@@ -339,8 +339,8 @@ const copy: Record<string, [string, string]> = {
 	question: ["问题", "Question"],
 	ask: ["发送", "Send"],
 	aiDisclosure: [
-		"只发送你选择的资料。请勿选择含敏感信息的备注。",
-		"Only selected records are sent. Avoid notes containing sensitive information.",
+		"只向你填写的服务地址发送所选资料的类型、名称、描述、网址、到期日、金额、币种，以及你输入的问题。API Key 只用于本次请求。",
+		"The service URL you enter receives your question and only the type, name, description, URL, due date, amount and currency of selected records. The API key is used only for this request.",
 	],
 	aiSelect: ["选择要使用的资料", "Select records to use"],
 	aiResponse: ["回答", "Response"],
@@ -348,6 +348,7 @@ const copy: Record<string, [string, string]> = {
 		"连接失败，请检查地址、密钥与跨域设置。",
 		"Connection failed. Check the URL, key and CORS settings.",
 	],
+	aiInvalidResponse: ["服务返回的内容无法读取，请重试。", "The service returned an unreadable response. Please try again."],
 	aiBusy: ["正在思考…", "Thinking…"],
 	allowedEndpoint: [
 		"仅支持 HTTPS；本机服务可使用 localhost HTTP。",

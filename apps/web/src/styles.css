@@ -330,6 +330,12 @@ p { line-height: 1.5; }
 .done { text-decoration: line-through; color: var(--muted); }
 .select-list { display: grid; max-height: 150px; overflow: auto; padding: 8px; border: 1px solid var(--line-soft); border-radius: 8px; }
 .select-list label { display: flex; align-items: center; gap: 8px; padding: 4px; }
+.ai-selection { min-width: 0; margin: 0; padding: 0; border: 0; }
+.ai-selection legend { margin-bottom: 6px; padding: 0; }
+.ai-select-list label, .ai-answer { min-width: 0; overflow-wrap: anywhere; }
+.ai-select-list label { align-items: flex-start; }
+.ai-select-list input[type="checkbox"] { flex: 0 0 18px; margin-top: 2px; }
+.ai-answer p { white-space: pre-wrap; }
 .import-preview { margin-top: 12px; padding: 12px; border: 1px solid var(--line-soft); border-radius: 8px; }
 .field-error { color: var(--danger); }
 .graph { height: 300px; margin: 0 12px 12px; border: 1px solid var(--line-soft); border-radius: 8px; overflow: hidden; }

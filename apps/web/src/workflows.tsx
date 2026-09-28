@@ -44,6 +44,7 @@ function Field({
 	value,
 	onChange,
 	type = "text",
+	autoComplete,
 	error,
 	children,
 }: {
@@ -52,6 +53,7 @@ function Field({
 	value?: string | number;
 	onChange?: (s: string) => void;
 	type?: string;
+	autoComplete?: string;
 	error?: string;
 	children?: React.ReactNode;
 }) {
@@ -63,6 +65,7 @@ function Field({
 					id={name}
 					name={name}
 					type={type}
+					autoComplete={autoComplete}
 					step={type === "number" ? "any" : undefined}
 					value={value ?? ""}
 					onChange={(e) => onChange?.(e.target.value)}
@@ -922,6 +925,54 @@ export function AiDialog({
 	const [answer, setAnswer] = useState("");
 	const [busy, setBusy] = useState(false);
 	const [error, setError] = useState("");
+	const requestGeneration = useRef(0);
+	const requestAbort = useRef<AbortController | null>(null);
+	const available = assets.filter((asset) => !asset.deleted);
+	const chosen = available.filter((asset) => selected.includes(asset.id));
+	const assetsFingerprint = JSON.stringify(
+		available.map((asset) => [
+			asset.id,
+			asset.kind,
+			asset.name,
+			asset.description,
+			asset.url,
+			asset.dueDate,
+			asset.amount,
+			asset.currency,
+		]),
+	);
+	const previousAssetsFingerprint = useRef(assetsFingerprint);
+	const availableIds = useRef(new Set<string>());
+	availableIds.current = new Set(available.map((asset) => asset.id));
+	function invalidateRequest() {
+		requestGeneration.current += 1;
+		requestAbort.current?.abort();
+		requestAbort.current = null;
+		setBusy(false);
+		setAnswer("");
+		setError("");
+	}
+	useEffect(() => {
+		if (previousAssetsFingerprint.current === assetsFingerprint) return;
+		previousAssetsFingerprint.current = assetsFingerprint;
+		requestGeneration.current += 1;
+		requestAbort.current?.abort();
+		requestAbort.current = null;
+		setBusy(false);
+		setAnswer("");
+		setError("");
+		setSelected((current) => {
+			const next = current.filter((id) => availableIds.current.has(id));
+			return next.length === current.length ? current : next;
+		});
+	}, [assetsFingerprint]);
+	useEffect(
+		() => () => {
+			requestGeneration.current += 1;
+			requestAbort.current?.abort();
+		},
+		[],
+	);
 	const allowed = useMemo(() => {
 		try {
 			const u = new URL(endpoint);
@@ -935,15 +986,23 @@ export function AiDialog({
 		}
 	}, [endpoint]);
 	async function ask() {
-		if (!allowed || !model.trim() || !question.trim() || selected.length === 0)
+		if (
+			busy ||
+			requestAbort.current ||
+			!allowed ||
+			!model.trim() ||
+			!question.trim() ||
+			chosen.length === 0
+		)
 			return;
+		const generation = ++requestGeneration.current;
+		const controller = new AbortController();
+		requestAbort.current = controller;
 		setBusy(true);
 		setAnswer("");
 		setError("");
 		try {
-			const chosen = assets
-				.filter((a) => selected.includes(a.id))
-				.map((a) => ({
+			const records = chosen.map((a) => ({
 					kind: a.kind,
 					name: a.name,
 					description: a.description,
@@ -951,15 +1010,18 @@ export function AiDialog({
 					dueDate: a.dueDate,
 					amount: a.amount,
 					currency: a.currency,
-				}));
+			}));
 			const res = await fetch(endpoint, {
 				method: "POST",
+				credentials: "omit",
+				redirect: "error",
+				referrerPolicy: "no-referrer",
 				headers: {
 					"Content-Type": "application/json",
 					...(apiKey ? { Authorization: `Bearer ${apiKey}` } : {}),
 				},
 				body: JSON.stringify({
-					model,
+					model: model.trim(),
 					messages: [
 						{
 							role: "system",
@@ -968,74 +1030,111 @@ export function AiDialog({
 						},
 						{
 							role: "user",
-							content: JSON.stringify({ records: chosen, question }),
+							content: JSON.stringify({ records, question: question.trim() }),
 						},
 					],
 				}),
+				signal: controller.signal,
 			});
 			if (!res.ok) throw Error("remote");
-			const body = (await res.json()) as {
-				choices?: { message?: { content?: string } }[];
+			let parsed: unknown;
+			try {
+				parsed = await res.json();
+			} catch {
+				throw Error("invalid-response");
+			}
+			const body = parsed as {
+				choices?: { message?: { content?: unknown } }[];
 			};
-			setAnswer(body.choices?.[0]?.message?.content || t("noMatches"));
-		} catch {
-			setError(t("aiError"));
+			const content = body?.choices?.[0]?.message?.content;
+			if (typeof content !== "string" || !content.trim())
+				throw Error("invalid-response");
+			if (generation === requestGeneration.current) setAnswer(content);
+		} catch (error) {
+			if (generation === requestGeneration.current)
+				setError(
+					t(error instanceof Error && error.message === "invalid-response" ? "aiInvalidResponse" : "aiError"),
+				);
 		} finally {
-			setBusy(false);
+			if (generation === requestGeneration.current) {
+				requestAbort.current = null;
+				setBusy(false);
+			}
 		}
 	}
 	return (
-		<Dialog title={t("assistant")} onClose={onClose}>
+		<Dialog
+			title={t("assistant")}
+			onClose={() => {
+				requestGeneration.current += 1;
+				requestAbort.current?.abort();
+				onClose();
+			}}
+		>
 			<div className="notice">{t("aiDisclosure")}</div>
 			<div className="form-grid">
 				<Field
 					name="ai-endpoint"
 					label={t("endpoint")}
 					value={endpoint}
-					onChange={setEndpoint}
+					onChange={(value) => {
+						invalidateRequest();
+						setEndpoint(value);
+					}}
 					error={endpoint && !allowed ? t("allowedEndpoint") : ""}
 				/>
 				<Field
 					name="ai-model"
 					label={t("model")}
 					value={model}
-					onChange={setModel}
+					onChange={(value) => {
+						invalidateRequest();
+						setModel(value);
+					}}
 				/>
 				<Field
 					name="ai-key"
 					label={t("apiKey")}
 					type="password"
+					autoComplete="off"
 					value={apiKey}
-					onChange={setApiKey}
+					onChange={(value) => {
+						invalidateRequest();
+						setApiKey(value);
+					}}
 				/>
 			</div>
-			<div className="field">
-				<div className="field-label">{t("aiSelect")}</div>
-				<div className="select-list">
-					{assets.map((a) => (
+			<fieldset className="field ai-selection">
+				<legend className="field-label">{t("aiSelect")}</legend>
+				<div className="select-list ai-select-list">
+					{available.map((a) => (
 						<label key={a.id}>
 							<input
 								type="checkbox"
 								checked={selected.includes(a.id)}
-								onChange={(e) =>
+								onChange={(e) => {
+									invalidateRequest();
 									setSelected((s) =>
 										e.target.checked
 											? [...s, a.id]
 											: s.filter((id) => id !== a.id),
-									)
-								}
+									);
+								}}
 							/>
 							{a.name}
 						</label>
 					))}
 				</div>
-			</div>
+			</fieldset>
 			<div className="field">
 				<label htmlFor="ai-question">{t("question")}</label>
 				<textarea
 					id="ai-question"
 					value={question}
-					onChange={(e) => setQuestion(e.target.value)}
+					onChange={(e) => {
+					invalidateRequest();
+					setQuestion(e.target.value);
+				}}
 					rows={3}
 				/>
 			</div>
@@ -1043,7 +1142,9 @@ export function AiDialog({
 				<Button
 					variant="primary"
 					onClick={() => void ask()}
-					disabled={busy || !allowed || !model || !question || !selected.length}
+					disabled={
+						busy || !allowed || !model.trim() || !question.trim() || !chosen.length
+					}
 				>
 					<Sparkles size={16} />
 					{busy ? t("aiBusy") : t("ask")}
@@ -1055,7 +1156,7 @@ export function AiDialog({
 				</p>
 			)}
 			{answer && (
-				<div className="notice">
+				<div className="notice ai-answer">
 					<strong>{t("aiResponse")}</strong>
 					<p>{answer}</p>
 				</div>
