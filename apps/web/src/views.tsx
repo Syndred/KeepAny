@@ -67,6 +67,7 @@ import {
 	monthlyAmount,
 } from "../../../packages/domain/src";
 import {
+	cleanupUnreferencedFile,
 	fileUrl,
 	putFile,
 	restoreEntity,
@@ -949,6 +950,21 @@ export function AssetDetail() {
 	const [submissionEdit, setSubmissionEdit] = useState(false);
 	const [taskEdit, setTaskEdit] = useState(false);
 	const [uploading, setUploading] = useState(false);
+	const [pendingImage, setPendingImage] = useState<File | null>(null);
+	const [pendingImageUrl, setPendingImageUrl] = useState("");
+	const [pendingImageStatus, setPendingImageStatus] = useState<
+		"loading" | "ready" | "error"
+	>("loading");
+	useEffect(() => {
+		setPendingImageStatus("loading");
+		if (!pendingImage) {
+			setPendingImageUrl("");
+			return;
+		}
+		const url = URL.createObjectURL(pendingImage);
+		setPendingImageUrl(url);
+		return () => URL.revokeObjectURL(url);
+	}, [pendingImage]);
 	const [relationTarget, setRelationTarget] = useState("");
 	const [relationLabel, setRelationLabel] = useState("");
 	const [submissionName, setSubmissionName] = useState("");
@@ -1036,15 +1052,18 @@ export function AssetDetail() {
 	async function addImage(file: File) {
 		if (!asset) return;
 		setUploading(true);
+		let fileId = "";
 		try {
-			const id = await putFile(file);
+			fileId = await putFile(file);
 			await save("asset", {
 				...asset,
-				attachments: [...asset.attachments, id],
+				attachments: [...asset.attachments, fileId],
 				updatedAt: new Date().toISOString(),
 			});
+			setPendingImage(null);
 			notify(t("saved"));
 		} catch {
+			if (fileId) await cleanupUnreferencedFile(fileId).catch(() => false);
 			notify(t("uploadError"));
 		} finally {
 			setUploading(false);
@@ -1276,7 +1295,7 @@ export function AssetDetail() {
 						<h2>{t("attachments")}</h2>
 						<Button
 							size="small"
-							disabled={uploading}
+							disabled={uploading || asset.attachments.length >= 20}
 							onClick={() => imageInput.current?.click()}
 						>
 							{uploading ? t("loading") : t("addPhoto")}
@@ -1290,7 +1309,24 @@ export function AssetDetail() {
 							aria-label={t("addPhoto")}
 							onChange={(e) => {
 								const file = e.target.files?.[0];
-								if (file) void addImage(file);
+								if (file) {
+									if (
+										![
+											"image/jpeg",
+											"image/png",
+											"image/webp",
+											"image/gif",
+										].includes(file.type) ||
+										file.size === 0 ||
+										file.size > 20 * 1024 * 1024
+									)
+										notify(t("uploadError"));
+									else {
+										setPendingImageUrl("");
+										setPendingImageStatus("loading");
+										setPendingImage(file);
+									}
+								}
 								e.target.value = "";
 							}}
 						/>
@@ -1304,15 +1340,16 @@ export function AssetDetail() {
 										variant="danger"
 										size="small"
 										onClick={() =>
-											run(async () =>
-												save("asset", {
+											run(async () => {
+												await save("asset", {
 													...asset,
 													attachments: asset.attachments.filter(
 														(x) => x !== id,
 													),
 													updatedAt: new Date().toISOString(),
-												}),
-											)
+												});
+												await cleanupUnreferencedFile(id).catch(() => false);
+											})
 										}
 									>
 										{t("removeImage")}
@@ -1613,6 +1650,33 @@ export function AssetDetail() {
 							onClick={() => void run(addSubmission)}
 						>
 							{t("save")}
+						</Button>
+					</div>
+				</Dialog>
+			)}
+			{pendingImage && (
+				<Dialog title={t("preview")} onClose={() => setPendingImage(null)}>
+					{pendingImageUrl && (
+						<img
+							className="image-preview"
+							src={pendingImageUrl}
+							alt={pendingImage.name}
+							onLoad={() => setPendingImageStatus("ready")}
+							onError={() => setPendingImageStatus("error")}
+						/>
+					)}
+					<p>{pendingImage.name}</p>
+					{pendingImageStatus === "error" && (
+						<p role="alert">{t("uploadError")}</p>
+					)}
+					<div className="actions">
+						<Button onClick={() => setPendingImage(null)}>{t("cancel")}</Button>
+						<Button
+							variant="primary"
+							disabled={uploading || pendingImageStatus !== "ready"}
+							onClick={() => void addImage(pendingImage)}
+						>
+							{uploading ? t("loading") : t("confirm")}
 						</Button>
 					</div>
 				</Dialog>
