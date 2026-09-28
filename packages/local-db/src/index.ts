@@ -10,15 +10,22 @@ export interface RecordRow { id: string; type: EntityType; payload: string; upda
 interface StoredFile { id: string; blob: Blob; name: string }
 interface Journal { id: string; rows: RecordRow[] }
 interface ImportJournal { id: string; rows: RecordRow[] }
+interface SyncBase { id: string; payload: string; version: number }
+export interface PulledRow { row: RecordRow; sequence: number; version: number }
+interface PullJournal { id: string; cursorStart: number; changes: PulledRow[] }
 
 class FileStore extends Dexie {
   blobs!: Table<StoredFile, string>;
   journal!: Table<Journal, string>;
   importJournal!: Table<ImportJournal, string>;
+  syncBase!: Table<SyncBase, string>;
+  syncMeta!: Table<{ id: string; cursor: number }, string>;
+  pullJournal!: Table<PullJournal, string>;
   constructor(name: string) {
     super(`${name}-files-v1`);
     this.version(1).stores({ blobs: 'id', journal: 'id' });
     this.version(2).stores({ blobs: 'id', journal: 'id', importJournal: 'id' });
+    this.version(3).stores({ blobs: 'id', journal: 'id', importJournal: 'id', syncBase: 'id', syncMeta: 'id', pullJournal: 'id' });
   }
 }
 
@@ -48,6 +55,7 @@ const rowFor = (type: EntityType, value: unknown): RecordRow => {
 };
 
 export class LocalRepository {
+  syncRecoveryError: string | null = null;
   constructor(readonly db: RxDatabase, readonly fileStore: FileStore) {}
 
   async allRecords(): Promise<RecordRow[]> {
@@ -143,6 +151,29 @@ export class LocalRepository {
       return rows.length;
     } catch (error) {
       await rollbackImport(this.db, this.fileStore, id);
+      throw error;
+    }
+  }
+
+  async syncCursor(): Promise<number> { return (await this.fileStore.syncMeta.get('cursor'))?.cursor ?? 0; }
+
+  // The cursor is committed only after every decrypted record in the page is durable.
+  async applyPulledBatch(changes: PulledRow[], cursorStart: number): Promise<number> {
+    if (await this.fileStore.pullJournal.count()) throw Error('pull-pending');
+    if (cursorStart !== await this.syncCursor()) throw Error('cursor-mismatch');
+    if (!changes.length || changes.length > 500) throw Error('pull-size');
+    for (let index = 0; index < changes.length; index++) {
+      const change = changes[index];
+      if (change.sequence !== cursorStart + index + 1 || !Number.isSafeInteger(change.version) || change.version < 1) throw Error('pull-sequence');
+      validateRow(change.row);
+    }
+    const id = crypto.randomUUID();
+    await this.fileStore.pullJournal.put({ id, cursorStart, changes });
+    try {
+      await replayPullJournal(this.db, this.fileStore, id);
+      return cursorStart + changes.length;
+    } catch (error) {
+      this.syncRecoveryError = error instanceof Error ? error.message : 'pull-failed';
       throw error;
     }
   }
@@ -297,6 +328,51 @@ async function rollbackImport(db: RxDatabase, store: FileStore, id: string): Pro
   await store.importJournal.delete(id);
 }
 
+function validateRow(row: RecordRow): void {
+  if (!Object.hasOwn(entitySchemas, row.type) || typeof row.payload !== 'string' ||
+    !Number.isSafeInteger(row.updatedAt) || row.updatedAt < 0) throw Error('pull-record');
+  const entity = parsedPayload(row);
+  if (row.id !== key(row.type, entity.id)) throw Error('pull-record');
+}
+
+async function replayPullJournal(db: RxDatabase, store: FileStore, id: string): Promise<void> {
+  const journal = await store.pullJournal.get(id);
+  if (!journal) return;
+  if (((await store.syncMeta.get('cursor'))?.cursor ?? 0) !== journal.cursorStart) throw Error('cursor-mismatch');
+  for (const change of journal.changes) {
+    validateRow(change.row);
+    const current = await db.records.findOne(change.row.id).exec();
+    const base = await store.syncBase.get(change.row.id);
+    const currentPayload = current ? canonical(current).payload : null;
+    if (currentPayload !== change.row.payload) {
+      if (currentPayload !== (base?.payload ?? null)) throw Error('sync-conflict');
+      if (current) {
+        const conflict = Symbol('sync-conflict');
+        try {
+          await current.incrementalModify((data: RecordRow) => {
+            if (data.payload !== (base?.payload ?? null)) throw conflict;
+            return { ...data, ...change.row };
+          });
+        } catch (error) {
+          if (error === conflict) throw Error('sync-conflict');
+          throw error;
+        }
+      } else {
+        try { await db.records.insert(change.row); }
+        catch (error) {
+          const raced = await db.records.findOne(change.row.id).exec();
+          if (!raced || canonical(raced).payload !== change.row.payload) throw error;
+        }
+      }
+    }
+    await store.syncBase.put({ id: change.row.id, payload: change.row.payload, version: change.version });
+  }
+  await store.transaction('rw', store.syncMeta, store.pullJournal, async () => {
+    await store.syncMeta.put({ id: 'cursor', cursor: journal.cursorStart + journal.changes.length });
+    await store.pullJournal.delete(id);
+  });
+}
+
 export async function openLocalRepository(name: string): Promise<LocalRepository> {
   if (!/^[a-z][a-z0-9-]{2,60}$/.test(name)) throw Error('database-name');
   const store = name === 'keepany-v1' ? files : new FileStore(name);
@@ -306,7 +382,12 @@ export async function openLocalRepository(name: string): Promise<LocalRepository
     await db.addCollections({ records: { schema: recordSchema } });
     for (const entry of await store.importJournal.toArray()) await rollbackImport(db, store, entry.id);
     for (const entry of await store.journal.toArray()) await replayJournal(db, store, entry.id);
-    return new LocalRepository(db, store);
+    const repository = new LocalRepository(db, store);
+    for (const entry of await store.pullJournal.toArray()) {
+      try { await replayPullJournal(db, store, entry.id); }
+      catch (error) { repository.syncRecoveryError = error instanceof Error ? error.message : 'pull-failed'; break; }
+    }
+    return repository;
   } catch (error) {
     await db?.close();
     if (store !== files) store.close();
@@ -322,6 +403,8 @@ function defaultRepository(): Promise<LocalRepository> {
 export async function database(): Promise<RxDatabase> { return (await defaultRepository()).db; }
 export async function save(type: EntityType, value: unknown) { return (await defaultRepository()).save(type, value); }
 export async function saveBatch(items: ReadonlyArray<{ type: EntityType; value: unknown }>) { return (await defaultRepository()).saveBatch(items); }
+export async function applyPulledBatch(changes: PulledRow[], cursorStart: number) { return (await defaultRepository()).applyPulledBatch(changes, cursorStart); }
+export async function syncCursor() { return (await defaultRepository()).syncCursor(); }
 export async function allRecords() { return (await defaultRepository()).allRecords(); }
 export async function deleteEntity(type: EntityType, id: string) { return (await defaultRepository()).deleteEntity(type, id); }
 export async function restoreEntity(type: EntityType, id: string) { return (await defaultRepository()).restoreEntity(type, id); }

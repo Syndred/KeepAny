@@ -150,4 +150,44 @@ describe('RxDB + free Dexie local repository', () => {
     expect(await recovered.fileStore.journal.count()).toBe(0);
     await recovered.close();
   });
+
+  it('advances the pull cursor after all cross-kind rows land and resumes an interrupted page', async () => {
+    const dbName = name();
+    const asset = project('Pulled project');
+    const account = { ...newAsset('account'), name: 'Pulled account' };
+    const rows: RecordRow[] = [asset, account].map(value => ({ id: `asset:${value.id}`, type: 'asset', payload: JSON.stringify(value), updatedAt: Date.now() }));
+    const relation = { id: crypto.randomUUID(), from: asset.id, to: account.id, label: 'uses', createdAt: new Date().toISOString(), verifiedAt: '', deleted: false };
+    rows.push({ id: `relation:${relation.id}`, type: 'relation', payload: JSON.stringify(relation), updatedAt: Date.now() });
+    const changes = rows.map((row, index) => ({ row, sequence: index + 1, version: 1 }));
+    const db = await openLocalRepository(dbName);
+    await db.fileStore.pullJournal.put({ id: 'interrupted-pull', cursorStart: 0, changes });
+    await db.db.records.insert(rows[0]); // Crash after the first RxDB write.
+    await db.close();
+    const recovered = await openLocalRepository(dbName);
+    expect(recovered.syncRecoveryError).toBeNull();
+    expect(await recovered.syncCursor()).toBe(3);
+    expect(await recovered.allRecords()).toHaveLength(3);
+    expect(await recovered.fileStore.pullJournal.count()).toBe(0);
+    await recovered.close();
+  });
+
+  it('keeps local offline edits and the old cursor when a pulled record conflicts', async () => {
+    const dbName = name();
+    const db = await openLocalRepository(dbName);
+    const asset = project('Initial');
+    const initial: RecordRow = { id: `asset:${asset.id}`, type: 'asset', payload: JSON.stringify(asset), updatedAt: Date.now() };
+    expect(await db.applyPulledBatch([{ row: initial, sequence: 1, version: 1 }], 0)).toBe(1);
+    await db.save('asset', { ...asset, name: 'Local offline edit' });
+    const remote: RecordRow = { ...initial, payload: JSON.stringify({ ...asset, name: 'Remote offline edit' }) };
+    await expect(db.applyPulledBatch([{ row: remote, sequence: 2, version: 2 }], 1)).rejects.toThrow('sync-conflict');
+    expect(await db.syncCursor()).toBe(1);
+    expect((await db.get<Asset>('asset', asset.id))?.name).toBe('Local offline edit');
+    expect(await db.fileStore.pullJournal.count()).toBe(1);
+    await db.close();
+    const reopened = await openLocalRepository(dbName);
+    expect(reopened.syncRecoveryError).toBe('sync-conflict');
+    expect((await reopened.get<Asset>('asset', asset.id))?.name).toBe('Local offline edit');
+    expect(await reopened.syncCursor()).toBe(1);
+    await reopened.close();
+  });
 });

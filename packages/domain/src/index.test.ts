@@ -7,6 +7,14 @@ describe('subscription and local asset rules', () => {
     expect(dueOnCycle('2026-01-31', 'month', 1, 2)).toBe('2026-03-31');
     expect(dueOnCycle('2024-02-29', 'year', 1, 1)).toBe('2025-02-28');
     expect(dueOnCycle('2024-02-29', 'year', 1, 4)).toBe('2028-02-29');
+    let subscription = assetSchema.parse({ ...newAsset('subscription'), dueDate: '2026-01-31' });
+    for (const expected of ['2026-02-28', '2026-03-31']) {
+      const billingAnchor = subscription.billingAnchor || subscription.dueDate;
+      const renewalCount = subscription.renewalCount + 1;
+      subscription = assetSchema.parse({ ...subscription, billingAnchor, renewalCount,
+        dueDate: dueOnCycle(billingAnchor, subscription.cycle, subscription.interval, renewalCount) });
+      expect(subscription.dueDate).toBe(expected);
+    }
   });
 
   it('separates nominal monthly equivalent from actual trial and discount charges', () => {
