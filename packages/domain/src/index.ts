@@ -10,7 +10,14 @@ export type Asset=z.infer<typeof assetSchema>;
 export type AssetKind=typeof kinds[number];
 export const relationSchema=z.object({id:z.string().min(1).max(96),from:z.string().min(1).max(96),to:z.string().min(1).max(96),label:z.string().min(1).max(100),source:z.string().max(500).optional(),createdAt:z.string(),verifiedAt:z.string().default(''),deleted:z.boolean().default(false)}).refine(v=>v.from!==v.to,'self-relation');
 export type Relation=z.infer<typeof relationSchema>;
-export const taskSchema=z.object({id:z.string().min(1).max(96),name:z.string().min(1).max(300),assetId:z.string().max(96).default(''),dueDate:z.string().default(''),done:z.boolean().default(false),completedAt:z.string().default(''),createdAt:z.string(),dedupeKey:z.string().max(200).default(''),deleted:z.boolean().default(false)});
+export const impactSnapshotSchema=z.object({
+ accountId:z.string().min(1).max(96),relationId:z.string().min(1).max(96),relatedAssetId:z.string().min(1).max(96),
+ fromAssetId:z.string().min(1).max(96),toAssetId:z.string().min(1).max(96),
+ fromName:z.string().min(1).max(160),toName:z.string().min(1).max(160),relatedName:z.string().min(1).max(160),
+ label:z.string().min(1).max(100),source:z.string().max(500),verifiedAt:z.string().max(64),generatedAt:z.string().min(1).max(64),
+});
+export type ImpactSnapshot=z.infer<typeof impactSnapshotSchema>;
+export const taskSchema=z.object({id:z.string().min(1).max(96),name:z.string().min(1).max(300),assetId:z.string().max(96).default(''),dueDate:z.string().default(''),done:z.boolean().default(false),completedAt:z.string().default(''),completionHistory:z.array(z.string().min(1).max(64)).default([]),createdAt:z.string(),dedupeKey:z.string().max(200).default(''),impactSnapshot:impactSnapshotSchema.optional(),deleted:z.boolean().default(false)});
 export type Task=z.infer<typeof taskSchema>;
 export const categorySchema=z.object({id:z.string().min(1).max(96),kind:z.enum(kinds),name:z.string().min(1).max(60),order:z.number().int(),deleted:z.boolean().default(false)});
 export type Category=z.infer<typeof categorySchema>;
