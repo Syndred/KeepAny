@@ -79,6 +79,7 @@ export function BindingPanel() {
 					const latest = await repository.activeBinding();
 					setBinding(latest);
 					if (latest?.bindingId !== binding.bindingId) {
+						setForgetOpen(false);
 						setMessage({ key: "bindingForgotten" });
 						return;
 					}
@@ -123,7 +124,13 @@ export function BindingPanel() {
 						>
 							{t("bindingCheck")}
 						</Button>
-						<Button disabled={busy} onClick={() => setForgetOpen(true)}>
+						<Button
+							disabled={busy}
+							onClick={() => {
+								setMessage(undefined);
+								setForgetOpen(true);
+							}}
+						>
 							{t("bindingForget")}
 						</Button>
 					</div>
@@ -195,7 +202,7 @@ export function BindingPanel() {
 					{t("bindingStart")}
 				</Button>
 			)}
-			{message && (
+			{message && (!forgetOpen || !binding) && (
 				<p role="status">{t(message.key, { count: message.count })}</p>
 			)}
 			{forgetOpen && binding && (
@@ -206,6 +213,9 @@ export function BindingPanel() {
 					}}
 				>
 					<p>{t("bindingForgetConfirm")}</p>
+					{message && (
+						<p role="alert">{t(message.key, { count: message.count })}</p>
+					)}
 					<div className="actions">
 						<Button disabled={busy} onClick={() => setForgetOpen(false)}>
 							{t("cancel")}
