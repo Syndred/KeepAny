@@ -152,6 +152,9 @@ for (const locale of ["en-US", "zh-CN"] as const) {
 					"href",
 					url,
 				);
+				expect(
+					await page.evaluate(() => document.documentElement.scrollWidth),
+				).toBeLessThanOrEqual(width);
 				await page.reload();
 				await expect(page.locator("tr").filter({ hasText: name })).toHaveCount(
 					1,
