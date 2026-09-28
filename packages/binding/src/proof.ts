@@ -49,3 +49,38 @@ export async function createDeviceProof(input: {
 		.setJti(crypto.randomUUID())
 		.sign(input.deviceKey.privateKey);
 }
+
+/** A fresh sender-constrained proof for one fixed-origin bound sync request. */
+export async function createBoundResourceProof(input: {
+	deviceKey: DeviceKey;
+	method: "GET" | "POST" | "PUT";
+	publicUrl: string;
+	accessToken: string;
+}): Promise<string> {
+	const url = new URL(input.publicUrl);
+	if (
+		!(["GET", "POST", "PUT"] as string[]).includes(input.method) ||
+		input.publicUrl.includes("?") || input.publicUrl.includes("#") ||
+		url.username || url.password || url.search || url.hash ||
+		(url.protocol !== "https:" &&
+			!(url.protocol === "http:" &&
+				["localhost", "127.0.0.1", "[::1]"].includes(url.hostname))) ||
+		!url.pathname.startsWith("/") ||
+		!input.accessToken || input.accessToken.length > 8192
+	) {
+		throw Error("binding-resource-proof");
+	}
+	return new SignJWT({
+		htm: input.method,
+		htu: `${url.origin}${url.pathname}`,
+		ath: await tokenDigest(input.accessToken),
+	})
+		.setProtectedHeader({
+			alg: "ES256",
+			typ: "dpop+jwt",
+			jwk: input.deviceKey.publicJwk,
+		})
+		.setIssuedAt()
+		.setJti(crypto.randomUUID())
+		.sign(input.deviceKey.privateKey);
+}

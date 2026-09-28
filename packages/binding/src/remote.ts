@@ -243,9 +243,13 @@ export async function refreshAndStoreBoundAccess(input: {
 	repository: BindingRepository;
 	transport: BindingTransport;
 	keys: JWTVerifyGetKey;
+	requiredScope?: BindingScope;
 }): Promise<{ accessToken: string; accessExpiresAt: string; scope: string }> {
 	const binding = await input.repository.activeBinding();
 	if (!binding) throw Error("binding-not-active");
+	const requiredScope = input.requiredScope ?? "sync:read";
+	if (!binding.allowedScopes.includes(requiredScope))
+		throw Error("binding-access-scope");
 	const pending = await input.repository.beginRefresh(binding.bindingId);
 	const deviceKey = await input.repository.deviceKey();
 	const proof = await createDeviceProof({
@@ -272,12 +276,14 @@ export async function refreshAndStoreBoundAccess(input: {
 		subject: binding.subject,
 		instanceIdHash: binding.instanceIdHash,
 		deviceKeyThumbprint: await deviceKeyThumbprint(deviceKey),
-		requiredScope: "sync:read",
+		requiredScope,
 	});
 	if (
 		verified.expiresAt * 1000 !== Date.parse(result.accessExpiresAt) ||
 		[...verified.scopes].sort().join(" ") !==
-			result.scope.split(" ").sort().join(" ")
+			result.scope.split(" ").sort().join(" ") ||
+		[...verified.scopes].sort().join(" ") !==
+			[...binding.allowedScopes].sort().join(" ")
 	) {
 		throw Error("binding-refresh-token-mismatch");
 	}
@@ -288,6 +294,12 @@ export async function refreshAndStoreBoundAccess(input: {
 		refreshToken: result.refreshToken,
 		expiresAt: result.refreshExpiresAt,
 	});
+	const current = await input.repository.activeBinding();
+	if (current?.bindingId !== binding.bindingId || current.subject !== binding.subject ||
+		current.localAccountId !== binding.localAccountId ||
+		current.instanceIdHash !== binding.instanceIdHash ||
+		[...current.allowedScopes].sort().join(" ") !== [...binding.allowedScopes].sort().join(" "))
+		throw Error("binding-not-active");
 	return {
 		accessToken: result.accessToken,
 		accessExpiresAt: result.accessExpiresAt,
