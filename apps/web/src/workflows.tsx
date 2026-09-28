@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Papa from "papaparse";
 import { Download, FileUp, Link2, LockKeyhole, Sparkles } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -18,6 +18,7 @@ import {
 	allRecords,
 	exportArchive,
 	inspectArchive,
+	localRepository,
 	restoreArchive,
 	save,
 	saveBatch,
@@ -480,6 +481,7 @@ export function TaskEditor({
 type ImportCandidate = { asset: Asset; duplicate: boolean; selected: boolean };
 export function IntakeTools() {
 	const { t } = useTranslation();
+	const restoreFileInput = useRef<HTMLInputElement>(null);
 	const [password, setPassword] = useState("");
 	const [restoreFile, setRestoreFile] = useState<File | null>(null);
 	const [readyArchive, setReadyArchive] = useState<Uint8Array | null>(null);
@@ -492,6 +494,14 @@ export function IntakeTools() {
 		url: string;
 		name: string;
 	} | null>(null);
+	useEffect(() => {
+		let active = true;
+		void localRepository().then((repository) => {
+			if (active && repository.restoreRecoveryError)
+				setMessage((current) => current || t("restoreRecoveryPending"));
+		}).catch(() => undefined);
+		return () => { active = false; };
+	}, [t]);
 	useEffect(() => {
 		return () => {
 			if (readyDownload) URL.revokeObjectURL(readyDownload.url);
@@ -530,10 +540,15 @@ export function IntakeTools() {
 				new Uint8Array(await restoreFile.arrayBuffer()),
 				password,
 			);
-			const result = await inspectArchive(decrypted);
-			setReadyArchive(decrypted);
-			setArchiveCount(result.rows.length);
-			setMessage(t("preview"));
+			try {
+				const result = await inspectArchive(decrypted);
+				setReadyArchive(decrypted);
+				setArchiveCount(result.rows.length);
+				setMessage(t("preview"));
+			} catch {
+				setReadyArchive(null);
+				setMessage(t("archiveInvalid"));
+			}
 		} catch {
 			setReadyArchive(null);
 			setMessage(t("decryptError"));
@@ -549,8 +564,14 @@ export function IntakeTools() {
 			setMessage(t("restoreReady", { count }));
 			setReadyArchive(null);
 			setRestoreFile(null);
-		} catch {
-			setMessage(t("error"));
+			if (restoreFileInput.current) restoreFileInput.current.value = "";
+		} catch (error) {
+			const key = error instanceof Error && error.message === "restore-conflict"
+				? "restoreConflict"
+				: error instanceof Error && error.message === "restore-recovery-pending"
+					? "restoreRecoveryPending"
+					: "error";
+			setMessage(t(key));
 		} finally {
 			setBusy(false);
 		}
@@ -681,6 +702,7 @@ export function IntakeTools() {
 				<div className="field">
 					<label htmlFor="restore-file">{t("restoreBackup")}</label>
 					<input
+						ref={restoreFileInput}
 						id="restore-file"
 						type="file"
 						accept=".ka1"
@@ -690,6 +712,7 @@ export function IntakeTools() {
 						}}
 					/>
 				</div>
+				<small>{t("restoreHint")}</small>
 				<div className="actions">
 					<Button
 						onClick={() => void inspect()}
