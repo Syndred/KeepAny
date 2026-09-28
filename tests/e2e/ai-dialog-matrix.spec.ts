@@ -228,6 +228,9 @@ for (const language of ["en", "zh-CN"] as const) {
 					],
 					question: "Summarize my selected record",
 				});
+				expect(Object.keys(user.records[0]).sort()).toEqual(
+					["amount", "currency", "description", "dueDate", "kind", "name", "url"].sort(),
+				);
 				expect(JSON.stringify(payload)).not.toContain(excluded);
 				expect(JSON.stringify(payload)).not.toContain(
 					"private-description-sentinel",
