@@ -12,6 +12,7 @@ import { deviceKeyThumbprint, tokenDigest } from "./proof";
 import {
 	BindingTransport,
 	pollAndConsumeBinding,
+	readBindingState,
 	refreshAndStoreBoundAccess,
 	startBindingChallenge,
 } from "./remote";
@@ -106,6 +107,13 @@ describe("commercial challenge transport", () => {
 					},
 				});
 			}
+			if (url.pathname.endsWith("/state")) {
+				expect(body).toEqual({ bindingId, refreshToken: nextRefreshToken });
+				return Response.json({
+					code: 0,
+					data: { bindingId, state: "revoked" },
+				});
+			}
 			const identity = await repo.identity();
 			const now = Math.floor(Date.now() / 1000);
 			const bindingTicket = await new SignJWT({
@@ -185,6 +193,12 @@ describe("commercial challenge transport", () => {
 			expect((await repo.credential(bindingId))?.refreshToken).toBe(
 				nextRefreshToken,
 			);
+			expect(await readBindingState({ repository: repo, transport })).toEqual({
+				bindingId,
+				state: "revoked",
+			});
+			expect(await repo.activeBinding()).toBeUndefined();
+			expect(await repo.credential(bindingId)).toBeUndefined();
 		} finally {
 			await repo.deleteDatabase();
 		}

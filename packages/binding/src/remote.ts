@@ -47,20 +47,21 @@ const refreshedSchema = z.strictObject({
 	tokenType: z.literal("DPoP"),
 	scope: z.string().min(1),
 });
-const stateSchema = z.object({
-	bindingId: z.uuid(),
-	subject: z.string().regex(/^keepanyadm:[A-Za-z0-9_-]{1,128}$/),
-	state: z.enum([
-		"active",
-		"revoked",
-		"credential_expired",
-		"inactive",
-		"device_limit",
-	]),
-	scopes: z.array(bindingScopeSchema),
-	credentialExpiresAt: z.iso.datetime(),
-	entitlements: z.unknown(),
-});
+const stateSchema = z.discriminatedUnion("state", [
+	z.strictObject({ bindingId: z.uuid(), state: z.literal("revoked") }),
+	z.strictObject({
+		bindingId: z.uuid(),
+		state: z.literal("credential_expired"),
+	}),
+	z.strictObject({
+		bindingId: z.uuid(),
+		subject: z.string().regex(/^keepanyadm:[A-Za-z0-9_-]{1,128}$/),
+		state: z.enum(["active", "inactive", "device_limit"]),
+		scopes: z.array(bindingScopeSchema),
+		credentialExpiresAt: z.iso.datetime(),
+		entitlements: z.unknown(),
+	}),
+]);
 
 export class BindingRemoteError extends Error {
 	constructor(
@@ -223,7 +224,7 @@ export async function readBindingState(input: {
 	});
 	if (
 		result.bindingId !== binding.bindingId ||
-		result.subject !== binding.subject
+		("subject" in result && result.subject !== binding.subject)
 	)
 		throw Error("binding-state-mismatch");
 	if (result.state === "revoked")

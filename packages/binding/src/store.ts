@@ -222,7 +222,7 @@ export class BindingRepository {
 						requestId: credential.pendingRequestId,
 					};
 				}
-				const requestId = crypto.randomUUID();
+				const requestId = newInstanceId();
 				await this.db.credentials.update(bindingId, {
 					pendingRequestId: requestId,
 					pendingSince: new Date().toISOString(),
