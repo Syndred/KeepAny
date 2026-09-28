@@ -131,9 +131,9 @@ export class SelfHostSyncClient {
           expectedVersion, ciphertext: JSON.stringify(envelope), tombstone, intent: base &&
           (JSON.parse(base.payload) as { deleted?: boolean }).deleted && !tombstone ? 'restore' : 'write' };
         await this.repository.stageScopedOutbox(scope, row, operation);
-        await this.pushOutbox(scope);
-        if (await this.pullAll(scope)) return this.report('conflict');
       }
+      await this.pushOutbox(scope);
+      if (await this.pullAll(scope)) return this.report('conflict');
       const report = await this.report('synced');
       onStatus?.(report);
       return report;
@@ -151,17 +151,32 @@ export class SelfHostSyncClient {
   }
 
   private async pushOutbox(scope: string): Promise<void> {
-    for (const item of await this.repository.listScopedOutbox(scope)) {
-      if (item.blocked) continue;
+    const pending = (await this.repository.listScopedOutbox(scope)).filter(item => !item.blocked);
+    let offset = 0;
+    while (offset < pending.length) {
+      const batch: typeof pending = [];
+      let bytes = 0;
+      while (offset < pending.length && batch.length < 100) {
+        const item = pending[offset];
+        const size = JSON.stringify(item.operation).length + 1;
+        if (size > 3_500_000) throw Error('sync-operation-size');
+        if (batch.length && bytes + size > 3_500_000) break;
+        batch.push(item);
+        bytes += size;
+        offset++;
+      }
       const response = await request(this.endpoint, this.token, '/sync/push',
-        { workspaceId: this.workspaceId, operations: [item.operation] }, syncPushResponseSchema);
-      const result = response.results[0];
-      if (!result || result.operationId !== item.operation.operationId) throw Error('sync-push-response');
-      if (result.status === 'accepted' || result.status === 'duplicate') {
-        await this.repository.acknowledgeScopedOutbox(scope, result.operationId, result.version, this.keyEpoch);
-      } else if (result.status === 'conflict') {
-        await this.repository.blockScopedOutbox(scope, result.operationId);
-      } else throw Error('sync-push-rejected');
+        { workspaceId: this.workspaceId, operations: batch.map(item => item.operation) }, syncPushResponseSchema);
+      if (response.results.length !== batch.length) throw Error('sync-push-response');
+      for (const [index, item] of batch.entries()) {
+        const result = response.results[index];
+        if (!result || result.operationId !== item.operation.operationId) throw Error('sync-push-response');
+        if (result.status === 'accepted' || result.status === 'duplicate') {
+          await this.repository.acknowledgeScopedOutbox(scope, result.operationId, result.version, this.keyEpoch);
+        } else if (result.status === 'conflict') {
+          await this.repository.blockScopedOutbox(scope, result.operationId);
+        } else throw Error('sync-push-rejected');
+      }
     }
   }
 
@@ -169,17 +184,21 @@ export class SelfHostSyncClient {
     for (let page = 0; page < 10000; page++) {
       const cursor = await this.repository.scopedCursor(scope);
       const response = await request(this.endpoint, this.token, '/sync/pull',
-        { workspaceId: this.workspaceId, cursor, limit: 1 }, syncPullResponseSchema);
+        { workspaceId: this.workspaceId, cursor, limit: 100 }, syncPullResponseSchema);
       if (!response.changes.length) {
         if (response.nextCursor !== cursor) throw Error('sync-cursor');
         return false;
       }
-      const change = response.changes[0];
-      if (response.changes.length !== 1 || response.nextCursor !== cursor + 1 || change.sequence !== cursor + 1) throw Error('sync-cursor');
-      const row = await this.openChange(scope, change);
-      const result = await this.repository.applyScopedPull(scope, { row, sequence: change.sequence,
-        version: change.version, operationId: change.operationId, keyEpoch: this.keyEpoch, ciphertext: change.ciphertext });
-      if (result === 'conflict') return true;
+      let expected = cursor;
+      for (const change of response.changes) {
+        expected++;
+        if (change.sequence !== expected) throw Error('sync-cursor');
+        const row = await this.openChange(scope, change);
+        const result = await this.repository.applyScopedPull(scope, { row, sequence: change.sequence,
+          version: change.version, operationId: change.operationId, keyEpoch: this.keyEpoch, ciphertext: change.ciphertext });
+        if (result === 'conflict') return true;
+      }
+      if (response.nextCursor !== expected) throw Error('sync-cursor');
     }
     throw Error('sync-page-limit');
   }

@@ -160,6 +160,16 @@ it('rejects a different workspace key before making another network request', as
   await db.close();
 });
 
+it('sends independent local records in one bounded push request', async () => {
+  const { config } = server(crypto.randomUUID());
+  const db = await openLocalRepository(name());
+  for (let index = 0; index < 3; index++) await db.save('asset', { ...newAsset('project'), name: `Batch ${index}` });
+  expect((await new SelfHostSyncClient(db, config).run()).status).toBe('synced');
+  expect(vi.mocked(fetch).mock.calls.filter(([url]) => String(url).endsWith('/sync/push'))).toHaveLength(1);
+  expect(vi.mocked(fetch).mock.calls.filter(([url]) => String(url).endsWith('/sync/pull'))).toHaveLength(3);
+  await db.close();
+});
+
 async function scope(config: { endpoint: string; token: string }): Promise<string> {
   const bytes = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(JSON.stringify([config.endpoint, 'self-host-owner']))));
   return Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
