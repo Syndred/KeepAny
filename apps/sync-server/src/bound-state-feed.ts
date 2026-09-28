@@ -286,6 +286,7 @@ export function createBoundStateFeed(config: BoundStateFeedConfig) {
         if (!closed) acceptedState(state, applied);
       } catch (error) {
         retryKnown(bindingId);
+        if (error instanceof Error && error.message === 'bound-state-feed-capacity-exceeded') report('capacity');
         throw error;
       }
     })();

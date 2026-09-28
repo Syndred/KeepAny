@@ -352,6 +352,24 @@ describe('bound state feed', () => {
     await feed.close();
   });
 
+  it('reports database admission exhaustion during a first bound proof', async () => {
+    const failures: string[] = [];
+    const item = await open({
+      store: {
+        hasState: async () => false,
+        listKnownNonRevokedIds: async () => [],
+        upsertVerifiedState: async () => { throw Error('bound-state-feed-capacity-exceeded'); },
+      },
+      onError: reason => { failures.push(reason); },
+    });
+    item.setHandler(async id => response(await signState(item.origin, { binding_id: id })));
+    const feed = createBoundStateFeed(item.config);
+    await feed.bootstrapIfMissing(bindingId);
+    expect(failures).toContain('capacity');
+    expect(item.applied).toHaveLength(0);
+    await feed.close();
+  });
+
   it('bounds direct refresh concurrency and cancels requests even during signing', async () => {
     const item = await open();
     item.config.fetchFn = async (_url, init) => new Promise<Response>((_resolve, reject) => {

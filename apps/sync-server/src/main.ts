@@ -20,9 +20,9 @@ if (process.argv[2] === 'migrate') {
   try { await migrateSyncDatabase(pool, process.env.KEEPANY_MIGRATIONS_DIR); }
   finally { await pool.end(); }
 } else {
+  let boundFeed: ReturnType<typeof createBoundStateFeed> | undefined;
   try {
     const boundStateStore = process.env.KEEPANY_SYNC_AUTH_MODE === 'bound' ? createPostgresBoundStateStore(pool) : undefined;
-    let boundFeed: ReturnType<typeof createBoundStateFeed> | undefined;
     if (boundStateStore) {
       const env = process.env;
       if (env.KEEPANY_SYNC_WEB_ORIGIN) throw Error('KEEPANY_SYNC_WEB_ORIGIN-not-allowed-in-bound-mode');
@@ -48,8 +48,8 @@ if (process.argv[2] === 'migrate') {
     const port = Number(process.env.PORT ?? '8787');
     if (!Number.isInteger(port) || port < 1 || port > 65535) throw Error('PORT-invalid');
     const hostname = process.env.HOST ?? '127.0.0.1';
+    await boundFeed?.start();
     const server = serve({ fetch: app.fetch, port, hostname });
-    boundFeed?.start();
     console.info(`KeepAny sync listening on ${hostname}:${port}`);
     const proofCleanup = boundStateStore && setInterval(() => {
       void boundStateStore.pruneExpiredProofs().catch(() => console.error('KeepAny sync proof cleanup failed'));
@@ -70,6 +70,7 @@ if (process.argv[2] === 'migrate') {
     process.once('SIGINT', shutdown);
     process.once('SIGTERM', shutdown);
   } catch (error) {
+    await boundFeed?.close();
     await pool.end();
     throw error;
   }
