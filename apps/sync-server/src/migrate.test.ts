@@ -10,7 +10,7 @@ const directory = resolve(process.cwd(), 'apps/sync-server/migrations');
 function migrationPool(pg: PGlite): Pool {
   return { connect: async () => ({
     query: async (text: string, values?: unknown[]) => {
-      if (text.includes('CREATE TABLE IF NOT EXISTS sync_workspaces') || text.includes('ALTER TABLE sync_changes')) {
+      if (text.includes('CREATE TABLE IF NOT EXISTS sync_workspaces') || text.includes('ALTER TABLE sync_changes') || text.includes('CREATE TABLE sync_bound_bindings')) {
         await pg.exec(text);
         return { rows: [] };
       }
@@ -27,13 +27,16 @@ it('applies the migration once and records its checksum', async () => {
     await migrateSyncDatabase(pool, directory);
     await migrateSyncDatabase(pool, directory);
     const migration = await pg.query<{ id: string; sha256: string }>('SELECT id,sha256 FROM sync_schema_migrations');
-    expect(migration.rows).toHaveLength(3);
+    expect(migration.rows).toHaveLength(4);
     expect(migration.rows[0].id).toBe('001_sync');
     expect(migration.rows[0].sha256).toMatch(/^[a-f0-9]{64}$/);
     expect(migration.rows[1].id).toBe('002_attachments');
     expect(migration.rows[2].id).toBe('003_change_operation_id');
+    expect(migration.rows[3].id).toBe('004_bound_state');
     expect((await pg.query('SELECT attachment_id FROM sync_attachments')).rows).toHaveLength(0);
     expect((await pg.query('SELECT operation_id FROM sync_changes')).rows).toHaveLength(0);
+    expect((await pg.query('SELECT binding_id FROM sync_bound_bindings')).rows).toHaveLength(0);
+    expect((await pg.query('SELECT proof_jti_hash FROM sync_bound_proofs')).rows).toHaveLength(0);
   } finally { await pg.close(); }
 }, 20_000);
 
@@ -69,6 +72,6 @@ it('upgrades historical changes from accepted operation results without changing
       WHERE table_name='sync_changes' AND column_name='operation_id'`);
     expect(nullable.rows[0].is_nullable).toBe('NO');
     expect((await pg.query<{ id: string }>('SELECT id FROM sync_schema_migrations ORDER BY id')).rows.map(row => row.id))
-      .toEqual(['001_sync', '002_attachments', '003_change_operation_id']);
+      .toEqual(['001_sync', '002_attachments', '003_change_operation_id', '004_bound_state']);
   } finally { await pg.close(); }
 }, 20_000);

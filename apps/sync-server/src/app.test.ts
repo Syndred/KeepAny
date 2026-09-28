@@ -8,7 +8,7 @@ import { createPostgresSyncApp } from './app';
 
 const migrations = await Promise.all(['001_sync', '002_attachments', '003_change_operation_id'].map(id =>
   readFile(new URL(`../migrations/${id}.sql`, import.meta.url), 'utf8')));
-async function fixture() {
+async function fixture(webOrigin?: string) {
   const pg = new PGlite();
   for (const migration of migrations) await pg.exec(migration);
   const pool: SqlPool = { connect: async () => ({
@@ -22,8 +22,32 @@ async function fixture() {
   };
   return { pg, objects, app: createPostgresSyncApp(new PostgresSyncService(pool), async header =>
     header === 'Bearer alice' ? 'alice' : header === 'Bearer bob' ? 'bob' : null,
-  new AttachmentService(pool, store)) };
+  new AttachmentService(pool, store), { webOrigin }) };
 }
+
+it('permits only the configured self-host Web origin for browser preflight and sync', async () => {
+  const webOrigin = 'http://127.0.0.1:4173';
+  const { pg, app } = await fixture(webOrigin);
+  try {
+    const preflight = await app.request('/sync/pull', { method: 'OPTIONS', headers: {
+      origin: webOrigin, 'access-control-request-method': 'POST',
+      'access-control-request-headers': 'authorization,content-type',
+    } });
+    expect(preflight.status).toBe(204);
+    expect(preflight.headers.get('access-control-allow-origin')).toBe(webOrigin);
+    expect(preflight.headers.get('access-control-allow-headers')).toContain('Authorization');
+    const created = await app.request('/workspaces', { method: 'POST',
+      headers: { origin: webOrigin, authorization: 'Bearer alice' } });
+    expect(created.status).toBe(201);
+    expect(created.headers.get('access-control-allow-origin')).toBe(webOrigin);
+    const other = await app.request('/workspaces', { method: 'POST',
+      headers: { origin: 'https://untrusted.example', authorization: 'Bearer alice' } });
+    expect(other.status).toBe(403);
+    expect(other.headers.get('access-control-allow-origin')).toBeNull();
+    expect(() => createPostgresSyncApp(new PostgresSyncService({} as SqlPool), async () => null,
+      undefined, { webOrigin: 'https://untrusted.example/path' })).toThrow('sync-web-origin');
+  } finally { await pg.close(); }
+}, 20_000);
 
 it('serves authenticated workspace creation, push and pull', async () => {
   const { pg, app } = await fixture();

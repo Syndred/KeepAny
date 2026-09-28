@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import { bodyLimit } from 'hono/body-limit';
+import { cors } from 'hono/cors';
 import { HTTPException } from 'hono/http-exception';
 import { z } from 'zod';
 import { syncPullRequestSchema, syncPushRequestSchema } from '../../../packages/contracts/src';
@@ -19,8 +20,28 @@ export type AuthRequest = {
 };
 export type Authenticate = (authorization: string | undefined, request?: AuthRequest) => Promise<string | null>;
 
-export function createPostgresSyncApp(service: PostgresSyncService, authenticate: Authenticate, attachments?: AttachmentService) {
+function configuredWebOrigin(value: string): string {
+  const url = new URL(value);
+  if (url.origin !== value || url.username || url.password || url.search || url.hash ||
+    (url.protocol !== 'https:' && !(url.protocol === 'http:' &&
+      ['localhost', '127.0.0.1', '[::1]'].includes(url.hostname)))) throw Error('sync-web-origin');
+  return url.origin;
+}
+
+export function createPostgresSyncApp(service: PostgresSyncService, authenticate: Authenticate, attachments?: AttachmentService,
+  options?: { webOrigin?: string }) {
   const app = new Hono();
+  if (options?.webOrigin) {
+    const origin = configuredWebOrigin(options.webOrigin);
+    app.use('*', async (context, next) => {
+      const supplied = context.req.header('origin');
+      if (supplied && supplied !== origin) return context.json({ error: 'forbidden' }, 403);
+      await next();
+    });
+    app.use('*', cors({ origin, allowMethods: ['GET', 'POST', 'PUT', 'OPTIONS'],
+      allowHeaders: ['Authorization', 'Content-Type', 'DPoP', 'X-Ciphertext-SHA256'],
+      exposeHeaders: ['X-Ciphertext-SHA256'], maxAge: 300 }));
+  }
   const subjectFor = (context: { req: { header: (name: string) => string | undefined; raw: Request } }, scope: AuthRequest['scope']) =>
     authenticate(context.req.header('authorization'), {
       method: context.req.raw.method, url: context.req.raw.url,
