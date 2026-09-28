@@ -1071,7 +1071,7 @@ export function AiDialog({
 				onClose();
 			}}
 		>
-			<div className="notice">{t("aiDisclosure")}</div>
+			<div className="notice ai-disclosure">{t("aiDisclosure")}</div>
 			<div className="form-grid">
 				<Field
 					name="ai-endpoint"
@@ -1129,13 +1129,14 @@ export function AiDialog({
 			<div className="field">
 				<label htmlFor="ai-question">{t("question")}</label>
 				<textarea
+					className="ai-question"
 					id="ai-question"
 					value={question}
 					onChange={(e) => {
-					invalidateRequest();
-					setQuestion(e.target.value);
-				}}
-					rows={3}
+						invalidateRequest();
+						setQuestion(e.target.value);
+					}}
+					rows={2}
 				/>
 			</div>
 			<div className="actions">
