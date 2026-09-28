@@ -629,6 +629,7 @@ export function IntakeTools() {
 	async function parseCSV(file: File) {
 		setBusy(true);
 		setMessage("");
+		setCandidates([]);
 		try {
 			const text = await file.text();
 			const result = Papa.parse<Record<string, string>>(text, {
@@ -689,6 +690,7 @@ export function IntakeTools() {
 			setCandidates([{ asset, duplicate, selected: !duplicate }]);
 			setMessage(t("preview"));
 		} catch {
+			setCandidates([]);
 			setMessage(t("invalid"));
 		}
 	}
@@ -795,8 +797,9 @@ export function IntakeTools() {
 						id="csv-file"
 						type="file"
 						accept=".csv,text/csv"
-						onChange={(e) => {
+					onChange={(e) => {
 							const file = e.target.files?.[0];
+							setCandidates([]);
 							if (file) void parseCSV(file);
 						}}
 					/>
@@ -807,7 +810,10 @@ export function IntakeTools() {
 						id="import-url"
 						type="url"
 						value={url}
-						onChange={(e) => setUrl(e.target.value)}
+						onChange={(e) => {
+						setUrl(e.target.value);
+						setCandidates([]);
+					}}
 						placeholder="https://"
 					/>
 				</div>
