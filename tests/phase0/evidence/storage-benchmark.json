@@ -1,0 +1,107 @@
+{
+  "generatedAt": "2026-09-28T10:55:47.047Z",
+  "node": "v22.23.1",
+  "environment": {
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.8010.12 Safari/537.36",
+    "platform": "MacIntel",
+    "hardwareConcurrency": 10,
+    "deviceMemoryGiB": 16,
+    "indexedDB": true,
+    "webCrypto": true,
+    "storageEstimate": true,
+    "storagePersisted": false,
+    "initialQuotaBytes": 3221225472
+  },
+  "results": [
+    {
+      "engine": "rxdb-dexie",
+      "count": 100,
+      "relationCount": 100,
+      "attachmentCount": 1,
+      "insertMs": 7,
+      "loadMs": 4.5,
+      "reopenLoadMs": 3.9,
+      "indexedLookupMs": 0.6,
+      "attachmentWriteMs": 2,
+      "quotaBytes": 3221446656,
+      "usageDeltaBytes": 221184,
+      "heapUsedBytes": 10000000
+    },
+    {
+      "engine": "rxdb-dexie",
+      "count": 1000,
+      "relationCount": 1000,
+      "attachmentCount": 10,
+      "insertMs": 52.1,
+      "loadMs": 14.5,
+      "reopenLoadMs": 13.9,
+      "indexedLookupMs": 0.6,
+      "attachmentWriteMs": 1.8,
+      "quotaBytes": 3221667840,
+      "usageDeltaBytes": 221184,
+      "heapUsedBytes": 10000000
+    },
+    {
+      "engine": "rxdb-dexie",
+      "count": 10000,
+      "relationCount": 10000,
+      "attachmentCount": 100,
+      "insertMs": 525.3,
+      "loadMs": 133.2,
+      "reopenLoadMs": 154.1,
+      "indexedLookupMs": 1.4,
+      "attachmentWriteMs": 9.4,
+      "quotaBytes": 3221889024,
+      "usageDeltaBytes": 221184,
+      "heapUsedBytes": 10000000
+    },
+    {
+      "engine": "dexie",
+      "count": 100,
+      "relationCount": 100,
+      "attachmentCount": 1,
+      "insertMs": 3.8,
+      "loadMs": 0.9,
+      "reopenLoadMs": 0.8,
+      "indexedLookupMs": 0.3,
+      "attachmentWriteMs": 0.3,
+      "quotaBytes": 3221889024,
+      "usageDeltaBytes": 0,
+      "heapUsedBytes": 10000000
+    },
+    {
+      "engine": "dexie",
+      "count": 1000,
+      "relationCount": 1000,
+      "attachmentCount": 10,
+      "insertMs": 28.6,
+      "loadMs": 5.6,
+      "reopenLoadMs": 5.5,
+      "indexedLookupMs": 0.3,
+      "attachmentWriteMs": 1.1,
+      "quotaBytes": 3221889024,
+      "usageDeltaBytes": 0,
+      "heapUsedBytes": 10000000
+    },
+    {
+      "engine": "dexie",
+      "count": 10000,
+      "relationCount": 10000,
+      "attachmentCount": 100,
+      "insertMs": 283.8,
+      "loadMs": 48.8,
+      "reopenLoadMs": 46.7,
+      "indexedLookupMs": 3.6,
+      "attachmentWriteMs": 7.5,
+      "quotaBytes": 3221889024,
+      "usageDeltaBytes": 0,
+      "heapUsedBytes": 10000000
+    }
+  ],
+  "caveats": [
+    "Headless Chromium on this machine; repeat on target devices.",
+    "Each case uses a new IndexedDB database and deletes it after measurement.",
+    "QuotaExceededError was not intentionally induced.",
+    "Measurements are single runs, not confidence intervals or a production workload."
+  ]
+}
