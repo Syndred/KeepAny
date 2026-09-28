@@ -535,11 +535,16 @@ export function IntakeTools() {
 	const [password, setPassword] = useState("");
 	const [restoreFile, setRestoreFile] = useState<File | null>(null);
 	const [readyArchive, setReadyArchive] = useState<Uint8Array | null>(null);
+	const [readyArchiveGeneration, setReadyArchiveGeneration] = useState<number | null>(null);
 	const [archiveCount, setArchiveCount] = useState(0);
 	const [candidates, setCandidates] = useState<ImportCandidate[]>([]);
+	const [candidateGeneration, setCandidateGeneration] = useState<number | null>(null);
 	const [url, setUrl] = useState("");
 	const [message, setMessage] = useState("");
 	const [busy, setBusy] = useState(false);
+	const [inspecting, setInspecting] = useState(false);
+	const importGeneration = useRef(0);
+	const restoreGeneration = useRef(0);
 	const [readyDownload, setReadyDownload] = useState<{
 		url: string;
 		name: string;
@@ -584,35 +589,41 @@ export function IntakeTools() {
 	}
 	async function inspect() {
 		if (!restoreFile || !password) return;
-		setBusy(true);
+		const generation = ++restoreGeneration.current;
+		setInspecting(true);
+		setReadyArchive(null);
+		setReadyArchiveGeneration(null);
+		setArchiveCount(0);
 		try {
 			const decrypted = await decryptBackup(
 				new Uint8Array(await restoreFile.arrayBuffer()),
 				password,
 			);
+			if (generation !== restoreGeneration.current) return;
 			try {
 				const result = await inspectArchive(decrypted);
+				if (generation !== restoreGeneration.current) return;
 				setReadyArchive(decrypted);
+				setReadyArchiveGeneration(generation);
 				setArchiveCount(result.rows.length);
 				setMessage(t("preview"));
 			} catch {
-				setReadyArchive(null);
-				setMessage(t("archiveInvalid"));
+				if (generation === restoreGeneration.current) setMessage(t("archiveInvalid"));
 			}
 		} catch {
-			setReadyArchive(null);
-			setMessage(t("decryptError"));
+			if (generation === restoreGeneration.current) setMessage(t("decryptError"));
 		} finally {
-			setBusy(false);
+			if (generation === restoreGeneration.current) setInspecting(false);
 		}
 	}
 	async function restore() {
-		if (!readyArchive) return;
+		if (!readyArchive || readyArchiveGeneration !== restoreGeneration.current) return;
 		setBusy(true);
 		try {
 			const count = await restoreArchive(readyArchive);
 			setMessage(t("restoreReady", { count }));
 			setReadyArchive(null);
+			setReadyArchiveGeneration(null);
 			setRestoreFile(null);
 			if (restoreFileInput.current) restoreFileInput.current.value = "";
 		} catch (error) {
@@ -627,17 +638,20 @@ export function IntakeTools() {
 		}
 	}
 	async function parseCSV(file: File) {
-		setBusy(true);
+		const generation = ++importGeneration.current;
 		setMessage("");
 		setCandidates([]);
+		setCandidateGeneration(null);
 		try {
 			const text = await file.text();
+			if (generation !== importGeneration.current) return;
 			const result = Papa.parse<Record<string, string>>(text, {
 				header: true,
 				skipEmptyLines: true,
 			});
 			if (result.errors.length) throw Error("csv");
 			const records = await allRecords();
+			if (generation !== importGeneration.current) return;
 			const existing = records
 				.filter((r) => r.type === "asset")
 				.map((r) => JSON.parse(r.payload) as Asset);
@@ -666,20 +680,23 @@ export function IntakeTools() {
 				}
 			}
 			setCandidates(preview);
+			setCandidateGeneration(generation);
 			setMessage(`${preview.length} ${t("preview")}`);
 		} catch {
-			setMessage(t("error"));
-		} finally {
-			setBusy(false);
+			if (generation === importGeneration.current) setMessage(t("error"));
 		}
 	}
 	async function previewUrl() {
+		const generation = ++importGeneration.current;
+		setCandidates([]);
+		setCandidateGeneration(null);
 		try {
 			const address = new URL(url);
 			if (!["http:", "https:"].includes(address.protocol)) throw Error("url");
 			const existing = (await allRecords())
 				.filter((r) => r.type === "asset")
 				.map((r) => JSON.parse(r.payload) as Asset);
+			if (generation !== importGeneration.current) return;
 			const asset = {
 				...newAsset("project"),
 				name: address.hostname,
@@ -688,18 +705,21 @@ export function IntakeTools() {
 			};
 			const duplicate = duplicates(asset, existing).length > 0;
 			setCandidates([{ asset, duplicate, selected: !duplicate }]);
+			setCandidateGeneration(generation);
 			setMessage(t("preview"));
 		} catch {
-			setCandidates([]);
-			setMessage(t("invalid"));
+			if (generation === importGeneration.current) setMessage(t("invalid"));
 		}
 	}
 	async function importCandidates() {
+		if (candidateGeneration !== importGeneration.current) return;
 		setBusy(true);
 		try {
 			const selected = candidates.filter((c) => c.selected && !c.duplicate);
 			await saveBatch(selected.map((c) => ({ type: "asset", value: c.asset })));
+			importGeneration.current++;
 			setCandidates([]);
+			setCandidateGeneration(null);
 			setMessage(`${t("imported")} · ${selected.length}`);
 		} catch {
 			setMessage(t("error"));
@@ -727,8 +747,12 @@ export function IntakeTools() {
 						disabled={busy}
 						value={password}
 						onChange={(e) => {
+							restoreGeneration.current++;
+							setInspecting(false);
 							setPassword(e.target.value);
 							setReadyArchive(null);
+							setReadyArchiveGeneration(null);
+							setArchiveCount(0);
 							setReadyDownload(null);
 						}}
 					/>
@@ -737,7 +761,7 @@ export function IntakeTools() {
 				<div className="actions">
 					<Button
 						onClick={() => void download()}
-						disabled={busy || password.length < 12}
+						disabled={busy || inspecting || password.length < 12}
 					>
 						<Download size={16} />
 						{t("backup")}
@@ -758,9 +782,14 @@ export function IntakeTools() {
 						id="restore-file"
 						type="file"
 						accept=".ka1"
+						disabled={busy}
 						onChange={(e) => {
+							restoreGeneration.current++;
+							setInspecting(false);
 							setRestoreFile(e.target.files?.[0] || null);
 							setReadyArchive(null);
+							setReadyArchiveGeneration(null);
+							setArchiveCount(0);
 						}}
 					/>
 				</div>
@@ -768,7 +797,7 @@ export function IntakeTools() {
 				<div className="actions">
 					<Button
 						onClick={() => void inspect()}
-						disabled={busy || !restoreFile || !password}
+						disabled={busy || inspecting || !restoreFile || !password}
 					>
 						{t("preview")}
 					</Button>
@@ -776,7 +805,7 @@ export function IntakeTools() {
 						<Button
 							variant="primary"
 							onClick={() => void restore()}
-							disabled={busy}
+							disabled={busy || inspecting || readyArchiveGeneration !== restoreGeneration.current}
 						>
 							{t("confirm")} · {archiveCount}
 						</Button>
@@ -797,9 +826,12 @@ export function IntakeTools() {
 						id="csv-file"
 						type="file"
 						accept=".csv,text/csv"
-					onChange={(e) => {
+						disabled={busy || inspecting}
+						onChange={(e) => {
 							const file = e.target.files?.[0];
+							importGeneration.current++;
 							setCandidates([]);
+							setCandidateGeneration(null);
 							if (file) void parseCSV(file);
 						}}
 					/>
@@ -810,14 +842,17 @@ export function IntakeTools() {
 						id="import-url"
 						type="url"
 						value={url}
+						disabled={busy || inspecting}
 						onChange={(e) => {
-						setUrl(e.target.value);
-						setCandidates([]);
+							importGeneration.current++;
+							setUrl(e.target.value);
+							setCandidates([]);
+							setCandidateGeneration(null);
 					}}
 						placeholder="https://"
 					/>
 				</div>
-				<Button onClick={() => void previewUrl()} disabled={!url}>
+				<Button onClick={() => void previewUrl()} disabled={busy || inspecting || !url}>
 					<Link2 size={16} />
 					{t("preview")}
 				</Button>
@@ -850,7 +885,8 @@ export function IntakeTools() {
 							variant="primary"
 							onClick={() => void importCandidates()}
 							disabled={
-								busy || !candidates.some((c) => c.selected && !c.duplicate)
+								busy || inspecting || candidateGeneration !== importGeneration.current ||
+								!candidates.some((c) => c.selected && !c.duplicate)
 							}
 						>
 							{t("confirmImport")}
