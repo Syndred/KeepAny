@@ -1,8 +1,8 @@
 import { useTranslation } from "react-i18next";
 import { Check } from "lucide-react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import type { Task } from "../../../packages/domain/src";
-import { save } from "../../../packages/local-db/src";
+import { setTaskDone } from "../../../packages/local-db/src";
 import { Button } from "./components/ui/button";
 import { ImpactTaskRow } from "./ImpactTaskRow";
 import { date, useAppContext } from "./view-shared";
@@ -10,6 +10,7 @@ export function TaskRow({ task }: { task: Task }) {
 	const { t, i18n } = useTranslation();
 	const { notify } = useAppContext();
 	const [busy, setBusy] = useState(false);
+	const inFlight = useRef(false);
 	if (task.impactSnapshot) return <ImpactTaskRow task={task} />;
 	const completionHistory = task.completionHistory?.length
 		? task.completionHistory
@@ -22,21 +23,16 @@ export function TaskRow({ task }: { task: Task }) {
 				disabled={busy}
 				aria-label={t(task.done ? "reopen" : "complete")}
 				onClick={async () => {
+					if (inFlight.current) return;
+					inFlight.current = true;
 					setBusy(true);
 					try {
-						const now = new Date().toISOString();
-						await save("task", {
-							...task,
-							done: !task.done,
-							completedAt: task.done ? "" : now,
-							completionHistory: task.done
-								? completionHistory
-								: [...completionHistory, now],
-						});
+						await setTaskDone(task.id, task.done);
 						notify(t("saved"));
 					} catch {
 						notify(t("error"));
 					} finally {
+						inFlight.current = false;
 						setBusy(false);
 					}
 				}}

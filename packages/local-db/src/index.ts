@@ -2,7 +2,7 @@ import { createRxDatabase, type RxDatabase } from 'rxdb';
 import { getRxStorageDexie } from 'rxdb/plugins/storage-dexie';
 import Dexie, { type Table } from 'dexie';
 import { z } from 'zod';
-import { dueOnCycle, entitySchemas, type Asset, type EntityType, type History } from '../../domain/src';
+import { dueOnCycle, entitySchemas, type Asset, type EntityType, type History, type Task } from '../../domain/src';
 import { zipSync, unzipSync, strToU8, strFromU8 } from 'fflate';
 import type { SyncOperation } from '../../contracts/src';
 
@@ -150,6 +150,14 @@ export class LocalRepository {
   }
 
   async save(type: EntityType, value: unknown): Promise<RecordRow> {
+    const task = type === 'task' ? entitySchemas.task.parse(value) : null;
+    if (task?.dedupeKey && !task.done && !task.deleted) {
+      return withRenewalLock(`keepany-task:${this.db.name}`, () => this.saveUnlocked(type, value));
+    }
+    return this.saveUnlocked(type, value);
+  }
+
+  private async saveUnlocked(type: EntityType, value: unknown): Promise<RecordRow> {
     if (type === 'asset' && this.renewalRecoveryError) throw Error('renewal-recovery-pending');
     const next = rowFor(type, value);
     const entity = parsedPayload(next) as Record<string, unknown>;
@@ -169,20 +177,72 @@ export class LocalRepository {
     if (current) {
       await current.incrementalModify((data: RecordRow) => {
         if (parsedPayload(data).deleted && !parsedPayload(next).deleted) throw Error('tombstone-restore-required');
-        if (type === 'asset' && (parsedPayload(data) as Asset).lastRenewalId !== (parsedPayload(next) as Asset).lastRenewalId) {
-          throw Error('asset-stale-renewal');
+        if (type === 'asset') {
+          const previous = parsedPayload(data) as Asset;
+          const proposed = parsedPayload(next) as Asset;
+          if (previous.lastRenewalId !== proposed.lastRenewalId) throw Error('asset-stale-renewal');
+          if (previous.lastItemEventId !== proposed.lastItemEventId) throw Error('item-stale');
+          if (previous.kind === 'item' &&
+            (previous.status !== proposed.status || previous.borrower !== proposed.borrower)) throw Error('item-action-required');
         }
         return { ...data, ...next };
       });
     } else {
+      if (type === 'asset' && entity.kind === 'item' &&
+        (entity.status !== 'active' || entity.borrower)) throw Error('item-action-required');
       try {
         await this.db.records.insert(next);
       } catch (error) {
         if (!(await this.db.records.findOne(next.id).exec())) throw error;
-        return this.save(type, value);
+        return this.saveUnlocked(type, value);
       }
     }
     return next;
+  }
+
+  // Re-read the current row inside RxDB's CAS retry to preserve every completion timestamp.
+  async setTaskDone(id: string, expectedDone: boolean): Promise<Task> {
+    return withRenewalLock(`keepany-task:${this.db.name}`, async () => {
+      const current = await this.db.records.findOne(key('task', id)).exec();
+      if (!current) throw Error('task-stale');
+      const before = entitySchemas.task.parse(JSON.parse(canonical(current).payload));
+      if (expectedDone && before.dedupeKey) {
+        const tasks = await this.list<Task>('task');
+        if (tasks.some(task => task.id !== id && !task.done && task.dedupeKey === before.dedupeKey)) throw Error('task-duplicate');
+      }
+      const now = new Date().toISOString();
+      let result: Task | null = null;
+      await current.incrementalModify((data: RecordRow) => {
+        const task = entitySchemas.task.parse(JSON.parse(data.payload));
+        if (task.deleted || task.done !== expectedDone) throw Error('task-stale');
+        const history = task.completionHistory.length ? task.completionHistory :
+          task.done && task.completedAt ? [task.completedAt] : [];
+        result = entitySchemas.task.parse({ ...task, done: !expectedDone,
+          completedAt: expectedDone ? '' : now,
+          completionHistory: expectedDone ? history : [...history, now] });
+        return { ...data, payload: JSON.stringify(result), updatedAt: Date.now() };
+      });
+      if (!result) throw Error('task-stale');
+      return result;
+    });
+  }
+
+  async setItemArchived(id: string, expectedStatus: 'active' | 'archived'): Promise<Asset> {
+    return withRenewalLock(`keepany-renewal:${this.db.name}`, async () => {
+      await this.settleRenewalJournals();
+      const current = await this.db.records.findOne(key('asset', id)).exec();
+      if (!current) throw Error('item-stale');
+      let result: Asset | null = null;
+      await current.incrementalModify((data: RecordRow) => {
+        const item = entitySchemas.asset.parse(JSON.parse(data.payload));
+        if (item.kind !== 'item' || item.deleted || item.status !== expectedStatus || item.borrower) throw Error('item-stale');
+        result = entitySchemas.asset.parse({ ...item, status: expectedStatus === 'active' ? 'archived' : 'active',
+          updatedAt: new Date().toISOString() });
+        return { ...data, payload: JSON.stringify(result), updatedAt: Date.now() };
+      });
+      if (!result) throw Error('item-stale');
+      return result;
+    });
   }
 
   // New records only. A durable journal rolls back partial writes after errors or interruption.
@@ -195,6 +255,8 @@ export class LocalRepository {
     for (const row of rows.filter(row => row.type === 'asset')) {
       const asset = parsedPayload(row);
       liveAssets.set(asset.id, !asset.deleted);
+      if ((asset as unknown as Asset).kind === 'item' &&
+        ((asset as unknown as Asset).status !== 'active' || (asset as unknown as Asset).borrower)) throw Error('item-action-required');
       for (const id of (asset as unknown as { attachments: string[] }).attachments) {
         if (!(await this.fileStore.blobs.get(id))) throw Error('attachment-missing');
       }
@@ -264,37 +326,76 @@ export class LocalRepository {
       event.billDate !== expected.dueDate || event.amount === undefined || event.currency !== expected.currency) {
       throw Error('renewal-invalid');
     }
+    await this.recordHistoryPair(expected, next, event, 'renewal');
+  }
+
+  async recordItemAction(expectedAsset: Asset, nextAsset: Asset, history: History): Promise<void> {
+    const expected = entitySchemas.asset.parse(expectedAsset);
+    const next = entitySchemas.asset.parse(nextAsset);
+    const event = entitySchemas.history.parse(history);
+    const unchanged = Object.keys(expected).every(field =>
+      ['status', 'borrower', 'lastItemEventId', 'updatedAt'].includes(field) ||
+      JSON.stringify(expected[field as keyof Asset]) === JSON.stringify(next[field as keyof Asset]));
+    const active = expected.status === 'active';
+    const loaned = expected.status === 'loaned';
+    const validTransition = event.action === 'loan'
+      ? active && next.status === 'loaned' && !!next.borrower.trim() &&
+        event.borrower === next.borrower && !expected.borrower
+      : event.action === 'return'
+        ? loaned && next.status === 'active' && !next.borrower && event.borrower === expected.borrower
+        : event.action === 'maintenance' && (active || loaned) && next.status === expected.status &&
+          next.borrower === expected.borrower && !!event.note.trim() && !!event.eventDate;
+    if (expected.kind !== 'item' || expected.deleted || next.id !== expected.id ||
+      next.kind !== 'item' || next.deleted || !unchanged || !validTransition ||
+      next.lastItemEventId !== event.id || event.assetId !== expected.id || event.deleted ||
+      (event.eventDate !== undefined && !event.eventDate)) throw Error('item-invalid');
+    await this.recordHistoryPair(expected, next, event, 'item');
+  }
+
+  private async recordHistoryPair(expected: Asset, next: Asset, event: History,
+    kind: 'renewal' | 'item'): Promise<void> {
     const lockName = `keepany-renewal:${this.db.name}`;
     await withRenewalLock(lockName, async () => {
       await this.settleRenewalJournals();
-      const current = await this.db.records.findOne(key('asset', expected.id)).exec();
-      const existingHistory = await this.db.records.findOne(key('history', event.id)).exec();
-      if (!current || existingHistory) throw Error('renewal-stale');
-      const currentRow = canonical(current);
-      const currentAsset = entitySchemas.asset.parse(JSON.parse(currentRow.payload));
-      if (JSON.stringify(currentAsset) !== JSON.stringify(expected)) throw Error('renewal-stale');
-      const nextRow = rowFor('asset', next);
-      const historyRow = rowFor('history', event);
-      const journalId = crypto.randomUUID();
-      await this.fileStore.renewalJournal.add({ id: journalId, assetId: expected.id,
-        expectedPayload: currentRow.payload, next: nextRow, history: historyRow });
-      try {
-        const previous = (current as unknown as { _data: Record<string, unknown> })._data;
-        const result = await this.db.records.storageInstance.bulkWrite([
-          { previous, document: { ...previous, ...nextRow } },
-          { document: { ...historyRow, _deleted: false, _attachments: {} } },
-        ], 'keepany-renewal');
-        if (result.error.length) throw Error(result.error.some(error => error.status === 409) ? 'renewal-stale' : 'renewal-write-failed');
-        // A failed journal cleanup leaves a committed pair that replay can safely recognize.
-        await this.fileStore.renewalJournal.delete(journalId).catch(() => {});
-      } catch (error) {
-        let outcome: 'committed' | 'cancelled';
-        try { outcome = await replayRenewalJournal(this.db, this.fileStore, journalId); }
-        catch (recoveryError) {
-          this.renewalRecoveryError = recoveryError instanceof Error ? recoveryError.message : 'renewal-recovery-pending';
-          throw Error('renewal-recovery-pending');
+      for (let attempt = 0; attempt < 3; attempt++) {
+        // Direct storage writes can leave RxDocument._data at an older revision until
+        // its change event arrives. Read the storage revision used by the CAS itself.
+        const [current] = await this.db.records.storageInstance.findDocumentsById([key('asset', expected.id)], false);
+        const [existingHistory] = await this.db.records.storageInstance.findDocumentsById([key('history', event.id)], false);
+        if (!current || existingHistory) throw Error(kind === 'item' ? 'item-stale' : 'renewal-stale');
+        const currentRow = current as RecordRow;
+        const currentAsset = entitySchemas.asset.parse(JSON.parse(currentRow.payload));
+        if (JSON.stringify(currentAsset) !== JSON.stringify(expected)) throw Error(kind === 'item' ? 'item-stale' : 'renewal-stale');
+        const nextRow = rowFor('asset', next);
+        const historyRow = rowFor('history', event);
+        const journalId = crypto.randomUUID();
+        await this.fileStore.renewalJournal.add({ id: journalId, assetId: expected.id,
+          expectedPayload: currentRow.payload, next: nextRow, history: historyRow });
+        try {
+          const result = await this.db.records.storageInstance.bulkWrite([
+            { previous: current, document: { ...current, ...nextRow } },
+            { document: { ...historyRow, _deleted: false, _attachments: {} } },
+          ], `keepany-${kind}`);
+          if (result.error.length) throw Error(result.error.some(error => error.status === 409) ?
+            (kind === 'item' ? 'item-stale' : 'renewal-stale') : `${kind}-write-failed`);
+          // A failed journal cleanup leaves a committed pair that replay can safely recognize.
+          await this.fileStore.renewalJournal.delete(journalId).catch(() => {});
+          return;
+        } catch (error) {
+          let outcome: 'committed' | 'cancelled';
+          try { outcome = await replayRenewalJournal(this.db, this.fileStore, journalId); }
+          catch (recoveryError) {
+            this.renewalRecoveryError = recoveryError instanceof Error ? recoveryError.message : 'renewal-recovery-pending';
+            throw Error('renewal-recovery-pending');
+          }
+          if (outcome === 'committed') return;
+          // A storage revision can advance while its payload remains unchanged.
+          // Retry only a CAS conflict after the journal has cancelled its own row;
+          // the next iteration rechecks the exact expected asset payload.
+          if (error instanceof Error && error.message === (kind === 'item' ? 'item-stale' : 'renewal-stale') &&
+            attempt < 2) continue;
+          throw error;
         }
-        if (outcome !== 'committed') throw error;
       }
     });
   }
@@ -560,6 +661,16 @@ export class LocalRepository {
 
   // Explicit undo is the only local path that can revive a tombstone.
   async restoreEntity(type: EntityType, id: string): Promise<RecordRow> {
+    if (type === 'asset' || type === 'history') {
+      return withRenewalLock(`keepany-renewal:${this.db.name}`, async () => {
+        await this.settleRenewalJournals();
+        return this.restoreEntityUnlocked(type, id);
+      });
+    }
+    return this.restoreEntityUnlocked(type, id);
+  }
+
+  private async restoreEntityUnlocked(type: EntityType, id: string): Promise<RecordRow> {
     const document = await this.db.records.findOne(key(type, id)).exec();
     if (!document) throw Error('not-in-trash');
     const previous = parsedPayload(canonical(document)) as Record<string, unknown>;
@@ -802,14 +913,16 @@ async function rollbackImport(db: RxDatabase, store: FileStore, id: string): Pro
 async function replayRenewalJournal(db: RxDatabase, store: FileStore, id: string): Promise<'committed' | 'cancelled'> {
   const journal = await store.renewalJournal.get(id);
   if (!journal) return 'cancelled';
-  const asset = await db.records.findOne(journal.next.id).exec();
-  const history = await db.records.findOne(journal.history.id).exec();
-  const assetPayload = asset ? canonical(asset).payload : null;
-  const historyPayload = history ? canonical(history).payload : null;
+  const [asset] = await db.records.storageInstance.findDocumentsById([journal.next.id], false);
+  const [history] = await db.records.storageInstance.findDocumentsById([journal.history.id], false);
+  const assetPayload = asset ? asset.payload : null;
+  const historyPayload = history ? history.payload : null;
   if (historyPayload && historyPayload !== journal.history.payload) throw Error('renewal-recovery-conflict');
-  const expectedMarker = entitySchemas.asset.parse(JSON.parse(journal.expectedPayload)).lastRenewalId;
-  const nextMarker = entitySchemas.asset.parse(JSON.parse(journal.next.payload)).lastRenewalId;
-  const currentMarker = assetPayload ? entitySchemas.asset.parse(JSON.parse(assetPayload)).lastRenewalId : null;
+  const action = entitySchemas.history.parse(JSON.parse(journal.history.payload)).action;
+  const markerField = action === 'renew' ? 'lastRenewalId' : 'lastItemEventId';
+  const expectedMarker = entitySchemas.asset.parse(JSON.parse(journal.expectedPayload))[markerField];
+  const nextMarker = entitySchemas.asset.parse(JSON.parse(journal.next.payload))[markerField];
+  const currentMarker = assetPayload ? entitySchemas.asset.parse(JSON.parse(assetPayload))[markerField] : null;
   // A later ordinary edit can change the payload without changing this operation marker.
   // Old v7 journals have no marker, so keep their exact-payload recovery behavior.
   if (assetPayload === journal.next.payload || (nextMarker && currentMarker === nextMarker)) {
@@ -829,7 +942,11 @@ async function replayRenewalJournal(db: RxDatabase, store: FileStore, id: string
   if (cannotCancel) {
     throw Error('renewal-recovery-conflict');
   }
-  if (history) await history.remove();
+  if (history) {
+    const document = await db.records.findOne(journal.history.id).exec();
+    if (!document) throw Error('renewal-recovery-conflict');
+    await document.remove();
+  }
   await store.renewalJournal.delete(id);
   return 'cancelled';
 }
@@ -1100,6 +1217,15 @@ export async function save(type: EntityType, value: unknown) { return (await def
 export async function saveBatch(items: ReadonlyArray<{ type: EntityType; value: unknown }>) { return (await defaultRepository()).saveBatch(items); }
 export async function recordRenewal(expectedAsset: Asset, nextAsset: Asset, history: History) {
   return (await defaultRepository()).recordRenewal(expectedAsset, nextAsset, history);
+}
+export async function recordItemAction(expectedAsset: Asset, nextAsset: Asset, history: History) {
+  return (await defaultRepository()).recordItemAction(expectedAsset, nextAsset, history);
+}
+export async function setTaskDone(id: string, expectedDone: boolean) {
+  return (await defaultRepository()).setTaskDone(id, expectedDone);
+}
+export async function setItemArchived(id: string, expectedStatus: 'active' | 'archived') {
+  return (await defaultRepository()).setItemArchived(id, expectedStatus);
 }
 export async function applyPulledBatch(changes: PulledRow[], cursorStart: number) { return (await defaultRepository()).applyPulledBatch(changes, cursorStart); }
 export async function syncCursor() { return (await defaultRepository()).syncCursor(); }
