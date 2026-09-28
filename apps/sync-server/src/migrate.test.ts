@@ -21,8 +21,10 @@ it('applies the migration once and records its checksum', async () => {
     await migrateSyncDatabase(pool, directory);
     await migrateSyncDatabase(pool, directory);
     const migration = await pg.query<{ id: string; sha256: string }>('SELECT id,sha256 FROM sync_schema_migrations');
-    expect(migration.rows).toHaveLength(1);
+    expect(migration.rows).toHaveLength(2);
     expect(migration.rows[0].id).toBe('001_sync');
     expect(migration.rows[0].sha256).toMatch(/^[a-f0-9]{64}$/);
+    expect(migration.rows[1].id).toBe('002_attachments');
+    expect((await pg.query('SELECT attachment_id FROM sync_attachments')).rows).toHaveLength(0);
   } finally { await pg.close(); }
 }, 20_000);

@@ -1,19 +1,28 @@
+import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { PGlite } from '@electric-sql/pglite';
 import { expect, it } from 'vitest';
+import { AttachmentService, CIPHERTEXT_ATTACHMENT_TYPE, type CiphertextObjectStore } from '../../../packages/sync-core/src/attachments';
 import { PostgresSyncService, type SqlPool } from '../../../packages/sync-core/src/postgres';
 import { createPostgresSyncApp } from './app';
 
-const migration = await readFile(new URL('../migrations/001_sync.sql', import.meta.url), 'utf8');
+const migrations = await Promise.all(['001_sync', '002_attachments'].map(id =>
+  readFile(new URL(`../migrations/${id}.sql`, import.meta.url), 'utf8')));
 async function fixture() {
   const pg = new PGlite();
-  await pg.exec(migration);
+  for (const migration of migrations) await pg.exec(migration);
   const pool: SqlPool = { connect: async () => ({
     query: async (text, values) => pg.query(text, values),
     release: () => {},
   }) };
-  return { pg, app: createPostgresSyncApp(new PostgresSyncService(pool), async header =>
-    header === 'Bearer alice' ? 'alice' : header === 'Bearer bob' ? 'bob' : null) };
+  const objects = new Map<string, Uint8Array>();
+  const store: CiphertextObjectStore = {
+    put: async (key, bytes) => { objects.set(key, Uint8Array.from(bytes)); },
+    get: async key => objects.get(key) ?? null,
+  };
+  return { pg, objects, app: createPostgresSyncApp(new PostgresSyncService(pool), async header =>
+    header === 'Bearer alice' ? 'alice' : header === 'Bearer bob' ? 'bob' : null,
+  new AttachmentService(pool, store)) };
 }
 
 it('serves authenticated workspace creation, push and pull', async () => {
@@ -36,6 +45,38 @@ it('serves authenticated workspace creation, push and pull', async () => {
     expect(pull.status).toBe(200);
     expect(await pull.json()).toMatchObject({ changes: [{ id: change.id, ciphertext: change.ciphertext }], nextCursor: 1 });
     expect(pull.headers.get('cache-control')).toBe('no-store');
+  } finally { await pg.close(); }
+}, 20_000);
+
+it('serves only authorized ciphertext attachment upload and verified readback', async () => {
+  const { pg, app, objects } = await fixture();
+  try {
+    const workspaceResponse = await app.request('/workspaces', { method: 'POST',
+      headers: { authorization: 'Bearer alice' } });
+    const { workspaceId } = await workspaceResponse.json() as { workspaceId: string };
+    const attachmentId = crypto.randomUUID();
+    const url = `/workspaces/${workspaceId}/attachments/${attachmentId}`;
+    const bytes = Buffer.from([5, 25, 99, 201]);
+    const sha256 = createHash('sha256').update(bytes).digest('hex');
+    const headers = { authorization: 'Bearer alice', 'content-type': CIPHERTEXT_ATTACHMENT_TYPE,
+      'x-ciphertext-sha256': sha256 };
+    expect((await app.request(url, { method: 'PUT', body: bytes, headers: { ...headers, 'content-type': 'text/plain' } })).status).toBe(415);
+    expect((await app.request(url, { method: 'PUT', body: bytes,
+      headers: { ...headers, 'x-ciphertext-sha256': '0'.repeat(64) } })).status).toBe(400);
+    expect((await app.request(url, { method: 'PUT', body: Buffer.alloc(4 * 1024 * 1024 + 1), headers })).status).toBe(413);
+    expect((await app.request(url, { method: 'PUT', body: bytes, headers: { ...headers, authorization: 'Bearer bob' } })).status).toBe(403);
+    const uploaded = await app.request(url, { method: 'PUT', body: bytes, headers });
+    expect(uploaded.status).toBe(201);
+    expect(await uploaded.json()).toMatchObject({ status: 'stored', sha256 });
+    expect((await app.request(url, { method: 'PUT', body: bytes, headers })).status).toBe(200);
+    expect((await app.request(url, { headers: { authorization: 'Bearer bob' } })).status).toBe(403);
+    const downloaded = await app.request(url, { headers: { authorization: 'Bearer alice' } });
+    expect(downloaded.status).toBe(200);
+    expect(downloaded.headers.get('content-type')).toBe(CIPHERTEXT_ATTACHMENT_TYPE);
+    expect(downloaded.headers.get('x-ciphertext-sha256')).toBe(sha256);
+    expect(Buffer.from(await downloaded.arrayBuffer())).toEqual(bytes);
+    objects.set(`${workspaceId}/${attachmentId}`, Uint8Array.from([0, 0, 0, 0]));
+    expect((await app.request(url, { headers: { authorization: 'Bearer alice' } })).status).toBe(502);
   } finally { await pg.close(); }
 }, 20_000);
 

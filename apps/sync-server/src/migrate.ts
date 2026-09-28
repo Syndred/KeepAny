@@ -4,9 +4,10 @@ import { resolve } from 'node:path';
 import type { Pool } from 'pg';
 
 export async function migrateSyncDatabase(pool: Pool, migrationsDir = resolve(process.cwd(), 'apps/sync-server/migrations')): Promise<void> {
-  const id = '001_sync';
-  const sql = await readFile(resolve(migrationsDir, `${id}.sql`), 'utf8');
-  const digest = createHash('sha256').update(sql).digest('hex');
+  const migrations = await Promise.all(['001_sync', '002_attachments'].map(async id => {
+    const sql = await readFile(resolve(migrationsDir, `${id}.sql`), 'utf8');
+    return { id, sql, digest: createHash('sha256').update(sql).digest('hex') };
+  }));
   const client = await pool.connect();
   let begun = false;
   try {
@@ -16,12 +17,14 @@ export async function migrateSyncDatabase(pool: Pool, migrationsDir = resolve(pr
     await client.query(`CREATE TABLE IF NOT EXISTS sync_schema_migrations (
       id text PRIMARY KEY, sha256 char(64) NOT NULL, applied_at timestamptz NOT NULL DEFAULT now()
     )`);
-    const existing = await client.query<{ sha256: string }>('SELECT sha256 FROM sync_schema_migrations WHERE id=$1', [id]);
-    if (existing.rows[0]) {
-      if (existing.rows[0].sha256 !== digest) throw Error('migration-checksum');
-    } else {
-      await client.query(sql);
-      await client.query('INSERT INTO sync_schema_migrations (id,sha256) VALUES ($1,$2)', [id, digest]);
+    for (const { id, sql, digest } of migrations) {
+      const existing = await client.query<{ sha256: string }>('SELECT sha256 FROM sync_schema_migrations WHERE id=$1', [id]);
+      if (existing.rows[0]) {
+        if (existing.rows[0].sha256 !== digest) throw Error('migration-checksum');
+      } else {
+        await client.query(sql);
+        await client.query('INSERT INTO sync_schema_migrations (id,sha256) VALUES ($1,$2)', [id, digest]);
+      }
     }
     await client.query('COMMIT');
   } catch (error) {
