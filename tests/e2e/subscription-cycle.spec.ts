@@ -131,8 +131,8 @@ test("renewal cycle, local amounts and history survive edits, status changes, re
 			await restored.goto("/assets/subscription");
 			await restored.getByText(name).first().click();
 			await expect(nextDate(restored, "下次日期")).toHaveText("2026年6月30日");
-			await expect(historyRows(restored, "维护记录")).toHaveCount(3);
-			await expect(historyRows(restored, "维护记录").first()).toContainText("本机记录金额");
+			await expect(historyRows(restored, "历史记录")).toHaveCount(3);
+			await expect(historyRows(restored, "历史记录").first()).toContainText("本机记录金额");
 			if (before) {
 				const after = await localRenewalState(restored, name);
 				expect(after.asset?.id).toBe(before.asset?.id);
@@ -142,7 +142,7 @@ test("renewal cycle, local amounts and history survive edits, status changes, re
 			await restored.screenshot({ path: `${evidence}/subscription-cycle-zh-1280.png`, fullPage: true });
 			await restored.setViewportSize({ width: 390, height: 844 });
 			await restored.reload();
-			await expect(historyRows(restored, "维护记录")).toHaveCount(3);
+			await expect(historyRows(restored, "历史记录")).toHaveCount(3);
 			expect(await restored.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
 			await restored.screenshot({ path: `${evidence}/subscription-cycle-zh-390.png`, fullPage: true });
 		} finally {

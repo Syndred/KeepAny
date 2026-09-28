@@ -218,3 +218,123 @@ test("item loan, return, maintenance, reminder and task history survive trash an
 		await source.close();
 	}
 });
+
+test("item actions use the local calendar day across time zones and an open page crossing midnight", async ({ browser }) => {
+	test.setTimeout(120_000);
+	const cases = [
+		{
+			zone: "Asia/Shanghai",
+			restoreZone: "America/Los_Angeles",
+			initialInstant: "2026-09-28T18:30:00Z",
+			nextInstant: "2026-09-29T16:30:00Z",
+			manualActionInstant: "2026-09-30T16:30:00Z",
+			initialDay: "2026-09-29",
+			nextDay: "2026-09-30",
+			initialDisplay: "Sep 29, 2026",
+			nextDisplay: "Sep 30, 2026",
+		},
+		{
+			zone: "America/Los_Angeles",
+			restoreZone: "Asia/Shanghai",
+			initialInstant: "2026-09-29T02:30:00Z",
+			nextInstant: "2026-09-29T07:30:00Z",
+			manualActionInstant: "2026-09-30T07:30:00Z",
+			initialDay: "2026-09-28",
+			nextDay: "2026-09-29",
+			initialDisplay: "Sep 28, 2026",
+			nextDisplay: "Sep 29, 2026",
+		},
+	] as const;
+	for (const scenario of cases) {
+		const unique = crypto.randomUUID().slice(0, 8);
+		const name = `Clock item ${unique}`;
+		const password = `item-calendar-${unique}-2026`;
+		const source = await browser.newContext({
+			locale: "en-US",
+			timezoneId: scenario.zone,
+			acceptDownloads: true,
+			viewport: { width: 1280, height: 800 },
+		});
+		const page = await source.newPage();
+		page.setDefaultTimeout(10_000);
+		try {
+			await page.clock.setFixedTime(new Date(scenario.initialInstant));
+			await page.goto("/assets/item");
+			await page.getByRole("button", { name: "Add", exact: true }).click();
+			const dialog = page.getByRole("dialog");
+			await dialog.getByLabel("Name", { exact: true }).fill(name);
+			await dialog.getByLabel("Purchase date").fill("2026-09-01");
+			await dialog.getByLabel("Warranty ends").fill("2027-09-01");
+			await dialog.getByRole("button", { name: "Save" }).click();
+			await expect(dialog).toBeHidden();
+			await page.getByText(name).first().click();
+			await expect(page.getByLabel("Maintenance date")).toHaveValue(scenario.initialDay);
+			await page.getByLabel("Borrower").fill(`Borrower ${unique}`);
+			await page.getByRole("button", { name: "Lend item" }).click();
+			await expect(historyRows(page, "History")).toHaveCount(1);
+			await expect(historyRows(page, "History").first()).toContainText(scenario.initialDisplay);
+
+			// Keep this detail page open while its local calendar day changes.
+			await page.clock.setFixedTime(new Date(scenario.nextInstant));
+			await page.getByRole("button", { name: "Return item" }).click();
+			await expect(historyRows(page, "History")).toHaveCount(2);
+			await expect(historyRows(page, "History").first()).toContainText(scenario.nextDisplay);
+			await page.getByLabel("Maintenance notes").fill(`Automatic day ${unique}`);
+			await page.getByRole("button", { name: "Log maintenance" }).click();
+			await expect(historyRows(page, "History")).toHaveCount(3);
+			await expect(historyRows(page, "History").first()).toContainText(scenario.nextDisplay);
+			await page.getByLabel("Maintenance date").fill("2026-09-20");
+			await page.getByLabel("Maintenance notes").fill(`Chosen day ${unique}`);
+			await page.clock.setFixedTime(new Date(scenario.manualActionInstant));
+			await page.evaluate(() => window.dispatchEvent(new Event("focus")));
+			await expect(page.getByLabel("Maintenance date")).toHaveValue("2026-09-20");
+			await page.getByRole("button", { name: "Log maintenance" }).click();
+			await expect(historyRows(page, "History")).toHaveCount(4);
+			await expect(historyRows(page, "History").filter({ hasText: `Chosen day ${unique}` })).toContainText("Sep 20, 2026");
+
+			const before = await localItemState(page, name);
+			expect(before.history.map(row => [row.action, row.eventDate]).sort((left, right) => `${left[0]}:${left[1]}`.localeCompare(`${right[0]}:${right[1]}`))).toEqual([
+				["loan", scenario.initialDay],
+				["return", scenario.nextDay],
+				["maintenance", scenario.nextDay],
+				["maintenance", "2026-09-20"],
+			].sort((left, right) => `${left[0]}:${left[1]}`.localeCompare(`${right[0]}:${right[1]}`)));
+			await page.goto("/intake");
+			await page.locator("#backup-password").fill(password);
+			await page.getByRole("button", { name: "Create backup" }).click();
+			const downloadEvent = page.waitForEvent("download");
+			await page.getByRole("link", { name: "Save backup file" }).click();
+			const backupPath = await (await downloadEvent).path();
+			if (!backupPath) throw Error("calendar backup download missing");
+			const destination = await browser.newContext({ locale: "en-US", timezoneId: scenario.restoreZone, viewport: { width: 1280, height: 800 } });
+			const restored = await destination.newPage();
+			restored.setDefaultTimeout(10_000);
+			try {
+				await restored.goto("/assets/item");
+				await expect(restored.getByText(name)).toHaveCount(0);
+				await restored.goto("/intake");
+				await restored.locator("#backup-password").fill(password);
+				await restored.locator("#restore-file").setInputFiles(backupPath);
+				await restored.getByRole("button", { name: "Preview", exact: true }).first().click();
+				await restored.getByRole("button", { name: /Confirm ·/ }).click();
+				await expect(restored.getByText(/Restored \d+ records/)).toBeVisible();
+				await restored.goto("/assets/item");
+				await restored.getByText(name).first().click();
+				await expect(detail(restored, "Purchase date")).toHaveText("Sep 1, 2026");
+				await expect(detail(restored, "Warranty ends")).toHaveText("Sep 1, 2027");
+				await expect(historyRows(restored, "History")).toHaveCount(4);
+				await expect(historyRows(restored, "History").filter({ hasText: `Automatic day ${unique}` })).toContainText(scenario.nextDisplay);
+				await expect(historyRows(restored, "History").filter({ hasText: `Chosen day ${unique}` })).toContainText("Sep 20, 2026");
+				const after = await localItemState(restored, name);
+				expect(after.asset.id).toBe(before.asset.id);
+				expect(after.asset.purchaseDate).toBe(before.asset.purchaseDate);
+				expect(after.asset.warrantyDate).toBe(before.asset.warrantyDate);
+				expect(after.history.map(row => [row.id, row.action, row.eventDate])).toEqual(before.history.map(row => [row.id, row.action, row.eventDate]));
+			} finally {
+				await destination.close();
+			}
+		} finally {
+			await source.close();
+		}
+	}
+});
