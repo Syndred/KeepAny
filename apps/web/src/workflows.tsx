@@ -26,7 +26,6 @@ import {
 } from "../../../packages/local-db/src";
 import { Button } from "./components/ui/button";
 import { Dialog } from "./components/ui/dialog";
-import { useAppContext } from "./view-shared";
 
 const categoryOptions: Record<AssetKind, string[]> = {
 	project: ["website", "repository", "tool"],
@@ -427,7 +426,6 @@ export function TaskEditor({
 	onClose: () => void;
 }) {
 	const { t } = useTranslation();
-	const { data } = useAppContext();
 	const [name, setName] = useState("");
 	const [dueDate, setDueDate] = useState("");
 	const [nameError, setNameError] = useState("");
@@ -466,14 +464,10 @@ export function TaskEditor({
 		inFlight.current = true;
 		setBusy(true);
 		try {
-			const isItem = data.assets.some((asset) => !asset.deleted && asset.id === assetId && asset.kind === "item");
-			let dedupeKey = "";
-			if (isItem) {
-				const normalizedName = name.trim().normalize("NFKC").replace(/\s+/g, " ").toLocaleLowerCase("en");
-				const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(normalizedName));
-				const hash = Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
-				dedupeKey = `item:${assetId}:${hash}:${dueDate || "none"}`;
-			}
+			const normalizedName = name.trim().normalize("NFKC").replace(/\s+/g, " ").toLocaleLowerCase("en");
+			const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(normalizedName));
+			const hash = Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
+			const dedupeKey = `manual:${assetId || "global"}:${hash}:${dueDate || "none"}`;
 			await save("task", {
 				...parsed.data,
 				dedupeKey,
