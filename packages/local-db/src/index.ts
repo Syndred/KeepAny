@@ -9,13 +9,16 @@ import { zipSync, unzipSync, strToU8, strFromU8 } from 'fflate';
 export interface RecordRow { id: string; type: EntityType; payload: string; updatedAt: number }
 interface StoredFile { id: string; blob: Blob; name: string }
 interface Journal { id: string; rows: RecordRow[] }
+interface ImportJournal { id: string; rows: RecordRow[] }
 
 class FileStore extends Dexie {
   blobs!: Table<StoredFile, string>;
   journal!: Table<Journal, string>;
+  importJournal!: Table<ImportJournal, string>;
   constructor(name: string) {
     super(`${name}-files-v1`);
     this.version(1).stores({ blobs: 'id', journal: 'id' });
+    this.version(2).stores({ blobs: 'id', journal: 'id', importJournal: 'id' });
   }
 }
 
@@ -94,6 +97,54 @@ export class LocalRepository {
       }
     }
     return next;
+  }
+
+  // New records only. A durable journal rolls back partial writes after errors or interruption.
+  async saveBatch(items: ReadonlyArray<{ type: EntityType; value: unknown }>): Promise<number> {
+    if (!items.length || items.length > 1000) throw Error('batch-size');
+    const rows = items.map(item => rowFor(item.type, item.value));
+    const ids = new Set(rows.map(row => row.id));
+    if (ids.size !== rows.length) throw Error('batch-duplicate');
+    const liveAssets = new Map<string, boolean>();
+    for (const row of rows.filter(row => row.type === 'asset')) {
+      const asset = parsedPayload(row);
+      liveAssets.set(asset.id, !asset.deleted);
+      for (const id of (asset as unknown as { attachments: string[] }).attachments) {
+        if (!(await this.fileStore.blobs.get(id))) throw Error('attachment-missing');
+      }
+    }
+    const taskKeys = new Set<string>();
+    const existingTasks = await this.list<{ id: string; dedupeKey: string; done: boolean }>('task');
+    for (const row of rows) {
+      if (await this.db.records.findOne(row.id).exec()) throw Error('batch-existing');
+      const value = parsedPayload(row) as Record<string, unknown>;
+      if (row.type === 'relation' && !value.deleted) {
+        for (const endpoint of [value.from, value.to] as string[]) {
+          const live = liveAssets.get(endpoint);
+          if (live === false) throw Error('relation-endpoint');
+          if (live === undefined) {
+            const existing = await this.get<{ deleted: boolean }>('asset', endpoint);
+            if (!existing || existing.deleted) throw Error('relation-endpoint');
+          }
+        }
+      }
+      if (row.type === 'task' && value.dedupeKey && !value.done && !value.deleted) {
+        const dedupeKey = value.dedupeKey as string;
+        if (taskKeys.has(dedupeKey) || existingTasks.some(task => task.dedupeKey === dedupeKey && !task.done)) throw Error('task-duplicate');
+        taskKeys.add(dedupeKey);
+      }
+    }
+    const id = crypto.randomUUID();
+    await this.fileStore.importJournal.put({ id, rows });
+    try {
+      const result = await this.db.records.bulkInsert(rows);
+      if (result.error.length) throw Error('batch-insert-failed');
+      await this.fileStore.importJournal.delete(id);
+      return rows.length;
+    } catch (error) {
+      await rollbackImport(this.db, this.fileStore, id);
+      throw error;
+    }
   }
 
   async deleteEntity(type: EntityType, id: string): Promise<RecordRow> {
@@ -234,6 +285,18 @@ async function replayJournal(db: RxDatabase, store: FileStore, id: string): Prom
   await store.journal.delete(id);
 }
 
+async function rollbackImport(db: RxDatabase, store: FileStore, id: string): Promise<void> {
+  const journal = await store.importJournal.get(id);
+  if (!journal) return;
+  for (const row of journal.rows) {
+    const current = await db.records.findOne(row.id).exec();
+    if (!current) continue;
+    if (canonical(current).payload !== row.payload) throw Error('import-rollback-conflict');
+    await current.remove();
+  }
+  await store.importJournal.delete(id);
+}
+
 export async function openLocalRepository(name: string): Promise<LocalRepository> {
   if (!/^[a-z][a-z0-9-]{2,60}$/.test(name)) throw Error('database-name');
   const store = name === 'keepany-v1' ? files : new FileStore(name);
@@ -241,6 +304,7 @@ export async function openLocalRepository(name: string): Promise<LocalRepository
   try {
     db = await createRxDatabase({ name, storage: getRxStorageDexie(), multiInstance: true });
     await db.addCollections({ records: { schema: recordSchema } });
+    for (const entry of await store.importJournal.toArray()) await rollbackImport(db, store, entry.id);
     for (const entry of await store.journal.toArray()) await replayJournal(db, store, entry.id);
     return new LocalRepository(db, store);
   } catch (error) {
@@ -257,6 +321,7 @@ function defaultRepository(): Promise<LocalRepository> {
 }
 export async function database(): Promise<RxDatabase> { return (await defaultRepository()).db; }
 export async function save(type: EntityType, value: unknown) { return (await defaultRepository()).save(type, value); }
+export async function saveBatch(items: ReadonlyArray<{ type: EntityType; value: unknown }>) { return (await defaultRepository()).saveBatch(items); }
 export async function allRecords() { return (await defaultRepository()).allRecords(); }
 export async function deleteEntity(type: EntityType, id: string) { return (await defaultRepository()).deleteEntity(type, id); }
 export async function restoreEntity(type: EntityType, id: string) { return (await defaultRepository()).restoreEntity(type, id); }

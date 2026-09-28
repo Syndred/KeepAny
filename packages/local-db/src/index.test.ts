@@ -64,6 +64,32 @@ describe('RxDB + free Dexie local repository', () => {
     await db.close();
   });
 
+  it('validates imports as a batch and rolls back an interrupted partial insert', async () => {
+    const dbName = name();
+    const db = await openLocalRepository(dbName);
+    const first = project('CSV one');
+    const second = project('CSV two');
+    await expect(db.saveBatch([
+      { type: 'asset', value: first },
+      { type: 'asset', value: { ...second, name: '' } },
+    ])).rejects.toThrow();
+    expect(await db.allRecords()).toHaveLength(0);
+    expect(await db.saveBatch([{ type: 'asset', value: first }, { type: 'asset', value: second }])).toBe(2);
+    expect(await db.allRecords()).toHaveLength(2);
+    await db.close();
+
+    const interruptedName = name();
+    const interrupted = await openLocalRepository(interruptedName);
+    const row: RecordRow = { id: `asset:${first.id}`, type: 'asset', payload: JSON.stringify(first), updatedAt: Date.now() };
+    await interrupted.fileStore.importJournal.put({ id: 'partial-import', rows: [row] });
+    await interrupted.db.records.insert(row);
+    await interrupted.close();
+    const recovered = await openLocalRepository(interruptedName);
+    expect(await recovered.allRecords()).toHaveLength(0);
+    expect(await recovered.fileStore.importJournal.count()).toBe(0);
+    await recovered.close();
+  });
+
   it('exports and restores records, relationships, tombstones and image bytes', async () => {
     const source = await openLocalRepository(name());
     const asset = project('Backup project');
