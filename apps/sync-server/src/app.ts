@@ -60,6 +60,11 @@ export function createPostgresSyncApp(service: PostgresSyncService, authenticate
     return context.json({ error: 'internal' }, 500);
   });
   app.get('/healthz', context => context.json({ status: 'ok' }));
+  app.post('/sync/identity', async context => {
+    const subject = await subjectFor(context, 'sync:read');
+    if (!subject) return context.json({ error: 'unauthorized' }, 401);
+    return context.json({ accountId: subject });
+  });
   app.post('/workspaces', async context => {
     const subject = await subjectFor(context, 'sync:write');
     if (!subject) return context.json({ error: 'unauthorized' }, 401);

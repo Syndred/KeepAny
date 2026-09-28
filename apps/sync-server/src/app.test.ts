@@ -53,6 +53,11 @@ it('serves authenticated workspace creation, push and pull', async () => {
   const { pg, app } = await fixture();
   try {
     const headers = { authorization: 'Bearer alice', 'content-type': 'application/json' };
+    expect(await (await app.request('/sync/identity', { method: 'POST', headers })).json()).toEqual({ accountId: 'alice' });
+    expect(await (await app.request('/sync/identity', { method: 'POST', headers: {
+      authorization: 'Bearer bob', 'content-type': 'application/json',
+    } })).json()).toEqual({ accountId: 'bob' });
+    expect((await app.request('/sync/identity', { method: 'POST' })).status).toBe(401);
     const workspaceResponse = await app.request('/workspaces', { method: 'POST', headers });
     expect(workspaceResponse.status).toBe(201);
     const { workspaceId } = await workspaceResponse.json() as { workspaceId: string };

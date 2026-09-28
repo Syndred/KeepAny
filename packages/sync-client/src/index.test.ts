@@ -15,6 +15,7 @@ function server(workspaceId: string, disconnectAfterFirstPush = false) {
   let disconnected = false;
   vi.stubGlobal('fetch', vi.fn(async (url: string, init: RequestInit) => {
     const body = JSON.parse(String(init.body));
+    if (url.endsWith('/sync/identity')) return new Response(JSON.stringify({ accountId: 'self-host-owner' }), { status: 200 });
     if (url.endsWith('/sync/push')) {
       const result = await service.push(body);
       if (disconnectAfterFirstPush && !disconnected) { disconnected = true; throw Error('offline'); }
@@ -67,6 +68,14 @@ it('shows a genuine same-record conflict and sends the chosen local edit at the 
   expect(result.status).toBe('conflict');
   expect(JSON.parse(result.conflict?.remotePayload ?? '{}').name).toBe('From A');
   expect(JSON.parse(result.conflict?.localPayload ?? '{}').name).toBe('From B');
+  const authenticatedFetch = fetch;
+  vi.stubGlobal('fetch', vi.fn(async (url: string, init: RequestInit) => String(url).endsWith('/sync/identity')
+    ? new Response('{}', { status: 401 }) : authenticatedFetch(url, init)));
+  const denied = await clientB.run();
+  expect(denied.status).toBe('failed');
+  expect(denied.error).toBe('sync-auth');
+  expect(denied.conflict).toBeNull();
+  vi.stubGlobal('fetch', authenticatedFetch);
   expect((await clientB.resolve('local')).status).toBe('pending');
   expect((await clientB.run()).status).toBe('synced');
   expect((await service.pull({ workspaceId, cursor: 0, limit: 10 })).changes.at(-1)?.version).toBe(3);
@@ -130,7 +139,7 @@ it('rejects unsafe URLs and checks the required 32-byte workspace key', () => {
   expect(() => decodeWorkspaceKey('bad')).toThrow('sync-key');
 });
 
-it('refuses all network writes when a local record references a photo', async () => {
+it('refuses asset transfer when a local record references a photo', async () => {
   const workspaceId = crypto.randomUUID();
   const { config } = server(workspaceId);
   const fetchMock = vi.mocked(fetch);
@@ -141,11 +150,11 @@ it('refuses all network writes when a local record references a photo', async ()
   const report = await new SelfHostSyncClient(db, config).run();
   expect(report.status).toBe('failed');
   expect(report.error).toBe('sync-attachments-unsupported');
-  expect(fetchMock).not.toHaveBeenCalled();
+  expect(fetchMock.mock.calls.some(([url]) => String(url).endsWith('/sync/push') || String(url).endsWith('/sync/pull'))).toBe(false);
   await db.close();
 });
 
-it('rejects a different workspace key before making another network request', async () => {
+it('rejects a different workspace key before asset transfer', async () => {
   const { config } = server(crypto.randomUUID());
   const db = await openLocalRepository(name());
   await db.save('asset', { ...newAsset('project'), name: 'Pinned key' });
@@ -156,7 +165,7 @@ it('rejects a different workspace key before making another network request', as
   const report = await wrong.run();
   expect(report.status).toBe('failed');
   expect(report.error).toBe('sync-key-mismatch');
-  expect(fetchMock).not.toHaveBeenCalled();
+  expect(fetchMock.mock.calls.some(([url]) => String(url).endsWith('/sync/push') || String(url).endsWith('/sync/pull'))).toBe(false);
   await db.close();
 });
 
@@ -170,14 +179,44 @@ it('sends independent local records in one bounded push request', async () => {
   await db.close();
 });
 
+it('binds one local dataset to one remote and rejects workspace, endpoint and account switches without transfer', async () => {
+  const workspaceA = crypto.randomUUID();
+  const workspaceB = crypto.randomUUID();
+  const { service, config } = server(workspaceA);
+  const db = await openLocalRepository(name());
+  const asset = { ...newAsset('project'), name: 'Only in A' };
+  await db.save('asset', asset);
+  const a = new SelfHostSyncClient(db, config);
+  expect((await a.run()).status).toBe('synced');
+  const fetchMock = vi.mocked(fetch);
+  fetchMock.mockClear();
+  const b = new SelfHostSyncClient(db, { ...config, workspaceId: workspaceB });
+  expect((await b.report()).error).toBe('sync-dataset-bound');
+  expect((await b.run()).error).toBe('sync-dataset-bound');
+  expect((await service.pull({ workspaceId: workspaceB, cursor: 0, limit: 10 })).changes).toHaveLength(0);
+  expect(fetchMock.mock.calls.some(([url]) => String(url).endsWith('/sync/push') || String(url).endsWith('/sync/pull'))).toBe(false);
+  const endpointChanged = new SelfHostSyncClient(db, { ...config, endpoint: 'http://127.0.0.1:3200' });
+  expect((await endpointChanged.run()).error).toBe('sync-dataset-bound');
+  const originalFetch = fetch;
+  vi.stubGlobal('fetch', vi.fn(async (url: string, init: RequestInit) => String(url).endsWith('/sync/identity')
+    ? new Response(JSON.stringify({ accountId: 'another-owner' }), { status: 200 }) : originalFetch(url, init)));
+  expect((await a.run()).error).toBe('sync-account-mismatch');
+  vi.stubGlobal('fetch', originalFetch);
+  await db.save('asset', { ...asset, name: 'Back in A' });
+  expect((await a.run()).status).toBe('synced');
+  expect((await service.pull({ workspaceId: workspaceA, cursor: 0, limit: 10 })).changes).toHaveLength(2);
+  await db.close();
+});
+
 it('rejects a malformed pull page before writing any record or cursor', async () => {
   const workspaceId = crypto.randomUUID();
   const { config } = server(workspaceId);
   const remoteId = `asset:${crypto.randomUUID()}`;
-  vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({ changes: [{
-    operationId: crypto.randomUUID(), id: remoteId, kind: 'asset', schemaVersion: 1,
-    ciphertext: 'opaque', tombstone: false, version: 1, sequence: 1,
-  }], nextCursor: 2 }), { status: 200 })));
+  vi.stubGlobal('fetch', vi.fn(async (url: string) => new Response(JSON.stringify(String(url).endsWith('/sync/identity')
+    ? { accountId: 'self-host-owner' } : { changes: [{
+      operationId: crypto.randomUUID(), id: remoteId, kind: 'asset', schemaVersion: 1,
+      ciphertext: 'opaque', tombstone: false, version: 1, sequence: 1,
+    }], nextCursor: 2 }), { status: 200 })));
   const db = await openLocalRepository(name());
   const result = await new SelfHostSyncClient(db, config).run();
   expect(result.status).toBe('failed');

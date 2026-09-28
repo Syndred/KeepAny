@@ -7,6 +7,7 @@ export type SyncStatus = 'local' | 'pending' | 'syncing' | 'synced' | 'conflict'
 export interface SyncReport { status: SyncStatus; pending: number; cursor: number; conflict: ScopedConflict | null; error?: string }
 export interface SelfHostConfig { endpoint: string; token: string; workspaceId: string; key: Uint8Array; keyEpoch?: number }
 const workspaceSchema = z.uuid();
+const identitySchema = z.object({ accountId: z.string().min(1).max(256) });
 const text = new TextEncoder();
 const decode = new TextDecoder('utf-8', { fatal: true });
 
@@ -78,18 +79,24 @@ export class SelfHostSyncClient {
 
   async report(status: SyncStatus = 'local', error?: string): Promise<SyncReport> {
     const scope = await this.scopePromise;
+    const binding = await this.repository.getDatasetBinding();
+    if (binding && (binding.scope !== scope || binding.endpoint !== this.endpoint ||
+      binding.accountId !== 'self-host-owner' || binding.workspaceId !== this.workspaceId)) {
+      return { status: 'failed', pending: 0, cursor: 0, conflict: null, error: 'sync-dataset-bound' };
+    }
     const [outbox, dirty, cursor, conflict] = await Promise.all([
       this.repository.listScopedOutbox(scope), this.repository.dirtyScopedRows(scope),
       this.repository.scopedCursor(scope), this.repository.scopedConflict(scope),
     ]);
     const pending = outbox.length + dirty.length;
     const blocked = outbox.some(item => item.blocked);
-    return { status: conflict ? 'conflict' : blocked ? 'failed' : pending && (status === 'local' || status === 'synced') ? 'pending' : status,
-      pending, cursor, conflict, ...(error ? { error } : {}) };
+    return { status: status === 'failed' ? 'failed' : conflict ? 'conflict' : blocked ? 'failed' : pending && (status === 'local' || status === 'synced') ? 'pending' : status,
+      pending, cursor, conflict: status === 'failed' ? null : conflict, ...(error ? { error } : {}) };
   }
 
   async resolve(choice: 'local' | 'remote'): Promise<SyncReport> {
     const scope = await this.scopePromise;
+    await this.verifyDataset(scope);
     await this.pinKey(scope);
     await this.repository.resolveScopedConflict(scope, choice);
     return this.report('pending');
@@ -109,6 +116,7 @@ export class SelfHostSyncClient {
 
   private async runUnlocked(scope: string, onStatus?: (report: SyncReport) => void): Promise<SyncReport> {
     try {
+      await this.verifyDataset(scope);
       await this.pinKey(scope);
       // Never upload a partial asset collection when its referenced binary files cannot be transferred.
       for (const row of await this.repository.allRecords()) assertNoUnsupportedFiles(row);
@@ -142,6 +150,17 @@ export class SelfHostSyncClient {
       onStatus?.(report);
       return report;
     }
+  }
+
+  private async verifyDataset(scope: string): Promise<void> {
+    const { accountId } = await request(this.endpoint, this.token, '/sync/identity', {}, identitySchema);
+    // This client implements the single-account self-host contract. The authenticated
+    // subject is stable across token rotation and guards against reusing a workspace ID
+    // on another account or an endpoint configured with a different account.
+    if (accountId !== 'self-host-owner') throw Error('sync-account-mismatch');
+    await this.repository.claimDatasetBinding({
+      endpoint: this.endpoint, accountId, workspaceId: this.workspaceId, scope,
+    });
   }
 
   private async pinKey(scope: string): Promise<void> {
