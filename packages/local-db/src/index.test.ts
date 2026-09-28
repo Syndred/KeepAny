@@ -1,11 +1,24 @@
 import 'fake-indexeddb/auto';
 import { describe, expect, it } from 'vitest';
-import { zipSync, unzipSync, strToU8 } from 'fflate';
+import { zipSync, unzipSync, strToU8, strFromU8 } from 'fflate';
 import { newAsset, type Asset } from '../../domain/src';
 import { inspectArchive, openLocalRepository, type RecordRow } from './index';
 
 const name = () => `test-${crypto.randomUUID().slice(0, 12)}`;
 const project = (label: string): Asset => ({ ...newAsset('project'), name: label });
+const hash = async (bytes: Uint8Array) => Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', bytes as BufferSource)))
+  .map(byte => byte.toString(16).padStart(2, '0')).join('');
+const changedArchive = async (backup: Uint8Array, edit: (entries: Record<string, Uint8Array>, manifest: Record<string, unknown>, rows: RecordRow[]) => void) => {
+  const entries = unzipSync(backup);
+  const manifest = JSON.parse(strFromU8(entries['manifest.json'])) as Record<string, unknown>;
+  const rows = JSON.parse(strFromU8(entries['records.json'])) as RecordRow[];
+  edit(entries, manifest, rows);
+  entries['records.json'] = strToU8(JSON.stringify(rows));
+  manifest.recordCount = rows.length;
+  manifest.recordsHash = await hash(entries['records.json']);
+  entries['manifest.json'] = strToU8(JSON.stringify(manifest));
+  return zipSync(entries);
+};
 
 describe('RxDB + free Dexie local repository', () => {
   it('persists all core entity types and tombstones through an offline reopen', async () => {
@@ -112,9 +125,83 @@ describe('RxDB + free Dexie local repository', () => {
     expect((await restored.get<Asset>('asset', account.id))?.deleted).toBe(true);
     expect(await restored.list('relation')).toHaveLength(1);
     const image = await restored.fileStore.blobs.get(fileId);
-    expect(Array.from(new Uint8Array(await image!.blob.arrayBuffer()))).toEqual([1, 2, 3, 4]);
+    if (!image) throw Error('restored-image-missing');
+    expect(Array.from(new Uint8Array(await image.blob.arrayBuffer()))).toEqual([1, 2, 3, 4]);
     expect(await restored.fileStore.journal.count()).toBe(0);
     await restored.close();
+  });
+
+  it('round trips completed history, submission ledger, relation tombstones and exact multiple images, then imports again', async () => {
+    const source = await openLocalRepository(name());
+    const asset = project('Full backup');
+    const linked = { ...newAsset('item'), name: 'Camera' };
+    const imageInputs = [
+      { name: 'front.png', type: 'image/png', bytes: new Uint8Array([0, 1, 2, 255]) },
+      { name: 'back.webp', type: 'image/webp', bytes: new Uint8Array([9, 8, 7, 6]) },
+    ];
+    const imageIds: string[] = [];
+    try {
+      for (const image of imageInputs) imageIds.push(await source.putFile(new File([image.bytes], image.name, { type: image.type })));
+      await source.save('asset', { ...asset, attachments: imageIds });
+      await source.save('asset', linked);
+      const relationId = crypto.randomUUID();
+      await source.save('relation', { id: relationId, from: asset.id, to: linked.id, label: 'contains', createdAt: new Date().toISOString() });
+      await source.deleteEntity('relation', relationId);
+      await source.save('task', { id: crypto.randomUUID(), name: 'Service camera', assetId: linked.id,
+        done: true, completedAt: new Date().toISOString(), createdAt: new Date().toISOString() });
+      await source.save('history', { id: crypto.randomUUID(), assetId: linked.id, action: 'maintenance',
+        note: 'Cleaned sensor', createdAt: new Date().toISOString() });
+      await source.save('submission', { id: crypto.randomUUID(), assetId: asset.id, name: 'Directory',
+        url: 'https://example.com/listing', status: 'submitted', submittedAt: new Date().toISOString() });
+      await source.deleteEntity('asset', linked.id);
+      const backup = await source.exportArchive();
+      const sourceRows = await source.allRecords();
+      const target = await openLocalRepository(name());
+      try {
+        expect(await target.restoreArchive(backup)).toBe(sourceRows.length);
+        expect(await target.restoreArchive(backup)).toBe(sourceRows.length);
+        expect((await target.allRecords()).map(row => [row.id, row.payload]).sort()).toEqual(
+          sourceRows.map(row => [row.id, row.payload]).sort());
+        expect((await target.get<Asset>('asset', linked.id))?.deleted).toBe(true);
+        expect(await target.list('relation')).toHaveLength(0);
+        expect(await target.list('relation', true)).toHaveLength(1);
+        expect(await target.list('history')).toHaveLength(1);
+        expect(await target.list('submission')).toHaveLength(1);
+        expect(await target.list('task')).toHaveLength(1);
+        for (const [index, id] of imageIds.entries()) {
+          const file = await target.readFile(id);
+          expect(file).toEqual({ id, ...imageInputs[index] });
+          if (!file) throw Error('restored-image-missing');
+          expect(await hash(file.bytes)).toBe(await hash(imageInputs[index].bytes));
+        }
+        expect(await target.fileStore.journal.count()).toBe(0);
+      } finally { await target.close(); }
+    } finally { await source.close(); }
+  });
+
+  it('rejects a same-ID image with changed name, MIME or bytes without changing local data', async () => {
+    const source = await openLocalRepository(name());
+    const asset = project('Image source');
+    const fileId = await source.putFile(new File([new Uint8Array([1, 2, 3])], 'original.png', { type: 'image/png' }));
+    await source.save('asset', { ...asset, attachments: [fileId] });
+    const backup = await source.exportArchive();
+    await source.close();
+    for (const change of [
+      { name: 'renamed.png', type: 'image/png', bytes: [1, 2, 3] },
+      { name: 'original.png', type: 'image/webp', bytes: [1, 2, 3] },
+      { name: 'original.png', type: 'image/png', bytes: [3, 2, 1] },
+    ]) {
+      const target = await openLocalRepository(name());
+      try {
+        await target.fileStore.blobs.add({ id: fileId, name: change.name,
+          blob: new Blob([new Uint8Array(change.bytes)], { type: change.type }) });
+        await expect(target.restoreArchive(backup)).rejects.toThrow('restore-conflict');
+        expect(await target.allRecords()).toHaveLength(0);
+        expect(await target.fileStore.journal.count()).toBe(0);
+        expect(await target.readFile(fileId)).toEqual({ id: fileId, name: change.name,
+          type: change.type, bytes: new Uint8Array(change.bytes) });
+      } finally { await target.close(); }
+    }
   });
 
   it('rejects altered backups and existing conflicting data before writing', async () => {
@@ -133,6 +220,50 @@ describe('RxDB + free Dexie local repository', () => {
     expect((await destination.get<Asset>('asset', asset.id))?.name).toBe('Local edit');
     expect(await destination.fileStore.journal.count()).toBe(0);
     await destination.close();
+  });
+
+  it('rejects tampered, missing, duplicate, dangling and unsupported archives before any local write', async () => {
+    const source = await openLocalRepository(name());
+    const asset = project('Archive base');
+    const fileId = await source.putFile(new File([new Uint8Array([1, 2, 3])], 'source.png', { type: 'image/png' }));
+    await source.save('asset', { ...asset, attachments: [fileId] });
+    const backup = await source.exportArchive();
+    await source.close();
+    const danglingId = crypto.randomUUID();
+    const row = (type: RecordRow['type'], value: Record<string, unknown>): RecordRow => ({
+      id: `${type}:${value.id}`, type, payload: JSON.stringify(value), updatedAt: Date.now(),
+    });
+    const cases: Array<[string, Uint8Array, string]> = [
+      ['tampered image', await changedArchive(backup, entries => { entries[`files/${fileId}`] = new Uint8Array([9, 9, 9]); }), 'archive-hash'],
+      ['missing image', await changedArchive(backup, entries => { delete entries[`files/${fileId}`]; }), 'archive-hash'],
+      ['missing manifest entry', await changedArchive(backup, (_entries, manifest) => { manifest.attachments = []; }), 'archive-entry'],
+      ['duplicate record ID', await changedArchive(backup, (_entries, _manifest, rows) => { rows.push({ ...rows[0] }); }), 'archive-id'],
+      ['dangling relation', await changedArchive(backup, (_entries, _manifest, rows) => { rows.push(row('relation', {
+        id: crypto.randomUUID(), from: asset.id, to: danglingId, label: 'missing', createdAt: new Date().toISOString(),
+      })); }), 'archive-relation-reference'],
+      ['dangling task', await changedArchive(backup, (_entries, _manifest, rows) => { rows.push(row('task', {
+        id: crypto.randomUUID(), name: 'missing', assetId: danglingId, createdAt: new Date().toISOString(),
+      })); }), 'archive-task-reference'],
+      ['dangling submission', await changedArchive(backup, (_entries, _manifest, rows) => { rows.push(row('submission', {
+        id: crypto.randomUUID(), assetId: danglingId, name: 'missing', url: 'https://example.com', status: 'planned',
+      })); }), 'archive-submission-reference'],
+      ['dangling history', await changedArchive(backup, (_entries, _manifest, rows) => { rows.push(row('history', {
+        id: crypto.randomUUID(), assetId: danglingId, action: 'maintenance', note: 'missing', createdAt: new Date().toISOString(),
+      })); }), 'archive-history-reference'],
+      ['unsupported version', await changedArchive(backup, (_entries, manifest) => { manifest.version = 2; }), ''],
+    ];
+    const target = await openLocalRepository(name());
+    const local = project('Keep local data');
+    try {
+      await target.save('asset', local);
+      for (const [label, altered, error] of cases) {
+        await expect(target.restoreArchive(altered), label).rejects.toThrow(error);
+        expect((await target.get<Asset>('asset', local.id))?.name, label).toBe('Keep local data');
+        expect(await target.get('asset', asset.id), label).toBeNull();
+        expect(await target.fileStore.blobs.count(), label).toBe(0);
+        expect(await target.fileStore.journal.count(), label).toBe(0);
+      }
+    } finally { await target.close(); }
   });
 
   it('excludes orphan images from backups and collects only files no asset or recovery journal references', async () => {
@@ -185,19 +316,59 @@ describe('RxDB + free Dexie local repository', () => {
 
   it('replays an interrupted restore journal when the database reopens', async () => {
     const source = await openLocalRepository(name());
-    await source.save('asset', project('Journal recovery'));
+    const first = project('Journal recovery');
+    const fileId = await source.putFile(new File([new Uint8Array([5, 4, 3])], 'journal.gif', { type: 'image/gif' }));
+    await source.save('asset', { ...first, attachments: [fileId] });
     await source.save('asset', project('Second journal record'));
     const rows: RecordRow[] = await source.allRecords();
+    const file = await source.readFile(fileId);
+    if (!file) throw Error('source-image-missing');
     await source.close();
     const dbName = name();
     const target = await openLocalRepository(dbName);
+    // Fixture simulates the durable Dexie attachment+journal commit and one RxDB row before a crash.
+    await target.fileStore.blobs.add({ id: fileId, name: file.name, blob: new Blob([new Uint8Array(file.bytes)], { type: file.type }) });
     await target.db.records.insert(rows[0]); // The first row was written before interruption.
     await target.fileStore.journal.put({ id: 'interrupted', rows });
     await target.close();
     const recovered = await openLocalRepository(dbName);
+    expect(recovered.restoreRecoveryError).toBeNull();
     expect(await recovered.allRecords()).toHaveLength(2);
+    expect(await recovered.readFile(fileId)).toEqual(file);
     expect(await recovered.fileStore.journal.count()).toBe(0);
     await recovered.close();
+  });
+
+  it('opens local data after a conflicting restore replay and retains the journal for explicit recovery', async () => {
+    const dbName = name();
+    const source = await openLocalRepository(name());
+    const asset = project('Archive version');
+    const first = project('Already replayed');
+    await source.save('asset', first);
+    await source.save('asset', asset);
+    const rows = await source.allRecords();
+    const backup = await source.exportArchive();
+    await source.close();
+    const target = await openLocalRepository(dbName);
+    await target.save('asset', { ...asset, name: 'New local edit' });
+    const firstRow = rows.find(row => row.id === `asset:${first.id}`);
+    if (!firstRow) throw Error('source-record-missing');
+    await target.db.records.insert(firstRow);
+    await target.fileStore.journal.put({ id: 'conflicting', rows });
+    await target.close();
+    const reopened = await openLocalRepository(dbName);
+    try {
+      expect(reopened.restoreRecoveryError).toBe('restore-conflict');
+      expect((await reopened.get<Asset>('asset', asset.id))?.name).toBe('New local edit');
+      expect(await reopened.fileStore.journal.count()).toBe(1);
+      await expect(reopened.restoreArchive(backup)).rejects.toThrow('restore-recovery-pending');
+      expect(await reopened.list('asset')).toHaveLength(2);
+      expect((await reopened.get<Asset>('asset', first.id))?.name).toBe('Already replayed');
+    } finally { await reopened.close(); }
+    const again = await openLocalRepository(dbName);
+    expect(again.restoreRecoveryError).toBe('restore-conflict');
+    expect((await again.get<Asset>('asset', asset.id))?.name).toBe('New local edit');
+    await again.close();
   });
 
   it('advances the pull cursor after all cross-kind rows land and resumes an interrupted page', async () => {

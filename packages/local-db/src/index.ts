@@ -93,6 +93,7 @@ const rowFor = (type: EntityType, value: unknown): RecordRow => {
 
 export class LocalRepository {
   syncRecoveryError: string | null = null;
+  restoreRecoveryError: string | null = null;
   constructor(readonly db: RxDatabase, readonly fileStore: FileStore) {}
 
   async allRecords(): Promise<RecordRow[]> {
@@ -590,6 +591,7 @@ export class LocalRepository {
   }
 
   async restoreArchive(bytes: Uint8Array): Promise<number> {
+    if (await this.fileStore.journal.count()) throw Error('restore-recovery-pending');
     const { rows, manifest, entries } = await inspectArchive(bytes);
     // Validate all conflicts before writing attachments or a journal.
     for (const row of rows) {
@@ -598,15 +600,26 @@ export class LocalRepository {
     }
     for (const attachment of manifest.attachments) {
       const current = await this.fileStore.blobs.get(attachment.id);
-      if (current && await sha(new Uint8Array(await current.blob.arrayBuffer())) !== attachment.sha256) throw Error('restore-conflict');
+      if (current && (current.name !== attachment.name || current.blob.type !== attachment.type ||
+        current.blob.size !== attachment.size ||
+        await sha(new Uint8Array(await current.blob.arrayBuffer())) !== attachment.sha256)) throw Error('restore-conflict');
     }
     const journalId = crypto.randomUUID();
     await this.fileStore.transaction('rw', this.fileStore.blobs, this.fileStore.journal, async () => {
       for (const attachment of manifest.attachments) {
-        await this.fileStore.blobs.put({
-          id: attachment.id, name: attachment.name,
-          blob: new Blob([entries[`files/${attachment.id}`] as BlobPart], { type: attachment.type }),
-        });
+        const existing = await this.fileStore.blobs.get(attachment.id);
+        if (existing) {
+          if (existing.name !== attachment.name || existing.blob.type !== attachment.type ||
+            existing.blob.size !== attachment.size ||
+            !sameBytes(new Uint8Array(await Dexie.waitFor(existing.blob.arrayBuffer())), entries[`files/${attachment.id}`])) {
+            throw Error('restore-conflict');
+          }
+        } else {
+          await this.fileStore.blobs.add({
+            id: attachment.id, name: attachment.name,
+            blob: new Blob([entries[`files/${attachment.id}`] as BlobPart], { type: attachment.type }),
+          });
+        }
       }
       await this.fileStore.journal.put({ id: journalId, rows });
     });
@@ -624,6 +637,7 @@ async function replayJournal(db: RxDatabase, store: FileStore, id: string): Prom
   const journal = await store.journal.get(id);
   if (!journal) return;
   for (const row of journal.rows) {
+    await assertRowAttachmentsAvailable(store, row);
     const current = await db.records.findOne(row.id).exec();
     if (current) {
       if (canonical(current).payload !== row.payload) throw Error('restore-conflict');
@@ -827,8 +841,15 @@ export async function openLocalRepository(name: string): Promise<LocalRepository
     db = await createRxDatabase({ name, storage: getRxStorageDexie(), multiInstance: true });
     await db.addCollections({ records: { schema: recordSchema } });
     for (const entry of await store.importJournal.toArray()) await rollbackImport(db, store, entry.id);
-    for (const entry of await store.journal.toArray()) await replayJournal(db, store, entry.id);
     const repository = new LocalRepository(db, store);
+    for (const entry of await store.journal.toArray()) {
+      try { await replayJournal(db, store, entry.id); }
+      catch (error) {
+        // Keep an interrupted journal for manual recovery without locking users out of local data.
+        repository.restoreRecoveryError = error instanceof Error ? error.message : 'restore-failed';
+        break;
+      }
+    }
     for (const entry of await store.pullJournal.toArray()) {
       try { await replayPullJournal(db, store, entry.id); }
       catch (error) { repository.syncRecoveryError = error instanceof Error ? error.message : 'pull-failed'; break; }
@@ -952,6 +973,9 @@ function validateReferences(rows: RecordRow[], attachmentIds: Set<string>): void
     if (row.type === 'asset' && (value.attachments as string[]).some(id => !attachmentIds.has(id))) throw Error('archive-attachment-reference');
     if (row.type === 'relation' && (!assetIds.has(value.from as string) || !assetIds.has(value.to as string))) throw Error('archive-relation-reference');
     if (row.type === 'task' && value.assetId && !assetIds.has(value.assetId as string)) throw Error('archive-task-reference');
+    if ((row.type === 'submission' || row.type === 'history') && !assetIds.has(value.assetId as string)) {
+      throw Error(`archive-${row.type}-reference`);
+    }
   }
 }
 
