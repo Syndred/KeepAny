@@ -65,6 +65,7 @@ test('formal Web grants one RxDB record to an isolated official SDK stdio client
   const pairingPath = join(privateDir, 'pairing.json');
   let client: Client | undefined;
   let transport: StdioClientTransport | undefined;
+  let releasePausedWrite = () => undefined;
   const unique = crypto.randomUUID().slice(0, 8);
   const before = `MCP selected ${unique}`;
   const after = `MCP approved ${unique}`;
@@ -207,8 +208,39 @@ test('formal Web grants one RxDB record to an isolated official SDK stdio client
     expect(rejected.isError).toBe(true);
     expect(result<Record<string, unknown>>(await client.callTool({ name: 'get_asset', arguments: { id: request.assetIds[0] } }))).toEqual({ id: request.assetIds[0], name: after });
 
+    // Hold the actual RxDB modifier's bridge check, then revoke from the real UI.
+    const raceOperationId = `mcp-revoke-${crypto.randomUUID()}`;
+    const racePatch = { name: `${after} cancelled` };
+    const racePreview = result<{ previewId: string }>(await client.callTool({ name: 'preview_asset_update',
+      arguments: { id: request.assetIds[0], operationId: raceOperationId, patch: racePatch } }));
+    const raceDialog = page.getByRole('dialog', { name: '确认修改资料' });
+    await raceDialog.getByRole('button', { name: '批准本次修改' }).click();
+    await expect(raceDialog).toBeHidden();
+    let checks = 0;
+    let paused = false;
+    let continueWrite!: () => void;
+    const writeReleased = new Promise<void>(resolve => { continueWrite = resolve; });
+    releasePausedWrite = continueWrite;
+    await page.route(`${pairing.url}/check-write`, async route => {
+      checks++;
+      if (checks === 5) { paused = true; await writeReleased; }
+      await route.continue();
+    });
+    const pendingConfirm = client.callTool({ name: 'confirm_asset_update', arguments: {
+      id: request.assetIds[0], operationId: raceOperationId, previewId: racePreview.previewId, patch: racePatch,
+    } });
+    await waitFor(async () => paused);
     await panel.getByRole('button', { name: '撤销本机授权' }).click();
+    continueWrite();
+    expect((await pendingConfirm).isError).toBe(true);
     await expect(panel.getByRole('button', { name: '生成连接请求' })).toBeVisible();
+    await expect(panel.getByRole('alert')).toContainText('修改正在处理，可能已保存');
+    await panel.getByRole('alert').scrollIntoViewIfNeeded();
+    await mobileWidth(page);
+    await page.screenshot({ path: join(evidence, 'mcp-revoke-zh-390.png') });
+    await page.goto('/assets/project');
+    await expect(page.getByText(after, { exact: true }).first()).toBeVisible();
+    await expect(page.getByText(racePatch.name, { exact: true })).toHaveCount(0);
     const revoked = await client.callTool({ name: 'get_asset', arguments: { id: request.assetIds[0] } });
     expect(revoked.isError).toBe(true);
     expect(JSON.stringify(revoked)).toContain('grant-denied');
@@ -217,6 +249,7 @@ test('formal Web grants one RxDB record to an isolated official SDK stdio client
     expect(stderr).not.toContain(pairing.pairingSecret);
     expect(errors).toEqual([]);
   } finally {
+    releasePausedWrite();
     await client?.close().catch(() => undefined);
     await transport?.close().catch(() => undefined);
     await context.close();
