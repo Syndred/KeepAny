@@ -106,8 +106,8 @@ export class BrowserMcpBridgeClient {
     this.expiresAt = reply.expiresAt;
     let approved = false;
     try { approved = await this.options.approve(this.scope); }
-    catch (error) { await this.revokeGrant().catch(() => undefined); throw error; }
-    if (!approved) { await this.revokeGrant().catch(() => undefined); throw Error('bridge-approval-denied'); }
+    catch (error) { await this.revokeGrant().catch(() => this.close()); throw error; }
+    if (!approved) { await this.revokeGrant().catch(() => this.close()); throw Error('bridge-approval-denied'); }
     return this.scope;
   }
 
@@ -135,9 +135,8 @@ export class BrowserMcpBridgeClient {
 
   /** Server-side grant revocation precedes clearing the browser session. */
   async revokeGrant(): Promise<void> {
-    const token = this.sessionSecret;
-    try { if (token) await this.post('/revoke-grant', {}, token); }
-    finally { this.stopLocal(); }
+    await this.post('/revoke-grant', {}, this.token());
+    this.stopLocal();
   }
 
   /** Keep this active only while the Web app is open. It never persists a token. */

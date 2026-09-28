@@ -201,6 +201,28 @@ describe('loopback MCP browser relay', () => {
     await expect(authority.requireGrant(grant.id, grant.secret)).rejects.toThrow('grant-denied');
   });
 
+  it('retains the paired session for an explicit revoke retry after a transient HTTP failure', async () => {
+    const { bridge, store, authority, grant } = await fixture();
+    let failRevoke = true;
+    const fetcher: typeof fetch = (input, init) => {
+      if (String(input).endsWith('/revoke-grant') && failRevoke) {
+        failRevoke = false;
+        return Promise.resolve(new Response(JSON.stringify({ error: 'temporary-failure' }), { status: 503 }));
+      }
+      return fetch(input, { ...init,
+        headers: { ...Object.fromEntries(new Headers(init?.headers).entries()), Origin: appOrigin } });
+    };
+    const client = new BrowserMcpBridgeClient({ url: bridge.url, pairingSecret: bridge.pairingSecret,
+      store, fetcher, approve: async () => true });
+    await client.pair();
+    await expect(client.revokeGrant()).rejects.toThrow('bridge-request-failed');
+    await authority.requireGrant(grant.id, grant.secret);
+    expect(await client.pendingPreviews()).toEqual([]);
+    await client.revokeGrant();
+    await expect(authority.requireGrant(grant.id, grant.secret)).rejects.toThrow('grant-denied');
+    await expect(client.pendingPreviews()).rejects.toThrow('bridge-not-paired');
+  });
+
   it('consumes each response nonce once and times out an unanswered request', async () => {
     const { asset, bridge, request } = await fixture(1_000);
     const pair = await (await request('/pair', { secret: bridge.pairingSecret })).json() as { sessionSecret: string };
