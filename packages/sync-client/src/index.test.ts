@@ -12,10 +12,13 @@ const endpoint = 'http://127.0.0.1:3199';
 
 function server(workspaceId: string, disconnectAfterFirstPush = false) {
   const service = new SyncService(new MemorySyncStateStore());
+  const allowed = new Set([workspaceId]);
   let disconnected = false;
   vi.stubGlobal('fetch', vi.fn(async (url: string, init: RequestInit) => {
     const body = JSON.parse(String(init.body));
-    if (url.endsWith('/sync/identity')) return new Response(JSON.stringify({ accountId: 'self-host-owner' }), { status: 200 });
+    if (url.endsWith('/sync/preflight')) return allowed.has(body.workspaceId)
+      ? new Response(JSON.stringify({ accountId: 'self-host-owner', workspaceId: body.workspaceId }), { status: 200 })
+      : new Response('{}', { status: 403 });
     if (url.endsWith('/sync/push')) {
       const result = await service.push(body);
       if (disconnectAfterFirstPush && !disconnected) { disconnected = true; throw Error('offline'); }
@@ -26,7 +29,7 @@ function server(workspaceId: string, disconnectAfterFirstPush = false) {
   }));
   const key = new Uint8Array(32).fill(7);
   const config = { endpoint, token, workspaceId, key };
-  return { service, config };
+  return { service, config, grant: (id: string) => { allowed.add(id); } };
 }
 
 it('retries the same encrypted operation after server acceptance and browser interruption', async () => {
@@ -69,7 +72,7 @@ it('shows a genuine same-record conflict and sends the chosen local edit at the 
   expect(JSON.parse(result.conflict?.remotePayload ?? '{}').name).toBe('From A');
   expect(JSON.parse(result.conflict?.localPayload ?? '{}').name).toBe('From B');
   const authenticatedFetch = fetch;
-  vi.stubGlobal('fetch', vi.fn(async (url: string, init: RequestInit) => String(url).endsWith('/sync/identity')
+  vi.stubGlobal('fetch', vi.fn(async (url: string, init: RequestInit) => String(url).endsWith('/sync/preflight')
     ? new Response('{}', { status: 401 }) : authenticatedFetch(url, init)));
   const denied = await clientB.run();
   expect(denied.status).toBe('failed');
@@ -182,7 +185,8 @@ it('sends independent local records in one bounded push request', async () => {
 it('binds one local dataset to one remote and rejects workspace, endpoint and account switches without transfer', async () => {
   const workspaceA = crypto.randomUUID();
   const workspaceB = crypto.randomUUID();
-  const { service, config } = server(workspaceA);
+  const { service, config, grant } = server(workspaceA);
+  grant(workspaceB);
   const db = await openLocalRepository(name());
   const asset = { ...newAsset('project'), name: 'Only in A' };
   await db.save('asset', asset);
@@ -198,8 +202,8 @@ it('binds one local dataset to one remote and rejects workspace, endpoint and ac
   const endpointChanged = new SelfHostSyncClient(db, { ...config, endpoint: 'http://127.0.0.1:3200' });
   expect((await endpointChanged.run()).error).toBe('sync-dataset-bound');
   const originalFetch = fetch;
-  vi.stubGlobal('fetch', vi.fn(async (url: string, init: RequestInit) => String(url).endsWith('/sync/identity')
-    ? new Response(JSON.stringify({ accountId: 'another-owner' }), { status: 200 }) : originalFetch(url, init)));
+  vi.stubGlobal('fetch', vi.fn(async (url: string, init: RequestInit) => String(url).endsWith('/sync/preflight')
+    ? new Response(JSON.stringify({ accountId: 'another-owner', workspaceId: config.workspaceId }), { status: 200 }) : originalFetch(url, init)));
   expect((await a.run()).error).toBe('sync-account-mismatch');
   vi.stubGlobal('fetch', originalFetch);
   await db.save('asset', { ...asset, name: 'Back in A' });
@@ -208,12 +212,65 @@ it('binds one local dataset to one remote and rejects workspace, endpoint and ac
   await db.close();
 });
 
+it('does not bind an unrecognized workspace and can sync the corrected workspace after reopen', async () => {
+  const validWorkspace = crypto.randomUUID();
+  const { service, config } = server(validWorkspace);
+  const dbName = name();
+  const db = await openLocalRepository(dbName);
+  const asset = { ...newAsset('project'), name: 'Preserved locally' };
+  await db.save('asset', asset);
+  const wrong = new SelfHostSyncClient(db, { ...config, workspaceId: crypto.randomUUID() });
+  expect((await wrong.run()).error).toBe('sync-auth');
+  expect(await db.getDatasetBinding()).toBeNull();
+  expect(await db.fileStore.scopedMeta.count()).toBe(0);
+  await db.close();
+  const reopened = await openLocalRepository(dbName);
+  expect(await reopened.getDatasetBinding()).toBeNull();
+  expect((await new SelfHostSyncClient(reopened, config).run()).status).toBe('synced');
+  expect((await service.pull({ workspaceId: validWorkspace, cursor: 0, limit: 10 })).changes).toHaveLength(1);
+  expect((await reopened.get<Asset>('asset', asset.id))?.name).toBe('Preserved locally');
+  await reopened.close();
+});
+
+it('does not bind when workspace preflight fails on the network', async () => {
+  const { config } = server(crypto.randomUUID());
+  const authenticatedFetch = fetch;
+  const db = await openLocalRepository(name());
+  await db.save('asset', { ...newAsset('project'), name: 'Still local' });
+  vi.stubGlobal('fetch', vi.fn(async (url: string, init: RequestInit) => String(url).endsWith('/sync/preflight')
+    ? Promise.reject(Error('offline')) : authenticatedFetch(url, init)));
+  expect((await new SelfHostSyncClient(db, config).run()).error).toBe('offline');
+  expect(await db.getDatasetBinding()).toBeNull();
+  vi.stubGlobal('fetch', authenticatedFetch);
+  expect((await new SelfHostSyncClient(db, config).run()).status).toBe('synced');
+  await db.close();
+});
+
+it('allows only one remote to claim an initially unbound dataset across concurrent sync clients', async () => {
+  const workspaceA = crypto.randomUUID();
+  const workspaceB = crypto.randomUUID();
+  const { config, grant, service } = server(workspaceA);
+  grant(workspaceB);
+  const db = await openLocalRepository(name());
+  await db.save('asset', { ...newAsset('project'), name: 'Shared local row' });
+  const [a, b] = await Promise.all([
+    new SelfHostSyncClient(db, config).run(),
+    new SelfHostSyncClient(db, { ...config, workspaceId: workspaceB }).run(),
+  ]);
+  expect([a.status, b.status].sort()).toEqual(['failed', 'synced']);
+  expect([a.error, b.error]).toContain('sync-dataset-bound');
+  const aChanges = (await service.pull({ workspaceId: workspaceA, cursor: 0, limit: 10 })).changes;
+  const bChanges = (await service.pull({ workspaceId: workspaceB, cursor: 0, limit: 10 })).changes;
+  expect(aChanges.length + bChanges.length).toBe(1);
+  await db.close();
+});
+
 it('rejects a malformed pull page before writing any record or cursor', async () => {
   const workspaceId = crypto.randomUUID();
   const { config } = server(workspaceId);
   const remoteId = `asset:${crypto.randomUUID()}`;
-  vi.stubGlobal('fetch', vi.fn(async (url: string) => new Response(JSON.stringify(String(url).endsWith('/sync/identity')
-    ? { accountId: 'self-host-owner' } : { changes: [{
+  vi.stubGlobal('fetch', vi.fn(async (url: string) => new Response(JSON.stringify(String(url).endsWith('/sync/preflight')
+    ? { accountId: 'self-host-owner', workspaceId } : { changes: [{
       operationId: crypto.randomUUID(), id: remoteId, kind: 'asset', schemaVersion: 1,
       ciphertext: 'opaque', tombstone: false, version: 1, sequence: 1,
     }], nextCursor: 2 }), { status: 200 })));

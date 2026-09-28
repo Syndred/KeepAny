@@ -61,6 +61,17 @@ it('serves authenticated workspace creation, push and pull', async () => {
     const workspaceResponse = await app.request('/workspaces', { method: 'POST', headers });
     expect(workspaceResponse.status).toBe(201);
     const { workspaceId } = await workspaceResponse.json() as { workspaceId: string };
+    const preflight = await app.request('/sync/preflight', { method: 'POST', headers,
+      body: JSON.stringify({ workspaceId }) });
+    expect(preflight.status).toBe(200);
+    expect(await preflight.json()).toEqual({ accountId: 'alice', workspaceId });
+    expect((await app.request('/sync/preflight', { method: 'POST', headers,
+      body: JSON.stringify({ workspaceId: crypto.randomUUID() }) })).status).toBe(403);
+    expect((await app.request('/sync/preflight', { method: 'POST', headers: {
+      authorization: 'Bearer bob', 'content-type': 'application/json',
+    }, body: JSON.stringify({ workspaceId }) })).status).toBe(403);
+    expect((await app.request('/sync/preflight', { method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ workspaceId }) })).status).toBe(401);
     const change = {
       operationId: crypto.randomUUID(), id: `asset:${crypto.randomUUID()}`, kind: 'asset', schemaVersion: 1,
       expectedVersion: 0, ciphertext: 'opaque-ciphertext', tombstone: false,
@@ -74,6 +85,20 @@ it('serves authenticated workspace creation, push and pull', async () => {
     expect(pull.status).toBe(200);
     expect(await pull.json()).toMatchObject({ changes: [{ id: change.id, ciphertext: change.ciphertext }], nextCursor: 1 });
     expect(pull.headers.get('cache-control')).toBe('no-store');
+  } finally { await pg.close(); }
+}, 20_000);
+
+it('requires both read and write membership before local dataset attachment', async () => {
+  const { pg, app } = await fixture();
+  try {
+    const headers = { authorization: 'Bearer alice', 'content-type': 'application/json' };
+    const created = await app.request('/workspaces', { method: 'POST', headers });
+    const { workspaceId } = await created.json() as { workspaceId: string };
+    await pg.query('UPDATE sync_memberships SET can_write=false WHERE workspace_id=$1', [workspaceId]);
+    const body = JSON.stringify({ workspaceId });
+    expect((await app.request('/sync/preflight', { method: 'POST', headers, body })).status).toBe(403);
+    expect((await app.request('/sync/pull', { method: 'POST', headers,
+      body: JSON.stringify({ workspaceId, cursor: 0, limit: 1 }) })).status).toBe(200);
   } finally { await pg.close(); }
 }, 20_000);
 

@@ -73,6 +73,7 @@ test('isolated browsers keep one local dataset on its remote through retry, conf
   const errors: string[] = [];
   const contextA = await browser.newContext({ locale: 'en-US' });
   const contextB = await browser.newContext({ locale: 'en-US', viewport: { width: 390, height: 844 } });
+  let contextC: Awaited<ReturnType<typeof browser.newContext>> | undefined;
   const pageA = await contextA.newPage();
   const pageB = await contextB.newPage();
   pageA.setDefaultTimeout(10_000);
@@ -111,6 +112,9 @@ test('isolated browsers keep one local dataset on its remote through retry, conf
     await addDialog.getByLabel('Name', { exact: true }).fill(firstName);
     await addDialog.getByRole('button', { name: 'Save' }).click();
     await expect(addDialog).toBeHidden();
+    await configure(pageA, endpoint, crypto.randomUUID(), keyA);
+    await sync(pageA, 'This sync did not complete');
+    await pageA.reload();
     await configure(pageA, endpoint, workspaceA, keyA);
     await sync(pageA, 'This sync completed');
     await pageA.reload();
@@ -195,9 +199,40 @@ test('isolated browsers keep one local dataset on its remote through retry, conf
     await pageA.locator('.sync-panel .form-grid input').nth(2).fill(workspaceA);
     await pageA.locator('.sync-panel .form-grid input').nth(3).fill(keyA);
     await sync(pageA, 'This sync completed');
+
+    const workspaceC = await createWorkspace(endpoint);
+    const workspaceD = await createWorkspace(endpoint);
+    const keyC = Buffer.from(crypto.getRandomValues(new Uint8Array(32))).toString('base64url');
+    const keyD = Buffer.from(crypto.getRandomValues(new Uint8Array(32))).toString('base64url');
+    contextC = await browser.newContext({ locale: 'en-US' });
+    const tabC = await contextC.newPage();
+    const tabD = await contextC.newPage();
+    tabC.setDefaultTimeout(10_000);
+    tabD.setDefaultTimeout(10_000);
+    tabC.on('pageerror', error => errors.push(`C: ${error.message}`));
+    tabD.on('pageerror', error => errors.push(`D: ${error.message}`));
+    await tabC.goto('/assets/project');
+    await tabC.getByRole('button', { name: 'Add', exact: true }).click();
+    const raceDialog = tabC.getByRole('dialog');
+    await raceDialog.getByLabel('Name', { exact: true }).fill('Concurrent local record');
+    await raceDialog.getByRole('button', { name: 'Save' }).click();
+    await expect(raceDialog).toBeHidden();
+    await configure(tabC, endpoint, workspaceC, keyC);
+    await configure(tabD, endpoint, workspaceD, keyD);
+    await Promise.all([
+      tabC.getByRole('button', { name: 'Sync now' }).click(),
+      tabD.getByRole('button', { name: 'Sync now' }).click(),
+    ]);
+    await expect.poll(async () => [
+      await tabC.locator('.sync-panel .notice').textContent(),
+      await tabD.locator('.sync-panel .notice').textContent(),
+    ].sort()).toEqual(['This sync completed', 'This sync did not complete']);
+    const cChanges = (await service.pull({ workspaceId: workspaceC, cursor: 0, limit: 10 }, accountId)).changes;
+    const dChanges = (await service.pull({ workspaceId: workspaceD, cursor: 0, limit: 10 }, accountId)).changes;
+    expect(cChanges.length + dChanges.length).toBe(1);
     expect(errors).toEqual([]);
   } finally {
-    await Promise.allSettled([contextA.close(), contextB.close()]);
+    await Promise.allSettled([contextA.close(), contextB.close(), contextC?.close()]);
     if (child && child.exitCode === null) {
       const exited = once(child, 'exit');
       child.kill('SIGTERM');

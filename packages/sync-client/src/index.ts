@@ -7,7 +7,7 @@ export type SyncStatus = 'local' | 'pending' | 'syncing' | 'synced' | 'conflict'
 export interface SyncReport { status: SyncStatus; pending: number; cursor: number; conflict: ScopedConflict | null; error?: string }
 export interface SelfHostConfig { endpoint: string; token: string; workspaceId: string; key: Uint8Array; keyEpoch?: number }
 const workspaceSchema = z.uuid();
-const identitySchema = z.object({ accountId: z.string().min(1).max(256) });
+const preflightSchema = z.object({ accountId: z.string().min(1).max(256), workspaceId: workspaceSchema });
 const text = new TextEncoder();
 const decode = new TextDecoder('utf-8', { fatal: true });
 
@@ -153,11 +153,12 @@ export class SelfHostSyncClient {
   }
 
   private async verifyDataset(scope: string): Promise<void> {
-    const { accountId } = await request(this.endpoint, this.token, '/sync/identity', {}, identitySchema);
+    const { accountId, workspaceId } = await request(this.endpoint, this.token, '/sync/preflight',
+      { workspaceId: this.workspaceId }, preflightSchema);
     // This client implements the single-account self-host contract. The authenticated
     // subject is stable across token rotation and guards against reusing a workspace ID
     // on another account or an endpoint configured with a different account.
-    if (accountId !== 'self-host-owner') throw Error('sync-account-mismatch');
+    if (accountId !== 'self-host-owner' || workspaceId !== this.workspaceId) throw Error('sync-account-mismatch');
     await this.repository.claimDatasetBinding({
       endpoint: this.endpoint, accountId, workspaceId: this.workspaceId, scope,
     });

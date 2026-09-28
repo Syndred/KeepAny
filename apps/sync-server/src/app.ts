@@ -65,6 +65,13 @@ export function createPostgresSyncApp(service: PostgresSyncService, authenticate
     if (!subject) return context.json({ error: 'unauthorized' }, 401);
     return context.json({ accountId: subject });
   });
+  app.post('/sync/preflight', async context => {
+    const subject = await subjectFor(context, 'sync:write');
+    if (!subject) return context.json({ error: 'unauthorized' }, 401);
+    const { workspaceId } = z.object({ workspaceId: z.uuid() }).parse(await context.req.json());
+    await service.assertWorkspaceAccess(workspaceId, subject);
+    return context.json({ accountId: subject, workspaceId });
+  });
   app.post('/workspaces', async context => {
     const subject = await subjectFor(context, 'sync:write');
     if (!subject) return context.json({ error: 'unauthorized' }, 401);

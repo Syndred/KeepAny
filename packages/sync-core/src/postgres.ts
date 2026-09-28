@@ -47,6 +47,15 @@ const numeric = (value: unknown): number => {
 export class PostgresSyncService {
   constructor(private readonly pool: SqlPool) {}
 
+  async assertWorkspaceAccess(workspaceId: string, subjectId: string): Promise<void> {
+    await withSqlTransaction(this.pool, async client => {
+      await requireSyncMembership(client, workspaceId, subjectId, 'read');
+      await requireSyncMembership(client, workspaceId, subjectId, 'write');
+      const workspace = await client.query('SELECT workspace_id FROM sync_workspaces WHERE workspace_id=$1 FOR SHARE', [workspaceId]);
+      if (!workspace.rows[0]) throw new SyncForbiddenError();
+    });
+  }
+
   async createWorkspace(subjectId: string): Promise<string> {
     if (!subjectId || subjectId.length > 200) throw Error('subject');
     const workspaceId = crypto.randomUUID();
