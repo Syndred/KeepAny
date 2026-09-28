@@ -1,4 +1,4 @@
-import { GetObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import { GetObjectCommand, PutObjectCommand, S3Client, type GetObjectCommandOutput } from '@aws-sdk/client-s3';
 import {
   AttachmentIntegrityError, CIPHERTEXT_ATTACHMENT_TYPE, MAX_CIPHERTEXT_ATTACHMENT_BYTES,
   type CiphertextObjectStore,
@@ -14,7 +14,7 @@ export class S3CiphertextObjectStore implements CiphertextObjectStore {
   }
 
   async get(key: string): Promise<Uint8Array | null> {
-    let response;
+    let response: GetObjectCommandOutput;
     try { response = await this.client.send(new GetObjectCommand({ Bucket: this.bucket, Key: key })); }
     catch (error) {
       if (error instanceof Error && (error.name === 'NoSuchKey' || error.name === 'NotFound')) return null;
