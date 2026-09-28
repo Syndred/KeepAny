@@ -55,10 +55,10 @@ export function money(amount: number, currency: string, lang: string) {
 }
 export function date(value: string, lang: string) {
 	if (!value) return "—";
-	const time = new Date(`${value}T12:00:00`);
+	const time = new Date(`${value}T12:00:00Z`);
 	return Number.isNaN(time.getTime())
 		? value
-		: new Intl.DateTimeFormat(lang, { dateStyle: "medium" }).format(time);
+		: new Intl.DateTimeFormat(lang, { dateStyle: "medium", timeZone: "UTC" }).format(time);
 }
 export function niceCategory(value: string, t: (s: string) => string) {
 	return builtins.project

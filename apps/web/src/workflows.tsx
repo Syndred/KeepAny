@@ -137,7 +137,9 @@ export function AssetEditor({
 				draft.status === "cancelled" &&
 				asset?.status !== "cancelled"
 					? new Date().toISOString()
-					: draft.cancelledAt,
+					: kind === "subscription" && draft.status !== "cancelled"
+						? ""
+						: draft.cancelledAt,
 			updatedAt: new Date().toISOString(),
 		});
 		if (!parsed.success) {

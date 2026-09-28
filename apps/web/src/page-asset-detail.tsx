@@ -23,7 +23,9 @@ import {
 	cleanupUnreferencedFile,
 	deleteEntity,
 	fileUrl,
+	localRepository,
 	putFile,
+	recordRenewal,
 	save,
 	saveBatch,
 } from "../../../packages/local-db/src";
@@ -235,6 +237,21 @@ export function AssetDetail() {
 	const [submissionName, setSubmissionName] = useState("");
 	const [submissionUrl, setSubmissionUrl] = useState("");
 	const [historyNote, setHistoryNote] = useState("");
+	const [renewalAmount, setRenewalAmount] = useState("");
+	const [renewalAmountError, setRenewalAmountError] = useState("");
+	const [renewalBusy, setRenewalBusy] = useState(false);
+	const [renewalRecoveryPending, setRenewalRecoveryPending] = useState(false);
+	const renewalInFlight = useRef(false);
+	useEffect(() => {
+		if (kind !== "subscription") return;
+		let active = true;
+		void localRepository().then(repository => {
+			if (active) setRenewalRecoveryPending(!!repository.renewalRecoveryError);
+		}).catch(() => {
+			if (active) setRenewalRecoveryPending(true);
+		});
+		return () => { active = false; };
+	}, [kind]);
 	const liveById = new Map(liveAssets(data).map((item) => [item.id, item]));
 	const relations = data.relations.filter(
 		(r) =>
@@ -470,20 +487,38 @@ export function AssetDetail() {
 		if (!asset) return;
 		const now = new Date().toISOString();
 		let update = { ...asset, updatedAt: now };
-		let note = historyNote.trim();
+		const note = historyNote.trim();
 		if (action === "renew" && asset.dueDate) {
 			const anchor = asset.billingAnchor || asset.dueDate;
 			const count = (asset.renewalCount || 0) + 1;
 			const charge = actualCharge(asset, asset.dueDate);
+			if (charge === null) throw Error("renewal-inactive");
+			const entered = renewalAmount.trim();
+			const valid = asset.currency === "JPY" ? /^\d+$/ : /^\d+(?:\.\d{1,2})?$/;
+			if (entered && !valid.test(entered)) throw Error("renewal-amount-invalid");
+			const factor = asset.currency === "JPY" ? 1 : 100;
+			const recordedAmount = entered ? Math.round(Number(entered) * factor) : charge;
+			if (!Number.isSafeInteger(recordedAmount) || recordedAmount < 0) throw Error("renewal-amount-invalid");
 			update = {
 				...update,
 				billingAnchor: anchor,
 				renewalCount: count,
 				dueDate: dueOnCycle(anchor, asset.cycle, asset.interval, count),
 			};
-			note =
-				note ||
-				`${charge === null ? "—" : money(charge, asset.currency, i18n.language)} · ${asset.dueDate}`;
+			await recordRenewal(asset, update, {
+				id: crypto.randomUUID(),
+				assetId: asset.id,
+				action: "renew",
+				billDate: asset.dueDate,
+				amount: recordedAmount,
+				currency: asset.currency,
+				note,
+				createdAt: now,
+				deleted: false,
+			});
+			setHistoryNote("");
+			setRenewalAmount("");
+			return;
 		}
 		if (action === "loan")
 			update = {
@@ -503,6 +538,31 @@ export function AssetDetail() {
 			deleted: false,
 		});
 		setHistoryNote("");
+	}
+	async function recordRenewalAction() {
+		if (renewalInFlight.current) return;
+		renewalInFlight.current = true;
+		setRenewalBusy(true);
+		try {
+			setRenewalAmountError("");
+			await recordAction("renew");
+			setRenewalRecoveryPending(false);
+			notify(t("saved"));
+		} catch (error) {
+			if (error instanceof Error && error.message === "renewal-amount-invalid") {
+				setRenewalAmountError(t("invalid"));
+			} else if (error instanceof Error && error.message === "renewal-stale") {
+				notify(t("renewalStale"));
+			} else if (error instanceof Error && error.message === "renewal-recovery-pending") {
+				setRenewalRecoveryPending(true);
+				notify(t("renewalRecoveryPending"));
+			} else {
+				notify(t("error"));
+			}
+		} finally {
+			renewalInFlight.current = false;
+			setRenewalBusy(false);
+		}
 	}
 	async function createImpact() {
 		if (!asset || impactInFlight.current || impactPendingCount === 0) return;
@@ -998,11 +1058,12 @@ export function AssetDetail() {
 					<div className="card-header">
 						<h2>{t("history")}</h2>
 					</div>
+					{asset.kind === "subscription" && renewalRecoveryPending && <p className="notice" role="alert">{t("renewalRecoveryPending")}</p>}
 					<div className="toolbar">
 						{asset.kind === "subscription" ? (
 							<Button
-								disabled={asset.status !== "active" || !asset.dueDate}
-								onClick={() => void run(() => recordAction("renew"))}
+									disabled={asset.status !== "active" || !asset.dueDate || renewalBusy}
+									onClick={() => void recordRenewalAction()}
 							>
 								{t("renew")}
 							</Button>
@@ -1032,7 +1093,23 @@ export function AssetDetail() {
 							placeholder={asset.kind === "item" ? t("borrower") : t("notes")}
 							aria-label={t("notes")}
 						/>
+						{asset.kind === "subscription" && (
+							<label className="renewal-amount-field">
+								<span>{t("recordedAmount")} ({asset.currency})</span>
+								<input
+									type="number"
+									min="0"
+									step={asset.currency === "JPY" ? "1" : "0.01"}
+									value={renewalAmount}
+									onChange={(event) => { setRenewalAmount(event.target.value); setRenewalAmountError(""); }}
+									aria-invalid={!!renewalAmountError}
+									placeholder={dueCharge === null ? "" : String(dueCharge / (asset.currency === "JPY" ? 1 : 100))}
+								/>
+								{renewalAmountError && <small role="alert">{renewalAmountError}</small>}
+							</label>
+						)}
 					</div>
+					{asset.kind === "subscription" && <p className="subtitle">{t("renewalLocalHint")}</p>}
 					{histories.length ? (
 						<div className="list">
 							{histories.map((h) => (
@@ -1044,6 +1121,9 @@ export function AssetDetail() {
 											{new Intl.DateTimeFormat(i18n.language, {
 												dateStyle: "medium",
 											}).format(new Date(h.createdAt))}
+											{h.action === "renew" && h.billDate && h.amount !== undefined && h.currency
+												? ` · ${date(h.billDate, i18n.language)} · ${t("recordedAmount")}: ${money(h.amount, h.currency, i18n.language)}`
+												: ""}
 											{h.note && ` · ${h.note}`}
 										</small>
 									</div>

@@ -150,6 +150,7 @@ export class LocalRepository {
   }
 
   async save(type: EntityType, value: unknown): Promise<RecordRow> {
+    if (type === 'asset' && this.renewalRecoveryError) throw Error('renewal-recovery-pending');
     const next = rowFor(type, value);
     const entity = parsedPayload(next) as Record<string, unknown>;
     if (type === 'asset') {

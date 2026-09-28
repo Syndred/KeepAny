@@ -127,6 +127,8 @@ p { line-height: 1.5; }
 .toolbar, .actions, .card-header, .tabs, .chips { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .toolbar { justify-content: space-between; flex-wrap: wrap; margin: 0 0 14px; }
 .toolbar > *, .actions > * { min-width: 0; }
+.renewal-amount-field { display: inline-flex; align-items: center; gap: 8px; min-width: 0; color: var(--ink); font-size: 12px; font-weight: 700; }
+.renewal-amount-field input { width: 110px; max-width: 100%; min-height: 36px; padding: 5px 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--paper); }
 .actions { flex-wrap: wrap; }
 .card, .stat, .notice, .alert { min-width: 0; border: 2px solid var(--line); border-radius: 17px; background: var(--paper); box-shadow: var(--shadow); }
 .card { padding: 16px; }
