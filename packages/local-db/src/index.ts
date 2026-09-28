@@ -35,8 +35,10 @@ interface DefaultRepositoryState {
 }
 // Vite HMR re-evaluates this module while the old RxDB remains open. Keep the resource across reloads.
 const defaultGlobal = globalThis as typeof globalThis & { __keepanyLocalDbState?: DefaultRepositoryState };
-const defaultState = defaultGlobal.__keepanyLocalDbState ??= {};
-export const files = defaultState.fileStore ??= new FileStore('keepany');
+if (!defaultGlobal.__keepanyLocalDbState) defaultGlobal.__keepanyLocalDbState = {};
+const defaultState = defaultGlobal.__keepanyLocalDbState;
+if (!defaultState.fileStore) defaultState.fileStore = new FileStore('keepany');
+export const files = defaultState.fileStore;
 const recordSchema = {
   title: 'KeepAny entity', version: 0, primaryKey: 'id', type: 'object',
   properties: {
@@ -440,9 +442,12 @@ export async function openLocalRepository(name: string): Promise<LocalRepository
 let singleton: Promise<LocalRepository> | undefined;
 function defaultRepository(): Promise<LocalRepository> {
   if (!singleton) {
-    const resources = defaultState.resources ??= openLocalRepository('keepany-v1')
-      .then(repository => ({ db: repository.db, fileStore: repository.fileStore }))
-      .catch(error => { defaultState.resources = undefined; throw error; });
+    if (!defaultState.resources) {
+      defaultState.resources = openLocalRepository('keepany-v1')
+        .then(repository => ({ db: repository.db, fileStore: repository.fileStore }))
+        .catch(error => { defaultState.resources = undefined; throw error; });
+    }
+    const resources = defaultState.resources;
     singleton = resources.then(({ db, fileStore }) => new LocalRepository(db, fileStore))
       .catch(error => { singleton = undefined; throw error; });
   }
