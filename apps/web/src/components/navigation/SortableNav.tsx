@@ -2,6 +2,7 @@ import { type ComponentType } from 'react';
 import { DndContext, KeyboardSensor, PointerSensor, closestCenter, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, arrayMove, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { Link } from '@tanstack/react-router';
 import { ChevronDown, ChevronUp, GripVertical } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
@@ -47,9 +48,9 @@ function NavRow({ item, index, count, activePath, onNavigate, onMove }: {
       aria-label={`${item.label} ${t('drag')}`}
       title={t('drag')}
     ><GripVertical size={17}/></button>
-    <a href={item.to} className={`sortable-nav-link${active ? ' active' : ''}`} aria-current={active ? 'page' : undefined} onClick={onNavigate} title={item.label}>
+    <Link to={item.to} className={`sortable-nav-link${active ? ' active' : ''}`} aria-current={active ? 'page' : undefined} onClick={onNavigate} title={item.label}>
       <Icon size={17}/><span>{item.label}</span>{item.badge != null && item.badge > 0 && <em>{item.badge}</em>}
-    </a>
+    </Link>
     <div className="nav-order-actions">
       <button type="button" onClick={() => onMove(item.id, -1)} disabled={index === 0} aria-label={`${t('navMoveUp')} ${item.label}`} title={t('navMoveUp')}><ChevronUp size={14}/></button>
       <button type="button" onClick={() => onMove(item.id, 1)} disabled={index === count - 1} aria-label={`${t('navMoveDown')} ${item.label}`} title={t('navMoveDown')}><ChevronDown size={14}/></button>

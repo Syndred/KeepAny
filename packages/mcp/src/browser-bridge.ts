@@ -76,7 +76,7 @@ export class BrowserMcpBridgeClient {
     const url = new URL(options.url);
     if (url.protocol !== 'http:' || url.hostname !== '127.0.0.1' || url.pathname !== '/' ||
       url.search || url.hash || !url.port || url.origin !== options.url) throw Error('invalid-bridge-url');
-    this.fetcher = options.fetcher ?? fetch;
+    this.fetcher = options.fetcher ?? ((input, init) => fetch(input, init));
   }
 
   private async post(path: string, body: unknown, token?: string, signal?: AbortSignal) {
