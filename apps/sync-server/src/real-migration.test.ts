@@ -156,6 +156,7 @@ it.skipIf(!process.env.KEEPANY_TEST_DATABASE_URL)(
 					jkt,
 					scope: "sync:read" as const,
 					tokenIssuedAt: Math.floor(Date.now() / 1000) + 1,
+					tokenExpiresAt: Math.floor(Date.now() / 1000) + 60,
 					proofIssuedAt: Math.floor(Date.now() / 1000),
 					proofJti: crypto.randomUUID(),
 				};
@@ -164,6 +165,38 @@ it.skipIf(!process.env.KEEPANY_TEST_DATABASE_URL)(
 					secondStore.claimProof(claim),
 				]);
 				expect(results.sort()).toEqual([false, true]);
+				const secondPid = (await secondInstance.query<{ pid: number }>('SELECT pg_backend_pid() AS pid')).rows[0].pid;
+				const waitPastExpiry = async (proofJti: string, tokenExpiresAt: number, proofIssuedAt: number) => {
+					const locker = await pool.connect();
+					try {
+						await locker.query('BEGIN');
+						await locker.query('SELECT binding_id FROM sync_bound_bindings WHERE binding_id=$1 FOR UPDATE', [bindingId]);
+						const pending = secondStore.claimProof({ ...claim, proofJti, tokenExpiresAt, proofIssuedAt });
+						let waiting = false;
+						for (let attempt = 0; attempt < 30; attempt++) {
+							const activity = await admin.query<{ wait_event_type: string | null }>(
+								'SELECT wait_event_type FROM pg_stat_activity WHERE pid=$1', [secondPid]);
+							if (activity.rows[0]?.wait_event_type === 'Lock') { waiting = true; break; }
+							await new Promise(resolve => setTimeout(resolve, 20));
+						}
+						expect(waiting).toBe(true);
+						const deadline = Math.min(tokenExpiresAt, proofIssuedAt + 60) * 1000;
+						await new Promise(resolve => setTimeout(resolve, Math.max(0, deadline - Date.now() + 100)));
+						await locker.query('COMMIT');
+						expect(await pending).toBe(false);
+						const proofHash = createHash('sha256').update(proofJti).digest('hex');
+						const persisted = await pool.query<{ count: string }>(
+							'SELECT count(*) FROM sync_bound_proofs WHERE proof_jti_hash=$1', [proofHash]);
+						expect(persisted.rows[0].count).toBe('0');
+					} finally {
+						await locker.query('ROLLBACK').catch(() => {});
+						locker.release();
+					}
+				};
+				await waitPastExpiry(crypto.randomUUID(), Math.floor(Date.now() / 1000) + 2,
+					Math.floor(Date.now() / 1000));
+				await waitPastExpiry(crypto.randomUUID(), Math.floor(Date.now() / 1000) + 60,
+					Math.floor(Date.now() / 1000) - 59);
 				await pool.query(
 					`UPDATE sync_bound_bindings SET status='revoked', epoch=3, token_valid_after=2,
           state_observed_at=now(), state_expires_at=now()+interval '10 seconds' WHERE binding_id=$1`,

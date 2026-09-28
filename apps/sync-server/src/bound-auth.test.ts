@@ -44,7 +44,19 @@ it('accepts only pinned bound JWT and device DPoP across real Hono HTTP routes',
     readFile(new URL(`../migrations/${id}.sql`, import.meta.url), 'utf8')));
   for (const migration of migrations) await pg.exec(migration);
   const pool: SqlPool = { connect: async () => ({ query: async (sql, values) => pg.query(sql, values), release: () => {} }) };
-  const stateStore = createPostgresBoundStateStore(pg as unknown as Pick<Pool, 'query'>);
+  // PGlite uses one connection; serialize transaction clients for the shared-proof test.
+  let available = Promise.resolve();
+  const statePool = {
+    query: (sql: string, values?: unknown[]) => pg.query(sql, values),
+    connect: async () => {
+      const previous = available;
+      let release = () => {};
+      available = new Promise<void>(resolve => { release = resolve; });
+      await previous;
+      return { query: (sql: string, values?: unknown[]) => pg.query(sql, values), release };
+    },
+  } as unknown as Pick<Pool, 'connect' | 'query'>;
+  const stateStore = createPostgresBoundStateStore(statePool);
   const service = new PostgresSyncService(pool);
   let authenticate: Authenticate = async () => null;
   const server = serve({ fetch: createPostgresSyncApp(service, (authorization, request) => authenticate(authorization, request)).fetch,
@@ -93,11 +105,12 @@ it('accepts only pinned bound JWT and device DPoP across real Hono HTTP routes',
       VALUES ($1, $2, $3, $4, ARRAY['sync:read', 'sync:write'], 'active', 1, $5, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP + INTERVAL '10 seconds')`,
     [bindingId, subject, instanceIdHash, jkt, now() - 5]);
     expect(await stateStore.claimProof({ bindingId, subject, instanceIdHash, jkt, scope: 'sync:write',
-      tokenIssuedAt: now(), proofIssuedAt: now(), proofJti: createHash('sha256').update(crypto.randomUUID()).digest('base64url') })).toBe(true);
+      tokenIssuedAt: now(), tokenExpiresAt: now() + 60, proofIssuedAt: now(),
+      proofJti: createHash('sha256').update(crypto.randomUUID()).digest('base64url') })).toBe(true);
     const sharedJti = createHash('sha256').update(crypto.randomUUID()).digest('base64url');
     const sharedClaim = { bindingId, subject, instanceIdHash, jkt, scope: 'sync:read' as const,
-      tokenIssuedAt: now(), proofIssuedAt: now(), proofJti: sharedJti };
-    const secondStore = createPostgresBoundStateStore(pg as unknown as Pick<Pool, 'query'>);
+      tokenIssuedAt: now(), tokenExpiresAt: now() + 60, proofIssuedAt: now(), proofJti: sharedJti };
+    const secondStore = createPostgresBoundStateStore(statePool);
     expect((await Promise.all([stateStore.claimProof(sharedClaim), secondStore.claimProof(sharedClaim)])).sort()).toEqual([false, true]);
     const workspace = await post('/workspaces', valid);
     expect(workspace.status).toBe(201);
@@ -108,7 +121,7 @@ it('accepts only pinned bound JWT and device DPoP across real Hono HTTP routes',
     expect((await post('/sync/push', readOnly, { body: { workspaceId, operations: [] } })).status).toBe(401);
     const replayJti = createHash('sha256').update(crypto.randomUUID()).digest('base64url');
     expect((await post('/sync/pull', valid, { body: { workspaceId, cursor: 0 }, jti: replayJti })).status).toBe(200);
-    authenticate = createBoundTokenAuthenticator({ ...boundConfig, stateStore: createPostgresBoundStateStore(pg as unknown as Pick<Pool, 'query'>) });
+    authenticate = createBoundTokenAuthenticator({ ...boundConfig, stateStore: createPostgresBoundStateStore(statePool) });
     expect((await post('/sync/pull', valid, { body: { workspaceId, cursor: 0 }, jti: replayJti })).status).toBe(401);
     authenticate = createBoundTokenAuthenticator({ ...boundConfig, stateStore: {
       claimProof: async () => { throw Error('database-unavailable'); }, pruneExpiredProofs: async () => {},
@@ -153,6 +166,19 @@ it('accepts only pinned bound JWT and device DPoP across real Hono HTTP routes',
     expect((await post('/sync/pull', valid, { body: { workspaceId, cursor: 0 } })).status).toBe(401);
     const afterEpoch = await access({}, { issuedAt: scopeCutoff + 3, expiresAt: now() + 60 });
     expect((await post('/sync/pull', afterEpoch, { body: { workspaceId, cursor: 0 } })).status).toBe(401);
+    const delayedClaim = vi.fn(async () => true);
+    const delayedBootstrap = vi.fn(async () => { await new Promise(resolve => setTimeout(resolve, 2100)); });
+    authenticate = createBoundTokenAuthenticator({ ...boundConfig, bootstrapState: delayedBootstrap,
+      stateStore: { claimProof: delayedClaim, pruneExpiredProofs: async () => {} } });
+    const shortLived = await access({}, { expiresAt: now() + 2 });
+    expect((await post('/workspaces', shortLived)).status).toBe(401);
+    expect(delayedBootstrap).toHaveBeenCalledTimes(1);
+    expect(delayedClaim).not.toHaveBeenCalled();
+    const longLived = await access();
+    expect((await post('/workspaces', longLived, { iat: now() - 59 })).status).toBe(401);
+    expect(delayedBootstrap).toHaveBeenCalledTimes(2);
+    expect(delayedClaim).not.toHaveBeenCalled();
+    authenticate = createBoundTokenAuthenticator(boundConfig);
     expect((await fetch(`${origin}/workspaces`, { method: 'POST', headers: { authorization: `Bearer ${valid}` } })).status).toBe(401);
     expect((await fetch(`${origin}/workspaces`, { method: 'POST', headers: { authorization: `DPoP ${valid}` } })).status).toBe(401);
   } finally {

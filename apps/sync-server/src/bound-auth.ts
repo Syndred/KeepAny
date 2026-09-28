@@ -103,14 +103,17 @@ export function createBoundTokenAuthenticator(config: BoundAuthConfig): Authenti
       const expectedHtu = `${publicOrigin}${path}`;
       const ath = createHash('sha256').update(token).digest('base64url');
       if (proof.htm !== request.method || proof.htu !== expectedHtu || proof.ath !== ath ||
-        typeof proof.iat !== 'number' || !Number.isInteger(proof.iat) || Math.abs(now - proof.iat) > 60 ||
+        typeof proof.iat !== 'number' || !Number.isInteger(proof.iat) || Math.abs(Date.now() / 1000 - proof.iat) > 60 ||
         typeof proof.jti !== 'string' || !B64.test(proof.jti) || proof.jti.length < 22 || proof.jti.length > 128) return null;
       await config.bootstrapState?.(bindingId);
+      // Bootstrap can finish after either credential has crossed its validity window.
+      if (Date.now() >= payload.exp * 1000 || Math.abs(Date.now() / 1000 - proof.iat) > 60) return null;
       const accepted = await config.stateStore.claimProof({
         bindingId, subject, instanceIdHash, jkt: confirmation.jkt, scope: request.scope,
-        tokenIssuedAt: payload.iat, proofIssuedAt: proof.iat, proofJti: proof.jti,
+        tokenIssuedAt: payload.iat, tokenExpiresAt: payload.exp, proofIssuedAt: proof.iat, proofJti: proof.jti,
       });
-      return accepted ? subject : null;
+      if (!accepted || Date.now() >= payload.exp * 1000 || Math.abs(Date.now() / 1000 - proof.iat) > 60) return null;
+      return subject;
     } catch {
       return null;
     }
