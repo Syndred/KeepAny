@@ -232,8 +232,10 @@ export async function readBindingState(input: {
 	const current = await input.repository.activeBinding();
 	if (current?.bindingId !== binding.bindingId)
 		throw Error("binding-not-active");
-	if (result.state === "revoked")
-		await input.repository.revokeLocal(binding.bindingId);
+	if (result.state === "revoked") {
+		const removed = await input.repository.revokeLocal(binding.bindingId);
+		if (!removed) throw Error("binding-not-active");
+	}
 	return result;
 }
 
