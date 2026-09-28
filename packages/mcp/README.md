@@ -6,6 +6,7 @@
 
 - 可信应用调用 `McpAuthority.issueGrant`，明确选择资产 ID、可读字段、可写字段和 1 分钟至 7 天有效期。写字段必须同时可读。随机密钥仅签发时返回一次，状态文件只保存哈希。
 - MCP 工具不能签发、批准或撤销授权。可信应用调用 `revokeGrant` 后，后续请求重新检查状态并拒绝；待确认预览同时失效。浏览器执行器在写前及 RxDB `incrementalModify` 每次回调中复查本地取消、请求/会话期限和桥上授权；显式撤销先阻止新写并等待已进入存储的写结束，再返回成功。若写已交给存储，界面提示核对资料；已落库但应答丢失仍保持 `operation-uncertain`，不得自动重试。
+- `run(signal)` 的外部取消与浏览器关闭、显式撤销共用写取消守卫：暂停的读恢复后不得进入 CAS，已排队写在回调前复查。每个 `/check-write` 使用携带 AbortSignal 的 HTTP 请求，并受当前 MCP 请求和配对会话剩余期限约束；取消或到期会终止尚未提交的权限检查。浏览器实际已交给 RxDB 存储的写仍须等待结果，不能把取消网络请求冒充为回滚。
 - 读取只返回授权资产的指定字段。查询只搜索投影后可见内容。删除资产不会返回。
 - 写入仅允许 `name`、`category`、`tags`、`description`、`url`。工具先返回旧值和新值预览。可信应用向用户展示**准确预览**后，单独调用 `approvePreview`；模型拿到预览 ID 本身不能批准。确认时再次校验授权、预览哈希、操作 ID、过期时间和资产版本，RxDB 适配器通过 `incrementalModify` 拒绝并发覆盖。
 - 操作 ID 先持久占位再写资产，成功后写完成回执。重复确认返回 `duplicate`。若进程在写入与回执之间中断，操作保持 `pending` 并返回 `operation-uncertain`，需要人工核对，不能自动重放。
@@ -19,6 +20,6 @@
 
 ## 验证
 
-`pnpm exec vitest run packages/mcp/src apps/mcp-launcher/src` 覆盖字段/资产范围、错误密钥、撤销、预览批准、重放、并发冲突、未决操作、持久状态、RxDB 同源写入、官方 SDK stdio/内存传输协议和真实 loopback 桥。`bridge-race.test.ts` 确定性暂停浏览器读和写，验证撤销、关闭、授权及期限在提交前阻断；`rxdb-store.test.ts` 验证真正 `incrementalModify` 回调中的取消及与桥同跑的撤销。`bridge-browser.test.ts` 用随机端口页面和 Chromium 验证跨源拒绝、CORS 与字段投影；`tests/e2e/mcp-web.spec.ts` 再用正式 Web、启动器、官方 SDK 和真实浏览器 RxDB 验证手工连接与批准。测试只用合成资料，不输出密钥；本机通过不证明正式打包或生产环境可用。
+`pnpm exec vitest run packages/mcp/src apps/mcp-launcher/src` 覆盖字段/资产范围、错误密钥、撤销、预览批准、重放、并发冲突、未决操作、持久状态、RxDB 同源写入、官方 SDK stdio/内存传输协议和真实 loopback 桥。`bridge-race.test.ts` 确定性暂停浏览器读、CAS 和可取消的 `/check-write`，验证显式撤销、关闭、外部 `run(signal)`、授权及期限在提交前阻断；`rxdb-store.test.ts` 验证真正 `incrementalModify` 回调中的取消及与桥同跑的撤销。`bridge-browser.test.ts` 用随机端口页面和 Chromium 验证跨源拒绝、CORS 与字段投影；`tests/e2e/mcp-web.spec.ts` 再用正式 Web、启动器、官方 SDK 和真实浏览器 RxDB 验证手工连接、批准及挂起网络检查时的撤销。测试只用合成资料，不输出密钥；本机通过不证明正式打包或生产环境可用。
 
 SDK 依据：[官方 TypeScript SDK v2](https://ts.sdk.modelcontextprotocol.io/v2/)、[stdio 指南](https://github.com/modelcontextprotocol/typescript-sdk/blob/main/docs/serving/stdio.md)。未复制上游源码，仅使用 npm MIT 包 API。
