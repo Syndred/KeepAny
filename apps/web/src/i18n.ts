@@ -187,7 +187,7 @@ const copy: Record<string, [string, string]> = {
 	],
 	select: ["选择", "Select"],
 	importCount: ["已选 {{count}} 条", "{{count}} selected"],
-	backupReady: ["备份已下载", "Backup downloaded"],
+	backupReady: ["已生成备份，请检查浏览器下载记录", "Backup prepared; check browser downloads"],
 	restoreReady: ["已恢复 {{count}} 条记录", "Restored {{count}} records"],
 	password: ["密码", "Password"],
 	noDue: ["未设置日期", "No date set"],
