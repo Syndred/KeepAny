@@ -214,3 +214,98 @@ for (const language of ["en", "zh-CN"] as const) {
 		});
 	}
 }
+
+for (const scenario of [
+	{
+		language: "en",
+		width: 390,
+		add: "Add",
+		name: "Name",
+		save: "Save",
+		addImage: "Add image",
+		replace: "Replace image",
+		cancel: "Cancel",
+		confirm: "Confirm",
+	},
+	{
+		language: "zh-CN",
+		width: 1280,
+		add: "新增",
+		name: "名称",
+		save: "保存",
+		addImage: "添加图片",
+		replace: "替换图片",
+		cancel: "取消",
+		confirm: "确认",
+	},
+] as const) {
+	test(`${scenario.language} production-safe image dialog at ${scenario.width}px`, async ({
+		browser,
+	}) => {
+		const context = await browser.newContext({
+			viewport: { width: scenario.width, height: 844 },
+		});
+		await context.addInitScript(
+			(language) => localStorage.setItem("keepany-language", language),
+			scenario.language,
+		);
+		const page = await context.newPage();
+		const name = `Preview image ${crypto.randomUUID().slice(0, 8)}`;
+		try {
+			await page.goto("/assets/project");
+			await page
+				.getByRole("button", { name: scenario.add, exact: true })
+				.click();
+			const editor = page.getByRole("dialog");
+			await editor.getByLabel(scenario.name, { exact: true }).fill(name);
+			await editor.getByRole("button", { name: scenario.save }).click();
+			await expect(editor).toBeHidden();
+			await page.getByText(name).first().click();
+			await expect(page.getByRole("heading", { name })).toBeVisible();
+			const addImage = page.getByRole("button", { name: scenario.addImage });
+			const firstChooser = page.waitForEvent("filechooser");
+			await addImage.click();
+			await (await firstChooser).setFiles({
+				name: "first.png",
+				mimeType: "image/png",
+				buffer: await png(page, "#4a82de"),
+			});
+			const dialog = page.getByRole("dialog");
+			await expect(
+				dialog.getByRole("button", { name: scenario.confirm }),
+			).toBeEnabled();
+			await dialog.getByRole("button", { name: scenario.cancel }).click();
+			await expect(addImage).toBeFocused();
+			await page.reload();
+			await expect(page.locator(".asset-image")).toHaveCount(0);
+			const nextChooser = page.waitForEvent("filechooser");
+			await addImage.click();
+			await (await nextChooser).setFiles({
+				name: "first.png",
+				mimeType: "image/png",
+				buffer: await png(page, "#4a82de"),
+			});
+			await dialog.getByRole("button", { name: scenario.confirm }).click();
+			await expect(page.locator(".asset-image")).toHaveCount(1);
+			await page.reload();
+			await expect(page.locator(".asset-image")).toHaveCount(1);
+			const replace = page.getByRole("button", { name: scenario.replace });
+			const chooser = page.waitForEvent("filechooser");
+			await replace.click();
+			await (await chooser).setFiles({
+				name: "second.png",
+				mimeType: "image/png",
+				buffer: await png(page, "#f57143"),
+			});
+			await dialog.getByRole("button", { name: scenario.confirm }).click();
+			await expect(dialog).toBeHidden();
+			await page.reload();
+			await expect(page.locator(".asset-image")).toHaveCount(1);
+			expect(
+				await page.evaluate(() => document.documentElement.scrollWidth),
+			).toBeLessThanOrEqual(scenario.width);
+		} finally {
+			await context.close();
+		}
+	});
+}

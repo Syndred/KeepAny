@@ -267,3 +267,62 @@ for (const copy of copies) {
 		}
 	});
 }
+
+for (const [index, width] of [390, 1280].entries()) {
+	const copy = copies[index];
+	test(`${copy.language} production-safe relation delete dialog at ${width}px`, async ({
+		browser,
+	}) => {
+		const context = await browser.newContext({
+			viewport: { width, height: 844 },
+			locale: copy.language === "en" ? "en-US" : "zh-CN",
+		});
+		await context.addInitScript(
+			(language) => localStorage.setItem("keepany-language", language),
+			copy.language,
+		);
+		const page = await context.newPage();
+		const suffix = crypto.randomUUID().slice(0, 8);
+		const project = `Preview project ${suffix}`;
+		const account = `Preview account ${suffix}`;
+		const label = `Preview relation ${suffix}`;
+		try {
+			await addAsset(page, copy, "project", project);
+			await addAsset(page, copy, "account", account);
+			await page.goto("/assets/project");
+			await page.getByText(project, { exact: true }).first().click();
+			await addRelation(page, copy, account, label);
+			const trigger = page.getByRole("button", {
+				name: `${copy.deleteRelation} · ${label} · ${account}`,
+			});
+			await trigger.click();
+			const dialog = page.getByRole("dialog", { name: copy.deleteRelation });
+			await dialog.getByRole("button", { name: copy.cancel }).click();
+			await expect(trigger).toBeFocused();
+			await page.reload();
+			await expect(trigger).toBeVisible();
+			await trigger.click();
+			await dialog.getByRole("button", { name: copy.deleteRelation }).click();
+			await expect(dialog).toBeHidden();
+			await page.reload();
+			await expect(
+				page.locator(".relation-row").filter({ hasText: label }),
+			).toHaveCount(0);
+			await page.goto("/trash");
+			const trash = page.locator(".relation-row").filter({ hasText: label });
+			await expect(trash).toBeVisible();
+			await trash.getByRole("button", { name: copy.restore }).click();
+			await expect(trash).toHaveCount(0);
+			await page.goto("/assets/project");
+			await page.getByText(project, { exact: true }).first().click();
+			await expect(
+				page.locator(".relation-row").filter({ hasText: label }),
+			).toBeVisible();
+			expect(
+				await page.evaluate(() => document.documentElement.scrollWidth),
+			).toBeLessThanOrEqual(width);
+		} finally {
+			await context.close();
+		}
+	});
+}
