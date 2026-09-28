@@ -627,8 +627,13 @@ export class LocalRepository {
       }
       await this.fileStore.journal.put({ id: journalId, rows });
     });
-    await replayJournal(this.db, this.fileStore, journalId);
-    this.restoreRecoveryError = null;
+    try {
+      await replayJournal(this.db, this.fileStore, journalId);
+      this.restoreRecoveryError = null;
+    } catch (error) {
+      this.restoreRecoveryError = error instanceof Error ? error.message : 'restore-failed';
+      throw error;
+    }
     return rows.length;
   }
 

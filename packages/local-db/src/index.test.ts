@@ -1,5 +1,5 @@
 import 'fake-indexeddb/auto';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { zipSync, unzipSync, strToU8, strFromU8 } from 'fflate';
 import { newAsset, type Asset } from '../../domain/src';
 import { inspectArchive, openLocalRepository, type RecordRow } from './index';
@@ -337,6 +337,30 @@ describe('RxDB + free Dexie local repository', () => {
     expect(await recovered.readFile(fileId)).toEqual(file);
     expect(await recovered.fileStore.journal.count()).toBe(0);
     await recovered.close();
+  });
+
+  it('exposes a live restore replay failure before reopening and clears it after replay', async () => {
+    const source = await openLocalRepository(name());
+    const asset = project('Interrupted live restore');
+    await source.save('asset', asset);
+    const backup = await source.exportArchive();
+    await source.close();
+    const dbName = name();
+    const target = await openLocalRepository(dbName);
+    const insert = vi.spyOn(target.db.records, 'insert').mockRejectedValueOnce(Error('storage-interrupted'));
+    try {
+      await expect(target.restoreArchive(backup)).rejects.toThrow('storage-interrupted');
+      expect(target.restoreRecoveryError).toBe('storage-interrupted');
+      expect(await target.fileStore.journal.count()).toBe(1);
+    } finally {
+      insert.mockRestore();
+      await target.close();
+    }
+    const reopened = await openLocalRepository(dbName);
+    expect(reopened.restoreRecoveryError).toBeNull();
+    expect((await reopened.get<Asset>('asset', asset.id))?.name).toBe(asset.name);
+    expect(await reopened.fileStore.journal.count()).toBe(0);
+    await reopened.close();
   });
 
   it('opens local data after a conflicting restore replay and retains the journal for explicit recovery', async () => {
