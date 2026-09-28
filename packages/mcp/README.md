@@ -5,7 +5,7 @@
 ## 授权边界
 
 - 可信应用调用 `McpAuthority.issueGrant`，明确选择资产 ID、可读字段、可写字段和 1 分钟至 7 天有效期。写字段必须同时可读。随机密钥仅签发时返回一次，状态文件只保存哈希。
-- MCP 工具不能签发、批准或撤销授权。可信应用调用 `revokeGrant` 后，后续请求重新检查状态并拒绝；待确认预览同时失效。
+- MCP 工具不能签发、批准或撤销授权。可信应用调用 `revokeGrant` 后，后续请求重新检查状态并拒绝；待确认预览同时失效。浏览器执行器在写前及 RxDB `incrementalModify` 每次回调中复查本地取消、请求/会话期限和桥上授权；显式撤销先阻止新写并等待已进入存储的写结束，再返回成功。若写已交给存储，界面提示核对资料；已落库但应答丢失仍保持 `operation-uncertain`，不得自动重试。
 - 读取只返回授权资产的指定字段。查询只搜索投影后可见内容。删除资产不会返回。
 - 写入仅允许 `name`、`category`、`tags`、`description`、`url`。工具先返回旧值和新值预览。可信应用向用户展示**准确预览**后，单独调用 `approvePreview`；模型拿到预览 ID 本身不能批准。确认时再次校验授权、预览哈希、操作 ID、过期时间和资产版本，RxDB 适配器通过 `incrementalModify` 拒绝并发覆盖。
 - 操作 ID 先持久占位再写资产，成功后写完成回执。重复确认返回 `duplicate`。若进程在写入与回执之间中断，操作保持 `pending` 并返回 `operation-uncertain`，需要人工核对，不能自动重放。
@@ -15,10 +15,10 @@
 
 `RxdbMcpAssetStore` 可在**持有 Web 应用同一个 IndexedDB 上下文**的代码中操作现有 RxDB 资产集。独立 Node stdio 进程不能直接打开浏览器 IndexedDB。`bridge.ts` 提供只监听数值 loopback 的单会话 RPC，`browser-bridge.ts` 提供同源仓库执行器。配对须由可信启动器把随机密钥交给 Web 应用，再由用户对作用域进行一次批准。桥只发送获批可读字段的投影；写入在浏览器端合并原记录并按版本比较。威胁边界见 [ADR 0002](../../docs/adr/0002-mcp-bridge.md)。
 
-正式 Web 授权/批准界面、可信启动器及 MCP 客户端配置尚未接入；隔离 Chromium 的测试页面已验证跨源连接，但并未接入正式 Web 资料库，**普通用户目前仍不能通过 MCP 访问自己的浏览器资料**。不得提供“从备份复制出第二份可写资产库”的启动脚本，这会造成两个状态源。同一操作系统账户下可读取进程内存或浏览器资料的恶意进程不受本桥隔离。
+开发版正式 Web 设置页、逐次写批准和独立 [本机 stdio 启动器](../../apps/mcp-launcher/README.md) 已接通同一 RxDB 资料库；用户须自行配置 MCP 客户端并选择一次性配对文件。真实官方 SDK 子进程与隔离 Chromium 已完成本机联调。**普通用户入口尚未发布**：正式跨平台打包、生产 HTTPS/PWA 回环、安全审计和真实设备仍待验收。不得提供“从备份复制出第二份可写资产库”的启动脚本，这会造成两个状态源。同一操作系统账户下可读取进程内存或浏览器资料的恶意进程不受本桥隔离。
 
 ## 验证
 
-`pnpm exec vitest run packages/mcp/src` 覆盖字段/资产范围、错误密钥、撤销、预览批准、重放、并发冲突、未决操作、持久状态、RxDB 同源写入、官方 SDK 内存传输协议及真实 loopback 桥。其中 `bridge-browser.test.ts` 启动本机随机端口页面和 Chromium，验证非许可页面来源无法配对、许可来源的 CORS 预检与 JSON 配对、带 Bearer 的跨源轮询及受限字段响应。测试只用随机合成密钥，不输出密钥；它不证明可信启动器或正式 Web 授权界面可用。`pnpm typecheck` 校验 SDK 和跨包接口。
+`pnpm exec vitest run packages/mcp/src apps/mcp-launcher/src` 覆盖字段/资产范围、错误密钥、撤销、预览批准、重放、并发冲突、未决操作、持久状态、RxDB 同源写入、官方 SDK stdio/内存传输协议和真实 loopback 桥。`bridge-race.test.ts` 确定性暂停浏览器读和写，验证撤销、关闭、授权及期限在提交前阻断；`rxdb-store.test.ts` 验证真正 `incrementalModify` 回调中的取消及与桥同跑的撤销。`bridge-browser.test.ts` 用随机端口页面和 Chromium 验证跨源拒绝、CORS 与字段投影；`tests/e2e/mcp-web.spec.ts` 再用正式 Web、启动器、官方 SDK 和真实浏览器 RxDB 验证手工连接与批准。测试只用合成资料，不输出密钥；本机通过不证明正式打包或生产环境可用。
 
 SDK 依据：[官方 TypeScript SDK v2](https://ts.sdk.modelcontextprotocol.io/v2/)、[stdio 指南](https://github.com/modelcontextprotocol/typescript-sdk/blob/main/docs/serving/stdio.md)。未复制上游源码，仅使用 npm MIT 包 API。
