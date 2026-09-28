@@ -74,6 +74,7 @@ test('isolated browsers keep one local dataset on its remote through retry, conf
   const contextA = await browser.newContext({ locale: 'en-US' });
   const contextB = await browser.newContext({ locale: 'en-US', viewport: { width: 390, height: 844 } });
   let contextC: Awaited<ReturnType<typeof browser.newContext>> | undefined;
+  let contextE: Awaited<ReturnType<typeof browser.newContext>> | undefined;
   const pageA = await contextA.newPage();
   const pageB = await contextB.newPage();
   pageA.setDefaultTimeout(10_000);
@@ -126,6 +127,22 @@ test('isolated browsers keep one local dataset on its remote through retry, conf
     await pageB.reload();
     await pageB.goto('/assets/project');
     await expect(pageB.getByText(firstName, { exact: true })).toBeVisible();
+
+    contextE = await browser.newContext({ locale: 'en-US' });
+    const pageE = await contextE.newPage();
+    pageE.setDefaultTimeout(10_000);
+    pageE.on('pageerror', error => errors.push(`E: ${error.message}`));
+    await configure(pageE, endpoint, workspaceA, keyB);
+    await sync(pageE, 'This sync did not complete');
+    await pageE.reload();
+    await configure(pageE, endpoint, workspaceA, keyA);
+    await sync(pageE, 'This sync completed');
+    await pageE.goto('/assets/project');
+    await expect(pageE.getByText(firstName, { exact: true })).toBeVisible();
+    await configure(pageE, endpoint, workspaceA, keyB);
+    await sync(pageE, 'This sync did not complete');
+    await pageE.goto('/assets/project');
+    await expect(pageE.getByText(firstName, { exact: true })).toBeVisible();
 
     await editProject(pageA, firstName, fromA);
     let dropped = false;
@@ -232,7 +249,7 @@ test('isolated browsers keep one local dataset on its remote through retry, conf
     expect(cChanges.length + dChanges.length).toBe(1);
     expect(errors).toEqual([]);
   } finally {
-    await Promise.allSettled([contextA.close(), contextB.close(), contextC?.close()]);
+    await Promise.allSettled([contextA.close(), contextB.close(), contextC?.close(), contextE?.close()]);
     if (child && child.exitCode === null) {
       const exited = once(child, 'exit');
       child.kill('SIGTERM');

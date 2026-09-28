@@ -57,8 +57,11 @@ test('encrypted photo survives lost upload acknowledgment and rejects missing or
     response.writeHead(200, { 'Content-Length': bytes.length,
       'Content-Type': 'application/vnd.keepany.ciphertext' }).end(bytes);
   });
-  const contextA = await browser.newContext({ locale: 'en-US' });
+  const contextA = await browser.newContext({ locale: 'en-US', acceptDownloads: true });
   const contextB = await browser.newContext({ locale: 'en-US', viewport: { width: 390, height: 844 } });
+  let contextC: Awaited<ReturnType<typeof browser.newContext>> | undefined;
+  let contextD: Awaited<ReturnType<typeof browser.newContext>> | undefined;
+  let releaseBlockedUpload = () => {};
   const pageA = await contextA.newPage();
   const pageB = await contextB.newPage();
   const errors: string[] = [];
@@ -169,9 +172,68 @@ test('encrypted photo survives lost upload acknowledgment and rejects missing or
       expect(await pageB.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
       await pageB.screenshot({ path: `${process.env.KEEPANY_SYNC_EVIDENCE_DIR}/photo-sync-zh-390.png`, fullPage: true });
     }
+
+    // Two fresh devices restored from one backup retain the same logical attachment ID.
+    await pageA.goto('/intake');
+    const backupPassword = `test-only-photo-${crypto.randomUUID()}`;
+    await pageA.locator('#backup-password').fill(backupPassword);
+    await pageA.getByRole('button', { name: 'Create backup' }).click();
+    const saveFile = pageA.getByRole('link', { name: 'Save backup file' });
+    await expect(saveFile).toBeVisible();
+    const downloadPromise = pageA.waitForEvent('download');
+    await saveFile.click();
+    const backupPath = await (await downloadPromise).path();
+    if (!backupPath) throw Error('backup-path');
+    const secondWorkspace = await fetch(`${endpoint}/workspaces`, { method: 'POST', headers: {
+      Authorization: `Bearer ${token}`, 'Content-Type': 'application/json',
+    }, body: '{}' }).then(response => response.json()) as { workspaceId: string };
+    const secondKey = Buffer.from(crypto.getRandomValues(new Uint8Array(32))).toString('base64url');
+    contextC = await browser.newContext({ locale: 'en-US' });
+    contextD = await browser.newContext({ locale: 'en-US' });
+    const pageC = await contextC.newPage();
+    const pageD = await contextD.newPage();
+    pageC.on('pageerror', error => errors.push(`C: ${error.message}`));
+    pageD.on('pageerror', error => errors.push(`D: ${error.message}`));
+    for (const page of [pageC, pageD]) {
+      await page.goto('/intake');
+      await page.locator('#backup-password').fill(backupPassword);
+      await page.locator('#restore-file').setInputFiles(backupPath);
+      await page.getByRole('button', { name: 'Preview', exact: true }).first().click();
+      await page.getByRole('button', { name: /Confirm ·/ }).click();
+      await expect(page.getByText(/Restored \d+ records/)).toBeVisible();
+      await configure(page, endpoint, secondWorkspace.workspaceId, secondKey);
+    }
+    let blockedUpload = false;
+    let lostAck = false;
+    const holdUpload = new Promise<void>(resolve => { releaseBlockedUpload = resolve; });
+    const routePattern = `${endpoint}/workspaces/${secondWorkspace.workspaceId}/attachments/**`;
+    await pageD.route(routePattern, async route => {
+      if (route.request().method() !== 'PUT' || lostAck) return route.continue();
+      blockedUpload = true;
+      await holdUpload;
+      const response = await route.fetch();
+      expect(response.ok()).toBe(true);
+      lostAck = true;
+      await route.abort('failed');
+    });
+    await pageD.getByRole('button', { name: 'Sync now' }).click();
+    await expect.poll(() => blockedUpload).toBe(true);
+    await sync(pageC, 'This sync completed');
+    releaseBlockedUpload();
+    await expect(pageD.locator('.sync-panel .notice')).toHaveText('This sync did not complete');
+    await pageD.unroute(routePattern);
+    await pageD.reload();
+    await configure(pageD, endpoint, secondWorkspace.workspaceId, secondKey);
+    await sync(pageD, 'This sync completed');
+    expect((await service.pull({ workspaceId: secondWorkspace.workspaceId, cursor: 0, limit: 10 }, 'self-host-owner')).changes)
+      .toHaveLength(1);
+    await pageD.goto('/assets/project');
+    await pageD.getByText(assetName, { exact: true }).first().click();
+    await expect(pageD.locator('img.asset-image')).toHaveJSProperty('naturalWidth', 32);
     expect(errors).toEqual([]);
   } finally {
-    await Promise.allSettled([contextA.close(), contextB.close()]);
+    releaseBlockedUpload();
+    await Promise.allSettled([contextA.close(), contextB.close(), contextC?.close(), contextD?.close()]);
     if (child && child.exitCode === null) {
       const exited = once(child, 'exit');
       child.kill('SIGTERM');
