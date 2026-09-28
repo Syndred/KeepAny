@@ -3,7 +3,7 @@ import { randomBytes, randomUUID, timingSafeEqual } from 'node:crypto';
 import type { AddressInfo } from 'node:net';
 import { assetSchema } from '../../domain/src';
 import { McpAccessError, type McpAuthority, type ReadField, type WriteField } from './authority';
-import type { AssetSnapshot, McpAssetStore } from './service';
+import type { AssetSnapshot, McpAssetStore, PreviewResult } from './service';
 
 type Action = 'get' | 'list' | 'compareAndSet';
 type Request = { id: string; action: Action; args: unknown[]; expiresAt: number };
@@ -47,7 +47,11 @@ export interface LocalMcpBridge {
   url: string;
   /** One-time, two-minute secret. Deliver through a trusted UI/IPC, never MCP stdout or a URL. */
   pairingSecret: string;
+  /** Resolves only after the first successful, authenticated browser pairing. */
+  paired: Promise<void>;
   store: McpAssetStore;
+  /** Receives the exact write preview from the MCP tool, never a model approval. */
+  publishPreview(preview: PreviewResult): void;
   close(): Promise<void>;
 }
 
@@ -75,9 +79,17 @@ export async function startLocalMcpBridge(options: LocalBridgeOptions): Promise<
   let pairExpiresAt = Date.now() + 120_000;
   let sessionSecret = '';
   let sessionExpiresAt = 0;
+  let sessionTimer: ReturnType<typeof setTimeout> | undefined;
   let closed = false;
+  let pairedResolve!: () => void;
+  let pairedReject!: (error: Error) => void;
+  const pairedPromise = new Promise<void>((resolve, reject) => { pairedResolve = resolve; pairedReject = reject; });
+  // The launcher may close before it starts waiting for the pair result.
+  void pairedPromise.catch(() => undefined);
   const queue: Request[] = [];
   const pending = new Map<string, Pending>();
+  const previews = new Map<string, PreviewResult>();
+  let store!: McpAssetStore;
 
   const failPending = (code: string) => {
     queue.length = 0;
@@ -125,6 +137,9 @@ export async function startLocalMcpBridge(options: LocalBridgeOptions): Promise<
         pairingSecret = '';
         pairExpiresAt = 0;
         sessionExpiresAt = Math.min(Date.now() + 15 * 60_000, grant.expiresAt);
+        clearTimeout(pairTimer);
+        sessionTimer = setTimeout(() => { void stop(); }, Math.max(0, sessionExpiresAt - Date.now()));
+        pairedResolve();
         reply(response, 200, { sessionSecret, expiresAt: sessionExpiresAt,
           scope: { assetIds: grant.assetIds, readFields: grant.readFields, writeFields: grant.writeFields } });
         return;
@@ -149,6 +164,44 @@ export async function startLocalMcpBridge(options: LocalBridgeOptions): Promise<
         if (body.error !== undefined) item.reject(new McpAccessError('browser-operation-failed'));
         else item.resolve(body.result);
         reply(response, 204); return;
+      }
+      if (request.url === '/pending-previews') {
+        await json(request);
+        const visible: PreviewResult[] = [];
+        for (const [id, preview] of previews) {
+          try { await options.authority.pendingPreview(grant.id, id); visible.push(preview); }
+          catch { previews.delete(id); }
+        }
+        reply(response, 200, { previews: visible }); return;
+      }
+      if (request.url === '/approve-preview' || request.url === '/reject-preview') {
+        const body = await json(request);
+        if (typeof body.previewId !== 'string') throw new McpAccessError('preview-denied');
+        const preview = previews.get(body.previewId);
+        if (!preview) throw new McpAccessError('preview-denied');
+        const registered = await options.authority.pendingPreview(grant.id, body.previewId);
+        if (registered.assetId !== preview.assetId || registered.operationId !== preview.operationId ||
+          registered.expectedVersion !== preview.expectedVersion || registered.expiresAt !== preview.expiresAt)
+          throw new McpAccessError('preview-denied');
+        if (request.url === '/approve-preview') {
+          // Ask the active browser for the current RxDB version. A stale preview
+          // cannot be approved, even when it is still inside its five-minute TTL.
+          const current = await store.get(preview.assetId);
+          if (!current || current.asset.deleted || current.version !== preview.expectedVersion)
+            throw new McpAccessError('write-conflict');
+          await options.authority.approvePreview(grant.id, body.previewId);
+        } else await options.authority.rejectPreview(grant.id, body.previewId);
+        previews.delete(body.previewId);
+        reply(response, 204); return;
+      }
+      if (request.url === '/revoke-grant') {
+        await json(request);
+        await options.authority.revokeGrant(grant.id);
+        previews.clear();
+        failPending('grant-denied');
+        reply(response, 204);
+        queueMicrotask(() => { void stop(); });
+        return;
       }
       throw new McpAccessError('bridge-denied');
     } catch (error) {
@@ -177,7 +230,7 @@ export async function startLocalMcpBridge(options: LocalBridgeOptions): Promise<
     await allowed(); // Revocation while the browser was working must not release a result.
     return value;
   };
-  const store: McpAssetStore = {
+  store = {
     async get(id) {
       if (!grant.assetIds.includes(id)) throw new McpAccessError('asset-denied');
       const value = await call('get', [id]);
@@ -207,15 +260,31 @@ export async function startLocalMcpBridge(options: LocalBridgeOptions): Promise<
       return value;
     },
   };
-  return { url, get pairingSecret() { return pairingSecret; },
-    store,
-    async close() {
+  const stop = async () => {
       if (closed) return;
       closed = true;
+      clearTimeout(pairTimer);
+      clearTimeout(sessionTimer);
       sessionSecret = ''; pairingSecret = '';
+      previews.clear();
+      pairedReject(new McpAccessError('bridge-closed'));
       failPending('bridge-closed');
       await new Promise<void>(resolve => server.close(() => resolve()));
+  };
+  const pairTimer = setTimeout(() => { void stop(); }, 120_000);
+  return { url, get pairingSecret() { return pairingSecret; }, paired: pairedPromise,
+    store,
+    publishPreview(preview) {
+      if (closed || !sessionSecret || Date.now() >= sessionExpiresAt || preview.expiresAt <= Date.now() ||
+        previews.size >= 32) throw new McpAccessError('preview-denied');
+      const previous = previews.get(preview.previewId);
+      if (previous) {
+        if (JSON.stringify(previous) !== JSON.stringify(preview)) throw new McpAccessError('preview-denied');
+        return;
+      }
+      previews.set(preview.previewId, structuredClone(preview));
     },
+    close: stop,
   };
 }
 

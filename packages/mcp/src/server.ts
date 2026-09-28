@@ -3,7 +3,7 @@ import { serveStdio } from '@modelcontextprotocol/server/stdio';
 import { z } from 'zod';
 import type { McpAuthority } from './authority';
 import { McpAccessError } from './authority';
-import { McpAssetService, type McpAssetStore } from './service';
+import { McpAssetService, type McpAssetStore, type PreviewResult } from './service';
 
 const patchSchema = z.object({
   name: z.string().min(1).max(160).optional(),
@@ -18,6 +18,8 @@ export interface LocalMcpOptions {
   authority: McpAuthority;
   grantId: string;
   grantSecret: string;
+  /** Trusted launcher callback; the MCP tool cannot approve this preview. */
+  onPreview?: (preview: PreviewResult) => Promise<void> | void;
 }
 
 const response = (work: Promise<unknown>) => work.then(value => ({
@@ -45,7 +47,10 @@ export function createKeepAnyMcpServer(options: LocalMcpOptions) {
     description: 'Preview one permitted asset update. A trusted local caller must separately approve the exact preview before confirmation.',
     inputSchema: z.object({ id: z.string().min(1).max(96), operationId: z.string().regex(/^[A-Za-z0-9_-]{8,96}$/), patch: patchSchema }).strict(),
     annotations: { readOnlyHint: true },
-  }, ({ id, operationId, patch }) => response(service.previewUpdate(id, operationId, patch)));
+  }, ({ id, operationId, patch }) => response(service.previewUpdate(id, operationId, patch).then(async preview => {
+    await options.onPreview?.(preview);
+    return preview;
+  })));
   server.registerTool('confirm_asset_update', {
     description: 'Apply a previously previewed update only after out-of-band local approval. Reusing an operation ID is idempotent.',
     inputSchema: z.object({ id: z.string().min(1).max(96), operationId: z.string().regex(/^[A-Za-z0-9_-]{8,96}$/),

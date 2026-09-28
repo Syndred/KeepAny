@@ -107,13 +107,98 @@ describe('loopback MCP browser relay', () => {
   });
 
   it('keeps the browser executor inactive when the user denies the scope', async () => {
-    const { bridge, store } = await fixture();
+    const { bridge, store, authority, grant } = await fixture();
     const fetcher: typeof fetch = (input, init) => fetch(input, { ...init,
       headers: { ...Object.fromEntries(new Headers(init?.headers).entries()), Origin: appOrigin } });
     const client = new BrowserMcpBridgeClient({ url: bridge.url, pairingSecret: bridge.pairingSecret,
       store, fetcher, approve: async () => false });
     await expect(client.pair()).rejects.toThrow('bridge-approval-denied');
     await expect(client.run()).rejects.toThrow('bridge-not-paired');
+    await expect(authority.requireGrant(grant.id, grant.secret)).rejects.toThrow('grant-denied');
+  });
+
+  it('uses paired browser controls for exact-value approval, rejection, and revocation', async () => {
+    const { asset, store, authority, grant, bridge, request } = await fixture();
+    const fetcher: typeof fetch = (input, init) => fetch(input, { ...init,
+      headers: { ...Object.fromEntries(new Headers(init?.headers).entries()), Origin: appOrigin } });
+    const client = new BrowserMcpBridgeClient({ url: bridge.url, pairingSecret: bridge.pairingSecret,
+      store, fetcher, approve: async () => true });
+    const paired = bridge.paired;
+    await client.pair();
+    await paired;
+    const running = client.run();
+    try {
+      const service = new McpAssetService(bridge.store, authority, grant.id, grant.secret);
+      const first = await service.previewUpdate(asset.id, 'control-op-001', { name: 'User approved' });
+      bridge.publishPreview(first);
+      expect(await client.pendingPreviews()).toEqual([first]);
+      await expect(service.confirmUpdate({ id: asset.id, operationId: first.operationId,
+        previewId: first.previewId, patch: { name: 'User approved' } })).rejects.toThrow('preview-not-approved');
+      const pairResponse = await request('/pair', { secret: bridge.pairingSecret });
+      expect(pairResponse.status).toBe(403);
+      expect((await request('/approve-preview', { previewId: first.previewId }, appOrigin,
+        { Authorization: 'Bearer wrong' })).status).toBe(403);
+      expect((await request('/approve-preview', { previewId: first.previewId }, 'https://wrong.example',
+        { Authorization: 'Bearer wrong' })).status).toBe(403);
+      await client.approvePreview(first.previewId);
+      expect(await client.pendingPreviews()).toEqual([]);
+      expect(await service.confirmUpdate({ id: asset.id, operationId: first.operationId,
+        previewId: first.previewId, patch: { name: 'User approved' } })).toEqual({ status: 'applied' });
+      expect(store.current().asset).toMatchObject({ name: 'User approved', username: 'private-login' });
+
+      const second = await service.previewUpdate(asset.id, 'control-op-002', { name: 'User rejected' });
+      bridge.publishPreview(second);
+      await client.rejectPreview(second.previewId);
+      await expect(service.confirmUpdate({ id: asset.id, operationId: second.operationId,
+        previewId: second.previewId, patch: { name: 'User rejected' } })).rejects.toThrow('preview-not-approved');
+      await expect(service.previewUpdate(asset.id, second.operationId, { name: 'User rejected' })).rejects.toThrow('preview-denied');
+      const audit = await authority.auditEntries(grant.id);
+      expect(JSON.stringify(audit)).not.toContain('User approved');
+      expect(JSON.stringify(audit)).not.toContain('User rejected');
+      await client.revokeGrant();
+      await expect(authority.requireGrant(grant.id, grant.secret)).rejects.toThrow('grant-denied');
+      await expect(bridge.store.get(asset.id)).rejects.toThrow();
+    } finally { client.close(); await running.catch(() => undefined); }
+  });
+
+  it('refuses approval when the RxDB version changed after the model preview', async () => {
+    const { asset, store, authority, grant, bridge } = await fixture();
+    const fetcher: typeof fetch = (input, init) => fetch(input, { ...init,
+      headers: { ...Object.fromEntries(new Headers(init?.headers).entries()), Origin: appOrigin } });
+    const client = new BrowserMcpBridgeClient({ url: bridge.url, pairingSecret: bridge.pairingSecret,
+      store, fetcher, approve: async () => true });
+    await client.pair();
+    const running = client.run();
+    try {
+      const service = new McpAssetService(bridge.store, authority, grant.id, grant.secret);
+      const preview = await service.previewUpdate(asset.id, 'control-op-003', { name: 'Stale' });
+      bridge.publishPreview(preview);
+      expect(await store.compareAndSet(asset.id, 'v1', { ...asset, name: 'Concurrent edit' })).toBe('applied');
+      await expect(client.approvePreview(preview.previewId)).rejects.toThrow('bridge-request-failed');
+      await expect(service.confirmUpdate({ id: asset.id, operationId: preview.operationId,
+        previewId: preview.previewId, patch: { name: 'Stale' } })).rejects.toThrow('preview-not-approved');
+      expect(store.current().asset.name).toBe('Concurrent edit');
+    } finally { await client.revokeGrant().catch(() => undefined); await running.catch(() => undefined); }
+  });
+
+  it('aborts the browser poll and releases the grant when the page run is cancelled', async () => {
+    const { bridge, store, authority, grant } = await fixture();
+    const fetcher: typeof fetch = (input, init) => fetch(input, { ...init,
+      headers: { ...Object.fromEntries(new Headers(init?.headers).entries()), Origin: appOrigin } });
+    const client = new BrowserMcpBridgeClient({ url: bridge.url, pairingSecret: bridge.pairingSecret,
+      store, fetcher, approve: async () => true });
+    await client.pair();
+    const controller = new AbortController();
+    const running = client.run(controller.signal);
+    controller.abort();
+    await running;
+    await expect(client.run()).rejects.toThrow('bridge-not-paired');
+    for (let attempt = 0; attempt < 20; attempt++) {
+      try { await authority.requireGrant(grant.id, grant.secret); }
+      catch { break; }
+      await new Promise(resolve => setTimeout(resolve, 10));
+    }
+    await expect(authority.requireGrant(grant.id, grant.secret)).rejects.toThrow('grant-denied');
   });
 
   it('consumes each response nonce once and times out an unanswered request', async () => {

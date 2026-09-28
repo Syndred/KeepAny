@@ -7,7 +7,12 @@ const object = (value: unknown): Record<string, unknown> => {
   if (!value || typeof value !== 'object' || Array.isArray(value)) throw Error('invalid-bridge-message');
   return value as Record<string, unknown>;
 };
-const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+const sleep = (ms: number, signal: AbortSignal) => new Promise<void>(resolve => {
+  if (signal.aborted) { resolve(); return; }
+  const timer = setTimeout(done, ms);
+  function done() { clearTimeout(timer); signal.removeEventListener('abort', done); resolve(); }
+  signal.addEventListener('abort', done, { once: true });
+});
 const project = (snapshot: AssetSnapshot, scope: BridgeScope): AssetSnapshot => {
   const { asset } = snapshot;
   const partial: Record<string, unknown> = { id: asset.id, kind: asset.kind, createdAt: asset.createdAt,
@@ -65,6 +70,7 @@ export class BrowserMcpBridgeClient {
   private expiresAt = 0;
   private scope: BridgeScope | null = null;
   private stopped = false;
+  private readonly loopAbort = new AbortController();
   private readonly fetcher: typeof fetch;
   constructor(private readonly options: BrowserBridgeOptions) {
     const url = new URL(options.url);
@@ -73,10 +79,10 @@ export class BrowserMcpBridgeClient {
     this.fetcher = options.fetcher ?? fetch;
   }
 
-  private async post(path: string, body: unknown, token?: string) {
+  private async post(path: string, body: unknown, token?: string, signal?: AbortSignal) {
     const response = await this.fetcher(`${this.options.url}${path}`, { method: 'POST', mode: 'cors', cache: 'no-store',
       headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-      body: JSON.stringify(body) });
+      body: JSON.stringify(body), signal });
     if (response.status === 204) return null;
     if (!response.ok) throw Error('bridge-request-failed');
     return object(await response.json());
@@ -100,25 +106,75 @@ export class BrowserMcpBridgeClient {
     this.expiresAt = reply.expiresAt;
     let approved = false;
     try { approved = await this.options.approve(this.scope); }
-    catch (error) { this.close(); throw error; }
-    if (!approved) { this.close(); throw Error('bridge-approval-denied'); }
+    catch (error) { await this.revokeGrant().catch(() => undefined); throw error; }
+    if (!approved) { await this.revokeGrant().catch(() => undefined); throw Error('bridge-approval-denied'); }
     return this.scope;
+  }
+
+  private token() {
+    if (this.stopped || !this.sessionSecret || Date.now() >= this.expiresAt) throw Error('bridge-not-paired');
+    return this.sessionSecret;
+  }
+
+  /** The trusted Web UI may show exact before/after values; this is never an MCP tool. */
+  async pendingPreviews(): Promise<import('./service').PreviewResult[]> {
+    const reply = await this.post('/pending-previews', {}, this.token());
+    if (!reply || !Array.isArray(reply.previews)) throw Error('invalid-bridge-message');
+    return reply.previews as import('./service').PreviewResult[];
+  }
+
+  async approvePreview(previewId: string): Promise<void> {
+    if (!/^[0-9a-f-]{36}$/.test(previewId)) throw Error('invalid-preview-id');
+    await this.post('/approve-preview', { previewId }, this.token());
+  }
+
+  async rejectPreview(previewId: string): Promise<void> {
+    if (!/^[0-9a-f-]{36}$/.test(previewId)) throw Error('invalid-preview-id');
+    await this.post('/reject-preview', { previewId }, this.token());
+  }
+
+  /** Server-side grant revocation precedes clearing the browser session. */
+  async revokeGrant(): Promise<void> {
+    const token = this.sessionSecret;
+    try { if (token) await this.post('/revoke-grant', {}, token); }
+    finally { this.stopLocal(); }
   }
 
   /** Keep this active only while the Web app is open. It never persists a token. */
   async run(signal?: AbortSignal) {
     if (!this.scope || !this.sessionSecret) throw Error('bridge-not-paired');
-    while (!this.stopped && !signal?.aborted && Date.now() < this.expiresAt) {
-      const request = await this.post('/poll', {}, this.sessionSecret);
-      if (!request) { await sleep(100); continue; }
-      const message = request as unknown as BrowserBridgeRequest;
-      let body: { id: string; result?: BrowserBridgeResult; error?: string };
-      try {
-        body = { id: message.id, result: await executeBrowserBridgeRequest(message, this.options.store, this.scope) };
-      } catch { body = { id: message.id, error: 'browser-operation-failed' }; }
-      await this.post('/respond', body, this.sessionSecret);
+    const combined = signal ? AbortSignal.any([signal, this.loopAbort.signal]) : this.loopAbort.signal;
+    try {
+      while (!this.stopped && !combined.aborted && Date.now() < this.expiresAt) {
+        const request = await this.post('/poll', {}, this.sessionSecret, combined);
+        if (!request) { await sleep(100, combined); continue; }
+        const message = request as unknown as BrowserBridgeRequest;
+        let body: { id: string; result?: BrowserBridgeResult; error?: string };
+        try {
+          body = { id: message.id, result: await executeBrowserBridgeRequest(message, this.options.store, this.scope) };
+        } catch { body = { id: message.id, error: 'browser-operation-failed' }; }
+        if (combined.aborted) break;
+        await this.post('/respond', body, this.sessionSecret, combined);
+      }
+    } catch (error) {
+      if (!combined.aborted) throw error;
+    } finally {
+      if (!this.stopped) this.close();
     }
   }
 
-  close() { this.stopped = true; this.sessionSecret = ''; this.scope = null; }
+  private stopLocal() {
+    this.stopped = true;
+    this.loopAbort.abort();
+    this.sessionSecret = '';
+    this.scope = null;
+  }
+
+  /** Best-effort on page close; callers needing proof of revocation use revokeGrant(). */
+  close() {
+    if (this.stopped) return;
+    const token = this.sessionSecret;
+    if (token) void this.post('/revoke-grant', {}, token).catch(() => undefined);
+    this.stopLocal();
+  }
 }

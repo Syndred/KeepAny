@@ -15,7 +15,9 @@ describe('official MCP protocol wiring', () => {
       async list(ids: readonly string[]) { return ids.includes(asset.id) ? [{ asset, version: 'v1' }] : []; },
       async compareAndSet() { return 'applied' as const; },
     };
-    const server = createKeepAnyMcpServer({ store, authority, grantId: grant.id, grantSecret: grant.secret });
+    const published: Array<{ previewId: string; expectedVersion: string; changes: unknown[] }> = [];
+    const server = createKeepAnyMcpServer({ store, authority, grantId: grant.id, grantSecret: grant.secret,
+      onPreview: preview => { published.push(preview); } });
     const client = new Client({ name: 'keepany-test', version: '1.0.0' });
     const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
     try {
@@ -31,6 +33,9 @@ describe('official MCP protocol wiring', () => {
       const preview = await client.callTool({ name: 'preview_asset_update',
         arguments: { id: asset.id, operationId: 'operation-003', patch: { name: 'Updated' } } });
       const result = (preview.structuredContent as { result: { previewId: string } }).result;
+      expect(published).toHaveLength(1);
+      expect(published[0]).toMatchObject({ previewId: result.previewId, expectedVersion: 'v1',
+        changes: [{ field: 'name', before: 'MCP visible', after: 'Updated' }] });
       const denied = await client.callTool({ name: 'confirm_asset_update',
         arguments: { id: asset.id, operationId: 'operation-003', previewId: result.previewId, patch: { name: 'Updated' } } });
       expect(denied.isError).toBe(true);

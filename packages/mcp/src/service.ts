@@ -10,7 +10,7 @@ export interface McpAssetStore {
 }
 
 export type AssetPatch = Partial<Pick<Asset, WriteField>>;
-export type PreviewResult = { previewId: string; operationId: string; assetId: string; expiresAt: number;
+export type PreviewResult = { previewId: string; operationId: string; assetId: string; expectedVersion: string; expiresAt: number;
   changes: Array<{ field: WriteField; before: Asset[WriteField]; after: Asset[WriteField] }> };
 
 const allowedRead = (grant: Grant, asset: Asset) => grant.assetIds.includes(asset.id) && !asset.deleted;
@@ -71,7 +71,8 @@ export class McpAssetService {
     if (!changes.length) throw new McpAccessError('no-change');
     const preview = await this.authority.createPreview({ grantId: grant.id, operationId, assetId: id,
       expectedVersion: snapshot.version, patchHash: patchHash(patch) });
-    return { previewId: preview.id, operationId, assetId: id, expiresAt: preview.expiresAt, changes };
+    return { previewId: preview.id, operationId, assetId: id, expectedVersion: preview.expectedVersion,
+      expiresAt: preview.expiresAt, changes };
   }
 
   async confirmUpdate(input: { id: string; operationId: string; previewId: string; patch: AssetPatch }) {

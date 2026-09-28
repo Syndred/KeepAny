@@ -1,9 +1,18 @@
-import { createHash, randomBytes, randomUUID, timingSafeEqual } from 'node:crypto';
+import { sha256 } from '@noble/hashes/sha2.js';
+import { bytesToHex, utf8ToBytes } from '@noble/hashes/utils.js';
+import { readableFields, writableFields, type ReadField, type WriteField } from './fields';
 
-export const readableFields = ['kind', 'name', 'category', 'tags', 'description', 'url', 'status', 'dueDate'] as const;
-export const writableFields = ['name', 'category', 'tags', 'description', 'url'] as const;
-export type ReadField = (typeof readableFields)[number];
-export type WriteField = (typeof writableFields)[number];
+export { readableFields, writableFields } from './fields';
+export type { ReadField, WriteField } from './fields';
+
+const randomUUID = () => crypto.randomUUID();
+const randomSecret = () => {
+  const bytes = crypto.getRandomValues(new Uint8Array(32));
+  // Buffer is unavailable in the browser. Base64url can be built from 32 bytes.
+  let binary = '';
+  for (const byte of bytes) binary += String.fromCharCode(byte);
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+};
 
 export interface Grant {
   id: string;
@@ -25,6 +34,7 @@ export interface PendingPreview {
   patchHash: string;
   expiresAt: number;
   approvedAt?: number;
+  rejectedAt?: number;
 }
 
 export interface OperationReceipt {
@@ -42,7 +52,7 @@ export interface AuditEntry {
   id: string;
   at: number;
   grantId: string;
-  action: 'list' | 'get' | 'preview' | 'confirm' | 'grant' | 'revoke' | 'approve';
+  action: 'list' | 'get' | 'preview' | 'confirm' | 'grant' | 'revoke' | 'approve' | 'reject';
   outcome: 'allowed' | 'denied' | 'applied' | 'duplicate' | 'conflict';
   assetId?: string;
   fieldNames?: string[];
@@ -84,12 +94,13 @@ export class McpAccessError extends Error {
   constructor(readonly code: string) { super(code); }
 }
 
-export const digest = (value: string) => createHash('sha256').update(value).digest('hex');
+export const digest = (value: string) => bytesToHex(sha256(utf8ToBytes(value)));
 const secretDigest = (secret: string) => digest(`keepany-mcp-grant-v1:${secret}`);
 const equalDigest = (a: string, b: string) => {
-  const left = Buffer.from(a, 'hex');
-  const right = Buffer.from(b, 'hex');
-  return left.length === right.length && left.length === 32 && timingSafeEqual(left, right);
+  if (!/^[a-f0-9]{64}$/.test(a) || !/^[a-f0-9]{64}$/.test(b)) return false;
+  let different = 0;
+  for (let i = 0; i < 64; i++) different |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return different === 0;
 };
 
 export class McpAuthority {
@@ -106,7 +117,7 @@ export class McpAuthority {
       !Number.isSafeInteger(input.ttlMs) || input.ttlMs < 60_000 || input.ttlMs > 7 * 24 * 60 * 60_000) {
       throw new McpAccessError('invalid-grant');
     }
-    const secret = randomBytes(32).toString('base64url');
+    const secret = randomSecret();
     const at = this.now();
     const grant: Grant = { id: randomUUID(), secretHash: secretDigest(secret), assetIds: ids,
       readFields: reads, writeFields: writes, createdAt: at, expiresAt: at + input.ttlMs };
@@ -145,6 +156,7 @@ export class McpAuthority {
     return this.storage.update(state => {
       const previous = state.previews.find(item => item.grantId === preview.grantId && item.operationId === preview.operationId);
       if (previous) {
+        if (previous.rejectedAt !== undefined || previous.expiresAt <= at) throw new McpAccessError('preview-denied');
         if (previous.patchHash !== preview.patchHash || previous.assetId !== preview.assetId || previous.expectedVersion !== preview.expectedVersion)
           throw new McpAccessError('operation-reused');
         return previous;
@@ -165,16 +177,42 @@ export class McpAuthority {
     await this.storage.update(state => {
       const grant = state.grants.find(item => item.id === grantId);
       const preview = state.previews.find(item => item.id === previewId && item.grantId === grantId);
-      if (!grant || grant.revokedAt !== undefined || grant.expiresAt <= at || !preview || preview.expiresAt <= at) throw new McpAccessError('preview-denied');
+      if (!grant || grant.revokedAt !== undefined || grant.expiresAt <= at || !preview ||
+        preview.expiresAt <= at || preview.rejectedAt !== undefined || preview.approvedAt !== undefined) throw new McpAccessError('preview-denied');
       preview.approvedAt = at;
       audit(state, { at, grantId, action: 'approve', outcome: 'allowed', assetId: preview.assetId, operationId: preview.operationId });
+    });
+  }
+
+  async pendingPreview(grantId: string, previewId: string) {
+    const at = this.now();
+    const state = await this.storage.read();
+    const grant = state.grants.find(item => item.id === grantId);
+    const preview = state.previews.find(item => item.id === previewId && item.grantId === grantId);
+    if (!grant || grant.revokedAt !== undefined || grant.expiresAt <= at || !preview ||
+      preview.expiresAt <= at || preview.approvedAt !== undefined || preview.rejectedAt !== undefined)
+      throw new McpAccessError('preview-denied');
+    return preview;
+  }
+
+  async rejectPreview(grantId: string, previewId: string) {
+    const at = this.now();
+    await this.storage.update(state => {
+      const grant = state.grants.find(item => item.id === grantId);
+      const preview = state.previews.find(item => item.id === previewId && item.grantId === grantId);
+      if (!grant || grant.revokedAt !== undefined || grant.expiresAt <= at || !preview ||
+        preview.expiresAt <= at || preview.approvedAt !== undefined || preview.rejectedAt !== undefined)
+        throw new McpAccessError('preview-denied');
+      preview.rejectedAt = at;
+      audit(state, { at, grantId, action: 'reject', outcome: 'denied', assetId: preview.assetId, operationId: preview.operationId });
     });
   }
 
   async approvedPreview(grantId: string, previewId: string, operationId: string, assetId: string, patchHash: string) {
     const item = (await this.storage.read()).previews.find(preview => preview.id === previewId && preview.grantId === grantId &&
       preview.operationId === operationId && preview.assetId === assetId && preview.patchHash === patchHash);
-    if (!item || item.approvedAt === undefined || item.expiresAt <= this.now()) throw new McpAccessError('preview-not-approved');
+    if (!item || item.approvedAt === undefined || item.rejectedAt !== undefined || item.expiresAt <= this.now())
+      throw new McpAccessError('preview-not-approved');
     return item;
   }
 
