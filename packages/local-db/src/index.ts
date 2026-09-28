@@ -4,6 +4,7 @@ import Dexie, { type Table } from 'dexie';
 import { z } from 'zod';
 import { entitySchemas, type EntityType } from '../../domain/src';
 import { zipSync, unzipSync, strToU8, strFromU8 } from 'fflate';
+import type { SyncOperation } from '../../contracts/src';
 
 // This transport shape is consumed by the web app's RxDB observer.
 export interface RecordRow { id: string; type: EntityType; payload: string; updatedAt: number }
@@ -11,8 +12,12 @@ interface StoredFile { id: string; blob: Blob; name: string }
 interface Journal { id: string; rows: RecordRow[] }
 interface ImportJournal { id: string; rows: RecordRow[] }
 interface SyncBase { id: string; payload: string; version: number }
-export interface PulledRow { row: RecordRow; sequence: number; version: number }
+export interface PulledRow { row: RecordRow; sequence: number; version: number; operationId?: string; keyEpoch?: number; ciphertext?: string }
 interface PullJournal { id: string; cursorStart: number; changes: PulledRow[] }
+interface ScopedBase { id: string; scope: string; rowId: string; payload: string; version: number; row?: RecordRow; operationId?: string; keyEpoch?: number; ciphertext?: string }
+export interface ScopedOutbox { id: string; scope: string; row: RecordRow; operation: SyncOperation; blocked?: boolean }
+interface ScopedPullJournal { id: string; scope: string; cursorStart: number; change: PulledRow; localPayload: string | null; decision?: 'local' | 'remote' }
+export interface ScopedConflict { rowId: string; localPayload: string | null; remotePayload: string; basePayload: string | null; remoteVersion: number }
 
 class FileStore extends Dexie {
   blobs!: Table<StoredFile, string>;
@@ -21,11 +26,17 @@ class FileStore extends Dexie {
   syncBase!: Table<SyncBase, string>;
   syncMeta!: Table<{ id: string; cursor: number }, string>;
   pullJournal!: Table<PullJournal, string>;
+  scopedBase!: Table<ScopedBase, string>;
+  scopedMeta!: Table<{ id: string; cursor: number; keyFingerprint?: string; keyEpoch?: number }, string>;
+  scopedOutbox!: Table<ScopedOutbox, string>;
+  scopedPull!: Table<ScopedPullJournal, string>;
   constructor(name: string) {
     super(`${name}-files-v1`);
     this.version(1).stores({ blobs: 'id', journal: 'id' });
     this.version(2).stores({ blobs: 'id', journal: 'id', importJournal: 'id' });
     this.version(3).stores({ blobs: 'id', journal: 'id', importJournal: 'id', syncBase: 'id', syncMeta: 'id', pullJournal: 'id' });
+    this.version(4).stores({ blobs: 'id', journal: 'id', importJournal: 'id', syncBase: 'id', syncMeta: 'id', pullJournal: 'id',
+      scopedBase: 'id, scope', scopedMeta: 'id', scopedOutbox: 'id, scope', scopedPull: 'id' });
   }
 }
 
@@ -165,6 +176,121 @@ export class LocalRepository {
   }
 
   async syncCursor(): Promise<number> { return (await this.fileStore.syncMeta.get('cursor'))?.cursor ?? 0; }
+
+  async scopedCursor(scope: string): Promise<number> { return (await this.fileStore.scopedMeta.get(scope))?.cursor ?? 0; }
+
+  async pinScopedKey(scope: string, fingerprint: string, keyEpoch: number): Promise<void> {
+    assertScope(scope);
+    if (!/^[a-f0-9]{64}$/.test(fingerprint) || !Number.isSafeInteger(keyEpoch) || keyEpoch < 1) throw Error('sync-key');
+    await this.fileStore.transaction('rw', this.fileStore.scopedMeta, async () => {
+      const existing = await this.fileStore.scopedMeta.get(scope);
+      if (existing && (existing.keyFingerprint !== fingerprint || existing.keyEpoch !== keyEpoch)) throw Error('sync-key-mismatch');
+      if (!existing) await this.fileStore.scopedMeta.add({ id: scope, cursor: 0, keyFingerprint: fingerprint, keyEpoch });
+    });
+  }
+
+  async scopedBaseFor(scope: string, rowId: string): Promise<ScopedBase | null> {
+    return (await this.fileStore.scopedBase.get(scopedKey(scope, rowId))) ?? null;
+  }
+
+  async listScopedOutbox(scope: string): Promise<ScopedOutbox[]> {
+    assertScope(scope);
+    return this.fileStore.scopedOutbox.where('scope').equals(scope).toArray();
+  }
+
+  async dirtyScopedRows(scope: string): Promise<RecordRow[]> {
+    assertScope(scope);
+    const rows = await this.allRecords();
+    const dirty: RecordRow[] = [];
+    for (const row of rows) {
+      const [base, pending] = await Promise.all([
+        this.fileStore.scopedBase.get(scopedKey(scope, row.id)),
+        this.fileStore.scopedOutbox.get(scopedKey(scope, row.id)),
+      ]);
+      if (row.payload !== (base?.payload ?? null) && !pending) dirty.push(row);
+    }
+    return dirty;
+  }
+
+  async stageScopedOutbox(scope: string, row: RecordRow, operation: SyncOperation): Promise<ScopedOutbox> {
+    assertScope(scope);
+    validateRow(row);
+    if (operation.id !== row.id || operation.kind !== row.type || operation.expectedVersion !==
+      ((await this.scopedBaseFor(scope, row.id))?.version ?? 0) || operation.tombstone !== Boolean(parsedPayload(row).deleted)) throw Error('outbox-context');
+    const id = scopedKey(scope, row.id);
+    const existing = await this.fileStore.scopedOutbox.get(id);
+    if (existing) return existing;
+    const current = await this.db.records.findOne(row.id).exec();
+    if (!current || canonical(current).payload !== row.payload) throw Error('outbox-stale');
+    const item = { id, scope, row, operation };
+    await this.fileStore.scopedOutbox.add(item);
+    return item;
+  }
+
+  async acknowledgeScopedOutbox(scope: string, operationId: string, version: number, keyEpoch: number): Promise<void> {
+    assertScope(scope);
+    const item = (await this.listScopedOutbox(scope)).find(entry => entry.operation.operationId === operationId);
+    if (!item || version !== item.operation.expectedVersion + 1) throw Error('outbox-ack');
+    await this.fileStore.transaction('rw', this.fileStore.scopedBase, this.fileStore.scopedOutbox, async () => {
+      const current = await this.fileStore.scopedOutbox.get(item.id);
+      if (current?.operation.operationId !== operationId) throw Error('outbox-ack');
+      await this.fileStore.scopedBase.put({ id: item.id, scope, rowId: item.row.id, payload: item.row.payload,
+        row: item.row, version, operationId, keyEpoch, ciphertext: item.operation.ciphertext });
+      await this.fileStore.scopedOutbox.delete(item.id);
+    });
+  }
+
+  async blockScopedOutbox(scope: string, operationId: string): Promise<void> {
+    const item = (await this.listScopedOutbox(scope)).find(entry => entry.operation.operationId === operationId);
+    if (!item) throw Error('outbox-missing');
+    await this.fileStore.scopedOutbox.update(item.id, { blocked: true });
+  }
+
+  async scopedConflict(scope: string): Promise<ScopedConflict | null> {
+    assertScope(scope);
+    const journal = await this.fileStore.scopedPull.get(scope);
+    if (!journal || journal.decision) return null;
+    const base = await this.fileStore.scopedBase.get(scopedKey(scope, journal.change.row.id));
+    const current = await this.db.records.findOne(journal.change.row.id).exec();
+    const localPayload = current ? canonical(current).payload : null;
+    if (localPayload === journal.change.row.payload || localPayload === (base?.payload ?? null)) return null;
+    return { rowId: journal.change.row.id, localPayload, remotePayload: journal.change.row.payload,
+      basePayload: base?.payload ?? null, remoteVersion: journal.change.version };
+  }
+
+  async applyScopedPull(scope: string, change: PulledRow): Promise<'applied' | 'conflict'> {
+    assertScope(scope);
+    validateRow(change.row);
+    const cursor = await this.scopedCursor(scope);
+    if (change.sequence !== cursor + 1 || !Number.isSafeInteger(change.version) || change.version < 1) throw Error('pull-sequence');
+    const previous = await this.fileStore.scopedPull.get(scope);
+    if (previous && (previous.change.sequence !== change.sequence || previous.change.row.payload !== change.row.payload)) throw Error('pull-pending');
+    if (!previous) {
+      const current = await this.db.records.findOne(change.row.id).exec();
+      await this.fileStore.scopedPull.add({ id: scope, scope, cursorStart: cursor, change,
+        localPayload: current ? canonical(current).payload : null });
+    }
+    return replayScopedPull(this.db, this.fileStore, scope);
+  }
+
+  async resumeScopedPull(scope: string): Promise<'applied' | 'conflict' | 'none'> {
+    assertScope(scope);
+    if (!(await this.fileStore.scopedPull.get(scope))) return 'none';
+    return replayScopedPull(this.db, this.fileStore, scope);
+  }
+
+  async resolveScopedConflict(scope: string, decision: 'local' | 'remote'): Promise<void> {
+    assertScope(scope);
+    const journal = await this.fileStore.scopedPull.get(scope);
+    if (!journal || !(await this.scopedConflict(scope))) throw Error('conflict-missing');
+    const current = await this.db.records.findOne(journal.change.row.id).exec();
+    if ((current ? canonical(current).payload : null) !== journal.localPayload) {
+      await this.fileStore.scopedPull.update(scope, { localPayload: current ? canonical(current).payload : null });
+      throw Error('conflict-local-changed');
+    }
+    await this.fileStore.scopedPull.update(scope, { decision });
+    if (await replayScopedPull(this.db, this.fileStore, scope) !== 'applied') throw Error('conflict-unresolved');
+  }
 
   // The cursor is committed only after every decrypted record in the page is durable.
   async applyPulledBatch(changes: PulledRow[], cursorStart: number): Promise<number> {
@@ -417,6 +543,62 @@ async function replayPullJournal(db: RxDatabase, store: FileStore, id: string): 
   });
 }
 
+function assertScope(scope: string): void {
+  if (!/^[a-f0-9]{64}:[a-f0-9-]{36}$/.test(scope)) throw Error('sync-scope');
+}
+function scopedKey(scope: string, rowId: string): string { assertScope(scope); return `${scope}|${rowId}`; }
+
+async function replayScopedPull(db: RxDatabase, store: FileStore, scope: string): Promise<'applied' | 'conflict'> {
+  const journal = await store.scopedPull.get(scope);
+  if (!journal) return 'applied';
+  if (((await store.scopedMeta.get(scope))?.cursor ?? 0) !== journal.cursorStart) throw Error('cursor-mismatch');
+  const { row, version } = journal.change;
+  validateRow(row);
+  const id = scopedKey(scope, row.id);
+  const current = await db.records.findOne(row.id).exec();
+  const currentPayload = current ? canonical(current).payload : null;
+  const base = await store.scopedBase.get(id);
+  const basePayload = base?.payload ?? null;
+  if (base?.version === version && base.operationId === journal.change.operationId &&
+      base.ciphertext === journal.change.ciphertext && row.payload === base.payload) {
+    await store.transaction('rw', store.scopedMeta, store.scopedPull, async () => {
+      const meta = await store.scopedMeta.get(scope);
+      await store.scopedMeta.put({ ...meta, id: scope, cursor: journal.cursorStart + 1 });
+      await store.scopedPull.delete(scope);
+    });
+    return 'applied';
+  }
+  if (!journal.decision && currentPayload !== row.payload && currentPayload !== basePayload) return 'conflict';
+  if (journal.decision === 'remote' && currentPayload !== journal.localPayload && currentPayload !== row.payload) {
+    await store.scopedPull.update(scope, { decision: undefined, localPayload: currentPayload });
+    return 'conflict';
+  }
+  if (journal.decision !== 'local' && currentPayload !== row.payload) {
+    if (journal.decision !== 'remote' && currentPayload !== basePayload) return 'conflict';
+    if (current) {
+      await current.incrementalModify((data: RecordRow) => {
+        if (data.payload !== currentPayload) throw Error('pull-race');
+        return { ...data, ...row };
+      });
+    } else {
+      try { await db.records.insert(row); }
+      catch (error) {
+        const raced = await db.records.findOne(row.id).exec();
+        if (!raced || canonical(raced).payload !== row.payload) throw error;
+      }
+    }
+  }
+  await store.transaction('rw', store.scopedMeta, store.scopedBase, store.scopedOutbox, store.scopedPull, async () => {
+    await store.scopedBase.put({ id, scope, rowId: row.id, payload: row.payload, version,
+      row, operationId: journal.change.operationId, keyEpoch: journal.change.keyEpoch, ciphertext: journal.change.ciphertext });
+    if (journal.decision) await store.scopedOutbox.delete(id);
+    const meta = await store.scopedMeta.get(scope);
+    await store.scopedMeta.put({ ...meta, id: scope, cursor: journal.cursorStart + 1 });
+    await store.scopedPull.delete(scope);
+  });
+  return 'applied';
+}
+
 export async function openLocalRepository(name: string): Promise<LocalRepository> {
   if (!/^[a-z][a-z0-9-]{2,60}$/.test(name)) throw Error('database-name');
   const store = name === 'keepany-v1' ? files : new FileStore(name);
@@ -429,6 +611,10 @@ export async function openLocalRepository(name: string): Promise<LocalRepository
     const repository = new LocalRepository(db, store);
     for (const entry of await store.pullJournal.toArray()) {
       try { await replayPullJournal(db, store, entry.id); }
+      catch (error) { repository.syncRecoveryError = error instanceof Error ? error.message : 'pull-failed'; break; }
+    }
+    for (const entry of await store.scopedPull.toArray()) {
+      try { await replayScopedPull(db, store, entry.scope); }
       catch (error) { repository.syncRecoveryError = error instanceof Error ? error.message : 'pull-failed'; break; }
     }
     return repository;
@@ -454,6 +640,7 @@ function defaultRepository(): Promise<LocalRepository> {
   return singleton;
 }
 export async function database(): Promise<RxDatabase> { return (await defaultRepository()).db; }
+export async function localRepository(): Promise<LocalRepository> { return defaultRepository(); }
 export async function save(type: EntityType, value: unknown) { return (await defaultRepository()).save(type, value); }
 export async function saveBatch(items: ReadonlyArray<{ type: EntityType; value: unknown }>) { return (await defaultRepository()).saveBatch(items); }
 export async function applyPulledBatch(changes: PulledRow[], cursorStart: number) { return (await defaultRepository()).applyPulledBatch(changes, cursorStart); }
