@@ -198,11 +198,17 @@ describe('browser MCP write cancellation boundary', () => {
 
   it('propagates only the external run signal through a paused browser read', async () => {
     const controller = new AbortController();
-    const { store, confirm, running } = await fixture(300, { signal: controller.signal });
+    const { store, authority, grant, confirm, running } = await fixture(300, { signal: controller.signal });
     store.pauseAtRead = store.reads + 2;
     const result = confirm();
     await store.readEntered.promise;
     controller.abort();
+    for (let attempt = 0; attempt < 20; attempt++) {
+      try { await authority.requireGrant(grant.id, grant.secret); }
+      catch { break; }
+      await new Promise(resolve => setTimeout(resolve, 10));
+    }
+    await expect(authority.requireGrant(grant.id, grant.secret)).rejects.toThrow('grant-denied');
     store.readRelease.resolve();
     expect(await result).toBeInstanceOf(Error);
     await running;

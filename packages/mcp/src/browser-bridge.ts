@@ -209,7 +209,10 @@ export class BrowserMcpBridgeClient {
   async run(signal?: AbortSignal) {
     if (!this.scope || !this.sessionSecret) throw Error('bridge-not-paired');
     const combined = signal ? AbortSignal.any([signal, this.loopAbort.signal]) : this.loopAbort.signal;
-    const cancelOnAbort = () => this.cancelWrites();
+    const cancelOnAbort = () => {
+      this.cancelWrites();
+      if (!this.stopped && !this.revocation) void this.close();
+    };
     if (combined.aborted) cancelOnAbort();
     else combined.addEventListener('abort', cancelOnAbort, { once: true });
     try {
