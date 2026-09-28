@@ -179,7 +179,13 @@ test("late old CSV cannot replace a newer valid CSV", async ({ page }) => {
 	await releaseHeldRead(page);
 	await expect(page.locator(".import-preview")).toContainText("New CSV");
 	await expect(page.locator(".import-preview")).not.toContainText("Old CSV");
-	await page.getByRole("button", { name: "Confirm import" }).last().click();
+	await page
+		.getByRole("button", { name: "Confirm import" })
+		.last()
+		.evaluate((button) => {
+			(button as HTMLButtonElement).click();
+			(button as HTMLButtonElement).click();
+		});
 	await expect(page.locator(".notice[role='status']")).toContainText(
 		"Import complete",
 	);
@@ -409,6 +415,76 @@ test("same-tab double click and two tabs create only one normalized category", a
 								row.type === "category" &&
 								!JSON.parse(row.payload).deleted &&
 								JSON.parse(row.payload).name === "Double Category",
+						).length;
+					}, repositoryModuleUrl),
+				)
+				.toBe(1);
+		}
+	} finally {
+		await context.close();
+	}
+});
+
+test("two tabs reject the same category when Web Locks are unavailable", async ({
+	browser,
+}) => {
+	const context = await browser.newContext({ locale: "en-US" });
+	await context.addInitScript(() => {
+		Object.defineProperty(navigator, "locks", {
+			configurable: true,
+			value: undefined,
+		});
+	});
+	const first = await context.newPage();
+	const second = await context.newPage();
+	try {
+		await Promise.all([
+			first.goto("/assets/project"),
+			second.goto("/assets/project"),
+		]);
+		const dialogs = await Promise.all(
+			[first, second].map(async (page) => {
+				await page.getByRole("button", { name: "Manage" }).click();
+				return page.getByRole("dialog", { name: "Category" });
+			}),
+		);
+		await dialogs[0].getByLabel("Category name").fill("No Lock Category");
+		await dialogs[1].getByLabel("Category name").fill("no lock category");
+		await Promise.all(
+			dialogs.map((dialog) =>
+				dialog.getByRole("button", { name: "Save" }).click(),
+			),
+		);
+		await expect
+			.poll(
+				async () =>
+					Number(await dialogs[0].isVisible()) +
+					Number(await dialogs[1].isVisible()),
+			)
+			.toBe(1);
+		const loser = (await dialogs[0].isVisible()) ? dialogs[0] : dialogs[1];
+		await expect(loser.getByRole("alert")).toHaveText(
+			"This category already exists.",
+		);
+		if (process.env.KEEPANY_RACE_MODE === "preview") {
+			const observer = await context.newPage();
+			await observer.goto("/assets/project");
+			await observer.getByRole("button", { name: "Manage" }).click();
+			await expect(
+				observer
+					.getByRole("dialog", { name: "Category" })
+					.locator(".list-row")
+					.filter({ hasText: /no lock category/i }),
+			).toHaveCount(1);
+		} else {
+			await expect
+				.poll(async () =>
+					first.evaluate(async (modulePath) => {
+						const { localRepository } = await import(modulePath);
+						const rows = await (await localRepository()).allRecords();
+						return rows.filter(
+							(row: { type: string; payload: string }) =>
+								row.type === "category" && !JSON.parse(row.payload).deleted,
 						).length;
 					}, repositoryModuleUrl),
 				)
