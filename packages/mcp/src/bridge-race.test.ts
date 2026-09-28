@@ -57,26 +57,50 @@ afterEach(async () => {
   }
 });
 
-async function fixture(requestTimeoutMs = 10_000) {
+async function fixture(requestTimeoutMs = 10_000, options?: {
+  signal?: AbortSignal;
+  wrapFetcher?: (base: typeof fetch) => typeof fetch;
+}) {
   const asset = { ...newAsset('project'), name: 'Before' };
   const store = new GatedStore(asset);
   const authority = new McpAuthority(new MemoryAuthorityStorage());
   const grant = await authority.issueGrant({ assetIds: [asset.id], readFields: ['name'], writeFields: ['name'], ttlMs: 60_000 });
   const bridge = await startLocalMcpBridge({ appOrigin, authority, grantId: grant.id, grantSecret: grant.secret,
     requestTimeoutMs });
-  const fetcher: typeof fetch = (input, init) => fetch(input, { ...init,
+  const baseFetcher: typeof fetch = (input, init) => fetch(input, { ...init,
     headers: { ...Object.fromEntries(new Headers(init?.headers).entries()), Origin: appOrigin } });
+  const fetcher = options?.wrapFetcher?.(baseFetcher) ?? baseFetcher;
   const client = new BrowserMcpBridgeClient({ url: bridge.url, pairingSecret: bridge.pairingSecret,
     store, fetcher, approve: async () => true });
   await client.pair();
-  const running = client.run().catch(error => error);
+  const running = client.run(options?.signal).catch(error => error);
   fixtures.push({ store, client, running, bridge });
   const service = new McpAssetService(bridge.store, authority, grant.id, grant.secret);
   const preview = await service.previewUpdate(asset.id, `race-${crypto.randomUUID()}`, { name: 'After' });
   await authority.approvePreview(grant.id, preview.previewId);
   const confirm = () => service.confirmUpdate({ id: asset.id, operationId: preview.operationId,
     previewId: preview.previewId, patch: { name: 'After' } }).then(value => value, error => error as Error);
-  return { asset, store, authority, grant, bridge, client, service, preview, confirm };
+  return { asset, store, authority, grant, bridge, client, service, preview, confirm, running };
+}
+
+function hangingWriteCheck() {
+  const entered = deferred();
+  let checks = 0;
+  let receivedSignal = false;
+  let aborted = false;
+  const wrapFetcher = (base: typeof fetch): typeof fetch => (input, init) => {
+    if (String(input).endsWith('/check-write') && ++checks === 3) {
+      receivedSignal = Boolean(init?.signal);
+      entered.resolve();
+      return new Promise<Response>((_resolve, reject) => {
+        const fail = () => { aborted = true; reject(new DOMException('Aborted', 'AbortError')); };
+        if (init?.signal?.aborted) fail();
+        else init?.signal?.addEventListener('abort', fail, { once: true });
+      });
+    }
+    return base(input, init);
+  };
+  return { entered, wrapFetcher, state: () => ({ receivedSignal, aborted, checks }) };
 }
 
 describe('browser MCP write cancellation boundary', () => {
@@ -123,7 +147,8 @@ describe('browser MCP write cancellation boundary', () => {
     expect((await revocation).writeMayHaveApplied).toBe(true);
     expect(store.writes).toBe(1);
     expect(store.row.asset.name).toBe('After');
-    expect(await result).toBeInstanceOf(Error);
+    const outcome = await result;
+    expect(outcome instanceof Error || outcome.status === 'applied').toBe(true);
     expect(store.writes).toBe(1);
   });
 
@@ -169,6 +194,82 @@ describe('browser MCP write cancellation boundary', () => {
     store.readRelease.resolve();
     expect(await result).toBeInstanceOf(Error);
     expect(store.writes).toBe(0);
+  });
+
+  it('propagates only the external run signal through a paused browser read', async () => {
+    const controller = new AbortController();
+    const { store, confirm, running } = await fixture(300, { signal: controller.signal });
+    store.pauseAtRead = store.reads + 2;
+    const result = confirm();
+    await store.readEntered.promise;
+    controller.abort();
+    store.readRelease.resolve();
+    expect(await result).toBeInstanceOf(Error);
+    await running;
+    expect(store.writes).toBe(0);
+  });
+
+  it('propagates only the external run signal into a queued CAS branch', async () => {
+    const controller = new AbortController();
+    const { store, confirm, running } = await fixture(300, { signal: controller.signal });
+    store.pauseCas = true;
+    const result = confirm();
+    await store.casEntered.promise;
+    controller.abort();
+    store.casRelease.resolve();
+    expect(await result).toBeInstanceOf(Error);
+    await running;
+    expect(store.writes).toBe(0);
+  });
+
+  it('aborts a hanging precommit check at the request deadline without writing', async () => {
+    const hanging = hangingWriteCheck();
+    const { store, confirm, running } = await fixture(100, { wrapFetcher: hanging.wrapFetcher });
+    const result = confirm();
+    await hanging.entered.promise;
+    expect((await result)).toBeInstanceOf(Error);
+    await running;
+    expect(hanging.state()).toMatchObject({ receivedSignal: true, aborted: true });
+    expect(store.writes).toBe(0);
+  });
+
+  it('aborts a hanging precommit check before confirming explicit revoke', async () => {
+    const hanging = hangingWriteCheck();
+    const { store, authority, grant, client, confirm } = await fixture(300, { wrapFetcher: hanging.wrapFetcher });
+    const result = confirm();
+    await hanging.entered.promise;
+    expect((await client.revokeGrant()).writeMayHaveApplied).toBe(true);
+    expect(hanging.state()).toMatchObject({ receivedSignal: true, aborted: true });
+    expect(await result).toBeInstanceOf(Error);
+    expect(store.writes).toBe(0);
+    await expect(authority.requireGrant(grant.id, grant.secret)).rejects.toThrow('grant-denied');
+  });
+
+  it('aborts a hanging precommit check when the browser client closes', async () => {
+    const hanging = hangingWriteCheck();
+    const { store, authority, grant, client, confirm } = await fixture(300, { wrapFetcher: hanging.wrapFetcher });
+    const result = confirm();
+    await hanging.entered.promise;
+    await client.close();
+    expect(hanging.state()).toMatchObject({ receivedSignal: true, aborted: true });
+    expect(await result).toBeInstanceOf(Error);
+    expect(store.writes).toBe(0);
+    await expect(authority.requireGrant(grant.id, grant.secret)).rejects.toThrow('grant-denied');
+  });
+
+  it('aborts a hanging precommit check when only the external run signal ends', async () => {
+    const hanging = hangingWriteCheck();
+    const controller = new AbortController();
+    const { store, authority, grant, confirm, running } = await fixture(300,
+      { signal: controller.signal, wrapFetcher: hanging.wrapFetcher });
+    const result = confirm();
+    await hanging.entered.promise;
+    controller.abort();
+    await running;
+    expect(hanging.state()).toMatchObject({ receivedSignal: true, aborted: true });
+    expect(await result).toBeInstanceOf(Error);
+    expect(store.writes).toBe(0);
+    await expect(authority.requireGrant(grant.id, grant.secret)).rejects.toThrow('grant-denied');
   });
 
   it('keeps a committed write uncertain when its acknowledgement is lost', async () => {

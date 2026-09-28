@@ -82,6 +82,7 @@ export class BrowserMcpBridgeClient {
   private scope: BridgeScope | null = null;
   private stopped = false;
   private writesCancelled = false;
+  private readonly writeAbort = new AbortController();
   private writeMayHaveApplied = false;
   private readonly activeCommits = new Set<Promise<unknown>>();
   private revocation: Promise<{ writeMayHaveApplied: boolean }> | null = null;
@@ -150,7 +151,27 @@ export class BrowserMcpBridgeClient {
   }
 
   private checkWrite() {
-    if (this.writesCancelled || this.stopped || Date.now() >= this.expiresAt) throw Error('bridge-write-cancelled');
+    if (this.writeAbort.signal.aborted || this.writesCancelled || this.stopped || Date.now() >= this.expiresAt)
+      throw Error('bridge-write-cancelled');
+  }
+
+  private cancelWrites() {
+    this.writesCancelled = true;
+    this.writeAbort.abort();
+  }
+
+  private async checkRemoteWrite(id: string, requestExpiresAt: number, runSignal: AbortSignal) {
+    this.checkWrite();
+    const remaining = Math.min(requestExpiresAt, this.expiresAt) - Date.now();
+    if (remaining <= 0) throw Error('bridge-request-expired');
+    const deadline = new AbortController();
+    const timer = setTimeout(() => deadline.abort(), remaining);
+    try {
+      await this.post('/check-write', { id }, this.sessionSecret,
+        AbortSignal.any([runSignal, this.writeAbort.signal, deadline.signal]));
+      this.checkWrite();
+      if (Date.now() >= requestExpiresAt) throw Error('bridge-request-expired');
+    } finally { clearTimeout(timer); }
   }
 
   private commit<T>(work: () => Promise<T>): Promise<T> {
@@ -171,7 +192,7 @@ export class BrowserMcpBridgeClient {
   revokeGrant(): Promise<{ writeMayHaveApplied: boolean }> {
     if (this.revocation) return this.revocation;
     const token = this.token();
-    this.writesCancelled = true;
+    this.cancelWrites();
     this.writeMayHaveApplied ||= this.activeCommits.size > 0;
     const work = (async () => {
       await this.drainCommits();
@@ -188,6 +209,9 @@ export class BrowserMcpBridgeClient {
   async run(signal?: AbortSignal) {
     if (!this.scope || !this.sessionSecret) throw Error('bridge-not-paired');
     const combined = signal ? AbortSignal.any([signal, this.loopAbort.signal]) : this.loopAbort.signal;
+    const cancelOnAbort = () => this.cancelWrites();
+    if (combined.aborted) cancelOnAbort();
+    else combined.addEventListener('abort', cancelOnAbort, { once: true });
     try {
       while (!this.stopped && !combined.aborted && Date.now() < this.expiresAt) {
         const request = await this.post('/poll', {}, this.sessionSecret, combined);
@@ -197,7 +221,7 @@ export class BrowserMcpBridgeClient {
         try {
           body = { id: message.id, result: await executeBrowserBridgeRequest(message, this.options.store, this.scope, {
             check: () => this.checkWrite(),
-            checkRemote: async id => { await this.post('/check-write', { id }, this.sessionSecret); },
+            checkRemote: id => this.checkRemoteWrite(id, message.expiresAt, combined),
             commit: work => this.commit(work),
           }) };
         } catch { body = { id: message.id, error: 'browser-operation-failed' }; }
@@ -207,6 +231,7 @@ export class BrowserMcpBridgeClient {
     } catch (error) {
       if (!combined.aborted) throw error;
     } finally {
+      combined.removeEventListener('abort', cancelOnAbort);
       if (!this.stopped && this.revocation) await this.revocation.catch(() => undefined);
       if (!this.stopped) await this.close();
     }
@@ -214,7 +239,7 @@ export class BrowserMcpBridgeClient {
 
   private stopLocal() {
     this.stopped = true;
-    this.writesCancelled = true;
+    this.cancelWrites();
     this.loopAbort.abort();
     this.sessionSecret = '';
     this.scope = null;
