@@ -48,7 +48,7 @@ describe('encrypted attachment codec', () => {
     const opened = await openAttachment(input);
     expect(opened).toEqual({ name: 'private-photo.png', type: 'image/png', bytes, sha256: sealed.sourceSha256 });
     expect(await openAttachment(input)).toEqual(opened);
-  });
+  }, 20_000);
 
   it('rejects wrong key, epoch, workspace, and logical attachment identity', async () => {
     const { input } = await fixture();

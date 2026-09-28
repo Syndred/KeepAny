@@ -13,8 +13,27 @@ const endpoint = 'http://127.0.0.1:3199';
 function server(workspaceId: string, disconnectAfterFirstPush = false) {
   const service = new SyncService(new MemorySyncStateStore());
   const allowed = new Set([workspaceId]);
+  const objects = new Map<string, Uint8Array>();
   let disconnected = false;
+  let dropAttachmentAck = false;
   vi.stubGlobal('fetch', vi.fn(async (url: string, init: RequestInit) => {
+    if (url.includes('/attachments/')) {
+      const id = url.split('/').at(-1) ?? '';
+      if (init.method === 'GET') {
+        const bytes = objects.get(id);
+        return bytes ? new Response(Uint8Array.from(bytes).buffer, { status: 200, headers: {
+          'content-type': 'application/vnd.keepany.ciphertext', 'content-length': String(bytes.length),
+          'x-ciphertext-sha256': await sha256(bytes),
+        } }) : new Response(null, { status: 404 });
+      }
+      const bytes = new Uint8Array(init.body as ArrayBuffer);
+      const previous = objects.get(id);
+      if (previous && await sha256(previous) !== await sha256(bytes)) return new Response(null, { status: 409 });
+      objects.set(id, Uint8Array.from(bytes));
+      if (dropAttachmentAck) { dropAttachmentAck = false; throw Error('offline'); }
+      return new Response(JSON.stringify({ sha256: await sha256(bytes), size: bytes.length,
+        status: previous ? 'duplicate' : 'stored' }), { status: previous ? 200 : 201 });
+    }
     const body = JSON.parse(String(init.body));
     if (url.endsWith('/sync/preflight')) return allowed.has(body.workspaceId)
       ? new Response(JSON.stringify({ accountId: 'self-host-owner', workspaceId: body.workspaceId }), { status: 200 })
@@ -29,7 +48,13 @@ function server(workspaceId: string, disconnectAfterFirstPush = false) {
   }));
   const key = new Uint8Array(32).fill(7);
   const config = { endpoint, token, workspaceId, key };
-  return { service, config, grant: (id: string) => { allowed.add(id); } };
+  return { service, config, objects, dropNextAttachmentAck: () => { dropAttachmentAck = true; },
+    grant: (id: string) => { allowed.add(id); } };
+}
+
+async function sha256(bytes: Uint8Array): Promise<string> {
+  const hash = new Uint8Array(await crypto.subtle.digest('SHA-256', bytes as BufferSource));
+  return Array.from(hash, byte => byte.toString(16).padStart(2, '0')).join('');
 }
 
 it('retries the same encrypted operation after server acceptance and browser interruption', async () => {
@@ -142,19 +167,46 @@ it('rejects unsafe URLs and checks the required 32-byte workspace key', () => {
   expect(() => decodeWorkspaceKey('bad')).toThrow('sync-key');
 });
 
-it('refuses asset transfer when a local record references a photo', async () => {
+it('retries encrypted photo objects after lost acknowledgment and pulls verified bytes on a second device', async () => {
   const workspaceId = crypto.randomUUID();
-  const { config } = server(workspaceId);
-  const fetchMock = vi.mocked(fetch);
-  const db = await openLocalRepository(name());
+  const { service, config, objects, dropNextAttachmentAck } = server(workspaceId);
+  const dbName = name();
+  const db = await openLocalRepository(dbName);
   const attachmentId = crypto.randomUUID();
-  await db.fileStore.blobs.add({ id: attachmentId, blob: new Blob(['photo'], { type: 'image/png' }), name: 'photo.png' });
-  await db.save('asset', { ...newAsset('project'), name: 'Has photo', attachments: [attachmentId] });
+  const photo = Uint8Array.from([137, 80, 78, 71, 0, 1, 2, 3]);
+  await db.fileStore.blobs.add({ id: attachmentId, blob: new Blob([photo as BlobPart], { type: 'image/png' }), name: 'photo.png' });
+  const asset = { ...newAsset('project'), name: 'Has photo', attachments: [attachmentId] };
+  await db.save('asset', asset);
+  dropNextAttachmentAck();
   const report = await new SelfHostSyncClient(db, config).run();
   expect(report.status).toBe('failed');
-  expect(report.error).toBe('sync-attachments-unsupported');
-  expect(fetchMock.mock.calls.some(([url]) => String(url).endsWith('/sync/push') || String(url).endsWith('/sync/pull'))).toBe(false);
+  expect((await service.pull({ workspaceId, cursor: 0, limit: 10 })).changes).toHaveLength(0);
+  const scopeId = `${await scope(config)}:${workspaceId}`;
+  const plan = await db.getScopedAttachmentUpload(scopeId, attachmentId);
+  expect(plan?.objects.at(-1)?.id).toBe(attachmentId);
+  expect(objects.size).toBe(1);
+  const firstCiphertext = Uint8Array.from(objects.values().next().value ?? []);
   await db.close();
+  const reopened = await openLocalRepository(dbName);
+  expect((await new SelfHostSyncClient(reopened, config).run()).status).toBe('synced');
+  expect(await reopened.getScopedAttachmentUpload(scopeId, attachmentId)).toBeNull();
+  expect(objects.values().next().value).toEqual(firstCiphertext);
+  expect((await service.pull({ workspaceId, cursor: 0, limit: 10 })).changes).toHaveLength(1);
+  expect(Array.from(objects.values()).some(bytes => new TextDecoder().decode(bytes).includes('photo.png'))).toBe(false);
+  const peer = await openLocalRepository(name());
+  expect((await new SelfHostSyncClient(peer, config).run()).status).toBe('synced');
+  expect((await peer.readFile(attachmentId))?.bytes).toEqual(photo);
+  await peer.deleteEntity('asset', asset.id);
+  expect((await new SelfHostSyncClient(peer, config).run()).status).toBe('synced');
+  expect((await new SelfHostSyncClient(reopened, config).run()).status).toBe('synced');
+  expect((await reopened.get<Asset>('asset', asset.id))?.deleted).toBe(true);
+  await reopened.restoreEntity('asset', asset.id);
+  expect((await new SelfHostSyncClient(reopened, config).run()).status).toBe('synced');
+  expect((await new SelfHostSyncClient(peer, config).run()).status).toBe('synced');
+  expect((await peer.get<Asset>('asset', asset.id))?.deleted).toBe(false);
+  expect((await peer.readFile(attachmentId))?.bytes).toEqual(photo);
+  await reopened.close();
+  await peer.close();
 });
 
 it('rejects a different workspace key before asset transfer', async () => {

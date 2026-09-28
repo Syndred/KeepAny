@@ -281,6 +281,16 @@ export class LocalRepository {
     return snapshot;
   }
 
+  async deleteScopedAttachmentUpload(scope: string, attachmentId: string): Promise<void> {
+    assertScope(scope);
+    z.uuid().parse(attachmentId);
+    await this.fileStore.transaction('rw', [this.fileStore.datasetBinding, this.fileStore.scopedAttachmentUploads], async () => {
+      const binding = await this.fileStore.datasetBinding.get('active');
+      if (binding?.scope !== scope) throw Error('sync-dataset-bound');
+      await this.fileStore.scopedAttachmentUploads.delete(scopedKey(scope, attachmentId));
+    });
+  }
+
   async pendingScopedPullRow(scope: string): Promise<RecordRow | null> {
     assertScope(scope);
     await this.requireDatasetScope(scope);

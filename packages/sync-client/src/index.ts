@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { syncPullResponseSchema, syncPushResponseSchema, type SyncChange, type SyncOperation } from '../../contracts/src';
 import { generateWorkspaceKey, openSyncChangeEnvelope, ReplayGuard, sealEnvelope } from '../../crypto/src';
 import type { LocalRepository, RecordRow, ScopedConflict } from '../../local-db/src';
+import { SelfHostAttachmentSync } from './attachment-sync';
 
 export type SyncStatus = 'local' | 'pending' | 'syncing' | 'synced' | 'conflict' | 'failed';
 export interface SyncReport { status: SyncStatus; pending: number; cursor: number; conflict: ScopedConflict | null; error?: string }
@@ -33,7 +34,7 @@ export async function newWorkspaceKey(): Promise<string> { return encodeWorkspac
 async function request<T>(endpoint: string, token: string, route: string, body: unknown, schema: z.ZodType<T>): Promise<T> {
   const response = await fetch(`${endpoint}${route}`, {
     method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify(body), cache: 'no-store', credentials: 'omit',
+    body: JSON.stringify(body), cache: 'no-store', credentials: 'omit', signal: AbortSignal.timeout(30_000),
   });
   if (!response.ok) throw Error(response.status === 401 || response.status === 403 ? 'sync-auth' : `sync-http-${response.status}`);
   return schema.parse(await response.json());
@@ -48,12 +49,6 @@ async function scopeFor(endpoint: string, workspaceId: string): Promise<string> 
   // Self-host mode has one stable server subject. Bearer token rotation must not abandon an outbox.
   const bytes = new Uint8Array(await crypto.subtle.digest('SHA-256', text.encode(JSON.stringify([endpoint, 'self-host-owner']))));
   return `${Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('')}:${workspaceId}`;
-}
-
-function assertNoUnsupportedFiles(row: RecordRow): void {
-  if (row.type !== 'asset') return;
-  const attachments = (JSON.parse(row.payload) as { attachments?: unknown }).attachments;
-  if (Array.isArray(attachments) && attachments.length) throw Error('sync-attachments-unsupported');
 }
 
 export class SelfHostSyncClient {
@@ -98,6 +93,8 @@ export class SelfHostSyncClient {
     const scope = await this.scopePromise;
     await this.verifyDataset(scope);
     await this.pinKey(scope);
+    const remote = await this.repository.pendingScopedPullRow(scope);
+    if (remote) await this.attachments(scope).ensureDownloadedRow(remote);
     await this.repository.resolveScopedConflict(scope, choice);
     return this.report('pending');
   }
@@ -118,13 +115,14 @@ export class SelfHostSyncClient {
     try {
       await this.verifyDataset(scope);
       await this.pinKey(scope);
-      // Never upload a partial asset collection when its referenced binary files cannot be transferred.
-      for (const row of await this.repository.allRecords()) assertNoUnsupportedFiles(row);
+      const attachments = this.attachments(scope);
       onStatus?.(await this.report('syncing'));
+      const interruptedPull = await this.repository.pendingScopedPullRow(scope);
+      if (interruptedPull) await attachments.ensureDownloadedRow(interruptedPull);
       const recovered = await this.repository.resumeScopedPull(scope);
       if (recovered === 'conflict') return this.report('conflict');
-      await this.pushOutbox(scope);
-      if (await this.pullAll(scope)) return this.report('conflict');
+      await this.pushOutbox(scope, attachments);
+      if (await this.pullAll(scope, attachments)) return this.report('conflict');
       for (const row of await this.repository.dirtyScopedRows(scope)) {
         const current = (await this.repository.allRecords()).find(item => item.id === row.id);
         if (!current || current.payload !== row.payload) continue;
@@ -140,8 +138,8 @@ export class SelfHostSyncClient {
           (JSON.parse(base.payload) as { deleted?: boolean }).deleted && !tombstone ? 'restore' : 'write' };
         await this.repository.stageScopedOutbox(scope, row, operation);
       }
-      await this.pushOutbox(scope);
-      if (await this.pullAll(scope)) return this.report('conflict');
+      await this.pushOutbox(scope, attachments);
+      if (await this.pullAll(scope, attachments)) return this.report('conflict');
       const report = await this.report('synced');
       onStatus?.(report);
       return report;
@@ -170,7 +168,12 @@ export class SelfHostSyncClient {
     await this.repository.pinScopedKey(scope, fingerprint, this.keyEpoch);
   }
 
-  private async pushOutbox(scope: string): Promise<void> {
+  private attachments(scope: string): SelfHostAttachmentSync {
+    return new SelfHostAttachmentSync(this.repository, scope, this.endpoint, this.token,
+      this.workspaceId, this.key, this.keyEpoch);
+  }
+
+  private async pushOutbox(scope: string, attachments: SelfHostAttachmentSync): Promise<void> {
     const pending = (await this.repository.listScopedOutbox(scope)).filter(item => !item.blocked);
     let offset = 0;
     while (offset < pending.length) {
@@ -185,13 +188,15 @@ export class SelfHostSyncClient {
         bytes += size;
         offset++;
       }
+      for (const item of batch) await attachments.ensureUploadedRow(item.row);
       const response = await request(this.endpoint, this.token, '/sync/push',
         { workspaceId: this.workspaceId, operations: batch.map(item => item.operation) }, syncPushResponseSchema);
       if (response.results.length !== batch.length ||
         response.results.some((result, index) => result.operationId !== batch[index].operation.operationId)) throw Error('sync-push-response');
-      for (const result of response.results) {
+      for (const [index, result] of response.results.entries()) {
         if (result.status === 'accepted' || result.status === 'duplicate') {
           await this.repository.acknowledgeScopedOutbox(scope, result.operationId, result.version, this.keyEpoch);
+          await attachments.forgetUploadedRow(batch[index].row);
         } else if (result.status === 'conflict') {
           await this.repository.blockScopedOutbox(scope, result.operationId);
         } else throw Error('sync-push-rejected');
@@ -199,7 +204,7 @@ export class SelfHostSyncClient {
     }
   }
 
-  private async pullAll(scope: string): Promise<boolean> {
+  private async pullAll(scope: string, attachments: SelfHostAttachmentSync): Promise<boolean> {
     for (let page = 0; page < 10000; page++) {
       const cursor = await this.repository.scopedCursor(scope);
       const response = await request(this.endpoint, this.token, '/sync/pull',
@@ -212,6 +217,7 @@ export class SelfHostSyncClient {
         response.nextCursor !== cursor + response.changes.length) throw Error('sync-cursor');
       for (const change of response.changes) {
         const row = await this.openChange(scope, change);
+        await attachments.ensureDownloadedRow(row);
         const result = await this.repository.applyScopedPull(scope, { row, sequence: change.sequence,
           version: change.version, operationId: change.operationId, keyEpoch: this.keyEpoch, ciphertext: change.ciphertext });
         if (result === 'conflict') return true;
@@ -239,7 +245,6 @@ export class SelfHostSyncClient {
     const row = JSON.parse(decode.decode(opened.plaintext)) as RecordRow;
     if (row.id !== change.id || row.type !== change.kind ||
       Boolean((JSON.parse(row.payload) as { deleted?: boolean }).deleted) !== change.tombstone) throw Error('sync-content');
-    assertNoUnsupportedFiles(row);
     return row;
   }
 }
