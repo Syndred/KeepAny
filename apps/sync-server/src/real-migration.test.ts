@@ -10,7 +10,7 @@ const directory = resolve(process.cwd(), "apps/sync-server/migrations");
 
 // Opt in only with an isolated PostgreSQL test database. Never touches public schema.
 it.skipIf(!process.env.KEEPANY_TEST_DATABASE_URL)(
-	"upgrades a historical accepted change through 003, 004 and 005 in real PostgreSQL",
+	"upgrades a historical accepted change through 003, 004, 005 and 006 in real PostgreSQL",
 	async () => {
 		const connectionString = process.env.KEEPANY_TEST_DATABASE_URL;
 		if (!connectionString) throw Error("test-database-url");
@@ -97,7 +97,8 @@ it.skipIf(!process.env.KEEPANY_TEST_DATABASE_URL)(
 				"002_attachments",
 				"003_change_operation_id",
 				"004_bound_state",
-				"005_bound_state_guard",
+			"005_bound_state_guard",
+			"006_bound_state_writer_guard",
 			]);
 			const bindingId = crypto.randomUUID();
 			const jkt = "a".repeat(43);
@@ -105,7 +106,7 @@ it.skipIf(!process.env.KEEPANY_TEST_DATABASE_URL)(
 			await pool.query(
 				`INSERT INTO sync_bound_bindings
       (binding_id,subject,instance_id_hash,jkt,scopes,status,epoch,token_valid_after,state_observed_at,state_expires_at)
-      VALUES ($1,$2,$3,$4,$5,'active',1,0,now(),now()+interval '1 minute')`,
+      VALUES ($1,$2,$3,$4,$5,'active',1,0,now(),now()+interval '10 seconds')`,
 				[bindingId, "keepanyadm:test", "c".repeat(64), jkt, ["sync:read"]],
 			);
 			const insertProof = () =>
@@ -136,21 +137,10 @@ it.skipIf(!process.env.KEEPANY_TEST_DATABASE_URL)(
 			).rejects.toMatchObject({ code: "P0001" });
 			await expect(
 				pool.query(
-					"UPDATE sync_bound_bindings SET status='revoked' WHERE binding_id=$1",
-					[bindingId],
-				),
-			).resolves.toBeDefined();
-			await expect(
-				pool.query(
-					"UPDATE sync_bound_bindings SET status='active' WHERE binding_id=$1",
+					"UPDATE sync_bound_bindings SET status='inactive' WHERE binding_id=$1",
 					[bindingId],
 				),
 			).rejects.toMatchObject({ code: "P0001" });
-			await pool.query(
-				`UPDATE sync_bound_bindings SET status='active', epoch=3, token_valid_after=2,
-      state_observed_at=now(), state_expires_at=now()+interval '10 seconds' WHERE binding_id=$1`,
-				[bindingId],
-			);
 			const secondInstance = new pg.Pool({
 				connectionString,
 				options: `-c search_path=${schema}`,
@@ -175,9 +165,15 @@ it.skipIf(!process.env.KEEPANY_TEST_DATABASE_URL)(
 				]);
 				expect(results.sort()).toEqual([false, true]);
 				await pool.query(
-					"UPDATE sync_bound_bindings SET status='revoked' WHERE binding_id=$1",
+					`UPDATE sync_bound_bindings SET status='revoked', epoch=3, token_valid_after=2,
+          state_observed_at=now(), state_expires_at=now()+interval '10 seconds' WHERE binding_id=$1`,
 					[bindingId],
 				);
+				await expect(pool.query(
+					`UPDATE sync_bound_bindings SET status='active', epoch=4, token_valid_after=3,
+          state_observed_at=now(), state_expires_at=now()+interval '10 seconds' WHERE binding_id=$1`,
+					[bindingId],
+				)).rejects.toMatchObject({ code: "P0001" });
 				expect(
 					await secondStore.claimProof({
 						...claim,
