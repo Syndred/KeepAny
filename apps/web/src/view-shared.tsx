@@ -104,20 +104,36 @@ export function Empty({ hint = true }: { hint?: boolean }) {
 		</div>
 	);
 }
-export function AssetRow({ asset }: { asset: Asset }) {
+export function AssetRow({
+	asset,
+	rememberListScroll = false,
+}: {
+	asset: Asset;
+	rememberListScroll?: boolean;
+}) {
 	const { t, i18n } = useTranslation();
+	const { search } = useAppContext();
 	const Icon = icons[asset.kind];
 	return (
 		<Link
 			className="list-row"
 			to="/assets/$kind/$id"
 			params={{ kind: asset.kind, id: asset.id }}
-			onClick={() =>
+			onClick={() => {
+				if (!rememberListScroll) return;
 				sessionStorage.setItem(
 					`keepany-scroll-${asset.kind}`,
 					String(window.scrollY),
-				)
-			}
+				);
+				sessionStorage.setItem(
+					`keepany-scroll-filter-${asset.kind}`,
+					JSON.stringify({
+						category:
+							sessionStorage.getItem(`keepany-category-${asset.kind}`) || "",
+						search,
+					}),
+				);
+			}}
 		>
 			<span className="row-icon">
 				<Icon size={18} />

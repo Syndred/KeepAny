@@ -244,14 +244,30 @@ export function AssetList() {
 	);
 	const restored = useRef("");
 	useEffect(() => {
-		if (data.loading || !assets.length || restored.current === kind) return;
-		restored.current = kind;
-		const y = Number(sessionStorage.getItem(`keepany-scroll-${kind}`) || 0);
-		if (y) {
-			const frame = requestAnimationFrame(() => window.scrollTo(0, y));
-			return () => cancelAnimationFrame(frame);
+		if (data.loading || restored.current === kind) return;
+		const savedFilter = sessionStorage.getItem(`keepany-scroll-filter-${kind}`);
+		if (savedFilter) {
+			try {
+				const saved = JSON.parse(savedFilter) as {
+					category?: string;
+					search?: string;
+				};
+				if (saved.category !== category || saved.search !== search) {
+					restored.current = kind;
+					return;
+				}
+			} catch {
+				// An old or malformed scroll hint must not block the list.
+			}
 		}
-	}, [kind, data.loading, assets.length]);
+		if (!assets.length) return;
+		const frame = requestAnimationFrame(() => {
+			const y = Number(sessionStorage.getItem(`keepany-scroll-${kind}`) || 0);
+			if (Number.isFinite(y) && y > 0) window.scrollTo(0, y);
+			restored.current = kind;
+		});
+		return () => cancelAnimationFrame(frame);
+	}, [kind, category, search, data.loading, assets.length]);
 	return (
 		<main className="page">
 			<PageTitle
@@ -270,7 +286,7 @@ export function AssetList() {
 				{assets.length ? (
 					<div className="list">
 						{assets.map((a) => (
-							<AssetRow asset={a} key={a.id} />
+							<AssetRow asset={a} key={a.id} rememberListScroll />
 						))}
 					</div>
 				) : (
