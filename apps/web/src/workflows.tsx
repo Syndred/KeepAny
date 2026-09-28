@@ -543,6 +543,7 @@ export function IntakeTools() {
 	const [message, setMessage] = useState("");
 	const [busy, setBusy] = useState(false);
 	const [inspecting, setInspecting] = useState(false);
+	const importing = useRef(false);
 	const importGeneration = useRef(0);
 	const restoreGeneration = useRef(0);
 	const [readyDownload, setReadyDownload] = useState<{
@@ -712,7 +713,8 @@ export function IntakeTools() {
 		}
 	}
 	async function importCandidates() {
-		if (candidateGeneration !== importGeneration.current) return;
+		if (importing.current || candidateGeneration !== importGeneration.current) return;
+		importing.current = true;
 		setBusy(true);
 		try {
 			const selected = candidates.filter((c) => c.selected && !c.duplicate);
@@ -724,6 +726,7 @@ export function IntakeTools() {
 		} catch {
 			setMessage(t("error"));
 		} finally {
+			importing.current = false;
 			setBusy(false);
 		}
 	}
