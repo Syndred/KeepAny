@@ -133,12 +133,16 @@ test('isolated browsers keep one local dataset on its remote through retry, conf
     await configure(pageA, endpoint, workspaceA, keyA);
     await sync(pageA, 'This sync did not complete');
     expect(dropped).toBe(true);
+    const service = new PostgresSyncService(pool);
+    const acceptedOperation = (await service.pull({ workspaceId: workspaceA, cursor: 0, limit: 20 }, accountId)).changes.at(-1)?.operationId;
+    expect(acceptedOperation).toBeTruthy();
     await pageA.unroute(`${endpoint}/sync/push`);
     await pageA.reload();
     await configure(pageA, endpoint, workspaceA, keyA);
     await sync(pageA, 'This sync completed');
-    const service = new PostgresSyncService(pool);
-    expect((await service.pull({ workspaceId: workspaceA, cursor: 0, limit: 20 }, accountId)).changes).toHaveLength(2);
+    const retriedChanges = (await service.pull({ workspaceId: workspaceA, cursor: 0, limit: 20 }, accountId)).changes;
+    expect(retriedChanges).toHaveLength(2);
+    expect(retriedChanges.at(-1)?.operationId).toBe(acceptedOperation);
 
     await editProject(pageB, firstName, fromB);
     await configure(pageB, endpoint, workspaceA, keyA);
