@@ -200,6 +200,7 @@ export function AssetDetail() {
 	);
 	const [edit, setEdit] = useState(false);
 	const [deleteOpen, setDeleteOpen] = useState(false);
+	const [deleteError, setDeleteError] = useState("");
 	const [deleteBusy, setDeleteBusy] = useState(false);
 	const deleteInFlight = useRef(false);
 	const [relationEdit, setRelationEdit] = useState(false);
@@ -416,20 +417,18 @@ export function AssetDetail() {
 		}
 	};
 	async function confirmDelete() {
-		if (deleteInFlight.current) return;
+		if (!asset || deleteInFlight.current) return;
 		deleteInFlight.current = true;
 		setDeleteBusy(true);
+		setDeleteError("");
 		try {
-			await save("asset", {
-				...asset,
-				deleted: true,
-				updatedAt: new Date().toISOString(),
-			});
+			await deleteEntity("asset", asset.id);
 			setDeleteOpen(false);
 			await navigate({ to: "/assets/$kind", params: { kind } });
 			notify(t("saved"));
-		} catch {
-			notify(t("error"));
+		} catch (error) {
+			const reason = error instanceof Error ? error.message : "";
+			setDeleteError(t(["asset-stale", "attachment-missing"].includes(reason) ? "assetDeleteStale" : "error"));
 		} finally {
 			deleteInFlight.current = false;
 			setDeleteBusy(false);
@@ -776,7 +775,7 @@ export function AssetDetail() {
 					<Button
 						variant="danger"
 						disabled={deleteBusy}
-						onClick={() => setDeleteOpen(true)}
+						onClick={() => { setDeleteError(""); setDeleteOpen(true); }}
 					>
 						{t("delete")}
 					</Button>
@@ -790,6 +789,7 @@ export function AssetDetail() {
 					}}
 				>
 					<p>{t("deleteConfirm")}</p>
+					{deleteError && <p className="field-error" role="alert">{deleteError}</p>}
 					<div className="actions">
 						<Button disabled={deleteBusy} onClick={() => setDeleteOpen(false)}>
 							{t("cancel")}

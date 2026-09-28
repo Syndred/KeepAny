@@ -66,6 +66,7 @@ const copy: Record<string, [string, string]> = {
 	filterTag: ["按标签筛选", "Filter by tag"],
 	allTags: ["全部标签", "All tags"],
 	assetStale: ["资料已在另一处更新，请重新打开后再保存。", "This record changed elsewhere. Reopen it before saving."],
+	assetDeleteStale: ["资料已更新，删除未执行。请关闭弹窗核对最新资料后重试。", "This record changed. Nothing was deleted. Close this dialog, review the latest record, and try again."],
 	manage: ["管理", "Manage"],
 	category: ["分类", "Category"],
 	name: ["名称", "Name"],
