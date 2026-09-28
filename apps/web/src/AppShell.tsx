@@ -224,7 +224,7 @@ export function AppShell() {
 							)}
 						</div>
 						<div className="top-actions">
-							<Button variant="ghost" onClick={() => setAi(true)}>
+							<Button variant="ghost" aria-label={t("assistant")} onClick={() => setAi(true)}>
 								<Sparkles size={17} />
 								<span>{t("assistant")}</span>
 							</Button>
