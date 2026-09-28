@@ -20,6 +20,14 @@ interface ScopedPullJournal { id: string; scope: string; cursorStart: number; ch
 export interface ScopedConflict { rowId: string; localPayload: string | null; remotePayload: string; basePayload: string | null; remoteVersion: number }
 export interface DatasetBinding { endpoint: string; accountId: string; workspaceId: string; scope: string }
 interface StoredDatasetBinding extends DatasetBinding { id: 'active' }
+export interface ScopedAttachmentUploadPlan {
+  scope: string;
+  attachmentId: string;
+  sourceSha256: string;
+  keyEpoch: number;
+  objects: Array<{ id: string; sha256: string; bytes: Uint8Array }>;
+}
+interface StoredScopedAttachmentUploadPlan extends ScopedAttachmentUploadPlan { id: string }
 
 class FileStore extends Dexie {
   blobs!: Table<StoredFile, string>;
@@ -33,6 +41,7 @@ class FileStore extends Dexie {
   scopedOutbox!: Table<ScopedOutbox, string>;
   scopedPull!: Table<ScopedPullJournal, string>;
   datasetBinding!: Table<StoredDatasetBinding, string>;
+  scopedAttachmentUploads!: Table<StoredScopedAttachmentUploadPlan, string>;
   constructor(name: string) {
     super(`${name}-files-v1`);
     this.version(1).stores({ blobs: 'id', journal: 'id' });
@@ -42,6 +51,9 @@ class FileStore extends Dexie {
       scopedBase: 'id, scope', scopedMeta: 'id', scopedOutbox: 'id, scope', scopedPull: 'id' });
     this.version(5).stores({ blobs: 'id', journal: 'id', importJournal: 'id', syncBase: 'id', syncMeta: 'id', pullJournal: 'id',
       scopedBase: 'id, scope', scopedMeta: 'id', scopedOutbox: 'id, scope', scopedPull: 'id', datasetBinding: 'id' });
+    this.version(6).stores({ blobs: 'id', journal: 'id', importJournal: 'id', syncBase: 'id', syncMeta: 'id', pullJournal: 'id',
+      scopedBase: 'id, scope', scopedMeta: 'id', scopedOutbox: 'id, scope', scopedPull: 'id', datasetBinding: 'id',
+      scopedAttachmentUploads: 'id, scope' });
   }
 }
 
@@ -194,19 +206,20 @@ export class LocalRepository {
     await validateDatasetBinding(binding);
     await this.fileStore.transaction('rw', [this.fileStore.datasetBinding, this.fileStore.scopedMeta,
       this.fileStore.scopedBase, this.fileStore.scopedOutbox, this.fileStore.scopedPull,
-      this.fileStore.syncBase, this.fileStore.syncMeta, this.fileStore.pullJournal], async () => {
+      this.fileStore.scopedAttachmentUploads, this.fileStore.syncBase, this.fileStore.syncMeta, this.fileStore.pullJournal], async () => {
         const existing = await this.fileStore.datasetBinding.get('active');
         if (existing && !sameDatasetBinding(existing, binding)) throw Error('sync-dataset-bound');
-        const [meta, base, outbox, pulls, oldBaseCount, oldMetaCount, oldPullCount] = await Promise.all([
+        const [meta, base, outbox, pulls, uploads, oldBaseCount, oldMetaCount, oldPullCount] = await Promise.all([
           this.fileStore.scopedMeta.toCollection().primaryKeys(),
           this.fileStore.scopedBase.orderBy('scope').uniqueKeys(),
           this.fileStore.scopedOutbox.orderBy('scope').uniqueKeys(),
           this.fileStore.scopedPull.toCollection().primaryKeys(),
+          this.fileStore.scopedAttachmentUploads.orderBy('scope').uniqueKeys(),
           this.fileStore.syncBase.count(), this.fileStore.syncMeta.count(), this.fileStore.pullJournal.count(),
         ]);
         // The pre-scoped prototype has no remote identity, so its provenance cannot be inferred.
         if (oldBaseCount || oldMetaCount || oldPullCount) throw Error('sync-dataset-ambiguous');
-        const legacyScopes = new Set([...meta, ...base, ...outbox, ...pulls]);
+        const legacyScopes = new Set([...meta, ...base, ...outbox, ...pulls, ...uploads]);
         if (legacyScopes.size > 1) throw Error('sync-dataset-ambiguous');
         if (legacyScopes.size === 1 && !legacyScopes.has(binding.scope)) throw Error('sync-dataset-bound');
         if (!existing) await this.fileStore.datasetBinding.add({ id: 'active', ...binding });
@@ -239,6 +252,45 @@ export class LocalRepository {
   async listScopedOutbox(scope: string): Promise<ScopedOutbox[]> {
     assertScope(scope);
     return this.fileStore.scopedOutbox.where('scope').equals(scope).toArray();
+  }
+
+  async getScopedAttachmentUpload(scope: string, attachmentId: string): Promise<ScopedAttachmentUploadPlan | null> {
+    assertScope(scope);
+    z.uuid().parse(attachmentId);
+    await this.requireDatasetScope(scope);
+    const stored = await this.fileStore.scopedAttachmentUploads.get(scopedKey(scope, attachmentId));
+    return stored ? copyAttachmentPlan(stored) : null;
+  }
+
+  async putScopedAttachmentUpload(plan: ScopedAttachmentUploadPlan): Promise<ScopedAttachmentUploadPlan> {
+    if (!plan || !Array.isArray(plan.objects) || plan.objects.some(object => !(object?.bytes instanceof Uint8Array)))
+      throw Error('sync-attachment-plan');
+    const snapshot = copyAttachmentPlan(plan);
+    await validateAttachmentPlan(snapshot);
+    const id = scopedKey(snapshot.scope, snapshot.attachmentId);
+    await this.fileStore.transaction('rw', [this.fileStore.datasetBinding, this.fileStore.scopedAttachmentUploads], async () => {
+      const binding = await this.fileStore.datasetBinding.get('active');
+      if (binding?.scope !== snapshot.scope) throw Error('sync-dataset-bound');
+      const existing = await this.fileStore.scopedAttachmentUploads.get(id);
+      if (existing) {
+        if (!sameAttachmentPlan(existing, snapshot)) throw Error('sync-attachment-plan-conflict');
+      } else {
+        await this.fileStore.scopedAttachmentUploads.add({ id, ...snapshot });
+      }
+    });
+    return snapshot;
+  }
+
+  async pendingScopedPullRow(scope: string): Promise<RecordRow | null> {
+    assertScope(scope);
+    await this.requireDatasetScope(scope);
+    const pending = await this.fileStore.scopedPull.get(scope);
+    return pending ? { ...pending.change.row } : null;
+  }
+
+  private async requireDatasetScope(scope: string): Promise<void> {
+    const binding = await this.fileStore.datasetBinding.get('active');
+    if (binding?.scope !== scope) throw Error('sync-dataset-bound');
   }
 
   async dirtyScopedRows(scope: string): Promise<RecordRow[]> {
@@ -422,6 +474,32 @@ export class LocalRepository {
     return id;
   }
 
+  async readFile(id: string): Promise<{ id: string; name: string; type: string; bytes: Uint8Array } | null> {
+    z.uuid().parse(id);
+    const file = await this.fileStore.blobs.get(id);
+    if (!file) return null;
+    return { id, name: file.name, type: file.blob.type, bytes: new Uint8Array(await file.blob.arrayBuffer()) };
+  }
+
+  async putSyncedFile(input: { id: string; name: string; type: string; bytes: Uint8Array; sha256: string }): Promise<void> {
+    const { id, name, type, sha256 } = input;
+    z.uuid().parse(id);
+    if (typeof name !== 'string' || name.length > 255) throw Error('file-name');
+    if (!['image/jpeg', 'image/png', 'image/webp', 'image/gif'].includes(type)) throw Error('file-type');
+    if (!(input.bytes instanceof Uint8Array) || input.bytes.length > 20 * 1024 * 1024) throw Error('file-size');
+    const bytes = new Uint8Array(input.bytes);
+    if (!/^[a-f0-9]{64}$/.test(sha256) || await sha(bytes) !== sha256) throw Error('sync-attachment-integrity');
+    await this.fileStore.transaction('rw', this.fileStore.blobs, async () => {
+      const existing = await this.fileStore.blobs.get(id);
+      if (existing) {
+        if (existing.name !== name || existing.blob.type !== type || existing.blob.size !== bytes.length ||
+          !sameBytes(new Uint8Array(await Dexie.waitFor(existing.blob.arrayBuffer())), bytes)) throw Error('sync-attachment-conflict');
+      } else {
+        await this.fileStore.blobs.add({ id, name, blob: new Blob([new Uint8Array(bytes)], { type }) });
+      }
+    });
+  }
+
   async fileUrl(id: string): Promise<string> {
     const value = await this.fileStore.blobs.get(id);
     return value ? URL.createObjectURL(value.blob) : '';
@@ -448,12 +526,15 @@ export class LocalRepository {
 
   private async protectedFileIds(): Promise<Set<string>> {
     const rows = await this.allRecords();
-    const [restores, imports, pulls] = await Promise.all([
+    const [restores, imports, pulls, scopedOutbox, scopedPull] = await Promise.all([
       this.fileStore.journal.toArray(), this.fileStore.importJournal.toArray(), this.fileStore.pullJournal.toArray(),
+      this.fileStore.scopedOutbox.toArray(), this.fileStore.scopedPull.toArray(),
     ]);
     for (const entry of restores) rows.push(...entry.rows);
     for (const entry of imports) rows.push(...entry.rows);
     for (const entry of pulls) rows.push(...entry.changes.map(change => change.row));
+    for (const entry of scopedOutbox) rows.push(entry.row);
+    for (const entry of scopedPull) rows.push(entry.change.row);
     return attachmentIdsIn(rows);
   }
 
@@ -553,6 +634,14 @@ function validateRow(row: RecordRow): void {
   if (row.id !== key(row.type, entity.id)) throw Error('pull-record');
 }
 
+async function assertRowAttachmentsAvailable(store: FileStore, row: RecordRow): Promise<void> {
+  if (row.type !== 'asset') return;
+  const asset = parsedPayload(row) as unknown as { attachments: string[] };
+  for (const id of asset.attachments) {
+    if (!(await store.blobs.get(id))) throw Error('attachment-missing');
+  }
+}
+
 async function replayPullJournal(db: RxDatabase, store: FileStore, id: string): Promise<void> {
   const journal = await store.pullJournal.get(id);
   if (!journal) return;
@@ -596,6 +685,40 @@ function assertScope(scope: string): void {
 }
 function scopedKey(scope: string, rowId: string): string { assertScope(scope); return `${scope}|${rowId}`; }
 
+function sameBytes(left: Uint8Array, right: Uint8Array): boolean {
+  return left.length === right.length && left.every((value, index) => value === right[index]);
+}
+
+function copyAttachmentPlan(plan: ScopedAttachmentUploadPlan): ScopedAttachmentUploadPlan {
+  return { scope: plan.scope, attachmentId: plan.attachmentId, sourceSha256: plan.sourceSha256,
+    keyEpoch: plan.keyEpoch, objects: plan.objects.map(object => ({ ...object, bytes: new Uint8Array(object.bytes) })) };
+}
+
+function sameAttachmentPlan(left: ScopedAttachmentUploadPlan, right: ScopedAttachmentUploadPlan): boolean {
+  return left.scope === right.scope && left.attachmentId === right.attachmentId &&
+    left.sourceSha256 === right.sourceSha256 && left.keyEpoch === right.keyEpoch &&
+    left.objects.length === right.objects.length && left.objects.every((object, index) => {
+      const other = right.objects[index];
+      return object.id === other.id && object.sha256 === other.sha256 && sameBytes(object.bytes, other.bytes);
+    });
+}
+
+async function validateAttachmentPlan(plan: ScopedAttachmentUploadPlan): Promise<void> {
+  assertScope(plan.scope);
+  if (!z.uuid().safeParse(plan.attachmentId).success || !/^[a-f0-9]{64}$/.test(plan.sourceSha256) ||
+    !Number.isSafeInteger(plan.keyEpoch) || plan.keyEpoch < 1 || !Array.isArray(plan.objects) ||
+    plan.objects.length < 1 || plan.objects.length > 32 ||
+    plan.objects.at(-1)?.id !== plan.attachmentId) throw Error('sync-attachment-plan');
+  const seen = new Set<string>();
+  for (const object of plan.objects) {
+    if (!z.uuid().safeParse(object.id).success || seen.has(object.id) ||
+      !/^[a-f0-9]{64}$/.test(object.sha256) || !(object.bytes instanceof Uint8Array) ||
+      object.bytes.length < 1 || object.bytes.length > 4 * 1024 * 1024 ||
+      await sha(object.bytes) !== object.sha256) throw Error('sync-attachment-plan');
+    seen.add(object.id);
+  }
+}
+
 function sameDatasetBinding(a: DatasetBinding, b: DatasetBinding): boolean {
   return a.endpoint === b.endpoint && a.accountId === b.accountId &&
     a.workspaceId === b.workspaceId && a.scope === b.scope;
@@ -624,6 +747,7 @@ async function replayScopedPull(db: RxDatabase, store: FileStore, scope: string)
   if (((await store.scopedMeta.get(scope))?.cursor ?? 0) !== journal.cursorStart) throw Error('cursor-mismatch');
   const { row, version } = journal.change;
   validateRow(row);
+  await assertRowAttachmentsAvailable(store, row);
   const id = scopedKey(scope, row.id);
   const current = await db.records.findOne(row.id).exec();
   const currentPayload = current ? canonical(current).payload : null;
@@ -687,11 +811,11 @@ export async function openLocalRepository(name: string): Promise<LocalRepository
     const pendingScopedPulls = await store.scopedPull.toArray();
     if (pendingScopedPulls.length) {
       const binding = await store.datasetBinding.get('active');
-      const [meta, base, outbox] = await Promise.all([
+      const [meta, base, outbox, uploads] = await Promise.all([
         store.scopedMeta.toCollection().primaryKeys(), store.scopedBase.orderBy('scope').uniqueKeys(),
-        store.scopedOutbox.orderBy('scope').uniqueKeys(),
+        store.scopedOutbox.orderBy('scope').uniqueKeys(), store.scopedAttachmentUploads.orderBy('scope').uniqueKeys(),
       ]);
-      const scopes = new Set([...meta, ...base, ...outbox, ...pendingScopedPulls.map(entry => entry.scope)]);
+      const scopes = new Set([...meta, ...base, ...outbox, ...uploads, ...pendingScopedPulls.map(entry => entry.scope)]);
       if (scopes.size > 1) repository.syncRecoveryError = 'sync-dataset-ambiguous';
       else if (binding && scopes.size && !scopes.has(binding.scope)) repository.syncRecoveryError = 'sync-dataset-bound';
       else {
