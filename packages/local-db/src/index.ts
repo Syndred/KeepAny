@@ -59,8 +59,9 @@ class FileStore extends Dexie {
 
 interface DefaultRepositoryState {
   fileStore?: FileStore;
-  resources?: Promise<{ db: RxDatabase; fileStore: FileStore }>;
+  resources?: Promise<{ db: RxDatabase; fileStore: FileStore; recoveryState?: RepositoryRecoveryState }>;
 }
+interface RepositoryRecoveryState { syncError: string | null; restoreError: string | null }
 // Vite HMR re-evaluates this module while the old RxDB remains open. Keep the resource across reloads.
 const defaultGlobal = globalThis as typeof globalThis & { __keepanyLocalDbState?: DefaultRepositoryState };
 if (!defaultGlobal.__keepanyLocalDbState) defaultGlobal.__keepanyLocalDbState = {};
@@ -92,9 +93,12 @@ const rowFor = (type: EntityType, value: unknown): RecordRow => {
 };
 
 export class LocalRepository {
-  syncRecoveryError: string | null = null;
-  restoreRecoveryError: string | null = null;
-  constructor(readonly db: RxDatabase, readonly fileStore: FileStore) {}
+  constructor(readonly db: RxDatabase, readonly fileStore: FileStore,
+    readonly recoveryState: RepositoryRecoveryState = { syncError: null, restoreError: null }) {}
+  get syncRecoveryError(): string | null { return this.recoveryState.syncError; }
+  set syncRecoveryError(value: string | null) { this.recoveryState.syncError = value; }
+  get restoreRecoveryError(): string | null { return this.recoveryState.restoreError; }
+  set restoreRecoveryError(value: string | null) { this.recoveryState.restoreError = value; }
 
   async allRecords(): Promise<RecordRow[]> {
     return (await this.db.records.find().exec()).map(canonical);
@@ -624,6 +628,7 @@ export class LocalRepository {
       await this.fileStore.journal.put({ id: journalId, rows });
     });
     await replayJournal(this.db, this.fileStore, journalId);
+    this.restoreRecoveryError = null;
     return rows.length;
   }
 
@@ -884,11 +889,22 @@ function defaultRepository(): Promise<LocalRepository> {
   if (!singleton) {
     if (!defaultState.resources) {
       defaultState.resources = openLocalRepository('keepany-v1')
-        .then(repository => ({ db: repository.db, fileStore: repository.fileStore }))
+        .then(repository => ({ db: repository.db, fileStore: repository.fileStore,
+          recoveryState: repository.recoveryState }))
         .catch(error => { defaultState.resources = undefined; throw error; });
     }
     const resources = defaultState.resources;
-    singleton = resources.then(({ db, fileStore }) => new LocalRepository(db, fileStore))
+    singleton = resources.then(async resource => {
+      // An older HMR module kept only handles. Preserve a visible pending state for its journals.
+      if (!resource.recoveryState) {
+        resource.recoveryState = {
+          restoreError: await resource.fileStore.journal.count() ? 'restore-recovery-pending' : null,
+          syncError: await resource.fileStore.pullJournal.count() || await resource.fileStore.scopedPull.count()
+            ? 'sync-recovery-pending' : null,
+        };
+      }
+      return new LocalRepository(resource.db, resource.fileStore, resource.recoveryState);
+    })
       .catch(error => { singleton = undefined; throw error; });
   }
   return singleton;
