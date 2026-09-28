@@ -24,6 +24,15 @@ Docker Compose 文件位于本目录，明确选择 `self-host`。需在 Compose
 
 可信写入器向固定商业 origin 的 `GET /api/keepany/v1/bound-state/:bindingId` 发送独立 reader JWT，核验商业状态 JWT 的签名、issuer、audience、`typ`、绑定身份、scope、epoch 和时间，再以数据库条件写入短租约。已知非撤销绑定每至多 5 秒后台刷新一次；首次有效 bound JWT 与设备 DPoP 均验过且本地没有状态行时，才受限地按 ID 拉取。只在数据库中保存经核验状态，不保存或轮换设备刷新凭证；旧 epoch、同 epoch 改状态、旧观测续租和撤销墓碑复活均拒绝。每次资源请求重查 PostgreSQL，访问 JWT 的 `iat` 严格晚于状态 cutoff。商业 503、网络/签名故障或写入失败不会续租，旧租约到期后拒绝；租约截止取商业 JWT `exp` 与签名 `state_expires_at` 的较早者，不从 HTTP 收到时重算。撤销仍有拉取周期和最长剩余租约的延迟，不承诺即时生效。真实付费账号、生产服务、反向代理、密钥管理与多机部署尚未验收。
 
+本机合成账号的双进程验收从商业仓库固定提交 `7589b6d` 建临时源码快照，使用隔离 SQLite、实际商业 Vite HTTP、核心 `main.ts` 与测试 PostgreSQL 的随机 schema。脚本需要同级只读商业仓库、其已安装依赖、macOS APFS 文件克隆能力及专用测试数据库；它不改商业工作树，结束时清理临时进程、目录和 schema。在仓库根目录运行：
+
+```sh
+KEEPANY_TEST_DATABASE_URL='postgresql://USER:PASSWORD@127.0.0.1:PORT/TEST_DB' \
+  node --import tsx scripts/accept-bound-state-cross-process.ts
+```
+
+验收覆盖第二设备商业 HTTP 批准/刷新、首次资源请求自动写入后 201、商业 HTTP 暂停至租约过期后 401、恢复取得新签名状态后 200、商业 HTTP 撤销后的旧令牌 401。临时合成 Plus 不代表真实订单或生产服务验收。
+
 ## 密文附件接口
 
 设置 `KEEPANY_S3_BUCKET`、`KEEPANY_S3_REGION`，并按存储提供商设置 `KEEPANY_S3_ENDPOINT` 与访问密钥。未设置 bucket 时附件接口返回 503，不影响记录同步。服务端使用 AWS SDK v3 的 S3 API；对象键由服务端按 `workspaceId/attachmentId` 生成，调用者不能指定 bucket 或对象键。
