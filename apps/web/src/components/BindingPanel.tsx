@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
 	bridgeBindingKeys,
@@ -16,6 +16,7 @@ import {
 	type StoredBinding,
 } from "../../../../packages/binding/src/store";
 import { Button } from "./ui/button";
+import { Dialog } from "./ui/dialog";
 
 const issuer = import.meta.env.VITE_KEEPANY_BINDING_ISSUER;
 const bridgeOrigin = import.meta.env.VITE_KEEPANY_BINDING_BRIDGE_ORIGIN;
@@ -38,6 +39,8 @@ export function BindingPanel() {
 	const [binding, setBinding] = useState<StoredBinding>();
 	const [pending, setPending] = useState<PendingBinding>();
 	const [busy, setBusy] = useState(false);
+	const busyRef = useRef(false);
+	const [forgetOpen, setForgetOpen] = useState(false);
 	const [message, setMessage] = useState<{ key: string; count?: number }>();
 	useEffect(() => {
 		if (!configured) return;
@@ -62,6 +65,8 @@ export function BindingPanel() {
 	if (!configured) return null;
 	const repository = defaultBindingRepository();
 	async function run(action: () => Promise<void>) {
+		if (busyRef.current) return;
+		busyRef.current = true;
 		setBusy(true);
 		setMessage(undefined);
 		try {
@@ -69,6 +74,7 @@ export function BindingPanel() {
 		} catch {
 			setMessage({ key: "bindingFailed" });
 		} finally {
+			busyRef.current = false;
 			setBusy(false);
 		}
 	}
@@ -95,17 +101,7 @@ export function BindingPanel() {
 						>
 							{t("bindingCheck")}
 						</Button>
-						<Button
-							disabled={busy}
-							onClick={() => {
-								if (!window.confirm(t("bindingForgetConfirm"))) return;
-								void run(async () => {
-									await repository.revokeLocal(binding.bindingId);
-									setBinding(undefined);
-									setMessage({ key: "bindingForgotten" });
-								});
-							}}
-						>
+						<Button disabled={busy} onClick={() => setForgetOpen(true)}>
 							{t("bindingForget")}
 						</Button>
 					</div>
@@ -179,6 +175,35 @@ export function BindingPanel() {
 			)}
 			{message && (
 				<p role="status">{t(message.key, { count: message.count })}</p>
+			)}
+			{forgetOpen && binding && (
+				<Dialog
+					title={t("bindingForget")}
+					onClose={() => {
+						if (!busyRef.current) setForgetOpen(false);
+					}}
+				>
+					<p>{t("bindingForgetConfirm")}</p>
+					<div className="actions">
+						<Button disabled={busy} onClick={() => setForgetOpen(false)}>
+							{t("cancel")}
+						</Button>
+						<Button
+							variant="danger"
+							disabled={busy}
+							onClick={() =>
+								void run(async () => {
+									await repository.revokeLocal(binding.bindingId);
+									setForgetOpen(false);
+									setBinding(undefined);
+									setMessage({ key: "bindingForgotten" });
+								})
+							}
+						>
+							{t("bindingForget")}
+						</Button>
+					</div>
+				</Dialog>
 			)}
 		</section>
 	);

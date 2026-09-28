@@ -178,6 +178,9 @@ export function AssetDetail() {
 		(a) => a.id === params.id && a.kind === kind && !a.deleted,
 	);
 	const [edit, setEdit] = useState(false);
+	const [deleteOpen, setDeleteOpen] = useState(false);
+	const [deleteBusy, setDeleteBusy] = useState(false);
+	const deleteInFlight = useRef(false);
 	const [relationEdit, setRelationEdit] = useState(false);
 	const [submissionEdit, setSubmissionEdit] = useState(false);
 	const [taskEdit, setTaskEdit] = useState(false);
@@ -242,6 +245,26 @@ export function AssetDetail() {
 			notify(t("error"));
 		}
 	};
+	async function confirmDelete() {
+		if (deleteInFlight.current) return;
+		deleteInFlight.current = true;
+		setDeleteBusy(true);
+		try {
+			await save("asset", {
+				...asset,
+				deleted: true,
+				updatedAt: new Date().toISOString(),
+			});
+			setDeleteOpen(false);
+			await navigate({ to: "/assets/$kind", params: { kind } });
+			notify(t("saved"));
+		} catch {
+			notify(t("error"));
+		} finally {
+			deleteInFlight.current = false;
+			setDeleteBusy(false);
+		}
+	}
 	async function addRelation() {
 		if (!asset) return;
 		const target = data.assets.find((a) => a.id === relationTarget);
@@ -381,22 +404,35 @@ export function AssetDetail() {
 					<Button onClick={() => setEdit(true)}>{t("edit")}</Button>
 					<Button
 						variant="danger"
-						onClick={() => {
-							if (window.confirm(t("deleteConfirm")))
-								run(async () => {
-									await save("asset", {
-										...asset,
-										deleted: true,
-										updatedAt: new Date().toISOString(),
-									});
-									await navigate({ to: "/assets/$kind", params: { kind } });
-								});
-						}}
+						disabled={deleteBusy}
+						onClick={() => setDeleteOpen(true)}
 					>
 						{t("delete")}
 					</Button>
 				</div>
 			</div>
+			{deleteOpen && (
+				<Dialog
+					title={t("delete")}
+					onClose={() => {
+						if (!deleteInFlight.current) setDeleteOpen(false);
+					}}
+				>
+					<p>{t("deleteConfirm")}</p>
+					<div className="actions">
+						<Button disabled={deleteBusy} onClick={() => setDeleteOpen(false)}>
+							{t("cancel")}
+						</Button>
+						<Button
+							variant="danger"
+							disabled={deleteBusy}
+							onClick={() => void confirmDelete()}
+						>
+							{t("delete")}
+						</Button>
+					</div>
+				</Dialog>
+			)}
 			<div className="detail-grid">
 				<section className="card">
 					<div className="card-header">
