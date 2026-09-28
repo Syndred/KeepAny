@@ -5,14 +5,14 @@
 ```text
 /Users/syndred/Desktop/projects/
   KeepAny/        # 开源核心、基础同步、自部署、用户资产UI
-  KeepAny-Cloud/  # 私有：ShipAny官网、付费会员、运营后台
+  KeepAnyAdm/  # 私有：ShipAny官网、付费会员、运营后台
 ```
 
-当前仅KeepAny已建立文档；KeepAny-Cloud尚未创建、未下载模板。实施时使用已购且允许该协作方式的ShipAny版本；检查模板远端后再开发。文件夹拆开有助于代码发布边界，但不能自动解决许可证兼容问题。
+用户已创建KeepAnyAdm并放入ShipAny模板；2026-09-28开始双线实现。实施时使用已购且允许该协作方式的ShipAny版本；检查模板远端后再开发。文件夹拆开有助于代码发布边界，但不能自动解决许可证兼容问题。
 
 ## 各自负责什么
 
-| 功能 | KeepAny | KeepAny-Cloud |
+| 功能 | KeepAny | KeepAnyAdm |
 |---|---|---|
 | 资产应用、分类、关系、待办、导出 | 开源 | 不复制 |
 | 基础同步协议与服务、BYOK/MCP | 开源可自部署 | 可托管并运营 |

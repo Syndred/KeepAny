@@ -28,7 +28,7 @@
 
 当前只建立文档与设计资料。正式开发按文档创建 `apps/web`、`apps/sync-server`、`apps/worker`、`packages/*`，不把演示HTML当应用入口。
 
-商业官网、会员与运营后台计划放在同级 `../KeepAny-Cloud`，独立仓库，不置于本仓库。当前未下载或复制 ShipAny 模板。
+商业官网、会员与运营后台计划放在同级 `../KeepAnyAdm`，独立仓库，不置于本仓库。用户已在同级 KeepAnyAdm 放入 ShipAny 模板，保持私有独立仓库。
 
 ## 许可证状态
 
