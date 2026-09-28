@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { request as httpRequest } from 'node:http';
 import { newAsset, type Asset } from '../../domain/src';
-import { McpAuthority, MemoryAuthorityStorage } from './authority';
+import { McpAuthority, MemoryAuthorityStorage, type ReadField, type WriteField } from './authority';
 import { BrowserMcpBridgeClient } from './browser-bridge';
 import { startLocalMcpBridge, type LocalMcpBridge } from './bridge';
 import { McpAssetService, type AssetSnapshot, type McpAssetStore } from './service';
@@ -24,11 +24,11 @@ function fixtureStore(asset: Asset): McpAssetStore & { current(): AssetSnapshot 
   };
 }
 
-async function fixture(timeout?: number) {
+async function fixture(timeout?: number, readFields: ReadField[] = ['name'], writeFields: WriteField[] = ['name']) {
   const asset = { ...newAsset('account'), name: 'Allowed name', username: 'private-login', notes: 'private notes' };
   const store = fixtureStore(asset);
   const authority = new McpAuthority(new MemoryAuthorityStorage());
-  const grant = await authority.issueGrant({ assetIds: [asset.id], readFields: ['name'], writeFields: ['name'], ttlMs: 60_000 });
+  const grant = await authority.issueGrant({ assetIds: [asset.id], readFields, writeFields, ttlMs: 60_000 });
   const bridge = await startLocalMcpBridge({ appOrigin, authority, grantId: grant.id, grantSecret: grant.secret,
     requestTimeoutMs: timeout });
   bridges.push(bridge);
@@ -39,6 +39,20 @@ async function fixture(timeout?: number) {
 }
 
 describe('loopback MCP browser relay', () => {
+  it('keeps an unapproved required domain field out of MCP output', async () => {
+    const { asset, store, authority, grant, bridge } = await fixture(undefined, ['category'], []);
+    const fetcher: typeof fetch = (input, init) => fetch(input, { ...init,
+      headers: { ...Object.fromEntries(new Headers(init?.headers).entries()), Origin: appOrigin } });
+    const client = new BrowserMcpBridgeClient({ url: bridge.url, pairingSecret: bridge.pairingSecret,
+      store, fetcher, approve: async () => true });
+    await client.pair();
+    const running = client.run();
+    try {
+      const service = new McpAssetService(bridge.store, authority, grant.id, grant.secret);
+      expect(await service.getAsset(asset.id)).toEqual({ id: asset.id, category: asset.category });
+      expect(await service.listAssets()).toEqual([{ id: asset.id, category: asset.category }]);
+    } finally { client.close(); await running.catch(() => undefined); }
+  });
   it('requires an exact origin, host and one-time pairing secret', async () => {
     const { bridge, request } = await fixture();
     expect((await request('/pair', { secret: bridge.pairingSecret }, 'null')).status).toBe(403);

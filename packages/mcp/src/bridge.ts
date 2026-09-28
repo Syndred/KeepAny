@@ -63,7 +63,9 @@ export async function startLocalMcpBridge(options: LocalBridgeOptions): Promise<
   const wireAsset = (raw: unknown) => {
     const value = object(raw);
     if (Object.keys(value).some(key => !permittedWireFields.has(key))) throw new McpAccessError('invalid-browser-result');
-    return assetSchema.parse(value);
+    // The domain schema requires a name even when the grant does not expose it.
+    // This sentinel is never projected to MCP output; browser writes merge only approved fields.
+    return assetSchema.parse({ name: '[private]', ...value });
   };
   const requestTimeoutMs = options.requestTimeoutMs ?? 10_000;
   if (!Number.isSafeInteger(requestTimeoutMs) || requestTimeoutMs < 100 || requestTimeoutMs > 30_000)
