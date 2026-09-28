@@ -312,6 +312,8 @@ p { line-height: 1.5; }
   .nav a, .nav button { width: 100%; white-space: normal; }
   .side-bottom { display: grid; }
   .topbar { min-height: 50px; padding-inline: 16px; }
+  .top-search { flex: 1; width: auto; }
+  .top-actions { flex: none; }
   .page { padding: 16px 16px 32px; }
   .top-actions .button span { display: none; }
   .facts { grid-template-columns: 1fr; }
