@@ -4,6 +4,8 @@
 
 认证模式必须显式选择。`self-host` 仅适合单主体自部署，使用长随机 Bearer；它不是商业绑定认证。`bound` 是受控试验模式，验证商业侧签发的设备绑定 JWT 与每次请求的设备 DPoP，并由可信写入器读取商业签名状态断言、写入 PostgreSQL 短租约。正式多人官方服务、真实账号、设备加入/恢复、生产密钥/TLS 与端到端密钥协议尚未通过验收，不应对外开放同步服务。
 
+`self-host-session` 是另一种可选自部署模式：Better Auth 1.7.6 管理用户密码和 Cookie 会话，PG 工作区成员主体为 `selfhost:<Better Auth 用户 ID>`。它不接受旧 `self-host` Bearer、商业 bound JWT 或按邮箱合并商业身份。工作区记录与密文附件仍由原有服务按每次请求的成员权限检查；`GET /workspaces` 只列当前账号的有效成员工作区。退出登录后本机资产与导出继续可用，已绑定另一账号/工作区的本机数据集不得自动改绑。
+
 本机单主体运行时先设置 `DATABASE_URL`、`KEEPANY_SYNC_AUTH_MODE=self-host` 和至少 32 字符的 `KEEPANY_SYNC_TOKEN`，再执行：
 
 ```sh
@@ -13,6 +15,14 @@ node apps/sync-server/dist/main.js
 ```
 
 Docker Compose 文件位于本目录，明确选择 `self-host`。需在 Compose 环境设置 `POSTGRES_PASSWORD`、包含 URL 编码密码且主机为 `postgres` 的 `DATABASE_URL`、`KEEPANY_SYNC_TOKEN`，然后在仓库根目录运行 `docker compose -f apps/sync-server/compose.yaml up --build`。服务只绑定宿主机 `127.0.0.1:8787`；需要外部访问时自行配置 HTTPS 反向代理。
+
+## 自部署多用户会话
+
+先在专用 PostgreSQL 数据库运行包含 Better Auth 官方 1.7.6 SQL 的 `007_self_host_session` 迁移，再启动服务。所支持的生产拓扑为 Web 静态文件与 Hono API **共用一个 HTTPS origin**；反向代理把 `/api/auth/*`、`/sync/*`、`/workspaces`、`/workspaces/*` 转给 Node 服务。`KEEPANY_SYNC_PUBLIC_ORIGIN` 必须是浏览器地址栏中的精确 origin；反向代理负责 TLS、Host 与请求体转发，Node 只监听内网/回环。会话 Cookie 不跨域、不可由脚本读取，在 HTTPS 下为 Secure、HttpOnly、SameSite=Lax；会话模式不开放跨源 CORS，改变状态的 API 要求精确 Origin。不要把商业域名的 Cookie 共享给此服务，也不要把服务暴露在 HTTP 公网。
+
+运行配置为 `DATABASE_URL`、`KEEPANY_SYNC_AUTH_MODE=self-host-session`、`KEEPANY_SYNC_PUBLIC_ORIGIN=https://你的站点` 和仓库外生成并保管的至少 32 字符高熵 `BETTER_AUTH_SECRET`。此模式禁止 `KEEPANY_SYNC_TOKEN` 与 `KEEPANY_SYNC_WEB_ORIGIN`。注册默认关闭；由部署者需要新增用户时显式设 `KEEPANY_SESSION_ALLOW_SIGNUP=true`，通过同源设置页创建账号后关闭该开关并重启服务。当前只支持 Better Auth 本地邮件地址/密码登录，不发送验证邮件、不提供邮件找回；邮箱不等于已验证的真实身份。生产启用前还需完成 HTTPS、备份、密钥管理、长期负载和外部设备验收。
+
+本机开发可在非 production 环境用回环 HTTP：服务的 `KEEPANY_SYNC_PUBLIC_ORIGIN` 设为 Vite 实际 origin，例如 `http://127.0.0.1:5173`，服务监听 `127.0.0.1:8787`；另开 Web 进程执行 `KEEPANY_SELFHOST_DEV_PROXY_TARGET=http://127.0.0.1:8787 pnpm dev --port 5173 --strictPort`。此开发代理仅接受回环目标，将 `/api/auth`、`/sync`、`/workspaces` 转给 Hono，让浏览器仍是同源 Cookie 请求。更换账号时，同一浏览器本机资料不会自动变成新账号的资料；已绑定的数据集只能回到原服务、账号和工作区，另一个账号请用独立浏览器资料。工作区密钥依然只在页面内存中，需另行安全保存。
 
 `003_change_operation_id` 迁移给拉取记录补上原始 `operationId`，并按旧版已接受操作的工作区序号回填；旧迁移的校验和保持不变。若旧记录找不到对应的已接受操作，迁移会回滚并报错，需先排查数据一致性，不能跳过或生成替代 ID。执行迁移后再启动新版服务。
 

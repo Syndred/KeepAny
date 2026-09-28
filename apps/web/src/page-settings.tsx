@@ -261,7 +261,7 @@ export function SettingsPage() {
 					<label className="field"><span>{t("syncWorkspaceKey")}</span><input type={showKey ? "text" : "password"} value={workspaceKey} disabled={syncBusy} onChange={event => editConfig(() => setWorkspaceKey(event.target.value))} autoComplete="off" /><small>{t(accessMode === "session" ? "syncSessionKeyHint" : "syncKeyHint")}</small></label>
 				</div>
 				{accessMode === "session" && sessionAccountId && <div className="actions">
-					<label className="field"><span>{t("syncSelectWorkspace")}</span><select value="" disabled={syncBusy || availableWorkspaces.length === 0} onChange={event => editConfig(() => {
+					<label className="field"><span>{t("syncSelectWorkspace")}</span><select value={availableWorkspaces.includes(workspaceId) ? workspaceId : ""} disabled={syncBusy || availableWorkspaces.length === 0} onChange={event => editConfig(() => {
 						setWorkspaceId(event.target.value); setWorkspaceKey(""); setNeedsKeySave(false);
 					})}><option value="">{t(availableWorkspaces.length ? "syncSelectWorkspace" : "syncNoWorkspaces")}</option>
 						{availableWorkspaces.map(id => <option key={id} value={id}>{id}</option>)}</select></label>
