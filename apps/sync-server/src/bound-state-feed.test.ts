@@ -244,11 +244,19 @@ describe('bound state feed', () => {
 
   it('renews 24 slow healthy leases through multiple real-time rounds without a gap', async () => {
     const ids = Array.from({ length: 24 }, () => randomUUID());
+    const lastExpiry = new Map<string, number>();
+    const gaps: string[] = [];
     const item = await open({
       store: {
         hasState: async () => true,
         listKnownNonRevokedIds: async () => ids,
-        upsertVerifiedState: async state => { item.applied.push(state); return 'applied'; },
+        upsertVerifiedState: async state => {
+          const previous = lastExpiry.get(state.bindingId);
+          if (previous !== undefined && previous <= Date.now()) gaps.push(state.bindingId);
+          lastExpiry.set(state.bindingId, state.stateExpiresAt.getTime());
+          item.applied.push(state);
+          return 'applied';
+        },
       },
       onError: () => {},
     });
@@ -268,6 +276,7 @@ describe('bound state feed', () => {
         expect(item.applied.some(state => state.bindingId === id && state.stateExpiresAt.getTime() > now)).toBe(true);
       }
     }
+    expect(gaps).toHaveLength(0);
     expect(item.received.length).toBeGreaterThanOrEqual(48);
     await feed.close();
   }, 15_000);
