@@ -170,6 +170,23 @@ it('sends independent local records in one bounded push request', async () => {
   await db.close();
 });
 
+it('rejects a malformed pull page before writing any record or cursor', async () => {
+  const workspaceId = crypto.randomUUID();
+  const { config } = server(workspaceId);
+  const remoteId = `asset:${crypto.randomUUID()}`;
+  vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({ changes: [{
+    operationId: crypto.randomUUID(), id: remoteId, kind: 'asset', schemaVersion: 1,
+    ciphertext: 'opaque', tombstone: false, version: 1, sequence: 1,
+  }], nextCursor: 2 }), { status: 200 })));
+  const db = await openLocalRepository(name());
+  const result = await new SelfHostSyncClient(db, config).run();
+  expect(result.status).toBe('failed');
+  expect(result.error).toBe('sync-cursor');
+  expect(result.cursor).toBe(0);
+  expect(await db.allRecords()).toEqual([]);
+  await db.close();
+});
+
 async function scope(config: { endpoint: string; token: string }): Promise<string> {
   const bytes = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(JSON.stringify([config.endpoint, 'self-host-owner']))));
   return Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
