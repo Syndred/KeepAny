@@ -1,6 +1,6 @@
 import {
   ReplayGuard, createRecoveryCredential, generateDeviceKeys, generateWorkspaceKey,
-  grantDeviceKey, openDeviceGrant, openEnvelope, rotateWorkspaceKey, sealEnvelope,
+  grantDeviceKey, openDeviceGrant, openSyncChangeEnvelope, rotateWorkspaceKey, sealEnvelope,
   unwrapRecovery, wrapForRecovery,
 } from '../src';
 
@@ -8,14 +8,19 @@ async function runCryptoSmoke() {
   const workspaceId = '00000000-0000-4000-8000-000000000001';
   const key = await generateWorkspaceKey();
   const plaintext = new TextEncoder().encode('browser synthetic record');
-  const context = { workspaceId, recordId: 'asset:browser-test', schemaVersion: 1, keyEpoch: 1,
-    sequence: 1, operationId: '10000000-0000-4000-8000-000000000001', tombstone: false };
+  const context = { workspaceId, recordId: 'asset:browser-test', kind: 'asset' as const,
+    schemaVersion: 1, keyEpoch: 1, recordVersion: 1,
+    operationId: '10000000-0000-4000-8000-000000000001', tombstone: false };
   const envelope = await sealEnvelope(plaintext, key, context);
+  const change = { operationId: context.operationId, id: context.recordId, kind: context.kind,
+    schemaVersion: context.schemaVersion, ciphertext: JSON.stringify(envelope),
+    tombstone: context.tombstone, version: 1, sequence: 3 };
   const guard = new ReplayGuard();
-  const opened = await openEnvelope(envelope, key, context, guard);
-  guard.markApplied(context);
+  const opened = await openSyncChangeEnvelope(envelope, key, { workspaceId, change, keyEpoch: 1 }, guard);
+  guard.markApplied(opened.context, opened.recordVersion);
   let replayRejected = false;
-  try { await openEnvelope(envelope, key, context, guard); } catch { replayRejected = true; }
+  try { await openSyncChangeEnvelope(envelope, key, { workspaceId, change, keyEpoch: 1 }, guard); }
+  catch { replayRejected = true; }
   const credential = await createRecoveryCredential();
   const wrap = await wrapForRecovery(key, credential, workspaceId, 1);
   const recovered = await unwrapRecovery(wrap, credential, workspaceId, 1);
@@ -26,7 +31,7 @@ async function runCryptoSmoke() {
   const rotated = await rotateWorkspaceKey({ workspaceId, previousEpoch: 1, previousKey: key, issuer: first,
     recipients: [first, second], revokedDeviceIds: ['device-revoked'], recoveryCredential: credential });
   return {
-    roundTrip: new TextDecoder().decode(opened) === 'browser synthetic record',
+    roundTrip: new TextDecoder().decode(opened.plaintext) === 'browser synthetic record',
     replayRejected, recoveryMatches: recovered.every((byte, index) => byte === key[index]),
     secondDeviceMatches: joined.every((byte, index) => byte === key[index]),
     rotatedEpoch: rotated.keyEpoch,

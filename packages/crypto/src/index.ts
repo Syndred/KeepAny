@@ -1,5 +1,6 @@
 import sodium from 'libsodium-wrappers';
 import { z } from 'zod';
+import { syncChangeSchema, type SyncChange } from '../../contracts/src';
 
 const FORMAT = 'keepany-sync-envelope';
 const ALGORITHM = 'XChaCha20-Poly1305-IETF';
@@ -8,17 +9,29 @@ const GRANT_FORMAT = 'keepany-device-grant';
 const CREDENTIAL_PREFIX = 'ka1_';
 const b64Schema = z.string().regex(/^[A-Za-z0-9_-]+$/);
 const idSchema = z.string().min(1).max(120).regex(/^[A-Za-z0-9:_-]+$/);
-const contextSchema = z.object({
+const baseContextSchema = z.object({
   workspaceId: z.uuid(), recordId: idSchema, schemaVersion: z.number().int().min(1).max(100),
-  keyEpoch: z.number().int().positive(), sequence: z.number().int().positive(), operationId: z.uuid(),
+  keyEpoch: z.number().int().positive(), operationId: z.uuid(),
   tombstone: z.boolean(),
 });
+const legacyContextSchema = baseContextSchema.extend({ sequence: z.number().int().positive() });
+const contextV2Schema = baseContextSchema.extend({
+  kind: z.enum(['asset', 'relation', 'task', 'category', 'submission', 'history', 'preference']),
+  recordVersion: z.number().int().positive(),
+}).refine(value => value.recordId.startsWith(`${value.kind}:`), 'kind-mismatch');
+const contextSchema = z.union([contextV2Schema, legacyContextSchema]);
 export type EnvelopeContext = z.infer<typeof contextSchema>;
+export type EnvelopeContextV2 = z.infer<typeof contextV2Schema>;
+export type LegacyEnvelopeContext = z.infer<typeof legacyContextSchema>;
 
-const envelopeSchema = z.object({
-  format: z.literal(FORMAT), version: z.literal(1), algorithm: z.literal(ALGORITHM),
-  context: contextSchema, nonce: b64Schema.max(40), ciphertext: b64Schema.max(2_000_000),
+const envelopeBaseSchema = z.object({
+  format: z.literal(FORMAT), algorithm: z.literal(ALGORITHM),
+  nonce: b64Schema.max(40), ciphertext: b64Schema.max(2_000_000),
 });
+const envelopeSchema = z.discriminatedUnion('version', [
+  envelopeBaseSchema.extend({ version: z.literal(1), context: legacyContextSchema }),
+  envelopeBaseSchema.extend({ version: z.literal(2), context: contextV2Schema }),
+]);
 export type EncryptedEnvelope = z.infer<typeof envelopeSchema>;
 
 const recoverySchema = z.object({
@@ -46,12 +59,21 @@ const equalBytes = (left: Uint8Array, right: Uint8Array) => left.length === righ
 function assertKey(key: Uint8Array): void {
   if (!(key instanceof Uint8Array) || key.length !== sodium.crypto_aead_xchacha20poly1305_ietf_KEYBYTES) throw Error('key-length');
 }
+function isV2(context: EnvelopeContext): context is EnvelopeContextV2 {
+  return 'recordVersion' in context;
+}
 function aad(context: EnvelopeContext): Uint8Array {
+  if (isV2(context)) return utf8(JSON.stringify([FORMAT, 2, ALGORITHM, context.workspaceId,
+    context.recordId, context.kind, context.schemaVersion, context.keyEpoch, context.recordVersion,
+    context.operationId, context.tombstone]));
   return utf8(JSON.stringify([FORMAT, 1, ALGORITHM, context.workspaceId, context.recordId,
     context.schemaVersion, context.keyEpoch, context.sequence, context.operationId, context.tombstone]));
 }
 function assertContext(actual: EnvelopeContext, expected: EnvelopeContext): void {
-  for (const field of Object.keys(contextSchema.shape) as (keyof EnvelopeContext)[]) {
+  if (isV2(actual) !== isV2(expected)) throw Error('envelope-context');
+  const fields = isV2(actual) ? Object.keys(baseContextSchema.shape) : Object.keys(legacyContextSchema.shape);
+  if (isV2(actual)) fields.push('kind', 'recordVersion');
+  for (const field of fields as (keyof EnvelopeContext)[]) {
     if (actual[field] !== expected[field]) throw Error('envelope-context');
   }
 }
@@ -71,16 +93,17 @@ export async function sealEnvelope(plaintext: Uint8Array, dataKey: Uint8Array, r
   const context = contextSchema.parse(rawContext);
   if (!(plaintext instanceof Uint8Array) || plaintext.length > 1_000_000) throw Error('envelope-size');
   const nonce = sodium.randombytes_buf(sodium.crypto_aead_xchacha20poly1305_ietf_NPUBBYTES);
-  return {
-    format: FORMAT, version: 1, algorithm: ALGORITHM, context,
-    nonce: encode(nonce),
-    ciphertext: encode(sodium.crypto_aead_xchacha20poly1305_ietf_encrypt(plaintext, aad(context), null, nonce, dataKey)),
-  };
+  const common = { format: FORMAT, algorithm: ALGORITHM, nonce: encode(nonce),
+    ciphertext: encode(sodium.crypto_aead_xchacha20poly1305_ietf_encrypt(plaintext, aad(context), null, nonce, dataKey)) } as const;
+  return isV2(context) ? { ...common, version: 2, context } : { ...common, version: 1, context };
 }
 
-interface ReplayEntry { workspaceId: string; recordId: string; keyEpoch: number; sequence: number }
+interface ReplayEntry { workspaceId: string; recordId: string; keyEpoch: number; sequence?: number; recordVersion?: number }
+const replayEntrySchema = baseContextSchema.pick({ workspaceId: true, recordId: true, keyEpoch: true }).extend({
+  sequence: z.number().int().positive().optional(), recordVersion: z.number().int().positive().optional(),
+}).refine(value => value.sequence !== undefined || value.recordVersion !== undefined);
 const replaySnapshotSchema = z.object({
-  version: z.literal(1), entries: z.array(contextSchema.pick({ workspaceId: true, recordId: true, keyEpoch: true, sequence: true })).max(100_000),
+  version: z.union([z.literal(1), z.literal(2)]), entries: z.array(replayEntrySchema).max(100_000),
   operations: z.array(z.uuid()).max(100_000), minimumEpochs: z.array(z.object({ workspaceId: z.uuid(), epoch: z.number().int().positive() })).max(10_000),
 });
 export type ReplaySnapshot = z.infer<typeof replaySnapshotSchema>;
@@ -101,7 +124,7 @@ export class ReplayGuard {
   }
 
   snapshot(): ReplaySnapshot {
-    return { version: 1, entries: [...this.latest.values()], operations: [...this.operations],
+    return { version: 2, entries: [...this.latest.values()], operations: [...this.operations],
       minimumEpochs: [...this.minimumEpochs].map(([workspaceId, epoch]) => ({ workspaceId, epoch })) };
   }
 
@@ -111,18 +134,32 @@ export class ReplayGuard {
     this.minimumEpochs.set(workspaceId, Math.max(epoch, this.minimumEpochs.get(workspaceId) ?? 1));
   }
 
-  assertFresh(context: EnvelopeContext): void {
+  assertFresh(context: EnvelopeContext, observedRecordVersion?: number): void {
+    if (observedRecordVersion !== undefined && (!Number.isSafeInteger(observedRecordVersion) || observedRecordVersion < 1 ||
+      (isV2(context) && context.recordVersion !== observedRecordVersion))) throw Error('envelope-context');
     if (context.keyEpoch < (this.minimumEpochs.get(context.workspaceId) ?? 1)) throw Error('envelope-replay');
     if (this.operations.has(context.operationId)) throw Error('envelope-replay');
     const previous = this.latest.get(JSON.stringify([context.workspaceId, context.recordId]));
-    if (previous && (context.keyEpoch < previous.keyEpoch ||
-      (context.keyEpoch === previous.keyEpoch && context.sequence <= previous.sequence))) throw Error('envelope-replay');
+    if (!previous) return;
+    if (context.keyEpoch < previous.keyEpoch) throw Error('envelope-replay');
+    const recordVersion = isV2(context) ? context.recordVersion : observedRecordVersion;
+    if (previous.recordVersion !== undefined && recordVersion === undefined) throw Error('envelope-replay-baseline');
+    if (previous.recordVersion !== undefined && recordVersion !== undefined) {
+      if (recordVersion <= previous.recordVersion) throw Error('envelope-replay');
+    } else if (!isV2(context) && previous.sequence !== undefined) {
+      if (context.sequence <= previous.sequence) throw Error('envelope-replay');
+    } else {
+      // A legacy snapshot does not prove a record version. Require a trusted rebaseline.
+      throw Error('envelope-replay-baseline');
+    }
   }
 
-  markApplied(context: EnvelopeContext): void {
-    this.assertFresh(context);
+  markApplied(context: EnvelopeContext, observedRecordVersion?: number): void {
+    this.assertFresh(context, observedRecordVersion);
     this.latest.set(JSON.stringify([context.workspaceId, context.recordId]), {
-      workspaceId: context.workspaceId, recordId: context.recordId, keyEpoch: context.keyEpoch, sequence: context.sequence,
+      workspaceId: context.workspaceId, recordId: context.recordId, keyEpoch: context.keyEpoch,
+      ...(isV2(context) ? { recordVersion: context.recordVersion } : { sequence: context.sequence,
+        ...(observedRecordVersion === undefined ? {} : { recordVersion: observedRecordVersion }) }),
     });
     this.operations.add(context.operationId);
   }
@@ -130,13 +167,15 @@ export class ReplayGuard {
 
 export async function openEnvelope(
   input: unknown, dataKey: Uint8Array, rawExpected: EnvelopeContext, replayGuard: ReplayGuard,
+  observedRecordVersion?: number,
 ): Promise<Uint8Array> {
   await ready;
   assertKey(dataKey);
   const envelope = envelopeSchema.parse(input);
   const expected = contextSchema.parse(rawExpected);
+  if (envelope.version !== (isV2(expected) ? 2 : 1)) throw Error('envelope-context');
   assertContext(envelope.context, expected);
-  replayGuard.assertFresh(envelope.context);
+  replayGuard.assertFresh(envelope.context, observedRecordVersion);
   let nonce: Uint8Array;
   let ciphertext: Uint8Array;
   try { nonce = decode(envelope.nonce); ciphertext = decode(envelope.ciphertext); }
@@ -145,6 +184,25 @@ export async function openEnvelope(
   const plaintext = decryptAuthenticated(ciphertext, aad(envelope.context), nonce, dataKey);
   // The caller commits after its own durable record write. A failed write can be retried.
   return plaintext;
+}
+
+// Expected metadata must come from the authenticated pull response and trusted local workspace/key epoch.
+// Never derive expected values from envelope.context itself.
+export async function openSyncChangeEnvelope(
+  input: unknown, dataKey: Uint8Array,
+  source: { workspaceId: string; change: SyncChange; keyEpoch: number }, replayGuard: ReplayGuard,
+): Promise<{ plaintext: Uint8Array; context: EnvelopeContext; recordVersion: number }> {
+  const change = syncChangeSchema.parse(source.change);
+  if (!change.id.startsWith(`${change.kind}:`)) throw Error('envelope-context');
+  const version = envelopeSchema.parse(input).version;
+  const common = { workspaceId: z.uuid().parse(source.workspaceId), recordId: change.id,
+    schemaVersion: change.schemaVersion, keyEpoch: z.number().int().positive().parse(source.keyEpoch),
+    operationId: change.operationId, tombstone: change.tombstone };
+  const context: EnvelopeContext = version === 2
+    ? { ...common, kind: change.kind, recordVersion: change.version }
+    : { ...common, sequence: change.sequence };
+  const plaintext = await openEnvelope(input, dataKey, context, replayGuard, change.version);
+  return { plaintext, context, recordVersion: change.version };
 }
 
 export async function createRecoveryCredential(): Promise<string> {
