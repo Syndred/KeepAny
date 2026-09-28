@@ -107,7 +107,7 @@ test("project, account, subscription, task and downloaded backup survive a fresh
 			await restored.goto("/assets/subscription");
 			await expect(restored.getByText(subscription)).toBeVisible();
 			await restored.goto("/settings");
-			await restored.locator("select").selectOption("zh-CN");
+			await restored.locator("section.card").filter({ has: restored.getByRole("heading", { name: "Language" }) }).locator("select").selectOption("zh-CN");
 			await expect(
 				restored.getByRole("heading", { name: "设置" }),
 			).toBeVisible();

@@ -43,7 +43,7 @@ async function selectSession(page: Page, origin: string): Promise<void> {
 }
 
 async function signUp(page: Page, email: string, name: string, password: string): Promise<void> {
-  await page.getByLabel('Name', { exact: true }).fill(name);
+  await page.getByRole('textbox', { name: 'Name', exact: true }).fill(name);
   await page.getByLabel('Email address').fill(email);
   await page.getByLabel('Password', { exact: true }).fill(password);
   await page.getByRole('button', { name: 'Create account' }).click();
