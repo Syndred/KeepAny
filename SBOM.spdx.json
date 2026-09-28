@@ -2,21 +2,21 @@
   "spdxVersion": "SPDX-2.3",
   "dataLicense": "CC0-1.0",
   "SPDXID": "SPDXRef-DOCUMENT",
-  "name": "KeepAny installed pnpm inventory 94eee28a41de",
-  "documentNamespace": "urn:uuid:94eee28a-41de-428e-a941-f5a292782eee",
+  "name": "KeepAny installed pnpm inventory 82fdc2846a64",
+  "documentNamespace": "urn:uuid:82fdc284-6a64-435a-a1e4-66a90d246078",
   "creationInfo": {
     "creators": [
       "Tool: scripts/phase0/generate-legal-artifacts.mjs"
     ],
-    "created": "2026-09-28T15:27:09Z",
+    "created": "2026-09-28T16:10:32Z",
     "comment": "Installed-tree snapshot; creation time is retained for the same lock SHA-256 so --check can compare deterministic output."
   },
   "annotations": [
     {
-      "annotationDate": "2026-09-28T15:27:09Z",
+      "annotationDate": "2026-09-28T16:10:32Z",
       "annotationType": "OTHER",
       "annotator": "Tool: scripts/phase0/generate-legal-artifacts.mjs",
-      "comment": "pnpm-lock.yaml SHA-256: 94eee28a41ded28e2941f5a292782eeec6a59316b57ca7b0cbabf248487ccd2c; installed package versions: 589; missing root license text: 30."
+      "comment": "pnpm-lock.yaml SHA-256: 82fdc2846a64135a71e466a90d24607853f320bfa47fb3398ebdb6cb447df297; installed package versions: 589; missing root license text: 30."
     }
   ],
   "documentDescribes": [
@@ -2296,7 +2296,7 @@
       "licenseConcluded": "NOASSERTION",
       "licenseDeclared": "MIT",
       "copyrightText": "NOASSERTION",
-      "sourceInfo": "Installed metadata: node_modules/.pnpm/@noble+hashes@2.4.0/node_modules/@noble/hashes/package.json; package-root license/notice files: node_modules/.pnpm/@noble+hashes@2.4.0/node_modules/@noble/hashes/LICENSE sha256:4f221aee6e072336700c408c68ab3b96a3fc09f6aebe6f48f1bd99e5ef13faec; metadata repository: git+https://github.com/paulmillr/noble-hashes.git; direct scope: transitive.",
+      "sourceInfo": "Installed metadata: node_modules/.pnpm/@noble+hashes@2.4.0/node_modules/@noble/hashes/package.json; package-root license/notice files: node_modules/.pnpm/@noble+hashes@2.4.0/node_modules/@noble/hashes/LICENSE sha256:4f221aee6e072336700c408c68ab3b96a3fc09f6aebe6f48f1bd99e5ef13faec; metadata repository: git+https://github.com/paulmillr/noble-hashes.git; direct scope: production.",
       "homepage": "https://paulmillr.com/noble/"
     },
     {

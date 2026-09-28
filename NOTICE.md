@@ -2,8 +2,8 @@
 
 本清单由 `node scripts/phase0/generate-legal-artifacts.mjs` 根据当前 `pnpm-lock.yaml`、实际安装树和各包 `package.json` 生成。它记录包内许可声明和包根目录中的许可/NOTICE 文件指纹；并非法律兼容性结论或可直接分发的完整第三方许可证正文包。
 
-- 锁文件 SHA-256：`94eee28a41ded28e2941f5a292782eeec6a59316b57ca7b0cbabf248487ccd2c`
-- 已安装包版本：589；直接运行依赖：32；直接开发依赖：18。
+- 锁文件 SHA-256：`82fdc2846a64135a71e466a90d24607853f320bfa47fb3398ebdb6cb447df297`
+- 已安装包版本：589；直接运行依赖：33；直接开发依赖：18。
 - 包根目录缺少许可证正文：30。各项仍需按发布版本核对上游正文、版权和特殊 NOTICE。
 - 项目源码许可证：根目录 `LICENSE` 为 AGPL-3.0-only；发布前仍需由版权持有人确认，并完成依赖兼容性复核。
 - 本轮未复制 HomeInventory、Wallos、DomainMOD、Homebox 的业务源码；该四项仅在 `docs/03-开源业务模块复用审计.md` 中作为候选和参考登记。
@@ -190,7 +190,7 @@
 | `@modelcontextprotocol/core@2.1.0` | 传递依赖 | `MIT` | `node_modules/.pnpm/@modelcontextprotocol+core@2.1.0/node_modules/@modelcontextprotocol/core/LICENSE` (SHA-256 `0382b0057770ca05e9c350a50aa3b1c1fea84da0bc81d723bf00b9aa841be58a`) |
 | `@modelcontextprotocol/server@2.1.0` | production | `MIT` | `node_modules/.pnpm/@modelcontextprotocol+server@2.1.0/node_modules/@modelcontextprotocol/server/LICENSE` (SHA-256 `0382b0057770ca05e9c350a50aa3b1c1fea84da0bc81d723bf00b9aa841be58a`) |
 | `@noble/ciphers@2.4.0` | 传递依赖 | `MIT` | `node_modules/.pnpm/@noble+ciphers@2.4.0/node_modules/@noble/ciphers/LICENSE` (SHA-256 `f36671a5487c9c5050efacb58011c37c24c55a889803cb036cf9d9a6347c1e2d`) |
-| `@noble/hashes@2.4.0` | 传递依赖 | `MIT` | `node_modules/.pnpm/@noble+hashes@2.4.0/node_modules/@noble/hashes/LICENSE` (SHA-256 `4f221aee6e072336700c408c68ab3b96a3fc09f6aebe6f48f1bd99e5ef13faec`) |
+| `@noble/hashes@2.4.0` | production | `MIT` | `node_modules/.pnpm/@noble+hashes@2.4.0/node_modules/@noble/hashes/LICENSE` (SHA-256 `4f221aee6e072336700c408c68ab3b96a3fc09f6aebe6f48f1bd99e5ef13faec`) |
 | `@opentelemetry/semantic-conventions@1.43.0` | 传递依赖 | `Apache-2.0` | `node_modules/.pnpm/@opentelemetry+semantic-conventions@1.43.0/node_modules/@opentelemetry/semantic-conventions/LICENSE` (SHA-256 `c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4`) |
 | `@oxc-project/types@0.151.0` | 传递依赖 | `MIT` | `node_modules/.pnpm/@oxc-project+types@0.151.0/node_modules/@oxc-project/types/LICENSE` (SHA-256 `95ced5ecf1133fbf41d409b5555c86c344f83f3b019926057ddbc07cfdcc27b3`) |
 | `@playwright/test@1.63.0` | development | `Apache-2.0` | `node_modules/.pnpm/@playwright+test@1.63.0/node_modules/@playwright/test/LICENSE` (SHA-256 `45873d00a0dd243596deb4aa23b2493b3d1f0671921bf2538ea431d7380220eb`)<br>`node_modules/.pnpm/@playwright+test@1.63.0/node_modules/@playwright/test/NOTICE` (SHA-256 `6d602191187b35b9b01d2cffa01c8469c2c8d9de8a96f1bf868e0f264f51c81d`) |
