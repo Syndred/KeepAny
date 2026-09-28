@@ -1,5 +1,6 @@
 import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
+
 const copy: Record<string, [string, string]> = {
 	overview: ["概览", "Overview"],
 	tasks: ["待办", "Tasks"],
@@ -11,6 +12,47 @@ const copy: Record<string, [string, string]> = {
 	intake: ["收录与备份", "Import & backup"],
 	trash: ["回收站", "Trash"],
 	settings: ["设置", "Settings"],
+	bindingTitle: ["连接账号", "Connect account"],
+	bindingHint: [
+		"连接后可在此设备查看授权状态。同步需另行开启。",
+		"View account authorization on this device. Sync is enabled separately.",
+	],
+	bindingStart: ["开始连接", "Start connecting"],
+	bindingCode: ["授权码", "Approval code"],
+	bindingApprove: [
+		"在账号页面确认此授权码，再返回检查结果。",
+		"Confirm this code in your account, then return to check the result.",
+	],
+	bindingOpenApproval: ["打开授权页面", "Open approval page"],
+	bindingCheck: ["检查状态", "Check status"],
+	bindingWait: ["请在 {{count}} 秒后重试。", "Try again in {{count}} seconds."],
+	bindingConnected: ["本机已保存账号连接", "Connection saved on this device"],
+	bindingForget: ["从本机移除", "Remove from this device"],
+	bindingForgetConfirm: [
+		"仅移除本机连接。要撤销设备授权，请到账号页面操作。",
+		"This removes the local connection only. Revoke device access in your account settings.",
+	],
+	bindingForgotten: ["已从本机移除连接", "Connection removed from this device"],
+	bindingFailed: [
+		"连接未完成，请稍后重试。",
+		"Connection could not be completed. Try again.",
+	],
+	bindingLocalError: [
+		"无法读取本机连接状态。",
+		"Could not read the connection on this device.",
+	],
+	bindingDeviceName: ["KeepAny 网页", "KeepAny Web"],
+	bindingState_active: ["授权有效", "Authorization is active"],
+	bindingState_inactive: ["授权暂不可用", "Authorization is inactive"],
+	bindingState_device_limit: ["设备数量已达上限", "Device limit reached"],
+	bindingState_credential_expired: [
+		"授权凭据已过期",
+		"Authorization credentials expired",
+	],
+	bindingState_revoked: ["授权已撤销", "Authorization revoked"],
+	bindingPoll_denied: ["授权被拒绝", "Authorization denied"],
+	bindingPoll_expired: ["授权码已过期", "Approval code expired"],
+	bindingPoll_revoked: ["授权已撤销", "Authorization revoked"],
 	assistant: ["AI 助手", "AI assistant"],
 	all: ["全部", "All"],
 	add: ["新增", "Add"],
@@ -279,16 +321,14 @@ export const resources = {
 		),
 	},
 };
-i18n
-	.use(initReactI18next)
-	.init({
-		resources,
-		lng:
-			typeof window === "undefined"
-				? "en"
-				: localStorage.getItem("keepany-language") ||
-					(navigator.language.startsWith("zh") ? "zh-CN" : "en"),
-		fallbackLng: "en",
-		interpolation: { escapeValue: false },
-	});
+i18n.use(initReactI18next).init({
+	resources,
+	lng:
+		typeof window === "undefined"
+			? "en"
+			: localStorage.getItem("keepany-language") ||
+				(navigator.language.startsWith("zh") ? "zh-CN" : "en"),
+	fallbackLng: "en",
+	interpolation: { escapeValue: false },
+});
 export default i18n;

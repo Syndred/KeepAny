@@ -188,6 +188,8 @@ p { line-height: 1.5; }
 .button.icon { width: 36px; height: 36px; flex: none; padding: 6px; border-radius: 11px; }
 .button.small { min-height: 30px; padding: 4px 9px; font-size: 12px; }
 .button:disabled, .tabs button:disabled { opacity: .58; filter: grayscale(.35); box-shadow: none; }
+.binding-panel { margin-top: 16px; }
+.binding-code { display: inline-block; max-width: 100%; padding: 6px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--paper); font-size: 20px; font-weight: 800; letter-spacing: .08em; overflow-wrap: anywhere; }
 
 .tabs { flex-wrap: nowrap; gap: 6px; width: 100%; overflow-x: auto; overscroll-behavior-inline: contain; padding: 2px 4px 6px 2px; scrollbar-width: thin; }
 .tabs > button, .tabs > .sortable-pill { flex: none; }

@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { BindingPanel } from "./components/BindingPanel";
 import { Button } from "./components/ui/button";
 import { seed } from "./data";
 import { PageTitle, useAppContext } from "./view-shared";
@@ -54,6 +55,7 @@ export function SettingsPage() {
 					)}
 				</section>
 			</div>
+			<BindingPanel />
 			<section className="card padded">
 				<h2>{t("trial")}</h2>
 				<p>{t("emptyHint")}</p>
