@@ -75,6 +75,8 @@ test('isolated browsers keep one local dataset on its remote through retry, conf
   const contextB = await browser.newContext({ locale: 'en-US', viewport: { width: 390, height: 844 } });
   const pageA = await contextA.newPage();
   const pageB = await contextB.newPage();
+  pageA.setDefaultTimeout(10_000);
+  pageB.setDefaultTimeout(10_000);
   pageA.on('pageerror', error => errors.push(`A: ${error.message}`));
   pageB.on('pageerror', error => errors.push(`B: ${error.message}`));
   try {
