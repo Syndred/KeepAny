@@ -6,6 +6,7 @@ type Engine = 'rxdb-dexie' | 'dexie';
 type BenchResult = Record<string, unknown>;
 const now = () => performance.now();
 const elapsed = (start: number) => Math.round((now() - start) * 100) / 100;
+const heapUsed = () => (performance as Performance & { memory?: { usedJSHeapSize: number } }).memory?.usedJSHeapSize ?? null;
 const asset = (i: number) => ({ id: `asset-${String(i).padStart(8, '0')}`, name: `Asset ${String(i).padStart(8, '0')}`, kind: 'project', updatedAt: i });
 const relation = (i: number, count: number) => ({ id: `relation-${String(i).padStart(8, '0')}`, fromId: asset(i).id, toId: asset((i + 1) % count).id, kind: 'uses' });
 const attachment = (i: number) => ({ id: `attachment-${i}`, ownerId: asset(i).id, blob: new Blob([new Uint8Array(16 * 1024)], { type: 'application/octet-stream' }) });
@@ -54,7 +55,8 @@ async function rxdbBenchmark(count: number): Promise<BenchResult> {
     const reopenedRelations = await db.relations.find().exec();
     const reopenLoadMs = elapsed(start);
     if (reopenedAssets.length !== count || reopenedRelations.length !== count) throw new Error('RxDB reopen count mismatch');
-    return { engine: 'rxdb-dexie', count, relationCount: relations.length, attachmentCount, insertMs, loadMs, reopenLoadMs, indexedLookupMs, attachmentWriteMs };
+    const retainedUsageBytes = (await navigator.storage?.estimate?.())?.usage ?? null;
+    return { engine: 'rxdb-dexie', count, relationCount: relations.length, attachmentCount, insertMs, loadMs, reopenLoadMs, indexedLookupMs, attachmentWriteMs, retainedUsageBytes, retainedHeapUsedBytes: heapUsed() };
   } finally {
     await db.remove();
     files.close();
@@ -98,7 +100,8 @@ async function dexieBenchmark(count: number): Promise<BenchResult> {
     const reopenedRelations = await db.table('relations').toArray();
     const reopenLoadMs = elapsed(start);
     if (reopenedAssets.length !== count || reopenedRelations.length !== count) throw new Error('Dexie reopen count mismatch');
-    return { engine: 'dexie', count, relationCount: relations.length, attachmentCount, insertMs, loadMs, reopenLoadMs, indexedLookupMs, attachmentWriteMs };
+    const retainedUsageBytes = (await navigator.storage?.estimate?.())?.usage ?? null;
+    return { engine: 'dexie', count, relationCount: relations.length, attachmentCount, insertMs, loadMs, reopenLoadMs, indexedLookupMs, attachmentWriteMs, retainedUsageBytes, retainedHeapUsedBytes: heapUsed() };
   } finally {
     db.close();
     await Dexie.delete(dbName);
@@ -110,7 +113,7 @@ async function runKeepAnyBenchmark(engine: Engine, count: number) {
   const before = await navigator.storage?.estimate?.();
   const result = engine === 'rxdb-dexie' ? await rxdbBenchmark(count) : await dexieBenchmark(count);
   const after = await navigator.storage?.estimate?.();
-  return { ...result, quotaBytes: after?.quota ?? null, usageDeltaBytes: before?.usage === undefined || after?.usage === undefined ? null : after.usage - before.usage, heapUsedBytes: (performance as Performance & { memory?: { usedJSHeapSize: number } }).memory?.usedJSHeapSize ?? null };
+  return { ...result, quotaBytes: after?.quota ?? null, retainedUsageDeltaBytes: before?.usage === undefined || result.retainedUsageBytes === null ? null : Number(result.retainedUsageBytes) - before.usage, postCleanupUsageDeltaBytes: before?.usage === undefined || after?.usage === undefined ? null : after.usage, postCleanupHeapUsedBytes: heapUsed() };
 }
 
 Object.assign(window, { runKeepAnyBenchmark });
