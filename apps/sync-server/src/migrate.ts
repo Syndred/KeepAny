@@ -4,7 +4,7 @@ import { resolve } from 'node:path';
 import type { Pool } from 'pg';
 
 export async function migrateSyncDatabase(pool: Pool, migrationsDir = resolve(process.cwd(), 'apps/sync-server/migrations')): Promise<void> {
-  const migrations = await Promise.all(['001_sync', '002_attachments'].map(async id => {
+  const migrations = await Promise.all(['001_sync', '002_attachments', '003_change_operation_id'].map(async id => {
     const sql = await readFile(resolve(migrationsDir, `${id}.sql`), 'utf8');
     return { id, sql, digest: createHash('sha256').update(sql).digest('hex') };
   }));

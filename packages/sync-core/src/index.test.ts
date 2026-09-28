@@ -1,4 +1,4 @@
-import { mkdtemp, rm } from 'node:fs/promises';
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
@@ -25,6 +25,7 @@ describe('stage 0 sync state machine', () => {
     expect((await service.push({ workspaceId, operations: [deviceB] })).results[0]).toMatchObject({ status: 'conflict', version: 2, reason: 'version' });
     const pull = await service.pull({ workspaceId, cursor: 0, limit: 100 });
     expect(pull.changes.map(change => change.ciphertext)).toEqual(['opaque-ciphertext', 'device-A-ciphertext']);
+    expect(pull.changes[1].operationId).toBe(deviceA.operationId);
     expect(pull.nextCursor).toBe(2);
   });
 
@@ -63,7 +64,28 @@ describe('stage 0 sync state machine', () => {
     const firstPage = await resumed.pull({ workspaceId, cursor: 0, limit: 2 });
     const secondPage = await resumed.pull({ workspaceId, cursor: firstPage.nextCursor, limit: 2 });
     expect([...firstPage.changes, ...secondPage.changes].map(change => change.kind)).toEqual(['asset', 'relation', 'task']);
+    expect([...firstPage.changes, ...secondPage.changes].map(change => change.operationId))
+      .toEqual(operations.map(operation => operation.operationId));
     expect(secondPage.nextCursor).toBe(3);
+  });
+
+  it('loads older file state without operation IDs by matching accepted operation results', async () => {
+    const directory = await mkdtemp(join(tmpdir(), 'keepany-sync-upgrade-'));
+    temporary.push(directory);
+    const path = join(directory, 'state.json');
+    const first = operation();
+    const store = new JsonFileSyncStateStore(path);
+    await new SyncService(store).push({ workspaceId, operations: [first] });
+    const old = JSON.parse(await readFile(path, 'utf8'));
+    delete old.workspaces[workspaceId].changes[0].operationId;
+    delete old.workspaces[workspaceId].documents[docId].operationId;
+    await writeFile(path, JSON.stringify(old));
+
+    const resumed = new SyncService(new JsonFileSyncStateStore(path));
+    expect((await resumed.pull({ workspaceId, cursor: 0, limit: 1 })).changes[0].operationId).toBe(first.operationId);
+    expect((await resumed.push({ workspaceId, operations: [first] })).results[0].status).toBe('duplicate');
+    await resumed.push({ workspaceId, operations: [operation({ expectedVersion: 1 })] });
+    expect(JSON.parse(await readFile(path, 'utf8')).workspaces[workspaceId].changes[0].operationId).toBe(first.operationId);
   });
 
   it('enforces the HTTP workspace boundary and validated request contract', async () => {

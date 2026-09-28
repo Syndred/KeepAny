@@ -38,7 +38,7 @@ it('accepts only pinned bound JWT and device DPoP across real Hono HTTP routes',
   const publicDeviceJwk = { kty: 'EC' as const, crv: 'P-256' as const, x: ecJwk.x, y: ecJwk.y };
   const otherDeviceJwk = { kty: 'EC' as const, crv: 'P-256' as const, x: otherEcJwk.x, y: otherEcJwk.y };
   const pg = new PGlite();
-  const migrations = await Promise.all(['001_sync', '002_attachments'].map(id =>
+  const migrations = await Promise.all(['001_sync', '002_attachments', '003_change_operation_id'].map(id =>
     readFile(new URL(`../migrations/${id}.sql`, import.meta.url), 'utf8')));
   for (const migration of migrations) await pg.exec(migration);
   const pool: SqlPool = { connect: async () => ({ query: async (sql, values) => pg.query(sql, values), release: () => {} }) };

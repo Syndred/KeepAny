@@ -14,7 +14,7 @@ import { migrateSyncDatabase } from './migrate';
 import { S3CiphertextObjectStore } from './s3-objects';
 
 type PushBody = { results: Array<{ status: string; reason?: string; version: number; sequence: number }> };
-type PullBody = { changes: Array<{ id: string; ciphertext: string; tombstone: boolean; sequence: number }>; nextCursor: number };
+type PullBody = { changes: Array<{ id: string; operationId: string; schemaVersion: number; ciphertext: string; tombstone: boolean; sequence: number }>; nextCursor: number };
 
 // Opt in explicitly. The test creates and drops its own schema in a real PostgreSQL database.
 it.skipIf(!process.env.KEEPANY_TEST_DATABASE_URL)('runs two offline clients through Hono, PostgreSQL and signed S3 HTTP', async () => {
@@ -127,10 +127,16 @@ it.skipIf(!process.env.KEEPANY_TEST_DATABASE_URL)('runs two offline clients thro
     const page1 = await deviceB.post('/sync/pull', { workspaceId, cursor: 1, limit: 1 }).then(response => response.json()) as PullBody;
     const page2 = await deviceB.post('/sync/pull', { workspaceId, cursor: page1.nextCursor, limit: 1 }).then(response => response.json()) as PullBody;
     expect([...page1.changes, ...page2.changes].map(change => change.sequence)).toEqual([2, 3]);
+    expect(page1.changes[0].operationId).toBe(accepted.operationId);
+    expect(page2.changes[0].operationId).toBe(deleted.operationId);
     expect(page2.changes[0].tombstone).toBe(true);
     const winningEnvelope = JSON.parse(page1.changes[0].ciphertext);
     expect(winningEnvelope.context).toMatchObject({ workspaceId, recordId, sequence: 2 });
-    const opened = await openEnvelope(winningEnvelope, key, winningEnvelope.context, new ReplayGuard());
+    const opened = await openEnvelope(winningEnvelope, key, {
+      workspaceId, recordId: page1.changes[0].id, schemaVersion: page1.changes[0].schemaVersion,
+      keyEpoch: 1, sequence: page1.changes[0].sequence, operationId: page1.changes[0].operationId,
+      tombstone: page1.changes[0].tombstone,
+    }, new ReplayGuard());
     expect(new TextDecoder().decode(opened)).toBe(accepted === editA ? 'device-a-private-value' : 'device-b-private-value');
     const stored = await pool.query<{ ciphertext: string }>('SELECT ciphertext FROM sync_documents WHERE workspace_id=$1 AND doc_id=$2', [workspaceId, recordId]);
     expect(stored.rows[0].ciphertext).not.toContain('deleted-private-value');

@@ -80,6 +80,7 @@ export const syncPullRequestSchema = z.object({
 });
 export type SyncPullRequest = z.infer<typeof syncPullRequestSchema>;
 export const syncChangeSchema = z.object({
+	operationId: z.uuid(),
 	id: syncIdSchema,
 	kind: syncKindSchema,
 	schemaVersion: z.number().int().min(1).max(100),

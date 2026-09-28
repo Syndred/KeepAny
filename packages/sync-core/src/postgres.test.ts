@@ -2,16 +2,18 @@ import { readFile } from 'node:fs/promises';
 import { PGlite } from '@electric-sql/pglite';
 import { describe, expect, it } from 'vitest';
 import type { SyncOperation } from '../../contracts/src';
+import { generateWorkspaceKey, openEnvelope, ReplayGuard, sealEnvelope } from '../../crypto/src';
 import { PostgresSyncService, SyncForbiddenError, type SqlPool } from './postgres';
 
-const migration = await readFile(new URL('../../../apps/sync-server/migrations/001_sync.sql', import.meta.url), 'utf8');
+const migrations = await Promise.all(['001_sync', '003_change_operation_id'].map(id =>
+  readFile(new URL(`../../../apps/sync-server/migrations/${id}.sql`, import.meta.url), 'utf8')));
 const operation = (id: string, changes: Partial<SyncOperation> = {}): SyncOperation => ({
   operationId: crypto.randomUUID(), id, kind: 'asset', schemaVersion: 1,
   expectedVersion: 0, ciphertext: 'opaque-ciphertext', tombstone: false, intent: 'write', ...changes,
 });
 async function fixture() {
   const pg = new PGlite();
-  await pg.exec(migration);
+  for (const migration of migrations) await pg.exec(migration);
   const pool: SqlPool = { connect: async () => ({
     query: async (text, values) => pg.query(text, values),
     release: () => {},
@@ -20,6 +22,28 @@ async function fixture() {
 }
 
 describe('PostgreSQL transaction sync', () => {
+  it('returns enough pull metadata to authenticate an encrypted envelope', async () => {
+    const { pg, service } = await fixture();
+    try {
+      const workspaceId = await service.createWorkspace('alice');
+      const id = `asset:${crypto.randomUUID()}`;
+      const operationId = crypto.randomUUID();
+      const key = await generateWorkspaceKey();
+      const envelope = await sealEnvelope(new TextEncoder().encode('private-value'), key, {
+        workspaceId, recordId: id, schemaVersion: 1, keyEpoch: 1, sequence: 1, operationId, tombstone: false,
+      });
+      await service.push({ workspaceId, operations: [operation(id, {
+        operationId, ciphertext: JSON.stringify(envelope),
+      })] }, 'alice');
+      const change = (await service.pull({ workspaceId, cursor: 0, limit: 1 }, 'alice')).changes[0];
+      const plaintext = await openEnvelope(JSON.parse(change.ciphertext), key, {
+        workspaceId, recordId: change.id, schemaVersion: change.schemaVersion, keyEpoch: 1,
+        sequence: change.sequence, operationId: change.operationId, tombstone: change.tombstone,
+      }, new ReplayGuard());
+      expect(new TextDecoder().decode(plaintext)).toBe('private-value');
+    } finally { await pg.close(); }
+  }, 20_000);
+
   it('persists idempotent operations, version conflicts and tombstones', async () => {
     const { pg, service } = await fixture();
     try {
@@ -28,6 +52,7 @@ describe('PostgreSQL transaction sync', () => {
       const first = operation(id);
       expect((await service.push({ workspaceId, operations: [first] }, 'alice')).results[0]).toMatchObject({ status: 'accepted', version: 1, sequence: 1 });
       expect((await service.push({ workspaceId, operations: [first] }, 'alice')).results[0]).toMatchObject({ status: 'duplicate', version: 1, sequence: 1 });
+      expect((await service.pull({ workspaceId, cursor: 0, limit: 100 }, 'alice')).changes[0].operationId).toBe(first.operationId);
       expect((await service.push({ workspaceId, operations: [{ ...first, ciphertext: 'changed' }] }, 'alice')).results[0]).toMatchObject({ status: 'rejected', reason: 'operation-reused' });
       expect((await service.push({ workspaceId, operations: [operation(id, { expectedVersion: 0 })] }, 'alice')).results[0]).toMatchObject({ status: 'conflict', version: 1 });
       expect((await service.push({ workspaceId, operations: [operation(id, { expectedVersion: 1, tombstone: true })] }, 'alice')).results[0]).toMatchObject({ status: 'accepted', version: 2, sequence: 2 });
@@ -53,7 +78,7 @@ describe('PostgreSQL transaction sync', () => {
 
   it('rolls back sequence and document writes when a change insert fails', async () => {
     const pg = new PGlite();
-    await pg.exec(migration);
+    for (const migration of migrations) await pg.exec(migration);
     let failNextChange = true;
     const pool: SqlPool = { connect: async () => ({
       query: async (text, values) => {
@@ -90,6 +115,8 @@ describe('PostgreSQL transaction sync', () => {
       const first = await service.pull({ workspaceId, cursor: 0, limit: 2 }, 'alice');
       const second = await service.pull({ workspaceId, cursor: first.nextCursor, limit: 2 }, 'alice');
       expect([...first.changes, ...second.changes].map(change => change.kind)).toEqual(['asset', 'relation', 'task']);
+      expect([...first.changes, ...second.changes].map(change => change.operationId))
+        .toEqual(operations.map(operation => operation.operationId));
       expect(second.nextCursor).toBe(3);
     } finally { await pg.close(); }
   }, 20_000);

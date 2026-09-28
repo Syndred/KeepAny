@@ -4,6 +4,8 @@
 
 `JsonFileSyncStateStore` 是单进程实验存储：每个操作先原子替换 JSON 文件再确认成功。它不能承担多进程或多副本并发生产流量。生产服务仍需 PostgreSQL 事务、租户鉴权、游标保留策略、速率限制和密钥管理。
 
+拉取变更现在包含写入时的 `operationId`，旧 JSON 状态会从已接受操作的持久结果回填。加密信封当前还把客户端预先密封的 `sequence` 绑定为 AAD，但工作区全局序号由服务端在提交时分配；跨记录或并发写入时客户端不能可靠预知它。正式加密同步客户端仍须先解决这个协议问题并验证兼容迁移。
+
 本地端 `LocalRepository.applyPulledBatch(changes, cursorStart)` 先写 Dexie 操作日志，逐条写入 RxDB，再在同一 Dexie 事务内提交游标和删除日志。重开会重放未完成批次；同记录本地编辑冲突时保留本地内容与原游标，并设置 `syncRecoveryError`。冲突解决界面尚未实现，不能宣传自动合并。
 
 运行 `pnpm exec vitest run packages/sync-core/src packages/local-db/src` 可复现阶段 0 断网重试、重复 push、两设备离线同字段冲突、墓碑与跨类型中断恢复。双设备测试使用测试专用共享 AES-GCM 密钥；它不证明设备加入、恢复密钥、撤销、跨设备密钥轮换、附件分块认证、真实网络故障或外部部署安全。正式云同步需先完成这些门槛。

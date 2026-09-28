@@ -14,6 +14,8 @@ node apps/sync-server/dist/main.js
 
 Docker Compose 文件位于本目录，明确选择 `self-host`。需在 Compose 环境设置 `POSTGRES_PASSWORD`、包含 URL 编码密码且主机为 `postgres` 的 `DATABASE_URL`、`KEEPANY_SYNC_TOKEN`，然后在仓库根目录运行 `docker compose -f apps/sync-server/compose.yaml up --build`。服务只绑定宿主机 `127.0.0.1:8787`；需要外部访问时自行配置 HTTPS 反向代理。
 
+`003_change_operation_id` 迁移给拉取记录补上原始 `operationId`，并按旧版已接受操作的工作区序号回填；旧迁移的校验和保持不变。若旧记录找不到对应的已接受操作，迁移会回滚并报错，需先排查数据一致性，不能跳过或生成替代 ID。执行迁移后再启动新版服务。
+
 ## 设备绑定验签试验
 
 `bound` 模式要求 `KEEPANY_BOUND_ISSUER` 为商业侧固定 issuer origin，`KEEPANY_BOUND_JWKS_JSON` 为从其 `/.well-known/jwks.json` **经受信任渠道钉住的公钥 JSON**，`KEEPANY_SYNC_PUBLIC_ORIGIN` 为客户端访问同步服务的固定 HTTPS origin，`KEEPANY_BOUND_BINDINGS_JSON` 为运营方确认后配置的数组。每项需有 `bindingId`、`subject`、`instanceIdHash`（SHA-256 hex）、`jkt`（设备 P-256 公钥指纹）及 `scopes`（`sync:read`/`sync:write`）。模式为 `bound` 时不得设置 `KEEPANY_SYNC_TOKEN`；缺少配置、未知绑定或签名/声明不匹配均拒绝。公钥轮换及绑定映射变更目前需由运营方安全更新配置并重启。

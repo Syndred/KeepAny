@@ -6,7 +6,7 @@ import { AttachmentService, CIPHERTEXT_ATTACHMENT_TYPE, type CiphertextObjectSto
 import { PostgresSyncService, type SqlPool } from '../../../packages/sync-core/src/postgres';
 import { createPostgresSyncApp } from './app';
 
-const migrations = await Promise.all(['001_sync', '002_attachments'].map(id =>
+const migrations = await Promise.all(['001_sync', '002_attachments', '003_change_operation_id'].map(id =>
   readFile(new URL(`../migrations/${id}.sql`, import.meta.url), 'utf8')));
 async function fixture() {
   const pg = new PGlite();

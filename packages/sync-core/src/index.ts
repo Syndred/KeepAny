@@ -20,6 +20,10 @@ const workspaceSchema = z.object({
   operations: z.record(z.string(), operationResultSchema),
 });
 const stateSchema = z.object({ version: z.literal(1), workspaces: z.record(z.string(), workspaceSchema) });
+const legacyChangeSchema = z.union([syncChangeSchema, syncChangeSchema.omit({ operationId: true })]);
+const legacyStateSchema = stateSchema.extend({ workspaces: z.record(z.string(), workspaceSchema.extend({
+  documents: z.record(z.string(), legacyChangeSchema), changes: z.array(legacyChangeSchema),
+})) });
 export type SyncState = z.infer<typeof stateSchema>;
 const emptyState = (): SyncState => ({ version: 1, workspaces: {} });
 const emptyWorkspace = (): SyncState['workspaces'][string] => ({ sequence: 0, documents: {}, changes: [], operations: {} });
@@ -39,7 +43,32 @@ export class MemorySyncStateStore implements SyncStateStore {
 export class JsonFileSyncStateStore implements SyncStateStore {
   constructor(private readonly path: string) {}
   async load(): Promise<SyncState> {
-    try { return stateSchema.parse(JSON.parse(await readFile(this.path, 'utf8'))); }
+    try {
+      const stored = legacyStateSchema.parse(JSON.parse(await readFile(this.path, 'utf8')));
+      const workspaces = Object.fromEntries(Object.entries(stored.workspaces).map(([workspaceId, workspace]) => {
+        const accepted = new Map<number, SyncOperation>();
+        for (const [operationId, entry] of Object.entries(workspace.operations)) {
+          if (entry.result.status !== 'accepted') continue;
+          const operation = syncOperationSchema.parse(JSON.parse(entry.fingerprint));
+          if (operation.operationId !== operationId || entry.result.operationId !== operationId ||
+              accepted.has(entry.result.sequence)) throw Error('sync-change-operation-backfill');
+          accepted.set(entry.result.sequence, operation);
+        }
+        const upgrade = (change: z.infer<typeof legacyChangeSchema>): SyncChange => {
+          if ('operationId' in change) return syncChangeSchema.parse(change);
+          const operation = accepted.get(change.sequence);
+          if (!operation || operation.id !== change.id || operation.kind !== change.kind ||
+              operation.ciphertext !== change.ciphertext || operation.tombstone !== change.tombstone) {
+            throw Error('sync-change-operation-backfill');
+          }
+          return { ...change, operationId: operation.operationId };
+        };
+        return [workspaceId, { ...workspace, documents: Object.fromEntries(
+          Object.entries(workspace.documents).map(([id, change]) => [id, upgrade(change)])),
+          changes: workspace.changes.map(upgrade) }];
+      }));
+      return stateSchema.parse({ ...stored, workspaces });
+    }
     catch (error) {
       if ((error as NodeJS.ErrnoException).code === 'ENOENT') return emptyState();
       throw error;
@@ -99,7 +128,7 @@ export class SyncService {
     } else {
       const version = (current?.version ?? 0) + 1;
       const sequence = ++workspace.sequence;
-      const change: SyncChange = { id: operation.id, kind: operation.kind, schemaVersion: operation.schemaVersion,
+      const change: SyncChange = { operationId: operation.operationId, id: operation.id, kind: operation.kind, schemaVersion: operation.schemaVersion,
         ciphertext: operation.ciphertext, tombstone: operation.tombstone, version, sequence };
       workspace.documents[operation.id] = change;
       workspace.changes.push(change);

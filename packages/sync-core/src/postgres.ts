@@ -107,9 +107,9 @@ export class PostgresSyncService {
         tombstone=EXCLUDED.tombstone,version=EXCLUDED.version,sequence=EXCLUDED.sequence`,
       [workspaceId, operation.id, operation.kind, operation.schemaVersion, operation.ciphertext, operation.tombstone, version, sequence]);
       await client.query(`INSERT INTO sync_changes
-        (workspace_id,sequence,doc_id,kind,schema_version,ciphertext,tombstone,version)
-        VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
-      [workspaceId, sequence, operation.id, operation.kind, operation.schemaVersion, operation.ciphertext, operation.tombstone, version]);
+        (workspace_id,sequence,operation_id,doc_id,kind,schema_version,ciphertext,tombstone,version)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
+      [workspaceId, sequence, operation.operationId, operation.id, operation.kind, operation.schemaVersion, operation.ciphertext, operation.tombstone, version]);
       result = { operationId: operation.operationId, status: 'accepted', version, sequence };
     }
     await client.query(
@@ -123,11 +123,11 @@ export class PostgresSyncService {
     const request = syncPullRequestSchema.parse(input);
     return withSqlTransaction(this.pool, async client => {
       await requireSyncMembership(client, request.workspaceId, subjectId, 'read');
-      const page = await client.query(`SELECT sequence,doc_id,kind,schema_version,ciphertext,tombstone,version
+      const page = await client.query(`SELECT sequence,operation_id,doc_id,kind,schema_version,ciphertext,tombstone,version
         FROM sync_changes WHERE workspace_id=$1 AND sequence>$2 ORDER BY sequence ASC LIMIT $3`,
       [request.workspaceId, request.cursor, request.limit]);
       const changes = page.rows.map(row => syncChangeSchema.parse({
-        id: row.doc_id, kind: row.kind, schemaVersion: numeric(row.schema_version),
+        operationId: row.operation_id, id: row.doc_id, kind: row.kind, schemaVersion: numeric(row.schema_version),
         ciphertext: row.ciphertext, tombstone: row.tombstone,
         version: numeric(row.version), sequence: numeric(row.sequence),
       }));
