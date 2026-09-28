@@ -8,6 +8,8 @@ export type BoundAuthConfig = {
   publicOrigin: string;
   jwks: unknown;
   stateStore: BoundStateStore;
+  /** Invoked only after both the commercial token and the device proof are verified. */
+  bootstrapState?: (bindingId: string) => Promise<void>;
 };
 
 const B64 = /^[A-Za-z0-9_-]+$/;
@@ -103,6 +105,7 @@ export function createBoundTokenAuthenticator(config: BoundAuthConfig): Authenti
       if (proof.htm !== request.method || proof.htu !== expectedHtu || proof.ath !== ath ||
         typeof proof.iat !== 'number' || !Number.isInteger(proof.iat) || Math.abs(now - proof.iat) > 60 ||
         typeof proof.jti !== 'string' || !B64.test(proof.jti) || proof.jti.length < 22 || proof.jti.length > 128) return null;
+      await config.bootstrapState?.(bindingId);
       const accepted = await config.stateStore.claimProof({
         bindingId, subject, instanceIdHash, jkt: confirmation.jkt, scope: request.scope,
         tokenIssuedAt: payload.iat, proofIssuedAt: proof.iat, proofJti: proof.jti,

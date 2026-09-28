@@ -14,7 +14,8 @@ export function createStaticTokenAuthenticator(token: string, subjectId = 'self-
   };
 }
 
-export function createConfiguredAuthenticator(env: Record<string, string | undefined>, boundStateStore?: BoundStateStore): Authenticate {
+export function createConfiguredAuthenticator(env: Record<string, string | undefined>, boundStateStore?: BoundStateStore,
+  bootstrapState?: (bindingId: string) => Promise<void>): Authenticate {
   if (env.KEEPANY_SYNC_AUTH_MODE === 'self-host') {
     if (!env.KEEPANY_SYNC_TOKEN) throw Error('KEEPANY_SYNC_TOKEN-required');
     return createStaticTokenAuthenticator(env.KEEPANY_SYNC_TOKEN);
@@ -26,7 +27,8 @@ export function createConfiguredAuthenticator(env: Record<string, string | undef
     const jwks = env.KEEPANY_BOUND_JWKS_JSON;
     if (env.KEEPANY_BOUND_BINDINGS_JSON !== undefined) throw Error('KEEPANY_BOUND_BINDINGS_JSON-not-allowed');
     if (!issuer || !publicOrigin || !jwks || !boundStateStore) throw Error('bound-auth-configuration-required');
-    return createBoundTokenAuthenticator({ issuer, publicOrigin, jwks: JSON.parse(jwks), stateStore: boundStateStore });
+    return createBoundTokenAuthenticator({ issuer, publicOrigin, jwks: JSON.parse(jwks), stateStore: boundStateStore,
+      bootstrapState });
   }
   throw Error('KEEPANY_SYNC_AUTH_MODE-required');
 }

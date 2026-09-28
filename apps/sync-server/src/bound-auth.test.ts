@@ -5,7 +5,7 @@ import { serve } from '@hono/node-server';
 import { PGlite } from '@electric-sql/pglite';
 import { calculateJwkThumbprint, exportJWK, generateKeyPair, SignJWT } from 'jose';
 import type { Pool } from 'pg';
-import { expect, it } from 'vitest';
+import { expect, it, vi } from 'vitest';
 import { PostgresSyncService, type SqlPool } from '../../../packages/sync-core/src/postgres';
 import { createPostgresSyncApp, type Authenticate } from './app';
 import { createBoundTokenAuthenticator } from './bound-auth';
@@ -40,7 +40,7 @@ it('accepts only pinned bound JWT and device DPoP across real Hono HTTP routes',
   const publicDeviceJwk = { kty: 'EC' as const, crv: 'P-256' as const, x: ecJwk.x, y: ecJwk.y };
   const otherDeviceJwk = { kty: 'EC' as const, crv: 'P-256' as const, x: otherEcJwk.x, y: otherEcJwk.y };
   const pg = new PGlite();
-  const migrations = await Promise.all(['001_sync', '002_attachments', '003_change_operation_id', '004_bound_state', '005_bound_state_guard'].map(id =>
+  const migrations = await Promise.all(['001_sync', '002_attachments', '003_change_operation_id', '004_bound_state', '005_bound_state_guard', '006_bound_state_writer_guard'].map(id =>
     readFile(new URL(`../migrations/${id}.sql`, import.meta.url), 'utf8')));
   for (const migration of migrations) await pg.exec(migration);
   const pool: SqlPool = { connect: async () => ({ query: async (sql, values) => pg.query(sql, values), release: () => {} }) };
@@ -81,10 +81,16 @@ it('accepts only pinned bound JWT and device DPoP across real Hono HTTP routes',
       ...(options.origin ? { origin: options.origin } : {}) }, body: JSON.stringify(options.body ?? {}) });
   try {
     const valid = await access();
+    const bootstrapState = vi.fn(async () => {});
+    authenticate = createBoundTokenAuthenticator({ ...boundConfig, bootstrapState });
     expect((await post('/workspaces', valid)).status).toBe(401);
+    expect(bootstrapState).toHaveBeenCalledExactlyOnceWith(bindingId);
+    expect((await post('/workspaces', await access({}, { issuer: 'https://attacker.test' }))).status).toBe(401);
+    expect(bootstrapState).toHaveBeenCalledTimes(1);
+    authenticate = createBoundTokenAuthenticator(boundConfig);
     await pg.query(`INSERT INTO sync_bound_bindings
       (binding_id, subject, instance_id_hash, jkt, scopes, status, epoch, token_valid_after, state_observed_at, state_expires_at)
-      VALUES ($1, $2, $3, $4, ARRAY['sync:read', 'sync:write'], 'active', 1, $5, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP + INTERVAL '15 seconds')`,
+      VALUES ($1, $2, $3, $4, ARRAY['sync:read', 'sync:write'], 'active', 1, $5, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP + INTERVAL '10 seconds')`,
     [bindingId, subject, instanceIdHash, jkt, now() - 5]);
     expect(await stateStore.claimProof({ bindingId, subject, instanceIdHash, jkt, scope: 'sync:write',
       tokenIssuedAt: now(), proofIssuedAt: now(), proofJti: createHash('sha256').update(crypto.randomUUID()).digest('base64url') })).toBe(true);
@@ -137,16 +143,15 @@ it('accepts only pinned bound JWT and device DPoP across real Hono HTTP routes',
     const afterScope = await access({}, { issuedAt: scopeCutoff + 1, expiresAt: now() + 60 });
     expect((await post('/workspaces', afterScope)).status).toBe(401);
     expect((await post('/sync/pull', afterScope, { body: { workspaceId, cursor: 0 } })).status).toBe(200);
+    await expect(pg.query("UPDATE sync_bound_bindings SET state_expires_at = state_observed_at + INTERVAL '16 seconds' WHERE binding_id = $1", [bindingId])).rejects.toThrow();
     await pg.query("UPDATE sync_bound_bindings SET status = 'revoked', epoch = 3, token_valid_after = $1 WHERE binding_id = $2", [scopeCutoff + 1, bindingId]);
     expect((await post('/sync/pull', valid, { body: { workspaceId, cursor: 0 } })).status).toBe(401);
-    await pg.query(`UPDATE sync_bound_bindings SET status = 'active', epoch = 4,
+    await expect(pg.query(`UPDATE sync_bound_bindings SET status = 'active', epoch = 4,
       token_valid_after = $2, state_observed_at = CURRENT_TIMESTAMP,
-      state_expires_at = CURRENT_TIMESTAMP + INTERVAL '15 seconds'
-      WHERE binding_id = $1`, [bindingId, scopeCutoff + 2]);
+      state_expires_at = CURRENT_TIMESTAMP + INTERVAL '10 seconds'
+      WHERE binding_id = $1`, [bindingId, scopeCutoff + 2])).rejects.toThrow();
     expect((await post('/sync/pull', valid, { body: { workspaceId, cursor: 0 } })).status).toBe(401);
     const afterEpoch = await access({}, { issuedAt: scopeCutoff + 3, expiresAt: now() + 60 });
-    expect((await post('/sync/pull', afterEpoch, { body: { workspaceId, cursor: 0 } })).status).toBe(200);
-    await pg.query("UPDATE sync_bound_bindings SET state_expires_at = state_observed_at + INTERVAL '16 seconds' WHERE binding_id = $1", [bindingId]);
     expect((await post('/sync/pull', afterEpoch, { body: { workspaceId, cursor: 0 } })).status).toBe(401);
     expect((await fetch(`${origin}/workspaces`, { method: 'POST', headers: { authorization: `Bearer ${valid}` } })).status).toBe(401);
     expect((await fetch(`${origin}/workspaces`, { method: 'POST', headers: { authorization: `DPoP ${valid}` } })).status).toBe(401);

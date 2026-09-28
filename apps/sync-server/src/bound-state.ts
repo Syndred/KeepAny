@@ -18,7 +18,7 @@ export type BoundStateStore = {
   pruneExpiredProofs(): Promise<void>;
 };
 
-/** The writer of sync_bound_bindings is a separate trusted integration, not this resource server. */
+/** Resource requests only consume fresh trusted state and an atomic DPoP replay row. */
 export function createPostgresBoundStateStore(pool: Pick<Pool, 'query'>): BoundStateStore {
   return {
     async claimProof(claim) {
@@ -37,7 +37,7 @@ export function createPostgresBoundStateStore(pool: Pick<Pool, 'query'>): BoundS
           AND token_valid_after < $6::bigint
           AND state_observed_at <= CURRENT_TIMESTAMP
           AND state_expires_at > CURRENT_TIMESTAMP
-          AND state_expires_at <= state_observed_at + INTERVAL '15 seconds'
+          AND state_expires_at <= state_observed_at + INTERVAL '10 seconds'
         ON CONFLICT DO NOTHING
         RETURNING binding_id
       `, [claim.bindingId, claim.subject, claim.instanceIdHash, claim.jkt, claim.scope,
