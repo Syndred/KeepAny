@@ -229,7 +229,7 @@ export function SettingsPage() {
 				</fieldset>}
 				{needsKeySave && <label className="sync-key-check"><input type="checkbox" checked={!needsKeySave} onChange={event => setNeedsKeySave(!event.target.checked)} />{t("syncKeySavedConfirm")}</label>}
 				<div className="notice" role="status">{t(`syncState_${syncBusy ? "syncing" : syncReport?.status ?? "local"}`)}</div>
-				{syncReport?.status === "failed" && <p role="alert">{t(syncReport.error === "sync-attachments-unsupported" ? "syncFilesUnsupported" : syncReport.error === "sync-auth" ? "syncAuthFailed" : syncReport.error === "sync-key-mismatch" ? "syncKeyMismatch" : syncReport.error === "sync-dataset-bound" || syncReport.error === "sync-dataset-ambiguous" ? "syncDatasetBound" : syncReport.error === "sync-account-mismatch" ? "syncAccountMismatch" : "syncFailedHint")}</p>}
+				{syncReport?.status === "failed" && <p role="alert">{t(syncReport.error?.startsWith("sync-attachment-") || syncReport.error?.startsWith("attachment-") ? "syncFilesUnsupported" : syncReport.error === "sync-auth" ? "syncAuthFailed" : syncReport.error === "sync-key-mismatch" ? "syncKeyMismatch" : syncReport.error === "sync-dataset-bound" || syncReport.error === "sync-dataset-ambiguous" ? "syncDatasetBound" : syncReport.error === "sync-account-mismatch" ? "syncAccountMismatch" : "syncFailedHint")}</p>}
 				{syncReport && syncReport.pending > 0 && <small>{t("syncPendingCount", { count: syncReport.pending })}</small>}
 				{syncReport?.conflict && <div className="sync-conflict" role="alert">
 					<h3>{t("syncConflictTitle")}</h3>
