@@ -19,19 +19,25 @@ export function createPostgresBoundStateWriter(pool: Pick<Pool, 'connect' | 'que
       try {
         await client.query('BEGIN');
         begun = true;
-        // Every writer uses this database-wide lock before admitting a new ID.
-        // Existing rows remain refreshable when the admission limit is full.
-        await client.query("SELECT pg_advisory_xact_lock(hashtext('keepany-bound-state-feed-capacity'))");
-        const existing = await client.query<{ status: string }>(
-          'SELECT status FROM sync_bound_bindings WHERE binding_id=$1::uuid FOR UPDATE',
+        const existing = await client.query<{ binding_id: string }>(
+          'SELECT binding_id FROM sync_bound_bindings WHERE binding_id=$1::uuid FOR UPDATE',
           [state.bindingId],
         );
-        if (existing.rows.length === 0 && state.status !== 'revoked') {
-          const count = await client.query<{ admitted: number }>(
-            "SELECT count(*)::int AS admitted FROM sync_bound_bindings WHERE status <> 'revoked'",
+        if (existing.rows.length === 0) {
+          // A missing row has no row lock. Serialize admission across writers,
+          // then recheck: another transaction may have inserted this same ID.
+          await client.query("SELECT pg_advisory_xact_lock(hashtext('keepany-bound-state-feed-capacity'))");
+          const admittedWhileWaiting = await client.query<{ binding_id: string }>(
+            'SELECT binding_id FROM sync_bound_bindings WHERE binding_id=$1::uuid FOR UPDATE',
+            [state.bindingId],
           );
-          if ((count.rows[0]?.admitted ?? 0) >= MAX_NON_REVOKED_BINDINGS) {
-            throw Error('bound-state-feed-capacity-exceeded');
+          if (admittedWhileWaiting.rows.length === 0 && state.status !== 'revoked') {
+            const count = await client.query<{ admitted: number }>(
+              "SELECT count(*)::int AS admitted FROM sync_bound_bindings WHERE status <> 'revoked'",
+            );
+            if ((count.rows[0]?.admitted ?? 0) >= MAX_NON_REVOKED_BINDINGS) {
+              throw Error('bound-state-feed-capacity-exceeded');
+            }
           }
         }
         const result = await client.query<{ binding_id: string }>(`

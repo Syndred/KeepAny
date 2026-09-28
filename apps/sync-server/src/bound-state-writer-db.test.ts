@@ -105,6 +105,7 @@ it.skipIf(!testDatabase)('admits at most 32 non-revoked IDs across PostgreSQL wr
   const first = new pg.Pool(connection);
   const second = new pg.Pool(connection);
   let restarted: pg.Pool | undefined;
+  let fastRenewals: pg.Pool | undefined;
   let created = false;
   let firstClosed = false;
   let secondClosed = false;
@@ -135,7 +136,24 @@ it.skipIf(!testDatabase)('admits at most 32 non-revoked IDs across PostgreSQL wr
     await expect(another.upsertVerifiedState(observedState(rejectedId)))
       .rejects.toThrow('bound-state-feed-capacity-exceeded');
 
-    const renewed = observedState(admittedIds[0], 2_000);
+    fastRenewals = new pg.Pool({ ...connection, options: `-c search_path=${schema} -c lock_timeout=750ms` });
+    const admissionGate = await second.connect();
+    let gateBegun = false;
+    try {
+      await admissionGate.query('BEGIN');
+      gateBegun = true;
+      await admissionGate.query("SELECT pg_advisory_xact_lock(hashtext('keepany-bound-state-feed-capacity'))");
+      const quickWriter = createPostgresBoundStateWriter(fastRenewals);
+      expect(await Promise.all([
+        quickWriter.upsertVerifiedState(observedState(admittedIds[0], 2_000)),
+        quickWriter.upsertVerifiedState(observedState(admittedIds[1], 2_000)),
+      ])).toEqual(['applied', 'applied']);
+    } finally {
+      if (gateBegun) await admissionGate.query('ROLLBACK');
+      admissionGate.release();
+    }
+
+    const renewed = observedState(admittedIds[0], 3_000);
     expect(await writer.upsertVerifiedState(renewed)).toBe('applied');
     const tombstoneId = crypto.randomUUID();
     expect(await another.upsertVerifiedState({ ...observedState(tombstoneId), status: 'revoked' })).toBe('applied');
@@ -146,7 +164,11 @@ it.skipIf(!testDatabase)('admits at most 32 non-revoked IDs across PostgreSQL wr
       ...observedState(admittedIds[0], 3_000), status: 'revoked', epoch: 2, tokenValidAfter: 1,
     })).toBe('applied');
     expect(await another.listKnownNonRevokedIds()).toHaveLength(31);
-    expect(await another.upsertVerifiedState(observedState(rejectedId))).toBe('applied');
+    const sameNewState = observedState(rejectedId);
+    expect((await Promise.all([
+      writer.upsertVerifiedState(sameNewState),
+      another.upsertVerifiedState(sameNewState),
+    ])).sort()).toEqual(['applied', 'ignored']);
 
     await first.end();
     firstClosed = true;
@@ -163,6 +185,7 @@ it.skipIf(!testDatabase)('admits at most 32 non-revoked IDs across PostgreSQL wr
   } finally {
     if (!firstClosed) await first.end();
     if (!secondClosed) await second.end();
+    await fastRenewals?.end();
     await restarted?.end();
     if (created) await admin.query(`DROP SCHEMA "${schema}" CASCADE`);
     await admin.end();
