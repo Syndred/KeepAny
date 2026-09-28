@@ -10,7 +10,7 @@
 - 撤销原型只向保留设备分发新的 epoch 和新数据密钥，并生成新的恢复包装。旧设备不能解密新密文，但已经获得的历史明文或旧密钥无法收回。
 - `ReplayGuard` 要求操作 id 唯一且每个记录的 `(keyEpoch, sequence)` 单调递增。`openEnvelope` 只验证，不推进状态；调用者在记录写入成功后调用 `markApplied`，并将 `snapshot()` 与业务写入原子持久化。测试验证快照恢复后重复消息仍被拒绝。
 
-运行：`pnpm exec vitest run packages/crypto/src/index.test.ts`；`pnpm exec tsc --noEmit`。2026-09-28 本机结果为 7/7 测试通过、类型检查通过。参见 [libsodium XChaCha20-Poly1305 文档](https://libsodium.gitbook.io/doc/secret-key_cryptography/aead/chacha20-poly1305/xchacha20-poly1305_construction)、[authenticated public-key encryption](https://libsodium.gitbook.io/doc/public-key_cryptography/authenticated_encryption) 与 [libsodium.js 官方 README](https://github.com/jedisct1/libsodium.js/blob/master/README.md)。依赖许可证为安装包声明的 ISC，正式发布前仍须核查分发内容。
+运行：`pnpm exec vitest run packages/crypto/src/index.test.ts`；`pnpm exec tsc --noEmit`；`node packages/crypto/scripts/run-browser-smoke.mjs`。2026-09-28 本机结果为 7/7 测试通过、类型检查通过；无头 Chromium 153 中完成加解密、重放拒绝、恢复、第二设备加入与轮换烟测。浏览器测试只使用内存中的合成密钥，不写 IndexedDB 或服务端。参见 [libsodium XChaCha20-Poly1305 文档](https://libsodium.gitbook.io/doc/secret-key_cryptography/aead/chacha20-poly1305/xchacha20-poly1305_construction)、[authenticated public-key encryption](https://libsodium.gitbook.io/doc/public-key_cryptography/authenticated_encryption) 与 [libsodium.js 官方 README](https://github.com/jedisct1/libsodium.js/blob/master/README.md)。依赖许可证为安装包声明的 ISC，正式发布前仍须核查分发内容。
 
 ## 尚未满足的上线门槛
 
