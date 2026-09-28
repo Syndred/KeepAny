@@ -10,6 +10,7 @@ import {
 	readBindingState,
 	startBindingChallenge,
 } from "../../../../packages/binding/src/remote";
+import type { BindingScope } from "../../../../packages/binding/src/ticket";
 import {
 	defaultBindingRepository,
 	type PendingBinding,
@@ -20,6 +21,7 @@ import { Dialog } from "./ui/dialog";
 
 const issuer = import.meta.env.VITE_KEEPANY_BINDING_ISSUER;
 const bridgeOrigin = import.meta.env.VITE_KEEPANY_BINDING_BRIDGE_ORIGIN;
+const officialOrigin = import.meta.env.VITE_KEEPANY_OFFICIAL_SYNC_ORIGIN;
 const configured =
 	typeof issuer === "string" && typeof bridgeOrigin === "string";
 
@@ -34,8 +36,15 @@ function client() {
 	};
 }
 
-export function BindingPanel() {
+export function BindingPanel({
+	onBindingChange,
+}: {
+	onBindingChange?: (binding: StoredBinding | undefined) => void;
+}) {
 	const { t } = useTranslation();
+	const officialConfigured =
+		typeof officialOrigin === "string" &&
+		officialOrigin === window.location.origin;
 	const [binding, setBinding] = useState<StoredBinding>();
 	const [pending, setPending] = useState<PendingBinding>();
 	const [busy, setBusy] = useState(false);
@@ -53,6 +62,7 @@ export function BindingPanel() {
 			.then(([active, challenge]) => {
 				if (!mounted) return;
 				setBinding(active);
+				onBindingChange?.(active);
 				setPending(challenge);
 			})
 			.catch(() => {
@@ -61,7 +71,7 @@ export function BindingPanel() {
 		return () => {
 			mounted = false;
 		};
-	}, []);
+	}, [onBindingChange]);
 	if (!configured) return null;
 	const repository = defaultBindingRepository();
 	async function run(action: () => Promise<void>) {
@@ -78,6 +88,7 @@ export function BindingPanel() {
 				try {
 					const latest = await repository.activeBinding();
 					setBinding(latest);
+					onBindingChange?.(latest);
 					if (latest?.bindingId !== binding.bindingId) {
 						setForgetOpen(false);
 						setMessage({ key: "bindingForgotten" });
@@ -94,6 +105,18 @@ export function BindingPanel() {
 			setBusy(false);
 		}
 	}
+	function begin(scopes: BindingScope[]) {
+		void run(async () => {
+			const result = await startBindingChallenge({
+				repository,
+				transport: client().transport,
+				instanceName: t("bindingDeviceName"),
+				scopes,
+			});
+			setPending(await repository.pendingChallenge());
+			setMessage({ key: "bindingWait", count: result.interval });
+		});
+	}
 	return (
 		<section className="card padded binding-panel">
 			<h2>{t("bindingTitle")}</h2>
@@ -101,6 +124,15 @@ export function BindingPanel() {
 			{binding ? (
 				<>
 					<p>{t("bindingConnected")}</p>
+					{officialConfigured && (
+						<p>
+							{t(
+								binding.allowedScopes.includes("sync:write")
+									? "bindingWriteEnabled"
+									: "bindingReadOnly",
+							)}
+						</p>
+					)}
 					<div className="actions">
 						<Button
 							disabled={busy}
@@ -112,6 +144,7 @@ export function BindingPanel() {
 									});
 									const latest = await repository.activeBinding();
 									setBinding(latest);
+									onBindingChange?.(latest);
 									setMessage({
 										key:
 											state.state === "revoked" ||
@@ -140,6 +173,9 @@ export function BindingPanel() {
 					<p>{t("bindingCode")}</p>
 					<code className="binding-code">{pending.userCode}</code>
 					<p>{t("bindingApprove")}</p>
+					{pending.requestedScopes.includes("sync:write") && (
+						<p>{t("bindingWriteRequest")}</p>
+					)}
 					<div className="actions">
 						<a
 							className="button"
@@ -162,6 +198,7 @@ export function BindingPanel() {
 										result.status === "already-bound"
 									) {
 										setBinding(result.binding);
+										onBindingChange?.(result.binding);
 										setPending(undefined);
 										setMessage(undefined);
 									} else if (
@@ -184,23 +221,19 @@ export function BindingPanel() {
 					</div>
 				</>
 			) : (
-				<Button
-					disabled={busy}
-					onClick={() =>
-						void run(async () => {
-							const result = await startBindingChallenge({
-								repository,
-								transport: client().transport,
-								instanceName: t("bindingDeviceName"),
-								scopes: ["sync:read"],
-							});
-							setPending(await repository.pendingChallenge());
-							setMessage({ key: "bindingWait", count: result.interval });
-						})
-					}
-				>
-					{t("bindingStart")}
-				</Button>
+				<div className="actions">
+					<Button disabled={busy} onClick={() => begin(["sync:read"])}>
+						{t("bindingStart")}
+					</Button>
+					{officialConfigured && (
+						<Button
+							disabled={busy}
+							onClick={() => begin(["sync:read", "sync:write"])}
+						>
+							{t("bindingStartOfficial")}
+						</Button>
+					)}
+				</div>
 			)}
 			{message && (!forgetOpen || !binding) && (
 				<p role="status">{t(message.key, { count: message.count })}</p>
@@ -228,6 +261,7 @@ export function BindingPanel() {
 									await repository.revokeLocal(binding.bindingId);
 									setForgetOpen(false);
 									setBinding(undefined);
+									onBindingChange?.(undefined);
 									setMessage({ key: "bindingForgotten" });
 								})
 							}
