@@ -164,6 +164,8 @@ const copy: Record<string, [string, string]> = {
 	verifiedAt: ["最近核验", "Last verified"],
 	evidence: ["依据", "Evidence"],
 	addSubmission: ["新增外链", "Add backlink"],
+	submissionNameTooLong: ["名称不能超过 200 个字符", "Name must be 200 characters or fewer"],
+	submissionInvalidUrl: ["请输入有效的 http 或 https 网址", "Enter a valid http or https URL"],
 	renew: ["记录续费", "Record renewal"],
 	renewHint: [
 		"记录后将按当前周期推进下次日期。",
