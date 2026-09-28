@@ -9,7 +9,7 @@ const directory = resolve(process.cwd(), "apps/sync-server/migrations");
 
 // Opt in only with an isolated PostgreSQL test database. Never touches public schema.
 it.skipIf(!process.env.KEEPANY_TEST_DATABASE_URL)(
-	"upgrades a historical accepted change through 003 and 004 in real PostgreSQL",
+	"upgrades a historical accepted change through 003, 004 and 005 in real PostgreSQL",
 	async () => {
 		const connectionString = process.env.KEEPANY_TEST_DATABASE_URL;
 		if (!connectionString) throw Error("test-database-url");
@@ -96,6 +96,7 @@ it.skipIf(!process.env.KEEPANY_TEST_DATABASE_URL)(
 				"002_attachments",
 				"003_change_operation_id",
 				"004_bound_state",
+				"005_bound_state_guard",
 			]);
 			const bindingId = crypto.randomUUID();
 			const jkt = "a".repeat(43);
@@ -114,6 +115,41 @@ it.skipIf(!process.env.KEEPANY_TEST_DATABASE_URL)(
 				);
 			await insertProof();
 			await expect(insertProof()).rejects.toMatchObject({ code: "23505" });
+			await expect(
+				pool.query(
+					"UPDATE sync_bound_bindings SET epoch=0 WHERE binding_id=$1",
+					[bindingId],
+				),
+			).rejects.toMatchObject({ code: "P0001" });
+			await expect(
+				pool.query(
+					"UPDATE sync_bound_bindings SET token_valid_after=1, epoch=2 WHERE binding_id=$1",
+					[bindingId],
+				),
+			).resolves.toBeDefined();
+			await expect(
+				pool.query(
+					"UPDATE sync_bound_bindings SET token_valid_after=0 WHERE binding_id=$1",
+					[bindingId],
+				),
+			).rejects.toMatchObject({ code: "P0001" });
+			await expect(
+				pool.query(
+					"UPDATE sync_bound_bindings SET status='revoked' WHERE binding_id=$1",
+					[bindingId],
+				),
+			).resolves.toBeDefined();
+			await expect(
+				pool.query(
+					"UPDATE sync_bound_bindings SET status='active' WHERE binding_id=$1",
+					[bindingId],
+				),
+			).rejects.toMatchObject({ code: "P0001" });
+			await expect(
+				pool.query("DELETE FROM sync_bound_bindings WHERE binding_id=$1", [
+					bindingId,
+				]),
+			).rejects.toMatchObject({ code: "P0001" });
 		} finally {
 			await pool.end();
 			if (created) await admin.query(`DROP SCHEMA "${schema}" CASCADE`);
