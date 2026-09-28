@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import type { LocalRepository, RecordRow, ScopedAttachmentUploadPlan } from '../../local-db/src';
 import { openAttachment, sealAttachment } from './attachment-codec';
+import type { BoundSyncAuthorizer } from './index';
 
 const ciphertextType = 'application/vnd.keepany.ciphertext';
 const maxObjectBytes = 4 * 1024 * 1024;
@@ -22,13 +23,16 @@ export class SelfHostAttachmentSync {
   constructor(private readonly repository: LocalRepository, private readonly scope: string,
     private readonly endpoint: string, private readonly token: string | undefined, private readonly workspaceId: string,
     private readonly key: Uint8Array, private readonly keyEpoch: number,
-    private readonly sessionAccountId?: string) {
-    if (token === undefined && !sessionAccountId) throw Error('sync-auth');
+    private readonly sessionAccountId?: string, private readonly bound?: BoundSyncAuthorizer) {
+    if (Number(token !== undefined) + Number(Boolean(sessionAccountId)) + Number(Boolean(bound)) !== 1)
+      throw Error('sync-auth');
   }
 
-  private requestCredentials(): RequestCredentials { return this.token === undefined ? 'include' : 'omit'; }
-  private requestHeaders(): Record<string, string> {
-    return this.token === undefined ? { 'X-KeepAny-Account-Id': this.sessionAccountId ?? '' } :
+  private requestCredentials(): RequestCredentials { return this.sessionAccountId ? 'include' : 'omit'; }
+  private async assertCurrent(): Promise<void> { await this.bound?.assertCurrent(); }
+  private async requestHeaders(method: 'GET' | 'PUT', url: string): Promise<Record<string, string>> {
+    if (this.bound) return this.bound.headers(method, url);
+    return this.sessionAccountId ? { 'X-KeepAny-Account-Id': this.sessionAccountId } :
       { Authorization: `Bearer ${this.token}` };
   }
 
@@ -37,8 +41,13 @@ export class SelfHostAttachmentSync {
   }
 
   private async getObject(id: string): Promise<Uint8Array | null> {
-    const response = await fetch(this.path(id), { method: 'GET', headers: this.requestHeaders(),
+    const url = this.path(id);
+    await this.assertCurrent();
+    const headers = await this.requestHeaders('GET', url);
+    await this.assertCurrent();
+    const response = await fetch(url, { method: 'GET', headers,
       cache: 'no-store', credentials: this.requestCredentials(), signal: AbortSignal.timeout(30_000) });
+    await this.assertCurrent();
     if (response.status === 404) return null;
     if (response.status === 401 || response.status === 403) throw Error('sync-auth');
     if (response.status === 502) throw Error('sync-attachment-integrity');
@@ -64,6 +73,7 @@ export class SelfHostAttachmentSync {
     for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.length; }
     const expected = response.headers.get('x-ciphertext-sha256');
     if (!expected || expected !== await digest(bytes)) throw Error('sync-attachment-integrity');
+    await this.assertCurrent();
     return bytes;
   }
 
@@ -71,15 +81,21 @@ export class SelfHostAttachmentSync {
     if (object.bytes.length > maxObjectBytes || object.sha256 !== await digest(object.bytes)) throw Error('sync-attachment-integrity');
     const body = new ArrayBuffer(object.bytes.length);
     new Uint8Array(body).set(object.bytes);
-    const response = await fetch(this.path(object.id), { method: 'PUT', headers: {
-      ...this.requestHeaders(), 'Content-Type': ciphertextType,
+    const url = this.path(object.id);
+    await this.assertCurrent();
+    const headers = await this.requestHeaders('PUT', url);
+    await this.assertCurrent();
+    const response = await fetch(url, { method: 'PUT', headers: {
+      ...headers, 'Content-Type': ciphertextType,
       'X-Ciphertext-SHA256': object.sha256,
     }, body, cache: 'no-store', credentials: this.requestCredentials(), signal: AbortSignal.timeout(30_000) });
+    await this.assertCurrent();
     if (response.status === 401 || response.status === 403) throw Error('sync-auth');
     if (response.status === 409) throw Error('sync-attachment-conflict');
     if (!response.ok) throw Error(`sync-attachment-http-${response.status}`);
     const receipt = responseSchema.parse(await response.json());
     if (receipt.sha256 !== object.sha256 || receipt.size !== object.bytes.length) throw Error('sync-attachment-receipt');
+    await this.assertCurrent();
   }
 
   private async openRemote(id: string, manifestBytes: Uint8Array) {
@@ -103,7 +119,10 @@ export class SelfHostAttachmentSync {
     if (!manifest) return false;
     const opened = await this.openRemote(id, manifest);
     this.assertMatchesLocal(opened, local, sourceSha256);
-    if (clearPlan) await this.repository.deleteScopedAttachmentUpload(this.scope, id);
+    if (clearPlan) {
+      await this.assertCurrent();
+      await this.repository.deleteScopedAttachmentUpload(this.scope, id);
+    }
     return true;
   }
 
@@ -159,6 +178,7 @@ export class SelfHostAttachmentSync {
     if (await this.acceptRemote(id, local, sourceSha256, false)) return;
     const sealed = await sealAttachment({ workspaceId: this.workspaceId, attachmentId: id, key: this.key,
       keyEpoch: this.keyEpoch, name: local.name, type: local.type, bytes: local.bytes });
+    await this.assertCurrent();
     plan = await this.repository.putScopedAttachmentUpload({ scope: this.scope, attachmentId: id,
       sourceSha256: sealed.sourceSha256, keyEpoch: this.keyEpoch, objects: sealed.objects });
     await this.uploadOrAcceptWinner(plan, local, sourceSha256);
@@ -169,13 +189,17 @@ export class SelfHostAttachmentSync {
   }
 
   async forgetUploadedRow(row: RecordRow): Promise<void> {
-    for (const id of attachmentIds(row)) await this.repository.deleteScopedAttachmentUpload(this.scope, id);
+    for (const id of attachmentIds(row)) {
+      await this.assertCurrent();
+      await this.repository.deleteScopedAttachmentUpload(this.scope, id);
+    }
   }
 
   async ensureDownloaded(id: string): Promise<void> {
     const manifest = await this.getObject(id);
     if (!manifest) throw Error('sync-attachment-remote-missing');
     const opened = await this.openRemote(id, manifest);
+    await this.assertCurrent();
     await this.repository.putSyncedFile({ id, name: opened.name, type: opened.type,
       bytes: opened.bytes, sha256: opened.sha256 });
   }

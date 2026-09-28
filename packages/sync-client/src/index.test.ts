@@ -3,8 +3,8 @@ import { afterEach, expect, it, vi } from 'vitest';
 import { newAsset, type Asset } from '../../domain/src';
 import { openLocalRepository } from '../../local-db/src';
 import { MemorySyncStateStore, SyncService } from '../../sync-core/src';
-import { SelfHostSyncClient, createSessionWorkspace, decodeWorkspaceKey, encodeWorkspaceKey,
-  getSessionIdentity, normalizeEndpoint } from './index';
+import { SelfHostSyncClient, createBoundWorkspace, createSessionWorkspace, decodeWorkspaceKey, encodeWorkspaceKey,
+  getBoundIdentity, getSessionIdentity, listBoundWorkspaces, normalizeEndpoint, type BoundSyncAuthorizer } from './index';
 
 afterEach(() => vi.unstubAllGlobals());
 const name = () => `test-${crypto.randomUUID().slice(0, 12)}`;
@@ -540,3 +540,187 @@ async function scope(config: { endpoint: string; token: string }): Promise<strin
   const bytes = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(JSON.stringify([config.endpoint, 'self-host-owner']))));
   return Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
 }
+
+function boundServer(workspaceId: string) {
+  const service = new SyncService(new MemorySyncStateStore());
+  const objects = new Map<string, Uint8Array>();
+  const requests: { url: string; init: RequestInit }[] = [];
+  let active = true;
+  let proof = 0;
+  const accountId = 'keepanyadm:alice';
+  const authorizer: BoundSyncAuthorizer = {
+    accountId,
+    assertCurrent: async () => { if (!active) throw Error('binding-stale'); },
+    headers: async (method, url) => ({ Authorization: 'DPoP short-token',
+      DPoP: `${++proof}:${method}:${url}` }),
+  };
+  const fetchBound = vi.fn(async (url: string, init: RequestInit) => {
+    requests.push({ url: String(url), init });
+    const headers = init.headers as Record<string, string>;
+    if (init.credentials !== 'omit' || headers.Authorization !== 'DPoP short-token' ||
+      headers.DPoP !== `${requests.length}:${init.method}:${url}` || headers['X-KeepAny-Account-Id'])
+      throw Error('bound-transport');
+    if (String(url).endsWith('/sync/identity')) return Response.json({ accountId });
+    if (String(url).endsWith('/workspaces') && init.method === 'GET')
+      return Response.json({ workspaces: [{ workspaceId, canRead: true, canWrite: true }] });
+    if (String(url).endsWith('/workspaces') && init.method === 'POST')
+      return Response.json({ workspaceId }, { status: 201 });
+    if (String(url).includes('/attachments/')) {
+      const id = String(url).split('/').at(-1) ?? '';
+      if (init.method === 'GET') {
+        const bytes = objects.get(id);
+        return bytes ? new Response(Uint8Array.from(bytes).buffer, { headers: {
+          'content-type': 'application/vnd.keepany.ciphertext', 'content-length': String(bytes.length),
+          'x-ciphertext-sha256': await sha256(bytes),
+        } }) : new Response(null, { status: 404 });
+      }
+      const bytes = new Uint8Array(init.body as ArrayBuffer);
+      objects.set(id, bytes);
+      return Response.json({ sha256: await sha256(bytes), size: bytes.length, status: 'stored' }, { status: 201 });
+    }
+    const body = JSON.parse(String(init.body));
+    if (String(url).endsWith('/sync/preflight')) return Response.json({ accountId, workspaceId: body.workspaceId });
+    if (String(url).endsWith('/sync/push')) return Response.json(await service.push(body));
+    if (String(url).endsWith('/sync/pull')) return Response.json(await service.pull(body));
+    throw Error('route');
+  });
+  vi.stubGlobal('fetch', fetchBound);
+  return { authorizer, fetchBound, requests, objects, service,
+    invalidate: () => { active = false; }, get active() { return active; } };
+}
+
+it('uses a fresh bound proof on identity, workspace, records and encrypted image requests', async () => {
+  const workspaceId = crypto.randomUUID();
+  const remote = boundServer(workspaceId);
+  expect(await getBoundIdentity(endpoint, remote.authorizer)).toBe('keepanyadm:alice');
+  expect(await listBoundWorkspaces(endpoint, remote.authorizer)).toEqual([workspaceId]);
+  expect(await createBoundWorkspace(endpoint, remote.authorizer)).toBe(workspaceId);
+  const config = { endpoint, bound: remote.authorizer, workspaceId, key: new Uint8Array(32).fill(7) };
+  const sender = await openLocalRepository(name());
+  const receiver = await openLocalRepository(name());
+  try {
+    const photo = Uint8Array.from([137, 80, 78, 71, 1, 2, 3]);
+    const id = await sender.putFile(new File([photo as BlobPart], 'bound.png', { type: 'image/png' }));
+    const asset = { ...newAsset('project'), name: 'Bound image', attachments: [id] };
+    await sender.save('asset', asset);
+    expect((await new SelfHostSyncClient(sender, config).run()).status).toBe('synced');
+    expect((await new SelfHostSyncClient(receiver, config).run()).status).toBe('synced');
+    expect((await receiver.get<Asset>('asset', asset.id))?.name).toBe('Bound image');
+    expect((await receiver.readFile(id))?.bytes).toEqual(photo);
+    expect(remote.requests.some(request => request.init.method === 'PUT')).toBe(true);
+    expect(remote.requests.some(request => request.init.method === 'GET' &&
+      request.url.includes('/attachments/'))).toBe(true);
+    expect((await sender.getDatasetBinding())?.accountId).toBe('keepanyadm:alice');
+  } finally { await sender.close(); await receiver.close(); }
+});
+
+it('rejects a mismatched bound identity without claiming a dataset or sending assets', async () => {
+  const workspaceId = crypto.randomUUID();
+  const remote = boundServer(workspaceId);
+  const original = fetch;
+  vi.stubGlobal('fetch', vi.fn(async (url: string, init: RequestInit) =>
+    String(url).endsWith('/sync/identity') || String(url).endsWith('/sync/preflight')
+      ? Response.json({ accountId: 'keepanyadm:bob', workspaceId }) : original(url, init)));
+  await expect(getBoundIdentity(endpoint, remote.authorizer)).rejects.toThrow('sync-account-mismatch');
+  const db = await openLocalRepository(name());
+  try {
+    await db.save('asset', { ...newAsset('project'), name: 'Local only' });
+    const result = await new SelfHostSyncClient(db, { endpoint, bound: remote.authorizer,
+      workspaceId, key: new Uint8Array(32).fill(7) }).run();
+    expect(result.error).toBe('sync-account-mismatch');
+    expect(await db.getDatasetBinding()).toBeNull();
+    expect(remote.requests.some(request => request.url.endsWith('/sync/push'))).toBe(false);
+  } finally { await db.close(); }
+});
+
+it('does not claim or pin a dataset when a bound preflight finishes after local removal', async () => {
+  const workspaceId = crypto.randomUUID();
+  const remote = boundServer(workspaceId);
+  const underlying = fetch;
+  let release!: () => void;
+  const blocked = new Promise<void>(resolve => { release = resolve; });
+  let notify!: () => void;
+  const started = new Promise<void>(resolve => { notify = resolve; });
+  vi.stubGlobal('fetch', vi.fn(async (url: string, init: RequestInit) => {
+    const response = await underlying(url, init);
+    if (String(url).endsWith('/sync/preflight')) { notify(); await blocked; }
+    return response;
+  }));
+  const db = await openLocalRepository(name());
+  try {
+    await db.save('asset', { ...newAsset('project'), name: 'Local only' });
+    const run = new SelfHostSyncClient(db, { endpoint, bound: remote.authorizer,
+      workspaceId, key: new Uint8Array(32).fill(7) }).run();
+    await started;
+    remote.invalidate();
+    release();
+    expect((await run).error).toBe('binding-stale');
+    expect(await db.getDatasetBinding()).toBeNull();
+    expect(remote.requests.some(request => request.url.endsWith('/sync/push') ||
+      request.url.endsWith('/sync/pull'))).toBe(false);
+  } finally { await db.close(); }
+});
+
+it('keeps an outbox operation pending when a bound push response arrives after local removal', async () => {
+  const workspaceId = crypto.randomUUID();
+  const remote = boundServer(workspaceId);
+  const underlying = fetch;
+  let release!: () => void;
+  const blocked = new Promise<void>(resolve => { release = resolve; });
+  let notify!: () => void;
+  const started = new Promise<void>(resolve => { notify = resolve; });
+  vi.stubGlobal('fetch', vi.fn(async (url: string, init: RequestInit) => {
+    const response = await underlying(url, init);
+    if (String(url).endsWith('/sync/push')) { notify(); await blocked; }
+    return response;
+  }));
+  const db = await openLocalRepository(name());
+  const asset = { ...newAsset('project'), name: 'Pending after removal' };
+  await db.save('asset', asset);
+  try {
+    const run = new SelfHostSyncClient(db, { endpoint, bound: remote.authorizer,
+      workspaceId, key: new Uint8Array(32).fill(7) }).run();
+    await started;
+    remote.invalidate();
+    release();
+    const result = await run;
+    expect(result.error).toBe('binding-stale');
+    const binding = await db.getDatasetBinding();
+    expect(binding?.accountId).toBe('keepanyadm:alice');
+    if (!binding) throw Error('missing-dataset-binding');
+    expect((await db.listScopedOutbox(binding.scope))).toHaveLength(1);
+    expect((await db.get<Asset>('asset', asset.id))?.name).toBe(asset.name);
+  } finally { await db.close(); }
+});
+
+it('discards a bound pull response after local removal without applying rows or cursor', async () => {
+  const workspaceId = crypto.randomUUID();
+  const remote = boundServer(workspaceId);
+  const config = { endpoint, bound: remote.authorizer, workspaceId, key: new Uint8Array(32).fill(7) };
+  const sender = await openLocalRepository(name());
+  const receiver = await openLocalRepository(name());
+  const asset = { ...newAsset('project'), name: 'Remote only' };
+  await sender.save('asset', asset);
+  expect((await new SelfHostSyncClient(sender, config).run()).status).toBe('synced');
+  const underlying = fetch;
+  let release!: () => void;
+  const blocked = new Promise<void>(resolve => { release = resolve; });
+  let notify!: () => void;
+  const started = new Promise<void>(resolve => { notify = resolve; });
+  vi.stubGlobal('fetch', vi.fn(async (url: string, init: RequestInit) => {
+    const response = await underlying(url, init);
+    if (String(url).endsWith('/sync/pull')) { notify(); await blocked; }
+    return response;
+  }));
+  try {
+    const run = new SelfHostSyncClient(receiver, config).run();
+    await started;
+    remote.invalidate();
+    release();
+    expect((await run).error).toBe('binding-stale');
+    expect(await receiver.allRecords()).toEqual([]);
+    const binding = await receiver.getDatasetBinding();
+    if (!binding) throw Error('missing-dataset-binding');
+    expect(await receiver.scopedCursor(binding.scope)).toBe(0);
+  } finally { await sender.close(); await receiver.close(); }
+});

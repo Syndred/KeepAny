@@ -3,6 +3,7 @@ import { afterEach, expect, it, vi } from 'vitest';
 import { newAsset } from '../../domain/src';
 import { openLocalRepository, type DatasetBinding, type LocalRepository } from '../../local-db/src';
 import { SelfHostAttachmentSync } from './attachment-sync';
+import type { BoundSyncAuthorizer } from './index';
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -219,4 +220,41 @@ it('rejects a same-ID winner with changed name, type or content and a manifest w
   } finally {
     await Promise.all([a.close(), renamed.close(), retyped.close(), changed.close(), equal.close()]);
   }
+});
+
+it('keeps a bound encrypted upload plan when its PUT receipt arrives after local removal', async () => {
+  const owner = await binding(crypto.randomUUID());
+  const id = crypto.randomUUID();
+  const db = await device(owner, id);
+  let active = true;
+  let proof = 0;
+  let release!: () => void;
+  const blocked = new Promise<void>(resolve => { release = resolve; });
+  let notify!: () => void;
+  const started = new Promise<void>(resolve => { notify = resolve; });
+  const bound: BoundSyncAuthorizer = {
+    accountId: 'keepanyadm:alice',
+    assertCurrent: async () => { if (!active) throw Error('binding-stale'); },
+    headers: async (method, url) => ({ Authorization: 'DPoP short-token', DPoP: `${++proof}:${method}:${url}` }),
+  };
+  vi.stubGlobal('fetch', vi.fn(async (_url: string, init: RequestInit) => {
+    if ((init.headers as Record<string, string>).Authorization !== 'DPoP short-token' ||
+      init.credentials !== 'omit') throw Error('bound-transport');
+    if (init.method === 'GET') return new Response(null, { status: 404 });
+    notify();
+    await blocked;
+    return Response.json({ sha256: (init.headers as Record<string, string>)['X-Ciphertext-SHA256'],
+      size: (init.body as ArrayBuffer).byteLength, status: 'stored' }, { status: 201 });
+  }));
+  try {
+    const sync = new SelfHostAttachmentSync(db, owner.scope, endpoint, undefined, owner.workspaceId, key, 1,
+      undefined, bound);
+    const upload = sync.ensureUploaded(id);
+    await started;
+    active = false;
+    release();
+    await expect(upload).rejects.toThrow('binding-stale');
+    expect(await db.getScopedAttachmentUpload(owner.scope, id)).not.toBeNull();
+    expect(proof).toBe(2);
+  } finally { await db.close(); }
 });
