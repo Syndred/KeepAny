@@ -16,6 +16,7 @@ import {
 	type Relation,
 	actualCharge,
 	dueOnCycle,
+	inputFromMinorUnits,
 	monthlyMinorUnits,
 	parseMinorUnits,
 } from "../../../packages/domain/src";
@@ -1253,7 +1254,7 @@ export function AssetDetail() {
 									value={renewalAmount}
 									onChange={(event) => { setRenewalAmount(event.target.value); setRenewalAmountError(""); }}
 									aria-invalid={!!renewalAmountError}
-									placeholder={dueCharge === null ? "" : String(dueCharge / (asset.currency === "JPY" ? 1 : 100))}
+									placeholder={dueCharge === null ? "" : inputFromMinorUnits(dueCharge, asset.currency)}
 								/>
 								{renewalAmountError && <small role="alert">{renewalAmountError}</small>}
 							</label>
