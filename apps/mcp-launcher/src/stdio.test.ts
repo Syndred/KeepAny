@@ -41,7 +41,7 @@ describe('official SDK stdio launcher', () => {
     const env = Object.fromEntries(Object.entries(process.env).filter((entry): entry is [string, string] => entry[1] !== undefined));
     const transport = new StdioClientTransport({
       command: join(repo, 'node_modules', '.bin', 'tsx'),
-      args: [main, '--request', requestPath, '--pairing-file', pairingPath],
+      args: [main, '--request', requestPath, '--pairing-file', pairingPath, '--state-dir', directory],
       cwd: repo, env: { ...env, HOME: home }, stderr: 'pipe',
     });
     let stderr = '';
@@ -74,6 +74,8 @@ describe('official SDK stdio launcher', () => {
       await browser.pair();
       running = browser.run();
       await waitFor(async () => access(pairingPath).then(() => false, () => true));
+      expect(await access(join(directory, 'authority.json')).then(() => true, () => false)).toBe(true);
+      expect(await access(join(home, '.keepany', 'mcp', 'authority.json')).then(() => true, () => false)).toBe(false);
       const list = await client.callTool({ name: 'list_assets', arguments: {} });
       expect(list.isError).not.toBe(true);
       expect((list.structuredContent as { result: unknown }).result).toEqual([{ id: asset.id, name: asset.name }]);
@@ -104,7 +106,7 @@ describe('official SDK stdio launcher', () => {
     const main = fileURLToPath(new URL('./main.ts', import.meta.url));
     const env = Object.fromEntries(Object.entries(process.env).filter((entry): entry is [string, string] => entry[1] !== undefined));
     const transport = new StdioClientTransport({ command: join(repo, 'node_modules', '.bin', 'tsx'),
-      args: [main, '--request', requestPath, '--pairing-file', pairingPath],
+      args: [main, '--request', requestPath, '--pairing-file', pairingPath, '--state-dir', directory],
       cwd: repo, env: { ...env, HOME: home }, stderr: 'pipe' });
     const client = new Client({ name: 'keepany-signal-test', version: '1.0.0' });
     try {

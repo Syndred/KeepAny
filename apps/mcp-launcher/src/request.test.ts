@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import { readLaunchRequest, parseLaunchRequest } from './request';
-import { writePairingFile, type PairingFilePayload } from './pairing-file';
+import { prepareStateDirectory, writePairingFile, type PairingFilePayload } from './pairing-file';
 
 const directories: string[] = [];
 afterEach(async () => { await Promise.all(directories.splice(0).map(directory => rm(directory, { recursive: true, force: true }))); });
@@ -79,5 +79,11 @@ describe('one-time private pairing file', () => {
     await expect(writePairingFile('pair.json', pairing())).rejects.toThrow('pairing-path-not-absolute');
     await symlink(directory, privateDir);
     await expect(writePairingFile(join(privateDir, 'pair.json'), pairing())).rejects.toThrow('pairing-directory-unsafe');
+    await expect(prepareStateDirectory('relative')).rejects.toThrow('state-directory-not-absolute');
+    await expect(prepareStateDirectory(privateDir)).rejects.toThrow('pairing-directory-unsafe');
+    await chmod(directory, 0o755);
+    await expect(prepareStateDirectory(directory)).rejects.toThrow('pairing-directory-unsafe');
+    await chmod(directory, 0o700);
+    expect(await prepareStateDirectory(directory)).toBe(directory);
   });
 });

@@ -3,7 +3,7 @@ import { McpAuthority } from '../../../packages/mcp/src/authority';
 import { FileAuthorityStorage } from '../../../packages/mcp/src/file-storage';
 import { startLocalMcpBridge } from '../../../packages/mcp/src/bridge';
 import { serveKeepAnyMcpStdio } from '../../../packages/mcp/src/server';
-import { defaultAuthorityPath, defaultPairingPath, prepareDefaultDirectory, writePairingFile } from './pairing-file';
+import { defaultAuthorityPath, defaultPairingPath, prepareDefaultDirectory, prepareStateDirectory, writePairingFile } from './pairing-file';
 import { LauncherError, readLaunchRequest } from './request';
 
 const pairingLifetimeMs = 2 * 60_000;
@@ -11,6 +11,7 @@ const pairingLifetimeMs = 2 * 60_000;
 export interface LaunchOptions {
   requestPath: string;
   pairingPath?: string;
+  stateDir?: string;
 }
 
 export interface RunningLauncher {
@@ -22,9 +23,9 @@ export interface RunningLauncher {
 /** The request is a scope proposal, never a bearer credential or a command to execute. */
 export async function launchMcp(options: LaunchOptions): Promise<RunningLauncher> {
   const request = await readLaunchRequest(options.requestPath);
-  await prepareDefaultDirectory();
-  const pairingPath = options.pairingPath ?? defaultPairingPath();
-  const authority = new McpAuthority(new FileAuthorityStorage(defaultAuthorityPath()));
+  const stateDir = options.stateDir ? await prepareStateDirectory(options.stateDir) : await prepareDefaultDirectory();
+  const pairingPath = options.pairingPath ?? defaultPairingPath(stateDir);
+  const authority = new McpAuthority(new FileAuthorityStorage(defaultAuthorityPath(stateDir)));
   const grant = await authority.issueGrant({ assetIds: request.assetIds, readFields: request.readFields,
     writeFields: request.writeFields, ttlMs: request.ttlMs });
   let bridge: Awaited<ReturnType<typeof startLocalMcpBridge>> | undefined;
@@ -71,16 +72,19 @@ export async function launchMcp(options: LaunchOptions): Promise<RunningLauncher
 function parseArgs(argv: string[]): LaunchOptions {
   let requestPath = '';
   let pairingPath: string | undefined;
+  let stateDir: string | undefined;
   for (let i = 0; i < argv.length; i += 2) {
     const option = argv[i];
     const value = argv[i + 1];
-    if (!value || (option !== '--request' && option !== '--pairing-file')) throw new LauncherError('invalid-arguments');
+    if (!value || (option !== '--request' && option !== '--pairing-file' && option !== '--state-dir'))
+      throw new LauncherError('invalid-arguments');
     if (option === '--request' && !requestPath) requestPath = value;
     else if (option === '--pairing-file' && pairingPath === undefined) pairingPath = value;
+    else if (option === '--state-dir' && stateDir === undefined) stateDir = value;
     else throw new LauncherError('invalid-arguments');
   }
   if (!requestPath) throw new LauncherError('request-required');
-  return { requestPath, pairingPath };
+  return { requestPath, pairingPath, stateDir };
 }
 
 async function main() {

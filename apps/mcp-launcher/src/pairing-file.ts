@@ -14,12 +14,12 @@ export interface PairingFilePayload {
   expiresAt: number;
 }
 
-export function defaultPairingPath(): string {
-  return join(homedir(), '.keepany', 'mcp', `pairing-${randomUUID()}.json`);
+export function defaultPairingPath(directory = join(homedir(), '.keepany', 'mcp')): string {
+  return join(directory, `pairing-${randomUUID()}.json`);
 }
 
-export function defaultAuthorityPath(): string {
-  return join(homedir(), '.keepany', 'mcp', 'authority.json');
+export function defaultAuthorityPath(directory = join(homedir(), '.keepany', 'mcp')): string {
+  return join(directory, 'authority.json');
 }
 
 async function verifyPrivateDirectory(path: string) {
@@ -40,6 +40,13 @@ export async function prepareDefaultDirectory() {
     await verifyPrivateDirectory(item);
   }
   return directory;
+}
+
+/** Explicit state directories must exist already; never create arbitrary parent chains. */
+export async function prepareStateDirectory(path: string) {
+  if (!isAbsolute(path)) throw new LauncherError('state-directory-not-absolute');
+  await verifyPrivateDirectory(path);
+  return path;
 }
 
 export interface PairingFile {
