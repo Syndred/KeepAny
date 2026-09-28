@@ -4,6 +4,12 @@ import { expect, type Page, test } from "@playwright/test";
 const repositoryModuleUrl = `/@fs${process.cwd()}/packages/local-db/src/index.ts`;
 
 async function savedProjectNames(page: Page): Promise<string[]> {
+	if (process.env.KEEPANY_RACE_MODE === "preview") {
+		await page.goto("/assets/project");
+		const names = page.locator("main.page a.list-row .row-main strong");
+		await names.first().waitFor();
+		return names.allTextContents();
+	}
 	return page.evaluate(async (modulePath) => {
 		const { localRepository } = await import(modulePath);
 		const repository = await localRepository();
@@ -94,6 +100,9 @@ test("late old CSV cannot replace a newer URL preview or be imported", async ({
 	await expect(page.locator(".import-preview")).toContainText("new.example");
 	await expect(page.locator(".import-preview")).not.toContainText("Old CSV");
 	await page.getByRole("button", { name: "Confirm import" }).last().click();
+	await expect(page.locator(".notice[role='status']")).toContainText(
+		"Import complete",
+	);
 	await expect.poll(() => savedProjectNames(page)).toEqual(["new.example"]);
 });
 
@@ -137,6 +146,9 @@ test("late valid CSV cannot revive candidates after a newer broken CSV", async (
 	});
 	await expect(page.locator(".import-preview")).toContainText("Retry CSV");
 	await page.getByRole("button", { name: "Confirm import" }).last().click();
+	await expect(page.locator(".notice[role='status']")).toContainText(
+		"Import complete",
+	);
 	await expect.poll(() => savedProjectNames(page)).toEqual(["Retry CSV"]);
 });
 
@@ -168,6 +180,9 @@ test("late old CSV cannot replace a newer valid CSV", async ({ page }) => {
 	await expect(page.locator(".import-preview")).toContainText("New CSV");
 	await expect(page.locator(".import-preview")).not.toContainText("Old CSV");
 	await page.getByRole("button", { name: "Confirm import" }).last().click();
+	await expect(page.locator(".notice[role='status']")).toContainText(
+		"Import complete",
+	);
 	await expect.poll(() => savedProjectNames(page)).toEqual(["New CSV"]);
 });
 
@@ -238,6 +253,9 @@ test("late URL preview cannot reappear after editing the URL", async ({
 		"old.example",
 	);
 	await importCard.getByRole("button", { name: "Confirm import" }).click();
+	await expect(page.locator(".notice[role='status']")).toContainText(
+		"Import complete",
+	);
 	await expect.poll(() => savedProjectNames(page)).toEqual(["new.example"]);
 });
 
@@ -333,18 +351,31 @@ test("same-tab double click and two tabs create only one normalized category", a
 		await expect(loser.getByRole("alert")).toHaveText(
 			"This category already exists.",
 		);
-		await expect
-			.poll(async () =>
-				first.evaluate(async (modulePath) => {
-					const { localRepository } = await import(modulePath);
-					const rows = await (await localRepository()).allRecords();
-					return rows.filter(
-						(row: { type: string; payload: string }) =>
-							row.type === "category" && !JSON.parse(row.payload).deleted,
-					).length;
-				}, repositoryModuleUrl),
-			)
-			.toBe(1);
+		let observer: Page | undefined;
+		if (process.env.KEEPANY_RACE_MODE === "preview") {
+			observer = await context.newPage();
+			await observer.goto("/assets/project");
+			await observer.getByRole("button", { name: "Manage" }).click();
+			await expect(
+				observer
+					.getByRole("dialog", { name: "Category" })
+					.locator(".list-row")
+					.filter({ hasText: /race category/i }),
+			).toHaveCount(1);
+		} else {
+			await expect
+				.poll(async () =>
+					first.evaluate(async (modulePath) => {
+						const { localRepository } = await import(modulePath);
+						const rows = await (await localRepository()).allRecords();
+						return rows.filter(
+							(row: { type: string; payload: string }) =>
+								row.type === "category" && !JSON.parse(row.payload).deleted,
+						).length;
+					}, repositoryModuleUrl),
+				)
+				.toBe(1);
+		}
 		await loser.getByLabel("Category name").fill("Retry Category");
 		await loser.getByRole("button", { name: "Save" }).click();
 		await expect(loser).toBeHidden();
@@ -358,20 +389,31 @@ test("same-tab double click and two tabs create only one normalized category", a
 				(button as HTMLButtonElement).click();
 			});
 		await expect(doubleDialog).toBeHidden();
-		await expect
-			.poll(async () =>
-				first.evaluate(async (modulePath) => {
-					const { localRepository } = await import(modulePath);
-					const rows = await (await localRepository()).allRecords();
-					return rows.filter(
-						(row: { type: string; payload: string }) =>
-							row.type === "category" &&
-							!JSON.parse(row.payload).deleted &&
-							JSON.parse(row.payload).name === "Double Category",
-					).length;
-				}, repositoryModuleUrl),
-			)
-			.toBe(1);
+		if (observer) {
+			await observer.reload();
+			await observer.getByRole("button", { name: "Manage" }).click();
+			await expect(
+				observer
+					.getByRole("dialog", { name: "Category" })
+					.locator(".list-row")
+					.filter({ hasText: "Double Category" }),
+			).toHaveCount(1);
+		} else {
+			await expect
+				.poll(async () =>
+					first.evaluate(async (modulePath) => {
+						const { localRepository } = await import(modulePath);
+						const rows = await (await localRepository()).allRecords();
+						return rows.filter(
+							(row: { type: string; payload: string }) =>
+								row.type === "category" &&
+								!JSON.parse(row.payload).deleted &&
+								JSON.parse(row.payload).name === "Double Category",
+						).length;
+					}, repositoryModuleUrl),
+				)
+				.toBe(1);
+		}
 	} finally {
 		await context.close();
 	}
