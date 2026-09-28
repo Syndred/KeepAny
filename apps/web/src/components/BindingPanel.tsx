@@ -72,6 +72,21 @@ export function BindingPanel() {
 		try {
 			await action();
 		} catch {
+			// Another tab may have removed the binding during an in-flight check.
+			// Reconcile the visible state with the local repository before retry UI.
+			if (binding) {
+				try {
+					const latest = await repository.activeBinding();
+					setBinding(latest);
+					if (latest?.bindingId !== binding.bindingId) {
+						setMessage({ key: "bindingForgotten" });
+						return;
+					}
+				} catch {
+					setMessage({ key: "bindingLocalError" });
+					return;
+				}
+			}
 			setMessage({ key: "bindingFailed" });
 		} finally {
 			busyRef.current = false;
@@ -94,8 +109,15 @@ export function BindingPanel() {
 										repository,
 										transport: client().transport,
 									});
-									if (state.state === "revoked") setBinding(undefined);
-									setMessage({ key: `bindingState_${state.state}` });
+									const latest = await repository.activeBinding();
+									setBinding(latest);
+									setMessage({
+										key:
+											state.state === "revoked" ||
+											latest?.bindingId === binding.bindingId
+												? `bindingState_${state.state}`
+												: "bindingForgotten",
+									});
 								})
 							}
 						>

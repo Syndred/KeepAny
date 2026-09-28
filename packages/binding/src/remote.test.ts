@@ -22,6 +22,107 @@ import { instanceIdHash } from "./ticket";
 const issuer = "http://127.0.0.1:3100";
 
 describe("commercial challenge transport", () => {
+	it("does not accept an old state reply after local removal in another tab", async () => {
+		const databaseName = `binding-${crypto.randomUUID()}`;
+		const firstTab = new BindingRepository(databaseName);
+		const secondTab = new BindingRepository(databaseName);
+		const bindingId = crypto.randomUUID();
+		const subject = `keepanyadm:${crypto.randomUUID()}`;
+		const refreshToken = "R".repeat(43);
+		const { privateKey, publicKey } = await generateKeyPair("RS256", {
+			modulusLength: 2048,
+		});
+		const keys = createLocalJWKSet({
+			keys: [
+				{ ...(await exportJWK(publicKey)), kid: "binding-race", alg: "RS256" },
+			],
+		});
+		let releaseState: (() => void) | undefined;
+		const stateHeld = new Promise<void>((resolve) => {
+			releaseState = resolve;
+		});
+		let stateRequested: (() => void) | undefined;
+		const requested = new Promise<void>((resolve) => {
+			stateRequested = resolve;
+		});
+		const transport = new BindingTransport(issuer, (async (request) => {
+			const path = new URL(request.toString()).pathname;
+			if (path.endsWith("/device"))
+				return Response.json({
+					code: 0,
+					data: {
+						deviceCode: "D".repeat(43),
+						userCode: "TEST-CODE",
+						verificationUri: `${issuer}/settings/connect`,
+						expiresIn: 300,
+						interval: 5,
+					},
+				});
+			if (path.endsWith("/state")) {
+				stateRequested?.();
+				await stateHeld;
+				return Response.json({
+					code: 0,
+					data: {
+						bindingId,
+						subject,
+						state: "active",
+						scopes: ["sync:read"],
+						credentialExpiresAt: new Date(
+							Date.now() + 86_400_000,
+						).toISOString(),
+						entitlements: {},
+					},
+				});
+			}
+			throw Error(`unexpected ${path}`);
+		}) as typeof fetch);
+		try {
+			await startBindingChallenge({
+				repository: firstTab,
+				transport,
+				instanceName: "KeepAny Web",
+				scopes: ["sync:read"],
+			});
+			const identity = await firstTab.identity();
+			const now = Math.floor(Date.now() / 1000);
+			const ticket = await new SignJWT({
+				scope: "binding:complete",
+				binding_id: bindingId,
+				instance_id_hash: await instanceIdHash(identity.instanceId),
+				allowed_scopes: ["sync:read"],
+			})
+				.setProtectedHeader({ alg: "RS256", kid: "binding-race", typ: "JWT" })
+				.setIssuer(issuer)
+				.setAudience("keepany-binding")
+				.setSubject(subject)
+				.setJti(crypto.randomUUID())
+				.setIssuedAt(now)
+				.setExpirationTime(now + 60)
+				.sign(privateKey);
+			await firstTab.consume({
+				ticket,
+				issuer,
+				keys,
+				expectedBindingId: bindingId,
+				expectedSubject: subject,
+				refreshToken,
+				refreshExpiresAt: new Date(Date.now() + 86_400_000).toISOString(),
+			});
+			const oldReply = readBindingState({ repository: firstTab, transport });
+			await requested;
+			expect(await secondTab.revokeLocal(bindingId)).toBe(true);
+			releaseState?.();
+			await expect(oldReply).rejects.toThrow("binding-not-active");
+			expect(await firstTab.activeBinding()).toBeUndefined();
+			expect(await firstTab.credential(bindingId)).toBeUndefined();
+		} finally {
+			releaseState?.();
+			secondTab.close();
+			await firstTab.deleteDatabase();
+		}
+	});
+
 	it("sends the persisted device public key and consumes the exact signed approval once", async () => {
 		const repo = new BindingRepository(`binding-${crypto.randomUUID()}`);
 		const deviceCode = "D".repeat(43);

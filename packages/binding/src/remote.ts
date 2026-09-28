@@ -227,6 +227,11 @@ export async function readBindingState(input: {
 		("subject" in result && result.subject !== binding.subject)
 	)
 		throw Error("binding-state-mismatch");
+	// A second tab can remove this credential while the HTTP response is in flight.
+	// Never present that older response as the current local authorization state.
+	const current = await input.repository.activeBinding();
+	if (current?.bindingId !== binding.bindingId)
+		throw Error("binding-not-active");
 	if (result.state === "revoked")
 		await input.repository.revokeLocal(binding.bindingId);
 	return result;
