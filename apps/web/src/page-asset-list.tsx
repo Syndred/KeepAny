@@ -112,6 +112,7 @@ function CategoryStrip({
 	);
 	const [manage, setManage] = useState(false);
 	const [name, setName] = useState("");
+	const [categoryError, setCategoryError] = useState("");
 	async function onDragEnd(e: DragEndEvent) {
 		if (!e.over || e.active.id === e.over.id) return;
 		const from = ordered.indexOf(String(e.active.id)),
@@ -122,15 +123,32 @@ function CategoryStrip({
 	}
 	async function addCategory() {
 		const trimmed = name.trim();
-		if (!trimmed || categoryNames.includes(trimmed)) return;
-		await save("category", {
-			id: crypto.randomUUID(),
-			kind,
-			name: trimmed,
-			order: categoryNames.length,
-			deleted: false,
-		});
+		if (!trimmed) return;
+		const normalized = trimmed.toLocaleLowerCase();
+		if (
+			categoryNames.some((category) =>
+				[category, niceCategory(category, t)].some(
+					(label) => label.toLocaleLowerCase() === normalized,
+				),
+			)
+		) {
+			setCategoryError(t("categoryDuplicate"));
+			return;
+		}
+		try {
+			await save("category", {
+				id: crypto.randomUUID(),
+				kind,
+				name: trimmed,
+				order: categoryNames.length,
+				deleted: false,
+			});
+		} catch {
+			setCategoryError(t("error"));
+			return;
+		}
 		setName("");
+		setCategoryError("");
 		setManage(false);
 		choose(trimmed);
 		notify(t("saved"));
@@ -165,21 +183,50 @@ function CategoryStrip({
 						))}
 					</SortableContext>
 				</DndContext>
-				<Button variant="ghost" size="small" onClick={() => setManage(true)}>
+				<Button
+					variant="ghost"
+					size="small"
+					onClick={() => {
+						setCategoryError("");
+						setManage(true);
+					}}
+				>
 					<Plus size={14} />
 					{t("manage")}
 				</Button>
 			</div>
 			{manage && (
-				<Dialog title={t("category")} onClose={() => setManage(false)}>
+				<Dialog
+					title={t("category")}
+					onClose={() => {
+						setCategoryError("");
+						setManage(false);
+					}}
+				>
 					<div className="field">
 						<label htmlFor="category-name">{t("categoryName")}</label>
 						<input
 							id="category-name"
 							value={name}
 							maxLength={60}
-							onChange={(e) => setName(e.target.value)}
+							aria-invalid={!!categoryError}
+							aria-describedby={
+								categoryError ? "category-name-error" : undefined
+							}
+							onChange={(e) => {
+								setName(e.target.value);
+								setCategoryError("");
+							}}
 						/>
+						{categoryError && (
+							<small
+								id="category-name-error"
+								className="field-error"
+								role="alert"
+							>
+								{categoryError}
+							</small>
+						)}
 					</div>
 					<div className="actions">
 						<Button onClick={addCategory} disabled={!name.trim()}>

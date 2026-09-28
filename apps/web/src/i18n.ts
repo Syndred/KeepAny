@@ -136,6 +136,7 @@ const copy: Record<string, [string, string]> = {
 	device: ["数码设备", "Devices"],
 	other: ["其他", "Other"],
 	categoryName: ["分类名称", "Category name"],
+	categoryDuplicate: ["该分类已存在。", "This category already exists."],
 	newCategory: ["新增分类", "New category"],
 	categoryHelp: [
 		"删除分类不会删除资产。",
