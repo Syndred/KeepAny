@@ -2,7 +2,7 @@ import { createRxDatabase, type RxDatabase } from 'rxdb';
 import { getRxStorageDexie } from 'rxdb/plugins/storage-dexie';
 import Dexie, { type Table } from 'dexie';
 import { z } from 'zod';
-import { entitySchemas, type EntityType } from '../../domain/src';
+import { dueOnCycle, entitySchemas, type Asset, type EntityType, type History } from '../../domain/src';
 import { zipSync, unzipSync, strToU8, strFromU8 } from 'fflate';
 import type { SyncOperation } from '../../contracts/src';
 
@@ -11,6 +11,7 @@ export interface RecordRow { id: string; type: EntityType; payload: string; upda
 interface StoredFile { id: string; blob: Blob; name: string }
 interface Journal { id: string; rows: RecordRow[] }
 interface ImportJournal { id: string; rows: RecordRow[] }
+interface RenewalJournal { id: string; assetId: string; expectedPayload: string; next: RecordRow; history: RecordRow }
 interface SyncBase { id: string; payload: string; version: number }
 export interface PulledRow { row: RecordRow; sequence: number; version: number; operationId?: string; keyEpoch?: number; ciphertext?: string }
 interface PullJournal { id: string; cursorStart: number; changes: PulledRow[] }
@@ -33,6 +34,7 @@ class FileStore extends Dexie {
   blobs!: Table<StoredFile, string>;
   journal!: Table<Journal, string>;
   importJournal!: Table<ImportJournal, string>;
+  renewalJournal!: Table<RenewalJournal, string>;
   syncBase!: Table<SyncBase, string>;
   syncMeta!: Table<{ id: string; cursor: number }, string>;
   pullJournal!: Table<PullJournal, string>;
@@ -54,6 +56,9 @@ class FileStore extends Dexie {
     this.version(6).stores({ blobs: 'id', journal: 'id', importJournal: 'id', syncBase: 'id', syncMeta: 'id', pullJournal: 'id',
       scopedBase: 'id, scope', scopedMeta: 'id', scopedOutbox: 'id, scope', scopedPull: 'id', datasetBinding: 'id',
       scopedAttachmentUploads: 'id, scope' });
+    this.version(7).stores({ blobs: 'id', journal: 'id', importJournal: 'id', syncBase: 'id', syncMeta: 'id', pullJournal: 'id',
+      scopedBase: 'id, scope', scopedMeta: 'id', scopedOutbox: 'id, scope', scopedPull: 'id', datasetBinding: 'id',
+      scopedAttachmentUploads: 'id, scope', renewalJournal: 'id, assetId' });
   }
 }
 
@@ -61,12 +66,21 @@ interface DefaultRepositoryState {
   fileStore?: FileStore;
   resources?: Promise<{ db: RxDatabase; fileStore: FileStore; recoveryState?: RepositoryRecoveryState }>;
 }
-interface RepositoryRecoveryState { syncError: string | null; restoreError: string | null }
+interface RepositoryRecoveryState { syncError: string | null; restoreError: string | null; renewalError: string | null }
 // Vite HMR re-evaluates this module while the old RxDB remains open. Keep the resource across reloads.
 const defaultGlobal = globalThis as typeof globalThis & { __keepanyLocalDbState?: DefaultRepositoryState };
 if (!defaultGlobal.__keepanyLocalDbState) defaultGlobal.__keepanyLocalDbState = {};
 const defaultState = defaultGlobal.__keepanyLocalDbState;
-if (!defaultState.fileStore) defaultState.fileStore = new FileStore('keepany');
+if (!defaultState.fileStore?.renewalJournal) {
+  // A Vite HMR module may have retained a v6 Dexie handle. Rebind the shared
+  // RxDB handle to a v7 file store so the new journal table can be upgraded.
+  defaultState.fileStore?.close();
+  const upgradedStore = new FileStore('keepany');
+  defaultState.fileStore = upgradedStore;
+  if (defaultState.resources) {
+    defaultState.resources = defaultState.resources.then(resource => ({ ...resource, fileStore: upgradedStore }));
+  }
+}
 export const files = defaultState.fileStore;
 const recordSchema = {
   title: 'KeepAny entity', version: 0, primaryKey: 'id', type: 'object',
@@ -91,14 +105,28 @@ const rowFor = (type: EntityType, value: unknown): RecordRow => {
   const parsed = parseEntity(type, value);
   return { id: key(type, parsed.id), type, payload: JSON.stringify(parsed), updatedAt: Date.now() };
 };
+const renewalLocks = new Map<string, Promise<void>>();
+async function withRenewalLock<T>(name: string, action: () => Promise<T>): Promise<T> {
+  const previous = renewalLocks.get(name) ?? Promise.resolve();
+  const run = previous.then(() => {
+    const locks = typeof navigator === 'undefined' ? undefined : navigator.locks;
+    return locks ? locks.request(name, action) : action();
+  });
+  const tail = run.then(() => {}, () => {});
+  renewalLocks.set(name, tail);
+  try { return await run; }
+  finally { if (renewalLocks.get(name) === tail) renewalLocks.delete(name); }
+}
 
 export class LocalRepository {
   constructor(readonly db: RxDatabase, readonly fileStore: FileStore,
-    readonly recoveryState: RepositoryRecoveryState = { syncError: null, restoreError: null }) {}
+    readonly recoveryState: RepositoryRecoveryState = { syncError: null, restoreError: null, renewalError: null }) {}
   get syncRecoveryError(): string | null { return this.recoveryState.syncError; }
   set syncRecoveryError(value: string | null) { this.recoveryState.syncError = value; }
   get restoreRecoveryError(): string | null { return this.recoveryState.restoreError; }
   set restoreRecoveryError(value: string | null) { this.recoveryState.restoreError = value; }
+  get renewalRecoveryError(): string | null { return this.recoveryState.renewalError; }
+  set renewalRecoveryError(value: string | null) { this.recoveryState.renewalError = value; }
 
   async allRecords(): Promise<RecordRow[]> {
     return (await this.db.records.find().exec()).map(canonical);
@@ -199,6 +227,71 @@ export class LocalRepository {
       await rollbackImport(this.db, this.fileStore, id);
       throw error;
     }
+  }
+
+  private async settleRenewalJournals(): Promise<void> {
+    for (const entry of await this.fileStore.renewalJournal.toArray()) {
+      try { await replayRenewalJournal(this.db, this.fileStore, entry.id); }
+      catch (error) {
+        this.renewalRecoveryError = error instanceof Error ? error.message : 'renewal-recovery-pending';
+        throw Error('renewal-recovery-pending');
+      }
+    }
+    this.renewalRecoveryError = null;
+  }
+
+  // The wrapped RxDB storage sends both rows through one Dexie transaction. Its CAS can
+  // reject one row while accepting the other, so the durable journal repairs that case.
+  async recordRenewal(expectedAsset: Asset, nextAsset: Asset, history: History): Promise<void> {
+    const expected = entitySchemas.asset.parse(expectedAsset);
+    const next = entitySchemas.asset.parse(nextAsset);
+    const event = entitySchemas.history.parse(history);
+    const anchor = expected.billingAnchor || expected.dueDate;
+    const unchanged = Object.keys(expected).every(field =>
+      ['dueDate', 'billingAnchor', 'renewalCount', 'updatedAt'].includes(field) ||
+      JSON.stringify(expected[field as keyof Asset]) === JSON.stringify(next[field as keyof Asset]));
+    if (expected.kind !== 'subscription' || expected.status !== 'active' || expected.deleted || !expected.dueDate ||
+      next.id !== expected.id || next.kind !== 'subscription' || next.status !== 'active' || next.deleted ||
+      next.renewalCount !== expected.renewalCount + 1 || next.billingAnchor !== anchor ||
+      next.dueDate !== dueOnCycle(anchor, expected.cycle, expected.interval, next.renewalCount) ||
+      !unchanged ||
+      event.action !== 'renew' || event.assetId !== expected.id || event.deleted ||
+      event.billDate !== expected.dueDate || event.amount === undefined || event.currency !== expected.currency) {
+      throw Error('renewal-invalid');
+    }
+    const lockName = `keepany-renewal:${this.db.name}`;
+    await withRenewalLock(lockName, async () => {
+      await this.settleRenewalJournals();
+      const current = await this.db.records.findOne(key('asset', expected.id)).exec();
+      const existingHistory = await this.db.records.findOne(key('history', event.id)).exec();
+      if (!current || existingHistory) throw Error('renewal-stale');
+      const currentRow = canonical(current);
+      const currentAsset = entitySchemas.asset.parse(JSON.parse(currentRow.payload));
+      if (JSON.stringify(currentAsset) !== JSON.stringify(expected)) throw Error('renewal-stale');
+      const nextRow = rowFor('asset', next);
+      const historyRow = rowFor('history', event);
+      const journalId = crypto.randomUUID();
+      await this.fileStore.renewalJournal.add({ id: journalId, assetId: expected.id,
+        expectedPayload: currentRow.payload, next: nextRow, history: historyRow });
+      try {
+        const previous = (current as unknown as { _data: Record<string, unknown> })._data;
+        const result = await this.db.records.storageInstance.bulkWrite([
+          { previous, document: { ...previous, ...nextRow } },
+          { document: { ...historyRow, _deleted: false, _attachments: {} } },
+        ], 'keepany-renewal');
+        if (result.error.length) throw Error(result.error.some(error => error.status === 409) ? 'renewal-stale' : 'renewal-write-failed');
+        // A failed journal cleanup leaves a committed pair that replay can safely recognize.
+        await this.fileStore.renewalJournal.delete(journalId).catch(() => {});
+      } catch (error) {
+        let outcome: 'committed' | 'cancelled';
+        try { outcome = await replayRenewalJournal(this.db, this.fileStore, journalId); }
+        catch (recoveryError) {
+          this.renewalRecoveryError = recoveryError instanceof Error ? recoveryError.message : 'renewal-recovery-pending';
+          throw Error('renewal-recovery-pending');
+        }
+        if (outcome !== 'committed') throw error;
+      }
+    });
   }
 
   async syncCursor(): Promise<number> { return (await this.fileStore.syncMeta.get('cursor'))?.cursor ?? 0; }
@@ -448,13 +541,16 @@ export class LocalRepository {
   }
 
   async deleteEntity(type: EntityType, id: string): Promise<RecordRow> {
-    const current = await this.get<Record<string, unknown>>(type, id);
-    if (!current) throw Error('not-found');
-    if (current.deleted) {
-      const row = await this.db.records.findOne(key(type, id)).exec();
-      return canonical(row);
-    }
-    return this.save(type, { ...current, deleted: true, ...(type === 'asset' ? { updatedAt: new Date().toISOString() } : {}) });
+    return withRenewalLock(`keepany-renewal:${this.db.name}`, async () => {
+      if (type === 'asset' || type === 'history') await this.settleRenewalJournals();
+      const current = await this.get<Record<string, unknown>>(type, id);
+      if (!current) throw Error('not-found');
+      if (current.deleted) {
+        const row = await this.db.records.findOne(key(type, id)).exec();
+        return canonical(row);
+      }
+      return this.save(type, { ...current, deleted: true, ...(type === 'asset' ? { updatedAt: new Date().toISOString() } : {}) });
+    });
   }
 
   // Explicit undo is the only local path that can revive a tombstone.
@@ -569,76 +665,82 @@ export class LocalRepository {
 
   private async protectedFileIds(): Promise<Set<string>> {
     const rows = await this.allRecords();
-    const [restores, imports, pulls, scopedOutbox, scopedPull] = await Promise.all([
+    const [restores, imports, pulls, scopedOutbox, scopedPull, renewals] = await Promise.all([
       this.fileStore.journal.toArray(), this.fileStore.importJournal.toArray(), this.fileStore.pullJournal.toArray(),
-      this.fileStore.scopedOutbox.toArray(), this.fileStore.scopedPull.toArray(),
+      this.fileStore.scopedOutbox.toArray(), this.fileStore.scopedPull.toArray(), this.fileStore.renewalJournal.toArray(),
     ]);
     for (const entry of restores) rows.push(...entry.rows);
     for (const entry of imports) rows.push(...entry.rows);
     for (const entry of pulls) rows.push(...entry.changes.map(change => change.row));
     for (const entry of scopedOutbox) rows.push(entry.row);
     for (const entry of scopedPull) rows.push(entry.change.row);
+    for (const entry of renewals) rows.push(entry.next);
     return attachmentIdsIn(rows);
   }
 
   async exportArchive(): Promise<Uint8Array> {
-    const rows = await this.allRecords();
-    const blobs: StoredFile[] = [];
-    for (const id of attachmentIdsIn(rows)) {
-      const file = await this.fileStore.blobs.get(id);
-      if (!file) throw Error('archive-attachment-reference');
-      blobs.push(file);
-    }
-    validateReferences(rows, new Set(blobs.map(blob => blob.id)));
-    const entries: Record<string, Uint8Array> = { 'records.json': strToU8(JSON.stringify(rows)) };
-    const attachments: AttachmentManifest[] = [];
-    for (const item of blobs) {
-      const bytes = new Uint8Array(await item.blob.arrayBuffer());
-      entries[`files/${item.id}`] = bytes;
-      attachments.push({ id: item.id, name: item.name, type: attachmentSchema.shape.type.parse(item.blob.type), size: bytes.length, sha256: await sha(bytes) });
-    }
-    entries['manifest.json'] = strToU8(JSON.stringify({
-      format: 'keepany-backup', version: 1, createdAt: new Date().toISOString(),
-      recordCount: rows.length, recordsHash: await sha(entries['records.json']), attachments,
-    }));
-    if (Object.values(entries).reduce((size, entry) => size + entry.length, 0) > 300 * 1024 * 1024) throw Error('archive-size');
-    const archive = zipSync(entries, { level: 1 });
-    if (archive.length > 100 * 1024 * 1024) throw Error('archive-size');
-    return archive;
+    return withRenewalLock(`keepany-renewal:${this.db.name}`, async () => {
+      await this.settleRenewalJournals();
+      const rows = await this.allRecords();
+      const blobs: StoredFile[] = [];
+      for (const id of attachmentIdsIn(rows)) {
+        const file = await this.fileStore.blobs.get(id);
+        if (!file) throw Error('archive-attachment-reference');
+        blobs.push(file);
+      }
+      validateReferences(rows, new Set(blobs.map(blob => blob.id)));
+      const entries: Record<string, Uint8Array> = { 'records.json': strToU8(JSON.stringify(rows)) };
+      const attachments: AttachmentManifest[] = [];
+      for (const item of blobs) {
+        const bytes = new Uint8Array(await item.blob.arrayBuffer());
+        entries[`files/${item.id}`] = bytes;
+        attachments.push({ id: item.id, name: item.name, type: attachmentSchema.shape.type.parse(item.blob.type), size: bytes.length, sha256: await sha(bytes) });
+      }
+      entries['manifest.json'] = strToU8(JSON.stringify({
+        format: 'keepany-backup', version: 1, createdAt: new Date().toISOString(),
+        recordCount: rows.length, recordsHash: await sha(entries['records.json']), attachments,
+      }));
+      if (Object.values(entries).reduce((size, entry) => size + entry.length, 0) > 300 * 1024 * 1024) throw Error('archive-size');
+      const archive = zipSync(entries, { level: 1 });
+      if (archive.length > 100 * 1024 * 1024) throw Error('archive-size');
+      return archive;
+    });
   }
 
   async restoreArchive(bytes: Uint8Array): Promise<number> {
-    if (await this.fileStore.journal.count()) throw Error('restore-recovery-pending');
-    const { rows, manifest, entries } = await inspectArchive(bytes);
-    // Validate all conflicts before writing attachments or a journal.
-    for (const row of rows) {
-      const current = await this.db.records.findOne(row.id).exec();
-      if (current && canonical(current).payload !== row.payload) throw Error('restore-conflict');
-    }
-    for (const attachment of manifest.attachments) {
-      const current = await this.fileStore.blobs.get(attachment.id);
-      if (current && (current.name !== attachment.name || current.blob.type !== attachment.type ||
-        current.blob.size !== attachment.size ||
-        await sha(new Uint8Array(await current.blob.arrayBuffer())) !== attachment.sha256)) throw Error('restore-conflict');
-    }
-    const journalId = crypto.randomUUID();
-    await this.fileStore.transaction('rw', this.fileStore.blobs, this.fileStore.journal, async () => {
-      for (const attachment of manifest.attachments) {
-        const existing = await this.fileStore.blobs.get(attachment.id);
-        if (existing) {
-          if (existing.name !== attachment.name || existing.blob.type !== attachment.type ||
-            existing.blob.size !== attachment.size ||
-            !sameBytes(new Uint8Array(await Dexie.waitFor(existing.blob.arrayBuffer())), entries[`files/${attachment.id}`])) {
-            throw Error('restore-conflict');
-          }
-        } else {
-          await this.fileStore.blobs.add({
-            id: attachment.id, name: attachment.name,
-            blob: new Blob([entries[`files/${attachment.id}`] as BlobPart], { type: attachment.type }),
-          });
-        }
+    return withRenewalLock(`keepany-renewal:${this.db.name}`, async () => {
+      await this.settleRenewalJournals();
+      if (await this.fileStore.journal.count()) throw Error('restore-recovery-pending');
+      const { rows, manifest, entries } = await inspectArchive(bytes);
+      // Validate all conflicts before writing attachments or a journal.
+      for (const row of rows) {
+        const current = await this.db.records.findOne(row.id).exec();
+        if (current && canonical(current).payload !== row.payload) throw Error('restore-conflict');
       }
-      await this.fileStore.journal.put({ id: journalId, rows });
+      for (const attachment of manifest.attachments) {
+        const current = await this.fileStore.blobs.get(attachment.id);
+        if (current && (current.name !== attachment.name || current.blob.type !== attachment.type ||
+          current.blob.size !== attachment.size ||
+          await sha(new Uint8Array(await current.blob.arrayBuffer())) !== attachment.sha256)) throw Error('restore-conflict');
+      }
+      const journalId = crypto.randomUUID();
+      await this.fileStore.transaction('rw', this.fileStore.blobs, this.fileStore.journal, async () => {
+        for (const attachment of manifest.attachments) {
+          const existing = await this.fileStore.blobs.get(attachment.id);
+          if (existing) {
+            if (existing.name !== attachment.name || existing.blob.type !== attachment.type ||
+              existing.blob.size !== attachment.size ||
+              !sameBytes(new Uint8Array(await Dexie.waitFor(existing.blob.arrayBuffer())), entries[`files/${attachment.id}`])) {
+              throw Error('restore-conflict');
+            }
+          } else {
+            await this.fileStore.blobs.add({
+              id: attachment.id, name: attachment.name,
+              blob: new Blob([entries[`files/${attachment.id}`] as BlobPart], { type: attachment.type }),
+            });
+          }
+        }
+        await this.fileStore.journal.put({ id: journalId, rows });
     });
     try {
       await replayJournal(this.db, this.fileStore, journalId);
@@ -648,6 +750,7 @@ export class LocalRepository {
       throw error;
     }
     return rows.length;
+    });
   }
 
   async close(): Promise<void> {
@@ -687,6 +790,33 @@ async function rollbackImport(db: RxDatabase, store: FileStore, id: string): Pro
     await current.remove();
   }
   await store.importJournal.delete(id);
+}
+
+// A completed storage batch is atomic. If RxDB reports a per-row CAS conflict,
+// repair only this journal's own history row; never rewind an unrelated asset update.
+async function replayRenewalJournal(db: RxDatabase, store: FileStore, id: string): Promise<'committed' | 'cancelled'> {
+  const journal = await store.renewalJournal.get(id);
+  if (!journal) return 'cancelled';
+  const asset = await db.records.findOne(journal.next.id).exec();
+  const history = await db.records.findOne(journal.history.id).exec();
+  const assetPayload = asset ? canonical(asset).payload : null;
+  const historyPayload = history ? canonical(history).payload : null;
+  if (historyPayload && historyPayload !== journal.history.payload) throw Error('renewal-recovery-conflict');
+  if (assetPayload === journal.next.payload) {
+    if (!history) {
+      try { await db.records.insert(journal.history); }
+      catch (error) {
+        const raced = await db.records.findOne(journal.history.id).exec();
+        if (!raced || canonical(raced).payload !== journal.history.payload) throw error;
+      }
+    }
+    await store.renewalJournal.delete(id);
+    return 'committed';
+  }
+  if (assetPayload !== journal.expectedPayload && history) throw Error('renewal-recovery-conflict');
+  if (history) await history.remove();
+  await store.renewalJournal.delete(id);
+  return 'cancelled';
 }
 
 function validateRow(row: RecordRow): void {
@@ -863,8 +993,18 @@ export async function openLocalRepository(name: string): Promise<LocalRepository
   try {
     db = await createRxDatabase({ name, storage: getRxStorageDexie(), multiInstance: true });
     await db.addCollections({ records: { schema: recordSchema } });
+    const openedDb = db;
     for (const entry of await store.importJournal.toArray()) await rollbackImport(db, store, entry.id);
     const repository = new LocalRepository(db, store);
+    await withRenewalLock(`keepany-renewal:${name}`, async () => {
+      for (const entry of await store.renewalJournal.toArray()) {
+        try { await replayRenewalJournal(openedDb, store, entry.id); }
+        catch (error) {
+          repository.renewalRecoveryError = error instanceof Error ? error.message : 'renewal-recovery-pending';
+          break;
+        }
+      }
+    });
     for (const entry of await store.journal.toArray()) {
       try { await replayJournal(db, store, entry.id); }
       catch (error) {
@@ -919,9 +1059,21 @@ function defaultRepository(): Promise<LocalRepository> {
           restoreError: await resource.fileStore.journal.count() ? 'restore-recovery-pending' : null,
           syncError: await resource.fileStore.pullJournal.count() || await resource.fileStore.scopedPull.count()
             ? 'sync-recovery-pending' : null,
+          renewalError: await resource.fileStore.renewalJournal.count() ? 'renewal-recovery-pending' : null,
         };
       }
-      return new LocalRepository(resource.db, resource.fileStore, resource.recoveryState);
+      if (resource.recoveryState.renewalError === undefined) resource.recoveryState.renewalError = null;
+      const repository = new LocalRepository(resource.db, resource.fileStore, resource.recoveryState);
+      await withRenewalLock(`keepany-renewal:${resource.db.name}`, async () => {
+        for (const entry of await resource.fileStore.renewalJournal.toArray()) {
+          try { await replayRenewalJournal(resource.db, resource.fileStore, entry.id); }
+          catch (error) {
+            repository.renewalRecoveryError = error instanceof Error ? error.message : 'renewal-recovery-pending';
+            break;
+          }
+        }
+      });
+      return repository;
     })
       .catch(error => { singleton = undefined; throw error; });
   }
@@ -931,6 +1083,9 @@ export async function database(): Promise<RxDatabase> { return (await defaultRep
 export async function localRepository(): Promise<LocalRepository> { return defaultRepository(); }
 export async function save(type: EntityType, value: unknown) { return (await defaultRepository()).save(type, value); }
 export async function saveBatch(items: ReadonlyArray<{ type: EntityType; value: unknown }>) { return (await defaultRepository()).saveBatch(items); }
+export async function recordRenewal(expectedAsset: Asset, nextAsset: Asset, history: History) {
+  return (await defaultRepository()).recordRenewal(expectedAsset, nextAsset, history);
+}
 export async function applyPulledBatch(changes: PulledRow[], cursorStart: number) { return (await defaultRepository()).applyPulledBatch(changes, cursorStart); }
 export async function syncCursor() { return (await defaultRepository()).syncCursor(); }
 export async function allRecords() { return (await defaultRepository()).allRecords(); }
