@@ -214,6 +214,7 @@ p { line-height: 1.5; }
 .mcp-active dd { min-width: 0; margin: 0; }
 .mcp-active .button { justify-self: start; }
 .mcp-error { color: var(--danger); font-weight: 650; }
+.mcp-scope-list, .mcp-preview-asset, .mcp-preview-changes { min-width: 0; overflow-wrap: anywhere; }
 
 .tabs { flex-wrap: nowrap; gap: 6px; width: 100%; overflow-x: auto; overscroll-behavior-inline: contain; padding: 2px 4px 6px 2px; scrollbar-width: thin; }
 .tabs > button, .tabs > .sortable-pill { flex: none; }

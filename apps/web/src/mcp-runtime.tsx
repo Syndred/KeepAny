@@ -355,7 +355,7 @@ export function McpRuntimeProvider({
 		</Dialog>}
 		{preview && <Dialog title={t("mcpWriteApprovalTitle")} onClose={() => void decidePreview(false)}>
 			<p>{t("mcpWriteApprovalHint")}</p>
-			<p>{t("mcpPreviewAsset")}: {assets.find(asset => asset.id === preview.assetId)?.name ?? preview.assetId}</p>
+			<p className="mcp-preview-asset">{t("mcpPreviewAsset")}: {assets.find(asset => asset.id === preview.assetId)?.name ?? preview.assetId}</p>
 			<div className="mcp-preview-changes">
 				{preview.changes.map(change => <div key={change.field} className="mcp-preview-change">
 					<strong>{t(`mcpField_${change.field}`)}</strong>
