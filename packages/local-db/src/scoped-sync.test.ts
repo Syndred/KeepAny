@@ -49,6 +49,21 @@ it('binds one local dataset durably and refuses A to B to A copying without losi
   await reopened.close();
 });
 
+it('serializes simultaneous first claims so only one remote owns the local dataset', async () => {
+  const db = await openLocalRepository(name());
+  const a = await binding();
+  const b = await binding(a.endpoint);
+  const results = await Promise.allSettled([db.claimDatasetBinding(a), db.claimDatasetBinding(b)]);
+  expect(results.filter(result => result.status === 'fulfilled')).toHaveLength(1);
+  expect(results.filter(result => result.status === 'rejected')).toHaveLength(1);
+  const winner = await db.getDatasetBinding();
+  expect([a, b]).toContainEqual(winner);
+  expect((results.find(result => result.status === 'rejected') as PromiseRejectedResult).reason.message)
+    .toBe('sync-dataset-bound');
+  expect(await db.fileStore.scopedMeta.count()).toBe(0);
+  await db.close();
+});
+
 it('claims matching legacy scoped state but refuses a different target without modifying pending data', async () => {
   const a = await binding();
   const b = await binding(a.endpoint);
