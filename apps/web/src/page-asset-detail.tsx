@@ -13,12 +13,14 @@ import { useTranslation } from "react-i18next";
 import {
 	type Asset,
 	type Submission,
+	type Relation,
 	actualCharge,
 	dueOnCycle,
 	monthlyAmount,
 } from "../../../packages/domain/src";
 import {
 	cleanupUnreferencedFile,
+	deleteEntity,
 	fileUrl,
 	putFile,
 	save,
@@ -27,7 +29,6 @@ import { Button } from "./components/ui/button";
 import { Dialog } from "./components/ui/dialog";
 import { TaskRow } from "./TaskRow";
 import {
-	AssetRow,
 	Empty,
 	PageTitle,
 	date,
@@ -43,6 +44,10 @@ const AssetEditor = lazy(() =>
 const TaskEditor = lazy(() =>
 	import("./workflows").then((module) => ({ default: module.TaskEditor })),
 );
+function graphLabel(value: string) {
+	const chars = Array.from(value);
+	return chars.length > 18 ? `${chars.slice(0, 18).join("")}…` : value;
+}
 function ImageTile({ id }: { id: string }) {
 	const [url, setUrl] = useState("");
 	useEffect(() => {
@@ -182,6 +187,17 @@ export function AssetDetail() {
 	const [deleteBusy, setDeleteBusy] = useState(false);
 	const deleteInFlight = useRef(false);
 	const [relationEdit, setRelationEdit] = useState(false);
+	const [relationToDelete, setRelationToDelete] = useState<Relation | null>(
+		null,
+	);
+	const [relationBusy, setRelationBusy] = useState(false);
+	const relationInFlight = useRef(false);
+	const [relationError, setRelationError] = useState("");
+	const [relationFilter, setRelationFilter] = useState("");
+	const centerId = asset?.id;
+	useEffect(() => {
+		if (centerId) setRelationFilter("");
+	}, [centerId]);
 	const [submissionEdit, setSubmissionEdit] = useState(false);
 	const [taskEdit, setTaskEdit] = useState(false);
 	const [uploading, setUploading] = useState(false);
@@ -202,19 +218,70 @@ export function AssetDetail() {
 	}, [pendingImage]);
 	const [relationTarget, setRelationTarget] = useState("");
 	const [relationLabel, setRelationLabel] = useState("");
+	const [relationSource, setRelationSource] = useState("");
+	const [relationVerifiedAt, setRelationVerifiedAt] = useState("");
 	const [submissionName, setSubmissionName] = useState("");
 	const [submissionUrl, setSubmissionUrl] = useState("");
 	const [historyNote, setHistoryNote] = useState("");
+	const liveById = new Map(liveAssets(data).map((item) => [item.id, item]));
 	const relations = data.relations.filter(
-		(r) => !r.deleted && (r.from === asset?.id || r.to === asset?.id),
+		(r) =>
+			!r.deleted &&
+			(r.from === asset?.id || r.to === asset?.id) &&
+			liveById.has(r.from) &&
+			liveById.has(r.to),
 	);
-	const related = relations
-		.map((r) =>
-			data.assets.find(
-				(a) => a.id === (r.from === asset?.id ? r.to : r.from) && !a.deleted,
-			),
-		)
-		.filter((x): x is Asset => !!x);
+	const related = Array.from(
+		new Map(
+			relations.map((r) => {
+				const neighbor = liveById.get(r.from === asset?.id ? r.to : r.from);
+				return [neighbor?.id, neighbor] as const;
+			}),
+		).values(),
+	).filter((item): item is Asset => !!item);
+	const normalizedFilter =
+		relations.length >= 5 ? relationFilter.trim().toLocaleLowerCase() : "";
+	const visibleRelations = normalizedFilter
+		? relations.filter((relation) => {
+				const neighbor = liveById.get(
+					relation.from === asset?.id ? relation.to : relation.from,
+				);
+				return [neighbor?.name, relation.label, relation.source].some((value) =>
+					value?.toLocaleLowerCase().includes(normalizedFilter),
+				);
+			})
+		: relations;
+	const visibleRelated = Array.from(
+		new Map(
+			visibleRelations.map((r) => {
+				const neighbor = liveById.get(r.from === asset?.id ? r.to : r.from);
+				return [neighbor?.id, neighbor] as const;
+			}),
+		).values(),
+	).filter((item): item is Asset => !!item);
+	const graphEdges = Array.from(
+		visibleRelations
+			.reduce((groups, relation) => {
+				const pair = JSON.stringify([relation.from, relation.to]);
+				const group = groups.get(pair) ?? [];
+				group.push(relation);
+				groups.set(pair, group);
+				return groups;
+			}, new Map<string, Relation[]>())
+			.values(),
+	).map(
+		(group) =>
+			({
+				id: group[0].id,
+				source: group[0].from,
+				target: group[0].to,
+				label:
+					group.length > 2
+						? `${graphLabel(group[0].label)} · +${group.length - 1}`
+						: group.map((relation) => graphLabel(relation.label)).join(" · "),
+				markerEnd: { type: MarkerType.ArrowClosed },
+			}) as Edge,
+	);
 	const ownTasks = data.tasks.filter(
 		(x) => !x.deleted && x.assetId === asset?.id,
 	);
@@ -266,21 +333,68 @@ export function AssetDetail() {
 		}
 	}
 	async function addRelation() {
-		if (!asset) return;
+		if (!asset || relationInFlight.current) return;
 		const target = data.assets.find((a) => a.id === relationTarget);
-		if (!target || target.id === asset.id || !relationLabel.trim()) return;
-		await save("relation", {
-			id: crypto.randomUUID(),
-			from: asset.id,
-			to: target.id,
-			label: relationLabel.trim(),
-			createdAt: new Date().toISOString(),
-			verifiedAt: "",
-			deleted: false,
-		});
-		setRelationEdit(false);
-		setRelationLabel("");
-		setRelationTarget("");
+		if (
+			!target ||
+			target.deleted ||
+			target.id === asset.id ||
+			!relationLabel.trim()
+		)
+			return;
+		if (
+			relations.some(
+				(r) =>
+					r.from === asset.id &&
+					r.to === target.id &&
+					r.label.toLocaleLowerCase() ===
+						relationLabel.trim().toLocaleLowerCase(),
+			)
+		) {
+			setRelationError(t("relationDuplicate"));
+			return;
+		}
+		relationInFlight.current = true;
+		setRelationBusy(true);
+		setRelationError("");
+		try {
+			await save("relation", {
+				id: crypto.randomUUID(),
+				from: asset.id,
+				to: target.id,
+				label: relationLabel.trim(),
+				...(relationSource.trim() ? { source: relationSource.trim() } : {}),
+				createdAt: new Date().toISOString(),
+				verifiedAt: relationVerifiedAt,
+				deleted: false,
+			});
+			setRelationEdit(false);
+			setRelationLabel("");
+			setRelationTarget("");
+			setRelationSource("");
+			setRelationVerifiedAt("");
+			notify(t("saved"));
+		} catch {
+			setRelationError(t("error"));
+		} finally {
+			relationInFlight.current = false;
+			setRelationBusy(false);
+		}
+	}
+	async function confirmRelationDelete() {
+		if (!relationToDelete || relationInFlight.current) return;
+		relationInFlight.current = true;
+		setRelationBusy(true);
+		try {
+			await deleteEntity("relation", relationToDelete.id);
+			setRelationToDelete(null);
+			notify(t("saved"));
+		} catch {
+			notify(t("error"));
+		} finally {
+			relationInFlight.current = false;
+			setRelationBusy(false);
+		}
 	}
 	async function addSubmission() {
 		if (
@@ -637,7 +751,10 @@ export function AssetDetail() {
 						<Button
 							variant="ghost"
 							size="small"
-							onClick={() => setRelationEdit(true)}
+							onClick={() => {
+								setRelationError("");
+								setRelationEdit(true);
+							}}
 						>
 							<Plus size={14} />
 							{t("addRelation")}
@@ -645,7 +762,20 @@ export function AssetDetail() {
 					</div>
 					{relations.length ? (
 						<>
-							<div className="graph">
+							{relations.length >= 5 && (
+								<div className="field relation-filter">
+									<label htmlFor="relation-filter">
+										{t("filterRelations")}
+									</label>
+									<input
+										id="relation-filter"
+										type="search"
+										value={relationFilter}
+										onChange={(event) => setRelationFilter(event.target.value)}
+									/>
+								</div>
+							)}
+							<section className="graph" aria-label={t("relations")}>
 								<ReactFlow
 									fitView
 									nodes={
@@ -656,7 +786,7 @@ export function AssetDetail() {
 												data: { label: asset.name },
 												type: "default",
 											},
-											...related.map((a, i) => ({
+											...visibleRelated.map((a, i) => ({
 												id: a.id,
 												position: {
 													x: 20 + (i % 3) * 180,
@@ -667,19 +797,10 @@ export function AssetDetail() {
 											})),
 										] as Node[]
 									}
-									edges={relations.map(
-										(r) =>
-											({
-												id: r.id,
-												source: r.from,
-												target: r.to,
-												label: r.label,
-												markerEnd: { type: MarkerType.ArrowClosed },
-											}) as Edge,
-									)}
+									edges={graphEdges}
 									onNodeClick={(_, node) => {
-										const target = data.assets.find((a) => a.id === node.id);
-										if (target)
+										const target = liveById.get(node.id);
+										if (target && target.id !== asset.id)
 											void navigate({
 												to: "/assets/$kind/$id",
 												params: { kind: target.kind, id: target.id },
@@ -691,12 +812,52 @@ export function AssetDetail() {
 									<Background />
 									<Controls showInteractive={false} />
 								</ReactFlow>
-							</div>
-							<div className="list">
-								{related.map((a) => (
-									<AssetRow key={a.id} asset={a} />
-								))}
-							</div>
+							</section>
+							{visibleRelations.length ? (
+								<div className="list relation-list">
+									{visibleRelations.map((relation) => {
+										const neighbor = liveById.get(
+											relation.from === asset.id ? relation.to : relation.from,
+										);
+										if (!neighbor) return null;
+										return (
+											<div className="list-row relation-row" key={relation.id}>
+												<div className="relation-info">
+													<Link
+														to="/assets/$kind/$id"
+														params={{ kind: neighbor.kind, id: neighbor.id }}
+													>
+														<strong>{neighbor.name}</strong>
+													</Link>
+													<small>
+														{liveById.get(relation.from)?.name} →{" "}
+														{liveById.get(relation.to)?.name} · {relation.label}
+													</small>
+													{(relation.source || relation.verifiedAt) && (
+														<small>
+															{relation.source &&
+																`${t("relationSource")}: ${relation.source}`}
+															{relation.source && relation.verifiedAt && " · "}
+															{relation.verifiedAt &&
+																`${t("verifiedAt")}: ${date(relation.verifiedAt, i18n.language)}`}
+														</small>
+													)}
+												</div>
+												<Button
+													variant="ghost"
+													size="small"
+													aria-label={`${t("deleteRelation")} · ${relation.label} · ${neighbor.name}`}
+													onClick={() => setRelationToDelete(relation)}
+												>
+													{t("remove")}
+												</Button>
+											</div>
+										);
+									})}
+								</div>
+							) : (
+								<Empty hint={false} />
+							)}
 						</>
 					) : (
 						<Empty hint={false} />
@@ -862,7 +1023,12 @@ export function AssetDetail() {
 				</Suspense>
 			)}
 			{relationEdit && (
-				<Dialog title={t("addRelation")} onClose={() => setRelationEdit(false)}>
+				<Dialog
+					title={t("addRelation")}
+					onClose={() => {
+						if (!relationInFlight.current) setRelationEdit(false);
+					}}
+				>
 					<div className="form-grid">
 						<div className="field">
 							<label htmlFor="relation-target">{t("target")}</label>
@@ -889,14 +1055,63 @@ export function AssetDetail() {
 								onChange={(e) => setRelationLabel(e.target.value)}
 							/>
 						</div>
+						<div className="field">
+							<label htmlFor="relation-source">{t("relationSource")}</label>
+							<input
+								id="relation-source"
+								value={relationSource}
+								onChange={(e) => setRelationSource(e.target.value)}
+							/>
+						</div>
+						<div className="field">
+							<label htmlFor="relation-verified">{t("verifiedAt")}</label>
+							<input
+								id="relation-verified"
+								type="date"
+								value={relationVerifiedAt}
+								onChange={(e) => setRelationVerifiedAt(e.target.value)}
+							/>
+						</div>
 					</div>
+					{relationError && (
+						<p className="field-error" role="alert">
+							{relationError}
+						</p>
+					)}
 					<div className="actions">
 						<Button
 							variant="primary"
-							disabled={!relationTarget || !relationLabel.trim()}
-							onClick={() => void run(addRelation)}
+							disabled={
+								!relationTarget || !relationLabel.trim() || relationBusy
+							}
+							onClick={() => void addRelation()}
 						>
 							{t("save")}
+						</Button>
+					</div>
+				</Dialog>
+			)}
+			{relationToDelete && (
+				<Dialog
+					title={t("deleteRelation")}
+					onClose={() => {
+						if (!relationInFlight.current) setRelationToDelete(null);
+					}}
+				>
+					<p>{t("deleteRelationConfirm", { label: relationToDelete.label })}</p>
+					<div className="actions">
+						<Button
+							disabled={relationBusy}
+							onClick={() => setRelationToDelete(null)}
+						>
+							{t("cancel")}
+						</Button>
+						<Button
+							variant="danger"
+							disabled={relationBusy}
+							onClick={() => void confirmRelationDelete()}
+						>
+							{t("deleteRelation")}
 						</Button>
 					</div>
 				</Dialog>

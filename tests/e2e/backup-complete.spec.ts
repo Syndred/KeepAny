@@ -42,11 +42,12 @@ async function addAsset(page: Page, kind: "project" | "account" | "subscription"
 	await expect(page.getByRole("heading", { name })).toBeVisible();
 }
 
-async function addRelation(page: Page, target: string, label: string) {
+async function addRelation(page: Page, target: string, label: string, source = "") {
 	await page.getByRole("button", { name: "Add connection" }).click();
 	const dialog = page.getByRole("dialog");
 	await dialog.getByLabel("Connect to").selectOption({ label: target });
 	await dialog.getByLabel("Connection label").fill(label);
+	if (source) await dialog.getByLabel("Connection source").fill(source);
 	await dialog.getByRole("button", { name: "Save" }).click();
 	await expect(dialog).toBeHidden();
 }
@@ -86,7 +87,7 @@ test("formal backup restores full local graph, history, ledger, tombstones and o
 
 		await page.goto("/assets/project");
 		await page.getByText(project, { exact: true }).first().click();
-		await addRelation(page, account, "owner");
+		await addRelation(page, account, "owner", `Account record ${suffix}`);
 		await addRelation(page, otherAccount, "old owner");
 		await page.getByRole("button", { name: "Add backlink" }).click();
 		const backlink = page.getByRole("dialog");
@@ -151,14 +152,13 @@ test("formal backup restores full local graph, history, ledger, tombstones and o
 		await page.goto("/trash");
 		await expect(page.getByText(deletedProject)).toBeVisible();
 
-		// Fixture only: the product currently has no relation deletion control.
-		await page.evaluate(async ({ label, modulePath }) => {
-			const { localRepository } = await import(modulePath);
-			const repo = await localRepository();
-			const relation = (await repo.list("relation")).find((row: { label: string }) => row.label === label);
-			if (!relation) throw Error("relation fixture missing");
-			await repo.deleteEntity("relation", relation.id);
-		}, { label: "old owner", modulePath: repositoryModuleUrl });
+		await page.goto("/assets/project");
+		await page.getByText(project, { exact: true }).first().click();
+		await page.getByRole("button", { name: `Delete connection · old owner · ${otherAccount}` }).click();
+		await page.getByRole("dialog").getByRole("button", { name: "Delete connection" }).click();
+		await expect(page.locator(".relation-row").filter({ hasText: "old owner" })).toHaveCount(0);
+		await page.goto("/trash");
+		await expect(page.locator(".relation-row").filter({ hasText: "old owner" })).toBeVisible();
 		const before = await snapshot(page);
 		const parsed = before.rows.map(row => ({ ...row, value: JSON.parse(row.payload) }));
 		const mainProjectId = parsed.find(row => row.type === "asset" && row.value.name === project)?.value.id;

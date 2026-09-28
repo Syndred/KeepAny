@@ -327,6 +327,12 @@ p { line-height: 1.5; }
 .import-preview .list-row { padding: 7px 0; }
 .field-error { color: var(--danger); }
 .graph { height: 300px; margin: 0 12px 12px; border: 1px solid var(--line-soft); border-radius: 8px; overflow: hidden; }
+.relation-filter { margin: 0 12px 12px; }
+.relation-row { align-items: flex-start; }
+.relation-row .relation-info { flex: 1; min-width: 0; }
+.relation-row .relation-info a { color: inherit; }
+.relation-row .relation-info small { margin-top: 3px; }
+.relation-row .button { flex: none; }
 
 @media (max-width: 1050px) {
   .shell { grid-template-columns: 186px minmax(0, 1fr); }
