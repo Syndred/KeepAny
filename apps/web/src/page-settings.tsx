@@ -64,6 +64,10 @@ export function SettingsPage() {
 		invalidateConfig();
 		setSessionAccountId(accountId);
 		setAvailableWorkspaces([]);
+		setWorkspaceId("");
+		setWorkspaceKey("");
+		setShowKey(false);
+		setNeedsKeySave(false);
 	};
 	const loadWorkspaces = useCallback(async (accountId: string): Promise<string[]> => {
 		const { getSessionIdentity } = await import("../../../packages/sync-client/src");
@@ -257,8 +261,8 @@ export function SettingsPage() {
 				<div className="form-grid">
 					<label className="field"><span>{t("syncServerUrl")}</span><input value={syncEndpoint} disabled={syncBusy} readOnly={accessMode === "session"} onChange={event => editConfig(() => setEndpoint(event.target.value))} placeholder="https://sync.example.com" autoComplete="url" /></label>
 					{accessMode === "token" && <label className="field"><span>{t("syncAccessToken")}</span><input type="password" value={token} disabled={syncBusy} onChange={event => editConfig(() => setToken(event.target.value))} autoComplete="off" /></label>}
-					<label className="field"><span>{t("syncWorkspace")}</span><input value={workspaceId} disabled={syncBusy} onChange={event => editConfig(() => setWorkspaceId(event.target.value))} autoComplete="off" /></label>
-					<label className="field"><span>{t("syncWorkspaceKey")}</span><input type={showKey ? "text" : "password"} value={workspaceKey} disabled={syncBusy} onChange={event => editConfig(() => setWorkspaceKey(event.target.value))} autoComplete="off" /><small>{t(accessMode === "session" ? "syncSessionKeyHint" : "syncKeyHint")}</small></label>
+					<label className="field"><span>{t("syncWorkspace")}</span><input value={workspaceId} disabled={syncBusy || !hasAccess} onChange={event => editConfig(() => setWorkspaceId(event.target.value))} autoComplete="off" /></label>
+					<label className="field"><span>{t("syncWorkspaceKey")}</span><input type={showKey ? "text" : "password"} value={workspaceKey} disabled={syncBusy || !hasAccess} onChange={event => editConfig(() => setWorkspaceKey(event.target.value))} autoComplete="off" /><small>{t(accessMode === "session" ? "syncSessionKeyHint" : "syncKeyHint")}</small></label>
 				</div>
 				{accessMode === "session" && sessionAccountId && <div className="actions">
 					<label className="field"><span>{t("syncSelectWorkspace")}</span><select value={availableWorkspaces.includes(workspaceId) ? workspaceId : ""} disabled={syncBusy || availableWorkspaces.length === 0} onChange={event => editConfig(() => {
