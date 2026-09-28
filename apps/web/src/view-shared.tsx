@@ -1,0 +1,142 @@
+import { createContext, useContext } from "react";
+import { Link } from "@tanstack/react-router";
+import { useTranslation } from "react-i18next";
+import {
+	ArchiveRestore,
+	Boxes,
+	CircleHelp,
+	Shield,
+	WalletCards,
+} from "lucide-react";
+import type { Asset, AssetKind } from "../../../packages/domain/src";
+import type { Data } from "./data";
+type AppContextValue = {
+	data: Data;
+	search: string;
+	setSearch: (s: string) => void;
+	notify: (s: string) => void;
+};
+export const AppContext = createContext<AppContextValue | null>(null);
+export function useAppContext() {
+	const value = useContext(AppContext);
+	if (!value) throw Error("missing-app-context");
+	return value;
+}
+export const kinds: AssetKind[] = [
+	"project",
+	"account",
+	"subscription",
+	"item",
+	"vault",
+];
+export const icons = {
+	project: Boxes,
+	account: Shield,
+	subscription: WalletCards,
+	item: ArchiveRestore,
+	vault: Shield,
+};
+export const builtins: Record<AssetKind, string[]> = {
+	project: ["website", "repository", "tool"],
+	account: ["email", "phone", "social"],
+	subscription: ["software", "service"],
+	item: ["device", "other"],
+	vault: ["other"],
+};
+export function validKind(value: string): AssetKind {
+	return kinds.includes(value as AssetKind) ? (value as AssetKind) : "project";
+}
+export function money(amount: number, currency: string, lang: string) {
+	return new Intl.NumberFormat(lang, {
+		style: "currency",
+		currency,
+		maximumFractionDigits: currency === "JPY" ? 0 : 2,
+	}).format(amount / (currency === "JPY" ? 1 : 100));
+}
+export function date(value: string, lang: string) {
+	if (!value) return "—";
+	const time = new Date(`${value}T12:00:00`);
+	return Number.isNaN(time.getTime())
+		? value
+		: new Intl.DateTimeFormat(lang, { dateStyle: "medium" }).format(time);
+}
+export function niceCategory(value: string, t: (s: string) => string) {
+	return builtins.project
+		.concat(builtins.account, builtins.subscription, builtins.item)
+		.includes(value)
+		? t(value)
+		: value;
+}
+export function liveAssets(data: Data) {
+	return data.assets.filter((a) => !a.deleted);
+}
+
+export function PageTitle({
+	eyebrow,
+	title,
+	subtitle,
+	action,
+}: {
+	eyebrow?: string;
+	title: string;
+	subtitle?: string;
+	action?: React.ReactNode;
+}) {
+	return (
+		<div className="page-header">
+			<div>
+				{eyebrow && <div className="eyebrow">{eyebrow}</div>}
+				<h1>{title}</h1>
+				{subtitle && <p className="subtitle">{subtitle}</p>}
+			</div>
+			{action && <div className="actions">{action}</div>}
+		</div>
+	);
+}
+
+export function Empty({ hint = true }: { hint?: boolean }) {
+	const { t } = useTranslation();
+	return (
+		<div className="empty">
+			<CircleHelp size={24} />
+			<strong>{t("empty")}</strong>
+			{hint && <span>{t("emptyHint")}</span>}
+		</div>
+	);
+}
+export function AssetRow({ asset }: { asset: Asset }) {
+	const { t, i18n } = useTranslation();
+	const Icon = icons[asset.kind];
+	return (
+		<Link
+			className="list-row"
+			to="/assets/$kind/$id"
+			params={{ kind: asset.kind, id: asset.id }}
+			onClick={() =>
+				sessionStorage.setItem(
+					`keepany-scroll-${asset.kind}`,
+					String(window.scrollY),
+				)
+			}
+		>
+			<span className="row-icon">
+				<Icon size={18} />
+			</span>
+			<div className="row-main">
+				<strong>{asset.name}</strong>
+				<small>
+					{niceCategory(asset.category, t)}
+					{asset.description ? ` · ${asset.description}` : ""}
+				</small>
+			</div>
+			{asset.kind === "subscription" && (
+				<b>{money(asset.amount, asset.currency, i18n.language)}</b>
+			)}
+			{asset.tags.slice(0, 2).map((tag) => (
+				<span className="chip" key={tag}>
+					{tag}
+				</span>
+			))}
+		</Link>
+	);
+}

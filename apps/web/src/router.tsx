@@ -2,53 +2,51 @@ import {
 	createRootRoute,
 	createRoute,
 	createRouter,
+	lazyRouteComponent,
 } from "@tanstack/react-router";
-import {
-	AppShell,
-	Overview,
-	TaskPage,
-	AssetList,
-	AssetDetail,
-	IntakePage,
-	TrashPage,
-	SettingsPage,
-} from "./views";
+import { AppShell } from "./AppShell";
 
 const rootRoute = createRootRoute({ component: AppShell });
 const indexRoute = createRoute({
 	getParentRoute: () => rootRoute,
 	path: "/",
-	component: Overview,
+	component: lazyRouteComponent(() => import("./page-overview"), "Overview"),
 });
 const taskRoute = createRoute({
 	getParentRoute: () => rootRoute,
 	path: "/tasks",
-	component: TaskPage,
+	component: lazyRouteComponent(() => import("./page-tasks"), "TaskPage"),
 });
 export const listRoute = createRoute({
 	getParentRoute: () => rootRoute,
 	path: "/assets/$kind",
-	component: AssetList,
+	component: lazyRouteComponent(() => import("./page-asset-list"), "AssetList"),
 });
 export const detailRoute = createRoute({
 	getParentRoute: () => rootRoute,
 	path: "/assets/$kind/$id",
-	component: AssetDetail,
+	component: lazyRouteComponent(
+		() => import("./page-asset-detail"),
+		"AssetDetail",
+	),
 });
 const intakeRoute = createRoute({
 	getParentRoute: () => rootRoute,
 	path: "/intake",
-	component: IntakePage,
+	component: lazyRouteComponent(() => import("./page-intake"), "IntakePage"),
 });
 const trashRoute = createRoute({
 	getParentRoute: () => rootRoute,
 	path: "/trash",
-	component: TrashPage,
+	component: lazyRouteComponent(() => import("./page-trash"), "TrashPage"),
 });
 const settingsRoute = createRoute({
 	getParentRoute: () => rootRoute,
 	path: "/settings",
-	component: SettingsPage,
+	component: lazyRouteComponent(
+		() => import("./page-settings"),
+		"SettingsPage",
+	),
 });
 const routeTree = rootRoute.addChildren([
 	indexRoute,
