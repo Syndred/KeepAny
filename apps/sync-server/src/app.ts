@@ -14,6 +14,7 @@ import { type PostgresSyncService, SyncForbiddenError } from '../../../packages/
 export type AuthRequest = {
   method: string;
   url: string;
+  headers: Headers;
   origin: string | undefined;
   dpop: string | undefined;
   scope: 'sync:read' | 'sync:write';
@@ -29,8 +30,9 @@ function configuredWebOrigin(value: string): string {
 }
 
 export function createPostgresSyncApp(service: PostgresSyncService, authenticate: Authenticate, attachments?: AttachmentService,
-  options?: { webOrigin?: string }) {
+  options?: { webOrigin?: string; session?: { origin: string; handler: (request: Request) => Promise<Response> } }) {
   const app = new Hono();
+  if (options?.webOrigin && options.session) throw Error('sync-auth-origin-conflict');
   if (options?.webOrigin) {
     const origin = configuredWebOrigin(options.webOrigin);
     app.use('*', async (context, next) => {
@@ -42,11 +44,29 @@ export function createPostgresSyncApp(service: PostgresSyncService, authenticate
       allowHeaders: ['Authorization', 'Content-Type', 'DPoP', 'X-Ciphertext-SHA256'],
       exposeHeaders: ['X-Ciphertext-SHA256'], maxAge: 300 }));
   }
-  const subjectFor = (context: { req: { header: (name: string) => string | undefined; raw: Request } }, scope: AuthRequest['scope']) =>
-    authenticate(context.req.header('authorization'), {
+  if (options?.session) {
+    const origin = configuredWebOrigin(options.session.origin);
+    app.use('*', async (context, next) => {
+      const path = new URL(context.req.raw.url).pathname;
+      if (path.startsWith('/api/auth/') || path.startsWith('/sync/') ||
+        path === '/workspaces' || path.startsWith('/workspaces/')) {
+        const supplied = context.req.header('origin');
+        if ((context.req.method !== 'GET' && context.req.method !== 'HEAD' && supplied !== origin) ||
+          (supplied && supplied !== origin)) return context.json({ error: 'forbidden' }, 403);
+      }
+      await next();
+    });
+  }
+  const subjectFor = async (context: { req: { header: (name: string) => string | undefined; raw: Request } }, scope: AuthRequest['scope']) => {
+    const subject = await authenticate(context.req.header('authorization'), {
       method: context.req.raw.method, url: context.req.raw.url,
+      headers: context.req.raw.headers,
       origin: context.req.header('origin'), dpop: context.req.header('dpop'), scope,
     });
+    if (options?.session && new URL(context.req.raw.url).pathname !== '/sync/identity' &&
+      context.req.header('x-keepany-account-id') !== subject) return null;
+    return subject;
+  };
   app.use('*', bodyLimit({ maxSize: 4 * 1024 * 1024 }));
   app.use('*', async (context, next) => { await next(); context.header('Cache-Control', 'no-store'); });
   app.onError((error, context) => {
@@ -60,6 +80,7 @@ export function createPostgresSyncApp(service: PostgresSyncService, authenticate
     return context.json({ error: 'internal' }, 500);
   });
   app.get('/healthz', context => context.json({ status: 'ok' }));
+  if (options?.session) app.all('/api/auth/*', context => options.session?.handler(context.req.raw) ?? context.notFound());
   app.post('/sync/identity', async context => {
     const subject = await subjectFor(context, 'sync:read');
     if (!subject) return context.json({ error: 'unauthorized' }, 401);
@@ -77,6 +98,11 @@ export function createPostgresSyncApp(service: PostgresSyncService, authenticate
     if (!subject) return context.json({ error: 'unauthorized' }, 401);
     const workspaceId = await service.createWorkspace(subject);
     return context.json({ workspaceId }, 201);
+  });
+  app.get('/workspaces', async context => {
+    const subject = await subjectFor(context, 'sync:read');
+    if (!subject) return context.json({ error: 'unauthorized' }, 401);
+    return context.json({ workspaces: await service.listWorkspaces(subject) });
   });
   app.post('/sync/push', async context => {
     const subject = await subjectFor(context, 'sync:write');

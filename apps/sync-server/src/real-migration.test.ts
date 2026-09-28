@@ -10,7 +10,7 @@ const directory = resolve(process.cwd(), "apps/sync-server/migrations");
 
 // Opt in only with an isolated PostgreSQL test database. Never touches public schema.
 it.skipIf(!process.env.KEEPANY_TEST_DATABASE_URL)(
-	"upgrades a historical accepted change through 003, 004, 005 and 006 in real PostgreSQL",
+	"upgrades a historical accepted change through 003-007 in real PostgreSQL",
 	async () => {
 		const connectionString = process.env.KEEPANY_TEST_DATABASE_URL;
 		if (!connectionString) throw Error("test-database-url");
@@ -99,6 +99,7 @@ it.skipIf(!process.env.KEEPANY_TEST_DATABASE_URL)(
 				"004_bound_state",
 			"005_bound_state_guard",
 			"006_bound_state_writer_guard",
+			"007_self_host_session",
 			]);
 			const bindingId = crypto.randomUUID();
 			const jkt = "a".repeat(43);

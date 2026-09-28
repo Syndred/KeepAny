@@ -10,6 +10,7 @@ import { createBoundStateFeed } from './bound-state-feed';
 import { createPostgresBoundStateWriter } from './bound-state-writer-db';
 import { migrateSyncDatabase } from './migrate';
 import { createS3CiphertextObjectStore } from './s3-objects';
+import { createSelfHostSession } from './self-host-session';
 
 const databaseUrl = process.env.DATABASE_URL;
 if (!databaseUrl) throw Error('DATABASE_URL-required');
@@ -39,12 +40,14 @@ if (process.argv[2] === 'migrate') {
         store: createPostgresBoundStateWriter(pool),
       });
     }
-    const authenticate = createConfiguredAuthenticator(process.env, boundStateStore, boundFeed?.bootstrapIfMissing);
+    const session = process.env.KEEPANY_SYNC_AUTH_MODE === 'self-host-session' ? createSelfHostSession(pool, process.env) : undefined;
+    const authenticate = session?.authenticate ?? createConfiguredAuthenticator(process.env, boundStateStore, boundFeed?.bootstrapIfMissing);
     const service = new PostgresSyncService(pool);
     const objects = createS3CiphertextObjectStore(process.env);
     const attachments = objects ? new AttachmentService(pool, objects) : undefined;
     const app = createPostgresSyncApp(service, authenticate, attachments,
-      process.env.KEEPANY_SYNC_AUTH_MODE === 'self-host' ? { webOrigin: process.env.KEEPANY_SYNC_WEB_ORIGIN } : undefined);
+      session ? { session: { origin: session.origin, handler: session.auth.handler } }
+        : process.env.KEEPANY_SYNC_AUTH_MODE === 'self-host' ? { webOrigin: process.env.KEEPANY_SYNC_WEB_ORIGIN } : undefined);
     const port = Number(process.env.PORT ?? '8787');
     if (!Number.isInteger(port) || port < 1 || port > 65535) throw Error('PORT-invalid');
     const hostname = process.env.HOST ?? '127.0.0.1';

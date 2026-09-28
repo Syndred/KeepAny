@@ -47,6 +47,23 @@ const numeric = (value: unknown): number => {
 export class PostgresSyncService {
   constructor(private readonly pool: SqlPool) {}
 
+  async listWorkspaces(subjectId: string): Promise<Array<{ workspaceId: string; canRead: boolean; canWrite: boolean }>> {
+    if (!subjectId || subjectId.length > 200) throw Error('subject');
+    const client = await this.pool.connect();
+    try {
+      const memberships = await client.query(
+        `SELECT workspace_id, can_read, can_write FROM sync_memberships
+         WHERE subject_id=$1 AND revoked_at IS NULL AND (can_read OR can_write)
+         ORDER BY created_at ASC, workspace_id ASC`, [subjectId],
+      );
+      return memberships.rows.map(row => ({
+        workspaceId: String(row.workspace_id), canRead: row.can_read === true, canWrite: row.can_write === true,
+      }));
+    } finally {
+      client.release();
+    }
+  }
+
   async assertWorkspaceAccess(workspaceId: string, subjectId: string): Promise<void> {
     await withSqlTransaction(this.pool, async client => {
       await requireSyncMembership(client, workspaceId, subjectId, 'read');

@@ -3,7 +3,7 @@ import type { Authenticate } from './app';
 import { createBoundTokenAuthenticator } from './bound-auth';
 import type { BoundStateStore } from './bound-state';
 
-// Self-hosted single-subject bootstrap. Replace this verifier with Better Auth before official multi-user sync.
+// Legacy static single-subject bootstrap, retained only in explicit self-host mode.
 export function createStaticTokenAuthenticator(token: string, subjectId = 'self-host-owner'): Authenticate {
   if (token.length < 32 || token.length > 4096) throw Error('sync-token-configuration');
   const expected = createHash('sha256').update(token).digest();
