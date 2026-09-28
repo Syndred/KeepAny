@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import pg from "pg";
 import { expect, it } from "vitest";
+import { createPostgresBoundStateStore } from "./bound-state";
 import { migrateSyncDatabase } from "./migrate";
 
 const directory = resolve(process.cwd(), "apps/sync-server/migrations");
@@ -145,6 +146,47 @@ it.skipIf(!process.env.KEEPANY_TEST_DATABASE_URL)(
 					[bindingId],
 				),
 			).rejects.toMatchObject({ code: "P0001" });
+			await pool.query(
+				`UPDATE sync_bound_bindings SET status='active', epoch=3, token_valid_after=2,
+      state_observed_at=now(), state_expires_at=now()+interval '10 seconds' WHERE binding_id=$1`,
+				[bindingId],
+			);
+			const secondInstance = new pg.Pool({
+				connectionString,
+				options: `-c search_path=${schema}`,
+				max: 1,
+			});
+			try {
+				const firstStore = createPostgresBoundStateStore(pool);
+				const secondStore = createPostgresBoundStateStore(secondInstance);
+				const claim = {
+					bindingId,
+					subject: "keepanyadm:test",
+					instanceIdHash: "c".repeat(64),
+					jkt,
+					scope: "sync:read" as const,
+					tokenIssuedAt: Math.floor(Date.now() / 1000) + 1,
+					proofIssuedAt: Math.floor(Date.now() / 1000),
+					proofJti: crypto.randomUUID(),
+				};
+				const results = await Promise.all([
+					firstStore.claimProof(claim),
+					secondStore.claimProof(claim),
+				]);
+				expect(results.sort()).toEqual([false, true]);
+				await pool.query(
+					"UPDATE sync_bound_bindings SET status='revoked' WHERE binding_id=$1",
+					[bindingId],
+				);
+				expect(
+					await secondStore.claimProof({
+						...claim,
+						proofJti: crypto.randomUUID(),
+					}),
+				).toBe(false);
+			} finally {
+				await secondInstance.end();
+			}
 			await expect(
 				pool.query("DELETE FROM sync_bound_bindings WHERE binding_id=$1", [
 					bindingId,
