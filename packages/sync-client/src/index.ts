@@ -249,6 +249,7 @@ export class SelfHostSyncClient {
       await this.pushOutbox(scope, attachments);
       if (await this.pullAll(scope, attachments)) return this.report('conflict');
       const report = await this.report('synced');
+      await this.assertCurrent();
       onStatus?.(report);
       return report;
     } catch (error) {
