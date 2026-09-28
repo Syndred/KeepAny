@@ -11,9 +11,9 @@ import { useAppContext } from "../view-shared";
 import { Button } from "./ui/button";
 
 const durations = [
+	{ value: 5 * 60_000, key: "mcpDuration5m" },
+	{ value: 10 * 60_000, key: "mcpDuration10m" },
 	{ value: 15 * 60_000, key: "mcpDuration15m" },
-	{ value: 60 * 60_000, key: "mcpDuration1h" },
-	{ value: 24 * 60 * 60_000, key: "mcpDuration1d" },
 ] as const;
 const same = (left: readonly string[], right: readonly string[]) =>
 	left.length === right.length &&
@@ -28,7 +28,7 @@ export function McpPanel() {
 	const [assetIds, setAssetIds] = useState<string[]>([]);
 	const [readFields, setReadFields] = useState<ReadField[]>(["name"]);
 	const [writeFields, setWriteFields] = useState<WriteField[]>([]);
-	const [ttlMs, setTtlMs] = useState<number>(durations[0].value);
+	const [ttlMs, setTtlMs] = useState<number>(durations[2].value);
 	const [busy, setBusy] = useState(false);
 	const [localError, setLocalError] = useState<string | null>(null);
 	const [download, setDownload] = useState<{

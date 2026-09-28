@@ -21,6 +21,7 @@ import {
 	type SortableNavItem,
 } from "./components/navigation/SortableNav";
 import { AppContext, icons, kinds, liveAssets } from "./view-shared";
+import { McpRuntimeProvider } from "./mcp-runtime";
 const AiDialog = lazy(() =>
 	import("./workflows").then((module) => ({ default: module.AiDialog })),
 );
@@ -104,6 +105,7 @@ export function AppShell() {
 	});
 	return (
 		<AppContext.Provider value={context}>
+			<McpRuntimeProvider assets={liveAssets(data)}>
 			<div className="shell">
 				<aside
 					className={`sidebar ${mobile ? "open" : ""}`}
@@ -253,6 +255,7 @@ export function AppShell() {
 					<AiDialog assets={liveAssets(data)} onClose={() => setAi(false)} />
 				</Suspense>
 			)}
+			</McpRuntimeProvider>
 		</AppContext.Provider>
 	);
 }

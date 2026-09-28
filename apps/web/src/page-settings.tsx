@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { localRepository } from "../../../packages/local-db/src";
 import type { SelfHostSyncClient, SyncReport } from "../../../packages/sync-client/src";
 import { BindingPanel } from "./components/BindingPanel";
+import { McpPanel } from "./components/McpPanel";
 import { Button } from "./components/ui/button";
 import { seed } from "./data";
 import { PageTitle, useAppContext } from "./view-shared";
@@ -245,6 +246,7 @@ export function SettingsPage() {
 				</section>
 			</div>
 			<BindingPanel />
+			<McpPanel />
 			<section className="card padded sync-panel">
 				<h2>{t("selfHostSync")}</h2>
 				<p>{t("selfHostSyncHint")}</p>
