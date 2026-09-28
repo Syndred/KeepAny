@@ -315,6 +315,8 @@ const copy: Record<string, [string, string]> = {
 	syncFilesUnsupported: ["记录中包含图片，当前尚不能安全同步图片。请先使用加密备份。", "Some records contain photos, which cannot be synced safely yet. Use an encrypted backup for now."],
 	syncAuthFailed: ["服务拒绝了访问，请检查令牌和工作区权限。", "The server denied access. Check the token and workspace permissions."],
 	syncKeyMismatch: ["此工作区之前使用另一把密钥。请找回原密钥后再试。", "This workspace was previously used with a different key. Re-enter the original key."],
+	syncDatasetBound: ["本机资料已关联原服务、账号和工作区。请恢复原配置；要连接另一处，请使用独立浏览器资料。", "This device's records are linked to their original server, account, and workspace. Restore that configuration, or use a separate browser profile for another destination."],
+	syncAccountMismatch: ["服务返回的账号与本机自托管同步账号不符。请检查服务账号；要连接另一账号，请使用独立浏览器资料。", "The server account does not match this device's self-hosted sync account. Check the account, or use a separate browser profile for another account."],
 	syncFailedHint: ["请检查服务、网络和密钥后重试。已保存在本机的更改仍在本机。", "Check the server, network, and key, then retry. Changes saved on this device remain here."],
 	syncPendingCount: ["{{count}} 条更改待同步", "{{count}} changes waiting to sync"],
 	syncConflictTitle: ["选择保留的版本", "Choose a version to keep"],

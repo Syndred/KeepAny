@@ -23,51 +23,130 @@ export function SettingsPage() {
 	const [syncReport, setSyncReport] = useState<SyncReport | null>(null);
 	const [syncBusy, setSyncBusy] = useState(false);
 	const clientRef = useRef<SelfHostSyncClient | null>(null);
+	const clientGeneration = useRef(-1);
+	const configGeneration = useRef(0);
+	const activeOperation = useRef<number | null>(null);
+	const nextOperation = useRef(0);
+	const mounted = useRef(true);
 	useEffect(() => {
-		void navigator.storage?.persisted?.().then(setPersistent);
+		mounted.current = true;
+		void navigator.storage?.persisted?.().then(value => { if (mounted.current) setPersistent(value); });
+		return () => {
+			mounted.current = false;
+			configGeneration.current++;
+			activeOperation.current = null;
+			clientGeneration.current = -1;
+			clientRef.current = null;
+		};
 	}, []);
-	const connect = async () => {
+	const invalidateConfig = () => {
+		configGeneration.current++;
+		clientGeneration.current = -1;
+		clientRef.current = null;
+		setSyncReport(null);
+		setConfirmCreate(false);
+	};
+	const editConfig = (write: () => void) => {
+		if (activeOperation.current !== null) return;
+		invalidateConfig();
+		write();
+	};
+	const beginOperation = () => {
+		if (activeOperation.current !== null) return null;
+		const id = ++nextOperation.current;
+		activeOperation.current = id;
+		setSyncBusy(true);
+		return { id, generation: configGeneration.current };
+	};
+	const isActive = (operation: { id: number; generation: number }) =>
+		mounted.current && activeOperation.current === operation.id && configGeneration.current === operation.generation;
+	const finishOperation = (operation: { id: number }) => {
+		if (activeOperation.current !== operation.id) return;
+		activeOperation.current = null;
+		if (mounted.current) setSyncBusy(false);
+	};
+	const failure = (error: unknown, fallback: string): SyncReport => ({
+		status: "failed", pending: 0, cursor: 0, conflict: null,
+		error: error instanceof Error ? error.message : fallback,
+	});
+	const connect = async (operation: { id: number; generation: number }) => {
 		const { SelfHostSyncClient, decodeWorkspaceKey } = await import("../../../packages/sync-client/src");
-		const client = new SelfHostSyncClient(await localRepository(), {
+		const repository = await localRepository();
+		if (!isActive(operation)) return null;
+		const client = new SelfHostSyncClient(repository, {
 			endpoint, token, workspaceId, key: decodeWorkspaceKey(workspaceKey),
 		});
+		if (!isActive(operation)) return null;
 		clientRef.current = client;
-		localStorage.setItem("keepany-selfhost-endpoint", client.endpoint);
-		localStorage.setItem("keepany-selfhost-workspace", client.workspaceId);
+		clientGeneration.current = operation.generation;
 		return client;
 	};
+	const rememberLocation = (client: SelfHostSyncClient) => {
+		localStorage.setItem("keepany-selfhost-endpoint", client.endpoint);
+		localStorage.setItem("keepany-selfhost-workspace", client.workspaceId);
+	};
 	const createWorkspace = async () => {
+		const operation = beginOperation();
+		if (!operation) return;
 		setConfirmCreate(false);
-		setSyncBusy(true);
 		try {
 			const { newWorkspaceKey, createSelfHostedWorkspace } = await import("../../../packages/sync-client/src");
+			if (!isActive(operation)) return;
+			const binding = await (await localRepository()).getDatasetBinding();
+			if (!isActive(operation)) return;
+			if (binding) throw Error("sync-dataset-bound");
 			const key = await newWorkspaceKey();
+			if (!isActive(operation)) return;
 			const id = await createSelfHostedWorkspace(endpoint, token);
+			if (!isActive(operation)) return;
+			invalidateConfig();
 			setWorkspaceId(id);
 			setWorkspaceKey(key);
 			setNeedsKeySave(true);
-			setSyncReport(null);
-		} catch { setSyncReport({ status: "failed", pending: 0, cursor: 0, conflict: null, error: "sync-create-failed" }); }
-		finally { setSyncBusy(false); }
+		} catch (error) { if (isActive(operation)) setSyncReport(failure(error, "sync-create-failed")); }
+		finally { finishOperation(operation); }
 	};
 	const syncNow = async () => {
-		setSyncBusy(true);
+		const operation = beginOperation();
+		if (!operation) return;
 		try {
-			const client = await connect();
-			setSyncReport(await client.run(setSyncReport));
-		} catch {
-			setSyncReport({ status: "failed", pending: 0, cursor: 0, conflict: null, error: "sync-configuration" });
-		} finally { setSyncBusy(false); }
+			const client = await connect(operation);
+			if (!client || !isActive(operation)) return;
+			const report = await client.run(value => { if (isActive(operation)) setSyncReport(value); });
+			if (isActive(operation)) {
+				if (!report.error) rememberLocation(client);
+				setSyncReport(report);
+			}
+		} catch (error) {
+			if (isActive(operation)) setSyncReport(failure(error, "sync-configuration"));
+		} finally { finishOperation(operation); }
 	};
 	const chooseConflict = async (choice: "local" | "remote") => {
-		setSyncBusy(true);
+		const client = clientRef.current;
+		if (!syncReport?.conflict || !client || clientGeneration.current !== configGeneration.current) return;
+		const operation = beginOperation();
+		if (!operation) return;
 		try {
-			const client = clientRef.current ?? await connect();
-			setSyncReport(await client.resolve(choice));
-			setSyncReport(await client.run(setSyncReport));
-		} catch {
-			setSyncReport(await clientRef.current?.report("conflict") ?? { status: "failed", pending: 0, cursor: 0, conflict: null, error: "sync-resolution" });
-		} finally { setSyncBusy(false); }
+			const resolved = await client.resolve(choice);
+			if (!isActive(operation)) return;
+			setSyncReport(resolved);
+			const report = await client.run(value => { if (isActive(operation)) setSyncReport(value); });
+			if (isActive(operation)) setSyncReport(report);
+		} catch (error) {
+			if (isActive(operation)) setSyncReport(failure(error, "sync-resolution"));
+		} finally { finishOperation(operation); }
+	};
+	const checkLocal = async () => {
+		const operation = beginOperation();
+		if (!operation) return;
+		try {
+			const client = await connect(operation);
+			if (!client || !isActive(operation)) return;
+			const report = await client.report();
+			if (isActive(operation)) setSyncReport(report);
+		} catch (error) {
+			if (isActive(operation)) setSyncReport(failure(error, "sync-configuration"));
+		} finally { finishOperation(operation); }
 	};
 	const differences = (() => {
 		const conflict = syncReport?.conflict;
@@ -126,10 +205,10 @@ export function SettingsPage() {
 				<h2>{t("selfHostSync")}</h2>
 				<p>{t("selfHostSyncHint")}</p>
 				<div className="form-grid">
-					<label className="field"><span>{t("syncServerUrl")}</span><input value={endpoint} onChange={event => setEndpoint(event.target.value)} placeholder="https://sync.example.com" autoComplete="url" /></label>
-					<label className="field"><span>{t("syncAccessToken")}</span><input type="password" value={token} onChange={event => setToken(event.target.value)} autoComplete="off" /></label>
-					<label className="field"><span>{t("syncWorkspace")}</span><input value={workspaceId} onChange={event => setWorkspaceId(event.target.value)} autoComplete="off" /></label>
-					<label className="field"><span>{t("syncWorkspaceKey")}</span><input type={showKey ? "text" : "password"} value={workspaceKey} onChange={event => setWorkspaceKey(event.target.value)} autoComplete="off" /><small>{t("syncKeyHint")}</small></label>
+					<label className="field"><span>{t("syncServerUrl")}</span><input value={endpoint} disabled={syncBusy} onChange={event => editConfig(() => setEndpoint(event.target.value))} placeholder="https://sync.example.com" autoComplete="url" /></label>
+					<label className="field"><span>{t("syncAccessToken")}</span><input type="password" value={token} disabled={syncBusy} onChange={event => editConfig(() => setToken(event.target.value))} autoComplete="off" /></label>
+					<label className="field"><span>{t("syncWorkspace")}</span><input value={workspaceId} disabled={syncBusy} onChange={event => editConfig(() => setWorkspaceId(event.target.value))} autoComplete="off" /></label>
+					<label className="field"><span>{t("syncWorkspaceKey")}</span><input type={showKey ? "text" : "password"} value={workspaceKey} disabled={syncBusy} onChange={event => editConfig(() => setWorkspaceKey(event.target.value))} autoComplete="off" /><small>{t("syncKeyHint")}</small></label>
 				</div>
 				<div className="actions">
 					<Button disabled={syncBusy || !endpoint || !token} onClick={() => {
@@ -141,19 +220,16 @@ export function SettingsPage() {
 						try { await navigator.clipboard.writeText(workspaceKey); notify(t("syncKeyCopied")); }
 						catch { notify(t("syncCopyFailed")); }
 					}}>{t("syncCopyKey")}</Button>
-					<Button disabled={syncBusy || !endpoint || !token || !workspaceId || !workspaceKey} onClick={async () => {
-						try { setSyncReport(await (await connect()).report()); }
-						catch { setSyncReport({ status: "failed", pending: 0, cursor: 0, conflict: null, error: "sync-configuration" }); }
-					}}>{t("syncCheckLocal")}</Button>
+					<Button disabled={syncBusy || !endpoint || !token || !workspaceId || !workspaceKey} onClick={() => void checkLocal()}>{t("syncCheckLocal")}</Button>
 					<Button disabled={syncBusy || needsKeySave || !endpoint || !token || !workspaceId || !workspaceKey} onClick={() => void syncNow()}>{t("syncNow")}</Button>
 				</div>
-				{confirmCreate && <fieldset className="sync-confirm"><legend>{t("syncCreateWorkspace")}</legend>
+				{confirmCreate && <fieldset className="sync-confirm" disabled={syncBusy}><legend>{t("syncCreateWorkspace")}</legend>
 					<p>{t("syncCreateConfirm")}</p>
 					<div className="actions"><Button onClick={() => setConfirmCreate(false)}>{t("cancel")}</Button><Button onClick={() => void createWorkspace()}>{t("syncCreateWorkspace")}</Button></div>
 				</fieldset>}
 				{needsKeySave && <label className="sync-key-check"><input type="checkbox" checked={!needsKeySave} onChange={event => setNeedsKeySave(!event.target.checked)} />{t("syncKeySavedConfirm")}</label>}
 				<div className="notice" role="status">{t(`syncState_${syncBusy ? "syncing" : syncReport?.status ?? "local"}`)}</div>
-				{syncReport?.status === "failed" && <p role="alert">{t(syncReport.error === "sync-attachments-unsupported" ? "syncFilesUnsupported" : syncReport.error === "sync-auth" ? "syncAuthFailed" : syncReport.error === "sync-key-mismatch" ? "syncKeyMismatch" : "syncFailedHint")}</p>}
+				{syncReport?.status === "failed" && <p role="alert">{t(syncReport.error === "sync-attachments-unsupported" ? "syncFilesUnsupported" : syncReport.error === "sync-auth" ? "syncAuthFailed" : syncReport.error === "sync-key-mismatch" ? "syncKeyMismatch" : syncReport.error === "sync-dataset-bound" || syncReport.error === "sync-dataset-ambiguous" ? "syncDatasetBound" : syncReport.error === "sync-account-mismatch" ? "syncAccountMismatch" : "syncFailedHint")}</p>}
 				{syncReport && syncReport.pending > 0 && <small>{t("syncPendingCount", { count: syncReport.pending })}</small>}
 				{syncReport?.conflict && <div className="sync-conflict" role="alert">
 					<h3>{t("syncConflictTitle")}</h3>
