@@ -82,13 +82,57 @@ export class SelfHostAttachmentSync {
       } });
   }
 
-  private async uploadPlan(plan: ScopedAttachmentUploadPlan): Promise<void> {
+  private assertMatchesLocal(opened: { name: string; type: string; sha256: string },
+    local: { name: string; type: string }, sourceSha256: string): void {
+    if (opened.sha256 !== sourceSha256 || opened.name !== local.name || opened.type !== local.type)
+      throw Error('sync-attachment-conflict');
+  }
+
+  private async acceptRemote(id: string, local: { name: string; type: string },
+    sourceSha256: string, clearPlan: boolean): Promise<boolean> {
+    const manifest = await this.getObject(id);
+    if (!manifest) return false;
+    const opened = await this.openRemote(id, manifest);
+    this.assertMatchesLocal(opened, local, sourceSha256);
+    if (clearPlan) await this.repository.deleteScopedAttachmentUpload(this.scope, id);
+    return true;
+  }
+
+  private async assertPlanMatchesLocal(plan: ScopedAttachmentUploadPlan,
+    local: { name: string; type: string }, sourceSha256: string): Promise<void> {
+    const objects = new Map(plan.objects.map(object => [object.id, object.bytes]));
+    const manifestBytes = objects.get(plan.attachmentId);
+    if (!manifestBytes) throw Error('sync-attachment-plan');
+    const opened = await openAttachment({ workspaceId: this.workspaceId, attachmentId: plan.attachmentId,
+      key: this.key, keyEpoch: this.keyEpoch, manifestBytes, loadObject: async objectId => {
+        const bytes = objects.get(objectId);
+        if (!bytes) throw Error('sync-attachment-plan');
+        return bytes;
+      } });
+    if (opened.sha256 !== sourceSha256 || opened.name !== local.name || opened.type !== local.type)
+      throw Error('sync-attachment-local-changed');
+  }
+
+  private async uploadPlan(plan: ScopedAttachmentUploadPlan,
+    local: { name: string; type: string }, sourceSha256: string): Promise<void> {
     for (const object of plan.objects) await this.putObject(object);
     // Require readback and AEAD validation before any asset record can reference the objects.
     const manifest = await this.getObject(plan.attachmentId);
     if (!manifest) throw Error('sync-attachment-remote-missing');
     const opened = await this.openRemote(plan.attachmentId, manifest);
-    if (opened.sha256 !== plan.sourceSha256) throw Error('sync-attachment-integrity');
+    this.assertMatchesLocal(opened, local, sourceSha256);
+  }
+
+  private async uploadOrAcceptWinner(plan: ScopedAttachmentUploadPlan,
+    local: { name: string; type: string }, sourceSha256: string): Promise<void> {
+    try {
+      await this.uploadPlan(plan, local, sourceSha256);
+    } catch (error) {
+      // A different device may have committed its manifest after our initial 404.
+      // Only a complete, AEAD-verified and semantically equal remote attachment wins.
+      if (!(error instanceof Error) || error.message !== 'sync-attachment-conflict' ||
+        !await this.acceptRemote(plan.attachmentId, local, sourceSha256, true)) throw error;
+    }
   }
 
   async ensureUploaded(id: string): Promise<void> {
@@ -98,20 +142,17 @@ export class SelfHostAttachmentSync {
     let plan = await this.repository.getScopedAttachmentUpload(this.scope, id);
     if (plan) {
       if (plan.sourceSha256 !== sourceSha256 || plan.keyEpoch !== this.keyEpoch) throw Error('sync-attachment-local-changed');
-      await this.uploadPlan(plan);
+      await this.assertPlanMatchesLocal(plan, local, sourceSha256);
+      if (await this.acceptRemote(id, local, sourceSha256, true)) return;
+      await this.uploadOrAcceptWinner(plan, local, sourceSha256);
       return;
     }
-    const existing = await this.getObject(id);
-    if (existing) {
-      const opened = await this.openRemote(id, existing);
-      if (opened.sha256 !== sourceSha256 || opened.type !== local.type) throw Error('sync-attachment-local-changed');
-      return;
-    }
+    if (await this.acceptRemote(id, local, sourceSha256, false)) return;
     const sealed = await sealAttachment({ workspaceId: this.workspaceId, attachmentId: id, key: this.key,
       keyEpoch: this.keyEpoch, name: local.name, type: local.type, bytes: local.bytes });
     plan = await this.repository.putScopedAttachmentUpload({ scope: this.scope, attachmentId: id,
       sourceSha256: sealed.sourceSha256, keyEpoch: this.keyEpoch, objects: sealed.objects });
-    await this.uploadPlan(plan);
+    await this.uploadOrAcceptWinner(plan, local, sourceSha256);
   }
 
   async ensureUploadedRow(row: RecordRow): Promise<void> {
