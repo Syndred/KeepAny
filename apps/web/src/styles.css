@@ -262,6 +262,15 @@ p { line-height: 1.5; }
 .brand small { max-width: 150px; }
 .nav em { margin-left: auto; padding: 1px 6px; border-radius: 7px; background: var(--paper); font-size: 11px; font-style: normal; }
 .side-status { display: flex; align-items: center; gap: 8px; padding: 8px 10px; color: var(--muted); font-size: 11px; }
+.sync-panel { margin-top: 16px; }
+.sync-panel .form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); margin: 16px 0; }
+.sync-panel .notice { margin: 16px 0 8px; }
+.sync-confirm { margin-top: 12px; padding: 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--yellow-soft); }
+.sync-key-check { display: flex; align-items: flex-start; gap: 8px; margin-top: 12px; font-weight: 700; }
+.sync-key-check input { width: 18px; height: 18px; flex: none; accent-color: var(--green); }
+.sync-conflict { margin-top: 16px; padding: 16px; border: 1px solid var(--danger); border-radius: 12px; }
+.sync-differences { display: grid; gap: 8px; margin: 12px 0; max-height: 360px; overflow: auto; }
+.sync-difference { display: grid; grid-template-columns: minmax(110px, 1fr) repeat(2, minmax(0, 2fr)); gap: 8px; padding: 8px; background: var(--paper-soft); border-radius: 8px; overflow-wrap: anywhere; }
 .top-search { position: relative; display: flex; align-items: center; gap: 8px; width: min(100%, 340px); min-width: 0; padding: 6px 10px; border: 1px solid var(--line-soft); border-radius: 10px; background: var(--paper-soft); color: var(--muted); }
 .top-search input { flex: 1; min-width: 0; padding: 2px 0; border: 0; outline: 0; background: transparent; font-size: 13px; }
 .top-search:focus-within { outline: 2px solid var(--green); outline-offset: 2px; }
@@ -330,6 +339,7 @@ p { line-height: 1.5; }
 @media (max-width: 620px) {
   .page-header { display: grid; padding: 14px; }
   .card-grid, .detail-grid { grid-template-columns: 1fr; }
+  .sync-panel .form-grid, .sync-difference { grid-template-columns: 1fr; }
   .stat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
   .stat-grid .stat:last-child:nth-child(odd) { grid-column: 1 / -1; }
   .form-grid { grid-template-columns: 1fr; }
