@@ -20,16 +20,25 @@ function attachmentIds(row: RecordRow): string[] {
 
 export class SelfHostAttachmentSync {
   constructor(private readonly repository: LocalRepository, private readonly scope: string,
-    private readonly endpoint: string, private readonly token: string, private readonly workspaceId: string,
-    private readonly key: Uint8Array, private readonly keyEpoch: number) {}
+    private readonly endpoint: string, private readonly token: string | undefined, private readonly workspaceId: string,
+    private readonly key: Uint8Array, private readonly keyEpoch: number,
+    private readonly sessionAccountId?: string) {
+    if (token === undefined && !sessionAccountId) throw Error('sync-auth');
+  }
+
+  private requestCredentials(): RequestCredentials { return this.token === undefined ? 'include' : 'omit'; }
+  private requestHeaders(): Record<string, string> {
+    return this.token === undefined ? { 'X-KeepAny-Account-Id': this.sessionAccountId ?? '' } :
+      { Authorization: `Bearer ${this.token}` };
+  }
 
   private path(id: string): string {
     return `${this.endpoint}/workspaces/${this.workspaceId}/attachments/${z.uuid().parse(id)}`;
   }
 
   private async getObject(id: string): Promise<Uint8Array | null> {
-    const response = await fetch(this.path(id), { method: 'GET', headers: { Authorization: `Bearer ${this.token}` },
-      cache: 'no-store', credentials: 'omit', signal: AbortSignal.timeout(30_000) });
+    const response = await fetch(this.path(id), { method: 'GET', headers: this.requestHeaders(),
+      cache: 'no-store', credentials: this.requestCredentials(), signal: AbortSignal.timeout(30_000) });
     if (response.status === 404) return null;
     if (response.status === 401 || response.status === 403) throw Error('sync-auth');
     if (response.status === 502) throw Error('sync-attachment-integrity');
@@ -63,9 +72,9 @@ export class SelfHostAttachmentSync {
     const body = new ArrayBuffer(object.bytes.length);
     new Uint8Array(body).set(object.bytes);
     const response = await fetch(this.path(object.id), { method: 'PUT', headers: {
-      Authorization: `Bearer ${this.token}`, 'Content-Type': ciphertextType,
+      ...this.requestHeaders(), 'Content-Type': ciphertextType,
       'X-Ciphertext-SHA256': object.sha256,
-    }, body, cache: 'no-store', credentials: 'omit', signal: AbortSignal.timeout(30_000) });
+    }, body, cache: 'no-store', credentials: this.requestCredentials(), signal: AbortSignal.timeout(30_000) });
     if (response.status === 401 || response.status === 403) throw Error('sync-auth');
     if (response.status === 409) throw Error('sync-attachment-conflict');
     if (!response.ok) throw Error(`sync-attachment-http-${response.status}`);

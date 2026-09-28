@@ -6,7 +6,9 @@ import { SelfHostAttachmentSync } from './attachment-sync';
 
 export type SyncStatus = 'local' | 'pending' | 'syncing' | 'synced' | 'conflict' | 'failed';
 export interface SyncReport { status: SyncStatus; pending: number; cursor: number; conflict: ScopedConflict | null; error?: string }
-export interface SelfHostConfig { endpoint: string; token: string; workspaceId: string; key: Uint8Array; keyEpoch?: number }
+interface SelfHostBaseConfig { endpoint: string; workspaceId: string; key: Uint8Array; keyEpoch?: number }
+export type SelfHostConfig = SelfHostBaseConfig & ({ token: string; sessionAccountId?: never } |
+  { sessionAccountId: string; token?: never });
 const workspaceSchema = z.uuid();
 const preflightSchema = z.object({ accountId: z.string().min(1).max(256), workspaceId: workspaceSchema });
 const text = new TextEncoder();
@@ -50,10 +52,14 @@ export function encodeWorkspaceKey(key: Uint8Array): string {
 }
 export async function newWorkspaceKey(): Promise<string> { return encodeWorkspaceKey(await generateWorkspaceKey()); }
 
-async function request<T>(endpoint: string, token: string, route: string, body: unknown, schema: z.ZodType<T>): Promise<T> {
+async function request<T>(endpoint: string, token: string | undefined, route: string, body: unknown,
+  schema: z.ZodType<T>, sessionAccountId?: string): Promise<T> {
   const response = await fetch(`${endpoint}${route}`, {
-    method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify(body), cache: 'no-store', credentials: 'omit', signal: AbortSignal.timeout(30_000),
+    method: 'POST', headers: { ...(token === undefined ? {} : { Authorization: `Bearer ${token}` }),
+      ...(sessionAccountId === undefined ? {} : { 'X-KeepAny-Account-Id': sessionAccountId }),
+      'Content-Type': 'application/json' },
+    body: JSON.stringify(body), cache: 'no-store', credentials: token === undefined ? 'include' : 'omit',
+    signal: AbortSignal.timeout(30_000),
   });
   if (!response.ok) throw Error(response.status === 401 || response.status === 403 ? 'sync-auth' : `sync-http-${response.status}`);
   return schema.parse(await response.json());
@@ -64,9 +70,24 @@ export async function createSelfHostedWorkspace(endpoint: string, token: string)
   return (await request(normalizeEndpoint(endpoint), token, '/workspaces', {}, z.object({ workspaceId: workspaceSchema }))).workspaceId;
 }
 
-async function scopeFor(endpoint: string, workspaceId: string): Promise<string> {
-  // Self-host mode has one stable server subject. Bearer token rotation must not abandon an outbox.
-  const bytes = new Uint8Array(await crypto.subtle.digest('SHA-256', text.encode(JSON.stringify([endpoint, 'self-host-owner']))));
+export async function getSessionIdentity(endpoint: string): Promise<string> {
+  const response = await request(normalizeEndpoint(endpoint), undefined, '/sync/identity', {},
+    z.object({ accountId: z.string().min(1).max(256) }));
+  if (!response.accountId.startsWith('selfhost:') || response.accountId.length <= 'selfhost:'.length)
+    throw Error('sync-account-mismatch');
+  return response.accountId;
+}
+
+export async function createSessionWorkspace(endpoint: string): Promise<string> {
+  const accountId = await getSessionIdentity(endpoint);
+  return (await request(normalizeEndpoint(endpoint), undefined, '/workspaces', {},
+    z.object({ workspaceId: workspaceSchema }), accountId)).workspaceId;
+}
+
+async function scopeFor(endpoint: string, accountId: string, workspaceId: string): Promise<string> {
+  // The server subject remains stable across credential rotation. A session subject
+  // only becomes trusted after the authenticated preflight agrees with this ID.
+  const bytes = new Uint8Array(await crypto.subtle.digest('SHA-256', text.encode(JSON.stringify([endpoint, accountId]))));
   return `${Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('')}:${workspaceId}`;
 }
 
@@ -74,7 +95,8 @@ export class SelfHostSyncClient {
   readonly endpoint: string;
   readonly workspaceId: string;
   readonly keyEpoch: number;
-  private readonly token: string;
+  private readonly token: string | undefined;
+  private readonly accountId: string;
   private readonly key: Uint8Array;
   private scopePromise: Promise<string>;
   private busy = false;
@@ -82,20 +104,26 @@ export class SelfHostSyncClient {
   constructor(private readonly repository: LocalRepository, config: SelfHostConfig) {
     this.endpoint = normalizeEndpoint(config.endpoint);
     this.workspaceId = workspaceSchema.parse(config.workspaceId).toLowerCase();
-    if (config.token.length < 32) throw Error('sync-auth');
+    const session = config.sessionAccountId !== undefined;
+    if (session === (config.token !== undefined)) throw Error('sync-auth');
+    if ('token' in config && config.token !== undefined && config.token.length < 32) throw Error('sync-auth');
+    if (session && (!z.string().min(1).max(256).safeParse(config.sessionAccountId).success ||
+      !config.sessionAccountId?.startsWith('selfhost:') || config.sessionAccountId.length <= 'selfhost:'.length))
+      throw Error('sync-auth');
     if (config.key.length !== 32) throw Error('sync-key');
     this.token = config.token;
+    this.accountId = config.sessionAccountId ?? 'self-host-owner';
     this.key = Uint8Array.from(config.key);
     this.keyEpoch = config.keyEpoch ?? 1;
     if (!Number.isSafeInteger(this.keyEpoch) || this.keyEpoch < 1) throw Error('sync-key-epoch');
-    this.scopePromise = scopeFor(this.endpoint, this.workspaceId);
+    this.scopePromise = scopeFor(this.endpoint, this.accountId, this.workspaceId);
   }
 
   async report(status: SyncStatus = 'local', error?: string): Promise<SyncReport> {
     const scope = await this.scopePromise;
     const binding = await this.repository.getDatasetBinding();
     if (binding && (binding.scope !== scope || binding.endpoint !== this.endpoint ||
-      binding.accountId !== 'self-host-owner' || binding.workspaceId !== this.workspaceId)) {
+      binding.accountId !== this.accountId || binding.workspaceId !== this.workspaceId)) {
       return { status: 'failed', pending: 0, cursor: 0, conflict: null, error: 'sync-dataset-bound' };
     }
     const [outbox, dirty, cursor, conflict] = await Promise.all([
@@ -173,11 +201,10 @@ export class SelfHostSyncClient {
 
   private async verifyDataset(scope: string): Promise<void> {
     const { accountId, workspaceId } = await request(this.endpoint, this.token, '/sync/preflight',
-      { workspaceId: this.workspaceId }, preflightSchema);
-    // This client implements the single-account self-host contract. The authenticated
-    // subject is stable across token rotation and guards against reusing a workspace ID
-    // on another account or an endpoint configured with a different account.
-    if (accountId !== 'self-host-owner' || workspaceId !== this.workspaceId) throw Error('sync-account-mismatch');
+      { workspaceId: this.workspaceId }, preflightSchema, this.token === undefined ? this.accountId : undefined);
+    // The account ID provided at setup cannot identify a dataset on its own. Require
+    // this request's authenticated server subject before claiming or sending records.
+    if (accountId !== this.accountId || workspaceId !== this.workspaceId) throw Error('sync-account-mismatch');
     await this.repository.claimDatasetBinding({
       endpoint: this.endpoint, accountId, workspaceId: this.workspaceId, scope,
     });
@@ -191,7 +218,7 @@ export class SelfHostSyncClient {
 
   private attachments(scope: string): SelfHostAttachmentSync {
     return new SelfHostAttachmentSync(this.repository, scope, this.endpoint, this.token,
-      this.workspaceId, this.key, this.keyEpoch);
+      this.workspaceId, this.key, this.keyEpoch, this.token === undefined ? this.accountId : undefined);
   }
 
   private async pushOutbox(scope: string, attachments: SelfHostAttachmentSync): Promise<void> {
@@ -211,7 +238,8 @@ export class SelfHostSyncClient {
       }
       for (const item of batch) await attachments.ensureUploadedRow(item.row);
       const response = await request(this.endpoint, this.token, '/sync/push',
-        { workspaceId: this.workspaceId, operations: batch.map(item => item.operation) }, syncPushResponseSchema);
+        { workspaceId: this.workspaceId, operations: batch.map(item => item.operation) }, syncPushResponseSchema,
+        this.token === undefined ? this.accountId : undefined);
       if (response.results.length !== batch.length ||
         response.results.some((result, index) => result.operationId !== batch[index].operation.operationId)) throw Error('sync-push-response');
       for (const [index, result] of response.results.entries()) {
@@ -229,7 +257,8 @@ export class SelfHostSyncClient {
     for (let page = 0; page < 10000; page++) {
       const cursor = await this.repository.scopedCursor(scope);
       const response = await request(this.endpoint, this.token, '/sync/pull',
-        { workspaceId: this.workspaceId, cursor, limit: 100 }, syncPullResponseSchema);
+        { workspaceId: this.workspaceId, cursor, limit: 100 }, syncPullResponseSchema,
+        this.token === undefined ? this.accountId : undefined);
       if (!response.changes.length) {
         if (response.nextCursor !== cursor) throw Error('sync-cursor');
         return false;

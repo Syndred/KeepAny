@@ -3,7 +3,8 @@ import { afterEach, expect, it, vi } from 'vitest';
 import { newAsset, type Asset } from '../../domain/src';
 import { openLocalRepository } from '../../local-db/src';
 import { MemorySyncStateStore, SyncService } from '../../sync-core/src';
-import { SelfHostSyncClient, decodeWorkspaceKey, encodeWorkspaceKey, normalizeEndpoint } from './index';
+import { SelfHostSyncClient, createSessionWorkspace, decodeWorkspaceKey, encodeWorkspaceKey,
+  getSessionIdentity, normalizeEndpoint } from './index';
 
 afterEach(() => vi.unstubAllGlobals());
 const name = () => `test-${crypto.randomUUID().slice(0, 12)}`;
@@ -413,6 +414,126 @@ it('rejects a malformed pull page before writing any record or cursor', async ()
   expect(result.cursor).toBe(0);
   expect(await db.allRecords()).toEqual([]);
   await db.close();
+});
+
+function sessionServer(workspaceId: string) {
+  const service = new SyncService(new MemorySyncStateStore());
+  const objects = new Map<string, Uint8Array>();
+  const requests: { url: string; init: RequestInit }[] = [];
+  let subject: string | null = 'selfhost:alice';
+  vi.stubGlobal('fetch', vi.fn(async (url: string, init: RequestInit) => {
+    requests.push({ url: String(url), init });
+    const headers = init.headers as Record<string, string> | undefined;
+    if (init.credentials !== 'include' || headers?.Authorization) throw Error('session-transport');
+    if (!subject) return new Response('{}', { status: 401 });
+    if (String(url).endsWith('/sync/identity')) return Response.json({ accountId: subject });
+    if (headers?.['X-KeepAny-Account-Id'] !== subject) return new Response('{}', { status: 401 });
+    if (String(url).endsWith('/workspaces')) return Response.json({ workspaceId }, { status: 201 });
+    if (String(url).includes('/attachments/')) {
+      const id = String(url).split('/').at(-1) ?? '';
+      if (init.method === 'GET') {
+        const bytes = objects.get(id);
+        return bytes ? new Response(Uint8Array.from(bytes).buffer, { headers: {
+          'content-type': 'application/vnd.keepany.ciphertext', 'content-length': String(bytes.length),
+          'x-ciphertext-sha256': await sha256(bytes),
+        } }) : new Response(null, { status: 404 });
+      }
+      const bytes = new Uint8Array(init.body as ArrayBuffer);
+      objects.set(id, bytes);
+      return Response.json({ sha256: await sha256(bytes), size: bytes.length, status: 'stored' }, { status: 201 });
+    }
+    const body = JSON.parse(String(init.body));
+    if (String(url).endsWith('/sync/preflight')) return Response.json({ accountId: subject, workspaceId: body.workspaceId });
+    if (String(url).endsWith('/sync/push')) return Response.json(await service.push(body));
+    if (String(url).endsWith('/sync/pull')) return Response.json(await service.pull(body));
+    throw Error('route');
+  }));
+  return { service, objects, requests, setSubject: (next: string | null) => { subject = next; } };
+}
+
+it('uses the browser session for identity, workspace, records and encrypted image objects', async () => {
+  const workspaceId = crypto.randomUUID();
+  const remote = sessionServer(workspaceId);
+  expect(await getSessionIdentity(endpoint)).toBe('selfhost:alice');
+  expect(await createSessionWorkspace(endpoint)).toBe(workspaceId);
+  const config = { endpoint, sessionAccountId: 'selfhost:alice', workspaceId, key: new Uint8Array(32).fill(7) };
+  const sender = await openLocalRepository(name());
+  const receiver = await openLocalRepository(name());
+  try {
+    const photo = Uint8Array.from([137, 80, 78, 71, 1, 2, 3]);
+    const id = await sender.putFile(new File([photo as BlobPart], 'session.png', { type: 'image/png' }));
+    const asset = { ...newAsset('project'), name: 'Session photo', attachments: [id] };
+    await sender.save('asset', asset);
+    expect((await new SelfHostSyncClient(sender, config).run()).status).toBe('synced');
+    expect((await new SelfHostSyncClient(receiver, config).run()).status).toBe('synced');
+    expect((await receiver.get<Asset>('asset', asset.id))?.name).toBe('Session photo');
+    expect((await receiver.readFile(id))?.bytes).toEqual(photo);
+    expect(remote.requests.some(request => request.init.method === 'PUT' &&
+      request.url.includes('/attachments/'))).toBe(true);
+    expect(remote.requests.some(request => request.init.method === 'GET' &&
+      request.url.includes('/attachments/'))).toBe(true);
+    expect(remote.requests.every(request => request.init.credentials === 'include' &&
+      !(request.init.headers as Record<string, string> | undefined)?.Authorization)).toBe(true);
+    expect(remote.requests.every(request => request.url.endsWith('/sync/identity') ||
+      (request.init.headers as Record<string, string>)['X-KeepAny-Account-Id'] === 'selfhost:alice')).toBe(true);
+    expect(remote.objects.size).toBeGreaterThan(0);
+    expect((await sender.getDatasetBinding())?.accountId).toBe('selfhost:alice');
+  } finally { await sender.close(); await receiver.close(); }
+});
+
+it('keeps static Bearer requests separate from session cookies and rejects a non-session identity', async () => {
+  const { config } = server(crypto.randomUUID());
+  const db = await openLocalRepository(name());
+  try {
+    await db.save('asset', { ...newAsset('project'), name: 'Static' });
+    expect((await new SelfHostSyncClient(db, config).run()).status).toBe('synced');
+    expect(vi.mocked(fetch).mock.calls.every(([, init]) => init?.credentials === 'omit' &&
+      (init?.headers as Record<string, string>)?.Authorization === `Bearer ${token}` &&
+      !(init?.headers as Record<string, string>)?.['X-KeepAny-Account-Id'])).toBe(true);
+  } finally { await db.close(); }
+  vi.stubGlobal('fetch', vi.fn(async () => Response.json({ accountId: 'self-host-owner' })));
+  await expect(getSessionIdentity(endpoint)).rejects.toThrow('sync-account-mismatch');
+});
+
+it('rejects a caller supplied account before claiming or pushing, and blocks changed or expired sessions', async () => {
+  const workspaceId = crypto.randomUUID();
+  const remote = sessionServer(workspaceId);
+  const db = await openLocalRepository(name());
+  const asset = { ...newAsset('project'), name: 'Keep local' };
+  await db.save('asset', asset);
+  const config = { endpoint, sessionAccountId: 'selfhost:wrong', workspaceId, key: new Uint8Array(32).fill(7) };
+  try {
+    expect((await new SelfHostSyncClient(db, config).run()).error).toBe('sync-auth');
+    expect(await db.getDatasetBinding()).toBeNull();
+    expect(remote.requests.some(request => request.url.endsWith('/sync/push') ||
+      request.url.includes('/attachments/'))).toBe(false);
+    const serverFetch = fetch;
+    vi.stubGlobal('fetch', vi.fn(async (url: string, init: RequestInit) =>
+      String(url).endsWith('/sync/preflight')
+        ? Response.json({ accountId: 'selfhost:bob', workspaceId }) : serverFetch(url, init)));
+    const correct = new SelfHostSyncClient(db, { ...config, sessionAccountId: 'selfhost:alice' });
+    expect((await correct.run()).error).toBe('sync-account-mismatch');
+    expect(await db.getDatasetBinding()).toBeNull();
+    vi.stubGlobal('fetch', serverFetch);
+    expect((await correct.run()).status).toBe('synced');
+    expect((await db.getDatasetBinding())?.accountId).toBe('selfhost:alice');
+    await db.save('asset', { ...asset, name: 'Do not leak' });
+    remote.requests.length = 0;
+    vi.stubGlobal('fetch', vi.fn(async (url: string, init: RequestInit) => {
+      const response = await serverFetch(url, init);
+      if (String(url).endsWith('/sync/preflight') && response.ok) remote.setSubject('selfhost:bob');
+      return response;
+    }));
+    expect((await correct.run()).error).toBe('sync-auth');
+    expect(remote.requests.some(request => request.url.endsWith('/sync/push') ||
+      request.url.endsWith('/sync/pull'))).toBe(true);
+    expect((await remote.service.pull({ workspaceId, cursor: 0, limit: 10 })).changes).toHaveLength(1);
+    vi.stubGlobal('fetch', serverFetch);
+    remote.setSubject(null);
+    expect((await correct.run()).error).toBe('sync-auth');
+    expect((await db.getDatasetBinding())?.accountId).toBe('selfhost:alice');
+    expect((await remote.service.pull({ workspaceId, cursor: 0, limit: 10 })).changes).toHaveLength(1);
+  } finally { await db.close(); }
 });
 
 async function scope(config: { endpoint: string; token: string }): Promise<string> {
