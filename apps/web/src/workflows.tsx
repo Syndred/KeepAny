@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Papa from "papaparse";
 import { Download, FileUp, Link2, LockKeyhole, Sparkles } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -488,12 +488,22 @@ export function IntakeTools() {
 	const [url, setUrl] = useState("");
 	const [message, setMessage] = useState("");
 	const [busy, setBusy] = useState(false);
+	const [readyDownload, setReadyDownload] = useState<{
+		url: string;
+		name: string;
+	} | null>(null);
+	useEffect(() => {
+		return () => {
+			if (readyDownload) URL.revokeObjectURL(readyDownload.url);
+		};
+	}, [readyDownload]);
 	async function download() {
 		if (password.length < 12) {
 			setMessage(t("backupPassword"));
 			return;
 		}
 		setBusy(true);
+		setReadyDownload(null);
 		try {
 			const plain = await exportArchive();
 			const encrypted = await encryptBackup(plain, password);
@@ -501,11 +511,10 @@ export function IntakeTools() {
 				type: "application/octet-stream",
 			});
 			const address = URL.createObjectURL(blob);
-			const a = document.createElement("a");
-			a.href = address;
-			a.download = `keepany-${new Date().toISOString().slice(0, 10)}.ka1`;
-			a.click();
-			setTimeout(() => URL.revokeObjectURL(address), 10000);
+			setReadyDownload({
+				url: address,
+				name: `keepany-${new Date().toISOString().slice(0, 10)}.ka1`,
+			});
 			setMessage(t("backupReady"));
 		} catch {
 			setMessage(t("error"));
@@ -642,10 +651,12 @@ export function IntakeTools() {
 						type="password"
 						minLength={12}
 						autoComplete="new-password"
+						disabled={busy}
 						value={password}
 						onChange={(e) => {
 							setPassword(e.target.value);
 							setReadyArchive(null);
+							setReadyDownload(null);
 						}}
 					/>
 				</div>
@@ -658,6 +669,14 @@ export function IntakeTools() {
 						<Download size={16} />
 						{t("backup")}
 					</Button>
+					{readyDownload && (
+						<Button asChild variant="primary">
+							<a href={readyDownload.url} download={readyDownload.name}>
+								<Download size={16} />
+								{t("saveBackupFile")}
+							</a>
+						</Button>
+					)}
 				</div>
 				<div className="field">
 					<label htmlFor="restore-file">{t("restoreBackup")}</label>
