@@ -100,6 +100,27 @@ it('syncs a tombstone and requires explicit local restore before reviving a reco
   await b.close();
 });
 
+it('clears a rejected pending write when the server already has the same final record', async () => {
+  const workspaceId = crypto.randomUUID();
+  const { config } = server(workspaceId);
+  const a = await openLocalRepository(name());
+  const b = await openLocalRepository(name());
+  const asset = { ...newAsset('project'), name: 'Initial' };
+  await a.save('asset', asset);
+  const clientA = new SelfHostSyncClient(a, config);
+  const clientB = new SelfHostSyncClient(b, config);
+  await clientA.run();
+  await clientB.run();
+  await a.save('asset', { ...asset, name: 'Same' });
+  await b.save('asset', { ...asset, name: 'Same' });
+  await clientA.run();
+  const result = await clientB.run();
+  expect(result.status).toBe('synced');
+  expect(result.pending).toBe(0);
+  await a.close();
+  await b.close();
+});
+
 it('rejects unsafe URLs and checks the required 32-byte workspace key', () => {
   expect(normalizeEndpoint('https://example.com/')).toBe('https://example.com');
   expect(() => normalizeEndpoint('http://example.com')).toThrow('sync-endpoint');

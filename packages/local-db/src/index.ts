@@ -591,7 +591,7 @@ async function replayScopedPull(db: RxDatabase, store: FileStore, scope: string)
   await store.transaction('rw', store.scopedMeta, store.scopedBase, store.scopedOutbox, store.scopedPull, async () => {
     await store.scopedBase.put({ id, scope, rowId: row.id, payload: row.payload, version,
       row, operationId: journal.change.operationId, keyEpoch: journal.change.keyEpoch, ciphertext: journal.change.ciphertext });
-    if (journal.decision) await store.scopedOutbox.delete(id);
+    if (journal.decision || currentPayload === row.payload) await store.scopedOutbox.delete(id);
     const meta = await store.scopedMeta.get(scope);
     await store.scopedMeta.put({ ...meta, id: scope, cursor: journal.cursorStart + 1 });
     await store.scopedPull.delete(scope);
