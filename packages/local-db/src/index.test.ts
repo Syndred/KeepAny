@@ -313,6 +313,26 @@ describe('RxDB + free Dexie local repository', () => {
     await reopened.close();
   });
 
+  it('retains an ambiguous legacy journal without an operation marker for manual recovery', async () => {
+    const dbName = name();
+    const db = await openLocalRepository(dbName);
+    const { expected, next, event } = renewalFixture();
+    const original = await db.save('asset', expected);
+    await db.fileStore.renewalJournal.add({ id: 'legacy-ambiguous', assetId: expected.id,
+      expectedPayload: original.payload,
+      next: { ...original, payload: JSON.stringify({ ...next, lastRenewalId: '' }) },
+      history: { id: `history:${event.id}`, type: 'history', payload: JSON.stringify(event), updatedAt: Date.now() } });
+    await db.save('asset', { ...expected, name: 'Another edit' });
+    await db.close();
+
+    const reopened = await openLocalRepository(dbName);
+    expect(reopened.renewalRecoveryError).toBe('renewal-recovery-conflict');
+    expect(await reopened.fileStore.renewalJournal.count()).toBe(1);
+    expect((await reopened.get<Asset>('asset', expected.id))?.name).toBe('Another edit');
+    await expect(reopened.exportArchive()).rejects.toThrow('renewal-recovery-pending');
+    await reopened.close();
+  });
+
   it('serializes export with an in-flight renewal and reopens with a settled journal', async () => {
     const dbName = name();
     const db = await openLocalRepository(dbName);

@@ -825,7 +825,7 @@ async function replayRenewalJournal(db: RxDatabase, store: FileStore, id: string
   }
   const cannotCancel = nextMarker
     ? currentMarker !== expectedMarker
-    : assetPayload !== journal.expectedPayload && !!history;
+    : assetPayload !== journal.expectedPayload;
   if (cannotCancel) {
     throw Error('renewal-recovery-conflict');
   }
