@@ -62,6 +62,8 @@ describe('ExternalLink exact submission ledger mapping', () => {
     const mapped = previewExternalLinkSubmission({ ...receipt, evidence: '', confirmedBy: '' }, key, mapping);
     expect(mapped.status).toBe('planned');
     expect(mapped.issues).toContain('missing-receipt-evidence');
+    const migrated = previewExternalLinkSubmission({ ...receipt, evidence: 'table.xlsx submitted seed' }, key, mapping);
+    expect(migrated.status).toBe('planned');
   });
 
   it('separates submitted, moderation, publication and search indexing', () => {
@@ -71,6 +73,8 @@ describe('ExternalLink exact submission ledger mapping', () => {
     expect(claimed).toMatchObject({ status: 'verify', listingClaim: 'claimed' });
     const live = previewExternalLinkSubmission({ ...receipt, publicationStatus: 'published', publicUrl: 'https://directory.example/tools/demo', verifiedAt: '2026-09-28T11:00:00Z' }, key, mapping);
     expect(live).toMatchObject({ status: 'verify', listingClaim: 'verified' });
+    const unverifiedIndex = previewExternalLinkSubmission({ ...receipt, publicationStatus: 'published', publicUrl: 'https://directory.example/tools/demo', indexedAt: '2026-09-29T11:00:00Z', indexEvidenceUrl: 'https://search.example/result/demo' }, key, mapping);
+    expect(unverifiedIndex.status).toBe('verify');
     const indexed = previewExternalLinkSubmission({ ...receipt, publicationStatus: 'published', publicUrl: 'https://directory.example/tools/demo', verifiedAt: '2026-09-28T11:00:00Z', indexedAt: '2026-09-29T11:00:00Z', indexEvidenceUrl: 'https://search.example/result/demo' }, key, mapping);
     expect(indexed.status).toBe('indexed');
   });

@@ -85,7 +85,7 @@ export function previewExternalLinkProfile(input: unknown, assetId: string): Ext
   return {
     assetId, profileId: profile.id,
     name: firstText(fields, FIELD_ALIASES.name) || profile.name || profile.id,
-    website: firstText(fields, FIELD_ALIASES.website) || profile.promoUrl || profile.url || '',
+    website: safeUrl(firstText(fields, FIELD_ALIASES.website) || profile.promoUrl || profile.url || ''),
     title: firstText(fields, FIELD_ALIASES.title),
     shortDescription: firstText(fields, FIELD_ALIASES.shortDescription),
     longDescription: firstText(fields, FIELD_ALIASES.longDescription),
@@ -121,9 +121,9 @@ export function normalizeDestinationKey(value: string, hostScopedHosts: Readonly
   return hostScopedHosts.has(host) ? host : `${host}${path}`;
 }
 
-export function externalLinkPairKey(destinationKey: string, profileId: string): string {
+export function externalLinkPairKey(destinationKey: string, profileId: string, hostScopedHosts: ReadonlySet<string> = new Set()): string {
   if (!profileId.trim() || profileId.includes('::')) throw Error('profile-id');
-  return `${normalizeDestinationKey(destinationKey)}::${profileId.trim()}`;
+  return `${normalizeDestinationKey(destinationKey, hostScopedHosts)}::${profileId.trim()}`;
 }
 
 export type ExternalLinkMappedStatus = 'planned' | 'submitted' | 'review' | 'verify' | 'indexed' | 'rejected';
@@ -168,7 +168,9 @@ export function previewExternalLinkSubmission(
   if (raw.indexedAt && !indexedAt) issues.push('invalid-indexed-at');
   if (raw.evidenceUrl && !evidenceUrl) issues.push('invalid-evidence-url');
   if (raw.publicUrl && !publicUrl) issues.push('invalid-public-url');
-  const receipt = raw.status === 'success' && ['agent', 'manual'].includes(raw.confirmedBy || '') && Boolean(evidence || evidenceUrl);
+  const nonReceiptMigrationEvidence = new Set(['table.xlsx submitted seed', 'legacy siteannotations.submittedprojects']);
+  const receipt = raw.status === 'success' && ['agent', 'manual'].includes(raw.confirmedBy || '') &&
+    Boolean(evidence || evidenceUrl) && !nonReceiptMigrationEvidence.has(evidence.toLowerCase());
   let status: ExternalLinkMappedStatus = 'planned';
   let listingClaim: ExternalLinkSubmissionPreview['listingClaim'] = 'none';
   if (raw.status === 'rejected' || raw.status === 'failed') status = 'rejected';
@@ -179,7 +181,10 @@ export function previewExternalLinkSubmission(
       listingClaim = publicUrl && verifiedAt ? 'verified' : 'claimed';
       if (!publicUrl || !verifiedAt) issues.push('publication-needs-verification');
     }
-    if (indexedAt && indexEvidenceUrl && publicUrl) status = 'indexed';
+    if (indexedAt && indexEvidenceUrl && publicUrl && verifiedAt) {
+      status = 'indexed';
+      listingClaim = 'verified';
+    }
   } else if (raw.status === 'success') issues.push('missing-receipt-evidence');
   if (receipt && !submittedAt) issues.push('missing-submitted-at');
   return {
