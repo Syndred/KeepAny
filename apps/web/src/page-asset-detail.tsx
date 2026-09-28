@@ -499,14 +499,16 @@ export function AssetDetail() {
 			const factor = asset.currency === "JPY" ? 1 : 100;
 			const recordedAmount = entered ? Math.round(Number(entered) * factor) : charge;
 			if (!Number.isSafeInteger(recordedAmount) || recordedAmount < 0) throw Error("renewal-amount-invalid");
+			const historyId = crypto.randomUUID();
 			update = {
 				...update,
 				billingAnchor: anchor,
 				renewalCount: count,
+				lastRenewalId: historyId,
 				dueDate: dueOnCycle(anchor, asset.cycle, asset.interval, count),
 			};
 			await recordRenewal(asset, update, {
-				id: crypto.randomUUID(),
+				id: historyId,
 				assetId: asset.id,
 				action: "renew",
 				billDate: asset.dueDate,

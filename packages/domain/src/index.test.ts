@@ -63,5 +63,6 @@ describe('subscription and local asset rules', () => {
     expect(historySchema.safeParse({...legacy,billDate:'2026-09-29',amount:0,currency:'USD'}).success).toBe(true);
     expect(historySchema.safeParse({...legacy,billDate:'2026-02-30',amount:100,currency:'USD'}).success).toBe(false);
     expect(historySchema.safeParse({...legacy,billDate:'2026-09-29',amount:-1,currency:'USD'}).success).toBe(false);
+    expect(assetSchema.parse({...newAsset('subscription'),lastRenewalId:undefined}).lastRenewalId).toBe('');
   });
 });

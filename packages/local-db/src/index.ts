@@ -169,6 +169,9 @@ export class LocalRepository {
     if (current) {
       await current.incrementalModify((data: RecordRow) => {
         if (parsedPayload(data).deleted && !parsedPayload(next).deleted) throw Error('tombstone-restore-required');
+        if (type === 'asset' && (parsedPayload(data) as Asset).lastRenewalId !== (parsedPayload(next) as Asset).lastRenewalId) {
+          throw Error('asset-stale-renewal');
+        }
         return { ...data, ...next };
       });
     } else {
@@ -249,11 +252,12 @@ export class LocalRepository {
     const event = entitySchemas.history.parse(history);
     const anchor = expected.billingAnchor || expected.dueDate;
     const unchanged = Object.keys(expected).every(field =>
-      ['dueDate', 'billingAnchor', 'renewalCount', 'updatedAt'].includes(field) ||
+      ['dueDate', 'billingAnchor', 'renewalCount', 'lastRenewalId', 'updatedAt'].includes(field) ||
       JSON.stringify(expected[field as keyof Asset]) === JSON.stringify(next[field as keyof Asset]));
     if (expected.kind !== 'subscription' || expected.status !== 'active' || expected.deleted || !expected.dueDate ||
       next.id !== expected.id || next.kind !== 'subscription' || next.status !== 'active' || next.deleted ||
       next.renewalCount !== expected.renewalCount + 1 || next.billingAnchor !== anchor ||
+      next.lastRenewalId !== event.id ||
       next.dueDate !== dueOnCycle(anchor, expected.cycle, expected.interval, next.renewalCount) ||
       !unchanged ||
       event.action !== 'renew' || event.assetId !== expected.id || event.deleted ||
@@ -803,7 +807,12 @@ async function replayRenewalJournal(db: RxDatabase, store: FileStore, id: string
   const assetPayload = asset ? canonical(asset).payload : null;
   const historyPayload = history ? canonical(history).payload : null;
   if (historyPayload && historyPayload !== journal.history.payload) throw Error('renewal-recovery-conflict');
-  if (assetPayload === journal.next.payload) {
+  const expectedMarker = entitySchemas.asset.parse(JSON.parse(journal.expectedPayload)).lastRenewalId;
+  const nextMarker = entitySchemas.asset.parse(JSON.parse(journal.next.payload)).lastRenewalId;
+  const currentMarker = assetPayload ? entitySchemas.asset.parse(JSON.parse(assetPayload)).lastRenewalId : null;
+  // A later ordinary edit can change the payload without changing this operation marker.
+  // Old v7 journals have no marker, so keep their exact-payload recovery behavior.
+  if (assetPayload === journal.next.payload || (nextMarker && currentMarker === nextMarker)) {
     if (!history) {
       try { await db.records.insert(journal.history); }
       catch (error) {
@@ -814,7 +823,12 @@ async function replayRenewalJournal(db: RxDatabase, store: FileStore, id: string
     await store.renewalJournal.delete(id);
     return 'committed';
   }
-  if (assetPayload !== journal.expectedPayload && history) throw Error('renewal-recovery-conflict');
+  const cannotCancel = nextMarker
+    ? currentMarker !== expectedMarker
+    : assetPayload !== journal.expectedPayload && !!history;
+  if (cannotCancel) {
+    throw Error('renewal-recovery-conflict');
+  }
   if (history) await history.remove();
   await store.renewalJournal.delete(id);
   return 'cancelled';

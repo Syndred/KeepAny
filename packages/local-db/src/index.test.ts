@@ -2,18 +2,18 @@ import 'fake-indexeddb/auto';
 import { describe, expect, it, vi } from 'vitest';
 import { zipSync, unzipSync, strToU8, strFromU8 } from 'fflate';
 import { historySchema, newAsset, type Asset } from '../../domain/src';
-import { inspectArchive, openLocalRepository, type RecordRow } from './index';
+import { inspectArchive, LocalRepository, openLocalRepository, type RecordRow } from './index';
 
 const name = () => `test-${crypto.randomUUID().slice(0, 12)}`;
 const project = (label: string): Asset => ({ ...newAsset('project'), name: label });
 const renewalFixture = () => {
   const expected: Asset = { ...newAsset('subscription'), name: 'Renewal fixture', amount: 1200,
     dueDate: '2026-01-31', billingAnchor: '2026-01-31' };
-  const next: Asset = { ...expected, dueDate: '2026-02-28', renewalCount: 1,
-    updatedAt: new Date(Date.now() + 1000).toISOString() };
   const event = historySchema.parse({ id: crypto.randomUUID(), assetId: expected.id, action: 'renew',
     note: 'Local renewal record', billDate: expected.dueDate, amount: expected.amount,
     currency: expected.currency, createdAt: new Date().toISOString() });
+  const next: Asset = { ...expected, dueDate: '2026-02-28', renewalCount: 1, lastRenewalId: event.id,
+    updatedAt: new Date(Date.now() + 1000).toISOString() };
   return { expected, next, event };
 };
 const hash = async (bytes: Uint8Array) => Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', bytes as BufferSource)))
@@ -203,7 +203,7 @@ describe('RxDB + free Dexie local repository', () => {
     await db.save('asset', expected);
     const second = { ...event, id: crypto.randomUUID() };
     const results = await Promise.allSettled([
-      db.recordRenewal(expected, next, event), db.recordRenewal(expected, next, second),
+      db.recordRenewal(expected, next, event), db.recordRenewal(expected, { ...next, lastRenewalId: second.id }, second),
     ]);
     expect(results.filter(result => result.status === 'fulfilled')).toHaveLength(1);
     expect(results.filter(result => result.status === 'rejected')).toHaveLength(1);
@@ -213,7 +213,8 @@ describe('RxDB + free Dexie local repository', () => {
     expect(histories).toHaveLength(1);
     expect([event.id, second.id]).toContain(histories[0].id);
     expect(await db.fileStore.renewalJournal.count()).toBe(0);
-    await expect(db.recordRenewal(expected, next, { ...event, id: crypto.randomUUID() })).rejects.toThrow('renewal-stale');
+    const retry = { ...event, id: crypto.randomUUID() };
+    await expect(db.recordRenewal(expected, { ...next, lastRenewalId: retry.id }, retry)).rejects.toThrow('renewal-stale');
 
     const archive = await db.exportArchive();
     const restored = await openLocalRepository(name());
@@ -252,6 +253,100 @@ describe('RxDB + free Dexie local repository', () => {
     await db.close();
   });
 
+  it('keeps a concurrent normal asset edit, cancels the orphan renewal, then permits retry and export', async () => {
+    const dbName = name();
+    const db = await openLocalRepository(dbName);
+    const otherTab = new LocalRepository(db.db, db.fileStore);
+    const { expected, next, event } = renewalFixture();
+    await db.save('asset', expected);
+    const storage = db.db.records.storageInstance;
+    const original = storage.bulkWrite.bind(storage);
+    const write = vi.spyOn(storage, 'bulkWrite').mockImplementationOnce(async (rows, context) => {
+      expect(context).toBe('keepany-renewal');
+      await otherTab.save('asset', { ...expected, name: 'Concurrent rename' });
+      return original(rows, context);
+    });
+    await expect(db.recordRenewal(expected, next, event)).rejects.toThrow('renewal-stale');
+    write.mockRestore();
+    const changed = await db.get<Asset>('asset', expected.id);
+    expect(changed).toMatchObject({ name: 'Concurrent rename', dueDate: expected.dueDate,
+      renewalCount: 0, lastRenewalId: expected.lastRenewalId });
+    expect(await db.list('history')).toHaveLength(0);
+    expect(await db.fileStore.renewalJournal.count()).toBe(0);
+    await expect(db.exportArchive()).resolves.toBeInstanceOf(Uint8Array);
+
+    if (!changed) throw Error('missing-renewal-fixture');
+    const retryEvent = { ...event, id: crypto.randomUUID() };
+    await otherTab.recordRenewal(changed, { ...changed, dueDate: next.dueDate,
+      renewalCount: 1, lastRenewalId: retryEvent.id, updatedAt: new Date().toISOString() }, retryEvent);
+    expect((await db.get<Asset>('asset', expected.id))?.name).toBe('Concurrent rename');
+    expect((await db.get<Asset>('asset', expected.id))?.renewalCount).toBe(1);
+    expect((await db.list<{ id: string }>('history')).map(row => row.id)).toEqual([retryEvent.id]);
+    await expect(db.save('asset', { ...expected, name: 'Stale overwrite' })).rejects.toThrow('asset-stale-renewal');
+    await db.close();
+  });
+
+  it('keeps a committed renewal after journal cleanup fails and another caller edits the asset', async () => {
+    const dbName = name();
+    const db = await openLocalRepository(dbName);
+    const otherTab = new LocalRepository(db.db, db.fileStore);
+    const { expected, next, event } = renewalFixture();
+    await db.save('asset', expected);
+    const deletion = vi.spyOn(db.fileStore.renewalJournal, 'delete').mockRejectedValueOnce(Error('injected-cleanup'));
+    await db.recordRenewal(expected, next, event);
+    deletion.mockRestore();
+    expect(await db.fileStore.renewalJournal.count()).toBe(1);
+    const committed = await otherTab.get<Asset>('asset', expected.id);
+    if (!committed) throw Error('missing-renewal-fixture');
+    await otherTab.save('asset', { ...committed, name: 'Renamed after renewal' });
+    await otherTab.save('asset', { ...committed, name: 'Renamed after renewal',
+      dueDate: '2026-07-31', billingAnchor: '2026-07-31', renewalCount: 0 });
+    await db.close();
+
+    const reopened = await openLocalRepository(dbName);
+    expect(reopened.renewalRecoveryError).toBeNull();
+    expect(await reopened.get<Asset>('asset', expected.id)).toMatchObject({ name: 'Renamed after renewal',
+      dueDate: '2026-07-31', renewalCount: 0, lastRenewalId: event.id });
+    expect((await reopened.list<{ id: string }>('history')).map(row => row.id)).toEqual([event.id]);
+    expect(await reopened.fileStore.renewalJournal.count()).toBe(0);
+    await expect(reopened.exportArchive()).resolves.toBeInstanceOf(Uint8Array);
+    await reopened.close();
+  });
+
+  it('serializes export with an in-flight renewal and reopens with a settled journal', async () => {
+    const dbName = name();
+    const db = await openLocalRepository(dbName);
+    const { expected, next, event } = renewalFixture();
+    await db.save('asset', expected);
+    let entered!: () => void;
+    let release!: () => void;
+    const atWrite = new Promise<void>(resolve => { entered = resolve; });
+    const allowWrite = new Promise<void>(resolve => { release = resolve; });
+    const storage = db.db.records.storageInstance;
+    const original = storage.bulkWrite.bind(storage);
+    const write = vi.spyOn(storage, 'bulkWrite').mockImplementationOnce(async (rows, context) => {
+      entered();
+      await allowWrite;
+      return original(rows, context);
+    });
+    const pending = db.recordRenewal(expected, next, event);
+    await atWrite;
+    let exported = false;
+    const exportPromise = new LocalRepository(db.db, db.fileStore).exportArchive().then(archive => { exported = true; return archive; });
+    await new Promise(resolve => setTimeout(resolve, 10));
+    expect(exported).toBe(false);
+    release();
+    await pending;
+    write.mockRestore();
+    expect(await exportPromise).toBeInstanceOf(Uint8Array);
+    await db.close();
+    const reopened = await openLocalRepository(dbName);
+    expect((await reopened.get<Asset>('asset', expected.id))?.renewalCount).toBe(1);
+    expect((await reopened.list<{ id: string }>('history')).map(row => row.id)).toEqual([event.id]);
+    expect(await reopened.fileStore.renewalJournal.count()).toBe(0);
+    await reopened.close();
+  });
+
   it('repairs a pending renewal journal on reopen without leaving a partial record', async () => {
     const dbName = name();
     const db = await openLocalRepository(dbName);
@@ -283,7 +378,9 @@ describe('RxDB + free Dexie local repository', () => {
       payload: JSON.stringify(event), updatedAt: Date.now() };
     await db.fileStore.renewalJournal.add({ id: 'asset-only-renewal', assetId: expected.id,
       expectedPayload: original.payload, next: nextRow, history: historyRow });
-    await db.save('asset', next);
+    const current = await db.db.records.findOne(`asset:${expected.id}`).exec();
+    if (!current) throw Error('missing-renewal-fixture');
+    await current.incrementalModify((data: RecordRow) => ({ ...data, ...nextRow }));
     await db.close();
 
     const recovered = await openLocalRepository(dbName);

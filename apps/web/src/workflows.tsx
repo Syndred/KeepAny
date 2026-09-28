@@ -158,8 +158,8 @@ export function AssetEditor({
 		try {
 			await save("asset", parsed.data);
 			onClose();
-		} catch {
-			setFailure(t("error"));
+		} catch (error) {
+			setFailure(error instanceof Error && error.message === "asset-stale-renewal" ? t("renewalStale") : t("error"));
 		} finally {
 			setBusy(false);
 		}

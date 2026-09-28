@@ -153,3 +153,81 @@ test("renewal cycle, local amounts and history survive edits, status changes, re
 		await source.close();
 	}
 });
+
+test("a second tab can edit while renewal is queued without leaving a false history or blocking backup", async ({ browser }) => {
+	test.skip(process.env.KEEPANY_SUBSCRIPTION_MODE === "preview", "This fault injection uses the development source module.");
+	test.setTimeout(90_000);
+	const context = await browser.newContext({ locale: "en-US", viewport: { width: 1280, height: 800 } });
+	const first = await context.newPage();
+	const second = await context.newPage();
+	first.setDefaultTimeout(10_000);
+	second.setDefaultTimeout(10_000);
+	const name = `Concurrent cycle ${crypto.randomUUID().slice(0, 8)}`;
+	try {
+		await first.goto("/assets/subscription");
+		await first.getByRole("button", { name: "Add", exact: true }).click();
+		const dialog = first.getByRole("dialog");
+		await dialog.getByLabel("Name", { exact: true }).fill(name);
+		await dialog.locator("#dueDate").fill("2026-01-31");
+		await dialog.getByRole("button", { name: "Save" }).click();
+		await expect(dialog).toBeHidden();
+		await first.getByText(name).first().click();
+		await second.goto(first.url());
+		await expect(second.getByRole("heading", { name })).toBeVisible();
+		await second.evaluate(async modulePath => {
+			const { localRepository } = await import(modulePath);
+			await localRepository();
+		}, repositoryModuleUrl);
+
+		await first.evaluate(async modulePath => {
+			const { localRepository } = await import(modulePath);
+			const repository = await localRepository();
+			const storage = repository.db.records.storageInstance;
+			const original = storage.bulkWrite.bind(storage);
+			let release: (() => void) | undefined;
+			let entered = false;
+			const gate = { entered: () => entered, release: () => release?.() };
+			(window as Window & { __renewalGate?: typeof gate }).__renewalGate = gate;
+			storage.bulkWrite = async (rows: Parameters<typeof original>[0], context: Parameters<typeof original>[1]) => {
+				if (context === "keepany-renewal" && !entered) {
+					entered = true;
+					await new Promise<void>(resolve => { release = resolve; });
+				}
+				return original(rows, context);
+			};
+		}, repositoryModuleUrl);
+		await first.getByRole("button", { name: "Record renewal" }).click();
+		await first.waitForFunction(() => (window as Window & { __renewalGate?: { entered: () => boolean } }).__renewalGate?.entered());
+		await second.evaluate(async ({ modulePath, name }) => {
+			const { localRepository } = await import(modulePath);
+			const repository = await localRepository();
+			const asset = (await repository.list("asset")).find((item: { name: string }) => item.name === name);
+			if (!asset) throw Error("subscription missing in second tab");
+			await repository.save("asset", { ...asset, name: `${name} renamed` });
+		}, { modulePath: repositoryModuleUrl, name });
+		const openingTab = await context.newPage();
+		await openingTab.goto(first.url());
+		await expect(openingTab.getByRole("heading", { name: `${name} renamed` })).toHaveCount(0);
+		await first.evaluate(() => (window as Window & { __renewalGate?: { release: () => void } }).__renewalGate?.release());
+		await expect.poll(async () => second.evaluate(async modulePath => {
+			const { localRepository } = await import(modulePath);
+			return (await localRepository()).fileStore.renewalJournal.count();
+		}, repositoryModuleUrl)).toBe(0);
+		await expect(openingTab.getByRole("heading", { name: `${name} renamed` })).toBeVisible();
+		const state = await localRenewalState(second, `${name} renamed`);
+		expect(state.asset).toMatchObject({ dueDate: "2026-01-31", renewalCount: 0 });
+		expect(state.history).toHaveLength(0);
+		expect(await second.evaluate(async modulePath => {
+			const { localRepository } = await import(modulePath);
+			return (await (await localRepository()).exportArchive()).length;
+		}, repositoryModuleUrl)).toBeGreaterThan(0);
+
+		await second.reload();
+		await second.getByRole("button", { name: "Record renewal" }).click();
+		await expect(nextDate(second, "Next date")).toHaveText("Feb 28, 2026");
+		await expect(historyRows(second, "History")).toHaveCount(1);
+	} finally {
+		await first.evaluate(() => (window as Window & { __renewalGate?: { release: () => void } }).__renewalGate?.release()).catch(() => {});
+		await context.close();
+	}
+});
