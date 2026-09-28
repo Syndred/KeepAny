@@ -1,6 +1,6 @@
 import sodium from 'libsodium-wrappers';
 import { z } from 'zod';
-import { syncChangeSchema, type SyncChange } from '../../contracts/src';
+import { syncChangeSchema, syncKindSchema, type SyncChange } from '../../contracts/src';
 
 const FORMAT = 'keepany-sync-envelope';
 const ALGORITHM = 'XChaCha20-Poly1305-IETF';
@@ -16,7 +16,7 @@ const baseContextSchema = z.object({
 });
 const legacyContextSchema = baseContextSchema.extend({ sequence: z.number().int().positive() });
 const contextV2Schema = baseContextSchema.extend({
-  kind: z.enum(['asset', 'relation', 'task', 'category', 'submission', 'history', 'preference']),
+  kind: syncKindSchema,
   recordVersion: z.number().int().positive(),
 }).refine(value => value.recordId.startsWith(`${value.kind}:`), 'kind-mismatch');
 const contextSchema = z.union([contextV2Schema, legacyContextSchema]);
