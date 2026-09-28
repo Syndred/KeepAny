@@ -190,6 +190,28 @@ p { line-height: 1.5; }
 .button:disabled, .tabs button:disabled { opacity: .58; filter: grayscale(.35); box-shadow: none; }
 .binding-panel { margin-top: 16px; }
 .binding-code { display: inline-block; max-width: 100%; padding: 6px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--paper); font-size: 20px; font-weight: 800; letter-spacing: .08em; overflow-wrap: anywhere; }
+.mcp-panel { display: grid; gap: 12px; margin-top: 16px; min-width: 0; }
+.mcp-panel > :is(h2, p) { margin: 0; }
+.mcp-options { min-width: 0; margin: 0; padding: 10px 12px 12px; border: 1px solid var(--line-soft); border-radius: 10px; }
+.mcp-options legend { padding: 0 4px; font-size: 13px; font-weight: 750; }
+.mcp-options small { display: block; margin-top: 8px; color: var(--muted); line-height: 1.4; }
+.mcp-options-list { display: grid; gap: 8px 14px; min-width: 0; }
+.mcp-asset-list { max-height: 180px; overflow-y: auto; }
+.mcp-field-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.mcp-check { display: flex; align-items: flex-start; gap: 8px; min-width: 0; font-size: 13px; line-height: 1.4; overflow-wrap: anywhere; cursor: pointer; }
+.mcp-check input { flex: none; width: 18px; height: 18px; margin: 0; accent-color: var(--green); }
+.mcp-check span { min-width: 0; }
+.mcp-check:has(input:disabled) { color: var(--muted); cursor: default; }
+.mcp-duration { max-width: 230px; }
+.mcp-panel .actions { flex-wrap: wrap; }
+.mcp-import { margin-top: 4px; }
+.mcp-active { display: grid; gap: 12px; min-width: 0; }
+.mcp-active > p { margin: 0; font-weight: 700; }
+.mcp-active dl { display: grid; grid-template-columns: minmax(100px, .5fr) minmax(0, 1fr); gap: 8px 12px; margin: 0; font-size: 13px; overflow-wrap: anywhere; }
+.mcp-active dt { color: var(--muted); font-weight: 700; }
+.mcp-active dd { min-width: 0; margin: 0; }
+.mcp-active .button { justify-self: start; }
+.mcp-error { color: var(--danger); font-weight: 650; }
 
 .tabs { flex-wrap: nowrap; gap: 6px; width: 100%; overflow-x: auto; overscroll-behavior-inline: contain; padding: 2px 4px 6px 2px; scrollbar-width: thin; }
 .tabs > button, .tabs > .sortable-pill { flex: none; }
@@ -346,6 +368,7 @@ p { line-height: 1.5; }
   .form-grid > .wide, .form-grid > [data-wide="true"] { grid-column: auto; }
   .field input, .field select, .field textarea, input.field, select.field, textarea.field { font-size: 16px; }
   .dialog { padding: 14px; }
+  .mcp-field-list, .mcp-active dl { grid-template-columns: 1fr; }
   .list-row { align-items: flex-start; flex-wrap: wrap; }
 }
 
