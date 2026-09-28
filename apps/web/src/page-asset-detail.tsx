@@ -19,6 +19,7 @@ import {
 	inputFromMinorUnits,
 	monthlyMinorUnits,
 	parseMinorUnits,
+	submissionSchema,
 } from "../../../packages/domain/src";
 import { buildImpactTasks, upgradeLegacyImpactTasks } from "../../../packages/domain/src/impact";
 import {
@@ -209,6 +210,7 @@ export function AssetDetail() {
 	const [relationToDelete, setRelationToDelete] = useState<Relation | null>(
 		null,
 	);
+	const [relationDeleteError, setRelationDeleteError] = useState("");
 	const [relationBusy, setRelationBusy] = useState(false);
 	const relationInFlight = useRef(false);
 	const [relationError, setRelationError] = useState("");
@@ -218,6 +220,11 @@ export function AssetDetail() {
 		if (centerId) setRelationFilter("");
 	}, [centerId]);
 	const [submissionEdit, setSubmissionEdit] = useState(false);
+	const [submissionNameError, setSubmissionNameError] = useState("");
+	const [submissionUrlError, setSubmissionUrlError] = useState("");
+	const [submissionSaveError, setSubmissionSaveError] = useState("");
+	const [submissionBusy, setSubmissionBusy] = useState(false);
+	const submissionInFlight = useRef(false);
 	const [taskEdit, setTaskEdit] = useState(false);
 	const [impactFilter, setImpactFilter] = useState<"all" | "pending" | "done">("all");
 	const [impactBusy, setImpactBusy] = useState(false);
@@ -410,14 +417,6 @@ export function AssetDetail() {
 		asset.kind === "subscription" && asset.dueDate
 			? actualCharge(asset, asset.dueDate)
 			: null;
-	const run = async (fn: () => Promise<unknown>) => {
-		try {
-			await fn();
-			notify(t("saved"));
-		} catch (error) {
-			notify(t(error instanceof Error && error.message === "asset-stale" ? "assetStale" : "error"));
-		}
-	};
 	async function confirmDelete() {
 		if (!asset || deleteInFlight.current) return;
 		deleteInFlight.current = true;
@@ -489,38 +488,69 @@ export function AssetDetail() {
 		if (!relationToDelete || relationInFlight.current) return;
 		relationInFlight.current = true;
 		setRelationBusy(true);
+		setRelationDeleteError("");
 		try {
 			await deleteEntity("relation", relationToDelete.id);
 			setRelationToDelete(null);
 			notify(t("saved"));
 		} catch {
-			notify(t("error"));
+			setRelationDeleteError(t("error"));
 		} finally {
 			relationInFlight.current = false;
 			setRelationBusy(false);
 		}
 	}
 	async function addSubmission() {
-		if (
-			!asset ||
-			!submissionName.trim() ||
-			!/^https?:\/\//i.test(submissionUrl)
-		)
-			return;
-		await save("submission", {
-			id: crypto.randomUUID(),
-			assetId: asset.id,
-			name: submissionName.trim(),
-			url: submissionUrl,
-			status: "planned",
-			submittedAt: "",
-			verifiedAt: "",
-			evidence: "",
-			deleted: false,
-		});
+		if (!asset || submissionInFlight.current) return;
+		const name = submissionName.trim();
+		const url = submissionUrl.trim();
+		const nameError = !name
+			? t("required")
+			: name.length > 200
+				? t("submissionNameTooLong")
+				: "";
+		const urlError = !url
+			? t("required")
+			: submissionSchema.shape.url.safeParse(url).success
+				? ""
+				: t("submissionInvalidUrl");
+		setSubmissionNameError(nameError);
+		setSubmissionUrlError(urlError);
+		setSubmissionSaveError("");
+		if (nameError || urlError) return;
+		submissionInFlight.current = true;
+		setSubmissionBusy(true);
+		try {
+			await save("submission", {
+				id: crypto.randomUUID(),
+				assetId: asset.id,
+				name,
+				url,
+				status: "planned",
+				submittedAt: "",
+				verifiedAt: "",
+				evidence: "",
+				deleted: false,
+			});
+			setSubmissionEdit(false);
+			setSubmissionName("");
+			setSubmissionUrl("");
+			notify(t("saved"));
+		} catch {
+			setSubmissionSaveError(t("error"));
+		} finally {
+			submissionInFlight.current = false;
+			setSubmissionBusy(false);
+		}
+	}
+	function closeSubmission() {
+		if (submissionInFlight.current) return;
 		setSubmissionEdit(false);
 		setSubmissionName("");
 		setSubmissionUrl("");
+		setSubmissionNameError("");
+		setSubmissionUrlError("");
+		setSubmissionSaveError("");
 	}
 	async function addImage(file: File) {
 		if (!asset || imageInFlight.current) return;
@@ -1104,7 +1134,10 @@ export function AssetDetail() {
 													variant="ghost"
 													size="small"
 													aria-label={`${t("deleteRelation")} · ${relation.label} · ${neighbor.name}`}
-													onClick={() => setRelationToDelete(relation)}
+													onClick={() => {
+														setRelationDeleteError("");
+														setRelationToDelete(relation);
+													}}
 												>
 													{t("remove")}
 												</Button>
@@ -1435,14 +1468,27 @@ export function AssetDetail() {
 				<Dialog
 					title={t("deleteRelation")}
 					onClose={() => {
-						if (!relationInFlight.current) setRelationToDelete(null);
+						if (!relationInFlight.current) {
+							setRelationDeleteError("");
+							setRelationToDelete(null);
+						}
 					}}
 				>
-					<p>{t("deleteRelationConfirm", { label: relationToDelete.label })}</p>
+					<p style={{ overflowWrap: "anywhere" }}>
+						{t("deleteRelationConfirm", { label: relationToDelete.label })}
+					</p>
+					{relationDeleteError && (
+						<p className="field-error" role="alert">
+							{relationDeleteError}
+						</p>
+					)}
 					<div className="actions">
 						<Button
 							disabled={relationBusy}
-							onClick={() => setRelationToDelete(null)}
+							onClick={() => {
+								setRelationDeleteError("");
+								setRelationToDelete(null);
+							}}
 						>
 							{t("cancel")}
 						</Button>
@@ -1459,7 +1505,7 @@ export function AssetDetail() {
 			{submissionEdit && (
 				<Dialog
 					title={t("addSubmission")}
-					onClose={() => setSubmissionEdit(false)}
+					onClose={closeSubmission}
 				>
 					<div className="form-grid">
 						<div className="field">
@@ -1467,8 +1513,15 @@ export function AssetDetail() {
 							<input
 								id="submission-name"
 								value={submissionName}
-								onChange={(e) => setSubmissionName(e.target.value)}
+								disabled={submissionBusy}
+								aria-invalid={!!submissionNameError}
+								aria-describedby={submissionNameError ? "submission-name-error" : undefined}
+								onChange={(e) => {
+									setSubmissionName(e.target.value);
+									setSubmissionNameError("");
+								}}
 							/>
+							{submissionNameError && <small id="submission-name-error" role="alert">{submissionNameError}</small>}
 						</div>
 						<div className="field">
 							<label htmlFor="submission-url">{t("url")}</label>
@@ -1476,17 +1529,24 @@ export function AssetDetail() {
 								id="submission-url"
 								type="url"
 								value={submissionUrl}
-								onChange={(e) => setSubmissionUrl(e.target.value)}
+								disabled={submissionBusy}
+								aria-invalid={!!submissionUrlError}
+								aria-describedby={submissionUrlError ? "submission-url-error" : undefined}
+								onChange={(e) => {
+									setSubmissionUrl(e.target.value);
+									setSubmissionUrlError("");
+								}}
 							/>
+							{submissionUrlError && <small id="submission-url-error" role="alert">{submissionUrlError}</small>}
 						</div>
 					</div>
+					{submissionSaveError && <p className="field-error" role="alert">{submissionSaveError}</p>}
 					<div className="actions">
+						<Button disabled={submissionBusy} onClick={closeSubmission}>{t("cancel")}</Button>
 						<Button
 							variant="primary"
-							disabled={
-								!submissionName.trim() || !/^https?:\/\//i.test(submissionUrl)
-							}
-							onClick={() => void run(addSubmission)}
+							disabled={submissionBusy}
+							onClick={() => void addSubmission()}
 						>
 							{t("save")}
 						</Button>
@@ -1504,7 +1564,7 @@ export function AssetDetail() {
 							onError={() => setPendingImageStatus("error")}
 						/>
 					)}
-					<p>{pendingImage.name}</p>
+					<p style={{ overflowWrap: "anywhere" }}>{pendingImage.name}</p>
 					{pendingImageStatus === "error" && (
 						<p role="alert">{t("uploadError")}</p>
 					)}
