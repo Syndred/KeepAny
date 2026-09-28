@@ -418,130 +418,132 @@ test("project and account CRUD, intersecting filters, trash and actual backup re
 	}
 });
 
-test("project image replacement removes old blob and actual backup restores only current image", async ({
-	browser,
-}) => {
-	test.setTimeout(120_000);
-	mkdirSync(evidence, { recursive: true });
-	const suffix = crypto.randomUUID().slice(0, 8);
-	const name = `Image project ${suffix}`;
-	const password = `image-crud-backup-${suffix}-2026`;
-	const source = await browser.newContext({
-		locale: "en-US",
-		acceptDownloads: true,
-		viewport: { width: 390, height: 844 },
-	});
-	const page = await source.newPage();
-	const errors: string[] = [];
-	page.on("pageerror", (error) => errors.push(error.message));
-	async function png(color: string) {
-		const base64 = await page.evaluate((fill) => {
-			const canvas = document.createElement("canvas");
-			canvas.width = 8;
-			canvas.height = 8;
-			const context = canvas.getContext("2d");
-			if (!context) throw Error("Canvas unavailable");
-			context.fillStyle = fill;
-			context.fillRect(0, 0, 8, 8);
-			return canvas.toDataURL("image/png").split(",")[1];
-		}, color);
-		return Buffer.from(base64, "base64");
-	}
-	try {
-		await add(page, "project", name);
-		await saveDialog(page);
-		await openDetail(page, name);
-		const projectId = (await assetRows(page)).find(
-			(asset) => asset.name === name,
-		)?.id;
-		if (!projectId) throw Error("Project ID missing");
-		const first = await png("#e43b44");
-		await page.getByLabel("Add image").setInputFiles({
-			name: "original.png",
-			mimeType: "image/png",
-			buffer: first,
-		});
-		await page
-			.getByRole("dialog")
-			.getByRole("button", { name: "Confirm" })
-			.click();
-		await expect(page.locator(".asset-image")).toHaveCount(1);
-		const firstFiles = await storedFiles(page);
-		expect(firstFiles).toHaveLength(1);
-		expect(firstFiles[0].bytes).toEqual(Array.from(first));
-		const replacement = await png("#2487c2");
-		const chooser = page.waitForEvent("filechooser");
-		await page.getByRole("button", { name: "Replace image" }).click();
-		await (await chooser).setFiles({
-			name: "replacement.png",
-			mimeType: "image/png",
-			buffer: replacement,
-		});
-		await page
-			.getByRole("dialog")
-			.getByRole("button", { name: "Confirm" })
-			.click();
-		await expect(page.locator(".asset-image")).toHaveCount(1);
-		await expect.poll(async () => (await storedFiles(page)).length).toBe(1);
-		const currentFiles = await storedFiles(page);
-		expect(currentFiles[0].id).not.toBe(firstFiles[0].id);
-		expect(currentFiles[0].name).toBe("replacement.png");
-		expect(currentFiles[0].bytes).toEqual(Array.from(replacement));
-		expect(
-			(await assetRows(page)).find((asset) => asset.id === projectId)
-				?.attachments,
-		).toEqual([currentFiles[0].id]);
-		await page.screenshot({
-			path: `${evidence}/crud-en-390-project-image-replaced.png`,
-		});
-
-		await page.goto("/intake");
-		await page.locator("#backup-password").fill(password);
-		await page.getByRole("button", { name: "Create backup" }).click();
-		const downloadEvent = page.waitForEvent("download");
-		await page.getByRole("link", { name: "Save backup file" }).click();
-		const backupPath = await (await downloadEvent).path();
-		if (!backupPath) throw Error("The browser did not save the .ka1 file");
-		const destination = await browser.newContext({
-			locale: "zh-CN",
+for (const kind of ["project", "account"] as const) {
+	test(`${kind} image replacement removes old blob and actual backup restores only current image`, async ({
+		browser,
+	}) => {
+		test.setTimeout(120_000);
+		mkdirSync(evidence, { recursive: true });
+		const suffix = crypto.randomUUID().slice(0, 8);
+		const name = `Image ${kind} ${suffix}`;
+		const password = `image-crud-backup-${suffix}-2026`;
+		const source = await browser.newContext({
+			locale: "en-US",
+			acceptDownloads: true,
 			viewport: { width: 390, height: 844 },
 		});
-		const restored = await destination.newPage();
-		restored.on("pageerror", (error) => errors.push(error.message));
+		const page = await source.newPage();
+		const errors: string[] = [];
+		page.on("pageerror", (error) => errors.push(error.message));
+		async function png(color: string) {
+			const base64 = await page.evaluate((fill) => {
+				const canvas = document.createElement("canvas");
+				canvas.width = 8;
+				canvas.height = 8;
+				const context = canvas.getContext("2d");
+				if (!context) throw Error("Canvas unavailable");
+				context.fillStyle = fill;
+				context.fillRect(0, 0, 8, 8);
+				return canvas.toDataURL("image/png").split(",")[1];
+			}, color);
+			return Buffer.from(base64, "base64");
+		}
 		try {
-			await restored.goto("/intake");
-			await restored.locator("#backup-password").fill(password);
-			await restored.locator("#restore-file").setInputFiles(backupPath);
-			await restored
-				.getByRole("button", { name: "预览", exact: true })
-				.first()
+			await add(page, kind, name);
+			await saveDialog(page);
+			await openDetail(page, name);
+			const assetId = (await assetRows(page)).find(
+				(asset) => asset.name === name,
+			)?.id;
+			if (!assetId) throw Error(`${kind} ID missing`);
+			const first = await png("#e43b44");
+			await page.getByLabel("Add image").setInputFiles({
+				name: "original.png",
+				mimeType: "image/png",
+				buffer: first,
+			});
+			await page
+				.getByRole("dialog")
+				.getByRole("button", { name: "Confirm" })
 				.click();
-			await restored.getByRole("button", { name: /确认 ·/ }).click();
-			await expect(restored.getByText(/已恢复 \d+ 条记录/)).toBeVisible();
-			await restored.goto(`/assets/project/${projectId}`);
-			await expect(restored.getByRole("heading", { name })).toBeVisible();
-			await expect(restored.locator(".asset-image")).toHaveCount(1);
+			await expect(page.locator(".asset-image")).toHaveCount(1);
+			const firstFiles = await storedFiles(page);
+			expect(firstFiles).toHaveLength(1);
+			expect(firstFiles[0].bytes).toEqual(Array.from(first));
+			const replacement = await png("#2487c2");
+			const chooser = page.waitForEvent("filechooser");
+			await page.getByRole("button", { name: "Replace image" }).click();
+			await (await chooser).setFiles({
+				name: "replacement.png",
+				mimeType: "image/png",
+				buffer: replacement,
+			});
+			await page
+				.getByRole("dialog")
+				.getByRole("button", { name: "Confirm" })
+				.click();
+			await expect(page.locator(".asset-image")).toHaveCount(1);
+			await expect.poll(async () => (await storedFiles(page)).length).toBe(1);
+			const currentFiles = await storedFiles(page);
+			expect(currentFiles[0].id).not.toBe(firstFiles[0].id);
+			expect(currentFiles[0].name).toBe("replacement.png");
+			expect(currentFiles[0].bytes).toEqual(Array.from(replacement));
 			expect(
-				(await assetRows(restored)).find((asset) => asset.id === projectId)
+				(await assetRows(page)).find((asset) => asset.id === assetId)
 					?.attachments,
 			).toEqual([currentFiles[0].id]);
-			expect(await storedFiles(restored)).toEqual(currentFiles);
+			await page.screenshot({
+				path: `${evidence}/crud-en-390-${kind}-image-replaced.png`,
+			});
+
+			await page.goto("/intake");
+			await page.locator("#backup-password").fill(password);
+			await page.getByRole("button", { name: "Create backup" }).click();
+			const downloadEvent = page.waitForEvent("download");
+			await page.getByRole("link", { name: "Save backup file" }).click();
+			const backupPath = await (await downloadEvent).path();
+			if (!backupPath) throw Error("The browser did not save the .ka1 file");
+			const destination = await browser.newContext({
+				locale: "zh-CN",
+				viewport: { width: 390, height: 844 },
+			});
+			const restored = await destination.newPage();
+			restored.on("pageerror", (error) => errors.push(error.message));
+			try {
+				await restored.goto("/intake");
+				await restored.locator("#backup-password").fill(password);
+				await restored.locator("#restore-file").setInputFiles(backupPath);
+				await restored
+					.getByRole("button", { name: "预览", exact: true })
+					.first()
+					.click();
+				await restored.getByRole("button", { name: /确认 ·/ }).click();
+				await expect(restored.getByText(/已恢复 \d+ 条记录/)).toBeVisible();
+				await restored.goto(`/assets/${kind}/${assetId}`);
+				await expect(restored.getByRole("heading", { name })).toBeVisible();
+				await expect(restored.locator(".asset-image")).toHaveCount(1);
+				expect(
+					(await assetRows(restored)).find((asset) => asset.id === assetId)
+						?.attachments,
+				).toEqual([currentFiles[0].id]);
+				expect(await storedFiles(restored)).toEqual(currentFiles);
+			} finally {
+				await destination.close();
+			}
+			await page.goto(`/assets/${kind}/${assetId}`);
+			await page.getByRole("button", { name: "Remove image" }).click();
+			await expect(page.locator(".asset-image")).toHaveCount(0);
+			await expect.poll(async () => (await storedFiles(page)).length).toBe(0);
+			expect(
+				(await assetRows(page)).find((asset) => asset.id === assetId)
+					?.attachments,
+			).toEqual([]);
+			expect(errors).toEqual([]);
 		} finally {
-			await destination.close();
+			await source.close();
 		}
-		await page.goto(`/assets/project/${projectId}`);
-		await page.getByRole("button", { name: "Remove image" }).click();
-		await expect(page.locator(".asset-image")).toHaveCount(0);
-		await expect.poll(async () => (await storedFiles(page)).length).toBe(0);
-		expect(
-			(await assetRows(page)).find((asset) => asset.id === projectId)
-				?.attachments,
-		).toEqual([]);
-		expect(errors).toEqual([]);
-	} finally {
-		await source.close();
-	}
-});
+	});
+}
 
 for (const locale of ["en-US", "zh-CN"] as const) {
 	for (const width of [360, 390, 768, 1280, 1440]) {
