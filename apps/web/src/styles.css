@@ -333,6 +333,15 @@ p { line-height: 1.5; }
 .relation-row .relation-info a { color: inherit; }
 .relation-row .relation-info small { margin-top: 3px; }
 .relation-row .button { flex: none; }
+.task-filters { flex-wrap: wrap; margin: 0 0 14px; border: 0; padding: 0; }
+.impact-checklist > .subtitle { margin-bottom: 14px; }
+.impact-checklist > .notice { margin-bottom: 14px; }
+.impact-task-row { align-items: flex-start; }
+.impact-task-info { flex: 1; min-width: 0; }
+.impact-task-info small { margin-top: 3px; }
+.impact-task-actions { display: grid; justify-items: start; gap: 5px; flex: none; }
+.impact-task-actions label { color: var(--muted); font-size: 12px; font-weight: 700; }
+.impact-task-actions input { width: 150px; max-width: 100%; min-height: 36px; }
 
 @media (max-width: 1050px) {
   .shell { grid-template-columns: 186px minmax(0, 1fr); }
@@ -376,6 +385,8 @@ p { line-height: 1.5; }
   .dialog { padding: 14px; }
   .mcp-field-list, .mcp-active dl { grid-template-columns: 1fr; }
   .list-row { align-items: flex-start; flex-wrap: wrap; }
+  .impact-task-row.list-row > div.impact-task-info { flex: 1 1 calc(100% - 52px); }
+  .impact-task-row.list-row > div.impact-task-actions { display: flex; flex: 0 0 100%; align-items: center; flex-wrap: wrap; width: 100%; padding-left: 48px; }
 }
 
 @media (max-width: 400px) {

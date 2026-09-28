@@ -274,11 +274,32 @@ const copy: Record<string, [string, string]> = {
 	],
 	impact: ["变更影响", "Change impact"],
 	impactHint: [
-		"这些资产与当前资料有关，变更后请逐项检查。",
-		"These assets are connected. Check each one after making a change.",
+		"停用或更换此账号前，根据已记录的关联逐项检查。",
+		"Before disabling or replacing this account, review each recorded connection.",
 	],
 	makeChecklist: ["生成检查待办", "Create checklist"],
 	checkConnection: ["检查关联", "Check connection"],
+	impactSnapshotHint: [
+		"清单保留生成时的关联信息。新增关联可再次生成；关联变化后请复核旧待办。完成只记录本机检查，不表示第三方资料已更新。",
+		"The checklist keeps the connection details from when it was created. Run it again for new connections and review older tasks when connections change. Completing a task records a local check only; it does not update other services.",
+	],
+	impactNewRelations: [
+		"还有 {{count}} 条当前关联未加入清单。",
+		"{{count}} current connection(s) have not been added to the checklist.",
+	],
+	impactSnapshotAt: ["生成于", "Created"],
+	impactRelationInactive: [
+		"原关联已移除或资产已删除；此待办保留生成时的记录。",
+		"The original connection or asset was removed. This task retains its recorded details.",
+	],
+	impactRelationChanged: [
+		"当前关联与生成时不同，请复核此待办。",
+		"The connection has changed since this task was created. Review it again.",
+	],
+	impactCompletedHistory: ["完成记录", "Completion history"],
+	remindLater: ["稍后提醒", "Remind later"],
+	viewTask: ["查看待办", "View task"],
+	taskFilter: ["筛选待办", "Filter tasks"],
 	balance: [
 		"按币种分别统计，不进行汇率换算。",
 		"Totals are grouped by currency without conversion.",

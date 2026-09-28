@@ -18,16 +18,19 @@ import {
 	dueOnCycle,
 	monthlyAmount,
 } from "../../../packages/domain/src";
+import { buildImpactTasks, upgradeLegacyImpactTasks } from "../../../packages/domain/src/impact";
 import {
 	cleanupUnreferencedFile,
 	deleteEntity,
 	fileUrl,
 	putFile,
 	save,
+	saveBatch,
 } from "../../../packages/local-db/src";
 import { Button } from "./components/ui/button";
 import { Dialog } from "./components/ui/dialog";
 import { TaskRow } from "./TaskRow";
+import { ImpactTaskRow } from "./ImpactTaskRow";
 import {
 	Empty,
 	PageTitle,
@@ -200,6 +203,15 @@ export function AssetDetail() {
 	}, [centerId]);
 	const [submissionEdit, setSubmissionEdit] = useState(false);
 	const [taskEdit, setTaskEdit] = useState(false);
+	const [impactFilter, setImpactFilter] = useState<"all" | "pending" | "done">("all");
+	const [impactBusy, setImpactBusy] = useState(false);
+	const impactInFlight = useRef(false);
+	const generatedImpactKeys = useRef(new Set<string>());
+	useEffect(() => {
+		for (const task of data.tasks) {
+			if (!task.deleted) generatedImpactKeys.current.delete(task.dedupeKey);
+		}
+	}, [data.tasks]);
 	const [uploading, setUploading] = useState(false);
 	const [pendingImage, setPendingImage] = useState<File | null>(null);
 	const [pendingImageUrl, setPendingImageUrl] = useState("");
@@ -231,14 +243,6 @@ export function AssetDetail() {
 			liveById.has(r.from) &&
 			liveById.has(r.to),
 	);
-	const related = Array.from(
-		new Map(
-			relations.map((r) => {
-				const neighbor = liveById.get(r.from === asset?.id ? r.to : r.from);
-				return [neighbor?.id, neighbor] as const;
-			}),
-		).values(),
-	).filter((item): item is Asset => !!item);
 	const normalizedFilter =
 		relations.length >= 5 ? relationFilter.trim().toLocaleLowerCase() : "";
 	const visibleRelations = normalizedFilter
@@ -283,8 +287,30 @@ export function AssetDetail() {
 			}) as Edge,
 	);
 	const ownTasks = data.tasks.filter(
-		(x) => !x.deleted && x.assetId === asset?.id,
+		(x) => !x.deleted && x.assetId === asset?.id && !x.impactSnapshot,
 	);
+	const impactTasks = data.tasks
+		.filter((task) =>
+			!task.deleted && task.impactSnapshot?.accountId === asset?.id,
+		)
+		.sort((a, b) => a.done === b.done ? a.createdAt.localeCompare(b.createdAt) : Number(a.done) - Number(b.done));
+	const impactCounts = {
+		all: impactTasks.length,
+		pending: impactTasks.filter((task) => !task.done).length,
+		done: impactTasks.filter((task) => task.done).length,
+	};
+	const visibleImpactTasks = impactTasks.filter((task) =>
+		impactFilter === "all" || (impactFilter === "done" ? task.done : !task.done),
+	);
+	const impactToGenerate = asset?.kind === "account"
+		? buildImpactTasks(asset, relations, [...liveById.values()], data.tasks, new Date().toISOString(), (linked) => `${t("checkConnection")}: ${linked.name}`)
+			.filter((task) => !generatedImpactKeys.current.has(task.dedupeKey))
+		: [];
+	const impactToUpgrade = asset?.kind === "account"
+		? upgradeLegacyImpactTasks(asset, relations, [...liveById.values()], data.tasks, new Date().toISOString())
+			.filter((task) => !generatedImpactKeys.current.has(task.dedupeKey))
+		: [];
+	const impactPendingCount = impactToGenerate.length + impactToUpgrade.length;
 	const submissions = data.submissions.filter(
 		(x) => !x.deleted && x.assetId === asset?.id,
 	);
@@ -479,24 +505,25 @@ export function AssetDetail() {
 		setHistoryNote("");
 	}
 	async function createImpact() {
-		if (!asset) return;
-		for (const linked of related) {
-			const key = `impact:${asset.id}:${linked.id}`;
-			if (data.tasks.some((x) => !x.deleted && !x.done && x.dedupeKey === key))
-				continue;
-			await save("task", {
-				id: crypto.randomUUID(),
-				name: `${t("checkConnection")}: ${linked.name}`,
-				assetId: linked.id,
-				dueDate: "",
-				done: false,
-				completedAt: "",
-				createdAt: new Date().toISOString(),
-				dedupeKey: key,
-				deleted: false,
-			});
+		if (!asset || impactInFlight.current || impactPendingCount === 0) return;
+		impactInFlight.current = true;
+		setImpactBusy(true);
+		try {
+			for (const task of impactToUpgrade) {
+				await save("task", task);
+				generatedImpactKeys.current.add(task.dedupeKey);
+			}
+			if (impactToGenerate.length) {
+				await saveBatch(impactToGenerate.map((value) => ({ type: "task" as const, value })));
+				for (const task of impactToGenerate) generatedImpactKeys.current.add(task.dedupeKey);
+			}
+			notify(t("saved"));
+		} catch {
+			notify(t("error"));
+		} finally {
+			impactInFlight.current = false;
+			setImpactBusy(false);
 		}
-		notify(t("saved"));
 	}
 	return (
 		<main className="page">
@@ -884,17 +911,50 @@ export function AssetDetail() {
 					) : (
 						<Empty hint={false} />
 					)}
-					{asset.kind === "account" && related.length > 0 && (
-						<div className="notice">
-							<strong>{t("impact")}</strong>
-							<p>{t("impactHint")}</p>
-							<Button size="small" onClick={() => void createImpact()}>
-								{t("makeChecklist")}
-							</Button>
-						</div>
-					)}
 				</section>
 			</div>
+			{asset.kind === "account" && (
+				<section className="card impact-checklist">
+					<div className="card-header">
+						<div>
+							<h2>{t("impact")}</h2>
+							<p>{t("impactHint")}</p>
+						</div>
+						<Button
+							size="small"
+							disabled={impactBusy || impactPendingCount === 0}
+							onClick={() => void createImpact()}
+						>
+							{t("makeChecklist")} · {impactPendingCount}
+						</Button>
+					</div>
+					<p className="subtitle">{t("impactSnapshotHint")}</p>
+					{impactPendingCount > 0 && (
+						<p className="notice" role="status">
+							{t("impactNewRelations", { count: impactPendingCount })}
+						</p>
+					)}
+					<fieldset className="tabs task-filters" aria-label={t("taskFilter")}>
+						{(["all", "pending", "done"] as const).map((value) => (
+							<button
+								type="button"
+								key={value}
+								aria-pressed={impactFilter === value}
+								onClick={() => setImpactFilter(value)}
+							>
+								{t(value)} · {impactCounts[value]}
+							</button>
+						))}
+					</fieldset>
+					{visibleImpactTasks.length ? (
+						<div className="list">
+							{visibleImpactTasks.map((task) => (
+								<ImpactTaskRow task={task} showTaskLink key={task.id} />
+							))}
+						</div>
+					) : <Empty hint={false} />}
+				</section>
+			)}
 			{asset.kind === "project" && (
 				<section className="card">
 					<div className="card-header">

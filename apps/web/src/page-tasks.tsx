@@ -11,12 +11,21 @@ export function TaskPage() {
 	const { data } = useAppContext();
 	const { t } = useTranslation();
 	const [edit, setEdit] = useState(false);
+	const [filter, setFilter] = useState<"all" | "pending" | "done">("all");
 	const tasks = data.tasks
 		.filter((x) => !x.deleted)
 		.sort(
 			(a, b) =>
 				Number(a.done) - Number(b.done) || a.dueDate.localeCompare(b.dueDate),
 		);
+	const counts = {
+		all: tasks.length,
+		pending: tasks.filter((task) => !task.done).length,
+		done: tasks.filter((task) => task.done).length,
+	};
+	const visibleTasks = tasks.filter(
+		(task) => filter === "all" || (filter === "done" ? task.done : !task.done),
+	);
 	return (
 		<main className="page">
 			<PageTitle
@@ -29,9 +38,21 @@ export function TaskPage() {
 				}
 			/>
 			<section className="card">
-				{tasks.length ? (
+				<fieldset className="tabs task-filters" aria-label={t("taskFilter")}>
+					{(["all", "pending", "done"] as const).map((value) => (
+						<button
+							type="button"
+							key={value}
+							aria-pressed={filter === value}
+							onClick={() => setFilter(value)}
+						>
+							{t(value)} · {counts[value]}
+						</button>
+					))}
+				</fieldset>
+				{visibleTasks.length ? (
 					<div className="list">
-						{tasks.map((task) => (
+						{visibleTasks.map((task) => (
 							<TaskRow task={task} key={task.id} />
 						))}
 					</div>
