@@ -115,6 +115,12 @@ export class LocalRepository {
       .filter(value => includeDeleted || !(value as { deleted?: boolean }).deleted);
   }
 
+  private async assertRelationEndpoints(relation: { from: string; to: string }): Promise<void> {
+    const from = await this.get<{ deleted: boolean }>('asset', relation.from);
+    const to = await this.get<{ deleted: boolean }>('asset', relation.to);
+    if (!from || !to || from.deleted || to.deleted) throw Error('relation-endpoint');
+  }
+
   async save(type: EntityType, value: unknown): Promise<RecordRow> {
     const next = rowFor(type, value);
     const entity = parsedPayload(next) as Record<string, unknown>;
@@ -124,9 +130,7 @@ export class LocalRepository {
       }
     }
     if (type === 'relation' && !entity.deleted) {
-      const from = await this.get<{ deleted: boolean }>('asset', entity.from as string);
-      const to = await this.get<{ deleted: boolean }>('asset', entity.to as string);
-      if (!from || !to || from.deleted || to.deleted) throw Error('relation-endpoint');
+      await this.assertRelationEndpoints(entity as { from: string; to: string });
     }
     if (type === 'task' && entity.dedupeKey && !entity.deleted && !entity.done) {
       const tasks = await this.list<{ id: string; dedupeKey: string; done: boolean }>('task');
@@ -457,11 +461,20 @@ export class LocalRepository {
   async restoreEntity(type: EntityType, id: string): Promise<RecordRow> {
     const document = await this.db.records.findOne(key(type, id)).exec();
     if (!document) throw Error('not-in-trash');
-    const next = rowFor(type, { ...parsedPayload(canonical(document)), deleted: false });
-    await document.incrementalModify((data: RecordRow) => {
-      if (!parsedPayload(data).deleted) throw Error('not-in-trash');
+    const previous = parsedPayload(canonical(document)) as Record<string, unknown>;
+    if (!previous.deleted) throw Error('not-in-trash');
+    if (type === 'relation') await this.assertRelationEndpoints(previous as { from: string; to: string });
+    let next: RecordRow | undefined;
+    await document.incrementalModify(async (data: RecordRow) => {
+      const current = parsedPayload(data) as Record<string, unknown>;
+      if (!current.deleted) throw Error('not-in-trash');
+      // The callback sees the latest tombstone after RxDB retries a concurrent write.
+      // Check endpoints here too, immediately before this relation is made live.
+      if (type === 'relation') await this.assertRelationEndpoints(current as { from: string; to: string });
+      next = rowFor(type, { ...current, deleted: false });
       return { ...data, ...next };
     });
+    if (!next) throw Error('restore-failed');
     return next;
   }
 

@@ -48,6 +48,90 @@ describe('RxDB + free Dexie local repository', () => {
     await reopened.close();
   });
 
+  it('deletes and restores one directed relation without changing another relation to the same asset', async () => {
+    const db = await openLocalRepository(name());
+    const projectAsset = project('Relation owner');
+    const account = { ...newAsset('account'), name: 'Related account' };
+    await db.save('asset', projectAsset);
+    await db.save('asset', account);
+    const createdAt = '2026-09-29T01:00:00.000Z';
+    const verifiedAt = '2026-09-29T02:00:00.000Z';
+    const first = { id: crypto.randomUUID(), from: projectAsset.id, to: account.id, label: 'signs in with',
+      source: 'Account settings', createdAt, verifiedAt };
+    const second = { ...first, id: crypto.randomUUID(), label: 'pays for', source: 'Billing settings' };
+    const reverse = { ...first, id: crypto.randomUUID(), from: account.id, to: projectAsset.id, label: 'manages' };
+    for (const relation of [first, second, reverse]) await db.save('relation', relation);
+
+    const deleted = await db.deleteEntity('relation', first.id);
+    expect(JSON.parse(deleted.payload)).toMatchObject({ ...first, deleted: true });
+    expect(await db.deleteEntity('relation', first.id)).toEqual(deleted);
+    expect((await db.list<{ id: string }>('relation')).map(value => value.id).sort()).toEqual([second.id, reverse.id].sort());
+    expect(await db.list('asset')).toHaveLength(2);
+    await expect(db.save('relation', first)).rejects.toThrow('tombstone-restore-required');
+
+    const restored = await db.restoreEntity('relation', first.id);
+    expect(JSON.parse(restored.payload)).toMatchObject({ ...first, deleted: false });
+    expect((await db.list<{ id: string }>('relation')).map(value => value.id).sort()).toEqual([first.id, second.id, reverse.id].sort());
+    await expect(db.restoreEntity('relation', first.id)).rejects.toThrow('not-in-trash');
+    await db.close();
+  });
+
+  it('refuses relation restoration when an endpoint is deleted or missing, and keeps its tombstone', async () => {
+    const db = await openLocalRepository(name());
+    const projectAsset = project('Relation source');
+    const account = { ...newAsset('account'), name: 'Relation target' };
+    await db.save('asset', projectAsset);
+    await db.save('asset', account);
+    const relation = { id: crypto.randomUUID(), from: projectAsset.id, to: account.id, label: 'uses',
+      source: 'Profile page', createdAt: '2026-09-29T01:00:00.000Z', verifiedAt: '2026-09-29T02:00:00.000Z' };
+    await db.save('relation', relation);
+    await db.deleteEntity('relation', relation.id);
+    await db.deleteEntity('asset', account.id);
+    await expect(db.restoreEntity('relation', relation.id)).rejects.toThrow('relation-endpoint');
+    expect((await db.get<{ deleted: boolean }>('relation', relation.id))?.deleted).toBe(true);
+    expect((await db.get<Asset>('asset', account.id))?.deleted).toBe(true);
+    await db.restoreEntity('asset', account.id);
+    await db.restoreEntity('relation', relation.id);
+    expect((await db.get<{ deleted: boolean }>('relation', relation.id))?.deleted).toBe(false);
+
+    const missing = { ...relation, id: crypto.randomUUID(), to: crypto.randomUUID(), deleted: true };
+    await db.save('relation', missing);
+    await expect(db.restoreEntity('relation', missing.id)).rejects.toThrow('relation-endpoint');
+    expect((await db.get<{ deleted: boolean }>('relation', missing.id))?.deleted).toBe(true);
+    await db.close();
+  });
+
+  it('rechecks relation endpoints at the final restore write and keeps legacy source absent', async () => {
+    const db = await openLocalRepository(name());
+    const projectAsset = project('Legacy source');
+    const account = { ...newAsset('account'), name: 'Legacy target' };
+    await db.save('asset', projectAsset);
+    await db.save('asset', account);
+    const legacy = { id: crypto.randomUUID(), from: projectAsset.id, to: account.id,
+      label: 'legacy link', createdAt: '2026-09-29T01:00:00.000Z' };
+    await db.save('relation', legacy);
+    await db.deleteEntity('relation', legacy.id);
+    let targetLookups = 0;
+    const originalGet = db.get.bind(db);
+    const getSpy = vi.spyOn(db, 'get').mockImplementation(async (type, id) => {
+      // Simulate the endpoint disappearing after the preliminary check.
+      if (type === 'asset' && id === account.id && ++targetLookups === 2) return null;
+      return originalGet(type, id);
+    });
+    await expect(db.restoreEntity('relation', legacy.id)).rejects.toThrow('relation-endpoint');
+    getSpy.mockRestore();
+    expect(targetLookups).toBe(2);
+    const tombstone = await db.get<{ deleted: boolean; source?: string }>('relation', legacy.id);
+    expect(tombstone?.deleted).toBe(true);
+    expect(Object.hasOwn(tombstone ?? {}, 'source')).toBe(false);
+    const restored = await db.restoreEntity('relation', legacy.id);
+    expect(Object.hasOwn(JSON.parse(restored.payload), 'source')).toBe(false);
+    const archive = await inspectArchive(await db.exportArchive());
+    const legacyRow = archive.rows.find(row => row.id === `relation:${legacy.id}`);
+    expect(Object.hasOwn(JSON.parse(legacyRow?.payload ?? '{}'), 'source')).toBe(false);
+    await db.close();
+  });
+
   it('reports same-field conflicts, blocks deletion resurrection and accepts duplicate delivery', async () => {
     const db = await openLocalRepository(name());
     const original = project('First');
