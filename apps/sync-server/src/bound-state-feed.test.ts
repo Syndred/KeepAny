@@ -230,15 +230,131 @@ describe('bound state feed', () => {
     item.setHandler(async () => response(await signState(item.origin, { status,
       epoch: status === 'inactive' ? 2 : 3,
       token_valid_after: status === 'inactive' ? 1 : 2,
+      ...(status === 'inactive' ? { state_expires_at: new Date(Date.now() + 1000).toISOString() } : {}),
     })));
     const feed = createBoundStateFeed(item.config);
-    feed.start();
+    await feed.start();
     await new Promise(resolve => setTimeout(resolve, 60));
     expect(item.applied.some(state => state.status === 'inactive')).toBe(true);
     status = 'active';
-    await new Promise(resolve => setTimeout(resolve, 60));
+    await new Promise(resolve => setTimeout(resolve, 500));
     expect(item.applied.some(state => state.status === 'active')).toBe(true);
     await feed.close();
+  }, 2000);
+
+  it('renews 24 slow healthy leases through multiple real-time rounds without a gap', async () => {
+    const ids = Array.from({ length: 24 }, () => randomUUID());
+    const item = await open({
+      store: {
+        hasState: async () => true,
+        listKnownNonRevokedIds: async () => ids,
+        upsertVerifiedState: async state => { item.applied.push(state); return 'applied'; },
+      },
+      onError: () => {},
+    });
+    item.setHandler(async id => {
+      const signed = await signState(item.origin, { binding_id: id });
+      await new Promise(resolve => setTimeout(resolve, 3200));
+      return response(signed);
+    });
+    const feed = createBoundStateFeed(item.config);
+    const started = Date.now();
+    await feed.start();
+    while (Date.now() - started < 12_000) {
+      await new Promise(resolve => setTimeout(resolve, 200));
+      if (Date.now() - started < 4500) continue;
+      const now = Date.now();
+      for (const id of ids) {
+        expect(item.applied.some(state => state.bindingId === id && state.stateExpiresAt.getTime() > now)).toBe(true);
+      }
+    }
+    expect(item.received.length).toBeGreaterThanOrEqual(48);
+    await feed.close();
+  }, 15_000);
+
+  it('keeps healthy leases alive while a few peers respond slowly with errors', async () => {
+    const healthy: string[] = Array.from({ length: 20 }, () => randomUUID());
+    const bad: string[] = Array.from({ length: 4 }, () => randomUUID());
+    const item = await open({
+      store: {
+        hasState: async () => true,
+        listKnownNonRevokedIds: async () => [...bad, ...healthy],
+        upsertVerifiedState: async state => { item.applied.push(state); return 'applied'; },
+      },
+      onError: () => {},
+    });
+    item.setHandler(async id => {
+      if (bad.includes(id)) {
+        await new Promise(resolve => setTimeout(resolve, 3800));
+        return Response.json({ code: -1, message: 'unavailable' }, { status: 503 });
+      }
+      const signed = await signState(item.origin, { binding_id: id });
+      await new Promise(resolve => setTimeout(resolve, 500));
+      return response(signed);
+    });
+    const feed = createBoundStateFeed(item.config);
+    await feed.start();
+    await new Promise(resolve => setTimeout(resolve, 6000));
+    const now = Date.now();
+    for (const id of healthy) {
+      expect(item.applied.some(state => state.bindingId === id && state.stateExpiresAt.getTime() > now)).toBe(true);
+    }
+    expect(item.applied.some(state => bad.includes(state.bindingId))).toBe(false);
+    await feed.close();
+  }, 9000);
+
+  it('rejects an over-capacity starting set before opening HTTP connections', async () => {
+    const ids = Array.from({ length: 33 }, () => randomUUID());
+    const failures: string[] = [];
+    const item = await open({
+      store: {
+        hasState: async () => true,
+        listKnownNonRevokedIds: async () => ids,
+        upsertVerifiedState: async state => { item.applied.push(state); return 'applied'; },
+      },
+      onError: reason => { failures.push(reason); },
+    });
+    const feed = createBoundStateFeed(item.config);
+    await expect(feed.start()).rejects.toThrow('bound-state-feed-capacity-exceeded');
+    expect(item.received).toHaveLength(0);
+    await feed.close();
+  });
+
+  it('reports dynamic capacity exhaustion and does not queue a new binding', async () => {
+    const ids = Array.from({ length: 32 }, () => randomUUID());
+    const newcomer = randomUUID();
+    const failures: string[] = [];
+    const item = await open({
+      intervalMs: 25,
+      store: {
+        hasState: async () => true,
+        listKnownNonRevokedIds: async () => ids,
+        upsertVerifiedState: async state => { item.applied.push(state); return 'applied'; },
+      },
+      onError: reason => { failures.push(reason); },
+    });
+    item.setHandler(async () => Response.json({ code: -1, message: 'unavailable' }, { status: 503 }));
+    const feed = createBoundStateFeed(item.config);
+    await feed.start();
+    ids.push(newcomer);
+    await new Promise(resolve => setTimeout(resolve, 100));
+    expect(failures).toContain('capacity');
+    expect(item.received).not.toContain(newcomer);
+    await feed.close();
+  });
+
+  it('bounds direct refresh concurrency and cancels requests even during signing', async () => {
+    const item = await open();
+    item.config.fetchFn = async (_url, init) => new Promise<Response>((_resolve, reject) => {
+      init?.signal?.addEventListener('abort', () => reject(Error('aborted')), { once: true });
+    });
+    const feed = createBoundStateFeed(item.config);
+    const operations = Array.from({ length: 32 }, () => feed.refresh(randomUUID()));
+    await expect(feed.refresh(randomUUID())).rejects.toThrow('bound-state-feed-capacity-exceeded');
+    await feed.close();
+    const results = await Promise.allSettled(operations);
+    expect(results.every(result => result.status === 'rejected')).toBe(true);
+    expect(item.applied).toHaveLength(0);
   });
 
   it('does not apply 404, 503 or oversized responses and stops background polling', async () => {
@@ -252,7 +368,7 @@ describe('bound state feed', () => {
     await expect(feed.refresh(bindingId)).rejects.toThrow();
     status = 200;
     await expect(feed.refresh(bindingId)).rejects.toThrow();
-    feed.start();
+    await feed.start();
     await new Promise(resolve => setTimeout(resolve, 80));
     expect(item.received.length).toBeGreaterThan(3);
     await feed.close();
