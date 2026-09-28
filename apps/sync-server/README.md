@@ -2,7 +2,7 @@
 
 阶段 3 的基础同步服务使用 Hono、PostgreSQL 事务与工作区成员表。服务端只保存密文和路由元数据。`POST /workspaces` 由已验证主体创建工作区；`POST /sync/push` 和 `POST /sync/pull` 每次在数据库内核查工作区读写权限。重复 `operationId` 幂等，期望版本不匹配返回冲突，墓碑不会被普通写入复活，拉取按工作区序号分页。
 
-认证模式必须显式选择。`self-host` 仅适合单主体自部署，使用长随机 Bearer；它不是商业绑定认证。`bound` 是受控试验模式，验证商业侧签发的设备绑定 JWT 与每次请求的设备 DPoP，并要求服务端预置已批准绑定映射。正式多人官方服务、设备加入/恢复/实时撤销与端到端密钥协议尚未通过验收，不应对外开放同步服务。
+认证模式必须显式选择。`self-host` 仅适合单主体自部署，使用长随机 Bearer；它不是商业绑定认证。`bound` 是受控试验模式，验证商业侧签发的设备绑定 JWT 与每次请求的设备 DPoP，并由可信写入器读取商业签名状态断言、写入 PostgreSQL 短租约。正式多人官方服务、真实账号、设备加入/恢复、生产密钥/TLS 与端到端密钥协议尚未通过验收，不应对外开放同步服务。
 
 本机单主体运行时先设置 `DATABASE_URL`、`KEEPANY_SYNC_AUTH_MODE=self-host` 和至少 32 字符的 `KEEPANY_SYNC_TOKEN`，再执行：
 
@@ -18,11 +18,11 @@ Docker Compose 文件位于本目录，明确选择 `self-host`。需在 Compose
 
 ## 设备绑定验签试验
 
-`bound` 模式要求 `KEEPANY_BOUND_ISSUER` 为商业侧固定 issuer origin，`KEEPANY_BOUND_JWKS_JSON` 为从其 `/.well-known/jwks.json` **经受信任渠道钉住的公钥 JSON**，`KEEPANY_SYNC_PUBLIC_ORIGIN` 为客户端访问同步服务的固定 HTTPS origin，`KEEPANY_BOUND_BINDINGS_JSON` 为运营方确认后配置的数组。每项需有 `bindingId`、`subject`、`instanceIdHash`（SHA-256 hex）、`jkt`（设备 P-256 公钥指纹）及 `scopes`（`sync:read`/`sync:write`）。模式为 `bound` 时不得设置 `KEEPANY_SYNC_TOKEN`；缺少配置、未知绑定或签名/声明不匹配均拒绝。公钥轮换及绑定映射变更目前需由运营方安全更新配置并重启。
+`bound` 模式要求 `KEEPANY_BOUND_ISSUER` 为商业侧固定签名 issuer origin，`KEEPANY_BOUND_JWKS_JSON` 为从商业 `/.well-known/jwks.json` **经受信任渠道钉住的仅公钥 JSON**，`KEEPANY_SYNC_PUBLIC_ORIGIN` 为客户端访问同步服务的固定 HTTPS origin。可信写入器另需 `KEEPANY_BOUND_STATE_COMMERCIAL_ORIGIN`（状态接口固定 origin）、`KEEPANY_BOUND_STATE_READER_ISSUER`、`KEEPANY_BOUND_STATE_READER_KID` 与 `KEEPANY_BOUND_STATE_READER_PRIVATE_KEY_FILE`（仓库外受保护的独立 RSA 私钥文件）；商业侧须先配置对应 reader 公钥。生产 origin 用 HTTPS，回环 HTTP 只用于本机隔离验收。模式为 `bound` 时不得设置 `KEEPANY_SYNC_TOKEN` 或旧的 `KEEPANY_BOUND_BINDINGS_JSON`；缺少/无效配置使服务拒绝启动。商业签名公钥可预置多个不同 `kid`：先发布新公钥并滚动更新核心配置，再切换签发钥，等待旧状态断言与实例更新完成后移除旧钥；reader 钥也先在商业端发布新公钥，再切核心私钥/kid。
 
-同步请求用 `Authorization: DPoP <accessToken>` 与 `DPoP: <proof>`。服务仅用本地固定 JWKS 验证 RS256、精确 issuer、`aud=keepany-sync-bound`、`sub`、`binding_id`、`instance_id_hash`、`cnf.jkt`、读写 scope 与最多 60 秒的令牌寿命；`Bearer` 和通用登录 `aud=keepany-sync` 均无效。证明须由绑定设备的 P-256 私钥签名，公钥指纹等于 `cnf.jkt`，且 `htm`、由固定公开 origin 加请求路径组成的 `htu`、访问令牌 SHA-256 的 `ath`、一分钟内 `iat` 和未用过的 `jti` 匹配。不同 `Origin` 的浏览器请求拒绝，服务不返回跨源 CORS 授权。证明重放缓存目前仅覆盖单进程，水平扩展须改为共享原子重放存储。
+同步请求用 `Authorization: DPoP <accessToken>` 与 `DPoP: <proof>`。服务仅用本地固定 JWKS 验证 RS256、精确 issuer、`aud=keepany-sync-bound`、`sub`、`binding_id`、`instance_id_hash`、`cnf.jkt`、读写 scope 与最多 60 秒的令牌寿命；`Bearer` 和通用登录 `aud=keepany-sync` 均无效。证明须由绑定设备的 P-256 私钥签名，公钥指纹等于 `cnf.jkt`，且 `htm`、由固定公开 origin 加请求路径组成的 `htu`、访问令牌 SHA-256 的 `ath`、一分钟内 `iat` 和未用过的 `jti` 匹配。不同 `Origin` 的浏览器请求拒绝，服务不返回跨源 CORS 授权。证明 `jti` 在 PostgreSQL 唯一约束下原子消费，多个进程共享判重；数据库故障时拒绝请求。
 
-此模式尚无连接商业 `/bindings/state` 的服务端桥，也不保存或轮换刷新凭证。商业侧解绑、取消或到期后，**已签发令牌在剩余最多 60 秒内仍可能离线验过**；实时撤销未验证，不能对外承诺。预置映射不是自动设备绑定，也不能证明套餐当前有效。生产认证、反向代理 URL/HTTPS、真实商业服务与多实例重放仍需端到端联调。
+可信写入器向固定商业 origin 的 `GET /api/keepany/v1/bound-state/:bindingId` 发送独立 reader JWT，核验商业状态 JWT 的签名、issuer、audience、`typ`、绑定身份、scope、epoch 和时间，再以数据库条件写入短租约。已知非撤销绑定每至多 5 秒后台刷新一次；首次有效 bound JWT 与设备 DPoP 均验过且本地没有状态行时，才受限地按 ID 拉取。只在数据库中保存经核验状态，不保存或轮换设备刷新凭证；旧 epoch、同 epoch 改状态、旧观测续租和撤销墓碑复活均拒绝。每次资源请求重查 PostgreSQL，访问 JWT 的 `iat` 严格晚于状态 cutoff。商业 503、网络/签名故障或写入失败不会续租，旧租约到期后拒绝；租约截止取商业 JWT `exp` 与签名 `state_expires_at` 的较早者，不从 HTTP 收到时重算。撤销仍有拉取周期和最长剩余租约的延迟，不承诺即时生效。真实付费账号、生产服务、反向代理、密钥管理与多机部署尚未验收。
 
 ## 密文附件接口
 
