@@ -155,6 +155,7 @@ for (const language of ["en", "zh-CN"] as const) {
 			const chosen = `${"A".repeat(140)}-${crypto.randomUUID().slice(0, 6)}`;
 			const excluded = `Excluded-${crypto.randomUUID().slice(0, 6)}`;
 			const answer = `Verified-${"R".repeat(1800)}`;
+			const stem = `ai-dialog-${language}-${width}${process.env.KEEPANY_AI_EVIDENCE_MODE === "preview" ? "-preview" : ""}`;
 			try {
 				await addProject(page, copy, chosen, "selected-description");
 				await addProject(page, copy, excluded, "private-description-sentinel");
@@ -190,7 +191,7 @@ for (const language of ["en", "zh-CN"] as const) {
 					await page.evaluate(() => document.documentElement.scrollWidth),
 				).toBeLessThanOrEqual(width);
 				await page.screenshot({
-					path: `${evidence}/ai-dialog-${language}-${width}-ready.png`,
+					path: `${evidence}/${stem}-ready.png`,
 				});
 				await dialog.getByRole("button", { name: copy.send }).focus();
 				for (let i = 0; i < 7; i += 1) {
@@ -243,13 +244,13 @@ for (const language of ["en", "zh-CN"] as const) {
 					),
 				).toBe(true);
 				await page.screenshot({
-					path: `${evidence}/ai-dialog-${language}-${width}-answer.png`,
+					path: `${evidence}/${stem}-answer.png`,
 				});
 				mock.plans.push({ status: 503 });
 				await dialog.getByRole("button", { name: copy.send }).click();
 				await expect(dialog.getByRole("alert")).toHaveText(copy.error);
 				await page.screenshot({
-					path: `${evidence}/ai-dialog-${language}-${width}-error.png`,
+					path: `${evidence}/${stem}-error.png`,
 				});
 				await page.keyboard.press("Escape");
 				await expect(dialog).toBeHidden();
