@@ -94,6 +94,8 @@ for (const scenario of [
 			await checklist.getByRole("button", { name: `${scenario.done} · 1` }).click();
 			await expect(checklist.locator(".impact-task-row")).toHaveCount(1);
 			await checklist.getByRole("button", { name: `${scenario.all} · 2` }).click();
+			await expect(page.locator(".react-flow__node")).toHaveCount(2);
+			await page.evaluate(() => window.scrollTo(0, 0));
 			await page.screenshot({ path: `${evidence}/impact-${scenario.language}-${scenario.width}-account.png`, fullPage: true });
 			await first.getByRole("link", { name: scenario.task }).click();
 			await expect(page).toHaveURL(/\/tasks#task-/);
@@ -139,6 +141,7 @@ for (const scenario of [
 				expect(after).toEqual(before);
 				await restored.goto(new URL(accountUrl).pathname);
 				await expect(restored.locator(".impact-task-row")).toHaveCount(2);
+				await expect(restored.locator(".react-flow__node")).toHaveCount(2);
 				await expect(restored.locator(".impact-checklist").getByRole("button", { name: `${scenario.generate} · 0` })).toBeDisabled();
 				await restored.screenshot({ path: `${evidence}/impact-${scenario.language}-${scenario.width}-restored.png`, fullPage: true });
 				const overflow = await restored.evaluate(() => document.documentElement.scrollWidth - innerWidth);
