@@ -3,7 +3,7 @@ import pg from 'pg';
 import { AttachmentService } from '../../../packages/sync-core/src/attachments';
 import { PostgresSyncService } from '../../../packages/sync-core/src/postgres';
 import { createPostgresSyncApp } from './app';
-import { createStaticTokenAuthenticator } from './auth';
+import { createConfiguredAuthenticator } from './auth';
 import { migrateSyncDatabase } from './migrate';
 import { createS3CiphertextObjectStore } from './s3-objects';
 
@@ -16,9 +16,7 @@ if (process.argv[2] === 'migrate') {
   try { await migrateSyncDatabase(pool, process.env.KEEPANY_MIGRATIONS_DIR); }
   finally { await pool.end(); }
 } else {
-  const token = process.env.KEEPANY_SYNC_TOKEN;
-  if (!token) throw Error('KEEPANY_SYNC_TOKEN-required');
-  const authenticate = createStaticTokenAuthenticator(token);
+  const authenticate = createConfiguredAuthenticator(process.env);
   const service = new PostgresSyncService(pool);
   const objects = createS3CiphertextObjectStore(process.env);
   const attachments = objects ? new AttachmentService(pool, objects) : undefined;

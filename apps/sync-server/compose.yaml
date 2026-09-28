@@ -18,6 +18,7 @@ services:
       dockerfile: apps/sync-server/Dockerfile
     environment:
       DATABASE_URL: ${DATABASE_URL:?Set DATABASE_URL with the db host and URL-encoded password}
+      KEEPANY_SYNC_AUTH_MODE: self-host
       KEEPANY_SYNC_TOKEN: ${KEEPANY_SYNC_TOKEN:?Set KEEPANY_SYNC_TOKEN}
       KEEPANY_S3_BUCKET: ${KEEPANY_S3_BUCKET:-}
       KEEPANY_S3_REGION: ${KEEPANY_S3_REGION:-us-east-1}
