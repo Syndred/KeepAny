@@ -16,6 +16,9 @@ it('requires an explicit auth mode and fails closed when bound trust is missing'
   expect(() => createConfiguredAuthenticator({ KEEPANY_SYNC_TOKEN: token })).toThrow('KEEPANY_SYNC_AUTH_MODE-required');
   expect(() => createConfiguredAuthenticator({ KEEPANY_SYNC_AUTH_MODE: 'bound', KEEPANY_SYNC_TOKEN: token })).toThrow('not-allowed');
   expect(() => createConfiguredAuthenticator({ KEEPANY_SYNC_AUTH_MODE: 'bound' })).toThrow('bound-auth-configuration-required');
+  expect(() => createConfiguredAuthenticator({ KEEPANY_SYNC_AUTH_MODE: 'bound', KEEPANY_BOUND_BINDINGS_JSON: '[]' }, {
+    claimProof: async () => false, pruneExpiredProofs: async () => {},
+  })).toThrow('KEEPANY_BOUND_BINDINGS_JSON-not-allowed');
   const selfHost = createConfiguredAuthenticator({ KEEPANY_SYNC_AUTH_MODE: 'self-host', KEEPANY_SYNC_TOKEN: token });
   expect(await selfHost(`Bearer ${token}`)).toBe('self-host-owner');
   expect(await selfHost(`DPoP ${token}`)).toBeNull();
