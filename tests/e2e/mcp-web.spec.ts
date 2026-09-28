@@ -59,7 +59,11 @@ test('formal Web grants one RxDB record to an isolated official SDK stdio client
   const context = await browser.newContext({ locale: 'en-US', viewport: { width: 390, height: 844 }, acceptDownloads: true });
   const page = await context.newPage();
   const errors: string[] = [];
+  let abortedWriteCheck = false;
   page.on('pageerror', error => errors.push(error.message));
+  page.on('requestfailed', request => {
+    if (request.url().endsWith('/check-write')) abortedWriteCheck = true;
+  });
   const privateDir = await mkdtemp(join(tmpdir(), 'keepany-mcp-web-'));
   await chmod(privateDir, 0o700);
   const pairingPath = join(privateDir, 'pairing.json');
@@ -231,10 +235,11 @@ test('formal Web grants one RxDB record to an isolated official SDK stdio client
     } });
     await waitFor(async () => paused);
     await panel.getByRole('button', { name: '撤销本机授权' }).click();
-    continueWrite();
-    expect((await pendingConfirm).isError).toBe(true);
     await expect(panel.getByRole('button', { name: '生成连接请求' })).toBeVisible();
     await expect(panel.getByRole('alert')).toContainText('修改正在处理，可能已保存');
+    expect(abortedWriteCheck).toBe(true);
+    continueWrite();
+    expect((await pendingConfirm).isError).toBe(true);
     await panel.getByRole('alert').scrollIntoViewIfNeeded();
     await mobileWidth(page);
     await page.screenshot({ path: join(evidence, 'mcp-revoke-zh-390.png') });
