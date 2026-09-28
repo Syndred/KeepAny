@@ -60,6 +60,9 @@ function validCalendarDay(value: string) {
 	const parsed = new Date(`${value}T12:00:00Z`);
 	return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value;
 }
+function localCalendarDay(now: Date) {
+	return `${String(now.getFullYear()).padStart(4, "0")}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+}
 function ImageTile({ id }: { id: string }) {
 	const [url, setUrl] = useState("");
 	useEffect(() => {
@@ -104,7 +107,7 @@ function SubmissionRow({ submission }: { submission: Submission }) {
 		setError("");
 		try {
 			const verifiedAt = ["indexed", "rejected"].includes(status)
-				? new Date().toISOString().slice(0, 10)
+				? localCalendarDay(new Date())
 				: "";
 			await save("submission", {
 				...submission,
@@ -247,7 +250,8 @@ export function AssetDetail() {
 	const [itemBorrower, setItemBorrower] = useState("");
 	const [itemLoanNote, setItemLoanNote] = useState("");
 	const [itemMaintenanceNote, setItemMaintenanceNote] = useState("");
-	const [itemEventDate, setItemEventDate] = useState(() => new Date().toISOString().slice(0, 10));
+	const [itemEventDate, setItemEventDate] = useState(() => localCalendarDay(new Date()));
+	const itemDateManuallySet = useRef(false);
 	const [itemReminderDate, setItemReminderDate] = useState("");
 	const [itemError, setItemError] = useState("");
 	const [itemRecoveryPending, setItemRecoveryPending] = useState(false);
@@ -258,6 +262,33 @@ export function AssetDetail() {
 	const [renewalBusy, setRenewalBusy] = useState(false);
 	const [renewalRecoveryPending, setRenewalRecoveryPending] = useState(false);
 	const renewalInFlight = useRef(false);
+	useEffect(() => {
+		if (!params.id) return;
+		itemDateManuallySet.current = false;
+		setItemEventDate(localCalendarDay(new Date()));
+	}, [params.id]);
+	useEffect(() => {
+		let timer = 0;
+		function refreshAutomaticDate() {
+			if (!itemDateManuallySet.current) setItemEventDate(localCalendarDay(new Date()));
+		}
+		function scheduleMidnight() {
+			const now = new Date();
+			const next = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1).getTime();
+			timer = window.setTimeout(() => {
+				refreshAutomaticDate();
+				scheduleMidnight();
+			}, Math.max(1, next - now.getTime() + 50));
+		}
+		scheduleMidnight();
+		window.addEventListener("focus", refreshAutomaticDate);
+		document.addEventListener("visibilitychange", refreshAutomaticDate);
+		return () => {
+			window.clearTimeout(timer);
+			window.removeEventListener("focus", refreshAutomaticDate);
+			document.removeEventListener("visibilitychange", refreshAutomaticDate);
+		};
+	}, []);
 	useEffect(() => {
 		if (kind !== "subscription") return;
 		let active = true;
@@ -559,19 +590,21 @@ export function AssetDetail() {
 			const note = action === "maintenance" ? itemMaintenanceNote.trim() : itemLoanNote.trim();
 			if (action === "loan" && !borrower) throw Error("item-borrower-required");
 			if (action === "maintenance" && !note) throw Error("item-note-required");
-			const eventDate = action === "maintenance"
+			const now = new Date();
+			const eventDate = action === "maintenance" && itemDateManuallySet.current
 				? itemEventDate
-				: new Date().toISOString().slice(0, 10);
+				: localCalendarDay(now);
+			if (action === "maintenance" && !itemDateManuallySet.current) setItemEventDate(eventDate);
 			if (!validCalendarDay(eventDate)) throw Error("item-date-invalid");
 			if (action === "maintenance" && itemReminderDate && !validCalendarDay(itemReminderDate)) throw Error("item-date-invalid");
 			const historyId = crypto.randomUUID();
-			const now = new Date().toISOString();
+			const timestamp = now.toISOString();
 			const next = {
 				...asset,
 				status: action === "loan" ? "loaned" as const : action === "return" ? "active" as const : asset.status,
 				borrower: action === "loan" ? borrower : action === "return" ? "" : asset.borrower,
 				lastItemEventId: historyId,
-				updatedAt: now,
+				updatedAt: timestamp,
 			};
 			await commitItemAction(asset, next, {
 				id: historyId,
@@ -580,7 +613,7 @@ export function AssetDetail() {
 				borrower: action === "maintenance" ? undefined : borrower,
 				eventDate,
 				note,
-				createdAt: now,
+				createdAt: timestamp,
 				deleted: false,
 			});
 			setItemRecoveryPending(false);
@@ -596,7 +629,7 @@ export function AssetDetail() {
 						dueDate: itemReminderDate,
 						done: false,
 						completedAt: "",
-						createdAt: now,
+						createdAt: timestamp,
 						dedupeKey: `item:${asset.id}:maintenance:${itemReminderDate}`,
 						deleted: false,
 					});
@@ -1236,7 +1269,7 @@ export function AssetDetail() {
 								</label>
 								<label className="field">
 									<span>{t("maintenanceDate")}</span>
-									<input type="date" value={itemEventDate} onChange={(event) => { setItemEventDate(event.target.value); setItemError(""); }} />
+									<input type="date" value={itemEventDate} onChange={(event) => { itemDateManuallySet.current = true; setItemEventDate(event.target.value); setItemError(""); }} />
 								</label>
 								<label className="field">
 									<span>{t("maintenanceReminderDate")}</span>
