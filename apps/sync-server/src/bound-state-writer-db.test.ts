@@ -96,3 +96,75 @@ it.skipIf(!testDatabase)('applies signed state with PostgreSQL CAS across writer
     await admin.end();
   }
 }, 60_000);
+
+it.skipIf(!testDatabase)('admits at most 32 non-revoked IDs across PostgreSQL writers without starving accepted IDs', async () => {
+  if (!testDatabase) throw Error('test-database-url');
+  const schema = `keepany_bound_capacity_${crypto.randomUUID().replaceAll('-', '')}`;
+  const admin = new pg.Pool({ connectionString: testDatabase, max: 1, connectionTimeoutMillis: 5_000 });
+  const connection = { connectionString: testDatabase, options: `-c search_path=${schema}`, max: 2, connectionTimeoutMillis: 5_000 };
+  const first = new pg.Pool(connection);
+  const second = new pg.Pool(connection);
+  let restarted: pg.Pool | undefined;
+  let created = false;
+  let firstClosed = false;
+  let secondClosed = false;
+  try {
+    await admin.query(`CREATE SCHEMA "${schema}"`);
+    created = true;
+    await migrateSyncDatabase(first);
+    const writer = createPostgresBoundStateWriter(first);
+    const another = createPostgresBoundStateWriter(second);
+    const admittedIds = Array.from({ length: 31 }, () => crypto.randomUUID());
+    for (const id of admittedIds) expect(await writer.upsertVerifiedState(observedState(id))).toBe('applied');
+
+    const contenders: string[] = [crypto.randomUUID(), crypto.randomUUID()];
+    const outcomes = await Promise.allSettled([
+      writer.upsertVerifiedState(observedState(contenders[0])),
+      another.upsertVerifiedState(observedState(contenders[1])),
+    ]);
+    expect(outcomes.filter(result => result.status === 'fulfilled')).toEqual([{ status: 'fulfilled', value: 'applied' }]);
+    expect(outcomes.find(result => result.status === 'rejected')).toMatchObject({
+      reason: { message: 'bound-state-feed-capacity-exceeded' },
+    });
+    const full = await another.listKnownNonRevokedIds();
+    expect(full).toHaveLength(32);
+    expect(full.filter(id => contenders.includes(id))).toHaveLength(1);
+    const rejectedId = contenders.find(id => !full.includes(id));
+    if (!rejectedId) throw Error('capacity-rejected-id-missing');
+    expect(await writer.hasState(rejectedId)).toBe(false);
+    await expect(another.upsertVerifiedState(observedState(rejectedId)))
+      .rejects.toThrow('bound-state-feed-capacity-exceeded');
+
+    const renewed = observedState(admittedIds[0], 2_000);
+    expect(await writer.upsertVerifiedState(renewed)).toBe('applied');
+    const tombstoneId = crypto.randomUUID();
+    expect(await another.upsertVerifiedState({ ...observedState(tombstoneId), status: 'revoked' })).toBe('applied');
+    expect(await writer.hasState(tombstoneId)).toBe(true);
+    expect(await another.listKnownNonRevokedIds()).toHaveLength(32);
+
+    expect(await writer.upsertVerifiedState({
+      ...observedState(admittedIds[0], 3_000), status: 'revoked', epoch: 2, tokenValidAfter: 1,
+    })).toBe('applied');
+    expect(await another.listKnownNonRevokedIds()).toHaveLength(31);
+    expect(await another.upsertVerifiedState(observedState(rejectedId))).toBe('applied');
+
+    await first.end();
+    firstClosed = true;
+    await second.end();
+    secondClosed = true;
+    restarted = new pg.Pool(connection);
+    await migrateSyncDatabase(restarted);
+    const afterRestart = createPostgresBoundStateWriter(restarted);
+    expect(await afterRestart.listKnownNonRevokedIds()).toHaveLength(32);
+    expect(await afterRestart.hasState(tombstoneId)).toBe(true);
+    expect(await afterRestart.upsertVerifiedState(observedState(rejectedId, 2_000))).toBe('applied');
+    await expect(afterRestart.upsertVerifiedState(observedState(crypto.randomUUID())))
+      .rejects.toThrow('bound-state-feed-capacity-exceeded');
+  } finally {
+    if (!firstClosed) await first.end();
+    if (!secondClosed) await second.end();
+    await restarted?.end();
+    if (created) await admin.query(`DROP SCHEMA "${schema}" CASCADE`);
+    await admin.end();
+  }
+}, 60_000);

@@ -1,18 +1,40 @@
 import type { Pool } from 'pg';
 import type { VerifiedBoundState } from './bound-state-record';
 
+const MAX_NON_REVOKED_BINDINGS = 32;
+
 export interface BoundStateWriterDatabase {
-  /** One statement performs the insert/update under PostgreSQL's row lock. */
+  /** Admission and the existing CAS write are one short PostgreSQL transaction. */
   upsertVerifiedState(state: VerifiedBoundState): Promise<'applied' | 'ignored'>;
   hasState(bindingId: string): Promise<boolean>;
   /** Includes expired leases so a later paid-state recovery can be observed. */
   listKnownNonRevokedIds(): Promise<string[]>;
 }
 
-export function createPostgresBoundStateWriter(pool: Pick<Pool, 'query'>): BoundStateWriterDatabase {
+export function createPostgresBoundStateWriter(pool: Pick<Pool, 'connect' | 'query'>): BoundStateWriterDatabase {
   return {
     async upsertVerifiedState(state) {
-      const result = await pool.query<{ binding_id: string }>(`
+      const client = await pool.connect();
+      let begun = false;
+      try {
+        await client.query('BEGIN');
+        begun = true;
+        // Every writer uses this database-wide lock before admitting a new ID.
+        // Existing rows remain refreshable when the admission limit is full.
+        await client.query("SELECT pg_advisory_xact_lock(hashtext('keepany-bound-state-feed-capacity'))");
+        const existing = await client.query<{ status: string }>(
+          'SELECT status FROM sync_bound_bindings WHERE binding_id=$1::uuid FOR UPDATE',
+          [state.bindingId],
+        );
+        if (existing.rows.length === 0 && state.status !== 'revoked') {
+          const count = await client.query<{ admitted: number }>(
+            "SELECT count(*)::int AS admitted FROM sync_bound_bindings WHERE status <> 'revoked'",
+          );
+          if ((count.rows[0]?.admitted ?? 0) >= MAX_NON_REVOKED_BINDINGS) {
+            throw Error('bound-state-feed-capacity-exceeded');
+          }
+        }
+        const result = await client.query<{ binding_id: string }>(`
         INSERT INTO sync_bound_bindings
           (binding_id, subject, instance_id_hash, jkt, scopes, status, epoch,
            token_valid_after, state_observed_at, state_expires_at)
@@ -46,10 +68,18 @@ export function createPostgresBoundStateWriter(pool: Pick<Pool, 'query'>): Bound
              AND EXCLUDED.state_observed_at > sync_bound_bindings.state_observed_at)
           )
         RETURNING binding_id
-      `, [state.bindingId, state.subject, state.instanceIdHash, state.jkt,
-        state.scopes, state.status, state.epoch, state.tokenValidAfter,
-        state.stateObservedAt, state.stateExpiresAt]);
-      return result.rows.length === 1 ? 'applied' : 'ignored';
+        `, [state.bindingId, state.subject, state.instanceIdHash, state.jkt,
+          state.scopes, state.status, state.epoch, state.tokenValidAfter,
+          state.stateObservedAt, state.stateExpiresAt]);
+        await client.query('COMMIT');
+        begun = false;
+        return result.rows.length === 1 ? 'applied' : 'ignored';
+      } catch (error) {
+        if (begun) await client.query('ROLLBACK');
+        throw error;
+      } finally {
+        client.release();
+      }
     },
     async hasState(bindingId) {
       const result = await pool.query('SELECT 1 FROM sync_bound_bindings WHERE binding_id=$1::uuid', [bindingId]);
