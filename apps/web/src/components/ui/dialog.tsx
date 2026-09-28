@@ -1,7 +1,7 @@
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
+import { type ReactNode, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import type { ReactNode } from "react";
 export function Dialog({
 	title,
 	children,
@@ -12,6 +12,14 @@ export function Dialog({
 	onClose: () => void;
 }) {
 	const { t } = useTranslation();
+	const opener = useRef<HTMLElement | null>(null);
+	if (
+		!opener.current &&
+		typeof document !== "undefined" &&
+		document.activeElement instanceof HTMLElement
+	) {
+		opener.current = document.activeElement;
+	}
 	return (
 		<DialogPrimitive.Root open onOpenChange={(v) => !v && onClose()}>
 			<DialogPrimitive.Portal>
@@ -19,6 +27,10 @@ export function Dialog({
 				<DialogPrimitive.Content
 					className="dialog"
 					aria-describedby={undefined}
+					onCloseAutoFocus={(event) => {
+						event.preventDefault();
+						if (opener.current?.isConnected) opener.current.focus();
+					}}
 				>
 					<header>
 						<DialogPrimitive.Title>{title}</DialogPrimitive.Title>
