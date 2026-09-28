@@ -234,14 +234,29 @@ export class LocalRepository {
 
   async scopedCursor(scope: string): Promise<number> { return (await this.fileStore.scopedMeta.get(scope))?.cursor ?? 0; }
 
-  async pinScopedKey(scope: string, fingerprint: string, keyEpoch: number): Promise<void> {
+  // A key is fixed once ciphertext or an authenticated pull has durable local evidence.
+  // A cursor-zero fingerprint alone may come from a failed first attempt or a crash.
+  async pinScopedKey(scope: string, fingerprint: string, keyEpoch: number): Promise<'provisional' | 'trusted'> {
     assertScope(scope);
     await this.assertDatasetScope(scope);
     if (!/^[a-f0-9]{64}$/.test(fingerprint) || !Number.isSafeInteger(keyEpoch) || keyEpoch < 1) throw Error('sync-key');
-    await this.fileStore.transaction('rw', this.fileStore.scopedMeta, async () => {
+    return this.fileStore.transaction('rw', [this.fileStore.datasetBinding, this.fileStore.scopedMeta,
+      this.fileStore.scopedBase, this.fileStore.scopedOutbox, this.fileStore.scopedPull,
+      this.fileStore.scopedAttachmentUploads], async () => {
+      const binding = await this.fileStore.datasetBinding.get('active');
+      if (binding && binding.scope !== scope) throw Error('sync-dataset-bound');
       const existing = await this.fileStore.scopedMeta.get(scope);
-      if (existing && (existing.keyFingerprint !== fingerprint || existing.keyEpoch !== keyEpoch)) throw Error('sync-key-mismatch');
-      if (!existing) await this.fileStore.scopedMeta.add({ id: scope, cursor: 0, keyFingerprint: fingerprint, keyEpoch });
+      const [base, outbox, pull, uploads] = await Promise.all([
+        this.fileStore.scopedBase.where('scope').equals(scope).count(),
+        this.fileStore.scopedOutbox.where('scope').equals(scope).count(),
+        this.fileStore.scopedPull.get(scope),
+        this.fileStore.scopedAttachmentUploads.where('scope').equals(scope).count(),
+      ]);
+      const trusted = Boolean((existing?.cursor ?? 0) > 0 || base || outbox || pull || uploads);
+      if (existing?.keyFingerprint === fingerprint && existing.keyEpoch === keyEpoch) return trusted ? 'trusted' : 'provisional';
+      if (trusted || (existing?.keyEpoch && keyEpoch < existing.keyEpoch)) throw Error('sync-key-mismatch');
+      await this.fileStore.scopedMeta.put({ id: scope, cursor: 0, keyFingerprint: fingerprint, keyEpoch });
+      return 'provisional';
     });
   }
 

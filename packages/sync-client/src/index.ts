@@ -11,6 +11,25 @@ const workspaceSchema = z.uuid();
 const preflightSchema = z.object({ accountId: z.string().min(1).max(256), workspaceId: workspaceSchema });
 const text = new TextEncoder();
 const decode = new TextDecoder('utf-8', { fatal: true });
+const scopeLocks = new Map<string, Promise<void>>();
+
+async function withScopeLock<T>(scope: string, action: () => Promise<T>): Promise<T> {
+  if (typeof navigator !== 'undefined' && navigator.locks) {
+    return navigator.locks.request(`keepany-sync:${scope}`, action);
+  }
+  // The browser lock spans tabs. This queue covers callers sharing one JS runtime
+  // (including the Node protocol tests) where navigator.locks is unavailable.
+  const previous = scopeLocks.get(scope) ?? Promise.resolve();
+  let release!: () => void;
+  const current = new Promise<void>(resolve => { release = resolve; });
+  scopeLocks.set(scope, current);
+  await previous;
+  try { return await action(); }
+  finally {
+    release();
+    if (scopeLocks.get(scope) === current) scopeLocks.delete(scope);
+  }
+}
 
 export function normalizeEndpoint(raw: string): string {
   const url = new URL(raw.trim());
@@ -91,12 +110,14 @@ export class SelfHostSyncClient {
 
   async resolve(choice: 'local' | 'remote'): Promise<SyncReport> {
     const scope = await this.scopePromise;
-    await this.verifyDataset(scope);
-    await this.pinKey(scope);
-    const remote = await this.repository.pendingScopedPullRow(scope);
-    if (remote) await this.attachments(scope).ensureDownloadedRow(remote);
-    await this.repository.resolveScopedConflict(scope, choice);
-    return this.report('pending');
+    return withScopeLock(scope, async () => {
+      await this.verifyDataset(scope);
+      await this.pinKey(scope);
+      const remote = await this.repository.pendingScopedPullRow(scope);
+      if (remote) await this.attachments(scope).ensureDownloadedRow(remote);
+      await this.repository.resolveScopedConflict(scope, choice);
+      return this.report('pending');
+    });
   }
 
   async run(onStatus?: (report: SyncReport) => void): Promise<SyncReport> {
@@ -104,23 +125,23 @@ export class SelfHostSyncClient {
     this.busy = true;
     try {
       const scope = await this.scopePromise;
-      const execute = () => this.runUnlocked(scope, onStatus);
-      return typeof navigator !== 'undefined' && navigator.locks
-        ? await navigator.locks.request(`keepany-sync:${scope}`, execute)
-        : await execute();
+      return await withScopeLock(scope, () => this.runUnlocked(scope, onStatus));
     } finally { this.busy = false; }
   }
 
   private async runUnlocked(scope: string, onStatus?: (report: SyncReport) => void): Promise<SyncReport> {
     try {
       await this.verifyDataset(scope);
-      await this.pinKey(scope);
+      const keyState = await this.pinKey(scope);
       const attachments = this.attachments(scope);
       onStatus?.(await this.report('syncing'));
       const interruptedPull = await this.repository.pendingScopedPullRow(scope);
       if (interruptedPull) await attachments.ensureDownloadedRow(interruptedPull);
       const recovered = await this.repository.resumeScopedPull(scope);
       if (recovered === 'conflict') return this.report('conflict');
+      // Before the first trusted key exists, authenticate remote records before
+      // sending local ciphertext. A wrong but well-formed key must not upload assets.
+      if (keyState === 'provisional' && await this.pullAll(scope, attachments)) return this.report('conflict');
       await this.pushOutbox(scope, attachments);
       if (await this.pullAll(scope, attachments)) return this.report('conflict');
       for (const row of await this.repository.dirtyScopedRows(scope)) {
@@ -162,10 +183,10 @@ export class SelfHostSyncClient {
     });
   }
 
-  private async pinKey(scope: string): Promise<void> {
+  private async pinKey(scope: string): Promise<'provisional' | 'trusted'> {
     const bytes = new Uint8Array(await crypto.subtle.digest('SHA-256', this.key as BufferSource));
     const fingerprint = Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
-    await this.repository.pinScopedKey(scope, fingerprint, this.keyEpoch);
+    return this.repository.pinScopedKey(scope, fingerprint, this.keyEpoch);
   }
 
   private attachments(scope: string): SelfHostAttachmentSync {

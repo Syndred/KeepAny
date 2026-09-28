@@ -224,13 +224,93 @@ it('rejects a different workspace key before asset transfer', async () => {
   await db.close();
 });
 
+it('authenticates an existing workspace before sending local records and corrects a first wrong key after reopen', async () => {
+  const workspaceId = crypto.randomUUID();
+  const { config, service } = server(workspaceId);
+  const seed = await openLocalRepository(name());
+  const remotePhoto = await seed.putFile(new File([Uint8Array.from([1, 2, 3])], 'remote.png', { type: 'image/png' }));
+  const remote = { ...newAsset('project'), name: 'Already remote', attachments: [remotePhoto] };
+  await seed.save('asset', remote);
+  expect((await new SelfHostSyncClient(seed, config).run()).status).toBe('synced');
+  await seed.close();
+
+  const dbName = name();
+  const db = await openLocalRepository(dbName);
+  const localPhoto = await db.putFile(new File([Uint8Array.from([4, 5, 6])], 'local.png', { type: 'image/png' }));
+  const local = { ...newAsset('project'), name: 'Must stay local until authentication', attachments: [localPhoto] };
+  await db.save('asset', local);
+  vi.mocked(fetch).mockClear();
+  const badKey = new Uint8Array(32).fill(8);
+  const failed = await new SelfHostSyncClient(db, { ...config, key: badKey }).run();
+  expect(failed.error).toBe('envelope-auth');
+  expect(failed.cursor).toBe(0);
+  expect(failed.pending).toBe(1);
+  expect((await db.get<Asset>('asset', remote.id))).toBeNull();
+  expect(vi.mocked(fetch).mock.calls.some(([url]) => String(url).endsWith('/sync/push') ||
+    String(url).includes('/attachments/'))).toBe(false);
+  expect((await service.pull({ workspaceId, cursor: 0, limit: 10 })).changes).toHaveLength(1);
+  await db.close();
+
+  const reopened = await openLocalRepository(dbName);
+  expect((await new SelfHostSyncClient(reopened, config).run()).status).toBe('synced');
+  expect((await reopened.get<Asset>('asset', remote.id))?.name).toBe(remote.name);
+  expect((await reopened.get<Asset>('asset', local.id))?.name).toBe(local.name);
+  expect((await reopened.readFile(remotePhoto))?.bytes).toEqual(Uint8Array.from([1, 2, 3]));
+  expect((await service.pull({ workspaceId, cursor: 0, limit: 10 })).changes).toHaveLength(2);
+  const afterTrust = await new SelfHostSyncClient(reopened, { ...config, key: badKey }).run();
+  expect(afterTrust.error).toBe('sync-key-mismatch');
+  await reopened.close();
+});
+
+it('recovers an unverified key after an interrupted first pull without losing the dataset binding', async () => {
+  const workspaceId = crypto.randomUUID();
+  const { config } = server(workspaceId);
+  const seed = await openLocalRepository(name());
+  await seed.save('asset', { ...newAsset('project'), name: 'Remote record' });
+  expect((await new SelfHostSyncClient(seed, config).run()).status).toBe('synced');
+  await seed.close();
+  const dbName = name();
+  const db = await openLocalRepository(dbName);
+  const originalFetch = fetch;
+  vi.stubGlobal('fetch', vi.fn(async (url: string, init: RequestInit) => String(url).endsWith('/sync/pull')
+    ? Promise.reject(Error('offline')) : originalFetch(url, init)));
+  const wrong = new SelfHostSyncClient(db, { ...config, key: new Uint8Array(32).fill(8) });
+  expect((await wrong.run()).error).toBe('offline');
+  expect(await db.getDatasetBinding()).toMatchObject({ workspaceId });
+  expect(await db.scopedCursor(`${await scope(config)}:${workspaceId}`)).toBe(0);
+  await db.close();
+  vi.stubGlobal('fetch', originalFetch);
+  const reopened = await openLocalRepository(dbName);
+  expect((await new SelfHostSyncClient(reopened, config).run()).status).toBe('synced');
+  await reopened.close();
+});
+
+it('serializes simultaneous first attempts with different keys and keeps a trusted epoch fixed', async () => {
+  const workspaceId = crypto.randomUUID();
+  const { config, service } = server(workspaceId);
+  const seed = await openLocalRepository(name());
+  await seed.save('asset', { ...newAsset('project'), name: 'Remote record' });
+  expect((await new SelfHostSyncClient(seed, config).run()).status).toBe('synced');
+  await seed.close();
+  const db = await openLocalRepository(name());
+  const wrong = new SelfHostSyncClient(db, { ...config, key: new Uint8Array(32).fill(8) });
+  const correct = new SelfHostSyncClient(db, config);
+  const [bad, good] = await Promise.all([wrong.run(), correct.run()]);
+  expect(bad.error).toBe('envelope-auth');
+  expect(good.status).toBe('synced');
+  expect((await service.pull({ workspaceId, cursor: 0, limit: 10 })).changes).toHaveLength(1);
+  expect(() => new SelfHostSyncClient(db, { ...config, keyEpoch: 0 })).toThrow('sync-key-epoch');
+  expect((await new SelfHostSyncClient(db, { ...config, keyEpoch: 2 }).run()).error).toBe('sync-key-mismatch');
+  await db.close();
+});
+
 it('sends independent local records in one bounded push request', async () => {
   const { config } = server(crypto.randomUUID());
   const db = await openLocalRepository(name());
   for (let index = 0; index < 3; index++) await db.save('asset', { ...newAsset('project'), name: `Batch ${index}` });
   expect((await new SelfHostSyncClient(db, config).run()).status).toBe('synced');
   expect(vi.mocked(fetch).mock.calls.filter(([url]) => String(url).endsWith('/sync/push'))).toHaveLength(1);
-  expect(vi.mocked(fetch).mock.calls.filter(([url]) => String(url).endsWith('/sync/pull'))).toHaveLength(3);
+  expect(vi.mocked(fetch).mock.calls.filter(([url]) => String(url).endsWith('/sync/pull'))).toHaveLength(4);
   await db.close();
 });
 

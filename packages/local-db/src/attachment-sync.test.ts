@@ -15,6 +15,39 @@ async function binding(): Promise<DatasetBinding> {
 }
 const row = (asset: Asset): RecordRow => ({ id: `asset:${asset.id}`, type: 'asset', payload: JSON.stringify(asset), updatedAt: Date.now() });
 
+it('replaces only an unverified first key; pending ciphertext or a committed cursor fixes the key and epoch', async () => {
+  const owner = await binding();
+  const dbName = name();
+  const db = await openLocalRepository(dbName);
+  await db.claimDatasetBinding(owner);
+  const first = 'a'.repeat(64);
+  const corrected = 'b'.repeat(64);
+  expect(await db.pinScopedKey(owner.scope, first, 1)).toBe('provisional');
+  await db.close();
+  const reopened = await openLocalRepository(dbName);
+  expect(await reopened.pinScopedKey(owner.scope, corrected, 1)).toBe('provisional');
+  expect((await reopened.fileStore.scopedMeta.get(owner.scope))?.keyFingerprint).toBe(corrected);
+  const asset = { ...newAsset('project'), name: 'Pending' };
+  const local = await reopened.save('asset', asset);
+  await reopened.stageScopedOutbox(owner.scope, local, { operationId: crypto.randomUUID(), id: local.id,
+    kind: local.type, schemaVersion: 1, expectedVersion: 0, ciphertext: 'sealed', tombstone: false, intent: 'write' });
+  expect(await reopened.pinScopedKey(owner.scope, corrected, 1)).toBe('trusted');
+  await expect(reopened.pinScopedKey(owner.scope, first, 1)).rejects.toThrow('sync-key-mismatch');
+  await expect(reopened.pinScopedKey(owner.scope, corrected, 2)).rejects.toThrow('sync-key-mismatch');
+  expect((await reopened.fileStore.scopedMeta.get(owner.scope))?.keyFingerprint).toBe(corrected);
+  await reopened.close();
+});
+
+it('does not roll back an unverified epoch after a failed first attempt', async () => {
+  const owner = await binding();
+  const db = await openLocalRepository(name());
+  await db.claimDatasetBinding(owner);
+  expect(await db.pinScopedKey(owner.scope, 'a'.repeat(64), 3)).toBe('provisional');
+  await expect(db.pinScopedKey(owner.scope, 'b'.repeat(64), 2)).rejects.toThrow('sync-key-mismatch');
+  expect(await db.pinScopedKey(owner.scope, 'b'.repeat(64), 3)).toBe('provisional');
+  await db.close();
+});
+
 it('persists one exact ciphertext upload plan through reopen and refuses changed bytes, epoch or scope', async () => {
   const dbName = name();
   const owner = await binding();
