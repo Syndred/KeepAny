@@ -1,14 +1,18 @@
 import { useEffect, useState } from "react";
-import { database, save, type RecordRow } from "../../../packages/local-db/src";
 import {
 	type Asset,
 	type Category,
-	type Relation,
-	type Task,
 	type History,
-	type Submission,
 	newAsset,
+	type Relation,
+	type Submission,
+	type Task,
 } from "../../../packages/domain/src";
+import {
+	database,
+	type RecordRow,
+	saveBatch,
+} from "../../../packages/local-db/src";
 export function useData() {
 	const [rows, setRows] = useState<RecordRow[]>([]),
 		[error, setError] = useState(""),
@@ -86,19 +90,23 @@ export async function seed() {
 		location: "Studio · Desk",
 		tags: ["Work"],
 	};
-	for (const asset of [a, b, c, d]) await save("asset", asset);
-	await save("relation", {
+	const accountRelation = {
 		id: crypto.randomUUID(),
 		from: a.id,
 		to: b.id,
 		label: "Contact email",
 		createdAt: new Date().toISOString(),
-	});
-	await save("relation", {
+	};
+	const hostingRelation = {
 		id: crypto.randomUUID(),
 		from: c.id,
 		to: a.id,
 		label: "Hosting",
 		createdAt: new Date().toISOString(),
-	});
+	};
+	await saveBatch([
+		...[a, b, c, d].map((value) => ({ type: "asset" as const, value })),
+		{ type: "relation", value: accountRelation },
+		{ type: "relation", value: hostingRelation },
+	]);
 }

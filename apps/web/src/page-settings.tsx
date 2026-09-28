@@ -1,14 +1,15 @@
-import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { seed } from "./data";
 import { Button } from "./components/ui/button";
+import { seed } from "./data";
 import { PageTitle, useAppContext } from "./view-shared";
 export function SettingsPage() {
 	const { data, notify } = useAppContext();
 	const { t, i18n } = useTranslation();
 	const [persistent, setPersistent] = useState<boolean | null>(null);
 	const [requested, setRequested] = useState(false);
+	const [seeding, setSeeding] = useState(false);
 	useEffect(() => {
 		void navigator.storage?.persisted?.().then(setPersistent);
 	}, []);
@@ -57,10 +58,17 @@ export function SettingsPage() {
 				<h2>{t("trial")}</h2>
 				<p>{t("emptyHint")}</p>
 				<Button
-					disabled={data.assets.length > 0}
+					disabled={data.assets.length > 0 || seeding}
 					onClick={async () => {
-						await seed();
-						notify(t("saved"));
+						setSeeding(true);
+						try {
+							await seed();
+							notify(t("saved"));
+						} catch {
+							notify(t("error"));
+						} finally {
+							setSeeding(false);
+						}
 					}}
 				>
 					{t("loadSample")}
