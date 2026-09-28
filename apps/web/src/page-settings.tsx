@@ -114,7 +114,7 @@ export function SettingsPage() {
 			if (!client || !isActive(operation)) return;
 			const report = await client.run(value => { if (isActive(operation)) setSyncReport(value); });
 			if (isActive(operation)) {
-				if (!report.error) rememberLocation(client);
+				if (report.status !== "failed") rememberLocation(client);
 				setSyncReport(report);
 			}
 		} catch (error) {
