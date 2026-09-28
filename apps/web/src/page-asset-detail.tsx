@@ -25,9 +25,11 @@ import {
 	fileUrl,
 	localRepository,
 	putFile,
+	recordItemAction as commitItemAction,
 	recordRenewal,
 	save,
 	saveBatch,
+	setItemArchived,
 } from "../../../packages/local-db/src";
 import { Button } from "./components/ui/button";
 import { Dialog } from "./components/ui/dialog";
@@ -52,6 +54,11 @@ const TaskEditor = lazy(() =>
 function graphLabel(value: string) {
 	const chars = Array.from(value);
 	return chars.length > 18 ? `${chars.slice(0, 18).join("")}…` : value;
+}
+function validCalendarDay(value: string) {
+	if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+	const parsed = new Date(`${value}T12:00:00Z`);
+	return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value;
 }
 function ImageTile({ id }: { id: string }) {
 	const [url, setUrl] = useState("");
@@ -237,6 +244,14 @@ export function AssetDetail() {
 	const [submissionName, setSubmissionName] = useState("");
 	const [submissionUrl, setSubmissionUrl] = useState("");
 	const [historyNote, setHistoryNote] = useState("");
+	const [itemBorrower, setItemBorrower] = useState("");
+	const [itemLoanNote, setItemLoanNote] = useState("");
+	const [itemMaintenanceNote, setItemMaintenanceNote] = useState("");
+	const [itemEventDate, setItemEventDate] = useState(() => new Date().toISOString().slice(0, 10));
+	const [itemReminderDate, setItemReminderDate] = useState("");
+	const [itemError, setItemError] = useState("");
+	const [itemBusy, setItemBusy] = useState(false);
+	const itemInFlight = useRef(false);
 	const [renewalAmount, setRenewalAmount] = useState("");
 	const [renewalAmountError, setRenewalAmountError] = useState("");
 	const [renewalBusy, setRenewalBusy] = useState(false);
@@ -482,7 +497,7 @@ export function AssetDetail() {
 		}
 	}
 	async function recordAction(
-		action: "loan" | "return" | "renew" | "maintenance",
+		action: "renew",
 	) {
 		if (!asset) return;
 		const now = new Date().toISOString();
@@ -522,24 +537,98 @@ export function AssetDetail() {
 			setRenewalAmount("");
 			return;
 		}
-		if (action === "loan")
-			update = {
-				...update,
-				status: "loaned" as const,
-				borrower: historyNote.trim(),
+	}
+	async function recordItem(action: "loan" | "return" | "maintenance") {
+		if (!asset || itemInFlight.current) return;
+		itemInFlight.current = true;
+		setItemBusy(true);
+		setItemError("");
+		try {
+			const borrower = action === "return" ? asset.borrower : itemBorrower.trim();
+			const note = action === "maintenance" ? itemMaintenanceNote.trim() : itemLoanNote.trim();
+			if (action === "loan" && !borrower) throw Error("item-borrower-required");
+			if (action === "maintenance" && !note) throw Error("item-note-required");
+			const eventDate = action === "maintenance"
+				? itemEventDate
+				: new Date().toISOString().slice(0, 10);
+			if (!validCalendarDay(eventDate)) throw Error("item-date-invalid");
+			if (action === "maintenance" && itemReminderDate && !validCalendarDay(itemReminderDate)) throw Error("item-date-invalid");
+			const historyId = crypto.randomUUID();
+			const now = new Date().toISOString();
+			const next = {
+				...asset,
+				status: action === "loan" ? "loaned" as const : action === "return" ? "active" as const : asset.status,
+				borrower: action === "loan" ? borrower : action === "return" ? "" : asset.borrower,
+				lastItemEventId: historyId,
+				updatedAt: now,
 			};
-		if (action === "return")
-			update = { ...update, status: "active" as const, borrower: "" };
-		await save("asset", update);
-		await save("history", {
-			id: crypto.randomUUID(),
-			assetId: asset.id,
-			action,
-			note,
-			createdAt: now,
-			deleted: false,
-		});
-		setHistoryNote("");
+			await commitItemAction(asset, next, {
+				id: historyId,
+				assetId: asset.id,
+				action,
+				borrower: action === "maintenance" ? undefined : borrower,
+				eventDate,
+				note,
+				createdAt: now,
+				deleted: false,
+			});
+			setItemBorrower("");
+			if (action === "maintenance") setItemMaintenanceNote("");
+			else setItemLoanNote("");
+			if (action === "maintenance" && itemReminderDate) {
+				try {
+					await save("task", {
+						id: crypto.randomUUID(),
+						assetId: asset.id,
+						name: t("maintenanceReminderTask", { name: asset.name }),
+						dueDate: itemReminderDate,
+						done: false,
+						completedAt: "",
+						createdAt: now,
+						dedupeKey: `item:${asset.id}:maintenance:${itemReminderDate}`,
+						deleted: false,
+					});
+					setItemReminderDate("");
+				} catch (error) {
+					if (error instanceof Error && error.message === "task-duplicate") {
+						setItemReminderDate("");
+					} else {
+						setItemError(t("maintenanceSavedReminderFailed"));
+						return;
+					}
+				}
+			}
+			notify(t("saved"));
+		} catch (error) {
+			const reason = error instanceof Error ? error.message : "";
+			setItemError(t(
+				reason === "item-borrower-required" ? "borrowerRequired" :
+				reason === "item-note-required" ? "maintenanceNoteRequired" :
+				reason === "item-date-invalid" ? "invalid" :
+				reason === "item-stale" || reason === "asset-stale-item" ? "itemStale" :
+				reason === "item-recovery-pending" || reason === "renewal-recovery-pending" ? "itemRecoveryPending" : "error",
+			));
+		} finally {
+			itemInFlight.current = false;
+			setItemBusy(false);
+		}
+	}
+	async function changeItemArchive() {
+		if (!asset || itemInFlight.current || !["active", "archived"].includes(asset.status)) return;
+		itemInFlight.current = true;
+		setItemBusy(true);
+		setItemError("");
+		try {
+			await setItemArchived(asset.id, asset.status as "active" | "archived");
+			notify(t("saved"));
+		} catch (error) {
+			const reason = error instanceof Error ? error.message : "";
+			setItemError(t(reason === "item-stale" ? "itemStale" :
+				reason === "renewal-recovery-pending" ? "itemRecoveryPending" : "error"));
+		} finally {
+			itemInFlight.current = false;
+			setItemBusy(false);
+		}
 	}
 	async function recordRenewalAction() {
 		if (renewalInFlight.current) return;
@@ -733,6 +822,12 @@ export function AssetDetail() {
 									<dt>{t("location")}</dt>
 									<dd>{asset.location || "—"}</dd>
 								</div>
+								{asset.status === "loaned" && asset.borrower && (
+									<div>
+										<dt>{t("borrower")}</dt>
+										<dd>{asset.borrower}</dd>
+									</div>
+								)}
 							</>
 						)}
 						{asset.status && (
@@ -1061,41 +1156,21 @@ export function AssetDetail() {
 						<h2>{t("history")}</h2>
 					</div>
 					{asset.kind === "subscription" && renewalRecoveryPending && <p className="notice" role="alert">{t("renewalRecoveryPending")}</p>}
-					<div className="toolbar">
-						{asset.kind === "subscription" ? (
+					{asset.kind === "item" && itemError && <p className="notice" role="alert">{itemError}</p>}
+					{asset.kind === "subscription" ? (
+						<div className="toolbar">
 							<Button
-									disabled={asset.status !== "active" || !asset.dueDate || renewalBusy}
-									onClick={() => void recordRenewalAction()}
+								disabled={asset.status !== "active" || !asset.dueDate || renewalBusy}
+								onClick={() => void recordRenewalAction()}
 							>
 								{t("renew")}
 							</Button>
-						) : (
-							<>
-								<Button
-									onClick={() =>
-										void run(() =>
-											recordAction(
-												asset.status === "loaned" ? "return" : "loan",
-											),
-										)
-									}
-								>
-									{t(asset.status === "loaned" ? "return" : "loan")}
-								</Button>
-								<Button
-									onClick={() => void run(() => recordAction("maintenance"))}
-								>
-									{t("maintenance")}
-								</Button>
-							</>
-						)}
-						<input
-							value={historyNote}
-							onChange={(e) => setHistoryNote(e.target.value)}
-							placeholder={asset.kind === "item" ? t("borrower") : t("notes")}
-							aria-label={t("notes")}
-						/>
-						{asset.kind === "subscription" && (
+							<input
+								value={historyNote}
+								onChange={(e) => setHistoryNote(e.target.value)}
+								placeholder={t("notes")}
+								aria-label={t("notes")}
+							/>
 							<label className="renewal-amount-field">
 								<span>{t("recordedAmount")} ({asset.currency})</span>
 								<input
@@ -1109,8 +1184,54 @@ export function AssetDetail() {
 								/>
 								{renewalAmountError && <small role="alert">{renewalAmountError}</small>}
 							</label>
-						)}
-					</div>
+						</div>
+					) : (
+						<>
+							<div className="toolbar">
+								{asset.status === "active" && (
+									<label className="field">
+										<span>{t("borrower")}</span>
+										<input value={itemBorrower} maxLength={200} onChange={(event) => { setItemBorrower(event.target.value); setItemError(""); }} />
+									</label>
+								)}
+								<label className="field">
+									<span>{t("loanReturnNote")}</span>
+									<input value={itemLoanNote} onChange={(event) => { setItemLoanNote(event.target.value); setItemError(""); }} />
+								</label>
+								<Button
+									disabled={itemBusy || !["active", "loaned"].includes(asset.status)}
+									onClick={() => void recordItem(asset.status === "loaned" ? "return" : "loan")}
+								>
+									{t(asset.status === "loaned" ? "return" : "loan")}
+								</Button>
+								{["active", "archived"].includes(asset.status) && (
+									<Button disabled={itemBusy} onClick={() => void changeItemArchive()}>
+										{t(asset.status === "archived" ? "reactivateItem" : "archiveItem")}
+									</Button>
+								)}
+							</div>
+							<div className="toolbar">
+								<label className="field">
+									<span>{t("maintenanceNotes")}</span>
+									<input value={itemMaintenanceNote} onChange={(event) => { setItemMaintenanceNote(event.target.value); setItemError(""); }} />
+								</label>
+								<label className="field">
+									<span>{t("maintenanceDate")}</span>
+									<input type="date" value={itemEventDate} onChange={(event) => { setItemEventDate(event.target.value); setItemError(""); }} />
+								</label>
+								<label className="field">
+									<span>{t("maintenanceReminderDate")}</span>
+									<input type="date" value={itemReminderDate} onChange={(event) => { setItemReminderDate(event.target.value); setItemError(""); }} />
+								</label>
+								<Button
+									disabled={itemBusy || !["active", "loaned"].includes(asset.status)}
+									onClick={() => void recordItem("maintenance")}
+								>
+									{t("maintenance")}
+								</Button>
+							</div>
+						</>
+					)}
 					{asset.kind === "subscription" && <p className="subtitle">{t("renewalLocalHint")}</p>}
 					{histories.length ? (
 						<div className="list">
@@ -1120,12 +1241,15 @@ export function AssetDetail() {
 									<div>
 										<strong>{t(h.action)}</strong>
 										<small>
-											{new Intl.DateTimeFormat(i18n.language, {
-												dateStyle: "medium",
-											}).format(new Date(h.createdAt))}
+											{h.eventDate
+												? date(h.eventDate, i18n.language)
+												: new Intl.DateTimeFormat(i18n.language, {
+													dateStyle: "medium",
+												}).format(new Date(h.createdAt))}
 											{h.action === "renew" && h.billDate && h.amount !== undefined && h.currency
 												? ` · ${date(h.billDate, i18n.language)} · ${t("recordedAmount")}: ${money(h.amount, h.currency, i18n.language)}`
 												: ""}
+											{h.borrower ? ` · ${t("borrower")}: ${h.borrower}` : ""}
 											{h.note && ` · ${h.note}`}
 										</small>
 									</div>

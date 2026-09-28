@@ -4,6 +4,7 @@ import { Download, FileUp, Link2, LockKeyhole, Sparkles } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import {
 	assetSchema,
+	taskSchema,
 	duplicates,
 	newAsset,
 	type Asset,
@@ -25,6 +26,7 @@ import {
 } from "../../../packages/local-db/src";
 import { Button } from "./components/ui/button";
 import { Dialog } from "./components/ui/dialog";
+import { useAppContext } from "./view-shared";
 
 const categoryOptions: Record<AssetKind, string[]> = {
 	project: ["website", "repository", "tool"],
@@ -159,7 +161,10 @@ export function AssetEditor({
 			await save("asset", parsed.data);
 			onClose();
 		} catch (error) {
-			setFailure(error instanceof Error && error.message === "asset-stale-renewal" ? t("renewalStale") : t("error"));
+			const reason = error instanceof Error ? error.message : "";
+			setFailure(t(reason === "asset-stale-renewal" ? "renewalStale" :
+				reason === "asset-stale-item" ? "itemStale" :
+				reason === "renewal-recovery-pending" && kind === "item" ? "itemRecoveryPending" : "error"));
 		} finally {
 			setBusy(false);
 		}
@@ -422,30 +427,63 @@ export function TaskEditor({
 	onClose: () => void;
 }) {
 	const { t } = useTranslation();
+	const { data } = useAppContext();
 	const [name, setName] = useState("");
 	const [dueDate, setDueDate] = useState("");
-	const [error, setError] = useState("");
+	const [nameError, setNameError] = useState("");
+	const [dueDateError, setDueDateError] = useState("");
+	const [failure, setFailure] = useState("");
+	const [busy, setBusy] = useState(false);
+	const inFlight = useRef(false);
 	async function submit(e: React.FormEvent) {
 		e.preventDefault();
+		if (inFlight.current) return;
+		setNameError("");
+		setDueDateError("");
+		setFailure("");
 		if (!name.trim()) {
-			setError(t("required"));
+			setNameError(t("required"));
 			return;
 		}
+		const candidate = {
+			id: crypto.randomUUID(),
+			name: name.trim(),
+			assetId,
+			dueDate,
+			done: false,
+			completedAt: "",
+			createdAt: new Date().toISOString(),
+			dedupeKey: "",
+			deleted: false,
+		};
+		const parsed = taskSchema.safeParse(candidate);
+		if (!parsed.success) {
+			const invalidDate = parsed.error.issues.some((issue) => issue.path[0] === "dueDate");
+			if (invalidDate) setDueDateError(t("invalid"));
+			else setNameError(t("invalid"));
+			return;
+		}
+		inFlight.current = true;
+		setBusy(true);
 		try {
+			const isItem = data.assets.some((asset) => !asset.deleted && asset.id === assetId && asset.kind === "item");
+			let dedupeKey = "";
+			if (isItem) {
+				const normalizedName = name.trim().normalize("NFKC").replace(/\s+/g, " ").toLocaleLowerCase("en");
+				const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(normalizedName));
+				const hash = Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
+				dedupeKey = `item:${assetId}:${hash}:${dueDate || "none"}`;
+			}
 			await save("task", {
-				id: crypto.randomUUID(),
-				name: name.trim(),
-				assetId,
-				dueDate,
-				done: false,
-				completedAt: "",
-				createdAt: new Date().toISOString(),
-				dedupeKey: "",
-				deleted: false,
+				...parsed.data,
+				dedupeKey,
 			});
 			onClose();
-		} catch {
-			setError(t("error"));
+		} catch (error) {
+			setFailure(error instanceof Error && error.message === "task-duplicate" ? t("taskDuplicatePending") : t("error"));
+		} finally {
+			inFlight.current = false;
+			setBusy(false);
 		}
 	}
 	return (
@@ -456,22 +494,24 @@ export function TaskEditor({
 						name="taskName"
 						label={t("name")}
 						value={name}
-						onChange={setName}
-						error={error}
+						onChange={(value) => { setName(value); setNameError(""); setFailure(""); }}
+						error={nameError}
 					/>
 					<Field
 						name="taskDue"
 						label={t("date")}
 						type="date"
 						value={dueDate}
-						onChange={setDueDate}
+						onChange={(value) => { setDueDate(value); setDueDateError(""); setFailure(""); }}
+						error={dueDateError}
 					/>
 				</div>
+				{failure && <p className="notice" role="alert">{failure}</p>}
 				<div className="actions">
-					<Button type="button" onClick={onClose}>
+					<Button type="button" onClick={onClose} disabled={busy}>
 						{t("cancel")}
 					</Button>
-					<Button variant="primary" type="submit">
+					<Button variant="primary" type="submit" disabled={busy}>
 						{t("save")}
 					</Button>
 				</div>
