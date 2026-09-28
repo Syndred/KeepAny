@@ -161,3 +161,35 @@ for (const locale of ["en-US", "zh-CN"] as const) {
 		});
 	}
 }
+
+for (const [locale, currentLabel, nextLabel, target] of [
+	["en-US", "Language", "语言", "zh-CN"],
+	["zh-CN", "语言", "Language", "en"],
+] as const) {
+	test(`${locale} settings language control has a name and choice persists`, async ({
+		browser,
+	}) => {
+		const context = await browser.newContext({ locale });
+		const page = await context.newPage();
+		const errors: string[] = [];
+		page.on("pageerror", (error) => errors.push(error.message));
+		try {
+			await page.goto("/settings");
+			const selection = page.getByRole("combobox", { name: currentLabel });
+			await expect(selection).toBeVisible();
+			await selection.focus();
+			await expect(selection).toBeFocused();
+			await selection.selectOption(target);
+			await expect(page.getByRole("combobox", { name: nextLabel })).toHaveValue(
+				target,
+			);
+			await page.reload();
+			await expect(page.getByRole("combobox", { name: nextLabel })).toHaveValue(
+				target,
+			);
+			expect(errors).toEqual([]);
+		} finally {
+			await context.close();
+		}
+	});
+}

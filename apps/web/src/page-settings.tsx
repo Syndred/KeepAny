@@ -209,8 +209,9 @@ export function SettingsPage() {
 			<PageTitle title={t("settings")} />
 			<div className="card-grid">
 				<section className="card padded">
-					<h2>{t("language")}</h2>
+					<h2 id="settings-language-label">{t("language")}</h2>
 					<select
+						aria-labelledby="settings-language-label"
 						value={i18n.language}
 						onChange={(e) => {
 							const value = e.target.value;
