@@ -15,10 +15,10 @@
 
 `RxdbMcpAssetStore` 可在**持有 Web 应用同一个 IndexedDB 上下文**的代码中操作现有 RxDB 资产集。独立 Node stdio 进程不能直接打开浏览器 IndexedDB。`bridge.ts` 提供只监听数值 loopback 的单会话 RPC，`browser-bridge.ts` 提供同源仓库执行器。配对须由可信启动器把随机密钥交给 Web 应用，再由用户对作用域进行一次批准。桥只发送获批可读字段的投影；写入在浏览器端合并原记录并按版本比较。威胁边界见 [ADR 0002](../../docs/adr/0002-mcp-bridge.md)。
 
-正式 Web 授权/批准界面、可信启动器、MCP 客户端配置及真实浏览器连接尚未接入，**普通用户目前仍不能通过 MCP 访问自己的浏览器资料**。不得提供“从备份复制出第二份可写资产库”的启动脚本，这会造成两个状态源。同一操作系统账户下可读取进程内存或浏览器资料的恶意进程不受本桥隔离。
+正式 Web 授权/批准界面、可信启动器及 MCP 客户端配置尚未接入；隔离 Chromium 的测试页面已验证跨源连接，但并未接入正式 Web 资料库，**普通用户目前仍不能通过 MCP 访问自己的浏览器资料**。不得提供“从备份复制出第二份可写资产库”的启动脚本，这会造成两个状态源。同一操作系统账户下可读取进程内存或浏览器资料的恶意进程不受本桥隔离。
 
 ## 验证
 
-`pnpm exec vitest run packages/mcp/src` 覆盖字段/资产范围、错误密钥、撤销、预览批准、重放、并发冲突、未决操作、持久状态、RxDB 同源写入、官方 SDK 内存传输协议及真实 loopback 桥。`pnpm typecheck` 校验 SDK 和跨包接口。
+`pnpm exec vitest run packages/mcp/src` 覆盖字段/资产范围、错误密钥、撤销、预览批准、重放、并发冲突、未决操作、持久状态、RxDB 同源写入、官方 SDK 内存传输协议及真实 loopback 桥。其中 `bridge-browser.test.ts` 启动本机随机端口页面和 Chromium，验证非许可页面来源无法配对、许可来源的 CORS 预检与 JSON 配对、带 Bearer 的跨源轮询及受限字段响应。测试只用随机合成密钥，不输出密钥；它不证明可信启动器或正式 Web 授权界面可用。`pnpm typecheck` 校验 SDK 和跨包接口。
 
 SDK 依据：[官方 TypeScript SDK v2](https://ts.sdk.modelcontextprotocol.io/v2/)、[stdio 指南](https://github.com/modelcontextprotocol/typescript-sdk/blob/main/docs/serving/stdio.md)。未复制上游源码，仅使用 npm MIT 包 API。
