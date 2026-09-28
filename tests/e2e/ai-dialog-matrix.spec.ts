@@ -182,6 +182,9 @@ for (const language of ["en", "zh-CN"] as const) {
 				await expect(
 					dialog.getByRole("button", { name: copy.send }),
 				).toBeEnabled();
+				await expect(
+					dialog.getByRole("button", { name: copy.send }),
+				).toBeInViewport({ ratio: 0.95 });
 				expect(
 					await dialog.evaluate(
 						(element) => element.scrollWidth <= element.clientWidth,
