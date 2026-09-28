@@ -207,7 +207,8 @@ export class BrowserMcpBridgeClient {
     } catch (error) {
       if (!combined.aborted) throw error;
     } finally {
-      if (!this.stopped && !this.revocation) await this.close();
+      if (!this.stopped && this.revocation) await this.revocation.catch(() => undefined);
+      if (!this.stopped) await this.close();
     }
   }
 

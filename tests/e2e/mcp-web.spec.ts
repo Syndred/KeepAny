@@ -65,7 +65,7 @@ test('formal Web grants one RxDB record to an isolated official SDK stdio client
   const pairingPath = join(privateDir, 'pairing.json');
   let client: Client | undefined;
   let transport: StdioClientTransport | undefined;
-  let releasePausedWrite = () => undefined;
+  let releasePausedWrite: () => void = () => undefined;
   const unique = crypto.randomUUID().slice(0, 8);
   const before = `MCP selected ${unique}`;
   const after = `MCP approved ${unique}`;
