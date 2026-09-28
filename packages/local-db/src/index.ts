@@ -29,7 +29,14 @@ class FileStore extends Dexie {
   }
 }
 
-export const files = new FileStore('keepany');
+interface DefaultRepositoryState {
+  fileStore?: FileStore;
+  resources?: Promise<{ db: RxDatabase; fileStore: FileStore }>;
+}
+// Vite HMR re-evaluates this module while the old RxDB remains open. Keep the resource across reloads.
+const defaultGlobal = globalThis as typeof globalThis & { __keepanyLocalDbState?: DefaultRepositoryState };
+const defaultState = defaultGlobal.__keepanyLocalDbState ??= {};
+export const files = defaultState.fileStore ??= new FileStore('keepany');
 const recordSchema = {
   title: 'KeepAny entity', version: 0, primaryKey: 'id', type: 'object',
   properties: {
@@ -244,9 +251,44 @@ export class LocalRepository {
     return value ? URL.createObjectURL(value.blob) : '';
   }
 
+  // Call after an asset write fails or after removing an image from an asset.
+  // Tombstones and durable journals still protect their referenced images.
+  async cleanupUnreferencedFile(id: string): Promise<boolean> {
+    z.string().uuid().parse(id);
+    if ((await this.protectedFileIds()).has(id)) return false;
+    if (!(await this.fileStore.blobs.get(id))) return false;
+    await this.fileStore.blobs.delete(id);
+    return true;
+  }
+
+  async collectOrphanFiles(): Promise<number> {
+    const protectedIds = await this.protectedFileIds();
+    const candidates = (await this.fileStore.blobs.toCollection().primaryKeys())
+      .filter(id => !protectedIds.has(id));
+    let removed = 0;
+    for (const id of candidates) if (await this.cleanupUnreferencedFile(id)) removed++;
+    return removed;
+  }
+
+  private async protectedFileIds(): Promise<Set<string>> {
+    const rows = await this.allRecords();
+    const [restores, imports, pulls] = await Promise.all([
+      this.fileStore.journal.toArray(), this.fileStore.importJournal.toArray(), this.fileStore.pullJournal.toArray(),
+    ]);
+    for (const entry of restores) rows.push(...entry.rows);
+    for (const entry of imports) rows.push(...entry.rows);
+    for (const entry of pulls) rows.push(...entry.changes.map(change => change.row));
+    return attachmentIdsIn(rows);
+  }
+
   async exportArchive(): Promise<Uint8Array> {
     const rows = await this.allRecords();
-    const blobs = await this.fileStore.blobs.toArray();
+    const blobs: StoredFile[] = [];
+    for (const id of attachmentIdsIn(rows)) {
+      const file = await this.fileStore.blobs.get(id);
+      if (!file) throw Error('archive-attachment-reference');
+      blobs.push(file);
+    }
     validateReferences(rows, new Set(blobs.map(blob => blob.id)));
     const entries: Record<string, Uint8Array> = { 'records.json': strToU8(JSON.stringify(rows)) };
     const attachments: AttachmentManifest[] = [];
@@ -397,7 +439,13 @@ export async function openLocalRepository(name: string): Promise<LocalRepository
 
 let singleton: Promise<LocalRepository> | undefined;
 function defaultRepository(): Promise<LocalRepository> {
-  if (!singleton) singleton = openLocalRepository('keepany-v1').catch(error => { singleton = undefined; throw error; });
+  if (!singleton) {
+    const resources = defaultState.resources ??= openLocalRepository('keepany-v1')
+      .then(repository => ({ db: repository.db, fileStore: repository.fileStore }))
+      .catch(error => { defaultState.resources = undefined; throw error; });
+    singleton = resources.then(({ db, fileStore }) => new LocalRepository(db, fileStore))
+      .catch(error => { singleton = undefined; throw error; });
+  }
   return singleton;
 }
 export async function database(): Promise<RxDatabase> { return (await defaultRepository()).db; }
@@ -410,6 +458,8 @@ export async function deleteEntity(type: EntityType, id: string) { return (await
 export async function restoreEntity(type: EntityType, id: string) { return (await defaultRepository()).restoreEntity(type, id); }
 export async function putFile(file: File) { return (await defaultRepository()).putFile(file); }
 export async function fileUrl(id: string) { return (await defaultRepository()).fileUrl(id); }
+export async function cleanupUnreferencedFile(id: string) { return (await defaultRepository()).cleanupUnreferencedFile(id); }
+export async function collectOrphanFiles() { return (await defaultRepository()).collectOrphanFiles(); }
 export async function exportArchive() { return (await defaultRepository()).exportArchive(); }
 export async function restoreArchive(bytes: Uint8Array) { return (await defaultRepository()).restoreArchive(bytes); }
 
@@ -478,4 +528,14 @@ function validateReferences(rows: RecordRow[], attachmentIds: Set<string>): void
     if (row.type === 'relation' && (!assetIds.has(value.from as string) || !assetIds.has(value.to as string))) throw Error('archive-relation-reference');
     if (row.type === 'task' && value.assetId && !assetIds.has(value.assetId as string)) throw Error('archive-task-reference');
   }
+}
+
+function attachmentIdsIn(rows: RecordRow[]): Set<string> {
+  const ids = new Set<string>();
+  for (const row of rows) {
+    if (row.type !== 'asset') continue;
+    const asset = parsedPayload(row) as unknown as { attachments: string[] };
+    for (const id of asset.attachments) ids.add(id);
+  }
+  return ids;
 }

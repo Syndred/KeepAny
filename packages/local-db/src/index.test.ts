@@ -99,6 +99,7 @@ describe('RxDB + free Dexie local repository', () => {
     await source.save('relation', { id: crypto.randomUUID(), from: asset.id, to: account.id, label: 'owns', createdAt: new Date().toISOString() });
     await source.deleteEntity('asset', account.id);
     const fileId = await source.putFile(new File([new Uint8Array([1, 2, 3, 4])], 'test.png', { type: 'image/png' }));
+    await source.save('asset', { ...asset, attachments: [fileId] });
     const backup = await source.exportArchive();
     const inspected = await inspectArchive(backup);
     expect(inspected.manifest.recordCount).toBe(3);
@@ -132,6 +133,54 @@ describe('RxDB + free Dexie local repository', () => {
     expect((await destination.get<Asset>('asset', asset.id))?.name).toBe('Local edit');
     expect(await destination.fileStore.journal.count()).toBe(0);
     await destination.close();
+  });
+
+  it('excludes orphan images from backups and collects only files no asset or recovery journal references', async () => {
+    const db = await openLocalRepository(name());
+    try {
+      const shared = await db.putFile(new File([new Uint8Array([1])], 'shared.png', { type: 'image/png' }));
+      const orphan = await db.putFile(new File([new Uint8Array([2])], 'orphan.png', { type: 'image/png' }));
+      const journalFile = await db.putFile(new File([new Uint8Array([3])], 'journal.png', { type: 'image/png' }));
+      const first = { ...project('First'), attachments: [shared] };
+      const tombstone = { ...project('In trash'), attachments: [shared] };
+      await db.save('asset', first);
+      await db.save('asset', tombstone);
+      await db.deleteEntity('asset', tombstone.id);
+      const pending = { ...project('Restore pending'), attachments: [journalFile] };
+      await db.fileStore.journal.put({ id: 'pending-file-reference', rows: [{
+        id: `asset:${pending.id}`, type: 'asset', payload: JSON.stringify(pending), updatedAt: Date.now(),
+      }] });
+
+      const backup = await inspectArchive(await db.exportArchive());
+      expect(backup.manifest.attachments.map(item => item.id)).toEqual([shared]);
+      expect(await db.cleanupUnreferencedFile(shared)).toBe(false);
+      expect(await db.collectOrphanFiles()).toBe(1);
+      expect(await db.fileStore.blobs.get(orphan)).toBeUndefined();
+      expect(await db.fileStore.blobs.get(journalFile)).toBeDefined();
+
+      await db.save('asset', { ...first, attachments: [] });
+      expect(await db.cleanupUnreferencedFile(shared)).toBe(false); // The tombstone still references it.
+      await db.save('asset', { ...tombstone, deleted: true, attachments: [] });
+      expect(await db.cleanupUnreferencedFile(shared)).toBe(true);
+      await db.fileStore.journal.delete('pending-file-reference');
+      expect(await db.collectOrphanFiles()).toBe(1);
+      expect((await inspectArchive(await db.exportArchive())).manifest.attachments).toHaveLength(0);
+    } finally { await db.close(); }
+  });
+
+  it('lets a failed asset write discard its new image without deleting a committed image', async () => {
+    const db = await openLocalRepository(name());
+    try {
+      const abandoned = await db.putFile(new File([new Uint8Array([4])], 'failed.png', { type: 'image/png' }));
+      const invalid = { ...project('Valid'), name: '', attachments: [abandoned] };
+      await expect(db.save('asset', invalid)).rejects.toThrow();
+      expect(await db.cleanupUnreferencedFile(abandoned)).toBe(true);
+      expect(await db.fileStore.blobs.get(abandoned)).toBeUndefined();
+      const kept = await db.putFile(new File([new Uint8Array([5])], 'kept.png', { type: 'image/png' }));
+      await db.save('asset', { ...project('Saved'), attachments: [kept] });
+      expect(await db.cleanupUnreferencedFile(kept)).toBe(false);
+      expect(await db.fileStore.blobs.get(kept)).toBeDefined();
+    } finally { await db.close(); }
   });
 
   it('replays an interrupted restore journal when the database reopens', async () => {
