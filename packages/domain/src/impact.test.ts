@@ -83,7 +83,7 @@ describe('account rebinding impact tasks', () => {
   it('upgrades an unambiguous legacy task without changing its ID, dates, completion state or past completions', () => {
     const account = asset('account', 'account-1', 'Email account');
     const project = asset('project', 'project-1', 'Project');
-    const link = relation('relation-1', project, account, 'admin of', 'signed note');
+    const link = { ...relation('relation-1', project, account, 'admin of', 'signed note'), createdAt: '2026-09-19T00:00:00.000Z' };
     const originalCreatedAt = '2026-09-20T01:00:00.000Z';
     const originalCompletedAt = '2026-09-22T01:00:00.000Z';
     const legacy = taskSchema.parse({ id: 'legacy-task', name: 'Original reminder', assetId: project.id,
@@ -105,7 +105,7 @@ describe('account rebinding impact tasks', () => {
   it('upgrades a raw legacy RxDB payload that has no completionHistory field', () => {
     const account = asset('account', 'account-1', 'Email account');
     const project = asset('project', 'project-1', 'Project');
-    const link = relation('relation-1', account, project, 'owner');
+    const link = { ...relation('relation-1', account, project, 'owner'), createdAt: '2026-09-19T00:00:00.000Z' };
     const completedAt = '2026-09-21T00:00:00.000Z';
     const rawLegacy = JSON.parse(JSON.stringify({
       id: 'old-raw', name: 'Old checklist', assetId: project.id, createdAt: at,
@@ -132,7 +132,7 @@ describe('account rebinding impact tasks', () => {
   it('uses the newest live legacy task while preserving older completion timestamps', () => {
     const account = asset('account', 'account-1', 'Email account');
     const project = asset('project', 'project-1', 'Project');
-    const link = relation('relation-1', account, project, 'owner');
+    const link = { ...relation('relation-1', account, project, 'owner'), createdAt: '2026-09-19T00:00:00.000Z' };
     const key = `impact:${account.id}:${project.id}`;
     const older = taskSchema.parse({ id: 'old-completed', name: 'Check', assetId: project.id, createdAt: '2026-09-20T00:00:00.000Z',
       dedupeKey: key, done: true, completedAt: '2026-09-21T00:00:00.000Z' });
@@ -144,6 +144,59 @@ describe('account rebinding impact tasks', () => {
     expect(upgraded.dueDate).toBe(newer.dueDate);
     expect(upgraded.completionHistory).toEqual(['2026-09-21T00:00:00.000Z']);
     expect(upgradeLegacyImpactTasks(account, [{ ...link, deleted: true }], [account, project], [older, newer], at)).toEqual([]);
+  });
+
+  it('does not reuse an older completed legacy task for a replacement relation after an upgrade and archive round trip', () => {
+    const account = asset('account', 'account-1', 'Email account');
+    const project = asset('project', 'project-1', 'Project');
+    const first = { ...relation('relation-1', account, project, 'old owner'), createdAt: '2026-09-19T00:00:00.000Z' };
+    const key = `impact:${account.id}:${project.id}`;
+    const older = taskSchema.parse({ id: 'old-completed', name: 'Old check', assetId: project.id,
+      createdAt: '2026-09-20T00:00:00.000Z', dedupeKey: key,
+      done: true, completedAt: '2026-09-21T00:00:00.000Z' });
+    const newer = taskSchema.parse({ id: 'new-pending', name: 'Old check', assetId: project.id,
+      createdAt: '2026-09-22T00:00:00.000Z', dedupeKey: key, done: false });
+    const [upgraded] = upgradeLegacyImpactTasks(account, [first], [account, project], [older, newer], at);
+    expect(upgraded.id).toBe(newer.id);
+    expect(upgraded.impactSnapshot?.legacyDedupeKey).toBe(key);
+    expect(upgraded.completionHistory).toEqual([older.completedAt]);
+    const replacement = { ...relation('relation-2', account, project, 'new owner'), createdAt: '2026-09-28T00:00:00.000Z' };
+    const relations = [{ ...first, deleted: true }, replacement];
+    const records = [older, upgraded];
+    expect(upgradeLegacyImpactTasks(account, relations, [account, project], records, at)).toEqual([]);
+    expect(uncoveredImpactRelationIds(account, relations, [account, project], records)).toEqual([replacement.id]);
+    const [fresh] = buildImpactTasks(account, relations, [account, project], records, at, makeName);
+    expect(fresh).toMatchObject({ done: false, completedAt: '', completionHistory: [],
+      impactSnapshot: { relationId: replacement.id, label: 'new owner' } });
+    expect(fresh.id).not.toBe(upgraded.id);
+    expect(records.find(task => task.id === upgraded.id)?.completionHistory).toEqual([older.completedAt]);
+    const restored = JSON.parse(JSON.stringify(records)) as Task[];
+    expect(restored[1].impactSnapshot?.legacyDedupeKey).toBe(key);
+    expect(upgradeLegacyImpactTasks(account, relations, [account, project], restored, at)).toEqual([]);
+    expect(uncoveredImpactRelationIds(account, relations, [account, project], restored)).toEqual([replacement.id]);
+    expect(buildImpactTasks(account, relations, [account, project], restored, at, makeName)[0]).toMatchObject({
+      done: false, completedAt: '', completionHistory: [], impactSnapshot: { relationId: replacement.id },
+    });
+    const deletedSnapshot = [older, { ...upgraded, deleted: true }];
+    expect(upgradeLegacyImpactTasks(account, relations, [account, project], deletedSnapshot, at)).toEqual([]);
+    expect(uncoveredImpactRelationIds(account, relations, [account, project], deletedSnapshot)).toEqual([replacement.id]);
+  });
+
+  it('does not assign a neighbor-keyed completion when a deleted relation predates the one current relation', () => {
+    const account = asset('account', 'account-1', 'Email account');
+    const project = asset('project', 'project-1', 'Project');
+    const old = { ...relation('relation-1', account, project, 'old'), createdAt: '2026-09-19T00:00:00.000Z', deleted: true };
+    const replacement = { ...relation('relation-2', account, project, 'replacement'), createdAt: '2026-09-28T00:00:00.000Z' };
+    const legacy = taskSchema.parse({ id: 'old-completed', name: 'Old check', assetId: project.id,
+      createdAt: '2026-09-20T00:00:00.000Z', dedupeKey: `impact:${account.id}:${project.id}`,
+      done: true, completedAt: '2026-09-21T00:00:00.000Z' });
+    expect(upgradeLegacyImpactTasks(account, [old, replacement], [account, project], [legacy], at)).toEqual([]);
+    expect(uncoveredImpactRelationIds(account, [old, replacement], [account, project], [legacy])).toEqual([replacement.id]);
+    expect(buildImpactTasks(account, [old, replacement], [account, project], [legacy], at, makeName)[0]).toMatchObject({
+      done: false, completedAt: '', completionHistory: [], impactSnapshot: { relationId: replacement.id },
+    });
+    expect(upgradeLegacyImpactTasks(account, [replacement], [account, project], [legacy], at)).toEqual([]);
+    expect(uncoveredImpactRelationIds(account, [replacement], [account, project], [legacy])).toEqual([replacement.id]);
   });
 
   it('parses old task records and archives without impact fields and preserves completed history when present', () => {

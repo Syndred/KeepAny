@@ -15,6 +15,7 @@ export const impactSnapshotSchema=z.object({
  fromAssetId:z.string().min(1).max(96),toAssetId:z.string().min(1).max(96),
  fromName:z.string().min(1).max(160),toName:z.string().min(1).max(160),relatedName:z.string().min(1).max(160),
  label:z.string().min(1).max(100),source:z.string().max(500),verifiedAt:z.string().max(64),generatedAt:z.string().min(1).max(64),
+ legacyDedupeKey:z.string().max(200).optional(),
 });
 export type ImpactSnapshot=z.infer<typeof impactSnapshotSchema>;
 export const taskSchema=z.object({id:z.string().min(1).max(96),name:z.string().min(1).max(300),assetId:z.string().max(96).default(''),dueDate:z.string().default(''),done:z.boolean().default(false),completedAt:z.string().default(''),completionHistory:z.array(z.string().min(1).max(64)).default([]),createdAt:z.string(),dedupeKey:z.string().max(200).default(''),impactSnapshot:impactSnapshotSchema.optional(),deleted:z.boolean().default(false)});

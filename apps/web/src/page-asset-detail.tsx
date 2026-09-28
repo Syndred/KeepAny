@@ -303,11 +303,11 @@ export function AssetDetail() {
 		impactFilter === "all" || (impactFilter === "done" ? task.done : !task.done),
 	);
 	const impactToGenerate = asset?.kind === "account"
-		? buildImpactTasks(asset, relations, [...liveById.values()], data.tasks, new Date().toISOString(), (linked) => `${t("checkConnection")}: ${linked.name}`)
+		? buildImpactTasks(asset, data.relations, [...liveById.values()], data.tasks, new Date().toISOString(), (linked) => `${t("checkConnection")}: ${linked.name}`)
 			.filter((task) => !generatedImpactKeys.current.has(task.dedupeKey))
 		: [];
 	const impactToUpgrade = asset?.kind === "account"
-		? upgradeLegacyImpactTasks(asset, relations, [...liveById.values()], data.tasks, new Date().toISOString())
+		? upgradeLegacyImpactTasks(asset, data.relations, [...liveById.values()], data.tasks, new Date().toISOString())
 			.filter((task) => !generatedImpactKeys.current.has(task.dedupeKey))
 		: [];
 	const impactPendingCount = impactToGenerate.length + impactToUpgrade.length;

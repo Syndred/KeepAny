@@ -14,7 +14,7 @@ async function taskRows(page: Page) {
 			dueDate: string;
 			completedAt: string;
 			completionHistory: string[];
-			impactSnapshot?: { accountId: string; relationId: string; label: string; source: string; verifiedAt: string };
+			impactSnapshot?: { accountId: string; relationId: string; label: string; source: string; verifiedAt: string; legacyDedupeKey?: string };
 		}[];
 	}, repositoryModuleUrl);
 }
@@ -235,19 +235,24 @@ test("legacy neighbor task fixture upgrades in place through the checklist UI", 
 	await dialog.getByRole("button", { name: "Save" }).click();
 	await expect(dialog).toBeHidden();
 	const legacyId = crypto.randomUUID();
-	await page.evaluate(async ({ modulePath, legacyId, account, project }) => {
+	const legacyFixture = await page.evaluate(async ({ modulePath, legacyId, account, project, label }) => {
 		const { localRepository, save } = await import(modulePath);
 		const repository = await localRepository();
 		const assets = await repository.list("asset", true) as { id: string; name: string }[];
+		const relations = await repository.list("relation", true) as { label: string; createdAt: string }[];
 		const accountId = assets.find((asset) => asset.name === account)?.id;
 		const projectId = assets.find((asset) => asset.name === project)?.id;
-		if (!accountId || !projectId) throw Error("fixture assets missing");
+		const relation = relations.find((item) => item.label === label);
+		if (!accountId || !projectId || !relation) throw Error("fixture inputs missing");
+		const createdAt = new Date(Date.parse(relation.createdAt) + 1).toISOString();
+		const completedAt = new Date(Date.parse(relation.createdAt) + 2).toISOString();
 		await save("task", {
 			id: legacyId, name: `Legacy check ${project}`, assetId: projectId,
-			dueDate: "2026-10-05", done: true, completedAt: "2026-09-28T12:00:00.000Z",
-			createdAt: "2026-09-28T11:00:00.000Z", dedupeKey: `impact:${accountId}:${projectId}`, deleted: false,
+			dueDate: "2026-10-05", done: true, completedAt,
+			createdAt, dedupeKey: `impact:${accountId}:${projectId}`, deleted: false,
 		});
-	}, { modulePath: repositoryModuleUrl, legacyId, account, project });
+		return { completedAt };
+	}, { modulePath: repositoryModuleUrl, legacyId, account, project, label });
 	await page.reload();
 	const checklist = page.locator(".impact-checklist");
 	await expect(checklist.getByRole("button", { name: "Create checklist · 1" })).toBeEnabled();
@@ -256,7 +261,137 @@ test("legacy neighbor task fixture upgrades in place through the checklist UI", 
 	await expect(checklist.getByRole("button", { name: "Create checklist · 0" })).toBeDisabled();
 	const rows = (await taskRows(page)).filter((row) => row.impactSnapshot);
 	expect(rows).toHaveLength(1);
-	expect(rows[0]).toMatchObject({ id: legacyId, done: true, dueDate: "2026-10-05", completedAt: "2026-09-28T12:00:00.000Z", completionHistory: ["2026-09-28T12:00:00.000Z"] });
+	expect(rows[0]).toMatchObject({ id: legacyId, done: true, dueDate: "2026-10-05", completedAt: legacyFixture.completedAt, completionHistory: [legacyFixture.completedAt] });
+});
+
+test("old completed neighbor task cannot complete a replacement relation after .ka1 restore", async ({ browser }) => {
+	test.setTimeout(120_000);
+	mkdirSync(evidence, { recursive: true });
+	const context = await browser.newContext({ locale: "en-US", viewport: { width: 390, height: 844 }, acceptDownloads: true });
+	const page = await context.newPage();
+	page.setDefaultTimeout(10_000);
+	const errors: string[] = [];
+	page.on("pageerror", (error) => errors.push(error.message));
+	const suffix = crypto.randomUUID().slice(0, 6);
+	const account = `Account ${suffix}`;
+	const project = `Project ${suffix}`;
+	const oldLabel = `Old owner ${suffix}`;
+	const newLabel = `New owner ${suffix}`;
+	const afterRestoreLabel = `Later owner ${suffix}`;
+	const completedId = crypto.randomUUID();
+	const pendingId = crypto.randomUUID();
+	const password = `legacy-impact-${suffix}-2026`;
+	async function addAsset(kind: "account" | "project", name: string) {
+		await page.goto(`/assets/${kind}`);
+		await page.getByRole("button", { name: "Add", exact: true }).click();
+		const dialog = page.getByRole("dialog");
+		await dialog.getByLabel("Name", { exact: true }).fill(name);
+		await dialog.getByRole("button", { name: "Save" }).click();
+		await expect(dialog).toBeHidden();
+		await page.getByText(name, { exact: true }).first().click();
+	}
+	async function addRelation(targetPage: Page, label: string) {
+		await targetPage.getByRole("button", { name: "Add connection" }).click();
+		const dialog = targetPage.getByRole("dialog");
+		await dialog.getByLabel("Connect to").selectOption({ label: project });
+		await dialog.getByLabel("Connection label").fill(label);
+		await dialog.getByRole("button", { name: "Save" }).click();
+		await expect(dialog).toBeHidden();
+	}
+	try {
+		await addAsset("project", project);
+		await addAsset("account", account);
+		const accountUrl = page.url();
+		await addRelation(page, oldLabel);
+		// The old neighbor-keyed tasks are fixture records; asset and relation creation above used the UI.
+		const fixture = await page.evaluate(async ({ modulePath, account, project, oldLabel, completedId, pendingId }) => {
+			const { localRepository, saveBatch } = await import(modulePath);
+			const repository = await localRepository();
+			const assets = await repository.list("asset", true) as { id: string; name: string }[];
+			const relations = await repository.list("relation", true) as { id: string; label: string; createdAt: string }[];
+			const accountId = assets.find((asset) => asset.name === account)?.id;
+			const projectId = assets.find((asset) => asset.name === project)?.id;
+			const first = relations.find((relation) => relation.label === oldLabel);
+			if (!accountId || !projectId || !first) throw Error("fixture inputs missing");
+			const start = Date.parse(first.createdAt);
+			const key = `impact:${accountId}:${projectId}`;
+			const completedAt = new Date(start + 2).toISOString();
+			await saveBatch([
+				{ type: "task", value: { id: completedId, name: "Old completed check", assetId: projectId, createdAt: new Date(start + 1).toISOString(), dueDate: "", done: true, completedAt, dedupeKey: key, deleted: false } },
+				{ type: "task", value: { id: pendingId, name: "Newer pending check", assetId: projectId, createdAt: new Date(start + 3).toISOString(), dueDate: "", done: false, completedAt: "", dedupeKey: key, deleted: false } },
+			]);
+			return { accountId, key, firstRelationId: first.id, completedAt };
+		}, { modulePath: repositoryModuleUrl, account, project, oldLabel, completedId, pendingId });
+		await page.reload();
+		const checklist = page.locator(".impact-checklist");
+		await checklist.getByRole("button", { name: "Create checklist · 1" }).click();
+		await expect(checklist.locator(".impact-task-row")).toHaveCount(1);
+		const upgraded = (await taskRows(page)).find((task) => task.id === pendingId);
+		expect(upgraded).toMatchObject({ done: false, completedAt: "", completionHistory: [fixture.completedAt], impactSnapshot: { relationId: fixture.firstRelationId, legacyDedupeKey: fixture.key } });
+		expect((await taskRows(page)).find((task) => task.id === completedId)).toMatchObject({ done: true, completedAt: fixture.completedAt, dedupeKey: fixture.key });
+		await page.getByRole("button", { name: `Delete connection · ${oldLabel} · ${project}` }).click();
+		await page.getByRole("dialog").getByRole("button", { name: "Delete connection" }).click();
+		await addRelation(page, newLabel);
+		await expect(checklist.getByRole("button", { name: "Create checklist · 1" })).toBeEnabled();
+		await checklist.getByRole("button", { name: "Create checklist · 1" }).click();
+		await expect(checklist.locator(".impact-task-row")).toHaveCount(2);
+		await expect(checklist.getByRole("button", { name: "Pending · 2" })).toBeVisible();
+		await expect(checklist.getByRole("button", { name: "Completed · 0" })).toBeVisible();
+		const newTask = (await taskRows(page)).find((task) => task.impactSnapshot?.label === newLabel);
+		expect(newTask).toMatchObject({ done: false, completedAt: "", completionHistory: [] });
+		expect(newTask?.id).not.toBe(completedId);
+		await page.reload();
+		await expect(checklist.getByRole("button", { name: "Create checklist · 0" })).toBeDisabled();
+		await expect(checklist.getByRole("button", { name: "Pending · 2" })).toBeVisible();
+		await page.goto("/intake");
+		await page.locator("#backup-password").fill(password);
+		await page.getByRole("button", { name: "Create backup" }).click();
+		const downloadPromise = page.waitForEvent("download");
+		await page.getByRole("link", { name: "Save backup file" }).click();
+		const download = await downloadPromise;
+		const path = await download.path();
+		if (!path || !download.suggestedFilename().endsWith(".ka1")) throw Error("real archive missing");
+		const restoredContext = await browser.newContext({ locale: "en-US", viewport: { width: 390, height: 844 } });
+		const restored = await restoredContext.newPage();
+		restored.on("pageerror", (error) => errors.push(error.message));
+		try {
+			await restored.goto("/intake");
+			await restored.locator("#backup-password").fill(password);
+			await restored.locator("#restore-file").setInputFiles(path);
+			await restored.getByRole("button", { name: "Preview", exact: true }).first().click();
+			await restored.getByRole("button", { name: /Confirm ·/ }).click();
+			await expect(restored.getByText(/Restored \d+ records/)).toBeVisible();
+			await restored.goto(new URL(accountUrl).pathname);
+			const restoredChecklist = restored.locator(".impact-checklist");
+			await expect(restoredChecklist.getByRole("button", { name: "Pending · 2" })).toBeVisible();
+			await expect(restoredChecklist.getByRole("button", { name: "Create checklist · 0" })).toBeDisabled();
+			const restoredTasks = await taskRows(restored);
+			expect(restoredTasks.find((task) => task.id === completedId)).toMatchObject({ done: true, completedAt: fixture.completedAt });
+			expect(restoredTasks.find((task) => task.id === pendingId)?.impactSnapshot).toMatchObject({ relationId: fixture.firstRelationId, legacyDedupeKey: fixture.key });
+			expect(restoredTasks.find((task) => task.id === newTask?.id)).toMatchObject({ done: false, completedAt: "", completionHistory: [] });
+			await restored.getByRole("button", { name: `Delete connection · ${newLabel} · ${project}` }).click();
+			await restored.getByRole("dialog").getByRole("button", { name: "Delete connection" }).click();
+			await addRelation(restored, afterRestoreLabel);
+			await restoredChecklist.getByRole("button", { name: "Create checklist · 1" }).click();
+			await expect(restoredChecklist.getByRole("button", { name: "Pending · 3" })).toBeVisible();
+			await expect(restoredChecklist.getByRole("button", { name: "Completed · 0" })).toBeVisible();
+			const latest = (await taskRows(restored)).find((task) => task.impactSnapshot?.label === afterRestoreLabel);
+			expect(latest).toMatchObject({ done: false, completedAt: "", completionHistory: [] });
+			await expect(restored.locator(".toast")).toHaveCount(0);
+			await restoredChecklist.screenshot({ path: `${evidence}/impact-legacy-replacement-en-390-restored.png` });
+			expect(await restored.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(1);
+			await restored.goto("/tasks");
+			await expect(restored.getByRole("button", { name: "All · 4" })).toBeVisible();
+			await expect(restored.getByRole("button", { name: "Pending · 3" })).toBeVisible();
+			await expect(restored.getByRole("button", { name: "Completed · 1" })).toBeVisible();
+			await expect(restored.locator(".impact-task-row").filter({ hasText: afterRestoreLabel }).getByText("Pending", { exact: true })).toBeVisible();
+		} finally {
+			await restoredContext.close();
+		}
+		expect(errors).toEqual([]);
+	} finally {
+		await context.close();
+	}
 });
 
 test("built PWA keeps the account checklist editable across offline reloads", async ({ browser }) => {
