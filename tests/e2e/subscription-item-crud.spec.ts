@@ -303,13 +303,10 @@ test("subscription and item shared CRUD, filters, image and actual backup restor
 		expect(subscriptionCurrentFile.bytes).toEqual(
 			Array.from(subscriptionAfter),
 		);
-		await page.getByRole("button", { name: "Remove image" }).click();
-		await expect(page.locator(".asset-image")).toHaveCount(0);
-		await expect.poll(async () => (await files(page)).length).toBe(0);
 		expect(
 			(await assets(page)).find((asset) => asset.id === subscriptionId)
 				?.attachments,
-		).toEqual([]);
+		).toEqual([subscriptionCurrentFile.id]);
 		await page.getByRole("link", { name: "Back to list" }).click();
 		await expect(
 			page
@@ -403,7 +400,10 @@ test("subscription and item shared CRUD, filters, image and actual backup restor
 			.getByRole("button", { name: "Confirm" })
 			.click();
 		await expect(page.locator(".asset-image")).toHaveCount(1);
-		const oldFile = (await files(page))[0];
+		const oldFile = (await files(page)).find(
+			(file) => file.name === "item-before.png",
+		);
+		if (!oldFile) throw Error("Original item image missing");
 		const newImage = await png(page, "#247fc0");
 		const chooser = page.waitForEvent("filechooser");
 		await page.getByRole("button", { name: "Replace image" }).click();
@@ -417,10 +417,17 @@ test("subscription and item shared CRUD, filters, image and actual backup restor
 			.getByRole("button", { name: "Confirm" })
 			.click();
 		await expect
-			.poll(async () => (await files(page))[0]?.name)
-			.toBe("item-after.png");
-		const currentFile = (await files(page))[0];
-		expect(await files(page)).toHaveLength(1);
+			.poll(
+				async () =>
+					(await files(page)).find((file) => file.name === "item-after.png")
+						?.id,
+			)
+			.toBeTruthy();
+		const currentFile = (await files(page)).find(
+			(file) => file.name === "item-after.png",
+		);
+		if (!currentFile) throw Error("Replacement item image missing");
+		expect(await files(page)).toHaveLength(2);
 		expect(currentFile.id).not.toBe(oldFile.id);
 		expect(currentFile.bytes).toEqual(Array.from(newImage));
 		await page.screenshot({
@@ -507,6 +514,9 @@ test("subscription and item shared CRUD, filters, image and actual backup restor
 		expect(before.find((asset) => asset.id === itemId)?.attachments).toEqual([
 			currentFile.id,
 		]);
+		expect(
+			before.find((asset) => asset.id === subscriptionId)?.attachments,
+		).toEqual([subscriptionCurrentFile.id]);
 		expect(before.every((asset) => !asset.deleted)).toBe(true);
 		await page.goto("/intake");
 		await page.locator("#backup-password").fill(password);
@@ -542,7 +552,14 @@ test("subscription and item shared CRUD, filters, image and actual backup restor
 			expect(await renewalHistory(restored, subscriptionId)).toEqual(
 				beforeHistory,
 			);
-			expect(await files(restored)).toEqual([currentFile]);
+			const restoredFiles = await files(restored);
+			expect(restoredFiles).toHaveLength(2);
+			expect(
+				restoredFiles.find((file) => file.id === subscriptionCurrentFile.id),
+			).toEqual(subscriptionCurrentFile);
+			expect(restoredFiles.find((file) => file.id === currentFile.id)).toEqual(
+				currentFile,
+			);
 			await restored.reload();
 			await restored.goto(`/assets/item/${itemId}`);
 			await expect(
@@ -559,11 +576,13 @@ test("subscription and item shared CRUD, filters, image and actual backup restor
 			await expect(
 				restored.getByRole("heading", { name: subscriptionSaved }),
 			).toBeVisible();
+			await expect(restored.locator(".asset-image")).toHaveCount(1);
 			expect(
 				await restored.evaluate(() => document.documentElement.scrollWidth),
 			).toBeLessThanOrEqual(390);
 			await restored.screenshot({
-				path: `${evidence}/crud-matrix-zh-390-restored-subscription.png`,
+				path: `${evidence}/crud-matrix-zh-390-restored-subscription-image.png`,
+				fullPage: true,
 			});
 		} finally {
 			await destination.close();
@@ -571,13 +590,120 @@ test("subscription and item shared CRUD, filters, image and actual backup restor
 		await page.goto(`/assets/item/${itemId}`);
 		await page.getByRole("button", { name: "Remove image" }).click();
 		await expect(page.locator(".asset-image")).toHaveCount(0);
-		await expect.poll(async () => (await files(page)).length).toBe(0);
+		await expect.poll(async () => (await files(page)).length).toBe(1);
 		expect(
 			(await assets(page)).find((asset) => asset.id === itemId)?.attachments,
+		).toEqual([]);
+		await page.goto(`/assets/subscription/${subscriptionId}`);
+		await page.getByRole("button", { name: "Remove image" }).click();
+		await expect(page.locator(".asset-image")).toHaveCount(0);
+		await expect.poll(async () => (await files(page)).length).toBe(0);
+		expect(
+			(await assets(page)).find((asset) => asset.id === subscriptionId)
+				?.attachments,
 		).toEqual([]);
 		expect(errors).toEqual([]);
 	} finally {
 		await source.close();
+	}
+});
+
+test("renewal hint preserves cents and matches blank or typed payments for USD and JPY", async ({
+	browser,
+}) => {
+	test.setTimeout(90_000);
+	mkdirSync(evidence, { recursive: true });
+	const context = await browser.newContext({
+		locale: "en-US",
+		viewport: { width: 390, height: 844 },
+	});
+	const page = await context.newPage();
+	const errors: string[] = [];
+	page.on("pageerror", (error) => errors.push(error.message));
+	try {
+		for (const [currency, amountText, minorUnits, visibleAmount] of [
+			[
+				"USD",
+				"90071992547409.91",
+				Number.MAX_SAFE_INTEGER,
+				"$90,071,992,547,409.91",
+			],
+			[
+				"JPY",
+				"9007199254740991",
+				Number.MAX_SAFE_INTEGER,
+				"¥9,007,199,254,740,991",
+			],
+		] as const) {
+			const name = `Hint ${currency} ${crypto.randomUUID().slice(0, 8)}`;
+			const dialog = await create(page, "subscription", name);
+			await dialog.locator("#currency").selectOption(currency);
+			await dialog.locator("#amount").fill(amountText);
+			await dialog.locator("#dueDate").fill("2026-10-31");
+			await save(page);
+			await detail(page, name);
+			const assetId = new URL(page.url()).pathname.split("/").at(-1);
+			if (!assetId) throw Error("Subscription ID missing");
+			const input = page.getByLabel("Locally recorded amount");
+			await expect(input).toHaveAttribute("placeholder", amountText);
+			const hint = await input.getAttribute("placeholder");
+			if (!hint) throw Error("Renewal hint missing");
+			await expect(input).toHaveValue("");
+			for (const width of [360, 390]) {
+				await page.setViewportSize({ width, height: 844 });
+				const layout = await input.evaluate((element: HTMLInputElement) => {
+					const style = getComputedStyle(element);
+					const canvas = document.createElement("canvas");
+					const measure = canvas.getContext("2d");
+					if (!measure) throw Error("Text measurement unavailable");
+					measure.font = style.font;
+					return {
+						fontSize: Number.parseFloat(style.fontSize),
+						available:
+							element.clientWidth -
+							Number.parseFloat(style.paddingLeft) -
+							Number.parseFloat(style.paddingRight) -
+							24,
+						textWidth: measure.measureText(element.placeholder).width,
+						scrollWidth: document.documentElement.scrollWidth,
+					};
+				});
+				expect(layout.fontSize).toBeGreaterThanOrEqual(16);
+				expect(layout.available).toBeGreaterThan(layout.textWidth);
+				expect(layout.scrollWidth).toBeLessThanOrEqual(width);
+			}
+			await page.screenshot({
+				path: `${evidence}/crud-matrix-en-390-${currency.toLowerCase()}-renewal-hint.png`,
+				fullPage: true,
+			});
+			const history = page
+				.locator("section.card")
+				.filter({ has: page.getByRole("heading", { name: "History" }) })
+				.locator(".list-row");
+			await page.getByRole("button", { name: "Record renewal" }).click();
+			await expect(history).toHaveCount(1);
+			await expect(history.first()).toContainText(visibleAmount);
+			await expect(input).toHaveAttribute("placeholder", amountText);
+			await input.fill(hint);
+			await page.getByRole("button", { name: "Record renewal" }).click();
+			await expect(history).toHaveCount(2);
+			for (const row of await history.all())
+				await expect(row).toContainText(visibleAmount);
+			if (process.env.KEEPANY_SUBSCRIPTION_MODE !== "preview")
+				expect(
+					(await renewalHistory(page, assetId)).map((row) => row.amount),
+				).toEqual([minorUnits, minorUnits]);
+			await page.reload();
+			await expect(input).toHaveAttribute("placeholder", amountText);
+			await expect(history).toHaveCount(2);
+			if (process.env.KEEPANY_SUBSCRIPTION_MODE !== "preview")
+				expect(
+					(await renewalHistory(page, assetId)).map((row) => row.amount),
+				).toEqual([minorUnits, minorUnits]);
+		}
+		expect(errors).toEqual([]);
+	} finally {
+		await context.close();
 	}
 });
 
