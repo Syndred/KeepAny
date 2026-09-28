@@ -1,10 +1,15 @@
 {
-  "generatedAt": "2026-09-28T10:55:53.945Z",
+  "generatedAt": "2026-09-28T11:34:44.709Z",
   "generator": "pnpm licenses list --json plus installed package root file inspection",
-  "lockSha256": "5836c3b43ad6b75a1819ebacaf6be4c95647db14d661f1a8b4e203c3e8235ccd",
+  "lockSha256": "daf6254cdccddf3c833e454320957472d53105d63a478747a8fe9d7ac743444e",
   "caveat": "Declared package metadata and file presence are inventory evidence, not a complete review of bundled files, subdependencies, copyright notices, or release license compatibility.",
-  "packageCount": 510,
+  "packageCount": 563,
   "missingLicenseText": [
+    "@aws-sdk/credential-provider-http@3.972.74",
+    "@aws-sdk/credential-provider-login@3.972.79",
+    "@aws-sdk/nested-clients@3.997.46",
+    "@biomejs/biome@2.5.14",
+    "@biomejs/cli-darwin-arm64@2.5.14",
     "@rolldown/binding-darwin-arm64@1.2.11",
     "@rollup/rollup-darwin-arm64@4.63.5",
     "err-code@3.0.1",
@@ -15,6 +20,8 @@
     "is-regexp@1.0.0",
     "jake@10.9.4",
     "jsesc@3.1.0",
+    "pg-types@2.2.0",
+    "pgpass@1.0.5",
     "punycode@2.3.1",
     "react-remove-scroll-bar@2.3.8",
     "regenerate@1.4.2",
@@ -31,6 +38,162 @@
       "name": "@apideck/better-ajv-errors",
       "version": "0.3.7",
       "declaredLicense": "MIT",
+      "licenseFiles": [
+        "LICENSE"
+      ],
+      "licenseTextPresent": true
+    },
+    {
+      "name": "@aws-sdk/checksums",
+      "version": "3.1001.1",
+      "declaredLicense": "Apache-2.0",
+      "licenseFiles": [
+        "LICENSE"
+      ],
+      "licenseTextPresent": true
+    },
+    {
+      "name": "@aws-sdk/client-s3",
+      "version": "3.1141.0",
+      "declaredLicense": "Apache-2.0",
+      "licenseFiles": [
+        "LICENSE"
+      ],
+      "licenseTextPresent": true
+    },
+    {
+      "name": "@aws-sdk/core",
+      "version": "3.978.1",
+      "declaredLicense": "Apache-2.0",
+      "licenseFiles": [
+        "LICENSE"
+      ],
+      "licenseTextPresent": true
+    },
+    {
+      "name": "@aws-sdk/credential-provider-env",
+      "version": "3.972.72",
+      "declaredLicense": "Apache-2.0",
+      "licenseFiles": [
+        "LICENSE"
+      ],
+      "licenseTextPresent": true
+    },
+    {
+      "name": "@aws-sdk/credential-provider-http",
+      "version": "3.972.74",
+      "declaredLicense": "Apache-2.0",
+      "licenseFiles": [],
+      "licenseTextPresent": false
+    },
+    {
+      "name": "@aws-sdk/credential-provider-ini",
+      "version": "3.973.17",
+      "declaredLicense": "Apache-2.0",
+      "licenseFiles": [
+        "LICENSE"
+      ],
+      "licenseTextPresent": true
+    },
+    {
+      "name": "@aws-sdk/credential-provider-login",
+      "version": "3.972.79",
+      "declaredLicense": "Apache-2.0",
+      "licenseFiles": [],
+      "licenseTextPresent": false
+    },
+    {
+      "name": "@aws-sdk/credential-provider-node",
+      "version": "3.972.84",
+      "declaredLicense": "Apache-2.0",
+      "licenseFiles": [
+        "LICENSE"
+      ],
+      "licenseTextPresent": true
+    },
+    {
+      "name": "@aws-sdk/credential-provider-process",
+      "version": "3.972.72",
+      "declaredLicense": "Apache-2.0",
+      "licenseFiles": [
+        "LICENSE"
+      ],
+      "licenseTextPresent": true
+    },
+    {
+      "name": "@aws-sdk/credential-provider-sso",
+      "version": "3.973.16",
+      "declaredLicense": "Apache-2.0",
+      "licenseFiles": [
+        "LICENSE"
+      ],
+      "licenseTextPresent": true
+    },
+    {
+      "name": "@aws-sdk/credential-provider-web-identity",
+      "version": "3.972.78",
+      "declaredLicense": "Apache-2.0",
+      "licenseFiles": [
+        "LICENSE"
+      ],
+      "licenseTextPresent": true
+    },
+    {
+      "name": "@aws-sdk/middleware-sdk-s3",
+      "version": "3.972.77",
+      "declaredLicense": "Apache-2.0",
+      "licenseFiles": [
+        "LICENSE"
+      ],
+      "licenseTextPresent": true
+    },
+    {
+      "name": "@aws-sdk/nested-clients",
+      "version": "3.997.46",
+      "declaredLicense": "Apache-2.0",
+      "licenseFiles": [],
+      "licenseTextPresent": false
+    },
+    {
+      "name": "@aws-sdk/signature-v4-multi-region",
+      "version": "3.996.47",
+      "declaredLicense": "Apache-2.0",
+      "licenseFiles": [
+        "LICENSE"
+      ],
+      "licenseTextPresent": true
+    },
+    {
+      "name": "@aws-sdk/token-providers",
+      "version": "3.1138.0",
+      "declaredLicense": "Apache-2.0",
+      "licenseFiles": [
+        "LICENSE"
+      ],
+      "licenseTextPresent": true
+    },
+    {
+      "name": "@aws-sdk/types",
+      "version": "3.974.6",
+      "declaredLicense": "Apache-2.0",
+      "licenseFiles": [
+        "LICENSE"
+      ],
+      "licenseTextPresent": true
+    },
+    {
+      "name": "@aws-sdk/xml-builder",
+      "version": "3.972.41",
+      "declaredLicense": "Apache-2.0",
+      "licenseFiles": [
+        "LICENSE"
+      ],
+      "licenseTextPresent": true
+    },
+    {
+      "name": "@aws/lambda-invoke-store",
+      "version": "0.3.0",
+      "declaredLicense": "Apache-2.0",
       "licenseFiles": [
         "LICENSE"
       ],
@@ -856,6 +1019,20 @@
       "licenseTextPresent": true
     },
     {
+      "name": "@biomejs/biome",
+      "version": "2.5.14",
+      "declaredLicense": "MIT OR Apache-2.0",
+      "licenseFiles": [],
+      "licenseTextPresent": false
+    },
+    {
+      "name": "@biomejs/cli-darwin-arm64",
+      "version": "2.5.14",
+      "declaredLicense": "MIT OR Apache-2.0",
+      "licenseFiles": [],
+      "licenseTextPresent": false
+    },
+    {
       "name": "@dnd-kit/accessibility",
       "version": "3.1.1",
       "declaredLicense": "MIT",
@@ -885,6 +1062,24 @@
     {
       "name": "@dnd-kit/utilities",
       "version": "3.2.2",
+      "declaredLicense": "MIT",
+      "licenseFiles": [
+        "LICENSE"
+      ],
+      "licenseTextPresent": true
+    },
+    {
+      "name": "@electric-sql/pglite",
+      "version": "0.5.8",
+      "declaredLicense": "Apache-2.0",
+      "licenseFiles": [
+        "LICENSE"
+      ],
+      "licenseTextPresent": true
+    },
+    {
+      "name": "@hono/node-server",
+      "version": "2.1.1",
       "declaredLicense": "MIT",
       "licenseFiles": [
         "LICENSE"
@@ -957,6 +1152,33 @@
     {
       "name": "@jridgewell/trace-mapping",
       "version": "0.3.31",
+      "declaredLicense": "MIT",
+      "licenseFiles": [
+        "LICENSE"
+      ],
+      "licenseTextPresent": true
+    },
+    {
+      "name": "@modelcontextprotocol/client",
+      "version": "2.1.0",
+      "declaredLicense": "MIT",
+      "licenseFiles": [
+        "LICENSE"
+      ],
+      "licenseTextPresent": true
+    },
+    {
+      "name": "@modelcontextprotocol/core",
+      "version": "2.1.0",
+      "declaredLicense": "MIT",
+      "licenseFiles": [
+        "LICENSE"
+      ],
+      "licenseTextPresent": true
+    },
+    {
+      "name": "@modelcontextprotocol/server",
+      "version": "2.1.0",
       "declaredLicense": "MIT",
       "licenseFiles": [
         "LICENSE"
@@ -1195,6 +1417,60 @@
       "licenseTextPresent": false
     },
     {
+      "name": "@smithy/core",
+      "version": "3.35.0",
+      "declaredLicense": "Apache-2.0",
+      "licenseFiles": [
+        "LICENSE"
+      ],
+      "licenseTextPresent": true
+    },
+    {
+      "name": "@smithy/credential-provider-imds",
+      "version": "4.5.2",
+      "declaredLicense": "Apache-2.0",
+      "licenseFiles": [
+        "LICENSE"
+      ],
+      "licenseTextPresent": true
+    },
+    {
+      "name": "@smithy/fetch-http-handler",
+      "version": "5.8.0",
+      "declaredLicense": "Apache-2.0",
+      "licenseFiles": [
+        "LICENSE"
+      ],
+      "licenseTextPresent": true
+    },
+    {
+      "name": "@smithy/node-http-handler",
+      "version": "4.12.1",
+      "declaredLicense": "Apache-2.0",
+      "licenseFiles": [
+        "LICENSE"
+      ],
+      "licenseTextPresent": true
+    },
+    {
+      "name": "@smithy/signature-v4",
+      "version": "5.7.4",
+      "declaredLicense": "Apache-2.0",
+      "licenseFiles": [
+        "LICENSE"
+      ],
+      "licenseTextPresent": true
+    },
+    {
+      "name": "@smithy/types",
+      "version": "4.19.0",
+      "declaredLicense": "Apache-2.0",
+      "licenseFiles": [
+        "LICENSE"
+      ],
+      "licenseTextPresent": true
+    },
+    {
       "name": "@standard-schema/utils",
       "version": "0.3.0",
       "declaredLicense": "MIT",
@@ -1404,6 +1680,15 @@
     {
       "name": "@types/papaparse",
       "version": "5.5.2",
+      "declaredLicense": "MIT",
+      "licenseFiles": [
+        "LICENSE"
+      ],
+      "licenseTextPresent": true
+    },
+    {
+      "name": "@types/pg",
+      "version": "8.23.1",
       "declaredLicense": "MIT",
       "licenseFiles": [
         "LICENSE"
@@ -1703,6 +1988,15 @@
       "name": "binary-decision-diagram",
       "version": "4.0.0",
       "declaredLicense": "ISC",
+      "licenseFiles": [
+        "LICENSE"
+      ],
+      "licenseTextPresent": true
+    },
+    {
+      "name": "bowser",
+      "version": "2.14.1",
+      "declaredLicense": "MIT",
       "licenseFiles": [
         "LICENSE"
       ],
@@ -2300,6 +2594,24 @@
       "licenseTextPresent": true
     },
     {
+      "name": "eventsource",
+      "version": "3.0.7",
+      "declaredLicense": "MIT",
+      "licenseFiles": [
+        "LICENSE"
+      ],
+      "licenseTextPresent": true
+    },
+    {
+      "name": "eventsource-parser",
+      "version": "3.1.1",
+      "declaredLicense": "MIT",
+      "licenseFiles": [
+        "LICENSE"
+      ],
+      "licenseTextPresent": true
+    },
+    {
       "name": "expect-type",
       "version": "1.4.0",
       "declaredLicense": "Apache-2.0",
@@ -2640,6 +2952,15 @@
     {
       "name": "hasown",
       "version": "2.0.4",
+      "declaredLicense": "MIT",
+      "licenseFiles": [
+        "LICENSE"
+      ],
+      "licenseTextPresent": true
+    },
+    {
+      "name": "hono",
+      "version": "4.13.10",
       "declaredLicense": "MIT",
       "licenseFiles": [
         "LICENSE"
@@ -3019,6 +3340,15 @@
       "licenseTextPresent": true
     },
     {
+      "name": "jose",
+      "version": "6.2.12",
+      "declaredLicense": "MIT",
+      "licenseFiles": [
+        "LICENSE.md"
+      ],
+      "licenseTextPresent": true
+    },
+    {
       "name": "js-base64",
       "version": "3.9.2",
       "declaredLicense": "BSD-3-Clause",
@@ -3094,6 +3424,24 @@
       "declaredLicense": "MIT",
       "licenseFiles": [
         "license"
+      ],
+      "licenseTextPresent": true
+    },
+    {
+      "name": "libsodium",
+      "version": "0.8.4",
+      "declaredLicense": "ISC",
+      "licenseFiles": [
+        "LICENSE"
+      ],
+      "licenseTextPresent": true
+    },
+    {
+      "name": "libsodium-wrappers",
+      "version": "0.8.4",
+      "declaredLicense": "ISC",
+      "licenseFiles": [
+        "LICENSE"
       ],
       "licenseTextPresent": true
     },
@@ -3413,6 +3761,74 @@
       "licenseTextPresent": true
     },
     {
+      "name": "pg",
+      "version": "8.23.0",
+      "declaredLicense": "MIT",
+      "licenseFiles": [
+        "LICENSE"
+      ],
+      "licenseTextPresent": true
+    },
+    {
+      "name": "pg-cloudflare",
+      "version": "1.4.0",
+      "declaredLicense": "MIT",
+      "licenseFiles": [
+        "LICENSE"
+      ],
+      "licenseTextPresent": true
+    },
+    {
+      "name": "pg-connection-string",
+      "version": "2.14.0",
+      "declaredLicense": "MIT",
+      "licenseFiles": [
+        "LICENSE"
+      ],
+      "licenseTextPresent": true
+    },
+    {
+      "name": "pg-int8",
+      "version": "1.0.1",
+      "declaredLicense": "ISC",
+      "licenseFiles": [
+        "LICENSE"
+      ],
+      "licenseTextPresent": true
+    },
+    {
+      "name": "pg-pool",
+      "version": "3.14.0",
+      "declaredLicense": "MIT",
+      "licenseFiles": [
+        "LICENSE"
+      ],
+      "licenseTextPresent": true
+    },
+    {
+      "name": "pg-protocol",
+      "version": "1.16.0",
+      "declaredLicense": "MIT",
+      "licenseFiles": [
+        "LICENSE"
+      ],
+      "licenseTextPresent": true
+    },
+    {
+      "name": "pg-types",
+      "version": "2.2.0",
+      "declaredLicense": "MIT",
+      "licenseFiles": [],
+      "licenseTextPresent": false
+    },
+    {
+      "name": "pgpass",
+      "version": "1.0.5",
+      "declaredLicense": "MIT",
+      "licenseFiles": [],
+      "licenseTextPresent": false
+    },
+    {
       "name": "picocolors",
       "version": "1.1.1",
       "declaredLicense": "ISC",
@@ -3424,6 +3840,15 @@
     {
       "name": "picomatch",
       "version": "4.0.7",
+      "declaredLicense": "MIT",
+      "licenseFiles": [
+        "LICENSE"
+      ],
+      "licenseTextPresent": true
+    },
+    {
+      "name": "pkce-challenge",
+      "version": "5.0.1",
       "declaredLicense": "MIT",
       "licenseFiles": [
         "LICENSE"
@@ -3465,6 +3890,42 @@
       "declaredLicense": "MIT",
       "licenseFiles": [
         "LICENSE"
+      ],
+      "licenseTextPresent": true
+    },
+    {
+      "name": "postgres-array",
+      "version": "2.0.0",
+      "declaredLicense": "MIT",
+      "licenseFiles": [
+        "license"
+      ],
+      "licenseTextPresent": true
+    },
+    {
+      "name": "postgres-bytea",
+      "version": "1.0.1",
+      "declaredLicense": "MIT",
+      "licenseFiles": [
+        "license"
+      ],
+      "licenseTextPresent": true
+    },
+    {
+      "name": "postgres-date",
+      "version": "1.0.7",
+      "declaredLicense": "MIT",
+      "licenseFiles": [
+        "license"
+      ],
+      "licenseTextPresent": true
+    },
+    {
+      "name": "postgres-interval",
+      "version": "1.2.0",
+      "declaredLicense": "MIT",
+      "licenseFiles": [
+        "license"
       ],
       "licenseTextPresent": true
     },
@@ -3930,6 +4391,15 @@
       "declaredLicense": "MIT",
       "licenseFiles": [
         "LICENSE.md"
+      ],
+      "licenseTextPresent": true
+    },
+    {
+      "name": "split2",
+      "version": "4.2.0",
+      "declaredLicense": "ISC",
+      "licenseFiles": [
+        "LICENSE"
       ],
       "licenseTextPresent": true
     },
