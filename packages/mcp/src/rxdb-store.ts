@@ -21,14 +21,20 @@ export class RxdbMcpAssetStore implements McpAssetStore {
     return rows.filter((row): row is AssetSnapshot => row !== null);
   }
 
-  async compareAndSet(id: string, expectedVersion: string, next: Asset): Promise<'applied' | 'conflict'> {
+  async compareAndSet(id: string, expectedVersion: string, next: Asset,
+    assertCanCommit?: () => void | Promise<void>): Promise<'applied' | 'conflict'> {
+    await assertCanCommit?.();
     const parsedNext = assetSchema.parse(next);
     if (parsedNext.id !== id || parsedNext.deleted) throw Error('invalid-asset-update');
     const document = await this.repository.db.records.findOne(`asset:${id}`).exec();
     if (!document) return 'conflict';
+    await assertCanCommit?.();
     const conflict = Symbol('conflict');
     try {
-      await document.incrementalModify((data: RecordRow) => {
+      await document.incrementalModify(async (data: RecordRow) => {
+        // RxDB may queue or retry this modifier after the initial read. This is
+        // the last application-controlled point before each storage write.
+        await assertCanCommit?.();
         if (digest(data.payload) !== expectedVersion) throw conflict;
         const previous = assetSchema.parse(JSON.parse(data.payload));
         if (previous.deleted) throw conflict;
@@ -36,6 +42,7 @@ export class RxdbMcpAssetStore implements McpAssetStore {
           if (!editable.has(field) && JSON.stringify(previous[field]) !== JSON.stringify(parsedNext[field]))
             throw Error('forbidden-asset-field');
         }
+        await assertCanCommit?.();
         return { ...data, payload: JSON.stringify(parsedNext), updatedAt: Date.now() };
       });
       return 'applied';

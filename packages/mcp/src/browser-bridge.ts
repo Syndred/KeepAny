@@ -26,6 +26,7 @@ const project = (snapshot: AssetSnapshot, scope: BridgeScope): AssetSnapshot => 
 /** Runs inside the Web app's IndexedDB origin against its canonical RxDB adapter. */
 export async function executeBrowserBridgeRequest(
   request: BrowserBridgeRequest, store: McpAssetStore, scope: BridgeScope,
+  control?: { check(): void; checkRemote(id: string): Promise<void>; commit<T>(work: () => Promise<T>): Promise<T> },
 ): Promise<BrowserBridgeResult> {
   if (!request || typeof request.id !== 'string' || !Array.isArray(request.args) || Date.now() >= request.expiresAt)
     throw Error('invalid-bridge-message');
@@ -41,16 +42,26 @@ export async function executeBrowserBridgeRequest(
     return (await store.list(id)).filter(item => id.includes(item.asset.id)).map(item => project(item, scope));
   }
   if (request.action === 'compareAndSet') {
+    const check = async () => {
+      if (Date.now() >= request.expiresAt) throw Error('bridge-request-expired');
+      control?.check();
+      await control?.checkRemote(request.id);
+      if (Date.now() >= request.expiresAt) throw Error('bridge-request-expired');
+      control?.check();
+    };
+    await check();
     const [, version, value] = request.args;
     if (typeof id !== 'string' || !scope.assetIds.includes(id) || typeof version !== 'string')
       throw Error('asset-denied');
     const next = assetSchema.parse(value);
     if (next.id !== id || next.deleted) throw Error('invalid-bridge-message');
     const current = await store.get(id);
+    await check();
     if (!current || current.version !== version || current.asset.deleted) return 'conflict';
     const merged: Asset = { ...current.asset, updatedAt: next.updatedAt };
     for (const field of scope.writeFields) (merged as unknown as Record<WriteField, unknown>)[field] = next[field];
-    return store.compareAndSet(id, version, assetSchema.parse(merged));
+    const write = () => store.compareAndSet(id, version, assetSchema.parse(merged), check);
+    return control ? control.commit(write) : write();
   }
   throw Error('invalid-bridge-message');
 }
@@ -70,6 +81,11 @@ export class BrowserMcpBridgeClient {
   private expiresAt = 0;
   private scope: BridgeScope | null = null;
   private stopped = false;
+  private writesCancelled = false;
+  private writeMayHaveApplied = false;
+  private readonly activeCommits = new Set<Promise<unknown>>();
+  private revocation: Promise<{ writeMayHaveApplied: boolean }> | null = null;
+  private closing: Promise<void> | null = null;
   private readonly loopAbort = new AbortController();
   private readonly fetcher: typeof fetch;
   constructor(private readonly options: BrowserBridgeOptions) {
@@ -133,10 +149,39 @@ export class BrowserMcpBridgeClient {
     await this.post('/reject-preview', { previewId }, this.token());
   }
 
-  /** Server-side grant revocation precedes clearing the browser session. */
-  async revokeGrant(): Promise<void> {
-    await this.post('/revoke-grant', {}, this.token());
-    this.stopLocal();
+  private checkWrite() {
+    if (this.writesCancelled || this.stopped || Date.now() >= this.expiresAt) throw Error('bridge-write-cancelled');
+  }
+
+  private commit<T>(work: () => Promise<T>): Promise<T> {
+    this.checkWrite();
+    // Register before the work starts. Revoke/close can then cancel queued work
+    // and wait for a storage write already underway before reporting completion.
+    const task = Promise.resolve().then(() => { this.checkWrite(); return work(); });
+    this.activeCommits.add(task);
+    void task.finally(() => this.activeCommits.delete(task)).catch(() => undefined);
+    return task;
+  }
+
+  private async drainCommits() {
+    while (this.activeCommits.size) await Promise.allSettled([...this.activeCommits]);
+  }
+
+  /** A successful result is returned only after any already-started storage write settles. */
+  revokeGrant(): Promise<{ writeMayHaveApplied: boolean }> {
+    if (this.revocation) return this.revocation;
+    const token = this.token();
+    this.writesCancelled = true;
+    this.writeMayHaveApplied ||= this.activeCommits.size > 0;
+    const work = (async () => {
+      await this.drainCommits();
+      await this.post('/revoke-grant', {}, token);
+      this.stopLocal();
+      return { writeMayHaveApplied: this.writeMayHaveApplied };
+    })();
+    this.revocation = work;
+    void work.finally(() => { if (this.revocation === work) this.revocation = null; }).catch(() => undefined);
+    return work;
   }
 
   /** Keep this active only while the Web app is open. It never persists a token. */
@@ -150,7 +195,11 @@ export class BrowserMcpBridgeClient {
         const message = request as unknown as BrowserBridgeRequest;
         let body: { id: string; result?: BrowserBridgeResult; error?: string };
         try {
-          body = { id: message.id, result: await executeBrowserBridgeRequest(message, this.options.store, this.scope) };
+          body = { id: message.id, result: await executeBrowserBridgeRequest(message, this.options.store, this.scope, {
+            check: () => this.checkWrite(),
+            checkRemote: async id => { await this.post('/check-write', { id }, this.sessionSecret); },
+            commit: work => this.commit(work),
+          }) };
         } catch { body = { id: message.id, error: 'browser-operation-failed' }; }
         if (combined.aborted) break;
         await this.post('/respond', body, this.sessionSecret, combined);
@@ -158,22 +207,28 @@ export class BrowserMcpBridgeClient {
     } catch (error) {
       if (!combined.aborted) throw error;
     } finally {
-      if (!this.stopped) this.close();
+      if (!this.stopped && !this.revocation) await this.close();
     }
   }
 
   private stopLocal() {
     this.stopped = true;
+    this.writesCancelled = true;
     this.loopAbort.abort();
     this.sessionSecret = '';
     this.scope = null;
   }
 
   /** Best-effort on page close; callers needing proof of revocation use revokeGrant(). */
-  close() {
-    if (this.stopped) return;
+  close(): Promise<void> {
+    if (this.closing) return this.closing;
+    if (this.stopped) return Promise.resolve();
     const token = this.sessionSecret;
-    if (token) void this.post('/revoke-grant', {}, token).catch(() => undefined);
     this.stopLocal();
+    this.closing = (async () => {
+      await this.drainCommits();
+      if (token) await this.post('/revoke-grant', {}, token).catch(() => undefined);
+    })();
+    return this.closing;
   }
 }

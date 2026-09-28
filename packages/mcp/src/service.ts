@@ -6,7 +6,8 @@ export interface McpAssetStore {
   get(id: string): Promise<AssetSnapshot | null>;
   list(ids: readonly string[]): Promise<AssetSnapshot[]>;
   // Must reject a concurrent change. The caller must never use a blind save here.
-  compareAndSet(id: string, expectedVersion: string, next: Asset): Promise<'applied' | 'conflict'>;
+  compareAndSet(id: string, expectedVersion: string, next: Asset,
+    assertCanCommit?: () => void | Promise<void>): Promise<'applied' | 'conflict'>;
 }
 
 export type AssetPatch = Partial<Pick<Asset, WriteField>>;

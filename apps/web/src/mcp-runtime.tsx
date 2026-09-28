@@ -124,7 +124,7 @@ export function McpRuntimeProvider({
 		timerRef.current = null;
 		controllerRef.current?.abort();
 		controllerRef.current = null;
-		clientRef.current?.close();
+		void clientRef.current?.close();
 		clientRef.current = null;
 		storeRef.current = null;
 		approvalRef.current?.(false);
@@ -136,8 +136,6 @@ export function McpRuntimeProvider({
 
 	useEffect(() => {
 		const leave = () => {
-			const client = clientRef.current;
-			if (client) void client.revokeGrant().catch(() => undefined);
 			stopLocal();
 		};
 		window.addEventListener("pagehide", leave);
@@ -260,7 +258,7 @@ export function McpRuntimeProvider({
 				}
 			});
 		} catch (cause) {
-			client?.close();
+			void client?.close();
 			approvalRef.current = null;
 			setPendingScope(null);
 			setStatus("error");
@@ -279,11 +277,11 @@ export function McpRuntimeProvider({
 		}
 		setBusy(true);
 		try {
-			await client.revokeGrant();
+			const result = await client.revokeGrant();
 			stopLocal();
 			setStatus("idle");
 			setPrepared(null);
-			setError(null);
+			setError(result.writeMayHaveApplied ? "mcpWriteMayHaveApplied" : null);
 		} catch {
 			setError("mcpRevokeUnconfirmed");
 			setStatus("connected");

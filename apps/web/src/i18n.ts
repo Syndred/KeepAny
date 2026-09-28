@@ -397,6 +397,7 @@ const copy: Record<string, [string, string]> = {
 	mcpPreviewExpired: ["本次修改请求已过期，请重新发起。", "This change request expired. Start it again."],
 	mcpStatusError: ["本机连接未完成，请重试。", "Local connection did not complete. Try again."],
 	mcpRevokeUnconfirmed: ["无法确认授权已撤销。请先停止本机连接，再重试。", "Could not confirm access was revoked. Stop the local connection and try again."],
+	mcpWriteMayHaveApplied: ["本机授权已撤销。撤销时有修改正在处理，可能已保存；再次操作前请核对资料。", "Local access was revoked. A change was in progress and may have been saved; review the record before trying again."],
 	mcpPreviewAsset: ["资料", "Record"],
 	mcpPreviewField: ["字段", "Field"],
 	mcpSelectionInvalid: ["请选择至少一条资料和一个可读字段。", "Choose at least one record and one readable field."],

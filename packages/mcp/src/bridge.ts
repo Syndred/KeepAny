@@ -165,6 +165,13 @@ export async function startLocalMcpBridge(options: LocalBridgeOptions): Promise<
         else item.resolve(body.result);
         reply(response, 204); return;
       }
+      if (request.url === '/check-write') {
+        const body = await json(request);
+        const item = typeof body.id === 'string' ? pending.get(body.id) : undefined;
+        if (item?.action !== 'compareAndSet' || Date.now() >= item.expiresAt)
+          throw new McpAccessError('request-expired');
+        reply(response, 204); return;
+      }
       if (request.url === '/pending-previews') {
         await json(request);
         const visible: PreviewResult[] = [];
