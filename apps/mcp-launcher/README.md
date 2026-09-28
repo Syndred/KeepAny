@@ -5,7 +5,7 @@
 ## 开发版连接步骤
 
 1. 在 KeepAny Web 的 MCP 设置中选择资产、可读字段、可写字段和有效期，下载请求 JSON。请求包含资产 ID，但没有配对密钥；保存后五分钟内启动 MCP 客户端。
-2. 将以下示例中的三个绝对路径换成自己机器上的路径，加入支持 stdio 的 MCP 客户端配置。`--request` 必填；可加 `--pairing-file /绝对/路径/pairing.json`，目标父目录须已存在、属当前用户且权限为 `0700`。未指定时会在 `~/.keepany/mcp/` 建立随机文件名。测试或显式隔离时可加 `--state-dir /绝对/私有目录`，该目录须**预先存在**、非符号链接、属当前用户、权限恰为 `0700`；授权状态和默认配对文件都写入该目录。
+2. 将以下示例中的绝对路径换成自己机器上的路径，加入支持 stdio 的 MCP 客户端配置。`--request` 必填；示例用固定的 `--pairing-file` 路径，方便从客户端启动后在 Web 选择。目标父目录由默认启动器建立为当前用户的 `0700` 私有目录；已有同名配对文件时会拒绝覆盖，须先核查旧进程与文件。未指定配对路径时会在 `~/.keepany/mcp/` 建立随机文件名。测试或显式隔离时可加 `--state-dir /绝对/私有目录`，该目录须**预先存在**、非符号链接、属当前用户、权限恰为 `0700`；授权状态和默认配对文件都写入该目录。
 3. MCP 客户端启动后，启动器只向 **stderr** 输出配对文件路径。在 Web 设置中手动选择该文件，核对范围并批准。文件为 `0600`、仅新建不覆盖；成功配对或两分钟超时即删除。请求过期时重新下载并启动新进程。
 
 ```json
@@ -16,7 +16,9 @@
       "args": [
         "/ABSOLUTE/KeepAny/apps/mcp-launcher/src/main.ts",
         "--request",
-        "/ABSOLUTE/Downloads/keepany-mcp-request.json"
+        "/ABSOLUTE/Downloads/keepany-mcp-request.json",
+        "--pairing-file",
+        "/ABSOLUTE/HOME/.keepany/mcp/pairing.json"
       ],
       "cwd": "/ABSOLUTE/KeepAny"
     }
