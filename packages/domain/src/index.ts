@@ -1,11 +1,32 @@
 import { z } from 'zod';
-import { addDays, addMonths, addYears, format, isValid, parseISO } from 'date-fns';
 export const kinds = ['project','account','subscription','item','vault'] as const;
+export const currencies = ['CNY','USD','EUR','GBP','JPY'] as const;
+
+// Date-only values are Gregorian calendar dates, independent of the host time zone.
+// Local Date and date-fns calendar operations can skip a date (for example, Apia 2011-12-30).
+function calendarDate(year:number,month:number,day:number){
+ const date=new Date(0);
+ date.setUTCHours(0,0,0,0);
+ date.setUTCFullYear(year,month,day);
+ return date;
+}
+function parseDateOnly(value:string){
+ if(!/^\d{4}-\d{2}-\d{2}$/.test(value))throw Error('invalid-date');
+ const year=Number(value.slice(0,4)),month=Number(value.slice(5,7)),day=Number(value.slice(8,10));
+ const date=calendarDate(year,month-1,day);
+ if(date.getUTCFullYear()!==year||date.getUTCMonth()!==month-1||date.getUTCDate()!==day)throw Error('invalid-date');
+ return date;
+}
+function validDateOnly(value:string){try{parseDateOnly(value);return true;}catch{return false;}}
+function formatDateOnly(date:Date){
+ if(!Number.isFinite(date.getTime())||date.getUTCFullYear()<0||date.getUTCFullYear()>9999)throw Error('invalid-date');
+ return `${String(date.getUTCFullYear()).padStart(4,'0')}-${String(date.getUTCMonth()+1).padStart(2,'0')}-${String(date.getUTCDate()).padStart(2,'0')}`;
+}
 export const assetSchema = z.object({
  id:z.string().min(1).max(96), kind:z.enum(kinds), name:z.string().trim().min(1).max(160), category:z.string().max(100).default(''), tags:z.array(z.string().max(60)).max(100).default([]),
  description:z.string().max(20000).default(''), url:z.string().max(2000).default(''), contact:z.string().max(500).default(''), longDescription:z.string().max(30000).default(''),
- amount:z.number().int().min(0).max(Number.MAX_SAFE_INTEGER).default(0),currency:z.enum(['CNY','USD','EUR','GBP','JPY']).default('CNY'),cycle:z.enum(['month','year','week','day']).default('month'),interval:z.number().int().min(1).max(100).default(1),dueDate:z.string().default(''),billingAnchor:z.string().default(''),renewalCount:z.number().int().nonnegative().default(0),purchaseDate:z.string().default(''),warrantyDate:z.string().default(''),trialEndsAt:z.string().default(''),discountUntil:z.string().default(''),discountAmount:z.number().int().min(0).max(Number.MAX_SAFE_INTEGER).default(0),cancelledAt:z.string().default(''),location:z.string().max(300).default(''),status:z.enum(['active','paused','cancelled','loaned','archived']).default('active'),borrower:z.string().max(200).default(''),username:z.string().max(300).default(''),notes:z.string().max(20000).default(''),attachments:z.array(z.string().uuid()).max(20).default([]),createdAt:z.string(),updatedAt:z.string(),deleted:z.boolean().default(false),
-}).superRefine((v,ctx)=>{ for(const key of ['dueDate','billingAnchor','purchaseDate','warrantyDate','trialEndsAt','discountUntil'] as const) if(v[key] && (!/^\d{4}-\d{2}-\d{2}$/.test(v[key]) || !isValid(parseISO(v[key])) || format(parseISO(v[key]),'yyyy-MM-dd')!==v[key]))ctx.addIssue({code:'custom',path:[key],message:'date'});if(v.discountAmount>v.amount)ctx.addIssue({code:'custom',path:['discountAmount'],message:'discount'});if(v.url && !/^https?:\/\//i.test(v.url) && !(v.kind==='vault' && /^(bitwarden|onepassword):\/\//i.test(v.url)))ctx.addIssue({code:'custom',path:['url'],message:'url'}); });
+ amount:z.number().int().min(0).max(Number.MAX_SAFE_INTEGER).default(0),currency:z.enum(currencies).default('CNY'),cycle:z.enum(['month','year','week','day']).default('month'),interval:z.number().int().min(1).max(100).default(1),dueDate:z.string().default(''),billingAnchor:z.string().default(''),renewalCount:z.number().int().nonnegative().default(0),purchaseDate:z.string().default(''),warrantyDate:z.string().default(''),trialEndsAt:z.string().default(''),discountUntil:z.string().default(''),discountAmount:z.number().int().min(0).max(Number.MAX_SAFE_INTEGER).default(0),cancelledAt:z.string().default(''),location:z.string().max(300).default(''),status:z.enum(['active','paused','cancelled','loaned','archived']).default('active'),borrower:z.string().max(200).default(''),username:z.string().max(300).default(''),notes:z.string().max(20000).default(''),attachments:z.array(z.string().uuid()).max(20).default([]),createdAt:z.string(),updatedAt:z.string(),deleted:z.boolean().default(false),
+}).superRefine((v,ctx)=>{ for(const key of ['dueDate','billingAnchor','purchaseDate','warrantyDate','trialEndsAt','discountUntil'] as const) if(v[key] && !validDateOnly(v[key]))ctx.addIssue({code:'custom',path:[key],message:'date'});if(v.discountAmount>v.amount)ctx.addIssue({code:'custom',path:['discountAmount'],message:'discount'});if(v.url && !/^https?:\/\//i.test(v.url) && !(v.kind==='vault' && /^(bitwarden|onepassword):\/\//i.test(v.url)))ctx.addIssue({code:'custom',path:['url'],message:'url'}); });
 export type Asset=z.infer<typeof assetSchema>;
 export type AssetKind=typeof kinds[number];
 export const relationSchema=z.object({id:z.string().min(1).max(96),from:z.string().min(1).max(96),to:z.string().min(1).max(96),label:z.string().min(1).max(100),source:z.string().max(500).optional(),createdAt:z.string(),verifiedAt:z.string().default(''),deleted:z.boolean().default(false)}).refine(v=>v.from!==v.to,'self-relation');
@@ -24,23 +45,36 @@ export const categorySchema=z.object({id:z.string().min(1).max(96),kind:z.enum(k
 export type Category=z.infer<typeof categorySchema>;
 export const submissionSchema=z.object({id:z.string().min(1).max(96),assetId:z.string().min(1).max(96),name:z.string().min(1).max(200),url:z.string().url().refine(v=>/^https?:\/\//.test(v)),status:z.enum(['planned','submitted','review','indexed','verify','rejected']),submittedAt:z.string().default(''),verifiedAt:z.string().default(''),evidence:z.string().max(2000).default(''),deleted:z.boolean().default(false)});
 export type Submission=z.infer<typeof submissionSchema>;
-export const historySchema=z.object({id:z.string().min(1).max(96),assetId:z.string().min(1).max(96),action:z.enum(['loan','return','renew','maintenance']),note:z.string(),createdAt:z.string(),deleted:z.boolean().default(false)});
+export const historySchema=z.object({id:z.string().min(1).max(96),assetId:z.string().min(1).max(96),action:z.enum(['loan','return','renew','maintenance']),note:z.string(),billDate:z.string().refine(validDateOnly,'date').optional(),amount:z.number().int().min(0).max(Number.MAX_SAFE_INTEGER).optional(),currency:z.enum(currencies).optional(),createdAt:z.string(),deleted:z.boolean().default(false)});
 export type History=z.infer<typeof historySchema>;
 export function newAsset(kind:AssetKind):Asset{const now=new Date().toISOString();return assetSchema.parse({id:crypto.randomUUID(),kind,name:'Untitled',createdAt:now,updatedAt:now});}
-export function nextDue(date:string,cycle:Asset['cycle'],interval=1){const d=parseISO(date);if(!isValid(d)||interval<1)throw Error('invalid-date');const result=cycle==='month'?addMonths(d,interval):cycle==='year'?addYears(d,interval):addDays(d,interval*(cycle==='week'?7:1));return format(result,'yyyy-MM-dd');}
+export function nextDue(date:string,cycle:Asset['cycle'],interval=1){return dueOnCycle(date,cycle,interval,1);}
 export function monthlyAmount(asset:Asset){return Math.round(asset.amount/(asset.interval*(asset.cycle==='year'?12:asset.cycle==='month'?1:asset.cycle==='week'?12/52:12/365)));}
 // Recalculate from the original anchor, so a January 31 monthly bill returns to March 31 after February.
 export function dueOnCycle(anchor:string,cycle:Asset['cycle'],interval:number,periods:number){
   if(!Number.isInteger(periods)||periods<0||!Number.isInteger(interval)||interval<1)throw Error('invalid-period');
-  const date=parseISO(anchor);
-  if(!isValid(date)||format(date,'yyyy-MM-dd')!==anchor)throw Error('invalid-date');
+  const date=parseDateOnly(anchor);
   const count=interval*periods;
-  return format(cycle==='month'?addMonths(date,count):cycle==='year'?addYears(date,count):addDays(date,count*(cycle==='week'?7:1)),'yyyy-MM-dd');
+  if(!Number.isSafeInteger(count))throw Error('invalid-period');
+  if(cycle==='month'||cycle==='year'){
+    const months=count*(cycle==='year'?12:1);
+    if(!Number.isSafeInteger(months))throw Error('invalid-period');
+    const targetMonth=date.getUTCMonth()+months;
+    const year=date.getUTCFullYear()+Math.floor(targetMonth/12);
+    const month=targetMonth%12;
+    const lastDay=calendarDate(year,month+1,0).getUTCDate();
+    return formatDateOnly(calendarDate(year,month,Math.min(date.getUTCDate(),lastDay)));
+  }
+  const days=count*(cycle==='week'?7:1);
+  if(!Number.isSafeInteger(days))throw Error('invalid-period');
+  date.setUTCDate(date.getUTCDate()+days);
+  return formatDateOnly(date);
 }
-// Actual charge for one bill; monthlyAmount remains the undiscounted planning equivalent.
+// Estimate for one billing date; this does not confirm that a payment occurred.
+// monthlyAmount remains the undiscounted planning equivalent.
 export function actualCharge(asset:Asset,onDate:string){
   if(asset.kind!=='subscription'||asset.status!=='active'||asset.deleted)return null;
-  if(!isValid(parseISO(onDate))||format(parseISO(onDate),'yyyy-MM-dd')!==onDate)throw Error('invalid-date');
+  parseDateOnly(onDate);
   if(asset.trialEndsAt && onDate<asset.trialEndsAt)return 0;
   return Math.max(0,asset.amount-(asset.discountUntil && onDate<=asset.discountUntil?asset.discountAmount:0));
 }
