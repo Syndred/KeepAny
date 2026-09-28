@@ -18,6 +18,8 @@ interface ScopedBase { id: string; scope: string; rowId: string; payload: string
 export interface ScopedOutbox { id: string; scope: string; row: RecordRow; operation: SyncOperation; blocked?: boolean }
 interface ScopedPullJournal { id: string; scope: string; cursorStart: number; change: PulledRow; localPayload: string | null; decision?: 'local' | 'remote' }
 export interface ScopedConflict { rowId: string; localPayload: string | null; remotePayload: string; basePayload: string | null; remoteVersion: number }
+export interface DatasetBinding { endpoint: string; accountId: string; workspaceId: string; scope: string }
+interface StoredDatasetBinding extends DatasetBinding { id: 'active' }
 
 class FileStore extends Dexie {
   blobs!: Table<StoredFile, string>;
@@ -30,6 +32,7 @@ class FileStore extends Dexie {
   scopedMeta!: Table<{ id: string; cursor: number; keyFingerprint?: string; keyEpoch?: number }, string>;
   scopedOutbox!: Table<ScopedOutbox, string>;
   scopedPull!: Table<ScopedPullJournal, string>;
+  datasetBinding!: Table<StoredDatasetBinding, string>;
   constructor(name: string) {
     super(`${name}-files-v1`);
     this.version(1).stores({ blobs: 'id', journal: 'id' });
@@ -37,6 +40,8 @@ class FileStore extends Dexie {
     this.version(3).stores({ blobs: 'id', journal: 'id', importJournal: 'id', syncBase: 'id', syncMeta: 'id', pullJournal: 'id' });
     this.version(4).stores({ blobs: 'id', journal: 'id', importJournal: 'id', syncBase: 'id', syncMeta: 'id', pullJournal: 'id',
       scopedBase: 'id, scope', scopedMeta: 'id', scopedOutbox: 'id, scope', scopedPull: 'id' });
+    this.version(5).stores({ blobs: 'id', journal: 'id', importJournal: 'id', syncBase: 'id', syncMeta: 'id', pullJournal: 'id',
+      scopedBase: 'id, scope', scopedMeta: 'id', scopedOutbox: 'id, scope', scopedPull: 'id', datasetBinding: 'id' });
   }
 }
 
@@ -177,10 +182,48 @@ export class LocalRepository {
 
   async syncCursor(): Promise<number> { return (await this.fileStore.syncMeta.get('cursor'))?.cursor ?? 0; }
 
+  async getDatasetBinding(): Promise<DatasetBinding | null> {
+    const binding = await this.fileStore.datasetBinding.get('active');
+    if (!binding) return null;
+    const { endpoint, accountId, workspaceId, scope } = binding;
+    return { endpoint, accountId, workspaceId, scope };
+  }
+
+  // RxDB records are one local dataset. Only an explicit migration may attach them to another remote.
+  async claimDatasetBinding(binding: DatasetBinding): Promise<DatasetBinding> {
+    await validateDatasetBinding(binding);
+    await this.fileStore.transaction('rw', [this.fileStore.datasetBinding, this.fileStore.scopedMeta,
+      this.fileStore.scopedBase, this.fileStore.scopedOutbox, this.fileStore.scopedPull,
+      this.fileStore.syncBase, this.fileStore.syncMeta, this.fileStore.pullJournal], async () => {
+        const existing = await this.fileStore.datasetBinding.get('active');
+        if (existing && !sameDatasetBinding(existing, binding)) throw Error('sync-dataset-bound');
+        const [meta, base, outbox, pulls, oldBaseCount, oldMetaCount, oldPullCount] = await Promise.all([
+          this.fileStore.scopedMeta.toCollection().primaryKeys(),
+          this.fileStore.scopedBase.orderBy('scope').uniqueKeys(),
+          this.fileStore.scopedOutbox.orderBy('scope').uniqueKeys(),
+          this.fileStore.scopedPull.toCollection().primaryKeys(),
+          this.fileStore.syncBase.count(), this.fileStore.syncMeta.count(), this.fileStore.pullJournal.count(),
+        ]);
+        // The pre-scoped prototype has no remote identity, so its provenance cannot be inferred.
+        if (oldBaseCount || oldMetaCount || oldPullCount) throw Error('sync-dataset-ambiguous');
+        const legacyScopes = new Set([...meta, ...base, ...outbox, ...pulls]);
+        if (legacyScopes.size > 1) throw Error('sync-dataset-ambiguous');
+        if (legacyScopes.size === 1 && !legacyScopes.has(binding.scope)) throw Error('sync-dataset-bound');
+        if (!existing) await this.fileStore.datasetBinding.add({ id: 'active', ...binding });
+      });
+    return { ...binding };
+  }
+
+  private async assertDatasetScope(scope: string): Promise<void> {
+    const binding = await this.fileStore.datasetBinding.get('active');
+    if (binding && binding.scope !== scope) throw Error('sync-dataset-bound');
+  }
+
   async scopedCursor(scope: string): Promise<number> { return (await this.fileStore.scopedMeta.get(scope))?.cursor ?? 0; }
 
   async pinScopedKey(scope: string, fingerprint: string, keyEpoch: number): Promise<void> {
     assertScope(scope);
+    await this.assertDatasetScope(scope);
     if (!/^[a-f0-9]{64}$/.test(fingerprint) || !Number.isSafeInteger(keyEpoch) || keyEpoch < 1) throw Error('sync-key');
     await this.fileStore.transaction('rw', this.fileStore.scopedMeta, async () => {
       const existing = await this.fileStore.scopedMeta.get(scope);
@@ -200,6 +243,7 @@ export class LocalRepository {
 
   async dirtyScopedRows(scope: string): Promise<RecordRow[]> {
     assertScope(scope);
+    await this.assertDatasetScope(scope);
     const rows = await this.allRecords();
     const dirty: RecordRow[] = [];
     for (const row of rows) {
@@ -214,6 +258,7 @@ export class LocalRepository {
 
   async stageScopedOutbox(scope: string, row: RecordRow, operation: SyncOperation): Promise<ScopedOutbox> {
     assertScope(scope);
+    await this.assertDatasetScope(scope);
     validateRow(row);
     if (operation.id !== row.id || operation.kind !== row.type || operation.expectedVersion !==
       ((await this.scopedBaseFor(scope, row.id))?.version ?? 0) || operation.tombstone !== Boolean(parsedPayload(row).deleted)) throw Error('outbox-context');
@@ -260,6 +305,7 @@ export class LocalRepository {
 
   async applyScopedPull(scope: string, change: PulledRow): Promise<'applied' | 'conflict'> {
     assertScope(scope);
+    await this.assertDatasetScope(scope);
     validateRow(change.row);
     const cursor = await this.scopedCursor(scope);
     if (change.sequence !== cursor + 1 || !Number.isSafeInteger(change.version) || change.version < 1) throw Error('pull-sequence');
@@ -275,12 +321,14 @@ export class LocalRepository {
 
   async resumeScopedPull(scope: string): Promise<'applied' | 'conflict' | 'none'> {
     assertScope(scope);
+    await this.assertDatasetScope(scope);
     if (!(await this.fileStore.scopedPull.get(scope))) return 'none';
     return replayScopedPull(this.db, this.fileStore, scope);
   }
 
   async resolveScopedConflict(scope: string, decision: 'local' | 'remote'): Promise<void> {
     assertScope(scope);
+    await this.assertDatasetScope(scope);
     const journal = await this.fileStore.scopedPull.get(scope);
     if (!journal || !(await this.scopedConflict(scope))) throw Error('conflict-missing');
     const current = await this.db.records.findOne(journal.change.row.id).exec();
@@ -548,6 +596,28 @@ function assertScope(scope: string): void {
 }
 function scopedKey(scope: string, rowId: string): string { assertScope(scope); return `${scope}|${rowId}`; }
 
+function sameDatasetBinding(a: DatasetBinding, b: DatasetBinding): boolean {
+  return a.endpoint === b.endpoint && a.accountId === b.accountId &&
+    a.workspaceId === b.workspaceId && a.scope === b.scope;
+}
+
+async function validateDatasetBinding(binding: DatasetBinding): Promise<void> {
+  let url: URL;
+  try { url = new URL(binding.endpoint); }
+  catch { throw Error('sync-dataset-identity'); }
+  if (url.origin !== binding.endpoint || url.username || url.password || url.pathname !== '/' ||
+    url.search || url.hash || (url.protocol !== 'https:' && url.protocol !== 'http:') ||
+    !binding.accountId || binding.accountId.trim() !== binding.accountId || binding.accountId.length > 256 ||
+    !z.uuid().safeParse(binding.workspaceId).success || binding.workspaceId !== binding.workspaceId.toLowerCase()) {
+    throw Error('sync-dataset-identity');
+  }
+  assertScope(binding.scope);
+  const bytes = new Uint8Array(await crypto.subtle.digest('SHA-256',
+    new TextEncoder().encode(JSON.stringify([binding.endpoint, binding.accountId]))));
+  const digest = Array.from(bytes, byte => byte.toString(16).padStart(2, '0')).join('');
+  if (binding.scope !== `${digest}:${binding.workspaceId}`) throw Error('sync-dataset-identity');
+}
+
 async function replayScopedPull(db: RxDatabase, store: FileStore, scope: string): Promise<'applied' | 'conflict'> {
   const journal = await store.scopedPull.get(scope);
   if (!journal) return 'applied';
@@ -614,9 +684,22 @@ export async function openLocalRepository(name: string): Promise<LocalRepository
       try { await replayPullJournal(db, store, entry.id); }
       catch (error) { repository.syncRecoveryError = error instanceof Error ? error.message : 'pull-failed'; break; }
     }
-    for (const entry of await store.scopedPull.toArray()) {
-      try { await replayScopedPull(db, store, entry.scope); }
-      catch (error) { repository.syncRecoveryError = error instanceof Error ? error.message : 'pull-failed'; break; }
+    const pendingScopedPulls = await store.scopedPull.toArray();
+    if (pendingScopedPulls.length) {
+      const binding = await store.datasetBinding.get('active');
+      const [meta, base, outbox] = await Promise.all([
+        store.scopedMeta.toCollection().primaryKeys(), store.scopedBase.orderBy('scope').uniqueKeys(),
+        store.scopedOutbox.orderBy('scope').uniqueKeys(),
+      ]);
+      const scopes = new Set([...meta, ...base, ...outbox, ...pendingScopedPulls.map(entry => entry.scope)]);
+      if (scopes.size > 1) repository.syncRecoveryError = 'sync-dataset-ambiguous';
+      else if (binding && scopes.size && !scopes.has(binding.scope)) repository.syncRecoveryError = 'sync-dataset-bound';
+      else {
+        for (const entry of pendingScopedPulls) {
+          try { await replayScopedPull(db, store, entry.scope); }
+          catch (error) { repository.syncRecoveryError = error instanceof Error ? error.message : 'pull-failed'; break; }
+        }
+      }
     }
     return repository;
   } catch (error) {

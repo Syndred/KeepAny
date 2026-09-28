@@ -1,10 +1,142 @@
 import 'fake-indexeddb/auto';
+import Dexie from 'dexie';
 import { expect, it } from 'vitest';
 import { newAsset, type Asset } from '../../domain/src';
-import { openLocalRepository, type RecordRow } from './index';
+import { openLocalRepository, type DatasetBinding, type RecordRow } from './index';
 
 const name = () => `test-${crypto.randomUUID().slice(0, 12)}`;
 const scope = (workspace: string) => `${'a'.repeat(64)}:${workspace}`;
+async function binding(endpoint = 'https://sync.example.test', accountId = 'self-host-owner',
+  workspaceId: string = crypto.randomUUID()): Promise<DatasetBinding> {
+  const bytes = new Uint8Array(await crypto.subtle.digest('SHA-256',
+    new TextEncoder().encode(JSON.stringify([endpoint, accountId]))));
+  const digest = Array.from(bytes, byte => byte.toString(16).padStart(2, '0')).join('');
+  return { endpoint, accountId, workspaceId, scope: `${digest}:${workspaceId}` };
+}
+
+it('binds one local dataset durably and refuses A to B to A copying without losing A edits or outbox', async () => {
+  const dbName = name();
+  const a = await binding();
+  const b = await binding(a.endpoint);
+  const otherServer = await binding('https://another.example.test', a.accountId, a.workspaceId);
+  const otherAccount = await binding(a.endpoint, 'another-owner', a.workspaceId);
+  const db = await openLocalRepository(dbName);
+  const asset = { ...newAsset('project'), name: 'Private A' };
+  const original = await db.save('asset', asset);
+  expect(await db.claimDatasetBinding(a)).toEqual(a);
+  const operationId = crypto.randomUUID();
+  await db.stageScopedOutbox(a.scope, original, { operationId, id: original.id, kind: 'asset', schemaVersion: 1,
+    expectedVersion: 0, ciphertext: 'opaque', tombstone: false, intent: 'write' });
+  await db.close();
+
+  const reopened = await openLocalRepository(dbName);
+  expect(await reopened.getDatasetBinding()).toEqual(a);
+  expect(await reopened.claimDatasetBinding(a)).toEqual(a);
+  for (const candidate of [b, otherServer, otherAccount]) {
+    await expect(reopened.claimDatasetBinding(candidate)).rejects.toThrow('sync-dataset-bound');
+    await expect(reopened.dirtyScopedRows(candidate.scope)).rejects.toThrow('sync-dataset-bound');
+    expect(await reopened.listScopedOutbox(candidate.scope)).toEqual([]);
+  }
+  await expect(reopened.applyScopedPull(b.scope, { row: original, sequence: 1, version: 1 }))
+    .rejects.toThrow('sync-dataset-bound');
+  await reopened.save('asset', { ...asset, name: 'Edited in A' });
+  expect(await reopened.claimDatasetBinding(a)).toEqual(a);
+  expect(await reopened.getDatasetBinding()).toEqual(a);
+  expect((await reopened.listScopedOutbox(a.scope))[0].operation.operationId).toBe(operationId);
+  expect((await reopened.get<Asset>('asset', asset.id))?.name).toBe('Edited in A');
+  await reopened.acknowledgeScopedOutbox(a.scope, operationId, 1, 1);
+  expect(await reopened.dirtyScopedRows(a.scope)).toHaveLength(1);
+  await reopened.close();
+});
+
+it('claims matching legacy scoped state but refuses a different target without modifying pending data', async () => {
+  const a = await binding();
+  const b = await binding(a.endpoint);
+  const db = await openLocalRepository(name());
+  const asset = { ...newAsset('project'), name: 'Old private A' };
+  const row = await db.save('asset', asset);
+  const operationId = crypto.randomUUID();
+  await db.pinScopedKey(a.scope, 'f'.repeat(64), 1);
+  await db.stageScopedOutbox(a.scope, row, { operationId, id: row.id, kind: 'asset', schemaVersion: 1,
+    expectedVersion: 0, ciphertext: 'opaque', tombstone: false, intent: 'write' });
+  await expect(db.claimDatasetBinding(b)).rejects.toThrow('sync-dataset-bound');
+  expect(await db.getDatasetBinding()).toBeNull();
+  expect((await db.listScopedOutbox(a.scope))[0].operation.operationId).toBe(operationId);
+  expect(await db.claimDatasetBinding(a)).toEqual(a);
+  expect(await db.getDatasetBinding()).toEqual(a);
+  await db.close();
+});
+
+it('upgrades a version 4 file store without clearing its legacy scoped outbox', async () => {
+  const dbName = name();
+  const a = await binding();
+  const asset = { ...newAsset('project'), name: 'Before upgrade' };
+  const row: RecordRow = { id: `asset:${asset.id}`, type: 'asset', payload: JSON.stringify(asset), updatedAt: Date.now() };
+  const operationId = crypto.randomUUID();
+  const legacy = new Dexie(`${dbName}-files-v1`);
+  legacy.version(4).stores({ blobs: 'id', journal: 'id', importJournal: 'id', syncBase: 'id', syncMeta: 'id',
+    pullJournal: 'id', scopedBase: 'id, scope', scopedMeta: 'id', scopedOutbox: 'id, scope', scopedPull: 'id' });
+  await legacy.table('scopedOutbox').put({ id: `${a.scope}|${row.id}`, scope: a.scope, row,
+    operation: { operationId, id: row.id, kind: 'asset', schemaVersion: 1, expectedVersion: 0,
+      ciphertext: 'opaque', tombstone: false, intent: 'write' } });
+  legacy.close();
+  const db = await openLocalRepository(dbName);
+  expect((await db.listScopedOutbox(a.scope))[0].operation.operationId).toBe(operationId);
+  expect(await db.claimDatasetBinding(a)).toEqual(a);
+  expect((await db.listScopedOutbox(a.scope))[0].operation.operationId).toBe(operationId);
+  await db.close();
+});
+
+it('rejects ambiguous legacy scopes across metadata, base, outbox and pull journals', async () => {
+  const a = await binding();
+  const b = await binding(a.endpoint);
+  const db = await openLocalRepository(name());
+  const asset = { ...newAsset('project'), name: 'Unresolved' };
+  const row = await db.save('asset', asset);
+  await db.fileStore.scopedMeta.put({ id: a.scope, cursor: 1 });
+  await db.fileStore.scopedBase.put({ id: `${b.scope}|${row.id}`, scope: b.scope, rowId: row.id,
+    payload: row.payload, version: 1 });
+  await db.fileStore.scopedOutbox.put({ id: `${a.scope}|${row.id}`, scope: a.scope, row,
+    operation: { operationId: crypto.randomUUID(), id: row.id, kind: 'asset', schemaVersion: 1,
+      expectedVersion: 0, ciphertext: 'opaque', tombstone: false, intent: 'write' } });
+  await db.fileStore.scopedPull.put({ id: b.scope, scope: b.scope, cursorStart: 0,
+    change: { row, sequence: 1, version: 1 }, localPayload: row.payload });
+  await expect(db.claimDatasetBinding(a)).rejects.toThrow('sync-dataset-ambiguous');
+  expect(await db.getDatasetBinding()).toBeNull();
+  expect((await db.listScopedOutbox(a.scope))).toHaveLength(1);
+  expect(await db.fileStore.scopedPull.get(b.scope)).toBeDefined();
+  expect((await db.get<Asset>('asset', asset.id))?.name).toBe('Unresolved');
+  await db.close();
+});
+
+it('does not attach a local dataset whose older unscoped sync provenance is unknown', async () => {
+  const db = await openLocalRepository(name());
+  const a = await binding();
+  await db.fileStore.syncMeta.put({ id: 'cursor', cursor: 1 });
+  await expect(db.claimDatasetBinding(a)).rejects.toThrow('sync-dataset-ambiguous');
+  expect(await db.getDatasetBinding()).toBeNull();
+  await db.close();
+});
+
+it('does not replay a pull journal from another dataset during repository reopen', async () => {
+  const dbName = name();
+  const a = await binding();
+  const b = await binding(a.endpoint);
+  const db = await openLocalRepository(dbName);
+  const asset = { ...newAsset('project'), name: 'Private A' };
+  const row = await db.save('asset', asset);
+  await db.claimDatasetBinding(a);
+  await db.pinScopedKey(a.scope, 'f'.repeat(64), 1);
+  await db.fileStore.scopedPull.put({ id: b.scope, scope: b.scope, cursorStart: 0,
+    change: { row: { ...row, payload: JSON.stringify({ ...asset, name: 'Private B' }) }, sequence: 1, version: 1 },
+    localPayload: row.payload, decision: 'remote' });
+  await db.close();
+  const reopened = await openLocalRepository(dbName);
+  expect(reopened.syncRecoveryError).toBe('sync-dataset-ambiguous');
+  expect((await reopened.get<Asset>('asset', asset.id))?.name).toBe('Private A');
+  expect(await reopened.fileStore.scopedPull.get(b.scope)).toBeDefined();
+  await reopened.close();
+});
 
 it('keeps a fixed pending operation across reopen and acknowledges only its exact version in one scope', async () => {
   const dbName = name();
