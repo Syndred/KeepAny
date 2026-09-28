@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
 	type ReadField,
@@ -6,7 +6,7 @@ import {
 	type WriteField,
 	writableFields,
 } from "../../../../packages/mcp/src/fields";
-import { useMcpRuntime } from "../mcp-runtime";
+import { type McpRequest, useMcpRuntime } from "../mcp-runtime";
 import { useAppContext } from "../view-shared";
 import { Button } from "./ui/button";
 
@@ -31,20 +31,26 @@ export function McpPanel() {
 	const [ttlMs, setTtlMs] = useState<number>(durations[0].value);
 	const [busy, setBusy] = useState(false);
 	const [localError, setLocalError] = useState<string | null>(null);
-	const requestUrl = useMemo(() => {
-		if (!prepared) return null;
-		return URL.createObjectURL(
+	const [download, setDownload] = useState<{
+		request: McpRequest;
+		url: string;
+	} | null>(null);
+
+	useEffect(() => {
+		if (!prepared) {
+			setDownload(null);
+			return;
+		}
+		const url = URL.createObjectURL(
 			new Blob([JSON.stringify(prepared, null, 2)], {
 				type: "application/json",
 			}),
 		);
-	}, [prepared]);
-
-	useEffect(() => {
+		setDownload({ request: prepared, url });
 		return () => {
-			if (requestUrl) URL.revokeObjectURL(requestUrl);
+			URL.revokeObjectURL(url);
 		};
-	}, [requestUrl]);
+	}, [prepared]);
 
 	const availableIds = new Set(assets.map((asset) => asset.id));
 	const selectedIds = assetIds.filter((id) => availableIds.has(id));
@@ -232,10 +238,10 @@ export function McpPanel() {
 						>
 							{t("mcpCreateRequest")}
 						</Button>
-						{requestCurrent && requestUrl && (
+						{requestCurrent && download?.request === prepared && (
 							<a
 								className="button"
-								href={requestUrl}
+								href={download.url}
 								download="keepany-mcp-request.json"
 							>
 								{t("mcpDownloadRequest")}
