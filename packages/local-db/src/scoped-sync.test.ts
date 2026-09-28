@@ -106,3 +106,23 @@ it('recovers a scoped pull interrupted between the record write and cursor commi
   expect(await reopened.fileStore.scopedPull.get(selectedScope)).toBeUndefined();
   await reopened.close();
 });
+
+it('retires a blocked write when local data returns to the base and a newer server record applies', async () => {
+  const db = await openLocalRepository(name());
+  const selectedScope = scope(crypto.randomUUID());
+  const asset = { ...newAsset('project'), name: 'Base' };
+  const initial: RecordRow = { id: `asset:${asset.id}`, type: 'asset', payload: JSON.stringify(asset), updatedAt: Date.now() };
+  await db.applyScopedPull(selectedScope, { row: initial, sequence: 1, version: 1 });
+  const edit = await db.save('asset', { ...asset, name: 'Rejected local edit' });
+  const operationId = crypto.randomUUID();
+  await db.stageScopedOutbox(selectedScope, edit, { operationId, id: edit.id, kind: 'asset', schemaVersion: 1,
+    expectedVersion: 1, ciphertext: 'sealed', tombstone: false, intent: 'write' });
+  await db.blockScopedOutbox(selectedScope, operationId);
+  await db.save('asset', asset);
+  const remote: RecordRow = { ...initial, payload: JSON.stringify({ ...asset, name: 'Server edit' }) };
+  expect(await db.applyScopedPull(selectedScope, { row: remote, sequence: 2, version: 2 })).toBe('applied');
+  expect((await db.get<Asset>('asset', asset.id))?.name).toBe('Server edit');
+  expect(await db.listScopedOutbox(selectedScope)).toEqual([]);
+  expect(await db.dirtyScopedRows(selectedScope)).toEqual([]);
+  await db.close();
+});
