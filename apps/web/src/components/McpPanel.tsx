@@ -22,7 +22,7 @@ const same = (left: readonly string[], right: readonly string[]) =>
 export function McpPanel() {
 	const { t } = useTranslation();
 	const { data } = useAppContext();
-	const { status, scope, prepared, error, prepare, importPairing, revoke } =
+	const { status, scope, prepared, error, prepare, invalidatePrepared, importPairing, revoke } =
 		useMcpRuntime();
 	const assets = data.assets.filter((asset) => !asset.deleted);
 	const [assetIds, setAssetIds] = useState<string[]>([]);
@@ -64,12 +64,14 @@ export function McpPanel() {
 	);
 	const connected = scope !== null;
 	const toggleAsset = (id: string, checked: boolean) => {
+		invalidatePrepared();
 		setAssetIds((current) =>
 			checked ? [...current, id] : current.filter((item) => item !== id),
 		);
 		setLocalError(null);
 	};
 	const toggleRead = (field: ReadField, checked: boolean) => {
+		invalidatePrepared();
 		setReadFields((current) =>
 			checked ? [...current, field] : current.filter((item) => item !== field),
 		);
@@ -79,6 +81,7 @@ export function McpPanel() {
 		setLocalError(null);
 	};
 	const toggleWrite = (field: WriteField, checked: boolean) => {
+		invalidatePrepared();
 		setWriteFields((current) =>
 			checked ? [...current, field] : current.filter((item) => item !== field),
 		);
@@ -87,7 +90,7 @@ export function McpPanel() {
 
 	return (
 		<section className="card padded mcp-panel">
-			<h2>{t("mcpTitle")}</h2>
+			<h2 id="mcp-panel-title" tabIndex={-1}>{t("mcpTitle")}</h2>
 			<p>{t("mcpHint")}</p>
 			{connected ? (
 				<div className="mcp-active">
@@ -208,7 +211,10 @@ export function McpPanel() {
 						<select
 							value={ttlMs}
 							disabled={busy || status === "pairing"}
-							onChange={(event) => setTtlMs(Number(event.target.value))}
+							onChange={(event) => {
+								invalidatePrepared();
+								setTtlMs(Number(event.target.value));
+							}}
 						>
 							{durations.map(({ value, key }) => (
 								<option value={value} key={value}>

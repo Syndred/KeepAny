@@ -6,10 +6,12 @@ export function Dialog({
 	title,
 	children,
 	onClose,
+	returnFocusTo,
 }: {
 	title: string;
 	children: ReactNode;
 	onClose: () => void;
+	returnFocusTo?: () => HTMLElement | null;
 }) {
 	const { t } = useTranslation();
 	const opener = useRef<HTMLElement | null>(null);
@@ -29,7 +31,8 @@ export function Dialog({
 					aria-describedby={undefined}
 					onCloseAutoFocus={(event) => {
 						event.preventDefault();
-						if (opener.current?.isConnected) opener.current.focus();
+						const target = returnFocusTo?.() ?? opener.current;
+						if (target?.isConnected) target.focus();
 					}}
 				>
 					<header>

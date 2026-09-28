@@ -40,6 +40,7 @@ type Runtime = {
 	prepared: McpRequest | null;
 	error: string | null;
 	prepare(input: RequestInput): void;
+	invalidatePrepared(): void;
 	importPairing(file: File): Promise<void>;
 	revoke(): Promise<void>;
 };
@@ -114,8 +115,10 @@ export function McpRuntimeProvider({
 	const storeRef = useRef<RxdbMcpAssetStore | null>(null);
 	const controllerRef = useRef<AbortController | null>(null);
 	const approvalRef = useRef<((approved: boolean) => void) | null>(null);
+	const scopeDecisionInFlightRef = useRef(false);
 	const timerRef = useRef<number | null>(null);
 	const generationRef = useRef(0);
+	const decisionInFlightRef = useRef(false);
 	const preview = previews[0];
 
 	const stopLocal = useCallback(() => {
@@ -184,12 +187,50 @@ export function McpRuntimeProvider({
 		link.remove();
 		window.setTimeout(() => URL.revokeObjectURL(url), 10_000);
 	}, [assets, status]);
+	const invalidatePrepared = useCallback(() => {
+		setPrepared(null);
+		setError(current =>
+			prepared || current === "mcpSelectionChanged" ? "mcpSelectionChanged" : null,
+		);
+	}, [prepared]);
 
 	const answerScope = (approved: boolean) => {
 		const resolve = approvalRef.current;
-		approvalRef.current = null;
-		setPendingScope(null);
-		resolve?.(approved);
+		if (!resolve || scopeDecisionInFlightRef.current) return;
+		if (!approved) {
+			approvalRef.current = null;
+			setPendingScope(null);
+			resolve(false);
+			return;
+		}
+		const requested = prepared;
+		const selected = pendingScope;
+		const store = storeRef.current;
+		scopeDecisionInFlightRef.current = true;
+		setBusy(true);
+		void (async () => {
+			const liveIds = new Set(assets.filter(asset => !asset.deleted).map(asset => asset.id));
+			const valid = Boolean(requested && selected && store &&
+				Date.now() - requested.createdAt <= 5 * 60_000 &&
+				selectedScope(selected, requested) &&
+				selected.assetIds.every(id => liveIds.has(id)) &&
+				(await Promise.all(selected.assetIds.map(id => store.get(id))))
+					.every(row => row && !row.asset.deleted));
+			if (approvalRef.current === resolve) {
+				approvalRef.current = null;
+				setPendingScope(null);
+				resolve(valid);
+			}
+		})().catch(() => {
+			if (approvalRef.current === resolve) {
+				approvalRef.current = null;
+				setPendingScope(null);
+				resolve(false);
+			}
+		}).finally(() => {
+			scopeDecisionInFlightRef.current = false;
+			setBusy(false);
+		});
 	};
 
 	const importPairing = useCallback(async (file: File) => {
@@ -212,6 +253,7 @@ export function McpRuntimeProvider({
 				import("../../../packages/local-db/src"),
 			]);
 			const store = new RxdbMcpAssetStore(await localRepository());
+			storeRef.current = store;
 			client = new BrowserMcpBridgeClient({
 				...pairing,
 				store,
@@ -259,6 +301,7 @@ export function McpRuntimeProvider({
 			});
 		} catch (cause) {
 			void client?.close();
+			storeRef.current = null;
 			approvalRef.current = null;
 			setPendingScope(null);
 			setStatus("error");
@@ -313,7 +356,8 @@ export function McpRuntimeProvider({
 		const current = preview;
 		const client = clientRef.current;
 		const store = storeRef.current;
-		if (!current || !client || !store || busy) return;
+		if (!current || !client || !store || decisionInFlightRef.current) return;
+		decisionInFlightRef.current = true;
 		setBusy(true);
 		try {
 			const row = await store.get(current.assetId);
@@ -332,13 +376,14 @@ export function McpRuntimeProvider({
 		} catch {
 			setError("mcpConnectionFailed");
 		} finally {
+			decisionInFlightRef.current = false;
 			setBusy(false);
 		}
 	};
 
-	return <context.Provider value={{ status, scope, prepared, error, prepare, importPairing, revoke }}>
+	return <context.Provider value={{ status, scope, prepared, error, prepare, invalidatePrepared, importPairing, revoke }}>
 		{children}
-		{pendingScope && <Dialog title={t("mcpScopeApprovalTitle")} onClose={() => answerScope(false)}>
+		{pendingScope && <Dialog title={t("mcpScopeApprovalTitle")} onClose={() => answerScope(false)} returnFocusTo={() => document.getElementById("mcp-panel-title")}>
 			<p>{t("mcpScopeApprovalHint")}</p>
 			<ul className="mcp-scope-list">
 				{pendingScope.assetIds.map(id =>
@@ -349,8 +394,8 @@ export function McpRuntimeProvider({
 				pendingScope.writeFields.map(field => t(`mcpField_${field}`)).join(", ") : t("mcpNoWrite")}</p>
 			{prepared && <p>{t("mcpScopeDuration", { minutes: prepared.ttlMs / 60_000 })}</p>}
 			<div className="actions">
-				<Button onClick={() => answerScope(false)}>{t("mcpScopeApprovalDeny")}</Button>
-				<Button onClick={() => answerScope(true)}>{t("mcpScopeApprovalApprove")}</Button>
+				<Button disabled={busy} onClick={() => answerScope(false)}>{t("mcpScopeApprovalDeny")}</Button>
+				<Button disabled={busy} onClick={() => answerScope(true)}>{t("mcpScopeApprovalApprove")}</Button>
 			</div>
 		</Dialog>}
 		{preview && <Dialog title={t("mcpWriteApprovalTitle")} onClose={() => void decidePreview(false)}>
