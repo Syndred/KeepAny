@@ -1,4 +1,5 @@
 import { z } from 'zod';
+export { parseMinorUnits, inputFromMinorUnits, formatMinorUnits } from './money';
 export const kinds = ['project','account','subscription','item','vault'] as const;
 export const currencies = ['CNY','USD','EUR','GBP','JPY'] as const;
 
@@ -50,7 +51,14 @@ export const historySchema=z.object({id:z.string().min(1).max(96),assetId:z.stri
 export type History=z.infer<typeof historySchema>;
 export function newAsset(kind:AssetKind):Asset{const now=new Date().toISOString();return assetSchema.parse({id:crypto.randomUUID(),kind,name:'Untitled',createdAt:now,updatedAt:now});}
 export function nextDue(date:string,cycle:Asset['cycle'],interval=1){return dueOnCycle(date,cycle,interval,1);}
-export function monthlyAmount(asset:Asset){return Math.round(asset.amount/(asset.interval*(asset.cycle==='year'?12:asset.cycle==='month'?1:asset.cycle==='week'?12/52:12/365)));}
+export function monthlyMinorUnits(asset:Asset):bigint{
+  const periods=BigInt(asset.interval);
+  const amount=BigInt(asset.amount);
+  const numerator=asset.cycle==='week'?amount*52n:asset.cycle==='day'?amount*365n:amount;
+  const denominator=periods*(asset.cycle==='year'||asset.cycle==='week'||asset.cycle==='day'?12n:1n);
+  return (2n*numerator+denominator)/(2n*denominator);
+}
+export function monthlyAmount(asset:Asset){return Number(monthlyMinorUnits(asset));}
 // Recalculate from the original anchor, so a January 31 monthly bill returns to March 31 after February.
 export function dueOnCycle(anchor:string,cycle:Asset['cycle'],interval:number,periods:number){
   if(!Number.isInteger(periods)||periods<0||!Number.isInteger(interval)||interval<1)throw Error('invalid-period');

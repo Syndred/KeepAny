@@ -6,7 +6,9 @@ import {
 	assetSchema,
 	taskSchema,
 	duplicates,
+	inputFromMinorUnits,
 	newAsset,
+	parseMinorUnits,
 	type Asset,
 	type AssetKind,
 	type Category,
@@ -61,6 +63,7 @@ function Field({
 					id={name}
 					name={name}
 					type={type}
+					step={type === "number" ? "any" : undefined}
 					value={value ?? ""}
 					onChange={(e) => onChange?.(e.target.value)}
 					aria-invalid={!!error}
@@ -99,12 +102,12 @@ export function AssetEditor({
 	);
 	const [amount, setAmount] = useState(
 		asset?.amount != null
-			? String(asset.amount / (asset.currency === "JPY" ? 1 : 100))
+			? inputFromMinorUnits(asset.amount, asset.currency)
 			: "0",
 	);
 	const [discount, setDiscount] = useState(
 		asset?.discountAmount != null
-			? String(asset.discountAmount / (asset.currency === "JPY" ? 1 : 100))
+			? inputFromMinorUnits(asset.discountAmount, asset.currency)
 			: "0",
 	);
 	const [errors, setErrors] = useState<Record<string, string>>({});
@@ -117,9 +120,8 @@ export function AssetEditor({
 	}
 	async function submit(e: React.FormEvent) {
 		e.preventDefault();
-		const n = Number(amount),
-			d = Number(discount),
-			factor = draft.currency === "JPY" ? 1 : 100;
+		const parsedAmount = parseMinorUnits(amount, draft.currency);
+		const parsedDiscount = parseMinorUnits(discount, draft.currency);
 		const scheduleChanged =
 			kind === "subscription" &&
 			original !== undefined &&
@@ -130,8 +132,8 @@ export function AssetEditor({
 			...draft,
 			tags: tagsInput.split(",").map((tag) => tag.trim()).filter(Boolean),
 			name: draft.name.trim(),
-			amount: Number.isFinite(n) ? Math.round(n * factor) : NaN,
-			discountAmount: Number.isFinite(d) ? Math.round(d * factor) : NaN,
+			amount: parsedAmount,
+			discountAmount: parsedDiscount,
 			billingAnchor:
 				kind === "subscription" && (scheduleChanged || !draft.billingAnchor)
 					? draft.dueDate

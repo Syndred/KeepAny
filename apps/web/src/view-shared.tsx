@@ -8,7 +8,7 @@ import {
 	Shield,
 	WalletCards,
 } from "lucide-react";
-import type { Asset, AssetKind } from "../../../packages/domain/src";
+import { formatMinorUnits, type Asset, type AssetKind } from "../../../packages/domain/src";
 import type { Data } from "./data";
 type AppContextValue = {
 	data: Data;
@@ -46,12 +46,8 @@ export const builtins: Record<AssetKind, string[]> = {
 export function validKind(value: string): AssetKind {
 	return kinds.includes(value as AssetKind) ? (value as AssetKind) : "project";
 }
-export function money(amount: number, currency: string, lang: string) {
-	return new Intl.NumberFormat(lang, {
-		style: "currency",
-		currency,
-		maximumFractionDigits: currency === "JPY" ? 0 : 2,
-	}).format(amount / (currency === "JPY" ? 1 : 100));
+export function money(amount: number | bigint, currency: string, lang: string) {
+	return formatMinorUnits(amount, currency, lang);
 }
 export function date(value: string, lang: string) {
 	if (!value) return "—";

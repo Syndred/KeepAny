@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { Bell, Plus, WalletCards } from "lucide-react";
-import { actualCharge, monthlyAmount } from "../../../packages/domain/src";
+import { actualCharge, monthlyMinorUnits } from "../../../packages/domain/src";
 import {
 	AssetRow,
 	Empty,
@@ -20,11 +20,11 @@ export function Overview() {
 		.filter((a) => a.kind === "subscription" && a.status === "active" && a.dueDate)
 		.sort((a, b) => a.dueDate.localeCompare(b.dueDate))
 		.slice(0, 4);
-	const totals = new Map<string, number>();
+	const totals = new Map<string, bigint>();
 	for (const a of assets.filter(
 		(x) => x.kind === "subscription" && x.status === "active",
 	))
-		totals.set(a.currency, (totals.get(a.currency) || 0) + monthlyAmount(a));
+		totals.set(a.currency, (totals.get(a.currency) || 0n) + monthlyMinorUnits(a));
 	return (
 		<main className="page">
 			<PageTitle

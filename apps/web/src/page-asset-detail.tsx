@@ -16,7 +16,8 @@ import {
 	type Relation,
 	actualCharge,
 	dueOnCycle,
-	monthlyAmount,
+	monthlyMinorUnits,
+	parseMinorUnits,
 } from "../../../packages/domain/src";
 import { buildImpactTasks, upgradeLegacyImpactTasks } from "../../../packages/domain/src/impact";
 import {
@@ -578,10 +579,7 @@ export function AssetDetail() {
 			const charge = actualCharge(asset, asset.dueDate);
 			if (charge === null) throw Error("renewal-inactive");
 			const entered = renewalAmount.trim();
-			const valid = asset.currency === "JPY" ? /^\d+$/ : /^\d+(?:\.\d{1,2})?$/;
-			if (entered && !valid.test(entered)) throw Error("renewal-amount-invalid");
-			const factor = asset.currency === "JPY" ? 1 : 100;
-			const recordedAmount = entered ? Math.round(Number(entered) * factor) : charge;
+			const recordedAmount = entered ? parseMinorUnits(entered, asset.currency) : charge;
 			if (!Number.isSafeInteger(recordedAmount) || recordedAmount < 0) throw Error("renewal-amount-invalid");
 			const historyId = crypto.randomUUID();
 			update = {
@@ -845,7 +843,7 @@ export function AssetDetail() {
 								<div>
 									<dt>{t("monthly")}</dt>
 									<dd>
-										{money(monthlyAmount(asset), asset.currency, i18n.language)}
+										{money(monthlyMinorUnits(asset), asset.currency, i18n.language)}
 									</dd>
 								</div>
 								<div>
