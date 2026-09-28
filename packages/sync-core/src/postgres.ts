@@ -12,6 +12,32 @@ export interface SqlClient {
 export interface SqlPool { connect(): Promise<SqlClient> }
 
 export class SyncForbiddenError extends Error { constructor() { super('forbidden'); } }
+export async function withSqlTransaction<T>(pool: SqlPool, run: (client: SqlClient) => Promise<T>): Promise<T> {
+  const client = await pool.connect();
+  let begun = false;
+  try {
+    await client.query('BEGIN');
+    begun = true;
+    const value = await run(client);
+    await client.query('COMMIT');
+    return value;
+  } catch (error) {
+    if (begun) await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+export async function requireSyncMembership(client: SqlClient, workspaceId: string, subjectId: string, scope: 'read' | 'write'): Promise<void> {
+  if (!subjectId) throw new SyncForbiddenError();
+  const result = await client.query(
+    'SELECT can_read, can_write FROM sync_memberships WHERE workspace_id=$1 AND subject_id=$2 AND revoked_at IS NULL FOR SHARE',
+    [workspaceId, subjectId],
+  );
+  const member = result.rows[0];
+  if (!member || member[scope === 'read' ? 'can_read' : 'can_write'] !== true) throw new SyncForbiddenError();
+}
 const numeric = (value: unknown): number => {
   const number = Number(value);
   if (!Number.isSafeInteger(number) || number < 0) throw Error('sync-sequence-range');
@@ -21,41 +47,14 @@ const numeric = (value: unknown): number => {
 export class PostgresSyncService {
   constructor(private readonly pool: SqlPool) {}
 
-  private async transaction<T>(run: (client: SqlClient) => Promise<T>): Promise<T> {
-    const client = await this.pool.connect();
-    let begun = false;
-    try {
-      await client.query('BEGIN');
-      begun = true;
-      const value = await run(client);
-      await client.query('COMMIT');
-      return value;
-    } catch (error) {
-      if (begun) await client.query('ROLLBACK');
-      throw error;
-    } finally {
-      client.release();
-    }
-  }
-
   async createWorkspace(subjectId: string): Promise<string> {
     if (!subjectId || subjectId.length > 200) throw Error('subject');
     const workspaceId = crypto.randomUUID();
-    await this.transaction(async client => {
+    await withSqlTransaction(this.pool, async client => {
       await client.query('INSERT INTO sync_workspaces (workspace_id) VALUES ($1)', [workspaceId]);
       await client.query('INSERT INTO sync_memberships (workspace_id, subject_id, can_read, can_write) VALUES ($1,$2,true,true)', [workspaceId, subjectId]);
     });
     return workspaceId;
-  }
-
-  private async requireMembership(client: SqlClient, workspaceId: string, subjectId: string, scope: 'read' | 'write'): Promise<void> {
-    if (!subjectId) throw new SyncForbiddenError();
-    const result = await client.query(
-      'SELECT can_read, can_write FROM sync_memberships WHERE workspace_id=$1 AND subject_id=$2 AND revoked_at IS NULL FOR SHARE',
-      [workspaceId, subjectId],
-    );
-    const member = result.rows[0];
-    if (!member || member[scope === 'read' ? 'can_read' : 'can_write'] !== true) throw new SyncForbiddenError();
   }
 
   async push(input: SyncPushRequest, subjectId: string): Promise<{ results: SyncPushResult[] }> {
@@ -63,14 +62,14 @@ export class PostgresSyncService {
     const results: SyncPushResult[] = [];
     // Commit each operation independently. A restarted batch reuses operationId for exact replay.
     for (const operation of request.operations) {
-      results.push(await this.transaction(client => this.apply(client, request.workspaceId, subjectId, operation)));
+      results.push(await withSqlTransaction(this.pool, client => this.apply(client, request.workspaceId, subjectId, operation)));
     }
     return { results };
   }
 
   private async apply(client: SqlClient, workspaceId: string, subjectId: string, input: SyncOperation): Promise<SyncPushResult> {
     const operation = syncOperationSchema.parse(input);
-    await this.requireMembership(client, workspaceId, subjectId, 'write');
+    await requireSyncMembership(client, workspaceId, subjectId, 'write');
     const workspaceResult = await client.query('SELECT next_sequence FROM sync_workspaces WHERE workspace_id=$1 FOR UPDATE', [workspaceId]);
     if (!workspaceResult.rows[0]) throw new SyncForbiddenError();
     const fingerprint = createHash('sha256').update(JSON.stringify(operation)).digest('hex');
@@ -122,8 +121,8 @@ export class PostgresSyncService {
 
   async pull(input: SyncPullRequest, subjectId: string): Promise<{ changes: SyncChange[]; nextCursor: number }> {
     const request = syncPullRequestSchema.parse(input);
-    return this.transaction(async client => {
-      await this.requireMembership(client, request.workspaceId, subjectId, 'read');
+    return withSqlTransaction(this.pool, async client => {
+      await requireSyncMembership(client, request.workspaceId, subjectId, 'read');
       const page = await client.query(`SELECT sequence,doc_id,kind,schema_version,ciphertext,tombstone,version
         FROM sync_changes WHERE workspace_id=$1 AND sequence>$2 ORDER BY sequence ASC LIMIT $3`,
       [request.workspaceId, request.cursor, request.limit]);
