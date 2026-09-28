@@ -45,6 +45,7 @@ export const taskSchema=z.object({id:z.string().min(1).max(96),name:z.string().m
 export type Task=z.infer<typeof taskSchema>;
 export const categorySchema=z.object({id:z.string().min(1).max(96),kind:z.enum(kinds),name:z.string().min(1).max(60),order:z.number().int(),deleted:z.boolean().default(false)});
 export type Category=z.infer<typeof categorySchema>;
+export const normalizeCategoryName = (name: string): string => name.trim().normalize('NFKC').toLowerCase();
 export const submissionSchema=z.object({id:z.string().min(1).max(96),assetId:z.string().min(1).max(96),name:z.string().min(1).max(200),url:z.string().url().refine(v=>/^https?:\/\//.test(v)),status:z.enum(['planned','submitted','review','indexed','verify','rejected']),submittedAt:z.string().default(''),verifiedAt:z.string().default(''),evidence:z.string().max(2000).default(''),deleted:z.boolean().default(false)});
 export type Submission=z.infer<typeof submissionSchema>;
 export const historySchema=z.object({id:z.string().min(1).max(96),assetId:z.string().min(1).max(96),action:z.enum(['loan','return','renew','maintenance']),note:z.string(),borrower:z.string().max(200).optional(),eventDate:z.string().refine(validDateOnly,'date').optional(),billDate:z.string().refine(validDateOnly,'date').optional(),amount:z.number().int().min(0).max(Number.MAX_SAFE_INTEGER).optional(),currency:z.enum(currencies).optional(),createdAt:z.string(),deleted:z.boolean().default(false)});

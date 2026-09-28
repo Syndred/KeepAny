@@ -42,6 +42,29 @@ const changedArchive = async (backup: Uint8Array, edit: (entries: Record<string,
 };
 
 describe('RxDB + free Dexie local repository', () => {
+  it('allows only one normalized category across concurrent calls and permits recreation after removal', async () => {
+    const first = await openLocalRepository(name());
+    try {
+      const attempts = await Promise.allSettled([
+        first.createCategory('project', '  Work  ', 3),
+        first.createCategory('project', 'ｗＯＲＫ', 3),
+      ]);
+      expect(attempts.filter(result => result.status === 'fulfilled')).toHaveLength(1);
+      expect(attempts.filter(result => result.status === 'rejected')).toHaveLength(1);
+      expect((attempts.find(result => result.status === 'rejected') as PromiseRejectedResult).reason.message)
+        .toBe('category-duplicate');
+      const categories = await first.list<{ id: string; kind: string; name: string; deleted: boolean }>('category');
+      expect(categories).toHaveLength(1);
+      expect(categories[0].kind).toBe('project');
+      await first.save('category', { ...categories[0], order: 3, deleted: true });
+      const recreated = await first.createCategory('project', 'work', 3);
+      expect(recreated.id).not.toBe(categories[0].id);
+      expect(await first.list('category')).toHaveLength(1);
+    } finally {
+      await first.close();
+    }
+  });
+
   it('rejects an outdated asset editor snapshot and deletes the latest image-bearing record', async () => {
     const db = await openLocalRepository(name());
     try {

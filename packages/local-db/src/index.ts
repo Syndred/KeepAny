@@ -2,7 +2,7 @@ import { createRxDatabase, type RxDatabase } from 'rxdb';
 import { getRxStorageDexie } from 'rxdb/plugins/storage-dexie';
 import Dexie, { type Table } from 'dexie';
 import { z } from 'zod';
-import { dueOnCycle, entitySchemas, type Asset, type EntityType, type History, type Task } from '../../domain/src';
+import { dueOnCycle, entitySchemas, normalizeCategoryName, type Asset, type AssetKind, type Category, type EntityType, type History, type Task } from '../../domain/src';
 import { zipSync, unzipSync, strToU8, strFromU8 } from 'fflate';
 import type { SyncOperation } from '../../contracts/src';
 
@@ -155,6 +155,32 @@ export class LocalRepository {
       return withRenewalLock(`keepany-task:${this.db.name}`, () => this.saveUnlocked(type, value));
     }
     return this.saveUnlocked(type, value);
+  }
+
+  async createCategory(kind: AssetKind, name: string, order: number): Promise<Category> {
+    const trimmed = name.trim();
+    const normalized = normalizeCategoryName(trimmed);
+    if (!normalized) throw Error('category-name');
+    return withRenewalLock(`keepany-category:${this.db.name}:${kind}:${normalized}`, async () => {
+      const categories = await this.list<Category>('category', true);
+      if (categories.some(category => category.kind === kind && !category.deleted &&
+        normalizeCategoryName(category.name) === normalized)) throw Error('category-duplicate');
+      const hash = await sha(new TextEncoder().encode(`${kind}:${normalized}`));
+      const prefix = `category-${kind}-${hash}`;
+      const used = new Set(categories.map(category => category.id));
+      let sequence = 1;
+      while (used.has(`${prefix}-${sequence}`)) sequence++;
+      const category = entitySchemas.category.parse({
+        id: `${prefix}-${sequence}`, kind, name: trimmed, order, deleted: false,
+      });
+      try {
+        await this.db.records.insert(rowFor('category', category));
+      } catch (error) {
+        if (await this.get<Category>('category', category.id)) throw Error('category-duplicate');
+        throw error;
+      }
+      return category;
+    });
   }
 
   async saveAssetIfCurrent(expected: Asset, next: Asset): Promise<RecordRow> {
@@ -1225,6 +1251,9 @@ function defaultRepository(): Promise<LocalRepository> {
 export async function database(): Promise<RxDatabase> { return (await defaultRepository()).db; }
 export async function localRepository(): Promise<LocalRepository> { return defaultRepository(); }
 export async function save(type: EntityType, value: unknown) { return (await defaultRepository()).save(type, value); }
+export async function createCategory(kind: AssetKind, name: string, order: number) {
+  return (await defaultRepository()).createCategory(kind, name, order);
+}
 export async function saveAssetIfCurrent(expected: Asset, next: Asset) { return (await defaultRepository()).saveAssetIfCurrent(expected, next); }
 export async function saveBatch(items: ReadonlyArray<{ type: EntityType; value: unknown }>) { return (await defaultRepository()).saveBatch(items); }
 export async function recordRenewal(expectedAsset: Asset, nextAsset: Asset, history: History) {

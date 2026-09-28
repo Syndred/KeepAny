@@ -18,8 +18,8 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { GripVertical, Plus } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import type { AssetKind } from "../../../packages/domain/src";
-import { save } from "../../../packages/local-db/src";
+import { normalizeCategoryName, type AssetKind } from "../../../packages/domain/src";
+import { createCategory, save } from "../../../packages/local-db/src";
 import { Button } from "./components/ui/button";
 import { Dialog } from "./components/ui/dialog";
 import {
@@ -113,6 +113,8 @@ function CategoryStrip({
 	const [manage, setManage] = useState(false);
 	const [name, setName] = useState("");
 	const [categoryError, setCategoryError] = useState("");
+	const addingCategory = useRef(false);
+	const [categoryBusy, setCategoryBusy] = useState(false);
 	async function onDragEnd(e: DragEndEvent) {
 		if (!e.over || e.active.id === e.over.id) return;
 		const from = ordered.indexOf(String(e.active.id)),
@@ -122,36 +124,39 @@ function CategoryStrip({
 		await save("preference", { id: `categoryOrder-${kind}`, value: next });
 	}
 	async function addCategory() {
+		if (addingCategory.current) return;
 		const trimmed = name.trim();
 		if (!trimmed) return;
-		const normalized = trimmed.toLocaleLowerCase();
+		const normalized = normalizeCategoryName(trimmed);
 		if (
 			categoryNames.some((category) =>
 				[category, niceCategory(category, t)].some(
-					(label) => label.toLocaleLowerCase() === normalized,
+					(label) => normalizeCategoryName(label) === normalized,
 				),
 			)
 		) {
 			setCategoryError(t("categoryDuplicate"));
 			return;
 		}
+		addingCategory.current = true;
+		setCategoryBusy(true);
 		try {
-			await save("category", {
-				id: crypto.randomUUID(),
-				kind,
-				name: trimmed,
-				order: categoryNames.length,
-				deleted: false,
-			});
-		} catch {
-			setCategoryError(t("error"));
-			return;
+			const created = await createCategory(kind, trimmed, categoryNames.length);
+			setName("");
+			setCategoryError("");
+			setManage(false);
+			choose(created.name);
+			notify(t("saved"));
+		} catch (error) {
+			setCategoryError(
+				error instanceof Error && error.message === "category-duplicate"
+					? t("categoryDuplicate")
+					: t("error"),
+			);
+		} finally {
+			addingCategory.current = false;
+			setCategoryBusy(false);
 		}
-		setName("");
-		setCategoryError("");
-		setManage(false);
-		choose(trimmed);
-		notify(t("saved"));
 	}
 	return (
 		<>
@@ -209,6 +214,7 @@ function CategoryStrip({
 							id="category-name"
 							value={name}
 							maxLength={60}
+							disabled={categoryBusy}
 							aria-invalid={!!categoryError}
 							aria-describedby={
 								categoryError ? "category-name-error" : undefined
@@ -229,7 +235,7 @@ function CategoryStrip({
 						)}
 					</div>
 					<div className="actions">
-						<Button onClick={addCategory} disabled={!name.trim()}>
+						<Button onClick={addCategory} disabled={!name.trim() || categoryBusy}>
 							{t("save")}
 						</Button>
 					</div>
