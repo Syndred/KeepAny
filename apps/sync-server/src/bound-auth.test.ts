@@ -133,6 +133,7 @@ it('accepts only pinned bound JWT and device DPoP across real Hono HTTP routes',
     await denied(valid, { iat: now() - 120 });
     const scopeCutoff = now();
     await pg.query("UPDATE sync_bound_bindings SET scopes = ARRAY['sync:read']::text[], epoch = 2, token_valid_after = $1 WHERE binding_id = $2", [scopeCutoff, bindingId]);
+    expect((await post('/sync/pull', valid, { body: { workspaceId, cursor: 0 } })).status).toBe(401);
     const afterScope = await access({}, { issuedAt: scopeCutoff + 1, expiresAt: now() + 60 });
     expect((await post('/workspaces', afterScope)).status).toBe(401);
     expect((await post('/sync/pull', afterScope, { body: { workspaceId, cursor: 0 } })).status).toBe(200);
