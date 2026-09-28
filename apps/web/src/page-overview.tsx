@@ -92,7 +92,7 @@ export function Overview() {
 						<div className="list">
 							{upcoming.map((a) => (
 								<Link
-									className="list-row"
+									className="list-row overview-subscription-row"
 									key={a.id}
 									to="/assets/$kind/$id"
 									params={{ kind: a.kind, id: a.id }}

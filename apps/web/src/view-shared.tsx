@@ -112,7 +112,11 @@ export function AssetRow({
 	const Icon = icons[asset.kind];
 	return (
 		<Link
-			className="list-row"
+			className={
+				asset.kind === "subscription"
+					? "list-row subscription-list-row"
+					: "list-row"
+			}
 			to="/assets/$kind/$id"
 			params={{ kind: asset.kind, id: asset.id }}
 			onClick={() => {

@@ -395,6 +395,10 @@ p { line-height: 1.5; }
   .dialog form > .actions { bottom: -14px; margin-inline: -14px; padding-inline: 14px; }
   .mcp-field-list, .mcp-active dl { grid-template-columns: 1fr; }
   .list-row { align-items: flex-start; flex-wrap: wrap; }
+  .subscription-list-row > .row-main { flex: 1 1 calc(100% - 46px); }
+  .subscription-list-row > b { flex: 0 0 100%; padding-left: 46px; }
+  .overview-subscription-row > div { flex: 1 1 calc(100% - 30px); }
+  .overview-subscription-row > b { flex: 0 0 100%; padding-left: 30px; }
   .impact-task-row.list-row > div.impact-task-info { flex: 1 1 calc(100% - 52px); }
   .impact-task-row.list-row > div.impact-task-actions { display: flex; flex: 0 0 100%; align-items: center; flex-wrap: wrap; width: 100%; padding-left: 48px; }
 }
