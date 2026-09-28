@@ -28,6 +28,7 @@ import {
 	recordItemAction as commitItemAction,
 	recordRenewal,
 	save,
+	saveAssetIfCurrent,
 	saveBatch,
 	setItemArchived,
 } from "../../../packages/local-db/src";
@@ -225,7 +226,9 @@ export function AssetDetail() {
 		}
 	}, [data.tasks]);
 	const [uploading, setUploading] = useState(false);
+	const imageInFlight = useRef(false);
 	const [pendingImage, setPendingImage] = useState<File | null>(null);
+	const [replaceImageId, setReplaceImageId] = useState("");
 	const [pendingImageUrl, setPendingImageUrl] = useState("");
 	const [pendingImageStatus, setPendingImageStatus] = useState<
 		"loading" | "ready" | "error"
@@ -408,8 +411,8 @@ export function AssetDetail() {
 		try {
 			await fn();
 			notify(t("saved"));
-		} catch {
-			notify(t("error"));
+		} catch (error) {
+			notify(t(error instanceof Error && error.message === "asset-stale" ? "assetStale" : "error"));
 		}
 	};
 	async function confirmDelete() {
@@ -519,23 +522,48 @@ export function AssetDetail() {
 		setSubmissionUrl("");
 	}
 	async function addImage(file: File) {
-		if (!asset) return;
+		if (!asset || imageInFlight.current) return;
+		imageInFlight.current = true;
 		setUploading(true);
 		let fileId = "";
 		try {
 			fileId = await putFile(file);
-			await save("asset", {
+			await saveAssetIfCurrent(asset, {
 				...asset,
-				attachments: [...asset.attachments, fileId],
+				attachments: replaceImageId
+					? asset.attachments.map((id) => id === replaceImageId ? fileId : id)
+					: [...asset.attachments, fileId],
 				updatedAt: new Date().toISOString(),
 			});
+			if (replaceImageId) await cleanupUnreferencedFile(replaceImageId).catch(() => false);
 			setPendingImage(null);
+			setReplaceImageId("");
 			notify(t("saved"));
-		} catch {
+		} catch (error) {
 			if (fileId) await cleanupUnreferencedFile(fileId).catch(() => false);
-			notify(t("uploadError"));
+			notify(t(error instanceof Error && error.message === "asset-stale" ? "assetStale" : "uploadError"));
 		} finally {
 			setUploading(false);
+			imageInFlight.current = false;
+		}
+	}
+	async function removeImage(id: string) {
+		if (!asset || imageInFlight.current) return;
+		imageInFlight.current = true;
+		setUploading(true);
+		try {
+			await saveAssetIfCurrent(asset, {
+				...asset,
+				attachments: asset.attachments.filter((attachmentId) => attachmentId !== id),
+				updatedAt: new Date().toISOString(),
+			});
+			await cleanupUnreferencedFile(id).catch(() => false);
+			notify(t("saved"));
+		} catch (error) {
+			notify(t(error instanceof Error && error.message === "asset-stale" ? "assetStale" : "error"));
+		} finally {
+			setUploading(false);
+			imageInFlight.current = false;
 		}
 	}
 	async function recordAction(
@@ -913,7 +941,7 @@ export function AssetDetail() {
 						<Button
 							size="small"
 							disabled={uploading || asset.attachments.length >= 20}
-							onClick={() => imageInput.current?.click()}
+							onClick={() => { setReplaceImageId(""); imageInput.current?.click(); }}
 						>
 							{uploading ? t("loading") : t("addPhoto")}
 						</Button>
@@ -935,7 +963,8 @@ export function AssetDetail() {
 											"image/gif",
 										].includes(file.type) ||
 										file.size === 0 ||
-										file.size > 20 * 1024 * 1024
+										file.size > 20 * 1024 * 1024 ||
+										file.name.length > 255
 									)
 										notify(t("uploadError"));
 									else {
@@ -953,21 +982,15 @@ export function AssetDetail() {
 							{asset.attachments.map((id) => (
 								<div key={id} className="image-item">
 									<ImageTile id={id} />
+									<Button size="small" disabled={uploading} onClick={() => {
+										setReplaceImageId(id);
+										imageInput.current?.click();
+									}}>{t("replaceImage")}</Button>
 									<Button
 										variant="danger"
 										size="small"
-										onClick={() =>
-											run(async () => {
-												await save("asset", {
-													...asset,
-													attachments: asset.attachments.filter(
-														(x) => x !== id,
-													),
-													updatedAt: new Date().toISOString(),
-												});
-												await cleanupUnreferencedFile(id).catch(() => false);
-											})
-										}
+										disabled={uploading}
+										onClick={() => void removeImage(id)}
 									>
 										{t("removeImage")}
 									</Button>

@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import {
@@ -28,7 +28,11 @@ const AiDialog = lazy(() =>
 export function AppShell() {
 	const data = useData();
 	const { t } = useTranslation();
-	const [search, setSearch] = useState("");
+	const [search, setSearch] = useState(
+		() => sessionStorage.getItem("keepany-search") || "",
+	);
+	const [searchOpen, setSearchOpen] = useState(false);
+	const topSearchRef = useRef<HTMLDivElement>(null);
 	const [toast, setToast] = useState("");
 	const [ai, setAi] = useState(false);
 	const [mobile, setMobile] = useState(false);
@@ -37,6 +41,12 @@ export function AppShell() {
 	);
 	const [pendingNavOrder, setPendingNavOrder] = useState<string[] | null>(null);
 	const pathname = useRouterState({ select: (s) => s.location.pathname });
+	useEffect(() => {
+		if (pathname) setSearchOpen(false);
+	}, [pathname]);
+	useEffect(() => {
+		sessionStorage.setItem("keepany-search", search);
+	}, [search]);
 	useEffect(() => {
 		const query = window.matchMedia("(max-width: 760px)");
 		const update = () => setNarrow(query.matches);
@@ -175,11 +185,15 @@ export function AppShell() {
 						>
 							<Menu size={20} />
 						</Button>
-						<div className="top-search">
+						<div className="top-search" ref={topSearchRef}>
 							<Search size={17} />
 							<input
 								value={search}
-								onChange={(e) => setSearch(e.target.value)}
+								onFocus={() => setSearchOpen(true)}
+								onBlur={(event) => {
+								if (!topSearchRef.current?.contains(event.relatedTarget)) setSearchOpen(false);
+								}}
+								onChange={(e) => { setSearch(e.target.value); setSearchOpen(true); }}
 								placeholder={t("search")}
 								aria-label={t("search")}
 							/>
@@ -193,14 +207,14 @@ export function AppShell() {
 									<X size={15} />
 								</Button>
 							)}
-							{matches.length > 0 && (
+							{searchOpen && matches.length > 0 && (
 								<div className="search-results">
 									{matches.map((asset) => (
 										<Link
 											key={asset.id}
 											to="/assets/$kind/$id"
 											params={{ kind: asset.kind, id: asset.id }}
-											onClick={() => setSearch("")}
+											onClick={() => { setSearch(""); setSearchOpen(false); }}
 										>
 											<strong>{asset.name}</strong>
 											<small>{t(asset.kind)}</small>

@@ -22,6 +22,7 @@ import {
 	localRepository,
 	restoreArchive,
 	save,
+	saveAssetIfCurrent,
 	saveBatch,
 } from "../../../packages/local-db/src";
 import { Button } from "./components/ui/button";
@@ -87,9 +88,10 @@ export function AssetEditor({
 	onClose: () => void;
 }) {
 	const { t } = useTranslation();
+	const original = useRef(asset).current;
 	const [draft, setDraft] = useState<Asset>(
 		() =>
-			asset ?? {
+			original ?? {
 				...newAsset(kind),
 				name: "",
 				category: categoryOptions[kind][0],
@@ -106,6 +108,7 @@ export function AssetEditor({
 			: "0",
 	);
 	const [errors, setErrors] = useState<Record<string, string>>({});
+	const [tagsInput, setTagsInput] = useState(() => original?.tags.join(", ") ?? "");
 	const [busy, setBusy] = useState(false);
 	const [failure, setFailure] = useState("");
 	function set<K extends FieldName>(key: K, value: Asset[K]) {
@@ -119,12 +122,13 @@ export function AssetEditor({
 			factor = draft.currency === "JPY" ? 1 : 100;
 		const scheduleChanged =
 			kind === "subscription" &&
-			asset !== undefined &&
-			(draft.dueDate !== asset.dueDate ||
-				draft.cycle !== asset.cycle ||
-				draft.interval !== asset.interval);
+			original !== undefined &&
+			(draft.dueDate !== original.dueDate ||
+				draft.cycle !== original.cycle ||
+				draft.interval !== original.interval);
 		const parsed = assetSchema.safeParse({
 			...draft,
+			tags: tagsInput.split(",").map((tag) => tag.trim()).filter(Boolean),
 			name: draft.name.trim(),
 			amount: Number.isFinite(n) ? Math.round(n * factor) : NaN,
 			discountAmount: Number.isFinite(d) ? Math.round(d * factor) : NaN,
@@ -136,7 +140,7 @@ export function AssetEditor({
 			cancelledAt:
 				kind === "subscription" &&
 				draft.status === "cancelled" &&
-				asset?.status !== "cancelled"
+				original?.status !== "cancelled"
 					? new Date().toISOString()
 					: kind === "subscription" && draft.status !== "cancelled"
 						? ""
@@ -157,11 +161,13 @@ export function AssetEditor({
 		setBusy(true);
 		setFailure("");
 		try {
-			await save("asset", parsed.data);
+			if (original) await saveAssetIfCurrent(original, parsed.data);
+			else await save("asset", parsed.data);
 			onClose();
 		} catch (error) {
 			const reason = error instanceof Error ? error.message : "";
-			setFailure(t(reason === "asset-stale-renewal" ? "renewalStale" :
+			setFailure(t(reason === "asset-stale" ? "assetStale" :
+				reason === "asset-stale-renewal" ? "renewalStale" :
 				reason === "item-stale" ? "itemStale" :
 				reason === "renewal-recovery-pending" && kind === "item" ? "itemRecoveryPending" : "error"));
 		} finally {
@@ -217,12 +223,14 @@ export function AssetEditor({
 								label={t("contact")}
 								value={draft.contact}
 								onChange={(v) => set("contact", v)}
+								error={errors.contact}
 							/>
 							<Field
 								name="description"
 								label={t("description")}
 								value={draft.description}
 								onChange={(v) => set("description", v)}
+								error={errors.description}
 							/>
 						</>
 					)}
@@ -233,12 +241,14 @@ export function AssetEditor({
 								label={t("username")}
 								value={draft.username}
 								onChange={(v) => set("username", v)}
+								error={errors.username}
 							/>
 							<Field
 								name="contact"
 								label={t("contact")}
 								value={draft.contact}
 								onChange={(v) => set("contact", v)}
+								error={errors.contact}
 							/>
 						</>
 					)}
@@ -362,22 +372,18 @@ export function AssetEditor({
 								label={t("location")}
 								value={draft.location}
 								onChange={(v) => set("location", v)}
+								error={errors.location}
 							/>
 						</>
 					)}
 					<Field
 						name="tags"
 						label={t("tags")}
-						value={draft.tags.join(", ")}
-						onChange={(v) =>
-							set(
-								"tags",
-								v
-									.split(",")
-									.map((s) => s.trim())
-									.filter(Boolean),
-							)
-						}
+						value={tagsInput}
+						onChange={(value) => {
+							setTagsInput(value);
+							setErrors((previous) => ({ ...previous, tags: "" }));
+						}}
 						error={errors.tags}
 					/>
 				</div>
@@ -389,7 +395,10 @@ export function AssetEditor({
 						rows={3}
 						value={draft.longDescription}
 						onChange={(e) => set("longDescription", e.target.value)}
+						aria-invalid={!!errors.longDescription}
+						aria-describedby={errors.longDescription ? "longDescription-error" : undefined}
 					/>
+					{errors.longDescription && <small id="longDescription-error" className="field-error">{errors.longDescription}</small>}
 				</div>
 				<div className="field">
 					<label htmlFor="notes">{t("notes")}</label>
@@ -398,7 +407,10 @@ export function AssetEditor({
 						rows={3}
 						value={draft.notes}
 						onChange={(e) => set("notes", e.target.value)}
+						aria-invalid={!!errors.notes}
+						aria-describedby={errors.notes ? "notes-error" : undefined}
 					/>
+					{errors.notes && <small id="notes-error" className="field-error">{errors.notes}</small>}
 				</div>
 				{failure && (
 					<p className="field-error" role="alert">

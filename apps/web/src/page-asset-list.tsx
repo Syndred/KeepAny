@@ -228,19 +228,34 @@ export function AssetList() {
 		),
 	);
 	const category = categories[kind] || "";
+	const [tags, setTags] = useState<Record<string, string>>(() =>
+		Object.fromEntries(
+			kinds.map((k) => [k, sessionStorage.getItem(`keepany-tag-${k}`) || ""]),
+		),
+	);
+	const tag = tags[kind] || "";
+	const chooseTag = (value: string) => {
+		sessionStorage.setItem(`keepany-tag-${kind}`, value);
+		setTags((prev) => ({ ...prev, [kind]: value }));
+	};
 	const choose = (value: string) => {
 		sessionStorage.setItem(`keepany-category-${kind}`, value);
 		setCategories((prev) => ({ ...prev, [kind]: value }));
 	};
 	const [edit, setEdit] = useState(false);
-	const assets = liveAssets(data).filter(
+	const allKindAssets = liveAssets(data).filter((asset) => asset.kind === kind);
+	const availableTags = [...new Set(allKindAssets.flatMap((asset) => asset.tags))].sort(
+		(a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }),
+	);
+	const normalizedSearch = search.trim().toLocaleLowerCase();
+	const assets = allKindAssets.filter(
 		(a) =>
-			a.kind === kind &&
 			(!category || a.category === category) &&
-			(!search ||
+			(!tag || a.tags.includes(tag)) &&
+			(!normalizedSearch ||
 				`${a.name} ${a.tags.join(" ")} ${a.url} ${a.username}`
-					.toLowerCase()
-					.includes(search.toLowerCase())),
+					.toLocaleLowerCase()
+					.includes(normalizedSearch)),
 	);
 	const restored = useRef("");
 	useEffect(() => {
@@ -250,9 +265,10 @@ export function AssetList() {
 			try {
 				const saved = JSON.parse(savedFilter) as {
 					category?: string;
+					tag?: string;
 					search?: string;
 				};
-				if (saved.category !== category || saved.search !== search) {
+				if (saved.category !== category || (saved.tag || "") !== tag || saved.search !== search) {
 					restored.current = kind;
 					return;
 				}
@@ -267,7 +283,7 @@ export function AssetList() {
 			restored.current = kind;
 		});
 		return () => cancelAnimationFrame(frame);
-	}, [kind, category, search, data.loading, assets.length]);
+	}, [kind, category, tag, search, data.loading, assets.length]);
 	return (
 		<main className="page">
 			<PageTitle
@@ -282,6 +298,16 @@ export function AssetList() {
 				}
 			/>
 			<CategoryStrip kind={kind} chosen={category} choose={choose} />
+			{(availableTags.length > 0 || tag) && (
+				<div className="list-filters">
+					<label htmlFor="asset-tag-filter">{t("filterTag")}</label>
+					<select id="asset-tag-filter" value={tag} onChange={(e) => chooseTag(e.target.value)}>
+						<option value="">{t("allTags")}</option>
+						{tag && !availableTags.includes(tag) && <option value={tag}>{tag}</option>}
+						{availableTags.map((value) => <option key={value} value={value}>{value}</option>)}
+					</select>
+				</div>
+			)}
 			<section className="card">
 				{assets.length ? (
 					<div className="list">
@@ -290,7 +316,11 @@ export function AssetList() {
 						))}
 					</div>
 				) : (
-					<Empty hint={!search} />
+					category || tag || normalizedSearch ? (
+						<div className="empty"><strong>{t("noMatches")}</strong></div>
+					) : (
+						<Empty />
+					)
 				)}
 			</section>
 			{edit && (

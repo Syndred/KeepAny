@@ -130,6 +130,7 @@ export function AssetRow({
 					JSON.stringify({
 						category:
 							sessionStorage.getItem(`keepany-category-${asset.kind}`) || "",
+						tag: sessionStorage.getItem(`keepany-tag-${asset.kind}`) || "",
 						search,
 					}),
 				);

@@ -42,6 +42,36 @@ const changedArchive = async (backup: Uint8Array, edit: (entries: Record<string,
 };
 
 describe('RxDB + free Dexie local repository', () => {
+  it('rejects an outdated asset editor snapshot and deletes the latest image-bearing record', async () => {
+    const db = await openLocalRepository(name());
+    try {
+      const first = project('First name');
+      await db.save('asset', first);
+      const oldEditor = await db.get<Asset>('asset', first.id);
+      if (!oldEditor) throw Error('asset-missing');
+      const imageId = await db.putFile(new File([new Uint8Array([7, 8])], 'latest.png', { type: 'image/png' }));
+      const latest = { ...first, name: 'Latest name', attachments: [imageId] };
+      await db.saveAssetIfCurrent(oldEditor, latest);
+      await expect(db.saveAssetIfCurrent(oldEditor, { ...oldEditor, name: 'Old edit' })).rejects.toThrow('asset-stale');
+      expect(await db.get<Asset>('asset', first.id)).toMatchObject({ name: 'Latest name', attachments: [imageId] });
+      await db.deleteEntity('asset', first.id);
+      expect(await db.get<Asset>('asset', first.id)).toMatchObject({ deleted: true, name: 'Latest name', attachments: [imageId] });
+      await db.restoreEntity('asset', first.id);
+      expect(await db.get<Asset>('asset', first.id)).toMatchObject({ deleted: false, name: 'Latest name', attachments: [imageId] });
+      expect((await inspectArchive(await db.exportArchive())).manifest.attachments.map(item => item.id)).toEqual([imageId]);
+    } finally { await db.close(); }
+  });
+
+  it('rejects an image name that would make a later backup impossible', async () => {
+    const db = await openLocalRepository(name());
+    try {
+      await expect(db.putFile(new File([new Uint8Array([1])], `${'a'.repeat(252)}.png`, { type: 'image/png' })))
+        .rejects.toThrow('file-name');
+      expect(await db.fileStore.blobs.count()).toBe(0);
+      await expect(db.exportArchive()).resolves.toBeInstanceOf(Uint8Array);
+    } finally { await db.close(); }
+  });
+
   it('persists all core entity types and tombstones through an offline reopen', async () => {
     const dbName = name();
     const db = await openLocalRepository(dbName);

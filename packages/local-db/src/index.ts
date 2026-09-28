@@ -157,7 +157,12 @@ export class LocalRepository {
     return this.saveUnlocked(type, value);
   }
 
-  private async saveUnlocked(type: EntityType, value: unknown): Promise<RecordRow> {
+  async saveAssetIfCurrent(expected: Asset, next: Asset): Promise<RecordRow> {
+    if (expected.id !== next.id || expected.kind !== next.kind) throw Error('asset-stale');
+    return this.saveUnlocked('asset', next, rowFor('asset', expected).payload);
+  }
+
+  private async saveUnlocked(type: EntityType, value: unknown, expectedAssetPayload?: string): Promise<RecordRow> {
     if (type === 'asset' && this.renewalRecoveryError) throw Error('renewal-recovery-pending');
     const next = rowFor(type, value);
     const entity = parsedPayload(next) as Record<string, unknown>;
@@ -176,6 +181,7 @@ export class LocalRepository {
     const current = await this.db.records.findOne(next.id).exec();
     if (current) {
       await current.incrementalModify((data: RecordRow) => {
+        if (expectedAssetPayload !== undefined && JSON.stringify(parsedPayload(data)) !== expectedAssetPayload) throw Error('asset-stale');
         if (parsedPayload(data).deleted && !parsedPayload(next).deleted) throw Error('tombstone-restore-required');
         if (type === 'asset') {
           const previous = parsedPayload(data) as Asset;
@@ -188,6 +194,7 @@ export class LocalRepository {
         return { ...data, ...next };
       });
     } else {
+      if (expectedAssetPayload !== undefined) throw Error('asset-stale');
       if (type === 'asset' && entity.kind === 'item' &&
         (entity.status !== 'active' || entity.borrower)) throw Error('item-action-required');
       try {
@@ -655,7 +662,10 @@ export class LocalRepository {
         const row = await this.db.records.findOne(key(type, id)).exec();
         return canonical(row);
       }
-      return this.save(type, { ...current, deleted: true, ...(type === 'asset' ? { updatedAt: new Date().toISOString() } : {}) });
+      const tombstone = { ...current, deleted: true, ...(type === 'asset' ? { updatedAt: new Date().toISOString() } : {}) };
+      return type === 'asset'
+        ? this.saveAssetIfCurrent(current as Asset, tombstone as Asset)
+        : this.save(type, tombstone);
     });
   }
 
@@ -722,6 +732,7 @@ export class LocalRepository {
   }
 
   async putFile(file: File): Promise<string> {
+    if (file.name.length > 255) throw Error('file-name');
     if (file.size > 20 * 1024 * 1024) throw Error('file-size');
     if (!['image/jpeg', 'image/png', 'image/webp', 'image/gif'].includes(file.type)) throw Error('file-type');
     const id = crypto.randomUUID();
@@ -1214,6 +1225,7 @@ function defaultRepository(): Promise<LocalRepository> {
 export async function database(): Promise<RxDatabase> { return (await defaultRepository()).db; }
 export async function localRepository(): Promise<LocalRepository> { return defaultRepository(); }
 export async function save(type: EntityType, value: unknown) { return (await defaultRepository()).save(type, value); }
+export async function saveAssetIfCurrent(expected: Asset, next: Asset) { return (await defaultRepository()).saveAssetIfCurrent(expected, next); }
 export async function saveBatch(items: ReadonlyArray<{ type: EntityType; value: unknown }>) { return (await defaultRepository()).saveBatch(items); }
 export async function recordRenewal(expectedAsset: Asset, nextAsset: Asset, history: History) {
   return (await defaultRepository()).recordRenewal(expectedAsset, nextAsset, history);
