@@ -1,7 +1,7 @@
 import 'fake-indexeddb/auto';
 import { describe, expect, it, vi } from 'vitest';
 import { zipSync, unzipSync, strToU8, strFromU8 } from 'fflate';
-import { historySchema, newAsset, type Asset } from '../../domain/src';
+import { historySchema, newAsset, type Asset, type History, type Task } from '../../domain/src';
 import { inspectArchive, LocalRepository, openLocalRepository, type RecordRow } from './index';
 
 const name = () => `test-${crypto.randomUUID().slice(0, 12)}`;
@@ -14,6 +14,17 @@ const renewalFixture = () => {
     currency: expected.currency, createdAt: new Date().toISOString() });
   const next: Asset = { ...expected, dueDate: '2026-02-28', renewalCount: 1, lastRenewalId: event.id,
     updatedAt: new Date(Date.now() + 1000).toISOString() };
+  return { expected, next, event };
+};
+const itemFixture = (expected: Asset = { ...newAsset('item'), name: 'Camera',
+  purchaseDate: '2026-01-15', warrantyDate: '2028-01-15' }, action: 'loan' | 'return' | 'maintenance' = 'loan') => {
+  const event: History = historySchema.parse({ id: crypto.randomUUID(), assetId: expected.id, action,
+    borrower: action === 'loan' ? 'Ada' : expected.borrower, note: action === 'maintenance' ? 'Cleaned lens' : '',
+    eventDate: '2026-09-29', createdAt: new Date().toISOString() });
+  const next: Asset = { ...expected,
+    status: action === 'loan' ? 'loaned' : action === 'return' ? 'active' : expected.status,
+    borrower: action === 'loan' ? 'Ada' : action === 'return' ? '' : expected.borrower,
+    lastItemEventId: event.id, updatedAt: new Date(Date.now() + 1000).toISOString() };
   return { expected, next, event };
 };
 const hash = async (bytes: Uint8Array) => Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', bytes as BufferSource)))
@@ -409,6 +420,227 @@ describe('RxDB + free Dexie local repository', () => {
     expect(await recovered.list('history')).toEqual([event]);
     expect(await recovered.fileStore.renewalJournal.count()).toBe(0);
     await recovered.close();
+  });
+
+  it('records one active loan with its borrower, rejects repeated and stale actions, then clears the borrower on return', async () => {
+    const db = await openLocalRepository(name());
+    const otherTab = new LocalRepository(db.db, db.fileStore);
+    const loan = itemFixture();
+    await db.save('asset', loan.expected);
+    const secondLoan = itemFixture(loan.expected);
+    const results = await Promise.allSettled([
+      db.recordItemAction(loan.expected, loan.next, loan.event),
+      otherTab.recordItemAction(secondLoan.expected, secondLoan.next, secondLoan.event),
+    ]);
+    expect(results.filter(result => result.status === 'fulfilled')).toHaveLength(1);
+    expect((results.find(result => result.status === 'rejected') as PromiseRejectedResult).reason.message).toBe('item-stale');
+    const committed = await db.get<Asset>('asset', loan.expected.id);
+    expect(committed).toMatchObject({ status: 'loaned', borrower: 'Ada' });
+    expect((await db.list<History>('history')).filter(event => event.action === 'loan')).toHaveLength(1);
+    if (!committed) throw Error('missing-item');
+    const repeatedLoan = itemFixture(committed);
+    await expect(db.recordItemAction(repeatedLoan.expected, repeatedLoan.next, repeatedLoan.event))
+      .rejects.toThrow('item-invalid');
+    await expect(db.save('asset', { ...committed, status: 'active', borrower: '' })).rejects.toThrow('item-action-required');
+    await expect(db.save('asset', { ...loan.expected, name: 'Stale direct edit' })).rejects.toThrow('item-stale');
+
+    const returned = itemFixture(committed, 'return');
+    await db.recordItemAction(returned.expected, returned.next, returned.event);
+    expect(await db.get<Asset>('asset', committed.id)).toMatchObject({ status: 'active', borrower: '',
+      lastItemEventId: returned.event.id });
+    expect((await db.list<History>('history')).map(event => [event.action, event.borrower]))
+      .toEqual(expect.arrayContaining([['loan', 'Ada'], ['return', 'Ada']]));
+    const afterReturn = await db.get<Asset>('asset', committed.id);
+    if (!afterReturn) throw Error('missing-returned-item');
+    const repeated = itemFixture(afterReturn, 'return');
+    await expect(db.recordItemAction(repeated.expected, repeated.next, repeated.event)).rejects.toThrow('item-invalid');
+    expect(await db.list('history')).toHaveLength(2);
+    expect(await db.fileStore.renewalJournal.count()).toBe(0);
+    await db.close();
+  });
+
+  it('validates item transitions before writing and keeps archive status CAS separate from loan history', async () => {
+    const db = await openLocalRepository(name());
+    const loan = itemFixture();
+    await expect(db.save('asset', { ...newAsset('item'), status: 'loaned', borrower: 'Ada' }))
+      .rejects.toThrow('item-action-required');
+    await expect(db.saveBatch([{ type: 'asset', value: { ...newAsset('item'), status: 'loaned', borrower: 'Ada' } }]))
+      .rejects.toThrow('item-action-required');
+    await expect(db.save('asset', { ...newAsset('item'), status: 'archived' }))
+      .rejects.toThrow('item-action-required');
+    expect(await db.list('asset')).toHaveLength(0);
+    await db.save('asset', loan.expected);
+    const impossibleReturn = itemFixture(loan.expected, 'return');
+    const invalid = [
+      { next: { ...loan.next, borrower: '' }, event: loan.event },
+      { next: loan.next, event: { ...loan.event, borrower: 'Someone else' } },
+      { next: { ...loan.next, name: 'Unrelated edit' }, event: loan.event },
+      { next: impossibleReturn.next, event: impossibleReturn.event },
+      { next: { ...loan.next, status: 'archived' as const }, event: loan.event },
+      { next: { ...loan.next, lastItemEventId: '' }, event: loan.event },
+    ];
+    for (const candidate of invalid) {
+      await expect(db.recordItemAction(loan.expected, candidate.next, candidate.event)).rejects.toThrow('item-invalid');
+    }
+    const maintenance = itemFixture(loan.expected, 'maintenance');
+    await expect(db.recordItemAction(maintenance.expected, maintenance.next,
+      { ...maintenance.event, note: '' })).rejects.toThrow('item-invalid');
+    await expect(db.recordItemAction(maintenance.expected, maintenance.next,
+      { ...maintenance.event, eventDate: undefined })).rejects.toThrow('item-invalid');
+    expect(await db.list('history')).toHaveLength(0);
+    expect((await db.get<Asset>('asset', loan.expected.id))?.status).toBe('active');
+
+    const archived = await db.setItemArchived(loan.expected.id, 'active');
+    expect(archived.status).toBe('archived');
+    await expect(db.setItemArchived(loan.expected.id, 'active')).rejects.toThrow('item-stale');
+    const archivedLoan = itemFixture(archived);
+    await expect(db.recordItemAction(archivedLoan.expected, archivedLoan.next, archivedLoan.event))
+      .rejects.toThrow('item-invalid');
+    const restored = await db.setItemArchived(loan.expected.id, 'archived');
+    expect(restored.status).toBe('active');
+    const freshLoan = itemFixture(restored);
+    await db.recordItemAction(freshLoan.expected, freshLoan.next, freshLoan.event);
+    await expect(db.setItemArchived(loan.expected.id, 'active')).rejects.toThrow('item-stale');
+    await db.close();
+  });
+
+  it('cancels an orphan item history when a normal asset edit wins the storage CAS', async () => {
+    const db = await openLocalRepository(name());
+    const otherTab = new LocalRepository(db.db, db.fileStore);
+    const loan = itemFixture();
+    await db.save('asset', loan.expected);
+    const storage = db.db.records.storageInstance;
+    const original = storage.bulkWrite.bind(storage);
+    const write = vi.spyOn(storage, 'bulkWrite').mockImplementationOnce(async (rows, context) => {
+      expect(context).toBe('keepany-item');
+      await otherTab.save('asset', { ...loan.expected, name: 'Renamed in another tab' });
+      return original(rows, context);
+    });
+    await expect(db.recordItemAction(loan.expected, loan.next, loan.event)).rejects.toThrow('item-stale');
+    write.mockRestore();
+    expect(await db.get<Asset>('asset', loan.expected.id)).toMatchObject({ name: 'Renamed in another tab',
+      status: 'active', borrower: '', lastItemEventId: '' });
+    expect(await db.list('history')).toHaveLength(0);
+    expect(await db.fileStore.renewalJournal.count()).toBe(0);
+    await expect(db.exportArchive()).resolves.toBeInstanceOf(Uint8Array);
+    const fresh = await db.get<Asset>('asset', loan.expected.id);
+    if (!fresh) throw Error('missing-item');
+    const retried = itemFixture(fresh);
+    await otherTab.recordItemAction(retried.expected, retried.next, retried.event);
+    expect((await db.get<Asset>('asset', fresh.id))?.name).toBe('Renamed in another tab');
+    expect((await db.list<History>('history')).map(row => row.id)).toEqual([retried.event.id]);
+    await db.close();
+  });
+
+  it('recovers either interrupted item row order without inventing a second loan', async () => {
+    for (const firstRow of ['asset', 'history'] as const) {
+      const dbName = name();
+      const db = await openLocalRepository(dbName);
+      const loan = itemFixture();
+      const original = await db.save('asset', loan.expected);
+      const nextRow: RecordRow = { ...original, payload: JSON.stringify(loan.next) };
+      const historyRow: RecordRow = { id: `history:${loan.event.id}`, type: 'history',
+        payload: JSON.stringify(loan.event), updatedAt: Date.now() };
+      await db.fileStore.renewalJournal.add({ id: `interrupted-${firstRow}`, assetId: loan.expected.id,
+        expectedPayload: original.payload, next: nextRow, history: historyRow });
+      if (firstRow === 'asset') {
+        const current = await db.db.records.findOne(original.id).exec();
+        if (!current) throw Error('missing-item');
+        await current.incrementalModify((data: RecordRow) => ({ ...data, ...nextRow }));
+      } else await db.db.records.insert(historyRow);
+      await db.close();
+
+      const recovered = await openLocalRepository(dbName);
+      expect(recovered.renewalRecoveryError).toBeNull();
+      expect(await recovered.fileStore.renewalJournal.count()).toBe(0);
+      if (firstRow === 'asset') {
+        expect(await recovered.get<Asset>('asset', loan.expected.id)).toMatchObject({ status: 'loaned',
+          borrower: 'Ada', lastItemEventId: loan.event.id });
+        expect((await recovered.list<History>('history')).map(event => event.id)).toEqual([loan.event.id]);
+      } else {
+        expect(await recovered.get<Asset>('asset', loan.expected.id)).toMatchObject({ status: 'active',
+          borrower: '', lastItemEventId: '' });
+        expect(await recovered.list('history')).toHaveLength(0);
+      }
+      await recovered.close();
+    }
+  });
+
+  it('keeps a committed item event after journal cleanup fails and the asset is edited, deleted, restored and backed up', async () => {
+    const dbName = name();
+    const db = await openLocalRepository(dbName);
+    const otherTab = new LocalRepository(db.db, db.fileStore);
+    const loan = itemFixture();
+    await db.save('asset', loan.expected);
+    const deletion = vi.spyOn(db.fileStore.renewalJournal, 'delete').mockRejectedValueOnce(Error('injected-cleanup'));
+    await db.recordItemAction(loan.expected, loan.next, loan.event);
+    deletion.mockRestore();
+    expect(await db.fileStore.renewalJournal.count()).toBe(1);
+    const committed = await otherTab.get<Asset>('asset', loan.expected.id);
+    if (!committed) throw Error('missing-item');
+    await otherTab.save('asset', { ...committed, name: 'Later rename', location: 'Shelf B' });
+    await db.close();
+
+    const reopened = await openLocalRepository(dbName);
+    expect(reopened.renewalRecoveryError).toBeNull();
+    expect(await reopened.fileStore.renewalJournal.count()).toBe(0);
+    expect(await reopened.get<Asset>('asset', loan.expected.id)).toMatchObject({ name: 'Later rename',
+      location: 'Shelf B', status: 'loaned', borrower: 'Ada', lastItemEventId: loan.event.id });
+    expect((await reopened.list<History>('history')).map(event => event.id)).toEqual([loan.event.id]);
+    await reopened.deleteEntity('asset', loan.expected.id);
+    expect((await reopened.get<Asset>('asset', loan.expected.id))?.deleted).toBe(true);
+    expect(await reopened.list('history')).toHaveLength(1);
+    await reopened.restoreEntity('asset', loan.expected.id);
+    const archive = await reopened.exportArchive();
+    const restored = await openLocalRepository(name());
+    expect(await restored.restoreArchive(archive)).toBe(2);
+    expect(await restored.get<Asset>('asset', loan.expected.id)).toEqual(await reopened.get<Asset>('asset', loan.expected.id));
+    expect(await restored.list('history')).toEqual(await reopened.list('history'));
+    await restored.close();
+    await reopened.close();
+  });
+
+  it('deduplicates pending item reminders and preserves every task completion after reopen and retry', async () => {
+    const dbName = name();
+    const db = await openLocalRepository(dbName);
+    const otherTab = new LocalRepository(db.db, db.fileStore);
+    const item = itemFixture().expected;
+    await db.save('asset', item);
+    const task: Task = { id: crypto.randomUUID(), name: 'Service camera', assetId: item.id,
+      dueDate: '2026-10-31', done: false, completedAt: '', completionHistory: [],
+      createdAt: new Date().toISOString(), dedupeKey: `item:${item.id}:maintenance:2026-10-31`, deleted: false };
+    const other = { ...task, id: crypto.randomUUID() };
+    const inserted = await Promise.allSettled([db.save('task', task), otherTab.save('task', other)]);
+    expect(inserted.filter(result => result.status === 'fulfilled')).toHaveLength(1);
+    expect((inserted.find(result => result.status === 'rejected') as PromiseRejectedResult).reason.message).toBe('task-duplicate');
+    const stored = (await db.list<Task>('task'))[0];
+    const completes = await Promise.allSettled([
+      db.setTaskDone(stored.id, false), otherTab.setTaskDone(stored.id, false),
+    ]);
+    expect(completes.filter(result => result.status === 'fulfilled')).toHaveLength(1);
+    expect((completes.find(result => result.status === 'rejected') as PromiseRejectedResult).reason.message).toBe('task-stale');
+    const first = await db.get<Task>('task', stored.id);
+    expect(first?.done).toBe(true);
+    expect(first?.completionHistory).toHaveLength(1);
+    expect(first?.completedAt).toBe(first?.completionHistory[0]);
+    await expect(db.setTaskDone(stored.id, false)).rejects.toThrow('task-stale');
+    const reopenedTask = await db.setTaskDone(stored.id, true);
+    expect(reopenedTask).toMatchObject({ done: false, completedAt: '' });
+    expect(reopenedTask.completionHistory).toEqual(first?.completionHistory);
+    const second = await otherTab.setTaskDone(stored.id, false);
+    expect(second.completionHistory).toHaveLength(2);
+    expect(second.completedAt).toBe(second.completionHistory[1]);
+    await db.close();
+
+    const reopened = await openLocalRepository(dbName);
+    expect(await reopened.get<Task>('task', stored.id)).toMatchObject({ done: true,
+      dueDate: '2026-10-31', completionHistory: second.completionHistory });
+    // Completed reminders no longer suppress a new pending reminder on the same date.
+    await reopened.save('task', { ...task, id: crypto.randomUUID() });
+    expect((await reopened.list<Task>('task')).filter(value => !value.done)).toHaveLength(1);
+    await expect(reopened.setTaskDone(stored.id, true)).rejects.toThrow('task-duplicate');
+    expect((await reopened.get<Task>('task', stored.id))?.completionHistory).toEqual(second.completionHistory);
+    await reopened.close();
   });
 
   it('exports and restores records, relationships, tombstones and image bytes', async () => {

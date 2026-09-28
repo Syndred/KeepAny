@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { actualCharge, assetSchema, dueOnCycle, historySchema, monthlyAmount, newAsset, nextDue } from './index';
+import { actualCharge, assetSchema, dueOnCycle, historySchema, monthlyAmount, newAsset, nextDue, taskSchema } from './index';
 
 describe('subscription and local asset rules', () => {
   it('uses the original billing anchor across short months and leap years', () => {
@@ -64,5 +64,27 @@ describe('subscription and local asset rules', () => {
     expect(historySchema.safeParse({...legacy,billDate:'2026-02-30',amount:100,currency:'USD'}).success).toBe(false);
     expect(historySchema.safeParse({...legacy,billDate:'2026-09-29',amount:-1,currency:'USD'}).success).toBe(false);
     expect(assetSchema.parse({...newAsset('subscription'),lastRenewalId:undefined}).lastRenewalId).toBe('');
+  });
+
+  it('keeps legacy item records and validates real purchase, warranty, maintenance and reminder dates', () => {
+    const item = newAsset('item');
+    expect(assetSchema.parse({ ...item, lastItemEventId: undefined }).lastItemEventId).toBe('');
+    expect(assetSchema.safeParse({ ...item, purchaseDate: '2024-02-29', warrantyDate: '2026-03-01' }).success).toBe(true);
+    // A secondhand purchase may happen after the original warranty expired.
+    expect(assetSchema.safeParse({ ...item, purchaseDate: '2026-03-01', warrantyDate: '2024-02-29' }).success).toBe(true);
+    for (const badDate of ['2025-02-29', '2026-04-31', '2026-13-01', '2026-9-01']) {
+      expect(assetSchema.safeParse({ ...item, purchaseDate: badDate }).success, badDate).toBe(false);
+      expect(assetSchema.safeParse({ ...item, warrantyDate: badDate }).success, badDate).toBe(false);
+      expect(historySchema.safeParse({ id: 'maintenance', assetId: item.id, action: 'maintenance', note: 'Serviced',
+        eventDate: badDate, createdAt: item.createdAt }).success, badDate).toBe(false);
+      expect(taskSchema.safeParse({ id: 'reminder', name: 'Service again', assetId: item.id,
+        dueDate: badDate, createdAt: item.createdAt }).success, badDate).toBe(false);
+    }
+    expect(historySchema.safeParse({ id: 'legacy-maintenance', assetId: item.id, action: 'maintenance',
+      note: 'Older record', createdAt: item.createdAt }).success).toBe(true);
+    expect(historySchema.safeParse({ id: 'new-maintenance', assetId: item.id, action: 'maintenance',
+      note: 'Cleaned', borrower: 'Ada', eventDate: '2026-09-29', createdAt: item.createdAt }).success).toBe(true);
+    expect(taskSchema.safeParse({ id: 'reminder', name: 'Service again', assetId: item.id,
+      dueDate: '2026-10-31', createdAt: item.createdAt }).success).toBe(true);
   });
 });
