@@ -13,6 +13,8 @@ pnpm exec tsx apps/binding-bridge/src/main.ts
 
 允许路径只有 `POST /api/keepany/v1/bindings/{device,poll,refresh,state}` 和 `GET /.well-known/jwks.json`。浏览器预检只允许相应方法及 `Content-Type`/必要时的 `DPoP`；拒绝无 Origin、其他 Origin/Host、Cookie、Authorization、查询参数、额外路径、错误字段和超过 2 KiB 的请求。上游响应限定 JSON 与大小，强制 `no-store`，429 只透传合法的秒数 `Retry-After`。私钥绝不经过桥；桥仅按需转发已由本地设备私钥签署的 DPoP。服务不记录请求体、令牌、响应或错误详情。
 
-**消费端集成边界：** 商业 issuer 是票据和访问令牌的签名 `iss`，DPoP 的 `htu` 也必须是商业公开接口 URL。网络请求可由 `BindingTransport` 的 fetch adapter 从商业 URL 映射到固定桥地址；不能把桥地址填成 `BindingTransport.issuer`，否则票据验签与 DPoP 都会失败。JWKS 可以从桥取得，但必须继续以商业 issuer 验证签名。当前 Web 还没有该 adapter 和正式绑定 UI，桥的本地 HTTP 测试不等于真实账号联通。
+**消费端集成边界：** 商业 issuer 是票据和访问令牌的签名 `iss`，DPoP 的 `htu` 也必须是商业公开接口 URL。`createBindingBridgeFetch` 只把网络目标映射到固定桥地址，`bridgeBindingKeys` 经桥读取 JWKS，仍以商业 issuer 验签；不能把桥地址填成 `BindingTransport.issuer`。Web 设置页在构建时同时配置 `VITE_KEEPANY_BINDING_ISSUER`、`VITE_KEEPANY_BINDING_BRIDGE_ORIGIN` 才显示绑定入口。两项值必须与桥的固定 issuer 和实际监听地址一致；未配置时入口不出现。浏览器入口目前只申请 `sync:read`，保存的是本机绑定关系，不代表云同步已经开启。
 
-威胁边界：精确 Origin/Host 和浏览器 CORS 只约束普通网页。恶意本机进程或浏览器扩展可以伪造 Origin 并访问回环端口；若将桥暴露到非回环网络、错误配置受信任 Origin，或同源 Web 遭 XSS，桥不能保护本地刷新凭证。本桥不执行商业登录、不保存凭证、不替代票据/访问令牌验签或商业状态查询。正式发布前需可信启动器、端口发现与退出管理、浏览器实际联调、安全审查及撤销传播验收。
+2026-09-28 用独立的 KeepAnyAdm 临时合成 Plus 进程、此桥和 Web 浏览器完成跨进程设备码批准、签名票据消费、`/state=active`、DPoP `/refresh` 与账号页面撤销后 `/state=revoked` 回读。本次商业测试服务运行于有未提交改动的同级仓库工作树，因此还不是固定源码版本、真实商业账号或部署验收。
+
+威胁边界：精确 Origin/Host 和浏览器 CORS 只约束普通网页。恶意本机进程或浏览器扩展可以伪造 Origin 并访问回环端口；若将桥暴露到非回环网络、错误配置受信任 Origin，或同源 Web 遭 XSS，桥不能保护本地刷新凭证。本桥不执行商业登录、不保存凭证、不替代票据/访问令牌验签或商业状态查询。正式发布前需可信启动器、端口发现与退出管理、安全审查及生产撤销传播验收。
