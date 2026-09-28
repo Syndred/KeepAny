@@ -38,7 +38,7 @@ export function BindingPanel() {
 	const [binding, setBinding] = useState<StoredBinding>();
 	const [pending, setPending] = useState<PendingBinding>();
 	const [busy, setBusy] = useState(false);
-	const [message, setMessage] = useState("");
+	const [message, setMessage] = useState<{ key: string; count?: number }>();
 	useEffect(() => {
 		if (!configured) return;
 		let mounted = true;
@@ -53,21 +53,21 @@ export function BindingPanel() {
 				setPending(challenge);
 			})
 			.catch(() => {
-				if (mounted) setMessage(t("bindingLocalError"));
+				if (mounted) setMessage({ key: "bindingLocalError" });
 			});
 		return () => {
 			mounted = false;
 		};
-	}, [t]);
+	}, []);
 	if (!configured) return null;
 	const repository = defaultBindingRepository();
 	async function run(action: () => Promise<void>) {
 		setBusy(true);
-		setMessage("");
+		setMessage(undefined);
 		try {
 			await action();
 		} catch {
-			setMessage(t("bindingFailed"));
+			setMessage({ key: "bindingFailed" });
 		} finally {
 			setBusy(false);
 		}
@@ -89,7 +89,7 @@ export function BindingPanel() {
 										transport: client().transport,
 									});
 									if (state.state === "revoked") setBinding(undefined);
-									setMessage(t(`bindingState_${state.state}`));
+									setMessage({ key: `bindingState_${state.state}` });
 								})
 							}
 						>
@@ -102,7 +102,7 @@ export function BindingPanel() {
 								void run(async () => {
 									await repository.revokeLocal(binding.bindingId);
 									setBinding(undefined);
-									setMessage(t("bindingForgotten"));
+									setMessage({ key: "bindingForgotten" });
 								});
 							}}
 						>
@@ -138,17 +138,18 @@ export function BindingPanel() {
 									) {
 										setBinding(result.binding);
 										setPending(undefined);
-										setMessage(t("bindingConnected"));
+										setMessage(undefined);
 									} else if (
 										result.status === "wait" ||
 										result.status === "slow_down"
 									) {
-										setMessage(
-											t("bindingWait", { count: result.retryAfterSeconds }),
-										);
+										setMessage({
+											key: "bindingWait",
+											count: result.retryAfterSeconds,
+										});
 									} else {
 										setPending(undefined);
-										setMessage(t(`bindingPoll_${result.status}`));
+										setMessage({ key: `bindingPoll_${result.status}` });
 									}
 								})
 							}
@@ -169,14 +170,16 @@ export function BindingPanel() {
 								scopes: ["sync:read"],
 							});
 							setPending(await repository.pendingChallenge());
-							setMessage(t("bindingWait", { count: result.interval }));
+							setMessage({ key: "bindingWait", count: result.interval });
 						})
 					}
 				>
 					{t("bindingStart")}
 				</Button>
 			)}
-			{message && <p role="status">{message}</p>}
+			{message && (
+				<p role="status">{t(message.key, { count: message.count })}</p>
+			)}
 		</section>
 	);
 }
