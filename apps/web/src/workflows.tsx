@@ -163,7 +163,7 @@ export function AssetEditor({
 		} catch (error) {
 			const reason = error instanceof Error ? error.message : "";
 			setFailure(t(reason === "asset-stale-renewal" ? "renewalStale" :
-				reason === "asset-stale-item" ? "itemStale" :
+				reason === "item-stale" ? "itemStale" :
 				reason === "renewal-recovery-pending" && kind === "item" ? "itemRecoveryPending" : "error"));
 		} finally {
 			setBusy(false);

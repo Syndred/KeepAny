@@ -250,6 +250,7 @@ export function AssetDetail() {
 	const [itemEventDate, setItemEventDate] = useState(() => new Date().toISOString().slice(0, 10));
 	const [itemReminderDate, setItemReminderDate] = useState("");
 	const [itemError, setItemError] = useState("");
+	const [itemRecoveryPending, setItemRecoveryPending] = useState(false);
 	const [itemBusy, setItemBusy] = useState(false);
 	const itemInFlight = useRef(false);
 	const [renewalAmount, setRenewalAmount] = useState("");
@@ -264,6 +265,16 @@ export function AssetDetail() {
 			if (active) setRenewalRecoveryPending(!!repository.renewalRecoveryError);
 		}).catch(() => {
 			if (active) setRenewalRecoveryPending(true);
+		});
+		return () => { active = false; };
+	}, [kind]);
+	useEffect(() => {
+		if (kind !== "item") return;
+		let active = true;
+		void localRepository().then(repository => {
+			if (active) setItemRecoveryPending(!!repository.renewalRecoveryError);
+		}).catch(() => {
+			if (active) setItemRecoveryPending(true);
 		});
 		return () => { active = false; };
 	}, [kind]);
@@ -572,6 +583,7 @@ export function AssetDetail() {
 				createdAt: now,
 				deleted: false,
 			});
+			setItemRecoveryPending(false);
 			setItemBorrower("");
 			if (action === "maintenance") setItemMaintenanceNote("");
 			else setItemLoanNote("");
@@ -601,12 +613,15 @@ export function AssetDetail() {
 			notify(t("saved"));
 		} catch (error) {
 			const reason = error instanceof Error ? error.message : "";
-			setItemError(t(
+			if (reason === "renewal-recovery-pending") {
+				setItemRecoveryPending(true);
+				setItemError("");
+			} else setItemError(t(
 				reason === "item-borrower-required" ? "borrowerRequired" :
 				reason === "item-note-required" ? "maintenanceNoteRequired" :
 				reason === "item-date-invalid" ? "invalid" :
-				reason === "item-stale" || reason === "asset-stale-item" ? "itemStale" :
-				reason === "item-recovery-pending" || reason === "renewal-recovery-pending" ? "itemRecoveryPending" : "error",
+				reason === "item-stale" ? "itemStale" :
+				reason === "item-recovery-pending" ? "itemRecoveryPending" : "error",
 			));
 		} finally {
 			itemInFlight.current = false;
@@ -620,11 +635,14 @@ export function AssetDetail() {
 		setItemError("");
 		try {
 			await setItemArchived(asset.id, asset.status as "active" | "archived");
+			setItemRecoveryPending(false);
 			notify(t("saved"));
 		} catch (error) {
 			const reason = error instanceof Error ? error.message : "";
-			setItemError(t(reason === "item-stale" ? "itemStale" :
-				reason === "renewal-recovery-pending" ? "itemRecoveryPending" : "error"));
+			if (reason === "renewal-recovery-pending") {
+				setItemRecoveryPending(true);
+				setItemError("");
+			} else setItemError(t(reason === "item-stale" ? "itemStale" : "error"));
 		} finally {
 			itemInFlight.current = false;
 			setItemBusy(false);
@@ -1155,7 +1173,8 @@ export function AssetDetail() {
 					<div className="card-header">
 						<h2>{t("history")}</h2>
 					</div>
-					{asset.kind === "subscription" && renewalRecoveryPending && <p className="notice" role="alert">{t("renewalRecoveryPending")}</p>}
+			{asset.kind === "subscription" && renewalRecoveryPending && <p className="notice" role="alert">{t("renewalRecoveryPending")}</p>}
+			{asset.kind === "item" && itemRecoveryPending && <p className="notice" role="alert">{t("itemRecoveryPending")}</p>}
 					{asset.kind === "item" && itemError && <p className="notice" role="alert">{itemError}</p>}
 					{asset.kind === "subscription" ? (
 						<div className="toolbar">
