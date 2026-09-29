@@ -56,19 +56,13 @@
 .top-ai-menu button:hover, .top-ai-menu a:hover { background: var(--yellow-soft); }
 @media(max-width:760px) {
   .shell { display: block; }
-  .shell .sidebar, .shell .sidebar.open { position: relative; top: auto; left: auto; z-index: auto; width: 100%; height: auto; max-height: none; padding: 14px; overflow: visible; transform: none; border-right: 0; border-bottom: 3px solid var(--line); }
   .shell .brand { padding: 0 3px 12px; }
-  .shell .workspace-current, .shell .sidebar-section-label, .shell .sidebar-user { display: none; }
   .shell .nav { display: grid; gap: 3px; }
   .shell .nav .sortable-nav-item { width: 100%; }
   .shell .sidebar-custom { margin-top: 12px; }
-  .shell .sidebar-custom .sidebar-section-label { display: block; }
   .shell .sidebar-customize { padding-left: 15px; }
-  .shell .side-bottom { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 9px; padding-top: 8px; }
-  .shell .side-bottom a { width: auto; min-height: 32px; padding: 5px 8px; }
-  .shell .mobile-menu, .shell .mobile-close, .shell .mobile-scrim { display: none; }
-  .shell .topbar { flex-wrap: wrap; min-height: 79px; padding: 9px 12px; }
-  .shell .topbar-page-label { display: block; width: 100%; }
+  .shell .topbar { flex-wrap: wrap; min-height: 60px; padding: 9px 12px; }
+  .shell .topbar-page-label { flex: 1 1 auto; width: auto; }
   .shell .topbar-back-link { display: inline-flex; }
   .shell .topbar-spacer { display: none; }
   .shell .top-search { flex: none; width: 32px; height: 32px; min-height: 32px; margin-left: auto; padding: 0; border-radius: 50%; cursor: pointer; }
