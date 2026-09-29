@@ -6,6 +6,9 @@ export type ReviewedCandidate = {
 	fileHash: string;
 	fileName: string;
 	rowNumber: number;
+	source?: "pdf";
+	sourceText?: string;
+	kindSelected?: boolean;
 	asset: Asset;
 	status: "pending" | "accepted" | "ignored";
 };
@@ -38,11 +41,11 @@ export async function getReviewedCandidate(id: string): Promise<ReviewedCandidat
 	return store.rows.get(id);
 }
 
-export async function editReviewedCandidate(id: string, asset: Asset): Promise<boolean> {
+export async function editReviewedCandidate(id: string, asset: Asset, kindSelected?: boolean): Promise<boolean> {
 	return store.transaction("rw", store.rows, async () => {
 		const row = await store.rows.get(id);
 		if (row?.status !== "pending") return false;
-		await store.rows.put({ ...row, asset });
+		await store.rows.put({ ...row, asset, kindSelected: kindSelected ?? row.kindSelected });
 		return true;
 	});
 }

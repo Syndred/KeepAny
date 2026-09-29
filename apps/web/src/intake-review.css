@@ -10,3 +10,6 @@
 .intake-review-source strong { min-width: 0; overflow-wrap: anywhere; }
 .intake-review-source small { color: var(--muted, #666); }
 .intake-review-row .actions { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.intake-review-row textarea { width: 100%; min-width: 0; resize: vertical; }
+.intake-pdf-text { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 320px; overflow: auto; font: inherit; }

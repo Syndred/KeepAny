@@ -18,7 +18,8 @@ const previousLock = previousSbom?.annotations?.[0]?.comment?.match(/pnpm-lock\.
 const created = previousLock === lockSha256 && previousSbom.creationInfo?.created
   ? previousSbom.creationInfo.created
   : new Date().toISOString().replace(/\.\d{3}Z$/, 'Z');
-const grouped = JSON.parse(execFileSync('pnpm', ['licenses', 'list', '--json'], {
+const storeArgs = process.env.KEEPANY_PNPM_STORE ? [`--config.store-dir=${process.env.KEEPANY_PNPM_STORE}`] : [];
+const grouped = JSON.parse(execFileSync('pnpm', [...storeArgs, 'licenses', 'list', '--json'], {
   cwd: root,
   encoding: 'utf8',
   maxBuffer: 20 * 1024 * 1024,

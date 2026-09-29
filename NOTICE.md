@@ -2,9 +2,9 @@
 
 本清单由 `node scripts/phase0/generate-legal-artifacts.mjs` 根据当前 `pnpm-lock.yaml`、实际安装树和各包 `package.json` 生成。它记录包内许可声明和包根目录中的许可/NOTICE 文件指纹；并非法律兼容性结论或可直接分发的完整第三方许可证正文包。
 
-- 锁文件 SHA-256：`a09c08a3eb5204b89c6becfa09137949bdea83bc063cf45caa637b4766657a8b`
-- 已安装包版本：589；直接运行依赖：33；直接开发依赖：19。
-- 包根目录缺少许可证正文：30。各项仍需按发布版本核对上游正文、版权和特殊 NOTICE。
+- 锁文件 SHA-256：`c53822dc5147cccef33c7068911a661dd13c7ff099ad3127e0dda390994dd5f6`
+- 已安装包版本：592；直接运行依赖：34；直接开发依赖：20。
+- 包根目录缺少许可证正文：31。各项仍需按发布版本核对上游正文、版权和特殊 NOTICE。
 - 项目源码许可证：根目录 `LICENSE` 为 AGPL-3.0-only；发布前仍需由版权持有人确认，并完成依赖兼容性复核。
 - 本轮未复制 HomeInventory、Wallos、DomainMOD、Homebox 的业务源码；该四项仅在 `docs/03-开源业务模块复用审计.md` 中作为候选和参考登记。
 
@@ -20,6 +20,7 @@
 | `@biomejs/biome@2.5.14` | `MIT OR Apache-2.0` | `node_modules/.pnpm/@biomejs+biome@2.5.14/node_modules/@biomejs/biome/package.json`；仓库：git+https://github.com/biomejs/biome.git；目录：`packages/@biomejs/biome` | 包根目录无许可证正文；尚未核对该发布版本对应上游正文、版权与 NOTICE。 |
 | `@biomejs/cli-darwin-arm64@2.5.14` | `MIT OR Apache-2.0` | `node_modules/.pnpm/@biomejs+cli-darwin-arm64@2.5.14/node_modules/@biomejs/cli-darwin-arm64/package.json`；仓库：git+https://github.com/biomejs/biome.git；目录：`packages/@biomejs/biome` | 包根目录无许可证正文；尚未核对该发布版本对应上游正文、版权与 NOTICE。 |
 | `@esbuild/darwin-arm64@0.27.7` | `MIT` | `node_modules/.pnpm/@esbuild+darwin-arm64@0.27.7/node_modules/@esbuild/darwin-arm64/package.json`；仓库：git+https://github.com/evanw/esbuild.git | 包根目录无许可证正文；尚未核对该发布版本对应上游正文、版权与 NOTICE。 |
+| `@napi-rs/canvas-darwin-arm64@1.0.9` | `MIT` | `node_modules/.pnpm/@napi-rs+canvas-darwin-arm64@1.0.9/node_modules/@napi-rs/canvas-darwin-arm64/package.json`；仓库：git+https://github.com/Brooooooklyn/canvas.git | 包根目录无许可证正文；尚未核对该发布版本对应上游正文、版权与 NOTICE。 |
 | `@rolldown/binding-darwin-arm64@1.2.11` | `MIT` | `node_modules/.pnpm/@rolldown+binding-darwin-arm64@1.2.11/node_modules/@rolldown/binding-darwin-arm64/package.json`；仓库：git+https://github.com/rolldown/rolldown.git；目录：`packages/rolldown` | 包根目录无许可证正文；尚未核对该发布版本对应上游正文、版权与 NOTICE。 |
 | `@rollup/rollup-darwin-arm64@4.63.5` | `MIT` | `node_modules/.pnpm/@rollup+rollup-darwin-arm64@4.63.5/node_modules/@rollup/rollup-darwin-arm64/package.json`；仓库：git+https://github.com/rollup/rollup.git | 包根目录无许可证正文；尚未核对该发布版本对应上游正文、版权与 NOTICE。 |
 | `err-code@3.0.1` | `MIT` | `node_modules/.pnpm/err-code@3.0.1/node_modules/err-code/package.json`；仓库：git://github.com/IndigoUnited/js-err-code.git | 包根目录无许可证正文；尚未核对该发布版本对应上游正文、版权与 NOTICE。 |
@@ -189,6 +190,8 @@
 | `@modelcontextprotocol/client@2.1.0` | development | `MIT` | `node_modules/.pnpm/@modelcontextprotocol+client@2.1.0/node_modules/@modelcontextprotocol/client/LICENSE` (SHA-256 `0382b0057770ca05e9c350a50aa3b1c1fea84da0bc81d723bf00b9aa841be58a`) |
 | `@modelcontextprotocol/core@2.1.0` | 传递依赖 | `MIT` | `node_modules/.pnpm/@modelcontextprotocol+core@2.1.0/node_modules/@modelcontextprotocol/core/LICENSE` (SHA-256 `0382b0057770ca05e9c350a50aa3b1c1fea84da0bc81d723bf00b9aa841be58a`) |
 | `@modelcontextprotocol/server@2.1.0` | production | `MIT` | `node_modules/.pnpm/@modelcontextprotocol+server@2.1.0/node_modules/@modelcontextprotocol/server/LICENSE` (SHA-256 `0382b0057770ca05e9c350a50aa3b1c1fea84da0bc81d723bf00b9aa841be58a`) |
+| `@napi-rs/canvas@1.0.9` | 传递依赖 | `MIT` | `node_modules/.pnpm/@napi-rs+canvas@1.0.9/node_modules/@napi-rs/canvas/LICENSE` (SHA-256 `8802fecf9da4367bc23bcf20b21cc143785fc6c92b152f3fa7fbe6ce08d344d6`) |
+| `@napi-rs/canvas-darwin-arm64@1.0.9` | 传递依赖 | `MIT` | 包根目录无 LICENSE/LICENCE/COPYING/NOTICE |
 | `@noble/ciphers@2.4.0` | 传递依赖 | `MIT` | `node_modules/.pnpm/@noble+ciphers@2.4.0/node_modules/@noble/ciphers/LICENSE` (SHA-256 `f36671a5487c9c5050efacb58011c37c24c55a889803cb036cf9d9a6347c1e2d`) |
 | `@noble/hashes@2.4.0` | production | `MIT` | `node_modules/.pnpm/@noble+hashes@2.4.0/node_modules/@noble/hashes/LICENSE` (SHA-256 `4f221aee6e072336700c408c68ab3b96a3fc09f6aebe6f48f1bd99e5ef13faec`) |
 | `@opentelemetry/semantic-conventions@1.43.0` | 传递依赖 | `Apache-2.0` | `node_modules/.pnpm/@opentelemetry+semantic-conventions@1.43.0/node_modules/@opentelemetry/semantic-conventions/LICENSE` (SHA-256 `c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4`) |
@@ -488,6 +491,7 @@
 | `path-key@3.1.1` | 传递依赖 | `MIT` | `node_modules/.pnpm/path-key@3.1.1/node_modules/path-key/license` (SHA-256 `48da2f39e100d4085767e94966b43f4fa95ff6a0698fba57ed460914e35f94a0`) |
 | `path-parse@1.0.7` | 传递依赖 | `MIT` | `node_modules/.pnpm/path-parse@1.0.7/node_modules/path-parse/LICENSE` (SHA-256 `3f4609137f65070541b9214300ea0d640af8192857de0eeb2b03403003d9228a`) |
 | `path-scurry@2.0.2` | 传递依赖 | `BlueOak-1.0.0` | `node_modules/.pnpm/path-scurry@2.0.2/node_modules/path-scurry/LICENSE.md` (SHA-256 `8a1af140fdfbf5afd3df27f7e662f989c5b963a300020dfafce42033cae9e004`) |
+| `pdfjs-dist@6.3.289` | production | `Apache-2.0` | `node_modules/.pnpm/pdfjs-dist@6.3.289/node_modules/pdfjs-dist/LICENSE` (SHA-256 `0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594`) |
 | `pg@8.23.0` | production | `MIT` | `node_modules/.pnpm/pg@8.23.0/node_modules/pg/LICENSE` (SHA-256 `192b8f5c96900f04a1271dec39688655d7416c1c6ea84a508e18b50d2b6751f3`) |
 | `pg-cloudflare@1.4.0` | 传递依赖 | `MIT` | `node_modules/.pnpm/pg-cloudflare@1.4.0/node_modules/pg-cloudflare/LICENSE` (SHA-256 `192b8f5c96900f04a1271dec39688655d7416c1c6ea84a508e18b50d2b6751f3`) |
 | `pg-connection-string@2.14.0` | 传递依赖 | `MIT` | `node_modules/.pnpm/pg-connection-string@2.14.0/node_modules/pg-connection-string/LICENSE` (SHA-256 `2244b5486c4427001b6756a87b9a297d427c111dcc3ba64a097492a8979c23d0`) |
@@ -631,7 +635,7 @@
 | `workbox-strategies@7.4.1` | 传递依赖 | `MIT` | `node_modules/.pnpm/workbox-strategies@7.4.1/node_modules/workbox-strategies/LICENSE` (SHA-256 `aee9670e09b75ca8a2a1fe62d545ae38a6797970caf0335628e3a4dd15bc9b6c`) |
 | `workbox-streams@7.4.1` | 传递依赖 | `MIT` | `node_modules/.pnpm/workbox-streams@7.4.1/node_modules/workbox-streams/LICENSE` (SHA-256 `aee9670e09b75ca8a2a1fe62d545ae38a6797970caf0335628e3a4dd15bc9b6c`) |
 | `workbox-sw@7.4.1` | 传递依赖 | `MIT` | `node_modules/.pnpm/workbox-sw@7.4.1/node_modules/workbox-sw/LICENSE` (SHA-256 `aee9670e09b75ca8a2a1fe62d545ae38a6797970caf0335628e3a4dd15bc9b6c`) |
-| `workbox-window@7.4.1` | 传递依赖 | `MIT` | `node_modules/.pnpm/workbox-window@7.4.1/node_modules/workbox-window/LICENSE` (SHA-256 `aee9670e09b75ca8a2a1fe62d545ae38a6797970caf0335628e3a4dd15bc9b6c`) |
+| `workbox-window@7.4.1` | development | `MIT` | `node_modules/.pnpm/workbox-window@7.4.1/node_modules/workbox-window/LICENSE` (SHA-256 `aee9670e09b75ca8a2a1fe62d545ae38a6797970caf0335628e3a4dd15bc9b6c`) |
 | `ws@8.21.3` | 传递依赖 | `MIT` | `node_modules/.pnpm/ws@8.21.3/node_modules/ws/LICENSE` (SHA-256 `2b29dcfe0d6471f7e8c92c5fb38c9f93edee10330937055440192f1832b1ecef`) |
 | `xtend@4.0.2` | 传递依赖 | `MIT` | `node_modules/.pnpm/xtend@4.0.2/node_modules/xtend/LICENSE` (SHA-256 `82e67379203d5794e7c44549847d8d64ae6904591381682360470898bd306821`) |
 | `yallist@3.1.1` | 传递依赖 | `ISC` | `node_modules/.pnpm/yallist@3.1.1/node_modules/yallist/LICENSE` (SHA-256 `4ec3d4c66cd87f5c8d8ad911b10f99bf27cb00cdfcff82621956e379186b016b`) |

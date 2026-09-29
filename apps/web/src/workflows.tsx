@@ -918,7 +918,7 @@ function validateImportCandidates(candidates: ImportCandidate[], existing: Asset
 export function IntakeTools({ onCsvStaged }: { onCsvStaged: () => void }) {
 	const { t } = useTranslation();
 	const { data, notify } = useAppContext();
-	const [mode, setMode] = useState<"url" | "image" | "csv" | "manual">("url");
+	const [mode, setMode] = useState<"url" | "image" | "csv" | "pdf" | "manual">("url");
 	const [manualKind, setManualKind] = useState<AssetKind>("project");
 	const [manualName, setManualName] = useState("");
 	const [photoAssetId, setPhotoAssetId] = useState("");
@@ -1137,12 +1137,13 @@ export function IntakeTools({ onCsvStaged }: { onCsvStaged: () => void }) {
 		setMessage("");
 		setCsvBusy(true);
 		try {
-			const count = await stageCsvForReview(file);
+			const pdf = file.name.toLowerCase().endsWith(".pdf") || file.type === "application/pdf";
+			const count = pdf ? await (await import("./intake-pdf")).stagePdfForReview(file) : await stageCsvForReview(file);
 			onCsvStaged();
 			setMessage(t("reviewCsvStaged", { count }));
 		} catch (error) {
 			const reason = error instanceof Error ? error.message : "";
-			setMessage(t(reason === "pdf" ? "reviewPdfUnavailable" : reason === "limit" ? "reviewCsvLimit" : reason === "invalid" ? "reviewCsvInvalid" : "error"));
+			setMessage(t(reason.startsWith("pdf") ? ({ pdfLimit: "reviewPdfLimit", pdfNoText: "reviewPdfNoText", pdfTimeout: "reviewPdfTimeout" }[reason] ?? "reviewPdfUnavailable") : reason === "limit" ? "reviewCsvLimit" : reason === "invalid" ? "reviewCsvInvalid" : "error"));
 		} finally {
 			setCsvBusy(false);
 		}
@@ -1245,6 +1246,7 @@ export function IntakeTools({ onCsvStaged }: { onCsvStaged: () => void }) {
 							["url", "intakeModeUrl"],
 							["image", "intakeModeImage"],
 							["csv", "intakeModeCsv"],
+							["pdf", "intakeModePdf"],
 							["manual", "intakeModeManual"],
 						] as const).map(([value, key]) => (
 							<button key={value} type="button" aria-pressed={mode === value} disabled={busy || inspecting || csvBusy} onClick={() => changeMode(value)}>
@@ -1275,11 +1277,11 @@ export function IntakeTools({ onCsvStaged }: { onCsvStaged: () => void }) {
 							</Button>
 						</>
 					)}
-					{mode === "csv" && (
+					{(mode === "csv" || mode === "pdf") && (
 						<>
-							<p>{t("csvHint")}</p>
+							<p>{t(mode === "pdf" ? "reviewPdfHint" : "csvHint")}</p>
 							<div className="field">
-								<label htmlFor="csv-file">{t("csv")}</label>
+								<label htmlFor="csv-file">{t(mode === "pdf" ? "intakeModePdf" : "csv")}</label>
 								<input
 									id="csv-file"
 									type="file"
