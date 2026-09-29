@@ -1,6 +1,6 @@
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { readFile, readdir, writeFile } from 'node:fs/promises';
+import { readdir, readFile, writeFile } from 'node:fs/promises';
 import { relative, resolve } from 'node:path';
 
 const root = resolve(import.meta.dirname, '../..');
@@ -14,16 +14,44 @@ if (rootLicenseSha256 !== 'd8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c
   throw new Error('Root LICENSE differs from the recorded SPDX AGPL-3.0-only text; review its provenance before regenerating');
 }
 const previousSbom = await readJson(resolve(root, 'SBOM.spdx.json')).catch(() => null);
+const thirdPartyManifest = await readJson(resolve(root, 'legal/third-party/manifest.json')).catch(() => null);
+const thirdPartyPackages = new Map((thirdPartyManifest?.packages ?? []).map(pkg => [`${pkg.name}@${pkg.version}`, pkg]));
+const thirdPartyMaterials = new Map((thirdPartyManifest?.materials ?? []).map(material => [material.id, material]));
 const previousLock = previousSbom?.annotations?.[0]?.comment?.match(/pnpm-lock\.yaml SHA-256: ([a-f0-9]{64})/)?.[1];
 const created = previousLock === lockSha256 && previousSbom.creationInfo?.created
   ? previousSbom.creationInfo.created
   : new Date().toISOString().replace(/\.\d{3}Z$/, 'Z');
 const storeArgs = process.env.KEEPANY_PNPM_STORE ? [`--config.store-dir=${process.env.KEEPANY_PNPM_STORE}`] : [];
-const grouped = JSON.parse(execFileSync('pnpm', [...storeArgs, 'licenses', 'list', '--json'], {
-  cwd: root,
-  encoding: 'utf8',
-  maxBuffer: 20 * 1024 * 1024,
-}));
+let grouped;
+try {
+  grouped = JSON.parse(execFileSync('pnpm', [...storeArgs, 'licenses', 'list', '--json'], {
+    cwd: root,
+    encoding: 'utf8',
+    maxBuffer: 20 * 1024 * 1024,
+  }));
+} catch (error) {
+  // A copied or partially hydrated pnpm store can fail before reading package.json.
+  // Reuse the same-lock installed paths already recorded in the previous snapshot,
+  // but refuse this fallback when no matching snapshot exists.
+  if (previousLock !== lockSha256 || !Array.isArray(previousSbom?.packages)) throw error;
+  grouped = {};
+  for (const previousPackage of previousSbom.packages) {
+    const metadataPath = previousPackage.sourceInfo?.match(/Installed metadata: ([^;]+)/)?.[1];
+    if (!metadataPath) throw error;
+    const license = previousPackage.licenseDeclared ?? 'NOASSERTION';
+    let entries = grouped[license];
+    if (!entries) {
+      entries = [];
+      grouped[license] = entries;
+    }
+    entries.push({
+      name: previousPackage.name,
+      versions: [previousPackage.versionInfo],
+      paths: [resolve(root, metadataPath.replace(/\/package\.json$/, ''))],
+    });
+  }
+  console.warn('pnpm licenses list unavailable; reused the matching-lock installed metadata paths from SBOM.spdx.json.');
+}
 
 const packages = [];
 for (const [pnpmLicense, entries] of Object.entries(grouped)) {
@@ -72,6 +100,18 @@ for (const name of [...Object.keys(rootPackage.dependencies ?? {}), ...Object.ke
 const missing = packages.filter(pkg => pkg.missingLicenseText);
 const escapeCell = value => String(value ?? '未提供').replaceAll('|', '\\|').replaceAll('\n', ' ');
 const pkgName = pkg => `${pkg.name}@${pkg.version}`;
+const thirdPartyRecord = pkg => thirdPartyPackages.get(pkgName(pkg));
+const thirdPartySummary = pkg => {
+  const record = thirdPartyRecord(pkg);
+  if (!record) return '未纳入上游原文索引；需补充精确版本来源。';
+  if (record.status === 'verified') {
+    return `已保留上游原文：${(record.materials ?? []).map(id => {
+      const material = thirdPartyMaterials.get(id);
+      return material ? `\`${material.path}\`（SHA-256 \`${material.sha256}\`；commit/path 见 manifest）` : `未找到材料 ${id}`;
+    }).join('<br>')}`;
+  }
+  return `未解决：${escapeCell(record.reason)}`;
+};
 const fileSummary = pkg => pkg.legalFiles.length
   ? pkg.legalFiles.map(file => `\`${file.path}\` (SHA-256 \`${file.sha256}\`)`).join('<br>')
   : '包根目录无 LICENSE/LICENCE/COPYING/NOTICE';
@@ -79,19 +119,19 @@ const fileSummary = pkg => pkg.legalFiles.length
 const notice = [
   '# KeepAny 第三方依赖声明与核查状态',
   '',
-  '本清单由 `node scripts/phase0/generate-legal-artifacts.mjs` 根据当前 `pnpm-lock.yaml`、实际安装树和各包 `package.json` 生成。它记录包内许可声明和包根目录中的许可/NOTICE 文件指纹；并非法律兼容性结论或可直接分发的完整第三方许可证正文包。',
+  '本清单由 `node scripts/phase0/generate-legal-artifacts.mjs` 根据当前 `pnpm-lock.yaml`、实际安装树和各包 `package.json` 生成。精确版本的上游许可证原文索引见 [`legal/third-party/manifest.json`](legal/third-party/manifest.json)，本文件记录包内许可声明和包根目录中的许可/NOTICE 文件指纹；并非法律兼容性结论或可直接分发的完整第三方许可证正文包。',
   '',
   `- 锁文件 SHA-256：\`${lockSha256}\``,
   `- 已安装包版本：${packages.length}；直接运行依赖：${packages.filter(pkg => pkg.directScope === 'production').length}；直接开发依赖：${packages.filter(pkg => pkg.directScope === 'development').length}。`,
-  `- 包根目录缺少许可证正文：${missing.length}。各项仍需按发布版本核对上游正文、版权和特殊 NOTICE。`,
+  `- 包根目录缺少许可证正文：${missing.length}；上游原文索引已核验 ${thirdPartyManifest?.scope?.verifiedPackageCount ?? 0} 项，仍有 ${thirdPartyManifest?.scope?.unresolvedPackageCount ?? missing.length} 项未解决。`,
   '- 项目源码许可证：根目录 `LICENSE` 为 AGPL-3.0-only；发布前仍需由版权持有人确认，并完成依赖兼容性复核。',
   '- 本轮未复制 HomeInventory、Wallos、DomainMOD、Homebox 的业务源码；该四项仅在 `docs/03-开源业务模块复用审计.md` 中作为候选和参考登记。',
   '',
   '## 缺少包内许可证正文的逐项记录',
   '',
-  '| 已安装包 | 包内声明 | 安装元数据与来源 | 未解决项 |',
+  '| 已安装包 | 包内声明 | 安装元数据与来源 | 上游原文及状态 |',
   '|---|---|---|---|',
-  ...missing.map(pkg => `| \`${escapeCell(pkgName(pkg))}\` | \`${escapeCell(pkg.declaredLicense ?? pkg.pnpmLicense)}\` | \`${escapeCell(pkg.metadataPath)}\`；仓库：${escapeCell(pkg.repository)}${pkg.repositoryDirectory ? `；目录：\`${escapeCell(pkg.repositoryDirectory)}\`` : ''} | 包根目录无许可证正文；尚未核对该发布版本对应上游正文、版权与 NOTICE。 |`),
+  ...missing.map(pkg => `| \`${escapeCell(pkgName(pkg))}\` | \`${escapeCell(pkg.declaredLicense ?? pkg.pnpmLicense)}\` | \`${escapeCell(pkg.metadataPath)}\`；仓库：${escapeCell(pkg.repository)}${pkg.repositoryDirectory ? `；目录：\`${escapeCell(pkg.repositoryDirectory)}\`` : ''} | ${thirdPartySummary(pkg)} |`),
   '',
   '## 全部已安装包版本与文件指纹',
   '',
@@ -105,11 +145,11 @@ const notice = [
 const snapshot = [
   '# 依赖版本与许可证快照',
   '',
-  `生成时间：${created}。数据来自当前 \`pnpm-lock.yaml\`、\`pnpm licenses list --json\` 和实际安装包的 \`package.json\`/包根目录文件；下表是已安装的直接依赖，而非 npm \`latest\` 候选。生成命令：\`node scripts/phase0/generate-legal-artifacts.mjs\`；校验命令：\`node scripts/phase0/generate-legal-artifacts.mjs --check\`。`,
+  `生成时间：${created}。数据来自当前 \`pnpm-lock.yaml\`、\`pnpm licenses list --json\` 和实际安装包的 \`package.json\`/包根目录文件；下表是已安装的直接依赖，而非 npm \`latest\` 候选。生成命令：\`node scripts/phase0/generate-legal-artifacts.mjs\`；校验命令：\`node scripts/phase0/generate-legal-artifacts.mjs --check\`。平台无关的已提交原文哈希校验：\`node scripts/phase0/verify-third-party-license-materials.mjs\`。`,
   '',
   `- 锁文件 SHA-256：\`${lockSha256}\`。根许可证文本 SHA-256：\`${rootLicenseSha256}\`。`,
   `- 已安装包版本：${packages.length}；其中直接运行依赖 ${packages.filter(pkg => pkg.directScope === 'production').length}，直接开发依赖 ${packages.filter(pkg => pkg.directScope === 'development').length}。同名不同版本分别计数。`,
-  `- 包根目录无许可证正文：${missing.length} 个，见 [NOTICE 逐项来源与缺口](../NOTICE.md#缺少包内许可证正文的逐项记录)。`,
+  `- 包根目录无许可证正文：${missing.length} 个，见 [NOTICE 逐项来源与缺口](../NOTICE.md#缺少包内许可证正文的逐项记录)；精确 npm 来源、上游 commit/path/hash 与未解决边界见 [第三方材料索引](../legal/third-party/manifest.json)。`,
   '- 机器可读清单：[SPDX 2.3 SBOM](../SBOM.spdx.json)。包根目录法律文件及 SHA-256 见 [NOTICE](../NOTICE.md)。这里的声明取自包元数据，不等于经过人工审定的许可证兼容性。',
   '',
   '| 直接包 | 已安装版本 | 用途 | 包内声明 |',
@@ -149,9 +189,9 @@ const sbom = {
     licenseConcluded: 'NOASSERTION',
     licenseDeclared: pkg.declaredLicense ?? 'NOASSERTION',
     copyrightText: 'NOASSERTION',
-    sourceInfo: `Installed metadata: ${pkg.metadataPath}; package-root license/notice files: ${pkg.legalFiles.length ? pkg.legalFiles.map(file => `${file.path} sha256:${file.sha256}`).join('; ') : 'none'}; metadata repository: ${pkg.repository ?? 'NOASSERTION'}; direct scope: ${pkg.directScope ?? 'transitive'}.`,
+    sourceInfo: `Installed metadata: ${pkg.metadataPath}; package-root license/notice files: ${pkg.legalFiles.length ? pkg.legalFiles.map(file => `${file.path} sha256:${file.sha256}`).join('; ') : 'none'}; metadata repository: ${pkg.repository ?? 'NOASSERTION'}; direct scope: ${pkg.directScope ?? 'transitive'}.${thirdPartyRecord(pkg) ? ` Third-party material manifest status: ${thirdPartyRecord(pkg).status}; materials: ${(thirdPartyRecord(pkg).materials ?? []).join(', ') || 'none'}; reason: ${thirdPartyRecord(pkg).reason ?? 'verified source files recorded in legal/third-party/manifest.json'}` : ''}`,
     ...(pkg.homepage ? { homepage: pkg.homepage } : {}),
-    ...(pkg.missingLicenseText ? { licenseComments: 'Installed package root lacks LICENSE/LICENCE/COPYING text; declared metadata is not an upstream-text verification.' } : {}),
+    ...(pkg.missingLicenseText ? { licenseComments: `Installed package root lacks LICENSE/LICENCE/COPYING text; ${thirdPartyRecord(pkg)?.status === 'verified' ? 'an upstream text and provenance record is retained in legal/third-party/manifest.json.' : thirdPartyRecord(pkg)?.reason ?? 'no upstream-text verification is recorded.'}` } : {}),
   })),
   relationships: packages.map((_, i) => ({ spdxElementId: 'SPDXRef-DOCUMENT', relatedSpdxElement: spdxId(i), relationshipType: 'DESCRIBES' })),
 };

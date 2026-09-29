@@ -1,0 +1,940 @@
+{
+  "schema": "keepany.third-party-license-materials.v1",
+  "generatedAt": "2026-09-30",
+  "scope": {
+    "source": "The 31 installed package versions recorded by the 2026-09-29 installed-tree snapshot.",
+    "platformIndependent": true,
+    "packageCount": 31,
+    "verifiedPackageCount": 16,
+    "unresolvedPackageCount": 15
+  },
+  "materials": [
+    {
+      "id": "biome-mit",
+      "path": "legal/third-party/texts/biome-LICENSE-MIT.txt",
+      "sha256": "4f6a0d776a00c0f46e1da1879321896071494229aa3219862a625e4560691a3a",
+      "source": {
+        "repository": "https://github.com/biomejs/biome.git",
+        "commit": "af4365d2b80177d0e0434c0ed4fd2c9171afc56c",
+        "path": "packages/@biomejs/biome/LICENSE-MIT",
+        "downloadUrl": "https://raw.githubusercontent.com/biomejs/biome/af4365d2b80177d0e0434c0ed4fd2c9171afc56c/packages/@biomejs/biome/LICENSE-MIT",
+        "mapping": "npm package gitHead"
+      }
+    },
+    {
+      "id": "biome-apache",
+      "path": "legal/third-party/texts/biome-LICENSE-APACHE.txt",
+      "sha256": "e2746aba8799f7a3378259f36a83a079e811ca7926cbdd248a2eb7ca9cbbac5d",
+      "source": {
+        "repository": "https://github.com/biomejs/biome.git",
+        "commit": "af4365d2b80177d0e0434c0ed4fd2c9171afc56c",
+        "path": "packages/@biomejs/biome/LICENSE-APACHE",
+        "downloadUrl": "https://raw.githubusercontent.com/biomejs/biome/af4365d2b80177d0e0434c0ed4fd2c9171afc56c/packages/@biomejs/biome/LICENSE-APACHE",
+        "mapping": "npm package gitHead"
+      }
+    },
+    {
+      "id": "esbuild-mit",
+      "path": "legal/third-party/texts/esbuild-LICENSE.md",
+      "sha256": "b40ec5baec7bb34fa5b1c09521fa3cd52d5fad7adafed74932a2010d3612a681",
+      "source": {
+        "repository": "https://github.com/evanw/esbuild.git",
+        "commit": "2025c9ff6ab15ba6b0f9d074fd732250cc46e4a3",
+        "path": "LICENSE.md",
+        "downloadUrl": "https://raw.githubusercontent.com/evanw/esbuild/2025c9ff6ab15ba6b0f9d074fd732250cc46e4a3/LICENSE.md",
+        "mapping": "npm package gitHead"
+      }
+    },
+    {
+      "id": "rollup-mit",
+      "path": "legal/third-party/texts/rollup-LICENSE.md",
+      "sha256": "fa1bd040c5bdeefe65b3821cebf474f2733ce65df13089bd151dda1778e62fe8",
+      "source": {
+        "repository": "https://github.com/rollup/rollup.git",
+        "commit": "3722484c33c58b3ab0cbbfcca09b8f267d420329",
+        "path": "LICENSE.md",
+        "downloadUrl": "https://raw.githubusercontent.com/rollup/rollup/3722484c33c58b3ab0cbbfcca09b8f267d420329/LICENSE.md",
+        "mapping": "npm package gitHead"
+      }
+    },
+    {
+      "id": "event-reduce-mit",
+      "path": "legal/third-party/texts/event-reduce-LICENSE.txt",
+      "sha256": "fae4e3d1830d0a8f795a06b07f4a8bbc343ff619fb6339de71f4b8986fa4242d",
+      "source": {
+        "repository": "https://github.com/pubkey/event-reduce.git",
+        "commit": "52e54b9f5944c35435e8e9dbbbd58c2413294998",
+        "path": "LICENSE",
+        "downloadUrl": "https://raw.githubusercontent.com/pubkey/event-reduce/52e54b9f5944c35435e8e9dbbbd58c2413294998/LICENSE",
+        "mapping": "npm package gitHead"
+      }
+    },
+    {
+      "id": "mathiasbynens-mit",
+      "path": "legal/third-party/texts/mathiasbynens-LICENSE-MIT.txt",
+      "sha256": "483acb265f182907d1caf6cff9c16c96f31325ed23792832cc5d8b12d5f88c8a",
+      "source": {
+        "repository": "https://github.com/mathiasbynens/jsesc.git",
+        "commit": "819f534875fd87c9033bb72148ab6a6ad1219ca0",
+        "path": "LICENSE-MIT.txt",
+        "downloadUrl": "https://raw.githubusercontent.com/mathiasbynens/jsesc/819f534875fd87c9033bb72148ab6a6ad1219ca0/LICENSE-MIT.txt",
+        "mapping": "npm package gitHead; identical hash confirmed for the listed mathiasbynens repositories"
+      }
+    },
+    {
+      "id": "regjsgen-mit",
+      "path": "legal/third-party/texts/regjsgen-LICENSE-MIT.txt",
+      "sha256": "21edea5565f8e8d4a0e548fe741b16f7d642afd8dadafa9dbab4232115abe0ec",
+      "source": {
+        "repository": "https://github.com/bnjmnt4n/regjsgen.git",
+        "commit": "fbb7ff03be5b72898c282a2376f78c95d07ec739",
+        "path": "LICENSE-MIT.txt",
+        "downloadUrl": "https://raw.githubusercontent.com/bnjmnt4n/regjsgen/fbb7ff03be5b72898c282a2376f78c95d07ec739/LICENSE-MIT.txt",
+        "mapping": "npm package gitHead"
+      }
+    },
+    {
+      "id": "rolldown-mit",
+      "path": "legal/third-party/texts/rolldown-LICENSE.txt",
+      "sha256": "23ecfff35a5a2e80d92142f75228912c3b1abc4b5a8337a821ff4397e2f9f734",
+      "source": {
+        "repository": "https://github.com/rolldown/rolldown.git",
+        "tag": "v1.2.11",
+        "commit": "8df421985114ecfaf52cce038d4a5a6ea8c05408",
+        "path": "LICENSE",
+        "downloadUrl": "https://raw.githubusercontent.com/rolldown/rolldown/8df421985114ecfaf52cce038d4a5a6ea8c05408/LICENSE",
+        "mapping": "npm version matched exact upstream tag"
+      }
+    }
+  ],
+  "packages": [
+    {
+      "name": "@aws-sdk/credential-provider-http",
+      "version": "3.972.74",
+      "declaredLicense": "Apache-2.0",
+      "npm": {
+        "registry": "https://registry.npmjs.org/@aws-sdk%2fcredential-provider-http/3.972.74",
+        "tarball": "https://registry.npmjs.org/@aws-sdk/credential-provider-http/-/credential-provider-http-3.972.74.tgz",
+        "integrity": "sha512-u91E/hT8f4d1xy0Jl7VG4nVKJ3lxbrZkoBTeSVoJdWBiSEUMwMS/9+e0H/aJVQV//Lt5wuzP+E69v4aRSsNTmw==",
+        "shasum": "15b366f17177ac07a7b463662e02f2ead1fcfa67"
+      },
+      "repository": {
+        "url": "git+https://github.com/aws/aws-sdk-js-v3.git",
+        "type": "git",
+        "directory": "packages-internal/credential-provider-http"
+      },
+      "homepage": "https://github.com/aws/aws-sdk-js-v3/tree/main/packages-internal/credential-provider-http",
+      "npmGitHead": null,
+      "status": "unresolved",
+      "reason": "npm 元数据没有 gitHead；本轮未得到与此包补丁版本一一对应的已核验上游 commit/tag，未使用默认分支文本。"
+    },
+    {
+      "name": "@aws-sdk/credential-provider-login",
+      "version": "3.972.79",
+      "declaredLicense": "Apache-2.0",
+      "npm": {
+        "registry": "https://registry.npmjs.org/@aws-sdk%2fcredential-provider-login/3.972.79",
+        "tarball": "https://registry.npmjs.org/@aws-sdk/credential-provider-login/-/credential-provider-login-3.972.79.tgz",
+        "integrity": "sha512-L+Z85anONJd8MaiuraO4wRxATCdEejBZ3K3eymzWI5JPXa9sOS9CkIm72PBKqXKX+Z9p9NGMX5AIMXm0LEflgw==",
+        "shasum": "7b7b75f051e0cb79958a0d2e894f26660e65ad0f"
+      },
+      "repository": {
+        "url": "git+https://github.com/aws/aws-sdk-js-v3.git",
+        "type": "git",
+        "directory": "packages-internal/credential-provider-login"
+      },
+      "homepage": "https://github.com/aws/aws-sdk-js-v3/tree/main/packages-internal/credential-provider-login",
+      "npmGitHead": null,
+      "status": "unresolved",
+      "reason": "npm 元数据没有 gitHead；本轮未得到与此包补丁版本一一对应的已核验上游 commit/tag，未使用默认分支文本。"
+    },
+    {
+      "name": "@aws-sdk/nested-clients",
+      "version": "3.997.46",
+      "declaredLicense": "Apache-2.0",
+      "npm": {
+        "registry": "https://registry.npmjs.org/@aws-sdk%2fnested-clients/3.997.46",
+        "tarball": "https://registry.npmjs.org/@aws-sdk/nested-clients/-/nested-clients-3.997.46.tgz",
+        "integrity": "sha512-oRxtBcka/JGHGs9l9p9IVajGoTP8vTPmoAzdHGy4Qcy9P5vPnDf6nhIeM/COQNY9k/OahImTRaLkHftoXvfcmQ==",
+        "shasum": "71fce1a139f9f81c81603d704c9300f45be74477"
+      },
+      "repository": {
+        "url": "git+https://github.com/aws/aws-sdk-js-v3.git",
+        "type": "git",
+        "directory": "packages/nested-clients"
+      },
+      "homepage": "https://github.com/aws/aws-sdk-js-v3/tree/main/packages/nested-clients",
+      "npmGitHead": null,
+      "status": "unresolved",
+      "reason": "npm 元数据没有 gitHead；本轮未得到与此包补丁版本一一对应的已核验上游 commit/tag，未使用默认分支文本。"
+    },
+    {
+      "name": "@better-auth/utils",
+      "version": "0.4.2",
+      "declaredLicense": "MIT",
+      "npm": {
+        "registry": "https://registry.npmjs.org/@better-auth%2futils/0.4.2",
+        "tarball": "https://registry.npmjs.org/@better-auth/utils/-/utils-0.4.2.tgz",
+        "integrity": "sha512-AUxrvu+HaaODsUyzDxFgwd/8RZ1yZaYo42LXKSrU2oGgR38pS1ij8nqQKNgtTWoYGpNevNXtCfgTy6loHveW9A==",
+        "shasum": "265a37e2ceef035e6968a851b13400d1b044e070"
+      },
+      "repository": {
+        "url": "git+https://github.com/better-auth/utils.git",
+        "type": "git"
+      },
+      "npmGitHead": null,
+      "status": "unresolved",
+      "reason": "上游 v0.4.2 tag commit 为 b20329a32d78f1f9bcc088bbd6f982b28c4192f1，但本轮核验的提交树中未定位到 LICENSE/LICENCE/COPYING/NOTICE 原文。",
+      "upstreamCandidate": {
+        "tag": "v0.4.2",
+        "commit": "b20329a32d78f1f9bcc088bbd6f982b28c4192f1",
+        "repository": "https://github.com/better-auth/utils.git"
+      }
+    },
+    {
+      "name": "@better-auth/utils",
+      "version": "0.5.0",
+      "declaredLicense": "MIT",
+      "npm": {
+        "registry": "https://registry.npmjs.org/@better-auth%2futils/0.5.0",
+        "tarball": "https://registry.npmjs.org/@better-auth/utils/-/utils-0.5.0.tgz",
+        "integrity": "sha512-BL8W4EfIZFwlu0r54m3v1ztjDhu6dDe/amLTm0xybmbZaNgYUqhD3SjpAsnq0q8YD6/ki4iwIgxJNLP/N3TxiA==",
+        "shasum": "753b2c3421c7745023dea964c5bafb00297cba96"
+      },
+      "repository": {
+        "url": "git+https://github.com/better-auth/utils.git",
+        "type": "git"
+      },
+      "npmGitHead": null,
+      "status": "unresolved",
+      "reason": "上游 v0.5.0 tag commit 为 f03c1c76aff7bfa3f4de4af47b112315c770a0d1，但本轮核验的提交树中未定位到 LICENSE/LICENCE/COPYING/NOTICE 原文。",
+      "upstreamCandidate": {
+        "tag": "v0.5.0",
+        "commit": "f03c1c76aff7bfa3f4de4af47b112315c770a0d1",
+        "repository": "https://github.com/better-auth/utils.git"
+      }
+    },
+    {
+      "name": "@biomejs/biome",
+      "version": "2.5.14",
+      "declaredLicense": "MIT OR Apache-2.0",
+      "npm": {
+        "registry": "https://registry.npmjs.org/@biomejs%2fbiome/2.5.14",
+        "tarball": "https://registry.npmjs.org/@biomejs/biome/-/biome-2.5.14.tgz",
+        "integrity": "sha512-0FabLIjd4M/dm8VFI86RMaLLdgepzbdfiAL2R8cr7V81OYYrP1w7Z73KfAwPK5h9SrEBXTzNG2y+mBwPo9xRnw==",
+        "shasum": "aeb4426c7f90bee410496ff1248665c8895c0f5e"
+      },
+      "repository": {
+        "url": "git+https://github.com/biomejs/biome.git",
+        "type": "git",
+        "directory": "packages/@biomejs/biome"
+      },
+      "homepage": "https://biomejs.dev",
+      "npmGitHead": "af4365d2b80177d0e0434c0ed4fd2c9171afc56c",
+      "status": "verified",
+      "materials": [
+        "biome-mit",
+        "biome-apache"
+      ],
+      "upstream": {
+        "materials": [
+          {
+            "repository": "https://github.com/biomejs/biome.git",
+            "commit": "af4365d2b80177d0e0434c0ed4fd2c9171afc56c",
+            "path": "packages/@biomejs/biome/LICENSE-MIT",
+            "downloadUrl": "https://raw.githubusercontent.com/biomejs/biome/af4365d2b80177d0e0434c0ed4fd2c9171afc56c/packages/@biomejs/biome/LICENSE-MIT",
+            "mapping": "npm package gitHead"
+          },
+          {
+            "repository": "https://github.com/biomejs/biome.git",
+            "commit": "af4365d2b80177d0e0434c0ed4fd2c9171afc56c",
+            "path": "packages/@biomejs/biome/LICENSE-APACHE",
+            "downloadUrl": "https://raw.githubusercontent.com/biomejs/biome/af4365d2b80177d0e0434c0ed4fd2c9171afc56c/packages/@biomejs/biome/LICENSE-APACHE",
+            "mapping": "npm package gitHead"
+          }
+        ]
+      }
+    },
+    {
+      "name": "@biomejs/cli-darwin-arm64",
+      "version": "2.5.14",
+      "declaredLicense": "MIT OR Apache-2.0",
+      "npm": {
+        "registry": "https://registry.npmjs.org/@biomejs%2fcli-darwin-arm64/2.5.14",
+        "tarball": "https://registry.npmjs.org/@biomejs/cli-darwin-arm64/-/cli-darwin-arm64-2.5.14.tgz",
+        "integrity": "sha512-UnzaXO65L4tsZimFITFP2M121GyhDcWFrT3pL5ZJ5U4XcS/0L5VHYytVohdCf/gnDUFHgl2I9xnt5bV/J1kxHQ==",
+        "shasum": "962210cf03173155a37fab1d55de396afad75f37"
+      },
+      "repository": {
+        "url": "git+https://github.com/biomejs/biome.git",
+        "type": "git",
+        "directory": "packages/@biomejs/biome"
+      },
+      "homepage": "https://biomejs.dev",
+      "npmGitHead": "af4365d2b80177d0e0434c0ed4fd2c9171afc56c",
+      "status": "verified",
+      "materials": [
+        "biome-mit",
+        "biome-apache"
+      ],
+      "upstream": {
+        "materials": [
+          {
+            "repository": "https://github.com/biomejs/biome.git",
+            "commit": "af4365d2b80177d0e0434c0ed4fd2c9171afc56c",
+            "path": "packages/@biomejs/biome/LICENSE-MIT",
+            "downloadUrl": "https://raw.githubusercontent.com/biomejs/biome/af4365d2b80177d0e0434c0ed4fd2c9171afc56c/packages/@biomejs/biome/LICENSE-MIT",
+            "mapping": "npm package gitHead"
+          },
+          {
+            "repository": "https://github.com/biomejs/biome.git",
+            "commit": "af4365d2b80177d0e0434c0ed4fd2c9171afc56c",
+            "path": "packages/@biomejs/biome/LICENSE-APACHE",
+            "downloadUrl": "https://raw.githubusercontent.com/biomejs/biome/af4365d2b80177d0e0434c0ed4fd2c9171afc56c/packages/@biomejs/biome/LICENSE-APACHE",
+            "mapping": "npm package gitHead"
+          }
+        ]
+      }
+    },
+    {
+      "name": "@esbuild/darwin-arm64",
+      "version": "0.27.7",
+      "declaredLicense": "MIT",
+      "npm": {
+        "registry": "https://registry.npmjs.org/@esbuild%2fdarwin-arm64/0.27.7",
+        "tarball": "https://registry.npmjs.org/@esbuild/darwin-arm64/-/darwin-arm64-0.27.7.tgz",
+        "integrity": "sha512-5lckdqeuBPlKUwvoCXIgI2D9/ABmPq3Rdp7IfL70393YgaASt7tbju3Ac+ePVi3KDH6N2RqePfHnXkaDtY9fkw==",
+        "shasum": "6f23000fb9b40b7e04b7d0606c0693bd0632f322"
+      },
+      "repository": {
+        "url": "git+https://github.com/evanw/esbuild.git",
+        "type": "git"
+      },
+      "homepage": "https://github.com/evanw/esbuild#readme",
+      "npmGitHead": "2025c9ff6ab15ba6b0f9d074fd732250cc46e4a3",
+      "status": "verified",
+      "materials": [
+        "esbuild-mit"
+      ],
+      "upstream": {
+        "materials": [
+          {
+            "repository": "https://github.com/evanw/esbuild.git",
+            "commit": "2025c9ff6ab15ba6b0f9d074fd732250cc46e4a3",
+            "path": "LICENSE.md",
+            "downloadUrl": "https://raw.githubusercontent.com/evanw/esbuild/2025c9ff6ab15ba6b0f9d074fd732250cc46e4a3/LICENSE.md",
+            "mapping": "npm package gitHead"
+          }
+        ]
+      }
+    },
+    {
+      "name": "@napi-rs/canvas-darwin-arm64",
+      "version": "1.0.9",
+      "declaredLicense": "MIT",
+      "npm": {
+        "registry": "https://registry.npmjs.org/@napi-rs%2fcanvas-darwin-arm64/1.0.9",
+        "tarball": "https://registry.npmjs.org/@napi-rs/canvas-darwin-arm64/-/canvas-darwin-arm64-1.0.9.tgz",
+        "integrity": "sha512-YNdfLBzY0W/Pep9fo2L6RmoNlNksnn05LRnX66W63R3ij58S25QOTcjdtEt2v8+PnCESzqZsYzUo+QPeIR44NA==",
+        "shasum": "f87ad4b981613c912c0784378ce35b58949eb6f9"
+      },
+      "repository": {
+        "url": "git+https://github.com/Brooooooklyn/canvas.git",
+        "type": "git"
+      },
+      "homepage": "https://github.com/Brooooooklyn/canvas#readme",
+      "npmGitHead": null,
+      "status": "unresolved",
+      "reason": "npm 元数据没有 gitHead；虽可访问候选 tag 文本，本轮未得到独立核验的 tag commit，保持未解决。"
+    },
+    {
+      "name": "@rolldown/binding-darwin-arm64",
+      "version": "1.2.11",
+      "declaredLicense": "MIT",
+      "npm": {
+        "registry": "https://registry.npmjs.org/@rolldown%2fbinding-darwin-arm64/1.2.11",
+        "tarball": "https://registry.npmjs.org/@rolldown/binding-darwin-arm64/-/binding-darwin-arm64-1.2.11.tgz",
+        "integrity": "sha512-jShvqNtP6vDC6/A5JOAzbVV+DkgHqhl/ScVCJEbt+TUY6QYz7YnXcrg3sLtFBniro0f/Ld50ZwCWA6f7KYD1nQ==",
+        "shasum": "4ebc103da1e0d6b24d815c1fb1d6af73245c1b1f"
+      },
+      "repository": {
+        "url": "git+https://github.com/rolldown/rolldown.git",
+        "type": "git",
+        "directory": "packages/rolldown"
+      },
+      "homepage": "https://rolldown.rs/",
+      "npmGitHead": null,
+      "status": "verified",
+      "materials": [
+        "rolldown-mit"
+      ],
+    "upstream": {
+      "materials": [
+        "rolldown-mit"
+      ]
+    }
+    },
+    {
+      "name": "@rollup/rollup-darwin-arm64",
+      "version": "4.63.5",
+      "declaredLicense": "MIT",
+      "npm": {
+        "registry": "https://registry.npmjs.org/@rollup%2frollup-darwin-arm64/4.63.5",
+        "tarball": "https://registry.npmjs.org/@rollup/rollup-darwin-arm64/-/rollup-darwin-arm64-4.63.5.tgz",
+        "integrity": "sha512-wlJEERGfeuHeBavCL2qVnNacOK43NDoZM4sjkeRPymd04OAE9T1zBqDJgmZ+CIsPTYKwdzpUC8vmOw84dwY4Tg==",
+        "shasum": "4716ffe09f8c5b98e283a52cd792b3de2b71676b"
+      },
+      "repository": {
+        "url": "git+https://github.com/rollup/rollup.git",
+        "type": "git"
+      },
+      "homepage": "https://rollupjs.org/",
+      "npmGitHead": "3722484c33c58b3ab0cbbfcca09b8f267d420329",
+      "status": "verified",
+      "materials": [
+        "rollup-mit"
+      ],
+      "upstream": {
+        "materials": [
+          {
+            "repository": "https://github.com/rollup/rollup.git",
+            "commit": "3722484c33c58b3ab0cbbfcca09b8f267d420329",
+            "path": "LICENSE.md",
+            "downloadUrl": "https://raw.githubusercontent.com/rollup/rollup/3722484c33c58b3ab0cbbfcca09b8f267d420329/LICENSE.md",
+            "mapping": "npm package gitHead"
+          }
+        ]
+      }
+    },
+    {
+      "name": "err-code",
+      "version": "3.0.1",
+      "declaredLicense": "MIT",
+      "npm": {
+        "registry": "https://registry.npmjs.org/err-code/3.0.1",
+        "tarball": "https://registry.npmjs.org/err-code/-/err-code-3.0.1.tgz",
+        "integrity": "sha512-GiaH0KJUewYok+eeY05IIgjtAe4Yltygk9Wqp1V5yVWLdhf0hYZchRjNIT9bb0mSwRcIusT3cx7PJUf3zEIfUA==",
+        "shasum": "a444c7b992705f2b120ee320b09972eef331c920"
+      },
+      "repository": {
+        "url": "git://github.com/IndigoUnited/js-err-code.git",
+        "type": "git"
+      },
+      "homepage": "https://github.com/IndigoUnited/js-err-code#readme",
+      "npmGitHead": "830d141eb633c21b842df3f78aba5786fee1b31d",
+      "status": "unresolved",
+      "reason": "npm gitHead 为 830d141eb633c21b842df3f78aba5786fee1b31d；本轮核验的提交树中未定位到 LICENSE/LICENCE/COPYING/NOTICE 原文。"
+    },
+    {
+      "name": "event-reduce-js",
+      "version": "6.0.0",
+      "declaredLicense": "MIT",
+      "npm": {
+        "registry": "https://registry.npmjs.org/event-reduce-js/6.0.0",
+        "tarball": "https://registry.npmjs.org/event-reduce-js/-/event-reduce-js-6.0.0.tgz",
+        "integrity": "sha512-nxdoa8CeIzXDlS7CBum9wde2UgW6wMLO5V4WYYkRpFV0OAY0EK2YOyjbF8NF9ECffy58R3L8fHN7ccDmaBDT4g==",
+        "shasum": "7fd3b99f16c72819590edf6fb7b9f5ab57e71418"
+      },
+      "repository": {
+        "url": "git+https://github.com/pubkey/event-reduce.git",
+        "type": "git",
+        "directory": "javascript"
+      },
+      "homepage": "https://github.com/pubkey/event-reduce#readme",
+      "npmGitHead": "52e54b9f5944c35435e8e9dbbbd58c2413294998",
+      "status": "verified",
+      "materials": [
+        "event-reduce-mit"
+      ],
+      "upstream": {
+        "materials": [
+          {
+            "repository": "https://github.com/pubkey/event-reduce.git",
+            "commit": "52e54b9f5944c35435e8e9dbbbd58c2413294998",
+            "path": "LICENSE",
+            "downloadUrl": "https://raw.githubusercontent.com/pubkey/event-reduce/52e54b9f5944c35435e8e9dbbbd58c2413294998/LICENSE",
+            "mapping": "npm package gitHead"
+          }
+        ]
+      }
+    },
+    {
+      "name": "filelist",
+      "version": "1.0.6",
+      "declaredLicense": "Apache-2.0",
+      "npm": {
+        "registry": "https://registry.npmjs.org/filelist/1.0.6",
+        "tarball": "https://registry.npmjs.org/filelist/-/filelist-1.0.6.tgz",
+        "integrity": "sha512-5giy2PkLYY1cP39p17Ech+2xlpTRL9HLspOfEgm0L6CwBXBTgsK5ou0JtzYuepxkaQ/tvhCFIJ5uXo0OrM2DxA==",
+        "shasum": "1e8870942a7c636c862f7c49b9394937b6a995a3"
+      },
+      "repository": {
+        "url": "git://github.com/mde/filelist.git",
+        "type": "git"
+      },
+      "homepage": "https://github.com/mde/filelist",
+      "npmGitHead": null,
+      "status": "unresolved",
+      "reason": "npm 元数据没有 gitHead；本轮未得到与 1.0.6 精确对应且可核验的上游 tag commit。"
+    },
+    {
+      "name": "get-browser-rtc",
+      "version": "1.1.0",
+      "declaredLicense": "MIT",
+      "npm": {
+        "registry": "https://registry.npmjs.org/get-browser-rtc/1.1.0",
+        "tarball": "https://registry.npmjs.org/get-browser-rtc/-/get-browser-rtc-1.1.0.tgz",
+        "integrity": "sha512-MghbMJ61EJrRsDe7w1Bvqt3ZsBuqhce5nrn/XAwgwOXhcsz53/ltdxOse1h/8eKXj5slzxdsz56g5rzOFSGwfQ==",
+        "shasum": "d1494e299b00f33fc8e9d6d3343ba4ba99711a2c"
+      },
+      "repository": {
+        "url": "git://github.com/substack/get-browser-rtc.git",
+        "type": "git"
+      },
+      "homepage": "https://github.com/substack/get-browser-rtc#readme",
+      "npmGitHead": "f4c75dce0ac4fb2af0256dc508fbb23436c54db3",
+      "status": "unresolved",
+      "reason": "npm gitHead 为 f4c75dce0ac4fb2af0256dc508fbb23436c54db3；本轮核验的提交树中未定位到 LICENSE/LICENCE/COPYING/NOTICE 原文。"
+    },
+    {
+      "name": "is-module",
+      "version": "1.0.0",
+      "declaredLicense": "MIT",
+      "npm": {
+        "registry": "https://registry.npmjs.org/is-module/1.0.0",
+        "tarball": "https://registry.npmjs.org/is-module/-/is-module-1.0.0.tgz",
+        "integrity": "sha512-51ypPSPCoTEIN9dy5Oy+h4pShgJmPCygKfyRCISBI+JoWT/2oJvK8QPxmwv7b/p239jXrm9M1mlQbyKJ5A152g==",
+        "shasum": "3258fb69f78c14d5b815d664336b4cffb6441591"
+      },
+      "repository": {
+        "url": "git://github.com/component/is-module",
+        "type": "git"
+      },
+      "homepage": "https://github.com/component/is-module",
+      "npmGitHead": null,
+      "status": "unresolved",
+      "reason": "npm 元数据没有 gitHead；本轮未得到与 1.0.0 精确对应且可核验的上游 tag commit。"
+    },
+    {
+      "name": "is-regexp",
+      "version": "1.0.0",
+      "declaredLicense": "MIT",
+      "npm": {
+        "registry": "https://registry.npmjs.org/is-regexp/1.0.0",
+        "tarball": "https://registry.npmjs.org/is-regexp/-/is-regexp-1.0.0.tgz",
+        "integrity": "sha512-7zjFAPO4/gwyQAAgRRmqeEeyIICSdmCqa3tsVHMdBzaXXRiqopZL4Cyghg/XulGWrtABTpbnYYzzIRffLkP4oA==",
+        "shasum": "fd2d883545c46bac5a633e7b9a09e87fa2cb5069"
+      },
+      "repository": {
+        "url": "git://github.com/sindresorhus/is-regexp",
+        "type": "git"
+      },
+      "homepage": "https://github.com/sindresorhus/is-regexp",
+      "npmGitHead": null,
+      "status": "unresolved",
+      "reason": "npm 元数据没有 gitHead；本轮未得到与 1.0.0 精确对应且可核验的上游 tag commit。"
+    },
+    {
+      "name": "jake",
+      "version": "10.9.4",
+      "declaredLicense": "Apache-2.0",
+      "npm": {
+        "registry": "https://registry.npmjs.org/jake/10.9.4",
+        "tarball": "https://registry.npmjs.org/jake/-/jake-10.9.4.tgz",
+        "integrity": "sha512-wpHYzhxiVQL+IV05BLE2Xn34zW1S223hvjtqk0+gsPrwd/8JNLXJgZZM/iPFsYc1xyphF+6M6EvdE5E9MBGkDA==",
+        "shasum": "d626da108c63d5cfb00ab5c25fadc7e0084af8e6"
+      },
+      "repository": {
+        "url": "git://github.com/jakejs/jake.git",
+        "type": "git"
+      },
+      "homepage": "https://github.com/jakejs/jake#readme",
+      "npmGitHead": null,
+      "status": "unresolved",
+      "reason": "npm 元数据没有 gitHead；本轮未得到与 10.9.4 精确对应且可核验的上游 tag commit。"
+    },
+    {
+      "name": "jsesc",
+      "version": "3.1.0",
+      "declaredLicense": "MIT",
+      "npm": {
+        "registry": "https://registry.npmjs.org/jsesc/3.1.0",
+        "tarball": "https://registry.npmjs.org/jsesc/-/jsesc-3.1.0.tgz",
+        "integrity": "sha512-/sM3dO2FOzXjKQhJuo0Q173wf2KOo8t4I8vHy6lF9poUp7bKT0/NHE8fPX23PwfhnykfqnC2xRxOnVw5XuGIaA==",
+        "shasum": "74d335a234f67ed19907fdadfac7ccf9d409825d"
+      },
+      "repository": {
+        "url": "git+https://github.com/mathiasbynens/jsesc.git",
+        "type": "git"
+      },
+      "homepage": "https://mths.be/jsesc",
+      "npmGitHead": "819f534875fd87c9033bb72148ab6a6ad1219ca0",
+      "status": "verified",
+      "materials": [
+        "mathiasbynens-mit"
+      ],
+      "upstream": {
+        "materials": [
+          {
+            "repository": "https://github.com/mathiasbynens/jsesc.git",
+            "commit": "819f534875fd87c9033bb72148ab6a6ad1219ca0",
+            "path": "LICENSE-MIT.txt",
+            "downloadUrl": "https://raw.githubusercontent.com/mathiasbynens/jsesc/819f534875fd87c9033bb72148ab6a6ad1219ca0/LICENSE-MIT.txt",
+            "mapping": "npm package gitHead; identical hash confirmed for the listed mathiasbynens repositories"
+          }
+        ]
+      }
+    },
+    {
+      "name": "pg-types",
+      "version": "2.2.0",
+      "declaredLicense": "MIT",
+      "npm": {
+        "registry": "https://registry.npmjs.org/pg-types/2.2.0",
+        "tarball": "https://registry.npmjs.org/pg-types/-/pg-types-2.2.0.tgz",
+        "integrity": "sha512-qTAAlrEsl8s4OiEQY69wDvcMIdQN6wdz5ojQiOy6YRMuynxenON0O5oCpJI6lshc6scgAY8qvJ2On/p+CXY0GA==",
+        "shasum": "2d0250d636454f7cfa3b6ae0382fdfa8063254a3"
+      },
+      "repository": {
+        "url": "git://github.com/brianc/node-pg-types.git",
+        "type": "git"
+      },
+      "homepage": "https://github.com/brianc/node-pg-types",
+      "npmGitHead": "d9d9dfb87eb50914043cbc178c301b7dd3b0c50d",
+      "status": "unresolved",
+      "reason": "npm gitHead 为 d9d9dfb87eb50914043cbc178c301b7dd3b0c50d；本轮核验的提交树中未定位到 LICENSE/LICENCE/COPYING/NOTICE 原文。"
+    },
+    {
+      "name": "pgpass",
+      "version": "1.0.5",
+      "declaredLicense": "MIT",
+      "npm": {
+        "registry": "https://registry.npmjs.org/pgpass/1.0.5",
+        "tarball": "https://registry.npmjs.org/pgpass/-/pgpass-1.0.5.tgz",
+        "integrity": "sha512-FdW9r/jQZhSeohs1Z3sI1yxFQNFvMcnmfuj4WBMUTxOrAyLMaTcE1aAMBiTlbMNaXvBCQuVi0R7hd8udDSP7ug==",
+        "shasum": "9b873e4a564bb10fa7a7dbd55312728d422a223d"
+      },
+      "repository": {
+        "url": "git+https://github.com/hoegaarden/pgpass.git",
+        "type": "git"
+      },
+      "homepage": "https://github.com/hoegaarden/pgpass#readme",
+      "npmGitHead": "4230ed5e417ba6044ea7eb80b7c33db9ec301398",
+      "status": "unresolved",
+      "reason": "npm gitHead 为 4230ed5e417ba6044ea7eb80b7c33db9ec301398；本轮核验的提交树中未定位到 LICENSE/LICENCE/COPYING/NOTICE 原文。"
+    },
+    {
+      "name": "punycode",
+      "version": "2.3.1",
+      "declaredLicense": "MIT",
+      "npm": {
+        "registry": "https://registry.npmjs.org/punycode/2.3.1",
+        "tarball": "https://registry.npmjs.org/punycode/-/punycode-2.3.1.tgz",
+        "integrity": "sha512-vYt7UD1U9Wg6138shLtLOvdAu+8DsC/ilFtEVHcH+wydcSpNE20AfSOduf6MkRFahL5FY7X1oU7nKVZFtfq8Fg==",
+        "shasum": "027422e2faec0b25e1549c3e1bd8309b9133b6e5"
+      },
+      "repository": {
+        "url": "git+https://github.com/mathiasbynens/punycode.js.git",
+        "type": "git"
+      },
+      "homepage": "https://mths.be/punycode",
+      "npmGitHead": "9e1b2cda98d215d3a73fcbfe93c62e021f4ba768",
+      "status": "verified",
+      "materials": [
+        "mathiasbynens-mit"
+      ],
+      "upstream": {
+        "materials": [
+          {
+            "repository": "https://github.com/mathiasbynens/jsesc.git",
+            "commit": "819f534875fd87c9033bb72148ab6a6ad1219ca0",
+            "path": "LICENSE-MIT.txt",
+            "downloadUrl": "https://raw.githubusercontent.com/mathiasbynens/jsesc/819f534875fd87c9033bb72148ab6a6ad1219ca0/LICENSE-MIT.txt",
+            "mapping": "npm package gitHead; identical hash confirmed for the listed mathiasbynens repositories"
+          }
+        ]
+      }
+    },
+    {
+      "name": "react-remove-scroll-bar",
+      "version": "2.3.8",
+      "declaredLicense": "MIT",
+      "npm": {
+        "registry": "https://registry.npmjs.org/react-remove-scroll-bar/2.3.8",
+        "tarball": "https://registry.npmjs.org/react-remove-scroll-bar/-/react-remove-scroll-bar-2.3.8.tgz",
+        "integrity": "sha512-9r+yi9+mgU33AKcj6IbT9oRCO78WriSj6t/cF8DWBZJ9aOGPOTEDvdUDz1FwKim7QXWwmHqtdHnRJfhAxEG46Q==",
+        "shasum": "99c20f908ee467b385b68a3469b4a3e750012223"
+      },
+      "repository": {
+        "url": "git+https://github.com/theKashey/react-remove-scroll-bar.git",
+        "type": "git"
+      },
+      "homepage": "https://github.com/theKashey/react-remove-scroll-bar#readme",
+      "npmGitHead": "b3b1287aad81def2e2ae707274b74531b61ddbaf",
+      "status": "unresolved",
+      "reason": "npm gitHead 为 b3b1287aad81def2e2ae707274b74531b61ddbaf；本轮核验的提交树中未定位到 LICENSE/LICENCE/COPYING/NOTICE 原文。"
+    },
+    {
+      "name": "regenerate",
+      "version": "1.4.2",
+      "declaredLicense": "MIT",
+      "npm": {
+        "registry": "https://registry.npmjs.org/regenerate/1.4.2",
+        "tarball": "https://registry.npmjs.org/regenerate/-/regenerate-1.4.2.tgz",
+        "integrity": "sha512-zrceR/XhGYU/d/opr2EKO7aRHUeiBI8qjtfHqADTwZd6Szfy16la6kqD0MIUs5z5hx6AaKa+PixpPrR289+I0A==",
+        "shasum": "b9346d8827e8f5a32f7ba29637d398b69014848a"
+      },
+      "repository": {
+        "url": "git+https://github.com/mathiasbynens/regenerate.git",
+        "type": "git"
+      },
+      "homepage": "https://mths.be/regenerate",
+      "npmGitHead": "11567339f40fd262435934d544885bc047cb4220",
+      "status": "verified",
+      "materials": [
+        "mathiasbynens-mit"
+      ],
+      "upstream": {
+        "materials": [
+          {
+            "repository": "https://github.com/mathiasbynens/jsesc.git",
+            "commit": "819f534875fd87c9033bb72148ab6a6ad1219ca0",
+            "path": "LICENSE-MIT.txt",
+            "downloadUrl": "https://raw.githubusercontent.com/mathiasbynens/jsesc/819f534875fd87c9033bb72148ab6a6ad1219ca0/LICENSE-MIT.txt",
+            "mapping": "npm package gitHead; identical hash confirmed for the listed mathiasbynens repositories"
+          }
+        ]
+      }
+    },
+    {
+      "name": "regenerate-unicode-properties",
+      "version": "10.2.2",
+      "declaredLicense": "MIT",
+      "npm": {
+        "registry": "https://registry.npmjs.org/regenerate-unicode-properties/10.2.2",
+        "tarball": "https://registry.npmjs.org/regenerate-unicode-properties/-/regenerate-unicode-properties-10.2.2.tgz",
+        "integrity": "sha512-m03P+zhBeQd1RGnYxrGyDAPpWX/epKirLrp8e3qevZdVkKtnCrjjWczIbYc8+xd6vcTStVlqfycTx1KR4LOr0g==",
+        "shasum": "aa113812ba899b630658c7623466be71e1f86f66"
+      },
+      "repository": {
+        "url": "git+https://github.com/mathiasbynens/regenerate-unicode-properties.git",
+        "type": "git"
+      },
+      "homepage": "https://github.com/mathiasbynens/regenerate-unicode-properties",
+      "npmGitHead": "c683577673b373700da8553ddf694852a8564ba8",
+      "status": "verified",
+      "materials": [
+        "mathiasbynens-mit"
+      ],
+      "upstream": {
+        "materials": [
+          {
+            "repository": "https://github.com/mathiasbynens/jsesc.git",
+            "commit": "819f534875fd87c9033bb72148ab6a6ad1219ca0",
+            "path": "LICENSE-MIT.txt",
+            "downloadUrl": "https://raw.githubusercontent.com/mathiasbynens/jsesc/819f534875fd87c9033bb72148ab6a6ad1219ca0/LICENSE-MIT.txt",
+            "mapping": "npm package gitHead; identical hash confirmed for the listed mathiasbynens repositories"
+          }
+        ]
+      }
+    },
+    {
+      "name": "regexpu-core",
+      "version": "6.4.0",
+      "declaredLicense": "MIT",
+      "npm": {
+        "registry": "https://registry.npmjs.org/regexpu-core/6.4.0",
+        "tarball": "https://registry.npmjs.org/regexpu-core/-/regexpu-core-6.4.0.tgz",
+        "integrity": "sha512-0ghuzq67LI9bLXpOX/ISfve/Mq33a4aFRzoQYhnnok1JOFpmE/A2TBGkNVenOGEeSBCjIiWcc6MVOG5HEQv0sA==",
+        "shasum": "3580ce0c4faedef599eccb146612436b62a176e5"
+      },
+      "repository": {
+        "url": "git+https://github.com/mathiasbynens/regexpu-core.git",
+        "type": "git"
+      },
+      "homepage": "https://mths.be/regexpu",
+      "npmGitHead": "f7040c4b2f0b54732b888f08fe6080c4764d0455",
+      "status": "verified",
+      "materials": [
+        "mathiasbynens-mit"
+      ],
+      "upstream": {
+        "materials": [
+          {
+            "repository": "https://github.com/mathiasbynens/jsesc.git",
+            "commit": "819f534875fd87c9033bb72148ab6a6ad1219ca0",
+            "path": "LICENSE-MIT.txt",
+            "downloadUrl": "https://raw.githubusercontent.com/mathiasbynens/jsesc/819f534875fd87c9033bb72148ab6a6ad1219ca0/LICENSE-MIT.txt",
+            "mapping": "npm package gitHead; identical hash confirmed for the listed mathiasbynens repositories"
+          }
+        ]
+      }
+    },
+    {
+      "name": "regjsgen",
+      "version": "0.8.0",
+      "declaredLicense": "MIT",
+      "npm": {
+        "registry": "https://registry.npmjs.org/regjsgen/0.8.0",
+        "tarball": "https://registry.npmjs.org/regjsgen/-/regjsgen-0.8.0.tgz",
+        "integrity": "sha512-RvwtGe3d7LvWiDQXeQw8p5asZUmfU1G/l6WbUXeHta7Y2PEIvBTwH6E2EfmYUK8pxcxEdEmaomqyp0vZZ7C+3Q==",
+        "shasum": "df23ff26e0c5b300a6470cad160a9d090c3a37ab"
+      },
+      "repository": {
+        "url": "git+https://github.com/bnjmnt4n/regjsgen.git",
+        "type": "git"
+      },
+      "homepage": "https://github.com/bnjmnt4n/regjsgen",
+      "npmGitHead": "fbb7ff03be5b72898c282a2376f78c95d07ec739",
+      "status": "verified",
+      "materials": [
+        "regjsgen-mit"
+      ],
+      "upstream": {
+        "materials": [
+          {
+            "repository": "https://github.com/bnjmnt4n/regjsgen.git",
+            "commit": "fbb7ff03be5b72898c282a2376f78c95d07ec739",
+            "path": "LICENSE-MIT.txt",
+            "downloadUrl": "https://raw.githubusercontent.com/bnjmnt4n/regjsgen/fbb7ff03be5b72898c282a2376f78c95d07ec739/LICENSE-MIT.txt",
+            "mapping": "npm package gitHead"
+          }
+        ]
+      }
+    },
+    {
+      "name": "unicode-canonical-property-names-ecmascript",
+      "version": "2.0.1",
+      "declaredLicense": "MIT",
+      "npm": {
+        "registry": "https://registry.npmjs.org/unicode-canonical-property-names-ecmascript/2.0.1",
+        "tarball": "https://registry.npmjs.org/unicode-canonical-property-names-ecmascript/-/unicode-canonical-property-names-ecmascript-2.0.1.tgz",
+        "integrity": "sha512-dA8WbNeb2a6oQzAQ55YlT5vQAWGV9WXOsi3SskE3bcCdM0P4SDd+24zS/OCacdRq5BkdsRj9q3Pg6YyQoxIGqg==",
+        "shasum": "cb3173fe47ca743e228216e4a3ddc4c84d628cc2"
+      },
+      "repository": {
+        "url": "git+https://github.com/mathiasbynens/unicode-canonical-property-names-ecmascript.git",
+        "type": "git"
+      },
+      "homepage": "https://github.com/mathiasbynens/unicode-canonical-property-names-ecmascript",
+      "npmGitHead": "cb0be99b57b853b5af127f159d6edf0b1caf1c65",
+      "status": "verified",
+      "materials": [
+        "mathiasbynens-mit"
+      ],
+      "upstream": {
+        "materials": [
+          {
+            "repository": "https://github.com/mathiasbynens/jsesc.git",
+            "commit": "819f534875fd87c9033bb72148ab6a6ad1219ca0",
+            "path": "LICENSE-MIT.txt",
+            "downloadUrl": "https://raw.githubusercontent.com/mathiasbynens/jsesc/819f534875fd87c9033bb72148ab6a6ad1219ca0/LICENSE-MIT.txt",
+            "mapping": "npm package gitHead; identical hash confirmed for the listed mathiasbynens repositories"
+          }
+        ]
+      }
+    },
+    {
+      "name": "unicode-match-property-ecmascript",
+      "version": "2.0.0",
+      "declaredLicense": "MIT",
+      "npm": {
+        "registry": "https://registry.npmjs.org/unicode-match-property-ecmascript/2.0.0",
+        "tarball": "https://registry.npmjs.org/unicode-match-property-ecmascript/-/unicode-match-property-ecmascript-2.0.0.tgz",
+        "integrity": "sha512-5kaZCrbp5mmbz5ulBkDkbY0SsPOjKqVS35VpL9ulMPfSl0J0Xsm+9Evphv9CoIZFwre7aJoa94AY6seMKGVN5Q==",
+        "shasum": "54fd16e0ecb167cf04cf1f756bdcc92eba7976c3"
+      },
+      "repository": {
+        "url": "git+https://github.com/mathiasbynens/unicode-match-property-ecmascript.git",
+        "type": "git"
+      },
+      "homepage": "https://github.com/mathiasbynens/unicode-match-property-ecmascript",
+      "npmGitHead": "53be375cfb78a107da07410a43bba52db8fae534",
+      "status": "verified",
+      "materials": [
+        "mathiasbynens-mit"
+      ],
+      "upstream": {
+        "materials": [
+          {
+            "repository": "https://github.com/mathiasbynens/jsesc.git",
+            "commit": "819f534875fd87c9033bb72148ab6a6ad1219ca0",
+            "path": "LICENSE-MIT.txt",
+            "downloadUrl": "https://raw.githubusercontent.com/mathiasbynens/jsesc/819f534875fd87c9033bb72148ab6a6ad1219ca0/LICENSE-MIT.txt",
+            "mapping": "npm package gitHead; identical hash confirmed for the listed mathiasbynens repositories"
+          }
+        ]
+      }
+    },
+    {
+      "name": "unicode-match-property-value-ecmascript",
+      "version": "2.2.1",
+      "declaredLicense": "MIT",
+      "npm": {
+        "registry": "https://registry.npmjs.org/unicode-match-property-value-ecmascript/2.2.1",
+        "tarball": "https://registry.npmjs.org/unicode-match-property-value-ecmascript/-/unicode-match-property-value-ecmascript-2.2.1.tgz",
+        "integrity": "sha512-JQ84qTuMg4nVkx8ga4A16a1epI9H6uTXAknqxkGF/aFfRLw1xC/Bp24HNLaZhHSkWd3+84t8iXnp1J0kYcZHhg==",
+        "shasum": "65a7adfad8574c219890e219285ce4c64ed67eaa"
+      },
+      "repository": {
+        "url": "git+https://github.com/mathiasbynens/unicode-match-property-value-ecmascript.git",
+        "type": "git"
+      },
+      "homepage": "https://github.com/mathiasbynens/unicode-match-property-value-ecmascript",
+      "npmGitHead": "48cc09496d4398f9b113c87bfb63f4750f6e47ea",
+      "status": "verified",
+      "materials": [
+        "mathiasbynens-mit"
+      ],
+      "upstream": {
+        "materials": [
+          {
+            "repository": "https://github.com/mathiasbynens/jsesc.git",
+            "commit": "819f534875fd87c9033bb72148ab6a6ad1219ca0",
+            "path": "LICENSE-MIT.txt",
+            "downloadUrl": "https://raw.githubusercontent.com/mathiasbynens/jsesc/819f534875fd87c9033bb72148ab6a6ad1219ca0/LICENSE-MIT.txt",
+            "mapping": "npm package gitHead; identical hash confirmed for the listed mathiasbynens repositories"
+          }
+        ]
+      }
+    },
+    {
+      "name": "unicode-property-aliases-ecmascript",
+      "version": "2.2.0",
+      "declaredLicense": "MIT",
+      "npm": {
+        "registry": "https://registry.npmjs.org/unicode-property-aliases-ecmascript/2.2.0",
+        "tarball": "https://registry.npmjs.org/unicode-property-aliases-ecmascript/-/unicode-property-aliases-ecmascript-2.2.0.tgz",
+        "integrity": "sha512-hpbDzxUY9BFwX+UeBnxv3Sh1q7HFxj48DTmXchNgRa46lO8uj3/1iEn3MiNUYTg1g9ctIqXCCERn8gYZhHC5lQ==",
+        "shasum": "301d4f8a43d2b75c97adfad87c9dd5350c9475d1"
+      },
+      "repository": {
+        "url": "git+https://github.com/mathiasbynens/unicode-property-aliases-ecmascript.git",
+        "type": "git"
+      },
+      "homepage": "https://github.com/mathiasbynens/unicode-property-aliases-ecmascript",
+      "npmGitHead": "b2d62514fa3c6b57207a390c67c768d5e822565e",
+      "status": "verified",
+      "materials": [
+        "mathiasbynens-mit"
+      ],
+      "upstream": {
+        "materials": [
+          {
+            "repository": "https://github.com/mathiasbynens/jsesc.git",
+            "commit": "819f534875fd87c9033bb72148ab6a6ad1219ca0",
+            "path": "LICENSE-MIT.txt",
+            "downloadUrl": "https://raw.githubusercontent.com/mathiasbynens/jsesc/819f534875fd87c9033bb72148ab6a6ad1219ca0/LICENSE-MIT.txt",
+            "mapping": "npm package gitHead; identical hash confirmed for the listed mathiasbynens repositories"
+          }
+        ]
+      }
+    }
+  ],
+  "bundle": {
+    "status": "partial",
+    "note": "这些材料可供再分发包引用；实际生产 bundle 的模块集合、压缩产物和平台原生包仍需按具体构建分别确认。本索引不把未安装的 Linux 原生包视为失败，也不把 Darwin 原生包自动宣称为浏览器 bundle 内容。",
+    "verifiedSourceMaterialCount": 8,
+    "unresolvedPackageCount": 15
+  }
+}

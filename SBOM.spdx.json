@@ -682,9 +682,9 @@
       "licenseConcluded": "NOASSERTION",
       "licenseDeclared": "Apache-2.0",
       "copyrightText": "NOASSERTION",
-      "sourceInfo": "Installed metadata: node_modules/.pnpm/@aws-sdk+credential-provider-http@3.972.74/node_modules/@aws-sdk/credential-provider-http/package.json; package-root license/notice files: none; metadata repository: https://github.com/aws/aws-sdk-js-v3.git; direct scope: transitive.",
+      "sourceInfo": "Installed metadata: node_modules/.pnpm/@aws-sdk+credential-provider-http@3.972.74/node_modules/@aws-sdk/credential-provider-http/package.json; package-root license/notice files: none; metadata repository: https://github.com/aws/aws-sdk-js-v3.git; direct scope: transitive. Third-party material manifest status: unresolved; materials: none; reason: npm 元数据没有 gitHead；本轮未得到与此包补丁版本一一对应的已核验上游 commit/tag，未使用默认分支文本。",
       "homepage": "https://github.com/aws/aws-sdk-js-v3/tree/main/packages-internal/credential-provider-http",
-      "licenseComments": "Installed package root lacks LICENSE/LICENCE/COPYING text; declared metadata is not an upstream-text verification."
+      "licenseComments": "Installed package root lacks LICENSE/LICENCE/COPYING text; npm 元数据没有 gitHead；本轮未得到与此包补丁版本一一对应的已核验上游 commit/tag，未使用默认分支文本。"
     },
     {
       "SPDXID": "SPDXRef-Package-7",
@@ -707,9 +707,9 @@
       "licenseConcluded": "NOASSERTION",
       "licenseDeclared": "Apache-2.0",
       "copyrightText": "NOASSERTION",
-      "sourceInfo": "Installed metadata: node_modules/.pnpm/@aws-sdk+credential-provider-login@3.972.79/node_modules/@aws-sdk/credential-provider-login/package.json; package-root license/notice files: none; metadata repository: https://github.com/aws/aws-sdk-js-v3.git; direct scope: transitive.",
+      "sourceInfo": "Installed metadata: node_modules/.pnpm/@aws-sdk+credential-provider-login@3.972.79/node_modules/@aws-sdk/credential-provider-login/package.json; package-root license/notice files: none; metadata repository: https://github.com/aws/aws-sdk-js-v3.git; direct scope: transitive. Third-party material manifest status: unresolved; materials: none; reason: npm 元数据没有 gitHead；本轮未得到与此包补丁版本一一对应的已核验上游 commit/tag，未使用默认分支文本。",
       "homepage": "https://github.com/aws/aws-sdk-js-v3/tree/main/packages-internal/credential-provider-login",
-      "licenseComments": "Installed package root lacks LICENSE/LICENCE/COPYING text; declared metadata is not an upstream-text verification."
+      "licenseComments": "Installed package root lacks LICENSE/LICENCE/COPYING text; npm 元数据没有 gitHead；本轮未得到与此包补丁版本一一对应的已核验上游 commit/tag，未使用默认分支文本。"
     },
     {
       "SPDXID": "SPDXRef-Package-9",
@@ -780,9 +780,9 @@
       "licenseConcluded": "NOASSERTION",
       "licenseDeclared": "Apache-2.0",
       "copyrightText": "NOASSERTION",
-      "sourceInfo": "Installed metadata: node_modules/.pnpm/@aws-sdk+nested-clients@3.997.46/node_modules/@aws-sdk/nested-clients/package.json; package-root license/notice files: none; metadata repository: https://github.com/aws/aws-sdk-js-v3.git; direct scope: transitive.",
+      "sourceInfo": "Installed metadata: node_modules/.pnpm/@aws-sdk+nested-clients@3.997.46/node_modules/@aws-sdk/nested-clients/package.json; package-root license/notice files: none; metadata repository: https://github.com/aws/aws-sdk-js-v3.git; direct scope: transitive. Third-party material manifest status: unresolved; materials: none; reason: npm 元数据没有 gitHead；本轮未得到与此包补丁版本一一对应的已核验上游 commit/tag，未使用默认分支文本。",
       "homepage": "https://github.com/aws/aws-sdk-js-v3/tree/main/packages/nested-clients",
-      "licenseComments": "Installed package root lacks LICENSE/LICENCE/COPYING text; declared metadata is not an upstream-text verification."
+      "licenseComments": "Installed package root lacks LICENSE/LICENCE/COPYING text; npm 元数据没有 gitHead；本轮未得到与此包补丁版本一一对应的已核验上游 commit/tag，未使用默认分支文本。"
     },
     {
       "SPDXID": "SPDXRef-Package-15",
@@ -2016,8 +2016,8 @@
       "licenseConcluded": "NOASSERTION",
       "licenseDeclared": "MIT",
       "copyrightText": "NOASSERTION",
-      "sourceInfo": "Installed metadata: node_modules/.pnpm/@better-auth+utils@0.4.2/node_modules/@better-auth/utils/package.json; package-root license/notice files: none; metadata repository: git+https://github.com/better-auth/utils.git; direct scope: transitive.",
-      "licenseComments": "Installed package root lacks LICENSE/LICENCE/COPYING text; declared metadata is not an upstream-text verification."
+      "sourceInfo": "Installed metadata: node_modules/.pnpm/@better-auth+utils@0.4.2/node_modules/@better-auth/utils/package.json; package-root license/notice files: none; metadata repository: git+https://github.com/better-auth/utils.git; direct scope: transitive. Third-party material manifest status: unresolved; materials: none; reason: 上游 v0.4.2 tag commit 为 b20329a32d78f1f9bcc088bbd6f982b28c4192f1，但本轮核验的提交树中未定位到 LICENSE/LICENCE/COPYING/NOTICE 原文。",
+      "licenseComments": "Installed package root lacks LICENSE/LICENCE/COPYING text; 上游 v0.4.2 tag commit 为 b20329a32d78f1f9bcc088bbd6f982b28c4192f1，但本轮核验的提交树中未定位到 LICENSE/LICENCE/COPYING/NOTICE 原文。"
     },
     {
       "SPDXID": "SPDXRef-Package-119",
@@ -2028,8 +2028,8 @@
       "licenseConcluded": "NOASSERTION",
       "licenseDeclared": "MIT",
       "copyrightText": "NOASSERTION",
-      "sourceInfo": "Installed metadata: node_modules/.pnpm/@better-auth+utils@0.5.0/node_modules/@better-auth/utils/package.json; package-root license/notice files: none; metadata repository: git+https://github.com/better-auth/utils.git; direct scope: transitive.",
-      "licenseComments": "Installed package root lacks LICENSE/LICENCE/COPYING text; declared metadata is not an upstream-text verification."
+      "sourceInfo": "Installed metadata: node_modules/.pnpm/@better-auth+utils@0.5.0/node_modules/@better-auth/utils/package.json; package-root license/notice files: none; metadata repository: git+https://github.com/better-auth/utils.git; direct scope: transitive. Third-party material manifest status: unresolved; materials: none; reason: 上游 v0.5.0 tag commit 为 f03c1c76aff7bfa3f4de4af47b112315c770a0d1，但本轮核验的提交树中未定位到 LICENSE/LICENCE/COPYING/NOTICE 原文。",
+      "licenseComments": "Installed package root lacks LICENSE/LICENCE/COPYING text; 上游 v0.5.0 tag commit 为 f03c1c76aff7bfa3f4de4af47b112315c770a0d1，但本轮核验的提交树中未定位到 LICENSE/LICENCE/COPYING/NOTICE 原文。"
     },
     {
       "SPDXID": "SPDXRef-Package-120",
@@ -2051,9 +2051,9 @@
       "licenseConcluded": "NOASSERTION",
       "licenseDeclared": "MIT OR Apache-2.0",
       "copyrightText": "NOASSERTION",
-      "sourceInfo": "Installed metadata: node_modules/.pnpm/@biomejs+biome@2.5.14/node_modules/@biomejs/biome/package.json; package-root license/notice files: none; metadata repository: git+https://github.com/biomejs/biome.git; direct scope: development.",
+      "sourceInfo": "Installed metadata: node_modules/.pnpm/@biomejs+biome@2.5.14/node_modules/@biomejs/biome/package.json; package-root license/notice files: none; metadata repository: git+https://github.com/biomejs/biome.git; direct scope: development. Third-party material manifest status: verified; materials: biome-mit, biome-apache; reason: verified source files recorded in legal/third-party/manifest.json",
       "homepage": "https://biomejs.dev",
-      "licenseComments": "Installed package root lacks LICENSE/LICENCE/COPYING text; declared metadata is not an upstream-text verification."
+      "licenseComments": "Installed package root lacks LICENSE/LICENCE/COPYING text; an upstream text and provenance record is retained in legal/third-party/manifest.json."
     },
     {
       "SPDXID": "SPDXRef-Package-122",
@@ -2064,9 +2064,9 @@
       "licenseConcluded": "NOASSERTION",
       "licenseDeclared": "MIT OR Apache-2.0",
       "copyrightText": "NOASSERTION",
-      "sourceInfo": "Installed metadata: node_modules/.pnpm/@biomejs+cli-darwin-arm64@2.5.14/node_modules/@biomejs/cli-darwin-arm64/package.json; package-root license/notice files: none; metadata repository: git+https://github.com/biomejs/biome.git; direct scope: transitive.",
+      "sourceInfo": "Installed metadata: node_modules/.pnpm/@biomejs+cli-darwin-arm64@2.5.14/node_modules/@biomejs/cli-darwin-arm64/package.json; package-root license/notice files: none; metadata repository: git+https://github.com/biomejs/biome.git; direct scope: transitive. Third-party material manifest status: verified; materials: biome-mit, biome-apache; reason: verified source files recorded in legal/third-party/manifest.json",
       "homepage": "https://biomejs.dev",
-      "licenseComments": "Installed package root lacks LICENSE/LICENCE/COPYING text; declared metadata is not an upstream-text verification."
+      "licenseComments": "Installed package root lacks LICENSE/LICENCE/COPYING text; an upstream text and provenance record is retained in legal/third-party/manifest.json."
     },
     {
       "SPDXID": "SPDXRef-Package-123",
@@ -2133,8 +2133,8 @@
       "licenseConcluded": "NOASSERTION",
       "licenseDeclared": "MIT",
       "copyrightText": "NOASSERTION",
-      "sourceInfo": "Installed metadata: node_modules/.pnpm/@esbuild+darwin-arm64@0.27.7/node_modules/@esbuild/darwin-arm64/package.json; package-root license/notice files: none; metadata repository: git+https://github.com/evanw/esbuild.git; direct scope: transitive.",
-      "licenseComments": "Installed package root lacks LICENSE/LICENCE/COPYING text; declared metadata is not an upstream-text verification."
+      "sourceInfo": "Installed metadata: node_modules/.pnpm/@esbuild+darwin-arm64@0.27.7/node_modules/@esbuild/darwin-arm64/package.json; package-root license/notice files: none; metadata repository: git+https://github.com/evanw/esbuild.git; direct scope: transitive. Third-party material manifest status: verified; materials: esbuild-mit; reason: verified source files recorded in legal/third-party/manifest.json",
+      "licenseComments": "Installed package root lacks LICENSE/LICENCE/COPYING text; an upstream text and provenance record is retained in legal/third-party/manifest.json."
     },
     {
       "SPDXID": "SPDXRef-Package-129",
@@ -2298,8 +2298,8 @@
       "licenseConcluded": "NOASSERTION",
       "licenseDeclared": "MIT",
       "copyrightText": "NOASSERTION",
-      "sourceInfo": "Installed metadata: node_modules/.pnpm/@napi-rs+canvas-darwin-arm64@1.0.9/node_modules/@napi-rs/canvas-darwin-arm64/package.json; package-root license/notice files: none; metadata repository: git+https://github.com/Brooooooklyn/canvas.git; direct scope: transitive.",
-      "licenseComments": "Installed package root lacks LICENSE/LICENCE/COPYING text; declared metadata is not an upstream-text verification."
+      "sourceInfo": "Installed metadata: node_modules/.pnpm/@napi-rs+canvas-darwin-arm64@1.0.9/node_modules/@napi-rs/canvas-darwin-arm64/package.json; package-root license/notice files: none; metadata repository: git+https://github.com/Brooooooklyn/canvas.git; direct scope: transitive. Third-party material manifest status: unresolved; materials: none; reason: npm 元数据没有 gitHead；虽可访问候选 tag 文本，本轮未得到独立核验的 tag commit，保持未解决。",
+      "licenseComments": "Installed package root lacks LICENSE/LICENCE/COPYING text; npm 元数据没有 gitHead；虽可访问候选 tag 文本，本轮未得到独立核验的 tag commit，保持未解决。"
     },
     {
       "SPDXID": "SPDXRef-Package-143",
@@ -2562,9 +2562,9 @@
       "licenseConcluded": "NOASSERTION",
       "licenseDeclared": "MIT",
       "copyrightText": "NOASSERTION",
-      "sourceInfo": "Installed metadata: node_modules/.pnpm/@rolldown+binding-darwin-arm64@1.2.11/node_modules/@rolldown/binding-darwin-arm64/package.json; package-root license/notice files: none; metadata repository: git+https://github.com/rolldown/rolldown.git; direct scope: transitive.",
+      "sourceInfo": "Installed metadata: node_modules/.pnpm/@rolldown+binding-darwin-arm64@1.2.11/node_modules/@rolldown/binding-darwin-arm64/package.json; package-root license/notice files: none; metadata repository: git+https://github.com/rolldown/rolldown.git; direct scope: transitive. Third-party material manifest status: verified; materials: rolldown-mit; reason: verified source files recorded in legal/third-party/manifest.json",
       "homepage": "https://rolldown.rs/",
-      "licenseComments": "Installed package root lacks LICENSE/LICENCE/COPYING text; declared metadata is not an upstream-text verification."
+      "licenseComments": "Installed package root lacks LICENSE/LICENCE/COPYING text; an upstream text and provenance record is retained in legal/third-party/manifest.json."
     },
     {
       "SPDXID": "SPDXRef-Package-165",
@@ -2647,9 +2647,9 @@
       "licenseConcluded": "NOASSERTION",
       "licenseDeclared": "MIT",
       "copyrightText": "NOASSERTION",
-      "sourceInfo": "Installed metadata: node_modules/.pnpm/@rollup+rollup-darwin-arm64@4.63.5/node_modules/@rollup/rollup-darwin-arm64/package.json; package-root license/notice files: none; metadata repository: git+https://github.com/rollup/rollup.git; direct scope: transitive.",
+      "sourceInfo": "Installed metadata: node_modules/.pnpm/@rollup+rollup-darwin-arm64@4.63.5/node_modules/@rollup/rollup-darwin-arm64/package.json; package-root license/notice files: none; metadata repository: git+https://github.com/rollup/rollup.git; direct scope: transitive. Third-party material manifest status: verified; materials: rollup-mit; reason: verified source files recorded in legal/third-party/manifest.json",
       "homepage": "https://rollupjs.org/",
-      "licenseComments": "Installed package root lacks LICENSE/LICENCE/COPYING text; declared metadata is not an upstream-text verification."
+      "licenseComments": "Installed package root lacks LICENSE/LICENCE/COPYING text; an upstream text and provenance record is retained in legal/third-party/manifest.json."
     },
     {
       "SPDXID": "SPDXRef-Package-172",
@@ -4057,8 +4057,8 @@
       "licenseConcluded": "NOASSERTION",
       "licenseDeclared": "MIT",
       "copyrightText": "NOASSERTION",
-      "sourceInfo": "Installed metadata: node_modules/.pnpm/err-code@3.0.1/node_modules/err-code/package.json; package-root license/notice files: none; metadata repository: git://github.com/IndigoUnited/js-err-code.git; direct scope: transitive.",
-      "licenseComments": "Installed package root lacks LICENSE/LICENCE/COPYING text; declared metadata is not an upstream-text verification."
+      "sourceInfo": "Installed metadata: node_modules/.pnpm/err-code@3.0.1/node_modules/err-code/package.json; package-root license/notice files: none; metadata repository: git://github.com/IndigoUnited/js-err-code.git; direct scope: transitive. Third-party material manifest status: unresolved; materials: none; reason: npm gitHead 为 830d141eb633c21b842df3f78aba5786fee1b31d；本轮核验的提交树中未定位到 LICENSE/LICENCE/COPYING/NOTICE 原文。",
+      "licenseComments": "Installed package root lacks LICENSE/LICENCE/COPYING text; npm gitHead 为 830d141eb633c21b842df3f78aba5786fee1b31d；本轮核验的提交树中未定位到 LICENSE/LICENCE/COPYING/NOTICE 原文。"
     },
     {
       "SPDXID": "SPDXRef-Package-292",
@@ -4231,8 +4231,8 @@
       "licenseConcluded": "NOASSERTION",
       "licenseDeclared": "MIT",
       "copyrightText": "NOASSERTION",
-      "sourceInfo": "Installed metadata: node_modules/.pnpm/event-reduce-js@6.0.0/node_modules/event-reduce-js/package.json; package-root license/notice files: none; metadata repository: git+https://github.com/pubkey/event-reduce.git; direct scope: transitive.",
-      "licenseComments": "Installed package root lacks LICENSE/LICENCE/COPYING text; declared metadata is not an upstream-text verification."
+      "sourceInfo": "Installed metadata: node_modules/.pnpm/event-reduce-js@6.0.0/node_modules/event-reduce-js/package.json; package-root license/notice files: none; metadata repository: git+https://github.com/pubkey/event-reduce.git; direct scope: transitive. Third-party material manifest status: verified; materials: event-reduce-mit; reason: verified source files recorded in legal/third-party/manifest.json",
+      "licenseComments": "Installed package root lacks LICENSE/LICENCE/COPYING text; an upstream text and provenance record is retained in legal/third-party/manifest.json."
     },
     {
       "SPDXID": "SPDXRef-Package-307",
@@ -4362,9 +4362,9 @@
       "licenseConcluded": "NOASSERTION",
       "licenseDeclared": "Apache-2.0",
       "copyrightText": "NOASSERTION",
-      "sourceInfo": "Installed metadata: node_modules/.pnpm/filelist@1.0.6/node_modules/filelist/package.json; package-root license/notice files: none; metadata repository: git://github.com/mde/filelist.git; direct scope: transitive.",
+      "sourceInfo": "Installed metadata: node_modules/.pnpm/filelist@1.0.6/node_modules/filelist/package.json; package-root license/notice files: none; metadata repository: git://github.com/mde/filelist.git; direct scope: transitive. Third-party material manifest status: unresolved; materials: none; reason: npm 元数据没有 gitHead；本轮未得到与 1.0.6 精确对应且可核验的上游 tag commit。",
       "homepage": "https://github.com/mde/filelist",
-      "licenseComments": "Installed package root lacks LICENSE/LICENCE/COPYING text; declared metadata is not an upstream-text verification."
+      "licenseComments": "Installed package root lacks LICENSE/LICENCE/COPYING text; npm 元数据没有 gitHead；本轮未得到与 1.0.6 精确对应且可核验的上游 tag commit。"
     },
     {
       "SPDXID": "SPDXRef-Package-318",
@@ -4516,9 +4516,9 @@
       "licenseConcluded": "NOASSERTION",
       "licenseDeclared": "MIT",
       "copyrightText": "NOASSERTION",
-      "sourceInfo": "Installed metadata: node_modules/.pnpm/get-browser-rtc@1.1.0/node_modules/get-browser-rtc/package.json; package-root license/notice files: none; metadata repository: git://github.com/substack/get-browser-rtc.git; direct scope: transitive.",
+      "sourceInfo": "Installed metadata: node_modules/.pnpm/get-browser-rtc@1.1.0/node_modules/get-browser-rtc/package.json; package-root license/notice files: none; metadata repository: git://github.com/substack/get-browser-rtc.git; direct scope: transitive. Third-party material manifest status: unresolved; materials: none; reason: npm gitHead 为 f4c75dce0ac4fb2af0256dc508fbb23436c54db3；本轮核验的提交树中未定位到 LICENSE/LICENCE/COPYING/NOTICE 原文。",
       "homepage": "https://github.com/substack/get-browser-rtc#readme",
-      "licenseComments": "Installed package root lacks LICENSE/LICENCE/COPYING text; declared metadata is not an upstream-text verification."
+      "licenseComments": "Installed package root lacks LICENSE/LICENCE/COPYING text; npm gitHead 为 f4c75dce0ac4fb2af0256dc508fbb23436c54db3；本轮核验的提交树中未定位到 LICENSE/LICENCE/COPYING/NOTICE 原文。"
     },
     {
       "SPDXID": "SPDXRef-Package-331",
@@ -4972,8 +4972,8 @@
       "licenseConcluded": "NOASSERTION",
       "licenseDeclared": "MIT",
       "copyrightText": "NOASSERTION",
-      "sourceInfo": "Installed metadata: node_modules/.pnpm/is-module@1.0.0/node_modules/is-module/package.json; package-root license/notice files: none; metadata repository: component/is-module; direct scope: transitive.",
-      "licenseComments": "Installed package root lacks LICENSE/LICENCE/COPYING text; declared metadata is not an upstream-text verification."
+      "sourceInfo": "Installed metadata: node_modules/.pnpm/is-module@1.0.0/node_modules/is-module/package.json; package-root license/notice files: none; metadata repository: component/is-module; direct scope: transitive. Third-party material manifest status: unresolved; materials: none; reason: npm 元数据没有 gitHead；本轮未得到与 1.0.0 精确对应且可核验的上游 tag commit。",
+      "licenseComments": "Installed package root lacks LICENSE/LICENCE/COPYING text; npm 元数据没有 gitHead；本轮未得到与 1.0.0 精确对应且可核验的上游 tag commit。"
     },
     {
       "SPDXID": "SPDXRef-Package-370",
@@ -5064,8 +5064,8 @@
       "licenseConcluded": "NOASSERTION",
       "licenseDeclared": "MIT",
       "copyrightText": "NOASSERTION",
-      "sourceInfo": "Installed metadata: node_modules/.pnpm/is-regexp@1.0.0/node_modules/is-regexp/package.json; package-root license/notice files: none; metadata repository: sindresorhus/is-regexp; direct scope: transitive.",
-      "licenseComments": "Installed package root lacks LICENSE/LICENCE/COPYING text; declared metadata is not an upstream-text verification."
+      "sourceInfo": "Installed metadata: node_modules/.pnpm/is-regexp@1.0.0/node_modules/is-regexp/package.json; package-root license/notice files: none; metadata repository: sindresorhus/is-regexp; direct scope: transitive. Third-party material manifest status: unresolved; materials: none; reason: npm 元数据没有 gitHead；本轮未得到与 1.0.0 精确对应且可核验的上游 tag commit。",
+      "licenseComments": "Installed package root lacks LICENSE/LICENCE/COPYING text; npm 元数据没有 gitHead；本轮未得到与 1.0.0 精确对应且可核验的上游 tag commit。"
     },
     {
       "SPDXID": "SPDXRef-Package-378",
@@ -5227,8 +5227,8 @@
       "licenseConcluded": "NOASSERTION",
       "licenseDeclared": "Apache-2.0",
       "copyrightText": "NOASSERTION",
-      "sourceInfo": "Installed metadata: node_modules/.pnpm/jake@10.9.4/node_modules/jake/package.json; package-root license/notice files: none; metadata repository: git://github.com/jakejs/jake.git; direct scope: transitive.",
-      "licenseComments": "Installed package root lacks LICENSE/LICENCE/COPYING text; declared metadata is not an upstream-text verification."
+      "sourceInfo": "Installed metadata: node_modules/.pnpm/jake@10.9.4/node_modules/jake/package.json; package-root license/notice files: none; metadata repository: git://github.com/jakejs/jake.git; direct scope: transitive. Third-party material manifest status: unresolved; materials: none; reason: npm 元数据没有 gitHead；本轮未得到与 10.9.4 精确对应且可核验的上游 tag commit。",
+      "licenseComments": "Installed package root lacks LICENSE/LICENCE/COPYING text; npm 元数据没有 gitHead；本轮未得到与 10.9.4 精确对应且可核验的上游 tag commit。"
     },
     {
       "SPDXID": "SPDXRef-Package-392",
@@ -5284,9 +5284,9 @@
       "licenseConcluded": "NOASSERTION",
       "licenseDeclared": "MIT",
       "copyrightText": "NOASSERTION",
-      "sourceInfo": "Installed metadata: node_modules/.pnpm/jsesc@3.1.0/node_modules/jsesc/package.json; package-root license/notice files: none; metadata repository: https://github.com/mathiasbynens/jsesc.git; direct scope: transitive.",
+      "sourceInfo": "Installed metadata: node_modules/.pnpm/jsesc@3.1.0/node_modules/jsesc/package.json; package-root license/notice files: none; metadata repository: https://github.com/mathiasbynens/jsesc.git; direct scope: transitive. Third-party material manifest status: verified; materials: mathiasbynens-mit; reason: verified source files recorded in legal/third-party/manifest.json",
       "homepage": "https://mths.be/jsesc",
-      "licenseComments": "Installed package root lacks LICENSE/LICENCE/COPYING text; declared metadata is not an upstream-text verification."
+      "licenseComments": "Installed package root lacks LICENSE/LICENCE/COPYING text; an upstream text and provenance record is retained in legal/third-party/manifest.json."
     },
     {
       "SPDXID": "SPDXRef-Package-397",
@@ -5887,9 +5887,9 @@
       "licenseConcluded": "NOASSERTION",
       "licenseDeclared": "MIT",
       "copyrightText": "NOASSERTION",
-      "sourceInfo": "Installed metadata: node_modules/.pnpm/pg-types@2.2.0/node_modules/pg-types/package.json; package-root license/notice files: none; metadata repository: git://github.com/brianc/node-pg-types.git; direct scope: transitive.",
+      "sourceInfo": "Installed metadata: node_modules/.pnpm/pg-types@2.2.0/node_modules/pg-types/package.json; package-root license/notice files: none; metadata repository: git://github.com/brianc/node-pg-types.git; direct scope: transitive. Third-party material manifest status: unresolved; materials: none; reason: npm gitHead 为 d9d9dfb87eb50914043cbc178c301b7dd3b0c50d；本轮核验的提交树中未定位到 LICENSE/LICENCE/COPYING/NOTICE 原文。",
       "homepage": "https://github.com/brianc/node-pg-types",
-      "licenseComments": "Installed package root lacks LICENSE/LICENCE/COPYING text; declared metadata is not an upstream-text verification."
+      "licenseComments": "Installed package root lacks LICENSE/LICENCE/COPYING text; npm gitHead 为 d9d9dfb87eb50914043cbc178c301b7dd3b0c50d；本轮核验的提交树中未定位到 LICENSE/LICENCE/COPYING/NOTICE 原文。"
     },
     {
       "SPDXID": "SPDXRef-Package-450",
@@ -5900,8 +5900,8 @@
       "licenseConcluded": "NOASSERTION",
       "licenseDeclared": "MIT",
       "copyrightText": "NOASSERTION",
-      "sourceInfo": "Installed metadata: node_modules/.pnpm/pgpass@1.0.5/node_modules/pgpass/package.json; package-root license/notice files: none; metadata repository: https://github.com/hoegaarden/pgpass.git; direct scope: transitive.",
-      "licenseComments": "Installed package root lacks LICENSE/LICENCE/COPYING text; declared metadata is not an upstream-text verification."
+      "sourceInfo": "Installed metadata: node_modules/.pnpm/pgpass@1.0.5/node_modules/pgpass/package.json; package-root license/notice files: none; metadata repository: https://github.com/hoegaarden/pgpass.git; direct scope: transitive. Third-party material manifest status: unresolved; materials: none; reason: npm gitHead 为 4230ed5e417ba6044ea7eb80b7c33db9ec301398；本轮核验的提交树中未定位到 LICENSE/LICENCE/COPYING/NOTICE 原文。",
+      "licenseComments": "Installed package root lacks LICENSE/LICENCE/COPYING text; npm gitHead 为 4230ed5e417ba6044ea7eb80b7c33db9ec301398；本轮核验的提交树中未定位到 LICENSE/LICENCE/COPYING/NOTICE 原文。"
     },
     {
       "SPDXID": "SPDXRef-Package-451",
@@ -6061,9 +6061,9 @@
       "licenseConcluded": "NOASSERTION",
       "licenseDeclared": "MIT",
       "copyrightText": "NOASSERTION",
-      "sourceInfo": "Installed metadata: node_modules/.pnpm/punycode@2.3.1/node_modules/punycode/package.json; package-root license/notice files: none; metadata repository: https://github.com/mathiasbynens/punycode.js.git; direct scope: transitive.",
+      "sourceInfo": "Installed metadata: node_modules/.pnpm/punycode@2.3.1/node_modules/punycode/package.json; package-root license/notice files: none; metadata repository: https://github.com/mathiasbynens/punycode.js.git; direct scope: transitive. Third-party material manifest status: verified; materials: mathiasbynens-mit; reason: verified source files recorded in legal/third-party/manifest.json",
       "homepage": "https://mths.be/punycode",
-      "licenseComments": "Installed package root lacks LICENSE/LICENCE/COPYING text; declared metadata is not an upstream-text verification."
+      "licenseComments": "Installed package root lacks LICENSE/LICENCE/COPYING text; an upstream text and provenance record is retained in legal/third-party/manifest.json."
     },
     {
       "SPDXID": "SPDXRef-Package-465",
@@ -6157,8 +6157,8 @@
       "licenseConcluded": "NOASSERTION",
       "licenseDeclared": "MIT",
       "copyrightText": "NOASSERTION",
-      "sourceInfo": "Installed metadata: node_modules/.pnpm/react-remove-scroll-bar@2.3.8_@types+react@19.3.0_react@19.3.0/node_modules/react-remove-scroll-bar/package.json; package-root license/notice files: none; metadata repository: https://github.com/theKashey/react-remove-scroll-bar; direct scope: transitive.",
-      "licenseComments": "Installed package root lacks LICENSE/LICENCE/COPYING text; declared metadata is not an upstream-text verification."
+      "sourceInfo": "Installed metadata: node_modules/.pnpm/react-remove-scroll-bar@2.3.8_@types+react@19.3.0_react@19.3.0/node_modules/react-remove-scroll-bar/package.json; package-root license/notice files: none; metadata repository: https://github.com/theKashey/react-remove-scroll-bar; direct scope: transitive. Third-party material manifest status: unresolved; materials: none; reason: npm gitHead 为 b3b1287aad81def2e2ae707274b74531b61ddbaf；本轮核验的提交树中未定位到 LICENSE/LICENCE/COPYING/NOTICE 原文。",
+      "licenseComments": "Installed package root lacks LICENSE/LICENCE/COPYING text; npm gitHead 为 b3b1287aad81def2e2ae707274b74531b61ddbaf；本轮核验的提交树中未定位到 LICENSE/LICENCE/COPYING/NOTICE 原文。"
     },
     {
       "SPDXID": "SPDXRef-Package-473",
@@ -6204,9 +6204,9 @@
       "licenseConcluded": "NOASSERTION",
       "licenseDeclared": "MIT",
       "copyrightText": "NOASSERTION",
-      "sourceInfo": "Installed metadata: node_modules/.pnpm/regenerate@1.4.2/node_modules/regenerate/package.json; package-root license/notice files: none; metadata repository: https://github.com/mathiasbynens/regenerate.git; direct scope: transitive.",
+      "sourceInfo": "Installed metadata: node_modules/.pnpm/regenerate@1.4.2/node_modules/regenerate/package.json; package-root license/notice files: none; metadata repository: https://github.com/mathiasbynens/regenerate.git; direct scope: transitive. Third-party material manifest status: verified; materials: mathiasbynens-mit; reason: verified source files recorded in legal/third-party/manifest.json",
       "homepage": "https://mths.be/regenerate",
-      "licenseComments": "Installed package root lacks LICENSE/LICENCE/COPYING text; declared metadata is not an upstream-text verification."
+      "licenseComments": "Installed package root lacks LICENSE/LICENCE/COPYING text; an upstream text and provenance record is retained in legal/third-party/manifest.json."
     },
     {
       "SPDXID": "SPDXRef-Package-477",
@@ -6217,9 +6217,9 @@
       "licenseConcluded": "NOASSERTION",
       "licenseDeclared": "MIT",
       "copyrightText": "NOASSERTION",
-      "sourceInfo": "Installed metadata: node_modules/.pnpm/regenerate-unicode-properties@10.2.2/node_modules/regenerate-unicode-properties/package.json; package-root license/notice files: none; metadata repository: https://github.com/mathiasbynens/regenerate-unicode-properties.git; direct scope: transitive.",
+      "sourceInfo": "Installed metadata: node_modules/.pnpm/regenerate-unicode-properties@10.2.2/node_modules/regenerate-unicode-properties/package.json; package-root license/notice files: none; metadata repository: https://github.com/mathiasbynens/regenerate-unicode-properties.git; direct scope: transitive. Third-party material manifest status: verified; materials: mathiasbynens-mit; reason: verified source files recorded in legal/third-party/manifest.json",
       "homepage": "https://github.com/mathiasbynens/regenerate-unicode-properties",
-      "licenseComments": "Installed package root lacks LICENSE/LICENCE/COPYING text; declared metadata is not an upstream-text verification."
+      "licenseComments": "Installed package root lacks LICENSE/LICENCE/COPYING text; an upstream text and provenance record is retained in legal/third-party/manifest.json."
     },
     {
       "SPDXID": "SPDXRef-Package-478",
@@ -6241,9 +6241,9 @@
       "licenseConcluded": "NOASSERTION",
       "licenseDeclared": "MIT",
       "copyrightText": "NOASSERTION",
-      "sourceInfo": "Installed metadata: node_modules/.pnpm/regexpu-core@6.4.0/node_modules/regexpu-core/package.json; package-root license/notice files: none; metadata repository: https://github.com/mathiasbynens/regexpu-core.git; direct scope: transitive.",
+      "sourceInfo": "Installed metadata: node_modules/.pnpm/regexpu-core@6.4.0/node_modules/regexpu-core/package.json; package-root license/notice files: none; metadata repository: https://github.com/mathiasbynens/regexpu-core.git; direct scope: transitive. Third-party material manifest status: verified; materials: mathiasbynens-mit; reason: verified source files recorded in legal/third-party/manifest.json",
       "homepage": "https://mths.be/regexpu",
-      "licenseComments": "Installed package root lacks LICENSE/LICENCE/COPYING text; declared metadata is not an upstream-text verification."
+      "licenseComments": "Installed package root lacks LICENSE/LICENCE/COPYING text; an upstream text and provenance record is retained in legal/third-party/manifest.json."
     },
     {
       "SPDXID": "SPDXRef-Package-480",
@@ -6254,9 +6254,9 @@
       "licenseConcluded": "NOASSERTION",
       "licenseDeclared": "MIT",
       "copyrightText": "NOASSERTION",
-      "sourceInfo": "Installed metadata: node_modules/.pnpm/regjsgen@0.8.0/node_modules/regjsgen/package.json; package-root license/notice files: none; metadata repository: https://github.com/bnjmnt4n/regjsgen.git; direct scope: transitive.",
+      "sourceInfo": "Installed metadata: node_modules/.pnpm/regjsgen@0.8.0/node_modules/regjsgen/package.json; package-root license/notice files: none; metadata repository: https://github.com/bnjmnt4n/regjsgen.git; direct scope: transitive. Third-party material manifest status: verified; materials: regjsgen-mit; reason: verified source files recorded in legal/third-party/manifest.json",
       "homepage": "https://github.com/bnjmnt4n/regjsgen",
-      "licenseComments": "Installed package root lacks LICENSE/LICENCE/COPYING text; declared metadata is not an upstream-text verification."
+      "licenseComments": "Installed package root lacks LICENSE/LICENCE/COPYING text; an upstream text and provenance record is retained in legal/third-party/manifest.json."
     },
     {
       "SPDXID": "SPDXRef-Package-481",
@@ -7051,9 +7051,9 @@
       "licenseConcluded": "NOASSERTION",
       "licenseDeclared": "MIT",
       "copyrightText": "NOASSERTION",
-      "sourceInfo": "Installed metadata: node_modules/.pnpm/unicode-canonical-property-names-ecmascript@2.0.1/node_modules/unicode-canonical-property-names-ecmascript/package.json; package-root license/notice files: none; metadata repository: https://github.com/mathiasbynens/unicode-canonical-property-names-ecmascript.git; direct scope: transitive.",
+      "sourceInfo": "Installed metadata: node_modules/.pnpm/unicode-canonical-property-names-ecmascript@2.0.1/node_modules/unicode-canonical-property-names-ecmascript/package.json; package-root license/notice files: none; metadata repository: https://github.com/mathiasbynens/unicode-canonical-property-names-ecmascript.git; direct scope: transitive. Third-party material manifest status: verified; materials: mathiasbynens-mit; reason: verified source files recorded in legal/third-party/manifest.json",
       "homepage": "https://github.com/mathiasbynens/unicode-canonical-property-names-ecmascript",
-      "licenseComments": "Installed package root lacks LICENSE/LICENCE/COPYING text; declared metadata is not an upstream-text verification."
+      "licenseComments": "Installed package root lacks LICENSE/LICENCE/COPYING text; an upstream text and provenance record is retained in legal/third-party/manifest.json."
     },
     {
       "SPDXID": "SPDXRef-Package-549",
@@ -7064,9 +7064,9 @@
       "licenseConcluded": "NOASSERTION",
       "licenseDeclared": "MIT",
       "copyrightText": "NOASSERTION",
-      "sourceInfo": "Installed metadata: node_modules/.pnpm/unicode-match-property-ecmascript@2.0.0/node_modules/unicode-match-property-ecmascript/package.json; package-root license/notice files: none; metadata repository: https://github.com/mathiasbynens/unicode-match-property-ecmascript.git; direct scope: transitive.",
+      "sourceInfo": "Installed metadata: node_modules/.pnpm/unicode-match-property-ecmascript@2.0.0/node_modules/unicode-match-property-ecmascript/package.json; package-root license/notice files: none; metadata repository: https://github.com/mathiasbynens/unicode-match-property-ecmascript.git; direct scope: transitive. Third-party material manifest status: verified; materials: mathiasbynens-mit; reason: verified source files recorded in legal/third-party/manifest.json",
       "homepage": "https://github.com/mathiasbynens/unicode-match-property-ecmascript",
-      "licenseComments": "Installed package root lacks LICENSE/LICENCE/COPYING text; declared metadata is not an upstream-text verification."
+      "licenseComments": "Installed package root lacks LICENSE/LICENCE/COPYING text; an upstream text and provenance record is retained in legal/third-party/manifest.json."
     },
     {
       "SPDXID": "SPDXRef-Package-550",
@@ -7077,9 +7077,9 @@
       "licenseConcluded": "NOASSERTION",
       "licenseDeclared": "MIT",
       "copyrightText": "NOASSERTION",
-      "sourceInfo": "Installed metadata: node_modules/.pnpm/unicode-match-property-value-ecmascript@2.2.1/node_modules/unicode-match-property-value-ecmascript/package.json; package-root license/notice files: none; metadata repository: https://github.com/mathiasbynens/unicode-match-property-value-ecmascript.git; direct scope: transitive.",
+      "sourceInfo": "Installed metadata: node_modules/.pnpm/unicode-match-property-value-ecmascript@2.2.1/node_modules/unicode-match-property-value-ecmascript/package.json; package-root license/notice files: none; metadata repository: https://github.com/mathiasbynens/unicode-match-property-value-ecmascript.git; direct scope: transitive. Third-party material manifest status: verified; materials: mathiasbynens-mit; reason: verified source files recorded in legal/third-party/manifest.json",
       "homepage": "https://github.com/mathiasbynens/unicode-match-property-value-ecmascript",
-      "licenseComments": "Installed package root lacks LICENSE/LICENCE/COPYING text; declared metadata is not an upstream-text verification."
+      "licenseComments": "Installed package root lacks LICENSE/LICENCE/COPYING text; an upstream text and provenance record is retained in legal/third-party/manifest.json."
     },
     {
       "SPDXID": "SPDXRef-Package-551",
@@ -7090,9 +7090,9 @@
       "licenseConcluded": "NOASSERTION",
       "licenseDeclared": "MIT",
       "copyrightText": "NOASSERTION",
-      "sourceInfo": "Installed metadata: node_modules/.pnpm/unicode-property-aliases-ecmascript@2.2.0/node_modules/unicode-property-aliases-ecmascript/package.json; package-root license/notice files: none; metadata repository: https://github.com/mathiasbynens/unicode-property-aliases-ecmascript.git; direct scope: transitive.",
+      "sourceInfo": "Installed metadata: node_modules/.pnpm/unicode-property-aliases-ecmascript@2.2.0/node_modules/unicode-property-aliases-ecmascript/package.json; package-root license/notice files: none; metadata repository: https://github.com/mathiasbynens/unicode-property-aliases-ecmascript.git; direct scope: transitive. Third-party material manifest status: verified; materials: mathiasbynens-mit; reason: verified source files recorded in legal/third-party/manifest.json",
       "homepage": "https://github.com/mathiasbynens/unicode-property-aliases-ecmascript",
-      "licenseComments": "Installed package root lacks LICENSE/LICENCE/COPYING text; declared metadata is not an upstream-text verification."
+      "licenseComments": "Installed package root lacks LICENSE/LICENCE/COPYING text; an upstream text and provenance record is retained in legal/third-party/manifest.json."
     },
     {
       "SPDXID": "SPDXRef-Package-552",
