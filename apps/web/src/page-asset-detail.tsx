@@ -12,6 +12,7 @@ import { ArrowDownRight, ArrowLeft, Check, ExternalLink, Plus } from "lucide-rea
 import { useTranslation } from "react-i18next";
 import {
 	type Asset,
+	assetSchema,
 	type ProjectDomain,
 	type Submission,
 	type Relation,
@@ -834,19 +835,22 @@ export function AssetDetail() {
 		setItemBusy(true);
 		setItemStatusError("");
 		try {
+			// Legacy rows predate itemLifecycleStatus. Normalize before building the
+			// history pair so an unrecorded previous state is stored as null.
+			const current = assetSchema.parse(asset);
 			const timestamp = new Date().toISOString();
 			const historyId = crypto.randomUUID();
-			await commitItemAction(asset, {
-				...asset,
+			await commitItemAction(current, {
+				...current,
 				itemLifecycleStatus: itemStatusDraft,
 				itemStatusDate: itemStatusDateDraft,
 				lastItemEventId: historyId,
 				updatedAt: timestamp,
 			}, {
 				id: historyId,
-				assetId: asset.id,
+				assetId: current.id,
 				action: "itemStatus",
-				itemStatusBefore: asset.itemLifecycleStatus,
+				itemStatusBefore: current.itemLifecycleStatus,
 				itemStatusAfter: itemStatusDraft,
 				eventDate: itemStatusDateDraft,
 				note: itemStatusNote.trim(),

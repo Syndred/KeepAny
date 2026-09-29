@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { expect, type Page, test } from "@playwright/test";
 
 const repositoryModuleUrl = `/@fs${process.cwd()}/packages/local-db/src/index.ts`;
+const domainModuleUrl = `/@fs${process.cwd()}/packages/domain/src/index.ts`;
 
 function fact(page: Page, label: string) {
 	return page.locator("dt").filter({ hasText: label }).locator("..").locator("dd");
@@ -27,6 +28,42 @@ async function changeStatus(page: Page, status: string, day: string, note: strin
 	await dialog.getByRole("button", { name: "Save status" }).click();
 	await expect(dialog).toBeHidden();
 }
+
+test("legacy item without lifecycle fields records its first status change", async ({ page }) => {
+	const name = `Legacy work laptop ${crypto.randomUUID().slice(0, 8)}`;
+	await page.goto("/assets/item");
+	const id = await page.evaluate(async ({ modulePath, domainPath, name }) => {
+		const { localRepository } = await import(modulePath);
+		const { newAsset } = await import(domainPath);
+		const repository = await localRepository();
+		const asset = { ...newAsset("item"), name, purchaseDate: "2023-05-10" };
+		await repository.save("asset", asset);
+		const row = await repository.db.records.findOne(`asset:${asset.id}`).exec();
+		if (!row) throw Error("legacy row missing");
+		await row.incrementalModify((data: { payload: string }) => {
+			const payload = JSON.parse(data.payload);
+			for (const field of ["itemLifecycleStatus", "itemStatusDate", "itemStartDate", "itemWarrantyStatus", "lastItemEventId"])
+				delete payload[field];
+			return { ...data, payload: JSON.stringify(payload) };
+		});
+		return asset.id;
+	}, { modulePath: repositoryModuleUrl, domainPath: domainModuleUrl, name });
+	await page.goto(`/assets/item/${id}`);
+	await expect(page.getByRole("heading", { name })).toBeVisible();
+	await expect(fact(page, "Item status")).toHaveText("Not recorded");
+	await page.getByRole("button", { name: "Record status change" }).click();
+	const dialog = page.getByRole("dialog");
+	await dialog.getByLabel("Item status").selectOption("idle");
+	await dialog.getByLabel("Effective date").fill("2026-09-29");
+	await dialog.getByRole("button", { name: "Save status" }).click();
+	await expect(dialog).toBeHidden();
+	await expect(fact(page, "Item status")).toHaveText("Idle");
+	const saved = await state(page, name);
+	expect(saved.asset).toMatchObject({ itemLifecycleStatus: "idle", itemStatusDate: "2026-09-29" });
+	expect(saved.history.filter(row => row.action === "itemStatus")).toMatchObject([
+		{ itemStatusBefore: null, itemStatusAfter: "idle", eventDate: "2026-09-29" },
+	]);
+});
 
 test("physical item facts, atomic status history and encrypted backup survive in both languages and widths", async ({ browser }, testInfo) => {
 	test.setTimeout(180_000);
