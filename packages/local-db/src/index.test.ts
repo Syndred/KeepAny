@@ -2,7 +2,7 @@ import 'fake-indexeddb/auto';
 import { describe, expect, it, vi } from 'vitest';
 import { zipSync, unzipSync, strToU8, strFromU8 } from 'fflate';
 import { historySchema, newAsset, type Asset, type History, type Task } from '../../domain/src';
-import { buildProjectWorkflowTasks, recordProjectWorkflowTask } from '../../domain/src/project-workflow';
+import { buildProjectWorkflowTasks, currentProjectWorkflowRound, recordProjectWorkflowTask } from '../../domain/src/project-workflow';
 import { inspectArchive, LocalRepository, openLocalRepository, type RecordRow } from './index';
 
 const name = () => `test-${crypto.randomUUID().slice(0, 12)}`;
@@ -108,6 +108,67 @@ describe('RxDB + free Dexie local repository', () => {
       const stale = recordProjectWorkflowTask(old, 'blocked', 'Tab B stale result', '2026-09-29T02:00:00.000Z');
       await expect(db.saveTaskIfCurrent(old, stale)).rejects.toThrow('task-stale');
       expect((await db.get<Task>('task', initial.id))?.projectWorkflow?.record?.evidence).toBe('Verified by tab A');
+    } finally { await db.close(); }
+  });
+
+  it('checks the live close round before the final decision and local archive', async () => {
+    const db = await openLocalRepository(name());
+    const otherTab = new LocalRepository(db.db, db.fileStore);
+    try {
+      const site = project('Close race site');
+      await db.save('asset', site);
+      const makeRound = (roundId: string, at: string) => buildProjectWorkflowTasks({
+        project: site, assets: [site], relations: [], submissions: [], kind: 'close', roundId, at,
+        title: step => step,
+      });
+      const firstRoundId = crypto.randomUUID();
+      const initial = makeRound(firstRoundId, '2026-09-29T00:00:00.000Z');
+      await db.saveBatch(initial.map(value => ({ type: 'task' as const, value })));
+      const resolved = [] as Task[];
+      for (const task of initial.slice(0, -1)) {
+        const next = recordProjectWorkflowTask(task, 'done', 'Resolved', '2026-09-29T01:00:00.000Z');
+        await db.saveTaskIfCurrent(task, next);
+        resolved.push(next);
+      }
+
+      // Tab A renders an apparently complete round; tab B changes a prerequisite before A writes.
+      const staleRound = currentProjectWorkflowRound(await db.list<Task>('task'), site.id, 'close');
+      const decision = staleRound.find(task => task.projectWorkflow?.step === 'closeDecision');
+      if (!decision) throw Error('decision-missing');
+      const blocked = recordProjectWorkflowTask(resolved[0], 'blocked', 'Needs handoff', '2026-09-29T02:00:00.000Z');
+      await otherTab.saveTaskIfCurrent(resolved[0], blocked);
+      await expect(db.saveTaskIfCurrent(decision, recordProjectWorkflowTask(decision, 'done', 'Close approved', '2026-09-29T02:01:00.000Z')))
+        .rejects.toThrow('workflow-stale');
+      expect((await db.get<Task>('task', decision.id))?.projectWorkflow?.record).toBeUndefined();
+      expect((await db.get<Asset>('asset', site.id))?.status).toBe('active');
+
+      const unblocked = recordProjectWorkflowTask(blocked, 'done', 'Resolved again', '2026-09-29T03:00:00.000Z');
+      await db.saveTaskIfCurrent(blocked, unblocked);
+      const approved = recordProjectWorkflowTask(decision, 'done', 'Close approved', '2026-09-29T03:01:00.000Z');
+      await db.saveTaskIfCurrent(decision, approved);
+
+      // Tab A opens the archive dialog; tab B blocks another prerequisite before confirmation.
+      const blockedAgain = recordProjectWorkflowTask(resolved[1], 'blocked', 'Transfer failed', '2026-09-29T04:00:00.000Z');
+      await otherTab.saveTaskIfCurrent(resolved[1], blockedAgain);
+      await expect(db.archiveProjectIfWorkflowComplete(site, firstRoundId)).rejects.toThrow('workflow-stale');
+      expect((await db.get<Asset>('asset', site.id))?.status).toBe('active');
+      expect((await db.get<Task>('task', resolved[1].id))?.projectWorkflow?.record?.evidence).toBe('Transfer failed');
+
+      const resolvedAgain = recordProjectWorkflowTask(blockedAgain, 'done', 'Transfer complete', '2026-09-29T05:00:00.000Z');
+      await otherTab.saveTaskIfCurrent(blockedAgain, resolvedAgain);
+      await otherTab.deleteEntity('task', initial[0].id);
+      await expect(db.archiveProjectIfWorkflowComplete(site, firstRoundId)).rejects.toThrow('workflow-stale');
+      await otherTab.restoreEntity('task', initial[0].id);
+      const secondRoundId = crypto.randomUUID();
+      const secondRound = makeRound(secondRoundId, '2026-09-29T06:00:00.000Z');
+      await db.saveBatch(secondRound.map(value => ({ type: 'task' as const, value })));
+      await expect(db.archiveProjectIfWorkflowComplete(site, firstRoundId)).rejects.toThrow('workflow-stale');
+      expect((await db.get<Asset>('asset', site.id))?.status).toBe('active');
+      for (const task of secondRound) {
+        await db.saveTaskIfCurrent(task, recordProjectWorkflowTask(task, 'done', 'Second round complete', '2026-09-29T07:00:00.000Z'));
+      }
+      await expect(db.archiveProjectIfWorkflowComplete(site, secondRoundId)).resolves.toMatchObject({ type: 'asset' });
+      expect((await db.get<Asset>('asset', site.id))?.status).toBe('archived');
     } finally { await db.close(); }
   });
 

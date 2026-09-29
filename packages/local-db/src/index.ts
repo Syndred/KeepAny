@@ -3,6 +3,7 @@ import { getRxStorageDexie } from 'rxdb/plugins/storage-dexie';
 import Dexie, { type Table } from 'dexie';
 import { z } from 'zod';
 import { dueOnCycle, entitySchemas, normalizeCategoryName, type Asset, type AssetKind, type Category, type EntityType, type History, type Task } from '../../domain/src';
+import { canRecordProjectWorkflowTask, currentProjectWorkflowRound } from '../../domain/src/project-workflow';
 import { zipSync, unzipSync, strToU8, strFromU8 } from 'fflate';
 import type { SyncOperation } from '../../contracts/src';
 
@@ -170,7 +171,7 @@ export class LocalRepository {
 
   async save(type: EntityType, value: unknown): Promise<RecordRow> {
     const task = type === 'task' ? entitySchemas.task.parse(value) : null;
-    if (task?.dedupeKey && !task.done && !task.deleted) {
+    if (task) {
       return withRenewalLock(`keepany-task:${this.db.name}`, () => this.saveUnlocked(type, value));
     }
     return this.saveUnlocked(type, value);
@@ -212,6 +213,19 @@ export class LocalRepository {
     return withRenewalLock(`keepany-task:${this.db.name}`, () => this.saveUnlocked('task', next, rowFor('task', expected).payload));
   }
 
+  async archiveProjectIfWorkflowComplete(expectedProject: Asset, expectedRoundId: string): Promise<RecordRow> {
+    if (expectedProject.kind !== 'project' || expectedProject.deleted || expectedProject.status === 'archived' || !expectedRoundId) throw Error('workflow-stale');
+    return withRenewalLock(`keepany-task:${this.db.name}`, async () => {
+      const tasks = await this.list<Task>('task', true);
+      const round = currentProjectWorkflowRound(tasks, expectedProject.id, 'close');
+      if (!round.length || round[0].projectWorkflow?.roundId !== expectedRoundId ||
+        tasks.some(task => task.deleted && task.projectWorkflow?.roundId === expectedRoundId) ||
+        round.some(task => !['done', 'na'].includes(task.projectWorkflow?.record?.outcome ?? '')) ||
+        !round.some(task => task.projectWorkflow?.step === 'closeDecision' && task.projectWorkflow.record?.outcome === 'done')) throw Error('workflow-stale');
+      return this.saveUnlocked('asset', { ...expectedProject, status: 'archived', updatedAt: new Date().toISOString() }, rowFor('asset', expectedProject).payload);
+    });
+  }
+
   async savePreferenceIfCurrent(expected: { id: string; value: unknown } | null, next: { id: string; value: unknown }): Promise<RecordRow> {
     if (expected && expected.id !== next.id) throw Error('preference-stale');
     return this.saveUnlocked('preference', next, expected ? rowFor('preference', expected).payload : null);
@@ -221,6 +235,16 @@ export class LocalRepository {
     if (type === 'asset' && this.renewalRecoveryError) throw Error('renewal-recovery-pending');
     const next = rowFor(type, value);
     const entity = parsedPayload(next) as Record<string, unknown>;
+    if (type === 'task') {
+      const task = entity as unknown as Task;
+      if (task.projectWorkflow?.step === 'closeDecision' && task.projectWorkflow.record) {
+        const tasks = await this.list<Task>('task', true);
+        const round = currentProjectWorkflowRound(tasks, task.projectWorkflow.projectId, 'close');
+        if (!round.some(row => row.id === task.id) || round[0]?.projectWorkflow?.roundId !== task.projectWorkflow.roundId ||
+          tasks.some(row => row.deleted && row.projectWorkflow?.roundId === task.projectWorkflow?.roundId) ||
+          !canRecordProjectWorkflowTask(task, round)) throw Error('workflow-stale');
+      }
+    }
     if (type === 'asset') {
       for (const id of entity.attachments as string[]) {
         if (!(await this.fileStore.blobs.get(id))) throw Error('attachment-missing');
@@ -779,6 +803,9 @@ export class LocalRepository {
 
   // Explicit undo is the only local path that can revive a tombstone.
   async restoreEntity(type: EntityType, id: string): Promise<RecordRow> {
+    if (type === 'task') {
+      return withRenewalLock(`keepany-task:${this.db.name}`, () => this.restoreEntityUnlocked(type, id));
+    }
     if (type === 'asset' || type === 'history') {
       return withRenewalLock(`keepany-renewal:${this.db.name}`, async () => {
         await this.settleRenewalJournals();
@@ -1564,6 +1591,9 @@ export async function createCategory(kind: AssetKind, name: string, order: numbe
 }
 export async function saveAssetIfCurrent(expected: Asset, next: Asset) { return (await defaultRepository()).saveAssetIfCurrent(expected, next); }
 export async function saveTaskIfCurrent(expected: Task, next: Task) { return (await defaultRepository()).saveTaskIfCurrent(expected, next); }
+export async function archiveProjectIfWorkflowComplete(expectedProject: Asset, expectedRoundId: string) {
+  return (await defaultRepository()).archiveProjectIfWorkflowComplete(expectedProject, expectedRoundId);
+}
 export async function savePreferenceIfCurrent(expected: { id: string; value: unknown } | null, next: { id: string; value: unknown }) { return (await defaultRepository()).savePreferenceIfCurrent(expected, next); }
 export async function saveBatch(items: ReadonlyArray<{ type: EntityType; value: unknown }>) { return (await defaultRepository()).saveBatch(items); }
 export async function recordRenewal(expectedAsset: Asset, nextAsset: Asset, history: History) {

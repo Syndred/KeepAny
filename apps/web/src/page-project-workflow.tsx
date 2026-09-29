@@ -1,9 +1,9 @@
 import { Link, useRouterState } from '@tanstack/react-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { taskSchema, type Asset, type Task } from '../../../packages/domain/src';
+import type { Asset, Task } from '../../../packages/domain/src';
 import { buildProjectWorkflowTasks, currentProjectWorkflowRound, type ProjectWorkflowKind, type ProjectWorkflowProposal } from '../../../packages/domain/src/project-workflow';
-import { allRecords, saveAssetIfCurrent, saveBatch } from '../../../packages/local-db/src';
+import { archiveProjectIfWorkflowComplete, saveBatch } from '../../../packages/local-db/src';
 import { Button } from './components/ui/button';
 import { Dialog } from './components/ui/dialog';
 import { ProjectWorkflowTaskRow } from './ProjectWorkflowTaskRow';
@@ -69,12 +69,7 @@ export function ProjectWorkflowPage() {
     if (!project || !complete || kind !== 'close' || !round.some(task => task.projectWorkflow?.step === 'closeDecision' && task.projectWorkflow.record?.outcome === 'done')) return;
     setBusy(true); setError('');
     try {
-      const liveTasks = (await allRecords()).filter(row => row.type === 'task').map(row => taskSchema.parse(JSON.parse(row.payload)));
-      const liveRound = currentProjectWorkflowRound(liveTasks, project.id, 'close');
-      if (liveRound.length !== round.length || liveRound[0]?.projectWorkflow?.roundId !== round[0]?.projectWorkflow?.roundId ||
-        liveRound.some(task => !['done','na'].includes(task.projectWorkflow?.record?.outcome ?? '') ) ||
-        !liveRound.some(task => task.projectWorkflow?.step === 'closeDecision' && task.projectWorkflow.record?.outcome === 'done')) throw Error('workflow-stale');
-      await saveAssetIfCurrent(project, { ...project, status: 'archived', updatedAt: new Date().toISOString() });
+      await archiveProjectIfWorkflowComplete(project, round[0].projectWorkflow?.roundId ?? '');
       setArchiveOpen(false); notify(t('saved'));
     } catch (cause) { setError(cause instanceof Error && cause.message === 'workflow-stale' ? t('workflowRoundStale') : t('assetStale')); }
     finally { setBusy(false); }

@@ -30,7 +30,7 @@ export function ProjectWorkflowTaskRow({ task, round: suppliedRound }: { task: T
       await saveTaskIfCurrent(task, next);
       setEditing(false);
       notify(t('saved'));
-    } catch (cause) { setError(cause instanceof Error && cause.message === 'task-stale' ? t('workflowTaskStale') : t('error')); }
+    } catch (cause) { setError(cause instanceof Error && cause.message === 'workflow-stale' ? t('workflowRoundStale') : cause instanceof Error && cause.message === 'task-stale' ? t('workflowTaskStale') : t('error')); }
     finally { setBusy(false); }
   }
   const record = workflow.record;
