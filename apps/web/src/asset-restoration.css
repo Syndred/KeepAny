@@ -45,6 +45,24 @@
 .asset-category-order .sortable-pill {
 	flex: none;
 }
+.asset-category-members {
+	min-width: 0;
+	padding: 12px;
+	border: 1px solid var(--line-soft);
+	border-radius: 12px;
+	background: var(--paper);
+}
+.asset-category-members .card-header { gap: 8px; }
+.asset-category-members h3 { margin: 0; font-size: 14px; }
+.asset-category-members .subtitle { margin: 5px 0 9px; font-size: 12px; }
+.asset-category-member-list { display: grid; gap: 5px; max-height: 220px; overflow-y: auto; }
+.asset-category-member-list label { display: flex; align-items: center; gap: 9px; min-width: 0; padding: 7px; border-radius: 8px; cursor: pointer; }
+.asset-category-member-list label:hover { background: var(--yellow-soft); }
+.asset-category-member-list input { flex: none; width: 16px; height: 16px; }
+.asset-category-member-list span { display: grid; min-width: 0; }
+.asset-category-member-list strong, .asset-category-member-list small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.asset-category-member-list strong { font-size: 12px; }
+.asset-category-member-list small { color: var(--muted); font-size: 11px; }
 .asset-list-content {
 	min-width: 0;
 }

@@ -19,7 +19,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { ArrowRight, Code2, CreditCard, GripVertical, Mail, Package, Plus, Shield, Smartphone, UserRound } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { normalizeCategoryName, type Asset, type AssetKind } from "../../../packages/domain/src";
-import { createCategory, fileUrl, save } from "../../../packages/local-db/src";
+import { createCategory, fileUrl, save, saveAssetIfCurrent } from "../../../packages/local-db/src";
 import { Button } from "./components/ui/button";
 import { Dialog } from "./components/ui/dialog";
 import "./asset-restoration.css";
@@ -119,6 +119,53 @@ function CategoryStrip({
 	const [categoryError, setCategoryError] = useState("");
 	const addingCategory = useRef(false);
 	const [categoryBusy, setCategoryBusy] = useState(false);
+	const [memberCategory, setMemberCategory] = useState("");
+	const [memberIds, setMemberIds] = useState<string[]>([]);
+	const memberAssets = liveAssets(data).filter((asset) => asset.kind === kind).sort((a, b) => a.name.localeCompare(b.name));
+	const membersChanged = memberCategory !== "" && memberAssets.some((asset) => memberIds.includes(asset.id) !== (asset.category === memberCategory));
+	function selectManagedCategory(category: string) {
+		setMemberCategory(category);
+		setMemberIds(memberAssets.filter((asset) => asset.category === category).map((asset) => asset.id));
+		choose(category);
+	}
+	function openManager() {
+		setCategoryError("");
+		const initial = chosen || ordered[0] || "";
+		setMemberCategory(initial);
+		setMemberIds(memberAssets.filter((asset) => asset.category === initial).map((asset) => asset.id));
+		setManage(true);
+	}
+	async function saveMembers() {
+		if (!memberCategory || categoryBusy || !membersChanged) return;
+		setCategoryBusy(true);
+		setCategoryError("");
+		try {
+			for (const asset of memberAssets) {
+				const selected = memberIds.includes(asset.id);
+				if (selected === (asset.category === memberCategory)) continue;
+				await saveAssetIfCurrent(asset, { ...asset, category: selected ? memberCategory : "", updatedAt: new Date().toISOString() });
+			}
+			notify(t("saved"));
+		} catch (error) {
+			setCategoryError(t(error instanceof Error && error.message === "asset-stale" ? "assetStale" : "error"));
+		} finally { setCategoryBusy(false); }
+	}
+	async function removeCategory(category: (typeof data.categories)[number]) {
+		if (categoryBusy) return;
+		setCategoryBusy(true);
+		setCategoryError("");
+		try {
+			for (const asset of memberAssets.filter((item) => item.category === category.name)) {
+				await saveAssetIfCurrent(asset, { ...asset, category: "", updatedAt: new Date().toISOString() });
+			}
+			await save("category", { ...category, deleted: true });
+			if (chosen === category.name) choose("");
+			if (memberCategory === category.name) selectManagedCategory(ordered.find((item) => item !== category.name) || "");
+			notify(t("saved"));
+		} catch (error) {
+			setCategoryError(t(error instanceof Error && error.message === "asset-stale" ? "assetStale" : "error"));
+		} finally { setCategoryBusy(false); }
+	}
 	async function onDragEnd(e: DragEndEvent) {
 		if (!e.over || e.active.id === e.over.id) return;
 		const from = ordered.indexOf(String(e.active.id)),
@@ -177,20 +224,18 @@ function CategoryStrip({
 					<button type="button" key={id} className={chosen === id ? "active" : ""} aria-pressed={chosen === id} onClick={() => choose(id)}>{niceCategory(id, t)}</button>
 				))}
 				<button type="button" className="asset-category-add" aria-label={t("newCategory")} title={t("newCategory")}
-					onClick={() => {
-						setCategoryError("");
-						setManage(true);
-					}}
+						onClick={openManager}
 				>
 					<Plus size={14} />
 				</button>
 			</div>
-			<Button variant="ghost" size="small" className="asset-category-manage" onClick={() => { setCategoryError(""); setManage(true); }}>{t("manage")}</Button>
+			<Button variant="ghost" size="small" className="asset-category-manage" onClick={openManager}>{t("manage")}</Button>
 			</div>
 			{manage && (
 				<Dialog
 					title={t("category")}
 					onClose={() => {
+						if (categoryBusy) return;
 						setCategoryError("");
 						setManage(false);
 					}}
@@ -230,10 +275,15 @@ function CategoryStrip({
 						<DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
 							<SortableContext items={ordered} strategy={horizontalListSortingStrategy}>
 								<fieldset className="asset-category-order" aria-label={t("category")}>
-									{ordered.map((id) => <SortablePill key={id} id={id} label={niceCategory(id, t)} active={chosen === id} reorder onClick={() => choose(id)} />)}
+									{ordered.map((id) => <SortablePill key={id} id={id} label={niceCategory(id, t)} active={memberCategory === id} reorder onClick={() => selectManagedCategory(id)} />)}
 								</fieldset>
 							</SortableContext>
 						</DndContext>
+						{memberCategory && <div className="asset-category-members">
+							<div className="card-header"><h3>{t("categoryMembers")} · {niceCategory(memberCategory, t)}</h3><Button size="small" disabled={categoryBusy || !membersChanged} onClick={() => void saveMembers()}>{t("saveMembers")}</Button></div>
+							<p className="subtitle">{t("categoryMembersHint")}</p>
+							<div className="asset-category-member-list">{memberAssets.length ? memberAssets.map((asset) => <label key={asset.id}><input type="checkbox" disabled={categoryBusy} checked={memberIds.includes(asset.id)} onChange={(event) => setMemberIds((current) => event.target.checked ? [...current, asset.id] : current.filter((id) => id !== asset.id))} /><span><strong>{asset.name}</strong>{asset.category && asset.category !== memberCategory && <small>{niceCategory(asset.category, t)}</small>}</span></label>) : <p>{t("none")}</p>}</div>
+						</div>}
 						{data.categories
 							.filter((c) => c.kind === kind && !c.deleted)
 							.map((c) => (
@@ -242,10 +292,8 @@ function CategoryStrip({
 									<Button
 										variant="danger"
 										size="small"
-										onClick={async () => {
-											await save("category", { ...c, deleted: true });
-											if (chosen === c.name) choose("");
-										}}
+										disabled={categoryBusy}
+										onClick={() => void removeCategory(c)}
 									>
 										{t("remove")}
 									</Button>
