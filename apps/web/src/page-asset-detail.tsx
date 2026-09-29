@@ -970,6 +970,7 @@ export function AssetDetail() {
 				</div>
 				{kind === "project" && <div className="asset-project-hero-visual" role="img" aria-label={t("preview")}><ProjectPreview asset={asset} /></div>}
 				{kind !== "project" && <div className="actions">
+					{kind === "subscription" && <Button asChild><Link to="/finance">{t("financeViewLedger")}</Link></Button>}
 					<Button onClick={() => setEdit(true)}>{t("edit")}</Button>
 					<Button
 						variant="danger"

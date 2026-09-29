@@ -478,10 +478,13 @@ export function AssetList() {
 				title={t(kind === "project" ? "projectListTitle" : kind === "account" ? "accountListTitle" : kind === "subscription" ? "subscriptionListTitle" : kind === "vault" ? "vault" : "itemListTitle")}
 				subtitle={t(kind === "project" ? "projectListSubtitle" : kind === "account" ? "accountListSubtitle" : kind === "item" ? "itemListSubtitle" : kind === "vault" ? "vaultHint" : "summary")}
 				action={
-					<Button variant="primary" onClick={() => setEdit(true)}>
-						<Plus size={17} />
-						{t("add")}
-					</Button>
+					<>
+						{kind === "subscription" && <Button asChild><Link to="/finance">{t("financeViewLedger")}</Link></Button>}
+						<Button variant="primary" onClick={() => setEdit(true)}>
+							<Plus size={17} />
+							{t("add")}
+						</Button>
+					</>
 				}
 			/>
 			<CategoryStrip kind={kind} chosen={category} choose={choose} />

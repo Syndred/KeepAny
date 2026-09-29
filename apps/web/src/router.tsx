@@ -45,6 +45,11 @@ const collectionDetailRoute = createRoute({
 	path: "/collections/$id",
 	component: lazyRouteComponent(() => import("./page-collections"), "CollectionsPage"),
 });
+const financeRoute = createRoute({
+	getParentRoute: () => rootRoute,
+	path: "/finance",
+	component: lazyRouteComponent(() => import("./page-finance"), "FinancePage"),
+});
 const intakeRoute = createRoute({
 	getParentRoute: () => rootRoute,
 	path: "/intake",
@@ -71,6 +76,7 @@ const routeTree = rootRoute.addChildren([
 	projectWorkflowRoute,
 	collectionsRoute,
 	collectionDetailRoute,
+	financeRoute,
 	intakeRoute,
 	trashRoute,
 	settingsRoute,
