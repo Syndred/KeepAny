@@ -1,0 +1,58 @@
+.settings-restored .settings-section {
+  min-width: 0;
+  border: 2px solid var(--line);
+  border-radius: 17px;
+  background: var(--paper);
+  box-shadow: var(--shadow);
+}
+.settings-restored .settings-section > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 74px;
+  padding: 14px 16px;
+  cursor: pointer;
+  list-style: none;
+}
+.settings-restored .settings-section > summary::-webkit-details-marker { display: none; }
+.settings-restored .settings-section > summary::after {
+  content: "⌄";
+  flex: none;
+  font-size: 20px;
+  line-height: 1;
+}
+.settings-restored .settings-section[open] > summary::after { transform: rotate(180deg); }
+.settings-restored .settings-section > summary strong,
+.settings-restored .settings-section > summary small { display: block; }
+.settings-restored .settings-section > summary strong { font-size: 16px; line-height: 1.4; }
+.settings-restored .settings-section > summary small { margin-top: 4px; color: var(--muted); font-size: 12px; line-height: 1.5; }
+.settings-restored .settings-section-body { display: grid; gap: 16px; padding: 0 16px 16px; }
+.settings-restored .settings-section-body > .card { box-shadow: none; }
+.settings-restored .settings-section-body .sync-panel { margin-top: 0; }
+
+.intake-restored .intake-primary-grid { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); }
+.intake-restored .intake-backup-card { background: #e4eee0; }
+.intake-restored .intake-mode-tabs { display: flex; flex-wrap: wrap; overflow: visible; gap: 6px; min-width: 0; margin: 0 0 12px; padding: 0; border: 0; }
+.intake-restored .intake-mode-tabs legend { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }
+.intake-restored .intake-mode-tabs button { flex: none; }
+.intake-restored .intake-mode-tabs button[aria-pressed="true"] { background: var(--yellow); box-shadow: 2px 3px 0 var(--line); }
+.intake-restored .intake-primary-grid .card { align-self: start; }
+.intake-restored .intake-card-title { margin-bottom: 12px; }
+.intake-restored .intake-card-title h2 { margin: 0; }
+.intake-restored .intake-card-title p { margin: 4px 0 0; color: var(--muted); font-size: 12px; }
+.intake-restored .intake-backup-card .chips { margin-bottom: 12px; }
+.intake-restored .intake-photo-empty { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+.intake-restored .intake-photo-empty p { margin: 0; color: var(--muted); font-size: 12px; }
+.intake-restored .intake-backup-status { margin: 12px 0 0; padding: 8px 10px; border-radius: 8px; background: rgb(255 255 255 / 65%); color: var(--muted); font-size: 12px; line-height: 1.5; }
+.intake-restored .intake-secondary { margin-top: 0; }
+.intake-restored .intake-secondary > summary { cursor: pointer; font-weight: 700; }
+.intake-restored .intake-secondary > :not(summary) { margin-top: 12px; }
+.intake-restored .intake-recent { grid-column: 1 / -1; }
+.intake-restored .intake-recent .list-row { justify-content: space-between; }
+.intake-restored .intake-recent .list-row a { min-width: 0; color: var(--ink); font-weight: 700; text-decoration: none; overflow-wrap: anywhere; }
+.intake-restored .intake-recent .list-row a:hover { text-decoration: underline; }
+.intake-restored .intake-recent .list-row > span { color: var(--muted); font-size: 12px; }
+@media (max-width: 900px) {
+  .intake-restored .intake-primary-grid { grid-template-columns: 1fr; }
+}

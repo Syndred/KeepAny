@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { Link } from "@tanstack/react-router";
 import Papa from "papaparse";
-import { Download, FileUp, Link2, LockKeyhole, Sparkles } from "lucide-react";
+import { Download, Link2, Sparkles } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import {
 	assetSchema,
@@ -22,6 +23,8 @@ import {
 	exportArchive,
 	inspectArchive,
 	localRepository,
+	putFile,
+	cleanupUnreferencedFile,
 	restoreArchive,
 	save,
 	saveAssetIfCurrent,
@@ -32,6 +35,7 @@ import { Dialog } from "./components/ui/dialog";
 import { RemoteBackupPanel } from "./components/RemoteBackupPanel";
 import { ExternalLinkImportPanel } from "./components/ExternalLinkImportPanel";
 import { estimateAiCost, readAiUsage, type AiUsage } from "./ai-usage";
+import { useAppContext } from "./view-shared";
 
 const categoryOptions: Record<AssetKind, string[]> = {
 	project: ["website", "repository", "tool"],
@@ -537,6 +541,16 @@ export function TaskEditor({
 type ImportCandidate = { asset: Asset; duplicate: boolean; selected: boolean };
 export function IntakeTools() {
 	const { t } = useTranslation();
+	const { data, notify } = useAppContext();
+	const [mode, setMode] = useState<"url" | "image" | "csv" | "manual">("url");
+	const [manualKind, setManualKind] = useState<AssetKind>("project");
+	const [manualOpen, setManualOpen] = useState(false);
+	const [photoAssetId, setPhotoAssetId] = useState("");
+	const [photoFile, setPhotoFile] = useState<File | null>(null);
+	const [photoPreview, setPhotoPreview] = useState("");
+	const [photoBusy, setPhotoBusy] = useState(false);
+	const photoInFlight = useRef(false);
+	const photoFileInput = useRef<HTMLInputElement>(null);
 	const restoreFileInput = useRef<HTMLInputElement>(null);
 	const [password, setPassword] = useState("");
 	const [restoreFile, setRestoreFile] = useState<File | null>(null);
@@ -558,6 +572,45 @@ export function IntakeTools() {
 		url: string;
 		name: string;
 	} | null>(null);
+	const activeAssets = data.assets.filter(asset => !asset.deleted && asset.kind !== "vault");
+	const recentAssets = [...activeAssets].sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 5);
+	useEffect(() => {
+		if (!photoFile) { setPhotoPreview(""); return; }
+		const address = URL.createObjectURL(photoFile);
+		setPhotoPreview(address);
+		return () => URL.revokeObjectURL(address);
+	}, [photoFile]);
+	function changeMode(next: typeof mode) {
+		importGeneration.current++;
+		setCandidates([]);
+		setCandidateGeneration(null);
+		setMessage("");
+		setMode(next);
+	}
+	async function addPhoto() {
+		const asset = activeAssets.find(item => item.id === photoAssetId);
+		if (!asset || !photoFile || photoInFlight.current) return;
+		photoInFlight.current = true;
+		setPhotoBusy(true);
+		let fileId = "";
+		try {
+			fileId = await putFile(photoFile);
+			await saveAssetIfCurrent(asset, {
+				...asset,
+				attachments: [...asset.attachments, fileId],
+				updatedAt: new Date().toISOString(),
+			});
+			setPhotoFile(null);
+			if (photoFileInput.current) photoFileInput.current.value = "";
+			notify(t("saved"));
+		} catch (error) {
+			if (fileId) await cleanupUnreferencedFile(fileId).catch(() => false);
+			notify(t(error instanceof Error && error.message === "asset-stale" ? "assetStale" : "uploadError"));
+		} finally {
+			setPhotoBusy(false);
+			photoInFlight.current = false;
+		}
+	}
 	useEffect(() => {
 		let active = true;
 		void localRepository().then((repository) => {
@@ -762,180 +815,238 @@ export function IntakeTools() {
 		}
 	}
 	return (
-		<div className="card-grid">
-			<section className="card padded">
-				<div className="card-header">
-					<h2>
-						<LockKeyhole size={20} />
-						{t("secureBackup")}
-					</h2>
-				</div>
-				<p>{t("backupHint")}</p>
-				<div className="field">
-					<label htmlFor="backup-password">{t("backupPassword")}</label>
-					<input
-						id="backup-password"
-						type="password"
-						minLength={12}
-						autoComplete="new-password"
-						disabled={busy}
-						value={password}
-						onChange={(e) => {
-							invalidateRestorePreview();
-							setPassword(e.target.value);
-							setReadyDownload(null);
-						}}
-					/>
-				</div>
-				<small>{t("backupWarning")}</small>
-				<div className="actions">
-					<Button
-						onClick={() => void download()}
-						disabled={busy || inspecting || password.length < 12}
-					>
-						<Download size={16} />
-						{t("backup")}
-					</Button>
-					{readyDownload && (
-						<Button asChild variant="primary">
-							<a href={readyDownload.url} download={readyDownload.name}>
-								<Download size={16} />
-								{t("saveBackupFile")}
-							</a>
-						</Button>
-					)}
-				</div>
-				<div className="field">
-					<label htmlFor="restore-file">{t("restoreBackup")}</label>
-					<input
-						ref={restoreFileInput}
-						id="restore-file"
-						type="file"
-						accept=".ka1"
-						disabled={busy}
-						onChange={(e) => {
-							invalidateRestorePreview();
-							setRestoreFile(e.target.files?.[0] || null);
-						}}
-					/>
-				</div>
-				<small>{t("restoreHint")}</small>
-				<div className="actions">
-					<Button
-						onClick={() => void inspect()}
-						disabled={busy || inspecting || !restoreFile || !password}
-					>
-						{t("preview")}
-					</Button>
-					{readyArchive && readyArchiveOrigin === "local" && (
-						<Button
-							variant="primary"
-							onClick={() => void restore()}
-							disabled={busy || inspecting || readyArchiveGeneration !== restoreGeneration.current}
-						>
-							{t("confirm")} · {archiveCount}
-						</Button>
-					)}
-				</div>
-			</section>
-			<section className="card padded">
-				<div className="card-header">
-					<h2>
-						<FileUp size={20} />
-						{t("confirmImport")}
-					</h2>
-				</div>
-				<p>{t("csvHint")}</p>
-				<div className="field">
-					<label htmlFor="csv-file">{t("csv")}</label>
-					<input
-						id="csv-file"
-						type="file"
-						accept=".csv,text/csv"
-						disabled={busy || inspecting}
-						onChange={(e) => {
-							const file = e.target.files?.[0];
-							importGeneration.current++;
-							setCandidates([]);
-							setCandidateGeneration(null);
-							if (file) void parseCSV(file);
-						}}
-					/>
-				</div>
-				<div className="field">
-					<label htmlFor="import-url">{t("url")}</label>
-					<input
-						id="import-url"
-						type="url"
-						value={url}
-						disabled={busy || inspecting}
-						onChange={(e) => {
-							importGeneration.current++;
-							setUrl(e.target.value);
-							setCandidates([]);
-							setCandidateGeneration(null);
-					}}
-						placeholder="https://"
-					/>
-				</div>
-				<Button onClick={() => void previewUrl()} disabled={busy || inspecting || !url}>
-					<Link2 size={16} />
-					{t("preview")}
-				</Button>
-				{candidates.length > 0 && (
-					<div className="import-preview">
-						<h3>{t("preview")}</h3>
-						{candidates.map((c) => (
-							<label className="list-row" key={c.asset.id}>
-								<input
-									type="checkbox"
-									checked={c.selected}
-									disabled={c.duplicate}
-									onChange={(e) =>
-										setCandidates((current) =>
-											current.map((item) =>
-												item.asset.id === c.asset.id
-													? { ...item, selected: e.target.checked }
-													: item,
-											),
-										)
-									}
-								/>
-								<strong>{c.asset.name}</strong>
-								<span className={`chip ${c.duplicate ? "warn" : ""}`}>
-									{t(c.duplicate ? "duplicate" : "ready")}
-								</span>
-							</label>
-						))}
-						<Button
-							variant="primary"
-							onClick={() => void importCandidates()}
-							disabled={
-								busy || inspecting || candidateGeneration !== importGeneration.current ||
-								!candidates.some((c) => c.selected && !c.duplicate)
-							}
-						>
-							{t("confirmImport")}
-						</Button>
+		<div className="intake-tools">
+			<div className="card-grid intake-primary-grid">
+				<section className="card padded intake-quick-card">
+					<div className="intake-card-title">
+						<h2>{t("intakeQuickTitle")}</h2>
 					</div>
-				)}
+					<fieldset className="tabs intake-mode-tabs">
+						<legend>{t("intakeMode")}</legend>
+						{([
+							["url", "intakeModeUrl"],
+							["image", "intakeModeImage"],
+							["csv", "intakeModeCsv"],
+							["manual", "intakeModeManual"],
+						] as const).map(([value, key]) => (
+							<button key={value} type="button" aria-pressed={mode === value} onClick={() => changeMode(value)}>
+								{t(key)}
+							</button>
+						))}
+					</fieldset>
+					{mode === "url" && (
+						<>
+							<div className="field">
+								<label htmlFor="import-url">{t("url")}</label>
+								<input
+									id="import-url"
+									type="url"
+									value={url}
+									disabled={busy || inspecting}
+									onChange={(event) => {
+										importGeneration.current++;
+										setUrl(event.target.value);
+										setCandidates([]);
+										setCandidateGeneration(null);
+									}}
+									placeholder="https://your-project.com"
+								/>
+							</div>
+							<Button variant="primary" onClick={() => void previewUrl()} disabled={busy || inspecting || !url}>
+								<Link2 size={16} />{t("intakePreviewRecords")}
+							</Button>
+						</>
+					)}
+					{mode === "csv" && (
+						<>
+							<p>{t("csvHint")}</p>
+							<div className="field">
+								<label htmlFor="csv-file">{t("csv")}</label>
+								<input
+									id="csv-file"
+									type="file"
+									accept=".csv,text/csv"
+									disabled={busy || inspecting}
+									onChange={(event) => {
+										const file = event.target.files?.[0];
+										importGeneration.current++;
+										setCandidates([]);
+										setCandidateGeneration(null);
+										if (file) void parseCSV(file);
+									}}
+								/>
+							</div>
+						</>
+					)}
+					{mode === "manual" && (
+						<>
+							<div className="field">
+								<label htmlFor="intake-manual-kind">{t("intakeRecordType")}</label>
+								<select id="intake-manual-kind" value={manualKind} onChange={event => setManualKind(event.target.value as AssetKind)}>
+									{(["project", "account", "subscription", "item"] as const).map(kind => <option key={kind} value={kind}>{t(kind)}</option>)}
+								</select>
+							</div>
+							<Button variant="primary" onClick={() => setManualOpen(true)}>{t("newRecord")}</Button>
+						</>
+					)}
+					{mode === "image" && (
+						<>
+							<p>{t("intakeImageHint")}</p>
+							<div className="field">
+								<label htmlFor="intake-photo-asset">{t("selectAsset")}</label>
+								<select id="intake-photo-asset" value={photoAssetId} onChange={event => setPhotoAssetId(event.target.value)}>
+									<option value="">{t("selectAsset")}</option>
+									{activeAssets.map(asset => <option key={asset.id} value={asset.id}>{asset.name}</option>)}
+								</select>
+							</div>
+							{activeAssets.length === 0 && <div className="intake-photo-empty"><p>{t("intakePhotoNoAssets")}</p><Button onClick={() => { setManualKind("item"); setManualOpen(true); }}>{t("newRecord")}</Button></div>}
+							<div className="field">
+								<label htmlFor="intake-photo-file">{t("attachments")}</label>
+								<input
+									ref={photoFileInput}
+									id="intake-photo-file"
+									type="file"
+									accept="image/jpeg,image/png,image/webp,image/gif"
+									disabled={photoBusy}
+									onChange={event => {
+										const file = event.target.files?.[0] ?? null;
+										if (file && (file.size > 20 * 1024 * 1024 || !["image/jpeg", "image/png", "image/webp", "image/gif"].includes(file.type))) {
+											setPhotoFile(null);
+											event.currentTarget.value = "";
+											notify(t("uploadError"));
+											return;
+										}
+										setPhotoFile(file);
+									}}
+								/>
+							</div>
+							{photoPreview && photoFile && <img className="image-preview" src={photoPreview} alt={photoFile.name} />}
+							<Button variant="primary" disabled={photoBusy || !photoAssetId || !photoFile} onClick={() => void addPhoto()}>{t("addPhoto")}</Button>
+						</>
+					)}
+					{candidates.length > 0 && (mode === "url" || mode === "csv") && (
+						<div className="import-preview" aria-live="polite">
+							<h3>{t("preview")}</h3>
+							{candidates.map(candidate => (
+								<label className="list-row" key={candidate.asset.id}>
+									<input
+										type="checkbox"
+										checked={candidate.selected}
+										disabled={candidate.duplicate}
+										onChange={event => setCandidates(current => current.map(item =>
+											item.asset.id === candidate.asset.id ? { ...item, selected: event.target.checked } : item
+										))}
+									/>
+									<strong>{candidate.asset.name}</strong>
+									<span className={`chip ${candidate.duplicate ? "warn" : ""}`}>{t(candidate.duplicate ? "duplicate" : "ready")}</span>
+								</label>
+							))}
+							<Button variant="primary" onClick={() => void importCandidates()} disabled={
+								busy || inspecting || candidateGeneration !== importGeneration.current ||
+								!candidates.some(candidate => candidate.selected && !candidate.duplicate)
+							}>{t("confirmImport")}</Button>
+						</div>
+					)}
+				</section>
+				<section className="card padded intake-backup-card">
+					<div className="intake-card-title">
+						<h2>{t("intakeBackupTitle")}</h2>
+						<p>{t("backupHint")}</p>
+					</div>
+					<div className="chips">
+						<span className="chip">{t("intakeBackupRecords")}</span>
+						<span className="chip">{t("relations")}</span>
+						<span className="chip">{t("intakeBackupFiles")}</span>
+					</div>
+					<div className="field">
+						<label htmlFor="backup-password">{t("backupPassword")}</label>
+						<input
+							id="backup-password"
+							type="password"
+							minLength={12}
+							autoComplete="new-password"
+							disabled={busy}
+							value={password}
+							onChange={event => {
+								invalidateRestorePreview();
+								setPassword(event.target.value);
+								setReadyDownload(null);
+							}}
+						/>
+					</div>
+					<small>{t("backupWarning")}</small>
+					<div className="actions">
+						<Button onClick={() => void download()} disabled={busy || inspecting || password.length < 12}>
+							<Download size={16} />{t("backup")}
+						</Button>
+						{readyDownload && (
+							<Button asChild variant="primary">
+								<a href={readyDownload.url} download={readyDownload.name}><Download size={16} />{t("saveBackupFile")}</a>
+							</Button>
+						)}
+					</div>
+					<p className="intake-backup-status" role="status">{readyDownload ? t("backupReady") : t("intakeBackupIdle")}</p>
+					<details className="intake-secondary">
+						<summary>{t("restoreBackup")}</summary>
+						<div className="field">
+							<label htmlFor="restore-file">{t("restoreBackup")}</label>
+							<input
+								ref={restoreFileInput}
+								id="restore-file"
+								type="file"
+								accept=".ka1"
+								disabled={busy}
+								onChange={event => {
+									invalidateRestorePreview();
+									setRestoreFile(event.target.files?.[0] || null);
+									if (event.target.files?.length) event.currentTarget.closest("details")?.setAttribute("open", "");
+								}}
+							/>
+						</div>
+						<small>{t("restoreHint")}</small>
+						<div className="actions">
+							<Button onClick={() => void inspect()} disabled={busy || inspecting || !restoreFile || !password}>{t("preview")}</Button>
+							{readyArchive && readyArchiveOrigin === "local" && (
+								<Button variant="primary" onClick={() => void restore()} disabled={busy || inspecting || readyArchiveGeneration !== restoreGeneration.current}>
+									{t("confirm")} · {archiveCount}
+								</Button>
+							)}
+						</div>
+					</details>
+					<details className="intake-secondary">
+						<summary>{t("intakeBackupLocation")}</summary>
+						<RemoteBackupPanel
+							password={password}
+							busy={busy || inspecting}
+							setBusy={setBusy}
+							invalidatePreview={invalidateRestorePreview}
+							acceptPreview={acceptRemotePreview}
+							canConfirm={!!readyArchive && readyArchiveOrigin === "remote" && readyArchiveGeneration === restoreGeneration.current}
+							restoreCount={archiveCount}
+							confirmRestore={() => void restore()}
+						/>
+					</details>
+				</section>
+			</div>
+			<section className="card intake-recent">
+				<h2>{t("intakeRecent")}</h2>
+				{recentAssets.length ? (
+					<ul className="list">
+						{recentAssets.map(asset => (
+							<li className="list-row" key={asset.id}>
+								<Link to="/assets/$kind/$id" params={{ kind: asset.kind, id: asset.id }}>{asset.name}</Link>
+								<span>{t(asset.kind)}</span>
+							</li>
+						))}
+					</ul>
+				) : <p>{t("intakeRecentEmpty")}</p>}
 			</section>
-			<RemoteBackupPanel
-				password={password}
-				busy={busy || inspecting}
-				setBusy={setBusy}
-				invalidatePreview={invalidateRestorePreview}
-				acceptPreview={acceptRemotePreview}
-				canConfirm={!!readyArchive && readyArchiveOrigin === "remote" && readyArchiveGeneration === restoreGeneration.current}
-				restoreCount={archiveCount}
-				confirmRestore={() => void restore()}
-			/>
-			<ExternalLinkImportPanel />
-			{message && (
-				<div className="notice" role="status">
-					{message}
-				</div>
-			)}
+			<details className="card intake-secondary">
+				<summary>{t("intakeExternalLinkImport")}</summary>
+				<ExternalLinkImportPanel />
+			</details>
+			{message && <div className="notice" role="status">{message}</div>}
+			{manualOpen && <AssetEditor kind={manualKind} categories={data.categories} onClose={() => setManualOpen(false)} />}
 		</div>
 	);
 }

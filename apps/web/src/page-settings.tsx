@@ -1,4 +1,4 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useLocation } from "@tanstack/react-router";
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { bridgeBindingKeys, createBindingBridgeFetch } from "../../../packages/binding/src/bridge";
@@ -13,6 +13,7 @@ import { McpPanel } from "./components/McpPanel";
 import { Button } from "./components/ui/button";
 import { seed } from "./data";
 import { PageTitle, useAppContext } from "./view-shared";
+import "./settings-intake-restoration.css";
 const SelfHostSessionPanel = lazy(() => import("./components/SelfHostSessionPanel").then(module => ({ default: module.SelfHostSessionPanel })));
 type AccessMode = "token" | "session" | "official";
 const officialWorkspaceKey = (accountId: string) => `keepany-official-workspace:${accountId}`;
@@ -44,11 +45,33 @@ function syncFailureKey(error: string | undefined, mode: AccessMode): string {
 export function SettingsPage() {
 	const { data, notify } = useAppContext();
 	const { t, i18n } = useTranslation();
+	const location = useLocation();
 	const officialAvailable = typeof officialOrigin === "string" && officialOrigin === window.location.origin &&
 		typeof bindingIssuer === "string" && typeof bindingBridgeOrigin === "string";
 	const [persistent, setPersistent] = useState<boolean | null>(null);
 	const [requested, setRequested] = useState(false);
 	const [seeding, setSeeding] = useState(false);
+	const [assistantOpen, setAssistantOpen] = useState(() => window.location.hash === "#assistant");
+	const [connectionsOpen, setConnectionsOpen] = useState(() => window.location.hash === "#connections");
+	const [advancedOpen, setAdvancedOpen] = useState(() => window.location.hash === "#advanced-settings");
+	useEffect(() => {
+		const openLinkedSection = () => {
+			if (window.location.hash === "#assistant") setAssistantOpen(true);
+			if (window.location.hash === "#connections") setConnectionsOpen(true);
+			if (window.location.hash === "#advanced-settings") setAdvancedOpen(true);
+		};
+		window.addEventListener("hashchange", openLinkedSection);
+		return () => window.removeEventListener("hashchange", openLinkedSection);
+	}, []);
+	useEffect(() => {
+		if (location.hash === "assistant" || location.hash === "#assistant") setAssistantOpen(true);
+		if (location.hash === "connections" || location.hash === "#connections") setConnectionsOpen(true);
+		if (location.hash === "advanced-settings" || location.hash === "#advanced-settings") setAdvancedOpen(true);
+	}, [location.hash]);
+	useEffect(() => {
+		if (assistantOpen && window.location.hash === "#assistant")
+			document.getElementById("mcp-panel-title")?.focus();
+	}, [assistantOpen]);
 	const [accessMode, setAccessMode] = useState<AccessMode>(() => {
 		const saved = localStorage.getItem("keepany-sync-access-mode") ?? localStorage.getItem("keepany-selfhost-access-mode");
 		return saved === "official" && officialAvailable ? "official" : saved === "session" ? "session" : "token";
@@ -400,7 +423,7 @@ export function SettingsPage() {
 	const showConflictValue = (value: unknown) => typeof value === "boolean" ? t(value ? "syncYes" : "syncNo") :
 		Array.isArray(value) ? value.join(", ") : value && typeof value === "object" ? t("syncMultipleValues") : String(value ?? "—");
 	return (
-		<main className="page">
+		<main className="page settings-restored">
 			<PageTitle title={t("settings")} />
 			<div className="card-grid">
 				<section className="card padded">
@@ -441,8 +464,16 @@ export function SettingsPage() {
 					)}
 				</section>
 			</div>
-			<BindingPanel onBindingChange={changeBinding} />
-			<McpPanel />
+			<details id="assistant" className="settings-section" open={assistantOpen} onToggle={event => setAssistantOpen(event.currentTarget.open)}>
+				<summary><span><strong>{t("settingsAssistantAccess")}</strong><small>{t("settingsAssistantHint")}</small></span></summary>
+				<div className="settings-section-body">
+					<div className="actions"><Button onClick={() => window.dispatchEvent(new Event("keepany-open-ai-dialog"))}>{t("settingsAskAssistant")}</Button></div>
+					<McpPanel />
+				</div>
+			</details>
+			<details id="connections" className="settings-section" open={connectionsOpen} onToggle={event => setConnectionsOpen(event.currentTarget.open)}>
+				<summary><span><strong>{t("settingsConnections")}</strong><small>{t("settingsConnectionsHint")}</small></span></summary>
+				<div className="settings-section-body"><BindingPanel onBindingChange={changeBinding} />
 			<section className="card padded sync-panel">
 				<h2>{t(accessMode === "official" ? "officialSync" : "selfHostSync")}</h2>
 				<p>{t(accessMode === "official" ? "officialSyncHint" : "selfHostSyncHint")}</p>
@@ -537,6 +568,11 @@ export function SettingsPage() {
 				prepareTarget={prepareMigrationTarget}
 				syncTarget={syncArchiveMigration}
 			/>
+				</div>
+			</details>
+			<details id="advanced-settings" className="settings-section" open={advancedOpen} onToggle={event => setAdvancedOpen(event.currentTarget.open)}>
+				<summary><span><strong>{t("settingsAdvanced")}</strong><small>{t("settingsAdvancedHint")}</small></span></summary>
+				<div className="settings-section-body">
 			<section className="card padded">
 				<h2>{t("trial")}</h2>
 				<p>{t("emptyHint")}</p>
@@ -557,6 +593,8 @@ export function SettingsPage() {
 					{t("loadSample")}
 				</Button>
 			</section>
+				</div>
+			</details>
 		</main>
 	);
 }
