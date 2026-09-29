@@ -1292,7 +1292,7 @@ export function AssetDetail() {
 				</section>}
 				{asset.kind !== "project" && asset.kind !== "account" && <section className="card asset-profile-card">
 					<div className="card-header">
-						<h2>{t(asset.kind === "item" ? "itemStateTitle" : "profile")}</h2>
+						<div><h2>{t(asset.kind === "item" ? "itemStateTitle" : "profile")}</h2>{asset.kind === "item" && <small>{t("itemStateSubtitle")}</small>}</div>
 						{asset.kind === "item" && <Button size="small" disabled={itemBusy} onClick={openItemStatus}>{t("itemStatusChange")}</Button>}
 					</div>
 					<dl className="facts">
