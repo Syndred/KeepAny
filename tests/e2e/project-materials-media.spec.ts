@@ -71,8 +71,17 @@ for (const locale of ["zh-CN", "en"] as const) {
 			await upload("logoId", "logo.png", "#eb5f57");
 			await expect(page.locator(".asset-project-hero-logo img")).toBeVisible();
 			await expect(page.locator(".asset-project-hero-visual img")).toHaveCount(0);
+			await page.goto("/assets/project");
+			const projectCard = page.locator(".asset-project-card").filter({ hasText: "Materials test" });
+			await expect(projectCard.locator(".asset-browser-body img")).toHaveCount(0);
+			await projectCard.click();
+			await page.locator("#asset-project-materials > summary").click();
 			await upload("homeScreenshotId", "home.png", "#4b74da");
 			await expect(page.locator(".asset-project-hero-visual img")).toBeVisible();
+			await page.goto("/assets/project");
+			await expect(projectCard.locator(".asset-browser-body img")).toBeVisible();
+			await projectCard.click();
+			await page.locator("#asset-project-materials > summary").click();
 			await upload("productScreenshotIds", "product.png", "#50a884");
 			await upload("promoCoverId", "cover.png", "#edbe4d");
 			let stored = await storedProject(page, id);
@@ -109,11 +118,11 @@ for (const locale of ["zh-CN", "en"] as const) {
 			expect(stored.fileIds).not.toContain(oldLogo);
 			const oldCover = asset.projectMedia.promoCoverId;
 			await materials.locator('[data-project-media-role="promoCoverId"]').getByRole("button", { name: removeLabel }).click();
+			await expect(materials.locator('[data-project-media-role="promoCoverId"] img')).toHaveCount(0);
 			stored = await storedProject(page, id);
 			asset = stored.asset as typeof asset;
 			expect(asset.projectMedia.promoCoverId).toBe("");
 			expect(asset.attachments).not.toContain(oldCover);
-			await expect(materials.locator('[data-project-media-role="promoCoverId"] img')).toHaveCount(0);
 			expect(errors).toEqual([]);
 		} finally { await context.close(); }
 	});

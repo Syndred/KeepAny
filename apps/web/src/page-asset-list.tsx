@@ -22,6 +22,7 @@ import { normalizeCategoryName, type Asset, type AssetKind } from "../../../pack
 import { createCategory, fileUrl, save, saveAssetIfCurrent } from "../../../packages/local-db/src";
 import { Button } from "./components/ui/button";
 import "./asset-restoration.css";
+import "./vault-restoration.css";
 import {
 	Empty,
 	PageTitle,
@@ -313,9 +314,8 @@ function CategoryStrip({
 	);
 }
 
-function AssetCover({ asset }: { asset: Asset }) {
+function AssetCover({ asset, imageId = asset.attachments[0] }: { asset: Asset; imageId?: string }) {
 	const [src, setSrc] = useState("");
-	const imageId = asset.attachments[0];
 	useEffect(() => {
 		setSrc("");
 		if (!imageId) return;
@@ -340,10 +340,11 @@ export function ProjectPreview({ asset }: { asset: Asset }) {
 	const { t } = useTranslation();
 	const repository = asset.category === "repository";
 	const domain = assetDomain(asset.url);
+	const screenshotId = asset.projectMedia?.homeScreenshotId ?? "";
 	if (repository) return <div className="asset-repository-cover"><Code2 size={36} strokeWidth={1.8} /><strong>{asset.name}</strong><small>{domain || t("projectRepoCover")}</small></div>;
 	return <div className={`asset-editorial-preview asset-editorial-${asset.category}`}>
 		<div className="asset-browser-bar"><span /><span /><span /><small>{domain || asset.name}</small></div>
-		<div className={`asset-browser-body${asset.attachments.length ? " has-image" : ""}`}><AssetCover asset={asset} />{!asset.attachments.length && <div className="asset-editorial-copy"><span className="asset-editorial-kicker">{domain || niceCategory(asset.category, t)}</span><strong>{asset.name}</strong>{asset.description && <p>{asset.description}</p>}</div>}</div>
+		<div className={`asset-browser-body${screenshotId ? " has-image" : ""}`}><AssetCover asset={asset} imageId={screenshotId} />{!screenshotId && <div className="asset-editorial-copy"><span className="asset-editorial-kicker">{domain || niceCategory(asset.category, t)}</span><strong>{asset.name}</strong>{asset.description && <p>{asset.description}</p>}</div>}</div>
 	</div>;
 }
 
@@ -396,7 +397,7 @@ export function AssetList() {
 	}) ?? {}) as { kind?: string };
 	const kind = validKind(rawKind ?? "project");
 	const { data, search } = useAppContext();
-	const { t } = useTranslation();
+	const { t, i18n } = useTranslation();
 	const [categories, setCategories] = useState<Record<string, string>>(() =>
 		Object.fromEntries(
 			kinds.map((k) => [
@@ -436,6 +437,8 @@ export function AssetList() {
 	const [edit, setEdit] = useState(false);
 	const allLiveAssets = liveAssets(data);
 	const liveIds = new Set(allLiveAssets.map((asset) => asset.id));
+	const assetById = new Map(allLiveAssets.map((asset) => [asset.id, asset]));
+	const vaultRelations = data.relations.filter((relation) => !relation.deleted && liveIds.has(relation.from) && liveIds.has(relation.to));
 	const allKindAssets = allLiveAssets.filter((asset) => asset.kind === kind);
 	const availableTags = [...new Set(allKindAssets.flatMap((asset) => asset.tags))].sort(
 		(a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }),
@@ -488,7 +491,7 @@ export function AssetList() {
 						{kind === "subscription" && <Button asChild><Link to="/finance">{t("financeViewLedger")}</Link></Button>}
 						<Button variant="primary" onClick={() => setEdit(true)}>
 							<Plus size={17} />
-							{t("add")}
+							{t(kind === "vault" ? "vaultLinkEntry" : "add")}
 						</Button>
 					</>
 				}
@@ -504,7 +507,24 @@ export function AssetList() {
 					</select>
 				</div>
 			)}
-			<section className={`asset-list-content ${kind === "project" ? "asset-project-grid" : kind === "account" ? "asset-account-grid" : "asset-library-grid"}`}>
+			{kind === "vault" ? <section className="card vault-table-wrap asset-list-content" aria-label={t("vault")}>
+				<table className="vault-reference-table">
+					<thead><tr><th>{t("vaultEntryName")}</th><th>{t("vaultUsedFor")}</th><th>{t("vaultStorageLocation")}</th><th>{t("vaultVerifyDate")}</th><th>{t("status")}</th></tr></thead>
+					<tbody>{assets.map((asset) => {
+						const links = vaultRelations.filter((relation) => relation.from === asset.id || relation.to === asset.id);
+						const related = links.map((relation) => assetById.get(relation.from === asset.id ? relation.to : relation.from)).filter((candidate): candidate is Asset => !!candidate && candidate.kind !== "vault");
+						const verifiedAt = links.map((relation) => relation.verifiedAt).filter(Boolean).sort().at(-1);
+						return <tr key={asset.id}>
+							<td><Link to="/assets/$kind/$id" params={{ kind: "vault", id: asset.id }} onClick={() => rememberAssetList(asset, search)}><strong>{asset.name}</strong></Link>{asset.description && <small>{asset.description}</small>}</td>
+							<td>{related.length ? related.map((candidate) => candidate.name).join(" · ") : "—"}</td>
+							<td>{asset.location || asset.url || "—"}</td>
+							<td>{verifiedAt ? date(verifiedAt, i18n.language) : "—"}</td>
+							<td><span className={`chip ${related.length ? "" : "warn"}`}>{t(related.length ? "vaultLinked" : "vaultUnlinked")}</span></td>
+						</tr>;
+					})}</tbody>
+				</table>
+				{!assets.length && <div className="empty"><strong>{category || tag || normalizedSearch ? t("noMatches") : t("none")}</strong></div>}
+			</section> : <section className={`asset-list-content ${kind === "project" ? "asset-project-grid" : kind === "account" ? "asset-account-grid" : "asset-library-grid"}`}>
 				{assets.length ? (
 					assets.map((a) => kind === "project" ? <ProjectCard asset={a} search={search} key={a.id} /> : kind === "account" ? <AccountCard asset={a} search={search} connectionCount={data.relations.filter((relation) => !relation.deleted && liveIds.has(relation.from) && liveIds.has(relation.to) && (relation.from === a.id || relation.to === a.id)).length} key={a.id} /> : <LibraryCard asset={a} search={search} key={a.id} />)
 				) : (
@@ -514,7 +534,7 @@ export function AssetList() {
 						<Empty />
 					)
 				)}
-			</section>
+			</section>}
 			{edit && (
 				<Suspense
 					fallback={

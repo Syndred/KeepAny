@@ -105,7 +105,10 @@ export function AssetEditor({
 	onClose: () => void;
 }) {
 	const { t } = useTranslation();
+	const { data } = useAppContext();
 	const original = useRef(asset).current;
+	const [vaultRelatedId, setVaultRelatedId] = useState("");
+	const [vaultVerifiedAt, setVaultVerifiedAt] = useState("");
 	const [draft, setDraft] = useState<Asset>(
 		() =>
 			(original && kind === "project" ? assetSchema.parse(original) : original) ?? {
@@ -187,7 +190,14 @@ export function AssetEditor({
 		setFailure("");
 		try {
 			if (original) await saveAssetIfCurrent(original, parsed.data);
-			else await save("asset", parsed.data);
+			else if (kind === "vault" && vaultRelatedId) {
+				const linked = data.assets.some((candidate) => candidate.id === vaultRelatedId && !candidate.deleted && candidate.kind !== "vault");
+				if (!linked) throw Error("relation-endpoint");
+				await saveBatch([
+					{ type: "asset", value: parsed.data },
+					{ type: "relation", value: { id: crypto.randomUUID(), from: parsed.data.id, to: vaultRelatedId, label: t("vault"), createdAt: new Date().toISOString(), verifiedAt: vaultVerifiedAt, deleted: false } },
+				]);
+			} else await save("asset", parsed.data);
 			onClose();
 		} catch (error) {
 			const reason = error instanceof Error ? error.message : "";
@@ -206,7 +216,7 @@ export function AssetEditor({
 				<div className="form-grid">
 					<Field
 						name="name"
-						label={t("name")}
+						label={t(kind === "vault" ? "vaultEntryName" : "name")}
 						value={draft.name}
 						onChange={(v) => set("name", v)}
 						error={errors.name}
@@ -470,6 +480,18 @@ export function AssetEditor({
 							/>
 						</>
 					)}
+					{kind === "vault" && <>
+						<Field name="location" label={t("vaultStorageLocation")} value={draft.location} onChange={(value) => set("location", value)} error={errors.location} />
+						{!original && <>
+							<Field name="vaultRelatedId" label={t("vaultUsedFor")}>
+								<select id="vaultRelatedId" value={vaultRelatedId} onChange={(event) => setVaultRelatedId(event.target.value)}>
+									<option value="">{t("select")}</option>
+									{data.assets.filter((candidate) => !candidate.deleted && candidate.kind !== "vault").map((candidate) => <option key={candidate.id} value={candidate.id}>{candidate.name}</option>)}
+								</select>
+							</Field>
+							{vaultRelatedId && <Field name="vaultVerifiedAt" label={t("vaultVerifyDate")} type="date" value={vaultVerifiedAt} onChange={setVaultVerifiedAt} />}
+						</>}
+					</>}
 					{kind !== "project" && <Field
 						name="tags"
 						label={t("tags")}

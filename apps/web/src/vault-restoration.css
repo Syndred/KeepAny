@@ -1,0 +1,45 @@
+.vault-table-wrap {
+	margin-top: 16px;
+	overflow-x: auto;
+	padding: 0;
+}
+
+.vault-reference-table {
+	width: 100%;
+	min-width: 720px;
+	border-collapse: collapse;
+	text-align: left;
+}
+
+.vault-reference-table th,
+.vault-reference-table td {
+	padding: 18px 20px;
+	vertical-align: top;
+	border-bottom: 1px solid var(--line);
+}
+
+.vault-reference-table th {
+	font-size: 12px;
+	white-space: nowrap;
+}
+
+.vault-reference-table td:first-child {
+	min-width: 180px;
+}
+
+.vault-reference-table td small {
+	display: block;
+	margin-top: 4px;
+}
+
+.vault-reference-table tbody tr:last-child td {
+	border-bottom: 0;
+}
+
+.vault-reference-table a {
+	color: inherit;
+}
+
+.vault-table-wrap > .empty {
+	min-width: 720px;
+}
