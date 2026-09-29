@@ -23,4 +23,4 @@ jobs:
       - run: pnpm exec vitest run apps/sync-server/src/bound-auth.test.ts packages/binding/src/bound-sync.test.ts
       - run: pnpm build
       - name: Verify committed web bundle
-        run: diff -qr apps/web/dist release/web
+        run: node scripts/verify-local-release.mjs
