@@ -11,7 +11,7 @@
 - 密码：首期只引用专业密码库条目，不保存密码、恢复码或主密码。
 - 正式应用使用 React、RxDB + Dexie，支持本地资产、关系、待办、回收站、加密备份和中英文界面；参考 HTML 只保留为设计档案。
 - 自备 S3/WebDAV 的手动加密备份已有正式 Web 入口和本机受控 HTTP 读回/恢复验证；真实存储服务和生产 CORS 尚未验收。
-- 同步服务、端到端加密与 MCP 为可测试的开发原型；可选自部署服务已接入 Better Auth 多用户会话试验及现有单人令牌模式，本机真实 PostgreSQL 双客户端协议测试、受限账户绑定桥与合成商业账号的批准/续期/撤销联调。MCP 开发版现有 Web 授权/逐次写批准、独立本机启动器及官方 SDK 跨进程浏览器验收；正式打包、真实商业账号、真实双设备、生产会话部署和安全审计尚未闭环。
+- 同步服务、端到端加密与 MCP 为可测试的开发原型；可选自部署服务已接入 Better Auth 多用户会话试验及现有单人令牌模式，本机真实 PostgreSQL 双客户端协议测试、受限账户绑定桥与合成商业账号的批准/续期/撤销联调。MCP 有 macOS 本机可安装 npm tarball，并已从仓库外通过官方 SDK、生产构建 Web 的授权/逐次写批准/撤销纵切；公开 HTTPS 回环、Windows/Linux、真实商业账号与设备、生产部署和安全审计尚未闭环，普通用户入口不开放。
 
 ## 本机运行
 
@@ -25,7 +25,7 @@ pnpm test
 pnpm build
 ```
 
-`pnpm dev` 默认监听 `127.0.0.1:5173`；若端口已占用，Vite 会选择空闲端口。应用数据存于当前浏览器的本机存储，清除浏览器数据前请先导出加密备份。`pnpm test:e2e` 用隔离 Chromium 验证正式下载与干净上下文恢复，以及中英文五种视口；MCP 开发版手工连接见 [本机启动器说明](apps/mcp-launcher/README.md)，可选账户绑定入口的固定 issuer/本机桥配置见 [绑定桥说明](apps/binding-bridge/README.md)，同步服务的隔离运行说明见 [服务 README](apps/sync-server/README.md)。
+`pnpm dev` 默认监听 `127.0.0.1:5173`；若端口已占用，Vite 会选择空闲端口。应用数据存于当前浏览器的本机存储，清除浏览器数据前请先导出加密备份。`pnpm test:e2e` 用隔离 Chromium 验证正式下载与干净上下文恢复，以及中英文五种视口；MCP 本机打包与安装、客户端配置见 [本机启动器说明](apps/mcp-launcher/README.md)，可选账户绑定入口的固定 issuer/本机桥配置见 [绑定桥说明](apps/binding-bridge/README.md)，同步服务的隔离运行说明见 [服务 README](apps/sync-server/README.md)。
 
 ## 文档入口
 
