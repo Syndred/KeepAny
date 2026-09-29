@@ -56,3 +56,13 @@ test("desktop shell follows the frozen frame and keeps real navigation reachable
 		await expect(page.locator(".top-ai-menu a").last()).toHaveAttribute("href", "/assistant-access");
 	}
 });
+
+test("subscription sidebar opens the local money trail", async ({ page }) => {
+	await page.goto("/");
+	await page.evaluate(() => localStorage.setItem("keepany-language", "zh-CN"));
+	await page.reload();
+	await page.locator("aside.sidebar").getByRole("link", { name: "订阅" }).click();
+	await expect(page).toHaveURL(/\/finance$/);
+	await expect(page.getByRole("heading", { name: "订阅与账单" })).toBeVisible();
+	await expect(page.locator("aside.sidebar").getByRole("link", { name: "订阅" })).toHaveAttribute("aria-current", "page");
+});

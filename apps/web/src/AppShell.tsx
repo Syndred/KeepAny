@@ -130,7 +130,7 @@ export function AppShell() {
 		},
 		...kinds.map((kind) => ({
 			id: kind,
-			to: `/assets/${kind}`,
+			to: kind === "subscription" ? "/finance" : `/assets/${kind}`,
 			label: t(kind),
 			icon: icons[kind],
 		})),
