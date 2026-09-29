@@ -307,7 +307,7 @@ test("subscription and item shared CRUD, filters, image and actual backup restor
 			(await assets(page)).find((asset) => asset.id === subscriptionId)
 				?.attachments,
 		).toEqual([subscriptionCurrentFile.id]);
-		await page.getByRole("link", { name: "Back to list" }).click();
+		await page.getByRole("main").getByRole("link", { name: "Back to list" }).click();
 		await expect(
 			page
 				.locator("main.page .list-row")
@@ -433,7 +433,7 @@ test("subscription and item shared CRUD, filters, image and actual backup restor
 		await page.screenshot({
 			path: `${evidence}/crud-matrix-en-1280-item-image-replaced.png`,
 		});
-		await page.getByRole("link", { name: "Back to list" }).click();
+		await page.getByRole("main").getByRole("link", { name: "Back to list" }).click();
 		const otherItem = await create(page, "item", itemOther);
 		await otherItem.getByLabel("Category").selectOption("other");
 		await save(page);
@@ -473,7 +473,7 @@ test("subscription and item shared CRUD, filters, image and actual backup restor
 				.filter({ hasText: name })
 				.click();
 			await expect(page.getByRole("heading", { name })).toBeVisible();
-			await page.getByRole("link", { name: "Back to list" }).click();
+			await page.getByRole("main").getByRole("link", { name: "Back to list" }).click();
 			await expect(search).toHaveValue(tag);
 			await expect(page.locator("#asset-tag-filter")).toHaveValue(tag);
 			await expect(

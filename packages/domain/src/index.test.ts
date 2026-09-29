@@ -87,4 +87,26 @@ describe('subscription and local asset rules', () => {
     expect(taskSchema.safeParse({ id: 'reminder', name: 'Service again', assetId: item.id,
       dueDate: '2026-10-31', createdAt: item.createdAt }).success).toBe(true);
   });
+
+  it('distinguishes missing physical item facts from explicit zero price and validates status events', () => {
+    const item = newAsset('item');
+    expect(item).toMatchObject({ itemLifecycleStatus: 'inUse', itemWarrantyStatus: 'unverified', itemPurchasePriceKnown: false });
+    const legacy = { ...item, amount: 0, status: 'archived' } as Record<string, unknown>;
+    for (const field of ['itemLifecycleStatus', 'itemWarrantyStatus', 'itemStartDate', 'itemStatusDate', 'itemPurchasePriceKnown']) delete legacy[field];
+    expect(assetSchema.parse(legacy)).toMatchObject({ itemLifecycleStatus: null, itemWarrantyStatus: null,
+      itemStartDate: '', itemStatusDate: '', itemPurchasePriceKnown: false, status: 'archived' });
+    expect(assetSchema.parse({ ...legacy, amount: 1234 })).toMatchObject({ amount: 1234, itemPurchasePriceKnown: true });
+    expect(assetSchema.parse({ ...item, amount: 0, itemPurchasePriceKnown: true }).itemPurchasePriceKnown).toBe(true);
+    for (const badDate of ['2025-02-29', '2026-04-31']) {
+      expect(assetSchema.safeParse({ ...item, itemStartDate: badDate }).success).toBe(false);
+      expect(assetSchema.safeParse({ ...item, itemStatusDate: badDate }).success).toBe(false);
+    }
+    const event = { id: crypto.randomUUID(), assetId: item.id, action: 'itemStatus',
+      itemStatusBefore: 'inUse', itemStatusAfter: 'repairing', eventDate: '2026-09-29',
+      note: 'Repair note', createdAt: item.createdAt };
+    expect(historySchema.safeParse(event).success).toBe(true);
+    expect(historySchema.safeParse({ ...event, itemStatusBefore: undefined }).success).toBe(false);
+    expect(historySchema.safeParse({ ...event, itemStatusAfter: undefined }).success).toBe(false);
+    expect(historySchema.safeParse({ ...event, eventDate: undefined }).success).toBe(false);
+  });
 });

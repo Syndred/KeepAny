@@ -18,6 +18,7 @@ import {
 	actualCharge,
 	dueOnCycle,
 	inputFromMinorUnits,
+	itemLifecycleStatuses,
 	monthlyMinorUnits,
 	parseMinorUnits,
 	projectDomainSchema,
@@ -288,6 +289,11 @@ export function AssetDetail() {
 	const itemDateManuallySet = useRef(false);
 	const [itemReminderDate, setItemReminderDate] = useState("");
 	const [itemError, setItemError] = useState("");
+	const [itemStatusOpen, setItemStatusOpen] = useState(false);
+	const [itemStatusDraft, setItemStatusDraft] = useState<NonNullable<Asset["itemLifecycleStatus"]>>("inUse");
+	const [itemStatusDateDraft, setItemStatusDateDraft] = useState(() => localCalendarDay(new Date()));
+	const [itemStatusNote, setItemStatusNote] = useState("");
+	const [itemStatusError, setItemStatusError] = useState("");
 	const [itemRecoveryPending, setItemRecoveryPending] = useState(false);
 	const [itemBusy, setItemBusy] = useState(false);
 	const itemInFlight = useRef(false);
@@ -806,6 +812,61 @@ export function AssetDetail() {
 			setItemBusy(false);
 		}
 	}
+	function openItemStatus() {
+		if (!asset) return;
+		setItemStatusDraft(asset.itemLifecycleStatus ?? "inUse");
+		setItemStatusDateDraft(localCalendarDay(new Date()));
+		setItemStatusNote("");
+		setItemStatusError("");
+		setItemStatusOpen(true);
+	}
+	async function recordItemStatus() {
+		if (asset?.kind !== "item" || itemInFlight.current) return;
+		if (!validCalendarDay(itemStatusDateDraft)) {
+			setItemStatusError(t("itemStatusInvalid"));
+			return;
+		}
+		if (asset.status === "loaned" && ["resold", "retired"].includes(itemStatusDraft)) {
+			setItemStatusError(t("itemStatusLoanedGuard"));
+			return;
+		}
+		itemInFlight.current = true;
+		setItemBusy(true);
+		setItemStatusError("");
+		try {
+			const timestamp = new Date().toISOString();
+			const historyId = crypto.randomUUID();
+			await commitItemAction(asset, {
+				...asset,
+				itemLifecycleStatus: itemStatusDraft,
+				itemStatusDate: itemStatusDateDraft,
+				lastItemEventId: historyId,
+				updatedAt: timestamp,
+			}, {
+				id: historyId,
+				assetId: asset.id,
+				action: "itemStatus",
+				itemStatusBefore: asset.itemLifecycleStatus,
+				itemStatusAfter: itemStatusDraft,
+				eventDate: itemStatusDateDraft,
+				note: itemStatusNote.trim(),
+				createdAt: timestamp,
+				deleted: false,
+			});
+			setItemRecoveryPending(false);
+			setItemStatusOpen(false);
+			notify(t("saved"));
+		} catch (error) {
+			const reason = error instanceof Error ? error.message : "";
+			if (reason === "renewal-recovery-pending") {
+				setItemRecoveryPending(true);
+				setItemStatusError(t("itemRecoveryPending"));
+			} else setItemStatusError(t(reason === "item-stale" ? "itemStale" : reason === "item-invalid" ? "itemStatusInvalid" : "error"));
+		} finally {
+			itemInFlight.current = false;
+			setItemBusy(false);
+		}
+	}
 	async function changeItemArchive() {
 		if (!asset || itemInFlight.current || !["active", "archived"].includes(asset.status)) return;
 		itemInFlight.current = true;
@@ -1031,6 +1092,7 @@ export function AssetDetail() {
 				{asset.kind !== "project" && <section className="card asset-profile-card">
 					<div className="card-header">
 						<h2>{t("profile")}</h2>
+						{asset.kind === "item" && <Button size="small" disabled={itemBusy} onClick={openItemStatus}>{t("itemStatusChange")}</Button>}
 					</div>
 					<dl className="facts">
 						<div>
@@ -1113,8 +1175,28 @@ export function AssetDetail() {
 						{asset.kind === "item" && (
 							<>
 								<div>
+									<dt>{t("itemPurchasePrice")}</dt>
+									<dd>{asset.itemPurchasePriceKnown ? money(asset.amount, asset.currency, i18n.language) : t("itemStatusUnrecorded")}</dd>
+								</div>
+								<div>
 									<dt>{t("purchaseDate")}</dt>
-									<dd>{date(asset.purchaseDate, i18n.language)}</dd>
+									<dd>{asset.purchaseDate ? date(asset.purchaseDate, i18n.language) : t("itemStatusUnrecorded")}</dd>
+								</div>
+								<div>
+									<dt>{t("itemStartDate")}</dt>
+									<dd>{asset.itemStartDate ? date(asset.itemStartDate, i18n.language) : t("itemStatusUnrecorded")}</dd>
+								</div>
+								<div>
+									<dt>{t("itemLifecycleStatus")}</dt>
+									<dd><span className="chip">{asset.itemLifecycleStatus ? t(`itemStatus_${asset.itemLifecycleStatus}`) : t("itemStatusUnrecorded")}</span></dd>
+								</div>
+								<div>
+									<dt>{t("itemStatusDate")}</dt>
+									<dd>{asset.itemStatusDate ? date(asset.itemStatusDate, i18n.language) : t("itemStatusUnrecorded")}</dd>
+								</div>
+								<div>
+									<dt>{t("itemWarrantyStatus")}</dt>
+									<dd>{asset.itemWarrantyStatus ? t(`itemWarranty_${asset.itemWarrantyStatus}`) : t("itemStatusUnrecorded")}</dd>
 								</div>
 								<div>
 									<dt>{t("warrantyDate")}</dt>
@@ -1132,7 +1214,7 @@ export function AssetDetail() {
 								)}
 							</>
 						)}
-						{asset.status && (
+						{asset.status && (asset.kind !== "item" || asset.status !== "active" || !asset.itemLifecycleStatus || asset.itemLifecycleStatus === "inUse") && (
 							<div>
 								<dt>{t("status")}</dt>
 								<dd>
@@ -1455,7 +1537,7 @@ export function AssetDetail() {
 									<input value={itemLoanNote} onChange={(event) => { setItemLoanNote(event.target.value); setItemError(""); }} />
 								</label>
 								<Button
-									disabled={itemBusy || !["active", "loaned"].includes(asset.status)}
+									disabled={itemBusy || !["active", "loaned"].includes(asset.status) || (asset.status === "active" && ["repairing", "resold", "retired"].includes(asset.itemLifecycleStatus ?? ""))}
 									onClick={() => void recordItem(asset.status === "loaned" ? "return" : "loan")}
 								>
 									{t(asset.status === "loaned" ? "return" : "loan")}
@@ -1480,7 +1562,7 @@ export function AssetDetail() {
 									<input type="date" value={itemReminderDate} onChange={(event) => { setItemReminderDate(event.target.value); setItemError(""); }} />
 								</label>
 								<Button
-									disabled={itemBusy || !["active", "loaned"].includes(asset.status)}
+									disabled={itemBusy || !["active", "loaned"].includes(asset.status) || ["resold", "retired"].includes(asset.itemLifecycleStatus ?? "")}
 									onClick={() => void recordItem("maintenance")}
 								>
 									{t("maintenance")}
@@ -1495,7 +1577,7 @@ export function AssetDetail() {
 								<div className="list-row" key={h.id}>
 									<Check size={17} />
 									<div>
-										<strong>{t(h.action)}</strong>
+										<strong>{h.action === "itemStatus" ? `${h.itemStatusBefore ? t(`itemStatus_${h.itemStatusBefore}`) : t("itemStatusUnrecorded")} → ${h.itemStatusAfter ? t(`itemStatus_${h.itemStatusAfter}`) : t("itemStatusUnrecorded")}` : t(h.action)}</strong>
 										<small>
 											{h.eventDate
 												? date(h.eventDate, i18n.language)
@@ -1516,6 +1598,33 @@ export function AssetDetail() {
 						<Empty hint={false} />
 					)}
 				</section>
+			)}
+			{asset.kind === "item" && itemStatusOpen && (
+				<Dialog title={t("itemStatusChange")} onClose={() => { if (!itemInFlight.current) setItemStatusOpen(false); }}>
+					<div className="form-grid">
+						<label className="field" htmlFor="item-lifecycle-status">
+							<span>{t("itemLifecycleStatus")}</span>
+							<select id="item-lifecycle-status" value={itemStatusDraft} onChange={(event) => { setItemStatusDraft(event.target.value as NonNullable<Asset["itemLifecycleStatus"]>); setItemStatusError(""); }}>
+								{itemLifecycleStatuses.map((status) => <option key={status} value={status} disabled={asset.status === "loaned" && (status === "resold" || status === "retired")}>{t(`itemStatus_${status}`)}</option>)}
+							</select>
+						</label>
+						<label className="field" htmlFor="item-status-date">
+							<span>{t("itemStatusDate")}</span>
+							<input id="item-status-date" type="date" required value={itemStatusDateDraft} onChange={(event) => { setItemStatusDateDraft(event.target.value); setItemStatusError(""); }} />
+						</label>
+						<label className="field" htmlFor="item-status-note">
+							<span>{t("itemStatusNote")}</span>
+							<textarea id="item-status-note" maxLength={20000} value={itemStatusNote} onChange={(event) => setItemStatusNote(event.target.value)} />
+						</label>
+					</div>
+					<p className="subtitle">{t("itemStatusLocalHint")}</p>
+					{asset.status === "loaned" && <p className="subtitle">{t("itemStatusLoanedGuard")}</p>}
+					{itemStatusError && <p className="field-error" role="alert">{itemStatusError}</p>}
+					<div className="actions">
+						<Button disabled={itemBusy} onClick={() => setItemStatusOpen(false)}>{t("cancel")}</Button>
+						<Button variant="primary" disabled={itemBusy} onClick={() => void recordItemStatus()}>{t("itemStatusSave")}</Button>
+					</div>
+				</Dialog>
 			)}
 			{edit && (
 				<Suspense

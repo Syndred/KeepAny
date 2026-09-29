@@ -3,6 +3,8 @@ import { maintenanceScheduleSchema } from './task-repeat';
 export { parseMinorUnits, inputFromMinorUnits, formatMinorUnits } from './money';
 export const kinds = ['project','account','subscription','item','vault'] as const;
 export const currencies = ['CNY','USD','EUR','GBP','JPY'] as const;
+export const itemLifecycleStatuses = ['inUse','idle','repairing','resold','retired'] as const;
+export const itemWarrantyStatuses = ['unverified','inWarranty','outOfWarranty','notApplicable'] as const;
 // Domain holdings belong to a project record and are included in the same local backup/sync payload.
 export const projectDomainSchema=z.object({
  id:z.string().uuid(),name:z.string().trim().min(1).max(253).regex(/^(?!-)[a-z0-9-]+(?:\.[a-z0-9-]+)+$/i),
@@ -37,8 +39,8 @@ export const assetSchema = z.object({
  id:z.string().min(1).max(96), kind:z.enum(kinds), name:z.string().trim().min(1).max(160), category:z.string().max(100).default(''), tags:z.array(z.string().max(60)).max(100).default([]),
  description:z.string().max(20000).default(''), url:z.string().max(2000).default(''), contact:z.string().max(500).default(''), longDescription:z.string().max(30000).default(''),
  projectLaunchMonth:z.string().default(''),projectInspectionDate:z.string().default(''),projectDomains:z.array(projectDomainSchema).max(50).default([]),
- amount:z.number().int().min(0).max(Number.MAX_SAFE_INTEGER).default(0),currency:z.enum(currencies).default('CNY'),cycle:z.enum(['month','year','week','day']).default('month'),interval:z.number().int().min(1).max(100).default(1),dueDate:z.string().default(''),billingAnchor:z.string().default(''),renewalCount:z.number().int().nonnegative().default(0),lastRenewalId:z.string().max(96).default(''),lastItemEventId:z.string().max(96).default(''),purchaseDate:z.string().default(''),warrantyDate:z.string().default(''),trialEndsAt:z.string().default(''),discountUntil:z.string().default(''),discountAmount:z.number().int().min(0).max(Number.MAX_SAFE_INTEGER).default(0),cancelledAt:z.string().default(''),location:z.string().max(300).default(''),status:z.enum(['active','paused','cancelled','loaned','archived']).default('active'),borrower:z.string().max(200).default(''),username:z.string().max(300).default(''),notes:z.string().max(20000).default(''),attachments:z.array(z.string().uuid()).max(20).default([]),createdAt:z.string(),updatedAt:z.string(),deleted:z.boolean().default(false),
-}).superRefine((v,ctx)=>{ for(const key of ['dueDate','billingAnchor','purchaseDate','warrantyDate','trialEndsAt','discountUntil','projectInspectionDate'] as const) if(v[key] && !validDateOnly(v[key]))ctx.addIssue({code:'custom',path:[key],message:'date'});if(v.projectLaunchMonth && !/^\d{4}-(0[1-9]|1[0-2])$/.test(v.projectLaunchMonth))ctx.addIssue({code:'custom',path:['projectLaunchMonth'],message:'month'});for(const [index,domain] of v.projectDomains.entries())if(domain.expiryDate&&!validDateOnly(domain.expiryDate))ctx.addIssue({code:'custom',path:['projectDomains',index,'expiryDate'],message:'date'});if(v.discountAmount>v.amount)ctx.addIssue({code:'custom',path:['discountAmount'],message:'discount'});if(v.url && !/^https?:\/\//i.test(v.url) && !(v.kind==='vault' && /^(bitwarden|onepassword):\/\//i.test(v.url)))ctx.addIssue({code:'custom',path:['url'],message:'url'}); });
+ amount:z.number().int().min(0).max(Number.MAX_SAFE_INTEGER).default(0),currency:z.enum(currencies).default('CNY'),itemPurchasePriceKnown:z.boolean().default(false),cycle:z.enum(['month','year','week','day']).default('month'),interval:z.number().int().min(1).max(100).default(1),dueDate:z.string().default(''),billingAnchor:z.string().default(''),renewalCount:z.number().int().nonnegative().default(0),lastRenewalId:z.string().max(96).default(''),lastItemEventId:z.string().max(96).default(''),purchaseDate:z.string().default(''),warrantyDate:z.string().default(''),itemStartDate:z.string().default(''),itemStatusDate:z.string().default(''),itemLifecycleStatus:z.enum(itemLifecycleStatuses).nullable().default(null),itemWarrantyStatus:z.enum(itemWarrantyStatuses).nullable().default(null),trialEndsAt:z.string().default(''),discountUntil:z.string().default(''),discountAmount:z.number().int().min(0).max(Number.MAX_SAFE_INTEGER).default(0),cancelledAt:z.string().default(''),location:z.string().max(300).default(''),status:z.enum(['active','paused','cancelled','loaned','archived']).default('active'),borrower:z.string().max(200).default(''),username:z.string().max(300).default(''),notes:z.string().max(20000).default(''),attachments:z.array(z.string().uuid()).max(20).default([]),createdAt:z.string(),updatedAt:z.string(),deleted:z.boolean().default(false),
+}).superRefine((v,ctx)=>{ for(const key of ['dueDate','billingAnchor','purchaseDate','warrantyDate','itemStartDate','itemStatusDate','trialEndsAt','discountUntil','projectInspectionDate'] as const) if(v[key] && !validDateOnly(v[key]))ctx.addIssue({code:'custom',path:[key],message:'date'});if(v.projectLaunchMonth && !/^\d{4}-(0[1-9]|1[0-2])$/.test(v.projectLaunchMonth))ctx.addIssue({code:'custom',path:['projectLaunchMonth'],message:'month'});for(const [index,domain] of v.projectDomains.entries())if(domain.expiryDate&&!validDateOnly(domain.expiryDate))ctx.addIssue({code:'custom',path:['projectDomains',index,'expiryDate'],message:'date'});if(v.discountAmount>v.amount)ctx.addIssue({code:'custom',path:['discountAmount'],message:'discount'});if(v.url && !/^https?:\/\//i.test(v.url) && !(v.kind==='vault' && /^(bitwarden|onepassword):\/\//i.test(v.url)))ctx.addIssue({code:'custom',path:['url'],message:'url'}); }).transform(v=>v.kind==='item'&&v.amount>0&&!v.itemPurchasePriceKnown?{...v,itemPurchasePriceKnown:true}:v);
 export type Asset=z.infer<typeof assetSchema>;
 export type AssetKind=typeof kinds[number];
 export const relationSchema=z.object({id:z.string().min(1).max(96),from:z.string().min(1).max(96),to:z.string().min(1).max(96),label:z.string().min(1).max(100),source:z.string().max(500).optional(),createdAt:z.string(),verifiedAt:z.string().default(''),deleted:z.boolean().default(false)}).refine(v=>v.from!==v.to,'self-relation');
@@ -61,8 +63,8 @@ export const projectWorkflowSnapshotSchema=z.object({
  attachmentIds:z.array(z.string().uuid()).max(20).default([]),record:projectWorkflowRecordSchema.optional(),recordHistory:z.array(projectWorkflowRecordSchema).max(50).default([]),
 });
 export type ProjectWorkflowSnapshot=z.infer<typeof projectWorkflowSnapshotSchema>;
-export const maintenanceRecordSchema=z.object({action:z.enum(['complete','skip']),actionDate:z.string().refine(validDateOnly,'date'),previousDueDate:z.string().refine(validDateOnly,'date'),nextDueDate:z.string().refine(v=>v===null||validDateOnly(v),'date').nullable(),advancedOccurrences:z.number().int().nonnegative().safe(),evidence:z.string().trim().min(1).max(1000),recordedAt:z.string().datetime()});
-export const maintenancePlanSchema=z.object({schedule:maintenanceScheduleSchema,active:z.boolean(),records:z.array(maintenanceRecordSchema).max(1000).default([])});
+export const maintenanceRecordSchema=z.object({action:z.enum(['complete','skip','defer']),actionDate:z.string().refine(validDateOnly,'date'),previousDueDate:z.string().refine(validDateOnly,'date'),nextDueDate:z.string().refine(v=>v===null||validDateOnly(v),'date').nullable(),advancedOccurrences:z.number().int().nonnegative().safe(),evidence:z.string().trim().min(1).max(1000),recordedAt:z.string().datetime()}).superRefine((record,ctx)=>{if(record.action==='defer' && (!record.nextDueDate || record.nextDueDate<=record.previousDueDate || record.advancedOccurrences!==0))ctx.addIssue({code:'custom',path:['nextDueDate'],message:'defer-date'});});
+export const maintenancePlanSchema=z.object({schedule:maintenanceScheduleSchema,active:z.boolean(),deferredUntil:z.string().refine(v=>!v||validDateOnly(v),'date').default(''),records:z.array(maintenanceRecordSchema).max(1000).default([])}).superRefine((plan,ctx)=>{if(plan.deferredUntil && (!plan.active || plan.deferredUntil<=plan.schedule.dueDate))ctx.addIssue({code:'custom',path:['deferredUntil'],message:'defer-date'});});
 export type MaintenancePlan=z.infer<typeof maintenancePlanSchema>;
 export const taskSchema=z.object({id:z.string().min(1).max(96),name:z.string().min(1).max(300),assetId:z.string().max(96).default(''),dueDate:z.string().refine(v=>!v||validDateOnly(v),'date').default(''),done:z.boolean().default(false),completedAt:z.string().default(''),completionHistory:z.array(z.string().min(1).max(64)).default([]),createdAt:z.string(),dedupeKey:z.string().max(200).default(''),impactSnapshot:impactSnapshotSchema.optional(),projectWorkflow:projectWorkflowSnapshotSchema.optional(),maintenancePlan:maintenancePlanSchema.optional(),deleted:z.boolean().default(false)}).superRefine((task,ctx)=>{
  if(task.projectWorkflow){
@@ -72,7 +74,8 @@ export const taskSchema=z.object({id:z.string().min(1).max(96),name:z.string().m
  }
  if(task.maintenancePlan){
   const plan=task.maintenancePlan;const last=plan.records.at(-1);
-  if(!task.assetId || task.dueDate!==plan.schedule.dueDate || task.done===plan.active || (plan.active && task.completedAt) || (plan.active && last && last.nextDueDate!==plan.schedule.dueDate) || (!plan.active && (plan.schedule.rule.mode!=='once'||!last||last.nextDueDate!==null||task.completedAt!==last.recordedAt)))ctx.addIssue({code:'custom',path:['maintenancePlan'],message:'maintenance-state'});
+  const effectiveDueDate=plan.deferredUntil||plan.schedule.dueDate;
+  if(!task.assetId || task.dueDate!==effectiveDueDate || task.done===plan.active || (plan.active && task.completedAt) || (plan.active && last && last.nextDueDate!==effectiveDueDate) || (!plan.active && (plan.schedule.rule.mode!=='once'||!last||last.nextDueDate!==null||task.completedAt!==last.recordedAt)))ctx.addIssue({code:'custom',path:['maintenancePlan'],message:'maintenance-state'});
   if(task.projectWorkflow || task.impactSnapshot)ctx.addIssue({code:'custom',path:['maintenancePlan'],message:'maintenance-mixed'});
  }
 });
@@ -85,13 +88,15 @@ export type Submission=z.infer<typeof submissionSchema>;
 export const financeActions=['expense','topup','refund','balance'] as const;
 export const historySchema=z.object({
  id:z.string().min(1).max(96),assetId:z.string().min(1).max(96),
- action:z.enum(['loan','return','renew','maintenance',...financeActions]),
+ action:z.enum(['loan','return','renew','maintenance','itemStatus',...financeActions]),
  title:z.string().trim().max(160).optional(),source:z.string().trim().max(300).optional(),
  note:z.string(),borrower:z.string().max(200).optional(),
+ itemStatusBefore:z.enum(itemLifecycleStatuses).nullable().optional(),itemStatusAfter:z.enum(itemLifecycleStatuses).optional(),
  eventDate:z.string().refine(validDateOnly,'date').optional(),billDate:z.string().refine(validDateOnly,'date').optional(),
  amount:z.number().int().min(0).max(Number.MAX_SAFE_INTEGER).optional(),currency:z.enum(currencies).optional(),
  createdAt:z.string(),deleted:z.boolean().default(false),
 }).superRefine((value,ctx)=>{
+ if(value.action==='itemStatus' && (value.itemStatusBefore===undefined || !value.itemStatusAfter || !value.eventDate))ctx.addIssue({code:'custom',path:['itemStatusAfter'],message:'item-status'});
  if(!financeActions.includes(value.action as typeof financeActions[number]))return;
  if(!value.title)ctx.addIssue({code:'custom',path:['title'],message:'title'});
  if(!value.eventDate)ctx.addIssue({code:'custom',path:['eventDate'],message:'date'});
@@ -99,7 +104,7 @@ export const historySchema=z.object({
  if(!value.currency)ctx.addIssue({code:'custom',path:['currency'],message:'currency'});
 });
 export type History=z.infer<typeof historySchema>;
-export function newAsset(kind:AssetKind):Asset{const now=new Date().toISOString();return assetSchema.parse({id:crypto.randomUUID(),kind,name:'Untitled',createdAt:now,updatedAt:now});}
+export function newAsset(kind:AssetKind):Asset{const now=new Date().toISOString();return assetSchema.parse({id:crypto.randomUUID(),kind,name:'Untitled',...(kind==='item'?{itemLifecycleStatus:'inUse',itemWarrantyStatus:'unverified'}:{}),createdAt:now,updatedAt:now});}
 export function nextDue(date:string,cycle:Asset['cycle'],interval=1){return dueOnCycle(date,cycle,interval,1);}
 export function monthlyMinorUnits(asset:Asset):bigint{
   const periods=BigInt(asset.interval);

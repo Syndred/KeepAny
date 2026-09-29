@@ -11,7 +11,7 @@ type ItemState = {
 };
 
 function detail(page: Page, label: string) {
-	return page.locator("dt").filter({ hasText: label }).locator("..").locator("dd");
+	return page.locator("dt").filter({ hasText: new RegExp(`^${label}$`) }).locator("..").locator("dd");
 }
 
 function historyRows(page: Page, label: string) {

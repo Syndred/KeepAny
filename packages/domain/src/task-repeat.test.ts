@@ -4,6 +4,7 @@ import type { MaintenanceSchedule } from "./task-repeat";
 import {
 	advanceMaintenanceSchedule,
 	createMaintenanceSchedule,
+	deferMaintenanceSchedule,
 	maintenanceReminderDate,
 	maintenanceScheduleSchema,
 } from "./task-repeat";
@@ -120,6 +121,22 @@ describe("maintenance repeat schedule", () => {
 				advancedOccurrences: 0,
 			},
 		});
+	});
+
+	it("defers only the current occurrence with a recorded date while preserving the fixed anchor", () => {
+		const schedule = createMaintenanceSchedule({ dueDate: "2026-09-30", rule: { mode: "fixed", unit: "month", every: 1 }, leadDays: 2 });
+		const first = deferMaintenanceSchedule(schedule, "", "2026-09-29");
+		expect(first).toEqual({ nextDueDate: "2026-10-07", record: { action: "defer", actionDate: "2026-09-29", previousDueDate: "2026-09-30", nextDueDate: "2026-10-07", advancedOccurrences: 0 } });
+		expect(maintenanceReminderDate(schedule, first.nextDueDate)).toBe("2026-10-05");
+		const again = deferMaintenanceSchedule(schedule, first.nextDueDate, "2026-10-01");
+		expect(again.nextDueDate).toBe("2026-10-14");
+		const finished = advanceMaintenanceSchedule(schedule, "complete", "2026-10-14", again.nextDueDate);
+		expect(finished.record.previousDueDate).toBe("2026-10-14");
+		expect(finished.schedule?.dueDate).toBe("2026-10-30");
+		expect(finished.schedule?.anchorDate).toBe("2026-09-30");
+		const once = createMaintenanceSchedule({ dueDate: "2026-09-30", rule: { mode: "once" } });
+		expect(advanceMaintenanceSchedule(once, "skip", "2026-10-07", first.nextDueDate).record.previousDueDate).toBe("2026-10-07");
+		expect(() => deferMaintenanceSchedule(once, "2026-09-29", "2026-09-29")).toThrow("invalid-defer-date");
 	});
 
 	it("uses calendar days in every time zone including skipped civil days", () => {

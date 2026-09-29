@@ -121,9 +121,27 @@ export function createMaintenanceSchedule(input: {
 	});
 }
 
-export function maintenanceReminderDate(schedule: MaintenanceSchedule): string {
+export function effectiveMaintenanceDueDate(schedule: MaintenanceSchedule, deferredUntil = ""): string {
 	const value = maintenanceScheduleSchema.parse(schedule);
-	return subtractCalendarDays(value.dueDate, value.leadDays);
+	if (deferredUntil) {
+		utcDay(deferredUntil);
+		if (deferredUntil <= value.dueDate) throw Error("invalid-defer-date");
+	}
+	return deferredUntil || value.dueDate;
+}
+
+export function maintenanceReminderDate(schedule: MaintenanceSchedule, deferredUntil = ""): string {
+	const value = maintenanceScheduleSchema.parse(schedule);
+	return subtractCalendarDays(effectiveMaintenanceDueDate(value, deferredUntil), value.leadDays);
+}
+
+/** Delay only the current occurrence. The recurrence anchor remains unchanged. */
+export function deferMaintenanceSchedule(input: MaintenanceSchedule, deferredUntil: string, actionDate: string) {
+	const schedule = maintenanceScheduleSchema.parse(input);
+	utcDay(actionDate);
+	const previousDueDate = effectiveMaintenanceDueDate(schedule, deferredUntil);
+	const nextDueDate = dueOnCycle(actionDate > previousDueDate ? actionDate : previousDueDate, "day", 7, 1);
+	return { nextDueDate, record: { action: "defer" as const, actionDate, previousDueDate, nextDueDate, advancedOccurrences: 0 } };
 }
 
 function lastIndex(
@@ -183,9 +201,11 @@ export function advanceMaintenanceSchedule(
 	input: MaintenanceSchedule,
 	action: MaintenanceAction,
 	actionDate: string,
+	deferredUntil = "",
 ): MaintenanceAdvance {
 	const schedule = maintenanceScheduleSchema.parse(input);
 	utcDay(actionDate);
+	const currentDueDate = effectiveMaintenanceDueDate(schedule, deferredUntil);
 	if (action !== "complete" && action !== "skip") throw Error("invalid-action");
 	if (schedule.rule.mode === "once")
 		return {
@@ -193,7 +213,7 @@ export function advanceMaintenanceSchedule(
 			record: {
 				action,
 				actionDate,
-				previousDueDate: schedule.dueDate,
+				previousDueDate: currentDueDate,
 				nextDueDate: null,
 				advancedOccurrences: 0,
 			},
@@ -218,7 +238,7 @@ export function advanceMaintenanceSchedule(
 			schedule.rule.unit,
 			schedule.rule.every,
 			schedule.occurrence,
-			actionDate > schedule.dueDate ? actionDate : schedule.dueDate,
+			actionDate > currentDueDate ? actionDate : currentDueDate,
 		);
 		next = maintenanceScheduleSchema.parse({ ...schedule, ...following });
 	}
@@ -227,7 +247,7 @@ export function advanceMaintenanceSchedule(
 		record: {
 			action,
 			actionDate,
-			previousDueDate: schedule.dueDate,
+			previousDueDate: currentDueDate,
 			nextDueDate: next.dueDate,
 			advancedOccurrences:
 				schedule.rule.mode === "afterCompletion" && action === "complete"

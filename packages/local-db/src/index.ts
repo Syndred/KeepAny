@@ -241,17 +241,20 @@ export class LocalRepository {
         if (type === 'asset') {
           const previous = parsedPayload(data) as Asset;
           const proposed = parsedPayload(next) as Asset;
+          if (previous.kind !== proposed.kind && (previous.kind === 'item' || proposed.kind === 'item')) throw Error('asset-kind-immutable');
           if (previous.lastRenewalId !== proposed.lastRenewalId) throw Error('asset-stale-renewal');
           if (previous.lastItemEventId !== proposed.lastItemEventId) throw Error('item-stale');
           if (previous.kind === 'item' &&
-            (previous.status !== proposed.status || previous.borrower !== proposed.borrower)) throw Error('item-action-required');
+            (previous.status !== proposed.status || previous.borrower !== proposed.borrower ||
+              previous.itemLifecycleStatus !== proposed.itemLifecycleStatus || previous.itemStatusDate !== proposed.itemStatusDate)) throw Error('item-action-required');
         }
         return { ...data, ...next };
       });
     } else {
       if (expectedPayload !== undefined && expectedPayload !== null) throw Error(type === 'task' ? 'task-stale' : type === 'preference' ? 'preference-stale' : 'asset-stale');
       if (type === 'asset' && entity.kind === 'item' &&
-        (entity.status !== 'active' || entity.borrower)) throw Error('item-action-required');
+        (entity.status !== 'active' || entity.borrower ||
+          (entity.itemLifecycleStatus !== null && entity.itemLifecycleStatus !== 'inUse') || entity.itemStatusDate)) throw Error('item-action-required');
       try {
         await this.db.records.insert(next);
       } catch (error) {
@@ -325,7 +328,9 @@ export class LocalRepository {
       const asset = parsedPayload(row);
       liveAssets.set(asset.id, !asset.deleted);
       if ((asset as unknown as Asset).kind === 'item' &&
-        ((asset as unknown as Asset).status !== 'active' || (asset as unknown as Asset).borrower)) throw Error('item-action-required');
+        ((asset as unknown as Asset).status !== 'active' || (asset as unknown as Asset).borrower ||
+          ((asset as unknown as Asset).itemLifecycleStatus !== null && (asset as unknown as Asset).itemLifecycleStatus !== 'inUse') ||
+          (asset as unknown as Asset).itemStatusDate)) throw Error('item-action-required');
       for (const id of (asset as unknown as { attachments: string[] }).attachments) {
         if (!(await this.fileStore.blobs.get(id))) throw Error('attachment-missing');
       }
@@ -403,19 +408,29 @@ export class LocalRepository {
     const next = entitySchemas.asset.parse(nextAsset);
     const event = entitySchemas.history.parse(history);
     const unchanged = Object.keys(expected).every(field =>
-      ['status', 'borrower', 'lastItemEventId', 'updatedAt'].includes(field) ||
+      ['status', 'borrower', 'itemLifecycleStatus', 'itemStatusDate', 'lastItemEventId', 'updatedAt'].includes(field) ||
       JSON.stringify(expected[field as keyof Asset]) === JSON.stringify(next[field as keyof Asset]));
     const active = expected.status === 'active';
     const loaned = expected.status === 'loaned';
     const validTransition = event.action === 'loan'
-      ? active && next.status === 'loaned' && !!next.borrower.trim() &&
+      ? active && !['repairing','resold','retired'].includes(expected.itemLifecycleStatus ?? '') &&
+        next.status === 'loaned' && !!next.borrower.trim() &&
         event.borrower === next.borrower && !expected.borrower
       : event.action === 'return'
         ? loaned && next.status === 'active' && !next.borrower && event.borrower === expected.borrower
-        : event.action === 'maintenance' && (active || loaned) && next.status === expected.status &&
-          next.borrower === expected.borrower && !!event.note.trim() && !!event.eventDate;
+        : event.action === 'maintenance'
+          ? (active || loaned) && !['resold','retired'].includes(expected.itemLifecycleStatus ?? '') &&
+            next.status === expected.status && next.borrower === expected.borrower && !!event.note.trim() && !!event.eventDate
+          : event.action === 'itemStatus' && (active || loaned || expected.status === 'archived') &&
+            event.itemStatusBefore === expected.itemLifecycleStatus && !!event.itemStatusAfter && !!event.eventDate &&
+            (expected.itemLifecycleStatus !== event.itemStatusAfter || expected.itemStatusDate !== event.eventDate) &&
+            (!loaned || !['resold','retired'].includes(event.itemStatusAfter)) &&
+            next.status === expected.status && next.borrower === expected.borrower &&
+            next.itemLifecycleStatus === event.itemStatusAfter && next.itemStatusDate === event.eventDate;
     if (expected.kind !== 'item' || expected.deleted || next.id !== expected.id ||
       next.kind !== 'item' || next.deleted || !unchanged || !validTransition ||
+      (event.action !== 'itemStatus' && (event.itemStatusBefore !== undefined || event.itemStatusAfter !== undefined)) ||
+      (event.action !== 'itemStatus' && (next.itemLifecycleStatus !== expected.itemLifecycleStatus || next.itemStatusDate !== expected.itemStatusDate)) ||
       next.lastItemEventId !== event.id || event.assetId !== expected.id || event.deleted ||
       (event.eventDate !== undefined && !event.eventDate)) throw Error('item-invalid');
     await this.recordHistoryPair(expected, next, event, 'item');

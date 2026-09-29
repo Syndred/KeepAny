@@ -28,6 +28,14 @@ const itemFixture = (expected: Asset = { ...newAsset('item'), name: 'Camera',
     lastItemEventId: event.id, updatedAt: new Date(Date.now() + 1000).toISOString() };
   return { expected, next, event };
 };
+const itemStatusFixture = (expected: Asset, after: NonNullable<Asset['itemLifecycleStatus']>, eventDate = '2026-09-29') => {
+  const event: History = historySchema.parse({ id: crypto.randomUUID(), assetId: expected.id, action: 'itemStatus',
+    itemStatusBefore: expected.itemLifecycleStatus, itemStatusAfter: after, eventDate, note: 'Local status note',
+    createdAt: new Date().toISOString() });
+  const next: Asset = { ...expected, itemLifecycleStatus: after, itemStatusDate: eventDate,
+    lastItemEventId: event.id, updatedAt: new Date(Date.now() + 1000).toISOString() };
+  return { expected, next, event };
+};
 const hash = async (bytes: Uint8Array) => Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', bytes as BufferSource)))
   .map(byte => byte.toString(16).padStart(2, '0')).join('');
 const changedArchive = async (backup: Uint8Array, edit: (entries: Record<string, Uint8Array>, manifest: Record<string, unknown>, rows: RecordRow[]) => void) => {
@@ -696,6 +704,120 @@ describe('RxDB + free Dexie local repository', () => {
     expect(await restored.list('history')).toEqual(await reopened.list('history'));
     await restored.close();
     await reopened.close();
+  });
+
+  it('journals item status with CAS and keeps loans, maintenance, archive and purchase price separate', async () => {
+    const db = await openLocalRepository(name());
+    const otherTab = new LocalRepository(db.db, db.fileStore);
+    try {
+      const item = { ...newAsset('item'), name: 'Camera', amount: 1234, currency: 'USD' as const,
+        itemPurchasePriceKnown: true, itemStartDate: '2026-09-01', itemWarrantyStatus: 'inWarranty' as const };
+      await db.save('asset', item);
+      await expect(db.save('asset', { ...item, itemLifecycleStatus: 'resold' })).rejects.toThrow('item-action-required');
+      await expect(db.save('asset', { ...item, itemStatusDate: '2026-09-29' })).rejects.toThrow('item-action-required');
+      await expect(db.save('asset', { ...item, kind: 'subscription', itemLifecycleStatus: 'resold' })).rejects.toThrow('asset-kind-immutable');
+      await expect(db.save('asset', { ...newAsset('item'), itemLifecycleStatus: 'resold' })).rejects.toThrow('item-action-required');
+      const idle = itemStatusFixture(item, 'idle');
+      const repairing = itemStatusFixture(item, 'repairing');
+      const results = await Promise.allSettled([
+        db.recordItemAction(idle.expected, idle.next, idle.event),
+        otherTab.recordItemAction(repairing.expected, repairing.next, repairing.event),
+      ]);
+      expect(results.filter(result => result.status === 'fulfilled')).toHaveLength(1);
+      expect((results.find(result => result.status === 'rejected') as PromiseRejectedResult).reason.message).toBe('item-stale');
+      const committed = await db.get<Asset>('asset', item.id);
+      if (!committed) throw Error('missing-item');
+      expect(committed).toMatchObject({ amount: 1234, currency: 'USD', itemPurchasePriceKnown: true,
+        itemStartDate: '2026-09-01', itemWarrantyStatus: 'inWarranty', itemStatusDate: '2026-09-29' });
+      expect((await db.list<History>('history')).filter(row => row.action === 'itemStatus')).toHaveLength(1);
+      await expect(db.recordItemAction(idle.expected, idle.next, idle.event)).rejects.toThrow('item-stale');
+      const repair = itemStatusFixture(committed, 'repairing', '2026-09-30');
+      await db.recordItemAction(repair.expected, repair.next, repair.event);
+      const underRepair = await db.get<Asset>('asset', item.id);
+      if (!underRepair) throw Error('missing-item');
+      const blockedLoan = itemFixture(underRepair);
+      await expect(db.recordItemAction(blockedLoan.expected, blockedLoan.next, blockedLoan.event)).rejects.toThrow('item-invalid');
+      const service = itemFixture(underRepair, 'maintenance');
+      await db.recordItemAction(service.expected, service.next, service.event);
+      const serviced = await db.get<Asset>('asset', item.id);
+      if (!serviced) throw Error('missing-item');
+      const inUse = itemStatusFixture(serviced, 'inUse', '2026-10-01');
+      await db.recordItemAction(inUse.expected, inUse.next, inUse.event);
+      const loanable = await db.get<Asset>('asset', item.id);
+      if (!loanable) throw Error('missing-item');
+      const loan = itemFixture(loanable);
+      await db.recordItemAction(loan.expected, loan.next, loan.event);
+      const lent = await db.get<Asset>('asset', item.id);
+      if (!lent) throw Error('missing-item');
+      const blockedSale = itemStatusFixture(lent, 'resold', '2026-10-02');
+      await expect(db.recordItemAction(blockedSale.expected, blockedSale.next, blockedSale.event)).rejects.toThrow('item-invalid');
+      const returned = itemFixture(lent, 'return');
+      await db.recordItemAction(returned.expected, returned.next, returned.event);
+      const available = await db.get<Asset>('asset', item.id);
+      if (!available) throw Error('missing-item');
+      const sold = itemStatusFixture(available, 'resold', '2026-10-03');
+      await db.recordItemAction(sold.expected, sold.next, sold.event);
+      const disposed = await db.get<Asset>('asset', item.id);
+      if (!disposed) throw Error('missing-item');
+      const disposedLoan = itemFixture(disposed);
+      await expect(db.recordItemAction(disposedLoan.expected, disposedLoan.next, disposedLoan.event)).rejects.toThrow('item-invalid');
+      expect((await db.setItemArchived(item.id, 'active')).status).toBe('archived');
+      expect((await db.get<Asset>('asset', item.id))?.itemLifecycleStatus).toBe('resold');
+      const archive = await db.exportArchive();
+      const restored = await openLocalRepository(name());
+      try {
+        expect(await restored.restoreArchive(archive)).toBe(8);
+        expect(await restored.get<Asset>('asset', item.id)).toMatchObject({ itemLifecycleStatus: 'resold',
+          itemStatusDate: '2026-10-03', itemPurchasePriceKnown: true, amount: 1234, status: 'archived' });
+        expect((await restored.list<History>('history')).filter(row => row.action === 'itemStatus')).toHaveLength(4);
+      } finally { await restored.close(); }
+    } finally { await db.close(); }
+  });
+
+  it('removes orphan item status history after an injected partial storage failure', async () => {
+    const db = await openLocalRepository(name());
+    try {
+      const item = { ...newAsset('item'), name: 'Desk' };
+      await db.save('asset', item);
+      const status = itemStatusFixture(item, 'idle');
+      const storage = db.db.records.storageInstance;
+      const original = storage.bulkWrite.bind(storage);
+      const write = vi.spyOn(storage, 'bulkWrite').mockImplementationOnce(async (rows, context) => {
+        expect(context).toBe('keepany-item');
+        const inserted = await original([rows[1]], context);
+        expect(inserted.error).toHaveLength(0);
+        throw Error('injected-status-history-first');
+      });
+      await expect(db.recordItemAction(status.expected, status.next, status.event)).rejects.toThrow('injected-status-history-first');
+      write.mockRestore();
+      expect(await db.get<Asset>('asset', item.id)).toMatchObject({ itemLifecycleStatus: 'inUse', itemStatusDate: '' });
+      expect(await db.list('history')).toHaveLength(0);
+      expect(await db.fileStore.renewalJournal.count()).toBe(0);
+    } finally { await db.close(); }
+  });
+
+  it('restores a legacy item archive without inventing lifecycle or a zero purchase price', async () => {
+    const source = await openLocalRepository(name());
+    const item = { ...newAsset('item'), name: 'Legacy camera', amount: 3456, currency: 'USD' as const };
+    try {
+      await source.save('asset', item);
+      const archive = await changedArchive(await source.exportArchive(), (_entries, _manifest, rows) => {
+        const row = rows.find(candidate => candidate.id === `asset:${item.id}`);
+        if (!row) throw Error('missing-legacy-item');
+        const payload = JSON.parse(row.payload) as Record<string, unknown>;
+        for (const field of ['itemPurchasePriceKnown', 'itemLifecycleStatus', 'itemWarrantyStatus', 'itemStartDate', 'itemStatusDate']) delete payload[field];
+        payload.status = 'archived';
+        row.payload = JSON.stringify(payload);
+      });
+      const restored = await openLocalRepository(name());
+      try {
+        expect(await restored.restoreArchive(archive)).toBe(1);
+        expect(await restored.get<Asset>('asset', item.id)).toMatchObject({ status: 'archived', amount: 3456,
+          currency: 'USD', itemPurchasePriceKnown: true, itemLifecycleStatus: null, itemWarrantyStatus: null,
+          itemStartDate: '', itemStatusDate: '' });
+        expect(await restored.list('history')).toHaveLength(0);
+      } finally { await restored.close(); }
+    } finally { await source.close(); }
   });
 
   it('deduplicates pending item reminders and preserves every task completion after reopen and retry', async () => {

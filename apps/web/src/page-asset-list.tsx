@@ -380,7 +380,7 @@ function LibraryCard({ asset, search }: { asset: Asset; search: string }) {
 		<div className="asset-library-cover"><AssetCover asset={asset} />{!asset.attachments.length && <><Icon size={40} strokeWidth={1.7} /><span>{niceCategory(asset.category, t)}</span></>}</div>
 		<div className="asset-library-body"><strong>{asset.name}</strong><small>{asset.description || asset.location || niceCategory(asset.category, t)}</small><div className="asset-library-meta">
 			{asset.kind === "subscription" ? <><span>{money(asset.amount, asset.currency, i18n.language)}</span><span>{asset.interval} {t(asset.cycle)}</span>{asset.dueDate && <span>{t("dueDate")}: {date(asset.dueDate, i18n.language)}</span>}</> : asset.kind === "vault" ? <><span>{niceCategory(asset.category, t)}</span>{asset.url && <span>{asset.url}</span>}</> : <><span>{niceCategory(asset.category, t)}</span>{asset.location && <span>{asset.location}</span>}{asset.warrantyDate && <span>{t("warrantyDate")}: {date(asset.warrantyDate, i18n.language)}</span>}</>}
-		</div><div className="asset-library-foot"><span className="chip">{t(asset.status)}</span><ArrowRight size={14} aria-hidden="true" /></div></div>
+		</div><div className="asset-library-foot"><span className="chip">{asset.kind === "item" ? asset.itemLifecycleStatus ? t(`itemStatus_${asset.itemLifecycleStatus}`) : t("itemStatusUnrecorded") : t(asset.status)}</span>{asset.kind === "item" && asset.status !== "active" && <span className="chip">{t(asset.status)}</span>}<ArrowRight size={14} aria-hidden="true" /></div></div>
 	</Link>;
 }
 

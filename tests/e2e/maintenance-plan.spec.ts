@@ -89,3 +89,55 @@ test("one-time skip closes its plan; ordinary tasks keep their existing toggle",
 	await ordinary.getByRole("button", { name: "完成" }).click();
 	await expect(ordinary).toContainText("已完成");
 });
+
+test("defer seven days records evidence, survives reload and keeps the fixed schedule anchor", async ({ page }) => {
+	await page.goto("/");
+	await page.evaluate(() => localStorage.setItem("keepany-language", "en"));
+	const assetId = await createAsset(page);
+	const localDate = (value: Date) => `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, "0")}-${String(value.getDate()).padStart(2, "0")}`;
+	const actionDate = new Date();
+	const due = new Date(actionDate);
+	due.setDate(due.getDate() + 3);
+	const deferred = new Date(due);
+	deferred.setDate(deferred.getDate() + 7);
+	await page.goto("/tasks");
+	await page.getByRole("button", { name: "New maintenance plan" }).click();
+	const editor = page.getByRole("dialog");
+	await editor.getByLabel("Plan name").fill("Defer laptop review");
+	await editor.getByLabel("Linked asset").selectOption(assetId);
+	await editor.getByLabel("Repeat rule").selectOption("fixed");
+	await editor.getByLabel("Interval", { exact: true }).fill("1");
+	await editor.getByLabel("Interval unit").selectOption("month");
+	await editor.getByLabel("Next date").fill(localDate(due));
+	await editor.getByRole("button", { name: "Create plan" }).click();
+	const row = page.locator(".maintenance-task-row").filter({ hasText: "Defer laptop review" });
+	await row.getByRole("button", { name: "Defer 7 days" }).click();
+	await row.getByLabel("Evidence or note").fill("Waiting for replacement part");
+	await row.getByRole("button", { name: "Save action record" }).click();
+	await expect(row).toContainText("Original due date");
+	await page.reload();
+	await expect(row).toContainText("Defer laptop review");
+	await row.getByText("Action history · 1").click();
+	await expect(row).toContainText("Waiting for replacement part");
+	const deferredState = await page.evaluate(async repositoryModule => {
+		const { localRepository } = await import(repositoryModule);
+		const repository = await localRepository();
+		const task = (await repository.list("task")).find((value: { name: string }) => value.name === "Defer laptop review");
+		return { dueDate: task.dueDate, deferredUntil: task.maintenancePlan.deferredUntil, anchorDate: task.maintenancePlan.schedule.anchorDate, record: task.maintenancePlan.records[0] };
+	}, repositoryUrl);
+	expect(deferredState).toMatchObject({ dueDate: localDate(deferred), deferredUntil: localDate(deferred), anchorDate: localDate(due), record: { action: "defer", actionDate: localDate(actionDate), previousDueDate: localDate(due), nextDueDate: localDate(deferred), evidence: "Waiting for replacement part" } });
+	await row.getByRole("button", { name: "Confirm complete" }).click();
+	await row.getByLabel("Evidence or note").fill("Part arrived and review completed");
+	await row.getByRole("button", { name: "Save action record" }).click();
+	await expect(row.getByText("Action history · 2")).toBeVisible();
+	const finished = await page.evaluate(async repositoryModule => {
+		const { localRepository } = await import(repositoryModule);
+		const repository = await localRepository();
+		const task = (await repository.list("task")).find((value: { name: string }) => value.name === "Defer laptop review");
+		return { dueDate: task.dueDate, deferredUntil: task.maintenancePlan.deferredUntil, anchorDate: task.maintenancePlan.schedule.anchorDate, records: task.maintenancePlan.records.map((row: { action: string }) => row.action) };
+	}, repositoryUrl);
+	expect(finished.anchorDate).toBe(localDate(due));
+	expect(finished.deferredUntil).toBe("");
+	expect(finished.records).toEqual(["defer", "complete"]);
+	expect(finished.dueDate > localDate(deferred)).toBe(true);
+});

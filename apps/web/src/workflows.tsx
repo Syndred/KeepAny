@@ -114,7 +114,9 @@ export function AssetEditor({
 			},
 	);
 	const [amount, setAmount] = useState(
-		asset?.amount != null
+		kind === "item" && !asset?.itemPurchasePriceKnown
+			? ""
+			: asset?.amount != null
 			? inputFromMinorUnits(asset.amount, asset.currency)
 			: "0",
 	);
@@ -138,8 +140,8 @@ export function AssetEditor({
 	async function submit(e: React.FormEvent) {
 		e.preventDefault();
 		if (inFlight.current) return;
-		const parsedAmount = parseMinorUnits(amount, draft.currency);
-		const parsedDiscount = parseMinorUnits(discount, draft.currency);
+		const parsedAmount = kind === "item" && !amount.trim() ? 0 : parseMinorUnits(amount, draft.currency);
+		const parsedDiscount = kind === "subscription" ? parseMinorUnits(discount, draft.currency) : draft.discountAmount;
 		const scheduleChanged =
 			kind === "subscription" &&
 			original !== undefined &&
@@ -151,6 +153,7 @@ export function AssetEditor({
 			tags: tagsInput.split(",").map((tag) => tag.trim()).filter(Boolean),
 			name: draft.name.trim(),
 			amount: parsedAmount,
+			itemPurchasePriceKnown: kind === "item" ? !!amount.trim() : draft.itemPurchasePriceKnown,
 			discountAmount: parsedDiscount,
 			billingAnchor:
 				kind === "subscription" && (scheduleChanged || !draft.billingAnchor)
@@ -390,6 +393,19 @@ export function AssetEditor({
 					{kind === "item" && (
 						<>
 							<Field
+								name="amount"
+								label={t("itemPurchasePrice")}
+								value={amount}
+								type="number"
+								onChange={setAmount}
+								error={errors.amount}
+							/>
+							<Field name="currency" label={t("currency")}>
+								<select id="currency" value={draft.currency} onChange={(event) => set("currency", event.target.value as Asset["currency"])}>
+									{["CNY", "USD", "EUR", "GBP", "JPY"].map((value) => <option key={value} value={value}>{value}</option>)}
+								</select>
+							</Field>
+							<Field
 								name="purchaseDate"
 								label={t("purchaseDate")}
 								value={draft.purchaseDate}
@@ -397,6 +413,20 @@ export function AssetEditor({
 								onChange={(v) => set("purchaseDate", v)}
 								error={errors.purchaseDate}
 							/>
+							<Field
+								name="itemStartDate"
+								label={t("itemStartDate")}
+								value={draft.itemStartDate}
+								type="date"
+								onChange={(value) => set("itemStartDate", value)}
+								error={errors.itemStartDate}
+							/>
+							<Field name="itemWarrantyStatus" label={t("itemWarrantyStatus")}>
+								<select id="itemWarrantyStatus" value={draft.itemWarrantyStatus ?? ""} onChange={(event) => set("itemWarrantyStatus", event.target.value ? event.target.value as NonNullable<Asset["itemWarrantyStatus"]> : null)}>
+									<option value="">{t("itemStatusUnrecorded")}</option>
+									{["unverified", "inWarranty", "outOfWarranty", "notApplicable"].map((value) => <option key={value} value={value}>{t(`itemWarranty_${value}`)}</option>)}
+								</select>
+							</Field>
 							<Field
 								name="warrantyDate"
 								label={t("warrantyDate")}

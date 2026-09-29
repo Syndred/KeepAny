@@ -18,7 +18,7 @@ export function TaskPage() {
 		.sort(
 			(a, b) =>
 				Number(a.done) - Number(b.done) ||
-				(a.maintenancePlan?.active ? maintenanceReminderDate(a.maintenancePlan.schedule) : a.dueDate).localeCompare(b.maintenancePlan?.active ? maintenanceReminderDate(b.maintenancePlan.schedule) : b.dueDate),
+				(a.maintenancePlan?.active ? maintenanceReminderDate(a.maintenancePlan.schedule, a.maintenancePlan.deferredUntil) : a.dueDate).localeCompare(b.maintenancePlan?.active ? maintenanceReminderDate(b.maintenancePlan.schedule, b.maintenancePlan.deferredUntil) : b.dueDate),
 		);
 	const counts = {
 		all: tasks.length,
