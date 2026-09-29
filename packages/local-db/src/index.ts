@@ -2,7 +2,7 @@ import { createRxDatabase, type RxDatabase } from 'rxdb';
 import { getRxStorageDexie } from 'rxdb/plugins/storage-dexie';
 import Dexie, { type Table } from 'dexie';
 import { z } from 'zod';
-import { dueOnCycle, entitySchemas, normalizeCategoryName, type Asset, type AssetKind, type Category, type EntityType, type History, type Task } from '../../domain/src';
+import { dueOnCycle, entitySchemas, normalizeCategoryName, type Asset, type AssetKind, type Category, type EntityType, type History, type Submission, type Task } from '../../domain/src';
 import { canRecordProjectWorkflowTask, currentProjectWorkflowRound } from '../../domain/src/project-workflow';
 import { zipSync, unzipSync, strToU8, strFromU8 } from 'fflate';
 import type { SyncOperation } from '../../contracts/src';
@@ -213,6 +213,11 @@ export class LocalRepository {
     return withRenewalLock(`keepany-task:${this.db.name}`, () => this.saveUnlocked('task', next, rowFor('task', expected).payload));
   }
 
+  async saveSubmissionIfCurrent(expected: Submission, next: Submission): Promise<RecordRow> {
+    if (expected.id !== next.id || expected.assetId !== next.assetId || expected.deleted || next.deleted) throw Error('submission-stale');
+    return this.saveUnlocked('submission', next, rowFor('submission', expected).payload);
+  }
+
   async archiveProjectIfWorkflowComplete(expectedProject: Asset, expectedRoundId: string): Promise<RecordRow> {
     if (expectedProject.kind !== 'project' || expectedProject.deleted || expectedProject.status === 'archived' || !expectedRoundId) throw Error('workflow-stale');
     return withRenewalLock(`keepany-task:${this.db.name}`, async () => {
@@ -260,7 +265,7 @@ export class LocalRepository {
     const current = await this.db.records.findOne(next.id).exec();
     if (current) {
       await current.incrementalModify((data: RecordRow) => {
-        if (expectedPayload === null || (expectedPayload !== undefined && JSON.stringify(parsedPayload(data)) !== expectedPayload)) throw Error(type === 'task' ? 'task-stale' : type === 'preference' ? 'preference-stale' : 'asset-stale');
+        if (expectedPayload === null || (expectedPayload !== undefined && JSON.stringify(parsedPayload(data)) !== expectedPayload)) throw Error(type === 'task' ? 'task-stale' : type === 'preference' ? 'preference-stale' : type === 'submission' ? 'submission-stale' : 'asset-stale');
         if (parsedPayload(data).deleted && !parsedPayload(next).deleted) throw Error('tombstone-restore-required');
         if (type === 'asset') {
           const previous = parsedPayload(data) as Asset;
@@ -276,7 +281,7 @@ export class LocalRepository {
         return { ...data, ...next };
       });
     } else {
-      if (expectedPayload !== undefined && expectedPayload !== null) throw Error(type === 'task' ? 'task-stale' : type === 'preference' ? 'preference-stale' : 'asset-stale');
+      if (expectedPayload !== undefined && expectedPayload !== null) throw Error(type === 'task' ? 'task-stale' : type === 'preference' ? 'preference-stale' : type === 'submission' ? 'submission-stale' : 'asset-stale');
       if (type === 'asset' && entity.kind === 'item' &&
         (entity.status !== 'active' || entity.borrower ||
           (entity.itemLifecycleStatus !== null && entity.itemLifecycleStatus !== 'inUse') || entity.itemStatusDate)) throw Error('item-action-required');
@@ -284,7 +289,7 @@ export class LocalRepository {
         await this.db.records.insert(next);
       } catch (error) {
         if (!(await this.db.records.findOne(next.id).exec())) throw error;
-        if (expectedPayload !== undefined) throw Error(type === 'task' ? 'task-stale' : type === 'preference' ? 'preference-stale' : 'asset-stale');
+        if (expectedPayload !== undefined) throw Error(type === 'task' ? 'task-stale' : type === 'preference' ? 'preference-stale' : type === 'submission' ? 'submission-stale' : 'asset-stale');
         return this.saveUnlocked(type, value);
       }
     }
@@ -1596,6 +1601,7 @@ export async function createCategory(kind: AssetKind, name: string, order: numbe
 }
 export async function saveAssetIfCurrent(expected: Asset, next: Asset) { return (await defaultRepository()).saveAssetIfCurrent(expected, next); }
 export async function saveTaskIfCurrent(expected: Task, next: Task) { return (await defaultRepository()).saveTaskIfCurrent(expected, next); }
+export async function saveSubmissionIfCurrent(expected: Submission, next: Submission) { return (await defaultRepository()).saveSubmissionIfCurrent(expected, next); }
 export async function archiveProjectIfWorkflowComplete(expectedProject: Asset, expectedRoundId: string) {
   return (await defaultRepository()).archiveProjectIfWorkflowComplete(expectedProject, expectedRoundId);
 }

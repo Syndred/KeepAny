@@ -38,6 +38,7 @@ import {
 	recordRenewal,
 	save,
 	saveAssetIfCurrent,
+	saveSubmissionIfCurrent,
 	saveBatch,
 	setItemArchived,
 } from "../../../packages/local-db/src";
@@ -112,6 +113,8 @@ function SubmissionRow({ submission }: { submission: Submission }) {
 	const { t, i18n } = useTranslation();
 	const { notify } = useAppContext();
 	const [editing, setEditing] = useState(false);
+	const [editBase, setEditBase] = useState(submission);
+	const [conflict, setConflict] = useState(false);
 	const [name, setName] = useState(submission.name);
 	const [url, setUrl] = useState(submission.url);
 	const [status, setStatus] = useState<Submission["status"]>(submission.status);
@@ -129,11 +132,11 @@ function SubmissionRow({ submission }: { submission: Submission }) {
 		setSubmittedAt(submission.submittedAt);
 	}, [editing, submission.name, submission.url, submission.status, submission.evidence, submission.submittedAt]);
 	const changed =
-		name !== submission.name ||
-		url !== submission.url ||
-		status !== submission.status ||
-		evidence !== submission.evidence ||
-		submittedAt !== submission.submittedAt;
+		name !== editBase.name ||
+		url !== editBase.url ||
+		status !== editBase.status ||
+		evidence !== editBase.evidence ||
+		submittedAt !== editBase.submittedAt;
 	function cancel() {
 		if (inFlight.current) return;
 		setName(submission.name);
@@ -142,6 +145,7 @@ function SubmissionRow({ submission }: { submission: Submission }) {
 		setEvidence(submission.evidence);
 		setSubmittedAt(submission.submittedAt);
 		setError("");
+		setConflict(false);
 		setEditing(false);
 	}
 	async function store() {
@@ -167,12 +171,12 @@ function SubmissionRow({ submission }: { submission: Submission }) {
 		setError("");
 		try {
 			const verifiedAt = ["indexed", "rejected"].includes(status)
-				? status !== submission.status || evidence.trim() !== submission.evidence
+				? status !== editBase.status || evidence.trim() !== editBase.evidence
 					? localCalendarDay(new Date())
-					: submission.verifiedAt
+					: editBase.verifiedAt
 				: "";
-			await save("submission", {
-				...submission,
+			await saveSubmissionIfCurrent(editBase, {
+				...editBase,
 				name: name.trim(),
 				url: url.trim(),
 				status,
@@ -182,8 +186,9 @@ function SubmissionRow({ submission }: { submission: Submission }) {
 			});
 			setEditing(false);
 			notify(t("saved"));
-		} catch {
-			setError(t("error"));
+		} catch (cause) {
+			if (cause instanceof Error && cause.message === "submission-stale") setConflict(true);
+			else setError(t("error"));
 		} finally {
 			inFlight.current = false;
 			setBusy(false);
@@ -196,6 +201,7 @@ function SubmissionRow({ submission }: { submission: Submission }) {
 					{submission.name}
 				</a>}
 				{submission.externalLink && <small>{t("extImportedSource")} · {submission.externalLink.profileId}</small>}
+				{conflict && <small className="field-error" role="alert">{t("assetStale")}</small>}
 			</td>
 			<td>
 				{editing ? <select
@@ -234,11 +240,21 @@ function SubmissionRow({ submission }: { submission: Submission }) {
 			<td>
 				{editing ? <><Button
 					size="small"
-					disabled={!changed || busy}
+					disabled={!changed || busy || conflict}
 					onClick={() => void store()}
 				>
 					{t("save")}
-				</Button><Button size="small" disabled={busy} onClick={cancel}>{t("cancel")}</Button></> : <Button size="small" onClick={() => setEditing(true)}>{t(submission.status === "verify" ? "backlinkCheck" : submission.status === "planned" ? "edit" : "backlinkUpdate")}</Button>}
+				</Button><Button size="small" disabled={busy} onClick={cancel}>{t("cancel")}</Button></> : <Button size="small" onClick={() => {
+					setEditBase(submission);
+					setName(submission.name);
+					setUrl(submission.url);
+					setStatus(submission.status);
+					setEvidence(submission.evidence);
+					setSubmittedAt(submission.submittedAt);
+					setError("");
+					setConflict(false);
+					setEditing(true);
+				}}>{t(submission.status === "verify" ? "backlinkCheck" : submission.status === "planned" ? "edit" : "backlinkUpdate")}</Button>}
 			</td>
 		</tr>
 	);

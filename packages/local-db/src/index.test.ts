@@ -1,7 +1,7 @@
 import 'fake-indexeddb/auto';
 import { describe, expect, it, vi } from 'vitest';
 import { zipSync, unzipSync, strToU8, strFromU8 } from 'fflate';
-import { historySchema, newAsset, type Asset, type History, type Task } from '../../domain/src';
+import { historySchema, newAsset, submissionSchema, type Asset, type History, type Submission, type Task } from '../../domain/src';
 import { buildProjectWorkflowTasks, currentProjectWorkflowRound, recordProjectWorkflowTask } from '../../domain/src/project-workflow';
 import { inspectArchive, LocalRepository, openLocalRepository, type RecordRow } from './index';
 
@@ -91,6 +91,31 @@ describe('RxDB + free Dexie local repository', () => {
       await db.restoreEntity('asset', first.id);
       expect(await db.get<Asset>('asset', first.id)).toMatchObject({ deleted: false, name: 'Latest name', attachments: [imageId] });
       expect((await inspectArchive(await db.exportArchive())).manifest.attachments.map(item => item.id)).toEqual([imageId]);
+    } finally { await db.close(); }
+  });
+
+  it('rejects stale submission edits without rolling back verification and evidence', async () => {
+    const db = await openLocalRepository(name());
+    const otherTab = new LocalRepository(db.db, db.fileStore);
+    try {
+      const site = project('Submission site');
+      await db.save('asset', site);
+      const initial = submissionSchema.parse({ id: crypto.randomUUID(), assetId: site.id,
+        name: 'Directory', url: 'https://directory.example/site', status: 'verify',
+        submittedAt: '2026-09-28', verifiedAt: '', evidence: 'Receipt 1', deleted: false });
+      await db.save('submission', initial);
+      const oldEditor = await db.get<Submission>('submission', initial.id);
+      if (!oldEditor) throw Error('submission-missing');
+      const verified = { ...initial, status: 'indexed' as const,
+        verifiedAt: '2026-09-29', evidence: 'https://directory.example/site/live' };
+      await otherTab.saveSubmissionIfCurrent(initial, verified);
+      await expect(db.saveSubmissionIfCurrent(oldEditor, { ...oldEditor, name: 'Stale title' }))
+        .rejects.toThrow('submission-stale');
+      expect(await db.get<Submission>('submission', initial.id)).toEqual(verified);
+      await db.save('submission', { ...verified, deleted: true });
+      await expect(db.saveSubmissionIfCurrent(verified, { ...verified, name: 'Stale after deletion' }))
+        .rejects.toThrow('submission-stale');
+      expect((await db.get<Submission>('submission', initial.id))?.deleted).toBe(true);
     } finally { await db.close(); }
   });
 
