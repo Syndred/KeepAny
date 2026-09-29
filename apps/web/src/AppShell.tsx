@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import {
+	ArrowLeft,
 	ArrowRight,
 	Bell,
 	LayoutDashboard,
@@ -121,6 +122,10 @@ export function AppShell() {
 	const currentHeading = pathname === "/" ? t("overview") : currentKind ? t(currentKind) :
 		pathname === "/tasks" ? t("tasks") : pathname === "/intake" ? t("intake") :
 		pathname === "/trash" ? t("trash") : t("settings");
+	const projectDetailId = /^\/assets\/project\/([^/]+)\/?$/.exec(pathname)?.[1];
+	const relationReturnId = sessionStorage.getItem("keepany-relation-return-id");
+	const relationReturnKind = sessionStorage.getItem("keepany-relation-return-kind");
+	const projectReturnKind = projectDetailId && relationReturnId === projectDetailId && relationReturnKind && kinds.includes(relationReturnKind as (typeof kinds)[number]) ? relationReturnKind : "project";
 	function selectCategory(kind: string, category: string) {
 		sessionStorage.setItem(`keepany-category-${kind}`, category);
 		setMobile(false);
@@ -228,7 +233,7 @@ export function AppShell() {
 						>
 							<Menu size={20} />
 						</Button>
-						<strong className="topbar-page-label">{currentHeading}</strong>
+						{projectDetailId ? <Link className="topbar-page-label topbar-back-link" to="/assets/$kind" params={{ kind: projectReturnKind }} onClick={() => { sessionStorage.removeItem("keepany-relation-return-id"); sessionStorage.removeItem("keepany-relation-return-kind"); }}><ArrowLeft size={15}/>{t("back")}</Link> : <strong className="topbar-page-label">{currentHeading}</strong>}
 						<div className="topbar-spacer"/>
 						<div className="top-search" ref={topSearchRef}>
 							<button className="top-search-trigger" type="button" aria-label={t("search")} onMouseDown={(event) => event.preventDefault()} onClick={() => topSearchInputRef.current?.focus()}><Search size={17} /></button>

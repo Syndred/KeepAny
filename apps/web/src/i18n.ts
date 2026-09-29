@@ -794,6 +794,7 @@ Object.assign(copy, {
 	projectLinkedSubscriptions: ["关联订阅", "Linked subscriptions"],
 	projectNoDomains: ["暂无独立域名", "No domains recorded"],
 	projectCostUnavailable: ["多币种，无法合计", "Mixed currencies; total unavailable"],
+	projectCostPartial: ["部分费用尚未记录", "Some costs are not recorded"],
 	projectDomainNameInvalid: ["请输入有效域名", "Enter a valid domain"],
 	projectDomainDelete: ["删除域名", "Delete domain"],
 	projectEditDomain: ["编辑域名", "Edit domain"],

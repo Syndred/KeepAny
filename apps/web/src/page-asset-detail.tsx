@@ -8,10 +8,11 @@ import {
 	type Edge,
 	type Node,
 } from "@xyflow/react";
-import { ArrowLeft, Check, ExternalLink, Plus } from "lucide-react";
+import { ArrowDownRight, ArrowLeft, Check, ExternalLink, Plus } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import {
 	type Asset,
+	type ProjectDomain,
 	type Submission,
 	type Relation,
 	actualCharge,
@@ -19,6 +20,7 @@ import {
 	inputFromMinorUnits,
 	monthlyMinorUnits,
 	parseMinorUnits,
+	projectDomainSchema,
 	submissionSchema,
 } from "../../../packages/domain/src";
 import { buildImpactTasks, upgradeLegacyImpactTasks } from "../../../packages/domain/src/impact";
@@ -233,6 +235,12 @@ export function AssetDetail() {
 	}, [centerId]);
 	const [submissionEdit, setSubmissionEdit] = useState(false);
 	const [backlinksOpen, setBacklinksOpen] = useState(false);
+	const [materialsOpen, setMaterialsOpen] = useState(false);
+	const [domainEditing, setDomainEditing] = useState<string | null>(null);
+	const [domainDraft, setDomainDraft] = useState<ProjectDomain | null>(null);
+	const [domainFee, setDomainFee] = useState("");
+	const [domainError, setDomainError] = useState("");
+	const [domainBusy, setDomainBusy] = useState(false);
 	const [submissionNameError, setSubmissionNameError] = useState("");
 	const [submissionUrlError, setSubmissionUrlError] = useState("");
 	const [submissionSaveError, setSubmissionSaveError] = useState("");
@@ -414,6 +422,13 @@ export function AssetDetail() {
 	const submissions = data.submissions.filter(
 		(x) => !x.deleted && x.assetId === asset?.id,
 	);
+	const relatedAssets = Array.from(new Map(relations.map((relation) => {
+		const linked = liveById.get(relation.from === asset?.id ? relation.to : relation.from);
+		return [linked?.id, linked] as const;
+	})).values()).filter((linked): linked is Asset => !!linked);
+	const relatedAccounts = relatedAssets.filter((linked) => linked.kind === "account");
+	const relatedSubscriptions = relatedAssets.filter((linked) => linked.kind === "subscription" && linked.status === "active");
+	const pendingBacklinks = submissions.filter((entry) => entry.status === "verify");
 	const histories = data.history
 		.filter((x) => !x.deleted && x.assetId === asset?.id)
 		.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
@@ -430,6 +445,66 @@ export function AssetDetail() {
 		asset.kind === "subscription" && asset.dueDate
 			? actualCharge(asset, asset.dueDate)
 			: null;
+	const projectDomains = asset.kind === "project" ? (asset.projectDomains ?? []) : [];
+	const monthlyByCurrency = new Map<string, bigint>();
+	for (const linked of relatedSubscriptions) monthlyByCurrency.set(linked.currency, (monthlyByCurrency.get(linked.currency) ?? 0n) + monthlyMinorUnits(linked));
+	const annualByCurrency = new Map<string, bigint>();
+	for (const [currency, value] of monthlyByCurrency) annualByCurrency.set(currency, value * 12n);
+	for (const domain of projectDomains) if (domain.annualAmount !== null) annualByCurrency.set(domain.currency, (annualByCurrency.get(domain.currency) ?? 0n) + BigInt(domain.annualAmount));
+	const formatTotals = (totals: Map<string, bigint>) => totals.size ? Array.from(totals, ([currency, amount]) => money(amount, currency, i18n.language)).join(" + ") : "—";
+	const today = localCalendarDay(new Date());
+	const nextRenewal = [...projectDomains.map((domain) => domain.expiryDate), ...relatedSubscriptions.map((linked) => linked.dueDate)].filter((value) => value && value >= today).sort()[0] ?? "";
+	const incompleteCost = projectDomains.some((domain) => domain.annualAmount === null);
+	function scrollToFold(id: string, open: (value: boolean) => void) {
+		open(true);
+		requestAnimationFrame(() => document.getElementById(id)?.scrollIntoView({ block: "start", behavior: "smooth" }));
+	}
+	function openDomain(domain?: ProjectDomain) {
+		const next = domain ?? { id: crypto.randomUUID(), name: "", registrar: "", accountId: "", expiryDate: "", annualAmount: null, currency: "CNY", autoRenew: "unknown" } as ProjectDomain;
+		setDomainDraft(next);
+		setDomainFee(next.annualAmount === null ? "" : inputFromMinorUnits(next.annualAmount, next.currency));
+		setDomainEditing(domain?.id ?? "new");
+		setDomainError("");
+	}
+	async function storeDomains(next: ProjectDomain[]) {
+		if (asset?.kind !== "project") return;
+		await saveAssetIfCurrent(asset, { ...asset, projectDomains: next, updatedAt: new Date().toISOString() });
+	}
+	async function saveDomain() {
+		if (!domainDraft || !domainEditing || domainBusy) return;
+		let fee: number | null;
+		try { fee = domainFee.trim() === "" ? null : parseMinorUnits(domainFee, domainDraft.currency); }
+		catch { setDomainError(t("invalid")); return; }
+		const parsed = projectDomainSchema.safeParse({ ...domainDraft, name: domainDraft.name.trim().toLowerCase(), annualAmount: fee });
+		if (!parsed.success || (parsed.success && parsed.data.expiryDate && !validCalendarDay(parsed.data.expiryDate))) {
+			setDomainError(t(!parsed.success && parsed.error.issues.some((issue) => issue.path[0] === "name") ? "projectDomainNameInvalid" : "invalid"));
+			return;
+		}
+		if (projectDomains.some((domain) => domain.id !== domainEditing && domain.name.toLowerCase() === parsed.data.name.toLowerCase())) {
+			setDomainError(t("duplicate"));
+			return;
+		}
+		setDomainBusy(true);
+		setDomainError("");
+		try {
+			await storeDomains(domainEditing === "new" ? [...projectDomains, parsed.data] : projectDomains.map((entry) => entry.id === domainEditing ? parsed.data : entry));
+			setDomainEditing(null);
+			notify(t("saved"));
+		} catch (error) {
+			setDomainError(t(error instanceof Error && error.message === "asset-stale" ? "assetStale" : "error"));
+		} finally { setDomainBusy(false); }
+	}
+	async function removeDomain() {
+		if (!domainEditing || domainEditing === "new" || domainBusy) return;
+		setDomainBusy(true);
+		try {
+			await storeDomains(projectDomains.filter((entry) => entry.id !== domainEditing));
+			setDomainEditing(null);
+			notify(t("saved"));
+		} catch (error) {
+			setDomainError(t(error instanceof Error && error.message === "asset-stale" ? "assetStale" : "error"));
+		} finally { setDomainBusy(false); }
+	}
 	async function confirmDelete() {
 		if (!asset || deleteInFlight.current) return;
 		deleteInFlight.current = true;
@@ -797,20 +872,87 @@ export function AssetDetail() {
 			setImpactBusy(false);
 		}
 	}
+	const attachmentSection = (
+				<section className="card asset-attachments-card">
+					<div className="card-header">
+						<h2>{t(asset.kind === "project" ? "projectMaterialsImage" : "attachments")}</h2>
+						<Button
+							size="small"
+							disabled={uploading || asset.attachments.length >= 20}
+							onClick={() => { setReplaceImageId(""); imageInput.current?.click(); }}
+						>
+							{uploading ? t("loading") : t("addPhoto")}
+						</Button>
+						<input
+							ref={imageInput}
+							type="file"
+							accept="image/jpeg,image/png,image/webp,image/gif"
+							hidden
+							tabIndex={-1}
+							aria-label={t("addPhoto")}
+							onChange={(e) => {
+								const file = e.target.files?.[0];
+								if (file) {
+									if (
+										![
+											"image/jpeg",
+											"image/png",
+											"image/webp",
+											"image/gif",
+										].includes(file.type) ||
+										file.size === 0 ||
+										file.size > 20 * 1024 * 1024 ||
+										file.name.length > 255
+									)
+										notify(t("uploadError"));
+									else {
+										setPendingImageUrl("");
+										setPendingImageStatus("loading");
+										setPendingImage(file);
+									}
+								}
+								e.target.value = "";
+							}}
+						/>
+					</div>
+					{asset.attachments.length ? (
+						<div className="image-grid">
+							{asset.attachments.map((id) => (
+								<div key={id} className="image-item">
+									<ImageTile id={id} />
+									<Button size="small" disabled={uploading} onClick={() => {
+										setReplaceImageId(id);
+										imageInput.current?.click();
+									}}>{t("replaceImage")}</Button>
+									<Button
+										variant="danger"
+										size="small"
+										disabled={uploading}
+										onClick={() => void removeImage(id)}
+									>
+										{t("removeImage")}
+									</Button>
+								</div>
+							))}
+						</div>
+					) : (
+						asset.kind === "project" ? <p className="asset-quiet-empty">{t("none")}</p> : <Empty hint={false} />
+					)}
+				</section>
+	);
 	return (
 		<main className={`page asset-detail asset-detail-${kind}${relations.length ? " has-relations" : ""}`}>
 			{kind === "project" && <div className="asset-project-action-bar">
 				<Button onClick={() => setEdit(true)}>{t("edit")}</Button>
 				<Button variant="primary" onClick={() => setSubmissionEdit(true)}><Plus size={14} />{t("addSubmission")}</Button>
-				<Button onClick={() => { setBacklinksOpen(true); requestAnimationFrame(() => document.getElementById("asset-backlinks")?.scrollIntoView({ block: "start", behavior: "smooth" })); }}>{t("backlinks")}</Button>
 				<Button variant="danger" disabled={deleteBusy} onClick={() => { setDeleteError(""); setDeleteOpen(true); }}>{t("delete")}</Button>
 			</div>}
 			<div className="page-header">
 				<div>
-					<Link className="back-link" to="/assets/$kind" params={{ kind: returnKind }} onClick={() => { sessionStorage.removeItem("keepany-relation-return-id"); sessionStorage.removeItem("keepany-relation-return-kind"); }}>
+					{kind !== "project" && <Link className="back-link" to="/assets/$kind" params={{ kind: returnKind }} onClick={() => { sessionStorage.removeItem("keepany-relation-return-id"); sessionStorage.removeItem("keepany-relation-return-kind"); }}>
 						<ArrowLeft size={16} />
 						{t("back")}
-					</Link>
+					</Link>}
 					<div className="eyebrow">
 						{t(kind)} · {niceCategory(asset.category, t)}
 					</div>
@@ -819,6 +961,10 @@ export function AssetDetail() {
 						{asset.description || asset.url || t("local")}
 					</p>
 					{kind === "project" && <div className="asset-project-hero-meta"><span>{niceCategory(asset.category, t)}</span>{asset.status && <span>{t(asset.status)}</span>}{asset.url && <a href={asset.url} target="_blank" rel="noopener noreferrer">{asset.url}<ExternalLink size={13} /></a>}</div>}
+					{kind === "project" && <div className="asset-project-hero-actions">
+						<Button onClick={() => scrollToFold("asset-project-materials", setMaterialsOpen)}>{t("projectViewMaterials")}<ArrowDownRight size={15} /></Button>
+						<Button onClick={() => scrollToFold("asset-backlinks", setBacklinksOpen)}>{t("projectViewBacklinks")}<ArrowDownRight size={15} /></Button>
+					</div>}
 				</div>
 				{kind === "project" && <div className="asset-project-hero-visual" role="img" aria-label={t("preview")}><ProjectPreview asset={asset} /></div>}
 				{kind !== "project" && <div className="actions">
@@ -861,7 +1007,25 @@ export function AssetDetail() {
 				</Dialog>
 			)}
 			<div className="detail-grid asset-detail-primary">
-				<section className="card asset-profile-card">
+				{asset.kind === "project" && <section className="card asset-profile-card asset-project-profile-card">
+					<div className="card-header"><h2>{t("profile")}</h2></div>
+					<dl className="asset-project-facts">
+						<div><dt>{t("projectOfficialUrl")}</dt><dd>{asset.url ? <a href={asset.url} target="_blank" rel="noopener noreferrer">{asset.url}</a> : "—"}</dd></div>
+						<div><dt>{t("projectType")}</dt><dd>{niceCategory(asset.category, t) || "—"}</dd></div>
+						<div><dt>{t("projectLaunchMonth")}</dt><dd>{asset.projectLaunchMonth ? new Intl.DateTimeFormat(i18n.language, { year: "numeric", month: "long", timeZone: "UTC" }).format(new Date(`${asset.projectLaunchMonth}-01T12:00:00Z`)) : "—"}</dd></div>
+						<div><dt>{t("projectAccount")}</dt><dd>{relatedAccounts.length ? relatedAccounts.map((linked, index) => <span key={linked.id}>{index > 0 && " · "}<Link to="/assets/$kind/$id" params={{ kind: linked.kind, id: linked.id }} onClick={(event) => { event.preventDefault(); visitRelation(linked); }}>{linked.name}</Link></span>) : "—"}</dd></div>
+					</dl>
+					<div className="asset-project-related">
+						<div className="card-header"><h3>{t("related")}</h3></div>
+						{relatedAssets.length ? <div className="asset-project-related-list">{relatedAssets.map((linked) => <Link key={linked.id} className="asset-project-related-card" to="/assets/$kind/$id" params={{ kind: linked.kind, id: linked.id }} onClick={(event) => { event.preventDefault(); visitRelation(linked); }}><span className="asset-project-related-icon" aria-hidden="true">{linked.name.charAt(0).toUpperCase()}</span><span><strong>{linked.name}</strong><small>{t(linked.kind)}{linked.kind === "subscription" ? ` · ${money(linked.amount, linked.currency, i18n.language)}` : linked.username ? ` · ${linked.username}` : ""}</small></span><ArrowDownRight size={15} aria-hidden="true" /></Link>)}</div> : <p className="asset-quiet-empty">{t("none")}</p>}
+					</div>
+				</section>}
+				{asset.kind === "project" && <section className="card asset-project-reminders" id="project-reminders">
+					<div className="card-header"><h2>{t("projectLinkReminders")}</h2></div>
+					{pendingBacklinks.length ? <button type="button" className="asset-project-reminder-row" onClick={() => scrollToFold("asset-backlinks", setBacklinksOpen)}><span className="asset-project-reminder-symbol" aria-hidden="true">!</span><span><strong>{t("projectVerifyCount", { count: pendingBacklinks.length })}</strong><small>{t("projectViewBacklinks")}</small></span><ArrowDownRight size={16} /></button> : <p className="asset-quiet-empty">{t("projectNoLinkReminders")}</p>}
+					<div className="asset-project-reminder-row asset-project-reminder-static"><span className="asset-project-reminder-symbol" aria-hidden="true">↗</span><span><strong>{t("projectNextInspection")}</strong><small>{asset.projectInspectionDate ? date(asset.projectInspectionDate, i18n.language) : t("projectNoInspection")}</small></span></div>
+				</section>}
+				{asset.kind !== "project" && <section className="card asset-profile-card">
 					<div className="card-header">
 						<h2>{t("profile")}</h2>
 					</div>
@@ -990,74 +1154,31 @@ export function AssetDetail() {
 						</details>
 					)}
 					{asset.notes && <p className="note">{asset.notes}</p>}
-				</section>
-				<section className="card asset-attachments-card">
-					<div className="card-header">
-						<h2>{t("attachments")}</h2>
-						<Button
-							size="small"
-							disabled={uploading || asset.attachments.length >= 20}
-							onClick={() => { setReplaceImageId(""); imageInput.current?.click(); }}
-						>
-							{uploading ? t("loading") : t("addPhoto")}
-						</Button>
-						<input
-							ref={imageInput}
-							type="file"
-							accept="image/jpeg,image/png,image/webp,image/gif"
-							hidden
-							tabIndex={-1}
-							aria-label={t("addPhoto")}
-							onChange={(e) => {
-								const file = e.target.files?.[0];
-								if (file) {
-									if (
-										![
-											"image/jpeg",
-											"image/png",
-											"image/webp",
-											"image/gif",
-										].includes(file.type) ||
-										file.size === 0 ||
-										file.size > 20 * 1024 * 1024 ||
-										file.name.length > 255
-									)
-										notify(t("uploadError"));
-									else {
-										setPendingImageUrl("");
-										setPendingImageStatus("loading");
-										setPendingImage(file);
-									}
-								}
-								e.target.value = "";
-							}}
-						/>
-					</div>
-					{asset.attachments.length ? (
-						<div className="image-grid">
-							{asset.attachments.map((id) => (
-								<div key={id} className="image-item">
-									<ImageTile id={id} />
-									<Button size="small" disabled={uploading} onClick={() => {
-										setReplaceImageId(id);
-										imageInput.current?.click();
-									}}>{t("replaceImage")}</Button>
-									<Button
-										variant="danger"
-										size="small"
-										disabled={uploading}
-										onClick={() => void removeImage(id)}
-									>
-										{t("removeImage")}
-									</Button>
-								</div>
-							))}
-						</div>
-					) : (
-						asset.kind === "project" ? <p className="asset-quiet-empty">{t("none")}</p> : <Empty hint={false} />
-					)}
-				</section>
+				</section>}
+				{asset.kind !== "project" && attachmentSection}
 			</div>
+			{asset.kind === "project" && <section className="card asset-project-costs">
+				<div className="card-header"><h2>{t("projectDomainCosts")}</h2><Button size="small" onClick={() => openDomain()}><Plus size={14} />{t("projectAddDomain")}</Button></div>
+				<div className="asset-project-cost-grid">
+					<div><small>{t("projectMonthlyCost")}</small><strong>{formatTotals(monthlyByCurrency)}</strong><small>{relatedSubscriptions.length} {t("projectLinkedSubscriptions")}</small></div>
+					<div><small>{t("projectAnnualEstimate")}</small><strong>{formatTotals(annualByCurrency)}</strong>{incompleteCost && <small>{t("projectCostPartial")}</small>}</div>
+					<div><small>{t("projectNextRenewal")}</small><strong>{nextRenewal ? date(nextRenewal, i18n.language) : "—"}</strong><small>{projectDomains.length} {t("projectDomain")}</small></div>
+				</div>
+				{projectDomains.length ? <div className="asset-project-domain-list">{projectDomains.map((domain) => <div className="asset-project-domain-row" key={domain.id}><div><strong>{domain.name}</strong><small>{[domain.registrar, domain.accountId ? liveById.get(domain.accountId)?.name : "", domain.annualAmount === null ? "" : `${money(domain.annualAmount, domain.currency, i18n.language)} / ${t("year")}`].filter(Boolean).join(" · ") || "—"}</small><span>{t("projectExpiry")}: {date(domain.expiryDate, i18n.language)} · {t("projectAutoRenew")}: {t(domain.autoRenew === "on" ? "projectAutoRenewOn" : domain.autoRenew === "off" ? "projectAutoRenewOff" : "projectAutoRenewUnknown")}</span></div><Button size="small" onClick={() => openDomain(domain)}>{t("edit")}</Button></div>)}</div> : <p className="asset-quiet-empty">{t("projectNoDomains")}</p>}
+				<details className="asset-project-linked-subscriptions"><summary>{t("projectLinkedSubscriptions")} · {relatedSubscriptions.length}</summary>{relatedSubscriptions.length ? relatedSubscriptions.map((linked) => <Link key={linked.id} to="/assets/$kind/$id" params={{ kind: linked.kind, id: linked.id }} onClick={(event) => { event.preventDefault(); visitRelation(linked); }}><strong>{linked.name}</strong><span>{money(linked.amount, linked.currency, i18n.language)} / {t(linked.cycle)} · {date(linked.dueDate, i18n.language)}</span></Link>) : <p className="asset-quiet-empty">{t("none")}</p>}</details>
+			</section>}
+			{asset.kind === "project" && domainEditing && domainDraft && <Dialog title={domainEditing === "new" ? t("projectAddDomain") : t("projectEditDomain")} onClose={() => { if (!domainBusy) setDomainEditing(null); }}>
+				<form className="asset-project-domain-form" onSubmit={(event) => { event.preventDefault(); void saveDomain(); }}>
+					<label>{t("projectDomain")}<input required value={domainDraft.name} onChange={(event) => setDomainDraft({ ...domainDraft, name: event.target.value })} placeholder="example.com" /></label>
+					<label>{t("projectRegistrar")}<input value={domainDraft.registrar} onChange={(event) => setDomainDraft({ ...domainDraft, registrar: event.target.value })} /></label>
+					<label>{t("projectDomainAccount")}<select value={domainDraft.accountId} onChange={(event) => setDomainDraft({ ...domainDraft, accountId: event.target.value })}><option value="">—</option>{liveAssets(data).filter((entry) => entry.kind === "account").map((entry) => <option value={entry.id} key={entry.id}>{entry.name}</option>)}</select></label>
+					<label>{t("projectExpiry")}<input type="date" value={domainDraft.expiryDate} onChange={(event) => setDomainDraft({ ...domainDraft, expiryDate: event.target.value })} /></label>
+					<label>{t("projectAnnualFee")}<span className="asset-project-fee-row"><input inputMode="decimal" value={domainFee} onChange={(event) => setDomainFee(event.target.value)} /><select aria-label={t("currency")} value={domainDraft.currency} onChange={(event) => { const currency = event.target.value as ProjectDomain["currency"]; setDomainDraft({ ...domainDraft, currency }); setDomainFee(""); }}><option>CNY</option><option>USD</option><option>EUR</option><option>GBP</option><option>JPY</option></select></span></label>
+					<label>{t("projectAutoRenew")}<select value={domainDraft.autoRenew} onChange={(event) => setDomainDraft({ ...domainDraft, autoRenew: event.target.value as ProjectDomain["autoRenew"] })}><option value="unknown">{t("projectAutoRenewUnknown")}</option><option value="on">{t("projectAutoRenewOn")}</option><option value="off">{t("projectAutoRenewOff")}</option></select></label>
+					{domainError && <p role="alert" className="field-error">{domainError}</p>}
+					<div className="actions"><Button type="submit" variant="primary" disabled={domainBusy}>{t("save")}</Button>{domainEditing !== "new" && <Button type="button" variant="danger" disabled={domainBusy} onClick={() => void removeDomain()}>{t("projectDomainDelete")}</Button>}<Button type="button" disabled={domainBusy} onClick={() => setDomainEditing(null)}>{t("cancel")}</Button></div>
+				</form>
+			</Dialog>}
 			<div className="detail-grid asset-detail-secondary">
 				<section className="card asset-relations-card">
 					<div className="card-header">
@@ -1272,6 +1393,15 @@ export function AssetDetail() {
 					)}
 				</details>
 			)}
+			{asset.kind === "project" && <details className="card asset-project-materials" id="asset-project-materials" open={materialsOpen} onToggle={(event) => setMaterialsOpen(event.currentTarget.open)}>
+				<summary>{t("projectProfileMaterials")}</summary>
+				<div className="asset-project-materials-body">
+					<div className="card-header"><h2>{t("projectViewMaterials")}</h2><Button size="small" onClick={() => setEdit(true)}>{t("edit")}</Button></div>
+					<div className="asset-project-copy"><strong>{t("projectMaterialsShort")}</strong><p>{asset.description || "—"}</p></div>
+					<div className="asset-project-copy"><strong>{t("projectMaterialsLong")}</strong><p>{asset.longDescription || "—"}</p></div>
+					{attachmentSection}
+				</div>
+			</details>}
 			{(asset.kind === "item" || asset.kind === "subscription") && (
 				<section className="card">
 					<div className="card-header">

@@ -522,14 +522,11 @@
 	display: flex;
 	flex-wrap: wrap;
 	align-items: center;
+	justify-content: flex-end;
 	gap: 9px;
 	grid-column: 1 / -1;
 	order: 1;
-	padding: 15px 18px;
-	border: 2px solid var(--line);
-	border-radius: 17px;
-	background: var(--paper);
-	box-shadow: var(--shadow);
+	padding: 0 0 2px;
 }
 .asset-project-action-bar > .button {
 	display: inline-flex;
@@ -573,6 +570,17 @@
 	font-size: 11px;
 	font-weight: 750;
 	overflow-wrap: anywhere;
+}
+.asset-project-hero-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin-top: 16px;
+}
+.asset-project-hero-actions .button {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
 }
 .asset-project-hero-visual {
 	min-width: 0;
@@ -631,33 +639,91 @@
 .asset-detail-project .asset-profile-card {
 	order: 4;
 }
-.asset-detail-project .asset-tasks-card {
+.asset-detail-project .asset-project-reminders {
 	order: 5;
 }
-.asset-detail-project .asset-backlinks-card {
+.asset-detail-project .asset-project-costs {
 	grid-column: 1 / -1;
 	order: 6;
 }
-.asset-detail-project .asset-relations-card {
+.asset-detail-project .asset-tasks-card {
+	order: 10;
+}
+.asset-detail-project .asset-backlinks-card {
+	grid-column: 1 / -1;
 	order: 7;
 }
-.asset-detail-project .asset-attachments-card {
+.asset-detail-project .asset-project-materials {
+	grid-column: 1 / -1;
 	order: 8;
 }
-.asset-detail-project .asset-profile-card .facts {
-	display: grid;
-	grid-template-columns: repeat(2, minmax(0, 1fr));
+.asset-detail-project .asset-relations-card {
+	order: 9;
 }
-.asset-detail-project .asset-profile-card .facts > div {
-	padding: 8px 0;
+.asset-detail-project .asset-attachments-card {
+	order: initial;
+}
+.asset-project-facts { margin: 0; }
+.asset-project-facts > div {
+	display: grid;
+	grid-template-columns: 110px minmax(0, 1fr);
+	gap: 12px;
+	padding: 9px 0;
 	border-top: 1px solid var(--line-soft);
 }
-.asset-detail-project .asset-profile-card .facts dt {
-	font-size: 11px;
+.asset-project-facts dt { color: var(--muted); font-size: 12px; }
+.asset-project-facts dd { margin: 0; font-size: 12px; font-weight: 700; overflow-wrap: anywhere; }
+.asset-project-related { margin-top: 16px; }
+.asset-project-related h3 { margin: 0; font-size: 14px; }
+.asset-project-related-list { display: grid; gap: 7px; }
+.asset-project-related-card {
+	display: grid; grid-template-columns: 31px minmax(0, 1fr) auto; gap: 9px; align-items: center;
+	padding: 8px 9px; border: 1px solid var(--line-soft); border-radius: 9px;
+	color: var(--ink); text-decoration: none;
 }
-.asset-detail-project .asset-profile-card .facts dd {
-	font-size: 12px;
+.asset-project-related-card:hover { background: #fff2cf; }
+.asset-project-related-card > span:nth-child(2) { min-width: 0; }
+.asset-project-related-card strong, .asset-project-related-card small { display: block; overflow-wrap: anywhere; }
+.asset-project-related-card small { color: var(--muted); font-size: 11px; }
+.asset-project-related-icon { display: grid; place-items: center; width: 30px; height: 30px; border: 1px solid var(--line); border-radius: 8px; background: var(--yellow); font-weight: 850; }
+.asset-project-reminders { scroll-margin-top: 70px; }
+.asset-project-reminder-row {
+	display: flex; align-items: center; width: 100%; gap: 10px; padding: 12px 3px;
+	border: 0; border-top: 1px solid var(--line-soft); background: transparent;
+	color: var(--ink); text-align: left; cursor: pointer;
 }
+.asset-project-reminder-row > span:nth-child(2) { flex: 1; }
+.asset-project-reminder-row strong, .asset-project-reminder-row small { display: block; }
+.asset-project-reminder-row strong { font-size: 12px; }
+.asset-project-reminder-row small { color: var(--muted); font-size: 11px; }
+.asset-project-reminder-symbol { display: grid; place-items: center; flex: 0 0 31px; height: 31px; border: 1px solid var(--line); border-radius: 9px; background: #ffe094; font-weight: 900; }
+.asset-project-reminder-static { cursor: default; }
+.asset-project-cost-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 9px; }
+.asset-project-cost-grid > div { display: grid; align-content: start; gap: 5px; min-width: 0; padding: 12px; border: 1px solid var(--line-soft); border-radius: 11px; background: #fffaf0; }
+.asset-project-cost-grid strong { font-size: clamp(15px,1.7vw,22px); overflow-wrap: anywhere; }
+.asset-project-cost-grid small { color: var(--muted); font-size: 11px; }
+.asset-project-domain-list { margin-top: 12px; }
+.asset-project-domain-row { display: flex; gap: 15px; align-items: center; padding: 11px 0; border-top: 1px solid var(--line-soft); }
+.asset-project-domain-row > div { flex: 1; min-width: 0; }
+.asset-project-domain-row strong, .asset-project-domain-row small, .asset-project-domain-row span { display: block; overflow-wrap: anywhere; }
+.asset-project-domain-row small, .asset-project-domain-row span { color: var(--muted); font-size: 11px; }
+.asset-project-linked-subscriptions { margin-top: 10px; border-top: 1px solid var(--line-soft); padding-top: 10px; }
+.asset-project-linked-subscriptions summary { cursor: pointer; font-weight: 750; }
+.asset-project-linked-subscriptions a { display: flex; justify-content: space-between; gap: 12px; padding: 9px 0; border-top: 1px solid var(--line-soft); color: var(--ink); text-decoration: none; }
+.asset-project-linked-subscriptions a:first-of-type { margin-top: 10px; }
+.asset-project-linked-subscriptions span { color: var(--muted); font-size: 12px; }
+.asset-project-domain-form { display: grid; gap: 11px; }
+.asset-project-domain-form label { display: grid; gap: 5px; font-size: 12px; font-weight: 750; }
+.asset-project-domain-form input, .asset-project-domain-form select { width: 100%; min-width: 0; }
+.asset-project-fee-row { display: grid; grid-template-columns: minmax(0,1fr) 90px; gap: 7px; }
+.asset-detail-project .asset-project-materials, .asset-detail-project .asset-backlinks-card { padding: 0; scroll-margin-top: 75px; }
+.asset-detail-project .asset-project-materials > summary { cursor: pointer; padding: 14px 17px; font-size: 14px; font-weight: 800; }
+.asset-detail-project .asset-project-materials[open] > summary { border-bottom: 1px solid var(--line-soft); }
+.asset-project-materials-body { padding: 16px; }
+.asset-project-copy { padding: 12px 0; border-top: 1px solid var(--line-soft); }
+.asset-project-copy > strong { font-size: 12px; }
+.asset-project-copy p { margin: 5px 0 0; color: var(--muted); overflow-wrap: anywhere; }
+.asset-project-materials .asset-attachments-card { margin-top: 10px; box-shadow: none; border-width: 1px; }
 .asset-detail-project .asset-backlinks-card .table-wrap {
 	overflow-x: auto;
 }
@@ -801,7 +867,10 @@
 	.asset-detail-project .asset-attachments-card,
 	.asset-detail-project .asset-relations-card,
 	.asset-detail-project .asset-tasks-card,
-	.asset-detail-project .asset-profile-card {
+	.asset-detail-project .asset-profile-card,
+	.asset-detail-project .asset-project-reminders,
+	.asset-detail-project .asset-project-costs,
+	.asset-detail-project .asset-project-materials {
 		grid-column: auto;
 	}
 	.asset-detail-account.has-relations .asset-profile-card,
@@ -828,4 +897,7 @@
 	.asset-detail-project .asset-profile-card .facts {
 		grid-template-columns: 1fr;
 	}
+	.asset-project-cost-grid { grid-template-columns: 1fr; }
+	.asset-project-facts > div { grid-template-columns: 87px minmax(0,1fr); gap: 7px; }
+	.asset-project-linked-subscriptions a { display: grid; gap: 2px; }
 }

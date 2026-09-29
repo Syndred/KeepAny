@@ -231,6 +231,22 @@ export function AssetEditor({
 					{kind === "project" && (
 						<>
 							<Field
+								name="projectLaunchMonth"
+								label={t("projectLaunchMonth")}
+								type="month"
+								value={draft.projectLaunchMonth}
+								onChange={(v) => set("projectLaunchMonth", v)}
+								error={errors.projectLaunchMonth}
+							/>
+							<Field
+								name="projectInspectionDate"
+								label={t("projectNextInspection")}
+								type="date"
+								value={draft.projectInspectionDate}
+								onChange={(v) => set("projectInspectionDate", v)}
+								error={errors.projectInspectionDate}
+							/>
+							<Field
 								name="contact"
 								label={t("contact")}
 								value={draft.contact}

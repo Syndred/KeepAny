@@ -2,6 +2,14 @@ import { z } from 'zod';
 export { parseMinorUnits, inputFromMinorUnits, formatMinorUnits } from './money';
 export const kinds = ['project','account','subscription','item','vault'] as const;
 export const currencies = ['CNY','USD','EUR','GBP','JPY'] as const;
+// Domain holdings belong to a project record and are included in the same local backup/sync payload.
+export const projectDomainSchema=z.object({
+ id:z.string().uuid(),name:z.string().trim().min(1).max(253).regex(/^(?!-)[a-z0-9-]+(?:\.[a-z0-9-]+)+$/i),
+ registrar:z.string().max(200).default(''),accountId:z.string().max(96).default(''),
+ expiryDate:z.string().default(''),annualAmount:z.number().int().min(0).max(Number.MAX_SAFE_INTEGER).nullable().default(null),
+ currency:z.enum(currencies).default('CNY'),autoRenew:z.enum(['unknown','on','off']).default('unknown'),
+});
+export type ProjectDomain=z.infer<typeof projectDomainSchema>;
 
 // Date-only values are Gregorian calendar dates, independent of the host time zone.
 // Local Date and date-fns calendar operations can skip a date (for example, Apia 2011-12-30).
@@ -27,8 +35,9 @@ function formatDateOnly(date:Date){
 export const assetSchema = z.object({
  id:z.string().min(1).max(96), kind:z.enum(kinds), name:z.string().trim().min(1).max(160), category:z.string().max(100).default(''), tags:z.array(z.string().max(60)).max(100).default([]),
  description:z.string().max(20000).default(''), url:z.string().max(2000).default(''), contact:z.string().max(500).default(''), longDescription:z.string().max(30000).default(''),
+ projectLaunchMonth:z.string().default(''),projectInspectionDate:z.string().default(''),projectDomains:z.array(projectDomainSchema).max(50).default([]),
  amount:z.number().int().min(0).max(Number.MAX_SAFE_INTEGER).default(0),currency:z.enum(currencies).default('CNY'),cycle:z.enum(['month','year','week','day']).default('month'),interval:z.number().int().min(1).max(100).default(1),dueDate:z.string().default(''),billingAnchor:z.string().default(''),renewalCount:z.number().int().nonnegative().default(0),lastRenewalId:z.string().max(96).default(''),lastItemEventId:z.string().max(96).default(''),purchaseDate:z.string().default(''),warrantyDate:z.string().default(''),trialEndsAt:z.string().default(''),discountUntil:z.string().default(''),discountAmount:z.number().int().min(0).max(Number.MAX_SAFE_INTEGER).default(0),cancelledAt:z.string().default(''),location:z.string().max(300).default(''),status:z.enum(['active','paused','cancelled','loaned','archived']).default('active'),borrower:z.string().max(200).default(''),username:z.string().max(300).default(''),notes:z.string().max(20000).default(''),attachments:z.array(z.string().uuid()).max(20).default([]),createdAt:z.string(),updatedAt:z.string(),deleted:z.boolean().default(false),
-}).superRefine((v,ctx)=>{ for(const key of ['dueDate','billingAnchor','purchaseDate','warrantyDate','trialEndsAt','discountUntil'] as const) if(v[key] && !validDateOnly(v[key]))ctx.addIssue({code:'custom',path:[key],message:'date'});if(v.discountAmount>v.amount)ctx.addIssue({code:'custom',path:['discountAmount'],message:'discount'});if(v.url && !/^https?:\/\//i.test(v.url) && !(v.kind==='vault' && /^(bitwarden|onepassword):\/\//i.test(v.url)))ctx.addIssue({code:'custom',path:['url'],message:'url'}); });
+}).superRefine((v,ctx)=>{ for(const key of ['dueDate','billingAnchor','purchaseDate','warrantyDate','trialEndsAt','discountUntil','projectInspectionDate'] as const) if(v[key] && !validDateOnly(v[key]))ctx.addIssue({code:'custom',path:[key],message:'date'});if(v.projectLaunchMonth && !/^\d{4}-(0[1-9]|1[0-2])$/.test(v.projectLaunchMonth))ctx.addIssue({code:'custom',path:['projectLaunchMonth'],message:'month'});for(const [index,domain] of v.projectDomains.entries())if(domain.expiryDate&&!validDateOnly(domain.expiryDate))ctx.addIssue({code:'custom',path:['projectDomains',index,'expiryDate'],message:'date'});if(v.discountAmount>v.amount)ctx.addIssue({code:'custom',path:['discountAmount'],message:'discount'});if(v.url && !/^https?:\/\//i.test(v.url) && !(v.kind==='vault' && /^(bitwarden|onepassword):\/\//i.test(v.url)))ctx.addIssue({code:'custom',path:['url'],message:'url'}); });
 export type Asset=z.infer<typeof assetSchema>;
 export type AssetKind=typeof kinds[number];
 export const relationSchema=z.object({id:z.string().min(1).max(96),from:z.string().min(1).max(96),to:z.string().min(1).max(96),label:z.string().min(1).max(100),source:z.string().max(500).optional(),createdAt:z.string(),verifiedAt:z.string().default(''),deleted:z.boolean().default(false)}).refine(v=>v.from!==v.to,'self-relation');

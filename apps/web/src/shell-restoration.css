@@ -29,6 +29,8 @@
 .sidebar-user small { color: var(--muted); font-size: 10px; }
 .topbar { min-height: 64px; gap: 10px; }
 .topbar-page-label { flex: none; font-size: 12px; font-weight: 650; }
+.topbar-back-link { display: inline-flex; align-items: center; gap: 5px; width: fit-content; color: var(--ink); text-decoration: none; }
+.topbar-back-link:hover { text-decoration: underline; }
 .topbar-spacer { flex: 1; }
 .top-search { width: min(100%,190px); min-height: 34px; border: 2px solid var(--line); border-radius: 20px; background: var(--paper); color: var(--ink); }
 .top-search-trigger { display: grid; flex: none; place-items: center; padding: 0; border: 0; background: transparent; color: inherit; cursor: pointer; }
@@ -57,6 +59,7 @@
   .shell .mobile-menu, .shell .mobile-close, .shell .mobile-scrim { display: none; }
   .shell .topbar { flex-wrap: wrap; min-height: 79px; padding: 9px 12px; }
   .shell .topbar-page-label { display: block; width: 100%; }
+  .shell .topbar-back-link { display: inline-flex; }
   .shell .topbar-spacer { display: none; }
   .shell .top-search { flex: none; width: 32px; height: 32px; min-height: 32px; margin-left: auto; padding: 0; border-radius: 50%; cursor: pointer; }
   .shell .top-search-trigger { margin: auto; }
