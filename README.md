@@ -40,6 +40,7 @@ pnpm build
 9. [项目进度交接](docs/08-项目进度交接.md)
 10. [冻结版UI参考](design/keepany-ui-reference.html)
 11. [远端加密备份配置](docs/10-远端加密备份配置.md)
+12. [ExternalLink 台账导入合同](docs/11-ExternalLink台账导入合同.md)
 
 ## 目录约定
 
