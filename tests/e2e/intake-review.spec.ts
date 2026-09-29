@@ -98,3 +98,39 @@ test("two tabs confirming one staged row create one asset", async ({ context }) 
 	}, repositoryUrl);
 	expect(count).toBe(1);
 });
+
+test("cross-tab edit queued before confirmation saves the edited candidate", async ({ context }) => {
+	const first = await context.newPage();
+	await first.goto("/intake");
+	await first.locator("#intake-review-file").setInputFiles({ name: "edit-race.csv", mimeType: "text/csv", buffer: Buffer.from("name,kind\nBefore edit,project") });
+	await expect(first.locator(".intake-review-row")).toHaveCount(1);
+	const second = await context.newPage();
+	await second.goto("/intake");
+	await expect(second.locator(".intake-review-row")).toHaveCount(1);
+	const id = await first.evaluate(async (url) => {
+		const { listReviewedCandidates } = await import(url);
+		return (await listReviewedCandidates())[0].id as string;
+	}, reviewUrl);
+	await first.evaluate((candidateId) => {
+		const state = window as typeof window & { releaseReviewLock?: () => void; reviewLockHeld?: boolean };
+		void navigator.locks.request(`keepany-intake-review:${candidateId}`, async () => {
+			state.reviewLockHeld = true;
+			await new Promise<void>((resolve) => { state.releaseReviewLock = resolve; });
+		});
+	}, id);
+	await first.waitForFunction(() => (window as typeof window & { reviewLockHeld?: boolean }).reviewLockHeld);
+	await second.locator(".intake-review-row").getByLabel("Name").fill("After edit");
+	await expect.poll(() => second.evaluate(async (candidateId) =>
+		(await navigator.locks.query()).pending?.some((lock) => lock.name === `keepany-intake-review:${candidateId}`) ?? false, id)).toBe(true);
+	await first.locator(".intake-review-row").getByRole("button", { name: "Confirm and save" }).click();
+	await first.evaluate(() => (window as typeof window & { releaseReviewLock?: () => void }).releaseReviewLock?.());
+	await expect(first.locator(".intake-review-row")).toContainText("Confirmed");
+	const result = await first.evaluate(async ({ reviewPath, repositoryPath, candidateId }) => {
+		const { getReviewedCandidate } = await import(reviewPath);
+		const { localRepository } = await import(repositoryPath);
+		const candidate = await getReviewedCandidate(candidateId);
+		const asset = await (await localRepository()).get("asset", candidate.asset.id);
+		return { candidateName: candidate.asset.name, assetName: asset.name };
+	}, { reviewPath: reviewUrl, repositoryPath: repositoryUrl, candidateId: id });
+	expect(result).toEqual({ candidateName: "After edit", assetName: "After edit" });
+});

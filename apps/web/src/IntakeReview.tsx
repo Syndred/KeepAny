@@ -19,6 +19,12 @@ async function fingerprint(bytes: ArrayBuffer): Promise<string> {
 	return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
+function withReviewLock<T>(id: string, action: () => Promise<T>): Promise<T> {
+	return navigator.locks
+		? navigator.locks.request(`keepany-intake-review:${id}`, action)
+		: action();
+}
+
 export function IntakeReview() {
 	const { t } = useTranslation();
 	const [rows, setRows] = useState<ReviewedCandidate[]>([]);
@@ -92,7 +98,14 @@ export function IntakeReview() {
 		drafts.current.set(id, asset);
 		setRows((current) => current.map((item) => item.id === id ? { ...item, asset } : item));
 		const previous = pendingSaves.current.get(id) ?? Promise.resolve();
-		const next = previous.catch(() => undefined).then(() => editReviewedCandidate(id, asset));
+		const next = previous.catch(() => undefined).then(() => withReviewLock(id, async () => {
+			if (await editReviewedCandidate(id, asset)) return;
+			const latest = await getReviewedCandidate(id);
+			if (latest) {
+				drafts.current.delete(id);
+				setRows((current) => current.map((item) => item.id === id ? latest : item));
+			}
+		}));
 		pendingSaves.current.set(id, next);
 		void next.catch(() => setMessage(t("error")));
 	}
@@ -128,8 +141,7 @@ export function IntakeReview() {
 			await refresh();
 		};
 		try {
-			if (navigator.locks) await navigator.locks.request(`keepany-intake-review:${id}`, commit);
-			else await commit();
+			await withReviewLock(id, commit);
 		} catch { setMessage(t("error")); }
 		finally { inFlight.current.delete(id); setWorkingId(""); }
 	}

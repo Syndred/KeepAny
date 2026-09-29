@@ -38,9 +38,12 @@ export async function getReviewedCandidate(id: string): Promise<ReviewedCandidat
 	return store.rows.get(id);
 }
 
-export async function editReviewedCandidate(id: string, asset: Asset): Promise<void> {
-	await store.rows.where("id").equals(id).modify((row) => {
-		if (row.status === "pending") row.asset = asset;
+export async function editReviewedCandidate(id: string, asset: Asset): Promise<boolean> {
+	return store.transaction("rw", store.rows, async () => {
+		const row = await store.rows.get(id);
+		if (row?.status !== "pending") return false;
+		await store.rows.put({ ...row, asset });
+		return true;
 	});
 }
 
