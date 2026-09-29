@@ -33,7 +33,7 @@ export function AssistantAccessPage() {
 				<div className="assistant-access-section-head"><h2>{t("assistantAccessConnections")}</h2><p>{t("assistantAccessConnectionHint")}</p></div>
 				{connected && runtime.scope ? <div className="assistant-access-connection">
 					<div className="assistant-access-connection-head"><div><strong>{t("assistantAccessLocalConnection")}</strong>
-						<small>{t("assistantAccessExpires", { time: dateTime(runtime.expiresAt!) })}</small></div>
+						{runtime.expiresAt && <small>{t("assistantAccessExpires", { time: dateTime(runtime.expiresAt) })}</small>}</div>
 						<Button disabled={busy} onClick={() => void revoke()}>{t("mcpRevoke")}</Button></div>
 					<div className="assistant-access-scope"><strong>{t("assistantAccessSelectedRecords")}</strong>
 						<div className="assistant-access-chips">{runtime.scope.assetIds.map((id) => <span className="chip" key={id}>{assetsById.get(id)?.name ?? t("mcpAssetUnavailable")}</span>)}</div></div>
