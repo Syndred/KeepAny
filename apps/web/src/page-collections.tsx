@@ -1,0 +1,204 @@
+import { Link, useLocation, useNavigate } from "@tanstack/react-router";
+import { FolderPlus, Pencil, Plus, Trash2 } from "lucide-react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useTranslation } from "react-i18next";
+import { normalizeCategoryName, type Asset, type AssetKind } from "../../../packages/domain/src";
+import { localRepository, savePreferenceIfCurrent } from "../../../packages/local-db/src";
+import { Button } from "./components/ui/button";
+import { Dialog } from "./components/ui/dialog";
+import { COLLECTIONS_PREFERENCE_ID, readCollections, type AssetCollection } from "./collection-model";
+import { AssetRow, PageTitle, kinds, liveAssets, useAppContext } from "./view-shared";
+import "./collections.css";
+
+type CollectionDraft = AssetCollection & { creating: boolean; original?: AssetCollection };
+
+function collectionIdFromPath(pathname: string): string | null {
+	const match = /^\/collections\/([^/]+)\/?$/.exec(pathname);
+	if (!match) return null;
+	try { return decodeURIComponent(match[1]); } catch { return null; }
+}
+
+export function CollectionsPage() {
+	const { data, notify } = useAppContext();
+	const { t } = useTranslation();
+	const navigate = useNavigate();
+	const pathname = useLocation({ select: (location) => location.pathname });
+	const selectedId = collectionIdFromPath(pathname);
+	const collections = readCollections(data.preferences.find((item) => item.id === COLLECTIONS_PREFERENCE_ID)?.value);
+	const selected = collections.find((item) => item.id === selectedId);
+	const assets = liveAssets(data);
+	const assetById = new Map(assets.map((asset) => [asset.id, asset]));
+	const [editor, setEditor] = useState<CollectionDraft | null>(null);
+	const [search, setSearch] = useState("");
+	const [error, setError] = useState("");
+	const [deleteTarget, setDeleteTarget] = useState<AssetCollection | null>(null);
+	const [busy, setBusy] = useState(false);
+	const inFlight = useRef(false);
+
+	useEffect(() => {
+		setEditor(null);
+		setDeleteTarget(null);
+		setError("");
+		setSearch("");
+	}, [selectedId]);
+
+	const openNew = () => {
+		setEditor({ id: crypto.randomUUID(), name: "", assetIds: [], creating: true });
+		setError("");
+		setSearch("");
+	};
+	const openEdit = (collection: AssetCollection) => {
+		setEditor({ ...collection, assetIds: [...collection.assetIds], creating: false, original: collection });
+		setError("");
+		setSearch("");
+	};
+	const toggleAsset = (assetId: string, checked: boolean) => {
+		setEditor((current) => current && ({
+			...current,
+			assetIds: checked
+				? [...new Set([...current.assetIds, assetId])]
+				: current.assetIds.filter((id) => id !== assetId),
+		}));
+	};
+	const saveCollection = async (event: FormEvent) => {
+		event.preventDefault();
+		if (!editor || inFlight.current) return;
+		const name = editor.name.trim();
+		if (!name) { setError(t("required")); return; }
+		if (name.length > 20) { setError(t("collectionNameTooLong")); return; }
+		inFlight.current = true;
+		setBusy(true);
+		setError("");
+		try {
+			const repository = await localRepository();
+			const current = await repository.get<{ id: string; value: unknown }>("preference", COLLECTIONS_PREFERENCE_ID);
+			const latest = readCollections(current?.value);
+			const existing = latest.find((item) => item.id === editor.id);
+			if (!editor.creating && !existing) { setError(t("collectionMissing")); return; }
+			if (!editor.creating && JSON.stringify(existing) !== JSON.stringify(editor.original)) {
+				setError(t("collectionChanged"));
+				return;
+			}
+			if (editor.creating && latest.length >= 8) { setError(t("collectionLimit")); return; }
+			if (latest.some((item) => item.id !== editor.id && normalizeCategoryName(item.name) === normalizeCategoryName(name))) {
+				setError(t("collectionDuplicate"));
+				return;
+			}
+			const validIds = new Set((await repository.list<Asset>("asset")).map((asset) => asset.id));
+			const retainedMissingIds = (existing?.assetIds ?? []).filter((id) => !validIds.has(id));
+			const updated: AssetCollection = {
+				id: editor.id,
+				name,
+				assetIds: [...new Set([
+					...retainedMissingIds,
+					...editor.assetIds.filter((id) => validIds.has(id)),
+				])],
+			};
+			const next = editor.creating ? [...latest, updated] : latest.map((item) => item.id === editor.id ? updated : item);
+			await savePreferenceIfCurrent(current, { id: COLLECTIONS_PREFERENCE_ID, value: next });
+			setEditor(null);
+			notify(t("saved"));
+			await navigate({ to: "/collections/$id", params: { id: updated.id } });
+		} catch (cause) {
+			setError(t(cause instanceof Error && cause.message === "preference-stale" ? "collectionChanged" : "error"));
+		} finally {
+			inFlight.current = false;
+			setBusy(false);
+		}
+	};
+	const deleteCollection = async () => {
+		if (!deleteTarget || inFlight.current) return;
+		inFlight.current = true;
+		setBusy(true);
+		setError("");
+		try {
+			const repository = await localRepository();
+			const current = await repository.get<{ id: string; value: unknown }>("preference", COLLECTIONS_PREFERENCE_ID);
+			const latest = readCollections(current?.value);
+			const existing = latest.find((item) => item.id === deleteTarget.id);
+			if (JSON.stringify(existing) !== JSON.stringify(deleteTarget)) {
+				setError(t("collectionChanged"));
+				return;
+			}
+			await savePreferenceIfCurrent(current, { id: COLLECTIONS_PREFERENCE_ID, value: latest.filter((item) => item.id !== deleteTarget.id) });
+			setDeleteTarget(null);
+			setEditor(null);
+			notify(t("saved"));
+			if (selectedId === deleteTarget.id) await navigate({ to: "/collections" });
+		} catch (cause) {
+			setError(t(cause instanceof Error && cause.message === "preference-stale" ? "collectionChanged" : "error"));
+		} finally {
+			inFlight.current = false;
+			setBusy(false);
+		}
+	};
+	const memberAssets = selected?.assetIds.map((id) => assetById.get(id)).filter((asset): asset is Asset => !!asset) ?? [];
+	const normalizedSearch = search.trim().toLocaleLowerCase();
+	const visibleAssets = assets.filter((asset) => !normalizedSearch || asset.name.toLocaleLowerCase().includes(normalizedSearch));
+
+	return (
+		<main className="page collections-page">
+			<PageTitle
+				eyebrow={t("collectionsTitle")}
+				title={selected ? selected.name : selectedId ? t("collectionMissing") : t("collectionsTitle")}
+				subtitle={selected ? t("collectionAssetCount", { count: memberAssets.length }) : t("collectionsHint")}
+				action={selected ? <Button onClick={() => openEdit(selected)}><Pencil size={16} />{t("collectionEdit")}</Button> :
+					!selectedId ? <Button variant="primary" onClick={openNew} disabled={collections.length >= 8}><Plus size={16} />{t("collectionCreate")}</Button> : undefined}
+			/>
+			{selected ? (
+				<section className="card collections-members" aria-label={selected.name}>
+					{memberAssets.length ? <div className="list">{memberAssets.map((asset) => <AssetRow key={asset.id} asset={asset} />)}</div> :
+						<p>{t("collectionMembersEmpty")}</p>}
+				</section>
+			) : !selectedId ? (
+				<section className="collections-grid" aria-label={t("collectionsTitle")}>
+					{collections.length ? collections.map((collection) => {
+						const count = collection.assetIds.filter((id) => assetById.has(id)).length;
+						return <article className="card collections-tile" key={collection.id}>
+							<FolderPlus size={25} aria-hidden="true" />
+							<Link to="/collections/$id" params={{ id: collection.id }}><strong>{collection.name}</strong></Link>
+							<small>{t("collectionAssetCount", { count })}</small>
+							<div className="actions"><Button size="small" onClick={() => openEdit(collection)}>{t("edit")}</Button><Button size="small" variant="danger" onClick={() => { setError(""); setDeleteTarget(collection); }}>{t("collectionDelete")}</Button></div>
+						</article>;
+					}) : <section className="card collections-empty"><p>{t("collectionEmpty")}</p><Button variant="primary" onClick={openNew}>{t("collectionCreate")}</Button></section>}
+				</section>
+			) : <section className="card"><p>{t("collectionMissing")}</p></section>}
+			{editor && <section className="card collections-editor" aria-label={editor.creating ? t("collectionCreate") : t("collectionEdit")}>
+				<form onSubmit={(event) => void saveCollection(event)}>
+					<div className="card-header"><h2>{editor.creating ? t("collectionCreate") : t("collectionEdit")}</h2></div>
+					<div className="field">
+						<label htmlFor="collection-name">{t("collectionName")}</label>
+						<input id="collection-name" value={editor.name} disabled={busy} aria-invalid={!!error} onChange={(event) => { setEditor({ ...editor, name: event.target.value }); setError(""); }} />
+					</div>
+					<fieldset className="collections-fieldset"><legend>{t("collectionMembers")}</legend>
+						<div className="field"><label htmlFor="collection-search">{t("collectionSearchAssets")}</label><input id="collection-search" value={search} onChange={(event) => setSearch(event.target.value)} /></div>
+						<div className="collections-options">
+							{kinds.map((kind: AssetKind) => {
+								const group = visibleAssets.filter((asset) => asset.kind === kind).sort((a, b) => a.name.localeCompare(b.name));
+								return group.length ? <div className="collections-kind" key={kind}>
+									<h3>{t(kind)}</h3>
+									{group.map((asset) => <label className="collections-option" key={asset.id}>
+										<input type="checkbox" checked={editor.assetIds.includes(asset.id)} disabled={busy} onChange={(event) => toggleAsset(asset.id, event.target.checked)} />
+										<span>{asset.name}</span>
+									</label>)}
+								</div> : null;
+							})}
+						</div>
+					</fieldset>
+					{error && <p className="field-error" role="alert">{error}</p>}
+					<div className="actions">
+						<Button variant="primary" type="submit" disabled={busy}>{busy ? t("loading") : t("collectionSave")}</Button>
+						<Button type="button" disabled={busy} onClick={() => { if (!inFlight.current) setEditor(null); }}>{t("cancel")}</Button>
+						{!editor.creating && <Button type="button" variant="danger" disabled={busy} onClick={() => { setError(""); setDeleteTarget(editor.original ?? editor); }}><Trash2 size={15} />{t("collectionDelete")}</Button>}
+						{!editor.creating && <Button type="button" disabled={busy} onClick={openNew}>{t("collectionAddAnother")}</Button>}
+					</div>
+				</form>
+			</section>}
+			{deleteTarget && <Dialog title={t("collectionDelete")} onClose={() => { if (!inFlight.current) setDeleteTarget(null); }}>
+				<p>{t("collectionDeleteHint")}</p>
+				{error && <p className="field-error" role="alert">{error}</p>}
+				<div className="actions"><Button type="button" disabled={busy} onClick={() => setDeleteTarget(null)}>{t("cancel")}</Button><Button type="button" variant="danger" disabled={busy} onClick={() => void deleteCollection()}>{t("collectionDelete")}</Button></div>
+			</Dialog>}
+		</main>
+	);
+}
