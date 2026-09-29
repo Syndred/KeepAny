@@ -314,7 +314,7 @@ function CategoryStrip({
 	);
 }
 
-function AssetCover({ asset, imageId = asset.attachments[0] }: { asset: Asset; imageId?: string }) {
+function AssetCover({ asset, imageId = asset.kind === "item" ? asset.itemMedia?.coverId || asset.attachments[0] : asset.attachments[0] }: { asset: Asset; imageId?: string }) {
 	const [src, setSrc] = useState("");
 	useEffect(() => {
 		setSrc("");

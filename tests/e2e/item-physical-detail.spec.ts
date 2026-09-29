@@ -170,6 +170,34 @@ for (const locale of ["zh-CN", "en"] as const) {
 				expect(
 					(afterPhotos.asset as { attachments: string[] }).attachments,
 				).toContain(mediaId);
+			await page.evaluate(
+				async ({ repositoryPath, id, coverId }) => {
+					const { localRepository } = await import(repositoryPath);
+					const repository = await localRepository();
+					const asset = await repository.get("asset", id);
+					if (!asset) throw Error("item-missing");
+					await repository.save("asset", {
+						...asset,
+						attachments: [...asset.attachments.filter((value: string) => value !== coverId), coverId],
+						updatedAt: new Date().toISOString(),
+					});
+				},
+				{ repositoryPath, id, coverId: media.coverId },
+			);
+			await page.goto("/assets/item");
+			const listCover = page.locator(".asset-library-card .asset-library-cover img");
+			await expect(listCover).toBeVisible();
+			await expect.poll(() => listCover.evaluate((image: HTMLImageElement) => image.naturalWidth)).toBeGreaterThan(0);
+			const coverPixel = await listCover.evaluate((image: HTMLImageElement) => {
+				const canvas = document.createElement("canvas");
+				canvas.width = canvas.height = 1;
+				const context = canvas.getContext("2d");
+				if (!context) throw Error("canvas-unavailable");
+				context.drawImage(image, 0, 0, 1, 1);
+				return Array.from(context.getImageData(0, 0, 1, 1).data).slice(0, 3);
+			});
+			expect(coverPixel).toEqual([216, 133, 100]);
+			await page.goto(`/assets/item/${id}`);
 			const expectedReturnDate = new Date(Date.now() + 45 * 86_400_000)
 				.toISOString()
 				.slice(0, 10);
