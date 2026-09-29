@@ -1,3 +1,4 @@
+import { mkdirSync } from "node:fs";
 import { expect, test } from "@playwright/test";
 
 const domainUrl = `/@fs${process.cwd()}/packages/domain/src/index.ts`;
@@ -21,6 +22,8 @@ test("AI impact entry offers all three scenarios and opens the real selected wor
 	await expect(page.getByText("01 Review impact")).toBeVisible();
 	await expect(page.getByText("02 Act and record")).toBeVisible();
 	await expect(page.getByText("03 Review record")).toBeVisible();
+	mkdirSync("docs/evidence/2026-09-29", { recursive: true });
+	await page.screenshot({ path: "docs/evidence/2026-09-29/change-impact-en-390.png", fullPage: true });
 	await page.getByRole("link", { name: "Create action plan" }).click();
 	await expect(page.getByRole("heading", { name: "Review profile change impact" })).toBeVisible();
 	await page.goto("/change-impact");
@@ -30,5 +33,10 @@ test("AI impact entry offers all three scenarios and opens the real selected wor
 	await page.goto("/change-impact");
 	await page.getByRole("link", { name: "Open account checklist" }).click();
 	await expect(page.getByRole("heading", { name: "Phone for tests" })).toBeVisible();
+	await expect(page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).resolves.toBe(true);
+	await page.evaluate(() => localStorage.setItem("keepany-language", "zh-CN"));
+	await page.goto("/change-impact");
+	await expect(page.getByRole("button", { name: /更换手机号/ })).toBeVisible();
+	await page.screenshot({ path: "docs/evidence/2026-09-29/change-impact-zh-390.png", fullPage: true });
 	await expect(page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).resolves.toBe(true);
 });

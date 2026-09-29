@@ -1611,7 +1611,7 @@ export function AssetDetail() {
 								<div className="list-row" key={h.id}>
 									<Check size={17} />
 									<div>
-										<strong>{h.action === "itemStatus" ? `${h.itemStatusBefore ? t(`itemStatus_${h.itemStatusBefore}`) : t("itemStatusUnrecorded")} → ${h.itemStatusAfter ? t(`itemStatus_${h.itemStatusAfter}`) : t("itemStatusUnrecorded")}` : t(h.action)}</strong>
+										<strong>{h.action === "itemStatus" ? `${h.itemStatusBefore ? t(`itemStatus_${h.itemStatusBefore}`) : t("itemStatusUnrecorded")} → ${h.itemStatusAfter ? t(`itemStatus_${h.itemStatusAfter}`) : t("itemStatusUnrecorded")}` : ["expense", "topup", "refund", "balance"].includes(h.action) ? t(`financeAction${h.action[0].toUpperCase()}${h.action.slice(1)}`) : t(h.action)}</strong>
 										<small>
 											{h.eventDate
 												? date(h.eventDate, i18n.language)
