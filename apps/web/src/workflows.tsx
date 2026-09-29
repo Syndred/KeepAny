@@ -110,7 +110,7 @@ export function AssetEditor({
 	const [vaultVerifiedAt, setVaultVerifiedAt] = useState("");
 	const [draft, setDraft] = useState<Asset>(
 		() =>
-			(original && kind === "project" ? assetSchema.parse(original) : original) ?? {
+			(original && (kind === "project" || kind === "account") ? assetSchema.parse(original) : original) ?? {
 				...newAsset(kind),
 				name: "",
 				category: categoryOptions[kind][0],
@@ -312,6 +312,7 @@ export function AssetEditor({
 					)}
 					{kind === "account" && (
 						<>
+							<Field name="accountProvider" label={t("accountProvider")} value={draft.accountProvider} onChange={(value) => set("accountProvider", value)} error={errors.accountProvider} />
 							<Field
 								name="username"
 								label={t("username")}
@@ -326,6 +327,15 @@ export function AssetEditor({
 								onChange={(v) => set("contact", v)}
 								error={errors.contact}
 							/>
+							<Field name="description" label={t("accountPurpose")} error={errors.description}>
+								<textarea id="description" rows={3} value={draft.description} onChange={(event) => set("description", event.target.value)} />
+							</Field>
+							<Field name="status" label={t("status")}>
+								<select id="status" value={draft.status} onChange={(event) => set("status", event.target.value as Asset["status"])}>
+									{["active", "paused", "cancelled", "archived"].map((value) => <option value={value} key={value}>{t(value)}</option>)}
+								</select>
+							</Field>
+							<Field name="accountProfileVerifiedAt" label={t("accountProfileVerifiedAt")} type="date" value={draft.accountProfileVerifiedAt} onChange={(value) => set("accountProfileVerifiedAt", value)} error={errors.accountProfileVerifiedAt} />
 						</>
 					)}
 					{kind === "subscription" && (

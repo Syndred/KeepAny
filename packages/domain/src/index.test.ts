@@ -123,6 +123,19 @@ describe('subscription and local asset rules', () => {
     expect(assetSchema.safeParse({ ...saved, projectEmail: 'not-an-email' }).success).toBe(false);
   });
 
+  it('defaults legacy account profile fields and validates the separate profile review date', () => {
+    const legacy = { ...newAsset('account'), name: 'Work account', username: 'owner@example.test' } as Record<string, unknown>;
+    delete legacy.accountProvider;
+    delete legacy.accountProfileVerifiedAt;
+    expect(assetSchema.parse(legacy)).toMatchObject({ accountProvider: '', accountProfileVerifiedAt: '' });
+    const saved = assetSchema.parse({ ...legacy, accountProvider: 'Mail service', accountProfileVerifiedAt: '2024-02-29',
+      description: 'Project access', status: 'paused' });
+    expect(saved).toMatchObject({ accountProvider: 'Mail service', accountProfileVerifiedAt: '2024-02-29',
+      description: 'Project access', status: 'paused' });
+    expect(assetSchema.safeParse({ ...saved, accountProfileVerifiedAt: '2026-02-30' }).success).toBe(false);
+    expect(assetSchema.safeParse({ ...saved, accountProvider: 'X'.repeat(201) }).success).toBe(false);
+  });
+
   it('keeps legacy project images unassigned and validates media references', () => {
     const logo = crypto.randomUUID();
     const home = crypto.randomUUID();

@@ -1628,7 +1628,8 @@ export function AssetDetail() {
 				</section>
 			</div>
 			{asset.kind === "account" && <div className="account-facts-grid">
-				<section className="card account-facts-card"><h2>{t("accountBasicInfo")}</h2><dl>
+				<section className="card account-facts-card"><div className="account-facts-heading"><h2>{t("accountBasicInfo")}</h2><Button size="small" onClick={() => setEdit(true)}>{t("accountEditProfile")}</Button></div><dl>
+					<div><dt>{t("accountProvider")}</dt><dd>{asset.accountProvider || t("accountNotRecorded")}</dd></div>
 					<div><dt>{t("username")}</dt><dd>{asset.username || t("accountNotRecorded")}</dd></div>
 					<div><dt>{t("status")}</dt><dd>{t(asset.status)}</dd></div>
 					<div><dt>{t("accountPurpose")}</dt><dd>{asset.description || t("accountNotRecorded")}</dd></div>
@@ -1648,7 +1649,8 @@ export function AssetDetail() {
 				</section>
 				<section className="card account-facts-card account-security-card"><h2>{t("accountRecordsSecurity")}</h2><dl>
 					<div><dt>{t("accountRelatedProjects")}</dt><dd>{accountProjects.length ? accountProjects.map((linked) => linked.name).join(" · ") : t("accountNotRecorded")}</dd></div>
-					<div><dt>{t("verifiedAt")}</dt><dd>{accountVerifiedAt ? date(accountVerifiedAt, i18n.language) : t("accountNotRecorded")}</dd></div>
+					<div><dt>{t("accountProfileVerifiedAt")}</dt><dd>{asset.accountProfileVerifiedAt ? date(asset.accountProfileVerifiedAt, i18n.language) : t("accountNotRecorded")}</dd></div>
+					<div><dt>{t("accountRelationVerifiedAt")}</dt><dd>{accountVerifiedAt ? date(accountVerifiedAt, i18n.language) : t("accountNotRecorded")}</dd></div>
 					<div><dt>{t("accountVaultReferences")}</dt><dd>{accountVaults.length ? accountVaults.map((linked) => linked.name).join(" · ") : t("accountNotRecorded")}</dd></div>
 				</dl></section>
 			</div>}
