@@ -13,6 +13,7 @@ import {
 	type Asset,
 	type AssetKind,
 	type Category,
+	type ProjectMedia,
 	type Relation,
 	type Task,
 } from "../../../packages/domain/src";
@@ -26,6 +27,7 @@ import {
 	exportArchive,
 	inspectArchive,
 	localRepository,
+	fileUrl,
 	putFile,
 	cleanupUnreferencedFile,
 	restoreArchive,
@@ -49,6 +51,26 @@ const categoryOptions: Record<AssetKind, string[]> = {
 	vault: ["other"],
 };
 type FieldName = keyof Asset;
+type ProjectFormFiles = { logo?: File; home?: File; products?: File[]; promo?: File };
+const projectImageTypes = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
+
+function ProjectFormImage({ id, file }: { id?: string; file?: File }) {
+	const [url, setUrl] = useState("");
+	useEffect(() => {
+		let active = true;
+		let current = "";
+		const source = file ? Promise.resolve(URL.createObjectURL(file)) : id ? fileUrl(id) : null;
+		if (!source) return;
+		void source.then((value) => {
+			current = value;
+			if (active) setUrl(value);
+			else if (value) URL.revokeObjectURL(value);
+		}).catch(() => { if (active) setUrl(""); });
+		return () => { active = false; if (current) URL.revokeObjectURL(current); };
+	}, [id, file]);
+	return url ? <img className="project-editor-image" src={url} alt="" /> : null;
+}
+
 function Field({
 	label,
 	name,
@@ -105,7 +127,7 @@ export function AssetEditor({
 	onClose: () => void;
 }) {
 	const { t } = useTranslation();
-	const { data } = useAppContext();
+	const { data, notify } = useAppContext();
 	const originalRef = useRef(asset);
 	const original = originalRef.current;
 	const linkedSubscriptionAssets = original?.kind === "subscription" ? data.relations
@@ -142,6 +164,7 @@ export function AssetEditor({
 	const [tagsInput, setTagsInput] = useState(() => original?.tags.join(", ") ?? "");
 	const [busy, setBusy] = useState(false);
 	const [failure, setFailure] = useState("");
+	const [projectFiles, setProjectFiles] = useState<ProjectFormFiles>({});
 	const inFlight = useRef(false);
 	function closeIfIdle() {
 		if (!inFlight.current) onClose();
@@ -150,9 +173,36 @@ export function AssetEditor({
 		setDraft((prev) => ({ ...prev, [key]: value }));
 		setErrors((prev) => ({ ...prev, [key]: "" }));
 	}
+	function selectProjectFiles(key: keyof ProjectFormFiles, files: FileList | null) {
+		const selected = files ? Array.from(files) : [];
+		setProjectFiles((previous) => ({ ...previous, [key]: key === "products" ? selected : selected[0] }));
+		setErrors((previous) => ({ ...previous, projectMedia: "" }));
+	}
 	async function submit(e: React.FormEvent) {
 		e.preventDefault();
 		if (inFlight.current) return;
+		const selectedFiles = kind === "project"
+			? [projectFiles.logo, projectFiles.home, ...(projectFiles.products ?? []), projectFiles.promo].filter((file): file is File => !!file)
+			: [];
+		const previousMedia = draft.projectMedia;
+		const replacedIds = kind === "project" ? new Set([
+			projectFiles.logo ? previousMedia.logoId : "",
+			projectFiles.home ? previousMedia.homeScreenshotId : "",
+			projectFiles.promo ? previousMedia.promoCoverId : "",
+			...(projectFiles.products?.length ? previousMedia.productScreenshotIds : []),
+		].filter(Boolean)) : new Set<string>();
+		if ((projectFiles.products?.length ?? 0) > 4) {
+			setErrors((previous) => ({ ...previous, projectMedia: t("projectProductScreenshotsLimit") }));
+			return;
+		}
+		if (draft.attachments.length - replacedIds.size + selectedFiles.length > 20) {
+			setErrors((previous) => ({ ...previous, projectMedia: t("projectMediaAttachmentLimit") }));
+			return;
+		}
+		if (selectedFiles.some((file) => file.name.length > 255 || file.size > 20 * 1024 * 1024 || !projectImageTypes.has(file.type))) {
+			setErrors((previous) => ({ ...previous, projectMedia: t("uploadError") }));
+			return;
+		}
 		const parsedAmount = kind === "item" && !amount.trim() ? 0 : parseMinorUnits(amount, draft.currency);
 		const parsedDiscount = kind === "subscription" ? parseMinorUnits(discount, draft.currency) : draft.discountAmount;
 		const scheduleChanged =
@@ -198,7 +248,31 @@ export function AssetEditor({
 		inFlight.current = true;
 		setBusy(true);
 		setFailure("");
+		const uploadedIds: string[] = [];
+		let candidate: Asset | null = null;
+		let saveAttempted = false;
 		try {
+			if (kind === "project" && selectedFiles.length) {
+				const media: ProjectMedia = { ...previousMedia, productScreenshotIds: [...previousMedia.productScreenshotIds] };
+				const upload = async (file: File) => { const id = await putFile(file); uploadedIds.push(id); return id; };
+				if (projectFiles.logo) media.logoId = await upload(projectFiles.logo);
+				if (projectFiles.home) media.homeScreenshotId = await upload(projectFiles.home);
+				if (projectFiles.products?.length) {
+					media.productScreenshotIds = [];
+					for (const file of projectFiles.products) media.productScreenshotIds.push(await upload(file));
+				}
+				if (projectFiles.promo) media.promoCoverId = await upload(projectFiles.promo);
+				const attachments = [
+					...parsed.data.attachments.filter((id) => !replacedIds.has(id)),
+					...uploadedIds,
+				];
+				if (projectFiles.home) {
+					attachments.splice(attachments.indexOf(media.homeScreenshotId), 1);
+					attachments.unshift(media.homeScreenshotId);
+				}
+				candidate = assetSchema.parse({ ...parsed.data, attachments, projectMedia: media });
+			} else candidate = parsed.data;
+			const assetToSave = candidate;
 			const selectedLinks = kind === "subscription" ? [
 				{ id: projectId, kind: "project" as const, label: t("subscriptionProject") },
 				{ id: accountId, kind: "account" as const, label: t("subscriptionLoginAccount") },
@@ -210,12 +284,13 @@ export function AssetEditor({
 			}
 			const existingRelations = original && selectedLinks.length ? await repository?.list<Relation>("relation") ?? [] : [];
 			const newRelations: Relation[] = selectedLinks.filter((link) => !existingRelations.some((relation) => !relation.deleted && (
-				(relation.from === parsed.data.id && relation.to === link.id) || (relation.to === parsed.data.id && relation.from === link.id))
-			)).map((link) => ({ id: crypto.randomUUID(), from: parsed.data.id, to: link.id, label: link.label,
+				(relation.from === assetToSave.id && relation.to === link.id) || (relation.to === assetToSave.id && relation.from === link.id))
+			)).map((link) => ({ id: crypto.randomUUID(), from: assetToSave.id, to: link.id, label: link.label,
 				createdAt: new Date().toISOString(), verifiedAt: "", deleted: false }));
 			if (original) {
-				await saveAssetIfCurrent(original, parsed.data);
-				originalRef.current = parsed.data;
+				saveAttempted = true;
+				await saveAssetIfCurrent(original, candidate);
+				originalRef.current = candidate;
 				if (newRelations.length) {
 					try { await saveBatch(newRelations.map((value) => ({ type: "relation" as const, value }))); }
 					catch { throw Error("subscription-relations-pending"); }
@@ -225,16 +300,42 @@ export function AssetEditor({
 				const linked = data.assets.some((candidate) => candidate.id === vaultRelatedId && !candidate.deleted && candidate.kind !== "vault");
 				if (!linked) throw Error("relation-endpoint");
 				await saveBatch([
-					{ type: "asset", value: parsed.data },
-					{ type: "relation", value: { id: crypto.randomUUID(), from: parsed.data.id, to: vaultRelatedId, label: t("vault"), createdAt: new Date().toISOString(), verifiedAt: vaultVerifiedAt, deleted: false } },
+					{ type: "asset", value: candidate },
+					{ type: "relation", value: { id: crypto.randomUUID(), from: candidate.id, to: vaultRelatedId, label: t("vault"), createdAt: new Date().toISOString(), verifiedAt: vaultVerifiedAt, deleted: false } },
 				]);
 			} else if (kind === "subscription" && newRelations.length) await saveBatch([
-				{ type: "asset", value: parsed.data },
+				{ type: "asset", value: candidate },
 				...newRelations.map((value) => ({ type: "relation" as const, value })),
 			]);
-			else await save("asset", parsed.data);
+			else { saveAttempted = true; await save("asset", candidate); }
+			if (uploadedIds.length) {
+				const cleanup = await Promise.allSettled([...replacedIds].map((id) => cleanupUnreferencedFile(id)));
+				if (cleanup.some((result) => result.status === "rejected")) notify(t("projectMediaCleanupPending"));
+			}
 			onClose();
 		} catch (error) {
+			if (uploadedIds.length) {
+				let safeToCleanup = !saveAttempted;
+				if (saveAttempted && candidate) {
+					try {
+						const current = await (await localRepository()).get<Asset>("asset", candidate.id);
+						if (current && uploadedIds.every((id) => current.attachments.includes(id))) {
+							originalRef.current = current;
+							notify(t("projectMediaSavedCheck"));
+							onClose();
+							return;
+						}
+						safeToCleanup = true;
+					} catch { setFailure(t("projectMediaSaveUnknown")); return; }
+				}
+				if (safeToCleanup) {
+					const cleanup = await Promise.allSettled(uploadedIds.map((id) => cleanupUnreferencedFile(id)));
+					if (cleanup.some((result) => result.status === "rejected" || !result.value)) {
+						setFailure(t("projectMediaUploadCleanupPending"));
+						return;
+					}
+				}
+			}
 			const reason = error instanceof Error ? error.message : "";
 			setFailure(t(reason === "asset-stale" ? "assetStale" :
 				reason === "relation-endpoint" ? "subscriptionRelationUnavailable" :
@@ -565,6 +666,31 @@ export function AssetEditor({
 						error={errors.tags}
 					/>}
 				</div>
+				{kind === "project" && <details className="project-editor-group project-editor-media" open>
+					<summary>{t("projectMaterialsImage")}</summary>
+					<div className="project-editor-fields">
+						<Field name="projectLogoFile" label={t("projectLogo")}>
+							<input id="projectLogoFile" type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={(event) => selectProjectFiles("logo", event.target.files)} />
+							{(projectFiles.logo || draft.projectMedia.logoId) && <div className="project-editor-image-list"><ProjectFormImage id={draft.projectMedia.logoId} file={projectFiles.logo} /></div>}
+						</Field>
+						<Field name="projectHomeFile" label={t("projectHomeScreenshot")}>
+							<input id="projectHomeFile" type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={(event) => selectProjectFiles("home", event.target.files)} />
+							{(projectFiles.home || draft.projectMedia.homeScreenshotId) && <div className="project-editor-image-list"><ProjectFormImage id={draft.projectMedia.homeScreenshotId} file={projectFiles.home} /></div>}
+						</Field>
+						<Field name="projectProductFiles" label={t("projectProductScreenshots")}>
+							<input id="projectProductFiles" type="file" accept="image/jpeg,image/png,image/webp,image/gif" multiple onChange={(event) => selectProjectFiles("products", event.target.files)} />
+							<small>{t("projectProductScreenshotsLimit")}. {t("projectMediaReplaceHint")}</small>
+							<div className="project-editor-image-list">{projectFiles.products?.length
+					? projectFiles.products.map((file) => <ProjectFormImage key={`${file.name}-${file.size}-${file.lastModified}`} file={file} />)
+								: draft.projectMedia.productScreenshotIds.map((id) => <ProjectFormImage key={id} id={id} />)}</div>
+						</Field>
+						<Field name="projectPromoFile" label={t("projectPromoCover")}>
+							<input id="projectPromoFile" type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={(event) => selectProjectFiles("promo", event.target.files)} />
+							{(projectFiles.promo || draft.projectMedia.promoCoverId) && <div className="project-editor-image-list"><ProjectFormImage id={draft.projectMedia.promoCoverId} file={projectFiles.promo} /></div>}
+						</Field>
+						{errors.projectMedia && <p className="field-error" role="alert">{errors.projectMedia}</p>}
+					</div>
+				</details>}
 				{kind === "vault" && <p className="notice">{t("vaultHint")}</p>}
 				{kind !== "project" && <div className="field">
 					<label htmlFor="longDescription">{t("longDescription")}</label>
