@@ -16,14 +16,14 @@ test("built PWA reopens offline, edits local data and downloads a backup", async
 		await page.getByRole("button", { name: "Add", exact: true }).click();
 		await page.getByRole("dialog").getByLabel("Name", { exact: true }).fill(name);
 		await page.getByRole("dialog").getByRole("button", { name: "Save" }).click();
-		await expect(page.getByText(name, { exact: true })).toBeVisible();
+		await expect(page.getByText(name, { exact: true }).first()).toBeVisible();
 		await page.evaluate(async () => { await navigator.serviceWorker.ready; });
 		await page.reload();
 		await expect.poll(() => page.evaluate(() => Boolean(navigator.serviceWorker.controller))).toBe(true);
 		await context.setOffline(true);
 		await page.reload();
-		await expect(page.getByText(name, { exact: true })).toBeVisible();
-		await page.getByText(name, { exact: true }).click();
+		await expect(page.getByText(name, { exact: true }).first()).toBeVisible();
+		await page.getByText(name, { exact: true }).first().click();
 		await page.getByRole("button", { name: "Edit" }).click();
 		const dialog = page.getByRole("dialog");
 		await dialog.getByLabel("Name", { exact: true }).fill(`${name} edited`);
@@ -43,7 +43,7 @@ test("built PWA reopens offline, edits local data and downloads a backup", async
 		expect(statSync(path).size).toBeGreaterThan(52);
 		await page.reload();
 		await page.goto("/assets/project");
-		await expect(page.getByText(`${name} edited`, { exact: true })).toBeVisible();
+		await expect(page.getByText(`${name} edited`, { exact: true }).first()).toBeVisible();
 		expect(errors).toEqual([]);
 	} finally { await context.close(); }
 });

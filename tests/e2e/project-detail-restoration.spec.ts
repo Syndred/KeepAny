@@ -70,3 +70,28 @@ for (const width of [360, 390, 1280]) {
 		await expect(page.locator(".asset-project-costs")).toContainText("1,176.00");
 	});
 }
+
+test("project detail labels and recorded relationships render in Chinese at 390px", async ({ page }) => {
+	await page.setViewportSize({ width: 390, height: 850 });
+	await page.goto("/");
+	await page.evaluate(() => localStorage.setItem("keepany-language", "zh-CN"));
+	const projectId = await page.evaluate(async ([dataUrl, repositoryUrl]) => {
+		const { seed } = await import(dataUrl);
+		const { localRepository, save } = await import(repositoryUrl);
+		await seed();
+		const repository = await localRepository();
+		const project = (await repository.allRecords()).filter((row: { type: string }) => row.type === "asset").map((row: { payload: string }) => JSON.parse(row.payload)).find((asset: { kind: string }) => asset.kind === "project");
+		await save("submission", { id: crypto.randomUUID(), assetId: project.id, name: "目录记录", url: "https://directory.example/project", status: "verify", submittedAt: "2026-09-20", verifiedAt: "", evidence: "https://directory.example/project", deleted: false });
+		return project.id as string;
+	}, ["/src/data.ts", repositoryModuleUrl]);
+	await page.goto(`/assets/project/${projectId}`);
+	await expect(page.locator(".topbar-back-link")).toContainText("返回列表");
+	await expect(page.locator(".asset-project-profile-card")).toContainText("官方地址");
+	await expect(page.locator(".asset-project-profile-card")).toContainText("Studio Mail");
+	await expect(page.locator(".asset-project-reminders")).toContainText("1 条需要核验");
+	await expect(page.locator(".asset-project-costs")).toContainText("域名与持有成本");
+	await page.getByRole("button", { name: "查看投递素材" }).click();
+	await expect(page.locator(".asset-project-materials")).toHaveAttribute("open", "");
+	await expect(page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).resolves.toBe(true);
+	await page.screenshot({ path: "/tmp/keepany-project-detail-restored-zh-CN-390.png", fullPage: true });
+});
