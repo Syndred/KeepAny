@@ -137,6 +137,11 @@ p { line-height: 1.5; }
 .card-header p { color: var(--muted); font-size: 12px; }
 .card-grid, .stat-grid, .detail-grid, .form-grid { display: grid; gap: 16px; align-items: start; min-width: 0; }
 .card-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.remote-backup-panel { grid-column: 1 / -1; }
+.remote-backup-panel > :not(:first-child) { margin-top: 14px; }
+.remote-backup-panel .remote-backup-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.remote-backup-panel .remote-backup-fields > .wide { grid-column: 1 / -1; }
+.remote-backup-hint { display: block; color: var(--muted); line-height: 1.5; }
 .stat-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .stat { display: grid; align-content: start; gap: 6px; padding: 14px 16px; }
 .stat:nth-child(3n + 1) { background: var(--yellow); }
@@ -397,6 +402,8 @@ p { line-height: 1.5; }
   .renewal-amount-field input { width: 100%; font-size: 16px; }
   .page-header { display: grid; padding: 14px; }
   .card-grid, .detail-grid { grid-template-columns: 1fr; }
+  .remote-backup-panel .remote-backup-fields { grid-template-columns: 1fr; }
+  .remote-backup-panel .remote-backup-fields > .wide { grid-column: auto; }
   .sync-panel .form-grid, .sync-difference { grid-template-columns: 1fr; }
   .stat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
   .stat-grid .stat:last-child:nth-child(odd) { grid-column: 1 / -1; }

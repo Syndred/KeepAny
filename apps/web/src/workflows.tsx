@@ -29,6 +29,7 @@ import {
 } from "../../../packages/local-db/src";
 import { Button } from "./components/ui/button";
 import { Dialog } from "./components/ui/dialog";
+import { RemoteBackupPanel } from "./components/RemoteBackupPanel";
 
 const categoryOptions: Record<AssetKind, string[]> = {
 	project: ["website", "repository", "tool"],
@@ -539,6 +540,7 @@ export function IntakeTools() {
 	const [restoreFile, setRestoreFile] = useState<File | null>(null);
 	const [readyArchive, setReadyArchive] = useState<Uint8Array | null>(null);
 	const [readyArchiveGeneration, setReadyArchiveGeneration] = useState<number | null>(null);
+	const [readyArchiveOrigin, setReadyArchiveOrigin] = useState<"local" | "remote" | null>(null);
 	const [archiveCount, setArchiveCount] = useState(0);
 	const [candidates, setCandidates] = useState<ImportCandidate[]>([]);
 	const [candidateGeneration, setCandidateGeneration] = useState<number | null>(null);
@@ -547,6 +549,7 @@ export function IntakeTools() {
 	const [busy, setBusy] = useState(false);
 	const [inspecting, setInspecting] = useState(false);
 	const importing = useRef(false);
+	const restoring = useRef(false);
 	const importGeneration = useRef(0);
 	const restoreGeneration = useRef(0);
 	const [readyDownload, setReadyDownload] = useState<{
@@ -566,6 +569,24 @@ export function IntakeTools() {
 			if (readyDownload) URL.revokeObjectURL(readyDownload.url);
 		};
 	}, [readyDownload]);
+	function invalidateRestorePreview() {
+		const generation = ++restoreGeneration.current;
+		setInspecting(false);
+		setReadyArchive(null);
+		setReadyArchiveGeneration(null);
+		setReadyArchiveOrigin(null);
+		setArchiveCount(0);
+		setMessage("");
+		return generation;
+	}
+	function acceptRemotePreview(archive: Uint8Array, count: number, generation: number) {
+		if (generation !== restoreGeneration.current) return false;
+		setReadyArchive(archive);
+		setReadyArchiveGeneration(generation);
+		setReadyArchiveOrigin("remote");
+		setArchiveCount(count);
+		return true;
+	}
 	async function download() {
 		if (password.length < 12) {
 			setMessage(t("backupPassword"));
@@ -597,6 +618,7 @@ export function IntakeTools() {
 		setInspecting(true);
 		setReadyArchive(null);
 		setReadyArchiveGeneration(null);
+		setReadyArchiveOrigin(null);
 		setArchiveCount(0);
 		try {
 			const decrypted = await decryptBackup(
@@ -609,6 +631,7 @@ export function IntakeTools() {
 				if (generation !== restoreGeneration.current) return;
 				setReadyArchive(decrypted);
 				setReadyArchiveGeneration(generation);
+				setReadyArchiveOrigin("local");
 				setArchiveCount(result.rows.length);
 				setMessage(t("preview"));
 			} catch {
@@ -621,13 +644,15 @@ export function IntakeTools() {
 		}
 	}
 	async function restore() {
-		if (!readyArchive || readyArchiveGeneration !== restoreGeneration.current) return;
+		if (restoring.current || !readyArchive || readyArchiveGeneration !== restoreGeneration.current) return;
+		restoring.current = true;
 		setBusy(true);
 		try {
 			const count = await restoreArchive(readyArchive);
 			setMessage(t("restoreReady", { count }));
 			setReadyArchive(null);
 			setReadyArchiveGeneration(null);
+			setReadyArchiveOrigin(null);
 			setRestoreFile(null);
 			if (restoreFileInput.current) restoreFileInput.current.value = "";
 		} catch (error) {
@@ -638,6 +663,7 @@ export function IntakeTools() {
 					: "error";
 			setMessage(t(key));
 		} finally {
+			restoring.current = false;
 			setBusy(false);
 		}
 	}
@@ -753,12 +779,8 @@ export function IntakeTools() {
 						disabled={busy}
 						value={password}
 						onChange={(e) => {
-							restoreGeneration.current++;
-							setInspecting(false);
+							invalidateRestorePreview();
 							setPassword(e.target.value);
-							setReadyArchive(null);
-							setReadyArchiveGeneration(null);
-							setArchiveCount(0);
 							setReadyDownload(null);
 						}}
 					/>
@@ -790,12 +812,8 @@ export function IntakeTools() {
 						accept=".ka1"
 						disabled={busy}
 						onChange={(e) => {
-							restoreGeneration.current++;
-							setInspecting(false);
+							invalidateRestorePreview();
 							setRestoreFile(e.target.files?.[0] || null);
-							setReadyArchive(null);
-							setReadyArchiveGeneration(null);
-							setArchiveCount(0);
 						}}
 					/>
 				</div>
@@ -807,7 +825,7 @@ export function IntakeTools() {
 					>
 						{t("preview")}
 					</Button>
-					{readyArchive && (
+					{readyArchive && readyArchiveOrigin === "local" && (
 						<Button
 							variant="primary"
 							onClick={() => void restore()}
@@ -900,6 +918,16 @@ export function IntakeTools() {
 					</div>
 				)}
 			</section>
+			<RemoteBackupPanel
+				password={password}
+				busy={busy || inspecting}
+				setBusy={setBusy}
+				invalidatePreview={invalidateRestorePreview}
+				acceptPreview={acceptRemotePreview}
+				canConfirm={!!readyArchive && readyArchiveOrigin === "remote" && readyArchiveGeneration === restoreGeneration.current}
+				restoreCount={archiveCount}
+				confirmRestore={() => void restore()}
+			/>
 			{message && (
 				<div className="notice" role="status">
 					{message}

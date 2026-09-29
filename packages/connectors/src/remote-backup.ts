@@ -22,6 +22,10 @@ const receiptSchema = z.object({
   createdAt: z.string().datetime(),
 });
 
+export function parseRemoteBackupReceipt(value: unknown): RemoteBackupReceipt {
+  return receiptSchema.parse(value);
+}
+
 function safeEndpoint(raw: string): URL {
   let url: URL;
   try { url = new URL(raw); } catch { throw Error('backup-endpoint'); }
@@ -65,7 +69,7 @@ async function readLimited(response: Response): Promise<Uint8Array> {
 async function request(
   fetchImpl: typeof fetch, endpoint: URL, method: 'PUT' | 'GET',
   bytes: Uint8Array | undefined, headers: HeadersInit | undefined, timeoutMs: number,
-): Promise<Uint8Array | void> {
+): Promise<Uint8Array | undefined> {
   const controller = requestTimeout(timeoutMs);
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
@@ -130,7 +134,7 @@ async function sha256(bytes: Uint8Array): Promise<string> {
 }
 
 async function downloadCiphertext(transport: BackupTransport, receipt: RemoteBackupReceipt): Promise<Uint8Array> {
-  const valid = receiptSchema.parse(receipt);
+  const valid = parseRemoteBackupReceipt(receipt);
   const bytes = await transport.get();
   if (bytes.length !== valid.ciphertextSize || await sha256(bytes) !== valid.ciphertextSha256) throw Error('backup-readback-mismatch');
   return bytes;

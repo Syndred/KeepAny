@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { strToU8, zipSync } from 'fflate';
-import { createS3PresignedTransport, createWebDavTransport, downloadVerifiedArchive, restoreEncryptedArchive, uploadEncryptedArchive } from './remote-backup';
+import { createS3PresignedTransport, createWebDavTransport, downloadVerifiedArchive, parseRemoteBackupReceipt, restoreEncryptedArchive, uploadEncryptedArchive } from './remote-backup';
 
 const passphrase = 'a-long-test-passphrase';
 async function validArchive(): Promise<Uint8Array> {
@@ -28,14 +28,23 @@ describe('S3 presigned encrypted backup', () => {
   const putUrl = 'https://objects.example/bucket/keepany.backup?signature=put-secret';
   const getUrl = 'https://objects.example/bucket/keepany.backup?signature=get-secret';
 
+  it('accepts a saved receipt and rejects invalid verification metadata', () => {
+    const valid = { format: 'keepany-remote-backup', version: 1, ciphertextSha256: 'a'.repeat(64), ciphertextSize: 52, createdAt: '2026-09-29T00:00:00.000Z' };
+    expect(parseRemoteBackupReceipt(JSON.parse(JSON.stringify(valid)))).toEqual(valid);
+    expect(() => parseRemoteBackupReceipt({ ...valid, ciphertextSha256: 'bad' })).toThrow();
+    expect(() => parseRemoteBackupReceipt({ ...valid, ciphertextSize: 101 * 1024 * 1024 })).toThrow();
+  });
+
   it('uploads encrypted bytes, reads back, validates and restores through the repository', async () => {
     const store = mockObjectStore();
     const transport = createS3PresignedTransport({ putUrl, getUrl, fetchImpl: store.fetchImpl });
     const archive = await validArchive();
     const receipt = await uploadEncryptedArchive(archive, passphrase, transport);
-    expect(store.getStored()).toBeDefined();
-    expect(store.getStored()).not.toEqual(archive);
-    expect(new TextDecoder().decode(store.getStored()!.slice(0, 8))).toBe('KEEPANY1');
+    const stored = store.getStored();
+    expect(stored).toBeDefined();
+    if (!stored) throw Error('missing remote bytes');
+    expect(stored).not.toEqual(archive);
+    expect(new TextDecoder().decode(stored.slice(0, 8))).toBe('KEEPANY1');
     expect(await downloadVerifiedArchive(receipt, passphrase, transport)).toEqual(archive);
     const repository = { restoreArchive: vi.fn(async (bytes: Uint8Array) => {
       expect(bytes).toEqual(archive);
@@ -82,7 +91,8 @@ describe('WebDAV encrypted backup', () => {
     const authorization = vi.fn(async () => 'Bearer local-test-token');
     const transport = createWebDavTransport({ objectUrl: 'https://dav.example/keepany/backup.bin', authorization, fetchImpl: store.fetchImpl });
     const receipt = await uploadEncryptedArchive(await validArchive(), passphrase, transport);
-    const options = vi.mocked(store.fetchImpl).mock.calls[0][1]!;
+    const options = vi.mocked(store.fetchImpl).mock.calls[0][1];
+    if (!options) throw Error('missing PUT request');
     expect(new Headers(options.headers).get('Authorization')).toBe('Bearer local-test-token');
     expect(options).toMatchObject({ redirect: 'error', credentials: 'omit' });
     const repository = { restoreArchive: vi.fn(async () => 0) };
