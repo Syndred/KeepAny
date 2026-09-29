@@ -7,6 +7,8 @@
   "scripts": {
     "dev": "vite apps/web --host 127.0.0.1",
     "build": "tsc --noEmit && vite build apps/web",
+    "build:mcp": "node scripts/build-mcp-launcher.mjs",
+    "pack:mcp": "pnpm build:mcp && npm pack ./dist/mcp-launcher --pack-destination ./dist",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:e2e": "playwright test",
@@ -59,6 +61,7 @@
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
     "@vitejs/plugin-react": "6.1.1",
+    "esbuild": "0.27.7",
     "fake-indexeddb": "6.2.5",
     "tailwindcss": "4.3.3",
     "tsx": "4.21.0",

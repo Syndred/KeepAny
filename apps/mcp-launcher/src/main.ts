@@ -1,3 +1,4 @@
+import { realpathSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 import { McpAuthority } from '../../../packages/mcp/src/authority';
 import { FileAuthorityStorage } from '../../../packages/mcp/src/file-storage';
@@ -114,4 +115,4 @@ async function main() {
   if (process.stdin.readableEnded) shutdown();
 }
 
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) void main();
+if (process.argv[1] && import.meta.url === pathToFileURL(realpathSync(process.argv[1])).href) void main();

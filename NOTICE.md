@@ -2,8 +2,8 @@
 
 本清单由 `node scripts/phase0/generate-legal-artifacts.mjs` 根据当前 `pnpm-lock.yaml`、实际安装树和各包 `package.json` 生成。它记录包内许可声明和包根目录中的许可/NOTICE 文件指纹；并非法律兼容性结论或可直接分发的完整第三方许可证正文包。
 
-- 锁文件 SHA-256：`82fdc2846a64135a71e466a90d24607853f320bfa47fb3398ebdb6cb447df297`
-- 已安装包版本：589；直接运行依赖：33；直接开发依赖：18。
+- 锁文件 SHA-256：`a09c08a3eb5204b89c6becfa09137949bdea83bc063cf45caa637b4766657a8b`
+- 已安装包版本：589；直接运行依赖：33；直接开发依赖：19。
 - 包根目录缺少许可证正文：30。各项仍需按发布版本核对上游正文、版权和特殊 NOTICE。
 - 项目源码许可证：根目录 `LICENSE` 为 AGPL-3.0-only；发布前仍需由版权持有人确认，并完成依赖兼容性复核。
 - 本轮未复制 HomeInventory、Wallos、DomainMOD、Homebox 的业务源码；该四项仅在 `docs/03-开源业务模块复用审计.md` 中作为候选和参考登记。
@@ -346,7 +346,7 @@
 | `es-object-atoms@1.1.2` | 传递依赖 | `MIT` | `node_modules/.pnpm/es-object-atoms@1.1.2/node_modules/es-object-atoms/LICENSE` (SHA-256 `5e325595b4ea8cfec3802f545b1def5d7b73e4a5b8e9ba63e32a320f67732292`) |
 | `es-set-tostringtag@2.1.0` | 传递依赖 | `MIT` | `node_modules/.pnpm/es-set-tostringtag@2.1.0/node_modules/es-set-tostringtag/LICENSE` (SHA-256 `1a3aeb1f1398bd697d57c3c585faadf59d825aca6e3162cd7eeb72ff76eb2466`) |
 | `es-to-primitive@1.3.4` | 传递依赖 | `MIT` | `node_modules/.pnpm/es-to-primitive@1.3.4/node_modules/es-to-primitive/LICENSE` (SHA-256 `c61652db3d2808f667b48af0a358f0d85fd07ad4a0d0b1a50882dec3b764c522`) |
-| `esbuild@0.27.7` | 传递依赖 | `MIT` | `node_modules/.pnpm/esbuild@0.27.7/node_modules/esbuild/LICENSE.md` (SHA-256 `b40ec5baec7bb34fa5b1c09521fa3cd52d5fad7adafed74932a2010d3612a681`) |
+| `esbuild@0.27.7` | development | `MIT` | `node_modules/.pnpm/esbuild@0.27.7/node_modules/esbuild/LICENSE.md` (SHA-256 `b40ec5baec7bb34fa5b1c09521fa3cd52d5fad7adafed74932a2010d3612a681`) |
 | `escalade@3.2.0` | 传递依赖 | `MIT` | `node_modules/.pnpm/escalade@3.2.0/node_modules/escalade/license` (SHA-256 `9a9edad7baae52622bddf3c15b2ef8a33d2c89f2d25408ad13e8a7481c6b0c97`) |
 | `estree-walker@2.0.2` | 传递依赖 | `MIT` | `node_modules/.pnpm/estree-walker@2.0.2/node_modules/estree-walker/LICENSE` (SHA-256 `8a6dcbabe7179f9c8489c08a7d874d0f1e093ae7449e03756ccf87cb9d0e296e`) |
 | `estree-walker@3.0.3` | 传递依赖 | `MIT` | `node_modules/.pnpm/estree-walker@3.0.3/node_modules/estree-walker/LICENSE` (SHA-256 `8a6dcbabe7179f9c8489c08a7d874d0f1e093ae7449e03756ccf87cb9d0e296e`) |

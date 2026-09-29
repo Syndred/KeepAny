@@ -2,21 +2,21 @@
   "spdxVersion": "SPDX-2.3",
   "dataLicense": "CC0-1.0",
   "SPDXID": "SPDXRef-DOCUMENT",
-  "name": "KeepAny installed pnpm inventory 82fdc2846a64",
-  "documentNamespace": "urn:uuid:82fdc284-6a64-435a-a1e4-66a90d246078",
+  "name": "KeepAny installed pnpm inventory a09c08a3eb52",
+  "documentNamespace": "urn:uuid:a09c08a3-eb52-44b8-ac6b-ecfa09137949",
   "creationInfo": {
     "creators": [
       "Tool: scripts/phase0/generate-legal-artifacts.mjs"
     ],
-    "created": "2026-09-28T16:10:32Z",
+    "created": "2026-09-29T01:00:53Z",
     "comment": "Installed-tree snapshot; creation time is retained for the same lock SHA-256 so --check can compare deterministic output."
   },
   "annotations": [
     {
-      "annotationDate": "2026-09-28T16:10:32Z",
+      "annotationDate": "2026-09-29T01:00:53Z",
       "annotationType": "OTHER",
       "annotator": "Tool: scripts/phase0/generate-legal-artifacts.mjs",
-      "comment": "pnpm-lock.yaml SHA-256: 82fdc2846a64135a71e466a90d24607853f320bfa47fb3398ebdb6cb447df297; installed package versions: 589; missing root license text: 30."
+      "comment": "pnpm-lock.yaml SHA-256: a09c08a3eb5204b89c6becfa09137949bdea83bc063cf45caa637b4766657a8b; installed package versions: 589; missing root license text: 30."
     }
   ],
   "documentDescribes": [
@@ -4137,7 +4137,7 @@
       "licenseConcluded": "NOASSERTION",
       "licenseDeclared": "MIT",
       "copyrightText": "NOASSERTION",
-      "sourceInfo": "Installed metadata: node_modules/.pnpm/esbuild@0.27.7/node_modules/esbuild/package.json; package-root license/notice files: node_modules/.pnpm/esbuild@0.27.7/node_modules/esbuild/LICENSE.md sha256:b40ec5baec7bb34fa5b1c09521fa3cd52d5fad7adafed74932a2010d3612a681; metadata repository: git+https://github.com/evanw/esbuild.git; direct scope: transitive."
+      "sourceInfo": "Installed metadata: node_modules/.pnpm/esbuild@0.27.7/node_modules/esbuild/package.json; package-root license/notice files: node_modules/.pnpm/esbuild@0.27.7/node_modules/esbuild/LICENSE.md sha256:b40ec5baec7bb34fa5b1c09521fa3cd52d5fad7adafed74932a2010d3612a681; metadata repository: git+https://github.com/evanw/esbuild.git; direct scope: development."
     },
     {
       "SPDXID": "SPDXRef-Package-299",

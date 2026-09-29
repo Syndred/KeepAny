@@ -1,13 +1,14 @@
 import { Client } from '@modelcontextprotocol/client';
 import { StdioClientTransport } from '@modelcontextprotocol/client/stdio';
 import { expect, type Page, test } from '@playwright/test';
-import { access, chmod, mkdtemp, readFile, rm, stat } from 'node:fs/promises';
+import { access, chmod, mkdir, mkdtemp, readFile, rm, stat } from 'node:fs/promises';
 import { request as httpRequest } from 'node:http';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 
 const repo = resolve('.');
-const evidence = join(repo, 'docs/evidence/2026-09-29');
+const packagedExecutable = process.env.KEEPANY_MCP_EXECUTABLE;
+const evidence = join(repo, 'docs/evidence/2026-09-29', packagedExecutable ? 'mcp-packaged' : '');
 const exists = (path: string) => access(path).then(() => true, () => false);
 
 async function wrongHostStatus(url: string, origin: string, pairingSecret: string): Promise<number> {
@@ -77,7 +78,13 @@ test('formal Web grants one RxDB record to an isolated official SDK stdio client
   const other = `MCP not shared ${unique}`;
   const otherDescription = `other private description ${unique}`;
   try {
+    await mkdir(evidence, { recursive: true });
     await page.goto('/settings');
+    if (packagedExecutable) {
+      await page.evaluate(async () => { await navigator.serviceWorker.ready; });
+      await page.reload();
+      await expect.poll(() => page.evaluate(() => Boolean(navigator.serviceWorker.controller))).toBe(true);
+    }
     await page.locator('section.card').filter({ has: page.getByRole('heading', { name: 'Language' }) }).locator('select').selectOption('en');
     await addProject(page, before, hidden);
     await addProject(page, other, otherDescription);
@@ -111,10 +118,10 @@ test('formal Web grants one RxDB record to an isolated official SDK stdio client
 
     const childEnv = Object.fromEntries(Object.entries(process.env).filter((entry): entry is [string, string] => entry[1] !== undefined));
     transport = new StdioClientTransport({
-      command: join(repo, 'node_modules/.bin/tsx'),
-      args: [join(repo, 'apps/mcp-launcher/src/main.ts'), '--request', requestPath,
-        '--pairing-file', pairingPath, '--state-dir', privateDir],
-      cwd: repo, env: childEnv, stderr: 'pipe',
+      command: packagedExecutable ?? join(repo, 'node_modules/.bin/tsx'),
+      args: [...(packagedExecutable ? [] : [join(repo, 'apps/mcp-launcher/src/main.ts')]),
+        '--request', requestPath, '--pairing-file', pairingPath, '--state-dir', privateDir],
+      cwd: packagedExecutable ? privateDir : repo, env: childEnv, stderr: 'pipe',
     });
     let stderr = '';
     transport.stderr?.on('data', chunk => { stderr += String(chunk); });
