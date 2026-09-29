@@ -8,7 +8,7 @@ import {
 	type Edge,
 	type Node,
 } from "@xyflow/react";
-import { ArrowLeft, Check, Plus } from "lucide-react";
+import { ArrowLeft, Check, ExternalLink, Plus } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import {
 	type Asset,
@@ -37,6 +37,8 @@ import {
 } from "../../../packages/local-db/src";
 import { Button } from "./components/ui/button";
 import { Dialog } from "./components/ui/dialog";
+import "./asset-restoration.css";
+import { ProjectPreview } from "./page-asset-list";
 import { TaskRow } from "./TaskRow";
 import { ImpactTaskRow } from "./ImpactTaskRow";
 import {
@@ -217,10 +219,20 @@ export function AssetDetail() {
 	const [relationError, setRelationError] = useState("");
 	const [relationFilter, setRelationFilter] = useState("");
 	const centerId = asset?.id;
+	const relationReturnId = sessionStorage.getItem("keepany-relation-return-id");
+	const relationReturnKind = sessionStorage.getItem("keepany-relation-return-kind");
+	const returnKind = relationReturnId === asset?.id && relationReturnKind && validKind(relationReturnKind) === relationReturnKind ? relationReturnKind : kind;
+	function visitRelation(target: Asset) {
+		if (!asset || target.id === asset.id) return;
+		if (relationReturnId !== asset.id || !relationReturnKind) sessionStorage.setItem("keepany-relation-return-kind", kind);
+		sessionStorage.setItem("keepany-relation-return-id", target.id);
+		void navigate({ to: "/assets/$kind/$id", params: { kind: target.kind, id: target.id } });
+	}
 	useEffect(() => {
 		if (centerId) setRelationFilter("");
 	}, [centerId]);
 	const [submissionEdit, setSubmissionEdit] = useState(false);
+	const [backlinksOpen, setBacklinksOpen] = useState(false);
 	const [submissionNameError, setSubmissionNameError] = useState("");
 	const [submissionUrlError, setSubmissionUrlError] = useState("");
 	const [submissionSaveError, setSubmissionSaveError] = useState("");
@@ -534,6 +546,7 @@ export function AssetDetail() {
 				deleted: false,
 			});
 			setSubmissionEdit(false);
+			setBacklinksOpen(true);
 			setSubmissionName("");
 			setSubmissionUrl("");
 			notify(t("saved"));
@@ -785,10 +798,16 @@ export function AssetDetail() {
 		}
 	}
 	return (
-		<main className="page">
+		<main className={`page asset-detail asset-detail-${kind}${relations.length ? " has-relations" : ""}`}>
+			{kind === "project" && <div className="asset-project-action-bar">
+				<Button onClick={() => setEdit(true)}>{t("edit")}</Button>
+				<Button variant="primary" onClick={() => setSubmissionEdit(true)}><Plus size={14} />{t("addSubmission")}</Button>
+				<Button onClick={() => { setBacklinksOpen(true); requestAnimationFrame(() => document.getElementById("asset-backlinks")?.scrollIntoView({ block: "start", behavior: "smooth" })); }}>{t("backlinks")}</Button>
+				<Button variant="danger" disabled={deleteBusy} onClick={() => { setDeleteError(""); setDeleteOpen(true); }}>{t("delete")}</Button>
+			</div>}
 			<div className="page-header">
 				<div>
-					<Link className="back-link" to="/assets/$kind" params={{ kind }}>
+					<Link className="back-link" to="/assets/$kind" params={{ kind: returnKind }} onClick={() => { sessionStorage.removeItem("keepany-relation-return-id"); sessionStorage.removeItem("keepany-relation-return-kind"); }}>
 						<ArrowLeft size={16} />
 						{t("back")}
 					</Link>
@@ -799,8 +818,10 @@ export function AssetDetail() {
 					<p className="subtitle">
 						{asset.description || asset.url || t("local")}
 					</p>
+					{kind === "project" && <div className="asset-project-hero-meta"><span>{niceCategory(asset.category, t)}</span>{asset.status && <span>{t(asset.status)}</span>}{asset.url && <a href={asset.url} target="_blank" rel="noopener noreferrer">{asset.url}<ExternalLink size={13} /></a>}</div>}
 				</div>
-				<div className="actions">
+				{kind === "project" && <div className="asset-project-hero-visual" role="img" aria-label={t("preview")}><ProjectPreview asset={asset} /></div>}
+				{kind !== "project" && <div className="actions">
 					<Button onClick={() => setEdit(true)}>{t("edit")}</Button>
 					<Button
 						variant="danger"
@@ -809,8 +830,13 @@ export function AssetDetail() {
 					>
 						{t("delete")}
 					</Button>
-				</div>
+				</div>}
 			</div>
+			{kind === "project" && <div className="asset-project-stats">
+				<div><small>{t("projectRecords")}</small><strong>{submissions.length}</strong></div>
+				<div><small>{t("projectIndexed")}</small><strong>{submissions.filter((entry) => entry.status === "indexed").length}</strong></div>
+				<div><small>{t("projectNeedsReview")}</small><strong>{submissions.filter((entry) => entry.status === "verify").length}</strong></div>
+			</div>}
 			{deleteOpen && (
 				<Dialog
 					title={t("delete")}
@@ -834,8 +860,8 @@ export function AssetDetail() {
 					</div>
 				</Dialog>
 			)}
-			<div className="detail-grid">
-				<section className="card">
+			<div className="detail-grid asset-detail-primary">
+				<section className="card asset-profile-card">
 					<div className="card-header">
 						<h2>{t("profile")}</h2>
 					</div>
@@ -965,7 +991,7 @@ export function AssetDetail() {
 					)}
 					{asset.notes && <p className="note">{asset.notes}</p>}
 				</section>
-				<section className="card">
+				<section className="card asset-attachments-card">
 					<div className="card-header">
 						<h2>{t("attachments")}</h2>
 						<Button
@@ -1028,12 +1054,12 @@ export function AssetDetail() {
 							))}
 						</div>
 					) : (
-						<Empty hint={false} />
+						asset.kind === "project" ? <p className="asset-quiet-empty">{t("none")}</p> : <Empty hint={false} />
 					)}
 				</section>
 			</div>
-			<div className="detail-grid">
-				<section className="card">
+			<div className="detail-grid asset-detail-secondary">
+				<section className="card asset-relations-card">
 					<div className="card-header">
 						<h2>{t("relations")}</h2>
 						<Button
@@ -1073,6 +1099,7 @@ export function AssetDetail() {
 												position: { x: 180, y: 100 },
 												data: { label: asset.name },
 												type: "default",
+												className: "asset-graph-center",
 											},
 											...visibleRelated.map((a, i) => ({
 												id: a.id,
@@ -1082,17 +1109,14 @@ export function AssetDetail() {
 												},
 												data: { label: a.name },
 												type: "default",
+												className: "asset-graph-neighbor",
 											})),
 										] as Node[]
 									}
 									edges={graphEdges}
 									onNodeClick={(_, node) => {
 										const target = liveById.get(node.id);
-										if (target && target.id !== asset.id)
-											void navigate({
-												to: "/assets/$kind/$id",
-												params: { kind: target.kind, id: target.id },
-											});
+										if (target) visitRelation(target);
 									}}
 									nodesDraggable={false}
 									nodesConnectable={false}
@@ -1113,7 +1137,8 @@ export function AssetDetail() {
 												<div className="relation-info">
 													<Link
 														to="/assets/$kind/$id"
-														params={{ kind: neighbor.kind, id: neighbor.id }}
+																params={{ kind: neighbor.kind, id: neighbor.id }}
+																onClick={(event) => { event.preventDefault(); visitRelation(neighbor); }}
 													>
 														<strong>{neighbor.name}</strong>
 													</Link>
@@ -1147,14 +1172,14 @@ export function AssetDetail() {
 									})}
 								</div>
 							) : (
-								<Empty hint={false} />
+								asset.kind === "project" ? <p className="asset-quiet-empty">{t("noMatches")}</p> : <Empty hint={false} />
 							)}
 						</>
 					) : (
-						<Empty hint={false} />
+						asset.kind === "project" ? <p className="asset-quiet-empty">{t("none")}</p> : <Empty hint={false} />
 					)}
 				</section>
-				<section className="card">
+				<section className="card asset-tasks-card">
 					<div className="card-header">
 						<h2>{t("tasks")}</h2>
 						<Button
@@ -1173,7 +1198,7 @@ export function AssetDetail() {
 							))}
 						</div>
 					) : (
-						<Empty hint={false} />
+						asset.kind === "project" ? <p className="asset-quiet-empty">{t("none")}</p> : <Empty hint={false} />
 					)}
 				</section>
 			</div>
@@ -1220,18 +1245,8 @@ export function AssetDetail() {
 				</section>
 			)}
 			{asset.kind === "project" && (
-				<section className="card">
-					<div className="card-header">
-						<h2>{t("backlinks")}</h2>
-						<Button
-							variant="ghost"
-							size="small"
-							onClick={() => setSubmissionEdit(true)}
-						>
-							<Plus size={14} />
-							{t("addSubmission")}
-						</Button>
-					</div>
+				<details className="card asset-backlinks-card" id="asset-backlinks" open={backlinksOpen} onToggle={(event) => setBacklinksOpen(event.currentTarget.open)}>
+					<summary>{t("backlinks")}</summary>
 					{submissions.length ? (
 						<div className="table-wrap">
 							<table>
@@ -1253,9 +1268,9 @@ export function AssetDetail() {
 							</table>
 						</div>
 					) : (
-						<Empty hint={false} />
+						<p className="asset-quiet-empty">{t("none")}</p>
 					)}
-				</section>
+				</details>
 			)}
 			{(asset.kind === "item" || asset.kind === "subscription") && (
 				<section className="card">

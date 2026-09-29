@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
-import { useRouterState } from "@tanstack/react-router";
+import { Link, useRouterState } from "@tanstack/react-router";
 import {
 	DndContext,
 	PointerSensor,
@@ -16,19 +16,21 @@ import {
 	useSortable,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical, Plus } from "lucide-react";
+import { ArrowRight, Code2, CreditCard, GripVertical, Mail, Package, Plus, Shield, Smartphone, UserRound } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { normalizeCategoryName, type AssetKind } from "../../../packages/domain/src";
-import { createCategory, save } from "../../../packages/local-db/src";
+import { normalizeCategoryName, type Asset, type AssetKind } from "../../../packages/domain/src";
+import { createCategory, fileUrl, save } from "../../../packages/local-db/src";
 import { Button } from "./components/ui/button";
 import { Dialog } from "./components/ui/dialog";
+import "./asset-restoration.css";
 import {
-	AssetRow,
 	Empty,
 	PageTitle,
 	builtins,
+	date,
 	kinds,
 	liveAssets,
+	money,
 	niceCategory,
 	useAppContext,
 	validKind,
@@ -40,11 +42,13 @@ function SortablePill({
 	id,
 	label,
 	active,
+	reorder = false,
 	onClick,
 }: {
 	id: string;
 	label: string;
 	active: boolean;
+	reorder?: boolean;
 	onClick: () => void;
 }) {
 	const { t } = useTranslation();
@@ -56,7 +60,7 @@ function SortablePill({
 			className="sortable-pill"
 			style={{ transform: CSS.Transform.toString(transform), transition }}
 		>
-			<button
+			{reorder && <button
 				type="button"
 				className="drag-handle"
 				{...attributes}
@@ -64,7 +68,7 @@ function SortablePill({
 				aria-label={`${label} ${t("drag")}`}
 			>
 				<GripVertical size={14} />
-			</button>
+			</button>}
 			<button
 				type="button"
 				className={active ? "active" : ""}
@@ -160,7 +164,8 @@ function CategoryStrip({
 	}
 	return (
 		<>
-			<div className="tabs">
+			<div className="asset-category-toolbar">
+			<div className="asset-category-scroll tabs">
 				<button
 					type="button"
 					className={chosen === "" ? "active" : ""}
@@ -168,37 +173,19 @@ function CategoryStrip({
 				>
 					{t("all")}
 				</button>
-				<DndContext
-					sensors={sensors}
-					collisionDetection={closestCenter}
-					onDragEnd={onDragEnd}
-				>
-					<SortableContext
-						items={ordered}
-						strategy={horizontalListSortingStrategy}
-					>
-						{ordered.map((id) => (
-							<SortablePill
-								key={id}
-								id={id}
-								label={niceCategory(id, t)}
-								active={chosen === id}
-								onClick={() => choose(id)}
-							/>
-						))}
-					</SortableContext>
-				</DndContext>
-				<Button
-					variant="ghost"
-					size="small"
+				{ordered.map((id) => (
+					<button type="button" key={id} className={chosen === id ? "active" : ""} aria-pressed={chosen === id} onClick={() => choose(id)}>{niceCategory(id, t)}</button>
+				))}
+				<button type="button" className="asset-category-add" aria-label={t("newCategory")} title={t("newCategory")}
 					onClick={() => {
 						setCategoryError("");
 						setManage(true);
 					}}
 				>
 					<Plus size={14} />
-					{t("manage")}
-				</Button>
+				</button>
+			</div>
+			<Button variant="ghost" size="small" className="asset-category-manage" onClick={() => { setCategoryError(""); setManage(true); }}>{t("manage")}</Button>
 			</div>
 			{manage && (
 				<Dialog
@@ -240,6 +227,13 @@ function CategoryStrip({
 						</Button>
 					</div>
 					<div className="list">
+						<DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
+							<SortableContext items={ordered} strategy={horizontalListSortingStrategy}>
+								<fieldset className="asset-category-order" aria-label={t("category")}>
+									{ordered.map((id) => <SortablePill key={id} id={id} label={niceCategory(id, t)} active={chosen === id} reorder onClick={() => choose(id)} />)}
+								</fieldset>
+							</SortableContext>
+						</DndContext>
 						{data.categories
 							.filter((c) => c.kind === kind && !c.deleted)
 							.map((c) => (
@@ -263,6 +257,83 @@ function CategoryStrip({
 			)}
 		</>
 	);
+}
+
+function AssetCover({ asset }: { asset: Asset }) {
+	const [src, setSrc] = useState("");
+	const imageId = asset.attachments[0];
+	useEffect(() => {
+		setSrc("");
+		if (!imageId) return;
+		let active = true;
+		let objectUrl = "";
+		void fileUrl(imageId).then((url) => {
+			objectUrl = url;
+			if (active) setSrc(url);
+			else if (url) URL.revokeObjectURL(url);
+		}).catch(() => { if (active) setSrc(""); });
+		return () => { active = false; if (objectUrl) URL.revokeObjectURL(objectUrl); };
+	}, [imageId]);
+	return src ? <img src={src} alt="" /> : null;
+}
+
+function assetDomain(url: string) {
+	try { return new URL(url).hostname.replace(/^www\./, ""); }
+	catch { return url; }
+}
+
+export function ProjectPreview({ asset }: { asset: Asset }) {
+	const { t } = useTranslation();
+	const repository = asset.category === "repository";
+	const domain = assetDomain(asset.url);
+	if (repository) return <div className="asset-repository-cover"><Code2 size={36} strokeWidth={1.8} /><strong>{asset.name}</strong><small>{domain || t("projectRepoCover")}</small></div>;
+	return <div className={`asset-editorial-preview asset-editorial-${asset.category}`}>
+		<div className="asset-browser-bar"><span /><span /><span /><small>{domain || asset.name}</small></div>
+		<div className={`asset-browser-body${asset.attachments.length ? " has-image" : ""}`}><AssetCover asset={asset} />{!asset.attachments.length && <div className="asset-editorial-copy"><span className="asset-editorial-kicker">{domain || niceCategory(asset.category, t)}</span><strong>{asset.name}</strong>{asset.description && <p>{asset.description}</p>}</div>}</div>
+	</div>;
+}
+
+function rememberAssetList(asset: Asset, search: string) {
+	sessionStorage.setItem(`keepany-scroll-${asset.kind}`, String(window.scrollY));
+	sessionStorage.setItem(`keepany-scroll-filter-${asset.kind}`, JSON.stringify({
+		category: sessionStorage.getItem(`keepany-category-${asset.kind}`) || "",
+		tag: sessionStorage.getItem(`keepany-tag-${asset.kind}`) || "",
+		search,
+	}));
+}
+
+function ProjectCard({ asset, search }: { asset: Asset; search: string }) {
+	const { t } = useTranslation();
+	const repository = asset.category === "repository";
+	const domain = assetDomain(asset.url);
+	return <Link className={`asset-project-card list-row ${repository ? "is-repository" : ""}`} to="/assets/$kind/$id" params={{ kind: asset.kind, id: asset.id }} onClick={() => rememberAssetList(asset, search)}>
+		<div className="asset-project-cover">
+			<ProjectPreview asset={asset} />
+		</div>
+		<div className="asset-project-info"><div className="asset-project-heading"><span className="asset-project-avatar">{Array.from(asset.name)[0]?.toLocaleUpperCase() || "•"}</span><strong>{asset.name}</strong>{asset.status && <span className="chip">{t(asset.status)}</span>}</div>
+			<p>{asset.description || niceCategory(asset.category, t)}</p>
+			<div className="asset-project-foot"><span>{domain || niceCategory(asset.category, t)}</span><ArrowRight size={14} aria-hidden="true" /></div>
+		</div>
+	</Link>;
+}
+
+function AccountCard({ asset, search, connectionCount }: { asset: Asset; search: string; connectionCount: number }) {
+	const { t } = useTranslation();
+	const Icon = asset.category === "email" ? Mail : asset.category === "phone" ? Smartphone : UserRound;
+	return <Link className={`asset-account-card list-row asset-account-${asset.category}`} to="/assets/$kind/$id" params={{ kind: asset.kind, id: asset.id }} onClick={() => rememberAssetList(asset, search)}>
+		<span className="asset-account-avatar"><Icon size={20} /></span><span className="asset-account-summary"><strong>{asset.name}</strong><small>{asset.username || asset.contact || asset.description || niceCategory(asset.category, t)}</small><span className="asset-account-tags"><span className="chip">{niceCategory(asset.category, t)}</span><span className="chip">{connectionCount} {t("relations")}</span></span></span>
+	</Link>;
+}
+
+function LibraryCard({ asset, search }: { asset: Asset; search: string }) {
+	const { t, i18n } = useTranslation();
+	const Icon = asset.kind === "subscription" ? CreditCard : asset.kind === "vault" ? Shield : Package;
+	return <Link className="asset-library-card list-row" to="/assets/$kind/$id" params={{ kind: asset.kind, id: asset.id }} onClick={() => rememberAssetList(asset, search)}>
+		<div className="asset-library-cover"><AssetCover asset={asset} />{!asset.attachments.length && <><Icon size={40} strokeWidth={1.7} /><span>{niceCategory(asset.category, t)}</span></>}</div>
+		<div className="asset-library-body"><strong>{asset.name}</strong><small>{asset.description || asset.location || niceCategory(asset.category, t)}</small><div className="asset-library-meta">
+			{asset.kind === "subscription" ? <><span>{money(asset.amount, asset.currency, i18n.language)}</span><span>{asset.interval} {t(asset.cycle)}</span>{asset.dueDate && <span>{t("dueDate")}: {date(asset.dueDate, i18n.language)}</span>}</> : asset.kind === "vault" ? <><span>{niceCategory(asset.category, t)}</span>{asset.url && <span>{asset.url}</span>}</> : <><span>{niceCategory(asset.category, t)}</span>{asset.location && <span>{asset.location}</span>}{asset.warrantyDate && <span>{t("warrantyDate")}: {date(asset.warrantyDate, i18n.language)}</span>}</>}
+		</div><div className="asset-library-foot"><span className="chip">{t(asset.status)}</span><ArrowRight size={14} aria-hidden="true" /></div></div>
+	</Link>;
 }
 
 export function AssetList() {
@@ -295,8 +366,23 @@ export function AssetList() {
 		sessionStorage.setItem(`keepany-category-${kind}`, value);
 		setCategories((prev) => ({ ...prev, [kind]: value }));
 	};
+	useEffect(() => {
+		function selectCategory(event: Event) {
+			const selection = (event as CustomEvent<{ kind: AssetKind; category: string }>).detail;
+			if (!selection || !kinds.includes(selection.kind)) return;
+			sessionStorage.setItem(`keepany-category-${selection.kind}`, selection.category);
+			setCategories((prev) => ({ ...prev, [selection.kind]: selection.category }));
+		}
+		window.addEventListener("keepany-category-select", selectCategory);
+		return () => window.removeEventListener("keepany-category-select", selectCategory);
+	}, []);
+	useEffect(() => {
+		setCategories((prev) => ({ ...prev, [kind]: sessionStorage.getItem(`keepany-category-${kind}`) || "" }));
+	}, [kind]);
 	const [edit, setEdit] = useState(false);
-	const allKindAssets = liveAssets(data).filter((asset) => asset.kind === kind);
+	const allLiveAssets = liveAssets(data);
+	const liveIds = new Set(allLiveAssets.map((asset) => asset.id));
+	const allKindAssets = allLiveAssets.filter((asset) => asset.kind === kind);
 	const availableTags = [...new Set(allKindAssets.flatMap((asset) => asset.tags))].sort(
 		(a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }),
 	);
@@ -340,9 +426,9 @@ export function AssetList() {
 	return (
 		<main className="page">
 			<PageTitle
-				eyebrow="KeepAny"
-				title={t(kind)}
-				subtitle={t("summary")}
+				eyebrow={kind === "project" ? "PROJECT LIBRARY" : kind === "account" ? "MY ACCOUNTS" : "KeepAny"}
+				title={t(kind === "project" ? "projectListTitle" : kind === "account" ? "accountListTitle" : kind === "subscription" ? "subscriptionListTitle" : kind === "vault" ? "vault" : "itemListTitle")}
+				subtitle={t(kind === "project" ? "projectListSubtitle" : kind === "account" ? "accountListSubtitle" : kind === "item" ? "itemListSubtitle" : kind === "vault" ? "vaultHint" : "summary")}
 				action={
 					<Button variant="primary" onClick={() => setEdit(true)}>
 						<Plus size={17} />
@@ -361,13 +447,9 @@ export function AssetList() {
 					</select>
 				</div>
 			)}
-			<section className="card">
+			<section className={`asset-list-content ${kind === "project" ? "asset-project-grid" : kind === "account" ? "asset-account-grid" : "asset-library-grid"}`}>
 				{assets.length ? (
-					<div className="list">
-						{assets.map((a) => (
-							<AssetRow asset={a} key={a.id} rememberListScroll />
-						))}
-					</div>
+					assets.map((a) => kind === "project" ? <ProjectCard asset={a} search={search} key={a.id} /> : kind === "account" ? <AccountCard asset={a} search={search} connectionCount={data.relations.filter((relation) => !relation.deleted && liveIds.has(relation.from) && liveIds.has(relation.to) && (relation.from === a.id || relation.to === a.id)).length} key={a.id} /> : <LibraryCard asset={a} search={search} key={a.id} />)
 				) : (
 					category || tag || normalizedSearch ? (
 						<div className="empty"><strong>{t("noMatches")}</strong></div>
