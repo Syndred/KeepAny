@@ -137,6 +137,11 @@ export function AppShell() {
 	const detailMatch = /^\/assets\/([^/]+)\/([^/]+)\/?$/.exec(pathname);
 	const detailKind = detailMatch && kinds.includes(detailMatch[1] as (typeof kinds)[number]) ? detailMatch[1] : null;
 	const projectDetailId = detailKind === "project" ? detailMatch?.[2] : null;
+	const workflowMatch = /^\/assets\/project\/([^/]+)\/workflow\/(brand|close)\/?$/.exec(pathname);
+	let workflowProjectId: string | null = null;
+	if (workflowMatch) {
+		try { workflowProjectId = decodeURIComponent(workflowMatch[1]); } catch { /* Invalid route has no project return. */ }
+	}
 	const collectionDetailMatch = /^\/collections\/([^/]+)\/?$/.exec(pathname);
 	let collectionDetailId: string | null = null;
 	if (collectionDetailMatch) {
@@ -290,7 +295,7 @@ export function AppShell() {
 						>
 							<Menu size={20} />
 						</Button>
-						{detailKind ? <Link className="topbar-page-label topbar-back-link" to="/assets/$kind" params={{ kind: projectDetailId ? projectReturnKind : detailKind }} onClick={projectDetailId ? () => { sessionStorage.removeItem("keepany-relation-return-id"); sessionStorage.removeItem("keepany-relation-return-kind"); } : undefined}><ArrowLeft size={15}/>{t("back")}</Link> : collectionDetailId ? <Link className="topbar-page-label topbar-back-link" to="/collections"><ArrowLeft size={15}/>{t("collectionBack")}</Link> : pathname !== "/" ? <Link className="topbar-page-label topbar-back-link" to="/"><ArrowLeft size={15}/>{t("backToOverview")}</Link> : <strong className="topbar-page-label">{currentHeading}</strong>}
+						{detailKind ? <Link className="topbar-page-label topbar-back-link" to="/assets/$kind" params={{ kind: projectDetailId ? projectReturnKind : detailKind }} onClick={projectDetailId ? () => { sessionStorage.removeItem("keepany-relation-return-id"); sessionStorage.removeItem("keepany-relation-return-kind"); } : undefined}><ArrowLeft size={15}/>{t("back")}</Link> : workflowProjectId ? <Link className="topbar-page-label topbar-back-link" to="/assets/$kind/$id" params={{ kind: "project", id: workflowProjectId }}><ArrowLeft size={15}/>{t("workflowBackToProject")}</Link> : collectionDetailId ? <Link className="topbar-page-label topbar-back-link" to="/collections"><ArrowLeft size={15}/>{t("collectionBack")}</Link> : pathname !== "/" ? <Link className="topbar-page-label topbar-back-link" to="/"><ArrowLeft size={15}/>{t("backToOverview")}</Link> : <strong className="topbar-page-label">{currentHeading}</strong>}
 						<div className="topbar-spacer"/>
 						<div className="top-search" ref={topSearchRef}>
 							<button className="top-search-trigger" type="button" aria-label={t("search")} onMouseDown={(event) => event.preventDefault()} onClick={() => topSearchInputRef.current?.focus()}><Search size={17} /></button>

@@ -25,5 +25,7 @@ test("project workflow stays above the fold with a usable mobile drawer in both 
 		await page.locator(".mobile-scrim").click({ position: { x: 375, y: 100 } });
 		await expect(sidebar).not.toHaveClass(/open/);
 		await expect(page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).resolves.toBe(true);
+		await page.locator(".topbar-back-link").click();
+		await expect(page).toHaveURL(new RegExp(`/assets/project/${projectId}$`));
 	}
 });
