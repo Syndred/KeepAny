@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import {
 	assetSchema,
 	taskSchema,
+	currencies,
 	duplicates,
 	inputFromMinorUnits,
 	newAsset,
@@ -13,7 +14,9 @@ import {
 	type Asset,
 	type AssetKind,
 	type Category,
+	type Task,
 } from "../../../packages/domain/src";
+import { createMaintenanceSchedule, type RepeatRule } from "../../../packages/domain/src/task-repeat";
 import {
 	decryptBackup,
 	encryptBackup,
@@ -467,9 +470,11 @@ export function AssetEditor({
 
 export function TaskEditor({
 	assetId = "",
+	mode = "simple",
 	onClose,
 }: {
 	assetId?: string;
+	mode?: "simple" | "maintenance";
 	onClose: () => void;
 }) {
 	const { t } = useTranslation();
@@ -530,6 +535,7 @@ export function TaskEditor({
 			setBusy(false);
 		}
 	}
+	if (mode === "maintenance") return <MaintenancePlanEditor onClose={onClose} />;
 	return (
 		<Dialog title={t("newTask")} onClose={closeIfIdle}>
 			<form onSubmit={(e) => void submit(e)}>
@@ -562,6 +568,68 @@ export function TaskEditor({
 			</form>
 		</Dialog>
 	);
+}
+
+function MaintenancePlanEditor({ onClose }: { onClose: () => void }) {
+	const { t } = useTranslation();
+	const { data } = useAppContext();
+	const [name, setName] = useState("");
+	const [assetId, setAssetId] = useState("");
+	const [dueDate, setDueDate] = useState("");
+	const [mode, setMode] = useState<RepeatRule["mode"]>("once");
+	const [every, setEvery] = useState("1");
+	const [unit, setUnit] = useState<"day" | "week" | "month" | "year">("month");
+	const [leadDays, setLeadDays] = useState("7");
+	const [amount, setAmount] = useState("");
+	const [currency, setCurrency] = useState<(typeof currencies)[number]>("CNY");
+	const [error, setError] = useState("");
+	const [busy, setBusy] = useState(false);
+	const inFlight = useRef(false);
+	const assets = data.assets.filter((asset) => !asset.deleted);
+	async function submit(event: React.FormEvent) {
+		event.preventDefault();
+		if (inFlight.current) return;
+		setError("");
+		if (!name.trim() || !assetId || !assets.some((asset) => asset.id === assetId)) { setError(t("maintenanceRequired")); return; }
+		const minor = amount.trim() ? parseMinorUnits(amount, currency) : null;
+		if (minor !== null && !Number.isSafeInteger(minor)) { setError(t("maintenanceAmountInvalid")); return; }
+		if (!leadDays.trim()) { setError(t("maintenanceScheduleInvalid")); return; }
+		const rule: RepeatRule = mode === "once" ? { mode } : { mode, unit, every: Number(every) };
+		let candidate: Task;
+		try {
+			const schedule = createMaintenanceSchedule({ dueDate, rule, leadDays: Number(leadDays), plannedAmountMinor: minor, currency });
+			candidate = taskSchema.parse({ id: crypto.randomUUID(), name: name.trim(), assetId, dueDate: schedule.dueDate, done: false, completedAt: "", createdAt: new Date().toISOString(), dedupeKey: "", maintenancePlan: { schedule, active: true, records: [] }, deleted: false });
+		} catch { setError(t("maintenanceScheduleInvalid")); return; }
+		inFlight.current = true; setBusy(true);
+		try {
+			const currentAsset = await (await localRepository()).get<Asset>("asset", assetId);
+			if (!currentAsset || currentAsset.deleted) throw Error("asset-missing");
+			const normalized = name.trim().normalize("NFKC").replace(/\s+/g, " ").toLocaleLowerCase("en");
+			const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(normalized));
+			const hash = Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
+			await save("task", { ...candidate, dedupeKey: `maintenance:${assetId}:${hash.slice(0, 48)}:${dueDate}` });
+			onClose();
+		} catch (cause) { setError(cause instanceof Error && cause.message === "task-duplicate" ? t("taskDuplicatePending") : cause instanceof Error && cause.message === "asset-missing" ? t("maintenanceAssetMissing") : t("error")); }
+		finally { inFlight.current = false; setBusy(false); }
+	}
+	return <Dialog title={t("newMaintenancePlan")} onClose={() => { if (!inFlight.current) onClose(); }}>
+		<form className="maintenance-editor" onSubmit={(event) => void submit(event)}>
+			<div className="form-grid">
+				<Field name="maintenanceName" label={t("maintenanceName")} value={name} onChange={(value) => setName(value)} />
+				<div className="field"><label htmlFor="maintenanceAsset">{t("maintenanceAsset")}</label><select id="maintenanceAsset" value={assetId} onChange={(event) => setAssetId(event.target.value)} required><option value="">{t("maintenanceSelectAsset")}</option>{assets.map((asset) => <option key={asset.id} value={asset.id}>{asset.name} · {t(asset.kind)}</option>)}</select></div>
+				<div className="field"><label htmlFor="maintenanceRule">{t("maintenanceRule")}</label><select id="maintenanceRule" value={mode} onChange={(event) => setMode(event.target.value as RepeatRule["mode"])}><option value="once">{t("maintenanceOnce")}</option><option value="fixed">{t("maintenanceFixed")}</option><option value="afterCompletion">{t("maintenanceAfterCompletion")}</option></select></div>
+				<Field name="maintenanceDue" label={t("maintenanceDue")} type="date" value={dueDate} onChange={setDueDate} />
+				{mode !== "once" && <><Field name="maintenanceEvery" label={t("maintenanceEvery")} type="number" value={every} onChange={setEvery} /><div className="field"><label htmlFor="maintenanceUnit">{t("maintenanceUnit")}</label><select id="maintenanceUnit" value={unit} onChange={(event) => setUnit(event.target.value as typeof unit)}>{(["day", "week", "month", "year"] as const).map((value) => <option key={value} value={value}>{t(value)}</option>)}</select></div></>}
+				<Field name="maintenanceLead" label={t("maintenanceLead")} type="number" value={leadDays} onChange={setLeadDays} />
+				<Field name="maintenanceAmount" label={t("maintenanceAmount")} value={amount} onChange={setAmount} />
+				<div className="field"><label htmlFor="maintenanceCurrency">{t("currency")}</label><select id="maintenanceCurrency" value={currency} onChange={(event) => setCurrency(event.target.value as typeof currency)}>{currencies.map((value) => <option key={value} value={value}>{value}</option>)}</select></div>
+			</div>
+			<p className="maintenance-estimate-note">{t("maintenanceEstimateOnly")}</p>
+			{!assets.length && <p className="field-error">{t("maintenanceNoAssets")}</p>}
+			{error && <p className="field-error" role="alert">{error}</p>}
+			<div className="actions"><Button type="button" onClick={onClose} disabled={busy}>{t("cancel")}</Button><Button type="submit" variant="primary" disabled={busy || !assets.length}>{t("maintenanceCreate")}</Button></div>
+		</form>
+	</Dialog>;
 }
 
 type ImportCandidate = { asset: Asset; duplicate: boolean; invalid: boolean; selected: boolean };
