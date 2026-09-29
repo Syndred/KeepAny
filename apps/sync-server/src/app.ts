@@ -3,6 +3,7 @@ import { bodyLimit } from 'hono/body-limit';
 import { cors } from 'hono/cors';
 import { HTTPException } from 'hono/http-exception';
 import { z } from 'zod';
+import type { BoundDeviceReader } from './bound-state';
 import { syncPullRequestSchema, syncPushRequestSchema } from '../../../packages/contracts/src';
 import {
   AttachmentConflictError, AttachmentIntegrityError, AttachmentInvalidError, AttachmentNotFoundError, type AttachmentService,
@@ -43,7 +44,8 @@ function configuredWebOrigin(value: string): string {
 }
 
 export function createPostgresSyncApp(service: PostgresSyncService, authenticate: Authenticate, attachments?: AttachmentService,
-  options?: { webOrigin?: string; session?: { origin: string; handler: (request: Request) => Promise<Response> } }) {
+  options?: { webOrigin?: string; session?: { origin: string; handler: (request: Request) => Promise<Response> };
+    boundDevices?: BoundDeviceReader }) {
   const app = new Hono();
   if (options?.webOrigin && options.session) throw Error('sync-auth-origin-conflict');
   if (options?.webOrigin) {
@@ -100,6 +102,12 @@ export function createPostgresSyncApp(service: PostgresSyncService, authenticate
     const subject = await subjectFor(context, 'sync:read');
     if (!subject) return context.json({ error: 'unauthorized' }, 401);
     return context.json({ accountId: subject });
+  });
+  const boundDevices = options?.boundDevices;
+  if (boundDevices) app.get('/sync/devices', async context => {
+    const subject = await subjectFor(context, 'sync:read');
+    if (!subject) return context.json({ error: 'unauthorized' }, 401);
+    return context.json({ devices: await boundDevices.listForSubject(subject) });
   });
   app.post('/sync/preflight', async context => {
     const subject = await subjectFor(context, 'sync:write');

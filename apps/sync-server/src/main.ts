@@ -5,7 +5,7 @@ import { AttachmentService } from '../../../packages/sync-core/src/attachments';
 import { PostgresSyncService } from '../../../packages/sync-core/src/postgres';
 import { createPostgresSyncApp } from './app';
 import { createConfiguredAuthenticator } from './auth';
-import { createPostgresBoundStateStore } from './bound-state';
+import { createPostgresBoundDeviceReader, createPostgresBoundStateStore } from './bound-state';
 import { createBoundStateFeed } from './bound-state-feed';
 import { createPostgresBoundStateWriter } from './bound-state-writer-db';
 import { migrateSyncDatabase } from './migrate';
@@ -47,7 +47,8 @@ if (process.argv[2] === 'migrate') {
     const attachments = objects ? new AttachmentService(pool, objects) : undefined;
     const app = createPostgresSyncApp(service, authenticate, attachments,
       session ? { session: { origin: session.origin, handler: session.auth.handler } }
-        : process.env.KEEPANY_SYNC_AUTH_MODE === 'self-host' ? { webOrigin: process.env.KEEPANY_SYNC_WEB_ORIGIN } : undefined);
+        : process.env.KEEPANY_SYNC_AUTH_MODE === 'self-host' ? { webOrigin: process.env.KEEPANY_SYNC_WEB_ORIGIN }
+          : boundStateStore ? { boundDevices: createPostgresBoundDeviceReader(pool) } : undefined);
     const port = Number(process.env.PORT ?? '8787');
     if (!Number.isInteger(port) || port < 1 || port > 65535) throw Error('PORT-invalid');
     const hostname = process.env.HOST ?? '127.0.0.1';

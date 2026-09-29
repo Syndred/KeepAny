@@ -16,6 +16,7 @@ export interface BoundSyncAccess {
 
 const resourcePaths = new Set([
 	"/sync/identity",
+	"/sync/devices",
 	"/sync/preflight",
 	"/sync/push",
 	"/sync/pull",

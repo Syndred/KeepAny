@@ -356,6 +356,12 @@ test('official bound sync preserves encrypted records and photos across devices,
     await pageB.locator('.sync-panel .form-grid input').nth(1).fill(workspaceId);
     await pageB.locator('.sync-panel .form-grid input').nth(2).fill(workspaceKey);
     await sync(pageB, 'This sync completed');
+    const bindingIdA = await activeBindingId(pageA);
+    const bindingIdB = await activeBindingId(pageB);
+    await pageB.getByRole('button', { name: 'View device access' }).click();
+    await expect(pageB.locator('.binding-devices')).toContainText(bindingIdA);
+    await expect(pageB.locator('.binding-devices')).toContainText(bindingIdB);
+    await expect(pageB.locator('.binding-devices')).toContainText('This browser');
     await pageB.goto(`${webOrigin}/assets/project`);
     await pageB.getByText(assetName, { exact: true }).first().click();
     await expect(pageB.locator('img.asset-image')).toHaveJSProperty('naturalWidth', 32);
@@ -367,7 +373,11 @@ test('official bound sync preserves encrypted records and photos across devices,
     await sync(pageB, 'This sync did not complete');
     await pageB.locator('.sync-panel .form-grid input').nth(2).fill(workspaceKey);
     await sync(pageB, 'This sync completed');
-    const evidence = test.info();
+    await pageB.getByRole('button', { name: 'View device access' }).click();
+    await expect(pageB.locator('.binding-devices')).toContainText(bindingIdA);
+    await expect(pageB.locator('.binding-devices')).toContainText(bindingIdB);
+    const evidenceDir = resolve(root, 'docs/evidence/2026-09-29');
+    await mkdir(evidenceDir, { recursive: true });
     for (const width of [390, 1280]) {
       await pageB.setViewportSize({ width, height: 844 });
       for (const language of ['en', 'zh-CN'] as const) {
@@ -376,7 +386,7 @@ test('official bound sync preserves encrypted records and photos across devices,
           language === 'en' ? 'Official account connection' : '官方账号连接');
         expect(await pageB.evaluate(() => document.documentElement.scrollWidth))
           .toBeLessThanOrEqual(width + 1);
-        await pageB.screenshot({ path: evidence.outputPath(`official-bound-${language}-${width}.png`), fullPage: true });
+        await pageB.screenshot({ path: join(evidenceDir, `device-access-${language}-${width}.png`), fullPage: true });
       }
     }
     await pageB.locator('select').first().selectOption('en');
@@ -387,7 +397,6 @@ test('official bound sync preserves encrypted records and photos across devices,
 
     // The saved browser profile retains local CRUD and a genuine .ka1 backup
     // even after the commercial account has revoked its cloud binding.
-    const bindingIdB = await activeBindingId(pageB);
     await revoke(accountPage, commercial.origin, bindingIdB);
     for (let attempt = 0; attempt < 40; attempt++) {
       const state = await scoped.query<{ status: string }>('SELECT status FROM sync_bound_bindings WHERE binding_id=$1', [bindingIdB]);
@@ -396,12 +405,15 @@ test('official bound sync preserves encrypted records and photos across devices,
     }
     assert.equal((await scoped.query<{ status: string }>('SELECT status FROM sync_bound_bindings WHERE binding_id=$1',
       [bindingIdB])).rows[0]?.status, 'revoked', 'commercial revoke must reach bound-state tombstone');
+    await pageA.goto(`${webOrigin}/settings`);
+    await pageA.getByRole('button', { name: 'View device access' }).click();
+    await expect(pageA.locator('.binding-devices li').filter({ hasText: bindingIdB })).toContainText('Authorization revoked');
+    await pageA.locator('.sync-panel .form-grid input').nth(2).fill(workspaceKey);
     await sync(pageB, 'This sync did not complete');
     const sqliteUrl = `file:${join(dirname(commercial.secretsPath), 'fixture.db')}`;
     execFileSync(process.execPath, ['--input-type=module', '-e',
       'import { createClient } from "@libsql/client"; const db=createClient({url:process.argv[1]}); const result=await db.execute({sql:"UPDATE subscription SET current_period_end=?",args:[Date.now()-1000]}); db.close(); if(result.rowsAffected<1) process.exit(2);',
       sqliteUrl], { cwd: snapshot, timeout: 10_000, stdio: 'ignore' });
-    const bindingIdA = await activeBindingId(pageA);
     let expiredEntitlement = false;
     for (let attempt = 0; attempt < 60; attempt++) {
       const row = await scoped.query<{ status: string; expired: boolean }>(

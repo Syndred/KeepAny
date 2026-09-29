@@ -9,7 +9,7 @@ import { expect, it, vi } from 'vitest';
 import { PostgresSyncService, type SqlPool } from '../../../packages/sync-core/src/postgres';
 import { createPostgresSyncApp, type Authenticate } from './app';
 import { createBoundTokenAuthenticator } from './bound-auth';
-import { createPostgresBoundStateStore } from './bound-state';
+import { createPostgresBoundDeviceReader, createPostgresBoundStateStore } from './bound-state';
 
 const issuer = 'https://billing.keepany.test';
 const bindingId = 'f2d56513-d5fb-4616-8980-a4dcb6e83e8b';
@@ -59,7 +59,8 @@ it('accepts only pinned bound JWT and device DPoP across real Hono HTTP routes',
   const stateStore = createPostgresBoundStateStore(statePool);
   const service = new PostgresSyncService(pool);
   let authenticate: Authenticate = async () => null;
-  const server = serve({ fetch: createPostgresSyncApp(service, (authorization, request) => authenticate(authorization, request)).fetch,
+  const server = serve({ fetch: createPostgresSyncApp(service, (authorization, request) => authenticate(authorization, request),
+    undefined, { boundDevices: createPostgresBoundDeviceReader(statePool) }).fetch,
     hostname: '127.0.0.1', port: 0 });
   if (!server.listening) await once(server, 'listening');
   const address = server.address();
@@ -91,6 +92,9 @@ it('accepts only pinned bound JWT and device DPoP across real Hono HTTP routes',
     fetch(`${origin}${path}`, { method: 'POST', headers: { authorization: `DPoP ${token}`,
       dpop: await proof(token, path, options), 'content-type': 'application/json',
       ...(options.origin ? { origin: options.origin } : {}) }, body: JSON.stringify(options.body ?? {}) });
+  const request = async (method: 'GET' | 'PUT', path: string, token: string) =>
+    fetch(`${origin}${path}`, { method, headers: { authorization: `DPoP ${token}`,
+      dpop: await proof(token, path, { method }) } });
   try {
     const valid = await access();
     const bootstrapState = vi.fn(async () => {});
@@ -104,6 +108,16 @@ it('accepts only pinned bound JWT and device DPoP across real Hono HTTP routes',
       (binding_id, subject, instance_id_hash, jkt, scopes, status, epoch, token_valid_after, state_observed_at, state_expires_at)
       VALUES ($1, $2, $3, $4, ARRAY['sync:read', 'sync:write'], 'active', 1, $5, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP + INTERVAL '10 seconds')`,
     [bindingId, subject, instanceIdHash, jkt, now() - 5]);
+    const revokedSibling = crypto.randomUUID();
+    const foreignBinding = crypto.randomUUID();
+    await pg.query(`INSERT INTO sync_bound_bindings
+      (binding_id, subject, instance_id_hash, jkt, scopes, status, epoch, token_valid_after, state_observed_at, state_expires_at)
+      VALUES ($1, $2, $3, $4, ARRAY['sync:read', 'sync:write'], 'revoked', 2, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP + INTERVAL '10 seconds'),
+        ($5, $6, $3, $4, ARRAY['sync:read', 'sync:write'], 'active', 1, 1,
+          CURRENT_TIMESTAMP - INTERVAL '20 seconds', CURRENT_TIMESTAMP - INTERVAL '10 seconds')`,
+    [revokedSibling, subject, instanceIdHash, jkt, foreignBinding, 'keepanyadm:another-user']);
+    expect(await createPostgresBoundDeviceReader(statePool).listForSubject('keepanyadm:another-user'))
+      .toEqual([{ bindingId: foreignBinding, status: 'unavailable', stateObservedAt: expect.any(String) }]);
     expect(await stateStore.claimProof({ bindingId, subject, instanceIdHash, jkt, scope: 'sync:write',
       tokenIssuedAt: now(), tokenExpiresAt: now() + 60, proofIssuedAt: now(),
       proofJti: createHash('sha256').update(crypto.randomUUID()).digest('base64url') })).toBe(true);
@@ -114,6 +128,12 @@ it('accepts only pinned bound JWT and device DPoP across real Hono HTTP routes',
     expect((await Promise.all([stateStore.claimProof(sharedClaim), secondStore.claimProof(sharedClaim)])).sort()).toEqual([false, true]);
     const workspace = await post('/workspaces', valid);
     expect(workspace.status).toBe(201);
+    const roster = await request('GET', '/sync/devices', valid);
+    expect(roster.status).toBe(200);
+    expect((await roster.json() as { devices: Array<{ bindingId: string; status: string }> }).devices)
+      .toEqual(expect.arrayContaining([{ bindingId, status: 'active', stateObservedAt: expect.any(String) },
+        { bindingId: revokedSibling, status: 'revoked', stateObservedAt: expect.any(String) }]));
+    expect(JSON.stringify(await (await request('GET', '/sync/devices', valid)).json())).not.toContain(foreignBinding);
     const { workspaceId } = await workspace.json() as { workspaceId: string };
     expect((await post('/sync/pull', valid, { body: { workspaceId, cursor: 0 } })).status).toBe(200);
     const readOnly = await access({ scope: 'sync:read' });
@@ -159,6 +179,12 @@ it('accepts only pinned bound JWT and device DPoP across real Hono HTTP routes',
     await expect(pg.query("UPDATE sync_bound_bindings SET state_expires_at = state_observed_at + INTERVAL '16 seconds' WHERE binding_id = $1", [bindingId])).rejects.toThrow();
     await pg.query("UPDATE sync_bound_bindings SET status = 'revoked', epoch = 3, token_valid_after = $1 WHERE binding_id = $2", [scopeCutoff + 1, bindingId]);
     expect((await post('/sync/pull', valid, { body: { workspaceId, cursor: 0 } })).status).toBe(401);
+    expect((await post('/sync/push', valid, { body: { workspaceId, operations: [] } })).status).toBe(401);
+    expect((await post('/workspaces', valid)).status).toBe(401);
+    expect((await post('/workspaces/'+workspaceId+'/key-envelopes', valid)).status).toBe(401);
+    expect((await request('GET', '/sync/devices', valid)).status).toBe(401);
+    expect((await request('GET', `/workspaces/${workspaceId}/attachments/${crypto.randomUUID()}`, valid)).status).toBe(401);
+    expect((await request('PUT', `/workspaces/${workspaceId}/attachments/${crypto.randomUUID()}`, valid)).status).toBe(401);
     await expect(pg.query(`UPDATE sync_bound_bindings SET status = 'active', epoch = 4,
       token_valid_after = $2, state_observed_at = CURRENT_TIMESTAMP,
       state_expires_at = CURRENT_TIMESTAMP + INTERVAL '10 seconds'

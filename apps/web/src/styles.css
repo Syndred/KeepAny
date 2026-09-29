@@ -204,6 +204,8 @@ p { line-height: 1.5; }
 .button.small { min-height: 30px; padding: 4px 9px; font-size: 12px; }
 .button:disabled, .tabs button:disabled { opacity: .58; filter: grayscale(.35); box-shadow: none; }
 .binding-panel { margin-top: 16px; }
+.binding-devices { margin-top: 12px; }
+.binding-devices code { overflow-wrap: anywhere; }
 .binding-code { display: inline-block; max-width: 100%; padding: 6px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--paper); font-size: 20px; font-weight: 800; letter-spacing: .08em; overflow-wrap: anywhere; }
 .mcp-panel { display: grid; gap: 12px; margin-top: 16px; min-width: 0; }
 .mcp-panel > :is(h2, p) { margin: 0; }

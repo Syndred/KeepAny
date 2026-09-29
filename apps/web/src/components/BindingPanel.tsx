@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { z } from "zod";
 import {
 	bridgeBindingKeys,
 	createBindingBridgeFetch,
@@ -24,6 +25,12 @@ const bridgeOrigin = import.meta.env.VITE_KEEPANY_BINDING_BRIDGE_ORIGIN;
 const officialOrigin = import.meta.env.VITE_KEEPANY_OFFICIAL_SYNC_ORIGIN;
 const configured =
 	typeof issuer === "string" && typeof bridgeOrigin === "string";
+const devicesSchema = z.object({ devices: z.array(z.object({
+	bindingId: z.uuid(),
+	status: z.enum(["active", "inactive", "device_limit", "credential_expired", "revoked", "unavailable"]),
+	stateObservedAt: z.iso.datetime(),
+})).max(64) });
+type BoundDevice = z.infer<typeof devicesSchema>["devices"][number];
 
 function client() {
 	if (!configured) throw Error("binding-unconfigured");
@@ -51,6 +58,7 @@ export function BindingPanel({
 	const busyRef = useRef(false);
 	const [forgetOpen, setForgetOpen] = useState(false);
 	const [message, setMessage] = useState<{ key: string; count?: number }>();
+	const [devices, setDevices] = useState<BoundDevice[] | null>(null);
 	useEffect(() => {
 		if (!configured) return;
 		let mounted = true;
@@ -62,6 +70,7 @@ export function BindingPanel({
 			.then(([active, challenge]) => {
 				if (!mounted) return;
 				setBinding(active);
+				setDevices(null);
 				onBindingChange?.(active);
 				setPending(challenge);
 			})
@@ -88,6 +97,7 @@ export function BindingPanel({
 				try {
 					const latest = await repository.activeBinding();
 					setBinding(latest);
+					setDevices(null);
 					onBindingChange?.(latest);
 					if (latest?.bindingId !== binding.bindingId) {
 						setForgetOpen(false);
@@ -117,6 +127,22 @@ export function BindingPanel({
 			setMessage({ key: "bindingWait", count: result.interval });
 		});
 	}
+	function refreshDevices() {
+		void run(async () => {
+			setDevices(null);
+			if (!officialConfigured || !binding?.allowedScopes.includes("sync:write")) throw Error("binding-access-scope");
+			const { createBoundSyncAccess } = await import("../../../../packages/binding/src/bound-sync");
+			const access = await createBoundSyncAccess({ repository, ...client(), resourceOrigin: officialOrigin });
+			if (access.bindingId !== binding.bindingId) throw Error("binding-not-active");
+			const url = `${officialOrigin}/sync/devices`;
+			const response = await fetch(url, { headers: await access.headers("GET", url), cache: "no-store" });
+			await access.assertCurrent();
+			if (!response.ok) throw Error("binding-device-list");
+			const result = devicesSchema.parse(await response.json());
+			await access.assertCurrent();
+			setDevices(result.devices);
+		});
+	}
 	return (
 		<section className="card padded binding-panel">
 			<h2>{t("bindingTitle")}</h2>
@@ -134,6 +160,9 @@ export function BindingPanel({
 						</p>
 					)}
 					<div className="actions">
+						{officialConfigured && binding.allowedScopes.includes("sync:write") && (
+							<Button disabled={busy} onClick={refreshDevices}>{t("bindingDevicesRefresh")}</Button>
+						)}
 						<Button
 							disabled={busy}
 							onClick={() =>
@@ -144,6 +173,7 @@ export function BindingPanel({
 									});
 									const latest = await repository.activeBinding();
 									setBinding(latest);
+									setDevices(null);
 									onBindingChange?.(latest);
 									setMessage({
 										key:
@@ -167,6 +197,14 @@ export function BindingPanel({
 							{t("bindingForget")}
 						</Button>
 					</div>
+					{officialConfigured && binding.allowedScopes.includes("sync:write") && (
+						<div className="binding-devices">
+							<p>{t("bindingDevicesHint")}</p>
+							{devices && (devices.length ? <ul>{devices.map(device => <li key={device.bindingId}>
+								<code>{device.bindingId}</code> · {t(device.bindingId === binding.bindingId ? "bindingThisDevice" : "bindingOtherDevice")} · {t(`bindingState_${device.status}`)}
+							</li>)}</ul> : <p>{t("bindingDevicesEmpty")}</p>)}
+						</div>
+					)}
 				</>
 			) : pending && Date.parse(pending.expiresAt) > Date.now() ? (
 				<>
@@ -198,6 +236,7 @@ export function BindingPanel({
 										result.status === "already-bound"
 									) {
 										setBinding(result.binding);
+										setDevices(null);
 										onBindingChange?.(result.binding);
 										setPending(undefined);
 										setMessage(undefined);
@@ -261,6 +300,7 @@ export function BindingPanel({
 									await repository.revokeLocal(binding.bindingId);
 									setForgetOpen(false);
 									setBinding(undefined);
+									setDevices(null);
 									onBindingChange?.(undefined);
 									setMessage({ key: "bindingForgotten" });
 								})
