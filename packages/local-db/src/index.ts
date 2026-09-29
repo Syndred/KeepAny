@@ -29,6 +29,21 @@ export interface ScopedAttachmentUploadPlan {
   objects: Array<{ id: string; sha256: string; bytes: Uint8Array }>;
 }
 interface StoredScopedAttachmentUploadPlan extends ScopedAttachmentUploadPlan { id: string }
+export type ArchiveMergeChoice = 'source' | 'target';
+export interface ArchiveMergePreviewRow {
+  id: string; type: EntityType; status: 'new' | 'same' | 'conflict';
+  sourcePayload: string; targetPayload: string | null;
+}
+export interface ArchiveMergePreview { rows: ArchiveMergePreviewRow[]; targetFingerprint: string }
+interface ArchiveMergeChange { before: RecordRow | null; after: RecordRow }
+interface ArchiveMergeJournal {
+  id: 'active'; phase: 'applying' | 'applied' | 'syncing';
+  archiveHash: string; targetFingerprint: string; changes: ArchiveMergeChange[];
+  addedFileIds: string[]; insertedFileIds: string[];
+}
+export interface PendingArchiveMerge {
+  phase: ArchiveMergeJournal['phase']; archiveHash: string; changedRows: number; addedFiles: number;
+}
 
 class FileStore extends Dexie {
   blobs!: Table<StoredFile, string>;
@@ -44,6 +59,7 @@ class FileStore extends Dexie {
   scopedPull!: Table<ScopedPullJournal, string>;
   datasetBinding!: Table<StoredDatasetBinding, string>;
   scopedAttachmentUploads!: Table<StoredScopedAttachmentUploadPlan, string>;
+  archiveMerge!: Table<ArchiveMergeJournal, string>;
   constructor(name: string) {
     super(`${name}-files-v1`);
     this.version(1).stores({ blobs: 'id', journal: 'id' });
@@ -59,6 +75,9 @@ class FileStore extends Dexie {
     this.version(7).stores({ blobs: 'id', journal: 'id', importJournal: 'id', syncBase: 'id', syncMeta: 'id', pullJournal: 'id',
       scopedBase: 'id, scope', scopedMeta: 'id', scopedOutbox: 'id, scope', scopedPull: 'id', datasetBinding: 'id',
       scopedAttachmentUploads: 'id, scope', renewalJournal: 'id, assetId' });
+    this.version(8).stores({ blobs: 'id', journal: 'id', importJournal: 'id', syncBase: 'id', syncMeta: 'id', pullJournal: 'id',
+      scopedBase: 'id, scope', scopedMeta: 'id', scopedOutbox: 'id, scope', scopedPull: 'id', datasetBinding: 'id',
+      scopedAttachmentUploads: 'id, scope', renewalJournal: 'id, assetId', archiveMerge: 'id' });
   }
 }
 
@@ -71,9 +90,9 @@ interface RepositoryRecoveryState { syncError: string | null; restoreError: stri
 const defaultGlobal = globalThis as typeof globalThis & { __keepanyLocalDbState?: DefaultRepositoryState };
 if (!defaultGlobal.__keepanyLocalDbState) defaultGlobal.__keepanyLocalDbState = {};
 const defaultState = defaultGlobal.__keepanyLocalDbState;
-if (!defaultState.fileStore?.renewalJournal) {
-  // A Vite HMR module may have retained a v6 Dexie handle. Rebind the shared
-  // RxDB handle to a v7 file store so the new journal table can be upgraded.
+if (!defaultState.fileStore?.archiveMerge) {
+  // A Vite HMR module may retain a pre-v8 Dexie handle. Rebind the shared
+  // RxDB handle to the upgraded file store.
   defaultState.fileStore?.close();
   const upgradedStore = new FileStore('keepany');
   defaultState.fileStore = upgradedStore;
@@ -473,11 +492,17 @@ export class LocalRepository {
     if (binding && binding.scope !== scope) throw Error('sync-dataset-bound');
   }
 
+  private async assertArchiveMergeSyncAllowed(): Promise<void> {
+    const pending = await this.fileStore.archiveMerge.get('active');
+    if (pending && pending.phase !== 'syncing') throw Error('archive-merge-sync-paused');
+  }
+
   async scopedCursor(scope: string): Promise<number> { return (await this.fileStore.scopedMeta.get(scope))?.cursor ?? 0; }
 
   // A key is fixed once ciphertext or an authenticated pull has durable local evidence.
   // A cursor-zero fingerprint alone may come from a failed first attempt or a crash.
   async pinScopedKey(scope: string, fingerprint: string, keyEpoch: number): Promise<'provisional' | 'trusted'> {
+    await this.assertArchiveMergeSyncAllowed();
     assertScope(scope);
     await this.assertDatasetScope(scope);
     if (!/^[a-f0-9]{64}$/.test(fingerprint) || !Number.isSafeInteger(keyEpoch) || keyEpoch < 1) throw Error('sync-key');
@@ -506,6 +531,7 @@ export class LocalRepository {
   }
 
   async listScopedOutbox(scope: string): Promise<ScopedOutbox[]> {
+    await this.assertArchiveMergeSyncAllowed();
     assertScope(scope);
     return this.fileStore.scopedOutbox.where('scope').equals(scope).toArray();
   }
@@ -519,6 +545,7 @@ export class LocalRepository {
   }
 
   async putScopedAttachmentUpload(plan: ScopedAttachmentUploadPlan): Promise<ScopedAttachmentUploadPlan> {
+    await this.assertArchiveMergeSyncAllowed();
     if (!plan || !Array.isArray(plan.objects) || plan.objects.some(object => !(object?.bytes instanceof Uint8Array)))
       throw Error('sync-attachment-plan');
     const snapshot = copyAttachmentPlan(plan);
@@ -538,6 +565,7 @@ export class LocalRepository {
   }
 
   async deleteScopedAttachmentUpload(scope: string, attachmentId: string): Promise<void> {
+    await this.assertArchiveMergeSyncAllowed();
     assertScope(scope);
     z.uuid().parse(attachmentId);
     await this.fileStore.transaction('rw', [this.fileStore.datasetBinding, this.fileStore.scopedAttachmentUploads], async () => {
@@ -560,6 +588,7 @@ export class LocalRepository {
   }
 
   async dirtyScopedRows(scope: string): Promise<RecordRow[]> {
+    await this.assertArchiveMergeSyncAllowed();
     assertScope(scope);
     await this.assertDatasetScope(scope);
     const rows = await this.allRecords();
@@ -575,19 +604,24 @@ export class LocalRepository {
   }
 
   async stageScopedOutbox(scope: string, row: RecordRow, operation: SyncOperation): Promise<ScopedOutbox> {
+    await this.assertArchiveMergeSyncAllowed();
     assertScope(scope);
     await this.assertDatasetScope(scope);
     validateRow(row);
     if (operation.id !== row.id || operation.kind !== row.type || operation.expectedVersion !==
       ((await this.scopedBaseFor(scope, row.id))?.version ?? 0) || operation.tombstone !== Boolean(parsedPayload(row).deleted)) throw Error('outbox-context');
     const id = scopedKey(scope, row.id);
-    const existing = await this.fileStore.scopedOutbox.get(id);
-    if (existing) return existing;
-    const current = await this.db.records.findOne(row.id).exec();
-    if (!current || canonical(current).payload !== row.payload) throw Error('outbox-stale');
-    const item = { id, scope, row, operation };
-    await this.fileStore.scopedOutbox.add(item);
-    return item;
+    return this.fileStore.transaction('rw', this.fileStore.archiveMerge, this.fileStore.scopedOutbox, async () => {
+      const pending = await this.fileStore.archiveMerge.get('active');
+      if (pending && pending.phase !== 'syncing') throw Error('archive-merge-sync-paused');
+      const existing = await this.fileStore.scopedOutbox.get(id);
+      if (existing) return existing;
+      const current = await Dexie.waitFor(this.db.records.findOne(row.id).exec());
+      if (!current || canonical(current).payload !== row.payload) throw Error('outbox-stale');
+      const item = { id, scope, row, operation };
+      await this.fileStore.scopedOutbox.add(item);
+      return item;
+    });
   }
 
   async acknowledgeScopedOutbox(scope: string, operationId: string, version: number, keyEpoch: number): Promise<void> {
@@ -622,6 +656,7 @@ export class LocalRepository {
   }
 
   async applyScopedPull(scope: string, change: PulledRow): Promise<'applied' | 'conflict'> {
+    await this.assertArchiveMergeSyncAllowed();
     assertScope(scope);
     await this.assertDatasetScope(scope);
     validateRow(change.row);
@@ -631,13 +666,18 @@ export class LocalRepository {
     if (previous && (previous.change.sequence !== change.sequence || previous.change.row.payload !== change.row.payload)) throw Error('pull-pending');
     if (!previous) {
       const current = await this.db.records.findOne(change.row.id).exec();
-      await this.fileStore.scopedPull.add({ id: scope, scope, cursorStart: cursor, change,
-        localPayload: current ? canonical(current).payload : null });
+      await this.fileStore.transaction('rw', this.fileStore.archiveMerge, this.fileStore.scopedPull, async () => {
+        const pending = await this.fileStore.archiveMerge.get('active');
+        if (pending && pending.phase !== 'syncing') throw Error('archive-merge-sync-paused');
+        await this.fileStore.scopedPull.add({ id: scope, scope, cursorStart: cursor, change,
+          localPayload: current ? canonical(current).payload : null });
+      });
     }
     return replayScopedPull(this.db, this.fileStore, scope);
   }
 
   async resumeScopedPull(scope: string): Promise<'applied' | 'conflict' | 'none'> {
+    await this.assertArchiveMergeSyncAllowed();
     assertScope(scope);
     await this.assertDatasetScope(scope);
     if (!(await this.fileStore.scopedPull.get(scope))) return 'none';
@@ -645,6 +685,7 @@ export class LocalRepository {
   }
 
   async resolveScopedConflict(scope: string, decision: 'local' | 'remote'): Promise<void> {
+    await this.assertArchiveMergeSyncAllowed();
     assertScope(scope);
     await this.assertDatasetScope(scope);
     const journal = await this.fileStore.scopedPull.get(scope);
@@ -660,6 +701,7 @@ export class LocalRepository {
 
   // The cursor is committed only after every decrypted record in the page is durable.
   async applyPulledBatch(changes: PulledRow[], cursorStart: number): Promise<number> {
+    await this.assertArchiveMergeSyncAllowed();
     if (await this.fileStore.pullJournal.count()) throw Error('pull-pending');
     if (cursorStart !== await this.syncCursor()) throw Error('cursor-mismatch');
     if (!changes.length || changes.length > 500) throw Error('pull-size');
@@ -728,6 +770,7 @@ export class LocalRepository {
 
   // An exact base snapshot prevents silent last-write-wins. Replayed writes are idempotent.
   async applyIncoming(type: EntityType, value: unknown, expectedPayload: string | null): Promise<'applied' | 'duplicate' | 'conflict'> {
+    await this.assertArchiveMergeSyncAllowed();
     const next = rowFor(type, value);
     const existing = await this.db.records.findOne(next.id).exec();
     if (existing) {
@@ -774,6 +817,7 @@ export class LocalRepository {
   }
 
   async putSyncedFile(input: { id: string; name: string; type: string; bytes: Uint8Array; sha256: string }): Promise<void> {
+    await this.assertArchiveMergeSyncAllowed();
     const { id, name, type, sha256 } = input;
     z.uuid().parse(id);
     if (typeof name !== 'string' || name.length > 255) throw Error('file-name');
@@ -828,7 +872,155 @@ export class LocalRepository {
     for (const entry of scopedOutbox) rows.push(entry.row);
     for (const entry of scopedPull) rows.push(entry.change.row);
     for (const entry of renewals) rows.push(entry.next);
+    const merge = await this.fileStore.archiveMerge.get('active');
+    if (merge) for (const change of merge.changes) {
+      rows.push(change.after);
+      if (change.before) rows.push(change.before);
+    }
     return attachmentIdsIn(rows);
+  }
+
+  async pendingArchiveMerge(): Promise<PendingArchiveMerge | null> {
+    const journal = await this.fileStore.archiveMerge.get('active');
+    return journal ? { phase: journal.phase, archiveHash: journal.archiveHash,
+      changedRows: journal.changes.length, addedFiles: journal.addedFileIds.length } : null;
+  }
+
+  async previewArchiveMerge(bytes: Uint8Array): Promise<ArchiveMergePreview> {
+    if (await this.pendingArchiveMerge()) throw Error('archive-merge-pending');
+    const { rows } = await inspectArchive(bytes);
+    const target = await this.allRecords();
+    const byId = new Map(target.map(row => [row.id, row]));
+    const fingerprint = await targetFingerprint(target, this.fileStore);
+    return { targetFingerprint: fingerprint, rows: rows.map(source => {
+      const existing = byId.get(source.id);
+      return { id: source.id, type: source.type,
+        status: !existing ? 'new' : existing.payload === source.payload ? 'same' : 'conflict',
+        sourcePayload: source.payload, targetPayload: existing?.payload ?? null };
+    }) };
+  }
+
+  async applyArchiveMerge(bytes: Uint8Array, choices: Record<string, ArchiveMergeChoice>,
+    expectedFingerprint: string): Promise<{ imported: number; replaced: number; skipped: number }> {
+    return withRenewalLock(`keepany-renewal:${this.db.name}`, async () => {
+      await this.settleRenewalJournals();
+      if (await this.pendingArchiveMerge()) throw Error('archive-merge-pending');
+      if (!(await this.fileStore.datasetBinding.get('active'))) throw Error('archive-merge-unbound');
+      if (await this.fileStore.journal.count() || await this.fileStore.importJournal.count() ||
+        await this.fileStore.pullJournal.count() || await this.fileStore.scopedPull.count() ||
+        await this.fileStore.scopedOutbox.count() || await this.fileStore.scopedAttachmentUploads.count()) {
+        throw Error('archive-merge-recovery-pending');
+      }
+      const { rows, manifest, entries } = await inspectArchive(bytes);
+      const archiveHash = await sha(bytes);
+      const target = await this.allRecords();
+      if (await targetFingerprint(target, this.fileStore) !== expectedFingerprint) throw Error('archive-merge-stale');
+      const byId = new Map(target.map(row => [row.id, row]));
+      const sourceIds = new Set(rows.map(row => row.id));
+      if (Object.keys(choices).some(id => !sourceIds.has(id) || !['source', 'target'].includes(choices[id]))) {
+        throw Error('archive-merge-choice');
+      }
+      const changes: ArchiveMergeChange[] = [];
+      let imported = 0; let replaced = 0; let skipped = 0;
+      const finalRows = new Map(byId);
+      for (const source of rows) {
+        const before = byId.get(source.id) ?? null;
+        if (!before) {
+          if (choices[source.id]) throw Error('archive-merge-choice');
+          changes.push({ before, after: source }); finalRows.set(source.id, source); imported++;
+        } else if (before.payload === source.payload) {
+          if (choices[source.id]) throw Error('archive-merge-choice');
+          skipped++;
+        } else {
+          if (choices[source.id] !== 'source' && choices[source.id] !== 'target') throw Error('archive-merge-choice');
+          if (choices[source.id] === 'source') {
+            changes.push({ before, after: source }); finalRows.set(source.id, source); replaced++;
+          } else skipped++;
+        }
+      }
+      // The selected result is checked as one data set, including references to
+      // target-only records and source tombstones.
+      const final = [...finalRows.values()];
+      const finalFileIds = attachmentIdsIn(final);
+      const sourceFiles = new Map(manifest.attachments.map(attachment => [attachment.id, attachment]));
+      const existingFiles = await this.fileStore.blobs.toArray();
+      const existingById = new Map(existingFiles.map(file => [file.id, file]));
+      for (const attachment of manifest.attachments) {
+        const existing = existingById.get(attachment.id);
+        if (existing && (existing.name !== attachment.name || existing.blob.type !== attachment.type ||
+          existing.blob.size !== attachment.size ||
+          !sameBytes(new Uint8Array(await existing.blob.arrayBuffer()), entries[`files/${attachment.id}`]))) {
+          throw Error('archive-merge-image-conflict');
+        }
+      }
+      for (const id of finalFileIds) if (!existingById.has(id) && !sourceFiles.has(id)) throw Error('archive-attachment-reference');
+      validateReferences(final, finalFileIds);
+      const addedFileIds = [...finalFileIds].filter(id => !existingById.has(id));
+      // Detect a second-tab edit before recording the durable plan. Individual
+      // row writes below also use storage CAS, so an edit after this check fails.
+      if (await targetFingerprint(await this.allRecords(), this.fileStore) !== expectedFingerprint) throw Error('archive-merge-stale');
+      const journal: ArchiveMergeJournal = { id: 'active', phase: 'applying', archiveHash,
+        targetFingerprint: expectedFingerprint, changes, addedFileIds, insertedFileIds: [] };
+      await this.fileStore.transaction('rw', this.fileStore.archiveMerge, this.fileStore.scopedOutbox,
+        this.fileStore.scopedPull, this.fileStore.scopedAttachmentUploads, async () => {
+          if (await this.fileStore.archiveMerge.get('active')) throw Error('archive-merge-pending');
+          if (await this.fileStore.scopedOutbox.count() || await this.fileStore.scopedPull.count() ||
+            await this.fileStore.scopedAttachmentUploads.count()) throw Error('archive-merge-recovery-pending');
+          await this.fileStore.archiveMerge.add(journal);
+        });
+      try {
+        for (const id of addedFileIds) {
+          const attachment = sourceFiles.get(id);
+          if (!attachment) throw Error('archive-attachment-reference');
+          const content = entries[`files/${id}`];
+          await this.fileStore.transaction('rw', this.fileStore.blobs, this.fileStore.archiveMerge, async () => {
+            if (await this.fileStore.blobs.get(id)) throw Error('archive-merge-image-conflict');
+            await this.fileStore.blobs.add({ id, name: attachment.name,
+              blob: new Blob([content as BlobPart], { type: attachment.type }) });
+            const current = await this.fileStore.archiveMerge.get('active');
+            if (current?.phase !== 'applying') throw Error('archive-merge-pending');
+            await this.fileStore.archiveMerge.update('active', { insertedFileIds: [...current.insertedFileIds, id] });
+          });
+        }
+        for (const change of changes) await writeArchiveMergeRow(this.db, change.before, change.after);
+        const actual = await this.allRecords();
+        validateReferences(actual, attachmentIdsIn(actual));
+        for (const id of attachmentIdsIn(actual)) if (!(await this.fileStore.blobs.get(id))) throw Error('archive-attachment-reference');
+        await this.fileStore.archiveMerge.update('active', { phase: 'applied' });
+        return { imported, replaced, skipped };
+      } catch (error) {
+        await rollbackArchiveMergeJournal(this.db, this.fileStore).catch(() => {});
+        throw error;
+      }
+    });
+  }
+
+  async rollbackArchiveMerge(): Promise<void> {
+    return withRenewalLock(`keepany-renewal:${this.db.name}`, async () => {
+      const journal = await this.fileStore.archiveMerge.get('active');
+      if (!journal) return;
+      if (journal.phase === 'syncing') throw Error('archive-merge-sync-started');
+      await rollbackArchiveMergeJournal(this.db, this.fileStore);
+    });
+  }
+
+  async finalizeArchiveMerge(): Promise<void> {
+    await this.fileStore.transaction('rw', this.fileStore.archiveMerge, async () => {
+      const journal = await this.fileStore.archiveMerge.get('active');
+      if (journal?.phase !== 'applied') throw Error('archive-merge-not-applied');
+      await this.fileStore.archiveMerge.update('active', { phase: 'syncing' });
+    });
+  }
+
+  async completeArchiveMerge(): Promise<void> {
+    await this.fileStore.transaction('rw', this.fileStore.archiveMerge, this.fileStore.scopedOutbox,
+      this.fileStore.scopedPull, this.fileStore.scopedAttachmentUploads, async () => {
+        const journal = await this.fileStore.archiveMerge.get('active');
+        if (journal?.phase !== 'syncing') throw Error('archive-merge-not-syncing');
+        if (await this.fileStore.scopedOutbox.count() || await this.fileStore.scopedPull.count() ||
+          await this.fileStore.scopedAttachmentUploads.count()) throw Error('archive-merge-sync-pending');
+        await this.fileStore.archiveMerge.delete('active');
+      });
   }
 
   async exportArchive(): Promise<Uint8Array> {
@@ -849,9 +1041,21 @@ export class LocalRepository {
         entries[`files/${item.id}`] = bytes;
         attachments.push({ id: item.id, name: item.name, type: attachmentSchema.shape.type.parse(item.blob.type), size: bytes.length, sha256: await sha(bytes) });
       }
+      // A second tab may change records while attachments are read. Fail the
+      // export instead of returning a mixed record/image snapshot.
+      if (JSON.stringify((await this.allRecords()).sort((a, b) => a.id.localeCompare(b.id))) !==
+        JSON.stringify([...rows].sort((a, b) => a.id.localeCompare(b.id)))) throw Error('archive-export-stale');
+      for (const item of blobs) {
+        const current = await this.fileStore.blobs.get(item.id);
+        const expected = attachments.find(attachment => attachment.id === item.id);
+        if (!current || !expected || current.name !== expected.name || current.blob.type !== expected.type ||
+          await sha(new Uint8Array(await current.blob.arrayBuffer())) !== expected.sha256) throw Error('archive-export-stale');
+      }
+      const sourceBinding = await this.getDatasetBinding();
       entries['manifest.json'] = strToU8(JSON.stringify({
         format: 'keepany-backup', version: 1, createdAt: new Date().toISOString(),
         recordCount: rows.length, recordsHash: await sha(entries['records.json']), attachments,
+        ...(sourceBinding ? { sourceBinding } : {}),
       }));
       if (Object.values(entries).reduce((size, entry) => size + entry.length, 0) > 300 * 1024 * 1024) throw Error('archive-size');
       const archive = zipSync(entries, { level: 1 });
@@ -863,6 +1067,7 @@ export class LocalRepository {
   async restoreArchive(bytes: Uint8Array): Promise<number> {
     return withRenewalLock(`keepany-renewal:${this.db.name}`, async () => {
       await this.settleRenewalJournals();
+      if (await this.pendingArchiveMerge()) throw Error('archive-merge-pending');
       if (await this.fileStore.journal.count()) throw Error('restore-recovery-pending');
       const { rows, manifest, entries } = await inspectArchive(bytes);
       // Validate all conflicts before writing attachments or a journal.
@@ -931,6 +1136,61 @@ async function replayJournal(db: RxDatabase, store: FileStore, id: string): Prom
     }
   }
   await store.journal.delete(id);
+}
+
+async function targetFingerprint(rows: RecordRow[], store: FileStore): Promise<string> {
+  const files = await store.blobs.toArray();
+  const signatures = await Promise.all(files.map(async file => ({ id: file.id, name: file.name,
+    type: file.blob.type, sha256: await sha(new Uint8Array(await file.blob.arrayBuffer())) })));
+  return sha(strToU8(JSON.stringify({ rows: [...rows].sort((a, b) => a.id.localeCompare(b.id)),
+    files: signatures.sort((a, b) => a.id.localeCompare(b.id)) })));
+}
+
+function sameMergeRow(left: RecordRow | null, right: RecordRow | null): boolean {
+  return left === right || !!left && !!right && left.id === right.id && left.type === right.type &&
+    left.payload === right.payload && left.updatedAt === right.updatedAt;
+}
+
+async function writeArchiveMergeRow(db: RxDatabase, before: RecordRow | null, after: RecordRow | null): Promise<void> {
+  const id = after?.id ?? before?.id;
+  if (!id) throw Error('archive-merge-row');
+  const [raw] = await db.records.storageInstance.findDocumentsById([id], true);
+  const current = raw && !raw._deleted ? raw as RecordRow : null;
+  if (!sameMergeRow(current, before)) throw Error('archive-merge-race');
+  if (sameMergeRow(before, after)) return;
+  const document = after
+    ? { ...raw, ...after, _deleted: false, _attachments: raw?._attachments ?? {} }
+    : { ...raw, _deleted: true };
+  const result = await db.records.storageInstance.bulkWrite([{ ...(raw ? { previous: raw } : {}), document }], 'archive-merge');
+  if (result.error.length) throw Error(result.error.some(error => error.status === 409) ? 'archive-merge-race' : 'archive-merge-write');
+}
+
+async function rollbackArchiveMergeJournal(db: RxDatabase, store: FileStore): Promise<void> {
+  const journal = await store.archiveMerge.get('active');
+  if (!journal) return;
+  if (journal.phase === 'syncing') throw Error('archive-merge-sync-started');
+  // Preflight all rows before mutating any. A partially reverted prior attempt
+  // is accepted, but a third-party edit leaves the journal intact.
+  for (const change of journal.changes) {
+    const [raw] = await db.records.storageInstance.findDocumentsById([change.after.id], true);
+    const current = raw && !raw._deleted ? raw as RecordRow : null;
+    if (!sameMergeRow(current, change.after) && !sameMergeRow(current, change.before)) throw Error('archive-merge-rollback-conflict');
+  }
+  for (const change of [...journal.changes].reverse()) {
+    const [raw] = await db.records.storageInstance.findDocumentsById([change.after.id], true);
+    const current = raw && !raw._deleted ? raw as RecordRow : null;
+    if (sameMergeRow(current, change.before)) continue;
+    await writeArchiveMergeRow(db, change.after, change.before);
+  }
+  const rows = (await db.records.find().exec()).map(canonical);
+  const referenced = attachmentIdsIn(rows);
+  await store.transaction('rw', store.blobs, store.archiveMerge, async () => {
+    for (const id of journal.insertedFileIds) {
+      if (referenced.has(id)) throw Error('archive-merge-rollback-conflict');
+      await store.blobs.delete(id);
+    }
+    await store.archiveMerge.delete('active');
+  });
 }
 
 async function rollbackImport(db: RxDatabase, store: FileStore, id: string): Promise<void> {
@@ -1174,6 +1434,10 @@ export async function openLocalRepository(name: string): Promise<LocalRepository
         }
       }
     });
+    if ((await store.archiveMerge.get('active'))?.phase === 'applying') {
+      try { await rollbackArchiveMergeJournal(openedDb, store); }
+      catch { /* Keep the durable journal and expose it through pendingArchiveMerge. */ }
+    }
     for (const entry of await store.journal.toArray()) {
       try { await replayJournal(db, store, entry.id); }
       catch (error) {
@@ -1241,6 +1505,10 @@ function defaultRepository(): Promise<LocalRepository> {
             break;
           }
         }
+        if ((await resource.fileStore.archiveMerge.get('active'))?.phase === 'applying') {
+          try { await rollbackArchiveMergeJournal(resource.db, resource.fileStore); }
+          catch { /* Pending state remains visible for explicit recovery. */ }
+        }
       });
       return repository;
     })
@@ -1279,6 +1547,14 @@ export async function cleanupUnreferencedFile(id: string) { return (await defaul
 export async function collectOrphanFiles() { return (await defaultRepository()).collectOrphanFiles(); }
 export async function exportArchive() { return (await defaultRepository()).exportArchive(); }
 export async function restoreArchive(bytes: Uint8Array) { return (await defaultRepository()).restoreArchive(bytes); }
+export async function previewArchiveMerge(bytes: Uint8Array) { return (await defaultRepository()).previewArchiveMerge(bytes); }
+export async function applyArchiveMerge(bytes: Uint8Array, choices: Record<string, ArchiveMergeChoice>, expectedFingerprint: string) {
+  return (await defaultRepository()).applyArchiveMerge(bytes, choices, expectedFingerprint);
+}
+export async function pendingArchiveMerge() { return (await defaultRepository()).pendingArchiveMerge(); }
+export async function rollbackArchiveMerge() { return (await defaultRepository()).rollbackArchiveMerge(); }
+export async function finalizeArchiveMerge() { return (await defaultRepository()).finalizeArchiveMerge(); }
+export async function completeArchiveMerge() { return (await defaultRepository()).completeArchiveMerge(); }
 
 const attachmentSchema = z.object({
   id: z.string().uuid(), name: z.string().max(255),
@@ -1291,6 +1567,7 @@ const manifestSchema = z.object({
   format: z.literal('keepany-backup'), version: z.literal(1),
   createdAt: z.string().datetime(), recordCount: z.number().int().nonnegative().max(100000),
   recordsHash: z.string().regex(/^[0-9a-f]{64}$/), attachments: z.array(attachmentSchema).max(10000),
+  sourceBinding: z.object({ endpoint: z.string(), accountId: z.string(), workspaceId: z.string(), scope: z.string() }).optional(),
 });
 async function sha(bytes: Uint8Array): Promise<string> {
   return Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', bytes as BufferSource)))
@@ -1307,6 +1584,7 @@ export async function inspectArchive(bytes: Uint8Array) {
   } });
   if (!entries['manifest.json'] || !entries['records.json']) throw Error('archive-missing');
   const manifest = manifestSchema.parse(JSON.parse(strFromU8(entries['manifest.json'])));
+  if (manifest.sourceBinding) await validateDatasetBinding(manifest.sourceBinding);
   if (await sha(entries['records.json']) !== manifest.recordsHash) throw Error('archive-hash');
   const rawRows: unknown = JSON.parse(strFromU8(entries['records.json']));
   if (!Array.isArray(rawRows) || rawRows.length !== manifest.recordCount) throw Error('archive-records');
