@@ -2,6 +2,7 @@ import { readFileSync, mkdirSync } from "node:fs";
 import { expect, type BrowserContext, test } from "@playwright/test";
 
 const evidence = "docs/evidence/2026-09-29";
+const captureEvidence = process.env.KEEPANY_CAPTURE_EVIDENCE === "1";
 type Store = { bytes: Buffer | null; authorizations: string[] };
 
 async function routeStorage(
@@ -42,7 +43,7 @@ for (const variant of [
 		browser,
 	}) => {
 		test.setTimeout(90_000);
-		mkdirSync(evidence, { recursive: true });
+		if (captureEvidence) mkdirSync(evidence, { recursive: true });
 		const store: Store = { bytes: null, authorizations: [] };
 		const password = `remote-backup-${crypto.randomUUID()}-2026`;
 		const project = `Remote project ${crypto.randomUUID().slice(0, 8)}`;
@@ -169,13 +170,11 @@ for (const variant of [
 						.locator("#remote-dav-password")
 						.fill("test-app-password");
 				}
-				await targetPanel
-					.locator("#remote-receipt-file")
-					.setInputFiles({
-						name: "keepany-remote-receipt.json",
-						mimeType: "application/json",
-						buffer: receipt,
-					});
+				await targetPanel.locator("#remote-receipt-file").setInputFiles({
+					name: "keepany-remote-receipt.json",
+					mimeType: "application/json",
+					buffer: receipt,
+				});
 				await expect(targetPanel.locator("#remote-receipt")).not.toHaveValue(
 					"",
 				);
@@ -210,10 +209,11 @@ for (const variant of [
 				await expect(targetPanel.getByRole("status")).toContainText(
 					variant.kind === "s3" ? "Remote backup verified" : "远端备份已核对",
 				);
-				await targetPage.screenshot({
-					path: `${evidence}/remote-backup-${variant.kind}-${variant.locale === "zh-CN" ? "zh" : "en"}-${variant.width}.png`,
-					fullPage: true,
-				});
+				if (captureEvidence)
+					await targetPage.screenshot({
+						path: `${evidence}/remote-backup-${variant.kind}-${variant.locale === "zh-CN" ? "zh" : "en"}-${variant.width}.png`,
+						fullPage: true,
+					});
 				await targetPanel
 					.getByRole("button", {
 						name: variant.kind === "s3" ? /Confirm ·/ : /确认 ·/,
