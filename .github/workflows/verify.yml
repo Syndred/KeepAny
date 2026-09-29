@@ -38,10 +38,10 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - name: Verify checked-in third-party license materials
         run: node scripts/phase0/verify-third-party-license-materials.mjs
+      - run: pnpm exec playwright install --with-deps chromium
       - run: pnpm test
       - run: pnpm build
       - name: Verify committed web bundle
         run: node scripts/verify-local-release.mjs
-      - run: pnpm exec playwright install --with-deps chromium
       - name: Verify delivered files and offline backup flow
         run: pnpm exec playwright test --config playwright.release.config.ts --reporter=dot
