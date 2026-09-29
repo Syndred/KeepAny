@@ -742,9 +742,9 @@ export function IntakeTools({ onCsvStaged }: { onCsvStaged: () => void }) {
 	const [mode, setMode] = useState<"url" | "image" | "csv" | "manual">("url");
 	const [manualKind, setManualKind] = useState<AssetKind>("project");
 	const [manualName, setManualName] = useState("");
-	const [manualOpen, setManualOpen] = useState(false);
 	const [photoAssetId, setPhotoAssetId] = useState("");
 	const [photoFile, setPhotoFile] = useState<File | null>(null);
+	const [photoName, setPhotoName] = useState("");
 	const [photoPreview, setPhotoPreview] = useState("");
 	const [photoBusy, setPhotoBusy] = useState(false);
 	const photoInFlight = useRef(false);
@@ -810,6 +810,37 @@ export function IntakeTools({ onCsvStaged }: { onCsvStaged: () => void }) {
 		} finally {
 			setPhotoBusy(false);
 			photoInFlight.current = false;
+		}
+	}
+	async function createPhotoItem() {
+		if (!photoFile || photoInFlight.current) return;
+		const name = photoName.trim();
+		if (!name) { notify(t("required")); return; }
+		photoInFlight.current = true;
+		setPhotoBusy(true);
+		let fileId = "";
+		try {
+			const existing = (await allRecords())
+				.filter((row) => row.type === "asset")
+				.map((row) => JSON.parse(row.payload) as Asset);
+			const candidate = { ...newAsset("item"), name };
+			if (duplicates(candidate, existing).length) { notify(t("duplicate")); return; }
+			fileId = await putFile(photoFile);
+			await save("asset", assetSchema.parse({
+				...candidate,
+				attachments: [fileId],
+				itemMedia: { coverId: fileId, detailIds: [], receiptIds: [] },
+			}));
+			setPhotoFile(null);
+			setPhotoName("");
+			if (photoFileInput.current) photoFileInput.current.value = "";
+			notify(t("saved"));
+		} catch {
+			if (fileId) await cleanupUnreferencedFile(fileId).catch(() => false);
+			notify(t("uploadError"));
+		} finally {
+			photoInFlight.current = false;
+			setPhotoBusy(false);
 		}
 	}
 	useEffect(() => {
@@ -1114,12 +1145,11 @@ export function IntakeTools({ onCsvStaged }: { onCsvStaged: () => void }) {
 							<p>{t("intakeImageHint")}</p>
 							<div className="field">
 								<label htmlFor="intake-photo-asset">{t("selectAsset")}</label>
-								<select id="intake-photo-asset" value={photoAssetId} onChange={event => setPhotoAssetId(event.target.value)}>
-									<option value="">{t("selectAsset")}</option>
+								<select id="intake-photo-asset" value={photoAssetId} disabled={photoBusy} onChange={event => setPhotoAssetId(event.target.value)}>
+									<option value="">{t("intakePhotoNewItem")}</option>
 									{activeAssets.map(asset => <option key={asset.id} value={asset.id}>{asset.name}</option>)}
 								</select>
 							</div>
-							{activeAssets.length === 0 && <div className="intake-photo-empty"><p>{t("intakePhotoNoAssets")}</p><Button onClick={() => { setManualKind("item"); setManualOpen(true); }}>{t("newRecord")}</Button></div>}
 							<div className="field">
 								<label htmlFor="intake-photo-file">{t("attachments")}</label>
 								<input
@@ -1137,11 +1167,13 @@ export function IntakeTools({ onCsvStaged }: { onCsvStaged: () => void }) {
 											return;
 										}
 										setPhotoFile(file);
+										setPhotoName(file ? (file.name.replace(/\.[^.]+$/, "").slice(0, 160) || file.name.slice(0, 160)) : "");
 									}}
 								/>
 							</div>
 							{photoPreview && photoFile && <img className="image-preview" src={photoPreview} alt={photoFile.name} />}
-							<Button variant="primary" disabled={photoBusy || !photoAssetId || !photoFile} onClick={() => void addPhoto()}>{t("addPhoto")}</Button>
+							{photoFile && !photoAssetId && <div className="field"><label htmlFor="intake-photo-name">{t("name")}</label><input id="intake-photo-name" value={photoName} maxLength={160} disabled={photoBusy} onChange={event => setPhotoName(event.target.value)} /></div>}
+							<Button variant="primary" disabled={photoBusy || !photoFile || (!photoAssetId && !photoName.trim())} onClick={() => void (photoAssetId ? addPhoto() : createPhotoItem())}>{t(photoAssetId ? "addPhoto" : "confirmImport")}</Button>
 						</>
 					)}
 					{candidates.length > 0 && (mode === "url" || mode === "manual") && (
@@ -1279,7 +1311,6 @@ export function IntakeTools({ onCsvStaged }: { onCsvStaged: () => void }) {
 				) : <p>{t("intakeRecentEmpty")}</p>}
 			</section>
 			{message && <div className="notice" role="status">{message}</div>}
-			{manualOpen && <AssetEditor kind={manualKind} categories={data.categories} onClose={() => setManualOpen(false)} />}
 		</div>
 	);
 }

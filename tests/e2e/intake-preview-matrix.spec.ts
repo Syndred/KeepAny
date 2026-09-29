@@ -122,6 +122,28 @@ for (const locale of ["en-US", "zh-CN"] as const) {
 				);
 				await importCard.getByRole("button", { name: copy.photoMode }).click();
 				await expect(importCard.locator("#import-url")).toHaveCount(0);
+				await importCard.locator("#intake-photo-file").setInputFiles({
+					name: "new-photo.png",
+					mimeType: "image/png",
+					buffer: photo,
+				});
+				await expect(importCard.locator("img.image-preview")).toBeVisible();
+				await importCard.locator("#intake-photo-name").fill("Photo item");
+				await page.screenshot({
+					path: `${evidence}/${stem}-photo-new.png`,
+					fullPage: true,
+				});
+				await importCard.getByRole("button", { name: copy.import }).click();
+				await expect(page.locator(".intake-recent")).toContainText(
+					"Photo item",
+				);
+				await page
+					.locator(".intake-recent")
+					.getByRole("link", { name: "Photo item" })
+					.click();
+				await expect(page.locator(".asset-item-photo-stage img")).toBeVisible();
+				await page.goto("/intake");
+				await importCard.getByRole("button", { name: copy.photoMode }).click();
 				await importCard
 					.locator("#intake-photo-asset")
 					.selectOption({ label: "example.com" });
