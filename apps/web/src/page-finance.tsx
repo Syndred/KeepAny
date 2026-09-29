@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { Plus } from "lucide-react";
-import { useRef, useState, type FormEvent } from "react";
+import { lazy, Suspense, useRef, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import {
 	currencies, financeActions, formatMinorUnits, historySchema, monthlyMinorUnits,
@@ -16,8 +16,8 @@ type ManualAction = typeof financeActions[number];
 type LedgerAction = ManualAction | "renew";
 type EntryDraft = { action: ManualAction; assetId: string; title: string; amount: string; currency: typeof currencies[number]; eventDate: string; source: string; note: string };
 const ledgerActions = new Set<string>([...financeActions, "renew"]);
-const isManualAction = (action: string): action is ManualAction => financeActions.includes(action as ManualAction);
 const today = () => { const now = new Date(); return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")}`; };
+const AssetEditor = lazy(() => import("./workflows").then((module) => ({ default: module.AssetEditor })));
 
 function groupedMoney(entries: ReadonlyArray<{ currency: string; amount: number | bigint }>): Map<string, bigint> {
 	const totals = new Map<string, bigint>();
@@ -36,12 +36,14 @@ export function FinancePage() {
 	const targets = liveAssets(data).filter((asset) => asset.kind === "subscription" || asset.kind === "account");
 	const subscriptions = targets.filter((asset) => asset.kind === "subscription");
 	const assetsById = new Map(data.assets.map((asset) => [asset.id, asset]));
+	const liveById = new Map(liveAssets(data).map((asset) => [asset.id, asset]));
 	const records = data.history.filter((entry) => {
 		if (entry.deleted || !ledgerActions.has(entry.action)) return false;
 		const kind = assetsById.get(entry.assetId)?.kind;
 		return entry.action === "renew" ? kind === "subscription" : kind === "subscription" || kind === "account";
 	});
 	const [recordOpen, setRecordOpen] = useState(false);
+	const [editSubscription, setEditSubscription] = useState<Asset | "new" | null>(null);
 	const [busy, setBusy] = useState(false);
 	const inFlight = useRef(false);
 	const [error, setError] = useState("");
@@ -63,12 +65,23 @@ export function FinancePage() {
 		const previous = latestBalances.get(key);
 		if (!previous || `${entry.eventDate}:${entry.createdAt}` > `${previous.eventDate}:${previous.createdAt}`) latestBalances.set(key, entry);
 	}
-	const balances = groupedMoney([...latestBalances.values()].map((entry) => ({ currency: entry.currency!, amount: entry.amount! })));
+	const balances = groupedMoney([...latestBalances.values()].flatMap((entry) =>
+		entry.currency && entry.amount !== undefined ? [{ currency: entry.currency, amount: entry.amount }] : []));
 	const sources = [...new Set(records.map((entry) => entry.source?.trim()).filter((source): source is string => !!source))].sort((a, b) => a.localeCompare(b));
 	const hasEmptySource = records.some((entry) => !entry.source?.trim());
 	const filtered = records.filter((entry) => (typeFilter === "all" || entry.action === typeFilter) && (!assetFilter || entry.assetId === assetFilter)
 		&& (sourceFilter === "all" || (sourceFilter === "empty" ? !entry.source?.trim() : entry.source?.trim() === sourceFilter.slice(7))))
 		.sort((a, b) => (b.eventDate || b.billDate || b.createdAt).localeCompare(a.eventDate || a.billDate || a.createdAt) || b.createdAt.localeCompare(a.createdAt));
+	function relatedAssets(subscriptionId: string) {
+		return Array.from(new Map(data.relations.filter((relation) => !relation.deleted && (relation.from === subscriptionId || relation.to === subscriptionId))
+			.map((relation) => liveById.get(relation.from === subscriptionId ? relation.to : relation.from))
+			.filter((asset): asset is Asset => !!asset && (asset.kind === "project" || asset.kind === "account"))
+			.map((asset) => [asset.id, asset])).values());
+	}
+	function latestRecordedSource(subscriptionId: string) {
+		return records.filter((entry) => entry.assetId === subscriptionId && (entry.action === "expense" || entry.action === "renew") && entry.source?.trim())
+			.sort((a, b) => (b.eventDate || b.billDate || b.createdAt).localeCompare(a.eventDate || a.billDate || a.createdAt) || b.createdAt.localeCompare(a.createdAt))[0]?.source?.trim();
+	}
 	function openRecord() {
 		const target = targets[0];
 		setDraft({ action: "expense", assetId: target?.id ?? "", title: "", amount: "", currency: target?.currency ?? "CNY", eventDate: today(), source: "", note: "" });
@@ -109,15 +122,25 @@ export function FinancePage() {
 			<section className="card"><span>{t("financeConfirmedSpent")}</span><MoneyLines totals={confirmed} language={i18n.language} empty={t("financeNoRecords")}/><small>{t("financeConfirmedHint")}</small></section>
 			<section className="card"><span>{t("financeBalances")}</span><MoneyLines totals={balances} language={i18n.language} empty={t("financeNoBalance")}/><small>{t("financeBalanceHint")}</small></section>
 		</div>
+		<section className="card finance-linked-card" aria-labelledby="finance-linked-heading">
+			<div className="card-header finance-linked-head"><div><h2 id="finance-linked-heading">{t("financeLinkedAssets")}</h2><p>{t("financeSubscriptions")}</p></div><Button onClick={() => setEditSubscription("new")}><Plus size={16}/>{t("financeGoSubscriptions")}</Button></div>
+			{subscriptions.length ? <div className="finance-linked-list">{[...subscriptions].sort((a,b) => a.dueDate.localeCompare(b.dueDate)).map((asset) => {
+				const related = relatedAssets(asset.id);
+				const source = latestRecordedSource(asset.id);
+				return <article className="finance-linked-row" key={asset.id}>
+					<div className="finance-linked-top"><Link className="finance-subscription" to="/assets/$kind/$id" params={{kind:"subscription",id:asset.id}}><strong>{asset.name}</strong></Link><strong>{formatMinorUnits(asset.amount,asset.currency,i18n.language)} / {asset.interval} {t(asset.cycle)}</strong><Button size="small" onClick={() => setEditSubscription(asset)}>{t("edit")}</Button></div>
+					<div className="finance-linked-tags">{related.length ? related.map((neighbor) => <Link key={neighbor.id} to="/assets/$kind/$id" params={{kind:neighbor.kind,id:neighbor.id}}>{neighbor.name} ↗</Link>) : <span>{t("financeNoLinkedAssets")}</span>}</div>
+					<small>{asset.dueDate ? `${t("dueDate")}: ${date(asset.dueDate,i18n.language)} · ` : ""}{t(asset.status)} · {t("financeLatestSource")}: {source || t("financeNoSource")}</small>
+				</article>;
+			})}</div> : <p>{t("financeNoSubscriptions")}</p>}
+		</section>
 		<div className="finance-columns">
-			<section className="card"><div className="card-header"><h2>{t("financeSubscriptions")}</h2></div>
-				{subscriptions.length ? <div className="list">{subscriptions.sort((a,b) => a.dueDate.localeCompare(b.dueDate)).map((asset) => <Link className="list-row finance-subscription" key={asset.id} to="/assets/$kind/$id" params={{kind:"subscription",id:asset.id}}><span><strong>{asset.name}</strong><small>{asset.dueDate ? `${t("dueDate")}: ${date(asset.dueDate,i18n.language)} · ` : ""}{formatMinorUnits(asset.amount,asset.currency,i18n.language)}</small></span><span className="chip">{t(asset.status)}</span></Link>)}</div> : <p>{t("financeNoSubscriptions")}</p>}
-			</section>
 			<section className="card"><div className="card-header"><h2>{t("financeRecentRecords")}</h2></div>
 				<div className="finance-filters"><label>{t("financeFilterType")}<select value={typeFilter} onChange={(event) => setTypeFilter(event.target.value as LedgerAction | "all")}><option value="all">{t("all")}</option>{(["expense","topup","refund","balance","renew"] as const).map((action) => <option key={action} value={action}>{action === "renew" ? t("financeRenewalRecorded") : t(`financeAction${action[0].toUpperCase()}${action.slice(1)}`)}</option>)}</select></label><label>{t("financeFilterAsset")}<select value={assetFilter} onChange={(event) => setAssetFilter(event.target.value)}><option value="">{t("all")}</option>{[...new Set(records.map((entry) => entry.assetId))].map((id) => <option key={id} value={id}>{assetsById.get(id)?.name ?? t("financeMissingAsset")}</option>)}</select></label><label>{t("financeFilterSource")}<select value={sourceFilter} onChange={(event) => setSourceFilter(event.target.value)}><option value="all">{t("all")}</option>{hasEmptySource && <option value="empty">{t("financeNoSource")}</option>}{sources.map((source) => <option key={source} value={`source:${source}`}>{source}</option>)}</select></label></div>
 				{filtered.length ? <div className="list">{filtered.map((entry) => <div className="list-row finance-entry" key={entry.id}><div><strong>{entry.title || assetsById.get(entry.assetId)?.name || historyLabel(entry)}</strong><small>{historyLabel(entry)} · {assetsById.get(entry.assetId)?.name ?? t("financeMissingAsset")} · {date(entry.eventDate || entry.billDate || entry.createdAt.slice(0,10), i18n.language)} · {entry.source?.trim() || t("financeNoSource")}{entry.note ? ` · ${entry.note}` : ""}</small></div>{entry.amount !== undefined && entry.currency && <b>{formatMinorUnits(entry.amount,entry.currency,i18n.language)}</b>}</div>)}</div> : <p>{t("financeNoRecords")}</p>}
 			</section>
 		</div>
+		{editSubscription && <Suspense fallback={<div className="toast" role="status">{t("loading")}</div>}><AssetEditor kind="subscription" asset={editSubscription === "new" ? undefined : editSubscription} categories={data.categories} onClose={() => setEditSubscription(null)} /></Suspense>}
 		{recordOpen && <Dialog title={t("financeAddRecord")} onClose={closeRecord}>
 			{targets.length ? <form className="finance-form" onSubmit={(event) => void saveRecord(event)}>
 				<div className="field"><label htmlFor="finance-action">{t("financeRecordType")}</label><select id="finance-action" value={draft.action} disabled={busy} onChange={(event) => { setDraft({...draft,action:event.target.value as ManualAction});setError(""); }}>{financeActions.map((action) => <option key={action} value={action}>{t(`financeAction${action[0].toUpperCase()}${action.slice(1)}`)}</option>)}</select></div>
