@@ -2,24 +2,32 @@ import { lazy, Suspense, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Plus } from "lucide-react";
 import { Button } from "./components/ui/button";
-import { Empty, PageTitle, useAppContext } from "./view-shared";
+import { Empty, PageTitle, date, money, useAppContext } from "./view-shared";
 import { TaskRow } from "./TaskRow";
 import { maintenanceReminderDate } from "../../../packages/domain/src/task-repeat";
+import "./tasks-page.css";
+
 const TaskEditor = lazy(() =>
 	import("./workflows").then((module) => ({ default: module.TaskEditor })),
 );
+
 export function TaskPage() {
 	const { data } = useAppContext();
-	const { t } = useTranslation();
+	const { t, i18n } = useTranslation();
 	const [edit, setEdit] = useState<"simple" | "maintenance" | null>(null);
 	const [filter, setFilter] = useState<"all" | "pending" | "done">("all");
+	const [selectedPlanId, setSelectedPlanId] = useState("");
 	const tasks = data.tasks
-		.filter((x) => !x.deleted)
-		.sort(
-			(a, b) =>
-				Number(a.done) - Number(b.done) ||
-				(a.maintenancePlan?.active ? maintenanceReminderDate(a.maintenancePlan.schedule, a.maintenancePlan.deferredUntil) : a.dueDate).localeCompare(b.maintenancePlan?.active ? maintenanceReminderDate(b.maintenancePlan.schedule, b.maintenancePlan.deferredUntil) : b.dueDate),
-		);
+		.filter((task) => !task.deleted)
+		.sort((a, b) => {
+			const aDue = a.maintenancePlan?.active
+				? maintenanceReminderDate(a.maintenancePlan.schedule, a.maintenancePlan.deferredUntil)
+				: a.dueDate;
+			const bDue = b.maintenancePlan?.active
+				? maintenanceReminderDate(b.maintenancePlan.schedule, b.maintenancePlan.deferredUntil)
+				: b.dueDate;
+			return Number(a.done) - Number(b.done) || aDue.localeCompare(bDue);
+		});
 	const counts = {
 		all: tasks.length,
 		pending: tasks.filter((task) => !task.done).length,
@@ -28,18 +36,26 @@ export function TaskPage() {
 	const visibleTasks = tasks.filter(
 		(task) => filter === "all" || (filter === "done" ? task.done : !task.done),
 	);
+	const plans = tasks.filter((task) => task.maintenancePlan);
+	const selectedPlan = plans.find((task) => task.id === selectedPlanId) ?? plans[0];
+	const plan = selectedPlan?.maintenancePlan;
+	const asset = data.assets.find((item) => item.id === selectedPlan?.assetId && !item.deleted);
+	const lastRecord = plan?.records.at(-1);
+	const rule = plan?.schedule.rule;
+	const cadence = rule && (rule.mode === "once"
+		? t("maintenanceOnce")
+		: `${t(rule.mode === "fixed" ? "maintenanceFixed" : "maintenanceAfterCompletion")} · ${t("maintenanceEveryCount", { count: rule.every })} ${t(rule.unit)}`);
+
 	return (
-		<main className="page">
+		<main className="page tasks-page">
 			<PageTitle
-				title={t("tasks")}
-				action={<>
-					<Button onClick={() => setEdit("simple")}>{t("newTask")}</Button>
-					<Button variant="primary" onClick={() => setEdit("maintenance")}><Plus size={17} />{t("newMaintenancePlan")}</Button>
-				</>}
+				eyebrow={t("tasks")}
+				title={t("tasksHeroTitle")}
+				subtitle={t("tasksHeroSubtitle")}
 			/>
-			<section className="card">
+			<div className="tasks-toolbar">
 				<fieldset className="tabs task-filters" aria-label={t("taskFilter")}>
-					{(["all", "pending", "done"] as const).map((value) => (
+					{(["pending", "done", "all"] as const).map((value) => (
 						<button
 							type="button"
 							key={value}
@@ -50,24 +66,63 @@ export function TaskPage() {
 						</button>
 					))}
 				</fieldset>
-				{visibleTasks.length ? (
-					<div className="list">
-						{visibleTasks.map((task) => (
-							<TaskRow task={task} key={task.id} />
-						))}
+				<div className="tasks-toolbar-actions">
+					<Button onClick={() => setEdit("simple")}>{t("newTask")}</Button>
+					<Button variant="primary" onClick={() => setEdit("maintenance")}>
+						<Plus size={17} />{t("newMaintenancePlan")}
+					</Button>
+				</div>
+			</div>
+			<div className="tasks-columns">
+				<section className="card tasks-list-card" aria-labelledby="tasks-list-heading">
+					<div className="tasks-cardhead">
+						<h2 id="tasks-list-heading">{t("tasksRecent")}</h2>
+						<span className="chip">{visibleTasks.length}</span>
 					</div>
-				) : (
-					<Empty />
-				)}
-			</section>
-			{edit && (
-				<Suspense
-					fallback={
-						<div className="toast" role="status">
-							{t("loading")}
+					{visibleTasks.length ? (
+						<div className="list">
+							{visibleTasks.map((task) => <TaskRow task={task} key={task.id} />)}
 						</div>
-					}
-				>
+					) : <Empty />}
+				</section>
+				<section className="card tasks-plan-card" aria-labelledby="tasks-plan-heading">
+					<div className="tasks-cardhead">
+						<h2 id="tasks-plan-heading">{t("tasksPlanDetails")}</h2>
+					</div>
+					{plan && selectedPlan ? (
+						<>
+							{plans.length > 1 && (
+								<label className="tasks-plan-select">
+									<span>{t("tasksPlanDetails")}</span>
+									<select value={selectedPlan.id} onChange={(event) => setSelectedPlanId(event.target.value)}>
+										{plans.map((task) => <option key={task.id} value={task.id}>{task.name}</option>)}
+									</select>
+								</label>
+							)}
+							<strong className="tasks-plan-name">{selectedPlan.name}</strong>
+							<dl className="tasks-plan-facts">
+								<div><dt>{t("maintenanceAsset")}</dt><dd>{asset?.name ?? t("maintenanceAssetMissing")}</dd></div>
+								<div><dt>{t("maintenanceAmount")}</dt><dd>{plan.schedule.plannedAmountMinor === null ? "—" : money(plan.schedule.plannedAmountMinor, plan.schedule.currency, i18n.language)}</dd></div>
+								<div><dt>{t("maintenanceRule")}</dt><dd>{cadence}</dd></div>
+								<div><dt>{t("maintenanceDue")}</dt><dd>{date(plan.deferredUntil || plan.schedule.dueDate, i18n.language)}</dd></div>
+								<div><dt>{t("maintenanceReminder")}</dt><dd>{date(maintenanceReminderDate(plan.schedule, plan.deferredUntil), i18n.language)}</dd></div>
+								{lastRecord && <div><dt>{t("maintenanceActionDate")}</dt><dd>{date(lastRecord.actionDate, i18n.language)} · {t(lastRecord.action === "complete" ? "maintenanceCompleted" : lastRecord.action === "skip" ? "maintenanceSkipped" : "maintenanceDeferred")}</dd></div>}
+							</dl>
+							{lastRecord && <p className="tasks-plan-note"><strong>{t("maintenanceEvidence")}</strong><br />{lastRecord.evidence}</p>}
+							<button
+							className="tasks-plan-jump"
+							type="button"
+							onClick={() => {
+								setFilter("all");
+								requestAnimationFrame(() => document.getElementById(`task-${selectedPlan.id}`)?.scrollIntoView({ block: "center" }));
+							}}
+						>{t("viewTasks")} →</button>
+						</>
+					) : <Empty hint={false} />}
+				</section>
+			</div>
+			{edit && (
+				<Suspense fallback={<div className="toast" role="status">{t("loading")}</div>}>
 					<TaskEditor mode={edit} onClose={() => setEdit(null)} />
 				</Suspense>
 			)}
