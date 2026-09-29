@@ -30,6 +30,21 @@ export const detailRoute = createRoute({
 		"AssetDetail",
 	),
 });
+const projectWorkflowRoute = createRoute({
+	getParentRoute: () => rootRoute,
+	path: "/assets/project/$id/workflow/$flow",
+	component: lazyRouteComponent(() => import("./page-project-workflow"), "ProjectWorkflowPage"),
+});
+const collectionsRoute = createRoute({
+	getParentRoute: () => rootRoute,
+	path: "/collections",
+	component: lazyRouteComponent(() => import("./page-collections"), "CollectionsPage"),
+});
+const collectionDetailRoute = createRoute({
+	getParentRoute: () => rootRoute,
+	path: "/collections/$id",
+	component: lazyRouteComponent(() => import("./page-collections"), "CollectionsPage"),
+});
 const intakeRoute = createRoute({
 	getParentRoute: () => rootRoute,
 	path: "/intake",
@@ -53,6 +68,9 @@ const routeTree = rootRoute.addChildren([
 	taskRoute,
 	listRoute,
 	detailRoute,
+	projectWorkflowRoute,
+	collectionsRoute,
+	collectionDetailRoute,
 	intakeRoute,
 	trashRoute,
 	settingsRoute,

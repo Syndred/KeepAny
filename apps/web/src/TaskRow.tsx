@@ -5,6 +5,7 @@ import type { Task } from "../../../packages/domain/src";
 import { setTaskDone } from "../../../packages/local-db/src";
 import { Button } from "./components/ui/button";
 import { ImpactTaskRow } from "./ImpactTaskRow";
+import { ProjectWorkflowTaskRow } from "./ProjectWorkflowTaskRow";
 import { date, useAppContext } from "./view-shared";
 export function TaskRow({ task }: { task: Task }) {
 	const { t, i18n } = useTranslation();
@@ -12,6 +13,7 @@ export function TaskRow({ task }: { task: Task }) {
 	const [busy, setBusy] = useState(false);
 	const inFlight = useRef(false);
 	if (task.impactSnapshot) return <ImpactTaskRow task={task} />;
+	if (task.projectWorkflow) return <ProjectWorkflowTaskRow task={task} />;
 	const completionHistory = task.completionHistory?.length
 		? task.completionHistory
 		: task.done && task.completedAt ? [task.completedAt] : [];
