@@ -75,7 +75,7 @@ export function ArchiveMigrationPanel({ configurationKey, syncBusy, onBusyChange
 
 	const reset = () => {
 		generation.current++;
-		setTarget(null); setSourceBinding(null); setSourceAcknowledged(false);
+		setTarget(null); setSourceBinding(null); setLegacySourceLabel(""); setSourceAcknowledged(false);
 		setSourceBytes(null); setPreview(null); setChoices({});
 		setTargetBackupHash(null); setBackupVerified(false); setBackupFile(null); setMessage("");
 		if (downloadUrl.current) URL.revokeObjectURL(downloadUrl.current);
@@ -85,7 +85,7 @@ export function ArchiveMigrationPanel({ configurationKey, syncBusy, onBusyChange
 	useEffect(() => {
 		void configurationKey;
 		generation.current++;
-		setTarget(null); setSourceBinding(null); setSourceAcknowledged(false);
+		setTarget(null); setSourceBinding(null); setLegacySourceLabel(""); setSourceAcknowledged(false);
 		setSourceBytes(null); setPreview(null); setChoices({});
 		setTargetBackupHash(null); setBackupVerified(false); setBackupFile(null); setMessage("");
 		if (downloadUrl.current) URL.revokeObjectURL(downloadUrl.current);
