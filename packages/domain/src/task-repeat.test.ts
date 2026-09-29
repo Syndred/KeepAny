@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { taskSchema } from "./index";
 import type { MaintenanceSchedule } from "./task-repeat";
 import {
 	advanceMaintenanceSchedule,
@@ -13,6 +14,14 @@ const ongoing = (schedule: MaintenanceSchedule | null): MaintenanceSchedule => {
 };
 
 describe("maintenance repeat schedule", () => {
+	it("validates a Task backed by one maintenance schedule without changing ordinary tasks", () => {
+		const schedule = createMaintenanceSchedule({ dueDate: "2026-09-30", rule: { mode: "once" } });
+		const base = { id: crypto.randomUUID(), name: "Check asset", assetId: crypto.randomUUID(), dueDate: schedule.dueDate, done: false, completedAt: "", createdAt: new Date().toISOString(), dedupeKey: "", deleted: false };
+		expect(taskSchema.safeParse(base).success).toBe(true);
+		expect(taskSchema.safeParse({ ...base, maintenancePlan: { schedule, active: true, records: [] } }).success).toBe(true);
+		expect(taskSchema.safeParse({ ...base, dueDate: "2026-10-01", maintenancePlan: { schedule, active: true, records: [] } }).success).toBe(false);
+		expect(taskSchema.safeParse({ ...base, done: true, maintenancePlan: { schedule, active: true, records: [] } }).success).toBe(false);
+	});
 	it("keeps fixed month-end and leap-day anchors across completion and skip", () => {
 		const monthly = createMaintenanceSchedule({
 			dueDate: "2026-01-31",

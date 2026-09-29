@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { maintenanceScheduleSchema } from './task-repeat';
 export { parseMinorUnits, inputFromMinorUnits, formatMinorUnits } from './money';
 export const kinds = ['project','account','subscription','item','vault'] as const;
 export const currencies = ['CNY','USD','EUR','GBP','JPY'] as const;
@@ -60,11 +61,20 @@ export const projectWorkflowSnapshotSchema=z.object({
  attachmentIds:z.array(z.string().uuid()).max(20).default([]),record:projectWorkflowRecordSchema.optional(),recordHistory:z.array(projectWorkflowRecordSchema).max(50).default([]),
 });
 export type ProjectWorkflowSnapshot=z.infer<typeof projectWorkflowSnapshotSchema>;
-export const taskSchema=z.object({id:z.string().min(1).max(96),name:z.string().min(1).max(300),assetId:z.string().max(96).default(''),dueDate:z.string().refine(v=>!v||validDateOnly(v),'date').default(''),done:z.boolean().default(false),completedAt:z.string().default(''),completionHistory:z.array(z.string().min(1).max(64)).default([]),createdAt:z.string(),dedupeKey:z.string().max(200).default(''),impactSnapshot:impactSnapshotSchema.optional(),projectWorkflow:projectWorkflowSnapshotSchema.optional(),deleted:z.boolean().default(false)}).superRefine((task,ctx)=>{
- if(!task.projectWorkflow)return;
- if(task.assetId!==task.projectWorkflow.projectId)ctx.addIssue({code:'custom',path:['assetId'],message:'workflow-project'});
- const record=task.projectWorkflow.record;const complete=record?.outcome==='done'||record?.outcome==='na';
- if(task.done!==complete || task.completedAt!==(complete?record?.recordedAt:''))ctx.addIssue({code:'custom',path:['projectWorkflow'],message:'workflow-record'});
+export const maintenanceRecordSchema=z.object({action:z.enum(['complete','skip']),actionDate:z.string().refine(validDateOnly,'date'),previousDueDate:z.string().refine(validDateOnly,'date'),nextDueDate:z.string().refine(v=>v===null||validDateOnly(v),'date').nullable(),advancedOccurrences:z.number().int().nonnegative().safe(),evidence:z.string().trim().min(1).max(1000),recordedAt:z.string().datetime()});
+export const maintenancePlanSchema=z.object({schedule:maintenanceScheduleSchema,active:z.boolean(),records:z.array(maintenanceRecordSchema).max(1000).default([])});
+export type MaintenancePlan=z.infer<typeof maintenancePlanSchema>;
+export const taskSchema=z.object({id:z.string().min(1).max(96),name:z.string().min(1).max(300),assetId:z.string().max(96).default(''),dueDate:z.string().refine(v=>!v||validDateOnly(v),'date').default(''),done:z.boolean().default(false),completedAt:z.string().default(''),completionHistory:z.array(z.string().min(1).max(64)).default([]),createdAt:z.string(),dedupeKey:z.string().max(200).default(''),impactSnapshot:impactSnapshotSchema.optional(),projectWorkflow:projectWorkflowSnapshotSchema.optional(),maintenancePlan:maintenancePlanSchema.optional(),deleted:z.boolean().default(false)}).superRefine((task,ctx)=>{
+ if(task.projectWorkflow){
+  if(task.assetId!==task.projectWorkflow.projectId)ctx.addIssue({code:'custom',path:['assetId'],message:'workflow-project'});
+  const record=task.projectWorkflow.record;const complete=record?.outcome==='done'||record?.outcome==='na';
+  if(task.done!==complete || task.completedAt!==(complete?record?.recordedAt:''))ctx.addIssue({code:'custom',path:['projectWorkflow'],message:'workflow-record'});
+ }
+ if(task.maintenancePlan){
+  const plan=task.maintenancePlan;const last=plan.records.at(-1);
+  if(!task.assetId || task.dueDate!==plan.schedule.dueDate || task.done===plan.active || (plan.active && task.completedAt) || (plan.active && last && last.nextDueDate!==plan.schedule.dueDate) || (!plan.active && (plan.schedule.rule.mode!=='once'||!last||last.nextDueDate!==null||task.completedAt!==last.recordedAt)))ctx.addIssue({code:'custom',path:['maintenancePlan'],message:'maintenance-state'});
+  if(task.projectWorkflow || task.impactSnapshot)ctx.addIssue({code:'custom',path:['maintenancePlan'],message:'maintenance-mixed'});
+ }
 });
 export type Task=z.infer<typeof taskSchema>;
 export const categorySchema=z.object({id:z.string().min(1).max(96),kind:z.enum(kinds),name:z.string().min(1).max(60),order:z.number().int(),deleted:z.boolean().default(false)});
