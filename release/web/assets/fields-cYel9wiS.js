@@ -1,0 +1,1 @@
+var e=[`kind`,`name`,`category`,`tags`,`description`,`url`,`status`,`dueDate`],t=[`name`,`category`,`tags`,`description`,`url`];export{t as n,e as t};
