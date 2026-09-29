@@ -4,9 +4,10 @@ import { useTranslation } from "react-i18next";
 import { bridgeBindingKeys, createBindingBridgeFetch } from "../../../packages/binding/src/bridge";
 import { BindingTransport } from "../../../packages/binding/src/remote";
 import { defaultBindingRepository, type StoredBinding } from "../../../packages/binding/src/store";
-import { localRepository } from "../../../packages/local-db/src";
+import { localRepository, type DatasetBinding } from "../../../packages/local-db/src";
 import type { SelfHostSyncClient, SyncReport } from "../../../packages/sync-client/src";
 import { BindingPanel } from "./components/BindingPanel";
+import { ArchiveMigrationPanel } from "./components/ArchiveMigrationPanel";
 import { McpPanel } from "./components/McpPanel";
 import { Button } from "./components/ui/button";
 import { seed } from "./data";
@@ -36,6 +37,7 @@ function syncFailureKey(error: string | undefined, mode: AccessMode): string {
 	if (error === "sync-key-mismatch") return "syncKeyMismatch";
 	if (error === "sync-dataset-bound" || error === "sync-dataset-ambiguous") return "syncDatasetBound";
 	if (error === "sync-account-mismatch") return mode === "official" ? "syncOfficialAccountMismatch" : "syncAccountMismatch";
+	if (error?.startsWith("archive-merge-")) return "migrationSyncGate";
 	return "syncFailedHint";
 }
 export function SettingsPage() {
@@ -62,6 +64,7 @@ export function SettingsPage() {
 	const [needsKeySave, setNeedsKeySave] = useState(false);
 	const [syncReport, setSyncReport] = useState<SyncReport | null>(null);
 	const [syncBusy, setSyncBusy] = useState(false);
+	const [migrationBusy, setMigrationBusy] = useState(false);
 	const clientRef = useRef<SelfHostSyncClient | null>(null);
 	const clientGeneration = useRef(-1);
 	const configGeneration = useRef(0);
@@ -75,6 +78,7 @@ export function SettingsPage() {
 	const syncEndpoint = accessMode === "official" ? officialOrigin ?? "" : accessMode === "session" ? window.location.origin : endpoint;
 	const officialAccountId = officialBinding?.allowedScopes.includes("sync:write") ? officialBinding.subject : null;
 	const hasAccess = accessMode === "official" ? Boolean(officialAccountId) : accessMode === "session" ? Boolean(sessionAccountId) : Boolean(token);
+	const uiBusy = syncBusy || migrationBusy;
 	useEffect(() => {
 		mounted.current = true;
 		void navigator.storage?.persisted?.().then(value => { if (mounted.current) setPersistent(value); });
@@ -117,7 +121,7 @@ export function SettingsPage() {
 		}
 	}, []);
 	const editConfig = (write: () => void) => {
-		if (activeOperation.current !== null) return;
+		if (activeOperation.current !== null || migrationBusy) return;
 		invalidateConfig();
 		write();
 	};
@@ -243,19 +247,72 @@ export function SettingsPage() {
 		} catch (error) { if (isActive(operation)) setSyncReport(failure(error, "sync-create-failed")); }
 		finally { finishOperation(operation); }
 	};
-	const syncNow = async () => {
+	const prepareMigrationTarget = async (): Promise<DatasetBinding> => {
 		const operation = beginOperation();
-		if (!operation) return;
+		if (!operation) throw Error("migrationTargetFailed");
+		try {
+			const repository = await localRepository();
+			if (await repository.pendingArchiveMerge()) throw Error("archive-merge-pending");
+			const client = await connect(operation);
+			if (!client || !isActive(operation)) throw Error("migrationTargetChanged");
+			const local = await client.report();
+			if (local.pending > 0 || local.conflict) throw Error("migrationTargetNotClean");
+			const report = await client.run(value => { if (isActive(operation)) setSyncReport(value); });
+			if (!isActive(operation)) throw Error("migrationTargetChanged");
+			setSyncReport(report);
+			if (report.status !== "synced" || report.pending > 0) throw Error("migrationTargetFailed");
+			const binding = await repository.getDatasetBinding();
+			if (!binding || binding.endpoint !== client.endpoint || binding.workspaceId !== client.workspaceId)
+				throw Error("migrationTargetChanged");
+			rememberLocation(client);
+			return binding;
+		} finally { finishOperation(operation); }
+	};
+	const syncNow = async (): Promise<SyncReport | null> => {
+		const operation = beginOperation();
+		if (!operation) return null;
 		try {
 			const client = await connect(operation);
-			if (!client || !isActive(operation)) return;
+			if (!client || !isActive(operation)) return null;
 			const report = await client.run(value => { if (isActive(operation)) setSyncReport(value); });
 			if (isActive(operation)) {
 				if (report.status !== "failed") rememberLocation(client);
+				if (report.status === "synced" && report.pending === 0) {
+					const repository = await localRepository();
+					if ((await repository.pendingArchiveMerge())?.phase === "syncing") await repository.completeArchiveMerge();
+				}
 				setSyncReport(report);
 			}
+			return report;
 		} catch (error) {
 			if (isActive(operation)) setSyncReport(failure(error, "sync-configuration"));
+			return failure(error, "sync-configuration");
+		} finally { finishOperation(operation); }
+	};
+	const syncArchiveMigration = async (): Promise<SyncReport | null> => {
+		const operation = beginOperation();
+		if (!operation) return null;
+		try {
+			const client = await connect(operation);
+			if (!client || !isActive(operation)) return null;
+			const repository = await localRepository();
+			const pending = await repository.pendingArchiveMerge();
+			if (!pending || pending.phase === "applying") throw Error("archive-merge-not-applied");
+			if (pending.phase === "applied") {
+				await client.verifyTarget();
+				if (!isActive(operation)) return null;
+				await repository.finalizeArchiveMerge();
+			}
+			const report = await client.run(value => { if (isActive(operation)) setSyncReport(value); });
+			if (isActive(operation)) {
+				if (report.status === "synced" && report.pending === 0) await repository.completeArchiveMerge();
+				setSyncReport(report);
+			}
+			return report;
+		} catch (error) {
+			const report = failure(error, "sync-configuration");
+			if (isActive(operation)) setSyncReport(report);
+			return report;
 		} finally { finishOperation(operation); }
 	};
 	const chooseConflict = async (choice: "local" | "remote") => {
@@ -268,7 +325,13 @@ export function SettingsPage() {
 			if (!isActive(operation)) return;
 			setSyncReport(resolved);
 			const report = await client.run(value => { if (isActive(operation)) setSyncReport(value); });
-			if (isActive(operation)) setSyncReport(report);
+			if (isActive(operation)) {
+				if (report.status === "synced" && report.pending === 0) {
+					const repository = await localRepository();
+					if ((await repository.pendingArchiveMerge())?.phase === "syncing") await repository.completeArchiveMerge();
+				}
+				setSyncReport(report);
+			}
 		} catch (error) {
 			if (isActive(operation)) setSyncReport(failure(error, "sync-resolution"));
 		} finally { finishOperation(operation); }
@@ -343,7 +406,7 @@ export function SettingsPage() {
 			<section className="card padded sync-panel">
 				<h2>{t(accessMode === "official" ? "officialSync" : "selfHostSync")}</h2>
 				<p>{t(accessMode === "official" ? "officialSyncHint" : "selfHostSyncHint")}</p>
-				<label className="field"><span>{t("syncAccessMode")}</span><select value={accessMode} disabled={syncBusy} onChange={event => editConfig(() => {
+				<label className="field"><span>{t("syncAccessMode")}</span><select value={accessMode} disabled={uiBusy} onChange={event => editConfig(() => {
 					const mode: AccessMode = event.target.value === "official" && officialAvailable ? "official" : event.target.value === "session" ? "session" : "token";
 					localStorage.setItem("keepany-sync-access-mode", mode);
 					if (mode !== "official") localStorage.setItem("keepany-selfhost-access-mode", mode);
@@ -353,20 +416,20 @@ export function SettingsPage() {
 					setNeedsKeySave(false);
 					setToken("");
 				})}><option value="token">{t("syncTokenMode")}</option><option value="session">{t("syncSessionMode")}</option>{officialAvailable && <option value="official">{t("syncOfficialMode")}</option>}</select></label>
-				{accessMode === "session" && <><p>{t("syncSessionOriginHint")}</p><Suspense fallback={<p>{t("syncSessionChecking")}</p>}><SelfHostSessionPanel disabled={syncBusy} onSessionChange={changeSession} /></Suspense></>}
+				{accessMode === "session" && <><p>{t("syncSessionOriginHint")}</p><Suspense fallback={<p>{t("syncSessionChecking")}</p>}><SelfHostSessionPanel disabled={uiBusy} onSessionChange={changeSession} /></Suspense></>}
 				{accessMode === "official" && <p role="status">{t(hasAccess ? "syncOfficialReady" : "syncOfficialAuthorize")}</p>}
 				<div className="form-grid">
-					<label className="field"><span>{t("syncServerUrl")}</span><input value={syncEndpoint} disabled={syncBusy} readOnly={accessMode !== "token"} onChange={event => editConfig(() => setEndpoint(event.target.value))} placeholder="https://sync.example.com" autoComplete="url" /></label>
-					{accessMode === "token" && <label className="field"><span>{t("syncAccessToken")}</span><input type="password" value={token} disabled={syncBusy} onChange={event => editConfig(() => setToken(event.target.value))} autoComplete="off" /></label>}
-					<label className="field"><span>{t("syncWorkspace")}</span><input value={workspaceId} disabled={syncBusy || !hasAccess} onChange={event => editConfig(() => setWorkspaceId(event.target.value))} autoComplete="off" /></label>
-					<label className="field"><span>{t("syncWorkspaceKey")}</span><input type={showKey ? "text" : "password"} value={workspaceKey} disabled={syncBusy || !hasAccess} onChange={event => editConfig(() => setWorkspaceKey(event.target.value))} autoComplete="off" /><small>{t(accessMode === "token" ? "syncKeyHint" : "syncSessionKeyHint")}</small></label>
+					<label className="field"><span>{t("syncServerUrl")}</span><input value={syncEndpoint} disabled={uiBusy} readOnly={accessMode !== "token"} onChange={event => editConfig(() => setEndpoint(event.target.value))} placeholder="https://sync.example.com" autoComplete="url" /></label>
+					{accessMode === "token" && <label className="field"><span>{t("syncAccessToken")}</span><input type="password" value={token} disabled={uiBusy} onChange={event => editConfig(() => setToken(event.target.value))} autoComplete="off" /></label>}
+					<label className="field"><span>{t("syncWorkspace")}</span><input value={workspaceId} disabled={uiBusy || !hasAccess} onChange={event => editConfig(() => setWorkspaceId(event.target.value))} autoComplete="off" /></label>
+					<label className="field"><span>{t("syncWorkspaceKey")}</span><input type={showKey ? "text" : "password"} value={workspaceKey} disabled={uiBusy || !hasAccess} onChange={event => editConfig(() => setWorkspaceKey(event.target.value))} autoComplete="off" /><small>{t(accessMode === "token" ? "syncKeyHint" : "syncSessionKeyHint")}</small></label>
 				</div>
 				{accessMode !== "token" && hasAccess && <div className="actions">
-					<label className="field"><span>{t("syncSelectWorkspace")}</span><select value={availableWorkspaces.includes(workspaceId) ? workspaceId : ""} disabled={syncBusy || availableWorkspaces.length === 0} onChange={event => editConfig(() => {
+					<label className="field"><span>{t("syncSelectWorkspace")}</span><select value={availableWorkspaces.includes(workspaceId) ? workspaceId : ""} disabled={uiBusy || availableWorkspaces.length === 0} onChange={event => editConfig(() => {
 						setWorkspaceId(event.target.value); setWorkspaceKey(""); setNeedsKeySave(false);
 					})}><option value="">{t(availableWorkspaces.length ? "syncSelectWorkspace" : "syncNoWorkspaces")}</option>
 						{availableWorkspaces.map(id => <option key={id} value={id}>{id}</option>)}</select></label>
-					<Button disabled={syncBusy} onClick={() => {
+					<Button disabled={uiBusy} onClick={() => {
 						const mode = accessMode;
 						const accountId = mode === "session" ? sessionAccountId : officialBinding?.subject;
 						const generation = configGeneration.current;
@@ -379,7 +442,7 @@ export function SettingsPage() {
 					}}>{t("syncRefreshWorkspaces")}</Button>
 				</div>}
 				<div className="actions">
-					<Button disabled={syncBusy || !syncEndpoint || !hasAccess} onClick={() => {
+					<Button disabled={uiBusy || !syncEndpoint || !hasAccess} onClick={() => {
 						if (workspaceId || workspaceKey) setConfirmCreate(true);
 						else void createWorkspace();
 					}}>{t("syncCreateWorkspace")}</Button>
@@ -388,10 +451,10 @@ export function SettingsPage() {
 						try { await navigator.clipboard.writeText(workspaceKey); notify(t("syncKeyCopied")); }
 						catch { notify(t("syncCopyFailed")); }
 					}}>{t("syncCopyKey")}</Button>
-					<Button disabled={syncBusy || !syncEndpoint || !hasAccess || !workspaceId || !workspaceKey} onClick={() => void checkLocal()}>{t("syncCheckLocal")}</Button>
-					<Button disabled={syncBusy || needsKeySave || !syncEndpoint || !hasAccess || !workspaceId || !workspaceKey} onClick={() => void syncNow()}>{t("syncNow")}</Button>
+					<Button disabled={uiBusy || !syncEndpoint || !hasAccess || !workspaceId || !workspaceKey} onClick={() => void checkLocal()}>{t("syncCheckLocal")}</Button>
+					<Button disabled={uiBusy || needsKeySave || !syncEndpoint || !hasAccess || !workspaceId || !workspaceKey} onClick={() => void syncNow()}>{t("syncNow")}</Button>
 				</div>
-				{confirmCreate && <fieldset className="sync-confirm" disabled={syncBusy}><legend>{t("syncCreateWorkspace")}</legend>
+				{confirmCreate && <fieldset className="sync-confirm" disabled={uiBusy}><legend>{t("syncCreateWorkspace")}</legend>
 					<p>{t("syncCreateConfirm")}</p>
 					<div className="actions"><Button onClick={() => setConfirmCreate(false)}>{t("cancel")}</Button><Button onClick={() => void createWorkspace()}>{t("syncCreateWorkspace")}</Button></div>
 				</fieldset>}
@@ -408,11 +471,18 @@ export function SettingsPage() {
 						</div>)}
 					</div>
 					<div className="actions">
-						<Button disabled={syncBusy} onClick={() => void chooseConflict("local")}>{t("syncKeepLocal")}</Button>
-						<Button disabled={syncBusy} onClick={() => void chooseConflict("remote")}>{t("syncKeepRemote")}</Button>
+						<Button disabled={uiBusy} onClick={() => void chooseConflict("local")}>{t("syncKeepLocal")}</Button>
+						<Button disabled={uiBusy} onClick={() => void chooseConflict("remote")}>{t("syncKeepRemote")}</Button>
 					</div>
 				</div>}
 			</section>
+			<ArchiveMigrationPanel
+				configurationKey={JSON.stringify([accessMode, syncEndpoint, workspaceId, workspaceKey, token, sessionAccountId, officialAccountId])}
+				syncBusy={syncBusy}
+				onBusyChange={setMigrationBusy}
+				prepareTarget={prepareMigrationTarget}
+				syncTarget={syncArchiveMigration}
+			/>
 			<section className="card padded">
 				<h2>{t("trial")}</h2>
 				<p>{t("emptyHint")}</p>

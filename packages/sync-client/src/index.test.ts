@@ -11,7 +11,7 @@ const name = () => `test-${crypto.randomUUID().slice(0, 12)}`;
 const token = 't'.repeat(40);
 const endpoint = 'http://127.0.0.1:3199';
 
-function server(workspaceId: string, disconnectAfterFirstPush = false) {
+function server(workspaceId: string, disconnectAfterFirstPush = false, accountId = 'self-host-owner') {
   const service = new SyncService(new MemorySyncStateStore());
   const allowed = new Set([workspaceId]);
   const objects = new Map<string, Uint8Array>();
@@ -37,7 +37,7 @@ function server(workspaceId: string, disconnectAfterFirstPush = false) {
     }
     const body = JSON.parse(String(init.body));
     if (url.endsWith('/sync/preflight')) return allowed.has(body.workspaceId)
-      ? new Response(JSON.stringify({ accountId: 'self-host-owner', workspaceId: body.workspaceId }), { status: 200 })
+      ? new Response(JSON.stringify({ accountId, workspaceId: body.workspaceId }), { status: 200 })
       : new Response('{}', { status: 403 });
     if (url.endsWith('/sync/push')) {
       const result = await service.push(body);
@@ -52,6 +52,53 @@ function server(workspaceId: string, disconnectAfterFirstPush = false) {
   return { service, config, objects, dropNextAttachmentAck: () => { dropAttachmentAck = true; },
     grant: (id: string) => { allowed.add(id); } };
 }
+
+it('moves a source archive across accounts and remotes with a durable target retry', async () => {
+  const sourceWorkspace = crypto.randomUUID();
+  const sourceServer = server(sourceWorkspace, false, 'selfhost:source');
+  const source = await openLocalRepository(name());
+  const asset = { ...newAsset('project'), name: 'Cross-account transfer' };
+  await source.save('asset', asset);
+  const sourceClient = new SelfHostSyncClient(source, {
+    endpoint: 'http://127.0.0.1:3199', sessionAccountId: 'selfhost:source',
+    workspaceId: sourceWorkspace, key: sourceServer.config.key,
+  });
+  expect((await sourceClient.run()).status).toBe('synced');
+  const archive = await source.exportArchive();
+  const sourceBinding = await source.getDatasetBinding();
+
+  const targetWorkspace = crypto.randomUUID();
+  const targetServer = server(targetWorkspace, true, 'selfhost:target');
+  const target = await openLocalRepository(name());
+  const targetClient = new SelfHostSyncClient(target, {
+    endpoint: 'http://127.0.0.1:3200', sessionAccountId: 'selfhost:target',
+    workspaceId: targetWorkspace, key: targetServer.config.key,
+  });
+  expect((await targetClient.run()).status).toBe('synced');
+  const preview = await target.previewArchiveMerge(archive);
+  expect(preview.rows).toMatchObject([{ status: 'new' }]);
+  await target.applyArchiveMerge(archive, {}, preview.targetFingerprint);
+  const wrongKey = new SelfHostSyncClient(target, {
+    endpoint: 'http://127.0.0.1:3200', sessionAccountId: 'selfhost:target',
+    workspaceId: targetWorkspace, key: new Uint8Array(32).fill(8),
+  });
+  await expect(wrongKey.verifyTarget()).rejects.toThrow('sync-key-mismatch');
+  expect(await target.pendingArchiveMerge()).toMatchObject({ phase: 'applied' });
+  await targetClient.verifyTarget();
+  await target.finalizeArchiveMerge();
+  expect((await targetClient.run()).status).toBe('failed');
+  expect(await target.pendingArchiveMerge()).toMatchObject({ phase: 'syncing' });
+  expect((await targetClient.run()).status).toBe('synced');
+  await target.completeArchiveMerge();
+  expect(await target.pendingArchiveMerge()).toBeNull();
+  expect((await target.get<Asset>('asset', asset.id))?.name).toBe('Cross-account transfer');
+  expect((await source.getDatasetBinding())).toEqual(sourceBinding);
+  expect((await target.getDatasetBinding())?.accountId).toBe('selfhost:target');
+  expect((await target.getDatasetBinding())?.endpoint).toBe('http://127.0.0.1:3200');
+  expect((await targetServer.service.pull({ workspaceId: targetWorkspace, cursor: 0, limit: 10 })).changes).toHaveLength(1);
+  await source.close();
+  await target.close();
+});
 
 async function sha256(bytes: Uint8Array): Promise<string> {
   const hash = new Uint8Array(await crypto.subtle.digest('SHA-256', bytes as BufferSource));

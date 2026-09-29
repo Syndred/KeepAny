@@ -214,6 +214,16 @@ export class SelfHostSyncClient {
     } finally { this.busy = false; }
   }
 
+  async verifyTarget(): Promise<void> {
+    const scope = await this.scopePromise;
+    await withScopeLock(scope, async () => {
+      await this.verifyDataset(scope);
+      const bytes = new Uint8Array(await crypto.subtle.digest('SHA-256', this.key as BufferSource));
+      const fingerprint = Array.from(bytes, byte => byte.toString(16).padStart(2, '0')).join('');
+      await this.repository.verifyPinnedScopedKey(scope, fingerprint, this.keyEpoch);
+    });
+  }
+
   private async runUnlocked(scope: string, onStatus?: (report: SyncReport) => void): Promise<SyncReport> {
     try {
       await this.verifyDataset(scope);

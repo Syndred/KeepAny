@@ -499,6 +499,14 @@ export class LocalRepository {
 
   async scopedCursor(scope: string): Promise<number> { return (await this.fileStore.scopedMeta.get(scope))?.cursor ?? 0; }
 
+  async verifyPinnedScopedKey(scope: string, fingerprint: string, keyEpoch: number): Promise<void> {
+    assertScope(scope);
+    await this.assertDatasetScope(scope);
+    const stored = await this.fileStore.scopedMeta.get(scope);
+    if (!stored || stored.keyFingerprint !== fingerprint || stored.keyEpoch !== keyEpoch)
+      throw Error('sync-key-mismatch');
+  }
+
   // A key is fixed once ciphertext or an authenticated pull has durable local evidence.
   // A cursor-zero fingerprint alone may come from a failed first attempt or a crash.
   async pinScopedKey(scope: string, fingerprint: string, keyEpoch: number): Promise<'provisional' | 'trusted'> {
