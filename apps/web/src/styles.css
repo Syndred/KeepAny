@@ -378,6 +378,10 @@ p { line-height: 1.5; }
 .ai-select-list input[type="checkbox"] { flex: 0 0 18px; margin-top: 2px; }
 .field textarea.ai-question { min-height: 60px; }
 .ai-answer p { white-space: pre-wrap; }
+.ai-price-hint { color: var(--muted); font-size: 12px; line-height: 1.5; overflow-wrap: anywhere; }
+.ai-pricing { margin: 10px 0; min-width: 0; }
+.ai-pricing summary { cursor: pointer; font-size: 13px; font-weight: 700; }
+.ai-cost { display: grid; gap: 5px; margin-top: 10px; overflow-wrap: anywhere; }
 .import-preview { margin-top: 12px; padding: 12px; border: 1px solid var(--line-soft); border-radius: 8px; }
 .field-error { color: var(--danger); }
 .graph { height: 300px; margin: 0 12px 12px; border: 1px solid var(--line-soft); border-radius: 8px; overflow: hidden; }

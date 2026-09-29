@@ -285,6 +285,69 @@ for (const language of ["en", "zh-CN"] as const) {
 	}
 }
 
+for (const language of ["en", "zh-CN"] as const) {
+	test(`${language} AI usage and entered-rate estimate at 390px`, async ({ browser }) => {
+		const mock = await aiServer();
+		const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
+		await context.addInitScript((value) => localStorage.setItem("keepany-language", value), language);
+		const page = await context.newPage();
+		const errors: string[] = [];
+		page.on("pageerror", (error) => errors.push(error.message));
+		try {
+			await addProject(page, copies[language], "Usage project", "Synthetic record");
+			const { dialog } = await openAi(page, copies[language]);
+			await dialog.getByLabel(copies[language].endpoint).fill(mock.endpoint);
+			await dialog.getByLabel(copies[language].model).fill("synthetic-model");
+			await dialog.getByLabel(copies[language].question).fill("Show usage");
+			await dialog.getByRole("checkbox", { name: "Usage project" }).check();
+			await dialog.locator(".ai-pricing summary").click();
+			await dialog.locator("#ai-price-input").fill("2");
+			await dialog.locator("#ai-price-output").fill("8");
+			await dialog.locator("#ai-price-currency").fill("usd");
+			mock.plans.push({ status: 200, payload: {
+				model: "synthetic-model",
+				choices: [{ message: { content: "Metered answer" } }],
+				usage: { prompt_tokens: 123, completion_tokens: 45, total_tokens: 168 },
+			} });
+			await dialog.getByRole("button", { name: copies[language].send }).click();
+			await expect(dialog.getByText("Metered answer")).toBeVisible();
+			await expect(dialog.locator(".ai-cost")).toContainText("123");
+			await expect(dialog.locator(".ai-cost")).toContainText("45");
+			await expect(dialog.locator(".ai-cost")).toContainText("USD 0.000606");
+			expect(JSON.stringify(mock.requests[0].body)).not.toContain("ai-price");
+			expect(JSON.stringify(mock.requests[0].body)).not.toContain("0.000606");
+			expect(await dialog.evaluate((element) => element.scrollWidth <= element.clientWidth)).toBe(true);
+			expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+			await dialog.locator(".ai-cost").scrollIntoViewIfNeeded();
+			await page.screenshot({ path: `${evidence}/ai-cost-${language}-390.png` });
+
+			mock.plans.push({ status: 200, payload: {
+				model: "synthetic-model",
+				choices: [{ message: { content: "No usage answer" } }],
+			} });
+			await dialog.getByRole("button", { name: copies[language].send }).click();
+			await expect(dialog.getByText("No usage answer")).toBeVisible();
+			await expect(dialog.locator(".ai-cost")).not.toContainText("0.000606");
+			await expect(dialog.locator(".ai-cost")).not.toContainText("123");
+			await expect(dialog.locator(".ai-cost")).toContainText(language === "en" ? "Unknown" : "未知");
+
+			mock.plans.push({ status: 200, payload: {
+				model: "different-model",
+				choices: [{ message: { content: "Different model answer" } }],
+				usage: { prompt_tokens: 123, completion_tokens: 45 },
+			} });
+			await dialog.getByRole("button", { name: copies[language].send }).click();
+			await expect(dialog.getByText("Different model answer")).toBeVisible();
+			await expect(dialog.locator(".ai-cost")).toContainText("different-model");
+			await expect(dialog.locator(".ai-cost")).not.toContainText("0.000606");
+			expect(errors).toEqual([]);
+		} finally {
+			await context.close();
+			await mock.close();
+		}
+	});
+}
+
 test("AI rejects invalid success content, retries, filters deleted assets and sends once on double click", async ({
 	browser,
 }) => {

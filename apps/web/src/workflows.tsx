@@ -31,6 +31,7 @@ import { Button } from "./components/ui/button";
 import { Dialog } from "./components/ui/dialog";
 import { RemoteBackupPanel } from "./components/RemoteBackupPanel";
 import { ExternalLinkImportPanel } from "./components/ExternalLinkImportPanel";
+import { estimateAiCost, readAiUsage, type AiUsage } from "./ai-usage";
 
 const categoryOptions: Record<AssetKind, string[]> = {
 	project: ["website", "repository", "tool"],
@@ -953,6 +954,11 @@ export function AiDialog({
 	const [question, setQuestion] = useState("");
 	const [selected, setSelected] = useState<string[]>([]);
 	const [answer, setAnswer] = useState("");
+	const [usage, setUsage] = useState<AiUsage | null>(null);
+	const [returnedModel, setReturnedModel] = useState<string | null>(null);
+	const [inputPrice, setInputPrice] = useState("");
+	const [outputPrice, setOutputPrice] = useState("");
+	const [priceCurrency, setPriceCurrency] = useState("");
 	const [busy, setBusy] = useState(false);
 	const [error, setError] = useState("");
 	const requestGeneration = useRef(0);
@@ -980,6 +986,8 @@ export function AiDialog({
 		requestAbort.current = null;
 		setBusy(false);
 		setAnswer("");
+		setUsage(null);
+		setReturnedModel(null);
 		setError("");
 	}
 	useEffect(() => {
@@ -990,6 +998,8 @@ export function AiDialog({
 		requestAbort.current = null;
 		setBusy(false);
 		setAnswer("");
+		setUsage(null);
+		setReturnedModel(null);
 		setError("");
 		setSelected((current) => {
 			const next = current.filter((id) => availableIds.current.has(id));
@@ -1030,6 +1040,8 @@ export function AiDialog({
 		requestAbort.current = controller;
 		setBusy(true);
 		setAnswer("");
+		setUsage(null);
+		setReturnedModel(null);
 		setError("");
 		try {
 			const records = chosen.map((a) => ({
@@ -1075,11 +1087,16 @@ export function AiDialog({
 			}
 			const body = parsed as {
 				choices?: { message?: { content?: unknown } }[];
+				model?: unknown;
 			};
 			const content = body?.choices?.[0]?.message?.content;
 			if (typeof content !== "string" || !content.trim())
 				throw Error("invalid-response");
-			if (generation === requestGeneration.current) setAnswer(content);
+			if (generation === requestGeneration.current) {
+				setAnswer(content);
+				setUsage(readAiUsage(parsed));
+				setReturnedModel(typeof body.model === "string" && body.model.trim() ? body.model.trim() : null);
+			}
 		} catch (error) {
 			if (generation === requestGeneration.current)
 				setError(
@@ -1092,6 +1109,10 @@ export function AiDialog({
 			}
 		}
 	}
+	const modelMismatch = Boolean(returnedModel && returnedModel !== model.trim());
+	const estimate = usage && !modelMismatch
+		? estimateAiCost(usage, inputPrice, outputPrice, priceCurrency)
+		: null;
 	return (
 		<Dialog
 			title={t("assistant")}
@@ -1181,16 +1202,36 @@ export function AiDialog({
 					{busy ? t("aiBusy") : t("ask")}
 				</Button>
 			</div>
+			<details className="ai-pricing">
+				<summary>{t("aiPricing")}</summary>
+				<p className="ai-price-hint">{t("aiPriceHint")}</p>
+				<div className="form-grid">
+					<Field name="ai-price-input" label={t("aiInputPrice")} value={inputPrice} onChange={setInputPrice} />
+					<Field name="ai-price-output" label={t("aiOutputPrice")} value={outputPrice} onChange={setOutputPrice} />
+					<Field name="ai-price-currency" label={t("aiPriceCurrency")} value={priceCurrency}
+						onChange={(value) => setPriceCurrency(value.toUpperCase())} />
+				</div>
+			</details>
 			{error && (
 				<p className="field-error" role="alert">
 					{error}
 				</p>
 			)}
 			{answer && (
-				<div className="notice ai-answer">
-					<strong>{t("aiResponse")}</strong>
-					<p>{answer}</p>
-				</div>
+				<>
+					<div className="notice ai-answer">
+						<strong>{t("aiResponse")}</strong>
+						<p>{answer}</p>
+					</div>
+					<div className="notice ai-cost">
+						<strong>{t("aiUsageTitle")}</strong>
+						<p>{t("aiInputTokens")}: {usage?.inputTokens === null || usage?.inputTokens === undefined ? t("aiUnknown") : usage.inputTokens.toLocaleString()}</p>
+						<p>{t("aiOutputTokens")}: {usage?.outputTokens === null || usage?.outputTokens === undefined ? t("aiUnknown") : usage.outputTokens.toLocaleString()}</p>
+						<p>{t("aiEstimatedCost")}: {estimate === null ? t("aiUnknown") : `${priceCurrency.trim()} ${Number(estimate.toPrecision(6))}`}</p>
+						{modelMismatch && <p>{t("aiModelMismatch", { model: returnedModel })}</p>}
+						<p>{t("aiCostBoundary")}</p>
+					</div>
+				</>
 			)}
 		</Dialog>
 	);
