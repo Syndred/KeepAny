@@ -18,6 +18,7 @@ function migrationPool(pg: PGlite): Pool {
 					text.includes("CREATE FUNCTION sync_bound_binding_guard") ||
 					text.includes("ADD CONSTRAINT sync_bound_binding_signed_lease") ||
 					text.includes('create table "user"')
+					|| text.includes("CREATE TABLE sync_key_envelopes")
 				) {
 					await pg.exec(text);
 					return { rows: [] };
@@ -38,7 +39,7 @@ it("applies the migration once and records its checksum", async () => {
 		const migration = await pg.query<{ id: string; sha256: string }>(
 			"SELECT id,sha256 FROM sync_schema_migrations",
 		);
-		expect(migration.rows).toHaveLength(7);
+		expect(migration.rows).toHaveLength(8);
 		expect(migration.rows[0].id).toBe("001_sync");
 		expect(migration.rows[0].sha256).toMatch(/^[a-f0-9]{64}$/);
 		expect(migration.rows[1].id).toBe("002_attachments");
@@ -47,6 +48,7 @@ it("applies the migration once and records its checksum", async () => {
 		expect(migration.rows[4].id).toBe("005_bound_state_guard");
 		expect(migration.rows[5].id).toBe("006_bound_state_writer_guard");
 		expect(migration.rows[6].id).toBe("007_self_host_session");
+		expect(migration.rows[7].id).toBe("008_key_envelopes");
 		expect(
 			(await pg.query("SELECT attachment_id FROM sync_attachments")).rows,
 		).toHaveLength(0);
@@ -60,6 +62,7 @@ it("applies the migration once and records its checksum", async () => {
 			(await pg.query("SELECT proof_jti_hash FROM sync_bound_proofs")).rows,
 		).toHaveLength(0);
 		expect((await pg.query('SELECT id FROM "user"')).rows).toHaveLength(0);
+		expect((await pg.query("SELECT envelope_id FROM sync_key_envelopes")).rows).toHaveLength(0);
 	} finally {
 		await pg.close();
 	}
@@ -137,6 +140,7 @@ it("upgrades historical changes from accepted operation results without changing
 			"005_bound_state_guard",
 			"006_bound_state_writer_guard",
 			"007_self_host_session",
+			"008_key_envelopes",
 		]);
 	} finally {
 		await pg.close();

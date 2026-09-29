@@ -16,6 +16,7 @@ export async function migrateSyncDatabase(
 			"005_bound_state_guard",
 			"006_bound_state_writer_guard",
 			"007_self_host_session",
+			"008_key_envelopes",
 		].map(async (id) => {
 			const sql = await readFile(resolve(migrationsDir, `${id}.sql`), "utf8");
 			return {

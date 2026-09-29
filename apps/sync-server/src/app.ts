@@ -8,7 +8,9 @@ import {
   AttachmentConflictError, AttachmentIntegrityError, AttachmentInvalidError, AttachmentNotFoundError, type AttachmentService,
   CIPHERTEXT_ATTACHMENT_TYPE,
 } from '../../../packages/sync-core/src/attachments';
-import { type PostgresSyncService, SyncForbiddenError } from '../../../packages/sync-core/src/postgres';
+import {
+  KeyEnvelopeConflictError, KeyEnvelopeNotFoundError, type PostgresSyncService, SyncForbiddenError,
+} from '../../../packages/sync-core/src/postgres';
 
 // A caller must verify credentials and return a stable subject ID. No anonymous sync route exists.
 export type AuthRequest = {
@@ -20,6 +22,17 @@ export type AuthRequest = {
   scope: 'sync:read' | 'sync:write';
 };
 export type Authenticate = (authorization: string | undefined, request?: AuthRequest) => Promise<string | null>;
+
+const keyEnvelopeWrapSchema = z.strictObject({
+  format: z.literal('keepany-recovery-wrap'), version: z.literal(1), workspaceId: z.uuid(),
+  keyEpoch: z.literal(1), nonce: z.string().regex(/^[A-Za-z0-9_-]{32}$/),
+  ciphertext: z.string().regex(/^[A-Za-z0-9_-]{64}$/),
+});
+const keyEnvelopeCreateSchema = z.strictObject({
+  kind: z.enum(['recovery', 'join']), wrap: keyEnvelopeWrapSchema,
+  keyFingerprint: z.string().regex(/^[a-f0-9]{64}$/),
+  expiresInSeconds: z.number().int().min(60).max(900).optional(),
+}).refine(input => (input.kind === 'join') === (input.expiresInSeconds !== undefined), 'key-envelope-expiry');
 
 function configuredWebOrigin(value: string): string {
   const url = new URL(value);
@@ -72,6 +85,8 @@ export function createPostgresSyncApp(service: PostgresSyncService, authenticate
   app.onError((error, context) => {
     if (error instanceof HTTPException) return error.getResponse();
     if (error instanceof SyncForbiddenError) return context.json({ error: 'forbidden' }, 403);
+    if (error instanceof KeyEnvelopeConflictError) return context.json({ error: 'key-envelope-conflict' }, 409);
+    if (error instanceof KeyEnvelopeNotFoundError) return context.json({ error: 'key-envelope-not-found' }, 404);
     if (error instanceof AttachmentConflictError) return context.json({ error: 'attachment-conflict' }, 409);
     if (error instanceof AttachmentNotFoundError) return context.json({ error: 'attachment-not-found' }, 404);
     if (error instanceof AttachmentInvalidError) return context.json({ error: 'attachment-invalid' }, 400);
@@ -103,6 +118,36 @@ export function createPostgresSyncApp(service: PostgresSyncService, authenticate
     const subject = await subjectFor(context, 'sync:read');
     if (!subject) return context.json({ error: 'unauthorized' }, 401);
     return context.json({ workspaces: await service.listWorkspaces(subject) });
+  });
+  app.post('/workspaces/:workspaceId/key-envelopes', async context => {
+    const subject = await subjectFor(context, 'sync:write');
+    if (!subject) return context.json({ error: 'unauthorized' }, 401);
+    const workspaceId = z.uuid().parse(context.req.param('workspaceId'));
+    const input = keyEnvelopeCreateSchema.parse(await context.req.json());
+    if (input.wrap.workspaceId !== workspaceId) return context.json({ error: 'invalid-request' }, 400);
+    return context.json(await service.createKeyEnvelope(workspaceId, subject, input), 201);
+  });
+  app.get('/workspaces/:workspaceId/key-envelopes', async context => {
+    const subject = await subjectFor(context, 'sync:read');
+    if (!subject) return context.json({ error: 'unauthorized' }, 401);
+    const workspaceId = z.uuid().parse(context.req.param('workspaceId'));
+    return context.json({ envelopes: await service.listKeyEnvelopes(workspaceId, subject) });
+  });
+  app.get('/workspaces/:workspaceId/key-envelopes/:envelopeId', async context => {
+    const subject = await subjectFor(context, 'sync:read');
+    if (!subject) return context.json({ error: 'unauthorized' }, 401);
+    const workspaceId = z.uuid().parse(context.req.param('workspaceId'));
+    const envelopeId = z.uuid().parse(context.req.param('envelopeId'));
+    return context.json(await service.getKeyEnvelope(workspaceId, envelopeId, subject));
+  });
+  app.post('/workspaces/:workspaceId/key-envelopes/:envelopeId/revoke', async context => {
+    const subject = await subjectFor(context, 'sync:write');
+    if (!subject) return context.json({ error: 'unauthorized' }, 401);
+    const workspaceId = z.uuid().parse(context.req.param('workspaceId'));
+    const envelopeId = z.uuid().parse(context.req.param('envelopeId'));
+    z.strictObject({}).parse(await context.req.json());
+    await service.revokeKeyEnvelope(workspaceId, envelopeId, subject);
+    return context.json({ status: 'revoked' });
   });
   app.post('/sync/push', async context => {
     const subject = await subjectFor(context, 'sync:write');

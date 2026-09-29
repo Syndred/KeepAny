@@ -3,6 +3,7 @@ import {
   syncChangeSchema, syncOperationSchema, syncPullRequestSchema, syncPushRequestSchema, syncPushResultSchema,
   type SyncChange, type SyncOperation, type SyncPullRequest, type SyncPushRequest, type SyncPushResult,
 } from '../../contracts/src';
+import type { RecoveryWrap } from '../../crypto/src';
 
 // The production pg Pool and the test Postgres WASM adapter both implement this surface.
 export interface SqlClient {
@@ -12,6 +13,37 @@ export interface SqlClient {
 export interface SqlPool { connect(): Promise<SqlClient> }
 
 export class SyncForbiddenError extends Error { constructor() { super('forbidden'); } }
+export class KeyEnvelopeConflictError extends Error { constructor() { super('key-envelope-conflict'); } }
+export class KeyEnvelopeNotFoundError extends Error { constructor() { super('key-envelope-not-found'); } }
+export type KeyEnvelopeKind = 'recovery' | 'join';
+export interface KeyEnvelopeInput {
+  kind: KeyEnvelopeKind;
+  wrap: RecoveryWrap;
+  keyFingerprint: string;
+  expiresInSeconds?: number;
+}
+export interface KeyEnvelopeMetadata {
+  envelopeId: string;
+  kind: KeyEnvelopeKind;
+  keyEpoch: 1;
+  keyFingerprint: string;
+  createdAt: string;
+  expiresAt: string | null;
+}
+export interface KeyEnvelope extends KeyEnvelopeMetadata { wrap: RecoveryWrap }
+
+function keyEnvelopeMetadata(row: Record<string, unknown>): KeyEnvelopeMetadata {
+  return {
+    envelopeId: String(row.envelope_id), kind: row.kind as KeyEnvelopeKind, keyEpoch: 1,
+    keyFingerprint: String(row.key_fingerprint).trim(),
+    createdAt: new Date(String(row.created_at)).toISOString(),
+    expiresAt: row.expires_at == null ? null : new Date(String(row.expires_at)).toISOString(),
+  };
+}
+
+function keyEnvelope(row: Record<string, unknown>): KeyEnvelope {
+  return { ...keyEnvelopeMetadata(row), wrap: row.wrap as RecoveryWrap };
+}
 export async function withSqlTransaction<T>(pool: SqlPool, run: (client: SqlClient) => Promise<T>): Promise<T> {
   const client = await pool.connect();
   let begun = false;
@@ -46,6 +78,76 @@ const numeric = (value: unknown): number => {
 
 export class PostgresSyncService {
   constructor(private readonly pool: SqlPool) {}
+
+  async createKeyEnvelope(workspaceId: string, subjectId: string, input: KeyEnvelopeInput): Promise<KeyEnvelopeMetadata> {
+    return withSqlTransaction(this.pool, async client => {
+      await requireSyncMembership(client, workspaceId, subjectId, 'write');
+      // Lock the workspace to serialize the first fingerprint anchor and recovery creation.
+      const workspace = await client.query('SELECT key_fingerprint FROM sync_workspaces WHERE workspace_id=$1 FOR UPDATE', [workspaceId]);
+      if (!workspace.rows[0]) throw new SyncForbiddenError();
+      const anchored = workspace.rows[0].key_fingerprint;
+      if (anchored != null && String(anchored).trim() !== input.keyFingerprint) throw new KeyEnvelopeConflictError();
+      if (input.kind === 'recovery') {
+        const existing = await client.query(
+          `SELECT envelope_id FROM sync_key_envelopes
+           WHERE workspace_id=$1 AND kind='recovery' AND revoked_at IS NULL`, [workspaceId],
+        );
+        if (existing.rows[0]) throw new KeyEnvelopeConflictError();
+      }
+      const envelopeId = crypto.randomUUID();
+      const inserted = await client.query(
+        `INSERT INTO sync_key_envelopes
+           (envelope_id,workspace_id,kind,key_epoch,key_fingerprint,wrap,expires_at)
+         VALUES ($1,$2,$3,1,$4,$5::jsonb,
+           CASE WHEN $6::integer IS NULL THEN NULL ELSE now() + ($6::integer * interval '1 second') END)
+         RETURNING envelope_id,kind,key_epoch,key_fingerprint,created_at,expires_at`,
+        [envelopeId, workspaceId, input.kind, input.keyFingerprint, JSON.stringify(input.wrap), input.expiresInSeconds ?? null],
+      );
+      if (anchored == null) await client.query(
+        'UPDATE sync_workspaces SET key_fingerprint=$2 WHERE workspace_id=$1', [workspaceId, input.keyFingerprint],
+      );
+      return keyEnvelopeMetadata(inserted.rows[0]);
+    });
+  }
+
+  async listKeyEnvelopes(workspaceId: string, subjectId: string): Promise<KeyEnvelopeMetadata[]> {
+    return withSqlTransaction(this.pool, async client => {
+      await requireSyncMembership(client, workspaceId, subjectId, 'read');
+      const result = await client.query(
+        `SELECT envelope_id,kind,key_epoch,key_fingerprint,created_at,expires_at
+         FROM sync_key_envelopes WHERE workspace_id=$1 AND revoked_at IS NULL
+           AND (expires_at IS NULL OR expires_at > now())
+         ORDER BY created_at DESC,envelope_id DESC`, [workspaceId],
+      );
+      return result.rows.map(keyEnvelopeMetadata);
+    });
+  }
+
+  async getKeyEnvelope(workspaceId: string, envelopeId: string, subjectId: string): Promise<KeyEnvelope> {
+    return withSqlTransaction(this.pool, async client => {
+      await requireSyncMembership(client, workspaceId, subjectId, 'read');
+      const result = await client.query(
+        `SELECT envelope_id,kind,key_epoch,key_fingerprint,wrap,created_at,expires_at
+         FROM sync_key_envelopes WHERE workspace_id=$1 AND envelope_id=$2 AND revoked_at IS NULL
+           AND (expires_at IS NULL OR expires_at > now())`, [workspaceId, envelopeId],
+      );
+      if (!result.rows[0]) throw new KeyEnvelopeNotFoundError();
+      return keyEnvelope(result.rows[0]);
+    });
+  }
+
+  async revokeKeyEnvelope(workspaceId: string, envelopeId: string, subjectId: string): Promise<void> {
+    await withSqlTransaction(this.pool, async client => {
+      await requireSyncMembership(client, workspaceId, subjectId, 'write');
+      const result = await client.query(
+        `UPDATE sync_key_envelopes SET revoked_at=now()
+         WHERE workspace_id=$1 AND envelope_id=$2 AND revoked_at IS NULL
+           AND (expires_at IS NULL OR expires_at > now())
+         RETURNING envelope_id`, [workspaceId, envelopeId],
+      );
+      if (!result.rows[0]) throw new KeyEnvelopeNotFoundError();
+    });
+  }
 
   async listWorkspaces(subjectId: string): Promise<Array<{ workspaceId: string; canRead: boolean; canWrite: boolean }>> {
     if (!subjectId || subjectId.length > 200) throw Error('subject');
