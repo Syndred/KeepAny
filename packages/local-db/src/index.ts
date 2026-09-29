@@ -6,11 +6,14 @@ import { dueOnCycle, entitySchemas, normalizeCategoryName, type Asset, type Asse
 import { canRecordProjectWorkflowTask, currentProjectWorkflowRound } from '../../domain/src/project-workflow';
 import { zipSync, unzipSync, strToU8, strFromU8 } from 'fflate';
 import type { SyncOperation } from '../../contracts/src';
+import { assertReviewedAssetReferences, migrateLegacyIntakeReview, parseReviewedCandidates, sameReviewedCandidate, type ReviewedCandidate } from './intake-review';
+import { pendingSubscriptionSave, replaySubscriptionSave, subscriptionSaveComplete, type PendingSubscriptionSave, type SubscriptionLink, type SubscriptionSaveJournal } from './subscription-save';
+export type { PendingSubscriptionSave, SubscriptionLink } from './subscription-save';
 
 // This transport shape is consumed by the web app's RxDB observer.
 export interface RecordRow { id: string; type: EntityType; payload: string; updatedAt: number }
 interface StoredFile { id: string; blob: Blob; name: string }
-interface Journal { id: string; rows: RecordRow[] }
+interface Journal { id: string; rows: RecordRow[]; intakeReview?: ReviewedCandidate[] }
 interface ImportJournal { id: string; rows: RecordRow[] }
 interface RenewalJournal { id: string; assetId: string; expectedPayload: string; next: RecordRow; history: RecordRow }
 interface SyncBase { id: string; payload: string; version: number }
@@ -35,15 +38,24 @@ export interface ArchiveMergePreviewRow {
   id: string; type: EntityType; status: 'new' | 'same' | 'conflict';
   sourcePayload: string; targetPayload: string | null;
 }
-export interface ArchiveMergePreview { rows: ArchiveMergePreviewRow[]; targetFingerprint: string }
+export interface ArchiveMergePreviewCandidate {
+  id: string; status: 'new' | 'same' | 'conflict';
+  sourceCandidate: ReviewedCandidate; targetCandidate: ReviewedCandidate | null;
+}
+export interface ArchiveMergePreview {
+  rows: ArchiveMergePreviewRow[]; intakeReview: ArchiveMergePreviewCandidate[]; targetFingerprint: string;
+}
 interface ArchiveMergeChange { before: RecordRow | null; after: RecordRow }
+interface ArchiveMergeReviewChange { before: ReviewedCandidate | null; after: ReviewedCandidate }
 interface ArchiveMergeJournal {
   id: 'active'; phase: 'applying' | 'applied' | 'syncing';
   archiveHash: string; targetFingerprint: string; changes: ArchiveMergeChange[];
   addedFileIds: string[]; insertedFileIds: string[];
+  intakeReviewChanges?: ArchiveMergeReviewChange[];
 }
 export interface PendingArchiveMerge {
   phase: ArchiveMergeJournal['phase']; archiveHash: string; changedRows: number; addedFiles: number;
+  changedCandidates: number;
 }
 
 class FileStore extends Dexie {
@@ -61,6 +73,8 @@ class FileStore extends Dexie {
   datasetBinding!: Table<StoredDatasetBinding, string>;
   scopedAttachmentUploads!: Table<StoredScopedAttachmentUploadPlan, string>;
   archiveMerge!: Table<ArchiveMergeJournal, string>;
+  subscriptionSaveJournal!: Table<SubscriptionSaveJournal, string>;
+  intakeReview!: Table<ReviewedCandidate, string>;
   constructor(name: string) {
     super(`${name}-files-v1`);
     this.version(1).stores({ blobs: 'id', journal: 'id' });
@@ -79,6 +93,13 @@ class FileStore extends Dexie {
     this.version(8).stores({ blobs: 'id', journal: 'id', importJournal: 'id', syncBase: 'id', syncMeta: 'id', pullJournal: 'id',
       scopedBase: 'id, scope', scopedMeta: 'id', scopedOutbox: 'id, scope', scopedPull: 'id', datasetBinding: 'id',
       scopedAttachmentUploads: 'id, scope', renewalJournal: 'id, assetId', archiveMerge: 'id' });
+    this.version(9).stores({ blobs: 'id', journal: 'id', importJournal: 'id', syncBase: 'id', syncMeta: 'id', pullJournal: 'id',
+      scopedBase: 'id, scope', scopedMeta: 'id', scopedOutbox: 'id, scope', scopedPull: 'id', datasetBinding: 'id',
+      scopedAttachmentUploads: 'id, scope', renewalJournal: 'id, assetId', archiveMerge: 'id', subscriptionSaveJournal: 'id, &assetId' });
+    this.version(10).stores({ blobs: 'id', journal: 'id', importJournal: 'id', syncBase: 'id', syncMeta: 'id', pullJournal: 'id',
+      scopedBase: 'id, scope', scopedMeta: 'id', scopedOutbox: 'id, scope', scopedPull: 'id', datasetBinding: 'id',
+      scopedAttachmentUploads: 'id, scope', renewalJournal: 'id, assetId', archiveMerge: 'id', subscriptionSaveJournal: 'id, &assetId',
+      intakeReview: 'id, fileHash, status' });
   }
 }
 
@@ -86,13 +107,13 @@ interface DefaultRepositoryState {
   fileStore?: FileStore;
   resources?: Promise<{ db: RxDatabase; fileStore: FileStore; recoveryState?: RepositoryRecoveryState }>;
 }
-interface RepositoryRecoveryState { syncError: string | null; restoreError: string | null; renewalError: string | null }
+interface RepositoryRecoveryState { syncError: string | null; restoreError: string | null; renewalError: string | null; subscriptionError?: string | null; intakeError?: string | null }
 // Vite HMR re-evaluates this module while the old RxDB remains open. Keep the resource across reloads.
 const defaultGlobal = globalThis as typeof globalThis & { __keepanyLocalDbState?: DefaultRepositoryState };
 if (!defaultGlobal.__keepanyLocalDbState) defaultGlobal.__keepanyLocalDbState = {};
 const defaultState = defaultGlobal.__keepanyLocalDbState;
-if (!defaultState.fileStore?.archiveMerge) {
-  // A Vite HMR module may retain a pre-v8 Dexie handle. Rebind the shared
+if (!defaultState.fileStore?.subscriptionSaveJournal || !defaultState.fileStore?.intakeReview) {
+  // A Vite HMR module may retain an older Dexie handle. Rebind the shared
   // RxDB handle to the upgraded file store.
   defaultState.fileStore?.close();
   const upgradedStore = new FileStore('keepany');
@@ -147,6 +168,23 @@ export class LocalRepository {
   set restoreRecoveryError(value: string | null) { this.recoveryState.restoreError = value; }
   get renewalRecoveryError(): string | null { return this.recoveryState.renewalError; }
   set renewalRecoveryError(value: string | null) { this.recoveryState.renewalError = value; }
+  get subscriptionRecoveryError(): string | null { return this.recoveryState.subscriptionError ?? null; }
+  set subscriptionRecoveryError(value: string | null) { this.recoveryState.subscriptionError = value; }
+  get intakeReviewMigrationError(): string | null { return this.recoveryState.intakeError ?? null; }
+  set intakeReviewMigrationError(value: string | null) { this.recoveryState.intakeError = value; }
+
+  async retryIntakeReviewMigration(): Promise<void> {
+    if (this.db.name !== 'keepany-v1') return;
+    try {
+      const assetIds = new Set((await this.allRecords()).filter(row => row.type === 'asset')
+        .map(row => (JSON.parse(row.payload) as Asset).id));
+      await migrateLegacyIntakeReview(this.fileStore, 'keepany-intake-review-v1', assetIds);
+      this.intakeReviewMigrationError = null;
+    } catch (error) {
+      this.intakeReviewMigrationError = 'review-migration-failed';
+      throw error;
+    }
+  }
 
   async allRecords(): Promise<RecordRow[]> {
     return (await this.db.records.find().exec()).map(canonical);
@@ -208,6 +246,110 @@ export class LocalRepository {
     return this.saveUnlocked('asset', next, rowFor('asset', expected).payload);
   }
 
+  async getPendingSubscriptionSave(assetId: string): Promise<PendingSubscriptionSave | null> {
+    return pendingSubscriptionSave(this.db, this.fileStore, assetId);
+  }
+
+  private async settleSubscriptionSaves(assetId?: string): Promise<void> {
+    const journals = assetId
+      ? await this.fileStore.subscriptionSaveJournal.where('assetId').equals(assetId).toArray()
+      : await this.fileStore.subscriptionSaveJournal.toArray();
+    for (const journal of journals) {
+      try { await replaySubscriptionSave(this.db, this.fileStore, journal.id); }
+      catch (error) {
+        this.subscriptionRecoveryError = error instanceof Error ? error.message : 'subscription-relations-pending';
+        throw Error('subscription-relations-pending');
+      }
+    }
+    if (!(await this.fileStore.subscriptionSaveJournal.count())) this.subscriptionRecoveryError = null;
+  }
+
+  async retrySubscriptionSave(assetId: string): Promise<void> {
+    await withRenewalLock(`keepany-renewal:${this.db.name}`, () => this.settleSubscriptionSaves(assetId));
+  }
+
+  async retryAllSubscriptionSaves(): Promise<void> {
+    await withRenewalLock(`keepany-renewal:${this.db.name}`, () => this.settleSubscriptionSaves());
+  }
+
+  // Abandon only the remaining relation intent. Asset fields and relations already
+  // accepted by RxDB stay in place and can be reviewed through normal editing.
+  async abandonSubscriptionSave(assetId: string): Promise<void> {
+    await withRenewalLock(`keepany-renewal:${this.db.name}`, async () => {
+      await this.fileStore.subscriptionSaveJournal.where('assetId').equals(assetId).delete();
+      if (!(await this.fileStore.subscriptionSaveJournal.count())) this.subscriptionRecoveryError = null;
+    });
+  }
+
+  async saveSubscription(expectedAsset: Asset | null, nextAsset: Asset,
+    links: ReadonlyArray<SubscriptionLink>): Promise<Asset> {
+    const expected = expectedAsset ? entitySchemas.asset.parse(expectedAsset) : null;
+    const proposed = entitySchemas.asset.parse(nextAsset);
+    if (proposed.kind !== 'subscription' || proposed.deleted ||
+      (expected && (expected.kind !== 'subscription' || expected.deleted || expected.id !== proposed.id)) ||
+      links.length > 2 || new Set(links.map(link => link.kind)).size !== links.length ||
+      links.some(link => !['project', 'account'].includes(link.kind) || !link.id || link.id === proposed.id)) {
+      throw Error('subscription-save-invalid');
+    }
+    return withRenewalLock(`keepany-renewal:${this.db.name}`, async () => {
+      await this.settleRenewalJournals();
+      await this.settleSubscriptionSaves(proposed.id);
+      const [current] = await this.db.records.storageInstance.findDocumentsById([key('asset', proposed.id)], false);
+      if (expected ? !current || JSON.stringify(parsedPayload(current as RecordRow)) !== rowFor('asset', expected).payload : !!current) {
+        throw Error('asset-stale');
+      }
+      for (const link of links) {
+        const target = await this.get<Asset>('asset', link.id);
+        if (!target || target.deleted || target.kind !== link.kind) throw Error('relation-endpoint');
+      }
+      const id = crypto.randomUUID();
+      const next = entitySchemas.asset.parse({ ...proposed, lastSubscriptionSaveId: id });
+      const relations = links.map(link => ({ targetKind: link.kind, row: rowFor('relation', {
+        id: crypto.randomUUID(), from: next.id, to: link.id, label: link.label,
+        createdAt: new Date().toISOString(), verifiedAt: '', deleted: false,
+      }) }));
+      // The unique assetId index prevents two tabs without Web Locks from creating
+      // competing pending intents for the same subscription.
+      const journal: SubscriptionSaveJournal = { id, assetId: next.id,
+        expectedMarker: expected?.lastSubscriptionSaveId ?? '', next: rowFor('asset', next), relations };
+      try {
+        await this.fileStore.subscriptionSaveJournal.add(journal);
+      } catch (error) {
+        if (await this.getPendingSubscriptionSave(next.id)) throw Error('subscription-relations-pending');
+        throw error;
+      }
+      try {
+        await this.fileStore.transaction('rw', this.fileStore.subscriptionSaveJournal, async () => {
+          // A second tab may cancel an uncommitted intent before this transaction
+          // starts. Never commit the asset after its recovery record has disappeared.
+          if (!(await this.fileStore.subscriptionSaveJournal.get(id))) throw Error('asset-stale');
+          await Dexie.waitFor(Dexie.ignoreTransaction(() => this.saveUnlocked('asset', next,
+            expected ? rowFor('asset', expected).payload : null, true)));
+        });
+      } catch (error) {
+        try {
+          const outcome = await replaySubscriptionSave(this.db, this.fileStore, id);
+          if (outcome === 'committed' || await subscriptionSaveComplete(this.db, journal)) return next;
+        } catch (recoveryError) {
+          this.subscriptionRecoveryError = recoveryError instanceof Error ? recoveryError.message : 'subscription-relations-pending';
+          throw Error('subscription-relations-pending');
+        }
+        throw error;
+      }
+      try {
+        if (await replaySubscriptionSave(this.db, this.fileStore, id) !== 'committed' &&
+          !(await subscriptionSaveComplete(this.db, journal))) throw Error('asset-stale');
+      }
+      catch (error) {
+        if (error instanceof Error && error.message === 'asset-stale') throw error;
+        this.subscriptionRecoveryError = error instanceof Error ? error.message : 'subscription-relations-pending';
+        throw Error('subscription-relations-pending');
+      }
+      if (!(await this.fileStore.subscriptionSaveJournal.count())) this.subscriptionRecoveryError = null;
+      return next;
+    });
+  }
+
   async saveTaskIfCurrent(expected: Task, next: Task): Promise<RecordRow> {
     if (expected.id !== next.id || expected.projectWorkflow?.roundId !== next.projectWorkflow?.roundId) throw Error('task-stale');
     return withRenewalLock(`keepany-task:${this.db.name}`, () => this.saveUnlocked('task', next, rowFor('task', expected).payload));
@@ -236,7 +378,7 @@ export class LocalRepository {
     return this.saveUnlocked('preference', next, expected ? rowFor('preference', expected).payload : null);
   }
 
-  private async saveUnlocked(type: EntityType, value: unknown, expectedPayload?: string | null): Promise<RecordRow> {
+  private async saveUnlocked(type: EntityType, value: unknown, expectedPayload?: string | null, subscriptionSave = false): Promise<RecordRow> {
     if (type === 'asset' && this.renewalRecoveryError) throw Error('renewal-recovery-pending');
     const next = rowFor(type, value);
     const entity = parsedPayload(next) as Record<string, unknown>;
@@ -272,6 +414,7 @@ export class LocalRepository {
           const proposed = parsedPayload(next) as Asset;
           if (previous.kind !== proposed.kind && (previous.kind === 'item' || proposed.kind === 'item')) throw Error('asset-kind-immutable');
           if (previous.lastRenewalId !== proposed.lastRenewalId) throw Error('asset-stale-renewal');
+          if (!subscriptionSave && previous.lastSubscriptionSaveId !== proposed.lastSubscriptionSaveId) throw Error('asset-stale');
           if (previous.lastItemEventId !== proposed.lastItemEventId) throw Error('item-stale');
           if (previous.kind === 'item' &&
             (previous.status !== proposed.status || previous.borrower !== proposed.borrower ||
@@ -559,6 +702,7 @@ export class LocalRepository {
   }
 
   private async assertArchiveMergeSyncAllowed(): Promise<void> {
+    if (await this.fileStore.subscriptionSaveJournal.count()) throw Error('subscription-relations-pending');
     const pending = await this.fileStore.archiveMerge.get('active');
     if (pending && pending.phase !== 'syncing') throw Error('archive-merge-sync-paused');
   }
@@ -685,7 +829,9 @@ export class LocalRepository {
     if (operation.id !== row.id || operation.kind !== row.type || operation.expectedVersion !==
       ((await this.scopedBaseFor(scope, row.id))?.version ?? 0) || operation.tombstone !== Boolean(parsedPayload(row).deleted)) throw Error('outbox-context');
     const id = scopedKey(scope, row.id);
-    return this.fileStore.transaction('rw', this.fileStore.archiveMerge, this.fileStore.scopedOutbox, async () => {
+    return this.fileStore.transaction('rw', this.fileStore.archiveMerge, this.fileStore.scopedOutbox,
+      this.fileStore.subscriptionSaveJournal, async () => {
+      if (await this.fileStore.subscriptionSaveJournal.count()) throw Error('subscription-relations-pending');
       const pending = await this.fileStore.archiveMerge.get('active');
       if (pending && pending.phase !== 'syncing') throw Error('archive-merge-sync-paused');
       const existing = await this.fileStore.scopedOutbox.get(id);
@@ -740,7 +886,9 @@ export class LocalRepository {
     if (previous && (previous.change.sequence !== change.sequence || previous.change.row.payload !== change.row.payload)) throw Error('pull-pending');
     if (!previous) {
       const current = await this.db.records.findOne(change.row.id).exec();
-      await this.fileStore.transaction('rw', this.fileStore.archiveMerge, this.fileStore.scopedPull, async () => {
+      await this.fileStore.transaction('rw', this.fileStore.archiveMerge, this.fileStore.scopedPull,
+        this.fileStore.subscriptionSaveJournal, async () => {
+        if (await this.fileStore.subscriptionSaveJournal.count()) throw Error('subscription-relations-pending');
         const pending = await this.fileStore.archiveMerge.get('active');
         if (pending && pending.phase !== 'syncing') throw Error('archive-merge-sync-paused');
         await this.fileStore.scopedPull.add({ id: scope, scope, cursorStart: cursor, change,
@@ -939,9 +1087,10 @@ export class LocalRepository {
 
   private async protectedFileIds(): Promise<Set<string>> {
     const rows = await this.allRecords();
-    const [restores, imports, pulls, scopedOutbox, scopedPull, renewals] = await Promise.all([
+    const [restores, imports, pulls, scopedOutbox, scopedPull, renewals, subscriptionSaves] = await Promise.all([
       this.fileStore.journal.toArray(), this.fileStore.importJournal.toArray(), this.fileStore.pullJournal.toArray(),
       this.fileStore.scopedOutbox.toArray(), this.fileStore.scopedPull.toArray(), this.fileStore.renewalJournal.toArray(),
+      this.fileStore.subscriptionSaveJournal.toArray(),
     ]);
     for (const entry of restores) rows.push(...entry.rows);
     for (const entry of imports) rows.push(...entry.rows);
@@ -949,6 +1098,7 @@ export class LocalRepository {
     for (const entry of scopedOutbox) rows.push(entry.row);
     for (const entry of scopedPull) rows.push(entry.change.row);
     for (const entry of renewals) rows.push(entry.next);
+    for (const entry of subscriptionSaves) rows.push(entry.next);
     const merge = await this.fileStore.archiveMerge.get('active');
     if (merge) for (const change of merge.changes) {
       rows.push(change.after);
@@ -960,27 +1110,42 @@ export class LocalRepository {
   async pendingArchiveMerge(): Promise<PendingArchiveMerge | null> {
     const journal = await this.fileStore.archiveMerge.get('active');
     return journal ? { phase: journal.phase, archiveHash: journal.archiveHash,
-      changedRows: journal.changes.length, addedFiles: journal.addedFileIds.length } : null;
+      changedRows: journal.changes.length, changedCandidates: journal.intakeReviewChanges?.length ?? 0,
+      addedFiles: journal.addedFileIds.length } : null;
   }
 
   async previewArchiveMerge(bytes: Uint8Array): Promise<ArchiveMergePreview> {
+    if (this.intakeReviewMigrationError) await this.retryIntakeReviewMigration();
+    await this.retryAllSubscriptionSaves();
     if (await this.pendingArchiveMerge()) throw Error('archive-merge-pending');
-    const { rows } = await inspectArchive(bytes);
+    const { rows, intakeReview } = await inspectArchive(bytes);
     const target = await this.allRecords();
     const byId = new Map(target.map(row => [row.id, row]));
+    const targetReview = parseReviewedCandidates(await this.fileStore.intakeReview.toArray());
+    const reviewById = new Map(targetReview.map(row => [row.id, row]));
     const fingerprint = await targetFingerprint(target, this.fileStore);
+    if (reviewFingerprint(parseReviewedCandidates(await this.fileStore.intakeReview.toArray())) !== reviewFingerprint(targetReview) ||
+      JSON.stringify((await this.allRecords()).sort((a, b) => a.id.localeCompare(b.id))) !==
+      JSON.stringify([...target].sort((a, b) => a.id.localeCompare(b.id)))) throw Error('archive-merge-stale');
     return { targetFingerprint: fingerprint, rows: rows.map(source => {
       const existing = byId.get(source.id);
       return { id: source.id, type: source.type,
         status: !existing ? 'new' : existing.payload === source.payload ? 'same' : 'conflict',
         sourcePayload: source.payload, targetPayload: existing?.payload ?? null };
+    }), intakeReview: intakeReview.map(source => {
+      const existing = reviewById.get(source.id);
+      return { id: `review:${source.id}`, status: !existing ? 'new' : sameReviewedCandidate(source, existing) ? 'same' : 'conflict',
+        sourceCandidate: source, targetCandidate: existing ?? null };
     }) };
   }
 
   async applyArchiveMerge(bytes: Uint8Array, choices: Record<string, ArchiveMergeChoice>,
-    expectedFingerprint: string): Promise<{ imported: number; replaced: number; skipped: number }> {
+    expectedFingerprint: string): Promise<{ imported: number; replaced: number; skipped: number;
+      review?: { imported: number; replaced: number; skipped: number } }> {
     return withRenewalLock(`keepany-renewal:${this.db.name}`, async () => {
+      if (this.intakeReviewMigrationError) await this.retryIntakeReviewMigration();
       await this.settleRenewalJournals();
+      await this.settleSubscriptionSaves();
       if (await this.pendingArchiveMerge()) throw Error('archive-merge-pending');
       if (!(await this.fileStore.datasetBinding.get('active'))) throw Error('archive-merge-unbound');
       if (await this.fileStore.journal.count() || await this.fileStore.importJournal.count() ||
@@ -988,16 +1153,21 @@ export class LocalRepository {
         await this.fileStore.scopedOutbox.count() || await this.fileStore.scopedAttachmentUploads.count()) {
         throw Error('archive-merge-recovery-pending');
       }
-      const { rows, manifest, entries } = await inspectArchive(bytes);
+      const { rows, intakeReview, manifest, entries } = await inspectArchive(bytes);
       const archiveHash = await sha(bytes);
       const target = await this.allRecords();
       if (await targetFingerprint(target, this.fileStore) !== expectedFingerprint) throw Error('archive-merge-stale');
       const byId = new Map(target.map(row => [row.id, row]));
-      const sourceIds = new Set(rows.map(row => row.id));
+      const targetReview = parseReviewedCandidates(await this.fileStore.intakeReview.toArray());
+      const reviewById = new Map(targetReview.map(row => [row.id, row]));
+      const sourceIds = new Set([...rows.map(row => row.id), ...intakeReview.map(row => `review:${row.id}`)]);
       if (Object.keys(choices).some(id => !sourceIds.has(id) || !['source', 'target'].includes(choices[id]))) {
         throw Error('archive-merge-choice');
       }
       const changes: ArchiveMergeChange[] = [];
+      const intakeReviewChanges: ArchiveMergeReviewChange[] = [];
+      const review = { imported: 0, replaced: 0, skipped: 0 };
+      const finalReview = new Map(reviewById);
       let imported = 0; let replaced = 0; let skipped = 0;
       const finalRows = new Map(byId);
       for (const source of rows) {
@@ -1015,9 +1185,26 @@ export class LocalRepository {
           } else skipped++;
         }
       }
+      for (const source of intakeReview) {
+        const before = reviewById.get(source.id) ?? null;
+        const choice = choices[`review:${source.id}`];
+        if (!before) {
+          if (choice) throw Error('archive-merge-choice');
+          intakeReviewChanges.push({ before, after: source }); finalReview.set(source.id, source); review.imported++;
+        } else if (sameReviewedCandidate(before, source)) {
+          if (choice) throw Error('archive-merge-choice');
+          review.skipped++;
+        } else {
+          if (choice !== 'source' && choice !== 'target') throw Error('archive-merge-choice');
+          if (choice === 'source') {
+            intakeReviewChanges.push({ before, after: source }); finalReview.set(source.id, source); review.replaced++;
+          } else review.skipped++;
+        }
+      }
       // The selected result is checked as one data set, including references to
       // target-only records and source tombstones.
       const final = [...finalRows.values()];
+      assertReviewedAssetReferences([...finalReview.values()], assetIdsIn(final));
       const finalFileIds = attachmentIdsIn(final);
       const sourceFiles = new Map(manifest.attachments.map(attachment => [attachment.id, attachment]));
       const existingFiles = await this.fileStore.blobs.toArray();
@@ -1037,12 +1224,14 @@ export class LocalRepository {
       // row writes below also use storage CAS, so an edit after this check fails.
       if (await targetFingerprint(await this.allRecords(), this.fileStore) !== expectedFingerprint) throw Error('archive-merge-stale');
       const journal: ArchiveMergeJournal = { id: 'active', phase: 'applying', archiveHash,
-        targetFingerprint: expectedFingerprint, changes, addedFileIds, insertedFileIds: [] };
-      await this.fileStore.transaction('rw', this.fileStore.archiveMerge, this.fileStore.scopedOutbox,
-        this.fileStore.scopedPull, this.fileStore.scopedAttachmentUploads, async () => {
+        targetFingerprint: expectedFingerprint, changes, intakeReviewChanges, addedFileIds, insertedFileIds: [] };
+      await this.fileStore.transaction('rw', [this.fileStore.archiveMerge, this.fileStore.scopedOutbox,
+        this.fileStore.scopedPull, this.fileStore.scopedAttachmentUploads, this.fileStore.intakeReview], async () => {
           if (await this.fileStore.archiveMerge.get('active')) throw Error('archive-merge-pending');
           if (await this.fileStore.scopedOutbox.count() || await this.fileStore.scopedPull.count() ||
             await this.fileStore.scopedAttachmentUploads.count()) throw Error('archive-merge-recovery-pending');
+          if (reviewFingerprint(parseReviewedCandidates(await this.fileStore.intakeReview.toArray())) !==
+            reviewFingerprint(targetReview)) throw Error('archive-merge-stale');
           await this.fileStore.archiveMerge.add(journal);
         });
       try {
@@ -1060,11 +1249,15 @@ export class LocalRepository {
           });
         }
         for (const change of changes) await writeArchiveMergeRow(this.db, change.before, change.after);
+        await this.fileStore.transaction('rw', this.fileStore.intakeReview, async () => {
+          for (const change of intakeReviewChanges) await writeArchiveMergeReview(this.fileStore, change.before, change.after);
+        });
         const actual = await this.allRecords();
         validateReferences(actual, attachmentIdsIn(actual));
+        assertReviewedAssetReferences(parseReviewedCandidates(await this.fileStore.intakeReview.toArray()), assetIdsIn(actual));
         for (const id of attachmentIdsIn(actual)) if (!(await this.fileStore.blobs.get(id))) throw Error('archive-attachment-reference');
         await this.fileStore.archiveMerge.update('active', { phase: 'applied' });
-        return { imported, replaced, skipped };
+        return { imported, replaced, skipped, ...(intakeReview.length ? { review } : {}) };
       } catch (error) {
         await rollbackArchiveMergeJournal(this.db, this.fileStore).catch(() => {});
         throw error;
@@ -1102,8 +1295,12 @@ export class LocalRepository {
 
   async exportArchive(): Promise<Uint8Array> {
     return withRenewalLock(`keepany-renewal:${this.db.name}`, async () => {
+      if (this.intakeReviewMigrationError) await this.retryIntakeReviewMigration();
       await this.settleRenewalJournals();
+      await this.settleSubscriptionSaves();
       const rows = await this.allRecords();
+      const intakeReview = parseReviewedCandidates(await this.fileStore.intakeReview.toArray());
+      assertReviewedAssetReferences(intakeReview, assetIdsIn(rows));
       const blobs: StoredFile[] = [];
       for (const id of attachmentIdsIn(rows)) {
         const file = await this.fileStore.blobs.get(id);
@@ -1111,7 +1308,8 @@ export class LocalRepository {
         blobs.push(file);
       }
       validateReferences(rows, new Set(blobs.map(blob => blob.id)));
-      const entries: Record<string, Uint8Array> = { 'records.json': strToU8(JSON.stringify(rows)) };
+      const entries: Record<string, Uint8Array> = { 'records.json': strToU8(JSON.stringify(rows)),
+        'intake-review.json': strToU8(JSON.stringify(intakeReview)) };
       const attachments: AttachmentManifest[] = [];
       for (const item of blobs) {
         const bytes = new Uint8Array(await item.blob.arrayBuffer());
@@ -1122,6 +1320,8 @@ export class LocalRepository {
       // export instead of returning a mixed record/image snapshot.
       if (JSON.stringify((await this.allRecords()).sort((a, b) => a.id.localeCompare(b.id))) !==
         JSON.stringify([...rows].sort((a, b) => a.id.localeCompare(b.id)))) throw Error('archive-export-stale');
+      if (reviewFingerprint(parseReviewedCandidates(await this.fileStore.intakeReview.toArray())) !==
+        reviewFingerprint(intakeReview)) throw Error('archive-export-stale');
       for (const item of blobs) {
         const current = await this.fileStore.blobs.get(item.id);
         const expected = attachments.find(attachment => attachment.id === item.id);
@@ -1132,6 +1332,7 @@ export class LocalRepository {
       entries['manifest.json'] = strToU8(JSON.stringify({
         format: 'keepany-backup', version: 1, createdAt: new Date().toISOString(),
         recordCount: rows.length, recordsHash: await sha(entries['records.json']), attachments,
+        intakeReviewCount: intakeReview.length, intakeReviewHash: await sha(entries['intake-review.json']),
         ...(sourceBinding ? { sourceBinding } : {}),
       }));
       if (Object.values(entries).reduce((size, entry) => size + entry.length, 0) > 300 * 1024 * 1024) throw Error('archive-size');
@@ -1143,15 +1344,18 @@ export class LocalRepository {
 
   async restoreArchive(bytes: Uint8Array): Promise<number> {
     return withRenewalLock(`keepany-renewal:${this.db.name}`, async () => {
+      if (this.intakeReviewMigrationError) await this.retryIntakeReviewMigration();
       await this.settleRenewalJournals();
+      await this.settleSubscriptionSaves();
       if (await this.pendingArchiveMerge()) throw Error('archive-merge-pending');
       if (await this.fileStore.journal.count()) throw Error('restore-recovery-pending');
-      const { rows, manifest, entries } = await inspectArchive(bytes);
+      const { rows, intakeReview, manifest, entries } = await inspectArchive(bytes);
       // Validate all conflicts before writing attachments or a journal.
       for (const row of rows) {
         const current = await this.db.records.findOne(row.id).exec();
         if (current && canonical(current).payload !== row.payload) throw Error('restore-conflict');
       }
+      await assertReviewRestoreConflicts(this.fileStore, intakeReview);
       for (const attachment of manifest.attachments) {
         const current = await this.fileStore.blobs.get(attachment.id);
         if (current && (current.name !== attachment.name || current.blob.type !== attachment.type ||
@@ -1159,7 +1363,9 @@ export class LocalRepository {
           await sha(new Uint8Array(await current.blob.arrayBuffer())) !== attachment.sha256)) throw Error('restore-conflict');
       }
       const journalId = crypto.randomUUID();
-      await this.fileStore.transaction('rw', this.fileStore.blobs, this.fileStore.journal, async () => {
+      await this.fileStore.transaction('rw', this.fileStore.blobs, this.fileStore.journal,
+        this.fileStore.intakeReview, async () => {
+        await assertReviewRestoreConflicts(this.fileStore, intakeReview);
         for (const attachment of manifest.attachments) {
           const existing = await this.fileStore.blobs.get(attachment.id);
           if (existing) {
@@ -1175,7 +1381,7 @@ export class LocalRepository {
             });
           }
         }
-        await this.fileStore.journal.put({ id: journalId, rows });
+        await this.fileStore.journal.put({ id: journalId, rows, intakeReview });
     });
     try {
       await replayJournal(this.db, this.fileStore, journalId);
@@ -1197,6 +1403,10 @@ export class LocalRepository {
 async function replayJournal(db: RxDatabase, store: FileStore, id: string): Promise<void> {
   const journal = await store.journal.get(id);
   if (!journal) return;
+  const intakeReview = parseReviewedCandidates(journal.intakeReview ?? []);
+  await assertReviewRestoreConflicts(store, intakeReview);
+  const currentRows = (await db.records.find().exec()).map(canonical);
+  assertReviewedAssetReferences(intakeReview, assetIdsIn([...currentRows, ...journal.rows]));
   for (const row of journal.rows) {
     await assertRowAttachmentsAvailable(store, row);
     const current = await db.records.findOne(row.id).exec();
@@ -1212,15 +1422,50 @@ async function replayJournal(db: RxDatabase, store: FileStore, id: string): Prom
       if (canonical(raced).payload !== row.payload) throw Error('restore-conflict');
     }
   }
-  await store.journal.delete(id);
+  assertReviewedAssetReferences(intakeReview, assetIdsIn((await db.records.find().exec()).map(canonical)));
+  await store.transaction('rw', store.intakeReview, store.journal, async () => {
+    await assertReviewRestoreConflicts(store, intakeReview);
+    for (const row of intakeReview) if (!(await store.intakeReview.get(row.id))) await store.intakeReview.add(row);
+    await store.journal.delete(id);
+  });
+}
+
+function assetIdsIn(rows: RecordRow[]): Set<string> {
+  return new Set(rows.filter(row => row.type === 'asset').map(row => parsedPayload(row).id));
+}
+
+function reviewFingerprint(rows: ReviewedCandidate[]): string {
+  return JSON.stringify([...rows].sort((a, b) => a.id.localeCompare(b.id)));
+}
+
+async function assertReviewRestoreConflicts(store: FileStore, rows: ReviewedCandidate[]): Promise<void> {
+  for (const row of rows) {
+    const current = await store.intakeReview.get(row.id);
+    if (current && !sameReviewedCandidate(current, row)) throw Error('restore-conflict');
+  }
 }
 
 async function targetFingerprint(rows: RecordRow[], store: FileStore): Promise<string> {
   const files = await store.blobs.toArray();
+  const intakeReview = parseReviewedCandidates(await store.intakeReview.toArray());
   const signatures = await Promise.all(files.map(async file => ({ id: file.id, name: file.name,
     type: file.blob.type, sha256: await sha(new Uint8Array(await file.blob.arrayBuffer())) })));
   return sha(strToU8(JSON.stringify({ rows: [...rows].sort((a, b) => a.id.localeCompare(b.id)),
-    files: signatures.sort((a, b) => a.id.localeCompare(b.id)) })));
+    files: signatures.sort((a, b) => a.id.localeCompare(b.id)), intakeReview: reviewFingerprint(intakeReview) })));
+}
+
+function sameMergeReview(left: ReviewedCandidate | null, right: ReviewedCandidate | null): boolean {
+  return left === right || !!left && !!right && sameReviewedCandidate(left, right);
+}
+
+async function writeArchiveMergeReview(store: FileStore, before: ReviewedCandidate | null,
+  after: ReviewedCandidate | null): Promise<void> {
+  const id = after?.id ?? before?.id;
+  if (!id) throw Error('archive-merge-row');
+  const current = await store.intakeReview.get(id) ?? null;
+  if (!sameMergeReview(current, before)) throw Error('archive-merge-race');
+  if (after) await store.intakeReview.put(after);
+  else await store.intakeReview.delete(id);
 }
 
 function sameMergeRow(left: RecordRow | null, right: RecordRow | null): boolean {
@@ -1253,6 +1498,19 @@ async function rollbackArchiveMergeJournal(db: RxDatabase, store: FileStore): Pr
     const current = raw && !raw._deleted ? raw as RecordRow : null;
     if (!sameMergeRow(current, change.after) && !sameMergeRow(current, change.before)) throw Error('archive-merge-rollback-conflict');
   }
+  await store.transaction('rw', store.intakeReview, async () => {
+    for (const change of journal.intakeReviewChanges ?? []) {
+      const current = await store.intakeReview.get(change.after.id) ?? null;
+      if (!sameMergeReview(current, change.before) && !sameMergeReview(current, change.after)) {
+        throw Error('archive-merge-rollback-conflict');
+      }
+    }
+    // Undo review decisions before removing the assets they may reference.
+    for (const change of [...(journal.intakeReviewChanges ?? [])].reverse()) {
+      const current = await store.intakeReview.get(change.after.id) ?? null;
+      if (!sameMergeReview(current, change.before)) await writeArchiveMergeReview(store, change.after, change.before);
+    }
+  });
   for (const change of [...journal.changes].reverse()) {
     const [raw] = await db.records.storageInstance.findDocumentsById([change.after.id], true);
     const current = raw && !raw._deleted ? raw as RecordRow : null;
@@ -1502,11 +1760,22 @@ export async function openLocalRepository(name: string): Promise<LocalRepository
     const openedDb = db;
     for (const entry of await store.importJournal.toArray()) await rollbackImport(db, store, entry.id);
     const repository = new LocalRepository(db, store);
+    if (name === 'keepany-v1') {
+      try { await repository.retryIntakeReviewMigration(); }
+      catch { /* Keep local assets readable and preserve the legacy review database. */ }
+    }
     await withRenewalLock(`keepany-renewal:${name}`, async () => {
       for (const entry of await store.renewalJournal.toArray()) {
         try { await replayRenewalJournal(openedDb, store, entry.id); }
         catch (error) {
           repository.renewalRecoveryError = error instanceof Error ? error.message : 'renewal-recovery-pending';
+          break;
+        }
+      }
+      for (const entry of await store.subscriptionSaveJournal.toArray()) {
+        try { await replaySubscriptionSave(openedDb, store, entry.id); }
+        catch (error) {
+          repository.subscriptionRecoveryError = error instanceof Error ? error.message : 'subscription-relations-pending';
           break;
         }
       }
@@ -1570,10 +1839,16 @@ function defaultRepository(): Promise<LocalRepository> {
           syncError: await resource.fileStore.pullJournal.count() || await resource.fileStore.scopedPull.count()
             ? 'sync-recovery-pending' : null,
           renewalError: await resource.fileStore.renewalJournal.count() ? 'renewal-recovery-pending' : null,
+          subscriptionError: await resource.fileStore.subscriptionSaveJournal.count() ? 'subscription-relations-pending' : null,
+          intakeError: null,
         };
       }
       if (resource.recoveryState.renewalError === undefined) resource.recoveryState.renewalError = null;
+      if (resource.recoveryState.subscriptionError === undefined) resource.recoveryState.subscriptionError = null;
+      if (resource.recoveryState.intakeError === undefined) resource.recoveryState.intakeError = null;
       const repository = new LocalRepository(resource.db, resource.fileStore, resource.recoveryState);
+      try { await repository.retryIntakeReviewMigration(); }
+      catch { /* The shared migration error stays visible while local CRUD remains usable. */ }
       await withRenewalLock(`keepany-renewal:${resource.db.name}`, async () => {
         for (const entry of await resource.fileStore.renewalJournal.toArray()) {
           try { await replayRenewalJournal(resource.db, resource.fileStore, entry.id); }
@@ -1582,6 +1857,14 @@ function defaultRepository(): Promise<LocalRepository> {
             break;
           }
         }
+        for (const entry of await resource.fileStore.subscriptionSaveJournal.toArray()) {
+          try { await replaySubscriptionSave(resource.db, resource.fileStore, entry.id); }
+          catch (error) {
+            repository.subscriptionRecoveryError = error instanceof Error ? error.message : 'subscription-relations-pending';
+            break;
+          }
+        }
+        if (!(await resource.fileStore.subscriptionSaveJournal.count())) repository.subscriptionRecoveryError = null;
         if ((await resource.fileStore.archiveMerge.get('active'))?.phase === 'applying') {
           try { await rollbackArchiveMergeJournal(resource.db, resource.fileStore); }
           catch { /* Pending state remains visible for explicit recovery. */ }
@@ -1600,6 +1883,10 @@ export async function createCategory(kind: AssetKind, name: string, order: numbe
   return (await defaultRepository()).createCategory(kind, name, order);
 }
 export async function saveAssetIfCurrent(expected: Asset, next: Asset) { return (await defaultRepository()).saveAssetIfCurrent(expected, next); }
+export async function saveSubscription(expected: Asset | null, next: Asset, links: ReadonlyArray<SubscriptionLink>) { return (await defaultRepository()).saveSubscription(expected, next, links); }
+export async function getPendingSubscriptionSave(assetId: string) { return (await defaultRepository()).getPendingSubscriptionSave(assetId); }
+export async function retrySubscriptionSave(assetId: string) { return (await defaultRepository()).retrySubscriptionSave(assetId); }
+export async function abandonSubscriptionSave(assetId: string) { return (await defaultRepository()).abandonSubscriptionSave(assetId); }
 export async function saveTaskIfCurrent(expected: Task, next: Task) { return (await defaultRepository()).saveTaskIfCurrent(expected, next); }
 export async function saveSubmissionIfCurrent(expected: Submission, next: Submission) { return (await defaultRepository()).saveSubmissionIfCurrent(expected, next); }
 export async function archiveProjectIfWorkflowComplete(expectedProject: Asset, expectedRoundId: string) {
@@ -1650,6 +1937,8 @@ const manifestSchema = z.object({
   format: z.literal('keepany-backup'), version: z.literal(1),
   createdAt: z.string().datetime(), recordCount: z.number().int().nonnegative().max(100000),
   recordsHash: z.string().regex(/^[0-9a-f]{64}$/), attachments: z.array(attachmentSchema).max(10000),
+  intakeReviewCount: z.number().int().nonnegative().max(100000).optional(),
+  intakeReviewHash: z.string().regex(/^[0-9a-f]{64}$/).optional(),
   sourceBinding: z.object({ endpoint: z.string(), accountId: z.string(), workspaceId: z.string(), scope: z.string() }).optional(),
 });
 async function sha(bytes: Uint8Array): Promise<string> {
@@ -1684,6 +1973,17 @@ export async function inspectArchive(bytes: Uint8Array) {
     rows.push({ id: row.id, type: row.type, payload: JSON.stringify(parsed), updatedAt: row.updatedAt });
   }
   const allowed = new Set(['manifest.json', 'records.json']);
+  let intakeReview: ReviewedCandidate[] = [];
+  if (manifest.intakeReviewCount !== undefined || manifest.intakeReviewHash !== undefined) {
+    if (manifest.intakeReviewCount === undefined || !manifest.intakeReviewHash || !entries['intake-review.json']) {
+      throw Error('archive-review-missing');
+    }
+    allowed.add('intake-review.json');
+    if (await sha(entries['intake-review.json']) !== manifest.intakeReviewHash) throw Error('archive-hash');
+    intakeReview = parseReviewedCandidates(JSON.parse(strFromU8(entries['intake-review.json'])));
+    if (intakeReview.length !== manifest.intakeReviewCount) throw Error('archive-review-count');
+    assertReviewedAssetReferences(intakeReview, assetIdsIn(rows));
+  }
   const attachmentIds = new Set<string>();
   for (const attachment of manifest.attachments) {
     if (attachmentIds.has(attachment.id)) throw Error('archive-id');
@@ -1695,7 +1995,7 @@ export async function inspectArchive(bytes: Uint8Array) {
   }
   if (Object.keys(entries).some(path => !allowed.has(path))) throw Error('archive-entry');
   validateReferences(rows, attachmentIds);
-  return { rows, manifest, entries };
+  return { rows, intakeReview, manifest, entries };
 }
 
 function validateReferences(rows: RecordRow[], attachmentIds: Set<string>): void {

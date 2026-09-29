@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { syncPullResponseSchema, syncPushResponseSchema, type SyncChange, type SyncOperation } from '../../contracts/src';
 import { generateWorkspaceKey, openSyncChangeEnvelope, ReplayGuard, sealEnvelope, type RecoveryWrap } from '../../crypto/src';
-import type { LocalRepository, RecordRow, ScopedConflict } from '../../local-db/src';
+import type { LocalRepository, RecordRow, ScopedConflict, ScopedOutbox } from '../../local-db/src';
 import { SelfHostAttachmentSync } from './attachment-sync';
 
 export type SyncStatus = 'local' | 'pending' | 'syncing' | 'synced' | 'conflict' | 'failed';
@@ -290,10 +290,21 @@ export class SelfHostSyncClient {
       binding.accountId !== this.accountId || binding.workspaceId !== this.workspaceId)) {
       return { status: 'failed', pending: 0, cursor: 0, conflict: null, error: 'sync-dataset-bound' };
     }
-    const [outbox, dirty, cursor, conflict] = await Promise.all([
-      this.repository.listScopedOutbox(scope), this.repository.dirtyScopedRows(scope),
-      this.repository.scopedCursor(scope), this.repository.scopedConflict(scope),
-    ]);
+    const subscriptionFailure = async (): Promise<SyncReport> => ({ status: 'failed', pending: 0,
+      cursor: await this.repository.scopedCursor(scope), conflict: null, error: 'subscription-relations-pending' });
+    // Status reads must not transfer or repair a partially saved subscription.
+    if (await this.repository.fileStore.subscriptionSaveJournal.count()) return subscriptionFailure();
+    let outbox: ScopedOutbox[];
+    let dirty: RecordRow[], cursor: number, conflict: ScopedConflict | null;
+    try {
+      [outbox, dirty, cursor, conflict] = await Promise.all([
+        this.repository.listScopedOutbox(scope), this.repository.dirtyScopedRows(scope),
+        this.repository.scopedCursor(scope), this.repository.scopedConflict(scope),
+      ]);
+    } catch (error) {
+      if (error instanceof Error && error.message === 'subscription-relations-pending') return subscriptionFailure();
+      throw error;
+    }
     const pending = outbox.length + dirty.length;
     const blocked = outbox.some(item => item.blocked);
     return { status: status === 'failed' ? 'failed' : conflict ? 'conflict' : blocked ? 'failed' : pending && (status === 'local' || status === 'synced') ? 'pending' : status,
@@ -334,6 +345,7 @@ export class SelfHostSyncClient {
 
   private async runUnlocked(scope: string, onStatus?: (report: SyncReport) => void): Promise<SyncReport> {
     try {
+      await this.repository.retryAllSubscriptionSaves();
       await this.verifyDataset(scope);
       const keyState = await this.pinKey(scope);
       const attachments = this.attachments(scope);

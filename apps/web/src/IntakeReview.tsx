@@ -22,6 +22,9 @@ export function IntakeReview() {
 	const [rows, setRows] = useState<ReviewedCandidate[]>([]);
 	const [message, setMessage] = useState("");
 	const [workingId, setWorkingId] = useState("");
+	const [migrationPending, setMigrationPending] = useState(false);
+	const [migrationBusy, setMigrationBusy] = useState(false);
+	const migrationInFlight = useRef(false);
 	const inFlight = useRef(new Set<string>());
 	const drafts = useRef(new Map<string, Asset>());
 	const pendingSaves = useRef(new Map<string, Promise<void>>());
@@ -29,9 +32,28 @@ export function IntakeReview() {
 	const flushEdits = async () => Promise.all([...pendingSaves.current.values()]);
 	useEffect(() => {
 		let active = true;
-		void listReviewedCandidates().then((items) => { if (active) setRows(items); });
+		void (async () => {
+			const repository = await localRepository();
+			const items = await listReviewedCandidates();
+			if (active) {
+				setRows(items);
+				setMigrationPending(!!repository.intakeReviewMigrationError);
+			}
+		})().catch(() => { if (active) setMessage(t("error")); });
 		return () => { active = false; };
-	}, []);
+	}, [t]);
+	async function retryMigration() {
+		if (migrationInFlight.current) return;
+		migrationInFlight.current = true;
+		setMigrationBusy(true);
+		try {
+			await (await localRepository()).retryIntakeReviewMigration();
+			await refresh();
+			setMigrationPending(false);
+			setMessage("");
+		} catch { setMigrationPending(true); }
+		finally { migrationInFlight.current = false; setMigrationBusy(false); }
+	}
 
 	function edit(id: string, field: "name" | "kind" | "url" | "description", value: string) {
 		if (inFlight.current.has(id)) return;
@@ -94,6 +116,10 @@ export function IntakeReview() {
 	return <div className="intake-review">
 		<p>{t("reviewIntro")}</p>
 		<p className="muted">{t("reviewPdfHint")}</p>
+		{migrationPending && <div role="alert" className="notice">
+			<p>{t("reviewMigrationPending")}</p>
+			<Button disabled={migrationBusy} onClick={() => void retryMigration()}>{t("reviewRetryMigration")}</Button>
+		</div>}
 		{message && <p role="status" className="intake-review-message">{message}</p>}
 		{rows.length > 0 && <div className="intake-review-list">
 			<h3>{t("reviewCandidates")}</h3>

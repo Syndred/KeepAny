@@ -32,6 +32,7 @@ async function officialAccess() {
 	});
 }
 function syncFailureKey(error: string | undefined, mode: AccessMode): string {
+	if (error === "subscription-relations-pending") return "syncPendingSubscription";
 	if (error?.startsWith("sync-attachment-") || error?.startsWith("attachment-"))
 		return mode === "official" ? "syncOfficialFilesFailed" : "syncFilesUnsupported";
 	if (error === "sync-auth" || (mode === "official" && error?.startsWith("binding-")))

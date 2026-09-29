@@ -36,6 +36,7 @@ export function RemoteBackupPanel({
 	acceptPreview,
 	canConfirm,
 	restoreCount,
+	restoreReviewCount,
 	confirmRestore,
 }: {
 	password: string;
@@ -46,9 +47,11 @@ export function RemoteBackupPanel({
 		archive: Uint8Array,
 		count: number,
 		generation: number,
+		reviewCount?: number,
 	) => boolean;
 	canConfirm: boolean;
 	restoreCount: number;
+	restoreReviewCount: number;
 	confirmRestore: () => void;
 }) {
 	const { t } = useTranslation();
@@ -163,7 +166,7 @@ export function RemoteBackupPanel({
 				transport(true),
 			);
 			const inspected = await inspectArchive(archive);
-			if (acceptPreview(archive, inspected.rows.length, generation))
+			if (acceptPreview(archive, inspected.rows.length, generation, inspected.intakeReview.length))
 				setStatus(t("remotePreviewReady"));
 		} catch (error) {
 			setStatus(failure(error, "preview"));
@@ -348,6 +351,7 @@ export function RemoteBackupPanel({
 				>
 					{t("remotePreview")}
 				</Button>
+				{canConfirm && <p role="status">{t("restorePreviewSummary", { count: restoreCount, reviewCount: restoreReviewCount })}</p>}
 				{canConfirm && (
 					<Button variant="primary" onClick={confirmRestore} disabled={busy}>
 						{t("confirm")} · {restoreCount}

@@ -10,6 +10,7 @@ import {
 } from "../../../../packages/local-db/src";
 import { decryptBackup, encryptBackup } from "../../../../packages/local-db/src/backup-crypto";
 import type { SyncReport } from "../../../../packages/sync-client/src";
+import type { ReviewedCandidate } from "../../../../packages/local-db/src/intake-review";
 import { Button } from "./ui/button";
 
 interface Props {
@@ -43,6 +44,22 @@ function fieldValue(value: unknown): string {
 	if (value === undefined || value === null || value === "") return "—";
 	if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") return String(value);
 	return JSON.stringify(value);
+}
+
+const reviewStatusKey = (status: "pending" | "accepted" | "ignored") =>
+	status === "pending" ? "reviewStatusPending" : status === "accepted" ? "reviewStatusAccepted" : "reviewStatusIgnored";
+
+function reviewDifferences(source: ReviewedCandidate, target: ReviewedCandidate | null) {
+	return [
+		{ key: "migrationField_name", source: source.asset.name, target: target?.asset.name },
+		{ key: "intakeRecordType", source: source.asset.kind, target: target?.asset.kind, translated: true },
+		{ key: "migrationField_url", source: source.asset.url, target: target?.asset.url },
+		{ key: "migrationField_description", source: source.asset.description, target: target?.asset.description },
+		{ key: "reviewDecision", source: reviewStatusKey(source.status), target: target && reviewStatusKey(target.status), translated: true },
+		{ key: "reviewKindChosen", source: source.kindSelected ? "reviewChosen" : "reviewNotChosen", target: target?.kindSelected ? "reviewChosen" : "reviewNotChosen", translated: true },
+		{ key: "reviewSourceText", source: source.sourceText, target: target?.sourceText },
+		{ key: "reviewFileName", source: source.fileName, target: target?.fileName },
+	].filter(field => field.source !== field.target);
 }
 
 async function digest(bytes: Uint8Array): Promise<string> {
@@ -162,7 +179,8 @@ export function ArchiveMigrationPanel({ configurationKey, syncBusy, onBusyChange
 		if (!target || !preview || !sourceBytes || !backupVerified) throw Error("migrationBackupRequired");
 		if (!sourceAcknowledged || (!sourceBinding && !legacySourceLabel.trim())) throw Error("migrationSourceIdentity");
 		const conflicts = preview.rows.filter(row => row.status === "conflict");
-		if (conflicts.some(row => !choices[row.id])) throw Error("archive-merge-choice");
+		const reviewConflicts = preview.intakeReview.filter(row => row.status === "conflict");
+		if ([...conflicts, ...reviewConflicts].some(row => !choices[row.id])) throw Error("archive-merge-choice");
 		const verifiedTarget = await prepareTarget();
 		if (JSON.stringify(verifiedTarget) !== JSON.stringify(target)) throw Error("migrationTargetChanged");
 		const repo = await localRepository();
@@ -182,7 +200,9 @@ export function ArchiveMigrationPanel({ configurationKey, syncBusy, onBusyChange
 		setMessage(report?.status === "synced" && report.pending === 0 ? "migrationComplete" : "migrationRetry");
 	});
 	const conflicts = preview?.rows.filter(row => row.status === "conflict") ?? [];
-	const unset = conflicts.filter(row => !choices[row.id]).length;
+	const reviewRows = preview?.intakeReview ?? [];
+	const reviewConflicts = reviewRows.filter(row => row.status === "conflict");
+	const unset = [...conflicts, ...reviewConflicts].filter(row => !choices[row.id]).length;
 	return <section className="card padded migration-panel" aria-labelledby="migration-title">
 		<h2 id="migration-title">{t("migrationTitle")}</h2>
 		<p>{t("migrationHint")}</p>
@@ -191,6 +211,7 @@ export function ArchiveMigrationPanel({ configurationKey, syncBusy, onBusyChange
 			<h3>{t(`migrationPhase_${pending.phase}`)}</h3>
 			<p>{t(pending.phase === "syncing" ? "migrationRetryHint" : "migrationRollbackHint")}</p>
 			<p>{t("migrationChangedCount", { count: pending.changedRows })}</p>
+			{pending.changedCandidates > 0 && <p>{t("migrationReviewChangedCount", { count: pending.changedCandidates })}</p>}
 			<div className="actions">
 				{pending.phase !== "syncing" && <Button disabled={busy || syncBusy} onClick={rollback}>{t("migrationRollback")}</Button>}
 				{pending.phase === "applied" || pending.phase === "syncing" ? <Button disabled={busy || syncBusy} onClick={startSync}>{t(pending.phase === "syncing" ? "migrationRetrySync" : "migrationStartSync")}</Button> : null}
@@ -216,6 +237,10 @@ export function ArchiveMigrationPanel({ configurationKey, syncBusy, onBusyChange
 					<dl className="migration-identity"><dt>{t("syncServerUrl")}</dt><dd>{target.endpoint}</dd><dt>{t("migrationTargetAccount")}</dt><dd>{target.accountId}</dd><dt>{t("syncWorkspace")}</dt><dd>{target.workspaceId}</dd></dl>
 					<p>{t("migrationPreviewCount", { total: preview.rows.length, added: preview.rows.filter(row => row.status === "new").length, same: preview.rows.filter(row => row.status === "same").length, conflicts: conflicts.length })}</p>
 					<p>{t("migrationLinksHint")}</p>
+					{reviewRows.length > 0 && <>
+						<p>{t("migrationReviewPreviewCount", { total: reviewRows.length, added: reviewRows.filter(row => row.status === "new").length, same: reviewRows.filter(row => row.status === "same").length, conflicts: reviewConflicts.length })}</p>
+						<p>{t("migrationReviewBoundary")}</p>
+					</>}
 					{conflicts.length > 0 && <div className="migration-conflicts"><h4>{t("migrationConflictsTitle")}</h4>
 						{conflicts.map(row => <fieldset key={row.id} className="migration-conflict">
 							<legend>{t(`migrationType_${row.type}`)} · {row.id}</legend>
@@ -226,6 +251,20 @@ export function ArchiveMigrationPanel({ configurationKey, syncBusy, onBusyChange
 									<strong>{t(`migrationField_${field.key}`, { defaultValue: field.key })}</strong>
 									<span>{t("migrationKeepSource")}: {fieldValue(field.source)}</span>
 									<span>{t("migrationKeepTarget")}: {fieldValue(field.target)}</span>
+								</div>)}
+							</div></details>
+						</fieldset>)}
+					</div>}
+					{reviewConflicts.length > 0 && <div className="migration-conflicts"><h4>{t("intakeBackupReview")}</h4>
+						{reviewConflicts.map(row => <fieldset key={row.id} className="migration-conflict">
+							<legend>{row.sourceCandidate.fileName} · {row.sourceCandidate.rowNumber}</legend>
+							<label><input type="radio" name={`merge-${row.id}`} checked={choices[row.id] === "source"} disabled={busy || syncBusy} onChange={() => setChoices(old => ({ ...old, [row.id]: "source" }))} />{t("migrationKeepSource")}: {row.sourceCandidate.asset.name} · {t(reviewStatusKey(row.sourceCandidate.status))}</label>
+							<label><input type="radio" name={`merge-${row.id}`} checked={choices[row.id] === "target"} disabled={busy || syncBusy} onChange={() => setChoices(old => ({ ...old, [row.id]: "target" }))} />{t("migrationKeepTarget")}: {row.targetCandidate?.asset.name} · {row.targetCandidate && t(reviewStatusKey(row.targetCandidate.status))}</label>
+							<details><summary>{t("migrationShowDifferences")}</summary><div className="migration-field-differences">
+								{reviewDifferences(row.sourceCandidate, row.targetCandidate).map(field => <div key={field.key} className="migration-field-difference">
+									<strong>{t(field.key)}</strong>
+									<span>{t("migrationKeepSource")}: {field.translated && field.source ? t(field.source) : fieldValue(field.source)}</span>
+									<span>{t("migrationKeepTarget")}: {field.translated && field.target ? t(field.target) : fieldValue(field.target)}</span>
 								</div>)}
 							</div></details>
 						</fieldset>)}

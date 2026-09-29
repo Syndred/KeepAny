@@ -344,12 +344,48 @@ it('serializes simultaneous first attempts with different keys and keeps a trust
   const wrong = new SelfHostSyncClient(db, { ...config, key: new Uint8Array(32).fill(8) });
   const correct = new SelfHostSyncClient(db, config);
   const [bad, good] = await Promise.all([wrong.run(), correct.run()]);
-  expect(bad.error).toBe('envelope-auth');
+  // Scope digests finish asynchronously, so either client may acquire the lock
+  // first. The wrong key must fail before upload in either valid ordering.
+  expect(['envelope-auth', 'sync-key-mismatch']).toContain(bad.error);
   expect(good.status).toBe('synced');
   expect((await service.pull({ workspaceId, cursor: 0, limit: 10 })).changes).toHaveLength(1);
   expect(() => new SelfHostSyncClient(db, { ...config, keyEpoch: 0 })).toThrow('sync-key-epoch');
   expect((await new SelfHostSyncClient(db, { ...config, keyEpoch: 2 }).run()).error).toBe('sync-key-mismatch');
   await db.close();
+});
+
+it('reports pending subscription connections as a failure without repairing during status reads or transferring data', async () => {
+  const workspaceId = crypto.randomUUID();
+  const { config } = server(workspaceId);
+  const db = await openLocalRepository(name());
+  try {
+    const subscription = newAsset('subscription'), project = newAsset('project');
+    await db.saveBatch([subscription, project].map(value => ({ type: 'asset' as const, value })));
+    const insert = db.db.records.insert.bind(db.db.records);
+    const failed = vi.spyOn(db.db.records, 'insert').mockImplementation(async (...args) => {
+      if ((args[0] as { type: string }).type === 'relation') throw Error('injected-relation-failure');
+      return insert(...args);
+    });
+    await expect(db.saveSubscription(subscription, { ...subscription, subscriptionPaymentMethod: 'Bank transfer' },
+      [{ id: project.id, kind: 'project', label: 'Project' }])).rejects.toThrow('subscription-relations-pending');
+    failed.mockRestore();
+    await db.deleteEntity('asset', project.id);
+    const original = await db.allRecords();
+    const replay = vi.spyOn(db, 'retryAllSubscriptionSaves');
+    const client = new SelfHostSyncClient(db, config);
+    const failedReport = { status: 'failed', pending: 0, cursor: 0, conflict: null, error: 'subscription-relations-pending' };
+    expect(await client.report()).toEqual(failedReport);
+    expect(replay).not.toHaveBeenCalled();
+    const onStatus = vi.fn();
+    expect(await client.run(onStatus)).toEqual(failedReport);
+    expect(onStatus).toHaveBeenCalledWith(failedReport);
+    expect(fetch).not.toHaveBeenCalled();
+    expect(await db.allRecords()).toEqual(original);
+    expect(await db.fileStore.subscriptionSaveJournal.count()).toBe(1);
+    expect(await db.fileStore.scopedOutbox.count()).toBe(0);
+    await db.abandonSubscriptionSave(subscription.id);
+    expect((await client.run()).status).toBe('synced');
+  } finally { await db.close(); }
 });
 
 it('sends independent local records in one bounded push request', async () => {

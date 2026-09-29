@@ -14,7 +14,6 @@ import {
 	type AssetKind,
 	type Category,
 	type ProjectMedia,
-	type Relation,
 	type Task,
 } from "../../../packages/domain/src";
 import { createMaintenanceSchedule, type RepeatRule } from "../../../packages/domain/src/task-repeat";
@@ -33,6 +32,10 @@ import {
 	restoreArchive,
 	save,
 	saveAssetIfCurrent,
+	saveSubscription,
+	getPendingSubscriptionSave,
+	retrySubscriptionSave,
+	abandonSubscriptionSave,
 	saveBatch,
 } from "../../../packages/local-db/src";
 import { Button } from "./components/ui/button";
@@ -164,8 +167,40 @@ export function AssetEditor({
 	const [tagsInput, setTagsInput] = useState(() => original?.tags.join(", ") ?? "");
 	const [busy, setBusy] = useState(false);
 	const [failure, setFailure] = useState("");
+	const [pendingConnections, setPendingConnections] = useState(false);
+	const [checkingConnections, setCheckingConnections] = useState(kind === "subscription");
 	const [projectFiles, setProjectFiles] = useState<ProjectFormFiles>({});
 	const inFlight = useRef(false);
+	useEffect(() => {
+		if (kind !== "subscription") return;
+		let active = true;
+		void getPendingSubscriptionSave(draft.id).then(pending => {
+			if (active) setPendingConnections(!!pending);
+		}).catch(() => { if (active) setFailure(t("error")); })
+			.finally(() => { if (active) setCheckingConnections(false); });
+		return () => { active = false; };
+	}, [kind, draft.id, t]);
+	async function resolveConnections(abandon: boolean) {
+		if (inFlight.current) return;
+		inFlight.current = true;
+		setBusy(true);
+		setFailure("");
+		try {
+			await (abandon ? abandonSubscriptionSave(draft.id) : retrySubscriptionSave(draft.id));
+			const current = await (await localRepository()).get<Asset>("asset", draft.id);
+			if (current) {
+				originalRef.current = current;
+				setDraft(current);
+				setAmount(inputFromMinorUnits(current.amount, current.currency));
+				setDiscount(inputFromMinorUnits(current.discountAmount, current.currency));
+				setTagsInput(current.tags.join(", "));
+			}
+			if (abandon) { setProjectId(""); setAccountId(""); }
+			setPendingConnections(!!(await getPendingSubscriptionSave(draft.id)));
+			if (!abandon) onClose();
+		} catch { setFailure(t("subscriptionPendingConnections")); }
+		finally { inFlight.current = false; setBusy(false); }
+	}
 	function closeIfIdle() {
 		if (!inFlight.current) onClose();
 	}
@@ -180,7 +215,7 @@ export function AssetEditor({
 	}
 	async function submit(e: React.FormEvent) {
 		e.preventDefault();
-		if (inFlight.current) return;
+		if (inFlight.current || pendingConnections || checkingConnections) return;
 		const selectedFiles = kind === "project"
 			? [projectFiles.logo, projectFiles.home, ...(projectFiles.products ?? []), projectFiles.promo].filter((file): file is File => !!file)
 			: [];
@@ -277,24 +312,13 @@ export function AssetEditor({
 				{ id: projectId, kind: "project" as const, label: t("subscriptionProject") },
 				{ id: accountId, kind: "account" as const, label: t("subscriptionLoginAccount") },
 			].filter((link) => !!link.id) : [];
-			const repository = selectedLinks.length ? await localRepository() : null;
-			for (const link of selectedLinks) {
-				const target = await repository?.get<Asset>("asset", link.id);
-				if (!target || target.deleted || target.kind !== link.kind) throw Error("relation-endpoint");
-			}
-			const existingRelations = original && selectedLinks.length ? await repository?.list<Relation>("relation") ?? [] : [];
-			const newRelations: Relation[] = selectedLinks.filter((link) => !existingRelations.some((relation) => !relation.deleted && (
-				(relation.from === assetToSave.id && relation.to === link.id) || (relation.to === assetToSave.id && relation.from === link.id))
-			)).map((link) => ({ id: crypto.randomUUID(), from: assetToSave.id, to: link.id, label: link.label,
-				createdAt: new Date().toISOString(), verifiedAt: "", deleted: false }));
-			if (original) {
+			if (kind === "subscription") {
+				saveAttempted = true;
+				originalRef.current = await saveSubscription(original ?? null, assetToSave, selectedLinks);
+			} else if (original) {
 				saveAttempted = true;
 				await saveAssetIfCurrent(original, candidate);
 				originalRef.current = candidate;
-				if (newRelations.length) {
-					try { await saveBatch(newRelations.map((value) => ({ type: "relation" as const, value }))); }
-					catch { throw Error("subscription-relations-pending"); }
-				}
 			}
 			else if (kind === "vault" && vaultRelatedId) {
 				const linked = data.assets.some((candidate) => candidate.id === vaultRelatedId && !candidate.deleted && candidate.kind !== "vault");
@@ -303,17 +327,20 @@ export function AssetEditor({
 					{ type: "asset", value: candidate },
 					{ type: "relation", value: { id: crypto.randomUUID(), from: candidate.id, to: vaultRelatedId, label: t("vault"), createdAt: new Date().toISOString(), verifiedAt: vaultVerifiedAt, deleted: false } },
 				]);
-			} else if (kind === "subscription" && newRelations.length) await saveBatch([
-				{ type: "asset", value: candidate },
-				...newRelations.map((value) => ({ type: "relation" as const, value })),
-			]);
-			else { saveAttempted = true; await save("asset", candidate); }
+			} else { saveAttempted = true; await save("asset", candidate); }
 			if (uploadedIds.length) {
 				const cleanup = await Promise.allSettled([...replacedIds].map((id) => cleanupUnreferencedFile(id)));
 				if (cleanup.some((result) => result.status === "rejected")) notify(t("projectMediaCleanupPending"));
 			}
 			onClose();
 		} catch (error) {
+			if (kind === "subscription" && candidate && error instanceof Error && error.message === "subscription-relations-pending") {
+				setPendingConnections(true);
+				try {
+					const current = await (await localRepository()).get<Asset>("asset", candidate.id);
+					if (current) originalRef.current = current;
+				} catch { /* Keep the persistent intent for the next open/retry. */ }
+			}
 			if (uploadedIds.length) {
 				let safeToCleanup = !saveAttempted;
 				if (saveAttempted && candidate) {
@@ -721,11 +748,18 @@ export function AssetEditor({
 						{failure}
 					</p>
 				)}
+				{pendingConnections && <div className="notice" role="status">
+					<p>{t("subscriptionPendingConnections")}</p>
+					<div className="actions">
+						<Button type="button" disabled={busy} onClick={() => void resolveConnections(false)}>{t("subscriptionRetryConnections")}</Button>
+						<Button type="button" disabled={busy} onClick={() => void resolveConnections(true)}>{t("subscriptionAbandonConnections")}</Button>
+					</div>
+				</div>}
 				<div className="actions">
 					<Button type="button" onClick={closeIfIdle} disabled={busy}>
 						{t("cancel")}
 					</Button>
-					<Button type="submit" variant="primary" disabled={busy}>
+					<Button type="submit" variant="primary" disabled={busy || pendingConnections || checkingConnections}>
 						{busy ? t("loading") : t("save")}
 					</Button>
 				</div>
@@ -935,6 +969,7 @@ export function IntakeTools({ onCsvStaged }: { onCsvStaged: () => void }) {
 	const [readyArchiveGeneration, setReadyArchiveGeneration] = useState<number | null>(null);
 	const [readyArchiveOrigin, setReadyArchiveOrigin] = useState<"local" | "remote" | null>(null);
 	const [archiveCount, setArchiveCount] = useState(0);
+	const [archiveReviewCount, setArchiveReviewCount] = useState(0);
 	const [candidates, setCandidates] = useState<ImportCandidate[]>([]);
 	const [candidateGeneration, setCandidateGeneration] = useState<number | null>(null);
 	const [url, setUrl] = useState("");
@@ -1042,15 +1077,17 @@ export function IntakeTools({ onCsvStaged }: { onCsvStaged: () => void }) {
 		setReadyArchiveGeneration(null);
 		setReadyArchiveOrigin(null);
 		setArchiveCount(0);
+		setArchiveReviewCount(0);
 		setMessage("");
 		return generation;
 	}
-	function acceptRemotePreview(archive: Uint8Array, count: number, generation: number) {
+	function acceptRemotePreview(archive: Uint8Array, count: number, generation: number, reviewCount = 0) {
 		if (generation !== restoreGeneration.current) return false;
 		setReadyArchive(archive);
 		setReadyArchiveGeneration(generation);
 		setReadyArchiveOrigin("remote");
 		setArchiveCount(count);
+		setArchiveReviewCount(reviewCount);
 		return true;
 	}
 	async function download() {
@@ -1086,6 +1123,7 @@ export function IntakeTools({ onCsvStaged }: { onCsvStaged: () => void }) {
 		setReadyArchiveGeneration(null);
 		setReadyArchiveOrigin(null);
 		setArchiveCount(0);
+		setArchiveReviewCount(0);
 		try {
 			const decrypted = await decryptBackup(
 				new Uint8Array(await restoreFile.arrayBuffer()),
@@ -1099,6 +1137,7 @@ export function IntakeTools({ onCsvStaged }: { onCsvStaged: () => void }) {
 				setReadyArchiveGeneration(generation);
 				setReadyArchiveOrigin("local");
 				setArchiveCount(result.rows.length);
+				setArchiveReviewCount(result.intakeReview.length);
 				setMessage(t("preview"));
 			} catch {
 				if (generation === restoreGeneration.current) setMessage(t("archiveInvalid"));
@@ -1115,7 +1154,8 @@ export function IntakeTools({ onCsvStaged }: { onCsvStaged: () => void }) {
 		setBusy(true);
 		try {
 			const count = await restoreArchive(readyArchive);
-			setMessage(t("restoreReady", { count }));
+			onCsvStaged();
+			setMessage(t(archiveReviewCount ? "restoreReadyReview" : "restoreReady", { count, reviewCount: archiveReviewCount }));
 			setReadyArchive(null);
 			setReadyArchiveGeneration(null);
 			setReadyArchiveOrigin(null);
@@ -1407,6 +1447,7 @@ export function IntakeTools({ onCsvStaged }: { onCsvStaged: () => void }) {
 						<span className="chip">{t("intakeBackupRecords")}</span>
 						<span className="chip">{t("relations")}</span>
 						<span className="chip">{t("intakeBackupFiles")}</span>
+						<span className="chip">{t("intakeBackupReview")}</span>
 					</div>
 					<div className="field">
 						<label htmlFor="backup-password">{t("backupPassword")}</label>
@@ -1454,6 +1495,7 @@ export function IntakeTools({ onCsvStaged }: { onCsvStaged: () => void }) {
 							/>
 						</div>
 						<small>{t("restoreHint")}</small>
+						{readyArchive && readyArchiveOrigin === "local" && <p role="status">{t("restorePreviewSummary", { count: archiveCount, reviewCount: archiveReviewCount })}</p>}
 						<div className="actions">
 							<Button onClick={() => void inspect()} disabled={busy || inspecting || !restoreFile || !password}>{t("preview")}</Button>
 							{readyArchive && readyArchiveOrigin === "local" && (
@@ -1473,6 +1515,7 @@ export function IntakeTools({ onCsvStaged }: { onCsvStaged: () => void }) {
 							acceptPreview={acceptRemotePreview}
 							canConfirm={!!readyArchive && readyArchiveOrigin === "remote" && readyArchiveGeneration === restoreGeneration.current}
 							restoreCount={archiveCount}
+							restoreReviewCount={archiveReviewCount}
 							confirmRestore={() => void restore()}
 						/>
 					</details>
