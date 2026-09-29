@@ -124,12 +124,17 @@ export function AssetEditor({
 	const [tagsInput, setTagsInput] = useState(() => original?.tags.join(", ") ?? "");
 	const [busy, setBusy] = useState(false);
 	const [failure, setFailure] = useState("");
+	const inFlight = useRef(false);
+	function closeIfIdle() {
+		if (!inFlight.current) onClose();
+	}
 	function set<K extends FieldName>(key: K, value: Asset[K]) {
 		setDraft((prev) => ({ ...prev, [key]: value }));
 		setErrors((prev) => ({ ...prev, [key]: "" }));
 	}
 	async function submit(e: React.FormEvent) {
 		e.preventDefault();
+		if (inFlight.current) return;
 		const parsedAmount = parseMinorUnits(amount, draft.currency);
 		const parsedDiscount = parseMinorUnits(discount, draft.currency);
 		const scheduleChanged =
@@ -170,6 +175,7 @@ export function AssetEditor({
 			);
 			return;
 		}
+		inFlight.current = true;
 		setBusy(true);
 		setFailure("");
 		try {
@@ -183,11 +189,12 @@ export function AssetEditor({
 				reason === "item-stale" ? "itemStale" :
 				reason === "renewal-recovery-pending" && kind === "item" ? "itemRecoveryPending" : "error"));
 		} finally {
+			inFlight.current = false;
 			setBusy(false);
 		}
 	}
 	return (
-		<Dialog title={asset ? t("edit") : t("newRecord")} onClose={onClose}>
+		<Dialog title={asset ? t("edit") : t("newRecord")} onClose={closeIfIdle}>
 			<form onSubmit={(e) => void submit(e)}>
 				<div className="form-grid">
 					<Field
@@ -446,7 +453,7 @@ export function AssetEditor({
 					</p>
 				)}
 				<div className="actions">
-					<Button type="button" onClick={onClose}>
+					<Button type="button" onClick={closeIfIdle} disabled={busy}>
 						{t("cancel")}
 					</Button>
 					<Button type="submit" variant="primary" disabled={busy}>
@@ -473,6 +480,9 @@ export function TaskEditor({
 	const [failure, setFailure] = useState("");
 	const [busy, setBusy] = useState(false);
 	const inFlight = useRef(false);
+	function closeIfIdle() {
+		if (!inFlight.current) onClose();
+	}
 	async function submit(e: React.FormEvent) {
 		e.preventDefault();
 		if (inFlight.current) return;
@@ -521,7 +531,7 @@ export function TaskEditor({
 		}
 	}
 	return (
-		<Dialog title={t("newTask")} onClose={onClose}>
+		<Dialog title={t("newTask")} onClose={closeIfIdle}>
 			<form onSubmit={(e) => void submit(e)}>
 				<div className="form-grid">
 					<Field
@@ -542,7 +552,7 @@ export function TaskEditor({
 				</div>
 				{failure && <p className="notice" role="alert">{failure}</p>}
 				<div className="actions">
-					<Button type="button" onClick={onClose} disabled={busy}>
+					<Button type="button" onClick={closeIfIdle} disabled={busy}>
 						{t("cancel")}
 					</Button>
 					<Button variant="primary" type="submit" disabled={busy}>
@@ -554,7 +564,23 @@ export function TaskEditor({
 	);
 }
 
-type ImportCandidate = { asset: Asset; duplicate: boolean; selected: boolean };
+type ImportCandidate = { asset: Asset; duplicate: boolean; invalid: boolean; selected: boolean };
+
+function validateImportCandidates(candidates: ImportCandidate[], existing: Asset[]): ImportCandidate[] {
+	const preceding: Asset[] = [];
+	return candidates.map((candidate) => {
+		const parsed = assetSchema.safeParse({ ...candidate.asset, name: candidate.asset.name.trim() });
+		const invalid = !parsed.success;
+		const duplicate = parsed.success && duplicates(parsed.data, [...existing, ...preceding]).length > 0;
+		if (parsed.success) preceding.push(parsed.data);
+		return {
+			...candidate,
+			invalid,
+			duplicate,
+			selected: candidate.selected || (!invalid && !duplicate && (candidate.invalid || candidate.duplicate)),
+		};
+	});
+}
 export function IntakeTools() {
 	const { t } = useTranslation();
 	const { data, notify } = useAppContext();
@@ -581,6 +607,7 @@ export function IntakeTools() {
 	const [busy, setBusy] = useState(false);
 	const [inspecting, setInspecting] = useState(false);
 	const importing = useRef(false);
+	const previewExisting = useRef<Asset[]>([]);
 	const restoring = useRef(false);
 	const importGeneration = useRef(0);
 	const restoreGeneration = useRef(0);
@@ -597,6 +624,7 @@ export function IntakeTools() {
 		return () => URL.revokeObjectURL(address);
 	}, [photoFile]);
 	function changeMode(next: typeof mode) {
+		if (importing.current) return;
 		importGeneration.current++;
 		setCandidates([]);
 		setCandidateGeneration(null);
@@ -777,9 +805,10 @@ export function IntakeTools() {
 							...existing,
 							...preview.map((c) => c.asset),
 						]).length > 0;
-					preview.push({ asset: parsed.data, duplicate, selected: !duplicate });
+					preview.push({ asset: parsed.data, duplicate, invalid: false, selected: !duplicate });
 				}
 			}
+			previewExisting.current = existing;
 			setCandidates(preview);
 			setCandidateGeneration(generation);
 			setMessage(`${preview.length} ${t("preview")}`);
@@ -805,7 +834,8 @@ export function IntakeTools() {
 				url: address.toString(),
 			};
 			const duplicate = duplicates(asset, existing).length > 0;
-			setCandidates([{ asset, duplicate, selected: !duplicate }]);
+			previewExisting.current = existing;
+			setCandidates([{ asset, duplicate, invalid: false, selected: !duplicate }]);
 			setCandidateGeneration(generation);
 			setMessage(t("preview"));
 		} catch {
@@ -817,8 +847,25 @@ export function IntakeTools() {
 		importing.current = true;
 		setBusy(true);
 		try {
-			const selected = candidates.filter((c) => c.selected && !c.duplicate);
-			await saveBatch(selected.map((c) => ({ type: "asset", value: c.asset })));
+			const requested = new Set(candidates.filter((candidate) => candidate.selected).map((candidate) => candidate.asset.id));
+			const existing = (await allRecords())
+				.filter((row) => row.type === "asset")
+				.map((row) => JSON.parse(row.payload) as Asset);
+			if (candidateGeneration !== importGeneration.current) return;
+			previewExisting.current = existing;
+			const checked = validateImportCandidates(candidates, existing);
+			setCandidates(checked);
+			const blocked = checked.find((candidate) => requested.has(candidate.asset.id) && (candidate.invalid || candidate.duplicate));
+			if (blocked) {
+				setMessage(t(blocked.invalid ? "invalid" : "duplicate"));
+				return;
+			}
+			const selected = checked.filter((candidate) => requested.has(candidate.asset.id));
+			if (!selected.length) return;
+			await saveBatch(selected.map((candidate) => ({
+				type: "asset",
+				value: { ...candidate.asset, name: candidate.asset.name.trim() },
+			})));
 			importGeneration.current++;
 			setCandidates([]);
 			setCandidateGeneration(null);
@@ -845,7 +892,7 @@ export function IntakeTools() {
 							["csv", "intakeModeCsv"],
 							["manual", "intakeModeManual"],
 						] as const).map(([value, key]) => (
-							<button key={value} type="button" aria-pressed={mode === value} onClick={() => changeMode(value)}>
+							<button key={value} type="button" aria-pressed={mode === value} disabled={busy || inspecting} onClick={() => changeMode(value)}>
 								{t(key)}
 							</button>
 						))}
@@ -943,23 +990,40 @@ export function IntakeTools() {
 					{candidates.length > 0 && (mode === "url" || mode === "csv") && (
 						<div className="import-preview" aria-live="polite">
 							<h3>{t("preview")}</h3>
-							{candidates.map(candidate => (
-								<label className="list-row" key={candidate.asset.id}>
+							{candidates.map((candidate, index) => (
+								<div className="list-row" key={candidate.asset.id}>
 									<input
 										type="checkbox"
 										checked={candidate.selected}
-										disabled={candidate.duplicate}
+										aria-label={`${t("select")} ${candidate.asset.name || index + 1}`}
+										disabled={busy || ((candidate.duplicate || candidate.invalid) && !candidate.selected)}
 										onChange={event => setCandidates(current => current.map(item =>
 											item.asset.id === candidate.asset.id ? { ...item, selected: event.target.checked } : item
 										))}
 									/>
-									<strong>{candidate.asset.name}</strong>
-									<span className={`chip ${candidate.duplicate ? "warn" : ""}`}>{t(candidate.duplicate ? "duplicate" : "ready")}</span>
-								</label>
+									<div style={{ gridColumn: 2, minWidth: 0 }}>
+										<input
+											aria-label={`${t("name")} ${index + 1}`}
+											value={candidate.asset.name}
+											aria-invalid={candidate.invalid}
+											disabled={busy}
+											style={{ width: "100%" }}
+											onChange={event => {
+												const name = event.target.value;
+												setCandidates(current => validateImportCandidates(current.map(item =>
+													item.asset.id === candidate.asset.id ? { ...item, asset: { ...item.asset, name } } : item
+												), previewExisting.current));
+											}}
+										/>
+										{candidate.invalid && <small className="field-error">{t(candidate.asset.name.trim() ? "invalid" : "required")}</small>}
+									</div>
+									<span className={`chip ${candidate.duplicate || candidate.invalid ? "warn" : ""}`}>{t(candidate.invalid ? "invalid" : candidate.duplicate ? "duplicate" : "ready")}</span>
+								</div>
 							))}
 							<Button variant="primary" onClick={() => void importCandidates()} disabled={
 								busy || inspecting || candidateGeneration !== importGeneration.current ||
-								!candidates.some(candidate => candidate.selected && !candidate.duplicate)
+				!candidates.some(candidate => candidate.selected) ||
+				candidates.some(candidate => candidate.selected && (candidate.duplicate || candidate.invalid))
 							}>{t("confirmImport")}</Button>
 						</div>
 					)}
