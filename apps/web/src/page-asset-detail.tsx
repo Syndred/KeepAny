@@ -133,6 +133,7 @@ function SubmissionRow({ submission }: { submission: Submission }) {
 				<a href={submission.url} target="_blank" rel="noopener noreferrer">
 					{submission.name}
 				</a>
+				{submission.externalLink && <small>{t("extImportedSource")} · {submission.externalLink.profileId}</small>}
 			</td>
 			<td>
 				<select

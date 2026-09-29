@@ -30,6 +30,7 @@ import {
 import { Button } from "./components/ui/button";
 import { Dialog } from "./components/ui/dialog";
 import { RemoteBackupPanel } from "./components/RemoteBackupPanel";
+import { ExternalLinkImportPanel } from "./components/ExternalLinkImportPanel";
 
 const categoryOptions: Record<AssetKind, string[]> = {
 	project: ["website", "repository", "tool"],
@@ -928,6 +929,7 @@ export function IntakeTools() {
 				restoreCount={archiveCount}
 				confirmRestore={() => void restore()}
 			/>
+			<ExternalLinkImportPanel />
 			{message && (
 				<div className="notice" role="status">
 					{message}

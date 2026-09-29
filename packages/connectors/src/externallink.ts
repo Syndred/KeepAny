@@ -1,4 +1,7 @@
 import { z } from 'zod';
+import { sha256 } from '@noble/hashes/sha2.js';
+import { bytesToHex, utf8ToBytes } from '@noble/hashes/utils.js';
+import { submissionSchema, type Submission } from '../../domain/src';
 
 // Contract adapter only. It never reads an ExternalLink browser profile or submits a form.
 const profileSchema = z.object({
@@ -24,6 +27,34 @@ const recordSchema = z.object({
   indexEvidenceUrl: z.string().optional(), failureReason: z.string().optional(),
   note: z.string().optional(),
 }).passthrough();
+
+// ExternalLink Settings > 外链库 > 导出 JSON, extension/background.js exportSubmissionData.
+// Only these two documents are read. Timeline, Sheet and other exported data are ignored.
+const exportSchema = z.object({
+  format: z.literal('externallink-submission-backup'), version: z.literal(2),
+  siteProfiles: z.record(z.string(), z.unknown()),
+  submissionRecords: z.record(z.string(), z.unknown()),
+}).passthrough();
+
+export const EXTERNALLINK_HOST_SCOPED_DESTINATIONS: ReadonlySet<string> = new Set([
+  'aitools.neilpatel.com', 'producthunt.com', 'aisotools.com', 'startupcollections.com',
+  'startupstash.com', 'aisuperhub.io', 'launchpedia.co', 'tipseason.com', 'library.phygital.plus',
+]);
+
+export function parseExternalLinkExport(input: unknown) {
+  const parsed = exportSchema.parse(input);
+  if (Object.keys(parsed.siteProfiles).length > 200 || Object.keys(parsed.submissionRecords).length > 10000)
+    throw Error('externallink-export-size');
+  return parsed;
+}
+
+export function listExternalLinkExportProfiles(input: unknown) {
+  const data = parseExternalLinkExport(input);
+  return Object.entries(data.siteProfiles).flatMap(([id, value]) => {
+    const profile = profileSchema.safeParse(value);
+    return profile.success && profile.data.id === id && !id.includes('::') ? [{ id, name: profile.data.name?.trim() || id }] : [];
+  }).sort((left, right) => left.name.localeCompare(right.name));
+}
 
 const FIELD_ALIASES = {
   name: ['Name'],
@@ -133,6 +164,76 @@ export interface ExternalLinkSubmissionPreview {
   submittedAt: string; verifiedAt: string; indexedAt: string;
   evidence: string; evidenceUrl: string; publicUrl: string; indexEvidenceUrl: string;
   failureReason: string; issues: string[];
+}
+
+export interface ExternalLinkExportRow {
+  destinationUrl: string;
+  preview: ExternalLinkSubmissionPreview;
+  importable: boolean;
+  publicationStatus: string;
+}
+
+export function externalLinkSubmissionId(assetId: string, ledgerKey: string): string {
+  return `externallink:${bytesToHex(sha256(utf8ToBytes(`${assetId}\u0000${ledgerKey}`))).slice(0, 48)}`;
+}
+
+export function previewExternalLinkExport(input: unknown, profileId: string, assetId: string): {
+  profile: ExternalLinkProfilePreview; rows: ExternalLinkExportRow[];
+} {
+  if (!profileId || profileId.includes('::')) throw Error('externallink-profile');
+  const data = parseExternalLinkExport(input);
+  const rawProfile = data.siteProfiles[profileId];
+  if (!rawProfile) throw Error('externallink-profile');
+  const profile = previewExternalLinkProfile(rawProfile, assetId);
+  if (profile.profileId !== profileId) throw Error('externallink-profile');
+  const rows: ExternalLinkExportRow[] = [];
+  for (const [ledgerKey, value] of Object.entries(data.submissionRecords)) {
+    const candidateProfileId = value && typeof value === 'object' && !Array.isArray(value) ?
+      (value as { profileId?: unknown }).profileId : undefined;
+    if (candidateProfileId !== profileId && !ledgerKey.endsWith(`::${profileId}`)) continue;
+    const record = recordSchema.parse(value);
+    const destination = record.destinationUrl || record.destinationKey || '';
+    const preview = previewExternalLinkSubmission(record, ledgerKey, {
+      assetId, profileId, destinationUrl: destination,
+      hostScopedHosts: EXTERNALLINK_HOST_SCOPED_DESTINATIONS,
+    });
+    const destinationUrl = new URL(/^https?:\/\//i.test(destination) ? destination : `https://${destination}`);
+    destinationUrl.search = '';
+    destinationUrl.hash = '';
+    const evidence = preview.status === 'rejected' ? preview.failureReason :
+      preview.status === 'indexed' ? preview.indexEvidenceUrl :
+      preview.publicUrl || preview.evidenceUrl || preview.evidence;
+    rows.push({
+      destinationUrl: destinationUrl.toString(),
+      preview,
+      importable: preview.status !== 'planned' && Boolean(preview.submittedAt && evidence),
+      publicationStatus: (record.publicationStatus || '').slice(0, 64),
+    });
+  }
+  rows.sort((left, right) => left.preview.destinationKey.localeCompare(right.preview.destinationKey));
+  return { profile, rows };
+}
+
+export function externalLinkSubmissionForAsset(row: ExternalLinkExportRow, importedAt: string): Submission {
+  if (!row.importable) throw Error('externallink-evidence');
+  const preview = row.preview;
+  const evidence = preview.status === 'rejected' ? preview.failureReason :
+    preview.status === 'indexed' ? preview.indexEvidenceUrl :
+    preview.publicUrl || preview.evidenceUrl || preview.evidence;
+  return submissionSchema.parse({
+    id: externalLinkSubmissionId(preview.assetId, preview.ledgerKey), assetId: preview.assetId,
+    name: preview.destinationKey.slice(0, 200), url: row.destinationUrl,
+    status: preview.status, submittedAt: preview.submittedAt.slice(0, 10),
+    verifiedAt: (preview.indexedAt || preview.verifiedAt).slice(0, 10),
+    evidence, deleted: false,
+    externalLink: {
+      profileId: preview.profileId, destinationKey: preview.destinationKey, ledgerKey: preview.ledgerKey,
+      publicationStatus: row.publicationStatus, listingClaim: preview.listingClaim,
+      publicUrl: preview.publicUrl, evidenceUrl: preview.evidenceUrl,
+      indexEvidenceUrl: preview.indexEvidenceUrl, failureReason: preview.failureReason,
+      importedAt,
+    },
+  });
 }
 
 const safeUrl = (raw: string) => {

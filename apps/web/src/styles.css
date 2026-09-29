@@ -142,6 +142,14 @@ p { line-height: 1.5; }
 .remote-backup-panel .remote-backup-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .remote-backup-panel .remote-backup-fields > .wide { grid-column: 1 / -1; }
 .remote-backup-hint { display: block; color: var(--muted); line-height: 1.5; }
+.external-import-panel { grid-column: 1 / -1; }
+.external-import-panel > :not(:first-child) { margin-top: 14px; }
+.external-import-preview { display: grid; gap: 12px; min-width: 0; margin-top: 18px; }
+.external-import-preview > :is(h3, p) { margin: 0; overflow-wrap: anywhere; }
+.external-import-row { align-items: flex-start; }
+.external-import-record { display: grid; flex: 1; gap: 4px; min-width: 0; overflow-wrap: anywhere; }
+.external-import-record small { overflow-wrap: anywhere; }
+.field.external-checkbox { display: flex; align-items: center; gap: 8px; }
 .stat-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .stat { display: grid; align-content: start; gap: 6px; padding: 14px 16px; }
 .stat:nth-child(3n + 1) { background: var(--yellow); }

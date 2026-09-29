@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { checkTargetImageCount, externalLinkPairKey, normalizeDestinationKey, previewExternalLinkProfile, previewExternalLinkSubmission } from './externallink';
+import { checkTargetImageCount, externalLinkPairKey, externalLinkSubmissionForAsset, listExternalLinkExportProfiles, normalizeDestinationKey, previewExternalLinkExport, previewExternalLinkProfile, previewExternalLinkSubmission } from './externallink';
 
 const profile = {
   id: 'DemoProject', name: 'Fallback Name', url: 'https://demo.example',
@@ -82,5 +82,43 @@ describe('ExternalLink exact submission ledger mapping', () => {
   it('preserves failed status and reason without inventing a receipt', () => {
     const failed = previewExternalLinkSubmission({ destinationKey: 'directory.example/submit', profileId: 'DemoProject', status: 'failed', failureReason: 'Form rejected' }, key, mapping);
     expect(failed).toMatchObject({ status: 'rejected', failureReason: 'Form rejected', submittedAt: '' });
+  });
+});
+
+describe('ExternalLink Settings JSON export import contract', () => {
+  const exportData = {
+    format: 'externallink-submission-backup', version: 2,
+    siteProfiles: { DemoProject: profile, Other: { id: 'Other', name: 'Other site', fields: {} } },
+    submissionRecords: {
+      'startupstash.com::DemoProject': { destinationKey: 'startupstash.com', destinationUrl: 'https://startupstash.com/add-listing?temporary=secret', profileId: 'DemoProject', status: 'success', confirmedBy: 'agent', evidence: 'Submission received', submittedAt: '2026-09-28T10:00:00Z', publicationStatus: 'submitted' },
+      'directory.example/submit::DemoProject': { destinationKey: 'directory.example/submit', profileId: 'DemoProject', status: 'success', confirmedBy: 'migration', evidence: 'table.xlsx submitted seed', submittedAt: '2026-09-28T10:00:00Z' },
+      'other.example::Other': { destinationKey: 'other.example', profileId: 'Other', status: 'success', confirmedBy: 'agent', evidence: 'Other receipt', submittedAt: '2026-09-28T10:00:00Z' },
+    },
+    sheetTableData: { privateValue: 'never-import-this' },
+  };
+
+  it('selects one exact Profile and writes only a receipt-backed status', () => {
+    expect(listExternalLinkExportProfiles(exportData).map(item => item.id)).toEqual(['DemoProject', 'Other']);
+    const result = previewExternalLinkExport(exportData, 'DemoProject', 'asset-demo');
+    expect(result.profile.imageCounts).toEqual({ logo: 1, featured: 1, screenshots: 2, totalReferences: 4 });
+    expect(result.rows).toHaveLength(2);
+    const accepted = result.rows.find(row => row.preview.destinationKey === 'startupstash.com');
+    if (!accepted) throw Error('missing accepted row');
+    expect(accepted.importable).toBe(true);
+    expect(result.rows.find(row => row.preview.destinationKey === 'directory.example/submit')).toMatchObject({ importable: false, preview: { status: 'planned', issues: ['missing-receipt-evidence'] } });
+    const submission = externalLinkSubmissionForAsset(accepted, '2026-09-29T00:00:00.000Z');
+    expect(submission).toMatchObject({ assetId: 'asset-demo', status: 'submitted', submittedAt: '2026-09-28', externalLink: { profileId: 'DemoProject', destinationKey: 'startupstash.com', publicationStatus: 'submitted' } });
+    expect(submission.url).toBe('https://startupstash.com/add-listing');
+    expect(JSON.stringify(submission)).not.toContain('never-import-this');
+    const unproven = result.rows.find(row => !row.importable);
+    if (!unproven) throw Error('missing unproven row');
+    expect(() => externalLinkSubmissionForAsset(unproven, '2026-09-29T00:00:00.000Z')).toThrow('externallink-evidence');
+    expect(externalLinkSubmissionForAsset(accepted, '2026-09-29T00:00:00.000Z').id).toBe(submission.id);
+    expect(externalLinkSubmissionForAsset({ ...accepted, preview: { ...accepted.preview, assetId: 'other-asset' } }, '2026-09-29T00:00:00.000Z').id).not.toBe(submission.id);
+  });
+
+  it('rejects unsupported formats and ledger identity mismatches', () => {
+    expect(() => listExternalLinkExportProfiles({ ...exportData, version: 3 })).toThrow();
+    expect(() => previewExternalLinkExport({ ...exportData, submissionRecords: { 'other.example::DemoProject': { destinationKey: 'other.example', profileId: 'Other' } } }, 'DemoProject', 'asset-demo')).toThrow('ledger-identity');
   });
 });
