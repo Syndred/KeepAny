@@ -8,6 +8,7 @@ import { localRepository, type DatasetBinding } from "../../../packages/local-db
 import type { SelfHostSyncClient, SyncReport } from "../../../packages/sync-client/src";
 import { BindingPanel } from "./components/BindingPanel";
 import { ArchiveMigrationPanel } from "./components/ArchiveMigrationPanel";
+import { WorkspaceKeyPanel } from "./components/WorkspaceKeyPanel";
 import { McpPanel } from "./components/McpPanel";
 import { Button } from "./components/ui/button";
 import { seed } from "./data";
@@ -65,6 +66,7 @@ export function SettingsPage() {
 	const [syncReport, setSyncReport] = useState<SyncReport | null>(null);
 	const [syncBusy, setSyncBusy] = useState(false);
 	const [migrationBusy, setMigrationBusy] = useState(false);
+	const [keyAccessBusy, setKeyAccessBusy] = useState(false);
 	const clientRef = useRef<SelfHostSyncClient | null>(null);
 	const clientGeneration = useRef(-1);
 	const configGeneration = useRef(0);
@@ -78,7 +80,7 @@ export function SettingsPage() {
 	const syncEndpoint = accessMode === "official" ? officialOrigin ?? "" : accessMode === "session" ? window.location.origin : endpoint;
 	const officialAccountId = officialBinding?.allowedScopes.includes("sync:write") ? officialBinding.subject : null;
 	const hasAccess = accessMode === "official" ? Boolean(officialAccountId) : accessMode === "session" ? Boolean(sessionAccountId) : Boolean(token);
-	const uiBusy = syncBusy || migrationBusy;
+	const uiBusy = syncBusy || migrationBusy || keyAccessBusy;
 	useEffect(() => {
 		mounted.current = true;
 		void navigator.storage?.persisted?.().then(value => { if (mounted.current) setPersistent(value); });
@@ -121,7 +123,7 @@ export function SettingsPage() {
 		}
 	}, []);
 	const editConfig = (write: () => void) => {
-		if (activeOperation.current !== null || migrationBusy) return;
+		if (activeOperation.current !== null || migrationBusy || keyAccessBusy) return;
 		invalidateConfig();
 		write();
 	};
@@ -348,6 +350,31 @@ export function SettingsPage() {
 			if (isActive(operation)) setSyncReport(failure(error, "sync-configuration"));
 		} finally { finishOperation(operation); }
 	};
+	const openKeyEnvelopeClient = async () => {
+		const { KeyEnvelopeClient } = await import("../../../packages/sync-client/src");
+		if (accessMode === "official") {
+			const bound = await officialAccess();
+			if (bound.accountId !== officialAccountId) throw Error("sync-account-mismatch");
+			return new KeyEnvelopeClient({ endpoint: syncEndpoint, workspaceId, bound });
+		}
+		if (accessMode === "session") {
+			if (!sessionAccountId) throw Error("sync-auth");
+			return new KeyEnvelopeClient({ endpoint: syncEndpoint, workspaceId, sessionAccountId });
+		}
+		return new KeyEnvelopeClient({ endpoint: syncEndpoint, workspaceId, token });
+	};
+	const acceptRecoveredKey = async (key: string, recoveredAccountId: string) => {
+		const repository = await localRepository();
+		const binding = await repository.getDatasetBinding();
+		const accountId = accessMode === "session" ? sessionAccountId : accessMode === "official" ? officialAccountId : null;
+		if (accountId && recoveredAccountId !== accountId) throw Error("sync-account-mismatch");
+		if (binding && (binding.endpoint !== syncEndpoint || binding.workspaceId !== workspaceId ||
+			binding.accountId !== recoveredAccountId)) throw Error("sync-dataset-bound");
+		if (!binding && (await repository.allRecords()).length > 0) throw Error("sync-dataset-ambiguous");
+		invalidateConfig();
+		setWorkspaceKey(key);
+		setNeedsKeySave(false);
+	};
 	const differences = (() => {
 		const conflict = syncReport?.conflict;
 		if (!conflict) return [];
@@ -476,9 +503,23 @@ export function SettingsPage() {
 					</div>
 				</div>}
 			</section>
+			<WorkspaceKeyPanel
+				endpoint={syncEndpoint}
+				accountId={accessMode === "session" ? sessionAccountId : accessMode === "official" ? officialAccountId : null}
+				accessMode={accessMode}
+				accessToken={token}
+				hasAccess={hasAccess}
+				workspaceId={workspaceId}
+				workspaceKey={workspaceKey}
+				canIssue={syncReport?.status === "synced" && !needsKeySave}
+				otherBusy={syncBusy || migrationBusy}
+				onBusyChange={setKeyAccessBusy}
+				openClient={openKeyEnvelopeClient}
+				onRecovered={acceptRecoveredKey}
+			/>
 			<ArchiveMigrationPanel
 				configurationKey={JSON.stringify([accessMode, syncEndpoint, workspaceId, workspaceKey, token, sessionAccountId, officialAccountId])}
-				syncBusy={syncBusy}
+				syncBusy={syncBusy || keyAccessBusy}
 				onBusyChange={setMigrationBusy}
 				prepareTarget={prepareMigrationTarget}
 				syncTarget={syncArchiveMigration}

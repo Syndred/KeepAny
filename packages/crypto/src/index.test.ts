@@ -183,7 +183,8 @@ describe('recovery credential and device onboarding prototype', () => {
     await expect(unwrapRecovery(wrap, await createRecoveryCredential(), workspaceId, 1)).rejects.toThrow('envelope-auth');
     await expect(unwrapRecovery(wrap, credential, otherWorkspaceId, 1)).rejects.toThrow('recovery-context');
     await expect(unwrapRecovery(wrap, credential, workspaceId, 2)).rejects.toThrow('recovery-context');
-    await expect(unwrapRecovery({ ...wrap, ciphertext: `${wrap.ciphertext.slice(0, -1)}A` }, credential, workspaceId, 1)).rejects.toThrow();
+    // Change high-order bits rather than the last base64url character, whose unused pad bits can alias the same bytes.
+    await expect(unwrapRecovery({ ...wrap, ciphertext: `${wrap.ciphertext[0] === 'A' ? 'B' : 'A'}${wrap.ciphertext.slice(1)}` }, credential, workspaceId, 1)).rejects.toThrow();
   });
 
   it('joins a second device only with its private key and a pinned issuer public key', async () => {
