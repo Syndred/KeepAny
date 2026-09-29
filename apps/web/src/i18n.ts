@@ -299,6 +299,7 @@ const copy: Record<string, [string, string]> = {
 	removeImage: ["移除图片", "Remove image"],
 	replaceImage: ["替换图片", "Replace image"],
 	due: ["待续费", "Renewal due"],
+	overdue: ["已逾期", "Overdue"],
 	close: ["关闭", "Close"],
 	more: ["更多资料", "More details"],
 	secureBackup: ["加密备份", "Encrypted backup"],

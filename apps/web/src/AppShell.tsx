@@ -230,8 +230,8 @@ export function AppShell() {
 						</Button>
 						<strong className="topbar-page-label">{currentHeading}</strong>
 						<div className="topbar-spacer"/>
-						<div className="top-search" ref={topSearchRef} onClick={() => topSearchInputRef.current?.focus()}>
-							<Search size={17} />
+						<div className="top-search" ref={topSearchRef}>
+							<button className="top-search-trigger" type="button" aria-label={t("search")} onMouseDown={(event) => event.preventDefault()} onClick={() => topSearchInputRef.current?.focus()}><Search size={17} /></button>
 							<input
 								ref={topSearchInputRef}
 								value={search}

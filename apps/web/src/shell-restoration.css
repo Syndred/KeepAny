@@ -31,6 +31,7 @@
 .topbar-page-label { flex: none; font-size: 12px; font-weight: 650; }
 .topbar-spacer { flex: 1; }
 .top-search { width: min(100%,190px); min-height: 34px; border: 2px solid var(--line); border-radius: 20px; background: var(--paper); color: var(--ink); }
+.top-search-trigger { display: grid; flex: none; place-items: center; padding: 0; border: 0; background: transparent; color: inherit; cursor: pointer; }
 .top-search input { font-size: 12px; }
 .top-search kbd { flex: none; padding: 1px 4px; border: 1px solid var(--line); border-radius: 4px; color: var(--muted); font: 10px/1.2 inherit; }
 .top-search:focus-within { outline: 3px solid var(--green); }
@@ -58,11 +59,11 @@
   .shell .topbar-page-label { display: block; width: 100%; }
   .shell .topbar-spacer { display: none; }
   .shell .top-search { flex: none; width: 32px; height: 32px; min-height: 32px; margin-left: auto; padding: 0; border-radius: 50%; cursor: pointer; }
-  .shell .top-search > svg { flex: none; margin: auto; }
+  .shell .top-search-trigger { margin: auto; }
   .shell .top-search input { position: absolute; width: 1px; height: 1px; padding: 0; opacity: 0; }
   .shell .top-search kbd { display: none; }
   .shell .top-search:focus-within { position: absolute; top: calc(100% + 5px); right: 12px; left: 12px; z-index: 22; width: auto; height: 40px; padding: 5px 10px; border-radius: 12px; background: var(--paper); }
-  .shell .top-search:focus-within > svg { margin: 0; }
+  .shell .top-search:focus-within .top-search-trigger { margin: 0; }
   .shell .top-search:focus-within input { position: static; width: auto; height: auto; opacity: 1; }
   .shell .top-actions { flex: none; }
 }

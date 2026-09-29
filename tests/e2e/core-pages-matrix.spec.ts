@@ -25,8 +25,8 @@ for (const locale of ["en-US", "zh-CN"] as const) {
 							save: "保存",
 							move: "移至回收站",
 							restore: "恢复",
-							overview: "概览",
-							intake: "收录与备份",
+						overview: "你的数字宇宙，一眼掌握。",
+						intake: "随手收录，慢慢整理。",
 							settings: "设置",
 							trash: "回收站",
 						}
@@ -36,8 +36,8 @@ for (const locale of ["en-US", "zh-CN"] as const) {
 							save: "Save",
 							move: "Move to trash",
 							restore: "Restore",
-							overview: "Overview",
-							intake: "Import & backup",
+						overview: "Your world, all in one view.",
+						intake: "Collect now, organize later.",
 							settings: "Settings",
 							trash: "Trash",
 						};
@@ -51,23 +51,11 @@ for (const locale of ["en-US", "zh-CN"] as const) {
 					`${locale} ${width}px ${page.url()}`,
 				).toBeLessThanOrEqual(width);
 			}
-			async function verifyReadableSubscription(selector: string) {
-				const row = page.locator(selector).first();
-				await expect(row).toBeVisible();
-				const layout = await row.evaluate((element) => {
-					const name = element.querySelector(":scope > div:not(.row-icon)");
-					const amount = element.querySelector(":scope > b");
-					if (!name || !amount) throw Error("Subscription row fields missing");
-					const nameBox = name.getBoundingClientRect();
-					const amountBox = amount.getBoundingClientRect();
-					return {
-						nameWidth: nameBox.width,
-						nameBottom: nameBox.bottom,
-						amountTop: amountBox.top,
-					};
-				});
-				expect(layout.nameWidth).toBeGreaterThan(160);
-				expect(layout.amountTop).toBeGreaterThanOrEqual(layout.nameBottom - 1);
+			async function verifyReadableSubscription(name: string) {
+				const card = page.locator(".asset-library-card").filter({ hasText: name }).first();
+				await expect(card).toBeVisible();
+				await expect(card.locator(".asset-library-meta")).toContainText("90,071,992,547,409.91");
+				expect(await card.evaluate((element) => element.scrollWidth <= element.clientWidth)).toBe(true);
 			}
 			try {
 				await page.goto("/assets/subscription");
@@ -80,7 +68,7 @@ for (const locale of ["en-US", "zh-CN"] as const) {
 				await dialog.getByRole("button", { name: copy.save }).click();
 				await expect(dialog).toBeHidden();
 				if (width <= 390) {
-					await verifyReadableSubscription(".subscription-list-row");
+					await verifyReadableSubscription(subscription);
 					await page.screenshot({
 						path: `${evidence}/${stem}-subscription-list.png`,
 					});
@@ -88,14 +76,8 @@ for (const locale of ["en-US", "zh-CN"] as const) {
 
 				await page.goto("/");
 				await verifyPage(copy.overview);
-				await expect(page.locator("main.page")).toContainText(subscription);
-				await expect(page.locator("main.page")).toContainText(
-					"90,071,992,547,409.91",
-				);
-				if (width <= 390) {
-					await verifyReadableSubscription(".overview-subscription-row");
-					await verifyReadableSubscription(".subscription-list-row");
-				}
+				await expect(page.locator(".overview-action-row")).toContainText(subscription);
+				await expect(page.locator(".overview-stat").first()).toContainText("1");
 				await page.screenshot({
 					path: `${evidence}/${stem}-overview-populated.png`,
 					fullPage: true,
@@ -131,7 +113,7 @@ for (const locale of ["en-US", "zh-CN"] as const) {
 					.filter({ hasText: project })
 					.click();
 				await page
-					.locator("main.page > .page-header")
+					.locator("main.page > .asset-project-action-bar")
 					.getByRole("button", { name: copy.move })
 					.click();
 				await page
@@ -161,6 +143,15 @@ for (const locale of ["en-US", "zh-CN"] as const) {
 		});
 	}
 }
+
+test("mobile topbar search opens from its keyboard-accessible button", async ({ page }) => {
+	await page.setViewportSize({ width: 360, height: 844 });
+	await page.goto("/");
+	await expect(page.locator(".overview-hero")).toBeVisible();
+	await page.locator(".top-search-trigger").click();
+	await expect(page.locator(".top-search input")).toBeFocused();
+	expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(360);
+});
 
 for (const [locale, currentLabel, nextLabel, target] of [
 	["en-US", "Language", "语言", "zh-CN"],

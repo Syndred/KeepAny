@@ -1,0 +1,72 @@
+[
+  {
+    "locale": "zh-CN",
+    "width": 360,
+    "pageErrors": 0,
+    "overflow": 0,
+    "projectBack": true
+  },
+  {
+    "locale": "zh-CN",
+    "width": 390,
+    "pageErrors": 0,
+    "overflow": 0,
+    "projectBack": true
+  },
+  {
+    "locale": "zh-CN",
+    "width": 768,
+    "pageErrors": 0,
+    "overflow": 0,
+    "projectBack": true
+  },
+  {
+    "locale": "zh-CN",
+    "width": 1280,
+    "pageErrors": 0,
+    "overflow": 0,
+    "projectBack": true
+  },
+  {
+    "locale": "zh-CN",
+    "width": 1440,
+    "pageErrors": 0,
+    "overflow": 0,
+    "projectBack": true
+  },
+  {
+    "locale": "en-US",
+    "width": 360,
+    "pageErrors": 0,
+    "overflow": 0,
+    "projectBack": true
+  },
+  {
+    "locale": "en-US",
+    "width": 390,
+    "pageErrors": 0,
+    "overflow": 0,
+    "projectBack": true
+  },
+  {
+    "locale": "en-US",
+    "width": 768,
+    "pageErrors": 0,
+    "overflow": 0,
+    "projectBack": true
+  },
+  {
+    "locale": "en-US",
+    "width": 1280,
+    "pageErrors": 0,
+    "overflow": 0,
+    "projectBack": true
+  },
+  {
+    "locale": "en-US",
+    "width": 1440,
+    "pageErrors": 0,
+    "overflow": 0,
+    "projectBack": true
+  }
+]

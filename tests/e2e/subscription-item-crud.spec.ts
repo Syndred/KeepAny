@@ -728,8 +728,8 @@ for (const locale of ["en-US", "zh-CN"] as const) {
 							cancel: "取消",
 							notes: "备注",
 							edit: "编辑",
-							subscription: "订阅",
-							item: "实物",
+							subscription: "订阅与续费",
+							item: "拥有的一切，一张卡片就能找到。",
 						}
 					: {
 							add: "Add",
@@ -738,8 +738,8 @@ for (const locale of ["en-US", "zh-CN"] as const) {
 							cancel: "Cancel",
 							notes: "Notes",
 							edit: "Edit",
-							subscription: "Subscriptions",
-							item: "Items",
+							subscription: "Subscriptions and renewals",
+							item: "Find every item in one place.",
 						};
 			const errors: string[] = [];
 			page.on("pageerror", (error) => errors.push(error.message));

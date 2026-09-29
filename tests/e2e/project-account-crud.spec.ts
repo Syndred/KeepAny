@@ -74,17 +74,16 @@ async function deleteAndRestore(
 	kind: "project" | "account",
 	name: string,
 ) {
-	await page
-		.locator("main.page > .page-header")
-		.getByRole("button", { name: "Move to trash" })
-		.click();
+	const actions = page.locator(
+		kind === "project"
+			? "main.page > .asset-project-action-bar"
+			: "main.page > .page-header",
+	);
+	await actions.getByRole("button", { name: "Move to trash" }).click();
 	const confirm = page.getByRole("dialog");
 	await confirm.getByRole("button", { name: "Cancel" }).click();
 	await expect(page.getByRole("heading", { name })).toBeVisible();
-	await page
-		.locator("main.page > .page-header")
-		.getByRole("button", { name: "Move to trash" })
-		.click();
+	await actions.getByRole("button", { name: "Move to trash" }).click();
 	await confirm.getByRole("button", { name: "Move to trash" }).click();
 	await expect(page).toHaveURL(new RegExp(`/assets/${kind}$`));
 	await expect(
@@ -300,6 +299,10 @@ test("project and account CRUD, intersecting filters, trash and actual backup re
 			),
 		].join("\n");
 		await page.goto("/intake");
+		await page
+			.locator(".intake-mode-tabs")
+			.getByRole("button", { name: "Spreadsheet" })
+			.click();
 		await page.locator("#csv-file").setInputFiles({
 			name: "crud-scroll.csv",
 			mimeType: "text/csv",
@@ -568,8 +571,8 @@ for (const locale of ["en-US", "zh-CN"] as const) {
 							cancel: "取消",
 							notes: "备注",
 							edit: "编辑",
-							project: "项目",
-							account: "账号",
+							project: "每个项目，都有自己的档案。",
+							account: "每个账号，都有来有往。",
 						}
 					: {
 							add: "Add",
@@ -578,8 +581,8 @@ for (const locale of ["en-US", "zh-CN"] as const) {
 							cancel: "Cancel",
 							notes: "Notes",
 							edit: "Edit",
-							project: "Projects",
-							account: "Accounts",
+							project: "Every project has its own file.",
+							account: "Every account has connections.",
 						};
 			try {
 				for (const [kind, label] of [
