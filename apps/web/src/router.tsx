@@ -35,6 +35,16 @@ const projectWorkflowRoute = createRoute({
 	path: "/assets/project/$id/workflow/$flow",
 	component: lazyRouteComponent(() => import("./page-project-workflow"), "ProjectWorkflowPage"),
 });
+const changeImpactRoute = createRoute({
+	getParentRoute: () => rootRoute,
+	path: "/change-impact",
+	component: lazyRouteComponent(() => import("./page-change-impact"), "ChangeImpactPage"),
+});
+const assistantAccessRoute = createRoute({
+	getParentRoute: () => rootRoute,
+	path: "/assistant-access",
+	component: lazyRouteComponent(() => import("./page-assistant-access"), "AssistantAccessPage"),
+});
 const collectionsRoute = createRoute({
 	getParentRoute: () => rootRoute,
 	path: "/collections",
@@ -74,6 +84,8 @@ const routeTree = rootRoute.addChildren([
 	listRoute,
 	detailRoute,
 	projectWorkflowRoute,
+	changeImpactRoute,
+	assistantAccessRoute,
 	collectionsRoute,
 	collectionDetailRoute,
 	financeRoute,
