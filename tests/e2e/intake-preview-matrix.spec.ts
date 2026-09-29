@@ -12,12 +12,13 @@ const copies = {
 		csvMode: "Spreadsheet",
 		photoMode: "Photo or receipt",
 		addPhoto: "Add image",
-		duplicate: "Duplicate",
 		import: "Confirm import",
+		confirmCandidate: "Confirm and save",
+		staged: "candidates are ready for review",
+		invalidCsv: "No reviewable records",
 		invalid: "Please check this field",
 		preview: "Preview",
 		previewRecords: "Preview records",
-		ready: "Ready",
 		restore: "Restore backup",
 		saveBackup: "Save backup file",
 	},
@@ -29,12 +30,13 @@ const copies = {
 		csvMode: "表格",
 		photoMode: "图片 / 收据",
 		addPhoto: "添加图片",
-		duplicate: "重复",
 		import: "确认导入",
+		confirmCandidate: "确认入库",
+		staged: "条候选",
+		invalidCsv: "未找到可审核资料",
 		invalid: "请检查此项",
 		preview: "预览",
 		previewRecords: "预览资料",
-		ready: "可导入",
 		restore: "恢复备份",
 		saveBackup: "保存备份文件",
 	},
@@ -109,25 +111,12 @@ for (const locale of ["en-US", "zh-CN"] as const) {
 					mimeType: "text/csv",
 					buffer: Buffer.from(csv),
 				});
-				const preview = importCard.locator(".import-preview");
-				await expect(preview.locator(".list-row")).toHaveCount(2);
-				await expect(
-					preview
-						.locator(".list-row")
-						.filter({ hasText: "example.com" })
-						.first(),
-				).toContainText(copy.duplicate);
-				await expect(
-					preview.locator(".list-row").filter({ hasText: longName }),
-				).toContainText(copy.ready);
-				await expect(
-					preview
-						.locator(".list-row")
-						.filter({ hasText: "example.com" })
-						.first()
-						.locator("input"),
-				).toBeDisabled();
-				for (const chip of await preview.locator(".chip").all()) {
+				const review = page.locator(".intake-review-card");
+				const rows = review.locator(".intake-review-row");
+				await expect(page.locator(".notice[role='status']")).toContainText(copy.staged);
+				await expect(rows).toHaveCount(2);
+				await expect(rows.nth(1).getByLabel(locale === "zh-CN" ? "名称" : "Name")).toHaveValue(longName);
+				for (const chip of await review.locator(".chip").all()) {
 					const box = await chip.boundingBox();
 					expect(box?.width).toBeGreaterThanOrEqual(38);
 					expect(box?.height).toBeLessThanOrEqual(30);
@@ -144,15 +133,16 @@ for (const locale of ["en-US", "zh-CN"] as const) {
 					mimeType: "text/csv",
 					buffer: Buffer.from('name,kind\n"unterminated,project'),
 				});
-				await expect(importCard.locator(".import-preview")).toHaveCount(0);
+				await expect(page.locator(".notice[role='status']")).toContainText(copy.invalidCsv);
+				await expect(rows).toHaveCount(2);
 				await importCard.getByLabel(copy.csv).setInputFiles({
 					name: "preview.csv",
 					mimeType: "text/csv",
 					buffer: Buffer.from(csv),
 				});
-				await expect(preview.locator(".list-row")).toHaveCount(2);
-				await importCard.getByRole("button", { name: copy.import }).click();
-				await expect(importCard.locator(".import-preview")).toHaveCount(0);
+				await expect(rows).toHaveCount(2);
+				await rows.nth(1).getByRole("button", { name: copy.confirmCandidate }).click();
+				await expect(rows.nth(1)).toContainText(locale === "zh-CN" ? "已确认" : "Confirmed");
 
 				await backupCard
 					.locator("#backup-password")

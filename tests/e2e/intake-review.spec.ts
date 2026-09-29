@@ -16,11 +16,18 @@ for (const locale of ["zh-CN", "en-US"] as const) {
 		await page.goto("/intake");
 		const card = page.locator(".intake-review-card");
 		await expect(card.getByRole("heading", { name: labels.title })).toBeVisible();
-		const file = card.locator("#intake-review-file");
-		await file.setInputFiles({ name: "review.csv", mimeType: "text/csv", buffer: Buffer.from("name,kind,url\nAlpha,project,\nBeta,project,") });
+		await page.locator(".intake-mode-tabs").getByRole("button", { name: locale === "zh-CN" ? "表格" : "Spreadsheet" }).click();
+		const file = page.locator("#csv-file");
+		await file.setInputFiles({ name: "review.csv", mimeType: "text/csv", buffer: Buffer.from('name,kind,url\n"Alpha, One",project,\nBeta,project,') });
 		await expect(card.locator(".intake-review-row")).toHaveCount(2);
 		const first = card.locator(".intake-review-row").first();
 		const second = card.locator(".intake-review-row").nth(1);
+		await expect(first.getByLabel(locale === "zh-CN" ? "名称" : "Name")).toHaveValue("Alpha, One");
+		const beforeConfirm = await page.evaluate(async (url) => {
+			const { localRepository } = await import(url);
+			return (await (await localRepository()).allRecords()).filter((row: { type: string }) => row.type === "asset").length;
+		}, repositoryUrl);
+		expect(beforeConfirm).toBe(0);
 		await first.getByLabel(locale === "zh-CN" ? "名称" : "Name").fill("Edited quickly");
 		await first.getByLabel(locale === "zh-CN" ? "名称" : "Name").fill("Edited final");
 		await first.getByRole("button", { name: labels.confirm }).click();
@@ -36,7 +43,8 @@ for (const locale of ["zh-CN", "en-US"] as const) {
 		await page.reload();
 		await expect(card.locator(".intake-review-row")).toHaveCount(2);
 		await expect(card.locator(".intake-review-row").first()).toContainText(labels.accepted);
-		await file.setInputFiles({ name: "review-again.csv", mimeType: "text/csv", buffer: Buffer.from("name,kind,url\nAlpha,project,\nBeta,project,") });
+		await page.locator(".intake-mode-tabs").getByRole("button", { name: locale === "zh-CN" ? "表格" : "Spreadsheet" }).click();
+		await file.setInputFiles({ name: "review-again.csv", mimeType: "text/csv", buffer: Buffer.from('name,kind,url\n"Alpha, One",project,\nBeta,project,') });
 		await expect(card.locator(".intake-review-row")).toHaveCount(2);
 		const count = await page.evaluate(async (url) => {
 			const { localRepository } = await import(url);
@@ -44,7 +52,7 @@ for (const locale of ["zh-CN", "en-US"] as const) {
 		}, repositoryUrl);
 		expect(count).toBe(1);
 		await file.setInputFiles({ name: "invoice.pdf", mimeType: "application/pdf", buffer: Buffer.from("%PDF-1.4\n") });
-		await expect(card.getByRole("status")).toContainText(labels.pdf);
+		await expect(page.locator(".notice[role='status']")).toContainText(labels.pdf);
 		const historyCount = await page.evaluate(async (url) => {
 			const { localRepository } = await import(url);
 			return (await (await localRepository()).allRecords()).filter((row: { type: string }) => row.type === "history").length;
@@ -61,7 +69,8 @@ for (const locale of ["zh-CN", "en-US"] as const) {
 test("existing stable asset ID is reconciled after a simulated decision interruption", async ({ page }) => {
 	await page.goto("/intake");
 	const card = page.locator(".intake-review-card");
-	await card.locator("#intake-review-file").setInputFiles({ name: "recover.csv", mimeType: "text/csv", buffer: Buffer.from("name,kind\nRecover me,project") });
+	await page.getByRole("button", { name: "Spreadsheet" }).click();
+	await page.locator("#csv-file").setInputFiles({ name: "recover.csv", mimeType: "text/csv", buffer: Buffer.from("name,kind\nRecover me,project") });
 	await expect(card.locator(".intake-review-row")).toHaveCount(1);
 	await page.evaluate(async ({ reviewPath, repositoryPath }) => {
 		const { listReviewedCandidates } = await import(reviewPath);
@@ -81,7 +90,8 @@ test("existing stable asset ID is reconciled after a simulated decision interrup
 test("two tabs confirming one staged row create one asset", async ({ context }) => {
 	const first = await context.newPage();
 	await first.goto("/intake");
-	await first.locator("#intake-review-file").setInputFiles({ name: "same.csv", mimeType: "text/csv", buffer: Buffer.from("name,kind\nOne row,project") });
+	await first.getByRole("button", { name: "Spreadsheet" }).click();
+	await first.locator("#csv-file").setInputFiles({ name: "same.csv", mimeType: "text/csv", buffer: Buffer.from("name,kind\nOne row,project") });
 	await expect(first.locator(".intake-review-row")).toHaveCount(1);
 	const second = await context.newPage();
 	await second.goto("/intake");
@@ -102,7 +112,8 @@ test("two tabs confirming one staged row create one asset", async ({ context }) 
 test("cross-tab edit queued before confirmation saves the edited candidate", async ({ context }) => {
 	const first = await context.newPage();
 	await first.goto("/intake");
-	await first.locator("#intake-review-file").setInputFiles({ name: "edit-race.csv", mimeType: "text/csv", buffer: Buffer.from("name,kind\nBefore edit,project") });
+	await first.getByRole("button", { name: "Spreadsheet" }).click();
+	await first.locator("#csv-file").setInputFiles({ name: "edit-race.csv", mimeType: "text/csv", buffer: Buffer.from("name,kind\nBefore edit,project") });
 	await expect(first.locator(".intake-review-row")).toHaveCount(1);
 	const second = await context.newPage();
 	await second.goto("/intake");

@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import Papa from "papaparse";
 import { Download, Link2, Sparkles } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import {
@@ -36,7 +35,7 @@ import {
 import { Button } from "./components/ui/button";
 import { Dialog } from "./components/ui/dialog";
 import { RemoteBackupPanel } from "./components/RemoteBackupPanel";
-import { ExternalLinkImportPanel } from "./components/ExternalLinkImportPanel";
+import { stageCsvForReview } from "./intake-csv";
 import { estimateAiCost, readAiUsage, type AiUsage } from "./ai-usage";
 import { useAppContext } from "./view-shared";
 import "./project-editor.css";
@@ -727,7 +726,7 @@ function validateImportCandidates(candidates: ImportCandidate[], existing: Asset
 		};
 	});
 }
-export function IntakeTools() {
+export function IntakeTools({ onCsvStaged }: { onCsvStaged: () => void }) {
 	const { t } = useTranslation();
 	const { data, notify } = useAppContext();
 	const [mode, setMode] = useState<"url" | "image" | "csv" | "manual">("url");
@@ -751,6 +750,7 @@ export function IntakeTools() {
 	const [url, setUrl] = useState("");
 	const [message, setMessage] = useState("");
 	const [busy, setBusy] = useState(false);
+	const [csvBusy, setCsvBusy] = useState(false);
 	const [inspecting, setInspecting] = useState(false);
 	const importing = useRef(false);
 	const previewExisting = useRef<Asset[]>([]);
@@ -912,54 +912,18 @@ export function IntakeTools() {
 			setBusy(false);
 		}
 	}
-	async function parseCSV(file: File) {
-		const generation = ++importGeneration.current;
+	async function stageCSV(file: File) {
 		setMessage("");
-		setCandidates([]);
-		setCandidateGeneration(null);
+		setCsvBusy(true);
 		try {
-			const text = await file.text();
-			if (generation !== importGeneration.current) return;
-			const result = Papa.parse<Record<string, string>>(text, {
-				header: true,
-				skipEmptyLines: true,
-			});
-			if (result.errors.length) throw Error("csv");
-			const records = await allRecords();
-			if (generation !== importGeneration.current) return;
-			const existing = records
-				.filter((r) => r.type === "asset")
-				.map((r) => JSON.parse(r.payload) as Asset);
-			const preview: ImportCandidate[] = [];
-			for (const row of result.data.slice(0, 1000)) {
-				if (
-					!row.name?.trim() ||
-					!["project", "account", "subscription", "item"].includes(row.kind)
-				)
-					continue;
-				const asset = {
-					...newAsset(row.kind as AssetKind),
-					name: row.name.trim(),
-					url: row.url?.trim() || "",
-					category: row.category?.trim() || "",
-					description: row.description?.trim() || "",
-				};
-				const parsed = assetSchema.safeParse(asset);
-				if (parsed.success) {
-					const duplicate =
-						duplicates(parsed.data, [
-							...existing,
-							...preview.map((c) => c.asset),
-						]).length > 0;
-					preview.push({ asset: parsed.data, duplicate, invalid: false, selected: !duplicate });
-				}
-			}
-			previewExisting.current = existing;
-			setCandidates(preview);
-			setCandidateGeneration(generation);
-			setMessage(`${preview.length} ${t("preview")}`);
-		} catch {
-			if (generation === importGeneration.current) setMessage(t("error"));
+			const count = await stageCsvForReview(file);
+			onCsvStaged();
+			setMessage(t("reviewCsvStaged", { count }));
+		} catch (error) {
+			const reason = error instanceof Error ? error.message : "";
+			setMessage(t(reason === "pdf" ? "reviewPdfUnavailable" : reason === "limit" ? "reviewCsvLimit" : reason === "invalid" ? "reviewCsvInvalid" : "error"));
+		} finally {
+			setCsvBusy(false);
 		}
 	}
 	async function previewUrl() {
@@ -1038,7 +1002,7 @@ export function IntakeTools() {
 							["csv", "intakeModeCsv"],
 							["manual", "intakeModeManual"],
 						] as const).map(([value, key]) => (
-							<button key={value} type="button" aria-pressed={mode === value} disabled={busy || inspecting} onClick={() => changeMode(value)}>
+							<button key={value} type="button" aria-pressed={mode === value} disabled={busy || inspecting || csvBusy} onClick={() => changeMode(value)}>
 								{t(key)}
 							</button>
 						))}
@@ -1074,14 +1038,12 @@ export function IntakeTools() {
 								<input
 									id="csv-file"
 									type="file"
-									accept=".csv,text/csv"
-									disabled={busy || inspecting}
+									accept=".csv,text/csv,.pdf,application/pdf"
+									disabled={busy || inspecting || csvBusy}
 									onChange={(event) => {
 										const file = event.target.files?.[0];
-										importGeneration.current++;
-										setCandidates([]);
-										setCandidateGeneration(null);
-										if (file) void parseCSV(file);
+										event.currentTarget.value = "";
+										if (file) void stageCSV(file);
 									}}
 								/>
 							</div>
@@ -1133,7 +1095,7 @@ export function IntakeTools() {
 							<Button variant="primary" disabled={photoBusy || !photoAssetId || !photoFile} onClick={() => void addPhoto()}>{t("addPhoto")}</Button>
 						</>
 					)}
-					{candidates.length > 0 && (mode === "url" || mode === "csv") && (
+					{candidates.length > 0 && mode === "url" && (
 						<div className="import-preview" aria-live="polite">
 							<h3>{t("preview")}</h3>
 							{candidates.map((candidate, index) => (
@@ -1267,10 +1229,6 @@ export function IntakeTools() {
 					</ul>
 				) : <p>{t("intakeRecentEmpty")}</p>}
 			</section>
-			<details className="card intake-secondary">
-				<summary>{t("intakeExternalLinkImport")}</summary>
-				<ExternalLinkImportPanel />
-			</details>
 			{message && <div className="notice" role="status">{message}</div>}
 			{manualOpen && <AssetEditor kind={manualKind} categories={data.categories} onClose={() => setManualOpen(false)} />}
 		</div>

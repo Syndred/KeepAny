@@ -1,23 +1,15 @@
-import Papa from "papaparse";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { assetSchema, duplicates, newAsset, type Asset, type AssetKind } from "../../../packages/domain/src";
+import { assetSchema, duplicates, type Asset } from "../../../packages/domain/src";
 import { allRecords, localRepository, saveBatch } from "../../../packages/local-db/src";
 import { Button } from "./components/ui/button";
 import {
 	decideReviewedCandidate, editReviewedCandidate, getReviewedCandidate,
-	listReviewedCandidates, stageReviewedCandidates, type ReviewedCandidate,
+	listReviewedCandidates, type ReviewedCandidate,
 } from "./intake-review-store";
 import "./intake-review.css";
 
 const importKinds = ["project", "account", "subscription", "item"] as const;
-const maxCsvBytes = 2 * 1024 * 1024;
-const maxRows = 200;
-
-async function fingerprint(bytes: ArrayBuffer): Promise<string> {
-	const digest = await crypto.subtle.digest("SHA-256", bytes);
-	return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, "0")).join("");
-}
 
 function withReviewLock<T>(id: string, action: () => Promise<T>): Promise<T> {
 	return navigator.locks
@@ -29,9 +21,7 @@ export function IntakeReview() {
 	const { t } = useTranslation();
 	const [rows, setRows] = useState<ReviewedCandidate[]>([]);
 	const [message, setMessage] = useState("");
-	const [busy, setBusy] = useState(false);
 	const [workingId, setWorkingId] = useState("");
-	const generation = useRef(0);
 	const inFlight = useRef(new Set<string>());
 	const drafts = useRef(new Map<string, Asset>());
 	const pendingSaves = useRef(new Map<string, Promise<void>>());
@@ -40,55 +30,8 @@ export function IntakeReview() {
 	useEffect(() => {
 		let active = true;
 		void listReviewedCandidates().then((items) => { if (active) setRows(items); });
-		return () => { active = false; generation.current++; };
+		return () => { active = false; };
 	}, []);
-
-	async function chooseFile(file: File | undefined) {
-		const current = ++generation.current;
-		setMessage("");
-		if (!file) return;
-		if (file.name.toLowerCase().endsWith(".pdf") || file.type === "application/pdf") {
-			setMessage(t("reviewPdfUnavailable"));
-			return;
-		}
-		if (!file.name.toLowerCase().endsWith(".csv") || file.size > maxCsvBytes) {
-			setMessage(t("reviewCsvLimit"));
-			return;
-		}
-		setBusy(true);
-		try {
-			const bytes = await file.arrayBuffer();
-			const hash = await fingerprint(bytes);
-			const parsed = Papa.parse<Record<string, string>>(new TextDecoder().decode(bytes), { header: true, skipEmptyLines: true });
-			if (parsed.errors.length || parsed.data.length > maxRows || !parsed.data.length) throw Error("csv");
-			const importedAt = new Date().toISOString();
-			const staged: ReviewedCandidate[] = [];
-			for (const [index, source] of parsed.data.entries()) {
-				const kind = source.kind?.trim() as AssetKind;
-				if (!importKinds.includes(kind as typeof importKinds[number]) || !source.name?.trim()) continue;
-				const asset = assetSchema.safeParse({
-					...newAsset(kind), id: `csv-${hash.slice(0, 48)}-${index + 2}`,
-					name: source.name.trim(), url: source.url?.trim() ?? "",
-					category: source.category?.trim() ?? "", description: source.description?.trim() ?? "",
-					createdAt: importedAt, updatedAt: importedAt,
-				});
-				if (asset.success) staged.push({
-					id: `csv-${hash}-${index + 2}`, fileHash: hash, fileName: file.name,
-					rowNumber: index + 2, asset: asset.data, status: "pending",
-				});
-			}
-			if (!staged.length) throw Error("csv");
-			await stageReviewedCandidates(staged);
-			if (current !== generation.current) return;
-			await flushEdits();
-			await refresh();
-			setMessage(t("reviewCsvStaged", { count: staged.length }));
-		} catch {
-			if (current === generation.current) setMessage(t("reviewCsvInvalid"));
-		} finally {
-			if (current === generation.current) setBusy(false);
-		}
-	}
 
 	function edit(id: string, field: "name" | "kind" | "url" | "description", value: string) {
 		if (inFlight.current.has(id)) return;
@@ -148,10 +91,6 @@ export function IntakeReview() {
 
 	return <div className="intake-review">
 		<p>{t("reviewIntro")}</p>
-		<div className="field"><label htmlFor="intake-review-file">{t("reviewFile")}</label>
-			<input id="intake-review-file" type="file" accept=".csv,text/csv,.pdf,application/pdf" disabled={busy}
-				onChange={(event) => { void chooseFile(event.target.files?.[0]); event.currentTarget.value = ""; }} />
-		</div>
 		<p className="muted">{t("reviewPdfHint")}</p>
 		{message && <p role="status" className="intake-review-message">{message}</p>}
 		{rows.length > 0 && <div className="intake-review-list">

@@ -25,7 +25,7 @@ test("URL candidate name is edited before the RxDB write", async ({ page }) => {
 	expect(await projectNames(page)).toEqual(["Edited candidate"]);
 });
 
-test("CSV candidate edit checks empty, length and duplicate names before batch import", async ({ page }) => {
+test("CSV candidates are edited and confirmed individually with duplicate blocking", async ({ page }) => {
 	await page.goto("/intake");
 	await page.locator(".intake-mode-tabs").getByRole("button", { name: "Spreadsheet" }).click();
 	await page.locator("#csv-file").setInputFiles({
@@ -33,36 +33,25 @@ test("CSV candidate edit checks empty, length and duplicate names before batch i
 		mimeType: "text/csv",
 		buffer: Buffer.from("name,kind\nAlpha,project\nAlpha,project"),
 	});
-	const preview = page.locator(".import-preview");
-	await expect(preview.locator(".list-row")).toHaveCount(2);
-	await expect(preview.locator(".list-row").nth(1)).toContainText("Duplicate");
-	await preview.getByRole("textbox", { name: "Name 2" }).fill("Beta");
-	await expect(preview.locator(".list-row").nth(1).getByRole("checkbox")).toBeChecked();
-	const first = preview.getByRole("textbox", { name: "Name 1" });
-	await first.fill("");
-	await expect(preview.getByRole("button", { name: "Confirm import" })).toBeDisabled();
-	await first.fill("X".repeat(161));
-	await expect(preview.getByRole("button", { name: "Confirm import" })).toBeDisabled();
-	await first.fill("Beta");
-	await expect(preview.locator(".list-row").nth(1)).toContainText("Duplicate");
-	await expect(preview.getByRole("button", { name: "Confirm import" })).toBeDisabled();
-	await first.fill("Alpha edited");
-	await expect(preview.getByRole("button", { name: "Confirm import" })).toBeEnabled();
-	await page.evaluate(async ({ repositoryPath, domainPath }) => {
-		const { save } = await import(repositoryPath);
-		const { newAsset } = await import(domainPath);
-		await save("asset", { ...newAsset("project"), name: "Alpha edited" });
-	}, {
-		repositoryPath: repositoryModuleUrl,
-		domainPath: `/@fs${process.cwd()}/packages/domain/src/index.ts`,
-	});
-	await preview.getByRole("button", { name: "Confirm import" }).click();
-	await expect(preview.locator(".list-row").first()).toContainText("Duplicate");
-	expect(await projectNames(page)).toEqual(["Alpha edited"]);
-	await preview.locator(".list-row").first().getByRole("checkbox").uncheck();
-	await expect(preview.getByRole("button", { name: "Confirm import" })).toBeEnabled();
-	await first.fill("Alpha imported");
-	await preview.getByRole("button", { name: "Confirm import" }).click();
-	await expect(page.getByText("Import complete · 2")).toBeVisible();
-	expect((await projectNames(page)).sort()).toEqual(["Alpha edited", "Alpha imported", "Beta"]);
+	const rows = page.locator(".intake-review-row");
+	await expect(rows).toHaveCount(2);
+	const first = rows.first();
+	const second = rows.nth(1);
+	const name = first.getByLabel("Name");
+	await name.fill("");
+	await first.getByRole("button", { name: "Confirm and save" }).click();
+	await expect(page.locator(".intake-review-message")).toContainText("Check the name");
+	await name.fill("X".repeat(161));
+	await first.getByRole("button", { name: "Confirm and save" }).click();
+	await expect(page.locator(".intake-review-message")).toContainText("Check the name");
+	await name.fill("Alpha");
+	await first.getByRole("button", { name: "Confirm and save" }).click();
+	await expect(first).toContainText("Confirmed");
+	await second.getByRole("button", { name: "Confirm and save" }).click();
+	await expect(page.locator(".intake-review-message")).toContainText("Duplicate");
+	expect(await projectNames(page)).toEqual(["Alpha"]);
+	await second.getByLabel("Name").fill("Beta");
+	await second.getByRole("button", { name: "Confirm and save" }).click();
+	await expect(second).toContainText("Confirmed");
+	expect((await projectNames(page)).sort()).toEqual(["Alpha", "Beta"]);
 });
