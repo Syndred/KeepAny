@@ -12,13 +12,14 @@ import './project-workflow.css';
 
 const initialProposal: ProjectWorkflowProposal = { proposedName: '', proposedDescription: '', proposedUrl: '', changeNote: '' };
 
-export function ProjectWorkflowPage() {
+export function ProjectWorkflowPage({ projectId, flow, embedded = false }: { projectId?: string; flow?: ProjectWorkflowKind; embedded?: boolean } = {}) {
   const params = (useRouterState({ select: state => state.matches.at(-1)?.params }) ?? {}) as { id?: string; flow?: string };
-  const kind: ProjectWorkflowKind = params.flow === 'close' ? 'close' : 'brand';
+  const id = projectId ?? params.id;
+  const kind: ProjectWorkflowKind = flow ?? (params.flow === 'close' ? 'close' : 'brand');
   const { data, notify } = useAppContext();
   const { t, i18n } = useTranslation();
-  const project = data.assets.find(asset => asset.id === params.id && asset.kind === 'project' && !asset.deleted);
-  const round = currentProjectWorkflowRound(data.tasks, params.id ?? '', kind);
+  const project = data.assets.find(asset => asset.id === id && asset.kind === 'project' && !asset.deleted);
+  const round = currentProjectWorkflowRound(data.tasks, id ?? '', kind);
   const [newRound, setNewRound] = useState(false);
   const [report, setReport] = useState(false);
   const [proposal, setProposal] = useState<ProjectWorkflowProposal>(initialProposal);
@@ -78,9 +79,11 @@ export function ProjectWorkflowPage() {
   if (!project) return <main className="page"><p>{t('noMatches')}</p></main>;
   const related = data.relations.filter(relation => !relation.deleted && (relation.from === project.id || relation.to === project.id)).map(relation => data.assets.find(asset => asset.id === (relation.from === project.id ? relation.to : relation.from) && !asset.deleted)).filter((asset): asset is Asset => !!asset);
   const visible = creating ? previewTasks : round;
-  return <main className="page project-workflow-page">
-    <Link className="back-link" to="/assets/$kind/$id" params={{ kind: 'project', id: project.id }}>{t('workflowBackToProject')}</Link>
-    <div className="project-workflow-hero"><div><div className="eyebrow">{t('project')} · {t('workflowTitle')}</div><h1>{t(kind === 'brand' ? 'workflowBrandTitle' : 'workflowCloseTitle')}</h1><p>{project.name}</p></div><div className="project-workflow-steps"><span className={creating ? 'current' : ''}>{t('workflowPreview')}</span><span className={!creating && !report ? 'current' : ''}>{t('workflowPlan')}</span><span className={report ? 'current' : ''}>{t('workflowReport')}</span></div></div>
+  const Container = embedded ? 'div' : 'main';
+  const HeroTitle = embedded ? 'h2' : 'h1';
+  return <Container className={embedded ? 'project-workflow-page project-workflow-embedded' : 'page project-workflow-page'}>
+    {!embedded && <Link className="back-link" to="/assets/$kind/$id" params={{ kind: 'project', id: project.id }}>{t('workflowBackToProject')}</Link>}
+    <div className="project-workflow-hero"><div><div className="eyebrow">{t('project')} · {t('workflowTitle')}</div><HeroTitle>{t(kind === 'brand' ? 'workflowBrandTitle' : 'workflowCloseTitle')}</HeroTitle><p>{project.name}</p></div><div className="project-workflow-steps"><span className={creating ? 'current' : ''}>{t('workflowPreview')}</span><span className={!creating && !report ? 'current' : ''}>{t('workflowPlan')}</span><span className={report ? 'current' : ''}>{t('workflowReport')}</span></div></div>
     <div className="project-workflow-layout"><div className="project-workflow-main">
       {creating ? <section className="card project-workflow-card">
         <h2>{t('workflowPreview')}</h2>
@@ -104,5 +107,5 @@ export function ProjectWorkflowPage() {
       </section>
     </div><aside className="project-workflow-side"><section className="card project-workflow-card"><h2>{t('workflowRelatedAssets')}</h2>{related.length ? related.map(asset => <Link key={asset.id} to="/assets/$kind/$id" params={{ kind: asset.kind, id: asset.id }}>{asset.name}<small>{t(asset.kind)}</small></Link>) : <p>{t('none')}</p>}</section><section className="card project-workflow-card"><h2>{t('workflowScope')}</h2><p>{t('workflowScopeHint')}</p><p>{t('workflowNoPasswords')}</p></section></aside></div>
     {archiveOpen && <Dialog title={t('workflowArchiveLocal')} onClose={() => !busy && setArchiveOpen(false)}><p>{t('workflowArchiveConfirm')}</p><div className="project-workflow-actions"><Button onClick={() => setArchiveOpen(false)} disabled={busy}>{t('cancel')}</Button><Button variant="primary" onClick={() => void archive()} disabled={busy}>{t('workflowConfirmArchive')}</Button></div>{error && <p className="field-error" role="alert">{error}</p>}</Dialog>}
-  </main>;
+  </Container>;
 }

@@ -3,6 +3,9 @@
 .change-impact-picker button[aria-pressed="true"] { background: var(--yellow); }
 .change-impact-picker strong { font-size: 15px; }
 .change-impact-picker small { color: var(--muted); line-height: 1.4; }
+.change-impact-target-card { max-width: 500px; margin-bottom: 16px; padding: 14px 18px; }
+.change-impact-target-card .field { display: grid; gap: 6px; }
+.change-impact-target-card select { width: 100%; min-height: 38px; border: 2px solid var(--line); border-radius: 9px; background: var(--paper); padding: 6px 9px; }
 .change-impact-steps { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0; }
 .change-impact-steps span { padding: 7px 12px; border: 2px solid var(--line); border-radius: 999px; background: var(--paper); font-weight: 750; font-size: 12px; }
 .change-impact-steps .current { background: var(--yellow); }
