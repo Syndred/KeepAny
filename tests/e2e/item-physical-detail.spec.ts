@@ -34,6 +34,35 @@ async function png(page: Page, fill: string) {
 }
 
 for (const locale of ["zh-CN", "en"] as const) {
+	test(`${locale} receipt without a selected cover keeps the item list placeholder`, async ({ page }) => {
+		const zh = locale === "zh-CN";
+		await page.goto("/");
+		await page.evaluate((value) => localStorage.setItem("keepany-language", value), locale);
+		const id = await page.evaluate(async ({ repositoryPath, domainPath }) => {
+			const { localRepository } = await import(repositoryPath);
+			const { newAsset } = await import(domainPath);
+			const repository = await localRepository();
+			const asset = { ...newAsset("item"), name: "Receipt-only item" };
+			await repository.save("asset", asset);
+			return asset.id as string;
+		}, { repositoryPath, domainPath });
+		await page.goto(`/assets/item/${id}`);
+		const receipts = page.locator('[data-item-media-role="receiptIds"]');
+		await receipts.getByRole("button", { name: zh ? "添加图片" : "Add image" }).click();
+		await page.locator(".asset-attachments-card input[type=file]").setInputFiles({
+			name: "receipt.png", mimeType: "image/png", buffer: await png(page, "#e5bd57"),
+		});
+		await page.getByRole("dialog").getByRole("button", { name: zh ? "确认" : "Confirm" }).click();
+		await expect(receipts.locator("img.asset-image")).toBeVisible();
+		await page.goto("/assets/item");
+		const card = page.locator(".asset-library-card").filter({ hasText: "Receipt-only item" });
+		await expect(card.locator(".asset-library-cover img")).toHaveCount(0);
+		await expect(card.locator(".asset-library-cover svg")).toBeVisible();
+		await page.reload();
+		await expect(card.locator(".asset-library-cover img")).toHaveCount(0);
+		await expect(card.locator(".asset-library-cover svg")).toBeVisible();
+	});
+
 	test(`${locale} legacy Work laptop physical detail, evidence and expected return survive reload`, async ({
 		browser,
 	}) => {
