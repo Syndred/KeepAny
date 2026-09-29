@@ -72,7 +72,22 @@ export type Category=z.infer<typeof categorySchema>;
 export const normalizeCategoryName = (name: string): string => name.trim().normalize('NFKC').toLowerCase();
 export const submissionSchema=z.object({id:z.string().min(1).max(96),assetId:z.string().min(1).max(96),name:z.string().min(1).max(200),url:z.string().url().refine(v=>/^https?:\/\//.test(v)),status:z.enum(['planned','submitted','review','indexed','verify','rejected']),submittedAt:z.string().default(''),verifiedAt:z.string().default(''),evidence:z.string().max(2000).default(''),deleted:z.boolean().default(false),externalLink:z.object({profileId:z.string().min(1).max(96),destinationKey:z.string().min(1).max(512),ledgerKey:z.string().min(1).max(640),publicationStatus:z.string().max(64),listingClaim:z.enum(['none','claimed','verified']),publicUrl:z.string().max(2048),evidenceUrl:z.string().max(2048),indexEvidenceUrl:z.string().max(2048),failureReason:z.string().max(2000),importedAt:z.string().datetime()}).optional()});
 export type Submission=z.infer<typeof submissionSchema>;
-export const historySchema=z.object({id:z.string().min(1).max(96),assetId:z.string().min(1).max(96),action:z.enum(['loan','return','renew','maintenance']),note:z.string(),borrower:z.string().max(200).optional(),eventDate:z.string().refine(validDateOnly,'date').optional(),billDate:z.string().refine(validDateOnly,'date').optional(),amount:z.number().int().min(0).max(Number.MAX_SAFE_INTEGER).optional(),currency:z.enum(currencies).optional(),createdAt:z.string(),deleted:z.boolean().default(false)});
+export const financeActions=['expense','topup','refund','balance'] as const;
+export const historySchema=z.object({
+ id:z.string().min(1).max(96),assetId:z.string().min(1).max(96),
+ action:z.enum(['loan','return','renew','maintenance',...financeActions]),
+ title:z.string().trim().max(160).optional(),source:z.string().trim().max(300).optional(),
+ note:z.string(),borrower:z.string().max(200).optional(),
+ eventDate:z.string().refine(validDateOnly,'date').optional(),billDate:z.string().refine(validDateOnly,'date').optional(),
+ amount:z.number().int().min(0).max(Number.MAX_SAFE_INTEGER).optional(),currency:z.enum(currencies).optional(),
+ createdAt:z.string(),deleted:z.boolean().default(false),
+}).superRefine((value,ctx)=>{
+ if(!financeActions.includes(value.action as typeof financeActions[number]))return;
+ if(!value.title)ctx.addIssue({code:'custom',path:['title'],message:'title'});
+ if(!value.eventDate)ctx.addIssue({code:'custom',path:['eventDate'],message:'date'});
+ if(value.amount===undefined || (value.action!=='balance'&&value.amount===0))ctx.addIssue({code:'custom',path:['amount'],message:'amount'});
+ if(!value.currency)ctx.addIssue({code:'custom',path:['currency'],message:'currency'});
+});
 export type History=z.infer<typeof historySchema>;
 export function newAsset(kind:AssetKind):Asset{const now=new Date().toISOString();return assetSchema.parse({id:crypto.randomUUID(),kind,name:'Untitled',createdAt:now,updatedAt:now});}
 export function nextDue(date:string,cycle:Asset['cycle'],interval=1){return dueOnCycle(date,cycle,interval,1);}
