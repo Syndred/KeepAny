@@ -27,8 +27,8 @@ export function MaintenanceTaskRow({ task }: { task: Task }) {
 	const { schedule } = plan;
 	const asset = data.assets.find((item) => item.id === task.assetId);
 	const latest = plan.records.at(-1);
-	const effectiveDueDate = plan.deferredUntil || schedule.dueDate;
-	const reminderDate = maintenanceReminderDate(schedule, plan.deferredUntil);
+	const effectiveDueDate = plan.active ? plan.deferredUntil || schedule.dueDate : task.dueDate;
+	const reminderDate = maintenanceReminderDate(schedule, effectiveDueDate === schedule.dueDate ? "" : effectiveDueDate);
 	const todayDate = today();
 	const reminderState = plan.active && todayDate > effectiveDueDate ? "maintenanceOverdue" : plan.active && todayDate >= reminderDate ? "maintenanceReminderActive" : "";
 	const cadence = schedule.rule.mode === "once" ? t("maintenanceOnce") : `${t(schedule.rule.mode === "fixed" ? "maintenanceFixed" : "maintenanceAfterCompletion")} · ${t("maintenanceEveryCount", { count: schedule.rule.every })} ${t(schedule.rule.unit)}`;
@@ -46,7 +46,7 @@ export function MaintenanceTaskRow({ task }: { task: Task }) {
 				return taskSchema.parse({ ...task, dueDate: transition.nextDueDate, maintenancePlan: { ...plan, deferredUntil: transition.nextDueDate, records: [...plan.records, { ...transition.record, evidence: evidence.trim(), recordedAt }] } });
 			})() : (() => {
 				const transition = advanceMaintenanceSchedule(schedule, action, actionDate, plan.deferredUntil);
-				return taskSchema.parse({ ...task, dueDate: transition.schedule?.dueDate ?? task.dueDate, done: !transition.schedule,
+				return taskSchema.parse({ ...task, dueDate: transition.schedule?.dueDate ?? transition.record.previousDueDate, done: !transition.schedule,
 					completedAt: transition.schedule ? "" : recordedAt,
 					completionHistory: action === "complete" ? [...task.completionHistory, recordedAt] : task.completionHistory,
 					maintenancePlan: { schedule: transition.schedule ?? schedule, active: !!transition.schedule, deferredUntil: "", records: [...plan.records, { ...transition.record, evidence: evidence.trim(), recordedAt }] } });
@@ -60,7 +60,7 @@ export function MaintenanceTaskRow({ task }: { task: Task }) {
 	return <article className="list-row maintenance-task-row" id={`task-${task.id}`}>
 		<div className="maintenance-task-head"><div><strong>{task.name}</strong><small>{t("maintenanceAsset")}: {asset && !asset.deleted ? <Link to="/assets/$kind/$id" params={{ kind: asset.kind, id: asset.id }}>{asset.name}</Link> : asset?.name ?? t("maintenanceAssetMissing")}</small></div><span className="chip">{plan.active ? t("pending") : t(latest?.action === "skip" ? "maintenanceSkipped" : "done")}</span></div>
 		<div className="maintenance-task-facts"><span>{t("maintenanceDue")}: {date(effectiveDueDate, i18n.language)}</span><span>{t("maintenanceReminder")}: {date(reminderDate, i18n.language)}</span><span>{t("maintenanceRule")}: {cadence}</span>{schedule.plannedAmountMinor !== null && <span>{t("maintenanceAmount")}: {money(schedule.plannedAmountMinor, schedule.currency, i18n.language)}</span>}</div>
-		{plan.deferredUntil && <small className="maintenance-estimate-note">{t("maintenanceOriginalDue")}: {date(schedule.dueDate, i18n.language)}</small>}
+		{effectiveDueDate !== schedule.dueDate && <small className="maintenance-estimate-note">{t("maintenanceOriginalDue")}: {date(schedule.dueDate, i18n.language)}</small>}
 		{reminderState && <p className="maintenance-reminder-state">{t(reminderState)}</p>}
 		{schedule.plannedAmountMinor !== null && <small className="maintenance-estimate-note">{t("maintenanceEstimateOnly")}</small>}
 		{plan.active && plan.records.length < 1000 && <div className="maintenance-task-actions"><Button size="small" onClick={() => { setAction("complete"); setActionDate(today()); setError(""); }}>{t("maintenanceComplete")}</Button><Button size="small" onClick={() => { setAction("defer"); setActionDate(today()); setError(""); }}>{t("maintenanceDefer")}</Button><Button size="small" onClick={() => { setAction("skip"); setActionDate(today()); setError(""); }}>{t("maintenanceSkip")}</Button></div>}

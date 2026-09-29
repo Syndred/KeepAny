@@ -141,3 +141,48 @@ test("defer seven days records evidence, survives reload and keeps the fixed sch
 	expect(finished.records).toEqual(["defer", "complete"]);
 	expect(finished.dueDate > localDate(deferred)).toBe(true);
 });
+
+for (const action of ["complete", "skip"] as const) {
+	test(`a deferred one-time plan can ${action} and retains its actual due date after reload`, async ({ page }) => {
+		await page.goto("/");
+		await page.evaluate(() => localStorage.setItem("keepany-language", "en"));
+		const assetId = await createAsset(page);
+		await page.goto("/tasks");
+		await page.getByRole("button", { name: "New maintenance plan" }).click();
+		const editor = page.getByRole("dialog");
+		await editor.getByLabel("Plan name").fill(`One-time ${action}`);
+		await editor.getByLabel("Linked asset").selectOption(assetId);
+		await editor.getByLabel("Next date").fill("2026-09-01");
+		await editor.getByRole("button", { name: "Create plan" }).click();
+		const row = page.locator(".maintenance-task-row").filter({ hasText: `One-time ${action}` });
+		await row.getByRole("button", { name: "Defer 7 days" }).click();
+		await row.getByLabel("Action date").fill("2026-09-01");
+		await row.getByLabel("Evidence or note").fill("Waiting for the part");
+		await row.getByRole("button", { name: "Save action record" }).click();
+		await expect(row).toContainText("Original due date");
+		await page.reload();
+		await expect(row).toContainText("Sep 8, 2026");
+		await row.getByRole("button", { name: action === "complete" ? "Confirm complete" : "Skip this occurrence" }).click();
+		await row.getByLabel("Action date").fill("2026-09-08");
+		await row.getByLabel("Evidence or note").fill(`Verified ${action}`);
+		await row.getByRole("button", { name: "Save action record" }).click();
+		await expect(row.getByText("Action history · 2")).toBeVisible();
+		await expect(row).toContainText("Sep 8, 2026");
+		await page.reload();
+		await expect(row).toContainText(action === "complete" ? "Completed" : "Skipped");
+		await expect(row).toContainText("Sep 8, 2026");
+		await expect(row).toContainText("Original due date: Sep 1, 2026");
+		const stored = await page.evaluate(async repositoryModule => {
+			const { localRepository } = await import(repositoryModule);
+			const repository = await localRepository();
+			const task = (await repository.list("task")).find((value: { name: string }) => value.name.startsWith("One-time "));
+			return task && { dueDate: task.dueDate, anchorDate: task.maintenancePlan.schedule.anchorDate, scheduleDueDate: task.maintenancePlan.schedule.dueDate, deferredUntil: task.maintenancePlan.deferredUntil, active: task.maintenancePlan.active, done: task.done, completedAt: task.completedAt, completionHistory: task.completionHistory, records: task.maintenancePlan.records };
+		}, repositoryUrl);
+		expect(stored).toMatchObject({ dueDate: "2026-09-08", anchorDate: "2026-09-01", scheduleDueDate: "2026-09-01", deferredUntil: "", active: false, done: true, records: [
+			{ action: "defer", previousDueDate: "2026-09-01", nextDueDate: "2026-09-08" },
+			{ action, previousDueDate: "2026-09-08", nextDueDate: null },
+		] });
+		expect(stored?.completionHistory).toHaveLength(action === "complete" ? 1 : 0);
+		expect(stored?.completedAt).toBe(stored?.records[1].recordedAt);
+	});
+}

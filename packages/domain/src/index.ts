@@ -73,9 +73,9 @@ export const taskSchema=z.object({id:z.string().min(1).max(96),name:z.string().m
   if(task.done!==complete || task.completedAt!==(complete?record?.recordedAt:''))ctx.addIssue({code:'custom',path:['projectWorkflow'],message:'workflow-record'});
  }
  if(task.maintenancePlan){
-  const plan=task.maintenancePlan;const last=plan.records.at(-1);
-  const effectiveDueDate=plan.deferredUntil||plan.schedule.dueDate;
-  if(!task.assetId || task.dueDate!==effectiveDueDate || task.done===plan.active || (plan.active && task.completedAt) || (plan.active && last && last.nextDueDate!==effectiveDueDate) || (!plan.active && (plan.schedule.rule.mode!=='once'||!last||last.nextDueDate!==null||task.completedAt!==last.recordedAt)))ctx.addIssue({code:'custom',path:['maintenancePlan'],message:'maintenance-state'});
+  const plan=task.maintenancePlan;const last=plan.records.at(-1);const prior=plan.records.at(-2);
+  const effectiveDueDate=plan.active?(plan.deferredUntil||plan.schedule.dueDate):last?.previousDueDate;
+  if(!task.assetId || task.dueDate!==effectiveDueDate || task.done===plan.active || (plan.active && task.completedAt) || (plan.active && last && last.nextDueDate!==effectiveDueDate) || (!plan.active && (plan.schedule.rule.mode!=='once'||!last||last.nextDueDate!==null||last.previousDueDate!==(prior?.action==='defer'?prior.nextDueDate:plan.schedule.dueDate)||task.completedAt!==last.recordedAt)))ctx.addIssue({code:'custom',path:['maintenancePlan'],message:'maintenance-state'});
   if(task.projectWorkflow || task.impactSnapshot)ctx.addIssue({code:'custom',path:['maintenancePlan'],message:'maintenance-mixed'});
  }
 });
