@@ -39,6 +39,7 @@ import { RemoteBackupPanel } from "./components/RemoteBackupPanel";
 import { ExternalLinkImportPanel } from "./components/ExternalLinkImportPanel";
 import { estimateAiCost, readAiUsage, type AiUsage } from "./ai-usage";
 import { useAppContext } from "./view-shared";
+import "./project-editor.css";
 
 const categoryOptions: Record<AssetKind, string[]> = {
 	project: ["website", "repository", "tool"],
@@ -107,7 +108,7 @@ export function AssetEditor({
 	const original = useRef(asset).current;
 	const [draft, setDraft] = useState<Asset>(
 		() =>
-			original ?? {
+			(original && kind === "project" ? assetSchema.parse(original) : original) ?? {
 				...newAsset(kind),
 				name: "",
 				category: categoryOptions[kind][0],
@@ -201,7 +202,7 @@ export function AssetEditor({
 	}
 	return (
 		<Dialog title={asset ? t("edit") : t("newRecord")} onClose={closeIfIdle}>
-			<form onSubmit={(e) => void submit(e)}>
+			<form className={kind === "project" ? "project-editor" : undefined} onSubmit={(e) => void submit(e)}>
 				<div className="form-grid">
 					<Field
 						name="name"
@@ -273,6 +274,31 @@ export function AssetEditor({
 								onChange={(v) => set("description", v)}
 								error={errors.description}
 							/>
+							<details className="project-editor-group" open>
+								<summary>{t("projectPositioning")}</summary>
+								<div className="project-editor-fields">
+									<Field name="projectTitle" label={t("projectProductTitle")} value={draft.projectTitle} onChange={(v) => set("projectTitle", v)} error={errors.projectTitle} />
+									<Field name="projectPromoUrl" label={t("projectPromoUrl")} type="url" value={draft.projectPromoUrl} onChange={(v) => set("projectPromoUrl", v)} error={errors.projectPromoUrl} />
+									<Field name="tags" label={t("tags")} value={tagsInput} onChange={(value) => { setTagsInput(value); setErrors((previous) => ({ ...previous, tags: "" })); }} error={errors.tags} />
+								</div>
+							</details>
+							<details className="project-editor-group">
+								<summary>{t("projectIntroductionPricing")}</summary>
+								<div className="project-editor-fields">
+									<Field name="projectMediumDescription" label={t("projectMediumDescription")} error={errors.projectMediumDescription}><textarea id="projectMediumDescription" rows={4} value={draft.projectMediumDescription} onChange={(event) => set("projectMediumDescription", event.target.value)} /></Field>
+									<Field name="longDescription" label={t("projectFullDescription")} error={errors.longDescription}><textarea id="longDescription" rows={4} value={draft.longDescription} onChange={(event) => set("longDescription", event.target.value)} /></Field>
+									<Field name="projectFeatures" label={t("projectFeatures")} error={errors.projectFeatures}><textarea id="projectFeatures" rows={4} value={draft.projectFeatures} onChange={(event) => set("projectFeatures", event.target.value)} /></Field>
+									<Field name="projectPricing" label={t("projectPricing")} error={errors.projectPricing}><textarea id="projectPricing" rows={4} value={draft.projectPricing} onChange={(event) => set("projectPricing", event.target.value)} /></Field>
+									<Field name="projectPricingType" label={t("projectPricingType")} value={draft.projectPricingType} onChange={(v) => set("projectPricingType", v)} error={errors.projectPricingType} />
+								</div>
+							</details>
+							<details className="project-editor-group">
+								<summary>{t("projectContactDetails")}</summary>
+								<div className="project-editor-fields">
+									<Field name="projectEmail" label={t("projectBusinessEmail")} type="email" value={draft.projectEmail} onChange={(v) => set("projectEmail", v)} error={errors.projectEmail} />
+									<Field name="notes" label={t("projectAdditionalNotes")} error={errors.notes}><textarea id="notes" rows={4} value={draft.notes} onChange={(event) => set("notes", event.target.value)} /></Field>
+								</div>
+							</details>
 						</>
 					)}
 					{kind === "account" && (
@@ -444,7 +470,7 @@ export function AssetEditor({
 							/>
 						</>
 					)}
-					<Field
+					{kind !== "project" && <Field
 						name="tags"
 						label={t("tags")}
 						value={tagsInput}
@@ -453,10 +479,10 @@ export function AssetEditor({
 							setErrors((previous) => ({ ...previous, tags: "" }));
 						}}
 						error={errors.tags}
-					/>
+					/>}
 				</div>
 				{kind === "vault" && <p className="notice">{t("vaultHint")}</p>}
-				<div className="field">
+				{kind !== "project" && <div className="field">
 					<label htmlFor="longDescription">{t("longDescription")}</label>
 					<textarea
 						id="longDescription"
@@ -467,8 +493,8 @@ export function AssetEditor({
 						aria-describedby={errors.longDescription ? "longDescription-error" : undefined}
 					/>
 					{errors.longDescription && <small id="longDescription-error" className="field-error">{errors.longDescription}</small>}
-				</div>
-				<div className="field">
+				</div>}
+				{kind !== "project" && <div className="field">
 					<label htmlFor="notes">{t("notes")}</label>
 					<textarea
 						id="notes"
@@ -479,7 +505,7 @@ export function AssetEditor({
 						aria-describedby={errors.notes ? "notes-error" : undefined}
 					/>
 					{errors.notes && <small id="notes-error" className="field-error">{errors.notes}</small>}
-				</div>
+				</div>}
 				{failure && (
 					<p className="field-error" role="alert">
 						{failure}

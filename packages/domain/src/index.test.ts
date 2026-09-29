@@ -109,4 +109,17 @@ describe('subscription and local asset rules', () => {
     expect(historySchema.safeParse({ ...event, itemStatusAfter: undefined }).success).toBe(false);
     expect(historySchema.safeParse({ ...event, eventDate: undefined }).success).toBe(false);
   });
+
+  it('round-trips project profile fields and rejects invalid contact links', () => {
+    const legacy = newAsset('project');
+    const saved = assetSchema.parse({ ...legacy, projectTitle: 'Product title', projectPromoUrl: 'https://example.test/promo',
+      projectMediumDescription: 'Medium copy', projectFeatures: 'Feature copy', projectPricing: 'Free tier',
+      projectPricingType: 'Freemium', projectEmail: 'hello@example.test' });
+    expect(saved).toMatchObject({ projectTitle: 'Product title', projectPromoUrl: 'https://example.test/promo',
+      projectMediumDescription: 'Medium copy', projectFeatures: 'Feature copy', projectPricing: 'Free tier',
+      projectPricingType: 'Freemium', projectEmail: 'hello@example.test' });
+    expect(assetSchema.parse({ ...legacy, projectTitle: undefined }).projectTitle).toBe('');
+    expect(assetSchema.safeParse({ ...saved, projectPromoUrl: 'javascript:alert(1)' }).success).toBe(false);
+    expect(assetSchema.safeParse({ ...saved, projectEmail: 'not-an-email' }).success).toBe(false);
+  });
 });
