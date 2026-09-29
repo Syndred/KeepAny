@@ -9,9 +9,14 @@
 .sidebar-section-label { padding: 0 11px 8px; color: var(--muted); font-size: 10px; font-weight: 750; letter-spacing: .08em; }
 .nav { gap: 3px; }
 .nav .sortable-nav-item { grid-template-columns: 22px minmax(0,1fr); min-height: 43px; gap: 2px; border-radius: 20px; }
-.nav .sortable-nav-item.is-managing { grid-template-columns: 22px minmax(0,1fr) 26px; }
+.nav .sortable-nav-item.is-managing { grid-template-columns: 22px minmax(0,1fr) 24px 26px; }
 .nav .sortable-nav-item:has(.active) { box-shadow: 3px 4px 0 var(--line); }
 .nav .sortable-nav-link { min-height: 39px; padding-right: 8px; font-size: 13px; }
+.nav .nav-link-placeholder { display: flex; align-items: center; gap: 6px; min-width: 0; color: var(--muted); }
+.nav .sortable-nav-item.is-hidden { opacity: .8; }
+.nav .nav-visibility-toggle { width: 16px; height: 16px; margin: 0 auto; accent-color: var(--ink); cursor: pointer; }
+.nav .nav-visibility-toggle:disabled { opacity: .45; cursor: not-allowed; }
+.nav .nav-visibility-toggle:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
 .nav .nav-drag-handle { width: 22px; min-height: 39px; opacity: 0; }
 .nav .sortable-nav-item:hover .nav-drag-handle, .nav .sortable-nav-item:focus-within .nav-drag-handle, .nav .sortable-nav-item.is-managing .nav-drag-handle { opacity: 1; }
 .nav .nav-order-actions button { min-height: 19px; }

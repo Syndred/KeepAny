@@ -29,6 +29,15 @@ import "./shell-restoration.css";
 const AiDialog = lazy(() =>
 	import("./workflows").then((module) => ({ default: module.AiDialog })),
 );
+const SIDEBAR_IDS = ["overview", "tasks", ...kinds];
+
+function normalizeHiddenNavIds(value: unknown, ids: string[]): string[] {
+	if (!Array.isArray(value)) return [];
+	const hidden = [...new Set(value.filter((id): id is string => typeof id === "string" && id !== "overview" && ids.includes(id)))];
+	if (kinds.every((kind) => hidden.includes(kind))) return hidden.filter((id) => id !== "project");
+	return hidden;
+}
+
 export function AppShell() {
 	const data = useData();
 	const { t } = useTranslation();
@@ -46,6 +55,7 @@ export function AppShell() {
 	const [manageNav, setManageNav] = useState(false);
 	const [mobile, setMobile] = useState(false);
 	const [pendingNavOrder, setPendingNavOrder] = useState<string[] | null>(null);
+	const [pendingHiddenIds, setPendingHiddenIds] = useState<string[] | null>(null);
 	const pathname = useRouterState({ select: (s) => s.location.pathname });
 	const navigate = useNavigate();
 	useEffect(() => {
@@ -122,7 +132,9 @@ export function AppShell() {
 	const currentHeading = pathname === "/" ? t("overview") : currentKind ? t(currentKind) :
 		pathname === "/tasks" ? t("tasks") : pathname === "/intake" ? t("intake") :
 		pathname === "/trash" ? t("trash") : t("settings");
-	const projectDetailId = /^\/assets\/project\/([^/]+)\/?$/.exec(pathname)?.[1];
+	const detailMatch = /^\/assets\/([^/]+)\/([^/]+)\/?$/.exec(pathname);
+	const detailKind = detailMatch && kinds.includes(detailMatch[1] as (typeof kinds)[number]) ? detailMatch[1] : null;
+	const projectDetailId = detailKind === "project" ? detailMatch?.[2] : null;
 	const relationReturnId = sessionStorage.getItem("keepany-relation-return-id");
 	const relationReturnKind = sessionStorage.getItem("keepany-relation-return-kind");
 	const projectReturnKind = projectDetailId && relationReturnId === projectDetailId && relationReturnKind && kinds.includes(relationReturnKind as (typeof kinds)[number]) ? relationReturnKind : "project";
@@ -141,6 +153,9 @@ export function AppShell() {
 		(Array.isArray(savedNavOrder)
 			? savedNavOrder.filter((id): id is string => typeof id === "string")
 			: []);
+	const savedHiddenIds = data.preferences.find((preference) => preference.id === "sidebarHidden")?.value;
+	const hiddenIds = normalizeHiddenNavIds(pendingHiddenIds ?? savedHiddenIds, SIDEBAR_IDS);
+	const visibleAssetKindCount = kinds.filter((kind) => !hiddenIds.includes(kind)).length;
 	useEffect(() => {
 		if (
 			pendingNavOrder &&
@@ -149,13 +164,53 @@ export function AppShell() {
 		)
 			setPendingNavOrder(null);
 	}, [pendingNavOrder, savedNavOrder]);
+	useEffect(() => {
+		if (pendingHiddenIds && JSON.stringify(pendingHiddenIds) === JSON.stringify(normalizeHiddenNavIds(savedHiddenIds, SIDEBAR_IDS))) {
+			setPendingHiddenIds(null);
+		}
+	}, [pendingHiddenIds, savedHiddenIds]);
 	const orderedNavigation = [...navigation].sort((a, b) => {
 		const ai = navOrder.indexOf(a.id),
 			bi = navOrder.indexOf(b.id);
 		return (
 			(ai < 0 ? navigation.length : ai) - (bi < 0 ? navigation.length : bi)
 		);
+	}).map((item) => {
+		const visible = !hiddenIds.includes(item.id);
+		const mustKeepAsset = kinds.includes(item.id as (typeof kinds)[number]) && visible && visibleAssetKindCount === 1;
+		return {
+			...item,
+			visible,
+			visibilityLocked: item.id === "overview" || mustKeepAsset,
+			visibilityLockReason: item.id === "overview" ? t("navAlwaysVisible") : mustKeepAsset ? t("navAtLeastOneAsset") : undefined,
+		};
 	});
+	function changeVisibility(id: string, visible: boolean) {
+		if (id === "overview" || !SIDEBAR_IDS.includes(id)) return;
+		const next = normalizeHiddenNavIds(visible ? hiddenIds.filter((item) => item !== id) : [...hiddenIds, id], SIDEBAR_IDS);
+		if (!visible && !next.includes(id)) {
+			setToast(t("navAtLeastOneAsset"));
+			return;
+		}
+		setPendingHiddenIds(next);
+		void save("preference", { id: "sidebarHidden", value: next }).catch(() => {
+			setPendingHiddenIds(null);
+			setToast(t("error"));
+		});
+	}
+	function changeOrder(ids: string[]) {
+		const fullIds = orderedNavigation.map((item) => item.id);
+		const orderedIds = manageNav ? ids : (() => {
+			const visibleIds = new Set(ids);
+			let position = 0;
+			return fullIds.map((id) => visibleIds.has(id) ? ids[position++] : id);
+		})();
+		setPendingNavOrder(orderedIds);
+		void save("preference", { id: "sidebarOrder", value: orderedIds }).catch(() => {
+			setPendingNavOrder(null);
+			setToast(t("error"));
+		});
+	}
 	return (
 		<AppContext.Provider value={context}>
 			<McpRuntimeProvider assets={liveAssets(data)}>
@@ -183,19 +238,11 @@ export function AppShell() {
 					<div className="sidebar-section-label">{t("workspaceSection")}</div>
 					<nav className="nav" aria-label={t("navigation")}>
 						<SortableNav
-							items={orderedNavigation}
+							items={manageNav ? orderedNavigation : orderedNavigation.filter((item) => item.visible)}
 							activePath={pathname}
 							manageMode={manageNav}
-							onOrderChange={(ids) => {
-								setPendingNavOrder(ids);
-								void save("preference", {
-									id: "sidebarOrder",
-									value: ids,
-								}).catch(() => {
-									setPendingNavOrder(null);
-									setToast(t("error"));
-								});
-							}}
+							onOrderChange={changeOrder}
+							onVisibilityChange={changeVisibility}
 							onNavigate={() => setMobile(false)}
 						/>
 					</nav>
@@ -233,7 +280,7 @@ export function AppShell() {
 						>
 							<Menu size={20} />
 						</Button>
-						{projectDetailId ? <Link className="topbar-page-label topbar-back-link" to="/assets/$kind" params={{ kind: projectReturnKind }} onClick={() => { sessionStorage.removeItem("keepany-relation-return-id"); sessionStorage.removeItem("keepany-relation-return-kind"); }}><ArrowLeft size={15}/>{t("back")}</Link> : <strong className="topbar-page-label">{currentHeading}</strong>}
+						{detailKind ? <Link className="topbar-page-label topbar-back-link" to="/assets/$kind" params={{ kind: projectDetailId ? projectReturnKind : detailKind }} onClick={projectDetailId ? () => { sessionStorage.removeItem("keepany-relation-return-id"); sessionStorage.removeItem("keepany-relation-return-kind"); } : undefined}><ArrowLeft size={15}/>{t("back")}</Link> : pathname !== "/" ? <Link className="topbar-page-label topbar-back-link" to="/"><ArrowLeft size={15}/>{t("backToOverview")}</Link> : <strong className="topbar-page-label">{currentHeading}</strong>}
 						<div className="topbar-spacer"/>
 						<div className="top-search" ref={topSearchRef}>
 							<button className="top-search-trigger" type="button" aria-label={t("search")} onMouseDown={(event) => event.preventDefault()} onClick={() => topSearchInputRef.current?.focus()}><Search size={17} /></button>

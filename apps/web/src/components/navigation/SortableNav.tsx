@@ -12,33 +12,39 @@ export type SortableNavItem = {
   label: string;
   icon: ComponentType<{ size?: number }>;
   badge?: number;
+  visible?: boolean;
+  visibilityLocked?: boolean;
+  visibilityLockReason?: string;
 };
 
 export type SortableNavProps = {
   items: SortableNavItem[];
   activePath: string;
   onOrderChange: (ids: string[]) => void;
+  onVisibilityChange?: (id: string, visible: boolean) => void;
   onNavigate: () => void;
   manageMode?: boolean;
 };
 
-function NavRow({ item, index, count, activePath, onNavigate, onMove, manageMode }: {
+function NavRow({ item, index, count, activePath, onNavigate, onMove, onVisibilityChange, manageMode }: {
   item: SortableNavItem;
   index: number;
   count: number;
   activePath: string;
   onNavigate: () => void;
   onMove: (id: string, direction: -1 | 1) => void;
+  onVisibilityChange?: (id: string, visible: boolean) => void;
   manageMode: boolean;
 }) {
   const { t } = useTranslation();
   const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } = useSortable({ id: item.id });
   const active = item.to === '/' ? activePath === '/' : activePath === item.to || activePath.startsWith(`${item.to}/`);
   const Icon = item.icon;
+  const visible = item.visible !== false;
 
   return <div
     ref={setNodeRef}
-    className={`sortable-nav-item${isDragging ? ' is-dragging' : ''}${manageMode ? ' is-managing' : ''}`}
+    className={`sortable-nav-item${isDragging ? ' is-dragging' : ''}${manageMode ? ' is-managing' : ''}${visible ? '' : ' is-hidden'}`}
     style={{ transform: CSS.Transform.toString(transform), transition }}
   >
     <button
@@ -50,9 +56,18 @@ function NavRow({ item, index, count, activePath, onNavigate, onMove, manageMode
       aria-label={`${item.label} ${t('drag')}`}
       title={t('drag')}
     ><GripVertical size={17}/></button>
-    <Link to={item.to} className={`sortable-nav-link${active ? ' active' : ''}`} aria-current={active ? 'page' : undefined} onClick={onNavigate} title={item.label}>
+    {visible ? <Link to={item.to} className={`sortable-nav-link${active ? ' active' : ''}`} aria-current={active ? 'page' : undefined} onClick={onNavigate} title={item.label}>
       <Icon size={17}/><span>{item.label}</span>{item.badge != null && item.badge > 0 && <em>{item.badge}</em>}
-    </Link>
+    </Link> : <span className="sortable-nav-link nav-link-placeholder"><Icon size={17}/><span>{item.label}</span></span>}
+    {manageMode && <input
+      type="checkbox"
+      className="nav-visibility-toggle"
+      checked={visible}
+      disabled={item.visibilityLocked}
+      onChange={(event) => onVisibilityChange?.(item.id, event.target.checked)}
+      aria-label={`${t('showNavItem')}: ${item.label}`}
+      title={item.visibilityLockReason ?? `${t(visible ? 'hideNavItem' : 'showNavItem')}: ${item.label}`}
+    />}
     {manageMode && <div className="nav-order-actions">
       <button type="button" onClick={() => onMove(item.id, -1)} disabled={index === 0} aria-label={`${t('navMoveUp')} ${item.label}`} title={t('navMoveUp')}><ChevronUp size={14}/></button>
       <button type="button" onClick={() => onMove(item.id, 1)} disabled={index === count - 1} aria-label={`${t('navMoveDown')} ${item.label}`} title={t('navMoveDown')}><ChevronDown size={14}/></button>
@@ -60,7 +75,7 @@ function NavRow({ item, index, count, activePath, onNavigate, onMove, manageMode
   </div>;
 }
 
-export function SortableNav({ items, activePath, onOrderChange, onNavigate, manageMode = false }: SortableNavProps) {
+export function SortableNav({ items, activePath, onOrderChange, onVisibilityChange, onNavigate, manageMode = false }: SortableNavProps) {
   const { t } = useTranslation();
   const ids = items.map(item => item.id);
   const sensors = useSensors(
@@ -97,6 +112,6 @@ export function SortableNav({ items, activePath, onOrderChange, onNavigate, mana
       },
     }}
   ><SortableContext items={ids} strategy={verticalListSortingStrategy}>
-      {items.map((item, index) => <NavRow key={item.id} item={item} index={index} count={items.length} activePath={activePath} onNavigate={onNavigate} onMove={move} manageMode={manageMode}/>)}
+      {items.map((item, index) => <NavRow key={item.id} item={item} index={index} count={items.length} activePath={activePath} onNavigate={onNavigate} onMove={move} onVisibilityChange={onVisibilityChange} manageMode={manageMode}/>)}
     </SortableContext></DndContext>;
 }
