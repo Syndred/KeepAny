@@ -1,4 +1,4 @@
-import { type ComponentType } from 'react';
+import type { ComponentType } from 'react';
 import { DndContext, KeyboardSensor, PointerSensor, closestCenter, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, arrayMove, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -19,15 +19,17 @@ export type SortableNavProps = {
   activePath: string;
   onOrderChange: (ids: string[]) => void;
   onNavigate: () => void;
+  manageMode?: boolean;
 };
 
-function NavRow({ item, index, count, activePath, onNavigate, onMove }: {
+function NavRow({ item, index, count, activePath, onNavigate, onMove, manageMode }: {
   item: SortableNavItem;
   index: number;
   count: number;
   activePath: string;
   onNavigate: () => void;
   onMove: (id: string, direction: -1 | 1) => void;
+  manageMode: boolean;
 }) {
   const { t } = useTranslation();
   const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } = useSortable({ id: item.id });
@@ -36,7 +38,7 @@ function NavRow({ item, index, count, activePath, onNavigate, onMove }: {
 
   return <div
     ref={setNodeRef}
-    className={`sortable-nav-item${isDragging ? ' is-dragging' : ''}`}
+    className={`sortable-nav-item${isDragging ? ' is-dragging' : ''}${manageMode ? ' is-managing' : ''}`}
     style={{ transform: CSS.Transform.toString(transform), transition }}
   >
     <button
@@ -51,14 +53,14 @@ function NavRow({ item, index, count, activePath, onNavigate, onMove }: {
     <Link to={item.to} className={`sortable-nav-link${active ? ' active' : ''}`} aria-current={active ? 'page' : undefined} onClick={onNavigate} title={item.label}>
       <Icon size={17}/><span>{item.label}</span>{item.badge != null && item.badge > 0 && <em>{item.badge}</em>}
     </Link>
-    <div className="nav-order-actions">
+    {manageMode && <div className="nav-order-actions">
       <button type="button" onClick={() => onMove(item.id, -1)} disabled={index === 0} aria-label={`${t('navMoveUp')} ${item.label}`} title={t('navMoveUp')}><ChevronUp size={14}/></button>
       <button type="button" onClick={() => onMove(item.id, 1)} disabled={index === count - 1} aria-label={`${t('navMoveDown')} ${item.label}`} title={t('navMoveDown')}><ChevronDown size={14}/></button>
-    </div>
+    </div>}
   </div>;
 }
 
-export function SortableNav({ items, activePath, onOrderChange, onNavigate }: SortableNavProps) {
+export function SortableNav({ items, activePath, onOrderChange, onNavigate, manageMode = false }: SortableNavProps) {
   const { t } = useTranslation();
   const ids = items.map(item => item.id);
   const sensors = useSensors(
@@ -95,6 +97,6 @@ export function SortableNav({ items, activePath, onOrderChange, onNavigate }: So
       },
     }}
   ><SortableContext items={ids} strategy={verticalListSortingStrategy}>
-      {items.map((item, index) => <NavRow key={item.id} item={item} index={index} count={items.length} activePath={activePath} onNavigate={onNavigate} onMove={move}/>)}
+      {items.map((item, index) => <NavRow key={item.id} item={item} index={index} count={items.length} activePath={activePath} onNavigate={onNavigate} onMove={move} manageMode={manageMode}/>)}
     </SortableContext></DndContext>;
 }
