@@ -130,7 +130,7 @@ export function FinancePage() {
 				return <article className="finance-linked-row" key={asset.id}>
 					<div className="finance-linked-top"><Link className="finance-subscription" to="/assets/$kind/$id" params={{kind:"subscription",id:asset.id}}><strong>{asset.name}</strong></Link><strong>{formatMinorUnits(asset.amount,asset.currency,i18n.language)} / {asset.interval} {t(asset.cycle)}</strong><Button size="small" onClick={() => setEditSubscription(asset)}>{t("edit")}</Button></div>
 					<div className="finance-linked-tags">{related.length ? related.map((neighbor) => <Link key={neighbor.id} to="/assets/$kind/$id" params={{kind:neighbor.kind,id:neighbor.id}}>{neighbor.name} ↗</Link>) : <span>{t("financeNoLinkedAssets")}</span>}</div>
-					<small>{asset.dueDate ? `${t("dueDate")}: ${date(asset.dueDate,i18n.language)} · ` : ""}{t(asset.status)} · {t("financeLatestSource")}: {source || t("financeNoSource")}</small>
+					<small>{asset.dueDate ? `${t("dueDate")}: ${date(asset.dueDate,i18n.language)} · ` : ""}{t(asset.status)} · {t("subscriptionPaymentMethod")}: {asset.subscriptionPaymentMethod || t("accountNotRecorded")} · {t("financeLatestSource")}: {source || t("financeNoSource")}</small>
 				</article>;
 			})}</div> : <p>{t("financeNoSubscriptions")}</p>}
 		</section>

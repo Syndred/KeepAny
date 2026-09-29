@@ -50,6 +50,15 @@ describe('subscription and local asset rules', () => {
     expect(actualCharge({ ...subscription, status: 'cancelled' }, '2026-05-15')).toBeNull();
   });
 
+  it('keeps payment method metadata separate from actual subscription charges', () => {
+    const legacy = { ...newAsset('subscription'), name: 'Backup plan' } as Record<string, unknown>;
+    delete legacy.subscriptionPaymentMethod;
+    expect(assetSchema.parse(legacy).subscriptionPaymentMethod).toBe('');
+    const saved = assetSchema.parse({ ...legacy, subscriptionPaymentMethod: 'Visa ending 4242' });
+    expect(saved.subscriptionPaymentMethod).toBe('Visa ending 4242');
+    expect(assetSchema.safeParse({ ...saved, subscriptionPaymentMethod: 'X'.repeat(201) }).success).toBe(false);
+  });
+
   it('rejects impossible dates, over-discounts and executable URL schemes', () => {
     const base = newAsset('subscription');
     expect(assetSchema.safeParse({ ...base, dueDate: '2026-02-30' }).success).toBe(false);

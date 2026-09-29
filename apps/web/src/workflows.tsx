@@ -13,6 +13,7 @@ import {
 	type Asset,
 	type AssetKind,
 	type Category,
+	type Relation,
 	type Task,
 } from "../../../packages/domain/src";
 import { createMaintenanceSchedule, type RepeatRule } from "../../../packages/domain/src/task-repeat";
@@ -105,12 +106,21 @@ export function AssetEditor({
 }) {
 	const { t } = useTranslation();
 	const { data } = useAppContext();
-	const original = useRef(asset).current;
+	const originalRef = useRef(asset);
+	const original = originalRef.current;
+	const linkedSubscriptionAssets = original?.kind === "subscription" ? data.relations
+		.filter((relation) => !relation.deleted && (relation.from === original.id || relation.to === original.id))
+		.map((relation) => data.assets.find((candidate) => candidate.id === (relation.from === original.id ? relation.to : relation.from)))
+		.filter((candidate): candidate is Asset => !!candidate && !candidate.deleted) : [];
+	const linkedProjects = linkedSubscriptionAssets.filter((candidate) => candidate.kind === "project");
+	const linkedAccounts = linkedSubscriptionAssets.filter((candidate) => candidate.kind === "account");
+	const [projectId, setProjectId] = useState(() => linkedProjects.length === 1 ? linkedProjects[0].id : "");
+	const [accountId, setAccountId] = useState(() => linkedAccounts.length === 1 ? linkedAccounts[0].id : "");
 	const [vaultRelatedId, setVaultRelatedId] = useState("");
 	const [vaultVerifiedAt, setVaultVerifiedAt] = useState("");
 	const [draft, setDraft] = useState<Asset>(
 		() =>
-			(original && (kind === "project" || kind === "account") ? assetSchema.parse(original) : original) ?? {
+			(original && (kind === "project" || kind === "account" || kind === "subscription") ? assetSchema.parse(original) : original) ?? {
 				...newAsset(kind),
 				name: "",
 				category: categoryOptions[kind][0],
@@ -155,6 +165,7 @@ export function AssetEditor({
 			...draft,
 			tags: tagsInput.split(",").map((tag) => tag.trim()).filter(Boolean),
 			name: draft.name.trim(),
+			subscriptionPaymentMethod: kind === "subscription" ? draft.subscriptionPaymentMethod.trim() : draft.subscriptionPaymentMethod,
 			amount: parsedAmount,
 			itemPurchasePriceKnown: kind === "item" ? !!amount.trim() : draft.itemPurchasePriceKnown,
 			discountAmount: parsedDiscount,
@@ -188,7 +199,28 @@ export function AssetEditor({
 		setBusy(true);
 		setFailure("");
 		try {
-			if (original) await saveAssetIfCurrent(original, parsed.data);
+			const selectedLinks = kind === "subscription" ? [
+				{ id: projectId, kind: "project" as const, label: t("subscriptionProject") },
+				{ id: accountId, kind: "account" as const, label: t("subscriptionLoginAccount") },
+			].filter((link) => !!link.id) : [];
+			const repository = selectedLinks.length ? await localRepository() : null;
+			for (const link of selectedLinks) {
+				const target = await repository?.get<Asset>("asset", link.id);
+				if (!target || target.deleted || target.kind !== link.kind) throw Error("relation-endpoint");
+			}
+			const existingRelations = original && selectedLinks.length ? await repository?.list<Relation>("relation") ?? [] : [];
+			const newRelations: Relation[] = selectedLinks.filter((link) => !existingRelations.some((relation) => !relation.deleted &&
+				(relation.from === parsed.data.id && relation.to === link.id) || (relation.to === parsed.data.id && relation.from === link.id)
+			)).map((link) => ({ id: crypto.randomUUID(), from: parsed.data.id, to: link.id, label: link.label,
+				createdAt: new Date().toISOString(), verifiedAt: "", deleted: false }));
+			if (original) {
+				await saveAssetIfCurrent(original, parsed.data);
+				originalRef.current = parsed.data;
+				if (newRelations.length) {
+					try { await saveBatch(newRelations.map((value) => ({ type: "relation" as const, value }))); }
+					catch { throw Error("subscription-relations-pending"); }
+				}
+			}
 			else if (kind === "vault" && vaultRelatedId) {
 				const linked = data.assets.some((candidate) => candidate.id === vaultRelatedId && !candidate.deleted && candidate.kind !== "vault");
 				if (!linked) throw Error("relation-endpoint");
@@ -196,11 +228,17 @@ export function AssetEditor({
 					{ type: "asset", value: parsed.data },
 					{ type: "relation", value: { id: crypto.randomUUID(), from: parsed.data.id, to: vaultRelatedId, label: t("vault"), createdAt: new Date().toISOString(), verifiedAt: vaultVerifiedAt, deleted: false } },
 				]);
-			} else await save("asset", parsed.data);
+			} else if (kind === "subscription" && newRelations.length) await saveBatch([
+				{ type: "asset", value: parsed.data },
+				...newRelations.map((value) => ({ type: "relation" as const, value })),
+			]);
+			else await save("asset", parsed.data);
 			onClose();
 		} catch (error) {
 			const reason = error instanceof Error ? error.message : "";
 			setFailure(t(reason === "asset-stale" ? "assetStale" :
+				reason === "relation-endpoint" ? "subscriptionRelationUnavailable" :
+				reason === "subscription-relations-pending" ? "subscriptionRelationsNotSaved" :
 				reason === "asset-stale-renewal" ? "renewalStale" :
 				reason === "item-stale" ? "itemStale" :
 				reason === "renewal-recovery-pending" && kind === "item" ? "itemRecoveryPending" : "error"));
@@ -340,6 +378,21 @@ export function AssetEditor({
 					)}
 					{kind === "subscription" && (
 						<>
+							<Field name="subscriptionProject" label={t("subscriptionProject")}>
+								<select id="subscriptionProject" value={projectId} onChange={(event) => setProjectId(event.target.value)}>
+									<option value="">{t("none")}</option>
+									{data.assets.filter((candidate) => candidate.kind === "project" && !candidate.deleted).map((candidate) => <option key={candidate.id} value={candidate.id}>{candidate.name}</option>)}
+								</select>
+							</Field>
+							<Field name="subscriptionLoginAccount" label={t("subscriptionLoginAccount")}>
+								<select id="subscriptionLoginAccount" value={accountId} onChange={(event) => setAccountId(event.target.value)}>
+									<option value="">{t("none")}</option>
+									{data.assets.filter((candidate) => candidate.kind === "account" && !candidate.deleted).map((candidate) => <option key={candidate.id} value={candidate.id}>{candidate.name}</option>)}
+								</select>
+							</Field>
+							{original && (linkedProjects.length > 0 || linkedAccounts.length > 0) && <p className="notice">{t("subscriptionExistingLinks")}: {[...linkedProjects, ...linkedAccounts].map((candidate) => candidate.name).join(" · ")}. {t("subscriptionLinksAdditive")}</p>}
+							<Field name="subscriptionPaymentMethod" label={t("subscriptionPaymentMethod")} value={draft.subscriptionPaymentMethod} onChange={(value) => set("subscriptionPaymentMethod", value)} error={errors.subscriptionPaymentMethod} />
+							<small>{t("subscriptionPaymentHint")}</small>
 							<Field
 								name="amount"
 								label={t("amount")}
