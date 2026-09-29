@@ -42,6 +42,7 @@ import {
 import { Button } from "./components/ui/button";
 import { Dialog } from "./components/ui/dialog";
 import "./asset-restoration.css";
+import "./account-detail.css";
 import { ProjectPreview } from "./page-asset-list";
 import { TaskRow } from "./TaskRow";
 import { ImpactTaskRow } from "./ImpactTaskRow";
@@ -434,6 +435,9 @@ export function AssetDetail() {
 		return [linked?.id, linked] as const;
 	})).values()).filter((linked): linked is Asset => !!linked);
 	const relatedAccounts = relatedAssets.filter((linked) => linked.kind === "account");
+	const accountVerifiedAt = relations.map((relation) => relation.verifiedAt).filter(Boolean).sort().at(-1) ?? "";
+	const accountProjects = relatedAssets.filter((linked) => linked.kind === "project");
+	const accountVaults = relatedAssets.filter((linked) => linked.kind === "vault");
 	const relatedSubscriptions = relatedAssets.filter((linked) => linked.kind === "subscription" && linked.status === "active");
 	const pendingBacklinks = submissions.filter((entry) => entry.status === "verify");
 	const histories = data.history
@@ -1074,7 +1078,7 @@ export function AssetDetail() {
 					</div>
 				</Dialog>
 			)}
-			<div className="detail-grid asset-detail-primary">
+			<div className={`detail-grid asset-detail-primary${asset.kind === "account" ? " account-empty-primary" : ""}`}>
 				{asset.kind === "project" && <section className="card asset-profile-card asset-project-profile-card">
 					<div className="card-header"><h2>{t("profile")}</h2></div>
 					<dl className="asset-project-facts">
@@ -1093,7 +1097,7 @@ export function AssetDetail() {
 					{pendingBacklinks.length ? <button type="button" className="asset-project-reminder-row" onClick={() => scrollToFold("asset-backlinks", setBacklinksOpen)}><span className="asset-project-reminder-symbol" aria-hidden="true">!</span><span><strong>{t("projectVerifyCount", { count: pendingBacklinks.length })}</strong><small>{t("projectViewBacklinks")}</small></span><ArrowDownRight size={16} /></button> : <p className="asset-quiet-empty">{t("projectNoLinkReminders")}</p>}
 					<div className="asset-project-reminder-row asset-project-reminder-static"><span className="asset-project-reminder-symbol" aria-hidden="true">↗</span><span><strong>{t("projectNextInspection")}</strong><small>{asset.projectInspectionDate ? date(asset.projectInspectionDate, i18n.language) : t("projectNoInspection")}</small></span></div>
 				</section>}
-				{asset.kind !== "project" && <section className="card asset-profile-card">
+				{asset.kind !== "project" && asset.kind !== "account" && <section className="card asset-profile-card">
 					<div className="card-header">
 						<h2>{t("profile")}</h2>
 						{asset.kind === "item" && <Button size="small" disabled={itemBusy} onClick={openItemStatus}>{t("itemStatusChange")}</Button>}
@@ -1244,7 +1248,7 @@ export function AssetDetail() {
 					)}
 					{asset.notes && <p className="note">{asset.notes}</p>}
 				</section>}
-				{asset.kind !== "project" && attachmentSection}
+				{asset.kind !== "project" && asset.kind !== "account" && attachmentSection}
 			</div>
 			{asset.kind === "project" && <section className="card asset-project-costs">
 				<div className="card-header"><h2>{t("projectDomainCosts")}</h2><Button size="small" onClick={() => openDomain()}><Plus size={14} />{t("projectAddDomain")}</Button></div>
@@ -1412,6 +1416,32 @@ export function AssetDetail() {
 					)}
 				</section>
 			</div>
+			{asset.kind === "account" && <div className="account-facts-grid">
+				<section className="card account-facts-card"><h2>{t("accountBasicInfo")}</h2><dl>
+					<div><dt>{t("username")}</dt><dd>{asset.username || t("accountNotRecorded")}</dd></div>
+					<div><dt>{t("status")}</dt><dd>{t(asset.status)}</dd></div>
+					<div><dt>{t("accountPurpose")}</dt><dd>{asset.description || t("accountNotRecorded")}</dd></div>
+					<div><dt>{t("category")}</dt><dd>{niceCategory(asset.category, t) || t("accountNotRecorded")}</dd></div>
+					{asset.url && <div><dt>{t("url")}</dt><dd><a href={asset.url} target="_blank" rel="noopener noreferrer">{asset.url}</a></dd></div>}
+					{asset.contact && <div><dt>{t("contact")}</dt><dd>{asset.contact}</dd></div>}
+				</dl>
+				{asset.tags.length > 0 && <div className="chips">{asset.tags.map((tag) => <span className="chip" key={tag}>{tag}</span>)}</div>}
+				{asset.longDescription && <details className="more"><summary>{t("more")}</summary><p>{asset.longDescription}</p></details>}
+				{asset.notes && <p className="note">{asset.notes}</p>}
+				</section>
+				<section className="card account-facts-card account-links-card"><h2>{t("accountBindings")}</h2>
+					{relations.length ? <ul>{relations.map((relation) => {
+						const linked = liveById.get(relation.from === asset.id ? relation.to : relation.from);
+						return linked ? <li key={relation.id}><span>{relation.label}</span><Link to="/assets/$kind/$id" params={{ kind: linked.kind, id: linked.id }} onClick={(event) => { event.preventDefault(); visitRelation(linked); }}>{linked.name}</Link></li> : null;
+					})}</ul> : <p>{t("accountNoBindings")}</p>}
+				</section>
+				<section className="card account-facts-card account-security-card"><h2>{t("accountRecordsSecurity")}</h2><dl>
+					<div><dt>{t("accountRelatedProjects")}</dt><dd>{accountProjects.length ? accountProjects.map((linked) => linked.name).join(" · ") : t("accountNotRecorded")}</dd></div>
+					<div><dt>{t("verifiedAt")}</dt><dd>{accountVerifiedAt ? date(accountVerifiedAt, i18n.language) : t("accountNotRecorded")}</dd></div>
+					<div><dt>{t("accountVaultReferences")}</dt><dd>{accountVaults.length ? accountVaults.map((linked) => linked.name).join(" · ") : t("accountNotRecorded")}</dd></div>
+				</dl></section>
+			</div>}
+			{asset.kind === "account" && attachmentSection}
 			{asset.kind === "account" && (
 				<section className="card impact-checklist">
 					<div className="card-header">
