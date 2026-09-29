@@ -8,7 +8,7 @@ import { Button } from "./components/ui/button";
 import { Dialog } from "./components/ui/dialog";
 import { SortableNav, type SortableNavItem } from "./components/navigation/SortableNav";
 import { COLLECTIONS_PREFERENCE_ID, readCollections, type AssetCollection } from "./collection-model";
-import { AssetRow, PageTitle, icons, kinds, liveAssets, useAppContext } from "./view-shared";
+import { PageTitle, icons, kinds, liveAssets, niceCategory, useAppContext } from "./view-shared";
 import "./collections.css";
 
 type CollectionDraft = AssetCollection & { creating: boolean; original?: AssetCollection };
@@ -85,6 +85,7 @@ export function CollectionsPage() {
 		setEditor(newDraft());
 		setError("");
 		setSearch("");
+		if (selectedId) void navigate({ to: "/collections" });
 	};
 	const updateSidebar = async (id: "sidebarOrder" | "sidebarHidden", value: string[]) => {
 		if (navInFlight.current) return;
@@ -193,27 +194,33 @@ export function CollectionsPage() {
 	const memberAssets = selected?.assetIds.map((id) => assetById.get(id)).filter((asset): asset is Asset => !!asset) ?? [];
 	const normalizedSearch = search.trim().toLocaleLowerCase();
 	const visibleAssets = assets.filter((asset) => !normalizedSearch || asset.name.toLocaleLowerCase().includes(normalizedSearch));
+	const organizing = !selectedId || !!editor;
 
 	return (
-		<main className={`page collections-page${!selectedId ? " collections-organize-page" : ""}`}>
+		<main className={`page collections-page${organizing ? " collections-organize-page" : ""}`}>
 			<PageTitle
-				eyebrow={selectedId ? t("collectionsTitle") : t("organizeEyebrow")}
-				title={selected ? selected.name : selectedId ? t("collectionMissing") : t("organizeTitle")}
-				subtitle={selected ? t("collectionAssetCount", { count: memberAssets.length }) : t("organizeSubtitle")}
-				action={selected ? <Button onClick={() => openEdit(selected)}><Pencil size={16} />{t("collectionEdit")}</Button> :
-					!selectedId ? <Button variant="primary" onClick={openNew} disabled={collections.length >= 8}><Plus size={16} />{t("collectionCreate")}</Button> : undefined}
+				eyebrow={organizing ? t("organizeEyebrow") : t("collectionsTitle")}
+				title={organizing ? t("organizeTitle") : selected ? selected.name : t("collectionMissing")}
+				subtitle={organizing ? t("organizeSubtitle") : selected ? t("collectionAssetCount", { count: memberAssets.length }) : undefined}
+				action={organizing ? <Button variant="primary" onClick={openNew} disabled={collections.length >= 8}><Plus size={16} />{t("collectionCreate")}</Button> :
+					selected ? <Button onClick={() => openEdit(selected)}><Pencil size={16} />{t("collectionEdit")}</Button> : undefined}
 			/>
-			{selected ? (
-				<section className="card collections-members" aria-label={selected.name}>
-					{memberAssets.length ? <div className="list">{memberAssets.map((asset) => <AssetRow key={asset.id} asset={asset} />)}</div> :
-						<p>{t("collectionMembersEmpty")}</p>}
-				</section>
-			) : !selectedId ? (
+			{organizing ? (
 				<section className="card collections-organize-nav" aria-label={t("organizeNavTitle")}>
 					<div className="card-header"><div><h2>{t("organizeNavTitle")}</h2><p>{t("organizeNavHint")}</p></div></div>
 					<div className="collections-nav"><SortableNav items={sidebarItems} activePath="/collections" manageMode onNavigate={() => {}}
 						onOrderChange={(ids) => void updateSidebar("sidebarOrder", ids)} onVisibilityChange={changeVisibility} /></div>
 					{navError && <p className="field-error collections-nav-error" role="alert">{navError}</p>}
+				</section>
+			) : selected ? (
+				<section className="collections-members" aria-label={selected.name}>
+					{memberAssets.length ? <div className="collections-member-grid">{memberAssets.map((asset) => {
+						const Icon = icons[asset.kind];
+						return <Link className="collections-member-card" key={asset.id} to="/assets/$kind/$id" params={{ kind: asset.kind, id: asset.id }}>
+							<div className={`collections-member-cover collections-member-${asset.kind}`}><Icon size={34} strokeWidth={1.7} aria-hidden="true" /><span>{niceCategory(asset.category, t)}</span></div>
+							<div className="collections-member-body"><strong>{asset.name}</strong><small>{asset.description || asset.location || niceCategory(asset.category, t)}</small><div><span className="chip">{t(asset.kind)}</span><span className="chip">{t(asset.status)}</span></div></div>
+						</Link>;
+					})}</div> : <div className="card"><p>{t("collectionMembersEmpty")}</p></div>}
 				</section>
 			) : <section className="card"><p>{t("collectionMissing")}</p></section>}
 			{editor && <section className="card collections-editor" aria-label={editor.creating ? t("collectionCreate") : t("collectionEdit")}>
@@ -247,7 +254,7 @@ export function CollectionsPage() {
 					</div>
 				</form>
 			</section>}
-			{!selectedId && collections.length > 0 && <section className="collections-grid collections-existing" aria-label={t("collectionsTitle")}>
+			{organizing && collections.length > 0 && <section className="collections-grid collections-existing" aria-label={t("collectionsTitle")}>
 				{collections.map((collection) => {
 					const count = collection.assetIds.filter((id) => assetById.has(id)).length;
 					return <article className="card collections-tile" key={collection.id}>
