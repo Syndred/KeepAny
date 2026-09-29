@@ -42,6 +42,11 @@ test("desktop shell follows the frozen frame and keeps real navigation reachable
 		await page.locator(".top-search-panel .search-results a").click();
 		await expect(page).toHaveURL(new RegExp(`/assets/project/${projectId}$`));
 		await page.goto("/");
+		await page.locator(".top-search-trigger").click();
+		await page.locator(".top-search-panel input").fill("Atlas");
+		await page.locator(".top-search-panel-close").click();
+		await expect(page.locator(".top-search-panel")).toHaveCount(0);
+		await expect.poll(() => page.evaluate(() => sessionStorage.getItem("keepany-search"))).toBe("");
 		await page.locator(".sidebar-user").click();
 		await expect(page.locator(".sidebar-tools-menu a")).toHaveCount(3);
 		await page.locator(".sidebar-user").click();

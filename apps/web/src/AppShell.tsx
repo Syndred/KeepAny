@@ -58,7 +58,7 @@ export function AppShell() {
 	const pathname = useRouterState({ select: (s) => s.location.pathname });
 	const navigate = useNavigate();
 	useEffect(() => {
-		if (pathname) { setSearchOpen(false); setAiMenu(false); setToolsOpen(false); setMobile(false); }
+		if (pathname) { setSearchOpen(false); setSearch(""); setAiMenu(false); setToolsOpen(false); setMobile(false); }
 	}, [pathname]);
 	useEffect(() => {
 		const open = () => setAi(true);
@@ -73,6 +73,7 @@ export function AppShell() {
 				window.requestAnimationFrame(() => topSearchInputRef.current?.focus());
 			} else if (event.key === "Escape") {
 				setSearchOpen(false);
+				setSearch("");
 				setAiMenu(false);
 				setToolsOpen(false);
 			}
@@ -91,7 +92,7 @@ export function AppShell() {
 	useEffect(() => {
 		if (!searchOpen) return;
 		const closeOutside = (event: PointerEvent) => {
-			if (event.target instanceof Node && !topSearchPanelRef.current?.contains(event.target) && !(event.target as Element).closest?.(".top-search-trigger")) setSearchOpen(false);
+			if (event.target instanceof Node && !topSearchPanelRef.current?.contains(event.target) && !(event.target as Element).closest?.(".top-search-trigger")) { setSearchOpen(false); setSearch(""); }
 		};
 		document.addEventListener("pointerdown", closeOutside);
 		return () => document.removeEventListener("pointerdown", closeOutside);
@@ -296,7 +297,7 @@ export function AppShell() {
 						</Button>
 						{detailKind ? <Link className="topbar-page-label topbar-back-link" to="/assets/$kind" params={{ kind: projectDetailId ? projectReturnKind : detailKind }} onClick={projectDetailId ? () => { sessionStorage.removeItem("keepany-relation-return-id"); sessionStorage.removeItem("keepany-relation-return-kind"); } : undefined}><ArrowLeft size={15}/>{t("back")}</Link> : workflowProjectId ? <Link className="topbar-page-label topbar-back-link" to="/assets/$kind/$id" params={{ kind: "project", id: workflowProjectId }}><ArrowLeft size={15}/>{t("workflowBackToProject")}</Link> : collectionDetailId ? <Link className="topbar-page-label topbar-back-link" to="/collections"><ArrowLeft size={15}/>{t("collectionBack")}</Link> : pathname !== "/" ? <Link className="topbar-page-label topbar-back-link" to="/"><ArrowLeft size={15}/>{t("backToOverview")}</Link> : <strong className="topbar-page-label">{currentHeading}</strong>}
 						<div className="topbar-spacer"/>
-						<button className="top-search top-search-trigger" type="button" aria-label={t("search")} aria-expanded={searchOpen} onClick={() => { setSearchOpen((open) => !open); window.requestAnimationFrame(() => topSearchInputRef.current?.focus()); }}><Search size={17} /><span>{t("search")}</span>
+						<button className="top-search top-search-trigger" type="button" aria-label={t("search")} aria-expanded={searchOpen} onClick={() => { if (searchOpen) { setSearchOpen(false); setSearch(""); } else { setSearchOpen(true); window.requestAnimationFrame(() => topSearchInputRef.current?.focus()); } }}><Search size={17} /><span>{t("search")}</span>
 							<kbd>⌘ K</kbd>
 						</button>
 						<div className="top-actions">
@@ -318,7 +319,7 @@ export function AppShell() {
 						<label htmlFor="top-search-query">{t("search")}</label>
 						<div className="top-search-panel-input"><input id="top-search-query" ref={topSearchInputRef} value={search} onChange={(event) => setSearch(event.target.value)} placeholder={t("search")} autoComplete="off" /><button type="button" onClick={() => { setSearchOpen(false); setSearch(""); }} aria-label={t("close")}><X size={17}/></button></div>
 						{search.trim() && <div className="search-results">{matches.length ? matches.map((asset) => <Link key={asset.id} to="/assets/$kind/$id" params={{ kind: asset.kind, id: asset.id }} onClick={() => { setSearch(""); setSearchOpen(false); }}><strong>{asset.name}</strong><small>{t(asset.kind)}</small></Link>) : <p>{t("none")}</p>}</div>}
-						<button type="button" className="top-search-panel-close" onClick={() => setSearchOpen(false)}>{t("close")}</button>
+						<button type="button" className="top-search-panel-close" onClick={() => { setSearchOpen(false); setSearch(""); }}>{t("close")}</button>
 					</div>}
 					{data.loading ? (
 						<main className="page">
