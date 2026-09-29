@@ -10,4 +10,4 @@ if (selfHostProxy) {
 }
 const proxy = selfHostProxy ? Object.fromEntries(['/api/auth', '/sync', '/workspaces'].map(path =>
   [path, { target: selfHostProxy, changeOrigin: true }])) : undefined;
-export default defineConfig({ plugins: [react(), tailwindcss(), VitePWA({ registerType:'prompt', manifest:{name:'KeepAny',short_name:'KeepAny',theme_color:'#fff8e9',background_color:'#fff8e9',display:'standalone',icons:[]},workbox:{maximumFileSizeToCacheInBytes:5000000}})], build:{outDir:'dist'},server:{fs:{allow:['../..']},proxy} });
+export default defineConfig({ plugins: [react(), tailwindcss(), VitePWA({ registerType:'autoUpdate', injectRegister:null, manifest:{name:'KeepAny',short_name:'KeepAny',theme_color:'#fff8e9',background_color:'#fff8e9',display:'standalone',icons:[]},workbox:{maximumFileSizeToCacheInBytes:5000000}})], build:{outDir:'dist'},server:{fs:{allow:['../..']},proxy} });
