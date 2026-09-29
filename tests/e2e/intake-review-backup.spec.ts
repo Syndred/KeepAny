@@ -97,7 +97,7 @@ for (const locale of ['zh-CN', 'en-US']) test(`${locale} downloaded encrypted ba
       await restoredPdf.getByText(zh ? '查看提取原文' : 'View extracted text', { exact: true }).click();
       await expect(restoredPdf.locator('pre')).toContainText('Original PDF reference USD 12.00');
       await expect(restoredPdf.getByLabel(zh ? '资料类型' : 'Record type')).toHaveValue('account');
-      await restored.screenshot({ path: `/private/tmp/keepany-intake-review-backup-${locale}.png`, fullPage: true });
+      await restored.screenshot({ path: test.info().outputPath(`intake-review-backup-${locale}.png`), fullPage: true });
       expect(await restored.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
       await restoredPdf.getByRole('button', { name: zh ? '确认入库' : 'Confirm and save', exact: true }).click();
       await expect(restoredPdf).toContainText(zh ? '已确认' : 'Confirmed');

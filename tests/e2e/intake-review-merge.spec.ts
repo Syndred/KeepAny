@@ -136,7 +136,7 @@ for (const locale of ['zh-CN', 'en-US']) test(`${locale} 390 candidate merge req
         if (index < 2) await expect(apply).toBeDisabled();
       }
       await expect(apply).toBeEnabled();
-      await panel.screenshot({ path: `/private/tmp/keepany-intake-merge-${locale}-${round}-choices.png` });
+      await panel.screenshot({ path: test.info().outputPath(`intake-review-merge-${locale}-${round}-choices.png`) });
       expect(await targetPage.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
       await apply.click(); await expect(panel).toContainText(zh ? '本机合并完成，尚未同步' : 'Local merge complete; sync not started');
       await targetPage.reload(); await expect(panel.getByRole('button', { name: zh ? '撤销本机合并' : 'Undo local merge', exact: true })).toBeVisible();
