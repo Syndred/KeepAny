@@ -4,12 +4,13 @@ test("mobile collection sidebar link survives reload and returns to collection m
 	await page.setViewportSize({ width: 390, height: 844 });
 	await page.goto("/");
 	await page.evaluate(() => localStorage.setItem("keepany-language", "en"));
-	await page.goto("/collections");
+	await page.reload();
 	const sidebar = page.locator("aside.sidebar");
 	await expect.poll(() => sidebar.evaluate((element) => element.getBoundingClientRect().right)).toBeLessThanOrEqual(0);
 	await page.getByRole("button", { name: "Navigation" }).click();
-	await expect(sidebar.getByRole("link", { name: "Manage collections" })).toBeVisible();
-	await sidebar.locator(".mobile-close").click();
+	await sidebar.getByRole("link", { name: "Customize sidebar" }).click();
+	await expect(page).toHaveURL(/\/collections$/);
+	await expect(sidebar).not.toHaveClass(/open/);
 	await page.getByRole("button", { name: "New collection" }).first().click();
 	await page.getByLabel("Collection name").fill("Launch set");
 	await page.getByRole("button", { name: "Save collection" }).click();
@@ -22,7 +23,7 @@ test("mobile collection sidebar link survives reload and returns to collection m
 	await page.locator(".topbar-back-link").click();
 	await expect(page).toHaveURL(/\/collections$/);
 	await page.getByRole("button", { name: "Navigation" }).click();
-	await expect(sidebar.getByRole("link", { name: "Manage collections" })).toHaveAttribute("aria-current", "page");
+	await expect(sidebar.getByRole("link", { name: "Customize sidebar" })).toHaveAttribute("aria-current", "page");
 	await collectionLink.click();
 	await expect(page.getByRole("heading", { name: "Launch set" })).toBeVisible();
 	await expect(sidebar).not.toHaveClass(/open/);

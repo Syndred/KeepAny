@@ -149,7 +149,7 @@ test("mobile topbar search opens from its keyboard-accessible button", async ({ 
 	await page.goto("/");
 	await expect(page.locator(".overview-hero")).toBeVisible();
 	await page.locator(".top-search-trigger").click();
-	await expect(page.locator(".top-search input")).toBeFocused();
+	await expect(page.locator(".top-search-panel input")).toBeFocused();
 	expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(360);
 });
 
