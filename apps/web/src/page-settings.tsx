@@ -363,14 +363,27 @@ export function SettingsPage() {
 		}
 		return new KeyEnvelopeClient({ endpoint: syncEndpoint, workspaceId, token });
 	};
-	const acceptRecoveredKey = async (key: string, recoveredAccountId: string) => {
+	const recoveredConfigGeneration = configGeneration.current;
+	const acceptRecoveredKey = async (key: string, recoveredAccountId: string, isCurrent: () => boolean) => {
+		const assertCurrent = () => {
+			if (!mounted.current || !isCurrent() || configGeneration.current !== recoveredConfigGeneration)
+				throw Error("sync-configuration-changed");
+		};
+		assertCurrent();
 		const repository = await localRepository();
+		assertCurrent();
 		const binding = await repository.getDatasetBinding();
+		assertCurrent();
 		const accountId = accessMode === "session" ? sessionAccountId : accessMode === "official" ? officialAccountId : null;
 		if (accountId && recoveredAccountId !== accountId) throw Error("sync-account-mismatch");
 		if (binding && (binding.endpoint !== syncEndpoint || binding.workspaceId !== workspaceId ||
 			binding.accountId !== recoveredAccountId)) throw Error("sync-dataset-bound");
-		if (!binding && (await repository.allRecords()).length > 0) throw Error("sync-dataset-ambiguous");
+		if (!binding) {
+			const records = await repository.allRecords();
+			assertCurrent();
+			if (records.length > 0) throw Error("sync-dataset-ambiguous");
+		}
+		assertCurrent();
 		invalidateConfig();
 		setWorkspaceKey(key);
 		setNeedsKeySave(false);
