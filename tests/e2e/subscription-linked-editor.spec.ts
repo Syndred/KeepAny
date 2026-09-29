@@ -122,14 +122,14 @@ test("stale subscription edit does not overwrite another tab's asset changes", a
 	expect(stored).toEqual({ name: "Changed elsewhere", paymentMethod: "" });
 });
 
-test("reselecting a removed project creates one active connection", async ({ page }) => {
+test("reselecting a removed reverse project connection creates one active connection", async ({ page }) => {
 	await page.goto("/finance");
 	const ids = await page.evaluate(async ({ domainPath, repositoryPath }) => {
 		const { newAsset } = await import(domainPath);
 		const { saveBatch } = await import(repositoryPath);
 		const subscription = { ...newAsset("subscription"), name: "Reconnected plan" };
 		const project = { ...newAsset("project"), name: "Project to reconnect" };
-		const removedRelation = { id: crypto.randomUUID(), from: subscription.id, to: project.id, label: "Project", createdAt: new Date().toISOString(), verifiedAt: "", deleted: true };
+		const removedRelation = { id: crypto.randomUUID(), from: project.id, to: subscription.id, label: "Project", createdAt: new Date().toISOString(), verifiedAt: "", deleted: true };
 		await saveBatch([{ type: "asset", value: subscription }, { type: "asset", value: project }, { type: "relation", value: removedRelation }]);
 		return { subscriptionId: subscription.id, projectId: project.id };
 	}, { domainPath, repositoryPath });

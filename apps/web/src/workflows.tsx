@@ -209,8 +209,8 @@ export function AssetEditor({
 				if (!target || target.deleted || target.kind !== link.kind) throw Error("relation-endpoint");
 			}
 			const existingRelations = original && selectedLinks.length ? await repository?.list<Relation>("relation") ?? [] : [];
-			const newRelations: Relation[] = selectedLinks.filter((link) => !existingRelations.some((relation) => !relation.deleted &&
-				(relation.from === parsed.data.id && relation.to === link.id) || (relation.to === parsed.data.id && relation.from === link.id)
+			const newRelations: Relation[] = selectedLinks.filter((link) => !existingRelations.some((relation) => !relation.deleted && (
+				(relation.from === parsed.data.id && relation.to === link.id) || (relation.to === parsed.data.id && relation.from === link.id))
 			)).map((link) => ({ id: crypto.randomUUID(), from: parsed.data.id, to: link.id, label: link.label,
 				createdAt: new Date().toISOString(), verifiedAt: "", deleted: false }));
 			if (original) {
