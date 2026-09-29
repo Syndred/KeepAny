@@ -50,7 +50,22 @@ export const impactSnapshotSchema=z.object({
  legacyDedupeKey:z.string().max(200).optional(),
 });
 export type ImpactSnapshot=z.infer<typeof impactSnapshotSchema>;
-export const taskSchema=z.object({id:z.string().min(1).max(96),name:z.string().min(1).max(300),assetId:z.string().max(96).default(''),dueDate:z.string().refine(v=>!v||validDateOnly(v),'date').default(''),done:z.boolean().default(false),completedAt:z.string().default(''),completionHistory:z.array(z.string().min(1).max(64)).default([]),createdAt:z.string(),dedupeKey:z.string().max(200).default(''),impactSnapshot:impactSnapshotSchema.optional(),deleted:z.boolean().default(false)});
+export const projectWorkflowRecordSchema=z.object({outcome:z.enum(['done','blocked','na']),evidence:z.string().trim().min(1).max(2000),recordedAt:z.string().datetime()});
+export const projectWorkflowSnapshotSchema=z.object({
+ kind:z.enum(['brand','close']),roundId:z.string().uuid(),projectId:z.string().min(1).max(96),generatedAt:z.string().datetime(),
+ projectName:z.string().min(1).max(160),projectDescription:z.string().max(20000),projectUrl:z.string().max(2000),
+ proposedName:z.string().max(160).default(''),proposedDescription:z.string().max(2000).default(''),proposedUrl:z.string().max(2000).default(''),changeNote:z.string().max(2000).default(''),
+ step:z.enum(['brandProfile','brandSubmission','brandRelation','brandDomain','closeBackup','closeHandoff','closeSubscription','closeDomain','closeBacklink','closeRelated','closeDecision']),
+ sourceId:z.string().max(96).default(''),sourceName:z.string().max(300).default(''),sourceUrl:z.string().max(2048).default(''),sourceDetail:z.string().max(2000).default(''),sourceAssetId:z.string().max(96).default(''),sourceAssetKind:z.enum(kinds).optional(),
+ attachmentIds:z.array(z.string().uuid()).max(20).default([]),record:projectWorkflowRecordSchema.optional(),recordHistory:z.array(projectWorkflowRecordSchema).max(50).default([]),
+});
+export type ProjectWorkflowSnapshot=z.infer<typeof projectWorkflowSnapshotSchema>;
+export const taskSchema=z.object({id:z.string().min(1).max(96),name:z.string().min(1).max(300),assetId:z.string().max(96).default(''),dueDate:z.string().refine(v=>!v||validDateOnly(v),'date').default(''),done:z.boolean().default(false),completedAt:z.string().default(''),completionHistory:z.array(z.string().min(1).max(64)).default([]),createdAt:z.string(),dedupeKey:z.string().max(200).default(''),impactSnapshot:impactSnapshotSchema.optional(),projectWorkflow:projectWorkflowSnapshotSchema.optional(),deleted:z.boolean().default(false)}).superRefine((task,ctx)=>{
+ if(!task.projectWorkflow)return;
+ if(task.assetId!==task.projectWorkflow.projectId)ctx.addIssue({code:'custom',path:['assetId'],message:'workflow-project'});
+ const record=task.projectWorkflow.record;const complete=record?.outcome==='done'||record?.outcome==='na';
+ if(task.done!==complete || task.completedAt!==(complete?record?.recordedAt:''))ctx.addIssue({code:'custom',path:['projectWorkflow'],message:'workflow-record'});
+});
 export type Task=z.infer<typeof taskSchema>;
 export const categorySchema=z.object({id:z.string().min(1).max(96),kind:z.enum(kinds),name:z.string().min(1).max(60),order:z.number().int(),deleted:z.boolean().default(false)});
 export type Category=z.infer<typeof categorySchema>;

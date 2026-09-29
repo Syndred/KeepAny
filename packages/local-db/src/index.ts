@@ -207,7 +207,17 @@ export class LocalRepository {
     return this.saveUnlocked('asset', next, rowFor('asset', expected).payload);
   }
 
-  private async saveUnlocked(type: EntityType, value: unknown, expectedAssetPayload?: string): Promise<RecordRow> {
+  async saveTaskIfCurrent(expected: Task, next: Task): Promise<RecordRow> {
+    if (expected.id !== next.id || expected.projectWorkflow?.roundId !== next.projectWorkflow?.roundId) throw Error('task-stale');
+    return withRenewalLock(`keepany-task:${this.db.name}`, () => this.saveUnlocked('task', next, rowFor('task', expected).payload));
+  }
+
+  async savePreferenceIfCurrent(expected: { id: string; value: unknown } | null, next: { id: string; value: unknown }): Promise<RecordRow> {
+    if (expected && expected.id !== next.id) throw Error('preference-stale');
+    return this.saveUnlocked('preference', next, expected ? rowFor('preference', expected).payload : null);
+  }
+
+  private async saveUnlocked(type: EntityType, value: unknown, expectedPayload?: string | null): Promise<RecordRow> {
     if (type === 'asset' && this.renewalRecoveryError) throw Error('renewal-recovery-pending');
     const next = rowFor(type, value);
     const entity = parsedPayload(next) as Record<string, unknown>;
@@ -226,7 +236,7 @@ export class LocalRepository {
     const current = await this.db.records.findOne(next.id).exec();
     if (current) {
       await current.incrementalModify((data: RecordRow) => {
-        if (expectedAssetPayload !== undefined && JSON.stringify(parsedPayload(data)) !== expectedAssetPayload) throw Error('asset-stale');
+        if (expectedPayload === null || (expectedPayload !== undefined && JSON.stringify(parsedPayload(data)) !== expectedPayload)) throw Error(type === 'task' ? 'task-stale' : type === 'preference' ? 'preference-stale' : 'asset-stale');
         if (parsedPayload(data).deleted && !parsedPayload(next).deleted) throw Error('tombstone-restore-required');
         if (type === 'asset') {
           const previous = parsedPayload(data) as Asset;
@@ -239,13 +249,14 @@ export class LocalRepository {
         return { ...data, ...next };
       });
     } else {
-      if (expectedAssetPayload !== undefined) throw Error('asset-stale');
+      if (expectedPayload !== undefined && expectedPayload !== null) throw Error(type === 'task' ? 'task-stale' : type === 'preference' ? 'preference-stale' : 'asset-stale');
       if (type === 'asset' && entity.kind === 'item' &&
         (entity.status !== 'active' || entity.borrower)) throw Error('item-action-required');
       try {
         await this.db.records.insert(next);
       } catch (error) {
         if (!(await this.db.records.findOne(next.id).exec())) throw error;
+        if (expectedPayload !== undefined) throw Error(type === 'task' ? 'task-stale' : type === 'preference' ? 'preference-stale' : 'asset-stale');
         return this.saveUnlocked(type, value);
       }
     }
@@ -299,6 +310,12 @@ export class LocalRepository {
 
   // New records only. A durable journal rolls back partial writes after errors or interruption.
   async saveBatch(items: ReadonlyArray<{ type: EntityType; value: unknown }>): Promise<number> {
+    return items.some(item => item.type === 'task')
+      ? withRenewalLock(`keepany-task:${this.db.name}`, () => this.saveBatchUnlocked(items))
+      : this.saveBatchUnlocked(items);
+  }
+
+  private async saveBatchUnlocked(items: ReadonlyArray<{ type: EntityType; value: unknown }>): Promise<number> {
     if (!items.length || items.length > 1000) throw Error('batch-size');
     const rows = items.map(item => rowFor(item.type, item.value));
     const ids = new Set(rows.map(row => row.id));
@@ -1531,6 +1548,8 @@ export async function createCategory(kind: AssetKind, name: string, order: numbe
   return (await defaultRepository()).createCategory(kind, name, order);
 }
 export async function saveAssetIfCurrent(expected: Asset, next: Asset) { return (await defaultRepository()).saveAssetIfCurrent(expected, next); }
+export async function saveTaskIfCurrent(expected: Task, next: Task) { return (await defaultRepository()).saveTaskIfCurrent(expected, next); }
+export async function savePreferenceIfCurrent(expected: { id: string; value: unknown } | null, next: { id: string; value: unknown }) { return (await defaultRepository()).savePreferenceIfCurrent(expected, next); }
 export async function saveBatch(items: ReadonlyArray<{ type: EntityType; value: unknown }>) { return (await defaultRepository()).saveBatch(items); }
 export async function recordRenewal(expectedAsset: Asset, nextAsset: Asset, history: History) {
   return (await defaultRepository()).recordRenewal(expectedAsset, nextAsset, history);

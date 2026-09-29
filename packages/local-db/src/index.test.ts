@@ -2,6 +2,7 @@ import 'fake-indexeddb/auto';
 import { describe, expect, it, vi } from 'vitest';
 import { zipSync, unzipSync, strToU8, strFromU8 } from 'fflate';
 import { historySchema, newAsset, type Asset, type History, type Task } from '../../domain/src';
+import { buildProjectWorkflowTasks, recordProjectWorkflowTask } from '../../domain/src/project-workflow';
 import { inspectArchive, LocalRepository, openLocalRepository, type RecordRow } from './index';
 
 const name = () => `test-${crypto.randomUUID().slice(0, 12)}`;
@@ -82,6 +83,50 @@ describe('RxDB + free Dexie local repository', () => {
       await db.restoreEntity('asset', first.id);
       expect(await db.get<Asset>('asset', first.id)).toMatchObject({ deleted: false, name: 'Latest name', attachments: [imageId] });
       expect((await inspectArchive(await db.exportArchive())).manifest.attachments.map(item => item.id)).toEqual([imageId]);
+    } finally { await db.close(); }
+  });
+
+  it('rejects stale project workflow evidence rather than overwriting another tab', async () => {
+    const db = await openLocalRepository(name());
+    try {
+      const site = project('Evidence site');
+      await db.save('asset', site);
+      const [initial] = buildProjectWorkflowTasks({ project: site, assets: [site], relations: [], submissions: [], kind: 'brand', proposal: { proposedName: 'New site', proposedDescription: '', proposedUrl: '', changeNote: '' }, roundId: crypto.randomUUID(), at: '2026-09-29T00:00:00.000Z', title: step => step });
+      await db.save('task', initial);
+      const old = await db.get<Task>('task', initial.id);
+      if (!old) throw Error('task-missing');
+      const first = recordProjectWorkflowTask(old, 'done', 'Verified by tab A', '2026-09-29T01:00:00.000Z');
+      await db.saveTaskIfCurrent(old, first);
+      const stale = recordProjectWorkflowTask(old, 'blocked', 'Tab B stale result', '2026-09-29T02:00:00.000Z');
+      await expect(db.saveTaskIfCurrent(old, stale)).rejects.toThrow('task-stale');
+      expect((await db.get<Task>('task', initial.id))?.projectWorkflow?.record?.evidence).toBe('Verified by tab A');
+    } finally { await db.close(); }
+  });
+
+  it('creates only one pending workflow checklist from concurrent attempts', async () => {
+    const db = await openLocalRepository(name());
+    try {
+      const site = project('Concurrent site');
+      await db.save('asset', site);
+      const make = () => buildProjectWorkflowTasks({ project: site, assets: [site], relations: [], submissions: [], kind: 'brand', proposal: { proposedName: 'New name', proposedDescription: '', proposedUrl: '', changeNote: '' }, roundId: crypto.randomUUID(), at: new Date().toISOString(), title: step => step });
+      const [first, second] = await Promise.allSettled([db.saveBatch(make().map(value => ({ type: 'task' as const, value }))), db.saveBatch(make().map(value => ({ type: 'task' as const, value })))]);
+      expect([first, second].filter(result => result.status === 'fulfilled')).toHaveLength(1);
+      expect([first, second].filter(result => result.status === 'rejected')).toHaveLength(1);
+      expect(await db.list<Task>('task')).toHaveLength(1);
+    } finally { await db.close(); }
+  });
+
+  it('uses compare-and-save for collection preferences', async () => {
+    const db = await openLocalRepository(name());
+    try {
+      const first = { id: 'collection-test', value: { name: 'First' } };
+      await db.savePreferenceIfCurrent(null, first);
+      await expect(db.savePreferenceIfCurrent(null, { ...first, value: { name: 'Duplicate' } })).rejects.toThrow('preference-stale');
+      const old = await db.get<{ id: string; value: unknown }>('preference', first.id);
+      if (!old) throw Error('preference-missing');
+      await db.savePreferenceIfCurrent(old, { id: first.id, value: { name: 'Updated' } });
+      await expect(db.savePreferenceIfCurrent(old, { id: first.id, value: { name: 'Stale' } })).rejects.toThrow('preference-stale');
+      expect((await db.get<{ id: string; value: { name: string } }>('preference', first.id))?.value.name).toBe('Updated');
     } finally { await db.close(); }
   });
 
