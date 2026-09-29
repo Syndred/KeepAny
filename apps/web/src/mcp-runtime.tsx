@@ -9,7 +9,7 @@ import {
 } from "react";
 import { useTranslation } from "react-i18next";
 import type { Asset } from "../../../packages/domain/src";
-import type { BrowserMcpBridgeClient } from "../../../packages/mcp/src/browser-bridge";
+import type { BrowserAuditEntry, BrowserMcpBridgeClient } from "../../../packages/mcp/src/browser-bridge";
 import type { BridgeScope } from "../../../packages/mcp/src/bridge";
 import {
 	readableFields,
@@ -37,6 +37,8 @@ type RequestInput = Pick<McpRequest, "assetIds" | "readFields" | "writeFields" |
 type Runtime = {
 	status: McpStatus;
 	scope: BridgeScope | null;
+	expiresAt: number | null;
+	audit: BrowserAuditEntry[];
 	prepared: McpRequest | null;
 	error: string | null;
 	prepare(input: RequestInput): void;
@@ -104,6 +106,8 @@ export function McpRuntimeProvider({
 	const { t } = useTranslation();
 	const [status, setStatus] = useState<McpStatus>("idle");
 	const [scope, setScope] = useState<BridgeScope | null>(null);
+	const [expiresAt, setExpiresAt] = useState<number | null>(null);
+	const [audit, setAudit] = useState<BrowserAuditEntry[]>([]);
 	const [prepared, setPrepared] = useState<McpRequest | null>(null);
 	const [error, setError] = useState<string | null>(null);
 	const [pendingScope, setPendingScope] = useState<BridgeScope | null>(null);
@@ -135,6 +139,8 @@ export function McpRuntimeProvider({
 		setPendingScope(null);
 		setPreviews([]);
 		setScope(null);
+		setExpiresAt(null);
+		setAudit([]);
 	}, []);
 
 	useEffect(() => {
@@ -273,13 +279,20 @@ export function McpRuntimeProvider({
 			controllerRef.current = controller;
 			const generation = ++generationRef.current;
 			setScope(selected);
+			setExpiresAt(client.sessionExpiresAt);
 			setStatus("connected");
 			setPrepared(null);
+			let lastAuditFetch = 0;
 			const refresh = async () => {
 				try {
-					const list = await client?.pendingPreviews();
+					const now = Date.now();
+					const checkAudit = now - lastAuditFetch >= 5_000;
+					if (checkAudit) lastAuditFetch = now;
+					const [list, entries] = await Promise.all([client?.pendingPreviews(), checkAudit ? client?.auditEntries().catch(() => []) : undefined]);
 					if (generation === generationRef.current && list) setPreviews(current =>
 						JSON.stringify(current) === JSON.stringify(list) ? current : list);
+					if (generation === generationRef.current && entries) setAudit(current =>
+						JSON.stringify(current) === JSON.stringify(entries) ? current : entries);
 				} catch {
 					if (generation === generationRef.current) {
 						setError("mcpConnectionFailed");
@@ -288,6 +301,7 @@ export function McpRuntimeProvider({
 				}
 			};
 			timerRef.current = window.setInterval(() => { void refresh(); }, 800);
+			void refresh();
 			void client.run(controller.signal).catch(() => {
 				if (generation === generationRef.current) {
 					setError("mcpConnectionFailed");
@@ -381,7 +395,7 @@ export function McpRuntimeProvider({
 		}
 	};
 
-	return <context.Provider value={{ status, scope, prepared, error, prepare, invalidatePrepared, importPairing, revoke }}>
+	return <context.Provider value={{ status, scope, expiresAt, audit, prepared, error, prepare, invalidatePrepared, importPairing, revoke }}>
 		{children}
 		{pendingScope && <Dialog title={t("mcpScopeApprovalTitle")} onClose={() => answerScope(false)} returnFocusTo={() => document.getElementById("mcp-panel-title")}>
 			<p>{t("mcpScopeApprovalHint")}</p>

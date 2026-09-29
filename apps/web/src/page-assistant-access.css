@@ -1,0 +1,29 @@
+.assistant-access-page { display: grid; gap: 15px; min-width: 0; }
+.assistant-access-banner { padding: 13px 18px; border: 1px solid var(--ink, #273248); border-radius: 14px; background: var(--yellow-soft, #fff2c8); }
+.assistant-access-grid { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(260px, 0.9fr); gap: 14px; align-items: start; }
+.assistant-access-grid > *, .assistant-access-side { min-width: 0; }
+.assistant-access-connections, .assistant-access-side { display: grid; gap: 14px; }
+.assistant-access-section-head h2, .assistant-access-side h2 { margin: 0 0 5px; }
+.assistant-access-section-head p, .assistant-access-empty p, .assistant-access-side p { margin: 0; }
+.assistant-access-connection { display: grid; gap: 14px; padding: 14px; border: 1px solid var(--border, #d6d9dc); border-radius: 12px; background: var(--yellow-soft, #fff8e5); }
+.assistant-access-connection-head { display: flex; justify-content: space-between; gap: 12px; align-items: start; }
+.assistant-access-connection-head > div { display: grid; gap: 4px; min-width: 0; }
+.assistant-access-connection-head small { overflow-wrap: anywhere; }
+.assistant-access-scope { display: grid; gap: 6px; min-width: 0; }
+.assistant-access-scope p { margin: 0; }
+.assistant-access-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.assistant-access-chips .chip { overflow-wrap: anywhere; max-width: 100%; }
+.assistant-access-empty { display: grid; gap: 7px; padding: 20px; border: 1px dashed var(--border, #d6d9dc); border-radius: 12px; }
+.assistant-access-connections .actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.assistant-access-history ol { margin: 10px 0 0; padding-left: 18px; display: grid; gap: 12px; }
+.assistant-access-history li { padding-left: 4px; }
+.assistant-access-history li strong, .assistant-access-history li small { display: block; }
+.assistant-access-history li small { overflow-wrap: anywhere; }
+.assistant-access-allowed { overflow: hidden; }
+.assistant-access-allowed h2 { padding: 16px 18px 12px; border-bottom: 1px solid var(--border, #d6d9dc); }
+.assistant-access-allowed ul { padding: 0; margin: 0; list-style: none; }
+.assistant-access-allowed li { padding: 12px 18px; border-bottom: 1px solid var(--border, #d6d9dc); }
+.assistant-access-allowed li:last-child { border-bottom: 0; }
+.assistant-access-allowed > p { padding: 15px 18px; }
+@media (max-width: 800px) { .assistant-access-grid { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 480px) { .assistant-access-connection-head { flex-direction: column; } }

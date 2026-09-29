@@ -76,6 +76,9 @@ export interface BrowserBridgeOptions {
   fetcher?: typeof fetch;
 }
 
+export type BrowserAuditEntry = Pick<import('./authority').AuditEntry,
+  'id' | 'at' | 'action' | 'outcome' | 'assetId' | 'fieldNames'>;
+
 export class BrowserMcpBridgeClient {
   private sessionSecret = '';
   private expiresAt = 0;
@@ -89,6 +92,7 @@ export class BrowserMcpBridgeClient {
   private closing: Promise<void> | null = null;
   private readonly loopAbort = new AbortController();
   private readonly fetcher: typeof fetch;
+  get sessionExpiresAt(): number { return this.expiresAt; }
   constructor(private readonly options: BrowserBridgeOptions) {
     const url = new URL(options.url);
     if (url.protocol !== 'http:' || url.hostname !== '127.0.0.1' || url.pathname !== '/' ||
@@ -131,6 +135,13 @@ export class BrowserMcpBridgeClient {
   private token() {
     if (this.stopped || !this.sessionSecret || Date.now() >= this.expiresAt) throw Error('bridge-not-paired');
     return this.sessionSecret;
+  }
+
+  /** The trusted Web UI may show exact before/after values; this is never an MCP tool. */
+  async auditEntries(): Promise<BrowserAuditEntry[]> {
+    const reply = await this.post('/audit', {}, this.token());
+    if (!reply || !Array.isArray(reply.entries)) throw Error('invalid-bridge-audit');
+    return reply.entries as BrowserAuditEntry[];
   }
 
   /** The trusted Web UI may show exact before/after values; this is never an MCP tool. */

@@ -80,6 +80,20 @@ describe('loopback MCP bridge in a real browser', () => {
     expect(paired.body.scope).toEqual({ assetIds: [asset.id], readFields: ['name'], writeFields: [] });
     // Chromium successfully read a JSON POST across origins, which requires its CORS preflight.
 
+    await authority.record({ grantId: grant.id, action: 'get', outcome: 'allowed', assetId: asset.id, fieldNames: ['name'] });
+    const auditHeaders = { Origin: appOrigin, 'Content-Type': 'application/json', Authorization: `Bearer ${paired.body.sessionSecret}` };
+    const unauthenticated = await fetch(`${bridge.url}/audit`, { method: 'POST', headers: { Origin: appOrigin, 'Content-Type': 'application/json' }, body: '{}' });
+    expect(unauthenticated.status).toBe(403);
+    const wrongOrigin = await fetch(`${bridge.url}/audit`, { method: 'POST', headers: { ...auditHeaders, Origin: otherOrigin }, body: '{}' });
+    expect(wrongOrigin.status).toBe(403);
+    const auditReply = await fetch(`${bridge.url}/audit`, { method: 'POST', headers: auditHeaders, body: '{}' });
+    expect(auditReply.status).toBe(200);
+    const auditBody = await auditReply.json();
+    expect(auditBody.entries).toContainEqual(expect.objectContaining({ action: 'get', outcome: 'allowed', assetId: asset.id }));
+    expect(JSON.stringify(auditBody)).not.toContain(grant.secret);
+    expect(JSON.stringify(auditBody)).not.toContain(grant.id);
+    expect(JSON.stringify(auditBody)).not.toContain('hidden-login');
+
     const work = bridge.store.get(asset.id);
     const relay = await page.evaluate(async ({ url, token, assetId, createdAt, updatedAt, kind, deleted, name }) => {
       const headers = { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };

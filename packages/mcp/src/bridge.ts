@@ -145,6 +145,15 @@ export async function startLocalMcpBridge(options: LocalBridgeOptions): Promise<
         return;
       }
       await paired(request);
+      if (request.url === '/audit') {
+        await json(request);
+        const entries = (await options.authority.auditEntries(grant.id)).slice(-20).reverse().map(item => ({
+          id: item.id, at: item.at, action: item.action, outcome: item.outcome,
+          ...(item.assetId ? { assetId: item.assetId } : {}),
+          ...(item.fieldNames ? { fieldNames: item.fieldNames } : {}),
+        }));
+        reply(response, 200, { entries }); return;
+      }
       if (request.url === '/poll') {
         await json(request);
         let next: Request | undefined;
