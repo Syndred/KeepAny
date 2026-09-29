@@ -1,12 +1,13 @@
 import { Client } from '@modelcontextprotocol/client';
 import { StdioClientTransport } from '@modelcontextprotocol/client/stdio';
 import { expect, type Browser, type Page, test } from '@playwright/test';
-import { chmod, mkdtemp, readFile, rm, stat } from 'node:fs/promises';
+import { chmod, mkdir, mkdtemp, readFile, rm, stat } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 
 const repo = resolve('.');
-const evidence = join(repo, 'docs/evidence/2026-09-29');
+const evidence = process.env.KEEPANY_MCP_EVIDENCE_DIR ?? join(repo, 'docs/evidence/2026-09-29');
+test.beforeAll(async () => { await mkdir(evidence, { recursive: true }); });
 const evidenceSuffix = process.env.KEEPANY_MCP_EVIDENCE_MODE === 'preview' ? '-preview' : '';
 const widths = [360, 390, 768, 1280, 1440] as const;
 const languages = [
@@ -53,7 +54,7 @@ async function addProject(page: Page, name: string, description: string) {
 }
 
 async function selectLanguage(page: Page, code: string) {
-  await page.goto('/settings');
+  await page.goto('/settings#assistant');
   await page.locator('section.card').filter({ has: page.getByRole('heading', { name: /^(Language|语言)$/ }) })
     .locator('select').selectOption(code);
 }
@@ -342,7 +343,7 @@ test('a preview expires when the record changes in another browser tab', async (
     const second = await local.context.newPage();
     const changed = `Changed in second tab ${crypto.randomUUID().slice(0, 8)}`;
     await second.goto('/assets/project');
-    await second.getByText(local.selected, { exact: true }).click();
+    await second.locator(`.asset-list-content a[href="/assets/project/${request.assetIds[0]}"]`).click();
     await second.getByRole('button', { name: 'Edit', exact: true }).click();
     const edit = second.getByRole('dialog');
     await edit.getByLabel('Short description').fill(changed);
@@ -411,12 +412,12 @@ test('removing the selected record during scope approval cannot authorize the st
   const local = await fixture(browser, language, 390);
   let connection: Awaited<ReturnType<typeof launch>> | undefined;
   try {
-    const { path } = await prepareRequest(local.page, language, local.selected, local.excluded);
+    const { path, request } = await prepareRequest(local.page, language, local.selected, local.excluded);
     connection = await launch(path, local.privateDir, 'removed');
     const { panel, dialog } = await pair(local.page, language, connection);
     const second = await local.context.newPage();
     await second.goto('/assets/project');
-    await second.getByText(local.selected, { exact: true }).click();
+    await second.locator(`.asset-list-content a[href="/assets/project/${request.assetIds[0]}"]`).click();
     await second.getByRole('button', { name: 'Move to trash' }).click();
     await second.getByRole('dialog').getByRole('button', { name: 'Move to trash' }).click();
     await expect(second.getByRole('heading', { name: local.selected })).toHaveCount(0);

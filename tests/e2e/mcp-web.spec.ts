@@ -8,7 +8,7 @@ import { join, resolve } from 'node:path';
 
 const repo = resolve('.');
 const packagedExecutable = process.env.KEEPANY_MCP_EXECUTABLE;
-const evidence = join(repo, 'docs/evidence/2026-09-29', packagedExecutable ? 'mcp-packaged' : '');
+const evidence = process.env.KEEPANY_MCP_EVIDENCE_DIR ?? join(repo, 'docs/evidence/2026-09-29', packagedExecutable ? 'mcp-packaged' : '');
 const exists = (path: string) => access(path).then(() => true, () => false);
 
 async function wrongHostStatus(url: string, origin: string, pairingSecret: string): Promise<number> {
@@ -79,7 +79,7 @@ test('formal Web grants one RxDB record to an isolated official SDK stdio client
   const otherDescription = `other private description ${unique}`;
   try {
     await mkdir(evidence, { recursive: true });
-    await page.goto('/settings');
+    await page.goto('/settings#assistant');
     if (packagedExecutable) {
       await page.evaluate(async () => { await navigator.serviceWorker.ready; });
       await page.reload();
@@ -88,7 +88,7 @@ test('formal Web grants one RxDB record to an isolated official SDK stdio client
     await page.locator('section.card').filter({ has: page.getByRole('heading', { name: 'Language' }) }).locator('select').selectOption('en');
     await addProject(page, before, hidden);
     await addProject(page, other, otherDescription);
-    await page.goto('/settings');
+    await page.goto('/settings#assistant');
     const panel = page.locator('.mcp-panel');
     await expect(panel.getByRole('heading', { name: 'Local MCP access' })).toBeVisible();
     await panel.getByRole('group', { name: 'Accessible records' }).getByLabel(before).check();
@@ -194,9 +194,11 @@ test('formal Web grants one RxDB record to an isolated official SDK stdio client
     await expect(page.getByText(after, { exact: true }).first()).toBeVisible();
     await expect(page.getByText(before, { exact: true })).toHaveCount(0);
     await page.getByRole('button', { name: 'Navigation' }).click();
-    await page.getByRole('link', { name: 'Settings' }).click();
+    await page.locator('.sidebar-user').click();
+    await page.getByRole('link', { name: 'Settings', exact: true }).click();
     await expect(page.locator('.sidebar')).not.toHaveClass(/open/);
     await expect.poll(() => page.locator('.sidebar').evaluate(element => element.getBoundingClientRect().right)).toBeLessThanOrEqual(0);
+    await page.locator('#assistant > summary').click();
     await expect(panel.getByText('Local connection authorized')).toBeVisible();
 
     await page.locator('section.card').filter({ has: page.getByRole('heading', { name: 'Language' }) }).locator('select').selectOption('zh-CN');
