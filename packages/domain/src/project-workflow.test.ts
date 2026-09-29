@@ -15,10 +15,13 @@ const title = (step: string, source: string) => `${step}: ${source}`;
 describe('project workflow', () => {
   it('snapshots actual brand dependencies and preserves them after source changes', () => {
     const f = fixture();
+    f.project.description = 'x'.repeat(20000);
     const rows = buildProjectWorkflowTasks({ ...f, kind: 'brand', proposal: { proposedName: 'Site B', proposedDescription: '', proposedUrl: '', changeNote: '' }, roundId: crypto.randomUUID(), at: '2026-09-29T00:00:00.000Z', title });
     expect(rows.map(row => row.projectWorkflow?.step)).toEqual(['brandProfile', 'brandSubmission', 'brandRelation', 'brandRelation', 'brandDomain']);
     expect(rows.find(row => row.projectWorkflow?.step === 'brandSubmission')?.projectWorkflow?.sourceUrl).toBe('https://directory.example/a');
     expect(rows[0].projectWorkflow?.projectName).toBe('Site A');
+    expect(rows[0].projectWorkflow?.projectDescription).toHaveLength(20000);
+    expect(rows[0].projectWorkflow?.sourceDetail).toHaveLength(2000);
     f.project.name = 'Edited later';
     expect(rows[0].projectWorkflow?.projectName).toBe('Site A');
     expect(new Set(rows.map(row => row.dedupeKey)).size).toBe(rows.length);

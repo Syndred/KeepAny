@@ -41,6 +41,7 @@ export function ProjectWorkflowTaskRow({ task, round: suppliedRound }: { task: T
       <span className={`project-workflow-chip ${record?.outcome ?? 'pending'}`}>{t(`workflowOutcome_${record?.outcome ?? 'pending'}`)}</span>
     </div>
     {workflow.sourceDetail && ['brandProfile','brandRelation','brandDomain'].includes(workflow.step) && <p>{workflow.sourceDetail}</p>}
+    {workflow.step === 'closeBackup' && <p>{t('attachments')}: {workflow.attachmentIds.length}</p>}
     <div className="project-workflow-source">
       {linked ? <Link to="/assets/$kind/$id" params={{ kind: workflow.sourceAssetKind!, id: workflow.sourceAssetId }}>{t('workflowOpenRelated')}</Link> : null}
       {workflow.sourceUrl && <a href={workflow.sourceUrl} target="_blank" rel="noopener noreferrer">{t('workflowOpenSource')}</a>}

@@ -26,7 +26,7 @@ export function buildProjectWorkflowTasks(input: {
     if (other) linked.set(other.id, other);
   }
   const backlinkRows = submissions.filter(row => !row.deleted && row.assetId === project.id);
-  const source = (step: ProjectWorkflowStep, fields: Partial<Source> = {}): Source => ({ step, sourceId: '', sourceName: '', sourceUrl: '', sourceDetail: '', sourceAssetId: '', ...fields, sourceDetail: (fields.sourceDetail ?? '').slice(0, 2000) });
+  const source = (step: ProjectWorkflowStep, fields: Partial<Source> = {}): Source => ({ step, sourceId: '', sourceName: '', sourceUrl: '', sourceAssetId: '', ...fields, sourceDetail: (fields.sourceDetail ?? '').slice(0, 2000) });
   const steps: Source[] = kind === 'brand' ? [
     source('brandProfile', { sourceId: project.id, sourceName: project.name, sourceUrl: project.url, sourceDetail: project.description, sourceAssetId: project.id, sourceAssetKind: 'project' }),
     ...backlinkRows.map(row => source('brandSubmission', { sourceId: row.id, sourceName: row.name, sourceUrl: row.url, sourceDetail: row.status })),
