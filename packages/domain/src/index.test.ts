@@ -122,4 +122,22 @@ describe('subscription and local asset rules', () => {
     expect(assetSchema.safeParse({ ...saved, projectPromoUrl: 'javascript:alert(1)' }).success).toBe(false);
     expect(assetSchema.safeParse({ ...saved, projectEmail: 'not-an-email' }).success).toBe(false);
   });
+
+  it('keeps legacy project images unassigned and validates media references', () => {
+    const logo = crypto.randomUUID();
+    const home = crypto.randomUUID();
+    const cover = crypto.randomUUID();
+    const shots = Array.from({ length: 4 }, () => crypto.randomUUID());
+    const project = newAsset('project');
+    const legacy = { ...project, attachments: [logo] } as Record<string, unknown>;
+    delete legacy.projectMedia;
+    expect(assetSchema.parse(legacy).projectMedia).toEqual({ logoId: '', homeScreenshotId: '', productScreenshotIds: [], promoCoverId: '' });
+    const valid = { ...project, attachments: [home, logo, cover, ...shots],
+      projectMedia: { logoId: logo, homeScreenshotId: home, productScreenshotIds: shots, promoCoverId: cover } };
+    expect(assetSchema.parse(valid).projectMedia.productScreenshotIds).toEqual(shots);
+    expect(assetSchema.safeParse({ ...valid, attachments: [logo, cover, ...shots] }).success).toBe(false);
+    expect(assetSchema.safeParse({ ...valid, projectMedia: { ...valid.projectMedia, promoCoverId: logo } }).success).toBe(false);
+    expect(assetSchema.safeParse({ ...valid, projectMedia: { ...valid.projectMedia, productScreenshotIds: [...shots, crypto.randomUUID()] } }).success).toBe(false);
+    expect(assetSchema.safeParse({ ...newAsset('account'), attachments: [logo], projectMedia: { logoId: logo } }).success).toBe(false);
+  });
 });

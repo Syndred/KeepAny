@@ -14,6 +14,7 @@ import {
 	type Asset,
 	assetSchema,
 	type ProjectDomain,
+	type ProjectMedia,
 	type Submission,
 	type Relation,
 	actualCharge,
@@ -78,12 +79,16 @@ function localCalendarDay(now: Date) {
 function ImageTile({ id }: { id: string }) {
 	const [url, setUrl] = useState("");
 	useEffect(() => {
+		let active = true;
 		let current = "";
-		fileUrl(id).then((v) => {
+		setUrl("");
+		void fileUrl(id).then((v) => {
 			current = v;
-			setUrl(v);
-		});
+			if (active) setUrl(v);
+			else if (v) URL.revokeObjectURL(v);
+		}).catch(() => { if (active) setUrl(""); });
 		return () => {
+			active = false;
 			if (current) URL.revokeObjectURL(current);
 		};
 	}, [id]);
@@ -91,6 +96,8 @@ function ImageTile({ id }: { id: string }) {
 }
 
 const submissionStatuses = ["planned", "submitted", "review", "indexed", "verify", "rejected"] as const;
+type ProjectImageRole = "logoId" | "homeScreenshotId" | "productScreenshotIds" | "promoCoverId" | "other";
+const emptyProjectMedia: ProjectMedia = { logoId: "", homeScreenshotId: "", productScreenshotIds: [], promoCoverId: "" };
 
 function SubmissionRow({ submission }: { submission: Submission }) {
 	const { t, i18n } = useTranslation();
@@ -294,6 +301,7 @@ export function AssetDetail() {
 	const imageInFlight = useRef(false);
 	const [pendingImage, setPendingImage] = useState<File | null>(null);
 	const [replaceImageId, setReplaceImageId] = useState("");
+	const [projectImageRole, setProjectImageRole] = useState<ProjectImageRole>("other");
 	const [pendingImageUrl, setPendingImageUrl] = useState("");
 	const [pendingImageStatus, setPendingImageStatus] = useState<
 		"loading" | "ready" | "error"
@@ -491,6 +499,13 @@ export function AssetDetail() {
 			? actualCharge(asset, asset.dueDate)
 			: null;
 	const projectDomains = asset.kind === "project" ? (asset.projectDomains ?? []) : [];
+	const projectMedia = asset.projectMedia ?? emptyProjectMedia;
+	const assignedProjectImages = new Set([
+		projectMedia.logoId, projectMedia.homeScreenshotId, projectMedia.promoCoverId,
+		...projectMedia.productScreenshotIds,
+	].filter(Boolean));
+	const visibleAttachmentIds = asset.kind === "project"
+		? asset.attachments.filter((id) => !assignedProjectImages.has(id)) : asset.attachments;
 	const monthlyByCurrency = new Map<string, bigint>();
 	for (const linked of relatedSubscriptions) monthlyByCurrency.set(linked.currency, (monthlyByCurrency.get(linked.currency) ?? 0n) + monthlyMinorUnits(linked));
 	const annualByCurrency = new Map<string, bigint>();
@@ -700,6 +715,11 @@ export function AssetDetail() {
 		setSubmissionUrlError("");
 		setSubmissionSaveError("");
 	}
+	function chooseImage(role: ProjectImageRole, replaceId = "") {
+		setProjectImageRole(role);
+		setReplaceImageId(replaceId);
+		imageInput.current?.click();
+	}
 	async function addImage(file: File) {
 		if (!asset || imageInFlight.current) return;
 		imageInFlight.current = true;
@@ -707,16 +727,29 @@ export function AssetDetail() {
 		let fileId = "";
 		try {
 			fileId = await putFile(file);
+			const media: ProjectMedia = { ...emptyProjectMedia, ...asset.projectMedia,
+				productScreenshotIds: [...(asset.projectMedia?.productScreenshotIds ?? [])] };
+			if (asset.kind === "project") {
+				if (projectImageRole === "productScreenshotIds") {
+					media.productScreenshotIds = replaceImageId
+						? media.productScreenshotIds.map((id) => id === replaceImageId ? fileId : id)
+						: [...media.productScreenshotIds, fileId];
+				} else if (projectImageRole !== "other") media[projectImageRole] = fileId;
+			}
+			const updatedAttachments = replaceImageId
+				? asset.attachments.map((id) => id === replaceImageId ? fileId : id)
+				: [...asset.attachments, fileId];
 			await saveAssetIfCurrent(asset, {
 				...asset,
-				attachments: replaceImageId
-					? asset.attachments.map((id) => id === replaceImageId ? fileId : id)
-					: [...asset.attachments, fileId],
+				attachments: asset.kind === "project" && projectImageRole === "homeScreenshotId"
+					? [fileId, ...updatedAttachments.filter((id) => id !== fileId)] : updatedAttachments,
+				projectMedia: media,
 				updatedAt: new Date().toISOString(),
 			});
 			if (replaceImageId) await cleanupUnreferencedFile(replaceImageId).catch(() => false);
 			setPendingImage(null);
 			setReplaceImageId("");
+			setProjectImageRole("other");
 			notify(t("saved"));
 		} catch (error) {
 			if (fileId) await cleanupUnreferencedFile(fileId).catch(() => false);
@@ -731,9 +764,15 @@ export function AssetDetail() {
 		imageInFlight.current = true;
 		setUploading(true);
 		try {
+			const media: ProjectMedia = { ...emptyProjectMedia, ...asset.projectMedia,
+				productScreenshotIds: (asset.projectMedia?.productScreenshotIds ?? []).filter((value) => value !== id) };
+			if (media.logoId === id) media.logoId = "";
+			if (media.homeScreenshotId === id) media.homeScreenshotId = "";
+			if (media.promoCoverId === id) media.promoCoverId = "";
 			await saveAssetIfCurrent(asset, {
 				...asset,
 				attachments: asset.attachments.filter((attachmentId) => attachmentId !== id),
+				projectMedia: media,
 				updatedAt: new Date().toISOString(),
 			});
 			await cleanupUnreferencedFile(id).catch(() => false);
@@ -989,21 +1028,50 @@ export function AssetDetail() {
 			setImpactBusy(false);
 		}
 	}
+	function projectMediaCard(role: "logoId" | "homeScreenshotId" | "promoCoverId", label: string) {
+		const id = projectMedia[role];
+		const attachmentCount = asset?.attachments.length ?? 20;
+		return <section className="project-media-card" data-project-media-role={role} aria-label={label} key={role}>
+			<h3>{label}</h3>
+			{id ? <ImageTile id={id} /> : <p className="asset-quiet-empty">{t("none")}</p>}
+			<div className="project-media-actions">
+				<Button size="small" disabled={uploading || (!id && attachmentCount >= 20)} onClick={() => chooseImage(role, id)}>{t(id ? "replaceImage" : "addPhoto")}</Button>
+				{id && <Button size="small" variant="danger" disabled={uploading} onClick={() => void removeImage(id)}>{t("removeImage")}</Button>}
+			</div>
+		</section>;
+	}
+	const projectMediaSection = asset.kind === "project" && <section className="project-media-section" aria-label={t("projectMaterialsImage")}>
+		<h2>{t("projectMaterialsImage")}</h2>
+		<div className="project-media-grid">
+			{projectMediaCard("logoId", t("projectLogo"))}
+			{projectMediaCard("homeScreenshotId", t("projectHomeScreenshot"))}
+			{projectMediaCard("promoCoverId", t("projectPromoCover"))}
+			<section className="project-media-card" data-project-media-role="productScreenshotIds" aria-label={t("projectProductScreenshots")}>
+				<h3>{t("projectProductScreenshots")}</h3>
+				<p className="project-media-hint">{t("projectProductScreenshotsLimit")}</p>
+				{projectMedia.productScreenshotIds.length ? <div className="project-screenshot-grid">{projectMedia.productScreenshotIds.map((id) => <div className="project-screenshot" key={id}>
+					<ImageTile id={id} />
+					<div className="project-media-actions"><Button size="small" disabled={uploading} onClick={() => chooseImage("productScreenshotIds", id)}>{t("replaceImage")}</Button><Button size="small" variant="danger" disabled={uploading} onClick={() => void removeImage(id)}>{t("removeImage")}</Button></div>
+				</div>)}</div> : <p className="asset-quiet-empty">{t("none")}</p>}
+				<Button size="small" disabled={uploading || asset.attachments.length >= 20 || projectMedia.productScreenshotIds.length >= 4} onClick={() => chooseImage("productScreenshotIds")}>{t("addPhoto")}</Button>
+			</section>
+		</div>
+	</section>;
 	const attachmentSection = (
 				<section className="card asset-attachments-card">
 					<div className="card-header">
-						<h2>{t(asset.kind === "project" ? "projectMaterialsImage" : "attachments")}</h2>
+						<h2>{t(asset.kind === "project" ? "projectOtherImages" : "attachments")}</h2>
 						<Button
 							size="small"
 							disabled={uploading || asset.attachments.length >= 20}
-							onClick={() => { setReplaceImageId(""); imageInput.current?.click(); }}
+							onClick={() => chooseImage("other")}
 						>
 							{uploading ? t("loading") : t("addPhoto")}
 						</Button>
 						<input
 							ref={imageInput}
 							type="file"
-							accept="image/jpeg,image/png,image/webp,image/gif"
+							accept={asset.kind === "project" ? "image/jpeg,image/png,image/webp" : "image/jpeg,image/png,image/webp,image/gif"}
 							hidden
 							tabIndex={-1}
 							aria-label={t("addPhoto")}
@@ -1011,14 +1079,9 @@ export function AssetDetail() {
 								const file = e.target.files?.[0];
 								if (file) {
 									if (
-										![
-											"image/jpeg",
-											"image/png",
-											"image/webp",
-											"image/gif",
-										].includes(file.type) ||
+										!(asset.kind === "project" ? ["image/jpeg", "image/png", "image/webp"] : ["image/jpeg", "image/png", "image/webp", "image/gif"]).includes(file.type) ||
 										file.size === 0 ||
-										file.size > 20 * 1024 * 1024 ||
+										file.size > (asset.kind === "project" ? 5 : 20) * 1024 * 1024 ||
 										file.name.length > 255
 									)
 										notify(t("uploadError"));
@@ -1032,14 +1095,13 @@ export function AssetDetail() {
 							}}
 						/>
 					</div>
-					{asset.attachments.length ? (
+					{visibleAttachmentIds.length ? (
 						<div className="image-grid">
-							{asset.attachments.map((id) => (
+							{visibleAttachmentIds.map((id) => (
 								<div key={id} className="image-item">
 									<ImageTile id={id} />
 									<Button size="small" disabled={uploading} onClick={() => {
-										setReplaceImageId(id);
-										imageInput.current?.click();
+										chooseImage("other", id);
 									}}>{t("replaceImage")}</Button>
 									<Button
 										variant="danger"
@@ -1075,7 +1137,7 @@ export function AssetDetail() {
 					<div className="eyebrow">
 						{t(kind)} · {niceCategory(asset.category, t)}
 					</div>
-					<h1>{asset.name}</h1>
+					{kind === "project" && projectMedia.logoId ? <div className="asset-project-hero-brand"><div className="asset-project-hero-logo"><ImageTile id={projectMedia.logoId} /></div><h1>{asset.name}</h1></div> : <h1>{asset.name}</h1>}
 					<p className="subtitle">
 						{asset.description || asset.url || t("local")}
 					</p>
@@ -1085,7 +1147,7 @@ export function AssetDetail() {
 						<Button onClick={() => scrollToFold("asset-backlinks", setBacklinksOpen)}>{t("projectViewBacklinks")}<ArrowDownRight size={15} /></Button>
 					</div>}
 				</div>
-				{kind === "project" && <div className="asset-project-hero-visual" role="img" aria-label={t("preview")}><ProjectPreview asset={asset} /></div>}
+				{kind === "project" && <div className="asset-project-hero-visual" role="img" aria-label={t("preview")}>{projectMedia.homeScreenshotId ? <ImageTile id={projectMedia.homeScreenshotId} /> : <ProjectPreview asset={{ ...asset, attachments: [] }} />}</div>}
 				{kind !== "project" && <div className="actions">
 					{kind === "subscription" && <Button asChild><Link to="/finance">{t("financeViewLedger")}</Link></Button>}
 					<Button onClick={() => setEdit(true)}>{t("edit")}</Button>
@@ -1568,8 +1630,18 @@ export function AssetDetail() {
 				<summary>{t("projectProfileMaterials")}</summary>
 				<div className="asset-project-materials-body">
 					<div className="card-header"><h2>{t("projectViewMaterials")}</h2><Button size="small" onClick={() => setEdit(true)}>{t("edit")}</Button></div>
+					<div className="asset-project-copy"><strong>{t("projectProductTitle")}</strong><p>{asset.projectTitle || "—"}</p></div>
+					<div className="asset-project-copy"><strong>{t("projectPromoUrl")}</strong><p>{asset.projectPromoUrl && /^https?:\/\//i.test(asset.projectPromoUrl) ? <a href={asset.projectPromoUrl} target="_blank" rel="noopener noreferrer">{asset.projectPromoUrl}</a> : asset.projectPromoUrl || "—"}</p></div>
+					<div className="asset-project-copy"><strong>{t("tags")}</strong><p>{asset.tags.join(", ") || "—"}</p></div>
 					<div className="asset-project-copy"><strong>{t("projectMaterialsShort")}</strong><p>{asset.description || "—"}</p></div>
+					<div className="asset-project-copy"><strong>{t("projectMediumDescription")}</strong><p>{asset.projectMediumDescription || "—"}</p></div>
 					<div className="asset-project-copy"><strong>{t("projectMaterialsLong")}</strong><p>{asset.longDescription || "—"}</p></div>
+					<div className="asset-project-copy"><strong>{t("projectFeatures")}</strong><p>{asset.projectFeatures || "—"}</p></div>
+					<div className="asset-project-copy"><strong>{t("projectPricing")}</strong><p>{asset.projectPricing || "—"}</p></div>
+					<div className="asset-project-copy"><strong>{t("projectPricingType")}</strong><p>{asset.projectPricingType || "—"}</p></div>
+					<div className="asset-project-copy"><strong>{t("projectBusinessEmail")}</strong><p>{asset.projectEmail || "—"}</p></div>
+					<div className="asset-project-copy"><strong>{t("projectAdditionalNotes")}</strong><p>{asset.notes || "—"}</p></div>
+					{projectMediaSection}
 					{attachmentSection}
 				</div>
 			</details>}
