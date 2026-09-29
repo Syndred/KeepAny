@@ -25,12 +25,12 @@ test('brand changes use one evidence-backed round and preserve its snapshot', as
   await page.getByRole('link', { name: 'Review profile changes' }).click();
   await expect(page.getByRole('heading', { name: 'Review profile change impact' })).toBeVisible();
   await expect(page.locator('.project-workflow-preview-row')).toHaveCount(5);
-  await page.getByLabel('Proposed name').fill('Mori Studio');
+  await page.getByLabel('Proposed name').fill('Atlas Studio');
   await page.getByRole('button', { name: 'Create action plan' }).click();
   await expect(page.locator('.project-workflow-task')).toHaveCount(5);
   await page.reload();
   await expect(page.locator('.project-workflow-task')).toHaveCount(5);
-  await expect(page.locator('.project-workflow-before-after')).toContainText('Mori Studio');
+  await expect(page.locator('.project-workflow-before-after')).toContainText('Atlas Studio');
   await page.locator('.project-workflow-task').first().getByRole('button', { name: 'Record result' }).click();
   await page.locator('.project-workflow-task').first().getByLabel('Evidence or note').fill('Updated local project profile and checked title.');
   await page.locator('.project-workflow-task').first().getByRole('button', { name: 'Save result' }).click();
@@ -53,6 +53,10 @@ test('close and handover requires evidence, records blockers and gates local arc
   await page.getByRole('button', { name: 'Create action plan' }).click();
   const tasks = page.locator('.project-workflow-task');
   await expect(tasks).toHaveCount(7);
+  await expect(tasks.filter({ hasText: 'Atlas hosting' })).toContainText('98.00');
+  await expect(tasks.filter({ hasText: 'Atlas hosting' })).toContainText('Oct 22, 2026');
+  await expect(tasks.filter({ hasText: 'atlas.example' }).first()).toContainText('Registry A');
+  await expect(tasks.filter({ hasText: 'atlas.example' }).first()).toContainText('Jan 1, 2027');
   await expect(tasks.last().getByRole('button', { name: 'Record result' })).toBeDisabled();
   await tasks.first().getByRole('button', { name: 'Record result' }).click();
   await tasks.first().getByLabel('Result').selectOption('blocked');

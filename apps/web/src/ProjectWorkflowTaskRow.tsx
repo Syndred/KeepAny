@@ -1,11 +1,11 @@
 import { Link } from '@tanstack/react-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { Task } from '../../../packages/domain/src';
+import { formatMinorUnits, type Task } from '../../../packages/domain/src';
 import { canRecordProjectWorkflowTask, recordProjectWorkflowTask } from '../../../packages/domain/src/project-workflow';
 import { saveTaskIfCurrent } from '../../../packages/local-db/src';
 import { Button } from './components/ui/button';
-import { useAppContext } from './view-shared';
+import { date, useAppContext } from './view-shared';
 
 export function ProjectWorkflowTaskRow({ task, round: suppliedRound }: { task: Task; round?: Task[] }) {
   const { t, i18n, } = useTranslation();
@@ -34,16 +34,33 @@ export function ProjectWorkflowTaskRow({ task, round: suppliedRound }: { task: T
     finally { setBusy(false); }
   }
   const record = workflow.record;
-  const linked = workflow.sourceAssetId && workflow.sourceAssetKind && data.assets.some(asset => asset.id === workflow.sourceAssetId && !asset.deleted);
+  const linkedKind = workflow.sourceAssetKind;
+  const linked = workflow.sourceAssetId && linkedKind && data.assets.some(asset => asset.id === workflow.sourceAssetId && !asset.deleted);
+  let sourceDetail = workflow.sourceDetail;
+  if (workflow.step === 'closeSubscription') {
+    const match = /^(\d+) (CNY|USD|EUR|GBP|JPY) \/ (\d+) (month|year|week|day); (.*)$/.exec(sourceDetail);
+    sourceDetail = match
+      ? `${formatMinorUnits(Number(match[1]), match[2], i18n.language)} / ${match[3]} ${t(match[4])}${match[5] ? ` · ${t('dueDate')}: ${date(match[5], i18n.language)}` : ''}`
+      : '';
+  } else if (workflow.step === 'closeDomain') {
+    const parts = sourceDetail.split('; ');
+    const renew = parts.pop() ?? '';
+    const expiry = parts.pop() ?? '';
+    const registrar = parts.join('; ');
+    sourceDetail = [registrar && `${t('projectRegistrar')}: ${registrar}`, expiry && `${t('projectExpiry')}: ${date(expiry, i18n.language)}`, renew && `${t(renew === 'on' ? 'projectAutoRenewOn' : renew === 'off' ? 'projectAutoRenewOff' : 'projectAutoRenewUnknown')}`].filter(Boolean).join(' · ');
+  } else if (workflow.step === 'closeBackup') {
+    sourceDetail = `${sourceDetail} ${t('attachments')}`;
+  } else if (['closeBacklink', 'closeRelated', 'closeDecision'].includes(workflow.step)) {
+    sourceDetail = t(sourceDetail);
+  }
   return <article className="project-workflow-task" id={`task-${task.id}`}>
     <div className="project-workflow-task-head">
       <strong>{t(`workflowStep_${workflow.step}`)}{workflow.sourceName ? ` · ${workflow.sourceName}` : ''}</strong>
       <span className={`project-workflow-chip ${record?.outcome ?? 'pending'}`}>{t(`workflowOutcome_${record?.outcome ?? 'pending'}`)}</span>
     </div>
-    {workflow.sourceDetail && ['brandProfile','brandRelation','brandDomain'].includes(workflow.step) && <p>{workflow.sourceDetail}</p>}
-    {workflow.step === 'closeBackup' && <p>{t('attachments')}: {workflow.attachmentIds.length}</p>}
+    {sourceDetail && <p>{sourceDetail}</p>}
     <div className="project-workflow-source">
-      {linked ? <Link to="/assets/$kind/$id" params={{ kind: workflow.sourceAssetKind!, id: workflow.sourceAssetId }}>{t('workflowOpenRelated')}</Link> : null}
+      {linked && linkedKind ? <Link to="/assets/$kind/$id" params={{ kind: linkedKind, id: workflow.sourceAssetId }}>{t('workflowOpenRelated')}</Link> : null}
       {workflow.sourceUrl && <a href={workflow.sourceUrl} target="_blank" rel="noopener noreferrer">{t('workflowOpenSource')}</a>}
       <small>{t('workflowSnapshotAt')}: {new Date(workflow.generatedAt).toLocaleString(i18n.language)}</small>
     </div>
