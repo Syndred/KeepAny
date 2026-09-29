@@ -96,11 +96,12 @@ test("formal backup restores full local graph, history, ledger, tombstones and o
 		await backlink.getByRole("button", { name: "Save" }).click();
 		await expect(backlink).toBeHidden();
 		const ledgerRow = page.locator("tr").filter({ hasText: `Directory ${suffix}` });
+		await ledgerRow.getByRole("button", { name: "Edit" }).click();
 		await ledgerRow.getByRole("combobox").selectOption("submitted");
 		await ledgerRow.getByLabel(`Directory ${suffix} Submitted`).fill("2026-09-29");
 		await ledgerRow.getByLabel(`Directory ${suffix} Evidence`).fill(`Local test receipt ${suffix}`);
 		await ledgerRow.getByRole("button", { name: "Save" }).click();
-		await expect(ledgerRow.getByRole("combobox")).toHaveValue("submitted");
+		await expect(ledgerRow.locator(".backlink-status")).toHaveText("Submitted");
 		await expect.poll(async () => {
 			const row = (await snapshot(page)).rows.find(row => row.type === "submission");
 			return row ? JSON.parse(row.payload).status : "missing";
@@ -226,11 +227,12 @@ test("formal backup restores full local graph, history, ledger, tombstones and o
 			await restoreFromFile(restored, path, password);
 			expect(await snapshot(restored)).toEqual(before);
 			await restored.goto("/assets/project");
-			await expect(restored.getByText(project, { exact: true })).toBeVisible();
+			await expect(restored.getByText(project, { exact: true }).first()).toBeVisible();
 			await expect(restored.getByText(deletedProject)).toHaveCount(0);
 			await restored.getByText(project, { exact: true }).first().click();
 			await expect(restored.getByText(account).first()).toBeVisible();
 			await expect(restored.getByText(otherAccount)).toHaveCount(0);
+			await restored.locator(".asset-backlinks-card summary").click();
 			await expect(restored.getByText(`Directory ${suffix}`)).toBeVisible();
 			await restored.goto("/assets/item");
 			await restored.getByText(item).first().click();

@@ -147,7 +147,7 @@ for (const locale of ["en-US", "zh-CN"] as const) {
 				await expect(trigger).toBeFocused();
 				const row = page.locator("tr").filter({ hasText: name });
 				await expect(row).toHaveCount(1);
-				await expect(row.getByRole("combobox")).toHaveValue("planned");
+				await expect(row.locator(".backlink-status")).toHaveText(copy.planned);
 				await expect(row.getByRole("link", { name })).toHaveAttribute(
 					"href",
 					url,

@@ -43,6 +43,7 @@ import { Button } from "./components/ui/button";
 import { Dialog } from "./components/ui/dialog";
 import "./asset-restoration.css";
 import "./account-detail.css";
+import "./backlink-ledger.css";
 import { ProjectPreview } from "./page-asset-list";
 import { TaskRow } from "./TaskRow";
 import { ImpactTaskRow } from "./ImpactTaskRow";
@@ -89,96 +90,125 @@ function ImageTile({ id }: { id: string }) {
 	return url ? <img src={url} alt="" className="asset-image" /> : null;
 }
 
+const submissionStatuses = ["planned", "submitted", "review", "indexed", "verify", "rejected"] as const;
+
 function SubmissionRow({ submission }: { submission: Submission }) {
 	const { t, i18n } = useTranslation();
 	const { notify } = useAppContext();
+	const [editing, setEditing] = useState(false);
+	const [name, setName] = useState(submission.name);
+	const [url, setUrl] = useState(submission.url);
 	const [status, setStatus] = useState<Submission["status"]>(submission.status);
 	const [evidence, setEvidence] = useState(submission.evidence);
 	const [submittedAt, setSubmittedAt] = useState(submission.submittedAt);
 	const [error, setError] = useState("");
 	const [busy, setBusy] = useState(false);
+	const inFlight = useRef(false);
+	useEffect(() => {
+		if (editing) return;
+		setName(submission.name);
+		setUrl(submission.url);
+		setStatus(submission.status);
+		setEvidence(submission.evidence);
+		setSubmittedAt(submission.submittedAt);
+	}, [editing, submission.name, submission.url, submission.status, submission.evidence, submission.submittedAt]);
 	const changed =
+		name !== submission.name ||
+		url !== submission.url ||
 		status !== submission.status ||
 		evidence !== submission.evidence ||
 		submittedAt !== submission.submittedAt;
+	function cancel() {
+		if (inFlight.current) return;
+		setName(submission.name);
+		setUrl(submission.url);
+		setStatus(submission.status);
+		setEvidence(submission.evidence);
+		setSubmittedAt(submission.submittedAt);
+		setError("");
+		setEditing(false);
+	}
 	async function store() {
+		if (inFlight.current) return;
+		if (!name.trim() || name.trim().length > 200 || !submissionSchema.shape.url.safeParse(url.trim()).success) {
+			setError(t("invalid"));
+			return;
+		}
 		if (status !== "planned" && !evidence.trim()) {
 			setError(t("evidenceRequired"));
 			return;
 		}
-		if (status === "indexed" && !/^https?:\/\/\S+$/i.test(evidence.trim())) {
+		if (status === "indexed" && !submissionSchema.shape.url.safeParse(evidence.trim()).success) {
 			setError(t("invalid"));
 			return;
 		}
-		if (status !== "planned" && !submittedAt) {
+		if (status !== "planned" && (!submittedAt || !validCalendarDay(submittedAt))) {
 			setError(t("submittedDateRequired"));
 			return;
 		}
+		inFlight.current = true;
 		setBusy(true);
 		setError("");
 		try {
 			const verifiedAt = ["indexed", "rejected"].includes(status)
-				? localCalendarDay(new Date())
+				? status !== submission.status || evidence.trim() !== submission.evidence
+					? localCalendarDay(new Date())
+					: submission.verifiedAt
 				: "";
 			await save("submission", {
 				...submission,
+				name: name.trim(),
+				url: url.trim(),
 				status,
 				evidence: evidence.trim(),
 				submittedAt: status === "planned" ? "" : submittedAt,
 				verifiedAt,
 			});
+			setEditing(false);
 			notify(t("saved"));
 		} catch {
 			setError(t("error"));
 		} finally {
+			inFlight.current = false;
 			setBusy(false);
 		}
 	}
 	return (
-		<tr>
+		<tr className={editing ? "backlink-row-editing" : undefined}>
 			<td>
-				<a href={submission.url} target="_blank" rel="noopener noreferrer">
+				{editing ? <><strong className="backlink-edit-name">{submission.name}</strong><input aria-label={`${submission.name} ${t("name")}`} value={name} onChange={(event) => { setName(event.target.value); setError(""); }} /><input type="url" aria-label={`${submission.name} ${t("url")}`} value={url} onChange={(event) => { setUrl(event.target.value); setError(""); }} /></> : <a href={submission.url} target="_blank" rel="noopener noreferrer">
 					{submission.name}
-				</a>
+				</a>}
 				{submission.externalLink && <small>{t("extImportedSource")} · {submission.externalLink.profileId}</small>}
 			</td>
 			<td>
-				<select
+				{editing ? <select
 					aria-label={`${submission.name} ${t("status")}`}
 					value={status}
-					onChange={(e) => setStatus(e.target.value as Submission["status"])}
+					onChange={(e) => { setStatus(e.target.value as Submission["status"]); setError(""); }}
 				>
-					{(
-						[
-							"planned",
-							"submitted",
-							"review",
-							"indexed",
-							"verify",
-							"rejected",
-						] as const
-					).map((value) => (
+					{submissionStatuses.map((value) => (
 						<option key={value} value={value}>
 							{t(value)}
 						</option>
 					))}
-				</select>
+				</select> : <span className={`backlink-status backlink-status-${submission.status}`}>{t(submission.status)}</span>}
 			</td>
 			<td>
-				<input
+				{editing ? <input
 					type="date"
 					aria-label={`${submission.name} ${t("submittedAt")}`}
 					value={submittedAt}
-					onChange={(e) => setSubmittedAt(e.target.value)}
-				/>
+					onChange={(e) => { setSubmittedAt(e.target.value); setError(""); }}
+				/> : date(submission.submittedAt, i18n.language)}
 			</td>
 			<td>{date(submission.verifiedAt, i18n.language)}</td>
 			<td>
-				<input
+				{editing ? <input
 					aria-label={`${submission.name} ${t("evidence")}`}
 					value={evidence}
-					onChange={(e) => setEvidence(e.target.value)}
-				/>
+					onChange={(e) => { setEvidence(e.target.value); setError(""); }}
+				/> : submission.evidence ? submissionSchema.shape.url.safeParse(submission.evidence).success ? <a href={submission.evidence} target="_blank" rel="noopener noreferrer">{submission.evidence}</a> : <span>{submission.evidence}</span> : "—"}
 				{error && (
 					<small className="field-error" role="alert">
 						{error}
@@ -186,13 +216,13 @@ function SubmissionRow({ submission }: { submission: Submission }) {
 				)}
 			</td>
 			<td>
-				<Button
+				{editing ? <><Button
 					size="small"
 					disabled={!changed || busy}
 					onClick={() => void store()}
 				>
 					{t("save")}
-				</Button>
+				</Button><Button size="small" disabled={busy} onClick={cancel}>{t("cancel")}</Button></> : <Button size="small" onClick={() => setEditing(true)}>{t(submission.status === "verify" ? "backlinkCheck" : submission.status === "planned" ? "edit" : "backlinkUpdate")}</Button>}
 			</td>
 		</tr>
 	);
@@ -237,6 +267,7 @@ export function AssetDetail() {
 		if (centerId) setRelationFilter("");
 	}, [centerId]);
 	const [submissionEdit, setSubmissionEdit] = useState(false);
+	const [backlinkFilter, setBacklinkFilter] = useState<"all" | Submission["status"]>("all");
 	const [backlinksOpen, setBacklinksOpen] = useState(false);
 	const [materialsOpen, setMaterialsOpen] = useState(false);
 	const [domainEditing, setDomainEditing] = useState<string | null>(null);
@@ -283,6 +314,9 @@ export function AssetDetail() {
 	const [relationVerifiedAt, setRelationVerifiedAt] = useState("");
 	const [submissionName, setSubmissionName] = useState("");
 	const [submissionUrl, setSubmissionUrl] = useState("");
+	const [submissionStatus, setSubmissionStatus] = useState<Submission["status"]>("planned");
+	const [submissionDate, setSubmissionDate] = useState("");
+	const [submissionEvidence, setSubmissionEvidence] = useState("");
 	const [historyNote, setHistoryNote] = useState("");
 	const [itemBorrower, setItemBorrower] = useState("");
 	const [itemLoanNote, setItemLoanNote] = useState("");
@@ -615,8 +649,15 @@ export function AssetDetail() {
 				: t("submissionInvalidUrl");
 		setSubmissionNameError(nameError);
 		setSubmissionUrlError(urlError);
-		setSubmissionSaveError("");
-		if (nameError || urlError) return;
+		const statusError = submissionStatus !== "planned" && !submissionEvidence.trim()
+			? t("evidenceRequired")
+			: submissionStatus === "indexed" && !submissionSchema.shape.url.safeParse(submissionEvidence.trim()).success
+				? t("backlinkReceiptHint")
+				: submissionStatus !== "planned" && (!submissionDate || !validCalendarDay(submissionDate))
+					? t("submittedDateRequired")
+					: "";
+		setSubmissionSaveError(statusError);
+		if (nameError || urlError || statusError) return;
 		submissionInFlight.current = true;
 		setSubmissionBusy(true);
 		try {
@@ -625,16 +666,20 @@ export function AssetDetail() {
 				assetId: asset.id,
 				name,
 				url,
-				status: "planned",
-				submittedAt: "",
-				verifiedAt: "",
-				evidence: "",
+				status: submissionStatus,
+				submittedAt: submissionStatus === "planned" ? "" : submissionDate,
+				verifiedAt: submissionStatus === "indexed" || submissionStatus === "rejected" ? localCalendarDay(new Date()) : "",
+				evidence: submissionEvidence.trim(),
 				deleted: false,
 			});
 			setSubmissionEdit(false);
 			setBacklinksOpen(true);
+			setBacklinkFilter("all");
 			setSubmissionName("");
 			setSubmissionUrl("");
+			setSubmissionStatus("planned");
+			setSubmissionDate("");
+			setSubmissionEvidence("");
 			notify(t("saved"));
 		} catch {
 			setSubmissionSaveError(t("error"));
@@ -648,6 +693,9 @@ export function AssetDetail() {
 		setSubmissionEdit(false);
 		setSubmissionName("");
 		setSubmissionUrl("");
+		setSubmissionStatus("planned");
+		setSubmissionDate("");
+		setSubmissionEvidence("");
 		setSubmissionNameError("");
 		setSubmissionUrlError("");
 		setSubmissionSaveError("");
@@ -1487,6 +1535,9 @@ export function AssetDetail() {
 			{asset.kind === "project" && (
 				<details className="card asset-backlinks-card" id="asset-backlinks" open={backlinksOpen} onToggle={(event) => setBacklinksOpen(event.currentTarget.open)}>
 					<summary>{t("backlinks")}</summary>
+					<fieldset className="backlink-filters" aria-label={t("backlinkFilter")}>
+						{(["all", ...submissionStatuses] as const).map((value) => <button type="button" key={value} aria-pressed={backlinkFilter === value} onClick={() => setBacklinkFilter(value)}>{t(value)}</button>)}
+					</fieldset>
 					{submissions.length ? (
 						<div className="table-wrap">
 							<table>
@@ -1501,11 +1552,12 @@ export function AssetDetail() {
 									</tr>
 								</thead>
 								<tbody>
-									{submissions.map((s) => (
+									{submissions.filter((entry) => backlinkFilter === "all" || entry.status === backlinkFilter).map((s) => (
 										<SubmissionRow key={s.id} submission={s} />
 									))}
 								</tbody>
 							</table>
+							{submissions.filter((entry) => backlinkFilter === "all" || entry.status === backlinkFilter).length === 0 && <p className="asset-quiet-empty backlink-filter-empty">{t("none")}</p>}
 						</div>
 					) : (
 						<p className="asset-quiet-empty">{t("none")}</p>
@@ -1815,7 +1867,7 @@ export function AssetDetail() {
 							/>
 							{submissionNameError && <small id="submission-name-error" role="alert">{submissionNameError}</small>}
 						</div>
-						<div className="field">
+							<div className="field">
 							<label htmlFor="submission-url">{t("url")}</label>
 							<input
 								id="submission-url"
@@ -1830,6 +1882,21 @@ export function AssetDetail() {
 								}}
 							/>
 							{submissionUrlError && <small id="submission-url-error" role="alert">{submissionUrlError}</small>}
+						</div>
+						<div className="field">
+							<label htmlFor="submission-status">{t("status")}</label>
+							<select id="submission-status" value={submissionStatus} disabled={submissionBusy} onChange={(event) => { setSubmissionStatus(event.target.value as Submission["status"]); setSubmissionSaveError(""); }}>
+								{submissionStatuses.map((value) => <option key={value} value={value}>{t(value)}</option>)}
+							</select>
+						</div>
+						<div className="field">
+							<label htmlFor="submission-date">{t("submittedAt")}</label>
+							<input id="submission-date" type="date" value={submissionDate} disabled={submissionBusy || submissionStatus === "planned"} onChange={(event) => { setSubmissionDate(event.target.value); setSubmissionSaveError(""); }} />
+						</div>
+						<div className="field backlink-evidence-field">
+							<label htmlFor="submission-evidence">{t("evidence")}</label>
+							<input id="submission-evidence" value={submissionEvidence} disabled={submissionBusy} onChange={(event) => { setSubmissionEvidence(event.target.value); setSubmissionSaveError(""); }} />
+							<small>{t("backlinkReceiptHint")}</small>
 						</div>
 					</div>
 					{submissionSaveError && <p className="field-error" role="alert">{submissionSaveError}</p>}
