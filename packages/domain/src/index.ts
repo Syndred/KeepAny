@@ -18,6 +18,12 @@ export const projectMediaSchema=z.object({
  productScreenshotIds:z.array(z.string().uuid()).max(4).default([]),promoCoverId:z.union([z.literal(''),z.string().uuid()]).default(''),
 });
 export type ProjectMedia=z.infer<typeof projectMediaSchema>;
+export const itemMediaSchema=z.object({
+ coverId:z.union([z.literal(''),z.string().uuid()]).default(''),
+ detailIds:z.array(z.string().uuid()).max(16).default([]),
+ receiptIds:z.array(z.string().uuid()).max(16).default([]),
+});
+export type ItemMedia=z.infer<typeof itemMediaSchema>;
 
 // Date-only values are Gregorian calendar dates, independent of the host time zone.
 // Local Date and date-fns calendar operations can skip a date (for example, Apia 2011-12-30).
@@ -45,9 +51,9 @@ export const assetSchema = z.object({
  description:z.string().max(20000).default(''), url:z.string().max(2000).default(''), contact:z.string().max(500).default(''), longDescription:z.string().max(30000).default(''),
  projectLaunchMonth:z.string().default(''),projectInspectionDate:z.string().default(''),projectDomains:z.array(projectDomainSchema).max(50).default([]),
  projectTitle:z.string().max(300).default(''),projectPromoUrl:z.string().max(2000).default(''),projectMediumDescription:z.string().max(2500).default(''),projectFeatures:z.string().max(2500).default(''),projectPricing:z.string().max(2500).default(''),projectPricingType:z.string().max(300).default(''),projectEmail:z.string().max(300).default(''),projectMedia:projectMediaSchema.default({logoId:'',homeScreenshotId:'',productScreenshotIds:[],promoCoverId:''}),
- amount:z.number().int().min(0).max(Number.MAX_SAFE_INTEGER).default(0),currency:z.enum(currencies).default('CNY'),itemPurchasePriceKnown:z.boolean().default(false),cycle:z.enum(['month','year','week','day']).default('month'),interval:z.number().int().min(1).max(100).default(1),dueDate:z.string().default(''),billingAnchor:z.string().default(''),renewalCount:z.number().int().nonnegative().default(0),lastRenewalId:z.string().max(96).default(''),lastItemEventId:z.string().max(96).default(''),purchaseDate:z.string().default(''),warrantyDate:z.string().default(''),itemStartDate:z.string().default(''),itemStatusDate:z.string().default(''),itemLifecycleStatus:z.enum(itemLifecycleStatuses).nullable().default(null),itemWarrantyStatus:z.enum(itemWarrantyStatuses).nullable().default(null),trialEndsAt:z.string().default(''),discountUntil:z.string().default(''),discountAmount:z.number().int().min(0).max(Number.MAX_SAFE_INTEGER).default(0),cancelledAt:z.string().default(''),location:z.string().max(300).default(''),status:z.enum(['active','paused','cancelled','loaned','archived']).default('active'),borrower:z.string().max(200).default(''),username:z.string().max(300).default(''),notes:z.string().max(20000).default(''),attachments:z.array(z.string().uuid()).max(20).default([]),createdAt:z.string(),updatedAt:z.string(),deleted:z.boolean().default(false),
+ amount:z.number().int().min(0).max(Number.MAX_SAFE_INTEGER).default(0),currency:z.enum(currencies).default('CNY'),itemPurchasePriceKnown:z.boolean().default(false),cycle:z.enum(['month','year','week','day']).default('month'),interval:z.number().int().min(1).max(100).default(1),dueDate:z.string().default(''),billingAnchor:z.string().default(''),renewalCount:z.number().int().nonnegative().default(0),lastRenewalId:z.string().max(96).default(''),lastItemEventId:z.string().max(96).default(''),purchaseDate:z.string().default(''),warrantyDate:z.string().default(''),itemStartDate:z.string().default(''),itemStatusDate:z.string().default(''),itemLifecycleStatus:z.enum(itemLifecycleStatuses).nullable().default(null),itemWarrantyStatus:z.enum(itemWarrantyStatuses).nullable().default(null),itemMedia:itemMediaSchema.default({coverId:'',detailIds:[],receiptIds:[]}),itemExpectedReturnDate:z.string().default(''),trialEndsAt:z.string().default(''),discountUntil:z.string().default(''),discountAmount:z.number().int().min(0).max(Number.MAX_SAFE_INTEGER).default(0),cancelledAt:z.string().default(''),location:z.string().max(300).default(''),status:z.enum(['active','paused','cancelled','loaned','archived']).default('active'),borrower:z.string().max(200).default(''),username:z.string().max(300).default(''),notes:z.string().max(20000).default(''),attachments:z.array(z.string().uuid()).max(20).default([]),createdAt:z.string(),updatedAt:z.string(),deleted:z.boolean().default(false),
 }).superRefine((v,ctx)=>{
- for(const key of ['dueDate','billingAnchor','purchaseDate','warrantyDate','itemStartDate','itemStatusDate','trialEndsAt','discountUntil','projectInspectionDate'] as const) if(v[key] && !validDateOnly(v[key]))ctx.addIssue({code:'custom',path:[key],message:'date'});
+ for(const key of ['dueDate','billingAnchor','purchaseDate','warrantyDate','itemStartDate','itemStatusDate','itemExpectedReturnDate','trialEndsAt','discountUntil','projectInspectionDate'] as const) if(v[key] && !validDateOnly(v[key]))ctx.addIssue({code:'custom',path:[key],message:'date'});
  if(v.projectLaunchMonth && !/^\d{4}-(0[1-9]|1[0-2])$/.test(v.projectLaunchMonth))ctx.addIssue({code:'custom',path:['projectLaunchMonth'],message:'month'});
  for(const [index,domain] of v.projectDomains.entries())if(domain.expiryDate&&!validDateOnly(domain.expiryDate))ctx.addIssue({code:'custom',path:['projectDomains',index,'expiryDate'],message:'date'});
  if(v.discountAmount>v.amount)ctx.addIssue({code:'custom',path:['discountAmount'],message:'discount'});
@@ -57,6 +63,10 @@ export const assetSchema = z.object({
  const mediaIds=[v.projectMedia.logoId,v.projectMedia.homeScreenshotId,v.projectMedia.promoCoverId,...v.projectMedia.productScreenshotIds].filter(Boolean);
  if(mediaIds.length && v.kind!=='project')ctx.addIssue({code:'custom',path:['projectMedia'],message:'project-only'});
  if(new Set(mediaIds).size!==mediaIds.length || mediaIds.some(id=>!v.attachments.includes(id)))ctx.addIssue({code:'custom',path:['projectMedia'],message:'attachment-reference'});
+ const itemMediaIds=[v.itemMedia.coverId,...v.itemMedia.detailIds,...v.itemMedia.receiptIds].filter(Boolean);
+ if(itemMediaIds.length && v.kind!=='item')ctx.addIssue({code:'custom',path:['itemMedia'],message:'item-only'});
+ if(new Set(itemMediaIds).size!==itemMediaIds.length || itemMediaIds.some(id=>!v.attachments.includes(id)))ctx.addIssue({code:'custom',path:['itemMedia'],message:'attachment-reference'});
+ if(v.itemExpectedReturnDate && (v.kind!=='item' || v.status!=='loaned'))ctx.addIssue({code:'custom',path:['itemExpectedReturnDate'],message:'loaned-only'});
 }).transform(v=>v.kind==='item'&&v.amount>0&&!v.itemPurchasePriceKnown?{...v,itemPurchasePriceKnown:true}:v);
 export type Asset=z.infer<typeof assetSchema>;
 export type AssetKind=typeof kinds[number];
@@ -108,12 +118,15 @@ export const historySchema=z.object({
  action:z.enum(['loan','return','renew','maintenance','itemStatus',...financeActions]),
  title:z.string().trim().max(160).optional(),source:z.string().trim().max(300).optional(),
  note:z.string(),borrower:z.string().max(200).optional(),
+ expectedReturnDate:z.string().refine(v=>!v||validDateOnly(v),'date').optional(),
  itemStatusBefore:z.enum(itemLifecycleStatuses).nullable().optional(),itemStatusAfter:z.enum(itemLifecycleStatuses).optional(),
  eventDate:z.string().refine(validDateOnly,'date').optional(),billDate:z.string().refine(validDateOnly,'date').optional(),
  amount:z.number().int().min(0).max(Number.MAX_SAFE_INTEGER).optional(),currency:z.enum(currencies).optional(),
  createdAt:z.string(),deleted:z.boolean().default(false),
 }).superRefine((value,ctx)=>{
  if(value.action==='itemStatus' && (value.itemStatusBefore===undefined || !value.itemStatusAfter || !value.eventDate))ctx.addIssue({code:'custom',path:['itemStatusAfter'],message:'item-status'});
+ if(value.expectedReturnDate && value.action!=='loan')ctx.addIssue({code:'custom',path:['expectedReturnDate'],message:'loan-only'});
+ if(value.expectedReturnDate && value.eventDate && value.expectedReturnDate<value.eventDate)ctx.addIssue({code:'custom',path:['expectedReturnDate'],message:'before-loan'});
  if(!financeActions.includes(value.action as typeof financeActions[number]))return;
  if(!value.title)ctx.addIssue({code:'custom',path:['title'],message:'title'});
  if(!value.eventDate)ctx.addIssue({code:'custom',path:['eventDate'],message:'date'});

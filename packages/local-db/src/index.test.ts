@@ -626,6 +626,30 @@ describe('RxDB + free Dexie local repository', () => {
     await db.close();
   });
 
+  it('commits the expected return date with loan history and clears it atomically on return', async () => {
+    const db = await openLocalRepository(name());
+    const loan = itemFixture();
+    await db.save('asset', loan.expected);
+    const expectedReturnDate = '2026-10-10';
+    await expect(db.recordItemAction(loan.expected, { ...loan.next, itemExpectedReturnDate: expectedReturnDate }, loan.event))
+      .rejects.toThrow('item-invalid');
+    expect((await db.get<Asset>('asset', loan.expected.id))?.itemExpectedReturnDate).toBe('');
+    expect(await db.list('history')).toHaveLength(0);
+    await db.recordItemAction(loan.expected, { ...loan.next, itemExpectedReturnDate: expectedReturnDate },
+      { ...loan.event, expectedReturnDate });
+    const current = await db.get<Asset>('asset', loan.expected.id);
+    expect(current).toMatchObject({ status: 'loaned', borrower: 'Ada', itemExpectedReturnDate: expectedReturnDate });
+    expect(await db.list<History>('history')).toMatchObject([{ action: 'loan', expectedReturnDate }]);
+    if (!current) throw Error('missing-loaned-item');
+    await expect(db.save('asset', { ...current, itemExpectedReturnDate: '2026-10-11' })).rejects.toThrow('item-action-required');
+    const returned = itemFixture(current, 'return');
+    await expect(db.recordItemAction(current, returned.next, returned.event)).rejects.toThrow();
+    await db.recordItemAction(current, { ...returned.next, itemExpectedReturnDate: '' }, returned.event);
+    expect(await db.get<Asset>('asset', current.id)).toMatchObject({ status: 'active', borrower: '', itemExpectedReturnDate: '' });
+    expect((await db.list<History>('history')).map(row => row.action).sort()).toEqual(['loan', 'return']);
+    await db.close();
+  });
+
   it('validates item transitions before writing and keeps archive status CAS separate from loan history', async () => {
     const db = await openLocalRepository(name());
     const loan = itemFixture();

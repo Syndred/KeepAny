@@ -140,4 +140,25 @@ describe('subscription and local asset rules', () => {
     expect(assetSchema.safeParse({ ...valid, projectMedia: { ...valid.projectMedia, productScreenshotIds: [...shots, crypto.randomUUID()] } }).success).toBe(false);
     expect(assetSchema.safeParse({ ...newAsset('account'), attachments: [logo], projectMedia: { logoId: logo } }).success).toBe(false);
   });
+
+  it('defaults legacy item media and return dates, and validates attached evidence', () => {
+    const item = newAsset('item');
+    const cover = crypto.randomUUID();
+    const receipt = crypto.randomUUID();
+    const legacy = { ...item, attachments: [cover] } as Record<string, unknown>;
+    delete legacy.itemMedia;
+    delete legacy.itemExpectedReturnDate;
+    expect(assetSchema.parse(legacy)).toMatchObject({ itemMedia: { coverId: '', detailIds: [], receiptIds: [] }, itemExpectedReturnDate: '' });
+    const valid = { ...item, attachments: [cover, receipt], itemMedia: { coverId: cover, detailIds: [], receiptIds: [receipt] } };
+    expect(assetSchema.safeParse(valid).success).toBe(true);
+    expect(assetSchema.safeParse({ ...valid, attachments: [cover] }).success).toBe(false);
+    expect(assetSchema.safeParse({ ...valid, itemMedia: { ...valid.itemMedia, detailIds: [receipt] } }).success).toBe(false);
+    expect(assetSchema.safeParse({ ...item, itemExpectedReturnDate: '2026-10-10' }).success).toBe(false);
+    expect(assetSchema.safeParse({ ...item, status: 'loaned', borrower: 'Ada', itemExpectedReturnDate: '2026-10-10' }).success).toBe(true);
+    expect(assetSchema.safeParse({ ...item, status: 'loaned', borrower: 'Ada', itemExpectedReturnDate: '2026-02-30' }).success).toBe(false);
+    const event = { id: crypto.randomUUID(), assetId: item.id, action: 'loan', borrower: 'Ada', note: '', eventDate: '2026-09-29', expectedReturnDate: '2026-10-10', createdAt: item.createdAt };
+    expect(historySchema.safeParse(event).success).toBe(true);
+    expect(historySchema.safeParse({ ...event, expectedReturnDate: '2026-09-28' }).success).toBe(false);
+    expect(historySchema.safeParse({ ...event, action: 'return' }).success).toBe(false);
+  });
 });

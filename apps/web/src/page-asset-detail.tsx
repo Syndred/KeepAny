@@ -15,6 +15,7 @@ import {
 	assetSchema,
 	type ProjectDomain,
 	type ProjectMedia,
+	type ItemMedia,
 	type Submission,
 	type Relation,
 	actualCharge,
@@ -98,6 +99,14 @@ function ImageTile({ id }: { id: string }) {
 const submissionStatuses = ["planned", "submitted", "review", "indexed", "verify", "rejected"] as const;
 type ProjectImageRole = "logoId" | "homeScreenshotId" | "productScreenshotIds" | "promoCoverId" | "other";
 const emptyProjectMedia: ProjectMedia = { logoId: "", homeScreenshotId: "", productScreenshotIds: [], promoCoverId: "" };
+type ItemImageRole = "coverId" | "detailIds" | "receiptIds" | "other";
+const emptyItemMedia: ItemMedia = { coverId: "", detailIds: [], receiptIds: [] };
+const itemLocationSeparator = " \u2063› ";
+function itemLocationParts(location: string): [string, string, string] {
+	if (!location.includes(itemLocationSeparator)) return [location, "", ""];
+	const parts = location.split(itemLocationSeparator);
+	return parts.length === 3 ? [parts[0], parts[1], parts[2]] : [location, "", ""];
+}
 
 function SubmissionRow({ submission }: { submission: Submission }) {
 	const { t, i18n } = useTranslation();
@@ -302,6 +311,7 @@ export function AssetDetail() {
 	const [pendingImage, setPendingImage] = useState<File | null>(null);
 	const [replaceImageId, setReplaceImageId] = useState("");
 	const [projectImageRole, setProjectImageRole] = useState<ProjectImageRole>("other");
+	const [itemImageRole, setItemImageRole] = useState<ItemImageRole>("other");
 	const [pendingImageUrl, setPendingImageUrl] = useState("");
 	const [pendingImageStatus, setPendingImageStatus] = useState<
 		"loading" | "ready" | "error"
@@ -327,7 +337,15 @@ export function AssetDetail() {
 	const [submissionEvidence, setSubmissionEvidence] = useState("");
 	const [historyNote, setHistoryNote] = useState("");
 	const [itemBorrower, setItemBorrower] = useState("");
+	const [itemExpectedReturnDate, setItemExpectedReturnDate] = useState("");
 	const [itemLoanNote, setItemLoanNote] = useState("");
+	const [locationOpen, setLocationOpen] = useState(false);
+	const [locationArea, setLocationArea] = useState("");
+	const [locationContainer, setLocationContainer] = useState("");
+	const [locationSpot, setLocationSpot] = useState("");
+	const [locationError, setLocationError] = useState("");
+	const [locationBusy, setLocationBusy] = useState(false);
+	const locationInFlight = useRef(false);
 	const [itemMaintenanceNote, setItemMaintenanceNote] = useState("");
 	const [itemEventDate, setItemEventDate] = useState(() => localCalendarDay(new Date()));
 	const itemDateManuallySet = useRef(false);
@@ -500,12 +518,15 @@ export function AssetDetail() {
 			: null;
 	const projectDomains = asset.kind === "project" ? (asset.projectDomains ?? []) : [];
 	const projectMedia = asset.projectMedia ?? emptyProjectMedia;
+	const itemMedia = asset.itemMedia ?? emptyItemMedia;
 	const assignedProjectImages = new Set([
 		projectMedia.logoId, projectMedia.homeScreenshotId, projectMedia.promoCoverId,
 		...projectMedia.productScreenshotIds,
 	].filter(Boolean));
+	const assignedItemImages = new Set([itemMedia.coverId, ...itemMedia.detailIds, ...itemMedia.receiptIds].filter(Boolean));
 	const visibleAttachmentIds = asset.kind === "project"
-		? asset.attachments.filter((id) => !assignedProjectImages.has(id)) : asset.attachments;
+		? asset.attachments.filter((id) => !assignedProjectImages.has(id))
+		: asset.kind === "item" ? asset.attachments.filter((id) => !assignedItemImages.has(id)) : asset.attachments;
 	const monthlyByCurrency = new Map<string, bigint>();
 	for (const linked of relatedSubscriptions) monthlyByCurrency.set(linked.currency, (monthlyByCurrency.get(linked.currency) ?? 0n) + monthlyMinorUnits(linked));
 	const annualByCurrency = new Map<string, bigint>();
@@ -715,8 +736,9 @@ export function AssetDetail() {
 		setSubmissionUrlError("");
 		setSubmissionSaveError("");
 	}
-	function chooseImage(role: ProjectImageRole, replaceId = "") {
-		setProjectImageRole(role);
+	function chooseImage(role: ProjectImageRole | ItemImageRole, replaceId = "") {
+		if (asset?.kind === "item") setItemImageRole(role as ItemImageRole);
+		else setProjectImageRole(role as ProjectImageRole);
 		setReplaceImageId(replaceId);
 		imageInput.current?.click();
 	}
@@ -729,6 +751,8 @@ export function AssetDetail() {
 			fileId = await putFile(file);
 			const media: ProjectMedia = { ...emptyProjectMedia, ...asset.projectMedia,
 				productScreenshotIds: [...(asset.projectMedia?.productScreenshotIds ?? [])] };
+			const itemImages: ItemMedia = { ...emptyItemMedia, ...asset.itemMedia,
+				detailIds: [...(asset.itemMedia?.detailIds ?? [])], receiptIds: [...(asset.itemMedia?.receiptIds ?? [])] };
 			if (asset.kind === "project") {
 				if (projectImageRole === "productScreenshotIds") {
 					media.productScreenshotIds = replaceImageId
@@ -736,20 +760,29 @@ export function AssetDetail() {
 						: [...media.productScreenshotIds, fileId];
 				} else if (projectImageRole !== "other") media[projectImageRole] = fileId;
 			}
+			if (asset.kind === "item") {
+				if (itemImageRole === "detailIds" || itemImageRole === "receiptIds") {
+					itemImages[itemImageRole] = replaceImageId
+						? itemImages[itemImageRole].map((id) => id === replaceImageId ? fileId : id)
+						: [...itemImages[itemImageRole], fileId];
+				} else if (itemImageRole === "coverId") itemImages.coverId = fileId;
+			}
 			const updatedAttachments = replaceImageId
 				? asset.attachments.map((id) => id === replaceImageId ? fileId : id)
 				: [...asset.attachments, fileId];
 			await saveAssetIfCurrent(asset, {
 				...asset,
-				attachments: asset.kind === "project" && projectImageRole === "homeScreenshotId"
+				attachments: (asset.kind === "project" && projectImageRole === "homeScreenshotId") || (asset.kind === "item" && itemImageRole === "coverId")
 					? [fileId, ...updatedAttachments.filter((id) => id !== fileId)] : updatedAttachments,
 				projectMedia: media,
+				itemMedia: itemImages,
 				updatedAt: new Date().toISOString(),
 			});
 			if (replaceImageId) await cleanupUnreferencedFile(replaceImageId).catch(() => false);
 			setPendingImage(null);
 			setReplaceImageId("");
 			setProjectImageRole("other");
+			setItemImageRole("other");
 			notify(t("saved"));
 		} catch (error) {
 			if (fileId) await cleanupUnreferencedFile(fileId).catch(() => false);
@@ -766,6 +799,10 @@ export function AssetDetail() {
 		try {
 			const media: ProjectMedia = { ...emptyProjectMedia, ...asset.projectMedia,
 				productScreenshotIds: (asset.projectMedia?.productScreenshotIds ?? []).filter((value) => value !== id) };
+			const itemImages: ItemMedia = { ...emptyItemMedia, ...asset.itemMedia,
+				detailIds: (asset.itemMedia?.detailIds ?? []).filter((value) => value !== id),
+				receiptIds: (asset.itemMedia?.receiptIds ?? []).filter((value) => value !== id) };
+			if (itemImages.coverId === id) itemImages.coverId = "";
 			if (media.logoId === id) media.logoId = "";
 			if (media.homeScreenshotId === id) media.homeScreenshotId = "";
 			if (media.promoCoverId === id) media.promoCoverId = "";
@@ -773,6 +810,7 @@ export function AssetDetail() {
 				...asset,
 				attachments: asset.attachments.filter((attachmentId) => attachmentId !== id),
 				projectMedia: media,
+				itemMedia: itemImages,
 				updatedAt: new Date().toISOString(),
 			});
 			await cleanupUnreferencedFile(id).catch(() => false);
@@ -829,7 +867,8 @@ export function AssetDetail() {
 		setItemBusy(true);
 		setItemError("");
 		try {
-			const borrower = action === "return" ? asset.borrower : itemBorrower.trim();
+			const current = assetSchema.parse(asset);
+			const borrower = action === "return" ? current.borrower : itemBorrower.trim();
 			const note = action === "maintenance" ? itemMaintenanceNote.trim() : itemLoanNote.trim();
 			if (action === "loan" && !borrower) throw Error("item-borrower-required");
 			if (action === "maintenance" && !note) throw Error("item-note-required");
@@ -839,21 +878,24 @@ export function AssetDetail() {
 				: localCalendarDay(now);
 			if (action === "maintenance" && !itemDateManuallySet.current) setItemEventDate(eventDate);
 			if (!validCalendarDay(eventDate)) throw Error("item-date-invalid");
+			if (action === "loan" && itemExpectedReturnDate && (!validCalendarDay(itemExpectedReturnDate) || itemExpectedReturnDate < eventDate)) throw Error("item-date-invalid");
 			if (action === "maintenance" && itemReminderDate && !validCalendarDay(itemReminderDate)) throw Error("item-date-invalid");
 			const historyId = crypto.randomUUID();
 			const timestamp = now.toISOString();
 			const next = {
-				...asset,
-				status: action === "loan" ? "loaned" as const : action === "return" ? "active" as const : asset.status,
-				borrower: action === "loan" ? borrower : action === "return" ? "" : asset.borrower,
+				...current,
+				status: action === "loan" ? "loaned" as const : action === "return" ? "active" as const : current.status,
+				borrower: action === "loan" ? borrower : action === "return" ? "" : current.borrower,
+				itemExpectedReturnDate: action === "loan" ? itemExpectedReturnDate : action === "return" ? "" : current.itemExpectedReturnDate,
 				lastItemEventId: historyId,
 				updatedAt: timestamp,
 			};
-			await commitItemAction(asset, next, {
+			await commitItemAction(current, next, {
 				id: historyId,
-				assetId: asset.id,
+				assetId: current.id,
 				action,
 				borrower: action === "maintenance" ? undefined : borrower,
+				expectedReturnDate: action === "loan" && itemExpectedReturnDate ? itemExpectedReturnDate : undefined,
 				eventDate,
 				note,
 				createdAt: timestamp,
@@ -861,6 +903,7 @@ export function AssetDetail() {
 			});
 			setItemRecoveryPending(false);
 			setItemBorrower("");
+			setItemExpectedReturnDate("");
 			if (action === "maintenance") setItemMaintenanceNote("");
 			else setItemLoanNote("");
 			if (action === "maintenance" && itemReminderDate) {
@@ -902,6 +945,38 @@ export function AssetDetail() {
 		} finally {
 			itemInFlight.current = false;
 			setItemBusy(false);
+		}
+	}
+	function openLocation() {
+		if (asset?.kind !== "item") return;
+		const [area, container, spot] = itemLocationParts(asset.location ?? "");
+		setLocationArea(area);
+		setLocationContainer(container);
+		setLocationSpot(spot);
+		setLocationError("");
+		setLocationOpen(true);
+	}
+	async function saveLocation() {
+		if (asset?.kind !== "item" || locationInFlight.current) return;
+		const parts = [locationArea.trim(), locationContainer.trim(), locationSpot.trim()];
+		const value = parts.filter(Boolean).join(itemLocationSeparator);
+		if (parts.some((part) => part.includes("\u2063")) || (!parts[0] && (parts[1] || parts[2])) || (parts[2] && !parts[1]) || value.length > 300) {
+			setLocationError(t("invalid"));
+			return;
+		}
+		locationInFlight.current = true;
+		setLocationBusy(true);
+		setLocationError("");
+		try {
+			const current = assetSchema.parse(asset);
+			await saveAssetIfCurrent(current, { ...current, location: value, updatedAt: new Date().toISOString() });
+			setLocationOpen(false);
+			notify(t("saved"));
+		} catch (error) {
+			setLocationError(t(error instanceof Error && error.message === "asset-stale" ? "itemStale" : "error"));
+		} finally {
+			locationInFlight.current = false;
+			setLocationBusy(false);
 		}
 	}
 	function openItemStatus() {
@@ -1060,7 +1135,7 @@ export function AssetDetail() {
 	const attachmentSection = (
 				<section className="card asset-attachments-card">
 					<div className="card-header">
-						<h2>{t(asset.kind === "project" ? "projectOtherImages" : "attachments")}</h2>
+						<h2>{t(asset.kind === "project" ? "projectOtherImages" : asset.kind === "item" ? "itemOtherImages" : "attachments")}</h2>
 						<Button
 							size="small"
 							disabled={uploading || asset.attachments.length >= 20}
@@ -1189,6 +1264,14 @@ export function AssetDetail() {
 				</Dialog>
 			)}
 			<div className={`detail-grid asset-detail-primary${asset.kind === "account" ? " account-empty-primary" : ""}`}>
+				{asset.kind === "item" && <section className="card asset-item-photo-main" aria-label={t("itemCoverPhoto")}>
+					<div className="asset-item-photo-stage">{itemMedia.coverId ? <ImageTile id={itemMedia.coverId} /> : <p>{t("itemStatusUnrecorded")}</p>}
+						<span className="chip">{asset.status === "loaned" ? t("loaned") : asset.itemLifecycleStatus ? t(`itemStatus_${asset.itemLifecycleStatus}`) : t("itemStatusUnrecorded")}</span>
+					</div>
+					<div className="asset-item-photo-actions"><Button size="small" disabled={uploading || (!itemMedia.coverId && asset.attachments.length >= 20)} onClick={() => chooseImage("coverId", itemMedia.coverId)}>{t(itemMedia.coverId ? "replaceImage" : "addPhoto")}</Button>
+						<Button size="small" disabled={uploading || asset.attachments.length >= 20} onClick={() => chooseImage("detailIds")}>{t("itemDetailPhotos")}</Button>
+					</div>
+				</section>}
 				{asset.kind === "project" && <section className="card asset-profile-card asset-project-profile-card">
 					<div className="card-header"><h2>{t("profile")}</h2></div>
 					<dl className="asset-project-facts">
@@ -1209,7 +1292,7 @@ export function AssetDetail() {
 				</section>}
 				{asset.kind !== "project" && asset.kind !== "account" && <section className="card asset-profile-card">
 					<div className="card-header">
-						<h2>{t("profile")}</h2>
+						<h2>{t(asset.kind === "item" ? "itemStateTitle" : "profile")}</h2>
 						{asset.kind === "item" && <Button size="small" disabled={itemBusy} onClick={openItemStatus}>{t("itemStatusChange")}</Button>}
 					</div>
 					<dl className="facts">
@@ -1322,7 +1405,7 @@ export function AssetDetail() {
 								</div>
 								<div>
 									<dt>{t("location")}</dt>
-									<dd>{asset.location || "—"}</dd>
+									<dd>{asset.location ? asset.location.replaceAll("\u2063", "") : "—"}</dd><Button size="small" onClick={openLocation}>{t("itemEditLocation")}</Button>
 								</div>
 								{asset.status === "loaned" && asset.borrower && (
 									<div>
@@ -1330,6 +1413,7 @@ export function AssetDetail() {
 										<dd>{asset.borrower}</dd>
 									</div>
 								)}
+								{asset.status === "loaned" && <div><dt>{t("itemExpectedReturnDate")}</dt><dd>{asset.itemExpectedReturnDate ? date(asset.itemExpectedReturnDate, i18n.language) : t("itemStatusUnrecorded")}</dd></div>}
 							</>
 						)}
 						{asset.status && (asset.kind !== "item" || asset.status !== "active" || !asset.itemLifecycleStatus || asset.itemLifecycleStatus === "inUse") && (
@@ -1357,6 +1441,23 @@ export function AssetDetail() {
 						</details>
 					)}
 					{asset.notes && <p className="note">{asset.notes}</p>}
+				</section>}
+				{asset.kind === "item" && <section className="card asset-item-evidence" aria-label={t("itemPhotosAndEvidence")}>
+					<div className="card-header"><h2>{t("itemPhotosAndEvidence")}</h2></div>
+					<p className="asset-item-evidence-hint">{t("itemEvidenceHint")}</p>
+					<div className="asset-item-evidence-groups">
+						{(["coverId", "detailIds", "receiptIds"] as const).map((role) => {
+							const ids = role === "coverId" ? (itemMedia.coverId ? [itemMedia.coverId] : []) : itemMedia[role];
+							const label = t(role === "coverId" ? "itemCoverPhoto" : role === "detailIds" ? "itemDetailPhotos" : "itemReceiptImages");
+							return <section className="asset-item-evidence-group" data-item-media-role={role} aria-label={label} key={role}>
+								<div className="asset-item-evidence-head"><h3>{label}</h3><Button size="small" disabled={uploading || (asset.attachments.length >= 20 && !(role === "coverId" && itemMedia.coverId))} onClick={() => chooseImage(role, role === "coverId" ? itemMedia.coverId : "")}>{t(role === "coverId" && itemMedia.coverId ? "replaceImage" : "addPhoto")}</Button></div>
+								{ids.length ? <div className="asset-item-evidence-grid">{ids.map((id) => <div className="asset-item-evidence-image" key={id}>
+									<ImageTile id={id} />
+									<div className="project-media-actions"><Button size="small" disabled={uploading} onClick={() => chooseImage(role, id)}>{t("replaceImage")}</Button><Button size="small" variant="danger" disabled={uploading} onClick={() => void removeImage(id)}>{t("removeImage")}</Button></div>
+								</div>)}</div> : <p className="asset-quiet-empty">{t("none")}</p>}
+							</section>;
+						})}
+					</div>
 				</section>}
 				{asset.kind !== "project" && asset.kind !== "account" && attachmentSection}
 			</div>
@@ -1648,7 +1749,7 @@ export function AssetDetail() {
 			{(asset.kind === "item" || asset.kind === "subscription") && (
 				<section className="card">
 					<div className="card-header">
-						<h2>{t("history")}</h2>
+						<div><h2>{t("history")}</h2>{asset.kind === "item" && <small>{t("itemTimeline")}</small>}</div>
 					</div>
 			{asset.kind === "subscription" && renewalRecoveryPending && <p className="notice" role="alert">{t("renewalRecoveryPending")}</p>}
 			{asset.kind === "item" && itemRecoveryPending && <p className="notice" role="alert">{t("itemRecoveryPending")}</p>}
@@ -1685,10 +1786,13 @@ export function AssetDetail() {
 						<>
 							<div className="toolbar">
 								{asset.status === "active" && (
-									<label className="field">
+									<><label className="field">
 										<span>{t("borrower")}</span>
 										<input value={itemBorrower} maxLength={200} onChange={(event) => { setItemBorrower(event.target.value); setItemError(""); }} />
-									</label>
+									</label><label className="field">
+										<span>{t("itemExpectedReturnDate")}</span>
+										<input type="date" value={itemExpectedReturnDate} onChange={(event) => { setItemExpectedReturnDate(event.target.value); setItemError(""); }} />
+									</label></>
 								)}
 								<label className="field">
 									<span>{t("loanReturnNote")}</span>
@@ -1730,7 +1834,7 @@ export function AssetDetail() {
 					)}
 					{asset.kind === "subscription" && <p className="subtitle">{t("renewalLocalHint")}</p>}
 					{histories.length ? (
-						<div className="list">
+						<div className={asset.kind === "item" ? "list asset-item-timeline" : "list"}>
 							{histories.map((h) => (
 								<div className="list-row" key={h.id}>
 									<Check size={17} />
@@ -1746,6 +1850,7 @@ export function AssetDetail() {
 												? ` · ${date(h.billDate, i18n.language)} · ${t("recordedAmount")}: ${money(h.amount, h.currency, i18n.language)}`
 												: ""}
 											{h.borrower ? ` · ${t("borrower")}: ${h.borrower}` : ""}
+											{h.expectedReturnDate ? ` · ${t("itemExpectedReturnDate")}: ${date(h.expectedReturnDate, i18n.language)}` : ""}
 											{h.note && ` · ${h.note}`}
 										</small>
 									</div>
@@ -1757,6 +1862,15 @@ export function AssetDetail() {
 					)}
 				</section>
 			)}
+			{asset.kind === "item" && locationOpen && <Dialog title={t("itemEditLocation")} onClose={() => { if (!locationBusy) setLocationOpen(false); }}>
+				<div className="asset-item-location-fields">
+					<label><span>{t("itemLocationArea")}</span><input value={locationArea} maxLength={300} disabled={locationBusy} onChange={(event) => { setLocationArea(event.target.value); setLocationError(""); }} /></label>
+					<label><span>{t("itemLocationContainer")}</span><input value={locationContainer} maxLength={300} disabled={locationBusy} onChange={(event) => { setLocationContainer(event.target.value); setLocationError(""); }} /></label>
+					<label><span>{t("itemLocationSpot")}</span><input value={locationSpot} maxLength={300} disabled={locationBusy} onChange={(event) => { setLocationSpot(event.target.value); setLocationError(""); }} /></label>
+				</div>
+				{locationError && <p className="field-error" role="alert">{locationError}</p>}
+				<div className="actions"><Button disabled={locationBusy} onClick={() => setLocationOpen(false)}>{t("cancel")}</Button><Button variant="primary" disabled={locationBusy} onClick={() => void saveLocation()}>{t("itemSaveLocation")}</Button></div>
+			</Dialog>}
 			{asset.kind === "item" && itemStatusOpen && (
 				<Dialog title={t("itemStatusChange")} onClose={() => { if (!itemInFlight.current) setItemStatusOpen(false); }}>
 					<div className="form-grid">

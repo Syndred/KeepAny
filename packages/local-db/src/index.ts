@@ -270,7 +270,8 @@ export class LocalRepository {
           if (previous.lastItemEventId !== proposed.lastItemEventId) throw Error('item-stale');
           if (previous.kind === 'item' &&
             (previous.status !== proposed.status || previous.borrower !== proposed.borrower ||
-              previous.itemLifecycleStatus !== proposed.itemLifecycleStatus || previous.itemStatusDate !== proposed.itemStatusDate)) throw Error('item-action-required');
+              previous.itemLifecycleStatus !== proposed.itemLifecycleStatus || previous.itemStatusDate !== proposed.itemStatusDate ||
+              previous.itemExpectedReturnDate !== proposed.itemExpectedReturnDate)) throw Error('item-action-required');
         }
         return { ...data, ...next };
       });
@@ -432,24 +433,28 @@ export class LocalRepository {
     const next = entitySchemas.asset.parse(nextAsset);
     const event = entitySchemas.history.parse(history);
     const unchanged = Object.keys(expected).every(field =>
-      ['status', 'borrower', 'itemLifecycleStatus', 'itemStatusDate', 'lastItemEventId', 'updatedAt'].includes(field) ||
+      ['status', 'borrower', 'itemLifecycleStatus', 'itemStatusDate', 'itemExpectedReturnDate', 'lastItemEventId', 'updatedAt'].includes(field) ||
       JSON.stringify(expected[field as keyof Asset]) === JSON.stringify(next[field as keyof Asset]));
     const active = expected.status === 'active';
     const loaned = expected.status === 'loaned';
     const validTransition = event.action === 'loan'
       ? active && !['repairing','resold','retired'].includes(expected.itemLifecycleStatus ?? '') &&
         next.status === 'loaned' && !!next.borrower.trim() &&
-        event.borrower === next.borrower && !expected.borrower
+        event.borrower === next.borrower && !expected.borrower &&
+        next.itemExpectedReturnDate === (event.expectedReturnDate ?? '')
       : event.action === 'return'
-        ? loaned && next.status === 'active' && !next.borrower && event.borrower === expected.borrower
+        ? loaned && next.status === 'active' && !next.borrower && event.borrower === expected.borrower &&
+          !next.itemExpectedReturnDate && !event.expectedReturnDate
         : event.action === 'maintenance'
           ? (active || loaned) && !['resold','retired'].includes(expected.itemLifecycleStatus ?? '') &&
-            next.status === expected.status && next.borrower === expected.borrower && !!event.note.trim() && !!event.eventDate
+            next.status === expected.status && next.borrower === expected.borrower &&
+            next.itemExpectedReturnDate === expected.itemExpectedReturnDate && !!event.note.trim() && !!event.eventDate
           : event.action === 'itemStatus' && (active || loaned || expected.status === 'archived') &&
             event.itemStatusBefore === expected.itemLifecycleStatus && !!event.itemStatusAfter && !!event.eventDate &&
             (expected.itemLifecycleStatus !== event.itemStatusAfter || expected.itemStatusDate !== event.eventDate) &&
             (!loaned || !['resold','retired'].includes(event.itemStatusAfter)) &&
             next.status === expected.status && next.borrower === expected.borrower &&
+            next.itemExpectedReturnDate === expected.itemExpectedReturnDate &&
             next.itemLifecycleStatus === event.itemStatusAfter && next.itemStatusDate === event.eventDate;
     if (expected.kind !== 'item' || expected.deleted || next.id !== expected.id ||
       next.kind !== 'item' || next.deleted || !unchanged || !validTransition ||
