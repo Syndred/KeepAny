@@ -106,10 +106,12 @@ test("project, account, subscription, task and downloaded backup survive a fresh
 			await confirm.click();
 			await expect(restored.getByText(/Restored \d+ records/)).toBeVisible();
 			await restored.goto("/assets/project");
-			await expect(restored.getByText(editedProject)).toBeVisible();
+			const restoredProject = restored.locator("a.asset-project-card").filter({ hasText: editedProject });
+			await expect(restoredProject).toHaveCount(1);
+			await expect(restoredProject).toBeVisible();
 			await restored.reload();
-			await expect(restored.getByText(editedProject)).toBeVisible();
-			await restored.getByText(editedProject).first().click();
+			await expect(restoredProject).toBeVisible();
+			await restoredProject.click();
 			await expect(restored.getByText(account).first()).toBeVisible();
 			await expect(restored.getByText(task)).toBeVisible();
 			await restored.goto("/assets/subscription");
@@ -159,7 +161,7 @@ test("both languages fit key pages and the task dialog at target widths", async 
 					).toBeLessThanOrEqual(width);
 				}
 				await page.goto("/tasks");
-				await page.locator("main.page").getByRole("button").first().click();
+				await page.getByRole("button", { name: locale === "zh-CN" ? "新建待办" : "New task", exact: true }).click();
 				await expect(page.getByRole("dialog")).toBeVisible();
 				expect(
 					await page.evaluate(() => document.documentElement.scrollWidth),
