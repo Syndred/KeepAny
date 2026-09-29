@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { syncPullResponseSchema, syncPushResponseSchema, type SyncChange, type SyncOperation } from '../../contracts/src';
-import { generateWorkspaceKey, openSyncChangeEnvelope, ReplayGuard, sealEnvelope } from '../../crypto/src';
+import { generateWorkspaceKey, openSyncChangeEnvelope, ReplayGuard, sealEnvelope, type RecoveryWrap } from '../../crypto/src';
 import type { LocalRepository, RecordRow, ScopedConflict } from '../../local-db/src';
 import { SelfHostAttachmentSync } from './attachment-sync';
 
@@ -12,11 +12,34 @@ export interface BoundSyncAuthorizer {
   headers(method: 'GET' | 'POST' | 'PUT', url: string): Promise<{ Authorization: string; DPoP: string }>;
   assertCurrent(): Promise<void>;
 }
-export type SelfHostConfig = SelfHostBaseConfig & ({ token: string; sessionAccountId?: never; bound?: never } |
+export type KeyEnvelopeConfig = { endpoint: string; workspaceId: string } & ({ token: string; sessionAccountId?: never; bound?: never } |
   { sessionAccountId: string; token?: never; bound?: never } |
   { bound: BoundSyncAuthorizer; token?: never; sessionAccountId?: never });
+export type SelfHostConfig = SelfHostBaseConfig & KeyEnvelopeConfig;
 const workspaceSchema = z.uuid();
 const preflightSchema = z.object({ accountId: z.string().min(1).max(256), workspaceId: workspaceSchema });
+const keyFingerprintSchema = z.string().regex(/^[a-f0-9]{64}$/);
+const recoveryWrapSchema = z.object({
+  format: z.literal('keepany-recovery-wrap'), version: z.literal(1), workspaceId: workspaceSchema,
+  keyEpoch: z.literal(1), nonce: z.string().regex(/^[A-Za-z0-9_-]{32}$/),
+  ciphertext: z.string().regex(/^[A-Za-z0-9_-]{64}$/),
+});
+const keyEnvelopeKindSchema = z.enum(['recovery', 'join']);
+const keyEnvelopeMetadataSchema = z.object({
+  envelopeId: workspaceSchema, kind: keyEnvelopeKindSchema, keyEpoch: z.number().int().positive(),
+  keyFingerprint: keyFingerprintSchema, expiresAt: z.iso.datetime().nullable(), createdAt: z.iso.datetime(),
+});
+const keyEnvelopeSchema = keyEnvelopeMetadataSchema.extend({ wrap: recoveryWrapSchema });
+export type KeyEnvelopeMetadata = z.infer<typeof keyEnvelopeMetadataSchema>;
+export type KeyEnvelope = KeyEnvelopeMetadata & { wrap: RecoveryWrap };
+export type CreateKeyEnvelope = { kind: 'recovery' | 'join'; wrap: RecoveryWrap; keyFingerprint: string;
+  expiresInSeconds?: number };
+function assertActiveEnvelope(metadata: KeyEnvelopeMetadata): void {
+  if (metadata.kind === 'recovery' ? metadata.expiresAt !== null : metadata.expiresAt === null)
+    throw Error('sync-key-envelope-response');
+  if (metadata.expiresAt !== null && Date.parse(metadata.expiresAt) <= Date.now())
+    throw Error('sync-key-envelope-expired');
+}
 const text = new TextEncoder();
 const decode = new TextDecoder('utf-8', { fatal: true });
 const scopeLocks = new Map<string, Promise<void>>();
@@ -109,6 +132,98 @@ function checkedBound(bound: BoundSyncAuthorizer): BoundSyncAuthorizer {
   return bound;
 }
 
+function checkedAuthorization(config: KeyEnvelopeConfig): { token?: string; bound?: BoundSyncAuthorizer; accountId: string } {
+  const session = config.sessionAccountId !== undefined;
+  const bound = config.bound !== undefined;
+  if (Number(session) + Number(config.token !== undefined) + Number(bound) !== 1) throw Error('sync-auth');
+  if (config.token !== undefined && config.token.length < 32) throw Error('sync-auth');
+  if (session && (!z.string().min(1).max(256).safeParse(config.sessionAccountId).success ||
+    !config.sessionAccountId?.startsWith('selfhost:') || config.sessionAccountId.length <= 'selfhost:'.length))
+    throw Error('sync-auth');
+  if (config.bound) checkedBound(config.bound);
+  return { token: config.token, bound: config.bound,
+    accountId: config.bound?.accountId ?? config.sessionAccountId ?? 'self-host-owner' };
+}
+
+/** Opaque encrypted key wraps. This client never accepts a recovery credential or data key. */
+export class KeyEnvelopeClient {
+  readonly endpoint: string;
+  readonly workspaceId: string;
+  readonly accountId: string;
+  private readonly token: string | undefined;
+  private readonly bound: BoundSyncAuthorizer | undefined;
+
+  constructor(config: KeyEnvelopeConfig) {
+    this.endpoint = normalizeEndpoint(config.endpoint);
+    this.workspaceId = workspaceSchema.parse(config.workspaceId).toLowerCase();
+    const auth = checkedAuthorization(config);
+    this.accountId = auth.accountId;
+    this.token = auth.token;
+    this.bound = auth.bound;
+  }
+
+  async create(input: CreateKeyEnvelope): Promise<KeyEnvelopeMetadata> {
+    const wrap = recoveryWrapSchema.parse(input.wrap);
+    if (wrap.workspaceId !== this.workspaceId) throw Error('sync-key-envelope-context');
+    keyFingerprintSchema.parse(input.keyFingerprint);
+    keyEnvelopeKindSchema.parse(input.kind);
+    if (input.kind === 'join' && (typeof input.expiresInSeconds !== 'number' ||
+      !Number.isSafeInteger(input.expiresInSeconds) ||
+      input.expiresInSeconds < 60 || input.expiresInSeconds > 900)) throw Error('sync-key-envelope-expiry');
+    if (input.kind === 'recovery' && input.expiresInSeconds !== undefined) throw Error('sync-key-envelope-expiry');
+    await this.verifyTarget();
+    const response = await request(this.endpoint, this.authorization(), 'POST',
+      `/workspaces/${this.workspaceId}/key-envelopes`, keyEnvelopeMetadataSchema, input);
+    if (response.kind !== input.kind || response.keyEpoch !== wrap.keyEpoch ||
+      response.keyFingerprint !== input.keyFingerprint)
+      throw Error('sync-key-envelope-response');
+    assertActiveEnvelope(response);
+    return response;
+  }
+
+  async list(): Promise<KeyEnvelopeMetadata[]> {
+    await this.verifyTarget();
+    const response = await request(this.endpoint, this.authorization(), 'GET',
+      `/workspaces/${this.workspaceId}/key-envelopes`, z.object({ envelopes: z.array(keyEnvelopeMetadataSchema) }));
+    for (const envelope of response.envelopes) assertActiveEnvelope(envelope);
+    return response.envelopes;
+  }
+
+  async get(envelopeId: string): Promise<KeyEnvelope> {
+    const id = workspaceSchema.parse(envelopeId).toLowerCase();
+    await this.verifyTarget();
+    const response = await request(this.endpoint, this.authorization(), 'GET',
+      `/workspaces/${this.workspaceId}/key-envelopes/${id}`, keyEnvelopeSchema);
+    if (response.envelopeId !== id || response.wrap.workspaceId !== this.workspaceId ||
+      response.wrap.keyEpoch !== response.keyEpoch)
+      throw Error('sync-key-envelope-response');
+    assertActiveEnvelope(response);
+    return response;
+  }
+
+  async revoke(envelopeId: string): Promise<void> {
+    const id = workspaceSchema.parse(envelopeId).toLowerCase();
+    await this.verifyTarget();
+    const response = await request(this.endpoint, this.authorization(), 'POST',
+      `/workspaces/${this.workspaceId}/key-envelopes/${id}/revoke`, z.object({ status: z.literal('revoked') }), {});
+    if (response.status !== 'revoked') throw Error('sync-key-envelope-response');
+  }
+
+  async verifyTarget(): Promise<{ accountId: string; workspaceId: string }> {
+    const { accountId, workspaceId } = await request(this.endpoint, this.authorization(), 'POST', '/sync/preflight',
+      preflightSchema, { workspaceId: this.workspaceId });
+    if (accountId !== this.accountId || workspaceId !== this.workspaceId ||
+      (this.bound && this.bound.accountId !== this.accountId)) throw Error('sync-account-mismatch');
+    await this.bound?.assertCurrent();
+    return { accountId, workspaceId };
+  }
+
+  private authorization(): RequestAuthorization {
+    return this.bound ? { bound: this.bound } : this.token !== undefined ? { token: this.token } :
+      { sessionAccountId: this.accountId };
+  }
+}
+
 export async function getBoundIdentity(endpoint: string, bound: BoundSyncAuthorizer): Promise<string> {
   const authorizer = checkedBound(bound);
   const expectedAccountId = authorizer.accountId;
@@ -157,18 +272,11 @@ export class SelfHostSyncClient {
   constructor(private readonly repository: LocalRepository, config: SelfHostConfig) {
     this.endpoint = normalizeEndpoint(config.endpoint);
     this.workspaceId = workspaceSchema.parse(config.workspaceId).toLowerCase();
-    const session = config.sessionAccountId !== undefined;
-    const bound = config.bound !== undefined;
-    if (Number(session) + Number(config.token !== undefined) + Number(bound) !== 1) throw Error('sync-auth');
-    if ('token' in config && config.token !== undefined && config.token.length < 32) throw Error('sync-auth');
-    if (session && (!z.string().min(1).max(256).safeParse(config.sessionAccountId).success ||
-      !config.sessionAccountId?.startsWith('selfhost:') || config.sessionAccountId.length <= 'selfhost:'.length))
-      throw Error('sync-auth');
-    if (config.bound) checkedBound(config.bound);
+    const auth = checkedAuthorization(config);
     if (config.key.length !== 32) throw Error('sync-key');
-    this.token = config.token;
-    this.bound = config.bound;
-    this.accountId = config.bound?.accountId ?? config.sessionAccountId ?? 'self-host-owner';
+    this.token = auth.token;
+    this.bound = auth.bound;
+    this.accountId = auth.accountId;
     this.key = Uint8Array.from(config.key);
     this.keyEpoch = config.keyEpoch ?? 1;
     if (!Number.isSafeInteger(this.keyEpoch) || this.keyEpoch < 1) throw Error('sync-key-epoch');
