@@ -1,0 +1,12 @@
+.intake-review { display: grid; gap: 12px; min-width: 0; }
+.intake-review > p { margin: 0; }
+.intake-review-message { padding: 10px 12px; border-radius: var(--radius-md, 10px); background: var(--surface-subtle, #f4f5f7); }
+.intake-review-list { display: grid; gap: 12px; min-width: 0; }
+.intake-review-list h3 { margin: 0; }
+.intake-review-row { display: grid; gap: 10px; min-width: 0; padding: 14px; border: 1px solid var(--border, #ddd); border-radius: var(--radius-md, 10px); }
+.intake-review-row .field { min-width: 0; }
+.intake-review-row input, .intake-review-row select { width: 100%; min-width: 0; }
+.intake-review-source { display: flex; align-items: center; gap: 8px; min-width: 0; flex-wrap: wrap; }
+.intake-review-source strong { min-width: 0; overflow-wrap: anywhere; }
+.intake-review-source small { color: var(--muted, #666); }
+.intake-review-row .actions { display: flex; flex-wrap: wrap; gap: 8px; }
