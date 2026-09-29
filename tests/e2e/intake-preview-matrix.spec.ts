@@ -1,8 +1,12 @@
 import { mkdirSync } from "node:fs";
 import { expect, test } from "@playwright/test";
 
-const evidence = process.env.KEEPANY_INTAKE_EVIDENCE_DIR ?? "docs/evidence/2026-09-29";
-const photo = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAACAAAAAYCAIAAAAUMWhjAAAAhUlEQVR4nLXNuRXCQBAE0WJCIQlZikEJYZLZ5iGfLOTyYI85Wu3NlPEfn2Pja/vzhXT2c7fzfS+A2rDuV2jYKKgMmzSJYfPcysYCoGysAWqGC6BgeAGyRgAgZcQA4kYYIGhkACJGEsBt5AF8RgnAYVQBVoYAYGpoAMaGDGBgKIGuIQb+jQtZ/TPNXBjnggAAAABJRU5ErkJggg==", "base64");
+const evidence =
+	process.env.KEEPANY_INTAKE_EVIDENCE_DIR ?? "docs/evidence/2026-09-29";
+const photo = Buffer.from(
+	"iVBORw0KGgoAAAANSUhEUgAAACAAAAAYCAIAAAAUMWhjAAAAhUlEQVR4nLXNuRXCQBAE0WJCIQlZikEJYZLZ5iGfLOTyYI85Wu3NlPEfn2Pja/vzhXT2c7fzfS+A2rDuV2jYKKgMmzSJYfPcysYCoGysAWqGC6BgeAGyRgAgZcQA4kYYIGhkACJGEsBt5AF8RgnAYVQBVoYAYGpoAMaGDGBgKIGuIQb+jQtZ/TPNXBjnggAAAABJRU5ErkJggg==",
+	"base64",
+);
 const copies = {
 	"en-US": {
 		quick: "Quick capture",
@@ -11,6 +15,7 @@ const copies = {
 		csv: "CSV file",
 		csvMode: "Spreadsheet",
 		photoMode: "Photo or receipt",
+		manualMode: "Manual",
 		addPhoto: "Add image",
 		import: "Confirm import",
 		confirmCandidate: "Confirm and save",
@@ -29,6 +34,7 @@ const copies = {
 		csv: "CSV 表格",
 		csvMode: "表格",
 		photoMode: "图片 / 收据",
+		manualMode: "手动",
 		addPhoto: "添加图片",
 		import: "确认导入",
 		confirmCandidate: "确认入库",
@@ -64,41 +70,81 @@ for (const locale of ["en-US", "zh-CN"] as const) {
 				await page.goto("/intake");
 				const importCard = page.locator(".intake-quick-card");
 				const backupCard = page.locator(".intake-backup-card");
-				await expect(importCard.getByRole("heading", { name: copy.quick })).toBeVisible();
-				await expect(backupCard.getByRole("heading", { name: copy.backup })).toBeVisible();
+				await expect(
+					importCard.getByRole("heading", { name: copy.quick }),
+				).toBeVisible();
+				await expect(
+					backupCard.getByRole("heading", { name: copy.backup }),
+				).toBeVisible();
 				await expect(importCard.locator("#csv-file")).toHaveCount(0);
 				const url = "https://example.com/keepany-preview";
 				await importCard.locator("#import-url").fill(url);
-				await importCard.getByRole("button", { name: copy.previewRecords }).click();
-				await expect(importCard.locator(".import-preview")).toContainText(
-					"example.com",
-				);
+				await importCard
+					.getByRole("button", { name: copy.previewRecords })
+					.click();
+				await expect(
+					importCard.locator(".import-preview input:not([type=checkbox])"),
+				).toHaveValue(/example\.com/);
 				await page.screenshot({
 					path: `${evidence}/${stem}-url.png`,
 					fullPage: true,
 				});
 				await importCard.locator("#import-url").fill("file:///old-candidate");
 				await expect(importCard.locator(".import-preview")).toHaveCount(0);
-				await importCard.getByRole("button", { name: copy.previewRecords }).click();
+				await importCard
+					.getByRole("button", { name: copy.previewRecords })
+					.click();
 				await expect(page.locator(".notice[role='status']")).toContainText(
 					copy.invalid,
 				);
 				await expect(importCard.locator(".import-preview")).toHaveCount(0);
 				await importCard.locator("#import-url").fill(url);
-				await importCard.getByRole("button", { name: copy.previewRecords }).click();
+				await importCard
+					.getByRole("button", { name: copy.previewRecords })
+					.click();
 				await importCard.getByRole("button", { name: copy.import }).click();
 				await expect(importCard.locator(".import-preview")).toHaveCount(0);
+				await importCard.getByRole("button", { name: copy.manualMode }).click();
+				await importCard.locator("#intake-manual-name").fill("Inbox idea");
+				await importCard
+					.getByRole("button", { name: copy.previewRecords })
+					.click();
+				await expect(
+					importCard.locator(".import-preview input:not([type=checkbox])"),
+				).toHaveValue("Inbox idea");
+				await page.screenshot({
+					path: `${evidence}/${stem}-manual.png`,
+					fullPage: true,
+				});
+				await importCard.getByRole("button", { name: copy.import }).click();
+				await expect(page.locator(".intake-recent")).toContainText(
+					"Inbox idea",
+				);
 				await importCard.getByRole("button", { name: copy.photoMode }).click();
 				await expect(importCard.locator("#import-url")).toHaveCount(0);
-				await importCard.locator("#intake-photo-asset").selectOption({ label: "example.com" });
-				await importCard.locator("#intake-photo-file").setInputFiles({ name: "receipt.png", mimeType: "image/png", buffer: photo });
+				await importCard
+					.locator("#intake-photo-asset")
+					.selectOption({ label: "example.com" });
+				await importCard.locator("#intake-photo-file").setInputFiles({
+					name: "receipt.png",
+					mimeType: "image/png",
+					buffer: photo,
+				});
 				await expect(importCard.locator("img.image-preview")).toBeVisible();
 				await importCard.getByRole("button", { name: copy.addPhoto }).click();
 				await expect(importCard.locator("img.image-preview")).toHaveCount(0);
-				await page.locator(".intake-recent").getByRole("link", { name: "example.com" }).click();
-				await expect(page.locator(".asset-image").first()).toBeVisible();
+				await page
+					.locator(".intake-recent")
+					.getByRole("link", { name: "example.com" })
+					.click();
+				await page.locator("#asset-project-materials > summary").click();
+				await expect(
+					page.locator(".asset-attachments-card img.asset-image").first(),
+				).toBeVisible();
 				await page.goto("/intake");
-				await importCard.getByRole("button", { name: copy.csvMode, exact: true }).click();
+				await importCard
+					.getByRole("button", { name: copy.csvMode, exact: true })
+					.click();
 				await expect(importCard.locator("#import-url")).toHaveCount(0);
 
 				const csv = [
@@ -113,9 +159,13 @@ for (const locale of ["en-US", "zh-CN"] as const) {
 				});
 				const review = page.locator(".intake-review-card");
 				const rows = review.locator(".intake-review-row");
-				await expect(page.locator(".notice[role='status']")).toContainText(copy.staged);
+				await expect(page.locator(".notice[role='status']")).toContainText(
+					copy.staged,
+				);
 				await expect(rows).toHaveCount(2);
-				await expect(rows.nth(1).getByLabel(locale === "zh-CN" ? "名称" : "Name")).toHaveValue(longName);
+				await expect(
+					rows.nth(1).getByLabel(locale === "zh-CN" ? "名称" : "Name"),
+				).toHaveValue(longName);
 				for (const chip of await review.locator(".chip").all()) {
 					const box = await chip.boundingBox();
 					expect(box?.width).toBeGreaterThanOrEqual(38);
@@ -133,7 +183,9 @@ for (const locale of ["en-US", "zh-CN"] as const) {
 					mimeType: "text/csv",
 					buffer: Buffer.from('name,kind\n"unterminated,project'),
 				});
-				await expect(page.locator(".notice[role='status']")).toContainText(copy.invalidCsv);
+				await expect(page.locator(".notice[role='status']")).toContainText(
+					copy.invalidCsv,
+				);
 				await expect(rows).toHaveCount(2);
 				await importCard.getByLabel(copy.csv).setInputFiles({
 					name: "preview.csv",
@@ -141,8 +193,13 @@ for (const locale of ["en-US", "zh-CN"] as const) {
 					buffer: Buffer.from(csv),
 				});
 				await expect(rows).toHaveCount(2);
-				await rows.nth(1).getByRole("button", { name: copy.confirmCandidate }).click();
-				await expect(rows.nth(1)).toContainText(locale === "zh-CN" ? "已确认" : "Confirmed");
+				await rows
+					.nth(1)
+					.getByRole("button", { name: copy.confirmCandidate })
+					.click();
+				await expect(rows.nth(1)).toContainText(
+					locale === "zh-CN" ? "已确认" : "Confirmed",
+				);
 
 				await backupCard
 					.locator("#backup-password")
@@ -159,7 +216,10 @@ for (const locale of ["en-US", "zh-CN"] as const) {
 				const downloaded = await downloadPromise;
 				const file = await downloaded.path();
 				if (!file) throw new Error("Downloaded backup missing");
-				await backupCard.locator("details.intake-secondary > summary").filter({ hasText: copy.restore }).click();
+				await backupCard
+					.locator("details.intake-secondary > summary")
+					.filter({ hasText: copy.restore })
+					.click();
 				await backupCard.getByLabel(copy.restore).setInputFiles(file);
 				await backupCard.getByRole("button", { name: copy.preview }).click();
 				await expect(

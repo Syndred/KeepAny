@@ -731,6 +731,7 @@ export function IntakeTools({ onCsvStaged }: { onCsvStaged: () => void }) {
 	const { data, notify } = useAppContext();
 	const [mode, setMode] = useState<"url" | "image" | "csv" | "manual">("url");
 	const [manualKind, setManualKind] = useState<AssetKind>("project");
+	const [manualName, setManualName] = useState("");
 	const [manualOpen, setManualOpen] = useState(false);
 	const [photoAssetId, setPhotoAssetId] = useState("");
 	const [photoFile, setPhotoFile] = useState<File | null>(null);
@@ -952,6 +953,30 @@ export function IntakeTools({ onCsvStaged }: { onCsvStaged: () => void }) {
 			if (generation === importGeneration.current) setMessage(t("invalid"));
 		}
 	}
+	async function previewManual() {
+		const generation = ++importGeneration.current;
+		setCandidates([]);
+		setCandidateGeneration(null);
+		const name = manualName.trim();
+		if (!name) {
+			setMessage(t("required"));
+			return;
+		}
+		try {
+			const existing = (await allRecords())
+				.filter((row) => row.type === "asset")
+				.map((row) => JSON.parse(row.payload) as Asset);
+			if (generation !== importGeneration.current) return;
+			const asset = { ...newAsset(manualKind), name };
+			const duplicate = duplicates(asset, existing).length > 0;
+			previewExisting.current = existing;
+			setCandidates([{ asset, duplicate, invalid: false, selected: !duplicate }]);
+			setCandidateGeneration(generation);
+			setMessage(t("preview"));
+		} catch {
+			if (generation === importGeneration.current) setMessage(t("error"));
+		}
+	}
 	async function importCandidates() {
 		if (importing.current || candidateGeneration !== importGeneration.current) return;
 		importing.current = true;
@@ -1052,12 +1077,26 @@ export function IntakeTools({ onCsvStaged }: { onCsvStaged: () => void }) {
 					{mode === "manual" && (
 						<>
 							<div className="field">
+								<label htmlFor="intake-manual-name">{t("name")}</label>
+								<input id="intake-manual-name" value={manualName} maxLength={160} disabled={busy || inspecting} onChange={event => {
+									importGeneration.current++;
+									setManualName(event.target.value);
+									setCandidates([]);
+									setCandidateGeneration(null);
+								}} />
+							</div>
+							<div className="field">
 								<label htmlFor="intake-manual-kind">{t("intakeRecordType")}</label>
-								<select id="intake-manual-kind" value={manualKind} onChange={event => setManualKind(event.target.value as AssetKind)}>
+								<select id="intake-manual-kind" value={manualKind} disabled={busy || inspecting} onChange={event => {
+									importGeneration.current++;
+									setManualKind(event.target.value as AssetKind);
+									setCandidates([]);
+									setCandidateGeneration(null);
+								}}>
 									{(["project", "account", "subscription", "item"] as const).map(kind => <option key={kind} value={kind}>{t(kind)}</option>)}
 								</select>
 							</div>
-							<Button variant="primary" onClick={() => setManualOpen(true)}>{t("newRecord")}</Button>
+							<Button variant="primary" onClick={() => void previewManual()} disabled={busy || inspecting || !manualName.trim()}>{t("intakePreviewRecords")}</Button>
 						</>
 					)}
 					{mode === "image" && (
@@ -1095,7 +1134,7 @@ export function IntakeTools({ onCsvStaged }: { onCsvStaged: () => void }) {
 							<Button variant="primary" disabled={photoBusy || !photoAssetId || !photoFile} onClick={() => void addPhoto()}>{t("addPhoto")}</Button>
 						</>
 					)}
-					{candidates.length > 0 && mode === "url" && (
+					{candidates.length > 0 && (mode === "url" || mode === "manual") && (
 						<div className="import-preview" aria-live="polite">
 							<h3>{t("preview")}</h3>
 							{candidates.map((candidate, index) => (
