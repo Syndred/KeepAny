@@ -36,3 +36,18 @@ pnpm install --frozen-lockfile   # 首次使用或 node_modules 不存在时执�
 ## 2026-09-30 入口收口
 
 原 Chrome 已只保留一个 4180 核心入口，实际加载文件名已与固定包核对。服务在后台运行，仍可使用上述停止脚本；未清站点数据。4188 旧验收资料留在原来源，未自动迁移。新增 PDF 文字收录，需核对提取原文并选择资料类型后确认，不自动记账。最终包测试与提交见项目交接顶部；运维复核步骤见 [本机运行与版本核查](../docs/本机运行与版本核查.md)。
+
+## 2026-09-30 完整审核备份与恢复补证
+
+`.ka1` 现在同时保存收录草稿、提取原文、类型选择和确认／忽略决策，恢复后可以继续审核；原 PDF 文件不保存。订阅关联失败后可在订阅编辑中重试或放弃剩余关联，已保存资料和已有关系保留。未解决意图时应用拒绝导出或同步半成品，需先处理该订阅。
+
+原 Chrome 已实际加载本轮固定入口 `index-BkwkZDwn.js`，前后0项资产且未清理站点数据。最终固定文件12项浏览器检查通过，包含实际加密文件下载／干净恢复、离线重开和编辑、离线图标、PDF、审核备份及合并撤销。复核命令：
+
+```bash
+pnpm build
+node scripts/verify-local-release.mjs
+pnpm exec playwright test --config playwright.release.config.ts --reporter=dot
+node scripts/phase0/verify-third-party-license-materials.mjs
+```
+
+现有 Vite PWA 清单已包含安装图标，图形沿用应用 K 标志和统一颜色；矢量源位于 `apps/web/public/icons/keepany.svg`。隔离 Chromium 已在断网后实际解码清单及全部图标；没有把此结果当成真机已安装。本地包与阶段／生产发布边界见[最新交接](../docs/08-项目进度交接.md)。

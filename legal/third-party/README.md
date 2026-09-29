@@ -11,4 +11,3 @@
 ```bash
 node scripts/phase0/verify-third-party-license-materials.mjs
 ```
-
