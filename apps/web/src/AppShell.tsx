@@ -143,7 +143,6 @@ export function AppShell() {
 		pathname === "/trash" ? t("trash") : t("settings");
 	const detailMatch = /^\/assets\/([^/]+)\/([^/]+)\/?$/.exec(pathname);
 	const detailKind = detailMatch && kinds.includes(detailMatch[1] as (typeof kinds)[number]) ? detailMatch[1] : null;
-	const projectDetailId = detailKind === "project" ? detailMatch?.[2] : null;
 	const workflowMatch = /^\/assets\/project\/([^/]+)\/workflow\/(brand|close)\/?$/.exec(pathname);
 	let workflowProjectId: string | null = null;
 	if (workflowMatch) {
@@ -156,7 +155,8 @@ export function AppShell() {
 	}
 	const relationReturnId = sessionStorage.getItem("keepany-relation-return-id");
 	const relationReturnKind = sessionStorage.getItem("keepany-relation-return-kind");
-	const projectReturnKind = projectDetailId && relationReturnId === projectDetailId && relationReturnKind && kinds.includes(relationReturnKind as (typeof kinds)[number]) ? relationReturnKind : "project";
+	const hasRelationReturn = Boolean(detailKind && relationReturnId === detailMatch?.[2] && relationReturnKind && kinds.includes(relationReturnKind as (typeof kinds)[number]));
+	const detailReturnKind = hasRelationReturn ? relationReturnKind as (typeof kinds)[number] : detailKind;
 	function selectCategory(kind: string, category: string) {
 		sessionStorage.setItem(`keepany-category-${kind}`, category);
 		setMobile(false);
@@ -295,7 +295,7 @@ export function AppShell() {
 						>
 							<Menu size={20} />
 						</Button>
-						{detailKind ? <Link className="topbar-page-label topbar-back-link" to="/assets/$kind" params={{ kind: projectDetailId ? projectReturnKind : detailKind }} onClick={projectDetailId ? () => { sessionStorage.removeItem("keepany-relation-return-id"); sessionStorage.removeItem("keepany-relation-return-kind"); } : undefined}><ArrowLeft size={15}/>{t("back")}</Link> : workflowProjectId ? <Link className="topbar-page-label topbar-back-link" to="/assets/$kind/$id" params={{ kind: "project", id: workflowProjectId }}><ArrowLeft size={15}/>{t("workflowBackToProject")}</Link> : collectionDetailId ? <Link className="topbar-page-label topbar-back-link" to="/collections"><ArrowLeft size={15}/>{t("collectionBack")}</Link> : pathname !== "/" ? <Link className="topbar-page-label topbar-back-link" to="/"><ArrowLeft size={15}/>{t("backToOverview")}</Link> : <strong className="topbar-page-label">{currentHeading}</strong>}
+						{detailKind ? <Link className="topbar-page-label topbar-back-link" to="/assets/$kind" params={{ kind: detailReturnKind ?? detailKind }} onClick={hasRelationReturn ? () => { sessionStorage.removeItem("keepany-relation-return-id"); sessionStorage.removeItem("keepany-relation-return-kind"); } : undefined}><ArrowLeft size={15}/>{t("back")}</Link> : workflowProjectId ? <Link className="topbar-page-label topbar-back-link" to="/assets/$kind/$id" params={{ kind: "project", id: workflowProjectId }}><ArrowLeft size={15}/>{t("workflowBackToProject")}</Link> : collectionDetailId ? <Link className="topbar-page-label topbar-back-link" to="/collections"><ArrowLeft size={15}/>{t("collectionBack")}</Link> : pathname !== "/" ? <Link className="topbar-page-label topbar-back-link" to="/"><ArrowLeft size={15}/>{t("backToOverview")}</Link> : <strong className="topbar-page-label">{currentHeading}</strong>}
 						<div className="topbar-spacer"/>
 						<button className="top-search top-search-trigger" type="button" aria-label={t("search")} aria-expanded={searchOpen} onClick={() => { if (searchOpen) { setSearchOpen(false); setSearch(""); } else { setSearchOpen(true); window.requestAnimationFrame(() => topSearchInputRef.current?.focus()); } }}><Search size={17} /><span>{t("search")}</span>
 							<kbd>⌘ K</kbd>
