@@ -9,7 +9,8 @@ const copies = {
 		all: "All",
 		category: "Category",
 		categoryName: "Category name",
-		close: "Close",
+		categorySave: "Save collection",
+		close: "Collapse",
 		duplicate: "This category already exists.",
 		manage: "Manage",
 		name: "Name",
@@ -23,7 +24,8 @@ const copies = {
 		all: "全部",
 		category: "分类",
 		categoryName: "分类名称",
-		close: "关闭",
+		categorySave: "保存分类",
+		close: "收起",
 		duplicate: "该分类已存在。",
 		manage: "管理",
 		name: "名称",
@@ -47,9 +49,9 @@ for (const locale of ["en-US", "zh-CN"] as const) {
 		try {
 			await page.goto("/assets/project");
 			await page.getByRole("button", { name: copy.manage }).click();
-			const dialog = page.getByRole("dialog", { name: copy.category });
+			const dialog = page.getByRole("region", { name: copy.category });
 			await dialog.getByLabel(copy.categoryName).fill(copy.website);
-			await dialog.getByRole("button", { name: copy.save }).click();
+			await dialog.getByRole("button", { name: copy.categorySave, exact: true }).click();
 			await expect(dialog.getByRole("alert")).toHaveText(copy.duplicate);
 			await expect(dialog.getByLabel(copy.categoryName)).toHaveAttribute(
 				"aria-invalid",
@@ -57,14 +59,14 @@ for (const locale of ["en-US", "zh-CN"] as const) {
 			);
 			await dialog.getByLabel(copy.categoryName).fill(custom);
 			await expect(dialog.getByRole("alert")).toHaveCount(0);
-			await dialog.getByRole("button", { name: copy.save }).click();
+			await dialog.getByRole("button", { name: copy.categorySave, exact: true }).click();
 			await expect(dialog).toBeHidden();
 			await expect(
-				page.getByRole("button", { name: custom, exact: true }),
+				page.getByRole("main").getByRole("button", { name: custom, exact: true }),
 			).toBeVisible();
 			await page.getByRole("button", { name: copy.manage }).click();
 			await dialog.getByLabel(copy.categoryName).fill(custom.toUpperCase());
-			await dialog.getByRole("button", { name: copy.save }).click();
+			await dialog.getByRole("button", { name: copy.categorySave, exact: true }).click();
 			await expect(dialog.getByRole("alert")).toHaveText(copy.duplicate);
 			await dialog
 				.locator(".list-row")
@@ -74,7 +76,7 @@ for (const locale of ["en-US", "zh-CN"] as const) {
 			await expect(dialog.locator(".list-row")).toHaveCount(0);
 			await dialog.getByRole("button", { name: copy.close }).click();
 			await expect(
-				page.getByRole("button", { name: custom, exact: true }),
+				page.getByRole("main").getByRole("button", { name: custom, exact: true }),
 			).toHaveCount(0);
 			expect(errors).toEqual([]);
 		} finally {
@@ -100,16 +102,16 @@ for (const locale of ["en-US", "zh-CN"] as const) {
 			try {
 				await page.goto("/assets/project");
 				await page.getByRole("button", { name: copy.manage }).click();
-				const categoryDialog = page.getByRole("dialog", {
+				const categoryDialog = page.getByRole("region", {
 					name: copy.category,
 				});
 				const category = "C".repeat(60);
 				await categoryDialog.getByLabel(copy.categoryName).fill(category);
-				await categoryDialog.getByRole("button", { name: copy.save }).click();
+				await categoryDialog.getByRole("button", { name: copy.categorySave, exact: true }).click();
 				await expect(categoryDialog).toBeHidden();
 				await page.getByRole("button", { name: copy.manage }).click();
 				await categoryDialog.getByLabel(copy.categoryName).fill(category);
-				await categoryDialog.getByRole("button", { name: copy.save }).click();
+				await categoryDialog.getByRole("button", { name: copy.categorySave, exact: true }).click();
 				await expect(categoryDialog.getByRole("alert")).toHaveText(
 					copy.duplicate,
 				);
@@ -125,7 +127,7 @@ for (const locale of ["en-US", "zh-CN"] as const) {
 							),
 					).toBeGreaterThanOrEqual(16);
 					await expect(
-						categoryDialog.getByRole("button", { name: copy.save }),
+						categoryDialog.getByRole("button", { name: copy.categorySave, exact: true }),
 					).toBeInViewport({ ratio: 1 });
 				}
 				await page.screenshot({ path: `${evidence}/${stem}-category.png` });

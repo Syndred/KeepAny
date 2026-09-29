@@ -33,6 +33,19 @@
 .asset-category-manage {
 	flex: none;
 }
+.asset-category-inline {
+	display: grid;
+	gap: 12px;
+	margin: 14px 0 18px;
+	padding: 18px;
+}
+.asset-category-inline > .card-header { margin: 0; }
+.asset-category-inline > .field { max-width: 420px; }
+.asset-category-inline > .actions { justify-content: flex-start; }
+.asset-category-inline > .list { display: grid; gap: 10px; }
+.asset-category-inline .asset-category-members { max-width: 720px; }
+.asset-category-inline .list-row { display: flex; justify-content: space-between; gap: 12px; align-items: center; }
+.asset-category-inline .list-row strong { overflow-wrap: anywhere; }
 .asset-category-order {
 	display: flex;
 	gap: 8px;

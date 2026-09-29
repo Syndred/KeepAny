@@ -50,7 +50,7 @@ export function ProjectWorkflowTaskRow({ task, round: suppliedRound }: { task: T
     sourceDetail = [registrar && `${t('projectRegistrar')}: ${registrar}`, expiry && `${t('projectExpiry')}: ${date(expiry, i18n.language)}`, renew && `${t(renew === 'on' ? 'projectAutoRenewOn' : renew === 'off' ? 'projectAutoRenewOff' : 'projectAutoRenewUnknown')}`].filter(Boolean).join(' · ');
   } else if (workflow.step === 'closeBackup') {
     sourceDetail = `${sourceDetail} ${t('attachments')}`;
-  } else if (['closeBacklink', 'closeRelated', 'closeDecision'].includes(workflow.step)) {
+  } else if (['brandSubmission', 'closeBacklink', 'closeRelated', 'closeDecision'].includes(workflow.step)) {
     sourceDetail = t(sourceDetail);
   }
   return <article className="project-workflow-task" id={`task-${task.id}`}>

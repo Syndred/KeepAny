@@ -21,7 +21,6 @@ import { useTranslation } from "react-i18next";
 import { normalizeCategoryName, type Asset, type AssetKind } from "../../../packages/domain/src";
 import { createCategory, fileUrl, save, saveAssetIfCurrent } from "../../../packages/local-db/src";
 import { Button } from "./components/ui/button";
-import { Dialog } from "./components/ui/dialog";
 import "./asset-restoration.css";
 import {
 	Empty,
@@ -130,9 +129,16 @@ function CategoryStrip({
 	}
 	function openManager() {
 		setCategoryError("");
-		const initial = chosen || ordered[0] || "";
-		setMemberCategory(initial);
-		setMemberIds(memberAssets.filter((asset) => asset.category === initial).map((asset) => asset.id));
+		setName("");
+		setMemberCategory("");
+		setMemberIds([]);
+		setManage(true);
+	}
+	function openNewCategory() {
+		setName("");
+		setMemberCategory("");
+		setMemberIds([]);
+		setCategoryError("");
 		setManage(true);
 	}
 	async function saveMembers() {
@@ -193,7 +199,11 @@ function CategoryStrip({
 		setCategoryBusy(true);
 		try {
 			const created = await createCategory(kind, trimmed, categoryNames.length);
+			setMemberCategory(created.name);
 			setName("");
+			for (const asset of memberAssets.filter((item) => memberIds.includes(item.id))) {
+				await saveAssetIfCurrent(asset, { ...asset, category: created.name, updatedAt: new Date().toISOString() });
+			}
 			setCategoryError("");
 			setManage(false);
 			choose(created.name);
@@ -224,7 +234,7 @@ function CategoryStrip({
 					<button type="button" key={id} className={chosen === id ? "active" : ""} aria-pressed={chosen === id} onClick={() => choose(id)}>{niceCategory(id, t)}</button>
 				))}
 				<button type="button" className="asset-category-add" aria-label={t("newCategory")} title={t("newCategory")}
-						onClick={openManager}
+						onClick={openNewCategory}
 				>
 					<Plus size={14} />
 				</button>
@@ -232,14 +242,8 @@ function CategoryStrip({
 			<Button variant="ghost" size="small" className="asset-category-manage" onClick={openManager}>{t("manage")}</Button>
 			</div>
 			{manage && (
-				<Dialog
-					title={t("category")}
-					onClose={() => {
-						if (categoryBusy) return;
-						setCategoryError("");
-						setManage(false);
-					}}
-				>
+				<section className="card asset-category-inline" aria-label={t("category")}>
+					<div className="card-header"><h3>{memberCategory ? t("category") : t("newCategory")}</h3></div>
 					<div className="field">
 						<label htmlFor="category-name">{t("categoryName")}</label>
 						<input
@@ -266,11 +270,6 @@ function CategoryStrip({
 							</small>
 						)}
 					</div>
-					<div className="actions">
-						<Button onClick={addCategory} disabled={!name.trim() || categoryBusy}>
-							{t("save")}
-						</Button>
-					</div>
 					<div className="list">
 						<DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
 							<SortableContext items={ordered} strategy={horizontalListSortingStrategy}>
@@ -279,11 +278,11 @@ function CategoryStrip({
 								</fieldset>
 							</SortableContext>
 						</DndContext>
-						{memberCategory && <div className="asset-category-members">
-							<div className="card-header"><h3>{t("categoryMembers")} · {niceCategory(memberCategory, t)}</h3><Button size="small" disabled={categoryBusy || !membersChanged} onClick={() => void saveMembers()}>{t("saveMembers")}</Button></div>
+						<div className="asset-category-members">
+							<div className="card-header"><h3>{t("categoryMembers")}{memberCategory ? ` · ${niceCategory(memberCategory, t)}` : ""}</h3>{memberCategory && <Button size="small" disabled={categoryBusy || !membersChanged} onClick={() => void saveMembers()}>{t("saveMembers")}</Button>}</div>
 							<p className="subtitle">{t("categoryMembersHint")}</p>
 							<div className="asset-category-member-list">{memberAssets.length ? memberAssets.map((asset) => <label key={asset.id}><input type="checkbox" disabled={categoryBusy} checked={memberIds.includes(asset.id)} onChange={(event) => setMemberIds((current) => event.target.checked ? [...current, asset.id] : current.filter((id) => id !== asset.id))} /><span><strong>{asset.name}</strong>{asset.category && asset.category !== memberCategory && <small>{niceCategory(asset.category, t)}</small>}</span></label>) : <p>{t("none")}</p>}</div>
-						</div>}
+							</div>
 						{data.categories
 							.filter((c) => c.kind === kind && !c.deleted)
 							.map((c) => (
@@ -300,8 +299,15 @@ function CategoryStrip({
 								</div>
 							))}
 					</div>
+					<div className="actions">
+						<Button variant="primary" onClick={addCategory} disabled={!name.trim() || categoryBusy}>
+							{t("collectionSave")}
+						</Button>
+						<Button onClick={openNewCategory} disabled={categoryBusy}>{t("collectionAddAnother")}</Button>
+						<Button onClick={() => { setCategoryError(""); setManage(false); }} disabled={categoryBusy}>{t("categoryCollapse")}</Button>
+					</div>
 					<p className="subtitle">{t("categoryHelp")}</p>
-				</Dialog>
+				</section>
 			)}
 		</>
 	);
