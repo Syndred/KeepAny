@@ -1,4 +1,8 @@
 import { expect, test } from "@playwright/test";
+import { mkdirSync } from "node:fs";
+
+const evidence = process.env.KEEPANY_EVIDENCE_DIR ?? "docs/evidence/2026-09-30";
+mkdirSync(evidence, { recursive: true });
 
 function pdf(lines: string[], chinese = false) {
 	const stream = `BT /F1 12 Tf 50 750 Td ${lines.map((line, i) => `${i ? '0 -20 Td ' : ''}${chinese ? `<${Array.from(line).map(char => char.charCodeAt(0).toString(16).padStart(4, "0")).join("")}>` : `(${line})`} Tj`).join('\n')} ET`;
@@ -33,7 +37,7 @@ for (const locale of ["zh-CN", "en-US"]) for (const width of [390, 1280]) test(`
 		await expect(row.locator('pre')).toContainText('Service total USD 12.00');
 		const confirm = row.getByRole('button', { name: zh ? '确认入库' : 'Confirm and save' });
 		await expect(confirm).toBeDisabled();
-		await page.screenshot({ path: `docs/evidence/2026-09-30/keepany-pdf-review-${process.env.KEEPANY_PDF_RELEASE === "1" ? "release-" : ""}${locale}-${width}.png`, fullPage: true });
+		await page.screenshot({ path: `${evidence}/keepany-pdf-review-${process.env.KEEPANY_PDF_RELEASE === "1" ? "release-" : ""}${locale}-${width}.png`, fullPage: true });
 		await row.getByLabel(zh ? '资料类型' : 'Record type').selectOption('subscription');
 		await row.getByLabel(zh ? '名称' : 'Name', { exact: true }).fill('Reviewed invoice');
 		await row.getByLabel(zh ? "简短描述" : "Short description").fill("Manually reviewed USD 12.00");
@@ -88,6 +92,6 @@ for (const locale of ["zh-CN", "en-US"]) for (const width of [390, 1280]) test(`
 		await expect(row).toHaveCount(2);
 		await expect(ignoredRow).toContainText(zh ? '已忽略' : 'Ignored');
 		expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
-		await page.screenshot({ path: `docs/evidence/2026-09-30/keepany-pdf-${process.env.KEEPANY_PDF_RELEASE === "1" ? "release-" : ""}${locale}-${width}.png`, fullPage: true });
+		await page.screenshot({ path: `${evidence}/keepany-pdf-${process.env.KEEPANY_PDF_RELEASE === "1" ? "release-" : ""}${locale}-${width}.png`, fullPage: true });
 	} finally { await context.close(); }
 });

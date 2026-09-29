@@ -10,6 +10,22 @@ permissions:
 jobs:
   verify:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17.11-alpine3.24
+        env:
+          POSTGRES_USER: keepany_test
+          POSTGRES_PASSWORD: keepany_ci_test
+          POSTGRES_DB: keepany_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U keepany_test -d keepany_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      KEEPANY_TEST_DATABASE_URL: postgresql://keepany_test:keepany_ci_test@127.0.0.1:5432/keepany_test
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -20,7 +36,12 @@ jobs:
           node-version: '22'
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm exec vitest run apps/sync-server/src/bound-auth.test.ts packages/binding/src/bound-sync.test.ts
+      - name: Verify checked-in third-party license materials
+        run: node scripts/phase0/verify-third-party-license-materials.mjs
+      - run: pnpm test
       - run: pnpm build
       - name: Verify committed web bundle
         run: node scripts/verify-local-release.mjs
+      - run: pnpm exec playwright install --with-deps chromium
+      - name: Verify delivered files and offline backup flow
+        run: pnpm exec playwright test --config playwright.release.config.ts --reporter=dot

@@ -10,7 +10,7 @@ const directory = resolve(process.cwd(), "apps/sync-server/migrations");
 
 // Opt in only with an isolated PostgreSQL test database. Never touches public schema.
 it.skipIf(!process.env.KEEPANY_TEST_DATABASE_URL)(
-	"upgrades a historical accepted change through 003-007 in real PostgreSQL",
+	"upgrades a historical accepted change through 003-008 in real PostgreSQL",
 	async () => {
 		const connectionString = process.env.KEEPANY_TEST_DATABASE_URL;
 		if (!connectionString) throw Error("test-database-url");
@@ -97,10 +97,28 @@ it.skipIf(!process.env.KEEPANY_TEST_DATABASE_URL)(
 				"002_attachments",
 				"003_change_operation_id",
 				"004_bound_state",
-			"005_bound_state_guard",
-			"006_bound_state_writer_guard",
-			"007_self_host_session",
+				"005_bound_state_guard",
+				"006_bound_state_writer_guard",
+				"007_self_host_session",
+				"008_key_envelopes",
 			]);
+			const fingerprint = "d".repeat(64);
+			await pool.query("UPDATE sync_workspaces SET key_fingerprint=$2 WHERE workspace_id=$1", [workspaceId, fingerprint]);
+			await expect(pool.query("UPDATE sync_workspaces SET key_fingerprint='invalid' WHERE workspace_id=$1", [workspaceId]))
+				.rejects.toMatchObject({ code: "23514" });
+			const insertRecovery = (epoch = 1) => pool.query(
+				"INSERT INTO sync_key_envelopes (envelope_id,workspace_id,kind,key_epoch,key_fingerprint,wrap) VALUES ($1,$2,'recovery',$3,$4,$5::jsonb)",
+				[crypto.randomUUID(), workspaceId, epoch, fingerprint, JSON.stringify({ ciphertext: "test-only-wrap" })],
+			);
+			await insertRecovery();
+			await expect(insertRecovery()).rejects.toMatchObject({ code: "23505" });
+			await pool.query("UPDATE sync_key_envelopes SET revoked_at=now() WHERE workspace_id=$1", [workspaceId]);
+			await insertRecovery();
+			await expect(insertRecovery(2)).rejects.toMatchObject({ code: "23514" });
+			await expect(pool.query(
+				"INSERT INTO sync_key_envelopes (envelope_id,workspace_id,kind,key_epoch,key_fingerprint,wrap) VALUES ($1,$2,'join',1,$3,'{}'::jsonb)",
+				[crypto.randomUUID(), workspaceId, fingerprint],
+			)).rejects.toMatchObject({ code: "23514" });
 			const bindingId = crypto.randomUUID();
 			const jkt = "a".repeat(43);
 			const proofHash = "b".repeat(64);
