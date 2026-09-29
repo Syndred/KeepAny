@@ -31,6 +31,7 @@ test("project, account, subscription, task and downloaded backup survive a fresh
 	page.on("pageerror", (error) => errors.push(error.message));
 	const unique = crypto.randomUUID().slice(0, 8);
 	const project = `Flow Project ${unique}`;
+	const editedProject = `${project} edited`;
 	const account = `Flow Account ${unique}`;
 	const subscription = `Flow Subscription ${unique}`;
 	const task = `Review renewal ${unique}`;
@@ -43,6 +44,13 @@ test("project, account, subscription, task and downloaded backup survive a fresh
 		await page.goto("/assets/project");
 		await page.getByText(project).first().click();
 		await expect(page.getByRole("heading", { name: project })).toBeVisible();
+		await page.getByRole("button", { name: "Edit", exact: true }).click();
+		const edit = page.getByRole("dialog");
+		await edit.getByLabel("Name", { exact: true }).fill(editedProject);
+		await edit.getByRole("button", { name: "Save", exact: true }).click();
+		await expect(edit).toBeHidden();
+		await page.reload();
+		await expect(page.getByRole("heading", { name: editedProject })).toBeVisible();
 		await page.getByRole("button", { name: "Add connection" }).click();
 		const relation = page.getByRole("dialog");
 		await relation.getByLabel("Connect to").selectOption({ label: account });
@@ -98,10 +106,10 @@ test("project, account, subscription, task and downloaded backup survive a fresh
 			await confirm.click();
 			await expect(restored.getByText(/Restored \d+ records/)).toBeVisible();
 			await restored.goto("/assets/project");
-			await expect(restored.getByText(project)).toBeVisible();
+			await expect(restored.getByText(editedProject)).toBeVisible();
 			await restored.reload();
-			await expect(restored.getByText(project)).toBeVisible();
-			await restored.getByText(project).first().click();
+			await expect(restored.getByText(editedProject)).toBeVisible();
+			await restored.getByText(editedProject).first().click();
 			await expect(restored.getByText(account).first()).toBeVisible();
 			await expect(restored.getByText(task)).toBeVisible();
 			await restored.goto("/assets/subscription");

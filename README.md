@@ -15,7 +15,9 @@
 
 ## 本机运行
 
-需要 Node.js 与 pnpm。依锁文件安装后运行：
+要直接使用已构建的本地版，请先看 [release/README.md](release/README.md)，在仓库根目录执行 `./release/start.command`，然后打开固定地址 `http://127.0.0.1:4180/`；`./release/stop.command` 停止服务。首次使用需 Node.js、pnpm 及 `pnpm install --frozen-lockfile`。浏览器资料由当前地址和浏览器配置文件隔离；从旧开发端口搬入资料须先导出加密 `.ka1` 再在新地址恢复。
+
+开发源码时依锁文件安装后运行：
 
 ```bash
 pnpm install --frozen-lockfile

@@ -10,3 +10,5 @@ test-results/
 *.log
 .DS_Store
 work/
+release/.local-server.pid
+release/.local-server.log
