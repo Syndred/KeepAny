@@ -3,6 +3,41 @@ import { expect, test } from "@playwright/test";
 
 test.skip(process.env.KEEPANY_PRODUCTION_OFFLINE !== "1", "Run against the built PWA preview with KEEPANY_PRODUCTION_OFFLINE=1");
 
+test("delivered installation manifest and icons remain available offline", async ({ browser }) => {
+	const context = await browser.newContext();
+	const page = await context.newPage();
+	try {
+		await page.goto("/");
+		await page.evaluate(async () => { await navigator.serviceWorker.ready; });
+		await page.reload();
+		await expect.poll(() => page.evaluate(() => Boolean(navigator.serviceWorker.controller))).toBe(true);
+		await context.setOffline(true);
+		await page.reload();
+		const installation = await page.evaluate(async () => {
+			const manifestUrl = document.querySelector<HTMLLinkElement>('link[rel="manifest"]')?.href;
+			if (!manifestUrl) throw Error("manifest-missing");
+			const manifest = await (await fetch(manifestUrl)).json();
+			const icons = await Promise.all(manifest.icons.map(async (icon: { src: string; sizes: string; purpose: string }) => {
+				const image = new Image();
+				image.src = new URL(icon.src, manifestUrl).href;
+				await image.decode();
+				return { sizes: icon.sizes, purpose: icon.purpose, width: image.naturalWidth, height: image.naturalHeight };
+			}));
+			const touch = new Image();
+			touch.src = document.querySelector<HTMLLinkElement>('link[rel="apple-touch-icon"]')?.href ?? "";
+			await touch.decode();
+			return { id: manifest.id, start: manifest.start_url, scope: manifest.scope, display: manifest.display,
+				icons, touch: [touch.naturalWidth, touch.naturalHeight] };
+		});
+		expect(installation).toMatchObject({ id: "/", start: "/", scope: "/", display: "standalone", touch: [180, 180] });
+		expect(installation.icons).toEqual(expect.arrayContaining([
+			{ sizes: "192x192", purpose: "any", width: 192, height: 192 },
+			{ sizes: "512x512", purpose: "any", width: 512, height: 512 },
+			{ sizes: "512x512", purpose: "maskable", width: 512, height: 512 },
+		]));
+	} finally { await context.close(); }
+});
+
 test("built PWA reopens offline, edits local data and downloads a backup", async ({ browser }) => {
 	test.setTimeout(90_000);
 	const context = await browser.newContext({ locale: "en-US", acceptDownloads: true });

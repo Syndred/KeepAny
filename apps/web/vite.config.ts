@@ -10,4 +10,17 @@ if (selfHostProxy) {
 }
 const proxy = selfHostProxy ? Object.fromEntries(['/api/auth', '/sync', '/workspaces'].map(path =>
   [path, { target: selfHostProxy, changeOrigin: true }])) : undefined;
-export default defineConfig({ plugins: [react(), tailwindcss(), VitePWA({ registerType:'autoUpdate', injectRegister:null, manifest:{name:'KeepAny',short_name:'KeepAny',theme_color:'#fff8e9',background_color:'#fff8e9',display:'standalone',icons:[]},workbox:{maximumFileSizeToCacheInBytes:5000000}})], build:{outDir:'dist'},server:{fs:{allow:['../..']},proxy} });
+export default defineConfig({ plugins: [react(), tailwindcss(), VitePWA({
+  registerType:'autoUpdate', injectRegister:null,
+  includeAssets: ['icons/*.png', 'icons/*.svg'],
+  manifest: {
+    id:'/', name:'KeepAny', short_name:'KeepAny', start_url:'/', scope:'/',
+    theme_color:'#fff9ec', background_color:'#fff9ec', display:'standalone',
+    icons:[
+      {src:'/icons/keepany-192.png',sizes:'192x192',type:'image/png',purpose:'any'},
+      {src:'/icons/keepany-512.png',sizes:'512x512',type:'image/png',purpose:'any'},
+      {src:'/icons/keepany-maskable-512.png',sizes:'512x512',type:'image/png',purpose:'maskable'},
+    ],
+  },
+  workbox:{maximumFileSizeToCacheInBytes:5000000},
+})], build:{outDir:'dist'},server:{fs:{allow:['../..']},proxy} });
