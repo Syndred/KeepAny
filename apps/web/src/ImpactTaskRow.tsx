@@ -3,7 +3,7 @@ import { Check } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { Task } from "../../../packages/domain/src";
-import { save } from "../../../packages/local-db/src";
+import { saveTaskIfCurrent } from "../../../packages/local-db/src";
 import { Button } from "./components/ui/button";
 import { date, useAppContext } from "./view-shared";
 
@@ -41,10 +41,10 @@ export function ImpactTaskRow({
 	async function update(patch: Partial<Task>) {
 		setBusy(true);
 		try {
-			await save("task", { ...task, ...patch });
+			await saveTaskIfCurrent(task, { ...task, ...patch });
 			notify(t("saved"));
-		} catch {
-			notify(t("error"));
+		} catch (cause) {
+			notify(t(cause instanceof Error && cause.message === "task-stale" ? "workflowTaskStale" : "error"));
 		} finally {
 			setBusy(false);
 		}
