@@ -1,7 +1,7 @@
 {
   "date": "2026-10-01",
   "scope": "本机密码功能软件闭环；非生产或物理设备验收",
-  "codeHead": "18425d0",
+  "codeHead": "04915e15b8b8805245665af00e8a6d0a8c198efb",
   "unit": {
     "passed": 512,
     "skipped": 6,
@@ -44,7 +44,16 @@
       "20个改动文件lint",
       "git diff --check",
       "法律材料与锁文件一致"
-    ]
+    ],
+    "independentClosure": {
+      "status": "both_p1_closed",
+      "head": "04915e1",
+      "findings": [
+        "共享公开头校验在save、inspect和restore事务前拦截魔数假包／截断",
+        "ensureReady重读revision，SPA空库→实际恢复→立即解锁E2E明确通过"
+      ],
+      "method": "只读代码与现有13/13报告复核；未重新执行测试"
+    }
   },
   "native": {
     "url": "http://127.0.0.1:4184/assets/vault",
@@ -105,7 +114,23 @@
     "reason": "导航改名为真正密码库后，更新中英checkbox旧label；保留五类资料／分类／回收站／真实备份恢复原断言"
   },
   "ci": {
-    "status": "awaiting_new_head",
-    "url": "https://github.com/Syndred/KeepAny/commits/main/"
+    "run": 45,
+    "url": "https://github.com/Syndred/KeepAny/actions/runs/36777562042",
+    "head": "04915e15b8b8805245665af00e8a6d0a8c198efb",
+    "status": "success",
+    "duration": "15m 6s",
+    "unitPassed": 518,
+    "unitFiles": 68,
+    "unitFailed": 0,
+    "unitSkipped": 0,
+    "releasePassed": 82,
+    "releaseDuration": "10.3m",
+    "syncPassed": 2,
+    "syncDuration": "41.5s",
+    "readback": "ci45-readback.json",
+    "summary": "ci45-summary-dom.txt",
+    "screenshot": "ci45-summary.jpg",
+    "coverage": "真实PostgreSQL全仓单测、frozen install／法律材料／构建／固定包一致、全量固定包浏览器回归、隔离PG与本机HTTP同步",
+    "documentationCloseout": "后续仅说明、约束与证据提交；应用源码、依赖和固定包不变，以[skip ci]避免重复无变更矩阵"
   }
 }
