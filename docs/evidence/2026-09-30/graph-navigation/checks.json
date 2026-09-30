@@ -1,0 +1,101 @@
+{
+  "date": "2026-09-30",
+  "sourceCommit": "d57927089a8f804ca15dba7a0cd02791a60394dd",
+  "releaseCommit": "ed2d6be796a927aea1a1a0d6189d2a0397fea60a",
+  "entry": "index-CuLK0Yfj.js",
+  "indexSha256": "53119699f28d7120e7662d70d9a6cedc1aed75284030d20049c2f25204d138b0",
+  "frozenReferenceSha256": "61c78012a377946b88d8888cc030ab3ba5eb78e01227432b41aa5b4ac88151d7",
+  "source": {
+    "collectionsCases": 4,
+    "graphCases": 4,
+    "graphFailureScenarioRepeats": 2,
+    "failed": 0,
+    "skipped": 0,
+    "flaky": 0,
+    "categoryCases": 2,
+    "beforeMeasurementBoundary": "The earlier six-case source run passed both category cases and three graph cases, and failed one graph case. Final graph four cases plus two repeats are separate."
+  },
+  "unit": {
+    "files": 62,
+    "total": 420,
+    "passed": 414,
+    "failed": 0,
+    "skipped": 6,
+    "postgres": "CI32 passed all 420 tests with real PostgreSQL; local run remains 414 passed and 6 skipped."
+  },
+  "fixedRelease": {
+    "startTime": "2026-09-30T03:32:33.738Z",
+    "duration": 80994.718,
+    "expected": 36,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "build": {
+    "passed": true,
+    "entryKB": 504.61,
+    "gzipKB": 163.97,
+    "warning": "Vite 500kB chunk warning"
+  },
+  "lint": {
+    "scope": "Changed TS/TSX/spec/config only",
+    "errors": 0,
+    "warnings": 0,
+    "wholeRepositoryLintClaim": false
+  },
+  "artifactVerification": {
+    "currentFiles": 73,
+    "retainedFiles": 353,
+    "precacheEntries": 70,
+    "byteIdentical": true
+  },
+  "legal": {
+    "texts": 16,
+    "verified": 26,
+    "unresolved": 5,
+    "installedVersions": 592,
+    "checksPassed": true
+  },
+  "originalChrome": {
+    "url": "http://127.0.0.1:4180/",
+    "viewport": {
+      "width": 1230,
+      "height": 876
+    },
+    "previousEntry": "index-DwULKM8N.js",
+    "actualEntry": "index-CuLK0Yfj.js",
+    "method": "No pending edit; normal reload then visible official update button; actual script and collections subscription -> finance -> overview readback",
+    "assetsBefore": 0,
+    "assetsAfter": 0,
+    "clearedSiteData": false,
+    "injectedFixture": false,
+    "modifiedPreference": false,
+    "finalPage": "Overview"
+  },
+  "remoteCi": {
+    "status": "Success",
+    "run": "https://github.com/Syndred/KeepAny/actions/runs/36665431001",
+    "head": "715f003",
+    "totalDuration": "6m22s",
+    "jobDuration": "6m18s",
+    "unitFiles": 62,
+    "unitPassed": 420,
+    "unitSkipped": 0,
+    "browserCount": 36,
+    "browserStep": "passed",
+    "browserDuration": "2m56s",
+    "warning": "Node20 actions run on Node24",
+    "notice": "ubuntu-latest upcoming migration",
+    "previousFailure": "https://github.com/Syndred/KeepAny/actions/runs/36662742744",
+    "fix": "c753faf menu hydration and viewport waits; d579270 graph dimensions and status"
+  },
+  "delivery": {
+    "localFilesUpdated": true,
+    "internetDeployment": false,
+    "fullVisualAcceptance": false,
+    "realDeviceAcceptance": false,
+    "goalComplete": false,
+    "keyEpochStash": "Paused and untouched",
+    "KeepAnyAdm": "Untouched"
+  }
+}
