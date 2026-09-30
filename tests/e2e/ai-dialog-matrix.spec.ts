@@ -71,9 +71,13 @@ const copies = {
 		name: "Name",
 		description: "Short description",
 		contact: "Contact",
-		notes: "Notes",
+		contactDetails: "Contact details",
+		notes: "Additional notes",
 		save: "Save",
 		assistant: "AI assistant",
+		assistantMenu: "AI assistant and access",
+		assistantAccess: "Assistant access",
+		askAssistant: "Ask assistant",
 		endpoint: "Service URL",
 		model: "Model",
 		key: "API key (this session only)",
@@ -87,9 +91,13 @@ const copies = {
 		name: "名称",
 		description: "简短描述",
 		contact: "联系方式",
-		notes: "备注",
+		contactDetails: "联系方式",
+		notes: "补充说明",
 		save: "保存",
 		assistant: "AI 助手",
+		assistantMenu: "AI 助手与授权",
+		assistantAccess: "助手授权",
+		askAssistant: "提问助手",
 		endpoint: "服务地址",
 		model: "模型",
 		key: "API Key（仅本次会话）",
@@ -115,6 +123,10 @@ async function addProject(
 		.getByLabel(copy.contact, { exact: true })
 		.fill("contact-private-sentinel");
 	await dialog
+		.locator("summary")
+		.filter({ hasText: copy.contactDetails })
+		.click();
+	await dialog
 		.getByLabel(copy.notes, { exact: true })
 		.fill("notes-private-sentinel");
 	await dialog.getByRole("button", { name: copy.save, exact: true }).click();
@@ -125,7 +137,13 @@ async function openAi(
 	page: Page,
 	copy: typeof copies.en | (typeof copies)["zh-CN"],
 ) {
-	const trigger = page.getByRole("button", { name: copy.assistant });
+	await page
+		.getByRole("button", { name: copy.assistantMenu, exact: true })
+		.click();
+	await page
+		.getByRole("link", { name: copy.assistantAccess, exact: true })
+		.click();
+	const trigger = page.getByRole("button", { name: copy.askAssistant, exact: true });
 	await trigger.click();
 	const dialog = page.getByRole("dialog", { name: copy.assistant });
 	await expect(dialog).toBeVisible();
@@ -380,7 +398,7 @@ test("AI rejects invalid success content, retries, filters deleted assets and se
 			.filter({ hasText: "Deleted AI project" })
 			.click();
 		await page
-			.locator("main.page > .page-header")
+			.locator(".asset-project-action-bar")
 			.getByRole("button", { name: "Move to trash" })
 			.click();
 		await page

@@ -1,5 +1,6 @@
 import { mkdirSync } from "node:fs";
 import { expect, type Page, test } from "@playwright/test";
+import type { Asset } from "../../packages/domain/src";
 
 const evidence = "docs/evidence/2026-09-29";
 const repositoryModuleUrl = `/@fs${process.cwd()}/packages/local-db/src/index.ts`;
@@ -66,8 +67,8 @@ async function installDeleteGate(page: Page, id: string) {
 		async ({ modulePath, assetId }) => {
 			const { localRepository } = await import(modulePath);
 			const repository = await localRepository();
-			const storage = repository.db.records.storageInstance;
-			const originalWrite = storage.bulkWrite.bind(storage);
+			const originalSaveAssetIfCurrent =
+				repository.saveAssetIfCurrent.bind(repository);
 			let release: (() => void) | undefined;
 			let entered = false;
 			let attempts = 0;
@@ -78,26 +79,8 @@ async function installDeleteGate(page: Page, id: string) {
 			};
 			(window as Window & { __deleteRaceGate?: typeof gate }).__deleteRaceGate =
 				gate;
-			storage.bulkWrite = async (
-				rows: Parameters<typeof originalWrite>[0],
-				context: Parameters<typeof originalWrite>[1],
-			) => {
-				const writes = rows as {
-					document: { id: string; type: string; payload: string };
-				}[];
-				if (
-					writes.some((row) => {
-						if (
-							row.document.id !== `asset:${assetId}` ||
-							row.document.type !== "asset"
-						)
-							return false;
-						return (
-							(JSON.parse(row.document.payload) as { deleted?: boolean })
-								.deleted === true
-						);
-					})
-				) {
+			repository.saveAssetIfCurrent = async (expected: Asset, next: Asset) => {
+				if (expected.id === assetId && next.deleted) {
 					attempts++;
 					if (!entered) {
 						entered = true;
@@ -106,7 +89,7 @@ async function installDeleteGate(page: Page, id: string) {
 						});
 					}
 				}
-				return originalWrite(rows, context);
+				return originalSaveAssetIfCurrent(expected, next);
 			};
 		},
 		{ modulePath: repositoryModuleUrl, assetId: id },
@@ -198,6 +181,9 @@ test("stale detail delete cannot erase another tab's rename and replacement imag
 		await expect(edit).toBeHidden();
 		await expect(second.getByRole("heading", { name: updated })).toBeVisible();
 		const replacement = await png(second, "#2486c1");
+		await second
+			.getByRole("button", { name: "View submission materials" })
+			.click();
 		const chooserEvent = second.waitForEvent("filechooser");
 		await second.getByRole("button", { name: "Replace image" }).click();
 		await (await chooserEvent).setFiles({

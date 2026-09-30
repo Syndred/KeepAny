@@ -1,0 +1,670 @@
+{
+  "stats": {
+    "startTime": "2026-09-30T07:08:37.395Z",
+    "duration": 1973267.2449999999,
+    "expected": 254,
+    "skipped": 18,
+    "unexpected": 73,
+    "flaky": 0
+  },
+  "failures": [
+    {
+      "file": "custom-category-edit.spec.ts",
+      "line": 66,
+      "title": "en custom project and account category edits retain identity and backup at 390px",
+      "errors": [
+        "\u001b[31mTest timeout of 45000ms exceeded.\u001b[39m"
+      ]
+    },
+    {
+      "file": "custom-category-edit.spec.ts",
+      "line": 66,
+      "title": "zh-CN custom project and account category edits retain identity and backup at 390px",
+      "errors": [
+        "\u001b[31mTest timeout of 45000ms exceeded.\u001b[39m"
+      ]
+    },
+    {
+      "file": "detail-asset-delete-dialog.spec.ts",
+      "line": 25,
+      "title": "en asset delete dialog fits and traps focus at 360px",
+      "errors": [
+        "\u001b[31mTest timeout of 45000ms exceeded.\u001b[39m"
+      ]
+    },
+    {
+      "file": "detail-asset-delete-dialog.spec.ts",
+      "line": 25,
+      "title": "en asset delete dialog fits and traps focus at 390px",
+      "errors": [
+        "\u001b[31mTest timeout of 45000ms exceeded.\u001b[39m"
+      ]
+    },
+    {
+      "file": "detail-asset-delete-dialog.spec.ts",
+      "line": 25,
+      "title": "en asset delete dialog fits and traps focus at 768px",
+      "errors": [
+        "\u001b[31mTest timeout of 45000ms exceeded.\u001b[39m"
+      ]
+    },
+    {
+      "file": "detail-asset-delete-dialog.spec.ts",
+      "line": 25,
+      "title": "en asset delete dialog fits and traps focus at 1280px",
+      "errors": [
+        "\u001b[31mTest timeout of 45000ms exceeded.\u001b[39m"
+      ]
+    },
+    {
+      "file": "detail-asset-delete-dialog.spec.ts",
+      "line": 25,
+      "title": "en asset delete dialog fits and traps focus at 1440px",
+      "errors": [
+        "\u001b[31mTest timeout of 45000ms exceeded.\u001b[39m"
+      ]
+    },
+    {
+      "file": "detail-asset-delete-dialog.spec.ts",
+      "line": 25,
+      "title": "zh-CN asset delete dialog fits and traps focus at 360px",
+      "errors": [
+        "\u001b[31mTest timeout of 45000ms exceeded.\u001b[39m"
+      ]
+    },
+    {
+      "file": "detail-asset-delete-dialog.spec.ts",
+      "line": 25,
+      "title": "zh-CN asset delete dialog fits and traps focus at 390px",
+      "errors": [
+        "\u001b[31mTest timeout of 45000ms exceeded.\u001b[39m"
+      ]
+    },
+    {
+      "file": "detail-asset-delete-dialog.spec.ts",
+      "line": 25,
+      "title": "zh-CN asset delete dialog fits and traps focus at 768px",
+      "errors": [
+        "\u001b[31mTest timeout of 45000ms exceeded.\u001b[39m"
+      ]
+    },
+    {
+      "file": "detail-asset-delete-dialog.spec.ts",
+      "line": 25,
+      "title": "zh-CN asset delete dialog fits and traps focus at 1280px",
+      "errors": [
+        "\u001b[31mTest timeout of 45000ms exceeded.\u001b[39m"
+      ]
+    },
+    {
+      "file": "detail-asset-delete-dialog.spec.ts",
+      "line": 25,
+      "title": "zh-CN asset delete dialog fits and traps focus at 1440px",
+      "errors": [
+        "\u001b[31mTest timeout of 45000ms exceeded.\u001b[39m"
+      ]
+    },
+    {
+      "file": "detail-image-dialog.spec.ts",
+      "line": 37,
+      "title": "en image preview and confirmation at 360px",
+      "errors": [
+        "\u001b[31mTest timeout of 45000ms exceeded.\u001b[39m"
+      ]
+    },
+    {
+      "file": "detail-image-dialog.spec.ts",
+      "line": 37,
+      "title": "en image preview and confirmation at 390px",
+      "errors": [
+        "\u001b[31mTest timeout of 45000ms exceeded.\u001b[39m"
+      ]
+    },
+    {
+      "file": "detail-image-dialog.spec.ts",
+      "line": 37,
+      "title": "en image preview and confirmation at 768px",
+      "errors": [
+        "\u001b[31mTest timeout of 45000ms exceeded.\u001b[39m"
+      ]
+    },
+    {
+      "file": "detail-image-dialog.spec.ts",
+      "line": 37,
+      "title": "en image preview and confirmation at 1280px",
+      "errors": [
+        "\u001b[31mTest timeout of 45000ms exceeded.\u001b[39m"
+      ]
+    },
+    {
+      "file": "detail-image-dialog.spec.ts",
+      "line": 37,
+      "title": "en image preview and confirmation at 1440px",
+      "errors": [
+        "\u001b[31mTest timeout of 45000ms exceeded.\u001b[39m"
+      ]
+    },
+    {
+      "file": "detail-image-dialog.spec.ts",
+      "line": 37,
+      "title": "zh-CN image preview and confirmation at 360px",
+      "errors": [
+        "\u001b[31mTest timeout of 45000ms exceeded.\u001b[39m"
+      ]
+    },
+    {
+      "file": "detail-image-dialog.spec.ts",
+      "line": 37,
+      "title": "zh-CN image preview and confirmation at 390px",
+      "errors": [
+        "\u001b[31mTest timeout of 45000ms exceeded.\u001b[39m"
+      ]
+    },
+    {
+      "file": "detail-image-dialog.spec.ts",
+      "line": 37,
+      "title": "zh-CN image preview and confirmation at 768px",
+      "errors": [
+        "\u001b[31mTest timeout of 45000ms exceeded.\u001b[39m"
+      ]
+    },
+    {
+      "file": "detail-image-dialog.spec.ts",
+      "line": 37,
+      "title": "zh-CN image preview and confirmation at 1280px",
+      "errors": [
+        "\u001b[31mTest timeout of 45000ms exceeded.\u001b[39m"
+      ]
+    },
+    {
+      "file": "detail-image-dialog.spec.ts",
+      "line": 37,
+      "title": "zh-CN image preview and confirmation at 1440px",
+      "errors": [
+        "\u001b[31mTest timeout of 45000ms exceeded.\u001b[39m"
+      ]
+    },
+    {
+      "file": "detail-image-dialog.spec.ts",
+      "line": 242,
+      "title": "en production-safe image dialog at 390px",
+      "errors": [
+        "\u001b[31mTest timeout of 45000ms exceeded.\u001b[39m"
+      ]
+    },
+    {
+      "file": "detail-image-dialog.spec.ts",
+      "line": 242,
+      "title": "zh-CN production-safe image dialog at 1280px",
+      "errors": [
+        "\u001b[31mTest timeout of 45000ms exceeded.\u001b[39m"
+      ]
+    },
+    {
+      "file": "detail-ledger-dialog.spec.ts",
+      "line": 50,
+      "title": "en-US local backlink dialog validation and layout at 768px",
+      "errors": [
+        "\u001b[31mTest timeout of 90000ms exceeded.\u001b[39m"
+      ]
+    },
+    {
+      "file": "editor-busy-close.spec.ts",
+      "line": 50,
+      "title": "AssetEditor cannot close from X, Escape, overlay or Cancel during a failed write",
+      "errors": [
+        "\u001b[31mTest timeout of 45000ms exceeded.\u001b[39m"
+      ]
+    },
+    {
+      "file": "editor-busy-close.spec.ts",
+      "line": 72,
+      "title": "TaskEditor remains open during save and closes only after the write succeeds",
+      "errors": [
+        "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m\n\nCall Log:\n- Timeout 5000ms exceeded while waiting on the predicate"
+      ]
+    },
+    {
+      "file": "externallink-import.spec.ts",
+      "line": 89,
+      "title": "en-US explicitly imports one evidenced ExternalLink row at 1280px",
+      "errors": [
+        "\u001b[31mTest timeout of 60000ms exceeded.\u001b[39m"
+      ]
+    },
+    {
+      "file": "externallink-import.spec.ts",
+      "line": 89,
+      "title": "zh-CN explicitly imports one evidenced ExternalLink row at 390px",
+      "errors": [
+        "\u001b[31mTest timeout of 60000ms exceeded.\u001b[39m"
+      ]
+    },
+    {
+      "file": "intake-candidate-edit.spec.ts",
+      "line": 28,
+      "title": "CSV candidates are edited and confirmed individually with duplicate blocking",
+      "errors": [
+        "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoContainText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: locator('.intake-review-message')\nExpected substring: \u001b[32m\"Check the name\"\u001b[39m\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toContainText\" locator('.intake-review-message') with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('.intake-review-message')\u001b[22m\n"
+      ]
+    },
+    {
+      "file": "item-status.spec.ts",
+      "line": 69,
+      "title": "physical item facts, atomic status history and encrypted backup survive in both languages and widths",
+      "errors": [
+        "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoHaveAttribute\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('dialog').getByRole('option', { name: 'Marked resold' })\nExpected: \u001b[32m\"\"\u001b[39m\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toHaveAttribute\" getByRole('dialog').getByRole('option', { name: 'Marked resold' }) with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('dialog').getByRole('option', { name: 'Marked resold' })\u001b[22m\n"
+      ]
+    },
+    {
+      "file": "list-scroll-return.spec.ts",
+      "line": 9,
+      "title": "dev 1280px restores the actual long-list scroll after detail and graph navigation",
+      "errors": [
+        "TimeoutError: locator.setInputFiles: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#csv-file')\u001b[22m\n"
+      ]
+    },
+    {
+      "file": "list-scroll-return.spec.ts",
+      "line": 9,
+      "title": "dev 390px restores the actual long-list scroll after detail and graph navigation",
+      "errors": [
+        "TimeoutError: locator.setInputFiles: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#csv-file')\u001b[22m\n"
+      ]
+    },
+    {
+      "file": "mcp-dialog-matrix.spec.ts",
+      "line": 165,
+      "title": "en 768: exact MCP scope and one-record write previews",
+      "errors": [
+        "\u001b[31mTest timeout of 120000ms exceeded.\u001b[39m"
+      ]
+    },
+    {
+      "file": "mcp-web.spec.ts",
+      "line": 59,
+      "title": "formal Web grants one RxDB record to an isolated official SDK stdio client and requires exact write approval",
+      "errors": [
+        "Error: condition-timeout"
+      ]
+    },
+    {
+      "file": "official-bound-sync.spec.ts",
+      "line": 193,
+      "title": "official bound sync preserves encrypted records and photos across devices, retries and revocation",
+      "errors": [
+        "TimeoutError: locator.click: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: 'Authorize official sync read and write' })\u001b[22m\n"
+      ]
+    },
+    {
+      "file": "preview-category-races.spec.ts",
+      "line": 72,
+      "title": "late old CSV cannot replace a newer URL preview or be imported",
+      "errors": [
+        "\u001b[31mTest timeout of 45000ms exceeded.\u001b[39m"
+      ]
+    },
+    {
+      "file": "preview-category-races.spec.ts",
+      "line": 109,
+      "title": "late valid CSV cannot revive candidates after a newer broken CSV",
+      "errors": [
+        "\u001b[31mTest timeout of 45000ms exceeded.\u001b[39m"
+      ]
+    },
+    {
+      "file": "preview-category-races.spec.ts",
+      "line": 155,
+      "title": "late old CSV cannot replace a newer valid CSV",
+      "errors": [
+        "\u001b[31mTest timeout of 45000ms exceeded.\u001b[39m"
+      ]
+    },
+    {
+      "file": "preview-category-races.spec.ts",
+      "line": 195,
+      "title": "late URL preview cannot reappear after editing the URL",
+      "errors": [
+        "\u001b[31mTest timeout of 45000ms exceeded.\u001b[39m"
+      ]
+    },
+    {
+      "file": "preview-category-races.spec.ts",
+      "line": 268,
+      "title": "late restore inspection cannot enable confirmation for a replaced file",
+      "errors": [
+        "\u001b[31mTest timeout of 45000ms exceeded.\u001b[39m"
+      ]
+    },
+    {
+      "file": "preview-category-races.spec.ts",
+      "line": 325,
+      "title": "same-tab double click and two tabs create only one normalized category",
+      "errors": [
+        "\u001b[31mTest timeout of 45000ms exceeded.\u001b[39m"
+      ]
+    },
+    {
+      "file": "preview-category-races.spec.ts",
+      "line": 428,
+      "title": "two tabs reject the same category when Web Locks are unavailable",
+      "errors": [
+        "\u001b[31mTest timeout of 45000ms exceeded.\u001b[39m"
+      ]
+    },
+    {
+      "file": "project-account-crud.spec.ts",
+      "line": 104,
+      "title": "project and account CRUD, intersecting filters, trash and actual backup restore",
+      "errors": [
+        "Error: locator.click: Error: strict mode violation: getByRole('link', { name: 'Back to list' }) resolved to 2 elements:\n    1) <a aria-current=\"page\" data-status=\"active\" href=\"/assets/account\" class=\"topbar-page-label topbar-back-link active\">…</a> aka getByRole('banner').getByRole('link', { name: 'Back to list' })\n    2) <a aria-current=\"page\" data-status=\"active\" href=\"/assets/account\" class=\"back-link active\">…</a> aka getByRole('main').getByRole('link', { name: 'Back to list' })\n\nCall log:\n\u001b[2m  - waiting for getByRole('link', { name: 'Back to list' })\u001b[22m\n"
+      ]
+    },
+    {
+      "file": "project-account-crud.spec.ts",
+      "line": 426,
+      "title": "project image replacement removes old blob and actual backup restores only current image",
+      "errors": [
+        "\u001b[31mTest timeout of 120000ms exceeded.\u001b[39m"
+      ]
+    },
+    {
+      "file": "project-account-crud.spec.ts",
+      "line": 554,
+      "title": "en-US project/account CRUD entry and edit dialog fit 360px",
+      "errors": [
+        "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeInViewport\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator:  getByRole('dialog').getByLabel('Notes')\nExpected: in viewport\nReceived: viewport ratio 0\nTimeout:  5000ms\n\nCall log:\n\u001b[2m  - Expect \"toBeInViewport\" getByRole('dialog').getByLabel('Notes') with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('dialog').getByLabel('Notes')\u001b[22m\n\u001b[2m    14 × locator resolved to <textarea rows=\"4\" id=\"notes\"></textarea>\u001b[22m\n\u001b[2m       - unexpected value \"viewport ratio 0\"\u001b[22m\n"
+      ]
+    },
+    {
+      "file": "project-account-crud.spec.ts",
+      "line": 554,
+      "title": "en-US project/account CRUD entry and edit dialog fit 390px",
+      "errors": [
+        "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeInViewport\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator:  getByRole('dialog').getByLabel('Notes')\nExpected: in viewport\nReceived: viewport ratio 0\nTimeout:  5000ms\n\nCall log:\n\u001b[2m  - Expect \"toBeInViewport\" getByRole('dialog').getByLabel('Notes') with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('dialog').getByLabel('Notes')\u001b[22m\n\u001b[2m    14 × locator resolved to <textarea rows=\"4\" id=\"notes\"></textarea>\u001b[22m\n\u001b[2m       - unexpected value \"viewport ratio 0\"\u001b[22m\n"
+      ]
+    },
+    {
+      "file": "project-account-crud.spec.ts",
+      "line": 554,
+      "title": "zh-CN project/account CRUD entry and edit dialog fit 360px",
+      "errors": [
+        "\u001b[31mTest timeout of 90000ms exceeded.\u001b[39m"
+      ]
+    },
+    {
+      "file": "project-account-crud.spec.ts",
+      "line": 554,
+      "title": "zh-CN project/account CRUD entry and edit dialog fit 390px",
+      "errors": [
+        "\u001b[31mTest timeout of 90000ms exceeded.\u001b[39m"
+      ]
+    },
+    {
+      "file": "relation-lifecycle.spec.ts",
+      "line": 103,
+      "title": "en 1280px relationship lifecycle and graph navigation",
+      "errors": [
+        "Error: locator.click: Error: strict mode violation: getByRole('link', { name: 'Back to list' }) resolved to 2 elements:\n    1) <a aria-current=\"page\" data-status=\"active\" href=\"/assets/account\" class=\"topbar-page-label topbar-back-link active\">…</a> aka getByRole('banner').getByRole('link', { name: 'Back to list' })\n    2) <a aria-current=\"page\" data-status=\"active\" href=\"/assets/account\" class=\"back-link active\">…</a> aka getByRole('main').getByRole('link', { name: 'Back to list' })\n\nCall log:\n\u001b[2m  - waiting for getByRole('link', { name: 'Back to list' })\u001b[22m\n"
+      ]
+    },
+    {
+      "file": "relation-lifecycle.spec.ts",
+      "line": 103,
+      "title": "en 390px relationship lifecycle and graph navigation",
+      "errors": [
+        "Error: locator.click: Error: strict mode violation: getByRole('link', { name: 'Back to list' }) resolved to 2 elements:\n    1) <a aria-current=\"page\" data-status=\"active\" href=\"/assets/account\" class=\"topbar-page-label topbar-back-link active\">…</a> aka getByRole('banner').getByRole('link', { name: 'Back to list' })\n    2) <a aria-current=\"page\" data-status=\"active\" href=\"/assets/account\" class=\"back-link active\">…</a> aka getByRole('main').getByRole('link', { name: 'Back to list' })\n\nCall log:\n\u001b[2m  - waiting for getByRole('link', { name: 'Back to list' })\u001b[22m\n"
+      ]
+    },
+    {
+      "file": "relation-lifecycle.spec.ts",
+      "line": 103,
+      "title": "zh-CN 1280px relationship lifecycle and graph navigation",
+      "errors": [
+        "Error: locator.click: Error: strict mode violation: getByRole('link', { name: '返回列表' }) resolved to 2 elements:\n    1) <a aria-current=\"page\" data-status=\"active\" href=\"/assets/account\" class=\"topbar-page-label topbar-back-link active\">…</a> aka getByRole('banner').getByRole('link', { name: '返回列表' })\n    2) <a aria-current=\"page\" data-status=\"active\" href=\"/assets/account\" class=\"back-link active\">…</a> aka getByRole('main').getByRole('link', { name: '返回列表' })\n\nCall log:\n\u001b[2m  - waiting for getByRole('link', { name: '返回列表' })\u001b[22m\n"
+      ]
+    },
+    {
+      "file": "relation-lifecycle.spec.ts",
+      "line": 103,
+      "title": "zh-CN 390px relationship lifecycle and graph navigation",
+      "errors": [
+        "Error: locator.click: Error: strict mode violation: getByRole('link', { name: '返回列表' }) resolved to 2 elements:\n    1) <a aria-current=\"page\" data-status=\"active\" href=\"/assets/account\" class=\"topbar-page-label topbar-back-link active\">…</a> aka getByRole('banner').getByRole('link', { name: '返回列表' })\n    2) <a aria-current=\"page\" data-status=\"active\" href=\"/assets/account\" class=\"back-link active\">…</a> aka getByRole('main').getByRole('link', { name: '返回列表' })\n\nCall log:\n\u001b[2m  - waiting for getByRole('link', { name: '返回列表' })\u001b[22m\n"
+      ]
+    },
+    {
+      "file": "remote-backup.spec.ts",
+      "line": 43,
+      "title": "s3 remote backup reads back and restores from a fresh browser",
+      "errors": [
+        "\u001b[31mTest timeout of 90000ms exceeded.\u001b[39m"
+      ]
+    },
+    {
+      "file": "remote-backup.spec.ts",
+      "line": 43,
+      "title": "webdav remote backup reads back and restores from a fresh browser",
+      "errors": [
+        "\u001b[31mTest timeout of 90000ms exceeded.\u001b[39m"
+      ]
+    },
+    {
+      "file": "restore-recovery-warning.spec.ts",
+      "line": 8,
+      "title": "a partial image restore keeps local data readable and warns after refresh in both languages",
+      "errors": [
+        "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByText('Local survivor 0d057c4f', { exact: true })\nExpected: visible\nError: strict mode violation: getByText('Local survivor 0d057c4f', { exact: true }) resolved to 3 elements:\n    1) <small>Local survivor 0d057c4f</small> aka getByText('Local survivor 0d057c4fWebsitesLocal survivor 0d057c4fLLocal survivor')\n    2) <strong>Local survivor 0d057c4f</strong> aka getByText('Local survivor 0d057c4fWebsitesLocal survivor 0d057c4fLLocal survivor')\n    3) <strong>Local survivor 0d057c4f</strong> aka getByText('Local survivor 0d057c4fWebsitesLocal survivor 0d057c4fLLocal survivor')\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" getByText('Local survivor 0d057c4f', { exact: true }) with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByText('Local survivor 0d057c4f', { exact: true })\u001b[22m\n"
+      ]
+    },
+    {
+      "file": "self-host-session.spec.ts",
+      "line": 110,
+      "title": "self-hosted sessions keep two users, encrypted records and photos in separate workspaces",
+      "errors": [
+        "TimeoutError: locator.click: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByLabel('Connection method')\u001b[22m\n\u001b[2m    - locator resolved to <button dir=\"ltr\" type=\"button\" role=\"combobox\" data-value=\"token\" data-state=\"closed\" aria-expanded=\"false\" id=\"sync-access-mode\" aria-autocomplete=\"none\" class=\"themed-select-trigger\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not visible\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not visible\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    19 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m       - element is not visible\u001b[22m\n\u001b[2m     - retrying click action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n"
+      ]
+    },
+    {
+      "file": "subscription-cycle.spec.ts",
+      "line": 26,
+      "title": "renewal cycle, local amounts and history survive edits, status changes, refresh and backup restore",
+      "errors": [
+        "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).not.\u001b[22mtoContainText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: locator('section.card').filter({ has: getByRole('heading', { name: 'Renewal due' }) })\nExpected substring: not \u001b[32m\"Cycle 715518a5\"\u001b[39m\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"not toContainText\" locator('section.card').filter({ has: getByRole('heading', { name: 'Renewal due' }) }) with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('section.card').filter({ has: getByRole('heading', { name: 'Renewal due' }) })\u001b[22m\n"
+      ]
+    },
+    {
+      "file": "subscription-cycle.spec.ts",
+      "line": 158,
+      "title": "a second tab can edit while renewal is queued without leaving a false history or blocking backup",
+      "errors": [
+        "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoHaveLength\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected length: \u001b[32m0\u001b[39m\nReceived length: \u001b[31m1\u001b[39m\nReceived array:  \u001b[31m[{\"action\": \"renew\", \"amount\": 0, \"assetId\": \"b997ebca-8ded-474c-8160-0ace8cd0d52c\", \"billDate\": \"2026-01-31\", \"createdAt\": \"2026-09-30T07:35:45.191Z\", \"currency\": \"CNY\", \"deleted\": false, \"id\": \"21426391-213b-490d-926e-6d103c3b8d2e\", \"note\": \"\"}]\u001b[39m"
+      ]
+    },
+    {
+      "file": "subscription-item-crud.spec.ts",
+      "line": 140,
+      "title": "subscription and item shared CRUD, filters, image and actual backup restore",
+      "errors": [
+        "TimeoutError: locator.fill: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('textbox', { name: 'Search all records' })\u001b[22m\n"
+      ]
+    },
+    {
+      "file": "subscription-item-crud.spec.ts",
+      "line": 713,
+      "title": "en-US subscription and item entry and editor fit 768px",
+      "errors": [
+        "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('dialog')\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" getByRole('dialog') with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('dialog')\u001b[22m\n"
+      ]
+    },
+    {
+      "file": "subscription-linked-editor.spec.ts",
+      "line": 336,
+      "title": "without Web Locks another tab cancels an uncommitted intent safely",
+      "errors": [
+        "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m\"asset-stale\"\u001b[39m\nReceived: \u001b[31m\"Transaction committed too early. See http://bit.ly/2kdckMn\"\u001b[39m"
+      ]
+    },
+    {
+      "file": "task-page-matrix.spec.ts",
+      "line": 98,
+      "title": "en-US task page and editor fit 360px with long task",
+      "errors": [
+        "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('heading', { name: 'Tasks', level: 1 })\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" getByRole('heading', { name: 'Tasks', level: 1 }) with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('heading', { name: 'Tasks', level: 1 })\u001b[22m\n"
+      ]
+    },
+    {
+      "file": "task-page-matrix.spec.ts",
+      "line": 98,
+      "title": "en-US task page and editor fit 390px with long task",
+      "errors": [
+        "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('heading', { name: 'Tasks', level: 1 })\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" getByRole('heading', { name: 'Tasks', level: 1 }) with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('heading', { name: 'Tasks', level: 1 })\u001b[22m\n"
+      ]
+    },
+    {
+      "file": "task-page-matrix.spec.ts",
+      "line": 98,
+      "title": "en-US task page and editor fit 768px with long task",
+      "errors": [
+        "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('heading', { name: 'Tasks', level: 1 })\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" getByRole('heading', { name: 'Tasks', level: 1 }) with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('heading', { name: 'Tasks', level: 1 })\u001b[22m\n"
+      ]
+    },
+    {
+      "file": "task-page-matrix.spec.ts",
+      "line": 98,
+      "title": "en-US task page and editor fit 1280px with long task",
+      "errors": [
+        "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('heading', { name: 'Tasks', level: 1 })\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" getByRole('heading', { name: 'Tasks', level: 1 }) with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('heading', { name: 'Tasks', level: 1 })\u001b[22m\n"
+      ]
+    },
+    {
+      "file": "task-page-matrix.spec.ts",
+      "line": 98,
+      "title": "en-US task page and editor fit 1440px with long task",
+      "errors": [
+        "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('heading', { name: 'Tasks', level: 1 })\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" getByRole('heading', { name: 'Tasks', level: 1 }) with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('heading', { name: 'Tasks', level: 1 })\u001b[22m\n"
+      ]
+    },
+    {
+      "file": "task-page-matrix.spec.ts",
+      "line": 98,
+      "title": "zh-CN task page and editor fit 360px with long task",
+      "errors": [
+        "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('heading', { name: '待办', level: 1 })\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" getByRole('heading', { name: '待办', level: 1 }) with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('heading', { name: '待办', level: 1 })\u001b[22m\n"
+      ]
+    },
+    {
+      "file": "task-page-matrix.spec.ts",
+      "line": 98,
+      "title": "zh-CN task page and editor fit 390px with long task",
+      "errors": [
+        "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('heading', { name: '待办', level: 1 })\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" getByRole('heading', { name: '待办', level: 1 }) with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('heading', { name: '待办', level: 1 })\u001b[22m\n"
+      ]
+    },
+    {
+      "file": "task-page-matrix.spec.ts",
+      "line": 98,
+      "title": "zh-CN task page and editor fit 768px with long task",
+      "errors": [
+        "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('heading', { name: '待办', level: 1 })\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" getByRole('heading', { name: '待办', level: 1 }) with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('heading', { name: '待办', level: 1 })\u001b[22m\n"
+      ]
+    },
+    {
+      "file": "task-page-matrix.spec.ts",
+      "line": 98,
+      "title": "zh-CN task page and editor fit 1280px with long task",
+      "errors": [
+        "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('heading', { name: '待办', level: 1 })\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" getByRole('heading', { name: '待办', level: 1 }) with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('heading', { name: '待办', level: 1 })\u001b[22m\n"
+      ]
+    },
+    {
+      "file": "task-page-matrix.spec.ts",
+      "line": 98,
+      "title": "zh-CN task page and editor fit 1440px with long task",
+      "errors": [
+        "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('heading', { name: '待办', level: 1 })\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" getByRole('heading', { name: '待办', level: 1 }) with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('heading', { name: '待办', level: 1 })\u001b[22m\n"
+      ]
+    },
+    {
+      "file": "workspace-key-recovery.spec.ts",
+      "line": 77,
+      "title": "join and independent recovery across isolated browsers with a real local ciphertext server",
+      "errors": [
+        "\u001b[31mTest timeout of 180000ms exceeded.\u001b[39m"
+      ]
+    }
+  ],
+  "skips": [
+    {
+      "file": "binding-dialog-matrix.spec.ts",
+      "title": "en local binding removal dialog at 360px"
+    },
+    {
+      "file": "binding-dialog-matrix.spec.ts",
+      "title": "en local binding removal dialog at 390px"
+    },
+    {
+      "file": "binding-dialog-matrix.spec.ts",
+      "title": "en local binding removal dialog at 768px"
+    },
+    {
+      "file": "binding-dialog-matrix.spec.ts",
+      "title": "en local binding removal dialog at 1280px"
+    },
+    {
+      "file": "binding-dialog-matrix.spec.ts",
+      "title": "en local binding removal dialog at 1440px"
+    },
+    {
+      "file": "binding-dialog-matrix.spec.ts",
+      "title": "zh-CN local binding removal dialog at 360px"
+    },
+    {
+      "file": "binding-dialog-matrix.spec.ts",
+      "title": "zh-CN local binding removal dialog at 390px"
+    },
+    {
+      "file": "binding-dialog-matrix.spec.ts",
+      "title": "zh-CN local binding removal dialog at 768px"
+    },
+    {
+      "file": "binding-dialog-matrix.spec.ts",
+      "title": "zh-CN local binding removal dialog at 1280px"
+    },
+    {
+      "file": "binding-dialog-matrix.spec.ts",
+      "title": "zh-CN local binding removal dialog at 1440px"
+    },
+    {
+      "file": "binding-dialog-matrix.spec.ts",
+      "title": "older state response cannot revive a binding removed in another tab"
+    },
+    {
+      "file": "binding.spec.ts",
+      "title": "account binding approval survives reload and remote revoke clears local credential"
+    },
+    {
+      "file": "impact-checklist.spec.ts",
+      "title": "built PWA keeps the account checklist editable across offline reloads"
+    },
+    {
+      "file": "production-offline.spec.ts",
+      "title": "delivered installation manifest and icons remain available offline"
+    },
+    {
+      "file": "production-offline.spec.ts",
+      "title": "built PWA reopens offline, edits local data and downloads a backup"
+    },
+    {
+      "file": "pwa-upgrade.spec.ts",
+      "title": "old controlled tab upgrades on the same origin without losing its project, image or draft"
+    },
+    {
+      "file": "storage-quota-recovery.spec.ts",
+      "title": "zh-CN 390 actual Chromium quota failure preserves the project draft and retries after quota recovery"
+    },
+    {
+      "file": "storage-quota-recovery.spec.ts",
+      "title": "en-US 390 actual Chromium quota failure preserves the project draft and retries after quota recovery"
+    }
+  ]
+}

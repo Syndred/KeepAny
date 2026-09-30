@@ -1,10 +1,13 @@
 import { mkdirSync } from "node:fs";
 import { expect, test } from "@playwright/test";
+import { selectChoice } from "./helpers/select-choice";
 
-const evidence = "docs/evidence/2026-09-29";
+const evidence =
+	process.env.KEEPANY_CONDITIONAL_EVIDENCE_DIR ?? "docs/evidence/2026-09-29";
 
 const copies = {
 	"en-US": {
+		addAnother: "Create another",
 		add: "Add",
 		all: "All",
 		category: "Category",
@@ -20,6 +23,7 @@ const copies = {
 		website: "Websites",
 	},
 	"zh-CN": {
+		addAnother: "新建另一个",
 		add: "新增",
 		all: "全部",
 		category: "分类",
@@ -51,7 +55,9 @@ for (const locale of ["en-US", "zh-CN"] as const) {
 			await page.getByRole("button", { name: copy.manage }).click();
 			const dialog = page.getByRole("region", { name: copy.category });
 			await dialog.getByLabel(copy.categoryName).fill(copy.website);
-			await dialog.getByRole("button", { name: copy.categorySave, exact: true }).click();
+			await dialog
+				.getByRole("button", { name: copy.categorySave, exact: true })
+				.click();
 			await expect(dialog.getByRole("alert")).toHaveText(copy.duplicate);
 			await expect(dialog.getByLabel(copy.categoryName)).toHaveAttribute(
 				"aria-invalid",
@@ -59,14 +65,23 @@ for (const locale of ["en-US", "zh-CN"] as const) {
 			);
 			await dialog.getByLabel(copy.categoryName).fill(custom);
 			await expect(dialog.getByRole("alert")).toHaveCount(0);
-			await dialog.getByRole("button", { name: copy.categorySave, exact: true }).click();
+			await dialog
+				.getByRole("button", { name: copy.categorySave, exact: true })
+				.click();
 			await expect(dialog).toBeHidden();
 			await expect(
-				page.getByRole("main").getByRole("button", { name: custom, exact: true }),
+				page
+					.getByRole("main")
+					.getByRole("button", { name: custom, exact: true }),
 			).toBeVisible();
 			await page.getByRole("button", { name: copy.manage }).click();
+			await dialog
+				.getByRole("button", { name: copy.addAnother, exact: true })
+				.click();
 			await dialog.getByLabel(copy.categoryName).fill(custom.toUpperCase());
-			await dialog.getByRole("button", { name: copy.categorySave, exact: true }).click();
+			await dialog
+				.getByRole("button", { name: copy.categorySave, exact: true })
+				.click();
 			await expect(dialog.getByRole("alert")).toHaveText(copy.duplicate);
 			await dialog
 				.locator(".list-row")
@@ -74,9 +89,11 @@ for (const locale of ["en-US", "zh-CN"] as const) {
 				.getByRole("button", { name: copy.remove })
 				.click();
 			await expect(dialog.locator(".list-row")).toHaveCount(0);
-			await dialog.getByRole("button", { name: copy.close }).click();
+			await expect(dialog).toBeHidden();
 			await expect(
-				page.getByRole("main").getByRole("button", { name: custom, exact: true }),
+				page
+					.getByRole("main")
+					.getByRole("button", { name: custom, exact: true }),
 			).toHaveCount(0);
 			expect(errors).toEqual([]);
 		} finally {
@@ -107,11 +124,20 @@ for (const locale of ["en-US", "zh-CN"] as const) {
 				});
 				const category = "C".repeat(60);
 				await categoryDialog.getByLabel(copy.categoryName).fill(category);
-				await categoryDialog.getByRole("button", { name: copy.categorySave, exact: true }).click();
+				const categorySaveButton = categoryDialog.getByRole("button", {
+					name: copy.categorySave,
+					exact: true,
+				});
+				await categorySaveButton.click();
 				await expect(categoryDialog).toBeHidden();
 				await page.getByRole("button", { name: copy.manage }).click();
+				await categoryDialog
+					.getByRole("button", { name: copy.addAnother, exact: true })
+					.click();
 				await categoryDialog.getByLabel(copy.categoryName).fill(category);
-				await categoryDialog.getByRole("button", { name: copy.categorySave, exact: true }).click();
+				await categoryDialog
+					.getByRole("button", { name: copy.categorySave, exact: true })
+					.click();
 				await expect(categoryDialog.getByRole("alert")).toHaveText(
 					copy.duplicate,
 				);
@@ -126,9 +152,8 @@ for (const locale of ["en-US", "zh-CN"] as const) {
 								Number.parseFloat(getComputedStyle(input).fontSize),
 							),
 					).toBeGreaterThanOrEqual(16);
-					await expect(
-						categoryDialog.getByRole("button", { name: copy.categorySave, exact: true }),
-					).toBeInViewport({ ratio: 1 });
+					await categorySaveButton.scrollIntoViewIfNeeded();
+					await expect(categorySaveButton).toBeInViewport({ ratio: 1 });
 				}
 				await page.screenshot({ path: `${evidence}/${stem}-category.png` });
 				await categoryDialog.getByRole("button", { name: copy.close }).click();
@@ -156,7 +181,7 @@ for (const locale of ["en-US", "zh-CN"] as const) {
 				const relationDialog = page.getByRole("dialog", {
 					name: copy.relation,
 				});
-				await relationDialog.locator("#relation-target").selectOption({
+				await selectChoice(relationDialog.locator("#relation-target"), {
 					label: account,
 				});
 				await relationDialog.locator("#relation-label").fill("L".repeat(90));
@@ -167,7 +192,7 @@ for (const locale of ["en-US", "zh-CN"] as const) {
 				).toBeLessThanOrEqual(width);
 				if (width <= 390) {
 					const sizes = await relationDialog
-						.locator("input, select")
+						.locator("input, [role=combobox]")
 						.evaluateAll((fields) =>
 							fields.map((field) =>
 								Number.parseFloat(getComputedStyle(field).fontSize),

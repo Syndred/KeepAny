@@ -1,8 +1,10 @@
 import { mkdirSync } from "node:fs";
 import { expect, test } from "@playwright/test";
+import { selectChoice } from "./helpers/select-choice";
 
 const domainUrl = `/@fs${process.cwd()}/packages/domain/src/index.ts`;
 const repositoryUrl = `/@fs${process.cwd()}/packages/local-db/src/index.ts`;
+const evidence = process.env.KEEPANY_EVIDENCE_DIR ?? "docs/evidence/2026-09-29";
 
 test("all three impact scenarios save and reopen their work on the same page", async ({
 	page,
@@ -65,12 +67,13 @@ test("all three impact scenarios save and reopen their work on the same page", a
 	await expect(page).toHaveURL(/\/change-impact$/);
 
 	await page.getByRole("button", { name: /Update project profile/ }).click();
-	await expect(page.getByLabel("Choose project")).toHaveValue(firstProjectId);
-	await page.getByLabel("Choose project").selectOption(secondProjectId);
+	await selectChoice(page.getByLabel("Choose project"), firstProjectId);
+	await expect(page.getByLabel("Choose project")).toHaveAttribute("data-value", firstProjectId);
+	await selectChoice(page.getByLabel("Choose project"), secondProjectId);
 	await expect(page.locator(".project-workflow-hero")).toContainText(
 		"Second project",
 	);
-	await page.getByLabel("Choose project").selectOption(firstProjectId);
+	await selectChoice(page.getByLabel("Choose project"), firstProjectId);
 	await expect(
 		page.getByRole("heading", { name: "Review profile change impact" }),
 	).toBeVisible();
@@ -99,10 +102,12 @@ test("all three impact scenarios save and reopen their work on the same page", a
 	);
 	await page.reload();
 	await page.getByRole("button", { name: /Update project profile/ }).click();
+	await selectChoice(page.getByLabel("Choose project"), firstProjectId);
 	await expect(page.locator(".project-workflow-task")).not.toHaveCount(0);
 	await expect(page).toHaveURL(/\/change-impact$/);
 
 	await page.getByRole("button", { name: /Close and hand over/ }).click();
+	await selectChoice(page.getByLabel("Choose project"), firstProjectId);
 	await expect(
 		page.getByRole("heading", { name: "Close or hand over project" }),
 	).toBeVisible();
@@ -120,20 +125,21 @@ test("all three impact scenarios save and reopen their work on the same page", a
 		),
 	).resolves.toBe(true);
 	await expect(page.locator(".toast")).toHaveCount(0);
-	mkdirSync("docs/evidence/2026-09-29", { recursive: true });
+	mkdirSync(evidence, { recursive: true });
 	await page.screenshot({
-		path: "docs/evidence/2026-09-29/change-impact-en-390.png",
+		path: `${evidence}/change-impact-en-390.png`,
 		fullPage: true,
 	});
 	await page.evaluate(() => localStorage.setItem("keepany-language", "zh-CN"));
 	await page.goto("/change-impact");
 	await page.getByRole("button", { name: /更新站点资料/ }).click();
+	await selectChoice(page.getByLabel("选择项目"), firstProjectId);
 	await expect(
 		page.getByRole("heading", { name: "检查资料更新影响" }),
 	).toBeVisible();
 	await expect(page.locator(".toast")).toHaveCount(0);
 	await page.screenshot({
-		path: "docs/evidence/2026-09-29/change-impact-zh-390.png",
+		path: `${evidence}/change-impact-zh-390.png`,
 		fullPage: true,
 	});
 	await expect(

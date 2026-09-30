@@ -1,0 +1,272 @@
+- link "Skip to content":
+  - /url: "#start-of-content"
+- banner "Global navigation menu":
+  - button "Open menu":
+  - link "Homepage (g then d)":
+    - /url: /
+  - navigation "Breadcrumbs":
+    - list:
+      - link "Syndred":
+        - /url: /Syndred
+        - generic: Syndred
+      - link "KeepAny":
+        - /url: /Syndred/KeepAny
+        - text: KeepAny
+      - button "Switch repository (option shift r)":
+  - button "Open quick search dialog, type / to search":
+    - text: Type
+    - generic: /
+    - text: to search
+  - link "Chat with Copilot":
+    - /url: /copilot
+  - button "Open Copilot…":
+  - button "Create new...":
+  - link "All issues":
+    - /url: /issues
+  - link "All pull requests":
+    - /url: /pulls
+  - link "All repositories":
+    - /url: /repos
+  - button "Open user navigation menu":
+    - img "User avatar"
+  - heading "Repository navigation" [level=2]
+  - navigation "Repository":
+    - list:
+      - link "Code":
+        - /url: /Syndred/KeepAny
+        - generic: Code
+      - link "Issues":
+        - /url: /Syndred/KeepAny/issues
+        - generic: Issues
+      - link "Pull requests":
+        - /url: /Syndred/KeepAny/pulls
+        - generic: Pull requests
+      - link "Agents":
+        - /url: /Syndred/KeepAny/agents?author=Syndred
+        - generic: Agents
+      - link "Actions":
+        - /url: /Syndred/KeepAny/actions
+        - generic: Actions
+      - link "Projects":
+        - /url: /Syndred/KeepAny/projects
+        - generic: Projects
+      - link "Security and quality":
+        - /url: /Syndred/KeepAny/security
+        - generic: Security and quality
+      - link "Insights":
+        - /url: /Syndred/KeepAny/network/dependencies
+        - generic: Insights
+      - link "Settings":
+        - /url: /Syndred/KeepAny/settings
+        - generic: Settings
+- main:
+  - link "Verify local release":
+    - /url: /Syndred/KeepAny/actions/workflows/verify.yml
+    - generic: Verify local release
+  - img "failed:"
+  - 'heading "test(release): verify themed package and complete finance restore flows #37" [level=1]':
+    - generic: "test(release): verify themed package and complete finance restore flows #37"
+  - button "Re-run jobs":
+    - generic: Re-run jobs
+  - button "Workflow run options":
+  - navigation "Workflow run":
+    - list:
+      - link "Summary":
+        - /url: /Syndred/KeepAny/actions/runs/36681725191
+        - generic: Summary
+      - heading "All jobs" [level=4]
+      - button "Filter by job status":
+      - list:
+        - link "verify":
+          - /url: /Syndred/KeepAny/actions/runs/36681725191/job/109778422174
+          - generic: verify
+      - heading "Run details" [level=3]
+      - list "Run details":
+        - link "Usage":
+          - /url: /Syndred/KeepAny/actions/runs/36681725191/usage
+          - generic: Usage
+        - link "Workflow file":
+          - /url: /Syndred/KeepAny/actions/runs/36681725191/workflow
+          - generic: Workflow file
+  - region "Check run summary":
+    - region "Annotations":
+      - button "Open job annotations":
+      - heading "Annotations" [level=2]
+      - generic: 1 error, 1 warning, and 1 notice
+    - link "verify":
+      - /url: "#logs"
+      - generic: verify
+    - generic: failed Sep 30, 202614 minutes ago in 8m 3s
+    - textbox "Search":
+      - /placeholder: Search logs
+    - button "Explain error":
+      - generic: Explain error
+    - button "Re-run this job":
+    - button "Show options":
+      - img "Show options"
+    - generic "Set up job 3s":
+      - generic: Set up job
+      - generic: 3s
+    - generic "Initialize containers 21s":
+      - generic: Initialize containers
+      - generic: 21s
+    - generic "Run actions/checkout@v4 7s":
+      - generic: Run actions/checkout@v4
+      - generic: 7s
+    - generic "Run pnpm/action-setup@v4 2s":
+      - generic: Run pnpm/action-setup@v4
+      - generic: 2s
+    - generic "Run actions/setup-node@v4 3s":
+      - generic: Run actions/setup-node@v4
+      - generic: 3s
+    - generic "Run pnpm install --frozen-lockfile 13s":
+      - generic: Run pnpm install --frozen-lockfile
+      - generic: 13s
+    - generic "Verify checked-in third-party license materials 0s":
+      - generic: Verify checked-in third-party license materials
+      - generic: 0s
+    - generic "Run pnpm exec playwright install --with-deps chromium 32s":
+      - generic: Run pnpm exec playwright install --with-deps chromium
+      - generic: 32s
+    - generic "Run pnpm test 1m 42s":
+      - generic: Run pnpm test
+      - generic: 1m 42s
+    - generic "Run pnpm build 7s":
+      - generic: Run pnpm build
+      - generic: 7s
+    - generic "Verify committed web bundle 0s":
+      - generic: Verify committed web bundle
+      - generic: 0s
+    - generic "Verify delivered files and offline backup flow 4m 49s":
+      - generic: Verify delivered files and offline backup flow
+      - generic: 4m 49s
+    - link "1":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36681725191/job/109778422174#step:12:1
+    - generic "Run pnpm exec playwright test --config playwright.release.config.ts --reporter=dot":
+      - generic: Run pnpm exec playwright test --config playwright.release.config.ts --reporter=dot
+    - link "7":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36681725191/job/109778422174#step:12:8
+    - link "8":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36681725191/job/109778422174#step:12:9
+    - generic: Running 51 tests using 2 workers
+    - link "9":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36681725191/job/109778422174#step:12:10
+    - generic: ··············································F····
+    - link "10":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36681725191/job/109778422174#step:12:11
+    - link "11":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36681725191/job/109778422174#step:12:12
+    - generic: 1) tests/e2e/vault-reference-release.spec.ts:391:3 › zh-CN 390px vault reference saves, archives and restores through the fixed UI
+    - link "12":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36681725191/job/109778422174#step:12:13
+    - link "13":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36681725191/job/109778422174#step:12:14
+    - generic: "Error: expect(received).toBe(expected) // Object.is equality"
+    - link "14":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36681725191/job/109778422174#step:12:15
+    - link "15":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36681725191/job/109778422174#step:12:16
+    - generic: "Expected: 0"
+    - link "16":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36681725191/job/109778422174#step:12:17
+    - generic: "Received: 40"
+    - link "17":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36681725191/job/109778422174#step:12:18
+    - link "18":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36681725191/job/109778422174#step:12:19
+    - generic: "Call Log:"
+    - link "19":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36681725191/job/109778422174#step:12:20
+    - generic: "- Timeout 2000ms exceeded while waiting on the predicate"
+    - link "20":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36681725191/job/109778422174#step:12:21
+    - link "21":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36681725191/job/109778422174#step:12:22
+    - generic: "212 | timeout: 2_000,"
+    - link "22":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36681725191/job/109778422174#step:12:23
+    - generic: "213 | })"
+    - link "23":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36681725191/job/109778422174#step:12:24
+    - generic: "> 214 | .toBe(initialState.scrollLeft);"
+    - link "24":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36681725191/job/109778422174#step:12:25
+    - generic: "| ^"
+    - link "25":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36681725191/job/109778422174#step:12:26
+    - generic: "215 | } finally {"
+    - link "26":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36681725191/job/109778422174#step:12:27
+    - generic: 216 | const restoredState = await readScrollState();
+    - link "27":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36681725191/job/109778422174#step:12:28
+    - generic: "217 | await test.info().attach(\"vault-table-scroll-after-left\", {"
+    - link "28":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36681725191/job/109778422174#step:12:29
+    - generic: at assertVaultTable (/home/runner/work/KeepAny/KeepAny/tests/e2e/vault-reference-release.spec.ts:214:6)
+    - link "29":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36681725191/job/109778422174#step:12:30
+    - generic: at restoreIntoCleanContext (/home/runner/work/KeepAny/KeepAny/tests/e2e/vault-reference-release.spec.ts:348:3)
+    - link "30":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36681725191/job/109778422174#step:12:31
+    - generic: at /home/runner/work/KeepAny/KeepAny/tests/e2e/vault-reference-release.spec.ts:448:22
+    - link "31":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36681725191/job/109778422174#step:12:32
+    - link "32":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36681725191/job/109778422174#step:12:33
+    - generic: "attachment #13: screenshot (image/png) ─────────────────────────────────────────────────────────"
+    - link "33":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36681725191/job/109778422174#step:12:34
+    - generic: test-results/vault-reference-release-zh-f49b3-stores-through-the-fixed-UI/test-failed-1.png
+    - link "34":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36681725191/job/109778422174#step:12:35
+    - generic: ────────────────────────────────────────────────────────────────────────────────────────────────
+    - link "35":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36681725191/job/109778422174#step:12:36
+    - link "36":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36681725191/job/109778422174#step:12:37
+    - generic: "attachment #14: screenshot (image/png) ─────────────────────────────────────────────────────────"
+    - link "37":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36681725191/job/109778422174#step:12:38
+    - generic: test-results/vault-reference-release-zh-f49b3-stores-through-the-fixed-UI/test-failed-2.png
+    - link "38":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36681725191/job/109778422174#step:12:39
+    - generic: ────────────────────────────────────────────────────────────────────────────────────────────────
+    - link "39":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36681725191/job/109778422174#step:12:40
+    - link "40":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36681725191/job/109778422174#step:12:41
+    - generic: "Error Context: test-results/vault-reference-release-zh-f49b3-stores-through-the-fixed-UI/error-context.md"
+    - link "41":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36681725191/job/109778422174#step:12:42
+    - link "42":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36681725191/job/109778422174#step:12:43
+    - generic: 1 failed
+    - link "43":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36681725191/job/109778422174#step:12:44
+    - generic: tests/e2e/vault-reference-release.spec.ts:391:3 › zh-CN 390px vault reference saves, archives and restores through the fixed UI
+    - link "44":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36681725191/job/109778422174#step:12:45
+    - generic: 50 passed (4.8m)
+    - link "45":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36681725191/job/109778422174#step:12:46
+    - text: "Error:"
+    - generic: Process completed with exit code 1.
+    - generic "Verify delivered sync files with isolated PostgreSQL and local HTTP 0s":
+      - generic: Verify delivered sync files with isolated PostgreSQL and local HTTP
+      - generic: 0s
+    - generic "Post Run actions/setup-node@v4 0s":
+      - generic: Post Run actions/setup-node@v4
+      - generic: 0s
+    - generic "Post Run pnpm/action-setup@v4 0s":
+      - generic: Post Run pnpm/action-setup@v4
+      - generic: 0s
+    - generic "Post Run actions/checkout@v4 0s":
+      - generic: Post Run actions/checkout@v4
+      - generic: 0s
+    - generic "Stop containers 0s":
+      - generic: Stop containers
+      - generic: 0s
+    - generic "Complete job 1s":
+      - generic: Complete job
+      - generic: 1s

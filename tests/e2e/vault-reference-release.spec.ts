@@ -204,8 +204,16 @@ async function assertVaultTable(
 			});
 		}
 		await expect(row.locator("td").nth(4)).toBeInViewport({ ratio: 0.1 });
-		for (let press = 0; press < 8; press += 1)
+		// Native keyboard scrolling animates and may coalesce rapid key presses.
+		// Read each actual movement before issuing another key; do not set scrollLeft.
+		for (let press = 0; press < 20; press += 1) {
+			const beforeLeft = (await readScrollState()).scrollLeft;
+			if (beforeLeft <= initialState.scrollLeft) break;
 			await tableWrap.press("ArrowLeft");
+			await expect.poll(async () => (await readScrollState()).scrollLeft, {
+				timeout: 2_000,
+			}).toBeLessThan(beforeLeft);
+		}
 		try {
 			await expect
 				.poll(async () => (await readScrollState()).scrollLeft, {

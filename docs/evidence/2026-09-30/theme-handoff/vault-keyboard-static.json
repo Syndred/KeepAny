@@ -1,0 +1,363 @@
+{
+  "config": {
+    "argv": [
+      "/Users/syndred/.nvm/versions/node/v22.23.1/bin/node",
+      "/Users/syndred/Desktop/projects/KeepAny/node_modules/.pnpm/@playwright+test@1.63.0/node_modules/@playwright/test/cli.js",
+      "test",
+      "--config",
+      "playwright.release.config.ts",
+      "tests/e2e/vault-reference-release.spec.ts",
+      "--workers=1",
+      "--reporter=json",
+      "--output=/private/tmp/keepany-vault-scroll-ci37-results"
+    ],
+    "configFile": "/Users/syndred/Desktop/projects/KeepAny/playwright.release.config.ts",
+    "rootDir": "/Users/syndred/Desktop/projects/KeepAny/tests/e2e",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "/private/tmp/keepany-vault-scroll-ci37-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "",
+        "name": "",
+        "testDir": "/Users/syndred/Desktop/projects/KeepAny/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "local-core.spec.ts",
+          "production-offline.spec.ts",
+          "intake-pdf.spec.ts",
+          "intake-expense.spec.ts",
+          "intake-review-backup.spec.ts",
+          "intake-review-merge.spec.ts",
+          "custom-category-release.spec.ts",
+          "global-search-release.spec.ts",
+          "detail-entry-statistics.spec.ts",
+          "intake-asset-receipt.spec.ts",
+          "collections-route.spec.ts",
+          "relation-graph-verification.spec.ts",
+          "restore-identity.spec.ts",
+          "archive-migration.spec.ts",
+          "vault-reference-release.spec.ts",
+          "themed-select.spec.ts",
+          "finance-ledger-release.spec.ts"
+        ],
+        "timeout": 90000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "json"
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.63.0",
+    "workers": 1,
+    "webServer": {
+      "command": "node node_modules/vite/bin/vite.js preview apps/web --outDir ../../release/web --host 127.0.0.1 --port 4194 --strictPort",
+      "url": "http://127.0.0.1:4194",
+      "reuseExistingServer": false,
+      "timeout": 30000
+    }
+  },
+  "suites": [
+    {
+      "title": "vault-reference-release.spec.ts",
+      "file": "vault-reference-release.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "zh-CN 390px vault reference saves, archives and restores through the fixed UI",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 9822,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-30T07:28:15.988Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "vault-table-scroll-initial",
+                      "contentType": "application/json",
+                      "body": "ewogICJzY3JvbGxMZWZ0IjogMCwKICAic2Nyb2xsV2lkdGgiOiA3MjAsCiAgImNsaWVudFdpZHRoIjogMzYyLAogICJmb2N1c2VkIjogdHJ1ZSwKICAib3ZlcmZsb3dYIjogImF1dG8iLAogICJvdmVyZmxvd1kiOiAiYXV0byIsCiAgInRhYkluZGV4IjogMCwKICAiYWN0aXZlVGFnTmFtZSI6ICJTRUNUSU9OIiwKICAiYWN0aXZlQ2xhc3NOYW1lIjogImNhcmQgdmF1bHQtdGFibGUtd3JhcCBhc3NldC1saXN0LWNvbnRlbnQiLAogICJzZWxlY3Rpb24iOiAiIiwKICAic2NyaXB0U291cmNlcyI6IFsKICAgICJodHRwOi8vMTI3LjAuMC4xOjQxOTQvYXNzZXRzL2luZGV4LURiTmlSVkEzLmpzIgogIF0KfQ=="
+                    },
+                    {
+                      "name": "vault-table-scroll-after-right",
+                      "contentType": "application/json",
+                      "body": "ewogICJzY3JvbGxMZWZ0IjogMSwKICAic2Nyb2xsV2lkdGgiOiA3MjAsCiAgImNsaWVudFdpZHRoIjogMzYyLAogICJmb2N1c2VkIjogdHJ1ZSwKICAib3ZlcmZsb3dYIjogImF1dG8iLAogICJvdmVyZmxvd1kiOiAiYXV0byIsCiAgInRhYkluZGV4IjogMCwKICAiYWN0aXZlVGFnTmFtZSI6ICJTRUNUSU9OIiwKICAiYWN0aXZlQ2xhc3NOYW1lIjogImNhcmQgdmF1bHQtdGFibGUtd3JhcCBhc3NldC1saXN0LWNvbnRlbnQiLAogICJzZWxlY3Rpb24iOiAiIiwKICAic2NyaXB0U291cmNlcyI6IFsKICAgICJodHRwOi8vMTI3LjAuMC4xOjQxOTQvYXNzZXRzL2luZGV4LURiTmlSVkEzLmpzIgogIF0KfQ=="
+                    },
+                    {
+                      "name": "vault-table-scroll-after-left",
+                      "contentType": "application/json",
+                      "body": "ewogICJzY3JvbGxMZWZ0IjogMCwKICAic2Nyb2xsV2lkdGgiOiA3MjAsCiAgImNsaWVudFdpZHRoIjogMzYyLAogICJmb2N1c2VkIjogdHJ1ZSwKICAib3ZlcmZsb3dYIjogImF1dG8iLAogICJvdmVyZmxvd1kiOiAiYXV0byIsCiAgInRhYkluZGV4IjogMCwKICAiYWN0aXZlVGFnTmFtZSI6ICJTRUNUSU9OIiwKICAiYWN0aXZlQ2xhc3NOYW1lIjogImNhcmQgdmF1bHQtdGFibGUtd3JhcCBhc3NldC1saXN0LWNvbnRlbnQiLAogICJzZWxlY3Rpb24iOiAiIiwKICAic2NyaXB0U291cmNlcyI6IFsKICAgICJodHRwOi8vMTI3LjAuMC4xOjQxOTQvYXNzZXRzL2luZGV4LURiTmlSVkEzLmpzIgogIF0KfQ=="
+                    },
+                    {
+                      "name": "vault-table-scroll-initial",
+                      "contentType": "application/json",
+                      "body": "ewogICJzY3JvbGxMZWZ0IjogMCwKICAic2Nyb2xsV2lkdGgiOiA3MjAsCiAgImNsaWVudFdpZHRoIjogMzYyLAogICJmb2N1c2VkIjogdHJ1ZSwKICAib3ZlcmZsb3dYIjogImF1dG8iLAogICJvdmVyZmxvd1kiOiAiYXV0byIsCiAgInRhYkluZGV4IjogMCwKICAiYWN0aXZlVGFnTmFtZSI6ICJTRUNUSU9OIiwKICAiYWN0aXZlQ2xhc3NOYW1lIjogImNhcmQgdmF1bHQtdGFibGUtd3JhcCBhc3NldC1saXN0LWNvbnRlbnQiLAogICJzZWxlY3Rpb24iOiAiIiwKICAic2NyaXB0U291cmNlcyI6IFsKICAgICJodHRwOi8vMTI3LjAuMC4xOjQxOTQvYXNzZXRzL2luZGV4LURiTmlSVkEzLmpzIgogIF0KfQ=="
+                    },
+                    {
+                      "name": "vault-table-scroll-after-right",
+                      "contentType": "application/json",
+                      "body": "ewogICJzY3JvbGxMZWZ0IjogMjE3LAogICJzY3JvbGxXaWR0aCI6IDcyMCwKICAiY2xpZW50V2lkdGgiOiAzNjIsCiAgImZvY3VzZWQiOiB0cnVlLAogICJvdmVyZmxvd1giOiAiYXV0byIsCiAgIm92ZXJmbG93WSI6ICJhdXRvIiwKICAidGFiSW5kZXgiOiAwLAogICJhY3RpdmVUYWdOYW1lIjogIlNFQ1RJT04iLAogICJhY3RpdmVDbGFzc05hbWUiOiAiY2FyZCB2YXVsdC10YWJsZS13cmFwIGFzc2V0LWxpc3QtY29udGVudCIsCiAgInNlbGVjdGlvbiI6ICIiLAogICJzY3JpcHRTb3VyY2VzIjogWwogICAgImh0dHA6Ly8xMjcuMC4wLjE6NDE5NC9hc3NldHMvaW5kZXgtRGJOaVJWQTMuanMiCiAgXQp9"
+                    },
+                    {
+                      "name": "vault-table-scroll-after-left",
+                      "contentType": "application/json",
+                      "body": "ewogICJzY3JvbGxMZWZ0IjogMCwKICAic2Nyb2xsV2lkdGgiOiA3MjAsCiAgImNsaWVudFdpZHRoIjogMzYyLAogICJmb2N1c2VkIjogdHJ1ZSwKICAib3ZlcmZsb3dYIjogImF1dG8iLAogICJvdmVyZmxvd1kiOiAiYXV0byIsCiAgInRhYkluZGV4IjogMCwKICAiYWN0aXZlVGFnTmFtZSI6ICJTRUNUSU9OIiwKICAiYWN0aXZlQ2xhc3NOYW1lIjogImNhcmQgdmF1bHQtdGFibGUtd3JhcCBhc3NldC1saXN0LWNvbnRlbnQiLAogICJzZWxlY3Rpb24iOiAiIiwKICAic2NyaXB0U291cmNlcyI6IFsKICAgICJodHRwOi8vMTI3LjAuMC4xOjQxOTQvYXNzZXRzL2luZGV4LURiTmlSVkEzLmpzIgogIF0KfQ=="
+                    },
+                    {
+                      "name": "vault-table-scroll-initial",
+                      "contentType": "application/json",
+                      "body": "ewogICJzY3JvbGxMZWZ0IjogMCwKICAic2Nyb2xsV2lkdGgiOiA3MjAsCiAgImNsaWVudFdpZHRoIjogMzYyLAogICJmb2N1c2VkIjogdHJ1ZSwKICAib3ZlcmZsb3dYIjogImF1dG8iLAogICJvdmVyZmxvd1kiOiAiYXV0byIsCiAgInRhYkluZGV4IjogMCwKICAiYWN0aXZlVGFnTmFtZSI6ICJTRUNUSU9OIiwKICAiYWN0aXZlQ2xhc3NOYW1lIjogImNhcmQgdmF1bHQtdGFibGUtd3JhcCBhc3NldC1saXN0LWNvbnRlbnQiLAogICJzZWxlY3Rpb24iOiAiIiwKICAic2NyaXB0U291cmNlcyI6IFsKICAgICJodHRwOi8vMTI3LjAuMC4xOjQxOTQvYXNzZXRzL2luZGV4LURiTmlSVkEzLmpzIgogIF0KfQ=="
+                    },
+                    {
+                      "name": "vault-table-scroll-after-right",
+                      "contentType": "application/json",
+                      "body": "ewogICJzY3JvbGxMZWZ0IjogMjAyLAogICJzY3JvbGxXaWR0aCI6IDcyMCwKICAiY2xpZW50V2lkdGgiOiAzNjIsCiAgImZvY3VzZWQiOiB0cnVlLAogICJvdmVyZmxvd1giOiAiYXV0byIsCiAgIm92ZXJmbG93WSI6ICJhdXRvIiwKICAidGFiSW5kZXgiOiAwLAogICJhY3RpdmVUYWdOYW1lIjogIlNFQ1RJT04iLAogICJhY3RpdmVDbGFzc05hbWUiOiAiY2FyZCB2YXVsdC10YWJsZS13cmFwIGFzc2V0LWxpc3QtY29udGVudCIsCiAgInNlbGVjdGlvbiI6ICIiLAogICJzY3JpcHRTb3VyY2VzIjogWwogICAgImh0dHA6Ly8xMjcuMC4wLjE6NDE5NC9hc3NldHMvaW5kZXgtRGJOaVJWQTMuanMiCiAgXQp9"
+                    },
+                    {
+                      "name": "vault-table-scroll-after-left",
+                      "contentType": "application/json",
+                      "body": "ewogICJzY3JvbGxMZWZ0IjogMCwKICAic2Nyb2xsV2lkdGgiOiA3MjAsCiAgImNsaWVudFdpZHRoIjogMzYyLAogICJmb2N1c2VkIjogdHJ1ZSwKICAib3ZlcmZsb3dYIjogImF1dG8iLAogICJvdmVyZmxvd1kiOiAiYXV0byIsCiAgInRhYkluZGV4IjogMCwKICAiYWN0aXZlVGFnTmFtZSI6ICJTRUNUSU9OIiwKICAiYWN0aXZlQ2xhc3NOYW1lIjogImNhcmQgdmF1bHQtdGFibGUtd3JhcCBhc3NldC1saXN0LWNvbnRlbnQiLAogICJzZWxlY3Rpb24iOiAiIiwKICAic2NyaXB0U291cmNlcyI6IFsKICAgICJodHRwOi8vMTI3LjAuMC4xOjQxOTQvYXNzZXRzL2luZGV4LURiTmlSVkEzLmpzIgogIF0KfQ=="
+                    },
+                    {
+                      "name": "vault-table-scroll-initial",
+                      "contentType": "application/json",
+                      "body": "ewogICJzY3JvbGxMZWZ0IjogMCwKICAic2Nyb2xsV2lkdGgiOiA3MjAsCiAgImNsaWVudFdpZHRoIjogMzYyLAogICJmb2N1c2VkIjogdHJ1ZSwKICAib3ZlcmZsb3dYIjogImF1dG8iLAogICJvdmVyZmxvd1kiOiAiYXV0byIsCiAgInRhYkluZGV4IjogMCwKICAiYWN0aXZlVGFnTmFtZSI6ICJTRUNUSU9OIiwKICAiYWN0aXZlQ2xhc3NOYW1lIjogImNhcmQgdmF1bHQtdGFibGUtd3JhcCBhc3NldC1saXN0LWNvbnRlbnQiLAogICJzZWxlY3Rpb24iOiAiIiwKICAic2NyaXB0U291cmNlcyI6IFsKICAgICJodHRwOi8vMTI3LjAuMC4xOjQxOTQvYXNzZXRzL2luZGV4LURiTmlSVkEzLmpzIgogIF0KfQ=="
+                    },
+                    {
+                      "name": "vault-table-scroll-after-right",
+                      "contentType": "application/json",
+                      "body": "ewogICJzY3JvbGxMZWZ0IjogMjUwLAogICJzY3JvbGxXaWR0aCI6IDcyMCwKICAiY2xpZW50V2lkdGgiOiAzNjIsCiAgImZvY3VzZWQiOiB0cnVlLAogICJvdmVyZmxvd1giOiAiYXV0byIsCiAgIm92ZXJmbG93WSI6ICJhdXRvIiwKICAidGFiSW5kZXgiOiAwLAogICJhY3RpdmVUYWdOYW1lIjogIlNFQ1RJT04iLAogICJhY3RpdmVDbGFzc05hbWUiOiAiY2FyZCB2YXVsdC10YWJsZS13cmFwIGFzc2V0LWxpc3QtY29udGVudCIsCiAgInNlbGVjdGlvbiI6ICIiLAogICJzY3JpcHRTb3VyY2VzIjogWwogICAgImh0dHA6Ly8xMjcuMC4wLjE6NDE5NC9hc3NldHMvaW5kZXgtRGJOaVJWQTMuanMiCiAgXQp9"
+                    },
+                    {
+                      "name": "vault-table-scroll-after-left",
+                      "contentType": "application/json",
+                      "body": "ewogICJzY3JvbGxMZWZ0IjogMCwKICAic2Nyb2xsV2lkdGgiOiA3MjAsCiAgImNsaWVudFdpZHRoIjogMzYyLAogICJmb2N1c2VkIjogdHJ1ZSwKICAib3ZlcmZsb3dYIjogImF1dG8iLAogICJvdmVyZmxvd1kiOiAiYXV0byIsCiAgInRhYkluZGV4IjogMCwKICAiYWN0aXZlVGFnTmFtZSI6ICJTRUNUSU9OIiwKICAiYWN0aXZlQ2xhc3NOYW1lIjogImNhcmQgdmF1bHQtdGFibGUtd3JhcCBhc3NldC1saXN0LWNvbnRlbnQiLAogICJzZWxlY3Rpb24iOiAiIiwKICAic2NyaXB0U291cmNlcyI6IFsKICAgICJodHRwOi8vMTI3LjAuMC4xOjQxOTQvYXNzZXRzL2luZGV4LURiTmlSVkEzLmpzIgogIF0KfQ=="
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "c34c947a40b123aa7f79-af7eb535ec9eec10c699",
+          "file": "vault-reference-release.spec.ts",
+          "line": 399,
+          "column": 3
+        },
+        {
+          "title": "zh-CN 1280px vault reference saves, archives and restores through the fixed UI",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 4067,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-30T07:28:25.939Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "c34c947a40b123aa7f79-33bbfdd2bddbcdb087ee",
+          "file": "vault-reference-release.spec.ts",
+          "line": 399,
+          "column": 3
+        },
+        {
+          "title": "en-US 390px vault reference saves, archives and restores through the fixed UI",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 9563,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-30T07:28:30.010Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "vault-table-scroll-initial",
+                      "contentType": "application/json",
+                      "body": "ewogICJzY3JvbGxMZWZ0IjogMCwKICAic2Nyb2xsV2lkdGgiOiA3MjAsCiAgImNsaWVudFdpZHRoIjogMzYyLAogICJmb2N1c2VkIjogdHJ1ZSwKICAib3ZlcmZsb3dYIjogImF1dG8iLAogICJvdmVyZmxvd1kiOiAiYXV0byIsCiAgInRhYkluZGV4IjogMCwKICAiYWN0aXZlVGFnTmFtZSI6ICJTRUNUSU9OIiwKICAiYWN0aXZlQ2xhc3NOYW1lIjogImNhcmQgdmF1bHQtdGFibGUtd3JhcCBhc3NldC1saXN0LWNvbnRlbnQiLAogICJzZWxlY3Rpb24iOiAiIiwKICAic2NyaXB0U291cmNlcyI6IFsKICAgICJodHRwOi8vMTI3LjAuMC4xOjQxOTQvYXNzZXRzL2luZGV4LURiTmlSVkEzLmpzIgogIF0KfQ=="
+                    },
+                    {
+                      "name": "vault-table-scroll-after-right",
+                      "contentType": "application/json",
+                      "body": "ewogICJzY3JvbGxMZWZ0IjogMjAzLAogICJzY3JvbGxXaWR0aCI6IDcyMCwKICAiY2xpZW50V2lkdGgiOiAzNjIsCiAgImZvY3VzZWQiOiB0cnVlLAogICJvdmVyZmxvd1giOiAiYXV0byIsCiAgIm92ZXJmbG93WSI6ICJhdXRvIiwKICAidGFiSW5kZXgiOiAwLAogICJhY3RpdmVUYWdOYW1lIjogIlNFQ1RJT04iLAogICJhY3RpdmVDbGFzc05hbWUiOiAiY2FyZCB2YXVsdC10YWJsZS13cmFwIGFzc2V0LWxpc3QtY29udGVudCIsCiAgInNlbGVjdGlvbiI6ICIiLAogICJzY3JpcHRTb3VyY2VzIjogWwogICAgImh0dHA6Ly8xMjcuMC4wLjE6NDE5NC9hc3NldHMvaW5kZXgtRGJOaVJWQTMuanMiCiAgXQp9"
+                    },
+                    {
+                      "name": "vault-table-scroll-after-left",
+                      "contentType": "application/json",
+                      "body": "ewogICJzY3JvbGxMZWZ0IjogMCwKICAic2Nyb2xsV2lkdGgiOiA3MjAsCiAgImNsaWVudFdpZHRoIjogMzYyLAogICJmb2N1c2VkIjogdHJ1ZSwKICAib3ZlcmZsb3dYIjogImF1dG8iLAogICJvdmVyZmxvd1kiOiAiYXV0byIsCiAgInRhYkluZGV4IjogMCwKICAiYWN0aXZlVGFnTmFtZSI6ICJTRUNUSU9OIiwKICAiYWN0aXZlQ2xhc3NOYW1lIjogImNhcmQgdmF1bHQtdGFibGUtd3JhcCBhc3NldC1saXN0LWNvbnRlbnQiLAogICJzZWxlY3Rpb24iOiAiIiwKICAic2NyaXB0U291cmNlcyI6IFsKICAgICJodHRwOi8vMTI3LjAuMC4xOjQxOTQvYXNzZXRzL2luZGV4LURiTmlSVkEzLmpzIgogIF0KfQ=="
+                    },
+                    {
+                      "name": "vault-table-scroll-initial",
+                      "contentType": "application/json",
+                      "body": "ewogICJzY3JvbGxMZWZ0IjogMCwKICAic2Nyb2xsV2lkdGgiOiA3MjAsCiAgImNsaWVudFdpZHRoIjogMzYyLAogICJmb2N1c2VkIjogdHJ1ZSwKICAib3ZlcmZsb3dYIjogImF1dG8iLAogICJvdmVyZmxvd1kiOiAiYXV0byIsCiAgInRhYkluZGV4IjogMCwKICAiYWN0aXZlVGFnTmFtZSI6ICJTRUNUSU9OIiwKICAiYWN0aXZlQ2xhc3NOYW1lIjogImNhcmQgdmF1bHQtdGFibGUtd3JhcCBhc3NldC1saXN0LWNvbnRlbnQiLAogICJzZWxlY3Rpb24iOiAiIiwKICAic2NyaXB0U291cmNlcyI6IFsKICAgICJodHRwOi8vMTI3LjAuMC4xOjQxOTQvYXNzZXRzL2luZGV4LURiTmlSVkEzLmpzIgogIF0KfQ=="
+                    },
+                    {
+                      "name": "vault-table-scroll-after-right",
+                      "contentType": "application/json",
+                      "body": "ewogICJzY3JvbGxMZWZ0IjogMTg5LAogICJzY3JvbGxXaWR0aCI6IDcyMCwKICAiY2xpZW50V2lkdGgiOiAzNjIsCiAgImZvY3VzZWQiOiB0cnVlLAogICJvdmVyZmxvd1giOiAiYXV0byIsCiAgIm92ZXJmbG93WSI6ICJhdXRvIiwKICAidGFiSW5kZXgiOiAwLAogICJhY3RpdmVUYWdOYW1lIjogIlNFQ1RJT04iLAogICJhY3RpdmVDbGFzc05hbWUiOiAiY2FyZCB2YXVsdC10YWJsZS13cmFwIGFzc2V0LWxpc3QtY29udGVudCIsCiAgInNlbGVjdGlvbiI6ICIiLAogICJzY3JpcHRTb3VyY2VzIjogWwogICAgImh0dHA6Ly8xMjcuMC4wLjE6NDE5NC9hc3NldHMvaW5kZXgtRGJOaVJWQTMuanMiCiAgXQp9"
+                    },
+                    {
+                      "name": "vault-table-scroll-after-left",
+                      "contentType": "application/json",
+                      "body": "ewogICJzY3JvbGxMZWZ0IjogMCwKICAic2Nyb2xsV2lkdGgiOiA3MjAsCiAgImNsaWVudFdpZHRoIjogMzYyLAogICJmb2N1c2VkIjogdHJ1ZSwKICAib3ZlcmZsb3dYIjogImF1dG8iLAogICJvdmVyZmxvd1kiOiAiYXV0byIsCiAgInRhYkluZGV4IjogMCwKICAiYWN0aXZlVGFnTmFtZSI6ICJTRUNUSU9OIiwKICAiYWN0aXZlQ2xhc3NOYW1lIjogImNhcmQgdmF1bHQtdGFibGUtd3JhcCBhc3NldC1saXN0LWNvbnRlbnQiLAogICJzZWxlY3Rpb24iOiAiIiwKICAic2NyaXB0U291cmNlcyI6IFsKICAgICJodHRwOi8vMTI3LjAuMC4xOjQxOTQvYXNzZXRzL2luZGV4LURiTmlSVkEzLmpzIgogIF0KfQ=="
+                    },
+                    {
+                      "name": "vault-table-scroll-initial",
+                      "contentType": "application/json",
+                      "body": "ewogICJzY3JvbGxMZWZ0IjogMCwKICAic2Nyb2xsV2lkdGgiOiA3MjAsCiAgImNsaWVudFdpZHRoIjogMzYyLAogICJmb2N1c2VkIjogdHJ1ZSwKICAib3ZlcmZsb3dYIjogImF1dG8iLAogICJvdmVyZmxvd1kiOiAiYXV0byIsCiAgInRhYkluZGV4IjogMCwKICAiYWN0aXZlVGFnTmFtZSI6ICJTRUNUSU9OIiwKICAiYWN0aXZlQ2xhc3NOYW1lIjogImNhcmQgdmF1bHQtdGFibGUtd3JhcCBhc3NldC1saXN0LWNvbnRlbnQiLAogICJzZWxlY3Rpb24iOiAiIiwKICAic2NyaXB0U291cmNlcyI6IFsKICAgICJodHRwOi8vMTI3LjAuMC4xOjQxOTQvYXNzZXRzL2luZGV4LURiTmlSVkEzLmpzIgogIF0KfQ=="
+                    },
+                    {
+                      "name": "vault-table-scroll-after-right",
+                      "contentType": "application/json",
+                      "body": "ewogICJzY3JvbGxMZWZ0IjogMjQ0LAogICJzY3JvbGxXaWR0aCI6IDcyMCwKICAiY2xpZW50V2lkdGgiOiAzNjIsCiAgImZvY3VzZWQiOiB0cnVlLAogICJvdmVyZmxvd1giOiAiYXV0byIsCiAgIm92ZXJmbG93WSI6ICJhdXRvIiwKICAidGFiSW5kZXgiOiAwLAogICJhY3RpdmVUYWdOYW1lIjogIlNFQ1RJT04iLAogICJhY3RpdmVDbGFzc05hbWUiOiAiY2FyZCB2YXVsdC10YWJsZS13cmFwIGFzc2V0LWxpc3QtY29udGVudCIsCiAgInNlbGVjdGlvbiI6ICIiLAogICJzY3JpcHRTb3VyY2VzIjogWwogICAgImh0dHA6Ly8xMjcuMC4wLjE6NDE5NC9hc3NldHMvaW5kZXgtRGJOaVJWQTMuanMiCiAgXQp9"
+                    },
+                    {
+                      "name": "vault-table-scroll-after-left",
+                      "contentType": "application/json",
+                      "body": "ewogICJzY3JvbGxMZWZ0IjogMCwKICAic2Nyb2xsV2lkdGgiOiA3MjAsCiAgImNsaWVudFdpZHRoIjogMzYyLAogICJmb2N1c2VkIjogdHJ1ZSwKICAib3ZlcmZsb3dYIjogImF1dG8iLAogICJvdmVyZmxvd1kiOiAiYXV0byIsCiAgInRhYkluZGV4IjogMCwKICAiYWN0aXZlVGFnTmFtZSI6ICJTRUNUSU9OIiwKICAiYWN0aXZlQ2xhc3NOYW1lIjogImNhcmQgdmF1bHQtdGFibGUtd3JhcCBhc3NldC1saXN0LWNvbnRlbnQiLAogICJzZWxlY3Rpb24iOiAiIiwKICAic2NyaXB0U291cmNlcyI6IFsKICAgICJodHRwOi8vMTI3LjAuMC4xOjQxOTQvYXNzZXRzL2luZGV4LURiTmlSVkEzLmpzIgogIF0KfQ=="
+                    },
+                    {
+                      "name": "vault-table-scroll-initial",
+                      "contentType": "application/json",
+                      "body": "ewogICJzY3JvbGxMZWZ0IjogMCwKICAic2Nyb2xsV2lkdGgiOiA3MjAsCiAgImNsaWVudFdpZHRoIjogMzYyLAogICJmb2N1c2VkIjogdHJ1ZSwKICAib3ZlcmZsb3dYIjogImF1dG8iLAogICJvdmVyZmxvd1kiOiAiYXV0byIsCiAgInRhYkluZGV4IjogMCwKICAiYWN0aXZlVGFnTmFtZSI6ICJTRUNUSU9OIiwKICAiYWN0aXZlQ2xhc3NOYW1lIjogImNhcmQgdmF1bHQtdGFibGUtd3JhcCBhc3NldC1saXN0LWNvbnRlbnQiLAogICJzZWxlY3Rpb24iOiAiIiwKICAic2NyaXB0U291cmNlcyI6IFsKICAgICJodHRwOi8vMTI3LjAuMC4xOjQxOTQvYXNzZXRzL2luZGV4LURiTmlSVkEzLmpzIgogIF0KfQ=="
+                    },
+                    {
+                      "name": "vault-table-scroll-after-right",
+                      "contentType": "application/json",
+                      "body": "ewogICJzY3JvbGxMZWZ0IjogMjA1LAogICJzY3JvbGxXaWR0aCI6IDcyMCwKICAiY2xpZW50V2lkdGgiOiAzNjIsCiAgImZvY3VzZWQiOiB0cnVlLAogICJvdmVyZmxvd1giOiAiYXV0byIsCiAgIm92ZXJmbG93WSI6ICJhdXRvIiwKICAidGFiSW5kZXgiOiAwLAogICJhY3RpdmVUYWdOYW1lIjogIlNFQ1RJT04iLAogICJhY3RpdmVDbGFzc05hbWUiOiAiY2FyZCB2YXVsdC10YWJsZS13cmFwIGFzc2V0LWxpc3QtY29udGVudCIsCiAgInNlbGVjdGlvbiI6ICIiLAogICJzY3JpcHRTb3VyY2VzIjogWwogICAgImh0dHA6Ly8xMjcuMC4wLjE6NDE5NC9hc3NldHMvaW5kZXgtRGJOaVJWQTMuanMiCiAgXQp9"
+                    },
+                    {
+                      "name": "vault-table-scroll-after-left",
+                      "contentType": "application/json",
+                      "body": "ewogICJzY3JvbGxMZWZ0IjogMCwKICAic2Nyb2xsV2lkdGgiOiA3MjAsCiAgImNsaWVudFdpZHRoIjogMzYyLAogICJmb2N1c2VkIjogdHJ1ZSwKICAib3ZlcmZsb3dYIjogImF1dG8iLAogICJvdmVyZmxvd1kiOiAiYXV0byIsCiAgInRhYkluZGV4IjogMCwKICAiYWN0aXZlVGFnTmFtZSI6ICJTRUNUSU9OIiwKICAiYWN0aXZlQ2xhc3NOYW1lIjogImNhcmQgdmF1bHQtdGFibGUtd3JhcCBhc3NldC1saXN0LWNvbnRlbnQiLAogICJzZWxlY3Rpb24iOiAiIiwKICAic2NyaXB0U291cmNlcyI6IFsKICAgICJodHRwOi8vMTI3LjAuMC4xOjQxOTQvYXNzZXRzL2luZGV4LURiTmlSVkEzLmpzIgogIF0KfQ=="
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "c34c947a40b123aa7f79-c9771af147112d545e30",
+          "file": "vault-reference-release.spec.ts",
+          "line": 399,
+          "column": 3
+        },
+        {
+          "title": "en-US 1280px vault reference saves, archives and restores through the fixed UI",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 5209,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-30T07:28:39.576Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "c34c947a40b123aa7f79-17d0da2a77b07b608bcf",
+          "file": "vault-reference-release.spec.ts",
+          "line": 399,
+          "column": 3
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-09-30T07:28:15.023Z",
+    "duration": 29814.071,
+    "expected": 4,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

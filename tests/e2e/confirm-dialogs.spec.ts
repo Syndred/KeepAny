@@ -48,11 +48,9 @@ for (const scenario of [
 			await expect(create).toBeHidden();
 			await page.getByText(name).first().click();
 			await expect(page.getByRole("heading", { name })).toBeVisible();
+			const actionBar = page.locator("main.page > .asset-project-action-bar");
 
-			await page
-				.locator("main.page > .page-header")
-				.getByRole("button", { name: scenario.move })
-				.click();
+			await actionBar.getByRole("button", { name: scenario.move }).click();
 			const dialog = page.getByRole("dialog");
 			await expect(dialog.getByText(scenario.warning)).toBeVisible();
 			await testInfo.attach(`${scenario.language}-asset-delete`, {
@@ -70,18 +68,12 @@ for (const scenario of [
 			await expect(dialog).toBeHidden();
 			await expect(page.getByRole("heading", { name })).toBeVisible();
 
-			await page
-				.locator("main.page > .page-header")
-				.getByRole("button", { name: scenario.move })
-				.click();
+			await actionBar.getByRole("button", { name: scenario.move }).click();
 			await page.keyboard.press("Escape");
 			await expect(dialog).toBeHidden();
 			await expect(page.getByRole("heading", { name })).toBeVisible();
 
-			await page
-				.locator("main.page > .page-header")
-				.getByRole("button", { name: scenario.move })
-				.click();
+			await actionBar.getByRole("button", { name: scenario.move }).click();
 			await dialog.getByRole("button", { name: scenario.move }).click();
 			await expect(dialog).toBeHidden();
 			await page.goto("/trash");
@@ -140,6 +132,17 @@ test("local binding removal dialog stays local and fits both languages", async (
 		});
 		try {
 			await page.goto("/settings");
+			const connections = page.locator("#connections");
+			const openConnections = async () => {
+				if (
+					!(await connections.evaluate(
+						(element) => (element as HTMLDetailsElement).open,
+					))
+				) {
+					await connections.locator("summary").click();
+				}
+			};
+			await openConnections();
 			await expect(
 				page.getByRole("button", {
 					name: scenario.language === "en" ? "Start connecting" : "开始连接",
@@ -198,6 +201,7 @@ test("local binding removal dialog stays local and fits both languages", async (
 				}
 			});
 			await page.reload();
+			await openConnections();
 			await expect(page.getByText(scenario.connected)).toBeVisible();
 			await page.getByRole("button", { name: scenario.remove }).click();
 			const dialog = page.getByRole("dialog");
@@ -225,6 +229,7 @@ test("local binding removal dialog stays local and fits both languages", async (
 			await expect(dialog).toBeHidden();
 			await expect(page.getByText(scenario.removed)).toBeVisible();
 			await page.reload();
+			await openConnections();
 			await expect(page.getByText(scenario.connected)).toHaveCount(0);
 			expect(remoteRequests).toEqual([]);
 		} finally {
