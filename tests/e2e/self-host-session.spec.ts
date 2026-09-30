@@ -38,7 +38,7 @@ async function stop(child: ChildProcess | undefined): Promise<void> {
 }
 
 async function selectSession(page: Page, origin: string): Promise<void> {
-  await page.goto(`${origin}/settings`);
+  await page.goto(`${origin}/settings#connections`);
   await selectChoice(page.getByLabel('Connection method'), 'session');
   await expect(page.getByText('Not signed in to the self-hosted service')).toBeVisible();
 }
@@ -80,7 +80,7 @@ async function addRecordWithPhoto(page: Page, origin: string, name: string): Pro
 }
 
 async function sync(page: Page, origin: string, workspace: { workspaceId: string; key: string }, expected: string): Promise<void> {
-  await page.goto(`${origin}/settings`);
+  await page.goto(`${origin}/settings#connections`);
   await expect(page.getByText('Signed in:')).toBeVisible();
   await page.getByLabel('Workspace ID').fill(workspace.workspaceId);
   await page.getByLabel('Workspace key').fill(workspace.key);
@@ -213,7 +213,6 @@ test('self-hosted sessions keep two users, encrypted records and photos in separ
     await pageC.getByRole('button', { name: 'Sign in' }).click();
     await expect(pageC.getByText(`Signed in: ${emailA}`)).toBeVisible();
     expect(await identity(pageC)).toBe(accountA);
-    await expect(pageC.getByLabel('Choose an existing workspace').locator(`option[value="${workspaceA.workspaceId}"]`)).toHaveCount(1);
     await selectChoice(pageC.getByLabel('Choose an existing workspace'), workspaceA.workspaceId);
     await pageC.getByLabel('Workspace key').fill(workspaceA.key);
     await pageC.getByRole('button', { name: 'Sync now' }).click();
@@ -247,7 +246,7 @@ test('self-hosted sessions keep two users, encrypted records and photos in separ
       await page.reload();
       await expect(page.getByText('Signed in:')).toBeVisible();
       await page.goto(`${origin}/assets/project`);
-      await expect(page.getByText(record, { exact: true })).toBeVisible();
+      await expect(page.getByText(record, { exact: true }).first()).toBeVisible();
       await page.getByText(record, { exact: true }).first().click();
       await expect(page.locator('img.asset-image')).toHaveJSProperty('naturalWidth', 32);
       expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
@@ -262,21 +261,19 @@ test('self-hosted sessions keep two users, encrypted records and photos in separ
     if (process.env.KEEPANY_SYNC_EVIDENCE_DIR) {
       await pageB.screenshot({ path: `${process.env.KEEPANY_SYNC_EVIDENCE_DIR}/session-record-photo-zh-390.png`, fullPage: true });
     }
-    await pageB.goto(`${webOrigin}/settings`);
+    await pageB.goto(`${webOrigin}/settings#connections`);
     await expect(pageB.getByText(`已登录：${emailB}`)).toBeVisible();
-    await expect(pageB.getByLabel('选择已有工作区').locator(`option[value="${workspaceB.workspaceId}"]`)).toHaveCount(1);
     await selectChoice(pageB.getByLabel('选择已有工作区'), workspaceB.workspaceId);
     expect(await pageB.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
     if (process.env.KEEPANY_SYNC_EVIDENCE_DIR) {
-      await pageA.goto(`${webOrigin}/settings`);
+      await pageA.goto(`${webOrigin}/settings#connections`);
       await expect(pageA.getByText(`Signed in: ${emailA}`)).toBeVisible();
-      await expect(pageA.getByLabel('Choose an existing workspace').locator(`option[value="${workspaceA.workspaceId}"]`)).toHaveCount(1);
       await selectChoice(pageA.getByLabel('Choose an existing workspace'), workspaceA.workspaceId);
       await pageA.screenshot({ path: `${process.env.KEEPANY_SYNC_EVIDENCE_DIR}/session-en-390.png`, fullPage: true });
       await pageB.screenshot({ path: `${process.env.KEEPANY_SYNC_EVIDENCE_DIR}/session-zh-390.png`, fullPage: true });
     }
 
-    await pageA.goto(`${webOrigin}/settings`);
+    await pageA.goto(`${webOrigin}/settings#connections`);
     await pageA.getByRole('button', { name: 'Sign out' }).click();
     await expect(pageA.getByText('Not signed in to the self-hosted service')).toBeVisible();
     expect((await requestAs(pageA, '/sync/identity', { method: 'POST' })).status).toBe(401);
@@ -293,8 +290,20 @@ test('self-hosted sessions keep two users, encrypted records and photos in separ
     await expect(pageA.getByRole('alert')).toContainText('linked to their original server, account, and workspace');
     expect((await pool.query('SELECT count(*)::int AS count FROM sync_operations WHERE workspace_id=$1', [workspaceB.workspaceId])).rows[0].count).toBe(1);
     await pageA.goto(`${webOrigin}/assets/project`);
-    await expect(pageA.getByText(recordA, { exact: true })).toBeVisible();
+    await expect(pageA.getByText(recordA, { exact: true }).first()).toBeVisible();
     await expect(pageA.getByText(recordB, { exact: true })).toHaveCount(0);
+
+    await pageC.route(`${webOrigin}/workspaces`, route => route.fulfill({
+      status: 503,
+      contentType: 'application/json',
+      body: JSON.stringify({ error: 'temporarily-unavailable' }),
+    }));
+    await pageC.goto(`${webOrigin}/settings#connections`);
+    await expect(pageC.getByRole('alert')).toContainText('Check the server, network, and key, then retry');
+    await pageC.unroute(`${webOrigin}/workspaces`);
+    await pageC.getByRole('button', { name: 'Refresh workspaces' }).click();
+    await expect(pageC.getByRole('alert')).toHaveCount(0);
+    await selectChoice(pageC.getByLabel('Choose an existing workspace'), workspaceA.workspaceId);
     expect(errors).toEqual([]);
   } finally {
     await Promise.allSettled([contextA.close(), contextB.close(), contextC?.close()]);

@@ -44,6 +44,12 @@ function syncFailureKey(error: string | undefined, mode: AccessMode): string {
 	if (error?.startsWith("archive-merge-")) return "migrationSyncGate";
 	return "syncFailedHint";
 }
+function failure(error: unknown, fallback: string): SyncReport {
+	return {
+		status: "failed", pending: 0, cursor: 0, conflict: null,
+		error: error instanceof Error ? error.message : fallback,
+	};
+}
 export function SettingsPage() {
 	const { data, notify } = useAppContext();
 	const { t, i18n } = useTranslation();
@@ -175,7 +181,7 @@ export function SettingsPage() {
 		if (await getSessionIdentity(window.location.origin) !== accountId) throw Error("sync-account-mismatch");
 		const response = await fetch(`${window.location.origin}/workspaces`, { credentials: "include", cache: "no-store",
 			headers: { "X-KeepAny-Account-Id": accountId } });
-		if (!response.ok) throw Error("sync-auth");
+		if (!response.ok) throw Error(response.status === 401 || response.status === 403 ? "sync-auth" : `sync-http-${response.status}`);
 		const body = await response.json() as { workspaces?: { workspaceId: string }[] };
 		return (body.workspaces ?? []).map(item => item.workspaceId);
 	}, []);
@@ -187,7 +193,9 @@ export function SettingsPage() {
 			try {
 				const ids = await loadWorkspaces(accessMode, accountId);
 				if (current) setAvailableWorkspaces(ids);
-			} catch { /* A later sign-in or explicit refresh can retry. */ }
+			} catch (error) {
+				if (current && mounted.current) setSyncReport(failure(error, "sync-failed"));
+			}
 		})();
 		return () => { current = false; };
 	}, [accessMode, sessionAccountId, officialAccountId, loadWorkspaces]);
@@ -205,10 +213,6 @@ export function SettingsPage() {
 		activeOperation.current = null;
 		if (mounted.current) setSyncBusy(false);
 	};
-	const failure = (error: unknown, fallback: string): SyncReport => ({
-		status: "failed", pending: 0, cursor: 0, conflict: null,
-		error: error instanceof Error ? error.message : fallback,
-	});
 	const connect = async (operation: { id: number; generation: number }) => {
 		const { SelfHostSyncClient, decodeWorkspaceKey, getSessionIdentity, getBoundIdentity } = await import("../../../packages/sync-client/src");
 		const repository = await localRepository();
@@ -508,9 +512,12 @@ export function SettingsPage() {
 						const generation = configGeneration.current;
 						if (!accountId || (mode !== "session" && mode !== "official")) return;
 						void loadWorkspaces(mode, accountId).then(ids => {
-							if (mounted.current && configGeneration.current === generation && accessModeRef.current === mode) setAvailableWorkspaces(ids);
-						}).catch(() => {
-							if (mounted.current && configGeneration.current === generation) setSyncReport(failure(Error("sync-auth"), "sync-auth"));
+							if (mounted.current && configGeneration.current === generation && accessModeRef.current === mode) {
+								setAvailableWorkspaces(ids);
+								setSyncReport(null);
+							}
+						}).catch(error => {
+							if (mounted.current && configGeneration.current === generation) setSyncReport(failure(error, "sync-failed"));
 						});
 					}}>{t("syncRefreshWorkspaces")}</Button>
 				</div>}
