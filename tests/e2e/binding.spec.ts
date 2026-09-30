@@ -1,5 +1,5 @@
 import { createHash, randomUUID } from "node:crypto";
-import { expect, test } from "@playwright/test";
+import { expect, type Page, test } from "@playwright/test";
 import { exportJWK, generateKeyPair, SignJWT } from "jose";
 import { selectChoice } from "./helpers/select-choice";
 
@@ -8,6 +8,19 @@ const bridge = process.env.VITE_KEEPANY_BINDING_BRIDGE_ORIGIN ?? "";
 const configured =
 	issuer === "http://127.0.0.1:3100" && bridge === "http://127.0.0.1:3191";
 const webOrigin = `http://127.0.0.1:${process.env.KEEPANY_E2E_PORT ?? "4173"}`;
+
+async function openConnections(page: Page) {
+	const connections = page.locator("#connections");
+	await expect(connections).toBeVisible();
+	if (
+		!(await connections.evaluate(
+			(element) => (element as HTMLDetailsElement).open,
+		))
+	) {
+		await connections.locator("summary").click();
+	}
+	await expect(connections).toHaveJSProperty("open", true);
+}
 
 test("account binding approval survives reload and remote revoke clears local credential", async ({
 	page,
@@ -104,6 +117,7 @@ test("account binding approval survives reload and remote revoke clears local cr
 	);
 	await page.setViewportSize({ width: 390, height: 844 });
 	await page.goto("/settings");
+	await openConnections(page);
 	await page.getByRole("button", { name: "Start connecting" }).click();
 	await expect(page.getByText("WEB-1234")).toBeVisible();
 	await expect(
@@ -125,14 +139,27 @@ test("account binding approval survives reload and remote revoke clears local cr
 		path: `${process.env.KEEPANY_EVIDENCE_DIR ?? "docs/evidence/2026-09-28"}/binding-fixture-en-390.png`,
 		fullPage: true,
 	});
-	await selectChoice(page.locator("section.card").filter({ has: page.getByRole("heading", { name: "Language" }) }).getByRole("combobox"), "zh-CN");
+	await selectChoice(
+		page
+			.locator("section.card")
+			.filter({ has: page.getByRole("heading", { name: "Language" }) })
+			.getByRole("combobox"),
+		"zh-CN",
+	);
 	await expect(page.getByText("本机已保存账号连接").first()).toBeVisible();
 	await page.screenshot({
 		path: `${process.env.KEEPANY_EVIDENCE_DIR ?? "docs/evidence/2026-09-28"}/binding-fixture-zh-390.png`,
 		fullPage: true,
 	});
-	await selectChoice(page.locator("section.card").filter({ has: page.getByRole("heading", { name: "语言" }) }).getByRole("combobox"), "en");
+	await selectChoice(
+		page
+			.locator("section.card")
+			.filter({ has: page.getByRole("heading", { name: "语言" }) })
+			.getByRole("combobox"),
+		"en",
+	);
 	await page.reload();
+	await openConnections(page);
 	await expect(
 		page.getByText("Connection saved on this device").first(),
 	).toBeVisible();
