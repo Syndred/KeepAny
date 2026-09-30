@@ -1,0 +1,246 @@
+{
+  "config": {
+    "argv": [
+      "/Users/syndred/.nvm/versions/node/v22.23.1/bin/node",
+      "/Users/syndred/Desktop/projects/KeepAny/node_modules/@playwright/test/cli.js",
+      "test",
+      "--config",
+      "playwright.release.config.ts",
+      "tests/e2e/task-theme-release.spec.ts",
+      "--reporter=list,json"
+    ],
+    "configFile": "/Users/syndred/Desktop/projects/KeepAny/playwright.release.config.ts",
+    "rootDir": "/Users/syndred/Desktop/projects/KeepAny/tests/e2e",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "/Users/syndred/Desktop/projects/KeepAny/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "",
+        "name": "",
+        "testDir": "/Users/syndred/Desktop/projects/KeepAny/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "local-core.spec.ts",
+          "production-offline.spec.ts",
+          "intake-pdf.spec.ts",
+          "intake-expense.spec.ts",
+          "intake-review-backup.spec.ts",
+          "intake-review-merge.spec.ts",
+          "custom-category-release.spec.ts",
+          "global-search-release.spec.ts",
+          "detail-entry-statistics.spec.ts",
+          "intake-asset-receipt.spec.ts",
+          "collections-route.spec.ts",
+          "relation-graph-verification.spec.ts",
+          "restore-identity.spec.ts",
+          "archive-migration.spec.ts",
+          "vault-reference-release.spec.ts",
+          "themed-select.spec.ts",
+          "spacing-consistency.spec.ts",
+          "task-theme-release.spec.ts",
+          "finance-ledger-release.spec.ts",
+          "collections-ledger-release.spec.ts",
+          "restore-self-service-release.spec.ts"
+        ],
+        "timeout": 90000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list"
+      ],
+      [
+        "json"
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.63.0",
+    "workers": 2,
+    "webServer": {
+      "command": "node node_modules/vite/bin/vite.js preview apps/web --outDir ../../release/web --host 127.0.0.1 --port 4181 --strictPort",
+      "url": "http://127.0.0.1:4181",
+      "reuseExistingServer": false,
+      "timeout": 30000
+    }
+  },
+  "suites": [
+    {
+      "title": "task-theme-release.spec.ts",
+      "file": "task-theme-release.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "zh-CN 390px completes the themed task workflow",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 9030,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-30T12:27:07.298Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "b2e889061086f95299ae-0bac5821f6ba11a80bd7",
+          "file": "task-theme-release.spec.ts",
+          "line": 525,
+          "column": 2
+        },
+        {
+          "title": "zh-CN 1280px completes the themed task workflow",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 9004,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-30T12:27:16.413Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "b2e889061086f95299ae-c841594b39a2a03f3e13",
+          "file": "task-theme-release.spec.ts",
+          "line": 525,
+          "column": 2
+        },
+        {
+          "title": "en-US 390px completes the themed task workflow",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 8979,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-30T12:27:25.420Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "b2e889061086f95299ae-42a2feee0a34949326c1",
+          "file": "task-theme-release.spec.ts",
+          "line": 525,
+          "column": 2
+        },
+        {
+          "title": "en-US 1280px completes the themed task workflow",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 9088,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-30T12:27:34.403Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "b2e889061086f95299ae-7dbaa11e4b2f315a474f",
+          "file": "task-theme-release.spec.ts",
+          "line": 525,
+          "column": 2
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-09-30T12:27:06.676Z",
+    "duration": 36847.272,
+    "expected": 4,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}
