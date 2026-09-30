@@ -35,6 +35,19 @@ async function localBindingState(page: Page, bindingId: string) {
 	}, bindingId);
 }
 
+async function openConnections(page: Page) {
+	const connections = page.locator("#connections");
+	await expect(connections).toBeVisible();
+	if (
+		!(await connections.evaluate(
+			(element) => (element as HTMLDetailsElement).open,
+		))
+	) {
+		await connections.locator("summary").click();
+	}
+	await expect(connections).toHaveJSProperty("open", true);
+}
+
 const copies = {
 	en: {
 		add: "Add",
@@ -105,6 +118,7 @@ for (const language of ["en", "zh-CN"] as const) {
 				).toBeVisible();
 
 				await page.goto("/settings");
+				await openConnections(page);
 				await expect(
 					page.getByRole("button", { name: copy.start }),
 				).toBeVisible();
@@ -173,6 +187,7 @@ for (const language of ["en", "zh-CN"] as const) {
 					{ id: bindingId, longSubject: subject },
 				);
 				await page.reload();
+				await openConnections(page);
 				await expect(page.getByText(copy.connected)).toBeVisible();
 				await expect(page.getByText(subject)).toHaveCount(0);
 
@@ -299,6 +314,7 @@ for (const language of ["en", "zh-CN"] as const) {
 					page.getByRole("button", { name: copy.start }),
 				).toBeVisible();
 				await page.reload();
+				await openConnections(page);
 				await expect(
 					page.getByRole("button", { name: copy.start }),
 				).toBeVisible();
@@ -349,6 +365,8 @@ test("older state response cannot revive a binding removed in another tab", asyn
 	try {
 		await first.goto("/settings");
 		await second.goto("/settings");
+		await openConnections(first);
+		await openConnections(second);
 		await expect(
 			first.getByRole("button", { name: "Start connecting" }),
 		).toBeVisible();
@@ -424,6 +442,8 @@ test("older state response cannot revive a binding removed in another tab", asyn
 		);
 		await first.reload();
 		await second.reload();
+		await openConnections(first);
+		await openConnections(second);
 		await expect(
 			first.getByText("Connection saved on this device"),
 		).toBeVisible();
@@ -486,6 +506,7 @@ test("older state response cannot revive a binding removed in another tab", asyn
 			first.getByRole("button", { name: "Start connecting" }),
 		).toBeVisible();
 		await first.reload();
+		await openConnections(first);
 		await expect(
 			first.getByText("Connection saved on this device"),
 		).toHaveCount(0);
