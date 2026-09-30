@@ -20,6 +20,8 @@ export default defineConfig({
 		"global-search-release.spec.ts",
 		"detail-entry-statistics.spec.ts",
 		"intake-asset-receipt.spec.ts",
+		"collections-route.spec.ts",
+		"relation-graph-verification.spec.ts",
 	],
 	timeout: 90_000,
 	workers: 2,

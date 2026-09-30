@@ -5,6 +5,8 @@ import {
 	Controls,
 	MarkerType,
 	ReactFlow,
+	useNodesInitialized,
+	useUpdateNodeInternals,
 	type Edge,
 	type Node,
 } from "@xyflow/react";
@@ -66,6 +68,16 @@ const AssetEditor = lazy(() =>
 const TaskEditor = lazy(() =>
 	import("./workflows").then((module) => ({ default: module.TaskEditor })),
 );
+function GraphNodeMeasurements({ nodeIds }: { nodeIds: string }) {
+	const initialized = useNodesInitialized();
+	const updateNodeInternals = useUpdateNodeInternals();
+	useEffect(() => {
+		// An async collection refresh can leave new nodes without measured handle bounds.
+		if (!initialized) updateNodeInternals(JSON.parse(nodeIds) as string[]);
+	}, [initialized, nodeIds, updateNodeInternals]);
+	return null;
+}
+
 function graphLabel(value: string) {
 	const chars = Array.from(value);
 	return chars.length > 18 ? `${chars.slice(0, 18).join("")}…` : value;
@@ -470,19 +482,26 @@ export function AssetDetail() {
 				return groups;
 			}, new Map<string, Relation[]>())
 			.values(),
-	).map(
-		(group) =>
-			({
-				id: group[0].id,
-				source: group[0].from,
-				target: group[0].to,
-				label:
-					group.length > 2
-						? `${graphLabel(group[0].label)} · +${group.length - 1}`
-						: group.map((relation) => graphLabel(relation.label)).join(" · "),
-				markerEnd: { type: MarkerType.ArrowClosed },
-			}) as Edge,
-	);
+	).map((group): Edge => {
+		const verified = group.every((relation) => !!relation.verifiedAt);
+		const label = group.length > 2
+			? `${graphLabel(group[0].label)} · +${group.length - 1}`
+			: group.map((relation) => graphLabel(relation.label)).join(" · ");
+		return {
+			id: group[0].id,
+			source: group[0].from,
+			target: group[0].to,
+			label,
+			className: verified ? "relation-graph-edge--verified" : "relation-graph-edge--pending",
+			ariaLabel: `${label} · ${t(verified ? "relationGraphVerified" : group.length > 1 ? "relationGraphMixed" : "relationGraphPending")}`,
+			style: {
+				stroke: verified ? "var(--green)" : "var(--muted)",
+				strokeWidth: 2,
+				strokeDasharray: verified ? "none" : "5 4",
+			},
+			markerEnd: { type: MarkerType.ArrowClosed },
+		};
+	});
 	const ownTasks = data.tasks.filter(
 		(x) => !x.deleted && x.assetId === asset?.id && !x.impactSnapshot,
 	);
@@ -1509,7 +1528,10 @@ export function AssetDetail() {
 			<div className="detail-grid asset-detail-secondary">
 				<section className="card asset-relations-card">
 					<div className="card-header">
-						<h2>{t("relations")}</h2>
+						<div>
+							<h2>{t("relations")}</h2>
+							{relations.length > 0 && <p>{t("relationGraphLegend")}</p>}
+						</div>
 						<Button
 							variant="ghost"
 							size="small"
@@ -1569,6 +1591,7 @@ export function AssetDetail() {
 									nodesDraggable={false}
 									nodesConnectable={false}
 								>
+									<GraphNodeMeasurements nodeIds={JSON.stringify([asset.id, ...visibleRelated.map((item) => item.id)])} />
 									<Background />
 									<Controls showInteractive={false} />
 								</ReactFlow>
