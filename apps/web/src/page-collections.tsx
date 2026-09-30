@@ -82,10 +82,13 @@ export function CollectionsPage() {
 	}, [selectedId]);
 
 	const openNew = () => {
+		if (selectedId) {
+			void navigate({ to: "/collections" });
+			return;
+		}
 		setEditor(newDraft());
 		setError("");
 		setSearch("");
-		if (selectedId) void navigate({ to: "/collections" });
 	};
 	const updateSidebar = async (id: "sidebarOrder" | "sidebarHidden", value: string[]) => {
 		if (navInFlight.current) return;

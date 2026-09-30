@@ -98,6 +98,7 @@ for (const variant of [{ locale: "zh-CN", width: 390 }, { locale: "en-US", width
 			await expect(page).toHaveURL(new RegExp(`${itemHref}$`));
 			await page.getByRole("button", { name: copy.move, exact: true }).click();
 			await page.getByRole("dialog").getByRole("button", { name: copy.move, exact: true }).click();
+			await expect(page).toHaveURL(/\/assets\/item$/);
 			await page.goto(collectionHref);
 			await expect(page.locator(".collections-member-card")).toHaveCount(4);
 			await expect(page.locator(".collections-member-card").filter({ hasText: names.item })).toHaveCount(0);
@@ -117,6 +118,7 @@ for (const variant of [{ locale: "zh-CN", width: 390 }, { locale: "en-US", width
 			await assertCards(page, "Travel cabinet v2", 4, copy, variant.width);
 			await page.getByRole("button", { name: copy.edit, exact: true }).click();
 			await edit.getByRole("button", { name: copy.another, exact: true }).click();
+			await expect(page).toHaveURL(/\/collections$/);
 			await editor.getByLabel(copy.collectionName, { exact: true }).fill("travel cabinet v2");
 			await editor.getByRole("button", { name: copy.collectionSave, exact: true }).click();
 			await expect(editor.getByRole("alert")).toContainText(copy.duplicate);
