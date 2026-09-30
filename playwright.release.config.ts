@@ -16,6 +16,7 @@ export default defineConfig({
 		"intake-expense.spec.ts",
 		"intake-review-backup.spec.ts",
 		"intake-review-merge.spec.ts",
+		"custom-category-release.spec.ts",
 	],
 	timeout: 90_000,
 	workers: 2,
