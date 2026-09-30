@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { liveQuery } from "dexie";
 import {
 	type Asset,
 	type Category,
@@ -10,10 +11,31 @@ import {
 } from "../../../packages/domain/src";
 import {
 	database,
+	type PendingCategoryEdit,
+	localRepository,
 	type RecordRow,
 	saveBatch,
 } from "../../../packages/local-db/src";
 export function useData() {
+	const [categoryEditsLoading, setCategoryEditsLoading] = useState(true);
+	const [categoryEditsError, setCategoryEditsError] = useState(false);
+	const [pendingCategoryEdits, setPendingCategoryEdits] = useState<PendingCategoryEdit[]>([]);
+	useEffect(() => {
+		let active = true;
+		let dispose: (() => void) | undefined;
+		void localRepository().then((repository) => {
+			if (!active) return;
+			const subscription = liveQuery(async () => {
+				const pending = await Promise.all((["project", "account", "subscription", "item", "vault"] as const).map((kind) => repository.getPendingCategoryEdit(kind)));
+				return pending.filter((edit): edit is PendingCategoryEdit => edit !== null);
+			}).subscribe({
+				next: (pending) => { setPendingCategoryEdits(pending); setCategoryEditsError(false); setCategoryEditsLoading(false); },
+				error: () => { setCategoryEditsError(true); setCategoryEditsLoading(false); },
+			});
+			dispose = () => subscription.unsubscribe();
+		}).catch(() => { if (active) { setCategoryEditsError(true); setCategoryEditsLoading(false); } });
+		return () => { active = false; dispose?.(); };
+	}, []);
 	const [rows, setRows] = useState<RecordRow[]>([]),
 		[error, setError] = useState(""),
 		[loading, setLoading] = useState(true);
@@ -44,6 +66,9 @@ export function useData() {
 	const get = <T>(type: string) =>
 		rows.filter((r) => r.type === type).map((r) => JSON.parse(r.payload) as T);
 	return {
+		pendingCategoryEdits,
+		categoryEditsLoading,
+		categoryEditsError,
 		assets: get<Asset>("asset"),
 		categories: get<Category>("category"),
 		relations: get<Relation>("relation"),

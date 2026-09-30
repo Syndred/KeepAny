@@ -18,8 +18,8 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { ArrowRight, Code2, CreditCard, GripVertical, Mail, Package, Plus, Shield, Smartphone, UserRound } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { normalizeCategoryName, type Asset, type AssetKind } from "../../../packages/domain/src";
-import { createCategory, fileUrl, save, saveAssetIfCurrent } from "../../../packages/local-db/src";
+import { normalizeCategoryName, type Asset, type AssetKind, type Category } from "../../../packages/domain/src";
+import { cancelCategoryEdit, createCategory, deleteCustomCategory, editCustomCategory, fileUrl, localRepository, retryCategoryEdit, save, saveAssetIfCurrent } from "../../../packages/local-db/src";
 import { Button } from "./components/ui/button";
 import { matchesAssetSearch } from "./asset-search";
 import "./asset-restoration.css";
@@ -44,12 +44,14 @@ function SortablePill({
 	label,
 	active,
 	reorder = false,
+	disabled = false,
 	onClick,
 }: {
 	id: string;
 	label: string;
 	active: boolean;
 	reorder?: boolean;
+	disabled?: boolean;
 	onClick: () => void;
 }) {
 	const { t } = useTranslation();
@@ -74,6 +76,7 @@ function SortablePill({
 				type="button"
 				className={active ? "active" : ""}
 				aria-pressed={active}
+				disabled={disabled}
 				onClick={onClick}
 			>
 				{label}
@@ -88,10 +91,10 @@ function CategoryStrip({
 }: {
 	kind: AssetKind;
 	chosen: string;
-	choose: (x: string) => void;
+	choose: (x: string, id?: string) => void;
 }) {
 	const { data, notify } = useAppContext();
-	const { t } = useTranslation();
+	const { t, i18n } = useTranslation();
 	const categoryNames = [
 		...builtins[kind],
 		...data.categories
@@ -122,29 +125,63 @@ function CategoryStrip({
 	const [categoryBusy, setCategoryBusy] = useState(false);
 	const [memberCategory, setMemberCategory] = useState("");
 	const [memberIds, setMemberIds] = useState<string[]>([]);
-	const memberAssets = liveAssets(data).filter((asset) => asset.kind === kind).sort((a, b) => a.name.localeCompare(b.name));
+	const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+	const [expectedAssets, setExpectedAssets] = useState<Asset[]>([]);
+	const [expectedCategories, setExpectedCategories] = useState<Category[]>([]);
+	const pending = data.pendingCategoryEdits.find((edit) => edit.kind === kind);
+	const blocked = categoryBusy || !!pending || data.categoryEditsLoading || data.categoryEditsError;
+	const memberAssets = (manage ? expectedAssets : data.assets).filter((asset) => asset.kind === kind && !asset.deleted).sort((a, b) => a.name.localeCompare(b.name));
 	const membersChanged = memberCategory !== "" && memberAssets.some((asset) => memberIds.includes(asset.id) !== (asset.category === memberCategory));
-	function selectManagedCategory(category: string) {
+	function categoryFailure(error: unknown) {
+		const reason = error instanceof Error ? error.message : "";
+		if (["category-duplicate", "category-reserved"].includes(reason)) return t("categoryDuplicate");
+		if (["category-stale", "category-members-stale", "asset-stale"].includes(reason)) return t("categoryEditStale");
+		if (reason === "category-edit-pending") return t("categoryEditFailed");
+		if (reason === "category-edit-conflict") return t("categoryEditConflict");
+		if (["category-name", "category-edit-invalid"].includes(reason)) return t("categoryNameInvalid");
+		return t("error");
+	}
+	function selectManagedCategory(category: string, expectedId?: string) {
+		const selected = builtins[kind].includes(category) ? null : data.categories.find((item) => item.kind === kind && !item.deleted && item.name === category) ?? null;
+		if ((expectedId && selected?.id !== expectedId) || (category && !builtins[kind].includes(category) && !selected)) {
+			setCategoryError(t("categoryEditStale"));
+			return;
+		}
+		const snapshot = structuredClone(data.assets.filter((asset) => asset.kind === kind));
+		setEditingCategory(selected ? structuredClone(selected) : null);
+		setExpectedAssets(snapshot);
+		setExpectedCategories(structuredClone(data.categories.filter((item) => item.kind === kind && !item.deleted)));
+		setName(selected?.name ?? "");
 		setMemberCategory(category);
-		setMemberIds(memberAssets.filter((asset) => asset.category === category).map((asset) => asset.id));
-		choose(category);
+		setMemberIds(category ? snapshot.filter((asset) => !asset.deleted && asset.category === category).map((asset) => asset.id) : []);
+		setCategoryError("");
+		choose(category, selected?.id);
 	}
 	function openManager() {
-		setCategoryError("");
-		setName("");
-		setMemberCategory("");
-		setMemberIds([]);
+		selectManagedCategory(chosen);
 		setManage(true);
 	}
 	function openNewCategory() {
-		setName("");
-		setMemberCategory("");
-		setMemberIds([]);
-		setCategoryError("");
+		selectManagedCategory("");
 		setManage(true);
 	}
+	async function resolveEdit(cancel: boolean) {
+		if (!pending || addingCategory.current) return;
+		addingCategory.current = true;
+		setCategoryBusy(true);
+		setCategoryError("");
+		try {
+			await (cancel ? cancelCategoryEdit(kind, pending.operationId) : retryCategoryEdit(kind, pending.operationId));
+			const current = await (await localRepository()).get<Category>("category", pending.categoryId);
+			if (current && !current.deleted) choose(current.name, current.id);
+			else choose("");
+			setManage(false);
+			notify(t(cancel ? "categoryEditCancelled" : "saved"));
+		} catch (error) { setCategoryError(categoryFailure(error)); }
+		finally { addingCategory.current = false; setCategoryBusy(false); }
+	}
 	async function saveMembers() {
-		if (!memberCategory || categoryBusy || !membersChanged) return;
+		if (!memberCategory || blocked || !membersChanged) return;
 		setCategoryBusy(true);
 		setCategoryError("");
 		try {
@@ -153,42 +190,42 @@ function CategoryStrip({
 				if (selected === (asset.category === memberCategory)) continue;
 				await saveAssetIfCurrent(asset, { ...asset, category: selected ? memberCategory : "", updatedAt: new Date().toISOString() });
 			}
+			setExpectedAssets(structuredClone((await (await localRepository()).list<Asset>("asset", true)).filter((asset) => asset.kind === kind)));
 			notify(t("saved"));
-		} catch (error) {
-			setCategoryError(t(error instanceof Error && error.message === "asset-stale" ? "assetStale" : "error"));
-		} finally { setCategoryBusy(false); }
+		} catch (error) { setCategoryError(categoryFailure(error)); }
+		finally { setCategoryBusy(false); }
 	}
 	async function removeCategory(category: (typeof data.categories)[number]) {
-		if (categoryBusy) return;
+		if (blocked) return;
 		setCategoryBusy(true);
 		setCategoryError("");
 		try {
-			for (const asset of memberAssets.filter((item) => item.category === category.name)) {
-				await saveAssetIfCurrent(asset, { ...asset, category: "", updatedAt: new Date().toISOString() });
-			}
-			await save("category", { ...category, deleted: true });
+			await deleteCustomCategory({ expectedCategory: category, expectedAssets });
 			if (chosen === category.name) choose("");
-			if (memberCategory === category.name) selectManagedCategory(ordered.find((item) => item !== category.name) || "");
+			setManage(false);
 			notify(t("saved"));
 		} catch (error) {
-			setCategoryError(t(error instanceof Error && error.message === "asset-stale" ? "assetStale" : "error"));
+			setCategoryError(categoryFailure(error));
 		} finally { setCategoryBusy(false); }
 	}
 	async function onDragEnd(e: DragEndEvent) {
-		if (!e.over || e.active.id === e.over.id) return;
+		if (blocked || !e.over || e.active.id === e.over.id) return;
 		const from = ordered.indexOf(String(e.active.id)),
 			to = ordered.indexOf(String(e.over.id));
 		const next = [...ordered];
 		next.splice(to, 0, next.splice(from, 1)[0]);
-		await save("preference", { id: `categoryOrder-${kind}`, value: next });
+		try { await save("preference", { id: `categoryOrder-${kind}`, value: next }); }
+		catch (error) { setCategoryError(categoryFailure(error)); }
 	}
 	async function addCategory() {
-		if (addingCategory.current) return;
+		if (addingCategory.current || pending) return;
 		const trimmed = name.trim();
 		if (!trimmed) return;
 		const normalized = normalizeCategoryName(trimmed);
+		const reservedNames = [...builtins[kind], "all", ...["zh-CN", "en"].flatMap((language) => [...builtins[kind], "all"].map((key) => i18n.getFixedT(language)(key)))];
 		if (
-			categoryNames.some((category) =>
+			reservedNames.some((reserved) => normalizeCategoryName(reserved) === normalized) ||
+			categoryNames.filter((category) => category !== editingCategory?.name).some((category) =>
 				[category, niceCategory(category, t)].some(
 					(label) => normalizeCategoryName(label) === normalized,
 				),
@@ -200,23 +237,20 @@ function CategoryStrip({
 		addingCategory.current = true;
 		setCategoryBusy(true);
 		try {
-			const created = await createCategory(kind, trimmed, categoryNames.length);
-			setMemberCategory(created.name);
-			setName("");
-			for (const asset of memberAssets.filter((item) => memberIds.includes(item.id))) {
-				await saveAssetIfCurrent(asset, { ...asset, category: created.name, updatedAt: new Date().toISOString() });
+			const created = editingCategory
+				? await editCustomCategory({ expectedCategory: editingCategory, name: trimmed, expectedAssets, memberIds, reservedNames })
+				: await createCategory(kind, trimmed, categoryNames.length);
+			if (!editingCategory) {
+				for (const asset of memberAssets.filter((item) => memberIds.includes(item.id))) {
+					await saveAssetIfCurrent(asset, { ...asset, category: created.name, updatedAt: new Date().toISOString() });
+				}
 			}
 			setCategoryError("");
 			setManage(false);
-			choose(created.name);
+			choose(created.name, created.id);
 			notify(t("saved"));
-		} catch (error) {
-			setCategoryError(
-				error instanceof Error && error.message === "category-duplicate"
-					? t("categoryDuplicate")
-					: t("error"),
-			);
-		} finally {
+		} catch (error) { setCategoryError(categoryFailure(error)); }
+		finally {
 			addingCategory.current = false;
 			setCategoryBusy(false);
 		}
@@ -235,24 +269,30 @@ function CategoryStrip({
 				{ordered.map((id) => (
 					<button type="button" key={id} className={chosen === id ? "active" : ""} aria-pressed={chosen === id} onClick={() => choose(id)}>{niceCategory(id, t)}</button>
 				))}
-				<button type="button" className="asset-category-add" aria-label={t("newCategory")} title={t("newCategory")}
+				<button type="button" className="asset-category-add" disabled={blocked} aria-label={t("newCategory")} title={t("newCategory")}
 						onClick={openNewCategory}
 				>
 					<Plus size={14} />
 				</button>
 			</div>
-			<Button variant="ghost" size="small" className="asset-category-manage" onClick={openManager}>{t("manage")}</Button>
+			<Button variant="ghost" size="small" className="asset-category-manage" disabled={categoryBusy} onClick={openManager}>{t("manage")}</Button>
 			</div>
+			{data.categoryEditsError && <p className="field-error" role="alert">{t("error")}</p>}
+			{pending && <section className="card asset-category-recovery" aria-label={t("categoryEditRecovery")}>
+				<p role="status">{t(pending.phase === "rolling-back" ? "categoryEditCancelling" : "categoryEditPending")}</p>
+				{categoryError && <p className="field-error" role="alert">{categoryError}</p>}
+				<div className="actions"><Button variant="primary" disabled={categoryBusy} onClick={() => void resolveEdit(false)}>{t(pending.phase === "rolling-back" ? "categoryEditFinishCancel" : "categoryEditRetry")}</Button>{pending.phase !== "rolling-back" && <Button disabled={categoryBusy} onClick={() => void resolveEdit(true)}>{t("categoryEditCancel")}</Button>}</div>
+			</section>}
 			{manage && (
 				<section className="card asset-category-inline" aria-label={t("category")}>
-					<div className="card-header"><h3>{memberCategory ? t("category") : t("newCategory")}</h3></div>
-					<div className="field">
+					<div className="card-header"><h3>{editingCategory ? t("categoryEdit") : memberCategory ? t("categoryMembers") : t("newCategory")}</h3></div>
+					{(!memberCategory || editingCategory) && <div className="field">
 						<label htmlFor="category-name">{t("categoryName")}</label>
 						<input
 							id="category-name"
 							value={name}
 							maxLength={60}
-							disabled={categoryBusy}
+							disabled={blocked}
 							aria-invalid={!!categoryError}
 							aria-describedby={
 								categoryError ? "category-name-error" : undefined
@@ -271,41 +311,42 @@ function CategoryStrip({
 								{categoryError}
 							</small>
 						)}
-					</div>
+					</div>}
+					{memberCategory && !editingCategory && categoryError && <p className="field-error" role="alert">{categoryError}</p>}
 					<div className="list">
 						<DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
 							<SortableContext items={ordered} strategy={horizontalListSortingStrategy}>
 								<fieldset className="asset-category-order" aria-label={t("category")}>
-									{ordered.map((id) => <SortablePill key={id} id={id} label={niceCategory(id, t)} active={memberCategory === id} reorder onClick={() => selectManagedCategory(id)} />)}
+									{ordered.map((id) => <SortablePill key={id} id={id} label={niceCategory(id, t)} active={memberCategory === id} disabled={blocked} reorder={!blocked} onClick={() => { if (!blocked) selectManagedCategory(id); }} />)}
 								</fieldset>
 							</SortableContext>
 						</DndContext>
 						<div className="asset-category-members">
-							<div className="card-header"><h3>{t("categoryMembers")}{memberCategory ? ` · ${niceCategory(memberCategory, t)}` : ""}</h3>{memberCategory && <Button size="small" disabled={categoryBusy || !membersChanged} onClick={() => void saveMembers()}>{t("saveMembers")}</Button>}</div>
+							<div className="card-header"><h3>{t("categoryMembers")}{memberCategory ? ` · ${niceCategory(memberCategory, t)}` : ""}</h3>{memberCategory && !editingCategory && <Button size="small" disabled={blocked || !membersChanged} onClick={() => void saveMembers()}>{t("saveMembers")}</Button>}</div>
 							<p className="subtitle">{t("categoryMembersHint")}</p>
-							<div className="asset-category-member-list">{memberAssets.length ? memberAssets.map((asset) => <label key={asset.id}><input type="checkbox" disabled={categoryBusy} checked={memberIds.includes(asset.id)} onChange={(event) => setMemberIds((current) => event.target.checked ? [...current, asset.id] : current.filter((id) => id !== asset.id))} /><span><strong>{asset.name}</strong>{asset.category && asset.category !== memberCategory && <small>{niceCategory(asset.category, t)}</small>}</span></label>) : <p>{t("none")}</p>}</div>
+							<div className="asset-category-member-list">{memberAssets.length ? memberAssets.map((asset) => <label key={asset.id}><input type="checkbox" disabled={blocked} checked={memberIds.includes(asset.id)} onChange={(event) => setMemberIds((current) => event.target.checked ? [...current, asset.id] : current.filter((id) => id !== asset.id))} /><span><strong>{asset.name}</strong>{asset.category && asset.category !== memberCategory && <small>{niceCategory(asset.category, t)}</small>}</span></label>) : <p>{t("none")}</p>}</div>
 							</div>
-						{data.categories
-							.filter((c) => c.kind === kind && !c.deleted)
+						{expectedCategories
 							.map((c) => (
 								<div className="list-row" key={c.id}>
 									<strong>{c.name}</strong>
+									<div className="actions"><Button size="small" disabled={blocked} onClick={() => selectManagedCategory(c.name, c.id)}>{t("edit")}</Button>
 									<Button
 										variant="danger"
 										size="small"
-										disabled={categoryBusy}
+										disabled={blocked}
 										onClick={() => void removeCategory(c)}
 									>
 										{t("remove")}
-									</Button>
+									</Button></div>
 								</div>
 							))}
 					</div>
 					<div className="actions">
-						<Button variant="primary" onClick={addCategory} disabled={!name.trim() || categoryBusy}>
+						{(!memberCategory || editingCategory) && <Button variant="primary" onClick={addCategory} disabled={!name.trim() || blocked}>
 							{t("collectionSave")}
-						</Button>
-						<Button onClick={openNewCategory} disabled={categoryBusy}>{t("collectionAddAnother")}</Button>
+						</Button>}
+						<Button onClick={openNewCategory} disabled={blocked}>{t("collectionAddAnother")}</Button>
 						<Button onClick={() => { setCategoryError(""); setManage(false); }} disabled={categoryBusy}>{t("categoryCollapse")}</Button>
 					</div>
 					<p className="subtitle">{t("categoryHelp")}</p>
@@ -408,7 +449,15 @@ export function AssetList() {
 			]),
 		),
 	);
-	const category = categories[kind] || "";
+	const [categoryIds, setCategoryIds] = useState<Record<string, string>>(() =>
+		Object.fromEntries(kinds.map((key) => [key, sessionStorage.getItem(`keepany-category-id-${key}`) || ""])),
+	);
+	const selectedCategory = data.categories.find((item) => item.id === categoryIds[kind] && item.kind === kind && !item.deleted);
+	const category = selectedCategory?.name ?? categories[kind] ?? "";
+	const pendingCategory = data.pendingCategoryEdits.find((edit) => edit.kind === kind && (edit.categoryId === selectedCategory?.id || [edit.beforeName, edit.afterName].includes(category)));
+	useEffect(() => {
+		if (selectedCategory) sessionStorage.setItem(`keepany-category-${kind}`, selectedCategory.name);
+	}, [kind, selectedCategory]);
 	const [tags, setTags] = useState<Record<string, string>>(() =>
 		Object.fromEntries(
 			kinds.map((k) => [k, sessionStorage.getItem(`keepany-tag-${k}`) || ""]),
@@ -419,22 +468,27 @@ export function AssetList() {
 		sessionStorage.setItem(`keepany-tag-${kind}`, value);
 		setTags((prev) => ({ ...prev, [kind]: value }));
 	};
-	const choose = (value: string) => {
+	const choose = (value: string, id?: string) => {
+		const categoryId = id ?? data.categories.find((item) => item.kind === kind && !item.deleted && item.name === value)?.id ?? "";
 		sessionStorage.setItem(`keepany-category-${kind}`, value);
+		sessionStorage.setItem(`keepany-category-id-${kind}`, categoryId);
 		setCategories((prev) => ({ ...prev, [kind]: value }));
+		setCategoryIds((prev) => ({ ...prev, [kind]: categoryId }));
 	};
 	useEffect(() => {
 		function selectCategory(event: Event) {
-			const selection = (event as CustomEvent<{ kind: AssetKind; category: string }>).detail;
+			const selection = (event as CustomEvent<{ kind: AssetKind; category: string; categoryId?: string }>).detail;
 			if (!selection || !kinds.includes(selection.kind)) return;
 			sessionStorage.setItem(`keepany-category-${selection.kind}`, selection.category);
 			setCategories((prev) => ({ ...prev, [selection.kind]: selection.category }));
+			setCategoryIds((prev) => ({ ...prev, [selection.kind]: selection.categoryId ?? "" }));
 		}
 		window.addEventListener("keepany-category-select", selectCategory);
 		return () => window.removeEventListener("keepany-category-select", selectCategory);
 	}, []);
 	useEffect(() => {
 		setCategories((prev) => ({ ...prev, [kind]: sessionStorage.getItem(`keepany-category-${kind}`) || "" }));
+		setCategoryIds((prev) => ({ ...prev, [kind]: sessionStorage.getItem(`keepany-category-id-${kind}`) || "" }));
 	}, [kind]);
 	const [edit, setEdit] = useState(false);
 	const allLiveAssets = liveAssets(data);
@@ -448,7 +502,7 @@ export function AssetList() {
 	const normalizedSearch = search.trim().toLocaleLowerCase();
 	const assets = allKindAssets.filter(
 		(a) =>
-			(!category || a.category === category) &&
+			(!category || a.category === category || !!pendingCategory && [pendingCategory.beforeName, pendingCategory.afterName].includes(a.category)) &&
 			(!tag || a.tags.includes(tag)) &&
 			matchesAssetSearch(a, search),
 	);
@@ -488,14 +542,14 @@ export function AssetList() {
 				action={
 					<>
 						{kind === "subscription" && <Button asChild><Link to="/finance">{t("financeViewLedger")}</Link></Button>}
-						<Button variant="primary" onClick={() => setEdit(true)}>
+						<Button variant="primary" disabled={data.pendingCategoryEdits.some((pending) => pending.kind === kind)} onClick={() => setEdit(true)}>
 							<Plus size={17} />
 							{t(kind === "vault" ? "vaultLinkEntry" : "add")}
 						</Button>
 					</>
 				}
 			/>
-			<CategoryStrip kind={kind} chosen={category} choose={choose} />
+			<CategoryStrip key={kind} kind={kind} chosen={category} choose={choose} />
 			{(availableTags.length > 0 || tag) && (
 				<div className="list-filters">
 					<label htmlFor="asset-tag-filter">{t("filterTag")}</label>

@@ -489,3 +489,8 @@ p { line-height: 1.5; }
   .sidebar { transition: none; }
   .nav .sortable-nav-item { transition: none !important; }
 }
+
+.asset-category-recovery { display: grid; gap: 12px; margin: 14px 0; padding: 18px; }
+.asset-category-recovery p { margin: 0; overflow-wrap: anywhere; }
+.asset-category-recovery .actions { justify-content: flex-start; flex-wrap: wrap; }
+.asset-category-inline .list-row > .actions { flex-shrink: 0; margin: 0; }

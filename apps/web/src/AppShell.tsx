@@ -154,11 +154,12 @@ export function AppShell() {
 	const relationReturnKind = sessionStorage.getItem("keepany-relation-return-kind");
 	const hasRelationReturn = Boolean(detailKind && relationReturnId === detailMatch?.[2] && relationReturnKind && kinds.includes(relationReturnKind as (typeof kinds)[number]));
 	const detailReturnKind = hasRelationReturn ? relationReturnKind as (typeof kinds)[number] : detailKind;
-	function selectCategory(kind: string, category: string) {
+	function selectCategory(kind: string, category: string, categoryId: string) {
 		sessionStorage.setItem(`keepany-category-${kind}`, category);
+		sessionStorage.setItem(`keepany-category-id-${kind}`, categoryId);
 		setMobile(false);
 		void navigate({ to: "/assets/$kind", params: { kind } }).then(() => {
-			window.dispatchEvent(new CustomEvent("keepany-category-select", { detail: { kind, category } }));
+			window.dispatchEvent(new CustomEvent("keepany-category-select", { detail: { kind, category, categoryId } }));
 		});
 	}
 	const savedNavOrder = data.preferences.find(
@@ -265,7 +266,7 @@ export function AppShell() {
 					<div className="sidebar-custom">
 						<div className="sidebar-section-label">{t("collectionsTitle")}</div>
 						{collections.map((collection) => <Link key={collection.id} to="/collections/$id" params={{ id: collection.id }} className="sidebar-category sidebar-collection" aria-current={collectionDetailId === collection.id ? "page" : undefined} onClick={() => setMobile(false)}>{collection.name}</Link>)}
-						{customCategories.map((category) => <button type="button" key={category.id} className="sidebar-category" onClick={() => selectCategory(category.kind, category.name)}>{category.name}</button>)}
+						{customCategories.map((category) => <button type="button" key={category.id} className="sidebar-category" onClick={() => selectCategory(category.kind, category.name, category.id)}>{category.name}</button>)}
 						<Link to="/collections" className="sidebar-customize" aria-current={/^\/collections\/?$/.test(pathname) ? "page" : undefined} onClick={() => setMobile(false)}><Plus size={15}/>{t("customizeSidebar")}</Link>
 					</div>
 					<div className="side-bottom">
