@@ -1,0 +1,35 @@
+[WebServer] (node:43760) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+
+Running 20 tests using 2 workers
+
+(node:43766) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+(node:43765) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1/20] tests/e2e/custom-category-release.spec.ts:67:2 › en-US fixed package category identity survives UI rename and encrypted clean restore
+[2/20] tests/e2e/global-search-release.spec.ts:61:2 › en-US fixed package global search navigates UI records and encrypted clean restore
+[3/20] tests/e2e/global-search-release.spec.ts:61:2 › zh-CN fixed package global search navigates UI records and encrypted clean restore
+[4/20] tests/e2e/custom-category-release.spec.ts:67:2 › zh-CN fixed package category identity survives UI rename and encrypted clean restore
+[5/20] tests/e2e/intake-expense.spec.ts:43:2 › zh-CN 390 PDF expense retains a draft, confirms once, and restores its receipt
+[6/20] tests/e2e/intake-expense.spec.ts:43:2 › zh-CN 1280 PDF expense retains a draft, confirms once, and restores its receipt
+[7/20] tests/e2e/intake-expense.spec.ts:43:2 › en-US 390 PDF expense retains a draft, confirms once, and restores its receipt
+[8/20] tests/e2e/intake-pdf.spec.ts:9:75 › zh-CN 390 PDF text requires explicit type and confirmation, retains decisions
+[9/20] tests/e2e/intake-pdf.spec.ts:9:75 › zh-CN 1280 PDF text requires explicit type and confirmation, retains decisions
+[10/20] tests/e2e/intake-expense.spec.ts:43:2 › en-US 1280 PDF expense retains a draft, confirms once, and restores its receipt
+[11/20] tests/e2e/intake-pdf.spec.ts:9:75 › en-US 390 PDF text requires explicit type and confirmation, retains decisions
+[12/20] tests/e2e/intake-pdf.spec.ts:9:75 › en-US 1280 PDF text requires explicit type and confirmation, retains decisions
+[13/20] tests/e2e/intake-review-backup.spec.ts:28:42 › zh-CN downloaded encrypted backup restores CSV/PDF drafts, receipts and stable deduplication
+[14/20] tests/e2e/intake-review-merge.spec.ts:64:42 › zh-CN 390 candidate merge requires choices, keeps selected drafts and decisions, and survives refresh/undo
+[15/20] tests/e2e/intake-review-backup.spec.ts:28:42 › en-US downloaded encrypted backup restores CSV/PDF drafts, receipts and stable deduplication
+[16/20] tests/e2e/local-core.spec.ts:23:1 › project, account, subscription, located item, linked reminder and downloaded backup survive a fresh browser restore
+[17/20] tests/e2e/intake-review-merge.spec.ts:64:42 › en-US 390 candidate merge requires choices, keeps selected drafts and decisions, and survives refresh/undo
+[18/20] tests/e2e/production-offline.spec.ts:6:1 › delivered installation manifest and icons remain available offline
+[19/20] tests/e2e/production-offline.spec.ts:41:1 › built PWA reopens offline, edits local data and downloads a backup
+[20/20] tests/e2e/local-core.spec.ts:165:1 › both languages fit key pages and the task dialog at target widths
+  20 passed (47.6s)

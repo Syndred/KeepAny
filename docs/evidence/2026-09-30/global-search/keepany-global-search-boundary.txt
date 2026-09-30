@@ -1,0 +1,53 @@
+[WebServer] (node:42763) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+
+Running 2 tests using 1 worker
+
+(node:42764) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1/2] tests/e2e/global-search.spec.ts:55:3 › en-US global search locates four sources, clears same-hash filters and bounds 15 long results at 390px
+[WebServer] 10:12:54 AM [vite] (client) [console.warn] -------------- RxDB Open Core RxStorage -------------------------------
+[WebServer] You are using the free Dexie.js based RxStorage implementation from RxDB https://rxdb.info/rx-storage-dexie.html?console=dexie 
+[WebServer] While this is a great option, we want to let you know that there are faster storage solutions available in our premium plugins.
+[WebServer] For professional users and production environments, we highly recommend considering these premium options to enhance performance and reliability.
+[WebServer]  https://rxdb.info/premium/?console=dexie 
+[WebServer] If you already purchased premium access you can disable this log by calling the setPremiumFlag() function from rxdb-premium/plugins/shared.
+[WebServer] ---------------------------------------------------------------------
+
+[WebServer] 10:12:54 AM [vite] (client) [console.warn] -------------- RxDB Open Core RxStorage -------------------------------
+[WebServer] You are using the free Dexie.js based RxStorage implementation from RxDB https://rxdb.info/rx-storage-dexie.html?console=dexie 
+[WebServer] While this is a great option, we want to let you know that there are faster storage solutions available in our premium plugins.
+[WebServer] For professional users and production environments, we highly recommend considering these premium options to enhance performance and reliability.
+[WebServer]  https://rxdb.info/premium/?console=dexie 
+[WebServer] If you already purchased premium access you can disable this log by calling the setPremiumFlag() function from rxdb-premium/plugins/shared.
+[WebServer] ---------------------------------------------------------------------
+
+[WebServer] 10:12:55 AM [vite] (client) [console.warn] -------------- RxDB Open Core RxStorage -------------------------------
+[WebServer] You are using the free Dexie.js based RxStorage implementation from RxDB https://rxdb.info/rx-storage-dexie.html?console=dexie 
+[WebServer] While this is a great option, we want to let you know that there are faster storage solutions available in our premium plugins.
+[WebServer] For professional users and production environments, we highly recommend considering these premium options to enhance performance and reliability.
+[WebServer]  https://rxdb.info/premium/?console=dexie 
+[WebServer] If you already purchased premium access you can disable this log by calling the setPremiumFlag() function from rxdb-premium/plugins/shared.
+[WebServer] ---------------------------------------------------------------------
+
+[2/2] tests/e2e/global-search.spec.ts:189:1 › a late target read does not replace a candidate draft queued after search navigation
+[WebServer] 10:12:56 AM [vite] (client) [console.warn] -------------- RxDB Open Core RxStorage -------------------------------
+[WebServer] You are using the free Dexie.js based RxStorage implementation from RxDB https://rxdb.info/rx-storage-dexie.html?console=dexie 
+[WebServer] While this is a great option, we want to let you know that there are faster storage solutions available in our premium plugins.
+[WebServer] For professional users and production environments, we highly recommend considering these premium options to enhance performance and reliability.
+[WebServer]  https://rxdb.info/premium/?console=dexie 
+[WebServer] If you already purchased premium access you can disable this log by calling the setPremiumFlag() function from rxdb-premium/plugins/shared.
+[WebServer] ---------------------------------------------------------------------
+
+[WebServer] 10:12:56 AM [vite] (client) [console.warn] -------------- RxDB Open Core RxStorage -------------------------------
+[WebServer] You are using the free Dexie.js based RxStorage implementation from RxDB https://rxdb.info/rx-storage-dexie.html?console=dexie 
+[WebServer] While this is a great option, we want to let you know that there are faster storage solutions available in our premium plugins.
+[WebServer] For professional users and production environments, we highly recommend considering these premium options to enhance performance and reliability.
+[WebServer]  https://rxdb.info/premium/?console=dexie 
+[WebServer] If you already purchased premium access you can disable this log by calling the setPremiumFlag() function from rxdb-premium/plugins/shared.
+[WebServer] ---------------------------------------------------------------------
+
+  2 passed (3.4s)

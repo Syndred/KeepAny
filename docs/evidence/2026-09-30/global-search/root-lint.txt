@@ -1,0 +1,20 @@
+apps/web/src/overview-restoration.css:42:124 lint/complexity/noImportantStyles  FIXABLE  ━━━━━━━━━━━
+
+  ! Avoid the use of the !important style.
+  
+    40 │ .overview-risk .button { min-height: 34px; padding: 6px 10px; background: var(--paper); box-shadow: 2px 3px 0 var(--line); }
+    41 │ .overview-reminder-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 52px; padding: 10px 14px; border-top: 1px solid var(--line-soft); color: var(--ink); font-size: 12px; text-decoration: none; }
+  > 42 │ .overview-project-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 22px !important; }
+       │                                                                                                                            ^^^^^^^^^^
+    43 │ .overview-project-heading h2 { margin: 0; font-size: 16px; }
+    44 │ .overview-project-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  
+  i This style reverses the cascade logic, and precedence is reversed. This could lead to having styles with higher specificity being overridden by styles with lower specificity.
+  
+  i Unsafe fix: Remove the style.
+  
+    42 │ .overview-project-heading·{·display:·flex;·align-items:·center;·justify-content:·space-between;·gap:·8px;·margin-top:·22px·!important;·}
+       │                                                                                                                           -----------   
+
+Checked 5 files in 19ms. No fixes applied.
+Found 1 warning.
