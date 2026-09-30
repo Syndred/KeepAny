@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { assetSchema, duplicates, formatMinorUnits, historySchema, parseMinorUnits, type Asset } from "../../../packages/domain/src";
 import { allRecords, localRepository, saveBatch } from "../../../packages/local-db/src";
@@ -25,6 +25,7 @@ function withReviewLock<T>(id: string, action: () => Promise<T>): Promise<T> {
 export function IntakeReview() {
 	const { t, i18n } = useTranslation();
 	const { data, notify } = useAppContext();
+	const assetsById = useMemo(() => new Map(data.assets.map((asset) => [asset.id, asset])), [data.assets]);
 	const targets = liveAssets(data).filter((asset) => asset.kind === "subscription" || asset.kind === "account");
 	const [rows, setRows] = useState<ReviewedCandidate[]>([]);
 	const [message, setMessage] = useState("");
@@ -238,6 +239,8 @@ export function IntakeReview() {
 			{rows.map((row) => {
 				const intent = expenseIntents.find((entry) => entry.candidateId === row.id);
 				const disabled = workingId === row.id || !!intent;
+				const currentAsset = row.status === "accepted" ? assetsById.get(row.asset.id) : undefined;
+				const savedAsset = currentAsset && !currentAsset.deleted ? currentAsset : undefined;
 				return <div className="intake-review-row" key={row.id} id={`intake-review-${row.id}`} tabIndex={-1}>
 				<div className="intake-review-source"><strong>{row.fileName}</strong><small>{row.source === "pdf" ? t("reviewPdfDocument") : t("reviewRowNumber", { number: row.rowNumber })}</small>
 					<span className={`chip ${row.status === "pending" ? "warn" : ""}`}>{t(`reviewStatus${row.status[0].toUpperCase()}${row.status.slice(1)}`)}</span></div>
@@ -245,8 +248,17 @@ export function IntakeReview() {
 				{row.status === "accepted" && row.reviewMode === "expense" && row.expenseDraft && <div className="intake-expense-receipt">
 					<strong>{row.expenseDraft.title}</strong>
 					<span>{formatMinorUnits(parseMinorUnits(row.expenseDraft.amount, row.expenseDraft.currency), row.expenseDraft.currency, i18n.language)} · {date(row.expenseDraft.eventDate, i18n.language)}</span>
-					<small>{data.assets.find((asset) => asset.id === row.expenseDraft?.assetId)?.name ?? t("financeMissingAsset")} · {row.expenseDraft.source}</small>
+					<small>{assetsById.get(row.expenseDraft.assetId)?.name ?? t("financeMissingAsset")} · {row.expenseDraft.source}</small>
 					<Link to="/finance">{t("reviewViewFinance")}</Link>
+				</div>}
+				{row.status !== "pending" && row.reviewMode !== "expense" && <div className="intake-expense-receipt">
+					<strong>{row.asset.name}</strong>
+					{(row.source !== "pdf" || row.kindSelected) && <span>{t("intakeRecordType")}: {t(row.asset.kind)}</span>}
+					{row.asset.url && <small>{t("url")}: {row.asset.url}</small>}
+					{row.source !== "pdf" && row.asset.description && <details><summary>{t("description")}</summary><p className="intake-pdf-text">{row.asset.description}</p></details>}
+					{row.status === "accepted" && (savedAsset
+						? <Link to="/assets/$kind/$id" params={{ kind: savedAsset.kind, id: savedAsset.id }}>{t("reviewViewAsset")}: {savedAsset.name}</Link>
+						: <small>{t("taskRelatedMissing")}</small>)}
 				</div>}
 				{row.status === "pending" && <>
 					<div className="field"><label htmlFor={`${row.id}-kind`}>{t("intakeRecordType")}</label><select id={`${row.id}-kind`} value={row.reviewMode === "expense" ? "expense" : row.source === "pdf" && !row.kindSelected ? "" : row.asset.kind} disabled={disabled} onChange={(event) => selectType(row.id, event.target.value)}><option value="" disabled>{t("reviewSelectKind")}</option>{importKinds.map((kind) => <option value={kind} key={kind}>{t(kind)}</option>)}{row.source === "pdf" && <option value="expense">{t("reviewExpense")}</option>}</select></div>

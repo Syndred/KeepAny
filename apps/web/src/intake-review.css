@@ -16,3 +16,4 @@
 
 .intake-expense-receipt { display: grid; gap: 6px; padding: 12px; border-radius: 10px; background: var(--green-soft); overflow-wrap: anywhere; }
 .intake-expense-receipt small { color: var(--muted); }
+.intake-expense-receipt a { color: var(--ink); font-weight: 700; text-underline-offset: 3px; overflow-wrap: anywhere; }

@@ -927,6 +927,7 @@ Object.assign(copy, {
 	reviewSelectFinanceTarget: ["请选择订阅或账号", "Select a subscription or account"],
 	reviewConfirmExpense: ["确认支出", "Confirm expense"],
 	reviewViewFinance: ["查看财务流水", "View transactions"],
+	reviewViewAsset: ["查看已保存资料", "View saved record"],
 	reviewChanged: ["这条候选已在其他页面更新，请重新核对。", "This candidate changed in another page. Please review it again."],
 	reviewExpensePending: ["这笔支出正在恢复保存，请稍后重试。", "This expense is recovering its saved state. Please retry shortly."],
 	reviewExpenseRecoveryHint: ["有一笔支出尚未完成保存。重试恢复后，再继续审核和备份。", "An expense has not finished saving. Retry recovery before continuing its review or creating a backup."],
