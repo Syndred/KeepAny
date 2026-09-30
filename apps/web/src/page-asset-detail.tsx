@@ -486,6 +486,8 @@ export function AssetDetail() {
 	const ownTasks = data.tasks.filter(
 		(x) => !x.deleted && x.assetId === asset?.id && !x.impactSnapshot,
 	);
+	const maintenanceTask = ownTasks.filter((task) => task.maintenancePlan)
+		.sort((a, b) => Number(!!b.maintenancePlan?.active) - Number(!!a.maintenancePlan?.active) || a.dueDate.localeCompare(b.dueDate) || a.id.localeCompare(b.id))[0];
 	const impactTasks = data.tasks
 		.filter((task) =>
 			!task.deleted && task.impactSnapshot?.accountId === asset?.id,
@@ -1302,7 +1304,7 @@ export function AssetDetail() {
 						<div><dt>{t("projectAccount")}</dt><dd>{relatedAccounts.length ? relatedAccounts.map((linked, index) => <span key={linked.id}>{index > 0 && " · "}<Link to="/assets/$kind/$id" params={{ kind: linked.kind, id: linked.id }} onClick={(event) => { event.preventDefault(); visitRelation(linked); }}>{linked.name}</Link></span>) : "—"}</dd></div>
 					</dl>
 					<div className="asset-project-related">
-						<div className="card-header"><h3>{t("related")}</h3></div>
+						<div className="card-header"><h3>{t("related")}</h3><Button asChild size="small"><Link to="/finance">{t("financeViewLedger")}<ArrowDownRight size={15} aria-hidden="true" /></Link></Button></div>
 						{relatedAssets.length ? <div className="asset-project-related-list">{relatedAssets.map((linked) => <Link key={linked.id} className="asset-project-related-card" to="/assets/$kind/$id" params={{ kind: linked.kind, id: linked.id }} onClick={(event) => { event.preventDefault(); visitRelation(linked); }}><span className="asset-project-related-icon" aria-hidden="true">{linked.name.charAt(0).toUpperCase()}</span><span><strong>{linked.name}</strong><small>{t(linked.kind)}{linked.kind === "subscription" ? ` · ${money(linked.amount, linked.currency, i18n.language)}` : linked.username ? ` · ${linked.username}` : ""}</small></span><ArrowDownRight size={15} aria-hidden="true" /></Link>)}</div> : <p className="asset-quiet-empty">{t("none")}</p>}
 					</div>
 				</section>}
@@ -1628,6 +1630,8 @@ export function AssetDetail() {
 				<section className="card asset-tasks-card">
 					<div className="card-header">
 						<h2>{t("tasks")}</h2>
+						<div className="actions">
+						{asset.kind === "item" && <Button asChild size="small"><Link to="/tasks" hash={maintenanceTask ? `task-${maintenanceTask.id}` : undefined}>{t("itemOpenMaintenancePlan")}</Link></Button>}
 						<Button
 							variant="ghost"
 							size="small"
@@ -1636,6 +1640,7 @@ export function AssetDetail() {
 							<Plus size={14} />
 							{t("add")}
 						</Button>
+						</div>
 					</div>
 					{ownTasks.length ? (
 						<div className="list">

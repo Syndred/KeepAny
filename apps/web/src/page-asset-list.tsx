@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
 	DndContext,
@@ -399,7 +399,7 @@ function rememberAssetList(asset: Asset, search: string) {
 	}));
 }
 
-function ProjectCard({ asset, search }: { asset: Asset; search: string }) {
+function ProjectCard({ asset, search, backlinks }: { asset: Asset; search: string; backlinks: { total: number; pending: number } }) {
 	const { t } = useTranslation();
 	const repository = asset.category === "repository";
 	const domain = assetDomain(asset.url);
@@ -409,7 +409,7 @@ function ProjectCard({ asset, search }: { asset: Asset; search: string }) {
 		</div>
 		<div className="asset-project-info"><div className="asset-project-heading"><span className="asset-project-avatar">{Array.from(asset.name)[0]?.toLocaleUpperCase() || "•"}</span><strong>{asset.name}</strong>{asset.status && <span className="chip">{t(asset.status)}</span>}</div>
 			<p>{asset.description || niceCategory(asset.category, t)}</p>
-			<div className="asset-project-foot"><span>{domain || niceCategory(asset.category, t)}</span><ArrowRight size={14} aria-hidden="true" /></div>
+			<div className="asset-project-foot"><span>{domain || niceCategory(asset.category, t)}<br />{t("projectCardBacklinks", { count: backlinks.total, pending: backlinks.pending })}</span><ArrowRight size={14} aria-hidden="true" /></div>
 		</div>
 	</Link>;
 }
@@ -441,6 +441,17 @@ export function AssetList() {
 	const kind = validKind(rawKind ?? "project");
 	const { data, search } = useAppContext();
 	const { t, i18n } = useTranslation();
+	const backlinksByAsset = useMemo(() => {
+		const counts = new Map<string, { total: number; pending: number }>();
+		for (const submission of data.submissions) {
+			if (submission.deleted) continue;
+			const count = counts.get(submission.assetId) ?? { total: 0, pending: 0 };
+			count.total += 1;
+			if (submission.status === "verify") count.pending += 1;
+			counts.set(submission.assetId, count);
+		}
+		return counts;
+	}, [data.submissions]);
 	const [categories, setCategories] = useState<Record<string, string>>(() =>
 		Object.fromEntries(
 			kinds.map((k) => [
@@ -579,7 +590,7 @@ export function AssetList() {
 				{!assets.length && <div className="empty"><strong>{category || tag || normalizedSearch ? t("noMatches") : t("none")}</strong></div>}
 			</section> : <section className={`asset-list-content ${kind === "project" ? "asset-project-grid" : kind === "account" ? "asset-account-grid" : "asset-library-grid"}`}>
 				{assets.length ? (
-					assets.map((a) => kind === "project" ? <ProjectCard asset={a} search={search} key={a.id} /> : kind === "account" ? <AccountCard asset={a} search={search} connectionCount={data.relations.filter((relation) => !relation.deleted && liveIds.has(relation.from) && liveIds.has(relation.to) && (relation.from === a.id || relation.to === a.id)).length} key={a.id} /> : <LibraryCard asset={a} search={search} key={a.id} />)
+					assets.map((a) => kind === "project" ? <ProjectCard asset={a} search={search} backlinks={backlinksByAsset.get(a.id) ?? { total: 0, pending: 0 }} key={a.id} /> : kind === "account" ? <AccountCard asset={a} search={search} connectionCount={data.relations.filter((relation) => !relation.deleted && liveIds.has(relation.from) && liveIds.has(relation.to) && (relation.from === a.id || relation.to === a.id)).length} key={a.id} /> : <LibraryCard asset={a} search={search} key={a.id} />)
 				) : (
 					category || tag || normalizedSearch ? (
 						<div className="empty"><strong>{t("noMatches")}</strong></div>

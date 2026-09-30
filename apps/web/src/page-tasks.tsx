@@ -1,4 +1,5 @@
 import { lazy, Suspense, useState } from "react";
+import { useRouterState } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { Plus } from "lucide-react";
 import { Button } from "./components/ui/button";
@@ -18,6 +19,7 @@ export function TaskPage() {
 	const [edit, setEdit] = useState<"simple" | "maintenance" | null>(null);
 	const [filter, setFilter] = useState<"all" | "pending" | "done">("all");
 	const [selectedPlanId, setSelectedPlanId] = useState("");
+	const taskHash = useRouterState({ select: (state) => state.location.hash });
 	const tasks = data.tasks
 		.filter((task) => !task.deleted)
 		.sort((a, b) => {
@@ -37,8 +39,14 @@ export function TaskPage() {
 	const visibleTasks = tasks.filter(
 		(task) => filter === "all" || (filter === "done" ? task.done : !task.done),
 	);
-	useSearchRowLocation("task-", tasks.map((task) => task.id), visibleTasks.map((task) => task.id), () => setFilter("all"));
 	const plans = tasks.filter((task) => task.maintenancePlan);
+	useSearchRowLocation("task-", tasks.map((task) => task.id), visibleTasks.map((task) => task.id), () => {
+		setFilter("all");
+		try {
+			const target = decodeURIComponent(taskHash.replace(/^#/, ""));
+			if (target.startsWith("task-") && plans.some((task) => task.id === target.slice(5))) setSelectedPlanId(target.slice(5));
+		} catch { /* Invalid hashes do not change the selected plan. */ }
+	});
 	const selectedPlan = plans.find((task) => task.id === selectedPlanId) ?? plans[0];
 	const plan = selectedPlan?.maintenancePlan;
 	const asset = data.assets.find((item) => item.id === selectedPlan?.assetId && !item.deleted);
