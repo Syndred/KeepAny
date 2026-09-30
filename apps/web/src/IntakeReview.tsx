@@ -46,14 +46,18 @@ export function IntakeReview() {
 	useSearchRowLocation("intake-review-", rows.map((row) => row.id), rows.map((row) => row.id), undefined, (id) => {
 		let active = true;
 		const pendingAtRead = pendingSaves.current.get(id);
-		void getReviewedCandidate(id).then((latest) => {
+		void (async () => {
+			try { await pendingAtRead; }
+			catch { return; }
+			if (!active) return;
+			const latest = await getReviewedCandidate(id);
 			if (!active || !latest || inFlight.current.has(id) || savingIdsRef.current.has(id)
 				|| pendingAtRead !== pendingSaves.current.get(id)) return;
 			drafts.current.delete(id);
 			setRows((current) => current.some((row) => row.id === id)
 				? current.map((row) => row.id === id ? latest : row)
 				: [...current, latest]);
-		}).catch(() => { if (active) setMessage(t("error")); });
+		})().catch(() => { if (active) setMessage(t("error")); });
 		return () => { active = false; };
 	});
 	const refresh = async () => {

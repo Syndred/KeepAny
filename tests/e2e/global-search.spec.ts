@@ -231,6 +231,50 @@ test("a late target read does not replace a candidate draft queued after search 
 	} finally { await other.close(); }
 });
 
+test("rejected candidate autosave keeps its draft and error on first and repeated search hashes", async ({ context, page }) => {
+	await page.goto("/intake");
+	await page.getByRole("button", { name: "Spreadsheet", exact: true }).click();
+	await page.locator("#csv-file").setInputFiles({ name: "failed-draft-search.csv", mimeType: "text/csv", buffer: Buffer.from("name,kind\nPersisted candidate title,project") });
+	const row = page.locator(".intake-review-row");
+	await expect(row).toHaveCount(1);
+	const rowId = await row.getAttribute("id");
+	if (!rowId) throw Error("failed-draft-row-id-missing");
+	const candidateId = rowId.slice("intake-review-".length);
+	await page.evaluate(async ({ modulePath, candidateId }) => {
+		const { localRepository } = await import(modulePath);
+		const repository = await localRepository();
+		repository.fileStore.intakeReview.hook("updating", (_changes: Record<string, unknown>, id: string) => {
+			if (id === candidateId) throw Error("test-intake-write-rejected");
+		});
+	}, { modulePath: repositoryUrl, candidateId });
+	const input = row.getByLabel("Name", { exact: true });
+	await input.fill("Unsaved candidate draft");
+	const alert = row.getByRole("alert");
+	await expect(alert).toBeVisible();
+	const originalError = await alert.textContent();
+	await expect(row.getByRole("status")).toHaveCount(0);
+	expect(await page.evaluate(async ({ modulePath, candidateId }) => {
+		const { localRepository } = await import(modulePath);
+		return (await (await localRepository()).fileStore.intakeReview.get(candidateId)).asset.name;
+	}, { modulePath: repositoryUrl, candidateId })).toBe("Persisted candidate title");
+	const other = await context.newPage();
+	try {
+		await other.goto("/intake");
+		await other.locator(".intake-review-row").getByRole("button", { name: "Confirm and save" }).click();
+		await expect(other.locator(".intake-review-row")).toContainText("Confirmed");
+		for (let activation = 0; activation < 2; activation++) {
+			await query(page, "failed-draft-search.csv");
+			await expect(results(page)).toHaveCount(1);
+			await results(page).click();
+			await focusedRow(page, rowId);
+			await page.evaluate(() => new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))));
+			await expect(input).toHaveValue("Unsaved candidate draft");
+			await expect(alert).toHaveText(originalError ?? "");
+			await expect(row.getByRole("status")).toHaveCount(0);
+		}
+	} finally { await other.close(); }
+});
+
 test("failed candidate metadata read conservatively excludes asset descriptions while public names remain searchable", async ({ page }) => {
 	await page.goto("/");
 	await fixture(page);
