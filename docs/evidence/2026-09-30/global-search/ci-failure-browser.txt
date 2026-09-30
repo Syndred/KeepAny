@@ -1,0 +1,103 @@
+Verify delivered files and offline backup flow
+2m 19s
+1
+Run pnpm exec playwright test --config playwright.release.config.ts --reporter=dot
+
+7
+
+
+8
+Running 20 tests using 2 workers
+
+9
+·············T······
+
+10
+
+
+11
+  1) tests/e2e/custom-category-release.spec.ts:67:2 › en-US fixed package category identity survives UI rename and encrypted clean restore 
+
+12
+
+
+13
+    Test timeout of 90000ms exceeded.
+
+14
+
+
+15
+    Error: browserContext.close: Target page, context or browser has been closed
+
+16
+
+
+17
+      130 | 					expect(final.assets.find((asset) => asset.name === `${kind} Second`)?.category).toBe("");
+
+18
+      131 | 				}
+
+19
+    > 132 | 			} finally { await destination.close(); }
+
+20
+          | 			            ^
+
+21
+      133 | 			expect(errors).toEqual([]);
+
+22
+      134 | 		} finally { await source.close(); }
+
+23
+      135 | 	});
+
+24
+        at /home/runner/work/KeepAny/KeepAny/tests/e2e/custom-category-release.spec.ts:132:16
+
+25
+
+
+26
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+
+27
+    test-results/custom-category-release-en-1e42c-and-encrypted-clean-restore/test-failed-2.png
+
+28
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+29
+
+
+30
+    attachment #2: screenshot (image/png) ──────────────────────────────────────────────────────────
+
+31
+    test-results/custom-category-release-en-1e42c-and-encrypted-clean-restore/test-failed-1.png
+
+32
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+33
+
+
+34
+    Error Context: test-results/custom-category-release-en-1e42c-and-encrypted-clean-restore/error-context.md
+
+35
+
+
+36
+  1 failed
+
+37
+    tests/e2e/custom-category-release.spec.ts:67:2 › en-US fixed package category identity survives UI rename and encrypted clean restore 
+
+38
+  19 passed (2.3m)
+
+39
+Error: Process completed with exit code 1.

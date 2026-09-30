@@ -92,7 +92,20 @@
   },
   "frozenReferenceSha256": "61c78012a377946b88d8888cc030ab3ba5eb78e01227432b41aa5b4ac88151d7",
   "remoteCi": {
-    "status": "Pending latest push; previous category CI #29 does not cover this search slice"
+    "status": "Failure",
+    "url": "https://github.com/Syndred/KeepAny/actions/runs/36659927080",
+    "head": "8a79f6d",
+    "duration": "5m 23s",
+    "jobDuration": "5m 19s",
+    "unitFilesPassed": 62,
+    "unitTestsPassed": 420,
+    "unitSkipped": 0,
+    "build": "passed",
+    "committedBundle": "passed",
+    "fixedBrowserPassed": 19,
+    "fixedBrowserFailed": 1,
+    "failure": "English category encrypted restore exceeded 90000ms total budget; cleanup masked original operation",
+    "followup": "39a189d bounds actions at 15s, gives category multi-download test 150s, and preserves original failure; next CI pending"
   },
   "notCompleted": [
     "Whole frozen UI state acceptance",
