@@ -1,0 +1,112 @@
+{
+  "schema": "keepany.delivery.pdf-expense.v1",
+  "generatedAt": "2026-09-30T01:03:52.012333+00:00",
+  "sourceHead": "d2c1398c811e7ae61ab210cb872d281dd052ebd1",
+  "sourceCommits": {
+    "search": "25e7f6e",
+    "licenses": "b4c07ab",
+    "tasks": "6c86ccd",
+    "invoice": "29445d6",
+    "releaseAcceptance": "d2c1398"
+  },
+  "release": {
+    "entry": "index-DTptK4Ob.js",
+    "indexSha256": "8e24b75ad6aecf6b8ec9745e6ce8ec136016c5a3164a5bcccb4a4787969ff269",
+    "currentFiles": 72,
+    "retainedFiles": 272,
+    "verification": "node scripts/verify-local-release.mjs; byte for byte current files, SHA-256 retained files",
+    "precacheEntries": 69,
+    "precacheKiB": 2564.33
+  },
+  "localUnit": {
+    "files": 60,
+    "total": 368,
+    "passed": 362,
+    "failed": 0,
+    "skipped": 6,
+    "skipReason": "KEEPANY_TEST_DATABASE_URL not configured; six PostgreSQL cases skipped locally; CI configured with isolated PostgreSQL"
+  },
+  "fixedBrowser": {
+    "startTime": "2026-09-30T01:00:43.648Z",
+    "duration": 34668.61,
+    "expected": 16,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "sourceBrowser": {
+    "invoiceAndExistingFinanceAndPdf": {
+      "passed": 10,
+      "port": 4174
+    },
+    "recovery": {
+      "passed": 4,
+      "port": 4174,
+      "boundary": "explicit injected write faults in disposable contexts; no physical power-loss or quota claim"
+    },
+    "searchAndShell": {
+      "passed": 4,
+      "port": 4196,
+      "fixtures": "synthetic records seeded in isolated development context"
+    },
+    "ordinaryReminder": {
+      "passed": 4,
+      "port": 4196,
+      "fixtures": "one synthetic item and frozen date in isolated development context"
+    },
+    "expandedCore": {
+      "passed": 2,
+      "port": 4174,
+      "flow": "actual UI item location search, linked reminder postponement, encrypted download and fresh restore"
+    }
+  },
+  "originalChrome": {
+    "tabId": "512546077",
+    "origin": "http://127.0.0.1:4180/",
+    "viewport": {
+      "width": 1230,
+      "height": 876
+    },
+    "beforeEntry": "index-BkwkZDwn.js",
+    "afterEntry": "index-DTptK4Ob.js",
+    "assetsBefore": 0,
+    "assetsAfter": 0,
+    "actions": [
+      "normal reload after checking no dialog",
+      "opened intake/PDF mode",
+      "returned to overview"
+    ],
+    "injectedFixtures": false,
+    "clearedStorage": false
+  },
+  "referenceSha256": "61c78012a377946b88d8888cc030ab3ba5eb78e01227432b41aa5b4ac88151d7",
+  "legalMaterials": {
+    "files": 13,
+    "verifiedPackages": 21,
+    "unresolvedPackages": 10,
+    "distributionReviewComplete": false
+  },
+  "pending": [
+    "custom category rename preserves ID and migrates name references with a recoverable journal",
+    "complete frozen UI state acceptance",
+    "physical devices, application storage-failure recovery and power-loss",
+    "production environment and security acceptance",
+    "ten unresolved license-text provenance gaps",
+    "key epoch implementation remains paused in stash"
+  ],
+  "goalComplete": false,
+  "releaseCommit": "1b128271fbc0c2d9ff47187d0f7ecc12c29ab8c7",
+  "remoteCi": {
+    "url": "https://github.com/Syndred/KeepAny/actions/runs/36653354303",
+    "status": "Success",
+    "duration": "5m 26s",
+    "unitFiles": 60,
+    "unitPassed": 368,
+    "unitSkipped": 0,
+    "postgres": true,
+    "build": "passed",
+    "bundleVerification": "passed",
+    "releaseBrowser": "passed",
+    "observedVia": "authenticated Chrome DOM summary and successful verify job"
+  }
+}
