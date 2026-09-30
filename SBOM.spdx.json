@@ -682,9 +682,9 @@
       "licenseConcluded": "NOASSERTION",
       "licenseDeclared": "Apache-2.0",
       "copyrightText": "NOASSERTION",
-      "sourceInfo": "Installed metadata: node_modules/.pnpm/@aws-sdk+credential-provider-http@3.972.74/node_modules/@aws-sdk/credential-provider-http/package.json; package-root license/notice files: none; metadata repository: https://github.com/aws/aws-sdk-js-v3.git; direct scope: transitive. Third-party material manifest status: unresolved; materials: none; reason: npm 元数据没有 gitHead；本轮未得到与此包补丁版本一一对应的已核验上游 commit/tag，未使用默认分支文本。",
+      "sourceInfo": "Installed metadata: node_modules/.pnpm/@aws-sdk+credential-provider-http@3.972.74/node_modules/@aws-sdk/credential-provider-http/package.json; package-root license/notice files: none; metadata repository: https://github.com/aws/aws-sdk-js-v3.git; direct scope: transitive. Third-party material manifest status: unresolved; materials: none; reason: npm 元数据缺少 gitHead 且该版本没有可用 attestation/provenance；已查官方 npm 版本元数据 https://registry.npmjs.org/@aws-sdk%2fcredential-provider-http/3.972.74 与精确 tarball https://registry.npmjs.org/@aws-sdk/credential-provider-http/-/credential-provider-http-3.972.74.tgz（包内未找到 LICENSE/LICENCE/COPYING/NOTICE 文件），以及上游仓库 https://github.com/aws/aws-sdk-js-v3.git 的对应包目录；仍缺少与该补丁版本一一对应的上游 commit/tag、许可证原文路径与原文 hash，因此保持未解决，未使用默认分支文本。",
       "homepage": "https://github.com/aws/aws-sdk-js-v3/tree/main/packages-internal/credential-provider-http",
-      "licenseComments": "Installed package root lacks LICENSE/LICENCE/COPYING text; npm 元数据没有 gitHead；本轮未得到与此包补丁版本一一对应的已核验上游 commit/tag，未使用默认分支文本。"
+      "licenseComments": "Installed package root lacks LICENSE/LICENCE/COPYING text; npm 元数据缺少 gitHead 且该版本没有可用 attestation/provenance；已查官方 npm 版本元数据 https://registry.npmjs.org/@aws-sdk%2fcredential-provider-http/3.972.74 与精确 tarball https://registry.npmjs.org/@aws-sdk/credential-provider-http/-/credential-provider-http-3.972.74.tgz（包内未找到 LICENSE/LICENCE/COPYING/NOTICE 文件），以及上游仓库 https://github.com/aws/aws-sdk-js-v3.git 的对应包目录；仍缺少与该补丁版本一一对应的上游 commit/tag、许可证原文路径与原文 hash，因此保持未解决，未使用默认分支文本。"
     },
     {
       "SPDXID": "SPDXRef-Package-7",
@@ -707,9 +707,9 @@
       "licenseConcluded": "NOASSERTION",
       "licenseDeclared": "Apache-2.0",
       "copyrightText": "NOASSERTION",
-      "sourceInfo": "Installed metadata: node_modules/.pnpm/@aws-sdk+credential-provider-login@3.972.79/node_modules/@aws-sdk/credential-provider-login/package.json; package-root license/notice files: none; metadata repository: https://github.com/aws/aws-sdk-js-v3.git; direct scope: transitive. Third-party material manifest status: unresolved; materials: none; reason: npm 元数据没有 gitHead；本轮未得到与此包补丁版本一一对应的已核验上游 commit/tag，未使用默认分支文本。",
+      "sourceInfo": "Installed metadata: node_modules/.pnpm/@aws-sdk+credential-provider-login@3.972.79/node_modules/@aws-sdk/credential-provider-login/package.json; package-root license/notice files: none; metadata repository: https://github.com/aws/aws-sdk-js-v3.git; direct scope: transitive. Third-party material manifest status: unresolved; materials: none; reason: npm 元数据缺少 gitHead 且该版本没有可用 attestation/provenance；已查官方 npm 版本元数据 https://registry.npmjs.org/@aws-sdk%2fcredential-provider-login/3.972.79 与精确 tarball https://registry.npmjs.org/@aws-sdk/credential-provider-login/-/credential-provider-login-3.972.79.tgz（包内未找到 LICENSE/LICENCE/COPYING/NOTICE 文件），以及上游仓库 https://github.com/aws/aws-sdk-js-v3.git 的对应包目录；仍缺少与该补丁版本一一对应的上游 commit/tag、许可证原文路径与原文 hash，因此保持未解决，未使用默认分支文本。",
       "homepage": "https://github.com/aws/aws-sdk-js-v3/tree/main/packages-internal/credential-provider-login",
-      "licenseComments": "Installed package root lacks LICENSE/LICENCE/COPYING text; npm 元数据没有 gitHead；本轮未得到与此包补丁版本一一对应的已核验上游 commit/tag，未使用默认分支文本。"
+      "licenseComments": "Installed package root lacks LICENSE/LICENCE/COPYING text; npm 元数据缺少 gitHead 且该版本没有可用 attestation/provenance；已查官方 npm 版本元数据 https://registry.npmjs.org/@aws-sdk%2fcredential-provider-login/3.972.79 与精确 tarball https://registry.npmjs.org/@aws-sdk/credential-provider-login/-/credential-provider-login-3.972.79.tgz（包内未找到 LICENSE/LICENCE/COPYING/NOTICE 文件），以及上游仓库 https://github.com/aws/aws-sdk-js-v3.git 的对应包目录；仍缺少与该补丁版本一一对应的上游 commit/tag、许可证原文路径与原文 hash，因此保持未解决，未使用默认分支文本。"
     },
     {
       "SPDXID": "SPDXRef-Package-9",
@@ -780,9 +780,9 @@
       "licenseConcluded": "NOASSERTION",
       "licenseDeclared": "Apache-2.0",
       "copyrightText": "NOASSERTION",
-      "sourceInfo": "Installed metadata: node_modules/.pnpm/@aws-sdk+nested-clients@3.997.46/node_modules/@aws-sdk/nested-clients/package.json; package-root license/notice files: none; metadata repository: https://github.com/aws/aws-sdk-js-v3.git; direct scope: transitive. Third-party material manifest status: unresolved; materials: none; reason: npm 元数据没有 gitHead；本轮未得到与此包补丁版本一一对应的已核验上游 commit/tag，未使用默认分支文本。",
+      "sourceInfo": "Installed metadata: node_modules/.pnpm/@aws-sdk+nested-clients@3.997.46/node_modules/@aws-sdk/nested-clients/package.json; package-root license/notice files: none; metadata repository: https://github.com/aws/aws-sdk-js-v3.git; direct scope: transitive. Third-party material manifest status: unresolved; materials: none; reason: npm 元数据缺少 gitHead 且该版本没有可用 attestation/provenance；已查官方 npm 版本元数据 https://registry.npmjs.org/@aws-sdk%2fnested-clients/3.997.46 与精确 tarball https://registry.npmjs.org/@aws-sdk/nested-clients/-/nested-clients-3.997.46.tgz（包内未找到 LICENSE/LICENCE/COPYING/NOTICE 文件），以及上游仓库 https://github.com/aws/aws-sdk-js-v3.git 的对应包目录；仍缺少与该补丁版本一一对应的上游 commit/tag、许可证原文路径与原文 hash，因此保持未解决，未使用默认分支文本。",
       "homepage": "https://github.com/aws/aws-sdk-js-v3/tree/main/packages/nested-clients",
-      "licenseComments": "Installed package root lacks LICENSE/LICENCE/COPYING text; npm 元数据没有 gitHead；本轮未得到与此包补丁版本一一对应的已核验上游 commit/tag，未使用默认分支文本。"
+      "licenseComments": "Installed package root lacks LICENSE/LICENCE/COPYING text; npm 元数据缺少 gitHead 且该版本没有可用 attestation/provenance；已查官方 npm 版本元数据 https://registry.npmjs.org/@aws-sdk%2fnested-clients/3.997.46 与精确 tarball https://registry.npmjs.org/@aws-sdk/nested-clients/-/nested-clients-3.997.46.tgz（包内未找到 LICENSE/LICENCE/COPYING/NOTICE 文件），以及上游仓库 https://github.com/aws/aws-sdk-js-v3.git 的对应包目录；仍缺少与该补丁版本一一对应的上游 commit/tag、许可证原文路径与原文 hash，因此保持未解决，未使用默认分支文本。"
     },
     {
       "SPDXID": "SPDXRef-Package-15",
@@ -2016,8 +2016,8 @@
       "licenseConcluded": "NOASSERTION",
       "licenseDeclared": "MIT",
       "copyrightText": "NOASSERTION",
-      "sourceInfo": "Installed metadata: node_modules/.pnpm/@better-auth+utils@0.4.2/node_modules/@better-auth/utils/package.json; package-root license/notice files: none; metadata repository: git+https://github.com/better-auth/utils.git; direct scope: transitive. Third-party material manifest status: unresolved; materials: none; reason: 上游 v0.4.2 tag commit 为 b20329a32d78f1f9bcc088bbd6f982b28c4192f1，但本轮核验的提交树中未定位到 LICENSE/LICENCE/COPYING/NOTICE 原文。",
-      "licenseComments": "Installed package root lacks LICENSE/LICENCE/COPYING text; 上游 v0.4.2 tag commit 为 b20329a32d78f1f9bcc088bbd6f982b28c4192f1，但本轮核验的提交树中未定位到 LICENSE/LICENCE/COPYING/NOTICE 原文。"
+      "sourceInfo": "Installed metadata: node_modules/.pnpm/@better-auth+utils@0.4.2/node_modules/@better-auth/utils/package.json; package-root license/notice files: none; metadata repository: git+https://github.com/better-auth/utils.git; direct scope: transitive. Third-party material manifest status: unresolved; materials: none; reason: 官方 npm SLSA provenance https://registry.npmjs.org/-/npm/v1/attestations/@better-auth%2futils@0.4.2 已确认 v0.4.2 -> b20329a32d78f1f9bcc088bbd6f982b28c4192f1 的精确版本映射；已查官方 npm 版本元数据 https://registry.npmjs.org/@better-auth%2futils/0.4.2、精确 tarball https://registry.npmjs.org/@better-auth/utils/-/utils-0.4.2.tgz 和提交树 https://github.com/better-auth/utils/tree/b20329a32d78f1f9bcc088bbd6f982b28c4192f1，但该提交树与包内均未定位 LICENSE/LICENCE/COPYING/NOTICE 原文，缺少可纳入材料的许可证原文路径与 hash，因此保持未解决。",
+      "licenseComments": "Installed package root lacks LICENSE/LICENCE/COPYING text; 官方 npm SLSA provenance https://registry.npmjs.org/-/npm/v1/attestations/@better-auth%2futils@0.4.2 已确认 v0.4.2 -> b20329a32d78f1f9bcc088bbd6f982b28c4192f1 的精确版本映射；已查官方 npm 版本元数据 https://registry.npmjs.org/@better-auth%2futils/0.4.2、精确 tarball https://registry.npmjs.org/@better-auth/utils/-/utils-0.4.2.tgz 和提交树 https://github.com/better-auth/utils/tree/b20329a32d78f1f9bcc088bbd6f982b28c4192f1，但该提交树与包内均未定位 LICENSE/LICENCE/COPYING/NOTICE 原文，缺少可纳入材料的许可证原文路径与 hash，因此保持未解决。"
     },
     {
       "SPDXID": "SPDXRef-Package-119",
@@ -2028,8 +2028,8 @@
       "licenseConcluded": "NOASSERTION",
       "licenseDeclared": "MIT",
       "copyrightText": "NOASSERTION",
-      "sourceInfo": "Installed metadata: node_modules/.pnpm/@better-auth+utils@0.5.0/node_modules/@better-auth/utils/package.json; package-root license/notice files: none; metadata repository: git+https://github.com/better-auth/utils.git; direct scope: transitive. Third-party material manifest status: unresolved; materials: none; reason: 上游 v0.5.0 tag commit 为 f03c1c76aff7bfa3f4de4af47b112315c770a0d1，但本轮核验的提交树中未定位到 LICENSE/LICENCE/COPYING/NOTICE 原文。",
-      "licenseComments": "Installed package root lacks LICENSE/LICENCE/COPYING text; 上游 v0.5.0 tag commit 为 f03c1c76aff7bfa3f4de4af47b112315c770a0d1，但本轮核验的提交树中未定位到 LICENSE/LICENCE/COPYING/NOTICE 原文。"
+      "sourceInfo": "Installed metadata: node_modules/.pnpm/@better-auth+utils@0.5.0/node_modules/@better-auth/utils/package.json; package-root license/notice files: none; metadata repository: git+https://github.com/better-auth/utils.git; direct scope: transitive. Third-party material manifest status: unresolved; materials: none; reason: 官方 npm SLSA provenance https://registry.npmjs.org/-/npm/v1/attestations/@better-auth%2futils@0.5.0 已确认 v0.5.0 -> f03c1c76aff7bfa3f4de4af47b112315c770a0d1 的精确版本映射；已查官方 npm 版本元数据 https://registry.npmjs.org/@better-auth%2futils/0.5.0、精确 tarball https://registry.npmjs.org/@better-auth/utils/-/utils-0.5.0.tgz 和提交树 https://github.com/better-auth/utils/tree/f03c1c76aff7bfa3f4de4af47b112315c770a0d1，但该提交树与包内均未定位 LICENSE/LICENCE/COPYING/NOTICE 原文，缺少可纳入材料的许可证原文路径与 hash，因此保持未解决。",
+      "licenseComments": "Installed package root lacks LICENSE/LICENCE/COPYING text; 官方 npm SLSA provenance https://registry.npmjs.org/-/npm/v1/attestations/@better-auth%2futils@0.5.0 已确认 v0.5.0 -> f03c1c76aff7bfa3f4de4af47b112315c770a0d1 的精确版本映射；已查官方 npm 版本元数据 https://registry.npmjs.org/@better-auth%2futils/0.5.0、精确 tarball https://registry.npmjs.org/@better-auth/utils/-/utils-0.5.0.tgz 和提交树 https://github.com/better-auth/utils/tree/f03c1c76aff7bfa3f4de4af47b112315c770a0d1，但该提交树与包内均未定位 LICENSE/LICENCE/COPYING/NOTICE 原文，缺少可纳入材料的许可证原文路径与 hash，因此保持未解决。"
     },
     {
       "SPDXID": "SPDXRef-Package-120",
@@ -2298,8 +2298,8 @@
       "licenseConcluded": "NOASSERTION",
       "licenseDeclared": "MIT",
       "copyrightText": "NOASSERTION",
-      "sourceInfo": "Installed metadata: node_modules/.pnpm/@napi-rs+canvas-darwin-arm64@1.0.9/node_modules/@napi-rs/canvas-darwin-arm64/package.json; package-root license/notice files: none; metadata repository: git+https://github.com/Brooooooklyn/canvas.git; direct scope: transitive. Third-party material manifest status: unresolved; materials: none; reason: npm 元数据没有 gitHead；虽可访问候选 tag 文本，本轮未得到独立核验的 tag commit，保持未解决。",
-      "licenseComments": "Installed package root lacks LICENSE/LICENCE/COPYING text; npm 元数据没有 gitHead；虽可访问候选 tag 文本，本轮未得到独立核验的 tag commit，保持未解决。"
+      "sourceInfo": "Installed metadata: node_modules/.pnpm/@napi-rs+canvas-darwin-arm64@1.0.9/node_modules/@napi-rs/canvas-darwin-arm64/package.json; package-root license/notice files: none; metadata repository: git+https://github.com/Brooooooklyn/canvas.git; direct scope: transitive. Third-party material manifest status: verified; materials: canvas-mit; reason: verified source files recorded in legal/third-party/manifest.json",
+      "licenseComments": "Installed package root lacks LICENSE/LICENCE/COPYING text; an upstream text and provenance record is retained in legal/third-party/manifest.json."
     },
     {
       "SPDXID": "SPDXRef-Package-143",
@@ -4057,8 +4057,8 @@
       "licenseConcluded": "NOASSERTION",
       "licenseDeclared": "MIT",
       "copyrightText": "NOASSERTION",
-      "sourceInfo": "Installed metadata: node_modules/.pnpm/err-code@3.0.1/node_modules/err-code/package.json; package-root license/notice files: none; metadata repository: git://github.com/IndigoUnited/js-err-code.git; direct scope: transitive. Third-party material manifest status: unresolved; materials: none; reason: npm gitHead 为 830d141eb633c21b842df3f78aba5786fee1b31d；本轮核验的提交树中未定位到 LICENSE/LICENCE/COPYING/NOTICE 原文。",
-      "licenseComments": "Installed package root lacks LICENSE/LICENCE/COPYING text; npm gitHead 为 830d141eb633c21b842df3f78aba5786fee1b31d；本轮核验的提交树中未定位到 LICENSE/LICENCE/COPYING/NOTICE 原文。"
+      "sourceInfo": "Installed metadata: node_modules/.pnpm/err-code@3.0.1/node_modules/err-code/package.json; package-root license/notice files: none; metadata repository: git://github.com/IndigoUnited/js-err-code.git; direct scope: transitive. Third-party material manifest status: unresolved; materials: none; reason: npm gitHead 830d141eb633c21b842df3f78aba5786fee1b31d 提供了精确提交映射；已查官方 npm 版本元数据 https://registry.npmjs.org/err-code/3.0.1、精确 tarball https://registry.npmjs.org/err-code/-/err-code-3.0.1.tgz 和提交树 https://github.com/IndigoUnited/js-err-code/tree/830d141eb633c21b842df3f78aba5786fee1b31d，但提交树中未定位 LICENSE/LICENCE/COPYING/NOTICE 原文，缺少可纳入材料的许可证原文路径与 hash，因此保持未解决。",
+      "licenseComments": "Installed package root lacks LICENSE/LICENCE/COPYING text; npm gitHead 830d141eb633c21b842df3f78aba5786fee1b31d 提供了精确提交映射；已查官方 npm 版本元数据 https://registry.npmjs.org/err-code/3.0.1、精确 tarball https://registry.npmjs.org/err-code/-/err-code-3.0.1.tgz 和提交树 https://github.com/IndigoUnited/js-err-code/tree/830d141eb633c21b842df3f78aba5786fee1b31d，但提交树中未定位 LICENSE/LICENCE/COPYING/NOTICE 原文，缺少可纳入材料的许可证原文路径与 hash，因此保持未解决。"
     },
     {
       "SPDXID": "SPDXRef-Package-292",
@@ -4362,9 +4362,9 @@
       "licenseConcluded": "NOASSERTION",
       "licenseDeclared": "Apache-2.0",
       "copyrightText": "NOASSERTION",
-      "sourceInfo": "Installed metadata: node_modules/.pnpm/filelist@1.0.6/node_modules/filelist/package.json; package-root license/notice files: none; metadata repository: git://github.com/mde/filelist.git; direct scope: transitive. Third-party material manifest status: unresolved; materials: none; reason: npm 元数据没有 gitHead；本轮未得到与 1.0.6 精确对应且可核验的上游 tag commit。",
+      "sourceInfo": "Installed metadata: node_modules/.pnpm/filelist@1.0.6/node_modules/filelist/package.json; package-root license/notice files: none; metadata repository: git://github.com/mde/filelist.git; direct scope: transitive. Third-party material manifest status: verified; materials: filelist-apache; reason: verified source files recorded in legal/third-party/manifest.json",
       "homepage": "https://github.com/mde/filelist",
-      "licenseComments": "Installed package root lacks LICENSE/LICENCE/COPYING text; npm 元数据没有 gitHead；本轮未得到与 1.0.6 精确对应且可核验的上游 tag commit。"
+      "licenseComments": "Installed package root lacks LICENSE/LICENCE/COPYING text; an upstream text and provenance record is retained in legal/third-party/manifest.json."
     },
     {
       "SPDXID": "SPDXRef-Package-318",
@@ -4516,9 +4516,9 @@
       "licenseConcluded": "NOASSERTION",
       "licenseDeclared": "MIT",
       "copyrightText": "NOASSERTION",
-      "sourceInfo": "Installed metadata: node_modules/.pnpm/get-browser-rtc@1.1.0/node_modules/get-browser-rtc/package.json; package-root license/notice files: none; metadata repository: git://github.com/substack/get-browser-rtc.git; direct scope: transitive. Third-party material manifest status: unresolved; materials: none; reason: npm gitHead 为 f4c75dce0ac4fb2af0256dc508fbb23436c54db3；本轮核验的提交树中未定位到 LICENSE/LICENCE/COPYING/NOTICE 原文。",
+      "sourceInfo": "Installed metadata: node_modules/.pnpm/get-browser-rtc@1.1.0/node_modules/get-browser-rtc/package.json; package-root license/notice files: none; metadata repository: git://github.com/substack/get-browser-rtc.git; direct scope: transitive. Third-party material manifest status: unresolved; materials: none; reason: npm gitHead f4c75dce0ac4fb2af0256dc508fbb23436c54db3 提供了精确提交映射；已查官方 npm 版本元数据 https://registry.npmjs.org/get-browser-rtc/1.1.0、精确 tarball https://registry.npmjs.org/get-browser-rtc/-/get-browser-rtc-1.1.0.tgz 和提交树 https://github.com/substack/get-browser-rtc/tree/f4c75dce0ac4fb2af0256dc508fbb23436c54db3，但提交树中未定位 LICENSE/LICENCE/COPYING/NOTICE 原文，缺少可纳入材料的许可证原文路径与 hash，因此保持未解决。",
       "homepage": "https://github.com/substack/get-browser-rtc#readme",
-      "licenseComments": "Installed package root lacks LICENSE/LICENCE/COPYING text; npm gitHead 为 f4c75dce0ac4fb2af0256dc508fbb23436c54db3；本轮核验的提交树中未定位到 LICENSE/LICENCE/COPYING/NOTICE 原文。"
+      "licenseComments": "Installed package root lacks LICENSE/LICENCE/COPYING text; npm gitHead f4c75dce0ac4fb2af0256dc508fbb23436c54db3 提供了精确提交映射；已查官方 npm 版本元数据 https://registry.npmjs.org/get-browser-rtc/1.1.0、精确 tarball https://registry.npmjs.org/get-browser-rtc/-/get-browser-rtc-1.1.0.tgz 和提交树 https://github.com/substack/get-browser-rtc/tree/f4c75dce0ac4fb2af0256dc508fbb23436c54db3，但提交树中未定位 LICENSE/LICENCE/COPYING/NOTICE 原文，缺少可纳入材料的许可证原文路径与 hash，因此保持未解决。"
     },
     {
       "SPDXID": "SPDXRef-Package-331",
@@ -4972,8 +4972,8 @@
       "licenseConcluded": "NOASSERTION",
       "licenseDeclared": "MIT",
       "copyrightText": "NOASSERTION",
-      "sourceInfo": "Installed metadata: node_modules/.pnpm/is-module@1.0.0/node_modules/is-module/package.json; package-root license/notice files: none; metadata repository: component/is-module; direct scope: transitive. Third-party material manifest status: unresolved; materials: none; reason: npm 元数据没有 gitHead；本轮未得到与 1.0.0 精确对应且可核验的上游 tag commit。",
-      "licenseComments": "Installed package root lacks LICENSE/LICENCE/COPYING text; npm 元数据没有 gitHead；本轮未得到与 1.0.0 精确对应且可核验的上游 tag commit。"
+      "sourceInfo": "Installed metadata: node_modules/.pnpm/is-module@1.0.0/node_modules/is-module/package.json; package-root license/notice files: none; metadata repository: component/is-module; direct scope: transitive. Third-party material manifest status: verified; materials: is-module-mit; reason: verified source files recorded in legal/third-party/manifest.json",
+      "licenseComments": "Installed package root lacks LICENSE/LICENCE/COPYING text; an upstream text and provenance record is retained in legal/third-party/manifest.json."
     },
     {
       "SPDXID": "SPDXRef-Package-370",
@@ -5064,8 +5064,8 @@
       "licenseConcluded": "NOASSERTION",
       "licenseDeclared": "MIT",
       "copyrightText": "NOASSERTION",
-      "sourceInfo": "Installed metadata: node_modules/.pnpm/is-regexp@1.0.0/node_modules/is-regexp/package.json; package-root license/notice files: none; metadata repository: sindresorhus/is-regexp; direct scope: transitive. Third-party material manifest status: unresolved; materials: none; reason: npm 元数据没有 gitHead；本轮未得到与 1.0.0 精确对应且可核验的上游 tag commit。",
-      "licenseComments": "Installed package root lacks LICENSE/LICENCE/COPYING text; npm 元数据没有 gitHead；本轮未得到与 1.0.0 精确对应且可核验的上游 tag commit。"
+      "sourceInfo": "Installed metadata: node_modules/.pnpm/is-regexp@1.0.0/node_modules/is-regexp/package.json; package-root license/notice files: none; metadata repository: sindresorhus/is-regexp; direct scope: transitive. Third-party material manifest status: verified; materials: is-regexp-mit; reason: verified source files recorded in legal/third-party/manifest.json",
+      "licenseComments": "Installed package root lacks LICENSE/LICENCE/COPYING text; an upstream text and provenance record is retained in legal/third-party/manifest.json."
     },
     {
       "SPDXID": "SPDXRef-Package-378",
@@ -5227,8 +5227,8 @@
       "licenseConcluded": "NOASSERTION",
       "licenseDeclared": "Apache-2.0",
       "copyrightText": "NOASSERTION",
-      "sourceInfo": "Installed metadata: node_modules/.pnpm/jake@10.9.4/node_modules/jake/package.json; package-root license/notice files: none; metadata repository: git://github.com/jakejs/jake.git; direct scope: transitive. Third-party material manifest status: unresolved; materials: none; reason: npm 元数据没有 gitHead；本轮未得到与 10.9.4 精确对应且可核验的上游 tag commit。",
-      "licenseComments": "Installed package root lacks LICENSE/LICENCE/COPYING text; npm 元数据没有 gitHead；本轮未得到与 10.9.4 精确对应且可核验的上游 tag commit。"
+      "sourceInfo": "Installed metadata: node_modules/.pnpm/jake@10.9.4/node_modules/jake/package.json; package-root license/notice files: none; metadata repository: git://github.com/jakejs/jake.git; direct scope: transitive. Third-party material manifest status: verified; materials: jake-apache; reason: verified source files recorded in legal/third-party/manifest.json",
+      "licenseComments": "Installed package root lacks LICENSE/LICENCE/COPYING text; an upstream text and provenance record is retained in legal/third-party/manifest.json."
     },
     {
       "SPDXID": "SPDXRef-Package-392",
@@ -5887,9 +5887,9 @@
       "licenseConcluded": "NOASSERTION",
       "licenseDeclared": "MIT",
       "copyrightText": "NOASSERTION",
-      "sourceInfo": "Installed metadata: node_modules/.pnpm/pg-types@2.2.0/node_modules/pg-types/package.json; package-root license/notice files: none; metadata repository: git://github.com/brianc/node-pg-types.git; direct scope: transitive. Third-party material manifest status: unresolved; materials: none; reason: npm gitHead 为 d9d9dfb87eb50914043cbc178c301b7dd3b0c50d；本轮核验的提交树中未定位到 LICENSE/LICENCE/COPYING/NOTICE 原文。",
+      "sourceInfo": "Installed metadata: node_modules/.pnpm/pg-types@2.2.0/node_modules/pg-types/package.json; package-root license/notice files: none; metadata repository: git://github.com/brianc/node-pg-types.git; direct scope: transitive. Third-party material manifest status: unresolved; materials: none; reason: npm gitHead d9d9dfb87eb50914043cbc178c301b7dd3b0c50d 提供了精确提交映射；已查官方 npm 版本元数据 https://registry.npmjs.org/pg-types/2.2.0、精确 tarball https://registry.npmjs.org/pg-types/-/pg-types-2.2.0.tgz 和提交树 https://github.com/brianc/node-pg-types/tree/d9d9dfb87eb50914043cbc178c301b7dd3b0c50d，但提交树中未定位 LICENSE/LICENCE/COPYING/NOTICE 原文，缺少可纳入材料的许可证原文路径与 hash，因此保持未解决。",
       "homepage": "https://github.com/brianc/node-pg-types",
-      "licenseComments": "Installed package root lacks LICENSE/LICENCE/COPYING text; npm gitHead 为 d9d9dfb87eb50914043cbc178c301b7dd3b0c50d；本轮核验的提交树中未定位到 LICENSE/LICENCE/COPYING/NOTICE 原文。"
+      "licenseComments": "Installed package root lacks LICENSE/LICENCE/COPYING text; npm gitHead d9d9dfb87eb50914043cbc178c301b7dd3b0c50d 提供了精确提交映射；已查官方 npm 版本元数据 https://registry.npmjs.org/pg-types/2.2.0、精确 tarball https://registry.npmjs.org/pg-types/-/pg-types-2.2.0.tgz 和提交树 https://github.com/brianc/node-pg-types/tree/d9d9dfb87eb50914043cbc178c301b7dd3b0c50d，但提交树中未定位 LICENSE/LICENCE/COPYING/NOTICE 原文，缺少可纳入材料的许可证原文路径与 hash，因此保持未解决。"
     },
     {
       "SPDXID": "SPDXRef-Package-450",
@@ -5900,8 +5900,8 @@
       "licenseConcluded": "NOASSERTION",
       "licenseDeclared": "MIT",
       "copyrightText": "NOASSERTION",
-      "sourceInfo": "Installed metadata: node_modules/.pnpm/pgpass@1.0.5/node_modules/pgpass/package.json; package-root license/notice files: none; metadata repository: https://github.com/hoegaarden/pgpass.git; direct scope: transitive. Third-party material manifest status: unresolved; materials: none; reason: npm gitHead 为 4230ed5e417ba6044ea7eb80b7c33db9ec301398；本轮核验的提交树中未定位到 LICENSE/LICENCE/COPYING/NOTICE 原文。",
-      "licenseComments": "Installed package root lacks LICENSE/LICENCE/COPYING text; npm gitHead 为 4230ed5e417ba6044ea7eb80b7c33db9ec301398；本轮核验的提交树中未定位到 LICENSE/LICENCE/COPYING/NOTICE 原文。"
+      "sourceInfo": "Installed metadata: node_modules/.pnpm/pgpass@1.0.5/node_modules/pgpass/package.json; package-root license/notice files: none; metadata repository: https://github.com/hoegaarden/pgpass.git; direct scope: transitive. Third-party material manifest status: unresolved; materials: none; reason: npm gitHead 4230ed5e417ba6044ea7eb80b7c33db9ec301398 提供了精确提交映射；已查官方 npm 版本元数据 https://registry.npmjs.org/pgpass/1.0.5、精确 tarball https://registry.npmjs.org/pgpass/-/pgpass-1.0.5.tgz 和提交树 https://github.com/hoegaarden/pgpass/tree/4230ed5e417ba6044ea7eb80b7c33db9ec301398，但提交树中未定位 LICENSE/LICENCE/COPYING/NOTICE 原文，缺少可纳入材料的许可证原文路径与 hash，因此保持未解决。",
+      "licenseComments": "Installed package root lacks LICENSE/LICENCE/COPYING text; npm gitHead 4230ed5e417ba6044ea7eb80b7c33db9ec301398 提供了精确提交映射；已查官方 npm 版本元数据 https://registry.npmjs.org/pgpass/1.0.5、精确 tarball https://registry.npmjs.org/pgpass/-/pgpass-1.0.5.tgz 和提交树 https://github.com/hoegaarden/pgpass/tree/4230ed5e417ba6044ea7eb80b7c33db9ec301398，但提交树中未定位 LICENSE/LICENCE/COPYING/NOTICE 原文，缺少可纳入材料的许可证原文路径与 hash，因此保持未解决。"
     },
     {
       "SPDXID": "SPDXRef-Package-451",
@@ -6157,8 +6157,8 @@
       "licenseConcluded": "NOASSERTION",
       "licenseDeclared": "MIT",
       "copyrightText": "NOASSERTION",
-      "sourceInfo": "Installed metadata: node_modules/.pnpm/react-remove-scroll-bar@2.3.8_@types+react@19.3.0_react@19.3.0/node_modules/react-remove-scroll-bar/package.json; package-root license/notice files: none; metadata repository: https://github.com/theKashey/react-remove-scroll-bar; direct scope: transitive. Third-party material manifest status: unresolved; materials: none; reason: npm gitHead 为 b3b1287aad81def2e2ae707274b74531b61ddbaf；本轮核验的提交树中未定位到 LICENSE/LICENCE/COPYING/NOTICE 原文。",
-      "licenseComments": "Installed package root lacks LICENSE/LICENCE/COPYING text; npm gitHead 为 b3b1287aad81def2e2ae707274b74531b61ddbaf；本轮核验的提交树中未定位到 LICENSE/LICENCE/COPYING/NOTICE 原文。"
+      "sourceInfo": "Installed metadata: node_modules/.pnpm/react-remove-scroll-bar@2.3.8_@types+react@19.3.0_react@19.3.0/node_modules/react-remove-scroll-bar/package.json; package-root license/notice files: none; metadata repository: https://github.com/theKashey/react-remove-scroll-bar; direct scope: transitive. Third-party material manifest status: unresolved; materials: none; reason: npm gitHead b3b1287aad81def2e2ae707274b74531b61ddbaf 提供了精确提交映射；已查官方 npm 版本元数据 https://registry.npmjs.org/react-remove-scroll-bar/2.3.8、精确 tarball https://registry.npmjs.org/react-remove-scroll-bar/-/react-remove-scroll-bar-2.3.8.tgz 和提交树 https://github.com/theKashey/react-remove-scroll-bar/tree/b3b1287aad81def2e2ae707274b74531b61ddbaf，但提交树中未定位 LICENSE/LICENCE/COPYING/NOTICE 原文，缺少可纳入材料的许可证原文路径与 hash，因此保持未解决。",
+      "licenseComments": "Installed package root lacks LICENSE/LICENCE/COPYING text; npm gitHead b3b1287aad81def2e2ae707274b74531b61ddbaf 提供了精确提交映射；已查官方 npm 版本元数据 https://registry.npmjs.org/react-remove-scroll-bar/2.3.8、精确 tarball https://registry.npmjs.org/react-remove-scroll-bar/-/react-remove-scroll-bar-2.3.8.tgz 和提交树 https://github.com/theKashey/react-remove-scroll-bar/tree/b3b1287aad81def2e2ae707274b74531b61ddbaf，但提交树中未定位 LICENSE/LICENCE/COPYING/NOTICE 原文，缺少可纳入材料的许可证原文路径与 hash，因此保持未解决。"
     },
     {
       "SPDXID": "SPDXRef-Package-473",

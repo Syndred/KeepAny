@@ -149,7 +149,7 @@ const snapshot = [
   '',
   `- 锁文件 SHA-256：\`${lockSha256}\`。根许可证文本 SHA-256：\`${rootLicenseSha256}\`。`,
   `- 已安装包版本：${packages.length}；其中直接运行依赖 ${packages.filter(pkg => pkg.directScope === 'production').length}，直接开发依赖 ${packages.filter(pkg => pkg.directScope === 'development').length}。同名不同版本分别计数。`,
-  `- 包根目录无许可证正文：${missing.length} 个，见 [NOTICE 逐项来源与缺口](../NOTICE.md#缺少包内许可证正文的逐项记录)；精确 npm 来源、上游 commit/path/hash 与未解决边界见 [第三方材料索引](../legal/third-party/manifest.json)。`,
+  `- 包根目录无许可证正文：${missing.length} 个，见 [NOTICE 逐项来源与缺口](../NOTICE.md#缺少包内许可证正文的逐项记录)；上游原文索引现为 ${thirdPartyManifest?.scope?.verifiedPackageCount ?? 0} 项核验、${thirdPartyManifest?.scope?.unresolvedPackageCount ?? missing.length} 项未解决（${thirdPartyMaterials.size} 份原文）。这不是全部再分发或兼容性结论。精确 npm 来源、上游 commit/path/hash 与未解决边界见 [第三方材料索引](../legal/third-party/manifest.json)。`,
   '- 机器可读清单：[SPDX 2.3 SBOM](../SBOM.spdx.json)。包根目录法律文件及 SHA-256 见 [NOTICE](../NOTICE.md)。这里的声明取自包元数据，不等于经过人工审定的许可证兼容性。',
   '',
   '| 直接包 | 已安装版本 | 用途 | 包内声明 |',

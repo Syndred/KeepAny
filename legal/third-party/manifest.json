@@ -5,8 +5,8 @@
     "source": "The 31 installed package versions recorded by the 2026-09-29 installed-tree snapshot.",
     "platformIndependent": true,
     "packageCount": 31,
-    "verifiedPackageCount": 16,
-    "unresolvedPackageCount": 15
+    "verifiedPackageCount": 21,
+    "unresolvedPackageCount": 10
   },
   "materials": [
     {
@@ -105,6 +105,71 @@
         "downloadUrl": "https://raw.githubusercontent.com/rolldown/rolldown/8df421985114ecfaf52cce038d4a5a6ea8c05408/LICENSE",
         "mapping": "npm version matched exact upstream tag"
       }
+    },
+    {
+      "id": "canvas-mit",
+      "path": "legal/third-party/texts/canvas-LICENSE.txt",
+      "sha256": "8802fecf9da4367bc23bcf20b21cc143785fc6c92b152f3fa7fbe6ce08d344d6",
+      "source": {
+        "repository": "https://github.com/Brooooooklyn/canvas.git",
+        "tag": "v1.0.9",
+        "commit": "b2723ffae4e74e8c9df752902b137ec4061530e9",
+        "path": "LICENSE",
+        "downloadUrl": "https://raw.githubusercontent.com/Brooooooklyn/canvas/b2723ffae4e74e8c9df752902b137ec4061530e9/LICENSE",
+        "mapping": "npm version matched exact upstream tag v1.0.9"
+      }
+    },
+    {
+      "id": "filelist-apache",
+      "path": "legal/third-party/texts/filelist-LICENSE.txt",
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+      "source": {
+        "repository": "https://github.com/mde/filelist.git",
+        "tag": "v1.0.6",
+        "commit": "7032f94d04ad905b4f32b92d2278785859e1d55f",
+        "path": "LICENSE",
+        "downloadUrl": "https://raw.githubusercontent.com/mde/filelist/7032f94d04ad905b4f32b92d2278785859e1d55f/LICENSE",
+        "mapping": "npm version matched exact upstream tag v1.0.6"
+      }
+    },
+    {
+      "id": "is-module-mit",
+      "path": "legal/third-party/texts/is-module-LICENSE.txt",
+      "sha256": "b361c02315511fd009bf81dab3cf1255f83aa1ad0f3010e87ee1998fb2c7064b",
+      "source": {
+        "repository": "https://github.com/component/is-module.git",
+        "tag": "1.0.0",
+        "commit": "b2179523cda03bb6d5aff525bfd6cabf2d22b13c",
+        "path": "LICENSE",
+        "downloadUrl": "https://raw.githubusercontent.com/component/is-module/b2179523cda03bb6d5aff525bfd6cabf2d22b13c/LICENSE",
+        "mapping": "npm version matched exact upstream tag 1.0.0"
+      }
+    },
+    {
+      "id": "is-regexp-mit",
+      "path": "legal/third-party/texts/is-regexp-license.txt",
+      "sha256": "6fb9754611c20f6649f68805e8c990e83261f29316e29de9e6cedae607b8634c",
+      "source": {
+        "repository": "https://github.com/sindresorhus/is-regexp.git",
+        "tag": "v1.0.0",
+        "commit": "ccbe7faf479d3abc4c958df1cf94898f902c2dc4",
+        "path": "license",
+        "downloadUrl": "https://raw.githubusercontent.com/sindresorhus/is-regexp/ccbe7faf479d3abc4c958df1cf94898f902c2dc4/license",
+        "mapping": "npm version matched exact upstream tag v1.0.0"
+      }
+    },
+    {
+      "id": "jake-apache",
+      "path": "legal/third-party/texts/jake-LICENSE.txt",
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+      "source": {
+        "repository": "https://github.com/jakejs/jake.git",
+        "tag": "v10.9.4",
+        "commit": "28a9960b506d3259dd2f708ea9bc82f615be91b5",
+        "path": "LICENSE",
+        "downloadUrl": "https://raw.githubusercontent.com/jakejs/jake/28a9960b506d3259dd2f708ea9bc82f615be91b5/LICENSE",
+        "mapping": "npm version matched exact upstream tag v10.9.4"
+      }
     }
   ],
   "packages": [
@@ -126,7 +191,7 @@
       "homepage": "https://github.com/aws/aws-sdk-js-v3/tree/main/packages-internal/credential-provider-http",
       "npmGitHead": null,
       "status": "unresolved",
-      "reason": "npm 元数据没有 gitHead；本轮未得到与此包补丁版本一一对应的已核验上游 commit/tag，未使用默认分支文本。"
+      "reason": "npm 元数据缺少 gitHead 且该版本没有可用 attestation/provenance；已查官方 npm 版本元数据 https://registry.npmjs.org/@aws-sdk%2fcredential-provider-http/3.972.74 与精确 tarball https://registry.npmjs.org/@aws-sdk/credential-provider-http/-/credential-provider-http-3.972.74.tgz（包内未找到 LICENSE/LICENCE/COPYING/NOTICE 文件），以及上游仓库 https://github.com/aws/aws-sdk-js-v3.git 的对应包目录；仍缺少与该补丁版本一一对应的上游 commit/tag、许可证原文路径与原文 hash，因此保持未解决，未使用默认分支文本。"
     },
     {
       "name": "@aws-sdk/credential-provider-login",
@@ -146,7 +211,7 @@
       "homepage": "https://github.com/aws/aws-sdk-js-v3/tree/main/packages-internal/credential-provider-login",
       "npmGitHead": null,
       "status": "unresolved",
-      "reason": "npm 元数据没有 gitHead；本轮未得到与此包补丁版本一一对应的已核验上游 commit/tag，未使用默认分支文本。"
+      "reason": "npm 元数据缺少 gitHead 且该版本没有可用 attestation/provenance；已查官方 npm 版本元数据 https://registry.npmjs.org/@aws-sdk%2fcredential-provider-login/3.972.79 与精确 tarball https://registry.npmjs.org/@aws-sdk/credential-provider-login/-/credential-provider-login-3.972.79.tgz（包内未找到 LICENSE/LICENCE/COPYING/NOTICE 文件），以及上游仓库 https://github.com/aws/aws-sdk-js-v3.git 的对应包目录；仍缺少与该补丁版本一一对应的上游 commit/tag、许可证原文路径与原文 hash，因此保持未解决，未使用默认分支文本。"
     },
     {
       "name": "@aws-sdk/nested-clients",
@@ -166,7 +231,7 @@
       "homepage": "https://github.com/aws/aws-sdk-js-v3/tree/main/packages/nested-clients",
       "npmGitHead": null,
       "status": "unresolved",
-      "reason": "npm 元数据没有 gitHead；本轮未得到与此包补丁版本一一对应的已核验上游 commit/tag，未使用默认分支文本。"
+      "reason": "npm 元数据缺少 gitHead 且该版本没有可用 attestation/provenance；已查官方 npm 版本元数据 https://registry.npmjs.org/@aws-sdk%2fnested-clients/3.997.46 与精确 tarball https://registry.npmjs.org/@aws-sdk/nested-clients/-/nested-clients-3.997.46.tgz（包内未找到 LICENSE/LICENCE/COPYING/NOTICE 文件），以及上游仓库 https://github.com/aws/aws-sdk-js-v3.git 的对应包目录；仍缺少与该补丁版本一一对应的上游 commit/tag、许可证原文路径与原文 hash，因此保持未解决，未使用默认分支文本。"
     },
     {
       "name": "@better-auth/utils",
@@ -184,7 +249,7 @@
       },
       "npmGitHead": null,
       "status": "unresolved",
-      "reason": "上游 v0.4.2 tag commit 为 b20329a32d78f1f9bcc088bbd6f982b28c4192f1，但本轮核验的提交树中未定位到 LICENSE/LICENCE/COPYING/NOTICE 原文。",
+      "reason": "官方 npm SLSA provenance https://registry.npmjs.org/-/npm/v1/attestations/@better-auth%2futils@0.4.2 已确认 v0.4.2 -> b20329a32d78f1f9bcc088bbd6f982b28c4192f1 的精确版本映射；已查官方 npm 版本元数据 https://registry.npmjs.org/@better-auth%2futils/0.4.2、精确 tarball https://registry.npmjs.org/@better-auth/utils/-/utils-0.4.2.tgz 和提交树 https://github.com/better-auth/utils/tree/b20329a32d78f1f9bcc088bbd6f982b28c4192f1，但该提交树与包内均未定位 LICENSE/LICENCE/COPYING/NOTICE 原文，缺少可纳入材料的许可证原文路径与 hash，因此保持未解决。",
       "upstreamCandidate": {
         "tag": "v0.4.2",
         "commit": "b20329a32d78f1f9bcc088bbd6f982b28c4192f1",
@@ -207,7 +272,7 @@
       },
       "npmGitHead": null,
       "status": "unresolved",
-      "reason": "上游 v0.5.0 tag commit 为 f03c1c76aff7bfa3f4de4af47b112315c770a0d1，但本轮核验的提交树中未定位到 LICENSE/LICENCE/COPYING/NOTICE 原文。",
+      "reason": "官方 npm SLSA provenance https://registry.npmjs.org/-/npm/v1/attestations/@better-auth%2futils@0.5.0 已确认 v0.5.0 -> f03c1c76aff7bfa3f4de4af47b112315c770a0d1 的精确版本映射；已查官方 npm 版本元数据 https://registry.npmjs.org/@better-auth%2futils/0.5.0、精确 tarball https://registry.npmjs.org/@better-auth/utils/-/utils-0.5.0.tgz 和提交树 https://github.com/better-auth/utils/tree/f03c1c76aff7bfa3f4de4af47b112315c770a0d1，但该提交树与包内均未定位 LICENSE/LICENCE/COPYING/NOTICE 原文，缺少可纳入材料的许可证原文路径与 hash，因此保持未解决。",
       "upstreamCandidate": {
         "tag": "v0.5.0",
         "commit": "f03c1c76aff7bfa3f4de4af47b112315c770a0d1",
@@ -344,8 +409,22 @@
       },
       "homepage": "https://github.com/Brooooooklyn/canvas#readme",
       "npmGitHead": null,
-      "status": "unresolved",
-      "reason": "npm 元数据没有 gitHead；虽可访问候选 tag 文本，本轮未得到独立核验的 tag commit，保持未解决。"
+      "status": "verified",
+      "materials": [
+        "canvas-mit"
+      ],
+      "upstream": {
+        "materials": [
+          {
+            "repository": "https://github.com/Brooooooklyn/canvas.git",
+            "tag": "v1.0.9",
+            "commit": "b2723ffae4e74e8c9df752902b137ec4061530e9",
+            "path": "LICENSE",
+            "downloadUrl": "https://raw.githubusercontent.com/Brooooooklyn/canvas/b2723ffae4e74e8c9df752902b137ec4061530e9/LICENSE",
+            "mapping": "npm version matched exact upstream tag v1.0.9"
+          }
+        ]
+      }
     },
     {
       "name": "@rolldown/binding-darwin-arm64",
@@ -423,7 +502,7 @@
       "homepage": "https://github.com/IndigoUnited/js-err-code#readme",
       "npmGitHead": "830d141eb633c21b842df3f78aba5786fee1b31d",
       "status": "unresolved",
-      "reason": "npm gitHead 为 830d141eb633c21b842df3f78aba5786fee1b31d；本轮核验的提交树中未定位到 LICENSE/LICENCE/COPYING/NOTICE 原文。"
+      "reason": "npm gitHead 830d141eb633c21b842df3f78aba5786fee1b31d 提供了精确提交映射；已查官方 npm 版本元数据 https://registry.npmjs.org/err-code/3.0.1、精确 tarball https://registry.npmjs.org/err-code/-/err-code-3.0.1.tgz 和提交树 https://github.com/IndigoUnited/js-err-code/tree/830d141eb633c21b842df3f78aba5786fee1b31d，但提交树中未定位 LICENSE/LICENCE/COPYING/NOTICE 原文，缺少可纳入材料的许可证原文路径与 hash，因此保持未解决。"
     },
     {
       "name": "event-reduce-js",
@@ -474,8 +553,22 @@
       },
       "homepage": "https://github.com/mde/filelist",
       "npmGitHead": null,
-      "status": "unresolved",
-      "reason": "npm 元数据没有 gitHead；本轮未得到与 1.0.6 精确对应且可核验的上游 tag commit。"
+      "status": "verified",
+      "materials": [
+        "filelist-apache"
+      ],
+      "upstream": {
+        "materials": [
+          {
+            "repository": "https://github.com/mde/filelist.git",
+            "tag": "v1.0.6",
+            "commit": "7032f94d04ad905b4f32b92d2278785859e1d55f",
+            "path": "LICENSE",
+            "downloadUrl": "https://raw.githubusercontent.com/mde/filelist/7032f94d04ad905b4f32b92d2278785859e1d55f/LICENSE",
+            "mapping": "npm version matched exact upstream tag v1.0.6"
+          }
+        ]
+      }
     },
     {
       "name": "get-browser-rtc",
@@ -494,7 +587,7 @@
       "homepage": "https://github.com/substack/get-browser-rtc#readme",
       "npmGitHead": "f4c75dce0ac4fb2af0256dc508fbb23436c54db3",
       "status": "unresolved",
-      "reason": "npm gitHead 为 f4c75dce0ac4fb2af0256dc508fbb23436c54db3；本轮核验的提交树中未定位到 LICENSE/LICENCE/COPYING/NOTICE 原文。"
+      "reason": "npm gitHead f4c75dce0ac4fb2af0256dc508fbb23436c54db3 提供了精确提交映射；已查官方 npm 版本元数据 https://registry.npmjs.org/get-browser-rtc/1.1.0、精确 tarball https://registry.npmjs.org/get-browser-rtc/-/get-browser-rtc-1.1.0.tgz 和提交树 https://github.com/substack/get-browser-rtc/tree/f4c75dce0ac4fb2af0256dc508fbb23436c54db3，但提交树中未定位 LICENSE/LICENCE/COPYING/NOTICE 原文，缺少可纳入材料的许可证原文路径与 hash，因此保持未解决。"
     },
     {
       "name": "is-module",
@@ -512,8 +605,22 @@
       },
       "homepage": "https://github.com/component/is-module",
       "npmGitHead": null,
-      "status": "unresolved",
-      "reason": "npm 元数据没有 gitHead；本轮未得到与 1.0.0 精确对应且可核验的上游 tag commit。"
+      "status": "verified",
+      "materials": [
+        "is-module-mit"
+      ],
+      "upstream": {
+        "materials": [
+          {
+            "repository": "https://github.com/component/is-module.git",
+            "tag": "1.0.0",
+            "commit": "b2179523cda03bb6d5aff525bfd6cabf2d22b13c",
+            "path": "LICENSE",
+            "downloadUrl": "https://raw.githubusercontent.com/component/is-module/b2179523cda03bb6d5aff525bfd6cabf2d22b13c/LICENSE",
+            "mapping": "npm version matched exact upstream tag 1.0.0"
+          }
+        ]
+      }
     },
     {
       "name": "is-regexp",
@@ -531,8 +638,22 @@
       },
       "homepage": "https://github.com/sindresorhus/is-regexp",
       "npmGitHead": null,
-      "status": "unresolved",
-      "reason": "npm 元数据没有 gitHead；本轮未得到与 1.0.0 精确对应且可核验的上游 tag commit。"
+      "status": "verified",
+      "materials": [
+        "is-regexp-mit"
+      ],
+      "upstream": {
+        "materials": [
+          {
+            "repository": "https://github.com/sindresorhus/is-regexp.git",
+            "tag": "v1.0.0",
+            "commit": "ccbe7faf479d3abc4c958df1cf94898f902c2dc4",
+            "path": "license",
+            "downloadUrl": "https://raw.githubusercontent.com/sindresorhus/is-regexp/ccbe7faf479d3abc4c958df1cf94898f902c2dc4/license",
+            "mapping": "npm version matched exact upstream tag v1.0.0"
+          }
+        ]
+      }
     },
     {
       "name": "jake",
@@ -550,8 +671,22 @@
       },
       "homepage": "https://github.com/jakejs/jake#readme",
       "npmGitHead": null,
-      "status": "unresolved",
-      "reason": "npm 元数据没有 gitHead；本轮未得到与 10.9.4 精确对应且可核验的上游 tag commit。"
+      "status": "verified",
+      "materials": [
+        "jake-apache"
+      ],
+      "upstream": {
+        "materials": [
+          {
+            "repository": "https://github.com/jakejs/jake.git",
+            "tag": "v10.9.4",
+            "commit": "28a9960b506d3259dd2f708ea9bc82f615be91b5",
+            "path": "LICENSE",
+            "downloadUrl": "https://raw.githubusercontent.com/jakejs/jake/28a9960b506d3259dd2f708ea9bc82f615be91b5/LICENSE",
+            "mapping": "npm version matched exact upstream tag v10.9.4"
+          }
+        ]
+      }
     },
     {
       "name": "jsesc",
@@ -602,7 +737,7 @@
       "homepage": "https://github.com/brianc/node-pg-types",
       "npmGitHead": "d9d9dfb87eb50914043cbc178c301b7dd3b0c50d",
       "status": "unresolved",
-      "reason": "npm gitHead 为 d9d9dfb87eb50914043cbc178c301b7dd3b0c50d；本轮核验的提交树中未定位到 LICENSE/LICENCE/COPYING/NOTICE 原文。"
+      "reason": "npm gitHead d9d9dfb87eb50914043cbc178c301b7dd3b0c50d 提供了精确提交映射；已查官方 npm 版本元数据 https://registry.npmjs.org/pg-types/2.2.0、精确 tarball https://registry.npmjs.org/pg-types/-/pg-types-2.2.0.tgz 和提交树 https://github.com/brianc/node-pg-types/tree/d9d9dfb87eb50914043cbc178c301b7dd3b0c50d，但提交树中未定位 LICENSE/LICENCE/COPYING/NOTICE 原文，缺少可纳入材料的许可证原文路径与 hash，因此保持未解决。"
     },
     {
       "name": "pgpass",
@@ -621,7 +756,7 @@
       "homepage": "https://github.com/hoegaarden/pgpass#readme",
       "npmGitHead": "4230ed5e417ba6044ea7eb80b7c33db9ec301398",
       "status": "unresolved",
-      "reason": "npm gitHead 为 4230ed5e417ba6044ea7eb80b7c33db9ec301398；本轮核验的提交树中未定位到 LICENSE/LICENCE/COPYING/NOTICE 原文。"
+      "reason": "npm gitHead 4230ed5e417ba6044ea7eb80b7c33db9ec301398 提供了精确提交映射；已查官方 npm 版本元数据 https://registry.npmjs.org/pgpass/1.0.5、精确 tarball https://registry.npmjs.org/pgpass/-/pgpass-1.0.5.tgz 和提交树 https://github.com/hoegaarden/pgpass/tree/4230ed5e417ba6044ea7eb80b7c33db9ec301398，但提交树中未定位 LICENSE/LICENCE/COPYING/NOTICE 原文，缺少可纳入材料的许可证原文路径与 hash，因此保持未解决。"
     },
     {
       "name": "punycode",
@@ -672,7 +807,7 @@
       "homepage": "https://github.com/theKashey/react-remove-scroll-bar#readme",
       "npmGitHead": "b3b1287aad81def2e2ae707274b74531b61ddbaf",
       "status": "unresolved",
-      "reason": "npm gitHead 为 b3b1287aad81def2e2ae707274b74531b61ddbaf；本轮核验的提交树中未定位到 LICENSE/LICENCE/COPYING/NOTICE 原文。"
+      "reason": "npm gitHead b3b1287aad81def2e2ae707274b74531b61ddbaf 提供了精确提交映射；已查官方 npm 版本元数据 https://registry.npmjs.org/react-remove-scroll-bar/2.3.8、精确 tarball https://registry.npmjs.org/react-remove-scroll-bar/-/react-remove-scroll-bar-2.3.8.tgz 和提交树 https://github.com/theKashey/react-remove-scroll-bar/tree/b3b1287aad81def2e2ae707274b74531b61ddbaf，但提交树中未定位 LICENSE/LICENCE/COPYING/NOTICE 原文，缺少可纳入材料的许可证原文路径与 hash，因此保持未解决。"
     },
     {
       "name": "regenerate",
@@ -934,7 +1069,7 @@
   "bundle": {
     "status": "partial",
     "note": "这些材料可供再分发包引用；实际生产 bundle 的模块集合、压缩产物和平台原生包仍需按具体构建分别确认。本索引不把未安装的 Linux 原生包视为失败，也不把 Darwin 原生包自动宣称为浏览器 bundle 内容。",
-    "verifiedSourceMaterialCount": 8,
-    "unresolvedPackageCount": 15
+    "verifiedSourceMaterialCount": 13,
+    "unresolvedPackageCount": 10
   }
 }
