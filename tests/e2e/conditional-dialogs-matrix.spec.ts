@@ -130,6 +130,17 @@ for (const locale of ["en-US", "zh-CN"] as const) {
 				});
 				await categorySaveButton.click();
 				await expect(categoryDialog).toBeHidden();
+				const longCategory = page.locator(".asset-category-scroll").getByRole("button", { name: category, exact: true });
+				await expect(longCategory).toHaveCount(1);
+				const textBounds = await longCategory.evaluate((button) => {
+					const range = document.createRange();
+					range.selectNodeContents(button);
+					const text = range.getBoundingClientRect();
+					const border = button.getBoundingClientRect();
+					return { textLeft: text.left, textRight: text.right, buttonLeft: border.left, buttonRight: border.right };
+				});
+				expect(textBounds.textLeft, "Long category text stays inside its own button").toBeGreaterThanOrEqual(textBounds.buttonLeft);
+				expect(textBounds.textRight, "Long category text cannot cover adjacent categories").toBeLessThanOrEqual(textBounds.buttonRight);
 				await page.getByRole("button", { name: copy.manage }).click();
 				await categoryDialog
 					.getByRole("button", { name: copy.addAnother, exact: true })

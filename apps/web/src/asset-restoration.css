@@ -13,6 +13,7 @@
 }
 .asset-category-scroll button {
 	flex: none;
+	max-width: none;
 	border: 2px solid var(--line);
 	border-radius: 999px;
 	background: var(--paper);

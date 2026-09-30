@@ -32,7 +32,7 @@
 .overview-action-copy strong { font-size: 13px; }
 .overview-action-copy small { margin-top: 2px; color: var(--muted); font-size: 12px; }
 .overview-action-date { flex: none; max-width: 130px; color: var(--muted); font-size: 11px; text-align: right; }
-.overview-action-date strong { display: block; color: var(--ink); font-size: 12px; }
+.overview-action-date strong { display: block; color: var(--ink); font-size: 12px; white-space: nowrap; }
 .overview-quiet { padding: 15px; border-top: 1px solid var(--line-soft); color: var(--muted); font-size: 12px; }
 .overview-risk { margin: 0 14px 14px; padding: 14px; border: 1px solid #f4dcc1; border-radius: 10px; background: #fff0d1; }
 .overview-risk h3 { display: flex; align-items: center; gap: 6px; margin: 0 0 6px; color: #a45d20; font-size: 13px; }
@@ -52,5 +52,5 @@
 .overview-project-counts strong { color: var(--ink); }
 .overview-project-empty p { margin: 0 0 10px; color: var(--muted); font-size: 13px; }
 @media (max-width: 800px) { .overview-panels { grid-template-columns: 1fr; } .overview-hero::before { right: -160px; opacity: .6; } }
-@media (max-width: 600px) { .overview-hero { align-items: flex-start; flex-direction: column; padding: 16px; } .overview-hero h1 { font-size: 28px; } .overview-hero-action { align-self: flex-start; } .overview-stats { grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px; } .overview-stats .overview-stat:last-child { grid-column: 1 / -1; } .overview-project-grid { grid-template-columns: 1fr; } .overview-action-date { max-width: 96px; } }
+@media (max-width: 600px) { .overview-hero { align-items: flex-start; flex-direction: column; padding: 16px; } .overview-hero h1 { font-size: 28px; } .overview-hero-action { align-self: flex-start; } .overview-stats { grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px; } .overview-stats .overview-stat:last-child { grid-column: 1 / -1; } .overview-project-grid { grid-template-columns: 1fr; } .overview-action-date { max-width: none; } }
 @media (prefers-reduced-motion: reduce) { .overview-project-card { transition: none; } }

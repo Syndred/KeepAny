@@ -79,6 +79,14 @@ for (const locale of ["en-US", "zh-CN"] as const) {
 				await verifyPage(copy.overview);
 				await expect(page.locator(".overview-action-row")).toContainText(subscription);
 				await expect(page.locator(".overview-stat").first()).toContainText("1");
+				const actionDate = page.locator(".overview-action-date strong").first();
+				await expect(actionDate).toBeVisible();
+				const dateLines = await actionDate.evaluate((element) => {
+					const range = document.createRange();
+					range.selectNodeContents(element);
+					return [...range.getClientRects()].filter((rect) => rect.width > 0 && rect.height > 0).length;
+				});
+				expect(dateLines, "The due date stays on one readable line").toBe(1);
 				await page.screenshot({
 					path: `${evidence}/${stem}-overview-populated.png`,
 					fullPage: true,
