@@ -1,0 +1,99 @@
+{
+  "recordedAt": "2026-09-30T01:46:00Z",
+  "sourceCodeCommit": "f102dce",
+  "testCommit": "aa4a324",
+  "build": {
+    "command": "pnpm build",
+    "status": "passed",
+    "entry": "assets/index-6jPGQ3F-.js",
+    "indexSha256": "07d6a4a80b663fbe0d3eac85f06d2df2ab6256b81da2562686e57146655e7f4e",
+    "pwaPrecacheEntries": 69
+  },
+  "unit": {
+    "files": 61,
+    "total": 390,
+    "passed": 384,
+    "failed": 0,
+    "skipped": 6,
+    "skipReason": "KEEPANY_TEST_DATABASE_URL unset locally; PostgreSQL tests reserved for CI"
+  },
+  "targetedSource": {
+    "categoryBackend": {
+      "files": 5,
+      "passed": 103,
+      "newCategoryTests": 22
+    },
+    "categoryBrowser": {
+      "passed": 14,
+      "followupPassed": 4,
+      "evidenceWaitPassed": 2,
+      "reportType": "Playwright line logs"
+    },
+    "detailBrowser": {
+      "passed": 12,
+      "report": "source-detail-playwright.json"
+    },
+    "limits": [
+      "Synthetic test data and injected write failures, not real quota failures or power-loss/device evidence"
+    ]
+  },
+  "releaseBrowser": {
+    "expected": 18,
+    "unexpected": 0,
+    "skipped": 0,
+    "flaky": 0,
+    "durationMs": 46239.67,
+    "served": "release/web fixed files on isolated 4181 origin",
+    "categoryNewTests": 2,
+    "proof": "Real UI creation, actual encrypted downloads, same category IDs after rename/member selection and clean context restore; no source fixture import in new fixed package tests"
+  },
+  "releaseFiles": {
+    "currentVerifiedByteForByte": 72,
+    "retainedHashedFiles": 303
+  },
+  "originalChrome": {
+    "origin": "http://127.0.0.1:4180/",
+    "viewport": {
+      "width": 1230,
+      "height": 876
+    },
+    "oldEntry": "assets/index-DTptK4Ob.js",
+    "actualEntry": "assets/index-6jPGQ3F-.js",
+    "method": "Normal reload then visible Update app button after checking no edits",
+    "assetsBefore": 0,
+    "assetsAfter": 0,
+    "dataCleared": false,
+    "syntheticRecordsInserted": false,
+    "categoryManagerOpenedAndCollapsed": true
+  },
+  "licenses": {
+    "officialTextFiles": 14,
+    "missingInstalledRootVersions": 31,
+    "verified": 24,
+    "unresolved": 7,
+    "materialHashCheck": "passed",
+    "installedInventoryCheck": "passed",
+    "browserAudit": "Companion write:false build at dirty working tree based on 3364411; not an exact final release audit",
+    "unresolvedIncludedInCompanionBrowser": [
+      "react-remove-scroll-bar@2.3.8"
+    ]
+  },
+  "frozenReferenceSha256": "61c78012a377946b88d8888cc030ab3ba5eb78e01227432b41aa5b4ac88151d7",
+  "remoteCi": {
+    "status": "pending after release push",
+    "lastVerifiedPriorCodeRun": "https://github.com/Syndred/KeepAny/actions/runs/36653354303",
+    "priorRunStatus": "Success, not current category head"
+  },
+  "notCompleted": [
+    "Whole frozen UI state acceptance",
+    "Cross-object global search implementation",
+    "Real devices and native installation",
+    "Formal-app quota recovery and actual power loss",
+    "Production HTTPS/cloud/object storage and physical dual devices",
+    "Seven license material gaps and full redistribution/security review"
+  ],
+  "keyEpochWork": "paused in existing stash",
+  "KeepAnyAdmModified": false,
+  "internetDeployment": false,
+  "releaseCommit": "bfaa6d3"
+}

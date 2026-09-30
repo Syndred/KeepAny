@@ -1,0 +1,753 @@
+{
+  "config": {
+    "argv": [
+      "/Users/syndred/.nvm/versions/node/v22.23.1/bin/node",
+      "/Users/syndred/Desktop/projects/KeepAny/node_modules/@playwright/test/cli.js",
+      "test",
+      "--config",
+      "playwright.release.config.ts",
+      "--output=/private/tmp/keepany-category-final-release-results",
+      "--reporter=json"
+    ],
+    "configFile": "/Users/syndred/Desktop/projects/KeepAny/playwright.release.config.ts",
+    "rootDir": "/Users/syndred/Desktop/projects/KeepAny/tests/e2e",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 2
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "/private/tmp/keepany-category-final-release-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 2
+        },
+        "id": "",
+        "name": "",
+        "testDir": "/Users/syndred/Desktop/projects/KeepAny/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "local-core.spec.ts",
+          "production-offline.spec.ts",
+          "intake-pdf.spec.ts",
+          "intake-expense.spec.ts",
+          "intake-review-backup.spec.ts",
+          "intake-review-merge.spec.ts",
+          "custom-category-release.spec.ts"
+        ],
+        "timeout": 90000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "json"
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.63.0",
+    "workers": 2,
+    "webServer": {
+      "command": "node node_modules/vite/bin/vite.js preview apps/web --outDir ../../release/web --host 127.0.0.1 --port 4181 --strictPort",
+      "url": "http://127.0.0.1:4181",
+      "reuseExistingServer": false,
+      "timeout": 30000
+    }
+  },
+  "suites": [
+    {
+      "title": "custom-category-release.spec.ts",
+      "file": "custom-category-release.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "en-US fixed package category identity survives UI rename and encrypted clean restore",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 8555,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-30T01:41:32.842Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ceabc48589b28927f060-d8c1f1d53687a5090ee1",
+          "file": "custom-category-release.spec.ts",
+          "line": 67,
+          "column": 2
+        },
+        {
+          "title": "zh-CN fixed package category identity survives UI rename and encrypted clean restore",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 8250,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-30T01:41:41.639Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ceabc48589b28927f060-9f6e1a32bda367e87cc5",
+          "file": "custom-category-release.spec.ts",
+          "line": 67,
+          "column": 2
+        }
+      ]
+    },
+    {
+      "title": "intake-expense.spec.ts",
+      "file": "intake-expense.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "zh-CN 390 PDF expense retains a draft, confirms once, and restores its receipt",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 3956,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-30T01:41:32.857Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "d037231ffda2ec798bca-0d9a84fd600700b23889",
+          "file": "intake-expense.spec.ts",
+          "line": 43,
+          "column": 2
+        },
+        {
+          "title": "zh-CN 1280 PDF expense retains a draft, confirms once, and restores its receipt",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 3668,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-30T01:41:37.038Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "d037231ffda2ec798bca-54feb0f6dd0812eb7edf",
+          "file": "intake-expense.spec.ts",
+          "line": 43,
+          "column": 2
+        },
+        {
+          "title": "en-US 390 PDF expense retains a draft, confirms once, and restores its receipt",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 3953,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-30T01:41:40.709Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "d037231ffda2ec798bca-a9d64caf00ae7054d306",
+          "file": "intake-expense.spec.ts",
+          "line": 43,
+          "column": 2
+        },
+        {
+          "title": "en-US 1280 PDF expense retains a draft, confirms once, and restores its receipt",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 3655,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-30T01:41:44.665Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "d037231ffda2ec798bca-859bc2bb2493c86b4c84",
+          "file": "intake-expense.spec.ts",
+          "line": 43,
+          "column": 2
+        }
+      ]
+    },
+    {
+      "title": "intake-pdf.spec.ts",
+      "file": "intake-pdf.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "zh-CN 390 PDF text requires explicit type and confirmation, retains decisions",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 2331,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-30T01:41:48.331Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "9a604dc1b5935c1684eb-830aee1363904de338dd",
+          "file": "intake-pdf.spec.ts",
+          "line": 9,
+          "column": 75
+        },
+        {
+          "title": "zh-CN 1280 PDF text requires explicit type and confirmation, retains decisions",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 2197,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-30T01:41:50.668Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "9a604dc1b5935c1684eb-4a3a7f10c5da30a6e917",
+          "file": "intake-pdf.spec.ts",
+          "line": 9,
+          "column": 75
+        },
+        {
+          "title": "en-US 390 PDF text requires explicit type and confirmation, retains decisions",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 2035,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-30T01:41:52.872Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "9a604dc1b5935c1684eb-d121dca12808fdaaa7a1",
+          "file": "intake-pdf.spec.ts",
+          "line": 9,
+          "column": 75
+        },
+        {
+          "title": "en-US 1280 PDF text requires explicit type and confirmation, retains decisions",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 2278,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-30T01:41:54.913Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "9a604dc1b5935c1684eb-ba9efec8ca36e8504210",
+          "file": "intake-pdf.spec.ts",
+          "line": 9,
+          "column": 75
+        }
+      ]
+    },
+    {
+      "title": "intake-review-backup.spec.ts",
+      "file": "intake-review-backup.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "zh-CN downloaded encrypted backup restores CSV/PDF drafts, receipts and stable deduplication",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2605,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-30T01:41:49.904Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "1b0ad01a63a2b8905c6d-4af068d993df7d052c89",
+          "file": "intake-review-backup.spec.ts",
+          "line": 28,
+          "column": 42
+        },
+        {
+          "title": "en-US downloaded encrypted backup restores CSV/PDF drafts, receipts and stable deduplication",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2349,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-30T01:41:52.514Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "1b0ad01a63a2b8905c6d-f43268c9605e5035201c",
+          "file": "intake-review-backup.spec.ts",
+          "line": 28,
+          "column": 42
+        }
+      ]
+    },
+    {
+      "title": "intake-review-merge.spec.ts",
+      "file": "intake-review-merge.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "zh-CN 390 candidate merge requires choices, keeps selected drafts and decisions, and survives refresh/undo",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 5567,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-30T01:41:54.876Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "c7b0d5d232a9dd7ddc41-e60f1c8d9848b209ff24",
+          "file": "intake-review-merge.spec.ts",
+          "line": 64,
+          "column": 42
+        },
+        {
+          "title": "en-US 390 candidate merge requires choices, keeps selected drafts and decisions, and survives refresh/undo",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 6652,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-30T01:42:00.448Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "c7b0d5d232a9dd7ddc41-ce7946c2cd901b91e645",
+          "file": "intake-review-merge.spec.ts",
+          "line": 64,
+          "column": 42
+        }
+      ]
+    },
+    {
+      "title": "local-core.spec.ts",
+      "file": "local-core.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "project, account, subscription, located item, linked reminder and downloaded backup survive a fresh browser restore",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 8755,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-30T01:41:57.202Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ca2d51e9409fb4c6a057-836dcda679ceb4aede8f",
+          "file": "local-core.spec.ts",
+          "line": 23,
+          "column": 1
+        },
+        {
+          "title": "both languages fit key pages and the task dialog at target widths",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 12378,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-30T01:42:05.965Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ca2d51e9409fb4c6a057-ecc12d6d43196fec5197",
+          "file": "local-core.spec.ts",
+          "line": 165,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "production-offline.spec.ts",
+      "file": "production-offline.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "delivered installation manifest and icons remain available offline",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 614,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-30T01:42:07.111Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "b84f5b53779e4c0405ad-9bcc59b9feec79b844e8",
+          "file": "production-offline.spec.ts",
+          "line": 6,
+          "column": 1
+        },
+        {
+          "title": "built PWA reopens offline, edits local data and downloads a backup",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2552,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-30T01:42:07.733Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "b84f5b53779e4c0405ad-d9d78ddcaef4785c2a26",
+          "file": "production-offline.spec.ts",
+          "line": 41,
+          "column": 1
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-09-30T01:41:32.141Z",
+    "duration": 46239.67,
+    "expected": 18,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}
