@@ -4,7 +4,8 @@ import Dexie, { type Table } from 'dexie';
 import { z } from 'zod';
 import { dueOnCycle, entitySchemas, normalizeCategoryName, type Asset, type AssetKind, type Category, type EntityType, type History, type Submission, type Task } from '../../domain/src';
 import { canRecordProjectWorkflowTask, currentProjectWorkflowRound } from '../../domain/src/project-workflow';
-import { zipSync, unzipSync, strToU8, strFromU8 } from 'fflate';
+import { zipSync, strToU8, strFromU8 } from 'fflate';
+import { unzipArchive } from './archive-unzip';
 import type { SyncOperation } from '../../contracts/src';
 import { assertReviewedAssetReferences, cancelReviewedExpenseConfirmation, confirmReviewedExpense, migrateLegacyIntakeReview,
   parseReviewedCandidates, pendingReviewedExpenseConfirmations, replayReviewedExpense, sameReviewedCandidate,
@@ -2227,13 +2228,7 @@ async function sha(bytes: Uint8Array): Promise<string> {
 }
 
 export async function inspectArchive(bytes: Uint8Array) {
-  if (bytes.length > 100 * 1024 * 1024) throw Error('archive-size');
-  let total = 0;
-  const entries = unzipSync(bytes, { filter: entry => {
-    total += entry.originalSize;
-    if (total > 300 * 1024 * 1024) throw Error('archive-size');
-    return true;
-  } });
+  const entries = unzipArchive(bytes);
   if (!entries['manifest.json'] || !entries['records.json']) throw Error('archive-missing');
   const manifest = manifestSchema.parse(JSON.parse(strFromU8(entries['manifest.json'])));
   if (manifest.sourceBinding) await validateDatasetBinding(manifest.sourceBinding);
