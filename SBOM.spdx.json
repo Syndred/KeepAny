@@ -5887,9 +5887,9 @@
       "licenseConcluded": "NOASSERTION",
       "licenseDeclared": "MIT",
       "copyrightText": "NOASSERTION",
-      "sourceInfo": "Installed metadata: node_modules/.pnpm/pg-types@2.2.0/node_modules/pg-types/package.json; package-root license/notice files: none; metadata repository: git://github.com/brianc/node-pg-types.git; direct scope: transitive. Third-party material manifest status: unresolved; materials: none; reason: npm gitHead d9d9dfb87eb50914043cbc178c301b7dd3b0c50d 提供了精确提交映射，且官方 tag v2.2.0 https://github.com/brianc/node-pg-types/tree/v2.2.0 指向同一提交；已查官方 npm 版本元数据 https://registry.npmjs.org/pg-types/2.2.0、精确 tarball https://registry.npmjs.org/pg-types/-/pg-types-2.2.0.tgz 和精确提交树 https://github.com/brianc/node-pg-types/tree/d9d9dfb87eb50914043cbc178c301b7dd3b0c50d，但该 tag/提交树与包内均未定位 LICENSE/LICENCE/COPYING/NOTICE 原文，缺少可纳入材料的许可证原文路径与 hash，因此保持未解决。",
+      "sourceInfo": "Installed metadata: node_modules/.pnpm/pg-types@2.2.0/node_modules/pg-types/package.json; package-root license/notice files: none; metadata repository: git://github.com/brianc/node-pg-types.git; direct scope: transitive. Third-party material manifest status: verified; materials: pg-types-readme-mit; reason: verified source files recorded in legal/third-party/manifest.json",
       "homepage": "https://github.com/brianc/node-pg-types",
-      "licenseComments": "Installed package root lacks LICENSE/LICENCE/COPYING text; npm gitHead d9d9dfb87eb50914043cbc178c301b7dd3b0c50d 提供了精确提交映射，且官方 tag v2.2.0 https://github.com/brianc/node-pg-types/tree/v2.2.0 指向同一提交；已查官方 npm 版本元数据 https://registry.npmjs.org/pg-types/2.2.0、精确 tarball https://registry.npmjs.org/pg-types/-/pg-types-2.2.0.tgz 和精确提交树 https://github.com/brianc/node-pg-types/tree/d9d9dfb87eb50914043cbc178c301b7dd3b0c50d，但该 tag/提交树与包内均未定位 LICENSE/LICENCE/COPYING/NOTICE 原文，缺少可纳入材料的许可证原文路径与 hash，因此保持未解决。"
+      "licenseComments": "Installed package root lacks LICENSE/LICENCE/COPYING text; an upstream text and provenance record is retained in legal/third-party/manifest.json."
     },
     {
       "SPDXID": "SPDXRef-Package-450",
@@ -5900,8 +5900,8 @@
       "licenseConcluded": "NOASSERTION",
       "licenseDeclared": "MIT",
       "copyrightText": "NOASSERTION",
-      "sourceInfo": "Installed metadata: node_modules/.pnpm/pgpass@1.0.5/node_modules/pgpass/package.json; package-root license/notice files: none; metadata repository: https://github.com/hoegaarden/pgpass.git; direct scope: transitive. Third-party material manifest status: unresolved; materials: none; reason: npm gitHead 4230ed5e417ba6044ea7eb80b7c33db9ec301398 提供了精确提交映射，且官方 tag v1.0.5 https://github.com/hoegaarden/pgpass/tree/v1.0.5 指向同一提交；已查官方 npm 版本元数据 https://registry.npmjs.org/pgpass/1.0.5、精确 tarball https://registry.npmjs.org/pgpass/-/pgpass-1.0.5.tgz 和精确提交树 https://github.com/hoegaarden/pgpass/tree/4230ed5e417ba6044ea7eb80b7c33db9ec301398，但该 tag/提交树与包内均未定位 LICENSE/LICENCE/COPYING/NOTICE 原文，缺少可纳入材料的许可证原文路径与 hash，因此保持未解决。",
-      "licenseComments": "Installed package root lacks LICENSE/LICENCE/COPYING text; npm gitHead 4230ed5e417ba6044ea7eb80b7c33db9ec301398 提供了精确提交映射，且官方 tag v1.0.5 https://github.com/hoegaarden/pgpass/tree/v1.0.5 指向同一提交；已查官方 npm 版本元数据 https://registry.npmjs.org/pgpass/1.0.5、精确 tarball https://registry.npmjs.org/pgpass/-/pgpass-1.0.5.tgz 和精确提交树 https://github.com/hoegaarden/pgpass/tree/4230ed5e417ba6044ea7eb80b7c33db9ec301398，但该 tag/提交树与包内均未定位 LICENSE/LICENCE/COPYING/NOTICE 原文，缺少可纳入材料的许可证原文路径与 hash，因此保持未解决。"
+      "sourceInfo": "Installed metadata: node_modules/.pnpm/pgpass@1.0.5/node_modules/pgpass/package.json; package-root license/notice files: none; metadata repository: https://github.com/hoegaarden/pgpass.git; direct scope: transitive. Third-party material manifest status: verified; materials: pgpass-readme-mit; reason: verified source files recorded in legal/third-party/manifest.json",
+      "licenseComments": "Installed package root lacks LICENSE/LICENCE/COPYING text; an upstream text and provenance record is retained in legal/third-party/manifest.json."
     },
     {
       "SPDXID": "SPDXRef-Package-451",

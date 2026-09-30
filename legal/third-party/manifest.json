@@ -5,8 +5,8 @@
     "source": "The 31 installed package versions recorded by the 2026-09-29 installed-tree snapshot.",
     "platformIndependent": true,
     "packageCount": 31,
-    "verifiedPackageCount": 24,
-    "unresolvedPackageCount": 7
+    "verifiedPackageCount": 26,
+    "unresolvedPackageCount": 5
   },
   "materials": [
     {
@@ -181,6 +181,36 @@
         "path": "LICENSE",
         "downloadUrl": "https://raw.githubusercontent.com/aws/aws-sdk-js-v3/c68e50e4a6e0469a20c2894fe8a29c140553ebb8/LICENSE",
         "mapping": "official GitHub publication commit; package package.json version matched the exact npm version"
+      }
+    },
+    {
+      "id": "pg-types-readme-mit",
+      "path": "legal/third-party/texts/pg-types-LICENSE.txt",
+      "sha256": "2c8a6e1b7782f0ca241792868af742f1c281c9661f59ec36c9acf40381c86645",
+      "source": {
+        "repository": "https://github.com/brianc/node-pg-types.git",
+        "tag": "v2.2.0",
+        "commit": "d9d9dfb87eb50914043cbc178c301b7dd3b0c50d",
+        "path": "README.md",
+        "downloadUrl": "https://raw.githubusercontent.com/brianc/node-pg-types/d9d9dfb87eb50914043cbc178c301b7dd3b0c50d/README.md",
+        "sourceSha256": "ecda9bca71d3f0cee4e600d1dd2bef336213f39ef2e8fca6a1a1c1c8723f643a",
+        "section": "## license（自 The MIT License (MIT) 起提取至文件末尾）",
+        "mapping": "npm package tarball README.md 与官方精确 tag v2.2.0/commit README.md 字节一致；许可证段落逐字提取"
+      }
+    },
+    {
+      "id": "pgpass-readme-mit",
+      "path": "legal/third-party/texts/pgpass-LICENSE.txt",
+      "sha256": "492e56ee92e47d39ca91d60ef75f55b1104678fab8f09838206b61b43136e211",
+      "source": {
+        "repository": "https://github.com/hoegaarden/pgpass.git",
+        "tag": "v1.0.5",
+        "commit": "4230ed5e417ba6044ea7eb80b7c33db9ec301398",
+        "path": "README.md",
+        "downloadUrl": "https://raw.githubusercontent.com/hoegaarden/pgpass/4230ed5e417ba6044ea7eb80b7c33db9ec301398/README.md",
+        "sourceSha256": "62549909404b5a0dcb2b4b74c9a930baf8095dbcfa1543c4ffc79378acd22b57",
+        "section": "## License（自 Copyright (c) 2013-2016 Hannes Hörl 起提取至文件末尾）",
+        "mapping": "npm package tarball README.md 与官方精确 tag v1.0.5/commit README.md 字节一致；许可证段落逐字提取"
       }
     }
   ],
@@ -787,8 +817,24 @@
       },
       "homepage": "https://github.com/brianc/node-pg-types",
       "npmGitHead": "d9d9dfb87eb50914043cbc178c301b7dd3b0c50d",
-      "status": "unresolved",
-      "reason": "npm gitHead d9d9dfb87eb50914043cbc178c301b7dd3b0c50d 提供了精确提交映射，且官方 tag v2.2.0 https://github.com/brianc/node-pg-types/tree/v2.2.0 指向同一提交；已查官方 npm 版本元数据 https://registry.npmjs.org/pg-types/2.2.0、精确 tarball https://registry.npmjs.org/pg-types/-/pg-types-2.2.0.tgz 和精确提交树 https://github.com/brianc/node-pg-types/tree/d9d9dfb87eb50914043cbc178c301b7dd3b0c50d，但该 tag/提交树与包内均未定位 LICENSE/LICENCE/COPYING/NOTICE 原文，缺少可纳入材料的许可证原文路径与 hash，因此保持未解决。"
+      "status": "verified",
+      "materials": [
+        "pg-types-readme-mit"
+      ],
+      "upstream": {
+        "materials": [
+          {
+            "repository": "https://github.com/brianc/node-pg-types.git",
+            "tag": "v2.2.0",
+            "commit": "d9d9dfb87eb50914043cbc178c301b7dd3b0c50d",
+            "path": "README.md",
+            "downloadUrl": "https://raw.githubusercontent.com/brianc/node-pg-types/d9d9dfb87eb50914043cbc178c301b7dd3b0c50d/README.md",
+            "sourceSha256": "ecda9bca71d3f0cee4e600d1dd2bef336213f39ef2e8fca6a1a1c1c8723f643a",
+            "section": "## license（自 The MIT License (MIT) 起提取至文件末尾）",
+            "mapping": "npm package tarball README.md 与官方精确 tag v2.2.0/commit README.md 字节一致；许可证段落逐字提取"
+          }
+        ]
+      }
     },
     {
       "name": "pgpass",
@@ -806,8 +852,24 @@
       },
       "homepage": "https://github.com/hoegaarden/pgpass#readme",
       "npmGitHead": "4230ed5e417ba6044ea7eb80b7c33db9ec301398",
-      "status": "unresolved",
-      "reason": "npm gitHead 4230ed5e417ba6044ea7eb80b7c33db9ec301398 提供了精确提交映射，且官方 tag v1.0.5 https://github.com/hoegaarden/pgpass/tree/v1.0.5 指向同一提交；已查官方 npm 版本元数据 https://registry.npmjs.org/pgpass/1.0.5、精确 tarball https://registry.npmjs.org/pgpass/-/pgpass-1.0.5.tgz 和精确提交树 https://github.com/hoegaarden/pgpass/tree/4230ed5e417ba6044ea7eb80b7c33db9ec301398，但该 tag/提交树与包内均未定位 LICENSE/LICENCE/COPYING/NOTICE 原文，缺少可纳入材料的许可证原文路径与 hash，因此保持未解决。"
+      "status": "verified",
+      "materials": [
+        "pgpass-readme-mit"
+      ],
+      "upstream": {
+        "materials": [
+          {
+            "repository": "https://github.com/hoegaarden/pgpass.git",
+            "tag": "v1.0.5",
+            "commit": "4230ed5e417ba6044ea7eb80b7c33db9ec301398",
+            "path": "README.md",
+            "downloadUrl": "https://raw.githubusercontent.com/hoegaarden/pgpass/4230ed5e417ba6044ea7eb80b7c33db9ec301398/README.md",
+            "sourceSha256": "62549909404b5a0dcb2b4b74c9a930baf8095dbcfa1543c4ffc79378acd22b57",
+            "section": "## License（自 Copyright (c) 2013-2016 Hannes Hörl 起提取至文件末尾）",
+            "mapping": "npm package tarball README.md 与官方精确 tag v1.0.5/commit README.md 字节一致；许可证段落逐字提取"
+          }
+        ]
+      }
     },
     {
       "name": "punycode",
@@ -1120,7 +1182,7 @@
   "bundle": {
     "status": "partial",
     "note": "这些材料可供再分发包引用；实际生产 bundle 的模块集合、压缩产物和平台原生包仍需按具体构建分别确认。本索引不把未安装的 Linux 原生包视为失败，也不把 Darwin 原生包自动宣称为浏览器 bundle 内容。",
-    "verifiedSourceMaterialCount": 14,
-    "unresolvedPackageCount": 7
+    "verifiedSourceMaterialCount": 16,
+    "unresolvedPackageCount": 5
   }
 }
