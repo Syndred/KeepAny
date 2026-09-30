@@ -1,5 +1,6 @@
 import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
+import { passwordVaultCopy } from "./password-vault-copy";
 
 const copy: Record<string, [string, string]> = {
 	overview: ["概览", "Overview"],
@@ -8,7 +9,7 @@ const copy: Record<string, [string, string]> = {
 	account: ["账号", "Accounts"],
 	subscription: ["订阅", "Subscriptions"],
 	item: ["实物", "Items"],
-	vault: ["密码库引用", "Vault references"],
+	vault: ["密码库", "Password vault"],
 	intake: ["收录与备份", "Import & backup"],
 	trash: ["回收站", "Trash"],
 	settings: ["设置", "Settings"],
@@ -350,8 +351,8 @@ const copy: Record<string, [string, string]> = {
 	],
 	backup: ["创建备份", "Create backup"],
 	backupHint: [
-		"备份包含资料、关系、原图、历史与收录审核记录。",
-		"Includes records, connections, original images, history and intake reviews.",
+		"备份包含资料、关系、原图、历史、收录审核记录与加密密码库。",
+		"Includes records, connections, original images, history, intake reviews and the encrypted password vault.",
 	],
 	restoreBackup: ["恢复备份", "Restore backup"],
 	restoreHint: [
@@ -478,12 +479,14 @@ const copy: Record<string, [string, string]> = {
 	],
 	external: ["打开链接", "Open link"],
 	vaultHint: [
-		"密码保存在你的密码库中，这里只记录引用，不填写密码或恢复码。",
-		"Keep passwords in your vault. Record references here, without passwords or recovery codes.",
+		"下方保留外部密码库的引用与关联；实际密码请存入上方的加密密码库。",
+		"Keep references and connections to external vaults below. Save passwords in the encrypted vault above.",
 	],
-	vaultListEyebrow: ["CREDENTIAL REFERENCES / 密码库", "CREDENTIAL REFERENCES"],
-	vaultListTitle: ["知道钥匙在哪里，\n不用把钥匙摆出来。", "Know where the keys are.\nKeep them in your vault."],
-	vaultListSubtitle: ["把登录信息关联到资产，需要时找到对应的密码库条目。", "Link vault entries to your assets so you can find them when needed."],
+	vaultListEyebrow: ["PRIVATE & LOCAL / 本机加密", "PRIVATE & LOCAL"],
+	vaultListTitle: ["密码，妥善保管。", "Keep your passwords close."],
+	vaultListSubtitle: ["用一个主密码管理登录信息，关联账号，随时备份。", "Manage logins with one master password, link accounts, and keep a backup."],
+	vaultReferencesTitle: ["外部密码库引用", "External vault references"],
+	accountOpenPasswords: ["管理这个账号的密码", "Manage this account’s passwords"],
 	vaultEntryName: ["条目名称", "Entry name"],
 	vaultUsedFor: ["用于", "Used for"],
 	vaultStorageLocation: ["保管位置", "Stored in"],
@@ -507,6 +510,9 @@ const copy: Record<string, [string, string]> = {
 	restoreReady: ["已恢复 {{count}} 条记录", "Restored {{count}} records"],
 	restoreReadyReview: ["已恢复 {{count}} 条记录和 {{reviewCount}} 条收录审核记录", "Restored {{count}} records and {{reviewCount}} intake reviews"],
 	restorePreviewSummary: ["资料记录：{{count}} · 收录审核：{{reviewCount}}", "Records: {{count}} · Intake reviews: {{reviewCount}}"],
+	restoreContainsVault: ["包含加密密码库。恢复后仍需原密码库主密码解锁。", "Includes an encrypted password vault. Its original master password is still needed after restoring."],
+	restoreVaultConflict: ["本机已有不同的密码库，无法覆盖。请先保留两份备份，再从密码库页面解锁并导入 KDBX。", "A different password vault already exists on this device. Keep both backups, then unlock the vault and import KDBX from the password vault page."],
+	"migrationError_restore-vault-conflict": ["备份包含另一个密码库，请先单独备份并通过密码库页面导入 KDBX，再迁移资产。", "The backup contains another password vault. Back it up and import KDBX through the password vault page before migrating assets."],
 	intakeBackupReview: ["收录审核记录", "Intake reviews"],
 	reviewMigrationPending: ["部分旧收录审核记录暂未迁入，原资料仍保留。请重试；完成前无法创建完整备份。", "Some older intake reviews could not be migrated. The originals are preserved. Retry before creating a complete backup."],
 	reviewRetryMigration: ["重试迁入审核记录", "Retry review migration"],
@@ -1333,6 +1339,7 @@ Object.assign(copy, {
 	navDropped: ["已放下 {{name}}", "Dropped {{name}}"],
 	navCancelled: ["已取消排序", "Sorting cancelled"],
 });
+Object.assign(copy, passwordVaultCopy);
 export const resources = {
 	en: {
 		translation: Object.fromEntries(

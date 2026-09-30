@@ -40,6 +40,9 @@ import { Select, SelectOption } from "./components/ui/select";
 const AssetEditor = lazy(() =>
 	import("./workflows").then((module) => ({ default: module.AssetEditor })),
 );
+const PasswordVaultPanel = lazy(() =>
+	import("./components/PasswordVaultPanel").then((module) => ({ default: module.PasswordVaultPanel })),
+);
 function SortablePill({
 	id,
 	label,
@@ -440,7 +443,9 @@ export function AssetList() {
 		select: (s) => s.matches.at(-1)?.params,
 	}) ?? {}) as { kind?: string };
 	const kind = validKind(rawKind ?? "project");
-	const { data, search } = useAppContext();
+	const { data, search, notify } = useAppContext();
+	const hash = useRouterState({ select: (state) => state.location.hash });
+	const focusAssetId = hash.startsWith("asset-") ? hash.slice(6) : undefined;
 	const { t, i18n } = useTranslation();
 	const backlinksByAsset = useMemo(() => {
 		const counts = new Map<string, { total: number; pending: number }>();
@@ -555,14 +560,20 @@ export function AssetList() {
 				action={
 					<>
 						{kind === "subscription" && <Button asChild><Link to="/finance">{t("financeViewLedger")}</Link></Button>}
-						<Button variant="primary" disabled={data.pendingCategoryEdits.some((pending) => pending.kind === kind)} onClick={() => setEdit(true)}>
+						<Button variant={kind === "vault" ? "default" : "primary"} disabled={data.pendingCategoryEdits.some((pending) => pending.kind === kind)} onClick={() => setEdit(true)}>
 							<Plus size={17} />
 							{t(kind === "vault" ? "vaultLinkEntry" : "add")}
 						</Button>
 					</>
 				}
 			/>
-			{kind === "vault" && <div className="notice vault-privacy-note" role="note"><LockKeyhole size={16} aria-hidden="true" /><span>{t("vaultHint")}</span></div>}
+			{kind === "vault" && <>
+				<Suspense fallback={<div className="notice" role="status">{t("pwVaultLoading")}</div>}>
+					<PasswordVaultPanel assets={liveAssets(data)} notify={notify} focusAssetId={focusAssetId} />
+				</Suspense>
+				<h2>{t("vaultReferencesTitle")}</h2>
+				<div className="notice vault-privacy-note" role="note"><LockKeyhole size={16} aria-hidden="true" /><span>{t("vaultHint")}</span></div>
+			</>}
 			<CategoryStrip key={kind} kind={kind} chosen={category} choose={choose} />
 			{(availableTags.length > 0 || tag) && (
 				<div className="list-filters">
@@ -576,7 +587,7 @@ export function AssetList() {
 			)}
 			{kind === "vault" ? (
 				// biome-ignore lint/a11y/noNoninteractiveTabindex: Named scroll region needs focus for keyboard access to overflow columns.
-				<section className="card vault-table-wrap asset-list-content" aria-label={t("vault")} tabIndex={0}>
+				<section className="card vault-table-wrap asset-list-content" aria-label={t("vaultReferencesTitle")} tabIndex={0}>
 				<table className="vault-reference-table">
 					<thead><tr><th>{t("vaultEntryName")}</th><th>{t("vaultUsedFor")}</th><th>{t("vaultStorageLocation")}</th><th>{t("vaultVerifyDate")}</th><th>{t("status")}</th></tr></thead>
 					<tbody>{assets.map((asset) => {

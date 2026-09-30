@@ -25,6 +25,7 @@ export default defineConfig({
 		"restore-identity.spec.ts",
 		"archive-migration.spec.ts",
 		"vault-reference-release.spec.ts",
+		"password-vault.spec.ts",
 		"themed-select.spec.ts",
 		"spacing-consistency.spec.ts",
 		"task-theme-release.spec.ts",

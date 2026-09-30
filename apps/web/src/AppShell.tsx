@@ -25,6 +25,7 @@ import {
 } from "./components/navigation/SortableNav";
 import { AppContext, icons, kinds, liveAssets } from "./view-shared";
 import { McpRuntimeProvider } from "./mcp-runtime";
+import { PasswordVaultProvider } from "./components/PasswordVaultProvider";
 import { buildGlobalSearchIndex, searchGlobalIndex, type GlobalSearchLabels } from "./global-search";
 import { requestSearchLocation } from "./search-location";
 import "./shell-restoration.css";
@@ -242,6 +243,7 @@ export function AppShell() {
 	}
 	return (
 		<AppContext.Provider value={context}>
+			<PasswordVaultProvider>
 			<McpRuntimeProvider assets={liveAssets(data)}>
 			<div className="shell">
 				<aside
@@ -370,6 +372,7 @@ export function AppShell() {
 				</Suspense>
 			)}
 			</McpRuntimeProvider>
+			</PasswordVaultProvider>
 		</AppContext.Provider>
 	);
 }

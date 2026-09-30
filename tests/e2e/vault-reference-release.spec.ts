@@ -25,16 +25,16 @@ const copyFor = (zh: boolean) =>
 				save: "保存",
 				language: "语言",
 				languageValue: "zh-CN",
-				heroFirst: "知道钥匙在哪里，",
-				heroSecond: "不用把钥匙摆出来。",
-				note: "密码保存在你的密码库中，这里只记录引用，不填写密码或恢复码。",
+				heroFirst: "密码，妥善保管。",
+				heroSecond: "密码，妥善保管。",
+				note: "下方保留外部密码库的引用与关联；实际密码请存入上方的加密密码库。",
 				linkEntry: "关联密码库条目",
 				entryName: "条目名称",
 				storedIn: "保管位置",
 				usedFor: "用于",
 				verified: "核实时间",
 				linked: "已关联",
-				vaultLabel: "密码库引用",
+				vaultLabel: "密码库",
 				backup: "创建备份",
 				download: "保存备份文件",
 				preview: "预览",
@@ -47,16 +47,16 @@ const copyFor = (zh: boolean) =>
 				save: "Save",
 				language: "Language",
 				languageValue: "en",
-				heroFirst: "Know where the keys are.",
-				heroSecond: "Keep them in your vault.",
-				note: "Keep passwords in your vault. Record references here, without passwords or recovery codes.",
+				heroFirst: "Keep your passwords close.",
+				heroSecond: "Keep your passwords close.",
+				note: "Keep references and connections to external vaults below. Save passwords in the encrypted vault above.",
 				linkEntry: "Link vault entry",
 				entryName: "Entry name",
 				storedIn: "Stored in",
 				usedFor: "Used for",
 				verified: "Verified",
 				linked: "Linked",
-				vaultLabel: "Vault references",
+				vaultLabel: "Password vault",
 				backup: "Create backup",
 				download: "Save backup file",
 				preview: "Preview",
@@ -162,9 +162,12 @@ async function assertVaultTable(
 	).toHaveAttribute("href", vaultHref);
 	if (width === 390) {
 		const tableWrap = page.locator(".vault-table-wrap");
+		await expect(page.locator("#password-vault-master")).toBeVisible();
 		await expect(tableWrap).toHaveAttribute("tabindex", "0");
 		await tableWrap.focus();
 		await expect(tableWrap).toBeFocused();
+		await row.scrollIntoViewIfNeeded();
+		await expect(row.locator("td").first()).toBeInViewport({ ratio: 0.1 });
 		const readScrollState = () =>
 			tableWrap.evaluate((element) => ({
 				scrollLeft: (element as HTMLElement).scrollLeft,

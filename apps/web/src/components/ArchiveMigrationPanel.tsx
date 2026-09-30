@@ -126,6 +126,7 @@ export function ArchiveMigrationPanel({ configurationKey, syncBusy, onBusyChange
 			"archive-merge-choice", "archive-merge-pending", "archive-merge-sync-started",
 			"archive-merge-rollback-conflict", "archive-merge-unbound",
 			"archive-attachment-reference", "archive-references", "sync-dataset-bound",
+			"restore-vault-conflict",
 			"migrationTargetNotClean", "migrationTargetFailed", "migrationBackupMismatch",
 			"migrationBackupPassword", "migrationBackupRequired", "migrationSourceInvalid",
 			"migrationTargetChanged", "migrationSourceIdentity",

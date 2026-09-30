@@ -973,6 +973,7 @@ export function IntakeTools({ onCsvStaged }: { onCsvStaged: () => void }) {
 	const [readyArchiveOrigin, setReadyArchiveOrigin] = useState<"local" | "remote" | null>(null);
 	const [archiveCount, setArchiveCount] = useState(0);
 	const [archiveReviewCount, setArchiveReviewCount] = useState(0);
+	const [archiveHasVault, setArchiveHasVault] = useState(false);
 	const [candidates, setCandidates] = useState<ImportCandidate[]>([]);
 	const [candidateGeneration, setCandidateGeneration] = useState<number | null>(null);
 	const [url, setUrl] = useState("");
@@ -1081,16 +1082,18 @@ export function IntakeTools({ onCsvStaged }: { onCsvStaged: () => void }) {
 		setReadyArchiveOrigin(null);
 		setArchiveCount(0);
 		setArchiveReviewCount(0);
+		setArchiveHasVault(false);
 		setMessage("");
 		return generation;
 	}
-	function acceptRemotePreview(archive: Uint8Array, count: number, generation: number, reviewCount = 0) {
+	function acceptRemotePreview(archive: Uint8Array, count: number, generation: number, reviewCount = 0, hasVault = false) {
 		if (generation !== restoreGeneration.current) return false;
 		setReadyArchive(archive);
 		setReadyArchiveGeneration(generation);
 		setReadyArchiveOrigin("remote");
 		setArchiveCount(count);
 		setArchiveReviewCount(reviewCount);
+		setArchiveHasVault(hasVault);
 		return true;
 	}
 	async function download() {
@@ -1145,6 +1148,7 @@ export function IntakeTools({ onCsvStaged }: { onCsvStaged: () => void }) {
 				setReadyArchiveOrigin("local");
 				setArchiveCount(result.rows.length);
 				setArchiveReviewCount(result.intakeReview.length);
+				setArchiveHasVault(!!result.passwordVault);
 				setMessage(t("preview"));
 			} catch {
 				if (generation === restoreGeneration.current) setMessage(t("archiveInvalid"));
@@ -1170,7 +1174,9 @@ export function IntakeTools({ onCsvStaged }: { onCsvStaged: () => void }) {
 			setRestoreFile(null);
 			if (restoreFileInput.current) restoreFileInput.current.value = "";
 		} catch (error) {
-			const key = error instanceof Error && error.message === "restore-conflict"
+			const key = error instanceof Error && error.message === "restore-vault-conflict"
+				? "restoreVaultConflict"
+				: error instanceof Error && error.message === "restore-conflict"
 				? "restoreConflict"
 				: error instanceof Error && error.message === "restore-source-identity"
 					? "restoreSourceIdentity"
@@ -1508,6 +1514,7 @@ export function IntakeTools({ onCsvStaged }: { onCsvStaged: () => void }) {
 						</div>
 						<small>{t("restoreHint")}</small>
 						{readyArchive && readyArchiveOrigin === "local" && <p role="status">{t("restorePreviewSummary", { count: archiveCount, reviewCount: archiveReviewCount })}</p>}
+						{readyArchive && readyArchiveOrigin === "local" && archiveHasVault && <p>{t("restoreContainsVault")}</p>}
 						<div className="actions">
 							<Button onClick={() => void inspect()} disabled={busy || inspecting || !restoreFile || !password}>{t("preview")}</Button>
 							{readyArchive && readyArchiveOrigin === "local" && (
@@ -1528,6 +1535,7 @@ export function IntakeTools({ onCsvStaged }: { onCsvStaged: () => void }) {
 							canConfirm={!!readyArchive && readyArchiveOrigin === "remote" && readyArchiveGeneration === restoreGeneration.current}
 							restoreCount={archiveCount}
 							restoreReviewCount={archiveReviewCount}
+							restoreHasVault={archiveHasVault}
 							confirmRestore={() => void restore()}
 						/>
 					</details>

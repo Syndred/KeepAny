@@ -1703,7 +1703,7 @@ export function AssetDetail() {
 					<div><dt>{t("accountProfileVerifiedAt")}</dt><dd>{asset.accountProfileVerifiedAt ? date(asset.accountProfileVerifiedAt, i18n.language) : t("accountNotRecorded")}</dd></div>
 					<div><dt>{t("accountRelationVerifiedAt")}</dt><dd>{accountVerifiedAt ? date(accountVerifiedAt, i18n.language) : t("accountNotRecorded")}</dd></div>
 					<div><dt>{t("accountVaultReferences")}</dt><dd>{accountVaults.length ? accountVaults.map((linked) => linked.name).join(" · ") : t("accountNotRecorded")}</dd></div>
-				</dl></section>
+				</dl><Button asChild><Link to="/assets/$kind" params={{ kind: "vault" }} hash={`asset-${asset.id}`}>{t("accountOpenPasswords")}<ArrowDownRight size={16} /></Link></Button></section>
 			</div>}
 			{asset.kind === "account" && attachmentSection}
 			{asset.kind === "account" && (
