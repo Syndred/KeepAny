@@ -1,0 +1,369 @@
+import { gzipSync } from 'fflate';
+import { Consts, Int64, Kdbx, ProtectedValue, VarDictionary, XmlUtils } from 'kdbxweb';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { checkHeader, configureDatabase, credentials, VAULT_LINK_FIELD } from './engine';
+import { generatePassword, VAULT_MAX_BYTES, VaultSession } from './index';
+import type { VaultEntryDraft, VaultPersistence, VaultRecord } from './types';
+
+const master = 'synthetic-master-v1';
+const nextMaster = 'synthetic-master-v2';
+const draft: VaultEntryDraft = {
+  title: 'Synthetic mail', username: 'synthetic@example.test', password: 'synthetic-secret-P4ss!',
+  url: 'https://example.test/login', notes: 'Synthetic private note', linkedAssetIds: ['synthetic-account-id'],
+};
+
+class MemoryStorage implements VaultPersistence {
+  record: VaultRecord | null = null;
+  writes = 0;
+  async read(): Promise<VaultRecord | null> { return this.record ? { ...this.record, bytes: this.record.bytes.slice() } : null; }
+  async write(bytes: Uint8Array, expectedRevision: string | null): Promise<VaultRecord> {
+    if ((this.record?.revision ?? null) !== expectedRevision) throw new Error('vault-stale');
+    this.writes += 1;
+    this.record = { id: 'local', revision: `revision-${this.writes}`, updatedAt: new Date().toISOString(), bytes: bytes.slice() };
+    return { ...this.record, bytes: this.record.bytes.slice() };
+  }
+}
+
+async function created() {
+  const storage = new MemoryStorage();
+  const session = new VaultSession(storage);
+  await session.initialize();
+  await session.create(master);
+  return { storage, session };
+}
+
+function deferred() {
+  let resolve!: () => void;
+  const promise = new Promise<void>((done) => { resolve = done; });
+  return { promise, resolve };
+}
+
+afterEach(() => vi.restoreAllMocks());
+
+describe('real encrypted local KDBX session', () => {
+  it('creates Argon2id KDBX4, keeps secrets out of persistence/summaries, and enforces lock and wrong master', async () => {
+    const { storage, session } = await created();
+    const unchangedSnapshot = session.getSnapshot();
+    expect(session.getSnapshot()).toBe(unchangedSnapshot);
+    const changed = vi.fn();
+    const unsubscribe = session.subscribe(changed);
+    const id = await session.saveEntry(draft);
+    expect(changed).toHaveBeenCalledOnce();
+    unsubscribe();
+    const bytes = await session.exportKdbx();
+    const plaintextProbe = new TextDecoder().decode(bytes);
+    for (const secret of [master, draft.password, draft.notes, draft.linkedAssetIds[0]]) expect(plaintextProbe).not.toContain(secret);
+    expect(JSON.stringify(session.getSnapshot())).not.toContain(draft.password);
+    expect(JSON.stringify(session.getSnapshot())).not.toContain(draft.notes);
+    const upstream = await Kdbx.load(bytes.slice().buffer, credentials(master));
+    expect(upstream.versionMajor).toBe(4);
+    expect(upstream.header.compression).toBe(Consts.CompressionAlgorithm.None);
+    const params = upstream.header.kdfParameters;
+    if (!params) throw new Error('missing synthetic KDF parameters');
+    expect((params.get('M') as Int64).value).toBe(64 * 1024 * 1024);
+    expect((params.get('I') as Int64).value).toBe(3);
+    const entry = [...upstream.getDefaultGroup().allEntries()][0];
+    expect(entry.fields.get('Password')).toBeInstanceOf(ProtectedValue);
+    expect(entry.fields.get(VAULT_LINK_FIELD)).toBeInstanceOf(ProtectedValue);
+    expect((entry.fields.get('Password') as ProtectedValue).getText()).toBe(draft.password);
+    const persisted = storage.record?.bytes.slice();
+    session.lock();
+    expect(session.getSnapshot()).toMatchObject({ status: 'locked', entries: [], trash: [] });
+    expect(() => session.readEntry(id)).toThrow('vault-locked');
+    expect(() => session.history(id)).toThrow('vault-locked');
+    await expect(session.exportKdbx()).rejects.toThrow('vault-locked');
+    await expect(session.unlock('incorrect-master')).rejects.toThrow('vault-password');
+    expect(storage.record?.bytes).toEqual(persisted);
+    expect(session.getSnapshot().status).toBe('locked');
+    await session.unlock(master);
+    expect(session.readEntry(id)).toEqual({ ...draft, id });
+  }, 30_000);
+
+  it('edits and restores password history and recycle bin with stable UUIDs after reload', async () => {
+    const { storage, session } = await created();
+    const id = await session.saveEntry({ ...draft, linkedAssetIds: [] });
+    await session.saveEntry({ ...draft, id, password: 'replacement-secret-02', title: 'Updated entry', linkedAssetIds: [] });
+    expect(session.history(id)).toHaveLength(1);
+    expect(session.history(id)[0].draft.password).toBe(draft.password);
+    await session.restoreHistory(id, 0);
+    expect(session.readEntry(id).password).toBe(draft.password);
+    expect(session.history(id)).toHaveLength(2);
+    await session.trashEntry(id);
+    expect(session.getSnapshot().entries).toEqual([]);
+    expect(session.getSnapshot().trash[0].id).toBe(id);
+    session.lock();
+    const reloaded = new VaultSession(storage);
+    await reloaded.initialize();
+    await reloaded.unlock(master);
+    expect(reloaded.getSnapshot().trash[0].id).toBe(id);
+    await reloaded.restoreEntry(id);
+    expect(reloaded.getSnapshot().trash).toEqual([]);
+    expect(reloaded.readEntry(id).password).toBe(draft.password);
+    expect(reloaded.history(id)).toHaveLength(2);
+  }, 30_000);
+
+  it('rotates master credentials only after verifying the current password', async () => {
+    const { session, storage } = await created();
+    const id = await session.saveEntry(draft);
+    const before = storage.record?.bytes.slice();
+    await expect(session.changeMasterPassword('incorrect-master', nextMaster)).rejects.toThrow('vault-password');
+    expect(storage.record?.bytes).toEqual(before);
+    await session.changeMasterPassword(master, nextMaster);
+    session.lock();
+    await expect(session.unlock(master)).rejects.toThrow('vault-password');
+    await session.unlock(nextMaster);
+    expect(session.readEntry(id).password).toBe(draft.password);
+    await expect(Kdbx.load((await session.exportKdbx()).slice().buffer, credentials(nextMaster))).resolves.toBeInstanceOf(Kdbx);
+  }, 30_000);
+
+  it('imports real Argon2d databases, preserves imported UUID/history/trash, and merges independent vaults without replacement', async () => {
+    const source = await created();
+    const sourceId = await source.session.saveEntry(draft);
+    await source.session.saveEntry({ ...draft, id: sourceId, password: 'changed-before-export' });
+    const trashId = await source.session.saveEntry({ ...draft, title: 'Imported trash' });
+    await source.session.trashEntry(trashId);
+    const upstream = await Kdbx.load((await source.session.exportKdbx()).slice().buffer, credentials(master));
+    upstream.setKdf(Consts.KdfId.Argon2d);
+    const importedBytes = new Uint8Array(await upstream.save());
+    const storage = new MemoryStorage();
+    const adopted = new VaultSession(storage);
+    await adopted.initialize();
+    await adopted.importKdbx(importedBytes, master);
+    expect(adopted.readEntry(sourceId).password).toBe('changed-before-export');
+    expect(adopted.history(sourceId)[0].draft.password).toBe(draft.password);
+    expect(adopted.getSnapshot().trash[0].id).toBe(trashId);
+    await source.session.saveEntry({ ...draft, id: sourceId, password: 'same-vault-newer-revision' });
+    await adopted.importKdbx(await source.session.exportKdbx(), master);
+    expect(adopted.readEntry(sourceId).password).toBe('same-vault-newer-revision');
+    adopted.lock();
+    await adopted.unlock(master);
+    expect(adopted.readEntry(sourceId).password).toBe('same-vault-newer-revision');
+    expect(adopted.getSnapshot().trash[0].id).toBe(trashId);
+    const target = await created();
+    const targetId = await target.session.saveEntry({ ...draft, title: 'Existing password' });
+    await target.session.importKdbx(importedBytes, master);
+    expect(target.session.getSnapshot().entries.map((entry) => entry.id)).toEqual(expect.arrayContaining([sourceId, targetId]));
+    expect(target.session.getSnapshot().trash.map((entry) => entry.id)).toContain(trashId);
+    expect(target.session.history(sourceId)[0].draft.password).toBe(draft.password);
+    const snapshotBeforeCollision = target.session.getSnapshot();
+    await expect(target.session.importKdbx(importedBytes, master)).rejects.toThrow('vault-stale');
+    expect(target.session.getSnapshot()).toBe(snapshotBeforeCollision);
+    expect(target.session.getSnapshot().entries).toHaveLength(2);
+    const preserved = target.storage.record?.bytes.slice();
+    await expect(target.session.importKdbx(importedBytes, 'incorrect-master')).rejects.toThrow('vault-password');
+    await expect(target.session.importKdbx(new Uint8Array([1, 2, 3]), master)).rejects.toThrow('vault-invalid');
+    expect(target.storage.record?.bytes).toEqual(preserved);
+    target.session.lock();
+    await expect(target.session.importKdbx(importedBytes, master)).rejects.toThrow('vault-locked');
+  }, 60_000);
+
+  it('rejects stale cross-tab writes without changing visible or persisted entries', async () => {
+    const { session: first, storage } = await created();
+    const id = await first.saveEntry(draft);
+    const second = new VaultSession(storage);
+    await second.initialize();
+    await second.unlock(master);
+    await first.saveEntry({ ...draft, id, password: 'first-tab-wins' });
+    const before = storage.record?.bytes.slice();
+    const snapshot = second.getSnapshot();
+    await expect(second.saveEntry({ ...draft, id, password: 'stale-tab-value' })).rejects.toThrow('vault-stale');
+    expect(second.getSnapshot()).toBe(snapshot);
+    expect(second.readEntry(id).password).toBe(draft.password);
+    expect(storage.record?.bytes).toEqual(before);
+    await expect(second.exportKdbx()).rejects.toThrow('vault-stale');
+    second.lock();
+    await second.unlock(master);
+    expect(second.readEntry(id).password).toBe('first-tab-wins');
+    const saved = await Promise.all([
+      second.saveEntry({ ...draft, title: 'Queued A' }), second.saveEntry({ ...draft, title: 'Queued B' }),
+    ]);
+    expect(second.getSnapshot().entries.map((entry) => entry.id)).toEqual(expect.arrayContaining(saved));
+  }, 30_000);
+
+  it('cannot resurrect an unlocked session or persist a mutation after lock during asynchronous encryption', async () => {
+    const { storage, session } = await created();
+    const reached = deferred();
+    const resume = deferred();
+    const originalSave = Kdbx.prototype.save;
+    vi.spyOn(Kdbx.prototype, 'save').mockImplementationOnce(async function (this: Kdbx) {
+      reached.resolve();
+      await resume.promise;
+      return originalSave.call(this);
+    });
+    const pending = session.saveEntry(draft);
+    const rejected = expect(pending).rejects.toThrow('vault-locked');
+    await reached.promise;
+    session.lock();
+    expect(session.getSnapshot()).toMatchObject({ status: 'locked', entries: [] });
+    resume.resolve();
+    await rejected;
+    expect(storage.writes).toBe(1);
+    expect(session.getSnapshot().status).toBe('locked');
+    const loadReached = deferred();
+    const loadResume = deferred();
+    const originalLoad = Kdbx.load;
+    vi.spyOn(Kdbx, 'load').mockImplementationOnce(async (...args) => {
+      loadReached.resolve();
+      await loadResume.promise;
+      return originalLoad(...args);
+    });
+    const unlock = session.unlock(master);
+    const unlockRejected = expect(unlock).rejects.toThrow('vault-locked');
+    await loadReached.promise;
+    session.lock();
+    loadResume.resolve();
+    await unlockRejected;
+    expect(session.getSnapshot()).toMatchObject({ status: 'locked', entries: [], trash: [] });
+  }, 30_000);
+
+  it('also prevents late import and master rotation from unlocking or replacing a locked session', async () => {
+    const { storage, session } = await created();
+    const id = await session.saveEntry(draft);
+    const exported = await session.exportKdbx();
+    for (const operation of ['import', 'rotate']) {
+      const reached = deferred();
+      const resume = deferred();
+      const original = Kdbx.load;
+      const spy = vi.spyOn(Kdbx, 'load').mockImplementationOnce(async (...args) => {
+        reached.resolve();
+        await resume.promise;
+        return original(...args);
+      });
+      const before = storage.record?.bytes.slice();
+      const pending = operation === 'import' ? session.importKdbx(exported, master) : session.changeMasterPassword(master, nextMaster);
+      const rejected = expect(pending).rejects.toThrow('vault-locked');
+      await reached.promise;
+      session.lock();
+      resume.resolve();
+      await rejected;
+      spy.mockRestore();
+      expect(session.getSnapshot()).toMatchObject({ status: 'locked', entries: [], trash: [] });
+      expect(storage.record?.bytes).toEqual(before);
+      await session.unlock(master);
+      expect(session.readEntry(id).password).toBe(draft.password);
+    }
+  }, 30_000);
+
+  it('clears held protected field and credential references on lock and isolates subscriber errors', async () => {
+    const { session } = await created();
+    session.subscribe(() => { throw new Error('synthetic subscriber rendering error'); });
+    const id = await session.saveEntry(draft);
+    expect(session.readEntry(id).password).toBe(draft.password);
+    // Capture references only inside this test to prove the zeroing boundary, not just missing UI state.
+    const db = (session as unknown as { db: Kdbx }).db;
+    const secret = db.getDefaultGroup().entries[0].fields.get('Password') as ProtectedValue;
+    const credential = db.credentials.passwordHash;
+    session.lock();
+    expect(secret.value.every((value) => value === 0)).toBe(true);
+    expect(secret.salt.every((value) => value === 0)).toBe(true);
+    expect(credential?.value.every((value) => value === 0)).toBe(true);
+    expect(credential?.salt.every((value) => value === 0)).toBe(true);
+    expect(session.getSnapshot()).toMatchObject({ status: 'locked', entries: [], trash: [] });
+  }, 30_000);
+
+  it('bounds import bytes/KDF work and validates drafts without overwriting the vault', async () => {
+    const { session, storage } = await created();
+    const before = storage.record?.bytes.slice();
+    await expect(session.importKdbx(new Uint8Array(VAULT_MAX_BYTES + 1), master)).rejects.toThrow('vault-size');
+    for (const invalid of [
+      { ...draft, url: 'javascript:alert(1)' }, { ...draft, url: 'https://user:secret@example.test/' }, { ...draft, title: '' },
+      { ...draft, password: 'a'.repeat(65_537) }, { ...draft, linkedAssetIds: Array(101).fill('id') },
+    ]) await expect(session.saveEntry(invalid)).rejects.toThrow('vault-invalid');
+    const malicious = Kdbx.create(credentials(master), 'Oversized work factor');
+    configureDatabase(malicious);
+    malicious.header.kdfParameters?.set('M', VarDictionary.ValueType.UInt64, Int64.from(129 * 1024 * 1024));
+    const header = new (await import('kdbxweb')).BinaryStream();
+    malicious.header.generateSalts();
+    malicious.header.write(header);
+    expect(() => checkHeader(new Uint8Array(header.getWrittenBytes()))).toThrow('vault-kdf');
+    malicious.header.kdfParameters?.set('M', VarDictionary.ValueType.UInt64, Int64.from(64 * 1024 * 1024));
+    malicious.header.kdfParameters?.set('I', VarDictionary.ValueType.UInt64, Int64.from(11));
+    const iterations = new (await import('kdbxweb')).BinaryStream();
+    malicious.header.write(iterations);
+    expect(() => checkHeader(new Uint8Array(iterations.getWrittenBytes()))).toThrow('vault-kdf');
+    expect(storage.record?.bytes).toEqual(before);
+  }, 30_000);
+
+  it('reads ordinary compressed upstream KDBX3/4 and rejects a compressed XML bomb through the patched real parser', async () => {
+    for (const version of [3, 4] as const) {
+      const external = Kdbx.create(credentials(master), `Compressed KDBX${version}`);
+      configureDatabase(external);
+      external.setVersion(version);
+      external.header.compression = Consts.CompressionAlgorithm.GZip;
+      const entry = external.createEntry(external.getDefaultGroup());
+      entry.fields.set('Title', 'Compressed external password');
+      entry.fields.set('Password', ProtectedValue.fromString('external-compressed-secret'));
+      entry.fields.set('URL', 'javascript:alert(1)');
+      const bytes = new Uint8Array(await external.save());
+      const decoded = await Kdbx.load(bytes.slice().buffer, credentials(master));
+      expect((decoded.getDefaultGroup().entries[0].fields.get('Password') as ProtectedValue).getText()).toBe('external-compressed-secret');
+      const store = new MemoryStorage();
+      const importing = new VaultSession(store);
+      await importing.initialize();
+      await importing.importKdbx(bytes, master);
+      expect(importing.getSnapshot().entries[0].url).toBe('');
+      expect(importing.readEntry(entry.uuid.id).password).toBe('external-compressed-secret');
+    }
+    const malicious = Kdbx.create(credentials(master), 'Synthetic compressed size boundary');
+    configureDatabase(malicious);
+    malicious.header.compression = Consts.CompressionAlgorithm.GZip;
+    const entry = malicious.createEntry(malicious.getDefaultGroup());
+    // An unprotected repetitive XML field makes the encrypted file small while inflation exceeds 32 MiB.
+    entry.fields.set('Notes', 'x'.repeat(33 * 1024 * 1024));
+    const bytes = new Uint8Array(await malicious.save());
+    expect(bytes.byteLength).toBeLessThan(VAULT_MAX_BYTES);
+    await expect(Kdbx.load(bytes.slice().buffer, credentials(master))).rejects.toThrow('vault-size');
+    const { storage, session } = await created();
+    const id = await session.saveEntry(draft);
+    const before = storage.record?.bytes.slice();
+    await expect(session.importKdbx(bytes, master)).rejects.toThrow('vault-size');
+    expect(storage.record?.bytes).toEqual(before);
+    expect(session.readEntry(id).password).toBe(draft.password);
+    await session.saveEntry({ ...draft, id, password: 'usable-after-bomb-rejection' });
+    expect(session.readEntry(id).password).toBe('usable-after-bomb-rejection');
+  }, 60_000);
+
+  it('enforces the real upstream compressed binary aggregate budget per XML document', async () => {
+    const external = Kdbx.create(credentials(master), 'Synthetic compressed binary aggregate');
+    external.setVersion(3);
+    const payload = Buffer.from(gzipSync(new Uint8Array(17 * 1024 * 1024).fill(7))).toString('base64');
+    const originalBuild = external.buildXml;
+    vi.spyOn(external, 'buildXml').mockImplementationOnce((context) => {
+      originalBuild.call(external, context);
+      const meta = external.xml?.getElementsByTagName('Meta')[0];
+      if (!meta) throw new Error('missing synthetic Meta');
+      const binaries = meta.getElementsByTagName('Binaries')[0];
+      for (const id of ['0', '1']) {
+        const binary = XmlUtils.addChildNode(binaries, 'Binary');
+        binary.setAttribute('ID', id);
+        binary.setAttribute('Compressed', 'True');
+        binary.textContent = payload;
+      }
+    });
+    const bomb = new Uint8Array(await external.save());
+    expect(bomb.byteLength).toBeLessThan(VAULT_MAX_BYTES);
+    await expect(Kdbx.load(bomb.slice().buffer, credentials(master))).rejects.toThrow('vault-size');
+    const { session, storage } = await created();
+    const before = storage.record?.bytes.slice();
+    await expect(session.importKdbx(bomb, master)).rejects.toThrow('vault-size');
+    expect(storage.record?.bytes).toEqual(before);
+    // A failed document must not poison the next parser invocation's aggregate budget.
+    const normal = new Uint8Array(await external.save());
+    await expect(Kdbx.load(normal.slice().buffer, credentials(master))).resolves.toBeInstanceOf(Kdbx);
+  }, 60_000);
+});
+
+it('generates cryptographic passwords of requested length with every enabled category and bounded inputs', () => {
+  vi.spyOn(Math, 'random').mockImplementation(() => { throw new Error('Math.random is forbidden'); });
+  for (let i = 0; i < 40; i++) {
+    const password = generatePassword(24);
+    expect(password).toHaveLength(24);
+    expect(password).toMatch(/[a-z]/);
+    expect(password).toMatch(/[A-Z]/);
+    expect(password).toMatch(/[0-9]/);
+    expect(password).toMatch(/[^a-zA-Z0-9]/);
+    expect(generatePassword(12, false)).toMatch(/^[a-zA-Z0-9]{12}$/);
+  }
+  expect(generatePassword(128)).toHaveLength(128);
+  for (const length of [0, 11, 129, NaN, 12.5]) expect(() => generatePassword(length)).toThrow('vault-invalid');
+});

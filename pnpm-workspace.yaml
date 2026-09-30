@@ -9,3 +9,8 @@ minimumReleaseAgeExclude:
   - hono@4.13.10
 onlyBuiltDependencies:
   - esbuild
+overrides:
+  'kdbxweb>@xmldom/xmldom': 0.8.15
+  'kdbxweb>fflate': 0.8.3
+patchedDependencies:
+  kdbxweb@2.1.1: patches/kdbxweb@2.1.1.patch

@@ -1,0 +1,217 @@
+diff --git a/dist/kdbxweb.js b/dist/kdbxweb.js
+index 7d330745e3ebc4c99c09a573824ae3bb08583565..d334fb20af0323fc330d0a855db60cdb4756c60e 100644
+--- a/dist/kdbxweb.js
++++ b/dist/kdbxweb.js
+@@ -2293,6 +2293,31 @@ const CryptoEngine = __webpack_require__(/*! ../crypto/crypto-engine */ "./crypt
+ const KeyEncryptorAes = __webpack_require__(/*! ../crypto/key-encryptor-aes */ "./crypto/key-encryptor-aes.ts");
+ const KeyEncryptorKdf = __webpack_require__(/*! ../crypto/key-encryptor-kdf */ "./crypto/key-encryptor-kdf.ts");
+ const int64_1 = __webpack_require__(/*! ../utils/int64 */ "./utils/int64.ts");
++
++// KeepAny: bound decrypted gzip output before XML/attachment allocations.
++// Small input chunks also bound transient inflater output bursts.
++function keepAnyBoundedGunzip(bytes) {
++    const limit = 32 * 1024 * 1024;
++    const chunks = [];
++    let size = 0;
++    let finished = false;
++    const stream = new fflate_1.Gunzip((chunk, final) => {
++        size += chunk.length;
++        if (size > limit) throw new Error('vault-size');
++        chunks.push(chunk);
++        finished = final;
++    });
++    for (let offset = 0; offset < bytes.length; offset += 1024) {
++        const end = Math.min(offset + 1024, bytes.length);
++        stream.push(bytes.subarray(offset, end), end === bytes.length);
++    }
++    if (!finished) throw new Error('vault-invalid');
++    const result = new Uint8Array(size);
++    let offset = 0;
++    for (const chunk of chunks) { result.set(chunk, offset); offset += chunk.length; }
++    return result;
++}
++
+ class KdbxFormat {
+     constructor(kdbx) {
+         this.preserveXml = false;
+@@ -2344,7 +2369,7 @@ class KdbxFormat {
+                         return this.decryptData(data, keys.cipherKey).then((data) => {
+                             (0, byte_utils_1.zeroBuffer)(keys.cipherKey);
+                             if (this.kdbx.header.compression === consts_1.CompressionAlgorithm.GZip) {
+-                                data = (0, byte_utils_1.arrayToBuffer)((0, fflate_1.gunzipSync)(new Uint8Array(data)));
++                                data = (0, byte_utils_1.arrayToBuffer)(keepAnyBoundedGunzip(new Uint8Array(data)));
+                             }
+                             stm = new binary_stream_1.BinaryStream((0, byte_utils_1.arrayToBuffer)(data));
+                             this.kdbx.header.readInnerHeader(stm, this.ctx);
+@@ -2470,7 +2495,7 @@ class KdbxFormat {
+                 data = this.trimStartBytesV3(data);
+                 return HashedBlockTransform.decrypt(data).then((data) => {
+                     if (this.kdbx.header.compression === consts_1.CompressionAlgorithm.GZip) {
+-                        data = (0, byte_utils_1.arrayToBuffer)((0, fflate_1.gunzipSync)(new Uint8Array(data)));
++                        data = (0, byte_utils_1.arrayToBuffer)(keepAnyBoundedGunzip(new Uint8Array(data)));
+                     }
+                     return (0, byte_utils_1.bytesToString)(data);
+                 });
+@@ -5334,6 +5359,32 @@ const int64_1 = __webpack_require__(/*! ./int64 */ "./utils/int64.ts");
+ const kdbx_uuid_1 = __webpack_require__(/*! ../format/kdbx-uuid */ "./format/kdbx-uuid.ts");
+ const protected_value_1 = __webpack_require__(/*! ../crypto/protected-value */ "./crypto/protected-value.ts");
+ const kdbx_binaries_1 = __webpack_require__(/*! ../format/kdbx-binaries */ "./format/kdbx-binaries.ts");
++
++// KeepAny: bound decrypted gzip output before XML/attachment allocations.
++// Small input chunks also bound transient inflater output bursts.
++function keepAnyBoundedGunzip(bytes) {
++    const limit = 32 * 1024 * 1024;
++    const chunks = [];
++    let size = 0;
++    let finished = false;
++    const stream = new fflate_1.Gunzip((chunk, final) => {
++        size += chunk.length;
++        if (size > limit) throw new Error('vault-size');
++        chunks.push(chunk);
++        finished = final;
++    });
++    for (let offset = 0; offset < bytes.length; offset += 1024) {
++        const end = Math.min(offset + 1024, bytes.length);
++        stream.push(bytes.subarray(offset, end), end === bytes.length);
++    }
++    if (!finished) throw new Error('vault-invalid');
++    const result = new Uint8Array(size);
++    let offset = 0;
++    for (const chunk of chunks) { result.set(chunk, offset); offset += chunk.length; }
++    return result;
++}
++
++const keepAnyBinaryBudgets = new WeakMap();
+ const DateRegex = /\.\d\d\d/;
+ const EpochSeconds = 62135596800;
+ const TagsSplitRegex = /\s*[;,:]\s*/;
+@@ -5598,7 +5649,11 @@ function getProtectedBinary(node) {
+     const compressed = strToBoolean(node.getAttribute(XmlNames.Attr.Compressed));
+     let bytes = (0, byte_utils_1.base64ToBytes)(text);
+     if (compressed) {
+-        bytes = (0, fflate_1.gunzipSync)(bytes);
++        bytes = keepAnyBoundedGunzip(bytes);
++        const document = node.ownerDocument || node;
++        const total = (keepAnyBinaryBudgets.get(document) || 0) + bytes.length;
++        if (total > 32 * 1024 * 1024) throw new Error('vault-size');
++        keepAnyBinaryBudgets.set(document, total);
+     }
+     return (0, byte_utils_1.arrayToBuffer)(bytes);
+ }
+diff --git a/lib/format/kdbx-format.ts b/lib/format/kdbx-format.ts
+index cad480a4f438bb1cdb8991b463b0bc40fd127ec3..ecb843e88d87ec39ca5b689da157fdcf8989901b 100644
+--- a/lib/format/kdbx-format.ts
++++ b/lib/format/kdbx-format.ts
+@@ -1,4 +1,4 @@
+-import { gzipSync, gunzipSync } from 'fflate';
++import { gzipSync, Gunzip } from 'fflate';
+ import { Kdbx } from './kdbx';
+ import { CipherId, CompressionAlgorithm, ErrorCodes } from '../defs/consts';
+ import { KdbxError } from '../errors/kdbx-error';
+@@ -21,6 +21,31 @@ import * as KeyEncryptorAes from '../crypto/key-encryptor-aes';
+ import * as KeyEncryptorKdf from '../crypto/key-encryptor-kdf';
+ import { Int64 } from '../utils/int64';
+ 
++
++// KeepAny: bound decrypted gzip output before XML/attachment allocations.
++// Small input chunks also bound transient inflater output bursts.
++function keepAnyBoundedGunzip(bytes: Uint8Array): Uint8Array {
++    const limit = 32 * 1024 * 1024;
++    const chunks: Uint8Array[] = [];
++    let size = 0;
++    let finished = false;
++    const stream = new Gunzip((chunk, final) => {
++        size += chunk.length;
++        if (size > limit) throw new Error('vault-size');
++        chunks.push(chunk);
++        finished = final;
++    });
++    for (let offset = 0; offset < bytes.length; offset += 1024) {
++        const end = Math.min(offset + 1024, bytes.length);
++        stream.push(bytes.subarray(offset, end), end === bytes.length);
++    }
++    if (!finished) throw new Error('vault-invalid');
++    const result = new Uint8Array(size);
++    let offset = 0;
++    for (const chunk of chunks) { result.set(chunk, offset); offset += chunk.length; }
++    return result;
++}
++
+ export class KdbxFormat {
+     readonly kdbx: Kdbx;
+     readonly ctx: KdbxContext;
+@@ -81,7 +106,7 @@ export class KdbxFormat {
+                             return this.decryptData(data, keys.cipherKey).then((data) => {
+                                 zeroBuffer(keys.cipherKey);
+                                 if (this.kdbx.header.compression === CompressionAlgorithm.GZip) {
+-                                    data = arrayToBuffer(gunzipSync(new Uint8Array(data)));
++                                    data = arrayToBuffer(keepAnyBoundedGunzip(new Uint8Array(data)));
+                                 }
+                                 stm = new BinaryStream(arrayToBuffer(data));
+                                 this.kdbx.header.readInnerHeader(stm, this.ctx);
+@@ -219,7 +244,7 @@ export class KdbxFormat {
+                 data = this.trimStartBytesV3(data);
+                 return HashedBlockTransform.decrypt(data).then((data) => {
+                     if (this.kdbx.header.compression === CompressionAlgorithm.GZip) {
+-                        data = arrayToBuffer(gunzipSync(new Uint8Array(data)));
++                        data = arrayToBuffer(keepAnyBoundedGunzip(new Uint8Array(data)));
+                     }
+                     return bytesToString(data);
+                 });
+diff --git a/lib/utils/xml-utils.ts b/lib/utils/xml-utils.ts
+index 2d208bd92ef07d5ec30daf26a83f1c72dc9f1c38..8d922838eeed4c0c16853fa7ed6ce14eb38c0fd0 100644
+--- a/lib/utils/xml-utils.ts
++++ b/lib/utils/xml-utils.ts
+@@ -1,4 +1,4 @@
+-import { gunzipSync } from 'fflate';
++import { Gunzip } from 'fflate';
+ import { KdbxError } from '../errors/kdbx-error';
+ import { ErrorCodes } from '../defs/consts';
+ import * as XmlNames from '../defs/xml-names';
+@@ -9,6 +9,33 @@ import { ProtectedValue } from '../crypto/protected-value';
+ import { ProtectSaltGenerator } from '../crypto/protect-salt-generator';
+ import { KdbxBinaries, KdbxBinaryOrRef } from '../format/kdbx-binaries';
+ 
++
++// KeepAny: bound decrypted gzip output before XML/attachment allocations.
++// Small input chunks also bound transient inflater output bursts.
++function keepAnyBoundedGunzip(bytes: Uint8Array): Uint8Array {
++    const limit = 32 * 1024 * 1024;
++    const chunks: Uint8Array[] = [];
++    let size = 0;
++    let finished = false;
++    const stream = new Gunzip((chunk, final) => {
++        size += chunk.length;
++        if (size > limit) throw new Error('vault-size');
++        chunks.push(chunk);
++        finished = final;
++    });
++    for (let offset = 0; offset < bytes.length; offset += 1024) {
++        const end = Math.min(offset + 1024, bytes.length);
++        stream.push(bytes.subarray(offset, end), end === bytes.length);
++    }
++    if (!finished) throw new Error('vault-invalid');
++    const result = new Uint8Array(size);
++    let offset = 0;
++    for (const chunk of chunks) { result.set(chunk, offset); offset += chunk.length; }
++    return result;
++}
++
++const keepAnyBinaryBudgets = new WeakMap<Node, number>();
++
+ const DateRegex = /\.\d\d\d/;
+ const EpochSeconds = 62135596800;
+ const TagsSplitRegex = /\s*[;,:]\s*/;
+@@ -303,7 +330,11 @@ export function getProtectedBinary(node: Node): KdbxBinaryOrRef | undefined {
+     const compressed = strToBoolean((<Element>node).getAttribute(XmlNames.Attr.Compressed));
+     let bytes = base64ToBytes(text);
+     if (compressed) {
+-        bytes = gunzipSync(bytes);
++        bytes = keepAnyBoundedGunzip(bytes);
++        const document = node.ownerDocument || node;
++        const total = (keepAnyBinaryBudgets.get(document) || 0) + bytes.length;
++        if (total > 32 * 1024 * 1024) throw new Error('vault-size');
++        keepAnyBinaryBudgets.set(document, total);
+     }
+     return arrayToBuffer(bytes);
+ }

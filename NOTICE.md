@@ -2,8 +2,8 @@
 
 本清单由 `node scripts/phase0/generate-legal-artifacts.mjs` 根据当前 `pnpm-lock.yaml`、实际安装树和各包 `package.json` 生成。精确版本的上游许可证原文索引见 [`legal/third-party/manifest.json`](legal/third-party/manifest.json)，本文件记录包内许可声明和包根目录中的许可/NOTICE 文件指纹；并非法律兼容性结论或可直接分发的完整第三方许可证正文包。
 
-- 锁文件 SHA-256：`f7e07195ef13955503aa388c33e61da0da558cb7e714a06b525fc041e99042a6`
-- 已安装包版本：607；直接运行依赖：35；直接开发依赖：20。
+- 锁文件 SHA-256：`fb472e15ce9708337a1dae195c400da24fcd10441359054e36add70033b8ad55`
+- 已安装包版本：610；直接运行依赖：37；直接开发依赖：20。
 - 包根目录缺少许可证正文：31；上游原文索引已核验 26 项，仍有 5 项未解决。
 - 项目源码许可证：根目录 `LICENSE` 为 AGPL-3.0-only；发布前仍需由版权持有人确认，并完成依赖兼容性复核。
 - 本轮未复制 HomeInventory、Wallos、DomainMOD、Homebox 的业务源码；该四项仅在 `docs/03-开源业务模块复用审计.md` 中作为候选和参考登记。
@@ -278,6 +278,7 @@
 | `@vitejs/plugin-react@6.1.1` | development | `MIT` | `node_modules/.pnpm/@vitejs+plugin-react@6.1.1_vite@8.3.1_@types+node@26.6.3_esbuild@0.27.7_jiti@2.7.0_terser@5.51.2_tsx@4.21.0_/node_modules/@vitejs/plugin-react/LICENSE` (SHA-256 `29b68325fe026047d13e187b44c33b2acacf7dc647dec4583702e59f235e13b5`) |
 | `@vitest/mocker@5.0.2` | 传递依赖 | `MIT` | `node_modules/.pnpm/@vitest+mocker@5.0.2_vite@8.3.1_@types+node@26.6.3_esbuild@0.27.7_jiti@2.7.0_terser@5.51.2_tsx@4.21.0_/node_modules/@vitest/mocker/LICENSE` (SHA-256 `04575fc5bfae19a9b63100f8691f901a2e15a399011ac02db435a9ef27295551`) |
 | `@vitest/spy@5.0.2` | 传递依赖 | `MIT` | `node_modules/.pnpm/@vitest+spy@5.0.2/node_modules/@vitest/spy/LICENSE` (SHA-256 `04575fc5bfae19a9b63100f8691f901a2e15a399011ac02db435a9ef27295551`) |
+| `@xmldom/xmldom@0.8.15` | 传递依赖 | `MIT` | `node_modules/.pnpm/@xmldom+xmldom@0.8.15/node_modules/@xmldom/xmldom/LICENSE` (SHA-256 `4da724fc305d81606b245b324d4d2586916b9d248b23d82183df753ace0fdf71`) |
 | `@xyflow/react@12.12.0` | production | `MIT` | `node_modules/.pnpm/@xyflow+react@12.12.0_@types+react-dom@19.3.0_@types+react@19.3.0__@types+react@19.3.0__1cb90ab7d1cf1770c5d6bdeb08bc880b/node_modules/@xyflow/react/LICENSE` (SHA-256 `023119ac20fb1c8c9930abe0bcd196989a1960388529a96fc43cebf96f07c9ff`) |
 | `@xyflow/system@0.0.83` | 传递依赖 | `MIT` | `node_modules/.pnpm/@xyflow+system@0.0.83/node_modules/@xyflow/system/LICENSE` (SHA-256 `023119ac20fb1c8c9930abe0bcd196989a1960388529a96fc43cebf96f07c9ff`) |
 | `acorn@8.18.0` | 传递依赖 | `MIT` | `node_modules/.pnpm/acorn@8.18.0/node_modules/acorn/LICENSE` (SHA-256 `76a876cf886ff9be2a8b5e2e86514fed06223c8c9f0c1e9ee9606e93841e00b7`) |
@@ -413,6 +414,7 @@
 | `has-proto@1.2.0` | 传递依赖 | `MIT` | `node_modules/.pnpm/has-proto@1.2.0/node_modules/has-proto/LICENSE` (SHA-256 `0f0ca96f50793990031ebc488a38f7292ff70bce8ab6a8e5eeda674abc32ccdf`) |
 | `has-symbols@1.1.0` | 传递依赖 | `MIT` | `node_modules/.pnpm/has-symbols@1.1.0/node_modules/has-symbols/LICENSE` (SHA-256 `206c1adcf206dc0031b11232f5b054ec5f1662407ab1ca415247921cab2068ab`) |
 | `has-tostringtag@1.0.2` | 传递依赖 | `MIT` | `node_modules/.pnpm/has-tostringtag@1.0.2/node_modules/has-tostringtag/LICENSE` (SHA-256 `e2560e002e13281578c75c850061d9255c33d16d732939e8c2db64c2506642fa`) |
+| `hash-wasm@4.12.0` | production | `MIT` | `node_modules/.pnpm/hash-wasm@4.12.0/node_modules/hash-wasm/LICENSE` (SHA-256 `c14dea172f72f2714284a0ac2ab1b00b5352a01409d58255a46227ffc541debd`) |
 | `hasown@2.0.4` | 传递依赖 | `MIT` | `node_modules/.pnpm/hasown@2.0.4/node_modules/hasown/LICENSE` (SHA-256 `bf9b0d665be2a689851eea667ca9f42066ea1d903b38349c51e6a44b2577680a`) |
 | `hono@4.13.10` | production | `MIT` | `node_modules/.pnpm/hono@4.13.10/node_modules/hono/LICENSE` (SHA-256 `a6ab98e5c77b9070c443eaff2ff81034a6f8cc05a7524d5098eb0f24defa0115`) |
 | `html-parse-stringify@4.0.1` | 传递依赖 | `MIT` | `node_modules/.pnpm/html-parse-stringify@4.0.1/node_modules/html-parse-stringify/LICENSE` (SHA-256 `3eb2802a4d0ea79f80977817451b056571dccd8373c9bf4e9be4b05f86afbf90`) |
@@ -466,6 +468,7 @@
 | `jsonfile@6.2.1` | 传递依赖 | `MIT` | `node_modules/.pnpm/jsonfile@6.2.1/node_modules/jsonfile/LICENSE` (SHA-256 `a9801fb52ba22ef808682a094da8a7a480584b7ed0dfd0d888ab543616335031`) |
 | `jsonpointer@5.0.1` | 传递依赖 | `MIT` | `node_modules/.pnpm/jsonpointer@5.0.1/node_modules/jsonpointer/LICENSE.md` (SHA-256 `3c79924aa8d99d94626e0abf13e80c30096b0c74c8d2a90e58cb598f480b9d3d`) |
 | `jsonschema-key-compression@1.7.0` | 传递依赖 | `ISC` | `node_modules/.pnpm/jsonschema-key-compression@1.7.0/node_modules/jsonschema-key-compression/LICENSE` (SHA-256 `c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4`) |
+| `kdbxweb@2.1.1` | production | `MIT` | `node_modules/.pnpm/kdbxweb@2.1.1_patch_hash=05d88aeba2ef24ee4ce6aca8b710a2037b8b6f16f46983369b7e5b93e6a31be7/node_modules/kdbxweb/LICENSE` (SHA-256 `5328cd70623b0154a3d13ce41d57d6d4e9fda5b6db2e8ed994d29c3598c374a8`) |
 | `kysely@0.29.6` | 传递依赖 | `MIT` | `node_modules/.pnpm/kysely@0.29.6/node_modules/kysely/LICENSE` (SHA-256 `f70408a03a6ae16b093ae84757bd813f861124e851efc7a17c3cb29ff247ff54`) |
 | `leven@3.1.0` | 传递依赖 | `MIT` | `node_modules/.pnpm/leven@3.1.0/node_modules/leven/license` (SHA-256 `48da2f39e100d4085767e94966b43f4fa95ff6a0698fba57ed460914e35f94a0`) |
 | `libsodium@0.8.4` | 传递依赖 | `ISC` | `node_modules/.pnpm/libsodium@0.8.4/node_modules/libsodium/LICENSE` (SHA-256 `ce7b8ba14db085aadb72359226ccf7273225db31dad653242a7726a10dabbbd4`) |
