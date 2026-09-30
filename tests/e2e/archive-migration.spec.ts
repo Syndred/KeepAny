@@ -1,11 +1,11 @@
 import { expect, test, type BrowserContext, type Page } from "@playwright/test";
-import { mkdir } from "node:fs/promises";
 import path from "node:path";
 
 const token = "migration-test-token-".padEnd(40, "x");
 const key = Buffer.from(new Uint8Array(32).fill(9)).toString("base64url");
 const password = "migration-source-passphrase";
 const targetPassword = "migration-target-passphrase";
+test.use({ actionTimeout: 15_000 });
 
 function mockSync(context: BrowserContext, port: number, workspaceId: string) {
 	const accepted = new Map<string, { version: number; sequence: number }>();
@@ -41,7 +41,7 @@ function mockSync(context: BrowserContext, port: number, workspaceId: string) {
 }
 
 async function configure(page: Page, port: number, workspaceId: string) {
-	await page.goto("/settings");
+	await page.goto("/settings#connections");
 	const inputs = page.locator(".sync-panel .form-grid input");
 	await inputs.nth(0).fill(`http://127.0.0.1:${port}`);
 	await inputs.nth(1).fill(token);
@@ -106,15 +106,14 @@ for (const locale of ["en", "zh-CN"] as const) {
 			await panel.getByLabel(locale === "en" ? "Select the downloaded target backup" : "选择已下载的目标备份").setInputFiles(targetFile);
 			await panel.getByRole("button", { name: locale === "en" ? "Verify downloaded backup" : "回读验证" }).click();
 			await expect(panel).toContainText(locale === "en" ? "Target backup verified from the downloaded file" : "目标备份已回读验证");
-			await mkdir(path.resolve("docs/evidence/2026-09-29"), { recursive: true });
-			await panel.screenshot({ path: path.resolve(`docs/evidence/2026-09-29/migration-${locale}-${locale === "en" ? 1280 : 390}-preview.png`) });
+			await panel.screenshot({ path: test.info().outputPath(`migration-${locale}-preview.png`) });
 			await panel.getByRole("button", { name: locale === "en" ? "Merge into target local data" : "确认合并到目标本机资料" }).click();
 			await expect(panel).toContainText(locale === "en" ? "Local merge complete; sync not started" : "本机合并完成，尚未同步");
 			if (locale === "zh-CN") {
 				await panel.getByRole("button", { name: "撤销本机合并" }).click();
 				await expect(panel).toContainText("本机合并已撤销");
 				await targetPage.goto("/assets/project");
-				await expect(targetPage.getByText("Source migration project")).toHaveCount(0);
+				await expect(targetPage.locator("main .list-row").filter({ hasText: "Source migration project" })).toHaveCount(0);
 			} else {
 				targetServer.dropNextPushAck();
 				await panel.getByRole("button", { name: "Start target sync" }).click();
@@ -123,15 +122,15 @@ for (const locale of ["en", "zh-CN"] as const) {
 				await panel.getByRole("button", { name: "Retry target sync" }).click();
 				await expect(panel).toContainText("Target sync complete");
 				await targetPage.goto("/assets/project");
-				await expect(targetPage.getByText("Source migration project")).toBeVisible();
+				await expect(targetPage.locator("main .list-row").filter({ hasText: "Source migration project" })).toBeVisible();
 				await targetPage.reload();
-				await expect(targetPage.getByText("Source migration project")).toBeVisible();
+				await expect(targetPage.locator("main .list-row").filter({ hasText: "Source migration project" })).toBeVisible();
 				await expect(targetServer.accepted.size).toBe(1);
 				await expect(targetServer.pushes).toBe(2);
 			}
-			await targetPage.goto("/settings");
+			await targetPage.goto("/settings#connections");
 			await expect(targetPage.getByRole("heading", { name: locale === "en" ? "Move to another account or workspace" : "迁移到另一账号或工作区" })).toBeVisible();
-			await targetPage.screenshot({ path: path.resolve(`docs/evidence/2026-09-29/migration-${locale}-${locale === "en" ? 1280 : 390}.png`), fullPage: true });
+			await targetPage.screenshot({ path: test.info().outputPath(`migration-${locale}.png`), fullPage: true });
 			expect(await targetPage.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
 			expect(errors).toEqual([]);
 		} finally { await sourceContext.close(); await targetContext.close(); }
@@ -152,17 +151,27 @@ test("existing target record requires an individual choice before migration", as
 	const targetServer = mockSync(targetContext, 3200, targetWorkspace);
 	try {
 		const file = await sourceBackup(sourcePage, "en", 3199, sourceWorkspace);
-		await targetPage.goto("/intake");
-		await targetPage.locator("#backup-password").fill(password);
-		await targetPage.locator("#restore-file").setInputFiles(file);
-		await targetPage.locator(".card").first().getByRole("button", { name: "Preview" }).click();
-		await targetPage.locator(".card").first().getByRole("button", { name: "Confirm · 1" }).click();
-		await expect(targetPage.getByText("Restored 1 records")).toBeVisible();
+		// Create the shared target record through the explicit transfer flow;
+		// ordinary restore now preserves the source identity on a clean browser.
 		await configure(targetPage, 3200, targetWorkspace);
-		await targetPage.locator(".sync-panel").getByRole("button", { name: "Sync now" }).click();
-		await expect(targetPage.locator(".sync-panel .notice")).toHaveText("This sync completed");
+		const initial = targetPage.locator(".migration-panel");
+		await initial.locator('input[type="file"]').first().setInputFiles(file);
+		await initial.locator('input[type="password"]').first().fill(password);
+		await initial.getByRole("button", { name: "Check target and preview" }).click();
+		await initial.getByLabel("I checked the source and target for this merge").check();
+		await initial.getByLabel("Target backup password (12 characters minimum)").fill(targetPassword);
+		await initial.getByRole("button", { name: "Create target backup" }).click();
+		const downloading = targetPage.waitForEvent("download");
+		await initial.getByRole("link", { name: "Download target backup" }).click();
+		const initialBackup = test.info().outputPath("target-initial.ka1");
+		await (await downloading).saveAs(initialBackup);
+		await initial.getByLabel("Select the downloaded target backup").setInputFiles(initialBackup);
+		await initial.getByRole("button", { name: "Verify downloaded backup" }).click();
+		await initial.getByRole("button", { name: "Merge into target local data" }).click();
+		await initial.getByRole("button", { name: "Start target sync" }).click();
+		await expect(initial).toContainText("Target sync complete");
 		await targetPage.goto("/assets/project");
-		await targetPage.getByText("Source migration project", { exact: true }).first().click();
+		await targetPage.locator("main .list-row").filter({ hasText: "Source migration project" }).click();
 		await targetPage.getByRole("button", { name: "Edit", exact: true }).click();
 		const dialog = targetPage.getByRole("dialog");
 		await dialog.getByLabel("Name", { exact: true }).fill("Target variant");
@@ -191,14 +200,14 @@ test("existing target record requires an individual choice before migration", as
 		await expect(panel.getByRole("button", { name: "Merge into target local data" })).toBeDisabled();
 		await panel.getByLabel(/Use source version/).check();
 		await expect(panel.getByRole("button", { name: "Merge into target local data" })).toBeEnabled();
-		await panel.screenshot({ path: path.resolve("docs/evidence/2026-09-29/migration-en-conflict-choice.png") });
+		await panel.screenshot({ path: test.info().outputPath("migration-en-conflict-choice.png") });
 		await panel.getByRole("button", { name: "Merge into target local data" }).click();
 		await expect(panel).toContainText("Local merge complete; sync not started");
 		await panel.getByRole("button", { name: "Start target sync" }).click();
 		await expect(panel).toContainText("Target sync complete");
 		await targetPage.goto("/assets/project");
-		await expect(targetPage.getByText("Source migration project", { exact: true })).toBeVisible();
-		await expect(targetPage.getByText("Target variant", { exact: true })).toHaveCount(0);
+		await expect(targetPage.locator("main .list-row").filter({ hasText: "Source migration project" })).toBeVisible();
+		await expect(targetPage.locator("main .list-row").filter({ hasText: "Target variant" })).toHaveCount(0);
 		expect(targetServer.accepted.size).toBe(3);
 	} finally { await sourceContext.close(); await targetContext.close(); }
 });

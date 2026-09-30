@@ -20,6 +20,7 @@ import { createMaintenanceSchedule, type RepeatRule } from "../../../packages/do
 import {
 	decryptBackup,
 	encryptBackup,
+	BACKUP_CONTAINER_MAX_BYTES,
 } from "../../../packages/local-db/src/backup-crypto";
 import {
 	allRecords,
@@ -1125,6 +1126,10 @@ export function IntakeTools({ onCsvStaged }: { onCsvStaged: () => void }) {
 		setArchiveCount(0);
 		setArchiveReviewCount(0);
 		try {
+			if (restoreFile.size > BACKUP_CONTAINER_MAX_BYTES) {
+				setMessage(t("backupTooLarge"));
+				return;
+			}
 			const decrypted = await decryptBackup(
 				new Uint8Array(await restoreFile.arrayBuffer()),
 				password,
@@ -1142,8 +1147,9 @@ export function IntakeTools({ onCsvStaged }: { onCsvStaged: () => void }) {
 			} catch {
 				if (generation === restoreGeneration.current) setMessage(t("archiveInvalid"));
 			}
-		} catch {
-			if (generation === restoreGeneration.current) setMessage(t("decryptError"));
+		} catch (error) {
+			if (generation === restoreGeneration.current)
+				setMessage(t(error instanceof Error && error.message === "backup-size" ? "backupTooLarge" : "decryptError"));
 		} finally {
 			if (generation === restoreGeneration.current) setInspecting(false);
 		}
@@ -1164,6 +1170,8 @@ export function IntakeTools({ onCsvStaged }: { onCsvStaged: () => void }) {
 		} catch (error) {
 			const key = error instanceof Error && error.message === "restore-conflict"
 				? "restoreConflict"
+				: error instanceof Error && error.message === "restore-source-identity"
+					? "restoreSourceIdentity"
 				: error instanceof Error && error.message === "restore-recovery-pending"
 					? "restoreRecoveryPending"
 					: "error";

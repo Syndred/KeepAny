@@ -355,8 +355,8 @@ const copy: Record<string, [string, string]> = {
 	],
 	restoreBackup: ["恢复备份", "Restore backup"],
 	restoreHint: [
-		"恢复会合并资料；同 ID 内容不同的记录将停止恢复。",
-		"Restore merges records. A conflicting record with the same ID stops the restore.",
+		"恢复会合并资料并保留备份中的同步身份。同 ID 内容不同会停止恢复。其他账号或工作区的资料，请在设置中迁移。",
+		"Restore merges records and preserves the backup's sync identity. Conflicting IDs stop the restore. Use migration in Settings for another account or workspace.",
 	],
 	chooseFile: ["选择文件", "Choose file"],
 	csv: ["CSV 表格", "CSV file"],
@@ -385,9 +385,17 @@ const copy: Record<string, [string, string]> = {
 		"备份内容无效、缺失或版本不兼容，未恢复资料。",
 		"Backup contents are invalid, missing or incompatible. No records were restored.",
 	],
+	backupTooLarge: [
+		"备份超过恢复大小上限（资料归档最多 100 MiB），请选择较小的备份。",
+		"This backup exceeds the restore limit (up to 100 MiB of archived data). Choose a smaller backup.",
+	],
 	restoreConflict: [
 		"本机有同 ID 但内容不同的资料，未恢复备份。",
 		"A local record with the same ID has different content. The backup was not restored.",
+	],
+	restoreSourceIdentity: [
+		"备份来源与当前同步身份不一致，或没有来源标识，未恢复资料。请在设置中使用「迁移到另一账号或工作区」。",
+		"The backup has a different or unknown sync identity. No records were restored. Use “Move to another account or workspace” in Settings.",
 	],
 	restoreRecoveryPending: [
 		"上次恢复尚未完成，当前资料可查看。请保留本机数据并寻求协助。",

@@ -19,7 +19,7 @@ export type { DeleteCustomCategoryInput, EditCustomCategoryInput, PendingCategor
 // This transport shape is consumed by the web app's RxDB observer.
 export interface RecordRow { id: string; type: EntityType; payload: string; updatedAt: number }
 interface StoredFile { id: string; blob: Blob; name: string }
-interface Journal { id: string; rows: RecordRow[]; intakeReview?: ReviewedCandidate[] }
+interface Journal { id: string; rows: RecordRow[]; intakeReview?: ReviewedCandidate[]; sourceBinding?: DatasetBinding }
 type ImportJournal = ReviewedImportJournal;
 interface RenewalJournal { id: string; assetId: string; expectedPayload: string; next: RecordRow; history: RecordRow }
 interface SyncBase { id: string; payload: string; version: number }
@@ -857,27 +857,16 @@ export class LocalRepository {
   // RxDB records are one local dataset. Only an explicit migration may attach them to another remote.
   async claimDatasetBinding(binding: DatasetBinding): Promise<DatasetBinding> {
     await validateDatasetBinding(binding);
-    await this.fileStore.transaction('rw', [this.fileStore.datasetBinding, this.fileStore.scopedMeta,
-      this.fileStore.scopedBase, this.fileStore.scopedOutbox, this.fileStore.scopedPull,
-      this.fileStore.scopedAttachmentUploads, this.fileStore.syncBase, this.fileStore.syncMeta, this.fileStore.pullJournal], async () => {
-        const existing = await this.fileStore.datasetBinding.get('active');
-        if (existing && !sameDatasetBinding(existing, binding)) throw Error('sync-dataset-bound');
-        const [meta, base, outbox, pulls, uploads, oldBaseCount, oldMetaCount, oldPullCount] = await Promise.all([
-          this.fileStore.scopedMeta.toCollection().primaryKeys(),
-          this.fileStore.scopedBase.orderBy('scope').uniqueKeys(),
-          this.fileStore.scopedOutbox.orderBy('scope').uniqueKeys(),
-          this.fileStore.scopedPull.toCollection().primaryKeys(),
-          this.fileStore.scopedAttachmentUploads.orderBy('scope').uniqueKeys(),
-          this.fileStore.syncBase.count(), this.fileStore.syncMeta.count(), this.fileStore.pullJournal.count(),
-        ]);
-        // The pre-scoped prototype has no remote identity, so its provenance cannot be inferred.
-        if (oldBaseCount || oldMetaCount || oldPullCount) throw Error('sync-dataset-ambiguous');
-        const legacyScopes = new Set([...meta, ...base, ...outbox, ...pulls, ...uploads]);
-        if (legacyScopes.size > 1) throw Error('sync-dataset-ambiguous');
-        if (legacyScopes.size === 1 && !legacyScopes.has(binding.scope)) throw Error('sync-dataset-bound');
-        if (!existing) await this.fileStore.datasetBinding.add({ id: 'active', ...binding });
+    return withRenewalLock(`keepany-renewal:${this.db.name}`, async () => {
+      await this.fileStore.transaction('rw', [this.fileStore.datasetBinding, this.fileStore.scopedMeta,
+        this.fileStore.scopedBase, this.fileStore.scopedOutbox, this.fileStore.scopedPull,
+        this.fileStore.scopedAttachmentUploads, this.fileStore.syncBase, this.fileStore.syncMeta,
+        this.fileStore.pullJournal, this.fileStore.journal], async () => {
+          if (await this.fileStore.journal.count()) throw Error('restore-recovery-pending');
+          await claimDatasetBindingInTransaction(this.fileStore, binding);
       });
-    return { ...binding };
+      return { ...binding };
+    });
   }
 
   private async assertDatasetScope(scope: string): Promise<void> {
@@ -1572,6 +1561,7 @@ export class LocalRepository {
       if (await this.pendingArchiveMerge()) throw Error('archive-merge-pending');
       if (await this.fileStore.journal.count()) throw Error('restore-recovery-pending');
       const { rows, intakeReview, manifest, entries } = await inspectArchive(bytes);
+      await assertRestoreIdentity(this.fileStore, manifest.sourceBinding);
       // Validate all conflicts before writing attachments or a journal.
       for (const row of rows) {
         const current = await this.db.records.findOne(row.id).exec();
@@ -1587,11 +1577,18 @@ export class LocalRepository {
       const journalId = crypto.randomUUID();
       await this.fileStore.transaction('rw', [this.fileStore.blobs, this.fileStore.journal,
         this.fileStore.intakeReview, this.fileStore.importJournal, this.fileStore.archiveMerge,
-        this.fileStore.categoryEditJournal], async () => {
+        this.fileStore.categoryEditJournal, this.fileStore.datasetBinding, this.fileStore.scopedMeta,
+        this.fileStore.scopedBase, this.fileStore.scopedOutbox, this.fileStore.scopedPull,
+        this.fileStore.scopedAttachmentUploads, this.fileStore.syncBase, this.fileStore.syncMeta,
+        this.fileStore.pullJournal], async () => {
         if (await this.fileStore.categoryEditJournal.count()) throw Error('category-edit-pending');
         if ((await this.fileStore.importJournal.toArray()).some(entry => entry.reviewedExpense)) throw Error('review-expense-pending');
         if (await this.fileStore.archiveMerge.count()) throw Error('archive-merge-pending');
         if (await this.fileStore.journal.count()) throw Error('restore-recovery-pending');
+        await assertRestoreIdentity(this.fileStore, manifest.sourceBinding);
+        // Preserve provenance together with the files and durable restore plan.
+        // A clean-browser restore must not silently become a transfer to another owner.
+        if (manifest.sourceBinding) await claimDatasetBindingInTransaction(this.fileStore, manifest.sourceBinding);
         await assertReviewRestoreConflicts(this.fileStore, intakeReview);
         for (const attachment of manifest.attachments) {
           const existing = await this.fileStore.blobs.get(attachment.id);
@@ -1608,7 +1605,8 @@ export class LocalRepository {
             });
           }
         }
-        await this.fileStore.journal.put({ id: journalId, rows, intakeReview });
+        await this.fileStore.journal.put({ id: journalId, rows, intakeReview,
+          ...(manifest.sourceBinding ? { sourceBinding: manifest.sourceBinding } : {}) });
     });
     try {
       await replayJournal(this.db, this.fileStore, journalId);
@@ -1630,6 +1628,8 @@ export class LocalRepository {
 async function replayJournal(db: RxDatabase, store: FileStore, id: string): Promise<void> {
   const journal = await store.journal.get(id);
   if (!journal) return;
+  await assertRestoreIdentity(store, journal.sourceBinding);
+  if (journal.sourceBinding && !(await store.datasetBinding.get('active'))) throw Error('restore-source-identity');
   const intakeReview = parseReviewedCandidates(journal.intakeReview ?? []);
   await assertReviewRestoreConflicts(store, intakeReview);
   const currentRows = (await db.records.find().exec()).map(canonical);
@@ -1912,6 +1912,31 @@ async function validateAttachmentPlan(plan: ScopedAttachmentUploadPlan): Promise
 function sameDatasetBinding(a: DatasetBinding, b: DatasetBinding): boolean {
   return a.endpoint === b.endpoint && a.accountId === b.accountId &&
     a.workspaceId === b.workspaceId && a.scope === b.scope;
+}
+
+async function assertRestoreIdentity(store: FileStore, source?: DatasetBinding): Promise<void> {
+  const target = await store.datasetBinding.get('active');
+  if (target && (!source || !sameDatasetBinding(target, source))) throw Error('restore-source-identity');
+}
+
+// Caller validates the identity and includes every table below in one Dexie transaction.
+async function claimDatasetBindingInTransaction(store: FileStore, binding: DatasetBinding): Promise<void> {
+  const existing = await store.datasetBinding.get('active');
+  if (existing && !sameDatasetBinding(existing, binding)) throw Error('sync-dataset-bound');
+  const [meta, base, outbox, pulls, uploads, oldBaseCount, oldMetaCount, oldPullCount] = await Promise.all([
+    store.scopedMeta.toCollection().primaryKeys(),
+    store.scopedBase.orderBy('scope').uniqueKeys(),
+    store.scopedOutbox.orderBy('scope').uniqueKeys(),
+    store.scopedPull.toCollection().primaryKeys(),
+    store.scopedAttachmentUploads.orderBy('scope').uniqueKeys(),
+    store.syncBase.count(), store.syncMeta.count(), store.pullJournal.count(),
+  ]);
+  // The pre-scoped prototype has no remote identity, so its provenance cannot be inferred.
+  if (oldBaseCount || oldMetaCount || oldPullCount) throw Error('sync-dataset-ambiguous');
+  const legacyScopes = new Set([...meta, ...base, ...outbox, ...pulls, ...uploads]);
+  if (legacyScopes.size > 1) throw Error('sync-dataset-ambiguous');
+  if (legacyScopes.size === 1 && !legacyScopes.has(binding.scope)) throw Error('sync-dataset-bound');
+  if (!existing) await store.datasetBinding.add({ id: 'active', ...binding });
 }
 
 async function validateDatasetBinding(binding: DatasetBinding): Promise<void> {

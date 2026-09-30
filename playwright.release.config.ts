@@ -22,6 +22,8 @@ export default defineConfig({
 		"intake-asset-receipt.spec.ts",
 		"collections-route.spec.ts",
 		"relation-graph-verification.spec.ts",
+		"restore-identity.spec.ts",
+		"archive-migration.spec.ts",
 	],
 	timeout: 90_000,
 	workers: 2,
