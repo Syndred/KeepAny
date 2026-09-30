@@ -530,7 +530,8 @@ export function AssetList() {
 					search?: string;
 				};
 				if (saved.category !== category || (saved.tag || "") !== tag || saved.search !== search) {
-					restored.current = kind;
+					// Navigation clears the shell's temporary query. Keep the position
+					// pending until the matching filters return instead of consuming it.
 					return;
 				}
 			} catch {

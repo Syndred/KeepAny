@@ -2,7 +2,8 @@ import { mkdirSync } from "node:fs";
 import { expect, type Page, test } from "@playwright/test";
 import { selectChoice } from "./helpers/select-choice";
 
-const evidence = "docs/evidence/2026-09-29";
+const evidence =
+	process.env.KEEPANY_EVIDENCE_DIR ?? process.env.KEEPANY_LEGACY_EVIDENCE_DIR ?? "docs/evidence/2026-09-29";
 const repositoryModuleUrl = `/@fs${process.cwd()}/packages/local-db/src/index.ts`;
 
 type StoredAsset = {
@@ -62,12 +63,92 @@ async function saveDialog(page: Page) {
 }
 
 async function openDetail(page: Page, name: string) {
-	await page
+	const row = page
 		.locator("main.page .list-row")
 		.filter({ hasText: name })
-		.first()
-		.click();
+		.first();
+	if (await page.locator("#top-search-query").isVisible().catch(() => false)) {
+		await row.focus();
+		await page.keyboard.press("Enter");
+	} else {
+		await row.click();
+	}
 	await expect(page.getByRole("heading", { name })).toBeVisible();
+}
+
+async function openSearchInput(page: Page) {
+	const input = page.locator("#top-search-query");
+	if (!(await input.isVisible().catch(() => false))) {
+		await page
+			.getByRole("button", { name: "Search all records", exact: true })
+			.click();
+	}
+	await expect(input).toBeVisible();
+	return input;
+}
+
+async function fillSearch(page: Page, value: string) {
+	const input = await openSearchInput(page);
+	await input.fill(value);
+	await expect
+		.poll(() => page.evaluate(() => sessionStorage.getItem("keepany-search") || ""))
+		.toBe(value);
+}
+
+async function expectSearchValue(page: Page, value: string) {
+	const input = await openSearchInput(page);
+	await expect(input).toHaveValue(value);
+}
+
+async function expectPersistedListSearch(
+	page: Page,
+	kind: "project" | "account",
+	value: string,
+) {
+	await expect
+		.poll(() =>
+			page.evaluate((assetKind) => {
+				try {
+					const raw = sessionStorage.getItem(`keepany-scroll-filter-${assetKind}`);
+					return raw ? (JSON.parse(raw) as { search?: string }).search ?? "" : "";
+				} catch {
+					return "";
+				}
+			}, kind),
+		)
+		.toBe(value);
+}
+
+async function closeSearch(page: Page) {
+	const input = page.locator("#top-search-query");
+	if (await input.isVisible().catch(() => false)) await input.press("Escape");
+	await expect(input).toBeHidden();
+}
+
+async function backToList(page: Page) {
+	await page
+		.getByRole("banner")
+		.getByRole("link", { name: /^(Back to list|返回列表)$/ })
+		.click();
+}
+
+async function openProjectMaterials(page: Page) {
+	const materials = page.locator("#asset-project-materials");
+	if (!page.url().includes("/assets/project/")) return;
+	await expect(materials).toHaveCount(1);
+	const initialOpen = await materials.evaluate((element) => (element as HTMLDetailsElement).open);
+	if (!initialOpen) {
+		const viewMaterials = page.getByRole("button", {
+			name: /^(View submission materials|查看提交材料)$/,
+		});
+		if (await viewMaterials.count()) await viewMaterials.first().click();
+		else await materials.locator("summary").click();
+	}
+	await expect
+		.poll(() =>
+			materials.evaluate((element) => (element as HTMLDetailsElement).open),
+		)
+		.toBe(true);
 }
 
 async function deleteAndRestore(
@@ -197,7 +278,7 @@ test("project and account CRUD, intersecting filters, trash and actual backup re
 			page.getByRole("heading", { name: projectSaved }),
 		).toBeVisible();
 		await expect(page.getByText("Cancelled project rename")).toHaveCount(0);
-		await page.getByRole("link", { name: "Back to list" }).click();
+		await backToList(page);
 		const otherDialog = await add(page, "project", otherProject);
 		await selectChoice(otherDialog.getByLabel("Category"), "repository");
 		await saveDialog(page);
@@ -237,39 +318,58 @@ test("project and account CRUD, intersecting filters, trash and actual backup re
 		await expect(
 			page.getByRole("heading", { name: accountSaved }),
 		).toBeVisible();
-		await page.getByRole("link", { name: "Back to list" }).click();
+		await backToList(page);
 
 		await page.goto("/assets/project");
-		const search = page.getByRole("textbox", { name: "Search all records" });
 		await page.getByRole("button", { name: "Websites", exact: true }).click();
 		await selectChoice(page.locator("#asset-tag-filter"), { label: tag });
-		await search.fill(tag);
+		await fillSearch(page, tag);
 		await expect(page.locator("main.page .list-row")).toHaveCount(1);
 		await expect(
 			page.locator("main.page .list-row").filter({ hasText: projectSaved }),
 		).toBeVisible();
+		await closeSearch(page);
 		await page
 			.getByRole("button", { name: "Repositories", exact: true })
 			.click();
+		await expect(
+			page.getByRole("button", { name: "Repositories", exact: true }),
+		).toHaveAttribute("aria-pressed", "true");
+		await fillSearch(page, tag);
 		await expect(page.locator("main.page .list-row")).toHaveCount(0);
+		await closeSearch(page);
 		await page.getByRole("button", { name: "Websites", exact: true }).click();
+		await expect(
+			page.getByRole("button", { name: "Websites", exact: true }),
+		).toHaveAttribute("aria-pressed", "true");
+		await fillSearch(page, tag);
 		await openDetail(page, projectSaved);
-		await page.getByRole("link", { name: "Back to list" }).click();
-		await expect(search).toHaveValue(tag);
+		await backToList(page);
+		await expectPersistedListSearch(page, "project", tag);
+		await fillSearch(page, tag);
+		await expectSearchValue(page, tag);
 		await expect(
 			page.getByRole("button", { name: "Websites", exact: true }),
 		).toHaveAttribute("aria-pressed", "true");
-		await expect(page.locator("#asset-tag-filter")).toHaveAttribute("data-value", tag);
+		await expect(page.locator("#asset-tag-filter")).toHaveAttribute(
+			"data-value",
+			tag,
+		);
 		await page.reload();
-		await expect(search).toHaveValue(tag);
+		await expectPersistedListSearch(page, "project", tag);
+		await fillSearch(page, tag);
+		await expectSearchValue(page, tag);
 		await expect(
 			page.getByRole("button", { name: "Websites", exact: true }),
 		).toHaveAttribute("aria-pressed", "true");
-		await expect(page.locator("#asset-tag-filter")).toHaveAttribute("data-value", tag);
+		await expect(page.locator("#asset-tag-filter")).toHaveAttribute(
+			"data-value",
+			tag,
+		);
 		await expect(page.locator("main.page .list-row")).toHaveCount(1);
-		await search.fill(`no-results-${suffix}`);
+		await fillSearch(page, `no-results-${suffix}`);
 		await expect(page.locator("main.page .list-row")).toHaveCount(0);
-		await search.fill("");
+		await fillSearch(page, "");
 		await openDetail(page, projectSaved);
 		await deleteAndRestore(page, "project", projectSaved);
 		await page.reload();
@@ -280,11 +380,11 @@ test("project and account CRUD, intersecting filters, trash and actual backup re
 		await page.goto("/assets/account");
 		await page.getByRole("button", { name: "Email", exact: true }).click();
 		await selectChoice(page.locator("#asset-tag-filter"), { label: tag });
-		await search.fill(longEmail);
+		await fillSearch(page, longEmail);
 		await expect(page.locator("main.page .list-row")).toHaveCount(1);
-		await search.fill(`no-results-${suffix}`);
+		await fillSearch(page, `no-results-${suffix}`);
 		await expect(page.locator("main.page .list-row")).toHaveCount(0);
-		await search.fill("");
+		await fillSearch(page, "");
 		await openDetail(page, accountSaved);
 		await deleteAndRestore(page, "account", accountSaved);
 		await page.reload();
@@ -309,15 +409,23 @@ test("project and account CRUD, intersecting filters, trash and actual backup re
 			mimeType: "text/csv",
 			buffer: Buffer.from(scrollCsv),
 		});
-		await expect(page.locator(".import-preview .list-row")).toHaveCount(45);
-		await page
-			.locator(".import-preview")
-			.getByRole("button", { name: "Confirm import" })
-			.click();
-		await expect(page.getByText("Import complete · 45")).toBeVisible();
+		await expect(
+			page.getByText("45 candidates are ready for review.", { exact: true }),
+		).toBeVisible();
+		await expect(page.locator(".intake-review-row")).toHaveCount(45);
+		for (let index = 0; index < 45; index += 1) {
+			const pending = page
+				.locator(".intake-review-row")
+				.filter({ has: page.getByRole("button", { name: "Confirm" }) })
+				.first();
+			await pending.getByRole("button", { name: "Confirm" }).click();
+		}
+		await expect(
+			page.locator(".intake-review-row").getByRole("button", { name: "Confirm" }),
+		).toHaveCount(0);
 		await page.goto("/assets/account");
 		await selectChoice(page.locator("#asset-tag-filter"), "");
-		await search.fill(`Scroll account ${suffix}`);
+		await fillSearch(page, `Scroll account ${suffix}`);
 		await expect(page.locator("main.page .list-row")).toHaveCount(45);
 		const target = page.locator("main.page .list-row").nth(30);
 		const targetName = await target.locator("strong").innerText();
@@ -326,14 +434,18 @@ test("project and account CRUD, intersecting filters, trash and actual backup re
 		);
 		const scrolled = await page.evaluate(() => window.scrollY);
 		expect(scrolled).toBeGreaterThan(1000);
-		await target.click();
-		await expect(page.getByRole("heading", { name: targetName })).toBeVisible();
-		await page.getByRole("link", { name: "Back to list" }).click();
-		await expect(search).toHaveValue(`Scroll account ${suffix}`);
+		await openDetail(page, targetName);
+		await backToList(page);
+		await expectPersistedListSearch(page, "account", `Scroll account ${suffix}`);
+		await fillSearch(page, `Scroll account ${suffix}`);
+		await expectSearchValue(page, `Scroll account ${suffix}`);
 		await expect(
 			page.getByRole("button", { name: "Email", exact: true }),
 		).toHaveAttribute("aria-pressed", "true");
-		await expect(page.locator("#asset-tag-filter")).toHaveAttribute("data-value", "");
+		await expect(page.locator("#asset-tag-filter")).toHaveAttribute(
+			"data-value",
+			"",
+		);
 		await expect
 			.poll(() => page.evaluate(() => window.scrollY))
 			.toBeGreaterThan(1000);
@@ -343,7 +455,7 @@ test("project and account CRUD, intersecting filters, trash and actual backup re
 		await page.screenshot({
 			path: `${evidence}/crud-en-1280-account-filter-return.png`,
 		});
-		await search.fill("");
+		await fillSearch(page, "");
 
 		const before = (await assetRows(page)).filter((asset) =>
 			[projectSaved, accountSaved, otherProject].includes(asset.name),
@@ -422,6 +534,58 @@ test("project and account CRUD, intersecting filters, trash and actual backup re
 	}
 });
 
+test("a matching list search can restore scroll after navigation clears the temporary query", async ({ browser }) => {
+	const context = await browser.newContext({ locale: "en-US", viewport: { width: 1280, height: 844 } });
+	const page = await context.newPage();
+	const errors: string[] = [];
+	page.on("pageerror", (error) => errors.push(error.message));
+	const query = `Scroll match ${crypto.randomUUID().slice(0, 8)}`;
+	const tag = `tag-${query}`;
+	try {
+		await page.goto("/assets/account");
+		await page.evaluate(async ({ repositoryPath, domainPath, query, tag }) => {
+			const { localRepository } = await import(repositoryPath);
+			const { newAsset } = await import(domainPath);
+			const repository = await localRepository();
+			for (let index = 0; index < 45; index++) {
+				await repository.save("asset", { ...newAsset("account"), category: "email", tags: [tag],
+					name: `${query} ${String(index).padStart(2, "0")}` });
+			}
+		}, { repositoryPath: repositoryModuleUrl, domainPath: `/@fs${process.cwd()}/packages/domain/src/index.ts`, query, tag });
+		await page.getByRole("button", { name: "Email", exact: true }).click();
+		await selectChoice(page.locator("#asset-tag-filter"), { label: tag });
+		await fillSearch(page, query);
+		await expect(page.locator("main.page .list-row")).toHaveCount(45);
+		const target = page.locator("main.page .list-row").nth(30);
+		const name = await target.locator("strong").innerText();
+		await target.evaluate((element) => element.scrollIntoView({ block: "center" }));
+		const before = await page.evaluate(() => window.scrollY);
+		expect(before).toBeGreaterThan(1000);
+		await openDetail(page, name);
+		const stored = await page.evaluate(() => Number(sessionStorage.getItem("keepany-scroll-account")));
+		expect(Math.abs(stored - before)).toBeLessThan(35);
+		await expect(page.locator("#top-search-query")).toBeHidden();
+		await backToList(page);
+		await expect(page.locator("#asset-tag-filter")).toHaveAttribute("data-value", tag);
+		await expect(page.getByRole("button", { name: "Email", exact: true })).toHaveAttribute("aria-pressed", "true");
+		await expectPersistedListSearch(page, "account", query);
+		await expect(page.locator("#top-search-query")).toBeHidden();
+		// The cleared query is a different view. Its first render must not consume
+		// the saved position before the user returns to the matching filter.
+		await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
+		await fillSearch(page, query);
+		await expect(page.locator("main.page .list-row")).toHaveCount(45);
+		await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(1000);
+		const after = await page.evaluate(() => window.scrollY);
+		expect(Math.abs(after - before)).toBeLessThan(35);
+		await expect(target).toBeInViewport({ ratio: 1 });
+		console.log(JSON.stringify({ kind: "account", before, stored, after }));
+		expect(errors).toEqual([]);
+	} finally {
+		await context.close();
+	}
+});
+
 for (const kind of ["project", "account"] as const) {
 	test(`${kind} image replacement removes old blob and actual backup restores only current image`, async ({
 		browser,
@@ -456,6 +620,7 @@ for (const kind of ["project", "account"] as const) {
 			await add(page, kind, name);
 			await saveDialog(page);
 			await openDetail(page, name);
+			await openProjectMaterials(page);
 			const assetId = (await assetRows(page)).find(
 				(asset) => asset.name === name,
 			)?.id;
@@ -524,6 +689,7 @@ for (const kind of ["project", "account"] as const) {
 				await restored.getByRole("button", { name: /确认 ·/ }).click();
 				await expect(restored.getByText(/已恢复 \d+ 条记录/)).toBeVisible();
 				await restored.goto(`/assets/${kind}/${assetId}`);
+				await openProjectMaterials(restored);
 				await expect(restored.getByRole("heading", { name })).toBeVisible();
 				await expect(restored.locator(".asset-image")).toHaveCount(1);
 				expect(
@@ -535,6 +701,7 @@ for (const kind of ["project", "account"] as const) {
 				await destination.close();
 			}
 			await page.goto(`/assets/${kind}/${assetId}`);
+			await openProjectMaterials(page);
 			await page.getByRole("button", { name: "Remove image" }).click();
 			await expect(page.locator(".asset-image")).toHaveCount(0);
 			await expect.poll(async () => (await storedFiles(page)).length).toBe(0);
@@ -565,22 +732,26 @@ for (const locale of ["en-US", "zh-CN"] as const) {
 			page.on("pageerror", (error) => errors.push(error.message));
 			const copy =
 				locale === "zh-CN"
-					? {
-							add: "新增",
-							name: "名称",
-							save: "保存",
-							cancel: "取消",
-							notes: "备注",
+						? {
+									add: "新增",
+									name: "名称",
+									save: "保存",
+									cancel: "取消",
+									notes: "备注",
+									projectNotes: "补充说明",
+									contactDetails: "联系方式",
 							edit: "编辑",
 							project: "每个项目，都有自己的档案。",
 							account: "每个账号，都有来有往。",
 						}
 					: {
 							add: "Add",
-							name: "Name",
-							save: "Save",
-							cancel: "Cancel",
-							notes: "Notes",
+									name: "Name",
+									save: "Save",
+									cancel: "Cancel",
+									notes: "Notes",
+									projectNotes: "Additional notes",
+									contactDetails: "Contact details",
 							edit: "Edit",
 							project: "Every project has its own file.",
 							account: "Every account has connections.",
@@ -605,6 +776,18 @@ for (const locale of ["en-US", "zh-CN"] as const) {
 						await page.evaluate(() => document.documentElement.scrollWidth),
 					).toBeLessThanOrEqual(width);
 					if (width <= 390) {
+						if (kind === "project") {
+							const contactDetails = dialog
+								.locator("details.project-editor-group")
+								.filter({ hasText: copy.contactDetails });
+							if (
+								!(await contactDetails.evaluate(
+									(element) => (element as HTMLDetailsElement).open,
+								))
+							) {
+								await contactDetails.locator("summary").click();
+							}
+						}
 						const sizes = await dialog
 							.locator("input, textarea, [role=combobox]")
 							.evaluateAll((elements) =>
@@ -622,8 +805,10 @@ for (const locale of ["en-US", "zh-CN"] as const) {
 						await expect(
 							dialog.getByRole("button", { name: copy.save }),
 						).toBeInViewport({ ratio: 1 });
-						await dialog.getByLabel(copy.notes).scrollIntoViewIfNeeded();
-						await expect(dialog.getByLabel(copy.notes)).toBeInViewport({
+						const notesLabel =
+							kind === "project" ? copy.projectNotes : copy.notes;
+						await dialog.getByLabel(notesLabel).scrollIntoViewIfNeeded();
+						await expect(dialog.getByLabel(notesLabel)).toBeInViewport({
 							ratio: 1,
 						});
 						await expect(
@@ -637,7 +822,9 @@ for (const locale of ["en-US", "zh-CN"] as const) {
 						await dialog.evaluate((element) =>
 							element.scrollTo({ top: element.scrollHeight }),
 						);
-						const notes = await dialog.getByLabel(copy.notes).boundingBox();
+						const notesLabel =
+							kind === "project" ? copy.projectNotes : copy.notes;
+						const notes = await dialog.getByLabel(notesLabel).boundingBox();
 						const actions = await dialog
 							.locator("form > .actions")
 							.boundingBox();
@@ -661,10 +848,18 @@ for (const locale of ["en-US", "zh-CN"] as const) {
 					expect(
 						await page.evaluate(() => document.documentElement.scrollWidth),
 					).toBeLessThanOrEqual(width);
-					await page
-						.getByRole("button", { name: copy.edit, exact: true })
-						.click();
-					await expect(page.getByRole("dialog")).toBeVisible();
+					const editButton =
+						kind === "project"
+							? page
+									.locator("main.page > .asset-project-action-bar")
+									.getByRole("button", { name: copy.edit, exact: true })
+							: page
+									.locator("main.page > .page-header")
+									.getByRole("button", { name: copy.edit, exact: true });
+					await editButton.click();
+					await expect(page.getByRole("dialog")).toBeVisible({
+						timeout: 15_000,
+					});
 					expect(
 						await page.evaluate(() => document.documentElement.scrollWidth),
 					).toBeLessThanOrEqual(width);
