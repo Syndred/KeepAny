@@ -28,6 +28,7 @@ export default defineConfig({
 		"themed-select.spec.ts",
 		"finance-ledger-release.spec.ts",
 		"collections-ledger-release.spec.ts",
+		"restore-self-service-release.spec.ts",
 	],
 	timeout: 90_000,
 	workers: 2,
