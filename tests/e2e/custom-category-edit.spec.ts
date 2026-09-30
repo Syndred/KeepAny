@@ -49,6 +49,10 @@ async function sidebarCategory(page: Page, name: string) {
 	await page.locator(".sidebar-custom").getByRole("button", { name, exact: true }).click();
 }
 async function fits(page: Page) {
+	await expect(page.locator(".mobile-scrim")).toBeHidden();
+	if ((page.viewportSize()?.width ?? 0) <= 760) {
+		await expect.poll(() => page.locator(".sidebar").evaluate((sidebar) => sidebar.getBoundingClientRect().right)).toBeLessThanOrEqual(0);
+	}
 	expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 	for (const button of await page.locator(".asset-category-inline > .actions button, .asset-category-recovery button").all()) {
 		const box = await button.boundingBox();
