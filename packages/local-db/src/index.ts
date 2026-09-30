@@ -21,6 +21,12 @@ export type { DeleteCustomCategoryInput, EditCustomCategoryInput, PendingCategor
 export interface RecordRow { id: string; type: EntityType; payload: string; updatedAt: number }
 interface StoredFile { id: string; blob: Blob; name: string }
 interface Journal { id: string; rows: RecordRow[]; intakeReview?: ReviewedCandidate[]; sourceBinding?: DatasetBinding }
+export interface RestoreRecoveryToken { journalId: string; planHash: string; datasetProof: string }
+export interface PendingRestoreRecovery {
+  token: RestoreRecoveryToken;
+  rowCount: number; candidateCount: number; presentEqual: number; missing: number; different: number;
+  canRetry: boolean; canAbandon: boolean; reason: string | null;
+}
 type ImportJournal = ReviewedImportJournal;
 interface RenewalJournal { id: string; assetId: string; expectedPayload: string; next: RecordRow; history: RecordRow }
 interface SyncBase { id: string; payload: string; version: number }
@@ -531,7 +537,8 @@ export class LocalRepository {
   }
 
   private async saveUnlocked(type: EntityType, value: unknown, expectedPayload?: string | null, subscriptionSave = false): Promise<RecordRow> {
-    if (!['asset', 'category', 'preference'].includes(type)) return this.saveEntityUnlocked(type, value, expectedPayload, subscriptionSave);
+    // Recovery validates one actual RxDB snapshot while holding this table.
+    // Histories and tasks must not change behind that validation either.
     const entity = parseEntity(type, value) as Asset | Category | { id: string };
     if (type === 'asset') for (const id of (entity as Asset).attachments) {
       if (!(await this.fileStore.blobs.get(id))) throw Error('attachment-missing');
@@ -608,6 +615,7 @@ export class LocalRepository {
   // Re-read the current row inside RxDB's CAS retry to preserve every completion timestamp.
   async setTaskDone(id: string, expectedDone: boolean): Promise<Task> {
     return withRenewalLock(`keepany-task:${this.db.name}`, async () => {
+      return withCategoryMutationGate(this.db, this.fileStore, [], async () => {
       const current = await this.db.records.findOne(key('task', id)).exec();
       if (!current) throw Error('task-stale');
       const before = entitySchemas.task.parse(JSON.parse(canonical(current).payload));
@@ -629,6 +637,7 @@ export class LocalRepository {
       });
       if (!result) throw Error('task-stale');
       return result;
+      });
     });
   }
 
@@ -876,6 +885,7 @@ export class LocalRepository {
   }
 
   private async assertArchiveMergeSyncAllowed(): Promise<void> {
+    if (await this.fileStore.journal.count()) throw Error('restore-recovery-pending');
     if (await this.fileStore.categoryEditJournal.count()) throw Error('category-edit-pending');
     if (await this.fileStore.subscriptionSaveJournal.count()) throw Error('subscription-relations-pending');
     if ((await this.fileStore.importJournal.toArray()).some(entry => entry.reviewedExpense)) throw Error('review-expense-pending');
@@ -902,7 +912,8 @@ export class LocalRepository {
     if (!/^[a-f0-9]{64}$/.test(fingerprint) || !Number.isSafeInteger(keyEpoch) || keyEpoch < 1) throw Error('sync-key');
     return this.fileStore.transaction('rw', [this.fileStore.datasetBinding, this.fileStore.scopedMeta,
       this.fileStore.scopedBase, this.fileStore.scopedOutbox, this.fileStore.scopedPull,
-      this.fileStore.scopedAttachmentUploads], async () => {
+      this.fileStore.scopedAttachmentUploads, this.fileStore.journal], async () => {
+      if (await this.fileStore.journal.count()) throw Error('restore-recovery-pending');
       const binding = await this.fileStore.datasetBinding.get('active');
       if (binding && binding.scope !== scope) throw Error('sync-dataset-bound');
       const existing = await this.fileStore.scopedMeta.get(scope);
@@ -945,7 +956,8 @@ export class LocalRepository {
     const snapshot = copyAttachmentPlan(plan);
     await validateAttachmentPlan(snapshot);
     const id = scopedKey(snapshot.scope, snapshot.attachmentId);
-    await this.fileStore.transaction('rw', [this.fileStore.datasetBinding, this.fileStore.scopedAttachmentUploads], async () => {
+    await this.fileStore.transaction('rw', [this.fileStore.datasetBinding, this.fileStore.scopedAttachmentUploads, this.fileStore.journal], async () => {
+      if (await this.fileStore.journal.count()) throw Error('restore-recovery-pending');
       const binding = await this.fileStore.datasetBinding.get('active');
       if (binding?.scope !== snapshot.scope) throw Error('sync-dataset-bound');
       const existing = await this.fileStore.scopedAttachmentUploads.get(id);
@@ -962,7 +974,8 @@ export class LocalRepository {
     await this.assertArchiveMergeSyncAllowed();
     assertScope(scope);
     z.uuid().parse(attachmentId);
-    await this.fileStore.transaction('rw', [this.fileStore.datasetBinding, this.fileStore.scopedAttachmentUploads], async () => {
+    await this.fileStore.transaction('rw', [this.fileStore.datasetBinding, this.fileStore.scopedAttachmentUploads, this.fileStore.journal], async () => {
+      if (await this.fileStore.journal.count()) throw Error('restore-recovery-pending');
       const binding = await this.fileStore.datasetBinding.get('active');
       if (binding?.scope !== scope) throw Error('sync-dataset-bound');
       await this.fileStore.scopedAttachmentUploads.delete(scopedKey(scope, attachmentId));
@@ -1006,7 +1019,8 @@ export class LocalRepository {
       ((await this.scopedBaseFor(scope, row.id))?.version ?? 0) || operation.tombstone !== Boolean(parsedPayload(row).deleted)) throw Error('outbox-context');
     const id = scopedKey(scope, row.id);
     return this.fileStore.transaction('rw', [this.fileStore.archiveMerge, this.fileStore.scopedOutbox,
-      this.fileStore.subscriptionSaveJournal, this.fileStore.importJournal, this.fileStore.categoryEditJournal], async () => {
+      this.fileStore.subscriptionSaveJournal, this.fileStore.importJournal, this.fileStore.categoryEditJournal, this.fileStore.journal], async () => {
+      if (await this.fileStore.journal.count()) throw Error('restore-recovery-pending');
       if (await this.fileStore.categoryEditJournal.count()) throw Error('category-edit-pending');
       if (await this.fileStore.subscriptionSaveJournal.count()) throw Error('subscription-relations-pending');
       if ((await this.fileStore.importJournal.toArray()).some(entry => entry.reviewedExpense)) throw Error('review-expense-pending');
@@ -1014,7 +1028,7 @@ export class LocalRepository {
       if (pending && pending.phase !== 'syncing') throw Error('archive-merge-sync-paused');
       const existing = await this.fileStore.scopedOutbox.get(id);
       if (existing) return existing;
-      const current = await Dexie.waitFor(this.db.records.findOne(row.id).exec());
+      const current = await Dexie.waitFor(Dexie.ignoreTransaction(() => this.db.records.findOne(row.id).exec()));
       if (!current || canonical(current).payload !== row.payload) throw Error('outbox-stale');
       const item = { id, scope, row, operation };
       await this.fileStore.scopedOutbox.add(item);
@@ -1026,7 +1040,8 @@ export class LocalRepository {
     assertScope(scope);
     const item = (await this.listScopedOutbox(scope)).find(entry => entry.operation.operationId === operationId);
     if (!item || version !== item.operation.expectedVersion + 1) throw Error('outbox-ack');
-    await this.fileStore.transaction('rw', this.fileStore.scopedBase, this.fileStore.scopedOutbox, async () => {
+    await this.fileStore.transaction('rw', this.fileStore.scopedBase, this.fileStore.scopedOutbox, this.fileStore.journal, async () => {
+      if (await this.fileStore.journal.count()) throw Error('restore-recovery-pending');
       const current = await this.fileStore.scopedOutbox.get(item.id);
       if (current?.operation.operationId !== operationId) throw Error('outbox-ack');
       await this.fileStore.scopedBase.put({ id: item.id, scope, rowId: item.row.id, payload: item.row.payload,
@@ -1038,7 +1053,10 @@ export class LocalRepository {
   async blockScopedOutbox(scope: string, operationId: string): Promise<void> {
     const item = (await this.listScopedOutbox(scope)).find(entry => entry.operation.operationId === operationId);
     if (!item) throw Error('outbox-missing');
-    await this.fileStore.scopedOutbox.update(item.id, { blocked: true });
+    await this.fileStore.transaction('rw', this.fileStore.scopedOutbox, this.fileStore.journal, async () => {
+      if (await this.fileStore.journal.count()) throw Error('restore-recovery-pending');
+      await this.fileStore.scopedOutbox.update(item.id, { blocked: true });
+    });
   }
 
   async scopedConflict(scope: string): Promise<ScopedConflict | null> {
@@ -1065,7 +1083,8 @@ export class LocalRepository {
     if (!previous) {
       const current = await this.db.records.findOne(change.row.id).exec();
       await this.fileStore.transaction('rw', [this.fileStore.archiveMerge, this.fileStore.scopedPull,
-        this.fileStore.subscriptionSaveJournal, this.fileStore.importJournal, this.fileStore.categoryEditJournal], async () => {
+        this.fileStore.subscriptionSaveJournal, this.fileStore.importJournal, this.fileStore.categoryEditJournal, this.fileStore.journal], async () => {
+        if (await this.fileStore.journal.count()) throw Error('restore-recovery-pending');
         if (await this.fileStore.categoryEditJournal.count()) throw Error('category-edit-pending');
         if (await this.fileStore.subscriptionSaveJournal.count()) throw Error('subscription-relations-pending');
         if ((await this.fileStore.importJournal.toArray()).some(entry => entry.reviewedExpense)) throw Error('review-expense-pending');
@@ -1090,14 +1109,24 @@ export class LocalRepository {
     await this.assertArchiveMergeSyncAllowed();
     assertScope(scope);
     await this.assertDatasetScope(scope);
-    const journal = await this.fileStore.scopedPull.get(scope);
-    if (!journal || !(await this.scopedConflict(scope))) throw Error('conflict-missing');
-    const current = await this.db.records.findOne(journal.change.row.id).exec();
-    if ((current ? canonical(current).payload : null) !== journal.localPayload) {
-      await this.fileStore.scopedPull.update(scope, { localPayload: current ? canonical(current).payload : null });
-      throw Error('conflict-local-changed');
-    }
-    await this.fileStore.scopedPull.update(scope, { decision });
+    const changed = await this.fileStore.transaction('rw', this.fileStore.scopedPull, this.fileStore.scopedBase,
+      this.fileStore.journal, async () => {
+      if (await this.fileStore.journal.count()) throw Error('restore-recovery-pending');
+      const journal = await this.fileStore.scopedPull.get(scope);
+      if (!journal) throw Error('conflict-missing');
+      const [current] = await Dexie.waitFor(Dexie.ignoreTransaction(() =>
+        this.db.records.storageInstance.findDocumentsById([journal.change.row.id], false)));
+      const payload = current?.payload ?? null;
+      const base = await this.fileStore.scopedBase.get(scopedKey(scope, journal.change.row.id));
+      if (journal.decision || payload === journal.change.row.payload || payload === (base?.payload ?? null)) throw Error('conflict-missing');
+      if (payload !== journal.localPayload) {
+        await this.fileStore.scopedPull.update(scope, { localPayload: payload });
+        return true;
+      }
+      await this.fileStore.scopedPull.update(scope, { decision });
+      return false;
+    });
+    if (changed) throw Error('conflict-local-changed');
     if (await replayScopedPull(this.db, this.fileStore, scope) !== 'applied') throw Error('conflict-unresolved');
   }
 
@@ -1113,7 +1142,8 @@ export class LocalRepository {
       validateRow(change.row);
     }
     const id = crypto.randomUUID();
-    await this.fileStore.transaction('rw', this.fileStore.pullJournal, this.fileStore.categoryEditJournal, async () => {
+    await this.fileStore.transaction('rw', this.fileStore.pullJournal, this.fileStore.categoryEditJournal, this.fileStore.journal, async () => {
+      if (await this.fileStore.journal.count()) throw Error('restore-recovery-pending');
       if (await this.fileStore.categoryEditJournal.count()) throw Error('category-edit-pending');
       if (await this.fileStore.pullJournal.count()) throw Error('pull-pending');
       await this.fileStore.pullJournal.put({ id, cursorStart, changes });
@@ -1158,7 +1188,6 @@ export class LocalRepository {
   }
 
   private async restoreEntityUnlocked(type: EntityType, id: string): Promise<RecordRow> {
-    if (!['asset', 'category', 'preference'].includes(type)) return this.restoreEntityRecord(type, id);
     return withCategoryMutationGate(this.db, this.fileStore, [{ type, id }], () => this.restoreEntityRecord(type, id));
   }
 
@@ -1185,7 +1214,11 @@ export class LocalRepository {
   // An exact base snapshot prevents silent last-write-wins. Replayed writes are idempotent.
   async applyIncoming(type: EntityType, value: unknown, expectedPayload: string | null): Promise<'applied' | 'duplicate' | 'conflict'> {
     await this.assertArchiveMergeSyncAllowed();
-    return withCategoryMutationGate(this.db, this.fileStore, [], () => this.applyIncomingUnlocked(type, value, expectedPayload), true);
+    return this.fileStore.transaction('rw', this.fileStore.categoryEditJournal, this.fileStore.journal, async () => {
+      if (await this.fileStore.journal.count()) throw Error('restore-recovery-pending');
+      await assertCategoryMutationAllowed(this.db, this.fileStore, [], true);
+      return Dexie.waitFor(Dexie.ignoreTransaction(() => this.applyIncomingUnlocked(type, value, expectedPayload)));
+    });
   }
 
   private async applyIncomingUnlocked(type: EntityType, value: unknown, expectedPayload: string | null): Promise<'applied' | 'duplicate' | 'conflict'> {
@@ -1243,7 +1276,8 @@ export class LocalRepository {
     if (!(input.bytes instanceof Uint8Array) || input.bytes.length > 20 * 1024 * 1024) throw Error('file-size');
     const bytes = new Uint8Array(input.bytes);
     if (!/^[a-f0-9]{64}$/.test(sha256) || await sha(bytes) !== sha256) throw Error('sync-attachment-integrity');
-    await this.fileStore.transaction('rw', this.fileStore.blobs, async () => {
+    await this.fileStore.transaction('rw', this.fileStore.blobs, this.fileStore.journal, async () => {
+      if (await this.fileStore.journal.count()) throw Error('restore-recovery-pending');
       const existing = await this.fileStore.blobs.get(id);
       if (existing) {
         if (existing.name !== name || existing.blob.type !== type || existing.blob.size !== bytes.length ||
@@ -1263,10 +1297,16 @@ export class LocalRepository {
   // Tombstones and durable journals still protect their referenced images.
   async cleanupUnreferencedFile(id: string): Promise<boolean> {
     z.string().uuid().parse(id);
-    if ((await this.protectedFileIds()).has(id)) return false;
-    if (!(await this.fileStore.blobs.get(id))) return false;
-    await this.fileStore.blobs.delete(id);
-    return true;
+    return this.fileStore.transaction('rw', restoreRecoveryTables(this.fileStore), async () => {
+      // Read records and their durable intents after acquiring the same gate
+      // used by restore. Otherwise an old record snapshot can pair with an
+      // already-cleared restore journal and delete a newly referenced image.
+      await this.fileStore.journal.count();
+      if ((await this.protectedFileIds()).has(id)) return false;
+      if (!(await this.fileStore.blobs.get(id))) return false;
+      await this.fileStore.blobs.delete(id);
+      return true;
+    });
   }
 
   async collectOrphanFiles(): Promise<number> {
@@ -1279,7 +1319,7 @@ export class LocalRepository {
   }
 
   private async protectedFileIds(): Promise<Set<string>> {
-    const rows = await this.allRecords();
+    const rows = await Dexie.waitFor(Dexie.ignoreTransaction(() => storedRestoreRows(this.db)));
     const [restores, imports, pulls, scopedOutbox, scopedPull, renewals, subscriptionSaves, categoryEdits] = await Promise.all([
       this.fileStore.journal.toArray(), this.fileStore.importJournal.toArray(), this.fileStore.pullJournal.toArray(),
       this.fileStore.scopedOutbox.toArray(), this.fileStore.scopedPull.toArray(), this.fileStore.renewalJournal.toArray(),
@@ -1620,41 +1660,243 @@ export class LocalRepository {
     });
   }
 
+  async getPendingRestoreRecoveries(): Promise<PendingRestoreRecovery[]> {
+    return this.fileStore.transaction('r', restoreRecoveryTables(this.fileStore), async () => {
+      const journals = await this.fileStore.journal.toArray();
+      if (!journals.length) return [];
+      const snapshot = await restoreRecoverySnapshot(this.db, this.fileStore);
+      const pending: PendingRestoreRecovery[] = [];
+      for (const journal of journals) pending.push(await describeRestoreRecovery(this.db, this.fileStore, journal, snapshot));
+      return pending;
+    });
+  }
+
+  async retryRestoreRecovery(expected: RestoreRecoveryToken): Promise<'completed'> {
+    try {
+      await replayJournal(this.db, this.fileStore, expected.journalId, expected);
+      this.restoreRecoveryError = await this.fileStore.journal.count() ? 'restore-recovery-pending' : null;
+      return 'completed';
+    } catch (error) {
+      if (!(error instanceof Error && error.message === 'restore-recovery-stale'))
+        this.restoreRecoveryError = error instanceof Error ? error.message : 'restore-failed';
+      throw error;
+    }
+  }
+
+  async abandonRestoreRecovery(expected: RestoreRecoveryToken): Promise<'kept-current'> {
+    await this.fileStore.transaction('rw', restoreRecoveryTables(this.fileStore), async () => {
+      const journal = await this.fileStore.journal.get(expected.journalId);
+      if (!journal) throw Error('restore-recovery-stale');
+      const snapshot = await restoreRecoverySnapshot(this.db, this.fileStore);
+      await assertRestoreRecoveryToken(this.db, this.fileStore, journal, snapshot, expected);
+      checkedRestoreJournal(journal);
+      await assertRestoreRecoverySource(snapshot.proof, journal.sourceBinding, true);
+      await assertRestoreRecoveryGate(this.fileStore);
+      assertRestoreRecoveryReferences(snapshot.rows, snapshot.candidates, snapshot.files);
+      await assertRestoreRecoveryFilesReadable(snapshot.rows, snapshot.files);
+      // Preserve every current record, candidate, attachment and provenance proof.
+      // Only this exact frozen intent is abandoned; no rollback is implied.
+      await this.fileStore.journal.delete(journal.id);
+    });
+    this.restoreRecoveryError = await this.fileStore.journal.count() ? 'restore-recovery-pending' : null;
+    return 'kept-current';
+  }
+
   async close(): Promise<void> {
     await this.db.close();
     this.fileStore.close();
   }
 }
 
-async function replayJournal(db: RxDatabase, store: FileStore, id: string): Promise<void> {
-  const journal = await store.journal.get(id);
-  if (!journal) return;
-  await assertRestoreIdentity(store, journal.sourceBinding);
-  if (journal.sourceBinding && !(await store.datasetBinding.get('active'))) throw Error('restore-source-identity');
-  const intakeReview = parseReviewedCandidates(journal.intakeReview ?? []);
-  await assertReviewRestoreConflicts(store, intakeReview);
-  const currentRows = (await db.records.find().exec()).map(canonical);
-  assertReviewedAssetReferences(intakeReview, assetIdsIn([...currentRows, ...journal.rows]), historyByIdIn([...currentRows, ...journal.rows]));
-  for (const row of journal.rows) {
-    await assertRowAttachmentsAvailable(store, row);
-    const current = await db.records.findOne(row.id).exec();
-    if (current) {
-      if (canonical(current).payload !== row.payload) throw Error('restore-conflict');
-      continue;
+interface RestoreDatasetProof { binding: DatasetBinding | null; scopes: string[]; legacy: boolean }
+interface RestoreRecoverySnapshot {
+  proof: RestoreDatasetProof; rows: RecordRow[]; candidates: ReviewedCandidate[]; files: Map<string, StoredFile>;
+}
+function restoreRecoveryTables(store: FileStore) {
+  return [store.journal, store.blobs, store.intakeReview, store.categoryEditJournal, store.importJournal,
+    store.archiveMerge, store.renewalJournal, store.subscriptionSaveJournal, store.datasetBinding, store.scopedMeta, store.scopedBase, store.scopedOutbox,
+    store.scopedPull, store.scopedAttachmentUploads, store.syncBase, store.syncMeta, store.pullJournal];
+}
+async function restoreDatasetProof(store: FileStore): Promise<RestoreDatasetProof> {
+  const [stored, meta, base, outbox, pulls, uploads, oldBase, oldMeta, oldPull] = await Promise.all([
+    store.datasetBinding.get('active'), store.scopedMeta.toCollection().primaryKeys(),
+    store.scopedBase.orderBy('scope').uniqueKeys(), store.scopedOutbox.orderBy('scope').uniqueKeys(),
+    store.scopedPull.toArray(), store.scopedAttachmentUploads.orderBy('scope').uniqueKeys(),
+    store.syncBase.count(), store.syncMeta.count(), store.pullJournal.count(),
+  ]);
+  const binding = stored ? { endpoint: stored.endpoint, accountId: stored.accountId,
+    workspaceId: stored.workspaceId, scope: stored.scope } : null;
+  return { binding, scopes: [...new Set([...meta, ...base, ...outbox, ...uploads,
+    ...pulls.flatMap(pull => [pull.id, pull.scope])])].map(String).sort(), legacy: Boolean(oldBase || oldMeta || oldPull) };
+}
+async function assertRestoreRecoverySource(proof: RestoreDatasetProof, source: DatasetBinding | undefined,
+  requireClaim: boolean): Promise<void> {
+  if (proof.binding && (!source || !sameDatasetBinding(proof.binding, source))) throw Error('restore-source-identity');
+  if (source) await Dexie.waitFor(validateDatasetBinding(source));
+  if (proof.binding) await Dexie.waitFor(validateDatasetBinding(proof.binding));
+  if (requireClaim && source && !proof.binding) throw Error('restore-source-identity');
+  if (proof.legacy || proof.scopes.length > 1) throw Error('sync-dataset-ambiguous');
+  const binding = proof.binding ?? (requireClaim ? null : source);
+  if (!binding && proof.scopes.length) throw Error('sync-dataset-ambiguous');
+  if (binding && proof.scopes.some(scope => scope !== binding.scope)) throw Error('sync-dataset-bound');
+}
+async function storedRestoreRows(db: RxDatabase): Promise<RecordRow[]> {
+  const query = db.records.find();
+  const { documents } = await db.records.storageInstance.query(query.getPreparedQuery());
+  return documents.map((row: RecordRow) => ({ id: row.id, type: row.type, payload: row.payload, updatedAt: row.updatedAt }));
+}
+async function restoreRecoverySnapshot(db: RxDatabase, store: FileStore): Promise<RestoreRecoverySnapshot> {
+  // FileStore reads stay in the owning transaction. Only RxDB work escapes it;
+  // reading a locked FileStore table from ignoreTransaction would self-deadlock.
+  const [proof, candidates, files] = await Promise.all([
+    restoreDatasetProof(store), store.intakeReview.toArray(), store.blobs.toArray(),
+  ]);
+  const rows = await Dexie.waitFor(Dexie.ignoreTransaction(() => storedRestoreRows(db)));
+  return { proof, rows, candidates, files: new Map(files.map(file => [file.id, file])) };
+}
+function checkedRestoreJournal(journal: Journal): Journal {
+  try {
+    if (!journal || typeof journal.id !== 'string' || !journal.id || !Array.isArray(journal.rows) ||
+      journal.rows.length > 100000) throw Error('invalid');
+    const ids = new Set<string>();
+    for (const row of journal.rows) {
+      validateRow(row);
+      if (ids.has(row.id)) throw Error('invalid');
+      ids.add(row.id);
     }
-    try {
-      await db.records.insert(row);
-    } catch (error) {
-      const raced = await db.records.findOne(row.id).exec();
-      if (!raced) throw error;
-      if (canonical(raced).payload !== row.payload) throw Error('restore-conflict');
-    }
+    return { ...journal, intakeReview: parseReviewedCandidates(journal.intakeReview ?? []) };
+  } catch { throw Error('restore-recovery-invalid'); }
+}
+async function restoreRecoveryToken(db: RxDatabase, store: FileStore, journal: Journal,
+  proof: RestoreDatasetProof): Promise<RestoreRecoveryToken> {
+  const scopes = [...new Set([...proof.scopes, ...(proof.binding ? [proof.binding.scope] : [])])].sort();
+  const [planHash, datasetProof] = await Dexie.waitFor(Promise.all([
+    sha(strToU8(JSON.stringify(journal))),
+    sha(strToU8(JSON.stringify({ db: db.name, store: store.name, binding: proof.binding, scopes, legacy: proof.legacy }))),
+  ]));
+  return { journalId: journal.id, planHash, datasetProof };
+}
+async function assertRestoreRecoveryToken(db: RxDatabase, store: FileStore, journal: Journal,
+  snapshot: RestoreRecoverySnapshot, expected: RestoreRecoveryToken): Promise<void> {
+  const actual = await restoreRecoveryToken(db, store, journal, snapshot.proof);
+  if (!expected || actual.journalId !== expected.journalId || actual.planHash !== expected.planHash ||
+    actual.datasetProof !== expected.datasetProof) throw Error('restore-recovery-stale');
+}
+async function assertRestoreRecoveryGate(store: FileStore): Promise<void> {
+  if (await store.categoryEditJournal.count()) throw Error('category-edit-pending');
+  if (await store.renewalJournal.count()) throw Error('renewal-recovery-pending');
+  if (await store.subscriptionSaveJournal.count()) throw Error('subscription-relations-pending');
+  if (await store.archiveMerge.count()) throw Error('archive-merge-pending');
+  if ((await store.importJournal.toArray()).some(entry => entry.reviewedExpense)) throw Error('review-expense-pending');
+}
+function assertRestoreRecoveryReferences(rows: RecordRow[], candidates: ReviewedCandidate[], files: Map<string, StoredFile>): void {
+  let parsed: ReviewedCandidate[];
+  let normalized: RecordRow[];
+  try {
+    normalized = rows.map(row => {
+      validateRow(row);
+      return { ...row, payload: JSON.stringify(parsedPayload(row)) };
+    });
+    parsed = parseReviewedCandidates(candidates);
   }
-  const restoredRows = (await db.records.find().exec()).map(canonical);
-  assertReviewedAssetReferences(intakeReview, assetIdsIn(restoredRows), historyByIdIn(restoredRows));
-  await store.transaction('rw', store.intakeReview, store.journal, async () => {
-    await assertReviewRestoreConflicts(store, intakeReview);
-    for (const row of intakeReview) if (!(await store.intakeReview.get(row.id))) await store.intakeReview.add(row);
+  catch { throw Error('restore-recovery-invalid'); }
+  validateReferences(normalized, new Set(files.keys()));
+  assertReviewedAssetReferences(parsed, assetIdsIn(rows), historyByIdIn(rows));
+  for (const id of attachmentIdsIn(rows)) {
+    const file = files.get(id);
+    if (!file || !(file.blob instanceof Blob) || !attachmentSchema.shape.type.safeParse(file.blob.type).success ||
+      !attachmentSchema.shape.name.safeParse(file.name).success || file.blob.size > 20 * 1024 * 1024) throw Error('archive-attachment-reference');
+  }
+}
+async function assertRestoreRecoveryFilesReadable(rows: RecordRow[], files: Map<string, StoredFile>): Promise<void> {
+  for (const id of attachmentIdsIn(rows)) {
+    const file = files.get(id);
+    if (!file || (await Dexie.waitFor(file.blob.arrayBuffer())).byteLength !== file.blob.size) throw Error('archive-attachment-reference');
+  }
+}
+function plannedRestoreSnapshot(journal: Journal, snapshot: RestoreRecoverySnapshot) {
+  const rows = new Map(snapshot.rows.map(row => [row.id, row]));
+  let parsed: ReviewedCandidate[];
+  try { parsed = parseReviewedCandidates(snapshot.candidates); }
+  catch { throw Error('restore-recovery-invalid'); }
+  const candidates = new Map(parsed.map(row => [row.id, row]));
+  for (const row of journal.rows) {
+    const current = rows.get(row.id);
+    if (current && current.payload !== row.payload) throw Error('restore-conflict');
+    rows.set(row.id, row);
+  }
+  for (const candidate of journal.intakeReview ?? []) {
+    const current = candidates.get(candidate.id);
+    if (current && !sameReviewedCandidate(current, candidate)) throw Error('restore-conflict');
+    candidates.set(candidate.id, candidate);
+  }
+  return { rows: [...rows.values()], candidates: [...candidates.values()] };
+}
+async function describeRestoreRecovery(db: RxDatabase, store: FileStore, journal: Journal,
+  snapshot: RestoreRecoverySnapshot): Promise<PendingRestoreRecovery> {
+  const token = await restoreRecoveryToken(db, store, journal, snapshot.proof);
+  const current = new Map(snapshot.rows.map(row => [row.id, row]));
+  const rows = Array.isArray(journal.rows) ? journal.rows : [];
+  let presentEqual = 0, missing = 0, different = 0;
+  for (const row of rows) {
+    const existing = row && current.get(row.id);
+    if (!existing) missing++;
+    else if (existing.payload === row.payload) presentEqual++;
+    else different++;
+  }
+  const result: PendingRestoreRecovery = { token, rowCount: rows.length,
+    candidateCount: Array.isArray(journal.intakeReview) ? journal.intakeReview.length : 0,
+    presentEqual, missing, different, canRetry: false, canAbandon: false, reason: null };
+  try {
+    const checked = checkedRestoreJournal(journal);
+    await assertRestoreRecoverySource(snapshot.proof, checked.sourceBinding, true);
+    await assertRestoreRecoveryGate(store);
+    try {
+      const planned = plannedRestoreSnapshot(checked, snapshot);
+      assertRestoreRecoveryReferences(planned.rows, planned.candidates, snapshot.files);
+      result.canRetry = true;
+    } catch (error) { result.reason = error instanceof z.ZodError ? 'restore-recovery-invalid' : error instanceof Error ? error.message : 'restore-failed'; }
+    try {
+      assertRestoreRecoveryReferences(snapshot.rows, snapshot.candidates, snapshot.files);
+      result.canAbandon = true;
+    } catch (error) { result.reason ??= error instanceof z.ZodError ? 'restore-recovery-invalid' : error instanceof Error ? error.message : 'restore-failed'; }
+  } catch (error) { result.reason = error instanceof z.ZodError ? 'restore-recovery-invalid' : error instanceof Error ? error.message : 'restore-failed'; }
+  return result;
+}
+
+async function replayJournal(db: RxDatabase, store: FileStore, id: string, expected?: RestoreRecoveryToken): Promise<void> {
+  await store.transaction('rw', restoreRecoveryTables(store), async () => {
+    const entry = await store.journal.get(id);
+    if (!entry) {
+      if (expected) throw Error('restore-recovery-stale');
+      return;
+    }
+    const snapshot = await restoreRecoverySnapshot(db, store);
+    if (expected) await assertRestoreRecoveryToken(db, store, entry, snapshot, expected);
+    const journal = checkedRestoreJournal(entry);
+    await assertRestoreRecoverySource(snapshot.proof, journal.sourceBinding, true);
+    await assertRestoreRecoveryGate(store);
+    const planned = plannedRestoreSnapshot(journal, snapshot);
+    assertRestoreRecoveryReferences(planned.rows, planned.candidates, snapshot.files);
+    await assertRestoreRecoveryFilesReadable(planned.rows, snapshot.files);
+    const restored = await Dexie.waitFor(Dexie.ignoreTransaction(async () => {
+      for (const row of journal.rows) {
+        const [current] = await db.records.storageInstance.findDocumentsById([row.id], false);
+        if (current) {
+          if (current.payload !== row.payload) throw Error('restore-conflict');
+          continue;
+        }
+        try { await db.records.insert(row); }
+        catch (error) {
+          const [raced] = await db.records.storageInstance.findDocumentsById([row.id], false);
+          if (!raced) throw error;
+          if (raced.payload !== row.payload) throw Error('restore-conflict');
+        }
+      }
+      return storedRestoreRows(db);
+    }));
+    assertRestoreRecoveryReferences(restored, planned.candidates, snapshot.files);
+    for (const candidate of journal.intakeReview ?? []) if (!(await store.intakeReview.get(candidate.id))) await store.intakeReview.add(candidate);
     await store.journal.delete(id);
   });
 }
@@ -1764,15 +2006,19 @@ async function rollbackArchiveMergeJournal(db: RxDatabase, store: FileStore): Pr
 }
 
 async function rollbackImport(db: RxDatabase, store: FileStore, id: string): Promise<void> {
-  const journal = await store.importJournal.get(id);
-  if (!journal) return;
-  for (const row of journal.rows) {
-    const current = await db.records.findOne(row.id).exec();
-    if (!current) continue;
-    if (canonical(current).payload !== row.payload) throw Error('import-rollback-conflict');
-    await current.remove();
-  }
-  await store.importJournal.delete(id);
+  await store.transaction('rw', store.importJournal, store.categoryEditJournal, async () => {
+    const journal = await store.importJournal.get(id);
+    if (!journal) return;
+    await Dexie.waitFor(Dexie.ignoreTransaction(async () => {
+      for (const row of journal.rows) {
+        const current = await db.records.findOne(row.id).exec();
+        if (!current) continue;
+        if (canonical(current).payload !== row.payload) throw Error('import-rollback-conflict');
+        await current.remove();
+      }
+    }));
+    await store.importJournal.delete(id);
+  });
 }
 
 // A completed storage batch is atomic. If RxDB reports a per-row CAS conflict,
@@ -1834,12 +2080,16 @@ async function assertRowAttachmentsAvailable(store: FileStore, row: RecordRow): 
 }
 
 async function replayPullJournal(db: RxDatabase, store: FileStore, id: string): Promise<void> {
+  return store.transaction('rw', [store.pullJournal, store.syncMeta, store.syncBase,
+    store.journal, store.categoryEditJournal], async () => {
+    if (await store.journal.count()) throw Error('restore-recovery-pending');
+    if (await store.categoryEditJournal.count()) throw Error('category-edit-pending');
   const journal = await store.pullJournal.get(id);
   if (!journal) return;
   if (((await store.syncMeta.get('cursor'))?.cursor ?? 0) !== journal.cursorStart) throw Error('cursor-mismatch');
   for (const change of journal.changes) {
     validateRow(change.row);
-    const current = await db.records.findOne(change.row.id).exec();
+    const current = await Dexie.waitFor(Dexie.ignoreTransaction(() => db.records.findOne(change.row.id).exec()));
     const base = await store.syncBase.get(change.row.id);
     const currentPayload = current ? canonical(current).payload : null;
     if (currentPayload !== change.row.payload) {
@@ -1847,25 +2097,24 @@ async function replayPullJournal(db: RxDatabase, store: FileStore, id: string): 
       if (current) {
         const conflict = Symbol('sync-conflict');
         try {
-          await current.incrementalModify((data: RecordRow) => {
+          await Dexie.waitFor(Dexie.ignoreTransaction(() => current.incrementalModify((data: RecordRow) => {
             if (data.payload !== (base?.payload ?? null)) throw conflict;
             return { ...data, ...change.row };
-          });
+          })));
         } catch (error) {
           if (error === conflict) throw Error('sync-conflict');
           throw error;
         }
       } else {
-        try { await db.records.insert(change.row); }
+        try { await Dexie.waitFor(Dexie.ignoreTransaction(() => db.records.insert(change.row))); }
         catch (error) {
-          const raced = await db.records.findOne(change.row.id).exec();
+          const raced = await Dexie.waitFor(Dexie.ignoreTransaction(() => db.records.findOne(change.row.id).exec()));
           if (!raced || canonical(raced).payload !== change.row.payload) throw error;
         }
       }
     }
     await store.syncBase.put({ id: change.row.id, payload: change.row.payload, version: change.version });
   }
-  await store.transaction('rw', store.syncMeta, store.pullJournal, async () => {
     await store.syncMeta.put({ id: 'cursor', cursor: journal.cursorStart + journal.changes.length });
     await store.pullJournal.delete(id);
   });
@@ -1916,8 +2165,7 @@ function sameDatasetBinding(a: DatasetBinding, b: DatasetBinding): boolean {
 }
 
 async function assertRestoreIdentity(store: FileStore, source?: DatasetBinding): Promise<void> {
-  const target = await store.datasetBinding.get('active');
-  if (target && (!source || !sameDatasetBinding(target, source))) throw Error('restore-source-identity');
+  await assertRestoreRecoverySource(await restoreDatasetProof(store), source, false);
 }
 
 // Caller validates the identity and includes every table below in one Dexie transaction.
@@ -1958,6 +2206,10 @@ async function validateDatasetBinding(binding: DatasetBinding): Promise<void> {
 }
 
 async function replayScopedPull(db: RxDatabase, store: FileStore, scope: string): Promise<'applied' | 'conflict'> {
+  return store.transaction('rw', [store.scopedPull, store.scopedMeta, store.scopedBase,
+    store.scopedOutbox, store.journal, store.categoryEditJournal, store.blobs], async () => {
+  if (await store.journal.count()) throw Error('restore-recovery-pending');
+  if (await store.categoryEditJournal.count()) throw Error('category-edit-pending');
   const journal = await store.scopedPull.get(scope);
   if (!journal) return 'applied';
   if (((await store.scopedMeta.get(scope))?.cursor ?? 0) !== journal.cursorStart) throw Error('cursor-mismatch');
@@ -1965,17 +2217,15 @@ async function replayScopedPull(db: RxDatabase, store: FileStore, scope: string)
   validateRow(row);
   await assertRowAttachmentsAvailable(store, row);
   const id = scopedKey(scope, row.id);
-  const current = await db.records.findOne(row.id).exec();
+  const current = await Dexie.waitFor(Dexie.ignoreTransaction(() => db.records.findOne(row.id).exec()));
   const currentPayload = current ? canonical(current).payload : null;
   const base = await store.scopedBase.get(id);
   const basePayload = base?.payload ?? null;
   if (base?.version === version && base.operationId === journal.change.operationId &&
       base.ciphertext === journal.change.ciphertext && row.payload === base.payload) {
-    await store.transaction('rw', store.scopedMeta, store.scopedPull, async () => {
       const meta = await store.scopedMeta.get(scope);
       await store.scopedMeta.put({ ...meta, id: scope, cursor: journal.cursorStart + 1 });
       await store.scopedPull.delete(scope);
-    });
     return 'applied';
   }
   if (!journal.decision && currentPayload !== row.payload && currentPayload !== basePayload) return 'conflict';
@@ -1986,19 +2236,18 @@ async function replayScopedPull(db: RxDatabase, store: FileStore, scope: string)
   if (journal.decision !== 'local' && currentPayload !== row.payload) {
     if (journal.decision !== 'remote' && currentPayload !== basePayload) return 'conflict';
     if (current) {
-      await current.incrementalModify((data: RecordRow) => {
+      await Dexie.waitFor(Dexie.ignoreTransaction(() => current.incrementalModify((data: RecordRow) => {
         if (data.payload !== currentPayload) throw Error('pull-race');
         return { ...data, ...row };
-      });
+      })));
     } else {
-      try { await db.records.insert(row); }
+      try { await Dexie.waitFor(Dexie.ignoreTransaction(() => db.records.insert(row))); }
       catch (error) {
-        const raced = await db.records.findOne(row.id).exec();
+        const raced = await Dexie.waitFor(Dexie.ignoreTransaction(() => db.records.findOne(row.id).exec()));
         if (!raced || canonical(raced).payload !== row.payload) throw error;
       }
     }
   }
-  await store.transaction('rw', store.scopedMeta, store.scopedBase, store.scopedOutbox, store.scopedPull, async () => {
     await store.scopedBase.put({ id, scope, rowId: row.id, payload: row.payload, version,
       row, operationId: journal.change.operationId, keyEpoch: journal.change.keyEpoch, ciphertext: journal.change.ciphertext });
     const pending = await store.scopedOutbox.get(id);
@@ -2006,8 +2255,8 @@ async function replayScopedPull(db: RxDatabase, store: FileStore, scope: string)
     const meta = await store.scopedMeta.get(scope);
     await store.scopedMeta.put({ ...meta, id: scope, cursor: journal.cursorStart + 1 });
     await store.scopedPull.delete(scope);
-  });
   return 'applied';
+  });
 }
 
 export async function openLocalRepository(name: string): Promise<LocalRepository> {
@@ -2142,6 +2391,14 @@ function defaultRepository(): Promise<LocalRepository> {
       catch { /* Pending confirmation stays frozen and can be retried explicitly. */ }
       try { await repository.retryAllCategoryEdits(); }
       catch { /* The persisted direction and conflict remain available for recovery. */ }
+      for (const entry of await resource.fileStore.journal.toArray()) {
+        try { await replayJournal(resource.db, resource.fileStore, entry.id); }
+        catch (error) {
+          repository.restoreRecoveryError = error instanceof Error ? error.message : 'restore-failed';
+          break;
+        }
+      }
+      if (!(await resource.fileStore.journal.count())) repository.restoreRecoveryError = null;
       return repository;
     })
       .catch(error => { singleton = undefined; throw error; });
@@ -2198,6 +2455,9 @@ export async function cleanupUnreferencedFile(id: string) { return (await defaul
 export async function collectOrphanFiles() { return (await defaultRepository()).collectOrphanFiles(); }
 export async function exportArchive() { return (await defaultRepository()).exportArchive(); }
 export async function restoreArchive(bytes: Uint8Array) { return (await defaultRepository()).restoreArchive(bytes); }
+export async function getPendingRestoreRecoveries() { return (await defaultRepository()).getPendingRestoreRecoveries(); }
+export async function retryRestoreRecovery(expected: RestoreRecoveryToken) { return (await defaultRepository()).retryRestoreRecovery(expected); }
+export async function abandonRestoreRecovery(expected: RestoreRecoveryToken) { return (await defaultRepository()).abandonRestoreRecovery(expected); }
 export async function previewArchiveMerge(bytes: Uint8Array) { return (await defaultRepository()).previewArchiveMerge(bytes); }
 export async function applyArchiveMerge(bytes: Uint8Array, choices: Record<string, ArchiveMergeChoice>, expectedFingerprint: string) {
   return (await defaultRepository()).applyArchiveMerge(bytes, choices, expectedFingerprint);

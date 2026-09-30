@@ -62,6 +62,9 @@ function entity(row: RecordRow) { return entitySchemas[row.type].parse(JSON.pars
 export async function withCategoryMutationGate<T>(db: RxDatabase, store: CategoryEditStore,
   targets: CategoryMutationTarget[], action: () => Promise<T>, allKinds = false): Promise<T> {
   return store.transaction('rw', store.categoryEditJournal, async () => {
+    // The callback can run before a queued native transaction obtains its lock.
+    // Acquire it with a FileStore request before starting any separate RxDB work.
+    await store.categoryEditJournal.count();
     await assertCategoryMutationAllowed(db, store, targets, allKinds);
     return Dexie.waitFor(Dexie.ignoreTransaction(action));
   });
