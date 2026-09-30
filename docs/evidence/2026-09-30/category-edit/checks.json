@@ -27,7 +27,12 @@
       "passed": 14,
       "followupPassed": 4,
       "evidenceWaitPassed": 2,
-      "reportType": "Playwright line logs"
+      "reportType": "Playwright line logs",
+      "reports": [
+        "keepany-category-browser.txt",
+        "keepany-category-final-browser.txt",
+        "keepany-category-evidence-browser.txt"
+      ]
     },
     "detailBrowser": {
       "passed": 12,
@@ -80,9 +85,12 @@
   },
   "frozenReferenceSha256": "61c78012a377946b88d8888cc030ab3ba5eb78e01227432b41aa5b4ac88151d7",
   "remoteCi": {
-    "status": "pending after release push",
-    "lastVerifiedPriorCodeRun": "https://github.com/Syndred/KeepAny/actions/runs/36653354303",
-    "priorRunStatus": "Success, not current category head"
+    "status": "Success",
+    "url": "https://github.com/Syndred/KeepAny/actions/runs/36656792883",
+    "head": "34ff7b7",
+    "duration": "5m 53s",
+    "jobDuration": "5m 49s",
+    "checked": "Authenticated Chrome run summary and succeeded verify job; all configured steps completed"
   },
   "notCompleted": [
     "Whole frozen UI state acceptance",
