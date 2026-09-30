@@ -1,6 +1,7 @@
 import { expect, it } from 'vitest';
 import { strToU8, unzipSync, zipSync, Zip, ZipDeflate } from 'fflate';
 import { unzipArchive } from './archive-unzip';
+import { inspectArchive } from './index';
 
 function changeDeclaredSize(archive: Uint8Array, size: number, local = true, central = true) {
   const bytes = Uint8Array.from(archive);
@@ -53,4 +54,11 @@ it.each([0, 6])('keeps ZIP header signatures inside genuine known-length file co
   data.set([0x50, 0x4b, 0x03, 0x04], 50);
   const path = `files/${crypto.randomUUID()}`;
   expect(unzipArchive(zipSync({ [path]: data }, { level: level as 0 | 6 }))).toEqual({ [path]: data });
+});
+
+it.each([0, 1, 6])('accepts a valid manifest whose central CRC equals a local header signature (level %s)', async level => {
+  const manifest = '{"format":"keepany-backup","version":1,"createdAt":"2026-09-30T00:00:00.000Z","recordCount":0,"recordsHash":"4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945","attachments":[],"padding":"93@C(5"}';
+  const archive = zipSync({ 'manifest.json': strToU8(manifest), 'records.json': strToU8('[]') }, { level: level as 0 | 1 | 6 });
+  expect(unzipSync(archive)['manifest.json']).toEqual(strToU8(manifest));
+  expect((await inspectArchive(archive)).rows).toEqual([]);
 });
