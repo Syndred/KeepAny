@@ -15,7 +15,7 @@ import type { Asset } from '../../packages/domain/src';
 test.skip(process.env.KEEPANY_STORAGE_QUOTA_ACCEPTANCE !== '1',
   'Opt-in: Chromium may confirm an origin quota override without enforcing it on existing application databases; recovery must remain unverified unless a native QuotaExceededError occurs');
 
-const evidence = path.resolve('docs/evidence/2026-09-30/delivery');
+const evidence = path.resolve(process.env.KEEPANY_EVIDENCE_DIR ?? 'docs/evidence/2026-09-30/delivery');
 const password = 'storage-quota-recovery-password';
 const reproductionCommand = 'KEEPANY_STORAGE_QUOTA_ACCEPTANCE=1 pnpm exec playwright test --config playwright.quota.config.ts --reporter=line';
 const releaseEntry = readFileSync('release/web/index.html', 'utf8').match(/<script[^>]*src="([^"]+)"/)?.[1];

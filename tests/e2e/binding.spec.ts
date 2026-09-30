@@ -122,13 +122,13 @@ test("account binding approval survives reload and remote revoke clears local cr
 		)
 		.toBe(true);
 	await page.screenshot({
-		path: "docs/evidence/2026-09-28/binding-fixture-en-390.png",
+		path: `${process.env.KEEPANY_EVIDENCE_DIR ?? "docs/evidence/2026-09-28"}/binding-fixture-en-390.png`,
 		fullPage: true,
 	});
 	await selectChoice(page.locator("section.card").filter({ has: page.getByRole("heading", { name: "Language" }) }).getByRole("combobox"), "zh-CN");
 	await expect(page.getByText("本机已保存账号连接").first()).toBeVisible();
 	await page.screenshot({
-		path: "docs/evidence/2026-09-28/binding-fixture-zh-390.png",
+		path: `${process.env.KEEPANY_EVIDENCE_DIR ?? "docs/evidence/2026-09-28"}/binding-fixture-zh-390.png`,
 		fullPage: true,
 	});
 	await selectChoice(page.locator("section.card").filter({ has: page.getByRole("heading", { name: "语言" }) }).getByRole("combobox"), "en");

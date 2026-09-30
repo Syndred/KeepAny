@@ -5,7 +5,7 @@ import { strFromU8, strToU8, unzipSync, zipSync } from "fflate";
 import { decryptBackup, encryptBackup } from "../../packages/local-db/src/backup-crypto";
 import { selectChoice } from "./helpers/select-choice";
 
-const evidence = "docs/evidence/2026-09-29";
+const evidence = process.env.KEEPANY_EVIDENCE_DIR ?? "docs/evidence/2026-09-29";
 const repositoryModuleUrl = `/@fs${process.cwd()}/packages/local-db/src/index.ts`;
 
 type Snapshot = {

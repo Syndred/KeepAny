@@ -3,7 +3,7 @@ import { expect, type Page, test } from "@playwright/test";
 import { selectChoice } from "./helpers/select-choice";
 
 const repositoryModuleUrl = `/@fs${process.cwd()}/packages/local-db/src/index.ts`;
-const evidenceDir = "docs/evidence/2026-09-29";
+const evidenceDir = process.env.KEEPANY_EVIDENCE_DIR ?? "docs/evidence/2026-09-29";
 
 type Copy = {
 	language: "zh-CN" | "en";
