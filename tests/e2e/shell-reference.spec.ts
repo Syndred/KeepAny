@@ -66,3 +66,30 @@ test("subscription sidebar opens the local money trail", async ({ page }) => {
 	await expect(page.getByRole("heading", { name: "订阅与账单" })).toBeVisible();
 	await expect(page.locator("aside.sidebar").getByRole("link", { name: "订阅" })).toHaveAttribute("aria-current", "page");
 });
+
+for (const locale of ["en-US", "zh-CN"]) {
+	test(`${locale} long project title stays within the mobile overview and opens its detail`, async ({ browser }) => {
+		const context = await browser.newContext({ locale, viewport: { width: 390, height: 844 } });
+		try {
+			const page = await context.newPage();
+			await page.goto("/");
+			const title = "VeryLongVisibleProjectTitle".repeat(3);
+			const id = await page.evaluate(async ([name, domainUrl, repositoryUrl]) => {
+				const { newAsset } = await import(domainUrl);
+				const { save } = await import(repositoryUrl);
+				const project = { ...newAsset("project"), name };
+				await save("asset", project);
+				return project.id as string;
+			}, [title, `/@fs${process.cwd()}/packages/domain/src/index.ts`, `/@fs${process.cwd()}/packages/local-db/src/index.ts`]);
+			const card = page.locator(".overview-project-card");
+			await expect(card.getByRole("heading", { name: title, exact: true })).toBeVisible();
+			expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);
+			await page.screenshot({ path: test.info().outputPath(`overview-long-title-${locale}-390.png`), fullPage: true });
+			await card.click();
+			await expect(page).toHaveURL(new RegExp(`/assets/project/${id}$`));
+			await expect(page.getByRole("heading", { name: title, exact: true })).toBeVisible();
+		} finally {
+			await context.close();
+		}
+	});
+}

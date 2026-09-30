@@ -46,7 +46,7 @@
 .overview-project-card:hover { transform: translateY(-2px); box-shadow: 5px 8px 0 var(--line); }
 .overview-project-top { display: flex; justify-content: space-between; align-items: center; }
 .overview-project-mark { display: grid; place-items: center; width: 31px; height: 31px; border-radius: 9px; background: var(--yellow-soft); font-weight: 800; }
-.overview-project-card h3 { margin: 12px 0 3px; font-size: 14px; }
+.overview-project-card h3 { margin: 12px 0 3px; overflow-wrap: anywhere; font-size: 14px; }
 .overview-project-card p { min-height: 19px; margin: 0; overflow: hidden; color: var(--muted); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
 .overview-project-counts { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 14px; color: var(--muted); font-size: 11px; }
 .overview-project-counts strong { color: var(--ink); }
