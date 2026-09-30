@@ -1,9 +1,10 @@
 import { Unzip, UnzipInflate, unzipSync, type UnzipFileInfo } from 'fflate';
 import { BACKUP_ARCHIVE_MAX_BYTES } from './backup-crypto';
+import { PASSWORD_VAULT_LIMIT } from './password-vault-storage';
 
 const expandedLimit = 300 * 1024 * 1024;
-const entryLimit = 10003; // Manifest + records + intake reviews + 10,000 attachments.
-const safePath = /^(?:manifest\.json|records\.json|intake-review\.json|files\/[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12})$/i;
+const entryLimit = 10004; // Manifest + records + intake reviews + password vault + 10,000 attachments.
+const safePath = /^(?:manifest\.json|records\.json|intake-review\.json|password-vault\.kdbx|files\/[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12})$/i;
 
 // KeepAny v1 writes ordinary single-disk, non-ZIP64 archives. Read only their
 // fixed EOCD boundary; fflate remains responsible for entry metadata/decoding.
@@ -32,6 +33,7 @@ export function unzipArchive(bytes: Uint8Array): Record<string, Uint8Array> {
   unzipSync(bytes, { filter: file => {
     if (!safePath.test(file.name) || declared.has(file.name) || declared.size >= entryLimit) throw Error('archive-entry');
     if (!Number.isSafeInteger(file.originalSize) || file.originalSize < 0) throw Error('archive-size');
+    if (file.name === 'password-vault.kdbx' && file.originalSize > PASSWORD_VAULT_LIMIT) throw Error('archive-size');
     declaredTotal += file.originalSize;
     if (declaredTotal > expandedLimit) throw Error('archive-size');
     if (file.compression !== 0 && file.compression !== 8) throw Error('archive-entry');

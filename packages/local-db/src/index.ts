@@ -6,6 +6,8 @@ import { dueOnCycle, entitySchemas, normalizeCategoryName, type Asset, type Asse
 import { canRecordProjectWorkflowTask, currentProjectWorkflowRound } from '../../domain/src/project-workflow';
 import { zipSync, strToU8, strFromU8 } from 'fflate';
 import { unzipArchive } from './archive-unzip';
+import { checkedPasswordVaultBytes, checkedPasswordVaultRecord, PASSWORD_VAULT_LIMIT, type VaultRecord } from './password-vault-storage';
+export type { VaultRecord } from './password-vault-storage';
 import type { SyncOperation } from '../../contracts/src';
 import { assertReviewedAssetReferences, cancelReviewedExpenseConfirmation, confirmReviewedExpense, migrateLegacyIntakeReview,
   parseReviewedCandidates, pendingReviewedExpenseConfirmations, replayReviewedExpense, sameReviewedCandidate,
@@ -20,7 +22,7 @@ export type { DeleteCustomCategoryInput, EditCustomCategoryInput, PendingCategor
 // This transport shape is consumed by the web app's RxDB observer.
 export interface RecordRow { id: string; type: EntityType; payload: string; updatedAt: number }
 interface StoredFile { id: string; blob: Blob; name: string }
-interface Journal { id: string; rows: RecordRow[]; intakeReview?: ReviewedCandidate[]; sourceBinding?: DatasetBinding }
+interface Journal { id: string; rows: RecordRow[]; intakeReview?: ReviewedCandidate[]; sourceBinding?: DatasetBinding; passwordVault?: VaultRecord }
 export interface RestoreRecoveryToken { journalId: string; planHash: string; datasetProof: string }
 export interface PendingRestoreRecovery {
   token: RestoreRecoveryToken;
@@ -89,6 +91,7 @@ class FileStore extends Dexie {
   subscriptionSaveJournal!: Table<SubscriptionSaveJournal, string>;
   intakeReview!: Table<ReviewedCandidate, string>;
   categoryEditJournal!: Table<CategoryEditJournal, string>;
+  passwordVault!: Table<VaultRecord, string>;
   constructor(name: string) {
     super(`${name}-files-v1`);
     this.version(1).stores({ blobs: 'id', journal: 'id' });
@@ -118,6 +121,10 @@ class FileStore extends Dexie {
       scopedBase: 'id, scope', scopedMeta: 'id', scopedOutbox: 'id, scope', scopedPull: 'id', datasetBinding: 'id',
       scopedAttachmentUploads: 'id, scope', renewalJournal: 'id, assetId', archiveMerge: 'id', subscriptionSaveJournal: 'id, &assetId',
       intakeReview: 'id, fileHash, status', categoryEditJournal: 'id' });
+    this.version(12).stores({ blobs: 'id', journal: 'id', importJournal: 'id', syncBase: 'id', syncMeta: 'id', pullJournal: 'id',
+      scopedBase: 'id, scope', scopedMeta: 'id', scopedOutbox: 'id, scope', scopedPull: 'id', datasetBinding: 'id',
+      scopedAttachmentUploads: 'id, scope', renewalJournal: 'id, assetId', archiveMerge: 'id', subscriptionSaveJournal: 'id, &assetId',
+      intakeReview: 'id, fileHash, status', categoryEditJournal: 'id', passwordVault: 'id' });
   }
 }
 
@@ -130,7 +137,7 @@ interface RepositoryRecoveryState { syncError: string | null; restoreError: stri
 const defaultGlobal = globalThis as typeof globalThis & { __keepanyLocalDbState?: DefaultRepositoryState };
 if (!defaultGlobal.__keepanyLocalDbState) defaultGlobal.__keepanyLocalDbState = {};
 const defaultState = defaultGlobal.__keepanyLocalDbState;
-if (!defaultState.fileStore?.subscriptionSaveJournal || !defaultState.fileStore?.intakeReview || !defaultState.fileStore?.categoryEditJournal) {
+if (!defaultState.fileStore?.subscriptionSaveJournal || !defaultState.fileStore?.intakeReview || !defaultState.fileStore?.categoryEditJournal || !defaultState.fileStore?.passwordVault) {
   // A Vite HMR module may retain an older Dexie handle. Rebind the shared
   // RxDB handle to the upgraded file store.
   defaultState.fileStore?.close();
@@ -194,6 +201,27 @@ export class LocalRepository {
   set intakeExpenseRecoveryError(value: string | null) { this.recoveryState.intakeExpenseError = value; }
   get categoryEditRecoveryError(): string | null { return this.recoveryState.categoryEditError ?? null; }
   set categoryEditRecoveryError(value: string | null) { this.recoveryState.categoryEditError = value; }
+
+  async readPasswordVault(): Promise<VaultRecord | null> {
+    const current = await this.fileStore.passwordVault.get('local');
+    return current ? checkedPasswordVaultRecord(current) : null;
+  }
+
+  async savePasswordVault(input: Uint8Array, expectedRevision: string | null): Promise<VaultRecord> {
+    const bytes = checkedPasswordVaultBytes(input);
+    if (expectedRevision !== null && typeof expectedRevision !== 'string') throw Error('vault-invalid');
+    return this.fileStore.transaction('rw', restoreRecoveryTables(this.fileStore), async () => {
+      if (await this.fileStore.journal.count()) throw Error('restore-recovery-pending');
+      await assertRestoreRecoveryGate(this.fileStore);
+      if (await this.fileStore.importJournal.count() || await this.fileStore.pullJournal.count() ||
+        await this.fileStore.scopedPull.count()) throw Error('vault-recovery-pending');
+      const current = await this.fileStore.passwordVault.get('local');
+      if ((current?.revision ?? null) !== expectedRevision) throw Error('vault-stale');
+      const record: VaultRecord = { id: 'local', revision: crypto.randomUUID(), bytes, updatedAt: new Date().toISOString() };
+      await this.fileStore.passwordVault.put(record);
+      return checkedPasswordVaultRecord(record);
+    });
+  }
 
   async getPendingCategoryEdit(kind: AssetKind): Promise<PendingCategoryEdit | null> {
     return pendingCategoryEdit(this.fileStore, kind);
@@ -1355,7 +1383,8 @@ export class LocalRepository {
     await this.retryReviewedExpenseConfirmations();
     await this.retryAllCategoryEdits();
     if (await this.pendingArchiveMerge()) throw Error('archive-merge-pending');
-    const { rows, intakeReview } = await inspectArchive(bytes);
+    const { rows, intakeReview, passwordVault } = await inspectArchive(bytes);
+    await assertArchiveMergePasswordVault(this.fileStore, passwordVault);
     const target = await this.allRecords();
     const byId = new Map(target.map(row => [row.id, row]));
     const targetReview = parseReviewedCandidates(await this.fileStore.intakeReview.toArray());
@@ -1392,9 +1421,11 @@ export class LocalRepository {
         await this.fileStore.scopedOutbox.count() || await this.fileStore.scopedAttachmentUploads.count()) {
         throw Error('archive-merge-recovery-pending');
       }
-      const { rows, intakeReview, manifest, entries } = await inspectArchive(bytes);
+      const { rows, intakeReview, manifest, entries, passwordVault } = await inspectArchive(bytes);
+      await assertArchiveMergePasswordVault(this.fileStore, passwordVault);
       const archiveHash = await sha(bytes);
       const target = await this.allRecords();
+      const targetVaultRevision = (await this.fileStore.passwordVault.get('local'))?.revision ?? null;
       if (await targetFingerprint(target, this.fileStore) !== expectedFingerprint) throw Error('archive-merge-stale');
       const byId = new Map(target.map(row => [row.id, row]));
       const targetReview = parseReviewedCandidates(await this.fileStore.intakeReview.toArray());
@@ -1466,7 +1497,7 @@ export class LocalRepository {
         targetFingerprint: expectedFingerprint, changes, intakeReviewChanges, addedFileIds, insertedFileIds: [] };
       await this.fileStore.transaction('rw', [this.fileStore.archiveMerge, this.fileStore.scopedOutbox,
         this.fileStore.scopedPull, this.fileStore.scopedAttachmentUploads, this.fileStore.intakeReview,
-        this.fileStore.importJournal, this.fileStore.journal, this.fileStore.categoryEditJournal], async () => {
+        this.fileStore.importJournal, this.fileStore.journal, this.fileStore.categoryEditJournal, this.fileStore.passwordVault], async () => {
           if (await this.fileStore.categoryEditJournal.count()) throw Error('category-edit-pending');
           if (await this.fileStore.archiveMerge.get('active')) throw Error('archive-merge-pending');
           if (await this.fileStore.importJournal.count() || await this.fileStore.journal.count()) throw Error('archive-merge-recovery-pending');
@@ -1474,6 +1505,8 @@ export class LocalRepository {
             await this.fileStore.scopedAttachmentUploads.count()) throw Error('archive-merge-recovery-pending');
           if (reviewFingerprint(parseReviewedCandidates(await this.fileStore.intakeReview.toArray())) !==
             reviewFingerprint(targetReview)) throw Error('archive-merge-stale');
+          await assertArchiveMergePasswordVault(this.fileStore, passwordVault);
+          if (((await this.fileStore.passwordVault.get('local'))?.revision ?? null) !== targetVaultRevision) throw Error('archive-merge-stale');
           await this.fileStore.archiveMerge.add(journal);
         });
       try {
@@ -1543,6 +1576,7 @@ export class LocalRepository {
       await this.settleReviewedExpenseConfirmations();
       await this.settleCategoryEdits();
       const rows = await this.allRecords();
+      const passwordVault = await this.readPasswordVault();
       const intakeReview = parseReviewedCandidates(await this.fileStore.intakeReview.toArray());
       assertReviewedAssetReferences(intakeReview, assetIdsIn(rows), historyByIdIn(rows));
       const blobs: StoredFile[] = [];
@@ -1554,6 +1588,7 @@ export class LocalRepository {
       validateReferences(rows, new Set(blobs.map(blob => blob.id)));
       const entries: Record<string, Uint8Array> = { 'records.json': strToU8(JSON.stringify(rows)),
         'intake-review.json': strToU8(JSON.stringify(intakeReview)) };
+      if (passwordVault) entries['password-vault.kdbx'] = passwordVault.bytes;
       const attachments: AttachmentManifest[] = [];
       for (const item of blobs) {
         const bytes = new Uint8Array(await item.blob.arrayBuffer());
@@ -1562,8 +1597,9 @@ export class LocalRepository {
       }
       // A second tab may change records while attachments are read. Fail the
       // export instead of returning a mixed record/image snapshot.
-      await this.fileStore.transaction('r', this.fileStore.intakeReview, this.fileStore.importJournal,
-        this.fileStore.categoryEditJournal, async () => {
+      await this.fileStore.transaction('r', [this.fileStore.intakeReview, this.fileStore.importJournal,
+        this.fileStore.categoryEditJournal, this.fileStore.passwordVault, this.fileStore.journal], async () => {
+        if ((await this.fileStore.journal.toArray()).some(entry => entry.passwordVault !== undefined)) throw Error('restore-recovery-pending');
         if (await this.fileStore.categoryEditJournal.count()) throw Error('category-edit-pending');
         if ((await this.fileStore.importJournal.toArray()).some(entry => entry.reviewedExpense)) throw Error('review-expense-pending');
         const actual = await Dexie.waitFor(Dexie.ignoreTransaction(() => this.allRecords()));
@@ -1571,6 +1607,11 @@ export class LocalRepository {
           JSON.stringify([...rows].sort((a, b) => a.id.localeCompare(b.id)))) throw Error('archive-export-stale');
         if (reviewFingerprint(parseReviewedCandidates(await this.fileStore.intakeReview.toArray())) !==
           reviewFingerprint(intakeReview)) throw Error('archive-export-stale');
+        const actualVault = await this.fileStore.passwordVault.get('local');
+        if ((actualVault?.revision ?? null) !== (passwordVault?.revision ?? null) ||
+          !!actualVault !== !!passwordVault || actualVault && passwordVault && !sameBytes(actualVault.bytes, passwordVault.bytes)) {
+          throw Error('archive-export-stale');
+        }
       });
       for (const item of blobs) {
         const current = await this.fileStore.blobs.get(item.id);
@@ -1583,6 +1624,8 @@ export class LocalRepository {
         format: 'keepany-backup', version: 1, createdAt: new Date().toISOString(),
         recordCount: rows.length, recordsHash: await sha(entries['records.json']), attachments,
         intakeReviewCount: intakeReview.length, intakeReviewHash: await sha(entries['intake-review.json']),
+        ...(passwordVault ? { passwordVault: { revision: passwordVault.revision, updatedAt: passwordVault.updatedAt,
+          size: passwordVault.bytes.length, sha256: await sha(passwordVault.bytes) } } : {}),
         ...(sourceBinding ? { sourceBinding } : {}),
       }));
       if (Object.values(entries).reduce((size, entry) => size + entry.length, 0) > 300 * 1024 * 1024) throw Error('archive-size');
@@ -1601,8 +1644,9 @@ export class LocalRepository {
       await this.settleCategoryEdits();
       if (await this.pendingArchiveMerge()) throw Error('archive-merge-pending');
       if (await this.fileStore.journal.count()) throw Error('restore-recovery-pending');
-      const { rows, intakeReview, manifest, entries } = await inspectArchive(bytes);
+      const { rows, intakeReview, manifest, entries, passwordVault } = await inspectArchive(bytes);
       await assertRestoreIdentity(this.fileStore, manifest.sourceBinding);
+      assertPasswordVaultRestoreConflict(await this.readPasswordVault(), passwordVault);
       // Validate all conflicts before writing attachments or a journal.
       for (const row of rows) {
         const current = await this.db.records.findOne(row.id).exec();
@@ -1621,12 +1665,13 @@ export class LocalRepository {
         this.fileStore.categoryEditJournal, this.fileStore.datasetBinding, this.fileStore.scopedMeta,
         this.fileStore.scopedBase, this.fileStore.scopedOutbox, this.fileStore.scopedPull,
         this.fileStore.scopedAttachmentUploads, this.fileStore.syncBase, this.fileStore.syncMeta,
-        this.fileStore.pullJournal], async () => {
+        this.fileStore.pullJournal, this.fileStore.passwordVault], async () => {
         if (await this.fileStore.categoryEditJournal.count()) throw Error('category-edit-pending');
         if ((await this.fileStore.importJournal.toArray()).some(entry => entry.reviewedExpense)) throw Error('review-expense-pending');
         if (await this.fileStore.archiveMerge.count()) throw Error('archive-merge-pending');
         if (await this.fileStore.journal.count()) throw Error('restore-recovery-pending');
         await assertRestoreIdentity(this.fileStore, manifest.sourceBinding);
+        assertPasswordVaultRestoreConflict(await this.fileStore.passwordVault.get('local') ?? null, passwordVault);
         // Preserve provenance together with the files and durable restore plan.
         // A clean-browser restore must not silently become a transfer to another owner.
         if (manifest.sourceBinding) await claimDatasetBindingInTransaction(this.fileStore, manifest.sourceBinding);
@@ -1647,6 +1692,7 @@ export class LocalRepository {
           }
         }
         await this.fileStore.journal.put({ id: journalId, rows, intakeReview,
+          ...(passwordVault ? { passwordVault } : {}),
           ...(manifest.sourceBinding ? { sourceBinding: manifest.sourceBinding } : {}) });
     });
     try {
@@ -1708,14 +1754,16 @@ export class LocalRepository {
   }
 }
 
-interface RestoreDatasetProof { binding: DatasetBinding | null; scopes: string[]; legacy: boolean }
+interface RestoreDatasetProof { binding: DatasetBinding | null; scopes: string[]; legacy: boolean;
+  passwordVault?: { revision: string; sha256: string } | null }
 interface RestoreRecoverySnapshot {
   proof: RestoreDatasetProof; rows: RecordRow[]; candidates: ReviewedCandidate[]; files: Map<string, StoredFile>;
+  passwordVault: VaultRecord | null;
 }
 function restoreRecoveryTables(store: FileStore) {
   return [store.journal, store.blobs, store.intakeReview, store.categoryEditJournal, store.importJournal,
     store.archiveMerge, store.renewalJournal, store.subscriptionSaveJournal, store.datasetBinding, store.scopedMeta, store.scopedBase, store.scopedOutbox,
-    store.scopedPull, store.scopedAttachmentUploads, store.syncBase, store.syncMeta, store.pullJournal];
+    store.scopedPull, store.scopedAttachmentUploads, store.syncBase, store.syncMeta, store.pullJournal, store.passwordVault];
 }
 async function restoreDatasetProof(store: FileStore): Promise<RestoreDatasetProof> {
   const [stored, meta, base, outbox, pulls, uploads, oldBase, oldMeta, oldPull] = await Promise.all([
@@ -1748,11 +1796,14 @@ async function storedRestoreRows(db: RxDatabase): Promise<RecordRow[]> {
 async function restoreRecoverySnapshot(db: RxDatabase, store: FileStore): Promise<RestoreRecoverySnapshot> {
   // FileStore reads stay in the owning transaction. Only RxDB work escapes it;
   // reading a locked FileStore table from ignoreTransaction would self-deadlock.
-  const [proof, candidates, files] = await Promise.all([
-    restoreDatasetProof(store), store.intakeReview.toArray(), store.blobs.toArray(),
+  const [proof, candidates, files, storedVault] = await Promise.all([
+    restoreDatasetProof(store), store.intakeReview.toArray(), store.blobs.toArray(), store.passwordVault.get('local'),
   ]);
+  const passwordVault = storedVault ? checkedPasswordVaultRecord(storedVault) : null;
+  proof.passwordVault = passwordVault ? { revision: passwordVault.revision,
+    sha256: await Dexie.waitFor(sha(passwordVault.bytes)) } : null;
   const rows = await Dexie.waitFor(Dexie.ignoreTransaction(() => storedRestoreRows(db)));
-  return { proof, rows, candidates, files: new Map(files.map(file => [file.id, file])) };
+  return { proof, rows, candidates, files: new Map(files.map(file => [file.id, file])), passwordVault };
 }
 function checkedRestoreJournal(journal: Journal): Journal {
   try {
@@ -1764,15 +1815,23 @@ function checkedRestoreJournal(journal: Journal): Journal {
       if (ids.has(row.id)) throw Error('invalid');
       ids.add(row.id);
     }
-    return { ...journal, intakeReview: parseReviewedCandidates(journal.intakeReview ?? []) };
+    return { ...journal, intakeReview: parseReviewedCandidates(journal.intakeReview ?? []),
+      ...(journal.passwordVault !== undefined ? { passwordVault: checkedPasswordVaultRecord(journal.passwordVault) } : {}) };
   } catch { throw Error('restore-recovery-invalid'); }
 }
 async function restoreRecoveryToken(db: RxDatabase, store: FileStore, journal: Journal,
   proof: RestoreDatasetProof): Promise<RestoreRecoveryToken> {
   const scopes = [...new Set([...proof.scopes, ...(proof.binding ? [proof.binding.scope] : [])])].sort();
+  // Hash the encrypted bytes directly rather than expanding a 16 MiB KDBX
+  // into a much larger JSON numeric array just to build an opaque token.
+  const tokenPlan = journal.passwordVault?.bytes instanceof Uint8Array ? { ...journal,
+    passwordVault: { id: journal.passwordVault.id, revision: journal.passwordVault.revision,
+      updatedAt: journal.passwordVault.updatedAt, size: journal.passwordVault.bytes.length,
+      sha256: await Dexie.waitFor(sha(journal.passwordVault.bytes)) } } : journal;
   const [planHash, datasetProof] = await Dexie.waitFor(Promise.all([
-    sha(strToU8(JSON.stringify(journal))),
-    sha(strToU8(JSON.stringify({ db: db.name, store: store.name, binding: proof.binding, scopes, legacy: proof.legacy }))),
+    sha(strToU8(JSON.stringify(tokenPlan))),
+    sha(strToU8(JSON.stringify({ db: db.name, store: store.name, binding: proof.binding, scopes,
+      legacy: proof.legacy, passwordVault: proof.passwordVault ?? null }))),
   ]));
   return { journalId: journal.id, planHash, datasetProof };
 }
@@ -1815,6 +1874,7 @@ async function assertRestoreRecoveryFilesReadable(rows: RecordRow[], files: Map<
   }
 }
 function plannedRestoreSnapshot(journal: Journal, snapshot: RestoreRecoverySnapshot) {
+  assertPasswordVaultRestoreConflict(snapshot.passwordVault, journal.passwordVault ?? null);
   const rows = new Map(snapshot.rows.map(row => [row.id, row]));
   let parsed: ReviewedCandidate[];
   try { parsed = parseReviewedCandidates(snapshot.candidates); }
@@ -1897,6 +1957,7 @@ async function replayJournal(db: RxDatabase, store: FileStore, id: string, expec
     }));
     assertRestoreRecoveryReferences(restored, planned.candidates, snapshot.files);
     for (const candidate of journal.intakeReview ?? []) if (!(await store.intakeReview.get(candidate.id))) await store.intakeReview.add(candidate);
+    if (journal.passwordVault && !snapshot.passwordVault) await store.passwordVault.add(checkedPasswordVaultRecord(journal.passwordVault));
     await store.journal.delete(id);
   });
 }
@@ -1927,8 +1988,23 @@ async function targetFingerprint(rows: RecordRow[], store: FileStore): Promise<s
   const intakeReview = parseReviewedCandidates(await store.intakeReview.toArray());
   const signatures = await Promise.all(files.map(async file => ({ id: file.id, name: file.name,
     type: file.blob.type, sha256: await sha(new Uint8Array(await file.blob.arrayBuffer())) })));
+  const passwordVault = await store.passwordVault.get('local');
   return sha(strToU8(JSON.stringify({ rows: [...rows].sort((a, b) => a.id.localeCompare(b.id)),
-    files: signatures.sort((a, b) => a.id.localeCompare(b.id)), intakeReview: reviewFingerprint(intakeReview) })));
+    files: signatures.sort((a, b) => a.id.localeCompare(b.id)), intakeReview: reviewFingerprint(intakeReview),
+    passwordVault: passwordVault ? { revision: passwordVault.revision, sha256: await sha(checkedPasswordVaultRecord(passwordVault).bytes) } : null })));
+}
+
+function assertPasswordVaultRestoreConflict(current: VaultRecord | null, incoming: VaultRecord | null): void {
+  if (current) checkedPasswordVaultRecord(current);
+  if (incoming) checkedPasswordVaultRecord(incoming);
+  if (current && incoming && !sameBytes(current.bytes, incoming.bytes)) throw Error('restore-vault-conflict');
+}
+async function assertArchiveMergePasswordVault(store: FileStore, incoming: VaultRecord | null): Promise<void> {
+  const current = await store.passwordVault.get('local') ?? null;
+  assertPasswordVaultRestoreConflict(current, incoming);
+  // A merge only changes ordinary assets. Moving a vault requires a clean
+  // restore with its own durable checkpoint; otherwise it could be omitted.
+  if (incoming && !current) throw Error('restore-vault-conflict');
 }
 
 function sameMergeReview(left: ReviewedCandidate | null, right: ReviewedCandidate | null): boolean {
@@ -2453,6 +2529,10 @@ export async function putFile(file: File) { return (await defaultRepository()).p
 export async function fileUrl(id: string) { return (await defaultRepository()).fileUrl(id); }
 export async function cleanupUnreferencedFile(id: string) { return (await defaultRepository()).cleanupUnreferencedFile(id); }
 export async function collectOrphanFiles() { return (await defaultRepository()).collectOrphanFiles(); }
+export async function readPasswordVault() { return (await defaultRepository()).readPasswordVault(); }
+export async function savePasswordVault(bytes: Uint8Array, expectedRevision: string | null) {
+  return (await defaultRepository()).savePasswordVault(bytes, expectedRevision);
+}
 export async function exportArchive() { return (await defaultRepository()).exportArchive(); }
 export async function restoreArchive(bytes: Uint8Array) { return (await defaultRepository()).restoreArchive(bytes); }
 export async function getPendingRestoreRecoveries() { return (await defaultRepository()).getPendingRestoreRecoveries(); }
@@ -2480,6 +2560,8 @@ const manifestSchema = z.object({
   recordsHash: z.string().regex(/^[0-9a-f]{64}$/), attachments: z.array(attachmentSchema).max(10000),
   intakeReviewCount: z.number().int().nonnegative().max(100000).optional(),
   intakeReviewHash: z.string().regex(/^[0-9a-f]{64}$/).optional(),
+  passwordVault: z.object({ revision: z.uuid(), updatedAt: z.string().datetime(),
+    size: z.number().int().min(12).max(PASSWORD_VAULT_LIMIT), sha256: z.string().regex(/^[0-9a-f]{64}$/) }).optional(),
   sourceBinding: z.object({ endpoint: z.string(), accountId: z.string(), workspaceId: z.string(), scope: z.string() }).optional(),
 });
 async function sha(bytes: Uint8Array): Promise<string> {
@@ -2508,6 +2590,14 @@ export async function inspectArchive(bytes: Uint8Array) {
     rows.push({ id: row.id, type: row.type, payload: JSON.stringify(parsed), updatedAt: row.updatedAt });
   }
   const allowed = new Set(['manifest.json', 'records.json']);
+  let passwordVault: VaultRecord | null = null;
+  if (manifest.passwordVault) {
+    const content = entries['password-vault.kdbx'];
+    if (!content || content.length !== manifest.passwordVault.size || await sha(content) !== manifest.passwordVault.sha256) throw Error('archive-hash');
+    allowed.add('password-vault.kdbx');
+    passwordVault = checkedPasswordVaultRecord({ id: 'local', revision: manifest.passwordVault.revision,
+      updatedAt: manifest.passwordVault.updatedAt, bytes: content });
+  }
   let intakeReview: ReviewedCandidate[] = [];
   if (manifest.intakeReviewCount !== undefined || manifest.intakeReviewHash !== undefined) {
     if (manifest.intakeReviewCount === undefined || !manifest.intakeReviewHash || !entries['intake-review.json']) {
@@ -2530,7 +2620,7 @@ export async function inspectArchive(bytes: Uint8Array) {
   }
   if (Object.keys(entries).some(path => !allowed.has(path))) throw Error('archive-entry');
   validateReferences(rows, attachmentIds);
-  return { rows, intakeReview, manifest, entries };
+  return { rows, intakeReview, manifest, entries, passwordVault };
 }
 
 function validateReferences(rows: RecordRow[], attachmentIds: Set<string>): void {
