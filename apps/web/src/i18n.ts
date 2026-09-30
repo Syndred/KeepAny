@@ -515,6 +515,8 @@ const copy: Record<string, [string, string]> = {
 	],
 	impactCompletedHistory: ["完成记录", "Completion history"],
 	remindLater: ["稍后提醒", "Remind later"],
+	taskPostponeDay: ["稍后 1 天", "Postpone 1 day"],
+	taskRelatedMissing: ["关联资料不可用", "Related record unavailable"],
 	viewTask: ["查看待办", "View task"],
 	taskFilter: ["筛选待办", "Filter tasks"],
 	balance: [
