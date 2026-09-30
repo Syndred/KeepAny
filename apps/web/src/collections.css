@@ -52,7 +52,7 @@
 .collections-nav .sortable-nav-link:hover { text-decoration: underline; }
 .collections-nav .nav-link-placeholder { color: var(--muted); }
 .collections-nav .nav-order-actions { grid-area: actions; display: grid; }
-.collections-nav .nav-order-actions button { display: grid; place-items: center; width: 26px; height: 20px; padding: 0; border: 0; border-radius: 5px; background: transparent; color: var(--muted); }
+.collections-nav .nav-order-actions button { display: grid; place-items: center; width: 26px; height: var(--space-6); padding: 0; border: 0; border-radius: 5px; background: transparent; color: var(--muted); }
 .collections-nav .nav-order-actions button:hover:not(:disabled) { background: var(--yellow-soft); color: var(--ink); }
 .collections-nav .nav-order-actions button:disabled { opacity: .35; }
 .collections-nav-error { margin: 8px 14px 14px; }

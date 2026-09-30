@@ -19,7 +19,7 @@
 .tasks-plan-facts dt { color: var(--muted); }
 .tasks-plan-facts dd { min-width: 0; margin: 0; font-weight: 700; overflow-wrap: anywhere; }
 .tasks-plan-note { margin: 0; padding: 11px 14px; border-top: 1px solid var(--line-soft); font-size: 12px; line-height: 1.5; overflow-wrap: anywhere; }
-.tasks-plan-jump { display: inline-block; margin: 12px 14px 14px; padding: 0; border: 0; background: transparent; color: var(--ink); font: inherit; font-size: 12px; font-weight: 700; text-decoration: underline; cursor: pointer; }
+.tasks-plan-jump { display: inline-block; min-height: var(--space-6); margin: 12px 14px 14px; padding: var(--space-1) 0; border: 0; background: transparent; color: var(--ink); font: inherit; font-size: 12px; font-weight: 700; text-decoration: underline; cursor: pointer; }
 @media (max-width: 620px) {
 	.tasks-columns { grid-template-columns: minmax(0, 1fr); }
 	.tasks-toolbar-actions { width: 100%; }
