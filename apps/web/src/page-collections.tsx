@@ -59,7 +59,7 @@ export function CollectionsPage() {
 	const visibleAssetKinds = kinds.filter((kind) => !sidebarHidden.includes(kind)).length;
 	const sidebarItems: SortableNavItem[] = sidebarOrder.map((id) => ({
 		id,
-		to: id === "overview" ? "/" : id === "tasks" ? "/tasks" : `/assets/${id}`,
+		to: id === "overview" ? "/" : id === "tasks" ? "/tasks" : id === "subscription" ? "/finance" : `/assets/${id}`,
 		label: t(id === "overview" ? "overview" : id === "tasks" ? "tasks" : id),
 		icon: id === "overview" ? LayoutDashboard : id === "tasks" ? Bell : icons[id as AssetKind],
 		visible: !sidebarHidden.includes(id),
