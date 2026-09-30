@@ -27,6 +27,7 @@ export default defineConfig({
 		"vault-reference-release.spec.ts",
 		"themed-select.spec.ts",
 		"spacing-consistency.spec.ts",
+		"task-theme-release.spec.ts",
 		"finance-ledger-release.spec.ts",
 		"collections-ledger-release.spec.ts",
 		"restore-self-service-release.spec.ts",
