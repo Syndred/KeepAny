@@ -1,0 +1,570 @@
+{
+  "date": "2026-09-30",
+  "packageCommit": "f477e9e7216f83c369741a6f0b89c1e13b4517f7",
+  "package": {
+    "entry": "index-oiQgNGNG.js",
+    "indexHtmlSha256": "6b4c7d30744410e3e59098b1d97c5675cc65d4c88842d9e449cc0ea45d97a0ea",
+    "entrySha256": "d5a3a6c3e701a6d7baf6c9a6b8d656b28da692160de442158521c4bb890e507a",
+    "currentFiles": 76,
+    "retainedPwaFiles": 490
+  },
+  "unit": {
+    "files": 65,
+    "passed": 486,
+    "failed": 0,
+    "skipped": 0
+  },
+  "source": {
+    "startTime": "2026-09-30T09:33:06.511Z",
+    "duration": 851745.256,
+    "expected": 367,
+    "skipped": 19,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "release": {
+    "startTime": "2026-09-30T10:13:44.241Z",
+    "duration": 179789.585,
+    "expected": 55,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "syncRelease": {
+    "startTime": "2026-09-30T10:16:25.026Z",
+    "duration": 16096.220000000001,
+    "expected": 2,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "visualRegressions": {
+    "startTime": "2026-09-30T09:26:01.643Z",
+    "duration": 34901.641,
+    "expected": 25,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "sourceConditionalSkips": [
+    {
+      "file": "binding-dialog-matrix.spec.ts",
+      "title": "en local binding removal dialog at 360px",
+      "annotations": [
+        {
+          "type": "skip",
+          "description": "Configure isolated issuer and bridge origins",
+          "location": {
+            "file": "/Users/syndred/Desktop/projects/KeepAny/tests/e2e/binding-dialog-matrix.spec.ts",
+            "line": 71,
+            "column": 9
+          }
+        }
+      ]
+    },
+    {
+      "file": "binding-dialog-matrix.spec.ts",
+      "title": "en local binding removal dialog at 390px",
+      "annotations": [
+        {
+          "type": "skip",
+          "description": "Configure isolated issuer and bridge origins",
+          "location": {
+            "file": "/Users/syndred/Desktop/projects/KeepAny/tests/e2e/binding-dialog-matrix.spec.ts",
+            "line": 71,
+            "column": 9
+          }
+        }
+      ]
+    },
+    {
+      "file": "binding-dialog-matrix.spec.ts",
+      "title": "en local binding removal dialog at 768px",
+      "annotations": [
+        {
+          "type": "skip",
+          "description": "Configure isolated issuer and bridge origins",
+          "location": {
+            "file": "/Users/syndred/Desktop/projects/KeepAny/tests/e2e/binding-dialog-matrix.spec.ts",
+            "line": 71,
+            "column": 9
+          }
+        }
+      ]
+    },
+    {
+      "file": "binding-dialog-matrix.spec.ts",
+      "title": "en local binding removal dialog at 1280px",
+      "annotations": [
+        {
+          "type": "skip",
+          "description": "Configure isolated issuer and bridge origins",
+          "location": {
+            "file": "/Users/syndred/Desktop/projects/KeepAny/tests/e2e/binding-dialog-matrix.spec.ts",
+            "line": 71,
+            "column": 9
+          }
+        }
+      ]
+    },
+    {
+      "file": "binding-dialog-matrix.spec.ts",
+      "title": "en local binding removal dialog at 1440px",
+      "annotations": [
+        {
+          "type": "skip",
+          "description": "Configure isolated issuer and bridge origins",
+          "location": {
+            "file": "/Users/syndred/Desktop/projects/KeepAny/tests/e2e/binding-dialog-matrix.spec.ts",
+            "line": 71,
+            "column": 9
+          }
+        }
+      ]
+    },
+    {
+      "file": "binding-dialog-matrix.spec.ts",
+      "title": "zh-CN local binding removal dialog at 360px",
+      "annotations": [
+        {
+          "type": "skip",
+          "description": "Configure isolated issuer and bridge origins",
+          "location": {
+            "file": "/Users/syndred/Desktop/projects/KeepAny/tests/e2e/binding-dialog-matrix.spec.ts",
+            "line": 71,
+            "column": 9
+          }
+        }
+      ]
+    },
+    {
+      "file": "binding-dialog-matrix.spec.ts",
+      "title": "zh-CN local binding removal dialog at 390px",
+      "annotations": [
+        {
+          "type": "skip",
+          "description": "Configure isolated issuer and bridge origins",
+          "location": {
+            "file": "/Users/syndred/Desktop/projects/KeepAny/tests/e2e/binding-dialog-matrix.spec.ts",
+            "line": 71,
+            "column": 9
+          }
+        }
+      ]
+    },
+    {
+      "file": "binding-dialog-matrix.spec.ts",
+      "title": "zh-CN local binding removal dialog at 768px",
+      "annotations": [
+        {
+          "type": "skip",
+          "description": "Configure isolated issuer and bridge origins",
+          "location": {
+            "file": "/Users/syndred/Desktop/projects/KeepAny/tests/e2e/binding-dialog-matrix.spec.ts",
+            "line": 71,
+            "column": 9
+          }
+        }
+      ]
+    },
+    {
+      "file": "binding-dialog-matrix.spec.ts",
+      "title": "zh-CN local binding removal dialog at 1280px",
+      "annotations": [
+        {
+          "type": "skip",
+          "description": "Configure isolated issuer and bridge origins",
+          "location": {
+            "file": "/Users/syndred/Desktop/projects/KeepAny/tests/e2e/binding-dialog-matrix.spec.ts",
+            "line": 71,
+            "column": 9
+          }
+        }
+      ]
+    },
+    {
+      "file": "binding-dialog-matrix.spec.ts",
+      "title": "zh-CN local binding removal dialog at 1440px",
+      "annotations": [
+        {
+          "type": "skip",
+          "description": "Configure isolated issuer and bridge origins",
+          "location": {
+            "file": "/Users/syndred/Desktop/projects/KeepAny/tests/e2e/binding-dialog-matrix.spec.ts",
+            "line": 71,
+            "column": 9
+          }
+        }
+      ]
+    },
+    {
+      "file": "binding-dialog-matrix.spec.ts",
+      "title": "older state response cannot revive a binding removed in another tab",
+      "annotations": [
+        {
+          "type": "skip",
+          "description": "Configure isolated issuer and bridge origins",
+          "location": {
+            "file": "/Users/syndred/Desktop/projects/KeepAny/tests/e2e/binding-dialog-matrix.spec.ts",
+            "line": 326,
+            "column": 7
+          }
+        }
+      ]
+    },
+    {
+      "file": "binding.spec.ts",
+      "title": "account binding approval survives reload and remote revoke clears local credential",
+      "annotations": [
+        {
+          "type": "skip",
+          "description": "Run with the fixed local binding fixture origins",
+          "location": {
+            "file": "/Users/syndred/Desktop/projects/KeepAny/tests/e2e/binding.spec.ts",
+            "line": 15,
+            "column": 7
+          }
+        }
+      ]
+    },
+    {
+      "file": "confirm-dialogs.spec.ts",
+      "title": "local binding removal dialog stays local and fits both languages",
+      "annotations": [
+        {
+          "type": "skip",
+          "description": "Run with the fixed local binding fixture origins",
+          "location": {
+            "file": "/Users/syndred/Desktop/projects/KeepAny/tests/e2e/confirm-dialogs.spec.ts",
+            "line": 91,
+            "column": 7
+          }
+        }
+      ]
+    },
+    {
+      "file": "impact-checklist.spec.ts",
+      "title": "built PWA keeps the account checklist editable across offline reloads",
+      "annotations": [
+        {
+          "type": "skip",
+          "description": "Run against a built PWA preview",
+          "location": {
+            "file": "/Users/syndred/Desktop/projects/KeepAny/tests/e2e/impact-checklist.spec.ts",
+            "line": 399,
+            "column": 7
+          }
+        }
+      ]
+    },
+    {
+      "file": "production-offline.spec.ts",
+      "title": "delivered installation manifest and icons remain available offline",
+      "annotations": [
+        {
+          "type": "skip",
+          "description": "Run against the built PWA preview with KEEPANY_PRODUCTION_OFFLINE=1",
+          "location": {
+            "file": "/Users/syndred/Desktop/projects/KeepAny/tests/e2e/production-offline.spec.ts",
+            "line": 4,
+            "column": 6
+          }
+        }
+      ]
+    },
+    {
+      "file": "production-offline.spec.ts",
+      "title": "built PWA reopens offline, edits local data and downloads a backup",
+      "annotations": [
+        {
+          "type": "skip",
+          "description": "Run against the built PWA preview with KEEPANY_PRODUCTION_OFFLINE=1",
+          "location": {
+            "file": "/Users/syndred/Desktop/projects/KeepAny/tests/e2e/production-offline.spec.ts",
+            "line": 4,
+            "column": 6
+          }
+        }
+      ]
+    },
+    {
+      "file": "pwa-upgrade.spec.ts",
+      "title": "old controlled tab upgrades on the same origin without losing its project, image or draft",
+      "annotations": [
+        {
+          "type": "skip",
+          "description": "Run the fixed 8f9a1b5 package against the newly built PWA with KEEPANY_PWA_UPGRADE=1",
+          "location": {
+            "file": "/Users/syndred/Desktop/projects/KeepAny/tests/e2e/pwa-upgrade.spec.ts",
+            "line": 9,
+            "column": 6
+          }
+        }
+      ]
+    },
+    {
+      "file": "storage-quota-recovery.spec.ts",
+      "title": "zh-CN 390 actual Chromium quota failure preserves the project draft and retries after quota recovery",
+      "annotations": [
+        {
+          "type": "skip",
+          "description": "Opt-in: Chromium may confirm an origin quota override without enforcing it on existing application databases; recovery must remain unverified unless a native QuotaExceededError occurs",
+          "location": {
+            "file": "/Users/syndred/Desktop/projects/KeepAny/tests/e2e/storage-quota-recovery.spec.ts",
+            "line": 15,
+            "column": 6
+          }
+        }
+      ]
+    },
+    {
+      "file": "storage-quota-recovery.spec.ts",
+      "title": "en-US 390 actual Chromium quota failure preserves the project draft and retries after quota recovery",
+      "annotations": [
+        {
+          "type": "skip",
+          "description": "Opt-in: Chromium may confirm an origin quota override without enforcing it on existing application databases; recovery must remain unverified unless a native QuotaExceededError occurs",
+          "location": {
+            "file": "/Users/syndred/Desktop/projects/KeepAny/tests/e2e/storage-quota-recovery.spec.ts",
+            "line": 15,
+            "column": 6
+          }
+        }
+      ]
+    }
+  ],
+  "screenshots": [
+    {
+      "file": "fixed-restore-pending-zh-CN-390.png",
+      "original": "/private/tmp/keepany-takeover-release-legacy-final/results/restore-self-service-relea-86310-d-record-write-interruption/restore-pending-zh-CN-390.png",
+      "sha256": "90e51cbe2e2c21b800579ac1aa15601e18064068702ea0a494662752c015339c"
+    },
+    {
+      "file": "fixed-restore-complete-zh-CN-390.png",
+      "original": "/private/tmp/keepany-takeover-release-legacy-final/results/restore-self-service-relea-86310-d-record-write-interruption/restore-complete-zh-CN-390.png",
+      "sha256": "83cf0fefbe7d7425e85298c614821d711c8e1a202fd372ca0fed3f56421bbdd5"
+    },
+    {
+      "file": "fixed-restore-pending-en-US-1280.png",
+      "original": "/private/tmp/keepany-takeover-release-legacy-final/results/restore-self-service-relea-51eb3-d-record-write-interruption/restore-pending-en-US-1280.png",
+      "sha256": "3bd136cc1971010c2486b4934c87b30464a09eb4896a2b7eaf34131bb44f4ec7"
+    },
+    {
+      "file": "fixed-restore-kept-en-US-1280.png",
+      "original": "/private/tmp/keepany-takeover-release-legacy-final/results/restore-self-service-relea-51eb3-d-record-write-interruption/restore-kept-en-US-1280.png",
+      "sha256": "80ca33a2034cea7658e5a3333331bce4793ae7fc7a48738e3cbfba254041daa0"
+    },
+    {
+      "file": "fixed-restore-complete-en-US-1280.png",
+      "original": "/private/tmp/keepany-takeover-release-legacy-final/results/restore-self-service-relea-51eb3-d-record-write-interruption/restore-complete-en-US-1280.png",
+      "sha256": "1bffb18b1df7206c37f5fa8891e7f804fc20ec26eb55ee99a9fdbf1febae00e0"
+    },
+    {
+      "file": "fixed-select-zh-390.png",
+      "original": "/private/tmp/keepany-takeover-release-legacy-final/results/themed-select-zh-CN-390-th-6bec5-ired-fields-and-long-labels/select-zh-390.png",
+      "sha256": "5dcd4a0e4ad625c40f367d8f7595a2b94ca3b11f164a4dcea18935b17d9302dd"
+    },
+    {
+      "file": "fixed-select-en-1280.png",
+      "original": "/private/tmp/keepany-takeover-release-legacy-final/results/themed-select-en-US-1280-t-79e09-ired-fields-and-long-labels/select-en-1280.png",
+      "sha256": "f951e71f3dc7994b1c8feb7b91ff591774ac436dbd79fe2ac6a1d3b02a5fb9c7"
+    },
+    {
+      "file": "fixed-vault-reference-source-zh-CN-390.png",
+      "original": "/private/tmp/keepany-takeover-release-legacy-final/results/vault-reference-release-zh-f49b3-stores-through-the-fixed-UI/vault-reference-source-zh-CN-390.png",
+      "sha256": "b7a52639647ad007cf44e237f5bdb562160cba9778270b3ea9f4828a383cc6fc"
+    },
+    {
+      "file": "fixed-vault-reference-source-en-US-1280.png",
+      "original": "/private/tmp/keepany-takeover-release-legacy-final/results/vault-reference-release-en-62fde-stores-through-the-fixed-UI/vault-reference-source-en-US-1280.png",
+      "sha256": "54b2972aec9a9e9a012bcfc06e60414e45f9e634f2a10c05c4efb37ad207bf34"
+    },
+    {
+      "file": "fixed-finance-ledger-source-zh-CN-390.png",
+      "original": "/private/tmp/keepany-takeover-release-legacy-final/results/finance-ledger-release-zh--12af9-UI-backup-and-clean-restore/finance-ledger-source-zh-CN-390.png",
+      "sha256": "110d16ea63ffc8371944502c5f5a6165fd5e63ae35e0fecbeefa5fd837f92f8f"
+    },
+    {
+      "file": "fixed-finance-ledger-source-en-US-1280.png",
+      "original": "/private/tmp/keepany-takeover-release-legacy-final/results/finance-ledger-release-en--bc921-UI-backup-and-clean-restore/finance-ledger-source-en-US-1280.png",
+      "sha256": "214650d109f181650bb15ee965b50b2adf5d643b1ab67535c3049b1f245010cd"
+    },
+    {
+      "file": "fixed-collection-five-types-zh-CN-390.png",
+      "original": "/private/tmp/keepany-takeover-release-legacy-final/results/collections-ledger-release-ddb80-ugh-trash-and-clean-restore/collection-five-types-zh-CN-390.png",
+      "sha256": "f4b7010bd5f53a84bb1983493b207cef7db3a1cf190d4642ab3f8140053ff09b"
+    },
+    {
+      "file": "fixed-collection-five-types-en-US-1280.png",
+      "original": "/private/tmp/keepany-takeover-release-legacy-final/results/collections-ledger-release-7f088-ugh-trash-and-clean-restore/collection-five-types-en-US-1280.png",
+      "sha256": "0f2e4bec6571f1c0846fb33b3ada03c9f3d16ed782b4296ee5925fa12533f6c8"
+    },
+    {
+      "file": "fixed-relation-graph-zh-CN-390.png",
+      "original": "/private/tmp/keepany-takeover-release-legacy-final/results/relation-graph-verificatio-5929e-ps-remain-accurate-at-390px/relation-graph-zh-CN-390.png",
+      "sha256": "c6eefb04eb4cdf3588e886acb9f9b49482b1cf827b631d7f24d51d78a2b89b17"
+    },
+    {
+      "file": "fixed-relation-graph-en-US-1280.png",
+      "original": "/private/tmp/keepany-takeover-release-legacy-final/results/relation-graph-verificatio-7d188-s-remain-accurate-at-1280px/relation-graph-en-US-1280.png",
+      "sha256": "17012b9348dc4cd8f6698365b7d137f3b26e3581596728272911c967229e015b"
+    },
+    {
+      "file": "source-core-zh-390-overview-populated.png",
+      "original": "/private/tmp/keepany-takeover-source-accept/evidence/core-zh-390-overview-populated.png",
+      "sha256": "89b4f8d889d97abd4f549b58a321592c7f3b3dd4ffe5be7ec48e0ea8b72d64ab"
+    },
+    {
+      "file": "source-core-zh-390-settings.png",
+      "original": "/private/tmp/keepany-takeover-source-accept/evidence/core-zh-390-settings.png",
+      "sha256": "493e22c4964a2c8c957c91b2629bf9ec8a9d6cf3fc541bac0da0af61ff8ae8a4"
+    },
+    {
+      "file": "source-core-zh-390-intake.png",
+      "original": "/private/tmp/keepany-takeover-source-accept/evidence/core-zh-390-intake.png",
+      "sha256": "8d031fcf9f60308417ad363587c647cacb27165f9cd3d151f924058b8ec1412c"
+    },
+    {
+      "file": "source-core-zh-390-trash-populated.png",
+      "original": "/private/tmp/keepany-takeover-source-accept/evidence/core-zh-390-trash-populated.png",
+      "sha256": "c94e57cb1ff26435dd83437d2562999ab1e30b4c755180b26ccf082deafaf2ad"
+    },
+    {
+      "file": "source-crud-zh-390-project-editor.png",
+      "original": "/private/tmp/keepany-takeover-source-accept/evidence/crud-zh-390-project-editor.png",
+      "sha256": "198d4a293912875e600e95a11c61179ee82bf02834510f46fa9a95eb3eaa7ea7"
+    },
+    {
+      "file": "source-crud-zh-390-account-editor.png",
+      "original": "/private/tmp/keepany-takeover-source-accept/evidence/crud-zh-390-account-editor.png",
+      "sha256": "5dabd97b067ecc8469e2585880ecb34e42f3c5af534adeef433d3f9042e8a1df"
+    },
+    {
+      "file": "source-crud-matrix-zh-390-item-editor.png",
+      "original": "/private/tmp/keepany-takeover-source-accept/evidence/crud-matrix-zh-390-item-editor.png",
+      "sha256": "342205f3d1301615bc72ddc2a56d91d8f1f5478392ee5da40212b7e02bf1b189"
+    },
+    {
+      "file": "source-crud-matrix-zh-390-subscription-editor.png",
+      "original": "/private/tmp/keepany-takeover-source-accept/evidence/crud-matrix-zh-390-subscription-editor.png",
+      "sha256": "1987d9ca03d31926433e08bddfc0c4410f21b46a191c4d99e5805e073a5a3194"
+    },
+    {
+      "file": "source-tasks-zh-390-populated.png",
+      "original": "/private/tmp/keepany-takeover-source-accept/evidence/tasks-zh-390-populated.png",
+      "sha256": "be72b4b49991961039570ffa74ed1f312e78798c2519b118905820205173b95c"
+    },
+    {
+      "file": "source-item-lifecycle-zh-390.png",
+      "original": "/private/tmp/keepany-takeover-source-accept/evidence/item-lifecycle-zh-390.png",
+      "sha256": "5736d74df37d9fdb780c78237593421047e402b3d3ec43573926fda177149653"
+    },
+    {
+      "file": "source-core-en-1280-overview-populated.png",
+      "original": "/private/tmp/keepany-takeover-source-accept/evidence/core-en-1280-overview-populated.png",
+      "sha256": "d39b986b3d428c852e78a285722281ffe97149ff30235b3734fe3f3e11da4f16"
+    },
+    {
+      "file": "source-core-en-1280-settings.png",
+      "original": "/private/tmp/keepany-takeover-source-accept/evidence/core-en-1280-settings.png",
+      "sha256": "a462ea3a0f862b85285eca829116a71b0b5a999c7bb191085334ee5c05ce0037"
+    },
+    {
+      "file": "source-core-en-1280-intake.png",
+      "original": "/private/tmp/keepany-takeover-source-accept/evidence/core-en-1280-intake.png",
+      "sha256": "caf7cfb1c3cd93ba46e519d15742fdf9046492801f83b483dbb4f4d400221d4e"
+    },
+    {
+      "file": "source-core-en-1280-trash-populated.png",
+      "original": "/private/tmp/keepany-takeover-source-accept/evidence/core-en-1280-trash-populated.png",
+      "sha256": "0167c79e176007eb3bfc6a5e0828fde9fe2417dae5c98248b7104bf53c74df69"
+    },
+    {
+      "file": "source-crud-en-1280-project-editor.png",
+      "original": "/private/tmp/keepany-takeover-source-accept/evidence/crud-en-1280-project-editor.png",
+      "sha256": "a999a55bb7c72ce2a6f8ef069fbe4420dca71fa27504ff79779b49495437aa77"
+    },
+    {
+      "file": "source-crud-en-1280-account-editor.png",
+      "original": "/private/tmp/keepany-takeover-source-accept/evidence/crud-en-1280-account-editor.png",
+      "sha256": "85f41c440cc9c421e485467908c787f7ff1f220d51ba6e2190228ab9a3651873"
+    },
+    {
+      "file": "source-crud-matrix-en-1280-item-editor.png",
+      "original": "/private/tmp/keepany-takeover-source-accept/evidence/crud-matrix-en-1280-item-editor.png",
+      "sha256": "2d0fc93d87c21eac06cf1c85024ef9bcf206ca6b0dbdced9aec9c6ea198732a1"
+    },
+    {
+      "file": "source-crud-matrix-en-1280-subscription-editor.png",
+      "original": "/private/tmp/keepany-takeover-source-accept/evidence/crud-matrix-en-1280-subscription-editor.png",
+      "sha256": "0e8498d63293df4f82f9bfce230fb39eb9733323cc156eff12b358d922db2e99"
+    },
+    {
+      "file": "source-tasks-en-1280-populated.png",
+      "original": "/private/tmp/keepany-takeover-source-accept/evidence/tasks-en-1280-populated.png",
+      "sha256": "fded097e777b9c7f343b5cd42bb1a8d822234914160f7a4fd0b8902863c0ffb4"
+    },
+    {
+      "file": "source-item-lifecycle-en-1280.png",
+      "original": "/private/tmp/keepany-takeover-source-accept/evidence/item-lifecycle-en-1280.png",
+      "sha256": "4bb5c7a0f633ba45e8c1dde029e1fca01f32dc306287703e782704741f94df0c"
+    }
+  ],
+  "ci": {
+    "verifiedEarlierSourceHead": "cf953cc54ec9e48dee72c75f39092c30b30d82f5",
+    "earlierRunUrl": "https://github.com/Syndred/KeepAny/actions/runs/36699907637",
+    "earlierJobUrl": "https://github.com/Syndred/KeepAny/actions/runs/36699907637/job/109836649989",
+    "earlierStatus": "completed successfully",
+    "scope": "Earlier ChGig package. Final oiQg source and evidence commit checks are read back after the final push, not inferred from this run."
+  },
+  "limits": [
+    "controlled IDB write failure is not actual storage quota or power loss",
+    "local synthetic HTTP/PostgreSQL and photo object service do not prove production cloud or physical devices",
+    "binding synthetic fixture and real quota tests have explicit opt-in requirements",
+    "5 license materials remain unresolved",
+    "no Internet deployment"
+  ],
+  "bindingConditional": {
+    "distinct": 13,
+    "passed": 13,
+    "failed": 0,
+    "skipped": 0,
+    "runs": [
+      "binding-matrix.json",
+      "binding-confirm.json",
+      "binding-flow.json"
+    ],
+    "testCommits": [
+      "b03b245",
+      "cf953cc"
+    ],
+    "scope": "synthetic binding rows and signed response fixtures; no real production account or issuer"
+  },
+  "conditionalPwa": {
+    "startTime": "2026-09-30T10:15:44.588Z",
+    "duration": 8853.278,
+    "expected": 2,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "sourceFullRunCommit": "6e5201191f638abe344d03abedc2ebc4ae44e308",
+  "finalProductSourceCommit": "9ad3bfd0415bfd5194822b622591d11df81b9368",
+  "globalSearchAfterLegacyFix": {
+    "startTime": "2026-09-30T10:13:45.249Z",
+    "duration": 17281.145,
+    "expected": 10,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "assetSearchAfterLegacyFix": {
+    "startTime": "2026-09-30T10:15:45.909Z",
+    "duration": 3673.254,
+    "expected": 2,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "sourceFullRunNote": "367/19 is the whole-source baseline before the final two nullish domain-array guards; final guards were verified by all 486 units, 10 global-search plus 2 asset-search flows, old-package upgrade plus offline checklist 2/2, and the whole delivered 55 plus real HTTP/PostgreSQL sync 2/2. No second full 386 run is claimed."
+}

@@ -1,0 +1,462 @@
+$ biome lint apps/web/src apps/sync-server/src packages
+apps/web/src/asset-restoration.css:62:1 lint/style/noDescendingSpecificity ━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Descending specificity selector found. This selector specificity is (0, 1, 0)
+  
+    60 │ 	flex: none;
+    61 │ }
+  > 62 │ .asset-category-members {
+       │ ^^^^^^^^^^^^^^^^^^^^^^^
+    63 │ 	min-width: 0;
+    64 │ 	padding: 12px;
+  
+  i This selector specificity is (0, 2, 0)
+  
+    45 │ .asset-category-inline > .actions { justify-content: flex-start; }
+    46 │ .asset-category-inline > .list { display: grid; gap: 10px; }
+  > 47 │ .asset-category-inline .asset-category-members { max-width: 720px; }
+       │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    48 │ .asset-category-inline .list-row { display: flex; justify-content: space-between; gap: 12px; align-items: center; }
+    49 │ .asset-category-inline .list-row strong { overflow-wrap: anywhere; }
+  
+  i Descending specificity selector may not be applied. Consider rearranging the order of the selectors. See MDN web docs for more details.
+  
+
+apps/web/src/asset-restoration.css:77:1 lint/style/noDescendingSpecificity ━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Descending specificity selector found. This selector specificity is (0, 1, 1)
+  
+    75 │ .asset-category-member-list input { flex: none; width: 16px; height: 16px; }
+    76 │ .asset-category-member-list span { display: grid; min-width: 0; }
+  > 77 │ .asset-category-member-list strong, .asset-category-member-list small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+       │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    78 │ .asset-category-member-list strong { font-size: 12px; }
+    79 │ .asset-category-member-list small { color: var(--muted); font-size: 11px; }
+  
+  i This selector specificity is (0, 2, 1)
+  
+    47 │ .asset-category-inline .asset-category-members { max-width: 720px; }
+    48 │ .asset-category-inline .list-row { display: flex; justify-content: space-between; gap: 12px; align-items: center; }
+  > 49 │ .asset-category-inline .list-row strong { overflow-wrap: anywhere; }
+       │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    50 │ .asset-category-order {
+    51 │ 	display: flex;
+  
+  i Descending specificity selector may not be applied. Consider rearranging the order of the selectors. See MDN web docs for more details.
+  
+
+apps/web/src/asset-restoration.css:78:1 lint/style/noDescendingSpecificity ━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Descending specificity selector found. This selector specificity is (0, 1, 1)
+  
+    76 │ .asset-category-member-list span { display: grid; min-width: 0; }
+    77 │ .asset-category-member-list strong, .asset-category-member-list small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  > 78 │ .asset-category-member-list strong { font-size: 12px; }
+       │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    79 │ .asset-category-member-list small { color: var(--muted); font-size: 11px; }
+    80 │ .asset-list-content {
+  
+  i This selector specificity is (0, 2, 1)
+  
+    47 │ .asset-category-inline .asset-category-members { max-width: 720px; }
+    48 │ .asset-category-inline .list-row { display: flex; justify-content: space-between; gap: 12px; align-items: center; }
+  > 49 │ .asset-category-inline .list-row strong { overflow-wrap: anywhere; }
+       │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    50 │ .asset-category-order {
+    51 │ 	display: flex;
+  
+  i Descending specificity selector may not be applied. Consider rearranging the order of the selectors. See MDN web docs for more details.
+  
+
+apps/web/src/asset-restoration.css:239:1 lint/style/noDescendingSpecificity ━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Descending specificity selector found. This selector specificity is (0, 1, 1)
+  
+    237 │ 	white-space: nowrap;
+    238 │ }
+  > 239 │ .asset-editorial-copy strong {
+        │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    240 │ 	font-family: Georgia, serif;
+    241 │ 	font-size: clamp(24px, 3vw, 37px);
+  
+  i This selector specificity is (0, 2, 1)
+  
+    47 │ .asset-category-inline .asset-category-members { max-width: 720px; }
+    48 │ .asset-category-inline .list-row { display: flex; justify-content: space-between; gap: 12px; align-items: center; }
+  > 49 │ .asset-category-inline .list-row strong { overflow-wrap: anywhere; }
+       │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    50 │ .asset-category-order {
+    51 │ 	display: flex;
+  
+  i Descending specificity selector may not be applied. Consider rearranging the order of the selectors. See MDN web docs for more details.
+  
+
+apps/web/src/asset-restoration.css:309:1 lint/style/noDescendingSpecificity ━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Descending specificity selector found. This selector specificity is (0, 1, 1)
+  
+    307 │ 	transform: rotate(25deg);
+    308 │ }
+  > 309 │ .asset-repository-cover strong {
+        │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    310 │ 	font-size: 15px;
+    311 │ }
+  
+  i This selector specificity is (0, 2, 1)
+  
+    47 │ .asset-category-inline .asset-category-members { max-width: 720px; }
+    48 │ .asset-category-inline .list-row { display: flex; justify-content: space-between; gap: 12px; align-items: center; }
+  > 49 │ .asset-category-inline .list-row strong { overflow-wrap: anywhere; }
+       │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    50 │ .asset-category-order {
+    51 │ 	display: flex;
+  
+  i Descending specificity selector may not be applied. Consider rearranging the order of the selectors. See MDN web docs for more details.
+  
+
+apps/web/src/asset-restoration.css:327:1 lint/style/noDescendingSpecificity ━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Descending specificity selector found. This selector specificity is (0, 1, 1)
+  
+    325 │ 	min-width: 0;
+    326 │ }
+  > 327 │ .asset-project-heading > strong {
+        │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    328 │ 	min-width: 0;
+    329 │ 	flex: 1;
+  
+  i This selector specificity is (0, 2, 1)
+  
+    47 │ .asset-category-inline .asset-category-members { max-width: 720px; }
+    48 │ .asset-category-inline .list-row { display: flex; justify-content: space-between; gap: 12px; align-items: center; }
+  > 49 │ .asset-category-inline .list-row strong { overflow-wrap: anywhere; }
+       │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    50 │ .asset-category-order {
+    51 │ 	display: flex;
+  
+  i Descending specificity selector may not be applied. Consider rearranging the order of the selectors. See MDN web docs for more details.
+  
+
+apps/web/src/asset-restoration.css:414:1 lint/style/noDescendingSpecificity ━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Descending specificity selector found. This selector specificity is (0, 1, 1)
+  
+    412 │ 	min-width: 0;
+    413 │ }
+  > 414 │ .asset-account-summary strong,
+        │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    415 │ .asset-account-summary small {
+    416 │ 	overflow-wrap: anywhere;
+  
+  i This selector specificity is (0, 2, 1)
+  
+    47 │ .asset-category-inline .asset-category-members { max-width: 720px; }
+    48 │ .asset-category-inline .list-row { display: flex; justify-content: space-between; gap: 12px; align-items: center; }
+  > 49 │ .asset-category-inline .list-row strong { overflow-wrap: anywhere; }
+       │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    50 │ .asset-category-order {
+    51 │ 	display: flex;
+  
+  i Descending specificity selector may not be applied. Consider rearranging the order of the selectors. See MDN web docs for more details.
+  
+
+apps/web/src/asset-restoration.css:418:1 lint/style/noDescendingSpecificity ━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Descending specificity selector found. This selector specificity is (0, 1, 1)
+  
+    416 │ 	overflow-wrap: anywhere;
+    417 │ }
+  > 418 │ .asset-account-summary strong {
+        │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    419 │ 	font-size: 14px;
+    420 │ }
+  
+  i This selector specificity is (0, 2, 1)
+  
+    47 │ .asset-category-inline .asset-category-members { max-width: 720px; }
+    48 │ .asset-category-inline .list-row { display: flex; justify-content: space-between; gap: 12px; align-items: center; }
+  > 49 │ .asset-category-inline .list-row strong { overflow-wrap: anywhere; }
+       │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    50 │ .asset-category-order {
+    51 │ 	display: flex;
+  
+  i Descending specificity selector may not be applied. Consider rearranging the order of the selectors. See MDN web docs for more details.
+  
+
+apps/web/src/asset-restoration.css:469:1 lint/style/noDescendingSpecificity ━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Descending specificity selector found. This selector specificity is (0, 1, 1)
+  
+    467 │ 	padding: 15px;
+    468 │ }
+  > 469 │ .asset-library-body > strong {
+        │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    470 │ 	font-size: 16px;
+    471 │ 	overflow-wrap: anywhere;
+  
+  i This selector specificity is (0, 2, 1)
+  
+    47 │ .asset-category-inline .asset-category-members { max-width: 720px; }
+    48 │ .asset-category-inline .list-row { display: flex; justify-content: space-between; gap: 12px; align-items: center; }
+  > 49 │ .asset-category-inline .list-row strong { overflow-wrap: anywhere; }
+       │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    50 │ .asset-category-order {
+    51 │ 	display: flex;
+  
+  i Descending specificity selector may not be applied. Consider rearranging the order of the selectors. See MDN web docs for more details.
+  
+
+apps/web/src/asset-restoration.css:667:1 lint/style/noDescendingSpecificity ━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Descending specificity selector found. This selector specificity is (0, 1, 1)
+  
+    665 │ 	font-size: 11px;
+    666 │ }
+  > 667 │ .asset-project-stats strong {
+        │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    668 │ 	font-size: clamp(19px, 2vw, 27px);
+    669 │ 	line-height: 1.1;
+  
+  i This selector specificity is (0, 2, 1)
+  
+    47 │ .asset-category-inline .asset-category-members { max-width: 720px; }
+    48 │ .asset-category-inline .list-row { display: flex; justify-content: space-between; gap: 12px; align-items: center; }
+  > 49 │ .asset-category-inline .list-row strong { overflow-wrap: anywhere; }
+       │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    50 │ .asset-category-order {
+    51 │ 	display: flex;
+  
+  i Descending specificity selector may not be applied. Consider rearranging the order of the selectors. See MDN web docs for more details.
+  
+
+apps/web/src/asset-restoration.css:725:1 lint/style/noDescendingSpecificity ━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Descending specificity selector found. This selector specificity is (0, 1, 1)
+  
+    723 │ .asset-project-related-card:hover { background: #fff2cf; }
+    724 │ .asset-project-related-card > span:nth-child(2) { min-width: 0; }
+  > 725 │ .asset-project-related-card strong, .asset-project-related-card small { display: block; overflow-wrap: anywhere; }
+        │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    726 │ .asset-project-related-card small { color: var(--muted); font-size: 11px; }
+    727 │ .asset-project-related-icon { display: grid; place-items: center; width: 30px; height: 30px; border: 1px solid var(--line); border-radius: 8px; background: var(--yellow); font-weight: 850; }
+  
+  i This selector specificity is (0, 2, 1)
+  
+    47 │ .asset-category-inline .asset-category-members { max-width: 720px; }
+    48 │ .asset-category-inline .list-row { display: flex; justify-content: space-between; gap: 12px; align-items: center; }
+  > 49 │ .asset-category-inline .list-row strong { overflow-wrap: anywhere; }
+       │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    50 │ .asset-category-order {
+    51 │ 	display: flex;
+  
+  i Descending specificity selector may not be applied. Consider rearranging the order of the selectors. See MDN web docs for more details.
+  
+
+apps/web/src/asset-restoration.css:728:1 lint/style/noDescendingSpecificity ━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Descending specificity selector found. This selector specificity is (0, 1, 0)
+  
+    726 │ .asset-project-related-card small { color: var(--muted); font-size: 11px; }
+    727 │ .asset-project-related-icon { display: grid; place-items: center; width: 30px; height: 30px; border: 1px solid var(--line); border-radius: 8px; background: var(--yellow); font-weight: 850; }
+  > 728 │ .asset-project-reminders { scroll-margin-top: 70px; }
+        │ ^^^^^^^^^^^^^^^^^^^^^^^^
+    729 │ .asset-project-reminder-row {
+    730 │ 	display: flex; align-items: center; width: 100%; gap: 10px; padding: 12px 3px;
+  
+  i This selector specificity is (0, 2, 0)
+  
+    679 │ 	order: 4;
+    680 │ }
+  > 681 │ .asset-detail-project .asset-project-reminders {
+        │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    682 │ 	order: 5;
+    683 │ }
+  
+  i Descending specificity selector may not be applied. Consider rearranging the order of the selectors. See MDN web docs for more details.
+  
+
+apps/web/src/asset-restoration.css:735:1 lint/style/noDescendingSpecificity ━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Descending specificity selector found. This selector specificity is (0, 1, 1)
+  
+    733 │ }
+    734 │ .asset-project-reminder-row > span:nth-child(2) { flex: 1; }
+  > 735 │ .asset-project-reminder-row strong, .asset-project-reminder-row small { display: block; }
+        │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    736 │ .asset-project-reminder-row strong { font-size: 12px; }
+    737 │ .asset-project-reminder-row small { color: var(--muted); font-size: 11px; }
+  
+  i This selector specificity is (0, 2, 1)
+  
+    47 │ .asset-category-inline .asset-category-members { max-width: 720px; }
+    48 │ .asset-category-inline .list-row { display: flex; justify-content: space-between; gap: 12px; align-items: center; }
+  > 49 │ .asset-category-inline .list-row strong { overflow-wrap: anywhere; }
+       │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    50 │ .asset-category-order {
+    51 │ 	display: flex;
+  
+  i Descending specificity selector may not be applied. Consider rearranging the order of the selectors. See MDN web docs for more details.
+  
+
+apps/web/src/asset-restoration.css:736:1 lint/style/noDescendingSpecificity ━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Descending specificity selector found. This selector specificity is (0, 1, 1)
+  
+    734 │ .asset-project-reminder-row > span:nth-child(2) { flex: 1; }
+    735 │ .asset-project-reminder-row strong, .asset-project-reminder-row small { display: block; }
+  > 736 │ .asset-project-reminder-row strong { font-size: 12px; }
+        │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    737 │ .asset-project-reminder-row small { color: var(--muted); font-size: 11px; }
+    738 │ .asset-project-reminder-symbol { display: grid; place-items: center; flex: 0 0 31px; height: 31px; border: 1px solid var(--line); border-radius: 9px; background: #ffe094; font-weight: 900; }
+  
+  i This selector specificity is (0, 2, 1)
+  
+    47 │ .asset-category-inline .asset-category-members { max-width: 720px; }
+    48 │ .asset-category-inline .list-row { display: flex; justify-content: space-between; gap: 12px; align-items: center; }
+  > 49 │ .asset-category-inline .list-row strong { overflow-wrap: anywhere; }
+       │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    50 │ .asset-category-order {
+    51 │ 	display: flex;
+  
+  i Descending specificity selector may not be applied. Consider rearranging the order of the selectors. See MDN web docs for more details.
+  
+
+apps/web/src/asset-restoration.css:742:1 lint/style/noDescendingSpecificity ━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Descending specificity selector found. This selector specificity is (0, 1, 1)
+  
+    740 │ .asset-project-cost-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 9px; }
+    741 │ .asset-project-cost-grid > div { display: grid; align-content: start; gap: 5px; min-width: 0; padding: 12px; border: 1px solid var(--line-soft); border-radius: 11px; background: #fffaf0; }
+  > 742 │ .asset-project-cost-grid strong { font-size: clamp(15px,1.7vw,22px); overflow-wrap: anywhere; }
+        │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    743 │ .asset-project-cost-grid small { color: var(--muted); font-size: 11px; }
+    744 │ .asset-project-domain-list { margin-top: 12px; }
+  
+  i This selector specificity is (0, 2, 1)
+  
+    47 │ .asset-category-inline .asset-category-members { max-width: 720px; }
+    48 │ .asset-category-inline .list-row { display: flex; justify-content: space-between; gap: 12px; align-items: center; }
+  > 49 │ .asset-category-inline .list-row strong { overflow-wrap: anywhere; }
+       │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    50 │ .asset-category-order {
+    51 │ 	display: flex;
+  
+  i Descending specificity selector may not be applied. Consider rearranging the order of the selectors. See MDN web docs for more details.
+  
+
+apps/web/src/asset-restoration.css:747:1 lint/style/noDescendingSpecificity ━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Descending specificity selector found. This selector specificity is (0, 1, 1)
+  
+    745 │ .asset-project-domain-row { display: flex; gap: 15px; align-items: center; padding: 11px 0; border-top: 1px solid var(--line-soft); }
+    746 │ .asset-project-domain-row > div { flex: 1; min-width: 0; }
+  > 747 │ .asset-project-domain-row strong, .asset-project-domain-row small, .asset-project-domain-row span { display: block; overflow-wrap: anywhere; }
+        │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    748 │ .asset-project-domain-row small, .asset-project-domain-row span { color: var(--muted); font-size: 11px; }
+    749 │ .asset-project-linked-subscriptions { margin-top: 10px; border-top: 1px solid var(--line-soft); padding-top: 10px; }
+  
+  i This selector specificity is (0, 2, 1)
+  
+    47 │ .asset-category-inline .asset-category-members { max-width: 720px; }
+    48 │ .asset-category-inline .list-row { display: flex; justify-content: space-between; gap: 12px; align-items: center; }
+  > 49 │ .asset-category-inline .list-row strong { overflow-wrap: anywhere; }
+       │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    50 │ .asset-category-order {
+    51 │ 	display: flex;
+  
+  i Descending specificity selector may not be applied. Consider rearranging the order of the selectors. See MDN web docs for more details.
+  
+
+apps/web/src/backlink-ledger.css:21:1 lint/style/noDescendingSpecificity ━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Descending specificity selector found. This selector specificity is (0, 1, 1)
+  
+    19 │ .asset-backlinks-card .backlink-filter-empty { padding: 12px; }
+    20 │ .backlink-evidence-field { grid-column: 1 / -1; }
+  > 21 │ .backlink-evidence-field small { color: var(--muted); }
+       │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    22 │ 
+  
+  i This selector specificity is (0, 1, 2)
+  
+    3 │ .backlink-filters button[aria-pressed="true"] { background: var(--yellow); font-weight: 800; }
+    4 │ .asset-backlinks-card td { overflow-wrap: anywhere; vertical-align: top; }
+  > 5 │ .asset-backlinks-card td small { display: block; color: var(--muted); font-size: 11px; }
+      │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    6 │ .asset-backlinks-card .backlink-edit-name { display: block; margin-bottom: 5px; font-size: 11px; }
+    7 │ .asset-backlinks-card .backlink-row-editing input, .asset-backlinks-card .backlink-row-editing .themed-select-trigger { width: 100%; min-width: 0; margin-bottom: 5px; }
+  
+  i Descending specificity selector may not be applied. Consider rearranging the order of the selectors. See MDN web docs for more details.
+  
+
+apps/web/src/collections.css:39:1 lint/style/noDescendingSpecificity ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Descending specificity selector found. This selector specificity is (0, 1, 0)
+  
+    37 │ .collections-organize-page > .collections-organize-nav { grid-column: 1; }
+    38 │ .collections-organize-page > .collections-editor { grid-column: 2; max-width: none; }
+  > 39 │ .collections-organize-nav { padding: 0; overflow: hidden; }
+       │ ^^^^^^^^^^^^^^^^^^^^^^^^^
+    40 │ .collections-organize-nav .card-header { margin: 0; padding: 16px 18px; border-bottom: 1px solid var(--line-soft); }
+    41 │ .collections-organize-nav .card-header p { margin: 3px 0 0; color: var(--muted); font-size: 12px; }
+  
+  i This selector specificity is (0, 2, 0)
+  
+    35 │ .page.collections-organize-page > * + * { margin-top: 0; }
+    36 │ .collections-organize-page > .page-header, .collections-organize-page > .collections-existing { grid-column: 1 / -1; }
+  > 37 │ .collections-organize-page > .collections-organize-nav { grid-column: 1; }
+       │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    38 │ .collections-organize-page > .collections-editor { grid-column: 2; max-width: none; }
+    39 │ .collections-organize-nav { padding: 0; overflow: hidden; }
+  
+  i Descending specificity selector may not be applied. Consider rearranging the order of the selectors. See MDN web docs for more details.
+  
+
+apps/web/src/collections.css:63:1 lint/style/noDescendingSpecificity ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Descending specificity selector found. This selector specificity is (0, 1, 0)
+  
+    61 │ .collections-organize-page .collections-options { grid-template-columns: 1fr; max-height: 350px; }
+    62 │ .collections-organize-page .collections-kind { padding: 8px 10px; }
+  > 63 │ .collections-existing { margin-top: 4px; }
+       │ ^^^^^^^^^^^^^^^^^^^^^
+    64 │ @media (max-width: 900px) {
+    65 │   .collections-organize-page { grid-template-columns: minmax(0, 1fr); }
+  
+  i This selector specificity is (0, 2, 0)
+  
+    34 │ .collections-organize-page { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(280px, 1fr); gap: 14px; align-items: start; }
+    35 │ .page.collections-organize-page > * + * { margin-top: 0; }
+  > 36 │ .collections-organize-page > .page-header, .collections-organize-page > .collections-existing { grid-column: 1 / -1; }
+       │                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    37 │ .collections-organize-page > .collections-organize-nav { grid-column: 1; }
+    38 │ .collections-organize-page > .collections-editor { grid-column: 2; max-width: none; }
+  
+  i Descending specificity selector may not be applied. Consider rearranging the order of the selectors. See MDN web docs for more details.
+  
+
+packages/sync-core/src/postgres.ts:71:7 lint/complexity/useOptionalChain  FIXABLE  ━━━━━━━━━━━━━━━━━
+
+  ! Change to an optional chain.
+  
+    69 │   );
+    70 │   const member = result.rows[0];
+  > 71 │   if (!member || member[scope === 'read' ? 'can_read' : 'can_write'] !== true) throw new SyncForbiddenError();
+       │       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    72 │ }
+    73 │ const numeric = (value: unknown): number => {
+  
+  i Unsafe fix: Change to an optional chain.
+  
+     69  69 │     );
+     70  70 │     const member = result.rows[0];
+     71     │ - ··if·(!member·||·member[scope·===·'read'·?·'can_read'·:·'can_write']·!==·true)·throw·new·SyncForbiddenError();
+         71 │ + ··if·(member?.[scope·===·'read'·?·'can_read'·:·'can_write']·!==·true)·throw·new·SyncForbiddenError();
+     72  72 │   }
+     73  73 │   const numeric = (value: unknown): number => {
+  
+
+The number of diagnostics exceeds the limit allowed. Use --max-diagnostics to increase it.
+Diagnostics not shown: 44.
+Checked 180 files in 162ms. No fixes applied.
+Found 64 warnings.

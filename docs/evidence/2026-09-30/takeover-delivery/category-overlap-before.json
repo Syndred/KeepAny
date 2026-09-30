@@ -1,0 +1,232 @@
+{
+  "config": {
+    "argv": [
+      "/Users/syndred/.nvm/versions/node/v22.23.1/bin/node",
+      "/Users/syndred/Desktop/projects/KeepAny/node_modules/@playwright/test/cli.js",
+      "test",
+      "--config",
+      "/private/tmp/keepany-visual-css.config.ts",
+      "conditional-dialogs-matrix.spec.ts",
+      "--grep",
+      "category and connection dialogs fit 390",
+      "--output=/private/tmp/keepany-category-overlap-before/results",
+      "--reporter=dot,json"
+    ],
+    "configFile": "/private/tmp/keepany-visual-css.config.ts",
+    "rootDir": "/Users/syndred/Desktop/projects/KeepAny/tests/e2e",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "/private/tmp/keepany-category-overlap-before/results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "",
+        "name": "",
+        "testDir": "/Users/syndred/Desktop/projects/KeepAny/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 90000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "dot"
+      ],
+      [
+        "json"
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.63.0",
+    "workers": 2,
+    "webServer": {
+      "command": "pnpm dev --port 4193 --strictPort",
+      "cwd": "/Users/syndred/Desktop/projects/KeepAny",
+      "url": "http://127.0.0.1:4193",
+      "reuseExistingServer": false,
+      "timeout": 30000
+    }
+  },
+  "suites": [
+    {
+      "title": "conditional-dialogs-matrix.spec.ts",
+      "file": "conditional-dialogs-matrix.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "en-US category and connection dialogs fit 390px",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 952,
+                  "error": {
+                    "message": "Error: Long category text stays inside its own button\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeGreaterThanOrEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: >= \u001b[32m335.28125\u001b[39m\nReceived:    \u001b[31m209.34375\u001b[39m",
+                    "stack": "Error: Long category text stays inside its own button\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeGreaterThanOrEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: >= \u001b[32m335.28125\u001b[39m\nReceived:    \u001b[31m209.34375\u001b[39m\n    at /Users/syndred/Desktop/projects/KeepAny/tests/e2e/conditional-dialogs-matrix.spec.ts:142:83",
+                    "location": {
+                      "file": "/Users/syndred/Desktop/projects/KeepAny/tests/e2e/conditional-dialogs-matrix.spec.ts",
+                      "column": 83,
+                      "line": 142
+                    },
+                    "snippet": "  140 | \t\t\t\t\treturn { textLeft: text.left, textRight: text.right, buttonLeft: border.left, buttonRight: border.right };\n  141 | \t\t\t\t});\n> 142 | \t\t\t\texpect(textBounds.textLeft, \"Long category text stays inside its own button\").toBeGreaterThanOrEqual(textBounds.buttonLeft);\n      | \t\t\t\t                                                                              ^\n  143 | \t\t\t\texpect(textBounds.textRight, \"Long category text cannot cover adjacent categories\").toBeLessThanOrEqual(textBounds.buttonRight);\n  144 | \t\t\t\tawait page.getByRole(\"button\", { name: copy.manage }).click();\n  145 | \t\t\t\tawait categoryDialog"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "/Users/syndred/Desktop/projects/KeepAny/tests/e2e/conditional-dialogs-matrix.spec.ts",
+                        "column": 83,
+                        "line": 142
+                      },
+                      "message": "Error: Long category text stays inside its own button\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeGreaterThanOrEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: >= \u001b[32m335.28125\u001b[39m\nReceived:    \u001b[31m209.34375\u001b[39m\n\n  140 | \t\t\t\t\treturn { textLeft: text.left, textRight: text.right, buttonLeft: border.left, buttonRight: border.right };\n  141 | \t\t\t\t});\n> 142 | \t\t\t\texpect(textBounds.textLeft, \"Long category text stays inside its own button\").toBeGreaterThanOrEqual(textBounds.buttonLeft);\n      | \t\t\t\t                                                                              ^\n  143 | \t\t\t\texpect(textBounds.textRight, \"Long category text cannot cover adjacent categories\").toBeLessThanOrEqual(textBounds.buttonRight);\n  144 | \t\t\t\tawait page.getByRole(\"button\", { name: copy.manage }).click();\n  145 | \t\t\t\tawait categoryDialog\n    at /Users/syndred/Desktop/projects/KeepAny/tests/e2e/conditional-dialogs-matrix.spec.ts:142:83"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-30T09:19:17.108Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "/private/tmp/keepany-category-overlap-before/results/conditional-dialogs-matrix-c1f18-onnection-dialogs-fit-390px/test-failed-1.png"
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "/private/tmp/keepany-category-overlap-before/results/conditional-dialogs-matrix-c1f18-onnection-dialogs-fit-390px/error-context.md"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "/Users/syndred/Desktop/projects/KeepAny/tests/e2e/conditional-dialogs-matrix.spec.ts",
+                    "column": 83,
+                    "line": 142
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "be8458ad2be2d7f2f244-159e920cabc516071cad",
+          "file": "conditional-dialogs-matrix.spec.ts",
+          "line": 105,
+          "column": 3
+        },
+        {
+          "title": "zh-CN category and connection dialogs fit 390px",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 883,
+                  "error": {
+                    "message": "Error: Long category text stays inside its own button\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeGreaterThanOrEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: >= \u001b[32m238\u001b[39m\nReceived:    \u001b[31m125.15625\u001b[39m",
+                    "stack": "Error: Long category text stays inside its own button\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeGreaterThanOrEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: >= \u001b[32m238\u001b[39m\nReceived:    \u001b[31m125.15625\u001b[39m\n    at /Users/syndred/Desktop/projects/KeepAny/tests/e2e/conditional-dialogs-matrix.spec.ts:142:83",
+                    "location": {
+                      "file": "/Users/syndred/Desktop/projects/KeepAny/tests/e2e/conditional-dialogs-matrix.spec.ts",
+                      "column": 83,
+                      "line": 142
+                    },
+                    "snippet": "  140 | \t\t\t\t\treturn { textLeft: text.left, textRight: text.right, buttonLeft: border.left, buttonRight: border.right };\n  141 | \t\t\t\t});\n> 142 | \t\t\t\texpect(textBounds.textLeft, \"Long category text stays inside its own button\").toBeGreaterThanOrEqual(textBounds.buttonLeft);\n      | \t\t\t\t                                                                              ^\n  143 | \t\t\t\texpect(textBounds.textRight, \"Long category text cannot cover adjacent categories\").toBeLessThanOrEqual(textBounds.buttonRight);\n  144 | \t\t\t\tawait page.getByRole(\"button\", { name: copy.manage }).click();\n  145 | \t\t\t\tawait categoryDialog"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "/Users/syndred/Desktop/projects/KeepAny/tests/e2e/conditional-dialogs-matrix.spec.ts",
+                        "column": 83,
+                        "line": 142
+                      },
+                      "message": "Error: Long category text stays inside its own button\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeGreaterThanOrEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: >= \u001b[32m238\u001b[39m\nReceived:    \u001b[31m125.15625\u001b[39m\n\n  140 | \t\t\t\t\treturn { textLeft: text.left, textRight: text.right, buttonLeft: border.left, buttonRight: border.right };\n  141 | \t\t\t\t});\n> 142 | \t\t\t\texpect(textBounds.textLeft, \"Long category text stays inside its own button\").toBeGreaterThanOrEqual(textBounds.buttonLeft);\n      | \t\t\t\t                                                                              ^\n  143 | \t\t\t\texpect(textBounds.textRight, \"Long category text cannot cover adjacent categories\").toBeLessThanOrEqual(textBounds.buttonRight);\n  144 | \t\t\t\tawait page.getByRole(\"button\", { name: copy.manage }).click();\n  145 | \t\t\t\tawait categoryDialog\n    at /Users/syndred/Desktop/projects/KeepAny/tests/e2e/conditional-dialogs-matrix.spec.ts:142:83"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-30T09:19:18.629Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "/private/tmp/keepany-category-overlap-before/results/conditional-dialogs-matrix-942bc-onnection-dialogs-fit-390px/test-failed-1.png"
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "/private/tmp/keepany-category-overlap-before/results/conditional-dialogs-matrix-942bc-onnection-dialogs-fit-390px/error-context.md"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "/Users/syndred/Desktop/projects/KeepAny/tests/e2e/conditional-dialogs-matrix.spec.ts",
+                    "column": 83,
+                    "line": 142
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "be8458ad2be2d7f2f244-df93ab819025587e8275",
+          "file": "conditional-dialogs-matrix.spec.ts",
+          "line": 105,
+          "column": 3
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-09-30T09:19:15.654Z",
+    "duration": 4080.3140000000003,
+    "expected": 0,
+    "skipped": 0,
+    "unexpected": 2,
+    "flaky": 0
+  }
+}
