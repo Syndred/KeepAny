@@ -1,0 +1,18 @@
+{
+  "stats": {
+    "startTime": "2026-09-30T02:46:55.040Z",
+    "duration": 42578.648,
+    "expected": 4,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "service": "pnpm dev --port 4204 --strictPort",
+  "command": "KEEPANY_E2E_PORT=4204 pnpm exec playwright test tests/e2e/detail-entry-statistics.spec.ts --workers=1 --reporter=json --output=/tmp/keepany-detail-entry-final-results",
+  "typecheck": "passed",
+  "lint": "5 files passed",
+  "diffCheck": "passed",
+  "deletedSubmission": "derived tombstone from real UI download; rehashed and encrypted, then restored in clean isolated context; no submission-delete UI added",
+  "maintenance": "existing /tasks + task hash; matching plan details selected and reload retained; no-plan entry uses existing creation UI",
+  "deployment": "source acceptance only; no build, release, push, or original Chrome modifications"
+}
