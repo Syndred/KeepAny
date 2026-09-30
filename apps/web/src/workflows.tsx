@@ -42,6 +42,7 @@ import {
 import { Button } from "./components/ui/button";
 import { Dialog } from "./components/ui/dialog";
 import { RemoteBackupPanel } from "./components/RemoteBackupPanel";
+import { RestoreRecoveryPanel } from "./components/RestoreRecoveryPanel";
 import { stageCsvForReview } from "./intake-csv";
 import { estimateAiCost, readAiUsage, type AiUsage } from "./ai-usage";
 import { useAppContext } from "./view-shared";
@@ -1486,6 +1487,7 @@ export function IntakeTools({ onCsvStaged }: { onCsvStaged: () => void }) {
 						)}
 					</div>
 					<p className="intake-backup-status" role="status">{readyDownload ? t("backupReady") : t("intakeBackupIdle")}</p>
+					<RestoreRecoveryPanel />
 					<details className="intake-secondary">
 						<summary>{t("restoreBackup")}</summary>
 						<div className="field">

@@ -218,7 +218,7 @@ export function CollectionsPage() {
 						const Icon = icons[asset.kind];
 						return <Link className="collections-member-card" key={asset.id} to="/assets/$kind/$id" params={{ kind: asset.kind, id: asset.id }}>
 							<div className={`collections-member-cover collections-member-${asset.kind}`}><Icon size={34} strokeWidth={1.7} aria-hidden="true" /><span>{niceCategory(asset.category, t)}</span></div>
-							<div className="collections-member-body"><strong>{asset.name}</strong><small>{asset.description || asset.location || niceCategory(asset.category, t)}</small><div><span className="chip">{t(asset.kind)}</span><span className="chip">{t(asset.status)}</span></div></div>
+							<div className="collections-member-body"><strong>{asset.name}</strong><small>{asset.description || asset.location || niceCategory(asset.category, t)}</small><div><span className="chip">{t(asset.kind)}</span><span className="chip">{asset.kind === "item" ? asset.itemLifecycleStatus ? t(`itemStatus_${asset.itemLifecycleStatus}`) : t("itemStatusUnrecorded") : t(asset.status)}</span>{asset.kind === "item" && asset.status !== "active" && <span className="chip">{t(asset.status)}</span>}</div></div>
 						</Link>;
 					})}</div> : <div className="card"><p>{t("collectionMembersEmpty")}</p></div>}
 				</section>

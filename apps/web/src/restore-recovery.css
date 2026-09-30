@@ -1,0 +1,73 @@
+.restore-recovery-panel {
+	margin-top: 12px;
+	background: var(--yellow-soft);
+}
+.restore-recovery-heading {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: 12px;
+}
+.restore-recovery-panel h2 {
+	margin: 0;
+}
+.restore-recovery-panel p {
+	margin: 6px 0 0;
+	color: var(--muted);
+	line-height: 1.5;
+}
+.restore-recovery-heading .chip {
+	flex: none;
+}
+.restore-recovery-case {
+	margin-top: 14px;
+	padding-top: 14px;
+	border-top: 1px solid var(--line-soft);
+}
+.restore-recovery-panel .restore-recovery-case-title {
+	margin: 0;
+	font-weight: 750;
+	color: var(--ink);
+}
+.restore-recovery-counts {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(95px, 1fr));
+	gap: 8px;
+	margin: 12px 0 0;
+}
+.restore-recovery-counts > div {
+	min-width: 0;
+	padding: 8px;
+	border: 1px solid var(--line-soft);
+	border-radius: 8px;
+	background: var(--paper-soft);
+}
+.restore-recovery-counts dt {
+	color: var(--muted);
+	font-size: 11px;
+	line-height: 1.35;
+}
+.restore-recovery-counts dd {
+	margin: 3px 0 0;
+	font-size: 17px;
+	font-weight: 750;
+}
+.restore-recovery-reason {
+	max-width: 75ch;
+}
+.restore-recovery-actions {
+	align-items: center;
+	margin-top: 12px;
+}
+.restore-recovery-actions [role="status"] {
+	color: var(--muted);
+	font-size: 12px;
+}
+@media (max-width: 700px) {
+	.restore-recovery-heading {
+		flex-direction: column;
+	}
+	.restore-recovery-counts {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+}

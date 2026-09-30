@@ -401,6 +401,71 @@ const copy: Record<string, [string, string]> = {
 		"上次恢复尚未完成，当前资料可查看。请保留本机数据并寻求协助。",
 		"A previous restore needs attention. You can still view local records. Keep this device's data and seek help.",
 	],
+	restoreRecoveryTitle: ["恢复待处理", "Restore needs attention"],
+	restoreRecoveryPendingShort: ["待处理", "Pending"],
+	restoreRecoveryHint: [
+		"上次恢复尚未完成。核对下方数量和原因，再选择继续或保留当前资料。",
+		"The last restore is incomplete. Check the counts and reason below, then continue or keep current data.",
+	],
+	restoreRecoveryCase: ["待处理的恢复记录", "Pending restore record"],
+	restoreRecoveryRows: ["归档记录", "Archive records"],
+	restoreRecoveryCandidates: ["审核条目", "Review entries"],
+	restoreRecoveryEqual: ["已相同", "Already matching"],
+	restoreRecoveryMissing: ["尚未写入", "Not written"],
+	restoreRecoveryDifferent: ["内容有差异", "Different"],
+	restoreRecoveryReason: [
+		"恢复尚未完成。请核对当前资料后选择继续，或保留当前资料并放弃剩余恢复。",
+		"The restore is incomplete. Check current data, then continue or keep current data and abandon the remainder.",
+	],
+	restoreRecoveryReasonSource: [
+		"恢复来源与当前资料不一致。请核对来源后再决定操作。",
+		"The restore source does not match current data. Check the source before choosing an action.",
+	],
+	restoreRecoveryReasonSourceAmbiguous: [
+		"无法确认恢复来源对应的资料范围。请核对同步来源后再决定操作。",
+		"The restore source scope could not be confirmed. Check the sync source before choosing an action.",
+	],
+	restoreRecoveryReasonSourceBound: [
+		"恢复来源与当前资料归属不一致。请核对来源后再决定操作。",
+		"The restore source does not match the current data ownership. Check the source before choosing an action.",
+	],
+	restoreRecoveryReasonInvalid: [
+		"恢复记录或其附件无法核对。请保留当前资料并重新检查备份。",
+		"The recovery record or an attachment could not be verified. Keep current data and check the backup again.",
+	],
+	restoreRecoveryReasonRetryOnly: [
+		"当前资料仍可核对；只有继续恢复可用。",
+		"Current data can still be checked; continuing the restore is the available action.",
+	],
+	restoreRecoveryReasonAbandonOnly: [
+		"当前资料仍可保留；继续恢复暂不可用。",
+		"Current data can be kept; continuing the restore is unavailable right now.",
+	],
+	restoreRecoveryReasonUnavailable: [
+		"当前资料仍保留，但这次恢复暂时没有可用操作。请刷新后再核对。",
+		"Current data remains, but no recovery action is available right now. Refresh and check again.",
+	],
+	restoreRecoveryReasonUnknown: [
+		"无法确认这次恢复是否仍适合继续。请核对当前资料后选择保留当前资料，或稍后重试。",
+		"It is not possible to confirm that this restore is safe to continue. Check current data, then keep it or try again later.",
+	],
+	restoreRecoveryContinue: ["继续恢复", "Continue restore"],
+	restoreRecoveryKeepCurrent: ["保留当前资料并放弃剩余恢复", "Keep current data and abandon restore"],
+	restoreRecoveryWorking: ["处理中…", "Working…"],
+	restoreRecoveryReadError: [
+		"无法读取恢复记录。当前资料仍保留，请刷新后再查看。",
+		"Recovery details could not be read. Current data remains; refresh and check again.",
+	],
+	restoreRecoveryActionError: [
+		"恢复记录未能更新。当前资料仍保留，请刷新后重新核对。",
+		"The recovery record could not be updated. Current data remains; refresh and check again.",
+	],
+	restoreRecoveryAbandonTitle: ["保留当前资料并放弃恢复？", "Keep current data and abandon restore?"],
+	restoreRecoveryAbandonHint: [
+		"已经写入的资料会保留，剩余记录与审核条目不会继续写入。请先确认你已核对当前资料。",
+		"Already written data will remain. Remaining records and review entries will not continue. Confirm after checking current data.",
+	],
+	restoreRecoveryAbandonConfirm: ["确认保留当前资料", "Keep current data"],
 	uploadError: [
 		"请选择不超过 20 MB 的 JPEG、PNG、WebP 或 GIF。",
 		"Choose a JPEG, PNG, WebP or GIF up to 20 MB.",
