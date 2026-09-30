@@ -1,0 +1,16 @@
+Verify delivered files and offline backup flow
+4m 51s
+1
+Run pnpm exec playwright test --config playwright.release.config.ts --reporter=dot
+
+7
+
+
+8
+Running 45 tests using 2 workers
+
+9
+·············································
+
+10
+  45 passed (4.8m)

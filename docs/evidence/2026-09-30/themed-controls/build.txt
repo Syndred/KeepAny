@@ -1,0 +1,84 @@
+$ tsc --noEmit && vite build apps/web
+vite v8.3.1 building client environment for production...
+transforming...
+✓ 3103 modules transformed.
+rendering chunks...
+computing gzip size...
+apps/web/dist/manifest.webmanifest                                 0.44 kB
+apps/web/dist/index.html                                           2.02 kB │ gzip:   0.64 kB
+apps/web/dist/assets/pdf.worker.min-Dswkl-cV.mjs               1,265.41 kB
+apps/web/dist/assets/workflows-BZYNMrrd.css                        1.00 kB │ gzip:   0.42 kB
+apps/web/dist/assets/page-intake-DPHNgu5M.css                      1.22 kB │ gzip:   0.44 kB
+apps/web/dist/assets/TaskRow-DfvVL7mv.css                          1.78 kB │ gzip:   0.59 kB
+apps/web/dist/assets/page-tasks-Dr5IbuFg.css                       2.06 kB │ gzip:   0.71 kB
+apps/web/dist/assets/page-assistant-access-ITpHSpOj.css            2.26 kB │ gzip:   0.66 kB
+apps/web/dist/assets/page-change-impact-2RQWMibu.css               2.52 kB │ gzip:   0.77 kB
+apps/web/dist/assets/select-CmQ_WCCZ.css                           2.77 kB │ gzip:   0.95 kB
+apps/web/dist/assets/finance-HjR7iGRf.css                          2.93 kB │ gzip:   0.89 kB
+apps/web/dist/assets/settings-intake-restoration-D_7Lwdc5.css      3.08 kB │ gzip:   0.91 kB
+apps/web/dist/assets/page-asset-detail-CGBbgxU5.css                3.15 kB │ gzip:   0.99 kB
+apps/web/dist/assets/page-project-workflow-aCbdCP0P.css            4.62 kB │ gzip:   1.10 kB
+apps/web/dist/assets/page-collections-CkKYIxTB.css                 5.86 kB │ gzip:   1.47 kB
+apps/web/dist/assets/page-overview-DzimmG-m.css                    6.07 kB │ gzip:   1.58 kB
+apps/web/dist/assets/page-asset-list-nVreysuk.css                 26.23 kB │ gzip:   4.90 kB
+apps/web/dist/assets/index-f1MCSJ19.css                           52.16 kB │ gzip:  10.34 kB
+apps/web/dist/assets/iso-BBcBjnDO.js                               0.09 kB │ gzip:   0.10 kB
+apps/web/dist/assets/fields-cYel9wiS.js                            0.15 kB │ gzip:   0.11 kB
+apps/web/dist/assets/useLocation-CwXj4e2-.js                       0.15 kB │ gzip:   0.14 kB
+apps/web/dist/assets/useRouterState-3pq2hcPQ.js                    0.19 kB │ gzip:   0.17 kB
+apps/web/dist/assets/arrow-right-C4A1BRmG.js                       0.20 kB │ gzip:   0.18 kB
+apps/web/dist/assets/smartphone-C25wPM6O.js                        0.23 kB │ gzip:   0.20 kB
+apps/web/dist/assets/chevron-up-DyqA9Feu.js                        0.26 kB │ gzip:   0.19 kB
+apps/web/dist/assets/useMatch-CShDk1mx.js                          0.63 kB │ gzip:   0.40 kB
+apps/web/dist/assets/rolldown-runtime-hePW80VL.js                  0.71 kB │ gzip:   0.42 kB
+apps/web/dist/assets/money-DzXEqiUQ.js                             0.78 kB │ gzip:   0.46 kB
+apps/web/dist/assets/rxdb-store-DEb5pRY_.js                        1.16 kB │ gzip:   0.62 kB
+apps/web/dist/assets/preload-helper-BZ1Pz5am.js                    1.21 kB │ gzip:   0.69 kB
+apps/web/dist/assets/bound-sync-BsHEUPl3.js                        2.17 kB │ gzip:   0.93 kB
+apps/web/dist/assets/finance-Z5YxC5xv.js                           2.29 kB │ gzip:   0.70 kB
+apps/web/dist/assets/page-trash-x2vapySt.js                        2.55 kB │ gzip:   1.03 kB
+apps/web/dist/assets/impact-CyIGwz8e.js                            2.62 kB │ gzip:   1.06 kB
+apps/web/dist/assets/ImpactTaskRow-DWLv5Fcz.js                     2.92 kB │ gzip:   1.28 kB
+apps/web/dist/assets/page-assistant-access-mlweinCR.js             4.19 kB │ gzip:   1.29 kB
+apps/web/dist/assets/button-BWS7bVa1.js                            4.21 kB │ gzip:   1.85 kB
+apps/web/dist/assets/ProjectWorkflowTaskRow-BPX5HyqG.js            4.33 kB │ gzip:   1.83 kB
+apps/web/dist/assets/tslib.es6-BgElsgfY.js                         4.58 kB │ gzip:   1.78 kB
+apps/web/dist/assets/dialog-DzZTLe3H.js                            5.04 kB │ gzip:   1.97 kB
+apps/web/dist/assets/workbox-window.prod.es5-Bd17z0YL.js           5.65 kB │ gzip:   2.20 kB
+apps/web/dist/assets/sha2-6eO_SsNp.js                              5.74 kB │ gzip:   2.80 kB
+apps/web/dist/assets/page-tasks-cqgc6b52.js                        6.10 kB │ gzip:   2.26 kB
+apps/web/dist/assets/view-shared-Drf3hDJS.js                       6.53 kB │ gzip:   3.00 kB
+apps/web/dist/assets/browser-bridge-50X28jmh.js                    6.93 kB │ gzip:   2.36 kB
+apps/web/dist/assets/page-change-impact-Bo9xcg_5.js                7.25 kB │ gzip:   2.45 kB
+apps/web/dist/assets/TaskRow-DkpJDslw.js                           8.59 kB │ gzip:   2.78 kB
+apps/web/dist/assets/page-overview-Dph5K-TQ.js                     8.63 kB │ gzip:   2.57 kB
+apps/web/dist/assets/link-CNzGk6cg.js                             10.36 kB │ gzip:   4.68 kB
+apps/web/dist/assets/page-project-workflow-CnwvFTBI.js            10.60 kB │ gzip:   2.85 kB
+apps/web/dist/assets/page-collections-BbrXaDsC.js                 10.61 kB │ gzip:   3.52 kB
+apps/web/dist/assets/page-finance-DRf5UGN2.js                     11.84 kB │ gzip:   3.78 kB
+apps/web/dist/assets/useTranslation-DQZauu0m.js                   13.91 kB │ gzip:   5.59 kB
+apps/web/dist/assets/src-DTQhZqQ_.js                              16.82 kB │ gzip:   5.04 kB
+apps/web/dist/assets/page-asset-list-DWzgZ_Ge.js                  23.21 kB │ gzip:   7.39 kB
+apps/web/dist/assets/src-CTWSwohq.js                              23.24 kB │ gzip:   6.61 kB
+apps/web/dist/assets/page-intake-DZOXJAiw.js                      26.08 kB │ gzip:   8.07 kB
+apps/web/dist/assets/es2015-BPjIwTeu.js                           33.55 kB │ gzip:  11.69 kB
+apps/web/dist/assets/SelfHostSessionPanel-CF4d7w10.js             33.86 kB │ gzip:  12.46 kB
+apps/web/dist/assets/sortable.esm-eYHPbb5y.js                     45.22 kB │ gzip:  14.84 kB
+apps/web/dist/assets/select-C-jcjjkI.js                           55.38 kB │ gzip:  19.18 kB
+apps/web/dist/assets/workflows-CkZXyG7n.js                        76.81 kB │ gzip:  22.19 kB
+apps/web/dist/assets/page-settings-CzXdg07Z.js                    87.96 kB │ gzip:  23.82 kB
+apps/web/dist/assets/schemas-CnB3p2Hq.js                          92.43 kB │ gzip:  26.04 kB
+apps/web/dist/assets/page-asset-detail-Cs4qJGa7.js               246.10 kB │ gzip:  72.31 kB
+apps/web/dist/assets/src-D2k5ufW3.js                             356.39 kB │ gzip: 106.82 kB
+apps/web/dist/assets/intake-pdf-_qqLbvJE.js                      431.11 kB │ gzip: 129.35 kB
+apps/web/dist/assets/src-DEeKAu4h.js                             442.80 kB │ gzip: 156.01 kB
+apps/web/dist/assets/index-DbNiRVA3.js                           460.50 kB │ gzip: 150.12 kB
+
+✓ built in 354ms
+
+PWA v1.3.0
+mode      generateSW
+precache  73 entries (2661.02 KiB)
+files generated
+  dist/sw.js
+  dist/workbox-9c191d2f.js

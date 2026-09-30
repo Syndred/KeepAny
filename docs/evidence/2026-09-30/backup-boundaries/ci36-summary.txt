@@ -1,0 +1,45 @@
+Verify local release
+test(web): verify fixed vault references through backup restore #36
+Re-run all jobs
+Summary
+All jobs
+verify
+Run details
+Usage
+Workflow file
+Triggered via push
+Syndred
+pushed
+ 2d5c72a
+main
+Status
+Success
+Total duration
+8m 50s
+Artifacts
+–
+verify.yml
+on: push
+verify
+8m 46s
+
+Oh hello! Nice to see you.
+
+Made with ❤️ by humans.txt
+
+verify summary
+Vitest Test Report
+Summary
+Test Files: ✅ 64 passes · 64 total
+Test Results: ✅ 444 passes · 444 total
+Job summary generated at run-time
+Annotations
+1 warning and 1 notice
+verify
+Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, actions/setup-node@v4, pnpm/action-setup@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+Show more
+
+
+verify
+"The ubuntu-latest label will migrate to Ubuntu 26 beginning October 19, 2026. For more information, see https://github.com/actions/runner-images/issues/14748"
+Show more

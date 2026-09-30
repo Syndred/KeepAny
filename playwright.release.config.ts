@@ -25,6 +25,8 @@ export default defineConfig({
 		"restore-identity.spec.ts",
 		"archive-migration.spec.ts",
 		"vault-reference-release.spec.ts",
+		"themed-select.spec.ts",
+		"finance-ledger-release.spec.ts",
 	],
 	timeout: 90_000,
 	workers: 2,
