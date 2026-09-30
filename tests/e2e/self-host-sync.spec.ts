@@ -38,7 +38,7 @@ async function createWorkspace(endpoint: string): Promise<string> {
 }
 
 async function configure(page: Page, endpoint: string, workspaceId: string, key: string): Promise<void> {
-  await page.goto('/settings');
+  await page.goto('/settings#connections');
   const inputs = page.locator('.sync-panel .form-grid input');
   await inputs.nth(0).fill(endpoint);
   await inputs.nth(1).fill(token);
@@ -53,7 +53,7 @@ async function sync(page: Page, expected: 'This sync completed' | 'Choose which 
 
 async function editProject(page: Page, name: string, replacement: string): Promise<void> {
   await page.goto('/assets/project');
-  await page.getByText(name, { exact: true }).first().click();
+  await page.locator('main .list-row').filter({ hasText: name }).click();
   await page.getByRole('button', { name: 'Edit', exact: true }).click();
   const dialog = page.getByRole('dialog');
   await dialog.getByLabel('Name', { exact: true }).fill(replacement);
@@ -120,13 +120,13 @@ test('isolated browsers keep one local dataset on its remote through retry, conf
     await sync(pageA, 'This sync completed');
     await pageA.reload();
     await pageA.goto('/assets/project');
-    await expect(pageA.getByText(firstName, { exact: true })).toBeVisible();
+    await expect(pageA.locator('main .list-row').filter({ hasText: firstName })).toBeVisible();
 
     await configure(pageB, endpoint, workspaceA, keyA);
     await sync(pageB, 'This sync completed');
     await pageB.reload();
     await pageB.goto('/assets/project');
-    await expect(pageB.getByText(firstName, { exact: true })).toBeVisible();
+    await expect(pageB.locator('main .list-row').filter({ hasText: firstName })).toBeVisible();
 
     contextE = await browser.newContext({ locale: 'en-US' });
     const pageE = await contextE.newPage();
@@ -138,11 +138,11 @@ test('isolated browsers keep one local dataset on its remote through retry, conf
     await configure(pageE, endpoint, workspaceA, keyA);
     await sync(pageE, 'This sync completed');
     await pageE.goto('/assets/project');
-    await expect(pageE.getByText(firstName, { exact: true })).toBeVisible();
+    await expect(pageE.locator('main .list-row').filter({ hasText: firstName })).toBeVisible();
     await configure(pageE, endpoint, workspaceA, keyB);
     await sync(pageE, 'This sync did not complete');
     await pageE.goto('/assets/project');
-    await expect(pageE.getByText(firstName, { exact: true })).toBeVisible();
+    await expect(pageE.locator('main .list-row').filter({ hasText: firstName })).toBeVisible();
 
     await editProject(pageA, firstName, fromA);
     let dropped = false;
@@ -193,19 +193,19 @@ test('isolated browsers keep one local dataset on its remote through retry, conf
     expect((await service.pull({ workspaceId: workspaceA, cursor: 0, limit: 20 }, accountId)).changes).toHaveLength(3);
 
     await pageB.goto('/assets/project');
-    await pageB.getByText(fromB, { exact: true }).first().click();
+    await pageB.locator('main .list-row').filter({ hasText: fromB }).click();
     await pageB.getByRole('button', { name: 'Move to trash', exact: true }).click();
     const deleteDialog = pageB.getByRole('dialog');
     await deleteDialog.getByRole('button', { name: 'Move to trash', exact: true }).click();
     await expect(deleteDialog).toBeHidden();
     await pageB.goto('/trash');
-    await expect(pageB.getByText(fromB, { exact: true })).toBeVisible();
+    await expect(pageB.locator('main .list-row').filter({ hasText: fromB })).toBeVisible();
     await configure(pageB, endpoint, workspaceA, keyA);
     await sync(pageB, 'This sync completed');
     await configure(pageA, endpoint, workspaceA, keyA);
     await sync(pageA, 'This sync completed');
     await pageA.goto('/assets/project');
-    await expect(pageA.getByText(fromB, { exact: true })).toHaveCount(0);
+    await expect(pageA.locator('main .list-row').filter({ hasText: fromB })).toHaveCount(0);
     const changes = (await service.pull({ workspaceId: workspaceA, cursor: 0, limit: 20 }, accountId)).changes;
     expect(changes.map(change => change.version)).toEqual([1, 2, 3, 4]);
     expect(changes.at(-1)?.tombstone).toBe(true);

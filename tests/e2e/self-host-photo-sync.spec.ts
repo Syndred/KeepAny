@@ -22,7 +22,7 @@ async function freePort(): Promise<number> {
 }
 
 async function configure(page: Page, endpoint: string, workspaceId: string, key: string): Promise<void> {
-  await page.goto('/settings');
+  await page.goto('/settings#connections');
   const inputs = page.locator('.sync-panel .form-grid input');
   await inputs.nth(0).fill(endpoint);
   await inputs.nth(1).fill(token);
@@ -33,6 +33,24 @@ async function configure(page: Page, endpoint: string, workspaceId: string, key:
 async function sync(page: Page, result: string): Promise<void> {
   await page.getByRole('button', { name: 'Sync now' }).click();
   await expect(page.locator('.sync-panel .notice')).toHaveText(result);
+}
+
+async function mergeBackup(page: Page, file: string, password: string): Promise<void> {
+  const panel = page.locator('.migration-panel');
+  await panel.locator('input[type="file"]').first().setInputFiles(file);
+  await panel.locator('input[type="password"]').first().fill(password);
+  await panel.getByRole('button', { name: 'Check target and preview' }).click();
+  await panel.getByLabel('I checked the source and target for this merge').check();
+  await panel.getByLabel('Target backup password (12 characters minimum)').fill(password);
+  await panel.getByRole('button', { name: 'Create target backup' }).click();
+  const downloading = page.waitForEvent('download');
+  await panel.getByRole('link', { name: 'Download target backup' }).click();
+  const targetFile = test.info().outputPath(`target-${crypto.randomUUID()}.ka1`);
+  await (await downloading).saveAs(targetFile);
+  await panel.getByLabel('Select the downloaded target backup').setInputFiles(targetFile);
+  await panel.getByRole('button', { name: 'Verify downloaded backup' }).click();
+  await panel.getByRole('button', { name: 'Merge into target local data' }).click();
+  await expect(panel).toContainText('Local merge complete; sync not started');
 }
 
 test('encrypted photo survives lost upload acknowledgment and rejects missing or changed objects before pull', async ({ browser }) => {
@@ -112,7 +130,7 @@ test('encrypted photo survives lost upload acknowledgment and rejects missing or
     await dialog.getByLabel('Name', { exact: true }).fill(assetName);
     await dialog.getByRole('button', { name: 'Save' }).click();
     await expect(dialog).toBeHidden();
-    await pageA.getByText(assetName, { exact: true }).first().click();
+    await pageA.locator('main .list-row').filter({ hasText: assetName }).click();
     await pageA.getByLabel('Add image').setInputFiles({ name: 'photo.png', mimeType: 'image/png', buffer: png });
     const preview = pageA.getByRole('dialog');
     await expect(preview.locator('img')).toHaveJSProperty('naturalWidth', 32);
@@ -150,17 +168,17 @@ test('encrypted photo survives lost upload acknowledgment and rejects missing or
     await configure(pageB, endpoint, workspaceId, key);
     await sync(pageB, 'This sync did not complete');
     await pageB.goto('/assets/project');
-    await expect(pageB.getByText(assetName, { exact: true })).toHaveCount(0);
+    await expect(pageB.locator('main .list-row').filter({ hasText: assetName })).toHaveCount(0);
     objects.set(firstPath, Buffer.concat([chunk.subarray(0, -1), Buffer.from([(chunk.at(-1) ?? 0) ^ 1])]));
     await configure(pageB, endpoint, workspaceId, key);
     await sync(pageB, 'This sync did not complete');
     await pageB.goto('/assets/project');
-    await expect(pageB.getByText(assetName, { exact: true })).toHaveCount(0);
+    await expect(pageB.locator('main .list-row').filter({ hasText: assetName })).toHaveCount(0);
     objects.set(firstPath, chunk);
     await configure(pageB, endpoint, workspaceId, key);
     await sync(pageB, 'This sync completed');
     await pageB.goto('/assets/project');
-    await pageB.getByText(assetName, { exact: true }).first().click();
+    await pageB.locator('main .list-row').filter({ hasText: assetName }).click();
     await expect(pageB.locator('img.asset-image')).toHaveJSProperty('naturalWidth', 32);
     expect(await pageB.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
     if (process.env.KEEPANY_SYNC_EVIDENCE_DIR) {
@@ -195,13 +213,10 @@ test('encrypted photo survives lost upload acknowledgment and rejects missing or
     pageC.on('pageerror', error => errors.push(`C: ${error.message}`));
     pageD.on('pageerror', error => errors.push(`D: ${error.message}`));
     for (const page of [pageC, pageD]) {
-      await page.goto('/intake');
-      await page.locator('#backup-password').fill(backupPassword);
-      await page.locator('#restore-file').setInputFiles(backupPath);
-      await page.getByRole('button', { name: 'Preview', exact: true }).first().click();
-      await page.getByRole('button', { name: /Confirm ·/ }).click();
-      await expect(page.getByText(/Restored \d+ records/)).toBeVisible();
       await configure(page, endpoint, secondWorkspace.workspaceId, secondKey);
+      // A different workspace uses the confirmed transfer flow with a real
+      // target backup download/readback, retaining the intended image-ID race.
+      await mergeBackup(page, backupPath, backupPassword);
     }
     let blockedUpload = false;
     let lostAck = false;
@@ -216,19 +231,21 @@ test('encrypted photo survives lost upload acknowledgment and rejects missing or
       lostAck = true;
       await route.abort('failed');
     });
-    await pageD.getByRole('button', { name: 'Sync now' }).click();
+    await pageD.locator('.migration-panel').getByRole('button', { name: 'Start target sync' }).click();
     await expect.poll(() => blockedUpload).toBe(true);
-    await sync(pageC, 'This sync completed');
+    await pageC.locator('.migration-panel').getByRole('button', { name: 'Start target sync' }).click();
+    await expect(pageC.locator('.sync-panel .notice')).toHaveText('This sync completed');
     releaseBlockedUpload();
     await expect(pageD.locator('.sync-panel .notice')).toHaveText('This sync did not complete');
     await pageD.unroute(routePattern);
     await pageD.reload();
     await configure(pageD, endpoint, secondWorkspace.workspaceId, secondKey);
-    await sync(pageD, 'This sync completed');
+    await pageD.locator('.migration-panel').getByRole('button', { name: 'Retry target sync' }).click();
+    await expect(pageD.locator('.sync-panel .notice')).toHaveText('This sync completed');
     expect((await service.pull({ workspaceId: secondWorkspace.workspaceId, cursor: 0, limit: 10 }, 'self-host-owner')).changes)
       .toHaveLength(1);
     await pageD.goto('/assets/project');
-    await pageD.getByText(assetName, { exact: true }).first().click();
+    await pageD.locator('main .list-row').filter({ hasText: assetName }).click();
     await expect(pageD.locator('img.asset-image')).toHaveJSProperty('naturalWidth', 32);
     expect(errors).toEqual([]);
   } finally {
