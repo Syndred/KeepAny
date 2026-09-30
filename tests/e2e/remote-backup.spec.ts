@@ -1,8 +1,9 @@
 import { readFileSync, mkdirSync } from "node:fs";
-import { expect, type BrowserContext, test } from "@playwright/test";
+import { expect, type BrowserContext, type Page, test } from "@playwright/test";
 import { selectChoice } from "./helpers/select-choice";
 
-const evidence = "docs/evidence/2026-09-29";
+const evidence =
+	process.env.KEEPANY_SYNC_EVIDENCE_DIR ?? "docs/evidence/2026-09-29";
 const captureEvidence = process.env.KEEPANY_CAPTURE_EVIDENCE === "1";
 type Store = { bytes: Buffer | null; authorizations: string[] };
 
@@ -34,6 +35,18 @@ async function routeStorage(
 			});
 		return route.fulfill({ status: 404, headers });
 	});
+}
+
+async function openRemoteBackup(page: Page) {
+	const section = page
+		.locator("details.intake-secondary")
+		.filter({ has: page.locator(".remote-backup-panel") });
+	await expect(section).toBeVisible();
+	if ((await section.getAttribute("open")) === null)
+		await section.locator("summary").click();
+	const panel = section.locator(".remote-backup-panel");
+	await expect(panel).toBeVisible();
+	return panel;
 }
 
 for (const variant of [
@@ -76,7 +89,7 @@ for (const variant of [
 
 			await sourcePage.goto("/intake");
 			await sourcePage.locator("#backup-password").fill(password);
-			const panel = sourcePage.locator(".remote-backup-panel");
+			const panel = await openRemoteBackup(sourcePage);
 			if (variant.kind === "s3") {
 				await panel
 					.locator("#remote-put-url")
@@ -100,7 +113,7 @@ for (const variant of [
 							: "加密上传并核对",
 				})
 				.click();
-			await expect(panel.getByRole("status")).toContainText(
+			await expect(panel.locator(".notice[role='status']")).toContainText(
 				variant.kind === "s3" ? "Uploaded and checked" : "已上传并读回核对",
 			);
 			expect(store.bytes?.subarray(0, 8).toString()).toBe("KEEPANY1");
@@ -132,7 +145,7 @@ for (const variant of [
 				await panel
 					.getByRole("button", { name: "Read and preview remote backup" })
 					.click();
-				await expect(panel.getByRole("status")).toContainText(
+				await expect(panel.locator(".notice[role='status']")).toContainText(
 					"does not match the receipt",
 				);
 				await expect(
@@ -143,7 +156,10 @@ for (const variant of [
 			await sourcePage.reload();
 			await expect(sourcePage.locator("#backup-password")).toHaveValue("");
 			await expect(sourcePage.locator("#remote-receipt")).toHaveValue("");
-			await expect(sourcePage.locator("#remote-kind")).toHaveAttribute("data-value", "s3");
+			await expect(sourcePage.locator("#remote-kind")).toHaveAttribute(
+				"data-value",
+				"s3",
+			);
 			const destination = await browser.newContext({
 				locale: variant.locale,
 				viewport: { width: variant.width, height: 844 },
@@ -153,7 +169,7 @@ for (const variant of [
 			targetPage.on("pageerror", (error) => errors.push(error.message));
 			try {
 				await targetPage.goto("/intake");
-				const targetPanel = targetPage.locator(".remote-backup-panel");
+				const targetPanel = await openRemoteBackup(targetPage);
 				await expect(targetPage.locator("#backup-password")).toHaveValue("");
 				await targetPage.locator("#backup-password").fill(password);
 				if (variant.kind === "s3") {
@@ -190,7 +206,9 @@ for (const variant of [
 								: "读取并预览远端备份",
 					})
 					.click();
-				await expect(targetPanel.getByRole("status")).toContainText(
+				await expect(
+					targetPanel.locator(".notice[role='status']"),
+				).toContainText(
 					variant.kind === "s3" ? "Could not decrypt" : "无法解密",
 				);
 				await expect(
@@ -207,7 +225,9 @@ for (const variant of [
 								: "读取并预览远端备份",
 					})
 					.click();
-				await expect(targetPanel.getByRole("status")).toContainText(
+				await expect(
+					targetPanel.locator(".notice[role='status']"),
+				).toContainText(
 					variant.kind === "s3" ? "Remote backup verified" : "远端备份已核对",
 				);
 				if (captureEvidence)

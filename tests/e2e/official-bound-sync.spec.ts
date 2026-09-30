@@ -22,6 +22,7 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const commercialCheckout = resolve(root, '../KeepAnyAdm');
 const commercialCommit = '7589b6d';
 const databaseUrl = process.env.KEEPANY_TEST_DATABASE_URL;
+const evidenceDir = process.env.KEEPANY_SYNC_EVIDENCE_DIR ?? resolve(root, 'docs/evidence/2026-09-29');
 const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAACAAAAAYCAIAAAAUMWhjAAAAhUlEQVR4nLXNuRXCQBAE0WJCIQlZikEJYZLZ5iGfLOTyYI85Wu3NlPEfn2Pja/vzhXT2c7fzfS+A2rDuV2jYKKgMmzSJYfPcysYCoGysAWqGC6BgeAGyRgAgZcQA4kYYIGhkACJGEsBt5AF8RgnAYVQBVoYAYGpoAMaGDGBgKIGuIQb+jQtZ/TPNXBjnggAAAABJRU5ErkJggg==', 'base64');
 const pause = (ms: number) => new Promise(done => setTimeout(done, ms));
 
@@ -142,7 +143,7 @@ async function approve(accountPage: Page, commercialOrigin: string, code: string
 }
 
 async function bind(page: Page, accountPage: Page, webOrigin: string, commercialOrigin: string): Promise<void> {
-  await page.goto(`${webOrigin}/settings`);
+  await page.goto(`${webOrigin}/settings#connections`);
   await page.getByRole('button', { name: 'Authorize official sync read and write' }).click();
   const code = (await page.locator('.binding-code').textContent())?.trim();
   assert.ok(code, 'approval-code-missing');
@@ -353,7 +354,7 @@ test('official bound sync preserves encrypted records and photos across devices,
     await sync(pageB, 'This sync did not complete');
     await pageB.goto(`${webOrigin}/assets/project`);
     await expect(pageB.getByText(assetName, { exact: true })).toHaveCount(0);
-    await pageB.goto(`${webOrigin}/settings`);
+    await pageB.goto(`${webOrigin}/settings#connections`);
     await pageB.locator('.sync-panel .form-grid input').nth(1).fill(workspaceId);
     await pageB.locator('.sync-panel .form-grid input').nth(2).fill(workspaceKey);
     await sync(pageB, 'This sync completed');
@@ -369,7 +370,7 @@ test('official bound sync preserves encrypted records and photos across devices,
     assert.ok(await scoped.query('SELECT 1 FROM sync_bound_bindings WHERE status=$1', ['active']).then(result => (result.rowCount ?? 0) >= 2));
 
     // A trusted dataset also refuses later key replacement without local loss.
-    await pageB.goto(`${webOrigin}/settings`);
+    await pageB.goto(`${webOrigin}/settings#connections`);
     await pageB.locator('.sync-panel .form-grid input').nth(2).fill(Buffer.alloc(32, 7).toString('base64url'));
     await sync(pageB, 'This sync did not complete');
     await pageB.locator('.sync-panel .form-grid input').nth(2).fill(workspaceKey);
@@ -377,7 +378,6 @@ test('official bound sync preserves encrypted records and photos across devices,
     await pageB.getByRole('button', { name: 'View device access' }).click();
     await expect(pageB.locator('.binding-devices')).toContainText(bindingIdA);
     await expect(pageB.locator('.binding-devices')).toContainText(bindingIdB);
-    const evidenceDir = resolve(root, 'docs/evidence/2026-09-29');
     await mkdir(evidenceDir, { recursive: true });
     for (const width of [390, 1280]) {
       await pageB.setViewportSize({ width, height: 844 });
@@ -406,7 +406,7 @@ test('official bound sync preserves encrypted records and photos across devices,
     }
     assert.equal((await scoped.query<{ status: string }>('SELECT status FROM sync_bound_bindings WHERE binding_id=$1',
       [bindingIdB])).rows[0]?.status, 'revoked', 'commercial revoke must reach bound-state tombstone');
-    await pageA.goto(`${webOrigin}/settings`);
+    await pageA.goto(`${webOrigin}/settings#connections`);
     await pageA.getByRole('button', { name: 'View device access' }).click();
     await expect(pageA.locator('.binding-devices li').filter({ hasText: bindingIdB })).toContainText('Authorization revoked');
     await pageA.locator('.sync-panel .form-grid input').nth(2).fill(workspaceKey);

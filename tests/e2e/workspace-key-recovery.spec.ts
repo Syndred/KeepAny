@@ -13,6 +13,7 @@ const token = "workspace-key-e2e".padEnd(40, "x");
 const otherToken = "other-account-e2e".padEnd(40, "y");
 const key = Buffer.from(new Uint8Array(32).fill(17)).toString("base64url");
 const webOrigin = `http://127.0.0.1:${process.env.KEEPANY_E2E_PORT ?? "4173"}`;
+const evidenceDir = process.env.KEEPANY_SYNC_EVIDENCE_DIR ?? path.resolve("docs/evidence/2026-09-29");
 
 async function fixture() {
 	const pg = new PGlite();
@@ -39,7 +40,7 @@ async function fixture() {
 }
 
 async function configure(page: Page, endpoint: string, workspaceId: string, withKey = false, accessToken = token) {
-	await page.goto("/settings");
+	await page.goto("/settings#connections");
 	const inputs = page.locator(".sync-panel .form-grid input");
 	await inputs.nth(0).fill(endpoint);
 	await inputs.nth(1).fill(accessToken);
@@ -142,19 +143,19 @@ test("join and independent recovery across isolated browsers with a real local c
 		panel = await unlock(target, "join", joinCredential, joinId);
 		await expect(panel).toContainText(`account self-host-owner · workspace ${workspaceId}`);
 		await expect(panel).toContainText(recoveryFingerprint);
-		await mkdir(path.resolve("docs/evidence/2026-09-29"), { recursive: true });
-		await panel.screenshot({ path: path.resolve("docs/evidence/2026-09-29/key-join-en-390-confirm.png") });
+		await mkdir(evidenceDir, { recursive: true });
+		await panel.screenshot({ path: path.join(evidenceDir, "key-join-en-390-confirm.png") });
 		await panel.getByLabel("I checked the account, workspace and key fingerprint").check();
 		await panel.getByRole("button", { name: "Use this key, then sync manually" }).click();
 		await expect(target.locator(".sync-panel .form-grid input").nth(3)).toHaveValue(key);
 		await target.locator(".sync-panel").getByRole("button", { name: "Sync now" }).click();
 		await expect(target.locator(".sync-panel .notice")).toHaveText("This sync completed");
-		await mkdir(path.resolve("docs/evidence/2026-09-29"), { recursive: true });
-		await panel.screenshot({ path: path.resolve("docs/evidence/2026-09-29/key-join-en-390.png") });
+		await mkdir(evidenceDir, { recursive: true });
+		await panel.screenshot({ path: path.join(evidenceDir, "key-join-en-390.png") });
 		await target.goto("/assets/project");
-		await expect(target.getByText("Device join proof project")).toBeVisible();
+		await expect(target.getByText("Device join proof project").first()).toBeVisible();
 		await target.reload();
-		await expect(target.getByText("Device join proof project")).toBeVisible();
+		await expect(target.getByText("Device join proof project").first()).toBeVisible();
 
 		const rows = await pg.query<{ wrap: unknown }>("SELECT wrap FROM sync_key_envelopes WHERE workspace_id=$1", [workspaceId]);
 		for (const row of rows.rows) {
@@ -175,9 +176,9 @@ test("join and independent recovery across isolated browsers with a real local c
 			await recoveryPanel.getByRole("button", { name: "Use this key, then sync manually" }).click();
 			await recovered.locator(".sync-panel").getByRole("button", { name: "Sync now" }).click();
 			await expect(recovered.locator(".sync-panel .notice")).toHaveText("This sync completed");
-			await recoveryPanel.screenshot({ path: path.resolve("docs/evidence/2026-09-29/key-recovery-en-1280.png") });
+			await recoveryPanel.screenshot({ path: path.join(evidenceDir, "key-recovery-en-1280.png") });
 			await recovered.goto("/assets/project");
-			await expect(recovered.getByText("Device join proof project")).toBeVisible();
+			await expect(recovered.getByText("Device join proof project").first()).toBeVisible();
 		} finally { await recoveryContext.close(); }
 		const zhContext = await browser.newContext({ locale: "zh-CN", viewport: { width: 390, height: 844 } });
 		const zhPage = await zhContext.newPage();
@@ -188,14 +189,14 @@ test("join and independent recovery across isolated browsers with a real local c
 			await zhPanel.getByLabel("恢复或加入凭据").fill(recoveryCredential);
 			await zhPanel.getByRole("button", { name: "核对凭据与密钥" }).click();
 			await expect(zhPanel).toContainText(recoveryFingerprint);
-			await zhPanel.screenshot({ path: path.resolve("docs/evidence/2026-09-29/key-recovery-zh-390-confirm.png") });
+			await zhPanel.screenshot({ path: path.join(evidenceDir, "key-recovery-zh-390-confirm.png") });
 			await zhPanel.getByLabel("我已核对账号、工作区和密钥指纹").check();
 			await zhPanel.getByRole("button", { name: "使用此密钥，随后手动同步" }).click();
 			await zhPage.locator(".sync-panel").getByRole("button", { name: "立即同步" }).click();
 			await expect(zhPage.locator(".sync-panel .notice")).toHaveText("本次同步已完成");
-			await zhPanel.screenshot({ path: path.resolve("docs/evidence/2026-09-29/key-recovery-zh-390.png") });
+			await zhPanel.screenshot({ path: path.join(evidenceDir, "key-recovery-zh-390.png") });
 			await zhPage.goto("/assets/project");
-			await expect(zhPage.getByText("Device join proof project")).toBeVisible();
+			await expect(zhPage.getByText("Device join proof project").first()).toBeVisible();
 			expect(await zhPage.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
 		} finally { await zhContext.close(); }
 		const dirtyContext = await browser.newContext({ locale: "en-US" });

@@ -24,13 +24,13 @@ async function wrongHostStatus(url: string, origin: string, pairingSecret: strin
   });
 }
 
-async function waitFor(check: () => Promise<boolean>, timeoutMs = 15_000) {
+async function waitFor(check: () => Promise<boolean>, timeoutMs = 15_000, label = 'condition') {
   const until = Date.now() + timeoutMs;
   while (Date.now() < until) {
     if (await check()) return;
     await new Promise(done => setTimeout(done, 40));
   }
-  throw Error('condition-timeout');
+  throw Error(`condition-timeout:${label}`);
 }
 
 async function addProject(page: Page, name: string, description: string) {
@@ -56,15 +56,38 @@ async function mobileWidth(page: Page) {
   expect(width).toBeLessThanOrEqual(390);
 }
 
+async function ensureAssistantOpen(page: Page) {
+  const section = page.locator('details#assistant');
+  if ((await section.getAttribute('open')) === null) await section.locator('summary').click();
+  await expect(section.locator('.mcp-panel')).toBeVisible();
+}
+
 test('formal Web grants one RxDB record to an isolated official SDK stdio client and requires exact write approval', async ({ browser }) => {
   test.setTimeout(150_000);
   const context = await browser.newContext({ locale: 'en-US', viewport: { width: 390, height: 844 }, acceptDownloads: true });
   const page = await context.newPage();
   const errors: string[] = [];
+  let uiStage = 'startup';
+  let checkWriteRequests = 0;
+  let checkWriteFailedRequests = 0;
+  const checkWriteStages: string[] = [];
   let abortedWriteCheck = false;
   page.on('pageerror', error => errors.push(error.message));
+  page.on('request', request => {
+    try {
+      if (new URL(request.url()).pathname === '/check-write') {
+        checkWriteRequests++;
+        checkWriteStages.push(uiStage);
+      }
+    } catch { /* URL is diagnostic data only. */ }
+  });
   page.on('requestfailed', request => {
-    if (request.url().endsWith('/check-write')) abortedWriteCheck = true;
+    try {
+      if (new URL(request.url()).pathname === '/check-write') {
+        abortedWriteCheck = true;
+        checkWriteFailedRequests++;
+      }
+    } catch { /* URL is diagnostic data only. */ }
   });
   const privateDir = await mkdtemp(join(tmpdir(), 'keepany-mcp-web-'));
   await chmod(privateDir, 0o700);
@@ -79,6 +102,7 @@ test('formal Web grants one RxDB record to an isolated official SDK stdio client
   const other = `MCP not shared ${unique}`;
   const otherDescription = `other private description ${unique}`;
   try {
+    uiStage = 'open-assistant-en';
     await mkdir(evidence, { recursive: true });
     await page.goto('/settings#assistant');
     if (packagedExecutable) {
@@ -87,9 +111,12 @@ test('formal Web grants one RxDB record to an isolated official SDK stdio client
       await expect.poll(() => page.evaluate(() => Boolean(navigator.serviceWorker.controller))).toBe(true);
     }
     await selectChoice(page.locator('section.card').filter({ has: page.getByRole('heading', { name: 'Language' }) }).getByRole("combobox"), 'en');
+    await ensureAssistantOpen(page);
     await addProject(page, before, hidden);
     await addProject(page, other, otherDescription);
+    uiStage = 'open-assistant-en-after-projects';
     await page.goto('/settings#assistant');
+    await ensureAssistantOpen(page);
     const panel = page.locator('.mcp-panel');
     await expect(panel.getByRole('heading', { name: 'Local MCP access' })).toBeVisible();
     await panel.getByRole('group', { name: 'Accessible records' }).getByLabel(before).check();
@@ -128,7 +155,8 @@ test('formal Web grants one RxDB record to an isolated official SDK stdio client
     transport.stderr?.on('data', chunk => { stderr += String(chunk); });
     client = new Client({ name: 'keepany-web-acceptance', version: '1.0.0' });
     await client.connect(transport);
-    await waitFor(() => exists(pairingPath));
+    uiStage = 'waiting-for-pairing-file';
+    await waitFor(() => exists(pairingPath), 15_000, 'pairing-file');
     expect((await stat(privateDir)).mode & 0o777).toBe(0o700);
     expect((await stat(pairingPath)).mode & 0o777).toBe(0o600);
     const pairing = JSON.parse(await readFile(pairingPath, 'utf8')) as {
@@ -158,7 +186,8 @@ test('formal Web grants one RxDB record to an isolated official SDK stdio client
     await expect(scope).not.toContainText(other);
     await scope.getByRole('button', { name: 'Allow connection' }).click();
     await expect(panel.getByText('Local connection authorized')).toBeVisible();
-    await waitFor(async () => !(await exists(pairingPath)));
+    uiStage = 'waiting-for-pairing-file-removal';
+    await waitFor(async () => !(await exists(pairingPath)), 15_000, 'pairing-file-removal');
 
     const list = result<Array<Record<string, unknown>>>(await client.callTool({ name: 'list_assets', arguments: {} }));
     expect(list).toEqual([{ id: request.assetIds[0], name: before }]);
@@ -199,10 +228,11 @@ test('formal Web grants one RxDB record to an isolated official SDK stdio client
     await page.getByRole('link', { name: 'Settings', exact: true }).click();
     await expect(page.locator('.sidebar')).not.toHaveClass(/open/);
     await expect.poll(() => page.locator('.sidebar').evaluate(element => element.getBoundingClientRect().right)).toBeLessThanOrEqual(0);
-    await page.locator('#assistant > summary').click();
+    await ensureAssistantOpen(page);
     await expect(panel.getByText('Local connection authorized')).toBeVisible();
 
     await selectChoice(page.locator('section.card').filter({ has: page.getByRole('heading', { name: 'Language' }) }).getByRole("combobox"), 'zh-CN');
+    await ensureAssistantOpen(page);
     await expect(panel.getByRole('heading', { name: '本机 MCP 授权' })).toBeVisible();
     await mobileWidth(page);
     await page.screenshot({ path: join(evidence, 'mcp-settings-zh-390.png'), fullPage: true });
@@ -235,6 +265,7 @@ test('formal Web grants one RxDB record to an isolated official SDK stdio client
     let continueWrite!: () => void;
     const writeReleased = new Promise<void>(resolve => { continueWrite = resolve; });
     releasePausedWrite = continueWrite;
+    uiStage = 'waiting-for-check-write-5';
     await page.route(`${pairing.url}/check-write`, async route => {
       checks++;
       if (checks === 5) { paused = true; await writeReleased; }
@@ -243,7 +274,13 @@ test('formal Web grants one RxDB record to an isolated official SDK stdio client
     const pendingConfirm = client.callTool({ name: 'confirm_asset_update', arguments: {
       id: request.assetIds[0], operationId: raceOperationId, previewId: racePreview.previewId, patch: racePatch,
     } });
-    await waitFor(async () => paused);
+    try {
+      await waitFor(async () => paused, 15_000, 'check-write-5');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      throw Error(`${message}; stage=${uiStage}; routeChecks=${checks}; observedRequests=${checkWriteRequests}; failedRequests=${checkWriteFailedRequests}; requestStages=${checkWriteStages.join(',') || 'none'}`);
+    }
+    uiStage = 'revoking-after-check-write-5';
     await panel.getByRole('button', { name: '撤销本机授权' }).click();
     await expect(panel.getByRole('button', { name: '生成连接请求' })).toBeVisible();
     await expect(panel.getByRole('alert')).toContainText('修改正在处理，可能已保存');

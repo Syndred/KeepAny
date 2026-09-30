@@ -58,6 +58,13 @@ async function selectLanguage(page: Page, code: string) {
   await page.goto('/settings#assistant');
   await selectChoice(page.locator('section.card').filter({ has: page.getByRole('heading', { name: /^(Language|语言)$/ }) })
     .getByRole("combobox"), code);
+  await ensureAssistantOpen(page);
+}
+
+async function ensureAssistantOpen(page: Page) {
+  const section = page.locator('details#assistant');
+  if ((await section.getAttribute('open')) === null) await section.locator('summary').click();
+  await expect(section.locator('.mcp-panel')).toBeVisible();
 }
 
 async function checkLayout(page: Page, width: number, dialog: ReturnType<Page['getByRole']>, action: ReturnType<Page['getByRole']>) {
@@ -80,6 +87,7 @@ async function checkLayout(page: Page, width: number, dialog: ReturnType<Page['g
 }
 
 async function prepareRequest(page: Page, language: Language, selected: string, excluded: string): Promise<{ path: string; request: RequestFile }> {
+  await ensureAssistantOpen(page);
   const panel = page.locator('.mcp-panel');
   const create = panel.getByRole('button', { name: language.create });
   const selectedOption = panel.getByRole('group', { name: language.asset }).getByLabel(selected);
@@ -153,6 +161,7 @@ async function fixture(browser: Browser, language: Language, width: number) {
 }
 
 async function pair(page: Page, language: Language, connection: Awaited<ReturnType<typeof launch>>) {
+  await ensureAssistantOpen(page);
   const panel = page.locator('.mcp-panel');
   await panel.getByLabel(language.import).focus();
   await panel.getByLabel(language.import).setInputFiles(connection.pairingPath);
