@@ -5,6 +5,7 @@ import type { Asset, Category } from "../../packages/domain/src";
 import { decryptBackup } from "../../packages/local-db/src/backup-crypto";
 
 const password = "category-fixed-package-backup-2026";
+test.use({ actionTimeout: 15_000 });
 type Kind = "project" | "account";
 const copy = (zh: boolean) => zh ? {
 	add: "新增", name: "名称", save: "保存", newCategory: "新增分类", category: "分类", categoryName: "分类名称", categorySave: "保存分类", manage: "管理", backup: "创建备份", download: "保存备份文件", preview: "预览", confirm: /确认 ·/, restored: /已恢复 \d+ 条记录/,
@@ -65,11 +66,14 @@ async function rename(page: Page, zh: boolean, name: string, add: string, remove
 
 for (const locale of ["en-US", "zh-CN"]) {
 	test(`${locale} fixed package category identity survives UI rename and encrypted clean restore`, async ({ browser }) => {
+		// Multiple encrypted downloads and a second browser context need a separate CI budget.
+		test.setTimeout(150_000);
 		const zh = locale === "zh-CN";
 		const text = copy(zh);
 		const source = await browser.newContext({ locale, viewport: { width: 390, height: 844 }, acceptDownloads: true });
 		const page = await source.newPage();
 		const errors: string[] = [];
+		let sourceFailure: unknown;
 		page.on("pageerror", (error) => errors.push(error.message));
 		try {
 			for (const kind of ["project", "account"] as const) {
@@ -101,6 +105,7 @@ for (const locale of ["en-US", "zh-CN"]) {
 				expect(after.assets.find((asset) => asset.name === `${kind} Second`)?.category).toBe(`Renamed ${kind}`);
 			}
 			const destination = await browser.newContext({ locale, viewport: { width: 390, height: 844 }, acceptDownloads: true });
+			let destinationFailure: unknown;
 			try {
 				const restored = await destination.newPage();
 				restored.on("pageerror", (error) => errors.push(error.message));
@@ -129,8 +134,20 @@ for (const locale of ["en-US", "zh-CN"]) {
 					expect(final.assets.find((asset) => asset.name === `${kind} First`)?.category).toBe(`Recovered ${kind}`);
 					expect(final.assets.find((asset) => asset.name === `${kind} Second`)?.category).toBe("");
 				}
-			} finally { await destination.close(); }
+			} catch (error) {
+				destinationFailure = error;
+				throw error;
+			} finally {
+				if (destinationFailure) await destination.close().catch(() => undefined);
+				else await destination.close();
+			}
 			expect(errors).toEqual([]);
-		} finally { await source.close(); }
+		} catch (error) {
+			sourceFailure = error;
+			throw error;
+		} finally {
+			if (sourceFailure) await source.close().catch(() => undefined);
+			else await source.close();
+		}
 	});
 }
