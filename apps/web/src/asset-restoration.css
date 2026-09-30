@@ -370,6 +370,8 @@
 	text-overflow: ellipsis;
 	white-space: nowrap;
 }
+.asset-project-foot > span:first-child { flex: 1; }
+.asset-project-foot > .asset-project-backlinks { display: inline-flex; align-items: center; gap: 5px; flex: none; }
 .asset-account-card {
 	display: grid;
 	grid-template-columns: 42px minmax(0, 1fr);

@@ -18,6 +18,8 @@ export default defineConfig({
 		"intake-review-merge.spec.ts",
 		"custom-category-release.spec.ts",
 		"global-search-release.spec.ts",
+		"detail-entry-statistics.spec.ts",
+		"intake-asset-receipt.spec.ts",
 	],
 	timeout: 90_000,
 	workers: 2,

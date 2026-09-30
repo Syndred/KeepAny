@@ -144,6 +144,12 @@ for (const locale of ["zh-CN", "en-US"]) {
 				await page.goto("/assets/project");
 				const card = page.locator(".asset-project-card").filter({ hasText: "Entry project" });
 				await expect(card.locator(".asset-project-foot")).toContainText(text.stats(2, 1));
+				expect(await card.locator(".asset-project-foot").evaluate((footer) => {
+					const [domain, counts] = [...footer.children].map((element) => element.getBoundingClientRect());
+					const countElement = footer.children[1];
+					return counts.left > domain.left && Math.abs((domain.top + domain.bottom) / 2 - (counts.top + counts.bottom) / 2) < 2
+						&& countElement.scrollWidth <= countElement.clientWidth;
+				})).toBe(true);
 				await expect(page.locator(`a[href="${other.href}"] .asset-project-foot`)).toContainText(text.stats(1, 1));
 				await card.locator(".asset-project-foot").scrollIntoViewIfNeeded();
 				await expect(card.locator(".asset-project-foot")).toBeInViewport({ ratio: 1 });

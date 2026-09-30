@@ -409,7 +409,7 @@ function ProjectCard({ asset, search, backlinks }: { asset: Asset; search: strin
 		</div>
 		<div className="asset-project-info"><div className="asset-project-heading"><span className="asset-project-avatar">{Array.from(asset.name)[0]?.toLocaleUpperCase() || "•"}</span><strong>{asset.name}</strong>{asset.status && <span className="chip">{t(asset.status)}</span>}</div>
 			<p>{asset.description || niceCategory(asset.category, t)}</p>
-			<div className="asset-project-foot"><span>{domain || niceCategory(asset.category, t)}<br />{t("projectCardBacklinks", { count: backlinks.total, pending: backlinks.pending })}</span><ArrowRight size={14} aria-hidden="true" /></div>
+			<div className="asset-project-foot"><span>{domain || niceCategory(asset.category, t)}</span><span className="asset-project-backlinks">{t("projectCardBacklinks", { count: backlinks.total, pending: backlinks.pending })}<ArrowRight size={14} aria-hidden="true" /></span></div>
 		</div>
 	</Link>;
 }
