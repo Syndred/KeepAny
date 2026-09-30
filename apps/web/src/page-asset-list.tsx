@@ -21,6 +21,7 @@ import { useTranslation } from "react-i18next";
 import { normalizeCategoryName, type Asset, type AssetKind } from "../../../packages/domain/src";
 import { createCategory, fileUrl, save, saveAssetIfCurrent } from "../../../packages/local-db/src";
 import { Button } from "./components/ui/button";
+import { matchesAssetSearch } from "./asset-search";
 import "./asset-restoration.css";
 import "./vault-restoration.css";
 import {
@@ -449,10 +450,7 @@ export function AssetList() {
 		(a) =>
 			(!category || a.category === category) &&
 			(!tag || a.tags.includes(tag)) &&
-			(!normalizedSearch ||
-				`${a.name} ${a.tags.join(" ")} ${a.url} ${a.username}`
-					.toLocaleLowerCase()
-					.includes(normalizedSearch)),
+			matchesAssetSearch(a, search),
 	);
 	const restored = useRef("");
 	useEffect(() => {

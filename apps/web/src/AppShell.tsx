@@ -25,6 +25,7 @@ import {
 } from "./components/navigation/SortableNav";
 import { AppContext, icons, kinds, liveAssets } from "./view-shared";
 import { McpRuntimeProvider } from "./mcp-runtime";
+import { matchesAssetSearch } from "./asset-search";
 import "./shell-restoration.css";
 const AiDialog = lazy(() =>
 	import("./workflows").then((module) => ({ default: module.AiDialog })),
@@ -107,11 +108,7 @@ export function AppShell() {
 	}, [toast]);
 	const matches = search.trim()
 		? liveAssets(data)
-				.filter((a) =>
-					`${a.name} ${a.tags.join(" ")} ${a.url} ${a.username}`
-						.toLowerCase()
-						.includes(search.toLowerCase()),
-				)
+				.filter((asset) => matchesAssetSearch(asset, search))
 				.slice(0, 6)
 		: [];
 	const context = useMemo(
