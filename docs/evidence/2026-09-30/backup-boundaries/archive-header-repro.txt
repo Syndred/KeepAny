@@ -1,0 +1,1 @@
+{"archiveBytes":308388,"declaredRecordBytes":2,"actualDeflateOutputBytes":315621376,"acceptedRows":0,"returnedRecordBytes":2,"durationMs":382}

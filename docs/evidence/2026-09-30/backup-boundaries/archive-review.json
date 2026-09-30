@@ -1,0 +1,65 @@
+{
+  "sourceCommit": "006c1a1",
+  "test": {
+    "command": "pnpm exec vitest run packages/local-db/src/archive-unzip.test.ts",
+    "passed": 11,
+    "failed": 0,
+    "filesPassed": 1
+  },
+  "actualExpansionProbe": {
+    "actualOriginalBytes": 315621376,
+    "declaredOriginalBytes": 2,
+    "compressedEntryBytes": 310669,
+    "archiveBytes": 310791,
+    "firstCompressedChunkBytes": 4054,
+    "firstOutputBurstBytes": 4119936,
+    "inflatePushCallsBeforeError": 1,
+    "error": "archive-size",
+    "returnedTruncatedContent": false,
+    "continuedDecodingAfterError": false,
+    "generation": "Pure memory, repeated 1MiB zero input, known local and central lengths forged to declare 2 bytes; no large payload retained in this report."
+  },
+  "compatibilityProbes": [
+    {
+      "case": "Content includes local-header signature PK0304 at offset 50 in a 100-byte entry",
+      "zipSyncLevels": [
+        0,
+        6
+      ],
+      "knownLengthZipSync": "passed, byte-for-byte",
+      "streamingDescriptor": "explicitly rejected with archive-entry"
+    },
+    {
+      "case": "Valid JSON manifest CRC32 equals local-header signature 04034b50",
+      "zipSyncLevels": [
+        0,
+        1,
+        6
+      ],
+      "result": "passed; central directory excluded from local streaming decode"
+    },
+    {
+      "case": "Trailing empty stored entry",
+      "zipSyncLevels": [
+        0,
+        6
+      ],
+      "result": "passed; controlled four-byte central signature lookahead preserves the empty entry"
+    }
+  ],
+  "formatBoundary": {
+    "descriptorContainers": "rejected before content decoding",
+    "generalPurposeZipReader": false,
+    "supportedFormat": "KeepAny v1 ordinary single-disk, non-ZIP64, known-local-length archives",
+    "productionV1ZipSyncCorpus": "preserved by targeted compatibility probes",
+    "productionExport": "packages/local-db/src/index.ts exportArchive uses zipSync(entries, { level: 1 }); no production Zip/ZipDeflate streaming export found"
+  },
+  "executionScope": {
+    "syntheticPureMemoryOnly": true,
+    "realUserDataAccessed": false,
+    "servicesStarted": false,
+    "repositoryFilesEditedByReviewer": false,
+    "newChecksForThisEvidenceWrite": false,
+    "largePayloadIncluded": false
+  }
+}

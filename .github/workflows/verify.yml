@@ -45,3 +45,5 @@ jobs:
         run: node scripts/verify-local-release.mjs
       - name: Verify delivered files and offline backup flow
         run: pnpm exec playwright test --config playwright.release.config.ts --reporter=dot
+      - name: Verify delivered sync files with isolated PostgreSQL and local HTTP
+        run: pnpm exec playwright test --config playwright.sync-release.config.ts --reporter=dot

@@ -1,0 +1,169 @@
+- link "Skip to content":
+  - /url: "#start-of-content"
+- banner "Global navigation menu":
+  - button "Open menu":
+  - link "Homepage (g then d)":
+    - /url: /
+  - navigation "Breadcrumbs":
+    - list:
+      - link "Syndred":
+        - /url: /Syndred
+        - generic: Syndred
+      - link "KeepAny":
+        - /url: /Syndred/KeepAny
+        - text: KeepAny
+      - button "Switch repository (option shift r)":
+  - button "Open quick search dialog, type / to search":
+    - text: Type
+    - generic: /
+    - text: to search
+  - link "Chat with Copilot":
+    - /url: /copilot
+  - button "Open Copilot…":
+  - button "Create new...":
+  - link "All issues":
+    - /url: /issues
+  - link "All pull requests":
+    - /url: /pulls
+  - link "All repositories":
+    - /url: /repos
+  - button "Open user navigation menu":
+    - img "User avatar"
+  - heading "Repository navigation" [level=2]
+  - navigation "Repository":
+    - list:
+      - link "Code":
+        - /url: /Syndred/KeepAny
+        - generic: Code
+      - link "Issues":
+        - /url: /Syndred/KeepAny/issues
+        - generic: Issues
+      - link "Pull requests":
+        - /url: /Syndred/KeepAny/pulls
+        - generic: Pull requests
+      - link "Agents":
+        - /url: /Syndred/KeepAny/agents?author=Syndred
+        - generic: Agents
+      - link "Actions":
+        - /url: /Syndred/KeepAny/actions
+        - generic: Actions
+      - link "Projects":
+        - /url: /Syndred/KeepAny/projects
+        - generic: Projects
+      - link "Security and quality":
+        - /url: /Syndred/KeepAny/security
+        - generic: Security and quality
+      - link "Insights":
+        - /url: /Syndred/KeepAny/network/dependencies
+        - generic: Insights
+      - link "Settings":
+        - /url: /Syndred/KeepAny/settings
+        - generic: Settings
+- main:
+  - link "Verify local release":
+    - /url: /Syndred/KeepAny/actions/workflows/verify.yml
+    - generic: Verify local release
+  - img "completed successfully:"
+  - 'heading "build(web): update reviewed backup boundary release #34" [level=1]':
+    - generic: "build(web): update reviewed backup boundary release #34"
+  - button "Re-run all jobs":
+    - generic: Re-run all jobs
+  - button "Workflow run options":
+  - navigation "Workflow run":
+    - list:
+      - link "Summary":
+        - /url: /Syndred/KeepAny/actions/runs/36671149054
+        - generic: Summary
+      - heading "All jobs" [level=4]
+      - button "Filter by job status":
+      - list:
+        - link "verify":
+          - /url: /Syndred/KeepAny/actions/runs/36671149054/job/109746205514
+          - generic: verify
+      - heading "Run details" [level=3]
+      - list "Run details":
+        - link "Usage":
+          - /url: /Syndred/KeepAny/actions/runs/36671149054/usage
+          - generic: Usage
+        - link "Workflow file":
+          - /url: /Syndred/KeepAny/actions/runs/36671149054/workflow
+          - generic: Workflow file
+  - region "Workflow run summary":
+    - generic: Triggered via push September 30, 2026 12:5610 minutes ago
+    - link "@Syndred Syndred":
+      - /url: /Syndred
+      - img "@Syndred"
+      - text: Syndred
+    - generic: pushed
+    - link "2492b96":
+      - /url: /Syndred/KeepAny/commit/2492b965d7ece9e394e0a0de87af0e411b3c5639
+      - text: 2492b96
+    - link "main":
+      - /url: /Syndred/KeepAny/tree/refs/heads/main
+    - generic: Status
+    - text: Success
+    - generic: Total duration
+    - link "7m 37s":
+      - /url: /Syndred/KeepAny/actions/runs/36671149054/usage
+    - generic: Artifacts
+    - text: –
+  - region "Workflow run graph":
+    - heading "verify.yml" [level=2]:
+      - link "verify.yml":
+        - /url: /Syndred/KeepAny/actions/runs/36671149054/workflow
+    - generic: "on: push"
+    - 'link "completed successfully: verify 7m 32s"':
+      - /url: /Syndred/KeepAny/actions/runs/36671149054/job/109746205514
+      - img "completed successfully:"
+      - generic: verify
+      - generic: 7m 32s
+    - paragraph: Oh hello! Nice to see you.
+    - paragraph:
+      - text: Made with ❤️ by
+      - link:
+        - /url: https://actions.github.io/humans.txt
+        - text: humans.txt
+    - button "Fit to window" [disabled]:
+    - button "Zoom out" [disabled]:
+    - button "Zoom in" [disabled]:
+  - heading "verify summary" [level=2]:
+    - link "verify summary":
+      - /url: "#summary-109746205514"
+  - button "job summary options":
+  - heading "Vitest Test Report" [level=2]
+  - heading "Summary" [level=3]
+  - list:
+    - strong: Test Files
+    - text: ": ✅"
+    - strong: 64 passes
+    - text: · 64 total
+    - strong: Test Results
+    - text: ": ✅"
+    - strong: 444 passes
+    - text: · 444 total
+  - link "Job summary generated at run-time":
+    - /url: https://docs.github.com/actions/using-workflows/workflow-commands-for-github-actions#adding-a-job-summary
+  - region "Annotations":
+    - heading "Annotations" [level=2]
+    - generic: 1 warning and 1 notice
+    - table:
+      - rowgroup:
+        - 'row "verify Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, actions/setup-node@v4, pnpm/action-setup@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/ Show more"':
+          - 'cell "verify Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, actions/setup-node@v4, pnpm/action-setup@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/ Show more"':
+            - link "verify":
+              - /url: /Syndred/KeepAny/actions/runs/36671149054/job/109746205514#step:25:2
+              - strong: verify
+            - text: "Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, actions/setup-node@v4, pnpm/action-setup@v4. For more information see:"
+            - link "https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/":
+              - /url: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+            - button "Show more"
+        - row "verify \"The ubuntu-latest label will migrate to Ubuntu 26 beginning October 19, 2026. For more information, see https://github.com/actions/runner-images/issues/14748\" Show more":
+          - cell "verify \"The ubuntu-latest label will migrate to Ubuntu 26 beginning October 19, 2026. For more information, see https://github.com/actions/runner-images/issues/14748\" Show more":
+            - link "verify":
+              - /url: /Syndred/KeepAny/actions/runs/36671149054/job/109746205514
+              - strong: verify
+            - text: "\"The ubuntu-latest label will migrate to Ubuntu 26 beginning October 19, 2026. For more information, see"
+            - link "https://github.com/actions/runner-images/issues/14748":
+              - /url: https://github.com/actions/runner-images/issues/14748
+            - text: "\""
+            - button "Show more"

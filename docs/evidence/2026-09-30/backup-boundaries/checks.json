@@ -1,0 +1,139 @@
+{
+  "date": "2026-09-30",
+  "runtimeSourceCommit": "006c1a173d40e02e22897cc7da5f8cb2fcd1a264",
+  "browserTestSourceCommit": "879e8d4787669cf8b229f3fa6edd7358a4e2dc23",
+  "releaseCommit": "2492b965d7ece9e394e0a0de87af0e411b3c5639",
+  "entry": "index-CDMhxXs0.js",
+  "indexSha256": "cf885bdacdb48ace249f2520f151888e8ff908288071abe16357f2383693ba39",
+  "bundle": {
+    "currentFilesByteIdentical": 72,
+    "explicitlyRetainedFiles": 374,
+    "pwaPrecacheEntries": 69,
+    "pwaPrecacheKiB": 2602.41,
+    "entryKB": 505.26,
+    "entryGzipKB": 164.18,
+    "viteLargeChunkWarning": true
+  },
+  "unit": {
+    "report": "unit-postgres.json",
+    "files": 64,
+    "passed": 444,
+    "failed": 0,
+    "skipped": 0,
+    "postgres": "17.11-alpine3.24",
+    "scope": "Root-owned disposable local database; tests create and drop isolated schemas."
+  },
+  "fixedBrowser": {
+    "report": "release-playwright.json",
+    "passed": 41,
+    "failed": 0,
+    "skipped": 0,
+    "flaky": 0,
+    "durationSeconds": 88.241169,
+    "scope": "Committed release/web; prior 36 plus restore identity 2 and explicit archive migration 3."
+  },
+  "selfhostBrowserSource": {
+    "report": "selfhost-playwright.json",
+    "passed": 2,
+    "failed": 0,
+    "skipped": 0,
+    "flaky": 0,
+    "durationSeconds": 15.744059,
+    "scope": "Development Web, real local sync HTTP and PostgreSQL, local synthetic object store; no real cloud or physical devices."
+  },
+  "selfhostBrowserFixed": {
+    "report": "selfhost-fixed-playwright.json",
+    "passed": 2,
+    "failed": 0,
+    "skipped": 0,
+    "flaky": 0,
+    "durationSeconds": 15.286834,
+    "scope": "The same committed index-CDMhxXs0.js Web bundle, real local sync HTTP and PostgreSQL, local synthetic object store. Separate run from fixedBrowser 41."
+  },
+  "targeted": {
+    "restoreIdentityTests": 7,
+    "cryptoSizeTests": 7,
+    "archiveUnzipTests": 11,
+    "actualExpansionReport": "archive-review.json"
+  },
+  "limits": {
+    "archiveBytes": 104857600,
+    "encryptedContainerBytes": 104857652,
+    "expandedBytes": 314572800,
+    "entries": 10003,
+    "compressedInputChunkBytes": 4096,
+    "supportedZip": "KeepAny v1 ordinary single-disk, non-ZIP64, known-local-length entries; descriptor containers explicitly rejected."
+  },
+  "ci": {
+    "run": 34,
+    "url": "https://github.com/Syndred/KeepAny/actions/runs/36671149054",
+    "head": "2492b965d7ece9e394e0a0de87af0e411b3c5639",
+    "status": "Success",
+    "totalDurationSeconds": 457,
+    "jobDurationSeconds": 452,
+    "unitPassed": 444,
+    "unitFiles": 64,
+    "fixedBrowserStepSeconds": 255,
+    "warnings": [
+      "Actions Node20 runtime migration to Node24",
+      "ubuntu-latest upcoming image migration"
+    ],
+    "summary": "ci34-summary.txt",
+    "fixedBrowserPassed": 41,
+    "fixedBrowserLog": "ci34-browser.txt"
+  },
+  "originalChrome": {
+    "origin": "http://127.0.0.1:4180",
+    "viewport": [
+      1230,
+      876
+    ],
+    "entry": "index-CDMhxXs0.js",
+    "assetsBefore": 0,
+    "assetsAfter": 0,
+    "siteDataCleared": false,
+    "preferencesChanged": false,
+    "fixturesInjected": false,
+    "screenshots": [
+      "chrome-intake.png",
+      "chrome-overview.png"
+    ],
+    "upgradeNote": "The normal PWA upgrade briefly loaded an intermediate BFlo build before final CDM readback; only final CDM is delivery evidence."
+  },
+  "legal": {
+    "installedVersions": 592,
+    "missingRootLicenseVersions": 31,
+    "verified": 26,
+    "unresolved": 5,
+    "texts": 16
+  },
+  "review": {
+    "foreignAndUnknownArchiveRejectedBeforeWrites": true,
+    "unboundRestorePinsDeclaredSourceWithFilesAndJournal": true,
+    "sourceClaimAndRestoreShareExistingLock": true,
+    "oldUnprovenJournalInBoundTargetKeptPending": true,
+    "credentialsKeysCursorsOutboxesCopied": false,
+    "sourceBindingIsServerSigned": false,
+    "testFixtureChange": "Legacy cross-workspace ordinary restores replaced by the existing explicit acknowledged migration, backup download and readback flow."
+  },
+  "remaining": [
+    "5 exact-version license bodies",
+    "Complete frozen design state-by-state visual comparison",
+    "Real mobile/native installation",
+    "Formal application quota and browser-clear recovery",
+    "Actual physical power loss",
+    "Production HTTPS/accounts/object storage/physical two-device verification",
+    "Complete production security and legal review"
+  ],
+  "keyEpochStashResumed": false,
+  "KeepAnyAdmModified": false,
+  "internetDeployment": false,
+  "goalComplete": false,
+  "cleanup": {
+    "rootOwnedPostgresContainerRemoved": true,
+    "remainingTestSchemasBeforeCleanup": 0,
+    "fixedSyncPort4182Stopped": true,
+    "original4180Kept": true,
+    "KeepAnyAdmContainerUntouched": true
+  }
+}
