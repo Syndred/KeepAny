@@ -1,0 +1,2255 @@
+{
+  "config": {
+    "argv": [
+      "/Users/syndred/.nvm/versions/node/v22.23.1/bin/node",
+      "/Users/syndred/Desktop/projects/KeepAny/node_modules/@playwright/test/cli.js",
+      "test",
+      "--config=playwright.release.config.ts",
+      "--grep-invert",
+      "spacing",
+      "--output=/private/tmp/keepany-spacing-release-core-results",
+      "--reporter=json"
+    ],
+    "configFile": "/Users/syndred/Desktop/projects/KeepAny/playwright.release.config.ts",
+    "rootDir": "/Users/syndred/Desktop/projects/KeepAny/tests/e2e",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 2
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "/private/tmp/keepany-spacing-release-core-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 2
+        },
+        "id": "",
+        "name": "",
+        "testDir": "/Users/syndred/Desktop/projects/KeepAny/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "local-core.spec.ts",
+          "production-offline.spec.ts",
+          "intake-pdf.spec.ts",
+          "intake-expense.spec.ts",
+          "intake-review-backup.spec.ts",
+          "intake-review-merge.spec.ts",
+          "custom-category-release.spec.ts",
+          "global-search-release.spec.ts",
+          "detail-entry-statistics.spec.ts",
+          "intake-asset-receipt.spec.ts",
+          "collections-route.spec.ts",
+          "relation-graph-verification.spec.ts",
+          "restore-identity.spec.ts",
+          "archive-migration.spec.ts",
+          "vault-reference-release.spec.ts",
+          "themed-select.spec.ts",
+          "spacing-consistency.spec.ts",
+          "finance-ledger-release.spec.ts",
+          "collections-ledger-release.spec.ts",
+          "restore-self-service-release.spec.ts"
+        ],
+        "timeout": 90000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "json"
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.63.0",
+    "workers": 2,
+    "webServer": {
+      "command": "node node_modules/vite/bin/vite.js preview apps/web --outDir ../../release/web --host 127.0.0.1 --port 4281 --strictPort",
+      "url": "http://127.0.0.1:4281",
+      "reuseExistingServer": false,
+      "timeout": 30000
+    }
+  },
+  "suites": [
+    {
+      "title": "archive-migration.spec.ts",
+      "file": "archive-migration.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "explicit archive migration in en",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 180000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2724,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-30T11:27:51.567Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "b4a083168afd9e1dc2db-a6b2a445fa3e226c7d17",
+          "file": "archive-migration.spec.ts",
+          "line": 75,
+          "column": 2
+        },
+        {
+          "title": "explicit archive migration in zh-CN",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 180000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2634,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-30T11:27:54.492Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "b4a083168afd9e1dc2db-318d85829f481460a781",
+          "file": "archive-migration.spec.ts",
+          "line": 75,
+          "column": 2
+        },
+        {
+          "title": "existing target record requires an individual choice before migration",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 4434,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-30T11:27:57.132Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "b4a083168afd9e1dc2db-c606c15290864058b4e3",
+          "file": "archive-migration.spec.ts",
+          "line": 140,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "collections-ledger-release.spec.ts",
+      "file": "collections-ledger-release.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "zh-CN 390 five asset types retain collection identity through trash and clean restore",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 7297,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-30T11:27:51.567Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "da4549550c937eb00a75-96cd07c5baed2488c978",
+          "file": "collections-ledger-release.spec.ts",
+          "line": 60,
+          "column": 2
+        },
+        {
+          "title": "en-US 1280 five asset types retain collection identity through trash and clean restore",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 7566,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-30T11:27:59.065Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "da4549550c937eb00a75-63843c4b9d186c2accf7",
+          "file": "collections-ledger-release.spec.ts",
+          "line": 60,
+          "column": 2
+        }
+      ]
+    },
+    {
+      "title": "collections-route.spec.ts",
+      "file": "collections-route.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "zh-CN 390px organize subscription entry opens and reloads finance",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 451,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-30T11:28:01.574Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "690661648518579f5964-2952066c604e7bf07542",
+          "file": "collections-route.spec.ts",
+          "line": 7,
+          "column": 3
+        },
+        {
+          "title": "zh-CN 1280px organize subscription entry opens and reloads finance",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 463,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-30T11:28:02.029Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "690661648518579f5964-c12749997ae9a7887e74",
+          "file": "collections-route.spec.ts",
+          "line": 7,
+          "column": 3
+        },
+        {
+          "title": "en-US 390px organize subscription entry opens and reloads finance",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 423,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-30T11:28:02.497Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "690661648518579f5964-55c5bdb1aa0d67e005fa",
+          "file": "collections-route.spec.ts",
+          "line": 7,
+          "column": 3
+        },
+        {
+          "title": "en-US 1280px organize subscription entry opens and reloads finance",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 470,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-30T11:28:02.926Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "690661648518579f5964-d3c1526881d4c2b4757d",
+          "file": "collections-route.spec.ts",
+          "line": 7,
+          "column": 3
+        }
+      ]
+    },
+    {
+      "title": "custom-category-release.spec.ts",
+      "file": "custom-category-release.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "en-US fixed package category identity survives UI rename and encrypted clean restore",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 8644,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-30T11:28:03.408Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ceabc48589b28927f060-d8c1f1d53687a5090ee1",
+          "file": "custom-category-release.spec.ts",
+          "line": 72,
+          "column": 2
+        },
+        {
+          "title": "zh-CN fixed package category identity survives UI rename and encrypted clean restore",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 8734,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-30T11:28:12.057Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ceabc48589b28927f060-9f6e1a32bda367e87cc5",
+          "file": "custom-category-release.spec.ts",
+          "line": 72,
+          "column": 2
+        }
+      ]
+    },
+    {
+      "title": "detail-entry-statistics.spec.ts",
+      "file": "detail-entry-statistics.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "zh-CN detail entries and live project statistics at 390px",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 10114,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-30T11:28:06.646Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "01e6fe734b3b0537958a-8794e21a17f6d4ffe8fc",
+          "file": "detail-entry-statistics.spec.ts",
+          "line": 92,
+          "column": 3
+        },
+        {
+          "title": "zh-CN detail entries and live project statistics at 1280px",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 9986,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-30T11:28:16.767Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "01e6fe734b3b0537958a-8ba85410c3673d6e7f5d",
+          "file": "detail-entry-statistics.spec.ts",
+          "line": 92,
+          "column": 3
+        },
+        {
+          "title": "en-US detail entries and live project statistics at 390px",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 9877,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-30T11:28:26.757Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "01e6fe734b3b0537958a-fe42d4bae6b448802d27",
+          "file": "detail-entry-statistics.spec.ts",
+          "line": 92,
+          "column": 3
+        },
+        {
+          "title": "en-US detail entries and live project statistics at 1280px",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 10052,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-30T11:28:36.637Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "01e6fe734b3b0537958a-b44331b8839e498e1e56",
+          "file": "detail-entry-statistics.spec.ts",
+          "line": 92,
+          "column": 3
+        }
+      ]
+    },
+    {
+      "title": "finance-ledger-release.spec.ts",
+      "file": "finance-ledger-release.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "zh-CN 390 finance ledger survives UI backup and clean restore",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 7206,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-30T11:28:20.806Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "a8489930fe96444aab52-c53927ef6417f06feeba",
+          "file": "finance-ledger-release.spec.ts",
+          "line": 310,
+          "column": 2
+        },
+        {
+          "title": "en-US 1280 finance ledger survives UI backup and clean restore",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 7330,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-30T11:28:28.017Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "a8489930fe96444aab52-c077af91316e6434db87",
+          "file": "finance-ledger-release.spec.ts",
+          "line": 310,
+          "column": 2
+        }
+      ]
+    },
+    {
+      "title": "global-search-release.spec.ts",
+      "file": "global-search-release.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "en-US fixed package global search navigates UI records and encrypted clean restore",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 4793,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-30T11:28:35.357Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "4315b8594be76ca64c5b-c62cfa75c613dd01e0aa",
+          "file": "global-search-release.spec.ts",
+          "line": 62,
+          "column": 2
+        },
+        {
+          "title": "zh-CN fixed package global search navigates UI records and encrypted clean restore",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 4679,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-30T11:28:40.154Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "4315b8594be76ca64c5b-607d1588485cde70c4b8",
+          "file": "global-search-release.spec.ts",
+          "line": 62,
+          "column": 2
+        }
+      ]
+    },
+    {
+      "title": "intake-asset-receipt.spec.ts",
+      "file": "intake-asset-receipt.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "en-US intake asset receipts retain snapshots and safe detail links at 390px",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3639,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-30T11:28:44.844Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "40b47f9b0f39d4e6fe77-3d328a5ef831fcd708bb",
+          "file": "intake-asset-receipt.spec.ts",
+          "line": 96,
+          "column": 3
+        },
+        {
+          "title": "en-US intake asset receipts retain snapshots and safe detail links at 1280px",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2523,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-30T11:28:48.487Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "40b47f9b0f39d4e6fe77-f46ac1472bb9a49dd3b8",
+          "file": "intake-asset-receipt.spec.ts",
+          "line": 96,
+          "column": 3
+        },
+        {
+          "title": "zh-CN intake asset receipts retain snapshots and safe detail links at 390px",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 4014,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-30T11:28:51.016Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "40b47f9b0f39d4e6fe77-e9bc692be41d69c3f45d",
+          "file": "intake-asset-receipt.spec.ts",
+          "line": 96,
+          "column": 3
+        },
+        {
+          "title": "zh-CN intake asset receipts retain snapshots and safe detail links at 1280px",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2583,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-30T11:28:55.036Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "40b47f9b0f39d4e6fe77-067e3a6ac48248533a6c",
+          "file": "intake-asset-receipt.spec.ts",
+          "line": 96,
+          "column": 3
+        }
+      ]
+    },
+    {
+      "title": "intake-expense.spec.ts",
+      "file": "intake-expense.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "zh-CN 390 PDF expense retains a draft, confirms once, and restores its receipt",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 4099,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-30T11:28:46.705Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "d037231ffda2ec798bca-0d9a84fd600700b23889",
+          "file": "intake-expense.spec.ts",
+          "line": 44,
+          "column": 2
+        },
+        {
+          "title": "zh-CN 1280 PDF expense retains a draft, confirms once, and restores its receipt",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 4319,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-30T11:28:50.810Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "d037231ffda2ec798bca-54feb0f6dd0812eb7edf",
+          "file": "intake-expense.spec.ts",
+          "line": 44,
+          "column": 2
+        },
+        {
+          "title": "en-US 390 PDF expense retains a draft, confirms once, and restores its receipt",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 4280,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-30T11:28:55.133Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "d037231ffda2ec798bca-a9d64caf00ae7054d306",
+          "file": "intake-expense.spec.ts",
+          "line": 44,
+          "column": 2
+        },
+        {
+          "title": "en-US 1280 PDF expense retains a draft, confirms once, and restores its receipt",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 4226,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-30T11:28:59.418Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "d037231ffda2ec798bca-859bc2bb2493c86b4c84",
+          "file": "intake-expense.spec.ts",
+          "line": 44,
+          "column": 2
+        }
+      ]
+    },
+    {
+      "title": "intake-pdf.spec.ts",
+      "file": "intake-pdf.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "zh-CN 390 PDF text requires explicit type and confirmation, retains decisions",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2292,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-30T11:28:57.634Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "9a604dc1b5935c1684eb-830aee1363904de338dd",
+          "file": "intake-pdf.spec.ts",
+          "line": 10,
+          "column": 75
+        },
+        {
+          "title": "zh-CN 1280 PDF text requires explicit type and confirmation, retains decisions",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2114,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-30T11:28:59.931Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "9a604dc1b5935c1684eb-4a3a7f10c5da30a6e917",
+          "file": "intake-pdf.spec.ts",
+          "line": 10,
+          "column": 75
+        },
+        {
+          "title": "en-US 390 PDF text requires explicit type and confirmation, retains decisions",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2207,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-30T11:29:02.049Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "9a604dc1b5935c1684eb-d121dca12808fdaaa7a1",
+          "file": "intake-pdf.spec.ts",
+          "line": 10,
+          "column": 75
+        },
+        {
+          "title": "en-US 1280 PDF text requires explicit type and confirmation, retains decisions",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2140,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-30T11:29:04.260Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "9a604dc1b5935c1684eb-ba9efec8ca36e8504210",
+          "file": "intake-pdf.spec.ts",
+          "line": 10,
+          "column": 75
+        }
+      ]
+    },
+    {
+      "title": "intake-review-backup.spec.ts",
+      "file": "intake-review-backup.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "zh-CN downloaded encrypted backup restores CSV/PDF drafts, receipts and stable deduplication",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 2352,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-30T11:29:03.655Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "1b0ad01a63a2b8905c6d-4af068d993df7d052c89",
+          "file": "intake-review-backup.spec.ts",
+          "line": 29,
+          "column": 42
+        },
+        {
+          "title": "en-US downloaded encrypted backup restores CSV/PDF drafts, receipts and stable deduplication",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 2486,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-30T11:29:06.011Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "1b0ad01a63a2b8905c6d-f43268c9605e5035201c",
+          "file": "intake-review-backup.spec.ts",
+          "line": 29,
+          "column": 42
+        }
+      ]
+    },
+    {
+      "title": "intake-review-merge.spec.ts",
+      "file": "intake-review-merge.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "zh-CN 390 candidate merge requires choices, keeps selected drafts and decisions, and survives refresh/undo",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 5572,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-30T11:29:06.410Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "c7b0d5d232a9dd7ddc41-e60f1c8d9848b209ff24",
+          "file": "intake-review-merge.spec.ts",
+          "line": 65,
+          "column": 42
+        },
+        {
+          "title": "en-US 390 candidate merge requires choices, keeps selected drafts and decisions, and survives refresh/undo",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 5306,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-30T11:29:11.985Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "c7b0d5d232a9dd7ddc41-ce7946c2cd901b91e645",
+          "file": "intake-review-merge.spec.ts",
+          "line": 65,
+          "column": 42
+        }
+      ]
+    },
+    {
+      "title": "local-core.spec.ts",
+      "file": "local-core.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "project, account, subscription, located item, linked reminder and downloaded backup survive a fresh browser restore",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 7279,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-30T11:29:08.506Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ca2d51e9409fb4c6a057-836dcda679ceb4aede8f",
+          "file": "local-core.spec.ts",
+          "line": 24,
+          "column": 1
+        },
+        {
+          "title": "both languages fit key pages and the task dialog at target widths",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 13573,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-30T11:29:15.788Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ca2d51e9409fb4c6a057-ecc12d6d43196fec5197",
+          "file": "local-core.spec.ts",
+          "line": 166,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "production-offline.spec.ts",
+      "file": "production-offline.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "delivered installation manifest and icons remain available offline",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 435,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-30T11:29:17.301Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "b84f5b53779e4c0405ad-9bcc59b9feec79b844e8",
+          "file": "production-offline.spec.ts",
+          "line": 6,
+          "column": 1
+        },
+        {
+          "title": "built PWA reopens offline, edits local data and downloads a backup",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2481,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-30T11:29:17.742Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "b84f5b53779e4c0405ad-d9d78ddcaef4785c2a26",
+          "file": "production-offline.spec.ts",
+          "line": 41,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "relation-graph-verification.spec.ts",
+      "file": "relation-graph-verification.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "zh-CN graph verification and mixed groups remain accurate at 390px",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 5071,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-30T11:29:20.234Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "a4ee662d214bb8e4d564-d272fe2acafca962865e",
+          "file": "relation-graph-verification.spec.ts",
+          "line": 12,
+          "column": 3
+        },
+        {
+          "title": "zh-CN graph verification and mixed groups remain accurate at 1280px",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 4223,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-30T11:29:25.309Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "a4ee662d214bb8e4d564-eb604e2d89bb5d2085a0",
+          "file": "relation-graph-verification.spec.ts",
+          "line": 12,
+          "column": 3
+        },
+        {
+          "title": "en-US graph verification and mixed groups remain accurate at 390px",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 5023,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-30T11:29:29.536Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "a4ee662d214bb8e4d564-9608c6613a1a1f8b112d",
+          "file": "relation-graph-verification.spec.ts",
+          "line": 12,
+          "column": 3
+        },
+        {
+          "title": "en-US graph verification and mixed groups remain accurate at 1280px",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 4235,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-30T11:29:34.565Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "a4ee662d214bb8e4d564-399bcd4ff8992bd9dca2",
+          "file": "relation-graph-verification.spec.ts",
+          "line": 12,
+          "column": 3
+        }
+      ]
+    },
+    {
+      "title": "restore-identity.spec.ts",
+      "file": "restore-identity.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "zh-CN ordinary restore preserves source identity and blocks a cross-workspace import",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 5109,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-30T11:29:29.371Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "b2c963555682c639c46d-9770b716d718d77ee3ab",
+          "file": "restore-identity.spec.ts",
+          "line": 73,
+          "column": 42
+        },
+        {
+          "title": "en-US ordinary restore preserves source identity and blocks a cross-workspace import",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 5038,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-30T11:29:34.484Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "b2c963555682c639c46d-12e97211f3b2d305b01c",
+          "file": "restore-identity.spec.ts",
+          "line": 73,
+          "column": 42
+        }
+      ]
+    },
+    {
+      "title": "restore-self-service-release.spec.ts",
+      "file": "restore-self-service-release.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "zh-CN 390px fixed UI continues restore after a controlled record write interruption",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 5003,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-30T11:29:38.808Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "controlled-write-failure",
+                      "contentType": "application/json",
+                      "body": "eyJlbmFibGVkIjp0cnVlLCJ3cml0ZXMiOjEsImZhaWx1cmVzIjoxfQ=="
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "21d389cdd82297442822-c1e14e1f1a7c92d361af",
+          "file": "restore-self-service-release.spec.ts",
+          "line": 266,
+          "column": 2
+        },
+        {
+          "title": "en-US 1280px fixed UI keeps current data after a controlled record write interruption",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 6112,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-30T11:29:43.814Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "controlled-write-failure",
+                      "contentType": "application/json",
+                      "body": "eyJlbmFibGVkIjp0cnVlLCJ3cml0ZXMiOjEsImZhaWx1cmVzIjoxfQ=="
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "21d389cdd82297442822-1da5cfa6555ab5c4eb27",
+          "file": "restore-self-service-release.spec.ts",
+          "line": 266,
+          "column": 2
+        }
+      ]
+    },
+    {
+      "title": "themed-select.spec.ts",
+      "file": "themed-select.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "zh-CN 390: themed choices preserve keyboard, clearing, required fields and long labels",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 2988,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-30T11:29:39.533Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "1de30a996d24fd0912d8-f6e6ad7359ef97cca42f",
+          "file": "themed-select.spec.ts",
+          "line": 35,
+          "column": 3
+        },
+        {
+          "title": "zh-CN 1280: themed choices preserve keyboard, clearing, required fields and long labels",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 3011,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-30T11:29:42.524Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "1de30a996d24fd0912d8-6cf5c3e64cc3ddbf0e11",
+          "file": "themed-select.spec.ts",
+          "line": 35,
+          "column": 3
+        },
+        {
+          "title": "en-US 390: themed choices preserve keyboard, clearing, required fields and long labels",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 2939,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-30T11:29:45.539Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "1de30a996d24fd0912d8-f786a1acc1af6a8532ff",
+          "file": "themed-select.spec.ts",
+          "line": 35,
+          "column": 3
+        },
+        {
+          "title": "en-US 1280: themed choices preserve keyboard, clearing, required fields and long labels",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 3018,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-30T11:29:48.483Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "1de30a996d24fd0912d8-1d7b6f47519f1fee2540",
+          "file": "themed-select.spec.ts",
+          "line": 35,
+          "column": 3
+        }
+      ]
+    },
+    {
+      "title": "vault-reference-release.spec.ts",
+      "file": "vault-reference-release.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "zh-CN 390px vault reference saves, archives and restores through the fixed UI",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 27042,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-30T11:29:50.177Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "vault-table-scroll-initial",
+                      "contentType": "application/json",
+                      "body": "ewogICJzY3JvbGxMZWZ0IjogMCwKICAic2Nyb2xsV2lkdGgiOiA3MjAsCiAgImNsaWVudFdpZHRoIjogMzYyLAogICJmb2N1c2VkIjogdHJ1ZSwKICAib3ZlcmZsb3dYIjogImF1dG8iLAogICJvdmVyZmxvd1kiOiAiYXV0byIsCiAgInRhYkluZGV4IjogMCwKICAiYWN0aXZlVGFnTmFtZSI6ICJTRUNUSU9OIiwKICAiYWN0aXZlQ2xhc3NOYW1lIjogImNhcmQgdmF1bHQtdGFibGUtd3JhcCBhc3NldC1saXN0LWNvbnRlbnQiLAogICJzZWxlY3Rpb24iOiAiIiwKICAic2NyaXB0U291cmNlcyI6IFsKICAgICJodHRwOi8vMTI3LjAuMC4xOjQyODEvYXNzZXRzL2luZGV4LURzek0temt4LmpzIgogIF0KfQ=="
+                    },
+                    {
+                      "name": "vault-table-scroll-after-right",
+                      "contentType": "application/json",
+                      "body": "ewogICJzY3JvbGxMZWZ0IjogMzIwLAogICJzY3JvbGxXaWR0aCI6IDcyMCwKICAiY2xpZW50V2lkdGgiOiAzNjIsCiAgImZvY3VzZWQiOiB0cnVlLAogICJvdmVyZmxvd1giOiAiYXV0byIsCiAgIm92ZXJmbG93WSI6ICJhdXRvIiwKICAidGFiSW5kZXgiOiAwLAogICJhY3RpdmVUYWdOYW1lIjogIlNFQ1RJT04iLAogICJhY3RpdmVDbGFzc05hbWUiOiAiY2FyZCB2YXVsdC10YWJsZS13cmFwIGFzc2V0LWxpc3QtY29udGVudCIsCiAgInNlbGVjdGlvbiI6ICIiLAogICJzY3JpcHRTb3VyY2VzIjogWwogICAgImh0dHA6Ly8xMjcuMC4wLjE6NDI4MS9hc3NldHMvaW5kZXgtRHN6TS16a3guanMiCiAgXQp9"
+                    },
+                    {
+                      "name": "vault-table-scroll-after-left",
+                      "contentType": "application/json",
+                      "body": "ewogICJzY3JvbGxMZWZ0IjogMCwKICAic2Nyb2xsV2lkdGgiOiA3MjAsCiAgImNsaWVudFdpZHRoIjogMzYyLAogICJmb2N1c2VkIjogdHJ1ZSwKICAib3ZlcmZsb3dYIjogImF1dG8iLAogICJvdmVyZmxvd1kiOiAiYXV0byIsCiAgInRhYkluZGV4IjogMCwKICAiYWN0aXZlVGFnTmFtZSI6ICJTRUNUSU9OIiwKICAiYWN0aXZlQ2xhc3NOYW1lIjogImNhcmQgdmF1bHQtdGFibGUtd3JhcCBhc3NldC1saXN0LWNvbnRlbnQiLAogICJzZWxlY3Rpb24iOiAiIiwKICAic2NyaXB0U291cmNlcyI6IFsKICAgICJodHRwOi8vMTI3LjAuMC4xOjQyODEvYXNzZXRzL2luZGV4LURzek0temt4LmpzIgogIF0KfQ=="
+                    },
+                    {
+                      "name": "vault-table-scroll-initial",
+                      "contentType": "application/json",
+                      "body": "ewogICJzY3JvbGxMZWZ0IjogMCwKICAic2Nyb2xsV2lkdGgiOiA3MjAsCiAgImNsaWVudFdpZHRoIjogMzYyLAogICJmb2N1c2VkIjogdHJ1ZSwKICAib3ZlcmZsb3dYIjogImF1dG8iLAogICJvdmVyZmxvd1kiOiAiYXV0byIsCiAgInRhYkluZGV4IjogMCwKICAiYWN0aXZlVGFnTmFtZSI6ICJTRUNUSU9OIiwKICAiYWN0aXZlQ2xhc3NOYW1lIjogImNhcmQgdmF1bHQtdGFibGUtd3JhcCBhc3NldC1saXN0LWNvbnRlbnQiLAogICJzZWxlY3Rpb24iOiAiIiwKICAic2NyaXB0U291cmNlcyI6IFsKICAgICJodHRwOi8vMTI3LjAuMC4xOjQyODEvYXNzZXRzL2luZGV4LURzek0temt4LmpzIgogIF0KfQ=="
+                    },
+                    {
+                      "name": "vault-table-scroll-after-right",
+                      "contentType": "application/json",
+                      "body": "ewogICJzY3JvbGxMZWZ0IjogMzIwLAogICJzY3JvbGxXaWR0aCI6IDcyMCwKICAiY2xpZW50V2lkdGgiOiAzNjIsCiAgImZvY3VzZWQiOiB0cnVlLAogICJvdmVyZmxvd1giOiAiYXV0byIsCiAgIm92ZXJmbG93WSI6ICJhdXRvIiwKICAidGFiSW5kZXgiOiAwLAogICJhY3RpdmVUYWdOYW1lIjogIlNFQ1RJT04iLAogICJhY3RpdmVDbGFzc05hbWUiOiAiY2FyZCB2YXVsdC10YWJsZS13cmFwIGFzc2V0LWxpc3QtY29udGVudCIsCiAgInNlbGVjdGlvbiI6ICIiLAogICJzY3JpcHRTb3VyY2VzIjogWwogICAgImh0dHA6Ly8xMjcuMC4wLjE6NDI4MS9hc3NldHMvaW5kZXgtRHN6TS16a3guanMiCiAgXQp9"
+                    },
+                    {
+                      "name": "vault-table-scroll-after-left",
+                      "contentType": "application/json",
+                      "body": "ewogICJzY3JvbGxMZWZ0IjogMCwKICAic2Nyb2xsV2lkdGgiOiA3MjAsCiAgImNsaWVudFdpZHRoIjogMzYyLAogICJmb2N1c2VkIjogdHJ1ZSwKICAib3ZlcmZsb3dYIjogImF1dG8iLAogICJvdmVyZmxvd1kiOiAiYXV0byIsCiAgInRhYkluZGV4IjogMCwKICAiYWN0aXZlVGFnTmFtZSI6ICJTRUNUSU9OIiwKICAiYWN0aXZlQ2xhc3NOYW1lIjogImNhcmQgdmF1bHQtdGFibGUtd3JhcCBhc3NldC1saXN0LWNvbnRlbnQiLAogICJzZWxlY3Rpb24iOiAiIiwKICAic2NyaXB0U291cmNlcyI6IFsKICAgICJodHRwOi8vMTI3LjAuMC4xOjQyODEvYXNzZXRzL2luZGV4LURzek0temt4LmpzIgogIF0KfQ=="
+                    },
+                    {
+                      "name": "vault-table-scroll-initial",
+                      "contentType": "application/json",
+                      "body": "ewogICJzY3JvbGxMZWZ0IjogMCwKICAic2Nyb2xsV2lkdGgiOiA3MjAsCiAgImNsaWVudFdpZHRoIjogMzYyLAogICJmb2N1c2VkIjogdHJ1ZSwKICAib3ZlcmZsb3dYIjogImF1dG8iLAogICJvdmVyZmxvd1kiOiAiYXV0byIsCiAgInRhYkluZGV4IjogMCwKICAiYWN0aXZlVGFnTmFtZSI6ICJTRUNUSU9OIiwKICAiYWN0aXZlQ2xhc3NOYW1lIjogImNhcmQgdmF1bHQtdGFibGUtd3JhcCBhc3NldC1saXN0LWNvbnRlbnQiLAogICJzZWxlY3Rpb24iOiAiIiwKICAic2NyaXB0U291cmNlcyI6IFsKICAgICJodHRwOi8vMTI3LjAuMC4xOjQyODEvYXNzZXRzL2luZGV4LURzek0temt4LmpzIgogIF0KfQ=="
+                    },
+                    {
+                      "name": "vault-table-scroll-after-right",
+                      "contentType": "application/json",
+                      "body": "ewogICJzY3JvbGxMZWZ0IjogMzIwLAogICJzY3JvbGxXaWR0aCI6IDcyMCwKICAiY2xpZW50V2lkdGgiOiAzNjIsCiAgImZvY3VzZWQiOiB0cnVlLAogICJvdmVyZmxvd1giOiAiYXV0byIsCiAgIm92ZXJmbG93WSI6ICJhdXRvIiwKICAidGFiSW5kZXgiOiAwLAogICJhY3RpdmVUYWdOYW1lIjogIlNFQ1RJT04iLAogICJhY3RpdmVDbGFzc05hbWUiOiAiY2FyZCB2YXVsdC10YWJsZS13cmFwIGFzc2V0LWxpc3QtY29udGVudCIsCiAgInNlbGVjdGlvbiI6ICIiLAogICJzY3JpcHRTb3VyY2VzIjogWwogICAgImh0dHA6Ly8xMjcuMC4wLjE6NDI4MS9hc3NldHMvaW5kZXgtRHN6TS16a3guanMiCiAgXQp9"
+                    },
+                    {
+                      "name": "vault-table-scroll-after-left",
+                      "contentType": "application/json",
+                      "body": "ewogICJzY3JvbGxMZWZ0IjogMCwKICAic2Nyb2xsV2lkdGgiOiA3MjAsCiAgImNsaWVudFdpZHRoIjogMzYyLAogICJmb2N1c2VkIjogdHJ1ZSwKICAib3ZlcmZsb3dYIjogImF1dG8iLAogICJvdmVyZmxvd1kiOiAiYXV0byIsCiAgInRhYkluZGV4IjogMCwKICAiYWN0aXZlVGFnTmFtZSI6ICJTRUNUSU9OIiwKICAiYWN0aXZlQ2xhc3NOYW1lIjogImNhcmQgdmF1bHQtdGFibGUtd3JhcCBhc3NldC1saXN0LWNvbnRlbnQiLAogICJzZWxlY3Rpb24iOiAiIiwKICAic2NyaXB0U291cmNlcyI6IFsKICAgICJodHRwOi8vMTI3LjAuMC4xOjQyODEvYXNzZXRzL2luZGV4LURzek0temt4LmpzIgogIF0KfQ=="
+                    },
+                    {
+                      "name": "vault-table-scroll-initial",
+                      "contentType": "application/json",
+                      "body": "ewogICJzY3JvbGxMZWZ0IjogMCwKICAic2Nyb2xsV2lkdGgiOiA3MjAsCiAgImNsaWVudFdpZHRoIjogMzYyLAogICJmb2N1c2VkIjogdHJ1ZSwKICAib3ZlcmZsb3dYIjogImF1dG8iLAogICJvdmVyZmxvd1kiOiAiYXV0byIsCiAgInRhYkluZGV4IjogMCwKICAiYWN0aXZlVGFnTmFtZSI6ICJTRUNUSU9OIiwKICAiYWN0aXZlQ2xhc3NOYW1lIjogImNhcmQgdmF1bHQtdGFibGUtd3JhcCBhc3NldC1saXN0LWNvbnRlbnQiLAogICJzZWxlY3Rpb24iOiAiIiwKICAic2NyaXB0U291cmNlcyI6IFsKICAgICJodHRwOi8vMTI3LjAuMC4xOjQyODEvYXNzZXRzL2luZGV4LURzek0temt4LmpzIgogIF0KfQ=="
+                    },
+                    {
+                      "name": "vault-table-scroll-after-right",
+                      "contentType": "application/json",
+                      "body": "ewogICJzY3JvbGxMZWZ0IjogMzIwLAogICJzY3JvbGxXaWR0aCI6IDcyMCwKICAiY2xpZW50V2lkdGgiOiAzNjIsCiAgImZvY3VzZWQiOiB0cnVlLAogICJvdmVyZmxvd1giOiAiYXV0byIsCiAgIm92ZXJmbG93WSI6ICJhdXRvIiwKICAidGFiSW5kZXgiOiAwLAogICJhY3RpdmVUYWdOYW1lIjogIlNFQ1RJT04iLAogICJhY3RpdmVDbGFzc05hbWUiOiAiY2FyZCB2YXVsdC10YWJsZS13cmFwIGFzc2V0LWxpc3QtY29udGVudCIsCiAgInNlbGVjdGlvbiI6ICIiLAogICJzY3JpcHRTb3VyY2VzIjogWwogICAgImh0dHA6Ly8xMjcuMC4wLjE6NDI4MS9hc3NldHMvaW5kZXgtRHN6TS16a3guanMiCiAgXQp9"
+                    },
+                    {
+                      "name": "vault-table-scroll-after-left",
+                      "contentType": "application/json",
+                      "body": "ewogICJzY3JvbGxMZWZ0IjogMCwKICAic2Nyb2xsV2lkdGgiOiA3MjAsCiAgImNsaWVudFdpZHRoIjogMzYyLAogICJmb2N1c2VkIjogdHJ1ZSwKICAib3ZlcmZsb3dYIjogImF1dG8iLAogICJvdmVyZmxvd1kiOiAiYXV0byIsCiAgInRhYkluZGV4IjogMCwKICAiYWN0aXZlVGFnTmFtZSI6ICJTRUNUSU9OIiwKICAiYWN0aXZlQ2xhc3NOYW1lIjogImNhcmQgdmF1bHQtdGFibGUtd3JhcCBhc3NldC1saXN0LWNvbnRlbnQiLAogICJzZWxlY3Rpb24iOiAiIiwKICAic2NyaXB0U291cmNlcyI6IFsKICAgICJodHRwOi8vMTI3LjAuMC4xOjQyODEvYXNzZXRzL2luZGV4LURzek0temt4LmpzIgogIF0KfQ=="
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "c34c947a40b123aa7f79-af7eb535ec9eec10c699",
+          "file": "vault-reference-release.spec.ts",
+          "line": 414,
+          "column": 3
+        },
+        {
+          "title": "zh-CN 1280px vault reference saves, archives and restores through the fixed UI",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 4149,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-30T11:30:17.222Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "c34c947a40b123aa7f79-33bbfdd2bddbcdb087ee",
+          "file": "vault-reference-release.spec.ts",
+          "line": 414,
+          "column": 3
+        },
+        {
+          "title": "en-US 390px vault reference saves, archives and restores through the fixed UI",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 27057,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-30T11:30:21.374Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "vault-table-scroll-initial",
+                      "contentType": "application/json",
+                      "body": "ewogICJzY3JvbGxMZWZ0IjogMCwKICAic2Nyb2xsV2lkdGgiOiA3MjAsCiAgImNsaWVudFdpZHRoIjogMzYyLAogICJmb2N1c2VkIjogdHJ1ZSwKICAib3ZlcmZsb3dYIjogImF1dG8iLAogICJvdmVyZmxvd1kiOiAiYXV0byIsCiAgInRhYkluZGV4IjogMCwKICAiYWN0aXZlVGFnTmFtZSI6ICJTRUNUSU9OIiwKICAiYWN0aXZlQ2xhc3NOYW1lIjogImNhcmQgdmF1bHQtdGFibGUtd3JhcCBhc3NldC1saXN0LWNvbnRlbnQiLAogICJzZWxlY3Rpb24iOiAiIiwKICAic2NyaXB0U291cmNlcyI6IFsKICAgICJodHRwOi8vMTI3LjAuMC4xOjQyODEvYXNzZXRzL2luZGV4LURzek0temt4LmpzIgogIF0KfQ=="
+                    },
+                    {
+                      "name": "vault-table-scroll-after-right",
+                      "contentType": "application/json",
+                      "body": "ewogICJzY3JvbGxMZWZ0IjogMzIwLAogICJzY3JvbGxXaWR0aCI6IDcyMCwKICAiY2xpZW50V2lkdGgiOiAzNjIsCiAgImZvY3VzZWQiOiB0cnVlLAogICJvdmVyZmxvd1giOiAiYXV0byIsCiAgIm92ZXJmbG93WSI6ICJhdXRvIiwKICAidGFiSW5kZXgiOiAwLAogICJhY3RpdmVUYWdOYW1lIjogIlNFQ1RJT04iLAogICJhY3RpdmVDbGFzc05hbWUiOiAiY2FyZCB2YXVsdC10YWJsZS13cmFwIGFzc2V0LWxpc3QtY29udGVudCIsCiAgInNlbGVjdGlvbiI6ICIiLAogICJzY3JpcHRTb3VyY2VzIjogWwogICAgImh0dHA6Ly8xMjcuMC4wLjE6NDI4MS9hc3NldHMvaW5kZXgtRHN6TS16a3guanMiCiAgXQp9"
+                    },
+                    {
+                      "name": "vault-table-scroll-after-left",
+                      "contentType": "application/json",
+                      "body": "ewogICJzY3JvbGxMZWZ0IjogMCwKICAic2Nyb2xsV2lkdGgiOiA3MjAsCiAgImNsaWVudFdpZHRoIjogMzYyLAogICJmb2N1c2VkIjogdHJ1ZSwKICAib3ZlcmZsb3dYIjogImF1dG8iLAogICJvdmVyZmxvd1kiOiAiYXV0byIsCiAgInRhYkluZGV4IjogMCwKICAiYWN0aXZlVGFnTmFtZSI6ICJTRUNUSU9OIiwKICAiYWN0aXZlQ2xhc3NOYW1lIjogImNhcmQgdmF1bHQtdGFibGUtd3JhcCBhc3NldC1saXN0LWNvbnRlbnQiLAogICJzZWxlY3Rpb24iOiAiIiwKICAic2NyaXB0U291cmNlcyI6IFsKICAgICJodHRwOi8vMTI3LjAuMC4xOjQyODEvYXNzZXRzL2luZGV4LURzek0temt4LmpzIgogIF0KfQ=="
+                    },
+                    {
+                      "name": "vault-table-scroll-initial",
+                      "contentType": "application/json",
+                      "body": "ewogICJzY3JvbGxMZWZ0IjogMCwKICAic2Nyb2xsV2lkdGgiOiA3MjAsCiAgImNsaWVudFdpZHRoIjogMzYyLAogICJmb2N1c2VkIjogdHJ1ZSwKICAib3ZlcmZsb3dYIjogImF1dG8iLAogICJvdmVyZmxvd1kiOiAiYXV0byIsCiAgInRhYkluZGV4IjogMCwKICAiYWN0aXZlVGFnTmFtZSI6ICJTRUNUSU9OIiwKICAiYWN0aXZlQ2xhc3NOYW1lIjogImNhcmQgdmF1bHQtdGFibGUtd3JhcCBhc3NldC1saXN0LWNvbnRlbnQiLAogICJzZWxlY3Rpb24iOiAiIiwKICAic2NyaXB0U291cmNlcyI6IFsKICAgICJodHRwOi8vMTI3LjAuMC4xOjQyODEvYXNzZXRzL2luZGV4LURzek0temt4LmpzIgogIF0KfQ=="
+                    },
+                    {
+                      "name": "vault-table-scroll-after-right",
+                      "contentType": "application/json",
+                      "body": "ewogICJzY3JvbGxMZWZ0IjogMzIwLAogICJzY3JvbGxXaWR0aCI6IDcyMCwKICAiY2xpZW50V2lkdGgiOiAzNjIsCiAgImZvY3VzZWQiOiB0cnVlLAogICJvdmVyZmxvd1giOiAiYXV0byIsCiAgIm92ZXJmbG93WSI6ICJhdXRvIiwKICAidGFiSW5kZXgiOiAwLAogICJhY3RpdmVUYWdOYW1lIjogIlNFQ1RJT04iLAogICJhY3RpdmVDbGFzc05hbWUiOiAiY2FyZCB2YXVsdC10YWJsZS13cmFwIGFzc2V0LWxpc3QtY29udGVudCIsCiAgInNlbGVjdGlvbiI6ICIiLAogICJzY3JpcHRTb3VyY2VzIjogWwogICAgImh0dHA6Ly8xMjcuMC4wLjE6NDI4MS9hc3NldHMvaW5kZXgtRHN6TS16a3guanMiCiAgXQp9"
+                    },
+                    {
+                      "name": "vault-table-scroll-after-left",
+                      "contentType": "application/json",
+                      "body": "ewogICJzY3JvbGxMZWZ0IjogMCwKICAic2Nyb2xsV2lkdGgiOiA3MjAsCiAgImNsaWVudFdpZHRoIjogMzYyLAogICJmb2N1c2VkIjogdHJ1ZSwKICAib3ZlcmZsb3dYIjogImF1dG8iLAogICJvdmVyZmxvd1kiOiAiYXV0byIsCiAgInRhYkluZGV4IjogMCwKICAiYWN0aXZlVGFnTmFtZSI6ICJTRUNUSU9OIiwKICAiYWN0aXZlQ2xhc3NOYW1lIjogImNhcmQgdmF1bHQtdGFibGUtd3JhcCBhc3NldC1saXN0LWNvbnRlbnQiLAogICJzZWxlY3Rpb24iOiAiIiwKICAic2NyaXB0U291cmNlcyI6IFsKICAgICJodHRwOi8vMTI3LjAuMC4xOjQyODEvYXNzZXRzL2luZGV4LURzek0temt4LmpzIgogIF0KfQ=="
+                    },
+                    {
+                      "name": "vault-table-scroll-initial",
+                      "contentType": "application/json",
+                      "body": "ewogICJzY3JvbGxMZWZ0IjogMCwKICAic2Nyb2xsV2lkdGgiOiA3MjAsCiAgImNsaWVudFdpZHRoIjogMzYyLAogICJmb2N1c2VkIjogdHJ1ZSwKICAib3ZlcmZsb3dYIjogImF1dG8iLAogICJvdmVyZmxvd1kiOiAiYXV0byIsCiAgInRhYkluZGV4IjogMCwKICAiYWN0aXZlVGFnTmFtZSI6ICJTRUNUSU9OIiwKICAiYWN0aXZlQ2xhc3NOYW1lIjogImNhcmQgdmF1bHQtdGFibGUtd3JhcCBhc3NldC1saXN0LWNvbnRlbnQiLAogICJzZWxlY3Rpb24iOiAiIiwKICAic2NyaXB0U291cmNlcyI6IFsKICAgICJodHRwOi8vMTI3LjAuMC4xOjQyODEvYXNzZXRzL2luZGV4LURzek0temt4LmpzIgogIF0KfQ=="
+                    },
+                    {
+                      "name": "vault-table-scroll-after-right",
+                      "contentType": "application/json",
+                      "body": "ewogICJzY3JvbGxMZWZ0IjogMzIwLAogICJzY3JvbGxXaWR0aCI6IDcyMCwKICAiY2xpZW50V2lkdGgiOiAzNjIsCiAgImZvY3VzZWQiOiB0cnVlLAogICJvdmVyZmxvd1giOiAiYXV0byIsCiAgIm92ZXJmbG93WSI6ICJhdXRvIiwKICAidGFiSW5kZXgiOiAwLAogICJhY3RpdmVUYWdOYW1lIjogIlNFQ1RJT04iLAogICJhY3RpdmVDbGFzc05hbWUiOiAiY2FyZCB2YXVsdC10YWJsZS13cmFwIGFzc2V0LWxpc3QtY29udGVudCIsCiAgInNlbGVjdGlvbiI6ICIiLAogICJzY3JpcHRTb3VyY2VzIjogWwogICAgImh0dHA6Ly8xMjcuMC4wLjE6NDI4MS9hc3NldHMvaW5kZXgtRHN6TS16a3guanMiCiAgXQp9"
+                    },
+                    {
+                      "name": "vault-table-scroll-after-left",
+                      "contentType": "application/json",
+                      "body": "ewogICJzY3JvbGxMZWZ0IjogMCwKICAic2Nyb2xsV2lkdGgiOiA3MjAsCiAgImNsaWVudFdpZHRoIjogMzYyLAogICJmb2N1c2VkIjogdHJ1ZSwKICAib3ZlcmZsb3dYIjogImF1dG8iLAogICJvdmVyZmxvd1kiOiAiYXV0byIsCiAgInRhYkluZGV4IjogMCwKICAiYWN0aXZlVGFnTmFtZSI6ICJTRUNUSU9OIiwKICAiYWN0aXZlQ2xhc3NOYW1lIjogImNhcmQgdmF1bHQtdGFibGUtd3JhcCBhc3NldC1saXN0LWNvbnRlbnQiLAogICJzZWxlY3Rpb24iOiAiIiwKICAic2NyaXB0U291cmNlcyI6IFsKICAgICJodHRwOi8vMTI3LjAuMC4xOjQyODEvYXNzZXRzL2luZGV4LURzek0temt4LmpzIgogIF0KfQ=="
+                    },
+                    {
+                      "name": "vault-table-scroll-initial",
+                      "contentType": "application/json",
+                      "body": "ewogICJzY3JvbGxMZWZ0IjogMCwKICAic2Nyb2xsV2lkdGgiOiA3MjAsCiAgImNsaWVudFdpZHRoIjogMzYyLAogICJmb2N1c2VkIjogdHJ1ZSwKICAib3ZlcmZsb3dYIjogImF1dG8iLAogICJvdmVyZmxvd1kiOiAiYXV0byIsCiAgInRhYkluZGV4IjogMCwKICAiYWN0aXZlVGFnTmFtZSI6ICJTRUNUSU9OIiwKICAiYWN0aXZlQ2xhc3NOYW1lIjogImNhcmQgdmF1bHQtdGFibGUtd3JhcCBhc3NldC1saXN0LWNvbnRlbnQiLAogICJzZWxlY3Rpb24iOiAiIiwKICAic2NyaXB0U291cmNlcyI6IFsKICAgICJodHRwOi8vMTI3LjAuMC4xOjQyODEvYXNzZXRzL2luZGV4LURzek0temt4LmpzIgogIF0KfQ=="
+                    },
+                    {
+                      "name": "vault-table-scroll-after-right",
+                      "contentType": "application/json",
+                      "body": "ewogICJzY3JvbGxMZWZ0IjogMzIwLAogICJzY3JvbGxXaWR0aCI6IDcyMCwKICAiY2xpZW50V2lkdGgiOiAzNjIsCiAgImZvY3VzZWQiOiB0cnVlLAogICJvdmVyZmxvd1giOiAiYXV0byIsCiAgIm92ZXJmbG93WSI6ICJhdXRvIiwKICAidGFiSW5kZXgiOiAwLAogICJhY3RpdmVUYWdOYW1lIjogIlNFQ1RJT04iLAogICJhY3RpdmVDbGFzc05hbWUiOiAiY2FyZCB2YXVsdC10YWJsZS13cmFwIGFzc2V0LWxpc3QtY29udGVudCIsCiAgInNlbGVjdGlvbiI6ICIiLAogICJzY3JpcHRTb3VyY2VzIjogWwogICAgImh0dHA6Ly8xMjcuMC4wLjE6NDI4MS9hc3NldHMvaW5kZXgtRHN6TS16a3guanMiCiAgXQp9"
+                    },
+                    {
+                      "name": "vault-table-scroll-after-left",
+                      "contentType": "application/json",
+                      "body": "ewogICJzY3JvbGxMZWZ0IjogMCwKICAic2Nyb2xsV2lkdGgiOiA3MjAsCiAgImNsaWVudFdpZHRoIjogMzYyLAogICJmb2N1c2VkIjogdHJ1ZSwKICAib3ZlcmZsb3dYIjogImF1dG8iLAogICJvdmVyZmxvd1kiOiAiYXV0byIsCiAgInRhYkluZGV4IjogMCwKICAiYWN0aXZlVGFnTmFtZSI6ICJTRUNUSU9OIiwKICAiYWN0aXZlQ2xhc3NOYW1lIjogImNhcmQgdmF1bHQtdGFibGUtd3JhcCBhc3NldC1saXN0LWNvbnRlbnQiLAogICJzZWxlY3Rpb24iOiAiIiwKICAic2NyaXB0U291cmNlcyI6IFsKICAgICJodHRwOi8vMTI3LjAuMC4xOjQyODEvYXNzZXRzL2luZGV4LURzek0temt4LmpzIgogIF0KfQ=="
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "c34c947a40b123aa7f79-c9771af147112d545e30",
+          "file": "vault-reference-release.spec.ts",
+          "line": 414,
+          "column": 3
+        },
+        {
+          "title": "en-US 1280px vault reference saves, archives and restores through the fixed UI",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 4165,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-30T11:30:48.435Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "c34c947a40b123aa7f79-17d0da2a77b07b608bcf",
+          "file": "vault-reference-release.spec.ts",
+          "line": 414,
+          "column": 3
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-09-30T11:27:50.781Z",
+    "duration": 181855.139,
+    "expected": 55,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}
