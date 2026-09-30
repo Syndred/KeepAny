@@ -586,9 +586,8 @@ export function AssetList() {
 				</div>
 			)}
 			{kind === "vault" ? (
-				// biome-ignore lint/a11y/noNoninteractiveTabindex: Named scroll region needs focus for keyboard access to overflow columns.
-				<section className="card vault-table-wrap asset-list-content" aria-label={t("vaultReferencesTitle")} tabIndex={0}>
-				<table className="vault-reference-table">
+				<section className="card vault-table-wrap asset-list-content" aria-label={t("vaultReferencesTitle")} tabIndex={assets.length ? 0 : undefined}>
+				{assets.length ? <table className="vault-reference-table">
 					<thead><tr><th>{t("vaultEntryName")}</th><th>{t("vaultUsedFor")}</th><th>{t("vaultStorageLocation")}</th><th>{t("vaultVerifyDate")}</th><th>{t("status")}</th></tr></thead>
 					<tbody>{assets.map((asset) => {
 						const links = vaultRelations.filter((relation) => relation.from === asset.id || relation.to === asset.id);
@@ -602,8 +601,7 @@ export function AssetList() {
 							<td><span className={`chip ${related.length ? "" : "warn"}`}>{t(related.length ? "vaultLinked" : "vaultUnlinked")}</span></td>
 						</tr>;
 					})}</tbody>
-				</table>
-				{!assets.length && <div className="empty"><strong>{category || tag || normalizedSearch ? t("noMatches") : t("none")}</strong></div>}
+				</table> : <div className="vault-reference-empty"><strong>{category || tag || normalizedSearch ? t("noMatches") : t("none")}</strong></div>}
 			</section>) : <section className={`asset-list-content ${kind === "project" ? "asset-project-grid" : kind === "account" ? "asset-account-grid" : "asset-library-grid"}`}>
 				{assets.length ? (
 					assets.map((a) => kind === "project" ? <ProjectCard asset={a} search={search} backlinks={backlinksByAsset.get(a.id) ?? { total: 0, pending: 0 }} key={a.id} /> : kind === "account" ? <AccountCard asset={a} search={search} connectionCount={data.relations.filter((relation) => !relation.deleted && liveIds.has(relation.from) && liveIds.has(relation.to) && (relation.from === a.id || relation.to === a.id)).length} key={a.id} /> : <LibraryCard asset={a} search={search} key={a.id} />)

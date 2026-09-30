@@ -73,6 +73,8 @@ export const passwordVaultCopy: Record<string, [string, string]> = {
 	pwVaultClearAssetFilter: ["显示全部条目", "Show all entries"],
 	pwVaultEntries: ["密码条目", "Password entries"],
 	pwVaultEntriesCount: ["{{count}} 条", "{{count}} entries"],
+	pwVaultEntriesCount_one: ["{{count}} 条", "{{count}} entry"],
+	pwVaultEntriesCount_other: ["{{count}} 条", "{{count}} entries"],
 	pwVaultNoEntries: ["还没有密码条目。", "No password entries yet."],
 	pwVaultNoMatches: ["没有匹配的密码条目。", "No matching password entries."],
 	pwVaultEntryNew: ["新密码条目", "New password entry"],

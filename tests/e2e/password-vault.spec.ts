@@ -102,6 +102,11 @@ for (const variant of variants) {
 			await page.locator("#password-vault-search-input").fill("Studio");
 			await expect(entry).toHaveCount(1);
 			await page.locator("#password-vault-search-input").fill("");
+			const externalEmpty = page.locator(".vault-reference-empty");
+			await expect(externalEmpty).toContainText(zh ? "暂无" : "None");
+			await externalEmpty.scrollIntoViewIfNeeded();
+			await expect(externalEmpty.locator("strong")).toBeInViewport();
+			await page.locator(".password-vault-panel").scrollIntoViewIfNeeded();
 			await page.screenshot({ path: join(evidenceRoot, `${variant.locale}-${variant.width}-entries.png`), fullPage: true });
 			await entry.getByRole("button", { name: t("pwVaultEditEntry"), exact: true }).click();
 			await expect(page.locator("#password-vault-entry-password")).toHaveValue(generated);
