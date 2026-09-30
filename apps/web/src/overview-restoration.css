@@ -39,7 +39,7 @@
 .overview-risk p { margin: 0 0 10px; font-size: 12px; }
 .overview-risk .button { min-height: 34px; padding: 6px 10px; background: var(--paper); box-shadow: 2px 3px 0 var(--line); }
 .overview-reminder-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 52px; padding: 10px 14px; border-top: 1px solid var(--line-soft); color: var(--ink); font-size: 12px; text-decoration: none; }
-.overview-project-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 22px !important; }
+.overview-page > .overview-project-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 22px; }
 .overview-project-heading h2 { margin: 0; font-size: 16px; }
 .overview-project-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .overview-project-card, .overview-project-empty { display: block; min-width: 0; padding: 15px; border: 2px solid var(--line); border-radius: 19px; background: var(--paper); box-shadow: 4px 6px 0 var(--line); color: var(--ink); text-decoration: none; }
