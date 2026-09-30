@@ -70,7 +70,7 @@ apps/web/dist/assets/intake-pdf-DdKcXmvV.js                      431.11 kB │ g
 apps/web/dist/assets/src-DEeKAu4h.js                             442.80 kB │ gzip: 156.01 kB
 apps/web/dist/assets/index-CDMhxXs0.js                           505.26 kB │ gzip: 164.18 kB
 
-[plugin builtin:vite-reporter] 
+[plugin builtin:vite-reporter]
 (!) Some chunks are larger than 500 kB after minification. Consider:
 - Using dynamic import() to code-split the application
 - Use build.rolldownOptions.output.codeSplitting to improve chunking: https://rolldown.rs/reference/OutputOptions.codeSplitting
