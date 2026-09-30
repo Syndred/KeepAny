@@ -1464,6 +1464,7 @@ export function IntakeTools({ onCsvStaged }: { onCsvStaged: () => void }) {
 						<input
 							id="backup-password"
 							type="password"
+							aria-describedby="backup-password-hint"
 							minLength={12}
 							autoComplete="new-password"
 							disabled={busy}
@@ -1474,8 +1475,8 @@ export function IntakeTools({ onCsvStaged }: { onCsvStaged: () => void }) {
 								setReadyDownload(null);
 							}}
 						/>
+						<small id="backup-password-hint">{t("backupWarning")}</small>
 					</div>
-					<small>{t("backupWarning")}</small>
 					<div className="actions">
 						<Button onClick={() => void download()} disabled={busy || inspecting || password.length < 12}>
 							<Download size={16} />{t("backup")}

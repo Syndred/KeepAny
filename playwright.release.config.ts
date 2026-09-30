@@ -26,6 +26,7 @@ export default defineConfig({
 		"archive-migration.spec.ts",
 		"vault-reference-release.spec.ts",
 		"themed-select.spec.ts",
+		"spacing-consistency.spec.ts",
 		"finance-ledger-release.spec.ts",
 		"collections-ledger-release.spec.ts",
 		"restore-self-service-release.spec.ts",
