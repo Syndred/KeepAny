@@ -1,8 +1,15 @@
 import { mkdirSync } from "node:fs";
 import { expect, type Page, test } from "@playwright/test";
 
-const evidence = "docs/evidence/2026-09-29";
+const evidence = process.env.KEEPANY_EVIDENCE_DIR ?? "docs/evidence/2026-09-29";
 const repositoryModuleUrl = `/@fs${process.cwd()}/packages/local-db/src/index.ts`;
+
+async function openMaterials(page: Page) {
+	const section = page.locator("#asset-project-materials");
+	await expect(section).toBeVisible();
+	if (await section.getAttribute("open") === null) await section.locator(":scope > summary").click();
+	await expect(section).toHaveAttribute("open", "");
+}
 
 async function imageState(page: Page) {
 	return page.evaluate(async (modulePath) => {
@@ -85,8 +92,10 @@ for (const language of ["en", "zh-CN"] as const) {
 				await expect(editor).toBeHidden();
 				await page.getByText(name).first().click();
 				await expect(page.getByRole("heading", { name })).toBeVisible();
+			await openMaterials(page);
 				const first = await png(page, "#4a82de");
-				const addImage = page.getByRole("button", { name: labels.addImage });
+				const images = page.locator(".asset-attachments-card");
+				const addImage = images.getByRole("button", { name: labels.addImage, exact: true });
 				const firstChooser = page.waitForEvent("filechooser");
 				await addImage.click();
 				await (await firstChooser).setFiles({
@@ -154,7 +163,7 @@ for (const language of ["en", "zh-CN"] as const) {
 				await expect(dialog).toBeHidden();
 				await expect(addImage).toBeFocused();
 				expect(await imageState(page)).toEqual({ attachments: [], files: 0 });
-				await page.getByLabel(labels.addImage).setInputFiles({
+				await images.getByLabel(labels.addImage, { exact: true }).setInputFiles({
 					name: "valid.png",
 					mimeType: "image/png",
 					buffer: first,
@@ -168,7 +177,7 @@ for (const language of ["en", "zh-CN"] as const) {
 				await expect.poll(async () => (await imageState(page)).files).toBe(1);
 				const saved = await imageState(page);
 				expect(saved.attachments).toHaveLength(1);
-				const replaceImage = page.getByRole("button", { name: labels.replace });
+				const replaceImage = images.getByRole("button", { name: labels.replace, exact: true });
 				const chooser = page.waitForEvent("filechooser");
 				await replaceImage.click();
 				await (await chooser).setFiles({
@@ -184,6 +193,7 @@ for (const language of ["en", "zh-CN"] as const) {
 				await expect(replaceImage).toBeFocused();
 				expect(await imageState(page)).toEqual(saved);
 				await page.reload();
+			await openMaterials(page);
 				await expect(page.locator(".asset-image")).toHaveCount(1);
 				expect(await imageState(page)).toEqual(saved);
 				const secondChooser = page.waitForEvent("filechooser");
@@ -205,6 +215,7 @@ for (const language of ["en", "zh-CN"] as const) {
 				expect(replaced.attachments).toHaveLength(1);
 				expect(replaced.files).toBe(1);
 				await page.reload();
+			await openMaterials(page);
 				await expect(page.locator(".asset-image")).toHaveCount(1);
 				expect(await imageState(page)).toEqual(replaced);
 				expect(errors).toEqual([]);
@@ -262,7 +273,9 @@ for (const scenario of [
 			await expect(editor).toBeHidden();
 			await page.getByText(name).first().click();
 			await expect(page.getByRole("heading", { name })).toBeVisible();
-			const addImage = page.getByRole("button", { name: scenario.addImage });
+			await openMaterials(page);
+			const images = page.locator(".asset-attachments-card");
+			const addImage = images.getByRole("button", { name: scenario.addImage, exact: true });
 			const firstChooser = page.waitForEvent("filechooser");
 			await addImage.click();
 			await (await firstChooser).setFiles({
@@ -277,6 +290,7 @@ for (const scenario of [
 			await dialog.getByRole("button", { name: scenario.cancel }).click();
 			await expect(addImage).toBeFocused();
 			await page.reload();
+			await openMaterials(page);
 			await expect(page.locator(".asset-image")).toHaveCount(0);
 			const nextChooser = page.waitForEvent("filechooser");
 			await addImage.click();
@@ -288,8 +302,9 @@ for (const scenario of [
 			await dialog.getByRole("button", { name: scenario.confirm }).click();
 			await expect(page.locator(".asset-image")).toHaveCount(1);
 			await page.reload();
+			await openMaterials(page);
 			await expect(page.locator(".asset-image")).toHaveCount(1);
-			const replace = page.getByRole("button", { name: scenario.replace });
+			const replace = images.getByRole("button", { name: scenario.replace, exact: true });
 			const chooser = page.waitForEvent("filechooser");
 			await replace.click();
 			await (await chooser).setFiles({
@@ -300,6 +315,7 @@ for (const scenario of [
 			await dialog.getByRole("button", { name: scenario.confirm }).click();
 			await expect(dialog).toBeHidden();
 			await page.reload();
+			await openMaterials(page);
 			await expect(page.locator(".asset-image")).toHaveCount(1);
 			expect(
 				await page.evaluate(() => document.documentElement.scrollWidth),

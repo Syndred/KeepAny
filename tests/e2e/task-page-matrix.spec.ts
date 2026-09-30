@@ -1,7 +1,7 @@
 import { mkdirSync } from "node:fs";
 import { expect, type Page, test } from "@playwright/test";
 
-const evidence = "docs/evidence/2026-09-29";
+const evidence = process.env.KEEPANY_EVIDENCE_DIR ?? "docs/evidence/2026-09-29";
 const repositoryModuleUrl = `/@fs${process.cwd()}/packages/local-db/src/index.ts`;
 
 type StoredTask = {
@@ -109,15 +109,15 @@ for (const locale of ["en-US", "zh-CN"] as const) {
 			const copy =
 				locale === "zh-CN"
 					? {
-							title: "待办",
-							add: "新建计划",
+							title: "提醒之后，还要留下完成记录。",
+							add: "新建待办",
 							name: "名称",
 							date: "日期",
 							save: "保存",
 							cancel: "取消",
 						}
 					: {
-							title: "Tasks",
+							title: "Keep a record after every reminder.",
 							add: "New task",
 							name: "Name",
 							date: "Date",

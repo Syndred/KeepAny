@@ -1,7 +1,7 @@
 import { mkdirSync } from "node:fs";
 import { expect, type Page, test } from "@playwright/test";
 
-const evidence = "docs/evidence/2026-09-29";
+const evidence = process.env.KEEPANY_EVIDENCE_DIR ?? "docs/evidence/2026-09-29";
 const copies = {
 	"en-US": {
 		add: "Add",
@@ -29,6 +29,13 @@ const copies = {
 	},
 } as const;
 
+async function openBacklinks(page: Page) {
+	const section = page.locator("#asset-backlinks");
+	await expect(section).toBeVisible();
+	if (await section.getAttribute("open") === null) await section.locator(":scope > summary").click();
+	await expect(section).toHaveAttribute("open", "");
+}
+
 async function createProject(
 	page: Page,
 	copy: (typeof copies)[keyof typeof copies],
@@ -42,6 +49,7 @@ async function createProject(
 	await expect(dialog).toBeHidden();
 	await page.locator("main.page .list-row").filter({ hasText: name }).click();
 	await expect(page.getByRole("heading", { name })).toBeVisible();
+	await openBacklinks(page);
 }
 
 for (const locale of ["en-US", "zh-CN"] as const) {
@@ -123,16 +131,8 @@ for (const locale of ["en-US", "zh-CN"] as const) {
 				await expect(dialog).toBeHidden();
 				await expect(trigger).toBeFocused();
 				await page.reload();
-				await expect(
-					page
-						.locator("section")
-						.filter({
-							has: page.getByRole("heading", {
-								name: locale === "zh-CN" ? "外链" : "Backlinks",
-							}),
-						})
-						.locator("tbody tr"),
-				).toHaveCount(0);
+				await openBacklinks(page);
+				await expect(page.locator("#asset-backlinks tbody tr")).toHaveCount(0);
 				await trigger.click();
 				await expect(dialog.getByLabel(copy.name)).toHaveValue("");
 				const name = `Local directory ${locale} ${width} ${"N".repeat(85)}`;
@@ -147,6 +147,7 @@ for (const locale of ["en-US", "zh-CN"] as const) {
 				await expect(trigger).toBeFocused();
 				const row = page.locator("tr").filter({ hasText: name });
 				await expect(row).toHaveCount(1);
+				await expect(row).toBeVisible();
 				await expect(row.locator(".backlink-status")).toHaveText(copy.planned);
 				await expect(row.getByRole("link", { name })).toHaveAttribute(
 					"href",
@@ -156,6 +157,7 @@ for (const locale of ["en-US", "zh-CN"] as const) {
 					await page.evaluate(() => document.documentElement.scrollWidth),
 				).toBeLessThanOrEqual(width);
 				await page.reload();
+				await openBacklinks(page);
 				await expect(page.locator("tr").filter({ hasText: name })).toHaveCount(
 					1,
 				);
@@ -209,6 +211,7 @@ for (const locale of ["en-US", "zh-CN"] as const) {
 				page.locator("tr").filter({ hasText: `Rapid ${locale}` }),
 			).toHaveCount(1);
 			await page.reload();
+				await openBacklinks(page);
 			await expect(
 				page.locator("tr").filter({ hasText: `Rapid ${locale}` }),
 			).toHaveCount(1);

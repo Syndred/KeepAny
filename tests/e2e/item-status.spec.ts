@@ -122,8 +122,11 @@ test("physical item facts, atomic status history and encrypted backup survive in
 		await page.getByLabel("Borrower").fill("Ada");
 		await page.getByRole("button", { name: "Lend item" }).click();
 		await page.getByRole("button", { name: "Record status change" }).click();
-		await expect(page.getByRole("dialog").getByRole("option", { name: "Marked resold" })).toHaveAttribute("data-disabled", "");
-		await expect(page.getByRole("dialog").getByRole("option", { name: "Marked retired" })).toHaveAttribute("data-disabled", "");
+		await page.getByRole("dialog").getByLabel("Item status").click();
+		await expect(page.getByRole("option", { name: "Marked resold", exact: true })).toHaveAttribute("data-disabled", "");
+		await expect(page.getByRole("option", { name: "Marked retired", exact: true })).toHaveAttribute("data-disabled", "");
+		await page.keyboard.press("Escape");
+		await expect(page.getByRole("dialog")).toBeVisible();
 		await page.getByRole("dialog").getByRole("button", { name: "Cancel" }).click();
 		await page.getByRole("button", { name: "Return item" }).click();
 		await changeStatus(page, "resold", "2026-09-15", "Local record only");

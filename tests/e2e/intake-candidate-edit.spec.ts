@@ -40,15 +40,15 @@ test("CSV candidates are edited and confirmed individually with duplicate blocki
 	const name = first.getByLabel("Name");
 	await name.fill("");
 	await first.getByRole("button", { name: "Confirm and save" }).click();
-	await expect(page.locator(".intake-review-message")).toContainText("Check the name");
+	await expect(first.getByRole("alert")).toContainText("Check the name");
 	await name.fill("X".repeat(161));
 	await first.getByRole("button", { name: "Confirm and save" }).click();
-	await expect(page.locator(".intake-review-message")).toContainText("Check the name");
+	await expect(first.getByRole("alert")).toContainText("Check the name");
 	await name.fill("Alpha");
 	await first.getByRole("button", { name: "Confirm and save" }).click();
 	await expect(first).toContainText("Confirmed");
 	await second.getByRole("button", { name: "Confirm and save" }).click();
-	await expect(page.locator(".intake-review-message")).toContainText("Duplicate");
+	await expect(second.getByRole("alert")).toContainText("Duplicate");
 	expect(await projectNames(page)).toEqual(["Alpha"]);
 	await second.getByLabel("Name").fill("Beta");
 	await second.getByRole("button", { name: "Confirm and save" }).click();

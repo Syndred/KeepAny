@@ -2,7 +2,7 @@ import { mkdirSync } from "node:fs";
 import { expect, type Page, test } from "@playwright/test";
 import { selectChoice } from "./helpers/select-choice";
 
-const evidence = "docs/evidence/2026-09-29";
+const evidence = process.env.KEEPANY_EVIDENCE_DIR ?? "docs/evidence/2026-09-29";
 const repositoryModuleUrl = `/@fs${process.cwd()}/packages/local-db/src/index.ts`;
 
 type Asset = {
@@ -106,6 +106,19 @@ async function detail(page: Page, name: string) {
 		.first()
 		.click();
 	await expect(page.getByRole("heading", { name })).toBeVisible();
+}
+
+async function openSearchInput(page: Page) {
+	const input = page.locator("#top-search-query");
+	if (!(await input.isVisible()))
+		await page.getByRole("button", { name: "Search all records", exact: true }).click();
+	await expect(input).toBeVisible();
+	return input;
+}
+
+async function expectSearchClosed(page: Page) {
+	await expect(page.locator("#top-search-query")).toBeHidden();
+	await expect.poll(() => page.evaluate(() => sessionStorage.getItem("keepany-search") || "")).toBe("");
 }
 
 async function trashCycle(
@@ -450,14 +463,13 @@ test("subscription and item shared CRUD, filters, image and actual backup restor
 			["item", "Devices", "Other", itemSaved, itemId],
 		] as const) {
 			await page.goto(`/assets/${kind}`);
-			const search = page.getByRole("textbox", {
-				name: "Search all records",
-			});
 			await page.getByRole("button", { name: category, exact: true }).click();
 			await selectChoice(page.locator("#asset-tag-filter"), { label: tag });
+			const search = await openSearchInput(page);
 			await search.fill(tag);
 			await expect(page.locator("main.page .list-row")).toHaveCount(1);
 			await page.getByRole("button", { name: category, exact: true }).click();
+			await expectSearchClosed(page);
 			await page.screenshot({
 				path: `${evidence}/crud-matrix-en-1280-${kind}-filter.png`,
 			});
@@ -469,23 +481,31 @@ test("subscription and item shared CRUD, filters, image and actual backup restor
 				path: `${evidence}/crud-matrix-en-1280-${kind}-empty.png`,
 			});
 			await page.getByRole("button", { name: category, exact: true }).click();
-			await page
-				.locator("main.page .list-row")
-				.filter({ hasText: name })
-				.click();
+			await openSearchInput(page);
+			await expect(search).toHaveValue("");
+			await search.fill(tag);
+			const row = page.locator("main.page .list-row").filter({ hasText: name });
+			await row.focus();
+			await row.press("Enter");
 			await expect(page.getByRole("heading", { name })).toBeVisible();
+			await expectSearchClosed(page);
 			await page.getByRole("main").getByRole("link", { name: "Back to list" }).click();
-			await expect(search).toHaveValue(tag);
+			await expectSearchClosed(page);
 			await expect(page.locator("#asset-tag-filter")).toHaveAttribute("data-value", tag);
 			await expect(
 				page.getByRole("button", { name: category, exact: true }),
 			).toHaveAttribute("aria-pressed", "true");
 			await page.reload();
-			await expect(search).toHaveValue(tag);
+			await expectSearchClosed(page);
 			await expect(page.locator("#asset-tag-filter")).toHaveAttribute("data-value", tag);
+			await expect(page.getByRole("button", { name: category, exact: true })).toHaveAttribute("aria-pressed", "true");
+			await openSearchInput(page);
+			await expect(search).toHaveValue("");
 			await search.fill(`no-results-${suffix}`);
 			await expect(page.locator("main.page .list-row")).toHaveCount(0);
-			await search.fill("");
+			await search.press("Escape");
+			await expectSearchClosed(page);
+			await expect(page.locator("main.page .list-row")).toHaveCount(1);
 			await page
 				.locator("main.page .list-row")
 				.filter({ hasText: name })
@@ -524,7 +544,9 @@ test("subscription and item shared CRUD, filters, image and actual backup restor
 		await page.getByRole("button", { name: "Create backup" }).click();
 		const downloadEvent = page.waitForEvent("download");
 		await page.getByRole("link", { name: "Save backup file" }).click();
-		const backupPath = await (await downloadEvent).path();
+		const download = await downloadEvent;
+		expect(download.suggestedFilename()).toMatch(/\.ka1$/);
+		const backupPath = await download.path();
 		if (!backupPath) throw Error("The browser did not save the .ka1 file");
 		const destination = await browser.newContext({
 			locale: "zh-CN",
@@ -538,10 +560,14 @@ test("subscription and item shared CRUD, filters, image and actual backup restor
 			await expect(restored.getByText(itemSaved)).toHaveCount(0);
 			await restored.goto("/intake");
 			await restored.locator("#backup-password").fill(password);
+			const restoreSection = restored.locator("details.intake-secondary").filter({ has: restored.locator("#restore-file") });
+			await expect(restoreSection).toBeVisible();
+			if ((await restoreSection.getAttribute("open")) === null)
+				await restoreSection.locator(":scope > summary").click();
+			await expect(restored.locator("#restore-file")).toBeVisible();
 			await restored.locator("#restore-file").setInputFiles(backupPath);
-			await restored
+			await restoreSection
 				.getByRole("button", { name: "预览", exact: true })
-				.first()
 				.click();
 			await restored.getByRole("button", { name: /确认 ·/ }).click();
 			await expect(restored.getByText(/已恢复 \d+ 条记录/)).toBeVisible();
@@ -567,6 +593,8 @@ test("subscription and item shared CRUD, filters, image and actual backup restor
 				restored.getByRole("heading", { name: itemSaved }),
 			).toBeVisible();
 			await expect(restored.locator(".asset-image")).toHaveCount(1);
+			await expect(restored.locator(".asset-image")).toBeVisible();
+			await expect(restored.locator(".asset-image")).toHaveJSProperty("naturalWidth", 8);
 			expect(
 				await restored.evaluate(() => document.documentElement.scrollWidth),
 			).toBeLessThanOrEqual(390);
@@ -578,6 +606,8 @@ test("subscription and item shared CRUD, filters, image and actual backup restor
 				restored.getByRole("heading", { name: subscriptionSaved }),
 			).toBeVisible();
 			await expect(restored.locator(".asset-image")).toHaveCount(1);
+			await expect(restored.locator(".asset-image")).toBeVisible();
+			await expect(restored.locator(".asset-image")).toHaveJSProperty("naturalWidth", 8);
 			expect(
 				await restored.evaluate(() => document.documentElement.scrollWidth),
 			).toBeLessThanOrEqual(390);
