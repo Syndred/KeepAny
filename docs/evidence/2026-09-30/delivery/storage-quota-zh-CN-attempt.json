@@ -121,5 +121,8 @@
   },
   "quotaRecoveryVerified": false,
   "reproductionCommand": "KEEPANY_STORAGE_QUOTA_ACCEPTANCE=1 KEEPANY_E2E_PORT=4202 pnpm exec playwright test tests/e2e/storage-quota-recovery.spec.ts --workers=1 --reporter=line",
-  "isolatedFixedReleaseReproductionCommand": "KEEPANY_STORAGE_QUOTA_ACCEPTANCE=1 pnpm exec playwright test --config playwright.quota.config.ts --reporter=line"
+  "isolatedFixedReleaseReproductionCommand": "KEEPANY_STORAGE_QUOTA_ACCEPTANCE=1 pnpm exec playwright test --config playwright.quota.config.ts --reporter=line",
+  "serviceCommandReported": "pnpm exec vite preview apps/web --outDir ../../release/web --host 127.0.0.1 --port 4202 --strictPort",
+  "scriptEntryIndependentlyObserved": false,
+  "sourceScope": "The worker started a fixed release/web preview; servedPackage is a test declaration. This run did not independently observe the script entry. Future opt-in reproduction verifies the entry against release/web/index.html."
 }
