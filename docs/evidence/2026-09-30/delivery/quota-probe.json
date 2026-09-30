@@ -1,0 +1,119 @@
+{
+  "generatedAt": "2026-09-30T00:01:20.841Z",
+  "mode": "quota-only",
+  "node": "v22.23.1",
+  "host": {
+    "platform": "darwin",
+    "arch": "arm64",
+    "osRelease": "27.0.0",
+    "cpuModel": "Apple M5",
+    "logicalCpuCount": 10,
+    "totalMemoryBytes": 17179869184
+  },
+  "browser": {
+    "engine": "Chromium",
+    "version": "153.0.8010.12",
+    "headless": true,
+    "launchArgs": [
+      "--enable-precise-memory-info"
+    ]
+  },
+  "environment": {
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.8010.12 Safari/537.36",
+    "platform": "MacIntel",
+    "hardwareConcurrency": 10,
+    "deviceMemoryGiB": 16,
+    "indexedDB": true,
+    "webCrypto": true,
+    "storageEstimate": true,
+    "storagePersisted": false,
+    "initialQuotaBytes": 3221225472
+  },
+  "measurement": {
+    "runsPerCase": 0,
+    "assetAndRelationCounts": [],
+    "attachmentBytes": null,
+    "attachmentCount": null,
+    "timing": "quota probe uses CDP and IndexedDB transaction events; no performance case timings",
+    "isolation": "single fresh browser context and one probe IndexedDB database; database is deleted after the write attempt",
+    "confidence": "single quota probe; no cross-browser/device matrix or production workload"
+  },
+  "results": [],
+  "quotaProbe": {
+    "outcome": "write-aborted",
+    "writeAttempted": true,
+    "errorName": "QuotaExceededError",
+    "requestedQuotaBytes": 1048576,
+    "cdpQuota": {
+      "usage": 0,
+      "quota": 1048576,
+      "overrideActive": true,
+      "usageBreakdown": [
+        {
+          "storageType": "file_systems",
+          "usage": 0
+        },
+        {
+          "storageType": "indexeddb",
+          "usage": 0
+        },
+        {
+          "storageType": "cache_storage",
+          "usage": 0
+        },
+        {
+          "storageType": "service_workers",
+          "usage": 0
+        }
+      ]
+    },
+    "webEstimate": {
+      "usageBytes": 0,
+      "quotaBytes": 3221225472
+    },
+    "cleanup": {
+      "databaseName": "keepany-phase0-quota-probe",
+      "databaseDelete": {
+        "status": "success"
+      },
+      "databaseInventory": {
+        "status": "absent",
+        "names": []
+      }
+    },
+    "reset": {
+      "commandStatus": "success",
+      "verified": true,
+      "readback": {
+        "usage": 0,
+        "quota": 982121859,
+        "overrideActive": false,
+        "usageBreakdown": [
+          {
+            "storageType": "file_systems",
+            "usage": 0
+          },
+          {
+            "storageType": "indexeddb",
+            "usage": 0
+          },
+          {
+            "storageType": "cache_storage",
+            "usage": 0
+          },
+          {
+            "storageType": "service_workers",
+            "usage": 0
+          }
+        ]
+      },
+      "cdpDetached": true
+    }
+  },
+  "caveats": [
+    "Headless Chromium on this machine; repeat on target devices.",
+    "Each case uses a new IndexedDB database and deletes it after measurement.",
+    "Quota probe attempts an isolated 1 MiB Chromium origin override; it writes only if the browser confirms the new quota, and it does not test application error UI.",
+    "Measurements are single runs, not confidence intervals or a production workload."
+  ]
+}

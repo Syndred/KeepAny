@@ -71,14 +71,21 @@
     "observedAt": "2026-09-29T23:54:20.084386+00:00",
     "unitPassed": 344,
     "durationSeconds": 247,
-    "scope": "Linux PostgreSQL-backed tests, build, committed bundle verifier and fixed-release Playwright command all succeeded; source/test commit bd948aa."
+    "scope": "Linux PostgreSQL-backed tests, build, committed bundle verifier and fixed-release Playwright command all succeeded; source/test commit bd948aa.",
+    "additionalReadback": {
+      "commit": "cd150ba4386c1c450b9860885b2a80ea330ad060",
+      "url": "https://github.com/Syndred/KeepAny/actions/runs/36647629922",
+      "status": "success",
+      "unitPassed": 344,
+      "durationSeconds": 273
+    }
   },
   "boundaries": [
     "PWA manifest/icons/offline paths verified; native installation on physical devices not verified.",
     "Intake candidates merge locally; they are not cloud synced.",
     "Intake merge mock uses static self-host-owner across two endpoints/workspaces, not two actual accounts.",
     "SIGKILL covers a disposable isolated Chromium test process, not power loss.",
-    "Quota probe override was not applied; no application QuotaExceededError acceptance.",
+    "Current isolated quota-only probe verifies actual QuotaExceededError and reset; older full benchmark misclassified override by web estimate. Application recovery is separate.",
     "Full release, all visual states, physical devices and production cloud gates remain open."
   ],
   "targetedAfterCiFix": {
@@ -91,5 +98,16 @@
     "temporaryTestServersStopped": true,
     "retainedLocalServicePort": 4180,
     "originalDataPreserved": true
+  },
+  "quotaProbe": {
+    "evidence": "quota-probe.json",
+    "mode": "quota-only",
+    "overriddenQuotaBytes": 1048576,
+    "webReportedQuotaBytes": 3221225472,
+    "outcome": "write-aborted",
+    "errorName": "QuotaExceededError",
+    "databaseRemovedVerified": true,
+    "overrideResetVerified": true,
+    "scope": "Isolated raw IndexedDB write; application UI recovery and physical low storage require separate acceptance."
   }
 }
