@@ -6,7 +6,7 @@ const repositoryModuleUrl = `/@fs${process.cwd()}/packages/local-db/src/index.ts
 async function savedProjectNames(page: Page): Promise<string[]> {
 	if (process.env.KEEPANY_RACE_MODE === "preview") {
 		await page.goto("/assets/project");
-		const names = page.locator("main.page a.list-row .row-main strong");
+		const names = page.locator("main.page .asset-project-card .asset-project-name");
 		await names.first().waitFor();
 		return names.allTextContents();
 	}
@@ -69,127 +69,71 @@ async function releaseHeldRead(page: Page) {
 	await page.waitForTimeout(100);
 }
 
-test("late old CSV cannot replace a newer URL preview or be imported", async ({
-	page,
-}) => {
+// CSV now stages durable review rows, and the formal UI serializes file reads.
+// Preserve the race boundary by checking blocked replacement/mode controls,
+// pending-only staging and the exact asset writes from a later explicit choice.
+async function stageHeldCsv(page: Page) {
 	await page.goto("/intake");
-	await holdFileRead(page, "held.csv", "text");
-	await page.locator("#csv-file").setInputFiles({
-		name: "held.csv",
-		mimeType: "text/csv",
-		buffer: Buffer.from("name,kind\nOld CSV,project"),
-	});
-	await expect
-		.poll(() =>
-			page.evaluate(() =>
-				Boolean(
-					(window as typeof window & { __heldReadStarted?: boolean })
-						.__heldReadStarted,
-				),
-			),
-		)
-		.toBe(true);
-	await page.locator("#import-url").fill("https://new.example/");
-	await page
-		.locator("section.card")
-		.filter({ has: page.getByRole("heading", { name: "Confirm import" }) })
-		.getByRole("button", { name: "Preview" })
-		.click();
-	await expect(page.locator(".import-preview")).toContainText("new.example");
+	await page.locator(".intake-mode-tabs").getByRole("button", { name: "Spreadsheet", exact: true }).click();
+	await holdFileRead(page, "held.csv", "arrayBuffer");
+	await page.locator("#csv-file").setInputFiles({ name: "held.csv", mimeType: "text/csv", buffer: Buffer.from("name,kind\nOld CSV,project") });
+	await expect.poll(() => page.evaluate(() => Boolean((window as typeof window & { __heldReadStarted?: boolean }).__heldReadStarted))).toBe(true);
+	await expect(page.locator("#csv-file")).toBeDisabled();
+	await expect(page.locator(".intake-mode-tabs").getByRole("button", { name: "Website", exact: true })).toBeDisabled();
+	await expect(page.locator(".intake-review-row")).toHaveCount(0);
+	expect(await savedProjectNames(page)).toEqual([]);
+}
+
+async function finishHeldCsv(page: Page) {
 	await releaseHeldRead(page);
-	await expect(page.locator(".import-preview")).toContainText("new.example");
-	await expect(page.locator(".import-preview")).not.toContainText("Old CSV");
-	await page.getByRole("button", { name: "Confirm import" }).last().click();
-	await expect(page.locator(".notice[role='status']")).toContainText(
-		"Import complete",
-	);
+	await expect(page.locator(".intake-review-row")).toHaveCount(1);
+	await expect(page.locator(".intake-review-row").getByLabel("Name", { exact: true })).toHaveValue("Old CSV");
+	await expect(page.locator("#csv-file")).toBeEnabled();
+	expect(await savedProjectNames(page)).toEqual([]);
+}
+
+test("pending CSV blocks a newer URL choice and never implicitly imports the staged row", async ({ page }) => {
+	await stageHeldCsv(page);
+	await finishHeldCsv(page);
+	await page.locator(".intake-mode-tabs").getByRole("button", { name: "Website", exact: true }).click();
+	await page.locator("#import-url").fill("https://new.example/");
+	await page.getByRole("button", { name: "Preview records", exact: true }).click();
+	await expect(page.locator(".import-preview").getByRole("textbox", { name: "Name 1", exact: true })).toHaveValue("new.example");
+	await expect(page.locator(".import-preview").getByRole("textbox", { name: "Name 1", exact: true })).not.toHaveValue("Old CSV");
+	await page.locator(".import-preview").getByRole("button", { name: "Confirm import", exact: true }).click();
+	await expect(page.locator(".notice[role='status']")).toContainText("Import complete");
 	await expect.poll(() => savedProjectNames(page)).toEqual(["new.example"]);
+	await expect(page.locator(".intake-review-row").getByLabel("Name", { exact: true })).toHaveValue("Old CSV");
+	await expect(page.locator(".intake-review-row").getByRole("button", { name: "Confirm and save", exact: true })).toBeEnabled();
 });
 
-test("late valid CSV cannot revive candidates after a newer broken CSV", async ({
-	page,
-}) => {
-	await page.goto("/intake");
-	await holdFileRead(page, "held.csv", "text");
-	await page.locator("#csv-file").setInputFiles({
-		name: "held.csv",
-		mimeType: "text/csv",
-		buffer: Buffer.from("name,kind\nOld CSV,project"),
-	});
-	await expect
-		.poll(() =>
-			page.evaluate(() =>
-				Boolean(
-					(window as typeof window & { __heldReadStarted?: boolean })
-						.__heldReadStarted,
-				),
-			),
-		)
-		.toBe(true);
-	await page.locator("#csv-file").setInputFiles({
-		name: "broken.csv",
-		mimeType: "text/csv",
-		buffer: Buffer.from('name,kind\n"unterminated,project'),
-	});
-	await expect(page.locator(".notice[role='status']")).toContainText(
-		"Could not finish. Please try again.",
-	);
-	await releaseHeldRead(page);
+test("pending CSV blocks replacement and a later broken CSV cannot confirm its pending row", async ({ page }) => {
+	await stageHeldCsv(page);
+	await finishHeldCsv(page);
+	await page.locator("#csv-file").setInputFiles({ name: "broken.csv", mimeType: "text/csv", buffer: Buffer.from('name,kind\n"unterminated,project') });
+	await expect(page.locator(".notice[role='status']")).toContainText("No reviewable records found");
 	await expect(page.locator(".import-preview")).toHaveCount(0);
-	await expect(page.locator(".notice[role='status']")).toContainText(
-		"Could not finish. Please try again.",
-	);
-	await page.locator("#csv-file").setInputFiles({
-		name: "retry.csv",
-		mimeType: "text/csv",
-		buffer: Buffer.from("name,kind\nRetry CSV,project"),
-	});
-	await expect(page.locator(".import-preview")).toContainText("Retry CSV");
-	await page.getByRole("button", { name: "Confirm import" }).last().click();
-	await expect(page.locator(".notice[role='status']")).toContainText(
-		"Import complete",
-	);
+	await expect(page.locator(".intake-review-row")).toHaveCount(1);
+	expect(await savedProjectNames(page)).toEqual([]);
+	await page.locator("#csv-file").setInputFiles({ name: "retry.csv", mimeType: "text/csv", buffer: Buffer.from("name,kind\nRetry CSV,project") });
+	const retry = page.locator(".intake-review-row").filter({ hasText: "retry.csv" });
+	await expect(page.locator(".intake-review-row")).toHaveCount(2);
+	await retry.getByRole("button", { name: "Confirm and save", exact: true }).click();
+	await expect(retry).toContainText("Confirmed");
 	await expect.poll(() => savedProjectNames(page)).toEqual(["Retry CSV"]);
 });
 
-test("late old CSV cannot replace a newer valid CSV", async ({ page }) => {
-	await page.goto("/intake");
-	await holdFileRead(page, "held.csv", "text");
-	await page.locator("#csv-file").setInputFiles({
-		name: "held.csv",
-		mimeType: "text/csv",
-		buffer: Buffer.from("name,kind\nOld CSV,project"),
-	});
-	await expect
-		.poll(() =>
-			page.evaluate(() =>
-				Boolean(
-					(window as typeof window & { __heldReadStarted?: boolean })
-						.__heldReadStarted,
-				),
-			),
-		)
-		.toBe(true);
-	await page.locator("#csv-file").setInputFiles({
-		name: "new.csv",
-		mimeType: "text/csv",
-		buffer: Buffer.from("name,kind\nNew CSV,project"),
-	});
-	await expect(page.locator(".import-preview")).toContainText("New CSV");
-	await releaseHeldRead(page);
-	await expect(page.locator(".import-preview")).toContainText("New CSV");
-	await expect(page.locator(".import-preview")).not.toContainText("Old CSV");
-	await page
-		.getByRole("button", { name: "Confirm import" })
-		.last()
-		.evaluate((button) => {
-			(button as HTMLButtonElement).click();
-			(button as HTMLButtonElement).click();
-		});
-	await expect(page.locator(".notice[role='status']")).toContainText(
-		"Import complete",
-	);
+test("two sequential CSV files stay separate and double confirmation writes only the chosen candidate", async ({ page }) => {
+	await stageHeldCsv(page);
+	await finishHeldCsv(page);
+	await page.locator("#csv-file").setInputFiles({ name: "new.csv", mimeType: "text/csv", buffer: Buffer.from("name,kind\nNew CSV,project") });
+	await expect(page.locator(".intake-review-row")).toHaveCount(2);
+	const chosen = page.locator(".intake-review-row").filter({ hasText: "new.csv" });
+	await chosen.getByRole("button", { name: "Confirm and save", exact: true }).evaluate((button) => { (button as HTMLButtonElement).click(); (button as HTMLButtonElement).click(); });
+	await expect(chosen).toContainText("Confirmed");
 	await expect.poll(() => savedProjectNames(page)).toEqual(["New CSV"]);
+	const old = page.locator(".intake-review-row").filter({ hasText: "held.csv" });
+	await expect(old.getByRole("button", { name: "Confirm and save", exact: true })).toBeEnabled();
 });
 
 test("late URL preview cannot reappear after editing the URL", async ({
@@ -227,10 +171,10 @@ test("late URL preview cannot reappear after editing the URL", async ({
 		};
 	}, uiRepositoryUrl);
 	const importCard = page.locator("section.card").filter({
-		has: page.getByRole("heading", { name: "Confirm import" }),
+		has: page.getByRole("heading", { name: "Quick capture" }),
 	});
 	await page.locator("#import-url").fill("https://old.example/");
-	await importCard.getByRole("button", { name: "Preview" }).click();
+	await importCard.getByRole("button", { name: "Preview records", exact: true }).click();
 	await expect
 		.poll(() =>
 			page.evaluate(() =>
@@ -242,22 +186,16 @@ test("late URL preview cannot reappear after editing the URL", async ({
 		)
 		.toBe(true);
 	await page.locator("#import-url").fill("https://new.example/");
-	await importCard.getByRole("button", { name: "Preview" }).click();
-	await expect(importCard.locator(".import-preview")).toContainText(
-		"new.example",
-	);
+	await importCard.getByRole("button", { name: "Preview records", exact: true }).click();
+	await expect(importCard.locator(".import-preview").getByRole("textbox", { name: "Name 1", exact: true })).toHaveValue("new.example");
 	await page.evaluate(() => {
 		(
 			window as typeof window & { __releaseOldUrl?: () => void }
 		).__releaseOldUrl?.();
 	});
 	await page.waitForTimeout(100);
-	await expect(importCard.locator(".import-preview")).toContainText(
-		"new.example",
-	);
-	await expect(importCard.locator(".import-preview")).not.toContainText(
-		"old.example",
-	);
+	await expect(importCard.locator(".import-preview").getByRole("textbox", { name: "Name 1", exact: true })).toHaveValue("new.example");
+	await expect(importCard.locator(".import-preview").getByRole("textbox", { name: "Name 1", exact: true })).not.toHaveValue("old.example");
 	await importCard.getByRole("button", { name: "Confirm import" }).click();
 	await expect(page.locator(".notice[role='status']")).toContainText(
 		"Import complete",
@@ -270,7 +208,7 @@ test("late restore inspection cannot enable confirmation for a replaced file", a
 }) => {
 	await page.goto("/intake");
 	const backupCard = page.locator("section.card").filter({
-		has: page.getByRole("heading", { name: "Encrypted backup" }),
+		has: page.getByRole("heading", { name: "Records & backup" }),
 	});
 	await backupCard.locator("#backup-password").fill("test-only-backup-2026");
 	await backupCard.getByRole("button", { name: "Create backup" }).click();
@@ -282,6 +220,7 @@ test("late restore inspection cannot enable confirmation for a replaced file", a
 	if (!filePath) throw Error("backup download missing");
 	const bytes = readFileSync(filePath);
 	await holdFileRead(page, "held.ka1", "arrayBuffer");
+	await backupCard.locator(".intake-secondary").filter({ has: page.locator("#restore-file") }).locator("summary").click();
 	await backupCard.locator("#restore-file").setInputFiles({
 		name: "held.ka1",
 		mimeType: "application/octet-stream",
@@ -335,15 +274,15 @@ test("same-tab double click and two tabs create only one normalized category", a
 		]);
 		const dialogs = await Promise.all(
 			[first, second].map(async (page) => {
-				await page.getByRole("button", { name: "Manage" }).click();
-				return page.getByRole("dialog", { name: "Category" });
+				await page.getByRole("button", { name: "New category", exact: true }).click();
+				return page.getByRole("region", { name: "Category", exact: true });
 			}),
 		);
 		await dialogs[0].getByLabel("Category name").fill("  Race Category  ");
 		await dialogs[1].getByLabel("Category name").fill("race category");
 		await Promise.all(
 			dialogs.map((dialog) =>
-				dialog.getByRole("button", { name: "Save" }).click(),
+				dialog.getByRole("button", { name: "Save collection", exact: true }).click(),
 			),
 		);
 		await expect
@@ -364,7 +303,7 @@ test("same-tab double click and two tabs create only one normalized category", a
 			await observer.getByRole("button", { name: "Manage" }).click();
 			await expect(
 				observer
-					.getByRole("dialog", { name: "Category" })
+					.getByRole("region", { name: "Category", exact: true })
 					.locator(".list-row")
 					.filter({ hasText: /race category/i }),
 			).toHaveCount(1);
@@ -383,13 +322,13 @@ test("same-tab double click and two tabs create only one normalized category", a
 				.toBe(1);
 		}
 		await loser.getByLabel("Category name").fill("Retry Category");
-		await loser.getByRole("button", { name: "Save" }).click();
+		await loser.getByRole("button", { name: "Save collection", exact: true }).click();
 		await expect(loser).toBeHidden();
-		await first.getByRole("button", { name: "Manage" }).click();
-		const doubleDialog = first.getByRole("dialog", { name: "Category" });
+		await first.getByRole("button", { name: "New category", exact: true }).click();
+		const doubleDialog = first.getByRole("region", { name: "Category", exact: true });
 		await doubleDialog.getByLabel("Category name").fill("Double Category");
 		await doubleDialog
-			.getByRole("button", { name: "Save" })
+			.getByRole("button", { name: "Save collection", exact: true })
 			.evaluate((button) => {
 				(button as HTMLButtonElement).click();
 				(button as HTMLButtonElement).click();
@@ -400,7 +339,7 @@ test("same-tab double click and two tabs create only one normalized category", a
 			await observer.getByRole("button", { name: "Manage" }).click();
 			await expect(
 				observer
-					.getByRole("dialog", { name: "Category" })
+					.getByRole("region", { name: "Category", exact: true })
 					.locator(".list-row")
 					.filter({ hasText: "Double Category" }),
 			).toHaveCount(1);
@@ -444,15 +383,15 @@ test("two tabs reject the same category when Web Locks are unavailable", async (
 		]);
 		const dialogs = await Promise.all(
 			[first, second].map(async (page) => {
-				await page.getByRole("button", { name: "Manage" }).click();
-				return page.getByRole("dialog", { name: "Category" });
+				await page.getByRole("button", { name: "New category", exact: true }).click();
+				return page.getByRole("region", { name: "Category", exact: true });
 			}),
 		);
 		await dialogs[0].getByLabel("Category name").fill("No Lock Category");
 		await dialogs[1].getByLabel("Category name").fill("no lock category");
 		await Promise.all(
 			dialogs.map((dialog) =>
-				dialog.getByRole("button", { name: "Save" }).click(),
+				dialog.getByRole("button", { name: "Save collection", exact: true }).click(),
 			),
 		);
 		await expect
@@ -472,7 +411,7 @@ test("two tabs reject the same category when Web Locks are unavailable", async (
 			await observer.getByRole("button", { name: "Manage" }).click();
 			await expect(
 				observer
-					.getByRole("dialog", { name: "Category" })
+					.getByRole("region", { name: "Category", exact: true })
 					.locator(".list-row")
 					.filter({ hasText: /no lock category/i }),
 			).toHaveCount(1);

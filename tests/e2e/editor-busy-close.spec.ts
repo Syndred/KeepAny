@@ -3,6 +3,8 @@ import { expect, test, type Page } from "@playwright/test";
 const repositoryModuleUrl = `/@fs${process.cwd()}/packages/local-db/src/index.ts`;
 
 async function holdNextSave(page: Page, entity: "asset" | "task", reject = false) {
+	const modulePath = await page.evaluate(() => performance.getEntriesByType("resource").map((entry) => entry.name).find((name) => name.includes("/packages/local-db/src/index.ts")));
+	if (!modulePath) throw Error("local-repository-module-not-loaded");
 	await page.evaluate(async ({ modulePath, entity, reject }) => {
 		const { localRepository } = await import(modulePath);
 		const repository = await localRepository();
@@ -25,7 +27,7 @@ async function holdNextSave(page: Page, entity: "asset" | "task", reject = false
 			}
 			return original(type, value);
 		};
-	}, { modulePath: repositoryModuleUrl, entity, reject });
+	}, { modulePath, entity, reject });
 }
 
 async function waitForSave(page: Page) {
@@ -48,9 +50,8 @@ async function storedNames(page: Page, entity: "asset" | "task") {
 }
 
 test("AssetEditor cannot close from X, Escape, overlay or Cancel during a failed write", async ({ page }) => {
-	await page.goto("/intake");
-	await page.locator(".intake-mode-tabs").getByRole("button", { name: "Manual" }).click();
-	await page.getByRole("button", { name: "New record" }).click();
+	await page.goto("/assets/account");
+	await page.getByRole("main").getByRole("button", { name: "Add", exact: true }).click();
 	const dialog = page.getByRole("dialog");
 	await dialog.getByLabel("Name", { exact: true }).fill("Held asset");
 	await holdNextSave(page, "asset", true);

@@ -358,11 +358,17 @@ for (const pause of ["intent", "asset"] as const) {
 					await new Promise<void>(resolve => { state.__resumeSubscription = resolve; });
 				};
 				if (pause === "intent") {
-					const add = repository.fileStore.subscriptionSaveJournal.add.bind(repository.fileStore.subscriptionSaveJournal);
-					repository.fileStore.subscriptionSaveJournal.add = async (...args: unknown[]) => {
-						const value = await add(...args);
-						await wait();
-						return value;
+					// Pause after the intent transaction has actually committed. Holding
+					// table.add's Promise lets IDB auto-commit early and corrupts the fixture.
+					const transact = repository.fileStore.transaction.bind(repository.fileStore);
+					let held = false;
+					repository.fileStore.transaction = async (...args: unknown[]) => {
+						const result = await transact(...args);
+						if (!held && args[0] === "rw" && args[1] === repository.fileStore.subscriptionSaveJournal) {
+							held = true;
+							await wait();
+						}
+						return result;
 					};
 				} else {
 					const storage = repository.db.records.storageInstance;

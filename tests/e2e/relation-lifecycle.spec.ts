@@ -2,7 +2,7 @@ import { mkdirSync } from "node:fs";
 import { expect, test, type Page } from "@playwright/test";
 import { selectChoice } from "./helpers/select-choice";
 
-const evidence = "docs/evidence/2026-09-29";
+const evidence = process.env.KEEPANY_EVIDENCE_DIR ?? "docs/evidence/2026-09-29";
 const repositoryModuleUrl = `/@fs${process.cwd()}/packages/local-db/src/index.ts`;
 
 async function relationRows(page: Page) {
@@ -153,7 +153,7 @@ for (const scenario of [
 		}
 		try {
 			await addAsset("account", account);
-			await page.getByRole("link", { name: scenario.back }).click();
+			await page.getByRole("banner").getByRole("link", { name: scenario.back }).click();
 			await page
 				.getByRole("button", { name: scenario.category, exact: true })
 				.click();
@@ -238,7 +238,11 @@ for (const scenario of [
 				.filter({ hasText: account })
 				.click();
 			await expect(page.getByRole("heading", { name: account })).toBeVisible();
-			await page.getByRole("link", { name: scenario.back }).click();
+			await page.getByRole("banner").getByRole("link", { name: scenario.back }).click();
+			// Relation navigation returns to its source list; each kind retains its own filter.
+			await expect(page).toHaveURL(/\/assets\/project$/);
+			await expect(page.getByText(project, { exact: true }).first()).toBeVisible();
+			await page.goto("/assets/account");
 			await expect(page).toHaveURL(/\/assets\/account$/);
 			await expect(
 				page.getByRole("button", { name: scenario.category, exact: true }),

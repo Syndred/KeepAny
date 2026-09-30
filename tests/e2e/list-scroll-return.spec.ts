@@ -2,7 +2,7 @@ import { mkdirSync } from "node:fs";
 import { expect, test } from "@playwright/test";
 import { selectChoice } from "./helpers/select-choice";
 
-const evidence = "docs/evidence/2026-09-29";
+const evidence = process.env.KEEPANY_EVIDENCE_DIR ?? "docs/evidence/2026-09-29";
 const mode = process.env.KEEPANY_SCROLL_MODE ?? "dev";
 
 for (const width of [1280, 390]) {
@@ -55,6 +55,7 @@ for (const width of [1280, 390]) {
 		}
 		try {
 			await page.goto("/intake");
+			await page.locator(".intake-mode-tabs").getByRole("button", { name: "Spreadsheet", exact: true }).click();
 			await page
 				.locator("#csv-file")
 				.setInputFiles({
@@ -62,12 +63,12 @@ for (const width of [1280, 390]) {
 					mimeType: "text/csv",
 					buffer: Buffer.from(csv),
 				});
-			await expect(page.locator(".import-preview .list-row")).toHaveCount(71);
-			await page
-				.locator(".import-preview")
-				.getByRole("button", { name: "Confirm import" })
-				.click();
-			await expect(page.getByText("Import complete · 71")).toBeVisible();
+			const reviews = page.locator(".intake-review-row");
+			await expect(reviews).toHaveCount(71);
+			for (let index = 0; index < 71; index++) {
+				await reviews.nth(index).getByRole("button", { name: "Confirm and save", exact: true }).click();
+				await expect(reviews.nth(index)).toContainText("Confirmed");
+			}
 			await page.goto("/assets/account");
 			await page.getByRole("button", { name: "Email", exact: true }).click();
 			await expect(page.locator(".list-row")).toHaveCount(70);
@@ -84,7 +85,7 @@ for (const width of [1280, 390]) {
 				Number(sessionStorage.getItem("keepany-scroll-account")),
 			);
 			expect(Math.abs(stored - before)).toBeLessThan(35);
-			await page.getByRole("link", { name: "Back to list" }).click();
+			await page.getByRole("banner").getByRole("link", { name: "Back to list" }).click();
 			const direct = await expectReturnedScroll(
 				stored,
 				`${evidence}/scroll-return-${mode}-${width}-direct.png`,
@@ -92,16 +93,14 @@ for (const width of [1280, 390]) {
 			await page.reload();
 			const refreshed = await expectReturnedScroll(stored);
 			await page.locator(".list-row").filter({ hasText: target }).click();
-			await page
-				.getByRole("textbox", { name: "Search all records" })
-				.fill(`absent-${suffix}`);
-			await page.getByRole("link", { name: "Back to list" }).click();
-			await expect(page.locator(".list-row")).toHaveCount(0);
-			await page
-				.getByRole("textbox", { name: "Search all records" })
-				.fill("");
-			await expect(page.locator(".list-row")).toHaveCount(70);
-			await expect.poll(readY).toBe(0);
+			await page.locator(".top-search-trigger").click();
+			await page.locator("#top-search-query").fill(`absent-${suffix}`);
+			await expect(page.locator(".top-search-panel")).toContainText("None");
+			await expect(page.locator(".top-search-panel a")).toHaveCount(0);
+			await page.locator("#top-search-query").press("Escape");
+			await expect(page.locator(".top-search-panel")).toHaveCount(0);
+			await page.getByRole("banner").getByRole("link", { name: "Back to list" }).click();
+			await expectReturnedScroll(stored);
 			await page.goto("/assets/project");
 			await page.getByText(project, { exact: true }).first().click();
 			await page.getByRole("button", { name: "Add connection" }).click();
@@ -115,7 +114,10 @@ for (const width of [1280, 390]) {
 				.filter({ hasText: target })
 				.click();
 			await expect(page.getByRole("heading", { name: target })).toBeVisible();
-			await page.getByRole("link", { name: "Back to list" }).click();
+			await page.getByRole("banner").getByRole("link", { name: "Back to list" }).click();
+			await expect(page).toHaveURL(/\/assets\/project$/);
+			await expect(page.getByText(project, { exact: true }).first()).toBeVisible();
+			await page.goto("/assets/account");
 			const graph = await expectReturnedScroll(stored);
 			console.log(
 				JSON.stringify({

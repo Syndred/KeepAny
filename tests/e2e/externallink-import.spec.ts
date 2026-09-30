@@ -3,7 +3,7 @@ import { expect, test } from "@playwright/test";
 import { selectChoice } from "./helpers/select-choice";
 
 const captureEvidence = process.env.KEEPANY_CAPTURE_EVIDENCE === "1";
-const evidence = "docs/evidence/2026-09-29";
+const evidence = process.env.KEEPANY_EVIDENCE_DIR ?? "docs/evidence/2026-09-29";
 
 function exportFixture() {
 	return {
@@ -113,6 +113,7 @@ for (const variant of [
 			await dialog.getByRole("button", { name: variant.save }).click();
 			await expect(page.getByText(projectName).first()).toBeVisible();
 			await page.goto("/intake");
+			await page.locator("details").filter({ has: page.locator(".external-import-panel") }).locator("summary").click();
 			const panel = page.locator(".external-import-panel");
 			await selectChoice(panel
 				.getByLabel(variant.project), { label: projectName });
@@ -152,16 +153,18 @@ for (const variant of [
 			await expect(panel.getByRole("status")).toContainText(variant.done);
 			await page.goto("/assets/project");
 			await page.getByText(projectName).first().click();
+			await page.locator("#asset-backlinks > summary").click();
 			const row = page
 				.locator("tr")
 				.filter({ hasText: "directory.example/submit" });
 			await expect(row).toBeVisible();
-			await expect(row.getByRole("combobox")).toHaveAttribute("data-value", "submitted");
+			await expect(row.locator(".backlink-status-submitted")).toHaveText(variant.submitted);
 			await expect(row).toContainText("DemoProject");
 			await expect(
 				page.locator("tr").filter({ hasText: "unproven.example" }),
 			).toHaveCount(0);
 			await page.reload();
+			await page.locator("#asset-backlinks > summary").click();
 			await expect(
 				page.locator("tr").filter({ hasText: "directory.example/submit" }),
 			).toHaveCount(1);

@@ -2,7 +2,7 @@ import { mkdirSync } from "node:fs";
 import { expect, type Page, test } from "@playwright/test";
 import { selectChoice } from "./helpers/select-choice";
 
-const evidence = "docs/evidence/2026-09-29";
+const evidence = process.env.KEEPANY_EVIDENCE_DIR ?? "docs/evidence/2026-09-29";
 const repositoryModuleUrl = `/@fs${process.cwd()}/packages/local-db/src/index.ts`;
 
 function nextDate(page: Page, label: string) {
@@ -80,7 +80,7 @@ test("renewal cycle, local amounts and history survive edits, status changes, re
 			if (status === "active") await expect(page.getByRole("button", { name: "Record renewal" })).toBeEnabled();
 			else await expect(page.getByRole("button", { name: "Record renewal" })).toBeDisabled();
 			await page.goto("/");
-			const dueCard = page.locator("section.card").filter({ has: page.getByRole("heading", { name: "Renewal due" }) });
+			const dueCard = page.locator(".overview-panel").filter({ has: page.getByRole("heading", { name: "Next actions" }) });
 			if (status === "active") await expect(dueCard).toContainText(name);
 			else await expect(dueCard).not.toContainText(name);
 			await page.goto("/assets/subscription");
@@ -125,6 +125,7 @@ test("renewal cycle, local amounts and history survive edits, status changes, re
 			await expect(restored.getByRole("heading", { name: "设置" })).toBeVisible();
 			await restored.goto("/intake");
 			await restored.locator("#backup-password").fill(password);
+			await restored.locator("details").filter({ has: restored.locator("#restore-file") }).locator("summary").click();
 			await restored.locator("#restore-file").setInputFiles(path);
 			await restored.getByRole("button", { name: "预览", exact: true }).first().click();
 			await restored.getByRole("button", { name: /确认 ·/ }).click();
@@ -155,7 +156,7 @@ test("renewal cycle, local amounts and history survive edits, status changes, re
 	}
 });
 
-test("a second tab can edit while renewal is queued without leaving a false history or blocking backup", async ({ browser }) => {
+test("an older client edit during a queued renewal leaves no false history and permits backup", async ({ browser }) => {
 	test.skip(process.env.KEEPANY_SUBSCRIPTION_MODE === "preview", "This fault injection uses the development source module.");
 	test.setTimeout(90_000);
 	const context = await browser.newContext({ locale: "en-US", viewport: { width: 1280, height: 800 } });
@@ -204,7 +205,14 @@ test("a second tab can edit while renewal is queued without leaving a false hist
 			const repository = await localRepository();
 			const asset = (await repository.list("asset")).find((item: { name: string }) => item.name === name);
 			if (!asset) throw Error("subscription missing in second tab");
-			await repository.save("asset", { ...asset, name: `${name} renamed` });
+			// Current public writes share the native journal gate. Model an older
+			// client that bypasses it, so the pair's storage CAS remains essential.
+			const storage = repository.db.records.storageInstance;
+			const [raw] = await storage.findDocumentsById([`asset:${asset.id}`], false);
+			const changed = await storage.bulkWrite([{ previous: raw, document: {
+				...raw, payload: JSON.stringify({ ...asset, name: `${name} renamed` }), updatedAt: raw.updatedAt + 1,
+			} }], "external-test-edit");
+			if (changed.error.length) throw Error("older-client-edit-failed");
 		}, { modulePath: repositoryModuleUrl, name });
 		const openingTab = await context.newPage();
 		await openingTab.goto(first.url());
@@ -215,6 +223,7 @@ test("a second tab can edit while renewal is queued without leaving a false hist
 			return (await localRepository()).fileStore.renewalJournal.count();
 		}, repositoryModuleUrl)).toBe(0);
 		await expect(openingTab.getByRole("heading", { name: `${name} renamed` })).toBeVisible();
+		await expect.poll(async () => (await localRenewalState(second, `${name} renamed`)).history).toHaveLength(0);
 		const state = await localRenewalState(second, `${name} renamed`);
 		expect(state.asset).toMatchObject({ dueDate: "2026-01-31", renewalCount: 0 });
 		expect(state.history).toHaveLength(0);
