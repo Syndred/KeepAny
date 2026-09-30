@@ -3,6 +3,7 @@ import { localRepository } from '../../../packages/local-db/src';
 import * as review from '../../../packages/local-db/src/intake-review';
 
 export type ReviewedCandidate = review.ReviewedCandidate;
+export type ReviewedExpenseDraft = review.ReviewedExpenseDraft;
 
 export async function stageReviewedCandidates(rows: ReviewedCandidate[]): Promise<ReviewedCandidate[]> {
   return review.stageReviewedCandidates((await localRepository()).fileStore, rows);
@@ -18,6 +19,14 @@ export async function getReviewedCandidate(id: string): Promise<ReviewedCandidat
 
 export async function editReviewedCandidate(id: string, asset: Asset, kindSelected?: boolean): Promise<boolean> {
   return review.editReviewedCandidate((await localRepository()).fileStore, id, asset, kindSelected);
+}
+
+export async function setReviewedCandidateMode(id: string, mode: 'asset' | 'expense', initialDraft?: ReviewedExpenseDraft): Promise<boolean> {
+  return review.setReviewedCandidateMode((await localRepository()).fileStore, id, mode, initialDraft);
+}
+
+export async function editReviewedExpenseDraft(id: string, draft: ReviewedExpenseDraft): Promise<boolean> {
+  return review.editReviewedExpenseDraft((await localRepository()).fileStore, id, draft);
 }
 
 export async function decideReviewedCandidate(id: string, status: "accepted" | "ignored"): Promise<void> {

@@ -1,26 +1,10 @@
 import { expect, test } from "@playwright/test";
 import { mkdirSync } from "node:fs";
+import { pdf } from "./fixtures/pdf";
 
 const evidence = process.env.KEEPANY_EVIDENCE_DIR ?? "docs/evidence/2026-09-30";
 mkdirSync(evidence, { recursive: true });
 
-function pdf(lines: string[], chinese = false) {
-	const stream = `BT /F1 12 Tf 50 750 Td ${lines.map((line, i) => `${i ? '0 -20 Td ' : ''}${chinese ? `<${Array.from(line).map(char => char.charCodeAt(0).toString(16).padStart(4, "0")).join("")}>` : `(${line})`} Tj`).join('\n')} ET`;
-	const objects = ["<< /Type /Catalog /Pages 2 0 R >>", "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
-		"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 600 800] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>",
-		"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>", `<< /Length ${Buffer.byteLength(stream)} >>\nstream\n${stream}\nendstream`];
-	if (chinese) {
-		objects[3] = "<< /Type /Font /Subtype /Type0 /BaseFont /STSong-Light /Encoding /Identity-H /DescendantFonts [<< /Type /Font /Subtype /CIDFontType0 /BaseFont /STSong-Light /CIDSystemInfo << /Registry (Adobe) /Ordering (GB1) /Supplement 4 >> >>] /ToUnicode 6 0 R >>";
-		const cmap = "/CIDInit /ProcSet findresource begin 12 dict begin begincmap /CIDSystemInfo << /Registry (Adobe) /Ordering (UCS) /Supplement 0 >> def /CMapName /Adobe-Identity-UCS def /CMapType 2 def 1 begincodespacerange <0000> <FFFF> endcodespacerange 1 beginbfrange <0000> <FFFF> <0000> endbfrange endcmap CMapName currentdict /CMap defineresource pop end end";
-		objects.push(`<< /Length ${Buffer.byteLength(cmap)} >>\nstream\n${cmap}\nendstream`);
-	}
-	let body = "%PDF-1.4\n";
-	const offsets = [0];
-	objects.forEach((object, i) => { offsets.push(Buffer.byteLength(body)); body += `${i + 1} 0 obj\n${object}\nendobj\n`; });
-	const xref = Buffer.byteLength(body);
-	body += `xref\n0 ${objects.length + 1}\n0000000000 65535 f \n${offsets.slice(1).map(offset => `${String(offset).padStart(10, '0')} 00000 n \n`).join('')}trailer\n<< /Root 1 0 R /Size ${objects.length + 1} >>\nstartxref\n${xref}\n%%EOF`;
-	return Buffer.from(body);
-}
 
 for (const locale of ["zh-CN", "en-US"]) for (const width of [390, 1280]) test(`${locale} ${width} PDF text requires explicit type and confirmation, retains decisions`, async ({ browser }) => {
 	const context = await browser.newContext({ locale, viewport: { width, height: 844 } });

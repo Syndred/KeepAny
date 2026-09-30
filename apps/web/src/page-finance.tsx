@@ -3,18 +3,19 @@ import { Plus } from "lucide-react";
 import { lazy, Suspense, useRef, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import {
-	currencies, financeActions, formatMinorUnits, historySchema, monthlyMinorUnits,
+	financeActions, formatMinorUnits, historySchema, monthlyMinorUnits,
 	parseMinorUnits, type Asset, type History,
 } from "../../../packages/domain/src";
 import { localRepository, save } from "../../../packages/local-db/src";
 import { Button } from "./components/ui/button";
+import { FinanceEntryFields, type FinanceEntryDraft } from "./components/FinanceEntryFields";
 import { Dialog } from "./components/ui/dialog";
 import { date, liveAssets, PageTitle, useAppContext } from "./view-shared";
 import "./finance.css";
 
 type ManualAction = typeof financeActions[number];
 type LedgerAction = ManualAction | "renew";
-type EntryDraft = { action: ManualAction; assetId: string; title: string; amount: string; currency: typeof currencies[number]; eventDate: string; source: string; note: string };
+type EntryDraft = FinanceEntryDraft & { action: ManualAction };
 const ledgerActions = new Set<string>([...financeActions, "renew"]);
 const today = () => { const now = new Date(); return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")}`; };
 const AssetEditor = lazy(() => import("./workflows").then((module) => ({ default: module.AssetEditor })));
@@ -136,7 +137,7 @@ export function FinancePage() {
 		</section>
 		<div className="finance-columns">
 			<section className="card"><div className="card-header"><h2>{t("financeRecentRecords")}</h2></div>
-				<div className="finance-filters"><label>{t("financeFilterType")}<select value={typeFilter} onChange={(event) => setTypeFilter(event.target.value as LedgerAction | "all")}><option value="all">{t("all")}</option>{(["expense","topup","refund","balance","renew"] as const).map((action) => <option key={action} value={action}>{action === "renew" ? t("financeRenewalRecorded") : t(`financeAction${action[0].toUpperCase()}${action.slice(1)}`)}</option>)}</select></label><label>{t("financeFilterAsset")}<select value={assetFilter} onChange={(event) => setAssetFilter(event.target.value)}><option value="">{t("all")}</option>{[...new Set(records.map((entry) => entry.assetId))].map((id) => <option key={id} value={id}>{assetsById.get(id)?.name ?? t("financeMissingAsset")}</option>)}</select></label><label>{t("financeFilterSource")}<select value={sourceFilter} onChange={(event) => setSourceFilter(event.target.value)}><option value="all">{t("all")}</option>{hasEmptySource && <option value="empty">{t("financeNoSource")}</option>}{sources.map((source) => <option key={source} value={`source:${source}`}>{source}</option>)}</select></label></div>
+				<div className="finance-filters"><label className="field">{t("financeFilterType")}<select value={typeFilter} onChange={(event) => setTypeFilter(event.target.value as LedgerAction | "all")}><option value="all">{t("all")}</option>{(["expense","topup","refund","balance","renew"] as const).map((action) => <option key={action} value={action}>{action === "renew" ? t("financeRenewalRecorded") : t(`financeAction${action[0].toUpperCase()}${action.slice(1)}`)}</option>)}</select></label><label className="field">{t("financeFilterAsset")}<select value={assetFilter} onChange={(event) => setAssetFilter(event.target.value)}><option value="">{t("all")}</option>{[...new Set(records.map((entry) => entry.assetId))].map((id) => <option key={id} value={id}>{assetsById.get(id)?.name ?? t("financeMissingAsset")}</option>)}</select></label><label className="field">{t("financeFilterSource")}<select value={sourceFilter} onChange={(event) => setSourceFilter(event.target.value)}><option value="all">{t("all")}</option>{hasEmptySource && <option value="empty">{t("financeNoSource")}</option>}{sources.map((source) => <option key={source} value={`source:${source}`}>{source}</option>)}</select></label></div>
 				{filtered.length ? <div className="list">{filtered.map((entry) => <div className="list-row finance-entry" key={entry.id}><div><strong>{entry.title || assetsById.get(entry.assetId)?.name || historyLabel(entry)}</strong><small>{historyLabel(entry)} · {assetsById.get(entry.assetId)?.name ?? t("financeMissingAsset")} · {date(entry.eventDate || entry.billDate || entry.createdAt.slice(0,10), i18n.language)} · {entry.source?.trim() || t("financeNoSource")}{entry.note ? ` · ${entry.note}` : ""}</small></div>{entry.amount !== undefined && entry.currency && <b>{formatMinorUnits(entry.amount,entry.currency,i18n.language)}</b>}</div>)}</div> : <p>{t("financeNoRecords")}</p>}
 			</section>
 		</div>
@@ -144,12 +145,7 @@ export function FinancePage() {
 		{recordOpen && <Dialog title={t("financeAddRecord")} onClose={closeRecord}>
 			{targets.length ? <form className="finance-form" onSubmit={(event) => void saveRecord(event)}>
 				<div className="field"><label htmlFor="finance-action">{t("financeRecordType")}</label><select id="finance-action" value={draft.action} disabled={busy} onChange={(event) => { setDraft({...draft,action:event.target.value as ManualAction});setError(""); }}>{financeActions.map((action) => <option key={action} value={action}>{t(`financeAction${action[0].toUpperCase()}${action.slice(1)}`)}</option>)}</select></div>
-				<div className="field"><label htmlFor="finance-asset">{t("financeRelatedAsset")}</label><select id="finance-asset" value={draft.assetId} disabled={busy} onChange={(event) => { const asset=targets.find((item)=>item.id===event.target.value);setDraft({...draft,assetId:event.target.value,currency:asset?.currency??draft.currency});setError(""); }}>{targets.map((asset) => <option key={asset.id} value={asset.id}>{asset.name} · {t(asset.kind)}</option>)}</select></div>
-				<div className="field"><label htmlFor="finance-title">{t("financeRecordTitle")}</label><input id="finance-title" value={draft.title} disabled={busy} onChange={(event) => {setDraft({...draft,title:event.target.value});setError("");}} /></div>
-				<div className="finance-form-pair"><div className="field"><label htmlFor="finance-amount">{t("financeAmount")}</label><input id="finance-amount" inputMode="decimal" value={draft.amount} disabled={busy} onChange={(event)=>{setDraft({...draft,amount:event.target.value});setError("");}} /></div><div className="field"><label htmlFor="finance-currency">{t("currency")}</label><select id="finance-currency" value={draft.currency} disabled={busy} onChange={(event)=>{setDraft({...draft,currency:event.target.value as typeof currencies[number]});setError("");}}>{currencies.map((currency)=><option key={currency} value={currency}>{currency}</option>)}</select></div></div>
-				<div className="field"><label htmlFor="finance-date">{t("financeDate")}</label><input id="finance-date" type="date" value={draft.eventDate} disabled={busy} onChange={(event)=>{setDraft({...draft,eventDate:event.target.value});setError("");}} /></div>
-				<div className="field"><label htmlFor="finance-source">{t("financeSource")}</label><input id="finance-source" value={draft.source} disabled={busy} onChange={(event)=>{setDraft({...draft,source:event.target.value});setError("");}} /></div>
-				<div className="field"><label htmlFor="finance-note">{t("financeNote")}</label><textarea id="finance-note" rows={2} value={draft.note} disabled={busy} onChange={(event)=>setDraft({...draft,note:event.target.value})}/></div>
+				<FinanceEntryFields draft={draft} targets={targets} disabled={busy} idPrefix="finance" onChange={(change) => { setDraft({ ...draft, ...change }); setError(""); }} />
 				{error && <p role="alert" className="field-error">{error}</p>}
 				<div className="actions"><Button variant="primary" type="submit" disabled={busy}>{busy?t("loading"):t("financeSaveRecord")}</Button><Button type="button" disabled={busy} onClick={closeRecord}>{t("cancel")}</Button></div>
 			</form> : <div className="finance-no-target"><p>{t("financeNoTarget")}</p><div className="actions"><Button asChild><Link to="/assets/$kind" params={{kind:"subscription"}}>{t("financeGoSubscriptions")}</Link></Button><Button asChild><Link to="/assets/$kind" params={{kind:"account"}}>{t("financeGoAccounts")}</Link></Button></div></div>}

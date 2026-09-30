@@ -2,22 +2,12 @@ import { readFileSync } from 'node:fs';
 import { expect, test, type Page } from '@playwright/test';
 import { strFromU8, unzipSync } from 'fflate';
 import { decryptBackup } from '../../packages/local-db/src/backup-crypto';
+import { pdf as makePdf } from "./fixtures/pdf";
 import type { ReviewedCandidate } from '../../packages/local-db/src/intake-review';
 
 const password = 'intake-review-backup-test-password';
 const csv = Buffer.from('name,kind\nPending CSV,project\nAccepted CSV,project\nIgnored CSV,item');
 
-function pdf(text: string): Buffer {
-  const stream = `BT /F1 12 Tf 50 750 Td (${text}) Tj ET`;
-  const objects = ['<< /Type /Catalog /Pages 2 0 R >>', '<< /Type /Pages /Kids [3 0 R] /Count 1 >>',
-    '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 600 800] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>',
-    '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>', `<< /Length ${Buffer.byteLength(stream)} >>\nstream\n${stream}\nendstream`];
-  let body = '%PDF-1.4\n'; const offsets: number[] = [];
-  objects.forEach((object, index) => { offsets.push(Buffer.byteLength(body)); body += `${index + 1} 0 obj\n${object}\nendobj\n`; });
-  const xref = Buffer.byteLength(body);
-  body += `xref\n0 ${objects.length + 1}\n0000000000 65535 f \n${offsets.map(offset => `${String(offset).padStart(10, '0')} 00000 n \n`).join('')}trailer\n<< /Root 1 0 R /Size ${objects.length + 1} >>\nstartxref\n${xref}\n%%EOF`;
-  return Buffer.from(body);
-}
 
 async function download(page: Page, zh: boolean) {
   await page.locator('#backup-password').fill(password);
@@ -40,7 +30,7 @@ for (const locale of ['zh-CN', 'en-US']) test(`${locale} downloaded encrypted ba
   const source = await browser.newContext({ locale, viewport: { width: 390, height: 844 } });
   const page = await source.newPage(); const errors: string[] = [];
   page.on('pageerror', error => errors.push(error.message));
-  const pendingPdf = pdf('Original PDF reference USD 12.00'), ignoredPdf = pdf('Ignored PDF reference USD 99.00');
+  const pendingPdf = makePdf(['Original PDF reference USD 12.00']), ignoredPdf = makePdf(['Ignored PDF reference USD 99.00']);
   try {
     await page.goto('/intake');
     await page.locator('.intake-mode-tabs').getByRole('button', { name: zh ? '表格' : 'Spreadsheet', exact: true }).click();

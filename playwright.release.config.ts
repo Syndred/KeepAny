@@ -13,6 +13,7 @@ export default defineConfig({
 		"local-core.spec.ts",
 		"production-offline.spec.ts",
 		"intake-pdf.spec.ts",
+		"intake-expense.spec.ts",
 		"intake-review-backup.spec.ts",
 		"intake-review-merge.spec.ts",
 	],

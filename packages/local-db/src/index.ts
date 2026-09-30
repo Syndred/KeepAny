@@ -6,7 +6,9 @@ import { dueOnCycle, entitySchemas, normalizeCategoryName, type Asset, type Asse
 import { canRecordProjectWorkflowTask, currentProjectWorkflowRound } from '../../domain/src/project-workflow';
 import { zipSync, unzipSync, strToU8, strFromU8 } from 'fflate';
 import type { SyncOperation } from '../../contracts/src';
-import { assertReviewedAssetReferences, migrateLegacyIntakeReview, parseReviewedCandidates, sameReviewedCandidate, type ReviewedCandidate } from './intake-review';
+import { assertReviewedAssetReferences, cancelReviewedExpenseConfirmation, confirmReviewedExpense, migrateLegacyIntakeReview,
+  parseReviewedCandidates, pendingReviewedExpenseConfirmations, replayReviewedExpense, sameReviewedCandidate,
+  type PendingReviewedExpenseConfirmation, type ReviewedCandidate, type ReviewedImportJournal } from './intake-review';
 import { pendingSubscriptionSave, replaySubscriptionSave, subscriptionSaveComplete, type PendingSubscriptionSave, type SubscriptionLink, type SubscriptionSaveJournal } from './subscription-save';
 export type { PendingSubscriptionSave, SubscriptionLink } from './subscription-save';
 
@@ -14,7 +16,7 @@ export type { PendingSubscriptionSave, SubscriptionLink } from './subscription-s
 export interface RecordRow { id: string; type: EntityType; payload: string; updatedAt: number }
 interface StoredFile { id: string; blob: Blob; name: string }
 interface Journal { id: string; rows: RecordRow[]; intakeReview?: ReviewedCandidate[] }
-interface ImportJournal { id: string; rows: RecordRow[] }
+type ImportJournal = ReviewedImportJournal;
 interface RenewalJournal { id: string; assetId: string; expectedPayload: string; next: RecordRow; history: RecordRow }
 interface SyncBase { id: string; payload: string; version: number }
 export interface PulledRow { row: RecordRow; sequence: number; version: number; operationId?: string; keyEpoch?: number; ciphertext?: string }
@@ -107,7 +109,7 @@ interface DefaultRepositoryState {
   fileStore?: FileStore;
   resources?: Promise<{ db: RxDatabase; fileStore: FileStore; recoveryState?: RepositoryRecoveryState }>;
 }
-interface RepositoryRecoveryState { syncError: string | null; restoreError: string | null; renewalError: string | null; subscriptionError?: string | null; intakeError?: string | null }
+interface RepositoryRecoveryState { syncError: string | null; restoreError: string | null; renewalError: string | null; subscriptionError?: string | null; intakeError?: string | null; intakeExpenseError?: string | null }
 // Vite HMR re-evaluates this module while the old RxDB remains open. Keep the resource across reloads.
 const defaultGlobal = globalThis as typeof globalThis & { __keepanyLocalDbState?: DefaultRepositoryState };
 if (!defaultGlobal.__keepanyLocalDbState) defaultGlobal.__keepanyLocalDbState = {};
@@ -172,18 +174,74 @@ export class LocalRepository {
   set subscriptionRecoveryError(value: string | null) { this.recoveryState.subscriptionError = value; }
   get intakeReviewMigrationError(): string | null { return this.recoveryState.intakeError ?? null; }
   set intakeReviewMigrationError(value: string | null) { this.recoveryState.intakeError = value; }
+  get intakeExpenseRecoveryError(): string | null { return this.recoveryState.intakeExpenseError ?? null; }
+  set intakeExpenseRecoveryError(value: string | null) { this.recoveryState.intakeExpenseError = value; }
 
   async retryIntakeReviewMigration(): Promise<void> {
     if (this.db.name !== 'keepany-v1') return;
     try {
-      const assetIds = new Set((await this.allRecords()).filter(row => row.type === 'asset')
+      const records = await this.allRecords();
+      const assetIds = new Set(records.filter(row => row.type === 'asset')
         .map(row => (JSON.parse(row.payload) as Asset).id));
-      await migrateLegacyIntakeReview(this.fileStore, 'keepany-intake-review-v1', assetIds);
+      await migrateLegacyIntakeReview(this.fileStore, 'keepany-intake-review-v1', assetIds, historyByIdIn(records));
       this.intakeReviewMigrationError = null;
     } catch (error) {
       this.intakeReviewMigrationError = 'review-migration-failed';
       throw error;
     }
+  }
+
+  async confirmReviewedExpense(expected: ReviewedCandidate): Promise<History> {
+    return withRenewalLock(`keepany-renewal:${this.db.name}`, async () => {
+      if (this.intakeReviewMigrationError) await this.retryIntakeReviewMigration();
+      await this.settleRenewalJournals();
+      await this.settleSubscriptionSaves();
+      if (await this.pendingArchiveMerge()) throw Error('archive-merge-pending');
+      try {
+        const history = await confirmReviewedExpense(this.db, this.fileStore, expected);
+        if (!(await this.fileStore.importJournal.toArray()).some(entry => entry.reviewedExpense)) this.intakeExpenseRecoveryError = null;
+        return history;
+      } catch (error) {
+        const code = error instanceof Error && error.message.startsWith('review-expense-') ? error.message : 'review-expense-pending';
+        if ((await this.fileStore.importJournal.toArray()).some(entry => entry.reviewedExpense)) this.intakeExpenseRecoveryError = code;
+        throw Error(code);
+      }
+    });
+  }
+
+  async retryReviewedExpenseConfirmations(): Promise<void> {
+    await withRenewalLock(`keepany-renewal:${this.db.name}`, () => this.settleReviewedExpenseConfirmations());
+  }
+
+  async pendingReviewedExpenseConfirmations(): Promise<PendingReviewedExpenseConfirmation[]> {
+    return pendingReviewedExpenseConfirmations(this.db, this.fileStore);
+  }
+
+  async cancelReviewedExpenseConfirmation(candidateId: string): Promise<'cancelled' | 'completed'> {
+    return withRenewalLock(`keepany-renewal:${this.db.name}`, async () => {
+      try {
+        const outcome = await cancelReviewedExpenseConfirmation(this.db, this.fileStore, candidateId);
+        if (!(await this.fileStore.importJournal.toArray()).some(entry => entry.reviewedExpense)) this.intakeExpenseRecoveryError = null;
+        return outcome;
+      } catch (error) {
+        const code = error instanceof Error && error.message.startsWith('review-expense-') ? error.message : 'review-expense-pending';
+        this.intakeExpenseRecoveryError = code;
+        throw Error(code);
+      }
+    });
+  }
+
+  private async settleReviewedExpenseConfirmations(): Promise<void> {
+    for (const entry of await this.fileStore.importJournal.toArray()) {
+      if (!entry.reviewedExpense) continue;
+      try { await replayReviewedExpense(this.db, this.fileStore, entry.id); }
+      catch (error) {
+        this.intakeExpenseRecoveryError = error instanceof Error && error.message.startsWith('review-expense-')
+          ? error.message : 'review-expense-pending';
+        throw Error(this.intakeExpenseRecoveryError);
+      }
+    }
+    this.intakeExpenseRecoveryError = null;
   }
 
   async allRecords(): Promise<RecordRow[]> {
@@ -703,6 +761,7 @@ export class LocalRepository {
 
   private async assertArchiveMergeSyncAllowed(): Promise<void> {
     if (await this.fileStore.subscriptionSaveJournal.count()) throw Error('subscription-relations-pending');
+    if ((await this.fileStore.importJournal.toArray()).some(entry => entry.reviewedExpense)) throw Error('review-expense-pending');
     const pending = await this.fileStore.archiveMerge.get('active');
     if (pending && pending.phase !== 'syncing') throw Error('archive-merge-sync-paused');
   }
@@ -830,8 +889,9 @@ export class LocalRepository {
       ((await this.scopedBaseFor(scope, row.id))?.version ?? 0) || operation.tombstone !== Boolean(parsedPayload(row).deleted)) throw Error('outbox-context');
     const id = scopedKey(scope, row.id);
     return this.fileStore.transaction('rw', this.fileStore.archiveMerge, this.fileStore.scopedOutbox,
-      this.fileStore.subscriptionSaveJournal, async () => {
+      this.fileStore.subscriptionSaveJournal, this.fileStore.importJournal, async () => {
       if (await this.fileStore.subscriptionSaveJournal.count()) throw Error('subscription-relations-pending');
+      if ((await this.fileStore.importJournal.toArray()).some(entry => entry.reviewedExpense)) throw Error('review-expense-pending');
       const pending = await this.fileStore.archiveMerge.get('active');
       if (pending && pending.phase !== 'syncing') throw Error('archive-merge-sync-paused');
       const existing = await this.fileStore.scopedOutbox.get(id);
@@ -887,8 +947,9 @@ export class LocalRepository {
     if (!previous) {
       const current = await this.db.records.findOne(change.row.id).exec();
       await this.fileStore.transaction('rw', this.fileStore.archiveMerge, this.fileStore.scopedPull,
-        this.fileStore.subscriptionSaveJournal, async () => {
+        this.fileStore.subscriptionSaveJournal, this.fileStore.importJournal, async () => {
         if (await this.fileStore.subscriptionSaveJournal.count()) throw Error('subscription-relations-pending');
+        if ((await this.fileStore.importJournal.toArray()).some(entry => entry.reviewedExpense)) throw Error('review-expense-pending');
         const pending = await this.fileStore.archiveMerge.get('active');
         if (pending && pending.phase !== 'syncing') throw Error('archive-merge-sync-paused');
         await this.fileStore.scopedPull.add({ id: scope, scope, cursorStart: cursor, change,
@@ -1117,6 +1178,7 @@ export class LocalRepository {
   async previewArchiveMerge(bytes: Uint8Array): Promise<ArchiveMergePreview> {
     if (this.intakeReviewMigrationError) await this.retryIntakeReviewMigration();
     await this.retryAllSubscriptionSaves();
+    await this.retryReviewedExpenseConfirmations();
     if (await this.pendingArchiveMerge()) throw Error('archive-merge-pending');
     const { rows, intakeReview } = await inspectArchive(bytes);
     const target = await this.allRecords();
@@ -1146,6 +1208,7 @@ export class LocalRepository {
       if (this.intakeReviewMigrationError) await this.retryIntakeReviewMigration();
       await this.settleRenewalJournals();
       await this.settleSubscriptionSaves();
+      await this.settleReviewedExpenseConfirmations();
       if (await this.pendingArchiveMerge()) throw Error('archive-merge-pending');
       if (!(await this.fileStore.datasetBinding.get('active'))) throw Error('archive-merge-unbound');
       if (await this.fileStore.journal.count() || await this.fileStore.importJournal.count() ||
@@ -1204,7 +1267,7 @@ export class LocalRepository {
       // The selected result is checked as one data set, including references to
       // target-only records and source tombstones.
       const final = [...finalRows.values()];
-      assertReviewedAssetReferences([...finalReview.values()], assetIdsIn(final));
+      assertReviewedAssetReferences([...finalReview.values()], assetIdsIn(final), historyByIdIn(final));
       const finalFileIds = attachmentIdsIn(final);
       const sourceFiles = new Map(manifest.attachments.map(attachment => [attachment.id, attachment]));
       const existingFiles = await this.fileStore.blobs.toArray();
@@ -1226,8 +1289,10 @@ export class LocalRepository {
       const journal: ArchiveMergeJournal = { id: 'active', phase: 'applying', archiveHash,
         targetFingerprint: expectedFingerprint, changes, intakeReviewChanges, addedFileIds, insertedFileIds: [] };
       await this.fileStore.transaction('rw', [this.fileStore.archiveMerge, this.fileStore.scopedOutbox,
-        this.fileStore.scopedPull, this.fileStore.scopedAttachmentUploads, this.fileStore.intakeReview], async () => {
+        this.fileStore.scopedPull, this.fileStore.scopedAttachmentUploads, this.fileStore.intakeReview,
+        this.fileStore.importJournal, this.fileStore.journal], async () => {
           if (await this.fileStore.archiveMerge.get('active')) throw Error('archive-merge-pending');
+          if (await this.fileStore.importJournal.count() || await this.fileStore.journal.count()) throw Error('archive-merge-recovery-pending');
           if (await this.fileStore.scopedOutbox.count() || await this.fileStore.scopedPull.count() ||
             await this.fileStore.scopedAttachmentUploads.count()) throw Error('archive-merge-recovery-pending');
           if (reviewFingerprint(parseReviewedCandidates(await this.fileStore.intakeReview.toArray())) !==
@@ -1254,7 +1319,7 @@ export class LocalRepository {
         });
         const actual = await this.allRecords();
         validateReferences(actual, attachmentIdsIn(actual));
-        assertReviewedAssetReferences(parseReviewedCandidates(await this.fileStore.intakeReview.toArray()), assetIdsIn(actual));
+        assertReviewedAssetReferences(parseReviewedCandidates(await this.fileStore.intakeReview.toArray()), assetIdsIn(actual), historyByIdIn(actual));
         for (const id of attachmentIdsIn(actual)) if (!(await this.fileStore.blobs.get(id))) throw Error('archive-attachment-reference');
         await this.fileStore.archiveMerge.update('active', { phase: 'applied' });
         return { imported, replaced, skipped, ...(intakeReview.length ? { review } : {}) };
@@ -1298,9 +1363,10 @@ export class LocalRepository {
       if (this.intakeReviewMigrationError) await this.retryIntakeReviewMigration();
       await this.settleRenewalJournals();
       await this.settleSubscriptionSaves();
+      await this.settleReviewedExpenseConfirmations();
       const rows = await this.allRecords();
       const intakeReview = parseReviewedCandidates(await this.fileStore.intakeReview.toArray());
-      assertReviewedAssetReferences(intakeReview, assetIdsIn(rows));
+      assertReviewedAssetReferences(intakeReview, assetIdsIn(rows), historyByIdIn(rows));
       const blobs: StoredFile[] = [];
       for (const id of attachmentIdsIn(rows)) {
         const file = await this.fileStore.blobs.get(id);
@@ -1318,10 +1384,14 @@ export class LocalRepository {
       }
       // A second tab may change records while attachments are read. Fail the
       // export instead of returning a mixed record/image snapshot.
-      if (JSON.stringify((await this.allRecords()).sort((a, b) => a.id.localeCompare(b.id))) !==
-        JSON.stringify([...rows].sort((a, b) => a.id.localeCompare(b.id)))) throw Error('archive-export-stale');
-      if (reviewFingerprint(parseReviewedCandidates(await this.fileStore.intakeReview.toArray())) !==
-        reviewFingerprint(intakeReview)) throw Error('archive-export-stale');
+      await this.fileStore.transaction('r', this.fileStore.intakeReview, this.fileStore.importJournal, async () => {
+        if ((await this.fileStore.importJournal.toArray()).some(entry => entry.reviewedExpense)) throw Error('review-expense-pending');
+        const actual = await Dexie.waitFor(Dexie.ignoreTransaction(() => this.allRecords()));
+        if (JSON.stringify(actual.sort((a, b) => a.id.localeCompare(b.id))) !==
+          JSON.stringify([...rows].sort((a, b) => a.id.localeCompare(b.id)))) throw Error('archive-export-stale');
+        if (reviewFingerprint(parseReviewedCandidates(await this.fileStore.intakeReview.toArray())) !==
+          reviewFingerprint(intakeReview)) throw Error('archive-export-stale');
+      });
       for (const item of blobs) {
         const current = await this.fileStore.blobs.get(item.id);
         const expected = attachments.find(attachment => attachment.id === item.id);
@@ -1347,6 +1417,7 @@ export class LocalRepository {
       if (this.intakeReviewMigrationError) await this.retryIntakeReviewMigration();
       await this.settleRenewalJournals();
       await this.settleSubscriptionSaves();
+      await this.settleReviewedExpenseConfirmations();
       if (await this.pendingArchiveMerge()) throw Error('archive-merge-pending');
       if (await this.fileStore.journal.count()) throw Error('restore-recovery-pending');
       const { rows, intakeReview, manifest, entries } = await inspectArchive(bytes);
@@ -1363,8 +1434,11 @@ export class LocalRepository {
           await sha(new Uint8Array(await current.blob.arrayBuffer())) !== attachment.sha256)) throw Error('restore-conflict');
       }
       const journalId = crypto.randomUUID();
-      await this.fileStore.transaction('rw', this.fileStore.blobs, this.fileStore.journal,
-        this.fileStore.intakeReview, async () => {
+      await this.fileStore.transaction('rw', [this.fileStore.blobs, this.fileStore.journal,
+        this.fileStore.intakeReview, this.fileStore.importJournal, this.fileStore.archiveMerge], async () => {
+        if ((await this.fileStore.importJournal.toArray()).some(entry => entry.reviewedExpense)) throw Error('review-expense-pending');
+        if (await this.fileStore.archiveMerge.count()) throw Error('archive-merge-pending');
+        if (await this.fileStore.journal.count()) throw Error('restore-recovery-pending');
         await assertReviewRestoreConflicts(this.fileStore, intakeReview);
         for (const attachment of manifest.attachments) {
           const existing = await this.fileStore.blobs.get(attachment.id);
@@ -1406,7 +1480,7 @@ async function replayJournal(db: RxDatabase, store: FileStore, id: string): Prom
   const intakeReview = parseReviewedCandidates(journal.intakeReview ?? []);
   await assertReviewRestoreConflicts(store, intakeReview);
   const currentRows = (await db.records.find().exec()).map(canonical);
-  assertReviewedAssetReferences(intakeReview, assetIdsIn([...currentRows, ...journal.rows]));
+  assertReviewedAssetReferences(intakeReview, assetIdsIn([...currentRows, ...journal.rows]), historyByIdIn([...currentRows, ...journal.rows]));
   for (const row of journal.rows) {
     await assertRowAttachmentsAvailable(store, row);
     const current = await db.records.findOne(row.id).exec();
@@ -1422,7 +1496,8 @@ async function replayJournal(db: RxDatabase, store: FileStore, id: string): Prom
       if (canonical(raced).payload !== row.payload) throw Error('restore-conflict');
     }
   }
-  assertReviewedAssetReferences(intakeReview, assetIdsIn((await db.records.find().exec()).map(canonical)));
+  const restoredRows = (await db.records.find().exec()).map(canonical);
+  assertReviewedAssetReferences(intakeReview, assetIdsIn(restoredRows), historyByIdIn(restoredRows));
   await store.transaction('rw', store.intakeReview, store.journal, async () => {
     await assertReviewRestoreConflicts(store, intakeReview);
     for (const row of intakeReview) if (!(await store.intakeReview.get(row.id))) await store.intakeReview.add(row);
@@ -1432,6 +1507,12 @@ async function replayJournal(db: RxDatabase, store: FileStore, id: string): Prom
 
 function assetIdsIn(rows: RecordRow[]): Set<string> {
   return new Set(rows.filter(row => row.type === 'asset').map(row => parsedPayload(row).id));
+}
+function historyByIdIn(rows: RecordRow[]): Map<string, History> {
+  return new Map(rows.filter(row => row.type === 'history').map(row => {
+    const history = entitySchemas.history.parse(JSON.parse(row.payload));
+    return [history.id, history];
+  }));
 }
 
 function reviewFingerprint(rows: ReviewedCandidate[]): string {
@@ -1758,7 +1839,7 @@ export async function openLocalRepository(name: string): Promise<LocalRepository
     db = await createRxDatabase({ name, storage: getRxStorageDexie(), multiInstance: true });
     await db.addCollections({ records: { schema: recordSchema } });
     const openedDb = db;
-    for (const entry of await store.importJournal.toArray()) await rollbackImport(db, store, entry.id);
+    for (const entry of await store.importJournal.toArray()) if (!entry.reviewedExpense) await rollbackImport(db, store, entry.id);
     const repository = new LocalRepository(db, store);
     if (name === 'keepany-v1') {
       try { await repository.retryIntakeReviewMigration(); }
@@ -1780,6 +1861,8 @@ export async function openLocalRepository(name: string): Promise<LocalRepository
         }
       }
     });
+    try { await repository.retryReviewedExpenseConfirmations(); }
+    catch { /* Keep the frozen receipt intent visible without blocking unrelated local CRUD. */ }
     if ((await store.archiveMerge.get('active'))?.phase === 'applying') {
       try { await rollbackArchiveMergeJournal(openedDb, store); }
       catch { /* Keep the durable journal and expose it through pendingArchiveMerge. */ }
@@ -1841,11 +1924,13 @@ function defaultRepository(): Promise<LocalRepository> {
           renewalError: await resource.fileStore.renewalJournal.count() ? 'renewal-recovery-pending' : null,
           subscriptionError: await resource.fileStore.subscriptionSaveJournal.count() ? 'subscription-relations-pending' : null,
           intakeError: null,
+          intakeExpenseError: null,
         };
       }
       if (resource.recoveryState.renewalError === undefined) resource.recoveryState.renewalError = null;
       if (resource.recoveryState.subscriptionError === undefined) resource.recoveryState.subscriptionError = null;
       if (resource.recoveryState.intakeError === undefined) resource.recoveryState.intakeError = null;
+      if (resource.recoveryState.intakeExpenseError === undefined) resource.recoveryState.intakeExpenseError = null;
       const repository = new LocalRepository(resource.db, resource.fileStore, resource.recoveryState);
       try { await repository.retryIntakeReviewMigration(); }
       catch { /* The shared migration error stays visible while local CRUD remains usable. */ }
@@ -1870,6 +1955,8 @@ function defaultRepository(): Promise<LocalRepository> {
           catch { /* Pending state remains visible for explicit recovery. */ }
         }
       });
+      try { await repository.retryReviewedExpenseConfirmations(); }
+      catch { /* Pending confirmation stays frozen and can be retried explicitly. */ }
       return repository;
     })
       .catch(error => { singleton = undefined; throw error; });
@@ -1982,7 +2069,7 @@ export async function inspectArchive(bytes: Uint8Array) {
     if (await sha(entries['intake-review.json']) !== manifest.intakeReviewHash) throw Error('archive-hash');
     intakeReview = parseReviewedCandidates(JSON.parse(strFromU8(entries['intake-review.json'])));
     if (intakeReview.length !== manifest.intakeReviewCount) throw Error('archive-review-count');
-    assertReviewedAssetReferences(intakeReview, assetIdsIn(rows));
+    assertReviewedAssetReferences(intakeReview, assetIdsIn(rows), historyByIdIn(rows));
   }
   const attachmentIds = new Set<string>();
   for (const attachment of manifest.attachments) {
