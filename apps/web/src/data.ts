@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { liveQuery } from "dexie";
 import {
 	type Asset,
@@ -16,7 +16,34 @@ import {
 	type RecordRow,
 	saveBatch,
 } from "../../../packages/local-db/src";
+import type { GlobalSearchCandidate } from "./global-search";
 export function useData() {
+	const [reviewedCandidates, setReviewedCandidates] = useState<GlobalSearchCandidate[]>([]);
+	const [reviewedCandidatesLoaded, setReviewedCandidatesLoaded] = useState(false);
+	useEffect(() => {
+		let active = true;
+		let dispose: (() => void) | undefined;
+		void localRepository().then((repository) => {
+			if (!active) return;
+			const subscription = liveQuery(async () => {
+				const candidates = await repository.fileStore.intakeReview.where("status").equals("accepted").toArray();
+				return candidates.map((row): GlobalSearchCandidate => ({
+					id: row.id, source: row.source, fileName: row.fileName, rowNumber: row.rowNumber,
+					status: row.status, reviewMode: row.reviewMode, historyId: row.historyId,
+					asset: { id: row.asset.id, kind: row.asset.kind, name: row.asset.name, url: row.asset.url },
+					expenseDraft: row.expenseDraft ? {
+						assetId: row.expenseDraft.assetId, title: row.expenseDraft.title, amount: row.expenseDraft.amount,
+						currency: row.expenseDraft.currency, eventDate: row.expenseDraft.eventDate, source: row.expenseDraft.source,
+					} : undefined,
+				}));
+			}).subscribe({
+				next: (candidates) => { if (active) { setReviewedCandidates(candidates); setReviewedCandidatesLoaded(true); } },
+				error: () => { if (active) { setReviewedCandidates([]); setReviewedCandidatesLoaded(false); } },
+			});
+			dispose = () => subscription.unsubscribe();
+		}).catch(() => { if (active) setReviewedCandidatesLoaded(false); });
+		return () => { active = false; dispose?.(); };
+	}, []);
 	const [categoryEditsLoading, setCategoryEditsLoading] = useState(true);
 	const [categoryEditsError, setCategoryEditsError] = useState(false);
 	const [pendingCategoryEdits, setPendingCategoryEdits] = useState<PendingCategoryEdit[]>([]);
@@ -63,19 +90,23 @@ export function useData() {
 			dispose?.();
 		};
 	}, []);
-	const get = <T>(type: string) =>
-		rows.filter((r) => r.type === type).map((r) => JSON.parse(r.payload) as T);
+	const entities = useMemo(() => {
+		const get = <T>(type: string) =>
+			rows.filter((r) => r.type === type).map((r) => JSON.parse(r.payload) as T);
+		return {
+			assets: get<Asset>("asset"), categories: get<Category>("category"),
+			relations: get<Relation>("relation"), tasks: get<Task>("task"),
+			history: get<History>("history"), submissions: get<Submission>("submission"),
+			preferences: get<{ id: string; value: unknown }>("preference"),
+		};
+	}, [rows]);
 	return {
+		...entities,
+		reviewedCandidates,
+		reviewedCandidatesLoaded,
 		pendingCategoryEdits,
 		categoryEditsLoading,
 		categoryEditsError,
-		assets: get<Asset>("asset"),
-		categories: get<Category>("category"),
-		relations: get<Relation>("relation"),
-		tasks: get<Task>("task"),
-		history: get<History>("history"),
-		submissions: get<Submission>("submission"),
-		preferences: get<{ id: string; value: unknown }>("preference"),
 		loading,
 		error,
 	};

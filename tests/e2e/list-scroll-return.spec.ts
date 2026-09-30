@@ -92,12 +92,12 @@ for (const width of [1280, 390]) {
 			const refreshed = await expectReturnedScroll(stored);
 			await page.locator(".list-row").filter({ hasText: target }).click();
 			await page
-				.getByRole("textbox", { name: "Search assets, tags…" })
+				.getByRole("textbox", { name: "Search all records" })
 				.fill(`absent-${suffix}`);
 			await page.getByRole("link", { name: "Back to list" }).click();
 			await expect(page.locator(".list-row")).toHaveCount(0);
 			await page
-				.getByRole("textbox", { name: "Search assets, tags…" })
+				.getByRole("textbox", { name: "Search all records" })
 				.fill("");
 			await expect(page.locator(".list-row")).toHaveCount(70);
 			await expect.poll(readY).toBe(0);

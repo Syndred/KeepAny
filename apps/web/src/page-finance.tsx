@@ -12,6 +12,7 @@ import { FinanceEntryFields, type FinanceEntryDraft } from "./components/Finance
 import { Dialog } from "./components/ui/dialog";
 import { date, liveAssets, PageTitle, useAppContext } from "./view-shared";
 import "./finance.css";
+import { useSearchRowLocation } from "./search-location";
 
 type ManualAction = typeof financeActions[number];
 type LedgerAction = ManualAction | "renew";
@@ -73,6 +74,9 @@ export function FinancePage() {
 	const filtered = records.filter((entry) => (typeFilter === "all" || entry.action === typeFilter) && (!assetFilter || entry.assetId === assetFilter)
 		&& (sourceFilter === "all" || (sourceFilter === "empty" ? !entry.source?.trim() : entry.source?.trim() === sourceFilter.slice(7))))
 		.sort((a, b) => (b.eventDate || b.billDate || b.createdAt).localeCompare(a.eventDate || a.billDate || a.createdAt) || b.createdAt.localeCompare(a.createdAt));
+	useSearchRowLocation("finance-entry-", records.map((entry) => entry.id), filtered.map((entry) => entry.id), () => {
+		setTypeFilter("all"); setAssetFilter(""); setSourceFilter("all");
+	});
 	function relatedAssets(subscriptionId: string) {
 		return Array.from(new Map(data.relations.filter((relation) => !relation.deleted && (relation.from === subscriptionId || relation.to === subscriptionId))
 			.map((relation) => liveById.get(relation.from === subscriptionId ? relation.to : relation.from))
@@ -138,7 +142,7 @@ export function FinancePage() {
 		<div className="finance-columns">
 			<section className="card"><div className="card-header"><h2>{t("financeRecentRecords")}</h2></div>
 				<div className="finance-filters"><label className="field">{t("financeFilterType")}<select value={typeFilter} onChange={(event) => setTypeFilter(event.target.value as LedgerAction | "all")}><option value="all">{t("all")}</option>{(["expense","topup","refund","balance","renew"] as const).map((action) => <option key={action} value={action}>{action === "renew" ? t("financeRenewalRecorded") : t(`financeAction${action[0].toUpperCase()}${action.slice(1)}`)}</option>)}</select></label><label className="field">{t("financeFilterAsset")}<select value={assetFilter} onChange={(event) => setAssetFilter(event.target.value)}><option value="">{t("all")}</option>{[...new Set(records.map((entry) => entry.assetId))].map((id) => <option key={id} value={id}>{assetsById.get(id)?.name ?? t("financeMissingAsset")}</option>)}</select></label><label className="field">{t("financeFilterSource")}<select value={sourceFilter} onChange={(event) => setSourceFilter(event.target.value)}><option value="all">{t("all")}</option>{hasEmptySource && <option value="empty">{t("financeNoSource")}</option>}{sources.map((source) => <option key={source} value={`source:${source}`}>{source}</option>)}</select></label></div>
-				{filtered.length ? <div className="list">{filtered.map((entry) => <div className="list-row finance-entry" key={entry.id}><div><strong>{entry.title || assetsById.get(entry.assetId)?.name || historyLabel(entry)}</strong><small>{historyLabel(entry)} · {assetsById.get(entry.assetId)?.name ?? t("financeMissingAsset")} · {date(entry.eventDate || entry.billDate || entry.createdAt.slice(0,10), i18n.language)} · {entry.source?.trim() || t("financeNoSource")}{entry.note ? ` · ${entry.note}` : ""}</small></div>{entry.amount !== undefined && entry.currency && <b>{formatMinorUnits(entry.amount,entry.currency,i18n.language)}</b>}</div>)}</div> : <p>{t("financeNoRecords")}</p>}
+				{filtered.length ? <div className="list">{filtered.map((entry) => <div className="list-row finance-entry" key={entry.id} id={`finance-entry-${entry.id}`} tabIndex={-1}><div><strong>{entry.title || assetsById.get(entry.assetId)?.name || historyLabel(entry)}</strong><small>{historyLabel(entry)} · {assetsById.get(entry.assetId)?.name ?? t("financeMissingAsset")} · {date(entry.eventDate || entry.billDate || entry.createdAt.slice(0,10), i18n.language)} · {entry.source?.trim() || t("financeNoSource")}{entry.note ? ` · ${entry.note}` : ""}</small></div>{entry.amount !== undefined && entry.currency && <b>{formatMinorUnits(entry.amount,entry.currency,i18n.language)}</b>}</div>)}</div> : <p>{t("financeNoRecords")}</p>}
 			</section>
 		</div>
 		{editSubscription && <Suspense fallback={<div className="toast" role="status">{t("loading")}</div>}><AssetEditor kind="subscription" asset={editSubscription === "new" ? undefined : editSubscription} categories={data.categories} onClose={() => setEditSubscription(null)} /></Suspense>}

@@ -450,7 +450,7 @@ test("subscription and item shared CRUD, filters, image and actual backup restor
 		] as const) {
 			await page.goto(`/assets/${kind}`);
 			const search = page.getByRole("textbox", {
-				name: "Search assets, tags…",
+				name: "Search all records",
 			});
 			await page.getByRole("button", { name: category, exact: true }).click();
 			await page.locator("#asset-tag-filter").selectOption({ label: tag });

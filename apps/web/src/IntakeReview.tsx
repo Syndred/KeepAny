@@ -12,6 +12,7 @@ import {
 	listReviewedCandidates, editReviewedExpenseDraft, setReviewedCandidateMode, type ReviewedCandidate,
 } from "./intake-review-store";
 import "./intake-review.css";
+import { useSearchRowLocation } from "./search-location";
 
 const importKinds = ["project", "account", "subscription", "item"] as const;
 
@@ -40,6 +41,21 @@ export function IntakeReview() {
 	const inFlight = useRef(new Set<string>());
 	const drafts = useRef(new Map<string, ReviewedCandidate>());
 	const pendingSaves = useRef(new Map<string, Promise<void>>());
+	const savingIdsRef = useRef(savingIds);
+	savingIdsRef.current = savingIds;
+	useSearchRowLocation("intake-review-", rows.map((row) => row.id), rows.map((row) => row.id), undefined, (id) => {
+		let active = true;
+		const pendingAtRead = pendingSaves.current.get(id);
+		void getReviewedCandidate(id).then((latest) => {
+			if (!active || !latest || inFlight.current.has(id) || savingIdsRef.current.has(id)
+				|| pendingAtRead !== pendingSaves.current.get(id)) return;
+			drafts.current.delete(id);
+			setRows((current) => current.some((row) => row.id === id)
+				? current.map((row) => row.id === id ? latest : row)
+				: [...current, latest]);
+		}).catch(() => { if (active) setMessage(t("error")); });
+		return () => { active = false; };
+	});
 	const refresh = async () => {
 		const repository = await localRepository();
 		const [items, pending] = await Promise.all([listReviewedCandidates(), repository.pendingReviewedExpenseConfirmations()]);
@@ -218,7 +234,7 @@ export function IntakeReview() {
 			{rows.map((row) => {
 				const intent = expenseIntents.find((entry) => entry.candidateId === row.id);
 				const disabled = workingId === row.id || !!intent;
-				return <div className="intake-review-row" key={row.id}>
+				return <div className="intake-review-row" key={row.id} id={`intake-review-${row.id}`} tabIndex={-1}>
 				<div className="intake-review-source"><strong>{row.fileName}</strong><small>{row.source === "pdf" ? t("reviewPdfDocument") : t("reviewRowNumber", { number: row.rowNumber })}</small>
 					<span className={`chip ${row.status === "pending" ? "warn" : ""}`}>{t(`reviewStatus${row.status[0].toUpperCase()}${row.status.slice(1)}`)}</span></div>
 				{row.sourceText && <details><summary>{t("reviewPdfOriginal")}</summary><pre className="intake-pdf-text">{row.sourceText}</pre></details>}

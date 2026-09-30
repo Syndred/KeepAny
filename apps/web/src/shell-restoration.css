@@ -50,7 +50,10 @@
 .top-search-panel-input { display: flex; align-items: center; min-height: 38px; border: 2px solid var(--line); border-radius: 10px; background: var(--paper); }
 .top-search-panel-input input { flex: 1; min-width: 0; padding: 8px 10px; border: 0; outline: 0; background: transparent; }
 .top-search-panel-input > button { display: grid; place-items: center; width: 38px; min-height: 36px; border: 0; background: transparent; }
-.top-search-panel .search-results { position: static; margin-top: 10px; border-radius: 10px; box-shadow: none; }
+.top-search-panel .search-results { position: static; max-height: min(320px, 45vh); overflow-y: auto; margin-top: 10px; border-radius: 10px; box-shadow: none; }
+.top-search-panel .search-results a { align-items: flex-start; }
+.global-search-result-text { display: grid; gap: 3px; flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.global-search-result-source { flex: none; white-space: nowrap; }
 .top-search-panel .search-results p { margin: 0; padding: 8px; font-size: 12px; }
 .top-search-panel-close { margin-top: 10px; padding: 6px 10px; border: 2px solid var(--line); border-radius: 999px; background: var(--paper); font-size: 12px; font-weight: 700; }
 .top-actions { gap: 7px; }

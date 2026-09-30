@@ -239,7 +239,7 @@ test("project and account CRUD, intersecting filters, trash and actual backup re
 		await page.getByRole("link", { name: "Back to list" }).click();
 
 		await page.goto("/assets/project");
-		const search = page.getByRole("textbox", { name: "Search assets, tags…" });
+		const search = page.getByRole("textbox", { name: "Search all records" });
 		await page.getByRole("button", { name: "Websites", exact: true }).click();
 		await page.locator("#asset-tag-filter").selectOption({ label: tag });
 		await search.fill(tag);

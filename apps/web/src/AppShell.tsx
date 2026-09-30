@@ -25,7 +25,8 @@ import {
 } from "./components/navigation/SortableNav";
 import { AppContext, icons, kinds, liveAssets } from "./view-shared";
 import { McpRuntimeProvider } from "./mcp-runtime";
-import { matchesAssetSearch } from "./asset-search";
+import { buildGlobalSearchIndex, searchGlobalIndex, type GlobalSearchLabels } from "./global-search";
+import { requestSearchLocation } from "./search-location";
 import "./shell-restoration.css";
 const AiDialog = lazy(() =>
 	import("./workflows").then((module) => ({ default: module.AiDialog })),
@@ -41,7 +42,7 @@ function normalizeHiddenNavIds(value: unknown, ids: string[]): string[] {
 
 export function AppShell() {
 	const data = useData();
-	const { t } = useTranslation();
+	const { t, i18n } = useTranslation();
 	const [search, setSearch] = useState(
 		() => sessionStorage.getItem("keepany-search") || "",
 	);
@@ -106,11 +107,22 @@ export function AppShell() {
 		const timer = window.setTimeout(() => setToast(""), 4500);
 		return () => window.clearTimeout(timer);
 	}, [toast]);
-	const matches = search.trim()
-		? liveAssets(data)
-				.filter((asset) => matchesAssetSearch(asset, search))
-				.slice(0, 6)
-		: [];
+	const searchLabels = useMemo((): GlobalSearchLabels => ({
+		assetKinds: { project: t("project"), account: t("account"), item: t("item"), subscription: t("subscription"), vault: t("vault") },
+		financeActions: { expense: t("financeActionExpense"), topup: t("financeActionTopup"), refund: t("financeActionRefund"), balance: t("financeActionBalance"), renew: t("financeRenewalRecorded") },
+		sources: { asset: t("globalSearchAsset"), finance: t("globalSearchFinance"), intake: t("globalSearchIntake"), task: t("globalSearchTask") },
+		taskStates: { pending: t("pending"), done: t("done") }, intakeAccepted: t("reviewStatusAccepted"),
+	}), [t]);
+	const searchIndex = useMemo(() => buildGlobalSearchIndex({
+		assets: data.assets, history: data.history, tasks: data.tasks,
+		reviewedCandidates: data.reviewedCandidates, reviewedCandidatesLoaded: data.reviewedCandidatesLoaded,
+		locale: i18n.language, labels: searchLabels,
+	}), [data.assets, data.history, data.tasks, data.reviewedCandidates, data.reviewedCandidatesLoaded, i18n.language, searchLabels]);
+	const matches = useMemo(() => searchGlobalIndex(searchIndex, search), [searchIndex, search]);
+	function closeSearch(hash?: string) {
+		setSearch(""); setSearchOpen(false);
+		if (hash) requestSearchLocation(hash);
+	}
 	const context = useMemo(
 		() => ({ data, search, setSearch, notify: setToast }),
 		[data, search],
@@ -295,7 +307,7 @@ export function AppShell() {
 						</Button>
 						{detailKind ? <Link className="topbar-page-label topbar-back-link" to="/assets/$kind" params={{ kind: detailReturnKind ?? detailKind }} onClick={hasRelationReturn ? () => { sessionStorage.removeItem("keepany-relation-return-id"); sessionStorage.removeItem("keepany-relation-return-kind"); } : undefined}><ArrowLeft size={15}/>{t("back")}</Link> : workflowProjectId ? <Link className="topbar-page-label topbar-back-link" to="/assets/$kind/$id" params={{ kind: "project", id: workflowProjectId }}><ArrowLeft size={15}/>{t("workflowBackToProject")}</Link> : collectionDetailId ? <Link className="topbar-page-label topbar-back-link" to="/collections"><ArrowLeft size={15}/>{t("collectionBack")}</Link> : pathname !== "/" ? <Link className="topbar-page-label topbar-back-link" to="/"><ArrowLeft size={15}/>{t("backToOverview")}</Link> : <strong className="topbar-page-label">{currentHeading}</strong>}
 						<div className="topbar-spacer"/>
-						<button className="top-search top-search-trigger" type="button" aria-label={t("search")} aria-expanded={searchOpen} onClick={() => { if (searchOpen) { setSearchOpen(false); setSearch(""); } else { setSearchOpen(true); window.requestAnimationFrame(() => topSearchInputRef.current?.focus()); } }}><Search size={17} /><span>{t("search")}</span>
+						<button className="top-search top-search-trigger" type="button" aria-label={t("globalSearch")} aria-expanded={searchOpen} onClick={() => { if (searchOpen) { setSearchOpen(false); setSearch(""); } else { setSearchOpen(true); window.requestAnimationFrame(() => topSearchInputRef.current?.focus()); } }}><Search size={17} /><span>{t("globalSearch")}</span>
 							<kbd>⌘ K</kbd>
 						</button>
 						<div className="top-actions">
@@ -314,9 +326,15 @@ export function AppShell() {
 						</div>
 					</header>
 					{searchOpen && <div className="top-search-panel" ref={topSearchPanelRef}>
-						<label htmlFor="top-search-query">{t("search")}</label>
-						<div className="top-search-panel-input"><input id="top-search-query" ref={topSearchInputRef} value={search} onChange={(event) => setSearch(event.target.value)} placeholder={t("search")} autoComplete="off" /><button type="button" onClick={() => { setSearchOpen(false); setSearch(""); }} aria-label={t("close")}><X size={17}/></button></div>
-						{search.trim() && <div className="search-results">{matches.length ? matches.map((asset) => <Link key={asset.id} to="/assets/$kind/$id" params={{ kind: asset.kind, id: asset.id }} onClick={() => { setSearch(""); setSearchOpen(false); }}><strong>{asset.name}</strong><small>{t(asset.kind)}</small></Link>) : <p>{t("none")}</p>}</div>}
+						<label htmlFor="top-search-query">{t("globalSearch")}</label>
+						<div className="top-search-panel-input"><input id="top-search-query" ref={topSearchInputRef} value={search} onChange={(event) => setSearch(event.target.value)} placeholder={t("globalSearchHint")} autoComplete="off" /><button type="button" onClick={() => closeSearch()} aria-label={t("close")}><X size={17}/></button></div>
+						<div className="search-results">{matches.length ? matches.map((result) => {
+							const content = <><span className="global-search-result-text"><strong>{result.title}</strong><small>{result.secondary}</small></span><small className="global-search-result-source">{searchLabels.sources[result.source]}</small></>;
+							const target = result.target;
+							if (target.type === "asset") return <Link key={result.key} to="/assets/$kind/$id" params={{ kind: target.kind, id: target.assetId }} onClick={() => closeSearch()}>{content}</Link>;
+							const hash = target.type === "finance" ? `finance-entry-${target.historyId}` : target.type === "intake" ? `intake-review-${target.candidateId}` : `task-${target.taskId}`;
+							return <Link key={result.key} to={target.type === "finance" ? "/finance" : target.type === "intake" ? "/intake" : "/tasks"} hash={hash} onClick={() => closeSearch(hash)}>{content}</Link>;
+						}) : <p>{t("none")}</p>}</div>
 						<button type="button" className="top-search-panel-close" onClick={() => { setSearchOpen(false); setSearch(""); }}>{t("close")}</button>
 					</div>}
 					{data.loading ? (

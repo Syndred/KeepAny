@@ -6,6 +6,7 @@ import { Empty, PageTitle, date, money, useAppContext } from "./view-shared";
 import { TaskRow } from "./TaskRow";
 import { maintenanceReminderDate } from "../../../packages/domain/src/task-repeat";
 import "./tasks-page.css";
+import { useSearchRowLocation } from "./search-location";
 
 const TaskEditor = lazy(() =>
 	import("./workflows").then((module) => ({ default: module.TaskEditor })),
@@ -36,6 +37,7 @@ export function TaskPage() {
 	const visibleTasks = tasks.filter(
 		(task) => filter === "all" || (filter === "done" ? task.done : !task.done),
 	);
+	useSearchRowLocation("task-", tasks.map((task) => task.id), visibleTasks.map((task) => task.id), () => setFilter("all"));
 	const plans = tasks.filter((task) => task.maintenancePlan);
 	const selectedPlan = plans.find((task) => task.id === selectedPlanId) ?? plans[0];
 	const plan = selectedPlan?.maintenancePlan;

@@ -43,7 +43,7 @@ export function TaskRow({ task }: { task: Task }) {
 		? task.completionHistory
 		: task.done && task.completedAt ? [task.completedAt] : [];
 	return (
-		<div className="list-row impact-task-row" id={`task-${task.id}`}>
+		<div className="list-row impact-task-row" id={`task-${task.id}`} tabIndex={-1}>
 			<Button
 				size="icon"
 				variant="ghost"
