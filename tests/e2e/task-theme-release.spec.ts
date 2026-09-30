@@ -458,7 +458,11 @@ async function assertNavBadgeInset(page: Page, variant: Variant, copy: Copy) {
 	expect(inset.left).toBeGreaterThanOrEqual(12);
 	expect(inset.right).toBeGreaterThanOrEqual(12);
 	if (variant.width <= 620) {
-		await page.locator(".mobile-scrim").click();
+		const scrim = page.locator(".mobile-scrim");
+		const bounds = await scrim.boundingBox();
+		if (!bounds) throw new Error("mobile-scrim-not-visible");
+		// The sidebar overlays the scrim's center; close via its exposed right edge.
+		await scrim.click({ position: { x: bounds.width - 8, y: bounds.height / 2 } });
 		await expect(page.locator(".mobile-scrim")).toBeHidden();
 	}
 }
