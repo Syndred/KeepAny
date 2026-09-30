@@ -1,5 +1,6 @@
 import { mkdirSync } from "node:fs";
 import { expect, type Page, test } from "@playwright/test";
+import { selectChoice } from "./helpers/select-choice";
 
 const evidence = "docs/evidence/2026-09-29";
 const repositoryModuleUrl = `/@fs${process.cwd()}/packages/local-db/src/index.ts`;
@@ -198,7 +199,7 @@ test("project and account CRUD, intersecting filters, trash and actual backup re
 		await expect(page.getByText("Cancelled project rename")).toHaveCount(0);
 		await page.getByRole("link", { name: "Back to list" }).click();
 		const otherDialog = await add(page, "project", otherProject);
-		await otherDialog.getByLabel("Category").selectOption("repository");
+		await selectChoice(otherDialog.getByLabel("Category"), "repository");
 		await saveDialog(page);
 
 		const accountDialog = await add(page, "account", account);
@@ -241,7 +242,7 @@ test("project and account CRUD, intersecting filters, trash and actual backup re
 		await page.goto("/assets/project");
 		const search = page.getByRole("textbox", { name: "Search all records" });
 		await page.getByRole("button", { name: "Websites", exact: true }).click();
-		await page.locator("#asset-tag-filter").selectOption({ label: tag });
+		await selectChoice(page.locator("#asset-tag-filter"), { label: tag });
 		await search.fill(tag);
 		await expect(page.locator("main.page .list-row")).toHaveCount(1);
 		await expect(
@@ -258,13 +259,13 @@ test("project and account CRUD, intersecting filters, trash and actual backup re
 		await expect(
 			page.getByRole("button", { name: "Websites", exact: true }),
 		).toHaveAttribute("aria-pressed", "true");
-		await expect(page.locator("#asset-tag-filter")).toHaveValue(tag);
+		await expect(page.locator("#asset-tag-filter")).toHaveAttribute("data-value", tag);
 		await page.reload();
 		await expect(search).toHaveValue(tag);
 		await expect(
 			page.getByRole("button", { name: "Websites", exact: true }),
 		).toHaveAttribute("aria-pressed", "true");
-		await expect(page.locator("#asset-tag-filter")).toHaveValue(tag);
+		await expect(page.locator("#asset-tag-filter")).toHaveAttribute("data-value", tag);
 		await expect(page.locator("main.page .list-row")).toHaveCount(1);
 		await search.fill(`no-results-${suffix}`);
 		await expect(page.locator("main.page .list-row")).toHaveCount(0);
@@ -278,7 +279,7 @@ test("project and account CRUD, intersecting filters, trash and actual backup re
 
 		await page.goto("/assets/account");
 		await page.getByRole("button", { name: "Email", exact: true }).click();
-		await page.locator("#asset-tag-filter").selectOption({ label: tag });
+		await selectChoice(page.locator("#asset-tag-filter"), { label: tag });
 		await search.fill(longEmail);
 		await expect(page.locator("main.page .list-row")).toHaveCount(1);
 		await search.fill(`no-results-${suffix}`);
@@ -315,7 +316,7 @@ test("project and account CRUD, intersecting filters, trash and actual backup re
 			.click();
 		await expect(page.getByText("Import complete · 45")).toBeVisible();
 		await page.goto("/assets/account");
-		await page.locator("#asset-tag-filter").selectOption("");
+		await selectChoice(page.locator("#asset-tag-filter"), "");
 		await search.fill(`Scroll account ${suffix}`);
 		await expect(page.locator("main.page .list-row")).toHaveCount(45);
 		const target = page.locator("main.page .list-row").nth(30);
@@ -332,7 +333,7 @@ test("project and account CRUD, intersecting filters, trash and actual backup re
 		await expect(
 			page.getByRole("button", { name: "Email", exact: true }),
 		).toHaveAttribute("aria-pressed", "true");
-		await expect(page.locator("#asset-tag-filter")).toHaveValue("");
+		await expect(page.locator("#asset-tag-filter")).toHaveAttribute("data-value", "");
 		await expect
 			.poll(() => page.evaluate(() => window.scrollY))
 			.toBeGreaterThan(1000);
@@ -605,7 +606,7 @@ for (const locale of ["en-US", "zh-CN"] as const) {
 					).toBeLessThanOrEqual(width);
 					if (width <= 390) {
 						const sizes = await dialog
-							.locator("input, textarea, select")
+							.locator("input, textarea, [role=combobox]")
 							.evaluateAll((elements) =>
 								elements.map((element) =>
 									Number.parseFloat(getComputedStyle(element).fontSize),

@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { expect, test, type Page } from "@playwright/test";
 import { strFromU8, unzipSync } from "fflate";
 import { decryptBackup } from "../../packages/local-db/src/backup-crypto";
+import { selectChoice } from "./helpers/select-choice";
 
 test.use({ actionTimeout: 15_000 });
 const password = "graph-verification-backup";
@@ -42,7 +43,7 @@ for (const locale of ["zh-CN", "en-US"] as const) {
 			async function connect(target: string, label: string, verified = false) {
 				await page.getByRole("button", { name: text.addRelation, exact: true }).click();
 				const dialog = page.getByRole("dialog");
-				await dialog.getByLabel(text.target, { exact: true }).selectOption({ label: target });
+				await selectChoice(dialog.getByLabel(text.target, { exact: true }), { label: target });
 				await dialog.getByLabel(text.label, { exact: true }).fill(label);
 				if (verified) await dialog.getByLabel(text.verifiedAt, { exact: true }).fill("2026-09-20");
 				await dialog.getByRole("button", { name: text.save, exact: true }).click();

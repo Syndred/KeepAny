@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { selectChoice } from "./helpers/select-choice";
 
 const repositoryModuleUrl = `/@fs${process.cwd()}/packages/local-db/src/index.ts`;
 const domainModuleUrl = `/@fs${process.cwd()}/packages/domain/src/index.ts`;
@@ -31,11 +32,11 @@ async function storedHistory(page: Page) {
 async function record(page: Page, input: { type: string; asset: string; title: string; amount: string; source: string; currency?: string }) {
 	await page.getByRole("button", { name: "Record transaction" }).click();
 	const dialog = page.getByRole("dialog", { name: "Record transaction" });
-	await dialog.getByLabel("Record type").selectOption(input.type);
-	await dialog.getByLabel("Subscription or account").selectOption(input.asset);
+	await selectChoice(dialog.getByLabel("Record type"), input.type);
+	await selectChoice(dialog.getByLabel("Subscription or account"), input.asset);
 	await dialog.getByLabel("Title").fill(input.title);
 	await dialog.getByLabel("Amount").fill(input.amount);
-	if (input.currency) await dialog.getByLabel("Currency").selectOption(input.currency);
+	if (input.currency) await selectChoice(dialog.getByLabel("Currency"), input.currency);
 	await dialog.getByLabel("Payment source (optional)").fill(input.source);
 	await dialog.getByRole("button", { name: "Save record" }).click();
 	await expect(dialog).toBeHidden();
@@ -58,17 +59,17 @@ test("ledger records confirmed spending, preserves renewal history and reads bac
 	await record(page, { type: "balance", asset: ids.accountId, title: "Card balance", amount: "23.60", source: "Card app" });
 	await expect(summary.locator(".card").nth(1)).toContainText("17.34");
 	await expect(summary.locator(".card").nth(2)).toContainText("23.60");
-	await page.getByRole("combobox", { name: "Type" }).selectOption("refund");
+	await selectChoice(page.getByRole("combobox", { name: "Type" }), "refund");
 	await expect(page.locator(".finance-entry")).toHaveCount(1);
 	await expect(page.locator(".finance-entry")).toContainText("Card refund");
-	await page.getByRole("combobox", { name: "Type" }).selectOption("all");
-	await page.getByRole("combobox", { name: "Related asset" }).selectOption(ids.accountId);
+	await selectChoice(page.getByRole("combobox", { name: "Type" }), "all");
+	await selectChoice(page.getByRole("combobox", { name: "Related asset" }), ids.accountId);
 	await expect(page.locator(".finance-entry")).toHaveCount(3);
-	await page.getByRole("combobox", { name: "Payment source or method" }).selectOption("source:Card app");
+	await selectChoice(page.getByRole("combobox", { name: "Payment source or method" }), "source:Card app");
 	await expect(page.locator(".finance-entry")).toHaveCount(1);
 	await expect(page.locator(".finance-entry")).toContainText("Card balance");
-	await page.getByRole("combobox", { name: "Related asset" }).selectOption("");
-	await page.getByRole("combobox", { name: "Payment source or method" }).selectOption("empty");
+	await selectChoice(page.getByRole("combobox", { name: "Related asset" }), "");
+	await selectChoice(page.getByRole("combobox", { name: "Payment source or method" }), "empty");
 	await expect(page.locator(".finance-entry")).toHaveCount(2);
 	await expect(page.locator(".finance-entry").filter({ hasText: "Card refund" })).toContainText("No source recorded");
 	await expect(page.locator(".finance-entry").filter({ hasText: "Recorded renewal" })).toHaveCount(1);
@@ -99,7 +100,7 @@ test("invalid record stays unsaved and a missing related asset offers creation p
 	const ids = await seedLedger(page);
 	await page.getByRole("button", { name: "Record transaction" }).click();
 	const form = page.getByRole("dialog", { name: "Record transaction" });
-	await form.getByLabel("Subscription or account").selectOption(ids.subscriptionId);
+	await selectChoice(form.getByLabel("Subscription or account"), ids.subscriptionId);
 	await form.getByLabel("Title").fill("Invalid expense");
 	await form.getByLabel("Amount").fill("0");
 	await form.getByLabel("Payment source (optional)").fill("Statement");
@@ -108,7 +109,7 @@ test("invalid record stays unsaved and a missing related asset offers creation p
 	await form.getByLabel("Amount").fill("1.234");
 	await form.getByRole("button", { name: "Save record" }).click();
 	await expect(form.getByRole("alert")).toContainText("valid amount");
-	await form.getByLabel("Record type").selectOption("balance");
+	await selectChoice(form.getByLabel("Record type"), "balance");
 	await form.getByLabel("Amount").fill("");
 	await form.getByRole("button", { name: "Save record" }).click();
 	await expect(form.getByRole("alert")).toContainText("valid amount");

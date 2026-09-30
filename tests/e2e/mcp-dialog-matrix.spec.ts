@@ -4,6 +4,7 @@ import { expect, type Browser, type Page, test } from '@playwright/test';
 import { chmod, mkdir, mkdtemp, readFile, rm, stat } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
+import { selectChoice } from "./helpers/select-choice";
 
 const repo = resolve('.');
 const evidence = process.env.KEEPANY_MCP_EVIDENCE_DIR ?? join(repo, 'docs/evidence/2026-09-29');
@@ -55,8 +56,8 @@ async function addProject(page: Page, name: string, description: string) {
 
 async function selectLanguage(page: Page, code: string) {
   await page.goto('/settings#assistant');
-  await page.locator('section.card').filter({ has: page.getByRole('heading', { name: /^(Language|语言)$/ }) })
-    .locator('select').selectOption(code);
+  await selectChoice(page.locator('section.card').filter({ has: page.getByRole('heading', { name: /^(Language|语言)$/ }) })
+    .getByRole("combobox"), code);
 }
 
 async function checkLayout(page: Page, width: number, dialog: ReturnType<Page['getByRole']>, action: ReturnType<Page['getByRole']>) {

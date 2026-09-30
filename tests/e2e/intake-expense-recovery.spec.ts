@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { pdf } from "./fixtures/pdf";
+import { selectChoice } from "./helpers/select-choice";
 
 const repositoryUrl = `/@fs${process.cwd()}/packages/local-db/src/index.ts`;
 
@@ -23,8 +24,8 @@ for (const locale of ["en-US", "zh-CN"]) for (const committed of [false, true]) 
 			await page.getByRole("button", { name: zh ? "PDF 文档" : "PDF document", exact: true }).click();
 			await page.locator("#csv-file").setInputFiles({ name: "recovery-invoice.pdf", mimeType: "application/pdf", buffer: pdf(["Paid USD 8.00"]) });
 			const row = page.locator(".intake-review-row");
-			await row.getByLabel(zh ? "资料类型" : "Record type").selectOption("expense");
-			await row.getByLabel(zh ? "关联订阅或账号" : "Subscription or account").selectOption({ label: zh ? "Billing account · 账号" : "Billing account · Accounts" });
+			await selectChoice(row.getByLabel(zh ? "资料类型" : "Record type"), "expense");
+			await selectChoice(row.getByLabel(zh ? "关联订阅或账号" : "Subscription or account"), { label: zh ? "Billing account · 账号" : "Billing account · Accounts" });
 			await row.getByLabel(zh ? "金额" : "Amount", { exact: true }).fill("8.00");
 			await row.getByLabel(zh ? "日期" : "Date", { exact: true }).fill("2026-09-30");
 			await expect(row.getByRole("button", { name: zh ? "确认支出" : "Confirm expense", exact: true })).toBeEnabled();

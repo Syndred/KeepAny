@@ -6,6 +6,7 @@ import { canRecordProjectWorkflowTask, recordProjectWorkflowTask } from '../../.
 import { saveTaskIfCurrent } from '../../../packages/local-db/src';
 import { Button } from './components/ui/button';
 import { date, useAppContext } from './view-shared';
+import { Select, SelectOption } from "./components/ui/select";
 
 export function ProjectWorkflowTaskRow({ task, round: suppliedRound }: { task: Task; round?: Task[] }) {
   const { t, i18n, } = useTranslation();
@@ -67,9 +68,9 @@ export function ProjectWorkflowTaskRow({ task, round: suppliedRound }: { task: T
     {record && <div className="project-workflow-record"><b>{t('workflowEvidence')}:</b> {record.evidence}<small>{new Date(record.recordedAt).toLocaleString(i18n.language)}</small></div>}
     {finalLocked && <p className="field-error">{t('workflowFinalLocked')}</p>}
     {editing ? <form className="project-workflow-record-form" onSubmit={event => void submit(event)}>
-      <label>{t('workflowResult')}<select value={outcome} onChange={event => setOutcome(event.target.value as typeof outcome)} disabled={busy}>
-        <option value="done">{t('workflowOutcome_done')}</option><option value="blocked">{t('workflowOutcome_blocked')}</option><option value="na">{t('workflowOutcome_na')}</option>
-      </select></label>
+      <label htmlFor={`workflow-result-${task.id}`}>{t('workflowResult')}<Select id={`workflow-result-${task.id}`} value={outcome} onValueChange={selectValue => setOutcome(selectValue as typeof outcome)} disabled={busy}>
+        <SelectOption value="done">{t('workflowOutcome_done')}</SelectOption><SelectOption value="blocked">{t('workflowOutcome_blocked')}</SelectOption><SelectOption value="na">{t('workflowOutcome_na')}</SelectOption>
+      </Select></label>
       <label>{t('workflowEvidence')}<textarea value={evidence} maxLength={2000} rows={3} onChange={event => { setEvidence(event.target.value); setError(''); }} required disabled={busy} placeholder={t('workflowEvidenceHint')} /></label>
       {error && <p className="field-error" role="alert">{error}</p>}
       <div className="project-workflow-actions"><Button type="button" onClick={() => setEditing(false)} disabled={busy}>{t('cancel')}</Button><Button type="submit" variant="primary" disabled={busy}>{t('workflowSaveRecord')}</Button></div>

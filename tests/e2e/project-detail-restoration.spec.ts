@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { selectChoice } from "./helpers/select-choice";
 
 const repositoryModuleUrl = `/@fs${process.cwd()}/packages/local-db/src/index.ts`;
 
@@ -61,7 +62,7 @@ for (const width of [360, 390, 1280]) {
 		await page.screenshot({ path: `/tmp/keepany-project-detail-restored-${width}.png`, fullPage: true });
 		await page.locator(".asset-project-domain-row").getByRole("button", { name: "Edit" }).click();
 		await domain.getByLabel("Annual fee").fill("130.00");
-		await domain.getByLabel("Auto renew").selectOption("on");
+		await selectChoice(domain.getByLabel("Auto renew"), "on");
 		await domain.getByRole("button", { name: "Save" }).click();
 		await expect(page.locator(".asset-project-costs")).toContainText("1,306.00");
 		await page.locator(".asset-project-domain-row").getByRole("button", { name: "Edit" }).click();

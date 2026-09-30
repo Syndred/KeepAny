@@ -5,6 +5,7 @@ import type { Asset, History } from "../../packages/domain/src";
 import { decryptBackup } from "../../packages/local-db/src/backup-crypto";
 import type { ReviewedCandidate } from "../../packages/local-db/src/intake-review";
 import { pdf } from "./fixtures/pdf";
+import { selectChoice } from "./helpers/select-choice";
 
 test.use({ timezoneId: "Asia/Shanghai" });
 
@@ -67,13 +68,13 @@ for (const locale of ["zh-CN", "en-US"]) for (const width of [390, 1280]) {
 			const buffer = pdf(["Cloud service invoice", "Paid USD 98.00 on 2026-09-30"]);
 			await source.locator("#csv-file").setInputFiles({ name: "cloud-invoice.pdf", mimeType: "application/pdf", buffer });
 			const row = source.locator(".intake-review-row");
-			await row.getByLabel(zh ? "资料类型" : "Record type").selectOption("expense");
+			await selectChoice(row.getByLabel(zh ? "资料类型" : "Record type"), "expense");
 			await row.getByRole("button", { name: zh ? "确认支出" : "Confirm expense", exact: true }).click();
 			await expect(row.getByRole("alert")).toContainText(zh ? "金额" : "amount");
-			await row.getByLabel(zh ? "关联订阅或账号" : "Subscription or account").selectOption({ label: zh ? "Cloud service · 订阅" : "Cloud service · Subscriptions" });
+			await selectChoice(row.getByLabel(zh ? "关联订阅或账号" : "Subscription or account"), { label: zh ? "Cloud service · 订阅" : "Cloud service · Subscriptions" });
 			await row.getByLabel(zh ? "名称" : "Title", { exact: true }).fill("September cloud invoice");
 			await row.getByLabel(zh ? "金额" : "Amount", { exact: true }).fill("98.xx");
-			await row.getByLabel(zh ? "币种" : "Currency", { exact: true }).selectOption("USD");
+			await selectChoice(row.getByLabel(zh ? "币种" : "Currency", { exact: true }), "USD");
 			await row.getByLabel(zh ? "日期" : "Date", { exact: true }).fill("2026-09-30");
 			await row.getByLabel(zh ? "备注" : "Note", { exact: true }).fill("Manually checked against the PDF");
 			await expect(row.getByRole("button", { name: zh ? "确认支出" : "Confirm expense", exact: true })).toBeEnabled();

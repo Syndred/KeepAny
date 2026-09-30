@@ -12,6 +12,7 @@ import {
 import { saveBatch } from "../../../../packages/local-db/src";
 import { useAppContext } from "../view-shared";
 import { Button } from "./ui/button";
+import { Select, SelectOption } from "./ui/select";
 
 type ExportData = ReturnType<typeof parseExternalLinkExport>;
 type Preview = ReturnType<typeof previewExternalLinkExport>;
@@ -144,24 +145,24 @@ export function ExternalLinkImportPanel() {
 			<div className="form-grid">
 				<div className="field">
 					<label htmlFor="ext-project">{t("extChooseProject")}</label>
-					<select
+					<Select
 						id="ext-project"
 						value={assetId}
 						disabled={busy}
-						onChange={(e) => {
-							setAssetId(e.target.value);
+						onValueChange={(selectValue) => {
+							setAssetId(selectValue);
 							setPreview(null);
 							setSelected([]);
 							setMessage("");
 						}}
 					>
-						<option value="">{t("select")}</option>
+						<SelectOption value="">{t("select")}</SelectOption>
 						{projects.map((asset) => (
-							<option key={asset.id} value={asset.id}>
+							<SelectOption key={asset.id} value={asset.id}>
 								{asset.name}
-							</option>
+							</SelectOption>
 						))}
-					</select>
+					</Select>
 				</div>
 				<div className="field">
 					<label htmlFor="ext-file">{t("extExportFile")}</label>
@@ -175,24 +176,24 @@ export function ExternalLinkImportPanel() {
 				</div>
 				<div className="field">
 					<label htmlFor="ext-profile">{t("extChooseProfile")}</label>
-					<select
+					<Select
 						id="ext-profile"
 						value={profileId}
 						disabled={busy || !source}
-						onChange={(e) => {
-							setProfileId(e.target.value);
+						onValueChange={(selectValue) => {
+							setProfileId(selectValue);
 							setPreview(null);
 							setSelected([]);
 							setMessage("");
 						}}
 					>
-						<option value="">{t("select")}</option>
+						<SelectOption value="">{t("select")}</SelectOption>
 						{profiles.map((profile) => (
-							<option key={profile.id} value={profile.id}>
+							<SelectOption key={profile.id} value={profile.id}>
 								{profile.name} · {profile.id}
-							</option>
+							</SelectOption>
 						))}
-					</select>
+					</Select>
 				</div>
 			</div>
 			<div className="actions">

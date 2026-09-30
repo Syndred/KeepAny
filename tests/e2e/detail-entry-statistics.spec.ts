@@ -4,6 +4,7 @@ import { expect, test, type Page } from "@playwright/test";
 import { strFromU8, strToU8, unzipSync, zipSync } from "fflate";
 import { decryptBackup, encryptBackup } from "../../packages/local-db/src/backup-crypto";
 import type { Submission, Task } from "../../packages/domain/src";
+import { selectChoice } from "./helpers/select-choice";
 
 const password = "detail-entries-real-backup";
 test.use({ actionTimeout: 15_000 });
@@ -47,7 +48,7 @@ async function addBacklink(page: Page, name: string, status: "verify" | "indexed
 	const editor = page.getByRole("dialog");
 	await editor.getByLabel(text.name, { exact: true }).fill(name);
 	await editor.getByLabel(text.url, { exact: true }).fill(`https://directory.example.test/${name.replaceAll(" ", "-")}`);
-	await editor.locator("#submission-status").selectOption(status);
+	await selectChoice(editor.locator("#submission-status"), status);
 	await editor.locator("#submission-date").fill("2026-09-20");
 	await editor.locator("#submission-evidence").fill(`https://directory.example.test/${name.replaceAll(" ", "-")}`);
 	await editor.getByRole("button", { name: text.save, exact: true }).click();
@@ -74,7 +75,7 @@ async function createPlan(page: Page, assetId: string, name: string, date: strin
 	await page.getByRole("button", { name: text.newPlan, exact: true }).click();
 	const editor = page.getByRole("dialog");
 	await editor.getByLabel(text.planName).fill(name);
-	await editor.getByLabel(text.linkedAsset).selectOption(assetId);
+	await selectChoice(editor.getByLabel(text.linkedAsset), assetId);
 	await editor.getByLabel(text.due).fill(date);
 	await fits(page);
 	await editor.getByRole("button", { name: text.createPlan, exact: true }).click();
@@ -162,9 +163,9 @@ for (const locale of ["zh-CN", "en-US"]) {
 				if (await page.locator(".asset-backlinks-card").getAttribute("open") === null) await page.locator(".asset-backlinks-card > summary").click();
 				await expect(page.locator(".asset-backlinks-card tr").filter({ hasText: "Deleted review" })).toHaveCount(0);
 				await row.getByRole("button", { name: text.verify, exact: true }).click();
-				await row.locator("select").selectOption("indexed");
+				await selectChoice(row.getByRole("combobox"), "indexed");
 				await row.getByRole("button", { name: text.save, exact: true }).click();
-				await expect(row.locator("select")).toHaveCount(0);
+				await expect(row.getByRole("combobox")).toHaveCount(0);
 				await page.goto("/assets/project");
 				await expect(card.locator(".asset-project-foot")).toContainText(text.stats(2, 0));
 				await page.reload();
@@ -189,7 +190,7 @@ for (const locale of ["zh-CN", "en-US"]) {
 				await maintenance.click();
 				await expect(page).toHaveURL(new RegExp(`/tasks#${taskRowId}$`));
 				await expect(page.locator(".tasks-plan-name")).toHaveText("Target maintenance plan");
-				await expect(page.locator(".tasks-plan-select select")).toHaveValue(taskRowId.slice(5));
+				await expect(page.locator(".tasks-plan-select").getByRole("combobox")).toHaveAttribute("data-value", taskRowId.slice(5));
 				await expect(page.locator(".tasks-plan-facts")).toContainText("Target maintenance item");
 				await expect(page.locator(`[id="${taskRowId}"]`)).toBeInViewport();
 				await fits(page);

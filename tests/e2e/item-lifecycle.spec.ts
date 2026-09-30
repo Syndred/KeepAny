@@ -1,5 +1,6 @@
 import { mkdirSync, readFileSync } from "node:fs";
 import { expect, type Page, test } from "@playwright/test";
+import { selectChoice } from "./helpers/select-choice";
 
 const evidence = "docs/evidence/2026-09-29";
 const repositoryModuleUrl = `/@fs${process.cwd()}/packages/local-db/src/index.ts`;
@@ -40,7 +41,7 @@ async function localItemState(page: Page, name: string): Promise<ItemState> {
 
 async function setLanguage(page: Page, value: "en-US" | "zh-CN") {
 	await page.goto("/settings");
-	await page.locator("section.card").filter({ has: page.getByRole("heading", { name: /^(Language|语言)$/ }) }).locator("select").selectOption(value);
+	await selectChoice(page.locator("section.card").filter({ has: page.getByRole("heading", { name: /^(Language|语言)$/ }) }).getByRole("combobox"), value);
 }
 
 async function captureWidths(page: Page, language: "en" | "zh", label: string) {

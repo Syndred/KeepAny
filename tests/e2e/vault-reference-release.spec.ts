@@ -9,6 +9,7 @@ import {
 import type { Asset, Relation } from "../../packages/domain/src";
 import { inspectArchive, type RecordRow } from "../../packages/local-db/src";
 import { decryptBackup } from "../../packages/local-db/src/backup-crypto";
+import { selectChoice } from "./helpers/select-choice";
 
 const password = "vault-reference-release-backup";
 const accountName = "Synthetic vault account";
@@ -24,6 +25,9 @@ const copyFor = (zh: boolean) =>
 				save: "保存",
 				language: "语言",
 				languageValue: "zh-CN",
+				heroFirst: "知道钥匙在哪里，",
+				heroSecond: "不用把钥匙摆出来。",
+				note: "密码保存在你的密码库中，这里只记录引用，不填写密码或恢复码。",
 				linkEntry: "关联密码库条目",
 				entryName: "条目名称",
 				storedIn: "保管位置",
@@ -43,6 +47,9 @@ const copyFor = (zh: boolean) =>
 				save: "Save",
 				language: "Language",
 				languageValue: "en",
+				heroFirst: "Know where the keys are.",
+				heroSecond: "Keep them in your vault.",
+				note: "Keep passwords in your vault. Record references here, without passwords or recovery codes.",
 				linkEntry: "Link vault entry",
 				entryName: "Entry name",
 				storedIn: "Stored in",
@@ -67,10 +74,10 @@ async function setLanguage(page: Page, zh: boolean) {
 		exact: true,
 	});
 	await expect(picker).toBeVisible();
-	await picker.selectOption(copy.languageValue);
+	await selectChoice(picker, copy.languageValue);
 	await expect(
 		page.getByRole("combobox", { name: copy.language, exact: true }),
-	).toHaveValue(copy.languageValue);
+	).toHaveAttribute("data-value", copy.languageValue);
 }
 
 async function createAccount(page: Page, copy: Copy) {
@@ -103,9 +110,10 @@ async function createVault(page: Page, copy: Copy, accountId: string) {
 	const dialog = page.getByRole("dialog");
 	await dialog.getByLabel(copy.entryName, { exact: true }).fill(vaultName);
 	await dialog.getByLabel(copy.storedIn, { exact: true }).fill(storageLocation);
-	await dialog
-		.getByLabel(copy.usedFor, { exact: true })
-		.selectOption(accountId);
+	await selectChoice(
+		dialog.getByLabel(copy.usedFor, { exact: true }),
+		accountId,
+	);
 	await dialog.getByLabel(copy.verified, { exact: true }).fill(verifiedAt);
 	await expect(dialog.getByLabel(/password|recovery|密码|恢复码/i)).toHaveCount(
 		0,
@@ -126,8 +134,21 @@ async function createVault(page: Page, copy: Copy, accountId: string) {
 	return { id, href };
 }
 
-async function assertVaultTable(page: Page, copy: Copy, vaultHref: string) {
+async function assertVaultTable(
+	page: Page,
+	copy: Copy,
+	vaultHref: string,
+	width?: number,
+) {
 	await page.goto("/assets/vault");
+	const hero = page.locator(".vault-page .page-header h1");
+	await expect(hero).toBeVisible();
+	await expect(hero).toContainText(copy.heroFirst);
+	await expect(hero).toContainText(copy.heroSecond);
+	const note = page.locator(".vault-privacy-note");
+	await expect(note).toBeVisible();
+	await expect(note).toHaveAttribute("role", "note");
+	await expect(note).toContainText(copy.note);
 	const table = page.locator(".vault-reference-table");
 	await expect(table).toBeVisible();
 	const row = table.locator("tbody tr").filter({ hasText: vaultName });
@@ -139,6 +160,66 @@ async function assertVaultTable(page: Page, copy: Copy, vaultHref: string) {
 	await expect(
 		row.getByRole("link", { name: vaultName, exact: true }),
 	).toHaveAttribute("href", vaultHref);
+	if (width === 390) {
+		const tableWrap = page.locator(".vault-table-wrap");
+		await expect(tableWrap).toHaveAttribute("tabindex", "0");
+		await tableWrap.focus();
+		await expect(tableWrap).toBeFocused();
+		const readScrollState = () =>
+			tableWrap.evaluate((element) => ({
+				scrollLeft: (element as HTMLElement).scrollLeft,
+				scrollWidth: (element as HTMLElement).scrollWidth,
+				clientWidth: (element as HTMLElement).clientWidth,
+				focused: document.activeElement === element,
+				overflowX: window.getComputedStyle(element).overflowX,
+				overflowY: window.getComputedStyle(element).overflowY,
+				tabIndex: (element as HTMLElement).tabIndex,
+				activeTagName: document.activeElement?.tagName ?? "",
+				activeClassName: String(
+					(document.activeElement as HTMLElement | null)?.className ?? "",
+				),
+				selection: window.getSelection()?.toString() ?? "",
+				scriptSources: Array.from(document.scripts)
+					.map((script) => script.src)
+					.filter(Boolean),
+			}));
+		const initialState = await readScrollState();
+		await test.info().attach("vault-table-scroll-initial", {
+			body: JSON.stringify(initialState, null, 2),
+			contentType: "application/json",
+		});
+		for (let press = 0; press < 8; press += 1)
+			await tableWrap.press("ArrowRight");
+		try {
+			await expect
+				.poll(async () => (await readScrollState()).scrollLeft, {
+					timeout: 2_000,
+				})
+				.toBeGreaterThan(initialState.scrollLeft);
+		} finally {
+			const rightState = await readScrollState();
+			await test.info().attach("vault-table-scroll-after-right", {
+				body: JSON.stringify(rightState, null, 2),
+				contentType: "application/json",
+			});
+		}
+		await expect(row.locator("td").nth(4)).toBeInViewport({ ratio: 0.1 });
+		for (let press = 0; press < 8; press += 1)
+			await tableWrap.press("ArrowLeft");
+		try {
+			await expect
+				.poll(async () => (await readScrollState()).scrollLeft, {
+					timeout: 2_000,
+				})
+				.toBe(initialState.scrollLeft);
+		} finally {
+			const restoredState = await readScrollState();
+			await test.info().attach("vault-table-scroll-after-left", {
+				body: JSON.stringify(restoredState, null, 2),
+				contentType: "application/json",
+			});
+		}
+	}
 }
 
 async function assertVaultDetails(page: Page, accountHref: string) {
@@ -262,9 +343,9 @@ async function restoreIntoCleanContext(
 			page.getByRole("status").filter({ hasText: copy.restored }),
 		).toBeVisible();
 
-		await assertVaultTable(page, copy, vaultHref);
+		await assertVaultTable(page, copy, vaultHref, width);
 		await page.reload();
-		await assertVaultTable(page, copy, vaultHref);
+		await assertVaultTable(page, copy, vaultHref, width);
 		const row = page
 			.locator(".vault-reference-table tbody tr")
 			.filter({ hasText: vaultName });
@@ -326,9 +407,9 @@ for (const locale of ["zh-CN", "en-US"] as const) {
 				await setLanguage(sourcePage, zh);
 				const account = await createAccount(sourcePage, copy);
 				const vault = await createVault(sourcePage, copy, account.id);
-				await assertVaultTable(sourcePage, copy, vault.href);
+				await assertVaultTable(sourcePage, copy, vault.href, width);
 				await sourcePage.reload();
-				await assertVaultTable(sourcePage, copy, vault.href);
+				await assertVaultTable(sourcePage, copy, vault.href, width);
 				const row = sourcePage
 					.locator(".vault-reference-table tbody tr")
 					.filter({ hasText: vaultName });

@@ -752,7 +752,7 @@
 .asset-project-linked-subscriptions span { color: var(--muted); font-size: 12px; }
 .asset-project-domain-form { display: grid; gap: 11px; }
 .asset-project-domain-form label { display: grid; gap: 5px; font-size: 12px; font-weight: 750; }
-.asset-project-domain-form input, .asset-project-domain-form select { width: 100%; min-width: 0; }
+.asset-project-domain-form input, .asset-project-domain-form .themed-select-trigger { width: 100%; min-width: 0; }
 .asset-project-fee-row { display: grid; grid-template-columns: minmax(0,1fr) 90px; gap: 7px; }
 .asset-detail-project .asset-project-materials, .asset-detail-project .asset-backlinks-card { padding: 0; scroll-margin-top: 75px; }
 .asset-detail-project .asset-project-materials > summary { cursor: pointer; padding: 14px 17px; font-size: 14px; font-weight: 800; }

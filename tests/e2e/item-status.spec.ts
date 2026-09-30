@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { expect, type Page, test } from "@playwright/test";
+import { selectChoice } from "./helpers/select-choice";
 
 const repositoryModuleUrl = `/@fs${process.cwd()}/packages/local-db/src/index.ts`;
 const domainModuleUrl = `/@fs${process.cwd()}/packages/domain/src/index.ts`;
@@ -22,7 +23,7 @@ async function state(page: Page, name: string) {
 async function changeStatus(page: Page, status: string, day: string, note: string) {
 	await page.getByRole("button", { name: "Record status change" }).click();
 	const dialog = page.getByRole("dialog");
-	await dialog.getByLabel("Item status").selectOption(status);
+	await selectChoice(dialog.getByLabel("Item status"), status);
 	await dialog.getByLabel("Effective date").fill(day);
 	await dialog.getByLabel("Note (optional)").fill(note);
 	await dialog.getByRole("button", { name: "Save status" }).click();
@@ -53,7 +54,7 @@ test("legacy item without lifecycle fields records its first status change", asy
 	await expect(fact(page, "Item status")).toHaveText("Not recorded");
 	await page.getByRole("button", { name: "Record status change" }).click();
 	const dialog = page.getByRole("dialog");
-	await dialog.getByLabel("Item status").selectOption("idle");
+	await selectChoice(dialog.getByLabel("Item status"), "idle");
 	await dialog.getByLabel("Effective date").fill("2026-09-29");
 	await dialog.getByRole("button", { name: "Save status" }).click();
 	await expect(dialog).toBeHidden();
@@ -81,7 +82,7 @@ test("physical item facts, atomic status history and encrypted backup survive in
 		await dialog.getByLabel("Name", { exact: true }).fill(name);
 		await dialog.getByLabel("Purchase date").fill("2026-09-01");
 		await dialog.getByLabel("Started using").fill("2026-09-05");
-		await dialog.getByLabel("Warranty status").selectOption("inWarranty");
+		await selectChoice(dialog.getByLabel("Warranty status"), "inWarranty");
 		await dialog.getByRole("button", { name: "Save" }).click();
 		await expect(dialog).toBeHidden();
 		await page.getByText(name).first().click();
@@ -101,7 +102,7 @@ test("physical item facts, atomic status history and encrypted backup survive in
 		await expect(fact(page, "Purchase price")).toContainText("12.34");
 		await page.getByRole("button", { name: "Edit", exact: true }).click();
 		dialog = page.getByRole("dialog");
-		await dialog.getByLabel("Currency").selectOption("JPY");
+		await selectChoice(dialog.getByLabel("Currency"), "JPY");
 		await dialog.getByRole("button", { name: "Save" }).click();
 		await expect(dialog.getByText("Please check this field")).toBeVisible();
 		await dialog.getByLabel("Purchase price").fill("120");
@@ -110,7 +111,7 @@ test("physical item facts, atomic status history and encrypted backup survive in
 		await expect((await state(page, name)).asset).toMatchObject({ amount: 120, currency: "JPY" });
 		await page.getByRole("button", { name: "Edit", exact: true }).click();
 		dialog = page.getByRole("dialog");
-		await dialog.getByLabel("Currency").selectOption("CNY");
+		await selectChoice(dialog.getByLabel("Currency"), "CNY");
 		await dialog.getByLabel("Purchase price").fill("12.34");
 		await dialog.getByRole("button", { name: "Save" }).click();
 		await expect(dialog).toBeHidden();
@@ -121,8 +122,8 @@ test("physical item facts, atomic status history and encrypted backup survive in
 		await page.getByLabel("Borrower").fill("Ada");
 		await page.getByRole("button", { name: "Lend item" }).click();
 		await page.getByRole("button", { name: "Record status change" }).click();
-		await expect(page.getByRole("dialog").getByRole("option", { name: "Marked resold" })).toHaveAttribute("disabled", "");
-		await expect(page.getByRole("dialog").getByRole("option", { name: "Marked retired" })).toHaveAttribute("disabled", "");
+		await expect(page.getByRole("dialog").getByRole("option", { name: "Marked resold" })).toHaveAttribute("data-disabled", "");
+		await expect(page.getByRole("dialog").getByRole("option", { name: "Marked retired" })).toHaveAttribute("data-disabled", "");
 		await page.getByRole("dialog").getByRole("button", { name: "Cancel" }).click();
 		await page.getByRole("button", { name: "Return item" }).click();
 		await changeStatus(page, "resold", "2026-09-15", "Local record only");
@@ -164,7 +165,7 @@ test("physical item facts, atomic status history and encrypted backup survive in
 		restored.on("pageerror", error => errors.push(error.message));
 		try {
 			await restored.goto("/settings");
-			await restored.locator("section.card").filter({ has: restored.getByRole("heading", { name: "语言" }) }).locator("select").selectOption("zh-CN");
+			await selectChoice(restored.locator("section.card").filter({ has: restored.getByRole("heading", { name: "语言" }) }).getByRole("combobox"), "zh-CN");
 			await restored.goto("/intake");
 			await restored.locator("#backup-password").fill(password);
 			await restored.locator("#restore-file").setInputFiles(backupPath);

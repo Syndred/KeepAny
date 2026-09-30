@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { mkdirSync } from "node:fs";
 import { pdf } from "./fixtures/pdf";
+import { selectChoice } from "./helpers/select-choice";
 
 const evidence = process.env.KEEPANY_EVIDENCE_DIR ?? "docs/evidence/2026-09-30";
 mkdirSync(evidence, { recursive: true });
@@ -22,7 +23,7 @@ for (const locale of ["zh-CN", "en-US"]) for (const width of [390, 1280]) test(`
 		const confirm = row.getByRole('button', { name: zh ? '确认入库' : 'Confirm and save' });
 		await expect(confirm).toBeDisabled();
 		await page.screenshot({ path: `${evidence}/keepany-pdf-review-${process.env.KEEPANY_PDF_RELEASE === "1" ? "release-" : ""}${locale}-${width}.png`, fullPage: true });
-		await row.getByLabel(zh ? '资料类型' : 'Record type').selectOption('subscription');
+		await selectChoice(row.getByLabel(zh ? '资料类型' : 'Record type'), 'subscription');
 		await row.getByLabel(zh ? '名称' : 'Name', { exact: true }).fill('Reviewed invoice');
 		await row.getByLabel(zh ? "简短描述" : "Short description").fill("Manually reviewed USD 12.00");
 		await confirm.click();

@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { selectChoice } from "./helpers/select-choice";
 
 test("topbar and detail return to the source list after opening a related asset", async ({ page }) => {
 	async function add(kind: "project" | "account", name: string) {
@@ -14,7 +15,7 @@ test("topbar and detail return to the source list after opening a related asset"
 	await page.getByText("Source project", { exact: true }).first().click();
 	await page.getByRole("button", { name: "Add connection" }).click();
 	const relation = page.getByRole("dialog");
-	await relation.getByLabel("Connect to").selectOption({ label: "Linked login" });
+	await selectChoice(relation.getByLabel("Connect to"), { label: "Linked login" });
 	await relation.getByLabel("Connection label").fill("Login account");
 	await relation.getByRole("button", { name: "Save" }).click();
 	await expect(relation).toBeHidden();

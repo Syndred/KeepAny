@@ -14,6 +14,7 @@ import { Button } from "./components/ui/button";
 import { seed } from "./data";
 import { PageTitle, useAppContext } from "./view-shared";
 import "./settings-intake-restoration.css";
+import { Select, SelectOption } from "./components/ui/select";
 const SelfHostSessionPanel = lazy(() => import("./components/SelfHostSessionPanel").then(module => ({ default: module.SelfHostSessionPanel })));
 type AccessMode = "token" | "session" | "official";
 const officialWorkspaceKey = (accountId: string) => `keepany-official-workspace:${accountId}`;
@@ -429,18 +430,18 @@ export function SettingsPage() {
 			<div className="card-grid">
 				<section className="card padded">
 					<h2 id="settings-language-label">{t("language")}</h2>
-					<select
+					<Select
 						aria-labelledby="settings-language-label"
 						value={i18n.language}
-						onChange={(e) => {
-							const value = e.target.value;
+						onValueChange={(selectValue) => {
+							const value = selectValue;
 							localStorage.setItem("keepany-language", value);
 							void i18n.changeLanguage(value);
 						}}
 					>
-						<option value="zh-CN">简体中文</option>
-						<option value="en">English</option>
-					</select>
+						<SelectOption value="zh-CN">简体中文</SelectOption>
+						<SelectOption value="en">English</SelectOption>
+					</Select>
 				</section>
 				<section className="card padded">
 					<h2>{t("storage")}</h2>
@@ -478,8 +479,8 @@ export function SettingsPage() {
 			<section className="card padded sync-panel">
 				<h2>{t(accessMode === "official" ? "officialSync" : "selfHostSync")}</h2>
 				<p>{t(accessMode === "official" ? "officialSyncHint" : "selfHostSyncHint")}</p>
-				<label className="field"><span>{t("syncAccessMode")}</span><select value={accessMode} disabled={uiBusy} onChange={event => editConfig(() => {
-					const mode: AccessMode = event.target.value === "official" && officialAvailable ? "official" : event.target.value === "session" ? "session" : "token";
+				<label htmlFor="sync-access-mode" className="field"><span>{t("syncAccessMode")}</span><Select id="sync-access-mode" value={accessMode} disabled={uiBusy} onValueChange={selectValue => editConfig(() => {
+					const mode: AccessMode = selectValue === "official" && officialAvailable ? "official" : selectValue === "session" ? "session" : "token";
 					localStorage.setItem("keepany-sync-access-mode", mode);
 					if (mode !== "official") localStorage.setItem("keepany-selfhost-access-mode", mode);
 					setAccessMode(mode);
@@ -487,7 +488,7 @@ export function SettingsPage() {
 					setWorkspaceKey("");
 					setNeedsKeySave(false);
 					setToken("");
-				})}><option value="token">{t("syncTokenMode")}</option><option value="session">{t("syncSessionMode")}</option>{officialAvailable && <option value="official">{t("syncOfficialMode")}</option>}</select></label>
+				})}><SelectOption value="token">{t("syncTokenMode")}</SelectOption><SelectOption value="session">{t("syncSessionMode")}</SelectOption>{officialAvailable && <SelectOption value="official">{t("syncOfficialMode")}</SelectOption>}</Select></label>
 				{accessMode === "session" && <><p>{t("syncSessionOriginHint")}</p><Suspense fallback={<p>{t("syncSessionChecking")}</p>}><SelfHostSessionPanel disabled={uiBusy} onSessionChange={changeSession} /></Suspense></>}
 				{accessMode === "official" && <p role="status">{t(hasAccess ? "syncOfficialReady" : "syncOfficialAuthorize")}</p>}
 				<div className="form-grid">
@@ -497,10 +498,10 @@ export function SettingsPage() {
 					<label className="field"><span>{t("syncWorkspaceKey")}</span><input type={showKey ? "text" : "password"} value={workspaceKey} disabled={uiBusy || !hasAccess} onChange={event => editConfig(() => setWorkspaceKey(event.target.value))} autoComplete="off" /><small>{t(accessMode === "token" ? "syncKeyHint" : "syncSessionKeyHint")}</small></label>
 				</div>
 				{accessMode !== "token" && hasAccess && <div className="actions">
-					<label className="field"><span>{t("syncSelectWorkspace")}</span><select value={availableWorkspaces.includes(workspaceId) ? workspaceId : ""} disabled={uiBusy || availableWorkspaces.length === 0} onChange={event => editConfig(() => {
-						setWorkspaceId(event.target.value); setWorkspaceKey(""); setNeedsKeySave(false);
-					})}><option value="">{t(availableWorkspaces.length ? "syncSelectWorkspace" : "syncNoWorkspaces")}</option>
-						{availableWorkspaces.map(id => <option key={id} value={id}>{id}</option>)}</select></label>
+					<label htmlFor="sync-select-workspace" className="field"><span>{t("syncSelectWorkspace")}</span><Select id="sync-select-workspace" value={availableWorkspaces.includes(workspaceId) ? workspaceId : ""} disabled={uiBusy || availableWorkspaces.length === 0} onValueChange={selectValue => editConfig(() => {
+						setWorkspaceId(selectValue); setWorkspaceKey(""); setNeedsKeySave(false);
+					})}><SelectOption value="">{t(availableWorkspaces.length ? "syncSelectWorkspace" : "syncNoWorkspaces")}</SelectOption>
+						{availableWorkspaces.map(id => <SelectOption key={id} value={id}>{id}</SelectOption>)}</Select></label>
 					<Button disabled={uiBusy} onClick={() => {
 						const mode = accessMode;
 						const accountId = mode === "session" ? sessionAccountId : officialBinding?.subject;

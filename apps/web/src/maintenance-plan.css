@@ -17,4 +17,4 @@
 .maintenance-history-item p { margin: 5px 0; overflow-wrap: anywhere; }
 .maintenance-history-item small { display: block; margin-top: 3px; color: var(--muted); }
 .maintenance-editor .form-grid { max-height: min(65vh, 560px); overflow: auto; }
-.maintenance-editor .field select { width: 100%; min-height: 40px; padding: 8px; border: 2px solid var(--line); border-radius: 8px; background: var(--paper); color: var(--ink); font: inherit; }
+.maintenance-editor .field .themed-select-trigger { width: 100%; }

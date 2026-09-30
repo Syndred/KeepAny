@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { selectChoice } from "./helpers/select-choice";
 
 const domainPath = `/@fs${process.cwd()}/packages/domain/src/index.ts`;
 const repositoryPath = `/@fs${process.cwd()}/packages/local-db/src/index.ts`;
@@ -37,7 +38,7 @@ for (const locale of ["zh-CN", "en-US"] as const) {
 			await firstRow.getByRole("button", { name: copy.check }).click();
 			await firstRow.getByLabel(`Atlas directory ${locale === "zh-CN" ? "名称" : "Name"}`).fill("Stale directory title");
 			await secondRow.getByRole("button", { name: copy.check }).click();
-			await secondRow.getByRole("combobox").selectOption("indexed");
+			await selectChoice(secondRow.getByRole("combobox"), "indexed");
 			await secondRow.getByLabel(`Atlas directory ${locale === "zh-CN" ? "依据" : "Evidence"}`).fill("https://directory.example/atlas/live");
 			await secondRow.getByRole("button", { name: copy.save, exact: true }).click();
 			await expect(secondRow.getByRole("combobox")).toHaveCount(0);

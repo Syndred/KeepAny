@@ -14,6 +14,7 @@ import { ImpactTaskRow } from "./ImpactTaskRow";
 import { ProjectWorkflowPage } from "./page-project-workflow";
 import { PageTitle, useAppContext } from "./view-shared";
 import "./change-impact.css";
+import { Select, SelectOption } from "./components/ui/select";
 
 type Scenario = "phone" | "brand" | "close";
 const scenarios = ["phone", "brand", "close"] as const;
@@ -174,17 +175,17 @@ export function ChangeImpactPage() {
 				<section className="card change-impact-target-card">
 					<label className="field" htmlFor="change-impact-target">
 						<span>{t("impactHubChooseTarget", { target: targetLabel })}</span>
-						<select
+						<Select
 							id="change-impact-target"
 							value={selected?.id ?? ""}
-							onChange={(event) => setSelectedId(event.target.value)}
+							onValueChange={(selectValue) => setSelectedId(selectValue)}
 						>
 							{targets.map((asset) => (
-								<option key={asset.id} value={asset.id}>
+								<SelectOption key={asset.id} value={asset.id}>
 									{asset.name}
-								</option>
+								</SelectOption>
 							))}
-						</select>
+						</Select>
 					</label>
 				</section>
 			)}
@@ -220,17 +221,17 @@ export function ChangeImpactPage() {
 									<span>
 										{t("impactHubChooseTarget", { target: targetLabel })}
 									</span>
-									<select
+									<Select
 										id="change-impact-target"
 										value={selected?.id ?? ""}
-										onChange={(event) => setSelectedId(event.target.value)}
+										onValueChange={(selectValue) => setSelectedId(selectValue)}
 									>
 										{targets.map((asset) => (
-											<option key={asset.id} value={asset.id}>
+											<SelectOption key={asset.id} value={asset.id}>
 												{asset.name}
-											</option>
+											</SelectOption>
 										))}
-									</select>
+									</Select>
 								</label>
 							) : (
 								<div className="change-impact-empty">

@@ -14,6 +14,7 @@ import {
 	inspectArchive,
 } from "../../../../packages/local-db/src";
 import { Button } from "./ui/button";
+import { Select, SelectOption } from "./ui/select";
 
 type RemoteKind = "s3" | "webdav";
 
@@ -187,19 +188,19 @@ export function RemoteBackupPanel({
 			<p>{t("remoteBackupHint")}</p>
 			<div className="field">
 				<label htmlFor="remote-kind">{t("remoteBackupKind")}</label>
-				<select
+				<Select
 					id="remote-kind"
 					value={kind}
 					disabled={busy}
-					onChange={(e) => {
+					onValueChange={(selectValue) => {
 						changed();
 						setDavPassword("");
-						setKind(e.target.value as RemoteKind);
+						setKind(selectValue as RemoteKind);
 					}}
 				>
-					<option value="s3">{t("remoteS3")}</option>
-					<option value="webdav">WebDAV</option>
-				</select>
+					<SelectOption value="s3">{t("remoteS3")}</SelectOption>
+					<SelectOption value="webdav">WebDAV</SelectOption>
+				</Select>
 			</div>
 			{kind === "s3" ? (
 				<div className="form-grid remote-backup-fields">

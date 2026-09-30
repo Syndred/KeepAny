@@ -4,6 +4,7 @@ import { strFromU8, unzipSync } from 'fflate';
 import { decryptBackup } from '../../packages/local-db/src/backup-crypto';
 import { pdf as makePdf } from "./fixtures/pdf";
 import type { ReviewedCandidate } from '../../packages/local-db/src/intake-review';
+import { selectChoice } from "./helpers/select-choice";
 
 const password = 'intake-review-backup-test-password';
 const csv = Buffer.from('name,kind\nPending CSV,project\nAccepted CSV,project\nIgnored CSV,item');
@@ -47,7 +48,7 @@ for (const locale of ['zh-CN', 'en-US']) test(`${locale} downloaded encrypted ba
     await page.locator('#csv-file').setInputFiles({ name: 'invoice-pending.pdf', mimeType: 'application/pdf', buffer: pendingPdf });
     const pending = rows.filter({ hasText: 'invoice-pending.pdf' });
     await expect(pending).toBeVisible();
-    await pending.getByLabel(zh ? '资料类型' : 'Record type').selectOption('account');
+    await selectChoice(pending.getByLabel(zh ? '资料类型' : 'Record type'), 'account');
     await pending.getByLabel(zh ? '名称' : 'Name', { exact: true }).fill('Edited pending PDF');
     await pending.getByLabel(zh ? '简短描述' : 'Short description').fill('PDF manual edit');
     await pending.getByText(zh ? '查看提取原文' : 'View extracted text', { exact: true }).click();
@@ -86,7 +87,7 @@ for (const locale of ['zh-CN', 'en-US']) test(`${locale} downloaded encrypted ba
       const restoredPdf = restoredRows.filter({ hasText: 'invoice-pending.pdf' });
       await restoredPdf.getByText(zh ? '查看提取原文' : 'View extracted text', { exact: true }).click();
       await expect(restoredPdf.locator('pre')).toContainText('Original PDF reference USD 12.00');
-      await expect(restoredPdf.getByLabel(zh ? '资料类型' : 'Record type')).toHaveValue('account');
+      await expect(restoredPdf.getByLabel(zh ? '资料类型' : 'Record type')).toHaveAttribute("data-value", 'account');
       await restored.screenshot({ path: test.info().outputPath(`intake-review-backup-${locale}.png`), fullPage: true });
       expect(await restored.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
       await restoredPdf.getByRole('button', { name: zh ? '确认入库' : 'Confirm and save', exact: true }).click();

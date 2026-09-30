@@ -1,5 +1,6 @@
 import { mkdirSync } from "node:fs";
 import { expect, test } from "@playwright/test";
+import { selectChoice } from "./helpers/select-choice";
 
 const captureEvidence = process.env.KEEPANY_CAPTURE_EVIDENCE === "1";
 const evidence = "docs/evidence/2026-09-29";
@@ -113,9 +114,8 @@ for (const variant of [
 			await expect(page.getByText(projectName).first()).toBeVisible();
 			await page.goto("/intake");
 			const panel = page.locator(".external-import-panel");
-			await panel
-				.getByLabel(variant.project)
-				.selectOption({ label: projectName });
+			await selectChoice(panel
+				.getByLabel(variant.project), { label: projectName });
 			await panel
 				.locator("#ext-file")
 				.setInputFiles({
@@ -123,7 +123,7 @@ for (const variant of [
 					mimeType: "application/json",
 					buffer: Buffer.from(JSON.stringify(exportFixture())),
 				});
-			await panel.getByLabel(variant.profile).selectOption("DemoProject");
+			await selectChoice(panel.getByLabel(variant.profile), "DemoProject");
 			await panel.getByRole("button", { name: variant.preview }).click();
 			await expect(panel).toContainText("A useful demo");
 			await expect(panel).toContainText("DemoProject");
@@ -156,7 +156,7 @@ for (const variant of [
 				.locator("tr")
 				.filter({ hasText: "directory.example/submit" });
 			await expect(row).toBeVisible();
-			await expect(row.getByRole("combobox")).toHaveValue("submitted");
+			await expect(row.getByRole("combobox")).toHaveAttribute("data-value", "submitted");
 			await expect(row).toContainText("DemoProject");
 			await expect(
 				page.locator("tr").filter({ hasText: "unproven.example" }),

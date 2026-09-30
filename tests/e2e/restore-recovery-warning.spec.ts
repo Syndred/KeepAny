@@ -1,5 +1,6 @@
 import { mkdirSync } from 'node:fs';
 import { expect, test } from '@playwright/test';
+import { selectChoice } from "./helpers/select-choice";
 
 const modulePath = `/@fs${process.cwd()}/packages/local-db/src/index.ts`;
 const evidence = 'docs/evidence/2026-09-29';
@@ -85,7 +86,7 @@ test('a partial image restore keeps local data readable and warns after refresh 
     expect(readback.file).toEqual({ name: 'partial-original.png', type: 'image/png', bytes: fixture.bytes });
 
     await page.goto('/settings');
-    await page.locator('section.card').filter({ has: page.getByRole('heading', { name: 'Language' }) }).locator('select').selectOption('zh-CN');
+    await selectChoice(page.locator('section.card').filter({ has: page.getByRole('heading', { name: 'Language' }) }).getByRole("combobox"), 'zh-CN');
     await page.goto('/intake');
     await expect(page.getByRole('status').getByText('上次恢复尚未完成，当前资料可查看。请保留本机数据并寻求协助。')).toBeVisible();
     await page.screenshot({ path: `${evidence}/restore-recovery-warning-zh-390.png`, fullPage: true });

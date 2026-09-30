@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { selectChoice } from "./helpers/select-choice";
 
 const repositoryPath = `/@fs${process.cwd()}/packages/local-db/src/index.ts`;
 
@@ -23,7 +24,7 @@ for (const locale of ["zh-CN", "en-US"] as const) {
 			const dialog = page.getByRole("dialog", { name: copy.backlink });
 			await dialog.locator("#submission-name").fill("Atlas listing");
 			await dialog.locator("#submission-url").fill("https://directory.example/atlas");
-			await dialog.locator("#submission-status").selectOption("verify");
+			await selectChoice(dialog.locator("#submission-status"), "verify");
 			await dialog.locator("#submission-date").fill("2026-09-28");
 			await dialog.locator("#submission-evidence").fill("Email receipt 42");
 			await dialog.getByRole("button", { name: copy.save, exact: true }).click();
@@ -42,7 +43,7 @@ for (const locale of ["zh-CN", "en-US"] as const) {
 			await row.getByRole("button", { name: copy.check }).click();
 			await row.getByLabel(`Atlas listing ${copy.name}`).fill("Atlas listing updated");
 			await row.getByLabel(`Atlas listing ${copy.url}`).fill("https://directory.example/atlas-updated");
-			await row.getByRole("combobox").selectOption("indexed");
+			await selectChoice(row.getByRole("combobox"), "indexed");
 			const bounds = await ledger.locator(".table-wrap").boundingBox();
 			expect(bounds).not.toBeNull();
 			for (const action of await row.locator(".backlink-row-actions button").all()) {

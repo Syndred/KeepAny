@@ -1,5 +1,6 @@
 import { mkdirSync } from "node:fs";
 import { expect, test, type Page } from "@playwright/test";
+import { selectChoice } from "./helpers/select-choice";
 
 const evidence = "docs/evidence/2026-09-29";
 const repositoryModuleUrl = `/@fs${process.cwd()}/packages/local-db/src/index.ts`;
@@ -141,7 +142,7 @@ for (const scenario of [
 		async function addRelation(labelValue: string, withMetadata = false) {
 			await page.getByRole("button", { name: scenario.addRelation }).click();
 			const dialog = page.getByRole("dialog");
-			await dialog.getByLabel(scenario.target).selectOption({ label: account });
+			await selectChoice(dialog.getByLabel(scenario.target), { label: account });
 			await dialog.getByLabel(scenario.label).fill(labelValue);
 			if (withMetadata) {
 				await dialog.getByLabel(scenario.source).fill("Local account record");
@@ -163,9 +164,8 @@ for (const scenario of [
 			await addRelation(label, true);
 			await page.getByRole("button", { name: scenario.addRelation }).click();
 			const duplicate = page.getByRole("dialog");
-			await duplicate
-				.getByLabel(scenario.target)
-				.selectOption({ label: account });
+			await selectChoice(duplicate
+				.getByLabel(scenario.target), { label: account });
 			await duplicate.getByLabel(scenario.label).fill(label);
 			await duplicate.getByRole("button", { name: scenario.save }).click();
 			await expect(duplicate.getByRole("alert")).toBeVisible();
@@ -352,7 +352,7 @@ test("crowded graph filters neighbors and clears filter on center change", async
 		for (const [index, neighbor] of neighbors.entries()) {
 			await page.getByRole("button", { name: "Add connection" }).click();
 			const dialog = page.getByRole("dialog");
-			await dialog.getByLabel("Connect to").selectOption({ label: neighbor });
+			await selectChoice(dialog.getByLabel("Connect to"), { label: neighbor });
 			await dialog.getByLabel("Connection label").fill(`role ${index}`);
 			await dialog.getByRole("button", { name: "Save" }).click();
 			await expect(dialog).toBeHidden();

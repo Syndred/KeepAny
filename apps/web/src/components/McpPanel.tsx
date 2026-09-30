@@ -9,6 +9,7 @@ import {
 import { type McpRequest, useMcpRuntime } from "../mcp-runtime";
 import { useAppContext } from "../view-shared";
 import { Button } from "./ui/button";
+import { Select, SelectOption } from "./ui/select";
 
 const durations = [
 	{ value: 5 * 60_000, key: "mcpDuration5m" },
@@ -206,22 +207,22 @@ export function McpPanel() {
 						</div>
 						<small>{t("mcpWriteHint")}</small>
 					</fieldset>
-					<label className="field mcp-duration">
+					<label htmlFor="mcp-duration" className="field mcp-duration">
 						<span>{t("mcpDuration")}</span>
-						<select
-							value={ttlMs}
+						<Select id="mcp-duration"
+							value={String(ttlMs)}
 							disabled={busy || status === "pairing"}
-							onChange={(event) => {
+							onValueChange={(selectValue) => {
 								invalidatePrepared();
-								setTtlMs(Number(event.target.value));
+								setTtlMs(Number(selectValue));
 							}}
 						>
 							{durations.map(({ value, key }) => (
-								<option value={value} key={value}>
+								<SelectOption value={String(value)} key={value}>
 									{t(key)}
-								</option>
+								</SelectOption>
 							))}
-						</select>
+						</Select>
 					</label>
 					<div className="actions">
 						<Button

@@ -3,6 +3,7 @@ import { mkdirSync, readFileSync } from "node:fs";
 import { expect, type Page, test } from "@playwright/test";
 import { strFromU8, strToU8, unzipSync, zipSync } from "fflate";
 import { decryptBackup, encryptBackup } from "../../packages/local-db/src/backup-crypto";
+import { selectChoice } from "./helpers/select-choice";
 
 const evidence = "docs/evidence/2026-09-29";
 const repositoryModuleUrl = `/@fs${process.cwd()}/packages/local-db/src/index.ts`;
@@ -45,7 +46,7 @@ async function addAsset(page: Page, kind: "project" | "account" | "subscription"
 async function addRelation(page: Page, target: string, label: string, source = "") {
 	await page.getByRole("button", { name: "Add connection" }).click();
 	const dialog = page.getByRole("dialog");
-	await dialog.getByLabel("Connect to").selectOption({ label: target });
+	await selectChoice(dialog.getByLabel("Connect to"), { label: target });
 	await dialog.getByLabel("Connection label").fill(label);
 	if (source) await dialog.getByLabel("Connection source").fill(source);
 	await dialog.getByRole("button", { name: "Save" }).click();
@@ -97,7 +98,7 @@ test("formal backup restores full local graph, history, ledger, tombstones and o
 		await expect(backlink).toBeHidden();
 		const ledgerRow = page.locator("tr").filter({ hasText: `Directory ${suffix}` });
 		await ledgerRow.getByRole("button", { name: "Edit" }).click();
-		await ledgerRow.getByRole("combobox").selectOption("submitted");
+		await selectChoice(ledgerRow.getByRole("combobox"), "submitted");
 		await ledgerRow.getByLabel(`Directory ${suffix} Submitted`).fill("2026-09-29");
 		await ledgerRow.getByLabel(`Directory ${suffix} Evidence`).fill(`Local test receipt ${suffix}`);
 		await ledgerRow.getByRole("button", { name: "Save" }).click();
@@ -242,7 +243,7 @@ test("formal backup restores full local graph, history, ledger, tombstones and o
 			await restored.goto("/trash");
 			await expect(restored.getByText(deletedProject)).toBeVisible();
 			await restored.goto("/settings");
-			await restored.locator("section.card").filter({ has: restored.getByRole("heading", { name: "Language" }) }).locator("select").selectOption("zh-CN");
+			await selectChoice(restored.locator("section.card").filter({ has: restored.getByRole("heading", { name: "Language" }) }).getByRole("combobox"), "zh-CN");
 			await restored.goto("/intake");
 			await restored.locator("#backup-password").fill(password);
 			await restored.getByRole("button", { name: "创建备份" }).click();
@@ -326,7 +327,7 @@ test("formal backup restores full local graph, history, ledger, tombstones and o
 		} finally { await conflict.close(); }
 
 		await page.goto("/settings");
-		await page.locator("section.card").filter({ has: page.getByRole("heading", { name: "Language" }) }).locator("select").selectOption("zh-CN");
+		await selectChoice(page.locator("section.card").filter({ has: page.getByRole("heading", { name: "Language" }) }).getByRole("combobox"), "zh-CN");
 		await page.goto("/intake");
 		await page.locator("#backup-password").fill(password);
 		await page.getByRole("button", { name: "创建备份" }).click();

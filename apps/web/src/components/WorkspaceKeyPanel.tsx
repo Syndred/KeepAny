@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { KeyEnvelope, KeyEnvelopeClient, KeyEnvelopeMetadata } from "../../../../packages/sync-client/src";
 import { Button } from "./ui/button";
+import { Select, SelectOption } from "./ui/select";
 
 interface Props {
 	endpoint: string;
@@ -178,9 +179,9 @@ export function WorkspaceKeyPanel({ endpoint, accountId, accessMode, accessToken
 		</div>}
 		<h3>{t("keyAccessUnlockTitle")}</h3>
 		<div className="form-grid">
-			<label className="field"><span>{t("keyAccessMethod")}</span><select value={kind} disabled={busy || otherBusy} onChange={event => { setKind(event.target.value as "recovery" | "join"); setCandidate(null); setConfirmed(false); }}>
-				<option value="recovery">{t("keyAccessRecovery")}</option><option value="join">{t("keyAccessJoin")}</option>
-			</select></label>
+			<label htmlFor="key-access-method" className="field"><span>{t("keyAccessMethod")}</span><Select id="key-access-method" value={kind} disabled={busy || otherBusy} onValueChange={selectValue => { setKind(selectValue as "recovery" | "join"); setCandidate(null); setConfirmed(false); }}>
+				<SelectOption value="recovery">{t("keyAccessRecovery")}</SelectOption><SelectOption value="join">{t("keyAccessJoin")}</SelectOption>
+			</Select></label>
 			{kind === "join" && <label className="field"><span>{t("keyAccessEnvelopeId")}</span><input value={joinId} disabled={busy || otherBusy} onChange={event => { setJoinId(event.target.value); setCandidate(null); }} autoComplete="off" /></label>}
 			<label className="field"><span>{t("keyAccessCredential")}</span><input type="password" value={credential} disabled={busy || otherBusy} onChange={event => { setCredential(event.target.value); setCandidate(null); }} autoComplete="off" /></label>
 		</div>

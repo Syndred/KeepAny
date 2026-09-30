@@ -1,5 +1,6 @@
 import { mkdirSync } from "node:fs";
 import { expect, test } from "@playwright/test";
+import { selectChoice } from "./helpers/select-choice";
 
 const evidence = "docs/evidence/2026-09-29";
 const mode = process.env.KEEPANY_SCROLL_MODE ?? "dev";
@@ -105,7 +106,7 @@ for (const width of [1280, 390]) {
 			await page.getByText(project, { exact: true }).first().click();
 			await page.getByRole("button", { name: "Add connection" }).click();
 			const dialog = page.getByRole("dialog");
-			await dialog.getByLabel("Connect to").selectOption({ label: target });
+			await selectChoice(dialog.getByLabel("Connect to"), { label: target });
 			await dialog.getByLabel("Connection label").fill("owner");
 			await dialog.getByRole("button", { name: "Save" }).click();
 			await expect(dialog).toBeHidden();

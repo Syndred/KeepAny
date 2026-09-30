@@ -28,7 +28,7 @@
 .finance-entry b { flex: none; overflow-wrap: anywhere; text-align: right; }
 .finance-filters { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; margin-bottom: 10px; }
 .finance-filters label { display: grid; gap: 5px; font-size: 12px; font-weight: 700; }
-.finance-filters select { min-width: 0; width: 100%; }
+.finance-filters .themed-select-trigger { min-width: 0; width: 100%; }
 .finance-form { display: grid; gap: 13px; }
 .finance-form-pair { display: grid; grid-template-columns: minmax(0,2fr) minmax(100px,1fr); gap: 12px; }
 .finance-form .actions { margin-top: 6px; }

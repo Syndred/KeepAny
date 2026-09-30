@@ -4,7 +4,7 @@
 .asset-backlinks-card td { overflow-wrap: anywhere; vertical-align: top; }
 .asset-backlinks-card td small { display: block; color: var(--muted); font-size: 11px; }
 .asset-backlinks-card .backlink-edit-name { display: block; margin-bottom: 5px; font-size: 11px; }
-.asset-backlinks-card .backlink-row-editing input, .asset-backlinks-card .backlink-row-editing select { width: 100%; min-width: 0; margin-bottom: 5px; }
+.asset-backlinks-card .backlink-row-editing input, .asset-backlinks-card .backlink-row-editing .themed-select-trigger { width: 100%; min-width: 0; margin-bottom: 5px; }
 .asset-backlinks-card td a, .asset-backlinks-card td span { overflow-wrap: anywhere; }
 .asset-backlinks-card .backlink-row-actions { display: flex; flex-wrap: wrap; gap: 5px; }
 .asset-backlinks-card .backlink-row-actions button { max-width: 100%; }

@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { selectChoice } from "./helpers/select-choice";
 
 const repositoryModuleUrl = `/@fs${process.cwd()}/packages/local-db/src/index.ts`;
 const domainModuleUrl = `/@fs${process.cwd()}/packages/domain/src/index.ts`;
@@ -59,7 +60,7 @@ test('close and handover requires evidence, records blockers and gates local arc
   await expect(tasks.filter({ hasText: 'atlas.example' }).first()).toContainText('Jan 1, 2027');
   await expect(tasks.last().getByRole('button', { name: 'Record result' })).toBeDisabled();
   await tasks.first().getByRole('button', { name: 'Record result' }).click();
-  await tasks.first().getByLabel('Result').selectOption('blocked');
+  await selectChoice(tasks.first().getByLabel('Result'), 'blocked');
   await tasks.first().getByLabel('Evidence or note').fill('Backup destination unavailable');
   await tasks.first().getByRole('button', { name: 'Save result' }).click();
   await expect(tasks.first()).toContainText('Backup destination unavailable');
@@ -70,7 +71,7 @@ test('close and handover requires evidence, records blockers and gates local arc
   for (let index = 0; index < 6; index++) {
     const row = tasks.nth(index);
     await row.getByRole('button', { name: /Record result|Edit result/ }).click();
-    await row.getByLabel('Result').selectOption(index === 0 ? 'done' : 'na');
+    await selectChoice(row.getByLabel('Result'), index === 0 ? 'done' : 'na');
     await row.getByLabel('Evidence or note').fill(`Verified item ${index} on its platform`);
     await row.getByRole('button', { name: 'Save result' }).click();
   }

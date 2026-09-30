@@ -1,3 +1,18 @@
+.vault-page .page-header h1 {
+	white-space: pre-line;
+}
+
+.vault-privacy-note {
+	display: flex;
+	align-items: flex-start;
+	gap: 9px;
+}
+
+.vault-privacy-note > svg {
+	flex-shrink: 0;
+	margin-top: 2px;
+}
+
 .vault-table-wrap {
 	margin-top: 16px;
 	overflow-x: auto;

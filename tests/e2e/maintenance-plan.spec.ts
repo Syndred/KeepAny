@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { selectChoice } from "./helpers/select-choice";
 
 const domainUrl = `/@fs${process.cwd()}/packages/domain/src/index.ts`;
 const repositoryUrl = `/@fs${process.cwd()}/packages/local-db/src/index.ts`;
@@ -22,10 +23,10 @@ test("maintenance plan keeps an estimated amount and advances fixed dates with e
 	await page.getByRole("button", { name: "New maintenance plan" }).click();
 	const editor = page.getByRole("dialog");
 	await editor.getByLabel("Plan name").fill("Clean laptop");
-	await editor.getByLabel("Linked asset").selectOption(assetId);
-	await editor.getByLabel("Repeat rule").selectOption("fixed");
+	await selectChoice(editor.getByLabel("Linked asset"), assetId);
+	await selectChoice(editor.getByLabel("Repeat rule"), "fixed");
 	await editor.getByLabel("Interval", { exact: true }).fill("1");
-	await editor.getByLabel("Interval unit").selectOption("month");
+	await selectChoice(editor.getByLabel("Interval unit"), "month");
 	await editor.getByLabel("Next date").fill("2026-01-31");
 	await editor.getByLabel("Remind days early").fill("7");
 	await editor.getByLabel("Planned amount (optional)").fill("50.00");
@@ -68,7 +69,7 @@ test("one-time skip closes its plan; ordinary tasks keep their existing toggle",
 	await page.getByRole("button", { name: "新建维护计划" }).click();
 	const editor = page.getByRole("dialog");
 	await editor.getByLabel("计划名称").fill("保修核查");
-	await editor.getByLabel("关联资产").selectOption(assetId);
+	await selectChoice(editor.getByLabel("关联资产"), assetId);
 	await editor.getByLabel("下次日期").fill("2026-10-19");
 	await editor.getByRole("button", { name: "创建计划" }).click();
 	const row = page.locator(".maintenance-task-row");
@@ -104,10 +105,10 @@ test("defer seven days records evidence, survives reload and keeps the fixed sch
 	await page.getByRole("button", { name: "New maintenance plan" }).click();
 	const editor = page.getByRole("dialog");
 	await editor.getByLabel("Plan name").fill("Defer laptop review");
-	await editor.getByLabel("Linked asset").selectOption(assetId);
-	await editor.getByLabel("Repeat rule").selectOption("fixed");
+	await selectChoice(editor.getByLabel("Linked asset"), assetId);
+	await selectChoice(editor.getByLabel("Repeat rule"), "fixed");
 	await editor.getByLabel("Interval", { exact: true }).fill("1");
-	await editor.getByLabel("Interval unit").selectOption("month");
+	await selectChoice(editor.getByLabel("Interval unit"), "month");
 	await editor.getByLabel("Next date").fill(localDate(due));
 	await editor.getByRole("button", { name: "Create plan" }).click();
 	const row = page.locator(".maintenance-task-row").filter({ hasText: "Defer laptop review" });
@@ -151,7 +152,7 @@ for (const action of ["complete", "skip"] as const) {
 		await page.getByRole("button", { name: "New maintenance plan" }).click();
 		const editor = page.getByRole("dialog");
 		await editor.getByLabel("Plan name").fill(`One-time ${action}`);
-		await editor.getByLabel("Linked asset").selectOption(assetId);
+		await selectChoice(editor.getByLabel("Linked asset"), assetId);
 		await editor.getByLabel("Next date").fill("2026-09-01");
 		await editor.getByRole("button", { name: "Create plan" }).click();
 		const row = page.locator(".maintenance-task-row").filter({ hasText: `One-time ${action}` });

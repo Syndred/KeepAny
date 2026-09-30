@@ -16,6 +16,7 @@ import { fileURLToPath } from 'node:url';
 import { expect, test, type BrowserContext, type Page } from '@playwright/test';
 import pg from 'pg';
 import { migrateSyncDatabase } from '../../apps/sync-server/src/migrate';
+import { selectChoice } from "./helpers/select-choice";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const commercialCheckout = resolve(root, '../KeepAnyAdm');
@@ -150,7 +151,7 @@ async function bind(page: Page, accountPage: Page, webOrigin: string, commercial
   await page.getByRole('button', { name: 'Check status' }).click();
   await expect(page.getByText('Connection saved on this device').first()).toBeVisible();
   await expect(page.getByText('Read and write access is approved.')).toBeVisible();
-  await page.locator('.sync-panel select').first().selectOption('official');
+  await selectChoice(page.locator('.sync-panel').getByRole("combobox").first(), 'official');
   await expect(page.locator('.sync-panel')).toContainText('Read and write access is approved.');
 }
 
@@ -381,7 +382,7 @@ test('official bound sync preserves encrypted records and photos across devices,
     for (const width of [390, 1280]) {
       await pageB.setViewportSize({ width, height: 844 });
       for (const language of ['en', 'zh-CN'] as const) {
-        await pageB.locator('select').first().selectOption(language);
+        await selectChoice(pageB.getByRole("combobox").first(), language);
         await expect(pageB.locator('.sync-panel')).toContainText(
           language === 'en' ? 'Official account connection' : '官方账号连接');
         expect(await pageB.evaluate(() => document.documentElement.scrollWidth))
@@ -389,7 +390,7 @@ test('official bound sync preserves encrypted records and photos across devices,
         await pageB.screenshot({ path: join(evidenceDir, `device-access-${language}-${width}.png`), fullPage: true });
       }
     }
-    await pageB.locator('select').first().selectOption('en');
+    await selectChoice(pageB.getByRole("combobox").first(), 'en');
     const refreshBeforeExpiry = refreshB;
     await pause(61_000); // The commercial access JWT is valid for at most 60 seconds.
     await sync(pageB, 'This sync completed');

@@ -13,6 +13,7 @@ import {
 } from "./intake-review-store";
 import "./intake-review.css";
 import { useSearchRowLocation } from "./search-location";
+import { Select, SelectOption } from "./components/ui/select";
 
 const importKinds = ["project", "account", "subscription", "item"] as const;
 
@@ -261,7 +262,7 @@ export function IntakeReview() {
 						: <small>{t("taskRelatedMissing")}</small>)}
 				</div>}
 				{row.status === "pending" && <>
-					<div className="field"><label htmlFor={`${row.id}-kind`}>{t("intakeRecordType")}</label><select id={`${row.id}-kind`} value={row.reviewMode === "expense" ? "expense" : row.source === "pdf" && !row.kindSelected ? "" : row.asset.kind} disabled={disabled} onChange={(event) => selectType(row.id, event.target.value)}><option value="" disabled>{t("reviewSelectKind")}</option>{importKinds.map((kind) => <option value={kind} key={kind}>{t(kind)}</option>)}{row.source === "pdf" && <option value="expense">{t("reviewExpense")}</option>}</select></div>
+					<div className="field"><label htmlFor={`${row.id}-kind`}>{t("intakeRecordType")}</label><Select id={`${row.id}-kind`} value={row.reviewMode === "expense" ? "expense" : row.source === "pdf" && !row.kindSelected ? "" : row.asset.kind} disabled={disabled} onValueChange={(selectValue) => selectType(row.id, selectValue)}><SelectOption value="" disabled>{t("reviewSelectKind")}</SelectOption>{importKinds.map((kind) => <SelectOption value={kind} key={kind}>{t(kind)}</SelectOption>)}{row.source === "pdf" && <SelectOption value="expense">{t("reviewExpense")}</SelectOption>}</Select></div>
 					{row.reviewMode === "expense" && row.expenseDraft ? <>
 						<p className="muted">{t("reviewExpenseHint")}</p>
 						{!targets.length && <div className="notice"><p>{t("financeNoTarget")}</p><div className="actions"><Button asChild><Link to="/assets/$kind" params={{ kind: "subscription" }}>{t("financeGoSubscriptions")}</Link></Button><Button asChild><Link to="/assets/$kind" params={{ kind: "account" }}>{t("financeGoAccounts")}</Link></Button></div></div>}

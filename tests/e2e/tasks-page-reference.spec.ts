@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { selectChoice } from "./helpers/select-choice";
 
 const domainUrl = `/@fs${process.cwd()}/packages/domain/src/index.ts`;
 const repositoryUrl = `/@fs${process.cwd()}/packages/local-db/src/index.ts`;
@@ -23,7 +24,7 @@ for (const locale of ["zh-CN", "en"] as const) {
 		await page.getByRole("button", { name: locale === "en" ? "New maintenance plan" : "新建维护计划" }).click();
 		const editor = page.getByRole("dialog");
 		await editor.getByLabel(locale === "en" ? "Plan name" : "计划名称").fill("Laptop review");
-		await editor.getByLabel(locale === "en" ? "Linked asset" : "关联资产").selectOption(assetId);
+		await selectChoice(editor.getByLabel(locale === "en" ? "Linked asset" : "关联资产"), assetId);
 		await editor.getByLabel(locale === "en" ? "Next date" : "下次日期").fill("2026-11-05");
 		await editor.getByLabel(locale === "en" ? "Planned amount (optional)" : "计划金额（可选）").fill("50");
 		await editor.getByRole("button", { name: locale === "en" ? "Create plan" : "创建计划" }).click();
@@ -59,7 +60,7 @@ test("task cards stack without horizontal overflow on mobile", async ({ page }) 
 	await page.getByRole("button", { name: "新建维护计划" }).click();
 	const editor = page.getByRole("dialog");
 	await editor.getByLabel("计划名称").fill("设备维护");
-	await editor.getByLabel("关联资产").selectOption(assetId);
+	await selectChoice(editor.getByLabel("关联资产"), assetId);
 	await editor.getByLabel("下次日期").fill("2026-11-05");
 	await editor.getByRole("button", { name: "创建计划" }).click();
 	const listBox = await page.locator(".tasks-list-card").boundingBox();

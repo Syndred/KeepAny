@@ -62,6 +62,7 @@ import {
 	useAppContext,
 	validKind,
 } from "./view-shared";
+import { Select, SelectOption } from "./components/ui/select";
 const AssetEditor = lazy(() =>
 	import("./workflows").then((module) => ({ default: module.AssetEditor })),
 );
@@ -216,18 +217,18 @@ function SubmissionRow({ submission }: { submission: Submission }) {
 				{conflict && <small className="field-error" role="alert">{t("assetStale")}</small>}
 			</td>
 			<td>
-				{editing ? <select
+				{editing ? <Select
 					className="field" disabled={busy}
 					aria-label={`${submission.name} ${t("status")}`}
 					value={status}
-					onChange={(e) => { setStatus(e.target.value as Submission["status"]); setError(""); }}
+					onValueChange={(selectValue) => { setStatus(selectValue as Submission["status"]); setError(""); }}
 				>
 					{submissionStatuses.map((value) => (
-						<option key={value} value={value}>
+						<SelectOption key={value} value={value}>
 							{t(value)}
-						</option>
+						</SelectOption>
 					))}
-				</select> : <span className={`backlink-status backlink-status-${submission.status}`}>{t(submission.status)}</span>}
+				</Select> : <span className={`backlink-status backlink-status-${submission.status}`}>{t(submission.status)}</span>}
 			</td>
 			<td>
 				{editing ? <input
@@ -1517,10 +1518,10 @@ export function AssetDetail() {
 				<form className="asset-project-domain-form" onSubmit={(event) => { event.preventDefault(); void saveDomain(); }}>
 					<label className="field">{t("projectDomain")}<input disabled={domainBusy} required value={domainDraft.name} onChange={(event) => setDomainDraft({ ...domainDraft, name: event.target.value })} placeholder="example.com" /></label>
 					<label className="field">{t("projectRegistrar")}<input disabled={domainBusy} value={domainDraft.registrar} onChange={(event) => setDomainDraft({ ...domainDraft, registrar: event.target.value })} /></label>
-					<label className="field">{t("projectDomainAccount")}<select disabled={domainBusy} value={domainDraft.accountId} onChange={(event) => setDomainDraft({ ...domainDraft, accountId: event.target.value })}><option value="">—</option>{liveAssets(data).filter((entry) => entry.kind === "account").map((entry) => <option value={entry.id} key={entry.id}>{entry.name}</option>)}</select></label>
+					<label htmlFor="project-domain-account" className="field">{t("projectDomainAccount")}<Select id="project-domain-account" disabled={domainBusy} value={domainDraft.accountId} onValueChange={(selectValue) => setDomainDraft({ ...domainDraft, accountId: selectValue })}><SelectOption value="">—</SelectOption>{liveAssets(data).filter((entry) => entry.kind === "account").map((entry) => <SelectOption value={entry.id} key={entry.id}>{entry.name}</SelectOption>)}</Select></label>
 					<label className="field">{t("projectExpiry")}<input disabled={domainBusy} type="date" value={domainDraft.expiryDate} onChange={(event) => setDomainDraft({ ...domainDraft, expiryDate: event.target.value })} /></label>
-					<label className="field">{t("projectAnnualFee")}<span className="asset-project-fee-row"><input disabled={domainBusy} inputMode="decimal" value={domainFee} onChange={(event) => setDomainFee(event.target.value)} /><select disabled={domainBusy} aria-label={t("currency")} value={domainDraft.currency} onChange={(event) => { const currency = event.target.value as ProjectDomain["currency"]; setDomainDraft({ ...domainDraft, currency }); setDomainFee(""); }}><option>CNY</option><option>USD</option><option>EUR</option><option>GBP</option><option>JPY</option></select></span></label>
-					<label className="field">{t("projectAutoRenew")}<select disabled={domainBusy} value={domainDraft.autoRenew} onChange={(event) => setDomainDraft({ ...domainDraft, autoRenew: event.target.value as ProjectDomain["autoRenew"] })}><option value="unknown">{t("projectAutoRenewUnknown")}</option><option value="on">{t("projectAutoRenewOn")}</option><option value="off">{t("projectAutoRenewOff")}</option></select></label>
+					<label className="field">{t("projectAnnualFee")}<span className="asset-project-fee-row"><input disabled={domainBusy} inputMode="decimal" value={domainFee} onChange={(event) => setDomainFee(event.target.value)} /><Select disabled={domainBusy} aria-label={t("currency")} value={domainDraft.currency} onValueChange={(selectValue) => { const currency = selectValue as ProjectDomain["currency"]; setDomainDraft({ ...domainDraft, currency }); setDomainFee(""); }}><SelectOption>CNY</SelectOption><SelectOption>USD</SelectOption><SelectOption>EUR</SelectOption><SelectOption>GBP</SelectOption><SelectOption>JPY</SelectOption></Select></span></label>
+					<label htmlFor="project-domain-auto-renew" className="field">{t("projectAutoRenew")}<Select id="project-domain-auto-renew" disabled={domainBusy} value={domainDraft.autoRenew} onValueChange={(selectValue) => setDomainDraft({ ...domainDraft, autoRenew: selectValue as ProjectDomain["autoRenew"] })}><SelectOption value="unknown">{t("projectAutoRenewUnknown")}</SelectOption><SelectOption value="on">{t("projectAutoRenewOn")}</SelectOption><SelectOption value="off">{t("projectAutoRenewOff")}</SelectOption></Select></label>
 					{domainError && <p role="alert" className="field-error">{domainError}</p>}
 					<div className="actions"><Button type="submit" variant="primary" disabled={domainBusy}>{t("save")}</Button>{domainEditing !== "new" && <Button type="button" variant="danger" disabled={domainBusy} onClick={() => void removeDomain()}>{t("projectDomainDelete")}</Button>}<Button type="button" disabled={domainBusy} onClick={() => setDomainEditing(null)}>{t("cancel")}</Button></div>
 				</form>
@@ -1927,9 +1928,9 @@ export function AssetDetail() {
 					<div className="form-grid">
 						<label className="field" htmlFor="item-lifecycle-status">
 							<span>{t("itemLifecycleStatus")}</span>
-							<select id="item-lifecycle-status" value={itemStatusDraft} onChange={(event) => { setItemStatusDraft(event.target.value as NonNullable<Asset["itemLifecycleStatus"]>); setItemStatusError(""); }}>
-								{itemLifecycleStatuses.map((status) => <option key={status} value={status} disabled={asset.status === "loaned" && (status === "resold" || status === "retired")}>{t(`itemStatus_${status}`)}</option>)}
-							</select>
+							<Select id="item-lifecycle-status" value={itemStatusDraft} onValueChange={(selectValue) => { setItemStatusDraft(selectValue as NonNullable<Asset["itemLifecycleStatus"]>); setItemStatusError(""); }}>
+								{itemLifecycleStatuses.map((status) => <SelectOption key={status} value={status} disabled={asset.status === "loaned" && (status === "resold" || status === "retired")}>{t(`itemStatus_${status}`)}</SelectOption>)}
+							</Select>
 						</label>
 						<label className="field" htmlFor="item-status-date">
 							<span>{t("itemStatusDate")}</span>
@@ -1986,20 +1987,20 @@ export function AssetDetail() {
 					<div className="form-grid">
 						<div className="field">
 							<label htmlFor="relation-target">{t("target")}</label>
-							<select
+							<Select
 								id="relation-target"
 								value={relationTarget}
-								onChange={(e) => setRelationTarget(e.target.value)}
+								onValueChange={(selectValue) => setRelationTarget(selectValue)}
 							>
-								<option value="">{t("selectAsset")}</option>
+								<SelectOption value="">{t("selectAsset")}</SelectOption>
 								{liveAssets(data)
 									.filter((a) => a.id !== asset.id)
 									.map((a) => (
-										<option key={a.id} value={a.id}>
+										<SelectOption key={a.id} value={a.id}>
 											{a.name}
-										</option>
+										</SelectOption>
 									))}
-							</select>
+							</Select>
 						</div>
 						<div className="field">
 							<label htmlFor="relation-label">{t("relationLabel")}</label>
@@ -2122,9 +2123,9 @@ export function AssetDetail() {
 						</div>
 						<div className="field">
 							<label htmlFor="submission-status">{t("status")}</label>
-							<select id="submission-status" value={submissionStatus} disabled={submissionBusy} onChange={(event) => { setSubmissionStatus(event.target.value as Submission["status"]); setSubmissionSaveError(""); }}>
-								{submissionStatuses.map((value) => <option key={value} value={value}>{t(value)}</option>)}
-							</select>
+							<Select id="submission-status" value={submissionStatus} disabled={submissionBusy} onValueChange={(selectValue) => { setSubmissionStatus(selectValue as Submission["status"]); setSubmissionSaveError(""); }}>
+								{submissionStatuses.map((value) => <SelectOption key={value} value={value}>{t(value)}</SelectOption>)}
+							</Select>
 						</div>
 						<div className="field">
 							<label htmlFor="submission-date">{t("submittedAt")}</label>

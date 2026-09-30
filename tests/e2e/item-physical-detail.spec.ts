@@ -1,4 +1,5 @@
 import { expect, type Page, test } from "@playwright/test";
+import { selectChoice } from "./helpers/select-choice";
 
 const repositoryPath = `/@fs${process.cwd()}/packages/local-db/src/index.ts`;
 const domainPath = `/@fs${process.cwd()}/packages/domain/src/index.ts`;
@@ -127,7 +128,7 @@ for (const locale of ["zh-CN", "en"] as const) {
 				})
 				.click();
 			let dialog = page.getByRole("dialog");
-			await dialog.locator("#item-lifecycle-status").selectOption("idle");
+			await selectChoice(dialog.locator("#item-lifecycle-status"), "idle");
 			await dialog.locator("#item-status-date").fill("2026-09-29");
 			await dialog
 				.getByRole("button", { name: zh ? "保存状态" : "Save status" })

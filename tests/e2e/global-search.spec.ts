@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { selectChoice } from "./helpers/select-choice";
 
 const repositoryUrl = `/@fs${process.cwd()}/packages/local-db/src/index.ts`;
 const domainUrl = `/@fs${process.cwd()}/packages/domain/src/index.ts`;
@@ -94,17 +95,17 @@ for (const locale of ["en-US", "zh-CN"]) {
 				await focusedRow(page, `finance-entry-${ids.historyId}`);
 				// Repeating the identical hash must reveal the row hidden by all three filters.
 				for (let repeat = 0; repeat < 2; repeat++) {
-					const filters = page.locator(".finance-filters select");
-					await filters.nth(0).selectOption("refund");
-					await filters.nth(1).selectOption(ids.otherAccountId);
-					await filters.nth(2).selectOption("source:Other bank");
+					const filters = page.locator(".finance-filters").getByRole("combobox");
+					await selectChoice(filters.nth(0), "refund");
+					await selectChoice(filters.nth(1), ids.otherAccountId);
+					await selectChoice(filters.nth(2), "source:Other bank");
 					await expect(page.locator(`[id="finance-entry-${ids.historyId}"]`)).toHaveCount(0);
 					await query(page, "dinner transaction");
 					await results(page).click();
 					await focusedRow(page, `finance-entry-${ids.historyId}`);
-					await expect(filters.nth(0)).toHaveValue("all");
-					await expect(filters.nth(1)).toHaveValue("");
-					await expect(filters.nth(2)).toHaveValue("all");
+					await expect(filters.nth(0)).toHaveAttribute("data-value", "all");
+					await expect(filters.nth(1)).toHaveAttribute("data-value", "");
+					await expect(filters.nth(2)).toHaveAttribute("data-value", "all");
 				}
 				await page.reload();
 				await focusedRow(page, `finance-entry-${ids.historyId}`);

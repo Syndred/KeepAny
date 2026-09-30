@@ -16,7 +16,7 @@ import {
 	useSortable,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { ArrowRight, Code2, CreditCard, GripVertical, Mail, Package, Plus, Shield, Smartphone, UserRound } from "lucide-react";
+import { ArrowRight, Code2, CreditCard, GripVertical, LockKeyhole, Mail, Package, Plus, Shield, Smartphone, UserRound } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { normalizeCategoryName, type Asset, type AssetKind, type Category } from "../../../packages/domain/src";
 import { cancelCategoryEdit, createCategory, deleteCustomCategory, editCustomCategory, fileUrl, localRepository, retryCategoryEdit, save, saveAssetIfCurrent } from "../../../packages/local-db/src";
@@ -36,6 +36,7 @@ import {
 	useAppContext,
 	validKind,
 } from "./view-shared";
+import { Select, SelectOption } from "./components/ui/select";
 const AssetEditor = lazy(() =>
 	import("./workflows").then((module) => ({ default: module.AssetEditor })),
 );
@@ -545,11 +546,11 @@ export function AssetList() {
 		return () => cancelAnimationFrame(frame);
 	}, [kind, category, tag, search, data.loading, assets.length]);
 	return (
-		<main className="page">
+		<main className={kind === "vault" ? "page vault-page" : "page"}>
 			<PageTitle
-				eyebrow={kind === "project" ? "PROJECT LIBRARY" : kind === "account" ? "MY ACCOUNTS" : "KeepAny"}
-				title={t(kind === "project" ? "projectListTitle" : kind === "account" ? "accountListTitle" : kind === "subscription" ? "subscriptionListTitle" : kind === "vault" ? "vault" : "itemListTitle")}
-				subtitle={t(kind === "project" ? "projectListSubtitle" : kind === "account" ? "accountListSubtitle" : kind === "item" ? "itemListSubtitle" : kind === "vault" ? "vaultHint" : "summary")}
+				eyebrow={kind === "project" ? "PROJECT LIBRARY" : kind === "account" ? "MY ACCOUNTS" : kind === "vault" ? t("vaultListEyebrow") : "KeepAny"}
+				title={t(kind === "project" ? "projectListTitle" : kind === "account" ? "accountListTitle" : kind === "subscription" ? "subscriptionListTitle" : kind === "vault" ? "vaultListTitle" : "itemListTitle")}
+				subtitle={t(kind === "project" ? "projectListSubtitle" : kind === "account" ? "accountListSubtitle" : kind === "item" ? "itemListSubtitle" : kind === "vault" ? "vaultListSubtitle" : "summary")}
 				action={
 					<>
 						{kind === "subscription" && <Button asChild><Link to="/finance">{t("financeViewLedger")}</Link></Button>}
@@ -560,18 +561,21 @@ export function AssetList() {
 					</>
 				}
 			/>
+			{kind === "vault" && <div className="notice vault-privacy-note" role="note"><LockKeyhole size={16} aria-hidden="true" /><span>{t("vaultHint")}</span></div>}
 			<CategoryStrip key={kind} kind={kind} chosen={category} choose={choose} />
 			{(availableTags.length > 0 || tag) && (
 				<div className="list-filters">
 					<label htmlFor="asset-tag-filter">{t("filterTag")}</label>
-					<select id="asset-tag-filter" value={tag} onChange={(e) => chooseTag(e.target.value)}>
-						<option value="">{t("allTags")}</option>
-						{tag && !availableTags.includes(tag) && <option value={tag}>{tag}</option>}
-						{availableTags.map((value) => <option key={value} value={value}>{value}</option>)}
-					</select>
+					<Select id="asset-tag-filter" value={tag} onValueChange={(selectValue) => chooseTag(selectValue)}>
+						<SelectOption value="">{t("allTags")}</SelectOption>
+						{tag && !availableTags.includes(tag) && <SelectOption value={tag}>{tag}</SelectOption>}
+						{availableTags.map((value) => <SelectOption key={value} value={value}>{value}</SelectOption>)}
+					</Select>
 				</div>
 			)}
-			{kind === "vault" ? <section className="card vault-table-wrap asset-list-content" aria-label={t("vault")}>
+			{kind === "vault" ? (
+				// biome-ignore lint/a11y/noNoninteractiveTabindex: Named scroll region needs focus for keyboard access to overflow columns.
+				<section className="card vault-table-wrap asset-list-content" aria-label={t("vault")} tabIndex={0}>
 				<table className="vault-reference-table">
 					<thead><tr><th>{t("vaultEntryName")}</th><th>{t("vaultUsedFor")}</th><th>{t("vaultStorageLocation")}</th><th>{t("vaultVerifyDate")}</th><th>{t("status")}</th></tr></thead>
 					<tbody>{assets.map((asset) => {
@@ -588,7 +592,7 @@ export function AssetList() {
 					})}</tbody>
 				</table>
 				{!assets.length && <div className="empty"><strong>{category || tag || normalizedSearch ? t("noMatches") : t("none")}</strong></div>}
-			</section> : <section className={`asset-list-content ${kind === "project" ? "asset-project-grid" : kind === "account" ? "asset-account-grid" : "asset-library-grid"}`}>
+			</section>) : <section className={`asset-list-content ${kind === "project" ? "asset-project-grid" : kind === "account" ? "asset-account-grid" : "asset-library-grid"}`}>
 				{assets.length ? (
 					assets.map((a) => kind === "project" ? <ProjectCard asset={a} search={search} backlinks={backlinksByAsset.get(a.id) ?? { total: 0, pending: 0 }} key={a.id} /> : kind === "account" ? <AccountCard asset={a} search={search} connectionCount={data.relations.filter((relation) => !relation.deleted && liveIds.has(relation.from) && liveIds.has(relation.to) && (relation.from === a.id || relation.to === a.id)).length} key={a.id} /> : <LibraryCard asset={a} search={search} key={a.id} />)
 				) : (

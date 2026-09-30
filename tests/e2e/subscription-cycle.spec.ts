@@ -1,5 +1,6 @@
 import { mkdirSync } from "node:fs";
 import { expect, type Page, test } from "@playwright/test";
+import { selectChoice } from "./helpers/select-choice";
 
 const evidence = "docs/evidence/2026-09-29";
 const repositoryModuleUrl = `/@fs${process.cwd()}/packages/local-db/src/index.ts`;
@@ -37,7 +38,7 @@ test("renewal cycle, local amounts and history survive edits, status changes, re
 		await page.getByRole("button", { name: "Add", exact: true }).click();
 		let dialog = page.getByRole("dialog");
 		await dialog.getByLabel("Name", { exact: true }).fill(name);
-		await dialog.locator("#currency").selectOption("USD");
+		await selectChoice(dialog.locator("#currency"), "USD");
 		await dialog.locator("#amount").fill("120.00");
 		await dialog.locator("#dueDate").fill("2026-01-31");
 		await dialog.locator("#trialEndsAt").fill("2026-02-01");
@@ -73,7 +74,7 @@ test("renewal cycle, local amounts and history survive edits, status changes, re
 		for (const status of ["paused", "cancelled", "active"]) {
 			await page.getByRole("button", { name: "Edit", exact: true }).click();
 			dialog = page.getByRole("dialog");
-			await dialog.locator("#status").selectOption(status);
+			await selectChoice(dialog.locator("#status"), status);
 			await dialog.getByRole("button", { name: "Save" }).click();
 			await expect(dialog).toBeHidden();
 			if (status === "active") await expect(page.getByRole("button", { name: "Record renewal" })).toBeEnabled();
@@ -120,7 +121,7 @@ test("renewal cycle, local amounts and history survive edits, status changes, re
 		restored.on("pageerror", error => errors.push(error.message));
 		try {
 			await restored.goto("/settings");
-			await restored.locator("section.card").filter({ has: restored.getByRole("heading", { name: /^(Language|语言)$/ }) }).locator("select").selectOption("zh-CN");
+			await selectChoice(restored.locator("section.card").filter({ has: restored.getByRole("heading", { name: /^(Language|语言)$/ }) }).getByRole("combobox"), "zh-CN");
 			await expect(restored.getByRole("heading", { name: "设置" })).toBeVisible();
 			await restored.goto("/intake");
 			await restored.locator("#backup-password").fill(password);

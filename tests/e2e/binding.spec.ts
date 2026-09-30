@@ -1,6 +1,7 @@
 import { createHash, randomUUID } from "node:crypto";
 import { expect, test } from "@playwright/test";
 import { exportJWK, generateKeyPair, SignJWT } from "jose";
+import { selectChoice } from "./helpers/select-choice";
 
 const issuer = process.env.VITE_KEEPANY_BINDING_ISSUER ?? "";
 const bridge = process.env.VITE_KEEPANY_BINDING_BRIDGE_ORIGIN ?? "";
@@ -124,13 +125,13 @@ test("account binding approval survives reload and remote revoke clears local cr
 		path: "docs/evidence/2026-09-28/binding-fixture-en-390.png",
 		fullPage: true,
 	});
-	await page.locator("section.card").filter({ has: page.getByRole("heading", { name: "Language" }) }).locator("select").selectOption("zh-CN");
+	await selectChoice(page.locator("section.card").filter({ has: page.getByRole("heading", { name: "Language" }) }).getByRole("combobox"), "zh-CN");
 	await expect(page.getByText("本机已保存账号连接").first()).toBeVisible();
 	await page.screenshot({
 		path: "docs/evidence/2026-09-28/binding-fixture-zh-390.png",
 		fullPage: true,
 	});
-	await page.locator("section.card").filter({ has: page.getByRole("heading", { name: "语言" }) }).locator("select").selectOption("en");
+	await selectChoice(page.locator("section.card").filter({ has: page.getByRole("heading", { name: "语言" }) }).getByRole("combobox"), "en");
 	await page.reload();
 	await expect(
 		page.getByText("Connection saved on this device").first(),

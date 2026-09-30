@@ -1,5 +1,6 @@
 import { mkdirSync } from "node:fs";
 import { expect, test } from "@playwright/test";
+import { selectChoice } from "./helpers/select-choice";
 
 const evidence = "docs/evidence/2026-09-29";
 
@@ -170,14 +171,14 @@ for (const [locale, currentLabel, nextLabel, target] of [
 			await expect(selection).toBeVisible();
 			await selection.focus();
 			await expect(selection).toBeFocused();
-			await selection.selectOption(target);
-			await expect(page.getByRole("combobox", { name: nextLabel })).toHaveValue(
-				target,
-			);
+			await selectChoice(selection, target);
+			await expect(
+				page.getByRole("combobox", { name: nextLabel }),
+			).toHaveAttribute("data-value", target);
 			await page.reload();
-			await expect(page.getByRole("combobox", { name: nextLabel })).toHaveValue(
-				target,
-			);
+			await expect(
+				page.getByRole("combobox", { name: nextLabel }),
+			).toHaveAttribute("data-value", target);
 			expect(errors).toEqual([]);
 		} finally {
 			await context.close();

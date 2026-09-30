@@ -1,5 +1,6 @@
 import { mkdirSync, readFileSync } from "node:fs";
 import { expect, test, type Page } from "@playwright/test";
+import { selectChoice } from "./helpers/select-choice";
 
 const evidence = "docs/evidence/2026-09-29";
 const repositoryModuleUrl = `/@fs${process.cwd()}/packages/local-db/src/index.ts`;
@@ -58,7 +59,7 @@ for (const scenario of [
 		async function addRelation(label: string, metadata: boolean) {
 			await page.getByRole("button", { name: scenario.addRelation }).click();
 			const dialog = page.getByRole("dialog");
-			await dialog.getByLabel(scenario.target).selectOption({ label: project });
+			await selectChoice(dialog.getByLabel(scenario.target), { label: project });
 			await dialog.getByLabel(scenario.label).fill(label);
 			if (metadata) {
 				await dialog.getByLabel(scenario.source).fill("Local relationship note");
@@ -178,7 +179,7 @@ test("relation changes preserve completed impact history and add only new relati
 	async function addRelation(target: string, name: string) {
 		await page.getByRole("button", { name: "Add connection" }).click();
 		const dialog = page.getByRole("dialog");
-		await dialog.getByLabel("Connect to").selectOption({ label: target });
+		await selectChoice(dialog.getByLabel("Connect to"), { label: target });
 		await dialog.getByLabel("Connection label").fill(name);
 		await dialog.getByRole("button", { name: "Save" }).click();
 		await expect(dialog).toBeHidden();
@@ -230,7 +231,7 @@ test("legacy neighbor task fixture upgrades in place through the checklist UI", 
 	await addAsset("account", account);
 	await page.getByRole("button", { name: "Add connection" }).click();
 	const dialog = page.getByRole("dialog");
-	await dialog.getByLabel("Connect to").selectOption({ label: project });
+	await selectChoice(dialog.getByLabel("Connect to"), { label: project });
 	await dialog.getByLabel("Connection label").fill(label);
 	await dialog.getByRole("button", { name: "Save" }).click();
 	await expect(dialog).toBeHidden();
@@ -293,7 +294,7 @@ test("old completed neighbor task cannot complete a replacement relation after .
 	async function addRelation(targetPage: Page, label: string) {
 		await targetPage.getByRole("button", { name: "Add connection" }).click();
 		const dialog = targetPage.getByRole("dialog");
-		await dialog.getByLabel("Connect to").selectOption({ label: project });
+		await selectChoice(dialog.getByLabel("Connect to"), { label: project });
 		await dialog.getByLabel("Connection label").fill(label);
 		await dialog.getByRole("button", { name: "Save" }).click();
 		await expect(dialog).toBeHidden();
@@ -413,7 +414,7 @@ test("built PWA keeps the account checklist editable across offline reloads", as
 		}
 		await page.getByRole("button", { name: "Add connection" }).click();
 		const relation = page.getByRole("dialog");
-		await relation.getByLabel("Connect to").selectOption({ label: `Project ${suffix}` });
+		await selectChoice(relation.getByLabel("Connect to"), { label: `Project ${suffix}` });
 		await relation.getByLabel("Connection label").fill(`Recovery ${suffix}`);
 		await relation.getByRole("button", { name: "Save" }).click();
 		await expect(relation).toBeHidden();

@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { selectChoice } from "./helpers/select-choice";
 
 const repositoryUrl = `/@fs${process.cwd()}/packages/local-db/src/index.ts`;
 const domainUrl = `/@fs${process.cwd()}/packages/domain/src/index.ts`;
@@ -119,7 +120,7 @@ for (const locale of ["en", "zh-CN"] as const) {
 			.locator("main .asset-category-scroll")
 			.getByRole("button", { name: fixture.category, exact: true })
 			.click();
-		await page.locator("#asset-tag-filter").selectOption("FieldProbe");
+		await selectChoice(page.locator("#asset-tag-filter"), "FieldProbe");
 		await trigger.click();
 		await input.fill("  DRAWERPROBE  ");
 		const cards = page.locator("main .asset-library-card");
@@ -143,7 +144,7 @@ for (const locale of ["en", "zh-CN"] as const) {
 		await input.fill("DrawerProbe");
 		await expect(cards).toHaveCount(1);
 		await page.reload();
-		await expect(page.locator("#asset-tag-filter")).toHaveValue("FieldProbe");
+		await expect(page.locator("#asset-tag-filter")).toHaveAttribute("data-value", "FieldProbe");
 		await expect(
 			page
 				.locator("main .asset-category-scroll")

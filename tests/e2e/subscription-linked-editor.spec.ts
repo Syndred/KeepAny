@@ -3,6 +3,7 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { execFileSync } from "node:child_process";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { selectChoice } from "./helpers/select-choice";
 
 const domainPath = `/@fs${process.cwd()}/packages/domain/src/index.ts`;
 const repositoryPath = `/@fs${process.cwd()}/packages/local-db/src/index.ts`;
@@ -49,8 +50,8 @@ for (const locale of ["zh-CN", "en-US"] as const) {
 				await page.getByRole("button", { name: copy.add }).click();
 				const dialog = page.getByRole("dialog");
 				await dialog.locator("#name").fill("Cloud plan");
-				await dialog.locator("#subscriptionProject").selectOption(ids.projectA);
-				await dialog.locator("#subscriptionLoginAccount").selectOption(ids.accountA);
+				await selectChoice(dialog.locator("#subscriptionProject"), ids.projectA);
+				await selectChoice(dialog.locator("#subscriptionLoginAccount"), ids.accountA);
 				await dialog.locator("#subscriptionPaymentMethod").fill("Visa ending 4242");
 				await dialog.locator("#amount").fill("12.50");
 				await dialog.locator("#dueDate").fill("2026-11-01");
@@ -67,10 +68,10 @@ for (const locale of ["zh-CN", "en-US"] as const) {
 				expect(state.linkedIds).toEqual([ids.projectA, ids.accountA].sort());
 				expect(state.historyCount).toBe(0);
 				await row.getByRole("button", { name: copy.edit }).click();
-				await expect(dialog.locator("#subscriptionProject")).toHaveValue(ids.projectA);
-				await expect(dialog.locator("#subscriptionLoginAccount")).toHaveValue(ids.accountA);
-				await dialog.locator("#subscriptionProject").selectOption(ids.projectB);
-				await dialog.locator("#subscriptionLoginAccount").selectOption(ids.accountB);
+				await expect(dialog.locator("#subscriptionProject")).toHaveAttribute("data-value", ids.projectA);
+				await expect(dialog.locator("#subscriptionLoginAccount")).toHaveAttribute("data-value", ids.accountA);
+				await selectChoice(dialog.locator("#subscriptionProject"), ids.projectB);
+				await selectChoice(dialog.locator("#subscriptionLoginAccount"), ids.accountB);
 				await dialog.locator("#subscriptionPaymentMethod").fill("Bank transfer");
 				await dialog.getByRole("button", { name: copy.save, exact: true }).click();
 				await expect(dialog).toBeHidden();
@@ -141,7 +142,7 @@ test("reselecting a removed reverse project connection creates one active connec
 	const row = page.locator(".finance-linked-row").filter({ hasText: "Reconnected plan" });
 	await row.getByRole("button", { name: "Edit" }).click();
 	const dialog = page.getByRole("dialog");
-	await dialog.locator("#subscriptionProject").selectOption(ids.projectId);
+	await selectChoice(dialog.locator("#subscriptionProject"), ids.projectId);
 	await dialog.getByRole("button", { name: "Save", exact: true }).click();
 	await expect(dialog).toBeHidden();
 	const activeCount = await page.evaluate(async ({ repositoryPath, ids }) => {
@@ -175,7 +176,7 @@ for (const locale of ["en-US", "zh-CN"] as const) {
 				const row = page.locator(".finance-linked-row").filter({ hasText: "Interrupted plan" });
 				await row.getByRole("button", { name: copy.edit }).click();
 				const dialog = page.getByRole("dialog");
-				await dialog.locator("#subscriptionProject").selectOption(ids.projectA);
+				await selectChoice(dialog.locator("#subscriptionProject"), ids.projectA);
 				await dialog.locator("#subscriptionPaymentMethod").fill("Card after interruption");
 				await page.evaluate(async repositoryPath => {
 					const { localRepository } = await import(repositoryPath);
@@ -230,7 +231,7 @@ for (const locale of ["en-US", "zh-CN"] as const) {
 					await dialog.getByRole("button", { name: copy.abandon }).click();
 					await expect(dialog.getByRole("button", { name: copy.save, exact: true })).toBeEnabled();
 					await expect(dialog.locator("#subscriptionPaymentMethod")).toHaveValue("Card after interruption");
-					await dialog.locator("#subscriptionProject").selectOption(ids.projectB);
+					await selectChoice(dialog.locator("#subscriptionProject"), ids.projectB);
 					await dialog.getByRole("button", { name: copy.save, exact: true }).click();
 					await expect(dialog).toBeHidden();
 				}
@@ -264,8 +265,8 @@ test("a real Chromium process crash after the subscription asset write replays i
 		await page.getByRole("button", { name: "Add subscription" }).click();
 		const dialog = page.getByRole("dialog");
 		await dialog.locator("#name").fill("Crash-recovered plan");
-		await dialog.locator("#subscriptionProject").selectOption(ids.projectA);
-		await dialog.locator("#subscriptionLoginAccount").selectOption(ids.accountA);
+		await selectChoice(dialog.locator("#subscriptionProject"), ids.projectA);
+		await selectChoice(dialog.locator("#subscriptionLoginAccount"), ids.accountA);
 		await dialog.locator("#subscriptionPaymentMethod").fill("Visa retained after crash");
 		await page.evaluate(async repositoryPath => {
 			const { localRepository } = await import(repositoryPath);

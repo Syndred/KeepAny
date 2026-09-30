@@ -4,6 +4,7 @@ import { expect, test, type BrowserContext, type Locator, type Page } from '@pla
 import { strFromU8, unzipSync } from 'fflate';
 import { decryptBackup } from '../../packages/local-db/src/backup-crypto';
 import type { ReviewedCandidate } from '../../packages/local-db/src/intake-review';
+import { selectChoice } from "./helpers/select-choice";
 
 const sourcePassword = 'candidate-source-migration-password', targetPassword = 'candidate-target-migration-password';
 const token = 'candidate-migration-test-token-'.padEnd(40, 'x');
@@ -76,7 +77,7 @@ for (const locale of ['zh-CN', 'en-US']) test(`${locale} 390 candidate merge req
       await page.locator('#csv-file').setInputFiles({ name: 'merge-review.csv', mimeType: 'text/csv', buffer: csv });
       const rows = page.locator('.intake-review-row'); await expect(rows).toHaveCount(3);
       await rows.nth(0).getByLabel(zh ? '名称' : 'Name', { exact: true }).fill('Shared draft');
-      await rows.nth(0).getByLabel(zh ? '资料类型' : 'Record type').selectOption(side === 'Source' ? 'account' : 'item');
+      await selectChoice(rows.nth(0).getByLabel(zh ? '资料类型' : 'Record type'), side === 'Source' ? 'account' : 'item');
       await rows.nth(0).getByLabel(zh ? '网址' : 'URL', { exact: true }).fill(`https://${side.toLowerCase()}.example.test/`);
       await rows.nth(0).getByLabel(zh ? '简短描述' : 'Short description').fill(`${side} draft description`);
       if (side === 'Source') {
@@ -145,11 +146,11 @@ for (const locale of ['zh-CN', 'en-US']) test(`${locale} 390 candidate merge req
       expect(merged.records).toEqual(sourceData.records);
       await targetPage.reload(); await expect(targetPage.locator('.intake-review-row')).toHaveCount(3);
       if (round === 'first') {
-        await expect(targetPage.locator('.intake-review-row').nth(0).getByLabel(zh ? '资料类型' : 'Record type')).toHaveValue('account');
+        await expect(targetPage.locator('.intake-review-row').nth(0).getByLabel(zh ? '资料类型' : 'Record type')).toHaveAttribute("data-value", 'account');
         await expect(targetPage.locator('.intake-review-row').nth(1).getByLabel(zh ? '名称' : 'Name', { exact: true })).toHaveValue('Target pending decision');
         await expect(targetPage.locator('.intake-review-row').nth(2)).toContainText(zh ? '已确认' : 'Confirmed');
       } else {
-        await expect(targetPage.locator('.intake-review-row').nth(0).getByLabel(zh ? '资料类型' : 'Record type')).toHaveValue('item');
+        await expect(targetPage.locator('.intake-review-row').nth(0).getByLabel(zh ? '资料类型' : 'Record type')).toHaveAttribute("data-value", 'item');
         await expect(targetPage.locator('.intake-review-row').nth(1)).toContainText(zh ? '已忽略' : 'Ignored');
         await expect(targetPage.locator('.intake-review-row').nth(2)).toContainText(zh ? '已忽略' : 'Ignored');
       }

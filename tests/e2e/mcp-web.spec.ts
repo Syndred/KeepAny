@@ -5,6 +5,7 @@ import { access, chmod, mkdir, mkdtemp, readFile, rm, stat } from 'node:fs/promi
 import { request as httpRequest } from 'node:http';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
+import { selectChoice } from "./helpers/select-choice";
 
 const repo = resolve('.');
 const packagedExecutable = process.env.KEEPANY_MCP_EXECUTABLE;
@@ -85,7 +86,7 @@ test('formal Web grants one RxDB record to an isolated official SDK stdio client
       await page.reload();
       await expect.poll(() => page.evaluate(() => Boolean(navigator.serviceWorker.controller))).toBe(true);
     }
-    await page.locator('section.card').filter({ has: page.getByRole('heading', { name: 'Language' }) }).locator('select').selectOption('en');
+    await selectChoice(page.locator('section.card').filter({ has: page.getByRole('heading', { name: 'Language' }) }).getByRole("combobox"), 'en');
     await addProject(page, before, hidden);
     await addProject(page, other, otherDescription);
     await page.goto('/settings#assistant');
@@ -94,7 +95,7 @@ test('formal Web grants one RxDB record to an isolated official SDK stdio client
     await panel.getByRole('group', { name: 'Accessible records' }).getByLabel(before).check();
     await expect(panel.getByRole('group', { name: 'Readable fields' }).getByLabel('Name')).toBeChecked();
     await panel.getByRole('group', { name: 'Editable fields' }).getByLabel('Name').check();
-    await panel.getByLabel('Access duration').selectOption(String(15 * 60_000));
+    await selectChoice(panel.getByLabel('Access duration'), String(15 * 60_000));
     await mobileWidth(page);
     await page.screenshot({ path: join(evidence, 'mcp-settings-en-390.png'), fullPage: true });
 
@@ -201,7 +202,7 @@ test('formal Web grants one RxDB record to an isolated official SDK stdio client
     await page.locator('#assistant > summary').click();
     await expect(panel.getByText('Local connection authorized')).toBeVisible();
 
-    await page.locator('section.card').filter({ has: page.getByRole('heading', { name: 'Language' }) }).locator('select').selectOption('zh-CN');
+    await selectChoice(page.locator('section.card').filter({ has: page.getByRole('heading', { name: 'Language' }) }).getByRole("combobox"), 'zh-CN');
     await expect(panel.getByRole('heading', { name: '本机 MCP 授权' })).toBeVisible();
     await mobileWidth(page);
     await page.screenshot({ path: join(evidence, 'mcp-settings-zh-390.png'), fullPage: true });

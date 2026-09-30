@@ -1,5 +1,6 @@
 import { readFileSync, mkdirSync } from "node:fs";
 import { expect, type BrowserContext, test } from "@playwright/test";
+import { selectChoice } from "./helpers/select-choice";
 
 const evidence = "docs/evidence/2026-09-29";
 const captureEvidence = process.env.KEEPANY_CAPTURE_EVIDENCE === "1";
@@ -84,7 +85,7 @@ for (const variant of [
 					.locator("#remote-get-url")
 					.fill("https://objects.example/keepany.bin?signature=download");
 			} else {
-				await panel.locator("#remote-kind").selectOption("webdav");
+				await selectChoice(panel.locator("#remote-kind"), "webdav");
 				await panel
 					.locator("#remote-dav-url")
 					.fill("https://dav.example/keepany.bin");
@@ -142,7 +143,7 @@ for (const variant of [
 			await sourcePage.reload();
 			await expect(sourcePage.locator("#backup-password")).toHaveValue("");
 			await expect(sourcePage.locator("#remote-receipt")).toHaveValue("");
-			await expect(sourcePage.locator("#remote-kind")).toHaveValue("s3");
+			await expect(sourcePage.locator("#remote-kind")).toHaveAttribute("data-value", "s3");
 			const destination = await browser.newContext({
 				locale: variant.locale,
 				viewport: { width: variant.width, height: 844 },
@@ -161,7 +162,7 @@ for (const variant of [
 						.locator("#remote-get-url")
 						.fill("https://objects.example/keepany.bin?signature=new-download");
 				} else {
-					await targetPanel.locator("#remote-kind").selectOption("webdav");
+					await selectChoice(targetPanel.locator("#remote-kind"), "webdav");
 					await targetPanel
 						.locator("#remote-dav-url")
 						.fill("https://dav.example/keepany.bin");

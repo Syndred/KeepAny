@@ -15,7 +15,7 @@
 .project-workflow-card-head p { margin: 0 0 13px; color: var(--muted); font-size: 12px; }
 .project-workflow-fields { display: grid; gap: 12px; margin: 18px 0; }
 .project-workflow-fields label, .project-workflow-record-form label { display: grid; gap: 5px; color: var(--ink); font-size: 12px; font-weight: 700; }
-.project-workflow-fields input, .project-workflow-fields textarea, .project-workflow-record-form textarea, .project-workflow-record-form select { width: 100%; padding: 9px; border: 2px solid var(--line); border-radius: 9px; background: var(--paper); color: var(--ink); font: inherit; font-weight: 400; }
+.project-workflow-fields input, .project-workflow-fields textarea, .project-workflow-record-form textarea { width: 100%; padding: 9px; border: 2px solid var(--line); border-radius: 9px; background: var(--paper); color: var(--ink); font: inherit; font-weight: 400; }
 .project-workflow-before-after { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin: 15px 0; }
 .project-workflow-before-after > div { min-width: 0; padding: 12px; border: 1px solid var(--line); border-radius: 9px; background: var(--paper-soft); overflow-wrap: anywhere; }
 .project-workflow-before-after small { display: block; margin-bottom: 5px; color: var(--muted); }

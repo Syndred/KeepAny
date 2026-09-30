@@ -1,5 +1,6 @@
 import { mkdirSync } from "node:fs";
 import { expect, type Page, test } from "@playwright/test";
+import { selectChoice } from "./helpers/select-choice";
 
 const repositoryModuleUrl = `/@fs${process.cwd()}/packages/local-db/src/index.ts`;
 const evidenceDir = "docs/evidence/2026-09-29";
@@ -80,7 +81,7 @@ async function addRelation(
 ) {
 	await page.getByRole("button", { name: copy.addRelation }).click();
 	const dialog = page.getByRole("dialog");
-	await dialog.getByLabel(copy.target).selectOption({ label: target });
+	await selectChoice(dialog.getByLabel(copy.target), { label: target });
 	await dialog.getByLabel(copy.label).fill(label);
 	await dialog.getByRole("button", { name: copy.save }).click();
 	await expect(dialog).toBeHidden();

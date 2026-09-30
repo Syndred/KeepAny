@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { selectChoice } from "./helpers/select-choice";
 
 const repositoryPath = `/@fs${process.cwd()}/packages/local-db/src/index.ts`;
 const domainPath = `/@fs${process.cwd()}/packages/domain/src/index.ts`;
@@ -21,7 +22,7 @@ for (const locale of ["zh-CN", "en-US"] as const) {
 				await dialog.locator("#accountProvider").fill("Mail service");
 				await dialog.locator("#username").fill("owner@example.test");
 				await dialog.locator("#description").fill("Project access");
-				await dialog.locator("#status").selectOption("paused");
+				await selectChoice(dialog.locator("#status"), "paused");
 				await dialog.locator("#accountProfileVerifiedAt").fill("2026-02-14");
 				await dialog.getByRole("button", { name: copy.save, exact: true }).click();
 				await expect(dialog).toBeHidden();
@@ -36,7 +37,7 @@ for (const locale of ["zh-CN", "en-US"] as const) {
 				await expect(dialog.locator("#accountProvider")).toHaveValue("Mail service");
 				await dialog.locator("#accountProvider").fill("Updated provider");
 				await dialog.locator("#description").fill("Backup access");
-				await dialog.locator("#status").selectOption("active");
+				await selectChoice(dialog.locator("#status"), "active");
 				await dialog.locator("#accountProfileVerifiedAt").fill("2026-03-15");
 				await dialog.getByRole("button", { name: copy.save, exact: true }).click();
 				await expect(dialog).toBeHidden();

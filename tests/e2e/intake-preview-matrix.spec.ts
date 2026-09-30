@@ -1,5 +1,6 @@
 import { mkdirSync } from "node:fs";
 import { expect, test } from "@playwright/test";
+import { selectChoice } from "./helpers/select-choice";
 
 const evidence =
 	process.env.KEEPANY_INTAKE_EVIDENCE_DIR ?? "docs/evidence/2026-09-29";
@@ -144,9 +145,8 @@ for (const locale of ["en-US", "zh-CN"] as const) {
 				await expect(page.locator(".asset-item-photo-stage img")).toBeVisible();
 				await page.goto("/intake");
 				await importCard.getByRole("button", { name: copy.photoMode }).click();
-				await importCard
-					.locator("#intake-photo-asset")
-					.selectOption({ label: "example.com" });
+				await selectChoice(importCard
+					.locator("#intake-photo-asset"), { label: "example.com" });
 				await importCard.locator("#intake-photo-file").setInputFiles({
 					name: "receipt.png",
 					mimeType: "image/png",

@@ -46,6 +46,7 @@ import { stageCsvForReview } from "./intake-csv";
 import { estimateAiCost, readAiUsage, type AiUsage } from "./ai-usage";
 import { useAppContext } from "./view-shared";
 import "./project-editor.css";
+import { Select, SelectOption } from "./components/ui/select";
 
 const categoryOptions: Record<AssetKind, string[]> = {
 	project: ["website", "repository", "tool"],
@@ -388,10 +389,10 @@ export function AssetEditor({
 						error={errors.name}
 					/>
 					<Field name="category" label={t("category")} error={errors.category}>
-						<select
+						<Select
 							id="category"
 							value={draft.category}
-							onChange={(e) => set("category", e.target.value)}
+							onValueChange={(selectValue) => set("category", selectValue)}
 						>
 							{[
 								...new Set([
@@ -402,11 +403,11 @@ export function AssetEditor({
 										.map((c) => c.name),
 								]),
 							].map((c) => (
-								<option key={c} value={c}>
+								<SelectOption key={c} value={c}>
 									{t(c)}
-								</option>
+								</SelectOption>
 							))}
-						</select>
+						</Select>
 					</Field>
 					{kind !== "item" && (
 						<Field
@@ -498,9 +499,9 @@ export function AssetEditor({
 								<textarea id="description" rows={3} value={draft.description} onChange={(event) => set("description", event.target.value)} />
 							</Field>
 							<Field name="status" label={t("status")}>
-								<select id="status" value={draft.status} onChange={(event) => set("status", event.target.value as Asset["status"])}>
-									{["active", "paused", "cancelled", "archived"].map((value) => <option value={value} key={value}>{t(value)}</option>)}
-								</select>
+								<Select id="status" value={draft.status} onValueChange={(selectValue) => set("status", selectValue as Asset["status"])}>
+									{["active", "paused", "cancelled", "archived"].map((value) => <SelectOption value={value} key={value}>{t(value)}</SelectOption>)}
+								</Select>
 							</Field>
 							<Field name="accountProfileVerifiedAt" label={t("accountProfileVerifiedAt")} type="date" value={draft.accountProfileVerifiedAt} onChange={(value) => set("accountProfileVerifiedAt", value)} error={errors.accountProfileVerifiedAt} />
 						</>
@@ -508,16 +509,16 @@ export function AssetEditor({
 					{kind === "subscription" && (
 						<>
 							<Field name="subscriptionProject" label={t("subscriptionProject")}>
-								<select id="subscriptionProject" value={projectId} onChange={(event) => setProjectId(event.target.value)}>
-									<option value="">{t("none")}</option>
-									{data.assets.filter((candidate) => candidate.kind === "project" && !candidate.deleted).map((candidate) => <option key={candidate.id} value={candidate.id}>{candidate.name}</option>)}
-								</select>
+								<Select id="subscriptionProject" value={projectId} onValueChange={(selectValue) => setProjectId(selectValue)}>
+									<SelectOption value="">{t("none")}</SelectOption>
+									{data.assets.filter((candidate) => candidate.kind === "project" && !candidate.deleted).map((candidate) => <SelectOption key={candidate.id} value={candidate.id}>{candidate.name}</SelectOption>)}
+								</Select>
 							</Field>
 							<Field name="subscriptionLoginAccount" label={t("subscriptionLoginAccount")}>
-								<select id="subscriptionLoginAccount" value={accountId} onChange={(event) => setAccountId(event.target.value)}>
-									<option value="">{t("none")}</option>
-									{data.assets.filter((candidate) => candidate.kind === "account" && !candidate.deleted).map((candidate) => <option key={candidate.id} value={candidate.id}>{candidate.name}</option>)}
-								</select>
+								<Select id="subscriptionLoginAccount" value={accountId} onValueChange={(selectValue) => setAccountId(selectValue)}>
+									<SelectOption value="">{t("none")}</SelectOption>
+									{data.assets.filter((candidate) => candidate.kind === "account" && !candidate.deleted).map((candidate) => <SelectOption key={candidate.id} value={candidate.id}>{candidate.name}</SelectOption>)}
+								</Select>
 							</Field>
 							{original && (linkedProjects.length > 0 || linkedAccounts.length > 0) && <p className="notice">{t("subscriptionExistingLinks")}: {[...linkedProjects, ...linkedAccounts].map((candidate) => candidate.name).join(" · ")}. {t("subscriptionLinksAdditive")}</p>}
 							<Field name="subscriptionPaymentMethod" label={t("subscriptionPaymentMethod")} value={draft.subscriptionPaymentMethod} onChange={(value) => set("subscriptionPaymentMethod", value)} error={errors.subscriptionPaymentMethod} />
@@ -531,34 +532,34 @@ export function AssetEditor({
 								error={errors.amount}
 							/>
 							<Field name="currency" label={t("currency")}>
-								<select
+								<Select
 									id="currency"
 									value={draft.currency}
-									onChange={(e) =>
-										set("currency", e.target.value as Asset["currency"])
+									onValueChange={(selectValue) =>
+										set("currency", selectValue as Asset["currency"])
 									}
 								>
 									{["CNY", "USD", "EUR", "GBP", "JPY"].map((v) => (
-										<option key={v} value={v}>
+										<SelectOption key={v} value={v}>
 											{v}
-										</option>
+										</SelectOption>
 									))}
-								</select>
+								</Select>
 							</Field>
 							<Field name="cycle" label={t("cycle")}>
-								<select
+								<Select
 									id="cycle"
 									value={draft.cycle}
-									onChange={(e) =>
-										set("cycle", e.target.value as Asset["cycle"])
+									onValueChange={(selectValue) =>
+										set("cycle", selectValue as Asset["cycle"])
 									}
 								>
 									{["month", "year", "week", "day"].map((v) => (
-										<option key={v} value={v}>
+										<SelectOption key={v} value={v}>
 											{t(v)}
-										</option>
+										</SelectOption>
 									))}
-								</select>
+								</Select>
 							</Field>
 							<Field
 								name="interval"
@@ -601,19 +602,19 @@ export function AssetEditor({
 								error={errors.discountUntil}
 							/>
 							<Field name="status" label={t("status")}>
-								<select
+								<Select
 									id="status"
 									value={draft.status}
-									onChange={(e) =>
-										set("status", e.target.value as Asset["status"])
+									onValueChange={(selectValue) =>
+										set("status", selectValue as Asset["status"])
 									}
 								>
 									{["active", "paused", "cancelled"].map((v) => (
-										<option key={v} value={v}>
+										<SelectOption key={v} value={v}>
 											{t(v)}
-										</option>
+										</SelectOption>
 									))}
-								</select>
+								</Select>
 							</Field>
 						</>
 					)}
@@ -628,9 +629,9 @@ export function AssetEditor({
 								error={errors.amount}
 							/>
 							<Field name="currency" label={t("currency")}>
-								<select id="currency" value={draft.currency} onChange={(event) => set("currency", event.target.value as Asset["currency"])}>
-									{["CNY", "USD", "EUR", "GBP", "JPY"].map((value) => <option key={value} value={value}>{value}</option>)}
-								</select>
+								<Select id="currency" value={draft.currency} onValueChange={(selectValue) => set("currency", selectValue as Asset["currency"])}>
+									{["CNY", "USD", "EUR", "GBP", "JPY"].map((value) => <SelectOption key={value} value={value}>{value}</SelectOption>)}
+								</Select>
 							</Field>
 							<Field
 								name="purchaseDate"
@@ -649,10 +650,10 @@ export function AssetEditor({
 								error={errors.itemStartDate}
 							/>
 							<Field name="itemWarrantyStatus" label={t("itemWarrantyStatus")}>
-								<select id="itemWarrantyStatus" value={draft.itemWarrantyStatus ?? ""} onChange={(event) => set("itemWarrantyStatus", event.target.value ? event.target.value as NonNullable<Asset["itemWarrantyStatus"]> : null)}>
-									<option value="">{t("itemStatusUnrecorded")}</option>
-									{["unverified", "inWarranty", "outOfWarranty", "notApplicable"].map((value) => <option key={value} value={value}>{t(`itemWarranty_${value}`)}</option>)}
-								</select>
+								<Select id="itemWarrantyStatus" value={draft.itemWarrantyStatus ?? ""} onValueChange={(selectValue) => set("itemWarrantyStatus", selectValue ? selectValue as NonNullable<Asset["itemWarrantyStatus"]> : null)}>
+									<SelectOption value="">{t("itemStatusUnrecorded")}</SelectOption>
+									{["unverified", "inWarranty", "outOfWarranty", "notApplicable"].map((value) => <SelectOption key={value} value={value}>{t(`itemWarranty_${value}`)}</SelectOption>)}
+								</Select>
 							</Field>
 							<Field
 								name="warrantyDate"
@@ -675,10 +676,10 @@ export function AssetEditor({
 						<Field name="location" label={t("vaultStorageLocation")} value={draft.location} onChange={(value) => set("location", value)} error={errors.location} />
 						{!original && <>
 							<Field name="vaultRelatedId" label={t("vaultUsedFor")}>
-								<select id="vaultRelatedId" value={vaultRelatedId} onChange={(event) => setVaultRelatedId(event.target.value)}>
-									<option value="">{t("select")}</option>
-									{data.assets.filter((candidate) => !candidate.deleted && candidate.kind !== "vault").map((candidate) => <option key={candidate.id} value={candidate.id}>{candidate.name}</option>)}
-								</select>
+								<Select id="vaultRelatedId" value={vaultRelatedId} onValueChange={(selectValue) => setVaultRelatedId(selectValue)}>
+									<SelectOption value="">{t("select")}</SelectOption>
+									{data.assets.filter((candidate) => !candidate.deleted && candidate.kind !== "vault").map((candidate) => <SelectOption key={candidate.id} value={candidate.id}>{candidate.name}</SelectOption>)}
+								</Select>
 							</Field>
 							{vaultRelatedId && <Field name="vaultVerifiedAt" label={t("vaultVerifyDate")} type="date" value={vaultVerifiedAt} onChange={setVaultVerifiedAt} />}
 						</>}
@@ -917,13 +918,13 @@ function MaintenancePlanEditor({ onClose }: { onClose: () => void }) {
 		<form className="maintenance-editor" onSubmit={(event) => void submit(event)}>
 			<div className="form-grid">
 				<Field name="maintenanceName" label={t("maintenanceName")} value={name} onChange={(value) => setName(value)} />
-				<div className="field"><label htmlFor="maintenanceAsset">{t("maintenanceAsset")}</label><select id="maintenanceAsset" value={assetId} onChange={(event) => setAssetId(event.target.value)} required><option value="">{t("maintenanceSelectAsset")}</option>{assets.map((asset) => <option key={asset.id} value={asset.id}>{asset.name} · {t(asset.kind)}</option>)}</select></div>
-				<div className="field"><label htmlFor="maintenanceRule">{t("maintenanceRule")}</label><select id="maintenanceRule" value={mode} onChange={(event) => setMode(event.target.value as RepeatRule["mode"])}><option value="once">{t("maintenanceOnce")}</option><option value="fixed">{t("maintenanceFixed")}</option><option value="afterCompletion">{t("maintenanceAfterCompletion")}</option></select></div>
+				<div className="field"><label htmlFor="maintenanceAsset">{t("maintenanceAsset")}</label><Select id="maintenanceAsset" value={assetId} onValueChange={(selectValue) => setAssetId(selectValue)} required><SelectOption value="">{t("maintenanceSelectAsset")}</SelectOption>{assets.map((asset) => <SelectOption key={asset.id} value={asset.id}>{asset.name} · {t(asset.kind)}</SelectOption>)}</Select></div>
+				<div className="field"><label htmlFor="maintenanceRule">{t("maintenanceRule")}</label><Select id="maintenanceRule" value={mode} onValueChange={(selectValue) => setMode(selectValue as RepeatRule["mode"])}><SelectOption value="once">{t("maintenanceOnce")}</SelectOption><SelectOption value="fixed">{t("maintenanceFixed")}</SelectOption><SelectOption value="afterCompletion">{t("maintenanceAfterCompletion")}</SelectOption></Select></div>
 				<Field name="maintenanceDue" label={t("maintenanceDue")} type="date" value={dueDate} onChange={setDueDate} />
-				{mode !== "once" && <><Field name="maintenanceEvery" label={t("maintenanceEvery")} type="number" value={every} onChange={setEvery} /><div className="field"><label htmlFor="maintenanceUnit">{t("maintenanceUnit")}</label><select id="maintenanceUnit" value={unit} onChange={(event) => setUnit(event.target.value as typeof unit)}>{(["day", "week", "month", "year"] as const).map((value) => <option key={value} value={value}>{t(value)}</option>)}</select></div></>}
+				{mode !== "once" && <><Field name="maintenanceEvery" label={t("maintenanceEvery")} type="number" value={every} onChange={setEvery} /><div className="field"><label htmlFor="maintenanceUnit">{t("maintenanceUnit")}</label><Select id="maintenanceUnit" value={unit} onValueChange={(selectValue) => setUnit(selectValue as typeof unit)}>{(["day", "week", "month", "year"] as const).map((value) => <SelectOption key={value} value={value}>{t(value)}</SelectOption>)}</Select></div></>}
 				<Field name="maintenanceLead" label={t("maintenanceLead")} type="number" value={leadDays} onChange={setLeadDays} />
 				<Field name="maintenanceAmount" label={t("maintenanceAmount")} value={amount} onChange={setAmount} />
-				<div className="field"><label htmlFor="maintenanceCurrency">{t("currency")}</label><select id="maintenanceCurrency" value={currency} onChange={(event) => setCurrency(event.target.value as typeof currency)}>{currencies.map((value) => <option key={value} value={value}>{value}</option>)}</select></div>
+				<div className="field"><label htmlFor="maintenanceCurrency">{t("currency")}</label><Select id="maintenanceCurrency" value={currency} onValueChange={(selectValue) => setCurrency(selectValue as typeof currency)}>{currencies.map((value) => <SelectOption key={value} value={value}>{value}</SelectOption>)}</Select></div>
 			</div>
 			<p className="maintenance-estimate-note">{t("maintenanceEstimateOnly")}</p>
 			{!assets.length && <p className="field-error">{t("maintenanceNoAssets")}</p>}
@@ -1357,14 +1358,14 @@ export function IntakeTools({ onCsvStaged }: { onCsvStaged: () => void }) {
 							</div>
 							<div className="field">
 								<label htmlFor="intake-manual-kind">{t("intakeRecordType")}</label>
-								<select id="intake-manual-kind" value={manualKind} disabled={busy || inspecting} onChange={event => {
+								<Select id="intake-manual-kind" value={manualKind} disabled={busy || inspecting} onValueChange={selectValue => {
 									importGeneration.current++;
-									setManualKind(event.target.value as AssetKind);
+									setManualKind(selectValue as AssetKind);
 									setCandidates([]);
 									setCandidateGeneration(null);
 								}}>
-									{(["project", "account", "subscription", "item"] as const).map(kind => <option key={kind} value={kind}>{t(kind)}</option>)}
-								</select>
+									{(["project", "account", "subscription", "item"] as const).map(kind => <SelectOption key={kind} value={kind}>{t(kind)}</SelectOption>)}
+								</Select>
 							</div>
 							<Button variant="primary" onClick={() => void previewManual()} disabled={busy || inspecting || !manualName.trim()}>{t("intakePreviewRecords")}</Button>
 						</>
@@ -1374,10 +1375,10 @@ export function IntakeTools({ onCsvStaged }: { onCsvStaged: () => void }) {
 							<p>{t("intakeImageHint")}</p>
 							<div className="field">
 								<label htmlFor="intake-photo-asset">{t("selectAsset")}</label>
-								<select id="intake-photo-asset" value={photoAssetId} disabled={photoBusy} onChange={event => setPhotoAssetId(event.target.value)}>
-									<option value="">{t("intakePhotoNewItem")}</option>
-									{activeAssets.map(asset => <option key={asset.id} value={asset.id}>{asset.name}</option>)}
-								</select>
+								<Select id="intake-photo-asset" value={photoAssetId} disabled={photoBusy} onValueChange={selectValue => setPhotoAssetId(selectValue)}>
+									<SelectOption value="">{t("intakePhotoNewItem")}</SelectOption>
+									{activeAssets.map(asset => <SelectOption key={asset.id} value={asset.id}>{asset.name}</SelectOption>)}
+								</Select>
 							</div>
 							<div className="field">
 								<label htmlFor="intake-photo-file">{t("attachments")}</label>

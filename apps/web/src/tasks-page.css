@@ -13,7 +13,7 @@
 .tasks-list-card > .empty, .tasks-plan-card > .empty { margin: 0 14px 14px; }
 .tasks-plan-name { display: block; padding: 0 14px 12px; font-size: 13px; overflow-wrap: anywhere; }
 .tasks-plan-select { display: grid; gap: 5px; padding: 0 14px 12px; color: var(--muted); font-size: 11px; font-weight: 700; }
-.tasks-plan-select select { width: 100%; min-height: 36px; padding: 5px 8px; border: 2px solid var(--line); border-radius: 8px; background: var(--paper); color: var(--ink); font: inherit; }
+.tasks-plan-select .themed-select-trigger { width: 100%; }
 .tasks-plan-facts { margin: 0; }
 .tasks-plan-facts > div { display: grid; grid-template-columns: minmax(85px, 36%) minmax(0, 1fr); gap: 8px; padding: 10px 14px; border-top: 1px solid var(--line-soft); font-size: 12px; line-height: 1.4; }
 .tasks-plan-facts dt { color: var(--muted); }

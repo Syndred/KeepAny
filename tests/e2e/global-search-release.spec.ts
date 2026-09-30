@@ -4,6 +4,7 @@ import { strFromU8, unzipSync } from "fflate";
 import { decryptBackup } from "../../packages/local-db/src/backup-crypto";
 import type { Asset, History, Task } from "../../packages/domain/src";
 import type { ReviewedCandidate } from "../../packages/local-db/src/intake-review";
+import { selectChoice } from "./helpers/select-choice";
 
 const password = "global-search-fixed-package-backup";
 const text = (zh: boolean) => zh ? {
@@ -86,10 +87,10 @@ for (const locale of ["en-US", "zh-CN"]) {
 			await page.goto("/finance");
 			await page.getByRole("button", { name: copy.record, exact: true }).click();
 			dialog = page.getByRole("dialog");
-			await dialog.locator("#finance-asset").selectOption(accountId);
+			await selectChoice(dialog.locator("#finance-asset"), accountId);
 			await dialog.locator("#finance-title").fill("Global dinner bill");
 			await dialog.locator("#finance-amount").fill("12.34");
-			await dialog.locator("#finance-currency").selectOption("USD");
+			await selectChoice(dialog.locator("#finance-currency"), "USD");
 			await dialog.locator("#finance-date").fill("2026-10-01");
 			await dialog.locator("#finance-source").fill("Global card statement");
 			await dialog.locator("#finance-note").fill("private-fixed-history-note");
@@ -117,7 +118,7 @@ for (const locale of ["en-US", "zh-CN"]) {
 			expect(history).toMatchObject({ assetId: wallet.id, amount: 1234, currency: "USD" });
 			expect(receipt.status).toBe("accepted");
 			await locate(page, "dinner bill", `finance-entry-${history.id}`);
-			await page.locator(".finance-filters select").first().selectOption("refund");
+			await selectChoice(page.locator(".finance-filters").getByRole("combobox").first(), "refund");
 			await expect(page.locator(".finance-entry")).toHaveCount(0);
 			await locate(page, "dinner bill", `finance-entry-${history.id}`);
 			await locate(page, "review payments", `task-${task.id}`);

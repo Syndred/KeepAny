@@ -7,6 +7,7 @@ import path from "node:path";
 import type { AddressInfo } from "node:net";
 import { PostgresSyncService, type SqlPool } from "../../packages/sync-core/src/postgres";
 import { createPostgresSyncApp } from "../../apps/sync-server/src/app";
+import { selectChoice } from "./helpers/select-choice";
 
 const token = "workspace-key-e2e".padEnd(40, "x");
 const otherToken = "other-account-e2e".padEnd(40, "y");
@@ -66,7 +67,7 @@ async function addProject(page: Page) {
 
 async function unlock(page: Page, kind: "join" | "recovery", credential: string, id = "") {
 	const panel = page.locator(".key-access-panel");
-	await panel.getByLabel("Method").selectOption(kind);
+	await selectChoice(panel.getByLabel("Method"), kind);
 	if (kind === "join") await panel.getByLabel("Credential ID").fill(id);
 	await panel.getByLabel("Recovery or join credential").fill(credential);
 	await panel.getByRole("button", { name: "Check credential and key" }).click();

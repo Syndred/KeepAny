@@ -4,6 +4,7 @@ import { strFromU8, unzipSync } from "fflate";
 import { decryptBackup } from "../../packages/local-db/src/backup-crypto";
 import type { Asset } from "../../packages/domain/src";
 import type { ReviewedCandidate } from "../../packages/local-db/src/intake-review";
+import { selectChoice } from "./helpers/select-choice";
 
 const password = "intake-asset-receipt-encrypted-backup";
 const acceptedName = "Confirmed CSV snapshot with a long descriptive name retained after the saved account changes";
@@ -38,7 +39,7 @@ async function assertReceipt(row: Locator, copy: Copy, ignored: boolean) {
 	await expect(receipt.locator("strong")).toHaveText(ignored ? ignoredName : acceptedName);
 	await expect(receipt.getByText(`${copy.recordType}: ${ignored ? copy.item : copy.account}`, { exact: true })).toBeVisible();
 	await expect(receipt).toContainText(ignored ? ignoredUrl : acceptedUrl);
-	await expect(row.locator("input, textarea, select")).toHaveCount(0);
+	await expect(row.locator("input, textarea, [role=combobox]")).toHaveCount(0);
 	const description = receipt.locator("details");
 	await expect(description).not.toHaveAttribute("open");
 	await description.getByText(copy.description, { exact: true }).click();
@@ -109,9 +110,9 @@ for (const locale of ["en-US", "zh-CN"]) {
 				].join("\n")) });
 				const rows = page.locator(".intake-review-row");
 				await expect(rows).toHaveCount(2);
-				await rows.nth(0).getByRole("combobox").selectOption("account");
+				await selectChoice(rows.nth(0).getByRole("combobox"), "account");
 				await rows.nth(0).getByRole("button", { name: copy.confirm, exact: true }).click();
-				await rows.nth(1).getByRole("combobox").selectOption("item");
+				await selectChoice(rows.nth(1).getByRole("combobox"), "item");
 				await rows.nth(1).getByRole("button", { name: copy.ignore, exact: true }).click();
 				const accepted = candidate(page, acceptedName), ignored = candidate(page, ignoredName);
 				await assertReceipt(accepted, copy, false);

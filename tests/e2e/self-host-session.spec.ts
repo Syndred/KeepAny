@@ -5,6 +5,7 @@ import { createServer as createNetServer } from 'node:net';
 import { expect, test, type Page } from '@playwright/test';
 import pg from 'pg';
 import { migrateSyncDatabase } from '../../apps/sync-server/src/migrate';
+import { selectChoice } from "./helpers/select-choice";
 
 const databaseUrl = process.env.KEEPANY_TEST_DATABASE_URL;
 const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAACAAAAAYCAIAAAAUMWhjAAAAhUlEQVR4nLXNuRXCQBAE0WJCIQlZikEJYZLZ5iGfLOTyYI85Wu3NlPEfn2Pja/vzhXT2c7fzfS+A2rDuV2jYKKgMmzSJYfPcysYCoGysAWqGC6BgeAGyRgAgZcQA4kYYIGhkACJGEsBt5AF8RgnAYVQBVoYAYGpoAMaGDGBgKIGuIQb+jQtZ/TPNXBjnggAAAABJRU5ErkJggg==', 'base64');
@@ -38,7 +39,7 @@ async function stop(child: ChildProcess | undefined): Promise<void> {
 
 async function selectSession(page: Page, origin: string): Promise<void> {
   await page.goto(`${origin}/settings`);
-  await page.getByLabel('Connection method').selectOption('session');
+  await selectChoice(page.getByLabel('Connection method'), 'session');
   await expect(page.getByText('Not signed in to the self-hosted service')).toBeVisible();
 }
 
@@ -213,7 +214,7 @@ test('self-hosted sessions keep two users, encrypted records and photos in separ
     await expect(pageC.getByText(`Signed in: ${emailA}`)).toBeVisible();
     expect(await identity(pageC)).toBe(accountA);
     await expect(pageC.getByLabel('Choose an existing workspace').locator(`option[value="${workspaceA.workspaceId}"]`)).toHaveCount(1);
-    await pageC.getByLabel('Choose an existing workspace').selectOption(workspaceA.workspaceId);
+    await selectChoice(pageC.getByLabel('Choose an existing workspace'), workspaceA.workspaceId);
     await pageC.getByLabel('Workspace key').fill(workspaceA.key);
     await pageC.getByRole('button', { name: 'Sync now' }).click();
     await expect(pageC.locator('.sync-panel .notice')).toHaveText('This sync completed');
@@ -264,13 +265,13 @@ test('self-hosted sessions keep two users, encrypted records and photos in separ
     await pageB.goto(`${webOrigin}/settings`);
     await expect(pageB.getByText(`已登录：${emailB}`)).toBeVisible();
     await expect(pageB.getByLabel('选择已有工作区').locator(`option[value="${workspaceB.workspaceId}"]`)).toHaveCount(1);
-    await pageB.getByLabel('选择已有工作区').selectOption(workspaceB.workspaceId);
+    await selectChoice(pageB.getByLabel('选择已有工作区'), workspaceB.workspaceId);
     expect(await pageB.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
     if (process.env.KEEPANY_SYNC_EVIDENCE_DIR) {
       await pageA.goto(`${webOrigin}/settings`);
       await expect(pageA.getByText(`Signed in: ${emailA}`)).toBeVisible();
       await expect(pageA.getByLabel('Choose an existing workspace').locator(`option[value="${workspaceA.workspaceId}"]`)).toHaveCount(1);
-      await pageA.getByLabel('Choose an existing workspace').selectOption(workspaceA.workspaceId);
+      await selectChoice(pageA.getByLabel('Choose an existing workspace'), workspaceA.workspaceId);
       await pageA.screenshot({ path: `${process.env.KEEPANY_SYNC_EVIDENCE_DIR}/session-en-390.png`, fullPage: true });
       await pageB.screenshot({ path: `${process.env.KEEPANY_SYNC_EVIDENCE_DIR}/session-zh-390.png`, fullPage: true });
     }

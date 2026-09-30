@@ -5,6 +5,7 @@ import { expect, test, type Page } from '@playwright/test';
 import pg from 'pg';
 import { PostgresSyncService } from '../../packages/sync-core/src/postgres';
 import { migrateSyncDatabase } from '../../apps/sync-server/src/migrate';
+import { selectChoice } from "./helpers/select-choice";
 
 const databaseUrl = process.env.KEEPANY_TEST_DATABASE_URL;
 const token = 'browser-test-token-'.padEnd(40, 'x');
@@ -178,11 +179,11 @@ test('isolated browsers keep one local dataset on its remote through retry, conf
     expect(await pageB.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
     if (process.env.KEEPANY_SYNC_EVIDENCE_DIR) {
       await pageB.screenshot({ path: `${process.env.KEEPANY_SYNC_EVIDENCE_DIR}/sync-bound-en.png`, fullPage: true });
-      await pageB.locator('select').first().selectOption('zh-CN');
+      await selectChoice(pageB.getByRole("combobox").first(), 'zh-CN');
       await expect(pageB.getByRole('alert')).toContainText('原服务');
       expect(await pageB.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
       await pageB.screenshot({ path: `${process.env.KEEPANY_SYNC_EVIDENCE_DIR}/sync-bound-zh.png`, fullPage: true });
-      await pageB.locator('select').first().selectOption('en');
+      await selectChoice(pageB.getByRole("combobox").first(), 'en');
     }
     expect((await service.pull({ workspaceId: workspaceB, cursor: 0, limit: 20 }, accountId)).changes).toHaveLength(0);
     await pageB.locator('.sync-panel .form-grid input').nth(2).fill(workspaceA);

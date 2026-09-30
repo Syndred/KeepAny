@@ -8,6 +8,7 @@ import { TaskRow } from "./TaskRow";
 import { maintenanceReminderDate } from "../../../packages/domain/src/task-repeat";
 import "./tasks-page.css";
 import { useSearchRowLocation } from "./search-location";
+import { Select, SelectOption } from "./components/ui/select";
 
 const TaskEditor = lazy(() =>
 	import("./workflows").then((module) => ({ default: module.TaskEditor })),
@@ -102,11 +103,11 @@ export function TaskPage() {
 					{plan && selectedPlan ? (
 						<>
 							{plans.length > 1 && (
-								<label className="tasks-plan-select">
+								<label htmlFor="tasks-plan-select" className="tasks-plan-select">
 									<span>{t("tasksPlanDetails")}</span>
-									<select value={selectedPlan.id} onChange={(event) => setSelectedPlanId(event.target.value)}>
-										{plans.map((task) => <option key={task.id} value={task.id}>{task.name}</option>)}
-									</select>
+									<Select id="tasks-plan-select" value={selectedPlan.id} onValueChange={(selectValue) => setSelectedPlanId(selectValue)}>
+										{plans.map((task) => <SelectOption key={task.id} value={task.id}>{task.name}</SelectOption>)}
+									</Select>
 								</label>
 							)}
 							<strong className="tasks-plan-name">{selectedPlan.name}</strong>

@@ -1,6 +1,7 @@
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect, test } from "@playwright/test";
+import { selectChoice } from "./helpers/select-choice";
 
 const repositoryModuleUrl = `/@fs${process.cwd()}/packages/local-db/src/index.ts`;
 const domainModuleUrl = `/@fs${process.cwd()}/packages/domain/src/index.ts`;
@@ -22,7 +23,7 @@ for (const locale of ["en", "zh-CN"] as const) {
 		const dialog = page.getByRole("dialog");
 		await dialog.getByLabel(locale === "en" ? "Entry name" : "条目名称").fill("Studio login reference");
 		await dialog.getByLabel(locale === "en" ? "Stored in" : "保管位置").fill("Bitwarden personal vault");
-		await dialog.getByLabel(locale === "en" ? "Used for" : "用于").selectOption(accountId);
+		await selectChoice(dialog.getByLabel(locale === "en" ? "Used for" : "用于"), accountId);
 		await dialog.getByLabel(locale === "en" ? "Verified" : "核实时间").fill("2026-09-20");
 		await expect(dialog.getByLabel(/password|密码|恢复码/i)).toHaveCount(0);
 		await dialog.getByRole("button", { name: locale === "en" ? "Save" : "保存", exact: true }).click();

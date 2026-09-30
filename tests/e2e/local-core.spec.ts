@@ -1,4 +1,5 @@
 import { expect, type Page, test } from "@playwright/test";
+import { selectChoice } from "./helpers/select-choice";
 
 async function addAsset(
 	page: Page,
@@ -64,7 +65,7 @@ test("project, account, subscription, located item, linked reminder and download
 		await expect(page.getByRole("heading", { name: editedProject })).toBeVisible();
 		await page.getByRole("button", { name: "Add connection" }).click();
 		const relation = page.getByRole("dialog");
-		await relation.getByLabel("Connect to").selectOption({ label: account });
+		await selectChoice(relation.getByLabel("Connect to"), { label: account });
 		await relation.getByLabel("Connection label").fill("owner");
 		await relation.getByRole("button", { name: "Save" }).click();
 		await expect(relation).toBeHidden();
@@ -146,7 +147,7 @@ test("project, account, subscription, located item, linked reminder and download
 			await expect(restored.locator("main .asset-library-card")).toHaveCount(1);
 			await expect(restored.locator("main .asset-library-card")).toContainText(item);
 			await restored.goto("/settings");
-			await restored.locator("section.card").filter({ has: restored.getByRole("heading", { name: "Language" }) }).locator("select").selectOption("zh-CN");
+			await selectChoice(restored.locator("section.card").filter({ has: restored.getByRole("heading", { name: "Language" }) }).getByRole("combobox"), "zh-CN");
 			await expect(
 				restored.getByRole("heading", { name: "设置" }),
 			).toBeVisible();

@@ -1,5 +1,6 @@
 import { mkdirSync } from "node:fs";
 import { expect, type Page, test } from "@playwright/test";
+import { selectChoice } from "./helpers/select-choice";
 
 const evidence = "docs/evidence/2026-09-29";
 const repositoryModuleUrl = `/@fs${process.cwd()}/packages/local-db/src/index.ts`;
@@ -232,11 +233,11 @@ test("subscription and item shared CRUD, filters, image and actual backup restor
 			dueDate: "2026-10-31",
 		});
 		await page.getByRole("button", { name: "Edit", exact: true }).click();
-		await subscriptionEdit.locator("#currency").selectOption("JPY");
+		await selectChoice(subscriptionEdit.locator("#currency"), "JPY");
 		await subscriptionEdit.locator("#discountAmount").fill("0");
 		await subscriptionEdit.getByRole("button", { name: "Save" }).click();
 		await expect(subscriptionEdit.locator("#amount-error")).toBeVisible();
-		await subscriptionEdit.locator("#currency").selectOption("CNY");
+		await selectChoice(subscriptionEdit.locator("#currency"), "CNY");
 		await subscriptionEdit.locator("#amount").fill("90071992547409.92");
 		await subscriptionEdit.getByRole("button", { name: "Save" }).click();
 		await expect(subscriptionEdit.locator("#amount-error")).toBeVisible();
@@ -318,7 +319,7 @@ test("subscription and item shared CRUD, filters, image and actual backup restor
 			"subscription",
 			subscriptionOther,
 		);
-		await otherSubscription.getByLabel("Category").selectOption("service");
+		await selectChoice(otherSubscription.getByLabel("Category"), "service");
 		await save(page);
 
 		const itemCreate = await create(page, "item", item);
@@ -435,7 +436,7 @@ test("subscription and item shared CRUD, filters, image and actual backup restor
 		});
 		await page.getByRole("main").getByRole("link", { name: "Back to list" }).click();
 		const otherItem = await create(page, "item", itemOther);
-		await otherItem.getByLabel("Category").selectOption("other");
+		await selectChoice(otherItem.getByLabel("Category"), "other");
 		await save(page);
 
 		for (const [kind, category, categoryOther, name, id] of [
@@ -453,7 +454,7 @@ test("subscription and item shared CRUD, filters, image and actual backup restor
 				name: "Search all records",
 			});
 			await page.getByRole("button", { name: category, exact: true }).click();
-			await page.locator("#asset-tag-filter").selectOption({ label: tag });
+			await selectChoice(page.locator("#asset-tag-filter"), { label: tag });
 			await search.fill(tag);
 			await expect(page.locator("main.page .list-row")).toHaveCount(1);
 			await page.getByRole("button", { name: category, exact: true }).click();
@@ -475,13 +476,13 @@ test("subscription and item shared CRUD, filters, image and actual backup restor
 			await expect(page.getByRole("heading", { name })).toBeVisible();
 			await page.getByRole("main").getByRole("link", { name: "Back to list" }).click();
 			await expect(search).toHaveValue(tag);
-			await expect(page.locator("#asset-tag-filter")).toHaveValue(tag);
+			await expect(page.locator("#asset-tag-filter")).toHaveAttribute("data-value", tag);
 			await expect(
 				page.getByRole("button", { name: category, exact: true }),
 			).toHaveAttribute("aria-pressed", "true");
 			await page.reload();
 			await expect(search).toHaveValue(tag);
-			await expect(page.locator("#asset-tag-filter")).toHaveValue(tag);
+			await expect(page.locator("#asset-tag-filter")).toHaveAttribute("data-value", tag);
 			await search.fill(`no-results-${suffix}`);
 			await expect(page.locator("main.page .list-row")).toHaveCount(0);
 			await search.fill("");
@@ -637,7 +638,7 @@ test("renewal hint preserves cents and matches blank or typed payments for USD a
 		] as const) {
 			const name = `Hint ${currency} ${crypto.randomUUID().slice(0, 8)}`;
 			const dialog = await create(page, "subscription", name);
-			await dialog.locator("#currency").selectOption(currency);
+			await selectChoice(dialog.locator("#currency"), currency);
 			await dialog.locator("#amount").fill(amountText);
 			await dialog.locator("#dueDate").fill("2026-10-31");
 			await save(page);
@@ -766,7 +767,7 @@ for (const locale of ["en-US", "zh-CN"] as const) {
 					).toBeLessThanOrEqual(width);
 					if (width <= 390) {
 						const sizes = await dialog
-							.locator("input, textarea, select")
+							.locator("input, textarea, [role=combobox]")
 							.evaluateAll((elements) =>
 								elements.map((element) =>
 									Number.parseFloat(getComputedStyle(element).fontSize),
