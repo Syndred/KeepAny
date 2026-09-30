@@ -1,0 +1,151 @@
+Verify delivered files and offline backup flow
+3m 33s
+51
+
+
+52
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+
+53
+    test-results/custom-category-release-en-1e42c-and-encrypted-clean-restore/test-failed-1.png
+
+54
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+55
+
+
+56
+    attachment #2: screenshot (image/png) ──────────────────────────────────────────────────────────
+
+57
+    test-results/custom-category-release-en-1e42c-and-encrypted-clean-restore/test-failed-2.png
+
+58
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+59
+
+
+60
+    Error Context: test-results/custom-category-release-en-1e42c-and-encrypted-clean-restore/error-context.md
+
+61
+
+
+62
+  2) tests/e2e/custom-category-release.spec.ts:68:2 › zh-CN fixed package category identity survives UI rename and encrypted clean restore 
+
+63
+
+
+64
+    TimeoutError: locator.click: Timeout 15000ms exceeded.
+
+65
+    Call log:
+
+66
+      - waiting for locator('.sidebar-custom').getByRole('button', { name: 'Renamed project', exact: true })
+
+67
+        - locator resolved to <button type="button" class="sidebar-category">Renamed project</button>
+
+68
+      - attempting click action
+
+69
+        2 × waiting for element to be visible, enabled and stable
+
+70
+          - element is visible, enabled and stable
+
+71
+          - scrolling into view if needed
+
+72
+          - done scrolling
+
+73
+          - element is outside of the viewport
+
+74
+        - retrying click action
+
+75
+        - waiting 20ms
+
+76
+        2 × waiting for element to be visible, enabled and stable
+
+77
+          - element is visible, enabled and stable
+
+78
+          - scrolling into view if needed
+
+79
+          - done scrolling
+
+80
+          - element is outside of the viewport
+
+81
+        - retrying click action
+
+82
+          - waiting 100ms
+
+83
+        29 × waiting for element to be visible, enabled and stable
+
+84
+           - element is visible, enabled and stable
+
+85
+           - scrolling into view if needed
+
+86
+           - done scrolling
+
+87
+           - element is outside of the viewport
+
+88
+         - retrying click action
+
+89
+           - waiting 500ms
+
+90
+
+
+91
+
+
+92
+      48 | async function sidebarCategory(page: Page, name: string) {
+
+93
+      49 | 	if (await page.locator(".mobile-menu").isVisible()) await page.locator(".mobile-menu").click();
+
+94
+    > 50 | 	await page.locator(".sidebar-custom").getByRole("button", { name, exact: true }).click();
+
+95
+         | 	                                                                                 ^
+
+96
+      51 | }
+
+97
+      52 | async function rename(page: Page, zh: boolean, name: string, add: string, remove: string) {
+
+98
+      53 | 	const text = copy(zh);
+
+99
+        at sidebarCategory (/home/runner/work/KeepAny/KeepAny/tests/e2e/custom-category-release.spec.ts:50:83)
+
+115
+        at /home/runner/work/KeepAny/KeepAny/tests/e2e/custom-category-release.spec.ts:122:6

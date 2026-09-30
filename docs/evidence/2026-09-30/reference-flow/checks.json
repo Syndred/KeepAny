@@ -75,10 +75,19 @@
     "finalPage": "首页"
   },
   "remoteCi": {
-    "status": "pending",
-    "previousRun": "https://github.com/Syndred/KeepAny/actions/runs/36659927080",
-    "previousResult": "Failure: 420单测通过，浏览器19/20；分类90秒总预算超时",
-    "testFix": "39a189d仅分类预算150秒、动作15秒并保留首个错误，不修改应用校验"
+    "status": "Failure",
+    "run": "https://github.com/Syndred/KeepAny/actions/runs/36662742744",
+    "head": "c0ffc3e",
+    "totalDuration": "6m49s",
+    "jobDuration": "6m46s",
+    "unitFiles": 62,
+    "unitPassed": 420,
+    "unitSkipped": 0,
+    "build": "passed",
+    "committedBundle": "passed",
+    "browser": "28项中两个分类用例失败，日志显示其余点号完成",
+    "failure": "en-US与zh-CN在恢复后首次调用sidebarCategory的Renamed project按钮位于视口外，动作15秒超时",
+    "fix": "此函数仅390px测试；直接等待并点击手机菜单，确认sidebar.open及目标在视口；消除瞬时isVisible把未挂载菜单当桌面的分支。新CI待确认。"
   },
   "delivery": {
     "localFilesUpdated": true,

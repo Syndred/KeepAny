@@ -46,8 +46,12 @@ async function download(page: Page, zh: boolean) {
 	};
 }
 async function sidebarCategory(page: Page, name: string) {
-	if (await page.locator(".mobile-menu").isVisible()) await page.locator(".mobile-menu").click();
-	await page.locator(".sidebar-custom").getByRole("button", { name, exact: true }).click();
+	// Every case uses 390px. Wait for hydration instead of treating an absent menu as desktop.
+	await page.locator(".mobile-menu").click();
+	await expect(page.locator(".sidebar")).toHaveClass(/\bopen\b/);
+	const category = page.locator(".sidebar-custom").getByRole("button", { name, exact: true });
+	await expect(category).toBeInViewport({ ratio: 1 });
+	await category.click();
 }
 async function rename(page: Page, zh: boolean, name: string, add: string, remove: string) {
 	const text = copy(zh);
