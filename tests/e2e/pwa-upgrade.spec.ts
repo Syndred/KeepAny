@@ -28,6 +28,10 @@ test("old controlled tab upgrades on the same origin without losing its project,
 	const address = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
 	const context = await browser.newContext({ locale: "en-US", viewport: { width: 1280, height: 800 } });
 	const page = await context.newPage();
+	const pageErrors: string[] = [];
+	const consoleErrors: string[] = [];
+	page.on("pageerror", (error) => pageErrors.push(error.message));
+	page.on("console", (message) => { if (message.type() === "error") consoleErrors.push(message.text()); });
 	const project = `Upgrade project ${crypto.randomUUID().slice(0, 8)}`;
 	try {
 		await page.goto(`${address}/assets/project`);
@@ -82,6 +86,8 @@ test("old controlled tab upgrades on the same origin without losing its project,
 		await expect(page.getByRole("heading", { name: project })).toBeVisible();
 		await expect(page.locator(".asset-image")).toHaveCount(1);
 		expect(await page.evaluate(() => (window as Window & { __pwaDraftMarker?: boolean }).__pwaDraftMarker)).toBeUndefined();
+		expect(pageErrors).toEqual([]);
+		expect(consoleErrors).toEqual([]);
 	} finally {
 		await context.close();
 		await new Promise<void>((resolveClosed) => server.close(() => resolveClosed()));

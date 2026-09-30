@@ -112,4 +112,13 @@ describe("public asset search", () => {
 		expect(matchesAssetSearch(asset, "抽屉")).toBe(true);
 		expect(matchesAssetSearch(asset, "missing shelf")).toBe(false);
 	});
+	it("searches older assets without domain fields while leaving the stored snapshot unchanged", () => {
+		const legacy = { ...newAsset("project"), name: "Legacy camera project", notes: "private recovery phrase" };
+		Reflect.deleteProperty(legacy, "projectDomains");
+		const snapshot = JSON.stringify(legacy);
+		expect(matchesAssetSearch(legacy, "camera project")).toBe(true);
+		expect(matchesAssetSearch(legacy, "private recovery phrase")).toBe(false);
+		expect(JSON.stringify(legacy)).toBe(snapshot);
+	});
+
 });

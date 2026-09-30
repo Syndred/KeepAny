@@ -165,7 +165,7 @@ export function buildGlobalSearchIndex(input: GlobalSearchInput): readonly Globa
 			kind, ...publicAssetTextFields.map((field) => asset[field]), ...asset.tags,
 			publicUrl(asset.url), publicUrl(asset.projectPromoUrl),
 			...(allowDescription ? [asset.description, asset.longDescription] : []),
-			...asset.projectDomains.flatMap((domain) => [domain.name, domain.registrar]),
+			...(asset.projectDomains ?? []).flatMap((domain) => [domain.name, domain.registrar]),
 		]));
 	}
 	const ledger = history.filter((row) => {

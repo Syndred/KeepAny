@@ -358,4 +358,14 @@ describe("global search public projection", () => {
 		expect(searchGlobalIndex(after, "new name")).toHaveLength(1);
 		expect(current.name).toBe("Old name");
 	});
+	it("indexes an older project without domain fields without rewriting or exposing private notes", () => {
+		const legacy = asset("project", { name: "Legacy travel project", notes: "private recovery phrase" });
+		Reflect.deleteProperty(legacy, "projectDomains");
+		const snapshot = JSON.stringify(legacy);
+		const entries = index({ assets: [legacy] });
+		expect(searchGlobalIndex(entries, "travel project")).toHaveLength(1);
+		expect(searchGlobalIndex(entries, "private recovery phrase")).toEqual([]);
+		expect(JSON.stringify(legacy)).toBe(snapshot);
+	});
+
 });

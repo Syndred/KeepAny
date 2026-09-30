@@ -29,7 +29,7 @@ export function matchesAssetSearch(asset: Asset, query: string): boolean {
 		asset.url,
 		asset.username,
 		...additionalPublicTextFields.map((field) => asset[field]),
-		...asset.projectDomains.flatMap((domain) => [
+		...(asset.projectDomains ?? []).flatMap((domain) => [
 			domain.name,
 			domain.registrar,
 		]),
