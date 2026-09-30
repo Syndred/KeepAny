@@ -1,0 +1,323 @@
+utton "Open menu":
+  - link "Homepage (g then d)":
+    - /url: /
+  - navigation "Breadcrumbs":
+    - list:
+      - link "Syndred":
+        - /url: /Syndred
+        - generic: Syndred
+      - link "KeepAny":
+        - /url: /Syndred/KeepAny
+        - text: KeepAny
+      - button "Switch repository (option shift r)":
+  - button "Open quick search dialog, type / to search":
+    - text: Type
+    - generic: /
+    - text: to search
+  - link "Chat with Copilot":
+    - /url: /copilot
+  - button "Open Copilot…":
+  - button "Create new...":
+  - link "All issues":
+    - /url: /issues
+  - link "All pull requests":
+    - /url: /pulls
+  - link "All repositories":
+    - /url: /repos
+  - button "Open user navigation menu":
+    - img "User avatar"
+  - heading "Repository navigation" [level=2]
+  - navigation "Repository":
+    - list:
+      - link "Code":
+        - /url: /Syndred/KeepAny
+        - generic: Code
+      - link "Issues":
+        - /url: /Syndred/KeepAny/issues
+        - generic: Issues
+      - link "Pull requests":
+        - /url: /Syndred/KeepAny/pulls
+        - generic: Pull requests
+      - link "Agents":
+        - /url: /Syndred/KeepAny/agents?author=Syndred
+        - generic: Agents
+      - link "Actions":
+        - /url: /Syndred/KeepAny/actions
+        - generic: Actions
+      - link "Projects":
+        - /url: /Syndred/KeepAny/projects
+        - generic: Projects
+      - link "Security and quality":
+        - /url: /Syndred/KeepAny/security
+        - generic: Security and quality
+      - link "Insights":
+        - /url: /Syndred/KeepAny/network/dependencies
+        - generic: Insights
+      - link "Settings":
+        - /url: /Syndred/KeepAny/settings
+        - generic: Settings
+- main:
+  - link "Verify local release":
+    - /url: /Syndred/KeepAny/actions/workflows/verify.yml
+    - generic: Verify local release
+  - img "failed:"
+  - 'heading "docs: record task theme verification and Chinese handoff #42" [level=1]':
+    - generic: "docs: record task theme verification and Chinese handoff #42"
+  - button "Re-run jobs":
+    - generic: Re-run jobs
+  - button "Workflow run options":
+  - navigation "Workflow run":
+    - list:
+      - link "Summary":
+        - /url: /Syndred/KeepAny/actions/runs/36715132843
+        - generic: Summary
+      - heading "All jobs" [level=4]
+      - button "Filter by job status":
+      - list:
+        - link "verify":
+          - /url: /Syndred/KeepAny/actions/runs/36715132843/job/109886087184
+          - generic: verify
+      - heading "Run details" [level=3]
+      - list "Run details":
+        - link "Usage":
+          - /url: /Syndred/KeepAny/actions/runs/36715132843/usage
+          - generic: Usage
+        - link "Workflow file":
+          - /url: /Syndred/KeepAny/actions/runs/36715132843/workflow
+          - generic: Workflow file
+  - region "Check run summary":
+    - region "Annotations":
+      - button "Open job annotations":
+      - heading "Annotations" [level=2]
+      - generic: 1 error, 1 warning, and 1 notice
+    - link "verify":
+      - /url: "#logs"
+      - generic: verify
+    - generic: failed Sep 30, 20265 hours ago in 13m 10s
+    - textbox "Search":
+      - /placeholder: Search logs
+    - button "Explain error":
+      - generic: Explain error
+    - button "Re-run this job":
+    - button "Show options":
+      - img "Show options"
+    - generic "Set up job 1s":
+      - generic: Set up job
+      - generic: 1s
+    - generic "Initialize containers 15s":
+      - generic: Initialize containers
+      - generic: 15s
+    - generic "Run actions/checkout@v4 10s":
+      - generic: Run actions/checkout@v4
+      - generic: 10s
+    - generic "Run pnpm/action-setup@v4 2s":
+      - generic: Run pnpm/action-setup@v4
+      - generic: 2s
+    - generic "Run actions/setup-node@v4 7s":
+      - generic: Run actions/setup-node@v4
+      - generic: 7s
+    - generic "Run pnpm install --frozen-lockfile 9s":
+      - generic: Run pnpm install --frozen-lockfile
+      - generic: 9s
+    - generic "Verify checked-in third-party license materials 0s":
+      - generic: Verify checked-in third-party license materials
+      - generic: 0s
+    - generic "Run pnpm exec playwright install --with-deps chromium 41s":
+      - generic: Run pnpm exec playwright install --with-deps chromium
+      - generic: 41s
+    - generic "Run pnpm test 2m 10s":
+      - generic: Run pnpm test
+      - generic: 2m 10s
+    - generic "Run pnpm build 10s":
+      - generic: Run pnpm build
+      - generic: 10s
+    - generic "Verify committed web bundle 0s":
+      - generic: Verify committed web bundle
+      - generic: 0s
+    - generic "Verify delivered files and offline backup flow 9m 19s":
+      - generic: Verify delivered files and offline backup flow
+      - generic: 9m 19s
+    - link "50":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36715132843/job/109886087184#step:12:51
+    - link "51":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36715132843/job/109886087184#step:12:52
+    - generic: "attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────"
+    - link "52":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36715132843/job/109886087184#step:12:53
+    - generic: test-results/task-theme-release-zh-CN-3-170e3-es-the-themed-task-workflow/test-failed-1.png
+    - link "53":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36715132843/job/109886087184#step:12:54
+    - generic: ────────────────────────────────────────────────────────────────────────────────────────────────
+    - link "54":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36715132843/job/109886087184#step:12:55
+    - link "55":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36715132843/job/109886087184#step:12:56
+    - generic: "Error Context: test-results/task-theme-release-zh-CN-3-170e3-es-the-themed-task-workflow/error-context.md"
+    - link "56":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36715132843/job/109886087184#step:12:57
+    - link "57":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36715132843/job/109886087184#step:12:58
+    - generic: 2) tests/e2e/task-theme-release.spec.ts:525:2 › en-US 390px completes the themed task workflow ───
+    - link "58":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36715132843/job/109886087184#step:12:59
+    - link "59":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36715132843/job/109886087184#step:12:60
+    - generic: "TimeoutError: locator.click: Timeout 10000ms exceeded."
+    - link "60":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36715132843/job/109886087184#step:12:61
+    - generic: "Call log:"
+    - link "61":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36715132843/job/109886087184#step:12:62
+    - generic: "- waiting for locator('.mobile-scrim')"
+    - link "62":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36715132843/job/109886087184#step:12:63
+    - generic: "- locator resolved to <button type=\"button\" aria-label=\"Close\" class=\"mobile-scrim\"></button>"
+    - link "63":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36715132843/job/109886087184#step:12:64
+    - generic: "- attempting click action"
+    - link "64":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36715132843/job/109886087184#step:12:65
+    - generic: 2 × waiting for element to be visible, enabled and stable
+    - link "65":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36715132843/job/109886087184#step:12:66
+    - generic: "- element is visible, enabled and stable"
+    - link "66":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36715132843/job/109886087184#step:12:67
+    - generic: "- scrolling into view if needed"
+    - link "67":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36715132843/job/109886087184#step:12:68
+    - generic: "- done scrolling"
+    - link "68":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36715132843/job/109886087184#step:12:69
+    - generic: "- <a title=\"Items\" href=\"/assets/item\" class=\"sortable-nav-link\">…</a> from <aside class=\"sidebar open\">…</aside> subtree intercepts pointer events"
+    - link "69":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36715132843/job/109886087184#step:12:70
+    - generic: "- retrying click action"
+    - link "70":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36715132843/job/109886087184#step:12:71
+    - generic: "- waiting 20ms"
+    - link "71":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36715132843/job/109886087184#step:12:72
+    - generic: 2 × waiting for element to be visible, enabled and stable
+    - link "72":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36715132843/job/109886087184#step:12:73
+    - generic: "- element is visible, enabled and stable"
+    - link "73":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36715132843/job/109886087184#step:12:74
+    - generic: "- scrolling into view if needed"
+    - link "74":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36715132843/job/109886087184#step:12:75
+    - generic: "- done scrolling"
+    - link "75":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36715132843/job/109886087184#step:12:76
+    - generic: "- <a title=\"Items\" href=\"/assets/item\" class=\"sortable-nav-link\">…</a> from <aside class=\"sidebar open\">…</aside> subtree intercepts pointer events"
+    - link "76":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36715132843/job/109886087184#step:12:77
+    - generic: "- retrying click action"
+    - link "77":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36715132843/job/109886087184#step:12:78
+    - generic: "- waiting 100ms"
+    - link "78":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36715132843/job/109886087184#step:12:79
+    - generic: 19 × waiting for element to be visible, enabled and stable
+    - link "79":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36715132843/job/109886087184#step:12:80
+    - generic: "- element is visible, enabled and stable"
+    - link "80":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36715132843/job/109886087184#step:12:81
+    - generic: "- scrolling into view if needed"
+    - link "81":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36715132843/job/109886087184#step:12:82
+    - generic: "- done scrolling"
+    - link "82":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36715132843/job/109886087184#step:12:83
+    - generic: "- <a title=\"Items\" href=\"/assets/item\" class=\"sortable-nav-link\">…</a> from <aside class=\"sidebar open\">…</aside> subtree intercepts pointer events"
+    - link "83":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36715132843/job/109886087184#step:12:84
+    - generic: "- retrying click action"
+    - link "84":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36715132843/job/109886087184#step:12:85
+    - generic: "- waiting 500ms"
+    - link "85":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36715132843/job/109886087184#step:12:86
+    - link "86":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36715132843/job/109886087184#step:12:87
+    - link "87":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36715132843/job/109886087184#step:12:88
+    - generic: 459 | expect(inset.right).toBeGreaterThanOrEqual(12);
+    - link "88":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36715132843/job/109886087184#step:12:89
+    - generic: "460 | if (variant.width <= 620) {"
+    - link "89":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36715132843/job/109886087184#step:12:90
+    - generic: "> 461 | await page.locator(\".mobile-scrim\").click();"
+    - link "90":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36715132843/job/109886087184#step:12:91
+    - generic: "| ^"
+    - link "91":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36715132843/job/109886087184#step:12:92
+    - generic: 462 | await expect(page.locator(".mobile-scrim")).toBeHidden();
+    - link "92":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36715132843/job/109886087184#step:12:93
+    - generic: "463 | }"
+    - link "93":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36715132843/job/109886087184#step:12:94
+    - generic: "464 | }"
+    - link "94":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36715132843/job/109886087184#step:12:95
+    - generic: at assertNavBadgeInset (/home/runner/work/KeepAny/KeepAny/tests/e2e/task-theme-release.spec.ts:461:39)
+    - link "95":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36715132843/job/109886087184#step:12:96
+    - generic: at /home/runner/work/KeepAny/KeepAny/tests/e2e/task-theme-release.spec.ts:671:4
+    - link "96":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36715132843/job/109886087184#step:12:97
+    - link "97":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36715132843/job/109886087184#step:12:98
+    - generic: "attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────"
+    - link "98":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36715132843/job/109886087184#step:12:99
+    - generic: test-results/task-theme-release-en-US-3-c4fc3-es-the-themed-task-workflow/test-failed-1.png
+    - link "99":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36715132843/job/109886087184#step:12:100
+    - generic: ────────────────────────────────────────────────────────────────────────────────────────────────
+    - link "100":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36715132843/job/109886087184#step:12:101
+    - link "101":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36715132843/job/109886087184#step:12:102
+    - generic: "Error Context: test-results/task-theme-release-en-US-3-c4fc3-es-the-themed-task-workflow/error-context.md"
+    - link "102":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36715132843/job/109886087184#step:12:103
+    - link "103":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36715132843/job/109886087184#step:12:104
+    - generic: 2 failed
+    - link "104":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36715132843/job/109886087184#step:12:105
+    - generic: tests/e2e/task-theme-release.spec.ts:525:2 › zh-CN 390px completes the themed task workflow ────
+    - link "105":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36715132843/job/109886087184#step:12:106
+    - generic: tests/e2e/task-theme-release.spec.ts:525:2 › en-US 390px completes the themed task workflow ────
+    - link "106":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36715132843/job/109886087184#step:12:107
+    - generic: 75 passed (9.3m)
+    - link "107":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36715132843/job/109886087184#step:12:108
+    - text: "Error:"
+    - generic: Process completed with exit code 1.
+    - generic "Verify delivered sync files with isolated PostgreSQL and local HTTP 0s":
+      - generic: Verify delivered sync files with isolated PostgreSQL and local HTTP
+      - generic: 0s
+    - generic "Post Run actions/setup-node@v4 0s":
+      - generic: Post Run actions/setup-node@v4
+      - generic: 0s
+    - generic "Post Run pnpm/action-setup@v4 0s":
+      - generic: Post Run pnpm/action-setup@v4
+      - generic: 0s
+    - generic "Post Run actions/checkout@v4 1s":
+      - generic: Post Run actions/checkout@v4
+      - generic: 1s
+    - generic "Stop containers 0s":
+      - generic: Stop containers
+      - generic: 0s
+    - generic "Complete job 0s":
+      - generic: Complete job
+      - generic: 0s

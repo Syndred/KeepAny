@@ -1,0 +1,323 @@
+- link "Skip to content":
+  - /url: "#start-of-content"
+- banner "Global navigation menu":
+  - button "Open menu":
+  - link "Homepage (g then d)":
+    - /url: /
+  - navigation "Breadcrumbs":
+    - list:
+      - link "Syndred":
+        - /url: /Syndred
+        - generic: Syndred
+      - link "KeepAny":
+        - /url: /Syndred/KeepAny
+        - text: KeepAny
+      - button "Switch repository (option shift r)":
+  - button "Open quick search dialog, type / to search":
+    - text: Type
+    - generic: /
+    - text: to search
+  - link "Chat with Copilot":
+    - /url: /copilot
+  - button "Open Copilot…":
+  - button "Create new...":
+  - link "All issues":
+    - /url: /issues
+  - link "All pull requests":
+    - /url: /pulls
+  - link "All repositories":
+    - /url: /repos
+  - button "Open user navigation menu":
+    - img "User avatar"
+  - heading "Repository navigation" [level=2]
+  - navigation "Repository":
+    - list:
+      - link "Code":
+        - /url: /Syndred/KeepAny
+        - generic: Code
+      - link "Issues":
+        - /url: /Syndred/KeepAny/issues
+        - generic: Issues
+      - link "Pull requests":
+        - /url: /Syndred/KeepAny/pulls
+        - generic: Pull requests
+      - link "Agents":
+        - /url: /Syndred/KeepAny/agents?author=Syndred
+        - generic: Agents
+      - link "Actions":
+        - /url: /Syndred/KeepAny/actions
+        - generic: Actions
+      - link "Projects":
+        - /url: /Syndred/KeepAny/projects
+        - generic: Projects
+      - link "Security and quality":
+        - /url: /Syndred/KeepAny/security
+        - generic: Security and quality
+      - link "Insights":
+        - /url: /Syndred/KeepAny/network/dependencies
+        - generic: Insights
+      - link "Settings":
+        - /url: /Syndred/KeepAny/settings
+        - generic: Settings
+- main:
+  - link "Verify local release":
+    - /url: /Syndred/KeepAny/actions/workflows/verify.yml
+    - generic: Verify local release
+  - img "currently running:"
+  - 'heading "build(web): refresh vault empty state and locale counts #43" [level=1]':
+    - generic: "build(web): refresh vault empty state and locale counts #43"
+  - button "Cancel workflow"
+  - button "Workflow run options":
+  - navigation "Workflow run":
+    - list:
+      - link "Summary":
+        - /url: /Syndred/KeepAny/actions/runs/36754640508
+        - generic: Summary
+      - heading "All jobs" [level=4]
+      - button "Filter by job status":
+      - list:
+        - link "verify":
+          - /url: /Syndred/KeepAny/actions/runs/36754640508/job/110021654430
+          - img "Currently running"
+          - generic: verify
+      - heading "Run details" [level=3]
+      - list "Run details":
+        - link "Usage":
+          - /url: /Syndred/KeepAny/actions/runs/36754640508/usage
+          - generic: Usage
+        - link "Workflow file":
+          - /url: /Syndred/KeepAny/actions/runs/36754640508/workflow
+          - generic: Workflow file
+  - region "Check run summary":
+    - link "verify":
+      - /url: "#logs"
+      - generic: verify
+    - generic: Started 2026-10-01 01:53:34 6m 30s ago
+    - textbox "Search":
+      - /placeholder: Search logs
+    - button "Show options":
+      - img "Show options"
+    - generic "Set up job 2s":
+      - generic: Set up job
+      - generic: 2s
+    - generic "Initialize containers 15s":
+      - generic: Initialize containers
+      - generic: 15s
+    - generic "Run actions/checkout@v4 9s":
+      - generic: Run actions/checkout@v4
+      - generic: 9s
+    - generic "Run pnpm/action-setup@v4 2s":
+      - generic: Run pnpm/action-setup@v4
+      - generic: 2s
+    - generic "Run actions/setup-node@v4 1s":
+      - generic: Run actions/setup-node@v4
+      - generic: 1s
+    - generic "Run pnpm install --frozen-lockfile 15s":
+      - generic: Run pnpm install --frozen-lockfile
+      - generic: 15s
+    - generic "Verify checked-in third-party license materials 0s":
+      - generic: Verify checked-in third-party license materials
+      - generic: 0s
+    - generic "Run pnpm exec playwright install --with-deps chromium 32s":
+      - generic: Run pnpm exec playwright install --with-deps chromium
+      - generic: 32s
+    - generic "Run pnpm test 2m 34s":
+      - generic: Run pnpm test
+      - generic: 2m 34s
+    - generic "Run pnpm build 11s":
+      - generic: Run pnpm build
+      - generic: 11s
+    - link "50":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36754640508/job/110021654430#step:10:51
+    - generic: "apps/web/dist/assets/rxdb-store-DUAO_jUX.js 1.16 kB │ gzip: 0.62 kB"
+    - link "51":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36754640508/job/110021654430#step:10:52
+    - generic: "apps/web/dist/assets/preload-helper-BZ1Pz5am.js 1.21 kB │ gzip: 0.69 kB"
+    - link "52":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36754640508/job/110021654430#step:10:53
+    - generic: "apps/web/dist/assets/bound-sync-BpQhGaeG.js 2.17 kB │ gzip: 0.93 kB"
+    - link "53":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36754640508/job/110021654430#step:10:54
+    - generic: "apps/web/dist/assets/finance-9J28YIAz.js 2.29 kB │ gzip: 0.70 kB"
+    - link "54":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36754640508/job/110021654430#step:10:55
+    - generic: "apps/web/dist/assets/page-trash-BQI6aZhZ.js 2.52 kB │ gzip: 1.02 kB"
+    - link "55":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36754640508/job/110021654430#step:10:56
+    - generic: "apps/web/dist/assets/impact-RSSgeURs.js 2.62 kB │ gzip: 1.06 kB"
+    - link "56":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36754640508/job/110021654430#step:10:57
+    - generic: "apps/web/dist/assets/ImpactTaskRow-CoP9HhRh.js 3.06 kB │ gzip: 1.35 kB"
+    - link "57":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36754640508/job/110021654430#step:10:58
+    - generic: "apps/web/dist/assets/createLucideIcon-Cv2NvGrq.js 3.15 kB │ gzip: 1.52 kB"
+    - link "58":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36754640508/job/110021654430#step:10:59
+    - generic: "apps/web/dist/assets/page-assistant-access-DVGYSABl.js 4.16 kB │ gzip: 1.26 kB"
+    - link "59":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36754640508/job/110021654430#step:10:60
+    - generic: "apps/web/dist/assets/button-CLLeZ0ME.js 4.23 kB │ gzip: 1.86 kB"
+    - link "60":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36754640508/job/110021654430#step:10:61
+    - generic: "apps/web/dist/assets/tslib.es6-BgElsgfY.js 4.58 kB │ gzip: 1.78 kB"
+    - link "61":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36754640508/job/110021654430#step:10:62
+    - generic: "apps/web/dist/assets/dialog-DeofS6qt.js 5.05 kB │ gzip: 1.97 kB"
+    - link "62":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36754640508/job/110021654430#step:10:63
+    - generic: "apps/web/dist/assets/workbox-window.prod.es5-Bd17z0YL.js 5.65 kB │ gzip: 2.20 kB"
+    - link "63":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36754640508/job/110021654430#step:10:64
+    - generic: "apps/web/dist/assets/sha2-6eO_SsNp.js 5.74 kB │ gzip: 2.80 kB"
+    - link "64":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36754640508/job/110021654430#step:10:65
+    - generic: "apps/web/dist/assets/ProjectWorkflowTaskRow-DBeDc-0u.js 6.14 kB │ gzip: 2.46 kB"
+    - link "65":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36754640508/job/110021654430#step:10:66
+    - generic: "apps/web/dist/assets/page-tasks-BQ2zBEzs.js 6.14 kB │ gzip: 2.30 kB"
+    - link "66":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36754640508/job/110021654430#step:10:67
+    - generic: "apps/web/dist/assets/browser-bridge-DZkD5tEY.js 6.93 kB │ gzip: 2.36 kB"
+    - link "67":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36754640508/job/110021654430#step:10:68
+    - generic: "apps/web/dist/assets/page-change-impact-OJJ8erpr.js 7.05 kB │ gzip: 2.37 kB"
+    - link "68":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36754640508/job/110021654430#step:10:69
+    - generic: "apps/web/dist/assets/page-overview-CIenhEJL.js 8.29 kB │ gzip: 2.45 kB"
+    - link "69":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36754640508/job/110021654430#step:10:70
+    - generic: "apps/web/dist/assets/TaskRow-dkRWF9bS.js 8.72 kB │ gzip: 2.83 kB"
+    - link "70":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36754640508/job/110021654430#step:10:71
+    - generic: "apps/web/dist/assets/link-Zfm1c1oB.js 10.37 kB │ gzip: 4.69 kB"
+    - link "71":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36754640508/job/110021654430#step:10:72
+    - generic: "apps/web/dist/assets/page-project-workflow-VpnmIFuR.js 10.59 kB │ gzip: 2.84 kB"
+    - link "72":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36754640508/job/110021654430#step:10:73
+    - generic: "apps/web/dist/assets/page-collections-OnRDWhNn.js 10.83 kB │ gzip: 3.60 kB"
+    - link "73":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36754640508/job/110021654430#step:10:74
+    - generic: "apps/web/dist/assets/page-finance-BZ8KK57Q.js 11.89 kB │ gzip: 3.81 kB"
+    - link "74":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36754640508/job/110021654430#step:10:75
+    - generic: "apps/web/dist/assets/useTranslation-3t-WiBRH.js 13.92 kB │ gzip: 5.59 kB"
+    - link "75":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36754640508/job/110021654430#step:10:76
+    - generic: "apps/web/dist/assets/src-B3xfyg5q.js 16.82 kB │ gzip: 5.04 kB"
+    - link "76":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36754640508/job/110021654430#step:10:77
+    - generic: "apps/web/dist/assets/src-CYIh49OI.js 23.24 kB │ gzip: 6.61 kB"
+    - link "77":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36754640508/job/110021654430#step:10:78
+    - generic: "apps/web/dist/assets/page-asset-list-C2u82WZP.js 23.94 kB │ gzip: 7.61 kB"
+    - link "78":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36754640508/job/110021654430#step:10:79
+    - generic: "apps/web/dist/assets/page-intake-DkiMCR-v.js 26.09 kB │ gzip: 8.08 kB"
+    - link "79":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36754640508/job/110021654430#step:10:80
+    - generic: "apps/web/dist/assets/PasswordVaultPanel-AVKGAYR9.js 27.14 kB │ gzip: 6.74 kB"
+    - link "80":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36754640508/job/110021654430#step:10:81
+    - generic: "apps/web/dist/assets/es2015-CHf_PN-9.js 33.57 kB │ gzip: 11.71 kB"
+    - link "81":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36754640508/job/110021654430#step:10:82
+    - generic: "apps/web/dist/assets/SelfHostSessionPanel-CB6Ix_lK.js 33.88 kB │ gzip: 12.46 kB"
+    - link "82":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36754640508/job/110021654430#step:10:83
+    - generic: "apps/web/dist/assets/src-h9mvb3ck.js 37.76 kB │ gzip: 14.64 kB"
+    - link "83":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36754640508/job/110021654430#step:10:84
+    - generic: "apps/web/dist/assets/sortable.esm-C096e-NT.js 45.23 kB │ gzip: 14.85 kB"
+    - link "84":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36754640508/job/110021654430#step:10:85
+    - generic: "apps/web/dist/assets/select-B4qbmqFw.js 55.39 kB │ gzip: 19.19 kB"
+    - link "85":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36754640508/job/110021654430#step:10:86
+    - generic: "apps/web/dist/assets/workflows-D8ansg-v.js 81.70 kB │ gzip: 23.29 kB"
+    - link "86":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36754640508/job/110021654430#step:10:87
+    - generic: "apps/web/dist/assets/page-settings-CP4NE_21.js 88.06 kB │ gzip: 23.85 kB"
+    - link "87":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36754640508/job/110021654430#step:10:88
+    - generic: "apps/web/dist/assets/schemas-CPFpcfS9.js 92.46 kB │ gzip: 26.05 kB"
+    - link "88":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36754640508/job/110021654430#step:10:89
+    - generic: "apps/web/dist/assets/text-link-DZYkbEuW.js 124.23 kB │ gzip: 40.34 kB"
+    - link "89":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36754640508/job/110021654430#step:10:90
+    - generic: "apps/web/dist/assets/header-jGoQ5BCs.js 201.42 kB │ gzip: 61.23 kB"
+    - link "90":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36754640508/job/110021654430#step:10:91
+    - generic: "apps/web/dist/assets/page-asset-detail-BuR9nzBy.js 246.34 kB │ gzip: 72.37 kB"
+    - link "91":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36754640508/job/110021654430#step:10:92
+    - generic: "apps/web/dist/assets/src-DpFxuKfp.js 369.79 kB │ gzip: 109.46 kB"
+    - link "92":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36754640508/job/110021654430#step:10:93
+    - generic: "apps/web/dist/assets/intake-pdf-CyMFTCDr.js 431.11 kB │ gzip: 129.35 kB"
+    - link "93":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36754640508/job/110021654430#step:10:94
+    - generic: "apps/web/dist/assets/src-DOsT5PM6.js 442.77 kB │ gzip: 155.99 kB"
+    - link "94":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36754640508/job/110021654430#step:10:95
+    - generic: "apps/web/dist/assets/index-CaqIJro_.js 481.75 kB │ gzip: 156.39 kB"
+    - link "95":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36754640508/job/110021654430#step:10:96
+    - generic: ✓ built in 1.76s
+    - link "98":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36754640508/job/110021654430#step:10:99
+    - generic: PWA v1.3.0
+    - link "99":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36754640508/job/110021654430#step:10:100
+    - generic: mode
+    - generic: generateSW
+    - link "100":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36754640508/job/110021654430#step:10:101
+    - generic: precache
+    - generic: 85 entries
+    - generic: (3095.79 KiB)
+    - link "101":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36754640508/job/110021654430#step:10:102
+    - generic: files generated
+    - link "102":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36754640508/job/110021654430#step:10:103
+    - generic: dist/sw.js
+    - link "103":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36754640508/job/110021654430#step:10:104
+    - generic: dist/workbox-9c191d2f.js
+    - generic "Verify committed web bundle 0s":
+      - generic: Verify committed web bundle
+      - generic: 0s
+    - link "1":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36754640508/job/110021654430#step:11:1
+    - generic "Run node scripts/verify-local-release.mjs":
+      - generic: Run node scripts/verify-local-release.mjs
+    - link "7":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36754640508/job/110021654430#step:11:7
+    - link "7":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36754640508/job/110021654430#step:11:8
+    - generic: Verified 88 current files byte for byte and 739 explicitly listed retained files.
+    - generic "In progress Verify delivered files and offline backup flow Started at 1790791056000 2m 28s":
+      - img "In progress"
+      - generic: Verify delivered files and offline backup flow
+      - generic "Oct 1, 2026, 01:57 GMT+8": Started at 1790791056000 2m 28s
+    - link "1":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36754640508/job/110021654430#step:12:1
+    - generic "Run pnpm exec playwright test --config playwright.release.config.ts --reporter=dot":
+      - generic: Run pnpm exec playwright test --config playwright.release.config.ts --reporter=dot
+    - link "7":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36754640508/job/110021654430#step:12:7
+    - link "8":
+      - /url: https://github.com/Syndred/KeepAny/actions/runs/36754640508/job/110021654430#step:12:9
+    - generic: Running 82 tests using 2 workers
+    - generic "Verify delivered sync files with isolated PostgreSQL and local HTTP":
+      - generic: Verify delivered sync files with isolated PostgreSQL and local HTTP
+    - generic "Post Run actions/setup-node@v4":
+      - generic: Post Run actions/setup-node@v4
+    - generic "Post Run pnpm/action-setup@v4":
+      - generic: Post Run pnpm/action-setup@v4
+    - generic "Post Run actions/checkout@v4":
+      - generic: Post Run actions/checkout@v4
+    - generic "Stop containers":
+      - generic: Stop containers

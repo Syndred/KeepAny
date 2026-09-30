@@ -1,0 +1,9 @@
+$ vitest run packages/password-vault/src/header.test.ts packages/local-db/src/password-vault-storage.test.ts
+
+ RUN  v5.0.2 /Users/syndred/Desktop/projects/KeepAny
+
+
+ Test Files  2 passed (2)
+      Tests  20 passed (20)
+   Start at  01:46:53
+   Duration  606ms (tests 53%, import 29%, transform 18%, worker 1%)
