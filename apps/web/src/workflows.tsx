@@ -1566,7 +1566,7 @@ export function AiDialog({
 	assets: Asset[];
 	onClose: () => void;
 }) {
-	const { t } = useTranslation();
+	const { t, i18n } = useTranslation();
 	const [endpoint, setEndpoint] = useState("");
 	const [model, setModel] = useState("");
 	const [apiKey, setApiKey] = useState("");
@@ -1844,8 +1844,8 @@ export function AiDialog({
 					</div>
 					<div className="notice ai-cost">
 						<strong>{t("aiUsageTitle")}</strong>
-						<p>{t("aiInputTokens")}: {usage?.inputTokens === null || usage?.inputTokens === undefined ? t("aiUnknown") : usage.inputTokens.toLocaleString()}</p>
-						<p>{t("aiOutputTokens")}: {usage?.outputTokens === null || usage?.outputTokens === undefined ? t("aiUnknown") : usage.outputTokens.toLocaleString()}</p>
+						<p>{t("aiInputTokens")}: {usage?.inputTokens === null || usage?.inputTokens === undefined ? t("aiUnknown") : usage.inputTokens.toLocaleString(i18n.language)}</p>
+						<p>{t("aiOutputTokens")}: {usage?.outputTokens === null || usage?.outputTokens === undefined ? t("aiUnknown") : usage.outputTokens.toLocaleString(i18n.language)}</p>
 						<p>{t("aiEstimatedCost")}: {estimate === null ? t("aiUnknown") : `${priceCurrency.trim()} ${Number(estimate.toPrecision(6))}`}</p>
 						{modelMismatch && <p>{t("aiModelMismatch", { model: returnedModel })}</p>}
 						<p>{t("aiCostBoundary")}</p>

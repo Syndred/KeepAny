@@ -35,4 +35,10 @@ describe("two-language UI copy", () => {
 			}
 		}
 	});
+
+	it("keeps English UI and sample copy free of Chinese characters", () => {
+		for (const [key, value] of Object.entries(resources.en.translation)) {
+			expect(value, key).not.toMatch(/\p{Script=Han}/u);
+		}
+	});
 });

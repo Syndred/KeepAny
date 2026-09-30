@@ -26,7 +26,7 @@ async function fingerprint(key: Uint8Array): Promise<string> {
 
 export function WorkspaceKeyPanel({ endpoint, accountId, accessMode, accessToken, hasAccess, workspaceId, workspaceKey, canIssue, otherBusy,
 	onBusyChange, openClient, onRecovered }: Props) {
-	const { t } = useTranslation();
+	const { t, i18n } = useTranslation();
 	const [envelopes, setEnvelopes] = useState<KeyEnvelopeMetadata[]>([]);
 	const [issued, setIssued] = useState<{ kind: "recovery" | "join"; credential: string; envelope: KeyEnvelopeMetadata } | null>(null);
 	const [kind, setKind] = useState<"recovery" | "join">("recovery");
@@ -166,14 +166,14 @@ export function WorkspaceKeyPanel({ endpoint, accountId, accessMode, accessToken
 			<p>{t("keyAccessEnvelopeId")}: <code>{issued.envelope.envelopeId}</code></p>
 			<p>{t("keyAccessCredential")}: <code>{issued.credential}</code></p>
 			<p>{t("keyAccessFingerprint")}: <code>{issued.envelope.keyFingerprint}</code></p>
-			{issued.envelope.expiresAt && <p>{t("keyAccessExpires")}: {new Date(issued.envelope.expiresAt).toLocaleString()}</p>}
+			{issued.envelope.expiresAt && <p>{t("keyAccessExpires")}: {new Date(issued.envelope.expiresAt).toLocaleString(i18n.language)}</p>}
 		</div>}
 		{envelopes.length > 0 && <div className="key-access-list">
 			<h3>{t("keyAccessActive")}</h3>
 			{envelopes.map(item => <div className="notice" key={item.envelopeId}>
 				<p>{t(item.kind === "recovery" ? "keyAccessRecovery" : "keyAccessJoin")}: <code>{item.envelopeId}</code></p>
 				<p>{t("keyAccessFingerprint")}: <code>{item.keyFingerprint}</code></p>
-				{item.expiresAt && <p>{t("keyAccessExpires")}: {new Date(item.expiresAt).toLocaleString()}</p>}
+				{item.expiresAt && <p>{t("keyAccessExpires")}: {new Date(item.expiresAt).toLocaleString(i18n.language)}</p>}
 				<Button disabled={busy || otherBusy} onClick={() => revoke(item.envelopeId)}>{t("keyAccessRevoke")}</Button>
 			</div>)}
 		</div>}

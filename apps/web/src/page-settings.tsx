@@ -12,6 +12,7 @@ import { WorkspaceKeyPanel } from "./components/WorkspaceKeyPanel";
 import { McpPanel } from "./components/McpPanel";
 import { Button } from "./components/ui/button";
 import { seed } from "./data";
+import { COLLECTIONS_PREFERENCE_ID } from "./collection-model";
 import { PageTitle, useAppContext } from "./view-shared";
 import "./settings-intake-restoration.css";
 import { Select, SelectOption } from "./components/ui/select";
@@ -443,8 +444,8 @@ export function SettingsPage() {
 							void i18n.changeLanguage(value);
 						}}
 					>
-						<SelectOption value="zh-CN">简体中文</SelectOption>
-						<SelectOption value="en">English</SelectOption>
+						<SelectOption value="zh-CN">{t("languageChinese")}</SelectOption>
+						<SelectOption value="en">{t("languageEnglish")}</SelectOption>
 					</Select>
 				</section>
 				<section className="card padded">
@@ -586,11 +587,11 @@ export function SettingsPage() {
 				<h2>{t("trial")}</h2>
 				<p>{t("emptyHint")}</p>
 				<Button
-					disabled={data.assets.length > 0 || seeding}
+					disabled={data.loading || data.assets.length > 0 || seeding}
 					onClick={async () => {
 						setSeeding(true);
 						try {
-							await seed();
+							await seed(t, i18n.language, data.preferences.find(preference => preference.id === COLLECTIONS_PREFERENCE_ID)?.value);
 							notify(t("saved"));
 						} catch {
 							notify(t("error"));

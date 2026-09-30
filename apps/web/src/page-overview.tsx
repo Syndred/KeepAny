@@ -79,7 +79,7 @@ export function Overview() {
       return <Link key={project.id} className="overview-project-card" to="/assets/$kind/$id" params={{ kind: "project", id: project.id }}>
         <div className="overview-project-top"><span className="overview-project-mark">{project.name.trim().charAt(0).toLocaleUpperCase() || "K"}</span><span className="chip">{t(project.status)}</span></div>
         <h3>{project.name}</h3><p>{[project.description, project.url].filter(Boolean).join(" · ") || t("project")}</p>
-        <div className="overview-project-counts"><span><strong>{linked.length}</strong> {t("overviewLinkedAssets")}</span><span><strong>{linked.filter((asset) => asset.kind === "account").length}</strong> {t("account")}</span><span><strong>{linked.filter((asset) => asset.kind === "subscription").length}</strong> {t("subscription")}</span></div>
+        <div className="overview-project-counts"><span><strong>{linked.length}</strong> {t("overviewLinkedAssets", { count: linked.length })}</span><span><strong>{linked.filter((asset) => asset.kind === "account").length}</strong> {t("overviewAccountLabel", { count: linked.filter((asset) => asset.kind === "account").length })}</span><span><strong>{linked.filter((asset) => asset.kind === "subscription").length}</strong> {t("overviewSubscriptionLabel", { count: linked.filter((asset) => asset.kind === "subscription").length })}</span></div>
       </Link>;
     })}</div> : <div className="overview-project-empty"><p>{t("overviewNoProjects")}</p><Link className="button" to="/assets/$kind" params={{ kind: "project" }}>{t("add")} {t("project")}</Link></div>}
   </main>;

@@ -12,3 +12,4 @@ test-results/
 work/
 release/.local-server.pid
 release/.local-server.log
+release/.local-demo-server.pid

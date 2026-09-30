@@ -11,6 +11,7 @@ export default defineConfig({
 	testDir: "./tests/e2e",
 	testMatch: [
 		"local-core.spec.ts",
+		"english-demo-release.spec.ts",
 		"production-offline.spec.ts",
 		"intake-pdf.spec.ts",
 		"intake-expense.spec.ts",
