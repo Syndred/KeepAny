@@ -10,7 +10,11 @@ import { assertReviewedAssetReferences, cancelReviewedExpenseConfirmation, confi
   parseReviewedCandidates, pendingReviewedExpenseConfirmations, replayReviewedExpense, sameReviewedCandidate,
   type PendingReviewedExpenseConfirmation, type ReviewedCandidate, type ReviewedImportJournal } from './intake-review';
 import { pendingSubscriptionSave, replaySubscriptionSave, subscriptionSaveComplete, type PendingSubscriptionSave, type SubscriptionLink, type SubscriptionSaveJournal } from './subscription-save';
+import { assertCategoryMutationAllowed, cancelCategoryEdit as cancelCategoryEditIntent, deleteCustomCategory as deleteCustomCategoryIntent,
+  editCustomCategory as editCustomCategoryIntent, pendingCategoryEdit, replayCategoryEdit, withCategoryMutationGate,
+  type CategoryEditJournal, type DeleteCustomCategoryInput, type EditCustomCategoryInput, type PendingCategoryEdit } from './category-edit';
 export type { PendingSubscriptionSave, SubscriptionLink } from './subscription-save';
+export type { DeleteCustomCategoryInput, EditCustomCategoryInput, PendingCategoryEdit } from './category-edit';
 
 // This transport shape is consumed by the web app's RxDB observer.
 export interface RecordRow { id: string; type: EntityType; payload: string; updatedAt: number }
@@ -77,6 +81,7 @@ class FileStore extends Dexie {
   archiveMerge!: Table<ArchiveMergeJournal, string>;
   subscriptionSaveJournal!: Table<SubscriptionSaveJournal, string>;
   intakeReview!: Table<ReviewedCandidate, string>;
+  categoryEditJournal!: Table<CategoryEditJournal, string>;
   constructor(name: string) {
     super(`${name}-files-v1`);
     this.version(1).stores({ blobs: 'id', journal: 'id' });
@@ -102,6 +107,10 @@ class FileStore extends Dexie {
       scopedBase: 'id, scope', scopedMeta: 'id', scopedOutbox: 'id, scope', scopedPull: 'id', datasetBinding: 'id',
       scopedAttachmentUploads: 'id, scope', renewalJournal: 'id, assetId', archiveMerge: 'id', subscriptionSaveJournal: 'id, &assetId',
       intakeReview: 'id, fileHash, status' });
+    this.version(11).stores({ blobs: 'id', journal: 'id', importJournal: 'id', syncBase: 'id', syncMeta: 'id', pullJournal: 'id',
+      scopedBase: 'id, scope', scopedMeta: 'id', scopedOutbox: 'id, scope', scopedPull: 'id', datasetBinding: 'id',
+      scopedAttachmentUploads: 'id, scope', renewalJournal: 'id, assetId', archiveMerge: 'id', subscriptionSaveJournal: 'id, &assetId',
+      intakeReview: 'id, fileHash, status', categoryEditJournal: 'id' });
   }
 }
 
@@ -109,12 +118,12 @@ interface DefaultRepositoryState {
   fileStore?: FileStore;
   resources?: Promise<{ db: RxDatabase; fileStore: FileStore; recoveryState?: RepositoryRecoveryState }>;
 }
-interface RepositoryRecoveryState { syncError: string | null; restoreError: string | null; renewalError: string | null; subscriptionError?: string | null; intakeError?: string | null; intakeExpenseError?: string | null }
+interface RepositoryRecoveryState { syncError: string | null; restoreError: string | null; renewalError: string | null; subscriptionError?: string | null; intakeError?: string | null; intakeExpenseError?: string | null; categoryEditError?: string | null }
 // Vite HMR re-evaluates this module while the old RxDB remains open. Keep the resource across reloads.
 const defaultGlobal = globalThis as typeof globalThis & { __keepanyLocalDbState?: DefaultRepositoryState };
 if (!defaultGlobal.__keepanyLocalDbState) defaultGlobal.__keepanyLocalDbState = {};
 const defaultState = defaultGlobal.__keepanyLocalDbState;
-if (!defaultState.fileStore?.subscriptionSaveJournal || !defaultState.fileStore?.intakeReview) {
+if (!defaultState.fileStore?.subscriptionSaveJournal || !defaultState.fileStore?.intakeReview || !defaultState.fileStore?.categoryEditJournal) {
   // A Vite HMR module may retain an older Dexie handle. Rebind the shared
   // RxDB handle to the upgraded file store.
   defaultState.fileStore?.close();
@@ -176,6 +185,82 @@ export class LocalRepository {
   set intakeReviewMigrationError(value: string | null) { this.recoveryState.intakeError = value; }
   get intakeExpenseRecoveryError(): string | null { return this.recoveryState.intakeExpenseError ?? null; }
   set intakeExpenseRecoveryError(value: string | null) { this.recoveryState.intakeExpenseError = value; }
+  get categoryEditRecoveryError(): string | null { return this.recoveryState.categoryEditError ?? null; }
+  set categoryEditRecoveryError(value: string | null) { this.recoveryState.categoryEditError = value; }
+
+  async getPendingCategoryEdit(kind: AssetKind): Promise<PendingCategoryEdit | null> {
+    return pendingCategoryEdit(this.fileStore, kind);
+  }
+
+  private async settleCategoryEdits(kind?: AssetKind, expectedOperationId?: string): Promise<void> {
+    const pendingKinds = kind ? [kind] : (await this.fileStore.categoryEditJournal.toArray()).map(entry => entry.id);
+    for (const pendingKind of pendingKinds) {
+      try { await replayCategoryEdit(this.db, this.fileStore, pendingKind, expectedOperationId); }
+      catch (error) {
+        if (error instanceof Error && error.message === 'category-stale') throw error;
+        this.categoryEditRecoveryError = error instanceof Error && error.message === 'category-edit-conflict' ? error.message : 'category-edit-pending';
+        throw Error(this.categoryEditRecoveryError);
+      }
+    }
+    if (!(await this.fileStore.categoryEditJournal.count())) this.categoryEditRecoveryError = null;
+  }
+
+  async retryCategoryEdit(kind: AssetKind, expectedOperationId?: string): Promise<void> {
+    await withRenewalLock(`keepany-renewal:${this.db.name}`, () => this.settleCategoryEdits(kind, expectedOperationId));
+  }
+
+  async retryAllCategoryEdits(): Promise<void> {
+    await withRenewalLock(`keepany-renewal:${this.db.name}`, () => this.settleCategoryEdits());
+  }
+
+  async cancelCategoryEdit(kind: AssetKind, expectedOperationId?: string): Promise<void> {
+    await withRenewalLock(`keepany-renewal:${this.db.name}`, async () => {
+      try {
+        await cancelCategoryEditIntent(this.db, this.fileStore, kind, expectedOperationId);
+        if (!(await this.fileStore.categoryEditJournal.count())) this.categoryEditRecoveryError = null;
+      } catch (error) {
+        if (error instanceof Error && error.message === 'category-stale') throw error;
+        this.categoryEditRecoveryError = error instanceof Error && error.message === 'category-edit-conflict' ? error.message : 'category-edit-pending';
+        throw Error(this.categoryEditRecoveryError);
+      }
+    });
+  }
+
+  async editCustomCategory(input: EditCustomCategoryInput): Promise<Category> {
+    return this.changeCustomCategory(input, false);
+  }
+
+  async deleteCustomCategory(input: DeleteCustomCategoryInput): Promise<Category> {
+    return this.changeCustomCategory(input, true);
+  }
+
+  private async changeCustomCategory(input: EditCustomCategoryInput | DeleteCustomCategoryInput, deleting: boolean): Promise<Category> {
+    return withRenewalLock(`keepany-renewal:${this.db.name}`, async () => {
+      await this.settleRenewalJournals();
+      await this.settleSubscriptionSaves();
+      await this.settleReviewedExpenseConfirmations();
+      try {
+        const store = {
+          categoryEditJournal: this.fileStore.categoryEditJournal,
+          transaction: this.fileStore.transaction.bind(this.fileStore),
+          recoveryTables: [this.fileStore.journal, this.fileStore.importJournal, this.fileStore.pullJournal,
+            this.fileStore.scopedPull, this.fileStore.scopedOutbox, this.fileStore.scopedAttachmentUploads,
+            this.fileStore.archiveMerge, this.fileStore.renewalJournal, this.fileStore.subscriptionSaveJournal],
+        };
+        const result = deleting ? await deleteCustomCategoryIntent(this.db, store, input)
+          : await editCustomCategoryIntent(this.db, store, input as EditCustomCategoryInput);
+        if (!(await this.fileStore.categoryEditJournal.count())) this.categoryEditRecoveryError = null;
+        return result;
+      } catch (error) {
+        if (error instanceof Error && error.message === 'category-stale') throw error;
+        if (await this.fileStore.categoryEditJournal.get(input.expectedCategory.kind)) {
+          this.categoryEditRecoveryError = error instanceof Error && error.message === 'category-edit-conflict' ? error.message : 'category-edit-pending';
+          throw Error(this.categoryEditRecoveryError);
+        }
+        throw error;
+      }
+    });
+  }
 
   async retryIntakeReviewMigration(): Promise<void> {
     if (this.db.name !== 'keepany-v1') return;
@@ -277,8 +362,11 @@ export class LocalRepository {
     const trimmed = name.trim();
     const normalized = normalizeCategoryName(trimmed);
     if (!normalized) throw Error('category-name');
-    return withRenewalLock(`keepany-category:${this.db.name}:${kind}:${normalized}`, async () => {
-      const categories = await this.list<Category>('category', true);
+    return withRenewalLock(`keepany-category:${this.db.name}:${kind}:${normalized}`, () =>
+      withCategoryMutationGate(this.db, this.fileStore, [{ type: 'category', id: '', kind }], async () => {
+      const query = this.db.records.find({ selector: { type: 'category' } });
+      const categories = (await this.db.records.storageInstance.query(query.getPreparedQuery())).documents
+        .map((row: RecordRow) => entitySchemas.category.parse(JSON.parse(row.payload)));
       if (categories.some(category => category.kind === kind && !category.deleted &&
         normalizeCategoryName(category.name) === normalized)) throw Error('category-duplicate');
       const hash = await sha(new TextEncoder().encode(`${kind}:${normalized}`));
@@ -296,7 +384,7 @@ export class LocalRepository {
         throw error;
       }
       return category;
-    });
+    }));
   }
 
   async saveAssetIfCurrent(expected: Asset, next: Asset): Promise<RecordRow> {
@@ -370,19 +458,24 @@ export class LocalRepository {
       // competing pending intents for the same subscription.
       const journal: SubscriptionSaveJournal = { id, assetId: next.id,
         expectedMarker: expected?.lastSubscriptionSaveId ?? '', next: rowFor('asset', next), relations };
+      for (const fileId of next.attachments) if (!(await this.fileStore.blobs.get(fileId))) throw Error('attachment-missing');
       try {
-        await this.fileStore.subscriptionSaveJournal.add(journal);
+        await this.fileStore.transaction('rw', this.fileStore.subscriptionSaveJournal, this.fileStore.categoryEditJournal, async () => {
+          await assertCategoryMutationAllowed(this.db, this.fileStore, [{ type: 'asset', id: next.id, kind: next.kind }]);
+          await this.fileStore.subscriptionSaveJournal.add(journal);
+        });
       } catch (error) {
         if (await this.getPendingSubscriptionSave(next.id)) throw Error('subscription-relations-pending');
         throw error;
       }
       try {
-        await this.fileStore.transaction('rw', this.fileStore.subscriptionSaveJournal, async () => {
+        await this.fileStore.transaction('rw', this.fileStore.subscriptionSaveJournal, this.fileStore.categoryEditJournal, async () => {
+          await assertCategoryMutationAllowed(this.db, this.fileStore, [{ type: 'asset', id: next.id, kind: next.kind }]);
           // A second tab may cancel an uncommitted intent before this transaction
           // starts. Never commit the asset after its recovery record has disappeared.
           if (!(await this.fileStore.subscriptionSaveJournal.get(id))) throw Error('asset-stale');
-          await Dexie.waitFor(Dexie.ignoreTransaction(() => this.saveUnlocked('asset', next,
-            expected ? rowFor('asset', expected).payload : null, true)));
+          await Dexie.waitFor(Dexie.ignoreTransaction(() => this.saveEntityUnlocked('asset', next,
+            expected ? rowFor('asset', expected).payload : null, true, true)));
         });
       } catch (error) {
         try {
@@ -437,6 +530,16 @@ export class LocalRepository {
   }
 
   private async saveUnlocked(type: EntityType, value: unknown, expectedPayload?: string | null, subscriptionSave = false): Promise<RecordRow> {
+    if (!['asset', 'category', 'preference'].includes(type)) return this.saveEntityUnlocked(type, value, expectedPayload, subscriptionSave);
+    const entity = parseEntity(type, value) as Asset | Category | { id: string };
+    if (type === 'asset') for (const id of (entity as Asset).attachments) {
+      if (!(await this.fileStore.blobs.get(id))) throw Error('attachment-missing');
+    }
+    return withCategoryMutationGate(this.db, this.fileStore, [{ type, id: entity.id, ...('kind' in entity ? { kind: entity.kind } : {}) }],
+      () => this.saveEntityUnlocked(type, value, expectedPayload, subscriptionSave, true));
+  }
+
+  private async saveEntityUnlocked(type: EntityType, value: unknown, expectedPayload?: string | null, subscriptionSave = false, attachmentsChecked = false): Promise<RecordRow> {
     if (type === 'asset' && this.renewalRecoveryError) throw Error('renewal-recovery-pending');
     const next = rowFor(type, value);
     const entity = parsedPayload(next) as Record<string, unknown>;
@@ -450,7 +553,7 @@ export class LocalRepository {
           !canRecordProjectWorkflowTask(task, round)) throw Error('workflow-stale');
       }
     }
-    if (type === 'asset') {
+    if (type === 'asset' && !attachmentsChecked) {
       for (const id of entity.attachments as string[]) {
         if (!(await this.fileStore.blobs.get(id))) throw Error('attachment-missing');
       }
@@ -467,6 +570,10 @@ export class LocalRepository {
       await current.incrementalModify((data: RecordRow) => {
         if (expectedPayload === null || (expectedPayload !== undefined && JSON.stringify(parsedPayload(data)) !== expectedPayload)) throw Error(type === 'task' ? 'task-stale' : type === 'preference' ? 'preference-stale' : type === 'submission' ? 'submission-stale' : 'asset-stale');
         if (parsedPayload(data).deleted && !parsedPayload(next).deleted) throw Error('tombstone-restore-required');
+        if (type === 'category') {
+          const previous = parsedPayload(data) as Category, proposed = parsedPayload(next) as Category;
+          if (previous.kind !== proposed.kind || previous.name !== proposed.name || previous.order !== proposed.order) throw Error('category-stale');
+        }
         if (type === 'asset') {
           const previous = parsedPayload(data) as Asset;
           const proposed = parsedPayload(next) as Asset;
@@ -491,7 +598,7 @@ export class LocalRepository {
       } catch (error) {
         if (!(await this.db.records.findOne(next.id).exec())) throw error;
         if (expectedPayload !== undefined) throw Error(type === 'task' ? 'task-stale' : type === 'preference' ? 'preference-stale' : type === 'submission' ? 'submission-stale' : 'asset-stale');
-        return this.saveUnlocked(type, value);
+        return this.saveEntityUnlocked(type, value, undefined, subscriptionSave, attachmentsChecked);
       }
     }
     return next;
@@ -527,6 +634,7 @@ export class LocalRepository {
   async setItemArchived(id: string, expectedStatus: 'active' | 'archived'): Promise<Asset> {
     return withRenewalLock(`keepany-renewal:${this.db.name}`, async () => {
       await this.settleRenewalJournals();
+      return withCategoryMutationGate(this.db, this.fileStore, [{ type: 'asset', id, kind: 'item' }], async () => {
       const current = await this.db.records.findOne(key('asset', id)).exec();
       if (!current) throw Error('item-stale');
       let result: Asset | null = null;
@@ -539,14 +647,14 @@ export class LocalRepository {
       });
       if (!result) throw Error('item-stale');
       return result;
+      });
     });
   }
 
   // New records only. A durable journal rolls back partial writes after errors or interruption.
   async saveBatch(items: ReadonlyArray<{ type: EntityType; value: unknown }>): Promise<number> {
     return items.some(item => item.type === 'task')
-      ? withRenewalLock(`keepany-task:${this.db.name}`, () => this.saveBatchUnlocked(items))
-      : this.saveBatchUnlocked(items);
+      ? withRenewalLock(`keepany-task:${this.db.name}`, () => this.saveBatchUnlocked(items)) : this.saveBatchUnlocked(items);
   }
 
   private async saveBatchUnlocked(items: ReadonlyArray<{ type: EntityType; value: unknown }>): Promise<number> {
@@ -588,11 +696,22 @@ export class LocalRepository {
       }
     }
     const id = crypto.randomUUID();
-    await this.fileStore.importJournal.put({ id, rows });
+    const targets = rows.map(row => {
+      const value = parsedPayload(row) as Asset | Category | { id: string };
+      return { type: row.type, id: value.id, ...('kind' in value ? { kind: value.kind } : {}) };
+    });
+    await this.fileStore.transaction('rw', this.fileStore.categoryEditJournal, this.fileStore.importJournal, async () => {
+      await assertCategoryMutationAllowed(this.db, this.fileStore, targets);
+      await this.fileStore.importJournal.put({ id, rows });
+    });
     try {
-      const result = await this.db.records.bulkInsert(rows);
-      if (result.error.length) throw Error('batch-insert-failed');
-      await this.fileStore.importJournal.delete(id);
+      await this.fileStore.transaction('rw', this.fileStore.categoryEditJournal, this.fileStore.importJournal, async () => {
+        await assertCategoryMutationAllowed(this.db, this.fileStore, targets);
+        if (!(await this.fileStore.importJournal.get(id))) throw Error('batch-insert-failed');
+        const result = await Dexie.waitFor(Dexie.ignoreTransaction(() => this.db.records.bulkInsert(rows)));
+        if (result.error.length) throw Error('batch-insert-failed');
+        await this.fileStore.importJournal.delete(id);
+      });
       return rows.length;
     } catch (error) {
       await rollbackImport(this.db, this.fileStore, id);
@@ -688,17 +807,24 @@ export class LocalRepository {
         const nextRow = rowFor('asset', next);
         const historyRow = rowFor('history', event);
         const journalId = crypto.randomUUID();
-        await this.fileStore.renewalJournal.add({ id: journalId, assetId: expected.id,
-          expectedPayload: currentRow.payload, next: nextRow, history: historyRow });
+        await this.fileStore.transaction('rw', this.fileStore.categoryEditJournal, this.fileStore.renewalJournal, async () => {
+          await assertCategoryMutationAllowed(this.db, this.fileStore, [{ type: 'asset', id: expected.id, kind: expected.kind }]);
+          await this.fileStore.renewalJournal.add({ id: journalId, assetId: expected.id,
+            expectedPayload: currentRow.payload, next: nextRow, history: historyRow });
+        });
         try {
-          const result = await this.db.records.storageInstance.bulkWrite([
-            { previous: current, document: { ...current, ...nextRow } },
-            { document: { ...historyRow, _deleted: false, _attachments: {} } },
-          ], `keepany-${kind}`);
-          if (result.error.length) throw Error(result.error.some(error => error.status === 409) ?
-            (kind === 'item' ? 'item-stale' : 'renewal-stale') : `${kind}-write-failed`);
-          // A failed journal cleanup leaves a committed pair that replay can safely recognize.
-          await this.fileStore.renewalJournal.delete(journalId).catch(() => {});
+          await this.fileStore.transaction('rw', this.fileStore.categoryEditJournal, this.fileStore.renewalJournal, async () => {
+            await assertCategoryMutationAllowed(this.db, this.fileStore, [{ type: 'asset', id: expected.id, kind: expected.kind }]);
+            if (!(await this.fileStore.renewalJournal.get(journalId))) throw Error(kind === 'item' ? 'item-stale' : 'renewal-stale');
+            const result = await Dexie.waitFor(Dexie.ignoreTransaction(() => this.db.records.storageInstance.bulkWrite([
+              { previous: current, document: { ...current, ...nextRow } },
+              { document: { ...historyRow, _deleted: false, _attachments: {} } },
+            ], `keepany-${kind}`)));
+            if (result.error.length) throw Error(result.error.some(error => error.status === 409) ?
+              (kind === 'item' ? 'item-stale' : 'renewal-stale') : `${kind}-write-failed`);
+            // A failed cleanup leaves a committed pair that replay can recognize.
+            await this.fileStore.renewalJournal.delete(journalId).catch(() => {});
+          });
           return;
         } catch (error) {
           let outcome: 'committed' | 'cancelled';
@@ -760,6 +886,7 @@ export class LocalRepository {
   }
 
   private async assertArchiveMergeSyncAllowed(): Promise<void> {
+    if (await this.fileStore.categoryEditJournal.count()) throw Error('category-edit-pending');
     if (await this.fileStore.subscriptionSaveJournal.count()) throw Error('subscription-relations-pending');
     if ((await this.fileStore.importJournal.toArray()).some(entry => entry.reviewedExpense)) throw Error('review-expense-pending');
     const pending = await this.fileStore.archiveMerge.get('active');
@@ -888,8 +1015,9 @@ export class LocalRepository {
     if (operation.id !== row.id || operation.kind !== row.type || operation.expectedVersion !==
       ((await this.scopedBaseFor(scope, row.id))?.version ?? 0) || operation.tombstone !== Boolean(parsedPayload(row).deleted)) throw Error('outbox-context');
     const id = scopedKey(scope, row.id);
-    return this.fileStore.transaction('rw', this.fileStore.archiveMerge, this.fileStore.scopedOutbox,
-      this.fileStore.subscriptionSaveJournal, this.fileStore.importJournal, async () => {
+    return this.fileStore.transaction('rw', [this.fileStore.archiveMerge, this.fileStore.scopedOutbox,
+      this.fileStore.subscriptionSaveJournal, this.fileStore.importJournal, this.fileStore.categoryEditJournal], async () => {
+      if (await this.fileStore.categoryEditJournal.count()) throw Error('category-edit-pending');
       if (await this.fileStore.subscriptionSaveJournal.count()) throw Error('subscription-relations-pending');
       if ((await this.fileStore.importJournal.toArray()).some(entry => entry.reviewedExpense)) throw Error('review-expense-pending');
       const pending = await this.fileStore.archiveMerge.get('active');
@@ -946,8 +1074,9 @@ export class LocalRepository {
     if (previous && (previous.change.sequence !== change.sequence || previous.change.row.payload !== change.row.payload)) throw Error('pull-pending');
     if (!previous) {
       const current = await this.db.records.findOne(change.row.id).exec();
-      await this.fileStore.transaction('rw', this.fileStore.archiveMerge, this.fileStore.scopedPull,
-        this.fileStore.subscriptionSaveJournal, this.fileStore.importJournal, async () => {
+      await this.fileStore.transaction('rw', [this.fileStore.archiveMerge, this.fileStore.scopedPull,
+        this.fileStore.subscriptionSaveJournal, this.fileStore.importJournal, this.fileStore.categoryEditJournal], async () => {
+        if (await this.fileStore.categoryEditJournal.count()) throw Error('category-edit-pending');
         if (await this.fileStore.subscriptionSaveJournal.count()) throw Error('subscription-relations-pending');
         if ((await this.fileStore.importJournal.toArray()).some(entry => entry.reviewedExpense)) throw Error('review-expense-pending');
         const pending = await this.fileStore.archiveMerge.get('active');
@@ -994,7 +1123,11 @@ export class LocalRepository {
       validateRow(change.row);
     }
     const id = crypto.randomUUID();
-    await this.fileStore.pullJournal.put({ id, cursorStart, changes });
+    await this.fileStore.transaction('rw', this.fileStore.pullJournal, this.fileStore.categoryEditJournal, async () => {
+      if (await this.fileStore.categoryEditJournal.count()) throw Error('category-edit-pending');
+      if (await this.fileStore.pullJournal.count()) throw Error('pull-pending');
+      await this.fileStore.pullJournal.put({ id, cursorStart, changes });
+    });
     try {
       await replayPullJournal(this.db, this.fileStore, id);
       return cursorStart + changes.length;
@@ -1035,6 +1168,11 @@ export class LocalRepository {
   }
 
   private async restoreEntityUnlocked(type: EntityType, id: string): Promise<RecordRow> {
+    if (!['asset', 'category', 'preference'].includes(type)) return this.restoreEntityRecord(type, id);
+    return withCategoryMutationGate(this.db, this.fileStore, [{ type, id }], () => this.restoreEntityRecord(type, id));
+  }
+
+  private async restoreEntityRecord(type: EntityType, id: string): Promise<RecordRow> {
     const document = await this.db.records.findOne(key(type, id)).exec();
     if (!document) throw Error('not-in-trash');
     const previous = parsedPayload(canonical(document)) as Record<string, unknown>;
@@ -1057,6 +1195,10 @@ export class LocalRepository {
   // An exact base snapshot prevents silent last-write-wins. Replayed writes are idempotent.
   async applyIncoming(type: EntityType, value: unknown, expectedPayload: string | null): Promise<'applied' | 'duplicate' | 'conflict'> {
     await this.assertArchiveMergeSyncAllowed();
+    return withCategoryMutationGate(this.db, this.fileStore, [], () => this.applyIncomingUnlocked(type, value, expectedPayload), true);
+  }
+
+  private async applyIncomingUnlocked(type: EntityType, value: unknown, expectedPayload: string | null): Promise<'applied' | 'duplicate' | 'conflict'> {
     const next = rowFor(type, value);
     const existing = await this.db.records.findOne(next.id).exec();
     if (existing) {
@@ -1082,7 +1224,7 @@ export class LocalRepository {
       return 'applied';
     } catch (error) {
       if (!(await this.db.records.findOne(next.id).exec())) throw error;
-      return this.applyIncoming(type, value, expectedPayload);
+      return this.applyIncomingUnlocked(type, value, expectedPayload);
     }
   }
 
@@ -1148,13 +1290,15 @@ export class LocalRepository {
 
   private async protectedFileIds(): Promise<Set<string>> {
     const rows = await this.allRecords();
-    const [restores, imports, pulls, scopedOutbox, scopedPull, renewals, subscriptionSaves] = await Promise.all([
+    const [restores, imports, pulls, scopedOutbox, scopedPull, renewals, subscriptionSaves, categoryEdits] = await Promise.all([
       this.fileStore.journal.toArray(), this.fileStore.importJournal.toArray(), this.fileStore.pullJournal.toArray(),
       this.fileStore.scopedOutbox.toArray(), this.fileStore.scopedPull.toArray(), this.fileStore.renewalJournal.toArray(),
       this.fileStore.subscriptionSaveJournal.toArray(),
+      this.fileStore.categoryEditJournal.toArray(),
     ]);
     for (const entry of restores) rows.push(...entry.rows);
     for (const entry of imports) rows.push(...entry.rows);
+    for (const entry of categoryEdits) for (const change of entry.changes) rows.push(change.before, change.after);
     for (const entry of pulls) rows.push(...entry.changes.map(change => change.row));
     for (const entry of scopedOutbox) rows.push(entry.row);
     for (const entry of scopedPull) rows.push(entry.change.row);
@@ -1179,6 +1323,7 @@ export class LocalRepository {
     if (this.intakeReviewMigrationError) await this.retryIntakeReviewMigration();
     await this.retryAllSubscriptionSaves();
     await this.retryReviewedExpenseConfirmations();
+    await this.retryAllCategoryEdits();
     if (await this.pendingArchiveMerge()) throw Error('archive-merge-pending');
     const { rows, intakeReview } = await inspectArchive(bytes);
     const target = await this.allRecords();
@@ -1209,6 +1354,7 @@ export class LocalRepository {
       await this.settleRenewalJournals();
       await this.settleSubscriptionSaves();
       await this.settleReviewedExpenseConfirmations();
+      await this.settleCategoryEdits();
       if (await this.pendingArchiveMerge()) throw Error('archive-merge-pending');
       if (!(await this.fileStore.datasetBinding.get('active'))) throw Error('archive-merge-unbound');
       if (await this.fileStore.journal.count() || await this.fileStore.importJournal.count() ||
@@ -1290,7 +1436,8 @@ export class LocalRepository {
         targetFingerprint: expectedFingerprint, changes, intakeReviewChanges, addedFileIds, insertedFileIds: [] };
       await this.fileStore.transaction('rw', [this.fileStore.archiveMerge, this.fileStore.scopedOutbox,
         this.fileStore.scopedPull, this.fileStore.scopedAttachmentUploads, this.fileStore.intakeReview,
-        this.fileStore.importJournal, this.fileStore.journal], async () => {
+        this.fileStore.importJournal, this.fileStore.journal, this.fileStore.categoryEditJournal], async () => {
+          if (await this.fileStore.categoryEditJournal.count()) throw Error('category-edit-pending');
           if (await this.fileStore.archiveMerge.get('active')) throw Error('archive-merge-pending');
           if (await this.fileStore.importJournal.count() || await this.fileStore.journal.count()) throw Error('archive-merge-recovery-pending');
           if (await this.fileStore.scopedOutbox.count() || await this.fileStore.scopedPull.count() ||
@@ -1364,6 +1511,7 @@ export class LocalRepository {
       await this.settleRenewalJournals();
       await this.settleSubscriptionSaves();
       await this.settleReviewedExpenseConfirmations();
+      await this.settleCategoryEdits();
       const rows = await this.allRecords();
       const intakeReview = parseReviewedCandidates(await this.fileStore.intakeReview.toArray());
       assertReviewedAssetReferences(intakeReview, assetIdsIn(rows), historyByIdIn(rows));
@@ -1384,7 +1532,9 @@ export class LocalRepository {
       }
       // A second tab may change records while attachments are read. Fail the
       // export instead of returning a mixed record/image snapshot.
-      await this.fileStore.transaction('r', this.fileStore.intakeReview, this.fileStore.importJournal, async () => {
+      await this.fileStore.transaction('r', this.fileStore.intakeReview, this.fileStore.importJournal,
+        this.fileStore.categoryEditJournal, async () => {
+        if (await this.fileStore.categoryEditJournal.count()) throw Error('category-edit-pending');
         if ((await this.fileStore.importJournal.toArray()).some(entry => entry.reviewedExpense)) throw Error('review-expense-pending');
         const actual = await Dexie.waitFor(Dexie.ignoreTransaction(() => this.allRecords()));
         if (JSON.stringify(actual.sort((a, b) => a.id.localeCompare(b.id))) !==
@@ -1418,6 +1568,7 @@ export class LocalRepository {
       await this.settleRenewalJournals();
       await this.settleSubscriptionSaves();
       await this.settleReviewedExpenseConfirmations();
+      await this.settleCategoryEdits();
       if (await this.pendingArchiveMerge()) throw Error('archive-merge-pending');
       if (await this.fileStore.journal.count()) throw Error('restore-recovery-pending');
       const { rows, intakeReview, manifest, entries } = await inspectArchive(bytes);
@@ -1435,7 +1586,9 @@ export class LocalRepository {
       }
       const journalId = crypto.randomUUID();
       await this.fileStore.transaction('rw', [this.fileStore.blobs, this.fileStore.journal,
-        this.fileStore.intakeReview, this.fileStore.importJournal, this.fileStore.archiveMerge], async () => {
+        this.fileStore.intakeReview, this.fileStore.importJournal, this.fileStore.archiveMerge,
+        this.fileStore.categoryEditJournal], async () => {
+        if (await this.fileStore.categoryEditJournal.count()) throw Error('category-edit-pending');
         if ((await this.fileStore.importJournal.toArray()).some(entry => entry.reviewedExpense)) throw Error('review-expense-pending');
         if (await this.fileStore.archiveMerge.count()) throw Error('archive-merge-pending');
         if (await this.fileStore.journal.count()) throw Error('restore-recovery-pending');
@@ -1863,6 +2016,8 @@ export async function openLocalRepository(name: string): Promise<LocalRepository
     });
     try { await repository.retryReviewedExpenseConfirmations(); }
     catch { /* Keep the frozen receipt intent visible without blocking unrelated local CRUD. */ }
+    try { await repository.retryAllCategoryEdits(); }
+    catch { /* Preserve conflicting category intents while keeping local data readable. */ }
     if ((await store.archiveMerge.get('active'))?.phase === 'applying') {
       try { await rollbackArchiveMergeJournal(openedDb, store); }
       catch { /* Keep the durable journal and expose it through pendingArchiveMerge. */ }
@@ -1925,12 +2080,14 @@ function defaultRepository(): Promise<LocalRepository> {
           subscriptionError: await resource.fileStore.subscriptionSaveJournal.count() ? 'subscription-relations-pending' : null,
           intakeError: null,
           intakeExpenseError: null,
+          categoryEditError: null,
         };
       }
       if (resource.recoveryState.renewalError === undefined) resource.recoveryState.renewalError = null;
       if (resource.recoveryState.subscriptionError === undefined) resource.recoveryState.subscriptionError = null;
       if (resource.recoveryState.intakeError === undefined) resource.recoveryState.intakeError = null;
       if (resource.recoveryState.intakeExpenseError === undefined) resource.recoveryState.intakeExpenseError = null;
+      if (resource.recoveryState.categoryEditError === undefined) resource.recoveryState.categoryEditError = null;
       const repository = new LocalRepository(resource.db, resource.fileStore, resource.recoveryState);
       try { await repository.retryIntakeReviewMigration(); }
       catch { /* The shared migration error stays visible while local CRUD remains usable. */ }
@@ -1957,6 +2114,8 @@ function defaultRepository(): Promise<LocalRepository> {
       });
       try { await repository.retryReviewedExpenseConfirmations(); }
       catch { /* Pending confirmation stays frozen and can be retried explicitly. */ }
+      try { await repository.retryAllCategoryEdits(); }
+      catch { /* The persisted direction and conflict remain available for recovery. */ }
       return repository;
     })
       .catch(error => { singleton = undefined; throw error; });
@@ -1969,6 +2128,15 @@ export async function save(type: EntityType, value: unknown) { return (await def
 export async function createCategory(kind: AssetKind, name: string, order: number) {
   return (await defaultRepository()).createCategory(kind, name, order);
 }
+export async function editCustomCategory(input: EditCustomCategoryInput) {
+  return (await defaultRepository()).editCustomCategory(input);
+}
+export async function deleteCustomCategory(input: DeleteCustomCategoryInput) {
+  return (await defaultRepository()).deleteCustomCategory(input);
+}
+export async function getPendingCategoryEdit(kind: AssetKind) { return (await defaultRepository()).getPendingCategoryEdit(kind); }
+export async function retryCategoryEdit(kind: AssetKind, expectedOperationId?: string) { return (await defaultRepository()).retryCategoryEdit(kind, expectedOperationId); }
+export async function cancelCategoryEdit(kind: AssetKind, expectedOperationId?: string) { return (await defaultRepository()).cancelCategoryEdit(kind, expectedOperationId); }
 export async function saveAssetIfCurrent(expected: Asset, next: Asset) { return (await defaultRepository()).saveAssetIfCurrent(expected, next); }
 export async function saveSubscription(expected: Asset | null, next: Asset, links: ReadonlyArray<SubscriptionLink>) { return (await defaultRepository()).saveSubscription(expected, next, links); }
 export async function getPendingSubscriptionSave(assetId: string) { return (await defaultRepository()).getPendingSubscriptionSave(assetId); }

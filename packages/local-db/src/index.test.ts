@@ -1,7 +1,7 @@
 import 'fake-indexeddb/auto';
 import { describe, expect, it, vi } from 'vitest';
 import { zipSync, unzipSync, strToU8, strFromU8 } from 'fflate';
-import { historySchema, newAsset, submissionSchema, type Asset, type History, type Submission, type Task } from '../../domain/src';
+import { assetSchema, historySchema, newAsset, submissionSchema, type Asset, type History, type Submission, type Task } from '../../domain/src';
 import { buildProjectWorkflowTasks, currentProjectWorkflowRound, recordProjectWorkflowTask } from '../../domain/src/project-workflow';
 import { inspectArchive, LocalRepository, openLocalRepository, type RecordRow } from './index';
 
@@ -456,7 +456,7 @@ describe('RxDB + free Dexie local repository', () => {
     await db.close();
   });
 
-  it('keeps a concurrent normal asset edit, cancels the orphan renewal, then permits retry and export', async () => {
+  it('keeps a concurrent external asset edit, cancels the orphan renewal, then permits retry and export', async () => {
     const dbName = name();
     const db = await openLocalRepository(dbName);
     const otherTab = new LocalRepository(db.db, db.fileStore);
@@ -466,7 +466,12 @@ describe('RxDB + free Dexie local repository', () => {
     const original = storage.bulkWrite.bind(storage);
     const write = vi.spyOn(storage, 'bulkWrite').mockImplementationOnce(async (rows, context) => {
       expect(context).toBe('keepany-renewal');
-      await otherTab.save('asset', { ...expected, name: 'Concurrent rename' });
+      // Public writes share the pair's native gate. An older client can bypass
+      // that gate; the storage CAS must still preserve its newer revision.
+      const [raw] = await storage.findDocumentsById([`asset:${expected.id}`], false);
+      const changed = await original([{ previous: raw, document: { ...raw,
+        payload: JSON.stringify(assetSchema.parse({ ...expected, name: 'Concurrent rename' })), updatedAt: raw.updatedAt + 1 } }], 'external-test-edit');
+      expect(changed.error).toEqual([]);
       return original(rows, context);
     });
     await expect(db.recordRenewal(expected, next, event)).rejects.toThrow('renewal-stale');
@@ -720,7 +725,7 @@ describe('RxDB + free Dexie local repository', () => {
     await db.close();
   });
 
-  it('cancels an orphan item history when a normal asset edit wins the storage CAS', async () => {
+  it('cancels an orphan item history when an external asset edit wins the storage CAS', async () => {
     const db = await openLocalRepository(name());
     const otherTab = new LocalRepository(db.db, db.fileStore);
     const loan = itemFixture();
@@ -729,7 +734,10 @@ describe('RxDB + free Dexie local repository', () => {
     const original = storage.bulkWrite.bind(storage);
     const write = vi.spyOn(storage, 'bulkWrite').mockImplementationOnce(async (rows, context) => {
       expect(context).toBe('keepany-item');
-      await otherTab.save('asset', { ...loan.expected, name: 'Renamed in another tab' });
+      const [raw] = await storage.findDocumentsById([`asset:${loan.expected.id}`], false);
+      const changed = await original([{ previous: raw, document: { ...raw,
+        payload: JSON.stringify(assetSchema.parse({ ...loan.expected, name: 'Renamed in another tab' })), updatedAt: raw.updatedAt + 1 } }], 'external-test-edit');
+      expect(changed.error).toEqual([]);
       return original(rows, context);
     });
     await expect(db.recordItemAction(loan.expected, loan.next, loan.event)).rejects.toThrow('item-stale');
