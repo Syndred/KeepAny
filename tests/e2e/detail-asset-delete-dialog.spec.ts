@@ -1,5 +1,8 @@
 import { expect, test } from "@playwright/test";
 
+const evidence =
+	process.env.KEEPANY_LEGACY_EVIDENCE_DIR ?? "docs/evidence/2026-09-29";
+
 const copies = {
 	en: {
 		add: "Add",
@@ -50,7 +53,7 @@ for (const language of ["en", "zh-CN"] as const) {
 					.click();
 				await expect(page.getByRole("heading", { name })).toBeVisible();
 				const trigger = page
-					.locator("main.page > .page-header")
+					.locator("main.page > .asset-project-action-bar")
 					.getByRole("button", { name: copy.move });
 				await trigger.click();
 				const dialog = page.getByRole("dialog");
@@ -79,7 +82,7 @@ for (const language of ["en", "zh-CN"] as const) {
 					).toBe(true);
 				}
 				await page.screenshot({
-					path: `docs/evidence/2026-09-29/detail-asset-delete-${language}-${width}.png`,
+					path: `${evidence}/detail-asset-delete-${language}-${width}.png`,
 				});
 				expect(
 					await page.evaluate(() => document.documentElement.scrollWidth),
