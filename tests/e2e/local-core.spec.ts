@@ -2,8 +2,9 @@ import { expect, type Page, test } from "@playwright/test";
 
 async function addAsset(
 	page: Page,
-	kind: "project" | "account" | "subscription",
+	kind: "project" | "account" | "subscription" | "item",
 	name: string,
+	location?: string,
 ) {
 	await page.goto(`/assets/${kind}`);
 	await page.getByRole("button", { name: "Add", exact: true }).click();
@@ -13,12 +14,13 @@ async function addAsset(
 		await dialog.locator("#amount").fill("12.50");
 		await dialog.locator("#dueDate").fill("2026-10-31");
 	}
+	if (location) await dialog.locator("#location").fill(location);
 	await dialog.getByRole("button", { name: "Save" }).click();
 	await expect(dialog).toBeHidden();
 	await expect(page.getByText(name).first()).toBeVisible();
 }
 
-test("project, account, subscription, task and downloaded backup survive a fresh browser restore", async ({
+test("project, account, subscription, located item, linked reminder and downloaded backup survive a fresh browser restore", async ({
 	browser,
 }) => {
 	const source = await browser.newContext({
@@ -34,12 +36,21 @@ test("project, account, subscription, task and downloaded backup survive a fresh
 	const editedProject = `${project} edited`;
 	const account = `Flow Account ${unique}`;
 	const subscription = `Flow Subscription ${unique}`;
+	const item = `Flow Item ${unique}`;
+	const location = `Study desk Drawer ${unique}`;
 	const task = `Review renewal ${unique}`;
 	const password = `test-only-backup-${unique}-2026`;
 	try {
 		await addAsset(page, "project", project);
 		await addAsset(page, "account", account);
 		await addAsset(page, "subscription", subscription);
+		await addAsset(page, "item", item, location);
+		await page.locator(".top-search-trigger").click();
+		await page.locator("#top-search-query").fill(location);
+		await expect(page.locator(".top-search-panel .search-results a")).toHaveCount(1);
+		await expect(page.locator("main .asset-library-card")).toHaveCount(1);
+		await page.locator(".top-search-panel .search-results a").click();
+		await expect(page.getByRole("heading", { name: item, exact: true })).toBeVisible();
 
 		await page.goto("/assets/project");
 		await page.getByText(project).first().click();
@@ -70,6 +81,15 @@ test("project, account, subscription, task and downloaded backup survive a fresh
 		await taskDialog.getByRole("button", { name: "Save" }).click();
 		await expect(taskDialog).toBeHidden();
 		await expect(page.getByText(task)).toBeVisible();
+		await page.goto("/tasks");
+		const reminder = page.locator("main .list-row").filter({ hasText: task });
+		await reminder.getByLabel("Remind later", { exact: true }).fill("2026-12-31");
+		await reminder.getByRole("button", { name: "Postpone 1 day", exact: true }).click();
+		await expect(reminder.getByLabel("Remind later", { exact: true })).toHaveValue("2027-01-01");
+		await page.reload();
+		await expect(reminder.getByLabel("Remind later", { exact: true })).toHaveValue("2027-01-01");
+		await reminder.getByRole("link", { name: editedProject, exact: true }).click();
+		await expect(page.getByRole("heading", { name: editedProject, exact: true })).toBeVisible();
 
 		await page.goto("/intake");
 		await page.locator("#backup-password").fill(password);
@@ -116,6 +136,15 @@ test("project, account, subscription, task and downloaded backup survive a fresh
 			await expect(restored.getByText(task)).toBeVisible();
 			await restored.goto("/assets/subscription");
 			await expect(restored.getByText(subscription)).toBeVisible();
+			await restored.goto("/tasks");
+			const restoredReminder = restored.locator("main .list-row").filter({ hasText: task });
+			await expect(restoredReminder.getByLabel("Remind later", { exact: true })).toHaveValue("2027-01-01");
+			await expect(restoredReminder.getByRole("link", { name: editedProject, exact: true })).toBeVisible();
+			await restored.goto("/assets/item");
+			await restored.locator(".top-search-trigger").click();
+			await restored.locator("#top-search-query").fill(location);
+			await expect(restored.locator("main .asset-library-card")).toHaveCount(1);
+			await expect(restored.locator("main .asset-library-card")).toContainText(item);
 			await restored.goto("/settings");
 			await restored.locator("section.card").filter({ has: restored.getByRole("heading", { name: "Language" }) }).locator("select").selectOption("zh-CN");
 			await expect(

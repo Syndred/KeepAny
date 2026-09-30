@@ -77,7 +77,7 @@ export function TaskRow({ task }: { task: Task }) {
 			<div className="impact-task-actions">
 				{!task.done && <>
 					<label htmlFor={`task-due-${task.id}`}>{t("remindLater")}</label>
-					<input id={`task-due-${task.id}`} type="date" value={task.dueDate} disabled={busy} onChange={(event) => void reschedule(event.target.value)} />
+					<input className="field" id={`task-due-${task.id}`} type="date" value={task.dueDate} disabled={busy} onChange={(event) => void reschedule(event.target.value)} />
 					<Button size="small" disabled={busy} onClick={postponeDay}>{t("taskPostponeDay")}</Button>
 				</>}
 				<span className="chip">{t(task.done ? "done" : "pending")}</span>
