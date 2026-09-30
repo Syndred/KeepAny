@@ -184,12 +184,26 @@ async function assertVaultTable(
 					.filter(Boolean),
 			}));
 		const initialState = await readScrollState();
+		const waitForScrollSettled = async () => {
+			let last = (await readScrollState()).scrollLeft;
+			let unchangedSince = Date.now();
+			await expect.poll(async () => {
+				const current = (await readScrollState()).scrollLeft;
+				if (current !== last) { last = current; unchangedSince = Date.now(); }
+				return Date.now() - unchangedSince;
+			}, { timeout: 3_000, intervals: [50] }).toBeGreaterThanOrEqual(150);
+		};
 		await test.info().attach("vault-table-scroll-initial", {
 			body: JSON.stringify(initialState, null, 2),
 			contentType: "application/json",
 		});
-		for (let press = 0; press < 8; press += 1)
+		for (let press = 0; press < 8; press += 1) {
+			const before = await readScrollState();
+			if (before.scrollLeft >= before.scrollWidth - before.clientWidth) break;
 			await tableWrap.press("ArrowRight");
+			await expect.poll(async () => (await readScrollState()).scrollLeft).toBeGreaterThan(before.scrollLeft);
+			await waitForScrollSettled();
+		}
 		try {
 			await expect
 				.poll(async () => (await readScrollState()).scrollLeft, {
@@ -213,6 +227,7 @@ async function assertVaultTable(
 			await expect.poll(async () => (await readScrollState()).scrollLeft, {
 				timeout: 2_000,
 			}).toBeLessThan(beforeLeft);
+			await waitForScrollSettled();
 		}
 		try {
 			await expect

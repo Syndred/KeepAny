@@ -181,7 +181,7 @@ it('accepts only pinned bound JWT and device DPoP across real Hono HTTP routes',
     expect((await post('/sync/pull', valid, { body: { workspaceId, cursor: 0 } })).status).toBe(401);
     expect((await post('/sync/push', valid, { body: { workspaceId, operations: [] } })).status).toBe(401);
     expect((await post('/workspaces', valid)).status).toBe(401);
-    expect((await post('/workspaces/'+workspaceId+'/key-envelopes', valid)).status).toBe(401);
+    expect((await post(`/workspaces/${workspaceId}/key-envelopes`, valid)).status).toBe(401);
     expect((await request('GET', '/sync/devices', valid)).status).toBe(401);
     expect((await request('GET', `/workspaces/${workspaceId}/attachments/${crypto.randomUUID()}`, valid)).status).toBe(401);
     expect((await request('PUT', `/workspaces/${workspaceId}/attachments/${crypto.randomUUID()}`, valid)).status).toBe(401);
