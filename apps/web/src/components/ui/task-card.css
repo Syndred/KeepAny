@@ -1,0 +1,11 @@
+.list:has(> .task-card) { display: grid; gap: var(--space-4); }
+.task-card, .task-card.list-row { min-width: 0; padding: var(--space-4); border: 1px solid var(--line); border-radius: 14px; background: var(--paper); color: var(--ink); box-shadow: 2px 2px 0 var(--line-soft); font-size: 13px; line-height: 1.55; overflow-wrap: anywhere; }
+.task-card strong { font-size: 14px; line-height: 1.45; }
+.task-card small { font-size: 11px; line-height: 1.55; }
+.task-card .impact-task-actions { gap: var(--space-2); }
+.task-card .maintenance-task-facts { gap: var(--space-2) var(--space-4); }
+.task-card .maintenance-task-actions { gap: var(--space-3); }
+@media (max-width: 620px) {
+	.task-card.list-row.impact-task-row { flex-wrap: wrap; }
+	.task-card .impact-task-actions { flex: 0 0 100%; display: flex; flex-wrap: wrap; align-items: center; padding-left: 0; }
+}

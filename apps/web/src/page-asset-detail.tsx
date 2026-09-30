@@ -44,6 +44,7 @@ import {
 	saveBatch,
 	setItemArchived,
 } from "../../../packages/local-db/src";
+import { TextLink } from "./components/ui/text-link";
 import { Button } from "./components/ui/button";
 import { Dialog } from "./components/ui/dialog";
 import "./asset-restoration.css";
@@ -1318,10 +1319,10 @@ export function AssetDetail() {
 				{asset.kind === "project" && <section className="card asset-profile-card asset-project-profile-card">
 					<div className="card-header"><h2>{t("profile")}</h2></div>
 					<dl className="asset-project-facts">
-						<div><dt>{t("projectOfficialUrl")}</dt><dd>{asset.url ? <a href={asset.url} target="_blank" rel="noopener noreferrer">{asset.url}</a> : "—"}</dd></div>
+						<div><dt>{t("projectOfficialUrl")}</dt><dd>{asset.url ? <TextLink href={asset.url} target="_blank" rel="noopener noreferrer"><span>{asset.url}</span><ExternalLink aria-hidden="true" /></TextLink> : "—"}</dd></div>
 						<div><dt>{t("projectType")}</dt><dd>{niceCategory(asset.category, t) || "—"}</dd></div>
 						<div><dt>{t("projectLaunchMonth")}</dt><dd>{asset.projectLaunchMonth ? new Intl.DateTimeFormat(i18n.language, { year: "numeric", month: "long", timeZone: "UTC" }).format(new Date(`${asset.projectLaunchMonth}-01T12:00:00Z`)) : "—"}</dd></div>
-						<div><dt>{t("projectAccount")}</dt><dd>{relatedAccounts.length ? relatedAccounts.map((linked, index) => <span key={linked.id}>{index > 0 && " · "}<Link to="/assets/$kind/$id" params={{ kind: linked.kind, id: linked.id }} onClick={(event) => { event.preventDefault(); visitRelation(linked); }}>{linked.name}</Link></span>) : "—"}</dd></div>
+						<div><dt>{t("projectAccount")}</dt><dd>{relatedAccounts.length ? relatedAccounts.map((linked, index) => <span key={linked.id}>{index > 0 && " · "}<TextLink asChild><Link to="/assets/$kind/$id" params={{ kind: linked.kind, id: linked.id }} onClick={(event) => { event.preventDefault(); visitRelation(linked); }}>{linked.name}</Link></TextLink></span>) : "—"}</dd></div>
 					</dl>
 					<div className="asset-project-related">
 						<div className="card-header"><h3>{t("related")}</h3><Button asChild size="small"><Link to="/finance">{t("financeViewLedger")}<ArrowDownRight size={15} aria-hidden="true" /></Link></Button></div>

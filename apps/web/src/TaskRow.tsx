@@ -4,6 +4,9 @@ import { Check } from "lucide-react";
 import { useRef, useState } from "react";
 import { dueOnCycle, type Task } from "../../../packages/domain/src";
 import { saveTaskIfCurrent, setTaskDone } from "../../../packages/local-db/src";
+import { Badge } from "./components/ui/badge";
+import { TaskCard } from "./components/ui/task-card";
+import { TextLink } from "./components/ui/text-link";
 import { Button } from "./components/ui/button";
 import { ImpactTaskRow } from "./ImpactTaskRow";
 import { ProjectWorkflowTaskRow } from "./ProjectWorkflowTaskRow";
@@ -43,7 +46,7 @@ export function TaskRow({ task }: { task: Task }) {
 		? task.completionHistory
 		: task.done && task.completedAt ? [task.completedAt] : [];
 	return (
-		<div className="list-row impact-task-row" id={`task-${task.id}`} tabIndex={-1}>
+		<TaskCard className="list-row impact-task-row" id={`task-${task.id}`} tabIndex={-1}>
 			<Button
 				size="icon"
 				variant="ghost"
@@ -69,7 +72,7 @@ export function TaskRow({ task }: { task: Task }) {
 			<div className="impact-task-info">
 				<strong className={task.done ? "done" : ""}>{task.name}</strong>
 				<small>{date(task.dueDate, i18n.language)}</small>
-				{task.assetId && <small>{t("related")}: {related ? <Link to="/assets/$kind/$id" params={{ kind: related.kind, id: related.id }}>{related.name}</Link> : t("taskRelatedMissing")}</small>}
+				{task.assetId && <small>{t("related")}: {related ? <TextLink asChild><Link to="/assets/$kind/$id" params={{ kind: related.kind, id: related.id }}>{related.name}</Link></TextLink> : t("taskRelatedMissing")}</small>}
 				{completionHistory.length ? (
 					<small>{t("impactCompletedHistory")}: {completionHistory.map((value) => new Date(value).toLocaleString(i18n.language)).join(" · ")}</small>
 				) : null}
@@ -80,8 +83,8 @@ export function TaskRow({ task }: { task: Task }) {
 					<input className="field" id={`task-due-${task.id}`} type="date" value={task.dueDate} disabled={busy} onChange={(event) => void reschedule(event.target.value)} />
 					<Button size="small" disabled={busy} onClick={postponeDay}>{t("taskPostponeDay")}</Button>
 				</>}
-				<span className="chip">{t(task.done ? "done" : "pending")}</span>
+				<Badge tone={task.done ? "success" : "pending"}>{t(task.done ? "done" : "pending")}</Badge>
 			</div>
-		</div>
+		</TaskCard>
 	);
 }

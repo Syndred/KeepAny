@@ -5,6 +5,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { Link } from '@tanstack/react-router';
 import { ChevronDown, ChevronUp, GripVertical } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { Badge } from '../ui/badge';
 
 export type SortableNavItem = {
   id: string;
@@ -57,7 +58,7 @@ function NavRow({ item, index, count, activePath, onNavigate, onMove, onVisibili
       title={t('drag')}
     ><GripVertical size={17}/></button>
     {visible ? <Link to={item.to} className={`sortable-nav-link${active ? ' active' : ''}`} aria-current={active ? 'page' : undefined} onClick={onNavigate} title={item.label}>
-      <Icon size={17}/><span>{item.label}</span>{item.badge != null && item.badge > 0 && <em>{item.badge}</em>}
+      <Icon size={17}/><span className="nav-label">{item.label}</span>{item.badge != null && item.badge > 0 && <Badge className="nav-count" tone="neutral">{item.badge}</Badge>}
     </Link> : <span className="sortable-nav-link nav-link-placeholder"><Icon size={17}/><span>{item.label}</span></span>}
     {manageMode && <input
       type="checkbox"

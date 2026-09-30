@@ -9,6 +9,7 @@ import { maintenanceReminderDate } from "../../../packages/domain/src/task-repea
 import "./tasks-page.css";
 import { useSearchRowLocation } from "./search-location";
 import { Select, SelectOption } from "./components/ui/select";
+import { Badge } from "./components/ui/badge";
 
 const TaskEditor = lazy(() =>
 	import("./workflows").then((module) => ({ default: module.TaskEditor })),
@@ -67,14 +68,14 @@ export function TaskPage() {
 			<div className="tasks-toolbar">
 				<fieldset className="tabs task-filters" aria-label={t("taskFilter")}>
 					{(["pending", "done", "all"] as const).map((value) => (
-						<button
+						<Button
 							type="button"
 							key={value}
 							aria-pressed={filter === value}
 							onClick={() => setFilter(value)}
 						>
 							{t(value)} · {counts[value]}
-						</button>
+						</Button>
 					))}
 				</fieldset>
 				<div className="tasks-toolbar-actions">
@@ -88,7 +89,7 @@ export function TaskPage() {
 				<section className="card tasks-list-card" aria-labelledby="tasks-list-heading">
 					<div className="tasks-cardhead">
 						<h2 id="tasks-list-heading">{t("tasksRecent")}</h2>
-						<span className="chip">{visibleTasks.length}</span>
+						<Badge tone="pending">{visibleTasks.length}</Badge>
 					</div>
 					{visibleTasks.length ? (
 						<div className="list">

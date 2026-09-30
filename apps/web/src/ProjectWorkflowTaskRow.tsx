@@ -7,6 +7,11 @@ import { saveTaskIfCurrent } from '../../../packages/local-db/src';
 import { Button } from './components/ui/button';
 import { date, useAppContext } from './view-shared';
 import { Select, SelectOption } from "./components/ui/select";
+import { ArrowUpRight, Check, Clock3, FileCheck2, LockKeyhole, Minus, TriangleAlert } from 'lucide-react';
+import { Badge } from './components/ui/badge';
+import { TextLink } from './components/ui/text-link';
+import { TaskCard, TaskReveal } from './components/ui/task-card';
+import './project-workflow-task.css';
 
 export function ProjectWorkflowTaskRow({ task, round: suppliedRound }: { task: Task; round?: Task[] }) {
   const { t, i18n, } = useTranslation();
@@ -54,26 +59,27 @@ export function ProjectWorkflowTaskRow({ task, round: suppliedRound }: { task: T
   } else if (['brandSubmission', 'closeBacklink', 'closeRelated', 'closeDecision'].includes(workflow.step)) {
     sourceDetail = t(sourceDetail);
   }
-  return <article className="project-workflow-task" id={`task-${task.id}`}>
+  const StatusIcon = record?.outcome === 'done' ? Check : record?.outcome === 'blocked' ? TriangleAlert : record?.outcome === 'na' ? Minus : Clock3;
+  const tone = record?.outcome === 'done' ? 'success' : record?.outcome === 'blocked' ? 'warning' : record?.outcome === 'na' ? 'muted' : 'pending';
+  return <TaskCard className="project-workflow-task" id={`task-${task.id}`} data-outcome={record?.outcome ?? 'pending'}>
     <div className="project-workflow-task-head">
-      <strong>{t(`workflowStep_${workflow.step}`)}{workflow.sourceName ? ` · ${workflow.sourceName}` : ''}</strong>
-      <span className={`project-workflow-chip ${record?.outcome ?? 'pending'}`}>{t(`workflowOutcome_${record?.outcome ?? 'pending'}`)}</span>
+      <div className="project-workflow-task-title"><span className="project-workflow-task-icon" aria-hidden="true"><FileCheck2 size={19} /></span><div><strong>{t(`workflowStep_${workflow.step}`)}</strong>{workflow.sourceName && <span className="project-workflow-task-name">{workflow.sourceName}</span>}</div></div>
+      <Badge tone={tone} className={`project-workflow-chip ${record?.outcome ?? 'pending'}`}><StatusIcon aria-hidden="true" />{t(`workflowOutcome_${record?.outcome ?? 'pending'}`)}</Badge>
     </div>
-    {sourceDetail && <p>{sourceDetail}</p>}
-    <div className="project-workflow-source">
-      {linked && linkedKind ? <Link to="/assets/$kind/$id" params={{ kind: linkedKind, id: workflow.sourceAssetId }}>{t('workflowOpenRelated')}</Link> : null}
-      {workflow.sourceUrl && <a href={workflow.sourceUrl} target="_blank" rel="noopener noreferrer">{t('workflowOpenSource')}</a>}
-      <small>{t('workflowSnapshotAt')}: {new Date(workflow.generatedAt).toLocaleString(i18n.language)}</small>
-    </div>
-    {record && <div className="project-workflow-record"><b>{t('workflowEvidence')}:</b> {record.evidence}<small>{new Date(record.recordedAt).toLocaleString(i18n.language)}</small></div>}
-    {finalLocked && <p className="field-error">{t('workflowFinalLocked')}</p>}
-    {editing ? <form className="project-workflow-record-form" onSubmit={event => void submit(event)}>
+    {sourceDetail && <p className="project-workflow-task-detail">{sourceDetail}</p>}
+    {(linked || workflow.sourceUrl) && <div className="project-workflow-source">
+      {linked && linkedKind ? <TextLink asChild><Link to="/assets/$kind/$id" params={{ kind: linkedKind, id: workflow.sourceAssetId }}>{t('workflowOpenRelated')}<ArrowUpRight aria-hidden="true" /></Link></TextLink> : null}
+      {workflow.sourceUrl && <TextLink href={workflow.sourceUrl} target="_blank" rel="noopener noreferrer">{t('workflowOpenSource')}<ArrowUpRight aria-hidden="true" /></TextLink>}
+    </div>}
+    {record && <div className="project-workflow-record"><span>{t('workflowEvidence')}</span><p>{record.evidence}</p><time dateTime={record.recordedAt}>{new Date(record.recordedAt).toLocaleString(i18n.language)}</time></div>}
+    {finalLocked && <p className="project-workflow-locked" id={`workflow-lock-${task.id}`}><LockKeyhole size={15} aria-hidden="true" /><span>{t('workflowFinalLocked')}</span></p>}
+    {editing ? <TaskReveal><form className="project-workflow-record-form" onSubmit={event => void submit(event)}>
       <label htmlFor={`workflow-result-${task.id}`}>{t('workflowResult')}<Select id={`workflow-result-${task.id}`} value={outcome} onValueChange={selectValue => setOutcome(selectValue as typeof outcome)} disabled={busy}>
         <SelectOption value="done">{t('workflowOutcome_done')}</SelectOption><SelectOption value="blocked">{t('workflowOutcome_blocked')}</SelectOption><SelectOption value="na">{t('workflowOutcome_na')}</SelectOption>
       </Select></label>
       <label>{t('workflowEvidence')}<textarea value={evidence} maxLength={2000} rows={3} onChange={event => { setEvidence(event.target.value); setError(''); }} required disabled={busy} placeholder={t('workflowEvidenceHint')} /></label>
       {error && <p className="field-error" role="alert">{error}</p>}
       <div className="project-workflow-actions"><Button type="button" onClick={() => setEditing(false)} disabled={busy}>{t('cancel')}</Button><Button type="submit" variant="primary" disabled={busy}>{t('workflowSaveRecord')}</Button></div>
-    </form> : <Button size="small" onClick={() => { setOutcome(record?.outcome ?? 'done'); setEvidence(record?.evidence ?? ''); setEditing(true); }} disabled={finalLocked}>{t(record ? 'workflowEditRecord' : 'workflowRecordResult')}</Button>}
-  </article>;
+    </form></TaskReveal> : <div className="project-workflow-task-footer"><small>{t('workflowSnapshotAt')}: <time dateTime={workflow.generatedAt}>{new Date(workflow.generatedAt).toLocaleString(i18n.language)}</time></small><Button size="small" aria-describedby={finalLocked ? `workflow-lock-${task.id}` : undefined} onClick={() => { setOutcome(record?.outcome ?? 'done'); setEvidence(record?.evidence ?? ''); setEditing(true); }} disabled={finalLocked}>{t(record ? 'workflowEditRecord' : 'workflowRecordResult')}</Button></div>}
+  </TaskCard>;
 }

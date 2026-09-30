@@ -4,6 +4,9 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { Task } from "../../../packages/domain/src";
 import { saveTaskIfCurrent } from "../../../packages/local-db/src";
+import { Badge } from "./components/ui/badge";
+import { TaskCard } from "./components/ui/task-card";
+import { TextLink } from "./components/ui/text-link";
 import { Button } from "./components/ui/button";
 import { date, useAppContext } from "./view-shared";
 
@@ -50,7 +53,7 @@ export function ImpactTaskRow({
 		}
 	}
 	return (
-		<div className="list-row impact-task-row" id={`task-${task.id}`}>
+		<TaskCard className="list-row impact-task-row" id={`task-${task.id}`}>
 			<Button
 				size="icon"
 				variant="ghost"
@@ -75,12 +78,12 @@ export function ImpactTaskRow({
 				</strong>
 				<small>
 					{t("related")}: {related ? (
-						<Link
+						<TextLink asChild><Link
 							to="/assets/$kind/$id"
 							params={{ kind: related.kind, id: related.id }}
 						>
 							{related.name}
-						</Link>
+						</Link></TextLink>
 					) : (
 						snapshot.relatedName
 					)}
@@ -98,7 +101,7 @@ export function ImpactTaskRow({
 					<small>{t("impactCompletedHistory")}: {completionHistory.map((value) => new Date(value).toLocaleString(i18n.language)).join(" · ")}</small>
 				)}
 				{showTaskLink && (
-					<small><Link to="/tasks" hash={`task-${task.id}`}>{t("viewTask")}</Link></small>
+					<small><TextLink asChild><Link to="/tasks" hash={`task-${task.id}`}>{t("viewTask")}</Link></TextLink></small>
 				)}
 			</div>
 			<div className="impact-task-actions">
@@ -110,8 +113,8 @@ export function ImpactTaskRow({
 					disabled={busy}
 					onChange={(event) => void update({ dueDate: event.target.value })}
 				/>
-				<span className="chip">{t(task.done ? "done" : "pending")}</span>
+				<Badge tone={task.done ? "success" : "pending"}>{t(task.done ? "done" : "pending")}</Badge>
 			</div>
-		</div>
+		</TaskCard>
 	);
 }

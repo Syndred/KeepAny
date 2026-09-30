@@ -1,0 +1,26 @@
+.project-workflow-task { display: grid; gap: var(--space-3); }
+.project-workflow-task[data-outcome="blocked"] { border-left: 4px solid var(--danger); }
+.project-workflow-task[data-outcome="done"] { border-left: 4px solid var(--green); }
+.project-workflow-task-head { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: var(--space-3); }
+.project-workflow-task-title { display: flex; flex: 1 1 190px; align-items: flex-start; gap: var(--space-3); min-width: 0; }
+.project-workflow-task-title > div { min-width: 0; }
+.project-workflow-task-icon { display: grid; flex: none; place-items: center; width: 36px; height: 36px; border: 1px solid var(--line); border-radius: 10px; background: var(--yellow-soft); }
+.project-workflow-task-title strong, .project-workflow-task-name { display: block; }
+.project-workflow-task-name { margin-top: var(--space-1); color: var(--muted); font-size: 12px; }
+.project-workflow-task .project-workflow-chip { flex: 0 1 auto; }
+.project-workflow-task-detail { margin: 0; color: var(--muted); font-size: 12px; }
+.project-workflow-source { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); font-size: 12px; }
+.project-workflow-record { display: grid; gap: var(--space-1); padding: var(--space-3); border: 1px solid var(--line-soft); border-radius: 10px; background: var(--paper-soft); }
+.project-workflow-record > span { color: var(--muted); font-size: 11px; font-weight: 700; }
+.project-workflow-record p { margin: 0; white-space: pre-wrap; }
+.project-workflow-record time { color: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; }
+.project-workflow-locked { display: flex; align-items: flex-start; gap: var(--space-2); margin: 0; padding: var(--space-3); border-radius: 10px; background: var(--yellow-soft); font-size: 12px; }
+.project-workflow-locked svg { flex: none; margin-top: 2px; }
+.project-workflow-task-footer { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: var(--space-3); padding-top: var(--space-3); border-top: 1px dashed var(--line-soft); }
+.project-workflow-task-footer > small { flex: 1 1 180px; color: var(--muted); }
+.project-workflow-task-footer .button { flex: none; }
+.project-workflow-record-form { display: grid; gap: var(--space-3); padding: var(--space-3); border: 1px solid var(--line-soft); border-radius: 10px; background: var(--paper-soft); }
+.project-workflow-record-form label { display: grid; gap: var(--space-2); min-width: 0; font-size: 12px; font-weight: 700; }
+.project-workflow-record-form textarea { width: 100%; padding: var(--space-3); border: 2px solid var(--line); border-radius: 10px; background: var(--paper); color: var(--ink); font: inherit; font-weight: 400; resize: vertical; }
+.project-workflow-record-form .field-error { margin: 0; }
+.project-workflow-record-form .project-workflow-actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: var(--space-3); margin: 0; }

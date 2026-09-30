@@ -1,0 +1,4 @@
+.text-link, .text-link:visited { display: inline-flex; align-items: center; gap: 6px; max-width: 100%; min-width: 0; color: var(--ink); font: inherit; font-weight: 700; line-height: 1.5; text-decoration: underline; text-decoration-color: var(--line-soft); text-decoration-thickness: 1px; text-underline-offset: 4px; overflow-wrap: anywhere; border-radius: 4px; }
+.text-link:hover { color: var(--green); text-decoration-color: currentColor; }
+.text-link svg { flex: none; width: 14px; height: 14px; }
+.text-link > span { min-width: 0; overflow-wrap: anywhere; }

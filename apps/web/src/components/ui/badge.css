@@ -1,0 +1,7 @@
+.badge { display: inline-flex; flex: none; align-items: center; justify-content: center; gap: var(--space-1); max-width: 100%; min-height: 26px; padding: 4px 9px; border: 1px solid var(--line); border-radius: 999px; color: var(--ink); font: inherit; font-size: 11px; font-weight: 750; line-height: 1.4; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.badge-neutral { background: var(--paper); }
+.badge-pending { background: var(--yellow-soft); }
+.badge-success { background: var(--green-soft); color: var(--green); }
+.badge-warning { background: var(--peach); color: var(--danger); }
+.badge-muted { background: var(--paper-soft); color: var(--muted); }
+.badge svg { flex: none; width: 13px; height: 13px; }

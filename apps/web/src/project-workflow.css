@@ -14,27 +14,15 @@
 .project-workflow-card-head { display: flex; align-items: start; justify-content: space-between; gap: 14px; }
 .project-workflow-card-head p { margin: 0 0 13px; color: var(--muted); font-size: 12px; }
 .project-workflow-fields { display: grid; gap: 12px; margin: 18px 0; }
-.project-workflow-fields label, .project-workflow-record-form label { display: grid; gap: 5px; color: var(--ink); font-size: 12px; font-weight: 700; }
-.project-workflow-fields input, .project-workflow-fields textarea, .project-workflow-record-form textarea { width: 100%; padding: 9px; border: 2px solid var(--line); border-radius: 9px; background: var(--paper); color: var(--ink); font: inherit; font-weight: 400; }
+.project-workflow-fields label { display: grid; gap: 5px; color: var(--ink); font-size: 12px; font-weight: 700; }
+.project-workflow-fields input, .project-workflow-fields textarea { width: 100%; padding: 9px; border: 2px solid var(--line); border-radius: 9px; background: var(--paper); color: var(--ink); font: inherit; font-weight: 400; }
 .project-workflow-before-after { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin: 15px 0; }
 .project-workflow-before-after > div { min-width: 0; padding: 12px; border: 1px solid var(--line); border-radius: 9px; background: var(--paper-soft); overflow-wrap: anywhere; }
 .project-workflow-before-after small { display: block; margin-bottom: 5px; color: var(--muted); }
 .project-workflow-before-after p { margin: 5px 0 0; font-size: 12px; }
 .project-workflow-warning { padding: 11px 13px; border-left: 4px solid var(--line); background: var(--yellow-soft); }
 .project-workflow-task-list { display: grid; gap: 10px; }
-.project-workflow-task, .project-workflow-preview-row, .project-workflow-report-row { min-width: 0; padding: 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--paper-soft); overflow-wrap: anywhere; }
-.project-workflow-task-head { display: flex; justify-content: space-between; gap: 10px; align-items: start; }
-.project-workflow-task p { margin: 6px 0; font-size: 12px; }
-.project-workflow-task .button { margin-top: 10px; }
-.project-workflow-chip { flex: none; padding: 3px 7px; border: 1px solid var(--line); border-radius: 20px; background: var(--paper); font-size: 11px; }
-.project-workflow-chip.blocked { background: #ffcab9; }
-.project-workflow-chip.done, .project-workflow-chip.na { background: var(--green); }
-.project-workflow-source { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 8px 0; font-size: 12px; }
-.project-workflow-source a { color: var(--ink); }
-.project-workflow-source small { color: var(--muted); }
-.project-workflow-record { margin: 8px 0; padding: 8px; border-left: 3px solid var(--green); background: var(--paper); font-size: 12px; }
-.project-workflow-record small { display: block; margin-top: 4px; color: var(--muted); }
-.project-workflow-record-form { display: grid; gap: 10px; margin-top: 12px; }
+.project-workflow-preview-row, .project-workflow-report-row { min-width: 0; padding: 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--paper-soft); overflow-wrap: anywhere; }
 .project-workflow-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
 .project-workflow-preview-row strong, .project-workflow-preview-row small { display: block; }
 .project-workflow-preview-row small { margin-top: 5px; color: var(--muted); overflow-wrap: anywhere; }
