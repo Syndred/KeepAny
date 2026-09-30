@@ -89,4 +89,4 @@ PDF 提取文字后，可选择“支出账单”，手动核对订阅／账号�
 
 归档上限100MiB，加密`.ka1`上限100MiB＋52字节，解压后的内容上限300MiB。文件选择超限时在本机读取／解密前提示。支持KeepAny正式v1导出的普通ZIP归档；不接收不含本地长度的流式descriptor容器。
 
-当前入口`index-CDMhxXs0.js`，72个当前文件与构建一致、374个历史哈希文件保留。真实PostgreSQL单测444/444、固定包41/41、同包实际本地HTTP＋PostgreSQL同步2/2分别通过；原Chrome已加载CDM，数据量不变且未清站点数据。新增固定同步CI步骤以独立配置执行，需隔离的`KEEPANY_TEST_DATABASE_URL`，不配置会报错；日常本地使用仍不依赖数据库。真机、完整视觉状态、生产安全和5项许可证正文尚未完成。[最新交接](../docs/08-项目进度交接.md)、[汇总](../docs/evidence/2026-09-30/backup-boundaries/checks.json)。
+当前入口`index-CDMhxXs0.js`，72个当前文件与构建一致、374个历史哈希文件保留。真实PostgreSQL单测444/444、固定包原41/41＋密码库4/4分别通过（当前配置45项），同包实际本地HTTP＋PostgreSQL同步2/2通过；原Chrome已加载CDM，数据量不变且未清站点数据。新增固定同步CI步骤以独立配置执行，需隔离的`KEEPANY_TEST_DATABASE_URL`，不配置会报错；日常本地使用仍不依赖数据库。真机、完整视觉状态、生产安全和5项许可证正文尚未完成。[最新交接](../docs/08-项目进度交接.md)、[汇总](../docs/evidence/2026-09-30/backup-boundaries/checks.json)。

@@ -135,5 +135,20 @@
     "fixedSyncPort4182Stopped": true,
     "original4180Kept": true,
     "KeepAnyAdmContainerUntouched": true
+  },
+  "fixedBrowserSupplement": {
+    "report": "vault-fixed-playwright.json",
+    "passed": 4,
+    "failed": 0,
+    "skipped": 0,
+    "flaky": 0,
+    "durationSeconds": 16.040087,
+    "scope": "Same index-CDMhxXs0.js committed Web files; zh-CN/en-US x390/1280, actual account and vault UI create, refresh, archive download/decrypt, clean UI restore/re-export, stable asset/relation IDs, source/restored pageerror=0. Separate run from previous 41."
+  },
+  "fixedBrowserConfiguredCount": 45,
+  "syncConfigMissingDatabase": {
+    "report": "sync-config-missing-db.txt",
+    "exitCode": 1,
+    "silentlySkipped": false
   }
 }

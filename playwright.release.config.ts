@@ -24,6 +24,7 @@ export default defineConfig({
 		"relation-graph-verification.spec.ts",
 		"restore-identity.spec.ts",
 		"archive-migration.spec.ts",
+		"vault-reference-release.spec.ts",
 	],
 	timeout: 90_000,
 	workers: 2,
