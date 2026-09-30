@@ -44,6 +44,7 @@ for (const width of [360, 390, 1280]) {
 		await domain.getByLabel("Registrar").fill("Example Registrar");
 		await domain.getByLabel("Expiry date").fill("2027-10-01");
 		await domain.getByLabel("Annual fee").fill("120.00");
+		await page.screenshot({ path: test.info().outputPath(`domain-dialog-en-${width}.png`), fullPage: true });
 		await domain.getByRole("button", { name: "Save" }).click();
 		await expect(domain).toBeHidden();
 		await expect(page.locator(".asset-project-costs")).toContainText("mori-notes.com");
@@ -90,6 +91,17 @@ test("project detail labels and recorded relationships render in Chinese at 390p
 	await expect(page.locator(".asset-project-profile-card")).toContainText("Studio Mail");
 	await expect(page.locator(".asset-project-reminders")).toContainText("1 条需要核验");
 	await expect(page.locator(".asset-project-costs")).toContainText("域名与持有成本");
+	await page.getByRole("button", { name: "添加域名" }).click();
+	const domain = page.getByRole("dialog");
+	await domain.getByLabel("域名", { exact: true }).fill("example.test");
+	await domain.getByLabel("注册商").fill("Example Registrar");
+	await domain.getByLabel("到期日").fill("2027-10-01");
+	await domain.getByLabel("年费").fill("120.00");
+	await page.screenshot({ path: test.info().outputPath("domain-dialog-zh-CN-390.png"), fullPage: true });
+	await domain.getByRole("button", { name: "保存", exact: true }).click();
+	await expect(domain).toBeHidden();
+	await page.reload();
+	await expect(page.locator(".asset-project-domain-row")).toContainText("example.test");
 	await page.getByRole("button", { name: "查看投递素材" }).click();
 	await expect(page.locator(".asset-project-materials")).toHaveAttribute("open", "");
 	await expect(page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).resolves.toBe(true);

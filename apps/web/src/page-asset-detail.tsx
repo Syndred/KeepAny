@@ -197,7 +197,7 @@ function SubmissionRow({ submission }: { submission: Submission }) {
 	return (
 		<tr className={editing ? "backlink-row-editing" : undefined}>
 			<td>
-				{editing ? <><strong className="backlink-edit-name">{submission.name}</strong><input aria-label={`${submission.name} ${t("name")}`} value={name} onChange={(event) => { setName(event.target.value); setError(""); }} /><input type="url" aria-label={`${submission.name} ${t("url")}`} value={url} onChange={(event) => { setUrl(event.target.value); setError(""); }} /></> : <a href={submission.url} target="_blank" rel="noopener noreferrer">
+				{editing ? <><strong className="backlink-edit-name">{submission.name}</strong><input className="field" disabled={busy} aria-label={`${submission.name} ${t("name")}`} value={name} onChange={(event) => { setName(event.target.value); setError(""); }} /><input className="field" disabled={busy} type="url" aria-label={`${submission.name} ${t("url")}`} value={url} onChange={(event) => { setUrl(event.target.value); setError(""); }} /></> : <a href={submission.url} target="_blank" rel="noopener noreferrer">
 					{submission.name}
 				</a>}
 				{submission.externalLink && <small>{t("extImportedSource")} · {submission.externalLink.profileId}</small>}
@@ -205,6 +205,7 @@ function SubmissionRow({ submission }: { submission: Submission }) {
 			</td>
 			<td>
 				{editing ? <select
+					className="field" disabled={busy}
 					aria-label={`${submission.name} ${t("status")}`}
 					value={status}
 					onChange={(e) => { setStatus(e.target.value as Submission["status"]); setError(""); }}
@@ -218,6 +219,7 @@ function SubmissionRow({ submission }: { submission: Submission }) {
 			</td>
 			<td>
 				{editing ? <input
+					className="field" disabled={busy}
 					type="date"
 					aria-label={`${submission.name} ${t("submittedAt")}`}
 					value={submittedAt}
@@ -227,6 +229,7 @@ function SubmissionRow({ submission }: { submission: Submission }) {
 			<td>{date(submission.verifiedAt, i18n.language)}</td>
 			<td>
 				{editing ? <input
+					className="field" disabled={busy}
 					aria-label={`${submission.name} ${t("evidence")}`}
 					value={evidence}
 					onChange={(e) => { setEvidence(e.target.value); setError(""); }}
@@ -238,6 +241,7 @@ function SubmissionRow({ submission }: { submission: Submission }) {
 				)}
 			</td>
 			<td>
+				<div className="backlink-row-actions">
 				{editing ? <><Button
 					size="small"
 					disabled={!changed || busy || conflict}
@@ -255,6 +259,7 @@ function SubmissionRow({ submission }: { submission: Submission }) {
 					setConflict(false);
 					setEditing(true);
 				}}>{t(submission.status === "verify" ? "backlinkCheck" : submission.status === "planned" ? "edit" : "backlinkUpdate")}</Button>}
+				</div>
 			</td>
 		</tr>
 	);
@@ -1489,12 +1494,12 @@ export function AssetDetail() {
 			</section>}
 			{asset.kind === "project" && domainEditing && domainDraft && <Dialog title={domainEditing === "new" ? t("projectAddDomain") : t("projectEditDomain")} onClose={() => { if (!domainBusy) setDomainEditing(null); }}>
 				<form className="asset-project-domain-form" onSubmit={(event) => { event.preventDefault(); void saveDomain(); }}>
-					<label>{t("projectDomain")}<input required value={domainDraft.name} onChange={(event) => setDomainDraft({ ...domainDraft, name: event.target.value })} placeholder="example.com" /></label>
-					<label>{t("projectRegistrar")}<input value={domainDraft.registrar} onChange={(event) => setDomainDraft({ ...domainDraft, registrar: event.target.value })} /></label>
-					<label>{t("projectDomainAccount")}<select value={domainDraft.accountId} onChange={(event) => setDomainDraft({ ...domainDraft, accountId: event.target.value })}><option value="">—</option>{liveAssets(data).filter((entry) => entry.kind === "account").map((entry) => <option value={entry.id} key={entry.id}>{entry.name}</option>)}</select></label>
-					<label>{t("projectExpiry")}<input type="date" value={domainDraft.expiryDate} onChange={(event) => setDomainDraft({ ...domainDraft, expiryDate: event.target.value })} /></label>
-					<label>{t("projectAnnualFee")}<span className="asset-project-fee-row"><input inputMode="decimal" value={domainFee} onChange={(event) => setDomainFee(event.target.value)} /><select aria-label={t("currency")} value={domainDraft.currency} onChange={(event) => { const currency = event.target.value as ProjectDomain["currency"]; setDomainDraft({ ...domainDraft, currency }); setDomainFee(""); }}><option>CNY</option><option>USD</option><option>EUR</option><option>GBP</option><option>JPY</option></select></span></label>
-					<label>{t("projectAutoRenew")}<select value={domainDraft.autoRenew} onChange={(event) => setDomainDraft({ ...domainDraft, autoRenew: event.target.value as ProjectDomain["autoRenew"] })}><option value="unknown">{t("projectAutoRenewUnknown")}</option><option value="on">{t("projectAutoRenewOn")}</option><option value="off">{t("projectAutoRenewOff")}</option></select></label>
+					<label className="field">{t("projectDomain")}<input disabled={domainBusy} required value={domainDraft.name} onChange={(event) => setDomainDraft({ ...domainDraft, name: event.target.value })} placeholder="example.com" /></label>
+					<label className="field">{t("projectRegistrar")}<input disabled={domainBusy} value={domainDraft.registrar} onChange={(event) => setDomainDraft({ ...domainDraft, registrar: event.target.value })} /></label>
+					<label className="field">{t("projectDomainAccount")}<select disabled={domainBusy} value={domainDraft.accountId} onChange={(event) => setDomainDraft({ ...domainDraft, accountId: event.target.value })}><option value="">—</option>{liveAssets(data).filter((entry) => entry.kind === "account").map((entry) => <option value={entry.id} key={entry.id}>{entry.name}</option>)}</select></label>
+					<label className="field">{t("projectExpiry")}<input disabled={domainBusy} type="date" value={domainDraft.expiryDate} onChange={(event) => setDomainDraft({ ...domainDraft, expiryDate: event.target.value })} /></label>
+					<label className="field">{t("projectAnnualFee")}<span className="asset-project-fee-row"><input disabled={domainBusy} inputMode="decimal" value={domainFee} onChange={(event) => setDomainFee(event.target.value)} /><select disabled={domainBusy} aria-label={t("currency")} value={domainDraft.currency} onChange={(event) => { const currency = event.target.value as ProjectDomain["currency"]; setDomainDraft({ ...domainDraft, currency }); setDomainFee(""); }}><option>CNY</option><option>USD</option><option>EUR</option><option>GBP</option><option>JPY</option></select></span></label>
+					<label className="field">{t("projectAutoRenew")}<select disabled={domainBusy} value={domainDraft.autoRenew} onChange={(event) => setDomainDraft({ ...domainDraft, autoRenew: event.target.value as ProjectDomain["autoRenew"] })}><option value="unknown">{t("projectAutoRenewUnknown")}</option><option value="on">{t("projectAutoRenewOn")}</option><option value="off">{t("projectAutoRenewOff")}</option></select></label>
 					{domainError && <p role="alert" className="field-error">{domainError}</p>}
 					<div className="actions"><Button type="submit" variant="primary" disabled={domainBusy}>{t("save")}</Button>{domainEditing !== "new" && <Button type="button" variant="danger" disabled={domainBusy} onClick={() => void removeDomain()}>{t("projectDomainDelete")}</Button>}<Button type="button" disabled={domainBusy} onClick={() => setDomainEditing(null)}>{t("cancel")}</Button></div>
 				</form>
@@ -1882,9 +1887,9 @@ export function AssetDetail() {
 			)}
 			{asset.kind === "item" && locationOpen && <Dialog title={t("itemEditLocation")} onClose={() => { if (!locationBusy) setLocationOpen(false); }}>
 				<div className="asset-item-location-fields">
-					<label><span>{t("itemLocationArea")}</span><input value={locationArea} maxLength={300} disabled={locationBusy} onChange={(event) => { setLocationArea(event.target.value); setLocationError(""); }} /></label>
-					<label><span>{t("itemLocationContainer")}</span><input value={locationContainer} maxLength={300} disabled={locationBusy} onChange={(event) => { setLocationContainer(event.target.value); setLocationError(""); }} /></label>
-					<label><span>{t("itemLocationSpot")}</span><input value={locationSpot} maxLength={300} disabled={locationBusy} onChange={(event) => { setLocationSpot(event.target.value); setLocationError(""); }} /></label>
+					<label className="field"><span>{t("itemLocationArea")}</span><input value={locationArea} maxLength={300} disabled={locationBusy} onChange={(event) => { setLocationArea(event.target.value); setLocationError(""); }} /></label>
+					<label className="field"><span>{t("itemLocationContainer")}</span><input value={locationContainer} maxLength={300} disabled={locationBusy} onChange={(event) => { setLocationContainer(event.target.value); setLocationError(""); }} /></label>
+					<label className="field"><span>{t("itemLocationSpot")}</span><input value={locationSpot} maxLength={300} disabled={locationBusy} onChange={(event) => { setLocationSpot(event.target.value); setLocationError(""); }} /></label>
 				</div>
 				{locationError && <p className="field-error" role="alert">{locationError}</p>}
 				<div className="actions"><Button disabled={locationBusy} onClick={() => setLocationOpen(false)}>{t("cancel")}</Button><Button variant="primary" disabled={locationBusy} onClick={() => void saveLocation()}>{t("itemSaveLocation")}</Button></div>

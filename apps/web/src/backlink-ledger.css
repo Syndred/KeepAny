@@ -6,8 +6,8 @@
 .asset-backlinks-card .backlink-edit-name { display: block; margin-bottom: 5px; font-size: 11px; }
 .asset-backlinks-card .backlink-row-editing input, .asset-backlinks-card .backlink-row-editing select { width: 100%; min-width: 0; margin-bottom: 5px; }
 .asset-backlinks-card td a, .asset-backlinks-card td span { overflow-wrap: anywhere; }
-.asset-backlinks-card td:last-child { white-space: nowrap; }
-.asset-backlinks-card td:last-child button + button { margin-left: 5px; }
+.asset-backlinks-card .backlink-row-actions { display: flex; flex-wrap: wrap; gap: 5px; }
+.asset-backlinks-card .backlink-row-actions button { max-width: 100%; }
 @media (max-width: 700px) {
 	.asset-backlinks-card th:last-child, .asset-backlinks-card td:last-child { position: sticky; right: 0; z-index: 1; background: #fffdf7; box-shadow: -1px 0 0 var(--line-soft); }
 	.asset-backlinks-card th:last-child { background: #fff2cf; }

@@ -149,6 +149,7 @@ for (const locale of ["zh-CN", "en"] as const) {
 			await dialog.getByLabel(zh ? "所在区域" : "Area").fill("Study");
 			await dialog.getByLabel(zh ? "收纳位置" : "Container").fill("Shelf");
 			await dialog.getByLabel(zh ? "具体位置" : "Exact spot").fill("Top");
+			await page.screenshot({ path: test.info().outputPath(`item-location-dialog-${locale}-390.png`), fullPage: true });
 			await dialog
 				.getByRole("button", { name: zh ? "保存位置" : "Save location" })
 				.click();

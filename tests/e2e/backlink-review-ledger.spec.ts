@@ -43,9 +43,17 @@ for (const locale of ["zh-CN", "en-US"] as const) {
 			await row.getByLabel(`Atlas listing ${copy.name}`).fill("Atlas listing updated");
 			await row.getByLabel(`Atlas listing ${copy.url}`).fill("https://directory.example/atlas-updated");
 			await row.getByRole("combobox").selectOption("indexed");
+			const bounds = await ledger.locator(".table-wrap").boundingBox();
+			expect(bounds).not.toBeNull();
+			for (const action of await row.locator(".backlink-row-actions button").all()) {
+				const button = await action.boundingBox();
+				expect(button).not.toBeNull();
+				if (bounds && button) expect(button.x + button.width).toBeLessThanOrEqual(bounds.x + bounds.width - 1);
+			}
 			await row.getByRole("button", { name: copy.save, exact: true }).click();
 			await expect(row.getByRole("alert")).toHaveText(copy.invalid);
 			await row.getByLabel(`Atlas listing ${copy.evidence}`).fill("https://directory.example/atlas/live");
+			await page.screenshot({ path: test.info().outputPath(`backlink-editor-${locale}-390.png`), fullPage: true });
 			await row.getByRole("button", { name: copy.save, exact: true }).click();
 			await expect(row).toHaveCount(0);
 			await filters.getByRole("button", { name: copy.indexed, exact: true }).click();
