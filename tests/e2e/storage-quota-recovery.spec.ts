@@ -1,0 +1,209 @@
+import { createHash } from 'node:crypto';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import path from 'node:path';
+import { expect, test, type Page } from '@playwright/test';
+import { strFromU8, unzipSync } from 'fflate';
+import { decryptBackup } from '../../packages/local-db/src/backup-crypto';
+import type { Asset } from '../../packages/domain/src';
+
+// Opt-in browser-boundary probe, excluded from normal delivery acceptance.
+// On 2026-09-30, Chromium 153 confirmed an override on the existing application
+// databases but saved both valid 2048px PNGs (~14 MiB) without QuotaExceededError.
+// Those two failures do not establish recovery acceptance or an application bug.
+// Reproduce against an isolated release/web preview on 4202:
+// KEEPANY_STORAGE_QUOTA_ACCEPTANCE=1 pnpm exec playwright test --config playwright.quota.config.ts --reporter=line
+test.skip(process.env.KEEPANY_STORAGE_QUOTA_ACCEPTANCE !== '1',
+  'Opt-in: Chromium may confirm an origin quota override without enforcing it on existing application databases; recovery must remain unverified unless a native QuotaExceededError occurs');
+
+const evidence = path.resolve('docs/evidence/2026-09-30/delivery');
+const password = 'storage-quota-recovery-password';
+const reproductionCommand = 'KEEPANY_STORAGE_QUOTA_ACCEPTANCE=1 pnpm exec playwright test --config playwright.quota.config.ts --reporter=line';
+const releaseEntry = readFileSync('release/web/index.html', 'utf8').match(/<script[^>]*src="([^"]+)"/)?.[1];
+type QuotaEvent = { source: string; database: string; errorName: string | null; message: string | null };
+type QuotaWindow = Window & { __nativeQuotaEvents?: QuotaEvent[] };
+const sha = (bytes: Uint8Array) => createHash('sha256').update(bytes).digest('hex');
+
+// Reuse the media tests' browser Canvas PNG fixture. RGB noise creates a valid
+// large image that cannot be compressed below the small remaining quota.
+async function png(page: Page, large = false): Promise<Buffer> {
+  const base64 = await page.evaluate((large) => {
+    const canvas = document.createElement('canvas'); canvas.width = canvas.height = large ? 2048 : 24;
+    const context = canvas.getContext('2d'); if (!context) throw Error('canvas-unavailable');
+    if (large) {
+      const pixels = context.createImageData(canvas.width, canvas.height);
+      for (let offset = 0; offset < pixels.data.length; offset += 65536) {
+        crypto.getRandomValues(pixels.data.subarray(offset, Math.min(offset + 65536, pixels.data.length)));
+      }
+      for (let offset = 3; offset < pixels.data.length; offset += 4) pixels.data[offset] = 255;
+      context.putImageData(pixels, 0, 0);
+    } else { context.fillStyle = '#235ac8'; context.fillRect(0, 0, canvas.width, canvas.height); }
+    return canvas.toDataURL('image/png').split(',')[1];
+  }, large);
+  return Buffer.from(base64, 'base64');
+}
+
+async function backup(page: Page, zh: boolean, fileName: string) {
+  await page.goto('/intake'); await page.locator('#backup-password').fill(password);
+  await page.getByRole('button', { name: zh ? '创建备份' : 'Create backup', exact: true }).click();
+  const link = page.getByRole('link', { name: zh ? '保存备份文件' : 'Save backup file' }); await expect(link).toBeVisible();
+  const event = page.waitForEvent('download'); await link.click(); const downloaded = await event;
+  const file = path.join(test.info().outputDir, fileName); await downloaded.saveAs(file);
+  const encrypted = readFileSync(file); expect(encrypted.subarray(0, 8).toString()).toBe('KEEPANY1');
+  const entries = unzipSync(await decryptBackup(new Uint8Array(encrypted), password));
+  const records = JSON.parse(strFromU8(entries['records.json'])) as Array<{ id: string; type: string; payload: string }>;
+  const manifest = JSON.parse(strFromU8(entries['manifest.json'])) as { attachments: Array<{ id: string; sha256: string; size: number }> };
+  return { file, records, manifest, entries };
+}
+
+async function imageBytes(page: Page): Promise<Buffer> {
+  const image = page.locator('.asset-project-hero-visual img'); await expect(image).toBeVisible();
+  const bytes = await image.evaluate(async (image: HTMLImageElement) => {
+    await image.decode(); return Array.from(new Uint8Array(await (await fetch(image.currentSrc)).arrayBuffer()));
+  });
+  return Buffer.from(bytes);
+}
+
+for (const locale of ['zh-CN', 'en-US']) test(`${locale} 390 actual Chromium quota failure preserves the project draft and retries after quota recovery`, async ({ browser, baseURL }) => {
+  test.setTimeout(120_000); const zh = locale === 'zh-CN';
+  if (!baseURL) throw Error('base-url-missing'); const origin = new URL(baseURL).origin;
+  const context = await browser.newContext({ locale, viewport: { width: 390, height: 844 }, serviceWorkers: 'block' });
+  // Observe original native events only. No quota errors or storage outcomes are mocked.
+  await context.addInitScript(() => {
+    const state = window as QuotaWindow; state.__nativeQuotaEvents = [];
+    const original = IDBDatabase.prototype.transaction;
+    IDBDatabase.prototype.transaction = function (...args: Parameters<typeof original>) {
+      const transaction = Reflect.apply(original, this, args) as IDBTransaction;
+      for (const eventName of ['error', 'abort']) transaction.addEventListener(eventName, event => {
+        const requestError = (event.target as IDBRequest)?.error;
+        const error = requestError ?? transaction.error;
+        state.__nativeQuotaEvents?.push({ source: `transaction-${eventName}`, database: this.name,
+          errorName: error?.name ?? null, message: error?.message ?? null });
+      });
+      return transaction;
+    };
+  });
+  const page = await context.newPage(), errors: string[] = []; page.setDefaultTimeout(10_000);
+  page.on('pageerror', error => errors.push(error.message)); const cdp = await context.newCDPSession(page);
+  let overrideSet = false;
+  let attempt: Record<string, unknown> | undefined;
+  mkdirSync(evidence, { recursive: true });
+  try {
+    const originalName = `Quota original ${locale}`, recoveredName = `Quota recovered ${locale}`;
+    await page.goto('/assets/project');
+    if (!releaseEntry) throw Error('release-entry-missing');
+    expect(await page.locator('script[src]').evaluateAll(scripts => scripts.map(script => script.getAttribute('src')))).toContain(releaseEntry);
+    const oldPng = await png(page), largePng = await png(page, true);
+    expect(largePng.length).toBeGreaterThan(12 * 1024 * 1024); expect(largePng.length).toBeLessThan(20 * 1024 * 1024);
+    await page.getByRole('button', { name: zh ? '新增' : 'Add', exact: true }).click();
+    let dialog = page.getByRole('dialog'); await dialog.locator('#name').fill(originalName);
+    await dialog.locator('#projectHomeFile').setInputFiles({ name: 'quota-old.png', mimeType: 'image/png', buffer: oldPng });
+    await expect(dialog.locator('.project-editor-image')).toHaveCount(1);
+    await dialog.getByRole('button', { name: zh ? '保存' : 'Save', exact: true }).click(); await expect(dialog).toBeHidden();
+    await page.getByText(originalName, { exact: true }).first().click();
+    const assetId = new URL(page.url()).pathname.split('/').at(-1); if (!assetId) throw Error('asset-id-missing');
+    expect(await imageBytes(page)).toEqual(oldPng);
+    const initial = await backup(page, zh, `quota-initial-${locale}.ka1`);
+    const initialRow = initial.records.find(row => row.id === `asset:${assetId}`); if (!initialRow) throw Error('asset-row-missing');
+    const initialAsset = JSON.parse(initialRow.payload) as Asset;
+    expect(initial.entries[`files/${initialAsset.projectMedia.homeScreenshotId}`]).toEqual(new Uint8Array(oldPng));
+    await page.goto(`/assets/project/${assetId}`);
+    const beforeQuota = await cdp.send('Storage.getUsageAndQuota', { origin });
+    const requestedQuota = Math.ceil(beforeQuota.usage) + 256 * 1024;
+    await cdp.send('Storage.overrideQuotaForOrigin', { origin, quotaSize: requestedQuota }); overrideSet = true;
+    const limited = await cdp.send('Storage.getUsageAndQuota', { origin });
+    expect(limited.overrideActive).toBe(true); expect(limited.quota).toBe(requestedQuota);
+    // Open the existing project with fresh database connections under the limit.
+    await page.reload();
+    await expect(page.getByRole('heading', { name: originalName, exact: true })).toBeVisible();
+    await page.getByRole('button', { name: zh ? '编辑' : 'Edit', exact: true }).first().click();
+    dialog = page.getByRole('dialog'); await dialog.locator('#name').fill(recoveredName);
+    await dialog.locator('#description').fill('Retained quota recovery draft');
+    await dialog.locator('#projectHomeFile').setInputFiles({ name: 'quota-large.png', mimeType: 'image/png', buffer: largePng });
+    const preview = dialog.locator('img.project-editor-image').first(); await expect(preview).toBeVisible();
+    expect(await preview.evaluate(async (image: HTMLImageElement) => { await image.decode(); return image.naturalWidth; })).toBe(2048);
+    await page.evaluate(() => { (window as QuotaWindow).__nativeQuotaEvents = []; });
+    await dialog.getByRole('button', { name: zh ? '保存' : 'Save', exact: true }).click();
+    await Promise.race([dialog.waitFor({ state: 'hidden' }), dialog.getByRole('alert').waitFor({ state: 'visible' })]);
+    attempt = {
+      locale, viewport: { width: 390, height: 844 }, origin, servedPackage: 'release/web', browser: browser.version(), reproductionCommand,
+      beforeQuota, requestedQuota, limited, imageBytes: largePng.length,
+      afterSave: await cdp.send('Storage.getUsageAndQuota', { origin }),
+      quotaEvents: await page.evaluate(() => (window as QuotaWindow).__nativeQuotaEvents ?? []),
+      editorRetained: await dialog.isVisible(),
+      instrumentation: 'Native IndexedDB transaction events observed; no errors or outcomes mocked',
+    };
+    if (!await dialog.isVisible()) {
+      // Preserve the browser boundary as a failure, with actual persisted-image
+      // and archive readback. It cannot count as quota-error recovery acceptance.
+      await expect(page.getByRole('heading', { name: recoveredName, exact: true })).toBeVisible();
+      await page.reload(); expect(await imageBytes(page)).toEqual(largePng);
+      await page.screenshot({ path: path.join(evidence, `storage-quota-${locale}-not-enforced.png`), fullPage: true });
+      await cdp.send('Storage.overrideQuotaForOrigin', { origin }); overrideSet = false;
+      const cleared = await cdp.send('Storage.getUsageAndQuota', { origin }); expect(cleared.overrideActive).toBe(false);
+      const saved = await backup(page, zh, `quota-not-enforced-${locale}.ka1`);
+      const savedRow = saved.records.find(row => row.id === `asset:${assetId}`); if (!savedRow) throw Error('unexpected-save-row-missing');
+      const savedAsset = JSON.parse(savedRow.payload) as Asset;
+      expect(savedAsset).toMatchObject({ id: assetId, name: recoveredName, description: 'Retained quota recovery draft' });
+      expect(saved.entries[`files/${savedAsset.projectMedia.homeScreenshotId}`]).toEqual(new Uint8Array(largePng));
+      Object.assign(attempt, { outcome: 'quota-not-enforced', cleared, assetId, pageErrors: errors,
+        originalImage: { id: initialAsset.projectMedia.homeScreenshotId, bytes: oldPng.length, sha256: sha(oldPng), browserDownloadedArchiveVerified: true },
+        savedImage: { id: savedAsset.projectMedia.homeScreenshotId, bytes: largePng.length, sha256: sha(largePng), refreshedAndBrowserDownloadedArchiveVerified: true },
+        quotaRecoveryVerified: false });
+      throw Error('quota-not-enforced: Chromium confirmed the quota override but saved the image without QuotaExceededError; recovery remains unverified');
+    }
+    await expect(dialog.getByRole('alert')).toBeVisible(); await expect(dialog).toBeVisible();
+    const quotaEvents = await page.evaluate(() => (window as QuotaWindow).__nativeQuotaEvents ?? []);
+    expect(quotaEvents.some(event => event.errorName === 'QuotaExceededError')).toBe(true);
+    await expect(dialog.locator('#name')).toHaveValue(recoveredName); await expect(dialog.locator('#description')).toHaveValue('Retained quota recovery draft');
+    expect(await dialog.locator('#projectHomeFile').evaluate((input: HTMLInputElement) => ({ name: input.files?.[0]?.name, size: input.files?.[0]?.size })))
+      .toEqual({ name: 'quota-large.png', size: largePng.length });
+    await expect(page.getByRole('heading', { name: originalName, exact: true })).toBeAttached();
+    await expect(page.getByRole('heading', { name: recoveredName, exact: true })).toHaveCount(0);
+    await dialog.getByRole('alert').scrollIntoViewIfNeeded();
+    await page.screenshot({ path: path.join(evidence, `storage-quota-${locale}-failed.png`), fullPage: true });
+    const readback = await context.newPage(); readback.on('pageerror', error => errors.push(error.message));
+    await readback.goto(`/assets/project/${assetId}`);
+    await expect(readback.getByRole('heading', { name: originalName, exact: true })).toBeVisible(); expect(await imageBytes(readback)).toEqual(oldPng);
+    const afterFailure = await backup(readback, zh, `quota-failed-${locale}.ka1`);
+    expect(afterFailure.records).toEqual(initial.records);
+    expect(afterFailure.entries[`files/${initialAsset.projectMedia.homeScreenshotId}`]).toEqual(new Uint8Array(oldPng));
+    await readback.close();
+    await cdp.send('Storage.overrideQuotaForOrigin', { origin }); overrideSet = false;
+    const cleared = await cdp.send('Storage.getUsageAndQuota', { origin }); expect(cleared.overrideActive).toBe(false);
+    // Retry the exact retained form and selected file, without re-entering the draft.
+    await dialog.getByRole('button', { name: zh ? '保存' : 'Save', exact: true }).click(); await expect(dialog).toBeHidden();
+    await expect(page.getByRole('heading', { name: recoveredName, exact: true })).toBeVisible(); await page.reload();
+    await expect(page.getByRole('heading', { name: recoveredName, exact: true })).toBeVisible(); expect(await imageBytes(page)).toEqual(largePng);
+    await page.screenshot({ path: path.join(evidence, `storage-quota-${locale}-recovered.png`), fullPage: true });
+    const recovered = await backup(page, zh, `quota-recovered-${locale}.ka1`);
+    const finalRow = recovered.records.find(row => row.id === `asset:${assetId}`); if (!finalRow) throw Error('recovered-row-missing');
+    const finalAsset = JSON.parse(finalRow.payload) as Asset;
+    expect(finalAsset).toMatchObject({ id: assetId, name: recoveredName, description: 'Retained quota recovery draft' });
+    expect(finalAsset.projectMedia.homeScreenshotId).not.toBe(initialAsset.projectMedia.homeScreenshotId);
+    expect(finalAsset.attachments).toEqual([finalAsset.projectMedia.homeScreenshotId]);
+    expect(recovered.entries[`files/${finalAsset.projectMedia.homeScreenshotId}`]).toEqual(new Uint8Array(largePng));
+    expect(recovered.entries[`files/${initialAsset.projectMedia.homeScreenshotId}`]).toBeUndefined();
+    expect(errors).toEqual([]);
+    writeFileSync(path.join(evidence, `storage-quota-${locale}.json`), JSON.stringify({
+      locale, viewport: { width: 390, height: 844 }, servedPackage: 'release/web', origin, assetId,
+      beforeQuota, requestedQuota, limited, cleared, quotaEvents, draftRetained: true, oldAssetUnchanged: true,
+      retryUsedSameDraftAndFile: true, pageErrors: errors,
+      originalImage: { id: initialAsset.projectMedia.homeScreenshotId, bytes: oldPng.length, sha256: sha(oldPng) },
+      recoveredImage: { id: finalAsset.projectMedia.homeScreenshotId, bytes: largePng.length, sha256: sha(largePng) },
+      archive: { records: recovered.records.length, currentImageBytesVerified: true, browserDownloaded: true },
+      instrumentation: 'Native IndexedDB transaction events observed; no errors or outcomes mocked',
+    }, null, 2));
+  } finally {
+    try {
+      if (overrideSet) {
+        await cdp.send('Storage.overrideQuotaForOrigin', { origin });
+        const cleared = await cdp.send('Storage.getUsageAndQuota', { origin });
+        if (attempt) attempt.clearedAfterFailure = cleared;
+        expect(cleared.overrideActive).toBe(false);
+      }
+      if (attempt) writeFileSync(path.join(evidence, `storage-quota-${locale}-attempt.json`), `${JSON.stringify(attempt, null, 2)}\n`);
+    } finally {
+      try { await cdp.detach(); } finally { await context.close(); }
+    }
+  }
+});

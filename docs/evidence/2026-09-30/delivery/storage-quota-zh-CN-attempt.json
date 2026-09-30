@@ -1,0 +1,125 @@
+{
+  "locale": "zh-CN",
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "origin": "http://127.0.0.1:4202",
+  "servedPackage": "release/web",
+  "browser": "153.0.8010.12",
+  "beforeQuota": {
+    "usage": 294912,
+    "quota": 1124588122,
+    "overrideActive": false,
+    "usageBreakdown": [
+      {
+        "storageType": "file_systems",
+        "usage": 0
+      },
+      {
+        "storageType": "indexeddb",
+        "usage": 294912
+      },
+      {
+        "storageType": "cache_storage",
+        "usage": 0
+      },
+      {
+        "storageType": "service_workers",
+        "usage": 0
+      }
+    ]
+  },
+  "requestedQuota": 557056,
+  "limited": {
+    "usage": 294912,
+    "quota": 557056,
+    "overrideActive": true,
+    "usageBreakdown": [
+      {
+        "storageType": "file_systems",
+        "usage": 0
+      },
+      {
+        "storageType": "indexeddb",
+        "usage": 294912
+      },
+      {
+        "storageType": "cache_storage",
+        "usage": 0
+      },
+      {
+        "storageType": "service_workers",
+        "usage": 0
+      }
+    ]
+  },
+  "imageBytes": 14431080,
+  "afterSave": {
+    "usage": 5541888,
+    "quota": 557056,
+    "overrideActive": true,
+    "usageBreakdown": [
+      {
+        "storageType": "file_systems",
+        "usage": 0
+      },
+      {
+        "storageType": "indexeddb",
+        "usage": 5541888
+      },
+      {
+        "storageType": "cache_storage",
+        "usage": 0
+      },
+      {
+        "storageType": "service_workers",
+        "usage": 0
+      }
+    ]
+  },
+  "quotaEvents": [],
+  "editorRetained": false,
+  "instrumentation": "Native IndexedDB transaction events observed; no errors or outcomes mocked",
+  "outcome": "quota-not-enforced",
+  "cleared": {
+    "usage": 5541888,
+    "quota": 1124588122,
+    "overrideActive": false,
+    "usageBreakdown": [
+      {
+        "storageType": "file_systems",
+        "usage": 0
+      },
+      {
+        "storageType": "indexeddb",
+        "usage": 5541888
+      },
+      {
+        "storageType": "cache_storage",
+        "usage": 0
+      },
+      {
+        "storageType": "service_workers",
+        "usage": 0
+      }
+    ]
+  },
+  "assetId": "2fa9db9f-0910-40bb-a540-324a00f67bc0",
+  "pageErrors": [],
+  "originalImage": {
+    "id": "6890839f-323c-4d19-81eb-92207fc45159",
+    "bytes": 136,
+    "sha256": "55ba82d86d864da23c86998e136fdcd682871c6d2d1b01b0fa84ad529ae48b5d",
+    "browserDownloadedArchiveVerified": true
+  },
+  "savedImage": {
+    "id": "e664fb6b-fb8e-4b15-9f7a-5d897abe8dbc",
+    "bytes": 14431080,
+    "sha256": "de015f071f4f00d9b6c0820ba0a73da9fba29e045793135332245edaf31fac3b",
+    "refreshedAndBrowserDownloadedArchiveVerified": true
+  },
+  "quotaRecoveryVerified": false,
+  "reproductionCommand": "KEEPANY_STORAGE_QUOTA_ACCEPTANCE=1 KEEPANY_E2E_PORT=4202 pnpm exec playwright test tests/e2e/storage-quota-recovery.spec.ts --workers=1 --reporter=line",
+  "isolatedFixedReleaseReproductionCommand": "KEEPANY_STORAGE_QUOTA_ACCEPTANCE=1 pnpm exec playwright test --config playwright.quota.config.ts --reporter=line"
+}

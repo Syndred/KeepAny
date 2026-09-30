@@ -78,6 +78,13 @@
       "status": "success",
       "unitPassed": 344,
       "durationSeconds": 273
+    },
+    "quotaProbeCommitReadback": {
+      "commit": "e9cba2fc2fa777fbcbf28f5ab56acd35242f1941",
+      "url": "https://github.com/Syndred/KeepAny/actions/runs/36648343107",
+      "status": "success",
+      "unitPassed": 344,
+      "durationSeconds": 244
     }
   },
   "boundaries": [
@@ -109,5 +116,23 @@
     "databaseRemovedVerified": true,
     "overrideResetVerified": true,
     "scope": "Isolated raw IndexedDB write; application UI recovery and physical low storage require separate acceptance."
-  }
+  },
+  "applicationQuotaAttempt": {
+    "evidence": [
+      "storage-quota-zh-CN-attempt.json",
+      "storage-quota-en-US-attempt.json"
+    ],
+    "config": "playwright.quota.config.ts",
+    "optInEnvironment": "KEEPANY_STORAGE_QUOTA_ACCEPTANCE=1",
+    "attempted": 2,
+    "failed": 2,
+    "defaultSkipped": 2,
+    "recoveryVerified": false,
+    "reason": "Chromium confirmed the override but allowed the existing application databases to save; no native QuotaExceededError observed.",
+    "ordinaryImageRefreshAndBrowserDownloadedArchiveVerified": true,
+    "overrideClearedVerified": true,
+    "temporaryPort": 4202,
+    "normalReleaseSuiteUnchanged": true
+  },
+  "updatedAt": "2026-09-30T00:15:08.237218+00:00"
 }
