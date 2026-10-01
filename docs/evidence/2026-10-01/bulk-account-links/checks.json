@@ -1,0 +1,80 @@
+{
+  "softwareCommit": "8ddc9e2081f75a752befafdd472ff7f73d0a7c73",
+  "sourceCommits": [
+    "001dffd",
+    "1a894c5"
+  ],
+  "entry": "index-DygXQB0C.js",
+  "indexSHA256": "67119249a7a6cd657c9e7f566f7f6dd503cc5f8bf296e98762fc5b42285e671f",
+  "entrySHA256": "cba4bca0fa4f7c58ef8c82ed3c2f51f0065613d04f9e366231954fa6d4ccbe15",
+  "fixedFiles": 91,
+  "retainedFiles": 1104,
+  "unit": {
+    "total": 84,
+    "passed": 84,
+    "failed": 0,
+    "newIdentityCases": 11,
+    "existingRelatedCases": 73
+  },
+  "fixedBrowser": {
+    "passed": 22,
+    "failed": 0,
+    "skipped": 0,
+    "flaky": 0,
+    "durationMs": 33464.993,
+    "languages": [
+      "zh-CN",
+      "en"
+    ],
+    "widths": [
+      390,
+      1280
+    ],
+    "syntheticModel": true
+  },
+  "firstAttempt": {
+    "bulkPassed": 4,
+    "regressionPassed": 14,
+    "regressionFailed": 2,
+    "reason": "Adding a separate identity preview line made desktop cards 517.55px, exceeding the existing 500px density check; preview now shares the evidence summary row; final assertions are unchanged."
+  },
+  "review": {
+    "fixed": [
+      "Identity changes between plan and write rejected inside the shared mutation gate",
+      "Bulk success count requires accepted candidate and live asset receipt"
+    ],
+    "openBlockingFindings": 0
+  },
+  "originalEgo": {
+    "origin": "http://127.0.0.1:4180",
+    "viewport": [
+      1218,
+      808
+    ],
+    "accepted": 13,
+    "ignored": 13,
+    "pending": 0,
+    "createdIdentityNodes": 3,
+    "createdRelations": 11,
+    "unknownGithubRecords": 2,
+    "repeatedCreatedRelations": 0,
+    "persistedAfterReload": true,
+    "privateScreenshot": "work/intake-bulk-20261001/ego-account-links.png"
+  },
+  "api": {
+    "realModelCalledThisTurn": false,
+    "newKeyCreated": false
+  },
+  "ci": {
+    "run": 57,
+    "url": "https://github.com/Syndred/KeepAny/actions/runs/36882454475",
+    "status": "In progress",
+    "commit": "8ddc9e2"
+  },
+  "previousCI": {
+    "run56": "Success, 17m29s",
+    "run55": "Success, 17m53s"
+  },
+  "deployment": "Local fixed release on 4180; no internet deployment",
+  "cleanup": "4194/4195 test servers and synthetic contexts exited; only own test outputs/downloads/intermediate chunks removed; original user page kept"
+}

@@ -1,0 +1,755 @@
+{
+  "config": {
+    "argv": [
+      "/Users/syndred/.nvm/versions/node/v22.23.1/bin/node",
+      "/Users/syndred/Desktop/projects/KeepAny/node_modules/@playwright/test/cli.js",
+      "test",
+      "-c",
+      "playwright.release.config.ts",
+      "ai-account-import-release.spec.ts",
+      "ai-release.spec.ts",
+      "intake-pdf.spec.ts",
+      "intake-expense.spec.ts",
+      "--reporter=json",
+      "--output=work/intake-bulk-20261001/regression-output"
+    ],
+    "configFile": "/Users/syndred/Desktop/projects/KeepAny/playwright.release.config.ts",
+    "rootDir": "/Users/syndred/Desktop/projects/KeepAny/tests/e2e",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 2
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "/Users/syndred/Desktop/projects/KeepAny/work/intake-bulk-20261001/regression-output",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 2
+        },
+        "id": "",
+        "name": "",
+        "testDir": "/Users/syndred/Desktop/projects/KeepAny/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "ai-release.spec.ts",
+          "ai-account-import-release.spec.ts",
+          "intake-bulk-account-links.spec.ts",
+          "ai-dialog-matrix.spec.ts",
+          "local-core.spec.ts",
+          "english-demo-release.spec.ts",
+          "production-offline.spec.ts",
+          "intake-pdf.spec.ts",
+          "intake-expense.spec.ts",
+          "intake-review-backup.spec.ts",
+          "intake-review-merge.spec.ts",
+          "custom-category-release.spec.ts",
+          "global-search-release.spec.ts",
+          "detail-entry-statistics.spec.ts",
+          "intake-asset-receipt.spec.ts",
+          "collections-route.spec.ts",
+          "relation-graph-verification.spec.ts",
+          "restore-identity.spec.ts",
+          "archive-migration.spec.ts",
+          "vault-reference-release.spec.ts",
+          "password-vault.spec.ts",
+          "themed-select.spec.ts",
+          "spacing-consistency.spec.ts",
+          "task-theme-release.spec.ts",
+          "finance-ledger-release.spec.ts",
+          "collections-ledger-release.spec.ts",
+          "restore-self-service-release.spec.ts"
+        ],
+        "timeout": 90000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "json"
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.63.0",
+    "workers": 2,
+    "webServer": {
+      "command": "node node_modules/vite/bin/vite.js preview apps/web --outDir ../../release/web --host 127.0.0.1 --port 4194 --strictPort",
+      "url": "http://127.0.0.1:4194",
+      "reuseExistingServer": false,
+      "timeout": 30000
+    }
+  },
+  "suites": [
+    {
+      "title": "ai-account-import-release.spec.ts",
+      "file": "ai-account-import-release.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "zh-CN account identifiers are reviewed, saved and retained at 390px",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1920,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-01T15:02:09.940Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "b418616e0ecac4095238-1b08a930c3081d01e873",
+          "file": "ai-account-import-release.spec.ts",
+          "line": 15,
+          "column": 3
+        },
+        {
+          "title": "zh-CN account identifiers are reviewed, saved and retained at 1280px",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 868,
+                  "error": {
+                    "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeLessThanOrEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: <= \u001b[32m500\u001b[39m\nReceived:    \u001b[31m517.546875\u001b[39m",
+                    "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeLessThanOrEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: <= \u001b[32m500\u001b[39m\nReceived:    \u001b[31m517.546875\u001b[39m\n    at /Users/syndred/Desktop/projects/KeepAny/tests/e2e/ai-account-import-release.spec.ts:169:34",
+                    "location": {
+                      "file": "/Users/syndred/Desktop/projects/KeepAny/tests/e2e/ai-account-import-release.spec.ts",
+                      "column": 34,
+                      "line": 169
+                    },
+                    "snippet": "  167 | \t\t\t\t\texpect(positions[0].y).toBe(positions[1].y);\n  168 | \t\t\t\t\texpect(positions[1].x).toBeGreaterThan(positions[0].x + positions[0].width);\n> 169 | \t\t\t\t\texpect(positions[0].height).toBeLessThanOrEqual(500);\n      | \t\t\t\t\t                            ^\n  170 | \t\t\t\t} else {\n  171 | \t\t\t\t\texpect(positions[0].x).toBe(positions[1].x);\n  172 | \t\t\t\t\texpect(positions[1].y).toBeGreaterThan(positions[0].y + positions[0].height);"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "/Users/syndred/Desktop/projects/KeepAny/tests/e2e/ai-account-import-release.spec.ts",
+                        "column": 34,
+                        "line": 169
+                      },
+                      "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeLessThanOrEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: <= \u001b[32m500\u001b[39m\nReceived:    \u001b[31m517.546875\u001b[39m\n\n  167 | \t\t\t\t\texpect(positions[0].y).toBe(positions[1].y);\n  168 | \t\t\t\t\texpect(positions[1].x).toBeGreaterThan(positions[0].x + positions[0].width);\n> 169 | \t\t\t\t\texpect(positions[0].height).toBeLessThanOrEqual(500);\n      | \t\t\t\t\t                            ^\n  170 | \t\t\t\t} else {\n  171 | \t\t\t\t\texpect(positions[0].x).toBe(positions[1].x);\n  172 | \t\t\t\t\texpect(positions[1].y).toBeGreaterThan(positions[0].y + positions[0].height);\n    at /Users/syndred/Desktop/projects/KeepAny/tests/e2e/ai-account-import-release.spec.ts:169:34"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-01T15:02:12.110Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "/Users/syndred/Desktop/projects/KeepAny/work/intake-bulk-20261001/regression-output/ai-account-import-release--cab3b-aved-and-retained-at-1280px/test-failed-1.png"
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "/Users/syndred/Desktop/projects/KeepAny/work/intake-bulk-20261001/regression-output/ai-account-import-release--cab3b-aved-and-retained-at-1280px/error-context.md"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "/Users/syndred/Desktop/projects/KeepAny/tests/e2e/ai-account-import-release.spec.ts",
+                    "column": 34,
+                    "line": 169
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "b418616e0ecac4095238-1db084d715000b94a6fa",
+          "file": "ai-account-import-release.spec.ts",
+          "line": 15,
+          "column": 3
+        },
+        {
+          "title": "en account identifiers are reviewed, saved and retained at 390px",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1583,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-01T15:02:13.186Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "b418616e0ecac4095238-cb9c5a677eec172c2b16",
+          "file": "ai-account-import-release.spec.ts",
+          "line": 15,
+          "column": 3
+        },
+        {
+          "title": "en account identifiers are reviewed, saved and retained at 1280px",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 877,
+                  "error": {
+                    "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeLessThanOrEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: <= \u001b[32m500\u001b[39m\nReceived:    \u001b[31m517.546875\u001b[39m",
+                    "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeLessThanOrEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: <= \u001b[32m500\u001b[39m\nReceived:    \u001b[31m517.546875\u001b[39m\n    at /Users/syndred/Desktop/projects/KeepAny/tests/e2e/ai-account-import-release.spec.ts:169:34",
+                    "location": {
+                      "file": "/Users/syndred/Desktop/projects/KeepAny/tests/e2e/ai-account-import-release.spec.ts",
+                      "column": 34,
+                      "line": 169
+                    },
+                    "snippet": "  167 | \t\t\t\t\texpect(positions[0].y).toBe(positions[1].y);\n  168 | \t\t\t\t\texpect(positions[1].x).toBeGreaterThan(positions[0].x + positions[0].width);\n> 169 | \t\t\t\t\texpect(positions[0].height).toBeLessThanOrEqual(500);\n      | \t\t\t\t\t                            ^\n  170 | \t\t\t\t} else {\n  171 | \t\t\t\t\texpect(positions[0].x).toBe(positions[1].x);\n  172 | \t\t\t\t\texpect(positions[1].y).toBeGreaterThan(positions[0].y + positions[0].height);"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "/Users/syndred/Desktop/projects/KeepAny/tests/e2e/ai-account-import-release.spec.ts",
+                        "column": 34,
+                        "line": 169
+                      },
+                      "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeLessThanOrEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: <= \u001b[32m500\u001b[39m\nReceived:    \u001b[31m517.546875\u001b[39m\n\n  167 | \t\t\t\t\texpect(positions[0].y).toBe(positions[1].y);\n  168 | \t\t\t\t\texpect(positions[1].x).toBeGreaterThan(positions[0].x + positions[0].width);\n> 169 | \t\t\t\t\texpect(positions[0].height).toBeLessThanOrEqual(500);\n      | \t\t\t\t\t                            ^\n  170 | \t\t\t\t} else {\n  171 | \t\t\t\t\texpect(positions[0].x).toBe(positions[1].x);\n  172 | \t\t\t\t\texpect(positions[1].y).toBeGreaterThan(positions[0].y + positions[0].height);\n    at /Users/syndred/Desktop/projects/KeepAny/tests/e2e/ai-account-import-release.spec.ts:169:34"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-01T15:02:14.853Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "/Users/syndred/Desktop/projects/KeepAny/work/intake-bulk-20261001/regression-output/ai-account-import-release--feae0-aved-and-retained-at-1280px/test-failed-1.png"
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "/Users/syndred/Desktop/projects/KeepAny/work/intake-bulk-20261001/regression-output/ai-account-import-release--feae0-aved-and-retained-at-1280px/error-context.md"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "/Users/syndred/Desktop/projects/KeepAny/tests/e2e/ai-account-import-release.spec.ts",
+                    "column": 34,
+                    "line": 169
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "b418616e0ecac4095238-cf96b63886b30fed5acf",
+          "file": "ai-account-import-release.spec.ts",
+          "line": 15,
+          "column": 3
+        }
+      ]
+    },
+    {
+      "title": "ai-release.spec.ts",
+      "file": "ai-release.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "en delivered AI import, local search and confirmed reminder at 390px",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 4230,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-01T15:02:09.941Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ff4162ef3d91cd0ef440-477c221890568ed8f7d0",
+          "file": "ai-release.spec.ts",
+          "line": 24,
+          "column": 3
+        },
+        {
+          "title": "en delivered AI import, local search and confirmed reminder at 1280px",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 3153,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-01T15:02:14.408Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ff4162ef3d91cd0ef440-353701252a88dd5fc914",
+          "file": "ai-release.spec.ts",
+          "line": 24,
+          "column": 3
+        },
+        {
+          "title": "zh-CN delivered AI import, local search and confirmed reminder at 390px",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 3938,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-01T15:02:17.564Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ff4162ef3d91cd0ef440-a6fb900a488e85586168",
+          "file": "ai-release.spec.ts",
+          "line": 24,
+          "column": 3
+        },
+        {
+          "title": "zh-CN delivered AI import, local search and confirmed reminder at 1280px",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 3234,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-01T15:02:21.507Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ff4162ef3d91cd0ef440-82ac4a240c09c6799b5c",
+          "file": "ai-release.spec.ts",
+          "line": 24,
+          "column": 3
+        }
+      ]
+    },
+    {
+      "title": "intake-expense.spec.ts",
+      "file": "intake-expense.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "zh-CN 390 PDF expense retains a draft, confirms once, and restores its receipt",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 3,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 4312,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-01T15:02:15.906Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "d037231ffda2ec798bca-0d9a84fd600700b23889",
+          "file": "intake-expense.spec.ts",
+          "line": 44,
+          "column": 2
+        },
+        {
+          "title": "zh-CN 1280 PDF expense retains a draft, confirms once, and restores its receipt",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 3,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 4632,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-01T15:02:20.295Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "d037231ffda2ec798bca-54feb0f6dd0812eb7edf",
+          "file": "intake-expense.spec.ts",
+          "line": 44,
+          "column": 2
+        },
+        {
+          "title": "en-US 390 PDF expense retains a draft, confirms once, and restores its receipt",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 3,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 4313,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-01T15:02:24.931Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "d037231ffda2ec798bca-a9d64caf00ae7054d306",
+          "file": "intake-expense.spec.ts",
+          "line": 44,
+          "column": 2
+        },
+        {
+          "title": "en-US 1280 PDF expense retains a draft, confirms once, and restores its receipt",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 3,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 4483,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-01T15:02:29.248Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "d037231ffda2ec798bca-859bc2bb2493c86b4c84",
+          "file": "intake-expense.spec.ts",
+          "line": 44,
+          "column": 2
+        }
+      ]
+    },
+    {
+      "title": "intake-pdf.spec.ts",
+      "file": "intake-pdf.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "zh-CN 390 PDF text requires explicit type and confirmation, retains decisions",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 2138,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-01T15:02:24.752Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "9a604dc1b5935c1684eb-830aee1363904de338dd",
+          "file": "intake-pdf.spec.ts",
+          "line": 10,
+          "column": 75
+        },
+        {
+          "title": "zh-CN 1280 PDF text requires explicit type and confirmation, retains decisions",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 2300,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-01T15:02:26.894Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "9a604dc1b5935c1684eb-4a3a7f10c5da30a6e917",
+          "file": "intake-pdf.spec.ts",
+          "line": 10,
+          "column": 75
+        },
+        {
+          "title": "en-US 390 PDF text requires explicit type and confirmation, retains decisions",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 2161,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-01T15:02:29.197Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "9a604dc1b5935c1684eb-d121dca12808fdaaa7a1",
+          "file": "intake-pdf.spec.ts",
+          "line": 10,
+          "column": 75
+        },
+        {
+          "title": "en-US 1280 PDF text requires explicit type and confirmation, retains decisions",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 2309,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-01T15:02:31.363Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "9a604dc1b5935c1684eb-ba9efec8ca36e8504210",
+          "file": "intake-pdf.spec.ts",
+          "line": 10,
+          "column": 75
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-10-01T15:02:09.341Z",
+    "duration": 24422.603,
+    "expected": 14,
+    "skipped": 0,
+    "unexpected": 2,
+    "flaky": 0
+  }
+}
