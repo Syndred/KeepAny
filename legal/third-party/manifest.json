@@ -1,11 +1,11 @@
 {
   "schema": "keepany.third-party-license-materials.v1",
-  "generatedAt": "2026-09-30",
+  "generatedAt": "2026-10-01",
   "scope": {
-    "source": "The 31 installed package versions recorded by the 2026-09-29 installed-tree snapshot.",
+    "source": "The 32 installed package versions recorded by the 2026-10-01 installed-tree snapshot.",
     "platformIndependent": true,
-    "packageCount": 31,
-    "verifiedPackageCount": 26,
+    "packageCount": 32,
+    "verifiedPackageCount": 27,
     "unresolvedPackageCount": 5
   },
   "materials": [
@@ -211,6 +211,18 @@
         "sourceSha256": "62549909404b5a0dcb2b4b74c9a930baf8095dbcfa1543c4ffc79378acd22b57",
         "section": "## License（自 Copyright (c) 2013-2016 Hannes Hörl 起提取至文件末尾）",
         "mapping": "npm package tarball README.md 与官方精确 tag v1.0.5/commit README.md 字节一致；许可证段落逐字提取"
+      }
+    },
+    {
+      "id": "vercel-ai-apache",
+      "path": "legal/third-party/texts/vercel-ai-LICENSE-APACHE.txt",
+      "sha256": "b4f9adb7c568904834d0dd6cc98d16c390d21ca32fc17ae7a267715269bd5529",
+      "source": {
+        "repository": "https://github.com/vercel/ai.git",
+        "commit": "69cc80b25c506971769dd8438bbce7e0eb5ef631",
+        "path": "LICENSE",
+        "downloadUrl": "https://raw.githubusercontent.com/vercel/ai/69cc80b25c506971769dd8438bbce7e0eb5ef631/LICENSE",
+        "mapping": "official npm provenance commit; @ai-sdk/provider-utils/package.json matched exact npm version"
       }
     }
   ],
@@ -528,11 +540,11 @@
       "materials": [
         "rolldown-mit"
       ],
-    "upstream": {
-      "materials": [
-        "rolldown-mit"
-      ]
-    }
+      "upstream": {
+        "materials": [
+          "rolldown-mit"
+        ]
+      }
     },
     {
       "name": "@rollup/rollup-darwin-arm64",
@@ -1177,12 +1189,45 @@
           }
         ]
       }
+    },
+    {
+      "name": "@ai-sdk/provider-utils",
+      "version": "5.0.51",
+      "declaredLicense": "Apache-2.0",
+      "npm": {
+        "registry": "https://registry.npmjs.org/@ai-sdk%2fprovider-utils/5.0.51",
+        "tarball": "https://registry.npmjs.org/@ai-sdk/provider-utils/-/provider-utils-5.0.51.tgz",
+        "integrity": "sha512-z0IsEsDx+dxlZqyCtDjMbBj16NGmxFVTgQcP3+n3EFm9ttNU6wjOgL/kgvaPwtmZM6F7JbtRuLyzr6WOfo5DMw==",
+        "shasum": "74bae566e227863523a75687825e5aa56b0fc2a5"
+      },
+      "repository": {
+        "url": "https://github.com/vercel/ai.git",
+        "type": "git",
+        "directory": "packages/provider-utils"
+      },
+      "homepage": "https://ai-sdk.dev/docs",
+      "npmGitHead": null,
+      "status": "verified",
+      "materials": [
+        "vercel-ai-apache"
+      ],
+      "upstream": {
+        "materials": [
+          {
+            "repository": "https://github.com/vercel/ai.git",
+            "commit": "69cc80b25c506971769dd8438bbce7e0eb5ef631",
+            "path": "LICENSE",
+            "downloadUrl": "https://raw.githubusercontent.com/vercel/ai/69cc80b25c506971769dd8438bbce7e0eb5ef631/LICENSE",
+            "mapping": "official npm provenance commit; packages/provider-utils/package.json matched the exact npm version"
+          }
+        ]
+      }
     }
   ],
   "bundle": {
     "status": "partial",
     "note": "这些材料可供再分发包引用；实际生产 bundle 的模块集合、压缩产物和平台原生包仍需按具体构建分别确认。本索引不把未安装的 Linux 原生包视为失败，也不把 Darwin 原生包自动宣称为浏览器 bundle 内容。",
-    "verifiedSourceMaterialCount": 16,
+    "verifiedSourceMaterialCount": 17,
     "unresolvedPackageCount": 5
   }
 }
