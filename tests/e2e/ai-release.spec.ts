@@ -154,6 +154,42 @@ for (const language of ["en", "zh-CN"] as const) {
 				await expect(subscription.locator("..")).toContainText("12.50");
 				const dialog = await openAssistant(page, copy);
 				await dialog
+					.getByRole("checkbox", { name: subscriptionName, exact: true })
+					.check();
+				const askQuestion = `What amount is supplied for ${subscriptionName}?`;
+				const askAnswer =
+					"The supplied amount is USD 12.50; the billing cycle is not supplied.";
+				mock.responses.push(askAnswer);
+				await dialog
+					.getByRole("textbox", { name: copy.question, exact: true })
+					.fill(askQuestion);
+				await dialog
+					.getByRole("button", { name: copy.send, exact: true })
+					.click();
+				await expect(
+					dialog.getByText(askAnswer, { exact: true }),
+				).toBeVisible();
+				const askRequest = mock.requests.at(-1);
+				expect(askRequest).toBeDefined();
+				const asked = JSON.parse(
+					askRequest?.body.messages.find((message) => message.role === "user")
+						?.content ?? "",
+				) as { records: Record<string, unknown>[]; question: string };
+				expect(asked).toEqual({
+					question: askQuestion,
+					records: [
+						{
+							kind: "subscription",
+							name: subscriptionName,
+							description: "",
+							url: "",
+							dueDate: "2026-12-20",
+							amount: "12.50",
+							currency: "USD",
+						},
+					],
+				});
+				await dialog
 					.getByRole("button", { name: copy.findTab, exact: true })
 					.click();
 				const question = `Find ${subscriptionName} and its monthly cost.`;
@@ -169,7 +205,7 @@ for (const language of ["en", "zh-CN"] as const) {
 						aggregate: "monthlyTotal",
 					}),
 				);
-				await dialog.getByLabel(copy.question, { exact: true }).fill(question);
+				await dialog.getByRole("textbox", { name: copy.question, exact: true }).fill(question);
 				await dialog
 					.getByRole("button", { name: copy.send, exact: true })
 					.click();
@@ -211,7 +247,7 @@ for (const language of ["en", "zh-CN"] as const) {
 					.click();
 				mock.responses.push(JSON.stringify(reminder));
 				await reminderDialog
-					.getByLabel(copy.question, { exact: true })
+					.getByRole("textbox", { name: copy.question, exact: true })
 					.fill(questionReminder);
 				await reminderDialog
 					.getByRole("button", { name: copy.send, exact: true })
@@ -253,7 +289,7 @@ for (const language of ["en", "zh-CN"] as const) {
 					.click();
 				mock.responses.push(JSON.stringify(reminder));
 				await reminderDialog
-					.getByLabel(copy.question, { exact: true })
+					.getByRole("textbox", { name: copy.question, exact: true })
 					.fill(questionReminder);
 				await reminderDialog
 					.getByRole("button", { name: copy.send, exact: true })
@@ -320,7 +356,7 @@ for (const language of ["en", "zh-CN"] as const) {
 				await expect(settings.locator("#ai-settings-url")).toHaveValue(
 					mock.baseURL,
 				);
-				expect(mock.requests).toHaveLength(4);
+				expect(mock.requests).toHaveLength(5);
 				expect(sourceRequests).toEqual([]);
 				expect(errors).toEqual([]);
 			} finally {

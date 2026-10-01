@@ -248,6 +248,7 @@ for (const language of ["en", "zh-CN"] as const) {
 						expect.objectContaining({
 							name: chosen,
 							description: "selected-description",
+							amount: null,
 						}),
 					],
 					question: "Summarize my selected record",
