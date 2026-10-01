@@ -112,6 +112,7 @@ describe("AI proposals stay bounded and require source-backed review", () => {
 		expect(reviewedCandidateSchema.parse(row).ai?.missingFields).toEqual([]);
 		expect(row.asset.url).toBe("https://keepany.example.test/project");
 		expect(row.status).toBe("pending");
+		expect(parsed.records[0].username).toBe("");
 
 		const subscription = aiImportSchema.parse({
 			records: [
@@ -138,6 +139,50 @@ describe("AI proposals stay bounded and require source-backed review", () => {
 			}).success,
 		).toBe(true);
 	});
+	it("keeps explicit account identifiers source-backed and preserves login methods", () => {
+		const accountSource =
+			"登录清单：Gmail=reader@example.test；GitHub 登录。";
+		const parsed = aiImportSchema.parse({
+			records: [
+				{
+					kind: "account",
+					name: "Studio mail",
+					username: "  reader@example.test  ",
+					evidence: "Gmail=reader@example.test",
+				},
+				{
+					kind: "account",
+					name: "Code hosting login",
+					username: null,
+					description: "GitHub 登录",
+					evidence: "GitHub 登录",
+				},
+			],
+		});
+		expect(parsed.records[0].username).toBe("reader@example.test");
+		expect(parsed.records[1].username).toBe("");
+		const rows = buildAiCandidates(parsed, { ...input, text: accountSource });
+		expect(rows[0].asset.username).toBe("reader@example.test");
+		expect(rows[1].asset.username).toBe("");
+		expect(rows[1].asset.description).toBe("GitHub 登录");
+
+		const missingSourceUsername = aiImportSchema.parse({
+			records: [
+				{
+					kind: "account",
+					name: "Studio mail",
+					username: "reader@example.test",
+					evidence: "登录清单",
+				},
+			],
+		});
+		expect(() =>
+			buildAiCandidates(missingSourceUsername, {
+				...input,
+				text: "登录清单：GitHub 登录。",
+			}),
+		).toThrow("ai-username");
+	});
 	it("rejects unknown structure and invalid values while normalizing optional nulls", () => {
 		const record = {
 			...output().records[0],
@@ -158,6 +203,9 @@ describe("AI proposals stay bounded and require source-backed review", () => {
 			{ description: "x".repeat(2001) },
 			{ tags: [null] },
 			{ relatedName: {} },
+			{ username: 1 },
+			{ username: "x".repeat(301) },
+			{ kind: "project", username: "project-login" },
 			{ missingFields: ["password"] },
 			{ missingFields: ["description", "unknown"] },
 			{ missingFields: Array(12).fill("tags") },
