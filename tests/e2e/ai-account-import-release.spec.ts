@@ -29,6 +29,10 @@ for (const language of ["zh-CN", "en"] as const) {
 			const errors: string[] = [];
 			page.on("pageerror", (error) => errors.push(error.message));
 			try {
+				await page.goto("/intake");
+				await expect(page.locator(".ai-import-panel")).toContainText(
+					zh ? "尚未配置 AI 模型" : "No AI model is configured",
+				);
 				await page.goto("/settings#assistant");
 				const settings = page.locator(".ai-settings-panel");
 				await selectChoice(
@@ -50,6 +54,55 @@ for (const language of ["zh-CN", "en"] as const) {
 					.click();
 				const importer = page.locator(".ai-import-panel"),
 					rows = page.locator(".intake-review-row");
+				await expect(importer).toContainText(
+					`${zh ? "当前模型：" : "Current model: "}${model}`,
+				);
+				await expect(importer.locator(".notice")).toHaveCount(0);
+				const choose = importer.getByRole("button", {
+					name: zh ? "选择文件" : "Choose file",
+					exact: true,
+				});
+				await expect(importer.locator("#ai-import-file")).toBeHidden();
+				const fileChooser = page.waitForEvent("filechooser");
+				await choose.focus();
+				await choose.press("Enter");
+				const fileName = `${"account-import-".repeat(10)}.txt`;
+				await (await fileChooser).setFiles({
+					name: fileName,
+					mimeType: "text/plain",
+					buffer: Buffer.from("Portal: https://example.test/"),
+				});
+				await expect(importer).toContainText(fileName);
+				await expect(importer.locator("#ai-import-text")).toBeDisabled();
+				await checkLayout(page, importer, width);
+				const fileGap = await importer.evaluate((panel) => {
+					const file = panel.querySelector(".file-picker");
+					const action = file?.nextElementSibling;
+					if (!file || !action) throw Error("Missing file picker or action");
+					return (
+						action.getBoundingClientRect().top -
+						file.getBoundingClientRect().bottom
+					);
+				});
+				expect(fileGap).toBeGreaterThanOrEqual(16);
+				await importer
+					.getByRole("button", {
+						name: zh ? "移除文件" : "Remove file",
+						exact: true,
+					})
+					.click();
+				await expect(importer.locator("#ai-import-file")).toHaveValue("");
+				await expect(importer.locator("#ai-import-text")).toBeEnabled();
+				const generateGap = await importer.evaluate((panel) => {
+					const file = panel.querySelector(".file-picker");
+					const action = file?.nextElementSibling;
+					if (!file || !action) throw Error("Missing file picker or action");
+					return (
+						action.getBoundingClientRect().top -
+						file.getBoundingClientRect().bottom
+					);
+				});
+				expect(generateGap).toBeGreaterThanOrEqual(16);
 				await importer
 					.locator("#ai-import-text")
 					.fill(
@@ -149,6 +202,27 @@ for (const language of ["zh-CN", "en"] as const) {
 						.locator(".account-facts-grid dl")
 						.getByText("edited@example.test", { exact: true }),
 				).toBeVisible();
+				await page.goto("/intake");
+				await expect(importer).toContainText(
+					zh
+						? `${model} 已配置。会话密钥在刷新或关闭页面后失效`
+						: `${model} is configured. Session keys expire on reload or close`,
+				);
+				await expect(
+					importer.getByRole("link", {
+						name: zh ? "启用密钥" : "Activate key",
+						exact: true,
+					}),
+				).toBeVisible();
+				await expect(importer).not.toContainText(
+					zh ? "尚未配置 AI 模型" : "No AI model is configured",
+				);
+				await expect(
+					importer.getByRole("button", { name: copy.generate, exact: true }),
+				).toBeDisabled();
+				await importer.screenshot({
+					path: `${evidence}/account-import-session-${language}-${width}.png`,
+				});
 				expect(mock.requests).toHaveLength(2);
 				for (const request of mock.requests)
 					expect(JSON.stringify(request.body)).not.toContain(

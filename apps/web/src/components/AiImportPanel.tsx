@@ -12,6 +12,9 @@ import {
 } from "../ai-workflow-model";
 import { stageReviewedCandidates } from "../intake-review-store";
 import { Button } from "./ui/button";
+import { FilePicker } from "./ui/file-picker";
+import { TextLink } from "./ui/text-link";
+import { usePasswordVault } from "./PasswordVaultProvider";
 
 async function fingerprint(bytes: ArrayBuffer) {
 	return [...new Uint8Array(await crypto.subtle.digest("SHA-256", bytes))]
@@ -28,7 +31,8 @@ function imageData(file: File): Promise<string> {
 }
 export function AiImportPanel({ onStaged }: { onStaged: () => void }) {
 	const { t } = useTranslation();
-	const { connection, revision } = useAiConnection();
+	const { connection, revision, settings } = useAiConnection();
+	const vault = usePasswordVault();
 	const [text, setText] = useState(""),
 		[file, setFile] = useState<File | null>(null),
 		[preview, setPreview] = useState("");
@@ -157,10 +161,26 @@ export function AiImportPanel({ onStaged }: { onStaged: () => void }) {
 			<p>{t("aiImportHint")}</p>
 			{!connection && (
 				<p className="notice">
-					{t("aiNeedsConfig")}{" "}
-					<Link to="/settings" hash="assistant">
-						{t("aiConfigure")}
-					</Link>
+					{t(
+						!settings
+							? "aiNeedsConfig"
+							: settings.keySource === "session"
+								? "aiImportSessionNeedsKey"
+								: vault.snapshot.status === "unlocked"
+									? "aiImportVaultNeedsKey"
+									: "aiImportVaultLocked",
+						{ model: settings?.model },
+					)}{" "}
+					<TextLink asChild>
+						<Link to="/settings" hash="assistant">
+							{t(settings ? "aiEnableKey" : "aiConfigure")}
+						</Link>
+					</TextLink>
+				</p>
+			)}
+			{connection && (
+				<p className="ai-import-model">
+					{t("aiImportCurrentModel", { model: connection.model })}
 				</p>
 			)}
 			<label className="field" htmlFor="ai-import-text">
@@ -177,32 +197,27 @@ export function AiImportPanel({ onStaged }: { onStaged: () => void }) {
 					}}
 				/>
 			</label>
-			<label className="field" htmlFor="ai-import-file">
-				<span>{t("aiImportFile")}</span>
-				<input
-					id="ai-import-file"
-					type="file"
-					accept=".csv,.txt,.pdf,image/png,image/jpeg,image/webp"
-					onChange={(event) => {
-						cancel();
-						setFile(event.target.files?.[0] ?? null);
-					}}
-				/>
-			</label>
+			<FilePicker
+				id="ai-import-file"
+				label={t("aiImportFile")}
+				chooseLabel={t("aiImportChooseFile")}
+				emptyLabel={t("aiImportNoFile")}
+				file={file}
+				accept=".csv,.txt,.pdf,image/png,image/jpeg,image/webp"
+				onFileChange={(nextFile) => {
+					cancel();
+					setFile(nextFile);
+				}}
+			/>
 			{file && (
 				<div className="actions">
-					<span>{file.name}</span>
 					<Button
 						onClick={() => {
 							cancel();
 							setFile(null);
-							const input = document.getElementById(
-								"ai-import-file",
-							) as HTMLInputElement | null;
-							if (input) input.value = "";
 						}}
 					>
-						{t("cancel")}
+						{t("aiImportRemoveFile")}
 					</Button>
 				</div>
 			)}

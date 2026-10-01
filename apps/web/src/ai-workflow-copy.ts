@@ -17,10 +17,24 @@ export const aiWorkflowCopy: Record<string, [string, string]> = {
 		"AI proposes a reminder. Check the target and time before saving.",
 	],
 	aiConfigure: ["配置模型", "Configure model"],
+	aiEnableKey: ["启用密钥", "Activate key"],
 	aiNeedsConfig: [
-		"请先在设置中配置模型并启用本次密钥。",
-		"Configure a model and activate its key in Settings first.",
+		"尚未配置 AI 模型，请先选择模型服务。",
+		"No AI model is configured. Choose a model service first.",
 	],
+	aiImportSessionNeedsKey: [
+		"{{model}} 已配置。会话密钥在刷新或关闭页面后失效，请启用本次密钥。",
+		"{{model}} is configured. Session keys expire on reload or close; activate a key for this page.",
+	],
+	aiImportVaultNeedsKey: [
+		"{{model}} 已配置，请启用密码库中已保存的密钥。",
+		"{{model}} is configured. Activate its saved key from the password vault.",
+	],
+	aiImportVaultLocked: [
+		"{{model}} 已配置，请在设置中解锁密码库并启用已保存的密钥。",
+		"{{model}} is configured. Unlock the password vault and activate its saved key in Settings.",
+	],
+	aiImportCurrentModel: ["当前模型：{{model}}", "Current model: {{model}}"],
 	aiImportTitle: ["AI 整理导入", "Organize with AI"],
 	aiImportHint: [
 		"本次文字或文件会发给所选模型。请先检查内容；结果需逐项核对后入库。",
@@ -28,6 +42,9 @@ export const aiWorkflowCopy: Record<string, [string, string]> = {
 	],
 	aiImportText: ["文字或表格内容", "Text or spreadsheet content"],
 	aiImportFile: ["CSV、文字、PDF 或图片", "CSV, text, PDF or image"],
+	aiImportChooseFile: ["选择文件", "Choose file"],
+	aiImportNoFile: ["未选择文件", "No file selected"],
+	aiImportRemoveFile: ["移除文件", "Remove file"],
 	aiImportGenerate: ["生成待审核资料", "Generate records to review"],
 	aiImportImageHint: [
 		"图片识别需要支持图像的模型，请对照原图核对结果。",
