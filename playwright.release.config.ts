@@ -11,6 +11,7 @@ export default defineConfig({
 	testDir: "./tests/e2e",
 	testMatch: [
 		"ai-release.spec.ts",
+		"ai-account-import-release.spec.ts",
 		"ai-dialog-matrix.spec.ts",
 		"local-core.spec.ts",
 		"english-demo-release.spec.ts",

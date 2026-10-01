@@ -147,7 +147,7 @@ export function IntakeReview() {
 		return row?.status === "pending" ? row : undefined;
 	}
 
-	function edit(id: string, field: "name" | "url" | "description" | "category" | "dueDate" | "cycle" | "currency" | "amount" | "interval" | "tags", value: string) {
+	function edit(id: string, field: "name" | "url" | "username" | "description" | "category" | "dueDate" | "cycle" | "currency" | "amount" | "interval" | "tags", value: string) {
 		const row = editableRow(id);
 		if (!row) return;
 		const asset = { ...row.asset, [field]: field === "amount" ? parseMinorUnits(value, row.asset.currency) : field === "interval" ? Number(value) : field === "tags" ? value.split(/[,，]/).map(tag => tag.trim()).filter(Boolean) : value } as Asset;
@@ -283,6 +283,7 @@ export function IntakeReview() {
 					</> : <>
 						<div className="field"><label htmlFor={`${row.id}-name`}>{t("name")}</label><input id={`${row.id}-name`} value={row.asset.name} disabled={disabled} onChange={(event) => edit(row.id, "name", event.target.value)} /></div>
 						<div className="field"><label htmlFor={`${row.id}-url`}>{t("url")}</label><input id={`${row.id}-url`} value={row.asset.url} disabled={disabled} onChange={(event) => edit(row.id, "url", event.target.value)} /></div>
+						{row.asset.kind === "account" && <div className="field"><label htmlFor={`${row.id}-username`}>{t("username")}</label><input id={`${row.id}-username`} value={row.asset.username} maxLength={300} autoComplete="off" disabled={disabled} onChange={(event) => edit(row.id, "username", event.target.value)} /></div>}
 						<div className="field"><label htmlFor={`${row.id}-description`}>{t("description")}</label><textarea rows={row.source === "pdf" ? 6 : 2} id={`${row.id}-description`} value={row.asset.description} disabled={disabled} onChange={(event) => edit(row.id, "description", event.target.value)} /></div>
 						{row.source === "ai" && <div className="form-grid">
                             <label className="field" htmlFor={`${row.id}-tags`}><span>{t("tags")}</span><input id={`${row.id}-tags`} defaultValue={row.asset.tags.join(", ")} disabled={disabled} onBlur={event => edit(row.id, "tags", event.target.value)} /></label>

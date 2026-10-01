@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { generateAiText } from "../../../../packages/ai/src";
 import { acquireAiConnection, useAiConnection } from "../ai-settings-store";
+import { hasExplicitImportSecret } from "../ai-import-input";
 import {
 	aiImportSchema,
 	buildAiCandidates,
@@ -102,6 +103,7 @@ export function AiImportPanel({ onStaged }: { onStaged: () => void }) {
 				);
 			if (sourceText.length > 20000 || (!sourceText.trim() && !image))
 				throw Error("ai-limit");
+			if (hasExplicitImportSecret(sourceText)) throw Error("ai-secret");
 			if (current !== generation.current || !lease.isCurrent()) return;
 			const response = await generateAiText(lease.connection, {
 				system: importSystem,
@@ -135,7 +137,9 @@ export function AiImportPanel({ onStaged }: { onStaged: () => void }) {
 					t(
 						error instanceof Error && error.message === "ai-limit"
 							? "aiInputLimit"
-							: "aiInvalid",
+							: error instanceof Error && error.message === "ai-secret"
+								? "aiSensitiveInput"
+								: "aiInvalid",
 					),
 				);
 		} finally {

@@ -48,6 +48,10 @@ export const aiWorkflowCopy: Record<string, [string, string]> = {
 		"文字最多 2 万字符，文件最多 10 MB；PDF 最多 20 页。",
 		"Use up to 20,000 characters or a 10 MB file; PDFs support up to 20 pages.",
 	],
+	aiSensitiveInput: [
+		"请先移除文字中的密码、API Key 或私钥，再生成资料。密码请保存在密码库。",
+		"Remove passwords, API keys or private keys from the text before generating records. Keep passwords in the password vault.",
+	],
 	aiSearchCount: ["找到 {{count}} 条资料", "{{count}} records found"],
 	aiSearchAmbiguous: [
 		"有多个同名对象，请补充更具体的名称。",
