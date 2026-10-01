@@ -18,8 +18,9 @@ for (const locale of ["zh-CN", "en-US"]) for (const width of [390, 1280]) test(`
 		await page.locator('#csv-file').setInputFiles({ name: 'invoice.pdf', mimeType: 'application/pdf', buffer });
 		const row = page.locator('.intake-review-row');
 		await expect(row).toHaveCount(1);
-		await row.getByText(zh ? '查看提取原文' : 'View extracted text', { exact: true }).click();
-		await expect(row.locator('pre')).toContainText('Service total USD 12.00');
+		const batch = page.locator('.intake-review-batch').filter({ has: row });
+		await batch.getByText(zh ? '查看提取原文' : 'View extracted text', { exact: true }).click();
+		await expect(batch.locator('.intake-review-original pre')).toContainText('Service total USD 12.00');
 		const confirm = row.getByRole('button', { name: zh ? '确认入库' : 'Confirm and save' });
 		await expect(confirm).toBeDisabled();
 		await page.screenshot({ path: `${evidence}/keepany-pdf-review-${process.env.KEEPANY_PDF_RELEASE === "1" ? "release-" : ""}${locale}-${width}.png`, fullPage: true });
@@ -69,7 +70,7 @@ for (const locale of ["zh-CN", "en-US"]) for (const width of [390, 1280]) test(`
 		await expect(row).toHaveCount(1);
 		const ignored = pdf(['中文账单服务费用'], true);
 		await page.locator('#csv-file').setInputFiles({ name: 'ignore.pdf', mimeType: 'application/pdf', buffer: ignored });
-		const ignoredRow = row.filter({ hasText: 'ignore.pdf' });
+		const ignoredRow = page.getByRole('region', { name: 'ignore.pdf', exact: true }).locator('.intake-review-row');
 		await expect(ignoredRow.getByLabel(zh ? '简短描述' : 'Short description')).toHaveValue('中文账单服务费用');
 		await ignoredRow.getByRole('button', { name: zh ? '忽略' : 'Ignore', exact: true }).click();
 		await expect(ignoredRow).toContainText(zh ? '已忽略' : 'Ignored');

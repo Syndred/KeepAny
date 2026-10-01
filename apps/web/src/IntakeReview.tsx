@@ -29,6 +29,20 @@ export function IntakeReview() {
 	const assetsById = useMemo(() => new Map(data.assets.map((asset) => [asset.id, asset])), [data.assets]);
 	const targets = liveAssets(data).filter((asset) => asset.kind === "subscription" || asset.kind === "account");
 	const [rows, setRows] = useState<ReviewedCandidate[]>([]);
+	const batches = useMemo(() => {
+		const grouped = new Map<string, ReviewedCandidate[]>();
+		for (const row of rows) {
+			const key = `${row.source ?? "csv"}:${row.fileHash}`;
+			const batch = grouped.get(key);
+			if (batch) batch.push(row);
+			else grouped.set(key, [row]);
+		}
+		return [...grouped].map(([key, items]) => ({
+			key, items, fileName: items[0].fileName,
+			sourceText: items.find((row) => row.sourceText)?.sourceText,
+			models: [...new Set(items.flatMap((row) => row.ai ? [`${row.ai.provider} · ${row.ai.model}`] : []))],
+		}));
+	}, [rows]);
 	const [message, setMessage] = useState("");
 	const [messageId, setMessageId] = useState("");
 	const [workingId, setWorkingId] = useState("");
@@ -249,16 +263,29 @@ export function IntakeReview() {
 		{message && !messageId && <p role="status" className="intake-review-message">{message}</p>}
 		{rows.length > 0 && <div className="intake-review-list">
 			<h3>{t("reviewCandidates")}</h3>
-			{rows.map((row) => {
+			{batches.map((batch) => <section className="intake-review-batch" key={batch.key} aria-label={batch.fileName}>
+				<header className="intake-review-batch-header">
+					<strong>{batch.fileName}</strong>
+					<small>{t("reviewBatchCount", { count: batch.items.length, pending: batch.items.filter((row) => row.status === "pending").length })}</small>
+					{batch.models.length > 0 && <small className="intake-review-batch-model">{batch.models.join(" / ")}</small>}
+				</header>
+				{batch.sourceText && <details className="intake-review-original"><summary>{t("reviewPdfOriginal")}</summary><pre className="intake-pdf-text">{batch.sourceText}</pre></details>}
+				<div className="intake-review-batch-rows">
+			{batch.items.map((row) => {
 				const intent = expenseIntents.find((entry) => entry.candidateId === row.id);
 				const disabled = workingId === row.id || !!intent;
 				const currentAsset = row.status === "accepted" ? assetsById.get(row.asset.id) : undefined;
 				const savedAsset = currentAsset && !currentAsset.deleted ? currentAsset : undefined;
 				return <div className="intake-review-row" key={row.id} id={`intake-review-${row.id}`} tabIndex={-1}>
-				<div className="intake-review-source"><strong>{row.fileName}</strong><small>{row.source === "pdf" ? t("reviewPdfDocument") : row.source === "ai" ? t("aiImportSource", { number: row.rowNumber }) : t("reviewRowNumber", { number: row.rowNumber })}</small>
+				<div className="intake-review-source"><strong>{row.asset.name}</strong><small>{row.source === "pdf" ? t("reviewPdfDocument") : row.source === "ai" ? t("reviewRecordNumber", { number: row.rowNumber }) : t("reviewRowNumber", { number: row.rowNumber })}</small>
 					<span className={`chip ${row.status === "pending" ? "warn" : ""}`}>{t(`reviewStatus${row.status[0].toUpperCase()}${row.status.slice(1)}`)}</span></div>
-				{row.sourceText && <details><summary>{t("reviewPdfOriginal")}</summary><pre className="intake-pdf-text">{row.sourceText}</pre></details>}
-				{row.ai && <div className="notice ai-source-evidence"><small>{row.ai.provider} · {row.ai.model}</small><p><strong>{t("aiSourceEvidence")}</strong>: {row.ai.evidence}</p>{row.ai.missingFields.length > 0 && <p>{t("aiMissingFields", { fields: row.ai.missingFields.map(field => t(field)).join(" · ") })}</p>}{row.ai.relatedName && <p>{t("aiRelatedSuggestion", { name: row.ai.relatedName })}</p>}</div>}
+				{row.ai && <>
+					<details className="intake-review-evidence"><summary>{t("aiSourceEvidence")}</summary><p>{row.ai.evidence}</p></details>
+					{(row.ai.missingFields.length > 0 || row.ai.relatedName) && <div className="intake-review-warnings">
+						{row.ai.missingFields.length > 0 && <p>{t("aiMissingFields", { fields: row.ai.missingFields.map(field => t(field)).join(" · ") })}</p>}
+						{row.ai.relatedName && <p>{t("aiRelatedSuggestion", { name: row.ai.relatedName })}</p>}
+					</div>}
+				</>}
 				{row.status === "accepted" && row.reviewMode === "expense" && row.expenseDraft && <div className="intake-expense-receipt">
 					<strong>{row.expenseDraft.title}</strong>
 					<span>{formatMinorUnits(parseMinorUnits(row.expenseDraft.amount, row.expenseDraft.currency), row.expenseDraft.currency, i18n.language)} · {date(row.expenseDraft.eventDate, i18n.language)}</span>
@@ -275,16 +302,17 @@ export function IntakeReview() {
 						: <small>{t("taskRelatedMissing")}</small>)}
 				</div>}
 				{row.status === "pending" && <>
+					<div className="intake-review-fields">
 					<div className="field"><label htmlFor={`${row.id}-kind`}>{t("intakeRecordType")}</label><Select id={`${row.id}-kind`} value={row.reviewMode === "expense" ? "expense" : row.source === "pdf" && !row.kindSelected ? "" : row.asset.kind} disabled={disabled} onValueChange={(selectValue) => selectType(row.id, selectValue)}><SelectOption value="" disabled>{t("reviewSelectKind")}</SelectOption>{importKinds.map((kind) => <SelectOption value={kind} key={kind}>{t(kind)}</SelectOption>)}{row.source === "pdf" && <SelectOption value="expense">{t("reviewExpense")}</SelectOption>}</Select></div>
 					{row.reviewMode === "expense" && row.expenseDraft ? <>
-						<p className="muted">{t("reviewExpenseHint")}</p>
-						{!targets.length && <div className="notice"><p>{t("financeNoTarget")}</p><div className="actions"><Button asChild><Link to="/assets/$kind" params={{ kind: "subscription" }}>{t("financeGoSubscriptions")}</Link></Button><Button asChild><Link to="/assets/$kind" params={{ kind: "account" }}>{t("financeGoAccounts")}</Link></Button></div></div>}
+						<p className="muted intake-review-wide">{t("reviewExpenseHint")}</p>
+						{!targets.length && <div className="notice intake-review-wide"><p>{t("financeNoTarget")}</p><div className="actions"><Button asChild><Link to="/assets/$kind" params={{ kind: "subscription" }}>{t("financeGoSubscriptions")}</Link></Button><Button asChild><Link to="/assets/$kind" params={{ kind: "account" }}>{t("financeGoAccounts")}</Link></Button></div></div>}
 						<FinanceEntryFields draft={row.expenseDraft} targets={targets} disabled={disabled} idPrefix={row.id} onChange={(change) => editExpense(row.id, change)} />
 					</> : <>
 						<div className="field"><label htmlFor={`${row.id}-name`}>{t("name")}</label><input id={`${row.id}-name`} value={row.asset.name} disabled={disabled} onChange={(event) => edit(row.id, "name", event.target.value)} /></div>
-						<div className="field"><label htmlFor={`${row.id}-url`}>{t("url")}</label><input id={`${row.id}-url`} value={row.asset.url} disabled={disabled} onChange={(event) => edit(row.id, "url", event.target.value)} /></div>
-						{row.asset.kind === "account" && <div className="field"><label htmlFor={`${row.id}-username`}>{t("username")}</label><input id={`${row.id}-username`} value={row.asset.username} maxLength={300} autoComplete="off" disabled={disabled} onChange={(event) => edit(row.id, "username", event.target.value)} /></div>}
-						<div className="field"><label htmlFor={`${row.id}-description`}>{t("description")}</label><textarea rows={row.source === "pdf" ? 6 : 2} id={`${row.id}-description`} value={row.asset.description} disabled={disabled} onChange={(event) => edit(row.id, "description", event.target.value)} /></div>
+						<div className="field intake-review-url"><label htmlFor={`${row.id}-url`}>{t("url")}</label><input id={`${row.id}-url`} value={row.asset.url} disabled={disabled} onChange={(event) => edit(row.id, "url", event.target.value)} /></div>
+						{row.asset.kind === "account" && <div className="field intake-review-username"><label htmlFor={`${row.id}-username`}>{t("username")}</label><input id={`${row.id}-username`} value={row.asset.username} maxLength={300} autoComplete="off" disabled={disabled} onChange={(event) => edit(row.id, "username", event.target.value)} /></div>}
+						<div className="field intake-review-wide"><label htmlFor={`${row.id}-description`}>{t("description")}</label><textarea rows={row.source === "pdf" ? 6 : 2} id={`${row.id}-description`} value={row.asset.description} disabled={disabled} onChange={(event) => edit(row.id, "description", event.target.value)} /></div>
 						{row.source === "ai" && <div className="form-grid">
                             <label className="field" htmlFor={`${row.id}-tags`}><span>{t("tags")}</span><input id={`${row.id}-tags`} defaultValue={row.asset.tags.join(", ")} disabled={disabled} onBlur={event => edit(row.id, "tags", event.target.value)} /></label>
 							<label className="field" htmlFor={`${row.id}-category`}><span>{t("category")}</span><input id={`${row.id}-category`} value={row.asset.category} disabled={disabled} onChange={event => edit(row.id, "category", event.target.value)} /></label>
@@ -292,6 +320,7 @@ export function IntakeReview() {
 							{row.asset.kind === "subscription" && <><label className="field" htmlFor={`${row.id}-dueDate`}><span>{t("dueDate")}</span><input id={`${row.id}-dueDate`} type="date" value={row.asset.dueDate} disabled={disabled} onChange={event => edit(row.id, "dueDate", event.target.value)} /></label><label className="field" htmlFor={`${row.id}-cycle`}><span>{t("cycle")}</span><Select id={`${row.id}-cycle`} value={row.ai?.missingFields.includes("cycle") ? "" : row.asset.cycle} disabled={disabled} onValueChange={value => edit(row.id, "cycle", value)}><SelectOption value="" disabled>{t("aiChooseField")}</SelectOption>{["month", "year", "week", "day"].map(value => <SelectOption key={value} value={value}>{t(value)}</SelectOption>)}</Select></label><label className="field" htmlFor={`${row.id}-interval`}><span>{t("interval")}</span><input id={`${row.id}-interval`} type="number" min={1} max={100} value={intervalDrafts[row.id] ?? String(row.asset.interval)} disabled={disabled} onChange={event => { setIntervalDrafts(current => ({ ...current, [row.id]: event.target.value })); edit(row.id, "interval", event.target.value); }} /></label></>}
 						</div>}
 					</>}
+					</div>
 					{message && messageId === row.id && <p role="alert" className="field-error">{message}</p>}
 					{savingIds.has(row.id) && <small role="status">{t("reviewSaving")}</small>}
 					{intent ? <div className="actions"><Button variant="primary" disabled={workingId === row.id} onClick={() => void decide(row.id, "accepted")}>{t("reviewExpenseRetry")}</Button>{!intent.committed && <Button disabled={workingId === row.id} onClick={() => void cancelExpense(row.id)}>{t("reviewExpenseCancel")}</Button>}</div> : <div className="actions"><Button variant="primary" disabled={workingId === row.id || savingIds.has(row.id) || (row.reviewMode === "expense" ? !targets.length : row.source === "pdf" && !row.kindSelected)} onClick={() => void decide(row.id, "accepted")}>{t(row.reviewMode === "expense" ? "reviewConfirmExpense" : "reviewConfirm")}</Button><Button disabled={workingId === row.id || savingIds.has(row.id)} onClick={() => void decide(row.id, "ignored")}>{t("reviewIgnore")}</Button></div>}
@@ -299,6 +328,8 @@ export function IntakeReview() {
 
 			</div>;
 			})}
+				</div>
+			</section>)}
 		</div>}
 	</div>;
 }

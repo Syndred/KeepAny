@@ -148,6 +148,29 @@ for (const language of ["zh-CN", "en"] as const) {
 					.getByRole("button", { name: copy.generate, exact: true })
 					.click();
 				await expect(rows).toHaveCount(2);
+				const batches = page.locator(".intake-review-batch");
+				await expect(batches).toHaveCount(1);
+				const batch = batches.first();
+				await expect(batch.locator(".intake-review-batch-header > strong")).toHaveCount(1);
+				await expect(batch.locator(".intake-review-batch-model")).toContainText(model);
+				await expect(batch.locator(".intake-review-original pre")).toHaveCount(1);
+				await expect(rows.locator(".intake-review-original")).toHaveCount(0);
+				await batch.locator(".intake-review-original > summary").click();
+				await expect(batch.locator(".intake-review-original pre")).toHaveText(source);
+				await batch.locator(".intake-review-original > summary").click();
+				await expect(batch.locator(".intake-review-original pre")).toBeHidden();
+				const positions = await rows.evaluateAll((elements) => elements.map((element) => {
+					const rect = element.getBoundingClientRect();
+					return { x: rect.x, y: rect.y, width: rect.width, height: rect.height };
+				}));
+				if (width === 1280) {
+					expect(positions[0].y).toBe(positions[1].y);
+					expect(positions[1].x).toBeGreaterThan(positions[0].x + positions[0].width);
+					expect(positions[0].height).toBeLessThanOrEqual(500);
+				} else {
+					expect(positions[0].x).toBe(positions[1].x);
+					expect(positions[1].y).toBeGreaterThan(positions[0].y + positions[0].height);
+				}
 				const portal = rows.filter({
 					has: page.locator('input[id$="-name"][value="Portal"]'),
 				});
@@ -163,11 +186,16 @@ for (const language of ["zh-CN", "en"] as const) {
 				await expect(
 					database.locator('textarea[id$="-description"]'),
 				).toHaveValue("GitHub");
+				await portal.locator(".intake-review-evidence > summary").click();
+				await expect(portal.locator(".intake-review-evidence p")).toHaveText(emailSource);
+				await portal.locator(".intake-review-evidence > summary").click();
 				await checkLayout(page, portal, width);
+				await checkLayout(page, database, width);
 				mkdirSync(evidence, { recursive: true });
 				await portal.screenshot({
 					path: `${evidence}/account-review-${language}-${width}.png`,
 				});
+				await batch.screenshot({path: `${evidence}/review-batch-${language}-${width}.png`});
 				await portal
 					.locator('input[id$="-username"]')
 					.fill("edited@example.test");
@@ -180,6 +208,19 @@ for (const language of ["zh-CN", "en"] as const) {
 				await expect(portal.locator('input[id$="-username"]')).toHaveValue(
 					"edited@example.test",
 				);
+				// The same displayed file name must not merge different source contents.
+				const alternateSource = "Alternate Portal: https://other.example.test/dashboard (GitHub)";
+				mock.responses.push(JSON.stringify({ text: "", records: [{ kind: "account", name: "Alternate Portal", url: "https://other.example.test/dashboard", username: "", description: "GitHub", evidence: alternateSource }] }));
+				await importer.locator("#ai-import-text").fill(alternateSource);
+				await importer.getByRole("button", {name: copy.generate, exact: true}).click();
+				await expect(rows).toHaveCount(3);
+				await expect(batches).toHaveCount(2);
+				await expect(batches.locator(".intake-review-batch-header > strong")).toHaveText([zh ? "文字或表格内容" : "Text or spreadsheet content", zh ? "文字或表格内容" : "Text or spreadsheet content"]);
+				const alternateBatch = batches.filter({has: page.locator('input[id$="-name"][value="Alternate Portal"]')});
+				await alternateBatch.locator(".intake-review-original > summary").click();
+				await expect(alternateBatch.locator(".intake-review-original pre")).toHaveText(alternateSource);
+				await expect(batch.locator(".intake-review-original pre")).toHaveText(source);
+				await alternateBatch.locator(".intake-review-original > summary").click();
 				const savedRow = page.locator(`#${await portal.getAttribute("id")}`);
 				await portal
 					.getByRole("button", { name: copy.confirmImport, exact: true })
@@ -223,7 +264,7 @@ for (const language of ["zh-CN", "en"] as const) {
 				await importer.screenshot({
 					path: `${evidence}/account-import-session-${language}-${width}.png`,
 				});
-				expect(mock.requests).toHaveLength(2);
+				expect(mock.requests).toHaveLength(3);
 				for (const request of mock.requests)
 					expect(JSON.stringify(request.body)).not.toContain(
 						"fictional-secret",

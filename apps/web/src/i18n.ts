@@ -1059,6 +1059,8 @@ Object.assign(copy, {
 	reviewCsvInvalid: ["未找到可审核资料。CSV 需包含 name 和 kind 列，kind 为 project、account、subscription 或 item，且不超过 200 行。", "No reviewable records found. CSV needs name and kind columns; kind must be project, account, subscription or item, with at most 200 rows."],
 	reviewCsvStaged: ["已准备 {{count}} 条候选，可逐条审核。", "{{count}} candidates are ready for review."],
 	reviewCandidates: ["待审核与处理记录", "Candidates and decisions"],
+	reviewBatchCount: ["共 {{count}} 项 · {{pending}} 项待确认", "{{count}} records · {{pending}} pending"],
+	reviewRecordNumber: ["第 {{number}} 项", "Record {{number}}"],
 	reviewRowNumber: ["第 {{number}} 行", "Row {{number}}"],
 	reviewStatusPending: ["待确认", "Pending"],
 	reviewStatusAccepted: ["已确认", "Confirmed"],

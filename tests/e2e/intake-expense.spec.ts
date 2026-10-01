@@ -90,8 +90,9 @@ for (const locale of ["zh-CN", "en-US"]) for (const width of [390, 1280]) {
 			await reviewed.reload();
 			const restoredRow = reviewed.locator(".intake-review-row");
 			await expect(restoredRow.getByLabel(zh ? "金额" : "Amount", { exact: true })).toHaveValue("98.xx");
-			await restoredRow.getByText(zh ? "查看提取原文" : "View extracted text", { exact: true }).click();
-			await expect(restoredRow.locator("pre")).toContainText("Paid USD 98.00");
+			const restoredBatch = reviewed.locator(".intake-review-batch").filter({ has: restoredRow });
+			await restoredBatch.getByText(zh ? "查看提取原文" : "View extracted text", { exact: true }).click();
+			await expect(restoredBatch.locator(".intake-review-original pre")).toContainText("Paid USD 98.00");
 			await restoredRow.getByRole("button", { name: zh ? "确认支出" : "Confirm expense", exact: true }).click();
 			await expect(restoredRow.getByRole("alert")).toContainText(zh ? "金额" : "amount");
 			await restoredRow.getByLabel(zh ? "金额" : "Amount", { exact: true }).fill("98.00");
