@@ -615,36 +615,38 @@ export function AiWorkspaceDialog({
 					</div>
 				</fieldset>
 			)}
-			<label className="field" htmlFor="ai-question">
-				<span>{t("question")}</span>
-				<textarea
-					id="ai-question"
-					disabled={saving}
-					className="ai-question"
-					rows={2}
-					value={question}
-					maxLength={10000}
-					onChange={(event) => {
-						invalidate();
-						setQuestion(event.target.value);
-					}}
-				/>
-			</label>
-			<div className="actions ai-request-actions">
-				<Button
-					variant="primary"
-					onClick={() => void ask()}
-					disabled={
-						busy ||
-						saving ||
-						!connection ||
-						!question.trim() ||
-						(mode === "ask" && !selected.length)
-					}
-				>
-					{busy ? t("aiBusy") : t("ask")}
-				</Button>
-				{busy && <Button onClick={invalidate}>{t("aiCancelRequest")}</Button>}
+			<div className="ai-request-footer">
+				<label className="field" htmlFor="ai-question">
+					<span>{t("question")}</span>
+					<textarea
+						id="ai-question"
+						disabled={saving}
+						className="ai-question"
+						rows={2}
+						value={question}
+						maxLength={10000}
+						onChange={(event) => {
+							invalidate();
+							setQuestion(event.target.value);
+						}}
+					/>
+				</label>
+				<div className="actions">
+					<Button
+						variant="primary"
+						onClick={() => void ask()}
+						disabled={
+							busy ||
+							saving ||
+							!connection ||
+							!question.trim() ||
+							(mode === "ask" && !selected.length)
+						}
+					>
+						{busy ? t("aiBusy") : t("ask")}
+					</Button>
+					{busy && <Button onClick={invalidate}>{t("aiCancelRequest")}</Button>}
+				</div>
 			</div>
 			{answer && (
 				<div className="notice ai-answer">

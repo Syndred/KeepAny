@@ -200,6 +200,9 @@ for (const language of ["en", "zh-CN"] as const) {
 				await expect(
 					dialog.getByRole("button", { name: copy.send }),
 				).toBeEnabled();
+				await expect(dialog.getByLabel(copy.question)).toBeInViewport({
+					ratio: 0.95,
+				});
 				await expect(
 					dialog.getByRole("button", { name: copy.send }),
 				).toBeInViewport({ ratio: 0.95 });
