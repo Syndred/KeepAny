@@ -136,15 +136,14 @@
 }
 
 .intake-review-batch-rows {
-	display: grid;
-	align-items: start;
-	gap: 10px;
 	min-width: 0;
+	column-count: 1;
+	column-gap: 10px;
 }
 
 @container intake-review-batch (min-width: 800px) {
-	.intake-review-batch-rows {
-		grid-template-columns: repeat(2, minmax(0, 1fr));
+	.intake-review-batch-rows:has(> .intake-review-row:nth-child(2)) {
+		column-count: 2;
 	}
 }
 
@@ -157,6 +156,9 @@
 
 .intake-review-row {
 	display: grid;
+	width: 100%;
+	break-inside: avoid;
+	margin-bottom: 10px;
 	align-content: start;
 	align-self: start;
 	gap: 8px;
