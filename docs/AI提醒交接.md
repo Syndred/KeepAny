@@ -64,7 +64,8 @@ await configureSubscriptionReminder(asset.id, {
 - `node_modules/.bin/vitest run packages/local-db/src/index.test.ts -t 'task|completion|maintenance'`：现有受影响任务路径 3／3 通过，42 项因筛选未运行。
 - 8 个新增 TS／TSX 文件 Biome lint 无诊断，`git diff --check` 通过。
 - 后续接线：`TaskRow.tsx` 完成传当前提醒时刻，延期保留精确提醒配置，“延期一天”按提醒时区计算日期；清空日期同时移除精确提醒。后续完整快照 CAS 定向 `task-reminder.test.ts + reminder-delivery.test.ts` 为 2 文件 11／11，通过变更后的确认快照拒绝与正确新快照完成／重开，TaskRow／新增仓库测试 lint 无诊断。
-- 全仓类型检查尚待并行整合：先前缺 `packages/ai/src`，最新被其他代理正在修改的 `IntakeReview.tsx` JSX 语法错误阻断；提醒自有文件未报告类型错误。主代理修复整合后必须重新 typecheck／构建。
+- 普通任务保存后摘要增加到期时间、实际提醒时间、IANA 时区、提前分钟与重复规则，继续使用既有 `impact-task-info small` 的颜色、行距与自动换行，没有新增 CSS 覆盖。提前量从到期时刻扣除后展示，避免把到期时间误称提醒时间。`TaskRow.test.tsx` 3／3：真实 RxDB 保存→关闭仓库→重开读回→中英组件渲染，验证 09:00 到期／08:30 提醒／Asia/Shanghai／提前 30 分钟／每 2 周；另验仅一次、完成后每月及英文单数。这是存储与渲染证据，不替代主代理当前固定包的浏览器截图。
+- 追加摘要后，全仓 `node_modules/.bin/tsc --noEmit` 通过；TaskRow、reminder-copy 与摘要测试 3 文件 lint 无诊断、diff-check 通过。此前并行整合期间缺 AI 模块、IntakeReview JSX 和模型设置空值的问题不再阻断此次类型检查；构建与实际浏览器验收由主代理记录。
 
 ## 未完成、边界与下步
 
@@ -76,4 +77,4 @@ await configureSubscriptionReminder(asset.id, {
 
 ## 提交与部署状态
 
-源码按领域／仓库与界面／调度两个可回滚范围提交：`d8cc996`（Task 字段、时区／重复、仓库原子投递）和 `e956581`（应用内卡片、系统通知、单订阅设置）。初始交接 `387ead8`；后续接线 `0304b00`（TaskRow 完成与延期）、`b2099e0`（完整确认快照 CAS 与定向测试）。本次分工不推送、不构建固定包、不部署。
+源码按领域／仓库与界面／调度两个可回滚范围提交：`d8cc996`（Task 字段、时区／重复、仓库原子投递）和 `e956581`（应用内卡片、系统通知、单订阅设置）。初始交接 `387ead8`；后续接线 `0304b00`（TaskRow 完成与延期）、`b2099e0`（完整确认快照 CAS 与定向测试）、`e66dd47`（交接更新）。保存后摘要、中英文 key、读回渲染测试与本段交接同作一次提交，主题为 `feat(reminders): show persisted task reminder schedule summaries`。本次分工不推送、不构建固定包、不部署。

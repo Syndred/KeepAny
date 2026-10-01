@@ -47,6 +47,8 @@ export function TaskRow({ task }: { task: Task }) {
 	const completionHistory = task.completionHistory?.length
 		? task.completionHistory
 		: task.done && task.completedAt ? [task.completedAt] : [];
+	const reminderAt = task.reminder ? new Date(Date.parse(task.reminder.at) - task.reminder.leadMinutes * 60_000).toISOString() : null;
+	const formatReminderTime = (at: string) => new Date(at).toLocaleString(i18n.language, { timeZone: task.reminder?.timeZone, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" });
 	return (
 		<TaskCard className="list-row impact-task-row" id={`task-${task.id}`} tabIndex={-1}>
 			<Button
@@ -73,7 +75,12 @@ export function TaskRow({ task }: { task: Task }) {
 			</Button>
 			<div className="impact-task-info">
 				<strong className={task.done ? "done" : ""}>{task.name}</strong>
-				<small>{date(task.dueDate, i18n.language)}</small>
+				{task.reminder && reminderAt ? <>
+					<small>{t("reminderSavedDue")}: <time dateTime={task.reminder.at}>{formatReminderTime(task.reminder.at)}</time></small>
+					<small>{t("reminderSavedTime")}: <time dateTime={reminderAt}>{formatReminderTime(reminderAt)}</time></small>
+					<small>{t("reminderSavedZone", { timeZone: task.reminder.timeZone })}</small>
+					<small>{t("reminderSavedLead", { count: task.reminder.leadMinutes })} · {task.reminder.rule.mode === "once" ? t("reminderSavedOnce") : t(`reminderSavedRepeat_${task.reminder.rule.mode}_${task.reminder.rule.unit}`, { count: task.reminder.rule.every })}</small>
+				</> : <small>{date(task.dueDate, i18n.language)}</small>}
 				{task.assetId && <small>{t("related")}: {related ? <TextLink asChild><Link to="/assets/$kind/$id" params={{ kind: related.kind, id: related.id }}>{related.name}</Link></TextLink> : t("taskRelatedMissing")}</small>}
 				{completionHistory.length ? (
 					<small>{t("impactCompletedHistory")}: {completionHistory.map((value) => new Date(value).toLocaleString(i18n.language)).join(" · ")}</small>
