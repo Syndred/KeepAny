@@ -47,8 +47,13 @@ for (const zh of [true, false]) {
 			await expect(language).toBeFocused();
 			await expect(language).toHaveAttribute("data-value", before ?? "");
 			await language.press("ArrowDown");
-			await page.getByRole("listbox").press("End");
-			const englishOption = page.getByRole("option", { name: "English", exact: true });
+			const languagePopup = page.getByRole("listbox");
+			const selectedLanguageOption = languagePopup.getByRole("option", { selected: true });
+			await expect(selectedLanguageOption).toBeFocused();
+			await selectedLanguageOption.press("End");
+			const englishOption = languagePopup
+				.getByRole("option")
+				.and(page.locator('[role="option"][data-value="en"]'));
 			await expect(englishOption).toBeFocused();
 			await englishOption.press("Enter");
 			await expect(page.getByRole("combobox", { name: "Language", exact: true })).toHaveAttribute("data-value", "en");
