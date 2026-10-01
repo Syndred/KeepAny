@@ -71,6 +71,23 @@ describe("atomic local reminder delivery", () => {
 			await expect(db.setTaskDone(task.id, false, task.reminder.at)).rejects.toThrow("task-stale");
 		} finally { await db.close(); }
 	});
+	it("rejects changes to the complete AI-confirmed snapshot inside the completion gate", async () => {
+		const db = await openLocalRepository(name());
+		try {
+			const task = taskFixture(); await db.save("task", task);
+			const preview = await db.get<Task>("task", task.id);
+			if (!preview) throw Error("task-missing");
+			await new LocalRepository(db.db, db.fileStore).saveTaskIfCurrent(preview, { ...preview, name: "Edited after preview" });
+			await expect(db.setTaskDone(preview.id, preview.done, preview.reminder?.at, preview)).rejects.toThrow("task-stale");
+			const current = await db.get<Task>("task", task.id);
+			if (!current) throw Error("task-missing");
+			expect(current.done).toBe(false);
+			expect(current.completionHistory).toEqual([]);
+			const completed = await db.setTaskDone(current.id, current.done, current.reminder?.at, current);
+			expect(completed.done).toBe(true);
+			await expect(db.setTaskDone(completed.id, true, completed.reminder?.at, { ...completed, name: "Stale reopen name" })).rejects.toThrow("task-stale");
+		} finally { await db.close(); }
+	});
 	it("saves per-subscription settings only against the reviewed live subscription", async () => {
 		const db = await openLocalRepository(name());
 		try {

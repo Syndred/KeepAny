@@ -682,12 +682,15 @@ export class LocalRepository {
   }
 
   // Re-read the current row inside RxDB's CAS retry to preserve every completion timestamp.
-  async setTaskDone(id: string, expectedDone: boolean, expectedReminderAt?: string): Promise<Task> {
+  async setTaskDone(id: string, expectedDone: boolean, expectedReminderAt?: string, expectedTask?: Task): Promise<Task> {
+    if (expectedTask && expectedTask.id !== id) throw Error('task-stale');
+    const expectedPayload = expectedTask ? rowFor('task', expectedTask).payload : undefined;
     return withRenewalLock(`keepany-task:${this.db.name}`, async () => {
       return withCategoryMutationGate(this.db, this.fileStore, [], async () => {
       const current = await this.db.records.findOne(key('task', id)).exec();
       if (!current) throw Error('task-stale');
       const before = entitySchemas.task.parse(JSON.parse(canonical(current).payload));
+      if (expectedPayload !== undefined && JSON.stringify(before) !== expectedPayload) throw Error('task-stale');
       if (before.reminder?.rule.mode !== undefined && before.reminder.rule.mode !== 'once' && before.reminder.at !== expectedReminderAt) throw Error('task-stale');
       const now = new Date().toISOString();
       const recurringReminder = !expectedDone && before.reminder ? advanceTaskReminder(before.reminder, now) : null;
@@ -704,6 +707,7 @@ export class LocalRepository {
       let result: Task | null = null;
       await current.incrementalModify((data: RecordRow) => {
         const task = entitySchemas.task.parse(JSON.parse(data.payload));
+        if (expectedPayload !== undefined && JSON.stringify(task) !== expectedPayload) throw Error('task-stale');
         if (task.deleted || task.done !== expectedDone || (task.reminder?.rule.mode !== undefined && task.reminder.rule.mode !== 'once' && task.reminder.at !== expectedReminderAt)) throw Error('task-stale');
         const history = task.completionHistory.length ? task.completionHistory :
           task.done && task.completedAt ? [task.completedAt] : [];
@@ -2563,8 +2567,8 @@ export async function recordRenewal(expectedAsset: Asset, nextAsset: Asset, hist
 export async function recordItemAction(expectedAsset: Asset, nextAsset: Asset, history: History) {
   return (await defaultRepository()).recordItemAction(expectedAsset, nextAsset, history);
 }
-export async function setTaskDone(id: string, expectedDone: boolean, expectedReminderAt?: string) {
-  return (await defaultRepository()).setTaskDone(id, expectedDone, expectedReminderAt);
+export async function setTaskDone(id: string, expectedDone: boolean, expectedReminderAt?: string, expectedTask?: Task) {
+  return (await defaultRepository()).setTaskDone(id, expectedDone, expectedReminderAt, expectedTask);
 }
 export async function setItemArchived(id: string, expectedStatus: 'active' | 'archived') {
   return (await defaultRepository()).setItemArchived(id, expectedStatus);
