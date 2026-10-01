@@ -1,0 +1,18 @@
+{
+  "date": "2026-10-01",
+  "origin": "http://127.0.0.1:4186",
+  "page": "/tasks",
+  "method": "normal Update app button through CUA Chrome browser 2",
+  "script": "/assets/index-BV5myCV7.js",
+  "index_sha256": "ffd8b0c6710884af2982ea22447e3ba7e126590fb99f870c4ec33c361b164776",
+  "pending_tasks": 2,
+  "preserved": "original demo assets, collection and two pending tasks",
+  "sent_to_ai": false,
+  "deepseek_actual_request": false,
+  "actual_native_notification": false,
+  "fixed_package_commit": "83bbf2c",
+  "current_files": 91,
+  "retained_files": 924,
+  "acceptance_origin": "http://127.0.0.1:4191",
+  "acceptance_script": "/assets/index-BV5myCV7.js"
+}

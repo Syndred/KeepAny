@@ -1,0 +1,182 @@
+{
+  "config": {
+    "argv": [
+      "/Users/syndred/.nvm/versions/node/v22.23.1/bin/node",
+      "/Users/syndred/Desktop/projects/KeepAny/node_modules/@playwright/test/cli.js",
+      "test",
+      "--config",
+      "playwright.release.config.ts",
+      "tests/e2e/ai-dialog-matrix.spec.ts",
+      "--grep",
+      "zh-CN AI dialog selected-only request and error at 390px",
+      "--reporter=json"
+    ],
+    "configFile": "/Users/syndred/Desktop/projects/KeepAny/playwright.release.config.ts",
+    "rootDir": "/Users/syndred/Desktop/projects/KeepAny/tests/e2e",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "/Users/syndred/Desktop/projects/KeepAny/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "",
+        "name": "",
+        "testDir": "/Users/syndred/Desktop/projects/KeepAny/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "ai-release.spec.ts",
+          "ai-dialog-matrix.spec.ts",
+          "local-core.spec.ts",
+          "english-demo-release.spec.ts",
+          "production-offline.spec.ts",
+          "intake-pdf.spec.ts",
+          "intake-expense.spec.ts",
+          "intake-review-backup.spec.ts",
+          "intake-review-merge.spec.ts",
+          "custom-category-release.spec.ts",
+          "global-search-release.spec.ts",
+          "detail-entry-statistics.spec.ts",
+          "intake-asset-receipt.spec.ts",
+          "collections-route.spec.ts",
+          "relation-graph-verification.spec.ts",
+          "restore-identity.spec.ts",
+          "archive-migration.spec.ts",
+          "vault-reference-release.spec.ts",
+          "password-vault.spec.ts",
+          "themed-select.spec.ts",
+          "spacing-consistency.spec.ts",
+          "task-theme-release.spec.ts",
+          "finance-ledger-release.spec.ts",
+          "collections-ledger-release.spec.ts",
+          "restore-self-service-release.spec.ts"
+        ],
+        "timeout": 90000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "json"
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.63.0",
+    "workers": 2,
+    "webServer": {
+      "command": "node node_modules/vite/bin/vite.js preview apps/web --outDir ../../release/web --host 127.0.0.1 --port 4195 --strictPort",
+      "url": "http://127.0.0.1:4195",
+      "reuseExistingServer": false,
+      "timeout": 30000
+    }
+  },
+  "suites": [
+    {
+      "title": "ai-dialog-matrix.spec.ts",
+      "file": "ai-dialog-matrix.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "zh-CN AI dialog selected-only request and error at 390px",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 7905,
+                  "error": {
+                    "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeInViewport\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator:  getByRole('dialog', { name: 'AI 助手' }).getByRole('button', { name: '发送' })\nExpected: in viewport\nReceived: viewport ratio 0\nTimeout:  5000ms\n\nCall log:\n\u001b[2m  - Expect \"toBeInViewport\" getByRole('dialog', { name: 'AI 助手' }).getByRole('button', { name: '发送' }) with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('dialog', { name: 'AI 助手' }).getByRole('button', { name: '发送' })\u001b[22m\n\u001b[2m    14 × locator resolved to <button class=\"button primary\">发送</button>\u001b[22m\n\u001b[2m       - unexpected value \"viewport ratio 0\"\u001b[22m\n",
+                    "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeInViewport\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator:  getByRole('dialog', { name: 'AI 助手' }).getByRole('button', { name: '发送' })\nExpected: in viewport\nReceived: viewport ratio 0\nTimeout:  5000ms\n\nCall log:\n\u001b[2m  - Expect \"toBeInViewport\" getByRole('dialog', { name: 'AI 助手' }).getByRole('button', { name: '发送' }) with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('dialog', { name: 'AI 助手' }).getByRole('button', { name: '发送' })\u001b[22m\n\u001b[2m    14 × locator resolved to <button class=\"button primary\">发送</button>\u001b[22m\n\u001b[2m       - unexpected value \"viewport ratio 0\"\u001b[22m\n\n    at /Users/syndred/Desktop/projects/KeepAny/tests/e2e/ai-dialog-matrix.spec.ts:205:7",
+                    "location": {
+                      "file": "/Users/syndred/Desktop/projects/KeepAny/tests/e2e/ai-dialog-matrix.spec.ts",
+                      "column": 7,
+                      "line": 205
+                    },
+                    "snippet": "  203 | \t\t\t\tawait expect(\n  204 | \t\t\t\t\tdialog.getByRole(\"button\", { name: copy.send }),\n> 205 | \t\t\t\t).toBeInViewport({ ratio: 0.95 });\n      | \t\t\t\t  ^\n  206 | \t\t\t\texpect(\n  207 | \t\t\t\t\tawait dialog.evaluate(\n  208 | \t\t\t\t\t\t(element) => element.scrollWidth <= element.clientWidth,"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "/Users/syndred/Desktop/projects/KeepAny/tests/e2e/ai-dialog-matrix.spec.ts",
+                        "column": 7,
+                        "line": 205
+                      },
+                      "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeInViewport\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator:  getByRole('dialog', { name: 'AI 助手' }).getByRole('button', { name: '发送' })\nExpected: in viewport\nReceived: viewport ratio 0\nTimeout:  5000ms\n\nCall log:\n\u001b[2m  - Expect \"toBeInViewport\" getByRole('dialog', { name: 'AI 助手' }).getByRole('button', { name: '发送' }) with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('dialog', { name: 'AI 助手' }).getByRole('button', { name: '发送' })\u001b[22m\n\u001b[2m    14 × locator resolved to <button class=\"button primary\">发送</button>\u001b[22m\n\u001b[2m       - unexpected value \"viewport ratio 0\"\u001b[22m\n\n\n  203 | \t\t\t\tawait expect(\n  204 | \t\t\t\t\tdialog.getByRole(\"button\", { name: copy.send }),\n> 205 | \t\t\t\t).toBeInViewport({ ratio: 0.95 });\n      | \t\t\t\t  ^\n  206 | \t\t\t\texpect(\n  207 | \t\t\t\t\tawait dialog.evaluate(\n  208 | \t\t\t\t\t\t(element) => element.scrollWidth <= element.clientWidth,\n    at /Users/syndred/Desktop/projects/KeepAny/tests/e2e/ai-dialog-matrix.spec.ts:205:7"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-01T00:46:26.432Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "/Users/syndred/Desktop/projects/KeepAny/test-results/ai-dialog-matrix-zh-CN-AI--3bc4b--request-and-error-at-390px/test-failed-1.png"
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "/Users/syndred/Desktop/projects/KeepAny/test-results/ai-dialog-matrix-zh-CN-AI--3bc4b--request-and-error-at-390px/error-context.md"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "/Users/syndred/Desktop/projects/KeepAny/tests/e2e/ai-dialog-matrix.spec.ts",
+                    "column": 7,
+                    "line": 205
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "25bdcde9fa9a16fb8f10-14024596282476cd29ff",
+          "file": "ai-dialog-matrix.spec.ts",
+          "line": 155,
+          "column": 3
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-10-01T00:46:25.843Z",
+    "duration": 8720.879,
+    "expected": 0,
+    "skipped": 0,
+    "unexpected": 1,
+    "flaky": 0
+  }
+}
