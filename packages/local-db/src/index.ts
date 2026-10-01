@@ -748,7 +748,11 @@ export class LocalRepository {
       ? withRenewalLock(`keepany-task:${this.db.name}`, () => this.saveBatchUnlocked(items)) : this.saveBatchUnlocked(items);
   }
 
-  private async saveBatchUnlocked(items: ReadonlyArray<{ type: EntityType; value: unknown }>): Promise<number> {
+  async saveBatchIfAssetsCurrent(items: ReadonlyArray<{ type: EntityType; value: unknown }>, expectedAssets: readonly Asset[]): Promise<number> {
+    return this.saveBatchUnlocked(items, expectedAssets);
+  }
+
+  private async saveBatchUnlocked(items: ReadonlyArray<{ type: EntityType; value: unknown }>, expectedAssets: readonly Asset[] = []): Promise<number> {
     if (!items.length || items.length > 1000) throw Error('batch-size');
     const rows = items.map(item => rowFor(item.type, item.value));
     const ids = new Set(rows.map(row => row.id));
@@ -786,20 +790,37 @@ export class LocalRepository {
         taskKeys.add(dedupeKey);
       }
     }
+    const expected = expectedAssets.map(asset => rowFor('asset', entitySchemas.asset.parse(asset)));
+    const assertAssetsCurrent = async () => {
+      for (const asset of expected) {
+        const [current] = await this.db.records.storageInstance.findDocumentsById([asset.id], false);
+        if (!current || JSON.stringify(parsedPayload(current as RecordRow)) !== asset.payload) throw Error('asset-stale');
+      }
+    };
     const id = crypto.randomUUID();
     const targets = rows.map(row => {
       const value = parsedPayload(row) as Asset | Category | { id: string };
       return { type: row.type, id: value.id, ...('kind' in value ? { kind: value.kind } : {}) };
     });
-    await this.fileStore.transaction('rw', this.fileStore.categoryEditJournal, this.fileStore.importJournal, async () => {
+    await this.fileStore.transaction('rw', [this.fileStore.categoryEditJournal, this.fileStore.importJournal,
+      this.fileStore.journal, this.fileStore.archiveMerge], async () => {
+      if (await this.fileStore.journal.count()) throw Error('restore-recovery-pending');
+      if (await this.fileStore.archiveMerge.count()) throw Error('archive-merge-pending');
       await assertCategoryMutationAllowed(this.db, this.fileStore, targets);
+      await Dexie.waitFor(Dexie.ignoreTransaction(assertAssetsCurrent));
       await this.fileStore.importJournal.put({ id, rows });
     });
     try {
-      await this.fileStore.transaction('rw', this.fileStore.categoryEditJournal, this.fileStore.importJournal, async () => {
+      await this.fileStore.transaction('rw', [this.fileStore.categoryEditJournal, this.fileStore.importJournal,
+        this.fileStore.journal, this.fileStore.archiveMerge], async () => {
+        if (await this.fileStore.journal.count()) throw Error('restore-recovery-pending');
+        if (await this.fileStore.archiveMerge.count()) throw Error('archive-merge-pending');
         await assertCategoryMutationAllowed(this.db, this.fileStore, targets);
         if (!(await this.fileStore.importJournal.get(id))) throw Error('batch-insert-failed');
-        const result = await Dexie.waitFor(Dexie.ignoreTransaction(() => this.db.records.bulkInsert(rows)));
+        const result = await Dexie.waitFor(Dexie.ignoreTransaction(async () => {
+          await assertAssetsCurrent();
+          return this.db.records.bulkInsert(rows);
+        }));
         if (result.error.length) throw Error('batch-insert-failed');
         await this.fileStore.importJournal.delete(id);
       });
