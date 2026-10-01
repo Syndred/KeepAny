@@ -6,7 +6,7 @@
       "test",
       "tests/e2e/reminder-runtime.spec.ts",
       "--workers=1",
-      "--reporter=list,json"
+      "--reporter=json"
     ],
     "configFile": "/Users/syndred/Desktop/projects/KeepAny/playwright.config.ts",
     "rootDir": "/Users/syndred/Desktop/projects/KeepAny/tests/e2e",
@@ -43,9 +43,6 @@
     ],
     "quiet": false,
     "reporter": [
-      [
-        "list"
-      ],
       [
         "json"
       ]
@@ -90,12 +87,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 1773,
+                  "duration": 1900,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-10-01T00:33:14.163Z",
+                  "startTime": "2026-10-01T00:34:29.997Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -124,12 +121,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 1699,
+                  "duration": 1728,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-10-01T00:33:16.090Z",
+                  "startTime": "2026-10-01T00:34:32.058Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -158,12 +155,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 503,
+                  "duration": 481,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-10-01T00:33:17.795Z",
+                  "startTime": "2026-10-01T00:34:33.792Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -181,8 +178,8 @@
   ],
   "errors": [],
   "stats": {
-    "startTime": "2026-10-01T00:33:13.936Z",
-    "duration": 4387.968,
+    "startTime": "2026-10-01T00:34:29.819Z",
+    "duration": 4480.792,
     "expected": 3,
     "skipped": 0,
     "unexpected": 0,
