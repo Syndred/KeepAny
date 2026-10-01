@@ -1,0 +1,10 @@
+.reminder-runtime-banner {
+  width: min(calc(100% - 40px), 1400px);
+  min-width: 0;
+  margin: var(--space-4) auto 0;
+  overflow-wrap: anywhere;
+}
+.reminder-runtime-banner .toolbar { flex-wrap: wrap; }
+@media (max-width: 768px) {
+  .reminder-runtime-banner { width: calc(100% - 24px); }
+}

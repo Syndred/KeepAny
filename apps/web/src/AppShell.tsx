@@ -340,6 +340,7 @@ export function AppShell() {
 						}) : <p>{t("none")}</p>}</div>
 						<button type="button" className="top-search-panel-close" onClick={() => { setSearchOpen(false); setSearch(""); }}>{t("close")}</button>
 					</div>}
+					<ReminderRuntime />
 					{data.loading ? (
 						<main className="page">
 							<div className="notice" role="status">
@@ -361,7 +362,6 @@ export function AppShell() {
 					{toast}
 				</div>
 			)}
-			<ReminderRuntime />
 			{ai && (
 				<Suspense
 					fallback={
