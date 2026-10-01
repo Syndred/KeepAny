@@ -1,0 +1,26 @@
+{
+  "buttonHeight": 44,
+  "entry": [
+    "/assets/index-DMq4cFVw.js"
+  ],
+  "fieldToFile": 16,
+  "fileToGenerate": 16,
+  "horizontalOverflow": false,
+  "ink": "#17243a",
+  "linkColor": "rgb(23, 36, 58)",
+  "nativeInputSize": [
+    0,
+    0
+  ],
+  "panel": {
+    "height": 466.2109375,
+    "width": 945,
+    "x": 234,
+    "y": 231.078125
+  },
+  "pending": 13,
+  "viewport": {
+    "height": 808,
+    "width": 1218
+  }
+}

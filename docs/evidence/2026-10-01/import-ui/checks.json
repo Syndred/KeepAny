@@ -1,0 +1,85 @@
+{
+  "softwareCommit": "5d95fc244ec5fb7f0bdee50755340f11d7e56c87",
+  "entry": "index-DMq4cFVw.js",
+  "unitTests": {
+    "file": "ai-settings-store.test.ts",
+    "passed": 7
+  },
+  "currentFiles": 91,
+  "retainedFiles": 1031,
+  "originalBrowser": {
+    "buttonHeight": 44,
+    "entry": [
+      "/assets/index-DMq4cFVw.js"
+    ],
+    "fieldToFile": 16,
+    "fileToGenerate": 16,
+    "horizontalOverflow": false,
+    "ink": "#17243a",
+    "linkColor": "rgb(23, 36, 58)",
+    "nativeInputSize": [
+      0,
+      0
+    ],
+    "panel": {
+      "height": 466.2109375,
+      "width": 945,
+      "x": 234,
+      "y": 231.078125
+    },
+    "pending": 13,
+    "viewport": {
+      "height": 808,
+      "width": 1218
+    }
+  },
+  "originalFileChooser": "First UI package: themed button opens native chooser, synthetic TXT selected and removed; final package preserves the same component. Final readback keeps 13 pending candidates; no model call.",
+  "ci": {
+    "number": 54,
+    "url": "https://github.com/Syndred/KeepAny/actions/runs/36808700266",
+    "status": "in_progress",
+    "commit": "5d95fc2"
+  },
+  "previousCi": {
+    "number": 52,
+    "url": "https://github.com/Syndred/KeepAny/actions/runs/36807133018",
+    "status": "success",
+    "jobDuration": "17m 0s",
+    "commit": "28ceb55",
+    "workflowDuration": "17m 4s"
+  },
+  "sha256": {
+    "index.html": "36b04060aa1a06ecf813ae0461351d593797677dfc3e746e513f6de28deb1e8e",
+    "assets/index-DMq4cFVw.js": "430302dcdea8d6614ef3a9ac1ae60af3b798fc1e1b309eb01b36c0a944d6110c"
+  },
+  "sourceCommits": [
+    "77c7312",
+    "50656ad"
+  ],
+  "firstUiPackage": {
+    "commit": "fd5b5137444e0808652fc209753b8b10522cc269",
+    "releaseTests": {
+      "startTime": "2026-10-01T02:58:11.979Z",
+      "duration": 16065.511,
+      "expected": 8,
+      "skipped": 0,
+      "unexpected": 0,
+      "flaky": 0
+    },
+    "report": "release-tests.json"
+  },
+  "finalAccountTests": {
+    "startTime": "2026-10-01T03:02:34.744Z",
+    "duration": 6216.639,
+    "expected": 4,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "intermediateCi": {
+    "number": 53,
+    "url": "https://github.com/Syndred/KeepAny/actions/runs/36808381119",
+    "status": "in_progress",
+    "commit": "fd5b513"
+  }
+}

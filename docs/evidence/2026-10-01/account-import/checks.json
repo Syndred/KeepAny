@@ -48,8 +48,8 @@
   "ci": {
     "run": 52,
     "url": "https://github.com/Syndred/KeepAny/actions/runs/36807133018",
-    "status": "in_progress",
-    "readback": "In progress; verify 5m 13s; exact commit 28ceb55"
+    "status": "success",
+    "readback": "Success; verify 17m 0s; exact commit 28ceb55"
   },
   "sha256": {
     "index.html": "941f27617229e16c2ca4ca824c313e1f65864767e979bab902497c7f899e9c08",
