@@ -338,7 +338,10 @@ export function AiSettingsPanel() {
 			)
 				return;
 			if (!answer.text.trim()) throw new Error();
-			setTestResult({ model: answer.model.slice(0, 120), ...answer.usage });
+			setTestResult({
+				model: (answer.model || settings.model).slice(0, 120),
+				...answer.usage,
+			});
 		} catch (caught) {
 			if (
 				mounted.current &&
