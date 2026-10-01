@@ -1,0 +1,32 @@
+{
+  "blankChips": 0,
+  "cards": 16,
+  "categoryChips": [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    2,
+    2,
+    2
+  ],
+  "scripts": [
+    "http://127.0.0.1:4180/assets/index-C7TIsphz.js"
+  ],
+  "styles": [
+    "{\"top\":\"2px\",\"right\":\"2px\",\"bottom\":\"2px\",\"left\":\"2px\",\"shadow\":\"rgb(32, 48, 74) 3px 4px 0px 0px\"}"
+  ],
+  "viewport": {
+    "height": 808,
+    "width": 1218
+  }
+}
