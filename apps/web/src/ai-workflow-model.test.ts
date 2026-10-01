@@ -62,6 +62,118 @@ describe("AI proposals stay bounded and require source-backed review", () => {
 			aiImportSchema.parse(parseAiJson('{"records":[],"tools":["delete"]}')),
 		).toThrow();
 	});
+	it("normalizes the bounded null fields and auxiliary missing fields returned by DeepSeek", () => {
+		const projectSource =
+			"项目：DS 验收项目，网址 https://keepany.example.test/project。";
+		const parsed = aiImportSchema.parse({
+			text: "",
+			records: [
+				{
+					kind: "project",
+					name: "DS 验收项目",
+					url: "https://keepany.example.test/project",
+					description: null,
+					category: null,
+					tags: null,
+					amount: null,
+					currency: null,
+					cycle: null,
+					interval: null,
+					dueDate: null,
+					evidence: projectSource,
+					relatedName: null,
+					missingFields: [
+						"description",
+						"category",
+						"tags",
+						"amount",
+						"currency",
+						"cycle",
+						"interval",
+						"dueDate",
+						"relatedName",
+					],
+				},
+			],
+		});
+		expect(parsed.records[0]).toMatchObject({
+			description: "",
+			category: "",
+			tags: [],
+			relatedName: "",
+			amount: null,
+			currency: null,
+			cycle: null,
+			interval: null,
+			dueDate: null,
+			missingFields: ["amount", "currency", "cycle", "dueDate"],
+		});
+		const row = buildAiCandidates(parsed, { ...input, text: projectSource })[0];
+		expect(reviewedCandidateSchema.parse(row).ai?.missingFields).toEqual([]);
+		expect(row.asset.url).toBe("https://keepany.example.test/project");
+		expect(row.status).toBe("pending");
+
+		const subscription = aiImportSchema.parse({
+			records: [
+				{
+					...output().records[0],
+					url: null,
+					description: null,
+					category: null,
+					tags: null,
+					relatedName: null,
+					missingFields: ["url", "description", "tags", "interval"],
+				},
+			],
+		});
+		const subscriptionRow = buildAiCandidates(subscription, input)[0];
+		expect(subscriptionRow.asset.amount).toBe(1250);
+		expect(subscriptionRow.asset.currency).toBe("USD");
+		expect(subscriptionRow.asset.url).toBe("");
+		expect(subscriptionRow.ai?.missingFields).toEqual([]);
+		expect(
+			reviewedCandidateSchema.safeParse({
+				...subscriptionRow,
+				status: "accepted",
+			}).success,
+		).toBe(true);
+	});
+	it("rejects unknown structure and invalid values while normalizing optional nulls", () => {
+		const record = {
+			...output().records[0],
+			description: null,
+			tags: null,
+		};
+		for (const patch of [
+			{ amount: 12.5 },
+			{ currency: "BTC" },
+			{ cycle: "monthly" },
+			{ interval: 0 },
+			{ dueDate: "2026-02-30" },
+			{ kind: "vault" },
+			{ kind: null },
+			{ name: null },
+			{ evidence: null },
+			{ description: 1 },
+			{ description: "x".repeat(2001) },
+			{ tags: [null] },
+			{ relatedName: {} },
+			{ missingFields: ["password"] },
+			{ missingFields: ["description", "unknown"] },
+			{ missingFields: Array(12).fill("tags") },
+			{ unknown: null },
+		])
+			expect(
+				aiImportSchema.safeParse({ records: [{ ...record, ...patch }] })
+					.success,
+			).toBe(false);
+		expect(
+			aiImportSchema.safeParse({ text: null, records: [record] }).success,
+		).toBe(false);
+		expect(
+			aiImportSchema.safeParse({ records: [record], unknown: null }).success,
+		).toBe(false);
+	});
 	it("rejects bad money, impossible dates and unbounded output", () => {
 		expect(() =>
 			buildAiCandidates(
