@@ -1,0 +1,93 @@
+{
+  "variant": {
+    "locale": "en-US",
+    "width": 390
+  },
+  "package": "index-DY8QEf3c.js",
+  "geometry": {
+    "viewport": 390,
+    "scrollWidth": 390,
+    "primary": {
+      "x": 12,
+      "y": 809.171875,
+      "width": 366,
+      "height": 949.421875,
+      "top": 809.171875,
+      "right": 378,
+      "bottom": 1758.59375,
+      "left": 12
+    },
+    "quick": {
+      "x": 12,
+      "y": 809.171875,
+      "width": 366,
+      "height": 461.109375,
+      "top": 809.171875,
+      "right": 378,
+      "bottom": 1270.28125,
+      "left": 12
+    },
+    "backup": {
+      "x": 12,
+      "y": 1294.28125,
+      "width": 366,
+      "height": 464.3125,
+      "top": 1294.28125,
+      "right": 378,
+      "bottom": 1758.59375,
+      "left": 12
+    },
+    "recent": {
+      "x": 12,
+      "y": 1782.59375,
+      "width": 366,
+      "height": 107.046875,
+      "top": 1782.59375,
+      "right": 378,
+      "bottom": 1889.640625,
+      "left": 12
+    },
+    "password": {
+      "x": 27,
+      "y": 1492.40625,
+      "width": 336,
+      "height": 40.390625,
+      "top": 1492.40625,
+      "right": 363,
+      "bottom": 1532.796875,
+      "left": 27
+    },
+    "backupActions": {
+      "x": 27,
+      "y": 1573.59375,
+      "width": 336,
+      "height": 36,
+      "top": 1573.59375,
+      "right": 363,
+      "bottom": 1609.59375,
+      "left": 27
+    },
+    "status": {
+      "x": 27,
+      "y": 1625.59375,
+      "width": 336,
+      "height": 42,
+      "top": 1625.59375,
+      "right": 363,
+      "bottom": 1667.59375,
+      "left": 27
+    },
+    "details": [
+      {
+        "open": false,
+        "top": 1683.59375,
+        "bottom": 1705.59375
+      },
+      {
+        "open": false,
+        "top": 1721.59375,
+        "bottom": 1743.59375
+      }
+    ]
+  }
+}
