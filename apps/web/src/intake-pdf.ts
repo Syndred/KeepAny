@@ -6,7 +6,7 @@ import { stageReviewedCandidates } from "./intake-review-store";
 GlobalWorkerOptions.workerSrc = workerUrl;
 
 /** Text extraction only: no rendering, OCR, transaction or amount inference. */
-export async function stagePdfForReview(file: File): Promise<number> {
+export async function readPdfText(file: File): Promise<{ text: string; hash: string }> {
 	if (!file.name.toLowerCase().endsWith(".pdf") || file.size > 10 * 1024 * 1024) throw Error("pdfLimit");
 	const bytes = await file.arrayBuffer();
 	const digest = await crypto.subtle.digest("SHA-256", bytes);
@@ -37,10 +37,7 @@ export async function stagePdfForReview(file: File): Promise<number> {
 			new Promise<never>((_, reject) => { timer = setTimeout(() => reject(Error("pdfTimeout")), 30000); }),
 		]);
 		if (!text) throw Error("pdfNoText");
-		const asset = { ...newAsset("item"), id: `pdf-${hash.slice(0, 48)}`, name: file.name.replace(/\.pdf$/i, "").slice(0, 160), description: text };
-		await stageReviewedCandidates([{ id: `pdf-${hash}`, fileHash: hash, fileName: file.name, rowNumber: 1,
-			asset, status: "pending", source: "pdf", sourceText: text, kindSelected: false }]);
-		return 1;
+		return { text, hash };
 	} catch (error) {
 		if (error instanceof Error && ["pdfLimit", "pdfNoText", "pdfTimeout"].includes(error.message)) throw error;
 		throw Error("pdfInvalid");
@@ -48,4 +45,12 @@ export async function stagePdfForReview(file: File): Promise<number> {
 		clearTimeout(timer);
 		await task.destroy();
 	}
+}
+
+export async function stagePdfForReview(file: File): Promise<number> {
+	const { text, hash } = await readPdfText(file);
+	const asset = { ...newAsset("item"), id: `pdf-${hash.slice(0, 48)}`, name: file.name.replace(/\.pdf$/i, "").slice(0, 160), description: text };
+	await stageReviewedCandidates([{ id: `pdf-${hash}`, fileHash: hash, fileName: file.name, rowNumber: 1,
+		asset, status: "pending", source: "pdf", sourceText: text, kindSelected: false }]);
+	return 1;
 }

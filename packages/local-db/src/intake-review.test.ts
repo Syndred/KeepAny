@@ -15,6 +15,27 @@ const fixture = (hash = 'a'.repeat(64), rowNumber = 2, pdf = false): ReviewedCan
   asset: { ...newAsset('project'), id: `${pdf ? 'pdf' : 'csv'}-${hash.slice(0, 48)}${pdf ? '' : `-${rowNumber}`}`, name: `Draft ${rowNumber}` },
   status: 'pending', ...(pdf ? { source: 'pdf', sourceText: 'Original invoice USD 12.00', kindSelected: false } : {}),
 });
+
+it('AI candidates preserve source evidence in encrypted backup and cancellation rolls back all rows', async () => {
+  const source = await openLocalRepository(name()), target = await openLocalRepository(name());
+  const row: ReviewedCandidate = { ...fixture('c'.repeat(64), 1),
+    id: `ai-${'c'.repeat(64)}-1`, fileName: 'synthetic.txt', source: 'ai', sourceText: 'Synthetic hosting USD 12.50',
+    asset: { ...newAsset('subscription'), id: `ai-${'c'.repeat(48)}-1`, name: 'Synthetic hosting', amount: 1250, currency: 'USD' },
+    ai: { provider: 'deepseek', model: 'synthetic', evidence: 'USD 12.50', missingFields: ['cycle'], relatedName: 'Studio' }, kindSelected: true };
+  try {
+    let checks = 0;
+    await expect(stageReviewedCandidates(source.fileStore, [row], () => ++checks < 3)).rejects.toThrow('review-cancelled');
+    expect(await listReviewedCandidates(source.fileStore)).toEqual([]);
+    await stageReviewedCandidates(source.fileStore, [row]);
+    await editReviewedCandidate(source.fileStore, row.id, row.asset, undefined, 'cycle');
+    const before = await listReviewedCandidates(source.fileStore);
+    expect(before[0].ai?.missingFields).toEqual([]);
+    const encrypted = await encryptBackup(await source.exportArchive(), 'synthetic-ai-backup');
+    expect(new TextDecoder().decode(encrypted)).not.toContain(row.sourceText);
+    await target.restoreArchive(await decryptBackup(encrypted, 'synthetic-ai-backup'));
+    expect(await listReviewedCandidates(target.fileStore)).toEqual(before);
+  } finally { await source.close(); await target.close(); }
+});
 const hash = async (bytes: Uint8Array) => Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', bytes as BufferSource)),
   byte => byte.toString(16).padStart(2, '0')).join('');
 async function alter(archive: Uint8Array, mutate: (entries: Record<string, Uint8Array>, manifest: Record<string, unknown>) => void) {

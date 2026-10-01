@@ -29,19 +29,23 @@ const draftAssetSchema = z.unknown().transform((value, context) => {
 export const reviewedCandidateSchema = z.object({
   id: z.string().min(1).max(100), fileHash: z.string().regex(/^[a-f0-9]{64}$/),
   fileName: z.string().min(1).max(1024), rowNumber: z.number().int().min(1).max(100000),
-  source: z.literal('pdf').optional(), sourceText: z.string().max(20000).optional(),
+  source: z.enum(['pdf', 'ai']).optional(), sourceText: z.string().max(20000).optional(),
+  ai: z.object({ provider: z.string().min(1).max(64), model: z.string().min(1).max(160),
+    evidence: z.string().min(1).max(2000), missingFields: z.array(z.string().max(60)).max(20),
+    relatedName: z.string().max(160).default('') }).strict().optional(),
   kindSelected: z.boolean().optional(), asset: draftAssetSchema,
   reviewMode: z.enum(['asset', 'expense']).optional(), expenseDraft: reviewedExpenseDraftSchema.optional(),
   historyId: z.string().max(96).optional(),
   status: z.enum(['pending', 'accepted', 'ignored']),
 }).strict().superRefine((row, context) => {
   const suffix = row.source === 'pdf' ? '' : `-${row.rowNumber}`;
-  const prefix = row.source === 'pdf' ? 'pdf' : 'csv';
+  const prefix = row.source === 'pdf' ? 'pdf' : row.source === 'ai' ? 'ai' : 'csv';
   if (row.id !== `${prefix}-${row.fileHash}${suffix}` ||
     row.asset.id !== `${prefix}-${row.fileHash.slice(0, 48)}${suffix}` ||
-    (row.source === 'pdf' ? row.rowNumber !== 1 || !row.sourceText : row.rowNumber < 2 || row.sourceText !== undefined)) {
+    (row.source === 'pdf' ? row.rowNumber !== 1 || !row.sourceText : row.source === 'ai' ? row.rowNumber < 1 || !row.sourceText || !row.ai : row.rowNumber < 2 || row.sourceText !== undefined)) {
     context.addIssue({ code: 'custom', message: 'review-id' });
   }
+  if ((row.source === 'ai') !== Boolean(row.ai)) context.addIssue({ code: 'custom', message: 'review-ai-source' });
   if (row.reviewMode === 'expense') {
     if (row.source !== 'pdf' || !row.expenseDraft || (row.status === 'accepted' &&
       (row.historyId !== reviewedExpenseHistoryId(row.fileHash) || !expenseHistory(row)))) {
@@ -49,6 +53,7 @@ export const reviewedCandidateSchema = z.object({
     }
   } else if (row.historyId !== undefined || (row.status === 'accepted' && (!assetSchema.safeParse(row.asset).success ||
     (row.source === 'pdf' && !row.kindSelected)))) context.addIssue({ code: 'custom', message: 'review-accepted' });
+  if (row.status === 'accepted' && row.source === 'ai' && row.asset.kind === 'subscription' && row.ai?.missingFields.some(field => ['amount', 'currency', 'cycle'].includes(field))) context.addIssue({ code: 'custom', message: 'review-ai-missing' });
   if (row.status !== 'accepted' && row.historyId !== undefined) context.addIssue({ code: 'custom', message: 'review-history' });
 });
 
@@ -131,12 +136,18 @@ export async function migrateLegacyIntakeReview(store: IntakeReviewStorage,
   } finally { legacy.close(); }
 }
 
-export async function stageReviewedCandidates(store: IntakeReviewStorage, input: ReviewedCandidate[]): Promise<ReviewedCandidate[]> {
+export async function stageReviewedCandidates(store: IntakeReviewStorage, input: ReviewedCandidate[], isCurrent: () => boolean = () => true): Promise<ReviewedCandidate[]> {
   if (!input.length) return [];
   const rows = parseReviewedCandidates(input);
   if (rows.some(row => row.fileHash !== rows[0].fileHash || row.status !== 'pending')) throw Error('review-stage');
   await store.transaction('rw', store.intakeReview, async () => {
-    for (const row of rows) if (!(await store.intakeReview.get(row.id))) await store.intakeReview.add(row);
+    for (const row of rows) {
+      if (!isCurrent()) throw Error('review-cancelled');
+      const existing = await store.intakeReview.get(row.id);
+      if (!isCurrent()) throw Error('review-cancelled');
+      if (!existing) await store.intakeReview.add(row);
+      if (!isCurrent()) throw Error('review-cancelled');
+    }
   });
   return store.intakeReview.where('fileHash').equals(rows[0].fileHash).sortBy('rowNumber');
 }
@@ -152,12 +163,12 @@ export async function getReviewedCandidate(store: IntakeReviewStorage, id: strin
 }
 
 export async function editReviewedCandidate(store: IntakeReviewStorage, id: string, asset: Asset,
-  kindSelected?: boolean): Promise<boolean> {
+  kindSelected?: boolean, resolvedField?: string): Promise<boolean> {
   return reviewTransaction(store, async () => {
     await assertReviewEditable(store, id);
     const row = await store.intakeReview.get(id);
     if (row?.status !== 'pending') return false;
-    await store.intakeReview.put(reviewedCandidateSchema.parse({ ...row, asset, kindSelected: kindSelected ?? row.kindSelected }));
+    await store.intakeReview.put(reviewedCandidateSchema.parse({ ...row, asset, kindSelected: kindSelected ?? row.kindSelected, ...(row.ai && resolvedField ? { ai: { ...row.ai, missingFields: row.ai.missingFields.filter(field => field !== resolvedField) } } : {}) }));
     return true;
   });
 }
@@ -173,7 +184,7 @@ export async function decideReviewedCandidate(store: IntakeReviewStorage, id: st
     const current = await store.intakeReview.get(id);
     if (current?.status !== 'pending') return;
     if (!sameReviewedCandidate(current, row)) throw Error('review-stale');
-    await store.intakeReview.put({ ...current, status });
+    await store.intakeReview.put(reviewedCandidateSchema.parse({ ...current, status }));
   });
 }
 

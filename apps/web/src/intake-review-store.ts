@@ -5,8 +5,8 @@ import * as review from '../../../packages/local-db/src/intake-review';
 export type ReviewedCandidate = review.ReviewedCandidate;
 export type ReviewedExpenseDraft = review.ReviewedExpenseDraft;
 
-export async function stageReviewedCandidates(rows: ReviewedCandidate[]): Promise<ReviewedCandidate[]> {
-  return review.stageReviewedCandidates((await localRepository()).fileStore, rows);
+export async function stageReviewedCandidates(rows: ReviewedCandidate[], isCurrent?: () => boolean): Promise<ReviewedCandidate[]> {
+  return review.stageReviewedCandidates((await localRepository()).fileStore, rows, isCurrent);
 }
 
 export async function listReviewedCandidates(): Promise<ReviewedCandidate[]> {
@@ -17,8 +17,8 @@ export async function getReviewedCandidate(id: string): Promise<ReviewedCandidat
   return review.getReviewedCandidate((await localRepository()).fileStore, id);
 }
 
-export async function editReviewedCandidate(id: string, asset: Asset, kindSelected?: boolean): Promise<boolean> {
-  return review.editReviewedCandidate((await localRepository()).fileStore, id, asset, kindSelected);
+export async function editReviewedCandidate(id: string, asset: Asset, kindSelected?: boolean, resolvedField?: string): Promise<boolean> {
+  return review.editReviewedCandidate((await localRepository()).fileStore, id, asset, kindSelected, resolvedField);
 }
 
 export async function setReviewedCandidateMode(id: string, mode: 'asset' | 'expense', initialDraft?: ReviewedExpenseDraft): Promise<boolean> {
