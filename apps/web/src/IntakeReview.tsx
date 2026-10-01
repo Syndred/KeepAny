@@ -154,6 +154,7 @@ export function IntakeReview() {
 		if (field === "currency") asset.amount = parseMinorUnits(inputFromMinorUnits(row.asset.amount, row.asset.currency), value as Asset["currency"]);
 		if (field === "interval" && (!Number.isInteger(asset.interval) || asset.interval < 1 || asset.interval > 100)) return;
 		if (!Number.isSafeInteger(asset.amount) || asset.amount < 0) { setMessageId(id); setMessage(t("financeInvalidAmount")); return; }
+		if (field === "amount" && asset.kind === "item") asset.itemPurchasePriceKnown = true;
 		const ai = row.ai ? { ...row.ai, missingFields: row.ai.missingFields.filter(item => item !== field) } : undefined;
 		queueEdit(id, { ...row, asset, ...(ai ? { ai } : {}) }, () => editReviewedCandidate(id, asset, undefined, field));
 	}
