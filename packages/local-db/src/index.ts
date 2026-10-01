@@ -4,6 +4,7 @@ import Dexie, { type Table } from 'dexie';
 import { z } from 'zod';
 import { dueOnCycle, entitySchemas, normalizeCategoryName, type Asset, type AssetKind, type Category, type EntityType, type History, type Submission, type Task } from '../../domain/src';
 import { canRecordProjectWorkflowTask, currentProjectWorkflowRound } from '../../domain/src/project-workflow';
+import { advanceTaskReminder, zonedParts } from '../../domain/src/task-reminder';
 import { zipSync, strToU8, strFromU8 } from 'fflate';
 import { unzipArchive } from './archive-unzip';
 import { checkedPasswordVaultBytes, checkedPasswordVaultRecord, PASSWORD_VAULT_LIMIT, type VaultRecord } from './password-vault-storage';
@@ -564,6 +565,46 @@ export class LocalRepository {
     return this.saveUnlocked('preference', next, expected ? rowFor('preference', expected).payload : null);
   }
 
+  async saveReminderPreferenceIfCurrent(expected: { id: string; value: unknown } | null, next: { id: string; value: unknown }, expectedAsset?: Asset): Promise<RecordRow> {
+    if (next.id !== 'reminder-settings' || (expected && expected.id !== next.id)) throw Error('preference-stale');
+    return withCategoryMutationGate(this.db, this.fileStore, [], async () => {
+      if (expectedAsset) {
+        const [row] = await this.db.records.storageInstance.findDocumentsById([key('asset', expectedAsset.id)], false);
+        const current = row ? entitySchemas.asset.parse(JSON.parse(row.payload)) : null;
+        if (!current || current.deleted || current.kind !== 'subscription' || current.status !== 'active' || JSON.stringify(current) !== rowFor('asset', expectedAsset).payload) throw Error('asset-stale');
+      }
+      return this.saveEntityUnlocked('preference', next, expected ? rowFor('preference', expected).payload : null);
+    });
+  }
+
+  // The existing mutation gate excludes edits, completions and deletions in every tab.
+  // Persist an at-most-once receipt before the synchronous notification callback.
+  async deliverReminderIfCurrent(input: { id: string; sourceType: 'task' | 'asset'; expected: Task | Asset; expectedPreference: { id: string; value: unknown } | null; scheduledAt: string }, deliver: () => void): Promise<boolean> {
+    if (!/^reminder-delivery:[a-f0-9]{64}$/.test(input.id) || !Number.isFinite(Date.parse(input.scheduledAt)) || Date.parse(input.scheduledAt) > Date.now()) throw Error('reminder-invalid');
+    return withCategoryMutationGate(this.db, this.fileStore, [], async () => {
+      const read = async (type: EntityType, id: string) => {
+        const [row] = await this.db.records.storageInstance.findDocumentsById([key(type, id)], false);
+        return row ? parsedPayload(row as RecordRow) : null;
+      };
+      const current = await read(input.sourceType, input.expected.id);
+      if (!current || current.deleted || JSON.stringify(current) !== rowFor(input.sourceType, input.expected).payload) return false;
+      if (input.sourceType === 'task') {
+        const task = current as Task;
+        if (task.done) return false;
+        if (task.assetId) {
+          const asset = await read('asset', task.assetId) as Asset | null;
+          if (!asset || asset.deleted || (asset.kind === 'subscription' && asset.status !== 'active')) return false;
+        }
+      } else if ((current as Asset).kind !== 'subscription' || (current as Asset).status !== 'active') return false;
+      const settings = await read('preference', 'reminder-settings');
+      if (JSON.stringify(settings) !== JSON.stringify(input.expectedPreference ? entitySchemas.preference.parse(input.expectedPreference) : null)) return false;
+      if (await read('preference', input.id)) return false;
+      await this.saveEntityUnlocked('preference', { id: input.id, value: { sourceType: input.sourceType, sourceId: input.expected.id, scheduledAt: input.scheduledAt, deliveredAt: new Date().toISOString() } }, null);
+      deliver();
+      return true;
+    });
+  }
+
   private async saveUnlocked(type: EntityType, value: unknown, expectedPayload?: string | null, subscriptionSave = false): Promise<RecordRow> {
     // Recovery validates one actual RxDB snapshot while holding this table.
     // Histories and tasks must not change behind that validation either.
@@ -641,25 +682,33 @@ export class LocalRepository {
   }
 
   // Re-read the current row inside RxDB's CAS retry to preserve every completion timestamp.
-  async setTaskDone(id: string, expectedDone: boolean): Promise<Task> {
+  async setTaskDone(id: string, expectedDone: boolean, expectedReminderAt?: string): Promise<Task> {
     return withRenewalLock(`keepany-task:${this.db.name}`, async () => {
       return withCategoryMutationGate(this.db, this.fileStore, [], async () => {
       const current = await this.db.records.findOne(key('task', id)).exec();
       if (!current) throw Error('task-stale');
       const before = entitySchemas.task.parse(JSON.parse(canonical(current).payload));
+      if (before.reminder?.rule.mode !== undefined && before.reminder.rule.mode !== 'once' && before.reminder.at !== expectedReminderAt) throw Error('task-stale');
+      const now = new Date().toISOString();
+      const recurringReminder = !expectedDone && before.reminder ? advanceTaskReminder(before.reminder, now) : null;
+      const nextDueDate = recurringReminder ? zonedParts(recurringReminder.at, recurringReminder.timeZone).date : before.dueDate;
+      const nextDedupeKey = recurringReminder && before.dedupeKey.startsWith('manual:') ? `${before.dedupeKey.slice(0, before.dedupeKey.lastIndexOf(':'))}:${nextDueDate}` : before.dedupeKey;
+      if (recurringReminder && nextDedupeKey) {
+        const tasks = await this.list<Task>('task');
+        if (tasks.some(task => task.id !== id && !task.done && task.dedupeKey === nextDedupeKey)) throw Error('task-duplicate');
+      }
       if (expectedDone && before.dedupeKey) {
         const tasks = await this.list<Task>('task');
         if (tasks.some(task => task.id !== id && !task.done && task.dedupeKey === before.dedupeKey)) throw Error('task-duplicate');
       }
-      const now = new Date().toISOString();
       let result: Task | null = null;
       await current.incrementalModify((data: RecordRow) => {
         const task = entitySchemas.task.parse(JSON.parse(data.payload));
-        if (task.deleted || task.done !== expectedDone) throw Error('task-stale');
+        if (task.deleted || task.done !== expectedDone || (task.reminder?.rule.mode !== undefined && task.reminder.rule.mode !== 'once' && task.reminder.at !== expectedReminderAt)) throw Error('task-stale');
         const history = task.completionHistory.length ? task.completionHistory :
           task.done && task.completedAt ? [task.completedAt] : [];
-        result = entitySchemas.task.parse({ ...task, done: !expectedDone,
-          completedAt: expectedDone ? '' : now,
+        result = entitySchemas.task.parse({ ...task, ...(recurringReminder ? { reminder: recurringReminder, dueDate: nextDueDate, dedupeKey: nextDedupeKey } : {}), done: recurringReminder ? false : !expectedDone,
+          completedAt: expectedDone || recurringReminder ? '' : now,
           completionHistory: expectedDone ? history : [...history, now] });
         return { ...data, payload: JSON.stringify(result), updatedAt: Date.now() };
       });
@@ -2514,8 +2563,8 @@ export async function recordRenewal(expectedAsset: Asset, nextAsset: Asset, hist
 export async function recordItemAction(expectedAsset: Asset, nextAsset: Asset, history: History) {
   return (await defaultRepository()).recordItemAction(expectedAsset, nextAsset, history);
 }
-export async function setTaskDone(id: string, expectedDone: boolean) {
-  return (await defaultRepository()).setTaskDone(id, expectedDone);
+export async function setTaskDone(id: string, expectedDone: boolean, expectedReminderAt?: string) {
+  return (await defaultRepository()).setTaskDone(id, expectedDone, expectedReminderAt);
 }
 export async function setItemArchived(id: string, expectedStatus: 'active' | 'archived') {
   return (await defaultRepository()).setItemArchived(id, expectedStatus);
