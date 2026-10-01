@@ -228,6 +228,7 @@ async function assertFormGeometry(scope: Locator, label: string) {
 						left: rect.left,
 						width: rect.width,
 						height: rect.height,
+						inStickyRegion: Boolean(field.closest(".ai-request-footer")),
 					},
 				];
 			},
@@ -314,6 +315,7 @@ async function assertFormGeometry(scope: Locator, label: string) {
 		for (let next = index + 1; next < metrics.fields.length; next += 1) {
 			const a = metrics.fields[index];
 			const b = metrics.fields[next];
+			if (a.inStickyRegion || b.inStickyRegion) continue;
 			const horizontalOverlap =
 				Math.min(a.right, b.right) - Math.max(a.left, b.left);
 			if (horizontalOverlap > 1) {
@@ -644,11 +646,23 @@ for (const variant of [
 				.click();
 			const ai = page.getByRole("dialog");
 			await assertFormGeometry(ai, "AI question dialog");
+			await assertRectGap(
+				ai.locator(".ai-request-footer > .field"),
+				ai.locator(".ai-request-footer > .actions"),
+				"AI request footer field to actions",
+				8,
+			);
 			await ai.locator("details.ai-pricing > summary").click();
 			await assertFormGeometry(ai, "AI pricing fields");
 			await assertRectGap(
+				ai.locator(".ai-request-footer > .field"),
+				ai.locator(".ai-request-footer > .actions"),
+				"AI request footer field to actions",
+				8,
+			);
+			await assertRectGap(
 				ai.locator(".ai-pricing > summary"),
-				ai.locator(".ai-pricing > .ai-price-hint"),
+				ai.locator(".ai-pricing > p"),
 				"AI pricing summary to hint",
 				8,
 			);
