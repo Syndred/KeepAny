@@ -324,6 +324,70 @@ describe("queries use local data and exact calculations", () => {
 	});
 });
 
+it("normalizes nullable query strings without accepting invalid search plans", () => {
+	const base = { scope: "assets", query: null, relatedQuery: null };
+	expect(searchPlanSchema.parse(base)).toMatchObject({
+		query: "",
+		relatedQuery: "",
+	});
+	for (const patch of [
+		{ query: 1 },
+		{ query: {} },
+		{ query: "x".repeat(161) },
+		{ relatedQuery: [] },
+		{ relatedQuery: "x".repeat(161) },
+		{ scope: null },
+		{ kind: "vault" },
+		{ dateFrom: "2026-02-30" },
+		{ aggregate: null },
+		{ unknown: null },
+	])
+		expect(searchPlanSchema.safeParse({ ...base, ...patch }).success).toBe(
+			false,
+		);
+});
+
+it("accepts DeepSeek's null subscription reminder queries as unresolved empty strings", () => {
+	const actualResponse = {
+		operation: "subscription",
+		name: "DS 验收订阅续费提醒",
+		taskQuery: null,
+		assetQuery: null,
+		localDate: null,
+		localTime: "09:00",
+		timeZone: "Asia/Shanghai",
+		leadMinutes: 0,
+		leadDays: 3,
+		rule: { mode: "once" },
+	};
+	expect(reminderPlanSchema.parse(actualResponse)).toEqual({
+		...actualResponse,
+		taskQuery: "",
+		assetQuery: "",
+	});
+	expect(reminderPlanSchema.parse({ ...actualResponse, name: null }).name).toBe(
+		"",
+	);
+	for (const patch of [
+		{ name: 1 },
+		{ name: "x".repeat(301) },
+		{ taskQuery: {} },
+		{ taskQuery: "x".repeat(301) },
+		{ assetQuery: [] },
+		{ assetQuery: "x".repeat(161) },
+		{ operation: null },
+		{ timeZone: null },
+		{ localDate: "2026-02-30" },
+		{ leadMinutes: null },
+		{ leadDays: "3" },
+		{ rule: { mode: "delete" } },
+		{ unknown: null },
+	])
+		expect(
+			reminderPlanSchema.safeParse({ ...actualResponse, ...patch }).success,
+		).toBe(false);
+});
+
 it("rejects edited invalid reminder zones, limits and unknown operations", () => {
 	const base = {
 		operation: "create",
