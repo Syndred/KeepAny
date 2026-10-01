@@ -171,6 +171,16 @@ const IMAGE_MEDIA_TYPES = new Set([
 	"image/heic",
 	"image/heif",
 ]);
+// The native SDK lists these V4 models and recognizes the unversioned Pro
+// alias. Keep legacy/custom model IDs on their existing server defaults.
+// https://api-docs.deepseek.com/guides/thinking_mode/
+const DEEPSEEK_JSON_NON_THINKING_MODELS = new Set([
+	"deepseek-flash",
+	"deepseek-pro",
+	"deepseek-v4-flash",
+	"deepseek-v4-pro",
+	"deepseek-v4-flash-vision-exp",
+]);
 
 function readUrl(value: string): URL {
 	let url: URL;
@@ -396,8 +406,10 @@ function normalizeUsage(value: unknown): number | null {
 
 /**
  * Generate one text response through the selected provider. The function only
- * requests text: no tools are registered or executed, and `json` only adds a
- * strict JSON instruction for the caller's own schema validation.
+ * requests text: no tools are registered or executed. JSON requests add a
+ * strict instruction for the caller's schema validation and disable thinking
+ * for known native DeepSeek V4 models so reasoning cannot consume the bounded
+ * output budget before a final JSON answer is returned.
  */
 export async function generateAiText(
 	inputConnection: AiConnection,
@@ -437,6 +449,12 @@ export async function generateAiText(
 			model: createLanguageModel(connection),
 			messages: [{ role: "user", content } as ModelMessage],
 			system: asPrompt(options.system, options.json === true),
+			providerOptions:
+				options.json === true &&
+				connection.provider === "deepseek" &&
+				DEEPSEEK_JSON_NON_THINKING_MODELS.has(connection.model)
+					? { deepseek: { thinking: { type: "disabled" } } }
+					: undefined,
 			maxOutputTokens,
 			maxRetries: 0,
 			abortSignal: combined.signal,

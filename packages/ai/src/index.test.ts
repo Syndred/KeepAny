@@ -165,6 +165,76 @@ describe("AI provider connection layer", () => {
 			contents: [{ role: "user", parts: [{ text: "hello" }] }],
 		});
 	});
+	it.each([
+		"deepseek-flash",
+		"deepseek-pro",
+		"deepseek-v4-flash",
+		"deepseek-v4-pro",
+		"deepseek-v4-flash-vision-exp",
+	])(
+		"disables native DeepSeek thinking for bounded JSON requests to %s",
+		async (model) => {
+			const requests: RecordedRequest[] = [];
+			mockFetch(openAiResponse(model), 200, requests);
+			await generateAiText(
+				connection("deepseek", "https://api.deepseek.test", model),
+				{
+					prompt: "Build a JSON reminder plan",
+					json: true,
+					maxOutputTokens: 1600,
+				},
+			);
+			expect(String(requests[0].input)).toBe(
+				"https://api.deepseek.test/chat/completions",
+			);
+			expect(bodyOf(requests[0])).toMatchObject({
+				model,
+				thinking: { type: "disabled" },
+				max_tokens: 1600,
+			});
+			expect(bodyOf(requests[0]).reasoning_effort).toBeUndefined();
+			expect(bodyOf(requests[0]).tools).toBeUndefined();
+		},
+	);
+
+	it("preserves native DeepSeek thinking defaults for ordinary questions", async () => {
+		const requests: RecordedRequest[] = [];
+		mockFetch(openAiResponse("deepseek-flash"), 200, requests);
+		await generateAiText(
+			connection("deepseek", "https://api.deepseek.test", "deepseek-flash"),
+			{ prompt: "Analyze the selected notes", maxOutputTokens: 1600 },
+		);
+		expect(bodyOf(requests[0]).thinking).toBeUndefined();
+		expect(bodyOf(requests[0]).reasoning_effort).toBeUndefined();
+		expect(bodyOf(requests[0]).max_tokens).toBe(1600);
+	});
+
+	it.each(["deepseek-chat", "deepseek-reasoner", "custom-deepseek-model"])(
+		"preserves native legacy or custom DeepSeek JSON defaults for %s",
+		async (model) => {
+			const requests: RecordedRequest[] = [];
+			mockFetch(openAiResponse(model), 200, requests);
+			await generateAiText(
+				connection("deepseek", "https://api.deepseek.test", model),
+				{ prompt: "Return JSON", json: true },
+			);
+			expect(bodyOf(requests[0]).thinking).toBeUndefined();
+		},
+	);
+
+	it.each(["openai", "compatible", "doubao", "ollama"] as const)(
+		"does not add DeepSeek thinking controls to the %s protocol",
+		async (provider) => {
+			const requests: RecordedRequest[] = [];
+			mockFetch(openAiResponse("deepseek-flash"), 200, requests);
+			await generateAiText(
+				connection(provider, "https://gateway.test/v1", "deepseek-flash"),
+				{ prompt: "Return JSON", json: true },
+			);
+			expect(bodyOf(requests[0]).thinking).toBeUndefined();
+			expect(bodyOf(requests[0]).reasoning_effort).toBeUndefined();
+		},
+	);
 
 	it("normalizes a full compatible chat/completions URL and applies request guards", async () => {
 		const requests: RecordedRequest[] = [];
