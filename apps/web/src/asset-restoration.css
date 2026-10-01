@@ -115,7 +115,6 @@
 .asset-list-content > .asset-account-card.list-row {
 	display: grid;
 	padding: 14px;
-	border-top-width: 5px;
 }
 .asset-list-content > .asset-library-card.list-row {
 	display: grid;
@@ -380,16 +379,6 @@
 	align-items: center;
 	min-height: 108px;
 	padding: 14px;
-	border-top: 5px solid #ffe38b;
-}
-.asset-account-email {
-	border-top-color: #ffe38b;
-}
-.asset-account-phone {
-	border-top-color: #a9dfca;
-}
-.asset-account-social {
-	border-top-color: #ffc2b6;
 }
 .asset-account-avatar {
 	display: grid;

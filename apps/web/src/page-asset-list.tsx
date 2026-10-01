@@ -420,9 +420,10 @@ function ProjectCard({ asset, search, backlinks }: { asset: Asset; search: strin
 
 function AccountCard({ asset, search, connectionCount }: { asset: Asset; search: string; connectionCount: number }) {
 	const { t } = useTranslation();
+	const categoryLabel = niceCategory(asset.category, t).trim();
 	const Icon = asset.category === "email" ? Mail : asset.category === "phone" ? Smartphone : UserRound;
 	return <Link className={`asset-account-card list-row asset-account-${asset.category}`} to="/assets/$kind/$id" params={{ kind: asset.kind, id: asset.id }} onClick={() => rememberAssetList(asset, search)}>
-		<span className="asset-account-avatar"><Icon size={20} /></span><span className="asset-account-summary"><strong>{asset.name}</strong><small>{asset.username || asset.contact || asset.description || niceCategory(asset.category, t)}</small><span className="asset-account-tags"><span className="chip">{niceCategory(asset.category, t)}</span><span className="chip">{connectionCount} {t("relations")}</span></span></span>
+		<span className="asset-account-avatar"><Icon size={20} /></span><span className="asset-account-summary"><strong>{asset.name}</strong><small>{asset.username || asset.contact || asset.description || categoryLabel}</small><span className="asset-account-tags">{categoryLabel && <span className="chip">{categoryLabel}</span>}<span className="chip">{connectionCount} {t("relations")}</span></span></span>
 	</Link>;
 }
 
