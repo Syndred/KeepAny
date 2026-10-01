@@ -326,8 +326,8 @@ export function AiSettingsPanel() {
 			};
 			const answer = await generateAiText(connection, {
 				system: "You are testing a model connection. Reply briefly.",
-				prompt: "Reply with OK.",
-				maxOutputTokens: 16,
+				prompt: "Reply only with OK, without an explanation.",
+				maxOutputTokens: 256,
 				signal: request.signal,
 			});
 			if (
