@@ -630,7 +630,7 @@ export function AiWorkspaceDialog({
 					}}
 				/>
 			</label>
-			<div className="actions">
+			<div className="actions ai-request-actions">
 				<Button
 					variant="primary"
 					onClick={() => void ask()}

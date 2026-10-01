@@ -305,7 +305,7 @@ p { line-height: 1.5; }
 .dialog form > * { margin-block: 0; }
 .dialog .actions { justify-content: flex-end; margin-top: 16px; }
 .dialog > .actions { margin-top: 0; }
-.dialog form > .actions { position: sticky; bottom: -18px; z-index: 1; margin-top: 0; margin-inline: -18px; padding: 12px 18px 8px; border-top: 1px solid var(--line-soft); background: var(--paper); }
+.dialog form > .actions, .dialog > .ai-request-actions { position: sticky; bottom: -18px; z-index: 1; margin-top: 0; margin-inline: -18px; padding: 12px 18px 8px; border-top: 1px solid var(--line-soft); background: var(--paper); }
 .toast { position: fixed; right: 16px; bottom: 16px; z-index: 50; max-width: min(400px, calc(100vw - 32px)); padding: 11px 14px; border: 2px solid var(--line); border-radius: 12px; background: var(--ink); box-shadow: var(--shadow); color: #fffdf6; font-size: 13px; line-height: 1.4; overflow-wrap: anywhere; }
 .mobile-nav { display: none; }
 .mobile-menu, .mobile-close, .mobile-scrim { display: none; }
@@ -467,7 +467,7 @@ p { line-height: 1.5; }
   .form-grid > .wide, .form-grid > [data-wide="true"] { grid-column: auto; }
   .field input, .field .themed-select-trigger, .field textarea, input.field, .themed-select-trigger.field, textarea.field, .top-search input, .list-filters .themed-select-trigger { font-size: 16px; }
   .dialog { padding: 14px; }
-  .dialog form > .actions { bottom: -14px; margin-inline: -14px; padding-inline: 14px; }
+  .dialog form > .actions, .dialog > .ai-request-actions { bottom: -14px; margin-inline: -14px; padding-inline: 14px; }
   .mcp-field-list, .mcp-active dl { grid-template-columns: 1fr; }
   .list-row { align-items: flex-start; flex-wrap: wrap; }
   .subscription-list-row > .row-main { flex: 1 1 calc(100% - 46px); }
