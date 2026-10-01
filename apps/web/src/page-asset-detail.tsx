@@ -4,6 +4,7 @@ import {
 	Background,
 	Controls,
 	MarkerType,
+	Position,
 	ReactFlow,
 	useNodesInitialized,
 	useUpdateNodeInternals,
@@ -493,6 +494,7 @@ export function AssetDetail() {
 			id: group[0].id,
 			source: group[0].from,
 			target: group[0].to,
+			type: "straight",
 			label,
 			className: verified ? "relation-graph-edge--verified" : "relation-graph-edge--pending",
 			ariaLabel: `${label} · ${t(verified ? "relationGraphVerified" : group.length > 1 ? "relationGraphMixed" : "relationGraphPending")}`,
@@ -1564,24 +1566,31 @@ export function AssetDetail() {
 							<section className="graph" aria-label={t("relations")}>
 								<ReactFlow
 									fitView
+									minZoom={0.1}
 									nodes={
 										[
 											{
 												id: asset.id,
-												position: { x: 180, y: 100 },
-												data: { label: asset.name },
+												position: { x: Math.max(0, visibleRelated.length - 1) * 90 - 15, y: 100 },
+												data: { label: <span className="asset-graph-label" title={asset.name}>{asset.name}</span> },
+												sourcePosition: Position.Bottom,
+												targetPosition: Position.Bottom,
 												type: "default",
 												className: "asset-graph-center",
+												ariaLabel: asset.name,
 											},
 											...visibleRelated.map((a, i) => ({
 												id: a.id,
 												position: {
-													x: 20 + (i % 3) * 180,
-													y: 240 + Math.floor(i / 3) * 110,
+													x: 20 + i * 180,
+													y: 240,
 												},
-												data: { label: a.name },
+												data: { label: <span className="asset-graph-label" title={a.name}>{a.name}</span> },
+												sourcePosition: Position.Top,
+												targetPosition: Position.Top,
 												type: "default",
 												className: "asset-graph-neighbor",
+												ariaLabel: a.name,
 											})),
 										] as Node[]
 									}

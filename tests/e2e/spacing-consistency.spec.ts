@@ -430,6 +430,7 @@ async function createAsset(
 		await dialog
 			.getByLabel(copy.provider, { exact: true })
 			.fill("Spacing test provider");
+	if (kind === "item") await dialog.locator("#location").fill("L".repeat(300));
 	if (kind === "subscription") {
 		if (!accountId) throw new Error("spacing-subscription-account-missing");
 		await selectChoice(
@@ -466,6 +467,21 @@ async function saveAndFindAsset(
 		.locator("main .asset-list-content a")
 		.filter({ hasText: name });
 	await expect(link).toHaveCount(1);
+	for (const title of await link.locator(".asset-editorial-copy strong, .asset-repository-cover strong").all()) {
+		expect(await title.evaluate(element => {
+			const titleRect = element.getBoundingClientRect();
+			const cover = element.closest(".asset-project-cover")!.getBoundingClientRect();
+			return titleRect.left >= cover.left && titleRect.right <= cover.right + 1 && titleRect.top >= cover.top && titleRect.bottom <= cover.bottom + 1;
+		}), "Long project titles remain inside the preview cover").toBe(true);
+	}
+	expect(await link.evaluate(element => element.scrollWidth <= element.clientWidth + 1), "Long asset names fit their cards").toBe(true);
+	for (const meta of await link.locator(".asset-library-meta span").all()) {
+		expect(await meta.evaluate(element => {
+			const rect = element.getBoundingClientRect();
+			const body = element.closest(".asset-library-body")!.getBoundingClientRect();
+			return rect.right <= body.right + 1 && element.scrollWidth <= element.clientWidth + 1;
+		}), "Long metadata stays inside its card and remains readable").toBe(true);
+	}
 	const href = await link.getAttribute("href");
 	const id = href?.split("/").at(-1);
 	if (!id) throw new Error(`spacing-asset-id-missing:${name}`);
@@ -724,10 +740,11 @@ for (const variant of variants) {
 		});
 		const page = await context.newPage();
 		try {
-			const projectName = `Spacing project ${variant.locale}-${variant.width}`;
-			const accountName = `Spacing account ${variant.locale}-${variant.width}`;
-			const itemName = `Spacing item ${variant.locale}-${variant.width}`;
-			const subscriptionName = `Spacing subscription ${variant.locale}-${variant.width}`;
+			const suffix = "L".repeat(110);
+			const projectName = `Spacing project ${variant.locale}-${variant.width} ${suffix}`;
+			const accountName = `Spacing account ${variant.locale}-${variant.width} ${suffix}`;
+			const itemName = `Spacing item ${variant.locale}-${variant.width} ${suffix}`;
+			const subscriptionName = `Spacing subscription ${variant.locale}-${variant.width} ${suffix}`;
 			const projectDialog = await createAsset(
 				page,
 				copy,
@@ -811,6 +828,16 @@ for (const variant of variants) {
 				.getByRole("button", { name: copy.save, exact: true })
 				.click();
 			await expect(relation).toBeHidden();
+			await page.getByRole("button", { name: copy.addConnection, exact: true }).click();
+			await selectChoice(relation.locator("#relation-target"), { value: subscriptionId });
+			await relation.locator("#relation-label").fill("Project subscription");
+			await relation.getByRole("button", { name: copy.save, exact: true }).click();
+			await expect(relation).toBeHidden();
+			const subscriptions = page.locator(".asset-project-linked-subscriptions");
+			await subscriptions.locator("summary").click();
+			const subscriptionRow = subscriptions.getByRole("link");
+			await expect(subscriptionRow).toContainText(subscriptionName);
+			expect(await subscriptionRow.evaluate(element => element.scrollWidth <= element.clientWidth + 1), "Linked subscription names wrap inside the detail card").toBe(true);
 			await assertNoHorizontalOverflow(page, "project relation detail");
 			await assertSiblingGaps(
 				page,

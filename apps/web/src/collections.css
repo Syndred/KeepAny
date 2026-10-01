@@ -23,7 +23,7 @@
 .collections-member-card { display: grid; min-width: 0; overflow: hidden; border: 2px solid var(--line); border-radius: 17px; background: var(--paper); box-shadow: var(--shadow); color: var(--ink); text-decoration: none; }
 .collections-member-card:hover { transform: translateY(-2px); box-shadow: 4px 6px 0 var(--line); }
 .collections-member-cover { display: grid; place-content: center; justify-items: center; gap: 8px; min-height: 150px; padding: 14px; border-bottom: 2px solid var(--line); background: var(--yellow-soft); }
-.collections-member-cover span { font-size: 12px; font-weight: 700; }
+.collections-member-cover span { max-width: 100%; font-size: 12px; font-weight: 700; overflow-wrap: anywhere; text-align: center; }
 .collections-member-project { background: var(--lavender); }
 .collections-member-account, .collections-member-vault { background: var(--blue-soft); }
 .collections-member-item { background: var(--green-soft); }

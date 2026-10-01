@@ -280,8 +280,8 @@ export function AppShell() {
 					</nav>
 					<div className="sidebar-custom">
 						<div className="sidebar-section-label">{t("collectionsTitle")}</div>
-						{collections.map((collection) => <Link key={collection.id} to="/collections/$id" params={{ id: collection.id }} className="sidebar-category sidebar-collection" aria-current={collectionDetailId === collection.id ? "page" : undefined} onClick={() => setMobile(false)}>{collection.name}</Link>)}
-						{customCategories.map((category) => <button type="button" key={category.id} className="sidebar-category" onClick={() => selectCategory(category.kind, category.name, category.id)}>{category.name}</button>)}
+						{collections.map((collection) => <Link key={collection.id} to="/collections/$id" params={{ id: collection.id }} className="sidebar-category sidebar-collection" aria-current={collectionDetailId === collection.id ? "page" : undefined} onClick={() => setMobile(false)} title={collection.name}><span>{collection.name}</span></Link>)}
+						{customCategories.map((category) => <button type="button" key={category.id} className="sidebar-category" onClick={() => selectCategory(category.kind, category.name, category.id)} title={category.name}><span>{category.name}</span></button>)}
 						<Link to="/collections" className="sidebar-customize" aria-current={/^\/collections\/?$/.test(pathname) ? "page" : undefined} onClick={() => setMobile(false)}><Plus size={15}/>{t("customizeSidebar")}</Link>
 					</div>
 					<div className="side-bottom">

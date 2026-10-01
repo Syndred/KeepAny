@@ -60,7 +60,7 @@ for (const zh of [true, false]) {
 			await selectChoice(page.getByRole("combobox", { name: "Language", exact: true }), zh ? "zh-CN" : "en");
 			await expect(page.locator('select:not([aria-hidden="true"])')).toHaveCount(0);
 
-			const account = zh ? "旅行与项目通知专用邮箱，保留很长的账号名称以检查窄屏排版" : "Travel and project notifications mailbox with a deliberately long account name";
+			const account = `${zh ? "旅行项目通知邮箱" : "Travel mailbox"} ${"L".repeat(110)}`;
 			await page.goto("/assets/account");
 			await page.getByRole("main").getByRole("button", { name: zh ? "新增" : "Add", exact: true }).click();
 			let dialog = page.getByRole("dialog");
@@ -90,6 +90,9 @@ for (const zh of [true, false]) {
 			await expect(dialog.locator(".themed-select-error")).toBeVisible();
 			await selectChoice(target, id);
 			await expect(target).toContainText(account);
+			const selectedValue = target.locator(".themed-select-value");
+			await expect(selectedValue).toHaveAttribute("title", `${account} · ${zh ? "账号" : "Accounts"}`);
+			expect(await target.evaluate(element => element.scrollWidth <= element.clientWidth + 1), "Continuous long values fit inside the picker").toBe(true);
 			await selectChoice(target, "");
 			await expect(target).toContainText(zh ? "选择资产" : "Select an asset");
 			await submit.click();

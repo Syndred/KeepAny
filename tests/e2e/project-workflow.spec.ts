@@ -3,19 +3,20 @@ import { selectChoice } from "./helpers/select-choice";
 
 const repositoryModuleUrl = `/@fs${process.cwd()}/packages/local-db/src/index.ts`;
 const domainModuleUrl = `/@fs${process.cwd()}/packages/domain/src/index.ts`;
+const longProjectName = `Atlas ${"L".repeat(154)}`;
 
 async function createFixture(page: Page) {
-  return page.evaluate(async ([domainUrl, repositoryUrl]) => {
+  return page.evaluate(async ([domainUrl, repositoryUrl, projectName]) => {
     const { newAsset } = await import(domainUrl);
     const { saveBatch } = await import(repositoryUrl);
-    const project = { ...newAsset('project'), name: 'Atlas Lab', description: 'Current product profile', url: 'https://atlas.example', projectDomains: [{ id: crypto.randomUUID(), name: 'atlas.example', registrar: 'Registry A', accountId: '', expiryDate: '2027-01-01', annualAmount: 12000, currency: 'CNY', autoRenew: 'on' }] };
+    const project = { ...newAsset('project'), name: projectName, description: 'Current product profile', url: 'https://atlas.example', projectDomains: [{ id: crypto.randomUUID(), name: 'atlas.example', registrar: 'Registry A', accountId: '', expiryDate: '2027-01-01', annualAmount: 12000, currency: 'CNY', autoRenew: 'on' }] };
     const account = { ...newAsset('account'), name: 'Atlas admin', username: 'admin@atlas.example' };
     const subscription = { ...newAsset('subscription'), name: 'Atlas hosting', amount: 9800, currency: 'CNY', dueDate: '2026-10-22' };
     const related = [account, subscription].map(asset => ({ id: crypto.randomUUID(), from: project.id, to: asset.id, label: 'managed by', createdAt: new Date().toISOString(), verifiedAt: '', deleted: false }));
     const submission = { id: crypto.randomUUID(), assetId: project.id, name: 'Atlas listing', url: 'https://directory.example/atlas', status: 'indexed', submittedAt: '', verifiedAt: '', evidence: '', deleted: false };
     await saveBatch([...([project, account, subscription].map(value => ({ type: 'asset' as const, value }))), ...related.map(value => ({ type: 'relation' as const, value })), { type: 'submission', value: submission }]);
     return project.id as string;
-  }, [domainModuleUrl, repositoryModuleUrl]);
+  }, [domainModuleUrl, repositoryModuleUrl, longProjectName]);
 }
 
 test('brand changes use one evidence-backed round and preserve its snapshot', async ({ page }) => {
@@ -24,6 +25,34 @@ test('brand changes use one evidence-backed round and preserve its snapshot', as
   const projectId = await createFixture(page);
   await page.goto(`/assets/project/${projectId}`);
   await page.getByRole('link', { name: 'Review profile changes' }).click();
+  await page.setViewportSize({ width: 390, height: 844 });
+  const heroName = page.locator('.project-workflow-hero > div').first().locator('p');
+  await expect(heroName).toHaveText(longProjectName);
+  const heroNameGeometry = await heroName.evaluate((element) => {
+    const hero = element.closest('.project-workflow-hero')?.getBoundingClientRect();
+    const rect = element.getBoundingClientRect();
+    return {
+      right: rect.right,
+      heroRight: hero?.right ?? 0,
+      scrollWidth: element.scrollWidth,
+      clientWidth: element.clientWidth,
+    };
+  });
+  expect(heroNameGeometry.right).toBeLessThanOrEqual(heroNameGeometry.heroRight + 1);
+  expect(heroNameGeometry.scrollWidth).toBeLessThanOrEqual(heroNameGeometry.clientWidth + 1);
+  await page.setViewportSize({ width: 1280, height: 844 });
+  const desktopHeroNameGeometry = await heroName.evaluate((element) => {
+    const hero = element.closest('.project-workflow-hero')?.getBoundingClientRect();
+    const rect = element.getBoundingClientRect();
+    return {
+      right: rect.right,
+      heroRight: hero?.right ?? 0,
+      scrollWidth: element.scrollWidth,
+      clientWidth: element.clientWidth,
+    };
+  });
+  expect(desktopHeroNameGeometry.right).toBeLessThanOrEqual(desktopHeroNameGeometry.heroRight + 1);
+  expect(desktopHeroNameGeometry.scrollWidth).toBeLessThanOrEqual(desktopHeroNameGeometry.clientWidth + 1);
   await expect(page.getByRole('heading', { name: 'Review profile change impact' })).toBeVisible();
   await expect(page.locator('.project-workflow-preview-row')).toHaveCount(5);
   await page.getByLabel('Proposed name').fill('Atlas Studio');

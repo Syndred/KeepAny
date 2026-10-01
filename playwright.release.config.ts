@@ -10,6 +10,7 @@ process.env.KEEPANY_EVIDENCE_DIR ??= "docs/evidence/2026-09-30/delivery";
 export default defineConfig({
 	testDir: "./tests/e2e",
 	testMatch: [
+		"core-pages-matrix.spec.ts",
 		"ai-release.spec.ts",
 		"ai-account-import-release.spec.ts",
 		"intake-bulk-account-links.spec.ts",

@@ -7,6 +7,7 @@ import { decryptBackup } from "../../packages/local-db/src/backup-crypto";
 const password = "category-fixed-package-backup-2026";
 test.use({ actionTimeout: 15_000 });
 type Kind = "project" | "account";
+const renamedCategory = (kind: Kind) => `Renamed ${kind} ${"L".repeat(44)}`;
 const copy = (zh: boolean) => zh ? {
 	add: "新增", name: "名称", save: "保存", newCategory: "新增分类", category: "分类", categoryName: "分类名称", categorySave: "保存分类", manage: "管理", backup: "创建备份", download: "保存备份文件", preview: "预览", confirm: /确认 ·/, restored: /已恢复 \d+ 条记录/,
 } : {
@@ -95,18 +96,24 @@ for (const locale of ["en-US", "zh-CN"]) {
 			expect(before.categories).toHaveLength(2);
 			for (const kind of ["project", "account"] as const) {
 				await page.goto(`/assets/${kind}`);
-				await rename(page, zh, `Renamed ${kind}`, `${kind} Second`, `${kind} First`);
+				await rename(page, zh, renamedCategory(kind), `${kind} Second`, `${kind} First`);
 				await page.locator("main .asset-list-content a").click();
-				await expect(page.getByRole("main").getByText(`Renamed ${kind}`, { exact: true }).first()).toBeVisible();
-				await sidebarCategory(page, `Renamed ${kind}`);
+				await expect(page.getByRole("main").getByText(renamedCategory(kind), { exact: true }).first()).toBeVisible();
+				const category = page.locator(".asset-detail .eyebrow");
+				expect(await category.evaluate(element => {
+					const rect = element.getBoundingClientRect();
+					const header = element.closest(".page-header")!.getBoundingClientRect();
+					return rect.right <= header.right + 1 && element.scrollWidth <= element.clientWidth + 1;
+				}), "Long custom categories wrap inside the detail header").toBe(true);
+				await sidebarCategory(page, renamedCategory(kind));
 				await expect(page.locator("main .asset-list-content a")).toHaveCount(1);
 			}
 			const after = await download(page, zh);
 			expect(after.categories).toHaveLength(2);
 			for (const kind of ["project", "account"] as const) {
-				expect(after.categories.find((category) => category.kind === kind)).toMatchObject({ id: before.categories.find((category) => category.kind === kind)?.id, name: `Renamed ${kind}`, deleted: false });
+				expect(after.categories.find((category) => category.kind === kind)).toMatchObject({ id: before.categories.find((category) => category.kind === kind)?.id, name: renamedCategory(kind), deleted: false });
 				expect(after.assets.find((asset) => asset.name === `${kind} First`)?.category).toBe("");
-				expect(after.assets.find((asset) => asset.name === `${kind} Second`)?.category).toBe(`Renamed ${kind}`);
+				expect(after.assets.find((asset) => asset.name === `${kind} Second`)?.category).toBe(renamedCategory(kind));
 			}
 			const destination = await browser.newContext({ locale, viewport: { width: 390, height: 844 }, acceptDownloads: true });
 			let destinationFailure: unknown;
@@ -123,7 +130,7 @@ for (const locale of ["en-US", "zh-CN"]) {
 				await expect(restored.getByText(text.restored)).toBeVisible();
 				for (const kind of ["project", "account"] as const) {
 					await restored.goto(`/assets/${kind}`);
-					await sidebarCategory(restored, `Renamed ${kind}`);
+					await sidebarCategory(restored, renamedCategory(kind));
 					await expect(restored.locator("main .asset-list-content a")).toHaveCount(1);
 					await expect(restored.locator("main .asset-list-content a")).toContainText(`${kind} Second`);
 					await rename(restored, zh, `Recovered ${kind}`, `${kind} First`, `${kind} Second`);

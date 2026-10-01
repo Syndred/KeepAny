@@ -387,10 +387,10 @@ export function ProjectPreview({ asset }: { asset: Asset }) {
 	const repository = asset.category === "repository";
 	const domain = assetDomain(asset.url);
 	const screenshotId = asset.projectMedia?.homeScreenshotId ?? "";
-	if (repository) return <div className="asset-repository-cover"><Code2 size={36} strokeWidth={1.8} /><strong>{asset.name}</strong><small>{domain || t("projectRepoCover")}</small></div>;
+	if (repository) return <div className="asset-repository-cover"><Code2 size={36} strokeWidth={1.8} /><strong title={asset.name}>{asset.name}</strong><small>{domain || t("projectRepoCover")}</small></div>;
 	return <div className={`asset-editorial-preview asset-editorial-${asset.category}`}>
 		<div className="asset-browser-bar"><span /><span /><span /><small>{domain || asset.name}</small></div>
-		<div className={`asset-browser-body${screenshotId ? " has-image" : ""}`}><AssetCover asset={asset} imageId={screenshotId} />{!screenshotId && <div className="asset-editorial-copy"><span className="asset-editorial-kicker">{domain || niceCategory(asset.category, t)}</span><strong>{asset.name}</strong>{asset.description && <p>{asset.description}</p>}</div>}</div>
+		<div className={`asset-browser-body${screenshotId ? " has-image" : ""}`}><AssetCover asset={asset} imageId={screenshotId} />{!screenshotId && <div className="asset-editorial-copy"><span className="asset-editorial-kicker">{domain || niceCategory(asset.category, t)}</span><strong title={asset.name}>{asset.name}</strong>{asset.description && <p>{asset.description}</p>}</div>}</div>
 	</div>;
 }
 

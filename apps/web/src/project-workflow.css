@@ -1,8 +1,9 @@
 .project-workflow-page { max-width: 1320px; }
 .project-workflow-page .back-link { display: inline-flex; margin-bottom: 14px; }
+.project-workflow-hero > div:first-child { min-width: 0; }
 .project-workflow-hero { display: flex; justify-content: space-between; align-items: end; gap: 20px; padding: 23px; border: 2px solid var(--line); border-radius: 18px; background: var(--yellow); box-shadow: 5px 6px 0 var(--line); }
 .project-workflow-hero h1, .project-workflow-hero h2 { margin: 7px 0; }
-.project-workflow-hero p { margin: 0; }
+.project-workflow-hero p { margin: 0; overflow-wrap: anywhere; }
 .project-workflow-steps { display: flex; flex-wrap: wrap; gap: 6px; }
 .project-workflow-steps span { padding: 7px 10px; border: 1px solid var(--line); border-radius: 20px; background: var(--paper); font-size: 12px; font-weight: 650; }
 .project-workflow-steps .current { background: var(--ink); color: var(--paper); }

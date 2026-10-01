@@ -122,6 +122,7 @@ button, a, input, .themed-select-trigger, textarea, summary { -webkit-tap-highli
 .page-header > * { min-width: 0; }
 .page-header h1, .page h1 { margin: 2px 0 5px; font-size: clamp(24px, 2.4vw, 34px); line-height: 1.2; font-weight: 850; letter-spacing: -.05em; overflow-wrap: anywhere; }
 .eyebrow { color: var(--green); font-size: 11px; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; }
+.asset-detail .eyebrow { overflow-wrap: anywhere; }
 .subtitle { max-width: 70ch; color: var(--muted); font-size: 13px; line-height: 1.5; overflow-wrap: anywhere; }
 h2, h3, p { margin-top: 0; }
 h2 { font-size: 17px; line-height: 1.35; letter-spacing: -.02em; }

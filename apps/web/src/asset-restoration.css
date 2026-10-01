@@ -236,12 +236,16 @@
 	white-space: nowrap;
 }
 .asset-editorial-copy strong {
+	display: -webkit-box;
 	font-family: Georgia, serif;
 	font-size: clamp(24px, 3vw, 37px);
 	font-weight: 800;
 	letter-spacing: -0.06em;
 	line-height: 1;
 	overflow-wrap: anywhere;
+	overflow: hidden;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 2;
 }
 .asset-editorial-copy p {
 	display: -webkit-box;
@@ -306,7 +310,13 @@
 	transform: rotate(25deg);
 }
 .asset-repository-cover strong {
+	display: -webkit-box;
+	min-width: 0;
+	max-width: 100%;
 	font-size: 15px;
+	overflow: hidden;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 3;
 }
 .asset-repository-cover small {
 	color: var(--muted);
@@ -447,8 +457,12 @@
 	object-fit: cover;
 }
 .asset-library-cover span {
+	min-width: 0;
+	max-width: 100%;
 	font-size: 11px;
 	font-weight: 800;
+	overflow-wrap: anywhere;
+	text-align: center;
 }
 .asset-library-body {
 	display: grid;
@@ -471,12 +485,15 @@
 	gap: 6px;
 }
 .asset-library-meta span {
+	min-width: 0;
+	max-width: 100%;
 	padding: 4px 8px;
 	border: 1px solid var(--line);
 	border-radius: 999px;
 	background: #fff0b8;
 	font-size: 10px;
 	font-weight: 750;
+	overflow-wrap: anywhere;
 }
 .asset-library-foot {
 	display: flex;
@@ -739,6 +756,7 @@
 .asset-project-linked-subscriptions summary { cursor: pointer; font-weight: 750; }
 .asset-project-linked-subscriptions a { display: flex; justify-content: space-between; gap: 12px; padding: 9px 0; border-top: 1px solid var(--line-soft); color: var(--ink); text-decoration: none; }
 .asset-project-linked-subscriptions a:first-of-type { margin-top: 10px; }
+.asset-project-linked-subscriptions strong, .asset-project-linked-subscriptions span { min-width: 0; overflow-wrap: anywhere; }
 .asset-project-linked-subscriptions span { color: var(--muted); font-size: 12px; }
 .asset-project-domain-form { display: grid; gap: 11px; }
 .asset-project-domain-form label { display: grid; gap: 5px; font-size: 12px; font-weight: 750; }
@@ -901,10 +919,18 @@
 	border-radius: 10px;
 	background: #fff4d8;
 }
-.asset-graph-center .react-flow__node-default {
-	background: #ffdd73;
+.asset-graph-label {
+	display: -webkit-box;
+	min-width: 0;
+	max-width: 100%;
+	overflow: hidden;
+	overflow-wrap: anywhere;
+	line-height: 1.4;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 3;
 }
 .graph .react-flow__node-default.asset-graph-center {
+	width: 220px;
 	background: #ffdd73;
 	font-weight: 800;
 	border: 2px solid var(--line);

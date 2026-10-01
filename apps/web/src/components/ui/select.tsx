@@ -203,12 +203,11 @@ export function Select({
 					disabled={disabled}
 					data-value={value}
 				>
-					<SelectPrimitive.Value
-						className="themed-select-value"
-						placeholder={triggerValue}
-					>
-						{triggerValue}
-					</SelectPrimitive.Value>
+					<span className="themed-select-value" title={textValue(triggerValue)}>
+						<SelectPrimitive.Value placeholder={triggerValue}>
+							{triggerValue}
+						</SelectPrimitive.Value>
+					</span>
 					<SelectPrimitive.Icon
 						className="themed-select-icon"
 						aria-hidden="true"

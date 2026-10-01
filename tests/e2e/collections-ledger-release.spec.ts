@@ -9,10 +9,11 @@ const password = "collection-user-flow-backup-2026";
 test.use({ actionTimeout: 15_000 });
 const kinds = ["project", "account", "subscription", "item", "vault"] as const;
 const names = Object.fromEntries(kinds.map((kind) => [kind, `Travel ${kind}`]));
+const longCategory = "C".repeat(60);
 const copyFor = (zh: boolean) => zh ? {
-	add: "新增", name: "名称", save: "保存", create: "新建分类", edit: "编辑分类", collectionName: "分类名称", collectionSave: "保存分类", another: "新建另一个", cancel: "取消", move: "移至回收站", restore: "恢复", statusChange: "记录状态变更", statusSave: "保存状态", idle: "闲置", backup: "创建备份", download: "保存备份文件", preview: "预览", confirm: /确认 ·/, restored: /已恢复 \d+ 条记录/, sidebar: "侧边栏入口", hideVault: "显示侧栏入口: 密码库", moveItem: "上移 实物", item: "实物", subscription: "订阅", duplicate: "已存在",
+	add: "新增", name: "名称", save: "保存", create: "新建分类", newCategory: "新增分类", edit: "编辑分类", collectionName: "分类名称", collectionSave: "保存分类", another: "新建另一个", cancel: "取消", move: "移至回收站", restore: "恢复", statusChange: "记录状态变更", statusSave: "保存状态", idle: "闲置", backup: "创建备份", download: "保存备份文件", preview: "预览", confirm: /确认 ·/, restored: /已恢复 \d+ 条记录/, sidebar: "侧边栏入口", hideVault: "显示侧栏入口: 密码库", moveItem: "上移 实物", item: "实物", subscription: "订阅", duplicate: "已存在",
 } : {
-	add: "Add", name: "Name", save: "Save", create: "New collection", edit: "Edit collection", collectionName: "Collection name", collectionSave: "Save collection", another: "Create another", cancel: "Cancel", move: "Move to trash", restore: "Restore", statusChange: "Record status change", statusSave: "Save status", idle: "Idle", backup: "Create backup", download: "Save backup file", preview: "Preview", confirm: /Confirm ·/, restored: /Restored \d+ records/, sidebar: "Sidebar sections", hideVault: "Show sidebar item: Password vault", moveItem: "Move up Items", item: "Items", subscription: "Subscriptions", duplicate: "already exists",
+	add: "Add", name: "Name", save: "Save", create: "New collection", newCategory: "New category", edit: "Edit collection", collectionName: "Collection name", collectionSave: "Save collection", another: "Create another", cancel: "Cancel", move: "Move to trash", restore: "Restore", statusChange: "Record status change", statusSave: "Save status", idle: "Idle", backup: "Create backup", download: "Save backup file", preview: "Preview", confirm: /Confirm ·/, restored: /Restored \d+ records/, sidebar: "Sidebar sections", hideVault: "Show sidebar item: Password vault", moveItem: "Move up Items", item: "Items", subscription: "Subscriptions", duplicate: "already exists",
 };
 type Copy = ReturnType<typeof copyFor>;
 type SavedCollection = { id: string; name: string; assetIds: string[] };
@@ -45,6 +46,20 @@ async function assertCards(page: Page, name: string, count: number, copy: Copy, 
 	await expect(cards).toHaveCount(count);
 	const item = cards.filter({ hasText: names.item });
 	await expect(item).toContainText(copy.idle);
+	const categoryLabel = item.locator(".collections-member-cover span");
+	await expect(categoryLabel).toHaveText(longCategory);
+	const labelGeometry = await categoryLabel.evaluate((element) => {
+		const cover = element.parentElement?.getBoundingClientRect();
+		const label = element.getBoundingClientRect();
+		return {
+			labelRight: label.right,
+			coverRight: cover?.right ?? 0,
+			scrollWidth: element.scrollWidth,
+			clientWidth: element.clientWidth,
+		};
+	});
+	expect(labelGeometry.labelRight).toBeLessThanOrEqual(labelGeometry.coverRight + 1);
+	expect(labelGeometry.scrollWidth).toBeLessThanOrEqual(labelGeometry.clientWidth + 1);
 	const geometry = await cards.evaluateAll((elements) => elements.map((element) => {
 		const rect = element.getBoundingClientRect();
 		return { x: rect.x, y: rect.y, width: rect.width, height: rect.height };
@@ -54,6 +69,45 @@ async function assertCards(page: Page, name: string, count: number, copy: Copy, 
 		expect(geometry[index].y).toBeGreaterThanOrEqual(geometry[index - 1].y + geometry[index - 1].height + 8);
 	}
 	expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
+}
+
+async function assertSidebarCategory(page: Page, width: number) {
+	const sidebar = page.locator(".sidebar");
+	if (width <= 760) {
+		await page.locator(".mobile-menu").click();
+		await expect(sidebar).toHaveClass(/open/);
+	}
+	const category = sidebar.locator(".sidebar-category").filter({ hasText: longCategory });
+	await expect(category).toHaveCount(1);
+	await expect(category).toHaveText(longCategory);
+	await expect(category).toHaveAttribute("title", longCategory);
+	const categoryLabel = category.locator(":scope > span");
+	await expect(categoryLabel).toHaveText(longCategory);
+	const categoryGeometry = await category.evaluate((element) => {
+		const sidebarRect = element.closest(".sidebar")?.getBoundingClientRect();
+		const label = element.querySelector(":scope > span");
+		const rect = element.getBoundingClientRect();
+		const labelRect = label?.getBoundingClientRect();
+		const style = label ? getComputedStyle(label) : null;
+		return {
+			right: rect.right,
+			sidebarRight: sidebarRect?.right ?? 0,
+			labelRight: labelRect?.right ?? 0,
+			scrollWidth: label?.scrollWidth ?? 0,
+			clientWidth: label?.clientWidth ?? 0,
+			overflow: style?.overflow ?? "",
+			textOverflow: style?.textOverflow ?? "",
+			whiteSpace: style?.whiteSpace ?? "",
+		};
+	});
+	expect(categoryGeometry.right).toBeLessThanOrEqual(categoryGeometry.sidebarRight + 1);
+	expect(categoryGeometry.labelRight).toBeLessThanOrEqual(categoryGeometry.right + 1);
+	expect(categoryGeometry.scrollWidth).toBeGreaterThan(categoryGeometry.clientWidth);
+	expect(categoryGeometry.overflow).toBe("hidden");
+	expect(categoryGeometry.textOverflow).toBe("ellipsis");
+	expect(categoryGeometry.whiteSpace).toBe("nowrap");
+	expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
+	if (width <= 760) await sidebar.locator(".mobile-close").click();
 }
 
 for (const variant of [{ locale: "zh-CN", width: 390 }, { locale: "en-US", width: 1280 }] as const) {
@@ -74,6 +128,13 @@ for (const variant of [{ locale: "zh-CN", width: 390 }, { locale: "en-US", width
 				await expect(form).toBeHidden();
 			}
 			await page.goto("/assets/item");
+			await page.getByRole("button", { name: copy.newCategory, exact: true }).click();
+			const categoryEditor = page.locator(".asset-category-inline");
+			await expect(categoryEditor).toBeVisible();
+			await categoryEditor.locator("#category-name").fill(longCategory);
+			await categoryEditor.locator(".asset-category-member-list label").filter({ hasText: names.item }).locator("input[type=checkbox]").check();
+			await categoryEditor.getByRole("button", { name: copy.collectionSave, exact: true }).click();
+			await expect(categoryEditor).toHaveCount(0);
 			await page.locator("main .asset-list-content a").filter({ hasText: names.item }).click();
 			const itemHref = new URL(page.url()).pathname;
 			await page.getByRole("button", { name: copy.statusChange, exact: true }).click();
@@ -83,6 +144,7 @@ for (const variant of [{ locale: "zh-CN", width: 390 }, { locale: "en-US", width
 			await status.getByRole("button", { name: copy.statusSave, exact: true }).click();
 			await expect(status).toBeHidden();
 			await page.goto("/collections");
+			await assertSidebarCategory(page, variant.width);
 			const sections = page.getByRole("region", { name: copy.sidebar, exact: true });
 			await sections.getByRole("button", { name: copy.moveItem, exact: true }).click();
 			await sections.getByRole("checkbox", { name: copy.hideVault, exact: true }).uncheck();
@@ -93,6 +155,7 @@ for (const variant of [{ locale: "zh-CN", width: 390 }, { locale: "en-US", width
 			await expect(page).toHaveURL(/\/collections\/[0-9a-f-]+$/);
 			const collectionHref = new URL(page.url()).pathname;
 			await page.reload();
+			await assertSidebarCategory(page, variant.width);
 			await assertCards(page, "Travel cabinet", 5, copy, variant.width);
 			await page.locator(".collections-member-card").filter({ hasText: names.item }).click();
 			await expect(page).toHaveURL(new RegExp(`${itemHref}$`));
@@ -142,9 +205,11 @@ for (const variant of [{ locale: "zh-CN", width: 390 }, { locale: "en-US", width
 				await restored.getByRole("button", { name: copy.confirm }).click();
 				await expect(restored.getByText(copy.restored)).toBeVisible();
 				await restored.goto(collectionHref);
+				await assertSidebarCategory(restored, variant.width);
 				await assertCards(restored, "Travel cabinet v2", 4, copy, variant.width);
 				await restored.screenshot({ path: test.info().outputPath(`collection-five-types-${variant.locale}-${variant.width}.png`), fullPage: true });
 				await restored.goto("/collections");
+				await assertSidebarCategory(restored, variant.width);
 				const restoredSections = restored.getByRole("region", { name: copy.sidebar, exact: true });
 				await expect(restoredSections.getByRole("checkbox", { name: copy.hideVault, exact: true })).not.toBeChecked();
 				const sectionOrder = await restoredSections.locator(".sortable-nav-link").allTextContents();
