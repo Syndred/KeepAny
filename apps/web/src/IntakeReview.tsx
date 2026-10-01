@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { assetSchema, duplicates, formatMinorUnits, historySchema, parseMinorUnits, type Asset } from "../../../packages/domain/src";
+import { assetSchema, duplicates, formatMinorUnits, inputFromMinorUnits, historySchema, parseMinorUnits, type Asset } from "../../../packages/domain/src";
 import { allRecords, localRepository, saveBatch } from "../../../packages/local-db/src";
 import { Button } from "./components/ui/button";
 import { FinanceEntryFields, type FinanceEntryDraft } from "./components/FinanceEntryFields";
@@ -32,6 +32,8 @@ export function IntakeReview() {
 	const [message, setMessage] = useState("");
 	const [messageId, setMessageId] = useState("");
 	const [workingId, setWorkingId] = useState("");
+	const [intervalDrafts, setIntervalDrafts] = useState<Record<string, string>>({});
+	const [amountDrafts, setAmountDrafts] = useState<Record<string, string>>({});
 	const [savingIds, setSavingIds] = useState(new Set<string>());
 	const [expenseRecoveryPending, setExpenseRecoveryPending] = useState(false);
 	const [expenseRecoveryBusy, setExpenseRecoveryBusy] = useState(false);
@@ -145,11 +147,15 @@ export function IntakeReview() {
 		return row?.status === "pending" ? row : undefined;
 	}
 
-	function edit(id: string, field: "name" | "url" | "description", value: string) {
+	function edit(id: string, field: "name" | "url" | "description" | "category" | "dueDate" | "cycle" | "currency" | "amount" | "interval" | "tags", value: string) {
 		const row = editableRow(id);
 		if (!row) return;
-		const asset = { ...row.asset, [field]: value };
-		queueEdit(id, { ...row, asset }, () => editReviewedCandidate(id, asset));
+		const asset = { ...row.asset, [field]: field === "amount" ? parseMinorUnits(value, row.asset.currency) : field === "interval" ? Number(value) : field === "tags" ? value.split(/[,，]/).map(tag => tag.trim()).filter(Boolean) : value } as Asset;
+		if (field === "currency") asset.amount = parseMinorUnits(inputFromMinorUnits(row.asset.amount, row.asset.currency), value as Asset["currency"]);
+		if (field === "interval" && (!Number.isInteger(asset.interval) || asset.interval < 1 || asset.interval > 100)) return;
+		if (!Number.isSafeInteger(asset.amount) || asset.amount < 0) { setMessageId(id); setMessage(t("financeInvalidAmount")); return; }
+		const ai = row.ai ? { ...row.ai, missingFields: row.ai.missingFields.filter(item => item !== field) } : undefined;
+		queueEdit(id, { ...row, asset, ...(ai ? { ai } : {}) }, () => editReviewedCandidate(id, asset, undefined, field));
 	}
 
 	function selectType(id: string, value: string) {
@@ -197,7 +203,12 @@ export function IntakeReview() {
 				await refresh();
 				return;
 			}
+			if (row.source === "ai" && row.asset.kind === "subscription" && row.ai?.missingFields.some(field => ["amount", "currency", "cycle"].includes(field))) {
+				setMessage(t("aiMissingFields", { fields: row.ai.missingFields.filter(field => ["amount", "currency", "cycle"].includes(field)).map(field => t(field)).join(" · ") })); return;
+			}
 			if (row.source === "pdf" && !row.kindSelected) { setMessage(t("reviewSelectKind")); return; }
+			if (amountDrafts[id] !== undefined && (!amountDrafts[id].trim() || !Number.isSafeInteger(parseMinorUnits(amountDrafts[id], row.asset.currency)))) { setMessage(t("financeInvalidAmount")); return; }
+			if (intervalDrafts[id] !== undefined && (!intervalDrafts[id].trim() || !Number.isInteger(Number(intervalDrafts[id])) || Number(intervalDrafts[id]) < 1 || Number(intervalDrafts[id]) > 100)) { setMessage(t("reviewInvalidCandidate")); return; }
 			const candidate = assetSchema.safeParse({ ...row.asset, name: row.asset.name.trim(), updatedAt: new Date().toISOString() });
 			if (!candidate.success) { setMessage(t("reviewInvalidCandidate")); return; }
 			const repository = await localRepository();
@@ -243,9 +254,10 @@ export function IntakeReview() {
 				const currentAsset = row.status === "accepted" ? assetsById.get(row.asset.id) : undefined;
 				const savedAsset = currentAsset && !currentAsset.deleted ? currentAsset : undefined;
 				return <div className="intake-review-row" key={row.id} id={`intake-review-${row.id}`} tabIndex={-1}>
-				<div className="intake-review-source"><strong>{row.fileName}</strong><small>{row.source === "pdf" ? t("reviewPdfDocument") : t("reviewRowNumber", { number: row.rowNumber })}</small>
+				<div className="intake-review-source"><strong>{row.fileName}</strong><small>{row.source === "pdf" ? t("reviewPdfDocument") : row.source === "ai" ? t("aiImportSource", { number: row.rowNumber }) : t("reviewRowNumber", { number: row.rowNumber })}</small>
 					<span className={`chip ${row.status === "pending" ? "warn" : ""}`}>{t(`reviewStatus${row.status[0].toUpperCase()}${row.status.slice(1)}`)}</span></div>
 				{row.sourceText && <details><summary>{t("reviewPdfOriginal")}</summary><pre className="intake-pdf-text">{row.sourceText}</pre></details>}
+				{row.ai && <div className="notice ai-source-evidence"><small>{row.ai.provider} · {row.ai.model}</small><p><strong>{t("aiSourceEvidence")}</strong>: {row.ai.evidence}</p>{row.ai.missingFields.length > 0 && <p>{t("aiMissingFields", { fields: row.ai.missingFields.map(field => t(field)).join(" · ") })}</p>}{row.ai.relatedName && <p>{t("aiRelatedSuggestion", { name: row.ai.relatedName })}</p>}</div>}
 				{row.status === "accepted" && row.reviewMode === "expense" && row.expenseDraft && <div className="intake-expense-receipt">
 					<strong>{row.expenseDraft.title}</strong>
 					<span>{formatMinorUnits(parseMinorUnits(row.expenseDraft.amount, row.expenseDraft.currency), row.expenseDraft.currency, i18n.language)} · {date(row.expenseDraft.eventDate, i18n.language)}</span>
@@ -271,6 +283,12 @@ export function IntakeReview() {
 						<div className="field"><label htmlFor={`${row.id}-name`}>{t("name")}</label><input id={`${row.id}-name`} value={row.asset.name} disabled={disabled} onChange={(event) => edit(row.id, "name", event.target.value)} /></div>
 						<div className="field"><label htmlFor={`${row.id}-url`}>{t("url")}</label><input id={`${row.id}-url`} value={row.asset.url} disabled={disabled} onChange={(event) => edit(row.id, "url", event.target.value)} /></div>
 						<div className="field"><label htmlFor={`${row.id}-description`}>{t("description")}</label><textarea rows={row.source === "pdf" ? 6 : 2} id={`${row.id}-description`} value={row.asset.description} disabled={disabled} onChange={(event) => edit(row.id, "description", event.target.value)} /></div>
+						{row.source === "ai" && <div className="form-grid">
+                            <label className="field" htmlFor={`${row.id}-tags`}><span>{t("tags")}</span><input id={`${row.id}-tags`} defaultValue={row.asset.tags.join(", ")} disabled={disabled} onBlur={event => edit(row.id, "tags", event.target.value)} /></label>
+							<label className="field" htmlFor={`${row.id}-category`}><span>{t("category")}</span><input id={`${row.id}-category`} value={row.asset.category} disabled={disabled} onChange={event => edit(row.id, "category", event.target.value)} /></label>
+							{(row.asset.kind === "subscription" || row.asset.kind === "item") && <><label className="field" htmlFor={`${row.id}-currency`}><span>{t("currency")}</span><Select id={`${row.id}-currency`} value={row.ai?.missingFields.includes("currency") ? "" : row.asset.currency} disabled={disabled} onValueChange={value => edit(row.id, "currency", value)}><SelectOption value="" disabled>{t("aiChooseField")}</SelectOption>{["CNY", "USD", "EUR", "GBP", "JPY"].map(value => <SelectOption key={value} value={value}>{value}</SelectOption>)}</Select></label><label className="field" htmlFor={`${row.id}-amount`}><span>{t("amount")}</span><input id={`${row.id}-amount`} inputMode="decimal" value={amountDrafts[row.id] ?? (row.ai?.missingFields.includes("amount") ? "" : inputFromMinorUnits(row.asset.amount, row.asset.currency))} disabled={disabled} onChange={event => { setAmountDrafts(current => ({ ...current, [row.id]: event.target.value })); if (event.target.value.trim()) edit(row.id, "amount", event.target.value); }} /></label></>}
+							{row.asset.kind === "subscription" && <><label className="field" htmlFor={`${row.id}-dueDate`}><span>{t("dueDate")}</span><input id={`${row.id}-dueDate`} type="date" value={row.asset.dueDate} disabled={disabled} onChange={event => edit(row.id, "dueDate", event.target.value)} /></label><label className="field" htmlFor={`${row.id}-cycle`}><span>{t("cycle")}</span><Select id={`${row.id}-cycle`} value={row.ai?.missingFields.includes("cycle") ? "" : row.asset.cycle} disabled={disabled} onValueChange={value => edit(row.id, "cycle", value)}><SelectOption value="" disabled>{t("aiChooseField")}</SelectOption>{["month", "year", "week", "day"].map(value => <SelectOption key={value} value={value}>{t(value)}</SelectOption>)}</Select></label><label className="field" htmlFor={`${row.id}-interval`}><span>{t("interval")}</span><input id={`${row.id}-interval`} type="number" min={1} max={100} value={intervalDrafts[row.id] ?? String(row.asset.interval)} disabled={disabled} onChange={event => { setIntervalDrafts(current => ({ ...current, [row.id]: event.target.value })); edit(row.id, "interval", event.target.value); }} /></label></>}
+						</div>}
 					</>}
 					{message && messageId === row.id && <p role="alert" className="field-error">{message}</p>}
 					{savingIds.has(row.id) && <small role="status">{t("reviewSaving")}</small>}

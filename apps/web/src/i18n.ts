@@ -1,6 +1,9 @@
 import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
 import { passwordVaultCopy } from "./password-vault-copy";
+import { aiCopy } from "./ai-copy";
+import { aiWorkflowCopy } from "./ai-workflow-copy";
+import { reminderCopy } from "./reminder-copy";
 
 const copy: Record<string, [string, string]> = {
 	overview: ["概览", "Overview"],
@@ -1375,7 +1378,7 @@ Object.assign(copy, {
 	navDropped: ["已放下 {{name}}", "Dropped {{name}}"],
 	navCancelled: ["已取消排序", "Sorting cancelled"],
 });
-Object.assign(copy, passwordVaultCopy);
+Object.assign(copy, passwordVaultCopy, aiCopy, aiWorkflowCopy, reminderCopy);
 export const resources = {
 	en: {
 		translation: Object.fromEntries(

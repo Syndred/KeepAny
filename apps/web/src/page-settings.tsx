@@ -10,6 +10,8 @@ import { BindingPanel } from "./components/BindingPanel";
 import { ArchiveMigrationPanel } from "./components/ArchiveMigrationPanel";
 import { WorkspaceKeyPanel } from "./components/WorkspaceKeyPanel";
 import { McpPanel } from "./components/McpPanel";
+import { AiSettingsPanel } from "./components/AiSettingsPanel";
+import { ReminderSettingsPanel } from "./components/ReminderSettingsPanel";
 import { Button } from "./components/ui/button";
 import { seed } from "./data";
 import { COLLECTIONS_PREFERENCE_ID } from "./collection-model";
@@ -471,10 +473,12 @@ export function SettingsPage() {
 					)}
 				</section>
 			</div>
+			<ReminderSettingsPanel />
 			<details id="assistant" className="settings-section" open={assistantOpen} onToggle={event => setAssistantOpen(event.currentTarget.open)}>
 				<summary><span><strong>{t("settingsAssistantAccess")}</strong><small>{t("settingsAssistantHint")}</small></span></summary>
 				<div className="settings-section-body">
 					<div className="actions"><Button onClick={() => window.dispatchEvent(new Event("keepany-open-ai-dialog"))}>{t("settingsAskAssistant")}</Button></div>
+					<AiSettingsPanel />
 					<McpPanel />
 				</div>
 			</details>

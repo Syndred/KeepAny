@@ -89,10 +89,19 @@ export function buildAiCandidates(
 				? parseMinorUnits(record.amount, record.currency)
 				: 0;
 		if (!Number.isSafeInteger(amount) || amount < 0) throw Error("ai-invalid");
-		const missing = new Set(record.missingFields);
+		const relevant =
+			record.kind === "subscription"
+				? ["amount", "currency", "cycle", "dueDate"]
+				: record.kind === "item"
+					? ["amount", "currency"]
+					: [];
+		const missing = new Set(
+			record.missingFields.filter((field) => relevant.includes(field)),
+		);
 		if (record.amount !== null && !record.currency) missing.add("amount");
 		for (const field of ["amount", "currency", "cycle", "dueDate"] as const)
-			if (record[field] === null) missing.add(field);
+			if (relevant.includes(field) && record[field] === null)
+				missing.add(field);
 		const rowNumber = index + 1;
 		const asset = assetSchema.parse({
 			...newAsset(record.kind),

@@ -29,6 +29,7 @@ import { PasswordVaultProvider } from "./components/PasswordVaultProvider";
 import { buildGlobalSearchIndex, searchGlobalIndex, type GlobalSearchLabels } from "./global-search";
 import { requestSearchLocation } from "./search-location";
 import "./shell-restoration.css";
+import { ReminderRuntime } from "./ReminderRuntime";
 const AiDialog = lazy(() =>
 	import("./workflows").then((module) => ({ default: module.AiDialog })),
 );
@@ -360,6 +361,7 @@ export function AppShell() {
 					{toast}
 				</div>
 			)}
+			<ReminderRuntime />
 			{ai && (
 				<Suspense
 					fallback={
