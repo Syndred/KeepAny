@@ -32,7 +32,7 @@ const dueDate = zonedParts(reminder.at, reminder.timeZone).date;
 
 `Task.reminder = { at, timeZone, leadMinutes, rule, anchorAt, occurrence }`。`createTaskReminder` 补齐初始 anchor/occurrence。`taskSchema` 限制提醒仅与普通任务结合，不能混入维护、外链影响或项目工作流任务。
 
-普通任务日期编辑可用 `rescheduleTaskReminder(reminder, newDueDate)` 保留时区、当地时间、提前分钟和重复规则，并从新日期开始重复。实物维护计划的原始固定锚点规则不变。`setTaskDone(id, expectedDone, task.reminder?.at)` 的第三参数必须传当前提醒时刻，以免旧标签的按钮重复完成下一期。
+普通任务日期编辑可用 `rescheduleTaskReminder(reminder, newDueDate)` 保留时区、当地时间、提前分钟和重复规则，并从新日期开始重复。实物维护计划的原始固定锚点规则不变。`setTaskDone(id, expectedDone, task.reminder?.at, task)` 的第三参数必须传当前提醒时刻，以免旧标签的按钮重复完成下一期；第四可选完整确认快照在仓库 gate 内和 RxDB CAS callback 中校验，AI 确认操作应传第四参数，避免先查再写的并发窗口。旧普通任务调用仍兼容。
 
 5. AI 单订阅提醒结果用户确认后调用：
 
@@ -63,6 +63,7 @@ await configureSubscriptionReminder(asset.id, {
 - MockNotification 纵切：真实 `new MockNotification` 发生在到期任务经仓库源／设置核对与回执后；两个仓库客户端竞争，通知构造仅一次。该证据是软件模拟，不能代替实际 OS 通知或真实浏览器跨标签回读。
 - `node_modules/.bin/vitest run packages/local-db/src/index.test.ts -t 'task|completion|maintenance'`：现有受影响任务路径 3／3 通过，42 项因筛选未运行。
 - 8 个新增 TS／TSX 文件 Biome lint 无诊断，`git diff --check` 通过。
+- 后续接线：`TaskRow.tsx` 完成传当前提醒时刻，延期保留精确提醒配置，“延期一天”按提醒时区计算日期；清空日期同时移除精确提醒。后续完整快照 CAS 定向 `task-reminder.test.ts + reminder-delivery.test.ts` 为 2 文件 11／11，通过变更后的确认快照拒绝与正确新快照完成／重开，TaskRow／新增仓库测试 lint 无诊断。
 - 全仓类型检查尚待并行整合：先前缺 `packages/ai/src`，最新被其他代理正在修改的 `IntakeReview.tsx` JSX 语法错误阻断；提醒自有文件未报告类型错误。主代理修复整合后必须重新 typecheck／构建。
 
 ## 未完成、边界与下步
@@ -75,4 +76,4 @@ await configureSubscriptionReminder(asset.id, {
 
 ## 提交与部署状态
 
-源码按领域／仓库与界面／调度两个可回滚范围提交：`d8cc996`（Task 字段、时区／重复、仓库原子投递）和 `e956581`（应用内卡片、系统通知、单订阅设置）。本交接另作中文文档提交。当前分工不推送、不构建固定包、不部署。
+源码按领域／仓库与界面／调度两个可回滚范围提交：`d8cc996`（Task 字段、时区／重复、仓库原子投递）和 `e956581`（应用内卡片、系统通知、单订阅设置）。初始交接 `387ead8`；后续接线 `0304b00`（TaskRow 完成与延期）、`b2099e0`（完整确认快照 CAS 与定向测试）。本次分工不推送、不构建固定包、不部署。
