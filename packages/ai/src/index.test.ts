@@ -1,0 +1,292 @@
+import { afterEach, describe, expect, it, vi } from "vitest";
+import {
+	AI_MAX_IMAGE_DATA_LENGTH,
+	AiClientError,
+	type AiConnection,
+	aiProviderIds,
+	generateAiText,
+	providerPresets,
+} from "./index";
+
+type RecordedRequest = {
+	input: RequestInfo | URL;
+	init?: RequestInit;
+};
+
+const openAiResponse = (model = "test-model") => ({
+	id: "chatcmpl-test",
+	object: "chat.completion",
+	created: 0,
+	model,
+	choices: [
+		{
+			index: 0,
+			message: { role: "assistant", content: "ok" },
+			finish_reason: "stop",
+		},
+	],
+	usage: { prompt_tokens: 3, completion_tokens: 4, total_tokens: 7 },
+});
+
+function mockFetch(
+	response: unknown,
+	status = 200,
+	requests: RecordedRequest[] = [],
+) {
+	const fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+		requests.push({ input, init });
+		return new Response(JSON.stringify(response), {
+			status,
+			headers: { "content-type": "application/json" },
+		});
+	});
+	vi.stubGlobal("fetch", fetch);
+	return fetch;
+}
+
+function connection(
+	provider: AiConnection["provider"],
+	baseURL: string,
+	model = "test-model",
+): AiConnection {
+	return { provider, baseURL, model, apiKey: "test-key" };
+}
+
+function bodyOf(request: RecordedRequest): Record<string, unknown> {
+	return JSON.parse(String(request.init?.body)) as Record<string, unknown>;
+}
+
+afterEach(() => {
+	vi.unstubAllGlobals();
+	vi.restoreAllMocks();
+});
+
+describe("AI provider connection layer", () => {
+	it("exposes editable presets for every supported provider", () => {
+		expect(Object.keys(providerPresets).sort()).toEqual(
+			[...aiProviderIds].sort(),
+		);
+		for (const id of aiProviderIds) {
+			expect(providerPresets[id].baseURL).toMatch(
+				/^(https:\/\/|http:\/\/127\.0\.0\.1)/,
+			);
+			expect(providerPresets[id].model).toBeTruthy();
+		}
+		expect(providerPresets.ollama.baseURL).toMatch(/^http:\/\/127\.0\.0\.1/);
+	});
+
+	it("uses the native OpenAI Chat Completions protocol", async () => {
+		const requests: RecordedRequest[] = [];
+		mockFetch(openAiResponse("gpt-test"), 200, requests);
+		const result = await generateAiText(
+			connection("openai", "https://api.openai.test/v1", "gpt-test"),
+			{ system: "system", prompt: "hello", maxOutputTokens: 16 },
+		);
+		expect(result).toEqual({
+			text: "ok",
+			usage: { inputTokens: 3, outputTokens: 4 },
+			model: "gpt-test",
+		});
+		expect(String(requests[0].input)).toBe(
+			"https://api.openai.test/v1/chat/completions",
+		);
+		expect(bodyOf(requests[0])).toMatchObject({
+			model: "gpt-test",
+			max_tokens: 16,
+			messages: [
+				{ role: "system", content: "system" },
+				{ role: "user", content: "hello" },
+			],
+		});
+	});
+
+	it("uses the native Anthropic Messages protocol", async () => {
+		const requests: RecordedRequest[] = [];
+		mockFetch(
+			{
+				id: "msg-test",
+				type: "message",
+				role: "assistant",
+				model: "claude-test",
+				content: [{ type: "text", text: "anthropic ok" }],
+				stop_reason: "end_turn",
+				usage: { input_tokens: 5, output_tokens: 6 },
+			},
+			200,
+			requests,
+		);
+		const result = await generateAiText(
+			connection("anthropic", "https://anthropic.test/v1", "claude-test"),
+			{ system: "system", prompt: "hello" },
+		);
+		expect(result.text).toBe("anthropic ok");
+		expect(result.usage).toEqual({ inputTokens: 5, outputTokens: 6 });
+		expect(String(requests[0].input)).toBe(
+			"https://anthropic.test/v1/messages",
+		);
+		expect(bodyOf(requests[0])).toMatchObject({
+			model: "claude-test",
+			max_tokens: 2048,
+			system: [{ type: "text", text: "system" }],
+			messages: [{ role: "user", content: [{ type: "text", text: "hello" }] }],
+		});
+	});
+
+	it("uses the native Gemini generateContent protocol", async () => {
+		const requests: RecordedRequest[] = [];
+		mockFetch(
+			{
+				candidates: [
+					{
+						content: { role: "model", parts: [{ text: "gemini ok" }] },
+						finishReason: "STOP",
+					},
+				],
+				usageMetadata: { promptTokenCount: 7, candidatesTokenCount: 8 },
+				modelVersion: "gemini-test",
+			},
+			200,
+			requests,
+		);
+		const result = await generateAiText(
+			connection(
+				"google",
+				"https://generativelanguage.test/v1beta",
+				"gemini-test",
+			),
+			{ prompt: "hello" },
+		);
+		expect(result.text).toBe("gemini ok");
+		expect(result.usage).toEqual({ inputTokens: 7, outputTokens: 8 });
+		expect(String(requests[0].input)).toBe(
+			"https://generativelanguage.test/v1beta/models/gemini-test:generateContent",
+		);
+		expect(bodyOf(requests[0])).toMatchObject({
+			contents: [{ role: "user", parts: [{ text: "hello" }] }],
+		});
+	});
+
+	it("normalizes a full compatible chat/completions URL and applies request guards", async () => {
+		const requests: RecordedRequest[] = [];
+		mockFetch(openAiResponse(), 200, requests);
+		await generateAiText(
+			connection("compatible", "https://gateway.test/api/v1/chat/completions"),
+			{ system: "Use JSON", prompt: "hello", json: true },
+		);
+		expect(String(requests[0].input)).toBe(
+			"https://gateway.test/api/v1/chat/completions",
+		);
+		expect(requests[0].init?.credentials).toBe("omit");
+		expect(requests[0].init?.redirect).toBe("error");
+		expect(requests[0].init?.referrerPolicy).toBe("no-referrer");
+		const body = bodyOf(requests[0]);
+		expect(body.tools).toBeUndefined();
+		expect(
+			(body.messages as Array<Record<string, unknown>>)[0].content,
+		).toContain("Return only valid JSON");
+	});
+
+	it("maps image input to provider image content and rejects remote image URLs", async () => {
+		const requests: RecordedRequest[] = [];
+		mockFetch(openAiResponse(), 200, requests);
+		await generateAiText(connection("openai", "https://api.openai.test/v1"), {
+			prompt: "describe",
+			image: { data: "aGVsbG8=", mediaType: "image/png" },
+		});
+		const messages = bodyOf(requests[0]).messages as Array<
+			Record<string, unknown>
+		>;
+		const content = (messages.at(-1) as Record<string, unknown>).content;
+		expect(content).toEqual([
+			{ type: "text", text: "describe" },
+			{
+				type: "image_url",
+				image_url: { url: "data:image/png;base64,aGVsbG8=" },
+			},
+		]);
+		await expect(
+			generateAiText(connection("openai", "https://api.openai.test/v1"), {
+				prompt: "describe",
+				image: {
+					data: "https://example.test/image.png",
+					mediaType: "image/png",
+				},
+			}),
+		).rejects.toMatchObject({ code: "invalid-image" });
+	});
+
+	it("does not retry or expose provider error details", async () => {
+		const requests: RecordedRequest[] = [];
+		mockFetch(
+			{ error: { message: "private-key-should-not-escape" } },
+			401,
+			requests,
+		);
+		const error = await generateAiText(
+			connection("deepseek", "https://api.deepseek.test"),
+			{ prompt: "hello" },
+		).catch((caught: unknown) => caught);
+		expect(error).toBeInstanceOf(AiClientError);
+		expect(error).toMatchObject({
+			code: "request-failed",
+			message: "request-failed",
+		});
+		expect(String(error)).not.toContain("private-key");
+		expect(requests).toHaveLength(1);
+	});
+
+	it("returns null for missing or invalid provider usage counters", async () => {
+		const requests: RecordedRequest[] = [];
+		const response = openAiResponse();
+		response.usage = {
+			prompt_tokens: -1,
+			completion_tokens: 1.5,
+			total_tokens: 0,
+		};
+		mockFetch(response, 200, requests);
+		const result = await generateAiText(
+			connection("openai", "https://api.openai.test/v1"),
+			{ prompt: "hello" },
+		);
+		expect(result.usage).toEqual({ inputTokens: null, outputTokens: null });
+	});
+
+	it("cancels a request through the caller signal", async () => {
+		const fetch = vi.fn(
+			async (_input: RequestInfo | URL, init?: RequestInit) =>
+				await new Promise<Response>((_resolve, reject) => {
+					const abort = () => reject(new DOMException("Aborted", "AbortError"));
+					if (init?.signal?.aborted) abort();
+					else init?.signal?.addEventListener("abort", abort, { once: true });
+				}),
+		);
+		vi.stubGlobal("fetch", fetch);
+		const controller = new AbortController();
+		const pending = generateAiText(
+			connection("openai", "https://api.openai.test/v1"),
+			{ prompt: "hello", signal: controller.signal },
+		);
+		controller.abort();
+		await expect(pending).rejects.toMatchObject({ code: "cancelled" });
+	});
+
+	it("enforces the image and output limits before network access", async () => {
+		const fetch = mockFetch(openAiResponse());
+		await expect(
+			generateAiText(connection("openai", "https://api.openai.test/v1"), {
+				prompt: "hello",
+				maxOutputTokens: 8_193,
+			}),
+		).rejects.toMatchObject({ code: "invalid-connection" });
+		await expect(
+			generateAiText(connection("openai", "https://api.openai.test/v1"), {
+				prompt: "hello",
+				image: {
+					data: "a".repeat(AI_MAX_IMAGE_DATA_LENGTH + 1),
+					mediaType: "image/png",
+				},
+			}),
+		).rejects.toMatchObject({ code: "invalid-image" });
+		expect(fetch).not.toHaveBeenCalled();
+	});
+});
