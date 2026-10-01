@@ -1,0 +1,73 @@
+{
+  "batches": 2,
+  "confirmed": 1,
+  "entry": [
+    "/assets/index-B8yAucPn.js"
+  ],
+  "firstPendingSizes": [
+    {
+      "height": 473.78125,
+      "width": 449.5,
+      "x": 252,
+      "y": 1781.9140625
+    },
+    {
+      "height": 473.78125,
+      "width": 449.5,
+      "x": 252,
+      "y": 2265.6953125
+    },
+    {
+      "height": 473.78125,
+      "width": 449.5,
+      "x": 252,
+      "y": 2749.4765625
+    }
+  ],
+  "horizontalOverflow": false,
+  "ignored": 13,
+  "originalPanels": 2,
+  "packed": [
+    {
+      "cards": 13,
+      "columns": 2,
+      "gaps": [
+        10,
+        10,
+        10,
+        10,
+        10,
+        10,
+        10,
+        10,
+        10,
+        10,
+        10
+      ]
+    },
+    {
+      "cards": 13,
+      "columns": 2,
+      "gaps": [
+        10,
+        10,
+        10,
+        10,
+        10,
+        10,
+        10,
+        10,
+        10,
+        10,
+        10
+      ]
+    }
+  ],
+  "pending": 12,
+  "perRowOriginals": 0,
+  "rows": 26,
+  "viewport": {
+    "height": 808,
+    "width": 1218
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "confirmed": 1,
+  "firstPendingSize": [
+    {
+      "height": 710.546875,
+      "width": 909,
+      "x": 252,
+      "y": 1756.8203125
+    },
+    {
+      "height": 710.546875,
+      "width": 909,
+      "x": 252,
+      "y": 2479.3671875
+    }
+  ],
+  "horizontalOverflow": false,
+  "ignored": 13,
+  "originalPanels": 26,
+  "pending": 12,
+  "rows": 26,
+  "viewport": {
+    "height": 808,
+    "width": 1218
+  }
+}

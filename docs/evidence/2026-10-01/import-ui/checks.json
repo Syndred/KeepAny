@@ -37,8 +37,9 @@
   "ci": {
     "number": 54,
     "url": "https://github.com/Syndred/KeepAny/actions/runs/36808700266",
-    "status": "in_progress",
-    "commit": "5d95fc2"
+    "status": "success",
+    "commit": "5d95fc2",
+    "workflowDuration": "16m 55s"
   },
   "previousCi": {
     "number": 52,
@@ -79,7 +80,9 @@
   "intermediateCi": {
     "number": 53,
     "url": "https://github.com/Syndred/KeepAny/actions/runs/36808381119",
-    "status": "in_progress",
-    "commit": "fd5b513"
-  }
+    "status": "success",
+    "commit": "fd5b513",
+    "workflowDuration": "17m 25s"
+  },
+  "ciReadbackEvidence": "../review-density/ci56-in-progress.png"
 }
