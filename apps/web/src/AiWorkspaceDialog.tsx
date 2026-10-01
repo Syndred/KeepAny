@@ -516,6 +516,7 @@ export function AiWorkspaceDialog({
 					<input
 						type="checkbox"
 						checked={useSaved}
+						disabled={saving}
 						onChange={(event) => {
 							invalidate();
 							setUseSaved(event.target.checked);
@@ -538,6 +539,7 @@ export function AiWorkspaceDialog({
 						<span>{t("endpoint")}</span>
 						<input
 							id="ai-endpoint"
+							disabled={saving}
 							value={endpoint}
 							onChange={(event) => {
 								invalidate();
@@ -552,6 +554,7 @@ export function AiWorkspaceDialog({
 						<span>{t("model")}</span>
 						<input
 							id="ai-model"
+							disabled={saving}
 							value={model}
 							onChange={(event) => {
 								invalidate();
@@ -563,6 +566,7 @@ export function AiWorkspaceDialog({
 						<span>{t("apiKey")}</span>
 						<input
 							id="ai-key"
+							disabled={saving}
 							type="password"
 							autoComplete="off"
 							value={apiKey}
@@ -583,6 +587,7 @@ export function AiWorkspaceDialog({
 								<input
 									type="checkbox"
 									checked={selected.includes(asset.id)}
+									disabled={saving}
 									onChange={(event) => {
 										invalidate();
 										setSelected((value) =>
@@ -602,6 +607,7 @@ export function AiWorkspaceDialog({
 				<span>{t("question")}</span>
 				<textarea
 					id="ai-question"
+					disabled={saving}
 					className="ai-question"
 					rows={2}
 					value={question}
