@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { Check } from "lucide-react";
 import { useRef, useState } from "react";
 import { dueOnCycle, type Task } from "../../../packages/domain/src";
+import { rescheduleTaskReminder, zonedParts } from "../../../packages/domain/src/task-reminder";
 import { saveTaskIfCurrent, setTaskDone } from "../../../packages/local-db/src";
 import { Badge } from "./components/ui/badge";
 import { TaskCard } from "./components/ui/task-card";
@@ -22,14 +23,15 @@ export function TaskRow({ task }: { task: Task }) {
 	if (task.maintenancePlan) return <MaintenanceTaskRow task={task} />;
 	const related = data.assets.find((asset) => asset.id === task.assetId && !asset.deleted);
 	async function reschedule(dueDate: string) {
-		if (inFlight.current || task.done) return;
+		if (inFlight.current || task.done || task.dueDate === dueDate) return;
 		inFlight.current = true;
 		setBusy(true);
 		try {
 			const dedupeKey = task.dedupeKey.startsWith("manual:")
 				? `${task.dedupeKey.slice(0, task.dedupeKey.lastIndexOf(":"))}:${dueDate || "none"}`
 				: task.dedupeKey;
-			await saveTaskIfCurrent(task, { ...task, dueDate, dedupeKey });
+			const reminder = task.reminder && dueDate ? rescheduleTaskReminder(task.reminder, dueDate) : undefined;
+			await saveTaskIfCurrent(task, { ...task, ...(task.reminder ? { reminder } : {}), dueDate, dedupeKey });
 			notify(t("saved"));
 		} catch (error) {
 			notify(t(error instanceof Error && error.message === "task-stale" ? "workflowTaskStale" : error instanceof Error && error.message === "task-duplicate" ? "taskDuplicatePending" : "error"));
@@ -38,7 +40,7 @@ export function TaskRow({ task }: { task: Task }) {
 	function postponeDay() {
 		try {
 			const now = new Date();
-			const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+			const today = task.reminder ? zonedParts(now.toISOString(), task.reminder.timeZone).date : `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
 			void reschedule(dueOnCycle(task.dueDate > today ? task.dueDate : today, "day", 1, 1));
 		} catch { notify(t("error")); }
 	}
@@ -57,8 +59,8 @@ export function TaskRow({ task }: { task: Task }) {
 					inFlight.current = true;
 					setBusy(true);
 					try {
-						await setTaskDone(task.id, task.done);
-						notify(t("saved"));
+						const updated = await setTaskDone(task.id, task.done, task.reminder?.at);
+						notify(t(updated.reminder && !updated.done && !task.done ? "reminderRepeatNext" : "saved"));
 					} catch (error) {
 						notify(t(error instanceof Error && error.message === "task-stale" ? "workflowTaskStale" : error instanceof Error && error.message === "task-duplicate" ? "taskDuplicatePending" : "error"));
 					} finally {
