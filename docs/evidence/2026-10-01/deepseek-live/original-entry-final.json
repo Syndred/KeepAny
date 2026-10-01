@@ -1,0 +1,7 @@
+{
+  "url": "http://127.0.0.1:4186/tasks",
+  "scripts": [
+    "/assets/index-B7gedowB.js"
+  ],
+  "tasks": "\n  - generic: Tasks\n  - heading \"Keep a record after every reminder.\" [level=1]\n  - paragraph: Track the outcome of every top-up, renewal, warranty, and review task.\n  - group \"Filter tasks\":\n    - button \"Pending · 2\"\n    - button \"Completed · 0\"\n    - button \"All · 2\" [pressed]\n  - button \"New task\"\n  - button \"New maintenance plan\":\n    - text: New maintenance plan\n  - region \"Recent tasks\":\n    - heading \"Recent tasks\" [level=2]\n    - generic: \"2\"\n    - article:\n      - button \"Complete\"\n      - strong: Review project contact details\n      - generic: Oct 2, 2026\n      - text: \"Related assets:\"\n      - link \"Mori Notes\":\n        - /url: /assets/project/dfd1cc2e-b08f-45cc-9b90-b869f221ad4a\n      - generic: Remind later\n      - textbox \"Remind later\": 2026-10-02\n      - button \"Postpone 1 day\"\n      - generic: Pending\n    - article:\n      - button \"Complete\"\n      - strong: Back up the work laptop\n      - generic: Oct 4, 2026\n      - text: \"Related assets:\"\n      - link \"Work laptop\":\n        - /url: /assets/item/2fdf3f02-ce97-4ecd-bb5d-64b6069f3f67\n      - generic: Remind later\n      - textbox \"Remind later\": 2026-10-04\n      - button \"Postpone 1 day\"\n      - generic: Pending\n  - region \"Plan details\":\n    - heading \"Plan details\" [level=2]\n    - strong: Nothing here yet"
+}

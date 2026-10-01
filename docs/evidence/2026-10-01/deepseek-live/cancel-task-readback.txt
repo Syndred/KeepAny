@@ -1,0 +1,19 @@
+
+  - generic: 待办
+  - heading "提醒之后，还要留下完成记录。" [level=1]
+  - paragraph: 充值、续费、保修和核实任务，都能追溯处理结果。
+  - group "筛选待办":
+    - button "待处理 · 0"
+    - button "已完成 · 0"
+    - button "全部 · 0" [pressed]
+  - button "新建待办"
+  - button "新建维护计划":
+    - text: 新建维护计划
+  - region "近期任务":
+    - heading "近期任务" [level=2]
+    - generic: "0"
+    - strong: 这里还没有内容
+    - generic: 添加第一条记录，把资料放在一起。
+  - region "计划详情":
+    - heading "计划详情" [level=2]
+    - strong: 这里还没有内容

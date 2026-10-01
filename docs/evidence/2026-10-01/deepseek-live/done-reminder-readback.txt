@@ -1,0 +1,102 @@
+- complementary:
+  - generic: K
+  - strong: KeepAny
+  - generic: 个人资产工作台
+  - button "个人工作区":
+    - strong: 个人工作区
+  - generic: 工作空间
+  - navigation "导航":
+    - button "概览 按住拖动排序":
+    - link "概览":
+      - /url: /
+      - generic: 概览
+    - button "待办 按住拖动排序":
+    - link "待办 1":
+      - /url: /tasks
+      - generic: 待办
+      - generic: "1"
+    - button "项目 按住拖动排序":
+    - link "项目":
+      - /url: /assets/project
+      - generic: 项目
+    - button "账号 按住拖动排序":
+    - link "账号":
+      - /url: /assets/account
+      - generic: 账号
+    - button "订阅 按住拖动排序":
+    - link "订阅":
+      - /url: /finance
+      - generic: 订阅
+    - button "实物 按住拖动排序":
+    - link "实物":
+      - /url: /assets/item
+      - generic: 实物
+    - button "密码库 按住拖动排序":
+    - link "密码库":
+      - /url: /assets/vault
+      - generic: 密码库
+    - status
+  - generic: 我的分类
+  - link "自定义侧边栏":
+    - /url: /collections
+    - text: 自定义侧边栏
+  - button "我 我的工作区 仅自己可见":
+    - generic: 我
+    - strong: 我的工作区
+    - generic: 仅自己可见
+- banner:
+  - link "返回概览":
+    - /url: /
+    - text: 返回概览
+  - button "搜索全部资料":
+    - generic: 搜索全部资料
+    - generic: ⌘ K
+  - link "待办提醒":
+    - /url: /tasks
+  - button "AI 助手与授权":
+  - link "收录与备份":
+    - /url: /intake
+- main:
+  - generic: 待办
+  - heading "提醒之后，还要留下完成记录。" [level=1]
+  - paragraph: 充值、续费、保修和核实任务，都能追溯处理结果。
+  - group "筛选待办":
+    - button "待处理 · 1"
+    - button "已完成 · 1"
+    - button "全部 · 2" [pressed]
+  - button "新建待办"
+  - button "新建维护计划":
+    - text: 新建维护计划
+  - region "近期任务":
+    - heading "近期任务" [level=2]
+    - generic: "2"
+    - article:
+      - button "完成"
+      - strong: DS 验收待办
+      - text: "到期时间:"
+      - time: 2026/10/03 09:00
+      - text: "提醒时间:"
+      - time: 2026/10/03 08:30
+      - generic: 时区：Asia/Shanghai
+      - generic: 提前 30 分钟 · 每 1 个月
+      - text: "关联资产:"
+      - link "DS 验收项目":
+        - /url: /assets/project/ai-4d05dab1d30f209f8bcb5f70615c17951257f064bfc5dd79-1
+      - generic: 稍后提醒
+      - textbox "稍后提醒": 2026-10-03
+      - button "稍后 1 天"
+      - generic: 待处理
+    - article:
+      - button "重新打开":
+      - strong: DS 到期提醒
+      - text: "到期时间:"
+      - time: 2026/10/01 09:00
+      - text: "提醒时间:"
+      - time: 2026/10/01 09:00
+      - generic: 时区：Asia/Shanghai
+      - generic: 提前 0 分钟 · 仅一次
+      - generic: "完成记录: 2026/10/1 09:27:58"
+      - generic: 已完成
+  - region "计划详情":
+    - heading "计划详情" [level=2]
+    - strong: 这里还没有内容
