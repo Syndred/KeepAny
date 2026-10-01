@@ -12,6 +12,7 @@ export default defineConfig({
 	testMatch: [
 		"ai-release.spec.ts",
 		"ai-account-import-release.spec.ts",
+		"intake-bulk-account-links.spec.ts",
 		"ai-dialog-matrix.spec.ts",
 		"local-core.spec.ts",
 		"english-demo-release.spec.ts",

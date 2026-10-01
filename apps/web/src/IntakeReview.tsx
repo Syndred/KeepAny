@@ -12,8 +12,11 @@ import {
 	listReviewedCandidates, editReviewedExpenseDraft, setReviewedCandidateMode, type ReviewedCandidate,
 } from "./intake-review-store";
 import "./intake-review.css";
+import { ensureReviewedAccountLinks, previewAccountIdentity } from "./intake-account-links";
 import { useSearchRowLocation } from "./search-location";
 import { Select, SelectOption } from "./components/ui/select";
+
+class ReviewValidationError extends Error {}
 
 const importKinds = ["project", "account", "subscription", "item"] as const;
 
@@ -46,6 +49,13 @@ export function IntakeReview() {
 	const [message, setMessage] = useState("");
 	const [messageId, setMessageId] = useState("");
 	const [workingId, setWorkingId] = useState("");
+	const [selectedIds, setSelectedIds] = useState(new Set<string>());
+	const [bulkBusy, setBulkBusy] = useState(false);
+	const bulkInFlight = useRef(false);
+	const [rowErrors, setRowErrors] = useState<Record<string, string>>({});
+	const [batchMessages, setBatchMessages] = useState<Record<string, string>>(
+		{},
+	);
 	const [intervalDrafts, setIntervalDrafts] = useState<Record<string, string>>({});
 	const [amountDrafts, setAmountDrafts] = useState<Record<string, string>>({});
 	const [savingIds, setSavingIds] = useState(new Set<string>());
@@ -137,6 +147,7 @@ export function IntakeReview() {
 
 	function queueEdit(id: string, nextRow: ReviewedCandidate, action: () => Promise<boolean>) {
 		drafts.current.set(id, nextRow);
+		setRowErrors(current => { const next = { ...current }; delete next[id]; return next; });
 		setSavingIds((current) => new Set(current).add(id));
 		setRows((current) => current.map((item) => item.id === id ? nextRow : item));
 		if (messageId === id) setMessage("");
@@ -156,7 +167,7 @@ export function IntakeReview() {
 	}
 
 	function editableRow(id: string) {
-		if (inFlight.current.has(id)) return;
+		if (bulkInFlight.current || inFlight.current.has(id)) return;
 		const row = drafts.current.get(id) ?? rows.find((item) => item.id === id);
 		return row?.status === "pending" ? row : undefined;
 	}
@@ -195,42 +206,68 @@ export function IntakeReview() {
 		queueEdit(id, { ...row, expenseDraft }, () => editReviewedExpenseDraft(id, expenseDraft));
 	}
 
-	async function decide(id: string, decision: "accepted" | "ignored") {
-		if (inFlight.current.has(id)) return;
-		inFlight.current.add(id);
-		setWorkingId(id);
-		setMessage("");
-		setMessageId(id);
-		const commit = async () => {
+	function decisionError(error: unknown) {
+		if (error instanceof ReviewValidationError) return error.message;
+		const code = error instanceof Error ? error.message : "";
+		return t(
+			code === "review-expense-target"
+				? "financeTargetChanged"
+				: code === "review-expense-invalid"
+					? "financeInvalidRecord"
+					: code === "review-expense-stale"
+						? "reviewChanged"
+						: code === "review-expense-pending"
+							? "reviewExpensePending"
+							: "error",
+		);
+	}
+
+	async function performDecision(id: string, decision: "accepted" | "ignored") {
 			const row = await getReviewedCandidate(id);
-			if (row?.status !== "pending") { await refresh(); return; }
-			if (decision === "ignored") {
-				await decideReviewedCandidate(id, "ignored");
-				await refresh();
-				return;
+			if (row?.status !== "pending") return false;
+		if (decision === "ignored") {
+			await decideReviewedCandidate(id, "ignored");
+			return true;
 			}
 			if (row.reviewMode === "expense") {
 				const draft = row.expenseDraft;
 				const amount = draft ? parseMinorUnits(draft.amount, draft.currency) : Number.NaN;
-				if (!draft?.amount.trim() || !Number.isSafeInteger(amount) || amount <= 0) { setMessage(t("financeInvalidAmount")); return; }
-				if (!historySchema.safeParse({ ...draft, id: `pdf-expense-${row.fileHash}`, action: "expense", amount, createdAt: new Date().toISOString(), deleted: false }).success) { setMessage(t("financeInvalidRecord")); return; }
-				await (await localRepository()).confirmReviewedExpense(row);
-				await refresh();
-				return;
+				if (!draft?.amount.trim() || !Number.isSafeInteger(amount) || amount <= 0) {
+				throw new ReviewValidationError(t("financeInvalidAmount")); }
+				if (!historySchema.safeParse({ ...draft, id: `pdf-expense-${row.fileHash}`, action: "expense", amount, createdAt: new Date().toISOString(), deleted: false }).success) {
+				throw new ReviewValidationError(t("financeInvalidRecord"));
 			}
-			if (row.source === "ai" && row.asset.kind === "subscription" && row.ai?.missingFields.some(field => ["amount", "currency", "cycle"].includes(field))) {
-				setMessage(t("aiMissingFields", { fields: row.ai.missingFields.filter(field => ["amount", "currency", "cycle"].includes(field)).map(field => t(field)).join(" · ") })); return;
+			await (await localRepository()).confirmReviewedExpense(row);
+			return true;
 			}
-			if (row.source === "pdf" && !row.kindSelected) { setMessage(t("reviewSelectKind")); return; }
-			if (amountDrafts[id] !== undefined && (!amountDrafts[id].trim() || !Number.isSafeInteger(parseMinorUnits(amountDrafts[id], row.asset.currency)))) { setMessage(t("financeInvalidAmount")); return; }
-			if (intervalDrafts[id] !== undefined && (!intervalDrafts[id].trim() || !Number.isInteger(Number(intervalDrafts[id])) || Number(intervalDrafts[id]) < 1 || Number(intervalDrafts[id]) > 100)) { setMessage(t("reviewInvalidCandidate")); return; }
+			if (row.source === "ai" && row.asset.kind === "subscription" && row.ai?.missingFields.some((field) =>
+				["amount", "currency", "cycle"].includes(field),
+			)
+		) {
+			throw new ReviewValidationError(
+				t("aiMissingFields", {
+					fields: row.ai.missingFields
+						.filter((field) => ["amount", "currency", "cycle"].includes(field))
+						.map((field) => t(field))
+						.join(" · "),
+				}),
+			);
+		}
+		if (row.source === "pdf" && !row.kindSelected) {
+			throw new ReviewValidationError(t("reviewSelectKind")); }
+			if (amountDrafts[id] !== undefined && (!amountDrafts[id].trim() || !Number.isSafeInteger(parseMinorUnits(amountDrafts[id], row.asset.currency)))) {
+			throw new ReviewValidationError(t("financeInvalidAmount")); }
+			if (intervalDrafts[id] !== undefined && (!intervalDrafts[id].trim() || !Number.isInteger(Number(intervalDrafts[id])) || Number(intervalDrafts[id]) < 1 || Number(intervalDrafts[id]) > 100)) {
+			throw new ReviewValidationError(t("reviewInvalidCandidate")); }
 			const candidate = assetSchema.safeParse({ ...row.asset, name: row.asset.name.trim(), updatedAt: new Date().toISOString() });
-			if (!candidate.success) { setMessage(t("reviewInvalidCandidate")); return; }
+			if (!candidate.success) {
+			throw new ReviewValidationError(t("reviewInvalidCandidate")); }
 			const repository = await localRepository();
 			const alreadySaved = await repository.get<Asset>("asset", candidate.data.id);
 			if (!alreadySaved) {
 				const existing = (await allRecords()).filter((item) => item.type === "asset").map((item) => JSON.parse(item.payload) as Asset);
-				if (duplicates(candidate.data, existing).length) { setMessage(t("duplicate")); return; }
+				if (duplicates(candidate.data, existing).length) {
+				throw new ReviewValidationError(t("duplicate")); }
 				try { await saveBatch([{ type: "asset", value: candidate.data }]); }
 				catch (error) {
 					if (!(error instanceof Error && error.message === "batch-existing") ||
@@ -238,18 +275,168 @@ export function IntakeReview() {
 				}
 			}
 			await decideReviewedCandidate(id, "accepted");
-			await refresh();
-		};
+		const receipt = await getReviewedCandidate(id);
+		const saved = await repository.get<Asset>("asset", candidate.data.id);
+		if (receipt?.status !== "accepted" || !saved || saved.deleted) throw new ReviewValidationError(t("reviewChanged"));
+		return true;
+	}
+
+	async function completeLinks(items: ReviewedCandidate[]) {
+		return ensureReviewedAccountLinks(items, {
+			labels: {
+				email: t("reviewEmailLink"),
+				phone: t("reviewPhoneLink"),
+				provider: t("reviewProviderLink"),
+			},
+		});
+	}
+
+	async function decide(id: string, decision: "accepted" | "ignored") {
+		if (bulkInFlight.current || inFlight.current.has(id)) return;
+		inFlight.current.add(id);
+		setWorkingId(id);
+		setMessage("");
+		setMessageId(id);
 		try {
 			await flushEdits();
-			await withReviewLock(id, commit);
+			await withReviewLock(id, () => performDecision(id, decision));
+			if (decision === "accepted") {
+				const accepted = await getReviewedCandidate(id);
+				if (accepted?.status === "accepted") {
+					const key = `${accepted.source ?? "csv"}:${accepted.fileHash}`;
+					try {
+						const result = await completeLinks([accepted]);
+						if (result.unresolved.length)
+							setBatchMessages((current) => ({
+								...current,
+								[key]: t("reviewLinksResult", {
+									count: result.createdRelations,
+									pending: result.unresolved.length,
+								}),
+							}));
+					} catch {
+						setBatchMessages((current) => ({
+							...current,
+							[key]: t("reviewLinksRetryHint"),
+						}));
+					}
+				}
+			}
+			setSelectedIds((current) => {
+				const next = new Set(current);
+				next.delete(id);
+				return next;
+			});
+			await refresh();
 		} catch (error) {
-			const code = error instanceof Error ? error.message : "";
-			setMessage(t(code === "review-expense-target" ? "financeTargetChanged" : code === "review-expense-invalid" ? "financeInvalidRecord" : code === "review-expense-stale" ? "reviewChanged" : code === "review-expense-pending" ? "reviewExpensePending" : "error"));
+			setMessage(decisionError(error));
 			setExpenseRecoveryPending(!!(await localRepository()).intakeExpenseRecoveryError);
 			await refresh().catch(() => undefined);
 		}
 		finally { inFlight.current.delete(id); setWorkingId(""); }
+	}
+
+	function selectRows(ids: string[], selected: boolean) {
+		setSelectedIds((current) => {
+			const next = new Set(current);
+			for (const id of ids) {
+				if (selected) next.add(id);
+				else next.delete(id);
+			}
+			return next;
+		});
+	}
+
+	async function confirmSelected(key: string, items: ReviewedCandidate[]) {
+		if (bulkInFlight.current || inFlight.current.size) return;
+		const ids = items
+			.filter((row) => row.status === "pending" && selectedIds.has(row.id))
+			.map((row) => row.id);
+		if (!ids.length) return;
+		bulkInFlight.current = true;
+		setBulkBusy(true);
+		setMessage("");
+		setMessageId("");
+		let confirmed = 0;
+		const failed: Record<string, string> = {};
+		const completed: string[] = [];
+		try {
+			await flushEdits();
+			for (const id of ids) {
+				try {
+					if (await withReviewLock(id, () => performDecision(id, "accepted")))
+						confirmed++;
+					completed.push(id);
+				} catch (error) {
+					failed[id] = decisionError(error);
+				}
+			}
+			setRowErrors((current) => {
+				const next = { ...current, ...failed };
+				for (const id of completed) delete next[id];
+				return next;
+			});
+			setSelectedIds((current) => {
+				const next = new Set(current);
+				for (const id of completed) next.delete(id);
+				return next;
+			});
+			const accepted = (await listReviewedCandidates()).filter(
+				(row) => completed.includes(row.id) && row.status === "accepted",
+			);
+			let linksMessage = "";
+			try {
+				const result = await completeLinks(accepted);
+				linksMessage = t("reviewLinksResult", {
+					count: result.createdRelations,
+					pending: result.unresolved.length,
+				});
+			} catch {
+				linksMessage = t("reviewLinksRetryHint");
+			}
+			setBatchMessages((current) => ({
+				...current,
+				[key]: `${t("reviewBulkResult", { count: confirmed, failed: Object.keys(failed).length })} ${linksMessage}`,
+			}));
+			await refresh();
+		} catch (error) {
+			setBatchMessages((current) => ({
+				...current,
+				[key]: decisionError(error),
+			}));
+		} finally {
+			bulkInFlight.current = false;
+			setBulkBusy(false);
+		}
+	}
+
+	async function repairLinks(key: string, items: ReviewedCandidate[]) {
+		if (bulkInFlight.current || inFlight.current.size) return;
+		bulkInFlight.current = true;
+		setBulkBusy(true);
+		try {
+			const result = await completeLinks(
+				items.filter(
+					(row) => row.status === "accepted" && row.asset.kind === "account",
+				),
+			);
+			setBatchMessages((current) => ({
+				...current,
+				[key]: t("reviewLinksResult", {
+					count: result.createdRelations,
+					pending: result.unresolved.length,
+				}),
+			}));
+			await refresh();
+		} catch {
+			setBatchMessages((current) => ({
+				...current,
+				[key]: t("reviewLinksRetryHint"),
+			}));
+		} finally {
+			bulkInFlight.current = false;
+			setBulkBusy(false);
+		}
 	}
 
 	return <div className="intake-review">
@@ -263,24 +450,34 @@ export function IntakeReview() {
 		{message && !messageId && <p role="status" className="intake-review-message">{message}</p>}
 		{rows.length > 0 && <div className="intake-review-list">
 			<h3>{t("reviewCandidates")}</h3>
-			{batches.map((batch) => <section className="intake-review-batch" key={batch.key} aria-label={batch.fileName}>
+			{batches.map((batch) => {
+				const pendingIds = batch.items.filter(row => row.status === "pending").map(row => row.id);
+				const selectedCount = pendingIds.filter(id => selectedIds.has(id)).length;
+				const busy = bulkBusy || !!workingId;
+				return <section className="intake-review-batch" key={batch.key} aria-label={batch.fileName}>
 				<header className="intake-review-batch-header">
 					<strong>{batch.fileName}</strong>
 					<small>{t("reviewBatchCount", { count: batch.items.length, pending: batch.items.filter((row) => row.status === "pending").length })}</small>
 					{batch.models.length > 0 && <small className="intake-review-batch-model">{batch.models.join(" / ")}</small>}
 				</header>
+				<div className="intake-review-batch-actions">
+					{pendingIds.length > 0 && <><label className="intake-review-select"><input type="checkbox" checked={selectedCount === pendingIds.length} ref={node => { if (node) node.indeterminate = selectedCount > 0 && selectedCount < pendingIds.length; }} aria-checked={selectedCount > 0 && selectedCount < pendingIds.length ? "mixed" : selectedCount === pendingIds.length} disabled={busy} onChange={event => selectRows(pendingIds, event.target.checked)} />{t("reviewSelectAll")}</label><Button variant="primary" disabled={busy || !selectedCount} onClick={() => void confirmSelected(batch.key, batch.items)}>{t("reviewConfirmSelected", { count: selectedCount })}</Button></>}
+					{batch.items.some(row => row.status === "accepted" && row.asset.kind === "account") && <Button disabled={busy} onClick={() => void repairLinks(batch.key, batch.items)}>{t("reviewCompleteLinks")}</Button>}
+				</div>
+				{batchMessages[batch.key] && <p className="intake-review-message" role="status">{batchMessages[batch.key]}</p>}
 				{batch.sourceText && <details className="intake-review-original"><summary>{t("reviewPdfOriginal")}</summary><pre className="intake-pdf-text">{batch.sourceText}</pre></details>}
 				<div className="intake-review-batch-rows">
 			{batch.items.map((row) => {
 				const intent = expenseIntents.find((entry) => entry.candidateId === row.id);
-				const disabled = workingId === row.id || !!intent;
+				const disabled = bulkBusy || workingId === row.id || !!intent;
 				const currentAsset = row.status === "accepted" ? assetsById.get(row.asset.id) : undefined;
 				const savedAsset = currentAsset && !currentAsset.deleted ? currentAsset : undefined;
+				const savedLinks = savedAsset?.kind === "account" ? data.relations.filter(relation => !relation.deleted && relation.from === savedAsset.id).flatMap(relation => { const target = assetsById.get(relation.to); return target && !target.deleted ? [{ relation, target }] : []; }) : [];
 				return <div className="intake-review-row" key={row.id} id={`intake-review-${row.id}`} tabIndex={-1}>
-				<div className="intake-review-source"><strong>{row.asset.name}</strong><small>{row.source === "pdf" ? t("reviewPdfDocument") : row.source === "ai" ? t("reviewRecordNumber", { number: row.rowNumber }) : t("reviewRowNumber", { number: row.rowNumber })}</small>
+				<div className="intake-review-source">{row.status === "pending" && <label className="intake-review-select" title={t("reviewSelectRecord", { name: row.asset.name })}><input type="checkbox" aria-label={t("reviewSelectRecord", { name: row.asset.name })} checked={selectedIds.has(row.id)} disabled={disabled} onChange={event => selectRows([row.id], event.target.checked)} /></label>}<strong>{row.asset.name}</strong><small>{row.source === "pdf" ? t("reviewPdfDocument") : row.source === "ai" ? t("reviewRecordNumber", { number: row.rowNumber }) : t("reviewRowNumber", { number: row.rowNumber })}</small>
 					<span className={`chip ${row.status === "pending" ? "warn" : ""}`}>{t(`reviewStatus${row.status[0].toUpperCase()}${row.status.slice(1)}`)}</span></div>
 				{row.ai && <>
-					<details className="intake-review-evidence"><summary>{t("aiSourceEvidence")}</summary><p>{row.ai.evidence}</p></details>
+					<details className="intake-review-evidence"><summary><span>{t("aiSourceEvidence")}</span>{row.status === "pending" && previewAccountIdentity(row.asset, row).map(identity => <small className="intake-review-identity" key={`${identity.kind}:${identity.provider}:${identity.identifier}`}>{t(identity.unknownUsername ? "reviewIdentityUnknown" : "reviewIdentityPreview", { kind: t(identity.kind === "email" ? "email" : identity.kind === "phone" ? "phone" : "reviewLoginProvider"), value: identity.identifier || identity.provider })}</small>)}</summary><p>{row.ai.evidence}</p></details>
 					{(row.ai.missingFields.length > 0 || row.ai.relatedName) && <div className="intake-review-warnings">
 						{row.ai.missingFields.length > 0 && <p>{t("aiMissingFields", { fields: row.ai.missingFields.map(field => t(field)).join(" · ") })}</p>}
 						{row.ai.relatedName && <p>{t("aiRelatedSuggestion", { name: row.ai.relatedName })}</p>}
@@ -297,6 +494,8 @@ export function IntakeReview() {
 					{(row.source !== "pdf" || row.kindSelected) && <span>{t("intakeRecordType")}: {t(row.asset.kind)}</span>}
 					{row.asset.url && <small>{t("url")}: {row.asset.url}</small>}
 					{row.source !== "pdf" && row.asset.description && <details><summary>{t("description")}</summary><p className="intake-pdf-text">{row.asset.description}</p></details>}
+					{row.status === "accepted" && savedLinks.map(({ relation, target }) => <small key={relation.id}>{relation.label}: <Link to="/assets/$kind/$id" params={{ kind: target.kind, id: target.id }}>{target.name}</Link></small>)}
+					{row.status === "accepted" && savedAsset?.kind === "account" && !savedLinks.length && previewAccountIdentity(savedAsset, row).length > 0 && <small>{t("reviewLinksPending")}</small>}
 					{row.status === "accepted" && (savedAsset
 						? <Link to="/assets/$kind/$id" params={{ kind: savedAsset.kind, id: savedAsset.id }}>{t("reviewViewAsset")}: {savedAsset.name}</Link>
 						: <small>{t("taskRelatedMissing")}</small>)}
@@ -321,15 +520,15 @@ export function IntakeReview() {
 						</div>}
 					</>}
 					</div>
-					{message && messageId === row.id && <p role="alert" className="field-error">{message}</p>}
+					{(rowErrors[row.id] || (message && messageId === row.id)) && <p role="alert" className="field-error">{rowErrors[row.id] || message}</p>}
 					{savingIds.has(row.id) && <small role="status">{t("reviewSaving")}</small>}
-					{intent ? <div className="actions"><Button variant="primary" disabled={workingId === row.id} onClick={() => void decide(row.id, "accepted")}>{t("reviewExpenseRetry")}</Button>{!intent.committed && <Button disabled={workingId === row.id} onClick={() => void cancelExpense(row.id)}>{t("reviewExpenseCancel")}</Button>}</div> : <div className="actions"><Button variant="primary" disabled={workingId === row.id || savingIds.has(row.id) || (row.reviewMode === "expense" ? !targets.length : row.source === "pdf" && !row.kindSelected)} onClick={() => void decide(row.id, "accepted")}>{t(row.reviewMode === "expense" ? "reviewConfirmExpense" : "reviewConfirm")}</Button><Button disabled={workingId === row.id || savingIds.has(row.id)} onClick={() => void decide(row.id, "ignored")}>{t("reviewIgnore")}</Button></div>}
+					{intent ? <div className="actions"><Button variant="primary" disabled={bulkBusy || workingId === row.id} onClick={() => void decide(row.id, "accepted")}>{t("reviewExpenseRetry")}</Button>{!intent.committed && <Button disabled={bulkBusy || workingId === row.id} onClick={() => void cancelExpense(row.id)}>{t("reviewExpenseCancel")}</Button>}</div> : <div className="actions"><Button variant="primary" disabled={bulkBusy || workingId === row.id || savingIds.has(row.id) || (row.reviewMode === "expense" ? !targets.length : row.source === "pdf" && !row.kindSelected)} onClick={() => void decide(row.id, "accepted")}>{t(row.reviewMode === "expense" ? "reviewConfirmExpense" : "reviewConfirm")}</Button><Button disabled={bulkBusy || workingId === row.id || savingIds.has(row.id)} onClick={() => void decide(row.id, "ignored")}>{t("reviewIgnore")}</Button></div>}
 				</>}
 
 			</div>;
 			})}
 				</div>
-			</section>)}
+			</section>; })}
 		</div>}
 	</div>;
 }

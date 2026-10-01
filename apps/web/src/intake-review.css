@@ -337,3 +337,41 @@
 		grid-column: 1 / -1;
 	}
 }
+
+.intake-review-batch-actions {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 6px 10px;
+}
+.intake-review-batch-actions:empty {
+	display: none;
+}
+.intake-review-select {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	min-height: 44px;
+	margin: 0;
+	cursor: pointer;
+	font-size: 12px;
+}
+.intake-review-source > .intake-review-select {
+	flex: none;
+}
+.intake-review .intake-review-select input[type="checkbox"] {
+	width: 18px;
+	height: 18px;
+	min-height: 18px;
+	padding: 0;
+	margin: 0;
+	accent-color: var(--green);
+}
+.intake-review-identity {
+	font-size: 12px;
+	line-height: 1.4;
+	color: var(--muted);
+	overflow-wrap: anywhere;
+}
+
+.intake-review-evidence summary { flex-wrap: wrap; gap: 4px 6px; }
