@@ -1,4 +1,8 @@
 export const aiWorkflowCopy: Record<string, [string, string]> = {
+	aiAskLimit: [
+		"每次最多选择 20 条，资料与问题合计最多 4 万字符。",
+		"Choose up to 20 records, with up to 40,000 characters including your question.",
+	],
 	aiChooseField: ["请选择", "Choose a value"],
 	aiUseSavedConfig: ["使用已保存的模型配置", "Use saved model configuration"],
 	aiAskTab: ["分析资料", "Ask about records"],

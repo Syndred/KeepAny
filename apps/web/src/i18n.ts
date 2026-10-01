@@ -665,8 +665,8 @@ const copy: Record<string, [string, string]> = {
 	question: ["问题", "Question"],
 	ask: ["发送", "Send"],
 	aiDisclosure: [
-		"只向你填写的服务地址发送所选资料的类型、名称、描述、网址、到期日、金额、币种，以及你输入的问题。API Key 只用于本次请求。",
-		"The service URL you enter receives your question and only the type, name, description, URL, due date, amount and currency of selected records. The API key is used only for this request.",
+		"只向你填写的服务地址发送所选资料的类型、名称、描述、网址、到期日、金额、币种，以及你输入的问题。API Key 仅用于所选服务的身份验证。",
+		"The service URL you enter receives your question and only the type, name, description, URL, due date, amount and currency of selected records. The API key authenticates requests to the selected service.",
 	],
 	aiSelect: ["选择要使用的资料", "Select records to use"],
 	aiResponse: ["回答", "Response"],
