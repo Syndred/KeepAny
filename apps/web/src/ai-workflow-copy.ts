@@ -23,8 +23,8 @@ export const aiWorkflowCopy: Record<string, [string, string]> = {
 		"No AI model is configured. Choose a model service first.",
 	],
 	aiImportSessionNeedsKey: [
-		"{{model}} 已配置。会话密钥在刷新或关闭页面后失效，请启用本次密钥。",
-		"{{model}} is configured. Session keys expire on reload or close; activate a key for this page.",
+		"{{model}} 已配置。当前页面尚未启用 API Key；刷新或关闭后需重新输入。",
+		"{{model}} is configured. This page needs an API key; enter it again after reload or close.",
 	],
 	aiImportVaultNeedsKey: [
 		"{{model}} 已配置，请启用密码库中已保存的密钥。",

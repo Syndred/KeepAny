@@ -205,8 +205,8 @@ for (const language of ["zh-CN", "en"] as const) {
 				await page.goto("/intake");
 				await expect(importer).toContainText(
 					zh
-						? `${model} 已配置。会话密钥在刷新或关闭页面后失效`
-						: `${model} is configured. Session keys expire on reload or close`,
+						? `${model} 已配置。当前页面尚未启用 API Key`
+						: `${model} is configured. This page needs an API key`,
 				);
 				await expect(
 					importer.getByRole("link", {
