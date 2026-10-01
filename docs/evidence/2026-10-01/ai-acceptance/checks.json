@@ -57,5 +57,13 @@
     "source": "worker verified same final fixed package on 4194",
     "skipped": 0,
     "failed": 0
+  },
+  "software_remote_sha": "5a31bc6c0c93aded2421fbecb59ed8fb143fb9b3",
+  "ci": {
+    "run": 49,
+    "url": "https://github.com/Syndred/KeepAny/actions/runs/36798654721",
+    "sha": "5a31bc6c0c93aded2421fbecb59ed8fb143fb9b3",
+    "observed_status": "In progress",
+    "browser": "logged-in Chrome CUA browser 2"
   }
 }
