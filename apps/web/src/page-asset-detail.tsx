@@ -3,7 +3,6 @@ import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import {
 	Background,
 	Controls,
-	MarkerType,
 	Position,
 	ReactFlow,
 	useNodesInitialized,
@@ -503,7 +502,6 @@ export function AssetDetail() {
 				strokeWidth: 2,
 				strokeDasharray: verified ? "none" : "5 4",
 			},
-			markerEnd: { type: MarkerType.ArrowClosed },
 		};
 	});
 	const ownTasks = data.tasks.filter(
