@@ -38,3 +38,29 @@ export type VaultSnapshot = {
 };
 
 export type VaultHistoryItem = { at: string; draft: VaultEntryDraft };
+
+export type VaultImportItem = {
+  draft: VaultEntryDraft;
+  /** Conflicts remain unchanged unless the caller makes an explicit choice. */
+  action?: 'skip' | 'new' | 'update';
+  targetId?: string;
+};
+
+export type VaultImportPreviewRow = {
+  index: number;
+  status: 'new' | 'duplicate' | 'conflict';
+  /** Existing active entries with the same exact URL/title and username; no secret fields. */
+  existingIds: string[];
+};
+
+export type VaultImportPreview = {
+  revision: string;
+  rows: VaultImportPreviewRow[];
+};
+export type VaultImportResult = {
+  added: number;
+  updated: number;
+  skipped: number;
+  entryIds: string[];
+  revision: string;
+};

@@ -2,7 +2,7 @@ import { gzipSync } from 'fflate';
 import { Consts, Int64, Kdbx, ProtectedValue, VarDictionary, XmlUtils } from 'kdbxweb';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { checkHeader, configureDatabase, credentials, VAULT_LINK_FIELD } from './engine';
-import { generatePassword, VAULT_MAX_BYTES, VaultSession } from './index';
+import { generatePassword, VAULT_IMPORT_MAX_ENTRIES, VAULT_MAX_BYTES, VaultSession } from './index';
 import type { VaultEntryDraft, VaultPersistence, VaultRecord } from './types';
 
 const master = 'synthetic-master-v1';
@@ -100,6 +100,307 @@ describe('real encrypted local KDBX session', () => {
     expect(reloaded.getSnapshot().trash).toEqual([]);
     expect(reloaded.readEntry(id).password).toBe(draft.password);
     expect(reloaded.history(id)).toHaveLength(2);
+  }, 30_000);
+
+  it('imports an entire batch with one clone and one encrypted save while preserving password whitespace', async () => {
+    const { storage, session } = await created();
+    const values = Array.from({ length: 100 }, (_, index) => ({
+      ...draft,
+      username: `synthetic-${index}@example.test`,
+      password: `  secret-${index}\t `,
+    }));
+    const load = vi.spyOn(Kdbx, 'load');
+    const save = vi.spyOn(Kdbx.prototype, 'save');
+    const preview = session.previewImport(values);
+    expect(preview.rows).toHaveLength(100);
+    expect(preview.rows.every((row) => row.status === 'new')).toBe(true);
+    expect(JSON.stringify(preview)).not.toContain('secret-');
+    expect(storage.writes).toBe(1);
+    const result = await session.importEntries(
+      values.map((value) => ({ draft: value })),
+      preview.revision,
+    );
+    expect(result).toMatchObject({ added: 100, updated: 0, skipped: 0 });
+    expect(result.entryIds).toHaveLength(100);
+    expect(new Set(result.entryIds).size).toBe(100);
+    expect(load).toHaveBeenCalledOnce();
+    expect(save).toHaveBeenCalledOnce();
+    expect(storage.writes).toBe(2);
+    expect(session.readEntry(result.entryIds[0]).password).toBe(
+      values[0].password,
+    );
+    session.lock();
+    await session.unlock(master);
+    expect(session.readEntry(result.entryIds[99]).password).toBe(
+      values[99].password,
+    );
+  }, 30_000);
+
+  it('skips exact credential duplicates, defaults conflicts to skip, and uses exact URL or title identity', async () => {
+    const { storage, session } = await created();
+    const id = await session.saveEntry(draft);
+    const noUrl = {
+      ...draft,
+      url: '',
+      title: 'Offline account',
+      username: 'local',
+    };
+    const values = [
+      { ...draft, title: 'AI renamed title', notes: 'different note' },
+      { ...draft, password: 'different-password' },
+      { ...draft, url: `${draft.url}/` },
+      noUrl,
+      { ...noUrl },
+      { ...noUrl, password: 'other-local-password' },
+    ];
+    const preview = session.previewImport(values);
+    expect(preview.rows.map((row) => row.status)).toEqual([
+      'duplicate',
+      'conflict',
+      'new',
+      'new',
+      'duplicate',
+      'conflict',
+    ]);
+    expect(preview.rows[1].existingIds).toEqual([id]);
+    expect(preview.rows[5].existingIds).toEqual([]);
+    const result = await session.importEntries(
+      values.map((value) => ({ draft: value })),
+      preview.revision,
+    );
+    expect(result).toMatchObject({ added: 2, updated: 0, skipped: 4 });
+    expect(session.getSnapshot().entries).toHaveLength(3);
+    expect(session.readEntry(id)).toEqual({ ...draft, id });
+    const writes = storage.writes;
+    const retry = await session.importEntries(
+      values.map((value) => ({ draft: value })),
+      result.revision,
+    );
+    expect(retry).toMatchObject({
+      added: 0,
+      updated: 0,
+      skipped: 6,
+      entryIds: [],
+    });
+    expect(storage.writes).toBe(writes);
+  }, 30_000);
+
+  it('requires an explicit matching target for conflict updates, preserves history, and allows keeping both', async () => {
+    const { session, storage } = await created();
+    const id = await session.saveEntry(draft);
+    const otherId = await session.saveEntry({
+      ...draft,
+      username: 'different-account',
+    });
+    const next = {
+      ...draft,
+      password: '  new-password  ',
+      notes: 'reviewed metadata',
+    };
+    const preview = session.previewImport([next]);
+    const before = storage.record?.bytes.slice();
+    await expect(
+      session.importEntries(
+        [{ draft: next, action: 'update' }],
+        preview.revision,
+      ),
+    ).rejects.toThrow('vault-invalid');
+    await expect(
+      session.importEntries(
+        [{ draft: next, action: 'update', targetId: otherId }],
+        preview.revision,
+      ),
+    ).rejects.toThrow('vault-invalid');
+    await expect(
+      session.importEntries(
+        [{ draft, action: 'update', targetId: otherId }],
+        preview.revision,
+      ),
+    ).rejects.toThrow('vault-invalid');
+    expect(storage.record?.bytes).toEqual(before);
+    const updated = await session.importEntries(
+      [{ draft: next, action: 'update', targetId: id }],
+      preview.revision,
+    );
+    expect(updated).toMatchObject({
+      added: 0,
+      updated: 1,
+      skipped: 0,
+      entryIds: [id],
+    });
+    expect(session.readEntry(id).password).toBe(next.password);
+    expect(session.history(id)[0].draft.password).toBe(draft.password);
+    const kept = await session.importEntries(
+      [{ draft, action: 'new' }],
+      updated.revision,
+    );
+    expect(kept).toMatchObject({ added: 1, updated: 0, skipped: 0 });
+    expect(session.getSnapshot().entries).toHaveLength(3);
+    session.lock();
+    await session.unlock(master);
+    expect(session.history(id)[0].draft.password).toBe(draft.password);
+    expect(session.readEntry(kept.entryIds[0]).password).toBe(draft.password);
+  }, 30_000);
+
+  it('validates the whole batch and aggregate limits before any encrypted mutation', async () => {
+    const { session, storage } = await created();
+    const revision = session.getSnapshot().revision as string;
+    const load = vi.spyOn(Kdbx, 'load');
+    const before = storage.record?.bytes.slice();
+    await expect(
+      session.importEntries(
+        [{ draft }, { draft: { ...draft, url: 'javascript:invalid' } }],
+        revision,
+      ),
+    ).rejects.toThrow('vault-invalid');
+    await expect(
+      session.importEntries(
+        [{ draft: { ...draft, id: 'unreviewed-target' } }],
+        revision,
+      ),
+    ).rejects.toThrow('vault-invalid');
+    await expect(
+      session.importEntries(
+        Array.from({ length: VAULT_IMPORT_MAX_ENTRIES + 1 }, () => ({ draft })),
+        revision,
+      ),
+    ).rejects.toThrow('vault-size');
+    const heavy = { ...draft, notes: '界'.repeat(60_000) };
+    await expect(
+      session.importEntries(
+        Array.from({ length: 25 }, () => ({ draft: heavy })),
+        revision,
+      ),
+    ).rejects.toThrow('vault-size');
+    expect(load).not.toHaveBeenCalled();
+    expect(storage.record?.bytes).toEqual(before);
+    expect(storage.writes).toBe(1);
+    expect(session.getSnapshot().entries).toEqual([]);
+  }, 30_000);
+
+  it('keeps both the visible and persisted vault unchanged when a batch save fails', async () => {
+    const { session, storage } = await created();
+    const id = await session.saveEntry(draft);
+    const preview = session.previewImport([
+      { ...draft, password: 'changed-secret' },
+      { ...draft, username: 'new-account' },
+    ]);
+    const snapshot = session.getSnapshot();
+    const before = storage.record?.bytes.slice();
+    const write = vi
+      .spyOn(storage, 'write')
+      .mockRejectedValueOnce(
+        new Error('synthetic write failure contains no credentials'),
+      );
+    await expect(
+      session.importEntries(
+        [
+          {
+            draft: { ...draft, password: 'changed-secret' },
+            action: 'update',
+            targetId: id,
+          },
+          { draft: { ...draft, username: 'new-account' } },
+        ],
+        preview.revision,
+      ),
+    ).rejects.toThrow('vault-invalid');
+    expect(write).toHaveBeenCalledOnce();
+    expect(session.getSnapshot()).toBe(snapshot);
+    expect(session.readEntry(id).password).toBe(draft.password);
+    expect(session.history(id)).toEqual([]);
+    expect(storage.record?.bytes).toEqual(before);
+  }, 30_000);
+
+  it('rejects changed previews and cross-tab revisions, and prevents two clicks from saving twice', async () => {
+    const { session, storage } = await created();
+    const preview = session.previewImport([draft]);
+    const items = [{ draft }];
+    const saved = await Promise.allSettled([
+      session.importEntries(items, preview.revision),
+      session.importEntries(items, preview.revision),
+    ]);
+    expect(
+      saved.filter((result) => result.status === 'fulfilled'),
+    ).toHaveLength(1);
+    expect(saved.find((result) => result.status === 'rejected')).toMatchObject({
+      reason: new Error('vault-stale'),
+    });
+    expect(session.getSnapshot().entries).toHaveLength(1);
+    expect(storage.writes).toBe(2);
+    const second = new VaultSession(storage);
+    await second.initialize();
+    await second.unlock(master);
+    const stale = second.previewImport([draft]);
+    await session.saveEntry({ ...draft, username: 'other-tab-account' });
+    const before = storage.record?.bytes.slice();
+    // Even an all-duplicate no-op must reject a stale durable revision.
+    await expect(second.importEntries(items, stale.revision)).rejects.toThrow(
+      'vault-stale',
+    );
+    expect(storage.record?.bytes).toEqual(before);
+    expect(second.getSnapshot().entries).toHaveLength(1);
+  }, 30_000);
+
+  it('rejects lock during batch encryption without writing or restoring unlocked state', async () => {
+    const { session, storage } = await created();
+    const reached = deferred();
+    const resume = deferred();
+    const originalSave = Kdbx.prototype.save;
+    vi.spyOn(Kdbx.prototype, 'save').mockImplementationOnce(async function (
+      this: Kdbx,
+    ) {
+      reached.resolve();
+      await resume.promise;
+      return originalSave.call(this);
+    });
+    const revision = session.previewImport([draft]).revision;
+    const pending = session.importEntries([{ draft }], revision);
+    const rejected = expect(pending).rejects.toThrow('vault-locked');
+    await reached.promise;
+    session.lock();
+    resume.resolve();
+    await rejected;
+    expect(storage.writes).toBe(1);
+    expect(session.getSnapshot()).toMatchObject({
+      status: 'locked',
+      entries: [],
+    });
+    expect(() => session.previewImport([draft])).toThrow('vault-locked');
+  }, 30_000);
+
+  it('rejects the durable CAS when another tab writes after batch validation and before encryption finishes', async () => {
+    const { session: first, storage } = await created();
+    const second = new VaultSession(storage);
+    await second.initialize();
+    await second.unlock(master);
+    const revision = second.previewImport([draft]).revision;
+    const snapshot = second.getSnapshot();
+    const reached = deferred();
+    const resume = deferred();
+    const originalSave = Kdbx.prototype.save;
+    vi.spyOn(Kdbx.prototype, 'save').mockImplementationOnce(async function (
+      this: Kdbx,
+    ) {
+      reached.resolve();
+      await resume.promise;
+      return originalSave.call(this);
+    });
+    const pending = second.importEntries([{ draft }], revision);
+    const rejected = expect(pending).rejects.toThrow('vault-stale');
+    await reached.promise;
+    const winner = await first.saveEntry({ ...draft, username: 'winning-tab' });
+    const before = storage.record?.bytes.slice();
+    resume.resolve();
+    await rejected;
+    expect(storage.writes).toBe(2);
+    expect(storage.record?.bytes).toEqual(before);
+    expect(second.getSnapshot()).toBe(snapshot);
+    second.lock();
+    await second.unlock(master);
+    expect(second.getSnapshot().entries.map((entry) => entry.id)).toEqual([
+      winner,
+    ]);
   }, 30_000);
 
   it('rotates master credentials only after verifying the current password', async () => {

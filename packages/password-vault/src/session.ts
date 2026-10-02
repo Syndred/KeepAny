@@ -3,7 +3,126 @@ import {
   applyDraft, checkBytes, clearCredentials, clearDatabase, configureDatabase, credentials, draftOf, fail,
   findEntry, isTrash, loadDatabase, nextKdbxTime, normalizeDraft, safeError, summaryOf,
 } from './engine';
-import type { VaultEntryDraft, VaultHistoryItem, VaultPersistence, VaultRecord, VaultSnapshot } from './types';
+import type {
+  VaultEntryDraft,
+  VaultHistoryItem,
+  VaultImportItem,
+  VaultImportPreview,
+  VaultImportPreviewRow,
+  VaultImportResult,
+  VaultPersistence,
+  VaultRecord,
+  VaultSnapshot,
+} from './types';
+
+export const VAULT_IMPORT_MAX_ENTRIES = 1_000;
+export const VAULT_IMPORT_MAX_BYTES = 4 * 1024 * 1024;
+const VAULT_MAX_ENTRIES = 10_000;
+
+type ImportMutation = {
+  action: 'new' | 'update';
+  draft: VaultEntryDraft;
+  targetId?: string;
+};
+
+function normalizeImport(items: VaultImportItem[]): VaultImportItem[] {
+  if (!Array.isArray(items)) fail('vault-invalid');
+  if (items.length > VAULT_IMPORT_MAX_ENTRIES) fail('vault-size');
+  let bytes = 0;
+  return items.map((item) => {
+    if (
+      !item ||
+      typeof item !== 'object' ||
+      item.draft?.id !== undefined ||
+      (item.action !== undefined &&
+        !['skip', 'new', 'update'].includes(item.action)) ||
+      (item.action === 'update'
+        ? typeof item.targetId !== 'string' ||
+          !item.targetId ||
+          item.targetId.length > 128
+        : item.targetId !== undefined)
+    )
+      fail('vault-invalid');
+    const draft = normalizeDraft(item.draft);
+    // Bound the entire request before cloning or performing expensive KDF work.
+    bytes += new TextEncoder().encode(JSON.stringify(draft)).byteLength;
+    if (bytes > VAULT_IMPORT_MAX_BYTES) fail('vault-size');
+    return { draft, action: item.action, targetId: item.targetId };
+  });
+}
+
+function importIdentity(draft: VaultEntryDraft): string {
+  // Do not normalize URLs or usernames: visually similar credentials can be distinct.
+  return JSON.stringify([
+    draft.url ? 'url' : 'title',
+    draft.url || draft.title,
+    draft.username,
+  ]);
+}
+
+function planImports(db: Kdbx, items: VaultImportItem[]) {
+  const byIdentity = new Map<string, VaultEntryDraft[]>();
+  const allEntries = [...db.getDefaultGroup().allEntries()];
+  for (const entry of allEntries) {
+    if (isTrash(db, entry)) continue;
+    const value = draftOf(entry);
+    const key = importIdentity(value);
+    const matches = byIdentity.get(key) ?? [];
+    matches.push(value);
+    byIdentity.set(key, matches);
+  }
+  const rows: VaultImportPreviewRow[] = [];
+  const mutations: ImportMutation[] = [];
+  let added = 0;
+  let updated = 0;
+  let skipped = 0;
+  for (const [index, item] of items.entries()) {
+    const key = importIdentity(item.draft);
+    const matches = byIdentity.get(key) ?? [];
+    const target =
+      item.action === 'update'
+        ? matches.find((value) => value.id === item.targetId)
+        : undefined;
+    if (item.action === 'update' && !target) fail('vault-invalid');
+    const duplicate = matches.some(
+      (value) => value.password === item.draft.password,
+    );
+    rows.push({
+      index,
+      status: duplicate ? 'duplicate' : matches.length ? 'conflict' : 'new',
+      existingIds: matches.flatMap((value) => (value.id ? [value.id] : [])),
+    });
+    if (
+      item.action === 'skip' ||
+      duplicate ||
+      (matches.length && item.action === undefined)
+    ) {
+      skipped += 1;
+      continue;
+    }
+    if (item.action === 'update') {
+      if (!target) fail('vault-invalid');
+      mutations.push({
+        action: 'update',
+        draft: item.draft,
+        targetId: item.targetId,
+      });
+      byIdentity.set(
+        key,
+        matches.map((value) =>
+          value === target ? { ...item.draft, id: target.id } : value,
+        ),
+      );
+      updated += 1;
+    } else {
+      mutations.push({ action: 'new', draft: item.draft });
+      byIdentity.set(key, [...matches, item.draft]);
+      added += 1;
+    }
+  }
+  if (allEntries.length + added > VAULT_MAX_ENTRIES) fail('vault-size');
+  return { rows, mutations, added, updated, skipped };
+}
 
 async function cloneCredentials(source: KdbxCredentials): Promise<KdbxCredentials> {
   const result = new KdbxCredentials(null);
@@ -152,6 +271,67 @@ export class VaultSession {
   }
 
   readEntry(id: string): VaultEntryDraft { return draftOf(findEntry(this.unlocked(), id)); }
+
+  previewImport(values: VaultEntryDraft[]): VaultImportPreview {
+    const db = this.unlocked();
+    if (!this.record) fail('vault-missing');
+    if (!Array.isArray(values)) fail('vault-invalid');
+    if (values.length > VAULT_IMPORT_MAX_ENTRIES) fail('vault-size');
+    const items = normalizeImport(values.map((draft) => ({ draft })));
+    return {
+      revision: this.record.revision,
+      rows: planImports(db, items).rows,
+    };
+  }
+
+  async importEntries(
+    values: VaultImportItem[],
+    expectedRevision: string,
+  ): Promise<VaultImportResult> {
+    const items = normalizeImport(values);
+    if (
+      typeof expectedRevision !== 'string' ||
+      !expectedRevision ||
+      expectedRevision.length > 256
+    )
+      fail('vault-invalid');
+    return this.run(async (generation) => {
+      const db = this.unlocked();
+      if (this.record?.revision !== expectedRevision) fail('vault-stale');
+      // A no-op still checks durable state; a stale preview must never report successful import.
+      const stored = await this.storage.read();
+      this.checkGeneration(generation);
+      if (stored?.revision !== expectedRevision) fail('vault-stale');
+      const plan = planImports(db, items);
+      let entryIds: string[] = [];
+      if (plan.mutations.length) {
+        entryIds = await this.mutate(generation, (candidate) =>
+          plan.mutations.map((mutation) => {
+            const entry =
+              mutation.action === 'update'
+                ? findEntry(candidate, mutation.targetId as string)
+                : candidate.createEntry(candidate.getDefaultGroup());
+            if (isTrash(candidate, entry)) fail('vault-invalid');
+            if (mutation.action === 'update') {
+              if (entry.history.length >= 1_000) fail('vault-size');
+              entry.pushHistory();
+            }
+            applyDraft(entry, mutation.draft);
+            return entry.uuid.id;
+          }),
+        );
+      }
+      this.checkGeneration(generation);
+      if (!this.record) fail('vault-missing');
+      return {
+        added: plan.added,
+        updated: plan.updated,
+        skipped: plan.skipped,
+        entryIds,
+        revision: this.record.revision,
+      };
+    });
+  }
 
   async trashEntry(id: string): Promise<void> {
     return this.run((generation) => this.mutate(generation, (candidate) => {
