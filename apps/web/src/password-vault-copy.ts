@@ -1,5 +1,147 @@
 /** Password vault copy kept separate so the shell can merge it into i18next. */
 export const passwordVaultCopy: Record<string, [string, string]> = {
+	pwSmartTitle: ["智能导入", "Smart import"],
+	pwSmartHint: [
+		"粘贴账号密码清单，核对后一次存入密码库。原文和密码只在本机处理。",
+		"Paste a login list, review it, and save it to your vault in one batch. Source text and passwords are processed on this device.",
+	],
+	pwSmartSource: ["账号密码清单", "Login list"],
+	pwSmartPlaceholder: [
+		"网址=https://example.com\n账号=reader@example.com\n密码=你的密码\n\n网址=https://another.example\n账号=另一个账号\n密码=另一个密码",
+		"Website=https://example.com\nUsername=reader@example.com\nPassword=your password\n\nWebsite=https://another.example\nUsername=another account\nPassword=another password",
+	],
+	pwSmartSyntax: [
+		"每个字段一行，每条用空行分隔。同一行多个字段用分号隔开；值含分号、逗号或竖线时用双引号包裹。也支持 CSV／表格，密码空格原样保留。",
+		"Use one field per line and a blank line between entries. Separate same-line fields with semicolons; quote values containing semicolons, commas, or pipes. CSV and spreadsheet rows are also supported. Password spaces are preserved.",
+	],
+	pwSmartFile: ["或选择 CSV／文本文件", "Or choose a CSV or text file"],
+	pwSmartChooseFile: ["选择文件", "Choose file"],
+	pwSmartNoFile: ["未选择文件", "No file selected"],
+	pwSmartRecognize: ["识别并预览", "Recognize and review"],
+	pwSmartReviewCount: [
+		"已识别 {{count}} 条，请核对账号和密码。",
+		"Recognized {{count}} entries. Check the usernames and passwords.",
+	],
+	pwSmartIssues: ["以下内容需要核对", "Some content needs review"],
+	pwSmartIssueLine: ["第 {{line}} 行", "Line {{line}}"],
+	pwSmartIssuesHint: [
+		"未识别的内容尚未导入。可修改原文后重新识别；下方完整条目可先确认。",
+		"Unrecognized content has not been imported. Edit the source and try again, or save the complete entries below first.",
+	],
+	pwSmartIssueUnknown: ["格式不明确", "Unclear format"],
+	"pwSmartIssue_unknown-field": ["有未识别的字段", "Unknown field"],
+	"pwSmartIssue_unrecognized-line": [
+		"无法确定这行的字段",
+		"Could not identify this line",
+	],
+	"pwSmartIssue_ambiguous-line": [
+		"字段分隔不明确",
+		"Ambiguous field separators",
+	],
+	"pwSmartIssue_duplicate-field": [
+		"同一条目有重复字段",
+		"Repeated field in the same entry",
+	],
+	"pwSmartIssue_missing-password": [
+		"缺少明确的密码字段",
+		"An explicit password field is missing",
+	],
+	"pwSmartIssue_missing-identity": [
+		"缺少网站或标题",
+		"Website or title is missing",
+	],
+	"pwSmartIssue_invalid-field": [
+		"字段内容需要修正",
+		"A field needs correction",
+	],
+	"pwSmartIssue_invalid-url": ["网址无法使用", "Website URL is invalid"],
+	"pwSmartIssue_invalid-csv": [
+		"表格列或引号格式不正确",
+		"Invalid table columns or quoting",
+	],
+	"pwSmartIssue_unsupported-type": [
+		"此条目类型暂不支持",
+		"This entry type is not supported",
+	],
+	pwSmartAiHint: [
+		"AI 可整理网站名称。只发送下方的网站域名和条目编号，账号、密码、备注及原文不会发送。",
+		"AI can organize website names. Only the domains and entry numbers listed below are sent. Usernames, passwords, notes, and source text stay on this device.",
+	],
+	pwSmartAiPreview: [
+		"查看将发送的 {{count}} 条网站信息",
+		"View the {{count}} website details to be sent",
+	],
+	pwSmartAiOrganize: [
+		"用 {{model}} 整理网站名称",
+		"Organize website names with {{model}}",
+	],
+	pwSmartAiOptional: [
+		"也可以直接核对并保存。要使用 AI，请先启用模型。",
+		"You can review and save directly. To use AI, activate your model first.",
+	],
+	pwSmartAiDone: [
+		"网站名称已整理，请核对后确认。",
+		"Website names organized. Review before saving.",
+	],
+	pwSmartAiBusy: ["正在整理网站名称…", "Organizing website names…"],
+	pwSmartAiChanged: [
+		"AI 配置已变化，整理已取消。原候选保留。",
+		"AI settings changed. Organization was cancelled; original entries are kept.",
+	],
+	pwSmartAiFailed: [
+		"AI 整理未完成，原候选保留。你仍可直接核对并保存。",
+		"AI organization did not finish. Original entries are kept; you can still review and save them.",
+	],
+	pwSmartSelectNew: ["全选新增条目", "Select all new entries"],
+	pwSmartRow: ["条目 {{count}}", "Entry {{count}}"],
+	pwSmartStatus_new: ["可新增", "New"],
+	pwSmartStatus_duplicate: ["已存在，跳过", "Already exists · skip"],
+	pwSmartStatus_conflict: ["密码不同，待选择", "Different password · choose"],
+	pwSmartStatus_invalid: ["待修正", "Needs correction"],
+	pwSmartConflictHint: [
+		"该网站和账号已有不同密码",
+		"This website and username have a different password",
+	],
+	pwSmartKeepExisting: [
+		"保留原条目，跳过这条",
+		"Keep existing entry and skip this one",
+	],
+	pwSmartCreateSeparate: ["作为独立条目新增", "Add as a separate entry"],
+	pwSmartUpdateExisting: [
+		"更新“{{name}}”，保留历史",
+		"Update “{{name}}” and keep history",
+	],
+	pwSmartInvalidRows: [
+		"请修正条目的标题、密码或网址后再确认。",
+		"Correct the entries’ titles, passwords, or URLs before saving.",
+	],
+	pwSmartConfirm: [
+		"确认导入 {{count}} 条",
+		"Confirm import of {{count}} entries",
+	],
+	pwSmartEditSource: ["修改原文", "Edit source"],
+	pwSmartNoRows: [
+		"尚未识别到完整条目，请检查字段和分隔。",
+		"No complete entries recognized. Check the fields and separators.",
+	],
+	pwSmartRemaining: [
+		"还有未识别的内容。原文暂留当前页面，关闭或锁库后清除。",
+		"Some content is still unrecognized. The source stays in this page until you close it or lock the vault.",
+	],
+	pwSmartContinue: ["继续核对原文", "Continue reviewing source"],
+	pwSmartSaved: [
+		"已保存：新增 {{added}} 条，更新 {{updated}} 条，跳过 {{skipped}} 条。",
+		"Saved: {{added}} added, {{updated}} updated, {{skipped}} skipped.",
+	],
+	pwSmartLimit: [
+		"每批最多 200 条，原文不超过 2 MiB。请分批导入。",
+		"Import up to 200 entries and 2 MiB of source text per batch. Split larger lists.",
+	],
+	pwSmartFailed: [
+		"导入未完成，原密码库保持不变。请检查内容后重试。",
+		"Import did not finish. Your vault is unchanged. Check the entries and retry.",
+	],
+	pwSmartLockClose: ["锁定并关闭", "Lock and close"],
 	pwVaultTitle: ["密码库", "Password vault"],
 	pwVaultSubtitle: [
 		"密码只保存在本机加密库中。",

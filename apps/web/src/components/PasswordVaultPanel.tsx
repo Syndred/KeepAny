@@ -1,12 +1,10 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { useTranslation } from "react-i18next";
 import {
 	Check,
 	Copy,
 	Download,
+	ExternalLink,
 	Eye,
 	EyeOff,
-	ExternalLink,
 	History,
 	KeyRound,
 	Link2,
@@ -20,19 +18,22 @@ import {
 	WandSparkles,
 	X,
 } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import type { Asset } from "../../../../packages/domain/src";
+import {
+	type PasswordVaultEntryDraft,
+	type PasswordVaultEntrySummary,
+	usePasswordVault,
+} from "./PasswordVaultProvider";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 import { Dialog } from "./ui/dialog";
 import { Select, SelectOption } from "./ui/select";
 import { TaskCard } from "./ui/task-card";
 import { TextLink } from "./ui/text-link";
-import {
-	usePasswordVault,
-	type PasswordVaultEntryDraft,
-	type PasswordVaultEntrySummary,
-} from "./PasswordVaultProvider";
 import "../password-vault.css";
+import { PasswordSmartImportDialog } from "./PasswordSmartImportDialog";
 
 type PasswordVaultPanelProps = {
 	assets: Asset[];
@@ -128,6 +129,7 @@ export function PasswordVaultPanel({
 	>([]);
 	const [historyReveal, setHistoryReveal] = useState<number | null>(null);
 	const [importOpen, setImportOpen] = useState(false);
+	const [smartImportOpen, setSmartImportOpen] = useState(false);
 	const [importFile, setImportFile] = useState<File | null>(null);
 	const [importPassword, setImportPassword] = useState("");
 	const [changeMasterOpen, setChangeMasterOpen] = useState(false);
@@ -168,6 +170,7 @@ export function PasswordVaultPanel({
 		setManualCopy(null);
 		setImportPassword("");
 		setImportOpen(false);
+		setSmartImportOpen(false);
 		setChangeMasterOpen(false);
 		setBusy(false);
 		setCurrentMaster("");
@@ -535,6 +538,12 @@ export function PasswordVaultPanel({
 
 	return (
 		<section className="password-vault-panel card padded">
+			{smartImportOpen && snapshot.status === "unlocked" && (
+				<PasswordSmartImportDialog
+					onClose={() => setSmartImportOpen(false)}
+					onSaved={(message) => notify?.(message)}
+				/>
+			)}
 			<header className="password-vault-header card-header">
 				<div>
 					<p className="password-vault-eyebrow">
@@ -628,6 +637,13 @@ export function PasswordVaultPanel({
 								onClick={() => setImportOpen(true)}
 							>
 								<Upload size={15} /> {t("pwVaultImport")}
+							</Button>
+							<Button
+								size="small"
+								disabled={busy}
+								onClick={() => setSmartImportOpen(true)}
+							>
+								<WandSparkles size={15} /> {t("pwSmartTitle")}
 							</Button>
 							<Button
 								size="small"
@@ -1316,16 +1332,30 @@ function EntryEditor({
 						{t("pwVaultPasswordField")}
 					</label>
 					<div className="password-vault-password-input">
-						<input
-							id="password-vault-entry-password"
-							type={showPassword ? "text" : "password"}
-							value={draft.password}
-							onChange={(event) => update("password", event.target.value)}
-							disabled={busy}
-							autoComplete="new-password"
-							placeholder={t("pwVaultPasswordPlaceholder")}
-							required
-						/>
+						{/[\r\n]/.test(draft.password) ? (
+							<textarea
+								id="password-vault-entry-password"
+								value={showPassword ? draft.password : "••••••••"}
+								readOnly={!showPassword}
+								onChange={(event) => update("password", event.target.value)}
+								disabled={busy}
+								autoComplete="off"
+								spellCheck={false}
+								rows={3}
+								required
+							/>
+						) : (
+							<input
+								id="password-vault-entry-password"
+								type={showPassword ? "text" : "password"}
+								value={draft.password}
+								onChange={(event) => update("password", event.target.value)}
+								disabled={busy}
+								autoComplete="new-password"
+								placeholder={t("pwVaultPasswordPlaceholder")}
+								required
+							/>
+						)}
 						<Button
 							type="button"
 							size="icon"
