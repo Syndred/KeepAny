@@ -1,0 +1,123 @@
+{
+  "baseCommit": "77c7b4246b898e3764e2dc6f5a8f4cb3808238ba",
+  "coreCommit": "c8428049e73159450880a2b710227218c4fe361f",
+  "entry": "index-O3LFaPiB.js",
+  "currentFiles": 93,
+  "retainedFiles": 1251,
+  "buildIncludingTypecheck": "passed",
+  "targetedLint": {
+    "errors": 0,
+    "warnings": 0,
+    "files": 13
+  },
+  "diffCheck": "passed",
+  "unitTests": {
+    "files": 4,
+    "passed": 64,
+    "durationSeconds": 29.555,
+    "coverage": [
+      "VaultSession batch writes and existing KDBX operations",
+      "Local CSV/TSV/text parsing and AI field allowlist",
+      "Shared model connection leases and key handling",
+      "Encrypted vault local persistence"
+    ],
+    "failed": 0,
+    "pending": 0,
+    "report": "unit-tests.json"
+  },
+  "fixedPackage": {
+    "final": {
+      "startTime": "2026-10-02T04:30:56.845Z",
+      "duration": 68520.484,
+      "expected": 16,
+      "skipped": 0,
+      "unexpected": 0,
+      "flaky": 0
+    },
+    "uniqueEffectivePassed": 16,
+    "initialPackage": {
+      "main": {
+        "startTime": "2026-10-02T04:25:09.859Z",
+        "duration": 59877.026,
+        "expected": 15,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      },
+      "filePicker": {
+        "startTime": "2026-10-02T04:27:59.670Z",
+        "duration": 4299.428,
+        "expected": 1,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      },
+      "uniqueEffectivePassed": 16,
+      "note": "Main 15 cases passed on index-CQaqBNLI.js. Added one file entry case afterward and ran only that new case. The first attempt was cancelled to fix the new test script empty-vault import button locator; its incomplete results are not counted."
+    },
+    "note": "After the final read-only review found dotted local/private suffixes were still allowed, added explicit local suffix filtering and a regression, rebuilt the source commit and reran all 16 against the exact final bundle. Initial package results are historical and are not added to final pass count."
+  },
+  "coverage": [
+    "zh-CN/en 390/1280 local paste review, exact secrets, optional host/id-only AI, bulk receipt and refresh",
+    "Actual downloaded KDBX decrypted read-only and restored through UI in a clean browser",
+    "Duplicate default skip, explicit update history, unchecked update target omitted, identity edits clear changed choices",
+    "Unrecognized source review retained in memory after saving complete entries; close/lock clears it",
+    "AI failure, delayed reply, cancellation, double event and cross-tab revision boundaries",
+    "Multiline secret masked in import and saved-entry editors, preserved after metadata edits and in KDBX history",
+    "Invalid UTF-8 rejects without replacement, Chrome CSV special characters, TSV preview and file reselection",
+    "Existing vault rotation, history, recycle bin, KDBX and actual full .ka1 backup/restore",
+    "Ordinary AI account import remains separate and continues working"
+  ],
+  "review": {
+    "core": "Independent read-only review complete; no unresolved findings. Restored original backend formatting with identical TypeScript AST.",
+    "parserAndUi": "Independent read-only review confirmed four followup fixes: related conflict selection reset; skipped update has no targetId; source review survives issues; fatal UTF8 decode. Multiline editors inspected."
+  },
+  "nativeEgo": {
+    "testOrigin": "http://127.0.0.1:4198",
+    "syntheticOnly": true,
+    "localImportReceipt": {
+      "added": 2,
+      "updated": 0,
+      "skipped": 0
+    },
+    "reloadLocked": true,
+    "unlockReadbackEntries": 2,
+    "testTabClosed": true,
+    "testServerStopped": true,
+    "originalOrigin": "http://127.0.0.1:4180",
+    "originalUpdateAppClicked": true,
+    "originalVaultRemainedLocked": true,
+    "note": "Native accessibility/UI verification. Original vault was not unlocked or imported. Exact loaded script in original Ego was not extracted; package byte equality and clean fixed-package browser tests are separate evidence."
+  },
+  "provider": {
+    "syntheticService": "passed",
+    "realDeepSeekThisChange": "not called",
+    "note": "Existing model client reused. Do not count host-only synthetic response verification as a real-provider result."
+  },
+  "knownBoundaries": [
+    "Explicit labeled text or known login CSV fields; ambiguous text reports line issues without guessing",
+    "200 import candidates and 2 MiB source, 40 AI hosts per request",
+    "Vault imports are local KDBX only; no ordinary candidate persistence, assets, MCP or asset sync",
+    "Common private/local suffixes are filtered locally without DNS lookups; this does not classify every enterprise private hostname.",
+    "390px coverage is desktop Chromium, not a physical phone",
+    "No internet deployment",
+    "Lock interrupts discard UI and late results; a storage write already begun may finish durably and requires unlock readback."
+  ],
+  "cleanup": {
+    "unusedUncommittedBuildFilesMovedToRecoverableTrash": 43,
+    "original4180Preserved": true,
+    "isolatedTestDownloadsAndRunnerOutput": "moved to recoverable Trash",
+    "temporaryLogsAndReports": "removed after public evidence copy",
+    "test4194Stopped": true
+  },
+  "sourceCommit": "0641edb60e2238c9e0b17d07293cf7082f507386",
+  "packageCommit": "2b3729b1d4fe289d98953d7e64d21a1da3c5f120",
+  "ci": {
+    "runNumber": 64,
+    "runId": 36965024124,
+    "url": "https://github.com/Syndred/KeepAny/actions/runs/36965024124",
+    "status": "in_progress",
+    "readVia": "authenticated native Ego GitHub Actions page",
+    "note": "GitHub CLI lacked auth; API and connector could not access the private repository. Native browser confirmed exact package commit/run in progress, not CI success."
+  }
+}
