@@ -1,0 +1,20 @@
+{
+  "sourceCommit": "04b7e72",
+  "entry": "index-BSM9Qbof.js",
+  "currentFiles": 91,
+  "retainedFiles": 1174,
+  "graphRegression": {
+    "startTime": "2026-10-02T01:01:56.644Z",
+    "duration": 40894.922000000006,
+    "expected": 4,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "originalEgo": "ego-metrics.json",
+  "buildIncludingTypecheck": "passed",
+  "changedFileLint": "passed with no diagnostics",
+  "diffCheck": "passed",
+  "ci": "not inspected",
+  "deployment": "local 4180 only"
+}

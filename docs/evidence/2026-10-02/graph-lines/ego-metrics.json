@@ -1,0 +1,29 @@
+{
+  "edges": [
+    {
+      "markerEnd": null,
+      "markerStart": null,
+      "path": "M 94.99999719034612,239.00002992002274L 274.9999772498666,141.79688209546146"
+    },
+    {
+      "markerEnd": null,
+      "markerStart": null,
+      "path": "M 275.00001657261623,239.00002992002274L 274.9999772498666,141.79688209546146"
+    },
+    {
+      "markerEnd": null,
+      "markerStart": null,
+      "path": "M 455.00001657261623,239.00002992002274L 274.9999772498666,141.79688209546146"
+    }
+  ],
+  "markerDefinitions": 0,
+  "nodes": 4,
+  "pageFits": true,
+  "scripts": [
+    "http://127.0.0.1:4180/assets/index-BSM9Qbof.js"
+  ],
+  "viewport": [
+    1218,
+    808
+  ]
+}
