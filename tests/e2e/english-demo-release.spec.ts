@@ -9,6 +9,10 @@ const evidence = process.env.KEEPANY_EVIDENCE_DIR ?? "docs/evidence/2026-10-01/e
 mkdirSync(evidence, { recursive: true });
 
 async function englishOnly(page: Page) {
+	const nativeLinks = await page.locator("a[href]").evaluateAll(links => links
+		.filter(link => link.getClientRects().length > 0 && ["rgb(0, 0, 238)", "rgb(85, 26, 139)", "rgb(0, 0, 255)"].includes(getComputedStyle(link).color))
+		.map(link => link.textContent));
+	expect(nativeLinks, "Visible links use the application theme").toEqual([]);
 	// Inspect rendered copy and form/accessibility text, including menus and placeholders.
 	const text = await page.locator("body").evaluate(body => [
 		(body as HTMLElement).innerText,

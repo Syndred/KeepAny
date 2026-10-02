@@ -7,7 +7,7 @@
 .account-facts-heading h2 { margin: 0; }
 .account-facts-card dl { margin: 0; }
 .account-facts-card dl > div, .account-links-card li { display: grid; grid-template-columns: minmax(110px, 30%) minmax(0, 1fr); gap: 10px; align-items: baseline; padding: 9px 0; border-top: 1px solid var(--border, #d6d9dc); }
-.account-facts-card dt, .account-links-card li span { color: var(--muted, #5b6370); }
+.account-facts-card dt, .account-links-card li > span { color: var(--muted, #5b6370); }
 .account-facts-card dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
 .account-links-card ul { margin: 0; padding: 0; list-style: none; }
 .account-links-card li a { overflow-wrap: anywhere; }

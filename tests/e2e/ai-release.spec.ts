@@ -153,6 +153,9 @@ for (const language of ["en", "zh-CN"] as const) {
 				);
 				await expect(subscription.locator("..")).toContainText("12.50");
 				const dialog = await openAssistant(page, copy);
+				for (const link of await dialog.getByRole("link").all()) {
+					await expect(link).toHaveCSS("color", "rgb(23, 36, 58)");
+				}
 				await dialog
 					.getByRole("checkbox", { name: subscriptionName, exact: true })
 					.check();
@@ -213,6 +216,10 @@ for (const language of ["en", "zh-CN"] as const) {
 					.locator(".ai-local-results")
 					.getByRole("link", { name: subscriptionName, exact: true });
 				await expect(result).toHaveCount(1);
+				await expect(result).toHaveCSS("color", "rgb(23, 36, 58)");
+				await result.hover();
+				await expect(result).toHaveCSS("color", "rgb(36, 107, 80)");
+				await page.mouse.move(0, 0);
 				await expect(result).toHaveAttribute(
 					"href",
 					subscriptionHref as string,
@@ -220,6 +227,7 @@ for (const language of ["en", "zh-CN"] as const) {
 				await expect(dialog.locator(".ai-local-results")).toContainText(
 					"12.50",
 				);
+				await dialog.locator(".ai-local-results").screenshot({ path: `${evidence}/ai-search-links-${language}-${width}.png` });
 				await result.click();
 				await expect(dialog).toBeHidden();
 				await expect(page).toHaveURL(new RegExp(`${subscriptionHref}$`));
@@ -303,6 +311,8 @@ for (const language of ["en", "zh-CN"] as const) {
 					exact: true,
 				});
 				await expect(saved).toBeVisible();
+				await page.mouse.move(0, 0);
+				await expect(saved).toHaveCSS("color", "rgb(23, 36, 58)");
 				const taskHref = await saved.getAttribute("href");
 				expect(taskHref).toBe("/tasks");
 				await reminderDialog

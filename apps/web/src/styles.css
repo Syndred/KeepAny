@@ -407,7 +407,6 @@ p { line-height: 1.5; }
 .relation-filter { margin: 0 12px 12px; }
 .relation-row { align-items: flex-start; }
 .relation-row .relation-info { flex: 1; min-width: 0; }
-.relation-row .relation-info a { color: inherit; }
 .relation-row .relation-info small { margin-top: 3px; }
 .relation-row .button { flex: none; }
 .task-filters { flex-wrap: wrap; margin: 0 0 14px; border: 0; padding: 0; }

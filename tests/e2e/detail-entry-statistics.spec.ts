@@ -162,6 +162,13 @@ for (const locale of ["zh-CN", "en-US"]) {
 				const row = page.locator(".asset-backlinks-card tr").filter({ hasText: "Live review" });
 				if (await page.locator(".asset-backlinks-card").getAttribute("open") === null) await page.locator(".asset-backlinks-card > summary").click();
 				await expect(page.locator(".asset-backlinks-card tr").filter({ hasText: "Deleted review" })).toHaveCount(0);
+				for (const link of await row.getByRole("link").all()) {
+					await expect(link).toHaveCSS("color", "rgb(23, 36, 58)");
+					await link.hover();
+					await expect(link).toHaveCSS("color", "rgb(36, 107, 80)");
+					await page.mouse.move(0, 0);
+				}
+				await row.screenshot({ path: test.info().outputPath(`backlink-links-${locale}-${width}.png`) });
 				await row.getByRole("button", { name: text.verify, exact: true }).click();
 				await selectChoice(row.getByRole("combobox"), "indexed");
 				await row.getByRole("button", { name: text.save, exact: true }).click();

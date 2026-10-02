@@ -211,9 +211,9 @@ function SubmissionRow({ submission }: { submission: Submission }) {
 	return (
 		<tr className={editing ? "backlink-row-editing" : undefined}>
 			<td>
-				{editing ? <><strong className="backlink-edit-name">{submission.name}</strong><input className="field" disabled={busy} aria-label={`${submission.name} ${t("name")}`} value={name} onChange={(event) => { setName(event.target.value); setError(""); }} /><input className="field" disabled={busy} type="url" aria-label={`${submission.name} ${t("url")}`} value={url} onChange={(event) => { setUrl(event.target.value); setError(""); }} /></> : <a href={submission.url} target="_blank" rel="noopener noreferrer">
-					{submission.name}
-				</a>}
+				{editing ? <><strong className="backlink-edit-name">{submission.name}</strong><input className="field" disabled={busy} aria-label={`${submission.name} ${t("name")}`} value={name} onChange={(event) => { setName(event.target.value); setError(""); }} /><input className="field" disabled={busy} type="url" aria-label={`${submission.name} ${t("url")}`} value={url} onChange={(event) => { setUrl(event.target.value); setError(""); }} /></> : <TextLink href={submission.url} target="_blank" rel="noopener noreferrer">
+					<span>{submission.name}</span>
+				</TextLink>}
 				{submission.externalLink && <small>{t("extImportedSource")} · {submission.externalLink.profileId}</small>}
 				{conflict && <small className="field-error" role="alert">{t("assetStale")}</small>}
 			</td>
@@ -247,7 +247,7 @@ function SubmissionRow({ submission }: { submission: Submission }) {
 					aria-label={`${submission.name} ${t("evidence")}`}
 					value={evidence}
 					onChange={(e) => { setEvidence(e.target.value); setError(""); }}
-				/> : submission.evidence ? submissionSchema.shape.url.safeParse(submission.evidence).success ? <a href={submission.evidence} target="_blank" rel="noopener noreferrer">{submission.evidence}</a> : <span>{submission.evidence}</span> : "—"}
+				/> : submission.evidence ? submissionSchema.shape.url.safeParse(submission.evidence).success ? <TextLink href={submission.evidence} target="_blank" rel="noopener noreferrer"><span>{submission.evidence}</span></TextLink> : <span>{submission.evidence}</span> : "—"}
 				{error && (
 					<small className="field-error" role="alert">
 						{error}
@@ -551,9 +551,9 @@ export function AssetDetail() {
 		return (
 			<main className="page">
 				<PageTitle title={t("noMatches")} />
-				<Link to="/assets/$kind" params={{ kind }}>
+				<TextLink asChild><Link to="/assets/$kind" params={{ kind }}>
 					{t("back")}
-				</Link>
+				</Link></TextLink>
 			</main>
 		);
 	const dueCharge =
@@ -1348,9 +1348,9 @@ export function AssetDetail() {
 							<div>
 								<dt>{t("url")}</dt>
 								<dd>
-									<a href={asset.url} target="_blank" rel="noopener noreferrer">
-										{asset.url}
-									</a>
+									<TextLink href={asset.url} target="_blank" rel="noopener noreferrer">
+										<span>{asset.url}</span>
+									</TextLink>
 								</dd>
 							</div>
 						)}
@@ -1615,13 +1615,13 @@ export function AssetDetail() {
 										return (
 											<div className="list-row relation-row" key={relation.id}>
 												<div className="relation-info">
-													<Link
+													<TextLink asChild><Link
 														to="/assets/$kind/$id"
 																params={{ kind: neighbor.kind, id: neighbor.id }}
 																onClick={(event) => { event.preventDefault(); visitRelation(neighbor); }}
 													>
 														<strong>{neighbor.name}</strong>
-													</Link>
+													</Link></TextLink>
 													<small>
 														{liveById.get(relation.from)?.name} →{" "}
 														{liveById.get(relation.to)?.name} · {relation.label}
@@ -1692,7 +1692,7 @@ export function AssetDetail() {
 					<div><dt>{t("status")}</dt><dd>{t(asset.status)}</dd></div>
 					<div><dt>{t("accountPurpose")}</dt><dd>{asset.description || t("accountNotRecorded")}</dd></div>
 					<div><dt>{t("category")}</dt><dd>{niceCategory(asset.category, t) || t("accountNotRecorded")}</dd></div>
-					{asset.url && <div><dt>{t("url")}</dt><dd><a href={asset.url} target="_blank" rel="noopener noreferrer">{asset.url}</a></dd></div>}
+					{asset.url && <div><dt>{t("url")}</dt><dd><TextLink href={asset.url} target="_blank" rel="noopener noreferrer"><span>{asset.url}</span></TextLink></dd></div>}
 					{asset.contact && <div><dt>{t("contact")}</dt><dd>{asset.contact}</dd></div>}
 				</dl>
 				{asset.tags.length > 0 && <div className="chips">{asset.tags.map((tag) => <span className="chip" key={tag}>{tag}</span>)}</div>}
@@ -1702,7 +1702,7 @@ export function AssetDetail() {
 				<section className="card account-facts-card account-links-card"><h2>{t("accountBindings")}</h2>
 					{relations.length ? <ul>{relations.map((relation) => {
 						const linked = liveById.get(relation.from === asset.id ? relation.to : relation.from);
-						return linked ? <li key={relation.id}><span>{relation.label}</span><Link to="/assets/$kind/$id" params={{ kind: linked.kind, id: linked.id }} onClick={(event) => { event.preventDefault(); visitRelation(linked); }}>{linked.name}</Link></li> : null;
+						return linked ? <li key={relation.id}><span>{relation.label}</span><TextLink asChild><Link to="/assets/$kind/$id" params={{ kind: linked.kind, id: linked.id }} onClick={(event) => { event.preventDefault(); visitRelation(linked); }}><span>{linked.name}</span></Link></TextLink></li> : null;
 					})}</ul> : <p>{t("accountNoBindings")}</p>}
 				</section>
 				<section className="card account-facts-card account-security-card"><h2>{t("accountRecordsSecurity")}</h2><dl>
@@ -1792,7 +1792,7 @@ export function AssetDetail() {
 				<div className="asset-project-materials-body">
 					<div className="card-header"><h2>{t("projectViewMaterials")}</h2><Button size="small" onClick={() => setEdit(true)}>{t("edit")}</Button></div>
 					<div className="asset-project-copy"><strong>{t("projectProductTitle")}</strong><p>{asset.projectTitle || "—"}</p></div>
-					<div className="asset-project-copy"><strong>{t("projectPromoUrl")}</strong><p>{asset.projectPromoUrl && /^https?:\/\//i.test(asset.projectPromoUrl) ? <a href={asset.projectPromoUrl} target="_blank" rel="noopener noreferrer">{asset.projectPromoUrl}</a> : asset.projectPromoUrl || "—"}</p></div>
+					<div className="asset-project-copy"><strong>{t("projectPromoUrl")}</strong><p>{asset.projectPromoUrl && /^https?:\/\//i.test(asset.projectPromoUrl) ? <TextLink href={asset.projectPromoUrl} target="_blank" rel="noopener noreferrer"><span>{asset.projectPromoUrl}</span></TextLink> : asset.projectPromoUrl || "—"}</p></div>
 					<div className="asset-project-copy"><strong>{t("tags")}</strong><p>{asset.tags.join(", ") || "—"}</p></div>
 					<div className="asset-project-copy"><strong>{t("projectMaterialsShort")}</strong><p>{asset.description || "—"}</p></div>
 					<div className="asset-project-copy"><strong>{t("projectMediumDescription")}</strong><p>{asset.projectMediumDescription || "—"}</p></div>

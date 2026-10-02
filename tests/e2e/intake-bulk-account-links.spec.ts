@@ -340,6 +340,23 @@ for (const language of ["zh-CN", "en"] as const) {
 				await expect(
 					facts.locator(`a[href="/assets/account/${emailNodes[0].id}"]`),
 				).toBeVisible();
+				const website = facts.getByRole("link", { name: service("Portal").url, exact: true });
+				const binding = facts.locator(`a[href="/assets/account/${emailNodes[0].id}"]`);
+				for (const link of [website, binding]) {
+					await expect(link).toHaveCSS("color", "rgb(23, 36, 58)");
+					await expect(link.locator("span")).toHaveCSS("color", "rgb(23, 36, 58)");
+					expect(await link.evaluate(element => element.scrollWidth <= element.clientWidth + 1)).toBe(true);
+					await link.hover();
+					await expect(link).toHaveCSS("color", "rgb(36, 107, 80)");
+					await expect(link.locator("span")).toHaveCSS("color", "rgb(36, 107, 80)");
+					await page.mouse.move(0, 0);
+					await link.press("Tab");
+					await page.keyboard.press("Shift+Tab");
+					await expect(link).toBeFocused();
+					await expect(link).toHaveCSS("outline-color", "rgb(36, 107, 80)");
+					await expect(link).toHaveCSS("outline-style", "solid");
+				}
+				await facts.screenshot({ path: `${evidence}/account-links-${language}-${width}.png` });
 				await facts
 					.locator(`a[href="/assets/account/${emailNodes[0].id}"]`)
 					.click();
@@ -351,6 +368,11 @@ for (const language of ["zh-CN", "en"] as const) {
 					path: `${evidence}/shared-email-${language}-${width}.png`,
 					fullPage: true,
 				});
+				await facts.getByRole("link", { name: "Portal", exact: true }).click();
+				await expect(page).toHaveURL(`/assets/account/${service("Portal").id}`);
+				await expect(binding).toHaveCSS("color", "rgb(23, 36, 58)");
+				await checkLayout(page, facts, width);
+				await facts.screenshot({ path: `${evidence}/account-links-return-${language}-${width}.png` });
 				const restoredContext = await browser.newContext({
 					locale: zh ? "zh-CN" : "en-US",
 					viewport: { width, height: 844 },

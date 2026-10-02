@@ -39,6 +39,7 @@ import {
 import { Button } from "./components/ui/button";
 import { Dialog } from "./components/ui/dialog";
 import { Select, SelectOption } from "./components/ui/select";
+import { TextLink } from "./components/ui/text-link";
 import { configureSubscriptionReminder } from "./reminders";
 import { requestSearchLocation } from "./search-location";
 import { useAppContext } from "./view-shared";
@@ -524,9 +525,9 @@ export function AiWorkspaceDialog({
 			</p>
 			{!stored.configured && (
 				<p>
-					<Link to="/settings" hash="assistant" onClick={onClose}>
+					<TextLink asChild><Link to="/settings" hash="assistant" onClick={onClose}>
 						{t("aiConfigure")}
-					</Link>
+					</Link></TextLink>
 				</p>
 			)}
 			{stored.configured && (
@@ -547,9 +548,9 @@ export function AiWorkspaceDialog({
 				<p>
 					{stored.settings?.provider} · {stored.settings?.model}{" "}
 					{!stored.connection && t("aiNeedsConfig")}{" "}
-					<Link to="/settings" hash="assistant" onClick={onClose}>
+					<TextLink asChild><Link to="/settings" hash="assistant" onClick={onClose}>
 						{t("aiConfigure")}
-					</Link>
+					</Link></TextLink>
 				</p>
 			) : (
 				<div className="form-grid">
@@ -677,15 +678,15 @@ export function AiWorkspaceDialog({
 					{searchResults.results.map((result) => (
 						<div key={result.id}>
 							{result.asset ? (
-								<Link
+								<TextLink asChild><Link
 									to="/assets/$kind/$id"
 									params={{ kind: result.asset.kind, id: result.id }}
 									onClick={onClose}
 								>
-									{result.title}
-								</Link>
+									<span>{result.title}</span>
+								</Link></TextLink>
 							) : (
-								<Link
+								<TextLink asChild><Link
 									to={result.task ? "/tasks" : "/finance"}
 									hash={`${result.task ? "task-" : "finance-entry-"}${result.id}`}
 									onClick={() => {
@@ -695,8 +696,8 @@ export function AiWorkspaceDialog({
 										onClose();
 									}}
 								>
-									{result.title}
-								</Link>
+									<span>{result.title}</span>
+								</Link></TextLink>
 							)}
 							{result.asset?.dueDate && <small>{result.asset.dueDate}</small>}
 						</div>
@@ -925,9 +926,9 @@ export function AiWorkspaceDialog({
 							</>
 						) : (
 							<>
-								<Link to="/tasks" onClick={onClose}>
+								<TextLink asChild><Link to="/tasks" onClick={onClose}>
 									{t("aiActionSaved")}
-								</Link>
+								</Link></TextLink>
 								{savedTask && (
 									<Button disabled={saving} onClick={() => void undo()}>
 										{t("aiUndoAction")}
