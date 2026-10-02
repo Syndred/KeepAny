@@ -122,7 +122,7 @@
 .asset-project-card:focus-visible,
 .asset-account-card:focus-visible,
 .asset-library-card:focus-visible {
-	outline: 3px solid var(--green);
+	outline: 3px solid var(--accent);
 	outline-offset: 4px;
 }
 .asset-project-cover {

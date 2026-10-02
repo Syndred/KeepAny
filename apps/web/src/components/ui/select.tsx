@@ -241,8 +241,8 @@ export function Select({
 										disabled={option.disabled}
 										data-value={option.value}
 									>
-										<SelectPrimitive.ItemText className="themed-select-item-text">
-											{option.children}
+										<SelectPrimitive.ItemText asChild>
+											<span className="themed-select-item-text">{option.children}</span>
 										</SelectPrimitive.ItemText>
 										{option.value === "" && value === "" ? (
 											<span

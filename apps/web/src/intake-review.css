@@ -365,7 +365,7 @@
 	min-height: 18px;
 	padding: 0;
 	margin: 0;
-	accent-color: var(--green);
+	accent-color: var(--accent);
 }
 .intake-review-identity {
 	font-size: 12px;

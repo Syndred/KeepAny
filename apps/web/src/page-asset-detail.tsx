@@ -1249,10 +1249,10 @@ export function AssetDetail() {
 			</div>}
 			<div className="page-header">
 				<div>
-					{kind !== "project" && <Link className="back-link" to="/assets/$kind" params={{ kind: returnKind }} onClick={() => { sessionStorage.removeItem("keepany-relation-return-id"); sessionStorage.removeItem("keepany-relation-return-kind"); }}>
+					{kind !== "project" && <TextLink asChild><Link className="back-link" to="/assets/$kind" params={{ kind: returnKind }} onClick={() => { sessionStorage.removeItem("keepany-relation-return-id"); sessionStorage.removeItem("keepany-relation-return-kind"); }}>
 						<ArrowLeft size={16} />
 						{t("back")}
-					</Link>}
+					</Link></TextLink>}
 					<div className="eyebrow">
 						{t(kind)} · {niceCategory(asset.category, t)}
 					</div>

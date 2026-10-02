@@ -164,8 +164,10 @@ for (const locale of ["zh-CN", "en-US"]) {
 				await expect(page.locator(".asset-backlinks-card tr").filter({ hasText: "Deleted review" })).toHaveCount(0);
 				for (const link of await row.getByRole("link").all()) {
 					await expect(link).toHaveCSS("color", "rgb(23, 36, 58)");
+					await expect(link).toHaveCSS("background-color", "rgb(255, 240, 184)");
 					await link.hover();
-					await expect(link).toHaveCSS("color", "rgb(36, 107, 80)");
+					await expect(link).toHaveCSS("color", "rgb(23, 36, 58)");
+					await expect(link).toHaveCSS("background-color", "rgb(255, 210, 76)");
 					await page.mouse.move(0, 0);
 				}
 				await row.screenshot({ path: test.info().outputPath(`backlink-links-${locale}-${width}.png`) });

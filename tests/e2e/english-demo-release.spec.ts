@@ -13,6 +13,13 @@ async function englishOnly(page: Page) {
 		.filter(link => link.getClientRects().length > 0 && ["rgb(0, 0, 238)", "rgb(85, 26, 139)", "rgb(0, 0, 255)"].includes(getComputedStyle(link).color))
 		.map(link => link.textContent));
 	expect(nativeLinks, "Visible links use the application theme").toEqual([]);
+	for (const link of await page.locator("a.text-link:visible").all()) {
+		await expect(link).toHaveCSS("color", "rgb(23, 36, 58)");
+		expect(await link.evaluate(element => getComputedStyle(element).backgroundColor)).toMatch(/^rgb\(255, (240, 184|210, 76)\)$/);
+	}
+	for (const checkbox of await page.locator('input[type="checkbox"]:visible, input[type="radio"]:visible').all()) {
+		await expect(checkbox).toHaveCSS("accent-color", "rgb(255, 210, 76)");
+	}
 	// Inspect rendered copy and form/accessibility text, including menus and placeholders.
 	const text = await page.locator("body").evaluate(body => [
 		(body as HTMLElement).innerText,
@@ -55,6 +62,16 @@ for (const width of [390, 1280]) {
 				await page.goto(route);
 				await expect(page.getByText(expected, { exact: true }).first()).toBeVisible();
 				await englishOnly(page);
+				if (route === "/intake") {
+					const picker = page.locator(".file-picker-control").first();
+					const choose = picker.getByRole("button", { name: "Choose file", exact: true });
+					await choose.press("Tab");
+					await page.keyboard.press("Shift+Tab");
+					await expect(choose).toBeFocused();
+					await expect(choose).toHaveCSS("outline-color", "rgb(255, 210, 76)");
+					await expect(picker).toHaveCSS("box-shadow", "rgb(255, 210, 76) 0px 0px 0px 3px");
+					await page.screenshot({ path: join(evidence, `en-${width}-file-focus.png`) });
+				}
 				await page.reload();
 				await expect(page.getByText(expected, { exact: true }).first()).toBeVisible();
 				await englishOnly(page);

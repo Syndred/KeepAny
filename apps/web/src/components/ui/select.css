@@ -26,7 +26,7 @@
 
 .themed-select-trigger:hover:not(:disabled),
 .themed-select-trigger[data-state="open"] {
-	background: var(--yellow-soft);
+	background: var(--accent-soft);
 }
 
 .themed-select-trigger:active:not(:disabled) {
@@ -122,7 +122,7 @@
 
 .themed-select-item[data-highlighted] {
 	border-color: var(--line);
-	background: var(--yellow);
+	background: var(--accent);
 }
 
 .themed-select-item[data-disabled] {
@@ -144,7 +144,7 @@
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
-	color: var(--green);
+	color: var(--ink);
 }
 
 .themed-select-scroll-button {

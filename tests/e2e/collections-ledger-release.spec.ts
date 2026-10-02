@@ -146,6 +146,7 @@ for (const variant of [{ locale: "zh-CN", width: 390 }, { locale: "en-US", width
 			await page.goto("/collections");
 			await assertSidebarCategory(page, variant.width);
 			const sections = page.getByRole("region", { name: copy.sidebar, exact: true });
+			await expect(sections.getByRole("checkbox", { name: copy.hideVault, exact: true })).toHaveCSS("accent-color", "rgb(255, 210, 76)");
 			await sections.getByRole("button", { name: copy.moveItem, exact: true }).click();
 			await sections.getByRole("checkbox", { name: copy.hideVault, exact: true }).uncheck();
 			const editor = page.getByRole("region", { name: copy.create, exact: true });

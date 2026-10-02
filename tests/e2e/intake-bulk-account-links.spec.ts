@@ -344,16 +344,20 @@ for (const language of ["zh-CN", "en"] as const) {
 				const binding = facts.locator(`a[href="/assets/account/${emailNodes[0].id}"]`);
 				for (const link of [website, binding]) {
 					await expect(link).toHaveCSS("color", "rgb(23, 36, 58)");
+					await expect(link).toHaveCSS("background-color", "rgb(255, 240, 184)");
+					await expect(link).toHaveCSS("text-decoration-color", "rgb(255, 210, 76)");
 					await expect(link.locator("span")).toHaveCSS("color", "rgb(23, 36, 58)");
 					expect(await link.evaluate(element => element.scrollWidth <= element.clientWidth + 1)).toBe(true);
 					await link.hover();
-					await expect(link).toHaveCSS("color", "rgb(36, 107, 80)");
-					await expect(link.locator("span")).toHaveCSS("color", "rgb(36, 107, 80)");
+					await expect(link).toHaveCSS("background-color", "rgb(255, 210, 76)");
+					await expect(link).toHaveCSS("color", "rgb(23, 36, 58)");
+					await expect(link.locator("span")).toHaveCSS("color", "rgb(23, 36, 58)");
 					await page.mouse.move(0, 0);
 					await link.press("Tab");
 					await page.keyboard.press("Shift+Tab");
 					await expect(link).toBeFocused();
-					await expect(link).toHaveCSS("outline-color", "rgb(36, 107, 80)");
+					await expect(link).toHaveCSS("outline-color", "rgb(255, 210, 76)");
+					await expect(link).toHaveCSS("background-color", "rgb(255, 210, 76)");
 					await expect(link).toHaveCSS("outline-style", "solid");
 				}
 				await facts.screenshot({ path: `${evidence}/account-links-${language}-${width}.png` });

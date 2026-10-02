@@ -1,6 +1,6 @@
 .collections-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr)); gap: 16px; }
 .collections-tile { display: grid; align-content: start; gap: 9px; }
-.collections-tile > svg { color: var(--green); }
+.collections-tile > svg { color: var(--ink); }
 .collections-tile > a { color: var(--ink); font-size: 18px; text-decoration: none; overflow-wrap: anywhere; }
 .collections-tile > a:hover { text-decoration: underline; }
 .collections-tile > small { color: var(--muted); }
@@ -45,7 +45,7 @@
 .collections-nav .nav-drag-handle { grid-area: handle; display: grid; place-items: center; width: 36px; height: 40px; padding: 0; border: 0; border-radius: 8px; background: transparent; color: var(--muted); cursor: grab; touch-action: none; }
 .collections-nav .nav-drag-handle:hover { background: var(--yellow-soft); }
 .collections-nav .nav-drag-handle:active { cursor: grabbing; }
-.collections-nav .nav-visibility-toggle { grid-area: check; width: 16px; height: 16px; margin: 0; accent-color: #3179df; cursor: pointer; }
+.collections-nav .nav-visibility-toggle { grid-area: check; width: 16px; height: 16px; margin: 0; accent-color: var(--accent); cursor: pointer; }
 .collections-nav .nav-visibility-toggle:disabled { opacity: .65; cursor: not-allowed; }
 .collections-nav .sortable-nav-link { grid-area: label; display: inline-flex; align-items: center; gap: 8px; min-width: 0; color: var(--ink); font-weight: 650; text-decoration: none; }
 .collections-nav .sortable-nav-link span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

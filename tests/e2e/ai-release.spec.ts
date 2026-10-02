@@ -217,8 +217,10 @@ for (const language of ["en", "zh-CN"] as const) {
 					.getByRole("link", { name: subscriptionName, exact: true });
 				await expect(result).toHaveCount(1);
 				await expect(result).toHaveCSS("color", "rgb(23, 36, 58)");
+				await expect(result).toHaveCSS("background-color", "rgb(255, 240, 184)");
 				await result.hover();
-				await expect(result).toHaveCSS("color", "rgb(36, 107, 80)");
+				await expect(result).toHaveCSS("color", "rgb(23, 36, 58)");
+				await expect(result).toHaveCSS("background-color", "rgb(255, 210, 76)");
 				await page.mouse.move(0, 0);
 				await expect(result).toHaveAttribute(
 					"href",

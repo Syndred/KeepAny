@@ -6,6 +6,7 @@ import { buildProjectWorkflowTasks, currentProjectWorkflowRound, type ProjectWor
 import { archiveProjectIfWorkflowComplete, saveBatch } from '../../../packages/local-db/src';
 import { Button } from './components/ui/button';
 import { Dialog } from './components/ui/dialog';
+import { TextLink } from './components/ui/text-link';
 import { ProjectWorkflowTaskRow } from './ProjectWorkflowTaskRow';
 import { useAppContext } from './view-shared';
 import './project-workflow.css';
@@ -82,7 +83,7 @@ export function ProjectWorkflowPage({ projectId, flow, embedded = false }: { pro
   const Container = embedded ? 'div' : 'main';
   const HeroTitle = embedded ? 'h2' : 'h1';
   return <Container className={embedded ? 'project-workflow-page project-workflow-embedded' : 'page project-workflow-page'}>
-    {!embedded && <Link className="back-link" to="/assets/$kind/$id" params={{ kind: 'project', id: project.id }}>{t('workflowBackToProject')}</Link>}
+    {!embedded && <TextLink asChild><Link className="back-link" to="/assets/$kind/$id" params={{ kind: 'project', id: project.id }}>{t('workflowBackToProject')}</Link></TextLink>}
     <div className="project-workflow-hero"><div><div className="eyebrow">{t('project')} · {t('workflowTitle')}</div><HeroTitle>{t(kind === 'brand' ? 'workflowBrandTitle' : 'workflowCloseTitle')}</HeroTitle><p>{project.name}</p></div><div className="project-workflow-steps"><span className={creating ? 'current' : ''}>{t('workflowPreview')}</span><span className={!creating && !report ? 'current' : ''}>{t('workflowPlan')}</span><span className={report ? 'current' : ''}>{t('workflowReport')}</span></div></div>
     <div className="project-workflow-layout"><div className="project-workflow-main">
       {creating ? <section className="card project-workflow-card">

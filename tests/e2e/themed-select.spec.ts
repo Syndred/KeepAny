@@ -45,11 +45,14 @@ for (const zh of [true, false]) {
 			await page.getByRole("listbox").press("Escape");
 			await expect(page.getByRole("listbox")).toBeHidden();
 			await expect(language).toBeFocused();
+			await expect(language).toHaveCSS("outline-color", "rgb(255, 210, 76)");
 			await expect(language).toHaveAttribute("data-value", before ?? "");
 			await language.press("ArrowDown");
 			const languagePopup = page.getByRole("listbox");
 			const selectedLanguageOption = languagePopup.getByRole("option", { selected: true });
 			await expect(selectedLanguageOption).toBeFocused();
+			await expect(selectedLanguageOption).toHaveCSS("background-color", "rgb(255, 210, 76)");
+			await expect(selectedLanguageOption.locator(".themed-select-item-indicator")).toHaveCSS("color", "rgb(23, 36, 58)");
 			await selectedLanguageOption.press("End");
 			const englishOption = languagePopup
 				.getByRole("option")
@@ -100,7 +103,10 @@ for (const zh of [true, false]) {
 			await expect(target).toBeFocused();
 			await selectChoice(target, id);
 			const popup = await assertPopup(page, target);
-			await expect(popup.getByRole("option", { name: `${account} · ${zh ? "账号" : "Accounts"}`, exact: true })).toBeVisible();
+			const longOption = popup.getByRole("option", { name: `${account} · ${zh ? "账号" : "Accounts"}`, exact: true });
+			await expect(longOption).toBeVisible();
+			expect(await longOption.evaluate(element => element.scrollWidth <= element.clientWidth + 1), "Continuous long option labels fit inside the menu").toBe(true);
+			expect(await longOption.locator(".themed-select-item-text").evaluate(element => element.scrollWidth <= element.clientWidth + 1)).toBe(true);
 			await page.screenshot({ path: testInfo.outputPath(`select-${zh ? "zh" : "en"}-${width}.png`) });
 			await popup.press("Escape");
 			await dialog.getByLabel(zh ? "下次日期" : "Next date").fill("2026-10-05");

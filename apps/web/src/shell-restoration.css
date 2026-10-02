@@ -16,9 +16,9 @@
 .nav .sortable-nav-link .nav-count { flex: none; min-width: 24px; min-height: 24px; margin-left: auto; padding: 2px 7px; border-color: var(--line-soft); overflow: visible; font-size: 11px; }
 .nav .nav-link-placeholder { display: flex; align-items: center; gap: 6px; min-width: 0; color: var(--muted); }
 .nav .sortable-nav-item.is-hidden { opacity: .8; }
-.nav .nav-visibility-toggle { width: 16px; height: 16px; margin: 0 auto; accent-color: var(--ink); cursor: pointer; }
+.nav .nav-visibility-toggle { width: 16px; height: 16px; margin: 0 auto; accent-color: var(--accent); cursor: pointer; }
 .nav .nav-visibility-toggle:disabled { opacity: .45; cursor: not-allowed; }
-.nav .nav-visibility-toggle:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.nav .nav-visibility-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .nav .nav-drag-handle { width: 22px; min-height: 39px; opacity: 0; }
 .nav .sortable-nav-item:hover .nav-drag-handle, .nav .sortable-nav-item:focus-within .nav-drag-handle, .nav .sortable-nav-item.is-managing .nav-drag-handle { opacity: 1; }
 .nav .nav-order-actions button { min-height: 19px; }

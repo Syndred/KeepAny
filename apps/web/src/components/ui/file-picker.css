@@ -24,8 +24,8 @@
 }
 
 .file-picker-control:focus-within {
-	border-color: var(--green);
-	box-shadow: 0 0 0 2px var(--green-soft);
+	border-color: var(--line);
+	box-shadow: 0 0 0 3px var(--accent);
 }
 
 .file-picker-input {
