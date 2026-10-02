@@ -1,0 +1,27 @@
+{
+  "accountTextLinks": [
+    {
+      "childColor": "rgb(23, 36, 58)",
+      "color": "rgb(23, 36, 58)",
+      "decoration": "rgb(217, 216, 204)",
+      "fits": true
+    },
+    {
+      "childColor": "rgb(23, 36, 58)",
+      "color": "rgb(23, 36, 58)",
+      "decoration": "rgb(217, 216, 204)",
+      "fits": true
+    }
+  ],
+  "entry": [
+    "index-C293lRwt.js"
+  ],
+  "nativeBluePurple": 0,
+  "pageFits": true,
+  "viewport": [
+    1218,
+    808
+  ],
+  "bindingNavigationAndReturn": true,
+  "privateScreenshot": "ignored work directory only"
+}

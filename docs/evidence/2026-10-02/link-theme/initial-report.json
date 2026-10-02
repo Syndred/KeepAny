@@ -1,0 +1,690 @@
+{
+  "config": {
+    "argv": [
+      "/Users/syndred/.nvm/versions/node/v22.23.1/bin/node",
+      "/Users/syndred/Desktop/projects/KeepAny/node_modules/@playwright/test/cli.js",
+      "test",
+      "-c",
+      "playwright.release.config.ts",
+      "intake-bulk-account-links.spec.ts",
+      "detail-entry-statistics.spec.ts",
+      "ai-release.spec.ts",
+      "english-demo-release.spec.ts",
+      "--reporter=list,json",
+      "--output=work/link-theme-20261002/test-output"
+    ],
+    "configFile": "/Users/syndred/Desktop/projects/KeepAny/playwright.release.config.ts",
+    "rootDir": "/Users/syndred/Desktop/projects/KeepAny/tests/e2e",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 2
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "/Users/syndred/Desktop/projects/KeepAny/work/link-theme-20261002/test-output",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 2
+        },
+        "id": "",
+        "name": "",
+        "testDir": "/Users/syndred/Desktop/projects/KeepAny/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "core-pages-matrix.spec.ts",
+          "ai-release.spec.ts",
+          "ai-account-import-release.spec.ts",
+          "intake-bulk-account-links.spec.ts",
+          "ai-dialog-matrix.spec.ts",
+          "local-core.spec.ts",
+          "english-demo-release.spec.ts",
+          "production-offline.spec.ts",
+          "intake-pdf.spec.ts",
+          "intake-expense.spec.ts",
+          "intake-review-backup.spec.ts",
+          "intake-review-merge.spec.ts",
+          "custom-category-release.spec.ts",
+          "global-search-release.spec.ts",
+          "detail-entry-statistics.spec.ts",
+          "intake-asset-receipt.spec.ts",
+          "collections-route.spec.ts",
+          "relation-graph-verification.spec.ts",
+          "restore-identity.spec.ts",
+          "archive-migration.spec.ts",
+          "vault-reference-release.spec.ts",
+          "password-vault.spec.ts",
+          "themed-select.spec.ts",
+          "spacing-consistency.spec.ts",
+          "task-theme-release.spec.ts",
+          "finance-ledger-release.spec.ts",
+          "collections-ledger-release.spec.ts",
+          "restore-self-service-release.spec.ts"
+        ],
+        "timeout": 90000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list"
+      ],
+      [
+        "json"
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.63.0",
+    "workers": 2,
+    "webServer": {
+      "command": "node node_modules/vite/bin/vite.js preview apps/web --outDir ../../release/web --host 127.0.0.1 --port 4194 --strictPort",
+      "url": "http://127.0.0.1:4194",
+      "reuseExistingServer": false,
+      "timeout": 30000
+    }
+  },
+  "suites": [
+    {
+      "title": "ai-release.spec.ts",
+      "file": "ai-release.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "en delivered AI import, local search and confirmed reminder at 390px",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 8540,
+                  "error": {
+                    "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoHaveCSS\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator:  getByRole('dialog', { name: 'AI assistant', exact: true }).locator('.ai-plan').getByRole('link', { name: 'Saved. View reminders', exact: true })\nExpected: \u001b[32m\"rgb(\u001b[7m23, 36, 58\u001b[27m)\"\u001b[39m\nReceived: \u001b[31m\"rgb(\u001b[7m36, 107, 80\u001b[27m)\"\u001b[39m\nTimeout:  5000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveCSS\" getByRole('dialog', { name: 'AI assistant', exact: true }).locator('.ai-plan').getByRole('link', { name: 'Saved. View reminders', exact: true }) with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('dialog', { name: 'AI assistant', exact: true }).locator('.ai-plan').getByRole('link', { name: 'Saved. View reminders', exact: true })\u001b[22m\n\u001b[2m    14 × locator resolved to <a href=\"/tasks\" class=\"text-link\">Saved. View reminders</a>\u001b[22m\n\u001b[2m       - unexpected value \"rgb(36, 107, 80)\"\u001b[22m\n",
+                    "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoHaveCSS\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator:  getByRole('dialog', { name: 'AI assistant', exact: true }).locator('.ai-plan').getByRole('link', { name: 'Saved. View reminders', exact: true })\nExpected: \u001b[32m\"rgb(\u001b[7m23, 36, 58\u001b[27m)\"\u001b[39m\nReceived: \u001b[31m\"rgb(\u001b[7m36, 107, 80\u001b[27m)\"\u001b[39m\nTimeout:  5000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveCSS\" getByRole('dialog', { name: 'AI assistant', exact: true }).locator('.ai-plan').getByRole('link', { name: 'Saved. View reminders', exact: true }) with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('dialog', { name: 'AI assistant', exact: true }).locator('.ai-plan').getByRole('link', { name: 'Saved. View reminders', exact: true })\u001b[22m\n\u001b[2m    14 × locator resolved to <a href=\"/tasks\" class=\"text-link\">Saved. View reminders</a>\u001b[22m\n\u001b[2m       - unexpected value \"rgb(36, 107, 80)\"\u001b[22m\n\n    at /Users/syndred/Desktop/projects/KeepAny/tests/e2e/ai-release.spec.ts:314:25",
+                    "location": {
+                      "file": "/Users/syndred/Desktop/projects/KeepAny/tests/e2e/ai-release.spec.ts",
+                      "column": 25,
+                      "line": 314
+                    },
+                    "snippet": "  312 | \t\t\t\t});\n  313 | \t\t\t\tawait expect(saved).toBeVisible();\n> 314 | \t\t\t\tawait expect(saved).toHaveCSS(\"color\", \"rgb(23, 36, 58)\");\n      | \t\t\t\t                    ^\n  315 | \t\t\t\tconst taskHref = await saved.getAttribute(\"href\");\n  316 | \t\t\t\texpect(taskHref).toBe(\"/tasks\");\n  317 | \t\t\t\tawait reminderDialog"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "/Users/syndred/Desktop/projects/KeepAny/tests/e2e/ai-release.spec.ts",
+                        "column": 25,
+                        "line": 314
+                      },
+                      "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoHaveCSS\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator:  getByRole('dialog', { name: 'AI assistant', exact: true }).locator('.ai-plan').getByRole('link', { name: 'Saved. View reminders', exact: true })\nExpected: \u001b[32m\"rgb(\u001b[7m23, 36, 58\u001b[27m)\"\u001b[39m\nReceived: \u001b[31m\"rgb(\u001b[7m36, 107, 80\u001b[27m)\"\u001b[39m\nTimeout:  5000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveCSS\" getByRole('dialog', { name: 'AI assistant', exact: true }).locator('.ai-plan').getByRole('link', { name: 'Saved. View reminders', exact: true }) with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('dialog', { name: 'AI assistant', exact: true }).locator('.ai-plan').getByRole('link', { name: 'Saved. View reminders', exact: true })\u001b[22m\n\u001b[2m    14 × locator resolved to <a href=\"/tasks\" class=\"text-link\">Saved. View reminders</a>\u001b[22m\n\u001b[2m       - unexpected value \"rgb(36, 107, 80)\"\u001b[22m\n\n\n  312 | \t\t\t\t});\n  313 | \t\t\t\tawait expect(saved).toBeVisible();\n> 314 | \t\t\t\tawait expect(saved).toHaveCSS(\"color\", \"rgb(23, 36, 58)\");\n      | \t\t\t\t                    ^\n  315 | \t\t\t\tconst taskHref = await saved.getAttribute(\"href\");\n  316 | \t\t\t\texpect(taskHref).toBe(\"/tasks\");\n  317 | \t\t\t\tawait reminderDialog\n    at /Users/syndred/Desktop/projects/KeepAny/tests/e2e/ai-release.spec.ts:314:25"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-02T02:04:41.250Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "/Users/syndred/Desktop/projects/KeepAny/work/link-theme-20261002/test-output/ai-release-en-delivered-AI-db5e4-confirmed-reminder-at-390px/test-failed-1.png"
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "/Users/syndred/Desktop/projects/KeepAny/work/link-theme-20261002/test-output/ai-release-en-delivered-AI-db5e4-confirmed-reminder-at-390px/error-context.md"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "/Users/syndred/Desktop/projects/KeepAny/tests/e2e/ai-release.spec.ts",
+                    "column": 25,
+                    "line": 314
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "ff4162ef3d91cd0ef440-477c221890568ed8f7d0",
+          "file": "ai-release.spec.ts",
+          "line": 24,
+          "column": 3
+        },
+        {
+          "title": "en delivered AI import, local search and confirmed reminder at 1280px",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3332,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-02T02:04:50.242Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ff4162ef3d91cd0ef440-353701252a88dd5fc914",
+          "file": "ai-release.spec.ts",
+          "line": 24,
+          "column": 3
+        },
+        {
+          "title": "zh-CN delivered AI import, local search and confirmed reminder at 390px",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 4089,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-02T02:04:53.666Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ff4162ef3d91cd0ef440-a6fb900a488e85586168",
+          "file": "ai-release.spec.ts",
+          "line": 24,
+          "column": 3
+        },
+        {
+          "title": "zh-CN delivered AI import, local search and confirmed reminder at 1280px",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3356,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-02T02:04:57.759Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ff4162ef3d91cd0ef440-82ac4a240c09c6799b5c",
+          "file": "ai-release.spec.ts",
+          "line": 24,
+          "column": 3
+        }
+      ]
+    },
+    {
+      "title": "detail-entry-statistics.spec.ts",
+      "file": "detail-entry-statistics.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "zh-CN detail entries and live project statistics at 390px",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 10425,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-02T02:04:41.252Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "01e6fe734b3b0537958a-8794e21a17f6d4ffe8fc",
+          "file": "detail-entry-statistics.spec.ts",
+          "line": 92,
+          "column": 3
+        },
+        {
+          "title": "zh-CN detail entries and live project statistics at 1280px",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 10476,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-02T02:04:51.937Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "01e6fe734b3b0537958a-8ba85410c3673d6e7f5d",
+          "file": "detail-entry-statistics.spec.ts",
+          "line": 92,
+          "column": 3
+        },
+        {
+          "title": "en-US detail entries and live project statistics at 390px",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 10296,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-02T02:05:02.420Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "01e6fe734b3b0537958a-fe42d4bae6b448802d27",
+          "file": "detail-entry-statistics.spec.ts",
+          "line": 92,
+          "column": 3
+        },
+        {
+          "title": "en-US detail entries and live project statistics at 1280px",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 10453,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-02T02:05:12.722Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "01e6fe734b3b0537958a-b44331b8839e498e1e56",
+          "file": "detail-entry-statistics.spec.ts",
+          "line": 92,
+          "column": 3
+        }
+      ]
+    },
+    {
+      "title": "english-demo-release.spec.ts",
+      "file": "english-demo-release.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "English sample records stay English across pages, details, menus and refresh at 390",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 6473,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-02T02:05:01.125Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "5d24a8c89f27c33962a7-429447c84f59d945f8bc",
+          "file": "english-demo-release.spec.ts",
+          "line": 28,
+          "column": 2
+        },
+        {
+          "title": "English sample records stay English across pages, details, menus and refresh at 1280",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 6460,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-02T02:05:07.602Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "5d24a8c89f27c33962a7-9af93793bcc05362b5db",
+          "file": "english-demo-release.spec.ts",
+          "line": 28,
+          "column": 2
+        },
+        {
+          "title": "Chinese sample records use Chinese copy and switching language preserves saved content",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 928,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-02T02:05:14.066Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "5d24a8c89f27c33962a7-50de6eb54cc8ac2d3a75",
+          "file": "english-demo-release.spec.ts",
+          "line": 82,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "intake-bulk-account-links.spec.ts",
+      "file": "intake-bulk-account-links.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "zh-CN 390px bulk confirmation retains failures and links shared account identifiers once",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3273,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-02T02:05:15.008Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "bf333a2fda7f41abbe51-a16f1efd78643ad85d96",
+          "file": "intake-bulk-account-links.spec.ts",
+          "line": 73,
+          "column": 3
+        },
+        {
+          "title": "zh-CN 1280px bulk confirmation retains failures and links shared account identifiers once",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3339,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-02T02:05:18.286Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "bf333a2fda7f41abbe51-86de2e0e11c5d5619d99",
+          "file": "intake-bulk-account-links.spec.ts",
+          "line": 73,
+          "column": 3
+        },
+        {
+          "title": "en 390px bulk confirmation retains failures and links shared account identifiers once",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3087,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-02T02:05:21.630Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "bf333a2fda7f41abbe51-6576f69ec05cd2a18165",
+          "file": "intake-bulk-account-links.spec.ts",
+          "line": 73,
+          "column": 3
+        },
+        {
+          "title": "en 1280px bulk confirmation retains failures and links shared account identifiers once",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3068,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-02T02:05:24.721Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "bf333a2fda7f41abbe51-3b478ff59ec2e4c34bec",
+          "file": "intake-bulk-account-links.spec.ts",
+          "line": 73,
+          "column": 3
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-10-02T02:04:40.553Z",
+    "duration": 47268.036,
+    "expected": 14,
+    "skipped": 0,
+    "unexpected": 1,
+    "flaky": 0
+  }
+}
