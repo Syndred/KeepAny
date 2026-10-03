@@ -1,0 +1,74 @@
+{
+  "date": "2026-10-04",
+  "bundle": "index-CZYTekms.js",
+  "unit": {
+    "files": 5,
+    "passed": 91,
+    "failed": 0
+  },
+  "checks": {
+    "typecheck": true,
+    "build": true,
+    "biomeFiles": 10,
+    "biomeErrors": 0,
+    "biomeWarnings": 0,
+    "diff": true,
+    "releaseCurrentFiles": 93,
+    "releaseRetainedFiles": 1295
+  },
+  "browser": {
+    "newAi": {
+      "startTime": "2026-10-03T23:06:54.915Z",
+      "duration": 21390.148,
+      "expected": 6,
+      "skipped": 0,
+      "unexpected": 0,
+      "flaky": 0
+    },
+    "regression": {
+      "startTime": "2026-10-03T23:07:36.125Z",
+      "duration": 68137.652,
+      "expected": 17,
+      "skipped": 0,
+      "unexpected": 0,
+      "flaky": 0
+    }
+  },
+  "originalEgo": {
+    "url": "http://127.0.0.1:4180/assets/vault",
+    "bundle": "index-CZYTekms.js",
+    "provider": "deepseek",
+    "baseURL": "https://api.deepseek.com",
+    "model": "deepseek-flash",
+    "connectionReady": true,
+    "userKeyRetainedOnlyForSamePageReload": true,
+    "temporaryKeyVariableCleared": true,
+    "userVaultState": "locked",
+    "userDataWritten": false,
+    "realRecognition": "waiting-for-user-unlock"
+  },
+  "scope": {
+    "sendsOnlyActivePasteAfterClick": true,
+    "readsExistingVault": false,
+    "sourceBackedValues": true,
+    "reviewBeforeSave": true,
+    "selfHostedCompatible": true,
+    "downloadsModel": false
+  },
+  "commits": [
+    "6247907",
+    "047eaa5",
+    "1ff63ad"
+  ],
+  "remote": {
+    "pushedCodeSha": "1ff63ad",
+    "verifiedCodeSha": "1ff63ad",
+    "ci": "not-read-back",
+    "internetDeployment": false
+  },
+  "cleanup": {
+    "temporaryServersStopped": true,
+    "isolatedContextsClosed": true,
+    "temporaryArtifactsMovedToRecoverableTrash": true
+  }
+}
