@@ -63,6 +63,165 @@ describe("local password paste parsing", () => {
 		]);
 		expect(result.issues).toEqual([]);
 	});
+	it("keeps an unlabelled service, email and password as an unselected local review candidate", () => {
+		const result = parseVaultImportText(
+			"outlook\ndemo.one@example.test\nSyntheticPass!42\ndemo.two@example.test",
+		);
+		expect(result.candidates).toHaveLength(1);
+		expect(result.candidates[0]).toMatchObject({
+			sourceLine: 1,
+			needsReview: true,
+			aiEligible: false,
+			draft: {
+				title: "outlook",
+				username: "demo.one@example.test",
+				password: "SyntheticPass!42",
+			},
+		});
+		expect(result.issues).toEqual([
+			{ lineNumber: 4, code: "unrecognized-line" },
+		]);
+		expect(buildVaultImportAiPreview(result.candidates)).toEqual({
+			records: [],
+		});
+	});
+	it("preserves unlabelled passwords literally and separates repeated email-anchored groups", () => {
+		const result = parseVaultImportText(
+			"1. Outlook\ndemo.one@example.test\n  a;b|c,密码：value  \nhttps://github.com/login\ndemo.two@example.test\nsecond-pass",
+		);
+		expect(result.issues).toEqual([]);
+		expect(
+			result.candidates.map(
+				({ sourceLine, draft, needsReview, aiEligible }) => ({
+					sourceLine,
+					title: draft.title,
+					username: draft.username,
+					password: draft.password,
+					url: draft.url,
+					needsReview,
+					aiEligible,
+				}),
+			),
+		).toEqual([
+			{
+				sourceLine: 1,
+				title: "Outlook",
+				username: "demo.one@example.test",
+				password: "  a;b|c,密码：value  ",
+				url: "",
+				needsReview: true,
+				aiEligible: false,
+			},
+			{
+				sourceLine: 4,
+				title: "github.com",
+				username: "demo.two@example.test",
+				password: "second-pass",
+				url: "https://github.com/login",
+				needsReview: true,
+				aiEligible: false,
+			},
+		]);
+	});
+	it("leaves incomplete or ambiguous unlabelled groups for review instead of borrowing the next identity", () => {
+		for (const input of [
+			"Outlook\ndemo.one@example.test",
+			"Outlook\ndemo.one@example.test\ndemo.two@example.test",
+			"Outlook\ndemo.one@example.test\n2. GitHub\ndemo.two@example.test",
+			"Outlook\ndemo-user\npassword-value",
+			"Outlook\ndemo.one@example.test\n\npassword-value",
+		]) {
+			const result = parseVaultImportText(input);
+			expect(result.candidates).toEqual([]);
+			expect(result.issues.length).toBeGreaterThan(0);
+		}
+	});
+	it("recognizes a 173-line synthetic list while retaining the trailing unmapped email and text", () => {
+		const lines = Array.from({ length: 57 }, (_, index) => [
+			`Synthetic service ${index + 1}`,
+			`demo.${index + 1}@example.test`,
+			`SyntheticPass!${index + 1};|,`,
+		]).flat();
+		lines.push("extra.account@example.test", "Unmapped source line");
+		expect(lines).toHaveLength(173);
+		const result = parseVaultImportText(lines.join("\n"));
+		expect(result.candidates).toHaveLength(57);
+		expect(
+			result.candidates.every(
+				({ needsReview, aiEligible }) => needsReview && !aiEligible,
+			),
+		).toBe(true);
+		expect(result.candidates[56]).toMatchObject({
+			sourceLine: 169,
+			draft: {
+				username: "demo.57@example.test",
+				password: "SyntheticPass!57;|,",
+			},
+		});
+		expect(result.issues).toEqual([
+			{ lineNumber: 172, code: "unrecognized-line" },
+			{ lineNumber: 173, code: "unrecognized-line" },
+		]);
+	});
+	it("accepts common login labels, Markdown groups and explicitly labelled account-password lines", () => {
+		const result = parseVaultImportText(
+			"## GitHub\n- **登录账号**：demo.one@example.test 登录密码：first-pass\n---\n2. Outlook\n账户名：demo.two@example.test\n登陆密码：second-pass\n网址：https://outlook.example.test",
+		);
+		expect(result.issues).toEqual([]);
+		expect(
+			result.candidates.map(({ draft }) => [
+				draft.title,
+				draft.username,
+				draft.password,
+			]),
+		).toEqual([
+			["GitHub", "demo.one@example.test", "first-pass"],
+			["Outlook", "demo.two@example.test", "second-pass"],
+		]);
+	});
+	it("rejects trailing delimiter ambiguity instead of silently dropping a password character", () => {
+		for (const password of ["p;", "p|", "p,", "p，", "p\t"]) {
+			const result = parseVaultImportText(
+				`title=Example\npassword=${password}`,
+			);
+			expect(result.candidates).toEqual([]);
+			expect(result.issues).toContainEqual({
+				lineNumber: 2,
+				code: "ambiguous-line",
+			});
+		}
+	});
+	it("never silently splits a label-looking password suffix at a space", () => {
+		for (const suffix of [
+			"username:demo",
+			"url:https://example.test",
+			"备注:private-note",
+			"登录账号：demo",
+		]) {
+			const password = `p ${suffix}`;
+			for (const source of [
+				`title=Example\npassword=${password}`,
+				`title=Example\nusername=reader password=${password}`,
+			]) {
+				const result = parseVaultImportText(source);
+				expect(result.candidates).toEqual([]);
+				expect(result.issues).toContainEqual({
+					lineNumber: 2,
+					code: "ambiguous-line",
+				});
+			}
+			const quoted = parseVaultImportText(
+				`title=Example\nusername=reader password=${JSON.stringify(password)}`,
+			);
+			expect(quoted.issues).toEqual([]);
+			expect(quoted.candidates[0].draft.password).toBe(password);
+		}
+		expect(
+			parseVaultImportText(
+				"title=Example\nusername=reader password=  literal pass  ",
+			).candidates[0].draft.password,
+		).toBe("  literal pass  ");
+	});
 	it("treats explicit Chinese website URLs as URLs and plain service names as titles", () => {
 		const result = parseVaultImportText(
 			"网站=https://github.com/login\n账号=reader\n密码=first-secret\n\n网站=GitHub\n账号=other\n密码=second-secret\n\n网站=example.test:443/path\n密码=third-secret",

@@ -26,6 +26,8 @@ export type VaultImportCandidate = {
 	sourceLine: number;
 	draft: VaultEntryDraft;
 	aiEligible: boolean;
+	/** Local format inference must be reviewed before selecting the entry. */
+	needsReview?: boolean;
 };
 export type VaultImportResult = {
 	candidates: VaultImportCandidate[];
@@ -35,7 +37,20 @@ export type VaultImportAiPreview = { records: { id: string; host: string }[] };
 
 type Field = "title" | "username" | "password" | "url" | "notes" | "type";
 const aliases: Record<Field, string[]> = {
-	title: ["title", "name", "标题", "名称", "网站", "平台", "服务"],
+	title: [
+		"title",
+		"name",
+		"标题",
+		"名称",
+		"网站",
+		"平台",
+		"服务",
+		"应用",
+		"网站名称",
+		"平台名称",
+		"应用名称",
+		"服务名称",
+	],
 	username: [
 		"username",
 		"user",
@@ -51,9 +66,34 @@ const aliases: Record<Field, string[]> = {
 		"邮箱",
 		"手机",
 		"手机号",
+		"登录账号",
+		"登陆账号",
+		"登录账户",
+		"登录名",
+		"账户名",
 	],
-	password: ["password", "pass", "pwd", "login_password", "密码", "口令"],
-	url: ["url", "uri", "website", "login_uri", "网址", "地址", "链接"],
+	password: [
+		"password",
+		"pass",
+		"pwd",
+		"login_password",
+		"密码",
+		"口令",
+		"登录密码",
+		"登陆密码",
+	],
+	url: [
+		"url",
+		"uri",
+		"website",
+		"login_uri",
+		"网址",
+		"地址",
+		"链接",
+		"网站地址",
+		"登录网址",
+		"登录地址",
+	],
 	notes: ["note", "notes", "备注"],
 	type: ["type", "类型"],
 };
@@ -61,6 +101,7 @@ const ignoredCsvFields = new Set(["folder", "favorite", "reprompt"]);
 function label(value: string): string {
 	return value
 		.trim()
+		.replace(/^(?:\*\*|`)([\s\S]*?)(?:\*\*|`)$/, "$1")
 		.normalize("NFKC")
 		.toLowerCase()
 		.replace(/[\s_-]/g, "");
@@ -114,6 +155,7 @@ type Block = {
 	line: number;
 	uncertain: boolean;
 	invalid: boolean;
+	needsReview?: boolean;
 };
 const emptyBlock = (line: number): Block => ({
 	values: {},
@@ -238,6 +280,7 @@ function finishBlock(block: Block, result: VaultImportResult) {
 		sourceLine: block.line,
 		draft,
 		aiEligible: !block.uncertain,
+		...(block.needsReview ? { needsReview: true } : {}),
 	});
 	if (result.candidates.length > VAULT_IMPORT_MAX_ENTRIES)
 		throw Error("vault-import-limit");
@@ -277,9 +320,34 @@ function parseLine(line: string): {
 			if (!boundary) return { fields, problem: "ambiguous-line" };
 			consumed += boundary[0].length;
 		} else {
-			const boundary = /[;|\t,，]/.exec(rest);
+			// A whitespace boundary is syntax only when another known label follows.
+			// Keep ordinary spaces inside credentials unchanged.
+			const explicitBoundary = /[;|\t,，]/.exec(rest);
+			const spacedBoundary = [
+				...rest.matchAll(/\s+([^:=：;|\t,，]{1,40}?)\s*[:=：]/g),
+			].find((match) => getField(match[1]));
+			const boundary =
+				explicitBoundary &&
+				(!spacedBoundary || explicitBoundary.index <= spacedBoundary.index)
+					? explicitBoundary
+					: spacedBoundary;
+			// A password containing a space and a label-looking suffix must never
+			// be shortened silently. Quoting or local line mapping resolves it.
+			if (field === "password" && boundary && boundary === spacedBoundary)
+				return { fields, problem: "ambiguous-line" };
+			if (
+				boundary &&
+				boundary === explicitBoundary &&
+				!rest.slice(boundary.index + 1).trim()
+			)
+				return { fields, problem: "ambiguous-line" };
 			value = boundary ? rest.slice(0, boundary.index) : rest;
-			consumed = boundary ? boundary.index + 1 : rest.length;
+			consumed = boundary
+				? boundary.index +
+					(boundary === spacedBoundary
+						? boundary[0].length - boundary[0].trimStart().length
+						: 1)
+				: rest.length;
 		}
 		fields.push({ field: valueField(match[1], value) ?? field, value });
 		rest = rest.slice(consumed);
@@ -287,19 +355,110 @@ function parseLine(line: string): {
 	}
 	return { fields };
 }
+function plainUrl(value: string): string | undefined {
+	const raw = value.trim();
+	if (
+		!/^(?:https?:\/\/|(?:[a-z\d-]+\.)+[a-z]{2,63}(?::\d+)?(?:[/?#]|$))/i.test(
+			raw,
+		)
+	)
+		return undefined;
+	return normalizeUrl(raw) ?? undefined;
+}
+function emailAccount(value: string): boolean {
+	return /^[^\s@]+@(?:[a-z\d](?:[a-z\d-]*[a-z\d])?\.)+[a-z]{2,63}$/i.test(
+		value.trim(),
+	);
+}
+function headingValue(line: string): string | undefined {
+	const marked = /^\s*(?:#{1,6}\s+|\d+[.)、．]\s*)(.+?)\s*$/.exec(line);
+	return marked?.[1].replace(/\s+#+$/, "").replace(/^\*\*(.*?)\*\*$/, "$1");
+}
+function contentLine(line: string): string {
+	return line.replace(/^\s*[-*+]\s+(?=\S)/, "");
+}
+function inferEmailBlock(lines: string[], index: number): Block | undefined {
+	const source = lines[index];
+	const name = headingValue(source) ?? source.trim();
+	const account = lines[index + 1];
+	const password = lines[index + 2];
+	// The email shape is an anchor, not proof of meaning. Every inferred entry
+	// stays local and unselected until the user reviews it.
+	if (
+		!name ||
+		name.length > fieldLimits.title ||
+		emailAccount(name) ||
+		!account ||
+		!emailAccount(account) ||
+		!password ||
+		!password.trim() ||
+		emailAccount(password) ||
+		headingValue(password) ||
+		plainUrl(password) ||
+		!parseLine(contentLine(source)).problem ||
+		!parseLine(contentLine(password)).problem ||
+		/^\s*(?:#{1,6}\s|[-*_=]{3,}\s*$)/.test(password) ||
+		(!plainUrl(name) && /[:=：]/.test(name))
+	)
+		return undefined;
+	const block = emptyBlock(index + 1);
+	block.values = {
+		...(plainUrl(name) ? { url: plainUrl(name) } : { title: name }),
+		username: account,
+		password,
+	};
+	block.uncertain = true;
+	block.needsReview = true;
+	return block;
+}
 function parseBlocks(input: string, result: VaultImportResult) {
 	let block = emptyBlock(1);
 	const flush = (line: number) => {
 		finishBlock(block, result);
 		block = emptyBlock(line);
 	};
-	for (const [index, line] of input.split(/\r\n|\n|\r/).entries()) {
+	const lines = input.split(/\r\n|\n|\r/);
+	for (let index = 0; index < lines.length; index++) {
+		const line = lines[index];
 		const lineNumber = index + 1;
-		if (!line.trim()) {
+		if (!line.trim() || /^\s*(?:-{3,}|\*{3,}|_{3,}|={3,})\s*$/.test(line)) {
 			flush(lineNumber + 1);
 			continue;
 		}
-		const parsed = parseLine(line);
+		const inferred = inferEmailBlock(lines, index);
+		if (inferred) {
+			flush(lineNumber);
+			finishBlock(inferred, result);
+			index += 2;
+			block = emptyBlock(index + 2);
+			continue;
+		}
+		let parsed = parseLine(contentLine(line));
+		const heading = headingValue(line);
+		const url = plainUrl(line);
+		const next = lines[index + 1];
+		const nextFields = next ? parseLine(contentLine(next)) : undefined;
+		if (
+			parsed.problem &&
+			(heading ||
+				url ||
+				(!/[:=：]/.test(line) &&
+					nextFields &&
+					!nextFields.problem &&
+					nextFields.fields.some(
+						({ field }) => field === "username" || field === "password",
+					)))
+		) {
+			flush(lineNumber);
+			parsed = {
+				fields: [
+					{
+						field: url ? "url" : "title",
+						value: url ?? heading ?? line.trim(),
+					},
+				],
+			};
+		}
 		if (
 			!parsed.problem &&
 			block.values.password !== undefined &&
