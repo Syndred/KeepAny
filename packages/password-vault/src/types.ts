@@ -18,6 +18,8 @@ export type VaultEntryDraft = {
   url: string;
   notes: string;
   linkedAssetIds: string[];
+  /** Explicit model-service authorization, kept inside the encrypted KDBX entry. */
+  aiKeyBinding?: { version: 1; provider: string; baseURL: string };
 };
 
 export type VaultEntrySummary = {

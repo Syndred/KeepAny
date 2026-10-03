@@ -7,6 +7,7 @@ import type { VaultEntryDraft, VaultEntrySummary } from './types';
 
 export { checkBytes, checkHeader, fail, safeError, VAULT_MAX_BYTES } from './header';
 export const VAULT_LINK_FIELD = 'KeepAny.LinkedAssetIds';
+export const VAULT_AI_KEY_BINDING_FIELD = 'KeepAny.AiKeyBinding';
 const MAX_ENTRIES = 10_000;
 const MAX_TEXT = 64 * 1024;
 
@@ -85,7 +86,28 @@ export function normalizeDraft(draft: VaultEntryDraft): VaultEntryDraft {
   }
   if (!Array.isArray(draft.linkedAssetIds) || draft.linkedAssetIds.length > 100
     || draft.linkedAssetIds.some((id) => typeof id !== 'string' || id.length < 1 || id.length > 128 || id.includes('\0'))) fail('vault-invalid');
-  return { ...draft, title: draft.title.trim(), linkedAssetIds: [...new Set(draft.linkedAssetIds)] };
+  if (draft.aiKeyBinding !== undefined && !validAiKeyBinding(draft.aiKeyBinding)) fail('vault-invalid');
+  return { ...draft, title: draft.title.trim(), linkedAssetIds: [...new Set(draft.linkedAssetIds)],
+    ...(draft.aiKeyBinding ? { aiKeyBinding: { version: 1, provider: draft.aiKeyBinding.provider, baseURL: draft.aiKeyBinding.baseURL } } : {}) };
+}
+
+function validAiKeyBinding(value: unknown): value is NonNullable<VaultEntryDraft['aiKeyBinding']> {
+  if (!value || typeof value !== 'object') return false;
+  const binding = value as Record<string, unknown>;
+  if (binding.version !== 1 || typeof binding.provider !== 'string' || !/^[a-z][a-z0-9-]{0,79}$/.test(binding.provider)
+    || typeof binding.baseURL !== 'string' || binding.baseURL.length > 2048) return false;
+  try {
+    const url = new URL(binding.baseURL);
+    return (url.protocol === 'https:' || (url.protocol === 'http:' && ['localhost', '127.0.0.1', '[::1]'].includes(url.hostname)))
+      && !url.username && !url.password && !url.search && !url.hash && url.href.replace(/\/$/, '') === binding.baseURL;
+  } catch { return false; }
+}
+
+function aiKeyBindingOf(entry: KdbxEntry): VaultEntryDraft['aiKeyBinding'] {
+  try {
+    const value: unknown = JSON.parse(text(entry, VAULT_AI_KEY_BINDING_FIELD));
+    return validAiKeyBinding(value) ? { version: 1, provider: value.provider, baseURL: value.baseURL } : undefined;
+  } catch { return undefined; }
 }
 
 function text(entry: KdbxEntry, field: string): string {
@@ -101,8 +123,10 @@ function links(entry: KdbxEntry): string[] {
 }
 
 export function draftOf(entry: KdbxEntry): VaultEntryDraft {
+  const aiKeyBinding = aiKeyBindingOf(entry);
   return { id: entry.uuid.id, title: text(entry, 'Title'), username: text(entry, 'UserName'),
-    password: text(entry, 'Password'), url: text(entry, 'URL'), notes: text(entry, 'Notes'), linkedAssetIds: links(entry) };
+    password: text(entry, 'Password'), url: text(entry, 'URL'), notes: text(entry, 'Notes'), linkedAssetIds: links(entry),
+    ...(aiKeyBinding ? { aiKeyBinding } : {}) };
 }
 
 function safeUrl(value: string): string {
@@ -126,6 +150,8 @@ export function applyDraft(entry: KdbxEntry, draft: VaultEntryDraft): void {
   entry.fields.set('URL', draft.url);
   entry.fields.set('Notes', ProtectedValue.fromString(draft.notes));
   entry.fields.set(VAULT_LINK_FIELD, ProtectedValue.fromString(JSON.stringify(draft.linkedAssetIds)));
+  if (draft.aiKeyBinding) entry.fields.set(VAULT_AI_KEY_BINDING_FIELD, ProtectedValue.fromString(JSON.stringify(draft.aiKeyBinding)));
+  else entry.fields.delete(VAULT_AI_KEY_BINDING_FIELD);
   // KDBX dates have whole-second precision. Preserve distinct history/merge versions even
   // when users edit multiple times in one second and the file is serialized between edits.
   const previous = entry.lastModTime;

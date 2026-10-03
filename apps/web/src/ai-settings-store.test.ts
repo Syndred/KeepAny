@@ -28,7 +28,14 @@ const configuration = {
 	model: "deepseek-chat",
 	keySource: "session" as const,
 };
-function vault() {
+const binding = {
+	version: 1 as const,
+	provider: "deepseek",
+	baseURL: configuration.baseURL,
+};
+function vault(aiKeyBinding?: VaultEntryDraft["aiKeyBinding"]) {
+	let password = "vault-secret";
+	let currentBinding = aiKeyBinding;
 	let state: VaultSnapshot = {
 		status: "unlocked",
 		revision: "one",
@@ -61,15 +68,24 @@ function vault() {
 				id,
 				title: "DeepSeek",
 				username: "",
-				password: "vault-secret",
+				password,
 				url: "",
 				notes: "",
 				linkedAssetIds: [],
+				...(currentBinding && id === "entry"
+					? { aiKeyBinding: currentBinding }
+					: {}),
 			};
 		},
 		update: (changes: Partial<VaultSnapshot>) => {
 			state = { ...state, ...changes };
 			for (const listener of listeners) listener();
+		},
+		changePassword: (value: string) => {
+			password = value;
+		},
+		clearBinding: () => {
+			currentBinding = undefined;
 		},
 		get reads() {
 			return reads;
@@ -166,6 +182,124 @@ describe("AI settings credential boundary", () => {
 		expect(() => reopened.activateVaultKey()).toThrow(
 			"aiSettingsVaultEntryRequired",
 		);
+	});
+	it("restores only the authorized encrypted service key after refresh and unlock", () => {
+		const saved = storage();
+		const session = vault(binding);
+		const store = new AiSettingsStore(saved);
+		store.attachVault(session);
+		store.saveConfiguration({
+			...configuration,
+			keySource: "vault",
+			vaultEntryId: "entry",
+			autoActivate: true,
+		});
+		const reopened = new AiSettingsStore(saved);
+		reopened.attachVault(session);
+		expect(reopened.acquire().connection.apiKey).toBe("vault-secret");
+		const entries = session.getSnapshot().entries;
+		const active = reopened.acquire();
+		session.update({ status: "locked", entries: [] });
+		expect(active.signal.aborted).toBe(true);
+		expect(reopened.getSnapshot().connection).toBeNull();
+		session.update({ status: "unlocked", entries });
+		expect(reopened.getSnapshot().connection?.apiKey).toBe("vault-secret");
+		expect(saved.getItem(AI_SETTINGS_STORAGE_KEY)).not.toContain(
+			"vault-secret",
+		);
+	});
+	it("keeps requests through unrelated vault writes but cancels them when the selected key changes", () => {
+		const session = vault(binding);
+		const store = new AiSettingsStore(storage());
+		store.attachVault(session);
+		store.saveConfiguration({
+			...configuration,
+			keySource: "vault",
+			vaultEntryId: "entry",
+			autoActivate: true,
+		});
+		const active = store.acquire();
+		const revision = store.getSnapshot().revision;
+		session.update({ revision: "unrelated-write" });
+		expect(active.isCurrent()).toBe(true);
+		expect(store.getSnapshot().revision).toBe(revision);
+		session.changePassword("rotated-vault-secret");
+		session.update({ revision: "key-update" });
+		expect(active.signal.aborted).toBe(true);
+		expect(store.getSnapshot().connection?.apiKey).toBe("rotated-vault-secret");
+		session.update({ revision: "key-deleted", entries: [] });
+		expect(store.getSnapshot().connection).toBeNull();
+	});
+	it("cannot authorize an arbitrary password or another service through plain settings metadata", () => {
+		const saved = storage();
+		const session = vault(binding);
+		session.update({
+			entries: [
+				...session.getSnapshot().entries,
+				{ ...session.getSnapshot().entries[0], id: "unselected-password" },
+			],
+		});
+		const store = new AiSettingsStore(saved);
+		store.attachVault(session);
+		const selected = {
+			...configuration,
+			keySource: "vault" as const,
+			vaultEntryId: "entry",
+			autoActivate: true,
+		};
+		store.saveConfiguration(selected);
+		for (const changed of [
+			{ baseURL: "https://attacker.example" },
+			{ provider: "openai" },
+			{ vaultEntryId: "unselected-password" },
+		]) {
+			saved.setItem(
+				AI_SETTINGS_STORAGE_KEY,
+				JSON.stringify({ ...selected, ...changed }),
+			);
+			store.reload();
+			expect(store.getSnapshot().connection).toBeNull();
+		}
+		const unbound = new AiSettingsStore(saved);
+		unbound.attachVault(vault());
+		expect(() => unbound.saveConfiguration(selected)).toThrow(
+			"aiSettingsVaultBindingRequired",
+		);
+	});
+	it("revokes an unchanged key when encrypted authorization is removed", () => {
+		const session = vault(binding);
+		const store = new AiSettingsStore(storage());
+		store.attachVault(session);
+		store.saveConfiguration({
+			...configuration,
+			keySource: "vault",
+			vaultEntryId: "entry",
+			autoActivate: true,
+		});
+		const lease = store.acquire();
+		session.clearBinding();
+		session.update({ revision: "authorization-removed" });
+		expect(lease.signal.aborted).toBe(true);
+		expect(store.getSnapshot().connection).toBeNull();
+	});
+	it("recovers the same authorized key on metadata reload and fails closed on a read error", () => {
+		const saved = storage();
+		const session = vault(binding);
+		const store = new AiSettingsStore(saved);
+		store.attachVault(session);
+		store.saveConfiguration({
+			...configuration,
+			keySource: "vault",
+			vaultEntryId: "entry",
+			autoActivate: true,
+		});
+		store.reload();
+		expect(store.getSnapshot().connection?.apiKey).toBe("vault-secret");
+		session.readEntry = () => {
+			throw new Error("private read diagnostics");
+		};
+		session.update({ revision: "read-error" });
+		expect(store.getSnapshot().connection).toBeNull();
 	});
 	it("cancels old requests on configuration changes and honors external abort", () => {
 		const store = new AiSettingsStore(storage());

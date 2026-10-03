@@ -1,7 +1,7 @@
 import { gzipSync } from 'fflate';
 import { Consts, Int64, Kdbx, ProtectedValue, VarDictionary, XmlUtils } from 'kdbxweb';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { checkHeader, configureDatabase, credentials, VAULT_LINK_FIELD } from './engine';
+import { checkHeader, configureDatabase, credentials, VAULT_AI_KEY_BINDING_FIELD, VAULT_LINK_FIELD } from './engine';
 import { generatePassword, VAULT_IMPORT_MAX_ENTRIES, VAULT_MAX_BYTES, VaultSession } from './index';
 import type { VaultEntryDraft, VaultPersistence, VaultRecord } from './types';
 
@@ -41,6 +41,41 @@ function deferred() {
 afterEach(() => vi.restoreAllMocks());
 
 describe('real encrypted local KDBX session', () => {
+  it('keeps model-service authorization encrypted across refresh, key editing and KDBX export/restore', async () => {
+    const { storage, session } = await created();
+    const aiKeyBinding = { version: 1 as const, provider: 'deepseek', baseURL: 'https://api.deepseek.com' };
+    const keyDraft = { ...draft, title: 'DeepSeek API Key', password: 'Synthetic-model-key-42', aiKeyBinding };
+    const id = await session.saveEntry(keyDraft);
+    const bytes = await session.exportKdbx();
+    expect(new TextDecoder().decode(bytes)).not.toContain(keyDraft.password);
+    expect(new TextDecoder().decode(bytes)).not.toContain(aiKeyBinding.baseURL);
+    expect(JSON.stringify(session.getSnapshot())).not.toContain('aiKeyBinding');
+    const upstream = await Kdbx.load(bytes.slice().buffer, credentials(master));
+    const field = [...upstream.getDefaultGroup().allEntries()][0].fields.get(VAULT_AI_KEY_BINDING_FIELD);
+    expect(field).toBeInstanceOf(ProtectedValue);
+    expect(JSON.parse((field as ProtectedValue).getText())).toEqual(aiKeyBinding);
+    session.lock();
+    const reopened = new VaultSession(storage);
+    await reopened.initialize();
+    await reopened.unlock(master);
+    expect(reopened.readEntry(id)).toEqual({ ...keyDraft, id });
+    await reopened.saveEntry({ ...reopened.readEntry(id), password: 'Synthetic-rotated-key-43' });
+    expect(reopened.history(id)[0].draft.aiKeyBinding).toEqual(aiKeyBinding);
+    const target = new VaultSession(new MemoryStorage());
+    await target.initialize();
+    await target.importKdbx(await reopened.exportKdbx(), master);
+    expect(target.readEntry(id)).toMatchObject({ password: 'Synthetic-rotated-key-43', aiKeyBinding });
+    const { aiKeyBinding: removedBinding, id: importedId, ...ordinaryLogin } = reopened.readEntry(id);
+    expect(removedBinding).toEqual(aiKeyBinding);
+    expect(importedId).toBe(id);
+    await reopened.importEntries([{ draft: { ...ordinaryLogin, password: 'Synthetic-imported-login-44' }, action: 'update', targetId: id }], reopened.getSnapshot().revision as string);
+    expect(reopened.readEntry(id).aiKeyBinding).toBeUndefined();
+    expect(reopened.history(id).at(-1)?.draft.aiKeyBinding).toEqual(aiKeyBinding);
+    for (const invalid of [{ ...aiKeyBinding, baseURL: 'http://remote.example' }, { ...aiKeyBinding, version: 2 }, { ...aiKeyBinding, provider: '' }]) {
+      await expect(reopened.saveEntry({ ...keyDraft, aiKeyBinding: invalid as typeof aiKeyBinding })).rejects.toThrow('vault-invalid');
+    }
+  }, 30_000);
+
   it('creates Argon2id KDBX4, keeps secrets out of persistence/summaries, and enforces lock and wrong master', async () => {
     const { storage, session } = await created();
     const unchangedSnapshot = session.getSnapshot();

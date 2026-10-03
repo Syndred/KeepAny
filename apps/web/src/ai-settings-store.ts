@@ -27,6 +27,7 @@ export type AiSettings = {
 	model: string;
 	keySource: AiKeySource;
 	vaultEntryId?: string;
+	autoActivate?: boolean;
 };
 export type AiConfigurationInput = AiSettings & { apiKey?: string };
 export type AiSettingsSnapshot = {
@@ -96,12 +97,24 @@ export function normalizeAiSettings(value: unknown): AiSettings {
 		(!vaultEntryId || vaultEntryId.length > 200)
 	)
 		throw new AiSettingsError("aiSettingsVaultEntryRequired");
+	if (
+		candidate.autoActivate !== undefined &&
+		typeof candidate.autoActivate !== "boolean"
+	)
+		throw new AiSettingsError("aiSettingsInvalid");
 	return {
 		provider: candidate.provider as AiProviderId,
 		baseURL: url.href.replace(/\/$/, ""),
 		model,
 		keySource: candidate.keySource as AiKeySource,
-		...(candidate.keySource === "vault" ? { vaultEntryId } : {}),
+		...(candidate.keySource === "vault"
+			? {
+					vaultEntryId,
+					...(typeof candidate.autoActivate === "boolean"
+						? { autoActivate: candidate.autoActivate }
+						: {}),
+				}
+			: {}),
 	};
 }
 
@@ -112,7 +125,7 @@ export type AiConnectionLease = {
 	release(): void;
 };
 
-/** API keys stay in memory. A saved vault reference never grants implicit key access. */
+/** Secrets remain in KDBX or memory; automatic reuse requires an encrypted service binding. */
 export class AiSettingsStore {
 	private listeners = new Set<() => void>();
 	private requests = new Set<AbortController>();
@@ -168,6 +181,7 @@ export class AiSettingsStore {
 			/* Invalid or inaccessible metadata does not enable a connection. */
 		}
 		this.key = "";
+		this.restoreAuthorizedVaultKey(settings);
 		this.publish(settings);
 	};
 	attachVault = (session: AiVaultSession | null): void => {
@@ -187,13 +201,30 @@ export class AiSettingsStore {
 		const fingerprint = `${snapshot?.status ?? "missing"}:${snapshot?.revision ?? ""}`;
 		if (fingerprint === this.vaultFingerprint) return;
 		this.vaultFingerprint = fingerprint;
-		// Locking, revision changes and deletion all require explicit credential re-selection.
-		if (this.snapshot.settings?.keySource === "vault") {
+		const settings = this.snapshot.settings;
+		if (settings?.keySource === "vault") {
+			const previousKey = this.key;
 			this.key = "";
-			this.publish(this.snapshot.settings);
+			this.restoreAuthorizedVaultKey(settings);
+			// Unrelated writes must not cancel a valid connection or its in-flight requests.
+			if (previousKey !== this.key) this.publish(settings);
 		}
 	};
-	private readVaultKey(entryId: string): string {
+	private restoreAuthorizedVaultKey(settings: AiSettings | null): void {
+		if (
+			settings?.keySource !== "vault" ||
+			!settings.autoActivate ||
+			!settings.vaultEntryId
+		)
+			return;
+		try {
+			this.key = this.readVaultKey(settings.vaultEntryId, settings);
+		} catch {
+			// Locked, missing, invalid or unbound entries stay unavailable without exposing values.
+			this.key = "";
+		}
+	}
+	private readVaultKey(entryId: string, authorizedTarget?: AiSettings): string {
 		const vault = this.vault;
 		const snapshot = vault?.getSnapshot();
 		if (!vault || snapshot?.status !== "unlocked")
@@ -201,7 +232,15 @@ export class AiSettingsStore {
 		if (!snapshot.entries.some((entry) => entry.id === entryId))
 			throw new AiSettingsError("aiSettingsVaultEntryRequired");
 		try {
-			const key = vault.readEntry(entryId).password.trim();
+			const entry = vault.readEntry(entryId);
+			if (
+				authorizedTarget &&
+				(entry.aiKeyBinding?.version !== 1 ||
+					entry.aiKeyBinding.provider !== authorizedTarget.provider ||
+					entry.aiKeyBinding.baseURL !== authorizedTarget.baseURL)
+			)
+				throw new AiSettingsError("aiSettingsVaultBindingRequired");
+			const key = entry.password.trim();
 			if (!key || key.length > 4096)
 				throw new AiSettingsError("aiSettingsKeyRequired");
 			return key;
@@ -214,7 +253,10 @@ export class AiSettingsStore {
 		const settings = normalizeAiSettings(input);
 		let nextKey = "";
 		if (settings.keySource === "vault")
-			nextKey = this.readVaultKey(settings.vaultEntryId as string);
+			nextKey = this.readVaultKey(
+				settings.vaultEntryId as string,
+				settings.autoActivate ? settings : undefined,
+			);
 		if (settings.keySource === "session") {
 			const previous = this.snapshot.settings;
 			const sameTarget =
@@ -250,7 +292,10 @@ export class AiSettingsStore {
 		const settings = this.snapshot.settings;
 		if (settings?.keySource !== "vault" || !settings.vaultEntryId)
 			throw new AiSettingsError("aiSettingsVaultEntryRequired");
-		this.key = this.readVaultKey(settings.vaultEntryId);
+		this.key = this.readVaultKey(
+			settings.vaultEntryId,
+			settings.autoActivate ? settings : undefined,
+		);
 		this.publish(settings);
 	};
 	clearConfiguration = (): void => {
