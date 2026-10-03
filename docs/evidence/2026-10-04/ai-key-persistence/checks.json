@@ -1,0 +1,67 @@
+{
+  "date": "2026-10-04",
+  "bundle": "index-CIsEFLdi.js",
+  "unit": {
+    "files": 3,
+    "passed": 58,
+    "failed": 0,
+    "durationSeconds": 15.6
+  },
+  "checks": {
+    "typecheck": true,
+    "build": true,
+    "biomeLintFiles": 16,
+    "biomeErrors": 0,
+    "biomeWarnings": 0,
+    "formattedFilesChecked": 10,
+    "diff": true,
+    "releaseCurrentFiles": 93,
+    "releaseRetainedFiles": 1318
+  },
+  "browser": {
+    "startTime": "2026-10-03T23:52:19.433Z",
+    "duration": 115090.493,
+    "expected": 32,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "scope": {
+    "encryptedKdbxKeyStorage": true,
+    "savedServiceBindingEncrypted": true,
+    "restoreSelectedAuthorizedKeyAfterUnlock": true,
+    "legacyRequiresExplicitActivation": true,
+    "unrelatedVaultWriteKeepsConnection": true,
+    "lockOrKeyChangeInvalidatesRequests": true,
+    "explicitSessionModeRemainsEphemeral": true,
+    "providerUsedForBrowserTests": "synthetic-loopback"
+  },
+  "commits": [
+    "f7dca0e",
+    "153d0bf",
+    "ab408ce"
+  ],
+  "remote": {
+    "verifiedCodeSha": "ab408cee8e8e5d621101f106771394c7ee68059d",
+    "ci": "not-read-back",
+    "internetDeployment": false
+  },
+  "originalEgo": {
+    "url": "http://127.0.0.1:4180/settings#assistant",
+    "update": "loaded-current-bundle",
+    "userKeyLoggedOrWrittenToOrdinaryFiles": false,
+    "realDeepSeekRecognition": "previous-request-rejected-401",
+    "bundle": "index-CIsEFLdi.js",
+    "provider": "deepseek",
+    "baseURL": "https://api.deepseek.com",
+    "model": "deepseek-flash",
+    "draftSource": "vault",
+    "autoActivateChecked": true,
+    "pendingKeyInputPreservedAcrossSamePageUpdate": true,
+    "temporaryKeyVariableCleared": true,
+    "userVaultState": "locked",
+    "userKeyEncryptedSave": "waiting-for-user-unlock",
+    "userVaultDataWritten": false,
+    "screenshot": "ego-long-term-key-awaiting-unlock.png"
+  }
+}
