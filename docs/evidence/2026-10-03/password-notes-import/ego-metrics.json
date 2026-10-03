@@ -1,0 +1,20 @@
+{
+  "originalOrigin": "http://127.0.0.1:4180/assets/vault",
+  "loadedEntry": "/assets/index-AtVWH8K7.js",
+  "vaultLocked": true,
+  "importerOpen": false,
+  "viewportWidth": 1218,
+  "documentScrollWidth": 1218,
+  "originalVaultUnlockedByAgent": false,
+  "syntheticDataImportedIntoOriginalVault": false,
+  "isolatedOrigin": "http://127.0.0.1:4327/assets/vault",
+  "syntheticFourLineResult": {
+    "recognized": 1,
+    "remainingIssueLine": 4,
+    "added": 1,
+    "updated": 0,
+    "skipped": 0,
+    "refreshThenUnlockEntryCount": 1
+  },
+  "testSpaceClosed": true
+}
