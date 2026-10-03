@@ -78,6 +78,22 @@ function vault() {
 }
 
 describe("AI settings credential boundary", () => {
+	it("supports a self-hosted compatible HTTPS service without a key", () => {
+		const store = new AiSettingsStore(storage());
+		store.saveConfiguration({
+			provider: "compatible",
+			baseURL: "https://selfhost.example/v1",
+			model: "my-deployed-model",
+			keySource: "none",
+		});
+		expect(store.acquire().connection.apiKey).toBe("");
+		expect(store.getSnapshot().connection?.baseURL).toBe(
+			"https://selfhost.example/v1",
+		);
+		expect(() =>
+			normalizeAiSettings({ ...configuration, keySource: "none" }),
+		).toThrow("aiSettingsKeyRequired");
+	});
 	it("persists only model metadata, and refresh does not recover a session key", () => {
 		const saved = storage();
 		const store = new AiSettingsStore(saved);

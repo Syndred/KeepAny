@@ -83,6 +83,7 @@ export function normalizeAiSettings(value: unknown): AiSettings {
 	if (
 		candidate.keySource === "none" &&
 		candidate.provider !== "ollama" &&
+		candidate.provider !== "compatible" &&
 		!local
 	)
 		throw new AiSettingsError("aiSettingsKeyRequired");

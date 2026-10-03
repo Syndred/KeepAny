@@ -8,6 +8,13 @@ import type {
 	VaultImportPreview,
 } from "../../../../packages/password-vault/src";
 import { acquireAiConnection, useAiConnection } from "../ai-settings-store";
+import { requestVaultImportAiRecognition } from "../vault-import-ai";
+import {
+	createVaultMappedLines,
+	parseVaultMappedLines,
+	updateVaultMappedSource,
+	type VaultMappedLine,
+} from "../vault-import-mapping";
 import {
 	buildVaultImportAiPreview,
 	parseVaultImportText,
@@ -15,12 +22,6 @@ import {
 	type VaultImportCandidate,
 	type VaultImportResult,
 } from "../vault-import-model";
-import {
-	createVaultMappedLines,
-	parseVaultMappedLines,
-	updateVaultMappedSource,
-	type VaultMappedLine,
-} from "../vault-import-mapping";
 import { PasswordImportMapping } from "./PasswordImportMapping";
 import { usePasswordVault } from "./PasswordVaultProvider";
 import { Button } from "./ui/button";
@@ -55,7 +56,12 @@ export function PasswordSmartImportDialog({
 }) {
 	const { t } = useTranslation();
 	const vault = usePasswordVault();
-	const { connection, settings, revision: aiRevision } = useAiConnection();
+	const {
+		connection,
+		settings,
+		revision: aiRevision,
+		activateVaultKey,
+	} = useAiConnection();
 	const [source, setSource] = useState("");
 	const [file, setFile] = useState<File | null>(null);
 	const [candidates, setCandidates] = useState<VaultImportCandidate[]>([]);
@@ -66,6 +72,7 @@ export function PasswordSmartImportDialog({
 	);
 	const [mappedLines, setMappedLines] = useState<VaultMappedLine[]>([]);
 	const [busy, setBusy] = useState<"file" | "ai" | "save" | null>(null);
+	const [aiMode, setAiMode] = useState<"recognize" | "titles">("recognize");
 	const [message, setMessage] = useState("");
 	const [receipt, setReceipt] = useState<{
 		added: number;
@@ -165,6 +172,63 @@ export function PasswordSmartImportDialog({
 			setMessage(t(errorCopy(error)));
 		}
 	}
+	function activateModel() {
+		if (running.current) return;
+		try {
+			activateVaultKey();
+			setMessage(t("aiSettingsVaultActivated"));
+		} catch {
+			setMessage(t("pwSmartAiKeyFailed"));
+		}
+	}
+	async function recognizeWithAi() {
+		if (running.current || !connection || !source.trim() || !session) return;
+		const startingRevision = session.getSnapshot().revision;
+		running.current = "ai";
+		setAiMode("recognize");
+		setBusy("ai");
+		setMessage("");
+		const current = ++generation.current;
+		const abort = new AbortController();
+		controller.current = abort;
+		let lease: ReturnType<typeof acquireAiConnection> | undefined;
+		try {
+			lease = acquireAiConnection(abort.signal);
+			const result = await requestVaultImportAiRecognition(
+				lease.connection,
+				source,
+				lease.signal,
+			);
+			if (
+				current !== generation.current ||
+				!lease.isCurrent() ||
+				session.getSnapshot().status !== "unlocked"
+			)
+				return;
+			if (session.getSnapshot().revision !== startingRevision) {
+				setMessage(t("pwVaultConflict"));
+				return;
+			}
+			showReview(result);
+		} catch (error) {
+			if (current === generation.current && !abort.signal.aborted) {
+				setMessage(
+					t(
+						error instanceof Error && error.message === "vault-import-ai-limit"
+							? "pwSmartAiLimit"
+							: "pwSmartAiRecognitionFailed",
+					),
+				);
+			}
+		} finally {
+			lease?.release();
+			if (current === generation.current) {
+				running.current = null;
+				setBusy(null);
+				controller.current = null;
+			}
+		}
+	}
 	function showReview(result: VaultImportResult) {
 		if (!session) return;
 		const plan = result.candidates.length
@@ -245,6 +309,7 @@ export function PasswordSmartImportDialog({
 		)
 			return;
 		running.current = "ai";
+		setAiMode("titles");
 		setBusy("ai");
 		setMessage("");
 		const current = ++generation.current;
@@ -426,12 +491,41 @@ export function PasswordSmartImportDialog({
 							onFileChange={(next) => void readFile(next)}
 							disabled={!!busy}
 						/>
-						<Button
-							variant="primary"
-							onClick={recognize}
-							disabled={!!busy || !source.trim()}
-						>
-							<Sparkles size={16} />
+						<div className="pw-smart-ai pw-smart-ai-recognition">
+							<p>{t("pwSmartAiRecognitionHint")}</p>
+							{settings && (
+								<p className="pw-smart-ai-target">
+									{t("pwSmartAiTarget", {
+										model: settings.model,
+										endpoint: settings.baseURL,
+									})}
+								</p>
+							)}
+							{connection ? (
+								<Button
+									variant="primary"
+									onClick={() => void recognizeWithAi()}
+									disabled={!!busy || !source.trim()}
+								>
+									<Sparkles size={16} />
+									{t("pwSmartAiRecognize", { model: connection.model })}
+								</Button>
+							) : settings?.keySource === "vault" ? (
+								<Button onClick={activateModel} disabled={!!busy}>
+									{t("aiSettingsActivateVaultKey")}
+								</Button>
+							) : (
+								<p>
+									{t("pwSmartAiOptional")}{" "}
+									<TextLink asChild>
+										<Link to="/settings" hash="assistant" onClick={close}>
+											{t(settings ? "aiEnableKey" : "aiConfigure")}
+										</Link>
+									</TextLink>
+								</p>
+							)}
+						</div>
+						<Button onClick={recognize} disabled={!!busy || !source.trim()}>
 							{t("pwSmartRecognize")}
 						</Button>
 						<Button onClick={startMapping} disabled={!!busy || !source.trim()}>
@@ -599,7 +693,13 @@ export function PasswordSmartImportDialog({
 				)}
 				{busy && (
 					<p role="status">
-						{t(busy === "ai" ? "pwSmartAiBusy" : "pwVaultBusy")}
+						{t(
+							busy === "ai"
+								? aiMode === "recognize"
+									? "pwSmartAiRecognitionBusy"
+									: "pwSmartAiBusy"
+								: "pwVaultBusy",
+						)}
 					</p>
 				)}
 				<div className="actions">

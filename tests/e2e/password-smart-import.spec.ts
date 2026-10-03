@@ -90,6 +90,7 @@ async function configureAndOpenVault(
 	locale: string,
 	baseURL: string,
 	width: number,
+	withoutKey = false,
 ) {
 	const ui = labels[locale === "zh-CN" ? "zh-CN" : "en"];
 	await page.goto("/settings#assistant");
@@ -97,7 +98,9 @@ async function configureAndOpenVault(
 	await selectChoice(settings.locator("#ai-settings-provider"), "compatible");
 	await settings.locator("#ai-settings-url").fill(baseURL);
 	await settings.locator("#ai-settings-model").fill(model);
-	await settings.locator("#ai-settings-api-key").fill(syntheticKey);
+	if (withoutKey)
+		await selectChoice(settings.locator("#ai-settings-key-source"), "none");
+	else await settings.locator("#ai-settings-api-key").fill(syntheticKey);
 	await settings
 		.getByRole("button", { name: ui.saveSettings, exact: true })
 		.click();
@@ -1354,5 +1357,344 @@ test("smart import FilePicker rejects invalid UTF-8 and preserves Chrome CSV cre
 		).toHaveCount(1);
 	} finally {
 		await context.close();
+	}
+});
+
+for (const variant of variants) {
+	test(`AI recognizes pasted password notes without sending the existing vault ${variant.locale} ${variant.width}`, async ({
+		browser,
+	}) => {
+		const t = copy(variant.locale);
+		const mock = await aiServer();
+		const context = await browser.newContext({
+			locale: variant.locale,
+			viewport: { width: variant.width, height: 844 },
+		});
+		await context.addInitScript(
+			(locale) => localStorage.setItem("keepany-language", locale),
+			variant.locale === "zh-CN" ? "zh-CN" : "en",
+		);
+		const page = await context.newPage();
+		const password = '  Synthetic notes ;|,\\" P4ss!\t  ';
+		const secondPassword = "Synthetic second notes secret!";
+		const source = [
+			"Outlook notes",
+			"demo.notes.one@example.test",
+			password,
+			"demo.unassigned@example.test",
+			"Second service",
+			"demo.notes.two@example.test",
+			secondPassword,
+			"Synthetic note with instructions: keep the original values",
+		].join("\n");
+		try {
+			await configureAndOpenVault(
+				page,
+				variant.locale,
+				mock.baseURL,
+				variant.width,
+				variant.locale === "zh-CN" && variant.width === 390,
+			);
+			await createVault(page, t);
+			await seedDuplicate(page, t);
+			const before = await persistedVault(page);
+			const importer = await openImport(page, t);
+			await importer.locator("#pw-smart-source").fill(source);
+			expect(mock.requests).toHaveLength(0);
+			await expect(importer.locator(".pw-smart-ai-recognition")).toContainText(
+				mock.baseURL,
+			);
+			await checkLayout(page, importer, variant.width);
+			await page.screenshot({
+				path: join(
+					evidenceRoot,
+					`password-ai-input-${variant.locale}-${variant.width}.png`,
+				),
+				fullPage: true,
+			});
+			mock.responses.push(
+				JSON.stringify({
+					records: [
+						{
+							title: { line: 1 },
+							username: { line: 2 },
+							password: { line: 3 },
+							url: null,
+							notes: null,
+						},
+						{
+							title: { line: 5 },
+							username: { line: 6 },
+							password: { line: 7 },
+							url: null,
+							notes: { line: 8 },
+						},
+					],
+					ignoredLines: [4],
+				}),
+			);
+			await importer
+				.getByRole("button", {
+					name: t("pwSmartAiRecognize", { model }),
+					exact: true,
+				})
+				.click();
+			await expect(importer.locator(".pw-smart-row")).toHaveCount(2);
+			await expect(
+				importer.locator("#pw-smart-vault-import-1-password"),
+			).toHaveValue(password);
+			await expect(
+				importer.locator("#pw-smart-vault-import-1-password"),
+			).toHaveAttribute("type", "password");
+			await expect(importer.locator(".pw-smart-issues")).toContainText(
+				t("pwSmartIssueLine", { line: 4 }),
+			);
+			await expect(
+				importer.getByRole("button", {
+					name: t("pwSmartConfirm", { count: 0 }),
+					exact: true,
+				}),
+			).toBeDisabled();
+			expect(await persistedVault(page)).toEqual(before);
+			expect(mock.requests).toHaveLength(1);
+			const sent = JSON.stringify(mock.requests[0].body);
+			expect(sent).toContain("demo.notes.one@example.test");
+			expect(sent).toContain("demo.unassigned@example.test");
+			expect(sent).not.toContain(duplicatePassword);
+			expect(sent).not.toContain(master);
+			expect(sent).not.toContain("synthetic-existing-user");
+			expect(sent).not.toContain(syntheticKey);
+			const persistedText = await page.evaluate(() =>
+				JSON.stringify({
+					local: { ...localStorage },
+					session: { ...sessionStorage },
+				}),
+			);
+			expect(persistedText).not.toContain("demo.notes.one@example.test");
+			expect(persistedText).not.toContain(secondPassword);
+			await checkLayout(page, importer, variant.width);
+			await page.screenshot({
+				path: join(
+					evidenceRoot,
+					`password-ai-review-${variant.locale}-${variant.width}.png`,
+				),
+				fullPage: true,
+			});
+			await importer
+				.getByRole("checkbox", { name: t("pwSmartSelectNew"), exact: true })
+				.check();
+			await importer
+				.getByRole("button", {
+					name: t("pwSmartConfirm", { count: 2 }),
+					exact: true,
+				})
+				.click();
+			await expect(importer.locator(".pw-smart-receipt")).toHaveText(
+				t("pwSmartSaved", { added: 2, updated: 0, skipped: 0 }),
+			);
+			await closeDialog(page);
+			await page.reload();
+			await unlock(page, t);
+			await expect(
+				page.locator(".password-vault-entry-list .password-vault-entry"),
+			).toHaveCount(3);
+			expect((await readEntry(page, t, "Outlook notes")).password).toBe(
+				password,
+			);
+			expect((await readEntry(page, t, "Second service")).password).toBe(
+				secondPassword,
+			);
+		} finally {
+			await context.close();
+			await mock.close();
+		}
+	});
+}
+
+test("AI note recognition keeps failed source and discards delayed results after close or model change", async ({
+	browser,
+}) => {
+	const t = copy("en-US");
+	const mock = await aiServer();
+	const context = await browser.newContext({
+		locale: "en-US",
+		viewport: { width: 1280, height: 844 },
+	});
+	await context.addInitScript(() =>
+		localStorage.setItem("keepany-language", "en"),
+	);
+	const page = await context.newPage();
+	const source =
+		"Synthetic service\ndemo.ai.failure@example.test\nSynthetic failure secret!";
+	try {
+		await configureAndOpenVault(page, "en-US", mock.baseURL, 1280);
+		await createVault(page, t);
+		const original = await persistedVault(page);
+		let importer = await openImport(page, t);
+		await importer.locator("#pw-smart-source").fill(source);
+		mock.responses.push("broken JSON with synthetic-only secret");
+		await importer
+			.getByRole("button", {
+				name: t("pwSmartAiRecognize", { model }),
+				exact: true,
+			})
+			.click();
+		await expect(
+			importer
+				.getByRole("status")
+				.filter({ hasText: t("pwSmartAiRecognitionFailed") }),
+		).toBeVisible();
+		await expect(importer.locator("#pw-smart-source")).toHaveValue(source);
+		expect(await persistedVault(page)).toEqual(original);
+		await expect(importer).not.toContainText("broken JSON");
+		const endpoint = `${mock.baseURL}/chat/completions`;
+		let release!: () => void;
+		let arrived!: () => void;
+		const gate = new Promise<void>((resolve) => {
+			release = resolve;
+		});
+		const received = new Promise<void>((resolve) => {
+			arrived = resolve;
+		});
+		await page.route(endpoint, async (route) => {
+			arrived();
+			await gate;
+			await route.abort().catch(() => undefined);
+		});
+		await importer
+			.getByRole("button", {
+				name: t("pwSmartAiRecognize", { model }),
+				exact: true,
+			})
+			.click();
+		await received;
+		await closeDialog(page);
+		release();
+		await page.unroute(endpoint);
+		importer = await openImport(page, t);
+		await expect(importer.locator("#pw-smart-source")).toHaveValue("");
+		await expect(importer.locator(".pw-smart-row")).toHaveCount(0);
+		expect(await persistedVault(page)).toEqual(original);
+		await importer.locator("#pw-smart-source").fill(source);
+		await page.route(endpoint, async (route) => {
+			// Simulate another tab replacing the model metadata while a request is in flight.
+			await page.evaluate(() =>
+				window.dispatchEvent(
+					new StorageEvent("storage", { key: "keepany-ai-settings-v1" }),
+				),
+			);
+			await route.abort().catch(() => undefined);
+		});
+		await importer
+			.getByRole("button", {
+				name: t("pwSmartAiRecognize", { model }),
+				exact: true,
+			})
+			.click();
+		await expect(
+			importer.getByRole("status").filter({ hasText: t("pwSmartAiChanged") }),
+		).toBeVisible();
+		await expect(importer.locator("#pw-smart-source")).toHaveValue(source);
+		await expect(importer.locator(".pw-smart-row")).toHaveCount(0);
+		expect(await persistedVault(page)).toEqual(original);
+		await closeDialog(page);
+	} finally {
+		await context.close();
+		await mock.close();
+	}
+});
+
+test("password AI import reuses a saved vault API key after explicit activation", async ({
+	browser,
+}) => {
+	const t = copy("en-US");
+	const mock = await aiServer();
+	const context = await browser.newContext({
+		locale: "en-US",
+		viewport: { width: 1280, height: 844 },
+	});
+	await context.addInitScript(() =>
+		localStorage.setItem("keepany-language", "en"),
+	);
+	const page = await context.newPage();
+	try {
+		await configureAndOpenVault(page, "en-US", mock.baseURL, 1280);
+		await createVault(page, t);
+		await seedDuplicate(page, t);
+		await entry(page, "Existing login")
+			.getByRole("button", { name: t("pwVaultEditEntry"), exact: true })
+			.click();
+		await page.locator("#password-vault-entry-password").fill(syntheticKey);
+		await page
+			.getByRole("button", { name: t("pwVaultSaveEntry"), exact: true })
+			.click();
+		await expect(page.getByRole("dialog")).toBeHidden();
+		await page
+			.getByRole("button", { name: "AI assistant and access", exact: true })
+			.click();
+		await page
+			.getByRole("link", { name: "Assistant access", exact: true })
+			.click();
+		await page
+			.getByRole("link", { name: "Configure local access", exact: true })
+			.click();
+		const settings = page.locator(".ai-settings-panel");
+		await selectChoice(settings.locator("#ai-settings-key-source"), "vault");
+		await selectChoice(settings.locator("#ai-settings-vault-entry"), {
+			label: "Existing login",
+		});
+		await settings
+			.getByRole("button", { name: "Save configuration", exact: true })
+			.click();
+		await expect(
+			settings
+				.getByRole("status")
+				.filter({ hasText: "Model connection is ready" }),
+		).toBeVisible();
+		await page.goto("/assets/vault");
+		await unlock(page, t);
+		const importer = await openImport(page, t);
+		const source =
+			"Synthetic activated-key service\ndemo.activated@example.test\nSynthetic activated secret!";
+		await importer.locator("#pw-smart-source").fill(source);
+		await expect(
+			importer.getByRole("button", {
+				name: "Activate selected key",
+				exact: true,
+			}),
+		).toBeVisible();
+		expect(mock.requests).toHaveLength(0);
+		await importer
+			.getByRole("button", { name: "Activate selected key", exact: true })
+			.click();
+		mock.responses.push(
+			JSON.stringify({
+				records: [
+					{
+						title: { line: 1 },
+						username: { line: 2 },
+						password: { line: 3 },
+						url: null,
+						notes: null,
+					},
+				],
+				ignoredLines: [],
+			}),
+		);
+		await importer
+			.getByRole("button", {
+				name: t("pwSmartAiRecognize", { model }),
+				exact: true,
+			})
+			.click();
+		await expect(importer.locator(".pw-smart-row")).toHaveCount(1);
+		expect(mock.requests[0].headers.authorization).toBe(
+			`Bearer ${syntheticKey}`,
+		);
+		expect(JSON.stringify(mock.requests[0].body)).not.toContain(syntheticKey);
+		await closeDialog(page);
+	} finally {
+		await context.close();
+		await mock.close();
 	}
 });

@@ -22,8 +22,8 @@ export const aiCopy: Record<string, [string, string]> = {
 	],
 	aiSettingsBaseUrl: ["API 地址", "API base URL"],
 	aiSettingsBaseUrlHint: [
-		"填写服务商的 API 基础地址，或完整接口地址。",
-		"Enter the provider's API base URL or full endpoint URL.",
+		"填写服务商或自部署模型的 API 地址。兼容服务支持本机 HTTP 或远端 HTTPS，无需在 KeepAny 下载模型。",
+		"Enter your provider's or self-hosted model's API URL. Compatible services support local HTTP or remote HTTPS. KeepAny does not download models.",
 	],
 	aiSettingsModel: ["模型名称或接入点 ID", "Model name or endpoint ID"],
 	aiSettingsModelHint: [
@@ -33,7 +33,7 @@ export const aiCopy: Record<string, [string, string]> = {
 	aiSettingsKeySource: ["API Key 的使用方式", "API key source"],
 	aiSettingsKeySession: ["仅当前页面会话", "Current page session only"],
 	aiSettingsKeyVault: ["使用密码库中的条目", "Use a password vault entry"],
-	aiSettingsKeyNone: ["本机服务无需密钥", "Local service without a key"],
+	aiSettingsKeyNone: ["服务无需密钥", "Service without a key"],
 	aiSettingsApiKey: ["API Key", "API key"],
 	aiSettingsApiKeyPlaceholder: ["输入密钥", "Enter your API key"],
 	aiSettingsKeepSessionKey: [

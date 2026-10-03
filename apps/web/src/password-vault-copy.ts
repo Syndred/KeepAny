@@ -2,8 +2,8 @@
 export const passwordVaultCopy: Record<string, [string, string]> = {
 	pwSmartTitle: ["智能导入", "Smart import"],
 	pwSmartHint: [
-		"粘贴账号密码清单，核对后一次存入密码库。原文和密码只在本机处理。",
-		"Paste a login list, review it, and save it to your vault in one batch. Source text and passwords are processed on this device.",
+		"粘贴账号密码清单，选择 AI 或本机识别，核对后存入加密密码库。",
+		"Paste a login list, choose AI or on-device recognition, then review and save it to your encrypted vault.",
 	],
 	pwSmartSource: ["账号密码清单", "Login list"],
 	pwSmartPlaceholder: [
@@ -30,13 +30,35 @@ export const passwordVaultCopy: Record<string, [string, string]> = {
 	pwSmartMapIgnore: ["忽略这行", "Ignore this line"],
 	pwSmartMapReview: ["预览指定的条目", "Review assigned entries"],
 	pwSmartInferredHint: [
-		"无字段名的条目需核对密码后勾选，才会导入。",
-		"Check passwords in unlabeled entries, then select the entries to import.",
+		"请核对这些条目的账号和密码，再勾选需要导入的条目。",
+		"Check the usernames and passwords, then select the entries you want to import.",
 	],
 	pwSmartFile: ["或选择 CSV／文本文件", "Or choose a CSV or text file"],
 	pwSmartChooseFile: ["选择文件", "Choose file"],
 	pwSmartNoFile: ["未选择文件", "No file selected"],
-	pwSmartRecognize: ["识别并预览", "Recognize and review"],
+	pwSmartRecognize: ["本机识别并预览", "Recognize on device"],
+	pwSmartAiRecognitionHint: [
+		"AI 识别会把本次清单全文（含账号、密码和备注）发送给你配置的模型服务。已有密码库不会发送，识别后需核对再保存。",
+		"AI recognition sends this entire list, including usernames, passwords and notes, to your configured model service. Your existing vault is not sent. Review the results before saving.",
+	],
+	pwSmartAiTarget: ["{{model}} · {{endpoint}}", "{{model}} · {{endpoint}}"],
+	pwSmartAiRecognize: [
+		"用 {{model}} 识别清单",
+		"Recognize list with {{model}}",
+	],
+	pwSmartAiRecognitionBusy: ["正在识别清单…", "Recognizing your list…"],
+	pwSmartAiRecognitionFailed: [
+		"AI 识别未完成，原文保留。请重试或使用本机识别。",
+		"AI recognition did not finish. Your source is kept. Try again or use on-device recognition.",
+	],
+	pwSmartAiKeyFailed: [
+		"无法启用所选密钥，请到模型设置核对。原文保留。",
+		"The selected key could not be activated. Check your model settings. Your source is kept.",
+	],
+	pwSmartAiLimit: [
+		"AI 每批最多处理 40,000 字符、2,000 行和 200 条。请把清单分批识别。",
+		"AI accepts up to 40,000 characters, 2,000 lines and 200 entries per batch. Split larger lists.",
+	],
 	pwSmartReviewCount: [
 		"已识别 {{count}} 条，请核对账号和密码。",
 		"Recognized {{count}} entries. Check the usernames and passwords.",
@@ -104,8 +126,8 @@ export const passwordVaultCopy: Record<string, [string, string]> = {
 	],
 	pwSmartAiBusy: ["正在整理网站名称…", "Organizing website names…"],
 	pwSmartAiChanged: [
-		"AI 配置已变化，整理已取消。原候选保留。",
-		"AI settings changed. Organization was cancelled; original entries are kept.",
+		"AI 配置已变化，本次处理已取消。原文和未保存条目保留。",
+		"AI settings changed. Processing was cancelled; your source and unsaved entries are kept.",
 	],
 	pwSmartAiFailed: [
 		"AI 整理未完成，原候选保留。你仍可直接核对并保存。",
@@ -218,8 +240,8 @@ export const passwordVaultCopy: Record<string, [string, string]> = {
 		"The vault is locked. Unlock it before trying again.",
 	],
 	pwVaultToolbarHint: [
-		"已解锁 · 仅在本机处理条目",
-		"Unlocked · entries are processed on this device",
+		"已解锁 · 本机加密保存",
+		"Unlocked · saved encrypted on this device",
 	],
 	pwVaultNewEntry: ["新建条目", "New entry"],
 	pwVaultLock: ["立即锁定", "Lock now"],

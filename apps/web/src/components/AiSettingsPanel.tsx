@@ -356,7 +356,8 @@ export function AiSettingsPanel() {
 			}
 		}
 	};
-	let canUseWithoutKey = draft.provider === "ollama";
+	let canUseWithoutKey =
+		draft.provider === "ollama" || draft.provider === "compatible";
 	try {
 		canUseWithoutKey ||= ["localhost", "127.0.0.1", "[::1]"].includes(
 			new URL(draft.baseURL).hostname,
