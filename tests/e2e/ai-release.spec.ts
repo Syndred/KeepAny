@@ -63,6 +63,10 @@ for (const language of ["en", "zh-CN"] as const) {
 				);
 				await settings.locator("#ai-settings-url").fill(mock.baseURL);
 				await settings.locator("#ai-settings-model").fill(model);
+				await selectChoice(
+					settings.locator("#ai-settings-key-source"),
+					"session",
+				);
 				await settings.locator("#ai-settings-api-key").fill(syntheticKey);
 				await settings
 					.getByRole("button", { name: copy.saveSettings, exact: true })

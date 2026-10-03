@@ -1,8 +1,38 @@
-.ai-settings-panel .form-grid { margin: var(--space-4) 0; }
-.ai-settings-panel small { color: var(--muted); line-height: 1.5; }
-.ai-settings-panel .actions { flex-wrap: wrap; }
-.ai-settings-test-hint { display: block; margin: var(--space-3) 0; }
-.ai-settings-vault { gap: var(--space-3); }
-.ai-settings-vault p { margin: 0; }
-.ai-settings-unlock { display: grid; gap: var(--space-3); }
-.ai-settings-panel .notice p { margin: 0; }
+.ai-settings-panel .form-grid {
+	margin: var(--space-4) 0;
+}
+.ai-settings-panel small {
+	color: var(--muted);
+	line-height: 1.5;
+}
+.ai-settings-panel .actions {
+	flex-wrap: wrap;
+}
+.ai-settings-test-hint {
+	display: block;
+	margin: var(--space-3) 0;
+}
+.ai-settings-vault {
+	gap: var(--space-3);
+}
+.ai-settings-vault p {
+	margin: 0;
+}
+.ai-settings-unlock {
+	display: grid;
+	gap: var(--space-3);
+}
+.ai-settings-panel .notice p {
+	margin: 0;
+}
+.ai-settings-auto-activate {
+	display: flex;
+	align-items: flex-start;
+	gap: var(--space-2);
+}
+.ai-settings-auto-activate input {
+	flex: 0 0 auto;
+	margin: 3px 0 0;
+	width: 18px;
+	height: 18px;
+}

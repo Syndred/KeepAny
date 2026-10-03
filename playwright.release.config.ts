@@ -12,6 +12,7 @@ export default defineConfig({
 	testMatch: [
 		"core-pages-matrix.spec.ts",
 		"ai-release.spec.ts",
+		"ai-key-persistence.spec.ts",
 		"ai-account-import-release.spec.ts",
 		"intake-bulk-account-links.spec.ts",
 		"ai-dialog-matrix.spec.ts",

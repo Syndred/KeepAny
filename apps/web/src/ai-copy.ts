@@ -31,8 +31,8 @@ export const aiCopy: Record<string, [string, string]> = {
 		"Enter a model supported by your provider; Doubao also accepts an Ark endpoint ID.",
 	],
 	aiSettingsKeySource: ["API Key 的使用方式", "API key source"],
-	aiSettingsKeySession: ["仅当前页面会话", "Current page session only"],
-	aiSettingsKeyVault: ["使用密码库中的条目", "Use a password vault entry"],
+	aiSettingsKeySession: ["仅本次使用", "Use for this session only"],
+	aiSettingsKeyVault: ["加密保存，长期使用", "Save encrypted for future use"],
 	aiSettingsKeyNone: ["服务无需密钥", "Service without a key"],
 	aiSettingsApiKey: ["API Key", "API key"],
 	aiSettingsApiKeyPlaceholder: ["输入密钥", "Enter your API key"],
@@ -40,18 +40,42 @@ export const aiCopy: Record<string, [string, string]> = {
 		"当前会话已有密钥；留空可继续使用",
 		"A session key is active; leave blank to keep using it",
 	],
+	aiSettingsKeepVaultKey: [
+		"留空继续使用所选条目中的密钥",
+		"Leave blank to keep the key in the selected entry",
+	],
 	aiSettingsSessionHint: [
 		"服务和模型会保存在本机；密钥仅在当前页面会话使用，刷新或关闭后需重新输入。",
 		"Provider and model settings are saved on this device. The key stays in this page session and must be entered again after refreshing or closing it.",
 	],
 	aiSettingsVaultHint: [
-		"先在密码库建立 API Key 条目，并把密钥放在“密码”字段。此处只保存你选中条目的引用；密码库锁定后需重新解锁并启用密钥。",
-		"Create an API key entry in your password vault and put the key in its Password field. Only a reference to your selected entry is saved here. Unlock the vault and activate the key again after it locks.",
+		"API Key 加密保存在本机密码库，刷新或重新打开后仍保留。密码库锁定时暂停使用，解锁后可继续。",
+		"Your API key is encrypted in the password vault on this device and survives refreshes and reopening. It cannot be used while the vault is locked; unlock it to continue.",
 	],
-	aiSettingsVaultEntry: ["密码库条目", "Vault entry"],
+	aiSettingsVaultNewKeyHint: [
+		"输入密钥后保存配置，将在密码库中新建 API Key 条目；也可选择已有条目。",
+		"Enter a key and save the configuration to create an API key entry in your vault, or select an existing entry.",
+	],
+	aiSettingsVaultReplacementHint: [
+		"留空复用所选密钥；输入新值会更新此条目的密码，并保留其他内容和历史。",
+		"Leave blank to reuse the selected key. A new value updates this entry's password while keeping its other fields and history.",
+	],
+	aiSettingsAutoActivate: [
+		"解锁密码库后自动启用此密钥",
+		"Activate this key automatically after unlocking the vault",
+	],
+	aiSettingsAutoActivateHint: [
+		"下次打开或刷新后，只需解锁密码库，无需重新输入 API Key。",
+		"After reopening or refreshing, unlock the vault to use the key without re-entering it.",
+	],
+	aiSettingsManualActivateHint: [
+		"下次打开或刷新后，解锁密码库并点击“启用已选密钥”，无需重新输入 API Key。",
+		"After reopening or refreshing, unlock the vault and click Activate selected key; you do not need to re-enter the key.",
+	],
+	aiSettingsVaultEntry: ["密钥保存位置", "Key storage entry"],
 	aiSettingsChooseVaultEntry: [
-		"选择一个 API Key 条目",
-		"Choose an API key entry",
+		"新建 API Key 条目",
+		"Create a new API key entry",
 	],
 	aiSettingsMissingVaultEntry: [
 		"原条目已不可用，请重新选择",
@@ -60,26 +84,63 @@ export const aiCopy: Record<string, [string, string]> = {
 	aiSettingsOpenVault: ["打开密码库", "Open password vault"],
 	aiSettingsUnlockVault: ["解锁密码库", "Unlock password vault"],
 	aiSettingsVaultEmpty: [
-		"还没有密码库。请先到密码库页面建立或导入，再回来选择密钥条目。",
-		"No password vault is set up. Create or import one on the Password vault page, then return to choose a key entry.",
+		"还没有密码库。先创建或导入密码库，即可加密保存 API Key。",
+		"Create or import a password vault before saving your API key encrypted.",
+	],
+	aiSettingsCreateVault: [
+		"创建或导入密码库",
+		"Create or import a password vault",
 	],
 	aiSettingsVaultReady: [
-		"密码库已解锁，选择条目后保存配置即可使用。",
-		"The vault is unlocked. Choose an entry and save the configuration to use it.",
+		"密码库已解锁，可以加密保存新密钥或使用已有条目。",
+		"The vault is unlocked. Save a new key encrypted or use an existing entry.",
 	],
 	aiSettingsActivateVaultKey: ["启用已选密钥", "Activate selected key"],
 	aiSettingsVaultActivated: [
 		"所选密钥已在当前会话启用。",
 		"The selected key is active in this session.",
 	],
-	aiSettingsReady: ["模型配置已就绪", "Model connection is ready"],
+	aiSettingsReady: ["模型配置已启用", "Model configuration is active"],
 	aiSettingsNeedsKey: [
 		"模型已配置，请启用或输入 API Key",
 		"Model configured; activate or enter an API key",
 	],
+	aiSettingsVaultNeedsUnlock: [
+		"模型已配置，请解锁密码库读取已保存的密钥",
+		"Model configured; unlock the vault to use the saved key",
+	],
+	aiSettingsVaultNeedsActivation: [
+		"密钥已保存，请点击“启用已选密钥”",
+		"The key is saved; click Activate selected key",
+	],
 	aiSettingsNotConfigured: ["尚未配置模型", "No model configured"],
 	aiSettingsSave: ["保存配置", "Save configuration"],
+	aiSettingsSaving: ["正在保存…", "Saving…"],
 	aiSettingsSaved: ["模型配置已保存。", "Model configuration saved."],
+	aiSettingsSessionSaved: [
+		"模型配置已保存。API Key 仅本次使用，刷新或关闭页面后需重新输入。",
+		"Model configuration saved. The API key lasts for this session only and must be entered again after refreshing or closing the page.",
+	],
+	aiSettingsVaultSaved: [
+		"API Key 已加密保存在密码库，模型配置已保存。",
+		"The API key is encrypted in your password vault and the model configuration is saved.",
+	],
+	aiSettingsVaultSavedNotActivated: [
+		"API Key 已加密保存，但密码库或模型配置已变化，尚未启用。请解锁并选择已保存的条目后重试。",
+		"The API key is encrypted in your vault, but the vault or model settings changed before activation. Unlock the vault and select the saved entry to retry.",
+	],
+	aiSettingsVaultConfigSaveFailed: [
+		"API Key 已加密保存，模型配置未保存。已保留所选条目，可再次保存配置，无需重新输入密钥。",
+		"The API key was saved encrypted, but the model configuration was not saved. The entry remains selected; save the configuration again without re-entering the key.",
+	],
+	aiSettingsVaultSaveFailed: [
+		"保存未完成，请解锁并核对密码库条目后重试；已填写的内容仍保留。",
+		"Saving did not complete. Unlock the vault and check its entries before retrying; your input has been kept.",
+	],
+	aiSettingsVaultBindingRequired: [
+		"所选条目尚未允许为此模型自动启用。请解锁密码库并保存配置，或关闭自动启用。",
+		"The selected entry is not yet authorized for automatic activation with this model. Unlock the vault and save the configuration, or turn off automatic activation.",
+	],
 	aiSettingsClear: ["移除模型配置", "Remove model configuration"],
 	aiSettingsCleared: [
 		"模型配置和本次会话密钥已移除，密码库条目仍保留。",

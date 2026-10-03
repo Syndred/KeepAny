@@ -100,7 +100,10 @@ async function configureAndOpenVault(
 	await settings.locator("#ai-settings-model").fill(model);
 	if (withoutKey)
 		await selectChoice(settings.locator("#ai-settings-key-source"), "none");
-	else await settings.locator("#ai-settings-api-key").fill(syntheticKey);
+	else {
+		await selectChoice(settings.locator("#ai-settings-key-source"), "session");
+		await settings.locator("#ai-settings-api-key").fill(syntheticKey);
+	}
 	await settings
 		.getByRole("button", { name: ui.saveSettings, exact: true })
 		.click();
@@ -1604,7 +1607,7 @@ test("AI note recognition keeps failed source and discards delayed results after
 	}
 });
 
-test("password AI import reuses a saved vault API key after explicit activation", async ({
+test("password AI import automatically restores its saved vault API key after unlock", async ({
 	browser,
 }) => {
 	const t = copy("en-US");
@@ -1643,30 +1646,28 @@ test("password AI import reuses a saved vault API key after explicit activation"
 		await selectChoice(settings.locator("#ai-settings-vault-entry"), {
 			label: "Existing login",
 		});
+		await settings.locator("#ai-settings-auto-activate").check();
 		await settings
 			.getByRole("button", { name: "Save configuration", exact: true })
 			.click();
 		await expect(
 			settings
 				.getByRole("status")
-				.filter({ hasText: "Model connection is ready" }),
+				.filter({ hasText: "Model configuration is active" }),
 		).toBeVisible();
 		await page.goto("/assets/vault");
 		await unlock(page, t);
 		const importer = await openImport(page, t);
 		const source =
-			"Synthetic activated-key service\ndemo.activated@example.test\nSynthetic activated secret!";
+			"Synthetic restored-key service\ndemo.restored@example.test\nSynthetic restored secret!";
 		await importer.locator("#pw-smart-source").fill(source);
 		await expect(
 			importer.getByRole("button", {
 				name: "Activate selected key",
 				exact: true,
 			}),
-		).toBeVisible();
+		).toHaveCount(0);
 		expect(mock.requests).toHaveLength(0);
-		await importer
-			.getByRole("button", { name: "Activate selected key", exact: true })
-			.click();
 		mock.responses.push(
 			JSON.stringify({
 				records: [

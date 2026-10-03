@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -8,14 +9,19 @@ import {
 } from "../../../../packages/ai/src";
 import {
 	type AiConfigurationInput,
+	type AiKeySource,
 	AiSettingsError,
 	aiProviderIds,
 	normalizeAiSettings,
 	useAiConnection,
 } from "../ai-settings-store";
-import { usePasswordVault } from "./PasswordVaultProvider";
+import {
+	type PasswordVaultEntryDraft,
+	usePasswordVault,
+} from "./PasswordVaultProvider";
 import { Button } from "./ui/button";
 import { Select, SelectOption } from "./ui/select";
+import { TextLink } from "./ui/text-link";
 import "./AiSettingsPanel.css";
 
 const providerCopy: Record<AiProviderId, string> = {
@@ -34,13 +40,17 @@ const providerCopy: Record<AiProviderId, string> = {
 
 export function createDefaultAiConfiguration(
 	provider: AiProviderId = "deepseek",
+	defaultKeySource: AiKeySource = "session",
 ): AiConfigurationInput {
 	const preset = providerPresets[provider];
 	return {
 		provider,
 		baseURL: preset.baseURL,
 		model: preset.model,
-		keySource: provider === "ollama" ? "none" : "session",
+		keySource: provider === "ollama" ? "none" : defaultKeySource,
+		...(defaultKeySource === "vault" && provider !== "ollama"
+			? { autoActivate: true }
+			: {}),
 		apiKey: "",
 	};
 }
@@ -53,6 +63,7 @@ export function AiConnectionFields({
 	idPrefix = "ai-connection",
 	showApiKey = true,
 	hasSessionKey = false,
+	defaultKeySource = "session",
 }: {
 	value: AiConfigurationInput;
 	onChange(value: AiConfigurationInput): void;
@@ -60,6 +71,7 @@ export function AiConnectionFields({
 	idPrefix?: string;
 	showApiKey?: boolean;
 	hasSessionKey?: boolean;
+	defaultKeySource?: AiKeySource;
 }) {
 	const { t } = useTranslation();
 	return (
@@ -73,7 +85,12 @@ export function AiConnectionFields({
 					value={value.provider}
 					disabled={disabled}
 					onValueChange={(next) =>
-						onChange(createDefaultAiConfiguration(next as AiProviderId))
+						onChange(
+							createDefaultAiConfiguration(
+								next as AiProviderId,
+								defaultKeySource,
+							),
+						)
 					}
 				>
 					{aiProviderIds.map((provider) => (
@@ -156,13 +173,14 @@ export function AiSettingsPanel() {
 	const [draft, setDraft] = useState<AiConfigurationInput>(() =>
 		ai.settings
 			? { ...ai.settings, apiKey: "" }
-			: createDefaultAiConfiguration(),
+			: createDefaultAiConfiguration("deepseek", "vault"),
 	);
 	const [master, setMaster] = useState("");
 	const [message, setMessage] = useState("");
 	const [error, setError] = useState("");
 	const [busy, setBusy] = useState(false);
 	const [vaultBusy, setVaultBusy] = useState(false);
+	const [saving, setSaving] = useState(false);
 	const [testResult, setTestResult] = useState<{
 		model: string;
 		inputTokens: number | null;
@@ -172,7 +190,11 @@ export function AiSettingsPanel() {
 	const generation = useRef(0);
 	const mounted = useRef(true);
 	const draftRef = useRef(draft);
+	const settingsRef = useRef(ai.settings);
+	const savingRef = useRef(false);
+	const saveGeneration = useRef(0);
 	draftRef.current = draft;
+	settingsRef.current = ai.settings;
 	const invalidateTest = useCallback(() => {
 		generation.current += 1;
 		controller.current?.abort();
@@ -181,8 +203,9 @@ export function AiSettingsPanel() {
 		setTestResult(null);
 	}, []);
 	useEffect(() => {
+		saveGeneration.current += 1;
 		if (ai.settings) setDraft({ ...ai.settings, apiKey: "" });
-		else setDraft(createDefaultAiConfiguration());
+		else setDraft(createDefaultAiConfiguration("deepseek", "vault"));
 	}, [ai.settings]);
 	useEffect(() => {
 		void ai.revision;
@@ -196,11 +219,14 @@ export function AiSettingsPanel() {
 		mounted.current = true;
 		return () => {
 			mounted.current = false;
+			saveGeneration.current += 1;
 			generation.current += 1;
 			controller.current?.abort();
 		};
 	}, []);
 	const changeDraft = (next: AiConfigurationInput) => {
+		if (savingRef.current) return;
+		saveGeneration.current += 1;
 		invalidateTest();
 		setDraft(next);
 		setMaster("");
@@ -209,31 +235,119 @@ export function AiSettingsPanel() {
 	};
 	const sameSessionTarget =
 		ai.settings?.keySource === "session" &&
-		draft.keySource === "session" &&
 		ai.settings.provider === draft.provider &&
 		ai.settings.baseURL === draft.baseURL.trim().replace(/\/$/, "");
 	const hasSessionKey = !!(sameSessionTarget && ai.connection?.apiKey);
 	const reportError = (caught: unknown, fallback = "aiSettingsInvalid") => {
 		setError(caught instanceof AiSettingsError ? caught.code : fallback);
 	};
-	const save = () => {
+	const save = async () => {
+		if (savingRef.current || vaultBusy) return;
 		invalidateTest();
 		setMessage("");
 		setError("");
+		savingRef.current = true;
+		setSaving(true);
+		const current = ++saveGeneration.current;
+		const savedSettings = ai.settings;
+		const input = draft;
+		const session = vault.session;
+		let savedEntryId: string | undefined;
+		const isCurrent = () =>
+			mounted.current &&
+			saveGeneration.current === current &&
+			settingsRef.current === savedSettings;
 		try {
+			// A new key has no entry reference until the encrypted write completes.
+			// Validate its destination before saving anything to the vault.
+			const target = normalizeAiSettings({
+				...input,
+				keySource: input.keySource === "vault" ? "session" : input.keySource,
+			});
+			if (input.keySource === "vault") {
+				if (session?.getSnapshot().status !== "unlocked")
+					throw new AiSettingsError("aiSettingsVaultLocked");
+				const apiKey = input.apiKey?.trim() ?? "";
+				if (apiKey.length > 4096)
+					throw new AiSettingsError("aiSettingsInvalid");
+				let entry: PasswordVaultEntryDraft;
+				if (input.vaultEntryId) {
+					try {
+						entry = session.readEntry(input.vaultEntryId);
+					} catch {
+						throw new AiSettingsError("aiSettingsVaultReadFailed");
+					}
+				} else {
+					if (!apiKey) throw new AiSettingsError("aiSettingsKeyRequired");
+					entry = {
+						title: `${t(providerCopy[target.provider])} API Key`,
+						username: "",
+						password: apiKey,
+						url: target.baseURL,
+						notes: "",
+						linkedAssetIds: [],
+					};
+				}
+				if (!(apiKey || entry.password.trim()))
+					throw new AiSettingsError("aiSettingsKeyRequired");
+				if ((apiKey || entry.password.trim()).length > 4096)
+					throw new AiSettingsError("aiSettingsInvalid");
+				const binding = {
+					version: 1 as const,
+					provider: target.provider,
+					baseURL: target.baseURL,
+				};
+				const needsBinding =
+					input.autoActivate === true &&
+					(entry.aiKeyBinding?.version !== binding.version ||
+						entry.aiKeyBinding.provider !== binding.provider ||
+						entry.aiKeyBinding.baseURL !== binding.baseURL);
+				if (!input.vaultEntryId || apiKey || needsBinding) {
+					savedEntryId = await session.saveEntry({
+						...entry,
+						password: apiKey || entry.password,
+						...(input.autoActivate === true ? { aiKeyBinding: binding } : {}),
+					});
+				} else savedEntryId = input.vaultEntryId;
+				if (isCurrent())
+					setDraft({ ...input, vaultEntryId: savedEntryId, apiKey: "" });
+				if (!isCurrent() || session.getSnapshot().status !== "unlocked") {
+					if (mounted.current) setMessage("aiSettingsVaultSavedNotActivated");
+					return;
+				}
+			}
 			ai.saveConfiguration({
-				...draft,
+				...input,
+				...(savedEntryId ? { vaultEntryId: savedEntryId } : {}),
 				apiKey:
-					draft.keySource === "session" &&
-					!draft.apiKey?.trim() &&
+					input.keySource === "session" &&
+					!input.apiKey?.trim() &&
 					hasSessionKey
 						? undefined
-						: draft.apiKey,
+						: input.apiKey,
 			});
-			setDraft((current) => ({ ...current, apiKey: "" }));
-			setMessage("aiSettingsSaved");
+			setDraft({
+				...input,
+				...(savedEntryId ? { vaultEntryId: savedEntryId } : {}),
+				apiKey: "",
+			});
+			setMessage(
+				input.keySource === "vault"
+					? "aiSettingsVaultSaved"
+					: input.keySource === "session"
+						? "aiSettingsSessionSaved"
+						: "aiSettingsSaved",
+			);
 		} catch (caught) {
-			reportError(caught);
+			if (!mounted.current) return;
+			if (savedEntryId && isCurrent()) {
+				// A metadata-only retry reuses the entry already saved to KDBX.
+				setDraft({ ...input, vaultEntryId: savedEntryId, apiKey: "" });
+				setError("aiSettingsVaultConfigSaveFailed");
+			} else if (isCurrent()) reportError(caught, "aiSettingsVaultSaveFailed");
+		} finally {
+			savingRef.current = false;
+			if (mounted.current) setSaving(false);
 		}
 	};
 	const clear = () => {
@@ -242,7 +356,7 @@ export function AiSettingsPanel() {
 		setError("");
 		try {
 			ai.clearConfiguration();
-			setDraft(createDefaultAiConfiguration());
+			setDraft(createDefaultAiConfiguration("deepseek", "vault"));
 			setMaster("");
 			setMessage("aiSettingsCleared");
 		} catch (caught) {
@@ -295,22 +409,25 @@ export function AiSettingsPanel() {
 		controller.current = request;
 		setBusy(true);
 		try {
-			const settings = normalizeAiSettings(draft);
+			const settings = normalizeAiSettings({
+				...draft,
+				keySource: draft.keySource === "vault" ? "session" : draft.keySource,
+			});
 			let apiKey = draft.apiKey?.trim() ?? "";
-			if (settings.keySource === "session" && !apiKey && hasSessionKey)
+			if (draft.keySource === "session" && !apiKey && hasSessionKey)
 				apiKey = ai.connection?.apiKey ?? "";
-			if (settings.keySource === "vault") {
+			if (draft.keySource === "vault" && !apiKey) {
 				if (vault.snapshot.status !== "unlocked" || !vault.session)
 					throw new AiSettingsError("aiSettingsVaultLocked");
 				if (
 					!vault.snapshot.entries.some(
-						(entry) => entry.id === settings.vaultEntryId,
+						(entry) => entry.id === draft.vaultEntryId,
 					)
 				)
 					throw new AiSettingsError("aiSettingsVaultEntryRequired");
 				try {
 					apiKey = vault.session
-						.readEntry(settings.vaultEntryId as string)
+						.readEntry(draft.vaultEntryId as string)
 						.password.trim();
 				} catch {
 					throw new AiSettingsError("aiSettingsVaultReadFailed");
@@ -318,6 +435,7 @@ export function AiSettingsPanel() {
 			}
 			if (settings.keySource !== "none" && !apiKey)
 				throw new AiSettingsError("aiSettingsKeyRequired");
+			if (apiKey.length > 4096) throw new AiSettingsError("aiSettingsInvalid");
 			const connection: AiConnection = {
 				provider: settings.provider,
 				baseURL: settings.baseURL,
@@ -372,6 +490,20 @@ export function AiSettingsPanel() {
 		ai.settings.provider === draft.provider &&
 		ai.settings.baseURL === draft.baseURL &&
 		ai.settings.model === draft.model;
+	const connectionStatus = ai.connection
+		? "aiSettingsReady"
+		: !ai.configured
+			? "aiSettingsNotConfigured"
+			: ai.settings?.keySource === "vault" &&
+					vault.snapshot.status !== "unlocked"
+				? "aiSettingsVaultNeedsUnlock"
+				: ai.settings?.keySource === "vault" &&
+						!ai.settings.autoActivate &&
+						vault.snapshot.entries.some(
+							(entry) => entry.id === ai.settings?.vaultEntryId,
+						)
+					? "aiSettingsVaultNeedsActivation"
+					: "aiSettingsNeedsKey";
 	return (
 		<section
 			className="card padded ai-settings-panel"
@@ -380,13 +512,7 @@ export function AiSettingsPanel() {
 			<h2 id="ai-settings-title">{t("aiSettingsTitle")}</h2>
 			<p>{t("aiSettingsHint")}</p>
 			<p className="notice" role="status">
-				{t(
-					ai.connection
-						? "aiSettingsReady"
-						: ai.configured
-							? "aiSettingsNeedsKey"
-							: "aiSettingsNotConfigured",
-				)}
+				{t(connectionStatus)}
 			</p>
 			<div className="form-grid">
 				<AiConnectionFields
@@ -395,6 +521,8 @@ export function AiSettingsPanel() {
 					showApiKey={false}
 					hasSessionKey={hasSessionKey}
 					idPrefix="ai-settings"
+					defaultKeySource="vault"
+					disabled={saving || vaultBusy}
 				/>
 				<div className="field wide">
 					<label htmlFor="ai-settings-key-source">
@@ -403,19 +531,27 @@ export function AiSettingsPanel() {
 					<Select
 						id="ai-settings-key-source"
 						value={draft.keySource}
+						disabled={saving || vaultBusy}
 						onValueChange={(source) =>
 							changeDraft({
 								...draft,
 								keySource: source as AiConfigurationInput["keySource"],
-								apiKey: "",
+								apiKey:
+									source === "none"
+										? ""
+										: draft.apiKey ||
+											(source === "vault" && hasSessionKey
+												? ai.connection?.apiKey
+												: ""),
 								vaultEntryId: "",
+								...(source === "vault" ? { autoActivate: true } : {}),
 							})
 						}
 					>
+						<SelectOption value="vault">{t("aiSettingsKeyVault")}</SelectOption>
 						<SelectOption value="session">
 							{t("aiSettingsKeySession")}
 						</SelectOption>
-						<SelectOption value="vault">{t("aiSettingsKeyVault")}</SelectOption>
 						{(canUseWithoutKey || draft.keySource === "none") && (
 							<SelectOption value="none" disabled={!canUseWithoutKey}>
 								{t("aiSettingsKeyNone")}
@@ -433,6 +569,7 @@ export function AiSettingsPanel() {
 							spellCheck={false}
 							maxLength={4096}
 							value={draft.apiKey ?? ""}
+							disabled={saving || vaultBusy}
 							placeholder={t(
 								hasSessionKey
 									? "aiSettingsKeepSessionKey"
@@ -451,13 +588,68 @@ export function AiSettingsPanel() {
 				{draft.keySource === "vault" && (
 					<div className="field wide ai-settings-vault">
 						<p>{t("aiSettingsVaultHint")}</p>
+						<label htmlFor="ai-settings-api-key">{t("aiSettingsApiKey")}</label>
+						<input
+							id="ai-settings-api-key"
+							type="password"
+							autoComplete="off"
+							spellCheck={false}
+							maxLength={4096}
+							value={draft.apiKey ?? ""}
+							disabled={saving || vaultBusy}
+							placeholder={t(
+								draft.vaultEntryId
+									? "aiSettingsKeepVaultKey"
+									: "aiSettingsApiKeyPlaceholder",
+							)}
+							onChange={(event) =>
+								changeDraft({ ...draft, apiKey: event.target.value })
+							}
+							aria-describedby="ai-settings-vault-key-hint"
+						/>
+						<small id="ai-settings-vault-key-hint">
+							{t(
+								draft.vaultEntryId
+									? "aiSettingsVaultReplacementHint"
+									: "aiSettingsVaultNewKeyHint",
+							)}
+						</small>
+						<label className="ai-settings-auto-activate">
+							<input
+								id="ai-settings-auto-activate"
+								type="checkbox"
+								checked={draft.autoActivate === true}
+								disabled={saving || vaultBusy}
+								onChange={(event) =>
+									changeDraft({ ...draft, autoActivate: event.target.checked })
+								}
+							/>
+							{t("aiSettingsAutoActivate")}
+						</label>
+						<small>
+							{t(
+								draft.autoActivate === true
+									? "aiSettingsAutoActivateHint"
+									: "aiSettingsManualActivateHint",
+							)}
+						</small>
 						{vault.snapshot.status === "loading" && (
-							<Button disabled={vaultBusy} onClick={() => void openVault()}>
+							<Button
+								disabled={vaultBusy || saving}
+								onClick={() => void openVault()}
+							>
 								{t("aiSettingsOpenVault")}
 							</Button>
 						)}
 						{vault.snapshot.status === "empty" && (
-							<p>{t("aiSettingsVaultEmpty")}</p>
+							<>
+								<p>{t("aiSettingsVaultEmpty")}</p>
+								<TextLink asChild>
+									<Link to="/assets/$kind" params={{ kind: "vault" }}>
+										{t("aiSettingsCreateVault")}
+									</Link>
+								</TextLink>
+							</>
 						)}
 						{vault.snapshot.status === "locked" && (
 							<div className="ai-settings-unlock">
@@ -469,7 +661,7 @@ export function AiSettingsPanel() {
 									type="password"
 									autoComplete="off"
 									value={master}
-									disabled={vaultBusy}
+									disabled={vaultBusy || saving}
 									onChange={(event) => setMaster(event.target.value)}
 									onKeyDown={(event) => {
 										if (event.key === "Enter") {
@@ -479,7 +671,7 @@ export function AiSettingsPanel() {
 									}}
 								/>
 								<Button
-									disabled={vaultBusy || !master}
+									disabled={vaultBusy || saving || !master}
 									onClick={() => void unlockVault()}
 								>
 									{t("aiSettingsUnlockVault")}
@@ -494,11 +686,12 @@ export function AiSettingsPanel() {
 								<Select
 									id="ai-settings-vault-entry"
 									value={draft.vaultEntryId ?? ""}
+									disabled={saving || vaultBusy}
 									onValueChange={(entryId) =>
-										changeDraft({ ...draft, vaultEntryId: entryId })
+										changeDraft({ ...draft, vaultEntryId: entryId, apiKey: "" })
 									}
 								>
-									<SelectOption value="" disabled>
+									<SelectOption value="">
 										{t("aiSettingsChooseVaultEntry")}
 									</SelectOption>
 									{draft.vaultEntryId &&
@@ -517,7 +710,10 @@ export function AiSettingsPanel() {
 								</Select>
 								<small>{t("aiSettingsVaultReady")}</small>
 								{selectedVaultSaved && !ai.connection && (
-									<Button disabled={!draft.vaultEntryId} onClick={activate}>
+									<Button
+										disabled={saving || !draft.vaultEntryId}
+										onClick={activate}
+									>
 										{t("aiSettingsActivateVaultKey")}
 									</Button>
 								)}
@@ -527,14 +723,30 @@ export function AiSettingsPanel() {
 				)}
 			</div>
 			<div className="actions">
-				<Button variant="primary" disabled={vaultBusy} onClick={save}>
-					{t("aiSettingsSave")}
+				<Button
+					variant="primary"
+					disabled={
+						saving ||
+						vaultBusy ||
+						(draft.keySource === "vault" &&
+							vault.snapshot.status !== "unlocked")
+					}
+					onClick={() => void save()}
+				>
+					{t(saving ? "aiSettingsSaving" : "aiSettingsSave")}
 				</Button>
-				<Button disabled={busy || vaultBusy} onClick={() => void runTest()}>
+				<Button
+					disabled={busy || vaultBusy || saving}
+					onClick={() => void runTest()}
+				>
 					{t(busy ? "aiSettingsTesting" : "aiSettingsTest")}
 				</Button>
 				{ai.configured && (
-					<Button variant="danger" disabled={vaultBusy} onClick={clear}>
+					<Button
+						variant="danger"
+						disabled={vaultBusy || saving}
+						onClick={clear}
+					>
 						{t("aiSettingsClear")}
 					</Button>
 				)}
