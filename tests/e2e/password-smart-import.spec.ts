@@ -286,7 +286,231 @@ async function inspectKdbx(path: string) {
 	}
 }
 
+test("local line mapping retains unresolved edits through partial save and clears them on lock", async ({
+	browser,
+}) => {
+	const t = copy("en-US");
+	const context = await browser.newContext({
+		locale: "en-US",
+		viewport: { width: 1280, height: 844 },
+	});
+	await context.addInitScript(() =>
+		localStorage.setItem("keepany-language", "en"),
+	);
+	const page = await context.newPage();
+	try {
+		await page.goto("/assets/vault");
+		await createVault(page, t);
+		const source =
+			"Mapped service\nplain-user\nSynthetic mapped password\nUnassigned old value";
+		const importer = await openImport(page, t, source);
+		await importer
+			.getByRole("button", { name: t("pwSmartMap"), exact: true })
+			.click();
+		await importer
+			.locator("#pw-map-value-4")
+			.fill("Unassigned corrected value");
+		await importer
+			.getByRole("button", { name: t("pwSmartEditSource"), exact: true })
+			.click();
+		await expect(importer.locator("#pw-smart-source")).toHaveValue(
+			source.replace("old value", "corrected value"),
+		);
+		await importer
+			.getByRole("button", { name: t("pwSmartMap"), exact: true })
+			.click();
+		for (const [line, field] of [
+			[1, "title"],
+			[2, "username"],
+			[3, "password"],
+		] as const)
+			await selectChoice(importer.locator(`#pw-map-field-${line}`), field);
+		await importer
+			.locator("#pw-map-value-4")
+			.fill("Unassigned second correction");
+		await importer
+			.getByRole("button", { name: t("pwSmartMapReview"), exact: true })
+			.click();
+		await expect(importer.locator(".pw-smart-issues")).toContainText(
+			t("pwSmartIssueLine", { line: 4 }),
+		);
+		await importer
+			.getByRole("button", {
+				name: t("pwSmartConfirm", { count: 1 }),
+				exact: true,
+			})
+			.click();
+		await expect(importer.locator(".pw-smart-receipt")).toHaveText(
+			t("pwSmartSaved", { added: 1, updated: 0, skipped: 0 }),
+		);
+		await importer
+			.getByRole("button", { name: t("pwSmartContinue"), exact: true })
+			.click();
+		await expect(importer.locator("#pw-smart-source")).toHaveValue(
+			source.replace("old value", "second correction"),
+		);
+		await importer
+			.getByRole("button", { name: t("pwSmartLockClose"), exact: true })
+			.click();
+		await expect(page.getByRole("dialog")).toBeHidden();
+		await unlock(page, t);
+		await openImport(page, t);
+		await expect(importer.locator("#pw-smart-source")).toHaveValue("");
+		await closeDialog(page);
+	} finally {
+		await context.close();
+	}
+});
+
 for (const variant of variants) {
+	test(`${variant.locale} ${variant.width}px unlabeled password notes and local field mapping save exact reviewed credentials`, async ({
+		browser,
+	}) => {
+		const t = copy(variant.locale);
+		const context = await browser.newContext({
+			locale: variant.locale,
+			viewport: { width: variant.width, height: 844 },
+		});
+		await context.addInitScript(
+			(locale) => localStorage.setItem("keepany-language", locale),
+			variant.locale === "zh-CN" ? "zh-CN" : "en",
+		);
+		const page = await context.newPage();
+		const errors: string[] = [];
+		const outgoing: string[] = [];
+		page.on("pageerror", (error) => errors.push(error.message));
+		page.on("request", (request) => {
+			if (/chat\/completions|responses$/.test(request.url()))
+				outgoing.push(request.url());
+		});
+		const password = "  Synthetic;pass|,with:punctuation!  ";
+		const source = `Outlook\ndemo.one@example.test\n${password}\ndemo.two@example.test`;
+		try {
+			await page.goto("/assets/vault");
+			await createVault(page, t);
+			const before = await persistedVault(page);
+			const importer = await openImport(page, t, source);
+			await expect(importer.locator(".pw-smart-row")).toHaveCount(1);
+			await expect(
+				importer.locator("#pw-smart-vault-import-1-password"),
+			).toHaveValue(password);
+			await expect(
+				importer.getByText(t("pwSmartInferredHint"), { exact: true }),
+			).toBeVisible();
+			await expect(
+				importer.locator(".pw-smart-row input[type=checkbox]"),
+			).not.toBeChecked();
+			await expect(
+				importer.getByRole("button", {
+					name: t("pwSmartConfirm", { count: 0 }),
+					exact: true,
+				}),
+			).toBeDisabled();
+			await expect(importer.locator(".pw-smart-issues")).toContainText(
+				t("pwSmartIssueLine", { line: 4 }),
+			);
+			expect(await persistedVault(page)).toEqual(before);
+			await importer
+				.getByRole("button", { name: t("pwSmartMap"), exact: true })
+				.click();
+			await expect(importer.locator(".pw-smart-map-line")).toHaveCount(4);
+			await expect(importer.locator("#pw-map-value-3")).toHaveAttribute(
+				"type",
+				"password",
+			);
+			await selectChoice(importer.locator("#pw-map-field-1"), "title");
+			await selectChoice(importer.locator("#pw-map-field-2"), "username");
+			await selectChoice(importer.locator("#pw-map-field-3"), "password");
+			await selectChoice(importer.locator("#pw-map-field-4"), "notes");
+			await checkLayout(page, importer, variant.width);
+			await page.locator(".dialog").evaluate((element) => {
+				element.scrollTop = 0;
+			});
+			await page.screenshot({
+				path: join(
+					evidenceRoot,
+					`password-notes-${variant.locale}-${variant.width}-mapping.png`,
+				),
+				fullPage: true,
+			});
+			await importer
+				.getByRole("button", { name: t("pwSmartMapReview"), exact: true })
+				.click();
+			await expect(importer.locator(".pw-smart-issues")).toHaveCount(0);
+			await expect(
+				importer.locator("#pw-smart-vault-import-1-notes"),
+			).toHaveValue("demo.two@example.test");
+			expect(await persistedVault(page)).toEqual(before);
+			await importer
+				.getByRole("button", {
+					name: t("pwSmartConfirm", { count: 1 }),
+					exact: true,
+				})
+				.click();
+			await expect(importer.locator(".pw-smart-receipt")).toHaveText(
+				t("pwSmartSaved", { added: 1, updated: 0, skipped: 0 }),
+			);
+			await closeDialog(page);
+			await page.reload();
+			await unlock(page, t);
+			expect(await readEntry(page, t, "Outlook")).toEqual({
+				password,
+				username: "demo.one@example.test",
+				url: "",
+				notes: "demo.two@example.test",
+			});
+			// A non-email account can be assigned locally when automatic recognition cannot decide.
+			const generic = "Generic service\nplain-user\nSynthetic second password";
+			await openImport(page, t, generic);
+			await expect(importer.locator(".pw-smart-row")).toHaveCount(0);
+			await importer
+				.getByRole("button", { name: t("pwSmartMap"), exact: true })
+				.click();
+			for (const [line, field] of [
+				[1, "title"],
+				[2, "username"],
+				[3, "password"],
+			] as const)
+				await selectChoice(importer.locator(`#pw-map-field-${line}`), field);
+			await importer
+				.getByRole("button", { name: t("pwSmartMapReview"), exact: true })
+				.click();
+			await expect(importer.locator(".pw-smart-row")).toHaveCount(1);
+			await checkLayout(page, importer, variant.width);
+			await page.locator(".dialog").evaluate((element) => {
+				element.scrollTop = 0;
+			});
+			await page.screenshot({
+				path: join(
+					evidenceRoot,
+					`password-notes-${variant.locale}-${variant.width}-review.png`,
+				),
+				fullPage: true,
+			});
+			await importer
+				.getByRole("button", {
+					name: t("pwSmartConfirm", { count: 1 }),
+					exact: true,
+				})
+				.click();
+			await expect(importer.locator(".pw-smart-receipt")).toBeVisible();
+			await closeDialog(page);
+			await page.reload();
+			await unlock(page, t);
+			expect((await readEntry(page, t, "Generic service")).username).toBe(
+				"plain-user",
+			);
+			await openImport(page, t);
+			await expect(importer.locator("#pw-smart-source")).toHaveValue("");
+			await expect(importer.locator(".pw-smart-map-line")).toHaveCount(0);
+			await closeDialog(page);
+			expect(outgoing).toEqual([]);
+			expect(errors).toEqual([]);
+		} finally {
+			await context.close();
+		}
+	});
+
 	test(`${variant.locale} ${variant.width}px smart password import reviews locally, sends domains only and saves a recoverable KDBX`, async ({
 		browser,
 	}) => {

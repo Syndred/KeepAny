@@ -11,8 +11,27 @@ export const passwordVaultCopy: Record<string, [string, string]> = {
 		"Website=https://example.com\nUsername=reader@example.com\nPassword=your password\n\nWebsite=https://another.example\nUsername=another account\nPassword=another password",
 	],
 	pwSmartSyntax: [
-		"每个字段一行，每条用空行分隔。同一行多个字段用分号隔开；值含分号、逗号或竖线时用双引号包裹。也支持 CSV／表格，密码空格原样保留。",
-		"Use one field per line and a blank line between entries. Separate same-line fields with semicolons; quote values containing semicolons, commas, or pipes. CSV and spreadsheet rows are also supported. Password spaces are preserved.",
+		"支持网站名、邮箱、密码各一行的清单，也支持带字段名的文本和 CSV／表格。识别不完整时可按行指定字段；密码空格原样保留。",
+		"Lists with a website name, email, and password on separate lines are supported, along with labeled text and CSV. Assign fields by line if recognition is incomplete. Password spaces are preserved.",
+	],
+	pwSmartMap: ["按行指定字段", "Assign fields by line"],
+	pwSmartMapHint: [
+		"为每行选择标题、账号、密码等字段，勾选新条目的起始行，再预览。未指定的行会保留待核对。",
+		"Choose a field for each line, mark where each entry begins, then review. Unassigned lines remain for review.",
+	],
+	pwSmartMapShow: ["显示原文内容", "Show source values"],
+	pwSmartMapHide: ["隐藏原文内容", "Hide source values"],
+	pwSmartMapStart: [
+		"第 {{line}} 行开始新条目",
+		"Start a new entry at line {{line}}",
+	],
+	pwSmartMapField: ["第 {{line}} 行的字段", "Field for line {{line}}"],
+	pwSmartMapUnassigned: ["待指定", "Unassigned"],
+	pwSmartMapIgnore: ["忽略这行", "Ignore this line"],
+	pwSmartMapReview: ["预览指定的条目", "Review assigned entries"],
+	pwSmartInferredHint: [
+		"无字段名的条目需核对密码后勾选，才会导入。",
+		"Check passwords in unlabeled entries, then select the entries to import.",
 	],
 	pwSmartFile: ["或选择 CSV／文本文件", "Or choose a CSV or text file"],
 	pwSmartChooseFile: ["选择文件", "Choose file"],
@@ -121,8 +140,8 @@ export const passwordVaultCopy: Record<string, [string, string]> = {
 	],
 	pwSmartEditSource: ["修改原文", "Edit source"],
 	pwSmartNoRows: [
-		"尚未识别到完整条目，请检查字段和分隔。",
-		"No complete entries recognized. Check the fields and separators.",
+		"尚未识别到完整条目。可按行指定字段后预览。",
+		"No complete entries recognized. Assign fields by line, then review.",
 	],
 	pwSmartRemaining: [
 		"还有未识别的内容。原文暂留当前页面，关闭或锁库后清除。",

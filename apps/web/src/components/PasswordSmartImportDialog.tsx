@@ -13,7 +13,15 @@ import {
 	parseVaultImportText,
 	requestVaultImportAiTitles,
 	type VaultImportCandidate,
+	type VaultImportResult,
 } from "../vault-import-model";
+import {
+	createVaultMappedLines,
+	parseVaultMappedLines,
+	updateVaultMappedSource,
+	type VaultMappedLine,
+} from "../vault-import-mapping";
+import { PasswordImportMapping } from "./PasswordImportMapping";
 import { usePasswordVault } from "./PasswordVaultProvider";
 import { Button } from "./ui/button";
 import { Dialog } from "./ui/dialog";
@@ -53,7 +61,10 @@ export function PasswordSmartImportDialog({
 	const [candidates, setCandidates] = useState<VaultImportCandidate[]>([]);
 	const [issues, setIssues] = useState<Issue[]>([]);
 	const [choices, setChoices] = useState<Record<string, Choice>>({});
-	const [stage, setStage] = useState<"input" | "review" | "saved">("input");
+	const [stage, setStage] = useState<"input" | "mapping" | "review" | "saved">(
+		"input",
+	);
+	const [mappedLines, setMappedLines] = useState<VaultMappedLine[]>([]);
 	const [busy, setBusy] = useState<"file" | "ai" | "save" | null>(null);
 	const [message, setMessage] = useState("");
 	const [receipt, setReceipt] = useState<{
@@ -92,6 +103,7 @@ export function PasswordSmartImportDialog({
 		setCandidates([]);
 		setChoices({});
 		setIssues([]);
+		setMappedLines([]);
 		onClose();
 	}, [vault.snapshot.status, onClose]);
 
@@ -128,6 +140,7 @@ export function PasswordSmartImportDialog({
 		setCandidates([]);
 		setChoices({});
 		setIssues([]);
+		setMappedLines([]);
 		onClose();
 	}
 	function resetInput(nextSource = source) {
@@ -139,6 +152,7 @@ export function PasswordSmartImportDialog({
 		setCandidates([]);
 		setChoices({});
 		setIssues([]);
+		setMappedLines([]);
 		setStage("input");
 		setSource(nextSource);
 	}
@@ -146,26 +160,49 @@ export function PasswordSmartImportDialog({
 		if (running.current || !session) return;
 		setMessage("");
 		try {
-			const result = parseVaultImportText(source);
-			const plan = result.candidates.length
-				? session.previewImport(result.candidates.map((row) => row.draft))
-				: null;
-			baseRevision.current = session.getSnapshot().revision;
-			setCandidates(result.candidates);
-			setIssues(result.issues);
-			setChoices(
-				Object.fromEntries(
-					result.candidates.map((row, index) => [
-						row.id,
-						{
-							selected: plan?.rows[index]?.status === "new",
-							action: plan?.rows[index]?.status === "new" ? "new" : "skip",
-						},
-					]),
-				),
-			);
-			setStage("review");
-			if (!result.candidates.length) setMessage(t("pwSmartNoRows"));
+			showReview(parseVaultImportText(source));
+		} catch (error) {
+			setMessage(t(errorCopy(error)));
+		}
+	}
+	function showReview(result: VaultImportResult) {
+		if (!session) return;
+		const plan = result.candidates.length
+			? session.previewImport(result.candidates.map((row) => row.draft))
+			: null;
+		baseRevision.current = session.getSnapshot().revision;
+		setCandidates(result.candidates);
+		setIssues(result.issues);
+		setChoices(
+			Object.fromEntries(
+				result.candidates.map((row, index) => [
+					row.id,
+					{
+						selected: plan?.rows[index]?.status === "new" && !row.needsReview,
+						action: plan?.rows[index]?.status === "new" ? "new" : "skip",
+					},
+				]),
+			),
+		);
+		setStage("review");
+		if (!result.candidates.length) setMessage(t("pwSmartNoRows"));
+	}
+	function startMapping() {
+		if (running.current) return;
+		try {
+			if (!mappedLines.length) setMappedLines(createVaultMappedLines(source));
+			setMessage("");
+			setStage("mapping");
+		} catch (error) {
+			setMessage(t(errorCopy(error)));
+		}
+	}
+	function reviewMapping() {
+		if (running.current) return;
+		setMessage("");
+		try {
+			showReview(parseVaultMappedLines(mappedLines));
+			setSource(updateVaultMappedSource(source, mappedLines));
 		} catch (error) {
 			setMessage(t(errorCopy(error)));
 		}
@@ -331,6 +368,7 @@ export function PasswordSmartImportDialog({
 			setFile(null);
 			setCandidates([]);
 			setChoices({});
+			setMappedLines([]);
 			setReceipt(result);
 			setStage("saved");
 			onSaved(t("pwSmartSaved", result));
@@ -396,7 +434,20 @@ export function PasswordSmartImportDialog({
 							<Sparkles size={16} />
 							{t("pwSmartRecognize")}
 						</Button>
+						<Button onClick={startMapping} disabled={!!busy || !source.trim()}>
+							{t("pwSmartMap")}
+						</Button>
 					</>
+				)}
+				{stage === "mapping" && (
+					<PasswordImportMapping
+						rows={mappedLines}
+						onChange={setMappedLines}
+						onReview={reviewMapping}
+						onBack={() =>
+							resetInput(updateVaultMappedSource(source, mappedLines))
+						}
+					/>
 				)}
 				{stage === "review" && (
 					<>
@@ -417,45 +468,55 @@ export function PasswordSmartImportDialog({
 									))}
 								</ul>
 								<p>{t("pwSmartIssuesHint")}</p>
+								<Button onClick={startMapping} disabled={!!busy}>
+									{t("pwSmartMap")}
+								</Button>
 							</div>
 						)}
 						{candidates.length > 0 && (
 							<>
-								<div className="pw-smart-ai">
-									<p>{t("pwSmartAiHint")}</p>
-									<details>
-										<summary>
-											{t("pwSmartAiPreview", {
-												count: aiPreview.records.length,
-											})}
-										</summary>
-										<ul>
-											{aiPreview.records.map((row) => (
-												<li key={row.id}>
-													{row.id} · {row.host}
-												</li>
-											))}
-										</ul>
-									</details>
-									{connection ? (
-										<Button
-											onClick={() => void organize()}
-											disabled={!!busy || outdated || !aiPreview.records.length}
-										>
-											<Sparkles size={16} />
-											{t("pwSmartAiOrganize", { model: connection.model })}
-										</Button>
-									) : (
-										<p>
-											{t("pwSmartAiOptional")}{" "}
-											<TextLink asChild>
-												<Link to="/settings" hash="assistant" onClick={close}>
-													{t(settings ? "aiEnableKey" : "aiConfigure")}
-												</Link>
-											</TextLink>
-										</p>
-									)}
-								</div>
+								{candidates.some((row) => row.needsReview) && (
+									<p className="notice">{t("pwSmartInferredHint")}</p>
+								)}
+								{aiPreview.records.length > 0 && (
+									<div className="pw-smart-ai">
+										<p>{t("pwSmartAiHint")}</p>
+										<details>
+											<summary>
+												{t("pwSmartAiPreview", {
+													count: aiPreview.records.length,
+												})}
+											</summary>
+											<ul>
+												{aiPreview.records.map((row) => (
+													<li key={row.id}>
+														{row.id} · {row.host}
+													</li>
+												))}
+											</ul>
+										</details>
+										{connection ? (
+											<Button
+												onClick={() => void organize()}
+												disabled={
+													!!busy || outdated || !aiPreview.records.length
+												}
+											>
+												<Sparkles size={16} />
+												{t("pwSmartAiOrganize", { model: connection.model })}
+											</Button>
+										) : (
+											<p>
+												{t("pwSmartAiOptional")}{" "}
+												<TextLink asChild>
+													<Link to="/settings" hash="assistant" onClick={close}>
+														{t(settings ? "aiEnableKey" : "aiConfigure")}
+													</Link>
+												</TextLink>
+											</p>
+										)}
+									</div>
+								)}
 								<label className="pw-smart-check">
 									<input
 										type="checkbox"
