@@ -1,0 +1,26 @@
+{
+  "observedAt": "2026-10-03T23:38:37.352904+00:00",
+  "url": "http://127.0.0.1:4180/assets/vault",
+  "bundle": "index-CZYTekms.js",
+  "provider": "deepseek",
+  "model": "deepseek-flash",
+  "requestUrl": "https://api.deepseek.com/chat/completions",
+  "fixture": "synthetic two-service note list with extra email and password whitespace",
+  "userVaultUnlockedByUser": true,
+  "requestViaNormalImportButton": true,
+  "observedResponse": {
+    "status": 401,
+    "errorType": "authentication_error",
+    "errorCode": "invalid_request_error"
+  },
+  "acceptance": "blocked-provider-authentication",
+  "sourceRetainedAfterFailure": true,
+  "candidateCount": 0,
+  "confirmedImport": false,
+  "userDataWritten": false,
+  "importClosedAndSyntheticDraftCleared": true,
+  "sensitiveHeadersOrProviderRawBodySaved": false,
+  "originalUserListRead": false,
+  "screenshot": "deepseek-live-synthetic-input.png",
+  "nextStep": "user replaces the active API Key through model settings, then real synthetic preview is retried"
+}

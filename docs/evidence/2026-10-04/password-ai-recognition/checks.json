@@ -43,9 +43,13 @@
     "connectionReady": true,
     "userKeyRetainedOnlyForSamePageReload": true,
     "temporaryKeyVariableCleared": true,
-    "userVaultState": "locked",
+    "userVaultState": "unlocked-by-user",
     "userDataWritten": false,
-    "realRecognition": "waiting-for-user-unlock"
+    "realRecognition": "blocked-provider-authentication",
+    "providerHttpStatus": 401,
+    "providerErrorType": "authentication_error",
+    "sourceRetainedAfterFailure": true,
+    "syntheticCandidatesCleared": true
   },
   "scope": {
     "sendsOnlyActivePasteAfterClick": true,
