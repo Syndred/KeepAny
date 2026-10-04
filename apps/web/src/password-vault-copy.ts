@@ -7,12 +7,12 @@ export const passwordVaultCopy: Record<string, [string, string]> = {
 	],
 	pwSmartSource: ["账号密码清单", "Login list"],
 	pwSmartPlaceholder: [
-		"网址=https://example.com\n账号=reader@example.com\n密码=你的密码\n\n网址=https://another.example\n账号=另一个账号\n密码=另一个密码",
-		"Website=https://example.com\nUsername=reader@example.com\nPassword=your password\n\nWebsite=https://another.example\nUsername=another account\nPassword=another password",
+		"Gmail\nreader@gmail.com\n你的密码\n\n应用名称\n另一个账号\n另一个密码",
+		"Gmail\nreader@gmail.com\nyour password\n\nApp name\nanother account\nanother password",
 	],
 	pwSmartSyntax: [
-		"支持网站名、邮箱、密码各一行的清单，也支持带字段名的文本和 CSV／表格。识别不完整时可按行指定字段；密码空格原样保留。",
-		"Lists with a website name, email, and password on separate lines are supported, along with labeled text and CSV. Assign fields by line if recognition is incomplete. Password spaces are preserved.",
+		"可粘贴邮箱、App 或网站账号清单，网址可以不填。支持名称、账号、密码各一行，也支持带字段名的文本和 CSV／表格。",
+		"Paste email, app, or website accounts. A website URL is optional. Names, usernames, and passwords on separate lines, labeled text, and CSV are supported.",
 	],
 	pwSmartMap: ["按行指定字段", "Assign fields by line"],
 	pwSmartMapHint: [
@@ -73,10 +73,23 @@ export const passwordVaultCopy: Record<string, [string, string]> = {
 		"完整 {{complete}} 条，待补全 {{pending}} 条。请核对后勾选。",
 		"{{complete}} complete, {{pending}} need completion. Review before selecting.",
 	],
-	pwSmartRowSource: [
-		"原文起始：第 {{line}} 行",
-		"Source starts at line {{line}}",
+	pwSmartSourceExcerpt: ["对应原文", "Source excerpt"],
+	pwSmartSourceShow: ["查看这段原文", "Show this source excerpt"],
+	pwSmartSourceHide: ["隐藏这段原文", "Hide this source excerpt"],
+	pwSmartSourceEdit: ["在原文中修改", "Edit in source"],
+	pwSmartSourceEditHint: [
+		"已定位并选中对应原文。未保存的条目和修改已保留；重新识别或按行预览会用新结果替换这些条目。",
+		"The matching source is selected. Your unsaved entries and edits are kept. Recognizing again or previewing assigned fields replaces them with new results.",
 	],
+	pwSmartSourceEditKeepHint: [
+		"未保存的条目和修改已保留。重新识别或按行预览会用新结果替换这些条目。",
+		"Your unsaved entries and edits are kept. Recognizing again or previewing assigned fields replaces them with new results.",
+	],
+	pwSmartSourceChangedHint: [
+		"原文已修改，返回核对仍显示上次结果。重新识别或按行预览会替换当前未保存的条目。",
+		"The source has changed. Returning to review shows the previous results. Recognizing again or previewing assigned fields replaces your current unsaved entries.",
+	],
+	pwSmartBackToReview: ["返回核对", "Back to review"],
 	pwSmartIssues: ["以下内容需要核对", "Some content needs review"],
 	pwSmartIssueLine: ["第 {{line}} 行", "Line {{line}}"],
 	pwSmartIssuesHint: [
@@ -97,13 +110,10 @@ export const passwordVaultCopy: Record<string, [string, string]> = {
 		"同一条目有重复字段",
 		"Repeated field in the same entry",
 	],
-	"pwSmartIssue_missing-password": [
-		"缺少明确的密码字段",
-		"An explicit password field is missing",
-	],
+	"pwSmartIssue_missing-password": ["待补充密码", "Add the missing password"],
 	"pwSmartIssue_missing-identity": [
-		"缺少网站或标题",
-		"Website or title is missing",
+		"待补充名称（邮箱、App 或网站）",
+		"Add a name for the email, app, or website account",
 	],
 	"pwSmartIssue_invalid-field": [
 		"字段内容需要修正",
@@ -154,8 +164,8 @@ export const passwordVaultCopy: Record<string, [string, string]> = {
 	pwSmartStatus_conflict: ["密码不同，待选择", "Different password · choose"],
 	pwSmartStatus_invalid: ["待修正", "Needs correction"],
 	pwSmartConflictHint: [
-		"该网站和账号已有不同密码",
-		"This website and username have a different password",
+		"同一名称和账号已有不同密码",
+		"An entry with this name and username has a different password",
 	],
 	pwSmartKeepExisting: [
 		"保留原条目，跳过这条",
@@ -276,7 +286,11 @@ export const passwordVaultCopy: Record<string, [string, string]> = {
 	pwVaultNoMatches: ["没有匹配的密码条目。", "No matching password entries."],
 	pwVaultEntryNew: ["新密码条目", "New password entry"],
 	pwVaultEntryEdit: ["编辑密码条目", "Edit password entry"],
-	pwVaultTitleField: ["标题", "Title"],
+	pwVaultTitleField: ["名称", "Name"],
+	pwVaultNamePlaceholder: [
+		"例如 Gmail、微信或网站名称",
+		"For example Gmail, WhatsApp, or a website name",
+	],
 	pwVaultUsernameField: ["用户名或账号", "Username or account"],
 	pwVaultPasswordField: ["密码", "Password"],
 	pwVaultPasswordPlaceholder: [
@@ -285,6 +299,9 @@ export const passwordVaultCopy: Record<string, [string, string]> = {
 	],
 	pwVaultUrlField: ["网址", "Website URL"],
 	pwVaultNotesField: ["备注", "Notes"],
+	pwVaultOptionalDetails: ["更多信息（可选）", "More information (optional)"],
+	pwVaultUrlOptionalField: ["网址（可选）", "Website URL (optional)"],
+	pwVaultNotesOptionalField: ["备注（可选）", "Notes (optional)"],
 	pwVaultLinkedAssets: ["关联资产", "Linked assets"],
 	pwVaultLinkedAssetsHint: [
 		"关联的资产名称会显示在条目中，密码不会进入资产搜索。",
