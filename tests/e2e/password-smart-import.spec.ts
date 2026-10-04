@@ -206,6 +206,32 @@ async function openOptional(details: Locator) {
 	if ((await details.getAttribute("open")) === null)
 		await details.locator("summary").first().click();
 }
+async function importAdvanced(importer: Locator, t: Copy, key: string) {
+	let button = importer.getByRole("button", { name: t(key), exact: true });
+	if (!(await button.isVisible())) {
+		button = importer.getByRole("button", {
+			name: t(key),
+			exact: true,
+			includeHidden: true,
+		});
+		const section = button.locator("xpath=ancestor::details[1]");
+		await section.locator("summary").first().click();
+	}
+	await button.click();
+}
+async function reviewMapping(importer: Locator, t: Copy) {
+	const append = importer.getByRole("button", {
+		name: t("pwSmartMapAdd"),
+		exact: true,
+	});
+	await ((await append.isVisible())
+		? append
+		: importer.getByRole("button", {
+				name: t("pwSmartMapReview"),
+				exact: true,
+			})
+	).click();
+}
 /** Read ciphertext only; preview and AI must leave the persisted revision and bytes unchanged. */
 async function persistedVault(page: Page) {
 	return page.evaluate(async () => {
@@ -315,22 +341,17 @@ test("local line mapping retains unresolved edits through partial save and clear
 		await createVault(page, t);
 		const source =
 			"Mapped service\nplain-user\nSynthetic mapped password\nUnassigned old value";
-		const importer = await openImport(page, t, source);
-		await importer
-			.getByRole("button", { name: t("pwSmartMap"), exact: true })
-			.click();
+		const importer = await openImport(page, t);
+		await importer.locator("#pw-smart-source").fill(source);
+		await importAdvanced(importer, t, "pwSmartMap");
 		await importer
 			.locator("#pw-map-value-4")
 			.fill("Unassigned corrected value");
-		await importer
-			.getByRole("button", { name: t("pwSmartEditSource"), exact: true })
-			.click();
+		await importAdvanced(importer, t, "pwSmartEditSource");
 		await expect(importer.locator("#pw-smart-source")).toHaveValue(
 			source.replace("old value", "corrected value"),
 		);
-		await importer
-			.getByRole("button", { name: t("pwSmartMap"), exact: true })
-			.click();
+		await importAdvanced(importer, t, "pwSmartMap");
 		for (const [line, field] of [
 			[1, "title"],
 			[2, "username"],
@@ -340,12 +361,11 @@ test("local line mapping retains unresolved edits through partial save and clear
 		await importer
 			.locator("#pw-map-value-4")
 			.fill("Unassigned second correction");
-		await importer
-			.getByRole("button", { name: t("pwSmartMapReview"), exact: true })
-			.click();
+		await reviewMapping(importer, t);
 		await expect(importer.locator(".pw-smart-issues")).toContainText(
 			t("pwSmartIssue_unrecognized-line"),
 		);
+		await importer.locator(".pw-smart-row").getByRole("checkbox").check();
 		await importer
 			.getByRole("button", {
 				name: t("pwSmartConfirm", { count: 1 }),
@@ -355,9 +375,12 @@ test("local line mapping retains unresolved edits through partial save and clear
 		await expect(importer.locator(".pw-smart-receipt")).toHaveText(
 			t("pwSmartSaved", { added: 1, updated: 0, skipped: 0 }),
 		);
-		await importer
-			.getByRole("button", { name: t("pwSmartContinue"), exact: true })
-			.click();
+		const continueButton = importer.getByRole("button", {
+			name: t("pwSmartContinue"),
+			exact: true,
+		});
+		if (await continueButton.isVisible()) await continueButton.click();
+		await importAdvanced(importer, t, "pwSmartEditSource");
 		await expect(importer.locator("#pw-smart-source")).toHaveValue(
 			source.replace("old value", "second correction"),
 		);
@@ -374,8 +397,606 @@ test("local line mapping retains unresolved edits through partial save and clear
 	}
 });
 
+test("advanced input and mapping returns retain edited review choices through failed replacement work", async ({
+	browser,
+}) => {
+	test.setTimeout(45_000);
+	const t = copy("en-US");
+	const mock = await aiServer();
+	const context = await browser.newContext({
+		locale: "en-US",
+		viewport: { width: 1280, height: 844 },
+	});
+	await context.addInitScript(() =>
+		localStorage.setItem("keepany-language", "en"),
+	);
+	const page = await context.newPage();
+	const source =
+		"Original review service\noriginal.review@example.test\nSynthetic reviewed secret!";
+	const editedNotes =
+		"Synthetic unsaved form edit that must survive every back button";
+	try {
+		await configureAndOpenVault(page, "en-US", mock.baseURL, 1280);
+		await createVault(page, t);
+		const original = await persistedVault(page);
+		const importer = await openImport(page, t);
+		await importer.locator("#pw-smart-source").fill(source);
+		mock.responses.push(
+			JSON.stringify({
+				records: [
+					{
+						title: { line: 1 },
+						username: { line: 2 },
+						password: { line: 3 },
+						url: null,
+						notes: null,
+					},
+				],
+				ignoredLines: [],
+			}),
+		);
+		await importer
+			.getByRole("button", {
+				name: t("pwSmartAiRecognize", { model }),
+				exact: true,
+			})
+			.click();
+		const row = importer.locator(".pw-smart-row");
+		await openRow(row);
+		await openOptional(row.locator(".pw-smart-optional"));
+		await row.locator("textarea[id$='-notes']").fill(editedNotes);
+		await row.getByRole("checkbox").check();
+		const assertOriginalReview = async () => {
+			await expect(row).toHaveCount(1);
+			await expect(row.locator("input[id$='-title']")).toHaveValue(
+				"Original review service",
+			);
+			await expect(row.locator("textarea[id$='-notes']")).toHaveValue(
+				editedNotes,
+			);
+			await expect(row.getByRole("checkbox")).toBeChecked();
+			await expect(importer.locator(".pw-smart-mode")).toHaveText(
+				t("pwSmartReviewMode_ai", { model, endpoint: mock.baseURL }),
+			);
+			expect(await persistedVault(page)).toEqual(original);
+		};
+		await importAdvanced(importer, t, "pwSmartEditSource");
+		const input = importer.locator("#pw-smart-source");
+		const changedSource = `${source}\nSynthetic unassigned correction`;
+		await input.fill(changedSource);
+		await importer.locator("#pw-smart-file").setInputFiles({
+			name: "synthetic-invalid-utf8.txt",
+			mimeType: "text/plain",
+			buffer: Buffer.from([0xff, 0xff]),
+		});
+		await expect(
+			importer.getByRole("status").filter({ hasText: t("pwSmartFailed") }),
+		).toBeVisible();
+		await expect(input).toHaveValue(changedSource);
+		await importer
+			.getByRole("button", { name: t("pwSmartBackToReview"), exact: true })
+			.click();
+		await assertOriginalReview();
+		await importAdvanced(importer, t, "pwSmartEditSource");
+		mock.responses.push("broken synthetic-only JSON");
+		await importer
+			.getByRole("button", {
+				name: t("pwSmartAiRecognize", { model }),
+				exact: true,
+			})
+			.click();
+		await expect(
+			importer
+				.getByRole("status")
+				.filter({ hasText: t("pwSmartAiRecognitionFailed") }),
+		).toBeVisible();
+		await expect(input).toHaveValue(changedSource);
+		await importer
+			.getByRole("button", { name: t("pwSmartBackToReview"), exact: true })
+			.click();
+		await assertOriginalReview();
+		await importAdvanced(importer, t, "pwSmartMap");
+		for (const [line, field] of [
+			[1, "title"],
+			[2, "title"],
+			[3, "password"],
+		] as const)
+			await selectChoice(importer.locator(`#pw-map-field-${line}`), field);
+		await reviewMapping(importer, t);
+		await expect(importer.locator(".pw-smart-mapping")).toBeVisible();
+		await importer
+			.getByRole("button", { name: t("pwSmartBackToReview"), exact: true })
+			.click();
+		await assertOriginalReview();
+		await importAdvanced(importer, t, "pwSmartMap");
+		await importAdvanced(importer, t, "pwSmartEditSource");
+		await expect(input).toHaveValue(changedSource);
+		await importer
+			.getByRole("button", { name: t("pwSmartBackToReview"), exact: true })
+			.click();
+		await assertOriginalReview();
+		await importer
+			.getByRole("button", {
+				name: t("pwSmartConfirm", { count: 1 }),
+				exact: true,
+			})
+			.click();
+		await expect(importer.locator(".pw-smart-receipt")).toHaveText(
+			t("pwSmartSaved", { added: 1, updated: 0, skipped: 0 }),
+		);
+		await closeDialog(page);
+		await page.reload();
+		await unlock(page, t);
+		expect(await readEntry(page, t, "Original review service")).toEqual({
+			password: "Synthetic reviewed secret!",
+			username: "original.review@example.test",
+			url: "",
+			notes: editedNotes,
+		});
+		expect(mock.requests).toHaveLength(2);
+	} finally {
+		await context.close();
+		await mock.close();
+	}
+});
+
+test("unassigned-only content becomes an editable pending form entry and saves locally", async ({
+	browser,
+}) => {
+	test.setTimeout(45_000);
+	const t = copy("en-US");
+	const context = await browser.newContext({
+		locale: "en-US",
+		viewport: { width: 390, height: 844 },
+	});
+	await context.addInitScript(() =>
+		localStorage.setItem("keepany-language", "en"),
+	);
+	const page = await context.newPage();
+	const outgoing: string[] = [];
+	page.on("request", (request) => {
+		if (/chat\/completions|responses$/.test(request.url()))
+			outgoing.push(request.url());
+	});
+	const source =
+		"Unassigned synthetic information\nSynthetic note retained as original";
+	const password = "Synthetic manually entered app password!";
+	try {
+		await page.goto("/assets/vault");
+		await createVault(page, t);
+		const original = await persistedVault(page);
+		const importer = await openImport(page, t, source);
+		await expect(importer.locator(".pw-smart-row")).toHaveCount(0);
+		await expect(importer.locator("#pw-smart-source")).toBeHidden();
+		const group = importer.locator(".pw-smart-source-group");
+		await expect(group).toHaveCount(1);
+		await group
+			.getByRole("button", { name: t("pwSmartFragmentFill"), exact: true })
+			.click();
+		const form = group.locator(".pw-smart-fragment-form");
+		await form
+			.locator("input[id$='-title']")
+			.fill("Synthetic manually completed App");
+		await form
+			.getByRole("button", { name: t("pwSmartFragmentAddNotes"), exact: true })
+			.click();
+		await expect(form.locator("textarea[id$='-notes']")).toHaveValue(source);
+		await form
+			.getByRole("button", { name: t("pwSmartFragmentApply"), exact: true })
+			.click();
+		const row = importer.locator(".pw-smart-row");
+		await expect(row).toHaveCount(1);
+		await expect(row.getByRole("checkbox")).toBeDisabled();
+		await expect(row.locator(".pw-smart-row-issues")).toContainText(
+			t("pwSmartIssue_missing-password"),
+		);
+		await openRow(row);
+		await expect(row.locator("textarea[id$='-notes']")).toHaveValue(source);
+		await row.locator("input[id$='-username']").fill("manual-app-user-91");
+		await row.locator("input[id$='-password']").fill(password);
+		await expect(row.getByRole("checkbox")).toBeEnabled();
+		await expect(row.getByRole("checkbox")).not.toBeChecked();
+		expect(await persistedVault(page)).toEqual(original);
+		await row.getByRole("checkbox").check();
+		await importer
+			.getByRole("button", {
+				name: t("pwSmartConfirm", { count: 1 }),
+				exact: true,
+			})
+			.click();
+		await expect(importer.locator(".pw-smart-receipt")).toHaveText(
+			t("pwSmartSaved", { added: 1, updated: 0, skipped: 0 }),
+		);
+		await closeDialog(page);
+		await page.reload();
+		await unlock(page, t);
+		expect(
+			await readEntry(page, t, "Synthetic manually completed App"),
+		).toEqual({
+			password,
+			username: "manual-app-user-91",
+			url: "",
+			notes: source,
+		});
+		expect(outgoing).toEqual([]);
+	} finally {
+		await context.close();
+	}
+});
+
+test("partly assigned source keeps the original fragment form draft while adding mapped entries", async ({
+	browser,
+}) => {
+	test.setTimeout(45_000);
+	const t = copy("en-US");
+	const context = await browser.newContext({
+		locale: "en-US",
+		viewport: { width: 1280, height: 844 },
+		acceptDownloads: true,
+	});
+	await context.addInitScript(() =>
+		localStorage.setItem("keepany-language", "en"),
+	);
+	const page = await context.newPage();
+	const outgoing: string[] = [];
+	page.on("request", (request) => {
+		if (/chat\/completions|responses$/.test(request.url()))
+			outgoing.push(request.url());
+	});
+	const mappedPassword = "Synthetic mapped original password!";
+	const manualPassword = "Synthetic unsaved manual password!";
+	const notes = "Synthetic unsaved note survives partial source assignment";
+	const source = `Synthetic mapped service\n${mappedPassword}\nSynthetic unassigned extra note`;
+	try {
+		await page.goto("/assets/vault");
+		await createVault(page, t);
+		const original = await persistedVault(page);
+		const importer = await openImport(page, t, source);
+		await expect(importer.locator(".pw-smart-row")).toHaveCount(0);
+		const group = importer.locator(".pw-smart-source-group");
+		await expect(group).toHaveCount(1);
+		const groupId = await group.getAttribute("data-source-group");
+		await group
+			.getByRole("button", { name: t("pwSmartFragmentFill"), exact: true })
+			.click();
+		const form = group.locator(".pw-smart-fragment-form");
+		await form.locator("input[id$='-title']").fill("Synthetic manual service");
+		await form.locator("input[id$='-username']").fill("manual-unsaved-user");
+		await form.locator("input[id$='-password']").fill(manualPassword);
+		await openOptional(form.locator(".pw-smart-optional"));
+		await form.locator("textarea[id$='-notes']").fill(notes);
+		await importAdvanced(importer, t, "pwSmartMap");
+		await selectChoice(importer.locator("#pw-map-field-1"), "title");
+		await selectChoice(importer.locator("#pw-map-field-2"), "password");
+		await reviewMapping(importer, t);
+		await expect(importer.locator(".pw-smart-row")).toHaveCount(1);
+		await expect(group).toHaveAttribute("data-source-group", groupId ?? "");
+		await expect(form).toHaveAttribute("data-expanded", "true");
+		await expect(form.locator("input[id$='-title']")).toHaveValue(
+			"Synthetic manual service",
+		);
+		await expect(form.locator("input[id$='-username']")).toHaveValue(
+			"manual-unsaved-user",
+		);
+		await expect(form.locator("input[id$='-password']")).toHaveValue(
+			manualPassword,
+		);
+		await expect(form.locator("textarea[id$='-notes']")).toHaveValue(notes);
+		expect(await persistedVault(page)).toEqual(original);
+		await form
+			.getByRole("button", { name: t("pwSmartFragmentApply"), exact: true })
+			.click();
+		await expect(importer.locator(".pw-smart-row")).toHaveCount(2);
+		await expect(importer.locator(".pw-smart-issues")).toHaveCount(0);
+		for (const checkbox of await importer
+			.locator(".pw-smart-row")
+			.getByRole("checkbox")
+			.all())
+			await checkbox.check();
+		await importer
+			.getByRole("button", {
+				name: t("pwSmartConfirm", { count: 2 }),
+				exact: true,
+			})
+			.click();
+		await expect(importer.locator(".pw-smart-receipt")).toHaveText(
+			t("pwSmartSaved", { added: 2, updated: 0, skipped: 0 }),
+		);
+		await closeDialog(page);
+		const download = page.waitForEvent("download");
+		await page
+			.getByRole("button", { name: t("pwVaultExport"), exact: true })
+			.click();
+		const path = test.info().outputPath("partly-assigned-fragment.kdbx");
+		await (await download).saveAs(path);
+		const exported = await inspectKdbx(path);
+		expect(exported).toHaveLength(2);
+		expect(exported.map(({ draft }) => draft)).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({
+					title: "Synthetic mapped service",
+					password: mappedPassword,
+					username: "",
+					notes: "",
+				}),
+				expect.objectContaining({
+					title: "Synthetic manual service",
+					password: manualPassword,
+					username: "manual-unsaved-user",
+					notes,
+				}),
+			]),
+		);
+		expect(outgoing).toEqual([]);
+	} finally {
+		await context.close();
+	}
+});
+
+test("remaining source forms explicitly supplement an entry already saved in this import", async ({
+	browser,
+}) => {
+	test.setTimeout(45_000);
+	const t = copy("en-US");
+	const mock = await aiServer();
+	const context = await browser.newContext({
+		locale: "en-US",
+		viewport: { width: 1280, height: 844 },
+		acceptDownloads: true,
+	});
+	await context.addInitScript(() =>
+		localStorage.setItem("keepany-language", "en"),
+	);
+	const page = await context.newPage();
+	const password = "Synthetic saved service password!";
+	const sourceNote = "Synthetic extra note kept for the imported service";
+	const source = `Saved service\nsaved.service@example.test\n${password}\n\n${sourceNote}`;
+	try {
+		await configureAndOpenVault(page, "en-US", mock.baseURL, 1280);
+		await createVault(page, t);
+		const importer = await openImport(page, t);
+		await importer.locator("#pw-smart-source").fill(source);
+		mock.responses.push(
+			JSON.stringify({
+				records: [
+					{
+						title: { line: 1 },
+						username: { line: 2 },
+						password: { line: 3 },
+						url: null,
+						notes: null,
+					},
+				],
+				ignoredLines: [5],
+			}),
+		);
+		await importer
+			.getByRole("button", {
+				name: t("pwSmartAiRecognize", { model }),
+				exact: true,
+			})
+			.click();
+		const group = importer.locator(".pw-smart-source-group");
+		await group
+			.getByRole("button", { name: t("pwSmartFragmentFill"), exact: true })
+			.click();
+		const form = group.locator(".pw-smart-fragment-form");
+		await selectChoice(form.locator("button[id$='-mode']"), "existing");
+		await selectChoice(form.locator("button[id$='-target']"), "vault-import-1");
+		await expect(
+			form.getByRole("button", {
+				name: t("pwSmartFragmentApply"),
+				exact: true,
+			}),
+		).toBeDisabled();
+		await form
+			.getByRole("button", { name: t("pwSmartFragmentAddNotes"), exact: true })
+			.click();
+		await expect(form.locator("textarea[id$='-notes']")).toHaveValue(
+			sourceNote,
+		);
+		await importer.locator(".pw-smart-row").getByRole("checkbox").check();
+		await importer
+			.getByRole("button", {
+				name: t("pwSmartConfirm", { count: 1 }),
+				exact: true,
+			})
+			.click();
+		await expect(importer.locator(".pw-smart-receipt")).toHaveText(
+			t("pwSmartSaved", { added: 1, updated: 0, skipped: 0 }),
+		);
+		const continueButton = importer.getByRole("button", {
+			name: t("pwSmartContinue"),
+			exact: true,
+		});
+		if (await continueButton.isVisible()) await continueButton.click();
+		await expect(importer.locator("#pw-smart-source")).toBeHidden();
+		await expect(importer.locator(".pw-smart-row")).toHaveCount(0);
+		const savedRevision = await persistedVault(page);
+		await expect(form).toHaveAttribute("data-expanded", "true");
+		await expect(form.locator("button[id$='-target']")).toHaveAttribute(
+			"data-value",
+			"vault-import-1",
+		);
+		await expect(form.locator("input[id$='-title']")).toHaveValue(
+			"Saved service",
+		);
+		await expect(form.locator("input[id$='-title']")).toHaveAttribute(
+			"readonly",
+			"",
+		);
+		await expect(form.locator("input[id$='-username']")).toHaveValue(
+			"saved.service@example.test",
+		);
+		await expect(
+			form.getByRole("button", {
+				name: t("pwSmartFragmentNotesAdded"),
+				exact: true,
+			}),
+		).toBeDisabled();
+		await expect(form.locator("textarea[id$='-notes']")).toHaveValue(
+			sourceNote,
+		);
+		await form
+			.getByRole("button", { name: t("pwSmartFragmentApply"), exact: true })
+			.click();
+		const row = importer.locator(".pw-smart-row");
+		await expect(row).toHaveCount(1);
+		await expect(row.getByRole("checkbox")).not.toBeChecked();
+		await expect(row.getByRole("checkbox")).toBeEnabled();
+		expect(await persistedVault(page)).toEqual(savedRevision);
+		await row.getByRole("checkbox").check();
+		await importer
+			.getByRole("button", {
+				name: t("pwSmartConfirm", { count: 1 }),
+				exact: true,
+			})
+			.click();
+		await expect(importer.locator(".pw-smart-receipt")).toHaveText(
+			t("pwSmartSaved", { added: 0, updated: 1, skipped: 0 }),
+		);
+		await closeDialog(page);
+		await expect(
+			page.locator(".password-vault-entry-list .password-vault-entry"),
+		).toHaveCount(1);
+		const download = page.waitForEvent("download");
+		await page
+			.getByRole("button", { name: t("pwVaultExport"), exact: true })
+			.click();
+		const path = test
+			.info()
+			.outputPath("fragment-update-after-partial-save.kdbx");
+		await (await download).saveAs(path);
+		const exported = await inspectKdbx(path);
+		expect(exported).toHaveLength(1);
+		expect(exported[0].draft).toMatchObject({
+			title: "Saved service",
+			username: "saved.service@example.test",
+			password,
+			url: "",
+			notes: sourceNote,
+		});
+		expect(exported[0].history).toHaveLength(1);
+		expect(mock.requests).toHaveLength(1);
+	} finally {
+		await context.close();
+		await mock.close();
+	}
+});
+
+test("a same-password duplicate can explicitly update saved notes after fragment completion", async ({
+	browser,
+}) => {
+	test.setTimeout(45_000);
+	const t = copy("en-US");
+	const mock = await aiServer();
+	const context = await browser.newContext({
+		locale: "en-US",
+		viewport: { width: 1280, height: 844 },
+		acceptDownloads: true,
+	});
+	await context.addInitScript(() =>
+		localStorage.setItem("keepany-language", "en"),
+	);
+	const page = await context.newPage();
+	const sourceNote = "Synthetic supplemental note for the already saved login";
+	const source = `Existing login\nsynthetic-existing-user\n${duplicatePassword}\nhttps://duplicate.example/login\n\n${sourceNote}`;
+	try {
+		await configureAndOpenVault(page, "en-US", mock.baseURL, 1280);
+		await createVault(page, t);
+		await seedDuplicate(page, t);
+		const original = await persistedVault(page);
+		const importer = await openImport(page, t);
+		await importer.locator("#pw-smart-source").fill(source);
+		mock.responses.push(
+			JSON.stringify({
+				records: [
+					{
+						title: { line: 1 },
+						username: { line: 2 },
+						password: { line: 3 },
+						url: { line: 4 },
+						notes: null,
+					},
+				],
+				ignoredLines: [6],
+			}),
+		);
+		await importer
+			.getByRole("button", {
+				name: t("pwSmartAiRecognize", { model }),
+				exact: true,
+			})
+			.click();
+		const row = importer.locator(".pw-smart-row");
+		await expect(row).toContainText(t("pwSmartStatus_duplicate"));
+		await expect(row.getByRole("checkbox")).toBeDisabled();
+		const group = importer.locator(".pw-smart-source-group");
+		await group
+			.getByRole("button", { name: t("pwSmartFragmentFill"), exact: true })
+			.click();
+		const form = group.locator(".pw-smart-fragment-form");
+		await selectChoice(form.locator("button[id$='-mode']"), "existing");
+		await selectChoice(form.locator("button[id$='-target']"), "vault-import-1");
+		await form
+			.getByRole("button", { name: t("pwSmartFragmentAddNotes"), exact: true })
+			.click();
+		await form
+			.getByRole("button", { name: t("pwSmartFragmentApply"), exact: true })
+			.click();
+		await expect(row).toContainText(t("pwSmartStatus_conflict"));
+		await expect(row.getByRole("checkbox")).toBeDisabled();
+		await expect(
+			importer.locator("#pw-smart-vault-import-1-action"),
+		).toHaveAttribute("data-value", "skip");
+		await importer.locator("#pw-smart-vault-import-1-action").click();
+		await expect(
+			page.getByRole("option", {
+				name: t("pwSmartCreateSeparate"),
+				exact: true,
+			}),
+		).toHaveAttribute("aria-disabled", "true");
+		await page.keyboard.press("Escape");
+		expect(await persistedVault(page)).toEqual(original);
+		await selectChoice(importer.locator("#pw-smart-vault-import-1-action"), {
+			label: t("pwSmartUpdateExisting", { name: "Existing login" }),
+		});
+		await expect(row.getByRole("checkbox")).toBeChecked();
+		await importer
+			.getByRole("button", {
+				name: t("pwSmartConfirm", { count: 1 }),
+				exact: true,
+			})
+			.click();
+		await expect(importer.locator(".pw-smart-receipt")).toHaveText(
+			t("pwSmartSaved", { added: 0, updated: 1, skipped: 0 }),
+		);
+		await closeDialog(page);
+		const download = page.waitForEvent("download");
+		await page
+			.getByRole("button", { name: t("pwVaultExport"), exact: true })
+			.click();
+		const path = test.info().outputPath("same-password-fragment-notes.kdbx");
+		await (await download).saveAs(path);
+		const exported = await inspectKdbx(path);
+		expect(exported).toHaveLength(1);
+		expect(exported[0].draft).toMatchObject({
+			title: "Existing login",
+			username: "synthetic-existing-user",
+			password: duplicatePassword,
+			url: "https://duplicate.example/login",
+			notes: sourceNote,
+		});
+		expect(exported[0].history).toHaveLength(1);
+		expect(mock.requests).toHaveLength(1);
+	} finally {
+		await context.close();
+		await mock.close();
+	}
+});
+
 for (const variant of variants) {
-	test(`${variant.locale} ${variant.width}px source excerpts locate exact text and Gmail or app logins save without websites`, async ({
+	test(`${variant.locale} ${variant.width}px unresolved source forms create or complete entries and save without rerunning AI`, async ({
 		browser,
 	}) => {
 		test.setTimeout(45_000);
@@ -399,6 +1020,11 @@ for (const variant of variants) {
 		const unknown =
 			'<img src=x onerror="document.body.dataset.syntheticXss=1">';
 		const unknownSecret = "Synthetic unassigned secret 2026!";
+		const attachedSource =
+			"Synthetic additional account information\r\nRecovery contact: help.synthetic@example.test";
+		const manuallyCreatedPassword =
+			"  Synthetic manually classified password ;|!  ";
+		const completedPassword = "Synthetic completed pending account password!";
 		const source = [
 			"Gmail",
 			"first.gmail@example.test",
@@ -415,6 +1041,8 @@ for (const variant of variants) {
 			"",
 			unknown,
 			unknownSecret,
+			"",
+			attachedSource,
 		].join("\r\n");
 		try {
 			await configureAndOpenVault(
@@ -463,7 +1091,7 @@ for (const variant of variants) {
 							notes: null,
 						},
 					],
-					ignoredLines: [15, 16],
+					ignoredLines: [15, 16, 18, 19],
 				}),
 			);
 			await importer
@@ -595,42 +1223,243 @@ for (const variant of variants) {
 			expect(
 				await page.evaluate(() => document.body.dataset.syntheticXss),
 			).toBeUndefined();
-			const start = Number(
-				await unknownExcerpt.getAttribute("data-source-start"),
-			);
-			const end = Number(await unknownExcerpt.getAttribute("data-source-end"));
-			const textareaSource = source.replace(/\r\n|\r/g, "\n");
-			expect(textareaSource.slice(start, end)).toBe(
-				`${unknown}\n${unknownSecret}`,
-			);
-			await unknownExcerpt
-				.getByRole("button", { name: t("pwSmartSourceEdit"), exact: true })
-				.click();
-			const sourceInput = importer.locator("#pw-smart-source");
-			await expect(sourceInput).toHaveValue(textareaSource);
-			expect(
-				await sourceInput.evaluate((element) => {
-					const field = element as HTMLTextAreaElement;
-					return {
-						start: field.selectionStart,
-						end: field.selectionEnd,
-						selected: field.value.slice(
-							field.selectionStart,
-							field.selectionEnd,
-						),
-					};
+			await expect(
+				unknownExcerpt.getByRole("button", {
+					name: t("pwSmartSourceEdit"),
+					exact: true,
 				}),
-			).toEqual({
-				start,
-				end,
-				selected: textareaSource.slice(start, end),
-			});
-			await importer
-				.getByRole("button", { name: t("pwSmartBackToReview"), exact: true })
+			).toHaveCount(0);
+			await first.getByRole("checkbox").check();
+			const groups = importer.locator(".pw-smart-source-group");
+			await expect(groups).toHaveCount(2);
+			const firstGroup = groups.nth(0);
+			const secondGroup = groups.nth(1);
+			await firstGroup
+				.getByRole("button", { name: t("pwSmartFragmentFill"), exact: true })
 				.click();
-			await expect(app.locator("textarea[id$='-notes']")).toHaveValue(
-				"Synthetic App review note",
+			const createForm = firstGroup.locator(".pw-smart-fragment-form");
+			await expect(createForm.locator("input[id$='-title']")).toHaveValue("");
+			await expect(createForm.locator("input[id$='-username']")).toHaveValue(
+				"",
 			);
+			await expect(createForm.locator("input[id$='-password']")).toHaveValue(
+				"",
+			);
+			await expect(createForm.locator("input[id$='-url']")).toBeHidden();
+			await expect(
+				createForm.getByRole("button", {
+					name: t("pwSmartFragmentApply"),
+					exact: true,
+				}),
+			).toBeDisabled();
+			await createForm
+				.locator("input[id$='-title']")
+				.fill("Manually classified App");
+			await createForm
+				.locator("input[id$='-username']")
+				.fill("manual-player-73");
+			await createForm
+				.locator("input[id$='-password']")
+				.fill(manuallyCreatedPassword);
+			await openOptional(createForm.locator(".pw-smart-optional"));
+			await createForm
+				.locator("input[id$='-url']")
+				.fill("https://optional-manual.example.test/login");
+			await createForm.locator("input[id$='-url']").fill("");
+			await createForm
+				.locator("textarea[id$='-notes']")
+				.fill("Synthetic manually classified note");
+			await createForm
+				.getByRole("button", {
+					name: t("pwSmartFragmentAddNotes"),
+					exact: true,
+				})
+				.click();
+			const createdNotes = await createForm
+				.locator("textarea[id$='-notes']")
+				.inputValue();
+			expect(createdNotes).toContain(`${unknown}\n${unknownSecret}`);
+			await createForm.locator("textarea[id$='-notes']").fill(createdNotes);
+			await firstGroup
+				.getByRole("button", {
+					name: t("pwSmartFragmentCollapse"),
+					exact: true,
+				})
+				.click();
+			await expect(createForm.locator("input[id$='-title']")).toBeHidden();
+			await firstGroup
+				.getByRole("button", { name: t("pwSmartFragmentFill"), exact: true })
+				.click();
+			await expect(createForm.locator("input[id$='-title']")).toHaveValue(
+				"Manually classified App",
+			);
+			await expect(createForm.locator("input[id$='-password']")).toHaveValue(
+				manuallyCreatedPassword,
+			);
+			await expect(createForm.locator("textarea[id$='-notes']")).toHaveValue(
+				createdNotes,
+			);
+			await expect(
+				createForm.getByRole("button", {
+					name: t("pwSmartFragmentNotesAdded"),
+					exact: true,
+				}),
+			).toBeDisabled();
+			await importAdvanced(importer, t, "pwSmartEditSource");
+			await expect(importer.locator("#pw-smart-source")).toHaveValue(
+				source.replace(/\r\n|\r/g, "\n"),
+			);
+			await importer
+				.getByRole("button", {
+					name: t("pwSmartBackToReview"),
+					exact: true,
+				})
+				.click();
+			await expect(createForm.locator("input[id$='-password']")).toHaveValue(
+				manuallyCreatedPassword,
+			);
+			await expect(createForm.locator("textarea[id$='-notes']")).toHaveValue(
+				createdNotes,
+			);
+			await importAdvanced(importer, t, "pwSmartMap");
+			await importer
+				.getByRole("button", {
+					name: t("pwSmartBackToReview"),
+					exact: true,
+				})
+				.click();
+			await expect(createForm.locator("input[id$='-title']")).toHaveValue(
+				"Manually classified App",
+			);
+			await expect(createForm.locator("input[id$='-password']")).toHaveValue(
+				manuallyCreatedPassword,
+			);
+			await expect(createForm.locator("textarea[id$='-notes']")).toHaveValue(
+				createdNotes,
+			);
+			await expect(first.getByRole("checkbox")).toBeChecked();
+			await selectChoice(createForm.locator("button[id$='-mode']"), "existing");
+			await selectChoice(
+				createForm.locator("button[id$='-target']"),
+				"vault-import-1",
+			);
+			await openOptional(createForm.locator(".pw-smart-optional"));
+			await createForm
+				.locator("textarea[id$='-notes']")
+				.fill("Synthetic draft for first target only");
+			await selectChoice(
+				createForm.locator("button[id$='-target']"),
+				"vault-import-2",
+			);
+			await expect(createForm.locator("textarea[id$='-notes']")).toHaveValue(
+				"",
+			);
+			await selectChoice(
+				createForm.locator("button[id$='-target']"),
+				"vault-import-1",
+			);
+			await expect(createForm.locator("textarea[id$='-notes']")).toHaveValue(
+				"Synthetic draft for first target only",
+			);
+			await selectChoice(createForm.locator("button[id$='-mode']"), "new");
+			await expect(createForm.locator("textarea[id$='-notes']")).toHaveValue(
+				createdNotes,
+			);
+			await secondGroup
+				.getByRole("button", { name: t("pwSmartFragmentFill"), exact: true })
+				.click();
+			const attachForm = secondGroup.locator(".pw-smart-fragment-form");
+			const modeId = await attachForm
+				.locator("button[id$='-mode']")
+				.getAttribute("id");
+			await selectChoice(attachForm.locator(`[id="${modeId}"]`), "existing");
+			await expect(
+				attachForm.getByRole("button", {
+					name: t("pwSmartFragmentApply"),
+					exact: true,
+				}),
+			).toBeDisabled();
+			await selectChoice(
+				attachForm.locator("button[id$='-target']"),
+				"vault-import-4",
+			);
+			await expect(attachForm.locator("input[id$='-title']")).toHaveValue(
+				"App without password",
+			);
+			await expect(attachForm.locator("input[id$='-username']")).toHaveValue(
+				"pending-player-55",
+			);
+			await expect(
+				attachForm.getByRole("button", {
+					name: t("pwSmartFragmentApply"),
+					exact: true,
+				}),
+			).toBeDisabled();
+			await attachForm
+				.locator("input[id$='-password']")
+				.fill(completedPassword);
+			await attachForm
+				.getByRole("button", {
+					name: t("pwSmartFragmentAddNotes"),
+					exact: true,
+				})
+				.click();
+			const completedNotes = await attachForm
+				.locator("textarea[id$='-notes']")
+				.inputValue();
+			expect(completedNotes).toContain(attachedSource.replace(/\r\n/g, "\n"));
+			await attachForm.locator("textarea[id$='-notes']").fill(completedNotes);
+			await pending
+				.locator("input[id$='-username']")
+				.fill("pending-player-corrected-56");
+			await expect(attachForm.locator("input[id$='-username']")).toHaveValue(
+				"pending-player-corrected-56",
+			);
+			await expect(createForm.locator("input[id$='-password']")).toHaveValue(
+				manuallyCreatedPassword,
+			);
+			await expect(first.getByRole("checkbox")).toBeChecked();
+			expect(await persistedVault(page)).toEqual(original);
+			expect(mock.requests).toHaveLength(1);
+			await checkLayout(page, importer, variant.width);
+			await attachForm.locator(".pw-smart-optional summary").click();
+			await attachForm
+				.locator(".pw-smart-fragment-editor")
+				.evaluate((element) => {
+					element.scrollIntoView({ block: "start", behavior: "instant" });
+				});
+			await page.screenshot({
+				path: join(
+					evidenceRoot,
+					`password-fragment-form-${variant.locale}-${variant.width}-fill.png`,
+				),
+				fullPage: true,
+			});
+			await attachForm
+				.getByRole("button", { name: t("pwSmartFragmentApply"), exact: true })
+				.click();
+			await expect(pending.locator("input[id$='-password']")).toHaveValue(
+				completedPassword,
+			);
+			await expect(pending.getByRole("checkbox")).toBeEnabled();
+			await expect(pending.getByRole("checkbox")).not.toBeChecked();
+			await createForm
+				.getByRole("button", { name: t("pwSmartFragmentApply"), exact: true })
+				.click();
+			await expect(rows).toHaveCount(5);
+			const created = rows.filter({
+				has: page.locator(".pw-smart-row-summary", {
+					hasText: "manual-player-73",
+				}),
+			});
+			await openRow(created);
+			await expect(created.getByRole("checkbox")).not.toBeChecked();
+			await expect(created.locator("input[id$='-url']")).toHaveValue("");
+			await expect(created.locator("textarea[id$='-notes']")).toHaveValue(
+				createdNotes,
+			);
+			await expect(importer.locator(".pw-smart-issues")).toHaveCount(0);
+			await expect(first.getByRole("checkbox")).toBeChecked();
 			expect(await persistedVault(page)).toEqual(original);
 			await checkLayout(page, importer, variant.width);
 			await pending
@@ -643,9 +1472,8 @@ for (const variant of variants) {
 				),
 				fullPage: true,
 			});
-			await importer
-				.getByRole("checkbox", { name: t("pwSmartSelectNew"), exact: true })
-				.check();
+			for (const row of [first, second, app])
+				await row.getByRole("checkbox").check();
 			await expect(pending.getByRole("checkbox")).not.toBeChecked();
 			await importer
 				.getByRole("button", {
@@ -656,9 +1484,26 @@ for (const variant of variants) {
 			await expect(importer.locator(".pw-smart-receipt")).toHaveText(
 				t("pwSmartSaved", { added: 3, updated: 0, skipped: 0 }),
 			);
-			await expect(rows).toHaveCount(1);
+			await expect(rows).toHaveCount(2);
 			await expect(pending.locator(".pw-smart-source-context")).toContainText(
 				"pending-player-55",
+			);
+			await expect(pending.locator("input[id$='-password']")).toHaveValue(
+				completedPassword,
+			);
+			await expect(created.locator("textarea[id$='-notes']")).toHaveValue(
+				createdNotes,
+			);
+			await pending.getByRole("checkbox").check();
+			await created.getByRole("checkbox").check();
+			await importer
+				.getByRole("button", {
+					name: t("pwSmartConfirm", { count: 2 }),
+					exact: true,
+				})
+				.click();
+			await expect(importer.locator(".pw-smart-receipt")).toHaveText(
+				t("pwSmartSaved", { added: 2, updated: 0, skipped: 0 }),
 			);
 			await closeDialog(page);
 			const download = page.waitForEvent("download");
@@ -699,9 +1544,23 @@ for (const variant of variants) {
 						url: "",
 						notes: "Synthetic App review note",
 					},
+					{
+						title: "App without password",
+						username: "pending-player-corrected-56",
+						password: completedPassword,
+						url: "",
+						notes: completedNotes,
+					},
+					{
+						title: "Manually classified App",
+						username: "manual-player-73",
+						password: manuallyCreatedPassword,
+						url: "",
+						notes: createdNotes,
+					},
 				]),
 			);
-			expect(exported).toHaveLength(3);
+			expect(exported).toHaveLength(5);
 			await page.reload();
 			await unlock(page, t);
 			await entry(page, "Studio App")
@@ -759,7 +1618,7 @@ for (const variant of variants) {
 			await page.goto("/assets/vault");
 			await createVault(page, t);
 			const before = await persistedVault(page);
-			const importer = await openImport(page, t, source);
+			let importer = await openImport(page, t, source);
 			await expect(importer.locator(".pw-smart-row")).toHaveCount(1);
 			await expect(
 				importer.locator("#pw-smart-vault-import-1-password"),
@@ -780,9 +1639,10 @@ for (const variant of variants) {
 				t("pwSmartIssue_unrecognized-line"),
 			);
 			expect(await persistedVault(page)).toEqual(before);
-			await importer
-				.getByRole("button", { name: t("pwSmartMap"), exact: true })
-				.click();
+			await closeDialog(page);
+			importer = await openImport(page, t);
+			await importer.locator("#pw-smart-source").fill(source);
+			await importAdvanced(importer, t, "pwSmartMap");
 			await expect(importer.locator(".pw-smart-map-line")).toHaveCount(4);
 			await expect(importer.locator("#pw-map-value-3")).toHaveAttribute(
 				"type",
@@ -803,13 +1663,16 @@ for (const variant of variants) {
 				),
 				fullPage: true,
 			});
-			await importer
-				.getByRole("button", { name: t("pwSmartMapReview"), exact: true })
-				.click();
+			await reviewMapping(importer, t);
 			await expect(importer.locator(".pw-smart-issues")).toHaveCount(0);
-			await expect(
-				importer.locator("#pw-smart-vault-import-1-notes"),
-			).toHaveValue("demo.two@example.test");
+			await expect(importer.locator(".pw-smart-row")).toHaveCount(1);
+			const mapped = importer.locator(".pw-smart-row").first();
+			await openRow(mapped);
+			await expect(mapped.locator("textarea[id$='-notes']")).toHaveValue(
+				"demo.two@example.test",
+			);
+			await expect(mapped.getByRole("checkbox")).toBeChecked();
+			await mapped.getByRole("checkbox").check();
 			expect(await persistedVault(page)).toEqual(before);
 			await importer
 				.getByRole("button", {
@@ -833,19 +1696,16 @@ for (const variant of variants) {
 			const generic = "Generic service\nplain-user\nSynthetic second password";
 			await openImport(page, t, generic);
 			await expect(importer.locator(".pw-smart-row")).toHaveCount(0);
-			await importer
-				.getByRole("button", { name: t("pwSmartMap"), exact: true })
-				.click();
+			await importAdvanced(importer, t, "pwSmartMap");
 			for (const [line, field] of [
 				[1, "title"],
 				[2, "username"],
 				[3, "password"],
 			] as const)
 				await selectChoice(importer.locator(`#pw-map-field-${line}`), field);
-			await importer
-				.getByRole("button", { name: t("pwSmartMapReview"), exact: true })
-				.click();
+			await reviewMapping(importer, t);
 			await expect(importer.locator(".pw-smart-row")).toHaveCount(1);
+			await importer.locator(".pw-smart-row").getByRole("checkbox").check();
 			await checkLayout(page, importer, variant.width);
 			await page.locator(".dialog").evaluate((element) => {
 				element.scrollTop = 0;
@@ -1024,9 +1884,7 @@ for (const variant of variants) {
 				t("pwSmartSaved", { added: 2, updated: 0, skipped: 0 }),
 			);
 			await expect(importer.locator("input[id$='-password']")).toHaveCount(1);
-			await importer
-				.getByRole("button", { name: t("pwSmartEditSource"), exact: true })
-				.click();
+			await importAdvanced(importer, t, "pwSmartEditSource");
 			await expect(importer.locator("#pw-smart-source")).toHaveValue(
 				pastedSource,
 			);
