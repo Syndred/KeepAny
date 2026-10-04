@@ -89,7 +89,7 @@ export const passwordVaultCopy: Record<string, [string, string]> = {
 		"点选原文，即可填入右侧字段。",
 		"Select source lines to fill a field.",
 	],
-	pwSmartSourceSelected: ["已选 {{count}} 行", "{{count}} lines selected"],
+	pwSmartSourceSelected: ["已选 {{count}} 行", "Selected lines: {{count}}"],
 	pwSmartFillTitle: ["填入名称", "Fill name"],
 	pwSmartFillUsername: ["填入账号", "Fill username"],
 	pwSmartFillPassword: ["填入密码", "Fill password"],
