@@ -22,6 +22,7 @@ export type VaultImportIssue = {
 	code: VaultImportIssueCode;
 };
 export type VaultImportSourceReference = {
+	encoding?: "json-string";
 	start: number;
 	end: number;
 	line: number;

@@ -33,9 +33,9 @@ import { Select, SelectOption } from "./ui/select";
 import { TaskCard } from "./ui/task-card";
 import { TextLink } from "./ui/text-link";
 import "../password-vault.css";
+import { withFilledVaultIdentifiers } from "../vault-import-model";
 import { PasswordSmartImportDialog } from "./PasswordSmartImportDialog";
 import { VaultLoginIdentifiers } from "./VaultLoginIdentifiers";
-import { withFilledVaultIdentifiers } from "../vault-import-model";
 
 type PasswordVaultPanelProps = {
 	assets: Asset[];
@@ -1363,23 +1363,17 @@ function EntryEditor({
 						maxLength={160}
 					/>
 				</div>
-				<div className="field">
-					<label htmlFor="password-vault-entry-username">
-						{t("pwVaultUsernameField")}
-					</label>
-					<input
-						id="password-vault-entry-username"
-						value={draft.username}
-						onChange={(event) => update("username", event.target.value)}
-						disabled={busy}
-						autoComplete="username"
-						maxLength={300}
-					/>
-				</div>
 				<VaultLoginIdentifiers
 					idPrefix="password-vault-entry"
 					values={draft.usernameAliases}
 					disabled={busy}
+					primary={{
+						id: "password-vault-entry-username",
+						value: draft.username,
+						autoComplete: "username",
+						maxLength: 300,
+						onChange: (value) => update("username", value),
+					}}
 					onChange={(values) => update("usernameAliases", values)}
 				/>
 				<div className="field password-vault-password-field password-vault-secret-field">
@@ -1455,7 +1449,34 @@ function EntryEditor({
 				</div>
 				<div className="password-vault-more-info password-vault-optional">
 					<div className="password-vault-more-info-fields">
-						{urlExpanded ? (
+						<div className="field password-vault-notes-field">
+							<div className="pw-smart-field-heading">
+								<label htmlFor="password-vault-entry-notes">
+									{t("pwVaultNotesOptionalField")}
+								</label>
+								{!urlExpanded && (
+									<Button
+										type="button"
+										variant="ghost"
+										size="small"
+										className="pw-smart-add-url"
+										onClick={() => setUrlExpanded(true)}
+										disabled={busy}
+									>
+										{t("pwVaultAddUrl")}
+									</Button>
+								)}
+							</div>
+							<textarea
+								id="password-vault-entry-notes"
+								value={draft.notes}
+								onChange={(event) => update("notes", event.target.value)}
+								disabled={busy}
+								rows={4}
+								maxLength={20000}
+							/>
+						</div>
+						{urlExpanded && (
 							<div className="field">
 								<label htmlFor="password-vault-entry-url">
 									{t("pwVaultUrlOptionalField")}
@@ -1471,30 +1492,7 @@ function EntryEditor({
 									placeholder="https://"
 								/>
 							</div>
-						) : (
-							<div>
-								<Button
-									type="button"
-									onClick={() => setUrlExpanded(true)}
-									disabled={busy}
-								>
-									{t("pwVaultAddUrl")}
-								</Button>
-							</div>
 						)}
-						<div className="field password-vault-notes-field">
-							<label htmlFor="password-vault-entry-notes">
-								{t("pwVaultNotesOptionalField")}
-							</label>
-							<textarea
-								id="password-vault-entry-notes"
-								value={draft.notes}
-								onChange={(event) => update("notes", event.target.value)}
-								disabled={busy}
-								rows={4}
-								maxLength={20000}
-							/>
-						</div>
 					</div>
 				</div>
 			</div>

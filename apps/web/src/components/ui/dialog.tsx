@@ -8,7 +8,9 @@ export function Dialog({
 	onClose,
 	closeDisabled = false,
 	returnFocusTo,
+	className,
 }: {
+	className?: string;
 	title: string;
 	children: ReactNode;
 	onClose: () => void;
@@ -29,7 +31,7 @@ export function Dialog({
 			<DialogPrimitive.Portal>
 				<DialogPrimitive.Overlay className="overlay" />
 				<DialogPrimitive.Content
-					className="dialog"
+					className={`dialog${className ? ` ${className}` : ""}`}
 					aria-describedby={undefined}
 					onCloseAutoFocus={(event) => {
 						event.preventDefault();

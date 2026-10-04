@@ -9,7 +9,10 @@ import type {
 	VaultSession,
 } from "../../../../packages/password-vault/src";
 import { acquireAiConnection, useAiConnection } from "../ai-settings-store";
-import { requestVaultImportAiRecognition } from "../vault-import-ai";
+import {
+	requestVaultImportAiRecognition,
+	VaultImportAiError,
+} from "../vault-import-ai";
 import {
 	createVaultMappedLines,
 	parseVaultMappedLines,
@@ -424,7 +427,16 @@ export function PasswordSmartImportDialog({
 					t(
 						error instanceof Error && error.message === "vault-import-ai-limit"
 							? "pwSmartAiLimit"
-							: "pwSmartAiRecognitionFailed",
+							: error instanceof VaultImportAiError &&
+									error.category === "timeout"
+								? "pwSmartAiTimeout"
+								: error instanceof VaultImportAiError &&
+										error.category === "output-limit"
+									? "pwSmartAiOutputLimit"
+									: error instanceof VaultImportAiError &&
+											error.category === "response-format"
+										? "pwSmartAiResponseFormat"
+										: "pwSmartAiRecognitionFailed",
 					),
 				);
 			}
@@ -767,6 +779,10 @@ export function PasswordSmartImportDialog({
 						candidate.id === row.id ? row : candidate,
 					);
 		const nextPlan = previewCandidates(session, rows);
+		const appliedPlan =
+			nextPlan?.rows[rows.findIndex((candidate) => candidate.id === row.id)];
+		const ready =
+			!!appliedPlan && (appliedPlan.status === "new" || !!row.updateTargetId);
 		const handled = new Set(
 			group.issues.map((issue) => `${issue.lineNumber}:${issue.code}`),
 		);
@@ -796,7 +812,7 @@ export function PasswordSmartImportDialog({
 						candidate.id,
 						changed
 							? {
-									selected: false,
+									selected: candidate.id === row.id && ready,
 									action: candidate.updateTargetId
 										? "update"
 										: after?.status === "new"
@@ -812,7 +828,15 @@ export function PasswordSmartImportDialog({
 			),
 		);
 		setStage("review");
-		setMessage(t("pwSmartManualAdded"));
+		setMessage(
+			t(
+				ready
+					? "pwSmartFragmentCompleted"
+					: appliedPlan
+						? "pwSmartManualAdded"
+						: "pwSmartFragmentPending",
+			),
+		);
 		return true;
 	}
 	async function save() {
@@ -922,6 +946,7 @@ export function PasswordSmartImportDialog({
 
 	return (
 		<Dialog
+			className="password-smart-import-dialog"
 			title={t("pwSmartTitle")}
 			onClose={close}
 			closeDisabled={busy === "save"}
@@ -1108,13 +1133,10 @@ export function PasswordSmartImportDialog({
 													)
 													.join(" · ")}
 											</p>
-											<VaultImportSourceExcerpt
-												excerpt={group.excerpt}
-												source={reviewSource}
-												disabled={!!busy}
-											/>
 											<VaultImportFragmentForm
 												idPrefix={`pw-fragment-${group.id}`}
+												source={reviewSource}
+												excerpt={group.excerpt}
 												fragmentText={reviewSource.slice(
 													group.excerpt.selection.start,
 													group.excerpt.selection.end,

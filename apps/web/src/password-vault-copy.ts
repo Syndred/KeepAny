@@ -76,6 +76,37 @@ export const passwordVaultCopy: Record<string, [string, string]> = {
 	pwSmartSourceExcerpt: ["对应原文", "Source excerpt"],
 	pwSmartSourceShow: ["查看这段原文", "Show this source excerpt"],
 	pwSmartSourceHide: ["隐藏这段原文", "Hide this source excerpt"],
+	pwSmartSourceCopy: ["复制原文", "Copy source"],
+	pwSmartSourceCopyFailed: [
+		"复制失败，请选中文字复制。",
+		"Could not copy. Select the text to copy it.",
+	],
+	pwSmartSourceSelectLine: [
+		"选择第 {{line}} 行原文",
+		"Select source line {{line}}",
+	],
+	pwSmartSourceSelectHint: [
+		"点选原文，即可填入右侧字段。",
+		"Select source lines to fill a field.",
+	],
+	pwSmartSourceSelected: ["已选 {{count}} 行", "{{count}} lines selected"],
+	pwSmartFillTitle: ["填入名称", "Fill name"],
+	pwSmartFillUsername: ["填入账号", "Fill username"],
+	pwSmartFillPassword: ["填入密码", "Fill password"],
+	pwSmartFillNotes: ["加入备注", "Add to notes"],
+	pwSmartFragmentChangeTarget: ["更换条目", "Change entry"],
+	pwSmartAiTimeout: [
+		"模型响应超时，原文和已有结果保留。请稍后重试。",
+		"The model timed out. Your source and existing results are kept. Try again later.",
+	],
+	pwSmartAiOutputLimit: [
+		"模型输出未完整返回，原文和已有结果保留。请缩小这批清单再识别。",
+		"The model's response was incomplete. Your source and existing results are kept. Try a smaller batch.",
+	],
+	pwSmartAiResponseFormat: [
+		"模型返回的格式无法识别，原文和已有结果保留。可重试或使用本机识别。",
+		"The model returned an unreadable format. Your source and existing results are kept. Try again or use on-device recognition.",
+	],
 	pwSmartSourceEdit: ["在原文中修改", "Edit in source"],
 	pwSmartSourceEditHint: [
 		"已选中对应原文，已有条目和修改保留。按行指定只追加条目；重新识别成功后才替换列表。",
@@ -93,10 +124,10 @@ export const passwordVaultCopy: Record<string, [string, string]> = {
 	pwSmartIssues: ["以下内容需要核对", "Some content needs review"],
 	pwSmartIssueLine: ["第 {{line}} 行", "Line {{line}}"],
 	pwSmartIssuesHint: [
-		"直接在对应原文旁填写入库信息，或补充到已有条目。下方完整条目可以先导入。",
-		"Fill in entry details beside the source excerpt, or add them to an existing entry. You can save the complete entries below first.",
+		"补全后点击「完成核对」，再确认入库。下方完整条目可以先导入。",
+		"Complete each entry and finish its review, then confirm saving. You can save the complete entries below first.",
 	],
-	pwSmartFragmentFill: ["填写入库信息", "Fill in entry details"],
+	pwSmartFragmentFill: ["补全这条信息", "Complete this entry"],
 	pwSmartFragmentHint: [
 		"补填后加入待导入列表，再确认入库。不会重新调用模型。",
 		"Add the completed details to the import list, then confirm saving. The model will not run again.",
@@ -118,7 +149,15 @@ export const passwordVaultCopy: Record<string, [string, string]> = {
 		"Add this source excerpt to notes",
 	],
 	pwSmartFragmentNotesAdded: ["原文已加入备注", "Source added to notes"],
-	pwSmartFragmentApply: ["加入待导入条目", "Add to the import list"],
+	pwSmartFragmentApply: ["完成核对", "Finish review"],
+	pwSmartFragmentCompleted: [
+		"已完成核对，可确认入库。",
+		"Review complete. Confirm to save.",
+	],
+	pwSmartFragmentPending: [
+		"已保留填写内容，请补全缺少的信息。",
+		"Your details are kept. Fill in the missing fields.",
+	],
 	pwSmartFragmentCollapse: ["收起表单", "Collapse form"],
 	pwSmartSavedEntryHint: [
 		"此条目已入库，可补充登录标识、密码和备注；另一个小号请选择新建条目。",

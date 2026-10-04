@@ -5,12 +5,15 @@ import {
 	type VaultImportCandidate,
 	withFilledVaultIdentifiers,
 } from "../vault-import-model";
+import { resolveVaultImportQuickFill } from "../vault-import-quick-fill";
+import type { VaultImportSourceExcerpt as SourceExcerpt } from "../vault-import-source";
 import { Button } from "./ui/button";
 import { Select, SelectOption } from "./ui/select";
 import {
 	type VaultImportDraftField,
 	VaultImportDraftFields,
 } from "./VaultImportDraftFields";
+import { VaultImportSourceExcerpt } from "./VaultImportSourceExcerpt";
 
 function blankDraft(): VaultEntryDraft {
 	return {
@@ -38,23 +41,43 @@ function copyDraft(draft: VaultEntryDraft): VaultEntryDraft {
 export function VaultImportFragmentForm({
 	idPrefix,
 	fragmentText,
+	source,
+	excerpt,
 	candidates,
 	disabled,
 	onApply,
 }: {
 	idPrefix: string;
 	fragmentText: string;
+	source: string;
+	excerpt: SourceExcerpt;
 	candidates: VaultImportCandidate[];
 	disabled: boolean;
 	onApply: (targetId: string | null, draft: VaultEntryDraft) => boolean;
 }) {
 	const { t } = useTranslation();
-	const [expanded, setExpanded] = useState(false);
-	const [mode, setMode] = useState<"new" | "existing">("new");
-	const [targetId, setTargetId] = useState("");
-	const [drafts, setDrafts] = useState<Map<string, VaultEntryDraft>>(
-		() => new Map([["new", blankDraft()]]),
+	const [initial] = useState(() =>
+		resolveVaultImportQuickFill(source, excerpt, candidates),
 	);
+	const [expanded, setExpanded] = useState(true);
+	const [choosingTarget, setChoosingTarget] = useState(false);
+	const [mode, setMode] = useState<"new" | "existing">(
+		initial.targetId ? "existing" : "new",
+	);
+	const [targetId, setTargetId] = useState(initial.targetId ?? "");
+	const [drafts, setDrafts] = useState<Map<string, VaultEntryDraft>>(() => {
+		const newDraft = initial.targetId
+			? {
+					...blankDraft(),
+					title: initial.draft.title,
+					username: initial.draft.username,
+				}
+			: initial.draft;
+		const result = new Map([["new", newDraft]]);
+		if (initial.targetId)
+			result.set(`target:${initial.targetId}`, initial.draft);
+		return result;
+	});
 	const [appended, setAppended] = useState<Set<string>>(() => new Set());
 	const [editedFields, setEditedFields] = useState<
 		Map<string, Set<VaultImportDraftField>>
@@ -107,6 +130,11 @@ export function VaultImportFragmentForm({
 				) !== JSON.stringify(target.draft.usernameAliases ?? [])));
 
 	function selectTarget(nextId: string) {
+		if (nextId === "new") {
+			setMode("new");
+			return;
+		}
+		setMode("existing");
 		setTargetId(nextId);
 		const nextTarget = candidates.find((candidate) => candidate.id === nextId);
 		if (!nextTarget) return;
@@ -149,118 +177,147 @@ export function VaultImportFragmentForm({
 	}
 
 	return (
-		<div className="pw-smart-fragment-form" data-expanded={expanded}>
-			{!expanded ? (
-				<Button
-					type="button"
-					onClick={() => setExpanded(true)}
+		<div
+			className="pw-smart-fragment-form"
+			data-expanded={expanded}
+			data-completion-target={mode === "new" ? "new" : (target?.id ?? targetId)}
+		>
+			<div className="pw-smart-quick-layout">
+				<VaultImportSourceExcerpt
+					excerpt={excerpt}
+					source={source}
+					candidates={candidates}
 					disabled={disabled}
-					aria-expanded={false}
-					aria-controls={`${idPrefix}-editor`}
-				>
-					{t("pwSmartFragmentFill")}
-				</Button>
-			) : (
-				<div className="pw-smart-fragment-editor" id={`${idPrefix}-editor`}>
-					<strong>{t("pwSmartFragmentFill")}</strong>
-					<p className="pw-smart-hint">{t("pwSmartFragmentHint")}</p>
-					<label className="field" htmlFor={`${idPrefix}-mode`}>
-						<span>{t("pwSmartFragmentMode")}</span>
-						<Select
-							id={`${idPrefix}-mode`}
-							value={mode}
-							onValueChange={(value) =>
-								setMode(value === "existing" ? "existing" : "new")
-							}
-							disabled={disabled}
-						>
-							<SelectOption value="new">{t("pwSmartFragmentNew")}</SelectOption>
-							<SelectOption value="existing" disabled={!candidates.length}>
-								{t("pwSmartFragmentExisting")}
-							</SelectOption>
-						</Select>
-					</label>
-					{mode === "existing" && (
-						<label className="field" htmlFor={`${idPrefix}-target`}>
-							<span>{t("pwSmartFragmentTarget")}</span>
-							<Select
-								id={`${idPrefix}-target`}
-								value={target?.id ?? targetId}
-								onValueChange={selectTarget}
+					readOnlyIdentity={readOnlyIdentity}
+					onAssign={(field, value) => {
+						if (!draft) return;
+						if (field === "usernameAliases")
+							changeField(field, [...(draft.usernameAliases ?? []), value]);
+						else
+							changeField(
+								field,
+								field === "notes" && draft.notes
+									? `${draft.notes}\n\n${value}`
+									: value,
+							);
+					}}
+				/>
+				{!expanded ? (
+					<Button
+						type="button"
+						onClick={() => setExpanded(true)}
+						disabled={disabled}
+						aria-expanded={false}
+						aria-controls={`${idPrefix}-editor`}
+					>
+						{t("pwSmartFragmentFill")}
+					</Button>
+				) : (
+					<div className="pw-smart-fragment-editor" id={`${idPrefix}-editor`}>
+						<div className="pw-smart-fragment-heading">
+							<strong>{t("pwSmartFragmentFill")}</strong>
+							<Button
+								type="button"
+								variant="ghost"
+								size="small"
 								disabled={disabled}
+								onClick={() => setChoosingTarget((value) => !value)}
+								aria-expanded={choosingTarget}
+								aria-controls={`${idPrefix}-target-picker`}
 							>
-								<SelectOption value="">
-									{t("pwSmartFragmentChooseTarget")}
-								</SelectOption>
-								{candidates.map((candidate, index) => (
-									<SelectOption key={candidate.id} value={candidate.id}>
-										{t("pwSmartRow", { count: index + 1 })} ·{" "}
-										{candidate.draft.title || t("pwVaultEntryNew")}
-										{candidate.draft.username
-											? ` · ${candidate.draft.username}`
-											: ""}
+								{t("pwSmartFragmentChangeTarget")}
+							</Button>
+						</div>
+						{choosingTarget && (
+							<label
+								className="field pw-smart-target-picker"
+								id={`${idPrefix}-target-picker`}
+								htmlFor={`${idPrefix}-target`}
+							>
+								<span>{t("pwSmartFragmentTarget")}</span>
+								<Select
+									id={`${idPrefix}-target`}
+									value={mode === "new" ? "new" : (target?.id ?? targetId)}
+									onValueChange={selectTarget}
+									disabled={disabled}
+								>
+									<SelectOption value="new">
+										{t("pwSmartFragmentNew")}
 									</SelectOption>
-								))}
-							</Select>
-						</label>
-					)}
-					{draft && canEdit && (
-						<VaultImportDraftFields
-							key={draftKey}
-							idPrefix={idPrefix}
-							draft={draft}
-							disabled={disabled}
-							readOnlyIdentity={readOnlyIdentity}
-							onChange={changeField}
-						/>
-					)}
-					{mode === "existing" && target && !hasChanges && (
-						<p className="pw-smart-hint">{t("pwSmartFragmentNoChange")}</p>
-					)}
-					<div className="actions pw-smart-fragment-actions">
-						<Button
-							type="button"
-							onClick={addSourceToNotes}
-							disabled={
-								disabled ||
-								!canEdit ||
-								!draft ||
-								!fragmentText ||
-								appended.has(draftKey)
-							}
-						>
-							{t(
-								appended.has(draftKey)
-									? "pwSmartFragmentNotesAdded"
-									: "pwSmartFragmentAddNotes",
-							)}
-						</Button>
-						<Button
-							type="button"
-							variant="primary"
-							onClick={() => {
-								if (!draft || !canEdit || !hasContent || !hasChanges) return;
-								const applyTargetId = mode === "new" ? null : target?.id;
-								if (applyTargetId === undefined) return;
-								if (onApply(applyTargetId, copyDraft(draft)))
-									setExpanded(false);
-							}}
-							disabled={disabled || !canEdit || !hasContent || !hasChanges}
-						>
-							{t("pwSmartFragmentApply")}
-						</Button>
-						<Button
-							type="button"
-							onClick={() => setExpanded(false)}
-							disabled={disabled}
-							aria-expanded={true}
-							aria-controls={`${idPrefix}-editor`}
-						>
-							{t("pwSmartFragmentCollapse")}
-						</Button>
+									{candidates.map((candidate, index) => (
+										<SelectOption key={candidate.id} value={candidate.id}>
+											{t("pwSmartRow", { count: index + 1 })} ·{" "}
+											{candidate.draft.title || t("pwVaultEntryNew")}
+											{candidate.draft.username
+												? ` · ${candidate.draft.username}`
+												: ""}
+										</SelectOption>
+									))}
+								</Select>
+							</label>
+						)}
+						{draft && canEdit && (
+							<VaultImportDraftFields
+								key={draftKey}
+								idPrefix={idPrefix}
+								draft={draft}
+								disabled={disabled}
+								readOnlyIdentity={readOnlyIdentity}
+								onChange={changeField}
+							/>
+						)}
+						{mode === "existing" && target && !hasChanges && (
+							<p className="pw-smart-hint">{t("pwSmartFragmentNoChange")}</p>
+						)}
+						<div className="actions pw-smart-fragment-actions">
+							<Button
+								type="button"
+								variant="ghost"
+								size="small"
+								onClick={addSourceToNotes}
+								disabled={
+									disabled ||
+									!canEdit ||
+									!draft ||
+									!fragmentText ||
+									appended.has(draftKey)
+								}
+							>
+								{t(
+									appended.has(draftKey)
+										? "pwSmartFragmentNotesAdded"
+										: "pwSmartFragmentAddNotes",
+								)}
+							</Button>
+							<Button
+								type="button"
+								variant="primary"
+								onClick={() => {
+									if (!draft || !canEdit || !hasContent || !hasChanges) return;
+									const applyTargetId = mode === "new" ? null : target?.id;
+									if (applyTargetId === undefined) return;
+									if (onApply(applyTargetId, copyDraft(draft)))
+										setExpanded(false);
+								}}
+								disabled={disabled || !canEdit || !hasContent || !hasChanges}
+							>
+								{t("pwSmartFragmentApply")}
+							</Button>
+							<Button
+								type="button"
+								variant="ghost"
+								size="small"
+								onClick={() => setExpanded(false)}
+								disabled={disabled}
+								aria-expanded={true}
+								aria-controls={`${idPrefix}-editor`}
+							>
+								{t("pwSmartFragmentCollapse")}
+							</Button>
+						</div>
 					</div>
-				</div>
-			)}
+				)}
+			</div>
 		</div>
 	);
 }
