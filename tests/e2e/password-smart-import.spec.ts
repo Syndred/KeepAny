@@ -137,13 +137,14 @@ async function unlock(page: Page, t: Copy) {
 	await expect(page.locator(".password-vault-toolbar")).toBeVisible();
 }
 async function closeDialog(page: Page) {
-	await page
+	const buttons = page
 		.getByRole("dialog")
-		.getByRole("button", { name: /^(Close|关闭)$/, exact: true })
-		.first()
-		.click();
+		.getByRole("button", { name: /^(Close|关闭)$/, exact: true });
+	await expect(buttons.last()).toBeEnabled();
+	await buttons.first().click();
 	await expect(page.getByRole("dialog")).toBeHidden();
 }
+
 async function openImport(page: Page, t: Copy, source?: string) {
 	await page
 		.getByRole("button", { name: t("pwSmartTitle"), exact: true })
@@ -188,6 +189,7 @@ async function readEntry(page: Page, t: Copy, title: string) {
 		.click();
 	const field = page.locator("#password-vault-entry-password");
 	await expect(field).toHaveAttribute("type", "password");
+	await openOptional(page.locator(".password-vault-optional"));
 	const result = {
 		password: await field.inputValue(),
 		username: await page.locator("#password-vault-entry-username").inputValue(),
@@ -202,9 +204,177 @@ async function openRow(row: Locator) {
 	if ((await editor.getAttribute("open")) === null)
 		await editor.locator("summary").first().click();
 }
-async function openOptional(details: Locator) {
-	if ((await details.getAttribute("open")) === null)
-		await details.locator("summary").first().click();
+async function openOptional(container: Locator) {
+	const addUrl = container.getByRole("button", {
+		name: /^(添加网址|Add website URL)$/,
+		exact: true,
+	});
+	if (await addUrl.isVisible()) await addUrl.click();
+}
+/** A real pointer hit must land on the control even after mousedown updates focus. */
+async function exercisePasswordEye(
+	page: Page,
+	field: Locator,
+	controls: Locator,
+	secret: string,
+) {
+	const multiline =
+		(await field.evaluate((element) => element.tagName)) === "TEXTAREA";
+	for (const [index, horizontal] of [
+		0.5, 0.02, 0.98, 0.5, 0.02, 0.98,
+	].entries()) {
+		const eye = controls.getByRole("button", {
+			name: /^(显示密码|隐藏密码|Show password|Hide password)$/,
+			exact: true,
+		});
+		await eye.scrollIntoViewIfNeeded();
+		const box = await eye.boundingBox();
+		if (!box) throw Error("Password eye has no pointer target");
+		expect(box.width).toBeGreaterThanOrEqual(44);
+		expect(box.height).toBeGreaterThanOrEqual(44);
+		const x = box.x + box.width * horizontal;
+		const y = box.y + box.height / 2;
+		await page.mouse.move(x, y);
+		await page.mouse.down();
+		try {
+			expect(
+				await eye.evaluate(
+					(element, point) => {
+						const rectangle = element.getBoundingClientRect();
+						const hit = document.elementFromPoint(point.x, point.y);
+						return (
+							rectangle.left <= point.x &&
+							point.x < rectangle.right &&
+							rectangle.top <= point.y &&
+							point.y < rectangle.bottom &&
+							(hit === element || (!!hit && element.contains(hit)))
+						);
+					},
+					{ x, y },
+				),
+			).toBe(true);
+		} finally {
+			await page.mouse.up();
+		}
+		test.info().annotations.push({
+			type: "ui-pointer-hit",
+			description: JSON.stringify({
+				field: await field.getAttribute("id"),
+				width: box.width,
+				height: box.height,
+				horizontal,
+				hitAfterMouseDown: true,
+				multiline,
+			}),
+		});
+		if (multiline) {
+			await expect(field).toHaveValue(
+				index % 2 === 0 ? secret.replace(/\r\n/g, "\n") : "••••••••",
+			);
+		} else {
+			await expect(field).toHaveAttribute(
+				"type",
+				index % 2 === 0 ? "text" : "password",
+			);
+			await expect(field).toHaveValue(secret);
+		}
+	}
+}
+async function addIdentifiers(form: Locator, values: string[]) {
+	for (const [index, value] of values.entries()) {
+		await form
+			.getByRole("button", {
+				name: /^(添加登录标识|Add login identifier)$/,
+				exact: true,
+			})
+			.click();
+		await form.locator(".pw-smart-identifier-row input").nth(index).fill(value);
+	}
+}
+async function expectIdentifiers(form: Locator, values: string[]) {
+	const inputs = form.locator(".pw-smart-identifier-row input");
+	await expect(inputs).toHaveCount(values.length);
+	for (const [index, value] of values.entries())
+		await expect(inputs.nth(index)).toHaveValue(value);
+}
+async function expectActionSpacing(actions: Locator) {
+	const gaps = await actions.evaluate((element) => {
+		const buttons = [...element.querySelectorAll("button")].filter(
+			(button) => button.getBoundingClientRect().width > 0,
+		);
+		return buttons.flatMap((button, index) =>
+			buttons.slice(index + 1).map((other) => {
+				const a = button.getBoundingClientRect();
+				const b = other.getBoundingClientRect();
+				const sameRow = Math.min(a.bottom, b.bottom) > Math.max(a.top, b.top);
+				return sameRow
+					? Math.max(b.left - a.right, a.left - b.right)
+					: Math.max(b.top - a.bottom, a.top - b.bottom);
+			}),
+		);
+	});
+	for (const gap of gaps) expect(gap).toBeGreaterThanOrEqual(15.5);
+	test.info().annotations.push({
+		type: "ui-gaps",
+		description: JSON.stringify({
+			target: await actions.getAttribute("class"),
+			gaps,
+		}),
+	});
+}
+async function expectCollapsedGroupSpacing(groups: Locator) {
+	const gaps = await groups.evaluateAll((elements) =>
+		elements.map((element, index) => {
+			const excerpt = element
+				.querySelector(".pw-smart-source-excerpt")
+				?.getBoundingClientRect();
+			const button = element
+				.querySelector(".pw-smart-fragment-form > button")
+				?.getBoundingClientRect();
+			const next = elements[index + 1]
+				?.querySelector(".pw-smart-source-group-reasons")
+				?.getBoundingClientRect();
+			return {
+				before: excerpt && button ? button.top - excerpt.bottom : null,
+				after: next && button ? next.top - button.bottom : null,
+			};
+		}),
+	);
+	for (const gap of gaps) {
+		if (gap.before !== null) expect(gap.before).toBeGreaterThanOrEqual(15.5);
+		if (gap.after !== null) expect(gap.after).toBeGreaterThanOrEqual(15.5);
+	}
+	test.info().annotations.push({
+		type: "ui-source-gaps",
+		description: JSON.stringify(gaps),
+	});
+}
+async function captureFragmentSections(
+	page: Page,
+	form: Locator,
+	stem: string,
+) {
+	await expect(page.locator(".toast")).toBeHidden({ timeout: 10_000 });
+	await form
+		.locator(".pw-smart-fragment-editor")
+		.evaluate((element) =>
+			element.scrollIntoView({ block: "start", behavior: "instant" }),
+		);
+	await page.screenshot({ path: join(evidenceRoot, `${stem}-top.png`) });
+	await form
+		.locator(".pw-smart-identifiers")
+		.evaluate((element) =>
+			element.scrollIntoView({ block: "start", behavior: "instant" }),
+		);
+	await page.screenshot({ path: join(evidenceRoot, `${stem}-details.png`) });
+	await form
+		.locator(".pw-smart-fragment-actions")
+		.evaluate((element) =>
+			element.scrollIntoView({ block: "center", behavior: "instant" }),
+		);
+	await page.screenshot({
+		path: join(evidenceRoot, `${stem}-notes-actions.png`),
+	});
 }
 async function importAdvanced(importer: Locator, t: Copy, key: string) {
 	let button = importer.getByRole("button", { name: t(key), exact: true });
@@ -999,7 +1169,7 @@ for (const variant of variants) {
 	test(`${variant.locale} ${variant.width}px unresolved source forms create or complete entries and save without rerunning AI`, async ({
 		browser,
 	}) => {
-		test.setTimeout(45_000);
+		test.setTimeout(75_000);
 		const t = copy(variant.locale);
 		const mock = await aiServer();
 		const context = await browser.newContext({
@@ -1013,7 +1183,11 @@ for (const variant of variants) {
 		);
 		const page = await context.newPage();
 		const errors: string[] = [];
+		const consoleErrors: string[] = [];
 		page.on("pageerror", (error) => errors.push(error.message));
+		page.on("console", (message) => {
+			if (message.type() === "error") consoleErrors.push(message.text());
+		});
 		const firstPassword = '  Synthetic Gmail ;|,\\" P4ss!\t  ';
 		const secondPassword = "Synthetic second Gmail password!";
 		const appPassword = "Synthetic App password\r\nsecond line  ";
@@ -1025,6 +1199,8 @@ for (const variant of variants) {
 		const manuallyCreatedPassword =
 			"  Synthetic manually classified password ;|!  ";
 		const completedPassword = "Synthetic completed pending account password!";
+		const additionalPassword =
+			"Synthetic additional platform account password!";
 		const source = [
 			"Gmail",
 			"first.gmail@example.test",
@@ -1128,10 +1304,8 @@ for (const variant of variants) {
 					username,
 				);
 				await expect(row.locator("input[id$='-url']")).toBeHidden();
-				await expect(row.locator(".pw-smart-optional")).not.toHaveAttribute(
-					"open",
-					"",
-				);
+				await expect(row.locator("textarea[id$='-notes']")).toBeVisible();
+				await expect(row.locator(".pw-smart-optional summary")).toHaveCount(0);
 			}
 			await expect(first.locator(".pw-smart-source-context")).toContainText(
 				"Gmail",
@@ -1196,6 +1370,7 @@ for (const variant of variants) {
 			await app
 				.locator("textarea[id$='-notes']")
 				.fill("Synthetic App review note");
+			await addIdentifiers(app, ["app-mailbox@example.test", "+15550000042"]);
 			const unknownExcerpt = importer
 				.locator(".pw-smart-issues .pw-smart-source-excerpt")
 				.first();
@@ -1232,6 +1407,27 @@ for (const variant of variants) {
 			await first.getByRole("checkbox").check();
 			const groups = importer.locator(".pw-smart-source-group");
 			await expect(groups).toHaveCount(2);
+			await expectCollapsedGroupSpacing(groups);
+			await expect(page.locator(".toast")).toBeHidden({ timeout: 10_000 });
+			await groups.first().scrollIntoViewIfNeeded();
+			await page.screenshot({
+				path: join(
+					evidenceRoot,
+					`password-fragment-gaps-${variant.locale}-${variant.width}.png`,
+				),
+			});
+			await exercisePasswordEye(
+				page,
+				first.locator("input[id$='-password']"),
+				first.locator(".pw-smart-password"),
+				firstPassword,
+			);
+			await exercisePasswordEye(
+				page,
+				app.locator("textarea[id$='-password']"),
+				app.locator(".pw-smart-password"),
+				appPassword,
+			);
 			const firstGroup = groups.nth(0);
 			const secondGroup = groups.nth(1);
 			await firstGroup
@@ -1261,6 +1457,27 @@ for (const variant of variants) {
 			await createForm
 				.locator("input[id$='-password']")
 				.fill(manuallyCreatedPassword);
+			await expect(createForm.locator("textarea[id$='-notes']")).toBeVisible();
+			await expect(
+				createForm.locator(".pw-smart-optional summary"),
+			).toHaveCount(0);
+			await addIdentifiers(createForm, [
+				"manual-alias-73",
+				"+15550000073",
+				"remove-alias-73",
+			]);
+			await createForm
+				.locator(".pw-smart-identifier-row")
+				.nth(2)
+				.getByRole("button")
+				.click();
+			await expectIdentifiers(createForm, ["manual-alias-73", "+15550000073"]);
+			await exercisePasswordEye(
+				page,
+				createForm.locator("input[id$='-password']"),
+				createForm.locator(".pw-smart-password"),
+				manuallyCreatedPassword,
+			);
 			await openOptional(createForm.locator(".pw-smart-optional"));
 			await createForm
 				.locator("input[id$='-url']")
@@ -1280,6 +1497,11 @@ for (const variant of variants) {
 				.inputValue();
 			expect(createdNotes).toContain(`${unknown}\n${unknownSecret}`);
 			await createForm.locator("textarea[id$='-notes']").fill(createdNotes);
+			await captureFragmentSections(
+				page,
+				createForm,
+				`password-fragment-identifiers-${variant.locale}-${variant.width}`,
+			);
 			await firstGroup
 				.getByRole("button", {
 					name: t("pwSmartFragmentCollapse"),
@@ -1338,12 +1560,25 @@ for (const variant of variants) {
 				createdNotes,
 			);
 			await expect(first.getByRole("checkbox")).toBeChecked();
+			await expectIdentifiers(createForm, ["manual-alias-73", "+15550000073"]);
 			await selectChoice(createForm.locator("button[id$='-mode']"), "existing");
 			await selectChoice(
 				createForm.locator("button[id$='-target']"),
 				"vault-import-1",
 			);
-			await openOptional(createForm.locator(".pw-smart-optional"));
+			await expect(
+				createForm.getByRole("button", {
+					name: t("pwSmartFragmentApply"),
+					exact: true,
+				}),
+			).toBeDisabled();
+			await addIdentifiers(createForm, ["first-target-alias"]);
+			await expect(
+				createForm.getByRole("button", {
+					name: t("pwSmartFragmentApply"),
+					exact: true,
+				}),
+			).toBeEnabled();
 			await createForm
 				.locator("textarea[id$='-notes']")
 				.fill("Synthetic draft for first target only");
@@ -1354,6 +1589,7 @@ for (const variant of variants) {
 			await expect(createForm.locator("textarea[id$='-notes']")).toHaveValue(
 				"",
 			);
+			await expectIdentifiers(createForm, []);
 			await selectChoice(
 				createForm.locator("button[id$='-target']"),
 				"vault-import-1",
@@ -1361,7 +1597,9 @@ for (const variant of variants) {
 			await expect(createForm.locator("textarea[id$='-notes']")).toHaveValue(
 				"Synthetic draft for first target only",
 			);
+			await expectIdentifiers(createForm, ["first-target-alias"]);
 			await selectChoice(createForm.locator("button[id$='-mode']"), "new");
+			await expectIdentifiers(createForm, ["manual-alias-73", "+15550000073"]);
 			await expect(createForm.locator("textarea[id$='-notes']")).toHaveValue(
 				createdNotes,
 			);
@@ -1422,7 +1660,10 @@ for (const variant of variants) {
 			expect(await persistedVault(page)).toEqual(original);
 			expect(mock.requests).toHaveLength(1);
 			await checkLayout(page, importer, variant.width);
-			await attachForm.locator(".pw-smart-optional summary").click();
+			await expectActionSpacing(
+				attachForm.locator(".pw-smart-fragment-actions"),
+			);
+			await expect(page.locator(".toast")).toBeHidden({ timeout: 10_000 });
 			await attachForm
 				.locator(".pw-smart-fragment-editor")
 				.evaluate((element) => {
@@ -1433,7 +1674,17 @@ for (const variant of variants) {
 					evidenceRoot,
 					`password-fragment-form-${variant.locale}-${variant.width}-fill.png`,
 				),
-				fullPage: true,
+			});
+			await attachForm
+				.locator(".pw-smart-fragment-actions")
+				.evaluate((element) =>
+					element.scrollIntoView({ block: "center", behavior: "instant" }),
+				);
+			await page.screenshot({
+				path: join(
+					evidenceRoot,
+					`password-fragment-form-${variant.locale}-${variant.width}-notes-actions.png`,
+				),
 			});
 			await attachForm
 				.getByRole("button", { name: t("pwSmartFragmentApply"), exact: true })
@@ -1454,7 +1705,43 @@ for (const variant of variants) {
 			});
 			await openRow(created);
 			await expect(created.getByRole("checkbox")).not.toBeChecked();
-			await expect(created.locator("input[id$='-url']")).toHaveValue("");
+			await expect(created.locator("input[id$='-url']")).toBeHidden();
+			await expect(created.locator("textarea[id$='-notes']")).toHaveValue(
+				createdNotes,
+			);
+			await created
+				.getByRole("button", {
+					name: t("pwVaultAddAnotherAccount"),
+					exact: true,
+				})
+				.click();
+			await expect(rows).toHaveCount(6);
+			const another = rows.last();
+			await expect(another.locator(".pw-smart-row-editor")).toHaveAttribute(
+				"open",
+				"",
+			);
+			await expect(another.getByRole("checkbox")).toBeDisabled();
+			await expect(another.locator("input[id$='-title']")).toHaveValue(
+				"Manually classified App",
+			);
+			await expect(another.locator("input[id$='-username']")).toHaveValue("");
+			await expect(another.locator("input[id$='-password']")).toHaveValue("");
+			await expectIdentifiers(another, []);
+			await expect(another.locator("textarea[id$='-notes']")).toHaveValue("");
+			await another
+				.locator("input[id$='-username']")
+				.fill("manual-small-player-74");
+			await another.locator("input[id$='-password']").fill(additionalPassword);
+			await expect(another.getByRole("checkbox")).toBeEnabled();
+			await expect(another.getByRole("checkbox")).not.toBeChecked();
+			await expect(created.locator("input[id$='-username']")).toHaveValue(
+				"manual-player-73",
+			);
+			await expect(created.locator("input[id$='-password']")).toHaveValue(
+				manuallyCreatedPassword,
+			);
+			await expectIdentifiers(created, ["manual-alias-73", "+15550000073"]);
 			await expect(created.locator("textarea[id$='-notes']")).toHaveValue(
 				createdNotes,
 			);
@@ -1484,7 +1771,7 @@ for (const variant of variants) {
 			await expect(importer.locator(".pw-smart-receipt")).toHaveText(
 				t("pwSmartSaved", { added: 3, updated: 0, skipped: 0 }),
 			);
-			await expect(rows).toHaveCount(2);
+			await expect(rows).toHaveCount(3);
 			await expect(pending.locator(".pw-smart-source-context")).toContainText(
 				"pending-player-55",
 			);
@@ -1496,15 +1783,18 @@ for (const variant of variants) {
 			);
 			await pending.getByRole("checkbox").check();
 			await created.getByRole("checkbox").check();
+			await another.getByRole("checkbox").check();
 			await importer
 				.getByRole("button", {
-					name: t("pwSmartConfirm", { count: 2 }),
+					name: t("pwSmartConfirm", { count: 3 }),
 					exact: true,
 				})
 				.click();
 			await expect(importer.locator(".pw-smart-receipt")).toHaveText(
-				t("pwSmartSaved", { added: 2, updated: 0, skipped: 0 }),
+				t("pwSmartSaved", { added: 3, updated: 0, skipped: 0 }),
 			);
+			// Both saves add three entries, so receipt text alone may still describe the prior save.
+			await expect(rows).toHaveCount(0);
 			await closeDialog(page);
 			const download = page.waitForEvent("download");
 			await page
@@ -1553,6 +1843,13 @@ for (const variant of variants) {
 					},
 					{
 						title: "Manually classified App",
+						username: "manual-small-player-74",
+						password: additionalPassword,
+						url: "",
+						notes: "",
+					},
+					{
+						title: "Manually classified App",
 						username: "manual-player-73",
 						password: manuallyCreatedPassword,
 						url: "",
@@ -1560,16 +1857,33 @@ for (const variant of variants) {
 					},
 				]),
 			);
-			expect(exported).toHaveLength(5);
+			expect(exported).toHaveLength(6);
+			expect(
+				exported.find(({ draft }) => draft.username === "manual-player-73")
+					?.draft.usernameAliases,
+			).toEqual(["manual-alias-73", "+15550000073"]);
 			await page.reload();
 			await unlock(page, t);
+			await entry(page, "Manually classified App")
+				.filter({ hasText: "manual-player-73" })
+				.getByRole("button", { name: t("pwVaultEditEntry"), exact: true })
+				.click();
+			await expectIdentifiers(page.getByRole("dialog"), [
+				"manual-alias-73",
+				"+15550000073",
+			]);
+			await closeDialog(page);
 			await entry(page, "Studio App")
 				.getByRole("button", { name: t("pwVaultEditEntry"), exact: true })
 				.click();
 			await expect(page.locator("#password-vault-entry-username")).toHaveValue(
 				"studio-player-42",
 			);
-			await expect(page.locator("#password-vault-entry-url")).toHaveValue("");
+			await expectIdentifiers(page.getByRole("dialog"), [
+				"app-mailbox@example.test",
+				"+15550000042",
+			]);
+			await expect(page.locator("#password-vault-entry-url")).toBeHidden();
 			await expect(page.locator("#password-vault-entry-notes")).toHaveValue(
 				"Synthetic App review note",
 			);
@@ -1586,6 +1900,22 @@ for (const variant of variants) {
 			await closeDialog(page);
 			expect(mock.requests).toHaveLength(1);
 			expect(errors).toEqual([]);
+			expect(consoleErrors).toEqual([]);
+			test.info().annotations.push({
+				type: "ui-errors",
+				description: JSON.stringify({
+					pageErrors: errors.length,
+					consoleErrors: consoleErrors.length,
+				}),
+			});
+			test.info().annotations.push({
+				type: "ui-kdbx",
+				description: JSON.stringify({
+					exportedEntries: exported.length,
+					aliasesAndDifferentPasswordsMatched: true,
+					aiCalls: mock.requests.length,
+				}),
+			});
 		} finally {
 			await context.close();
 			await mock.close();
