@@ -657,11 +657,11 @@ for (const variant of variants) {
 				})
 				.click();
 			await expect(importer.locator(".pw-smart-receipt")).toHaveText(
-				t("pwSmartSaved", { added: 2, updated: 0, skipped: 1 }),
+				t("pwSmartSaved", { added: 2, updated: 0, skipped: 0 }),
 			);
-			await expect(importer.locator("input[id$='-password']")).toHaveCount(0);
+			await expect(importer.locator("input[id$='-password']")).toHaveCount(1);
 			await importer
-				.getByRole("button", { name: t("pwSmartContinue"), exact: true })
+				.getByRole("button", { name: t("pwSmartEditSource"), exact: true })
 				.click();
 			await expect(importer.locator("#pw-smart-source")).toHaveValue(
 				pastedSource,
@@ -1099,7 +1099,7 @@ test("smart import preserves multiline secrets and clears conflict choices when 
 			})
 			.click();
 		await expect(importer.locator(".pw-smart-receipt")).toHaveText(
-			t("pwSmartSaved", { added: 1, updated: 0, skipped: 1 }),
+			t("pwSmartSaved", { added: 1, updated: 0, skipped: 0 }),
 		);
 		await closeDialog(page);
 		expect((await readEntry(page, t, "Existing login")).password).toBe(
@@ -1179,7 +1179,7 @@ test("smart import preserves multiline secrets and clears conflict choices when 
 			})
 			.click();
 		await expect(importer.locator(".pw-smart-receipt")).toHaveText(
-			t("pwSmartSaved", { added: 1, updated: 0, skipped: 1 }),
+			t("pwSmartSaved", { added: 1, updated: 0, skipped: 0 }),
 		);
 		await closeDialog(page);
 		await expect(
@@ -1699,3 +1699,265 @@ test("password AI import automatically restores its saved vault API key after un
 		await mock.close();
 	}
 });
+
+for (const variant of variants) {
+	test(`AI incomplete entries remain editable after a partial password import ${variant.locale} ${variant.width}`, async ({
+		browser,
+	}) => {
+		const t = copy(variant.locale);
+		const mock = await aiServer();
+		const context = await browser.newContext({
+			locale: variant.locale,
+			viewport: { width: variant.width, height: 844 },
+		});
+		await context.addInitScript(
+			(locale) => localStorage.setItem("keepany-language", locale),
+			variant.locale === "zh-CN" ? "zh-CN" : "en",
+		);
+		const page = await context.newPage();
+		const errors: string[] = [];
+		page.on("pageerror", (error) => errors.push(error.message));
+		const completePassword = "  Synthetic complete password ;|!  ";
+		const correctedPassword = "Synthetic manually completed password!";
+		const passwordOnly = "Synthetic original password-only value!";
+		const correctedNotes = "Synthetic correction retained through partial save";
+		const source = [
+			"Synthetic complete service",
+			"complete.synthetic@example.test",
+			completePassword,
+			"Synthetic service without password",
+			"missing.synthetic@example.test",
+			passwordOnly,
+			"Synthetic unassigned source fragment",
+		].join("\n");
+		try {
+			await configureAndOpenVault(
+				page,
+				variant.locale,
+				mock.baseURL,
+				variant.width,
+			);
+			await createVault(page, t);
+			const original = await persistedVault(page);
+			const importer = await openImport(page, t);
+			await importer.locator("#pw-smart-source").fill(source);
+			mock.responses.push(
+				JSON.stringify({
+					records: [
+						{
+							title: { line: 1 },
+							username: { line: 2 },
+							password: { line: 3 },
+							url: null,
+							notes: null,
+						},
+						{
+							title: { line: 4 },
+							username: { line: 5 },
+							password: null,
+							url: null,
+							notes: null,
+						},
+						{
+							title: null,
+							username: null,
+							password: { line: 6 },
+							url: null,
+							notes: null,
+						},
+					],
+					ignoredLines: [7],
+				}),
+			);
+			await importer
+				.getByRole("button", {
+					name: t("pwSmartAiRecognize", { model }),
+					exact: true,
+				})
+				.click();
+			const rows = importer.locator(".pw-smart-row");
+			const complete = importer.locator(
+				'.pw-smart-row[data-row-id="vault-import-1"]',
+			);
+			const missingPassword = importer.locator(
+				'.pw-smart-row[data-row-id="vault-import-2"]',
+			);
+			const missingTitle = importer.locator(
+				'.pw-smart-row[data-row-id="vault-import-3"]',
+			);
+			await expect(rows).toHaveCount(3);
+			await expect(importer.locator(".pw-smart-mode")).toHaveText(
+				t("pwSmartReviewMode_ai", { model, endpoint: mock.baseURL }),
+			);
+			await expect(importer.locator(".pw-smart-issues")).toContainText(
+				t("pwSmartIssueLine", { line: 7 }),
+			);
+			for (const checkbox of await rows.getByRole("checkbox").all())
+				await expect(checkbox).not.toBeChecked();
+			await expect(missingPassword.getByRole("checkbox")).toBeDisabled();
+			await expect(missingTitle.getByRole("checkbox")).toBeDisabled();
+			await expect(
+				missingPassword.locator(".pw-smart-row-issues"),
+			).toContainText(t("pwSmartIssue_missing-password"));
+			await expect(missingTitle.locator(".pw-smart-row-issues")).toContainText(
+				t("pwSmartIssue_missing-identity"),
+			);
+			await expect(missingPassword.locator(".pw-smart-row-source")).toHaveText(
+				t("pwSmartRowSource", { line: 4 }),
+			);
+			await expect(missingTitle.locator(".pw-smart-row-source")).toHaveText(
+				t("pwSmartRowSource", { line: 6 }),
+			);
+			await openRow(missingPassword);
+			await expect(
+				missingPassword.locator("input[id$='-password']"),
+			).toHaveValue("");
+			await missingPassword
+				.locator("textarea[id$='-notes']")
+				.fill(correctedNotes);
+			await openRow(missingTitle);
+			await expect(missingTitle.locator("input[id$='-title']")).toHaveValue("");
+			await expect(missingTitle.locator("input[id$='-password']")).toHaveValue(
+				passwordOnly,
+			);
+			await expect(
+				missingTitle.locator("input[id$='-password']"),
+			).toHaveAttribute("type", "password");
+			expect(await persistedVault(page)).toEqual(original);
+			expect(mock.requests).toHaveLength(1);
+			expect(JSON.stringify(mock.requests[0].body)).not.toContain(master);
+			expect(JSON.stringify(mock.requests[0].body)).not.toContain(syntheticKey);
+			await importer
+				.getByRole("checkbox", { name: t("pwSmartSelectNew"), exact: true })
+				.check();
+			await expect(complete.getByRole("checkbox")).toBeChecked();
+			await expect(missingPassword.getByRole("checkbox")).not.toBeChecked();
+			await expect(missingTitle.getByRole("checkbox")).not.toBeChecked();
+			const confirmOne = importer.getByRole("button", {
+				name: t("pwSmartConfirm", { count: 1 }),
+				exact: true,
+			});
+			await expect(confirmOne).toBeEnabled();
+			await checkLayout(page, importer, variant.width);
+			await page.locator(".dialog").evaluate((element) => {
+				element.scrollTop = 0;
+			});
+			await page.screenshot({
+				path: join(
+					evidenceRoot,
+					`password-ai-incomplete-${variant.locale}-${variant.width}-review.png`,
+				),
+				fullPage: true,
+			});
+			await missingPassword
+				.locator(".pw-smart-row-issues")
+				.scrollIntoViewIfNeeded();
+			await page.screenshot({
+				path: join(
+					evidenceRoot,
+					`password-ai-incomplete-${variant.locale}-${variant.width}-needs-completion.png`,
+				),
+				fullPage: true,
+			});
+			await confirmOne.click();
+			await expect(importer.locator(".pw-smart-receipt")).toHaveText(
+				t("pwSmartSaved", { added: 1, updated: 0, skipped: 0 }),
+			);
+			await expect(
+				page.locator(".password-vault-entry-list .password-vault-entry"),
+			).toHaveCount(1);
+			expect((await persistedVault(page)).revision).not.toBe(original.revision);
+			await expect(rows).toHaveCount(2);
+			await expect(importer.locator(".pw-smart-mode")).toHaveText(
+				t("pwSmartReviewMode_ai", { model, endpoint: mock.baseURL }),
+			);
+			await expect(
+				missingPassword.locator("textarea[id$='-notes']"),
+			).toHaveValue(correctedNotes);
+			await expect(missingTitle.locator("input[id$='-password']")).toHaveValue(
+				passwordOnly,
+			);
+			await expect(importer.locator(".pw-smart-issues")).toContainText(
+				t("pwSmartIssueLine", { line: 7 }),
+			);
+			await openRow(missingPassword);
+			await missingPassword
+				.locator("input[id$='-password']")
+				.fill(correctedPassword);
+			await expect(missingPassword.getByRole("checkbox")).toBeEnabled();
+			await expect(missingPassword.getByRole("checkbox")).not.toBeChecked();
+			await expect(missingPassword.locator(".pw-smart-row-issues")).toHaveCount(
+				0,
+			);
+			await openRow(missingTitle);
+			await missingTitle
+				.locator("input[id$='-title']")
+				.fill("Synthetic manually named service");
+			await expect(missingTitle.getByRole("checkbox")).toBeEnabled();
+			await expect(missingTitle.getByRole("checkbox")).not.toBeChecked();
+			await expect(missingTitle.locator(".pw-smart-row-issues")).toHaveCount(0);
+			await missingPassword.getByRole("checkbox").check();
+			await missingTitle.getByRole("checkbox").check();
+			await checkLayout(page, importer, variant.width);
+			await page.locator(".dialog").evaluate((element) => {
+				element.scrollTop = 0;
+			});
+			await page.screenshot({
+				path: join(
+					evidenceRoot,
+					`password-ai-incomplete-${variant.locale}-${variant.width}-remaining.png`,
+				),
+				fullPage: true,
+			});
+			await importer
+				.getByRole("button", {
+					name: t("pwSmartConfirm", { count: 2 }),
+					exact: true,
+				})
+				.click();
+			await expect(importer.locator(".pw-smart-receipt")).toHaveText(
+				t("pwSmartSaved", { added: 2, updated: 0, skipped: 0 }),
+			);
+			await closeDialog(page);
+			await page.reload();
+			await unlock(page, t);
+			await expect(
+				page.locator(".password-vault-entry-list .password-vault-entry"),
+			).toHaveCount(3);
+			expect(await readEntry(page, t, "Synthetic complete service")).toEqual({
+				password: completePassword,
+				username: "complete.synthetic@example.test",
+				url: "",
+				notes: "",
+			});
+			expect(
+				await readEntry(page, t, "Synthetic service without password"),
+			).toEqual({
+				password: correctedPassword,
+				username: "missing.synthetic@example.test",
+				url: "",
+				notes: correctedNotes,
+			});
+			expect(
+				await readEntry(page, t, "Synthetic manually named service"),
+			).toEqual({ password: passwordOnly, username: "", url: "", notes: "" });
+			await checkLayout(
+				page,
+				page.locator(".password-vault-panel"),
+				variant.width,
+			);
+			await page.screenshot({
+				path: join(
+					evidenceRoot,
+					`password-ai-incomplete-${variant.locale}-${variant.width}-restored.png`,
+				),
+				fullPage: true,
+			});
+			expect(mock.requests).toHaveLength(1);
+			expect(errors).toEqual([]);
+		} finally {
+			await context.close();
+			await mock.close();
+		}
+	});
+}

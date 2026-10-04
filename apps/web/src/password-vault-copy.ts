@@ -63,6 +63,20 @@ export const passwordVaultCopy: Record<string, [string, string]> = {
 		"已识别 {{count}} 条，请核对账号和密码。",
 		"Recognized {{count}} entries. Check the usernames and passwords.",
 	],
+	pwSmartReviewMode_ai: [
+		"AI 识别结果：{{model}} · {{endpoint}}",
+		"AI recognition: {{model}} · {{endpoint}}",
+	],
+	pwSmartReviewMode_local: ["本机识别结果", "On-device recognition"],
+	pwSmartReviewMode_manual: ["按行指定的结果", "Manually assigned entries"],
+	pwSmartReviewProgress: [
+		"完整 {{complete}} 条，待补全 {{pending}} 条。请核对后勾选。",
+		"{{complete}} complete, {{pending}} need completion. Review before selecting.",
+	],
+	pwSmartRowSource: [
+		"原文起始：第 {{line}} 行",
+		"Source starts at line {{line}}",
+	],
 	pwSmartIssues: ["以下内容需要核对", "Some content needs review"],
 	pwSmartIssueLine: ["第 {{line}} 行", "Line {{line}}"],
 	pwSmartIssuesHint: [
@@ -133,7 +147,7 @@ export const passwordVaultCopy: Record<string, [string, string]> = {
 		"AI 整理未完成，原候选保留。你仍可直接核对并保存。",
 		"AI organization did not finish. Original entries are kept; you can still review and save them.",
 	],
-	pwSmartSelectNew: ["全选新增条目", "Select all new entries"],
+	pwSmartSelectNew: ["全选可新增的完整条目", "Select all complete new entries"],
 	pwSmartRow: ["条目 {{count}}", "Entry {{count}}"],
 	pwSmartStatus_new: ["可新增", "New"],
 	pwSmartStatus_duplicate: ["已存在，跳过", "Already exists · skip"],
@@ -153,8 +167,8 @@ export const passwordVaultCopy: Record<string, [string, string]> = {
 		"Update “{{name}}” and keep history",
 	],
 	pwSmartInvalidRows: [
-		"请修正条目的标题、密码或网址后再确认。",
-		"Correct the entries’ titles, passwords, or URLs before saving.",
+		"待补全条目可在卡片中修改；完整条目可先导入，未保存的修改会保留。",
+		"Complete missing fields in the cards. You can save complete entries first; unsaved edits are kept.",
 	],
 	pwSmartConfirm: [
 		"确认导入 {{count}} 条",
