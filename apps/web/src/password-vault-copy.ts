@@ -202,12 +202,16 @@ export const passwordVaultCopy: Record<string, [string, string]> = {
 	pwSmartRow: ["条目 {{count}}", "Entry {{count}}"],
 	pwSmartStatus_new: ["可新增", "New"],
 	pwSmartStatus_duplicate: ["已存在，跳过", "Already exists · skip"],
-	pwSmartStatus_conflict: ["密码不同，待选择", "Different password · choose"],
+	pwSmartStatus_conflict: ["已有条目，待选择", "Existing entry · choose"],
 	pwSmartStatus_invalid: ["待修正", "Needs correction"],
 	pwSmartStatus_update: ["待更新", "Ready to update"],
 	pwSmartConflictHint: [
-		"同一名称和账号已有不同密码",
-		"An entry with this name and username has a different password",
+		"密码库中已有此账号，请选择保存方式",
+		"This account already exists in the vault. Choose how to save the changes.",
+	],
+	pwSmartSamePasswordUpdateHint: [
+		"密码相同，补充信息请更新已有条目。",
+		"The password is unchanged. Update an existing entry to save the added details.",
 	],
 	pwSmartKeepExisting: [
 		"保留原条目，跳过这条",

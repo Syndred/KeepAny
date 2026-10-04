@@ -52,7 +52,7 @@ type ReviewOrigin =
 	| { kind: "ai"; model: string; endpoint: string };
 type ReviewPreview = {
 	revision: string;
-	rows: (VaultImportPreviewRow | undefined)[];
+	rows: ((VaultImportPreviewRow & { updateOnly?: boolean }) | undefined)[];
 };
 
 function previewCandidates(
@@ -90,9 +90,17 @@ function previewCandidates(
 			rows[indexes[index]] = {
 				...row,
 				index: indexes[index],
-				...(candidate.updateTargetId &&
-				row.existingIds.includes(candidate.updateTargetId)
+				...((candidate.updateTargetId &&
+					row.existingIds.includes(candidate.updateTargetId)) ||
+				(candidate.explicitlyEdited &&
+					row.status === "duplicate" &&
+					row.existingIds.length)
 					? { status: "conflict" as const }
+					: {}),
+				...(candidate.explicitlyEdited &&
+				row.status === "duplicate" &&
+				row.existingIds.length
+					? { updateOnly: true }
 					: {}),
 			};
 		}
@@ -158,6 +166,7 @@ export function PasswordSmartImportDialog({
 		VaultImportCandidate[]
 	>([]);
 	const manualSequence = useRef(0);
+	const issueGroupIds = useRef(new Map<string, string>());
 	const [issues, setIssues] = useState<VaultImportIssue[]>([]);
 	const [choices, setChoices] = useState<Record<string, Choice>>({});
 	const [stage, setStage] = useState<"input" | "mapping" | "review" | "saved">(
@@ -241,8 +250,18 @@ export function PasswordSmartImportDialog({
 	);
 	const issueGroups = useMemo(
 		() =>
-			groupVaultImportIssues(issues).map((group) => ({
-				id: `source-${group[0].lineNumber}-${group[group.length - 1].lineNumber}`,
+			[
+				...[...issues]
+					.sort((a, b) => a.lineNumber - b.lineNumber)
+					.reduce((groups, issue) => {
+						const id =
+							issueGroupIds.current.get(`${issue.lineNumber}:${issue.code}`) ??
+							`source-${issue.lineNumber}`;
+						groups.set(id, [...(groups.get(id) ?? []), issue]);
+						return groups;
+					}, new Map<string, VaultImportIssue[]>()),
+			].map(([id, group]) => ({
+				id,
 				issues: group,
 				excerpt: buildVaultImportSourceExcerpt(
 					reviewSource,
@@ -422,6 +441,14 @@ export function PasswordSmartImportDialog({
 		setCandidates(result.candidates);
 		setReviewVersion((current) => current + 1);
 		setSavedCandidates([]);
+		issueGroupIds.current = new Map(
+			groupVaultImportIssues(result.issues).flatMap((group) =>
+				group.map((issue) => [
+					`${issue.lineNumber}:${issue.code}`,
+					`source-${group[0].lineNumber}-${group[group.length - 1].lineNumber}`,
+				]),
+			),
+		);
 		setIssues(result.issues);
 		setReviewOrigin(origin);
 		setReviewSource(resultSource);
@@ -596,6 +623,7 @@ export function PasswordSmartImportDialog({
 				? {
 						...row,
 						aiEligible: false,
+						explicitlyEdited: true,
 						draft: { ...row.draft, [field]: value },
 					}
 				: row,
@@ -686,6 +714,7 @@ export function PasswordSmartImportDialog({
 				linkedAssetIds: [...draft.linkedAssetIds],
 			},
 			aiEligible: false,
+			explicitlyEdited: !!target,
 			needsReview: true,
 			reviewIssues: validated.issues.map((issue) => ({
 				...issue,
@@ -1250,6 +1279,7 @@ function ImportRow({
 	const { t } = useTranslation();
 	const status = plan?.rows[index]?.status;
 	const ids = plan?.rows[index]?.existingIds ?? [];
+	const updateOnly = plan?.rows[index]?.updateOnly;
 	const rowIssues = currentRowIssues(row, !!status);
 	const [expanded, setExpanded] = useState(index === 0 || rowIssues.length > 0);
 	const sourceAnchor =
@@ -1339,7 +1369,13 @@ function ImportRow({
 			</details>
 			{status === "conflict" && !row.updateTargetId && (
 				<label className="field" htmlFor={`${fieldId}-action`}>
-					<span>{t("pwSmartConflictHint")}</span>
+					<span>
+						{t(
+							updateOnly
+								? "pwSmartSamePasswordUpdateHint"
+								: "pwSmartConflictHint",
+						)}
+					</span>
 					<Select
 						id={`${fieldId}-action`}
 						value={
@@ -1366,7 +1402,7 @@ function ImportRow({
 						}
 					>
 						<SelectOption value="skip">{t("pwSmartKeepExisting")}</SelectOption>
-						<SelectOption value="new">
+						<SelectOption value="new" disabled={updateOnly}>
 							{t("pwSmartCreateSeparate")}
 						</SelectOption>
 						{ids.map((id) => (

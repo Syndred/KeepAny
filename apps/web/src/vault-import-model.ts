@@ -40,6 +40,8 @@ export type VaultImportCandidate = {
 	updateTargetId?: string;
 	/** Explicit candidate IDs that wrote the same entry during this import. */
 	aliasIds?: string[];
+	/** The user changed fields; matching stored entries need an explicit save decision. */
+	explicitlyEdited?: boolean;
 	/** Snapshot for explicitly added rows when advanced input differs from the AI source. */
 	sourceSnapshot?: string;
 	/** Validated ranges in the current paste, retained only for local review. */
