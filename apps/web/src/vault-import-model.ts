@@ -28,6 +28,8 @@ export type VaultImportCandidate = {
 	aiEligible: boolean;
 	/** Local format inference must be reviewed before selecting the entry. */
 	needsReview?: boolean;
+	/** Safe source references that need correction before this draft can be saved. */
+	reviewIssues?: VaultImportIssue[];
 };
 export type VaultImportResult = {
 	candidates: VaultImportCandidate[];
@@ -220,7 +222,11 @@ function valueField(key: string, value: string): Field | undefined {
 		return "url";
 	return field;
 }
-function finishBlock(block: Block, result: VaultImportResult) {
+function finishBlock(
+	block: Block,
+	result: VaultImportResult,
+	keepIncomplete = false,
+) {
 	if (!Object.keys(block.values).length || block.invalid) return;
 	const value = block.values;
 	if (
@@ -234,25 +240,25 @@ function finishBlock(block: Block, result: VaultImportResult) {
 	}
 	if (value.password === undefined || value.password === "") {
 		issue(result, block.line, "missing-password");
-		return;
+		if (!keepIncomplete) return;
 	}
 	const url = normalizeUrl(value.url ?? "");
 	if (url === null) {
 		issue(result, block.line, "invalid-url");
-		return;
+		if (!keepIncomplete) return;
 	}
 	const title =
 		(value.title ?? "").trim() ||
 		(url ? new URL(url).hostname : (value.username ?? "").trim());
 	if (!title) {
 		issue(result, block.line, "missing-identity");
-		return;
+		if (!keepIncomplete) return;
 	}
 	const draft: VaultEntryDraft = {
 		title,
 		username: value.username ?? "",
-		password: value.password,
-		url,
+		password: value.password ?? "",
+		url: url ?? value.url ?? "",
 		notes: value.notes ?? "",
 		linkedAssetIds: [],
 	};
@@ -281,13 +287,40 @@ function finishBlock(block: Block, result: VaultImportResult) {
 		draft,
 		aiEligible: !block.uncertain,
 		...(block.needsReview ? { needsReview: true } : {}),
+		...(keepIncomplete && result.issues.length
+			? { reviewIssues: [...result.issues] }
+			: {}),
 	});
 	if (result.candidates.length > VAULT_IMPORT_MAX_ENTRIES)
 		throw Error("vault-import-limit");
 }
 
+/** AI values already reference exact source text; reuse the local field checks,
+ * while keeping missing fields editable instead of losing the recognized data. */
+export function validateVaultImportFields(
+	values: Partial<Record<Exclude<Field, "type">, string>>,
+): VaultImportResult {
+	const result: VaultImportResult = { candidates: [], issues: [] };
+	finishBlock(
+		{
+			values: Object.fromEntries(
+				(["title", "username", "password", "url", "notes"] as const)
+					.filter((field) => values[field] !== undefined)
+					.map((field) => [field, values[field]]),
+			),
+			line: 1,
+			uncertain: true,
+			invalid: false,
+			needsReview: true,
+		},
+		result,
+		true,
+	);
+	return result;
+}
+
 /** key=value pairs use explicit delimiters; JSON quotes preserve literal delimiters and whitespace. */
-function parseLine(line: string): {
+export function parseVaultImportLine(line: string): {
 	fields: { field: Field; value: string }[];
 	problem?: VaultImportIssueCode;
 } {
@@ -395,8 +428,8 @@ function inferEmailBlock(lines: string[], index: number): Block | undefined {
 		emailAccount(password) ||
 		headingValue(password) ||
 		plainUrl(password) ||
-		!parseLine(contentLine(source)).problem ||
-		!parseLine(contentLine(password)).problem ||
+		!parseVaultImportLine(contentLine(source)).problem ||
+		!parseVaultImportLine(contentLine(password)).problem ||
 		/^\s*(?:#{1,6}\s|[-*_=]{3,}\s*$)/.test(password) ||
 		(!plainUrl(name) && /[:=：]/.test(name))
 	)
@@ -433,11 +466,13 @@ function parseBlocks(input: string, result: VaultImportResult) {
 			block = emptyBlock(index + 2);
 			continue;
 		}
-		let parsed = parseLine(contentLine(line));
+		let parsed = parseVaultImportLine(contentLine(line));
 		const heading = headingValue(line);
 		const url = plainUrl(line);
 		const next = lines[index + 1];
-		const nextFields = next ? parseLine(contentLine(next)) : undefined;
+		const nextFields = next
+			? parseVaultImportLine(contentLine(next))
+			: undefined;
 		if (
 			parsed.problem &&
 			(heading ||

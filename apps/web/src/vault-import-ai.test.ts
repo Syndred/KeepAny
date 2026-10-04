@@ -327,7 +327,7 @@ describe("configured AI password recognition", () => {
 			code: "ambiguous-line",
 		});
 	});
-	it("reports missing fields and invalid URLs using original line numbers", async () => {
+	it("keeps missing fields and invalid URLs editable without duplicate unrecognized-line warnings", async () => {
 		answer([
 			record({ title: { line: 1 } }),
 			record({ password: { line: 2 } }),
@@ -337,12 +337,63 @@ describe("configured AI password recognition", () => {
 			connection,
 			"Example\nsynthetic-one\nOther\nsynthetic-two\nhttps://user:synthetic@example.test",
 		);
-		expect(result.candidates).toEqual([]);
+		expect(result.candidates).toHaveLength(3);
+		expect(result.candidates.map(({ reviewIssues }) => reviewIssues)).toEqual([
+			[{ lineNumber: 1, code: "missing-password" }],
+			[{ lineNumber: 2, code: "missing-identity" }],
+			[{ lineNumber: 5, code: "invalid-url" }],
+		]);
+		expect(result.candidates[0].draft).toMatchObject({
+			title: "Example",
+			password: "",
+		});
+		expect(result.candidates[1].draft).toMatchObject({
+			title: "",
+			password: "synthetic-one",
+		});
+		expect(result.candidates[2].draft.url).toBe(
+			"https://user:synthetic@example.test",
+		);
+		expect(result.issues).toEqual([]);
+	});
+	it("retains labelled incomplete entries and reports only genuinely unassigned content", async () => {
+		answer([
+			record({
+				title: { line: 1, substring: "Example" },
+				username: { line: 2, substring: "reader@example.test" },
+			}),
+		]);
+		const result = await requestVaultImportAiRecognition(
+			connection,
+			"网站=Example\n登录账号=reader@example.test\nunknown-synthetic-secret",
+		);
+		expect(result.candidates).toHaveLength(1);
+		expect(result.candidates[0].reviewIssues).toEqual([
+			{ lineNumber: 1, code: "missing-password" },
+		]);
+		expect(result.issues).toEqual([
+			{ lineNumber: 3, code: "unrecognized-line" },
+		]);
+	});
+	it("keeps incomplete credential spans reserved and rejects unsafe oversized or NUL fields", async () => {
+		answer([
+			record({ username: { line: 1 } }),
+			record({ title: { line: 2 }, password: { line: 1 } }),
+			record({ title: { line: 3 } }),
+			record({ title: { line: 4 }, notes: { line: 5 } }),
+		]);
+		const result = await requestVaultImportAiRecognition(
+			connection,
+			`reader@example.test\nExample\n${"x".repeat(257)}\nOther\nunsafe\0synthetic`,
+		);
+		expect(result.candidates).toHaveLength(1);
+		expect(result.candidates[0].draft.username).toBe("reader@example.test");
 		expect(result.issues).toEqual(
 			expect.arrayContaining([
-				{ lineNumber: 1, code: "missing-password" },
-				{ lineNumber: 2, code: "missing-identity" },
-				{ lineNumber: 5, code: "invalid-url" },
+				{ lineNumber: 1, code: "ambiguous-line" },
+				{ lineNumber: 3, code: "invalid-field" },
+				{ lineNumber: 4, code: "invalid-field" },
+				{ lineNumber: 5, code: "unrecognized-line" },
 			]),
 		);
 	});
