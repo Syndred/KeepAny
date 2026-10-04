@@ -53,7 +53,10 @@ export function VaultImportFragmentForm({
 	const [editedFields, setEditedFields] = useState<
 		Map<string, Set<VaultImportDraftField>>
 	>(() => new Map());
-	const target = candidates.find((candidate) => candidate.id === targetId);
+	const target = candidates.find(
+		(candidate) =>
+			candidate.id === targetId || candidate.aliasIds?.includes(targetId),
+	);
 	const draftKey = mode === "new" ? "new" : `target:${targetId}`;
 	const savedDraft = drafts.get(draftKey);
 	const readOnlyIdentity =
@@ -173,7 +176,7 @@ export function VaultImportFragmentForm({
 							<span>{t("pwSmartFragmentTarget")}</span>
 							<Select
 								id={`${idPrefix}-target`}
-								value={targetId}
+								value={target?.id ?? targetId}
 								onValueChange={selectTarget}
 								disabled={disabled}
 							>
@@ -228,7 +231,9 @@ export function VaultImportFragmentForm({
 							variant="primary"
 							onClick={() => {
 								if (!draft || !canEdit || !hasContent || !hasChanges) return;
-								if (onApply(mode === "new" ? null : targetId, copyDraft(draft)))
+								const applyTargetId = mode === "new" ? null : target?.id;
+								if (applyTargetId === undefined) return;
+								if (onApply(applyTargetId, copyDraft(draft)))
 									setExpanded(false);
 							}}
 							disabled={disabled || !canEdit || !hasContent || !hasChanges}
