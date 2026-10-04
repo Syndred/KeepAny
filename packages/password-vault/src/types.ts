@@ -64,5 +64,7 @@ export type VaultImportResult = {
   updated: number;
   skipped: number;
   entryIds: string[];
+  /** Actual writes aligned with the input rows; skipped rows have no entry ID. */
+  entryIdsByRow: (string | null)[];
   revision: string;
 };

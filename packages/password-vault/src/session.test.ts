@@ -277,6 +277,48 @@ describe('real encrypted local KDBX session', () => {
     expect(session.readEntry(kept.entryIds[0]).password).toBe(draft.password);
   }, 30_000);
 
+  it('updates explicit notes for the same password without duplicating the login and preserves history', async () => {
+    const { session, storage } = await created();
+    const id = await session.saveEntry(draft);
+    const revision = session.getSnapshot().revision as string;
+    const next = { ...draft, notes: 'Synthetic locally assigned source metadata\r\nkept exactly' };
+    const implicit = await session.importEntries([{ draft: next }], revision);
+    expect(implicit).toMatchObject({ added: 0, updated: 0, skipped: 1, revision });
+    expect(session.readEntry(id).notes).toBe(draft.notes);
+    const explicit = await session.importEntries([{ draft: next, action: 'update', targetId: id }], revision);
+    expect(explicit).toMatchObject({ added: 0, updated: 1, skipped: 0, entryIds: [id] });
+    expect(session.getSnapshot().entries).toHaveLength(1);
+    expect(session.readEntry(id)).toMatchObject({ password: draft.password, notes: next.notes });
+    expect(session.history(id)[0].draft.notes).toBe(draft.notes);
+    const writes = storage.writes;
+    const repeat = await session.importEntries([{ draft: next, action: 'update', targetId: id }], explicit.revision);
+    expect(repeat).toMatchObject({ added: 0, updated: 0, skipped: 1, revision: explicit.revision });
+    expect(storage.writes).toBe(writes);
+  });
+
+  it('aligns committed IDs with input rows through skipped rows and sequential updates of one target', async () => {
+    const { session } = await created();
+    const id = await session.saveEntry(draft);
+    const distinct = { ...draft, username: 'second@example.test' };
+    const result = await session.importEntries([
+      { draft, action: 'skip' },
+      { draft: { ...draft, password: 'Synthetic-replacement-password' }, action: 'update', targetId: id },
+      { draft: distinct, action: 'new' },
+      { draft, action: 'update', targetId: id },
+      { draft, action: 'update', targetId: id },
+    ], session.getSnapshot().revision as string);
+    expect(result).toMatchObject({ added: 1, updated: 2, skipped: 2 });
+    expect(result.entryIds).toEqual([id, result.entryIdsByRow[2], id]);
+    expect(result.entryIdsByRow).toEqual([null, id, result.entryIds[1], id, null]);
+    expect(session.readEntry(id).password).toBe(draft.password);
+    expect(session.readEntry(result.entryIds[1])).toMatchObject(distinct);
+    expect(session.history(id)).toHaveLength(2);
+    session.lock();
+    await session.unlock(master);
+    expect(session.readEntry(id).password).toBe(draft.password);
+    expect(session.getSnapshot().entries).toHaveLength(2);
+  });
+
   it('validates the whole batch and aggregate limits before any encrypted mutation', async () => {
     const { session, storage } = await created();
     const revision = session.getSnapshot().revision as string;

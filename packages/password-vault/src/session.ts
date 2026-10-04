@@ -20,6 +20,7 @@ export const VAULT_IMPORT_MAX_BYTES = 4 * 1024 * 1024;
 const VAULT_MAX_ENTRIES = 10_000;
 
 type ImportMutation = {
+  index: number;
   action: 'new' | 'update';
   draft: VaultEntryDraft;
   targetId?: string;
@@ -87,6 +88,14 @@ function planImports(db: Kdbx, items: VaultImportItem[]) {
     const duplicate = matches.some(
       (value) => value.password === item.draft.password,
     );
+    // An explicit metadata update must not disappear merely because the
+    // password matches. Exact repeats still avoid a new encrypted revision.
+    const explicitChange = target && (
+      target.title !== item.draft.title ||
+      target.notes !== item.draft.notes ||
+      JSON.stringify(target.linkedAssetIds) !== JSON.stringify(item.draft.linkedAssetIds) ||
+      target.password !== item.draft.password
+    );
     rows.push({
       index,
       status: duplicate ? 'duplicate' : matches.length ? 'conflict' : 'new',
@@ -94,7 +103,7 @@ function planImports(db: Kdbx, items: VaultImportItem[]) {
     });
     if (
       item.action === 'skip' ||
-      duplicate ||
+      (duplicate && !explicitChange) ||
       (matches.length && item.action === undefined)
     ) {
       skipped += 1;
@@ -103,6 +112,7 @@ function planImports(db: Kdbx, items: VaultImportItem[]) {
     if (item.action === 'update') {
       if (!target) fail('vault-invalid');
       mutations.push({
+        index,
         action: 'update',
         draft: item.draft,
         targetId: item.targetId,
@@ -115,7 +125,7 @@ function planImports(db: Kdbx, items: VaultImportItem[]) {
       );
       updated += 1;
     } else {
-      mutations.push({ action: 'new', draft: item.draft });
+      mutations.push({ index, action: 'new', draft: item.draft });
       byIdentity.set(key, [...matches, item.draft]);
       added += 1;
     }
@@ -304,6 +314,7 @@ export class VaultSession {
       if (stored?.revision !== expectedRevision) fail('vault-stale');
       const plan = planImports(db, items);
       let entryIds: string[] = [];
+      const entryIdsByRow: (string | null)[] = items.map(() => null);
       if (plan.mutations.length) {
         entryIds = await this.mutate(generation, (candidate) =>
           plan.mutations.map((mutation) => {
@@ -317,6 +328,7 @@ export class VaultSession {
               entry.pushHistory();
             }
             applyDraft(entry, mutation.draft);
+            entryIdsByRow[mutation.index] = entry.uuid.id;
             return entry.uuid.id;
           }),
         );
@@ -328,6 +340,7 @@ export class VaultSession {
         updated: plan.updated,
         skipped: plan.skipped,
         entryIds,
+        entryIdsByRow,
         revision: this.record.revision,
       };
     });
