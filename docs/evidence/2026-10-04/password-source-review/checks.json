@@ -1,0 +1,44 @@
+{
+  "date": "2026-10-04",
+  "unit": {
+    "files": 4,
+    "passed": 69,
+    "failed": 0,
+    "durationMs": 408
+  },
+  "release": {
+    "startTime": "2026-10-04T02:56:42.977Z",
+    "duration": 122864.481,
+    "expected": 35,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0,
+    "testFiles": [
+      "password-smart-import.spec.ts",
+      "password-vault.spec.ts"
+    ],
+    "bundle": "index-BvuODW5r.js",
+    "currentFiles": 93,
+    "retainedFiles": 1362
+  },
+  "checks": [
+    "typecheck",
+    "build",
+    "biome 11 production and unit files",
+    "git diff --check",
+    "verify-local-release byte identity"
+  ],
+  "originalPage": {
+    "url": "http://127.0.0.1:4180/assets/vault",
+    "bundle": "index-BvuODW5r.js",
+    "updatedBy": "reload followed by Update app",
+    "status": "review; 55 candidates, none selected",
+    "realProviderInvokedThisTurn": true,
+    "userVaultWrittenThisTurn": false,
+    "liveEvidence": "official-ai-readback.json"
+  },
+  "notes": [
+    "New excerpts and URL workflows use synthetic UI data and an isolated loopback model.",
+    "Prior real-provider evidence does not prove current user source field allocation."
+  ]
+}
