@@ -1,0 +1,423 @@
+{
+  "date": "2026-10-04",
+  "scope": "独立密码库智能导入：片段表单补填、实际入库及审核状态保留",
+  "bundle": "index-DwSOm5ol.js",
+  "bundleSha256": "f9f590182f0855de814434afe72c9d7d24e5089f38ace26dbec1c89b772a9434",
+  "productionSourceCommit": "ebedd6e",
+  "releaseCommit": "2d5cb19",
+  "e2eCommit": "acbb31a",
+  "unit": {
+    "files": 5,
+    "passed": 94,
+    "durationSeconds": 16.04,
+    "scope": [
+      "vault-import-model",
+      "vault-import-ai",
+      "vault-import-source",
+      "vault-import-mapping",
+      "password-vault/session"
+    ]
+  },
+  "checks": {
+    "typecheck": "passed",
+    "build": "passed",
+    "scopedBiome": "passed",
+    "diffCheck": "passed",
+    "fixedPackageParity": {
+      "currentFiles": 93,
+      "retainedHistoricalFiles": 1385
+    }
+  },
+  "browser": {
+    "report": "release-playwright.json",
+    "startTime": "2026-10-04T08:32:47.448Z",
+    "duration": 144610.926,
+    "expected": 40,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0,
+    "globalErrors": [],
+    "specs": [
+      {
+        "title": "local line mapping retains unresolved edits through partial save and clears them on lock",
+        "file": "password-smart-import.spec.ts",
+        "status": "expected",
+        "outcomes": [
+          "passed"
+        ]
+      },
+      {
+        "title": "advanced input and mapping returns retain edited review choices through failed replacement work",
+        "file": "password-smart-import.spec.ts",
+        "status": "expected",
+        "outcomes": [
+          "passed"
+        ]
+      },
+      {
+        "title": "unassigned-only content becomes an editable pending form entry and saves locally",
+        "file": "password-smart-import.spec.ts",
+        "status": "expected",
+        "outcomes": [
+          "passed"
+        ]
+      },
+      {
+        "title": "partly assigned source keeps the original fragment form draft while adding mapped entries",
+        "file": "password-smart-import.spec.ts",
+        "status": "expected",
+        "outcomes": [
+          "passed"
+        ]
+      },
+      {
+        "title": "remaining source forms explicitly supplement an entry already saved in this import",
+        "file": "password-smart-import.spec.ts",
+        "status": "expected",
+        "outcomes": [
+          "passed"
+        ]
+      },
+      {
+        "title": "a same-password duplicate can explicitly update saved notes after fragment completion",
+        "file": "password-smart-import.spec.ts",
+        "status": "expected",
+        "outcomes": [
+          "passed"
+        ]
+      },
+      {
+        "title": "zh-CN 390px unresolved source forms create or complete entries and save without rerunning AI",
+        "file": "password-smart-import.spec.ts",
+        "status": "expected",
+        "outcomes": [
+          "passed"
+        ]
+      },
+      {
+        "title": "zh-CN 390px unlabeled password notes and local field mapping save exact reviewed credentials",
+        "file": "password-smart-import.spec.ts",
+        "status": "expected",
+        "outcomes": [
+          "passed"
+        ]
+      },
+      {
+        "title": "zh-CN 390px smart password import reviews locally, sends domains only and saves a recoverable KDBX",
+        "file": "password-smart-import.spec.ts",
+        "status": "expected",
+        "outcomes": [
+          "passed"
+        ]
+      },
+      {
+        "title": "zh-CN 1280px unresolved source forms create or complete entries and save without rerunning AI",
+        "file": "password-smart-import.spec.ts",
+        "status": "expected",
+        "outcomes": [
+          "passed"
+        ]
+      },
+      {
+        "title": "zh-CN 1280px unlabeled password notes and local field mapping save exact reviewed credentials",
+        "file": "password-smart-import.spec.ts",
+        "status": "expected",
+        "outcomes": [
+          "passed"
+        ]
+      },
+      {
+        "title": "zh-CN 1280px smart password import reviews locally, sends domains only and saves a recoverable KDBX",
+        "file": "password-smart-import.spec.ts",
+        "status": "expected",
+        "outcomes": [
+          "passed"
+        ]
+      },
+      {
+        "title": "en-US 390px unresolved source forms create or complete entries and save without rerunning AI",
+        "file": "password-smart-import.spec.ts",
+        "status": "expected",
+        "outcomes": [
+          "passed"
+        ]
+      },
+      {
+        "title": "en-US 390px unlabeled password notes and local field mapping save exact reviewed credentials",
+        "file": "password-smart-import.spec.ts",
+        "status": "expected",
+        "outcomes": [
+          "passed"
+        ]
+      },
+      {
+        "title": "en-US 390px smart password import reviews locally, sends domains only and saves a recoverable KDBX",
+        "file": "password-smart-import.spec.ts",
+        "status": "expected",
+        "outcomes": [
+          "passed"
+        ]
+      },
+      {
+        "title": "en-US 1280px unresolved source forms create or complete entries and save without rerunning AI",
+        "file": "password-smart-import.spec.ts",
+        "status": "expected",
+        "outcomes": [
+          "passed"
+        ]
+      },
+      {
+        "title": "en-US 1280px unlabeled password notes and local field mapping save exact reviewed credentials",
+        "file": "password-smart-import.spec.ts",
+        "status": "expected",
+        "outcomes": [
+          "passed"
+        ]
+      },
+      {
+        "title": "en-US 1280px smart password import reviews locally, sends domains only and saves a recoverable KDBX",
+        "file": "password-smart-import.spec.ts",
+        "status": "expected",
+        "outcomes": [
+          "passed"
+        ]
+      },
+      {
+        "title": "smart import discards sensitive state on close and lock, keeps failed AI candidates, and rejects stale or delayed work",
+        "file": "password-smart-import.spec.ts",
+        "status": "expected",
+        "outcomes": [
+          "passed"
+        ]
+      },
+      {
+        "title": "smart import preserves multiline secrets and clears conflict choices when identities or selections change",
+        "file": "password-smart-import.spec.ts",
+        "status": "expected",
+        "outcomes": [
+          "passed"
+        ]
+      },
+      {
+        "title": "smart import FilePicker rejects invalid UTF-8 and preserves Chrome CSV credentials through save and reload",
+        "file": "password-smart-import.spec.ts",
+        "status": "expected",
+        "outcomes": [
+          "passed"
+        ]
+      },
+      {
+        "title": "AI recognizes pasted password notes without sending the existing vault zh-CN 390",
+        "file": "password-smart-import.spec.ts",
+        "status": "expected",
+        "outcomes": [
+          "passed"
+        ]
+      },
+      {
+        "title": "AI recognizes pasted password notes without sending the existing vault zh-CN 1280",
+        "file": "password-smart-import.spec.ts",
+        "status": "expected",
+        "outcomes": [
+          "passed"
+        ]
+      },
+      {
+        "title": "AI recognizes pasted password notes without sending the existing vault en-US 390",
+        "file": "password-smart-import.spec.ts",
+        "status": "expected",
+        "outcomes": [
+          "passed"
+        ]
+      },
+      {
+        "title": "AI recognizes pasted password notes without sending the existing vault en-US 1280",
+        "file": "password-smart-import.spec.ts",
+        "status": "expected",
+        "outcomes": [
+          "passed"
+        ]
+      },
+      {
+        "title": "AI note recognition keeps failed source and discards delayed results after close or model change",
+        "file": "password-smart-import.spec.ts",
+        "status": "expected",
+        "outcomes": [
+          "passed"
+        ]
+      },
+      {
+        "title": "password AI import automatically restores its saved vault API key after unlock",
+        "file": "password-smart-import.spec.ts",
+        "status": "expected",
+        "outcomes": [
+          "passed"
+        ]
+      },
+      {
+        "title": "AI incomplete entries remain editable after a partial password import zh-CN 390",
+        "file": "password-smart-import.spec.ts",
+        "status": "expected",
+        "outcomes": [
+          "passed"
+        ]
+      },
+      {
+        "title": "AI incomplete entries remain editable after a partial password import zh-CN 1280",
+        "file": "password-smart-import.spec.ts",
+        "status": "expected",
+        "outcomes": [
+          "passed"
+        ]
+      },
+      {
+        "title": "AI incomplete entries remain editable after a partial password import en-US 390",
+        "file": "password-smart-import.spec.ts",
+        "status": "expected",
+        "outcomes": [
+          "passed"
+        ]
+      },
+      {
+        "title": "AI incomplete entries remain editable after a partial password import en-US 1280",
+        "file": "password-smart-import.spec.ts",
+        "status": "expected",
+        "outcomes": [
+          "passed"
+        ]
+      },
+      {
+        "title": "zh-CN 390px app passwords save without a website and retain optional details when edited",
+        "file": "password-vault.spec.ts",
+        "status": "expected",
+        "outcomes": [
+          "passed"
+        ]
+      },
+      {
+        "title": "zh-CN 390px passwords persist, lock, rotate and restore with assets",
+        "file": "password-vault.spec.ts",
+        "status": "expected",
+        "outcomes": [
+          "passed"
+        ]
+      },
+      {
+        "title": "zh-CN 1280px app passwords save without a website and retain optional details when edited",
+        "file": "password-vault.spec.ts",
+        "status": "expected",
+        "outcomes": [
+          "passed"
+        ]
+      },
+      {
+        "title": "zh-CN 1280px passwords persist, lock, rotate and restore with assets",
+        "file": "password-vault.spec.ts",
+        "status": "expected",
+        "outcomes": [
+          "passed"
+        ]
+      },
+      {
+        "title": "en-US 390px app passwords save without a website and retain optional details when edited",
+        "file": "password-vault.spec.ts",
+        "status": "expected",
+        "outcomes": [
+          "passed"
+        ]
+      },
+      {
+        "title": "en-US 390px passwords persist, lock, rotate and restore with assets",
+        "file": "password-vault.spec.ts",
+        "status": "expected",
+        "outcomes": [
+          "passed"
+        ]
+      },
+      {
+        "title": "en-US 1280px app passwords save without a website and retain optional details when edited",
+        "file": "password-vault.spec.ts",
+        "status": "expected",
+        "outcomes": [
+          "passed"
+        ]
+      },
+      {
+        "title": "en-US 1280px passwords persist, lock, rotate and restore with assets",
+        "file": "password-vault.spec.ts",
+        "status": "expected",
+        "outcomes": [
+          "passed"
+        ]
+      },
+      {
+        "title": "password changes lock a revealed editor in another tab; idle lock and clean KDBX import work",
+        "file": "password-vault.spec.ts",
+        "status": "expected",
+        "outcomes": [
+          "passed"
+        ]
+      }
+    ],
+    "fixtures": "仅合成清单与合成模型；通过UI建立真实独立KDBX、导出解密并刷新回读",
+    "runtimePageErrors": "新增 zh/en × 390/1280 四个主流程逐项断言 []，未宣称采集所有浏览器 console",
+    "screenshotFollowup": {
+      "report": "screenshot-followup.json",
+      "startTime": "2026-10-04T08:37:22.028Z",
+      "duration": 6605.630999999999,
+      "expected": 1,
+      "skipped": 0,
+      "unexpected": 0,
+      "flaky": 0,
+      "globalErrors": [],
+      "note": "同包同一zh1280用例，仅修正截图滚动位置，不累加为41项"
+    }
+  },
+  "realPage": {
+    "readback": "original-page-readback.json",
+    "screenshot": "ego-final-build-locked.png",
+    "exactBundleVerified": true,
+    "locked": true,
+    "realSourceRetested": false,
+    "realEntriesSavedByAgent": false,
+    "blocker": "原页已自动锁定，等待用户在页面解锁并重新粘贴；未读取主密码或已锁全库"
+  },
+  "screenshots": {
+    "synthetic": true,
+    "form": [
+      "password-fragment-form-zh-CN-1280-fill.png",
+      "password-fragment-form-zh-CN-390-fill.png",
+      "password-fragment-form-en-US-1280-fill.png",
+      "password-fragment-form-en-US-390-fill.png"
+    ],
+    "review": [
+      "password-source-context-zh-CN-1280-review.png",
+      "password-source-context-zh-CN-390-review.png",
+      "password-source-context-en-US-1280-review.png",
+      "password-source-context-en-US-390-review.png"
+    ],
+    "visualReview": "中英390/1280已目检。最终zh1280表单名称、账号、密码及加入/收起操作同屏；手机纵向滚动，操作无遮挡。英文无中文文案。"
+  },
+  "delivery": {
+    "local4180Updated": true,
+    "internetDeployed": false,
+    "ciReadback": false,
+    "keepAnyAdmModified": false
+  },
+  "cleanup": {
+    "testPort4351Listening": false,
+    "original4180Kept": true,
+    "intermediateAssetsMovedToRecoverableTrash": 42,
+    "temporaryResults": {
+      "movedToRecoverableTrash": "/Users/syndred/.Trash/KeepAny-password-form-test-temp-1791103527531",
+      "files": [
+        "keepany-password-form-diagnostic",
+        "keepany-password-form-diagnostic-results",
+        "keepany-password-form-release-results",
+        "keepany-password-form-release.json",
+        "keepany-password-form-screenshot-results",
+        "keepany-password-form-screenshot.json"
+      ]
+    }
+  }
+}
