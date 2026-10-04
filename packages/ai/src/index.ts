@@ -7,7 +7,12 @@ import { createMoonshotAI } from "@ai-sdk/moonshotai";
 import { createOpenAI } from "@ai-sdk/openai";
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
-import { generateText, type LanguageModel, type ModelMessage } from "ai";
+import {
+	type FinishReason,
+	generateText,
+	type LanguageModel,
+	type ModelMessage,
+} from "ai";
 
 export const aiProviderIds = [
 	"openai",
@@ -124,6 +129,7 @@ export type GenerateAiTextOptions = {
 	signal?: AbortSignal;
 	json?: boolean;
 	maxOutputTokens?: number;
+	timeoutMs?: number;
 };
 
 export type AiUsage = {
@@ -135,6 +141,7 @@ export type GenerateAiTextResult = {
 	text: string;
 	usage: AiUsage;
 	model: string | null;
+	finishReason?: FinishReason;
 };
 
 export type AiErrorCode =
@@ -156,6 +163,8 @@ export class AiClientError extends Error {
 }
 
 export const AI_REQUEST_TIMEOUT_MS = 30_000;
+export const AI_MIN_REQUEST_TIMEOUT_MS = 1_000;
+export const AI_MAX_REQUEST_TIMEOUT_MS = 120_000;
 export const AI_DEFAULT_MAX_OUTPUT_TOKENS = 2_048;
 export const AI_MAX_OUTPUT_TOKENS = 8_192;
 export const AI_MAX_IMAGE_DATA_LENGTH = 14_000_000;
@@ -426,14 +435,18 @@ export async function generateAiText(
 		maxOutputTokens > AI_MAX_OUTPUT_TOKENS
 	)
 		throw new AiClientError("invalid-connection");
+	const timeoutMs = options.timeoutMs ?? AI_REQUEST_TIMEOUT_MS;
+	if (
+		!Number.isSafeInteger(timeoutMs) ||
+		timeoutMs < AI_MIN_REQUEST_TIMEOUT_MS ||
+		timeoutMs > AI_MAX_REQUEST_TIMEOUT_MS
+	)
+		throw new AiClientError("invalid-connection");
 	const image = options.image ? normalizeImage(options.image) : undefined;
 	if (options.signal?.aborted) throw new AiClientError("cancelled");
 
 	const timeoutController = new AbortController();
-	const timeoutId = setTimeout(
-		() => timeoutController.abort(),
-		AI_REQUEST_TIMEOUT_MS,
-	);
+	const timeoutId = setTimeout(() => timeoutController.abort(), timeoutMs);
 	const combined = createCombinedSignal(
 		options.signal,
 		timeoutController.signal,
@@ -458,7 +471,7 @@ export async function generateAiText(
 			maxOutputTokens,
 			maxRetries: 0,
 			abortSignal: combined.signal,
-			timeout: { totalMs: AI_REQUEST_TIMEOUT_MS },
+			timeout: { totalMs: timeoutMs },
 			telemetry: {
 				isEnabled: false,
 				recordInputs: false,
@@ -472,6 +485,7 @@ export async function generateAiText(
 				outputTokens: normalizeUsage(result.usage.outputTokens),
 			},
 			model: result.response.modelId || null,
+			finishReason: result.finishReason,
 		};
 	} catch (error) {
 		throw toClientError(error, options.signal, timeoutController.signal);

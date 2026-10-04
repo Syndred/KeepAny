@@ -57,6 +57,7 @@ function bodyOf(request: RecordedRequest): Record<string, unknown> {
 }
 
 afterEach(() => {
+	vi.useRealTimers();
 	vi.unstubAllGlobals();
 	vi.restoreAllMocks();
 });
@@ -86,6 +87,7 @@ describe("AI provider connection layer", () => {
 			text: "ok",
 			usage: { inputTokens: 3, outputTokens: 4 },
 			model: "gpt-test",
+			finishReason: "stop",
 		});
 		expect(String(requests[0].input)).toBe(
 			"https://api.openai.test/v1/chat/completions",
@@ -338,6 +340,96 @@ describe("AI provider connection layer", () => {
 		);
 		controller.abort();
 		await expect(pending).rejects.toMatchObject({ code: "cancelled" });
+	});
+
+	it.each([
+		{ timeoutMs: undefined, duration: 30_000 },
+		{ timeoutMs: 120_000, duration: 120_000 },
+	])(
+		"uses the bounded total timeout without retrying: $duration ms",
+		async ({ timeoutMs, duration }) => {
+			vi.useFakeTimers();
+			const fetch = vi.fn(
+				async (_input: RequestInfo | URL, init?: RequestInit) =>
+					await new Promise<Response>((_resolve, reject) => {
+						const abort = () =>
+							reject(new DOMException("Aborted", "AbortError"));
+						if (init?.signal?.aborted) abort();
+						else init?.signal?.addEventListener("abort", abort, { once: true });
+					}),
+			);
+			vi.stubGlobal("fetch", fetch);
+			let settled = false;
+			const pending = generateAiText(
+				connection("openai", "https://api.openai.test/v1"),
+				{
+					prompt: "synthetic",
+					...(timeoutMs === undefined ? {} : { timeoutMs }),
+				},
+			).catch((error: unknown) => {
+				settled = true;
+				return error;
+			});
+			await vi.advanceTimersByTimeAsync(duration - 1);
+			expect(settled).toBe(false);
+			await vi.advanceTimersByTimeAsync(1);
+			expect(await pending).toMatchObject({
+				code: "timeout",
+				message: "timeout",
+			});
+			expect(fetch).toHaveBeenCalledTimes(1);
+		},
+	);
+
+	it("cancels a long request immediately without waiting for its timeout", async () => {
+		vi.useFakeTimers();
+		const fetch = vi.fn(
+			async (_input: RequestInfo | URL, init?: RequestInit) =>
+				await new Promise<Response>((_resolve, reject) => {
+					const abort = () => reject(new DOMException("Aborted", "AbortError"));
+					if (init?.signal?.aborted) abort();
+					else init?.signal?.addEventListener("abort", abort, { once: true });
+				}),
+		);
+		vi.stubGlobal("fetch", fetch);
+		const controller = new AbortController();
+		const pending = generateAiText(
+			connection("openai", "https://api.openai.test/v1"),
+			{ prompt: "synthetic", timeoutMs: 120_000, signal: controller.signal },
+		).catch((error: unknown) => error);
+		await vi.advanceTimersByTimeAsync(30_001);
+		controller.abort();
+		expect(await pending).toMatchObject({
+			code: "cancelled",
+			message: "cancelled",
+		});
+		expect(fetch).toHaveBeenCalledTimes(1);
+	});
+
+	it.each([0, 999, 120_001, 1.5, NaN, Infinity])(
+		"rejects an invalid timeout before network access: %s",
+		async (timeoutMs) => {
+			const fetch = mockFetch(openAiResponse());
+			await expect(
+				generateAiText(connection("openai", "https://api.openai.test/v1"), {
+					prompt: "synthetic",
+					timeoutMs,
+				}),
+			).rejects.toMatchObject({ code: "invalid-connection" });
+			expect(fetch).not.toHaveBeenCalled();
+		},
+	);
+
+	it("returns only the SDK-normalized finish reason", async () => {
+		const response = openAiResponse();
+		response.choices[0].finish_reason = "length";
+		mockFetch(response);
+		const result = await generateAiText(
+			connection("openai", "https://api.openai.test/v1"),
+			{ prompt: "synthetic" },
+		);
+		expect(result.finishReason).toBe("length");
+		expect(result).not.toHaveProperty("rawFinishReason");
 	});
 
 	it("enforces the image and output limits before network access", async () => {
