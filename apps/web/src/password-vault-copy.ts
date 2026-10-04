@@ -109,6 +109,10 @@ export const passwordVaultCopy: Record<string, [string, string]> = {
 		"请选择要补充的条目",
 		"Choose the entry to add to",
 	],
+	pwSmartFragmentNoChange: [
+		"填写要补充的内容，或将这段原文加入备注。",
+		"Fill in the details to add, or add this source excerpt to notes.",
+	],
 	pwSmartFragmentAddNotes: [
 		"将这段原文加入备注",
 		"Add this source excerpt to notes",

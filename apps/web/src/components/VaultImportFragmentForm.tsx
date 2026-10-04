@@ -86,6 +86,13 @@ export function VaultImportFragmentForm({
 		(["title", "username", "password", "url", "notes"] as const).some(
 			(field) => draft[field].length > 0,
 		);
+	const hasChanges =
+		mode === "new" ||
+		(!!draft &&
+			!!target &&
+			(["title", "username", "password", "url", "notes"] as const).some(
+				(field) => draft[field] !== target.draft[field],
+			));
 
 	function selectTarget(nextId: string) {
 		setTargetId(nextId);
@@ -195,6 +202,9 @@ export function VaultImportFragmentForm({
 							onChange={changeField}
 						/>
 					)}
+					{mode === "existing" && target && !hasChanges && (
+						<p className="pw-smart-hint">{t("pwSmartFragmentNoChange")}</p>
+					)}
 					<div className="actions pw-smart-fragment-actions">
 						<Button
 							type="button"
@@ -217,11 +227,11 @@ export function VaultImportFragmentForm({
 							type="button"
 							variant="primary"
 							onClick={() => {
-								if (!draft || !canEdit || !hasContent) return;
+								if (!draft || !canEdit || !hasContent || !hasChanges) return;
 								if (onApply(mode === "new" ? null : targetId, copyDraft(draft)))
 									setExpanded(false);
 							}}
-							disabled={disabled || !canEdit || !hasContent}
+							disabled={disabled || !canEdit || !hasContent || !hasChanges}
 						>
 							{t("pwSmartFragmentApply")}
 						</Button>
