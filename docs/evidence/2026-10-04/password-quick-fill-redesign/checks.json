@@ -102,9 +102,10 @@
       "9b67b50",
       "2410dc8"
     ],
-    "remotePush": "evidence commit pending final push; subsequent remote SHA readback recorded in push-readback.json",
+    "remotePush": "functionality and acceptance evidence pushed; origin/main exact SHA a69bba6305f6b2f7e0df0bf28bb914e2a5be8c42 verified with ls-remote",
     "ci": "not checked this turn",
-    "internetDeployment": false
+    "internetDeployment": false,
+    "pushReadback": "push-readback.json"
   },
   "cleanup": {
     "intermediateUncommittedUnusedBuildFilesMovedToRecoverableTrash": 21,
