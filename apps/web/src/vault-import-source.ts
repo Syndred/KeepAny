@@ -19,6 +19,12 @@ export type VaultImportSourceExcerpt = {
 };
 
 type SourceLine = { number: number; start: number; end: number; text: string };
+export type VaultImportSourceSelection = {
+	start: number;
+	end: number;
+	encoding?: "json-string";
+};
+
 function sourceLines(source: string): SourceLine[] {
 	const result: SourceLine[] = [];
 	const ending = /\r\n|\r|\n/g;
@@ -40,6 +46,70 @@ function sourceLines(source: string): SourceLine[] {
 		text: source.slice(start),
 	});
 	return result;
+}
+
+/** A selected source line is read as written, without trimming its value. */
+export function getVaultImportSourceLineSelection(
+	source: string,
+	line: number,
+	endLine = line,
+): VaultImportSourceSelection | undefined {
+	const lines = sourceLines(source);
+	if (
+		!Number.isInteger(line) ||
+		!Number.isInteger(endLine) ||
+		line < 1 ||
+		endLine < line ||
+		endLine > lines.length
+	)
+		return undefined;
+	return { start: lines[line - 1].start, end: lines[endLine - 1].end };
+}
+
+/** JSON decoding is opt-in; an unlabelled quoted password remains literal. */
+export function readVaultImportSourceRange(
+	source: string,
+	selection: VaultImportSourceSelection,
+): string | undefined {
+	if (
+		!Number.isInteger(selection.start) ||
+		!Number.isInteger(selection.end) ||
+		selection.start < 0 ||
+		selection.start > selection.end ||
+		selection.end > source.length ||
+		(selection.encoding !== undefined && selection.encoding !== "json-string")
+	)
+		return undefined;
+	const value = source.slice(selection.start, selection.end);
+	if (selection.encoding !== "json-string") return value;
+	try {
+		const decoded: unknown = JSON.parse(value);
+		return typeof decoded === "string" ? decoded : undefined;
+	} catch {
+		return undefined;
+	}
+}
+
+/** Matches the same nonempty source section used by the read-only excerpt. */
+export function getVaultImportSourceSectionSelection(
+	source: string,
+	selection: VaultImportSourceSelection,
+): VaultImportSourceSelection | undefined {
+	if (readVaultImportSourceRange(source, selection) === undefined)
+		return undefined;
+	const lines = sourceLines(source);
+	let first = lines.findIndex(
+		(line) => line.start <= selection.start && selection.start <= line.end,
+	);
+	let last = lines.findIndex(
+		(line) => line.start <= selection.end && selection.end <= line.end,
+	);
+	if (first < 0 || last < first) return undefined;
+	if (lines.slice(first, last + 1).every((line) => !line.text.trim()))
+		return { start: lines[first].start, end: lines[last].end };
+	while (first > 0 && lines[first - 1].text.trim()) first--;
+	while (last + 1 < lines.length && lines[last + 1].text.trim()) last++;
+	return { start: lines[first].start, end: lines[last].end };
 }
 
 /** Adjacent warnings form one fragment instead of a list of line numbers. */
@@ -265,7 +335,7 @@ export function buildVaultImportSourceExcerpt(
 			)
 		)
 			return undefined;
-		return source.slice(reference.start, reference.end);
+		return readVaultImportSourceRange(source, reference);
 	}
 	const title = contextIdentity(owner?.sourceFields?.title);
 	const username = contextIdentity(owner?.sourceFields?.username);
