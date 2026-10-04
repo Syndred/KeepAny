@@ -36,6 +36,9 @@ export function VaultImportDraftFields({
 
 	return (
 		<>
+			{readOnlyIdentity && (
+				<p className="pw-smart-hint">{t("pwSmartSavedEntryHint")}</p>
+			)}
 			<div className="pw-smart-fields">
 				{(["title", "username"] as const).map((field) => (
 					<label

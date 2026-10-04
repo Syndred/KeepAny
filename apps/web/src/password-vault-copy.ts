@@ -116,6 +116,10 @@ export const passwordVaultCopy: Record<string, [string, string]> = {
 	pwSmartFragmentNotesAdded: ["原文已加入备注", "Source added to notes"],
 	pwSmartFragmentApply: ["加入待导入条目", "Add to the import list"],
 	pwSmartFragmentCollapse: ["收起表单", "Collapse form"],
+	pwSmartSavedEntryHint: [
+		"此条目已入库，可补充密码和备注；另一个账号请选择新建条目。",
+		"This entry is already saved. You can update its password and notes. Choose a new entry for a different account.",
+	],
 	pwSmartAdvanced: ["其他输入方式", "Other input methods"],
 	pwSmartManualAdded: [
 		"已加入待导入列表，请核对后勾选。",
@@ -192,6 +196,7 @@ export const passwordVaultCopy: Record<string, [string, string]> = {
 	pwSmartStatus_duplicate: ["已存在，跳过", "Already exists · skip"],
 	pwSmartStatus_conflict: ["密码不同，待选择", "Different password · choose"],
 	pwSmartStatus_invalid: ["待修正", "Needs correction"],
+	pwSmartStatus_update: ["待更新", "Ready to update"],
 	pwSmartConflictHint: [
 		"同一名称和账号已有不同密码",
 		"An entry with this name and username has a different password",
