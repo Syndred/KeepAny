@@ -10,12 +10,10 @@ export function VaultImportSourceExcerpt({
 	excerpt,
 	source,
 	disabled,
-	onEdit,
 }: {
 	excerpt: SourceExcerpt;
 	source: string;
 	disabled: boolean;
-	onEdit: (selection: { start: number; end: number }) => void;
 }) {
 	const { t } = useTranslation();
 	const [revealed, setRevealed] = useState(false);
@@ -65,13 +63,6 @@ export function VaultImportSourceExcerpt({
 				>
 					{revealed ? <EyeOff size={15} /> : <Eye size={15} />}
 					{t(revealed ? "pwSmartSourceHide" : "pwSmartSourceShow")}
-				</Button>
-				<Button
-					variant="ghost"
-					onClick={() => onEdit(excerpt.selection)}
-					disabled={disabled}
-				>
-					{t("pwSmartSourceEdit")}
 				</Button>
 			</div>
 		</div>

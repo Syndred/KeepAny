@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Eye, EyeOff, Lock, Sparkles } from "lucide-react";
+import { Lock, Sparkles } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type {
@@ -20,6 +20,7 @@ import {
 	buildVaultImportAiPreview,
 	parseVaultImportText,
 	requestVaultImportAiTitles,
+	VAULT_IMPORT_MAX_ENTRIES,
 	type VaultImportCandidate,
 	type VaultImportIssue,
 	type VaultImportResult,
@@ -36,6 +37,8 @@ import { Dialog } from "./ui/dialog";
 import { FilePicker } from "./ui/file-picker";
 import { Select, SelectOption } from "./ui/select";
 import { TextLink } from "./ui/text-link";
+import { VaultImportDraftFields } from "./VaultImportDraftFields";
+import { VaultImportFragmentForm } from "./VaultImportFragmentForm";
 import { VaultImportSourceExcerpt } from "./VaultImportSourceExcerpt";
 import "../password-smart-import.css";
 
@@ -83,7 +86,15 @@ function previewCandidates(
 			length: candidates.length,
 		});
 		for (const [index, row] of plan.rows.entries()) {
-			rows[indexes[index]] = { ...row, index: indexes[index] };
+			const candidate = candidates[indexes[index]];
+			rows[indexes[index]] = {
+				...row,
+				index: indexes[index],
+				...(candidate.updateTargetId &&
+				row.existingIds.includes(candidate.updateTargetId)
+					? { status: "conflict" as const }
+					: {}),
+			};
 		}
 		return { revision: plan.revision, rows };
 	} catch {
@@ -134,6 +145,7 @@ export function PasswordSmartImportDialog({
 	} = useAiConnection();
 	const [source, setSource] = useState("");
 	const [reviewSource, setReviewSource] = useState("");
+	const [reviewVersion, setReviewVersion] = useState(0);
 	const [editingSource, setEditingSource] = useState(false);
 	const [sourceSelection, setSourceSelection] = useState<{
 		start: number;
@@ -142,6 +154,10 @@ export function PasswordSmartImportDialog({
 	const sourceInput = useRef<HTMLTextAreaElement | null>(null);
 	const [file, setFile] = useState<File | null>(null);
 	const [candidates, setCandidates] = useState<VaultImportCandidate[]>([]);
+	const [savedCandidates, setSavedCandidates] = useState<
+		VaultImportCandidate[]
+	>([]);
+	const manualSequence = useRef(0);
 	const [issues, setIssues] = useState<VaultImportIssue[]>([]);
 	const [choices, setChoices] = useState<Record<string, Choice>>({});
 	const [stage, setStage] = useState<"input" | "mapping" | "review" | "saved">(
@@ -190,6 +206,7 @@ export function PasswordSmartImportDialog({
 		setSourceSelection(null);
 		setFile(null);
 		setCandidates([]);
+		setSavedCandidates([]);
 		setChoices({});
 		setIssues([]);
 		setMappedLines([]);
@@ -225,15 +242,28 @@ export function PasswordSmartImportDialog({
 	const issueGroups = useMemo(
 		() =>
 			groupVaultImportIssues(issues).map((group) => ({
+				id: `source-${group[0].lineNumber}-${group[group.length - 1].lineNumber}`,
 				issues: group,
 				excerpt: buildVaultImportSourceExcerpt(
 					reviewSource,
 					group.map((issue) => issue.lineNumber),
-					candidates,
+					[...candidates, ...savedCandidates].filter(
+						(row) => !row.sourceSnapshot || row.sourceSnapshot === reviewSource,
+					),
 				),
 			})),
-		[issues, reviewSource, candidates],
+		[issues, reviewSource, candidates, savedCandidates],
 	);
+	const hasReview = !!reviewSource;
+	const fragmentTargets = [
+		...candidates,
+		...savedCandidates.filter(
+			(saved) =>
+				!candidates.some(
+					(candidate) => candidate.updateTargetId === saved.updateTargetId,
+				),
+		),
+	];
 	const selected = candidates.filter((row, index) => {
 		const choice = choices[row.id];
 		const plan = preview?.rows[index];
@@ -261,6 +291,7 @@ export function PasswordSmartImportDialog({
 		setSourceSelection(null);
 		setFile(null);
 		setCandidates([]);
+		setSavedCandidates([]);
 		setChoices({});
 		setIssues([]);
 		setMappedLines([]);
@@ -274,6 +305,7 @@ export function PasswordSmartImportDialog({
 		setBusy(null);
 		setMessage("");
 		setCandidates([]);
+		setSavedCandidates([]);
 		setChoices({});
 		setIssues([]);
 		setMappedLines([]);
@@ -304,7 +336,12 @@ export function PasswordSmartImportDialog({
 		if (running.current || !session) return;
 		setMessage("");
 		try {
-			showReview(parseVaultImportText(source), { kind: "local" });
+			const result = parseVaultImportText(source);
+			if (hasReview && !result.candidates.length) {
+				setMessage(t("pwSmartNoRows"));
+				return;
+			}
+			showReview(result, { kind: "local" });
 		} catch (error) {
 			setMessage(t(errorCopy(error)));
 		}
@@ -346,6 +383,10 @@ export function PasswordSmartImportDialog({
 				setMessage(t("pwVaultConflict"));
 				return;
 			}
+			if (hasReview && !result.candidates.length) {
+				setMessage(t("pwSmartNoRows"));
+				return;
+			}
 			showReview(result, {
 				kind: "ai",
 				model: lease.connection.model,
@@ -379,6 +420,8 @@ export function PasswordSmartImportDialog({
 		const plan = previewCandidates(session, result.candidates);
 		baseRevision.current = session.getSnapshot().revision;
 		setCandidates(result.candidates);
+		setReviewVersion((current) => current + 1);
+		setSavedCandidates([]);
 		setIssues(result.issues);
 		setReviewOrigin(origin);
 		setReviewSource(resultSource);
@@ -415,11 +458,50 @@ export function PasswordSmartImportDialog({
 		setMessage("");
 		try {
 			const nextSource = updateVaultMappedSource(source, mappedLines);
-			showReview(
-				parseVaultMappedLines(mappedLines),
-				{ kind: "manual" },
-				nextSource,
-			);
+			const result = parseVaultMappedLines(mappedLines);
+			if (hasReview) {
+				if (nextSource !== reviewSource && result.issues.length) {
+					setMessage(t("pwSmartMapRemaining"));
+					return;
+				}
+				const handled = new Set(
+					source === reviewSource && nextSource === reviewSource
+						? result.handledLines
+						: [],
+				);
+				if (!result.candidates.length && !handled.size) {
+					setMessage(t("pwSmartNoRows"));
+					return;
+				}
+				if (
+					candidates.length + result.candidates.length >
+					VAULT_IMPORT_MAX_ENTRIES
+				)
+					throw Error("vault-import-limit");
+				const additions = result.candidates.map((row) => ({
+					...row,
+					sourceSnapshot: nextSource,
+					id: `vault-manual-${++manualSequence.current}`,
+					needsReview: true,
+				}));
+				setCandidates([...candidates, ...additions]);
+				setSource(nextSource);
+				setIssues(issues.filter((issue) => !handled.has(issue.lineNumber)));
+				setChoices((current) => ({
+					...current,
+					...Object.fromEntries(
+						additions.map((row) => [
+							row.id,
+							{ selected: false, action: "new" as const },
+						]),
+					),
+				}));
+				setStage("review");
+				setSourceSelection(null);
+				setMessage(additions.length ? t("pwSmartManualAdded") : "");
+				return;
+			}
+			showReview(result, { kind: "manual" }, nextSource);
 			setSource(nextSource);
 		} catch (error) {
 			setMessage(t(errorCopy(error)));
@@ -427,7 +509,7 @@ export function PasswordSmartImportDialog({
 	}
 	async function readFile(next: File | null) {
 		if (running.current) return;
-		if (!editingSource) resetInput("");
+		if (!hasReview) resetInput("");
 		else {
 			setSourceSelection(null);
 			setMappedLines([]);
@@ -537,7 +619,14 @@ export function PasswordSmartImportDialog({
 						changed
 							? {
 									selected: false,
-									action: after?.status === "new" ? "new" : "skip",
+									action: row.updateTargetId
+										? "update"
+										: after?.status === "new"
+											? "new"
+											: "skip",
+									...(row.updateTargetId
+										? { targetId: row.updateTargetId }
+										: {}),
 								}
 							: current[row.id],
 					];
@@ -548,6 +637,115 @@ export function PasswordSmartImportDialog({
 	}
 	function choose(id: string, choice: Choice) {
 		setChoices((current) => ({ ...current, [id]: choice }));
+	}
+	function applyFragment(
+		group: (typeof issueGroups)[number],
+		targetId: string | null,
+		draft: VaultEntryDraft,
+	): boolean {
+		if (running.current || !session || outdated) return false;
+		const target = targetId
+			? fragmentTargets.find((row) => row.id === targetId)
+			: undefined;
+		if (targetId && !target) return false;
+		const validated = validateVaultImportFields(draft);
+		if (
+			!validated.candidates.length ||
+			![
+				draft.title.trim(),
+				draft.username.trim(),
+				draft.password,
+				draft.notes,
+			].some(Boolean)
+		) {
+			setMessage(t("pwSmartIssue_invalid-field"));
+			return false;
+		}
+		if (
+			target &&
+			(["title", "username", "password", "url", "notes"] as const).every(
+				(field) => validated.candidates[0].draft[field] === target.draft[field],
+			)
+		) {
+			setMessage(t("pwSmartFragmentNoChange"));
+			return false;
+		}
+		const existingIndex = target
+			? candidates.findIndex((row) => row.id === target.id)
+			: -1;
+		if (existingIndex < 0 && candidates.length >= VAULT_IMPORT_MAX_ENTRIES) {
+			setMessage(t("pwSmartLimit"));
+			return false;
+		}
+		const row: VaultImportCandidate = {
+			...(target ?? validated.candidates[0]),
+			id: target?.id ?? `vault-manual-${++manualSequence.current}`,
+			sourceLine: target?.sourceLine ?? group.issues[0].lineNumber,
+			draft: {
+				...validated.candidates[0].draft,
+				linkedAssetIds: [...draft.linkedAssetIds],
+			},
+			aiEligible: false,
+			needsReview: true,
+			reviewIssues: validated.issues.map((issue) => ({
+				...issue,
+				lineNumber: group.issues[0].lineNumber,
+			})),
+		};
+		const rows =
+			existingIndex < 0
+				? [...candidates, row]
+				: candidates.map((candidate) =>
+						candidate.id === row.id ? row : candidate,
+					);
+		const nextPlan = previewCandidates(session, rows);
+		const handled = new Set(
+			group.issues.map((issue) => `${issue.lineNumber}:${issue.code}`),
+		);
+		setCandidates(rows);
+		setIssues(
+			issues.filter(
+				(issue) => !handled.has(`${issue.lineNumber}:${issue.code}`),
+			),
+		);
+		setChoices((current) =>
+			Object.fromEntries(
+				rows.map((candidate, index) => {
+					const beforeIndex = candidates.findIndex(
+						(before) => before.id === candidate.id,
+					);
+					const before =
+						beforeIndex < 0 ? undefined : preview?.rows[beforeIndex];
+					const after = nextPlan?.rows[index];
+					const changed =
+						candidate.id === row.id ||
+						!before ||
+						!after ||
+						before.status !== after.status ||
+						JSON.stringify(before.existingIds) !==
+							JSON.stringify(after.existingIds);
+					return [
+						candidate.id,
+						changed
+							? {
+									selected: false,
+									action: candidate.updateTargetId
+										? "update"
+										: after?.status === "new"
+											? "new"
+											: "skip",
+									...(candidate.updateTargetId
+										? { targetId: candidate.updateTargetId }
+										: {}),
+								}
+							: current[candidate.id],
+					];
+				}),
+			),
+		);
+		setStage("review");
+		setMessage(t("pwSmartManualAdded"));
+		return true;
 	}
 	async function save() {
 		if (
@@ -584,6 +782,33 @@ export function PasswordSmartImportDialog({
 			)
 				return;
 			const remaining = candidates.filter((row) => !selectedIds.has(row.id));
+			const savedById = new Map<string, VaultImportCandidate>();
+			selected.forEach((row, index) => {
+				const entryId = result.entryIdsByRow[index];
+				if (!entryId) return;
+				const draft = session.readEntry(entryId);
+				delete draft.id;
+				const previous =
+					savedById.get(entryId) ??
+					savedCandidates.find((saved) => saved.updateTargetId === entryId);
+				savedById.set(entryId, {
+					...row,
+					id: previous?.id ?? row.id,
+					aliasIds: [...new Set([...(previous?.aliasIds ?? []), row.id])],
+					updateTargetId: entryId,
+					draft,
+				});
+			});
+			const justSaved = [...savedById.values()];
+			setSavedCandidates((previous) => [
+				...previous.filter(
+					(row) =>
+						!justSaved.some(
+							(saved) => saved.updateTargetId === row.updateTargetId,
+						),
+				),
+				...justSaved,
+			]);
 			const nextPlan = previewCandidates(session, remaining);
 			baseRevision.current = result.revision;
 			setCandidates(remaining);
@@ -593,7 +818,15 @@ export function PasswordSmartImportDialog({
 						const status = nextPlan?.rows[index]?.status;
 						return [
 							row.id,
-							{ selected: false, action: status === "new" ? "new" : "skip" },
+							{
+								selected: false,
+								action: row.updateTargetId
+									? "update"
+									: status === "new"
+										? "new"
+										: "skip",
+								...(row.updateTargetId ? { targetId: row.updateTargetId } : {}),
+							},
 						];
 					}),
 				),
@@ -601,12 +834,13 @@ export function PasswordSmartImportDialog({
 			if (!remaining.length && !issues.length) {
 				setSource("");
 				setReviewSource("");
+				setSavedCandidates([]);
 				setSourceSelection(null);
 				setFile(null);
 				setMappedLines([]);
 			}
 			setReceipt(result);
-			setStage(remaining.length ? "review" : "saved");
+			setStage(remaining.length || issues.length ? "review" : "saved");
 			onSaved(t("pwSmartSaved", result));
 		} catch (error) {
 			if (current === generation.current) setMessage(t(errorCopy(error)));
@@ -634,7 +868,7 @@ export function PasswordSmartImportDialog({
 				)}
 				{stage === "input" && (
 					<>
-						{editingSource && (
+						{hasReview && (
 							<div className="pw-smart-edit-source">
 								<p className="notice">
 									{t(
@@ -738,6 +972,15 @@ export function PasswordSmartImportDialog({
 							rows={mappedLines}
 							onChange={setMappedLines}
 							onReview={reviewMapping}
+							{...(hasReview
+								? {
+										onBackToReview: () => {
+											setStage("review");
+											setMessage("");
+										},
+										reviewLabel: t("pwSmartMapAdd"),
+									}
+								: {})}
 							onBack={() => {
 								setSource(updateVaultMappedSource(source, mappedLines));
 								setSourceSelection(null);
@@ -747,8 +990,8 @@ export function PasswordSmartImportDialog({
 						/>
 					</>
 				)}
-				{stage === "review" && (
-					<>
+				{hasReview && (
+					<div key={reviewVersion} hidden={stage !== "review"}>
 						<p className="pw-smart-mode">
 							{t(
 								`pwSmartReviewMode_${reviewOrigin.kind}`,
@@ -781,7 +1024,8 @@ export function PasswordSmartImportDialog({
 									{issueGroups.map((group) => (
 										<div
 											className="pw-smart-source-group"
-											key={group.excerpt.id}
+											data-source-group={group.id}
+											key={group.id}
 										>
 											<p className="pw-smart-source-group-reasons">
 												{[...new Set(group.issues.map((issue) => issue.code))]
@@ -796,15 +1040,23 @@ export function PasswordSmartImportDialog({
 												excerpt={group.excerpt}
 												source={reviewSource}
 												disabled={!!busy}
-												onEdit={editSource}
+											/>
+											<VaultImportFragmentForm
+												idPrefix={`pw-fragment-${group.id}`}
+												fragmentText={reviewSource.slice(
+													group.excerpt.selection.start,
+													group.excerpt.selection.end,
+												)}
+												candidates={fragmentTargets}
+												disabled={!!busy || outdated}
+												onApply={(targetId, draft) =>
+													applyFragment(group, targetId, draft)
+												}
 											/>
 										</div>
 									))}
 								</div>
 								<p>{t("pwSmartIssuesHint")}</p>
-								<Button onClick={startMapping} disabled={!!busy}>
-									{t("pwSmartMap")}
-								</Button>
 							</div>
 						)}
 						{candidates.length > 0 && (
@@ -898,9 +1150,11 @@ export function PasswordSmartImportDialog({
 											onDraft={updateDraft}
 											onChoice={choose}
 											existing={vault.snapshot.entries}
-											source={reviewSource}
-											candidates={candidates}
-											onEditSource={editSource}
+											source={row.sourceSnapshot ?? reviewSource}
+											candidates={candidates.filter(
+												(candidate) =>
+													candidate.sourceSnapshot === row.sourceSnapshot,
+											)}
 										/>
 									))}
 								</div>
@@ -912,9 +1166,6 @@ export function PasswordSmartImportDialog({
 							</>
 						)}
 						<div className="actions pw-smart-footer">
-							<Button onClick={() => editSource()} disabled={!!busy}>
-								{t("pwSmartEditSource")}
-							</Button>
 							<Button
 								variant="primary"
 								onClick={() => void save()}
@@ -923,18 +1174,23 @@ export function PasswordSmartImportDialog({
 								{t("pwSmartConfirm", { count: selected.length })}
 							</Button>
 						</div>
-					</>
+						<details className="pw-smart-advanced">
+							<summary>{t("pwSmartAdvanced")}</summary>
+							<div className="actions">
+								<Button onClick={() => editSource()} disabled={!!busy}>
+									{t("pwSmartEditSource")}
+								</Button>
+								<Button onClick={startMapping} disabled={!!busy}>
+									{t("pwSmartMap")}
+								</Button>
+							</div>
+						</details>
+					</div>
 				)}
 				{stage === "saved" && receipt && (
 					<p className="pw-smart-receipt" role="status">
 						{t("pwSmartSaved", receipt)}
 					</p>
-				)}
-				{stage === "saved" && issues.length > 0 && (
-					<div className="pw-smart-issues">
-						<p>{t("pwSmartRemaining")}</p>
-						<Button onClick={() => editSource()}>{t("pwSmartContinue")}</Button>
-					</div>
 				)}
 				{busy && (
 					<p role="status">
@@ -979,7 +1235,6 @@ function ImportRow({
 	existing,
 	source,
 	candidates,
-	onEditSource,
 }: {
 	row: VaultImportCandidate;
 	index: number;
@@ -991,18 +1246,12 @@ function ImportRow({
 	existing: { id: string; title: string; username: string }[];
 	source: string;
 	candidates: VaultImportCandidate[];
-	onEditSource: (selection: { start: number; end: number }) => void;
 }) {
 	const { t } = useTranslation();
-	const [revealed, setRevealed] = useState(false);
-	const multilinePassword = /[\r\n]/.test(row.draft.password);
 	const status = plan?.rows[index]?.status;
 	const ids = plan?.rows[index]?.existingIds ?? [];
 	const rowIssues = currentRowIssues(row, !!status);
 	const [expanded, setExpanded] = useState(index === 0 || rowIssues.length > 0);
-	const [optionalExpanded, setOptionalExpanded] = useState(
-		!!row.draft.url || !!row.draft.notes,
-	);
 	const sourceAnchor =
 		row.sourceFields?.username?.line ??
 		row.sourceFields?.password?.line ??
@@ -1032,7 +1281,11 @@ function ImportRow({
 					{t("pwSmartRow", { count: index + 1 })}
 				</label>
 				<span className="pw-smart-status">
-					{t(`pwSmartStatus_${status ?? "invalid"}`)}
+					{t(
+						row.updateTargetId
+							? "pwSmartStatus_update"
+							: `pwSmartStatus_${status ?? "invalid"}`,
+					)}
 				</span>
 			</div>
 			{rowIssues.length > 0 && (
@@ -1057,120 +1310,13 @@ function ImportRow({
 						<span className="pw-smart-row-username">{row.draft.username}</span>
 					)}
 				</summary>
-				<div className="pw-smart-fields">
-					{(["title", "username"] as const).map((field) => (
-						<label
-							className={`field pw-smart-field-${field}`}
-							htmlFor={`${fieldId}-${field}`}
-							key={field}
-						>
-							<span>
-								{t(
-									{
-										title: "pwVaultTitleField",
-										username: "pwVaultUsernameField",
-									}[field],
-								)}
-							</span>
-							<input
-								id={`${fieldId}-${field}`}
-								value={row.draft[field]}
-								placeholder={
-									field === "title" ? t("pwVaultNamePlaceholder") : undefined
-								}
-								onChange={(event) => onDraft(row.id, field, event.target.value)}
-								disabled={disabled}
-								autoComplete="off"
-								spellCheck={false}
-							/>
-						</label>
-					))}
-					<label
-						className="field pw-smart-field-password"
-						htmlFor={`${fieldId}-password`}
-					>
-						<span>{t("pwVaultPasswordField")}</span>
-						<div className="pw-smart-password">
-							{multilinePassword ? (
-								<textarea
-									id={`${fieldId}-password`}
-									value={revealed ? row.draft.password : "••••••••"}
-									readOnly={!revealed}
-									onChange={(event) =>
-										onDraft(row.id, "password", event.target.value)
-									}
-									disabled={disabled}
-									autoComplete="off"
-									spellCheck={false}
-									rows={3}
-								/>
-							) : (
-								<input
-									id={`${fieldId}-password`}
-									value={row.draft.password}
-									type={revealed ? "text" : "password"}
-									onChange={(event) =>
-										onDraft(row.id, "password", event.target.value)
-									}
-									disabled={disabled}
-									autoComplete="new-password"
-									spellCheck={false}
-								/>
-							)}
-							<Button
-								size="icon"
-								variant="ghost"
-								aria-label={t(
-									revealed ? "pwVaultHidePassword" : "pwVaultShowPassword",
-								)}
-								onClick={() => setRevealed((value) => !value)}
-								disabled={disabled}
-							>
-								{revealed ? <EyeOff size={16} /> : <Eye size={16} />}
-							</Button>
-						</div>
-					</label>
-				</div>
-				<details
-					className="pw-smart-optional"
-					open={optionalExpanded}
-					onToggle={(event) => setOptionalExpanded(event.currentTarget.open)}
-				>
-					<summary>{t("pwVaultOptionalDetails")}</summary>
-					<div className="pw-smart-fields">
-						<label
-							className="field pw-smart-field-url"
-							htmlFor={`${fieldId}-url`}
-						>
-							<span>{t("pwVaultUrlOptionalField")}</span>
-							<input
-								id={`${fieldId}-url`}
-								value={row.draft.url}
-								onChange={(event) => onDraft(row.id, "url", event.target.value)}
-								disabled={disabled}
-								autoComplete="off"
-								spellCheck={false}
-							/>
-						</label>
-						<label
-							className="field pw-smart-field-notes"
-							htmlFor={`${fieldId}-notes`}
-						>
-							<span>{t("pwVaultNotesOptionalField")}</span>
-							<textarea
-								id={`${fieldId}-notes`}
-								value={row.draft.notes}
-								onChange={(event) =>
-									onDraft(row.id, "notes", event.target.value)
-								}
-								disabled={disabled}
-								autoComplete="off"
-								spellCheck={false}
-								rows={2}
-							/>
-						</label>
-					</div>
-				</details>
+				<VaultImportDraftFields
+					idPrefix={fieldId}
+					draft={row.draft}
+					disabled={disabled}
+					readOnlyIdentity={!!row.updateTargetId}
+					onChange={(field, value) => onDraft(row.id, field, value)}
+				/>
 				{expanded && (
 					<VaultImportSourceExcerpt
 						excerpt={buildVaultImportSourceExcerpt(
@@ -1188,11 +1334,10 @@ function ImportRow({
 						)}
 						source={source}
 						disabled={disabled}
-						onEdit={onEditSource}
 					/>
 				)}
 			</details>
-			{status === "conflict" && (
+			{status === "conflict" && !row.updateTargetId && (
 				<label className="field" htmlFor={`${fieldId}-action`}>
 					<span>{t("pwSmartConflictHint")}</span>
 					<Select

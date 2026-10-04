@@ -13,11 +13,15 @@ export function PasswordImportMapping({
 	onChange,
 	onReview,
 	onBack,
+	onBackToReview,
+	reviewLabel,
 }: {
 	rows: VaultMappedLine[];
 	onChange: (rows: VaultMappedLine[]) => void;
 	onReview: () => void;
 	onBack: () => void;
+	onBackToReview?: () => void;
+	reviewLabel?: string;
 }) {
 	const { t } = useTranslation();
 	const [revealed, setRevealed] = useState(false);
@@ -94,13 +98,16 @@ export function PasswordImportMapping({
 				</div>
 			))}
 			<div className="actions pw-smart-footer">
+				{onBackToReview && (
+					<Button onClick={onBackToReview}>{t("pwSmartBackToReview")}</Button>
+				)}
 				<Button onClick={onBack}>{t("pwSmartEditSource")}</Button>
 				<Button
 					variant="primary"
 					onClick={onReview}
 					disabled={!rows.some((row) => row.field === "password")}
 				>
-					{t("pwSmartMapReview")}
+					{reviewLabel ?? t("pwSmartMapReview")}
 				</Button>
 			</div>
 		</div>

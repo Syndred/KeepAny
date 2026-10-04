@@ -45,14 +45,20 @@ export function createVaultMappedLines(source: string): VaultMappedLine[] {
 
 export function parseVaultMappedLines(
 	rows: VaultMappedLine[],
-): VaultImportResult {
+): VaultImportResult & { handledLines: number[] } {
 	if (
 		rows.length > VAULT_IMPORT_MAX_ENTRIES * 10 ||
 		new TextEncoder().encode(rows.map((row) => row.value).join("\n"))
 			.byteLength > VAULT_IMPORT_MAX_BYTES
 	)
 		throw Error("vault-import-limit");
-	const result: VaultImportResult = { candidates: [], issues: [] };
+	const result: VaultImportResult & { handledLines: number[] } = {
+		candidates: [],
+		issues: [],
+		handledLines: rows
+			.filter((row) => row.field === "ignore")
+			.map((row) => row.lineNumber),
+	};
 	let block: VaultMappedLine[] = [];
 	const flush = () => {
 		const assigned = block.filter((row) => row.field && row.field !== "ignore");
@@ -79,6 +85,8 @@ export function parseVaultMappedLines(
 					.map((row) => `${row.field}=${JSON.stringify(row.value)}`)
 					.join("\n"),
 			);
+			if (parsed.candidates.length)
+				result.handledLines.push(...assigned.map((row) => row.lineNumber));
 			for (const row of parsed.candidates) {
 				result.candidates.push({
 					...row,

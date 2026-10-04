@@ -407,6 +407,36 @@ describe("local password paste parsing", () => {
 });
 
 describe("password import AI boundary", () => {
+	it("keeps manually completed rows local while retaining their secrets in the host exclusion check", () => {
+		const rows = candidates();
+		const manual = {
+			...rows[0],
+			id: "vault-manual-1",
+			aiEligible: false,
+			draft: { ...rows[0].draft, password: "manual-sensitive-token" },
+		};
+		expect(buildVaultImportAiPreview([...rows, manual])).toEqual(
+			buildVaultImportAiPreview(rows),
+		);
+		expect(
+			buildVaultImportAiPreview([
+				{
+					...rows[0],
+					draft: {
+						...rows[0].draft,
+						url: "https://manual-sensitive-token.example.test",
+					},
+				},
+				manual,
+			]).records,
+		).toEqual([]);
+		expect(() =>
+			buildVaultImportAiPreview([{ ...manual, aiEligible: true }]),
+		).toThrow("vault-import-ai-invalid");
+		expect(() => buildVaultImportAiPreview([manual, manual])).toThrow(
+			"vault-import-ai-invalid",
+		);
+	});
 	it("exports only generated ids and hosts, excluding all source, paths, accounts, passwords and notes", () => {
 		const preview = buildVaultImportAiPreview(candidates());
 		expect(preview).toEqual({

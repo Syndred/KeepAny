@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
 	createVaultMappedLines,
-	updateVaultMappedSource,
 	parseVaultMappedLines,
+	updateVaultMappedSource,
 	type VaultMappedField,
 } from "./vault-import-mapping";
 
@@ -82,6 +82,29 @@ describe("local password line mapping", () => {
 		);
 		expect(result.issues).toEqual([]);
 		expect(result.candidates[0].draft.notes).toBe("");
+		expect(result.handledLines).toEqual([3, 1, 2]);
+	});
+	it("only consumes successfully assigned blocks and explicitly ignored lines", () => {
+		const fields: VaultMappedField[] = [
+			"title",
+			"password",
+			"title",
+			"username",
+			"password",
+			"url",
+			"ignore",
+		];
+		const result = parseVaultMappedLines(
+			createVaultMappedLines(
+				"Good\np1\n\nIncomplete\nsecond@example.test\np2\nftp://example.test\n\nDiscarded",
+			).map((row, index) => ({ ...row, field: fields[index] })),
+		);
+		expect(result.candidates).toHaveLength(1);
+		expect(result.handledLines).toEqual([9, 1, 2]);
+		expect(result.issues).toContainEqual({
+			lineNumber: 4,
+			code: "invalid-url",
+		});
 	});
 	it("does not infer an entry boundary from repeated mapped titles or URLs", () => {
 		for (const field of ["title", "url"] as const) {

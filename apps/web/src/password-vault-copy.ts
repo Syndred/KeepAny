@@ -133,6 +133,10 @@ export const passwordVaultCopy: Record<string, [string, string]> = {
 		"将指定条目加入核对列表",
 		"Add assigned entries to the review list",
 	],
+	pwSmartMapRemaining: [
+		"还有未指定或有问题的内容，请完成字段指定或明确忽略后再加入列表。",
+		"Some content is unassigned or needs correction. Assign its fields or explicitly ignore it before adding these entries.",
+	],
 	pwSmartIssueUnknown: ["格式不明确", "Unclear format"],
 	"pwSmartIssue_unknown-field": ["有未识别的字段", "Unknown field"],
 	"pwSmartIssue_unrecognized-line": [

@@ -36,6 +36,12 @@ export type VaultImportCandidate = {
 	needsReview?: boolean;
 	/** Safe source references that need correction before this draft can be saved. */
 	reviewIssues?: VaultImportIssue[];
+	/** Explicitly selected entry saved earlier in this import, for local completion. */
+	updateTargetId?: string;
+	/** Explicit candidate IDs that wrote the same entry during this import. */
+	aliasIds?: string[];
+	/** Snapshot for explicitly added rows when advanced input differs from the AI source. */
+	sourceSnapshot?: string;
 	/** Validated ranges in the current paste, retained only for local review. */
 	sourceFields?: Partial<
 		Record<Exclude<Field, "type">, VaultImportSourceReference>
@@ -640,7 +646,11 @@ export function buildVaultImportAiPreview(
 	const ids = new Set<string>();
 	const records: VaultImportAiPreview["records"] = [];
 	for (const candidate of candidates) {
-		if (!/^vault-import-\d+$/.test(candidate.id) || ids.has(candidate.id))
+		if (
+			(!/^vault-import-\d+$/.test(candidate.id) &&
+				(candidate.aiEligible || !/^vault-manual-\d+$/.test(candidate.id))) ||
+			ids.has(candidate.id)
+		)
 			throw Error("vault-import-ai-invalid");
 		ids.add(candidate.id);
 		if (!candidate.aiEligible) continue;
