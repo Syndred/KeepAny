@@ -921,7 +921,11 @@ export function PasswordSmartImportDialog({
 	}
 
 	return (
-		<Dialog title={t("pwSmartTitle")} onClose={close}>
+		<Dialog
+			title={t("pwSmartTitle")}
+			onClose={close}
+			closeDisabled={busy === "save"}
+		>
 			<div className="password-smart-import">
 				<p className="pw-smart-hint">{t("pwSmartHint")}</p>
 				{message && (

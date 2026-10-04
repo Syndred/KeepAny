@@ -6,11 +6,13 @@ export function Dialog({
 	title,
 	children,
 	onClose,
+	closeDisabled = false,
 	returnFocusTo,
 }: {
 	title: string;
 	children: ReactNode;
 	onClose: () => void;
+	closeDisabled?: boolean;
 	returnFocusTo?: () => HTMLElement | null;
 }) {
 	const { t } = useTranslation();
@@ -40,6 +42,7 @@ export function Dialog({
 						<DialogPrimitive.Close
 							className="button icon ghost"
 							aria-label={t("close")}
+							disabled={closeDisabled}
 						>
 							<X size={18} />
 						</DialogPrimitive.Close>
