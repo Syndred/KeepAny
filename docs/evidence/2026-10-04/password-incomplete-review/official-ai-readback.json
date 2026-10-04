@@ -1,0 +1,28 @@
+{
+  "date": "2026-10-04",
+  "origin": "http://127.0.0.1:4180",
+  "bundle": "index-DXFQOmXN.js",
+  "model": "deepseek-flash",
+  "endpoint": "https://api.deepseek.com/chat/completions",
+  "httpStatus": 200,
+  "finishReason": "stop",
+  "sourceLines": 173,
+  "recordsReturned": 55,
+  "completePreviewRows": 49,
+  "incompletePreviewRows": 6,
+  "incompleteCodes": ["missing-password"],
+  "unassignedNonemptyLines": [48, 49, 50, 77, 78],
+  "usage": { "inputTokens": 3631, "outputTokens": 2871, "totalTokens": 6502 },
+  "selectedReadinessCheck": {
+    "completeRowsChecked": 49,
+    "incompleteRowsChecked": 0,
+    "confirmationEnabled": true,
+    "restoredSelectedCount": 0
+  },
+  "actualVaultImportConfirmed": false,
+  "vaultTestWrites": 0,
+  "sourceUpgradeHandling": "Current paste temporarily retained in tool memory, restored to the same page after the user unlocked, then the temporary variable was cleared.",
+  "privateValuesPersistedInEvidence": false,
+  "limitations": "This verifies provider success, source-reference acceptance, draft retention and confirmation readiness. It does not assert every model field assignment is correct. Six password references are missing and five nonempty lines remain unassigned; user review is still required.",
+  "screenshot": "ego-official-ai-review-safe.png"
+}

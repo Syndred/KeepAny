@@ -1,0 +1,21 @@
+{
+  "date": "2026-10-04",
+  "bundle": "index-DXFQOmXN.js",
+  "unitTests": { "files": 3, "passed": 62, "durationMs": 225 },
+  "sourceBrowserTests": { "passed": 22, "failed": 0, "skipped": 0, "flaky": 0, "durationMs": 114934.445 },
+  "fixedBundleBrowserTests": { "report": "release-playwright.json", "passed": 27, "failed": 0, "skipped": 0, "flaky": 0, "durationMs": 106819.27 },
+  "finalAdditionalAssertions": { "report": "release-final-new.json", "passed": 4, "failed": 0, "skipped": 0, "flaky": 0, "durationMs": 17693.221, "alreadyIncludedInDistinctTestCount": true },
+  "typecheck": "passed",
+  "build": "passed",
+  "biomeCheck": "seven source/test files passed",
+  "diffCheck": "passed",
+  "releaseVerification": { "currentFilesByteIdentical": 93, "explicitlyRetainedFiles": 1340 },
+  "review": "Independent read-only review found no blocking reference-safety or parser regressions.",
+  "realProvider": "official-ai-readback.json",
+  "syntheticUiScreenshots": [
+    "password-ai-incomplete-zh-CN-390-needs-completion.png",
+    "password-ai-incomplete-en-US-1280-remaining.png"
+  ],
+  "ci": "not checked in this turn",
+  "internetDeployment": false
+}
