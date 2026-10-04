@@ -1,7 +1,7 @@
 import { gzipSync } from 'fflate';
 import { Consts, Int64, Kdbx, ProtectedValue, VarDictionary, XmlUtils } from 'kdbxweb';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { checkHeader, configureDatabase, credentials, VAULT_AI_KEY_BINDING_FIELD, VAULT_LINK_FIELD } from './engine';
+import { checkHeader, configureDatabase, credentials, VAULT_AI_KEY_BINDING_FIELD, VAULT_LINK_FIELD, VAULT_USERNAME_ALIASES_FIELD } from './engine';
 import { generatePassword, VAULT_IMPORT_MAX_ENTRIES, VAULT_MAX_BYTES, VaultSession } from './index';
 import type { VaultEntryDraft, VaultPersistence, VaultRecord } from './types';
 
@@ -41,6 +41,111 @@ function deferred() {
 afterEach(() => vi.restoreAllMocks());
 
 describe('real encrypted local KDBX session', () => {
+  it('keeps exact additional login identifiers protected through editing, history and KDBX restore', async () => {
+    const { storage, session } = await created();
+    const id = await session.saveEntry(draft);
+    expect(session.readEntry(id)).toEqual({ ...draft, id });
+    expect(session.getSnapshot().entries[0]).not.toHaveProperty('usernameAliases');
+    const legacy = await Kdbx.load((await session.exportKdbx()).slice().buffer, credentials(master));
+    expect(legacy.getDefaultGroup().entries[0].fields.has(VAULT_USERNAME_ALIASES_FIELD)).toBe(false);
+
+    const aliases = ['Synthetic@example.test', 'synthetic-alternate@example.test', '  Synthetic handle  ', '+15550123456'];
+    await session.saveEntry({ ...draft, id, usernameAliases: [draft.username, ...aliases, aliases[1]] });
+    expect(session.readEntry(id)).toEqual({ ...draft, id, usernameAliases: aliases });
+    expect(session.getSnapshot().entries[0].usernameAliases).toEqual(aliases);
+    expect(session.history(id)[0].draft).not.toHaveProperty('usernameAliases');
+    const bytes = await session.exportKdbx();
+    const plaintextProbe = new TextDecoder().decode(bytes);
+    for (const alias of aliases) expect(plaintextProbe).not.toContain(alias);
+    const upstream = await Kdbx.load(bytes.slice().buffer, credentials(master));
+    const protectedAliases = upstream.getDefaultGroup().entries[0].fields.get(VAULT_USERNAME_ALIASES_FIELD);
+    expect(protectedAliases).toBeInstanceOf(ProtectedValue);
+    expect(JSON.parse((protectedAliases as ProtectedValue).getText())).toEqual(aliases);
+
+    session.lock();
+    expect(session.getSnapshot().entries).toEqual([]);
+    const reopened = new VaultSession(storage);
+    await reopened.initialize();
+    await reopened.unlock(master);
+    expect(reopened.readEntry(id).usernameAliases).toEqual(aliases);
+    await reopened.saveEntry({ ...draft, id, usernameAliases: [] });
+    expect(reopened.readEntry(id)).not.toHaveProperty('usernameAliases');
+    expect(reopened.history(id)[1].draft.usernameAliases).toEqual(aliases);
+    const removed = await Kdbx.load((await reopened.exportKdbx()).slice().buffer, credentials(master));
+    expect(removed.getDefaultGroup().entries[0].fields.has(VAULT_USERNAME_ALIASES_FIELD)).toBe(false);
+    expect(removed.getDefaultGroup().entries[0].history[1].fields.get(VAULT_USERNAME_ALIASES_FIELD)).toBeInstanceOf(ProtectedValue);
+    await reopened.restoreHistory(id, 1);
+    expect(reopened.readEntry(id).usernameAliases).toEqual(aliases);
+    const restored = new VaultSession(new MemoryStorage());
+    await restored.initialize();
+    await restored.importKdbx(await reopened.exportKdbx(), master);
+    expect(restored.readEntry(id)).toEqual({ ...draft, id, usernameAliases: aliases });
+    expect(restored.history(id)[1].draft.usernameAliases).toEqual(aliases);
+  }, 30_000);
+
+  it('keeps separate platform accounts independent even when their login aliases overlap', async () => {
+    const { session } = await created();
+    const first = { ...draft, usernameAliases: ['synthetic-shared@example.test', 'second-user'] };
+    const second = { ...draft, username: 'second-user', usernameAliases: [draft.username, 'synthetic-shared@example.test'] };
+    const result = await session.importEntries([{ draft: first }, { draft: second }], session.getSnapshot().revision as string);
+    expect(result).toMatchObject({ added: 2, updated: 0, skipped: 0 });
+    expect(result.entryIds[0]).not.toBe(result.entryIds[1]);
+    expect(session.getSnapshot().entries).toHaveLength(2);
+    expect(session.readEntry(result.entryIds[0])).toMatchObject(first);
+    expect(session.readEntry(result.entryIds[1])).toMatchObject(second);
+    const preview = session.previewImport([{ ...second, password: 'Synthetic second-account replacement' }]);
+    expect(preview.rows[0]).toEqual({ index: 0, status: 'conflict', existingIds: [result.entryIds[1]] });
+    session.lock();
+    await session.unlock(master);
+    expect(session.readEntry(result.entryIds[0])).toMatchObject(first);
+    expect(session.readEntry(result.entryIds[1])).toMatchObject(second);
+  }, 30_000);
+
+  it('requires an explicit same-password alias update and keeps exact repeats as no-ops', async () => {
+    const { storage, session } = await created();
+    const id = await session.saveEntry(draft);
+    const revision = session.getSnapshot().revision as string;
+    const next = { ...draft, usernameAliases: ['Synthetic second login', '+15550129876'] };
+    expect(session.previewImport([next]).rows[0]).toMatchObject({ status: 'duplicate', existingIds: [id] });
+    const implicit = await session.importEntries([{ draft: next }], revision);
+    expect(implicit).toMatchObject({ added: 0, updated: 0, skipped: 1, revision });
+    expect(session.readEntry(id)).not.toHaveProperty('usernameAliases');
+    const explicit = await session.importEntries([{ draft: next, action: 'update', targetId: id }], revision);
+    expect(explicit).toMatchObject({ added: 0, updated: 1, skipped: 0, entryIdsByRow: [id] });
+    expect(session.getSnapshot().entries).toHaveLength(1);
+    expect(session.readEntry(id)).toMatchObject(next);
+    expect(session.history(id)[0].draft).not.toHaveProperty('usernameAliases');
+    const writes = storage.writes;
+    const repeat = await session.importEntries([{ draft: { ...next, usernameAliases: [draft.username, ...next.usernameAliases, next.usernameAliases[0]] }, action: 'update', targetId: id }], explicit.revision);
+    expect(repeat).toMatchObject({ added: 0, updated: 0, skipped: 1, revision: explicit.revision });
+    expect(storage.writes).toBe(writes);
+    const removed = await session.importEntries([{ draft, action: 'update', targetId: id }], explicit.revision);
+    expect(removed).toMatchObject({ added: 0, updated: 1, skipped: 0 });
+    expect(session.readEntry(id)).not.toHaveProperty('usernameAliases');
+    expect(session.history(id).at(-1)?.draft.usernameAliases).toEqual(next.usernameAliases);
+  }, 30_000);
+
+  it('rejects invalid additional login identifiers before cloning or mutating encrypted entries', async () => {
+    const { storage, session } = await created();
+    const before = storage.record?.bytes.slice();
+    const revision = session.getSnapshot().revision as string;
+    const writes = storage.writes;
+    const load = vi.spyOn(Kdbx, 'load');
+    for (const usernameAliases of [null, 'synthetic alias', [''], ['synthetic\0alias'], ['x'.repeat(1025)], [12], Array(1), Array(21).fill('same exact value')]) {
+      const invalid = { ...draft, usernameAliases } as VaultEntryDraft;
+      await expect(session.saveEntry(invalid)).rejects.toThrow('vault-invalid');
+      await expect(session.importEntries([{ draft: invalid }], revision)).rejects.toThrow('vault-invalid');
+      expect(() => session.previewImport([invalid])).toThrow('vault-invalid');
+    }
+    expect(load).not.toHaveBeenCalled();
+    expect(storage.writes).toBe(writes);
+    expect(storage.record?.bytes).toEqual(before);
+    const aliases = Array.from({ length: 20 }, (_, index) => `Synthetic alias ${index}`);
+    aliases[0] = 'x'.repeat(1024);
+    const id = await session.saveEntry({ ...draft, usernameAliases: aliases });
+    expect(session.readEntry(id).usernameAliases).toEqual(aliases);
+  }, 30_000);
+
   it('keeps model-service authorization encrypted across refresh, key editing and KDBX export/restore', async () => {
     const { storage, session } = await created();
     const aiKeyBinding = { version: 1 as const, provider: 'deepseek', baseURL: 'https://api.deepseek.com' };

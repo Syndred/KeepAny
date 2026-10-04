@@ -8,6 +8,7 @@ import type { VaultEntryDraft, VaultEntrySummary } from './types';
 export { checkBytes, checkHeader, fail, safeError, VAULT_MAX_BYTES } from './header';
 export const VAULT_LINK_FIELD = 'KeepAny.LinkedAssetIds';
 export const VAULT_AI_KEY_BINDING_FIELD = 'KeepAny.AiKeyBinding';
+export const VAULT_USERNAME_ALIASES_FIELD = 'KeepAny.UsernameAliases';
 const MAX_ENTRIES = 10_000;
 const MAX_TEXT = 64 * 1024;
 
@@ -87,8 +88,20 @@ export function normalizeDraft(draft: VaultEntryDraft): VaultEntryDraft {
   if (!Array.isArray(draft.linkedAssetIds) || draft.linkedAssetIds.length > 100
     || draft.linkedAssetIds.some((id) => typeof id !== 'string' || id.length < 1 || id.length > 128 || id.includes('\0'))) fail('vault-invalid');
   if (draft.aiKeyBinding !== undefined && !validAiKeyBinding(draft.aiKeyBinding)) fail('vault-invalid');
-  return { ...draft, title: draft.title.trim(), linkedAssetIds: [...new Set(draft.linkedAssetIds)],
+  const { usernameAliases, ...fields } = draft;
+  const aliases = normalizeUsernameAliases(usernameAliases, draft.username);
+  return { ...fields, title: draft.title.trim(), linkedAssetIds: [...new Set(draft.linkedAssetIds)],
+    ...(aliases ? { usernameAliases: aliases } : {}),
     ...(draft.aiKeyBinding ? { aiKeyBinding: { version: 1, provider: draft.aiKeyBinding.provider, baseURL: draft.aiKeyBinding.baseURL } } : {}) };
+}
+
+function normalizeUsernameAliases(value: unknown, username: string): string[] | undefined {
+  if (value === undefined) return undefined;
+  if (!Array.isArray(value) || value.length > 20
+    || [...value].some((alias) => typeof alias !== 'string' || alias.length < 1 || alias.length > 1024 || alias.includes('\0'))) fail('vault-invalid');
+  // Login identifiers are exact values: do not trim or case-fold them.
+  const aliases = [...new Set(value.filter((alias) => alias !== username))];
+  return aliases.length ? aliases : undefined;
 }
 
 function validAiKeyBinding(value: unknown): value is NonNullable<VaultEntryDraft['aiKeyBinding']> {
@@ -122,10 +135,19 @@ function links(entry: KdbxEntry): string[] {
   } catch { return []; }
 }
 
+function usernameAliasesOf(entry: KdbxEntry): string[] | undefined {
+  const value = text(entry, VAULT_USERNAME_ALIASES_FIELD);
+  if (!value) return undefined;
+  try { return normalizeUsernameAliases(JSON.parse(value), text(entry, 'UserName')); }
+  catch { return undefined; }
+}
+
 export function draftOf(entry: KdbxEntry): VaultEntryDraft {
   const aiKeyBinding = aiKeyBindingOf(entry);
+  const usernameAliases = usernameAliasesOf(entry);
   return { id: entry.uuid.id, title: text(entry, 'Title'), username: text(entry, 'UserName'),
     password: text(entry, 'Password'), url: text(entry, 'URL'), notes: text(entry, 'Notes'), linkedAssetIds: links(entry),
+    ...(usernameAliases ? { usernameAliases } : {}),
     ...(aiKeyBinding ? { aiKeyBinding } : {}) };
 }
 
@@ -138,7 +160,9 @@ function safeUrl(value: string): string {
 }
 
 export function summaryOf(entry: KdbxEntry): VaultEntrySummary {
+  const usernameAliases = usernameAliasesOf(entry);
   return { id: entry.uuid.id, title: text(entry, 'Title'), username: text(entry, 'UserName'),
+    ...(usernameAliases ? { usernameAliases } : {}),
     url: safeUrl(text(entry, 'URL')), linkedAssetIds: links(entry),
     modifiedAt: (entry.times.lastModTime ?? new Date(0)).toISOString(), historyCount: entry.history.length };
 }
@@ -146,6 +170,8 @@ export function summaryOf(entry: KdbxEntry): VaultEntrySummary {
 export function applyDraft(entry: KdbxEntry, draft: VaultEntryDraft): void {
   entry.fields.set('Title', draft.title);
   entry.fields.set('UserName', draft.username);
+  if (draft.usernameAliases?.length) entry.fields.set(VAULT_USERNAME_ALIASES_FIELD, ProtectedValue.fromString(JSON.stringify(draft.usernameAliases)));
+  else entry.fields.delete(VAULT_USERNAME_ALIASES_FIELD);
   entry.fields.set('Password', ProtectedValue.fromString(draft.password));
   entry.fields.set('URL', draft.url);
   entry.fields.set('Notes', ProtectedValue.fromString(draft.notes));

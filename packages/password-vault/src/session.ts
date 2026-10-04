@@ -93,6 +93,7 @@ function planImports(db: Kdbx, items: VaultImportItem[]) {
     const explicitChange = target && (
       target.title !== item.draft.title ||
       target.notes !== item.draft.notes ||
+      JSON.stringify(target.usernameAliases ?? []) !== JSON.stringify(item.draft.usernameAliases ?? []) ||
       JSON.stringify(target.linkedAssetIds) !== JSON.stringify(item.draft.linkedAssetIds) ||
       target.password !== item.draft.password
     );

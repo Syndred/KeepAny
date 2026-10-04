@@ -14,6 +14,8 @@ export type VaultEntryDraft = {
   id?: string;
   title: string;
   username: string;
+  /** Additional exact login identifiers, protected inside the KDBX entry. */
+  usernameAliases?: string[];
   password: string;
   url: string;
   notes: string;
@@ -26,6 +28,7 @@ export type VaultEntrySummary = {
   id: string;
   title: string;
   username: string;
+  usernameAliases?: string[];
   url: string;
   linkedAssetIds: string[];
   modifiedAt: string;
