@@ -1,0 +1,546 @@
+{
+  "bundle": "/assets/index-DioBQTre.js",
+  "stats": {
+    "startTime": "2026-10-04T11:52:56.924Z",
+    "duration": 197995.98700000002,
+    "expected": 48,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "distinctTests": 48,
+  "annotations": {
+    "ui-quick-group-layout": 8,
+    "ui-quick-field-layout": 8,
+    "ui-gaps": 28,
+    "ui-quick-completion": 4,
+    "ui-source-gaps": 4,
+    "ui-pointer-hit": 124,
+    "ui-errors": 8,
+    "ui-kdbx": 8,
+    "ui-editor-field-layout": 4
+  },
+  "quickCompletion": [
+    {
+      "bundle": "/assets/index-DioBQTre.js",
+      "exportedEntries": 2,
+      "aiCalls": 1,
+      "identityRetyped": false,
+      "modeSelections": 0,
+      "clipboardExact": true,
+      "pageErrors": 0,
+      "consoleErrors": 0
+    },
+    {
+      "bundle": "/assets/index-DioBQTre.js",
+      "exportedEntries": 2,
+      "aiCalls": 1,
+      "identityRetyped": false,
+      "modeSelections": 0,
+      "clipboardExact": true,
+      "pageErrors": 0,
+      "consoleErrors": 0
+    },
+    {
+      "bundle": "/assets/index-DioBQTre.js",
+      "exportedEntries": 2,
+      "aiCalls": 1,
+      "identityRetyped": false,
+      "modeSelections": 0,
+      "clipboardExact": true,
+      "pageErrors": 0,
+      "consoleErrors": 0
+    },
+    {
+      "bundle": "/assets/index-DioBQTre.js",
+      "exportedEntries": 2,
+      "aiCalls": 1,
+      "identityRetyped": false,
+      "modeSelections": 0,
+      "clipboardExact": true,
+      "pageErrors": 0,
+      "consoleErrors": 0
+    }
+  ],
+  "layout": {
+    "groups": [
+      {
+        "gap": -300,
+        "verticalGap": 24,
+        "sourceOpen": false,
+        "scrollWidth": 300,
+        "clientWidth": 300
+      },
+      {
+        "gap": -300,
+        "verticalGap": 24,
+        "sourceOpen": false,
+        "scrollWidth": 300,
+        "clientWidth": 300
+      },
+      {
+        "gap": 24,
+        "verticalGap": -339.59375,
+        "sourceOpen": true,
+        "scrollWidth": 934,
+        "clientWidth": 934
+      },
+      {
+        "gap": 24,
+        "verticalGap": -339.59375,
+        "sourceOpen": true,
+        "scrollWidth": 934,
+        "clientWidth": 934
+      },
+      {
+        "gap": -300,
+        "verticalGap": 24,
+        "sourceOpen": false,
+        "scrollWidth": 300,
+        "clientWidth": 300
+      },
+      {
+        "gap": -300,
+        "verticalGap": 24,
+        "sourceOpen": false,
+        "scrollWidth": 300,
+        "clientWidth": 300
+      },
+      {
+        "gap": 24,
+        "verticalGap": -339.59375,
+        "sourceOpen": true,
+        "scrollWidth": 934,
+        "clientWidth": 934
+      },
+      {
+        "gap": 24,
+        "verticalGap": -339.59375,
+        "sourceOpen": true,
+        "scrollWidth": 934,
+        "clientWidth": 934
+      }
+    ],
+    "quickFields": [
+      {
+        "field": "title",
+        "width": 300,
+        "height": 52,
+        "parentWidth": 300,
+        "top": 511.546875
+      },
+      {
+        "field": "username",
+        "width": 300,
+        "height": 52,
+        "parentWidth": 300,
+        "top": 631.546875
+      },
+      {
+        "field": "password",
+        "width": 300,
+        "height": 52,
+        "parentWidth": 300,
+        "top": 725.734375
+      },
+      {
+        "field": "title",
+        "width": 300,
+        "height": 52,
+        "parentWidth": 300,
+        "top": 576.34375
+      },
+      {
+        "field": "username",
+        "width": 300,
+        "height": 52,
+        "parentWidth": 300,
+        "top": 696.34375
+      },
+      {
+        "field": "password",
+        "width": 300,
+        "height": 52,
+        "parentWidth": 300,
+        "top": 790.53125
+      },
+      {
+        "field": "title",
+        "width": 546,
+        "height": 52,
+        "parentWidth": 546,
+        "top": 352.765625
+      },
+      {
+        "field": "username",
+        "width": 546,
+        "height": 52,
+        "parentWidth": 546,
+        "top": 472.765625
+      },
+      {
+        "field": "password",
+        "width": 546,
+        "height": 52,
+        "parentWidth": 546,
+        "top": 566.953125
+      },
+      {
+        "field": "title",
+        "width": 546,
+        "height": 52,
+        "parentWidth": 546,
+        "top": 417.5625
+      },
+      {
+        "field": "username",
+        "width": 546,
+        "height": 52,
+        "parentWidth": 546,
+        "top": 537.5625
+      },
+      {
+        "field": "password",
+        "width": 546,
+        "height": 52,
+        "parentWidth": 546,
+        "top": 631.75
+      },
+      {
+        "field": "title",
+        "width": 300,
+        "height": 52,
+        "parentWidth": 300,
+        "top": 509.140625
+      },
+      {
+        "field": "username",
+        "width": 300,
+        "height": 52,
+        "parentWidth": 300,
+        "top": 629.140625
+      },
+      {
+        "field": "password",
+        "width": 300,
+        "height": 52,
+        "parentWidth": 300,
+        "top": 723.328125
+      },
+      {
+        "field": "title",
+        "width": 300,
+        "height": 52,
+        "parentWidth": 300,
+        "top": 600.9375
+      },
+      {
+        "field": "username",
+        "width": 300,
+        "height": 52,
+        "parentWidth": 300,
+        "top": 720.9375
+      },
+      {
+        "field": "password",
+        "width": 300,
+        "height": 52,
+        "parentWidth": 300,
+        "top": 815.125
+      },
+      {
+        "field": "title",
+        "width": 546,
+        "height": 52,
+        "parentWidth": 546,
+        "top": 351.765625
+      },
+      {
+        "field": "username",
+        "width": 546,
+        "height": 52,
+        "parentWidth": 546,
+        "top": 471.765625
+      },
+      {
+        "field": "password",
+        "width": 546,
+        "height": 52,
+        "parentWidth": 546,
+        "top": 565.953125
+      },
+      {
+        "field": "title",
+        "width": 546,
+        "height": 52,
+        "parentWidth": 546,
+        "top": 416.5625
+      },
+      {
+        "field": "username",
+        "width": 546,
+        "height": 52,
+        "parentWidth": 546,
+        "top": 536.5625
+      },
+      {
+        "field": "password",
+        "width": 546,
+        "height": 52,
+        "parentWidth": 546,
+        "top": 630.75
+      }
+    ],
+    "ordinaryFields": [
+      {
+        "field": "title",
+        "width": 326,
+        "height": 52,
+        "parentWidth": 326,
+        "top": 36.390625
+      },
+      {
+        "field": "username",
+        "width": 326,
+        "height": 52,
+        "parentWidth": 326,
+        "top": 156.390625
+      },
+      {
+        "field": "password",
+        "width": 326,
+        "height": 52,
+        "parentWidth": 326,
+        "top": 446.953125
+      },
+      {
+        "field": "url",
+        "width": 326,
+        "height": 52,
+        "parentWidth": 326,
+        "top": 762.703125
+      },
+      {
+        "field": "title",
+        "width": 510,
+        "height": 52,
+        "parentWidth": 510,
+        "top": 49.390625
+      },
+      {
+        "field": "username",
+        "width": 510,
+        "height": 52,
+        "parentWidth": 510,
+        "top": 169.390625
+      },
+      {
+        "field": "password",
+        "width": 510,
+        "height": 52,
+        "parentWidth": 510,
+        "top": 459.953125
+      },
+      {
+        "field": "url",
+        "width": 510,
+        "height": 52,
+        "parentWidth": 510,
+        "top": 764.515625
+      },
+      {
+        "field": "title",
+        "width": 326,
+        "height": 52,
+        "parentWidth": 326,
+        "top": 36.390625
+      },
+      {
+        "field": "username",
+        "width": 326,
+        "height": 52,
+        "parentWidth": 326,
+        "top": 156.390625
+      },
+      {
+        "field": "password",
+        "width": 326,
+        "height": 52,
+        "parentWidth": 326,
+        "top": 446.953125
+      },
+      {
+        "field": "url",
+        "width": 326,
+        "height": 52,
+        "parentWidth": 326,
+        "top": 762.703125
+      },
+      {
+        "field": "title",
+        "width": 510,
+        "height": 52,
+        "parentWidth": 510,
+        "top": 49.390625
+      },
+      {
+        "field": "username",
+        "width": 510,
+        "height": 52,
+        "parentWidth": 510,
+        "top": 169.390625
+      },
+      {
+        "field": "password",
+        "width": 510,
+        "height": 52,
+        "parentWidth": 510,
+        "top": 459.953125
+      },
+      {
+        "field": "url",
+        "width": 510,
+        "height": 52,
+        "parentWidth": 510,
+        "top": 764.515625
+      }
+    ],
+    "allInputHeights": [
+      52
+    ],
+    "allFieldWidthsMatch": true,
+    "quickWidths": [
+      300,
+      546
+    ],
+    "ordinaryWidths": [
+      326,
+      510
+    ],
+    "actionGroups": 28,
+    "buttonPairObservations": 128,
+    "minimumButtonGap": 16,
+    "sourceGroupGaps": [
+      [
+        16,
+        null
+      ],
+      [
+        16,
+        null
+      ],
+      [
+        16,
+        null
+      ],
+      [
+        16,
+        null
+      ]
+    ]
+  },
+  "pointer": {
+    "actualMouseDownHitMouseUp": 124,
+    "everyHitPassed": true,
+    "sourceTextSelectionFlows": 8,
+    "sourceRowsMeet44pxMinimum": true
+  },
+  "runtime": {
+    "explicitlyMonitoredTests": 12,
+    "restoredPagesAlsoMonitored": 4,
+    "samples": [
+      {
+        "pageErrors": 0,
+        "consoleErrors": 0
+      },
+      {
+        "pageErrors": 0,
+        "consoleErrors": 0
+      },
+      {
+        "pageErrors": 0,
+        "consoleErrors": 0
+      },
+      {
+        "pageErrors": 0,
+        "consoleErrors": 0
+      },
+      {
+        "pageErrors": 0,
+        "consoleErrors": 0
+      },
+      {
+        "pageErrors": 0,
+        "consoleErrors": 0
+      },
+      {
+        "pageErrors": 0,
+        "consoleErrors": 0
+      },
+      {
+        "pageErrors": 0,
+        "consoleErrors": 0
+      },
+      {
+        "pageErrors": 0,
+        "consoleErrors": 0
+      },
+      {
+        "pageErrors": 0,
+        "consoleErrors": 0
+      },
+      {
+        "pageErrors": 0,
+        "consoleErrors": 0
+      },
+      {
+        "pageErrors": 0,
+        "consoleErrors": 0
+      }
+    ]
+  },
+  "kdbx": [
+    {
+      "exportedEntries": 6,
+      "aliasesAndDifferentPasswordsMatched": true,
+      "aiCalls": 1
+    },
+    {
+      "exportedEntries": 6,
+      "aliasesAndDifferentPasswordsMatched": true,
+      "aiCalls": 1
+    },
+    {
+      "exportedEntries": 6,
+      "aliasesAndDifferentPasswordsMatched": true,
+      "aiCalls": 1
+    },
+    {
+      "exportedEntries": 6,
+      "aliasesAndDifferentPasswordsMatched": true,
+      "aiCalls": 1
+    },
+    {
+      "entriesAfterRefresh": 2,
+      "exportedThenReopened": 2,
+      "aliasesAndDifferentPasswordsMatched": true
+    },
+    {
+      "entriesAfterRefresh": 2,
+      "exportedThenReopened": 2,
+      "aliasesAndDifferentPasswordsMatched": true
+    },
+    {
+      "entriesAfterRefresh": 2,
+      "exportedThenReopened": 2,
+      "aliasesAndDifferentPasswordsMatched": true
+    },
+    {
+      "entriesAfterRefresh": 2,
+      "exportedThenReopened": 2,
+      "aliasesAndDifferentPasswordsMatched": true
+    }
+  ],
+  "testCommit": "2410dc8",
+  "fullRawReport": "release-playwright.json"
+}

@@ -1,0 +1,116 @@
+{
+  "date": "2026-10-04",
+  "scope": "KeepAny password import quick completion and credential form redesign",
+  "package": {
+    "entry": "index-DioBQTre.js",
+    "vaultCss": "PasswordVaultPanel-uPbdk22k.css",
+    "currentFiles": 93,
+    "retainedFiles": 1508,
+    "verification": "built dist and release/web byte-for-byte; all historical retained assets manifest-listed"
+  },
+  "unit": {
+    "files": 7,
+    "passed": 179,
+    "failed": 0,
+    "elapsedMs": 18898.452392578125,
+    "report": "unit.json"
+  },
+  "build": {
+    "typecheck": "passed",
+    "productionBuild": "passed",
+    "scopedBiome": "passed zero diagnostics",
+    "diffCheck": "passed",
+    "existingWarnings": [
+      "kdbxweb browser externalized crypto module",
+      "existing chunks over 500 kB"
+    ]
+  },
+  "finalE2e": {
+    "status": "passed",
+    "passed": 48,
+    "failed": 0,
+    "skipped": 0,
+    "flaky": 0,
+    "elapsedMs": 197995.98700000002,
+    "distinctTests": 48,
+    "bundle": "/assets/index-DioBQTre.js",
+    "report": "release-playwright.json",
+    "geometry": "ui-metrics.json",
+    "inputHeights": [
+      52
+    ],
+    "inputCount": 40,
+    "actionGroups": 28,
+    "buttonPairObservations": 128,
+    "minimumButtonGap": 16,
+    "validSourceFormGap": 24,
+    "actualPointerDownHitUpPassed": 124,
+    "syntheticProvider": true,
+    "realProvider": false
+  },
+  "selfReview": {
+    "reviewer": "root",
+    "languages": [
+      "zh-CN",
+      "en-US"
+    ],
+    "widths": [
+      390,
+      1280
+    ],
+    "verified": [
+      "known title and account prefill",
+      "no initial entry-mode picker",
+      "two-column desktop source plus form",
+      "folded mobile source",
+      "consistent password input dimensions",
+      "optional URL after notes",
+      "buttons and card spacing",
+      "fixed eye hit target",
+      "finish-review action auto-selects complete entry",
+      "no developer-facing text added to UI"
+    ],
+    "issuesCorrected": [
+      "finish-review status incorrectly asked for another selection",
+      "English selected-line grammar"
+    ]
+  },
+  "aiBoundary": {
+    "fullRecognitionTimeoutMs": 120000,
+    "ordinaryDefaultTimeoutMs": 30000,
+    "automaticRetry": false,
+    "partialIndependentValidRecordsRetained": true,
+    "truncatedJsonRepair": false,
+    "realProviderRequestThisTurn": false,
+    "historicFailureDiagnosis": "30s deadline and whole-batch nullable-field rejection found in code; exact historic 3-4 request failures not available",
+    "dataScope": "only user-selected current paste; no existing full vault or master password read or sent"
+  },
+  "originalBrowser": {
+    "metrics": "original-ego-metrics.json",
+    "screenshot": "original-ego-updated-locked.png",
+    "status": "final entry verified in original Ego; idle-locked, no import/editor draft, no horizontal overflow",
+    "privateSourceReadOrStored": false
+  },
+  "delivery": {
+    "codeCommits": [
+      "417ae05",
+      "bd68415",
+      "6bdb5c0",
+      "668784c",
+      "121906e",
+      "514ff7b",
+      "9b67b50",
+      "2410dc8"
+    ],
+    "remotePush": "evidence commit pending final push; subsequent remote SHA readback recorded in push-readback.json",
+    "ci": "not checked this turn",
+    "internetDeployment": false
+  },
+  "cleanup": {
+    "intermediateUncommittedUnusedBuildFilesMovedToRecoverableTrash": 21,
+    "committedHistoricalAssetsRetained": true,
+    "isolatedTestPort": 4355,
+    "originalPort": 4180,
+    "finalTemporaryFilesAndTestServer": "isolated4355 stopped; task-owned tmp outputs moved to recoverable Trash; original4180 and original Ego preserved"
+  }
+}

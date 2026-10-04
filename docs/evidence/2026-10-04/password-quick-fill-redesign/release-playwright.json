@@ -1,0 +1,3346 @@
+{
+  "config": {
+    "argv": [
+      "/Users/syndred/.nvm/versions/node/v22.23.1/bin/node",
+      "/Users/syndred/Desktop/projects/KeepAny/node_modules/@playwright/test/cli.js",
+      "test",
+      "--config=/tmp/keepany-password-quick-fill-existing-preview.config.ts",
+      "tests/e2e/password-smart-import.spec.ts",
+      "tests/e2e/password-vault.spec.ts",
+      "--workers=2",
+      "--max-failures=2",
+      "--output=/tmp/keepany-password-quick-fill-release-results",
+      "--reporter=json"
+    ],
+    "configFile": "/tmp/keepany-password-quick-fill-existing-preview.config.ts",
+    "rootDir": "/Users/syndred/Desktop/projects/KeepAny/tests/e2e",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 2,
+    "metadata": {
+      "actualWorkers": 2
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "/tmp/keepany-password-quick-fill-release-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 2
+        },
+        "id": "",
+        "name": "",
+        "testDir": "/Users/syndred/Desktop/projects/KeepAny/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "core-pages-matrix.spec.ts",
+          "ai-release.spec.ts",
+          "ai-key-persistence.spec.ts",
+          "ai-account-import-release.spec.ts",
+          "intake-bulk-account-links.spec.ts",
+          "ai-dialog-matrix.spec.ts",
+          "local-core.spec.ts",
+          "english-demo-release.spec.ts",
+          "production-offline.spec.ts",
+          "intake-pdf.spec.ts",
+          "intake-expense.spec.ts",
+          "intake-review-backup.spec.ts",
+          "intake-review-merge.spec.ts",
+          "custom-category-release.spec.ts",
+          "global-search-release.spec.ts",
+          "detail-entry-statistics.spec.ts",
+          "intake-asset-receipt.spec.ts",
+          "collections-route.spec.ts",
+          "relation-graph-verification.spec.ts",
+          "restore-identity.spec.ts",
+          "archive-migration.spec.ts",
+          "vault-reference-release.spec.ts",
+          "password-vault.spec.ts",
+          "password-smart-import.spec.ts",
+          "themed-select.spec.ts",
+          "spacing-consistency.spec.ts",
+          "task-theme-release.spec.ts",
+          "finance-ledger-release.spec.ts",
+          "collections-ledger-release.spec.ts",
+          "restore-self-service-release.spec.ts"
+        ],
+        "timeout": 90000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "json"
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.63.0",
+    "workers": 2,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "password-smart-import.spec.ts",
+      "file": "password-smart-import.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "local line mapping retains unresolved edits through partial save and clears them on lock",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2430,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-04T11:52:57.484Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "4848c27980ec82994023-544f712422bc2d1ec695",
+          "file": "password-smart-import.spec.ts",
+          "line": 578,
+          "column": 1
+        },
+        {
+          "title": "advanced input and mapping returns retain edited review choices through failed replacement work",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 4103,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-04T11:53:00.083Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "4848c27980ec82994023-e433deb2011c189a3a3d",
+          "file": "password-smart-import.spec.ts",
+          "line": 651,
+          "column": 1
+        },
+        {
+          "title": "unassigned-only content becomes an editable pending form entry and saves locally",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2897,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-04T11:53:04.190Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "4848c27980ec82994023-00da75041c46fd36a795",
+          "file": "password-smart-import.spec.ts",
+          "line": 794,
+          "column": 1
+        },
+        {
+          "title": "partly assigned source keeps the original fragment form draft while adding mapped entries",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2190,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-04T11:53:07.091Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "4848c27980ec82994023-65be34e496f3145bc171",
+          "file": "password-smart-import.spec.ts",
+          "line": 876,
+          "column": 1
+        },
+        {
+          "title": "remaining source forms explicitly supplement an entry already saved in this import",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2601,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-04T11:53:09.285Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "4848c27980ec82994023-26ab66d36f20a10ce1d7",
+          "file": "password-smart-import.spec.ts",
+          "line": 983,
+          "column": 1
+        },
+        {
+          "title": "a same-password duplicate can explicitly update saved notes after fragment completion",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2797,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-04T11:53:11.890Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "4848c27980ec82994023-1d466902f1f3209883e4",
+          "file": "password-smart-import.spec.ts",
+          "line": 1131,
+          "column": 1
+        },
+        {
+          "title": "zh-CN 390px quick completion reuses recognized identity and fills exact selected source with one AI request",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [
+                {
+                  "type": "ui-quick-group-layout",
+                  "description": "{\"gap\":-300,\"verticalGap\":24,\"sourceOpen\":false,\"scrollWidth\":300,\"clientWidth\":300}"
+                },
+                {
+                  "type": "ui-quick-field-layout",
+                  "description": "[{\"field\":\"title\",\"width\":300,\"height\":52,\"parentWidth\":300,\"top\":511.546875},{\"field\":\"username\",\"width\":300,\"height\":52,\"parentWidth\":300,\"top\":631.546875},{\"field\":\"password\",\"width\":300,\"height\":52,\"parentWidth\":300,\"top\":725.734375}]"
+                },
+                {
+                  "type": "ui-gaps",
+                  "description": "{\"target\":\"actions pw-smart-source-field-actions\",\"gaps\":[16,16,16,16,16,16]}"
+                },
+                {
+                  "type": "ui-gaps",
+                  "description": "{\"target\":\"actions pw-smart-fragment-actions\",\"gaps\":[16,68,16]}"
+                },
+                {
+                  "type": "ui-quick-group-layout",
+                  "description": "{\"gap\":-300,\"verticalGap\":24,\"sourceOpen\":false,\"scrollWidth\":300,\"clientWidth\":300}"
+                },
+                {
+                  "type": "ui-quick-field-layout",
+                  "description": "[{\"field\":\"title\",\"width\":300,\"height\":52,\"parentWidth\":300,\"top\":576.34375},{\"field\":\"username\",\"width\":300,\"height\":52,\"parentWidth\":300,\"top\":696.34375},{\"field\":\"password\",\"width\":300,\"height\":52,\"parentWidth\":300,\"top\":790.53125}]"
+                },
+                {
+                  "type": "ui-gaps",
+                  "description": "{\"target\":\"actions pw-smart-source-field-actions\",\"gaps\":[16,16,16,16,16,16]}"
+                },
+                {
+                  "type": "ui-gaps",
+                  "description": "{\"target\":\"actions pw-smart-fragment-actions\",\"gaps\":[16,68,16]}"
+                },
+                {
+                  "type": "ui-quick-completion",
+                  "description": "{\"bundle\":\"/assets/index-DioBQTre.js\",\"exportedEntries\":2,\"aiCalls\":1,\"identityRetyped\":false,\"modeSelections\":0,\"clipboardExact\":true,\"pageErrors\":0,\"consoleErrors\":0}"
+                }
+              ],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 8074,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-04T11:53:14.689Z",
+                  "annotations": [
+                    {
+                      "type": "ui-quick-group-layout",
+                      "description": "{\"gap\":-300,\"verticalGap\":24,\"sourceOpen\":false,\"scrollWidth\":300,\"clientWidth\":300}"
+                    },
+                    {
+                      "type": "ui-quick-field-layout",
+                      "description": "[{\"field\":\"title\",\"width\":300,\"height\":52,\"parentWidth\":300,\"top\":511.546875},{\"field\":\"username\",\"width\":300,\"height\":52,\"parentWidth\":300,\"top\":631.546875},{\"field\":\"password\",\"width\":300,\"height\":52,\"parentWidth\":300,\"top\":725.734375}]"
+                    },
+                    {
+                      "type": "ui-gaps",
+                      "description": "{\"target\":\"actions pw-smart-source-field-actions\",\"gaps\":[16,16,16,16,16,16]}"
+                    },
+                    {
+                      "type": "ui-gaps",
+                      "description": "{\"target\":\"actions pw-smart-fragment-actions\",\"gaps\":[16,68,16]}"
+                    },
+                    {
+                      "type": "ui-quick-group-layout",
+                      "description": "{\"gap\":-300,\"verticalGap\":24,\"sourceOpen\":false,\"scrollWidth\":300,\"clientWidth\":300}"
+                    },
+                    {
+                      "type": "ui-quick-field-layout",
+                      "description": "[{\"field\":\"title\",\"width\":300,\"height\":52,\"parentWidth\":300,\"top\":576.34375},{\"field\":\"username\",\"width\":300,\"height\":52,\"parentWidth\":300,\"top\":696.34375},{\"field\":\"password\",\"width\":300,\"height\":52,\"parentWidth\":300,\"top\":790.53125}]"
+                    },
+                    {
+                      "type": "ui-gaps",
+                      "description": "{\"target\":\"actions pw-smart-source-field-actions\",\"gaps\":[16,16,16,16,16,16]}"
+                    },
+                    {
+                      "type": "ui-gaps",
+                      "description": "{\"target\":\"actions pw-smart-fragment-actions\",\"gaps\":[16,68,16]}"
+                    },
+                    {
+                      "type": "ui-quick-completion",
+                      "description": "{\"bundle\":\"/assets/index-DioBQTre.js\",\"exportedEntries\":2,\"aiCalls\":1,\"identityRetyped\":false,\"modeSelections\":0,\"clipboardExact\":true,\"pageErrors\":0,\"consoleErrors\":0}"
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "4848c27980ec82994023-06dbe27dc673db3369a8",
+          "file": "password-smart-import.spec.ts",
+          "line": 1240,
+          "column": 2
+        },
+        {
+          "title": "zh-CN 390px unresolved source forms create or complete entries and save without rerunning AI",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 75000,
+              "annotations": [
+                {
+                  "type": "ui-source-gaps",
+                  "description": "[16,null]"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"field\":\"pw-smart-vault-import-1-password\",\"width\":44,\"height\":44,\"horizontal\":0.5,\"hitAfterMouseDown\":true,\"multiline\":false}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"field\":\"pw-smart-vault-import-1-password\",\"width\":44,\"height\":44,\"horizontal\":0.02,\"hitAfterMouseDown\":true,\"multiline\":false}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"field\":\"pw-smart-vault-import-1-password\",\"width\":44,\"height\":44,\"horizontal\":0.98,\"hitAfterMouseDown\":true,\"multiline\":false}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"field\":\"pw-smart-vault-import-1-password\",\"width\":44,\"height\":44,\"horizontal\":0.5,\"hitAfterMouseDown\":true,\"multiline\":false}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"field\":\"pw-smart-vault-import-1-password\",\"width\":44,\"height\":44,\"horizontal\":0.02,\"hitAfterMouseDown\":true,\"multiline\":false}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"field\":\"pw-smart-vault-import-1-password\",\"width\":44,\"height\":44,\"horizontal\":0.98,\"hitAfterMouseDown\":true,\"multiline\":false}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"field\":\"pw-smart-vault-import-3-password\",\"width\":44,\"height\":44,\"horizontal\":0.5,\"hitAfterMouseDown\":true,\"multiline\":true}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"field\":\"pw-smart-vault-import-3-password\",\"width\":44,\"height\":44,\"horizontal\":0.02,\"hitAfterMouseDown\":true,\"multiline\":true}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"field\":\"pw-smart-vault-import-3-password\",\"width\":44,\"height\":44,\"horizontal\":0.98,\"hitAfterMouseDown\":true,\"multiline\":true}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"field\":\"pw-smart-vault-import-3-password\",\"width\":44,\"height\":44,\"horizontal\":0.5,\"hitAfterMouseDown\":true,\"multiline\":true}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"field\":\"pw-smart-vault-import-3-password\",\"width\":44,\"height\":44,\"horizontal\":0.02,\"hitAfterMouseDown\":true,\"multiline\":true}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"field\":\"pw-smart-vault-import-3-password\",\"width\":44,\"height\":44,\"horizontal\":0.98,\"hitAfterMouseDown\":true,\"multiline\":true}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"field\":\"pw-fragment-source-15-16-password\",\"width\":44,\"height\":44,\"horizontal\":0.5,\"hitAfterMouseDown\":true,\"multiline\":false}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"field\":\"pw-fragment-source-15-16-password\",\"width\":44,\"height\":44,\"horizontal\":0.02,\"hitAfterMouseDown\":true,\"multiline\":false}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"field\":\"pw-fragment-source-15-16-password\",\"width\":44,\"height\":44,\"horizontal\":0.98,\"hitAfterMouseDown\":true,\"multiline\":false}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"field\":\"pw-fragment-source-15-16-password\",\"width\":44,\"height\":44,\"horizontal\":0.5,\"hitAfterMouseDown\":true,\"multiline\":false}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"field\":\"pw-fragment-source-15-16-password\",\"width\":44,\"height\":44,\"horizontal\":0.02,\"hitAfterMouseDown\":true,\"multiline\":false}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"field\":\"pw-fragment-source-15-16-password\",\"width\":44,\"height\":44,\"horizontal\":0.98,\"hitAfterMouseDown\":true,\"multiline\":false}"
+                },
+                {
+                  "type": "ui-gaps",
+                  "description": "{\"target\":\"actions pw-smart-fragment-actions\",\"gaps\":[16,68,16]}"
+                },
+                {
+                  "type": "ui-errors",
+                  "description": "{\"pageErrors\":0,\"consoleErrors\":0}"
+                },
+                {
+                  "type": "ui-kdbx",
+                  "description": "{\"exportedEntries\":6,\"aliasesAndDifferentPasswordsMatched\":true,\"aiCalls\":1}"
+                }
+              ],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 11512,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-04T11:53:22.767Z",
+                  "annotations": [
+                    {
+                      "type": "ui-source-gaps",
+                      "description": "[16,null]"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"field\":\"pw-smart-vault-import-1-password\",\"width\":44,\"height\":44,\"horizontal\":0.5,\"hitAfterMouseDown\":true,\"multiline\":false}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"field\":\"pw-smart-vault-import-1-password\",\"width\":44,\"height\":44,\"horizontal\":0.02,\"hitAfterMouseDown\":true,\"multiline\":false}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"field\":\"pw-smart-vault-import-1-password\",\"width\":44,\"height\":44,\"horizontal\":0.98,\"hitAfterMouseDown\":true,\"multiline\":false}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"field\":\"pw-smart-vault-import-1-password\",\"width\":44,\"height\":44,\"horizontal\":0.5,\"hitAfterMouseDown\":true,\"multiline\":false}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"field\":\"pw-smart-vault-import-1-password\",\"width\":44,\"height\":44,\"horizontal\":0.02,\"hitAfterMouseDown\":true,\"multiline\":false}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"field\":\"pw-smart-vault-import-1-password\",\"width\":44,\"height\":44,\"horizontal\":0.98,\"hitAfterMouseDown\":true,\"multiline\":false}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"field\":\"pw-smart-vault-import-3-password\",\"width\":44,\"height\":44,\"horizontal\":0.5,\"hitAfterMouseDown\":true,\"multiline\":true}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"field\":\"pw-smart-vault-import-3-password\",\"width\":44,\"height\":44,\"horizontal\":0.02,\"hitAfterMouseDown\":true,\"multiline\":true}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"field\":\"pw-smart-vault-import-3-password\",\"width\":44,\"height\":44,\"horizontal\":0.98,\"hitAfterMouseDown\":true,\"multiline\":true}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"field\":\"pw-smart-vault-import-3-password\",\"width\":44,\"height\":44,\"horizontal\":0.5,\"hitAfterMouseDown\":true,\"multiline\":true}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"field\":\"pw-smart-vault-import-3-password\",\"width\":44,\"height\":44,\"horizontal\":0.02,\"hitAfterMouseDown\":true,\"multiline\":true}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"field\":\"pw-smart-vault-import-3-password\",\"width\":44,\"height\":44,\"horizontal\":0.98,\"hitAfterMouseDown\":true,\"multiline\":true}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"field\":\"pw-fragment-source-15-16-password\",\"width\":44,\"height\":44,\"horizontal\":0.5,\"hitAfterMouseDown\":true,\"multiline\":false}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"field\":\"pw-fragment-source-15-16-password\",\"width\":44,\"height\":44,\"horizontal\":0.02,\"hitAfterMouseDown\":true,\"multiline\":false}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"field\":\"pw-fragment-source-15-16-password\",\"width\":44,\"height\":44,\"horizontal\":0.98,\"hitAfterMouseDown\":true,\"multiline\":false}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"field\":\"pw-fragment-source-15-16-password\",\"width\":44,\"height\":44,\"horizontal\":0.5,\"hitAfterMouseDown\":true,\"multiline\":false}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"field\":\"pw-fragment-source-15-16-password\",\"width\":44,\"height\":44,\"horizontal\":0.02,\"hitAfterMouseDown\":true,\"multiline\":false}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"field\":\"pw-fragment-source-15-16-password\",\"width\":44,\"height\":44,\"horizontal\":0.98,\"hitAfterMouseDown\":true,\"multiline\":false}"
+                    },
+                    {
+                      "type": "ui-gaps",
+                      "description": "{\"target\":\"actions pw-smart-fragment-actions\",\"gaps\":[16,68,16]}"
+                    },
+                    {
+                      "type": "ui-errors",
+                      "description": "{\"pageErrors\":0,\"consoleErrors\":0}"
+                    },
+                    {
+                      "type": "ui-kdbx",
+                      "description": "{\"exportedEntries\":6,\"aliasesAndDifferentPasswordsMatched\":true,\"aiCalls\":1}"
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "4848c27980ec82994023-2e808f84720d62d0e7d1",
+          "file": "password-smart-import.spec.ts",
+          "line": 1487,
+          "column": 2
+        },
+        {
+          "title": "zh-CN 390px unlabeled password notes and local field mapping save exact reviewed credentials",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 5247,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-04T11:53:34.281Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "4848c27980ec82994023-29f9b1a6b4dd65cb113b",
+          "file": "password-smart-import.spec.ts",
+          "line": 2216,
+          "column": 2
+        },
+        {
+          "title": "zh-CN 390px smart password import reviews locally, sends domains only and saves a recoverable KDBX",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 8060,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-04T11:53:39.532Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "4848c27980ec82994023-d54d8d69c79a2ed2246c",
+          "file": "password-smart-import.spec.ts",
+          "line": 2365,
+          "column": 2
+        },
+        {
+          "title": "zh-CN 1280px quick completion reuses recognized identity and fills exact selected source with one AI request",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [
+                {
+                  "type": "ui-quick-group-layout",
+                  "description": "{\"gap\":24,\"verticalGap\":-339.59375,\"sourceOpen\":true,\"scrollWidth\":934,\"clientWidth\":934}"
+                },
+                {
+                  "type": "ui-quick-field-layout",
+                  "description": "[{\"field\":\"title\",\"width\":546,\"height\":52,\"parentWidth\":546,\"top\":352.765625},{\"field\":\"username\",\"width\":546,\"height\":52,\"parentWidth\":546,\"top\":472.765625},{\"field\":\"password\",\"width\":546,\"height\":52,\"parentWidth\":546,\"top\":566.953125}]"
+                },
+                {
+                  "type": "ui-gaps",
+                  "description": "{\"target\":\"actions pw-smart-source-field-actions\",\"gaps\":[16,16,16,16,16,16]}"
+                },
+                {
+                  "type": "ui-gaps",
+                  "description": "{\"target\":\"actions pw-smart-fragment-actions\",\"gaps\":[16,112,16]}"
+                },
+                {
+                  "type": "ui-quick-group-layout",
+                  "description": "{\"gap\":24,\"verticalGap\":-339.59375,\"sourceOpen\":true,\"scrollWidth\":934,\"clientWidth\":934}"
+                },
+                {
+                  "type": "ui-quick-field-layout",
+                  "description": "[{\"field\":\"title\",\"width\":546,\"height\":52,\"parentWidth\":546,\"top\":417.5625},{\"field\":\"username\",\"width\":546,\"height\":52,\"parentWidth\":546,\"top\":537.5625},{\"field\":\"password\",\"width\":546,\"height\":52,\"parentWidth\":546,\"top\":631.75}]"
+                },
+                {
+                  "type": "ui-gaps",
+                  "description": "{\"target\":\"actions pw-smart-source-field-actions\",\"gaps\":[16,16,16,16,16,16]}"
+                },
+                {
+                  "type": "ui-gaps",
+                  "description": "{\"target\":\"actions pw-smart-fragment-actions\",\"gaps\":[16,112,16]}"
+                },
+                {
+                  "type": "ui-quick-completion",
+                  "description": "{\"bundle\":\"/assets/index-DioBQTre.js\",\"exportedEntries\":2,\"aiCalls\":1,\"identityRetyped\":false,\"modeSelections\":0,\"clipboardExact\":true,\"pageErrors\":0,\"consoleErrors\":0}"
+                }
+              ],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 7635,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-04T11:53:47.596Z",
+                  "annotations": [
+                    {
+                      "type": "ui-quick-group-layout",
+                      "description": "{\"gap\":24,\"verticalGap\":-339.59375,\"sourceOpen\":true,\"scrollWidth\":934,\"clientWidth\":934}"
+                    },
+                    {
+                      "type": "ui-quick-field-layout",
+                      "description": "[{\"field\":\"title\",\"width\":546,\"height\":52,\"parentWidth\":546,\"top\":352.765625},{\"field\":\"username\",\"width\":546,\"height\":52,\"parentWidth\":546,\"top\":472.765625},{\"field\":\"password\",\"width\":546,\"height\":52,\"parentWidth\":546,\"top\":566.953125}]"
+                    },
+                    {
+                      "type": "ui-gaps",
+                      "description": "{\"target\":\"actions pw-smart-source-field-actions\",\"gaps\":[16,16,16,16,16,16]}"
+                    },
+                    {
+                      "type": "ui-gaps",
+                      "description": "{\"target\":\"actions pw-smart-fragment-actions\",\"gaps\":[16,112,16]}"
+                    },
+                    {
+                      "type": "ui-quick-group-layout",
+                      "description": "{\"gap\":24,\"verticalGap\":-339.59375,\"sourceOpen\":true,\"scrollWidth\":934,\"clientWidth\":934}"
+                    },
+                    {
+                      "type": "ui-quick-field-layout",
+                      "description": "[{\"field\":\"title\",\"width\":546,\"height\":52,\"parentWidth\":546,\"top\":417.5625},{\"field\":\"username\",\"width\":546,\"height\":52,\"parentWidth\":546,\"top\":537.5625},{\"field\":\"password\",\"width\":546,\"height\":52,\"parentWidth\":546,\"top\":631.75}]"
+                    },
+                    {
+                      "type": "ui-gaps",
+                      "description": "{\"target\":\"actions pw-smart-source-field-actions\",\"gaps\":[16,16,16,16,16,16]}"
+                    },
+                    {
+                      "type": "ui-gaps",
+                      "description": "{\"target\":\"actions pw-smart-fragment-actions\",\"gaps\":[16,112,16]}"
+                    },
+                    {
+                      "type": "ui-quick-completion",
+                      "description": "{\"bundle\":\"/assets/index-DioBQTre.js\",\"exportedEntries\":2,\"aiCalls\":1,\"identityRetyped\":false,\"modeSelections\":0,\"clipboardExact\":true,\"pageErrors\":0,\"consoleErrors\":0}"
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "4848c27980ec82994023-2f4eb14d476b81a5455a",
+          "file": "password-smart-import.spec.ts",
+          "line": 1240,
+          "column": 2
+        },
+        {
+          "title": "zh-CN 1280px unresolved source forms create or complete entries and save without rerunning AI",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 75000,
+              "annotations": [
+                {
+                  "type": "ui-source-gaps",
+                  "description": "[16,null]"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"field\":\"pw-smart-vault-import-1-password\",\"width\":44,\"height\":44,\"horizontal\":0.5,\"hitAfterMouseDown\":true,\"multiline\":false}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"field\":\"pw-smart-vault-import-1-password\",\"width\":44,\"height\":44,\"horizontal\":0.02,\"hitAfterMouseDown\":true,\"multiline\":false}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"field\":\"pw-smart-vault-import-1-password\",\"width\":44,\"height\":44,\"horizontal\":0.98,\"hitAfterMouseDown\":true,\"multiline\":false}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"field\":\"pw-smart-vault-import-1-password\",\"width\":44,\"height\":44,\"horizontal\":0.5,\"hitAfterMouseDown\":true,\"multiline\":false}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"field\":\"pw-smart-vault-import-1-password\",\"width\":44,\"height\":44,\"horizontal\":0.02,\"hitAfterMouseDown\":true,\"multiline\":false}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"field\":\"pw-smart-vault-import-1-password\",\"width\":44,\"height\":44,\"horizontal\":0.98,\"hitAfterMouseDown\":true,\"multiline\":false}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"field\":\"pw-smart-vault-import-3-password\",\"width\":44,\"height\":44,\"horizontal\":0.5,\"hitAfterMouseDown\":true,\"multiline\":true}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"field\":\"pw-smart-vault-import-3-password\",\"width\":44,\"height\":44,\"horizontal\":0.02,\"hitAfterMouseDown\":true,\"multiline\":true}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"field\":\"pw-smart-vault-import-3-password\",\"width\":44,\"height\":44,\"horizontal\":0.98,\"hitAfterMouseDown\":true,\"multiline\":true}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"field\":\"pw-smart-vault-import-3-password\",\"width\":44,\"height\":44,\"horizontal\":0.5,\"hitAfterMouseDown\":true,\"multiline\":true}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"field\":\"pw-smart-vault-import-3-password\",\"width\":44,\"height\":44,\"horizontal\":0.02,\"hitAfterMouseDown\":true,\"multiline\":true}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"field\":\"pw-smart-vault-import-3-password\",\"width\":44,\"height\":44,\"horizontal\":0.98,\"hitAfterMouseDown\":true,\"multiline\":true}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"field\":\"pw-fragment-source-15-16-password\",\"width\":44,\"height\":44,\"horizontal\":0.5,\"hitAfterMouseDown\":true,\"multiline\":false}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"field\":\"pw-fragment-source-15-16-password\",\"width\":44,\"height\":44,\"horizontal\":0.02,\"hitAfterMouseDown\":true,\"multiline\":false}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"field\":\"pw-fragment-source-15-16-password\",\"width\":44,\"height\":44,\"horizontal\":0.98,\"hitAfterMouseDown\":true,\"multiline\":false}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"field\":\"pw-fragment-source-15-16-password\",\"width\":44,\"height\":44,\"horizontal\":0.5,\"hitAfterMouseDown\":true,\"multiline\":false}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"field\":\"pw-fragment-source-15-16-password\",\"width\":44,\"height\":44,\"horizontal\":0.02,\"hitAfterMouseDown\":true,\"multiline\":false}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"field\":\"pw-fragment-source-15-16-password\",\"width\":44,\"height\":44,\"horizontal\":0.98,\"hitAfterMouseDown\":true,\"multiline\":false}"
+                },
+                {
+                  "type": "ui-gaps",
+                  "description": "{\"target\":\"actions pw-smart-fragment-actions\",\"gaps\":[16,112,16]}"
+                },
+                {
+                  "type": "ui-errors",
+                  "description": "{\"pageErrors\":0,\"consoleErrors\":0}"
+                },
+                {
+                  "type": "ui-kdbx",
+                  "description": "{\"exportedEntries\":6,\"aliasesAndDifferentPasswordsMatched\":true,\"aiCalls\":1}"
+                }
+              ],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 11294,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-04T11:53:55.235Z",
+                  "annotations": [
+                    {
+                      "type": "ui-source-gaps",
+                      "description": "[16,null]"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"field\":\"pw-smart-vault-import-1-password\",\"width\":44,\"height\":44,\"horizontal\":0.5,\"hitAfterMouseDown\":true,\"multiline\":false}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"field\":\"pw-smart-vault-import-1-password\",\"width\":44,\"height\":44,\"horizontal\":0.02,\"hitAfterMouseDown\":true,\"multiline\":false}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"field\":\"pw-smart-vault-import-1-password\",\"width\":44,\"height\":44,\"horizontal\":0.98,\"hitAfterMouseDown\":true,\"multiline\":false}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"field\":\"pw-smart-vault-import-1-password\",\"width\":44,\"height\":44,\"horizontal\":0.5,\"hitAfterMouseDown\":true,\"multiline\":false}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"field\":\"pw-smart-vault-import-1-password\",\"width\":44,\"height\":44,\"horizontal\":0.02,\"hitAfterMouseDown\":true,\"multiline\":false}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"field\":\"pw-smart-vault-import-1-password\",\"width\":44,\"height\":44,\"horizontal\":0.98,\"hitAfterMouseDown\":true,\"multiline\":false}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"field\":\"pw-smart-vault-import-3-password\",\"width\":44,\"height\":44,\"horizontal\":0.5,\"hitAfterMouseDown\":true,\"multiline\":true}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"field\":\"pw-smart-vault-import-3-password\",\"width\":44,\"height\":44,\"horizontal\":0.02,\"hitAfterMouseDown\":true,\"multiline\":true}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"field\":\"pw-smart-vault-import-3-password\",\"width\":44,\"height\":44,\"horizontal\":0.98,\"hitAfterMouseDown\":true,\"multiline\":true}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"field\":\"pw-smart-vault-import-3-password\",\"width\":44,\"height\":44,\"horizontal\":0.5,\"hitAfterMouseDown\":true,\"multiline\":true}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"field\":\"pw-smart-vault-import-3-password\",\"width\":44,\"height\":44,\"horizontal\":0.02,\"hitAfterMouseDown\":true,\"multiline\":true}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"field\":\"pw-smart-vault-import-3-password\",\"width\":44,\"height\":44,\"horizontal\":0.98,\"hitAfterMouseDown\":true,\"multiline\":true}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"field\":\"pw-fragment-source-15-16-password\",\"width\":44,\"height\":44,\"horizontal\":0.5,\"hitAfterMouseDown\":true,\"multiline\":false}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"field\":\"pw-fragment-source-15-16-password\",\"width\":44,\"height\":44,\"horizontal\":0.02,\"hitAfterMouseDown\":true,\"multiline\":false}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"field\":\"pw-fragment-source-15-16-password\",\"width\":44,\"height\":44,\"horizontal\":0.98,\"hitAfterMouseDown\":true,\"multiline\":false}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"field\":\"pw-fragment-source-15-16-password\",\"width\":44,\"height\":44,\"horizontal\":0.5,\"hitAfterMouseDown\":true,\"multiline\":false}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"field\":\"pw-fragment-source-15-16-password\",\"width\":44,\"height\":44,\"horizontal\":0.02,\"hitAfterMouseDown\":true,\"multiline\":false}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"field\":\"pw-fragment-source-15-16-password\",\"width\":44,\"height\":44,\"horizontal\":0.98,\"hitAfterMouseDown\":true,\"multiline\":false}"
+                    },
+                    {
+                      "type": "ui-gaps",
+                      "description": "{\"target\":\"actions pw-smart-fragment-actions\",\"gaps\":[16,112,16]}"
+                    },
+                    {
+                      "type": "ui-errors",
+                      "description": "{\"pageErrors\":0,\"consoleErrors\":0}"
+                    },
+                    {
+                      "type": "ui-kdbx",
+                      "description": "{\"exportedEntries\":6,\"aliasesAndDifferentPasswordsMatched\":true,\"aiCalls\":1}"
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "4848c27980ec82994023-e30eacb86c50337d1079",
+          "file": "password-smart-import.spec.ts",
+          "line": 1487,
+          "column": 2
+        },
+        {
+          "title": "zh-CN 1280px unlabeled password notes and local field mapping save exact reviewed credentials",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 5683,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-04T11:54:06.531Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "4848c27980ec82994023-ada2a1c0a7d4e614190f",
+          "file": "password-smart-import.spec.ts",
+          "line": 2216,
+          "column": 2
+        },
+        {
+          "title": "zh-CN 1280px smart password import reviews locally, sends domains only and saves a recoverable KDBX",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 7797,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-04T11:54:12.220Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "4848c27980ec82994023-dc2579e7dc6cd735c94f",
+          "file": "password-smart-import.spec.ts",
+          "line": 2365,
+          "column": 2
+        },
+        {
+          "title": "en-US 390px quick completion reuses recognized identity and fills exact selected source with one AI request",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [
+                {
+                  "type": "ui-quick-group-layout",
+                  "description": "{\"gap\":-300,\"verticalGap\":24,\"sourceOpen\":false,\"scrollWidth\":300,\"clientWidth\":300}"
+                },
+                {
+                  "type": "ui-quick-field-layout",
+                  "description": "[{\"field\":\"title\",\"width\":300,\"height\":52,\"parentWidth\":300,\"top\":509.140625},{\"field\":\"username\",\"width\":300,\"height\":52,\"parentWidth\":300,\"top\":629.140625},{\"field\":\"password\",\"width\":300,\"height\":52,\"parentWidth\":300,\"top\":723.328125}]"
+                },
+                {
+                  "type": "ui-gaps",
+                  "description": "{\"target\":\"actions pw-smart-source-field-actions\",\"gaps\":[16,16,16,16,16,16]}"
+                },
+                {
+                  "type": "ui-gaps",
+                  "description": "{\"target\":\"actions pw-smart-fragment-actions\",\"gaps\":[16,68,16]}"
+                },
+                {
+                  "type": "ui-quick-group-layout",
+                  "description": "{\"gap\":-300,\"verticalGap\":24,\"sourceOpen\":false,\"scrollWidth\":300,\"clientWidth\":300}"
+                },
+                {
+                  "type": "ui-quick-field-layout",
+                  "description": "[{\"field\":\"title\",\"width\":300,\"height\":52,\"parentWidth\":300,\"top\":600.9375},{\"field\":\"username\",\"width\":300,\"height\":52,\"parentWidth\":300,\"top\":720.9375},{\"field\":\"password\",\"width\":300,\"height\":52,\"parentWidth\":300,\"top\":815.125}]"
+                },
+                {
+                  "type": "ui-gaps",
+                  "description": "{\"target\":\"actions pw-smart-source-field-actions\",\"gaps\":[16,16,16,16,16,16]}"
+                },
+                {
+                  "type": "ui-gaps",
+                  "description": "{\"target\":\"actions pw-smart-fragment-actions\",\"gaps\":[16,68,16]}"
+                },
+                {
+                  "type": "ui-quick-completion",
+                  "description": "{\"bundle\":\"/assets/index-DioBQTre.js\",\"exportedEntries\":2,\"aiCalls\":1,\"identityRetyped\":false,\"modeSelections\":0,\"clipboardExact\":true,\"pageErrors\":0,\"consoleErrors\":0}"
+                }
+              ],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 8054,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-04T11:54:20.020Z",
+                  "annotations": [
+                    {
+                      "type": "ui-quick-group-layout",
+                      "description": "{\"gap\":-300,\"verticalGap\":24,\"sourceOpen\":false,\"scrollWidth\":300,\"clientWidth\":300}"
+                    },
+                    {
+                      "type": "ui-quick-field-layout",
+                      "description": "[{\"field\":\"title\",\"width\":300,\"height\":52,\"parentWidth\":300,\"top\":509.140625},{\"field\":\"username\",\"width\":300,\"height\":52,\"parentWidth\":300,\"top\":629.140625},{\"field\":\"password\",\"width\":300,\"height\":52,\"parentWidth\":300,\"top\":723.328125}]"
+                    },
+                    {
+                      "type": "ui-gaps",
+                      "description": "{\"target\":\"actions pw-smart-source-field-actions\",\"gaps\":[16,16,16,16,16,16]}"
+                    },
+                    {
+                      "type": "ui-gaps",
+                      "description": "{\"target\":\"actions pw-smart-fragment-actions\",\"gaps\":[16,68,16]}"
+                    },
+                    {
+                      "type": "ui-quick-group-layout",
+                      "description": "{\"gap\":-300,\"verticalGap\":24,\"sourceOpen\":false,\"scrollWidth\":300,\"clientWidth\":300}"
+                    },
+                    {
+                      "type": "ui-quick-field-layout",
+                      "description": "[{\"field\":\"title\",\"width\":300,\"height\":52,\"parentWidth\":300,\"top\":600.9375},{\"field\":\"username\",\"width\":300,\"height\":52,\"parentWidth\":300,\"top\":720.9375},{\"field\":\"password\",\"width\":300,\"height\":52,\"parentWidth\":300,\"top\":815.125}]"
+                    },
+                    {
+                      "type": "ui-gaps",
+                      "description": "{\"target\":\"actions pw-smart-source-field-actions\",\"gaps\":[16,16,16,16,16,16]}"
+                    },
+                    {
+                      "type": "ui-gaps",
+                      "description": "{\"target\":\"actions pw-smart-fragment-actions\",\"gaps\":[16,68,16]}"
+                    },
+                    {
+                      "type": "ui-quick-completion",
+                      "description": "{\"bundle\":\"/assets/index-DioBQTre.js\",\"exportedEntries\":2,\"aiCalls\":1,\"identityRetyped\":false,\"modeSelections\":0,\"clipboardExact\":true,\"pageErrors\":0,\"consoleErrors\":0}"
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "4848c27980ec82994023-cde131799a859d59d37e",
+          "file": "password-smart-import.spec.ts",
+          "line": 1240,
+          "column": 2
+        },
+        {
+          "title": "en-US 390px unresolved source forms create or complete entries and save without rerunning AI",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 75000,
+              "annotations": [
+                {
+                  "type": "ui-source-gaps",
+                  "description": "[16,null]"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"field\":\"pw-smart-vault-import-1-password\",\"width\":44,\"height\":44,\"horizontal\":0.5,\"hitAfterMouseDown\":true,\"multiline\":false}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"field\":\"pw-smart-vault-import-1-password\",\"width\":44,\"height\":44,\"horizontal\":0.02,\"hitAfterMouseDown\":true,\"multiline\":false}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"field\":\"pw-smart-vault-import-1-password\",\"width\":44,\"height\":44,\"horizontal\":0.98,\"hitAfterMouseDown\":true,\"multiline\":false}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"field\":\"pw-smart-vault-import-1-password\",\"width\":44,\"height\":44,\"horizontal\":0.5,\"hitAfterMouseDown\":true,\"multiline\":false}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"field\":\"pw-smart-vault-import-1-password\",\"width\":44,\"height\":44,\"horizontal\":0.02,\"hitAfterMouseDown\":true,\"multiline\":false}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"field\":\"pw-smart-vault-import-1-password\",\"width\":44,\"height\":44,\"horizontal\":0.98,\"hitAfterMouseDown\":true,\"multiline\":false}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"field\":\"pw-smart-vault-import-3-password\",\"width\":44,\"height\":44,\"horizontal\":0.5,\"hitAfterMouseDown\":true,\"multiline\":true}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"field\":\"pw-smart-vault-import-3-password\",\"width\":44,\"height\":44,\"horizontal\":0.02,\"hitAfterMouseDown\":true,\"multiline\":true}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"field\":\"pw-smart-vault-import-3-password\",\"width\":44,\"height\":44,\"horizontal\":0.98,\"hitAfterMouseDown\":true,\"multiline\":true}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"field\":\"pw-smart-vault-import-3-password\",\"width\":44,\"height\":44,\"horizontal\":0.5,\"hitAfterMouseDown\":true,\"multiline\":true}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"field\":\"pw-smart-vault-import-3-password\",\"width\":44,\"height\":44,\"horizontal\":0.02,\"hitAfterMouseDown\":true,\"multiline\":true}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"field\":\"pw-smart-vault-import-3-password\",\"width\":44,\"height\":44,\"horizontal\":0.98,\"hitAfterMouseDown\":true,\"multiline\":true}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"field\":\"pw-fragment-source-15-16-password\",\"width\":44,\"height\":44,\"horizontal\":0.5,\"hitAfterMouseDown\":true,\"multiline\":false}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"field\":\"pw-fragment-source-15-16-password\",\"width\":44,\"height\":44,\"horizontal\":0.02,\"hitAfterMouseDown\":true,\"multiline\":false}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"field\":\"pw-fragment-source-15-16-password\",\"width\":44,\"height\":44,\"horizontal\":0.98,\"hitAfterMouseDown\":true,\"multiline\":false}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"field\":\"pw-fragment-source-15-16-password\",\"width\":44,\"height\":44,\"horizontal\":0.5,\"hitAfterMouseDown\":true,\"multiline\":false}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"field\":\"pw-fragment-source-15-16-password\",\"width\":44,\"height\":44,\"horizontal\":0.02,\"hitAfterMouseDown\":true,\"multiline\":false}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"field\":\"pw-fragment-source-15-16-password\",\"width\":44,\"height\":44,\"horizontal\":0.98,\"hitAfterMouseDown\":true,\"multiline\":false}"
+                },
+                {
+                  "type": "ui-gaps",
+                  "description": "{\"target\":\"actions pw-smart-fragment-actions\",\"gaps\":[16,68,16]}"
+                },
+                {
+                  "type": "ui-errors",
+                  "description": "{\"pageErrors\":0,\"consoleErrors\":0}"
+                },
+                {
+                  "type": "ui-kdbx",
+                  "description": "{\"exportedEntries\":6,\"aliasesAndDifferentPasswordsMatched\":true,\"aiCalls\":1}"
+                }
+              ],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 11428,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-04T11:54:28.077Z",
+                  "annotations": [
+                    {
+                      "type": "ui-source-gaps",
+                      "description": "[16,null]"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"field\":\"pw-smart-vault-import-1-password\",\"width\":44,\"height\":44,\"horizontal\":0.5,\"hitAfterMouseDown\":true,\"multiline\":false}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"field\":\"pw-smart-vault-import-1-password\",\"width\":44,\"height\":44,\"horizontal\":0.02,\"hitAfterMouseDown\":true,\"multiline\":false}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"field\":\"pw-smart-vault-import-1-password\",\"width\":44,\"height\":44,\"horizontal\":0.98,\"hitAfterMouseDown\":true,\"multiline\":false}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"field\":\"pw-smart-vault-import-1-password\",\"width\":44,\"height\":44,\"horizontal\":0.5,\"hitAfterMouseDown\":true,\"multiline\":false}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"field\":\"pw-smart-vault-import-1-password\",\"width\":44,\"height\":44,\"horizontal\":0.02,\"hitAfterMouseDown\":true,\"multiline\":false}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"field\":\"pw-smart-vault-import-1-password\",\"width\":44,\"height\":44,\"horizontal\":0.98,\"hitAfterMouseDown\":true,\"multiline\":false}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"field\":\"pw-smart-vault-import-3-password\",\"width\":44,\"height\":44,\"horizontal\":0.5,\"hitAfterMouseDown\":true,\"multiline\":true}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"field\":\"pw-smart-vault-import-3-password\",\"width\":44,\"height\":44,\"horizontal\":0.02,\"hitAfterMouseDown\":true,\"multiline\":true}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"field\":\"pw-smart-vault-import-3-password\",\"width\":44,\"height\":44,\"horizontal\":0.98,\"hitAfterMouseDown\":true,\"multiline\":true}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"field\":\"pw-smart-vault-import-3-password\",\"width\":44,\"height\":44,\"horizontal\":0.5,\"hitAfterMouseDown\":true,\"multiline\":true}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"field\":\"pw-smart-vault-import-3-password\",\"width\":44,\"height\":44,\"horizontal\":0.02,\"hitAfterMouseDown\":true,\"multiline\":true}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"field\":\"pw-smart-vault-import-3-password\",\"width\":44,\"height\":44,\"horizontal\":0.98,\"hitAfterMouseDown\":true,\"multiline\":true}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"field\":\"pw-fragment-source-15-16-password\",\"width\":44,\"height\":44,\"horizontal\":0.5,\"hitAfterMouseDown\":true,\"multiline\":false}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"field\":\"pw-fragment-source-15-16-password\",\"width\":44,\"height\":44,\"horizontal\":0.02,\"hitAfterMouseDown\":true,\"multiline\":false}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"field\":\"pw-fragment-source-15-16-password\",\"width\":44,\"height\":44,\"horizontal\":0.98,\"hitAfterMouseDown\":true,\"multiline\":false}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"field\":\"pw-fragment-source-15-16-password\",\"width\":44,\"height\":44,\"horizontal\":0.5,\"hitAfterMouseDown\":true,\"multiline\":false}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"field\":\"pw-fragment-source-15-16-password\",\"width\":44,\"height\":44,\"horizontal\":0.02,\"hitAfterMouseDown\":true,\"multiline\":false}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"field\":\"pw-fragment-source-15-16-password\",\"width\":44,\"height\":44,\"horizontal\":0.98,\"hitAfterMouseDown\":true,\"multiline\":false}"
+                    },
+                    {
+                      "type": "ui-gaps",
+                      "description": "{\"target\":\"actions pw-smart-fragment-actions\",\"gaps\":[16,68,16]}"
+                    },
+                    {
+                      "type": "ui-errors",
+                      "description": "{\"pageErrors\":0,\"consoleErrors\":0}"
+                    },
+                    {
+                      "type": "ui-kdbx",
+                      "description": "{\"exportedEntries\":6,\"aliasesAndDifferentPasswordsMatched\":true,\"aiCalls\":1}"
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "4848c27980ec82994023-a0cf088d9db36e45e54b",
+          "file": "password-smart-import.spec.ts",
+          "line": 1487,
+          "column": 2
+        },
+        {
+          "title": "en-US 390px unlabeled password notes and local field mapping save exact reviewed credentials",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 5619,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-04T11:54:39.507Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "4848c27980ec82994023-c822141aaf33f9c4f08f",
+          "file": "password-smart-import.spec.ts",
+          "line": 2216,
+          "column": 2
+        },
+        {
+          "title": "en-US 390px smart password import reviews locally, sends domains only and saves a recoverable KDBX",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 8069,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-04T11:54:45.129Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "4848c27980ec82994023-3efab57759ee6c7ead57",
+          "file": "password-smart-import.spec.ts",
+          "line": 2365,
+          "column": 2
+        },
+        {
+          "title": "en-US 1280px quick completion reuses recognized identity and fills exact selected source with one AI request",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [
+                {
+                  "type": "ui-quick-group-layout",
+                  "description": "{\"gap\":24,\"verticalGap\":-339.59375,\"sourceOpen\":true,\"scrollWidth\":934,\"clientWidth\":934}"
+                },
+                {
+                  "type": "ui-quick-field-layout",
+                  "description": "[{\"field\":\"title\",\"width\":546,\"height\":52,\"parentWidth\":546,\"top\":351.765625},{\"field\":\"username\",\"width\":546,\"height\":52,\"parentWidth\":546,\"top\":471.765625},{\"field\":\"password\",\"width\":546,\"height\":52,\"parentWidth\":546,\"top\":565.953125}]"
+                },
+                {
+                  "type": "ui-gaps",
+                  "description": "{\"target\":\"actions pw-smart-source-field-actions\",\"gaps\":[16,16,16,16,16,16]}"
+                },
+                {
+                  "type": "ui-gaps",
+                  "description": "{\"target\":\"actions pw-smart-fragment-actions\",\"gaps\":[16,150.65625,16]}"
+                },
+                {
+                  "type": "ui-quick-group-layout",
+                  "description": "{\"gap\":24,\"verticalGap\":-339.59375,\"sourceOpen\":true,\"scrollWidth\":934,\"clientWidth\":934}"
+                },
+                {
+                  "type": "ui-quick-field-layout",
+                  "description": "[{\"field\":\"title\",\"width\":546,\"height\":52,\"parentWidth\":546,\"top\":416.5625},{\"field\":\"username\",\"width\":546,\"height\":52,\"parentWidth\":546,\"top\":536.5625},{\"field\":\"password\",\"width\":546,\"height\":52,\"parentWidth\":546,\"top\":630.75}]"
+                },
+                {
+                  "type": "ui-gaps",
+                  "description": "{\"target\":\"actions pw-smart-source-field-actions\",\"gaps\":[16,16,16,16,16,16]}"
+                },
+                {
+                  "type": "ui-gaps",
+                  "description": "{\"target\":\"actions pw-smart-fragment-actions\",\"gaps\":[16,150.65625,16]}"
+                },
+                {
+                  "type": "ui-quick-completion",
+                  "description": "{\"bundle\":\"/assets/index-DioBQTre.js\",\"exportedEntries\":2,\"aiCalls\":1,\"identityRetyped\":false,\"modeSelections\":0,\"clipboardExact\":true,\"pageErrors\":0,\"consoleErrors\":0}"
+                }
+              ],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 7666,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-04T11:54:53.202Z",
+                  "annotations": [
+                    {
+                      "type": "ui-quick-group-layout",
+                      "description": "{\"gap\":24,\"verticalGap\":-339.59375,\"sourceOpen\":true,\"scrollWidth\":934,\"clientWidth\":934}"
+                    },
+                    {
+                      "type": "ui-quick-field-layout",
+                      "description": "[{\"field\":\"title\",\"width\":546,\"height\":52,\"parentWidth\":546,\"top\":351.765625},{\"field\":\"username\",\"width\":546,\"height\":52,\"parentWidth\":546,\"top\":471.765625},{\"field\":\"password\",\"width\":546,\"height\":52,\"parentWidth\":546,\"top\":565.953125}]"
+                    },
+                    {
+                      "type": "ui-gaps",
+                      "description": "{\"target\":\"actions pw-smart-source-field-actions\",\"gaps\":[16,16,16,16,16,16]}"
+                    },
+                    {
+                      "type": "ui-gaps",
+                      "description": "{\"target\":\"actions pw-smart-fragment-actions\",\"gaps\":[16,150.65625,16]}"
+                    },
+                    {
+                      "type": "ui-quick-group-layout",
+                      "description": "{\"gap\":24,\"verticalGap\":-339.59375,\"sourceOpen\":true,\"scrollWidth\":934,\"clientWidth\":934}"
+                    },
+                    {
+                      "type": "ui-quick-field-layout",
+                      "description": "[{\"field\":\"title\",\"width\":546,\"height\":52,\"parentWidth\":546,\"top\":416.5625},{\"field\":\"username\",\"width\":546,\"height\":52,\"parentWidth\":546,\"top\":536.5625},{\"field\":\"password\",\"width\":546,\"height\":52,\"parentWidth\":546,\"top\":630.75}]"
+                    },
+                    {
+                      "type": "ui-gaps",
+                      "description": "{\"target\":\"actions pw-smart-source-field-actions\",\"gaps\":[16,16,16,16,16,16]}"
+                    },
+                    {
+                      "type": "ui-gaps",
+                      "description": "{\"target\":\"actions pw-smart-fragment-actions\",\"gaps\":[16,150.65625,16]}"
+                    },
+                    {
+                      "type": "ui-quick-completion",
+                      "description": "{\"bundle\":\"/assets/index-DioBQTre.js\",\"exportedEntries\":2,\"aiCalls\":1,\"identityRetyped\":false,\"modeSelections\":0,\"clipboardExact\":true,\"pageErrors\":0,\"consoleErrors\":0}"
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "4848c27980ec82994023-709efb60341bd518cb3c",
+          "file": "password-smart-import.spec.ts",
+          "line": 1240,
+          "column": 2
+        },
+        {
+          "title": "en-US 1280px unresolved source forms create or complete entries and save without rerunning AI",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 75000,
+              "annotations": [
+                {
+                  "type": "ui-source-gaps",
+                  "description": "[16,null]"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"field\":\"pw-smart-vault-import-1-password\",\"width\":44,\"height\":44,\"horizontal\":0.5,\"hitAfterMouseDown\":true,\"multiline\":false}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"field\":\"pw-smart-vault-import-1-password\",\"width\":44,\"height\":44,\"horizontal\":0.02,\"hitAfterMouseDown\":true,\"multiline\":false}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"field\":\"pw-smart-vault-import-1-password\",\"width\":44,\"height\":44,\"horizontal\":0.98,\"hitAfterMouseDown\":true,\"multiline\":false}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"field\":\"pw-smart-vault-import-1-password\",\"width\":44,\"height\":44,\"horizontal\":0.5,\"hitAfterMouseDown\":true,\"multiline\":false}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"field\":\"pw-smart-vault-import-1-password\",\"width\":44,\"height\":44,\"horizontal\":0.02,\"hitAfterMouseDown\":true,\"multiline\":false}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"field\":\"pw-smart-vault-import-1-password\",\"width\":44,\"height\":44,\"horizontal\":0.98,\"hitAfterMouseDown\":true,\"multiline\":false}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"field\":\"pw-smart-vault-import-3-password\",\"width\":44,\"height\":44,\"horizontal\":0.5,\"hitAfterMouseDown\":true,\"multiline\":true}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"field\":\"pw-smart-vault-import-3-password\",\"width\":44,\"height\":44,\"horizontal\":0.02,\"hitAfterMouseDown\":true,\"multiline\":true}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"field\":\"pw-smart-vault-import-3-password\",\"width\":44,\"height\":44,\"horizontal\":0.98,\"hitAfterMouseDown\":true,\"multiline\":true}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"field\":\"pw-smart-vault-import-3-password\",\"width\":44,\"height\":44,\"horizontal\":0.5,\"hitAfterMouseDown\":true,\"multiline\":true}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"field\":\"pw-smart-vault-import-3-password\",\"width\":44,\"height\":44,\"horizontal\":0.02,\"hitAfterMouseDown\":true,\"multiline\":true}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"field\":\"pw-smart-vault-import-3-password\",\"width\":44,\"height\":44,\"horizontal\":0.98,\"hitAfterMouseDown\":true,\"multiline\":true}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"field\":\"pw-fragment-source-15-16-password\",\"width\":44,\"height\":44,\"horizontal\":0.5,\"hitAfterMouseDown\":true,\"multiline\":false}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"field\":\"pw-fragment-source-15-16-password\",\"width\":44,\"height\":44,\"horizontal\":0.02,\"hitAfterMouseDown\":true,\"multiline\":false}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"field\":\"pw-fragment-source-15-16-password\",\"width\":44,\"height\":44,\"horizontal\":0.98,\"hitAfterMouseDown\":true,\"multiline\":false}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"field\":\"pw-fragment-source-15-16-password\",\"width\":44,\"height\":44,\"horizontal\":0.5,\"hitAfterMouseDown\":true,\"multiline\":false}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"field\":\"pw-fragment-source-15-16-password\",\"width\":44,\"height\":44,\"horizontal\":0.02,\"hitAfterMouseDown\":true,\"multiline\":false}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"field\":\"pw-fragment-source-15-16-password\",\"width\":44,\"height\":44,\"horizontal\":0.98,\"hitAfterMouseDown\":true,\"multiline\":false}"
+                },
+                {
+                  "type": "ui-gaps",
+                  "description": "{\"target\":\"actions pw-smart-fragment-actions\",\"gaps\":[16,150.65625,16]}"
+                },
+                {
+                  "type": "ui-errors",
+                  "description": "{\"pageErrors\":0,\"consoleErrors\":0}"
+                },
+                {
+                  "type": "ui-kdbx",
+                  "description": "{\"exportedEntries\":6,\"aliasesAndDifferentPasswordsMatched\":true,\"aiCalls\":1}"
+                }
+              ],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 11286,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-04T11:55:00.871Z",
+                  "annotations": [
+                    {
+                      "type": "ui-source-gaps",
+                      "description": "[16,null]"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"field\":\"pw-smart-vault-import-1-password\",\"width\":44,\"height\":44,\"horizontal\":0.5,\"hitAfterMouseDown\":true,\"multiline\":false}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"field\":\"pw-smart-vault-import-1-password\",\"width\":44,\"height\":44,\"horizontal\":0.02,\"hitAfterMouseDown\":true,\"multiline\":false}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"field\":\"pw-smart-vault-import-1-password\",\"width\":44,\"height\":44,\"horizontal\":0.98,\"hitAfterMouseDown\":true,\"multiline\":false}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"field\":\"pw-smart-vault-import-1-password\",\"width\":44,\"height\":44,\"horizontal\":0.5,\"hitAfterMouseDown\":true,\"multiline\":false}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"field\":\"pw-smart-vault-import-1-password\",\"width\":44,\"height\":44,\"horizontal\":0.02,\"hitAfterMouseDown\":true,\"multiline\":false}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"field\":\"pw-smart-vault-import-1-password\",\"width\":44,\"height\":44,\"horizontal\":0.98,\"hitAfterMouseDown\":true,\"multiline\":false}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"field\":\"pw-smart-vault-import-3-password\",\"width\":44,\"height\":44,\"horizontal\":0.5,\"hitAfterMouseDown\":true,\"multiline\":true}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"field\":\"pw-smart-vault-import-3-password\",\"width\":44,\"height\":44,\"horizontal\":0.02,\"hitAfterMouseDown\":true,\"multiline\":true}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"field\":\"pw-smart-vault-import-3-password\",\"width\":44,\"height\":44,\"horizontal\":0.98,\"hitAfterMouseDown\":true,\"multiline\":true}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"field\":\"pw-smart-vault-import-3-password\",\"width\":44,\"height\":44,\"horizontal\":0.5,\"hitAfterMouseDown\":true,\"multiline\":true}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"field\":\"pw-smart-vault-import-3-password\",\"width\":44,\"height\":44,\"horizontal\":0.02,\"hitAfterMouseDown\":true,\"multiline\":true}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"field\":\"pw-smart-vault-import-3-password\",\"width\":44,\"height\":44,\"horizontal\":0.98,\"hitAfterMouseDown\":true,\"multiline\":true}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"field\":\"pw-fragment-source-15-16-password\",\"width\":44,\"height\":44,\"horizontal\":0.5,\"hitAfterMouseDown\":true,\"multiline\":false}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"field\":\"pw-fragment-source-15-16-password\",\"width\":44,\"height\":44,\"horizontal\":0.02,\"hitAfterMouseDown\":true,\"multiline\":false}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"field\":\"pw-fragment-source-15-16-password\",\"width\":44,\"height\":44,\"horizontal\":0.98,\"hitAfterMouseDown\":true,\"multiline\":false}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"field\":\"pw-fragment-source-15-16-password\",\"width\":44,\"height\":44,\"horizontal\":0.5,\"hitAfterMouseDown\":true,\"multiline\":false}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"field\":\"pw-fragment-source-15-16-password\",\"width\":44,\"height\":44,\"horizontal\":0.02,\"hitAfterMouseDown\":true,\"multiline\":false}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"field\":\"pw-fragment-source-15-16-password\",\"width\":44,\"height\":44,\"horizontal\":0.98,\"hitAfterMouseDown\":true,\"multiline\":false}"
+                    },
+                    {
+                      "type": "ui-gaps",
+                      "description": "{\"target\":\"actions pw-smart-fragment-actions\",\"gaps\":[16,150.65625,16]}"
+                    },
+                    {
+                      "type": "ui-errors",
+                      "description": "{\"pageErrors\":0,\"consoleErrors\":0}"
+                    },
+                    {
+                      "type": "ui-kdbx",
+                      "description": "{\"exportedEntries\":6,\"aliasesAndDifferentPasswordsMatched\":true,\"aiCalls\":1}"
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "4848c27980ec82994023-2a58a8b158afff48ae01",
+          "file": "password-smart-import.spec.ts",
+          "line": 1487,
+          "column": 2
+        },
+        {
+          "title": "en-US 1280px unlabeled password notes and local field mapping save exact reviewed credentials",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 5683,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-04T11:55:12.160Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "4848c27980ec82994023-c96d417c958e49114fa1",
+          "file": "password-smart-import.spec.ts",
+          "line": 2216,
+          "column": 2
+        },
+        {
+          "title": "en-US 1280px smart password import reviews locally, sends domains only and saves a recoverable KDBX",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 7792,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-04T11:55:17.846Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "4848c27980ec82994023-2dc35848f7cb31167c7c",
+          "file": "password-smart-import.spec.ts",
+          "line": 2365,
+          "column": 2
+        },
+        {
+          "title": "smart import discards sensitive state on close and lock, keeps failed AI candidates, and rejects stale or delayed work",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 4595,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-04T11:55:25.642Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "4848c27980ec82994023-b8e0349ffb4adff1cf63",
+          "file": "password-smart-import.spec.ts",
+          "line": 2687,
+          "column": 1
+        },
+        {
+          "title": "smart import preserves multiline secrets and clears conflict choices when identities or selections change",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3376,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-04T11:55:30.240Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "4848c27980ec82994023-e805930fa5e0141ef688",
+          "file": "password-smart-import.spec.ts",
+          "line": 2878,
+          "column": 1
+        },
+        {
+          "title": "smart import FilePicker rejects invalid UTF-8 and preserves Chrome CSV credentials through save and reload",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3154,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-04T11:55:33.619Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "4848c27980ec82994023-d68491a3dc68640fe87d",
+          "file": "password-smart-import.spec.ts",
+          "line": 3055,
+          "column": 1
+        },
+        {
+          "title": "AI recognizes pasted password notes without sending the existing vault zh-CN 390",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3922,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-04T11:55:36.776Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "4848c27980ec82994023-756d39a187f81e3749b1",
+          "file": "password-smart-import.spec.ts",
+          "line": 3210,
+          "column": 2
+        },
+        {
+          "title": "AI recognizes pasted password notes without sending the existing vault zh-CN 1280",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3753,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-04T11:55:40.702Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "4848c27980ec82994023-59f3e1d734720ae5bc7f",
+          "file": "password-smart-import.spec.ts",
+          "line": 3210,
+          "column": 2
+        },
+        {
+          "title": "AI recognizes pasted password notes without sending the existing vault en-US 390",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3971,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-04T11:55:44.460Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "4848c27980ec82994023-79264e33a609fa92fcf0",
+          "file": "password-smart-import.spec.ts",
+          "line": 3210,
+          "column": 2
+        },
+        {
+          "title": "AI recognizes pasted password notes without sending the existing vault en-US 1280",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3764,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-04T11:55:48.436Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "4848c27980ec82994023-66d8425a1fb3055d39a5",
+          "file": "password-smart-import.spec.ts",
+          "line": 3210,
+          "column": 2
+        },
+        {
+          "title": "AI note recognition keeps failed source and discards delayed results after close or model change",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1770,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-04T11:55:52.205Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "4848c27980ec82994023-66ba546620f7f75df408",
+          "file": "password-smart-import.spec.ts",
+          "line": 3360,
+          "column": 1
+        },
+        {
+          "title": "password AI import automatically restores its saved vault API key after unlock",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3923,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-04T11:55:53.978Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "4848c27980ec82994023-ba4532ae7aea20b097f2",
+          "file": "password-smart-import.spec.ts",
+          "line": 3453,
+          "column": 1
+        },
+        {
+          "title": "AI incomplete entries remain editable after a partial password import zh-CN 390",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 4405,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-04T11:55:57.905Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "4848c27980ec82994023-58dd46cef7cf65d3fada",
+          "file": "password-smart-import.spec.ts",
+          "line": 3547,
+          "column": 2
+        },
+        {
+          "title": "AI incomplete entries remain editable after a partial password import zh-CN 1280",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 4156,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-04T11:56:02.313Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "4848c27980ec82994023-75975a1a261d1fa2a450",
+          "file": "password-smart-import.spec.ts",
+          "line": 3547,
+          "column": 2
+        },
+        {
+          "title": "AI incomplete entries remain editable after a partial password import en-US 390",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 4351,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-04T11:56:06.473Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "4848c27980ec82994023-26a8dc394b5cc76855a7",
+          "file": "password-smart-import.spec.ts",
+          "line": 3547,
+          "column": 2
+        },
+        {
+          "title": "AI incomplete entries remain editable after a partial password import en-US 1280",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 4062,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-04T11:56:10.828Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "4848c27980ec82994023-8da94c7dc4a413ff750e",
+          "file": "password-smart-import.spec.ts",
+          "line": 3547,
+          "column": 2
+        }
+      ]
+    },
+    {
+      "title": "password-vault.spec.ts",
+      "file": "password-vault.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "zh-CN 390px multiple login identifiers and same-platform accounts survive KDBX export and reopen",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"width\":44,\"height\":44,\"horizontal\":0.5,\"hitAfterMouseDown\":true}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"width\":44,\"height\":44,\"horizontal\":0.02,\"hitAfterMouseDown\":true}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"width\":44,\"height\":44,\"horizontal\":0.98,\"hitAfterMouseDown\":true}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"width\":44,\"height\":44,\"horizontal\":0.5,\"hitAfterMouseDown\":true}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"width\":44,\"height\":44,\"horizontal\":0.02,\"hitAfterMouseDown\":true}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"width\":44,\"height\":44,\"horizontal\":0.98,\"hitAfterMouseDown\":true}"
+                },
+                {
+                  "type": "ui-editor-field-layout",
+                  "description": "[{\"field\":\"title\",\"width\":326,\"height\":52,\"parentWidth\":326,\"top\":36.390625},{\"field\":\"username\",\"width\":326,\"height\":52,\"parentWidth\":326,\"top\":156.390625},{\"field\":\"password\",\"width\":326,\"height\":52,\"parentWidth\":326,\"top\":446.953125},{\"field\":\"url\",\"width\":326,\"height\":52,\"parentWidth\":326,\"top\":762.703125}]"
+                },
+                {
+                  "type": "ui-gaps",
+                  "description": "{\"target\":\"actions password-vault-field-actions\",\"gaps\":[16]}"
+                },
+                {
+                  "type": "ui-gaps",
+                  "description": "{\"target\":\"actions password-vault-entry-actions\",\"gaps\":[16,16,16,16,16,16,16,16,127.34375,16]}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"width\":44,\"height\":44,\"horizontal\":0.02,\"hitAfterMouseDown\":true}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"width\":44,\"height\":44,\"horizontal\":0.5,\"hitAfterMouseDown\":true}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"width\":44,\"height\":44,\"horizontal\":0.02,\"hitAfterMouseDown\":true}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"width\":44,\"height\":44,\"horizontal\":0.98,\"hitAfterMouseDown\":true}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"width\":44,\"height\":44,\"horizontal\":0.5,\"hitAfterMouseDown\":true}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"width\":44,\"height\":44,\"horizontal\":0.02,\"hitAfterMouseDown\":true}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"width\":44,\"height\":44,\"horizontal\":0.98,\"hitAfterMouseDown\":true}"
+                },
+                {
+                  "type": "ui-errors",
+                  "description": "{\"pageErrors\":0,\"consoleErrors\":0,\"restoredPageIncluded\":true}"
+                },
+                {
+                  "type": "ui-kdbx",
+                  "description": "{\"entriesAfterRefresh\":2,\"exportedThenReopened\":2,\"aliasesAndDifferentPasswordsMatched\":true}"
+                }
+              ],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 10773,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-04T11:52:57.613Z",
+                  "annotations": [
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"width\":44,\"height\":44,\"horizontal\":0.5,\"hitAfterMouseDown\":true}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"width\":44,\"height\":44,\"horizontal\":0.02,\"hitAfterMouseDown\":true}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"width\":44,\"height\":44,\"horizontal\":0.98,\"hitAfterMouseDown\":true}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"width\":44,\"height\":44,\"horizontal\":0.5,\"hitAfterMouseDown\":true}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"width\":44,\"height\":44,\"horizontal\":0.02,\"hitAfterMouseDown\":true}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"width\":44,\"height\":44,\"horizontal\":0.98,\"hitAfterMouseDown\":true}"
+                    },
+                    {
+                      "type": "ui-editor-field-layout",
+                      "description": "[{\"field\":\"title\",\"width\":326,\"height\":52,\"parentWidth\":326,\"top\":36.390625},{\"field\":\"username\",\"width\":326,\"height\":52,\"parentWidth\":326,\"top\":156.390625},{\"field\":\"password\",\"width\":326,\"height\":52,\"parentWidth\":326,\"top\":446.953125},{\"field\":\"url\",\"width\":326,\"height\":52,\"parentWidth\":326,\"top\":762.703125}]"
+                    },
+                    {
+                      "type": "ui-gaps",
+                      "description": "{\"target\":\"actions password-vault-field-actions\",\"gaps\":[16]}"
+                    },
+                    {
+                      "type": "ui-gaps",
+                      "description": "{\"target\":\"actions password-vault-entry-actions\",\"gaps\":[16,16,16,16,16,16,16,16,127.34375,16]}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"width\":44,\"height\":44,\"horizontal\":0.02,\"hitAfterMouseDown\":true}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"width\":44,\"height\":44,\"horizontal\":0.5,\"hitAfterMouseDown\":true}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"width\":44,\"height\":44,\"horizontal\":0.02,\"hitAfterMouseDown\":true}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"width\":44,\"height\":44,\"horizontal\":0.98,\"hitAfterMouseDown\":true}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"width\":44,\"height\":44,\"horizontal\":0.5,\"hitAfterMouseDown\":true}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"width\":44,\"height\":44,\"horizontal\":0.02,\"hitAfterMouseDown\":true}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"width\":44,\"height\":44,\"horizontal\":0.98,\"hitAfterMouseDown\":true}"
+                    },
+                    {
+                      "type": "ui-errors",
+                      "description": "{\"pageErrors\":0,\"consoleErrors\":0,\"restoredPageIncluded\":true}"
+                    },
+                    {
+                      "type": "ui-kdbx",
+                      "description": "{\"entriesAfterRefresh\":2,\"exportedThenReopened\":2,\"aliasesAndDifferentPasswordsMatched\":true}"
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "26096664d0fbd4733036-757be26bb44754dbc37a",
+          "file": "password-vault.spec.ts",
+          "line": 234,
+          "column": 2
+        },
+        {
+          "title": "zh-CN 390px app passwords show notes directly, save without a website and retain added details when edited",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 4998,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-04T11:53:08.465Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "26096664d0fbd4733036-470288d3849b3d489bc2",
+          "file": "password-vault.spec.ts",
+          "line": 523,
+          "column": 2
+        },
+        {
+          "title": "zh-CN 390px passwords persist, lock, rotate and restore with assets",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 9515,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-04T11:53:13.466Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "26096664d0fbd4733036-d4fda19594871c7caf32",
+          "file": "password-vault.spec.ts",
+          "line": 653,
+          "column": 2
+        },
+        {
+          "title": "zh-CN 1280px multiple login identifiers and same-platform accounts survive KDBX export and reopen",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"width\":44,\"height\":44,\"horizontal\":0.5,\"hitAfterMouseDown\":true}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"width\":44,\"height\":44,\"horizontal\":0.02,\"hitAfterMouseDown\":true}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"width\":44,\"height\":44,\"horizontal\":0.98,\"hitAfterMouseDown\":true}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"width\":44,\"height\":44,\"horizontal\":0.5,\"hitAfterMouseDown\":true}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"width\":44,\"height\":44,\"horizontal\":0.02,\"hitAfterMouseDown\":true}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"width\":44,\"height\":44,\"horizontal\":0.98,\"hitAfterMouseDown\":true}"
+                },
+                {
+                  "type": "ui-editor-field-layout",
+                  "description": "[{\"field\":\"title\",\"width\":510,\"height\":52,\"parentWidth\":510,\"top\":49.390625},{\"field\":\"username\",\"width\":510,\"height\":52,\"parentWidth\":510,\"top\":169.390625},{\"field\":\"password\",\"width\":510,\"height\":52,\"parentWidth\":510,\"top\":459.953125},{\"field\":\"url\",\"width\":510,\"height\":52,\"parentWidth\":510,\"top\":764.515625}]"
+                },
+                {
+                  "type": "ui-gaps",
+                  "description": "{\"target\":\"actions password-vault-field-actions\",\"gaps\":[16]}"
+                },
+                {
+                  "type": "ui-gaps",
+                  "description": "{\"target\":\"actions password-vault-entry-actions\",\"gaps\":[16,161,246,355,16,101,210,16,125,16]}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"width\":44,\"height\":44,\"horizontal\":0.02,\"hitAfterMouseDown\":true}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"width\":44,\"height\":44,\"horizontal\":0.5,\"hitAfterMouseDown\":true}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"width\":44,\"height\":44,\"horizontal\":0.02,\"hitAfterMouseDown\":true}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"width\":44,\"height\":44,\"horizontal\":0.98,\"hitAfterMouseDown\":true}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"width\":44,\"height\":44,\"horizontal\":0.5,\"hitAfterMouseDown\":true}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"width\":44,\"height\":44,\"horizontal\":0.02,\"hitAfterMouseDown\":true}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"width\":44,\"height\":44,\"horizontal\":0.98,\"hitAfterMouseDown\":true}"
+                },
+                {
+                  "type": "ui-errors",
+                  "description": "{\"pageErrors\":0,\"consoleErrors\":0,\"restoredPageIncluded\":true}"
+                },
+                {
+                  "type": "ui-kdbx",
+                  "description": "{\"entriesAfterRefresh\":2,\"exportedThenReopened\":2,\"aliasesAndDifferentPasswordsMatched\":true}"
+                }
+              ],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 10793,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-04T11:53:22.986Z",
+                  "annotations": [
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"width\":44,\"height\":44,\"horizontal\":0.5,\"hitAfterMouseDown\":true}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"width\":44,\"height\":44,\"horizontal\":0.02,\"hitAfterMouseDown\":true}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"width\":44,\"height\":44,\"horizontal\":0.98,\"hitAfterMouseDown\":true}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"width\":44,\"height\":44,\"horizontal\":0.5,\"hitAfterMouseDown\":true}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"width\":44,\"height\":44,\"horizontal\":0.02,\"hitAfterMouseDown\":true}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"width\":44,\"height\":44,\"horizontal\":0.98,\"hitAfterMouseDown\":true}"
+                    },
+                    {
+                      "type": "ui-editor-field-layout",
+                      "description": "[{\"field\":\"title\",\"width\":510,\"height\":52,\"parentWidth\":510,\"top\":49.390625},{\"field\":\"username\",\"width\":510,\"height\":52,\"parentWidth\":510,\"top\":169.390625},{\"field\":\"password\",\"width\":510,\"height\":52,\"parentWidth\":510,\"top\":459.953125},{\"field\":\"url\",\"width\":510,\"height\":52,\"parentWidth\":510,\"top\":764.515625}]"
+                    },
+                    {
+                      "type": "ui-gaps",
+                      "description": "{\"target\":\"actions password-vault-field-actions\",\"gaps\":[16]}"
+                    },
+                    {
+                      "type": "ui-gaps",
+                      "description": "{\"target\":\"actions password-vault-entry-actions\",\"gaps\":[16,161,246,355,16,101,210,16,125,16]}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"width\":44,\"height\":44,\"horizontal\":0.02,\"hitAfterMouseDown\":true}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"width\":44,\"height\":44,\"horizontal\":0.5,\"hitAfterMouseDown\":true}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"width\":44,\"height\":44,\"horizontal\":0.02,\"hitAfterMouseDown\":true}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"width\":44,\"height\":44,\"horizontal\":0.98,\"hitAfterMouseDown\":true}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"width\":44,\"height\":44,\"horizontal\":0.5,\"hitAfterMouseDown\":true}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"width\":44,\"height\":44,\"horizontal\":0.02,\"hitAfterMouseDown\":true}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"width\":44,\"height\":44,\"horizontal\":0.98,\"hitAfterMouseDown\":true}"
+                    },
+                    {
+                      "type": "ui-errors",
+                      "description": "{\"pageErrors\":0,\"consoleErrors\":0,\"restoredPageIncluded\":true}"
+                    },
+                    {
+                      "type": "ui-kdbx",
+                      "description": "{\"entriesAfterRefresh\":2,\"exportedThenReopened\":2,\"aliasesAndDifferentPasswordsMatched\":true}"
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "26096664d0fbd4733036-bcc476887cb356777587",
+          "file": "password-vault.spec.ts",
+          "line": 234,
+          "column": 2
+        },
+        {
+          "title": "zh-CN 1280px app passwords show notes directly, save without a website and retain added details when edited",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 5150,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-04T11:53:33.783Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "26096664d0fbd4733036-11620ad7c06c97ea1e3f",
+          "file": "password-vault.spec.ts",
+          "line": 523,
+          "column": 2
+        },
+        {
+          "title": "zh-CN 1280px passwords persist, lock, rotate and restore with assets",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 9385,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-04T11:53:38.936Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "26096664d0fbd4733036-bd9ba1dde721c9f5683b",
+          "file": "password-vault.spec.ts",
+          "line": 653,
+          "column": 2
+        },
+        {
+          "title": "en-US 390px multiple login identifiers and same-platform accounts survive KDBX export and reopen",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"width\":44,\"height\":44,\"horizontal\":0.5,\"hitAfterMouseDown\":true}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"width\":44,\"height\":44,\"horizontal\":0.02,\"hitAfterMouseDown\":true}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"width\":44,\"height\":44,\"horizontal\":0.98,\"hitAfterMouseDown\":true}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"width\":44,\"height\":44,\"horizontal\":0.5,\"hitAfterMouseDown\":true}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"width\":44,\"height\":44,\"horizontal\":0.02,\"hitAfterMouseDown\":true}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"width\":44,\"height\":44,\"horizontal\":0.98,\"hitAfterMouseDown\":true}"
+                },
+                {
+                  "type": "ui-editor-field-layout",
+                  "description": "[{\"field\":\"title\",\"width\":326,\"height\":52,\"parentWidth\":326,\"top\":36.390625},{\"field\":\"username\",\"width\":326,\"height\":52,\"parentWidth\":326,\"top\":156.390625},{\"field\":\"password\",\"width\":326,\"height\":52,\"parentWidth\":326,\"top\":446.953125},{\"field\":\"url\",\"width\":326,\"height\":52,\"parentWidth\":326,\"top\":762.703125}]"
+                },
+                {
+                  "type": "ui-gaps",
+                  "description": "{\"target\":\"actions password-vault-field-actions\",\"gaps\":[16]}"
+                },
+                {
+                  "type": "ui-gaps",
+                  "description": "{\"target\":\"actions password-vault-entry-actions\",\"gaps\":[16,16,62,62,16,16,16,16,16,16]}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"width\":44,\"height\":44,\"horizontal\":0.02,\"hitAfterMouseDown\":true}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"width\":44,\"height\":44,\"horizontal\":0.5,\"hitAfterMouseDown\":true}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"width\":44,\"height\":44,\"horizontal\":0.02,\"hitAfterMouseDown\":true}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"width\":44,\"height\":44,\"horizontal\":0.98,\"hitAfterMouseDown\":true}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"width\":44,\"height\":44,\"horizontal\":0.5,\"hitAfterMouseDown\":true}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"width\":44,\"height\":44,\"horizontal\":0.02,\"hitAfterMouseDown\":true}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"width\":44,\"height\":44,\"horizontal\":0.98,\"hitAfterMouseDown\":true}"
+                },
+                {
+                  "type": "ui-errors",
+                  "description": "{\"pageErrors\":0,\"consoleErrors\":0,\"restoredPageIncluded\":true}"
+                },
+                {
+                  "type": "ui-kdbx",
+                  "description": "{\"entriesAfterRefresh\":2,\"exportedThenReopened\":2,\"aliasesAndDifferentPasswordsMatched\":true}"
+                }
+              ],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 10637,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-04T11:53:48.326Z",
+                  "annotations": [
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"width\":44,\"height\":44,\"horizontal\":0.5,\"hitAfterMouseDown\":true}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"width\":44,\"height\":44,\"horizontal\":0.02,\"hitAfterMouseDown\":true}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"width\":44,\"height\":44,\"horizontal\":0.98,\"hitAfterMouseDown\":true}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"width\":44,\"height\":44,\"horizontal\":0.5,\"hitAfterMouseDown\":true}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"width\":44,\"height\":44,\"horizontal\":0.02,\"hitAfterMouseDown\":true}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"width\":44,\"height\":44,\"horizontal\":0.98,\"hitAfterMouseDown\":true}"
+                    },
+                    {
+                      "type": "ui-editor-field-layout",
+                      "description": "[{\"field\":\"title\",\"width\":326,\"height\":52,\"parentWidth\":326,\"top\":36.390625},{\"field\":\"username\",\"width\":326,\"height\":52,\"parentWidth\":326,\"top\":156.390625},{\"field\":\"password\",\"width\":326,\"height\":52,\"parentWidth\":326,\"top\":446.953125},{\"field\":\"url\",\"width\":326,\"height\":52,\"parentWidth\":326,\"top\":762.703125}]"
+                    },
+                    {
+                      "type": "ui-gaps",
+                      "description": "{\"target\":\"actions password-vault-field-actions\",\"gaps\":[16]}"
+                    },
+                    {
+                      "type": "ui-gaps",
+                      "description": "{\"target\":\"actions password-vault-entry-actions\",\"gaps\":[16,16,62,62,16,16,16,16,16,16]}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"width\":44,\"height\":44,\"horizontal\":0.02,\"hitAfterMouseDown\":true}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"width\":44,\"height\":44,\"horizontal\":0.5,\"hitAfterMouseDown\":true}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"width\":44,\"height\":44,\"horizontal\":0.02,\"hitAfterMouseDown\":true}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"width\":44,\"height\":44,\"horizontal\":0.98,\"hitAfterMouseDown\":true}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"width\":44,\"height\":44,\"horizontal\":0.5,\"hitAfterMouseDown\":true}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"width\":44,\"height\":44,\"horizontal\":0.02,\"hitAfterMouseDown\":true}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"width\":44,\"height\":44,\"horizontal\":0.98,\"hitAfterMouseDown\":true}"
+                    },
+                    {
+                      "type": "ui-errors",
+                      "description": "{\"pageErrors\":0,\"consoleErrors\":0,\"restoredPageIncluded\":true}"
+                    },
+                    {
+                      "type": "ui-kdbx",
+                      "description": "{\"entriesAfterRefresh\":2,\"exportedThenReopened\":2,\"aliasesAndDifferentPasswordsMatched\":true}"
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "26096664d0fbd4733036-b5fdefa099fb42e34bf4",
+          "file": "password-vault.spec.ts",
+          "line": 234,
+          "column": 2
+        },
+        {
+          "title": "en-US 390px app passwords show notes directly, save without a website and retain added details when edited",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 5024,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-04T11:53:58.966Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "26096664d0fbd4733036-549cba2f881e362ca95e",
+          "file": "password-vault.spec.ts",
+          "line": 523,
+          "column": 2
+        },
+        {
+          "title": "en-US 390px passwords persist, lock, rotate and restore with assets",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 9392,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-04T11:54:03.994Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "26096664d0fbd4733036-06603123511f093a4e68",
+          "file": "password-vault.spec.ts",
+          "line": 653,
+          "column": 2
+        },
+        {
+          "title": "en-US 1280px multiple login identifiers and same-platform accounts survive KDBX export and reopen",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"width\":44,\"height\":44,\"horizontal\":0.5,\"hitAfterMouseDown\":true}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"width\":44,\"height\":44,\"horizontal\":0.02,\"hitAfterMouseDown\":true}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"width\":44,\"height\":44,\"horizontal\":0.98,\"hitAfterMouseDown\":true}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"width\":44,\"height\":44,\"horizontal\":0.5,\"hitAfterMouseDown\":true}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"width\":44,\"height\":44,\"horizontal\":0.02,\"hitAfterMouseDown\":true}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"width\":44,\"height\":44,\"horizontal\":0.98,\"hitAfterMouseDown\":true}"
+                },
+                {
+                  "type": "ui-editor-field-layout",
+                  "description": "[{\"field\":\"title\",\"width\":510,\"height\":52,\"parentWidth\":510,\"top\":49.390625},{\"field\":\"username\",\"width\":510,\"height\":52,\"parentWidth\":510,\"top\":169.390625},{\"field\":\"password\",\"width\":510,\"height\":52,\"parentWidth\":510,\"top\":459.953125},{\"field\":\"url\",\"width\":510,\"height\":52,\"parentWidth\":510,\"top\":764.515625}]"
+                },
+                {
+                  "type": "ui-gaps",
+                  "description": "{\"target\":\"actions password-vault-field-actions\",\"gaps\":[16]}"
+                },
+                {
+                  "type": "ui-gaps",
+                  "description": "{\"target\":\"actions password-vault-entry-actions\",\"gaps\":[16,206.65625,292.34375,399.21875,16,101.6875,208.5625,16,122.875,16]}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"width\":44,\"height\":44,\"horizontal\":0.02,\"hitAfterMouseDown\":true}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"width\":44,\"height\":44,\"horizontal\":0.5,\"hitAfterMouseDown\":true}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"width\":44,\"height\":44,\"horizontal\":0.02,\"hitAfterMouseDown\":true}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"width\":44,\"height\":44,\"horizontal\":0.98,\"hitAfterMouseDown\":true}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"width\":44,\"height\":44,\"horizontal\":0.5,\"hitAfterMouseDown\":true}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"width\":44,\"height\":44,\"horizontal\":0.02,\"hitAfterMouseDown\":true}"
+                },
+                {
+                  "type": "ui-pointer-hit",
+                  "description": "{\"width\":44,\"height\":44,\"horizontal\":0.98,\"hitAfterMouseDown\":true}"
+                },
+                {
+                  "type": "ui-errors",
+                  "description": "{\"pageErrors\":0,\"consoleErrors\":0,\"restoredPageIncluded\":true}"
+                },
+                {
+                  "type": "ui-kdbx",
+                  "description": "{\"entriesAfterRefresh\":2,\"exportedThenReopened\":2,\"aliasesAndDifferentPasswordsMatched\":true}"
+                }
+              ],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 10829,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-04T11:54:13.389Z",
+                  "annotations": [
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"width\":44,\"height\":44,\"horizontal\":0.5,\"hitAfterMouseDown\":true}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"width\":44,\"height\":44,\"horizontal\":0.02,\"hitAfterMouseDown\":true}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"width\":44,\"height\":44,\"horizontal\":0.98,\"hitAfterMouseDown\":true}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"width\":44,\"height\":44,\"horizontal\":0.5,\"hitAfterMouseDown\":true}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"width\":44,\"height\":44,\"horizontal\":0.02,\"hitAfterMouseDown\":true}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"width\":44,\"height\":44,\"horizontal\":0.98,\"hitAfterMouseDown\":true}"
+                    },
+                    {
+                      "type": "ui-editor-field-layout",
+                      "description": "[{\"field\":\"title\",\"width\":510,\"height\":52,\"parentWidth\":510,\"top\":49.390625},{\"field\":\"username\",\"width\":510,\"height\":52,\"parentWidth\":510,\"top\":169.390625},{\"field\":\"password\",\"width\":510,\"height\":52,\"parentWidth\":510,\"top\":459.953125},{\"field\":\"url\",\"width\":510,\"height\":52,\"parentWidth\":510,\"top\":764.515625}]"
+                    },
+                    {
+                      "type": "ui-gaps",
+                      "description": "{\"target\":\"actions password-vault-field-actions\",\"gaps\":[16]}"
+                    },
+                    {
+                      "type": "ui-gaps",
+                      "description": "{\"target\":\"actions password-vault-entry-actions\",\"gaps\":[16,206.65625,292.34375,399.21875,16,101.6875,208.5625,16,122.875,16]}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"width\":44,\"height\":44,\"horizontal\":0.02,\"hitAfterMouseDown\":true}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"width\":44,\"height\":44,\"horizontal\":0.5,\"hitAfterMouseDown\":true}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"width\":44,\"height\":44,\"horizontal\":0.02,\"hitAfterMouseDown\":true}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"width\":44,\"height\":44,\"horizontal\":0.98,\"hitAfterMouseDown\":true}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"width\":44,\"height\":44,\"horizontal\":0.5,\"hitAfterMouseDown\":true}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"width\":44,\"height\":44,\"horizontal\":0.02,\"hitAfterMouseDown\":true}"
+                    },
+                    {
+                      "type": "ui-pointer-hit",
+                      "description": "{\"width\":44,\"height\":44,\"horizontal\":0.98,\"hitAfterMouseDown\":true}"
+                    },
+                    {
+                      "type": "ui-errors",
+                      "description": "{\"pageErrors\":0,\"consoleErrors\":0,\"restoredPageIncluded\":true}"
+                    },
+                    {
+                      "type": "ui-kdbx",
+                      "description": "{\"entriesAfterRefresh\":2,\"exportedThenReopened\":2,\"aliasesAndDifferentPasswordsMatched\":true}"
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "26096664d0fbd4733036-54b74a5dc47509f5002c",
+          "file": "password-vault.spec.ts",
+          "line": 234,
+          "column": 2
+        },
+        {
+          "title": "en-US 1280px app passwords show notes directly, save without a website and retain added details when edited",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 5141,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-04T11:54:24.220Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "26096664d0fbd4733036-c7f6685d814740fcdb6a",
+          "file": "password-vault.spec.ts",
+          "line": 523,
+          "column": 2
+        },
+        {
+          "title": "en-US 1280px passwords persist, lock, rotate and restore with assets",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 10444,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-04T11:54:29.365Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "26096664d0fbd4733036-8fee324260fbde95d2c1",
+          "file": "password-vault.spec.ts",
+          "line": 653,
+          "column": 2
+        },
+        {
+          "title": "password changes lock a revealed editor in another tab; idle lock and clean KDBX import work",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 6490,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-04T11:54:39.812Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "26096664d0fbd4733036-f9317f7b9a22e18f7681",
+          "file": "password-vault.spec.ts",
+          "line": 979,
+          "column": 1
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-10-04T11:52:56.924Z",
+    "duration": 197995.98700000002,
+    "expected": 48,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}
