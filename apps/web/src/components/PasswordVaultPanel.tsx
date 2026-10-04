@@ -1290,6 +1290,9 @@ function EntryEditor({
 	onGenerate: () => void;
 	t: (key: string, options?: Record<string, unknown>) => string;
 }) {
+	const [moreInfoOpen, setMoreInfoOpen] = useState(
+		Boolean(draft.url || draft.notes),
+	);
 	const update = <K extends keyof PasswordVaultEntryDraft>(
 		key: K,
 		value: PasswordVaultEntryDraft[K],
@@ -1398,34 +1401,43 @@ function EntryEditor({
 						</Button>
 					</div>
 				</div>
-				<div className="field">
-					<label htmlFor="password-vault-entry-url">
-						{t("pwVaultUrlField")}
-					</label>
-					<input
-						id="password-vault-entry-url"
-						type="url"
-						value={draft.url}
-						onChange={(event) => update("url", event.target.value)}
-						disabled={busy}
-						inputMode="url"
-						autoComplete="url"
-						placeholder="https://"
-					/>
-				</div>
-				<div className="field password-vault-notes-field">
-					<label htmlFor="password-vault-entry-notes">
-						{t("pwVaultNotesField")}
-					</label>
-					<textarea
-						id="password-vault-entry-notes"
-						value={draft.notes}
-						onChange={(event) => update("notes", event.target.value)}
-						disabled={busy}
-						rows={4}
-						maxLength={20000}
-					/>
-				</div>
+				<details
+					className="password-vault-more-info password-vault-optional"
+					open={moreInfoOpen}
+					onToggle={(event) => setMoreInfoOpen(event.currentTarget.open)}
+				>
+					<summary>{t("pwVaultOptionalDetails")}</summary>
+					<div className="password-vault-more-info-fields">
+						<div className="field">
+							<label htmlFor="password-vault-entry-url">
+								{t("pwVaultUrlOptionalField")}
+							</label>
+							<input
+								id="password-vault-entry-url"
+								type="url"
+								value={draft.url}
+								onChange={(event) => update("url", event.target.value)}
+								disabled={busy}
+								inputMode="url"
+								autoComplete="url"
+								placeholder="https://"
+							/>
+						</div>
+						<div className="field password-vault-notes-field">
+							<label htmlFor="password-vault-entry-notes">
+								{t("pwVaultNotesOptionalField")}
+							</label>
+							<textarea
+								id="password-vault-entry-notes"
+								value={draft.notes}
+								onChange={(event) => update("notes", event.target.value)}
+								disabled={busy}
+								rows={4}
+								maxLength={20000}
+							/>
+						</div>
+					</div>
+				</details>
 			</div>
 			<div className="field password-vault-linked-picker">
 				<label htmlFor="password-vault-entry-asset">
