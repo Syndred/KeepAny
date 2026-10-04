@@ -2442,5 +2442,13 @@
     "port4353Listener": false,
     "original4180Preserved": true,
     "committedHistoricalAssetsPreserved": true
+  },
+  "pushReadback": {
+    "remote": "origin",
+    "branch": "main",
+    "acceptanceCommit": "4de12cb16be0db7bacca29a7444c992c17c1747e",
+    "observedRemoteSha": "4de12cb16be0db7bacca29a7444c992c17c1747e",
+    "exactMatch": true,
+    "note": "此回读记录在验收提交后另行提交并推送；不冒称CI已通过"
   }
 }
