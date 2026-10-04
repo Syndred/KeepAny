@@ -51,6 +51,11 @@ for (const locale of ["en-US", "zh-CN"] as const) {
 					await page.evaluate(() => document.documentElement.scrollWidth),
 					`${locale} ${width}px ${page.url()}`,
 				).toBeLessThanOrEqual(width);
+				const padding = await page.locator("main.page").evaluate((element) => {
+					const style = getComputedStyle(element);
+					return [style.paddingTop, style.paddingRight, style.paddingBottom, style.paddingLeft].map(Number.parseFloat);
+				});
+				for (const [index, value] of padding.entries()) expect(value, "Page padding stays compact").toBeLessThanOrEqual(index === 2 ? 24 : 16);
 			}
 			async function verifyReadableSubscription(name: string) {
 				const card = page.locator(".asset-library-card").filter({ hasText: name }).first();

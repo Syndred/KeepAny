@@ -1,16 +1,10 @@
 import { expect, test } from "@playwright/test";
+import { createProject } from "./helpers/create-project";
 
 test("desktop shell follows the frozen frame and keeps real navigation reachable in both languages", async ({ page }) => {
 	await page.setViewportSize({ width: 1280, height: 720 });
 	await page.goto("/");
-	const projectId = await page.evaluate(async ([domainUrl, repositoryUrl]) => {
-		const { newAsset } = await import(domainUrl);
-		const { saveBatch } = await import(repositoryUrl);
-		const project = { ...newAsset("project"), name: "Shell Atlas" };
-		const account = { ...newAsset("account"), name: "Atlas account" };
-		await saveBatch([{ type: "asset", value: project }, { type: "asset", value: account }]);
-		return project.id as string;
-	}, [`/@fs${process.cwd()}/packages/domain/src/index.ts`, `/@fs${process.cwd()}/packages/local-db/src/index.ts`]);
+	const projectId = await createProject(page, "Shell Atlas");
 
 	for (const [language, suffix] of [["zh-CN", "zh"], ["en", "en"]] as const) {
 		await page.evaluate((value) => localStorage.setItem("keepany-language", value), language);
@@ -74,13 +68,8 @@ for (const locale of ["en-US", "zh-CN"]) {
 			const page = await context.newPage();
 			await page.goto("/");
 			const title = "VeryLongVisibleProjectTitle".repeat(3);
-			const id = await page.evaluate(async ([name, domainUrl, repositoryUrl]) => {
-				const { newAsset } = await import(domainUrl);
-				const { save } = await import(repositoryUrl);
-				const project = { ...newAsset("project"), name };
-				await save("asset", project);
-				return project.id as string;
-			}, [title, `/@fs${process.cwd()}/packages/domain/src/index.ts`, `/@fs${process.cwd()}/packages/local-db/src/index.ts`]);
+			const id = await createProject(page, title);
+			await page.goto("/");
 			const card = page.locator(".overview-project-card");
 			await expect(card.getByRole("heading", { name: title, exact: true })).toBeVisible();
 			expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);

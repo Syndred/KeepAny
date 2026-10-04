@@ -1,4 +1,4 @@
-import { mkdirSync, readFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { join } from "node:path";
 import { expect, type Locator, type Page, test } from "@playwright/test";
@@ -390,7 +390,7 @@ async function expectIdentifiers(form: Locator, values: string[]) {
 	for (const [index, value] of values.entries())
 		await expect(inputs.nth(index)).toHaveValue(value);
 }
-async function expectActionSpacing(actions: Locator) {
+async function expectActionSpacing(actions: Locator, minimum = 15.5) {
 	const gaps = await actions.evaluate((element) => {
 		const buttons = [...element.querySelectorAll("button")].filter(
 			(button) => button.getBoundingClientRect().width > 0,
@@ -406,7 +406,7 @@ async function expectActionSpacing(actions: Locator) {
 			}),
 		);
 	});
-	for (const gap of gaps) expect(gap).toBeGreaterThanOrEqual(15.5);
+	for (const gap of gaps) expect(gap).toBeGreaterThanOrEqual(minimum);
 	test.info().annotations.push({
 		type: "ui-gaps",
 		description: JSON.stringify({
@@ -1310,6 +1310,27 @@ for (const variant of variants) {
 				.click();
 			const groups = importer.locator(".pw-smart-source-group");
 			await expect(groups).toHaveCount(2);
+			const reviewGaps = await importer
+				.locator(".pw-smart-review")
+				.evaluate((element) => {
+					const boxes = [...element.children]
+						.filter(
+							(child) => !child.matches(".pw-smart-footer, .pw-smart-advanced"),
+						)
+						.map((child) => child.getBoundingClientRect())
+						.filter((box) => box.width > 0 && box.height > 0);
+					return boxes
+						.slice(1)
+						.map((box, index) => box.top - boxes[index].bottom);
+				});
+			for (const gap of reviewGaps)
+				expect(
+					gap,
+					"Review sections remain visibly separated",
+				).toBeGreaterThanOrEqual(12);
+			expect(
+				(await page.getByRole("dialog").boundingBox())?.width,
+			).toBeLessThanOrEqual(880);
 			const rows = importer.locator(".pw-smart-row");
 			await expect(rows).toHaveCount(2);
 			for (const [index, title, username, password, line] of [
@@ -1724,6 +1745,9 @@ for (const variant of variants) {
 			await first.getByRole("checkbox").check();
 			const groups = importer.locator(".pw-smart-source-group");
 			await expect(groups).toHaveCount(2);
+			expect(
+				(await page.getByRole("dialog").boundingBox())?.width,
+			).toBeLessThanOrEqual(880);
 			await expectSourceGroupSpacing(groups);
 			await expect(page.locator(".toast")).toBeHidden({ timeout: 10_000 });
 			await groups.first().scrollIntoViewIfNeeded();
@@ -3798,6 +3822,133 @@ for (const variant of variants) {
 				fullPage: true,
 			});
 			expect(mock.requests).toHaveLength(1);
+			expect(errors).toEqual([]);
+		} finally {
+			await context.close();
+			await mock.close();
+		}
+	});
+}
+
+for (const variant of variants) {
+	test(`${variant.locale} ${variant.width}px import input uses compact width and content-sized actions`, async ({
+		browser,
+	}) => {
+		const t = copy(variant.locale);
+		const mock = await aiServer();
+		const context = await browser.newContext({
+			locale: variant.locale,
+			viewport: { width: variant.width, height: 900 },
+		});
+		await context.addInitScript(
+			(locale) => localStorage.setItem("keepany-language", locale),
+			variant.locale === "zh-CN" ? "zh-CN" : "en",
+		);
+		const page = await context.newPage();
+		const errors: string[] = [];
+		page.on("pageerror", (error) => errors.push(error.message));
+		try {
+			await configureAndOpenVault(
+				page,
+				variant.locale,
+				mock.baseURL,
+				variant.width,
+			);
+			await createVault(page, t);
+			const importer = await openImport(page, t);
+			const source =
+				"Title=Mail account\nUsername=density.user@example.test\nPassword=Synthetic density password";
+			await importer.locator("#pw-smart-source").fill(source);
+			const dialog = page.getByRole("dialog");
+			const inputGeometry = await dialog.evaluate((element) => {
+				const rect = element.getBoundingClientRect();
+				const picker = element.querySelector(".file-picker-control");
+				if (!picker) throw new Error("Missing file picker");
+				const pickerStyle = getComputedStyle(picker);
+				const buttons = [
+					...element.querySelectorAll(
+						".pw-smart-ai-recognition button, .pw-smart-input-actions button",
+					),
+				].map((button) => {
+					const box = button.getBoundingClientRect();
+					return {
+						width: box.width,
+						height: box.height,
+						scrollWidth: button.scrollWidth,
+						clientWidth: button.clientWidth,
+					};
+				});
+				return {
+					width: rect.width,
+					pickerHeight: picker.getBoundingClientRect().height,
+					pickerPadding:
+						parseFloat(pickerStyle.paddingTop) +
+						parseFloat(pickerStyle.paddingBottom),
+					buttons,
+					viewport: innerWidth,
+					documentWidth: document.documentElement.scrollWidth,
+					entry: [...document.scripts]
+						.map((script) => script.src)
+						.find((src) => /assets\/index-/.test(src)),
+				};
+			});
+			expect(inputGeometry.width).toBeLessThanOrEqual(
+				Math.min(640, variant.width - 16),
+			);
+			expect(inputGeometry.pickerHeight).toBeLessThanOrEqual(56);
+			expect(inputGeometry.pickerPadding).toBeLessThanOrEqual(8);
+			expect(inputGeometry.buttons).toHaveLength(3);
+			for (const button of inputGeometry.buttons) {
+				expect(button.height).toBeGreaterThanOrEqual(44);
+				expect(button.scrollWidth).toBeLessThanOrEqual(button.clientWidth + 1);
+				if (variant.width >= 900)
+					expect(button.width).toBeLessThan(inputGeometry.width - 80);
+			}
+			expect(inputGeometry.documentWidth).toBeLessThanOrEqual(variant.width);
+			await expectActionSpacing(
+				importer.locator(".pw-smart-input-actions"),
+				11.5,
+			);
+			await expect(page.locator(".toast")).toBeHidden();
+			await dialog.evaluate((element) => {
+				element.scrollTop = 0;
+			});
+			await page.screenshot({
+				path: join(
+					evidenceRoot,
+					`compact-import-${variant.locale}-${variant.width}-input.png`,
+				),
+			});
+			if (variant.width === 390) {
+				await dialog.evaluate((element) => {
+					element.scrollTop = element.scrollHeight;
+				});
+				await page.screenshot({
+					path: join(
+						evidenceRoot,
+						`compact-import-${variant.locale}-${variant.width}-controls.png`,
+					),
+				});
+			}
+			writeFileSync(
+				join(
+					evidenceRoot,
+					`compact-import-${variant.locale}-${variant.width}-geometry.json`,
+				),
+				JSON.stringify(inputGeometry, null, 2),
+			);
+			await importer
+				.getByRole("button", { name: t("pwSmartRecognize"), exact: true })
+				.click();
+			await expect(importer.locator(".pw-smart-row")).toHaveCount(1);
+			expect((await dialog.boundingBox())?.width).toBeLessThanOrEqual(640);
+			await importAdvanced(importer, t, "pwSmartEditSource");
+			await expect(importer.locator("#pw-smart-source")).toHaveValue(source);
+			await importer
+				.getByRole("button", { name: t("pwSmartMap"), exact: true })
+				.click();
+			expect((await dialog.boundingBox())?.width).toBeLessThanOrEqual(640);
+			expect(mock.requests).toHaveLength(0);
 			expect(errors).toEqual([]);
 		} finally {
 			await context.close();

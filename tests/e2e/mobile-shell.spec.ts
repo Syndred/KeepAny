@@ -1,15 +1,10 @@
 import { expect, test } from "@playwright/test";
+import { createProject } from "./helpers/create-project";
 
 test("project workflow stays above the fold with a usable mobile drawer in both languages", async ({ page }) => {
 	await page.setViewportSize({ width: 390, height: 844 });
 	await page.goto("/");
-	const projectId = await page.evaluate(async ([domainUrl, repositoryUrl]) => {
-		const { newAsset } = await import(domainUrl);
-		const { saveBatch } = await import(repositoryUrl);
-		const project = { ...newAsset("project"), name: "Mobile Atlas" };
-		await saveBatch([{ type: "asset", value: project }]);
-		return project.id as string;
-	}, [`/@fs${process.cwd()}/packages/domain/src/index.ts`, `/@fs${process.cwd()}/packages/local-db/src/index.ts`]);
+	const projectId = await createProject(page, "Mobile Atlas");
 
 	for (const [language, title] of [["en", "Close or hand over project"], ["zh-CN", "关闭与交接"]] as const) {
 		await page.evaluate((value) => localStorage.setItem("keepany-language", value), language);

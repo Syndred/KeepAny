@@ -557,13 +557,13 @@ for (const variant of variants) {
 				page.locator(".intake-primary-grid"),
 				page.locator(".intake-recent"),
 				"intake primary grid to recent card",
-				16,
+				8,
 			);
 			await assertRectGap(
 				page.locator(".intake-review-card"),
 				page.locator(".intake-restored > details.intake-secondary"),
 				"intake review card to ExternalLink import",
-				16,
+				8,
 			);
 			await assertSiblingGaps(
 				page,
