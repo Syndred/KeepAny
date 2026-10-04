@@ -1,6 +1,6 @@
 import { mkdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
 import { passwordVaultCopy } from "../../apps/web/src/password-vault-copy";
 import { decryptBackup } from "../../packages/local-db/src/backup-crypto";
 import { inspectArchive } from "../../packages/local-db/src";
@@ -47,6 +47,10 @@ async function closeEditor(page: Page) {
 	await page.getByRole("dialog").getByRole("button", { name: /^(Close|关闭)$/ }).click();
 	await expect(page.getByRole("dialog")).toBeHidden();
 }
+async function openMoreInformation(details: Locator) {
+	if ((await details.getAttribute("open")) === null)
+		await details.locator("summary").click();
+}
 async function readPassword(page: Page, t: ReturnType<typeof copy>) {
 	await page.locator(".password-vault-entry-list .password-vault-entry").getByRole("button", { name: t("pwVaultEditEntry"), exact: true }).click();
 	const field = page.locator("#password-vault-entry-password");
@@ -59,6 +63,136 @@ async function readPassword(page: Page, t: ReturnType<typeof copy>) {
 }
 
 for (const variant of variants) {
+	test(`${variant.locale} ${variant.width}px app passwords save without a website and retain optional details when edited`, async ({
+		browser,
+	}) => {
+		const t = copy(variant.locale);
+		const context = await browser.newContext({
+			locale: variant.locale,
+			viewport: { width: variant.width, height: 844 },
+		});
+		const page = await context.newPage();
+		const errors: string[] = [];
+		page.on("pageerror", (error) => errors.push(error.message));
+		const appTitle = "Studio mobile App";
+		const appUser = "studio-player-42";
+		const appPassword = "Synthetic App password 2026!";
+		const optionalUrl = "https://studio.example.test/sign-in";
+		const optionalNotes = "Synthetic optional account note";
+		try {
+			await language(page, variant.locale);
+			await page.goto("/assets/vault");
+			await page.locator("#password-vault-master").fill(master);
+			await page.locator("#password-vault-master-confirm").fill(master);
+			await page
+				.getByRole("button", { name: t("pwVaultCreate"), exact: true })
+				.click();
+			await expect(page.locator(".password-vault-toolbar")).toBeVisible();
+			await page
+				.getByRole("button", { name: t("pwVaultNewEntry"), exact: true })
+				.click();
+			const details = page.locator(".password-vault-optional");
+			await expect(page.locator("#password-vault-entry-url")).toBeHidden();
+			await expect(page.locator("#password-vault-entry-notes")).toBeHidden();
+			await page.locator("#password-vault-entry-title").fill(appTitle);
+			await page.locator("#password-vault-entry-username").fill(appUser);
+			await page.locator("#password-vault-entry-password").fill(appPassword);
+			await page.screenshot({
+				path: join(
+					evidenceRoot,
+					`password-app-${variant.locale}-${variant.width}-new.png`,
+				),
+				fullPage: true,
+			});
+			await page
+				.getByRole("button", { name: t("pwVaultSaveEntry"), exact: true })
+				.click();
+			await expect(page.getByRole("dialog")).toBeHidden();
+			const entry = page
+				.locator(".password-vault-entry-list .password-vault-entry")
+				.filter({ has: page.locator("strong", { hasText: appTitle }) });
+			await expect(entry).toHaveCount(1);
+			await entry
+				.getByRole("button", { name: t("pwVaultEditEntry"), exact: true })
+				.click();
+			await expect(page.locator("#password-vault-entry-password")).toHaveValue(
+				appPassword,
+			);
+			await expect(page.locator("#password-vault-entry-username")).toHaveValue(
+				appUser,
+			);
+			await expect(page.locator("#password-vault-entry-url")).toBeHidden();
+			await openMoreInformation(details);
+			await page.locator("#password-vault-entry-url").fill(optionalUrl);
+			await page.locator("#password-vault-entry-notes").fill(optionalNotes);
+			await page
+				.getByRole("button", { name: t("pwVaultSaveEntry"), exact: true })
+				.click();
+			await expect(page.getByRole("dialog")).toBeHidden();
+			await page.reload();
+			await unlock(page, t);
+			await entry
+				.getByRole("button", { name: t("pwVaultEditEntry"), exact: true })
+				.click();
+			await expect(page.locator("#password-vault-entry-url")).toBeVisible();
+			await expect(page.locator("#password-vault-entry-url")).toHaveValue(
+				optionalUrl,
+			);
+			await expect(page.locator("#password-vault-entry-notes")).toHaveValue(
+				optionalNotes,
+			);
+			await page
+				.locator("#password-vault-entry-password")
+				.fill(`${appPassword} revised`);
+			await page
+				.getByRole("button", { name: t("pwVaultSaveEntry"), exact: true })
+				.click();
+			await expect(page.getByRole("dialog")).toBeHidden();
+			await entry
+				.getByRole("button", { name: t("pwVaultEditEntry"), exact: true })
+				.click();
+			await expect(page.locator("#password-vault-entry-url")).toHaveValue(
+				optionalUrl,
+			);
+			await expect(page.locator("#password-vault-entry-notes")).toHaveValue(
+				optionalNotes,
+			);
+			await page.locator("#password-vault-entry-url").fill("");
+			await page.locator("#password-vault-entry-notes").fill("");
+			await page
+				.getByRole("button", { name: t("pwVaultSaveEntry"), exact: true })
+				.click();
+			await expect(page.getByRole("dialog")).toBeHidden();
+			await page.reload();
+			await unlock(page, t);
+			await entry
+				.getByRole("button", { name: t("pwVaultEditEntry"), exact: true })
+				.click();
+			await expect(page.locator("#password-vault-entry-password")).toHaveValue(
+				`${appPassword} revised`,
+			);
+			await expect(page.locator("#password-vault-entry-url")).toHaveValue("");
+			await expect(page.locator("#password-vault-entry-notes")).toHaveValue("");
+			await expect(page.locator("#password-vault-entry-url")).toBeHidden();
+			await expect(
+				page.evaluate(
+					() => document.documentElement.scrollWidth <= innerWidth + 1,
+				),
+			).resolves.toBe(true);
+			await page.screenshot({
+				path: join(
+					evidenceRoot,
+					`password-app-${variant.locale}-${variant.width}-restored.png`,
+				),
+				fullPage: true,
+			});
+			await closeEditor(page);
+			expect(errors).toEqual([]);
+		} finally {
+			await context.close();
+		}
+	});
+
 	test(`${variant.locale} ${variant.width}px passwords persist, lock, rotate and restore with assets`, async ({ browser }) => {
 		const t = copy(variant.locale);
 		const zh = variant.locale === "zh-CN";
@@ -81,6 +215,7 @@ for (const variant of variants) {
 			await page.getByRole("button", { name: t("pwVaultNewEntry"), exact: true }).click();
 			await page.locator("#password-vault-entry-title").fill(entryName);
 			await page.locator("#password-vault-entry-username").fill("editor@studio.example");
+			await openMoreInformation(page.locator(".password-vault-optional"));
 			await page.locator("#password-vault-entry-url").fill("https://studio.example/login");
 			await expect(page.locator(".password-vault-linked-chip")).toContainText(accountName);
 			await page.getByRole("dialog").getByRole("button", { name: t("pwVaultGeneratePassword"), exact: true }).last().click();

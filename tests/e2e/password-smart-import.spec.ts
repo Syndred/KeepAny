@@ -167,6 +167,7 @@ async function seedDuplicate(page: Page, t: Copy) {
 	await page
 		.locator("#password-vault-entry-username")
 		.fill("synthetic-existing-user");
+	await openOptional(page.locator(".password-vault-optional"));
 	await page
 		.locator("#password-vault-entry-url")
 		.fill("https://duplicate.example/login");
@@ -197,8 +198,13 @@ async function readEntry(page: Page, t: Copy, title: string) {
 	return result;
 }
 async function openRow(row: Locator) {
-	if ((await row.locator("details").getAttribute("open")) === null)
-		await row.locator("summary").click();
+	const editor = row.locator(".pw-smart-row-editor");
+	if ((await editor.getAttribute("open")) === null)
+		await editor.locator("summary").first().click();
+}
+async function openOptional(details: Locator) {
+	if ((await details.getAttribute("open")) === null)
+		await details.locator("summary").first().click();
 }
 /** Read ciphertext only; preview and AI must leave the persisted revision and bytes unchanged. */
 async function persistedVault(page: Page) {
@@ -338,7 +344,7 @@ test("local line mapping retains unresolved edits through partial save and clear
 			.getByRole("button", { name: t("pwSmartMapReview"), exact: true })
 			.click();
 		await expect(importer.locator(".pw-smart-issues")).toContainText(
-			t("pwSmartIssueLine", { line: 4 }),
+			t("pwSmartIssue_unrecognized-line"),
 		);
 		await importer
 			.getByRole("button", {
@@ -369,6 +375,364 @@ test("local line mapping retains unresolved edits through partial save and clear
 });
 
 for (const variant of variants) {
+	test(`${variant.locale} ${variant.width}px source excerpts locate exact text and Gmail or app logins save without websites`, async ({
+		browser,
+	}) => {
+		test.setTimeout(45_000);
+		const t = copy(variant.locale);
+		const mock = await aiServer();
+		const context = await browser.newContext({
+			locale: variant.locale,
+			viewport: { width: variant.width, height: 844 },
+			acceptDownloads: true,
+		});
+		await context.addInitScript(
+			(locale) => localStorage.setItem("keepany-language", locale),
+			variant.locale === "zh-CN" ? "zh-CN" : "en",
+		);
+		const page = await context.newPage();
+		const errors: string[] = [];
+		page.on("pageerror", (error) => errors.push(error.message));
+		const firstPassword = '  Synthetic Gmail ;|,\\" P4ss!\t  ';
+		const secondPassword = "Synthetic second Gmail password!";
+		const appPassword = "Synthetic App password\r\nsecond line  ";
+		const unknown =
+			'<img src=x onerror="document.body.dataset.syntheticXss=1">';
+		const unknownSecret = "Synthetic unassigned secret 2026!";
+		const source = [
+			"Gmail",
+			"first.gmail@example.test",
+			firstPassword,
+			"second.gmail@example.test",
+			secondPassword,
+			"",
+			"Studio App",
+			"studio-player-42",
+			appPassword,
+			"",
+			"App without password",
+			"pending-player-55",
+			"",
+			unknown,
+			unknownSecret,
+		].join("\r\n");
+		try {
+			await configureAndOpenVault(
+				page,
+				variant.locale,
+				mock.baseURL,
+				variant.width,
+			);
+			await createVault(page, t);
+			const original = await persistedVault(page);
+			const importer = await openImport(page, t);
+			await importer.locator("#pw-smart-file").setInputFiles({
+				name: "synthetic-gmail-app-logins.txt",
+				mimeType: "text/plain",
+				buffer: Buffer.from(source),
+			});
+			mock.responses.push(
+				JSON.stringify({
+					records: [
+						{
+							title: { line: 1 },
+							username: { line: 2 },
+							password: { line: 3 },
+							url: null,
+							notes: null,
+						},
+						{
+							title: { line: 1 },
+							username: { line: 4 },
+							password: { line: 5 },
+							url: null,
+							notes: null,
+						},
+						{
+							title: { line: 7 },
+							username: { line: 8 },
+							password: { line: 9, endLine: 10 },
+							url: null,
+							notes: null,
+						},
+						{
+							title: { line: 12 },
+							username: { line: 13 },
+							password: null,
+							url: null,
+							notes: null,
+						},
+					],
+					ignoredLines: [15, 16],
+				}),
+			);
+			await importer
+				.getByRole("button", {
+					name: t("pwSmartAiRecognize", { model }),
+					exact: true,
+				})
+				.click();
+			const rows = importer.locator(".pw-smart-row");
+			await expect(rows).toHaveCount(4);
+			for (const checkbox of await rows.getByRole("checkbox").all())
+				await expect(checkbox).not.toBeChecked();
+			const first = rows.nth(0);
+			const second = rows.nth(1);
+			const app = rows.nth(2);
+			const pending = importer.locator(
+				'.pw-smart-row[data-row-id="vault-import-4"]',
+			);
+			await expect(pending.locator(".pw-smart-row-editor")).toHaveAttribute(
+				"open",
+				"",
+			);
+			for (const [row, username] of [
+				[first, "first.gmail@example.test"],
+				[second, "second.gmail@example.test"],
+				[app, "studio-player-42"],
+				[pending, "pending-player-55"],
+			] as const) {
+				await expect(row.locator(".pw-smart-row-summary")).toContainText(
+					username,
+				);
+				await openRow(row);
+				await expect(row.locator(".pw-smart-source-context")).toContainText(
+					username,
+				);
+				await expect(row.locator("input[id$='-url']")).toBeHidden();
+				await expect(row.locator(".pw-smart-optional")).not.toHaveAttribute(
+					"open",
+					"",
+				);
+			}
+			await expect(first.locator(".pw-smart-source-context")).toContainText(
+				"Gmail",
+			);
+			await expect(second.locator(".pw-smart-source-context")).toContainText(
+				"Gmail",
+			);
+			await expect(app.locator(".pw-smart-source-context")).toContainText(
+				"Studio App",
+			);
+			await expect(pending.locator(".pw-smart-row-editor")).toHaveAttribute(
+				"open",
+				"",
+			);
+			await expect(pending.getByRole("checkbox")).toBeDisabled();
+			const firstExcerpt = first.locator(".pw-smart-source-excerpt");
+			const secondExcerpt = second.locator(".pw-smart-source-excerpt");
+			await expect(firstExcerpt).toHaveAttribute(
+				"data-source-revealed",
+				"false",
+			);
+			await expect(
+				firstExcerpt.locator(".pw-smart-source-text"),
+			).not.toContainText(firstPassword);
+			await firstExcerpt
+				.getByRole("button", { name: t("pwSmartSourceShow"), exact: true })
+				.click();
+			await expect(firstExcerpt).toHaveAttribute(
+				"data-source-revealed",
+				"true",
+			);
+			await expect(firstExcerpt.locator(".pw-smart-source-text")).toContainText(
+				firstPassword,
+			);
+			expect(
+				await firstExcerpt
+					.locator(".pw-smart-source-text")
+					.evaluate((element) => element.textContent),
+			).toBe(
+				[
+					"Gmail",
+					"first.gmail@example.test",
+					firstPassword,
+					"second.gmail@example.test",
+				].join("\n"),
+			);
+			await expect(secondExcerpt).toHaveAttribute(
+				"data-source-revealed",
+				"false",
+			);
+			await expect(
+				secondExcerpt.locator(".pw-smart-source-text"),
+			).not.toContainText(secondPassword);
+			await firstExcerpt
+				.getByRole("button", { name: t("pwSmartSourceHide"), exact: true })
+				.click();
+			await openOptional(app.locator(".pw-smart-optional"));
+			await app
+				.locator("input[id$='-url']")
+				.fill("https://optional.example.test/login");
+			await app.locator("input[id$='-url']").fill("");
+			await app
+				.locator("textarea[id$='-notes']")
+				.fill("Synthetic App review note");
+			const unknownExcerpt = importer
+				.locator(".pw-smart-issues .pw-smart-source-excerpt")
+				.first();
+			await expect(unknownExcerpt).toHaveAttribute(
+				"data-source-revealed",
+				"false",
+			);
+			await expect(
+				unknownExcerpt.locator(".pw-smart-source-text"),
+			).not.toContainText(unknown);
+			await unknownExcerpt
+				.getByRole("button", { name: t("pwSmartSourceShow"), exact: true })
+				.click();
+			await expect(
+				unknownExcerpt.locator(".pw-smart-source-text"),
+			).toContainText(unknown);
+			expect(
+				await unknownExcerpt
+					.locator(".pw-smart-source-text")
+					.evaluate((element) => element.textContent),
+			).toBe(`${unknown}\n${unknownSecret}`);
+			await expect(
+				importer.locator(".pw-smart-source-excerpt img"),
+			).toHaveCount(0);
+			expect(
+				await page.evaluate(() => document.body.dataset.syntheticXss),
+			).toBeUndefined();
+			const start = Number(
+				await unknownExcerpt.getAttribute("data-source-start"),
+			);
+			const end = Number(await unknownExcerpt.getAttribute("data-source-end"));
+			const textareaSource = source.replace(/\r\n|\r/g, "\n");
+			expect(textareaSource.slice(start, end)).toBe(
+				`${unknown}\n${unknownSecret}`,
+			);
+			await unknownExcerpt
+				.getByRole("button", { name: t("pwSmartSourceEdit"), exact: true })
+				.click();
+			const sourceInput = importer.locator("#pw-smart-source");
+			await expect(sourceInput).toHaveValue(textareaSource);
+			expect(
+				await sourceInput.evaluate((element) => {
+					const field = element as HTMLTextAreaElement;
+					return {
+						start: field.selectionStart,
+						end: field.selectionEnd,
+						selected: field.value.slice(
+							field.selectionStart,
+							field.selectionEnd,
+						),
+					};
+				}),
+			).toEqual({
+				start,
+				end,
+				selected: textareaSource.slice(start, end),
+			});
+			await importer
+				.getByRole("button", { name: t("pwSmartBackToReview"), exact: true })
+				.click();
+			await expect(app.locator("textarea[id$='-notes']")).toHaveValue(
+				"Synthetic App review note",
+			);
+			expect(await persistedVault(page)).toEqual(original);
+			await checkLayout(page, importer, variant.width);
+			await pending
+				.locator(".pw-smart-source-context")
+				.scrollIntoViewIfNeeded();
+			await page.screenshot({
+				path: join(
+					evidenceRoot,
+					`password-source-context-${variant.locale}-${variant.width}-review.png`,
+				),
+				fullPage: true,
+			});
+			await importer
+				.getByRole("checkbox", { name: t("pwSmartSelectNew"), exact: true })
+				.check();
+			await expect(pending.getByRole("checkbox")).not.toBeChecked();
+			await importer
+				.getByRole("button", {
+					name: t("pwSmartConfirm", { count: 3 }),
+					exact: true,
+				})
+				.click();
+			await expect(importer.locator(".pw-smart-receipt")).toHaveText(
+				t("pwSmartSaved", { added: 3, updated: 0, skipped: 0 }),
+			);
+			await expect(rows).toHaveCount(1);
+			await expect(pending.locator(".pw-smart-source-context")).toContainText(
+				"pending-player-55",
+			);
+			await closeDialog(page);
+			const download = page.waitForEvent("download");
+			await page
+				.getByRole("button", { name: t("pwVaultExport"), exact: true })
+				.click();
+			const path = test.info().outputPath("gmail-app-no-website.kdbx");
+			await (await download).saveAs(path);
+			const exported = await inspectKdbx(path);
+			expect(
+				exported.map(({ draft }) => ({
+					title: draft.title,
+					username: draft.username,
+					password: draft.password,
+					url: draft.url,
+					notes: draft.notes,
+				})),
+			).toEqual(
+				expect.arrayContaining([
+					{
+						title: "Gmail",
+						username: "first.gmail@example.test",
+						password: firstPassword,
+						url: "",
+						notes: "",
+					},
+					{
+						title: "Gmail",
+						username: "second.gmail@example.test",
+						password: secondPassword,
+						url: "",
+						notes: "",
+					},
+					{
+						title: "Studio App",
+						username: "studio-player-42",
+						password: appPassword,
+						url: "",
+						notes: "Synthetic App review note",
+					},
+				]),
+			);
+			expect(exported).toHaveLength(3);
+			await page.reload();
+			await unlock(page, t);
+			await entry(page, "Studio App")
+				.getByRole("button", { name: t("pwVaultEditEntry"), exact: true })
+				.click();
+			await expect(page.locator("#password-vault-entry-username")).toHaveValue(
+				"studio-player-42",
+			);
+			await expect(page.locator("#password-vault-entry-url")).toHaveValue("");
+			await expect(page.locator("#password-vault-entry-notes")).toHaveValue(
+				"Synthetic App review note",
+			);
+			await expect(
+				page.locator("textarea#password-vault-entry-password"),
+			).toHaveValue("••••••••");
+			await page
+				.getByRole("dialog")
+				.getByRole("button", { name: t("pwVaultShowPassword"), exact: true })
+				.click();
+			await expect(
+				page.locator("textarea#password-vault-entry-password"),
+			).toHaveValue(appPassword.replace(/\r\n/g, "\n"));
+			await closeDialog(page);
+			expect(mock.requests).toHaveLength(1);
+			expect(errors).toEqual([]);
+		} finally {
+			await context.close();
+			await mock.close();
+		}
+	});
+
 	test(`${variant.locale} ${variant.width}px unlabeled password notes and local field mapping save exact reviewed credentials`, async ({
 		browser,
 	}) => {
@@ -413,7 +777,7 @@ for (const variant of variants) {
 				}),
 			).toBeDisabled();
 			await expect(importer.locator(".pw-smart-issues")).toContainText(
-				t("pwSmartIssueLine", { line: 4 }),
+				t("pwSmartIssue_unrecognized-line"),
 			);
 			expect(await persistedVault(page)).toEqual(before);
 			await importer
@@ -1450,7 +1814,7 @@ for (const variant of variants) {
 				importer.locator("#pw-smart-vault-import-1-password"),
 			).toHaveAttribute("type", "password");
 			await expect(importer.locator(".pw-smart-issues")).toContainText(
-				t("pwSmartIssueLine", { line: 4 }),
+				t("pwSmartIssue_unrecognized-line"),
 			);
 			await expect(
 				importer.getByRole("button", {
@@ -1790,7 +2154,7 @@ for (const variant of variants) {
 				t("pwSmartReviewMode_ai", { model, endpoint: mock.baseURL }),
 			);
 			await expect(importer.locator(".pw-smart-issues")).toContainText(
-				t("pwSmartIssueLine", { line: 7 }),
+				t("pwSmartIssue_unrecognized-line"),
 			);
 			for (const checkbox of await rows.getByRole("checkbox").all())
 				await expect(checkbox).not.toBeChecked();
@@ -1802,16 +2166,17 @@ for (const variant of variants) {
 			await expect(missingTitle.locator(".pw-smart-row-issues")).toContainText(
 				t("pwSmartIssue_missing-identity"),
 			);
-			await expect(missingPassword.locator(".pw-smart-row-source")).toHaveText(
-				t("pwSmartRowSource", { line: 4 }),
-			);
-			await expect(missingTitle.locator(".pw-smart-row-source")).toHaveText(
-				t("pwSmartRowSource", { line: 6 }),
-			);
+			await expect(
+				missingPassword.locator(".pw-smart-source-excerpt"),
+			).toContainText("Synthetic service without password");
+			await expect(
+				missingPassword.locator(".pw-smart-source-excerpt"),
+			).toContainText("missing.synthetic@example.test");
 			await openRow(missingPassword);
 			await expect(
 				missingPassword.locator("input[id$='-password']"),
 			).toHaveValue("");
+			await openOptional(missingPassword.locator(".pw-smart-optional"));
 			await missingPassword
 				.locator("textarea[id$='-notes']")
 				.fill(correctedNotes);
@@ -1878,7 +2243,7 @@ for (const variant of variants) {
 				passwordOnly,
 			);
 			await expect(importer.locator(".pw-smart-issues")).toContainText(
-				t("pwSmartIssueLine", { line: 7 }),
+				t("pwSmartIssue_unrecognized-line"),
 			);
 			await openRow(missingPassword);
 			await missingPassword
