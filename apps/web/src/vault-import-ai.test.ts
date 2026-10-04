@@ -755,9 +755,13 @@ describe("configured AI password recognition", () => {
 		expect(generateAiText).toHaveBeenCalledTimes(1);
 	});
 
-	it.each([[0, 9999, "3", null], null, "uncertain hint"])(
+	it.each([
+		{ ignoredLines: [0, 9999, "3", null] },
+		{ ignoredLines: null },
+		{ ignoredLines: "uncertain hint" },
+	])(
 		"allows surrounding prose around one complete object and ignores invalid non-authoritative line hints: %j",
-		async (ignoredLines) => {
+		async ({ ignoredLines }) => {
 			vi.mocked(generateAiText).mockResolvedValue({
 				text: `Here is the extraction:\n\`\`\`json\n${JSON.stringify({ records: [{ title: { line: 1 }, password: { line: 2 } }], ignoredLines, explanation: "ignored metadata" })}\n\`\`\`\nPlease review it.`,
 				usage: { inputTokens: null, outputTokens: null },
