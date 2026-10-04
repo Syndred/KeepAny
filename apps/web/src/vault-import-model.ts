@@ -48,6 +48,8 @@ export type VaultImportCandidate = {
 	sourceFields?: Partial<
 		Record<Exclude<Field, "type">, VaultImportSourceReference>
 	>;
+	/** Extra login identifiers have individually verified source ranges. */
+	sourceUsernameAliases?: VaultImportSourceReference[];
 };
 export type VaultImportResult = {
 	candidates: VaultImportCandidate[];
@@ -316,9 +318,25 @@ function finishBlock(
 /** AI values already reference exact source text; reuse the local field checks,
  * while keeping missing fields editable instead of losing the recognized data. */
 export function validateVaultImportFields(
-	values: Partial<Record<Exclude<Field, "type">, string>>,
+	values: Partial<Record<Exclude<Field, "type">, string>> & {
+		usernameAliases?: string[];
+	},
 ): VaultImportResult {
 	const result: VaultImportResult = { candidates: [], issues: [] };
+	if (
+		values.usernameAliases !== undefined &&
+		(!Array.isArray(values.usernameAliases) ||
+			values.usernameAliases.length > 20 ||
+			Array.from(values.usernameAliases).some(
+				(value) =>
+					typeof value !== "string" ||
+					value.length > 1024 ||
+					value.includes("\0"),
+			))
+	) {
+		result.issues.push({ lineNumber: 1, code: "invalid-field" });
+		return result;
+	}
 	finishBlock(
 		{
 			values: Object.fromEntries(
@@ -334,7 +352,37 @@ export function validateVaultImportFields(
 		result,
 		true,
 	);
+	const identifiers = [
+		...new Set(
+			values.usernameAliases?.filter(
+				(value) => value.trim() && value !== values.username,
+			) ?? [],
+		),
+	];
+	if (identifiers.length)
+		for (const candidate of result.candidates)
+			candidate.draft.usernameAliases = identifiers;
 	return result;
+}
+
+/** Blank optional form rows remain editable but do not become stored identifiers. */
+export function withFilledVaultIdentifiers(
+	draft: VaultEntryDraft,
+): VaultEntryDraft {
+	return {
+		...draft,
+		...(draft.usernameAliases
+			? {
+					usernameAliases: [
+						...new Set(
+							draft.usernameAliases.filter(
+								(value) => value.trim() && value !== draft.username,
+							),
+						),
+					],
+				}
+			: {}),
+	};
 }
 
 /** key=value pairs use explicit delimiters; JSON quotes preserve literal delimiters and whitespace. */
@@ -642,7 +690,12 @@ export function buildVaultImportAiPreview(
 	if (candidates.length > VAULT_IMPORT_MAX_ENTRIES)
 		throw Error("vault-import-limit");
 	const secrets = candidates
-		.flatMap(({ draft }) => [draft.password, draft.username, draft.notes])
+		.flatMap(({ draft }) => [
+			draft.password,
+			draft.username,
+			...(draft.usernameAliases ?? []),
+			draft.notes,
+		])
 		.filter(Boolean)
 		.flatMap(secretFingerprints);
 	const ids = new Set<string>();

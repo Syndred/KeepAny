@@ -7,6 +7,8 @@ import {
 	requestVaultImportAiTitles,
 	VAULT_IMPORT_MAX_BYTES,
 	type VaultImportCandidate,
+	validateVaultImportFields,
+	withFilledVaultIdentifiers,
 } from "./vault-import-model";
 
 vi.mock("../../../packages/ai/src", () => ({ generateAiText: vi.fn() }));
@@ -25,6 +27,76 @@ const candidates = () => parseVaultImportText(text).candidates;
 afterEach(() => vi.resetAllMocks());
 
 describe("local password paste parsing", () => {
+	it("retains exact alternative identifiers while ignoring empty optional form rows", () => {
+		const values = {
+			title: "App",
+			username: "main@example.test",
+			password: "synthetic",
+			usernameAliases: [
+				"main@example.test",
+				"",
+				"  ",
+				"LoginName",
+				"loginname",
+				" LoginName ",
+				"LoginName",
+			],
+		};
+		const result = validateVaultImportFields(values);
+		expect(result.issues).toEqual([]);
+		expect(result.candidates[0].draft.usernameAliases).toEqual([
+			"LoginName",
+			"loginname",
+			" LoginName ",
+		]);
+		expect(values.usernameAliases).toHaveLength(7);
+		expect(
+			withFilledVaultIdentifiers({
+				...result.candidates[0].draft,
+				usernameAliases: ["LoginName", "", "  "],
+			}).usernameAliases,
+		).toEqual(["LoginName"]);
+		for (const aliases of [
+			Array(1),
+			["bad\0value"],
+			["x".repeat(1025)],
+			Array(21).fill("value"),
+		]) {
+			const invalid = validateVaultImportFields({
+				...values,
+				usernameAliases: aliases,
+			});
+			expect(invalid.candidates).toEqual([]);
+			expect(invalid.issues).toEqual([
+				{ lineNumber: 1, code: "invalid-field" },
+			]);
+		}
+	});
+	it("filters alternative login identifiers and their encodings from domain-only AI", () => {
+		const rows = candidates();
+		const identifier = "synthetic-alias-token";
+		const hex = [...new TextEncoder().encode(identifier)]
+			.map((byte) => byte.toString(16).padStart(2, "0"))
+			.join("");
+		const base64 = btoa(identifier).replace(/=+$/, "").toLowerCase();
+		const preview = buildVaultImportAiPreview([
+			...rows,
+			...([identifier, hex, base64] as const).map((host, index) => ({
+				...rows[0],
+				id: `vault-import-${index + 2}`,
+				draft: { ...rows[0].draft, url: `https://${host}.example.test` },
+			})),
+			{
+				...rows[0],
+				id: "vault-manual-1",
+				aiEligible: false,
+				draft: { ...rows[0].draft, usernameAliases: [identifier] },
+			},
+		]);
+		expect(preview.records).toEqual([
+			{ id: "vault-import-1", host: "example.test" },
+		]);
+	});
 	it("extracts explicit fields without changing password, account, notes or query/hash", () => {
 		const result = parseVaultImportText(text);
 		expect(result.issues).toEqual([]);

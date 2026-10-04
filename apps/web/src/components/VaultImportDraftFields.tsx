@@ -3,10 +3,12 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { VaultEntryDraft } from "../../../../packages/password-vault/src";
 import { Button } from "./ui/button";
+import { VaultLoginIdentifiers } from "./VaultLoginIdentifiers";
 
 export type VaultImportDraftField =
 	| "title"
 	| "username"
+	| "usernameAliases"
 	| "password"
 	| "url"
 	| "notes";
@@ -22,17 +24,16 @@ export function VaultImportDraftFields({
 	draft: VaultEntryDraft;
 	disabled: boolean;
 	readOnlyIdentity?: boolean;
-	onChange: (field: VaultImportDraftField, value: string) => void;
+	onChange: (field: VaultImportDraftField, value: string | string[]) => void;
 }) {
 	const { t } = useTranslation();
 	const [revealed, setRevealed] = useState(false);
-	const hasOptionalDetails = !!draft.url || !!draft.notes;
-	const [optionalExpanded, setOptionalExpanded] = useState(hasOptionalDetails);
+	const [urlExpanded, setUrlExpanded] = useState(!!draft.url);
 	const multilinePassword = /[\r\n]/.test(draft.password);
 
 	useEffect(() => {
-		if (hasOptionalDetails) setOptionalExpanded(true);
-	}, [hasOptionalDetails]);
+		if (draft.url) setUrlExpanded(true);
+	}, [draft.url]);
 
 	return (
 		<>
@@ -67,11 +68,16 @@ export function VaultImportDraftFields({
 						/>
 					</label>
 				))}
-				<label
-					className="field pw-smart-field-password"
-					htmlFor={`${idPrefix}-password`}
-				>
-					<span>{t("pwVaultPasswordField")}</span>
+				<VaultLoginIdentifiers
+					idPrefix={idPrefix}
+					values={draft.usernameAliases}
+					disabled={disabled}
+					onChange={(values) => onChange("usernameAliases", values)}
+				/>
+				<div className="field pw-smart-field-password">
+					<label htmlFor={`${idPrefix}-password`}>
+						{t("pwVaultPasswordField")}
+					</label>
 					<div className="pw-smart-password">
 						{multilinePassword ? (
 							<textarea
@@ -108,30 +114,37 @@ export function VaultImportDraftFields({
 							{revealed ? <EyeOff size={16} /> : <Eye size={16} />}
 						</Button>
 					</div>
-				</label>
+				</div>
 			</div>
-			<details
-				className="pw-smart-optional"
-				open={optionalExpanded}
-				onToggle={(event) => setOptionalExpanded(event.currentTarget.open)}
-			>
-				<summary>{t("pwVaultOptionalDetails")}</summary>
+			<div className="pw-smart-optional">
 				<div className="pw-smart-fields">
-					<label
-						className="field pw-smart-field-url"
-						htmlFor={`${idPrefix}-url`}
-					>
-						<span>{t("pwVaultUrlOptionalField")}</span>
-						<input
-							id={`${idPrefix}-url`}
-							value={draft.url}
-							onChange={(event) => onChange("url", event.target.value)}
-							disabled={disabled}
-							readOnly={readOnlyIdentity}
-							autoComplete="off"
-							spellCheck={false}
-						/>
-					</label>
+					{urlExpanded ? (
+						<label
+							className="field pw-smart-field-url"
+							htmlFor={`${idPrefix}-url`}
+						>
+							<span>{t("pwVaultUrlOptionalField")}</span>
+							<input
+								id={`${idPrefix}-url`}
+								value={draft.url}
+								onChange={(event) => onChange("url", event.target.value)}
+								disabled={disabled}
+								readOnly={readOnlyIdentity}
+								autoComplete="off"
+								spellCheck={false}
+							/>
+						</label>
+					) : (
+						<div className="pw-smart-field-url">
+							<Button
+								type="button"
+								onClick={() => setUrlExpanded(true)}
+								disabled={disabled || readOnlyIdentity}
+							>
+								{t("pwVaultAddUrl")}
+							</Button>
+						</div>
+					)}
 					<label
 						className="field pw-smart-field-notes"
 						htmlFor={`${idPrefix}-notes`}
@@ -148,7 +161,7 @@ export function VaultImportDraftFields({
 						/>
 					</label>
 				</div>
-			</details>
+			</div>
 		</>
 	);
 }

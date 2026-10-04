@@ -121,8 +121,8 @@ export const passwordVaultCopy: Record<string, [string, string]> = {
 	pwSmartFragmentApply: ["加入待导入条目", "Add to the import list"],
 	pwSmartFragmentCollapse: ["收起表单", "Collapse form"],
 	pwSmartSavedEntryHint: [
-		"此条目已入库，可补充密码和备注；另一个账号请选择新建条目。",
-		"This entry is already saved. You can update its password and notes. Choose a new entry for a different account.",
+		"此条目已入库，可补充登录标识、密码和备注；另一个小号请选择新建条目。",
+		"This entry is already saved. You can add login identifiers, a password or notes. Create a new entry for a different account.",
 	],
 	pwSmartAdvanced: ["其他输入方式", "Other input methods"],
 	pwSmartManualAdded: [
@@ -338,6 +338,25 @@ export const passwordVaultCopy: Record<string, [string, string]> = {
 		"For example Gmail, WhatsApp, or a website name",
 	],
 	pwVaultUsernameField: ["用户名或账号", "Username or account"],
+	pwVaultOtherIdentifier: [
+		"其他登录标识 {{count}}",
+		"Other login identifier {{count}}",
+	],
+	pwVaultAddIdentifier: ["添加登录标识", "Add login identifier"],
+	pwVaultRemoveIdentifier: [
+		"删除登录标识 {{count}}",
+		"Remove login identifier {{count}}",
+	],
+	pwVaultCopyIdentifier: [
+		"复制登录标识 {{count}}",
+		"Copy login identifier {{count}}",
+	],
+	pwVaultIdentifiersHint: [
+		"同一账号可填写邮箱、用户名或手机号。不同小号请分别新建条目。",
+		"Use email, username or phone for the same account. Create separate entries for different accounts.",
+	],
+	pwVaultAddAnotherAccount: ["新增同平台账号", "Add another account"],
+	pwVaultAddUrl: ["添加网址", "Add website URL"],
 	pwVaultPasswordField: ["密码", "Password"],
 	pwVaultPasswordPlaceholder: [
 		"输入密码，或使用生成器",

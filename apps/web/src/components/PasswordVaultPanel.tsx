@@ -34,6 +34,8 @@ import { TaskCard } from "./ui/task-card";
 import { TextLink } from "./ui/text-link";
 import "../password-vault.css";
 import { PasswordSmartImportDialog } from "./PasswordSmartImportDialog";
+import { VaultLoginIdentifiers } from "./VaultLoginIdentifiers";
+import { withFilledVaultIdentifiers } from "../vault-import-model";
 
 type PasswordVaultPanelProps = {
 	assets: Asset[];
@@ -226,7 +228,12 @@ export function PasswordVaultPanel({
 		() =>
 			scopedEntries.filter((entry) => {
 				if (!normalizedSearch) return true;
-				return [entry.title, entry.username, entry.url].some((value) =>
+				return [
+					entry.title,
+					entry.username,
+					...(entry.usernameAliases ?? []),
+					entry.url,
+				].some((value) =>
 					value.toLocaleLowerCase(i18n.language).includes(normalizedSearch),
 				);
 			}),
@@ -255,6 +262,15 @@ export function PasswordVaultPanel({
 		setDraft(blankDraft(assetFilter));
 		setShowPassword(false);
 		setSelectedAssetId("");
+	}
+
+	function openAnotherAccount(entry: PasswordVaultEntrySummary) {
+		openNewEditor();
+		setDraft({
+			...blankDraft(assetFilter),
+			title: entry.title,
+			url: entry.url,
+		});
 	}
 
 	function openEditor(id: string) {
@@ -338,9 +354,9 @@ export function PasswordVaultPanel({
 		event.preventDefault();
 		if (busy || !session || !draft) return;
 		const next: PasswordVaultEntryDraft = {
-			...draft,
+			...withFilledVaultIdentifiers(draft),
 			title: draft.title.trim(),
-			username: draft.username.trim(),
+			username: draft.username,
 			url: draft.url.trim(),
 			notes: draft.notes.trim(),
 			linkedAssetIds: [...new Set(draft.linkedAssetIds)],
@@ -714,6 +730,7 @@ export function PasswordVaultPanel({
 										entry={entry}
 										assetsById={assetsById}
 										onEdit={() => openEditor(entry.id)}
+										onAddAnother={() => openAnotherAccount(entry)}
 										onDelete={() => void deleteEntry(entry)}
 										onHistory={() => void openHistory(entry)}
 										onCopy={(label, value) => void copyValue(label, value)}
@@ -834,7 +851,12 @@ export function PasswordVaultPanel({
 											})}
 										</small>
 										<span>
-											{row.draft.username || t("pwVaultNoLinkedAssets")}
+											{[
+												row.draft.username,
+												...(row.draft.usernameAliases ?? []),
+											]
+												.filter(Boolean)
+												.join(" · ") || t("pwVaultNoLinkedAssets")}
 										</span>
 										{historyReveal === index && (
 											<code>{row.draft.password}</code>
@@ -1187,6 +1209,7 @@ function LockedState({
 
 function EntryCard({
 	entry,
+	onAddAnother,
 	assetsById,
 	onEdit,
 	onDelete,
@@ -1198,6 +1221,7 @@ function EntryCard({
 	entry: PasswordVaultEntrySummary;
 	assetsById: Map<string, Asset>;
 	onEdit: () => void;
+	onAddAnother: () => void;
 	onDelete: () => void;
 	onHistory: () => void;
 	onCopy: (label: string, value: string) => void;
@@ -1229,6 +1253,27 @@ function EntryCard({
 					})}
 				</small>
 			</div>
+			{!!entry.usernameAliases?.length && (
+				<div className="pw-smart-identifiers">
+					{entry.usernameAliases.map((value, index) => (
+						<div
+							className="pw-smart-identifier-row"
+							key={value}
+							data-identifier-index={index + 2}
+						>
+							<span>{value}</span>
+							<Button
+								type="button"
+								size="icon"
+								aria-label={t("pwVaultCopyIdentifier", { count: index + 2 })}
+								onClick={() => onCopy("pwVaultUsernameField", value)}
+							>
+								<Copy size={16} />
+							</Button>
+						</div>
+					))}
+				</div>
+			)}
 			{entry.linkedAssetIds.length > 0 && (
 				<div className="password-vault-linked-assets">
 					<Link2 size={14} />
@@ -1246,6 +1291,9 @@ function EntryCard({
 					disabled={!entry.username}
 				>
 					<Copy size={14} /> {t("pwVaultCopyUsername")}
+				</Button>
+				<Button size="small" onClick={onAddAnother}>
+					<Plus size={14} /> {t("pwVaultAddAnotherAccount")}
 				</Button>
 				<Button size="small" onClick={onEdit}>
 					<RefreshCw size={14} /> {t("pwVaultEditEntry")}
@@ -1290,9 +1338,7 @@ function EntryEditor({
 	onGenerate: () => void;
 	t: (key: string, options?: Record<string, unknown>) => string;
 }) {
-	const [moreInfoOpen, setMoreInfoOpen] = useState(
-		Boolean(draft.url || draft.notes),
-	);
+	const [urlExpanded, setUrlExpanded] = useState(Boolean(draft.url));
 	const update = <K extends keyof PasswordVaultEntryDraft>(
 		key: K,
 		value: PasswordVaultEntryDraft[K],
@@ -1330,7 +1376,13 @@ function EntryEditor({
 						maxLength={300}
 					/>
 				</div>
-				<div className="field password-vault-password-field">
+				<VaultLoginIdentifiers
+					idPrefix="password-vault-entry"
+					values={draft.usernameAliases}
+					disabled={busy}
+					onChange={(values) => update("usernameAliases", values)}
+				/>
+				<div className="field password-vault-password-field password-vault-secret-field">
 					<label htmlFor="password-vault-entry-password">
 						{t("pwVaultPasswordField")}
 					</label>
@@ -1401,28 +1453,35 @@ function EntryEditor({
 						</Button>
 					</div>
 				</div>
-				<details
-					className="password-vault-more-info password-vault-optional"
-					open={moreInfoOpen}
-					onToggle={(event) => setMoreInfoOpen(event.currentTarget.open)}
-				>
-					<summary>{t("pwVaultOptionalDetails")}</summary>
+				<div className="password-vault-more-info password-vault-optional">
 					<div className="password-vault-more-info-fields">
-						<div className="field">
-							<label htmlFor="password-vault-entry-url">
-								{t("pwVaultUrlOptionalField")}
-							</label>
-							<input
-								id="password-vault-entry-url"
-								type="url"
-								value={draft.url}
-								onChange={(event) => update("url", event.target.value)}
-								disabled={busy}
-								inputMode="url"
-								autoComplete="url"
-								placeholder="https://"
-							/>
-						</div>
+						{urlExpanded ? (
+							<div className="field">
+								<label htmlFor="password-vault-entry-url">
+									{t("pwVaultUrlOptionalField")}
+								</label>
+								<input
+									id="password-vault-entry-url"
+									type="url"
+									value={draft.url}
+									onChange={(event) => update("url", event.target.value)}
+									disabled={busy}
+									inputMode="url"
+									autoComplete="url"
+									placeholder="https://"
+								/>
+							</div>
+						) : (
+							<div>
+								<Button
+									type="button"
+									onClick={() => setUrlExpanded(true)}
+									disabled={busy}
+								>
+									{t("pwVaultAddUrl")}
+								</Button>
+							</div>
+						)}
 						<div className="field password-vault-notes-field">
 							<label htmlFor="password-vault-entry-notes">
 								{t("pwVaultNotesOptionalField")}
@@ -1437,7 +1496,7 @@ function EntryEditor({
 							/>
 						</div>
 					</div>
-				</details>
+				</div>
 			</div>
 			<div className="field password-vault-linked-picker">
 				<label htmlFor="password-vault-entry-asset">

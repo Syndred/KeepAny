@@ -25,6 +25,7 @@ import {
 	type VaultImportIssue,
 	type VaultImportResult,
 	validateVaultImportFields,
+	withFilledVaultIdentifiers,
 } from "../vault-import-model";
 import {
 	buildVaultImportSourceExcerpt,
@@ -66,20 +67,26 @@ function previewCandidates(
 		let plan: ReturnType<VaultSession["previewImport"]>;
 		try {
 			plan = session.previewImport(
-				indexes.map((index) => candidates[index].draft),
+				indexes.map((index) =>
+					withFilledVaultIdentifiers(candidates[index].draft),
+				),
 			);
 		} catch {
 			// One invalid edit must not prevent other entries from being reviewed.
 			indexes = indexes.filter((index) => {
 				try {
-					session.previewImport([candidates[index].draft]);
+					session.previewImport([
+						withFilledVaultIdentifiers(candidates[index].draft),
+					]);
 					return true;
 				} catch {
 					return false;
 				}
 			});
 			plan = session.previewImport(
-				indexes.map((index) => candidates[index].draft),
+				indexes.map((index) =>
+					withFilledVaultIdentifiers(candidates[index].draft),
+				),
 			);
 		}
 		const rows: ReviewPreview["rows"] = Array.from({
@@ -615,7 +622,7 @@ export function PasswordSmartImportDialog({
 	function updateDraft(
 		id: string,
 		field: keyof VaultEntryDraft,
-		value: string,
+		value: string | string[],
 	) {
 		if (running.current) return;
 		const rows = candidates.map((row) =>
@@ -666,6 +673,36 @@ export function PasswordSmartImportDialog({
 	function choose(id: string, choice: Choice) {
 		setChoices((current) => ({ ...current, [id]: choice }));
 	}
+	function addAnotherAccount(id: string) {
+		if (running.current || outdated) return;
+		const target = candidates.find((row) => row.id === id);
+		if (!target) return;
+		if (candidates.length >= VAULT_IMPORT_MAX_ENTRIES) {
+			setMessage(t("pwSmartLimit"));
+			return;
+		}
+		const row: VaultImportCandidate = {
+			id: `vault-manual-${++manualSequence.current}`,
+			sourceLine: target.sourceLine,
+			draft: {
+				title: target.draft.title,
+				url: target.draft.url,
+				username: "",
+				password: "",
+				notes: "",
+				linkedAssetIds: [],
+			},
+			aiEligible: false,
+			explicitlyEdited: true,
+			needsReview: true,
+		};
+		setCandidates((current) => [...current, row]);
+		setChoices((current) => ({
+			...current,
+			[row.id]: { selected: false, action: "new" },
+		}));
+		setMessage(t("pwSmartManualAdded"));
+	}
 	function applyFragment(
 		group: (typeof issueGroups)[number],
 		targetId: string | null,
@@ -693,7 +730,9 @@ export function PasswordSmartImportDialog({
 			target &&
 			(["title", "username", "password", "url", "notes"] as const).every(
 				(field) => validated.candidates[0].draft[field] === target.draft[field],
-			)
+			) &&
+			JSON.stringify(validated.candidates[0].draft.usernameAliases ?? []) ===
+				JSON.stringify(target.draft.usernameAliases ?? [])
 		) {
 			setMessage(t("pwSmartFragmentNoChange"));
 			return false;
@@ -714,7 +753,7 @@ export function PasswordSmartImportDialog({
 				linkedAssetIds: [...draft.linkedAssetIds],
 			},
 			aiEligible: false,
-			explicitlyEdited: !!target,
+			explicitlyEdited: true,
 			needsReview: true,
 			reviewIssues: validated.issues.map((issue) => ({
 				...issue,
@@ -799,7 +838,7 @@ export function PasswordSmartImportDialog({
 				const choice = choices[row.id];
 				const action = choice.action;
 				return {
-					draft: row.draft,
+					draft: withFilledVaultIdentifiers(row.draft),
 					action,
 					...(action === "update" ? { targetId: choice?.targetId } : {}),
 				};
@@ -1178,6 +1217,7 @@ export function PasswordSmartImportDialog({
 											disabled={!!busy || outdated}
 											onDraft={updateDraft}
 											onChoice={choose}
+											onAddAnother={addAnotherAccount}
 											existing={vault.snapshot.entries}
 											source={row.sourceSnapshot ?? reviewSource}
 											candidates={candidates.filter(
@@ -1261,6 +1301,7 @@ function ImportRow({
 	disabled,
 	onDraft,
 	onChoice,
+	onAddAnother,
 	existing,
 	source,
 	candidates,
@@ -1270,8 +1311,13 @@ function ImportRow({
 	plan: ReviewPreview | null;
 	choice: Choice;
 	disabled: boolean;
-	onDraft: (id: string, field: keyof VaultEntryDraft, value: string) => void;
+	onDraft: (
+		id: string,
+		field: keyof VaultEntryDraft,
+		value: string | string[],
+	) => void;
 	onChoice: (id: string, choice: Choice) => void;
+	onAddAnother: (id: string) => void;
 	existing: { id: string; title: string; username: string }[];
 	source: string;
 	candidates: VaultImportCandidate[];
@@ -1367,6 +1413,17 @@ function ImportRow({
 					/>
 				)}
 			</details>
+			{expanded && (
+				<div className="actions pw-smart-row-actions">
+					<Button
+						type="button"
+						onClick={() => onAddAnother(row.id)}
+						disabled={disabled}
+					>
+						{t("pwVaultAddAnotherAccount")}
+					</Button>
+				</div>
+			)}
 			{status === "conflict" && !row.updateTargetId && (
 				<label className="field" htmlFor={`${fieldId}-action`}>
 					<span>

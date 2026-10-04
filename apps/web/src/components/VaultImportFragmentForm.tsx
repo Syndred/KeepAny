@@ -1,7 +1,10 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { VaultEntryDraft } from "../../../../packages/password-vault/src";
-import type { VaultImportCandidate } from "../vault-import-model";
+import {
+	type VaultImportCandidate,
+	withFilledVaultIdentifiers,
+} from "../vault-import-model";
 import { Button } from "./ui/button";
 import { Select, SelectOption } from "./ui/select";
 import {
@@ -24,6 +27,9 @@ function copyDraft(draft: VaultEntryDraft): VaultEntryDraft {
 	const copy = {
 		...draft,
 		linkedAssetIds: [...draft.linkedAssetIds],
+		...(draft.usernameAliases
+			? { usernameAliases: [...draft.usernameAliases] }
+			: {}),
 	};
 	delete copy.id;
 	return copy;
@@ -93,9 +99,12 @@ export function VaultImportFragmentForm({
 		mode === "new" ||
 		(!!draft &&
 			!!target &&
-			(["title", "username", "password", "url", "notes"] as const).some(
+			((["title", "username", "password", "url", "notes"] as const).some(
 				(field) => draft[field] !== target.draft[field],
-			));
+			) ||
+				JSON.stringify(
+					withFilledVaultIdentifiers(draft).usernameAliases ?? [],
+				) !== JSON.stringify(target.draft.usernameAliases ?? [])));
 
 	function selectTarget(nextId: string) {
 		setTargetId(nextId);
@@ -110,7 +119,7 @@ export function VaultImportFragmentForm({
 		});
 	}
 
-	function changeField(field: VaultImportDraftField, value: string) {
+	function changeField(field: VaultImportDraftField, value: string | string[]) {
 		if (
 			readOnlyIdentity &&
 			(field === "title" || field === "username" || field === "url")
