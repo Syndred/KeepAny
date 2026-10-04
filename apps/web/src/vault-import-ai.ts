@@ -316,6 +316,14 @@ export async function requestVaultImportAiRecognition(
 			aiEligible: false,
 			needsReview: true,
 			...(reviewIssues.length ? { reviewIssues } : {}),
+			sourceFields: Object.fromEntries(
+				assigned.flatMap((field) => {
+					const reference = resolved[field];
+					if (!reference) return [];
+					const { start, end, line, endLine } = reference;
+					return [[field, { start, end, line, endLine }]];
+				}),
+			),
 		});
 		for (const field of assigned) {
 			const reference = resolved[field];

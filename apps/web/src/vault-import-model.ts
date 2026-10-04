@@ -21,6 +21,12 @@ export type VaultImportIssue = {
 	lineNumber: number;
 	code: VaultImportIssueCode;
 };
+export type VaultImportSourceReference = {
+	start: number;
+	end: number;
+	line: number;
+	endLine: number;
+};
 export type VaultImportCandidate = {
 	id: string;
 	sourceLine: number;
@@ -30,6 +36,10 @@ export type VaultImportCandidate = {
 	needsReview?: boolean;
 	/** Safe source references that need correction before this draft can be saved. */
 	reviewIssues?: VaultImportIssue[];
+	/** Validated ranges in the current paste, retained only for local review. */
+	sourceFields?: Partial<
+		Record<Exclude<Field, "type">, VaultImportSourceReference>
+	>;
 };
 export type VaultImportResult = {
 	candidates: VaultImportCandidate[];

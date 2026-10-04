@@ -73,6 +73,11 @@ describe("configured AI password recognition", () => {
 			],
 		});
 		expect(result.issues).toEqual([]);
+		expect(result.candidates[0].sourceFields).toEqual({
+			title: { start: 0, end: 7, line: 1, endLine: 1 },
+			username: { start: 9, end: 28, line: 2, endLine: 2 },
+			password: { start: 30, end: source.length, line: 3, endLine: 3 },
+		});
 		expect(result.candidates[0]).toMatchObject({
 			sourceLine: 1,
 			aiEligible: false,
