@@ -16,8 +16,8 @@ export const passwordVaultCopy: Record<string, [string, string]> = {
 	],
 	pwSmartMap: ["按行指定字段", "Assign fields by line"],
 	pwSmartMapHint: [
-		"为每行选择标题、账号、密码等字段，勾选新条目的起始行，再预览。未指定的行会保留待核对。",
-		"Choose a field for each line, mark where each entry begins, then review. Unassigned lines remain for review.",
+		"为每行选择名称、账号、密码等字段，标记条目起始行，再加入核对列表。已有条目保留，未指定的内容仍待核对。",
+		"Choose a field for each line, mark where each entry begins, then add it to review. Existing entries are kept; unassigned content still needs review.",
 	],
 	pwSmartMapShow: ["显示原文内容", "Show source values"],
 	pwSmartMapHide: ["隐藏原文内容", "Hide source values"],
@@ -78,16 +78,16 @@ export const passwordVaultCopy: Record<string, [string, string]> = {
 	pwSmartSourceHide: ["隐藏这段原文", "Hide this source excerpt"],
 	pwSmartSourceEdit: ["在原文中修改", "Edit in source"],
 	pwSmartSourceEditHint: [
-		"已定位并选中对应原文。未保存的条目和修改已保留；重新识别或按行预览会用新结果替换这些条目。",
-		"The matching source is selected. Your unsaved entries and edits are kept. Recognizing again or previewing assigned fields replaces them with new results.",
+		"已选中对应原文，已有条目和修改保留。按行指定只追加条目；重新识别成功后才替换列表。",
+		"The matching source is selected. Existing entries and edits are kept. Assigned entries are appended; only successful recognition replaces the list.",
 	],
 	pwSmartSourceEditKeepHint: [
-		"未保存的条目和修改已保留。重新识别或按行预览会用新结果替换这些条目。",
-		"Your unsaved entries and edits are kept. Recognizing again or previewing assigned fields replaces them with new results.",
+		"已有条目和修改保留。按行指定只追加条目；重新识别成功后才替换列表。",
+		"Existing entries and edits are kept. Assigned entries are appended; only successful recognition replaces the list.",
 	],
 	pwSmartSourceChangedHint: [
-		"原文已修改，返回核对仍显示上次结果。重新识别或按行预览会替换当前未保存的条目。",
-		"The source has changed. Returning to review shows the previous results. Recognizing again or previewing assigned fields replaces your current unsaved entries.",
+		"原文已修改，已有条目和修改保留。按行指定可追加条目；重新识别成功后才替换列表。",
+		"The source has changed. Existing entries and edits are kept. You can append assigned entries; only successful recognition replaces the list.",
 	],
 	pwSmartBackToReview: ["返回核对", "Back to review"],
 	pwSmartIssues: ["以下内容需要核对", "Some content needs review"],
