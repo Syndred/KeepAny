@@ -402,7 +402,14 @@
     "local4180Updated": true,
     "internetDeployed": false,
     "ciReadback": false,
-    "keepAnyAdmModified": false
+    "keepAnyAdmModified": false,
+    "push": {
+      "branch": "main",
+      "acceptanceCommit": "1444db79948fc54929dd84ef9062f9bfcb3c2fbd",
+      "remoteReadback": "1444db79948fc54929dd84ef9062f9bfcb3c2fbd",
+      "verified": true,
+      "note": "此远端回读记录另作说明提交，不改变最终代码或包"
+    }
   },
   "cleanup": {
     "testPort4351Listening": false,
