@@ -23,7 +23,7 @@ type Ref = {
 const record = (
 	value: Partial<
 		Record<"title" | "username" | "password" | "url" | "notes", Ref | null>
-	>,
+	> & { usernameAliases?: Ref[] },
 ) => ({
 	title: null,
 	username: null,
@@ -42,6 +42,236 @@ function answer(records: unknown[], ignoredLines: number[] = []) {
 afterEach(() => vi.resetAllMocks());
 
 describe("configured AI password recognition", () => {
+	it("extracts email, handle and phone alternatives only from individually proven source references", async () => {
+		const source =
+			"网站=Example\n邮箱=reader@example.test\n用户名=synthetic-handle\n手机号=+15550123456\n密码=synthetic-password";
+		answer([
+			record({
+				title: { line: 1, substring: "Example" },
+				username: { line: 2, substring: "reader@example.test" },
+				usernameAliases: [
+					{ line: 3, substring: "synthetic-handle" },
+					{ line: 4, substring: "+15550123456" },
+				],
+				password: { line: 5, substring: "synthetic-password" },
+			}),
+		]);
+		const result = await requestVaultImportAiRecognition(connection, source);
+		expect(result.issues).toEqual([]);
+		expect(result.candidates[0].draft).toMatchObject({
+			username: "reader@example.test",
+			usernameAliases: ["synthetic-handle", "+15550123456"],
+		});
+		expect(result.candidates[0].sourceUsernameAliases).toEqual(
+			["synthetic-handle", "+15550123456"].map((text, index) => ({
+				start: source.indexOf(text),
+				end: source.indexOf(text) + text.length,
+				line: index + 3,
+				endLine: index + 3,
+			})),
+		);
+	});
+	it("keeps separate platform accounts and their alternatives in separate records", async () => {
+		const source =
+			"Example\none@example.test\none-handle\none-secret\ntwo@example.test\n+15550120002\ntwo-secret\nOther\nthird@example.test\nthird-handle\nthird-secret";
+		answer([
+			record({
+				title: { line: 1 },
+				username: { line: 2 },
+				usernameAliases: [{ line: 3 }],
+				password: { line: 4 },
+			}),
+			record({
+				title: { line: 1 },
+				username: { line: 5 },
+				usernameAliases: [{ line: 6 }],
+				password: { line: 7 },
+			}),
+			record({
+				title: { line: 8 },
+				username: { line: 9 },
+				usernameAliases: [{ line: 10 }],
+				password: { line: 11 },
+			}),
+		]);
+		const result = await requestVaultImportAiRecognition(connection, source);
+		expect(result.issues).toEqual([]);
+		expect(
+			result.candidates.map(({ draft }) => [
+				draft.title,
+				draft.username,
+				draft.usernameAliases,
+				draft.password,
+			]),
+		).toEqual([
+			["Example", "one@example.test", ["one-handle"], "one-secret"],
+			["Example", "two@example.test", ["+15550120002"], "two-secret"],
+			["Other", "third@example.test", ["third-handle"], "third-secret"],
+		]);
+	});
+	it("preserves exact quoted alias characters and never infers aliases from repeated username labels", async () => {
+		const alias = "  Synthetic handle;|  ";
+		const quoted = JSON.stringify(alias);
+		answer([
+			record({
+				title: { line: 1 },
+				username: { line: 2, substring: "reader@example.test" },
+				usernameAliases: [
+					{ line: 3, substring: quoted, encoding: "json-string" },
+				],
+				password: { line: 4 },
+			}),
+		]);
+		const result = await requestVaultImportAiRecognition(
+			connection,
+			`Example\nusername=reader@example.test\nusername=${quoted}\nsynthetic-password`,
+		);
+		expect(result.issues).toEqual([]);
+		expect(result.candidates[0].draft.usernameAliases).toEqual([alias]);
+		answer([
+			record({
+				title: { line: 1 },
+				username: { line: 2, substring: "reader@example.test" },
+				password: { line: 4 },
+			}),
+		]);
+		const missingAlias = await requestVaultImportAiRecognition(
+			connection,
+			`Example\nusername=reader@example.test\nusername=${quoted}\nsynthetic-password`,
+		);
+		expect(missingAlias.candidates[0].draft).not.toHaveProperty(
+			"usernameAliases",
+		);
+		expect(missingAlias.candidates[0]).not.toHaveProperty(
+			"sourceUsernameAliases",
+		);
+		expect(missingAlias.issues).toContainEqual({
+			lineNumber: 3,
+			code: "unrecognized-line",
+		});
+	});
+	it.each([
+		{ line: 0 },
+		{ line: 9 },
+		{ line: 3, endLine: 2 },
+		{ line: 3, substring: "invented" },
+		{ line: 3, substring: "repeated" },
+		{ line: 1 },
+		{ line: 2 },
+		{ line: 4 },
+	])(
+		"rejects invalid, ambiguous or overlapping alias references without consuming the record: %j",
+		async (alias) => {
+			const source =
+				"Example\nreader@example.test\nrepeated repeated\nsynthetic-password";
+			answer([
+				record({
+					title: { line: 1 },
+					username: { line: 2 },
+					usernameAliases: [alias],
+					password: { line: 4 },
+				}),
+			]);
+			const result = await requestVaultImportAiRecognition(connection, source);
+			expect(result.candidates).toEqual([]);
+			expect(
+				result.issues.some(
+					({ code }) => code === "invalid-field" || code === "ambiguous-line",
+				),
+			).toBe(true);
+			for (const lineNumber of [1, 2, 3, 4])
+				expect(result.issues).toContainEqual({
+					lineNumber,
+					code: "unrecognized-line",
+				});
+		},
+	);
+	it("rejects repeated alias spans and reserves accepted aliases against later entry credentials", async () => {
+		const source =
+			"Example\nreader@example.test\nsynthetic-handle\nsynthetic-password\nsecond-secret";
+		answer([
+			record({
+				title: { line: 1 },
+				username: { line: 2 },
+				usernameAliases: [{ line: 3 }, { line: 3 }],
+				password: { line: 4 },
+			}),
+		]);
+		expect(
+			(await requestVaultImportAiRecognition(connection, source)).candidates,
+		).toEqual([]);
+		answer([
+			record({
+				title: { line: 1 },
+				username: { line: 2 },
+				usernameAliases: [{ line: 3 }],
+				password: { line: 4 },
+			}),
+			record({
+				title: { line: 1 },
+				username: { line: 3 },
+				password: { line: 5 },
+			}),
+		]);
+		const result = await requestVaultImportAiRecognition(connection, source);
+		expect(result.candidates).toHaveLength(1);
+		expect(result.candidates[0].draft.usernameAliases).toEqual([
+			"synthetic-handle",
+		]);
+		expect(result.issues).toEqual(
+			expect.arrayContaining([
+				{ lineNumber: 3, code: "ambiguous-line" },
+				{ lineNumber: 5, code: "unrecognized-line" },
+			]),
+		);
+	});
+	it("rejects excessive aliases and unsafe alias values without covering any source span", async () => {
+		const aliases = Array.from(
+			{ length: 21 },
+			(_, index) => `synthetic-alias-${index}`,
+		);
+		const source = [
+			"Example",
+			"reader@example.test",
+			"synthetic-password",
+			...aliases,
+		].join("\n");
+		answer([
+			record({
+				title: { line: 1 },
+				username: { line: 2 },
+				password: { line: 3 },
+				usernameAliases: aliases.map((_, index) => ({ line: index + 4 })),
+			}),
+		]);
+		await expect(
+			requestVaultImportAiRecognition(connection, source),
+		).rejects.toThrow(/^vault-import-ai-invalid-response$/);
+		for (const alias of ["x".repeat(1025), "synthetic\0alias"]) {
+			answer([
+				record({
+					title: { line: 1 },
+					username: { line: 2 },
+					password: { line: 3 },
+					usernameAliases: [{ line: 4 }],
+				}),
+			]);
+			const result = await requestVaultImportAiRecognition(
+				connection,
+				`Example\nreader@example.test\nsynthetic-password\n${alias}`,
+			);
+			expect(result.candidates).toEqual([]);
+			expect(result.issues).toContainEqual({
+				lineNumber: 1,
+				code: "invalid-field",
+			});
+			for (const lineNumber of [1, 2, 3, 4])
+				expect(result.issues).toContainEqual({
+					lineNumber,
+					code: "unrecognized-line",
+				});
+		}
+	});
 	it("sends exactly the current source lines through the existing client with a bounded output", async () => {
 		const controller = new AbortController();
 		const source = "Example\r\nreader@example.test\r\n  synthetic;|,!?  ";
@@ -73,6 +303,8 @@ describe("configured AI password recognition", () => {
 			],
 		});
 		expect(result.issues).toEqual([]);
+		expect(result.candidates[0].draft).not.toHaveProperty("usernameAliases");
+		expect(result.candidates[0]).not.toHaveProperty("sourceUsernameAliases");
 		expect(result.candidates[0].sourceFields).toEqual({
 			title: { start: 0, end: 7, line: 1, endLine: 1 },
 			username: { start: 9, end: 28, line: 2, endLine: 2 },
