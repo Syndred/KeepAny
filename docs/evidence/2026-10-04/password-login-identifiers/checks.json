@@ -1,0 +1,2446 @@
+{
+  "date": "2026-10-04",
+  "scope": "密码眼睛点击、备注直接显示、多登录标识、同平台独立账号与操作区间距",
+  "baseCommit": "6f0ba6b0d9447d6f9011e5683f83876ab1838f1f",
+  "sourceCommits": [
+    "ec5db10",
+    "283f5f1",
+    "910ea51",
+    "3697879",
+    "13a7056",
+    "a43e762",
+    "6d76b50",
+    "5e1aba6"
+  ],
+  "packageCommit": "077cb39",
+  "retainedManifestCommit": "8af0a60",
+  "entry": "index-BU1VgNry.js",
+  "entrySha256": "0cad07631ff4bfc983d21777fada46461b97f66822935bfaaaa95be6434acef8",
+  "passwordCss": "PasswordVaultPanel-DGnFxeiv.css",
+  "passwordCssSha256": "1d2a23d3b0ad46d553badcc611aa2fcac546f6d038c0a82f29ba31ecfda38cc2",
+  "releaseParity": {
+    "currentFilesByteIdentical": 93,
+    "explicitRetainedFiles": 1452
+  },
+  "unit": {
+    "passed": 118,
+    "failed": 0,
+    "pending": 0,
+    "files": 5,
+    "durationMs": 19902.4833984375,
+    "report": "unit-tests.json"
+  },
+  "browser": {
+    "startTime": "2026-10-04T11:06:33.990Z",
+    "duration": 153333.383,
+    "expected": 44,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0,
+    "runnerErrors": [],
+    "distinctTests": 44,
+    "report": "release-playwright.json",
+    "localSyntheticProvider": true,
+    "realProviderVerifiedThisTurn": false
+  },
+  "pointer": {
+    "actualMouseDownHitMouseUp": 124,
+    "allHitAfterMouseDown": true,
+    "minimumWidth": 44,
+    "minimumHeight": 44,
+    "positions": "中心以及内缘0.02/0.98",
+    "singleAndMultiline": true
+  },
+  "spacing": {
+    "minimumMeasuredActionGap": 16,
+    "sourceExcerptToFill": 16,
+    "collapsedFillToNextReason": 20,
+    "buttonShadow": 4,
+    "notesDirectlyVisible": true
+  },
+  "coreFlowsErrors": {
+    "observedCases": 8,
+    "pageErrors": 0,
+    "consoleErrors": 0,
+    "claimBoundary": "只声称8个新增/扩展核心链的实际pageerror与console error监听；其余36项以最终报告断言为准"
+  },
+  "kdbx": {
+    "importFlows": 4,
+    "entriesEach": 6,
+    "aiCallsEach": 1,
+    "ordinaryFlows": 4,
+    "distinctAccountsEach": 2,
+    "readBackPasswordsAndIdentifiers": true,
+    "exportAndIsolatedReopen": true
+  },
+  "originalPage": {
+    "url": "http://127.0.0.1:4180/assets/vault",
+    "entry": "index-BU1VgNry.js",
+    "passwordCss": "PasswordVaultPanel-DGnFxeiv.css",
+    "viewport": {
+      "width": 997,
+      "height": 808
+    },
+    "beforeUpdate": {
+      "locked": true,
+      "reviewOpen": false,
+      "sourceOpen": false,
+      "editorOpen": false
+    },
+    "afterUpdate": {
+      "locked": true,
+      "reviewOpen": false,
+      "sourceOpen": false,
+      "eyeWidth": 44,
+      "eyeHeight": 44,
+      "eyeTransform": "none"
+    },
+    "actions": [
+      "normal reload",
+      "normal Update app button",
+      "DOM bundle and geometry readback"
+    ],
+    "privateDraftRead": false,
+    "privateVaultRead": false,
+    "privateVaultWrite": false,
+    "realAiRequest": false,
+    "note": "原页面检查时已经自动锁定，没有活动表单；通过普通更新按钮加载最终包。未恢复或读取锁定前的私人草稿。",
+    "screenshot": "ego-current-package-locked.png"
+  },
+  "developmentFailures": [
+    {
+      "package": "index-Cf4FeiP5.js",
+      "result": "普通zh390/1280在生成/复制raw12间距断言失败；当时未完成44，不冒称通过",
+      "resolution": "6d76b50补齐密码范围所有actions间距并重建"
+    },
+    {
+      "package": "index-nooRKj_O.js",
+      "result": "定向1pass1fail；第二批save也是3条，旧receipt文案匹配导致提早点击保护中的close",
+      "resolution": "测试等待第二批rows0/关闭enabled；5e1aba6同步禁用保存中的headerX，最终包完整44通过"
+    }
+  ],
+  "tests": [
+    {
+      "title": "local line mapping retains unresolved edits through partial save and clears them on lock",
+      "status": "expected",
+      "results": [
+        {
+          "status": "passed",
+          "durationMs": 2590,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "title": "advanced input and mapping returns retain edited review choices through failed replacement work",
+      "status": "expected",
+      "results": [
+        {
+          "status": "passed",
+          "durationMs": 4170,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "title": "unassigned-only content becomes an editable pending form entry and saves locally",
+      "status": "expected",
+      "results": [
+        {
+          "status": "passed",
+          "durationMs": 3103,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "title": "partly assigned source keeps the original fragment form draft while adding mapped entries",
+      "status": "expected",
+      "results": [
+        {
+          "status": "passed",
+          "durationMs": 2388,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "title": "remaining source forms explicitly supplement an entry already saved in this import",
+      "status": "expected",
+      "results": [
+        {
+          "status": "passed",
+          "durationMs": 2982,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "title": "a same-password duplicate can explicitly update saved notes after fragment completion",
+      "status": "expected",
+      "results": [
+        {
+          "status": "passed",
+          "durationMs": 2962,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "title": "zh-CN 390px unresolved source forms create or complete entries and save without rerunning AI",
+      "status": "expected",
+      "results": [
+        {
+          "status": "passed",
+          "durationMs": 7513,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "title": "zh-CN 390px unlabeled password notes and local field mapping save exact reviewed credentials",
+      "status": "expected",
+      "results": [
+        {
+          "status": "passed",
+          "durationMs": 5830,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "title": "zh-CN 390px smart password import reviews locally, sends domains only and saves a recoverable KDBX",
+      "status": "expected",
+      "results": [
+        {
+          "status": "passed",
+          "durationMs": 8321,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "title": "zh-CN 1280px unresolved source forms create or complete entries and save without rerunning AI",
+      "status": "expected",
+      "results": [
+        {
+          "status": "passed",
+          "durationMs": 7333,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "title": "zh-CN 1280px unlabeled password notes and local field mapping save exact reviewed credentials",
+      "status": "expected",
+      "results": [
+        {
+          "status": "passed",
+          "durationMs": 5754,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "title": "zh-CN 1280px smart password import reviews locally, sends domains only and saves a recoverable KDBX",
+      "status": "expected",
+      "results": [
+        {
+          "status": "passed",
+          "durationMs": 7958,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "title": "en-US 390px unresolved source forms create or complete entries and save without rerunning AI",
+      "status": "expected",
+      "results": [
+        {
+          "status": "passed",
+          "durationMs": 7142,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "title": "en-US 390px unlabeled password notes and local field mapping save exact reviewed credentials",
+      "status": "expected",
+      "results": [
+        {
+          "status": "passed",
+          "durationMs": 5664,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "title": "en-US 390px smart password import reviews locally, sends domains only and saves a recoverable KDBX",
+      "status": "expected",
+      "results": [
+        {
+          "status": "passed",
+          "durationMs": 8021,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "title": "en-US 1280px unresolved source forms create or complete entries and save without rerunning AI",
+      "status": "expected",
+      "results": [
+        {
+          "status": "passed",
+          "durationMs": 6906,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "title": "en-US 1280px unlabeled password notes and local field mapping save exact reviewed credentials",
+      "status": "expected",
+      "results": [
+        {
+          "status": "passed",
+          "durationMs": 5776,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "title": "en-US 1280px smart password import reviews locally, sends domains only and saves a recoverable KDBX",
+      "status": "expected",
+      "results": [
+        {
+          "status": "passed",
+          "durationMs": 7837,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "title": "smart import discards sensitive state on close and lock, keeps failed AI candidates, and rejects stale or delayed work",
+      "status": "expected",
+      "results": [
+        {
+          "status": "passed",
+          "durationMs": 4618,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "title": "smart import preserves multiline secrets and clears conflict choices when identities or selections change",
+      "status": "expected",
+      "results": [
+        {
+          "status": "passed",
+          "durationMs": 3339,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "title": "smart import FilePicker rejects invalid UTF-8 and preserves Chrome CSV credentials through save and reload",
+      "status": "expected",
+      "results": [
+        {
+          "status": "passed",
+          "durationMs": 3202,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "title": "AI recognizes pasted password notes without sending the existing vault zh-CN 390",
+      "status": "expected",
+      "results": [
+        {
+          "status": "passed",
+          "durationMs": 4038,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "title": "AI recognizes pasted password notes without sending the existing vault zh-CN 1280",
+      "status": "expected",
+      "results": [
+        {
+          "status": "passed",
+          "durationMs": 4076,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "title": "AI recognizes pasted password notes without sending the existing vault en-US 390",
+      "status": "expected",
+      "results": [
+        {
+          "status": "passed",
+          "durationMs": 4012,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "title": "AI recognizes pasted password notes without sending the existing vault en-US 1280",
+      "status": "expected",
+      "results": [
+        {
+          "status": "passed",
+          "durationMs": 3799,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "title": "AI note recognition keeps failed source and discards delayed results after close or model change",
+      "status": "expected",
+      "results": [
+        {
+          "status": "passed",
+          "durationMs": 1771,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "title": "password AI import automatically restores its saved vault API key after unlock",
+      "status": "expected",
+      "results": [
+        {
+          "status": "passed",
+          "durationMs": 3922,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "title": "AI incomplete entries remain editable after a partial password import zh-CN 390",
+      "status": "expected",
+      "results": [
+        {
+          "status": "passed",
+          "durationMs": 4335,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "title": "AI incomplete entries remain editable after a partial password import zh-CN 1280",
+      "status": "expected",
+      "results": [
+        {
+          "status": "passed",
+          "durationMs": 4125,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "title": "AI incomplete entries remain editable after a partial password import en-US 390",
+      "status": "expected",
+      "results": [
+        {
+          "status": "passed",
+          "durationMs": 4368,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "title": "AI incomplete entries remain editable after a partial password import en-US 1280",
+      "status": "expected",
+      "results": [
+        {
+          "status": "passed",
+          "durationMs": 4069,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "title": "zh-CN 390px multiple login identifiers and same-platform accounts survive KDBX export and reopen",
+      "status": "expected",
+      "results": [
+        {
+          "status": "passed",
+          "durationMs": 6691,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "title": "zh-CN 390px app passwords show notes directly, save without a website and retain added details when edited",
+      "status": "expected",
+      "results": [
+        {
+          "status": "passed",
+          "durationMs": 5273,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "title": "zh-CN 390px passwords persist, lock, rotate and restore with assets",
+      "status": "expected",
+      "results": [
+        {
+          "status": "passed",
+          "durationMs": 10050,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "title": "zh-CN 1280px multiple login identifiers and same-platform accounts survive KDBX export and reopen",
+      "status": "expected",
+      "results": [
+        {
+          "status": "passed",
+          "durationMs": 6594,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "title": "zh-CN 1280px app passwords show notes directly, save without a website and retain added details when edited",
+      "status": "expected",
+      "results": [
+        {
+          "status": "passed",
+          "durationMs": 5293,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "title": "zh-CN 1280px passwords persist, lock, rotate and restore with assets",
+      "status": "expected",
+      "results": [
+        {
+          "status": "passed",
+          "durationMs": 9699,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "title": "en-US 390px multiple login identifiers and same-platform accounts survive KDBX export and reopen",
+      "status": "expected",
+      "results": [
+        {
+          "status": "passed",
+          "durationMs": 6318,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "title": "en-US 390px app passwords show notes directly, save without a website and retain added details when edited",
+      "status": "expected",
+      "results": [
+        {
+          "status": "passed",
+          "durationMs": 5006,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "title": "en-US 390px passwords persist, lock, rotate and restore with assets",
+      "status": "expected",
+      "results": [
+        {
+          "status": "passed",
+          "durationMs": 9477,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "title": "en-US 1280px multiple login identifiers and same-platform accounts survive KDBX export and reopen",
+      "status": "expected",
+      "results": [
+        {
+          "status": "passed",
+          "durationMs": 6310,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "title": "en-US 1280px app passwords show notes directly, save without a website and retain added details when edited",
+      "status": "expected",
+      "results": [
+        {
+          "status": "passed",
+          "durationMs": 5047,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "title": "en-US 1280px passwords persist, lock, rotate and restore with assets",
+      "status": "expected",
+      "results": [
+        {
+          "status": "passed",
+          "durationMs": 10541,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "title": "password changes lock a revealed editor in another tab; idle lock and clean KDBX import work",
+      "status": "expected",
+      "results": [
+        {
+          "status": "passed",
+          "durationMs": 6493,
+          "retry": 0
+        }
+      ]
+    }
+  ],
+  "measuredAnnotations": [
+    {
+      "title": "zh-CN 390px unresolved source forms create or complete entries and save without rerunning AI",
+      "type": "ui-source-gaps",
+      "value": [
+        {
+          "before": 16,
+          "after": 20
+        },
+        {
+          "before": 16,
+          "after": null
+        }
+      ]
+    },
+    {
+      "title": "zh-CN 390px unresolved source forms create or complete entries and save without rerunning AI",
+      "type": "ui-pointer-hit",
+      "value": {
+        "field": "pw-smart-vault-import-1-password",
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.5,
+        "hitAfterMouseDown": true,
+        "multiline": false
+      }
+    },
+    {
+      "title": "zh-CN 390px unresolved source forms create or complete entries and save without rerunning AI",
+      "type": "ui-pointer-hit",
+      "value": {
+        "field": "pw-smart-vault-import-1-password",
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.02,
+        "hitAfterMouseDown": true,
+        "multiline": false
+      }
+    },
+    {
+      "title": "zh-CN 390px unresolved source forms create or complete entries and save without rerunning AI",
+      "type": "ui-pointer-hit",
+      "value": {
+        "field": "pw-smart-vault-import-1-password",
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.98,
+        "hitAfterMouseDown": true,
+        "multiline": false
+      }
+    },
+    {
+      "title": "zh-CN 390px unresolved source forms create or complete entries and save without rerunning AI",
+      "type": "ui-pointer-hit",
+      "value": {
+        "field": "pw-smart-vault-import-1-password",
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.5,
+        "hitAfterMouseDown": true,
+        "multiline": false
+      }
+    },
+    {
+      "title": "zh-CN 390px unresolved source forms create or complete entries and save without rerunning AI",
+      "type": "ui-pointer-hit",
+      "value": {
+        "field": "pw-smart-vault-import-1-password",
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.02,
+        "hitAfterMouseDown": true,
+        "multiline": false
+      }
+    },
+    {
+      "title": "zh-CN 390px unresolved source forms create or complete entries and save without rerunning AI",
+      "type": "ui-pointer-hit",
+      "value": {
+        "field": "pw-smart-vault-import-1-password",
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.98,
+        "hitAfterMouseDown": true,
+        "multiline": false
+      }
+    },
+    {
+      "title": "zh-CN 390px unresolved source forms create or complete entries and save without rerunning AI",
+      "type": "ui-pointer-hit",
+      "value": {
+        "field": "pw-smart-vault-import-3-password",
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.5,
+        "hitAfterMouseDown": true,
+        "multiline": true
+      }
+    },
+    {
+      "title": "zh-CN 390px unresolved source forms create or complete entries and save without rerunning AI",
+      "type": "ui-pointer-hit",
+      "value": {
+        "field": "pw-smart-vault-import-3-password",
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.02,
+        "hitAfterMouseDown": true,
+        "multiline": true
+      }
+    },
+    {
+      "title": "zh-CN 390px unresolved source forms create or complete entries and save without rerunning AI",
+      "type": "ui-pointer-hit",
+      "value": {
+        "field": "pw-smart-vault-import-3-password",
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.98,
+        "hitAfterMouseDown": true,
+        "multiline": true
+      }
+    },
+    {
+      "title": "zh-CN 390px unresolved source forms create or complete entries and save without rerunning AI",
+      "type": "ui-pointer-hit",
+      "value": {
+        "field": "pw-smart-vault-import-3-password",
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.5,
+        "hitAfterMouseDown": true,
+        "multiline": true
+      }
+    },
+    {
+      "title": "zh-CN 390px unresolved source forms create or complete entries and save without rerunning AI",
+      "type": "ui-pointer-hit",
+      "value": {
+        "field": "pw-smart-vault-import-3-password",
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.02,
+        "hitAfterMouseDown": true,
+        "multiline": true
+      }
+    },
+    {
+      "title": "zh-CN 390px unresolved source forms create or complete entries and save without rerunning AI",
+      "type": "ui-pointer-hit",
+      "value": {
+        "field": "pw-smart-vault-import-3-password",
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.98,
+        "hitAfterMouseDown": true,
+        "multiline": true
+      }
+    },
+    {
+      "title": "zh-CN 390px unresolved source forms create or complete entries and save without rerunning AI",
+      "type": "ui-pointer-hit",
+      "value": {
+        "field": "pw-fragment-source-15-16-password",
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.5,
+        "hitAfterMouseDown": true,
+        "multiline": false
+      }
+    },
+    {
+      "title": "zh-CN 390px unresolved source forms create or complete entries and save without rerunning AI",
+      "type": "ui-pointer-hit",
+      "value": {
+        "field": "pw-fragment-source-15-16-password",
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.02,
+        "hitAfterMouseDown": true,
+        "multiline": false
+      }
+    },
+    {
+      "title": "zh-CN 390px unresolved source forms create or complete entries and save without rerunning AI",
+      "type": "ui-pointer-hit",
+      "value": {
+        "field": "pw-fragment-source-15-16-password",
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.98,
+        "hitAfterMouseDown": true,
+        "multiline": false
+      }
+    },
+    {
+      "title": "zh-CN 390px unresolved source forms create or complete entries and save without rerunning AI",
+      "type": "ui-pointer-hit",
+      "value": {
+        "field": "pw-fragment-source-15-16-password",
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.5,
+        "hitAfterMouseDown": true,
+        "multiline": false
+      }
+    },
+    {
+      "title": "zh-CN 390px unresolved source forms create or complete entries and save without rerunning AI",
+      "type": "ui-pointer-hit",
+      "value": {
+        "field": "pw-fragment-source-15-16-password",
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.02,
+        "hitAfterMouseDown": true,
+        "multiline": false
+      }
+    },
+    {
+      "title": "zh-CN 390px unresolved source forms create or complete entries and save without rerunning AI",
+      "type": "ui-pointer-hit",
+      "value": {
+        "field": "pw-fragment-source-15-16-password",
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.98,
+        "hitAfterMouseDown": true,
+        "multiline": false
+      }
+    },
+    {
+      "title": "zh-CN 390px unresolved source forms create or complete entries and save without rerunning AI",
+      "type": "ui-gaps",
+      "value": {
+        "target": "actions pw-smart-fragment-actions",
+        "gaps": [
+          16,
+          68,
+          16
+        ]
+      }
+    },
+    {
+      "title": "zh-CN 390px unresolved source forms create or complete entries and save without rerunning AI",
+      "type": "ui-errors",
+      "value": {
+        "pageErrors": 0,
+        "consoleErrors": 0
+      }
+    },
+    {
+      "title": "zh-CN 390px unresolved source forms create or complete entries and save without rerunning AI",
+      "type": "ui-kdbx",
+      "value": {
+        "exportedEntries": 6,
+        "aliasesAndDifferentPasswordsMatched": true,
+        "aiCalls": 1
+      }
+    },
+    {
+      "title": "zh-CN 1280px unresolved source forms create or complete entries and save without rerunning AI",
+      "type": "ui-source-gaps",
+      "value": [
+        {
+          "before": 16,
+          "after": 20
+        },
+        {
+          "before": 16,
+          "after": null
+        }
+      ]
+    },
+    {
+      "title": "zh-CN 1280px unresolved source forms create or complete entries and save without rerunning AI",
+      "type": "ui-pointer-hit",
+      "value": {
+        "field": "pw-smart-vault-import-1-password",
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.5,
+        "hitAfterMouseDown": true,
+        "multiline": false
+      }
+    },
+    {
+      "title": "zh-CN 1280px unresolved source forms create or complete entries and save without rerunning AI",
+      "type": "ui-pointer-hit",
+      "value": {
+        "field": "pw-smart-vault-import-1-password",
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.02,
+        "hitAfterMouseDown": true,
+        "multiline": false
+      }
+    },
+    {
+      "title": "zh-CN 1280px unresolved source forms create or complete entries and save without rerunning AI",
+      "type": "ui-pointer-hit",
+      "value": {
+        "field": "pw-smart-vault-import-1-password",
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.98,
+        "hitAfterMouseDown": true,
+        "multiline": false
+      }
+    },
+    {
+      "title": "zh-CN 1280px unresolved source forms create or complete entries and save without rerunning AI",
+      "type": "ui-pointer-hit",
+      "value": {
+        "field": "pw-smart-vault-import-1-password",
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.5,
+        "hitAfterMouseDown": true,
+        "multiline": false
+      }
+    },
+    {
+      "title": "zh-CN 1280px unresolved source forms create or complete entries and save without rerunning AI",
+      "type": "ui-pointer-hit",
+      "value": {
+        "field": "pw-smart-vault-import-1-password",
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.02,
+        "hitAfterMouseDown": true,
+        "multiline": false
+      }
+    },
+    {
+      "title": "zh-CN 1280px unresolved source forms create or complete entries and save without rerunning AI",
+      "type": "ui-pointer-hit",
+      "value": {
+        "field": "pw-smart-vault-import-1-password",
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.98,
+        "hitAfterMouseDown": true,
+        "multiline": false
+      }
+    },
+    {
+      "title": "zh-CN 1280px unresolved source forms create or complete entries and save without rerunning AI",
+      "type": "ui-pointer-hit",
+      "value": {
+        "field": "pw-smart-vault-import-3-password",
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.5,
+        "hitAfterMouseDown": true,
+        "multiline": true
+      }
+    },
+    {
+      "title": "zh-CN 1280px unresolved source forms create or complete entries and save without rerunning AI",
+      "type": "ui-pointer-hit",
+      "value": {
+        "field": "pw-smart-vault-import-3-password",
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.02,
+        "hitAfterMouseDown": true,
+        "multiline": true
+      }
+    },
+    {
+      "title": "zh-CN 1280px unresolved source forms create or complete entries and save without rerunning AI",
+      "type": "ui-pointer-hit",
+      "value": {
+        "field": "pw-smart-vault-import-3-password",
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.98,
+        "hitAfterMouseDown": true,
+        "multiline": true
+      }
+    },
+    {
+      "title": "zh-CN 1280px unresolved source forms create or complete entries and save without rerunning AI",
+      "type": "ui-pointer-hit",
+      "value": {
+        "field": "pw-smart-vault-import-3-password",
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.5,
+        "hitAfterMouseDown": true,
+        "multiline": true
+      }
+    },
+    {
+      "title": "zh-CN 1280px unresolved source forms create or complete entries and save without rerunning AI",
+      "type": "ui-pointer-hit",
+      "value": {
+        "field": "pw-smart-vault-import-3-password",
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.02,
+        "hitAfterMouseDown": true,
+        "multiline": true
+      }
+    },
+    {
+      "title": "zh-CN 1280px unresolved source forms create or complete entries and save without rerunning AI",
+      "type": "ui-pointer-hit",
+      "value": {
+        "field": "pw-smart-vault-import-3-password",
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.98,
+        "hitAfterMouseDown": true,
+        "multiline": true
+      }
+    },
+    {
+      "title": "zh-CN 1280px unresolved source forms create or complete entries and save without rerunning AI",
+      "type": "ui-pointer-hit",
+      "value": {
+        "field": "pw-fragment-source-15-16-password",
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.5,
+        "hitAfterMouseDown": true,
+        "multiline": false
+      }
+    },
+    {
+      "title": "zh-CN 1280px unresolved source forms create or complete entries and save without rerunning AI",
+      "type": "ui-pointer-hit",
+      "value": {
+        "field": "pw-fragment-source-15-16-password",
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.02,
+        "hitAfterMouseDown": true,
+        "multiline": false
+      }
+    },
+    {
+      "title": "zh-CN 1280px unresolved source forms create or complete entries and save without rerunning AI",
+      "type": "ui-pointer-hit",
+      "value": {
+        "field": "pw-fragment-source-15-16-password",
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.98,
+        "hitAfterMouseDown": true,
+        "multiline": false
+      }
+    },
+    {
+      "title": "zh-CN 1280px unresolved source forms create or complete entries and save without rerunning AI",
+      "type": "ui-pointer-hit",
+      "value": {
+        "field": "pw-fragment-source-15-16-password",
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.5,
+        "hitAfterMouseDown": true,
+        "multiline": false
+      }
+    },
+    {
+      "title": "zh-CN 1280px unresolved source forms create or complete entries and save without rerunning AI",
+      "type": "ui-pointer-hit",
+      "value": {
+        "field": "pw-fragment-source-15-16-password",
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.02,
+        "hitAfterMouseDown": true,
+        "multiline": false
+      }
+    },
+    {
+      "title": "zh-CN 1280px unresolved source forms create or complete entries and save without rerunning AI",
+      "type": "ui-pointer-hit",
+      "value": {
+        "field": "pw-fragment-source-15-16-password",
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.98,
+        "hitAfterMouseDown": true,
+        "multiline": false
+      }
+    },
+    {
+      "title": "zh-CN 1280px unresolved source forms create or complete entries and save without rerunning AI",
+      "type": "ui-gaps",
+      "value": {
+        "target": "actions pw-smart-fragment-actions",
+        "gaps": [
+          16,
+          151,
+          16
+        ]
+      }
+    },
+    {
+      "title": "zh-CN 1280px unresolved source forms create or complete entries and save without rerunning AI",
+      "type": "ui-errors",
+      "value": {
+        "pageErrors": 0,
+        "consoleErrors": 0
+      }
+    },
+    {
+      "title": "zh-CN 1280px unresolved source forms create or complete entries and save without rerunning AI",
+      "type": "ui-kdbx",
+      "value": {
+        "exportedEntries": 6,
+        "aliasesAndDifferentPasswordsMatched": true,
+        "aiCalls": 1
+      }
+    },
+    {
+      "title": "en-US 390px unresolved source forms create or complete entries and save without rerunning AI",
+      "type": "ui-source-gaps",
+      "value": [
+        {
+          "before": 16,
+          "after": 20
+        },
+        {
+          "before": 16,
+          "after": null
+        }
+      ]
+    },
+    {
+      "title": "en-US 390px unresolved source forms create or complete entries and save without rerunning AI",
+      "type": "ui-pointer-hit",
+      "value": {
+        "field": "pw-smart-vault-import-1-password",
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.5,
+        "hitAfterMouseDown": true,
+        "multiline": false
+      }
+    },
+    {
+      "title": "en-US 390px unresolved source forms create or complete entries and save without rerunning AI",
+      "type": "ui-pointer-hit",
+      "value": {
+        "field": "pw-smart-vault-import-1-password",
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.02,
+        "hitAfterMouseDown": true,
+        "multiline": false
+      }
+    },
+    {
+      "title": "en-US 390px unresolved source forms create or complete entries and save without rerunning AI",
+      "type": "ui-pointer-hit",
+      "value": {
+        "field": "pw-smart-vault-import-1-password",
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.98,
+        "hitAfterMouseDown": true,
+        "multiline": false
+      }
+    },
+    {
+      "title": "en-US 390px unresolved source forms create or complete entries and save without rerunning AI",
+      "type": "ui-pointer-hit",
+      "value": {
+        "field": "pw-smart-vault-import-1-password",
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.5,
+        "hitAfterMouseDown": true,
+        "multiline": false
+      }
+    },
+    {
+      "title": "en-US 390px unresolved source forms create or complete entries and save without rerunning AI",
+      "type": "ui-pointer-hit",
+      "value": {
+        "field": "pw-smart-vault-import-1-password",
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.02,
+        "hitAfterMouseDown": true,
+        "multiline": false
+      }
+    },
+    {
+      "title": "en-US 390px unresolved source forms create or complete entries and save without rerunning AI",
+      "type": "ui-pointer-hit",
+      "value": {
+        "field": "pw-smart-vault-import-1-password",
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.98,
+        "hitAfterMouseDown": true,
+        "multiline": false
+      }
+    },
+    {
+      "title": "en-US 390px unresolved source forms create or complete entries and save without rerunning AI",
+      "type": "ui-pointer-hit",
+      "value": {
+        "field": "pw-smart-vault-import-3-password",
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.5,
+        "hitAfterMouseDown": true,
+        "multiline": true
+      }
+    },
+    {
+      "title": "en-US 390px unresolved source forms create or complete entries and save without rerunning AI",
+      "type": "ui-pointer-hit",
+      "value": {
+        "field": "pw-smart-vault-import-3-password",
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.02,
+        "hitAfterMouseDown": true,
+        "multiline": true
+      }
+    },
+    {
+      "title": "en-US 390px unresolved source forms create or complete entries and save without rerunning AI",
+      "type": "ui-pointer-hit",
+      "value": {
+        "field": "pw-smart-vault-import-3-password",
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.98,
+        "hitAfterMouseDown": true,
+        "multiline": true
+      }
+    },
+    {
+      "title": "en-US 390px unresolved source forms create or complete entries and save without rerunning AI",
+      "type": "ui-pointer-hit",
+      "value": {
+        "field": "pw-smart-vault-import-3-password",
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.5,
+        "hitAfterMouseDown": true,
+        "multiline": true
+      }
+    },
+    {
+      "title": "en-US 390px unresolved source forms create or complete entries and save without rerunning AI",
+      "type": "ui-pointer-hit",
+      "value": {
+        "field": "pw-smart-vault-import-3-password",
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.02,
+        "hitAfterMouseDown": true,
+        "multiline": true
+      }
+    },
+    {
+      "title": "en-US 390px unresolved source forms create or complete entries and save without rerunning AI",
+      "type": "ui-pointer-hit",
+      "value": {
+        "field": "pw-smart-vault-import-3-password",
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.98,
+        "hitAfterMouseDown": true,
+        "multiline": true
+      }
+    },
+    {
+      "title": "en-US 390px unresolved source forms create or complete entries and save without rerunning AI",
+      "type": "ui-pointer-hit",
+      "value": {
+        "field": "pw-fragment-source-15-16-password",
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.5,
+        "hitAfterMouseDown": true,
+        "multiline": false
+      }
+    },
+    {
+      "title": "en-US 390px unresolved source forms create or complete entries and save without rerunning AI",
+      "type": "ui-pointer-hit",
+      "value": {
+        "field": "pw-fragment-source-15-16-password",
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.02,
+        "hitAfterMouseDown": true,
+        "multiline": false
+      }
+    },
+    {
+      "title": "en-US 390px unresolved source forms create or complete entries and save without rerunning AI",
+      "type": "ui-pointer-hit",
+      "value": {
+        "field": "pw-fragment-source-15-16-password",
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.98,
+        "hitAfterMouseDown": true,
+        "multiline": false
+      }
+    },
+    {
+      "title": "en-US 390px unresolved source forms create or complete entries and save without rerunning AI",
+      "type": "ui-pointer-hit",
+      "value": {
+        "field": "pw-fragment-source-15-16-password",
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.5,
+        "hitAfterMouseDown": true,
+        "multiline": false
+      }
+    },
+    {
+      "title": "en-US 390px unresolved source forms create or complete entries and save without rerunning AI",
+      "type": "ui-pointer-hit",
+      "value": {
+        "field": "pw-fragment-source-15-16-password",
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.02,
+        "hitAfterMouseDown": true,
+        "multiline": false
+      }
+    },
+    {
+      "title": "en-US 390px unresolved source forms create or complete entries and save without rerunning AI",
+      "type": "ui-pointer-hit",
+      "value": {
+        "field": "pw-fragment-source-15-16-password",
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.98,
+        "hitAfterMouseDown": true,
+        "multiline": false
+      }
+    },
+    {
+      "title": "en-US 390px unresolved source forms create or complete entries and save without rerunning AI",
+      "type": "ui-gaps",
+      "value": {
+        "target": "actions pw-smart-fragment-actions",
+        "gaps": [
+          16,
+          68,
+          16
+        ]
+      }
+    },
+    {
+      "title": "en-US 390px unresolved source forms create or complete entries and save without rerunning AI",
+      "type": "ui-errors",
+      "value": {
+        "pageErrors": 0,
+        "consoleErrors": 0
+      }
+    },
+    {
+      "title": "en-US 390px unresolved source forms create or complete entries and save without rerunning AI",
+      "type": "ui-kdbx",
+      "value": {
+        "exportedEntries": 6,
+        "aliasesAndDifferentPasswordsMatched": true,
+        "aiCalls": 1
+      }
+    },
+    {
+      "title": "en-US 1280px unresolved source forms create or complete entries and save without rerunning AI",
+      "type": "ui-source-gaps",
+      "value": [
+        {
+          "before": 16,
+          "after": 20
+        },
+        {
+          "before": 16,
+          "after": null
+        }
+      ]
+    },
+    {
+      "title": "en-US 1280px unresolved source forms create or complete entries and save without rerunning AI",
+      "type": "ui-pointer-hit",
+      "value": {
+        "field": "pw-smart-vault-import-1-password",
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.5,
+        "hitAfterMouseDown": true,
+        "multiline": false
+      }
+    },
+    {
+      "title": "en-US 1280px unresolved source forms create or complete entries and save without rerunning AI",
+      "type": "ui-pointer-hit",
+      "value": {
+        "field": "pw-smart-vault-import-1-password",
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.02,
+        "hitAfterMouseDown": true,
+        "multiline": false
+      }
+    },
+    {
+      "title": "en-US 1280px unresolved source forms create or complete entries and save without rerunning AI",
+      "type": "ui-pointer-hit",
+      "value": {
+        "field": "pw-smart-vault-import-1-password",
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.98,
+        "hitAfterMouseDown": true,
+        "multiline": false
+      }
+    },
+    {
+      "title": "en-US 1280px unresolved source forms create or complete entries and save without rerunning AI",
+      "type": "ui-pointer-hit",
+      "value": {
+        "field": "pw-smart-vault-import-1-password",
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.5,
+        "hitAfterMouseDown": true,
+        "multiline": false
+      }
+    },
+    {
+      "title": "en-US 1280px unresolved source forms create or complete entries and save without rerunning AI",
+      "type": "ui-pointer-hit",
+      "value": {
+        "field": "pw-smart-vault-import-1-password",
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.02,
+        "hitAfterMouseDown": true,
+        "multiline": false
+      }
+    },
+    {
+      "title": "en-US 1280px unresolved source forms create or complete entries and save without rerunning AI",
+      "type": "ui-pointer-hit",
+      "value": {
+        "field": "pw-smart-vault-import-1-password",
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.98,
+        "hitAfterMouseDown": true,
+        "multiline": false
+      }
+    },
+    {
+      "title": "en-US 1280px unresolved source forms create or complete entries and save without rerunning AI",
+      "type": "ui-pointer-hit",
+      "value": {
+        "field": "pw-smart-vault-import-3-password",
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.5,
+        "hitAfterMouseDown": true,
+        "multiline": true
+      }
+    },
+    {
+      "title": "en-US 1280px unresolved source forms create or complete entries and save without rerunning AI",
+      "type": "ui-pointer-hit",
+      "value": {
+        "field": "pw-smart-vault-import-3-password",
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.02,
+        "hitAfterMouseDown": true,
+        "multiline": true
+      }
+    },
+    {
+      "title": "en-US 1280px unresolved source forms create or complete entries and save without rerunning AI",
+      "type": "ui-pointer-hit",
+      "value": {
+        "field": "pw-smart-vault-import-3-password",
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.98,
+        "hitAfterMouseDown": true,
+        "multiline": true
+      }
+    },
+    {
+      "title": "en-US 1280px unresolved source forms create or complete entries and save without rerunning AI",
+      "type": "ui-pointer-hit",
+      "value": {
+        "field": "pw-smart-vault-import-3-password",
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.5,
+        "hitAfterMouseDown": true,
+        "multiline": true
+      }
+    },
+    {
+      "title": "en-US 1280px unresolved source forms create or complete entries and save without rerunning AI",
+      "type": "ui-pointer-hit",
+      "value": {
+        "field": "pw-smart-vault-import-3-password",
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.02,
+        "hitAfterMouseDown": true,
+        "multiline": true
+      }
+    },
+    {
+      "title": "en-US 1280px unresolved source forms create or complete entries and save without rerunning AI",
+      "type": "ui-pointer-hit",
+      "value": {
+        "field": "pw-smart-vault-import-3-password",
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.98,
+        "hitAfterMouseDown": true,
+        "multiline": true
+      }
+    },
+    {
+      "title": "en-US 1280px unresolved source forms create or complete entries and save without rerunning AI",
+      "type": "ui-pointer-hit",
+      "value": {
+        "field": "pw-fragment-source-15-16-password",
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.5,
+        "hitAfterMouseDown": true,
+        "multiline": false
+      }
+    },
+    {
+      "title": "en-US 1280px unresolved source forms create or complete entries and save without rerunning AI",
+      "type": "ui-pointer-hit",
+      "value": {
+        "field": "pw-fragment-source-15-16-password",
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.02,
+        "hitAfterMouseDown": true,
+        "multiline": false
+      }
+    },
+    {
+      "title": "en-US 1280px unresolved source forms create or complete entries and save without rerunning AI",
+      "type": "ui-pointer-hit",
+      "value": {
+        "field": "pw-fragment-source-15-16-password",
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.98,
+        "hitAfterMouseDown": true,
+        "multiline": false
+      }
+    },
+    {
+      "title": "en-US 1280px unresolved source forms create or complete entries and save without rerunning AI",
+      "type": "ui-pointer-hit",
+      "value": {
+        "field": "pw-fragment-source-15-16-password",
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.5,
+        "hitAfterMouseDown": true,
+        "multiline": false
+      }
+    },
+    {
+      "title": "en-US 1280px unresolved source forms create or complete entries and save without rerunning AI",
+      "type": "ui-pointer-hit",
+      "value": {
+        "field": "pw-fragment-source-15-16-password",
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.02,
+        "hitAfterMouseDown": true,
+        "multiline": false
+      }
+    },
+    {
+      "title": "en-US 1280px unresolved source forms create or complete entries and save without rerunning AI",
+      "type": "ui-pointer-hit",
+      "value": {
+        "field": "pw-fragment-source-15-16-password",
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.98,
+        "hitAfterMouseDown": true,
+        "multiline": false
+      }
+    },
+    {
+      "title": "en-US 1280px unresolved source forms create or complete entries and save without rerunning AI",
+      "type": "ui-gaps",
+      "value": {
+        "target": "actions pw-smart-fragment-actions",
+        "gaps": [
+          16,
+          16,
+          16
+        ]
+      }
+    },
+    {
+      "title": "en-US 1280px unresolved source forms create or complete entries and save without rerunning AI",
+      "type": "ui-errors",
+      "value": {
+        "pageErrors": 0,
+        "consoleErrors": 0
+      }
+    },
+    {
+      "title": "en-US 1280px unresolved source forms create or complete entries and save without rerunning AI",
+      "type": "ui-kdbx",
+      "value": {
+        "exportedEntries": 6,
+        "aliasesAndDifferentPasswordsMatched": true,
+        "aiCalls": 1
+      }
+    },
+    {
+      "title": "zh-CN 390px multiple login identifiers and same-platform accounts survive KDBX export and reopen",
+      "type": "ui-pointer-hit",
+      "value": {
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.5,
+        "hitAfterMouseDown": true
+      }
+    },
+    {
+      "title": "zh-CN 390px multiple login identifiers and same-platform accounts survive KDBX export and reopen",
+      "type": "ui-pointer-hit",
+      "value": {
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.02,
+        "hitAfterMouseDown": true
+      }
+    },
+    {
+      "title": "zh-CN 390px multiple login identifiers and same-platform accounts survive KDBX export and reopen",
+      "type": "ui-pointer-hit",
+      "value": {
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.98,
+        "hitAfterMouseDown": true
+      }
+    },
+    {
+      "title": "zh-CN 390px multiple login identifiers and same-platform accounts survive KDBX export and reopen",
+      "type": "ui-pointer-hit",
+      "value": {
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.5,
+        "hitAfterMouseDown": true
+      }
+    },
+    {
+      "title": "zh-CN 390px multiple login identifiers and same-platform accounts survive KDBX export and reopen",
+      "type": "ui-pointer-hit",
+      "value": {
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.02,
+        "hitAfterMouseDown": true
+      }
+    },
+    {
+      "title": "zh-CN 390px multiple login identifiers and same-platform accounts survive KDBX export and reopen",
+      "type": "ui-pointer-hit",
+      "value": {
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.98,
+        "hitAfterMouseDown": true
+      }
+    },
+    {
+      "title": "zh-CN 390px multiple login identifiers and same-platform accounts survive KDBX export and reopen",
+      "type": "ui-gaps",
+      "value": {
+        "target": "actions password-vault-field-actions",
+        "gaps": [
+          16
+        ]
+      }
+    },
+    {
+      "title": "zh-CN 390px multiple login identifiers and same-platform accounts survive KDBX export and reopen",
+      "type": "ui-gaps",
+      "value": {
+        "target": "actions password-vault-entry-actions",
+        "gaps": [
+          16,
+          16,
+          16,
+          16,
+          16,
+          16,
+          16,
+          16,
+          127.34375,
+          16
+        ]
+      }
+    },
+    {
+      "title": "zh-CN 390px multiple login identifiers and same-platform accounts survive KDBX export and reopen",
+      "type": "ui-pointer-hit",
+      "value": {
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.02,
+        "hitAfterMouseDown": true
+      }
+    },
+    {
+      "title": "zh-CN 390px multiple login identifiers and same-platform accounts survive KDBX export and reopen",
+      "type": "ui-pointer-hit",
+      "value": {
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.5,
+        "hitAfterMouseDown": true
+      }
+    },
+    {
+      "title": "zh-CN 390px multiple login identifiers and same-platform accounts survive KDBX export and reopen",
+      "type": "ui-pointer-hit",
+      "value": {
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.02,
+        "hitAfterMouseDown": true
+      }
+    },
+    {
+      "title": "zh-CN 390px multiple login identifiers and same-platform accounts survive KDBX export and reopen",
+      "type": "ui-pointer-hit",
+      "value": {
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.98,
+        "hitAfterMouseDown": true
+      }
+    },
+    {
+      "title": "zh-CN 390px multiple login identifiers and same-platform accounts survive KDBX export and reopen",
+      "type": "ui-pointer-hit",
+      "value": {
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.5,
+        "hitAfterMouseDown": true
+      }
+    },
+    {
+      "title": "zh-CN 390px multiple login identifiers and same-platform accounts survive KDBX export and reopen",
+      "type": "ui-pointer-hit",
+      "value": {
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.02,
+        "hitAfterMouseDown": true
+      }
+    },
+    {
+      "title": "zh-CN 390px multiple login identifiers and same-platform accounts survive KDBX export and reopen",
+      "type": "ui-pointer-hit",
+      "value": {
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.98,
+        "hitAfterMouseDown": true
+      }
+    },
+    {
+      "title": "zh-CN 390px multiple login identifiers and same-platform accounts survive KDBX export and reopen",
+      "type": "ui-errors",
+      "value": {
+        "pageErrors": 0,
+        "consoleErrors": 0,
+        "restoredPageIncluded": true
+      }
+    },
+    {
+      "title": "zh-CN 390px multiple login identifiers and same-platform accounts survive KDBX export and reopen",
+      "type": "ui-kdbx",
+      "value": {
+        "entriesAfterRefresh": 2,
+        "exportedThenReopened": 2,
+        "aliasesAndDifferentPasswordsMatched": true
+      }
+    },
+    {
+      "title": "zh-CN 1280px multiple login identifiers and same-platform accounts survive KDBX export and reopen",
+      "type": "ui-pointer-hit",
+      "value": {
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.5,
+        "hitAfterMouseDown": true
+      }
+    },
+    {
+      "title": "zh-CN 1280px multiple login identifiers and same-platform accounts survive KDBX export and reopen",
+      "type": "ui-pointer-hit",
+      "value": {
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.02,
+        "hitAfterMouseDown": true
+      }
+    },
+    {
+      "title": "zh-CN 1280px multiple login identifiers and same-platform accounts survive KDBX export and reopen",
+      "type": "ui-pointer-hit",
+      "value": {
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.98,
+        "hitAfterMouseDown": true
+      }
+    },
+    {
+      "title": "zh-CN 1280px multiple login identifiers and same-platform accounts survive KDBX export and reopen",
+      "type": "ui-pointer-hit",
+      "value": {
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.5,
+        "hitAfterMouseDown": true
+      }
+    },
+    {
+      "title": "zh-CN 1280px multiple login identifiers and same-platform accounts survive KDBX export and reopen",
+      "type": "ui-pointer-hit",
+      "value": {
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.02,
+        "hitAfterMouseDown": true
+      }
+    },
+    {
+      "title": "zh-CN 1280px multiple login identifiers and same-platform accounts survive KDBX export and reopen",
+      "type": "ui-pointer-hit",
+      "value": {
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.98,
+        "hitAfterMouseDown": true
+      }
+    },
+    {
+      "title": "zh-CN 1280px multiple login identifiers and same-platform accounts survive KDBX export and reopen",
+      "type": "ui-gaps",
+      "value": {
+        "target": "actions password-vault-field-actions",
+        "gaps": [
+          16
+        ]
+      }
+    },
+    {
+      "title": "zh-CN 1280px multiple login identifiers and same-platform accounts survive KDBX export and reopen",
+      "type": "ui-gaps",
+      "value": {
+        "target": "actions password-vault-entry-actions",
+        "gaps": [
+          16,
+          161,
+          246,
+          355,
+          16,
+          101,
+          210,
+          16,
+          125,
+          16
+        ]
+      }
+    },
+    {
+      "title": "zh-CN 1280px multiple login identifiers and same-platform accounts survive KDBX export and reopen",
+      "type": "ui-pointer-hit",
+      "value": {
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.02,
+        "hitAfterMouseDown": true
+      }
+    },
+    {
+      "title": "zh-CN 1280px multiple login identifiers and same-platform accounts survive KDBX export and reopen",
+      "type": "ui-pointer-hit",
+      "value": {
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.5,
+        "hitAfterMouseDown": true
+      }
+    },
+    {
+      "title": "zh-CN 1280px multiple login identifiers and same-platform accounts survive KDBX export and reopen",
+      "type": "ui-pointer-hit",
+      "value": {
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.02,
+        "hitAfterMouseDown": true
+      }
+    },
+    {
+      "title": "zh-CN 1280px multiple login identifiers and same-platform accounts survive KDBX export and reopen",
+      "type": "ui-pointer-hit",
+      "value": {
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.98,
+        "hitAfterMouseDown": true
+      }
+    },
+    {
+      "title": "zh-CN 1280px multiple login identifiers and same-platform accounts survive KDBX export and reopen",
+      "type": "ui-pointer-hit",
+      "value": {
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.5,
+        "hitAfterMouseDown": true
+      }
+    },
+    {
+      "title": "zh-CN 1280px multiple login identifiers and same-platform accounts survive KDBX export and reopen",
+      "type": "ui-pointer-hit",
+      "value": {
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.02,
+        "hitAfterMouseDown": true
+      }
+    },
+    {
+      "title": "zh-CN 1280px multiple login identifiers and same-platform accounts survive KDBX export and reopen",
+      "type": "ui-pointer-hit",
+      "value": {
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.98,
+        "hitAfterMouseDown": true
+      }
+    },
+    {
+      "title": "zh-CN 1280px multiple login identifiers and same-platform accounts survive KDBX export and reopen",
+      "type": "ui-errors",
+      "value": {
+        "pageErrors": 0,
+        "consoleErrors": 0,
+        "restoredPageIncluded": true
+      }
+    },
+    {
+      "title": "zh-CN 1280px multiple login identifiers and same-platform accounts survive KDBX export and reopen",
+      "type": "ui-kdbx",
+      "value": {
+        "entriesAfterRefresh": 2,
+        "exportedThenReopened": 2,
+        "aliasesAndDifferentPasswordsMatched": true
+      }
+    },
+    {
+      "title": "en-US 390px multiple login identifiers and same-platform accounts survive KDBX export and reopen",
+      "type": "ui-pointer-hit",
+      "value": {
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.5,
+        "hitAfterMouseDown": true
+      }
+    },
+    {
+      "title": "en-US 390px multiple login identifiers and same-platform accounts survive KDBX export and reopen",
+      "type": "ui-pointer-hit",
+      "value": {
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.02,
+        "hitAfterMouseDown": true
+      }
+    },
+    {
+      "title": "en-US 390px multiple login identifiers and same-platform accounts survive KDBX export and reopen",
+      "type": "ui-pointer-hit",
+      "value": {
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.98,
+        "hitAfterMouseDown": true
+      }
+    },
+    {
+      "title": "en-US 390px multiple login identifiers and same-platform accounts survive KDBX export and reopen",
+      "type": "ui-pointer-hit",
+      "value": {
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.5,
+        "hitAfterMouseDown": true
+      }
+    },
+    {
+      "title": "en-US 390px multiple login identifiers and same-platform accounts survive KDBX export and reopen",
+      "type": "ui-pointer-hit",
+      "value": {
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.02,
+        "hitAfterMouseDown": true
+      }
+    },
+    {
+      "title": "en-US 390px multiple login identifiers and same-platform accounts survive KDBX export and reopen",
+      "type": "ui-pointer-hit",
+      "value": {
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.98,
+        "hitAfterMouseDown": true
+      }
+    },
+    {
+      "title": "en-US 390px multiple login identifiers and same-platform accounts survive KDBX export and reopen",
+      "type": "ui-gaps",
+      "value": {
+        "target": "actions password-vault-field-actions",
+        "gaps": [
+          16
+        ]
+      }
+    },
+    {
+      "title": "en-US 390px multiple login identifiers and same-platform accounts survive KDBX export and reopen",
+      "type": "ui-gaps",
+      "value": {
+        "target": "actions password-vault-entry-actions",
+        "gaps": [
+          16,
+          16,
+          62,
+          62,
+          16,
+          16,
+          16,
+          16,
+          16,
+          16
+        ]
+      }
+    },
+    {
+      "title": "en-US 390px multiple login identifiers and same-platform accounts survive KDBX export and reopen",
+      "type": "ui-pointer-hit",
+      "value": {
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.02,
+        "hitAfterMouseDown": true
+      }
+    },
+    {
+      "title": "en-US 390px multiple login identifiers and same-platform accounts survive KDBX export and reopen",
+      "type": "ui-pointer-hit",
+      "value": {
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.5,
+        "hitAfterMouseDown": true
+      }
+    },
+    {
+      "title": "en-US 390px multiple login identifiers and same-platform accounts survive KDBX export and reopen",
+      "type": "ui-pointer-hit",
+      "value": {
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.02,
+        "hitAfterMouseDown": true
+      }
+    },
+    {
+      "title": "en-US 390px multiple login identifiers and same-platform accounts survive KDBX export and reopen",
+      "type": "ui-pointer-hit",
+      "value": {
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.98,
+        "hitAfterMouseDown": true
+      }
+    },
+    {
+      "title": "en-US 390px multiple login identifiers and same-platform accounts survive KDBX export and reopen",
+      "type": "ui-pointer-hit",
+      "value": {
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.5,
+        "hitAfterMouseDown": true
+      }
+    },
+    {
+      "title": "en-US 390px multiple login identifiers and same-platform accounts survive KDBX export and reopen",
+      "type": "ui-pointer-hit",
+      "value": {
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.02,
+        "hitAfterMouseDown": true
+      }
+    },
+    {
+      "title": "en-US 390px multiple login identifiers and same-platform accounts survive KDBX export and reopen",
+      "type": "ui-pointer-hit",
+      "value": {
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.98,
+        "hitAfterMouseDown": true
+      }
+    },
+    {
+      "title": "en-US 390px multiple login identifiers and same-platform accounts survive KDBX export and reopen",
+      "type": "ui-errors",
+      "value": {
+        "pageErrors": 0,
+        "consoleErrors": 0,
+        "restoredPageIncluded": true
+      }
+    },
+    {
+      "title": "en-US 390px multiple login identifiers and same-platform accounts survive KDBX export and reopen",
+      "type": "ui-kdbx",
+      "value": {
+        "entriesAfterRefresh": 2,
+        "exportedThenReopened": 2,
+        "aliasesAndDifferentPasswordsMatched": true
+      }
+    },
+    {
+      "title": "en-US 1280px multiple login identifiers and same-platform accounts survive KDBX export and reopen",
+      "type": "ui-pointer-hit",
+      "value": {
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.5,
+        "hitAfterMouseDown": true
+      }
+    },
+    {
+      "title": "en-US 1280px multiple login identifiers and same-platform accounts survive KDBX export and reopen",
+      "type": "ui-pointer-hit",
+      "value": {
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.02,
+        "hitAfterMouseDown": true
+      }
+    },
+    {
+      "title": "en-US 1280px multiple login identifiers and same-platform accounts survive KDBX export and reopen",
+      "type": "ui-pointer-hit",
+      "value": {
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.98,
+        "hitAfterMouseDown": true
+      }
+    },
+    {
+      "title": "en-US 1280px multiple login identifiers and same-platform accounts survive KDBX export and reopen",
+      "type": "ui-pointer-hit",
+      "value": {
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.5,
+        "hitAfterMouseDown": true
+      }
+    },
+    {
+      "title": "en-US 1280px multiple login identifiers and same-platform accounts survive KDBX export and reopen",
+      "type": "ui-pointer-hit",
+      "value": {
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.02,
+        "hitAfterMouseDown": true
+      }
+    },
+    {
+      "title": "en-US 1280px multiple login identifiers and same-platform accounts survive KDBX export and reopen",
+      "type": "ui-pointer-hit",
+      "value": {
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.98,
+        "hitAfterMouseDown": true
+      }
+    },
+    {
+      "title": "en-US 1280px multiple login identifiers and same-platform accounts survive KDBX export and reopen",
+      "type": "ui-gaps",
+      "value": {
+        "target": "actions password-vault-field-actions",
+        "gaps": [
+          16
+        ]
+      }
+    },
+    {
+      "title": "en-US 1280px multiple login identifiers and same-platform accounts survive KDBX export and reopen",
+      "type": "ui-gaps",
+      "value": {
+        "target": "actions password-vault-entry-actions",
+        "gaps": [
+          16,
+          206.65625,
+          292.34375,
+          399.21875,
+          16,
+          101.6875,
+          208.5625,
+          16,
+          122.875,
+          16
+        ]
+      }
+    },
+    {
+      "title": "en-US 1280px multiple login identifiers and same-platform accounts survive KDBX export and reopen",
+      "type": "ui-pointer-hit",
+      "value": {
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.02,
+        "hitAfterMouseDown": true
+      }
+    },
+    {
+      "title": "en-US 1280px multiple login identifiers and same-platform accounts survive KDBX export and reopen",
+      "type": "ui-pointer-hit",
+      "value": {
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.5,
+        "hitAfterMouseDown": true
+      }
+    },
+    {
+      "title": "en-US 1280px multiple login identifiers and same-platform accounts survive KDBX export and reopen",
+      "type": "ui-pointer-hit",
+      "value": {
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.02,
+        "hitAfterMouseDown": true
+      }
+    },
+    {
+      "title": "en-US 1280px multiple login identifiers and same-platform accounts survive KDBX export and reopen",
+      "type": "ui-pointer-hit",
+      "value": {
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.98,
+        "hitAfterMouseDown": true
+      }
+    },
+    {
+      "title": "en-US 1280px multiple login identifiers and same-platform accounts survive KDBX export and reopen",
+      "type": "ui-pointer-hit",
+      "value": {
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.5,
+        "hitAfterMouseDown": true
+      }
+    },
+    {
+      "title": "en-US 1280px multiple login identifiers and same-platform accounts survive KDBX export and reopen",
+      "type": "ui-pointer-hit",
+      "value": {
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.02,
+        "hitAfterMouseDown": true
+      }
+    },
+    {
+      "title": "en-US 1280px multiple login identifiers and same-platform accounts survive KDBX export and reopen",
+      "type": "ui-pointer-hit",
+      "value": {
+        "width": 44,
+        "height": 44,
+        "horizontal": 0.98,
+        "hitAfterMouseDown": true
+      }
+    },
+    {
+      "title": "en-US 1280px multiple login identifiers and same-platform accounts survive KDBX export and reopen",
+      "type": "ui-errors",
+      "value": {
+        "pageErrors": 0,
+        "consoleErrors": 0,
+        "restoredPageIncluded": true
+      }
+    },
+    {
+      "title": "en-US 1280px multiple login identifiers and same-platform accounts survive KDBX export and reopen",
+      "type": "ui-kdbx",
+      "value": {
+        "entriesAfterRefresh": 2,
+        "exportedThenReopened": 2,
+        "aliasesAndDifferentPasswordsMatched": true
+      }
+    }
+  ],
+  "ci": "本轮尚未回读",
+  "internetDeployment": false,
+  "keepAnyAdmChanged": false,
+  "e2eCommit": "4b8854c",
+  "captureRepeat": {
+    "startTime": "2026-10-04T11:13:26.150Z",
+    "duration": 47943.336,
+    "expected": 8,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0,
+    "report": "visual-playwright.json",
+    "includedInDistinctTests": 44,
+    "change": "only wait for toast and adjust screenshot scroll/extra captures"
+  },
+  "screenshots": [
+    "ego-current-package-locked.png",
+    "password-fragment-form-en-US-1280-fill.png",
+    "password-fragment-form-en-US-1280-notes-actions.png",
+    "password-fragment-form-en-US-390-fill.png",
+    "password-fragment-form-en-US-390-notes-actions.png",
+    "password-fragment-form-zh-CN-1280-fill.png",
+    "password-fragment-form-zh-CN-1280-notes-actions.png",
+    "password-fragment-form-zh-CN-390-fill.png",
+    "password-fragment-form-zh-CN-390-notes-actions.png",
+    "password-fragment-gaps-en-US-1280.png",
+    "password-fragment-gaps-en-US-390.png",
+    "password-fragment-gaps-zh-CN-1280.png",
+    "password-fragment-gaps-zh-CN-390.png",
+    "password-fragment-identifiers-en-US-1280-details.png",
+    "password-fragment-identifiers-en-US-1280-notes-actions.png",
+    "password-fragment-identifiers-en-US-1280-top.png",
+    "password-fragment-identifiers-en-US-390-details.png",
+    "password-fragment-identifiers-en-US-390-notes-actions.png",
+    "password-fragment-identifiers-en-US-390-top.png",
+    "password-fragment-identifiers-zh-CN-1280-details.png",
+    "password-fragment-identifiers-zh-CN-1280-notes-actions.png",
+    "password-fragment-identifiers-zh-CN-1280-top.png",
+    "password-fragment-identifiers-zh-CN-390-details.png",
+    "password-fragment-identifiers-zh-CN-390-notes-actions.png",
+    "password-fragment-identifiers-zh-CN-390-top.png",
+    "password-identifiers-en-US-1280-accounts.png",
+    "password-identifiers-en-US-1280-editor.png",
+    "password-identifiers-en-US-1280-notes-actions.png",
+    "password-identifiers-en-US-1280-top.png",
+    "password-identifiers-en-US-390-accounts.png",
+    "password-identifiers-en-US-390-editor.png",
+    "password-identifiers-en-US-390-notes-actions.png",
+    "password-identifiers-en-US-390-top.png",
+    "password-identifiers-zh-CN-1280-accounts.png",
+    "password-identifiers-zh-CN-1280-editor.png",
+    "password-identifiers-zh-CN-1280-notes-actions.png",
+    "password-identifiers-zh-CN-1280-top.png",
+    "password-identifiers-zh-CN-390-accounts.png",
+    "password-identifiers-zh-CN-390-editor.png",
+    "password-identifiers-zh-CN-390-notes-actions.png",
+    "password-identifiers-zh-CN-390-top.png"
+  ],
+  "visualReview": {
+    "locales": [
+      "zh-CN",
+      "en-US"
+    ],
+    "widths": [
+      390,
+      1280
+    ],
+    "notesAndActionsDirectlyVisible": true,
+    "topAndIdentifiersSeparateCaptures": true,
+    "operator": "root and E2E worker"
+  },
+  "cleanup": {
+    "method": "recoverable macOS Trash",
+    "destination": "/Users/syndred/.Trash/keepany-password-identifiers-20261004-191653",
+    "duplicateScreenshotsMoved": 69,
+    "temporaryArtifactsMoved": [
+      "keepany-password-identifiers-close-check.json",
+      "keepany-password-identifiers-targeted.json",
+      "keepany-password-identifiers-visual-final-results",
+      "keepany-password-identifiers-unit.json",
+      "keepany-password-identifiers-visual-final.json",
+      "keepany-password-identifiers-release-final-results",
+      "keepany-password-identifiers-release-final.json",
+      "keepany-password-identifiers-close-check-results",
+      "keepany-password-identifiers-targeted-results",
+      "keepany-password-identifiers-gap-failure-results"
+    ],
+    "playwrightContextsClosed": true,
+    "port4353Listener": false,
+    "original4180Preserved": true,
+    "committedHistoricalAssetsPreserved": true
+  }
+}
