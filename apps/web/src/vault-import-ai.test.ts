@@ -1,13 +1,22 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { type AiConnection, generateAiText } from "../../../packages/ai/src";
+import {
+	AiClientError,
+	type AiConnection,
+	generateAiText,
+} from "../../../packages/ai/src";
 import {
 	requestVaultImportAiRecognition,
 	VAULT_IMPORT_AI_MAX_CHARS,
 	VAULT_IMPORT_AI_MAX_LINES,
 	VAULT_IMPORT_AI_MAX_OUTPUT_TOKENS,
+	VAULT_IMPORT_AI_TIMEOUT_MS,
+	VaultImportAiError,
 } from "./vault-import-ai";
 
-vi.mock("../../../packages/ai/src", () => ({ generateAiText: vi.fn() }));
+vi.mock("../../../packages/ai/src", async (importOriginal) => ({
+	...(await importOriginal<typeof import("../../../packages/ai/src")>()),
+	generateAiText: vi.fn(),
+}));
 const connection: AiConnection = {
 	provider: "deepseek",
 	baseURL: "https://api.deepseek.com",
@@ -128,6 +137,11 @@ describe("configured AI password recognition", () => {
 		);
 		expect(result.issues).toEqual([]);
 		expect(result.candidates[0].draft.usernameAliases).toEqual([alias]);
+		expect(result.candidates[0].sourceUsernameAliases?.[0]).toMatchObject({
+			encoding: "json-string",
+			line: 3,
+			endLine: 3,
+		});
 		answer([
 			record({
 				title: { line: 1 },
@@ -293,6 +307,7 @@ describe("configured AI password recognition", () => {
 		expect(options).toMatchObject({
 			json: true,
 			maxOutputTokens: VAULT_IMPORT_AI_MAX_OUTPUT_TOKENS,
+			timeoutMs: VAULT_IMPORT_AI_TIMEOUT_MS,
 			signal: controller.signal,
 		});
 		expect(JSON.parse(options.prompt)).toEqual({
@@ -402,6 +417,11 @@ describe("configured AI password recognition", () => {
 			`Example\npassword=${quoted}`,
 		);
 		expect(result.candidates[0].draft.password).toBe(value);
+		expect(result.candidates[0].sourceFields?.password).toMatchObject({
+			encoding: "json-string",
+			line: 2,
+			endLine: 2,
+		});
 		expect(result.issues).toEqual([]);
 	});
 	it("rejects invalid or non-string JSON decoding and preserves literal unlabelled quotes", async () => {
@@ -634,7 +654,7 @@ describe("configured AI password recognition", () => {
 			]),
 		);
 	});
-	it("rejects unsupported response fields, malformed JSON, excess records and response limits with safe codes", async () => {
+	it("rejects unsupported field references, malformed JSON, excess records and response limits with safe codes", async () => {
 		for (const text of [
 			"synthetic-response-not-json",
 			JSON.stringify({
@@ -652,7 +672,6 @@ describe("configured AI password recognition", () => {
 				],
 				ignoredLines: [],
 			}),
-			JSON.stringify({ records: [], ignoredLines: [99] }),
 			JSON.stringify({
 				records: Array.from({ length: 201 }, () => record({})),
 				ignoredLines: [],
@@ -689,6 +708,141 @@ describe("configured AI password recognition", () => {
 			requestVaultImportAiRecognition(connection, "Example\nsynthetic"),
 		).rejects.toThrow(/^vault-import-ai-invalid-response$/);
 	});
+	it("accepts omitted absent fields and review metadata without inventing a value", async () => {
+		vi.mocked(generateAiText).mockResolvedValue({
+			text: JSON.stringify({
+				records: [{ title: { line: 1 }, password: { line: 2 } }],
+			}),
+			usage: { inputTokens: null, outputTokens: null },
+			model: null,
+		});
+		const result = await requestVaultImportAiRecognition(
+			connection,
+			"Example\nsynthetic-secret",
+		);
+		expect(result.candidates).toHaveLength(1);
+		expect(result.candidates[0].draft).toMatchObject({
+			title: "Example",
+			password: "synthetic-secret",
+			username: "",
+			url: "",
+			notes: "",
+		});
+		expect(result.issues).toEqual([]);
+		expect(generateAiText).toHaveBeenCalledTimes(1);
+	});
+
+	it("retains independently valid records when another record has an invalid schema", async () => {
+		answer([
+			{ title: { line: 1 }, username: "fabricated", password: { line: 3 } },
+			{ title: { line: 4 }, username: { line: 5 }, password: { line: 6 } },
+			{ title: { line: 7 }, password: { line: 8, arbitrary: "unsupported" } },
+		]);
+		const source =
+			"First\nfirst@example.test\nfirst-secret\nSecond\nsecond@example.test\nsecond-secret\nThird\nthird-secret";
+		const result = await requestVaultImportAiRecognition(connection, source);
+		expect(result.candidates).toHaveLength(1);
+		expect(result.candidates[0].draft).toMatchObject({
+			title: "Second",
+			username: "second@example.test",
+			password: "second-secret",
+		});
+		for (const lineNumber of [1, 2, 3, 7, 8])
+			expect(result.issues).toContainEqual({
+				lineNumber,
+				code: "unrecognized-line",
+			});
+		expect(generateAiText).toHaveBeenCalledTimes(1);
+	});
+
+	it.each([[0, 9999, "3", null], null, "uncertain hint"])(
+		"allows surrounding prose around one complete object and ignores invalid non-authoritative line hints: %j",
+		async (ignoredLines) => {
+			vi.mocked(generateAiText).mockResolvedValue({
+				text: `Here is the extraction:\n\`\`\`json\n${JSON.stringify({ records: [{ title: { line: 1 }, password: { line: 2 } }], ignoredLines, explanation: "ignored metadata" })}\n\`\`\`\nPlease review it.`,
+				usage: { inputTokens: null, outputTokens: null },
+				model: null,
+			});
+			const result = await requestVaultImportAiRecognition(
+				connection,
+				"Example\nsynthetic-secret\nuncertain-original",
+			);
+			expect(result.candidates).toHaveLength(1);
+			expect(result.issues).toEqual([
+				{ lineNumber: 3, code: "unrecognized-line" },
+			]);
+		},
+	);
+
+	it.each([
+		'{"records":[{"title":{"line":1},"password":{"line":2}}]',
+		'{"records":[]}\n{"records":[]}',
+		'{"records":[{"title":{"line":1},"password":{"line":2}}],}',
+	])("never repairs truncated or ambiguous JSON: %s", async (text) => {
+		vi.mocked(generateAiText).mockResolvedValue({
+			text,
+			usage: { inputTokens: null, outputTokens: null },
+			model: null,
+		});
+		await expect(
+			requestVaultImportAiRecognition(connection, "Example\nsynthetic-secret"),
+		).rejects.toMatchObject({
+			category: "response-format",
+			message: "vault-import-ai-invalid-response",
+		});
+		expect(generateAiText).toHaveBeenCalledTimes(1);
+	});
+
+	it("rejects token-limit completions even when their JSON happens to be complete", async () => {
+		vi.mocked(generateAiText).mockResolvedValue({
+			text: JSON.stringify({
+				records: [record({ title: { line: 1 }, password: { line: 2 } })],
+				ignoredLines: [],
+			}),
+			usage: { inputTokens: null, outputTokens: 8192 },
+			model: null,
+			finishReason: "length",
+		});
+		await expect(
+			requestVaultImportAiRecognition(connection, "Example\nsynthetic-secret"),
+		).rejects.toMatchObject({
+			category: "output-limit",
+			message: "vault-import-ai-invalid-response",
+		});
+		expect(generateAiText).toHaveBeenCalledTimes(1);
+	});
+
+	it("classifies provider timeout and cancellation without exposing provider bodies", async () => {
+		vi.mocked(generateAiText).mockRejectedValue(new AiClientError("timeout"));
+		const timeout = await requestVaultImportAiRecognition(
+			connection,
+			"Example\nsynthetic-secret",
+		).catch((error: unknown) => error);
+		expect(timeout).toBeInstanceOf(VaultImportAiError);
+		expect(timeout).toMatchObject({
+			category: "timeout",
+			message: "vault-import-ai-failed",
+		});
+		expect(timeout).not.toHaveProperty("cause");
+		vi.mocked(generateAiText).mockRejectedValue(new AiClientError("cancelled"));
+		await expect(
+			requestVaultImportAiRecognition(connection, "Example\nsynthetic-secret"),
+		).rejects.toThrow(/^vault-import-ai-cancelled$/);
+		vi.mocked(generateAiText).mockRejectedValue(
+			Error("synthetic private provider request body"),
+		);
+		const failed = await requestVaultImportAiRecognition(
+			connection,
+			"Example\nsynthetic-secret",
+		).catch((error: unknown) => error);
+		expect(failed).toMatchObject({
+			category: "request",
+			message: "vault-import-ai-failed",
+		});
+		expect(String(failed)).not.toContain("private");
+		expect(failed).not.toHaveProperty("cause");
+	});
+
 	it("checks source limits before the provider request and skips empty sources", async () => {
 		await expect(
 			requestVaultImportAiRecognition(
