@@ -215,14 +215,14 @@ export const passwordVaultCopy: Record<string, [string, string]> = {
 	],
 	pwSmartEditSource: ["修改原文", "Edit source"],
 	pwSmartNoRows: [
-		"尚未识别到完整条目。可按行指定字段后预览。",
-		"No complete entries recognized. Assign fields by line, then review.",
+		"尚未识别到条目，可在对应原文旁填写入库信息。",
+		"No entries recognized. Fill in entry details beside the matching source excerpt.",
 	],
 	pwSmartRemaining: [
 		"还有未识别的内容。原文暂留当前页面，关闭或锁库后清除。",
 		"Some content is still unrecognized. The source stays in this page until you close it or lock the vault.",
 	],
-	pwSmartContinue: ["继续核对原文", "Continue reviewing source"],
+	pwSmartContinue: ["继续补填条目", "Continue completing entries"],
 	pwSmartSaved: [
 		"已保存：新增 {{added}} 条，更新 {{updated}} 条，跳过 {{skipped}} 条。",
 		"Saved: {{added}} added, {{updated}} updated, {{skipped}} skipped.",
