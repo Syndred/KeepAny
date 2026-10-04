@@ -1,0 +1,1347 @@
+{
+  "config": {
+    "argv": [
+      "/Users/syndred/.nvm/versions/node/v22.23.1/bin/node",
+      "/Users/syndred/Desktop/projects/KeepAny/node_modules/@playwright/test/cli.js",
+      "test",
+      "tests/e2e/spacing-consistency.spec.ts",
+      "tests/e2e/core-pages-matrix.spec.ts",
+      "tests/e2e/shell-reference.spec.ts",
+      "tests/e2e/mobile-shell.spec.ts",
+      "--grep",
+      "intake spacing|(?:390|1280)px (?:settings|forms)|overview, intake|mobile topbar|settings language|desktop shell|subscription sidebar|long project title|project workflow",
+      "--workers=2",
+      "--output=/tmp/keepany-compact-site-test-results",
+      "--reporter=line,json"
+    ],
+    "configFile": "/Users/syndred/Desktop/projects/KeepAny/playwright.config.ts",
+    "rootDir": "/Users/syndred/Desktop/projects/KeepAny/tests/e2e",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 2
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "/tmp/keepany-compact-site-test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 2
+        },
+        "id": "",
+        "name": "",
+        "testDir": "/Users/syndred/Desktop/projects/KeepAny/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 45000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "line"
+      ],
+      [
+        "json"
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.63.0",
+    "workers": 2,
+    "webServer": {
+      "command": "pnpm dev --port 4356 --strictPort",
+      "url": "http://127.0.0.1:4356",
+      "reuseExistingServer": true,
+      "timeout": 30000
+    }
+  },
+  "suites": [
+    {
+      "title": "core-pages-matrix.spec.ts",
+      "file": "core-pages-matrix.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "en-US overview, intake, settings and trash fit 360px",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3106,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-04T12:48:45.408Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "2924006616a7705cf914-fb3f901d27a448c00ed0",
+          "file": "core-pages-matrix.spec.ts",
+          "line": 9,
+          "column": 3
+        },
+        {
+          "title": "en-US overview, intake, settings and trash fit 390px",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3117,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-04T12:48:48.602Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "2924006616a7705cf914-6c26982c391d310e988e",
+          "file": "core-pages-matrix.spec.ts",
+          "line": 9,
+          "column": 3
+        },
+        {
+          "title": "en-US overview, intake, settings and trash fit 768px",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2866,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-04T12:48:51.725Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "2924006616a7705cf914-3250952b3ece0fcda5f9",
+          "file": "core-pages-matrix.spec.ts",
+          "line": 9,
+          "column": 3
+        },
+        {
+          "title": "en-US overview, intake, settings and trash fit 1280px",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2911,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-04T12:48:54.597Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "2924006616a7705cf914-fb882469f0b2f711773f",
+          "file": "core-pages-matrix.spec.ts",
+          "line": 9,
+          "column": 3
+        },
+        {
+          "title": "en-US overview, intake, settings and trash fit 1440px",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2878,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-04T12:48:57.514Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "2924006616a7705cf914-bf61d54c5ade8780e38b",
+          "file": "core-pages-matrix.spec.ts",
+          "line": 9,
+          "column": 3
+        },
+        {
+          "title": "zh-CN overview, intake, settings and trash fit 360px",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2866,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-04T12:49:00.396Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "2924006616a7705cf914-b2fc8b61f474827246c7",
+          "file": "core-pages-matrix.spec.ts",
+          "line": 9,
+          "column": 3
+        },
+        {
+          "title": "zh-CN overview, intake, settings and trash fit 390px",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2849,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-04T12:49:03.271Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "2924006616a7705cf914-a35707844a38c7efe260",
+          "file": "core-pages-matrix.spec.ts",
+          "line": 9,
+          "column": 3
+        },
+        {
+          "title": "zh-CN overview, intake, settings and trash fit 768px",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2856,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-04T12:49:06.125Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "2924006616a7705cf914-579c06c7c8e27657abc0",
+          "file": "core-pages-matrix.spec.ts",
+          "line": 9,
+          "column": 3
+        },
+        {
+          "title": "zh-CN overview, intake, settings and trash fit 1280px",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2891,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-04T12:49:08.986Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "2924006616a7705cf914-01c84d790e3375e761ba",
+          "file": "core-pages-matrix.spec.ts",
+          "line": 9,
+          "column": 3
+        },
+        {
+          "title": "zh-CN overview, intake, settings and trash fit 1440px",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2881,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-04T12:49:11.882Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "2924006616a7705cf914-b3becf3e711e7f9e939b",
+          "file": "core-pages-matrix.spec.ts",
+          "line": 9,
+          "column": 3
+        },
+        {
+          "title": "mobile topbar search opens from its keyboard-accessible button",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 256,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-04T12:49:14.767Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "2924006616a7705cf914-8b593973cafd1fa75087",
+          "file": "core-pages-matrix.spec.ts",
+          "line": 161,
+          "column": 1
+        },
+        {
+          "title": "en-US settings language control has a name and choice persists",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 477,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-04T12:49:15.028Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "2924006616a7705cf914-cad020d55e7fde093ace",
+          "file": "core-pages-matrix.spec.ts",
+          "line": 174,
+          "column": 2
+        },
+        {
+          "title": "zh-CN settings language control has a name and choice persists",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 591,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-04T12:49:15.510Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "2924006616a7705cf914-acf18b1b0f673fe290a6",
+          "file": "core-pages-matrix.spec.ts",
+          "line": 174,
+          "column": 2
+        }
+      ]
+    },
+    {
+      "title": "mobile-shell.spec.ts",
+      "file": "mobile-shell.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "project workflow stays above the fold with a usable mobile drawer in both languages",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "failed",
+                  "duration": 276,
+                  "error": {
+                    "message": "Error: page.evaluate: TypeError: Failed to fetch dynamically imported module: http://127.0.0.1:4356/@fs/Users/syndred/Desktop/projects/KeepAny/packages/domain/src/index.ts",
+                    "stack": "Error: page.evaluate: TypeError: Failed to fetch dynamically imported module: http://127.0.0.1:4356/@fs/Users/syndred/Desktop/projects/KeepAny/packages/domain/src/index.ts\n    at /Users/syndred/Desktop/projects/KeepAny/tests/e2e/mobile-shell.spec.ts:6:31",
+                    "location": {
+                      "file": "/Users/syndred/Desktop/projects/KeepAny/tests/e2e/mobile-shell.spec.ts",
+                      "column": 31,
+                      "line": 6
+                    },
+                    "snippet": "  4 | \tawait page.setViewportSize({ width: 390, height: 844 });\n  5 | \tawait page.goto(\"/\");\n> 6 | \tconst projectId = await page.evaluate(async ([domainUrl, repositoryUrl]) => {\n    | \t                             ^\n  7 | \t\tconst { newAsset } = await import(domainUrl);\n  8 | \t\tconst { saveBatch } = await import(repositoryUrl);\n  9 | \t\tconst project = { ...newAsset(\"project\"), name: \"Mobile Atlas\" };"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "/Users/syndred/Desktop/projects/KeepAny/tests/e2e/mobile-shell.spec.ts",
+                        "column": 31,
+                        "line": 6
+                      },
+                      "message": "Error: page.evaluate: TypeError: Failed to fetch dynamically imported module: http://127.0.0.1:4356/@fs/Users/syndred/Desktop/projects/KeepAny/packages/domain/src/index.ts\n\n  4 | \tawait page.setViewportSize({ width: 390, height: 844 });\n  5 | \tawait page.goto(\"/\");\n> 6 | \tconst projectId = await page.evaluate(async ([domainUrl, repositoryUrl]) => {\n    | \t                             ^\n  7 | \t\tconst { newAsset } = await import(domainUrl);\n  8 | \t\tconst { saveBatch } = await import(repositoryUrl);\n  9 | \t\tconst project = { ...newAsset(\"project\"), name: \"Mobile Atlas\" };\n    at /Users/syndred/Desktop/projects/KeepAny/tests/e2e/mobile-shell.spec.ts:6:31"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-04T12:48:45.401Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "/tmp/keepany-compact-site-test-results/mobile-shell-project-workf-ddd38-le-drawer-in-both-languages/test-failed-1.png"
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "/tmp/keepany-compact-site-test-results/mobile-shell-project-workf-ddd38-le-drawer-in-both-languages/error-context.md"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "/Users/syndred/Desktop/projects/KeepAny/tests/e2e/mobile-shell.spec.ts",
+                    "column": 31,
+                    "line": 6
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "caeeee52b686924bfcb1-7a5f038b7a09afc1cd82",
+          "file": "mobile-shell.spec.ts",
+          "line": 3,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "shell-reference.spec.ts",
+      "file": "shell-reference.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "desktop shell follows the frozen frame and keeps real navigation reachable in both languages",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 1,
+                  "status": "failed",
+                  "duration": 194,
+                  "error": {
+                    "message": "Error: page.evaluate: TypeError: Failed to fetch dynamically imported module: http://127.0.0.1:4356/@fs/Users/syndred/Desktop/projects/KeepAny/packages/domain/src/index.ts",
+                    "stack": "Error: page.evaluate: TypeError: Failed to fetch dynamically imported module: http://127.0.0.1:4356/@fs/Users/syndred/Desktop/projects/KeepAny/packages/domain/src/index.ts\n    at /Users/syndred/Desktop/projects/KeepAny/tests/e2e/shell-reference.spec.ts:6:31",
+                    "location": {
+                      "file": "/Users/syndred/Desktop/projects/KeepAny/tests/e2e/shell-reference.spec.ts",
+                      "column": 31,
+                      "line": 6
+                    },
+                    "snippet": "  4 | \tawait page.setViewportSize({ width: 1280, height: 720 });\n  5 | \tawait page.goto(\"/\");\n> 6 | \tconst projectId = await page.evaluate(async ([domainUrl, repositoryUrl]) => {\n    | \t                             ^\n  7 | \t\tconst { newAsset } = await import(domainUrl);\n  8 | \t\tconst { saveBatch } = await import(repositoryUrl);\n  9 | \t\tconst project = { ...newAsset(\"project\"), name: \"Shell Atlas\" };"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "/Users/syndred/Desktop/projects/KeepAny/tests/e2e/shell-reference.spec.ts",
+                        "column": 31,
+                        "line": 6
+                      },
+                      "message": "Error: page.evaluate: TypeError: Failed to fetch dynamically imported module: http://127.0.0.1:4356/@fs/Users/syndred/Desktop/projects/KeepAny/packages/domain/src/index.ts\n\n  4 | \tawait page.setViewportSize({ width: 1280, height: 720 });\n  5 | \tawait page.goto(\"/\");\n> 6 | \tconst projectId = await page.evaluate(async ([domainUrl, repositoryUrl]) => {\n    | \t                             ^\n  7 | \t\tconst { newAsset } = await import(domainUrl);\n  8 | \t\tconst { saveBatch } = await import(repositoryUrl);\n  9 | \t\tconst project = { ...newAsset(\"project\"), name: \"Shell Atlas\" };\n    at /Users/syndred/Desktop/projects/KeepAny/tests/e2e/shell-reference.spec.ts:6:31"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-04T12:48:45.983Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "/tmp/keepany-compact-site-test-results/shell-reference-desktop-sh-36945-reachable-in-both-languages/test-failed-1.png"
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "/tmp/keepany-compact-site-test-results/shell-reference-desktop-sh-36945-reachable-in-both-languages/error-context.md"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "/Users/syndred/Desktop/projects/KeepAny/tests/e2e/shell-reference.spec.ts",
+                    "column": 31,
+                    "line": 6
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "ef0d6d66bbc501e38426-e3eca44d45d1c9ea544f",
+          "file": "shell-reference.spec.ts",
+          "line": 3,
+          "column": 1
+        },
+        {
+          "title": "subscription sidebar opens the local money trail",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 3,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 332,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-04T12:48:46.418Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ef0d6d66bbc501e38426-35285bdd13fda4bbf79b",
+          "file": "shell-reference.spec.ts",
+          "line": 60,
+          "column": 1
+        },
+        {
+          "title": "en-US long project title stays within the mobile overview and opens its detail",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 3,
+                  "parallelIndex": 1,
+                  "status": "failed",
+                  "duration": 199,
+                  "error": {
+                    "message": "Error: page.evaluate: TypeError: Failed to fetch dynamically imported module: http://127.0.0.1:4356/@fs/Users/syndred/Desktop/projects/KeepAny/packages/domain/src/index.ts",
+                    "stack": "Error: page.evaluate: TypeError: Failed to fetch dynamically imported module: http://127.0.0.1:4356/@fs/Users/syndred/Desktop/projects/KeepAny/packages/domain/src/index.ts\n    at /Users/syndred/Desktop/projects/KeepAny/tests/e2e/shell-reference.spec.ts:77:26",
+                    "location": {
+                      "file": "/Users/syndred/Desktop/projects/KeepAny/tests/e2e/shell-reference.spec.ts",
+                      "column": 26,
+                      "line": 77
+                    },
+                    "snippet": "  75 | \t\t\tawait page.goto(\"/\");\n  76 | \t\t\tconst title = \"VeryLongVisibleProjectTitle\".repeat(3);\n> 77 | \t\t\tconst id = await page.evaluate(async ([name, domainUrl, repositoryUrl]) => {\n     | \t\t\t                      ^\n  78 | \t\t\t\tconst { newAsset } = await import(domainUrl);\n  79 | \t\t\t\tconst { save } = await import(repositoryUrl);\n  80 | \t\t\t\tconst project = { ...newAsset(\"project\"), name };"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "/Users/syndred/Desktop/projects/KeepAny/tests/e2e/shell-reference.spec.ts",
+                        "column": 26,
+                        "line": 77
+                      },
+                      "message": "Error: page.evaluate: TypeError: Failed to fetch dynamically imported module: http://127.0.0.1:4356/@fs/Users/syndred/Desktop/projects/KeepAny/packages/domain/src/index.ts\n\n  75 | \t\t\tawait page.goto(\"/\");\n  76 | \t\t\tconst title = \"VeryLongVisibleProjectTitle\".repeat(3);\n> 77 | \t\t\tconst id = await page.evaluate(async ([name, domainUrl, repositoryUrl]) => {\n     | \t\t\t                      ^\n  78 | \t\t\t\tconst { newAsset } = await import(domainUrl);\n  79 | \t\t\t\tconst { save } = await import(repositoryUrl);\n  80 | \t\t\t\tconst project = { ...newAsset(\"project\"), name };\n    at /Users/syndred/Desktop/projects/KeepAny/tests/e2e/shell-reference.spec.ts:77:26"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-04T12:48:46.828Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "/tmp/keepany-compact-site-test-results/shell-reference-en-US-long-b1423-erview-and-opens-its-detail/test-failed-1.png"
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "/tmp/keepany-compact-site-test-results/shell-reference-en-US-long-b1423-erview-and-opens-its-detail/error-context.md"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "/Users/syndred/Desktop/projects/KeepAny/tests/e2e/shell-reference.spec.ts",
+                    "column": 26,
+                    "line": 77
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "ef0d6d66bbc501e38426-6737c75b87e19095dd94",
+          "file": "shell-reference.spec.ts",
+          "line": 71,
+          "column": 2
+        },
+        {
+          "title": "zh-CN long project title stays within the mobile overview and opens its detail",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 4,
+                  "parallelIndex": 1,
+                  "status": "failed",
+                  "duration": 180,
+                  "error": {
+                    "message": "Error: page.evaluate: TypeError: Failed to fetch dynamically imported module: http://127.0.0.1:4356/@fs/Users/syndred/Desktop/projects/KeepAny/packages/domain/src/index.ts",
+                    "stack": "Error: page.evaluate: TypeError: Failed to fetch dynamically imported module: http://127.0.0.1:4356/@fs/Users/syndred/Desktop/projects/KeepAny/packages/domain/src/index.ts\n    at /Users/syndred/Desktop/projects/KeepAny/tests/e2e/shell-reference.spec.ts:77:26",
+                    "location": {
+                      "file": "/Users/syndred/Desktop/projects/KeepAny/tests/e2e/shell-reference.spec.ts",
+                      "column": 26,
+                      "line": 77
+                    },
+                    "snippet": "  75 | \t\t\tawait page.goto(\"/\");\n  76 | \t\t\tconst title = \"VeryLongVisibleProjectTitle\".repeat(3);\n> 77 | \t\t\tconst id = await page.evaluate(async ([name, domainUrl, repositoryUrl]) => {\n     | \t\t\t                      ^\n  78 | \t\t\t\tconst { newAsset } = await import(domainUrl);\n  79 | \t\t\t\tconst { save } = await import(repositoryUrl);\n  80 | \t\t\t\tconst project = { ...newAsset(\"project\"), name };"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "/Users/syndred/Desktop/projects/KeepAny/tests/e2e/shell-reference.spec.ts",
+                        "column": 26,
+                        "line": 77
+                      },
+                      "message": "Error: page.evaluate: TypeError: Failed to fetch dynamically imported module: http://127.0.0.1:4356/@fs/Users/syndred/Desktop/projects/KeepAny/packages/domain/src/index.ts\n\n  75 | \t\t\tawait page.goto(\"/\");\n  76 | \t\t\tconst title = \"VeryLongVisibleProjectTitle\".repeat(3);\n> 77 | \t\t\tconst id = await page.evaluate(async ([name, domainUrl, repositoryUrl]) => {\n     | \t\t\t                      ^\n  78 | \t\t\t\tconst { newAsset } = await import(domainUrl);\n  79 | \t\t\t\tconst { save } = await import(repositoryUrl);\n  80 | \t\t\t\tconst project = { ...newAsset(\"project\"), name };\n    at /Users/syndred/Desktop/projects/KeepAny/tests/e2e/shell-reference.spec.ts:77:26"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-04T12:48:47.256Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "/tmp/keepany-compact-site-test-results/shell-reference-zh-CN-long-5a2c0-erview-and-opens-its-detail/test-failed-1.png"
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "/tmp/keepany-compact-site-test-results/shell-reference-zh-CN-long-5a2c0-erview-and-opens-its-detail/error-context.md"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "/Users/syndred/Desktop/projects/KeepAny/tests/e2e/shell-reference.spec.ts",
+                    "column": 26,
+                    "line": 77
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "ef0d6d66bbc501e38426-3199deb336213cd30fd8",
+          "file": "shell-reference.spec.ts",
+          "line": 71,
+          "column": 2
+        }
+      ]
+    },
+    {
+      "title": "spacing-consistency.spec.ts",
+      "file": "spacing-consistency.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "zh-CN 360px intake spacing keeps capture, backup and restore controls separated",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 5,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 770,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-04T12:48:47.696Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "f91f1b7d2018b49e7b46-6778bfeab417ecfd90d7",
+          "file": "spacing-consistency.spec.ts",
+          "line": 492,
+          "column": 2
+        },
+        {
+          "title": "zh-CN 390px intake spacing keeps capture, backup and restore controls separated",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 5,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 880,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-04T12:48:48.541Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "f91f1b7d2018b49e7b46-68f0c9a1b8f9589f5fad",
+          "file": "spacing-consistency.spec.ts",
+          "line": 492,
+          "column": 2
+        },
+        {
+          "title": "zh-CN 1280px intake spacing keeps capture, backup and restore controls separated",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 5,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 967,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-04T12:48:49.424Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "f91f1b7d2018b49e7b46-ffacc2e321a94fa9a434",
+          "file": "spacing-consistency.spec.ts",
+          "line": 492,
+          "column": 2
+        },
+        {
+          "title": "zh-CN 1440px intake spacing keeps capture, backup and restore controls separated",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 5,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 785,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-04T12:48:50.396Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "f91f1b7d2018b49e7b46-56c8d6d5905760503311",
+          "file": "spacing-consistency.spec.ts",
+          "line": 492,
+          "column": 2
+        },
+        {
+          "title": "en-US 360px intake spacing keeps capture, backup and restore controls separated",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 5,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 701,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-04T12:48:51.186Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "f91f1b7d2018b49e7b46-efeb96257a63cf030d25",
+          "file": "spacing-consistency.spec.ts",
+          "line": 492,
+          "column": 2
+        },
+        {
+          "title": "en-US 390px intake spacing keeps capture, backup and restore controls separated",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 5,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 861,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-04T12:48:51.892Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "f91f1b7d2018b49e7b46-4822bbadd4400bd94bd2",
+          "file": "spacing-consistency.spec.ts",
+          "line": 492,
+          "column": 2
+        },
+        {
+          "title": "en-US 1280px intake spacing keeps capture, backup and restore controls separated",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 5,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 914,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-04T12:48:52.757Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "f91f1b7d2018b49e7b46-106d41ad9aeb4b3629cc",
+          "file": "spacing-consistency.spec.ts",
+          "line": 492,
+          "column": 2
+        },
+        {
+          "title": "en-US 1440px intake spacing keeps capture, backup and restore controls separated",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 5,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 750,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-04T12:48:53.675Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "f91f1b7d2018b49e7b46-669746682ba34b3bc0be",
+          "file": "spacing-consistency.spec.ts",
+          "line": 492,
+          "column": 2
+        },
+        {
+          "title": "zh-CN 1280px settings sections, MCP, key access and AI pricing keep spacing",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 5,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 1504,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-04T12:48:54.428Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "f91f1b7d2018b49e7b46-af13b5f18883beb6db2a",
+          "file": "spacing-consistency.spec.ts",
+          "line": 627,
+          "column": 2
+        },
+        {
+          "title": "en-US 390px settings sections, MCP, key access and AI pricing keep spacing",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 5,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 1434,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-04T12:48:55.937Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "f91f1b7d2018b49e7b46-fdd1e0624b19ea354735",
+          "file": "spacing-consistency.spec.ts",
+          "line": 627,
+          "column": 2
+        },
+        {
+          "title": "zh-CN 390px forms and card grids keep field and action spacing",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 5,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 6985,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-04T12:48:57.376Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "f91f1b7d2018b49e7b46-7588cbbc241132e1d412",
+          "file": "spacing-consistency.spec.ts",
+          "line": 733,
+          "column": 2
+        },
+        {
+          "title": "zh-CN 1280px forms and card grids keep field and action spacing",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 5,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 6982,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-04T12:49:04.365Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "f91f1b7d2018b49e7b46-a45ad6141dfaedfe532e",
+          "file": "spacing-consistency.spec.ts",
+          "line": 733,
+          "column": 2
+        },
+        {
+          "title": "en-US 390px forms and card grids keep field and action spacing",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 5,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 7069,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-04T12:49:11.352Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "f91f1b7d2018b49e7b46-0dc31578dc7cb2c28d4d",
+          "file": "spacing-consistency.spec.ts",
+          "line": 733,
+          "column": 2
+        },
+        {
+          "title": "en-US 1280px forms and card grids keep field and action spacing",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 5,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 6973,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-04T12:49:18.427Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "f91f1b7d2018b49e7b46-721979cdec2c629c0517",
+          "file": "spacing-consistency.spec.ts",
+          "line": 733,
+          "column": 2
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-10-04T12:48:45.160Z",
+    "duration": 40269.736,
+    "expected": 28,
+    "skipped": 0,
+    "unexpected": 4,
+    "flaky": 0
+  }
+}

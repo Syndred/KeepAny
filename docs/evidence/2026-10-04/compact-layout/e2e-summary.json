@@ -1,0 +1,255 @@
+{
+  "unique_cases": 41,
+  "passed": 41,
+  "password_final_entry": "index-CimHBlrx.js",
+  "global_and_shell_entry": "index-V5MBuLWc.js",
+  "carry_forward": "Global stylesheets unchanged in final password-only min-height and review section gap rebuild. Initial four shell fixture failures were corrected to create project through visible UI; shell5 rerun passed. Initial four input-action36px failures prompted min-height44px fix; finalpassword9 passed.",
+  "cases": [
+    {
+      "file": "core-pages-matrix.spec.ts",
+      "title": "en-US overview, intake, settings and trash fit 360px",
+      "status": "expected",
+      "result": "passed"
+    },
+    {
+      "file": "core-pages-matrix.spec.ts",
+      "title": "en-US overview, intake, settings and trash fit 390px",
+      "status": "expected",
+      "result": "passed"
+    },
+    {
+      "file": "core-pages-matrix.spec.ts",
+      "title": "en-US overview, intake, settings and trash fit 768px",
+      "status": "expected",
+      "result": "passed"
+    },
+    {
+      "file": "core-pages-matrix.spec.ts",
+      "title": "en-US overview, intake, settings and trash fit 1280px",
+      "status": "expected",
+      "result": "passed"
+    },
+    {
+      "file": "core-pages-matrix.spec.ts",
+      "title": "en-US overview, intake, settings and trash fit 1440px",
+      "status": "expected",
+      "result": "passed"
+    },
+    {
+      "file": "core-pages-matrix.spec.ts",
+      "title": "zh-CN overview, intake, settings and trash fit 360px",
+      "status": "expected",
+      "result": "passed"
+    },
+    {
+      "file": "core-pages-matrix.spec.ts",
+      "title": "zh-CN overview, intake, settings and trash fit 390px",
+      "status": "expected",
+      "result": "passed"
+    },
+    {
+      "file": "core-pages-matrix.spec.ts",
+      "title": "zh-CN overview, intake, settings and trash fit 768px",
+      "status": "expected",
+      "result": "passed"
+    },
+    {
+      "file": "core-pages-matrix.spec.ts",
+      "title": "zh-CN overview, intake, settings and trash fit 1280px",
+      "status": "expected",
+      "result": "passed"
+    },
+    {
+      "file": "core-pages-matrix.spec.ts",
+      "title": "zh-CN overview, intake, settings and trash fit 1440px",
+      "status": "expected",
+      "result": "passed"
+    },
+    {
+      "file": "core-pages-matrix.spec.ts",
+      "title": "mobile topbar search opens from its keyboard-accessible button",
+      "status": "expected",
+      "result": "passed"
+    },
+    {
+      "file": "core-pages-matrix.spec.ts",
+      "title": "en-US settings language control has a name and choice persists",
+      "status": "expected",
+      "result": "passed"
+    },
+    {
+      "file": "core-pages-matrix.spec.ts",
+      "title": "zh-CN settings language control has a name and choice persists",
+      "status": "expected",
+      "result": "passed"
+    },
+    {
+      "file": "mobile-shell.spec.ts",
+      "title": "project workflow stays above the fold with a usable mobile drawer in both languages",
+      "status": "expected",
+      "result": "passed"
+    },
+    {
+      "file": "shell-reference.spec.ts",
+      "title": "desktop shell follows the frozen frame and keeps real navigation reachable in both languages",
+      "status": "expected",
+      "result": "passed"
+    },
+    {
+      "file": "shell-reference.spec.ts",
+      "title": "subscription sidebar opens the local money trail",
+      "status": "expected",
+      "result": "passed"
+    },
+    {
+      "file": "shell-reference.spec.ts",
+      "title": "en-US long project title stays within the mobile overview and opens its detail",
+      "status": "expected",
+      "result": "passed"
+    },
+    {
+      "file": "shell-reference.spec.ts",
+      "title": "zh-CN long project title stays within the mobile overview and opens its detail",
+      "status": "expected",
+      "result": "passed"
+    },
+    {
+      "file": "spacing-consistency.spec.ts",
+      "title": "zh-CN 360px intake spacing keeps capture, backup and restore controls separated",
+      "status": "expected",
+      "result": "passed"
+    },
+    {
+      "file": "spacing-consistency.spec.ts",
+      "title": "zh-CN 390px intake spacing keeps capture, backup and restore controls separated",
+      "status": "expected",
+      "result": "passed"
+    },
+    {
+      "file": "spacing-consistency.spec.ts",
+      "title": "zh-CN 1280px intake spacing keeps capture, backup and restore controls separated",
+      "status": "expected",
+      "result": "passed"
+    },
+    {
+      "file": "spacing-consistency.spec.ts",
+      "title": "zh-CN 1440px intake spacing keeps capture, backup and restore controls separated",
+      "status": "expected",
+      "result": "passed"
+    },
+    {
+      "file": "spacing-consistency.spec.ts",
+      "title": "en-US 360px intake spacing keeps capture, backup and restore controls separated",
+      "status": "expected",
+      "result": "passed"
+    },
+    {
+      "file": "spacing-consistency.spec.ts",
+      "title": "en-US 390px intake spacing keeps capture, backup and restore controls separated",
+      "status": "expected",
+      "result": "passed"
+    },
+    {
+      "file": "spacing-consistency.spec.ts",
+      "title": "en-US 1280px intake spacing keeps capture, backup and restore controls separated",
+      "status": "expected",
+      "result": "passed"
+    },
+    {
+      "file": "spacing-consistency.spec.ts",
+      "title": "en-US 1440px intake spacing keeps capture, backup and restore controls separated",
+      "status": "expected",
+      "result": "passed"
+    },
+    {
+      "file": "spacing-consistency.spec.ts",
+      "title": "zh-CN 1280px settings sections, MCP, key access and AI pricing keep spacing",
+      "status": "expected",
+      "result": "passed"
+    },
+    {
+      "file": "spacing-consistency.spec.ts",
+      "title": "en-US 390px settings sections, MCP, key access and AI pricing keep spacing",
+      "status": "expected",
+      "result": "passed"
+    },
+    {
+      "file": "spacing-consistency.spec.ts",
+      "title": "zh-CN 390px forms and card grids keep field and action spacing",
+      "status": "expected",
+      "result": "passed"
+    },
+    {
+      "file": "spacing-consistency.spec.ts",
+      "title": "zh-CN 1280px forms and card grids keep field and action spacing",
+      "status": "expected",
+      "result": "passed"
+    },
+    {
+      "file": "spacing-consistency.spec.ts",
+      "title": "en-US 390px forms and card grids keep field and action spacing",
+      "status": "expected",
+      "result": "passed"
+    },
+    {
+      "file": "spacing-consistency.spec.ts",
+      "title": "en-US 1280px forms and card grids keep field and action spacing",
+      "status": "expected",
+      "result": "passed"
+    },
+    {
+      "file": "password-smart-import.spec.ts",
+      "title": "advanced input and mapping returns retain edited review choices through failed replacement work",
+      "status": "expected",
+      "result": "passed"
+    },
+    {
+      "file": "password-smart-import.spec.ts",
+      "title": "zh-CN 390px quick completion reuses recognized identity and fills exact selected source with one AI request",
+      "status": "expected",
+      "result": "passed"
+    },
+    {
+      "file": "password-smart-import.spec.ts",
+      "title": "zh-CN 1280px quick completion reuses recognized identity and fills exact selected source with one AI request",
+      "status": "expected",
+      "result": "passed"
+    },
+    {
+      "file": "password-smart-import.spec.ts",
+      "title": "en-US 390px quick completion reuses recognized identity and fills exact selected source with one AI request",
+      "status": "expected",
+      "result": "passed"
+    },
+    {
+      "file": "password-smart-import.spec.ts",
+      "title": "en-US 1280px quick completion reuses recognized identity and fills exact selected source with one AI request",
+      "status": "expected",
+      "result": "passed"
+    },
+    {
+      "file": "password-smart-import.spec.ts",
+      "title": "zh-CN 390px import input uses compact width and content-sized actions",
+      "status": "expected",
+      "result": "passed"
+    },
+    {
+      "file": "password-smart-import.spec.ts",
+      "title": "zh-CN 1280px import input uses compact width and content-sized actions",
+      "status": "expected",
+      "result": "passed"
+    },
+    {
+      "file": "password-smart-import.spec.ts",
+      "title": "en-US 390px import input uses compact width and content-sized actions",
+      "status": "expected",
+      "result": "passed"
+    },
+    {
+      "file": "password-smart-import.spec.ts",
+      "title": "en-US 1280px import input uses compact width and content-sized actions",
+      "status": "expected",
+      "result": "passed"
+    }
+  ]
+}
