@@ -3,7 +3,7 @@
 .tasks-toolbar .task-filters { display: flex; flex: 0 1 auto; flex-wrap: wrap; gap: 7px; width: auto; min-width: 0; margin: 0; padding: 0; overflow: visible; border: 0; }
 .tasks-toolbar .task-filters button { white-space: nowrap; }
 .tasks-toolbar-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-.tasks-columns { display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(230px, 1fr); gap: var(--space-6); align-items: start; min-width: 0; }
+.tasks-columns { display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(230px, 1fr); gap: var(--space-4); align-items: start; min-width: 0; }
 .tasks-columns > .card { padding: 0; overflow: hidden; }
 .tasks-cardhead { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); min-height: 64px; padding: var(--space-4); }
 .tasks-cardhead h2 { margin: 0; font-size: 15px; line-height: 1.3; }

@@ -1,4 +1,4 @@
-import { useEffect, useRef, type ChangeEvent } from "react";
+import { type ChangeEvent, useEffect, useRef } from "react";
 import { Button } from "./button";
 import "./file-picker.css";
 
@@ -11,6 +11,7 @@ export interface FilePickerProps {
 	accept: string;
 	onFileChange: (file: File | null) => void;
 	disabled?: boolean;
+	compact?: boolean;
 }
 
 export function FilePicker({
@@ -22,6 +23,7 @@ export function FilePicker({
 	accept,
 	onFileChange,
 	disabled = false,
+	compact = false,
 }: FilePickerProps) {
 	const inputRef = useRef<HTMLInputElement>(null);
 
@@ -40,7 +42,7 @@ export function FilePicker({
 	}
 
 	return (
-		<div className="file-picker">
+		<div className={`file-picker${compact ? " file-picker-compact" : ""}`}>
 			<label id={`${id}-label`} className="file-picker-label" htmlFor={id}>
 				{label}
 			</label>

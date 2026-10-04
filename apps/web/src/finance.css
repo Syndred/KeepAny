@@ -1,5 +1,5 @@
 .finance-summary { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 16px; }
-.finance-summary > .card { display: grid; align-content: start; gap: 8px; min-height: 150px; }
+.finance-summary > .card { display: grid; align-content: start; gap: 8px; }
 .finance-summary > .card:nth-child(1) { background: var(--yellow-soft); }
 .finance-summary > .card:nth-child(2) { background: var(--green-soft); }
 .finance-summary > .card:nth-child(3) { background: var(--blue-soft); }

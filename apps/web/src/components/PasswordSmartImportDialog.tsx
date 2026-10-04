@@ -946,7 +946,7 @@ export function PasswordSmartImportDialog({
 
 	return (
 		<Dialog
-			className="password-smart-import-dialog"
+			className={`password-smart-import-dialog${stage === "review" && issueGroups.length > 0 ? " password-smart-import-dialog-wide" : ""}`}
 			title={t("pwSmartTitle")}
 			onClose={close}
 			closeDisabled={busy === "save"}
@@ -992,7 +992,7 @@ export function PasswordSmartImportDialog({
 							<textarea
 								ref={sourceInput}
 								id="pw-smart-source"
-								rows={8}
+								rows={6}
 								value={source}
 								onChange={(event) => {
 									setSource(event.target.value);
@@ -1009,6 +1009,7 @@ export function PasswordSmartImportDialog({
 							<small>{t("pwSmartSyntax")}</small>
 						</label>
 						<FilePicker
+							compact
 							id="pw-smart-file"
 							label={t("pwSmartFile")}
 							chooseLabel={t("pwSmartChooseFile")}
@@ -1018,46 +1019,53 @@ export function PasswordSmartImportDialog({
 							onFileChange={(next) => void readFile(next)}
 							disabled={!!busy}
 						/>
-						<div className="pw-smart-ai pw-smart-ai-recognition">
-							<p>{t("pwSmartAiRecognitionHint")}</p>
-							{settings && (
-								<p className="pw-smart-ai-target">
-									{t("pwSmartAiTarget", {
-										model: settings.model,
-										endpoint: settings.baseURL,
-									})}
-								</p>
-							)}
-							{connection ? (
+						<div className="pw-smart-input-actions">
+							<div className="pw-smart-ai pw-smart-ai-recognition">
+								<p>{t("pwSmartAiRecognitionHint")}</p>
+								{settings && (
+									<p className="pw-smart-ai-target">
+										{t("pwSmartAiTarget", {
+											model: settings.model,
+											endpoint: settings.baseURL,
+										})}
+									</p>
+								)}
+								{connection ? (
+									<Button
+										variant="primary"
+										onClick={() => void recognizeWithAi()}
+										disabled={!!busy || !source.trim()}
+									>
+										<Sparkles size={16} />
+										{t("pwSmartAiRecognize", { model: connection.model })}
+									</Button>
+								) : settings?.keySource === "vault" ? (
+									<Button onClick={activateModel} disabled={!!busy}>
+										{t("aiSettingsActivateVaultKey")}
+									</Button>
+								) : (
+									<p>
+										{t("pwSmartAiOptional")}{" "}
+										<TextLink asChild>
+											<Link to="/settings" hash="assistant" onClick={close}>
+												{t(settings ? "aiEnableKey" : "aiConfigure")}
+											</Link>
+										</TextLink>
+									</p>
+								)}
+							</div>
+							<div className="actions pw-smart-local-actions">
+								<Button onClick={recognize} disabled={!!busy || !source.trim()}>
+									{t("pwSmartRecognize")}
+								</Button>
 								<Button
-									variant="primary"
-									onClick={() => void recognizeWithAi()}
+									onClick={startMapping}
 									disabled={!!busy || !source.trim()}
 								>
-									<Sparkles size={16} />
-									{t("pwSmartAiRecognize", { model: connection.model })}
+									{t("pwSmartMap")}
 								</Button>
-							) : settings?.keySource === "vault" ? (
-								<Button onClick={activateModel} disabled={!!busy}>
-									{t("aiSettingsActivateVaultKey")}
-								</Button>
-							) : (
-								<p>
-									{t("pwSmartAiOptional")}{" "}
-									<TextLink asChild>
-										<Link to="/settings" hash="assistant" onClick={close}>
-											{t(settings ? "aiEnableKey" : "aiConfigure")}
-										</Link>
-									</TextLink>
-								</p>
-							)}
+							</div>
 						</div>
-						<Button onClick={recognize} disabled={!!busy || !source.trim()}>
-							{t("pwSmartRecognize")}
-						</Button>
-						<Button onClick={startMapping} disabled={!!busy || !source.trim()}>
-							{t("pwSmartMap")}
-						</Button>
 					</>
 				)}
 				{stage === "mapping" && (
@@ -1088,7 +1096,11 @@ export function PasswordSmartImportDialog({
 					</>
 				)}
 				{hasReview && (
-					<div key={reviewVersion} hidden={stage !== "review"}>
+					<div
+						className="pw-smart-review"
+						key={reviewVersion}
+						hidden={stage !== "review"}
+					>
 						<p className="pw-smart-mode">
 							{t(
 								`pwSmartReviewMode_${reviewOrigin.kind}`,
