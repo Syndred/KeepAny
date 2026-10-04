@@ -211,6 +211,99 @@ async function openOptional(container: Locator) {
 	});
 	if (await addUrl.isVisible()) await addUrl.click();
 }
+async function openFragment(group: Locator, t: Copy) {
+	const form = group.locator(".pw-smart-fragment-form");
+	if ((await form.getAttribute("data-expanded")) !== "true")
+		await form
+			.getByRole("button", { name: t("pwSmartFragmentFill"), exact: true })
+			.click();
+	await expect(form).toHaveAttribute("data-expanded", "true");
+	return form;
+}
+async function changeFragmentTarget(form: Locator, t: Copy, targetId: string) {
+	const picker = form.locator(".pw-smart-target-picker");
+	if (!(await picker.isVisible()))
+		await form
+			.getByRole("button", {
+				name: t("pwSmartFragmentChangeTarget"),
+				exact: true,
+			})
+			.click();
+	await selectChoice(picker.locator("button[id$='-target']"), targetId);
+}
+async function openSourceExcerpt(container: Locator, t: Copy) {
+	const toggle = container
+		.locator(".pw-smart-source-disclosure")
+		.getByRole("button", { name: t("pwSmartSourceExcerpt"), exact: true });
+	if (
+		(await toggle.count()) > 0 &&
+		(await toggle.getAttribute("aria-expanded")) === "false"
+	)
+		await toggle.click();
+	await expect(container.locator(".pw-smart-source-excerpt")).toBeVisible();
+}
+async function sourceText(excerpt: Locator) {
+	return (
+		await excerpt.locator(".pw-smart-source-value").allTextContents()
+	).join("\n");
+}
+async function expectQuickFormLayout(form: Locator) {
+	const fields = await form.evaluate((element) =>
+		["title", "username", "password"].map((field) => {
+			const control = element.querySelector<HTMLInputElement>(
+				`input[id$='-${field}']`,
+			);
+			const rectangle = control?.getBoundingClientRect();
+			const parent = control?.closest(".field")?.getBoundingClientRect();
+			return {
+				field,
+				width: rectangle?.width ?? 0,
+				height: rectangle?.height ?? 0,
+				parentWidth: parent?.width ?? 0,
+				top: rectangle?.top ?? 0,
+			};
+		}),
+	);
+	for (const field of fields) {
+		expect(field.width).toBeGreaterThan(120);
+		expect(Math.abs(field.width - field.parentWidth)).toBeLessThanOrEqual(1);
+		expect(Math.abs(field.height - 52)).toBeLessThanOrEqual(0.5);
+	}
+	expect(fields[1].top).toBeGreaterThan(fields[0].top);
+	expect(fields[2].top).toBeGreaterThan(fields[1].top);
+	test.info().annotations.push({
+		type: "ui-quick-field-layout",
+		description: JSON.stringify(fields),
+	});
+}
+async function expectQuickGroupLayout(group: Locator, width: number) {
+	const geometry = await group.evaluate((element) => {
+		const source = element.querySelector(".pw-smart-source-disclosure");
+		const form = element.querySelector(".pw-smart-fragment-editor");
+		const a = source?.getBoundingClientRect();
+		const b = form?.getBoundingClientRect();
+		return {
+			gap: a && b ? b.left - a.right : null,
+			verticalGap: a && b ? b.top - a.bottom : null,
+			sourceOpen:
+				source?.querySelector("button")?.getAttribute("aria-expanded") ===
+				"true",
+			scrollWidth: element.scrollWidth,
+			clientWidth: element.clientWidth,
+		};
+	});
+	if (width === 390) {
+		expect(geometry.sourceOpen).toBe(false);
+		expect(geometry.verticalGap).toBeGreaterThanOrEqual(15.5);
+	} else {
+		expect(geometry.gap).toBeGreaterThanOrEqual(15.5);
+	}
+	expect(geometry.scrollWidth).toBeLessThanOrEqual(geometry.clientWidth + 1);
+	test.info().annotations.push({
+		type: "ui-quick-group-layout",
+		description: JSON.stringify(geometry),
+	});
+}
 /** A real pointer hit must land on the control even after mousedown updates focus. */
 async function exercisePasswordEye(
 	page: Page,
@@ -322,28 +415,16 @@ async function expectActionSpacing(actions: Locator) {
 		}),
 	});
 }
-async function expectCollapsedGroupSpacing(groups: Locator) {
+async function expectSourceGroupSpacing(groups: Locator) {
 	const gaps = await groups.evaluateAll((elements) =>
 		elements.map((element, index) => {
-			const excerpt = element
-				.querySelector(".pw-smart-source-excerpt")
-				?.getBoundingClientRect();
-			const button = element
-				.querySelector(".pw-smart-fragment-form > button")
-				?.getBoundingClientRect();
-			const next = elements[index + 1]
-				?.querySelector(".pw-smart-source-group-reasons")
-				?.getBoundingClientRect();
-			return {
-				before: excerpt && button ? button.top - excerpt.bottom : null,
-				after: next && button ? next.top - button.bottom : null,
-			};
+			const rectangle = element.getBoundingClientRect();
+			const next = elements[index + 1]?.getBoundingClientRect();
+			return next ? next.top - rectangle.bottom : null;
 		}),
 	);
-	for (const gap of gaps) {
-		if (gap.before !== null) expect(gap.before).toBeGreaterThanOrEqual(15.5);
-		if (gap.after !== null) expect(gap.after).toBeGreaterThanOrEqual(15.5);
-	}
+	for (const gap of gaps)
+		if (gap !== null) expect(gap).toBeGreaterThanOrEqual(15.5);
 	test.info().annotations.push({
 		type: "ui-source-gaps",
 		description: JSON.stringify(gaps),
@@ -658,7 +739,7 @@ test("advanced input and mapping returns retain edited review choices through fa
 		await expect(
 			importer
 				.getByRole("status")
-				.filter({ hasText: t("pwSmartAiRecognitionFailed") }),
+				.filter({ hasText: t("pwSmartAiResponseFormat") }),
 		).toBeVisible();
 		await expect(input).toHaveValue(changedSource);
 		await importer
@@ -740,9 +821,7 @@ test("unassigned-only content becomes an editable pending form entry and saves l
 		await expect(importer.locator("#pw-smart-source")).toBeHidden();
 		const group = importer.locator(".pw-smart-source-group");
 		await expect(group).toHaveCount(1);
-		await group
-			.getByRole("button", { name: t("pwSmartFragmentFill"), exact: true })
-			.click();
+		await openFragment(group, t);
 		const form = group.locator(".pw-smart-fragment-form");
 		await form
 			.locator("input[id$='-title']")
@@ -826,9 +905,7 @@ test("partly assigned source keeps the original fragment form draft while adding
 		const group = importer.locator(".pw-smart-source-group");
 		await expect(group).toHaveCount(1);
 		const groupId = await group.getAttribute("data-source-group");
-		await group
-			.getByRole("button", { name: t("pwSmartFragmentFill"), exact: true })
-			.click();
+		await openFragment(group, t);
 		const form = group.locator(".pw-smart-fragment-form");
 		await form.locator("input[id$='-title']").fill("Synthetic manual service");
 		await form.locator("input[id$='-username']").fill("manual-unsaved-user");
@@ -947,12 +1024,9 @@ test("remaining source forms explicitly supplement an entry already saved in thi
 			})
 			.click();
 		const group = importer.locator(".pw-smart-source-group");
-		await group
-			.getByRole("button", { name: t("pwSmartFragmentFill"), exact: true })
-			.click();
+		await openFragment(group, t);
 		const form = group.locator(".pw-smart-fragment-form");
-		await selectChoice(form.locator("button[id$='-mode']"), "existing");
-		await selectChoice(form.locator("button[id$='-target']"), "vault-import-1");
+		await changeFragmentTarget(form, t, "vault-import-1");
 		await expect(
 			form.getByRole("button", {
 				name: t("pwSmartFragmentApply"),
@@ -1012,7 +1086,7 @@ test("remaining source forms explicitly supplement an entry already saved in thi
 			.click();
 		const row = importer.locator(".pw-smart-row");
 		await expect(row).toHaveCount(1);
-		await expect(row.getByRole("checkbox")).not.toBeChecked();
+		await expect(row.getByRole("checkbox")).toBeChecked();
 		await expect(row.getByRole("checkbox")).toBeEnabled();
 		expect(await persistedVault(page)).toEqual(savedRevision);
 		await row.getByRole("checkbox").check();
@@ -1102,12 +1176,9 @@ test("a same-password duplicate can explicitly update saved notes after fragment
 		await expect(row).toContainText(t("pwSmartStatus_duplicate"));
 		await expect(row.getByRole("checkbox")).toBeDisabled();
 		const group = importer.locator(".pw-smart-source-group");
-		await group
-			.getByRole("button", { name: t("pwSmartFragmentFill"), exact: true })
-			.click();
+		await openFragment(group, t);
 		const form = group.locator(".pw-smart-fragment-form");
-		await selectChoice(form.locator("button[id$='-mode']"), "existing");
-		await selectChoice(form.locator("button[id$='-target']"), "vault-import-1");
+		await changeFragmentTarget(form, t, "vault-import-1");
 		await form
 			.getByRole("button", { name: t("pwSmartFragmentAddNotes"), exact: true })
 			.click();
@@ -1166,6 +1237,253 @@ test("a same-password duplicate can explicitly update saved notes after fragment
 });
 
 for (const variant of variants) {
+	test(`${variant.locale} ${variant.width}px quick completion reuses recognized identity and fills exact selected source with one AI request`, async ({
+		browser,
+	}) => {
+		const t = copy(variant.locale);
+		const mock = await aiServer();
+		const context = await browser.newContext({
+			locale: variant.locale,
+			viewport: { width: variant.width, height: 844 },
+			permissions: ["clipboard-read", "clipboard-write"],
+			acceptDownloads: true,
+		});
+		await context.addInitScript(
+			(locale) => localStorage.setItem("keepany-language", locale),
+			variant.locale === "zh-CN" ? "zh-CN" : "en",
+		);
+		const page = await context.newPage();
+		const errors: string[] = [];
+		const consoleErrors: string[] = [];
+		page.on("pageerror", (error) => errors.push(error.message));
+		page.on("console", (message) => {
+			if (message.type() === "error") consoleErrors.push(message.text());
+		});
+		const firstPassword = "  Synthetic quick password ;|!  ";
+		const secondPassword = "Synthetic separate mobile password!";
+		const source = [
+			"Quick service",
+			"quick.user@example.test",
+			firstPassword,
+			"",
+			"Separate mobile App",
+			"mobile-player-52",
+			secondPassword,
+		].join("\n");
+		try {
+			await configureAndOpenVault(
+				page,
+				variant.locale,
+				mock.baseURL,
+				variant.width,
+			);
+			await createVault(page, t);
+			const original = await persistedVault(page);
+			const importer = await openImport(page, t);
+			await importer.locator("#pw-smart-source").fill(source);
+			mock.responses.push(
+				JSON.stringify({
+					records: [
+						{
+							title: { line: 1 },
+							username: { line: 2 },
+							password: null,
+							url: null,
+							notes: null,
+						},
+						{
+							title: { line: 5 },
+							username: { line: 6 },
+							password: null,
+							url: null,
+							notes: null,
+						},
+					],
+					ignoredLines: [3, 7],
+				}),
+			);
+			await importer
+				.getByRole("button", {
+					name: t("pwSmartAiRecognize", { model }),
+					exact: true,
+				})
+				.click();
+			const groups = importer.locator(".pw-smart-source-group");
+			await expect(groups).toHaveCount(2);
+			const rows = importer.locator(".pw-smart-row");
+			await expect(rows).toHaveCount(2);
+			for (const [index, title, username, password, line] of [
+				[0, "Quick service", "quick.user@example.test", firstPassword, 3],
+				[1, "Separate mobile App", "mobile-player-52", secondPassword, 7],
+			] as const) {
+				const group = groups.first();
+				const form = group.locator(".pw-smart-fragment-form");
+				await expect(form).toHaveAttribute("data-expanded", "true");
+				await expect(form).toHaveAttribute(
+					"data-completion-target",
+					`vault-import-${index + 1}`,
+				);
+				await expect(form.locator("button[id$='-mode']")).toHaveCount(0);
+				await expect(form.locator(".pw-smart-target-picker")).toBeHidden();
+				await expect(form.locator("input[id$='-title']")).toHaveValue(title);
+				await expect(form.locator("input[id$='-username']")).toHaveValue(
+					username,
+				);
+				await expect(form.locator("input[id$='-password']")).toHaveValue("");
+				await expectQuickGroupLayout(group, variant.width);
+				await expectQuickFormLayout(form);
+				await expect(form.locator("input[id$='-url']")).toBeHidden();
+				await expect(form.locator("textarea[id$='-notes']")).toBeVisible();
+				if (variant.locale === "en-US")
+					expect(await group.innerText()).not.toMatch(/[\u4e00-\u9fff]/);
+				await expect(page.locator(".toast")).toBeHidden({ timeout: 10_000 });
+				await form.evaluate((element) =>
+					element.scrollIntoView({ block: "start", behavior: "instant" }),
+				);
+				await page.screenshot({
+					path: join(
+						evidenceRoot,
+						`password-quick-fill-${variant.locale}-${variant.width}-${index + 1}-default.png`,
+					),
+				});
+				const excerpt = group.locator(".pw-smart-source-excerpt");
+				await openSourceExcerpt(group, t);
+				await excerpt
+					.getByRole("button", {
+						name: t("pwSmartSourceShow"),
+						exact: true,
+					})
+					.click();
+				const selectedLine = group.getByRole("checkbox", {
+					name: t("pwSmartSourceSelectLine", { line }),
+					exact: true,
+				});
+				const sourceLine = selectedLine.locator("xpath=..");
+				await sourceLine.locator(".pw-smart-source-value").click();
+				await expect(selectedLine).toBeChecked();
+				const lineBox = await sourceLine.boundingBox();
+				expect(lineBox?.height).toBeGreaterThanOrEqual(44);
+				const sourceActions = group.locator(".pw-smart-source-field-actions");
+				await expectActionSpacing(sourceActions);
+				await sourceActions.evaluate((element) =>
+					element.scrollIntoView({ block: "center", behavior: "instant" }),
+				);
+				await page.screenshot({
+					path: join(
+						evidenceRoot,
+						`password-quick-fill-${variant.locale}-${variant.width}-${index + 1}-source-actions.png`,
+					),
+				});
+				await group
+					.getByRole("button", { name: t("pwSmartSourceCopy"), exact: true })
+					.click();
+				expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(
+					password,
+				);
+				await group
+					.getByRole("button", { name: t("pwSmartFillPassword"), exact: true })
+					.click();
+				await expect(form.locator("input[id$='-password']")).toHaveValue(
+					password,
+				);
+				await expect(form.locator("input[id$='-title']")).toHaveValue(title);
+				await expect(form.locator("input[id$='-username']")).toHaveValue(
+					username,
+				);
+				await expectActionSpacing(form.locator(".pw-smart-fragment-actions"));
+				await checkLayout(page, importer, variant.width);
+				await expect(page.locator(".toast")).toBeHidden({ timeout: 10_000 });
+				if (variant.width === 390)
+					await group
+						.locator(".pw-smart-source-disclosure")
+						.getByRole("button", {
+							name: t("pwSmartSourceExcerpt"),
+							exact: true,
+						})
+						.click();
+				await form.evaluate((element) =>
+					element.scrollIntoView({ block: "start", behavior: "instant" }),
+				);
+				await page.screenshot({
+					path: join(
+						evidenceRoot,
+						`password-quick-fill-${variant.locale}-${variant.width}-${index + 1}.png`,
+					),
+				});
+				await form
+					.getByRole("button", {
+						name: t("pwSmartFragmentApply"),
+						exact: true,
+					})
+					.click();
+				await expect(
+					rows.nth(index).getByRole("checkbox").first(),
+				).toBeChecked();
+				await expect(groups).toHaveCount(1 - index);
+				expect(await persistedVault(page)).toEqual(original);
+				expect(mock.requests).toHaveLength(1);
+			}
+			await importer
+				.getByRole("button", {
+					name: t("pwSmartConfirm", { count: 2 }),
+					exact: true,
+				})
+				.click();
+			await expect(importer.locator(".pw-smart-receipt")).toHaveText(
+				t("pwSmartSaved", { added: 2, updated: 0, skipped: 0 }),
+			);
+			await closeDialog(page);
+			const download = page.waitForEvent("download");
+			await page
+				.getByRole("button", { name: t("pwVaultExport"), exact: true })
+				.click();
+			const path = test.info().outputPath("quick-filled-passwords.kdbx");
+			await (await download).saveAs(path);
+			const exported = await inspectKdbx(path);
+			expect(exported).toHaveLength(2);
+			expect(exported.map(({ draft }) => draft)).toEqual(
+				expect.arrayContaining([
+					expect.objectContaining({
+						title: "Quick service",
+						username: "quick.user@example.test",
+						password: firstPassword,
+						url: "",
+					}),
+					expect.objectContaining({
+						title: "Separate mobile App",
+						username: "mobile-player-52",
+						password: secondPassword,
+						url: "",
+					}),
+				]),
+			);
+			expect(mock.requests).toHaveLength(1);
+			expect(errors).toEqual([]);
+			expect(consoleErrors).toEqual([]);
+			test.info().annotations.push({
+				type: "ui-quick-completion",
+				description: JSON.stringify({
+					bundle: await page.evaluate(() =>
+						[...document.scripts]
+							.filter((script) => script.src)
+							.map((script) => new URL(script.src).pathname)
+							.find((path) => path.startsWith("/assets/index-")),
+					),
+					exportedEntries: exported.length,
+					aiCalls: mock.requests.length,
+					identityRetyped: false,
+					modeSelections: 0,
+					clipboardExact: true,
+					pageErrors: errors.length,
+					consoleErrors: consoleErrors.length,
+				}),
+			});
+		} finally {
+			await context.close();
+			await mock.close();
+		}
+	});
+
 	test(`${variant.locale} ${variant.width}px unresolved source forms create or complete entries and save without rerunning AI`, async ({
 		browser,
 	}) => {
@@ -1323,6 +1641,7 @@ for (const variant of variants) {
 			await expect(pending.getByRole("checkbox")).toBeDisabled();
 			const firstExcerpt = first.locator(".pw-smart-source-excerpt");
 			const secondExcerpt = second.locator(".pw-smart-source-excerpt");
+			await openSourceExcerpt(first, t);
 			await expect(firstExcerpt).toHaveAttribute(
 				"data-source-revealed",
 				"false",
@@ -1340,11 +1659,7 @@ for (const variant of variants) {
 			await expect(firstExcerpt.locator(".pw-smart-source-text")).toContainText(
 				firstPassword,
 			);
-			expect(
-				await firstExcerpt
-					.locator(".pw-smart-source-text")
-					.evaluate((element) => element.textContent),
-			).toBe(
+			expect(await sourceText(firstExcerpt)).toBe(
 				[
 					"Gmail",
 					"first.gmail@example.test",
@@ -1374,6 +1689,10 @@ for (const variant of variants) {
 			const unknownExcerpt = importer
 				.locator(".pw-smart-issues .pw-smart-source-excerpt")
 				.first();
+			await openSourceExcerpt(
+				importer.locator(".pw-smart-source-group").first(),
+				t,
+			);
 			await expect(unknownExcerpt).toHaveAttribute(
 				"data-source-revealed",
 				"false",
@@ -1387,11 +1706,9 @@ for (const variant of variants) {
 			await expect(
 				unknownExcerpt.locator(".pw-smart-source-text"),
 			).toContainText(unknown);
-			expect(
-				await unknownExcerpt
-					.locator(".pw-smart-source-text")
-					.evaluate((element) => element.textContent),
-			).toBe(`${unknown}\n${unknownSecret}`);
+			expect(await sourceText(unknownExcerpt)).toBe(
+				`${unknown}\n${unknownSecret}`,
+			);
 			await expect(
 				importer.locator(".pw-smart-source-excerpt img"),
 			).toHaveCount(0);
@@ -1407,7 +1724,7 @@ for (const variant of variants) {
 			await first.getByRole("checkbox").check();
 			const groups = importer.locator(".pw-smart-source-group");
 			await expect(groups).toHaveCount(2);
-			await expectCollapsedGroupSpacing(groups);
+			await expectSourceGroupSpacing(groups);
 			await expect(page.locator(".toast")).toBeHidden({ timeout: 10_000 });
 			await groups.first().scrollIntoViewIfNeeded();
 			await page.screenshot({
@@ -1430,9 +1747,7 @@ for (const variant of variants) {
 			);
 			const firstGroup = groups.nth(0);
 			const secondGroup = groups.nth(1);
-			await firstGroup
-				.getByRole("button", { name: t("pwSmartFragmentFill"), exact: true })
-				.click();
+			await openFragment(firstGroup, t);
 			const createForm = firstGroup.locator(".pw-smart-fragment-form");
 			await expect(createForm.locator("input[id$='-title']")).toHaveValue("");
 			await expect(createForm.locator("input[id$='-username']")).toHaveValue(
@@ -1509,9 +1824,7 @@ for (const variant of variants) {
 				})
 				.click();
 			await expect(createForm.locator("input[id$='-title']")).toBeHidden();
-			await firstGroup
-				.getByRole("button", { name: t("pwSmartFragmentFill"), exact: true })
-				.click();
+			await openFragment(firstGroup, t);
 			await expect(createForm.locator("input[id$='-title']")).toHaveValue(
 				"Manually classified App",
 			);
@@ -1561,11 +1874,7 @@ for (const variant of variants) {
 			);
 			await expect(first.getByRole("checkbox")).toBeChecked();
 			await expectIdentifiers(createForm, ["manual-alias-73", "+15550000073"]);
-			await selectChoice(createForm.locator("button[id$='-mode']"), "existing");
-			await selectChoice(
-				createForm.locator("button[id$='-target']"),
-				"vault-import-1",
-			);
+			await changeFragmentTarget(createForm, t, "vault-import-1");
 			await expect(
 				createForm.getByRole("button", {
 					name: t("pwSmartFragmentApply"),
@@ -1582,45 +1891,24 @@ for (const variant of variants) {
 			await createForm
 				.locator("textarea[id$='-notes']")
 				.fill("Synthetic draft for first target only");
-			await selectChoice(
-				createForm.locator("button[id$='-target']"),
-				"vault-import-2",
-			);
+			await changeFragmentTarget(createForm, t, "vault-import-2");
 			await expect(createForm.locator("textarea[id$='-notes']")).toHaveValue(
 				"",
 			);
 			await expectIdentifiers(createForm, []);
-			await selectChoice(
-				createForm.locator("button[id$='-target']"),
-				"vault-import-1",
-			);
+			await changeFragmentTarget(createForm, t, "vault-import-1");
 			await expect(createForm.locator("textarea[id$='-notes']")).toHaveValue(
 				"Synthetic draft for first target only",
 			);
 			await expectIdentifiers(createForm, ["first-target-alias"]);
-			await selectChoice(createForm.locator("button[id$='-mode']"), "new");
+			await changeFragmentTarget(createForm, t, "new");
 			await expectIdentifiers(createForm, ["manual-alias-73", "+15550000073"]);
 			await expect(createForm.locator("textarea[id$='-notes']")).toHaveValue(
 				createdNotes,
 			);
-			await secondGroup
-				.getByRole("button", { name: t("pwSmartFragmentFill"), exact: true })
-				.click();
+			await openFragment(secondGroup, t);
 			const attachForm = secondGroup.locator(".pw-smart-fragment-form");
-			const modeId = await attachForm
-				.locator("button[id$='-mode']")
-				.getAttribute("id");
-			await selectChoice(attachForm.locator(`[id="${modeId}"]`), "existing");
-			await expect(
-				attachForm.getByRole("button", {
-					name: t("pwSmartFragmentApply"),
-					exact: true,
-				}),
-			).toBeDisabled();
-			await selectChoice(
-				attachForm.locator("button[id$='-target']"),
-				"vault-import-4",
-			);
+			await changeFragmentTarget(attachForm, t, "vault-import-4");
 			await expect(attachForm.locator("input[id$='-title']")).toHaveValue(
 				"App without password",
 			);
@@ -1693,7 +1981,7 @@ for (const variant of variants) {
 				completedPassword,
 			);
 			await expect(pending.getByRole("checkbox")).toBeEnabled();
-			await expect(pending.getByRole("checkbox")).not.toBeChecked();
+			await expect(pending.getByRole("checkbox")).toBeChecked();
 			await createForm
 				.getByRole("button", { name: t("pwSmartFragmentApply"), exact: true })
 				.click();
@@ -1704,7 +1992,7 @@ for (const variant of variants) {
 				}),
 			});
 			await openRow(created);
-			await expect(created.getByRole("checkbox")).not.toBeChecked();
+			await expect(created.getByRole("checkbox")).toBeChecked();
 			await expect(created.locator("input[id$='-url']")).toBeHidden();
 			await expect(created.locator("textarea[id$='-notes']")).toHaveValue(
 				createdNotes,
@@ -1761,6 +2049,9 @@ for (const variant of variants) {
 			});
 			for (const row of [first, second, app])
 				await row.getByRole("checkbox").check();
+			// Explicit completion selects these two; keep them for a separate save.
+			await pending.getByRole("checkbox").uncheck();
+			await created.getByRole("checkbox").uncheck();
 			await expect(pending.getByRole("checkbox")).not.toBeChecked();
 			await importer
 				.getByRole("button", {
@@ -2213,7 +2504,7 @@ for (const variant of variants) {
 			await expect(importer.locator(".pw-smart-receipt")).toHaveText(
 				t("pwSmartSaved", { added: 2, updated: 0, skipped: 0 }),
 			);
-			await expect(importer.locator("input[id$='-password']")).toHaveCount(1);
+			await expect(rows.locator("input[id$='-password']")).toHaveCount(1);
 			await importAdvanced(importer, t, "pwSmartEditSource");
 			await expect(importer.locator("#pw-smart-source")).toHaveValue(
 				pastedSource,
@@ -3097,7 +3388,7 @@ test("AI note recognition keeps failed source and discards delayed results after
 		await expect(
 			importer
 				.getByRole("status")
-				.filter({ hasText: t("pwSmartAiRecognitionFailed") }),
+				.filter({ hasText: t("pwSmartAiResponseFormat") }),
 		).toBeVisible();
 		await expect(importer.locator("#pw-smart-source")).toHaveValue(source);
 		expect(await persistedVault(page)).toEqual(original);

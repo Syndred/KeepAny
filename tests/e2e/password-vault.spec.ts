@@ -1,9 +1,9 @@
 import { mkdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { expect, test, type Locator, type Page } from "@playwright/test";
+import { expect, type Locator, type Page, test } from "@playwright/test";
 import { passwordVaultCopy } from "../../apps/web/src/password-vault-copy";
-import { decryptBackup } from "../../packages/local-db/src/backup-crypto";
 import { inspectArchive } from "../../packages/local-db/src";
+import { decryptBackup } from "../../packages/local-db/src/backup-crypto";
 
 test.setTimeout(150_000);
 const evidenceRoot =
@@ -201,6 +201,35 @@ async function expectIdentifiers(form: Locator, values: string[]) {
 	for (const [index, value] of values.entries())
 		await expect(inputs.nth(index)).toHaveValue(value);
 }
+async function expectEditorFieldLayout(dialog: Locator) {
+	const fields = await dialog.evaluate((element) =>
+		["title", "username", "password", "url"].map((field) => {
+			const control = element.querySelector<HTMLInputElement>(
+				`#password-vault-entry-${field}`,
+			);
+			const rectangle = control?.getBoundingClientRect();
+			const parent = control?.closest(".field")?.getBoundingClientRect();
+			return {
+				field,
+				width: rectangle?.width ?? 0,
+				height: rectangle?.height ?? 0,
+				parentWidth: parent?.width ?? 0,
+				top: rectangle?.top ?? 0,
+			};
+		}),
+	);
+	for (const field of fields) {
+		expect(field.width).toBeGreaterThan(120);
+		expect(Math.abs(field.width - field.parentWidth)).toBeLessThanOrEqual(1);
+		expect(Math.abs(field.height - 52)).toBeLessThanOrEqual(0.5);
+	}
+	expect(fields[1].top).toBeGreaterThan(fields[0].top);
+	expect(fields[2].top).toBeGreaterThan(fields[1].top);
+	test.info().annotations.push({
+		type: "ui-editor-field-layout",
+		description: JSON.stringify(fields),
+	});
+}
 for (const variant of variants) {
 	test(`${variant.locale} ${variant.width}px multiple login identifiers and same-platform accounts survive KDBX export and reopen`, async ({
 		browser,
@@ -274,6 +303,7 @@ for (const variant of variants) {
 			const field = page.locator("#password-vault-entry-password");
 			await field.fill(password);
 			await exerciseEye(page, field, t, password);
+			await expectEditorFieldLayout(dialog);
 			await expectActionSpacing(
 				dialog.locator(".password-vault-field-actions"),
 			);
