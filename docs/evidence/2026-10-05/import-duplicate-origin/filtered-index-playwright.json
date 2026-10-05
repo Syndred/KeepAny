@@ -1,0 +1,191 @@
+{
+  "config": {
+    "argv": [
+      "/Users/syndred/.nvm/versions/node/v22.23.1/bin/node",
+      "/Users/syndred/.codex/worktrees/import-duplicate-origin/KeepAny/node_modules/@playwright/test/cli.js",
+      "test",
+      "--config",
+      "playwright.release.config.ts",
+      "tests/e2e/password-smart-import.spec.ts",
+      "--grep",
+      "same-platform",
+      "--workers=2",
+      "--reporter=line,json"
+    ],
+    "configFile": "/Users/syndred/.codex/worktrees/import-duplicate-origin/KeepAny/playwright.release.config.ts",
+    "rootDir": "/Users/syndred/.codex/worktrees/import-duplicate-origin/KeepAny/tests/e2e",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "/Users/syndred/.codex/worktrees/import-duplicate-origin/KeepAny/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "",
+        "name": "",
+        "testDir": "/Users/syndred/.codex/worktrees/import-duplicate-origin/KeepAny/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "core-pages-matrix.spec.ts",
+          "ai-release.spec.ts",
+          "ai-key-persistence.spec.ts",
+          "ai-account-import-release.spec.ts",
+          "intake-bulk-account-links.spec.ts",
+          "ai-dialog-matrix.spec.ts",
+          "local-core.spec.ts",
+          "english-demo-release.spec.ts",
+          "production-offline.spec.ts",
+          "intake-pdf.spec.ts",
+          "intake-expense.spec.ts",
+          "intake-review-backup.spec.ts",
+          "intake-review-merge.spec.ts",
+          "custom-category-release.spec.ts",
+          "global-search-release.spec.ts",
+          "detail-entry-statistics.spec.ts",
+          "intake-asset-receipt.spec.ts",
+          "collections-route.spec.ts",
+          "relation-graph-verification.spec.ts",
+          "restore-identity.spec.ts",
+          "archive-migration.spec.ts",
+          "vault-reference-release.spec.ts",
+          "password-vault.spec.ts",
+          "password-smart-import.spec.ts",
+          "password-smart-import-visual.spec.ts",
+          "themed-select.spec.ts",
+          "spacing-consistency.spec.ts",
+          "task-theme-release.spec.ts",
+          "finance-ledger-release.spec.ts",
+          "collections-ledger-release.spec.ts",
+          "restore-self-service-release.spec.ts"
+        ],
+        "timeout": 90000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "line"
+      ],
+      [
+        "json"
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.63.0",
+    "workers": 2,
+    "webServer": {
+      "command": "node node_modules/vite/bin/vite.js preview apps/web --outDir ../../release/web --host 127.0.0.1 --port 4364 --strictPort",
+      "url": "http://127.0.0.1:4364",
+      "reuseExistingServer": false,
+      "timeout": 30000
+    }
+  },
+  "suites": [
+    {
+      "title": "password-smart-import.spec.ts",
+      "file": "password-smart-import.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "zh-CN same-platform accounts distinguish batch repeats from saved duplicates",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 7232,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-05T01:59:50.810Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "4848c27980ec82994023-d49cc511c44770ba4290",
+          "file": "password-smart-import.spec.ts",
+          "line": 434,
+          "column": 2
+        },
+        {
+          "title": "en same-platform accounts distinguish batch repeats from saved duplicates",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 6851,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-05T01:59:58.190Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "4848c27980ec82994023-2c92c1004a3470c06a9f",
+          "file": "password-smart-import.spec.ts",
+          "line": 434,
+          "column": 2
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-10-05T01:59:50.169Z",
+    "duration": 14900.618999999999,
+    "expected": 2,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

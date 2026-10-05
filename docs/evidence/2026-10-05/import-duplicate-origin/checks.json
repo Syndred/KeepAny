@@ -1,0 +1,47 @@
+{
+  "date": "2026-10-05",
+  "sourceCommit": "1cf8762",
+  "packageCommit": "338d3d2",
+  "rootCause": "Batch duplicates and persisted-vault duplicates shared one misleading message. New same-platform accounts were not rejected solely by platform name.",
+  "reproduction": "Previous committed release failed the new UI assertion: expected batch explanation, received saved-vault explanation. Synthetic data only.",
+  "fix": "Preserve duplicateOfIndex from the core planner, remap filtered UI indexes, distinguish copy, and link to the matching draft without copying credentials.",
+  "unitTests": {
+    "passed": 31,
+    "files": 2
+  },
+  "browserTests": {
+    "startTime": "2026-10-05T01:57:46.198Z",
+    "duration": 74744.773,
+    "expected": 17,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "extendedFilteredIndexTests": {
+    "startTime": "2026-10-05T01:59:50.169Z",
+    "duration": 14900.618999999999,
+    "expected": 2,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "uniqueBrowserTests": 17,
+  "typecheck": "passed",
+  "targetedLint": "passed",
+  "releaseParity": {
+    "current": 93,
+    "retained": 1586,
+    "loadedAssets": 42,
+    "errors": 0
+  },
+  "entry": "index-KTuzRw8g.js",
+  "screenshotsReviewed": [
+    "same-platform-zh-CN-batch.png",
+    "same-platform-zh-CN-distinct.png",
+    "same-platform-en-batch.png",
+    "same-platform-en-distinct.png"
+  ],
+  "originalBrowser": "Left untouched to preserve the user import draft; no real vault read/write and no forced refresh.",
+  "ci": "not verified",
+  "internetDeployment": false
+}
