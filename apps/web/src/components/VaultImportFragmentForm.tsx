@@ -188,19 +188,6 @@ export function VaultImportFragmentForm({
 					source={source}
 					candidates={candidates}
 					disabled={disabled}
-					readOnlyIdentity={readOnlyIdentity}
-					onAssign={(field, value) => {
-						if (!draft) return;
-						if (field === "usernameAliases")
-							changeField(field, [...(draft.usernameAliases ?? []), value]);
-						else
-							changeField(
-								field,
-								field === "notes" && draft.notes
-									? `${draft.notes}\n\n${value}`
-									: value,
-							);
-					}}
 				/>
 				{!expanded ? (
 					<Button

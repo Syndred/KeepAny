@@ -2,6 +2,7 @@ import { Plus, Trash2, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "./ui/button";
+import { VaultImportPasteButton } from "./VaultImportPasteButton";
 
 /** Alternative identifiers share one credential; independent accounts stay separate. */
 export function VaultLoginIdentifiers({
@@ -10,12 +11,14 @@ export function VaultLoginIdentifiers({
 	disabled,
 	primary,
 	compact = false,
+	clipboardPaste = false,
 	onChange,
 }: {
 	idPrefix: string;
 	values?: string[];
 	disabled: boolean;
 	compact?: boolean;
+	clipboardPaste?: boolean;
 	primary?: {
 		id: string;
 		value: string;
@@ -73,16 +76,28 @@ export function VaultLoginIdentifiers({
 						</label>
 						{add}
 					</div>
-					<input
-						id={primary.id}
-						value={primary.value}
-						onChange={(event) => primary.onChange(event.target.value)}
-						disabled={disabled}
-						readOnly={primary.readOnly}
-						maxLength={primary.maxLength ?? 1024}
-						autoComplete={primary.autoComplete ?? "off"}
-						spellCheck={false}
-					/>
+					<div
+						className={clipboardPaste ? "pw-import-input-control" : undefined}
+					>
+						<input
+							id={primary.id}
+							value={primary.value}
+							onChange={(event) => primary.onChange(event.target.value)}
+							disabled={disabled}
+							readOnly={primary.readOnly}
+							maxLength={primary.maxLength ?? 1024}
+							autoComplete={primary.autoComplete ?? "off"}
+							spellCheck={false}
+						/>
+						{clipboardPaste && (
+							<VaultImportPasteButton
+								label={t("pwSmartAccountField")}
+								value={primary.value}
+								disabled={disabled || !!primary.readOnly}
+								onPaste={primary.onChange}
+							/>
+						)}
+					</div>
 				</div>
 			) : (
 				<div className="pw-smart-identifier-actions">{add}</div>
@@ -100,29 +115,47 @@ export function VaultLoginIdentifiers({
 							<label htmlFor={`${idPrefix}-identifier-${index + 1}`}>
 								{t("pwVaultOtherIdentifier", { count: index + 1 })}
 							</label>
-							<input
-								id={`${idPrefix}-identifier-${index + 1}`}
-								value={value}
-								title={compact ? value : undefined}
-								style={
-									compact
-										? {
-												width: `calc(${Math.max(6, Math.min(28, value.length + 1))}ch + 18px)`,
-											}
-										: undefined
+							<div
+								className={
+									clipboardPaste ? "pw-import-input-control" : undefined
 								}
-								onChange={(event) =>
-									onChange(
-										values.map((item, i) =>
-											i === index ? event.target.value : item,
-										),
-									)
-								}
-								disabled={disabled}
-								maxLength={1024}
-								autoComplete="off"
-								spellCheck={false}
-							/>
+							>
+								<input
+									id={`${idPrefix}-identifier-${index + 1}`}
+									value={value}
+									title={compact ? value : undefined}
+									style={
+										compact
+											? {
+													width: `calc(${Math.max(6, Math.min(28, value.length + 1))}ch + 18px)`,
+												}
+											: undefined
+									}
+									onChange={(event) =>
+										onChange(
+											values.map((item, i) =>
+												i === index ? event.target.value : item,
+											),
+										)
+									}
+									disabled={disabled}
+									maxLength={1024}
+									autoComplete="off"
+									spellCheck={false}
+								/>
+								{clipboardPaste && (
+									<VaultImportPasteButton
+										label={t("pwVaultOtherIdentifier", { count: index + 1 })}
+										value={value}
+										disabled={disabled}
+										onPaste={(text) =>
+											onChange(
+												values.map((item, i) => (i === index ? text : item)),
+											)
+										}
+									/>
+								)}
+							</div>
 						</div>
 						<Button
 							type="button"

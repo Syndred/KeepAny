@@ -1,25 +1,25 @@
 .pw-import-draft-fields {
 	display: grid;
-	gap: 27px;
+	gap: 12px;
 	min-width: 0;
 }
 .pw-import-draft-fields > .pw-smart-fields {
 	grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
-	gap: 11px 18px;
+	gap: 10px 14px;
 }
 .pw-import-draft-fields .field {
-	gap: 7px;
-	font-size: 16px;
+	gap: 6px;
+	font-size: 14px;
 }
 .pw-import-draft-fields .field input:not([type="checkbox"]),
 .pw-import-draft-fields .field textarea {
 	min-height: 44px;
 	border: 1px solid var(--line-soft);
 	border-radius: 7px;
-	font-size: 19px;
+	font-size: 16px;
 	font-weight: 400;
 	line-height: 1.25;
-	padding: 10px 14px;
+	padding: 8px 10px;
 	background: var(--paper);
 }
 .pw-import-draft-fields .field input:focus-visible,
@@ -28,6 +28,11 @@
 	outline: 2px solid var(--yellow);
 	outline-offset: 2px;
 }
+.pw-import-draft-fields .field > label {
+	min-height: 24px;
+	display: flex;
+	align-items: center;
+}
 .pw-import-draft-fields .pw-smart-field-heading {
 	min-height: 24px;
 	gap: 8px;
@@ -35,7 +40,7 @@
 .pw-import-draft-fields .pw-smart-field-heading .button.ghost {
 	min-height: 24px;
 	padding: 0;
-	font-size: 16px;
+	font-size: 14px;
 	font-weight: 400;
 	box-shadow: none;
 }
@@ -56,7 +61,7 @@
 	padding: 0;
 }
 .pw-import-draft-fields .pw-smart-field-notes textarea {
-	min-height: 74px;
+	min-height: 56px;
 }
 .pw-import-missing {
 	padding: 3px 10px;
@@ -109,8 +114,8 @@
 	overflow: hidden;
 }
 .pw-import-draft-fields .pw-import-identifiers .pw-smart-identifier-row input {
-	min-height: 28px;
-	height: 28px;
+	min-height: 36px;
+	height: 36px;
 	padding: 3px 7px;
 	font-size: 15px;
 	border: 0;
@@ -120,9 +125,9 @@
 	.pw-import-identifiers
 	.pw-smart-identifier-row
 	> .button {
-	width: 28px;
-	height: 28px;
-	min-height: 28px;
+	width: 36px;
+	height: 36px;
+	min-height: 36px;
 	padding: 0;
 	border: 0;
 }
@@ -161,48 +166,82 @@
 	flex-shrink: 0;
 }
 
-.pw-import-draft-fields .field input:not([type="checkbox"]) {
-	height: 44px;
-	padding-block: 8px;
+.pw-import-input-control {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto;
+	align-items: start;
+	gap: 4px;
+	min-width: 0;
 }
-.pw-import-draft-fields .pw-smart-field-password input:not([type="checkbox"]) {
-	height: 48px;
+.pw-import-input-control > input,
+.pw-import-input-control > textarea {
+	width: 100%;
+	min-width: 0;
+}
+.pw-import-paste {
+	position: relative;
+	display: inline-flex;
+}
+.pw-import-draft-fields .pw-import-paste > .button.icon {
+	width: 44px;
+	height: 44px;
+	min-height: 44px;
+	padding: 0;
 }
 .pw-import-draft-fields .pw-smart-field-notes textarea {
-	height: 74px;
-	min-height: 74px;
-	padding-block: 10px;
+	height: 56px;
 }
-.pw-import-draft-fields .pw-smart-field-password > label {
-	min-height: 24px;
+.pw-import-draft-fields .pw-smart-optional .pw-smart-fields {
+	grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+	gap: 14px;
 }
-.pw-import-draft-fields .pw-smart-password .button.icon {
-	height: 36px;
+.pw-import-draft-fields .pw-smart-optional .field {
+	grid-column: auto;
+}
+.pw-import-draft-fields .pw-smart-optional .field:only-child {
+	grid-column: 1 / -1;
+}
+.pw-import-paste-error {
+	position: absolute;
+	z-index: 4;
+	inset-block-start: 100%;
+	inset-inline-end: 0;
+	width: 230px;
+	max-width: 65vw;
+	border: 1px solid var(--line-soft);
+	background: var(--paper);
+	color: var(--danger);
+	border-radius: 6px;
+	padding: 8px;
+	font-size: 13px;
+	white-space: normal;
+}
+.pw-import-clipboard-sr {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+	clip-path: inset(50%);
+}
+.pw-import-identifiers
+	.pw-smart-identifier-row
+	.pw-import-paste
+	> .button.icon {
 	width: 36px;
+	height: 36px;
 	min-height: 36px;
 }
-.pw-import-draft-fields .pw-smart-password .button.icon svg {
-	width: 22px;
-	height: 22px;
-}
-.pw-import-draft-fields .pw-import-identifiers .pw-smart-identifier-row {
-	height: 32px;
-	align-items: center;
-}
-.pw-import-draft-fields .pw-import-identifiers .pw-smart-identifier-row input {
-	height: 30px;
-	min-height: 30px;
-	padding: 3px 9px;
-	font-size: 15px;
-}
-.pw-import-draft-fields
+@media (max-width: 600px) {
+	.pw-import-draft-fields .pw-smart-optional .pw-smart-fields {
+		grid-template-columns: minmax(0, 1fr);
+	}
+	.pw-import-draft-fields .pw-smart-identifier-row input,
+	.pw-import-draft-fields .pw-smart-identifier-row > .button,
 	.pw-import-identifiers
-	.pw-smart-identifier-row
-	> .button.icon {
-	height: 30px;
-	width: 28px;
-	min-height: 30px;
-}
-.pw-import-draft-fields .pw-smart-identifiers-compact {
-	gap: 10px;
+		.pw-smart-identifier-row
+		.pw-import-paste
+		> .button.icon {
+		min-height: 44px;
+		height: 44px;
+	}
 }

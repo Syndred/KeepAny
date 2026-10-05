@@ -1,7 +1,7 @@
 import {
 	ArrowLeftRight,
+	Check,
 	ChevronDown,
-	ChevronUp,
 	Copy,
 	Eye,
 	EyeOff,
@@ -23,8 +23,6 @@ import {
 	type VaultImportSourceExcerpt as SourceExcerpt,
 } from "../vault-import-source";
 import { Button } from "./ui/button";
-import { Select, SelectOption } from "./ui/select";
-import { TextLink } from "./ui/text-link";
 import "../vault-import-source-card.css";
 
 export function VaultImportSourceExcerpt({
@@ -32,8 +30,6 @@ export function VaultImportSourceExcerpt({
 	source,
 	disabled,
 	candidates = [],
-	readOnlyIdentity = false,
-	onAssign,
 	onChangeTarget,
 	compact = true,
 }: {
@@ -41,74 +37,50 @@ export function VaultImportSourceExcerpt({
 	source: string;
 	disabled: boolean;
 	candidates?: VaultImportCandidate[];
-	readOnlyIdentity?: boolean;
-	onAssign?: (field: VaultImportQuickFillField, value: string) => void;
 	onChangeTarget?: () => void;
 	compact?: boolean;
 }) {
 	const { t } = useTranslation();
 	const [revealed, setRevealed] = useState(false);
 	const [sourceOpen, setSourceOpen] = useState(true);
-	const [selecting, setSelecting] = useState(false);
-	const [selected, setSelected] = useState<Set<number>>(() => new Set());
-	const [copyStatus, setCopyStatus] = useState("");
-	const SourceLine = onAssign && selecting ? "label" : "div";
-	function selectedValue(
-		field?: VaultImportQuickFillField,
-		numbers = [...selected].sort((a, b) => a - b),
-	): string | undefined {
-		if (!numbers.length)
-			return readVaultImportSourceSelection(source, excerpt.selection, {
-				field,
-				candidates,
-			});
-		const blocks: number[][] = [];
-		for (const number of numbers) {
-			const previous = blocks.at(-1);
-			if (previous && previous.at(-1) === number - 1) previous.push(number);
-			else blocks.push([number]);
-		}
-		const values = blocks.map((block) => {
-			const selection = getVaultImportSourceLineSelection(
-				source,
-				block[0],
-				block[block.length - 1],
-			);
-			return selection
-				? readVaultImportSourceSelection(source, selection, {
-						field,
-						candidates,
-					})
-				: undefined;
-		});
-		return values.some((value) => value === undefined)
-			? undefined
-			: values.join("\n");
-	}
-	function assign(field: VaultImportQuickFillField, numbers?: number[]) {
-		const value = selectedValue(field, numbers);
-		if (value !== undefined) onAssign?.(field, value);
-	}
-	function quickFillPassword(line: number) {
-		// A proven password reference can span several source lines. Preserve its
-		// exact value instead of reducing a multiline secret to its first line.
-		for (const candidate of candidates) {
-			if (candidate.sourceSnapshot && candidate.sourceSnapshot !== source)
-				continue;
-			const reference = candidate.sourceFields?.password;
-			if (reference?.line !== line) continue;
-			const value = readVaultImportSourceSelection(source, reference, {
-				field: "password",
-				candidates: [candidate],
-			});
-			if (value !== undefined && value === candidate.draft.password) {
-				onAssign?.("password", value);
-				return;
+	const [copiedLine, setCopiedLine] = useState<number>();
+	const [copyError, setCopyError] = useState(false);
+	function copyValue(
+		line: number,
+		field?: Exclude<VaultImportQuickFillField, "usernameAliases">,
+	) {
+		// Prefer a verified field range, including complete multiline secrets.
+		if (field)
+			for (const candidate of candidates) {
+				if (candidate.sourceSnapshot && candidate.sourceSnapshot !== source)
+					continue;
+				const reference = candidate.sourceFields?.[field];
+				if (reference?.line !== line) continue;
+				const value = readVaultImportSourceSelection(source, reference, {
+					field,
+					candidates: [candidate],
+				});
+				if (value !== undefined && value === candidate.draft[field])
+					return value;
 			}
-		}
-		assign("password", [line]);
+		const selection = getVaultImportSourceLineSelection(source, line, line);
+		return selection
+			? readVaultImportSourceSelection(source, selection, { field, candidates })
+			: undefined;
 	}
 	function rowField(line: number, text: string) {
+		if (parseVaultImportLine(text).fields.length > 1) return undefined;
+		const references = candidates.flatMap((candidate) =>
+			Object.values(candidate.sourceFields ?? {}).filter(
+				(reference) => reference?.line === line,
+			),
+		);
+		if (
+			new Set(
+				references.map((reference) => `${reference?.start}:${reference?.end}`),
+			).size > 1
+		)
+			return undefined;
 		for (const candidate of candidates) {
 			if (candidate.sourceSnapshot && candidate.sourceSnapshot !== source)
 				continue;
@@ -123,16 +95,10 @@ export function VaultImportSourceExcerpt({
 			}
 		}
 		const fields = parseVaultImportLine(text).fields;
-		return fields.length === 1 ? fields[0].field : undefined;
+		return fields.length === 1 && fields[0].field !== "type"
+			? fields[0].field
+			: undefined;
 	}
-	const fields = [
-		["title", "pwVaultTitleField"],
-		["username", "pwVaultUsernameField"],
-		["password", "pwVaultPasswordField"],
-		["notes", "pwVaultNotesField"],
-		["usernameAliases", "pwSmartLoginIdentifierField"],
-		["url", "pwVaultUrlField"],
-	] as const;
 	return (
 		<div className={compact ? "pw-import-source-card" : undefined}>
 			<section
@@ -175,25 +141,6 @@ export function VaultImportSourceExcerpt({
 						<Button
 							type="button"
 							variant="ghost"
-							size="icon"
-							aria-label={t("pwSmartSourceCopy")}
-							disabled={disabled}
-							onClick={async () => {
-								const value = selectedValue();
-								if (value === undefined) return;
-								try {
-									await navigator.clipboard.writeText(value);
-									setCopyStatus(t("pwVaultCopied"));
-								} catch {
-									setCopyStatus(t("pwSmartSourceCopyFailed"));
-								}
-							}}
-						>
-							<Copy size={16} />
-						</Button>
-						<Button
-							type="button"
-							variant="ghost"
 							size="small"
 							aria-expanded={revealed}
 							disabled={disabled}
@@ -228,100 +175,61 @@ export function VaultImportSourceExcerpt({
 												…
 											</span>
 										)}
-									<SourceLine
+									<div
 										className="pw-smart-source-line"
-										data-selected={selected.has(row.lineNumber)}
 										data-hidden={!revealed && row.maskedText !== row.text}
 									>
-										{onAssign && selecting && (
-											<input
-												type="checkbox"
-												aria-label={t("pwSmartSourceSelectLine", {
-													line: row.lineNumber,
-												})}
-												checked={selected.has(row.lineNumber)}
-												disabled={disabled}
-												onChange={(event) => {
-													const next = new Set(selected);
-													if (event.target.checked) next.add(row.lineNumber);
-													else next.delete(row.lineNumber);
-													setSelected(next);
-												}}
-											/>
-										)}
 										<Icon size={17} aria-hidden="true" />
 										<span className="pw-smart-source-value">
 											{revealed ? row.text : row.maskedText}
 										</span>
-										{onAssign && !selecting && field === "password" && (
-											<Button
-												type="button"
-												size="small"
-												disabled={disabled}
-												onClick={() => quickFillPassword(row.lineNumber)}
-											>
-												{t("pwSmartFillPassword")}
-											</Button>
-										)}
-									</SourceLine>
+										<Button
+											type="button"
+											size="icon"
+											variant="ghost"
+											aria-label={t("pwSmartCopySourceLine", {
+												line: row.lineNumber,
+											})}
+											title={t(
+												copiedLine === row.lineNumber
+													? "pwVaultCopied"
+													: "pwSmartSourceCopy",
+											)}
+											disabled={disabled}
+											onClick={async () => {
+												const value = copyValue(row.lineNumber, field);
+												try {
+													if (value === undefined)
+														throw new Error("No source value");
+													await navigator.clipboard.writeText(value);
+													setCopiedLine(row.lineNumber);
+													setCopyError(false);
+												} catch {
+													setCopyError(true);
+												}
+											}}
+										>
+											{copiedLine === row.lineNumber ? (
+												<Check size={16} />
+											) : (
+												<Copy size={16} />
+											)}
+										</Button>
+									</div>
 								</Fragment>
 							);
 						})}
 					</div>
-					{onAssign && selecting && (
-						<div className="pw-import-source-assignment">
-							<span className="pw-import-source-selected">
-								{t("pwSmartSourceSelected", { count: selected.size })}
-							</span>
-							<Select
-								contentClassName="pw-smart-select-menu"
-								value=""
-								aria-label={t("pwSmartFillMenu")}
-								disabled={disabled || selected.size === 0}
-								onValueChange={(value) => {
-									if (value) assign(value as VaultImportQuickFillField);
-								}}
-							>
-								<SelectOption value="">{t("pwSmartFillMenu")}</SelectOption>
-								{fields.map(([field, key]) => (
-									<SelectOption
-										key={field}
-										value={field}
-										disabled={
-											readOnlyIdentity &&
-											["title", "username", "url"].includes(field)
-										}
-									>
-										{t(key)}
-									</SelectOption>
-								))}
-							</Select>
-						</div>
-					)}
 				</div>
-				{copyStatus && (
-					<span role="status" className="pw-smart-hint">
-						{copyStatus}
+				{(copyError || copiedLine !== undefined) && (
+					<span
+						role="status"
+						className={copyError ? "pw-smart-hint" : "pw-import-clipboard-sr"}
+					>
+						{t(copyError ? "pwSmartSourceCopyFailed" : "pwVaultCopied")}
 					</span>
 				)}
 			</section>
-			{onAssign && (
-				<TextLink asChild>
-					<button
-						type="button"
-						className="pw-import-source-select"
-						disabled={disabled}
-						aria-expanded={selecting}
-						onClick={() => {
-							setSelecting((value) => !value);
-							setSourceOpen(true);
-						}}
-					>
-						{t("pwSmartSelectSource")}
-						{selecting && <ChevronUp size={14} />}
-					</button>
-				</TextLink>
-			)}
 		</div>
 	);
 }

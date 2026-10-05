@@ -393,17 +393,6 @@ export function PasswordImportWorkspace(props: PasswordImportWorkspaceProps) {
 				}
 			: currentTarget?.draft;
 	const displayDraft = targetDraft ?? row?.draft;
-	function assign(field: VaultImportDraftField, value: string) {
-		if (!row || !displayDraft) return;
-		const next =
-			field === "usernameAliases"
-				? [...(displayDraft.usernameAliases ?? []), value]
-				: field === "notes" && displayDraft.notes
-					? `${displayDraft.notes}\n\n${value}`
-					: value;
-		if (currentTarget) updateTarget(field, next);
-		else onDraft(row.id, field, next);
-	}
 	return (
 		<div className="pw-import-workspace" data-view={filter}>
 			<aside className="pw-work-list" aria-label={t("pwWorkAll")}>
@@ -602,10 +591,6 @@ export function PasswordImportWorkspace(props: PasswordImportWorkspaceProps) {
 							excerpt={excerpt}
 							candidates={sourceCandidates}
 							disabled={disabled}
-							onAssign={assign}
-							readOnlyIdentity={
-								currentTarget ? targetReadonly : !!row.updateTargetId
-							}
 							onChangeTarget={changeTarget}
 						/>
 						<VaultImportDraftFields

@@ -1,5 +1,8 @@
 export const passwordImportWorkspaceZh = {
 	pwWorkApplied: "已保存本次补充",
+	pwSmartCopySourceLine: "复制原文第 {{line}} 行",
+	pwSmartPasteField: "粘贴{{field}}",
+	pwSmartPasteFailed: "无法读取剪贴板，请使用键盘或系统菜单粘贴。",
 	pwWorkNameRequired: "请填写名称",
 	pwWorkPasswordRequired: "请填写密码",
 	pwWorkPending: "待处理",
@@ -61,6 +64,10 @@ export const passwordImportWorkspaceEn: Record<
 	string
 > = {
 	pwWorkApplied: "Your additions have been kept",
+	pwSmartCopySourceLine: "Copy source line {{line}}",
+	pwSmartPasteField: "Paste {{field}}",
+	pwSmartPasteFailed:
+		"Clipboard access is unavailable. Use your keyboard or system menu to paste.",
 	pwWorkNameRequired: "Enter a name",
 	pwWorkPasswordRequired: "Enter a password",
 	pwWorkPending: "Pending",

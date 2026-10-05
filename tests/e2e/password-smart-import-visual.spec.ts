@@ -291,7 +291,7 @@ test("zh-CN controlled provider confirmation failure and cancel states", async (
 	}
 });
 
-test("zh-CN account editing source selection and themed controls", async ({
+test("zh-CN account editing source copy and paste controls", async ({
 	browser,
 }, info) => {
 	const h = await visualHarness(browser, "zh-CN");
@@ -336,44 +336,32 @@ test("zh-CN account editing source selection and themed controls", async ({
 			"Review of a missing password focuses the missing field.",
 		);
 		const source = editor(importer).locator(".pw-import-source-card");
+		await h.context.grantPermissions(["clipboard-read", "clipboard-write"]);
 		await source
-			.getByRole("button", { name: h.t("pwSmartFillPassword"), exact: true })
+			.locator(".pw-smart-source-line")
+			.nth(2)
+			.getByRole("button")
+			.click();
+		await editor(importer)
+			.getByRole("button", { name: "粘贴密码", exact: true })
 			.click();
 		await expect(field(importer, "password")).toHaveValue("Demo-only!42");
-		await evidence.capture(
-			"04-B",
-			"The password shortcut fills the proven source value exactly.",
-			undefined,
-			"-shortcut",
-		);
-		await field(importer, "password").fill("");
-		await source.getByRole("button", { name: /选择原文填入/ }).click();
-		const selections = source.getByRole("checkbox");
-		await selections.nth(0).check();
-		await selections.nth(2).check();
-		await source.getByRole("combobox").click();
+		await expect(source.getByRole("checkbox")).toHaveCount(0);
+		await expect(source.getByRole("combobox")).toHaveCount(0);
 		await evidence.capture(
 			"04-A",
-			"Arbitrary multi-line source selection opens the custom field menu.",
+			"Each source row has a copy action; no source selection or field menu remains.",
 		);
-		await h.page.keyboard.press("Escape");
-		await selections.nth(0).uncheck();
-		await source.getByRole("combobox").click();
-		await h.page.getByRole("option", { name: "密码", exact: true }).click();
-		await expect(field(importer, "password")).toHaveValue("Demo-only!42");
 		await evidence.capture(
 			"04-B",
-			"The selected original password fills the current candidate exactly.",
+			"Copying the masked password row and pasting fills the exact credential.",
 		);
 		await source
 			.getByRole("button", { name: h.t("pwVaultShowPassword"), exact: true })
 			.click();
-		await source
-			.getByRole("button", { name: h.t("pwSmartSourceCopy"), exact: true })
-			.click();
 		await evidence.capture(
 			"04-C",
-			"Revealing and copying is limited to the current source selection.",
+			"Source password visibility is independent of per-row copying.",
 		);
 		await source.getByRole("button", { name: /更换条目/ }).click();
 		await evidence.capture(
@@ -912,6 +900,22 @@ for (const locale of ["zh-CN", "en"] as const) {
 			await row(importer, "alex@example.com").click();
 			const password = field(importer, "password");
 			await expect(password).toHaveAttribute("readonly", "");
+			await h.context.grantPermissions(["clipboard-read", "clipboard-write"]);
+			await editor(importer)
+				.locator(".pw-smart-source-line")
+				.nth(2)
+				.getByRole("button")
+				.click();
+			expect(await h.page.evaluate(() => navigator.clipboard.readText())).toBe(
+				multiline,
+			);
+			await editor(importer)
+				.getByRole("button", {
+					name: locale === "en" ? "Paste Password" : "粘贴密码",
+					exact: true,
+				})
+				.click();
+
 			const eye = editor(importer)
 				.locator(".pw-smart-password")
 				.getByRole("button");
@@ -936,6 +940,12 @@ for (const locale of ["zh-CN", "en"] as const) {
 			expect(
 				await h.page.evaluate(() => document.documentElement.scrollWidth),
 			).toBeLessThanOrEqual(391);
+			await importer
+				.getByRole("button", {
+					name: /^(核对完成，下一条|Reviewed, next entry)$/,
+					exact: true,
+				})
+				.click();
 			await confirmSave(h.page, importer);
 			await expect(importer.locator(".pw-smart-receipt")).toBeVisible();
 			await closeImport(h.page, h.t);
@@ -1105,3 +1115,123 @@ test("zh-CN provider truncation and timeout preserve the existing review", async
 		await h.close();
 	}
 });
+
+for (const locale of ["zh-CN", "en"] as const) {
+	test(`${locale} quick clipboard exact values and compact desktop layout`, async ({
+		browser,
+	}, info) => {
+		const h = await visualHarness(browser, locale, {
+			width: 1218,
+			height: 808,
+		});
+		const evidence = visualEvidence(h.page, info, locale);
+		try {
+			const importer = await seedMain(h);
+			await h.context.grantPermissions(["clipboard-read", "clipboard-write"]);
+			const source = editor(importer).locator(".pw-import-source-card");
+			const paste = (key: string) =>
+				field(importer, key)
+					.locator(
+						"xpath=ancestor::div[contains(@class,'pw-import-input-control')][1]",
+					)
+					.getByRole("button")
+					.last();
+			await source
+				.locator(".pw-smart-source-line")
+				.nth(1)
+				.getByRole("button")
+				.click();
+			await paste("username").click();
+			await expect(field(importer, "username")).toHaveValue("alex@example.com");
+			await source
+				.locator(".pw-smart-source-line")
+				.nth(2)
+				.getByRole("button")
+				.click();
+			await paste("password").click();
+			await expect(field(importer, "password")).toHaveValue("Demo-only!42");
+			await evidence.capture(
+				"00-main",
+				"1218x808 compact review with seven pending accounts, an alias, and row copy / field paste.",
+			);
+			const metrics = await h.page
+				.locator(".dialog.password-smart-import-dialog")
+				.evaluate((node) => ({
+					height: node.scrollHeight,
+					client: node.clientHeight,
+					width: node.scrollWidth,
+					clientWidth: node.clientWidth,
+				}));
+			expect(metrics.height, JSON.stringify(metrics)).toBeLessThanOrEqual(
+				metrics.client + 1,
+			);
+			expect(metrics.width).toBeLessThanOrEqual(metrics.clientWidth + 1);
+			// Browser clipboard values remain exact even when the password control becomes a textarea.
+			const secret = "  Synthetic-only!\r\nsecond line  ";
+			await h.page.evaluate(
+				(text) => navigator.clipboard.writeText(text),
+				secret,
+			);
+			await paste("password").click();
+			await editor(importer)
+				.locator(".pw-smart-password")
+				.getByRole("button")
+				.click();
+			await expect(field(importer, "password")).toHaveValue(
+				secret.replace(/\r\n/g, "\n"),
+			);
+			await importer
+				.getByRole("button", { name: /^(下一条|Next entry)$/, exact: true })
+				.click();
+			await importer
+				.getByRole("button", { name: /^(上一条|Previous entry)$/, exact: true })
+				.click();
+			await editor(importer)
+				.locator(".pw-smart-password")
+				.getByRole("button")
+				.click();
+			await expect(field(importer, "password")).toHaveValue(
+				secret.replace(/\r\n/g, "\n"),
+			);
+			await h.page.evaluate(() => {
+				Object.defineProperty(navigator.clipboard, "readText", {
+					configurable: true,
+					value: () =>
+						Promise.reject(new DOMException("Denied", "NotAllowedError")),
+				});
+			});
+			await paste("username").click();
+			await expect(
+				editor(importer).locator(".pw-import-paste-error"),
+			).toBeVisible();
+			await expect(field(importer, "username")).toHaveValue("alex@example.com");
+			await h.page.evaluate(() => {
+				Object.defineProperty(navigator.clipboard, "readText", {
+					configurable: true,
+					value: () =>
+						new Promise<string>((resolve) => {
+							(
+								window as unknown as { resolvePaste: (text: string) => void }
+							).resolvePaste = resolve;
+						}),
+				});
+			});
+			await paste("username").click();
+			await importer
+				.getByRole("button", { name: /^(下一条|Next entry)$/, exact: true })
+				.click();
+			await h.page.evaluate(() =>
+				(
+					window as unknown as { resolvePaste: (text: string) => void }
+				).resolvePaste("late-synthetic-value"),
+			);
+			await expect(field(importer, "username")).toHaveValue("work@example.com");
+			await importer
+				.getByRole("button", { name: /^(上一条|Previous entry)$/, exact: true })
+				.click();
+			await expect(field(importer, "username")).toHaveValue("alex@example.com");
+		} finally {
+			await h.close();
+		}
+	});
+}
