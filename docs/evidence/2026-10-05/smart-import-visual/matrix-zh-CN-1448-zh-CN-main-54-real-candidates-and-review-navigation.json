@@ -1,0 +1,46 @@
+{
+  "locale": "zh-CN",
+  "viewport": {
+    "width": 1448,
+    "height": 1086
+  },
+  "controlledProvider": true,
+  "captured": [
+    {
+      "state": "00-main",
+      "screenshot": "00-main-zh-CN-1448.png",
+      "assertion": "54 actual candidates; 47 reviewed and 7 pending; Outlook selected; Notion conflict.",
+      "visualReview": "已于最终包逐图目检：布局、间距、可读性与对应状态交互通过；非像素完全一致声明。"
+    },
+    {
+      "state": "06-A",
+      "screenshot": "06-A-zh-CN-1448.png",
+      "assertion": "Clicking a row selects its own independent account.",
+      "visualReview": "已于最终包逐图目检：布局、间距、可读性与对应状态交互通过；非像素完全一致声明。"
+    },
+    {
+      "state": "06-D",
+      "screenshot": "06-D-zh-CN-1448.png",
+      "assertion": "Skip advances while preserving the previous candidate's notes.",
+      "visualReview": "已于最终包逐图目检：布局、间距、可读性与对应状态交互通过；非像素完全一致声明。"
+    },
+    {
+      "state": "06-C",
+      "screenshot": "06-C-zh-CN-1448.png",
+      "assertion": "Completing a valid candidate increments reviewed count and advances.",
+      "visualReview": "已于最终包逐图目检：布局、间距、可读性与对应状态交互通过；非像素完全一致声明。"
+    },
+    {
+      "state": "06-B",
+      "screenshot": "06-B-zh-CN-1448-reviewed.png",
+      "assertion": "Reviewed entries remain scrollable within the list, with undo available.",
+      "visualReview": "已于最终包逐图目检：布局、间距、可读性与对应状态交互通过；非像素完全一致声明。"
+    },
+    {
+      "state": "06-B",
+      "screenshot": "06-B-zh-CN-1448.png",
+      "assertion": "Undo review removes only the selected candidate from import selection.",
+      "visualReview": "已于最终包逐图目检：布局、间距、可读性与对应状态交互通过；非像素完全一致声明。"
+    }
+  ]
+}

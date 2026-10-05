@@ -1,0 +1,22 @@
+{
+  "locale": "zh-CN",
+  "viewport": {
+    "width": 1448,
+    "height": 1086
+  },
+  "controlledProvider": true,
+  "captured": [
+    {
+      "state": "02-C",
+      "screenshot": "02-C-zh-CN-1448-truncated.png",
+      "assertion": "Actual provider length finish reason is rejected while source and prior review remain.",
+      "visualReview": "已于最终包逐图目检：布局、间距、可读性与对应状态交互通过；非像素完全一致声明。"
+    },
+    {
+      "state": "02-C",
+      "screenshot": "02-C-zh-CN-1448-timeout.png",
+      "assertion": "The application's real 120-second timeout fires under browser clock control; no source or review loss.",
+      "visualReview": "已于最终包逐图目检：布局、间距、可读性与对应状态交互通过；非像素完全一致声明。"
+    }
+  ]
+}

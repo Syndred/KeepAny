@@ -1,0 +1,34 @@
+{
+  "locale": "zh-CN",
+  "viewport": {
+    "width": 1448,
+    "height": 1086
+  },
+  "controlledProvider": true,
+  "captured": [
+    {
+      "state": "05-A",
+      "screenshot": "05-A-zh-CN-1448.png",
+      "assertion": "Mapping uses the themed field selector and original source line numbers.",
+      "visualReview": "已于最终包逐图目检：布局、间距、可读性与对应状态交互通过；非像素完全一致声明。"
+    },
+    {
+      "state": "05-B",
+      "screenshot": "05-B-zh-CN-1448.png",
+      "assertion": "Two explicit starts split two independent accounts; blank and explanatory lines remain numbered.",
+      "visualReview": "已于最终包逐图目检：布局、间距、可读性与对应状态交互通过；非像素完全一致声明。"
+    },
+    {
+      "state": "05-D",
+      "screenshot": "05-D-zh-CN-1448.png",
+      "assertion": "Changing source displays replacement warning while preserving the existing review.",
+      "visualReview": "已于最终包逐图目检：布局、间距、可读性与对应状态交互通过；非像素完全一致声明。"
+    },
+    {
+      "state": "05-C",
+      "screenshot": "05-C-zh-CN-1448.png",
+      "assertion": "Mapped entries append to the existing review batch.",
+      "visualReview": "已于最终包逐图目检：布局、间距、可读性与对应状态交互通过；非像素完全一致声明。"
+    }
+  ]
+}
