@@ -506,6 +506,7 @@ export function PasswordImportWorkspace(props: PasswordImportWorkspaceProps) {
 						{t("pwWorkBulk")}
 					</Button>
 					<Select
+						contentClassName="pw-smart-select-menu"
 						className="pw-work-more"
 						aria-label={t("pwWorkMore")}
 						value={t("pwWorkMore")}
@@ -657,6 +658,7 @@ export function PasswordImportWorkspace(props: PasswordImportWorkspaceProps) {
 									<label className="field" htmlFor={`pw-action-${row.id}`}>
 										<span>{t("pwWorkSaveMethod")}</span>
 										<Select
+											contentClassName="pw-smart-select-menu"
 											id={`pw-action-${row.id}`}
 											aria-label={t("pwWorkSaveMethod")}
 											value={

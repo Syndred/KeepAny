@@ -575,6 +575,7 @@ test("zh-CN duplicate conflict bulk tools save and draft close confirmations", a
 			.getByRole("button", { name: "返回", exact: true })
 			.click();
 		await importer.getByRole("combobox", { name: "更多", exact: true }).click();
+		await expect(h.page.getByRole("listbox")).toHaveCSS("width", "220px");
 		await evidence.capture(
 			"08-B",
 			"More actions use the existing custom themed menu.",
@@ -601,6 +602,7 @@ test("zh-CN duplicate conflict bulk tools save and draft close confirmations", a
 		await h.page
 			.getByRole("combobox", { name: "导入操作菜单", exact: true })
 			.click();
+		await expect(h.page.getByRole("listbox")).toHaveCSS("width", "220px");
 		await evidence.capture(
 			"11-A",
 			"Import actions exposes model details and lock-close.",

@@ -1028,6 +1028,7 @@ export function PasswordSmartImportDialog({
 				<div className="pw-smart-header-actions">
 					{(stage !== "input" || hasReview) && (
 						<Select
+							contentClassName="pw-smart-select-menu"
 							className="pw-smart-input-menu"
 							value="input"
 							aria-label={t("pwSmartOtherInput")}
@@ -1045,6 +1046,7 @@ export function PasswordSmartImportDialog({
 						</Select>
 					)}
 					<Select
+						contentClassName="pw-smart-select-menu"
 						className="pw-smart-top-menu"
 						value="menu"
 						aria-label={t("pwSmartImportMenu")}

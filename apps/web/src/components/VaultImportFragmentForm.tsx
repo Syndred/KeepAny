@@ -236,6 +236,7 @@ export function VaultImportFragmentForm({
 							>
 								<span>{t("pwSmartFragmentTarget")}</span>
 								<Select
+									contentClassName="pw-smart-select-menu"
 									id={`${idPrefix}-target`}
 									value={mode === "new" ? "new" : (target?.id ?? targetId)}
 									onValueChange={selectTarget}

@@ -44,6 +44,7 @@ export type SelectProps = Omit<
 	onValueChange: (value: string) => void;
 	children: ReactNode;
 	className?: string;
+	contentClassName?: string;
 	id?: string;
 	name?: string;
 	disabled?: boolean;
@@ -135,6 +136,7 @@ export function Select({
 	onValueChange,
 	children,
 	className,
+	contentClassName,
 	id,
 	name,
 	disabled,
@@ -217,7 +219,7 @@ export function Select({
 				</SelectPrimitive.Trigger>
 				<SelectPrimitive.Portal>
 					<SelectPrimitive.Content
-						className="themed-select-content"
+						className={clsx("themed-select-content", contentClassName)}
 						position="popper"
 						sideOffset={4}
 						collisionPadding={8}
@@ -242,7 +244,9 @@ export function Select({
 										data-value={option.value}
 									>
 										<SelectPrimitive.ItemText asChild>
-											<span className="themed-select-item-text">{option.children}</span>
+											<span className="themed-select-item-text">
+												{option.children}
+											</span>
 										</SelectPrimitive.ItemText>
 										{option.value === "" && value === "" ? (
 											<span

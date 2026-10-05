@@ -274,6 +274,7 @@ export function VaultImportSourceExcerpt({
 								{t("pwSmartSourceSelected", { count: selected.size })}
 							</span>
 							<Select
+								contentClassName="pw-smart-select-menu"
 								value=""
 								aria-label={t("pwSmartFillMenu")}
 								disabled={disabled || selected.size === 0}

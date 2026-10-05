@@ -296,7 +296,7 @@ export function visualEvidence(
 				const metrics = await page.evaluate(() =>
 					Object.fromEntries(
 						[
-							".dialog.pw-smart-dialog",
+							".dialog.password-smart-import-dialog",
 							".pw-import-workspace",
 							".pw-work-list",
 							".pw-work-editor",

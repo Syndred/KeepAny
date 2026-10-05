@@ -93,6 +93,7 @@ export function PasswordImportMapping({
 								</td>
 								<td className="field">
 									<Select
+										contentClassName="pw-smart-select-menu"
 										id={`pw-map-field-${row.lineNumber}`}
 										aria-label={t("pwSmartMapField", { line: row.lineNumber })}
 										value={row.field}
