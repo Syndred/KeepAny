@@ -56,6 +56,8 @@ export type VaultImportPreviewRow = {
   status: 'new' | 'duplicate' | 'conflict';
   /** Existing active entries with the same exact URL/title and username; no secret fields. */
   existingIds: string[];
+  /** Earlier row in this batch with the same exact identity and password, when not already saved. */
+  duplicateOfIndex?: number;
 };
 
 export type VaultImportPreview = {

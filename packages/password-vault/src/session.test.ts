@@ -302,6 +302,8 @@ describe('real encrypted local KDBX session', () => {
       'duplicate',
       'conflict',
     ]);
+    expect(preview.rows[0].duplicateOfIndex).toBeUndefined();
+    expect(preview.rows[4].duplicateOfIndex).toBe(3);
     expect(preview.rows[1].existingIds).toEqual([id]);
     expect(preview.rows[5].existingIds).toEqual([]);
     const result = await session.importEntries(
@@ -324,6 +326,21 @@ describe('real encrypted local KDBX session', () => {
     });
     expect(storage.writes).toBe(writes);
   }, 30_000);
+
+  it('keeps same-platform accounts distinct and points batch duplicates at their original row', async () => {
+    const { session } = await created();
+    const existingId = await session.saveEntry(draft);
+    const another = { ...draft, username: 'second@example.test' };
+    const third = { ...draft, username: 'third@example.test' };
+    const preview = session.previewImport([another, draft, { ...another }, third]);
+    expect(preview.rows.map(row => row.status)).toEqual(['new', 'duplicate', 'duplicate', 'new']);
+    expect(preview.rows[1]).toMatchObject({ existingIds: [existingId] });
+    expect(preview.rows[1].duplicateOfIndex).toBeUndefined();
+    expect(preview.rows[2]).toMatchObject({ existingIds: [], duplicateOfIndex: 0 });
+    const saved = await session.importEntries([another, draft, { ...another }, third].map(value => ({ draft: value })), preview.revision);
+    expect(saved).toMatchObject({ added: 2, updated: 0, skipped: 2 });
+    expect(session.getSnapshot().entries).toHaveLength(3);
+  });
 
   it('requires an explicit matching target for conflict updates, preserves history, and allows keeping both', async () => {
     const { session, storage } = await created();

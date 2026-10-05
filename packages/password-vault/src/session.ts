@@ -63,6 +63,7 @@ function importIdentity(draft: VaultEntryDraft): string {
 
 function planImports(db: Kdbx, items: VaultImportItem[]) {
   const byIdentity = new Map<string, VaultEntryDraft[]>();
+  const batchIndexes = new Map<VaultEntryDraft, number>();
   const allEntries = [...db.getDefaultGroup().allEntries()];
   for (const entry of allEntries) {
     if (isTrash(db, entry)) continue;
@@ -85,7 +86,7 @@ function planImports(db: Kdbx, items: VaultImportItem[]) {
         ? matches.find((value) => value.id === item.targetId)
         : undefined;
     if (item.action === 'update' && !target) fail('vault-invalid');
-    const duplicate = matches.some(
+    const duplicate = matches.find(
       (value) => value.password === item.draft.password,
     );
     // An explicit metadata update must not disappear merely because the
@@ -101,6 +102,9 @@ function planImports(db: Kdbx, items: VaultImportItem[]) {
       index,
       status: duplicate ? 'duplicate' : matches.length ? 'conflict' : 'new',
       existingIds: matches.flatMap((value) => (value.id ? [value.id] : [])),
+      ...(duplicate && batchIndexes.has(duplicate)
+        ? { duplicateOfIndex: batchIndexes.get(duplicate) }
+        : {}),
     });
     if (
       item.action === 'skip' ||
@@ -127,6 +131,7 @@ function planImports(db: Kdbx, items: VaultImportItem[]) {
       updated += 1;
     } else {
       mutations.push({ index, action: 'new', draft: item.draft });
+      batchIndexes.set(item.draft, index);
       byIdentity.set(key, [...matches, item.draft]);
       added += 1;
     }

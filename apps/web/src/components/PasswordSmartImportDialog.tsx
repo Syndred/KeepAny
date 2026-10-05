@@ -98,15 +98,20 @@ function previewCandidates(
 			rows[indexes[index]] = {
 				...row,
 				index: indexes[index],
+				...(row.duplicateOfIndex !== undefined
+					? { duplicateOfIndex: indexes[row.duplicateOfIndex] }
+					: {}),
 				...((candidate.updateTargetId &&
 					row.existingIds.includes(candidate.updateTargetId)) ||
 				(candidate.explicitlyEdited &&
 					row.status === "duplicate" &&
+					row.duplicateOfIndex === undefined &&
 					row.existingIds.length)
 					? { status: "conflict" as const }
 					: {}),
 				...(candidate.explicitlyEdited &&
 				row.status === "duplicate" &&
+				row.duplicateOfIndex === undefined &&
 				row.existingIds.length
 					? { updateOnly: true }
 					: {}),

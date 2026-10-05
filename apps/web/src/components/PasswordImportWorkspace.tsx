@@ -195,6 +195,10 @@ export function PasswordImportWorkspace(props: PasswordImportWorkspaceProps) {
 		: -1;
 	const row = active?.candidate;
 	const plan = active && row ? preview?.rows[active.index] : undefined;
+	const duplicateCandidate =
+		plan?.duplicateOfIndex !== undefined
+			? candidates[plan.duplicateOfIndex]
+			: undefined;
 	const choice: WorkspaceChoice = row
 		? (choices[row.id] ?? {
 				selected: false,
@@ -647,9 +651,29 @@ export function PasswordImportWorkspace(props: PasswordImportWorkspaceProps) {
 							</p>
 						)}
 						{!currentTarget && plan?.status === "duplicate" && (
-							<p className="pw-work-conflict-note">
-								{t("pwWorkDuplicateHint")}
-							</p>
+							<div className="pw-work-conflict-note pw-work-duplicate-note">
+								<span>
+									{t(
+										duplicateCandidate
+											? "pwWorkBatchDuplicateHint"
+											: "pwWorkDuplicateHint",
+									)}
+								</span>
+								{duplicateCandidate && (
+									<Button
+										size="small"
+										disabled={disabled}
+										onClick={() => {
+											setFilter("all");
+											setActiveId(duplicateCandidate.id);
+											setTargetFor(null);
+											setAttempted(null);
+										}}
+									>
+										{t("pwWorkViewBatchDuplicate")}
+									</Button>
+								)}
+							</div>
 						)}
 						{!currentTarget &&
 							plan?.status === "conflict" &&

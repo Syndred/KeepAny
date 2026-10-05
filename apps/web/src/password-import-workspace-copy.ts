@@ -40,6 +40,9 @@ export const passwordImportWorkspaceZh = {
 	pwWorkBulkNone: "没有可批量核对的新条目。",
 	pwWorkSaveMethod: "保存方式",
 	pwWorkDuplicateHint: "密码库中已有相同条目。",
+	pwWorkBatchDuplicateHint:
+		"本次清单中已有同平台、同账号且密码相同的条目。可查看已有条目，或修改当前账号。",
+	pwWorkViewBatchDuplicate: "查看清单中的条目",
 	pwWorkConflictHint: "请选择保存方式后再核对。",
 	pwWorkUpdateHistory: "将保留旧密码历史。",
 	pwWorkUpdateTarget: "更新 {{name}} · {{username}}",
@@ -99,6 +102,9 @@ export const passwordImportWorkspaceEn: Record<
 	pwWorkBulkNone: "No new entries are ready for bulk review.",
 	pwWorkSaveMethod: "Save method",
 	pwWorkDuplicateHint: "An identical entry is already in your vault.",
+	pwWorkBatchDuplicateHint:
+		"An entry for the same service, account and password is already in this import. View that entry or change this account.",
+	pwWorkViewBatchDuplicate: "View entry in this import",
 	pwWorkConflictHint: "Choose how to save before reviewing.",
 	pwWorkUpdateHistory: "The previous password will remain in history.",
 	pwWorkUpdateTarget: "Update {{name}} · {{username}}",

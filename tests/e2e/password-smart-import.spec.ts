@@ -426,3 +426,119 @@ test("target drafts preserve edits per target and incorporate later edits to unt
 		await h.close();
 	}
 });
+
+for (const [locale, width] of [
+	["zh-CN", 1448],
+	["en", 390],
+] as const) {
+	test(`${locale} same-platform accounts distinguish batch repeats from saved duplicates`, async ({
+		browser,
+	}, info) => {
+		const h = await visualHarness(browser, locale, { width, height: 1086 });
+		const password = "Synthetic-same-platform!42";
+		const source = ["first@example.com", "second@example.com"]
+			.map(
+				(username) =>
+					`Title=Outlook\nUsername=${username}\nPassword="${password}"`,
+			)
+			.join("\n\n");
+		try {
+			await h.page.goto("/assets/vault");
+			await h.createVault();
+			await h.seedExisting({
+				title: "Outlook",
+				username: "saved@example.com",
+				password,
+			});
+			let importer = await h.open();
+			await recognize(h, importer, source);
+			// An incomplete earlier row is omitted from engine preview; the duplicate link still targets the correct UI row.
+			await field(editor(importer), "password").fill("");
+			await importer
+				.locator(".pw-work-list-row")
+				.filter({ hasText: "second@example.com" })
+				.click();
+			await button(importer, /^(新增同平台账号|Add another account)$/).click();
+			await expect(field(editor(importer), "username")).toHaveValue("");
+			await field(editor(importer), "username").fill("second@example.com");
+			await field(editor(importer), "password").fill(password);
+			const hint = editor(importer).locator(".pw-work-conflict-note");
+			await expect(hint).toContainText(
+				locale === "zh-CN" ? "本次清单" : "this import",
+			);
+			await expect(hint).not.toContainText(
+				locale === "zh-CN" ? "密码库中已有" : "already in your vault",
+			);
+			await expect(
+				button(importer, /^(核对完成，下一条|Reviewed, next entry)$/),
+			).toBeDisabled();
+			await expect(h.page.locator(".toast")).toBeHidden();
+			await hint.scrollIntoViewIfNeeded();
+			await h.page.screenshot({
+				path: info.outputPath(`same-platform-${locale}-batch.png`),
+			});
+			await button(
+				importer,
+				/^(查看清单中的条目|View entry in this import)$/,
+			).click();
+			await expect(field(editor(importer), "username")).toHaveValue(
+				"second@example.com",
+			);
+			await expect(button(importer, /^(撤销核对|Undo review)$/)).toBeVisible();
+			await importer
+				.locator(".pw-work-list-row")
+				.filter({ hasText: "second@example.com" })
+				.last()
+				.click();
+			await field(editor(importer), "username").fill("third@example.com");
+			await expect(
+				editor(importer).locator(".pw-work-conflict-note"),
+			).toHaveCount(0);
+			const finish = button(
+				importer,
+				/^(核对完成，下一条|Reviewed, next entry)$/,
+			);
+			await expect(finish).toBeEnabled();
+			await finish.scrollIntoViewIfNeeded();
+			await h.page.screenshot({
+				path: info.outputPath(`same-platform-${locale}-distinct.png`),
+			});
+			await finish.click();
+			await importer
+				.locator(".pw-work-list-row")
+				.filter({ hasText: "first@example.com" })
+				.click();
+			await field(editor(importer), "password").fill(password);
+			await finish.click();
+			await save(h.page, importer);
+			await expect(importer.locator(".pw-smart-receipt")).toContainText(
+				locale === "zh-CN" ? "新增 3" : "3 added",
+			);
+			await close(h.page);
+			const entries = await exported(h);
+			expect(entries).toHaveLength(4);
+			expect(entries.map((entry) => entry.draft.username).sort()).toEqual([
+				"first@example.com",
+				"saved@example.com",
+				"second@example.com",
+				"third@example.com",
+			]);
+			for (const entry of entries) expect(entry.draft.password).toBe(password);
+			importer = await h.open();
+			await recognize(h, importer, source.split("\n\n")[0]);
+			await expect(
+				editor(importer).locator(".pw-work-conflict-note"),
+			).toHaveText(
+				locale === "zh-CN"
+					? "密码库中已有相同条目。"
+					: "An identical entry is already in your vault.",
+			);
+			await expect(
+				button(importer, /^(查看清单中的条目|View entry in this import)$/),
+			).toHaveCount(0);
+			expect(h.errors).toEqual([]);
+		} finally {
+			await h.close();
+		}
+	});
+}
