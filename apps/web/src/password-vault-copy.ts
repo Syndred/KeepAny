@@ -5,7 +5,7 @@ export const passwordVaultCopy: Record<string, [string, string]> = {
 		"粘贴账号密码清单，选择 AI 或本机识别，核对后存入加密密码库。",
 		"Paste a login list, choose AI or on-device recognition, then review and save it to your encrypted vault.",
 	],
-	pwSmartSource: ["账号密码清单", "Login list"],
+	pwSmartSource: ["账号清单", "Login list"],
 	pwSmartPlaceholder: [
 		"Gmail\nreader@gmail.com\n你的密码\n\n应用名称\n另一个账号\n另一个密码",
 		"Gmail\nreader@gmail.com\nyour password\n\nApp name\nanother account\nanother password",
@@ -36,7 +36,7 @@ export const passwordVaultCopy: Record<string, [string, string]> = {
 	pwSmartFile: ["或选择 CSV／文本文件", "Or choose a CSV or text file"],
 	pwSmartChooseFile: ["选择文件", "Choose file"],
 	pwSmartNoFile: ["未选择文件", "No file selected"],
-	pwSmartRecognize: ["本机识别并预览", "Recognize on device"],
+	pwSmartRecognize: ["本机识别", "Recognize on device"],
 	pwSmartAiRecognitionHint: [
 		"AI 识别会把本次清单全文（含账号、密码和备注）发送给你配置的模型服务。已有密码库不会发送，识别后需核对再保存。",
 		"AI recognition sends this entire list, including usernames, passwords and notes, to your configured model service. Your existing vault is not sent. Review the results before saving.",
@@ -74,8 +74,8 @@ export const passwordVaultCopy: Record<string, [string, string]> = {
 		"{{complete}} complete, {{pending}} need completion. Review before selecting.",
 	],
 	pwSmartSourceExcerpt: ["对应原文", "Source excerpt"],
-	pwSmartSourceShow: ["查看这段原文", "Show this source excerpt"],
-	pwSmartSourceHide: ["隐藏这段原文", "Hide this source excerpt"],
+	pwSmartSourceShow: ["显示密码", "Show passwords"],
+	pwSmartSourceHide: ["隐藏密码", "Hide passwords"],
 	pwSmartSourceCopy: ["复制原文", "Copy source"],
 	pwSmartSourceCopyFailed: [
 		"复制失败，请选中文字复制。",

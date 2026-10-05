@@ -1,5 +1,6 @@
 import {
 	createContext,
+	type ReactNode,
 	useCallback,
 	useContext,
 	useEffect,
@@ -7,7 +8,6 @@ import {
 	useRef,
 	useState,
 	useSyncExternalStore,
-	type ReactNode,
 } from "react";
 import {
 	readPasswordVault,
@@ -80,8 +80,8 @@ export function PasswordVaultProvider({ children }: { children: ReactNode }) {
 			if (!session || current.status === "loading") return;
 			if (current.status === "unlocked") {
 				if (current.revision === revision) return;
-				session.lock();
 				setNotice("pwVaultLockedElsewhere");
+				session.lock();
 				emit(session.getSnapshot());
 				return;
 			}
@@ -200,6 +200,7 @@ export function PasswordVaultProvider({ children }: { children: ReactNode }) {
 	}, []);
 
 	const lock = useCallback(() => {
+		setNotice(null);
 		const session = sessionRef.current;
 		if (!session || snapshotRef.current.status !== "unlocked") return;
 		session.lock();

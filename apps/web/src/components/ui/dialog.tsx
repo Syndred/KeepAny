@@ -9,7 +9,9 @@ export function Dialog({
 	closeDisabled = false,
 	returnFocusTo,
 	className,
+	headerActions,
 }: {
+	headerActions?: ReactNode;
 	className?: string;
 	title: string;
 	children: ReactNode;
@@ -41,6 +43,7 @@ export function Dialog({
 				>
 					<header>
 						<DialogPrimitive.Title>{title}</DialogPrimitive.Title>
+						{headerActions}
 						<DialogPrimitive.Close
 							className="button icon ghost"
 							aria-label={t("close")}

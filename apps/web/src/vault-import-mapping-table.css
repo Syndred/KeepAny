@@ -1,0 +1,132 @@
+.pw-import-mapping-table {
+	gap: 18px;
+}
+.pw-import-map-heading {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 16px;
+	color: var(--muted);
+	font-size: 14px;
+}
+.pw-import-map-heading p {
+	margin: 0;
+}
+.pw-import-map-heading .button {
+	flex-shrink: 0;
+	font-size: 14px;
+	font-weight: 400;
+}
+.pw-import-map-scroll {
+	min-width: 0;
+	overflow-x: auto;
+	padding-bottom: 4px;
+}
+.pw-import-map-table {
+	min-width: 520px;
+	border: 1px solid var(--line-soft);
+	border-radius: 8px;
+}
+.pw-import-map-columns,
+.pw-import-mapping-table .pw-smart-map-line {
+	display: grid;
+	grid-template-columns: 42px minmax(160px, 1fr) minmax(110px, 0.65fr) 140px;
+	align-items: center;
+	gap: 12px;
+	padding: 9px 12px;
+}
+.pw-import-map-columns {
+	color: var(--muted);
+	font-size: 13px;
+}
+.pw-import-map-columns > :last-child {
+	text-align: center;
+}
+.pw-import-mapping-table .pw-smart-map-line {
+	border: 0;
+	border-radius: 0;
+	border-top: 1px solid var(--line-soft);
+	font-size: 15px;
+}
+.pw-import-mapping-table .pw-smart-map-line[data-entry-start="true"] {
+	background: var(--paper-soft);
+}
+.pw-import-map-line-number {
+	color: var(--muted);
+	text-align: center;
+}
+.pw-import-mapping-table .pw-smart-map-line input:not([type="checkbox"]) {
+	min-height: 32px;
+	height: 32px;
+	width: 100%;
+	border: 1px solid transparent;
+	border-radius: 4px;
+	padding: 3px 6px;
+	background: transparent;
+	font-size: 15px;
+	font-weight: 400;
+}
+.pw-import-mapping-table
+	.pw-smart-map-line
+	input:not([type="checkbox"]):focus-visible {
+	border-color: var(--yellow);
+	background: var(--paper);
+}
+.pw-import-mapping-table .themed-select-trigger {
+	min-height: 32px;
+	height: 32px;
+	padding: 3px 10px;
+	border: 1px solid var(--line-soft);
+	border-radius: 5px;
+	font-size: 14px;
+}
+.pw-import-map-start {
+	display: flex;
+	justify-content: center;
+}
+.pw-import-map-start input {
+	width: 18px;
+	height: 18px;
+	accent-color: var(--yellow);
+}
+.pw-import-mapping-table .pw-smart-footer {
+	display: flex;
+	gap: 12px;
+	padding-block: 14px 0;
+}
+.pw-import-mapping-table .pw-smart-footer > .button:last-child {
+	margin-inline-start: auto;
+}
+@media (max-width: 600px) {
+	.pw-import-map-heading {
+		align-items: flex-start;
+	}
+	.pw-import-map-heading .button {
+		font-size: 12px;
+	}
+	.pw-import-mapping-table .pw-smart-footer {
+		flex-wrap: wrap;
+	}
+	.pw-import-mapping-table .pw-smart-footer > .button {
+		flex: 1 1 auto;
+	}
+}
+
+.pw-import-map-table {
+	width: 100%;
+	border-collapse: separate;
+	border-spacing: 0;
+}
+.pw-import-map-table th,
+.pw-import-map-table td {
+	border: 0;
+	padding: 0;
+	text-align: start;
+}
+.pw-import-map-table th {
+	background: transparent;
+	font-weight: 400;
+}
+.pw-import-map-table .pw-import-map-line-number {
+	text-align: center;
+}

@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import type { VaultEntryDraft } from "../../../../packages/password-vault/src";
 import { Button } from "./ui/button";
 import { VaultLoginIdentifiers } from "./VaultLoginIdentifiers";
+import "../vault-import-fields.css";
 
 export type VaultImportDraftField =
 	| "title"
@@ -18,12 +19,16 @@ export function VaultImportDraftFields({
 	draft,
 	disabled,
 	readOnlyIdentity = false,
+	compact = true,
+	validationErrors = {},
 	onChange,
 }: {
 	idPrefix: string;
 	draft: VaultEntryDraft;
 	disabled: boolean;
 	readOnlyIdentity?: boolean;
+	compact?: boolean;
+	validationErrors?: Partial<Record<VaultImportDraftField, string>>;
 	onChange: (field: VaultImportDraftField, value: string | string[]) => void;
 }) {
 	const { t } = useTranslation();
@@ -34,7 +39,7 @@ export function VaultImportDraftFields({
 		if (draft.url) setUrlExpanded(true);
 	}, [draft.url]);
 	return (
-		<>
+		<div className={compact ? "pw-import-draft-fields" : undefined}>
 			{readOnlyIdentity && (
 				<p className="pw-smart-hint">{t("pwSmartSavedEntryHint")}</p>
 			)}
@@ -43,6 +48,10 @@ export function VaultImportDraftFields({
 					<label htmlFor={`${idPrefix}-title`}>{t("pwVaultTitleField")}</label>
 					<input
 						id={`${idPrefix}-title`}
+						aria-invalid={!!validationErrors.title}
+						aria-describedby={
+							validationErrors.title ? `${idPrefix}-title-error` : undefined
+						}
 						value={draft.title}
 						placeholder={t("pwVaultNamePlaceholder")}
 						onChange={(event) => onChange("title", event.target.value)}
@@ -52,28 +61,60 @@ export function VaultImportDraftFields({
 						spellCheck={false}
 						maxLength={256}
 					/>
+					{validationErrors.title && (
+						<small
+							className="pw-import-field-error"
+							id={`${idPrefix}-title-error`}
+						>
+							{validationErrors.title}
+						</small>
+					)}
 				</div>
-				<VaultLoginIdentifiers
-					idPrefix={idPrefix}
-					values={draft.usernameAliases}
-					disabled={disabled}
-					primary={{
-						id: `${idPrefix}-username`,
-						value: draft.username,
-						readOnly: readOnlyIdentity,
-						onChange: (value) => onChange("username", value),
-					}}
-					onChange={(values) => onChange("usernameAliases", values)}
-				/>
+				<div
+					className="pw-import-identifiers"
+					data-has-aliases={!!draft.usernameAliases?.length}
+				>
+					<VaultLoginIdentifiers
+						compact={compact}
+						idPrefix={idPrefix}
+						values={draft.usernameAliases}
+						disabled={disabled}
+						primary={{
+							id: `${idPrefix}-username`,
+							value: draft.username,
+							readOnly: readOnlyIdentity,
+							onChange: (value) => onChange("username", value),
+						}}
+						onChange={(values) => onChange("usernameAliases", values)}
+					/>
+				</div>
 				<div className="field pw-smart-field-password">
 					<label htmlFor={`${idPrefix}-password`}>
 						{t("pwVaultPasswordField")}
+						{!draft.password && (
+							<span className="pw-import-missing">
+								{t("pwSmartPasswordMissing")}
+							</span>
+						)}
 					</label>
-					<div className="pw-smart-password">
+					<div className="pw-smart-password" data-missing={!draft.password}>
 						{multilinePassword ? (
 							<textarea
 								id={`${idPrefix}-password`}
-								value={revealed ? draft.password : "••••••••"}
+								aria-invalid={!!validationErrors.password}
+								aria-describedby={
+									validationErrors.password
+										? `${idPrefix}-password-error`
+										: undefined
+								}
+								value={
+									revealed
+										? draft.password
+										: draft.password
+												.split(/\r\n|\r|\n/)
+												.map(() => "••••••••")
+												.join("\n")
+								}
 								readOnly={!revealed}
 								onChange={(event) => onChange("password", event.target.value)}
 								disabled={disabled}
@@ -84,8 +125,29 @@ export function VaultImportDraftFields({
 						) : (
 							<input
 								id={`${idPrefix}-password`}
+								aria-invalid={!!validationErrors.password}
+								aria-describedby={
+									validationErrors.password
+										? `${idPrefix}-password-error`
+										: undefined
+								}
 								value={draft.password}
+								placeholder={t("pwSmartPasswordPlaceholder")}
 								type={revealed ? "text" : "password"}
+								onPaste={(event) => {
+									const value = event.clipboardData.getData("text/plain");
+									if (!/[\r\n]/.test(value)) return;
+									event.preventDefault();
+									const input = event.currentTarget;
+									onChange(
+										"password",
+										draft.password.slice(0, input.selectionStart ?? 0) +
+											value +
+											draft.password.slice(
+												input.selectionEnd ?? draft.password.length,
+											),
+									);
+								}}
 								onChange={(event) => onChange("password", event.target.value)}
 								disabled={disabled}
 								autoComplete="new-password"
@@ -105,6 +167,14 @@ export function VaultImportDraftFields({
 							{revealed ? <EyeOff size={16} /> : <Eye size={16} />}
 						</Button>
 					</div>
+					{validationErrors.password && (
+						<small
+							className="pw-import-field-error"
+							id={`${idPrefix}-password-error`}
+						>
+							{validationErrors.password}
+						</small>
+					)}
 				</div>
 			</div>
 			<div className="pw-smart-optional">
@@ -130,6 +200,7 @@ export function VaultImportDraftFields({
 						<textarea
 							id={`${idPrefix}-notes`}
 							value={draft.notes}
+							placeholder={t("pwSmartNotesPlaceholder")}
 							onChange={(event) => onChange("notes", event.target.value)}
 							disabled={disabled}
 							autoComplete="off"
@@ -144,6 +215,10 @@ export function VaultImportDraftFields({
 							</label>
 							<input
 								id={`${idPrefix}-url`}
+								aria-invalid={!!validationErrors.url}
+								aria-describedby={
+									validationErrors.url ? `${idPrefix}-url-error` : undefined
+								}
 								value={draft.url}
 								onChange={(event) => onChange("url", event.target.value)}
 								disabled={disabled}
@@ -152,10 +227,18 @@ export function VaultImportDraftFields({
 								spellCheck={false}
 								placeholder="https://"
 							/>
+							{validationErrors.url && (
+								<small
+									className="pw-import-field-error"
+									id={`${idPrefix}-url-error`}
+								>
+									{validationErrors.url}
+								</small>
+							)}
 						</div>
 					)}
 				</div>
 			</div>
-		</>
+		</div>
 	);
 }

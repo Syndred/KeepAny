@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Lock, Sparkles } from "lucide-react";
+import { FileText, LoaderCircle, Lock } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type {
@@ -35,15 +35,13 @@ import {
 	groupVaultImportIssues,
 } from "../vault-import-source";
 import { PasswordImportMapping } from "./PasswordImportMapping";
+import { PasswordImportWorkspace } from "./PasswordImportWorkspace";
 import { usePasswordVault } from "./PasswordVaultProvider";
 import { Button } from "./ui/button";
 import { Dialog } from "./ui/dialog";
 import { FilePicker } from "./ui/file-picker";
 import { Select, SelectOption } from "./ui/select";
 import { TextLink } from "./ui/text-link";
-import { VaultImportDraftFields } from "./VaultImportDraftFields";
-import { VaultImportFragmentForm } from "./VaultImportFragmentForm";
-import { VaultImportSourceExcerpt } from "./VaultImportSourceExcerpt";
 import "../password-smart-import.css";
 
 type Choice = {
@@ -120,23 +118,6 @@ function previewCandidates(
 	}
 }
 
-function currentRowIssues(
-	row: VaultImportCandidate,
-	valid: boolean,
-): VaultImportIssue[] {
-	const codes = new Set(
-		validateVaultImportFields(row.draft).issues.map((issue) => issue.code),
-	);
-	if (!row.draft.title.trim()) codes.add("missing-identity");
-	if (!valid && !codes.size) codes.add("invalid-field");
-	return [...codes].map((code) => ({
-		code,
-		lineNumber:
-			row.reviewIssues?.find((issue) => issue.code === code)?.lineNumber ??
-			row.sourceLine,
-	}));
-}
-
 function errorCopy(error: unknown) {
 	const code = error instanceof Error ? error.message : "";
 	if (code === "vault-stale") return "pwVaultConflict";
@@ -161,10 +142,22 @@ export function PasswordSmartImportDialog({
 		revision: aiRevision,
 		activateVaultKey,
 	} = useAiConnection();
+	const [confirmation, setConfirmation] = useState<
+		| "ai"
+		| "titles"
+		| "save"
+		| "close"
+		| "lock"
+		| "model"
+		| "replace-local"
+		| "replace-ai"
+		| null
+	>(null);
+	const [unlockPassword, setUnlockPassword] = useState("");
+	const [unlockBusy, setUnlockBusy] = useState(false);
 	const [source, setSource] = useState("");
 	const [reviewSource, setReviewSource] = useState("");
 	const [reviewVersion, setReviewVersion] = useState(0);
-	const [editingSource, setEditingSource] = useState(false);
 	const [sourceSelection, setSourceSelection] = useState<{
 		start: number;
 		end: number;
@@ -184,7 +177,6 @@ export function PasswordSmartImportDialog({
 	);
 	const [mappedLines, setMappedLines] = useState<VaultMappedLine[]>([]);
 	const [busy, setBusy] = useState<"file" | "ai" | "save" | null>(null);
-	const [aiMode, setAiMode] = useState<"recognize" | "titles">("recognize");
 	const [reviewOrigin, setReviewOrigin] = useState<ReviewOrigin>({
 		kind: "local",
 	});
@@ -218,6 +210,15 @@ export function PasswordSmartImportDialog({
 	}, [aiRevision, t]);
 	useEffect(() => {
 		if (vault.snapshot.status === "unlocked") return;
+		if (vault.notice === "pwVaultLockedElsewhere") {
+			generation.current++;
+			controller.current?.abort();
+			running.current = null;
+			setBusy(null);
+			setConfirmation(null);
+			setMessage(t("pwSmartStaleDraft"));
+			return;
+		}
 		generation.current++;
 		controller.current?.abort();
 		setSource("");
@@ -230,7 +231,7 @@ export function PasswordSmartImportDialog({
 		setIssues([]);
 		setMappedLines([]);
 		onClose();
-	}, [vault.snapshot.status, onClose]);
+	}, [vault.snapshot.status, vault.notice, onClose, t]);
 	useEffect(() => {
 		if (stage !== "input" || !sourceSelection || !sourceInput.current) return;
 		const input = sourceInput.current;
@@ -306,10 +307,10 @@ export function PasswordSmartImportDialog({
 					plan.existingIds.includes(choice.targetId ?? "")))
 		);
 	});
-	const completeCount = preview?.rows.filter(Boolean).length ?? 0;
-	const pendingCount = candidates.length - completeCount;
+	const pendingCount = candidates.length - selected.length + issueGroups.length;
 	const outdated =
-		stage === "review" && baseRevision.current !== vault.snapshot.revision;
+		vault.snapshot.status !== "unlocked" ||
+		(!!reviewSource && baseRevision.current !== vault.snapshot.revision);
 
 	function close() {
 		if (running.current === "save") return;
@@ -342,7 +343,6 @@ export function PasswordSmartImportDialog({
 		setStage("input");
 		setSource(nextSource);
 		setReviewSource("");
-		setEditingSource(false);
 		setSourceSelection(null);
 	}
 	function editSource(selection?: { start: number; end: number }) {
@@ -357,7 +357,6 @@ export function PasswordSmartImportDialog({
 					: null;
 		}
 		setSourceSelection(nextSelection);
-		setEditingSource(true);
 		setMessage("");
 		setStage("input");
 	}
@@ -388,7 +387,6 @@ export function PasswordSmartImportDialog({
 		if (running.current || !connection || !source.trim() || !session) return;
 		const startingRevision = session.getSnapshot().revision;
 		running.current = "ai";
-		setAiMode("recognize");
 		setBusy("ai");
 		setMessage("");
 		const current = ++generation.current;
@@ -471,7 +469,6 @@ export function PasswordSmartImportDialog({
 		setIssues(result.issues);
 		setReviewOrigin(origin);
 		setReviewSource(resultSource);
-		setEditingSource(false);
 		setSourceSelection(null);
 		setReceipt(null);
 		setChoices(
@@ -492,7 +489,6 @@ export function PasswordSmartImportDialog({
 		if (running.current) return;
 		try {
 			if (!mappedLines.length) setMappedLines(createVaultMappedLines(source));
-			if (stage === "review") setEditingSource(true);
 			setMessage("");
 			setStage("mapping");
 		} catch (error) {
@@ -596,7 +592,6 @@ export function PasswordSmartImportDialog({
 		)
 			return;
 		running.current = "ai";
-		setAiMode("titles");
 		setBusy("ai");
 		setMessage("");
 		const current = ++generation.current;
@@ -617,7 +612,33 @@ export function PasswordSmartImportDialog({
 				session.getSnapshot().revision !== baseRevision.current
 			)
 				return;
-			setCandidates(rows);
+			const changed = new Set(
+				rows
+					.filter(
+						(row, index) => row.draft.title !== candidates[index]?.draft.title,
+					)
+					.map((row) => row.id),
+			);
+			const nextPreview = previewCandidates(session, rows);
+			setCandidates(
+				rows.map((row) =>
+					changed.has(row.id) ? { ...row, needsReview: true } : row,
+				),
+			);
+			setChoices((currentChoices) =>
+				Object.fromEntries(
+					rows.map((row, index) => [
+						row.id,
+						changed.has(row.id)
+							? {
+									selected: false,
+									action:
+										nextPreview?.rows[index]?.status === "new" ? "new" : "skip",
+								}
+							: currentChoices[row.id],
+					]),
+				),
+			);
 			setMessage(t("pwSmartAiDone"));
 		} catch {
 			if (current === generation.current && !abort.signal.aborted)
@@ -683,6 +704,12 @@ export function PasswordSmartImportDialog({
 		setMessage("");
 	}
 	function choose(id: string, choice: Choice) {
+		if (choice.selected)
+			setCandidates((current) =>
+				current.map((row) =>
+					row.id === id ? { ...row, needsReview: false } : row,
+				),
+			);
 		setChoices((current) => ({ ...current, [id]: choice }));
 	}
 	function addAnotherAccount(id: string) {
@@ -716,7 +743,10 @@ export function PasswordSmartImportDialog({
 		setMessage(t("pwSmartManualAdded"));
 	}
 	function applyFragment(
-		group: (typeof issueGroups)[number],
+		group: (typeof issueGroups)[number] & {
+			sourceLine?: number;
+			sourceSnapshot?: string;
+		},
 		targetId: string | null,
 		draft: VaultEntryDraft,
 	): boolean {
@@ -759,7 +789,13 @@ export function PasswordSmartImportDialog({
 		const row: VaultImportCandidate = {
 			...(target ?? validated.candidates[0]),
 			id: target?.id ?? `vault-manual-${++manualSequence.current}`,
-			sourceLine: target?.sourceLine ?? group.issues[0].lineNumber,
+			sourceLine:
+				target?.sourceLine ??
+				group.sourceLine ??
+				group.issues[0]?.lineNumber ??
+				1,
+			sourceSnapshot:
+				target?.sourceSnapshot ?? group.sourceSnapshot ?? reviewSource,
 			draft: {
 				...validated.candidates[0].draft,
 				linkedAssetIds: [...draft.linkedAssetIds],
@@ -769,7 +805,7 @@ export function PasswordSmartImportDialog({
 			needsReview: true,
 			reviewIssues: validated.issues.map((issue) => ({
 				...issue,
-				lineNumber: group.issues[0].lineNumber,
+				lineNumber: group.sourceLine ?? group.issues[0]?.lineNumber ?? 1,
 			})),
 		};
 		const rows =
@@ -944,46 +980,173 @@ export function PasswordSmartImportDialog({
 		}
 	}
 
+	function cancelRecognition() {
+		generation.current++;
+		controller.current?.abort();
+		controller.current = null;
+		running.current = null;
+		setBusy(null);
+		setMessage(t("pwSmartCancelled"));
+	}
+	function requestRecognition(ai: boolean) {
+		if (running.current || outdated) return;
+		setConfirmation(
+			ai ? "ai" : hasReview && source !== reviewSource ? "replace-local" : null,
+		);
+		if (!ai && (!hasReview || source === reviewSource)) recognize();
+	}
+	function requestClose() {
+		if (running.current === "save") return;
+		if (source || candidates.length || issues.length) setConfirmation("close");
+		else close();
+	}
+	async function unlockForReview() {
+		if (!session || unlockBusy) return;
+		setUnlockBusy(true);
+		try {
+			await session.unlock(unlockPassword);
+			baseRevision.current = session.getSnapshot().revision;
+			setChoices({});
+			setMessage(t("pwSmartReviewAgain"));
+		} catch {
+			setMessage(t("pwVaultUnlockFailed"));
+		} finally {
+			setUnlockPassword("");
+			setUnlockBusy(false);
+		}
+	}
+	const saveNewCount = selected.filter(
+		(row) => choices[row.id]?.action === "new",
+	).length;
 	return (
 		<Dialog
-			className={`password-smart-import-dialog${stage === "review" && issueGroups.length > 0 ? " password-smart-import-dialog-wide" : ""}`}
-			title={t("pwSmartTitle")}
-			onClose={close}
+			className={`password-smart-import-dialog${stage === "review" ? " password-smart-import-dialog-wide" : ""}`}
+			title={t(stage === "mapping" ? "pwSmartMap" : "pwSmartTitle")}
+			onClose={requestClose}
 			closeDisabled={busy === "save"}
+			headerActions={
+				<div className="pw-smart-header-actions">
+					{(stage !== "input" || hasReview) && (
+						<Select
+							className="pw-smart-input-menu"
+							value="input"
+							aria-label={t("pwSmartOtherInput")}
+							disabled={!!busy || outdated}
+							onValueChange={(value) => {
+								if (value === "paste") editSource();
+								if (value === "mapping") startMapping();
+							}}
+						>
+							<SelectOption value="input" disabled>
+								{t("pwSmartOtherInput")}
+							</SelectOption>
+							<SelectOption value="paste">{t("pwSmartPasteList")}</SelectOption>
+							<SelectOption value="mapping">{t("pwSmartMap")}</SelectOption>
+						</Select>
+					)}
+					<Select
+						className="pw-smart-top-menu"
+						value="menu"
+						aria-label={t("pwSmartImportMenu")}
+						disabled={busy === "save"}
+						onValueChange={(value) => {
+							if (value === "model") setConfirmation("model");
+							if (value === "lock") setConfirmation("lock");
+						}}
+					>
+						<SelectOption value="menu" disabled>
+							•••
+						</SelectOption>
+						<SelectOption value="model">
+							{t("pwSmartModelDetails")}
+						</SelectOption>
+						<SelectOption value="lock">{t("pwSmartLockClose")}</SelectOption>
+					</Select>
+				</div>
+			}
 		>
 			<div className="password-smart-import">
-				<p className="pw-smart-hint">{t("pwSmartHint")}</p>
 				{message && (
-					<p className="notice" role="status">
+					<p className="notice pw-smart-message" role="status">
 						{message}
 					</p>
 				)}
 				{outdated && (
-					<p className="notice" role="alert">
-						{t("pwVaultConflict")}
-					</p>
+					<div className="pw-smart-stale" role="alert">
+						<p>{t("pwSmartStaleDraft")}</p>
+						{vault.snapshot.status === "locked" && (
+							<form
+								onSubmit={(event) => {
+									event.preventDefault();
+									void unlockForReview();
+								}}
+							>
+								<label className="field" htmlFor="pw-smart-unlock">
+									<span>{t("pwVaultMasterPassword")}</span>
+									<input
+										id="pw-smart-unlock"
+										type="password"
+										autoComplete="current-password"
+										value={unlockPassword}
+										onChange={(event) => setUnlockPassword(event.target.value)}
+										disabled={unlockBusy}
+									/>
+								</label>
+								<Button type="submit" disabled={unlockBusy || !unlockPassword}>
+									{t("pwVaultUnlock")}
+								</Button>
+							</form>
+						)}
+					</div>
 				)}
 				{stage === "input" && (
-					<>
-						{hasReview && (
-							<div className="pw-smart-edit-source">
-								<p className="notice">
-									{t(
-										source === reviewSource
-											? sourceSelection
-												? "pwSmartSourceEditHint"
-												: "pwSmartSourceEditKeepHint"
-											: "pwSmartSourceChangedHint",
-									)}
-								</p>
+					<div className="pw-smart-input-page">
+						{hasReview && source !== reviewSource && (
+							<p className="notice">{t("pwSmartSourceChangedHint")}</p>
+						)}
+						{!connection && (
+							<div className="pw-smart-model-unavailable">
+								<strong>
+									{t(settings ? "pwSmartKeyInactive" : "pwSmartModelMissing")}
+								</strong>
+								{settings?.keySource === "vault" ? (
+									<Button onClick={activateModel} disabled={!!busy}>
+										{t("aiSettingsActivateVaultKey")}
+									</Button>
+								) : (
+									<TextLink asChild>
+										<Link to="/settings" hash="assistant" onClick={close}>
+											{t(settings ? "aiEnableKey" : "aiConfigure")}
+										</Link>
+									</TextLink>
+								)}
+							</div>
+						)}
+						{file && (
+							<div className="pw-smart-file-summary">
+								<FileText size={24} />
+								<span>
+									<strong>{file.name}</strong>
+									<small>{Math.ceil(file.size / 1024)} KB</small>
+								</span>
 								<Button
-									onClick={() => {
-										setStage("review");
-										setSourceSelection(null);
-									}}
+									variant="ghost"
 									disabled={!!busy}
+									onClick={() =>
+										document.getElementById("pw-smart-file")?.click()
+									}
 								>
-									{t("pwSmartBackToReview")}
+									{t("pwSmartReplaceFile")}
+								</Button>
+								<Button
+									variant="ghost"
+									disabled={!!busy}
+									onClick={() => {
+										setFile(null);
+										setSource("");
+									}}
+								>
+									{t("pwSmartRemoveFile")}
 								</Button>
 							</div>
 						)}
@@ -1001,99 +1164,94 @@ export function PasswordSmartImportDialog({
 									setFile(null);
 									setMessage("");
 								}}
-								disabled={!!busy}
+								disabled={!!busy || outdated}
 								autoComplete="off"
 								spellCheck={false}
 								placeholder={t("pwSmartPlaceholder")}
 							/>
-							<small>{t("pwSmartSyntax")}</small>
 						</label>
-						<FilePicker
-							compact
-							id="pw-smart-file"
-							label={t("pwSmartFile")}
-							chooseLabel={t("pwSmartChooseFile")}
-							emptyLabel={t("pwSmartNoFile")}
-							file={file}
-							accept=".csv,.tsv,.txt,text/csv,text/plain"
-							onFileChange={(next) => void readFile(next)}
-							disabled={!!busy}
-						/>
-						<div className="pw-smart-input-actions">
-							<div className="pw-smart-ai pw-smart-ai-recognition">
-								<p>{t("pwSmartAiRecognitionHint")}</p>
-								{settings && (
-									<p className="pw-smart-ai-target">
-										{t("pwSmartAiTarget", {
-											model: settings.model,
-											endpoint: settings.baseURL,
-										})}
-									</p>
-								)}
-								{connection ? (
-									<Button
-										variant="primary"
-										onClick={() => void recognizeWithAi()}
-										disabled={!!busy || !source.trim()}
-									>
-										<Sparkles size={16} />
-										{t("pwSmartAiRecognize", { model: connection.model })}
-									</Button>
-								) : settings?.keySource === "vault" ? (
-									<Button onClick={activateModel} disabled={!!busy}>
-										{t("aiSettingsActivateVaultKey")}
-									</Button>
-								) : (
-									<p>
-										{t("pwSmartAiOptional")}{" "}
-										<TextLink asChild>
-											<Link to="/settings" hash="assistant" onClick={close}>
-												{t(settings ? "aiEnableKey" : "aiConfigure")}
-											</Link>
-										</TextLink>
-									</p>
-								)}
-							</div>
-							<div className="actions pw-smart-local-actions">
-								<Button onClick={recognize} disabled={!!busy || !source.trim()}>
-									{t("pwSmartRecognize")}
+						<div
+							className={`pw-smart-file-picker${file ? " pw-smart-file-picker-loaded" : ""}`}
+						>
+							<FilePicker
+								compact
+								id="pw-smart-file"
+								label={t("pwSmartFile")}
+								chooseLabel={t("pwSmartChooseFile")}
+								emptyLabel={t("pwSmartFileTypes")}
+								file={file}
+								accept=".csv,.tsv,.txt,text/csv,text/plain"
+								onFileChange={(next) => void readFile(next)}
+								disabled={!!busy || outdated}
+							/>
+						</div>
+						{busy === "ai" && (
+							<div className="pw-smart-recognizing" role="status">
+								<LoaderCircle className="pw-smart-spinner" size={32} />
+								<strong>{t("pwSmartAiRecognitionBusy")}</strong>
+								<Button onClick={cancelRecognition}>
+									{t("pwSmartCancelRecognition")}
 								</Button>
+								<small>{t("pwSmartCancelKeeps")}</small>
+							</div>
+						)}
+						<div className="actions pw-smart-input-footer">
+							{hasReview ? (
 								<Button
+									onClick={() => {
+										setStage("review");
+										setSourceSelection(null);
+									}}
+									disabled={!!busy}
+								>
+									{t("pwSmartBackToReview")}
+								</Button>
+							) : (
+								<Button
+									variant="ghost"
 									onClick={startMapping}
-									disabled={!!busy || !source.trim()}
+									disabled={!!busy || !source.trim() || outdated}
 								>
 									{t("pwSmartMap")}
 								</Button>
-							</div>
+							)}
+							<Button
+								onClick={() => requestRecognition(false)}
+								disabled={!!busy || !source.trim() || outdated}
+							>
+								{t("pwSmartRecognize")}
+							</Button>
+							<Button
+								variant="primary"
+								onClick={() => requestRecognition(true)}
+								disabled={!!busy || !source.trim() || !connection || outdated}
+							>
+								{t("pwSmartUseAi")}
+							</Button>
 						</div>
-					</>
+					</div>
 				)}
 				{stage === "mapping" && (
-					<>
-						{editingSource && (
-							<p className="notice">{t("pwSmartSourceEditKeepHint")}</p>
-						)}
-						<PasswordImportMapping
-							rows={mappedLines}
-							onChange={setMappedLines}
-							onReview={reviewMapping}
-							{...(hasReview
-								? {
-										onBackToReview: () => {
-											setStage("review");
-											setMessage("");
-										},
-										reviewLabel: t("pwSmartMapAdd"),
-									}
-								: {})}
-							onBack={() => {
-								setSource(updateVaultMappedSource(source, mappedLines));
-								setSourceSelection(null);
-								setStage("input");
-								setMessage("");
-							}}
-						/>
-					</>
+					<PasswordImportMapping
+						rows={mappedLines}
+						onChange={setMappedLines}
+						onReview={reviewMapping}
+						{...(hasReview
+							? {
+									onBackToReview: () => {
+										setStage("review");
+										setMessage("");
+									},
+									reviewLabel: t("pwSmartMapAdd"),
+								}
+							: {})}
+						onBack={() => {
+							setSource(updateVaultMappedSource(source, mappedLines));
+							setSourceSelection(null);
+							setStage("input");
+							setMessage("");
+						}}
+					/>
 				)}
 				{hasReview && (
 					<div
@@ -1101,415 +1259,230 @@ export function PasswordSmartImportDialog({
 						key={reviewVersion}
 						hidden={stage !== "review"}
 					>
-						<p className="pw-smart-mode">
-							{t(
-								`pwSmartReviewMode_${reviewOrigin.kind}`,
-								reviewOrigin.kind === "ai"
-									? {
-											model: reviewOrigin.model,
-											endpoint: reviewOrigin.endpoint,
-										}
-									: {},
-							)}
-						</p>
-						{source !== reviewSource && (
-							<p className="notice">{t("pwSmartSourceChangedHint")}</p>
-						)}
-						<p className="pw-smart-summary">
-							{t("pwSmartReviewProgress", {
-								complete: completeCount,
-								pending: pendingCount,
-							})}
-						</p>
 						{receipt && (
 							<p className="pw-smart-receipt" role="status">
 								{t("pwSmartSaved", receipt)}
 							</p>
 						)}
-						{issues.length > 0 && (
-							<div className="pw-smart-issues" role="status">
-								<strong>{t("pwSmartIssues")}</strong>
-								<div className="pw-smart-source-groups">
-									{issueGroups.map((group) => (
-										<div
-											className="pw-smart-source-group"
-											data-source-group={group.id}
-											key={group.id}
-										>
-											<p className="pw-smart-source-group-reasons">
-												{[...new Set(group.issues.map((issue) => issue.code))]
-													.map((code) =>
-														t(`pwSmartIssue_${code}`, {
-															defaultValue: t("pwSmartIssueUnknown"),
-														}),
-													)
-													.join(" · ")}
-											</p>
-											<VaultImportFragmentForm
-												idPrefix={`pw-fragment-${group.id}`}
-												source={reviewSource}
-												excerpt={group.excerpt}
-												fragmentText={reviewSource.slice(
-													group.excerpt.selection.start,
-													group.excerpt.selection.end,
-												)}
-												candidates={fragmentTargets}
-												disabled={!!busy || outdated}
-												onApply={(targetId, draft) =>
-													applyFragment(group, targetId, draft)
-												}
-											/>
-										</div>
-									))}
-								</div>
-								<p>{t("pwSmartIssuesHint")}</p>
+						<PasswordImportWorkspace
+							candidates={candidates}
+							choices={choices}
+							preview={preview}
+							issueGroups={issueGroups}
+							fragmentTargets={fragmentTargets}
+							reviewSource={reviewSource}
+							savedCandidates={savedCandidates}
+							busy={!!busy}
+							outdated={outdated}
+							existing={vault.snapshot.entries}
+							onDraft={updateDraft}
+							onChoice={choose}
+							onAddAnother={addAnotherAccount}
+							onApplyFragment={applyFragment}
+							onOrganize={() => setConfirmation("titles")}
+							organizeRecords={aiPreview.records}
+							canOrganize={!!connection && !!aiPreview.records.length}
+						/>
+						<div className="pw-smart-footer">
+							<div className="pw-smart-counts">
+								<strong>
+									{t("pwSmartReviewedCount", { count: selected.length })}
+								</strong>
+								<span>{t("pwSmartPendingCount", { count: pendingCount })}</span>
 							</div>
-						)}
-						{candidates.length > 0 && (
-							<>
-								{candidates.some((row) => row.needsReview) && (
-									<p className="notice">{t("pwSmartInferredHint")}</p>
-								)}
-								{aiPreview.records.length > 0 && (
-									<div className="pw-smart-ai">
-										<p>{t("pwSmartAiHint")}</p>
-										<details>
-											<summary>
-												{t("pwSmartAiPreview", {
-													count: aiPreview.records.length,
-												})}
-											</summary>
-											<ul>
-												{aiPreview.records.map((row) => (
-													<li key={row.id}>
-														{row.id} · {row.host}
-													</li>
-												))}
-											</ul>
-										</details>
-										{connection ? (
-											<Button
-												onClick={() => void organize()}
-												disabled={
-													!!busy || outdated || !aiPreview.records.length
-												}
-											>
-												<Sparkles size={16} />
-												{t("pwSmartAiOrganize", { model: connection.model })}
-											</Button>
-										) : (
-											<p>
-												{t("pwSmartAiOptional")}{" "}
-												<TextLink asChild>
-													<Link to="/settings" hash="assistant" onClick={close}>
-														{t(settings ? "aiEnableKey" : "aiConfigure")}
-													</Link>
-												</TextLink>
-											</p>
-										)}
-									</div>
-								)}
-								<label className="pw-smart-check">
-									<input
-										type="checkbox"
-										checked={
-											preview?.rows.some((row) => row?.status === "new") ===
-												true &&
-											preview.rows.every(
-												(row, index) =>
-													row?.status !== "new" ||
-													choices[candidates[index].id]?.selected === true,
-											)
-										}
-										onChange={(event) => {
-											const checked = event.target.checked;
-											setChoices((current) =>
-												Object.fromEntries(
-													candidates.map((row, index) => [
-														row.id,
-														preview?.rows[index]?.status === "new"
-															? { selected: checked, action: "new" }
-															: current[row.id],
-													]),
-												),
-											);
-										}}
-										disabled={
-											!!busy ||
-											!preview?.rows.some((row) => row?.status === "new") ||
-											outdated
-										}
-									/>
-									{t("pwSmartSelectNew")}
-								</label>
-								<div className="pw-smart-rows">
-									{candidates.map((row, index) => (
-										<ImportRow
-											key={row.id}
-											row={row}
-											index={index}
-											plan={preview}
-											choice={
-												choices[row.id] ?? { selected: false, action: "new" }
-											}
-											disabled={!!busy || outdated}
-											onDraft={updateDraft}
-											onChoice={choose}
-											onAddAnother={addAnotherAccount}
-											existing={vault.snapshot.entries}
-											source={row.sourceSnapshot ?? reviewSource}
-											candidates={candidates.filter(
-												(candidate) =>
-													candidate.sourceSnapshot === row.sourceSnapshot,
-											)}
-										/>
-									))}
-								</div>
-								{pendingCount > 0 && (
-									<p className="notice" role="alert">
-										{t("pwSmartInvalidRows")}
-									</p>
-								)}
-							</>
-						)}
-						<div className="actions pw-smart-footer">
-							<Button
-								variant="primary"
-								onClick={() => void save()}
-								disabled={!!busy || outdated || !preview || !selected.length}
-							>
-								{t("pwSmartConfirm", { count: selected.length })}
-							</Button>
-						</div>
-						<details className="pw-smart-advanced">
-							<summary>{t("pwSmartAdvanced")}</summary>
 							<div className="actions">
-								<Button onClick={() => editSource()} disabled={!!busy}>
-									{t("pwSmartEditSource")}
+								<Button
+									onClick={() => setConfirmation("lock")}
+									disabled={busy === "save"}
+								>
+									<Lock size={18} />
+									{t("pwSmartLockClose")}
 								</Button>
-								<Button onClick={startMapping} disabled={!!busy}>
-									{t("pwSmartMap")}
+								<Button onClick={() => editSource()} disabled={!!busy}>
+									{t("pwSmartBack")}
+								</Button>
+								<Button
+									variant="primary"
+									onClick={() => setConfirmation("save")}
+									disabled={!!busy || outdated || !selected.length}
+								>
+									<Lock size={18} />
+									{t("pwSmartImportReviewed", { count: selected.length })}
 								</Button>
 							</div>
-						</details>
+						</div>
 					</div>
 				)}
 				{stage === "saved" && receipt && (
-					<p className="pw-smart-receipt" role="status">
-						{t("pwSmartSaved", receipt)}
-					</p>
+					<>
+						<p className="pw-smart-receipt" role="status">
+							{t("pwSmartSaved", receipt)}
+						</p>
+						<div className="actions">
+							<Button onClick={() => resetInput("")}>
+								{t("pwSmartPasteList")}
+							</Button>
+							<Button variant="primary" onClick={close}>
+								{t("pwVaultClose")}
+							</Button>
+						</div>
+					</>
 				)}
-				{busy && (
-					<p role="status">
-						{t(
-							busy === "ai"
-								? aiMode === "recognize"
-									? "pwSmartAiRecognitionBusy"
-									: "pwSmartAiBusy"
-								: "pwVaultBusy",
+				{busy && stage !== "input" && (
+					<div className="pw-smart-recognizing" role="status">
+						<LoaderCircle className="pw-smart-spinner" />
+						{t(busy === "ai" ? "pwSmartAiBusy" : "pwVaultBusy")}
+						{busy === "ai" && (
+							<Button onClick={cancelRecognition}>
+								{t("pwSmartCancelRecognition")}
+							</Button>
 						)}
-					</p>
+					</div>
 				)}
-				<div className="actions">
-					<Button onClick={close} disabled={busy === "save"}>
-						{t("pwVaultClose")}
-					</Button>
-					<Button
-						variant="ghost"
-						onClick={() => {
-							vault.lock();
-							close();
-						}}
-						disabled={busy === "save"}
-					>
-						<Lock size={15} />
-						{t("pwSmartLockClose")}
-					</Button>
-				</div>
 			</div>
+			{confirmation && (
+				<Dialog
+					className="pw-smart-confirm-dialog"
+					title={t(
+						confirmation === "ai"
+							? "pwSmartAiConfirmTitle"
+							: confirmation === "titles"
+								? "pwSmartOrganizeTitle"
+								: confirmation === "save"
+									? "pwSmartSaveTitle"
+									: confirmation === "close"
+										? "pwSmartCloseTitle"
+										: confirmation === "lock"
+											? "pwSmartLockTitle"
+											: confirmation === "model"
+												? "pwSmartModelDetails"
+												: "pwSmartReplaceTitle",
+					)}
+					onClose={() => setConfirmation(null)}
+					closeDisabled={busy === "save"}
+				>
+					{(confirmation === "ai" || confirmation === "model") && (
+						<>
+							<div className="pw-smart-model-details">
+								<strong>
+									{(confirmation === "model" &&
+									hasReview &&
+									reviewOrigin.kind === "ai"
+										? reviewOrigin.model
+										: (connection?.model ?? settings?.model)) ??
+										t("pwSmartModelMissing")}
+								</strong>
+								<span>
+									{confirmation === "model" &&
+									hasReview &&
+									reviewOrigin.kind === "ai"
+										? reviewOrigin.endpoint
+										: (connection?.baseURL ?? settings?.baseURL ?? "")}
+								</span>
+							</div>
+							<p>{t("pwSmartSendScope")}</p>
+							<p>{t("pwSmartExcludedScope")}</p>
+							{hasReview && source !== reviewSource && (
+								<p className="notice">{t("pwSmartSourceChangedHint")}</p>
+							)}
+						</>
+					)}
+					{confirmation === "titles" && (
+						<>
+							<p>{t("pwSmartOrganizeScope")}</p>
+							<div className="pw-smart-domain-table">
+								<div>
+									<strong>{t("pwSmartTempId")}</strong>
+									<strong>{t("pwSmartDomain")}</strong>
+								</div>
+								{aiPreview.records.map((row) => (
+									<div key={row.id}>
+										<span>{row.id}</span>
+										<span>{row.host}</span>
+									</div>
+								))}
+							</div>
+							<p>{t("pwSmartAiHint")}</p>
+						</>
+					)}
+					{confirmation === "save" && (
+						<>
+							<p>{t("pwSmartSaveCount", { count: selected.length })}</p>
+							<div className="pw-smart-save-counts">
+								<span>
+									{t("pwSmartAdded")}
+									<strong>{saveNewCount}</strong>
+								</span>
+								<span>
+									{t("pwSmartUpdated")}
+									<strong>{selected.length - saveNewCount}</strong>
+								</span>
+							</div>
+							<p>{t("pwSmartRemainingOpen", { count: pendingCount })}</p>
+						</>
+					)}
+					{(confirmation === "close" || confirmation === "lock") && (
+						<p>{t("pwSmartCloseClears")}</p>
+					)}
+					{confirmation.startsWith("replace-") && (
+						<p>{t("pwSmartSourceChangedHint")}</p>
+					)}
+					<div className="actions">
+						<Button
+							onClick={() => setConfirmation(null)}
+							disabled={busy === "save"}
+						>
+							{t(
+								confirmation === "close"
+									? "pwSmartKeepReviewing"
+									: confirmation === "save"
+										? "pwSmartBackToReview"
+										: "cancel",
+							)}
+						</Button>
+						{confirmation !== "model" && (
+							<Button
+								variant="primary"
+								disabled={
+									busy === "save" ||
+									(!!busy &&
+										confirmation !== "close" &&
+										confirmation !== "lock") ||
+									(confirmation === "save" && (outdated || !selected.length))
+								}
+								onClick={() => {
+									const action = confirmation;
+									setConfirmation(null);
+									if (action === "ai" || action === "replace-ai")
+										void recognizeWithAi();
+									if (action === "titles") void organize();
+									if (action === "save") void save();
+									if (action === "close") close();
+									if (action === "lock") {
+										vault.lock();
+										close();
+									}
+									if (action === "replace-local") recognize();
+								}}
+							>
+								{t(
+									confirmation === "ai"
+										? "pwSmartConfirmRecognition"
+										: confirmation === "titles"
+											? "pwSmartConfirmOrganize"
+											: confirmation === "save"
+												? "pwSmartSaveTitle"
+												: confirmation === "close"
+													? "pwSmartCloseAndClear"
+													: confirmation === "lock"
+														? "pwSmartLockClose"
+														: "pwSmartRecognize",
+								)}
+							</Button>
+						)}
+					</div>
+				</Dialog>
+			)}
 		</Dialog>
-	);
-}
-
-function ImportRow({
-	row,
-	index,
-	plan,
-	choice,
-	disabled,
-	onDraft,
-	onChoice,
-	onAddAnother,
-	existing,
-	source,
-	candidates,
-}: {
-	row: VaultImportCandidate;
-	index: number;
-	plan: ReviewPreview | null;
-	choice: Choice;
-	disabled: boolean;
-	onDraft: (
-		id: string,
-		field: keyof VaultEntryDraft,
-		value: string | string[],
-	) => void;
-	onChoice: (id: string, choice: Choice) => void;
-	onAddAnother: (id: string) => void;
-	existing: { id: string; title: string; username: string }[];
-	source: string;
-	candidates: VaultImportCandidate[];
-}) {
-	const { t } = useTranslation();
-	const status = plan?.rows[index]?.status;
-	const ids = plan?.rows[index]?.existingIds ?? [];
-	const updateOnly = plan?.rows[index]?.updateOnly;
-	const rowIssues = currentRowIssues(row, !!status);
-	const [expanded, setExpanded] = useState(index === 0 || rowIssues.length > 0);
-	const sourceAnchor =
-		row.sourceFields?.username?.line ??
-		row.sourceFields?.password?.line ??
-		row.sourceLine;
-	const fieldId = `pw-smart-${row.id}`;
-	return (
-		<article className="pw-smart-row" data-row-id={row.id}>
-			<div className="pw-smart-row-header">
-				<label className="pw-smart-check">
-					<input
-						type="checkbox"
-						checked={!!status && choice.selected && status !== "duplicate"}
-						disabled={
-							disabled ||
-							!status ||
-							status === "duplicate" ||
-							(status === "conflict" && choice.action === "skip")
-						}
-						onChange={(event) =>
-							onChoice(row.id, {
-								...choice,
-								action: status === "new" ? "new" : choice.action,
-								selected: event.target.checked,
-							})
-						}
-					/>
-					{t("pwSmartRow", { count: index + 1 })}
-				</label>
-				<span className="pw-smart-status">
-					{t(
-						row.updateTargetId
-							? "pwSmartStatus_update"
-							: `pwSmartStatus_${status ?? "invalid"}`,
-					)}
-				</span>
-			</div>
-			{rowIssues.length > 0 && (
-				<ul className="pw-smart-row-issues">
-					{rowIssues.map((issue) => (
-						<li key={`${issue.lineNumber}-${issue.code}`}>
-							{t(`pwSmartIssue_${issue.code}`, {
-								defaultValue: t("pwSmartIssueUnknown"),
-							})}
-						</li>
-					))}
-				</ul>
-			)}
-			<details
-				className="pw-smart-row-editor"
-				open={expanded}
-				onToggle={(event) => setExpanded(event.currentTarget.open)}
-			>
-				<summary className="pw-smart-row-summary">
-					<span>{row.draft.title || t("pwVaultEntryNew")}</span>
-					{row.draft.username && (
-						<span className="pw-smart-row-username">{row.draft.username}</span>
-					)}
-				</summary>
-				<VaultImportDraftFields
-					idPrefix={fieldId}
-					draft={row.draft}
-					disabled={disabled}
-					readOnlyIdentity={!!row.updateTargetId}
-					onChange={(field, value) => onDraft(row.id, field, value)}
-				/>
-				{expanded && (
-					<VaultImportSourceExcerpt
-						excerpt={buildVaultImportSourceExcerpt(
-							source,
-							rowIssues.length
-								? rowIssues.map((issue) =>
-										issue.code === "missing-password" ||
-										issue.code === "missing-identity"
-											? sourceAnchor
-											: issue.lineNumber,
-									)
-								: [sourceAnchor],
-							candidates,
-							row,
-						)}
-						source={source}
-						disabled={disabled}
-					/>
-				)}
-			</details>
-			{expanded && (
-				<div className="actions pw-smart-row-actions">
-					<Button
-						type="button"
-						onClick={() => onAddAnother(row.id)}
-						disabled={disabled}
-					>
-						{t("pwVaultAddAnotherAccount")}
-					</Button>
-				</div>
-			)}
-			{status === "conflict" && !row.updateTargetId && (
-				<label className="field" htmlFor={`${fieldId}-action`}>
-					<span>
-						{t(
-							updateOnly
-								? "pwSmartSamePasswordUpdateHint"
-								: "pwSmartConflictHint",
-						)}
-					</span>
-					<Select
-						id={`${fieldId}-action`}
-						value={
-							choice.action === "new"
-								? "new"
-								: choice.action === "update"
-									? `update:${choice.targetId}`
-									: "skip"
-						}
-						disabled={disabled}
-						onValueChange={(value) =>
-							onChoice(
-								row.id,
-								value === "skip"
-									? { selected: false, action: "skip" }
-									: value === "new"
-										? { selected: true, action: "new" }
-										: {
-												selected: true,
-												action: "update",
-												targetId: value.slice(7),
-											},
-							)
-						}
-					>
-						<SelectOption value="skip">{t("pwSmartKeepExisting")}</SelectOption>
-						<SelectOption value="new" disabled={updateOnly}>
-							{t("pwSmartCreateSeparate")}
-						</SelectOption>
-						{ids.map((id) => (
-							<SelectOption value={`update:${id}`} key={id}>
-								{t("pwSmartUpdateExisting", {
-									name: existing.find((entry) => entry.id === id)?.title ?? id,
-								})}
-							</SelectOption>
-						))}
-					</Select>
-				</label>
-			)}
-		</article>
 	);
 }

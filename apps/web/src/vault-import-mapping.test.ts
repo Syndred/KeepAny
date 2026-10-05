@@ -7,6 +7,15 @@ import {
 } from "./vault-import-mapping";
 
 describe("local password line mapping", () => {
+	it("keeps blank and whitespace-only rows visible with their original numbers", () => {
+		const rows = createVaultMappedLines("A\n  \n\nB");
+		expect(rows).toEqual([
+			{ lineNumber: 1, value: "A", field: "", startsEntry: true },
+			{ lineNumber: 2, value: "  ", field: "ignore", startsEntry: false },
+			{ lineNumber: 3, value: "", field: "ignore", startsEntry: false },
+			{ lineNumber: 4, value: "B", field: "", startsEntry: true },
+		]);
+	});
 	it("keeps corrected unresolved lines and source separators when returning to the source", () => {
 		const source = "\uFEFFA\r\np\r\n\r\nextra";
 		const rows = createVaultMappedLines(source).map((row) =>
@@ -37,10 +46,15 @@ describe("local password line mapping", () => {
 	it("separates blank-line groups and explicit boundaries while mapping original line numbers", () => {
 		const lines = createVaultMappedLines("A\np1\n\nB\np2\nC\np3");
 		const result = parseVaultMappedLines(
-			lines.map((row, index) => ({
+			lines.map((row) => ({
 				...row,
-				field: index % 2 ? "password" : "title",
-				startsEntry: index % 2 === 0,
+				field:
+					row.lineNumber === 3
+						? "ignore"
+						: [1, 4, 6].includes(row.lineNumber)
+							? "title"
+							: "password",
+				startsEntry: [1, 4, 6].includes(row.lineNumber),
 			})),
 		);
 		expect(
@@ -57,14 +71,14 @@ describe("local password line mapping", () => {
 		expect(result.issues).toEqual([]);
 	});
 	it("rejects missing passwords and duplicate fields without losing their source locations", () => {
-		const rows = createVaultMappedLines("A\none\ntwo\n\nB").map(
-			(row, index) => ({
-				...row,
-				field: (index === 0 || index === 3
+		const rows = createVaultMappedLines("A\none\ntwo\n\nB").map((row) => ({
+			...row,
+			field: (row.lineNumber === 4
+				? "ignore"
+				: row.lineNumber === 1 || row.lineNumber === 5
 					? "title"
 					: "password") as VaultMappedField,
-			}),
-		);
+		}));
 		const result = parseVaultMappedLines(rows);
 		expect(result.candidates).toEqual([]);
 		expect(result.issues).toEqual([
@@ -88,10 +102,12 @@ describe("local password line mapping", () => {
 		const fields: VaultMappedField[] = [
 			"title",
 			"password",
+			"ignore",
 			"title",
 			"username",
 			"password",
 			"url",
+			"ignore",
 			"ignore",
 		];
 		const result = parseVaultMappedLines(
@@ -100,7 +116,7 @@ describe("local password line mapping", () => {
 			).map((row, index) => ({ ...row, field: fields[index] })),
 		);
 		expect(result.candidates).toHaveLength(1);
-		expect(result.handledLines).toEqual([9, 1, 2]);
+		expect(result.handledLines).toEqual([3, 8, 9, 1, 2]);
 		expect(result.issues).toContainEqual({
 			lineNumber: 4,
 			code: "invalid-url",

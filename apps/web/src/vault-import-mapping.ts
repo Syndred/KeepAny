@@ -30,12 +30,14 @@ export function createVaultMappedLines(source: string): VaultMappedLine[] {
 		.replace(/^\uFEFF/, "")
 		.split(/\r\n|\n|\r/)
 		.entries()) {
-		if (!value.trim()) {
-			startsEntry = true;
-			continue;
-		}
-		rows.push({ lineNumber: index + 1, value, field: "", startsEntry });
-		startsEntry = false;
+		const blank = !value.trim();
+		rows.push({
+			lineNumber: index + 1,
+			value,
+			field: blank ? "ignore" : "",
+			startsEntry: !blank && startsEntry,
+		});
+		startsEntry = blank;
 		// Bound the number of controls as well as source bytes.
 		if (rows.length > VAULT_IMPORT_MAX_ENTRIES * 10)
 			throw Error("vault-import-limit");

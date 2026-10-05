@@ -172,13 +172,13 @@ export function PasswordVaultPanel({
 		setManualCopy(null);
 		setImportPassword("");
 		setImportOpen(false);
-		setSmartImportOpen(false);
+		if (notice !== "pwVaultLockedElsewhere") setSmartImportOpen(false);
 		setChangeMasterOpen(false);
 		setBusy(false);
 		setCurrentMaster("");
 		setNewMaster("");
 		setNewMasterConfirm("");
-	}, [snapshot.status]);
+	}, [snapshot.status, notice]);
 
 	useEffect(() => {
 		if (
@@ -554,12 +554,14 @@ export function PasswordVaultPanel({
 
 	return (
 		<section className="password-vault-panel card padded">
-			{smartImportOpen && snapshot.status === "unlocked" && (
-				<PasswordSmartImportDialog
-					onClose={() => setSmartImportOpen(false)}
-					onSaved={(message) => notify?.(message)}
-				/>
-			)}
+			{smartImportOpen &&
+				(snapshot.status === "unlocked" ||
+					notice === "pwVaultLockedElsewhere") && (
+					<PasswordSmartImportDialog
+						onClose={() => setSmartImportOpen(false)}
+						onSaved={(message) => notify?.(message)}
+					/>
+				)}
 			<header className="password-vault-header card-header">
 				<div>
 					<p className="password-vault-eyebrow">

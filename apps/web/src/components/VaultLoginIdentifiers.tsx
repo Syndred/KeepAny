@@ -1,4 +1,4 @@
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "./ui/button";
@@ -9,11 +9,13 @@ export function VaultLoginIdentifiers({
 	values = [],
 	disabled,
 	primary,
+	compact = false,
 	onChange,
 }: {
 	idPrefix: string;
 	values?: string[];
 	disabled: boolean;
+	compact?: boolean;
 	primary?: {
 		id: string;
 		value: string;
@@ -60,11 +62,15 @@ export function VaultLoginIdentifiers({
 		</Button>
 	);
 	return (
-		<div className="pw-smart-identifiers">
+		<div
+			className={`pw-smart-identifiers${compact ? " pw-smart-identifiers-compact" : ""}`}
+		>
 			{primary ? (
 				<div className="field pw-smart-primary-identifier">
 					<div className="pw-smart-field-heading">
-						<label htmlFor={primary.id}>{t("pwVaultUsernameField")}</label>
+						<label htmlFor={primary.id}>
+							{t(compact ? "pwSmartAccountField" : "pwVaultUsernameField")}
+						</label>
 						{add}
 					</div>
 					<input
@@ -81,6 +87,11 @@ export function VaultLoginIdentifiers({
 			) : (
 				<div className="pw-smart-identifier-actions">{add}</div>
 			)}
+			{compact && values.length > 0 && (
+				<span className="pw-import-alias-caption">
+					{t("pwSmartOtherIdentifiers")}
+				</span>
+			)}
 			{values
 				.map((value, index) => ({ value, index, key: keys[index] }))
 				.map(({ value, index, key }) => (
@@ -92,6 +103,14 @@ export function VaultLoginIdentifiers({
 							<input
 								id={`${idPrefix}-identifier-${index + 1}`}
 								value={value}
+								title={compact ? value : undefined}
+								style={
+									compact
+										? {
+												width: `calc(${Math.max(6, Math.min(28, value.length + 1))}ch + 18px)`,
+											}
+										: undefined
+								}
 								onChange={(event) =>
 									onChange(
 										values.map((item, i) =>
@@ -116,7 +135,7 @@ export function VaultLoginIdentifiers({
 							}}
 							disabled={disabled}
 						>
-							<Trash2 size={16} />
+							{compact ? <X size={14} /> : <Trash2 size={16} />}
 						</Button>
 					</div>
 				))}
