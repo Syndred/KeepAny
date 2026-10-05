@@ -77,10 +77,7 @@ export const smartImportCopy: Record<string, [string, string]> = {
 	pwSmartFillMenu: ["填入…", "Fill…"],
 	pwSmartChangeTarget: ["更换条目", "Change entry"],
 	pwSmartPasswordMissing: ["待补全", "Incomplete"],
-	pwSmartPasswordPlaceholder: [
-		"输入密码，或从上方原文填入",
-		"Enter a password or fill from the source above",
-	],
+	pwSmartPasswordPlaceholder: ["输入或粘贴密码", "Enter or paste a password"],
 	pwSmartNotesPlaceholder: ["补充说明", "Additional notes"],
 	pwSmartMapLineColumn: ["行号", "Line"],
 	pwSmartMapContentColumn: ["原文内容", "Source content"],
