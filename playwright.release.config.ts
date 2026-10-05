@@ -34,6 +34,7 @@ export default defineConfig({
 		"vault-reference-release.spec.ts",
 		"password-vault.spec.ts",
 		"password-smart-import.spec.ts",
+		"password-smart-import-visual.spec.ts",
 		"themed-select.spec.ts",
 		"spacing-consistency.spec.ts",
 		"task-theme-release.spec.ts",
