@@ -131,7 +131,7 @@ export function VaultImportDraftFields({
 									disabled={disabled}
 									autoComplete="off"
 									spellCheck={false}
-									rows={2}
+									rows={Math.min(6, draft.password.split(/\r\n|\r|\n/).length)}
 								/>
 							) : (
 								<input
