@@ -1,3 +1,5 @@
+import { mkdirSync } from "node:fs";
+import { join } from "node:path";
 import { expect, type Locator, type Page, test } from "@playwright/test";
 import {
 	inspectVisualKdbx,
@@ -542,3 +544,135 @@ for (const [locale, width] of [
 		}
 	});
 }
+
+for (const locale of ["zh-CN", "en"] as const)
+	for (const width of [390, 1280]) {
+		test(`${locale} ${width}px optional passwords and unchanged source review save to KDBX`, async ({
+			browser,
+		}) => {
+			const h = await visualHarness(browser, locale, { width, height: 900 });
+			try {
+				await h.configure();
+				await h.createVault();
+				let importer = await h.open();
+				await recognize(
+					h,
+					importer,
+					"name,username,notes\nSynthetic Google app,demo@example.test,Sign in with Google",
+				);
+				await expect(importer.locator(".pw-work-list-row")).toHaveCount(1);
+				await expect(field(editor(importer), "password")).toHaveValue("");
+				await expect(
+					editor(importer).getByText(h.t("pwSmartPasswordOptional"), {
+						exact: true,
+					}),
+				).toBeVisible();
+				await expect(
+					button(importer, /^(导入已核对的 0 条|Import 0 reviewed)$/),
+				).toBeDisabled();
+				if (width === 1280) {
+					await button(importer, /^(批量核对|Bulk review)$/).click();
+					await h.page
+						.getByRole("dialog")
+						.last()
+						.getByRole("button", {
+							name: /^(已核对，全部选入|Reviewed, select all)$/,
+							exact: true,
+						})
+						.click();
+				} else {
+					await button(
+						importer,
+						/^(核对完成，下一条|Reviewed, next entry)$/,
+					).click();
+				}
+				await save(h.page, importer);
+				await close(h.page);
+				const local = await exported(h);
+				expect(
+					local.map((item) => [
+						item.draft.title,
+						item.draft.password,
+						item.draft.notes,
+					]),
+				).toEqual([["Synthetic Google app", "", "Sign in with Google"]]);
+				importer = await h.open();
+				const fixture = recognitionFixture([
+					{
+						title: "Synthetic SSO app",
+						username: "sso@example.test",
+						password: "",
+					},
+				]);
+				// Leave a source line unassigned beside an otherwise complete AI candidate.
+				fixture.source =
+					fixture.source.trimEnd() + "\nAdditional source context";
+				h.mock.responses.push(fixture.response);
+				await importer.locator("#pw-smart-source").fill(fixture.source);
+				await ai(h.page, importer);
+				await expect(importer.locator(".pw-work-list-row")).toHaveCount(2);
+				await importer.locator(".pw-work-list-row[data-source-group]").click();
+				const form = importer.locator(
+					".pw-work-fragment:not([hidden]) .pw-smart-fragment-form",
+				);
+				await expect(field(form, "title")).toHaveValue("Synthetic SSO app");
+				await expect(
+					form.getByText(h.t("pwSmartFragmentHint"), { exact: true }),
+				).toBeVisible();
+				await expect(
+					form.getByRole("button", {
+						name: h.t("pwSmartFragmentApply"),
+						exact: true,
+					}),
+				).toBeEnabled();
+				const evidence =
+					process.env.KEEPANY_EVIDENCE_DIR ??
+					test.info().outputPath("evidence");
+				mkdirSync(evidence, { recursive: true });
+				await expect(h.page.locator(".toast")).toBeHidden();
+				await h.page.screenshot({
+					path: join(evidence, `optional-password-${locale}-${width}.png`),
+					fullPage: true,
+				});
+				if (width === 390) {
+					await form
+						.getByRole("button", {
+							name: h.t("pwSmartFragmentApply"),
+							exact: true,
+						})
+						.scrollIntoViewIfNeeded();
+					await h.page.screenshot({
+						path: join(
+							evidence,
+							`optional-password-${locale}-${width}-actions.png`,
+						),
+					});
+				}
+				expect(
+					await h.page.evaluate(
+						() => document.documentElement.scrollWidth <= innerWidth,
+					),
+				).toBe(true);
+				await form
+					.getByRole("button", {
+						name: h.t("pwSmartFragmentApply"),
+						exact: true,
+					})
+					.click();
+				await expect(
+					importer.locator(".pw-work-list-row[data-source-group]"),
+				).toHaveCount(0);
+				await save(h.page, importer);
+				await close(h.page);
+				const rows = await exported(h);
+				expect(rows).toHaveLength(2);
+				expect(
+					rows.find((item) => item.draft.title === "Synthetic SSO app")?.draft
+						.password,
+				).toBe("");
+				expect(h.errors).toEqual([]);
+			} finally {
+				await h.close();
+			}
+		});
+	}

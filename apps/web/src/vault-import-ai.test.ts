@@ -51,6 +51,31 @@ function answer(records: unknown[], ignoredLines: number[] = []) {
 afterEach(() => vi.resetAllMocks());
 
 describe("configured AI password recognition", () => {
+	it("keeps Google sign-in details without inventing a password or blocking review", async () => {
+		answer([
+			record({
+				title: { line: 1 },
+				username: { line: 2 },
+				notes: { line: 3 },
+			}),
+		]);
+		const result = await requestVaultImportAiRecognition(
+			connection,
+			"Example\nreader@example.test\nGoogle sign-in",
+		);
+		expect(result.issues).toEqual([]);
+		expect(result.candidates).toHaveLength(1);
+		expect(result.candidates[0]).toMatchObject({
+			needsReview: true,
+			draft: {
+				title: "Example",
+				username: "reader@example.test",
+				password: "",
+				notes: "Google sign-in",
+			},
+		});
+		expect(result.candidates[0].reviewIssues).toBeUndefined();
+	});
 	it("extracts email, handle and phone alternatives only from individually proven source references", async () => {
 		const source =
 			"网站=Example\n邮箱=reader@example.test\n用户名=synthetic-handle\n手机号=+15550123456\n密码=synthetic-password";
@@ -596,7 +621,7 @@ describe("configured AI password recognition", () => {
 		);
 		expect(result.candidates).toHaveLength(3);
 		expect(result.candidates.map(({ reviewIssues }) => reviewIssues)).toEqual([
-			[{ lineNumber: 1, code: "missing-password" }],
+			undefined,
 			[{ lineNumber: 2, code: "missing-identity" }],
 			[{ lineNumber: 5, code: "invalid-url" }],
 		]);
@@ -625,9 +650,8 @@ describe("configured AI password recognition", () => {
 			"网站=Example\n登录账号=reader@example.test\nunknown-synthetic-secret",
 		);
 		expect(result.candidates).toHaveLength(1);
-		expect(result.candidates[0].reviewIssues).toEqual([
-			{ lineNumber: 1, code: "missing-password" },
-		]);
+		expect(result.candidates[0].reviewIssues).toBeUndefined();
+		expect(result.candidates[0].needsReview).toBe(true);
 		expect(result.issues).toEqual([
 			{ lineNumber: 3, code: "unrecognized-line" },
 		]);

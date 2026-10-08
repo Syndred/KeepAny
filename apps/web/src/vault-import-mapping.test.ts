@@ -70,7 +70,7 @@ describe("local password line mapping", () => {
 		]);
 		expect(result.issues).toEqual([]);
 	});
-	it("rejects missing passwords and duplicate fields without losing their source locations", () => {
+	it("accepts passwordless entries while rejecting duplicate fields at their source locations", () => {
 		const rows = createVaultMappedLines("A\none\ntwo\n\nB").map((row) => ({
 			...row,
 			field: (row.lineNumber === 4
@@ -80,11 +80,13 @@ describe("local password line mapping", () => {
 					: "password") as VaultMappedField,
 		}));
 		const result = parseVaultMappedLines(rows);
-		expect(result.candidates).toEqual([]);
-		expect(result.issues).toEqual([
-			{ lineNumber: 3, code: "duplicate-field" },
-			{ lineNumber: 5, code: "missing-password" },
-		]);
+		expect(result.candidates).toHaveLength(1);
+		expect(result.candidates[0]).toMatchObject({
+			sourceLine: 5,
+			needsReview: true,
+			draft: { title: "B", password: "" },
+		});
+		expect(result.issues).toEqual([{ lineNumber: 3, code: "duplicate-field" }]);
 	});
 	it("allows an explicit ignore without assigning unknown lines to credentials", () => {
 		const fields: VaultMappedField[] = ["title", "password", "ignore"];

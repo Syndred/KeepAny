@@ -62,7 +62,7 @@ function previewCandidates(
 	candidates: VaultImportCandidate[],
 ): ReviewPreview | null {
 	let indexes = candidates.flatMap((row, index) =>
-		row.draft.title.trim() && row.draft.password ? [index] : [],
+		row.draft.title.trim() ? [index] : [],
 	);
 	try {
 		let plan: ReturnType<VaultSession["previewImport"]>;
@@ -781,8 +781,24 @@ export function PasswordSmartImportDialog({
 			JSON.stringify(validated.candidates[0].draft.usernameAliases ?? []) ===
 				JSON.stringify(target.draft.usernameAliases ?? [])
 		) {
-			setMessage(t("pwSmartFragmentNoChange"));
-			return false;
+			// Reviewing an already complete entry must not require a dummy edit.
+			const handled = new Set(
+				group.issues.map((issue) => `${issue.lineNumber}:${issue.code}`),
+			);
+			setIssues((current) =>
+				current.filter(
+					(issue) => !handled.has(`${issue.lineNumber}:${issue.code}`),
+				),
+			);
+			const index = candidates.findIndex((row) => row.id === target.id);
+			if (index >= 0 && preview?.rows[index]?.status === "new") {
+				setChoices((current) => ({
+					...current,
+					[target.id]: { selected: true, action: "new" },
+				}));
+			}
+			setMessage(t("pwSmartFragmentReviewed"));
+			return true;
 		}
 		const existingIndex = target
 			? candidates.findIndex((row) => row.id === target.id)

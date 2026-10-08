@@ -1,10 +1,7 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { VaultEntryDraft } from "../../../../packages/password-vault/src";
-import {
-	type VaultImportCandidate,
-	withFilledVaultIdentifiers,
-} from "../vault-import-model";
+import type { VaultImportCandidate } from "../vault-import-model";
 import { resolveVaultImportQuickFill } from "../vault-import-quick-fill";
 import type { VaultImportSourceExcerpt as SourceExcerpt } from "../vault-import-source";
 import { Button } from "./ui/button";
@@ -118,16 +115,6 @@ export function VaultImportFragmentForm({
 		(["title", "username", "password", "url", "notes"] as const).some(
 			(field) => draft[field].length > 0,
 		);
-	const hasChanges =
-		mode === "new" ||
-		(!!draft &&
-			!!target &&
-			((["title", "username", "password", "url", "notes"] as const).some(
-				(field) => draft[field] !== target.draft[field],
-			) ||
-				JSON.stringify(
-					withFilledVaultIdentifiers(draft).usernameAliases ?? [],
-				) !== JSON.stringify(target.draft.usernameAliases ?? [])));
 
 	function selectTarget(nextId: string) {
 		if (nextId === "new") {
@@ -254,9 +241,7 @@ export function VaultImportFragmentForm({
 								onChange={changeField}
 							/>
 						)}
-						{mode === "existing" && target && !hasChanges && (
-							<p className="pw-smart-hint">{t("pwSmartFragmentNoChange")}</p>
-						)}
+						<p className="pw-smart-hint">{t("pwSmartFragmentHint")}</p>
 						<div className="actions pw-smart-fragment-actions">
 							<Button
 								type="button"
@@ -281,13 +266,13 @@ export function VaultImportFragmentForm({
 								type="button"
 								variant="primary"
 								onClick={() => {
-									if (!draft || !canEdit || !hasContent || !hasChanges) return;
+									if (!draft || !canEdit || !hasContent) return;
 									const applyTargetId = mode === "new" ? null : target?.id;
 									if (applyTargetId === undefined) return;
 									if (onApply(applyTargetId, copyDraft(draft)))
 										setExpanded(false);
 								}}
-								disabled={disabled || !canEdit || !hasContent || !hasChanges}
+								disabled={disabled || !canEdit || !hasContent}
 							>
 								{t("pwSmartFragmentApply")}
 							</Button>

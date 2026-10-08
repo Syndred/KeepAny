@@ -27,6 +27,32 @@ const candidates = () => parseVaultImportText(text).candidates;
 afterEach(() => vi.resetAllMocks());
 
 describe("local password paste parsing", () => {
+	it("accepts passwordless sign-ins and requires explicit review without missing-field errors", () => {
+		for (const input of [
+			"title=Example;username=reader@example.test;notes=Google sign-in",
+			"title=Example\npassword=",
+			"name,username,password,notes\nExample,reader@example.test,,Google sign-in",
+			"name,email,notes\nExample,reader@example.test,Google sign-in",
+		]) {
+			const result = parseVaultImportText(input);
+			expect(result.issues).toEqual([]);
+			expect(result.candidates).toHaveLength(1);
+			expect(result.candidates[0]).toMatchObject({
+				needsReview: true,
+				draft: { title: "Example", password: "" },
+			});
+		}
+		const validated = validateVaultImportFields({
+			title: "Example",
+			username: "reader@example.test",
+			notes: "Google sign-in",
+		});
+		expect(validated.issues).toEqual([]);
+		expect(validated.candidates[0]).toMatchObject({
+			needsReview: true,
+			draft: { password: "", notes: "Google sign-in" },
+		});
+	});
 	it("retains exact alternative identifiers while ignoring empty optional form rows", () => {
 		const values = {
 			title: "App",
@@ -386,14 +412,17 @@ describe("local password paste parsing", () => {
 		const result = parseVaultImportText(
 			"GitHub user pass\n\n标题=Explicit\n账号=reader\n\n密码=lonely\n\n标题=Known\n密码=actual\nunknown: leftovers",
 		);
-		expect(result.candidates).toHaveLength(1);
+		expect(result.candidates).toHaveLength(2);
 		expect(result.candidates[0]).toMatchObject({
+			needsReview: true,
+			draft: { title: "Explicit", username: "reader", password: "" },
+		});
+		expect(result.candidates[1]).toMatchObject({
 			aiEligible: false,
 			draft: { title: "Known", password: "actual" },
 		});
 		expect(result.issues.map(({ code }) => code)).toEqual([
 			"unrecognized-line",
-			"missing-password",
 			"missing-identity",
 			"unknown-field",
 		]);
@@ -405,7 +434,6 @@ describe("local password paste parsing", () => {
 			"title=A;password=p;secret=x",
 			'title=A;password="broken',
 			"title=A\npassword=one\npassword=two",
-			"title=A\npassword=",
 			"password=alone",
 		]) {
 			const result = parseVaultImportText(input);

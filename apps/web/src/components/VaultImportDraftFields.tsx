@@ -100,15 +100,10 @@ export function VaultImportDraftFields({
 				</div>
 				<div className="field pw-smart-field-password">
 					<label htmlFor={`${idPrefix}-password`}>
-						{t("pwVaultPasswordField")}
-						{!draft.password && (
-							<span className="pw-import-missing">
-								{t("pwSmartPasswordMissing")}
-							</span>
-						)}
+						{t("pwSmartPasswordOptional")}
 					</label>
 					<div className="pw-import-input-control">
-						<div className="pw-smart-password" data-missing={!draft.password}>
+						<div className="pw-smart-password">
 							{multilinePassword ? (
 								<textarea
 									id={`${idPrefix}-password`}

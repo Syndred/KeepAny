@@ -248,8 +248,7 @@ export function PasswordImportWorkspace(props: PasswordImportWorkspaceProps) {
 			preview?.rows[index]?.status === "new" &&
 			!reviewed(candidate, index) &&
 			!validateVaultImportFields(candidate.draft).issues.length &&
-			!!candidate.draft.title.trim() &&
-			!!candidate.draft.password,
+			!!candidate.draft.title.trim(),
 	);
 
 	useEffect(() => {
@@ -290,15 +289,10 @@ export function PasswordImportWorkspace(props: PasswordImportWorkspaceProps) {
 		const valid =
 			!!plan &&
 			!!row.draft.title.trim() &&
-			!!row.draft.password &&
 			!validateVaultImportFields(row.draft).issues.length;
 		if (!valid) {
 			setAttempted(row.id);
-			const field = !row.draft.title.trim()
-				? "title"
-				: !row.draft.password
-					? "password"
-					: "url";
+			const field = !row.draft.title.trim() ? "title" : "url";
 			const input = document.getElementById(`pw-smart-${row.id}-${field}`);
 			input?.focus();
 			return;
@@ -315,7 +309,6 @@ export function PasswordImportWorkspace(props: PasswordImportWorkspaceProps) {
 	function statusKey(candidate: VaultImportCandidate, index: number) {
 		if (reviewed(candidate, index)) return "pwWorkReviewed";
 		if (!candidate.draft.title.trim()) return "pwWorkMissingName";
-		if (!candidate.draft.password) return "pwWorkMissingPassword";
 		if (candidate.updateTargetId) return "pwWorkUpdate";
 		const status = preview?.rows[index]?.status;
 		return status === "conflict"
@@ -439,7 +432,7 @@ export function PasswordImportWorkspace(props: PasswordImportWorkspaceProps) {
 						const candidate = item.candidate;
 						const key = candidate
 							? statusKey(candidate, item.index)
-							: "pwWorkInvalid";
+							: "pwWorkSourceReview";
 						return (
 							<button
 								type="button"
@@ -608,9 +601,6 @@ export function PasswordImportWorkspace(props: PasswordImportWorkspaceProps) {
 									? {
 											...(!row.draft.title.trim()
 												? { title: t("pwWorkNameRequired") }
-												: {}),
-											...(!row.draft.password
-												? { password: t("pwWorkPasswordRequired") }
 												: {}),
 											...(validateVaultImportFields(row.draft).issues.some(
 												(issue) => issue.code === "invalid-url",

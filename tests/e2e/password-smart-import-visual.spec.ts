@@ -86,8 +86,10 @@ async function seedMain(h: Awaited<ReturnType<typeof visualHarness>>) {
 		.click();
 	const bulk = h.page.getByRole("dialog").last();
 	// The fixture's 47 background entries are reviewed through the actual batch UI.
-	// Four valid pending brand accounts remain unchecked; missing/conflict entries are absent.
+	// Keep pending accounts unchecked, including accounts with optional empty passwords.
 	for (const username of [
+		"alex@example.com",
+		"design@example.com",
 		"work@example.com",
 		"dev@example.com",
 		"studio@example.com",
@@ -329,12 +331,14 @@ test("zh-CN account editing source copy and paste controls", async ({
 			"03-C",
 			"Notes and an optional valid website are editable.",
 		);
+		await field(importer, "title").fill("");
 		await importer.getByRole("button", { name: /核对完成.*下一条/ }).click();
-		await expect(field(importer, "password")).toBeFocused();
+		await expect(field(importer, "title")).toBeFocused();
 		await evidence.capture(
 			"03-D",
-			"Review of a missing password focuses the missing field.",
+			"Review of a missing name focuses the required name field.",
 		);
+		await field(importer, "title").fill("Outlook");
 		const source = editor(importer).locator(".pw-import-source-card");
 		await h.context.grantPermissions(["clipboard-read", "clipboard-write"]);
 		await source

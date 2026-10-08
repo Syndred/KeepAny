@@ -159,10 +159,11 @@ export function parseVaultImportText(text: string): VaultImportResult {
 			.data[0] ?? [];
 	const headerFields = first.map(getField);
 	if (
-		headerFields.includes("password") &&
-		headerFields.some(
-			(field) => field === "title" || field === "username" || field === "url",
-		)
+		(headerFields.includes("password") &&
+			headerFields.some(
+				(field) => field === "title" || field === "username" || field === "url",
+			)) ||
+		(headerFields.includes("title") && headerFields.includes("username"))
 	) {
 		parseCsv(input, first, result);
 	} else {
@@ -259,10 +260,6 @@ function finishBlock(
 		issue(result, block.line, "invalid-field");
 		return;
 	}
-	if (value.password === undefined || value.password === "") {
-		issue(result, block.line, "missing-password");
-		if (!keepIncomplete) return;
-	}
 	const url = normalizeUrl(value.url ?? "");
 	if (url === null) {
 		issue(result, block.line, "invalid-url");
@@ -302,12 +299,15 @@ function finishBlock(
 		issue(result, block.line, "unsupported-type");
 		return;
 	}
+	// Unclear local source may contain a password we failed to parse. Keep it
+	// unresolved instead of treating that ambiguity as a passwordless login.
+	if (!draft.password && block.uncertain && !keepIncomplete) return;
 	result.candidates.push({
 		id: `vault-import-${result.candidates.length + 1}`,
 		sourceLine: block.line,
 		draft,
 		aiEligible: !block.uncertain,
-		...(block.needsReview ? { needsReview: true } : {}),
+		...(block.needsReview || !draft.password ? { needsReview: true } : {}),
 		...(keepIncomplete && result.issues.length
 			? { reviewIssues: [...result.issues] }
 			: {}),
