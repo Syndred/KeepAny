@@ -1,6 +1,6 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { FileText, LoaderCircle, Lock } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type {
 	VaultEntryDraft,
@@ -34,6 +34,10 @@ import {
 	buildVaultImportSourceExcerpt,
 	groupVaultImportIssues,
 } from "../vault-import-source";
+import { readImportDraft, type ImportDraft } from "../vault-import-draft";
+import { useVaultImportDraft } from "../use-vault-import-draft";
+import type { WorkspaceDraftState } from "./PasswordImportWorkspace";
+import type { FragmentDraftState } from "./VaultImportFragmentForm";
 import { PasswordImportMapping } from "./PasswordImportMapping";
 import { PasswordImportWorkspace } from "./PasswordImportWorkspace";
 import { usePasswordVault } from "./PasswordVaultProvider";
@@ -140,6 +144,7 @@ export function PasswordSmartImportDialog({
 	onSaved: (message: string) => void;
 }) {
 	const { t } = useTranslation();
+	const navigate = useNavigate();
 	const vault = usePasswordVault();
 	const {
 		connection,
@@ -147,6 +152,38 @@ export function PasswordSmartImportDialog({
 		revision: aiRevision,
 		activateVaultKey,
 	} = useAiConnection();
+	const [initialDraft] = useState(() => {
+		let raw: string | null = null;
+		try {
+			raw = vault.session?.readImportDraft() ?? null;
+			return { raw, value: readImportDraft(raw), failed: false };
+		} catch {
+			return { raw, value: null, failed: true };
+		}
+	});
+	const restored = initialDraft.value;
+	const [workspaceState, setWorkspaceState] = useState<
+		WorkspaceDraftState | undefined
+	>(restored?.workspaceState);
+	const [fragmentStates, setFragmentStates] = useState<
+		Record<string, FragmentDraftState>
+	>(restored?.fragmentStates ?? {});
+	const [draftClosing, setDraftClosing] = useState(false);
+	const keepWorkspaceState = useCallback((next: WorkspaceDraftState) => {
+		setWorkspaceState((before) =>
+			JSON.stringify(before) === JSON.stringify(next) ? before : next,
+		);
+	}, []);
+	const keepFragmentState = useCallback(
+		(id: string, next: FragmentDraftState) => {
+			setFragmentStates((before) =>
+				JSON.stringify(before[id]) === JSON.stringify(next)
+					? before
+					: { ...before, [id]: next },
+			);
+		},
+		[],
+	);
 	const [confirmation, setConfirmation] = useState<
 		| "ai"
 		| "titles"
@@ -160,41 +197,57 @@ export function PasswordSmartImportDialog({
 	>(null);
 	const [unlockPassword, setUnlockPassword] = useState("");
 	const [unlockBusy, setUnlockBusy] = useState(false);
-	const [source, setSource] = useState("");
-	const [reviewSource, setReviewSource] = useState("");
-	const [reviewVersion, setReviewVersion] = useState(0);
+	const [source, setSource] = useState(restored?.source ?? "");
+	const [reviewSource, setReviewSource] = useState(
+		restored?.reviewSource ?? "",
+	);
+	const [reviewVersion, setReviewVersion] = useState(
+		restored?.reviewVersion ?? 0,
+	);
 	const [sourceSelection, setSourceSelection] = useState<{
 		start: number;
 		end: number;
 	} | null>(null);
 	const sourceInput = useRef<HTMLTextAreaElement | null>(null);
 	const [file, setFile] = useState<File | null>(null);
-	const [candidates, setCandidates] = useState<VaultImportCandidate[]>([]);
+	const [candidates, setCandidates] = useState<VaultImportCandidate[]>(
+		restored?.candidates ?? [],
+	);
 	const [savedCandidates, setSavedCandidates] = useState<
 		VaultImportCandidate[]
-	>([]);
-	const manualSequence = useRef(0);
-	const issueGroupIds = useRef(new Map<string, string>());
-	const [issues, setIssues] = useState<VaultImportIssue[]>([]);
-	const [choices, setChoices] = useState<Record<string, Choice>>({});
-	const [stage, setStage] = useState<"input" | "mapping" | "review" | "saved">(
-		"input",
+	>(restored?.savedCandidates ?? []);
+	const manualSequence = useRef(restored?.manualSequence ?? 0);
+	const issueGroupIds = useRef(
+		new Map<string, string>(restored?.issueGroupIds ?? []),
 	);
-	const [mappedLines, setMappedLines] = useState<VaultMappedLine[]>([]);
+	const [issues, setIssues] = useState<VaultImportIssue[]>(
+		restored?.issues ?? [],
+	);
+	const [choices, setChoices] = useState<Record<string, Choice>>(
+		restored?.choices ?? {},
+	);
+	const [stage, setStage] = useState<"input" | "mapping" | "review" | "saved">(
+		restored?.stage ?? "input",
+	);
+	const [mappedLines, setMappedLines] = useState<VaultMappedLine[]>(
+		restored?.mappedLines ?? [],
+	);
 	const [busy, setBusy] = useState<"file" | "ai" | "save" | null>(null);
-	const [reviewOrigin, setReviewOrigin] = useState<ReviewOrigin>({
-		kind: "local",
-	});
+	const [reviewOrigin, setReviewOrigin] = useState<ReviewOrigin>(
+		restored?.reviewOrigin ?? { kind: "local" },
+	);
 	const [message, setMessage] = useState("");
 	const [receipt, setReceipt] = useState<{
 		added: number;
 		updated: number;
 		skipped: number;
-	} | null>(null);
+	} | null>(restored?.receipt ?? null);
 	const running = useRef<"file" | "ai" | "save" | null>(null);
 	const generation = useRef(0);
 	const controller = useRef<AbortController | null>(null);
-	const baseRevision = useRef<string | null>(null);
+	const baseRevision = useRef<string | null>(
+		restored?.baseContentRevision ?? null,
+	);
 	const session = vault.session;
 
 	useEffect(
@@ -315,7 +368,79 @@ export function PasswordSmartImportDialog({
 	const pendingCount = candidates.length - selected.length + issueGroups.length;
 	const outdated =
 		vault.snapshot.status !== "unlocked" ||
-		(!!reviewSource && baseRevision.current !== vault.snapshot.revision);
+		(!!reviewSource && baseRevision.current !== vault.snapshot.contentRevision);
+
+	const draftValue = useMemo(() => {
+		if (!source && !reviewSource && !candidates.length && !issues.length)
+			return null;
+		const value: ImportDraft = {
+			version: 1,
+			source,
+			reviewSource,
+			reviewVersion,
+			candidates,
+			savedCandidates,
+			issues,
+			choices,
+			stage,
+			mappedLines,
+			reviewOrigin,
+			receipt,
+			manualSequence: manualSequence.current,
+			issueGroupIds: [...issueGroupIds.current],
+			baseContentRevision: baseRevision.current,
+			workspaceState,
+			fragmentStates,
+		};
+		return JSON.stringify(value);
+	}, [
+		source,
+		reviewSource,
+		reviewVersion,
+		candidates,
+		savedCandidates,
+		issues,
+		choices,
+		stage,
+		mappedLines,
+		reviewOrigin,
+		receipt,
+		workspaceState,
+		fragmentStates,
+	]);
+	const draftStore = useVaultImportDraft(
+		session,
+		draftValue,
+		initialDraft.raw,
+		!initialDraft.failed &&
+			vault.snapshot.status === "unlocked" &&
+			busy !== "save" &&
+			!draftClosing,
+	);
+	async function preserveAndClose(lock = false, discard = false) {
+		if (running.current === "save" || draftClosing) return false;
+		if (initialDraft.failed && !discard) {
+			if (lock) vault.lock();
+			close();
+			return true;
+		}
+		generation.current++;
+		controller.current?.abort();
+		running.current = null;
+		setBusy(null);
+		setDraftClosing(true);
+		try {
+			await draftStore.flush(discard ? null : undefined);
+			if (lock) vault.lock();
+			close();
+			return true;
+		} catch {
+			setMessage(t("pwSmartDraftFailed"));
+			return false;
+		} finally {
+			setDraftClosing(false);
+		}
+	}
 
 	function close() {
 		if (running.current === "save") return;
@@ -345,6 +470,8 @@ export function PasswordSmartImportDialog({
 		setIssues([]);
 		setMappedLines([]);
 		setReceipt(null);
+		setWorkspaceState(undefined);
+		setFragmentStates({});
 		setStage("input");
 		setSource(nextSource);
 		setReviewSource("");
@@ -390,7 +517,7 @@ export function PasswordSmartImportDialog({
 	}
 	async function recognizeWithAi() {
 		if (running.current || !connection || !source.trim() || !session) return;
-		const startingRevision = session.getSnapshot().revision;
+		const startingRevision = session.getSnapshot().contentRevision;
 		running.current = "ai";
 		setBusy("ai");
 		setMessage("");
@@ -411,7 +538,7 @@ export function PasswordSmartImportDialog({
 				session.getSnapshot().status !== "unlocked"
 			)
 				return;
-			if (session.getSnapshot().revision !== startingRevision) {
+			if (session.getSnapshot().contentRevision !== startingRevision) {
 				setMessage(t("pwVaultConflict"));
 				return;
 			}
@@ -459,9 +586,11 @@ export function PasswordSmartImportDialog({
 	) {
 		if (!session) return;
 		const plan = previewCandidates(session, result.candidates);
-		baseRevision.current = session.getSnapshot().revision;
+		baseRevision.current = session.getSnapshot().contentRevision;
 		setCandidates(result.candidates);
 		setReviewVersion((current) => current + 1);
+		setWorkspaceState(undefined);
+		setFragmentStates({});
 		setSavedCandidates([]);
 		issueGroupIds.current = new Map(
 			groupVaultImportIssues(result.issues).flatMap((group) =>
@@ -614,7 +743,7 @@ export function PasswordSmartImportDialog({
 				current !== generation.current ||
 				!lease.isCurrent() ||
 				session.getSnapshot().status !== "unlocked" ||
-				session.getSnapshot().revision !== baseRevision.current
+				session.getSnapshot().contentRevision !== baseRevision.current
 			)
 				return;
 			const changed = new Set(
@@ -924,7 +1053,12 @@ export function PasswordSmartImportDialog({
 					...(action === "update" ? { targetId: choice?.targetId } : {}),
 				};
 			});
-			const result = await session.importEntries(items, baseRevision.current);
+			await draftStore.flush();
+			if (session.getSnapshot().contentRevision !== baseRevision.current)
+				throw Error("vault-stale");
+			const physicalRevision = session.getSnapshot().revision;
+			if (!physicalRevision) throw Error("vault-missing");
+			const result = await session.importEntries(items, physicalRevision);
 			if (
 				current !== generation.current ||
 				session.getSnapshot().status !== "unlocked"
@@ -959,7 +1093,7 @@ export function PasswordSmartImportDialog({
 				...justSaved,
 			]);
 			const nextPlan = previewCandidates(session, remaining);
-			baseRevision.current = result.revision;
+			baseRevision.current = session.getSnapshot().contentRevision;
 			setCandidates(remaining);
 			setChoices(
 				Object.fromEntries(
@@ -1018,17 +1152,22 @@ export function PasswordSmartImportDialog({
 	}
 	function requestClose() {
 		if (running.current === "save") return;
-		if (source || candidates.length || issues.length) setConfirmation("close");
-		else close();
+		if (source || candidates.length || issues.length || initialDraft.failed)
+			setConfirmation("close");
+		else void preserveAndClose();
+	}
+	function recheckDraft() {
+		if (session?.getSnapshot().status !== "unlocked") return;
+		baseRevision.current = session.getSnapshot().contentRevision;
+		setChoices({});
+		setMessage(t("pwSmartReviewAgain"));
 	}
 	async function unlockForReview() {
 		if (!session || unlockBusy) return;
 		setUnlockBusy(true);
 		try {
 			await session.unlock(unlockPassword);
-			baseRevision.current = session.getSnapshot().revision;
-			setChoices({});
-			setMessage(t("pwSmartReviewAgain"));
+			recheckDraft();
 		} catch {
 			setMessage(t("pwVaultUnlockFailed"));
 		} finally {
@@ -1044,9 +1183,34 @@ export function PasswordSmartImportDialog({
 			className={`password-smart-import-dialog${stage === "review" ? " password-smart-import-dialog-wide" : ""}`}
 			title={t(stage === "mapping" ? "pwSmartMap" : "pwSmartTitle")}
 			onClose={requestClose}
-			closeDisabled={busy === "save"}
+			closeDisabled={busy === "save" || draftClosing}
 			headerActions={
 				<div className="pw-smart-header-actions">
+					{(draftValue ||
+						initialDraft.failed ||
+						draftStore.status === "failed") && (
+						<div className="pw-smart-draft-status" role="status">
+							<span>
+								{t(
+									initialDraft.failed
+										? "pwSmartDraftUnreadable"
+										: draftStore.status === "failed"
+											? "pwSmartDraftFailed"
+											: draftStore.status === "saving"
+												? "pwSmartDraftSaving"
+												: "pwSmartDraftSaved",
+								)}
+							</span>
+							{draftStore.status === "failed" && (
+								<Button
+									size="small"
+									onClick={() => void draftStore.flush().catch(() => {})}
+								>
+									{t("pwSmartDraftRetry")}
+								</Button>
+							)}
+						</div>
+					)}
 					{(stage !== "input" || hasReview) && (
 						<Select
 							contentClassName="pw-smart-select-menu"
@@ -1060,7 +1224,7 @@ export function PasswordSmartImportDialog({
 							}}
 						>
 							<SelectOption value="input" disabled>
-								{t("pwSmartOtherInput")}
+								{t("pwSmartInputMethods")}
 							</SelectOption>
 							<SelectOption value="paste">{t("pwSmartPasteList")}</SelectOption>
 							<SelectOption value="mapping">{t("pwSmartMap")}</SelectOption>
@@ -1096,7 +1260,16 @@ export function PasswordSmartImportDialog({
 				)}
 				{outdated && (
 					<div className="pw-smart-stale" role="alert">
-						<p>{t("pwSmartStaleDraft")}</p>
+						<p>
+							{t(
+								vault.snapshot.status === "unlocked"
+									? "pwSmartDraftVaultChanged"
+									: "pwSmartStaleDraft",
+							)}
+						</p>
+						{vault.snapshot.status === "unlocked" && (
+							<Button onClick={recheckDraft}>{t("pwSmartRecheckDraft")}</Button>
+						)}
 						{vault.snapshot.status === "locked" && (
 							<form
 								onSubmit={(event) => {
@@ -1122,7 +1295,7 @@ export function PasswordSmartImportDialog({
 						)}
 					</div>
 				)}
-				{stage === "input" && (
+				{stage === "input" && !initialDraft.failed && (
 					<div className="pw-smart-input-page">
 						{hasReview && source !== reviewSource && (
 							<p className="notice">{t("pwSmartSourceChangedHint")}</p>
@@ -1138,7 +1311,20 @@ export function PasswordSmartImportDialog({
 									</Button>
 								) : (
 									<TextLink asChild>
-										<Link to="/settings" hash="assistant" onClick={close}>
+										<Link
+											to="/settings"
+											hash="assistant"
+											onClick={(event) => {
+												event.preventDefault();
+												void preserveAndClose().then((saved) => {
+													if (saved)
+														void navigate({
+															to: "/settings",
+															hash: "assistant",
+														});
+												});
+											}}
+										>
 											{t(settings ? "aiEnableKey" : "aiConfigure")}
 										</Link>
 									</TextLink>
@@ -1288,6 +1474,10 @@ export function PasswordSmartImportDialog({
 							</p>
 						)}
 						<PasswordImportWorkspace
+							initialState={workspaceState}
+							onStateChange={keepWorkspaceState}
+							fragmentStates={fragmentStates}
+							onFragmentStateChange={keepFragmentState}
 							candidates={candidates}
 							choices={choices}
 							preview={preview}
@@ -1345,7 +1535,11 @@ export function PasswordSmartImportDialog({
 							<Button onClick={() => resetInput("")}>
 								{t("pwSmartPasteList")}
 							</Button>
-							<Button variant="primary" onClick={close}>
+							<Button
+								variant="primary"
+								disabled={draftClosing}
+								onClick={() => void preserveAndClose()}
+							>
 								{t("pwVaultClose")}
 							</Button>
 						</div>
@@ -1382,7 +1576,7 @@ export function PasswordSmartImportDialog({
 												: "pwSmartReplaceTitle",
 					)}
 					onClose={() => setConfirmation(null)}
-					closeDisabled={busy === "save"}
+					closeDisabled={busy === "save" || draftClosing}
 				>
 					{(confirmation === "ai" || confirmation === "model") && (
 						<>
@@ -1445,7 +1639,7 @@ export function PasswordSmartImportDialog({
 						</>
 					)}
 					{(confirmation === "close" || confirmation === "lock") && (
-						<p>{t("pwSmartCloseClears")}</p>
+						<p>{t("pwSmartCloseKeepsDraft")}</p>
 					)}
 					{confirmation.startsWith("replace-") && (
 						<p>{t("pwSmartSourceChangedHint")}</p>
@@ -1453,7 +1647,7 @@ export function PasswordSmartImportDialog({
 					<div className="actions">
 						<Button
 							onClick={() => setConfirmation(null)}
-							disabled={busy === "save"}
+							disabled={busy === "save" || draftClosing}
 						>
 							{t(
 								confirmation === "close"
@@ -1463,10 +1657,20 @@ export function PasswordSmartImportDialog({
 										: "cancel",
 							)}
 						</Button>
+						{confirmation === "close" && (
+							<Button
+								variant="ghost"
+								disabled={draftClosing || busy === "save"}
+								onClick={() => void preserveAndClose(false, true)}
+							>
+								{t("pwSmartCloseAndClear")}
+							</Button>
+						)}
 						{confirmation !== "model" && (
 							<Button
 								variant="primary"
 								disabled={
+									draftClosing ||
 									busy === "save" ||
 									(!!busy &&
 										confirmation !== "close" &&
@@ -1475,15 +1679,15 @@ export function PasswordSmartImportDialog({
 								}
 								onClick={() => {
 									const action = confirmation;
-									setConfirmation(null);
+									if (action !== "close" && action !== "lock")
+										setConfirmation(null);
 									if (action === "ai" || action === "replace-ai")
 										void recognizeWithAi();
 									if (action === "titles") void organize();
 									if (action === "save") void save();
-									if (action === "close") close();
+									if (action === "close") void preserveAndClose();
 									if (action === "lock") {
-										vault.lock();
-										close();
+										void preserveAndClose(true);
 									}
 									if (action === "replace-local") recognize();
 								}}
@@ -1496,7 +1700,7 @@ export function PasswordSmartImportDialog({
 											: confirmation === "save"
 												? "pwSmartSaveTitle"
 												: confirmation === "close"
-													? "pwSmartCloseAndClear"
+													? "pwSmartCloseKeepDraft"
 													: confirmation === "lock"
 														? "pwSmartLockClose"
 														: "pwSmartRecognize",

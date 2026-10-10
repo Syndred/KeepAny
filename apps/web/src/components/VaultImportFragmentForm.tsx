@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { VaultEntryDraft } from "../../../../packages/password-vault/src";
 import type { VaultImportCandidate } from "../vault-import-model";
@@ -11,6 +11,15 @@ import {
 	VaultImportDraftFields,
 } from "./VaultImportDraftFields";
 import { VaultImportSourceExcerpt } from "./VaultImportSourceExcerpt";
+
+export type FragmentDraftState = {
+	mode: "new" | "existing";
+	targetId: string;
+	drafts: Record<string, VaultEntryDraft>;
+	appended: string[];
+	editedFields: Record<string, VaultImportDraftField[]>;
+	expanded: boolean;
+};
 
 function blankDraft(): VaultEntryDraft {
 	return {
@@ -43,6 +52,8 @@ export function VaultImportFragmentForm({
 	candidates,
 	disabled,
 	onApply,
+	initialState,
+	onStateChange,
 }: {
 	idPrefix: string;
 	fragmentText: string;
@@ -51,18 +62,29 @@ export function VaultImportFragmentForm({
 	candidates: VaultImportCandidate[];
 	disabled: boolean;
 	onApply: (targetId: string | null, draft: VaultEntryDraft) => boolean;
+	initialState?: FragmentDraftState;
+	onStateChange?: (state: FragmentDraftState) => void;
 }) {
 	const { t } = useTranslation();
 	const [initial] = useState(() =>
 		resolveVaultImportQuickFill(source, excerpt, candidates),
 	);
-	const [expanded, setExpanded] = useState(true);
+	const [expanded, setExpanded] = useState(initialState?.expanded ?? true);
 	const [choosingTarget, setChoosingTarget] = useState(false);
 	const [mode, setMode] = useState<"new" | "existing">(
-		initial.targetId ? "existing" : "new",
+		initialState?.mode ?? (initial.targetId ? "existing" : "new"),
 	);
-	const [targetId, setTargetId] = useState(initial.targetId ?? "");
+	const [targetId, setTargetId] = useState(
+		initialState?.targetId ?? initial.targetId ?? "",
+	);
 	const [drafts, setDrafts] = useState<Map<string, VaultEntryDraft>>(() => {
+		if (initialState)
+			return new Map(
+				Object.entries(initialState.drafts).map(([key, draft]) => [
+					key,
+					copyDraft(draft),
+				]),
+			);
 		const newDraft = initial.targetId
 			? {
 					...blankDraft(),
@@ -75,10 +97,35 @@ export function VaultImportFragmentForm({
 			result.set(`target:${initial.targetId}`, initial.draft);
 		return result;
 	});
-	const [appended, setAppended] = useState<Set<string>>(() => new Set());
+	const [appended, setAppended] = useState<Set<string>>(
+		() => new Set(initialState?.appended),
+	);
 	const [editedFields, setEditedFields] = useState<
 		Map<string, Set<VaultImportDraftField>>
-	>(() => new Map());
+	>(
+		() =>
+			new Map(
+				Object.entries(initialState?.editedFields ?? {}).map(
+					([key, fields]) => [key, new Set(fields)],
+				),
+			),
+	);
+	const draftState = useMemo<FragmentDraftState>(
+		() => ({
+			mode,
+			targetId,
+			drafts: Object.fromEntries(drafts),
+			appended: [...appended],
+			editedFields: Object.fromEntries(
+				[...editedFields].map(([key, fields]) => [key, [...fields]]),
+			),
+			expanded,
+		}),
+		[mode, targetId, drafts, appended, editedFields, expanded],
+	);
+	useEffect(() => {
+		onStateChange?.(draftState);
+	}, [draftState, onStateChange]);
 	const target = candidates.find(
 		(candidate) =>
 			candidate.id === targetId || candidate.aliasIds?.includes(targetId),

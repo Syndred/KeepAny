@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { join } from "node:path";
@@ -378,7 +379,10 @@ export function visualEvidence(
 let readonlyRuntime:
 	| Promise<{ VaultSession: new (storage: VaultPersistence) => VaultSession }>
 	| undefined;
-export async function inspectVisualKdbx(path: string) {
+async function openVisualKdbx(
+	bytes: Uint8Array,
+	revision = "synthetic-visual-readonly",
+) {
 	readonlyRuntime ??= build({
 		entryPoints: ["packages/password-vault/src/index.ts"],
 		bundle: true,
@@ -400,8 +404,8 @@ export async function inspectVisualKdbx(path: string) {
 	const session = new Session({
 		read: async () => ({
 			id: "local",
-			revision: "synthetic-visual-readonly",
-			bytes: new Uint8Array(readFileSync(path)),
+			revision,
+			bytes,
 			updatedAt: "2026-10-05T00:00:00.000Z",
 		}),
 		write: async () => {
@@ -410,11 +414,72 @@ export async function inspectVisualKdbx(path: string) {
 	});
 	await session.initialize();
 	await session.unlock(visualMaster);
+	return session;
+}
+
+export async function inspectVisualKdbx(path: string) {
+	const session = await openVisualKdbx(new Uint8Array(readFileSync(path)));
 	try {
 		return session.getSnapshot().entries.map(({ id }) => ({
 			draft: session.readEntry(id),
 			history: session.history(id),
 		}));
+	} finally {
+		session.lock();
+	}
+}
+
+/** Decrypt the actual persisted KDBX, excluding only the unreviewed metadata draft. */
+export async function visualVaultContentFingerprint(page: Page) {
+	const record = await page.evaluate(async () => {
+		for (const metadata of await indexedDB.databases()) {
+			const databaseName = metadata.name;
+			if (!databaseName?.endsWith("-files-v1")) continue;
+			const db = await new Promise<IDBDatabase>((resolve, reject) => {
+				const open = indexedDB.open(databaseName);
+				open.onsuccess = () => resolve(open.result);
+				open.onerror = () => reject(open.error);
+			});
+			try {
+				if (!db.objectStoreNames.contains("passwordVault")) continue;
+				const stored = await new Promise<
+					{ revision: string; bytes: Uint8Array } | undefined
+				>((resolve, reject) => {
+					const get = db
+						.transaction("passwordVault", "readonly")
+						.objectStore("passwordVault")
+						.get("local");
+					get.onsuccess = () => resolve(get.result);
+					get.onerror = () => reject(get.error);
+				});
+				if (stored)
+					return { revision: stored.revision, bytes: Array.from(stored.bytes) };
+			} finally {
+				db.close();
+			}
+		}
+		throw Error("Synthetic acceptance vault missing");
+	});
+	const session = await openVisualKdbx(
+		new Uint8Array(record.bytes),
+		record.revision,
+	);
+	try {
+		const snapshot = session.getSnapshot();
+		const entries = [...snapshot.entries, ...snapshot.trash]
+			.sort((left, right) => left.id.localeCompare(right.id))
+			.map((summary) => ({
+				summary,
+				trashed: snapshot.trash.some(({ id }) => id === summary.id),
+				draft: session.readEntry(summary.id),
+				history: session.history(summary.id),
+			}));
+		return {
+			contentRevision: snapshot.contentRevision,
+			digest: createHash("sha256")
+				.update(JSON.stringify(entries))
+				.digest("hex"),
+		};
 	} finally {
 		session.lock();
 	}

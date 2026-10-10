@@ -40,6 +40,7 @@ const initialSnapshot: PasswordVaultSnapshot = {
 	entries: [],
 	trash: [],
 	revision: null,
+	contentRevision: null,
 };
 
 const PasswordVaultContext = createContext<PasswordVaultContextValue | null>(

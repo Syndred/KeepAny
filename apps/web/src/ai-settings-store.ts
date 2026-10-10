@@ -198,7 +198,8 @@ export class AiSettingsStore {
 	};
 	private handleVaultChange = (): void => {
 		const snapshot = this.vault?.getSnapshot();
-		const fingerprint = `${snapshot?.status ?? "missing"}:${snapshot?.revision ?? ""}`;
+		// Import-draft checkpoints change storage CAS revision without changing keys.
+		const fingerprint = `${snapshot?.status ?? "missing"}:${snapshot?.contentRevision ?? ""}`;
 		if (fingerprint === this.vaultFingerprint) return;
 		this.vaultFingerprint = fingerprint;
 		const settings = this.snapshot.settings;

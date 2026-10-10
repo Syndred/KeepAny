@@ -39,6 +39,7 @@ function vault(aiKeyBinding?: VaultEntryDraft["aiKeyBinding"]) {
 	let state: VaultSnapshot = {
 		status: "unlocked",
 		revision: "one",
+		contentRevision: "one",
 		trash: [],
 		entries: [
 			{
@@ -175,13 +176,45 @@ describe("AI settings credential boundary", () => {
 		expect(reopened.getSnapshot().connection).toBeNull();
 		reopened.activateVaultKey();
 		expect(session.reads).toBe(2);
-		session.update({ revision: "two" });
+		session.update({ revision: "two", contentRevision: "two" });
 		expect(reopened.getSnapshot().connection).toBeNull();
 		reopened.activateVaultKey();
-		session.update({ revision: "three", entries: [] });
+		session.update({
+			revision: "three",
+			contentRevision: "three",
+			entries: [],
+		});
 		expect(() => reopened.activateVaultKey()).toThrow(
 			"aiSettingsVaultEntryRequired",
 		);
+	});
+	it("keeps a manually activated key and pending request through draft-only revisions", () => {
+		const saved = storage();
+		const session = vault();
+		const first = new AiSettingsStore(saved);
+		first.attachVault(session);
+		first.saveConfiguration({
+			...configuration,
+			keySource: "vault",
+			vaultEntryId: "entry",
+		});
+		const reopened = new AiSettingsStore(saved);
+		reopened.attachVault(session);
+		reopened.activateVaultKey();
+		const lease = reopened.acquire();
+		const aiRevision = reopened.getSnapshot().revision;
+		const reads = session.reads;
+		session.update({ revision: "draft-checkpoint", contentRevision: "one" });
+		expect(session.reads).toBe(reads);
+		expect(reopened.getSnapshot().revision).toBe(aiRevision);
+		expect(reopened.getSnapshot().connection?.apiKey).toBe("vault-secret");
+		expect(lease.signal.aborted).toBe(false);
+		expect(lease.isCurrent()).toBe(true);
+		session.update({ revision: "entry-write", contentRevision: "entry-write" });
+		expect(lease.signal.aborted).toBe(true);
+		expect(lease.isCurrent()).toBe(false);
+		expect(reopened.getSnapshot().connection).toBeNull();
+		lease.release();
 	});
 	it("restores only the authorized encrypted service key after refresh and unlock", () => {
 		const saved = storage();
@@ -220,14 +253,21 @@ describe("AI settings credential boundary", () => {
 		});
 		const active = store.acquire();
 		const revision = store.getSnapshot().revision;
-		session.update({ revision: "unrelated-write" });
+		session.update({
+			revision: "unrelated-write",
+			contentRevision: "unrelated-write",
+		});
 		expect(active.isCurrent()).toBe(true);
 		expect(store.getSnapshot().revision).toBe(revision);
 		session.changePassword("rotated-vault-secret");
-		session.update({ revision: "key-update" });
+		session.update({ revision: "key-update", contentRevision: "key-update" });
 		expect(active.signal.aborted).toBe(true);
 		expect(store.getSnapshot().connection?.apiKey).toBe("rotated-vault-secret");
-		session.update({ revision: "key-deleted", entries: [] });
+		session.update({
+			revision: "key-deleted",
+			contentRevision: "key-deleted",
+			entries: [],
+		});
 		expect(store.getSnapshot().connection).toBeNull();
 	});
 	it("cannot authorize an arbitrary password or another service through plain settings metadata", () => {
@@ -278,7 +318,10 @@ describe("AI settings credential boundary", () => {
 		});
 		const lease = store.acquire();
 		session.clearBinding();
-		session.update({ revision: "authorization-removed" });
+		session.update({
+			revision: "authorization-removed",
+			contentRevision: "authorization-removed",
+		});
 		expect(lease.signal.aborted).toBe(true);
 		expect(store.getSnapshot().connection).toBeNull();
 	});
@@ -298,7 +341,7 @@ describe("AI settings credential boundary", () => {
 		session.readEntry = () => {
 			throw new Error("private read diagnostics");
 		};
-		session.update({ revision: "read-error" });
+		session.update({ revision: "read-error", contentRevision: "read-error" });
 		expect(store.getSnapshot().connection).toBeNull();
 	});
 	it("cancels old requests on configuration changes and honors external abort", () => {

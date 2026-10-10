@@ -6,7 +6,7 @@ import {
 	recognitionFixture,
 	visualHarness,
 	visualMaster,
-	visualVaultFingerprint,
+	visualVaultContentFingerprint,
 } from "./fixtures/password-smart-import-visual";
 import { syntheticKey } from "./helpers/ai-workflow";
 import { selectChoice } from "./helpers/select-choice";
@@ -86,7 +86,7 @@ for (const locale of ["zh-CN", "en"] as const)
 			try {
 				await h.page.goto("/assets/vault");
 				await h.createVault();
-				const before = await visualVaultFingerprint(h.page);
+				const before = await visualVaultContentFingerprint(h.page);
 				const importer = await h.open();
 				const source =
 					"Synthetic mapped service\n  Demo mapped!;,|  \nSynthetic original note";
@@ -124,7 +124,7 @@ for (const locale of ["zh-CN", "en"] as const)
 				await expect(field(form, "notes")).toHaveValue(
 					"Synthetic unsaved note",
 				);
-				expect(await visualVaultFingerprint(h.page)).toEqual(before);
+				expect(await visualVaultContentFingerprint(h.page)).toEqual(before);
 				await form
 					.getByRole("button", {
 						name: h.t("pwSmartFragmentApply"),
@@ -176,7 +176,7 @@ for (const locale of ["zh-CN", "en"] as const) {
 		try {
 			await h.page.goto("/assets/vault");
 			await h.createVault();
-			const before = await visualVaultFingerprint(h.page);
+			const before = await visualVaultContentFingerprint(h.page);
 			let importer = await h.open();
 			const file = importer.locator("input[type=file]");
 			await file.setInputFiles({
@@ -211,7 +211,7 @@ for (const locale of ["zh-CN", "en"] as const) {
 				await importer.getByRole("tab", { name: /已核对|Reviewed/ }).click();
 				await expect(field(editor(importer), "password")).toHaveValue(secret);
 				if (extension === "csv")
-					expect(await visualVaultFingerprint(h.page)).toEqual(before);
+					expect(await visualVaultContentFingerprint(h.page)).toEqual(before);
 				await save(h.page, importer);
 				await close(h.page);
 				if (extension === "csv") importer = await h.open();
@@ -249,7 +249,7 @@ test("AI delayed response is discarded after close and a real other-tab model ch
 	try {
 		await h.configure();
 		await h.createVault();
-		const before = await visualVaultFingerprint(h.page);
+		const before = await visualVaultContentFingerprint(h.page);
 		let importer = await h.open();
 		const endpoint = `${h.mock.baseURL}/chat/completions`;
 		let release!: () => void;
@@ -304,7 +304,7 @@ test("AI delayed response is discarded after close and a real other-tab model ch
 		release();
 		await h.page.unroute(endpoint);
 		await other.close();
-		expect(await visualVaultFingerprint(h.page)).toEqual(before);
+		expect(await visualVaultContentFingerprint(h.page)).toEqual(before);
 		expect(h.errors).toEqual([]);
 	} finally {
 		await h.close();

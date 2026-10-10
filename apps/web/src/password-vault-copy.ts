@@ -1,5 +1,31 @@
 /** Password vault copy kept separate so the shell can merge it into i18next. */
 export const passwordVaultCopy: Record<string, [string, string]> = {
+	pwSmartDraftSaving: ["正在加密保存草稿…", "Saving encrypted draft…"],
+	pwSmartDraftRetry: ["重试保存", "Retry saving"],
+	pwSmartInputMethods: ["输入方式", "Input methods"],
+	pwSmartRecheckDraft: ["重新核对", "Review again"],
+	pwSmartDraftVaultChanged: [
+		"密码库已修改，请重新核对当前结果。识别结果和填写内容已保留。",
+		"The vault has changed. Review these results again. Recognition results and your edits are kept.",
+	],
+	pwSmartDraftSaved: [
+		"草稿已加密保存，重新解锁后可继续核对。",
+		"Draft saved encrypted. Unlock again to continue reviewing.",
+	],
+	pwSmartDraftFailed: [
+		"草稿尚未保存。请重试，保存成功前不要刷新或关闭。",
+		"Draft was not saved. Retry before refreshing or closing.",
+	],
+	pwSmartDraftUnreadable: [
+		"已保存的草稿无法读取。请先关闭并清空草稿，再重新导入。",
+		"The saved draft could not be read. Close and clear it before starting another import.",
+	],
+	pwSmartCloseKeepDraft: ["保存草稿并关闭", "Save draft and close"],
+	pwSmartCloseKeepsDraft: [
+		"草稿将加密保存在本机密码库，重新解锁后可继续核对。",
+		"The draft stays encrypted in your local vault. Unlock again to continue reviewing.",
+	],
+
 	pwSmartTitle: ["智能导入", "Smart import"],
 	pwSmartHint: [
 		"粘贴账号密码清单，选择 AI 或本机识别，核对后存入加密密码库。",

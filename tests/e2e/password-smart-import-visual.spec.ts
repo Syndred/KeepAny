@@ -713,6 +713,9 @@ test("zh-CN atomic KDBX save supplementary import and cross-tab stale draft reco
 		await importer
 			.getByRole("button", { name: "核对完成，下一条", exact: true })
 			.click();
+		await expect(h.page.locator(".pw-smart-draft-status")).toContainText(
+			h.t("pwSmartDraftSaved"),
+		);
 		const before = await visualVaultFingerprint(h.page);
 		// Inject one storage failure at the real browser persistence boundary, never into React state.
 		await h.page.evaluate(() => {
@@ -868,7 +871,13 @@ test("zh-CN atomic KDBX save supplementary import and cross-tab stale draft reco
 			.getByRole("button", { name: h.t("pwVaultUnlock"), exact: true })
 			.click();
 		importer = await h.open();
-		await expect(importer.locator("#pw-smart-source")).toHaveValue("");
+		await expect(importer.locator(".pw-import-workspace")).toBeVisible();
+		await expect(field(importer, "notes")).toHaveValue(
+			"Synthetic draft survives cross-tab change",
+		);
+		await expect(
+			editor(importer).getByRole("combobox", { name: "保存方式", exact: true }),
+		).toHaveAttribute("data-value", "skip");
 		expect(h.errors).toEqual([]);
 	} finally {
 		await h.close();

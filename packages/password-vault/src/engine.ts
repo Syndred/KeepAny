@@ -9,6 +9,32 @@ export { checkBytes, checkHeader, fail, safeError, VAULT_MAX_BYTES } from './hea
 export const VAULT_LINK_FIELD = 'KeepAny.LinkedAssetIds';
 export const VAULT_AI_KEY_BINDING_FIELD = 'KeepAny.AiKeyBinding';
 export const VAULT_USERNAME_ALIASES_FIELD = 'KeepAny.UsernameAliases';
+export const VAULT_IMPORT_DRAFT_FIELD = 'KeepAny.ImportDraft';
+export const VAULT_IMPORT_DRAFT_MAX_BYTES = 16 * 1024 * 1024;
+
+/** Opaque application state lives only in the encrypted KDBX metadata body. */
+export function encodeImportDraft(value: string | null): string | null {
+  if (value === null) return null;
+  if (typeof value !== 'string') fail('vault-invalid');
+  if (value.length > VAULT_IMPORT_DRAFT_MAX_BYTES || new TextEncoder().encode(value).byteLength > VAULT_IMPORT_DRAFT_MAX_BYTES) fail('vault-size');
+  return JSON.stringify({ version: 1, payload: value });
+}
+
+export function readImportDraft(db: Kdbx): string | null {
+  const item = db.meta.customData.get(VAULT_IMPORT_DRAFT_FIELD);
+  if (!item) return null;
+  if (typeof item.value !== 'string') fail('vault-invalid');
+  // JSON escaping can expand a valid payload; bound it before JSON.parse.
+  if (item.value.length > VAULT_IMPORT_DRAFT_MAX_BYTES * 6 + 128) fail('vault-size');
+  let decoded: unknown;
+  try { decoded = JSON.parse(item.value); } catch { fail('vault-invalid'); }
+  if (!decoded || typeof decoded !== 'object' || Array.isArray(decoded)) fail('vault-invalid');
+  const envelope = decoded as { version?: unknown; payload?: unknown };
+  if (envelope.version !== 1 || typeof envelope.payload !== 'string') fail('vault-invalid');
+  encodeImportDraft(envelope.payload);
+  return envelope.payload;
+}
+
 const MAX_ENTRIES = 10_000;
 const MAX_TEXT = 64 * 1024;
 
@@ -214,6 +240,11 @@ export function clearDatabase(db: Kdbx | null): void {
       item.fields.clear();
     }
   }
+  // CustomData strings cannot be zeroed, but release both the held item and map
+  // references just as entry fields are released when the decrypted DB is discarded.
+  const importDraft = db.meta.customData.get(VAULT_IMPORT_DRAFT_FIELD);
+  if (importDraft) importDraft.value = undefined;
+  db.meta.customData.delete(VAULT_IMPORT_DRAFT_FIELD);
   clearCredentials(db.credentials);
   db.xml = undefined;
 }

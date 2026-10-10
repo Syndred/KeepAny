@@ -40,6 +40,8 @@ export type VaultSnapshot = {
   entries: VaultEntrySummary[];
   trash: VaultEntrySummary[];
   revision: string | null;
+  /** Entry/security revision; encrypted import-draft writes leave it unchanged. */
+  contentRevision: string | null;
 };
 
 export type VaultHistoryItem = { at: string; draft: VaultEntryDraft };

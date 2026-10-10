@@ -6,7 +6,7 @@ import {
 	CircleCheck,
 	Plus,
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type {
 	VaultEntryDraft,
@@ -29,7 +29,10 @@ import {
 	type VaultImportDraftField,
 	VaultImportDraftFields,
 } from "./VaultImportDraftFields";
-import { VaultImportFragmentForm } from "./VaultImportFragmentForm";
+import {
+	type FragmentDraftState,
+	VaultImportFragmentForm,
+} from "./VaultImportFragmentForm";
 import { VaultImportSourceExcerpt } from "./VaultImportSourceExcerpt";
 import "../password-import-workspace.css";
 
@@ -48,6 +51,21 @@ export type WorkspaceIssueGroup = {
 	excerpt: SourceExcerpt;
 	sourceLine?: number;
 	sourceSnapshot?: string;
+};
+type Filter = "pending" | "reviewed" | "all" | "duplicate";
+export type WorkspaceDraftState = {
+	filter: Filter;
+	activeId: string;
+	targetSelection: string;
+	targetEdits: Record<
+		string,
+		{
+			targetId: string | null;
+			draft: VaultEntryDraft;
+			edited: VaultImportDraftField[];
+		}
+	>;
+	targetFor: string | null;
 };
 export type PasswordImportWorkspaceProps = {
 	candidates: VaultImportCandidate[];
@@ -75,8 +93,11 @@ export type PasswordImportWorkspaceProps = {
 	onOrganize: () => void;
 	canOrganize?: boolean;
 	organizeRecords?: { id: string; host: string }[];
+	initialState?: WorkspaceDraftState;
+	onStateChange?: (state: WorkspaceDraftState) => void;
+	fragmentStates?: Record<string, FragmentDraftState>;
+	onFragmentStateChange?: (groupId: string, state: FragmentDraftState) => void;
 };
-type Filter = "pending" | "reviewed" | "all" | "duplicate";
 type Item = {
 	id: string;
 	candidate?: VaultImportCandidate;
@@ -123,33 +144,54 @@ export function PasswordImportWorkspace(props: PasswordImportWorkspaceProps) {
 		onApplyFragment,
 		onOrganize,
 		canOrganize = true,
+		initialState,
+		onStateChange,
+		fragmentStates,
+		onFragmentStateChange,
 	} = props;
 	const disabled = busy || outdated;
-	const [filter, setFilter] = useState<Filter>(() =>
-		candidates.length > 0 &&
-		!issueGroups.length &&
-		candidates.every((row) => choices[row.id]?.selected)
-			? "reviewed"
-			: "pending",
+	const [filter, setFilter] = useState<Filter>(
+		() =>
+			initialState?.filter ??
+			(candidates.length > 0 &&
+			!issueGroups.length &&
+			candidates.every((row) => choices[row.id]?.selected)
+				? "reviewed"
+				: "pending"),
 	);
-	const [activeId, setActiveId] = useState("");
+	const [activeId, setActiveId] = useState(initialState?.activeId ?? "");
 	const [bulkOpen, setBulkOpen] = useState(false);
 	const [bulkIds, setBulkIds] = useState<Set<string>>(new Set());
 	const [notice, setNotice] = useState("");
 	const [attempted, setAttempted] = useState<string | null>(null);
 	const [targetOpen, setTargetOpen] = useState(false);
-	const [targetSelection, setTargetSelection] = useState("new");
+	const [targetSelection, setTargetSelection] = useState(
+		initialState?.targetSelection ?? "new",
+	);
 	const [targetEdits, setTargetEdits] = useState<
-		Record<
-			string,
-			{
-				targetId: string | null;
-				draft: VaultEntryDraft;
-				edited: VaultImportDraftField[];
-			}
-		>
-	>({});
-	const [targetFor, setTargetFor] = useState<string | null>(null);
+		WorkspaceDraftState["targetEdits"]
+	>(() =>
+		Object.fromEntries(
+			Object.entries(initialState?.targetEdits ?? {}).map(([key, value]) => [
+				key,
+				{
+					...value,
+					draft: cloneDraft(value.draft),
+					edited: [...value.edited],
+				},
+			]),
+		),
+	);
+	const [targetFor, setTargetFor] = useState<string | null>(
+		initialState?.targetFor ?? null,
+	);
+	const draftState = useMemo<WorkspaceDraftState>(
+		() => ({ filter, activeId, targetSelection, targetEdits, targetFor }),
+		[filter, activeId, targetSelection, targetEdits, targetFor],
+	);
+	useEffect(() => {
+		onStateChange?.(draftState);
+	}, [draftState, onStateChange]);
 	const addedFrom = useRef<string | null>(null);
 	const previousIds = useRef(new Set(candidates.map((row) => row.id)));
 	const editorRef = useRef<HTMLDivElement>(null);
@@ -831,6 +873,12 @@ export function PasswordImportWorkspace(props: PasswordImportWorkspaceProps) {
 							)}
 							candidates={fragmentTargets}
 							disabled={disabled}
+							initialState={fragmentStates?.[group.id]}
+							onStateChange={
+								onFragmentStateChange
+									? (state) => onFragmentStateChange(group.id, state)
+									: undefined
+							}
 							onApply={(targetId, draft) =>
 								onApplyFragment(group, targetId, draft)
 							}

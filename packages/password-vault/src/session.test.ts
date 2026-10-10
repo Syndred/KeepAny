@@ -1,8 +1,8 @@
 import { gzipSync } from 'fflate';
 import { Consts, Int64, Kdbx, ProtectedValue, VarDictionary, XmlUtils } from 'kdbxweb';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { checkHeader, configureDatabase, credentials, VAULT_AI_KEY_BINDING_FIELD, VAULT_LINK_FIELD, VAULT_USERNAME_ALIASES_FIELD } from './engine';
-import { generatePassword, VAULT_IMPORT_MAX_ENTRIES, VAULT_MAX_BYTES, VaultSession } from './index';
+import { checkHeader, configureDatabase, credentials, VAULT_AI_KEY_BINDING_FIELD, VAULT_IMPORT_DRAFT_FIELD, VAULT_LINK_FIELD, VAULT_USERNAME_ALIASES_FIELD } from './engine';
+import { generatePassword, VAULT_IMPORT_DRAFT_MAX_BYTES, VAULT_IMPORT_MAX_ENTRIES, VAULT_MAX_BYTES, VaultSession } from './index';
 import type { VaultEntryDraft, VaultPersistence, VaultRecord } from './types';
 
 const master = 'synthetic-master-v1';
@@ -39,6 +39,161 @@ function deferred() {
 }
 
 afterEach(() => vi.restoreAllMocks());
+
+describe('encrypted recoverable import drafts', () => {
+  const payload = JSON.stringify({ version: 1, source: 'Synthetic source secret', candidates: [{ password: 'Synthetic unreviewed secret' }] });
+
+  it('restores exact encrypted draft state after reopen, without exposing entries, and preserves it through rotation/export', async () => {
+    const { session, storage } = await created();
+    const before = session.getSnapshot();
+    expect(session.readImportDraft()).toBeNull();
+    const revision = await session.writeImportDraft(payload, before.revision as string);
+    expect(revision).not.toBe(before.revision);
+    expect(session.getSnapshot()).toMatchObject({ revision, contentRevision: before.contentRevision, entries: [], trash: [] });
+    expect(session.readImportDraft()).toBe(payload);
+    expect(new TextDecoder().decode(storage.record?.bytes)).not.toContain('Synthetic source secret');
+    expect(JSON.stringify(session.getSnapshot())).not.toContain('Synthetic');
+    const writes = storage.writes;
+    expect(await session.writeImportDraft(payload, revision)).toBe(revision);
+    expect(storage.writes).toBe(writes);
+    const heldDb = (session as unknown as { db: Kdbx }).db;
+    const heldItem = heldDb.meta.customData.get(VAULT_IMPORT_DRAFT_FIELD);
+    session.lock();
+    expect(heldItem?.value).toBeUndefined();
+    expect(heldDb.meta.customData.has(VAULT_IMPORT_DRAFT_FIELD)).toBe(false);
+    expect(() => session.readImportDraft()).toThrow('vault-locked');
+    await expect(session.writeImportDraft(payload, revision)).rejects.toThrow('vault-locked');
+    const reopened = new VaultSession(storage);
+    await reopened.initialize();
+    await reopened.unlock(master);
+    expect(reopened.readImportDraft()).toBe(payload);
+    expect(reopened.getSnapshot().contentRevision).toBe(before.contentRevision);
+    await reopened.changeMasterPassword(master, nextMaster);
+    expect(reopened.getSnapshot().contentRevision).not.toBe(before.contentRevision);
+    const restored = new VaultSession(new MemoryStorage());
+    await restored.initialize();
+    await restored.importKdbx(await reopened.exportKdbx(), nextMaster);
+    expect(restored.readImportDraft()).toBe(payload);
+    expect(restored.getSnapshot()).toMatchObject({ entries: [], trash: [] });
+    const stableContent = restored.getSnapshot().contentRevision;
+    await restored.writeImportDraft(null, restored.getSnapshot().revision as string);
+    expect(restored.readImportDraft()).toBeNull();
+    expect(restored.getSnapshot().contentRevision).toBe(stableContent);
+    restored.lock();
+    await restored.unlock(nextMaster);
+    expect(restored.readImportDraft()).toBeNull();
+  }, 30_000);
+
+  it('leaves the earlier draft intact after write failure and checks durable revisions even for no-ops', async () => {
+    const { session, storage } = await created();
+    const revision = await session.writeImportDraft(payload, session.getSnapshot().revision as string);
+    const snapshot = session.getSnapshot();
+    const bytes = storage.record?.bytes.slice();
+    vi.spyOn(storage, 'write').mockRejectedValueOnce(new Error('synthetic failure'));
+    await expect(session.writeImportDraft('replacement', revision)).rejects.toThrow('vault-invalid');
+    expect(session.readImportDraft()).toBe(payload);
+    expect(session.getSnapshot()).toBe(snapshot);
+    expect(storage.record?.bytes).toEqual(bytes);
+    const second = new VaultSession(storage);
+    await second.initialize();
+    await second.unlock(master);
+    await second.writeImportDraft('other tab draft', revision);
+    await expect(session.writeImportDraft(payload, revision)).rejects.toThrow('vault-stale');
+    expect(session.readImportDraft()).toBe(payload);
+    session.lock();
+    await session.unlock(master);
+    expect(session.readImportDraft()).toBe('other tab draft');
+  }, 30_000);
+
+  it('rejects lock or cross-tab CAS during encryption without replacing the prior draft', async () => {
+    for (const interruptedBy of ['lock', 'other-tab']) {
+      const { session, storage } = await created();
+      const revision = await session.writeImportDraft(payload, session.getSnapshot().revision as string);
+      const other = new VaultSession(storage);
+      await other.initialize();
+      await other.unlock(master);
+      const reached = deferred();
+      const resume = deferred();
+      const originalSave = Kdbx.prototype.save;
+      const spy = vi.spyOn(Kdbx.prototype, 'save').mockImplementationOnce(async function (this: Kdbx) {
+        reached.resolve();
+        await resume.promise;
+        return originalSave.call(this);
+      });
+      const pending = session.writeImportDraft('losing replacement', revision);
+      const rejected = expect(pending).rejects.toThrow(interruptedBy === 'lock' ? 'vault-locked' : 'vault-stale');
+      await reached.promise;
+      if (interruptedBy === 'lock') session.lock();
+      else await other.writeImportDraft('winning replacement', revision);
+      const bytes = storage.record?.bytes.slice();
+      resume.resolve();
+      await rejected;
+      spy.mockRestore();
+      expect(storage.record?.bytes).toEqual(bytes);
+      if (interruptedBy === 'other-tab') expect(session.readImportDraft()).toBe(payload);
+      session.lock();
+      await session.unlock(master);
+      expect(session.readImportDraft()).toBe(interruptedBy === 'lock' ? payload : 'winning replacement');
+    }
+  }, 30_000);
+
+  it('preserves local draft or explicit deletion when merging a same-vault backup', async () => {
+    const { session } = await created();
+    await session.writeImportDraft('old backup draft', session.getSnapshot().revision as string);
+    const backup = await session.exportKdbx();
+    await session.writeImportDraft(payload, session.getSnapshot().revision as string);
+    const beforeMerge = session.getSnapshot().contentRevision;
+    await session.importKdbx(backup, master);
+    expect(session.readImportDraft()).toBe(payload);
+    expect(session.getSnapshot().contentRevision).not.toBe(beforeMerge);
+    await session.writeImportDraft(null, session.getSnapshot().revision as string);
+    await session.importKdbx(backup, master);
+    expect(session.readImportDraft()).toBeNull();
+    session.lock();
+    await session.unlock(master);
+    expect(session.readImportDraft()).toBeNull();
+  }, 30_000);
+
+  it('keeps a legacy content revision stable during draft writes but advances it for real entries', async () => {
+    const { session, storage } = await created();
+    const legacy = await Kdbx.load((await session.exportKdbx()).slice().buffer, credentials(master));
+    legacy.meta.customData.delete('KeepAny.ContentRevision');
+    if (!storage.record) throw Error('missing synthetic record');
+    storage.record.bytes = new Uint8Array(await legacy.save());
+    session.lock();
+    await session.unlock(master);
+    const legacyRevision = session.getSnapshot().revision;
+    expect(session.getSnapshot().contentRevision).toBe(legacyRevision);
+    await session.writeImportDraft(payload, legacyRevision as string);
+    expect(session.getSnapshot().contentRevision).toBe(legacyRevision);
+    session.lock();
+    await session.unlock(master);
+    expect(session.getSnapshot().contentRevision).toBe(legacyRevision);
+    await session.saveEntry(draft);
+    expect(session.getSnapshot().contentRevision).not.toBe(legacyRevision);
+    expect(session.readImportDraft()).toBe(payload);
+  }, 30_000);
+
+  it('bounds payloads and validates saved envelopes without echoing any source content', async () => {
+    const { session, storage } = await created();
+    const revision = session.getSnapshot().revision as string;
+    const writes = storage.writes;
+    await expect(session.writeImportDraft('x'.repeat(VAULT_IMPORT_DRAFT_MAX_BYTES + 1), revision)).rejects.toThrow('vault-size');
+    await expect(session.writeImportDraft('界'.repeat(Math.floor(VAULT_IMPORT_DRAFT_MAX_BYTES / 3) + 1), revision)).rejects.toThrow('vault-size');
+    await expect(session.writeImportDraft(4 as unknown as string, revision)).rejects.toThrow('vault-invalid');
+    await expect(session.writeImportDraft(payload, '')).rejects.toThrow('vault-invalid');
+    expect(storage.writes).toBe(writes);
+    const db = (session as unknown as { db: Kdbx }).db;
+    for (const value of ['secret malformed JSON', JSON.stringify({ version: 2, payload: 'future' }), JSON.stringify({ version: 1, payload: 42 })]) {
+      db.meta.customData.set(VAULT_IMPORT_DRAFT_FIELD, { value });
+      expect(() => session.readImportDraft()).toThrow('vault-invalid');
+    }
+    db.meta.customData.set(VAULT_IMPORT_DRAFT_FIELD, { value: JSON.stringify({ version: 1, payload: 'x'.repeat(VAULT_IMPORT_DRAFT_MAX_BYTES + 1) }) });
+    expect(() => session.readImportDraft()).toThrow('vault-size');
+    db.meta.customData.delete(VAULT_IMPORT_DRAFT_FIELD);
+    expect(session.getSnapshot()).toMatchObject({ entries: [], trash: [] });
+  }, 30_000);
+});
 
 describe('real encrypted local KDBX session', () => {
   it('keeps exact additional login identifiers protected through editing, history and KDBX restore', async () => {

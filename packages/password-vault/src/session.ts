@@ -1,7 +1,8 @@
 import { Kdbx, KdbxCredentials } from 'kdbxweb';
 import {
   applyDraft, checkBytes, clearCredentials, clearDatabase, configureDatabase, credentials, draftOf, fail,
-  findEntry, isTrash, loadDatabase, nextKdbxTime, normalizeDraft, safeError, summaryOf,
+  encodeImportDraft, findEntry, isTrash, loadDatabase, nextKdbxTime, normalizeDraft,
+  readImportDraft, safeError, summaryOf, VAULT_IMPORT_DRAFT_FIELD,
 } from './engine';
 import type {
   VaultEntryDraft,
@@ -18,6 +19,7 @@ import type {
 export const VAULT_IMPORT_MAX_ENTRIES = 1_000;
 export const VAULT_IMPORT_MAX_BYTES = 4 * 1024 * 1024;
 const VAULT_MAX_ENTRIES = 10_000;
+const VAULT_CONTENT_REVISION_FIELD = 'KeepAny.ContentRevision';
 
 type ImportMutation = {
   index: number;
@@ -154,7 +156,7 @@ export class VaultSession {
   private generation = 0;
   private queue: Promise<unknown> = Promise.resolve();
   private listeners = new Set<() => void>();
-  private snapshot: VaultSnapshot = { status: 'loading', entries: [], trash: [], revision: null };
+  private snapshot: VaultSnapshot = { status: 'loading', entries: [], trash: [], revision: null, contentRevision: null };
 
   constructor(private readonly storage: VaultPersistence) {}
 
@@ -169,11 +171,19 @@ export class VaultSession {
     const entries = this.db ? [...this.db.getDefaultGroup().allEntries()] : [];
     this.snapshot = {
       status, revision: this.record?.revision ?? null,
+      contentRevision: this.db ? this.contentRevision(this.db) : null,
       entries: entries.filter((entry) => !isTrash(this.db as Kdbx, entry)).map(summaryOf),
       trash: entries.filter((entry) => isTrash(this.db as Kdbx, entry)).map(summaryOf),
     };
     // Subscriber errors must not invalidate an already persisted encrypted revision.
     for (const listener of this.listeners) { try { listener(); } catch { /* Listener owns its rendering errors. */ } }
+  }
+
+  private contentRevision(db: Kdbx): string {
+    const stored = db.meta.customData.get(VAULT_CONTENT_REVISION_FIELD)?.value;
+    if (typeof stored === 'string' && stored.length > 0 && stored.length <= 256) return stored;
+    if (!this.record) fail('vault-missing');
+    return this.record.revision;
   }
 
   private checkGeneration(generation: number): void {
@@ -215,8 +225,9 @@ export class VaultSession {
     this.publish(this.record ? 'locked' : 'empty');
   }
 
-  private async persist(candidate: Kdbx, expectedRevision: string | null, generation: number): Promise<void> {
+  private async persist(candidate: Kdbx, expectedRevision: string | null, generation: number, preservedContentRevision?: string): Promise<void> {
     try {
+      candidate.meta.customData.set(VAULT_CONTENT_REVISION_FIELD, { value: preservedContentRevision ?? crypto.randomUUID() });
       const bytes = new Uint8Array(await candidate.save());
       checkBytes(bytes);
       this.checkGeneration(generation);
@@ -258,7 +269,7 @@ export class VaultSession {
     });
   }
 
-  private async mutate<T>(generation: number, operation: (candidate: Kdbx) => T | Promise<T>): Promise<T> {
+  private async mutate<T>(generation: number, operation: (candidate: Kdbx) => T | Promise<T>, preserveContentRevision = false): Promise<T> {
     const db = this.unlocked();
     const record = this.record;
     if (!record) fail('vault-missing');
@@ -270,7 +281,7 @@ export class VaultSession {
       this.checkGeneration(generation);
       const result = await operation(candidate);
       this.checkGeneration(generation);
-      await this.persist(candidate, record.revision, generation);
+      await this.persist(candidate, record.revision, generation, preserveContentRevision ? this.contentRevision(db) : undefined);
       return result;
     } catch (error) { clearDatabase(candidate); throw error; }
   }
@@ -287,6 +298,31 @@ export class VaultSession {
   }
 
   readEntry(id: string): VaultEntryDraft { return draftOf(findEntry(this.unlocked(), id)); }
+
+  /** Never exposes this unreviewed application state as a password entry. */
+  readImportDraft(): string | null { return readImportDraft(this.unlocked()); }
+
+  /** Returns the durable revision so callers can advance their import review base. */
+  async writeImportDraft(value: string | null, expectedRevision: string): Promise<string> {
+    const encoded = encodeImportDraft(value);
+    if (typeof expectedRevision !== 'string' || !expectedRevision || expectedRevision.length > 256) fail('vault-invalid');
+    return this.run(async (generation) => {
+      const db = this.unlocked();
+      if (this.record?.revision !== expectedRevision) fail('vault-stale');
+      // Even a same-payload no-op must reject another tab's durable write.
+      const stored = await this.storage.read();
+      this.checkGeneration(generation);
+      if (stored?.revision !== expectedRevision) fail('vault-stale');
+      const current = db.meta.customData.get(VAULT_IMPORT_DRAFT_FIELD)?.value ?? null;
+      if (current === encoded) return expectedRevision;
+      await this.mutate(generation, (candidate) => {
+        if (encoded === null) candidate.meta.customData.delete(VAULT_IMPORT_DRAFT_FIELD);
+        else candidate.meta.customData.set(VAULT_IMPORT_DRAFT_FIELD, { value: encoded });
+      }, true);
+      if (!this.record) fail('vault-missing');
+      return this.record.revision;
+    });
+  }
 
   previewImport(values: VaultEntryDraft[]): VaultImportPreview {
     const db = this.unlocked();
@@ -450,7 +486,14 @@ export class VaultSession {
       try { await this.mutate(generation, (candidate) => {
         const root = candidate.getDefaultGroup();
         const remoteRoot = imported.getDefaultGroup();
-        if (root.uuid.id === remoteRoot.uuid.id) candidate.merge(imported);
+        if (root.uuid.id === remoteRoot.uuid.id) {
+          // A restored backup must not overwrite local work or revive a discarded
+          // draft. Empty-vault adoption above intentionally retains its backup draft.
+          const localDraft = candidate.meta.customData.get(VAULT_IMPORT_DRAFT_FIELD);
+          candidate.merge(imported);
+          if (localDraft) candidate.meta.customData.set(VAULT_IMPORT_DRAFT_FIELD, localDraft);
+          else candidate.meta.customData.delete(VAULT_IMPORT_DRAFT_FIELD);
+        }
         else {
           const existingIds = new Set([...root.allEntries()].map((entry) => entry.uuid.id));
           const entries = [...remoteRoot.allEntries()];
