@@ -136,6 +136,7 @@ test('closed old PWA upgrades to the fresh-only portable package on the same per
   const errors: string[] = [];
   const failedCurrentResponses: string[] = [];
   const project = `Portable upgrade ${crypto.randomUUID().slice(0, 8)}`;
+  const collectionName = 'Portable collection';
   const password = 'synthetic-portable-upgrade-backup-only';
   let context: BrowserContext | undefined;
   let restoredContext: BrowserContext | undefined;
@@ -217,11 +218,24 @@ test('closed old PWA upgrades to the fresh-only portable package on the same per
     expect(Buffer.from(await originalImage(upgraded))).toEqual(imageBytes);
     await expect(upgraded.getByRole('heading', { name: project, exact: true })).toBeVisible();
     const visited: string[] = [];
-    for (const path of ['/', '/assets/project', '/assets/account', '/assets/subscription', '/assets/item', '/finance', '/tasks', '/collections', '/intake', '/settings', '/trash']) {
+    for (const path of ['/', '/assets/project', '/assets/account', '/assets/subscription', '/assets/item', '/assets/vault', detailPath,
+      `${detailPath}/workflow/brand`, `${detailPath}/workflow/close`, '/change-impact', '/assistant-access',
+      '/finance', '/tasks', '/collections', '/intake', '/settings', '/trash']) {
       await upgraded.goto(`${origin}${path}`);
       await expect(upgraded.getByRole('heading', { level: 1 })).toBeVisible();
       visited.push(path);
     }
+    await upgraded.goto(`${origin}/collections`);
+    await upgraded.getByRole('button', { name: 'New collection', exact: true }).first().click();
+    const collectionEditor = upgraded.getByRole('region', { name: 'New collection', exact: true });
+    await collectionEditor.getByLabel('Collection name', { exact: true }).fill(collectionName);
+    await collectionEditor.getByRole('checkbox', { name: project, exact: true }).check();
+    await collectionEditor.getByRole('button', { name: 'Save collection', exact: true }).click();
+    await expect(upgraded).toHaveURL(/\/collections\/[^/]+$/);
+    const collectionPath = new URL(upgraded.url()).pathname;
+    await upgraded.goto(`${origin}${collectionPath}`);
+    await expect(upgraded.getByRole('heading', { name: collectionName, exact: true })).toBeVisible();
+    visited.push(collectionPath);
 
     stage = 'download actual encrypted backup and inspect original identity/image';
     await upgraded.goto(`${origin}/intake`);
@@ -258,6 +272,9 @@ test('closed old PWA upgrades to the fresh-only portable package on the same per
     await restored.reload();
     await expect(restored.getByRole('heading', { name: project, exact: true })).toBeVisible();
     expect(Buffer.from(await originalImage(restored))).toEqual(imageBytes);
+    await restored.goto(`${origin}${collectionPath}`);
+    await expect(restored.getByRole('heading', { name: collectionName, exact: true })).toBeVisible();
+    await expect(restored.getByRole('link', { name: new RegExp(project) })).toBeVisible();
     expect(errors).toEqual([]);
     expect(failedCurrentResponses).toEqual([]);
     console.log(JSON.stringify({ oldCommit, newCommit: release.sourceCommit, sourceDirty: release.sourceDirty, oldWorkerHash, newWorkerHash, oldEntry, newEntry,
