@@ -69,7 +69,8 @@ async function recordDependency(filename) {
 }
 
 // A fresh production build is the only web source. release/web is never read.
-execFileSync('pnpm', ['--config.verify-deps-before-run=false', 'exec', 'tsc', '--noEmit'], { cwd: root, stdio: 'inherit' });
+// Invoke the installed JavaScript CLI directly: Windows cannot exec pnpm.cmd.
+execFileSync(process.execPath, [join(root, 'node_modules', 'typescript', 'bin', 'tsc'), '--noEmit'], { cwd: root, stdio: 'inherit' });
 const webModules = new Set();
 await buildWeb({
   root: join(root, 'apps', 'web'),
