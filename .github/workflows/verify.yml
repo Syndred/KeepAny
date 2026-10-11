@@ -47,3 +47,10 @@ jobs:
         run: pnpm exec playwright test --config playwright.release.config.ts --reporter=dot
       - name: Verify delivered sync files with isolated PostgreSQL and local HTTP
         run: pnpm exec playwright test --config playwright.sync-release.config.ts --reporter=dot
+      - name: Build and verify the actual portable preview
+        run: pnpm build:preview && pnpm verify:preview
+      - name: Exercise local workflows on the extracted portable server
+        shell: bash
+        run: |
+          archive="$(node --input-type=module -e 'import fs from "node:fs"; const files=fs.readdirSync("dist/preview").filter(name=>name.endsWith(".zip")); if(files.length!==1)throw Error("Expected one fresh preview"); process.stdout.write(`dist/preview/${files[0]}`);')"
+          KEEPANY_PREVIEW_ARCHIVE="$archive" KEEPANY_RELEASE_TEST_PORT=4391 pnpm exec playwright test --config playwright.portable-release.config.ts --reporter=dot

@@ -1,4 +1,22 @@
-# KeepAny 本地可运行版
+# KeepAny 本地测试版
+
+普通试用者请从 [GitHub Releases](https://github.com/Syndred/KeepAny/releases) 下载标注 `Pre-release` 的 `KeepAny-…-portable.zip`，按照包内 `START-HERE.md` 启动。便携包只需 Node.js 22+，不需要拉代码、安装 pnpm 或项目依赖。中英文入门见 [试用指南](../docs/试用指南.md)。发布状态和实际验证范围以对应 Release 为准。
+
+维护者从**已提交的干净仓库**构建便携包：
+
+```bash
+pnpm install --frozen-lockfile
+pnpm build:preview
+pnpm verify:preview
+```
+
+生成 `dist/preview/` 中的 ZIP、SHA-256 和对应源码。便携包使用本次完整构建，包含本机启动器、当前 Web 文件、对应源码与第三方材料；不携带仓库里的历年哈希资源。默认拒绝未提交改动；`--allow-dirty` 仅用于内部候选，不能当公开版本。
+
+验收须包括仓库外解压启动、实际启动器上的完整本地流程，以及同来源旧 PWA 的已记录升级路径；仅测试 Vite 开发或预览服务器不能替代便携包验收。公开介绍页另用 `pnpm build:public-site` 构建，发布目录只有 `dist/public-site/`。公开页面的手动发布工作流要求同一提交的本地交付和三系统打包 CI 成功。
+
+下文是供已有源码工作区使用的固定 `release/web/` 启动方式及历史验收记录。
+
+## 源码工作区固定本地包
 
 这是开源核心的**本地版**，使用已构建的 `release/web/`，可在浏览器内管理资产、关系、待办、图片并导出／恢复加密备份。本目录随仓库一起保存；不需要商业账号、Docker 或 PostgreSQL。
 
