@@ -4,6 +4,7 @@ process.env.KEEPANY_PORTABLE_UPGRADE = '1';
 export default defineConfig({
   testDir: './tests/e2e',
   testMatch: 'portable-preview-upgrade.spec.ts',
+  outputDir: 'test-results/portable-upgrade',
   timeout: 150_000,
   workers: 1,
   retries: 0,
