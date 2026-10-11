@@ -123,7 +123,7 @@ try {
   const licenses = JSON.parse(await readFile(join(packageRoot, 'legal', 'preview-license-inventory.json'), 'utf8'));
   assert.equal(licenses.unresolvedPackageCount, 0, 'No unresolved distributed license text');
   assert(licenses.packages.some(pkg => pkg.name === 'hono') && licenses.packages.some(pkg => pkg.name === '@hono/node-server'));
-  for (const path of ['source/package.json', 'source/pnpm-lock.yaml', 'source/pnpm-workspace.yaml', 'source/tsconfig.json', 'source/LICENSE', 'source/scripts/preview-server.mjs']) await stat(join(packageRoot, path));
+  for (const path of ['source/package.json', 'source/pnpm-lock.yaml', 'source/pnpm-workspace.yaml', 'source/tsconfig.json', 'source/LICENSE', 'source/SBOM.spdx.json', 'source/legal/third-party/manifest.json', 'source/scripts/preview-server.mjs']) await stat(join(packageRoot, path));
   assert(release.sourceFiles.some(file => file.path.startsWith('apps/web/src/')) && release.sourceFiles.some(file => file.path.startsWith('packages/')));
   for (const file of release.sourceFiles) assert.equal(sha256(await readFile(join(packageRoot, 'source', file.path))), file.sha256, `Corresponding source: ${file.path}`);
   checks.push('ZIP and per-file checksums, current web identity, source, launchers, license inventory, and clean external extraction');
