@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { assetSchema, duplicates, formatMinorUnits, inputFromMinorUnits, historySchema, parseMinorUnits, type Asset } from "../../../packages/domain/src";
 import { allRecords, localRepository, saveBatch } from "../../../packages/local-db/src";
@@ -69,6 +69,9 @@ export function IntakeReview() {
 	const inFlight = useRef(new Set<string>());
 	const drafts = useRef(new Map<string, ReviewedCandidate>());
 	const pendingSaves = useRef(new Map<string, Promise<void>>());
+	const failedSaves = useRef(new Set<string>());
+	const reviewRevision = useRef(0);
+	const readGeneration = useRef(0);
 	const savingIdsRef = useRef(savingIds);
 	savingIdsRef.current = savingIds;
 	useSearchRowLocation("intake-review-", rows.map((row) => row.id), rows.map((row) => row.id), undefined, (id) => {
@@ -78,9 +81,13 @@ export function IntakeReview() {
 			try { await pendingAtRead; }
 			catch { return; }
 			if (!active) return;
+			const revision = reviewRevision.current;
+			const generation = readGeneration.current;
 			const latest = await getReviewedCandidate(id);
 			if (!active || !latest || inFlight.current.has(id) || savingIdsRef.current.has(id)
-				|| pendingAtRead !== pendingSaves.current.get(id)) return;
+				|| pendingAtRead !== pendingSaves.current.get(id)
+				|| revision !== reviewRevision.current || generation !== readGeneration.current) return;
+			reviewRevision.current++;
 			drafts.current.delete(id);
 			setRows((current) => current.some((row) => row.id === id)
 				? current.map((row) => row.id === id ? latest : row)
@@ -88,34 +95,50 @@ export function IntakeReview() {
 		})().catch(() => { if (active) setMessage(t("error")); });
 		return () => { active = false; };
 	});
-	const refresh = async () => {
+	const refresh = useCallback(async (isActive: () => boolean = () => true) => {
+		const generation = ++readGeneration.current;
+		const isCurrent = () => isActive() && generation === readGeneration.current;
 		const repository = await localRepository();
-		const [items, pending] = await Promise.all([listReviewedCandidates(), repository.pendingReviewedExpenseConfirmations()]);
-		setRows(items);
-		setExpenseIntents(pending);
-		setExpenseRecoveryPending(pending.length > 0 || !!repository.intakeExpenseRecoveryError);
-	};
+		while (isCurrent()) {
+			const revision = reviewRevision.current;
+			await Promise.allSettled([...pendingSaves.current.values()]);
+			if (!isCurrent()) return;
+			if (revision !== reviewRevision.current) continue;
+			const [items, pending] = await Promise.all([listReviewedCandidates(), repository.pendingReviewedExpenseConfirmations()]);
+			if (!isCurrent()) return;
+			// Another row remains editable during confirmation. A read started before
+			// that edit must not replace its newer optimistic or persisted value.
+			if (revision !== reviewRevision.current) continue;
+			setRows(items.map((row) => {
+				const draft = drafts.current.get(row.id);
+				if (row.status === "pending" && failedSaves.current.has(row.id) && draft) return draft;
+				drafts.current.delete(row.id);
+				failedSaves.current.delete(row.id);
+				return row;
+			}));
+			setMigrationPending(!!repository.intakeReviewMigrationError);
+			setExpenseIntents(pending);
+			setExpenseRecoveryPending(pending.length > 0 || !!repository.intakeExpenseRecoveryError);
+			return;
+		}
+	}, []);
+	async function mutateReview<T>(action: () => Promise<T>): Promise<T> {
+		reviewRevision.current++;
+		try { return await action(); }
+		finally { reviewRevision.current++; }
+	}
 	const flushEdits = async () => Promise.all([...pendingSaves.current.values()]);
 	useEffect(() => {
 		let active = true;
-		void (async () => {
-			const repository = await localRepository();
-			const [items, pending] = await Promise.all([listReviewedCandidates(), repository.pendingReviewedExpenseConfirmations()]);
-			if (active) {
-				setRows(items);
-				setMigrationPending(!!repository.intakeReviewMigrationError);
-				setExpenseIntents(pending);
-				setExpenseRecoveryPending(pending.length > 0 || !!repository.intakeExpenseRecoveryError);
-			}
-		})().catch(() => { if (active) setMessage(t("error")); });
+		void refresh(() => active).catch(() => { if (active) setMessage(t("error")); });
 		return () => { active = false; };
-	}, [t]);
+	}, [t, refresh]);
 	async function retryMigration() {
 		if (migrationInFlight.current) return;
 		migrationInFlight.current = true;
 		setMigrationBusy(true);
 		try {
-			await (await localRepository()).retryIntakeReviewMigration();
+			await mutateReview(async () => (await localRepository()).retryIntakeReviewMigration());
 			await refresh();
 			setMigrationPending(false);
 			setMessage("");
@@ -127,7 +150,7 @@ export function IntakeReview() {
 		expenseRecoveryInFlight.current = true;
 		setExpenseRecoveryBusy(true);
 		try {
-			await (await localRepository()).retryReviewedExpenseConfirmations();
+			await mutateReview(async () => (await localRepository()).retryReviewedExpenseConfirmations());
 			await refresh();
 			setMessage("");
 		} catch { setExpenseRecoveryPending(true); }
@@ -138,7 +161,7 @@ export function IntakeReview() {
 		if (inFlight.current.has(id)) return;
 		inFlight.current.add(id); setWorkingId(id); setMessage(""); setMessageId(id);
 		try {
-			const result = await (await localRepository()).cancelReviewedExpenseConfirmation(id);
+			const result = await mutateReview(async () => (await localRepository()).cancelReviewedExpenseConfirmation(id));
 			await refresh();
 			notify(t(result === "completed" ? "financeRecordSaved" : "reviewExpenseCancelled"));
 		} catch { setMessage(t("error")); await refresh().catch(() => undefined); }
@@ -146,6 +169,8 @@ export function IntakeReview() {
 	}
 
 	function queueEdit(id: string, nextRow: ReviewedCandidate, action: () => Promise<boolean>) {
+		reviewRevision.current++;
+		failedSaves.current.delete(id);
 		drafts.current.set(id, nextRow);
 		setRowErrors(current => { const next = { ...current }; delete next[id]; return next; });
 		setSavingIds((current) => new Set(current).add(id));
@@ -155,13 +180,18 @@ export function IntakeReview() {
 		const next = previous.catch(() => undefined).then(() => withReviewLock(id, async () => {
 			if (await action()) return;
 			const latest = await getReviewedCandidate(id);
-			if (latest) {
+			if (latest && pendingSaves.current.get(id) === next) {
 				drafts.current.delete(id);
 				setRows((current) => current.map((item) => item.id === id ? latest : item));
 			}
 		}));
 		pendingSaves.current.set(id, next);
-		void next.catch(() => { setMessageId(id); setMessage(t("error")); }).finally(() => {
+		void next.catch(() => {
+			if (pendingSaves.current.get(id) !== next) return;
+			failedSaves.current.add(id);
+			setMessageId(id); setMessage(t("error"));
+		}).finally(() => {
+			reviewRevision.current++;
 			if (pendingSaves.current.get(id) === next) setSavingIds((current) => { const updated = new Set(current); updated.delete(id); return updated; });
 		});
 	}
@@ -299,7 +329,7 @@ export function IntakeReview() {
 		setMessageId(id);
 		try {
 			await flushEdits();
-			await withReviewLock(id, () => performDecision(id, decision));
+			await mutateReview(() => withReviewLock(id, () => performDecision(id, decision)));
 			if (decision === "accepted") {
 				const accepted = await getReviewedCandidate(id);
 				if (accepted?.status === "accepted") {
@@ -364,7 +394,7 @@ export function IntakeReview() {
 			await flushEdits();
 			for (const id of ids) {
 				try {
-					if (await withReviewLock(id, () => performDecision(id, "accepted")))
+					if (await mutateReview(() => withReviewLock(id, () => performDecision(id, "accepted"))))
 						confirmed++;
 					completed.push(id);
 				} catch (error) {

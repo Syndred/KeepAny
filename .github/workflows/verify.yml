@@ -44,6 +44,8 @@ jobs:
         run: node scripts/phase0/verify-third-party-license-materials.mjs --release
       - run: pnpm exec playwright install --with-deps chromium
       - run: pnpm test
+      - name: Verify intake refresh cannot overwrite concurrent edits
+        run: pnpm exec playwright test tests/e2e/intake-refresh-race.spec.ts --workers=1 --reporter=dot
       - run: pnpm build
       - name: Verify committed web bundle
         run: node scripts/verify-local-release.mjs
