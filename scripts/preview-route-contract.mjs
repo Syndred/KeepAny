@@ -1,5 +1,5 @@
 import { build } from 'esbuild';
-import { join } from 'node:path';
+import { isAbsolute, join } from 'node:path';
 
 // Use the real TanStack route tree, with only its rendering component replaced
 // during this build-time inspection. Lazy page imports are never executed.
@@ -13,7 +13,7 @@ export async function readApplicationRouteContract(root) {
     plugins: [{
       name: 'keepany-application-route-contract',
       setup(build) {
-        build.onResolve({ filter: /^[^./]/ }, args => ({ path: import.meta.resolve(args.path), external: true }));
+        build.onResolve({ filter: /^[^./]/ }, args => isAbsolute(args.path) ? undefined : ({ path: import.meta.resolve(args.path), external: true }));
         build.onResolve({ filter: /^\.\/AppShell$/ }, () => ({ path: 'AppShell', namespace: 'preview-route-shell' }));
         build.onLoad({ filter: /.*/, namespace: 'preview-route-shell' }, () => ({ contents: 'export const AppShell = () => null;', loader: 'js' }));
         build.onResolve({ filter: /^\.\/page-/ }, args => ({ path: args.path, external: true }));
