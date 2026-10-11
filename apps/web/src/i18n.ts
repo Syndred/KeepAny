@@ -1902,10 +1902,11 @@ Object.assign(copy, {
 		"Confirmed records will appear here.",
 	],
 	intakeExternalLinkImport: ["导入外链台账", "Import backlink ledger"],
-	overviewHero: ["你的数字宇宙，一眼掌握。", "Your world, all in one view."],
+	overviewEyebrow: ["本地数字资产工作台", "LOCAL DIGITAL ASSET WORKSPACE"],
+	overviewHero: ["项目、账号与订阅，一眼掌握。", "Your projects, accounts and subscriptions, connected."],
 	overviewHeroHint: [
-		"项目、外链、账号与现实资产，拥有自己的完整档案。",
-		"Projects, backlinks, accounts and physical items, each with a complete record.",
+		"看清项目依赖，记下续费与维护事项。资料保存在当前浏览器。",
+		"See project dependencies and track renewals and maintenance. Records stay in this browser.",
 	],
 	exploreProjects: ["探索我的项目", "Explore my projects"],
 	overviewCollectHint: [
@@ -1985,6 +1986,7 @@ Object.assign(copy, {
 		"还没有项目。添加一个项目开始整理。",
 		"No projects yet. Add one to get started.",
 	],
+	overviewTrySample: ["用示例资料开始", "Start with sample records"],
 	overviewRenewal: ["订阅续费", "Subscription renewal"],
 	overviewWarranty: ["保修到期", "Warranty expires"],
 	projectListTitle: [

@@ -50,7 +50,7 @@ export function Overview() {
   };
   return <main className="page overview-page">
     <section className="overview-hero">
-      <div><span className="eyebrow">YOUR WORLD, ALL CONNECTED</span><h1>{t("overviewHero")}</h1><p>{t("overviewHeroHint")}</p></div>
+      <div><span className="eyebrow">{t("overviewEyebrow")}</span><h1>{t("overviewHero")}</h1><p>{t("overviewHeroHint")}</p></div>
       <Link to="/assets/$kind" params={{ kind: "project" }} className="button overview-hero-action"><ArrowUpRight size={16}/>{t("exploreProjects")}</Link>
     </section>
     <div className="overview-intake-bar"><strong>{t("overviewCollectHint")}</strong><Link className="button" to="/intake"><Plus size={15}/>{t("quickIntake")}</Link><Link className="button" to="/tasks">{t("viewTasks")} <ArrowRight size={15}/></Link></div>
@@ -81,6 +81,6 @@ export function Overview() {
         <h3>{project.name}</h3><p>{[project.description, project.url].filter(Boolean).join(" · ") || t("project")}</p>
         <div className="overview-project-counts"><span><strong>{linked.length}</strong> {t("overviewLinkedAssets", { count: linked.length })}</span><span><strong>{linked.filter((asset) => asset.kind === "account").length}</strong> {t("overviewAccountLabel", { count: linked.filter((asset) => asset.kind === "account").length })}</span><span><strong>{linked.filter((asset) => asset.kind === "subscription").length}</strong> {t("overviewSubscriptionLabel", { count: linked.filter((asset) => asset.kind === "subscription").length })}</span></div>
       </Link>;
-    })}</div> : <div className="overview-project-empty"><p>{t("overviewNoProjects")}</p><Link className="button" to="/assets/$kind" params={{ kind: "project" }}>{t("add")} {t("project")}</Link></div>}
+    })}</div> : <div className="overview-project-empty"><p>{t("overviewNoProjects")}</p><div className="actions"><Link className="button" to="/assets/$kind" params={{ kind: "project" }}>{t("add")} {t("project")}</Link>{!data.loading && data.assets.length === 0 && <Link className="button" to="/settings" hash="advanced-settings">{t("overviewTrySample")}</Link>}</div></div>}
   </main>;
 }
