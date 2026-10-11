@@ -47,6 +47,7 @@ async function complete(process, timeout = 10000) {
   })]);
 }
 async function waitForState(process) {
+  let lastError;
   for (let attempt = 0; attempt < 100; attempt += 1) {
     try {
       const state = JSON.parse(await readFile(join(packageRoot, '.keepany-preview-server.json'), 'utf8'));
@@ -58,11 +59,17 @@ async function waitForState(process) {
         assert.equal(identity.listenAddress, '127.0.0.1', 'Actual OS listener is loopback, never a wildcard address');
         if (identity.pid === state.pid) return state;
       }
-    } catch (error) { if (error instanceof SyntaxError || error.name === 'AssertionError') throw error; }
+    } catch (error) {
+      if (error.name === 'AssertionError') throw error;
+      // The exclusive state file is visible before writeFile finishes. Only
+      // startup polling may wait for that write; malformed state still fails
+      // after the bounded deadline, with the last error retained for diagnosis.
+      lastError = error;
+    }
     if (process.child.exitCode !== null) throw Error(`Startup failed: ${process.output()}`);
     await new Promise(resolve => setTimeout(resolve, 50));
   }
-  throw Error(`No startup state: ${process.output()}`);
+  throw Error(`No startup state: ${process.output()}`, { cause: lastError });
 }
 async function reservePort() {
   const socket = createServer();
