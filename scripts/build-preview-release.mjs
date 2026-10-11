@@ -30,7 +30,10 @@ const sourcePathAllowed = path => /^(?:apps|packages|patches|scripts)\//.test(pa
 const sourcePaths = [...new Set(execFileSync('git', ['ls-files', '-z', '--cached', '--others', '--exclude-standard'], { cwd: root, encoding: 'utf8', maxBuffer: 20 * 1024 * 1024 }).split('\0').filter(path => path && sourcePathAllowed(path)))].sort();
 const sourceSnapshot = new Map();
 for (const path of sourcePaths) {
-  if (/(?:^|\/)(?:dist|node_modules|\.env(?:\..*)?)(?:\/|$)/.test(path)) throw Error(`Unexpected generated/private source path: ${path}`);
+  if (/(?:^|\/)(?:dist|node_modules)(?:\/|$)/.test(path)
+    || (/(?:^|\/)\.env(?:\..*)?$/.test(path) && !path.endsWith('/.env.example'))) {
+    throw Error(`Unexpected generated/private source path: ${path}`);
+  }
   sourceSnapshot.set(path, await readFile(join(root, path)));
 }
 const distributedPackages = new Map();
