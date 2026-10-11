@@ -133,6 +133,7 @@ async function start() {
       return context.text('Invalid path', 400);
     }
     if (context.req.header('host') !== `127.0.0.1:${port}`) return context.text('Invalid host', 403);
+    if (decoded.split('/').some(segment => segment.startsWith('.'))) return context.notFound();
     context.header('X-Content-Type-Options', 'nosniff');
     context.header('Cache-Control', 'no-cache');
     await next();
