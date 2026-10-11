@@ -1,2 +1,3 @@
+release/web/** -whitespace linguist-generated=true
 # Preserve public upstream package evidence byte-for-byte, including whitespace.
 legal/third-party/evidence/** -whitespace
