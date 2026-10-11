@@ -144,7 +144,7 @@ async function start() {
     if (requestOrigin && requestOrigin !== origin) return context.text('Forbidden', 403);
     await next();
   });
-  app.get(`${controlPath}/status`, context => context.json({ schema: state.schema, pid: state.pid }));
+  app.get(`${controlPath}/status`, context => context.json({ schema: state.schema, pid: state.pid, listenAddress: server.address().address }));
   app.post(`${controlPath}/stop`, context => {
     setTimeout(shutdown, 50);
     return context.json({ stopping: true });

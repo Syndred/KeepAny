@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
-import { spawn } from 'node:child_process';
+import { execFileSync, spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { chmod, mkdir, mkdtemp, readFile, readdir, rm, stat, writeFile } from 'node:fs/promises';
+import { mkdtemp, readFile, readdir, rm, stat, writeFile } from 'node:fs/promises';
 import { createServer, request } from 'node:http';
 import { createConnection } from 'node:net';
 import { networkInterfaces, tmpdir } from 'node:os';
@@ -52,8 +52,12 @@ async function waitForState(process) {
       const status = await fetch(`http://127.0.0.1:${state.port}/__keepany_preview__/status`, {
         headers: { authorization: `Bearer ${state.token}` }, signal: AbortSignal.timeout(500),
       });
-      if (status.ok && (await status.json()).pid === state.pid) return state;
-    } catch (error) { if (error instanceof SyntaxError) throw error; }
+      if (status.ok) {
+        const identity = await status.json();
+        assert.equal(identity.listenAddress, '127.0.0.1', 'Actual OS listener is loopback, never a wildcard address');
+        if (identity.pid === state.pid) return state;
+      }
+    } catch (error) { if (error instanceof SyntaxError || error.name === 'AssertionError') throw error; }
     if (process.child.exitCode !== null) throw Error(`Startup failed: ${process.output()}`);
     await new Promise(resolve => setTimeout(resolve, 50));
   }
@@ -89,15 +93,15 @@ async function refusesConnection(host) {
 
 try {
   const packageNames = new Set();
-  for (const [path, content] of Object.entries(extracted)) {
+  for (const path of Object.keys(extracted)) {
     assert(!path.startsWith('/') && !path.split('/').includes('..') && !path.includes('\\'), `Safe ZIP path: ${path}`);
     packageNames.add(path.split('/')[0]);
-    const target = join(temp, path);
-    await mkdir(dirname(target), { recursive: true });
-    await writeFile(target, content);
-    if (/\.(?:command|sh)$/.test(path)) await chmod(target, 0o755);
   }
   assert.equal(packageNames.size, 1, 'ZIP has one root folder');
+  if (process.platform === 'win32') {
+    const literal = value => `'${value.replaceAll("'", "''")}'`;
+    execFileSync('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', `Expand-Archive -LiteralPath ${literal(archivePath)} -DestinationPath ${literal(temp)}`], { stdio: 'pipe' });
+  } else execFileSync('unzip', ['-q', archivePath, '-d', temp], { stdio: 'pipe' });
   packageRoot = join(temp, [...packageNames][0]);
   assert(!packageRoot.startsWith(root), 'Runs outside repository');
   const sumLines = (await readFile(join(packageRoot, 'SHA256SUMS.txt'), 'utf8')).trim().split('\n');
@@ -112,7 +116,10 @@ try {
   for (const file of release.webFiles) assert.equal(sha256(await readFile(join(packageRoot, 'web', file.path))), file.sha256, `Web identity: ${file.path}`);
   assert.equal(release.defaultOrigin, 'http://127.0.0.1:4180');
   assert(!Object.keys(extracted).some(path => path.includes('/release/web/') || path.includes('/node_modules/')), 'No historical bundle or installed dependencies shipped');
-  for (const action of ['start', 'stop']) for (const ext of ['command', 'sh', 'bat']) await stat(join(packageRoot, `${action}.${ext}`));
+  for (const action of ['start', 'stop']) for (const ext of ['command', 'sh', 'bat']) {
+    const mode = (await stat(join(packageRoot, `${action}.${ext}`))).mode;
+    if (process.platform !== 'win32' && ext !== 'bat') assert(mode & 0o111, `Native ZIP extraction preserves executable permission: ${action}.${ext}`);
+  }
   const licenses = JSON.parse(await readFile(join(packageRoot, 'legal', 'preview-license-inventory.json'), 'utf8'));
   assert.equal(licenses.unresolvedPackageCount, 0, 'No unresolved distributed license text');
   assert(licenses.packages.some(pkg => pkg.name === 'hono') && licenses.packages.some(pkg => pkg.name === '@hono/node-server'));
@@ -159,8 +166,11 @@ try {
     assert(!response.body.includes('DO-NOT-SERVE-OUTSIDE-WEB'));
   }
   assert.equal((await rawRequest('/', { host: `evil.example:${port}` })).status, 403, 'Untrusted host rejected');
-  for (const details of Object.values(networkInterfaces()).flat()) {
-    if (details.family === 'IPv4' && !details.internal) await refusesConnection(details.address);
+  for (const [name, addresses] of Object.entries(networkInterfaces())) {
+    // VPN/TUN interfaces may transparently redirect traffic to loopback. Probe
+    // physical adapters, and separately verify the actual bound OS address.
+    if (/^(?:utun|tun|tap|wg|tailscale)/i.test(name)) continue;
+    for (const details of addresses) if (details.family === 'IPv4' && !details.internal) await refusesConnection(details.address);
   }
   checks.push('Raw and encoded path traversal, malformed path, Host rejection, private state, loopback-only listener');
 
