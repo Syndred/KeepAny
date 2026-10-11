@@ -1,0 +1,38 @@
+name: Verify portable preview
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  preview:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.10.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Build fresh portable preview
+        run: node scripts/build-preview-release.mjs
+      - name: Verify extracted package outside checkout
+        run: node scripts/verify-preview-release.mjs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: KeepAny-preview-${{ matrix.os }}
+          path: |
+            dist/preview/*.zip
+            dist/preview/*.zip.sha256
+          if-no-files-found: error
