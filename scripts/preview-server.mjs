@@ -95,11 +95,16 @@ function openBrowser(url) {
 
 async function start() {
   const release = JSON.parse(await readFile(join(packageRoot, 'RELEASE.json'), 'utf8'));
+  const routes = release.applicationRoutes;
+  if (!Array.isArray(routes?.paths) || !routes.paths.includes('/')
+    || routes.paths.some(path => typeof path !== 'string' || !/^\/(?:[\w$-]+\/?)*$/.test(path))
+    || !Array.isArray(routes.parameters?.kind) || !routes.parameters.kind.length
+    || routes.parameters.kind.some(kind => !/^[a-z][a-z-]*$/.test(kind))) throw Error('Invalid application route contract in RELEASE.json');
   await readFile(join(webRoot, 'index.html'));
   const token = randomBytes(32).toString('hex');
   const state = { schema: 'keepany.preview-server.v1', pid: process.pid, port, token };
   const origin = `http://127.0.0.1:${port}`;
-  const app = new Hono();
+  const app = new Hono({ strict: false });
   let server;
   let closing = false;
   let ownsState = false;
@@ -154,16 +159,19 @@ async function start() {
     await next();
   });
   app.use('*', serveStatic({ root: webRoot }));
-  app.use('*', async (context, next) => {
-    const path = context.req.path;
-    // Missing chunks, APIs, and dotfiles must never receive index.html.
-    const assetNavigation = /^\/assets\/(?:project|account|subscription|item)(?:\/[^./]+(?:\/workflow\/[^./]+)?)?\/?$/.test(path);
-    if ((/^\/assets(?:\/|$)/.test(path) && !assetNavigation)
-      || /^\/(?:icons|api|sync|workspaces|__keepany_preview__)(?:\/|$)/.test(path)
-      || path.split('/').some(segment => segment.includes('.'))
-      || !context.req.header('accept')?.includes('text/html')) return context.notFound();
-    return serveStatic({ root: webRoot, path: 'index.html' })(context, next);
-  });
+  // Hono matches the complete route contract extracted from the actual
+  // TanStack tree. Static files are tried first; missing chunks/API paths have
+  // no matching application route and remain 404, even with Accept: text/html.
+  for (const path of routes.paths) {
+    const pattern = path.replace(/\$([\w]+)/g, (_match, parameter) => {
+      const choices = routes.parameters[parameter];
+      return choices ? `:${parameter}{(?:${choices.join('|')})}` : `:${parameter}`;
+    });
+    app.on(['GET', 'HEAD'], pattern, async (context, next) => {
+      if (!context.req.header('accept')?.includes('text/html')) return context.notFound();
+      return serveStatic({ root: webRoot, path: 'index.html' })(context, next);
+    });
+  }
   // Claim this package instance before listening. A second process must not
   // overwrite the control state even when it requests a different test port.
   try {

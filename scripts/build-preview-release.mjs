@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { build as bundleServer } from 'esbuild';
 import { build as buildWeb } from 'vite';
 import { zipSync } from 'fflate';
+import { readApplicationRouteContract } from './preview-route-contract.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const allowDirty = process.argv.slice(2).includes('--allow-dirty');
@@ -40,6 +41,7 @@ for (const path of sourcePaths) {
 }
 const distributedPackages = new Map();
 const packageCache = new Map();
+const applicationRoutes = await readApplicationRouteContract(root);
 async function recordDependency(filename) {
   // Vite uses forward slashes on Windows; esbuild may use native separators.
   if (!filename.replaceAll('\\', '/').includes('/node_modules/')) return;
@@ -209,6 +211,7 @@ const release = {
   reproducibleArchiveTimestamp: archiveTime.toISOString(),
   node: '>=22', defaultOrigin: 'http://127.0.0.1:4180',
   webSource: 'fresh apps/web/dist production build',
+  applicationRoutes,
   webFiles: [...webFiles].map(([path, bytes]) => ({ path, sha256: sha256(bytes) })),
   sourceFiles, distributedDependencyCount: licenses.length,
   license: 'AGPL-3.0-only',

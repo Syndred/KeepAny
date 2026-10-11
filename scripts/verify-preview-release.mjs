@@ -8,6 +8,7 @@ import { networkInterfaces, tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { unzipSync } from 'fflate';
+import { readApplicationRouteContract } from './preview-route-contract.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const files = await readdir(join(root, 'dist', 'preview'));
@@ -111,6 +112,7 @@ try {
     assert.equal(sha256(await readFile(join(packageRoot, path))), digest, `Delivered checksum: ${path}`);
   }
   const release = JSON.parse(await readFile(join(packageRoot, 'RELEASE.json'), 'utf8'));
+  assert.deepEqual(release.applicationRoutes, await readApplicationRouteContract(join(packageRoot, 'source')), 'All delivered source application routes match the HTTP contract');
   const deliveredWeb = Object.keys(extracted).filter(path => path.startsWith(`${[...packageNames][0]}/web/`));
   assert.equal(deliveredWeb.length, release.webFiles.length, 'Only current web files shipped');
   for (const file of release.webFiles) assert.equal(sha256(await readFile(join(packageRoot, 'web', file.path))), file.sha256, `Web identity: ${file.path}`);
@@ -140,13 +142,16 @@ try {
   assert.equal(index.status, 200);
   assert(index.body.equals(indexBytes));
   assert.equal(index.headers['x-content-type-options'], 'nosniff');
-  const navigation = await rawRequest('/projects/example', { accept: 'text/html' });
-  assert.equal(navigation.status, 200);
-  assert(navigation.body.equals(indexBytes));
-  for (const path of ['/assets/project', '/assets/account', '/assets/subscription', '/assets/item', '/assets/project/synthetic-id', '/assets/project/synthetic-id/workflow/retire']) {
-    const response = await rawRequest(path, { accept: 'text/html' });
-    assert.equal(response.status, 200, `Actual application deep link has SPA fallback: ${path}`);
-    assert(response.body.equals(indexBytes));
+  for (const declared of release.applicationRoutes.paths) {
+    const kinds = declared.includes('$kind') ? release.applicationRoutes.parameters.kind : ['project'];
+    for (const kind of kinds) {
+      const path = declared.replaceAll('$kind', kind).replaceAll('$id', 'synthetic-id.with-dot').replaceAll('$flow', 'retire');
+      for (const method of ['GET', 'HEAD']) {
+        const response = await rawRequest(path, { accept: 'text/html' }, method);
+        assert.equal(response.status, 200, `Every formal application route supports direct ${method}: ${path}`);
+        assert(method === 'HEAD' ? response.body.length === 0 : response.body.equals(indexBytes));
+      }
+    }
   }
   const head = await rawRequest('/', {}, 'HEAD');
   assert.equal(head.status, 200);
@@ -156,12 +161,12 @@ try {
   const js = await rawRequest(`/${asset.path}`);
   assert.equal(js.status, 200);
   assert.equal(sha256(js.body), asset.sha256);
-  for (const path of ['/assets/does-not-exist.js', '/icons/missing.png', '/missing.js', '/api/auth/session', '/sync', '/.keepany-preview-server.json']) {
+  for (const path of ['/assets/does-not-exist.js', '/assets/does-not-exist.css', '/assets/does-not-exist', '/projects/example', '/icons/missing.png', '/missing.js', '/api/auth/session', '/sync', '/.keepany-preview-server.json']) {
     const response = await rawRequest(path, { accept: 'text/html' });
     assert.equal(response.status, 404, `No HTML fallback: ${path}`);
     assert(!response.body.equals(indexBytes));
   }
-  assert.equal((await rawRequest('/projects/example')).status, 404, 'Non-navigation fetch has no fallback');
+  assert.equal((await rawRequest('/assets/project')).status, 404, 'Non-navigation fetch has no fallback');
   assert.equal((await rawRequest('/', {}, 'POST')).status, 405);
   checks.push('Production assets, HEAD, SPA navigation fallback, missing asset/API/dotfile rejection');
 
