@@ -7,6 +7,9 @@
   "scripts": {
     "dev": "vite apps/web --host 127.0.0.1",
     "build": "tsc --noEmit && vite build apps/web",
+    "build:preview": "node scripts/build-preview-release.mjs",
+    "verify:preview": "node scripts/verify-preview-release.mjs",
+    "build:public-site": "node scripts/build-public-site.mjs",
     "build:mcp": "node scripts/build-mcp-launcher.mjs",
     "pack:mcp": "pnpm build:mcp && npm pack ./dist/mcp-launcher --pack-destination ./dist",
     "typecheck": "tsc --noEmit",
