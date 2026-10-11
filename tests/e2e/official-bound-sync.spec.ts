@@ -19,7 +19,9 @@ import { migrateSyncDatabase } from '../../apps/sync-server/src/migrate';
 import { selectChoice } from "./helpers/select-choice";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
-const commercialCheckout = resolve(root, '../KeepAnyAdm');
+// Isolated Git worktrees do not share the primary checkout's sibling paths.
+const commercialCheckout = process.env.KEEPANY_COMMERCIAL_CHECKOUT
+  ? resolve(process.env.KEEPANY_COMMERCIAL_CHECKOUT) : resolve(root, '../KeepAnyAdm');
 const commercialCommit = '7589b6d';
 const databaseUrl = process.env.KEEPANY_TEST_DATABASE_URL;
 const evidenceDir = process.env.KEEPANY_SYNC_EVIDENCE_DIR ?? resolve(root, 'docs/evidence/2026-09-29');
