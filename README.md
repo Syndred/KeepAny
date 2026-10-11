@@ -14,7 +14,7 @@
 
 ## 下载与试用
 
-**当前为早期测试版，公开预发布包仍在发布准备中。** 发布后从 [GitHub Releases](https://github.com/Syndred/KeepAny/releases) 获取标注 `Pre-release` 的 `KeepAny-…-portable.zip`。发布页会列出对应源码版本、校验值和已知限制；不要把 GitHub 的源码 ZIP 当成便携应用包。
+**当前为早期测试版。** 请从 [GitHub Releases](https://github.com/Syndred/KeepAny/releases) 获取标注 `Pre-release` 的 `KeepAny-…-portable.zip`。发布页会列出对应源码版本、校验值和已知限制；不要把 GitHub 的源码 ZIP 当成便携应用包。
 
 便携包需要 **[Node.js 22 或更新版本](https://nodejs.org/)**，无需 Git、pnpm 或编译源码。解压到一个固定文件夹后启动：
 
@@ -68,10 +68,10 @@
 
 ## 从源码运行
 
-使用 Node.js 22+ 和仓库指定的 pnpm 版本。依锁文件安装：
+使用 Node.js 22+ 和 pnpm 11.10.0。先安装指定 pnpm（Node.js 25+ 不再预装 Corepack），再依锁文件安装：
 
 ```bash
-corepack enable
+npm install --global pnpm@11.10.0
 pnpm install --frozen-lockfile
 pnpm dev
 ```

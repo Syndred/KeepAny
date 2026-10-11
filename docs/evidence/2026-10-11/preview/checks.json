@@ -1,0 +1,137 @@
+{
+  "schema": "keepany.preview-verification.v1",
+  "scope": "Synthetic local data only; reports are separate runs, not summed unique tests",
+  "reports": {
+    "unit": {
+      "reportSha256": "00f46bbaff0e1aefd9d905780aadd2990580dafb128f7143d0ebc34bfbf57349",
+      "stats": {
+        "numTotalTests": 786,
+        "numPassedTests": 786,
+        "numFailedTests": 0,
+        "numPendingTests": 0,
+        "success": true
+      }
+    },
+    "portable-workflows": {
+      "reportSha256": "a1a059aad203db97f6b291d891e501e677a106b5cd97aaa2e628829eda0a430b",
+      "stats": {
+        "startTime": "2026-10-11T07:54:11.353Z",
+        "duration": 1073451.8229999999,
+        "expected": 178,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      }
+    },
+    "source-initial": {
+      "reportSha256": "dcf90dda073696a50984d22951ee14966a3077e71921783957ad5e44282a5569",
+      "stats": {
+        "startTime": "2026-10-11T07:40:00.129Z",
+        "duration": 2382091.221,
+        "expected": 454,
+        "skipped": 19,
+        "unexpected": 15,
+        "flaky": 0
+      }
+    },
+    "source-targeted": {
+      "reportSha256": "67cca3d9ba5e4cc91fdbbb4aa4ee31157728e218c9a4ddfd2a41eee04ce13141",
+      "stats": {
+        "startTime": "2026-10-11T08:24:32.740Z",
+        "duration": 15086.556,
+        "expected": 8,
+        "skipped": 4,
+        "unexpected": 0,
+        "flaky": 0
+      }
+    },
+    "project-category": {
+      "reportSha256": "79bffed9178253fb4a9ac45b721b3e837e1be0b3074e0e26a447d77f807c6e2a",
+      "stats": {
+        "startTime": "2026-10-11T08:22:20.911Z",
+        "duration": 55789.414,
+        "expected": 8,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      }
+    },
+    "binding-fixtures": {
+      "reportSha256": "9adcb1316a822e4515662286b6a4a24417b669c60b193f820543fb05e1003c16",
+      "stats": {
+        "startTime": "2026-10-11T08:26:11.295Z",
+        "duration": 44990.637,
+        "expected": 15,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      }
+    },
+    "source-search": {
+      "reportSha256": "25da960851cbc235614df5a0a5c1b5d029657d9a12b792dfb7e35657ed114119",
+      "stats": {
+        "startTime": "2026-10-11T08:00:34.605Z",
+        "duration": 86600.548,
+        "expected": 8,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      }
+    },
+    "source-integration": {
+      "reportSha256": "86ea15172641d66acf4b0cc8e675861ff78c657da9b935bfbd5d783b1509994d",
+      "stats": {
+        "startTime": "2026-10-11T08:13:08.458Z",
+        "duration": 212403.113,
+        "expected": 5,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      }
+    },
+    "fixed-sync": {
+      "reportSha256": "64c10b81652db1c62fd7466a41fe042e0a7050766f2162bbe95c7989e2dd67cb",
+      "stats": {
+        "startTime": "2026-10-11T07:44:58.347Z",
+        "duration": 87073.325,
+        "expected": 2,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      }
+    },
+    "old-pwa": {
+      "reportSha256": "de6e002ef45197e63dc4dbd61b8e3e76cc14f6a33d5c1787c44d768a581c5a0f",
+      "stats": {
+        "startTime": "2026-10-11T07:50:39.808Z",
+        "duration": 19058.251,
+        "expected": 1,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      }
+    },
+    "onboarding": {
+      "reportSha256": "d09cbdb6d88a7472fc959f371272ad71ac3c0e64eb26b39206e1b3a6d4414f54",
+      "stats": {
+        "startTime": "2026-10-11T07:42:31.299Z",
+        "duration": 23648.851000000002,
+        "expected": 4,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      }
+    },
+    "portable-offline-checklist": {
+      "reportSha256": "2f98954ef848c6e05eba5e1dbf1d25566f5da8bd01b1ed6bea218e56ec28ea98",
+      "stats": {
+        "startTime": "2026-10-11T08:28:12.682Z",
+        "duration": 4551.481,
+        "expected": 1,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      }
+    }
+  }
+}

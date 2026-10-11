@@ -1,0 +1,110 @@
+{
+  "locale": "zh-CN",
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "servedPackage": "portable production package",
+  "sourceCommit": "286013697f48609ce0ee73583b1bd74c86d2a91c",
+  "origin": "http://127.0.0.1:4403",
+  "assetId": "da21f812-4dde-4de4-be52-9815f266b3d5",
+  "beforeQuota": {
+    "usage": 294912,
+    "quota": 1018583070,
+    "overrideActive": false,
+    "usageBreakdown": [
+      {
+        "storageType": "file_systems",
+        "usage": 0
+      },
+      {
+        "storageType": "indexeddb",
+        "usage": 294912
+      },
+      {
+        "storageType": "cache_storage",
+        "usage": 0
+      },
+      {
+        "storageType": "service_workers",
+        "usage": 0
+      }
+    ]
+  },
+  "requestedQuota": 557056,
+  "limited": {
+    "usage": 294912,
+    "quota": 557056,
+    "overrideActive": true,
+    "usageBreakdown": [
+      {
+        "storageType": "file_systems",
+        "usage": 0
+      },
+      {
+        "storageType": "indexeddb",
+        "usage": 294912
+      },
+      {
+        "storageType": "cache_storage",
+        "usage": 0
+      },
+      {
+        "storageType": "service_workers",
+        "usage": 0
+      }
+    ]
+  },
+  "cleared": {
+    "usage": 294912,
+    "quota": 1018583070,
+    "overrideActive": false,
+    "usageBreakdown": [
+      {
+        "storageType": "file_systems",
+        "usage": 0
+      },
+      {
+        "storageType": "indexeddb",
+        "usage": 294912
+      },
+      {
+        "storageType": "cache_storage",
+        "usage": 0
+      },
+      {
+        "storageType": "service_workers",
+        "usage": 0
+      }
+    ]
+  },
+  "quotaEvents": [
+    {
+      "source": "transaction-abort",
+      "database": "keepany-files-v1",
+      "errorName": "QuotaExceededError",
+      "message": ""
+    }
+  ],
+  "draftRetained": true,
+  "oldAssetUnchanged": true,
+  "quotaCacheWaitMs": 31000,
+  "retryUsedSameDraftAndFile": true,
+  "pageErrors": [],
+  "originalImage": {
+    "id": "76eafc64-7e2a-41fa-bdb0-bcbcbd0f0963",
+    "bytes": 136,
+    "sha256": "55ba82d86d864da23c86998e136fdcd682871c6d2d1b01b0fa84ad529ae48b5d"
+  },
+  "recoveredImage": {
+    "id": "fbf17fb0-a680-44b5-bc4b-7ce8de256ea7",
+    "bytes": 14431119,
+    "sha256": "3d03dd243ef38ff2868c4ae62724acb326880c9336b42aacbb6ac3a50daacc7a"
+  },
+  "archive": {
+    "records": 1,
+    "currentImageBytesVerified": true,
+    "browserDownloaded": true
+  },
+  "instrumentation": "Native IndexedDB transaction events observed; no errors or outcomes mocked"
+}

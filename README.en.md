@@ -14,7 +14,7 @@ No registration required. English and Simplified Chinese interfaces. The local c
 
 ## Download and try
 
-**This is an early preview. The public preview package is still being prepared for release.** Once published, download the `KeepAny-…-portable.zip` marked `Pre-release` from [GitHub Releases](https://github.com/Syndred/KeepAny/releases). Each release will identify its source revision, checksums, and known limits. GitHub's source ZIP is not the portable app.
+**This is an early preview.** Download the `KeepAny-…-portable.zip` marked `Pre-release` from [GitHub Releases](https://github.com/Syndred/KeepAny/releases). Each release will identify its source revision, checksums, and known limits. GitHub's source ZIP is not the portable app.
 
 The portable package requires **[Node.js 22 or newer](https://nodejs.org/)**. You do not need Git, pnpm, or a build step. Extract it to a folder you can keep:
 
@@ -71,7 +71,7 @@ Read the downloaded package's release notes for its limits. Detailed evidence an
 Use Node.js 22+ and the pnpm version declared by this repository. Install with the lockfile:
 
 ```bash
-corepack enable
+npm install --global pnpm@11.10.0
 pnpm install --frozen-lockfile
 pnpm dev
 ```
