@@ -174,7 +174,9 @@ test("same-page intake search reads a candidate confirmed in another tab without
 		// A completely new candidate must be inserted into this already mounted review list.
 		await other.getByRole("button", { name: "Spreadsheet", exact: true }).click();
 		await other.locator("#csv-file").setInputFiles({ name: "new-tab-search.csv", mimeType: "text/csv", buffer: Buffer.from("name,kind\nNew target receipt,project") });
-		const newTarget = other.locator(".intake-review-row").filter({ hasText: "new-tab-search.csv" });
+		const newTarget = other.getByRole("region", { name: "new-tab-search.csv", exact: true }).locator(".intake-review-row");
+		await expect(newTarget).toHaveCount(1);
+		await expect(newTarget).toContainText("New target receipt");
 		await newTarget.getByRole("button", { name: "Confirm and save" }).click();
 		await query(page, "new-tab-search.csv");
 		await expect(results(page)).toHaveCount(1);
