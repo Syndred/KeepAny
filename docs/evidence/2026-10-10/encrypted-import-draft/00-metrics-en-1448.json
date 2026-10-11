@@ -1,0 +1,122 @@
+{
+  ".dialog.password-smart-import-dialog": {
+    "x": 106,
+    "y": 153,
+    "width": 1236,
+    "height": 780,
+    "font": "16px",
+    "minHeight": "0px"
+  },
+  ".pw-import-workspace": {
+    "x": 119,
+    "y": 223,
+    "width": 1210,
+    "height": 626,
+    "font": "16px",
+    "minHeight": "auto"
+  },
+  ".pw-work-list": {
+    "x": 119,
+    "y": 223,
+    "width": 382.390625,
+    "height": 626,
+    "font": "16px",
+    "minHeight": "auto"
+  },
+  ".pw-work-editor": {
+    "x": 515.390625,
+    "y": 223,
+    "width": 813.59375,
+    "height": 626,
+    "font": "16px",
+    "minHeight": "auto"
+  },
+  ".pw-work-tabs": {
+    "x": 120,
+    "y": 224,
+    "width": 380.390625,
+    "height": 61,
+    "font": "16px",
+    "minHeight": "auto"
+  },
+  ".pw-work-list-footer": {
+    "x": 120,
+    "y": 787,
+    "width": 380.390625,
+    "height": 61,
+    "font": "16px",
+    "minHeight": "56px"
+  },
+  ".pw-work-list-row:first-child": {
+    "x": 120,
+    "y": 285,
+    "width": 380.390625,
+    "height": 64,
+    "font": "16px",
+    "minHeight": "64px"
+  },
+  ".pw-work-list-row:last-child": {
+    "x": 120,
+    "y": 669,
+    "width": 380.390625,
+    "height": 64,
+    "font": "16px",
+    "minHeight": "64px"
+  },
+  ".pw-work-editor-heading": {
+    "x": 532.390625,
+    "y": 236,
+    "width": 779.59375,
+    "height": 44,
+    "font": "16px",
+    "minHeight": "auto"
+  },
+  ".pw-import-source-card": {
+    "x": 532.390625,
+    "y": 294,
+    "width": 779.59375,
+    "height": 176,
+    "font": "16px",
+    "minHeight": "auto"
+  },
+  ".pw-smart-field-title input": {
+    "x": 532.390625,
+    "y": 510,
+    "width": 258.234375,
+    "height": 44,
+    "font": "16px",
+    "minHeight": "44px"
+  },
+  ".pw-smart-primary-identifier input": {
+    "x": 852.625,
+    "y": 510,
+    "width": 411.34375,
+    "height": 44,
+    "font": "16px",
+    "minHeight": "44px"
+  },
+  ".pw-smart-identifier-row": {
+    "x": 1008.578125,
+    "y": 562,
+    "width": 190.46875,
+    "height": 38,
+    "font": "16px",
+    "minHeight": "auto"
+  },
+  ".pw-smart-field-password input": {
+    "x": 532.390625,
+    "y": 640,
+    "width": 731.578125,
+    "height": 44,
+    "font": "16px",
+    "minHeight": "44px"
+  },
+  ".pw-smart-field-notes textarea": {
+    "x": 532.390625,
+    "y": 726,
+    "width": 731.59375,
+    "height": 56,
+    "font": "16px",
+    "minHeight": "56px"
+  }
+}

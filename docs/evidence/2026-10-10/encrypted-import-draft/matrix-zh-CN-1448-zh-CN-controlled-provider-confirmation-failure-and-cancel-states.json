@@ -1,0 +1,52 @@
+{
+  "locale": "zh-CN",
+  "viewport": {
+    "width": 1448,
+    "height": 1086
+  },
+  "controlledProvider": true,
+  "captured": [
+    {
+      "state": "01-A",
+      "screenshot": "01-A-zh-CN-1448.png",
+      "assertion": "Pasted synthetic source is editable before any model request.",
+      "visualReview": "待逐图人工对照最终参考图；测试通过不代表像素一致"
+    },
+    {
+      "state": "01-B",
+      "screenshot": "01-B-zh-CN-1448.png",
+      "assertion": "UTF-8 file content appears through the real file input.",
+      "visualReview": "待逐图人工对照最终参考图；测试通过不代表像素一致"
+    },
+    {
+      "state": "01-C",
+      "screenshot": "01-C-zh-CN-1448.png",
+      "assertion": "Model and endpoint disclosure precedes the first network request.",
+      "visualReview": "待逐图人工对照最终参考图；测试通过不代表像素一致"
+    },
+    {
+      "state": "02-C",
+      "screenshot": "02-C-zh-CN-1448-format.png",
+      "assertion": "Malformed provider output preserves exact source and reports only the failure category.",
+      "visualReview": "待逐图人工对照最终参考图；测试通过不代表像素一致"
+    },
+    {
+      "state": "01-D",
+      "screenshot": "01-D-zh-CN-1448.png",
+      "assertion": "Busy recognition disables source editing and exposes cancel.",
+      "visualReview": "待逐图人工对照最终参考图；测试通过不代表像素一致"
+    },
+    {
+      "state": "11-B",
+      "screenshot": "11-B-zh-CN-1448.png",
+      "assertion": "Cancellation returns to editable source without losing pasted text.",
+      "visualReview": "待逐图人工对照最终参考图；测试通过不代表像素一致"
+    },
+    {
+      "state": "02-B",
+      "screenshot": "02-B-zh-CN-1448.png",
+      "assertion": "Controlled AI results are not automatically reviewed.",
+      "visualReview": "待逐图人工对照最终参考图；测试通过不代表像素一致"
+    }
+  ]
+}

@@ -1,0 +1,786 @@
+{
+  "config": {
+    "argv": [
+      "/Users/syndred/.nvm/versions/node/v22.23.1/bin/node",
+      "/Users/syndred/.codex/worktrees/encrypted-import-draft/KeepAny/node_modules/@playwright/test/cli.js",
+      "test",
+      "--config=playwright.release.config.ts",
+      "tests/e2e/password-import-draft.spec.ts",
+      "tests/e2e/password-import-draft-input.spec.ts",
+      "tests/e2e/password-smart-import-visual.spec.ts",
+      "tests/e2e/password-smart-import.spec.ts",
+      "--grep",
+      "encrypted AI draft|explicit discard|write failure|full import|mapping|stale|optional passwords|compact|1218",
+      "--workers=1",
+      "--output=/tmp/keepany-draft-final-results",
+      "--reporter=json"
+    ],
+    "configFile": "/Users/syndred/.codex/worktrees/encrypted-import-draft/KeepAny/playwright.release.config.ts",
+    "rootDir": "/Users/syndred/.codex/worktrees/encrypted-import-draft/KeepAny/tests/e2e",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "/tmp/keepany-draft-final-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "",
+        "name": "",
+        "testDir": "/Users/syndred/.codex/worktrees/encrypted-import-draft/KeepAny/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "core-pages-matrix.spec.ts",
+          "ai-release.spec.ts",
+          "ai-key-persistence.spec.ts",
+          "ai-account-import-release.spec.ts",
+          "intake-bulk-account-links.spec.ts",
+          "ai-dialog-matrix.spec.ts",
+          "local-core.spec.ts",
+          "english-demo-release.spec.ts",
+          "production-offline.spec.ts",
+          "intake-pdf.spec.ts",
+          "intake-expense.spec.ts",
+          "intake-review-backup.spec.ts",
+          "intake-review-merge.spec.ts",
+          "custom-category-release.spec.ts",
+          "global-search-release.spec.ts",
+          "detail-entry-statistics.spec.ts",
+          "intake-asset-receipt.spec.ts",
+          "collections-route.spec.ts",
+          "relation-graph-verification.spec.ts",
+          "restore-identity.spec.ts",
+          "archive-migration.spec.ts",
+          "vault-reference-release.spec.ts",
+          "password-vault.spec.ts",
+          "password-smart-import.spec.ts",
+          "password-smart-import-visual.spec.ts",
+          "password-import-draft.spec.ts",
+          "password-import-draft-input.spec.ts",
+          "themed-select.spec.ts",
+          "spacing-consistency.spec.ts",
+          "task-theme-release.spec.ts",
+          "finance-ledger-release.spec.ts",
+          "collections-ledger-release.spec.ts",
+          "restore-self-service-release.spec.ts"
+        ],
+        "timeout": 90000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "json"
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.63.0",
+    "workers": 1,
+    "webServer": {
+      "command": "node node_modules/vite/bin/vite.js preview apps/web --outDir ../../release/web --host 127.0.0.1 --port 4372 --strictPort",
+      "url": "http://127.0.0.1:4372",
+      "reuseExistingServer": false,
+      "timeout": 30000
+    }
+  },
+  "suites": [
+    {
+      "title": "password-import-draft-input.spec.ts",
+      "file": "password-import-draft-input.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "zh-CN input source and unfinished line mapping recover after reload and unlock without AI requests",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 7801,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-11T02:57:17.379Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "f4aa4e06c608c473c716-7194c3df81f51f18fb97",
+          "file": "password-import-draft-input.spec.ts",
+          "line": 40,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "password-import-draft.spec.ts",
+      "file": "password-import-draft.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "zh-CN 1280px encrypted AI draft survives reload and lock without resending",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 6728,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-11T02:57:25.511Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "985c650e00823e9849f6-c73fbc80dd37d0599927",
+          "file": "password-import-draft.spec.ts",
+          "line": 16,
+          "column": 3
+        },
+        {
+          "title": "zh-CN 390px encrypted AI draft survives reload and lock without resending",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 6720,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-11T02:57:32.250Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "985c650e00823e9849f6-2a5e7a298165715c0578",
+          "file": "password-import-draft.spec.ts",
+          "line": 16,
+          "column": 3
+        },
+        {
+          "title": "en 1280px encrypted AI draft survives reload and lock without resending",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 6555,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-11T02:57:38.978Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "985c650e00823e9849f6-f4fa4226c581ffe8acd5",
+          "file": "password-import-draft.spec.ts",
+          "line": 16,
+          "column": 3
+        },
+        {
+          "title": "en 390px encrypted AI draft survives reload and lock without resending",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 6239,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-11T02:57:45.538Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "985c650e00823e9849f6-79c7c90c43e18e297f05",
+          "file": "password-import-draft.spec.ts",
+          "line": 16,
+          "column": 3
+        }
+      ]
+    },
+    {
+      "title": "password-smart-import-visual.spec.ts",
+      "file": "password-smart-import-visual.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "zh-CN mapping append original line numbers and return preservation",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 180000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 8231,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-11T02:57:51.792Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "05-A",
+                      "contentType": "image/png",
+                      "path": "/tmp/keepany-draft-final-results/password-smart-import-visu-2eb48-ers-and-return-preservation/attachments/05-A-0659139a6b79aa967a17f749f4fd2a9572ddd641.png"
+                    },
+                    {
+                      "name": "05-B",
+                      "contentType": "image/png",
+                      "path": "/tmp/keepany-draft-final-results/password-smart-import-visu-2eb48-ers-and-return-preservation/attachments/05-B-e464b36ff67dea509541f9d288f84faf1e7915a6.png"
+                    },
+                    {
+                      "name": "05-D",
+                      "contentType": "image/png",
+                      "path": "/tmp/keepany-draft-final-results/password-smart-import-visu-2eb48-ers-and-return-preservation/attachments/05-D-ca36bd87580f03e6b3a4ac742b05ca531732342b.png"
+                    },
+                    {
+                      "name": "05-C",
+                      "contentType": "image/png",
+                      "path": "/tmp/keepany-draft-final-results/password-smart-import-visu-2eb48-ers-and-return-preservation/attachments/05-C-d386165850c960702f6272525058c0b005f0d823.png"
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "4653c8bb31f108725040-ec2ebcf4fdee7ee5032f",
+          "file": "password-smart-import-visual.spec.ts",
+          "line": 433,
+          "column": 1
+        },
+        {
+          "title": "zh-CN atomic KDBX save supplementary import and cross-tab stale draft recovery",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 180000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 26151,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-11T02:58:00.027Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "02-A",
+                      "contentType": "image/png",
+                      "path": "/tmp/keepany-draft-final-results/password-smart-import-visu-711f4-ss-tab-stale-draft-recovery/attachments/02-A-7f9ca1185beff10c8aa49fe43bb6faaee23fa888.png"
+                    },
+                    {
+                      "name": "09-C-atomic-failure",
+                      "contentType": "image/png",
+                      "path": "/tmp/keepany-draft-final-results/password-smart-import-visu-711f4-ss-tab-stale-draft-recovery/attachments/09-C-atomic-failure-4724e3bf2ab9f3260100cb015fcc03aa0fb443ab.png"
+                    },
+                    {
+                      "name": "09-D",
+                      "contentType": "image/png",
+                      "path": "/tmp/keepany-draft-final-results/password-smart-import-visu-711f4-ss-tab-stale-draft-recovery/attachments/09-D-28a49dff1080d0145e1b160097dcf127103cc10b.png"
+                    },
+                    {
+                      "name": "07-A",
+                      "contentType": "image/png",
+                      "path": "/tmp/keepany-draft-final-results/password-smart-import-visu-711f4-ss-tab-stale-draft-recovery/attachments/07-A-f0730922d9dcc30ed79b8363d1c742b158de7495.png"
+                    },
+                    {
+                      "name": "09-C-stale",
+                      "contentType": "image/png",
+                      "path": "/tmp/keepany-draft-final-results/password-smart-import-visu-711f4-ss-tab-stale-draft-recovery/attachments/09-C-stale-8667af92f9ae456b9f3d38d1ee7b71fcaafbeb3a.png"
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "4653c8bb31f108725040-060d8971f4473837f161",
+          "file": "password-smart-import-visual.spec.ts",
+          "line": 686,
+          "column": 1
+        },
+        {
+          "title": "zh-CN quick clipboard exact values and compact desktop layout",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 180000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 6659,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-11T02:58:26.183Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "00-main",
+                      "contentType": "image/png",
+                      "path": "/tmp/keepany-draft-final-results/password-smart-import-visu-90574--and-compact-desktop-layout/attachments/00-main-c772068cd89c64ad9eaee5f94e3e45af8b82774a.png"
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "4653c8bb31f108725040-03e55e0eef3b2f9f24c5",
+          "file": "password-smart-import-visual.spec.ts",
+          "line": 1133,
+          "column": 2
+        },
+        {
+          "title": "en quick clipboard exact values and compact desktop layout",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 180000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 6908,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-11T02:58:32.848Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "00-main",
+                      "contentType": "image/png",
+                      "path": "/tmp/keepany-draft-final-results/password-smart-import-visu-5ec40--and-compact-desktop-layout/attachments/00-main-66e5085e5e375d56a4e563280e14fcc373b8d3ef.png"
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "4653c8bb31f108725040-428028699c75162899c5",
+          "file": "password-smart-import-visual.spec.ts",
+          "line": 1133,
+          "column": 2
+        }
+      ]
+    },
+    {
+      "title": "password-smart-import.spec.ts",
+      "file": "password-smart-import.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "zh-CN 390px unresolved fragment draft survives partial mapping and saves exact entries",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3224,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-11T02:58:39.772Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "4848c27980ec82994023-8d181b6cde14410ba5ec",
+          "file": "password-smart-import.spec.ts",
+          "line": 82,
+          "column": 3
+        },
+        {
+          "title": "zh-CN 1280px unresolved fragment draft survives partial mapping and saves exact entries",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3320,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-11T02:58:43.000Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "4848c27980ec82994023-66127f0b89c28e94a496",
+          "file": "password-smart-import.spec.ts",
+          "line": 82,
+          "column": 3
+        },
+        {
+          "title": "en 390px unresolved fragment draft survives partial mapping and saves exact entries",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3202,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-11T02:58:46.323Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "4848c27980ec82994023-63ab37e749836512c589",
+          "file": "password-smart-import.spec.ts",
+          "line": 82,
+          "column": 3
+        },
+        {
+          "title": "en 1280px unresolved fragment draft survives partial mapping and saves exact entries",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3247,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-11T02:58:49.529Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "4848c27980ec82994023-a8066e60169102ed7fbb",
+          "file": "password-smart-import.spec.ts",
+          "line": 82,
+          "column": 3
+        },
+        {
+          "title": "zh-CN 390px optional passwords and unchanged source review save to KDBX",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 9312,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-11T02:58:52.780Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "4848c27980ec82994023-224638a1e832e5ec9c2a",
+          "file": "password-smart-import.spec.ts",
+          "line": 550,
+          "column": 3
+        },
+        {
+          "title": "zh-CN 1280px optional passwords and unchanged source review save to KDBX",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 9068,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-11T02:59:02.100Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "4848c27980ec82994023-4d9a03ea65eba7465ff6",
+          "file": "password-smart-import.spec.ts",
+          "line": 550,
+          "column": 3
+        },
+        {
+          "title": "en 390px optional passwords and unchanged source review save to KDBX",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 8976,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-11T02:59:11.174Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "4848c27980ec82994023-885bdfc9e1b67f0ad976",
+          "file": "password-smart-import.spec.ts",
+          "line": 550,
+          "column": 3
+        },
+        {
+          "title": "en 1280px optional passwords and unchanged source review save to KDBX",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 8788,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-11T02:59:20.154Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "4848c27980ec82994023-16c0f089de63ff7ad285",
+          "file": "password-smart-import.spec.ts",
+          "line": 550,
+          "column": 3
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-10-11T02:57:16.688Z",
+    "duration": 132299.223,
+    "expected": 17,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}
