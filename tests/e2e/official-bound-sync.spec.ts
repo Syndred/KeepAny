@@ -463,8 +463,8 @@ test('official bound sync preserves encrypted records and photos across devices,
     assert.deepEqual(errors, [], 'uncaught browser error');
   } finally {
     const cleanupFailures: string[] = [];
-    const clean = async (label: string, work: Promise<unknown>) => {
-      try { await bounded(label, work); } catch { cleanupFailures.push(label); }
+    const clean = async (label: string, work: Promise<unknown>, timeoutMs = 7_000) => {
+      try { await bounded(label, work, timeoutMs); } catch { cleanupFailures.push(label); }
     };
     await Promise.all(contexts.map(context => clean('browser-context', context.close())));
     await Promise.all([stop(web), stop(bridge), stop(syncServer), stop(commercial?.child)].map(
@@ -477,7 +477,9 @@ test('official bound sync preserves encrypted records and photos across devices,
     try { if (created) await clean('schema-drop', admin.query(`DROP SCHEMA "${schema}" CASCADE`)); }
     finally {
       await clean('admin-pg', admin.end());
-      await clean('temporary-files', rm(temporary, { recursive: true, force: true }));
+      // The archived fixture includes a complete dependency tree; deletion can take
+      // longer than an individual socket shutdown on a busy filesystem.
+      await clean('temporary-files', rm(temporary, { recursive: true, force: true }), 60_000);
     }
     expect(cleanupFailures, 'isolated services, schema and files must be cleaned').toEqual([]);
   }
