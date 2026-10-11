@@ -81,7 +81,7 @@ test("project, account, subscription, located item, linked reminder and download
 		await taskDialog.getByLabel("Date").fill("2026-10-01");
 		await taskDialog.getByRole("button", { name: "Save" }).click();
 		await expect(taskDialog).toBeHidden();
-		await expect(page.getByRole("link", { name: task, exact: true })).toBeVisible();
+		await expect(page.locator(".asset-tasks-card .list-row").filter({ hasText: task }).getByText(task, { exact: true })).toBeVisible();
 		await page.goto("/tasks");
 		const reminder = page.locator("main .list-row").filter({ hasText: task });
 		await reminder.getByLabel("Remind later", { exact: true }).fill("2026-12-31");
@@ -134,7 +134,7 @@ test("project, account, subscription, located item, linked reminder and download
 			await expect(restoredProject).toBeVisible();
 			await restoredProject.click();
 			await expect(restored.getByText(account).first()).toBeVisible();
-			await expect(restored.getByRole("link", { name: task, exact: true })).toBeVisible();
+			await expect(restored.locator(".asset-tasks-card .list-row").filter({ hasText: task }).getByText(task, { exact: true })).toBeVisible();
 			await restored.goto("/assets/subscription");
 			await expect(restored.getByText(subscription)).toBeVisible();
 			await restored.goto("/tasks");
