@@ -1,0 +1,54 @@
+{
+  "schema": "keepany.open-source-audit.v1",
+  "date": "2026-10-11",
+  "baseCommit": "747c1843f0934d262bcbaa1559b24e045048630e",
+  "scope": "Public tracked files and all reachable Git references; no user vault, environment secrets or credential files read",
+  "secrets": {
+    "tool": "gitleaks v8.30.1",
+    "toolArchiveSHA256VerifiedAgainstOfficialChecksums": true,
+    "redaction": true,
+    "allReferences": true,
+    "reachableCommits": 633,
+    "scannedCommitsWithDiff": 627,
+    "scannedBytesApproximate": 181336964,
+    "rawAlerts": 298,
+    "reviewedFalsePositiveCategories": {
+      "buildHashesAndAssetInventory": 70,
+      "compiledKnownI18nDurationKeys": 219,
+      "sourceKnownI18nDurationKeys": 5,
+      "explicitSyntheticUnitTestCredentials": 4
+    },
+    "unclassifiedAlerts": 0,
+    "confirmedProductionSecrets": 0,
+    "confirmedCommercialTemplateSource": 0,
+    "historicalSensitivePathMatches": ["apps/sync-server/.env.example"],
+    "trackedImagesAndMedia": 2340,
+    "riskSelectedImagesInspected": 8,
+    "allHistoricalImagesInspected": false,
+    "realUserStorageTouched": false
+  },
+  "licenses": {
+    "missingPackageRootLicenseTextVersions": 32,
+    "upstreamOriginalTextPackageVersions": 27,
+    "exactMITDeclarationWithLabelledSupplementVersions": 5,
+    "unresolvedVersions": 0,
+    "allMaterialFiles": 30,
+    "upstreamOriginalTextFiles": 17,
+    "normativeTemplateFiles": 1,
+    "declarationEvidenceFiles": 12,
+    "strictReleaseGatePassed": true,
+    "generatedInventoryCheckPassed": true,
+    "releaseGateRegressionTests": 6,
+    "releaseGateRegressionPassed": 6,
+    "upstreamMissingOriginalLicenseTextStillRecorded": true,
+    "copyrightHoldersInvented": false,
+    "fullCompatibilityLegalOpinionClaimed": false
+  },
+  "testConfiguration": {
+    "sourceE2ESpecFiles": 106,
+    "fixedReleaseSpecFiles": 33,
+    "fixedSyncSpecFiles": 2,
+    "fullFunctionalTestsRunByThisAudit": false,
+    "note": "Root acceptance owns fresh functional reports; config coverage and conditional skip boundaries are recorded in the audit document."
+  }
+}

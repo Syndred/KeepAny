@@ -6,7 +6,8 @@
     "platformIndependent": true,
     "packageCount": 32,
     "verifiedPackageCount": 27,
-    "unresolvedPackageCount": 5
+    "unresolvedPackageCount": 0,
+    "supplementedPackageCount": 5
   },
   "materials": [
     {
@@ -224,6 +225,226 @@
         "downloadUrl": "https://raw.githubusercontent.com/vercel/ai/69cc80b25c506971769dd8438bbce7e0eb5ef631/LICENSE",
         "mapping": "official npm provenance commit; @ai-sdk/provider-utils/package.json matched exact npm version"
       }
+    },
+    {
+      "id": "spdx-MIT-normative-supplement",
+      "path": "legal/third-party/texts/spdx-MIT-normative-supplement.txt",
+      "sha256": "b05785f9f18e6716bab63424b11454513b9943a222595b70411009202fc592b5",
+      "source": {
+        "kind": "license-standard",
+        "licenseId": "MIT",
+        "repository": "https://github.com/spdx/license-list-data.git",
+        "commit": "31ba1a50e5397e00a304dbadc76531740e89ee48",
+        "path": "text/MIT.txt",
+        "downloadUrl": "https://raw.githubusercontent.com/spdx/license-list-data/31ba1a50e5397e00a304dbadc76531740e89ee48/text/MIT.txt",
+        "mapping": "SPDX canonical MIT template; normative supplement only, not any package upstream LICENSE or copyright attribution"
+      }
+    },
+    {
+      "id": "better-auth-utils-0.4.2-package-declaration",
+      "path": "legal/third-party/evidence/better-auth-utils-0.4.2-package.json",
+      "sha256": "b481d52c32f0d74fa1b0599b653326df21e649a2217506770f676e8d8385acf3",
+      "source": {
+        "kind": "npm-package-evidence",
+        "repository": "git+https://github.com/better-auth/utils.git",
+        "path": "package/package.json",
+        "downloadUrl": "https://registry.npmjs.org/@better-auth/utils/-/utils-0.4.2.tgz",
+        "mapping": "Unmodified evidence from exact npm @better-auth/utils@0.4.2 tarball after SHA-1 and SHA-512 verification; not an upstream LICENSE",
+        "npm": {
+          "name": "@better-auth/utils",
+          "version": "0.4.2",
+          "integrity": "sha512-AUxrvu+HaaODsUyzDxFgwd/8RZ1yZaYo42LXKSrU2oGgR38pS1ij8nqQKNgtTWoYGpNevNXtCfgTy6loHveW9A==",
+          "shasum": "265a37e2ceef035e6968a851b13400d1b044e070"
+        }
+      }
+    },
+    {
+      "id": "better-auth-utils-0.4.2-readme-declaration",
+      "path": "legal/third-party/evidence/better-auth-utils-0.4.2-README.md",
+      "sha256": "e7740292c8785d6b5895bf8620136662298df453cf30dbd5daaab2426dc1ac13",
+      "source": {
+        "kind": "npm-package-evidence",
+        "repository": "git+https://github.com/better-auth/utils.git",
+        "path": "package/README.md",
+        "downloadUrl": "https://registry.npmjs.org/@better-auth/utils/-/utils-0.4.2.tgz",
+        "mapping": "Unmodified evidence from exact npm @better-auth/utils@0.4.2 tarball after SHA-1 and SHA-512 verification; not an upstream LICENSE",
+        "npm": {
+          "name": "@better-auth/utils",
+          "version": "0.4.2",
+          "integrity": "sha512-AUxrvu+HaaODsUyzDxFgwd/8RZ1yZaYo42LXKSrU2oGgR38pS1ij8nqQKNgtTWoYGpNevNXtCfgTy6loHveW9A==",
+          "shasum": "265a37e2ceef035e6968a851b13400d1b044e070"
+        }
+      }
+    },
+    {
+      "id": "better-auth-utils-0.4.2-pinned-upstream-declaration",
+      "path": "legal/third-party/evidence/better-auth-utils-0.4.2-upstream-README.md",
+      "sha256": "e7740292c8785d6b5895bf8620136662298df453cf30dbd5daaab2426dc1ac13",
+      "source": {
+        "kind": "upstream-license-declaration",
+        "repository": "https://github.com/better-auth/utils.git",
+        "commit": "b20329a32d78f1f9bcc088bbd6f982b28c4192f1",
+        "path": "README.md",
+        "downloadUrl": "https://raw.githubusercontent.com/better-auth/utils/b20329a32d78f1f9bcc088bbd6f982b28c4192f1/README.md",
+        "mapping": "Exact npm SLSA provenance commit; original README declares MIT but is not a complete LICENSE notice"
+      }
+    },
+    {
+      "id": "better-auth-utils-0.5.0-package-declaration",
+      "path": "legal/third-party/evidence/better-auth-utils-0.5.0-package.json",
+      "sha256": "79113ffa86ff97e35c95c96ca93119b3ac22112bcf52c494e0d27ee6bb296b84",
+      "source": {
+        "kind": "npm-package-evidence",
+        "repository": "git+https://github.com/better-auth/utils.git",
+        "path": "package/package.json",
+        "downloadUrl": "https://registry.npmjs.org/@better-auth/utils/-/utils-0.5.0.tgz",
+        "mapping": "Unmodified evidence from exact npm @better-auth/utils@0.5.0 tarball after SHA-1 and SHA-512 verification; not an upstream LICENSE",
+        "npm": {
+          "name": "@better-auth/utils",
+          "version": "0.5.0",
+          "integrity": "sha512-BL8W4EfIZFwlu0r54m3v1ztjDhu6dDe/amLTm0xybmbZaNgYUqhD3SjpAsnq0q8YD6/ki4iwIgxJNLP/N3TxiA==",
+          "shasum": "753b2c3421c7745023dea964c5bafb00297cba96"
+        }
+      }
+    },
+    {
+      "id": "better-auth-utils-0.5.0-readme-declaration",
+      "path": "legal/third-party/evidence/better-auth-utils-0.5.0-README.md",
+      "sha256": "8ddf45255b6c321d8fd54248c3ee044e4f3da8a9bfd34eefef3ab1da0a3f3a87",
+      "source": {
+        "kind": "npm-package-evidence",
+        "repository": "git+https://github.com/better-auth/utils.git",
+        "path": "package/README.md",
+        "downloadUrl": "https://registry.npmjs.org/@better-auth/utils/-/utils-0.5.0.tgz",
+        "mapping": "Unmodified evidence from exact npm @better-auth/utils@0.5.0 tarball after SHA-1 and SHA-512 verification; not an upstream LICENSE",
+        "npm": {
+          "name": "@better-auth/utils",
+          "version": "0.5.0",
+          "integrity": "sha512-BL8W4EfIZFwlu0r54m3v1ztjDhu6dDe/amLTm0xybmbZaNgYUqhD3SjpAsnq0q8YD6/ki4iwIgxJNLP/N3TxiA==",
+          "shasum": "753b2c3421c7745023dea964c5bafb00297cba96"
+        }
+      }
+    },
+    {
+      "id": "better-auth-utils-0.5.0-pinned-upstream-declaration",
+      "path": "legal/third-party/evidence/better-auth-utils-0.5.0-upstream-README.md",
+      "sha256": "8ddf45255b6c321d8fd54248c3ee044e4f3da8a9bfd34eefef3ab1da0a3f3a87",
+      "source": {
+        "kind": "upstream-license-declaration",
+        "repository": "https://github.com/better-auth/utils.git",
+        "commit": "f03c1c76aff7bfa3f4de4af47b112315c770a0d1",
+        "path": "README.md",
+        "downloadUrl": "https://raw.githubusercontent.com/better-auth/utils/f03c1c76aff7bfa3f4de4af47b112315c770a0d1/README.md",
+        "mapping": "Exact npm SLSA provenance commit; original README declares MIT but is not a complete LICENSE notice"
+      }
+    },
+    {
+      "id": "err-code-3.0.1-package-declaration",
+      "path": "legal/third-party/evidence/err-code-3.0.1-package.json",
+      "sha256": "7cbd3e3ccbae581d787c38a39b288835da067eb6cf8e0e82cd6a4561276f065a",
+      "source": {
+        "kind": "npm-package-evidence",
+        "repository": "git://github.com/IndigoUnited/js-err-code.git",
+        "path": "package/package.json",
+        "downloadUrl": "https://registry.npmjs.org/err-code/-/err-code-3.0.1.tgz",
+        "mapping": "Unmodified evidence from exact npm err-code@3.0.1 tarball after SHA-1 and SHA-512 verification; not an upstream LICENSE",
+        "npm": {
+          "name": "err-code",
+          "version": "3.0.1",
+          "integrity": "sha512-GiaH0KJUewYok+eeY05IIgjtAe4Yltygk9Wqp1V5yVWLdhf0hYZchRjNIT9bb0mSwRcIusT3cx7PJUf3zEIfUA==",
+          "shasum": "a444c7b992705f2b120ee320b09972eef331c920"
+        }
+      }
+    },
+    {
+      "id": "err-code-3.0.1-readme-declaration",
+      "path": "legal/third-party/evidence/err-code-3.0.1-README.md",
+      "sha256": "2d89bcf41bb06b2eddbe129a75abd418ef92a5f633accec609fd22a4843a5a93",
+      "source": {
+        "kind": "npm-package-evidence",
+        "repository": "git://github.com/IndigoUnited/js-err-code.git",
+        "path": "package/README.md",
+        "downloadUrl": "https://registry.npmjs.org/err-code/-/err-code-3.0.1.tgz",
+        "mapping": "Unmodified evidence from exact npm err-code@3.0.1 tarball after SHA-1 and SHA-512 verification; not an upstream LICENSE",
+        "npm": {
+          "name": "err-code",
+          "version": "3.0.1",
+          "integrity": "sha512-GiaH0KJUewYok+eeY05IIgjtAe4Yltygk9Wqp1V5yVWLdhf0hYZchRjNIT9bb0mSwRcIusT3cx7PJUf3zEIfUA==",
+          "shasum": "a444c7b992705f2b120ee320b09972eef331c920"
+        }
+      }
+    },
+    {
+      "id": "get-browser-rtc-1.1.0-package-declaration",
+      "path": "legal/third-party/evidence/get-browser-rtc-1.1.0-package.json",
+      "sha256": "66720a3041f4aa74a5807035f77213bc2a19acbcd61868349748b64b14a21ddf",
+      "source": {
+        "kind": "npm-package-evidence",
+        "repository": "git://github.com/substack/get-browser-rtc.git",
+        "path": "package/package.json",
+        "downloadUrl": "https://registry.npmjs.org/get-browser-rtc/-/get-browser-rtc-1.1.0.tgz",
+        "mapping": "Unmodified evidence from exact npm get-browser-rtc@1.1.0 tarball after SHA-1 and SHA-512 verification; not an upstream LICENSE",
+        "npm": {
+          "name": "get-browser-rtc",
+          "version": "1.1.0",
+          "integrity": "sha512-MghbMJ61EJrRsDe7w1Bvqt3ZsBuqhce5nrn/XAwgwOXhcsz53/ltdxOse1h/8eKXj5slzxdsz56g5rzOFSGwfQ==",
+          "shasum": "d1494e299b00f33fc8e9d6d3343ba4ba99711a2c"
+        }
+      }
+    },
+    {
+      "id": "get-browser-rtc-1.1.0-readme-declaration",
+      "path": "legal/third-party/evidence/get-browser-rtc-1.1.0-README.md",
+      "sha256": "18d3b613d1afa4450b32f2b57fcf579009aa17a2bf82a054b6507725d31dbac7",
+      "source": {
+        "kind": "npm-package-evidence",
+        "repository": "git://github.com/substack/get-browser-rtc.git",
+        "path": "package/readme.markdown",
+        "downloadUrl": "https://registry.npmjs.org/get-browser-rtc/-/get-browser-rtc-1.1.0.tgz",
+        "mapping": "Unmodified evidence from exact npm get-browser-rtc@1.1.0 tarball after SHA-1 and SHA-512 verification; not an upstream LICENSE",
+        "npm": {
+          "name": "get-browser-rtc",
+          "version": "1.1.0",
+          "integrity": "sha512-MghbMJ61EJrRsDe7w1Bvqt3ZsBuqhce5nrn/XAwgwOXhcsz53/ltdxOse1h/8eKXj5slzxdsz56g5rzOFSGwfQ==",
+          "shasum": "d1494e299b00f33fc8e9d6d3343ba4ba99711a2c"
+        }
+      }
+    },
+    {
+      "id": "react-remove-scroll-bar-2.3.8-package-declaration",
+      "path": "legal/third-party/evidence/react-remove-scroll-bar-2.3.8-package.json",
+      "sha256": "e372f857ce05f266137c65293436b5380fec42ac311e6acb9378ed78b98d75d0",
+      "source": {
+        "kind": "npm-package-evidence",
+        "repository": "git+https://github.com/theKashey/react-remove-scroll-bar.git",
+        "path": "package/package.json",
+        "downloadUrl": "https://registry.npmjs.org/react-remove-scroll-bar/-/react-remove-scroll-bar-2.3.8.tgz",
+        "mapping": "Unmodified evidence from exact npm react-remove-scroll-bar@2.3.8 tarball after SHA-1 and SHA-512 verification; not an upstream LICENSE",
+        "npm": {
+          "name": "react-remove-scroll-bar",
+          "version": "2.3.8",
+          "integrity": "sha512-9r+yi9+mgU33AKcj6IbT9oRCO78WriSj6t/cF8DWBZJ9aOGPOTEDvdUDz1FwKim7QXWwmHqtdHnRJfhAxEG46Q==",
+          "shasum": "99c20f908ee467b385b68a3469b4a3e750012223"
+        }
+      }
+    },
+    {
+      "id": "react-remove-scroll-bar-2.3.8-readme-declaration",
+      "path": "legal/third-party/evidence/react-remove-scroll-bar-2.3.8-README.md",
+      "sha256": "486442209236ffa3893312e508694699a6b8834d30a2f9c083c1f3379983e4f9",
+      "source": {
+        "kind": "npm-package-evidence",
+        "repository": "git+https://github.com/theKashey/react-remove-scroll-bar.git",
+        "path": "package/README.md",
+        "downloadUrl": "https://registry.npmjs.org/react-remove-scroll-bar/-/react-remove-scroll-bar-2.3.8.tgz",
+        "mapping": "Unmodified evidence from exact npm react-remove-scroll-bar@2.3.8 tarball after SHA-1 and SHA-512 verification; not an upstream LICENSE",
+        "npm": {
+          "name": "react-remove-scroll-bar",
+          "version": "2.3.8",
+          "integrity": "sha512-9r+yi9+mgU33AKcj6IbT9oRCO78WriSj6t/cF8DWBZJ9aOGPOTEDvdUDz1FwKim7QXWwmHqtdHnRJfhAxEG46Q==",
+          "shasum": "99c20f908ee467b385b68a3469b4a3e750012223"
+        }
+      }
     }
   ],
   "packages": [
@@ -341,13 +562,30 @@
         "type": "git"
       },
       "npmGitHead": null,
-      "status": "unresolved",
-      "reason": "官方 npm SLSA provenance https://registry.npmjs.org/-/npm/v1/attestations/@better-auth%2futils@0.4.2 已确认 v0.4.2 -> b20329a32d78f1f9bcc088bbd6f982b28c4192f1 的精确版本映射；已查官方 npm 版本元数据 https://registry.npmjs.org/@better-auth%2futils/0.4.2、精确 tarball https://registry.npmjs.org/@better-auth/utils/-/utils-0.4.2.tgz 和提交树 https://github.com/better-auth/utils/tree/b20329a32d78f1f9bcc088bbd6f982b28c4192f1，但该提交树与包内均未定位 LICENSE/LICENCE/COPYING/NOTICE 原文，缺少可纳入材料的许可证原文路径与 hash，因此保持未解决。",
+      "status": "declared-with-supplement",
       "upstreamCandidate": {
         "tag": "v0.4.2",
         "commit": "b20329a32d78f1f9bcc088bbd6f982b28c4192f1",
         "repository": "https://github.com/better-auth/utils.git"
-      }
+      },
+      "materials": [
+        "spdx-MIT-normative-supplement",
+        "better-auth-utils-0.4.2-package-declaration",
+        "better-auth-utils-0.4.2-readme-declaration",
+        "better-auth-utils-0.4.2-pinned-upstream-declaration"
+      ],
+      "upstreamLicenseTextStatus": "not-found",
+      "originalMissingReason": "官方 npm SLSA provenance https://registry.npmjs.org/-/npm/v1/attestations/@better-auth%2futils@0.4.2 已确认 v0.4.2 -> b20329a32d78f1f9bcc088bbd6f982b28c4192f1 的精确版本映射；已查官方 npm 版本元数据 https://registry.npmjs.org/@better-auth%2futils/0.4.2、精确 tarball https://registry.npmjs.org/@better-auth/utils/-/utils-0.4.2.tgz 和提交树 https://github.com/better-auth/utils/tree/b20329a32d78f1f9bcc088bbd6f982b28c4192f1，但该提交树与包内均未定位 LICENSE/LICENCE/COPYING/NOTICE 原文，缺少可纳入材料的许可证原文路径与 hash，因此保持未解决。",
+      "npmEvidence": {
+        "packageJson": "better-auth-utils-0.4.2-package-declaration",
+        "readme": "better-auth-utils-0.4.2-readme-declaration",
+        "tarballIntegrityVerified": true,
+        "author": "Bereket Engida",
+        "contributors": null
+      },
+      "licenseSupplement": "spdx-MIT-normative-supplement",
+      "copyrightStatus": "No copyright notice supplied in exact npm package; original author metadata is preserved without treating it as copyright ownership.",
+      "supplementNote": "Exact package.json and README declare MIT. SPDX canonical text is a labelled normative supplement, not an upstream package LICENSE. Template copyright placeholders remain unchanged; no copyright holder or year is invented."
     },
     {
       "name": "@better-auth/utils",
@@ -364,13 +602,30 @@
         "type": "git"
       },
       "npmGitHead": null,
-      "status": "unresolved",
-      "reason": "官方 npm SLSA provenance https://registry.npmjs.org/-/npm/v1/attestations/@better-auth%2futils@0.5.0 已确认 v0.5.0 -> f03c1c76aff7bfa3f4de4af47b112315c770a0d1 的精确版本映射；已查官方 npm 版本元数据 https://registry.npmjs.org/@better-auth%2futils/0.5.0、精确 tarball https://registry.npmjs.org/@better-auth/utils/-/utils-0.5.0.tgz 和提交树 https://github.com/better-auth/utils/tree/f03c1c76aff7bfa3f4de4af47b112315c770a0d1，但该提交树与包内均未定位 LICENSE/LICENCE/COPYING/NOTICE 原文，缺少可纳入材料的许可证原文路径与 hash，因此保持未解决。",
+      "status": "declared-with-supplement",
       "upstreamCandidate": {
         "tag": "v0.5.0",
         "commit": "f03c1c76aff7bfa3f4de4af47b112315c770a0d1",
         "repository": "https://github.com/better-auth/utils.git"
-      }
+      },
+      "materials": [
+        "spdx-MIT-normative-supplement",
+        "better-auth-utils-0.5.0-package-declaration",
+        "better-auth-utils-0.5.0-readme-declaration",
+        "better-auth-utils-0.5.0-pinned-upstream-declaration"
+      ],
+      "upstreamLicenseTextStatus": "not-found",
+      "originalMissingReason": "官方 npm SLSA provenance https://registry.npmjs.org/-/npm/v1/attestations/@better-auth%2futils@0.5.0 已确认 v0.5.0 -> f03c1c76aff7bfa3f4de4af47b112315c770a0d1 的精确版本映射；已查官方 npm 版本元数据 https://registry.npmjs.org/@better-auth%2futils/0.5.0、精确 tarball https://registry.npmjs.org/@better-auth/utils/-/utils-0.5.0.tgz 和提交树 https://github.com/better-auth/utils/tree/f03c1c76aff7bfa3f4de4af47b112315c770a0d1，但该提交树与包内均未定位 LICENSE/LICENCE/COPYING/NOTICE 原文，缺少可纳入材料的许可证原文路径与 hash，因此保持未解决。",
+      "npmEvidence": {
+        "packageJson": "better-auth-utils-0.5.0-package-declaration",
+        "readme": "better-auth-utils-0.5.0-readme-declaration",
+        "tarballIntegrityVerified": true,
+        "author": "Bereket Engida",
+        "contributors": null
+      },
+      "licenseSupplement": "spdx-MIT-normative-supplement",
+      "copyrightStatus": "No copyright notice supplied in exact npm package; original author metadata is preserved without treating it as copyright ownership.",
+      "supplementNote": "Exact package.json and README declare MIT. SPDX canonical text is a labelled normative supplement, not an upstream package LICENSE. Template copyright placeholders remain unchanged; no copyright holder or year is invented."
     },
     {
       "name": "@biomejs/biome",
@@ -594,8 +849,24 @@
       },
       "homepage": "https://github.com/IndigoUnited/js-err-code#readme",
       "npmGitHead": "830d141eb633c21b842df3f78aba5786fee1b31d",
-      "status": "unresolved",
-      "reason": "npm gitHead 830d141eb633c21b842df3f78aba5786fee1b31d 提供了精确提交映射；已查官方 npm 版本元数据 https://registry.npmjs.org/err-code/3.0.1、精确 tarball https://registry.npmjs.org/err-code/-/err-code-3.0.1.tgz 和提交树 https://github.com/IndigoUnited/js-err-code/tree/830d141eb633c21b842df3f78aba5786fee1b31d，但提交树中未定位 LICENSE/LICENCE/COPYING/NOTICE 原文，缺少可纳入材料的许可证原文路径与 hash，因此保持未解决。"
+      "status": "declared-with-supplement",
+      "materials": [
+        "spdx-MIT-normative-supplement",
+        "err-code-3.0.1-package-declaration",
+        "err-code-3.0.1-readme-declaration"
+      ],
+      "upstreamLicenseTextStatus": "not-found",
+      "originalMissingReason": "npm gitHead 830d141eb633c21b842df3f78aba5786fee1b31d 提供了精确提交映射；已查官方 npm 版本元数据 https://registry.npmjs.org/err-code/3.0.1、精确 tarball https://registry.npmjs.org/err-code/-/err-code-3.0.1.tgz 和提交树 https://github.com/IndigoUnited/js-err-code/tree/830d141eb633c21b842df3f78aba5786fee1b31d，但提交树中未定位 LICENSE/LICENCE/COPYING/NOTICE 原文，缺少可纳入材料的许可证原文路径与 hash，因此保持未解决。",
+      "npmEvidence": {
+        "packageJson": "err-code-3.0.1-package-declaration",
+        "readme": "err-code-3.0.1-readme-declaration",
+        "tarballIntegrityVerified": true,
+        "author": "IndigoUnited <hello@indigounited.com> (http://indigounited.com)",
+        "contributors": null
+      },
+      "licenseSupplement": "spdx-MIT-normative-supplement",
+      "copyrightStatus": "No copyright notice supplied in exact npm package; original author metadata is preserved without treating it as copyright ownership.",
+      "supplementNote": "Exact package.json and README declare MIT. SPDX canonical text is a labelled normative supplement, not an upstream package LICENSE. Template copyright placeholders remain unchanged; no copyright holder or year is invented."
     },
     {
       "name": "event-reduce-js",
@@ -679,8 +950,24 @@
       },
       "homepage": "https://github.com/substack/get-browser-rtc#readme",
       "npmGitHead": "f4c75dce0ac4fb2af0256dc508fbb23436c54db3",
-      "status": "unresolved",
-      "reason": "npm gitHead f4c75dce0ac4fb2af0256dc508fbb23436c54db3 提供了精确提交映射；已查官方 npm 版本元数据 https://registry.npmjs.org/get-browser-rtc/1.1.0、精确 tarball https://registry.npmjs.org/get-browser-rtc/-/get-browser-rtc-1.1.0.tgz 和提交树 https://github.com/substack/get-browser-rtc/tree/f4c75dce0ac4fb2af0256dc508fbb23436c54db3，但提交树中未定位 LICENSE/LICENCE/COPYING/NOTICE 原文，缺少可纳入材料的许可证原文路径与 hash，因此保持未解决。"
+      "status": "declared-with-supplement",
+      "materials": [
+        "spdx-MIT-normative-supplement",
+        "get-browser-rtc-1.1.0-package-declaration",
+        "get-browser-rtc-1.1.0-readme-declaration"
+      ],
+      "upstreamLicenseTextStatus": "not-found",
+      "originalMissingReason": "npm gitHead f4c75dce0ac4fb2af0256dc508fbb23436c54db3 提供了精确提交映射；已查官方 npm 版本元数据 https://registry.npmjs.org/get-browser-rtc/1.1.0、精确 tarball https://registry.npmjs.org/get-browser-rtc/-/get-browser-rtc-1.1.0.tgz 和提交树 https://github.com/substack/get-browser-rtc/tree/f4c75dce0ac4fb2af0256dc508fbb23436c54db3，但提交树中未定位 LICENSE/LICENCE/COPYING/NOTICE 原文，缺少可纳入材料的许可证原文路径与 hash，因此保持未解决。",
+      "npmEvidence": {
+        "packageJson": "get-browser-rtc-1.1.0-package-declaration",
+        "readme": "get-browser-rtc-1.1.0-readme-declaration",
+        "tarballIntegrityVerified": true,
+        "author": "substack",
+        "contributors": null
+      },
+      "licenseSupplement": "spdx-MIT-normative-supplement",
+      "copyrightStatus": "No copyright notice supplied in exact npm package; original author metadata is preserved without treating it as copyright ownership.",
+      "supplementNote": "Exact package.json and README declare MIT. SPDX canonical text is a labelled normative supplement, not an upstream package LICENSE. Template copyright placeholders remain unchanged; no copyright holder or year is invented."
     },
     {
       "name": "is-module",
@@ -931,8 +1218,24 @@
       },
       "homepage": "https://github.com/theKashey/react-remove-scroll-bar#readme",
       "npmGitHead": "b3b1287aad81def2e2ae707274b74531b61ddbaf",
-      "status": "unresolved",
-      "reason": "npm gitHead b3b1287aad81def2e2ae707274b74531b61ddbaf 提供了精确提交映射；已查官方 npm 版本元数据 https://registry.npmjs.org/react-remove-scroll-bar/2.3.8、精确 tarball https://registry.npmjs.org/react-remove-scroll-bar/-/react-remove-scroll-bar-2.3.8.tgz 和提交树 https://github.com/theKashey/react-remove-scroll-bar/tree/b3b1287aad81def2e2ae707274b74531b61ddbaf，但提交树中未定位 LICENSE/LICENCE/COPYING/NOTICE 原文，缺少可纳入材料的许可证原文路径与 hash，因此保持未解决。"
+      "status": "declared-with-supplement",
+      "materials": [
+        "spdx-MIT-normative-supplement",
+        "react-remove-scroll-bar-2.3.8-package-declaration",
+        "react-remove-scroll-bar-2.3.8-readme-declaration"
+      ],
+      "upstreamLicenseTextStatus": "not-found",
+      "originalMissingReason": "npm gitHead b3b1287aad81def2e2ae707274b74531b61ddbaf 提供了精确提交映射；已查官方 npm 版本元数据 https://registry.npmjs.org/react-remove-scroll-bar/2.3.8、精确 tarball https://registry.npmjs.org/react-remove-scroll-bar/-/react-remove-scroll-bar-2.3.8.tgz 和提交树 https://github.com/theKashey/react-remove-scroll-bar/tree/b3b1287aad81def2e2ae707274b74531b61ddbaf，但提交树中未定位 LICENSE/LICENCE/COPYING/NOTICE 原文，缺少可纳入材料的许可证原文路径与 hash，因此保持未解决。",
+      "npmEvidence": {
+        "packageJson": "react-remove-scroll-bar-2.3.8-package-declaration",
+        "readme": "react-remove-scroll-bar-2.3.8-readme-declaration",
+        "tarballIntegrityVerified": true,
+        "author": "Anton Korzunov <thekashey@gmail.com>",
+        "contributors": null
+      },
+      "licenseSupplement": "spdx-MIT-normative-supplement",
+      "copyrightStatus": "No copyright notice supplied in exact npm package; original author metadata is preserved without treating it as copyright ownership.",
+      "supplementNote": "Exact package.json and README declare MIT. SPDX canonical text is a labelled normative supplement, not an upstream package LICENSE. Template copyright placeholders remain unchanged; no copyright holder or year is invented."
     },
     {
       "name": "regenerate",
@@ -1225,9 +1528,13 @@
     }
   ],
   "bundle": {
-    "status": "partial",
+    "status": "documented-with-normative-supplements",
     "note": "这些材料可供再分发包引用；实际生产 bundle 的模块集合、压缩产物和平台原生包仍需按具体构建分别确认。本索引不把未安装的 Linux 原生包视为失败，也不把 Darwin 原生包自动宣称为浏览器 bundle 内容。",
     "verifiedSourceMaterialCount": 17,
-    "unresolvedPackageCount": 5
+    "unresolvedPackageCount": 0,
+    "materialCount": 30,
+    "standardLicenseMaterialCount": 1,
+    "declarationEvidenceMaterialCount": 12,
+    "supplementedPackageCount": 5
   }
 }
