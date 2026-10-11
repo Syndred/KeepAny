@@ -1,22 +1,51 @@
-import { expect, test } from "@playwright/test";
+import { mkdirSync } from "node:fs";
+import { join } from "node:path";
+import { expect, type Page, test } from "@playwright/test";
 import { selectChoice } from "./helpers/select-choice";
 
 const repositoryModuleUrl = `/@fs${process.cwd()}/packages/local-db/src/index.ts`;
+const domainModuleUrl = `/@fs${process.cwd()}/packages/domain/src/index.ts`;
+const evidenceDirectory = process.env.KEEPANY_EVIDENCE_DIR ?? "/tmp";
+mkdirSync(evidenceDirectory, { recursive: true });
+
+async function projectFixture(page: Page, submissionName: string) {
+	return page.evaluate(async ({ domainModuleUrl, repositoryModuleUrl, submissionName }) => {
+		const { newAsset, relationSchema, submissionSchema } = await import(domainModuleUrl);
+		const { saveBatch } = await import(repositoryModuleUrl);
+		const project = {
+			...newAsset("project"), name: "Mori Notes", category: "website",
+			url: "https://example.com", description: "A quiet place for ideas",
+		};
+		const account = { ...newAsset("account"), name: "Studio Mail", category: "email", username: "hello@example.com" };
+		const hosting = {
+			...newAsset("subscription"), name: "Cloud hosting", category: "service",
+			amount: 9800, currency: "CNY" as const, dueDate: "2026-10-22",
+		};
+		const createdAt = new Date().toISOString();
+		const relations = [
+			relationSchema.parse({ id: crypto.randomUUID(), from: project.id, to: account.id, label: "Contact email", createdAt }),
+			relationSchema.parse({ id: crypto.randomUUID(), from: hosting.id, to: project.id, label: "Hosting", createdAt }),
+		];
+		const submission = submissionSchema.parse({
+			id: crypto.randomUUID(), assetId: project.id, name: submissionName,
+			url: "https://directory.example/project", status: "verify", submittedAt: "2026-09-20",
+			verifiedAt: "", evidence: "https://directory.example/project", deleted: false,
+		});
+		await saveBatch([
+			...[project, account, hosting].map(value => ({ type: "asset" as const, value })),
+			...relations.map(value => ({ type: "relation" as const, value })),
+			{ type: "submission", value: submission },
+		]);
+		return project.id as string;
+	}, { domainModuleUrl, repositoryModuleUrl, submissionName });
+}
 
 for (const width of [360, 390, 1280]) {
 	test(`project detail uses recorded relationships, domain costs and collapsible materials at ${width}px`, async ({ page }) => {
 		await page.setViewportSize({ width, height: 850 });
 		await page.goto("/");
 		await page.evaluate(() => localStorage.setItem("keepany-language", "en"));
-		const projectId = await page.evaluate(async ([dataUrl, repositoryUrl]) => {
-			const { seed } = await import(dataUrl);
-			const { localRepository, save } = await import(repositoryUrl);
-			await seed();
-			const repository = await localRepository();
-			const project = (await repository.allRecords()).filter((row: { type: string }) => row.type === "asset").map((row: { payload: string }) => JSON.parse(row.payload)).find((asset: { kind: string }) => asset.kind === "project");
-			await save("submission", { id: crypto.randomUUID(), assetId: project.id, name: "Directory record", url: "https://directory.example/project", status: "verify", submittedAt: "2026-09-20", verifiedAt: "", evidence: "https://directory.example/project", deleted: false });
-			return project.id as string;
-		}, ["/src/data.ts", repositoryModuleUrl]);
+		const projectId = await projectFixture(page, "Directory record");
 		await page.goto(`/assets/project/${projectId}`);
 		await expect(page.getByRole("heading", { name: "Mori Notes", exact: true })).toBeVisible();
 		await expect(page.locator(".asset-project-action-bar")).toBeVisible();
@@ -59,7 +88,7 @@ for (const width of [360, 390, 1280]) {
 		await expect(page.locator(".asset-project-reminders")).toContainText("Oct 5, 2026");
 		await expect(page.locator(".asset-project-costs")).toContainText("2027");
 		await expect(page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).resolves.toBe(true);
-		await page.screenshot({ path: `/tmp/keepany-project-detail-restored-${width}.png`, fullPage: true });
+		await page.screenshot({ path: join(evidenceDirectory, `keepany-project-detail-restored-${width}.png`), fullPage: true });
 		await page.locator(".asset-project-domain-row").getByRole("button", { name: "Edit" }).click();
 		await domain.getByLabel("Annual fee").fill("130.00");
 		await selectChoice(domain.getByLabel("Auto renew"), "on");
@@ -77,15 +106,7 @@ test("project detail labels and recorded relationships render in Chinese at 390p
 	await page.setViewportSize({ width: 390, height: 850 });
 	await page.goto("/");
 	await page.evaluate(() => localStorage.setItem("keepany-language", "zh-CN"));
-	const projectId = await page.evaluate(async ([dataUrl, repositoryUrl]) => {
-		const { seed } = await import(dataUrl);
-		const { localRepository, save } = await import(repositoryUrl);
-		await seed();
-		const repository = await localRepository();
-		const project = (await repository.allRecords()).filter((row: { type: string }) => row.type === "asset").map((row: { payload: string }) => JSON.parse(row.payload)).find((asset: { kind: string }) => asset.kind === "project");
-		await save("submission", { id: crypto.randomUUID(), assetId: project.id, name: "目录记录", url: "https://directory.example/project", status: "verify", submittedAt: "2026-09-20", verifiedAt: "", evidence: "https://directory.example/project", deleted: false });
-		return project.id as string;
-	}, ["/src/data.ts", repositoryModuleUrl]);
+	const projectId = await projectFixture(page, "目录记录");
 	await page.goto(`/assets/project/${projectId}`);
 	await expect(page.locator(".topbar-back-link")).toContainText("返回列表");
 	await expect(page.locator(".asset-project-profile-card")).toContainText("官方地址");
@@ -106,5 +127,5 @@ test("project detail labels and recorded relationships render in Chinese at 390p
 	await page.getByRole("button", { name: "查看投递素材" }).click();
 	await expect(page.locator(".asset-project-materials")).toHaveAttribute("open", "");
 	await expect(page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).resolves.toBe(true);
-	await page.screenshot({ path: "/tmp/keepany-project-detail-restored-zh-CN-390.png", fullPage: true });
+	await page.screenshot({ path: join(evidenceDirectory, "keepany-project-detail-restored-zh-CN-390.png"), fullPage: true });
 });
