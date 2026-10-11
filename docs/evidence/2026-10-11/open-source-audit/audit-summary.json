@@ -21,11 +21,23 @@
     "unclassifiedAlerts": 0,
     "confirmedProductionSecrets": 0,
     "confirmedCommercialTemplateSource": 0,
-    "historicalSensitivePathMatches": ["apps/sync-server/.env.example"],
-    "trackedImagesAndMedia": 2340,
-    "riskSelectedImagesInspected": 8,
+    "historicalSensitivePathMatches": [
+      "apps/sync-server/.env.example"
+    ],
     "allHistoricalImagesInspected": false,
-    "realUserStorageTouched": false
+    "realUserStorageTouched": false,
+    "trackedImagesAndMediaAtBaseline": 2340,
+    "baselineRiskSelectedImagesInspected": 8,
+    "postBaselineCommitsScannedThrough": "b83f7facc13eac41af9998796fc567032bc6a4e9",
+    "postBaselineRawAlerts": 4,
+    "postBaselineReviewedFalsePositiveCategories": {
+      "buildHashesAndAssetInventory": 1,
+      "compiledKnownI18nKeys": 3
+    },
+    "postBaselineUnclassifiedAlerts": 0,
+    "postBaselineConfirmedProductionSecrets": 0,
+    "lastIncrementalScanRange": "4758900..b83f7facc13eac41af9998796fc567032bc6a4e9",
+    "lastIncrementalScanRawAlerts": 0
   },
   "licenses": {
     "missingPackageRootLicenseTextVersions": 32,
@@ -42,7 +54,21 @@
     "releaseGateRegressionPassed": 6,
     "upstreamMissingOriginalLicenseTextStillRecorded": true,
     "copyrightHoldersInvented": false,
-    "fullCompatibilityLegalOpinionClaimed": false
+    "fullCompatibilityLegalOpinionClaimed": false,
+    "windowsCheckoutBytesFixCommit": "5287a9f",
+    "portablePathIndexFixCommit": "59025f2",
+    "windowsActualFailuresPreserved": true,
+    "threeOSStrictGatePassed": {
+      "sourceCommit": "475890003b161b24e9b5437cd96e22256526b9ee",
+      "run": "https://github.com/Syndred/KeepAny/actions/runs/38123892965",
+      "reportedBy": "Root acceptance checked the actual GitHub run",
+      "jobs": {
+        "macOS": 114424104101,
+        "Windows": 114424104297,
+        "Ubuntu": 114424104325
+      },
+      "result": "success"
+    }
   },
   "testConfiguration": {
     "sourceE2ESpecFiles": 106,
@@ -50,5 +76,97 @@
     "fixedSyncSpecFiles": 2,
     "fullFunctionalTestsRunByThisAudit": false,
     "note": "Root acceptance owns fresh functional reports; config coverage and conditional skip boundaries are recorded in the audit document."
+  },
+  "media": {
+    "fixedHead": "ab586c05650a37f79754450dfb7a7d494d30608e",
+    "checkedUnchangedThroughCommit": "b83f7facc13eac41af9998796fc567032bc6a4e9",
+    "gitObjectsByteVerified": 2126,
+    "byteMismatches": 0,
+    "trackedImagePaths": 2350,
+    "trackedRasterPaths": 2348,
+    "trackedSvgPaths": 2,
+    "headUniqueRasterBlobs": 2010,
+    "headUniqueSvgBlobs": 1,
+    "historicalOnlyRasterBlobs": 115,
+    "allUniqueRasterBlobs": 2125,
+    "allUniqueImageBlobs": 2126,
+    "ocrSucceeded": 2125,
+    "ocrFailed": 0,
+    "ocrMissing": 0,
+    "candidateImages": 550,
+    "candidateCategories": {
+      "other-url": 145,
+      "secret-label-followed-by-value": 149,
+      "long-token": 264,
+      "non-placeholder-email": 3
+    },
+    "credentialSyntaxCandidates": 0,
+    "categoryClassifications": {
+      "long-token": {
+        "synthetic-workspace-id": 4,
+        "synthetic-stress-text": 94,
+        "public-ui-copy": 98,
+        "synthetic-workspace-or-device-id": 5,
+        "ocr-misread": 1,
+        "synthetic-identity-or-fingerprint": 4,
+        "synthetic-workspace-or-asset-id": 13,
+        "synthetic-fixture-filename": 1,
+        "synthetic-graph-label": 8,
+        "local-temporary-file-id": 4,
+        "synthetic-account-field": 32
+      },
+      "other-url": {
+        "synthetic": 58,
+        "local": 1,
+        "public-url": 84,
+        "ocr-misread": 2
+      },
+      "non-placeholder-email": {
+        "ocr-misread": 3
+      },
+      "secret-label-followed-by-value": {
+        "label-context-empty-masked-or-synthetic-fixture": 149
+      }
+    },
+    "unclassifiedCandidateCategories": 0,
+    "originalBrowserImagesFullyInspected": 40,
+    "fullImageVisualReviewUniqueCount": 89,
+    "riskRegionVisualReviewUniqueCount": 39,
+    "manualReviewScope": "40 original-browser full images plus additional risk candidates and representative cropped regions; not all images manually inspected",
+    "confirmedRealPrivateCredentialAccountOrFinancialRisk": 0,
+    "rawImagesUploadedToCloudOCR": false,
+    "rawOCRTextCommitted": false,
+    "uncommittedTestOutputIncluded": false,
+    "imageRowsSHA256": "b19666b023439a4ee515513259f2b03f64023b46115684ed4ce2a14a139cb0cb"
+  },
+  "independentFinalReview": {
+    "readOnlyProductReview": true,
+    "areas": [
+      "empty onboarding",
+      "production module license inventory",
+      "source snapshot",
+      "portable runtime",
+      "real application route contract",
+      "public documentation workflow"
+    ],
+    "unresolvedKnownReleaseBlockers": 0,
+    "fixedWindowsLicenseCollectionCommit": "c30fa8b",
+    "fixedBearerByteLengthCommit": "4526973",
+    "finalCleanPackageAcceptanceOwnedByRoot": true
+  },
+  "functionalEvidenceReportedByRoot": {
+    "unitPassed": 786,
+    "unitSkipped": 0,
+    "isolatedRealPostgreSQL": true,
+    "integrationRetestPassed": 5,
+    "candidatePortableSpecFiles": 34,
+    "candidatePortableCasesPassed": 178,
+    "candidatePortableSkipped": 0,
+    "candidatePortableFlaky": 0,
+    "candidateServer": "delivered Hono runtime",
+    "nativeQuotaPassed": 2,
+    "oldPWAUpgradeRoutesAndBackupPassed": 18,
+    "sourceFull489CaseSuite": "still running when this audit was closed",
+    "finalCleanPackage": "root acceptance pending; dirty candidate is not final delivery"
   }
 }
