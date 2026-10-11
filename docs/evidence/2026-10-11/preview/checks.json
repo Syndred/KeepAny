@@ -132,6 +132,26 @@
         "unexpected": 0,
         "flaky": 0
       }
+    },
+    "intake-refresh-races": {
+      "reportSha256": "6b0c418d7c06a9b149dd5cc0c791ddc61fba01ded0b3819078b81c7a08e0b213",
+      "format": "Playwright line output",
+      "stats": {
+        "passed": 5,
+        "failed": 0,
+        "skipped": 0
+      },
+      "scope": "Synthetic IndexedDB delay and failure fixtures; source Vite server only"
+    },
+    "intake-refresh-related": {
+      "reportSha256": "9878371350860f769ff9ae8fab182dc4cbec61fd1a02822d72b73e07a0b7f785",
+      "format": "Playwright line output",
+      "stats": {
+        "passed": 24,
+        "failed": 0,
+        "skipped": 0
+      },
+      "scope": "Synthetic IndexedDB delay and failure fixtures; source Vite server only"
     }
   }
 }

@@ -24,7 +24,7 @@ The portable package requires **[Node.js 22 or newer](https://nodejs.org/)**. Yo
 | Linux | Run `./start.sh` in the package folder | Run `./stop.sh` |
 | Windows | Double-click `start.bat` | Double-click `stop.bat` |
 
-Open **http://127.0.0.1:4180/**. The server listens only on your computer. Closing the browser does not stop it. If another program is using the port, the launcher reports it rather than choosing a different address. The same browser and address show your existing local records; use a separate browser profile to start empty.
+Open **[http://127.0.0.1:4180/](http://127.0.0.1:4180/)**. The server listens only on your computer. Closing the browser does not stop it. If another program is using the port, the launcher reports it rather than choosing a different address. The same browser and address show your existing local records; use a separate browser profile to start empty.
 
 Before updating an existing installation, download and verify a backup, save your edits, close old tabs, and stop the old server. Open the new package in the same browser and at the same address. Save changes before accepting an app-update prompt; investigate the existing server if the port is occupied. See [upgrade steps](docs/试用指南.md#updating-an-existing-installation). Not every older PWA upgrade path has been verified.
 
