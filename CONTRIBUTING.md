@@ -24,7 +24,7 @@ Read [README](README.md), [product boundaries](docs/00-产品范围与开放边�
 Use Node.js 22+ and the pnpm version in `package.json`:
 
 ```bash
-corepack enable
+npm install --global pnpm@11.10.0
 pnpm install --frozen-lockfile
 pnpm dev
 ```
