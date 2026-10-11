@@ -8,7 +8,7 @@ Which email does a project use? Where is its domain registered? Which subscripti
 
 No registration required. English and Simplified Chinese interfaces. The local core is open source under [AGPL-3.0-only](LICENSE). Optional paid hosting is planned; official cloud sync and paid services are not available yet.
 
-![KeepAny overview with fictional project, account, and subscription records](docs/evidence/2026-10-01/english-demo/en-1280-overview.png)
+![KeepAny overview with fictional project, account, and subscription records](docs/evidence/2026-10-11/preview/onboarding-en-1280-sample.png)
 
 *Screenshot of the actual app using sample records.*
 
@@ -16,7 +16,7 @@ No registration required. English and Simplified Chinese interfaces. The local c
 
 **This is an early preview. The public preview package is still being prepared for release.** Once published, download the `KeepAny-…-portable.zip` marked `Pre-release` from [GitHub Releases](https://github.com/Syndred/KeepAny/releases). Each release will identify its source revision, checksums, and known limits. GitHub's source ZIP is not the portable app.
 
-The portable package requires **Node.js 22 or newer**. You do not need Git, pnpm, or a build step. Extract it to a folder you can keep:
+The portable package requires **[Node.js 22 or newer](https://nodejs.org/)**. You do not need Git, pnpm, or a build step. Extract it to a folder you can keep:
 
 | System | Start | Stop |
 |---|---|---|
@@ -26,7 +26,9 @@ The portable package requires **Node.js 22 or newer**. You do not need Git, pnpm
 
 Open **http://127.0.0.1:4180/**. The server listens only on your computer. Closing the browser does not stop it. If another program is using the port, the launcher reports it rather than choosing a different address. The same browser and address show your existing local records; use a separate browser profile to start empty.
 
-To explore, go to **Settings → More options → Add sample records**, then try:
+Before updating an existing installation, download and verify a backup, save your edits, close old tabs, and stop the old server. Open the new package in the same browser and at the same address. Save changes before accepting an app-update prompt; investigate the existing server if the port is occupied. See [upgrade steps](docs/试用指南.md#updating-an-existing-installation). Not every older PWA upgrade path has been verified.
+
+In an empty **Overview**, choose **Start with sample records**, then **Add sample records** in Settings. You can also use **Settings → More options → Add sample records**. Then try:
 
 1. Create a project and record its website or domain.
 2. Add a login account and connect it to the project.

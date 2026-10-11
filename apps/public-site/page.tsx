@@ -9,6 +9,7 @@ export type PublicSiteConfig = {
 	siteUrl: string;
 	downloadUrl: string;
 	repositoryUrl: string;
+	screenshotSize: { width: number; height: number };
 };
 
 const copy = {
@@ -41,7 +42,7 @@ const copy = {
 		tryLead: "Download a portable preview from the Releases page when available. It needs Node.js 22 or newer, with no Git, pnpm, or build step. Read that release's verified environments and limits.",
 		steps: [
 			"Extract the package. Run start.command on macOS, start.sh on Linux, or start.bat on Windows.",
-			"Open http://127.0.0.1:4180/ in your browser. Add sample records in Settings, or create a fictional project.",
+			"Open http://127.0.0.1:4180/. Choose Start with sample records in an empty Overview, then Add sample records in Settings, or create a fictional project.",
 			"Connect an account, record a subscription, and create a maintenance task.",
 			"Create and save an encrypted .ka1 backup. Restore it in a clean browser profile and check your records.",
 		],
@@ -89,7 +90,7 @@ const copy = {
 		tryLead: "便携测试包发布后可从 Releases 下载。需要 Node.js 22 或更新版本，无需 Git、pnpm 或编译。实际验证的系统与限制以对应发布说明为准。",
 		steps: [
 			"解压便携包。macOS 用 start.command，Linux 用 start.sh，Windows 用 start.bat。",
-			"浏览器打开 http://127.0.0.1:4180/，在设置加入示例，或建立一个虚构项目。",
+			"打开 http://127.0.0.1:4180/，空白概览点「用示例资料开始」，到设置点「加入示例资料」，或建立虚构项目。",
 			"关联账号、记录订阅，再建立一项维护待办。",
 			"创建并下载加密 .ka1 备份，在干净浏览器配置中恢复并核对资料。",
 		],
@@ -154,6 +155,8 @@ export function renderPublicPage(locale: PublicLocale, config: PublicSiteConfig)
 				<meta property="og:locale:alternate" content={isEnglish ? "zh_CN" : "en_US"} />
 				<meta property="og:image" content={`${config.siteUrl}assets/${screenshot}`} />
 				<meta property="og:image:alt" content={c.screenshotAlt} />
+				<meta property="og:image:width" content={String(config.screenshotSize.width)} />
+				<meta property="og:image:height" content={String(config.screenshotSize.height)} />
 				<meta name="twitter:card" content="summary_large_image" />
 				<link rel="icon" href={`${assets}keepany.svg`} type="image/svg+xml" />
 				<link rel="stylesheet" href={`${assets}public.css`} />
@@ -184,7 +187,7 @@ export function renderPublicPage(locale: PublicLocale, config: PublicSiteConfig)
 								<p className="public-preview">{c.preview}</p>
 							</div>
 							<figure className="public-screen">
-								<img src={`${assets}${screenshot}`} width="1280" height="926" alt={c.screenshotAlt} />
+								<img src={`${assets}${screenshot}`} width={config.screenshotSize.width} height={config.screenshotSize.height} alt={c.screenshotAlt} />
 								<figcaption>{c.screenshotCaption}</figcaption>
 							</figure>
 						</section>

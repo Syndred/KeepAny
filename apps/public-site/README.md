@@ -18,8 +18,8 @@ node scripts/build-public-site.mjs
 |---|---|
 | `KEEPANY_PUBLIC_SITE_URL` | `https://syndred.github.io/KeepAny/`，必须是无凭据、查询和片段的 HTTPS 地址；生成 canonical、hreflang、OG 和 sitemap |
 | `KEEPANY_PUBLIC_DOWNLOAD_URL` | GitHub Releases 列表；只能在实际发布后改为已存在的版本或资产地址 |
-| `KEEPANY_PUBLIC_SCREENSHOT_EN` | 仓库内既有英文合成示例截图；也可明确指定本轮已检查的公开截图路径 |
-| `KEEPANY_PUBLIC_SCREENSHOT_ZH` | 仓库内既有中文合成示例截图；发布前确认无个人资料、密钥或不明权利素材 |
+| `KEEPANY_PUBLIC_SCREENSHOT_EN` | 本轮正式包的英文合成示例 PNG；也可明确指定已检查的公开 PNG 截图路径 |
+| `KEEPANY_PUBLIC_SCREENSHOT_ZH` | 本轮正式包的中文合成示例 PNG；发布前确认无个人资料、密钥或不明权利素材 |
 
 默认站点地址是部署目标，不表示已经上线。部署、GitHub 仓库公开和下载包发布状态由根交接分别记录。
 

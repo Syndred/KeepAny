@@ -20,9 +20,18 @@ function publicUrl(value, name, trailingSlash = false) {
 const siteUrl = publicUrl(process.env.KEEPANY_PUBLIC_SITE_URL ?? 'https://syndred.github.io/KeepAny/', 'KEEPANY_PUBLIC_SITE_URL', true);
 const downloadUrl = publicUrl(process.env.KEEPANY_PUBLIC_DOWNLOAD_URL ?? `${repositoryUrl}/releases`, 'KEEPANY_PUBLIC_DOWNLOAD_URL');
 const screenshots = {
-  en: resolve(root, process.env.KEEPANY_PUBLIC_SCREENSHOT_EN ?? 'docs/evidence/2026-10-01/english-demo/en-1280-overview.png'),
-  zh: resolve(root, process.env.KEEPANY_PUBLIC_SCREENSHOT_ZH ?? 'docs/evidence/2026-10-01/english-demo/zh-1280-overview.png'),
+  en: resolve(root, process.env.KEEPANY_PUBLIC_SCREENSHOT_EN ?? 'docs/evidence/2026-10-11/preview/onboarding-en-1280-sample.png'),
+  zh: resolve(root, process.env.KEEPANY_PUBLIC_SCREENSHOT_ZH ?? 'docs/evidence/2026-10-11/preview/onboarding-zh-1280-sample.png'),
 };
+
+const screenshotSizes = Object.fromEntries(await Promise.all(Object.entries(screenshots).map(async ([locale, path]) => {
+  const bytes = await readFile(path);
+  if (bytes.length < 24 || bytes.subarray(0, 8).toString('hex') !== '89504e470d0a1a0a') throw Error(`Public screenshot must be a PNG: ${locale}`);
+  const width = bytes.readUInt32BE(16);
+  const height = bytes.readUInt32BE(20);
+  if (width < 1 || height < 1) throw Error(`Invalid screenshot dimensions: ${locale}`);
+  return [locale, { width, height }];
+})));
 
 const xmlText = value => value.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&apos;');
 
@@ -46,8 +55,8 @@ try {
   });
   const { renderPublicPage } = await import(pathToFileURL(renderer).href);
   await Promise.all([
-    writeFile(join(output, 'index.html'), renderPublicPage('en', { siteUrl, downloadUrl, repositoryUrl })),
-    writeFile(join(output, 'zh/index.html'), renderPublicPage('zh-CN', { siteUrl, downloadUrl, repositoryUrl })),
+    writeFile(join(output, 'index.html'), renderPublicPage('en', { siteUrl, downloadUrl, repositoryUrl, screenshotSize: screenshotSizes.en })),
+    writeFile(join(output, 'zh/index.html'), renderPublicPage('zh-CN', { siteUrl, downloadUrl, repositoryUrl, screenshotSize: screenshotSizes.zh })),
     build({ entryPoints: [join(root, 'apps/public-site/styles.css')], outfile: join(output, 'assets/public.css'), bundle: true, minify: true, logLevel: 'warning' }),
     copyFile(screenshots.en, join(output, 'assets/overview-en.png')),
     copyFile(screenshots.zh, join(output, 'assets/overview-zh.png')),
