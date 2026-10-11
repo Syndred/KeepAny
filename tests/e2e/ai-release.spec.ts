@@ -19,6 +19,7 @@ async function openFinance(page: Page) {
 }
 
 // This slice accepts the actual delivery bundle through UI only. No development-module imports.
+test.skip(process.env.KEEPANY_PRODUCTION_OFFLINE !== "1", "Run against the delivered portable/PWA preview with KEEPANY_PRODUCTION_OFFLINE=1");
 for (const language of ["en", "zh-CN"] as const) {
 	for (const width of [390, 1280]) {
 		test(`${language} delivered AI import, local search and confirmed reminder at ${width}px`, async ({

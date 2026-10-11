@@ -116,7 +116,8 @@ test("pending CSV blocks replacement and a later broken CSV cannot confirm its p
 	await expect(page.locator(".intake-review-row")).toHaveCount(1);
 	expect(await savedProjectNames(page)).toEqual([]);
 	await page.locator("#csv-file").setInputFiles({ name: "retry.csv", mimeType: "text/csv", buffer: Buffer.from("name,kind\nRetry CSV,project") });
-	const retry = page.locator(".intake-review-row").filter({ hasText: "retry.csv" });
+	const retry = page.getByRole("region", { name: "retry.csv", exact: true }).locator(".intake-review-row");
+	await expect(retry).toHaveCount(1);
 	await expect(page.locator(".intake-review-row")).toHaveCount(2);
 	await retry.getByRole("button", { name: "Confirm and save", exact: true }).click();
 	await expect(retry).toContainText("Confirmed");
@@ -128,11 +129,13 @@ test("two sequential CSV files stay separate and double confirmation writes only
 	await finishHeldCsv(page);
 	await page.locator("#csv-file").setInputFiles({ name: "new.csv", mimeType: "text/csv", buffer: Buffer.from("name,kind\nNew CSV,project") });
 	await expect(page.locator(".intake-review-row")).toHaveCount(2);
-	const chosen = page.locator(".intake-review-row").filter({ hasText: "new.csv" });
+	const chosen = page.getByRole("region", { name: "new.csv", exact: true }).locator(".intake-review-row");
+	await expect(chosen).toHaveCount(1);
 	await chosen.getByRole("button", { name: "Confirm and save", exact: true }).evaluate((button) => { (button as HTMLButtonElement).click(); (button as HTMLButtonElement).click(); });
 	await expect(chosen).toContainText("Confirmed");
 	await expect.poll(() => savedProjectNames(page)).toEqual(["New CSV"]);
-	const old = page.locator(".intake-review-row").filter({ hasText: "held.csv" });
+	const old = page.getByRole("region", { name: "held.csv", exact: true }).locator(".intake-review-row");
+	await expect(old).toHaveCount(1);
 	await expect(old.getByRole("button", { name: "Confirm and save", exact: true })).toBeEnabled();
 });
 

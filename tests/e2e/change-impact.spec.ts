@@ -61,9 +61,9 @@ test("all three impact scenarios save and reopen their work on the same page", a
 		.locator(".impact-task-row")
 		.getByRole("button", { name: /Complete/ })
 		.click();
-	await expect(page.locator(".impact-task-row .chip")).toHaveText("Completed");
+	await expect(page.locator(".impact-task-row .impact-task-actions .badge")).toHaveText("Completed");
 	await page.reload();
-	await expect(page.locator(".impact-task-row .chip")).toHaveText("Completed");
+	await expect(page.locator(".impact-task-row .impact-task-actions .badge")).toHaveText("Completed");
 	await expect(page).toHaveURL(/\/change-impact$/);
 
 	await page.getByRole("button", { name: /Update project profile/ }).click();
