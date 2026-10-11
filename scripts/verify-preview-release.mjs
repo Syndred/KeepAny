@@ -195,6 +195,9 @@ try {
   assert.deepEqual(JSON.parse(await readFile(join(packageRoot, '.keepany-preview-server.json'), 'utf8')), state);
   const bearer = { authorization: `Bearer ${state.token}` };
   assert.equal((await rawRequest('/__keepany_preview__/stop', {}, 'POST')).status, 403);
+  const malformedBearer = { authorization: `Bearer ${'é'.repeat(64)}` };
+  assert.equal((await rawRequest('/__keepany_preview__/status', malformedBearer)).status, 403, 'Non-ASCII bearer is rejected without a timingSafeEqual byte-length error');
+  assert.equal((await rawRequest('/__keepany_preview__/stop', malformedBearer, 'POST')).status, 403);
   assert.equal((await rawRequest('/__keepany_preview__/stop', { ...bearer, origin: 'https://evil.example' }, 'POST')).status, 403);
   const forgedState = { ...state, pid: state.pid + 100000 };
   await writeFile(join(packageRoot, '.keepany-preview-server.json'), JSON.stringify(forgedState));

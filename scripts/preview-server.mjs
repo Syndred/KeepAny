@@ -30,8 +30,10 @@ if (Number(process.versions.node.split('.')[0]) < 22) {
 }
 
 function authenticate(supplied, expected) {
-  if (typeof supplied !== 'string' || supplied.length !== expected.length) return false;
-  return timingSafeEqual(Buffer.from(supplied), Buffer.from(expected));
+  if (typeof supplied !== 'string') return false;
+  const actualBytes = Buffer.from(supplied);
+  const expectedBytes = Buffer.from(expected);
+  return actualBytes.length === expectedBytes.length && timingSafeEqual(actualBytes, expectedBytes);
 }
 
 async function readState() {
