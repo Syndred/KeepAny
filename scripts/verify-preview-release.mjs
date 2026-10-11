@@ -11,7 +11,8 @@ import { unzipSync } from 'fflate';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const files = await readdir(join(root, 'dist', 'preview'));
-const defaultArchive = files.filter(name => name.endsWith('.zip')).sort().at(-1);
+const archives = await Promise.all(files.filter(name => name.endsWith('.zip')).map(async name => ({ name, mtime: (await stat(join(root, 'dist', 'preview', name))).mtimeMs })));
+const defaultArchive = archives.sort((a, b) => b.mtime - a.mtime)[0]?.name;
 const archivePath = process.argv[2] ? resolve(process.argv[2]) : join(root, 'dist', 'preview', defaultArchive ?? 'missing.zip');
 const sha256 = bytes => createHash('sha256').update(bytes).digest('hex');
 const bytes = await readFile(archivePath);
