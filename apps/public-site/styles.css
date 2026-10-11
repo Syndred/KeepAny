@@ -1,0 +1,58 @@
+@import "../web/src/styles.css";
+@import "../web/src/components/ui/text-link.css";
+
+.public-page { max-width: 1180px; margin: 0 auto; padding: var(--space-6); }
+.public-page main { display: grid; gap: 48px; }
+.public-page h1 { margin: 0; font-size: clamp(34px, 4.7vw, 58px); font-weight: 850; line-height: 1.12; letter-spacing: -.045em; overflow-wrap: anywhere; }
+.public-page h2 { margin: 0 0 var(--space-4); font-size: clamp(23px, 2.6vw, 30px); line-height: 1.25; }
+.public-page h3 { margin: 0; font-size: 19px; line-height: 1.35; }
+.public-page p { margin: 0; font-size: 16px; line-height: 1.65; overflow-wrap: anywhere; }
+.public-page .eyebrow { font-size: 12px; line-height: 1.5; }
+.public-page .button { min-height: 46px; padding: var(--space-3) var(--space-6); font-size: 15px; }
+.public-page .text-link { min-height: 32px; }
+.public-header { display: flex; align-items: center; justify-content: space-between; gap: var(--space-6); padding: var(--space-3) 0 var(--space-8); }
+.public-header .brand { padding: 0; font-size: 24px; }
+.public-header nav { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--space-6); }
+.public-hero { display: grid; gap: var(--space-8); }
+.public-hero-copy { display: grid; justify-items: start; gap: var(--space-6); padding: clamp(24px, 5vw, 56px); border: 2px solid var(--line); border-radius: 24px; background: var(--yellow); box-shadow: var(--shadow); }
+.public-hero-copy h1 { max-width: 17ch; }
+.public-hero-copy .public-lead { max-width: 66ch; font-size: 19px; line-height: 1.6; }
+.public-actions { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-4); }
+.public-page .public-preview { color: var(--ink); font-size: 14px; }
+.public-screen { margin: 0; overflow: hidden; border: 2px solid var(--line); border-radius: 18px; background: var(--paper); box-shadow: var(--shadow); }
+.public-screen img { display: block; width: 100%; height: auto; }
+.public-screen figcaption { padding: var(--space-4) var(--space-6); border-top: 1px solid var(--line-soft); color: var(--muted); font-size: 14px; line-height: 1.5; }
+.public-section { scroll-margin-top: 24px; }
+.public-section > p { max-width: 80ch; }
+.public-section > p + p { margin-top: var(--space-4); }
+.public-question { display: grid; grid-template-columns: 1fr 1.7fr; align-items: start; gap: var(--space-8); padding: var(--space-8); border: 2px solid var(--line); border-radius: 18px; background: var(--paper-soft); }
+.public-question h2 { margin: 0; }
+.public-feature-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-6); }
+.public-feature { display: grid; align-content: start; gap: var(--space-4); padding: var(--space-6); }
+.public-feature > svg { width: 28px; height: 28px; }
+.public-feature p { color: var(--muted); }
+.public-try { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-8); padding: var(--space-8); border: 2px solid var(--line); border-radius: 18px; background: var(--paper); box-shadow: var(--shadow); }
+.public-try > div > p { margin-bottom: var(--space-6); }
+.public-try ol { display: grid; align-content: start; gap: var(--space-6); margin: 0; padding-left: var(--space-6); }
+.public-try li { padding-left: var(--space-2); line-height: 1.65; overflow-wrap: anywhere; }
+.public-try li::marker { color: var(--ink); font-weight: 800; }
+.public-data { padding: var(--space-8); border-left: 4px solid var(--line); background: var(--green-soft); border-radius: 0 18px 18px 0; }
+.public-feedback { display: grid; gap: var(--space-6); padding: var(--space-8); border: 2px solid var(--line); border-radius: 18px; background: var(--yellow-soft); }
+.public-feedback p { max-width: 80ch; }
+.public-footer { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--space-6); margin-top: 48px; padding: var(--space-6) 0; border-top: 2px solid var(--line); }
+.public-footer > div { display: flex; flex-wrap: wrap; gap: var(--space-4); }
+.public-footer p { color: var(--muted); font-size: 13px; }
+
+@media (max-width: 760px) {
+  .public-page { padding: var(--space-4); }
+  .public-page main { gap: var(--space-8); }
+  .public-header { align-items: flex-start; flex-wrap: wrap; gap: var(--space-4); padding-top: var(--space-4); }
+  .public-header nav { justify-content: flex-start; gap: var(--space-4); }
+  .public-hero-copy { padding: var(--space-6); }
+  .public-hero-copy .public-lead { font-size: 17px; }
+  .public-page h1 { max-width: none; font-size: 36px; }
+  .public-question, .public-try { grid-template-columns: minmax(0, 1fr); gap: var(--space-6); padding: var(--space-6); }
+  .public-feature-grid { grid-template-columns: minmax(0, 1fr); }
+  .public-data, .public-feedback { padding: var(--space-6); }
+  .public-footer { flex-direction: column; margin-top: var(--space-8); }
+}
