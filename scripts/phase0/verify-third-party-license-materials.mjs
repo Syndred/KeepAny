@@ -46,8 +46,10 @@ for (const material of materials) {
     fail(`material ${material.id} path escapes legal/third-party: ${material.path}`);
     continue;
   }
-  if (materialPaths.has(relativePath)) fail(`duplicate material path: ${relativePath}`);
-  materialPaths.add(relativePath);
+  // Check containment with native paths, then use the manifest's portable slash index.
+  const indexedRelativePath = relativePath.split(sep).join('/');
+  if (materialPaths.has(indexedRelativePath)) fail(`duplicate material path: ${indexedRelativePath}`);
+  materialPaths.add(indexedRelativePath);
   try {
     const fileStat = await stat(absolute);
     if (!fileStat.isFile()) {
