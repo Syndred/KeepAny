@@ -41,7 +41,8 @@ for (const path of sourcePaths) {
 const distributedPackages = new Map();
 const packageCache = new Map();
 async function recordDependency(filename) {
-  if (!filename.includes(`${sep}node_modules${sep}`)) return;
+  // Vite uses forward slashes on Windows; esbuild may use native separators.
+  if (!filename.replaceAll('\\', '/').includes('/node_modules/')) return;
   let directory = dirname(filename.replace(/\?.*$/, ''));
   const visited = [];
   while (directory !== dirname(directory)) {

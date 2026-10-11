@@ -123,6 +123,7 @@ try {
   const licenses = JSON.parse(await readFile(join(packageRoot, 'legal', 'preview-license-inventory.json'), 'utf8'));
   assert.equal(licenses.unresolvedPackageCount, 0, 'No unresolved distributed license text');
   assert(licenses.packages.some(pkg => pkg.name === 'hono') && licenses.packages.some(pkg => pkg.name === '@hono/node-server'));
+  for (const name of ['react', 'react-dom', 'rxdb', 'dexie', 'kdbxweb']) assert(licenses.packages.some(pkg => pkg.name === name), `Browser core dependency license recorded: ${name}`);
   for (const path of ['source/package.json', 'source/pnpm-lock.yaml', 'source/pnpm-workspace.yaml', 'source/tsconfig.json', 'source/LICENSE', 'source/SBOM.spdx.json', 'source/legal/third-party/manifest.json', 'source/scripts/preview-server.mjs']) await stat(join(packageRoot, path));
   assert(release.sourceFiles.some(file => file.path.startsWith('apps/web/src/')) && release.sourceFiles.some(file => file.path.startsWith('packages/')));
   for (const file of release.sourceFiles) assert.equal(sha256(await readFile(join(packageRoot, 'source', file.path))), file.sha256, `Corresponding source: ${file.path}`);
@@ -142,6 +143,11 @@ try {
   const navigation = await rawRequest('/projects/example', { accept: 'text/html' });
   assert.equal(navigation.status, 200);
   assert(navigation.body.equals(indexBytes));
+  for (const path of ['/assets/project', '/assets/account', '/assets/subscription', '/assets/item', '/assets/project/synthetic-id', '/assets/project/synthetic-id/workflow/retire']) {
+    const response = await rawRequest(path, { accept: 'text/html' });
+    assert.equal(response.status, 200, `Actual application deep link has SPA fallback: ${path}`);
+    assert(response.body.equals(indexBytes));
+  }
   const head = await rawRequest('/', {}, 'HEAD');
   assert.equal(head.status, 200);
   assert.equal(head.body.length, 0);

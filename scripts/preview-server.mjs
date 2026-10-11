@@ -157,7 +157,9 @@ async function start() {
   app.use('*', async (context, next) => {
     const path = context.req.path;
     // Missing chunks, APIs, and dotfiles must never receive index.html.
-    if (/^\/(?:assets|icons|api|sync|workspaces|__keepany_preview__)(?:\/|$)/.test(path)
+    const assetNavigation = /^\/assets\/(?:project|account|subscription|item)(?:\/[^./]+(?:\/workflow\/[^./]+)?)?\/?$/.test(path);
+    if ((/^\/assets(?:\/|$)/.test(path) && !assetNavigation)
+      || /^\/(?:icons|api|sync|workspaces|__keepany_preview__)(?:\/|$)/.test(path)
       || path.split('/').some(segment => segment.includes('.'))
       || !context.req.header('accept')?.includes('text/html')) return context.notFound();
     return serveStatic({ root: webRoot, path: 'index.html' })(context, next);
