@@ -1,0 +1,8 @@
+{
+  "testedArchive": "KeepAny-0.1.0-preview.bee3c1aa0f02-portable.zip",
+  "releasedArchive": "KeepAny-0.1.0-preview.64b98e7874a2-portable.zip",
+  "equalRuntimeFiles": 93,
+  "changedRuntimeFiles": 0,
+  "releasedSha256": "bde21d3267d0a3c5e9abc326b06a3f4cad4841c3c95ae05b221344e49dde39ec",
+  "sourceCommit": "64b98e7874a2fdd8d43c8e60de72a25de5800b25"
+}
