@@ -11,18 +11,16 @@
       "display_title": "docs: record complete StackPerch acceptance and preserved diagnostics",
       "run_number": 95,
       "event": "push",
-      "status": "in_progress",
-      "conclusion": null,
+      "status": "completed",
+      "conclusion": "success",
       "workflow_id": 369808441,
       "check_suite_id": 103875950485,
       "check_suite_node_id": "CS_kwDOUxxvY88AAAAYL303lQ",
       "url": "https://api.github.com/repos/Syndred/KeepAny/actions/runs/38339479371",
       "html_url": "https://github.com/Syndred/KeepAny/actions/runs/38339479371",
-      "pull_requests": [
-
-      ],
+      "pull_requests": [],
       "created_at": "2026-10-13T02:58:48Z",
-      "updated_at": "2026-10-13T02:58:51Z",
+      "updated_at": "2026-10-13T03:15:33Z",
       "actor": {
         "login": "Syndred",
         "id": 103977765,
@@ -45,9 +43,7 @@
         "site_admin": false
       },
       "run_attempt": 1,
-      "referenced_workflows": [
-
-      ],
+      "referenced_workflows": [],
       "run_started_at": "2026-10-13T02:58:48Z",
       "triggering_actor": {
         "login": "Syndred",
@@ -246,9 +242,7 @@
       "check_suite_node_id": "CS_kwDOUxxvY88AAAAYL303iw",
       "url": "https://api.github.com/repos/Syndred/KeepAny/actions/runs/38339479369",
       "html_url": "https://github.com/Syndred/KeepAny/actions/runs/38339479369",
-      "pull_requests": [
-
-      ],
+      "pull_requests": [],
       "created_at": "2026-10-13T02:58:48Z",
       "updated_at": "2026-10-13T03:00:38Z",
       "actor": {
@@ -273,9 +267,7 @@
         "site_admin": false
       },
       "run_attempt": 1,
-      "referenced_workflows": [
-
-      ],
+      "referenced_workflows": [],
       "run_started_at": "2026-10-13T02:58:48Z",
       "triggering_actor": {
         "login": "Syndred",
@@ -474,9 +466,7 @@
       "check_suite_node_id": "CS_kwDOUxxvY88AAAAYL3n2Pw",
       "url": "https://api.github.com/repos/Syndred/KeepAny/actions/runs/38339398137",
       "html_url": "https://github.com/Syndred/KeepAny/actions/runs/38339398137",
-      "pull_requests": [
-
-      ],
+      "pull_requests": [],
       "created_at": "2026-10-13T02:57:47Z",
       "updated_at": "2026-10-13T02:58:40Z",
       "actor": {
@@ -501,9 +491,7 @@
         "site_admin": false
       },
       "run_attempt": 1,
-      "referenced_workflows": [
-
-      ],
+      "referenced_workflows": [],
       "run_started_at": "2026-10-13T02:57:47Z",
       "triggering_actor": {
         "login": "Syndred",
@@ -702,9 +690,7 @@
       "check_suite_node_id": "CS_kwDOUxxvY88AAAAYLz3VUQ",
       "url": "https://api.github.com/repos/Syndred/KeepAny/actions/runs/38337915644",
       "html_url": "https://github.com/Syndred/KeepAny/actions/runs/38337915644",
-      "pull_requests": [
-
-      ],
+      "pull_requests": [],
       "created_at": "2026-10-13T02:39:26Z",
       "updated_at": "2026-10-13T02:40:58Z",
       "actor": {
@@ -729,9 +715,7 @@
         "site_admin": false
       },
       "run_attempt": 1,
-      "referenced_workflows": [
-
-      ],
+      "referenced_workflows": [],
       "run_started_at": "2026-10-13T02:39:26Z",
       "triggering_actor": {
         "login": "Syndred",
@@ -930,9 +914,7 @@
       "check_suite_node_id": "CS_kwDOUxxvY88AAAAYLz3VHw",
       "url": "https://api.github.com/repos/Syndred/KeepAny/actions/runs/38337915628",
       "html_url": "https://github.com/Syndred/KeepAny/actions/runs/38337915628",
-      "pull_requests": [
-
-      ],
+      "pull_requests": [],
       "created_at": "2026-10-13T02:39:26Z",
       "updated_at": "2026-10-13T02:56:36Z",
       "actor": {
@@ -957,9 +939,7 @@
         "site_admin": false
       },
       "run_attempt": 1,
-      "referenced_workflows": [
-
-      ],
+      "referenced_workflows": [],
       "run_started_at": "2026-10-13T02:39:26Z",
       "triggering_actor": {
         "login": "Syndred",
@@ -1141,5 +1121,14 @@
         "deployments_url": "https://api.github.com/repos/Syndred/KeepAny/deployments"
       }
     }
+  ],
+  "releaseGateRunIds": [
+    38337915628,
+    38337915644,
+    38339398137
+  ],
+  "tagTriggeredSameSourceRunIds": [
+    38339479369,
+    38339479371
   ]
 }
