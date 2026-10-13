@@ -9,6 +9,7 @@ if (!process.env.KEEPANY_TEST_DATABASE_URL) {
 // loopback HTTP and PostgreSQL. Each test owns and drops its database schema.
 export default defineConfig({
 	...releaseConfig,
+	outputDir: "test-results/sync-release",
 	testMatch: ["self-host-sync.spec.ts", "self-host-photo-sync.spec.ts"],
 	workers: 1,
 });

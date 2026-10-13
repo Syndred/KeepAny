@@ -5,6 +5,7 @@ const baseURL = `http://127.0.0.1:${port}`;
 
 export default defineConfig({
 	testDir: "./tests/e2e",
+	outputDir: "test-results/source",
 	timeout: 45_000,
 	use: { baseURL, screenshot: "only-on-failure" },
 	webServer: {
