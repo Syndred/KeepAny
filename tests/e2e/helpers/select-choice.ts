@@ -10,10 +10,15 @@ function quoteAttributeValue(value: string) {
 }
 
 export async function selectChoice(locator: Locator, choice: SelectChoice) {
+	await expect(locator).toBeVisible();
+	await expect(locator).toBeEnabled();
 	const triggerId = await locator.getAttribute("id");
-	await locator.click();
+	// Keyboard opening avoids Radix's opening-pointerup guard; selection still exercises the mouse.
+	await locator.press("ArrowDown");
 
 	const page = locator.page();
+	const popup = page.getByRole("listbox");
+	await expect(popup).toBeVisible();
 	const isLabelChoice = typeof choice !== "string" && "label" in choice;
 	const expectedValue =
 		typeof choice === "string"
@@ -23,11 +28,11 @@ export async function selectChoice(locator: Locator, choice: SelectChoice) {
 				: undefined;
 	let option: Locator;
 	if (isLabelChoice)
-		option = page.getByRole("option", { name: choice.label, exact: true });
+		option = popup.getByRole("option", { name: choice.label, exact: true });
 	else {
 		if (expectedValue === undefined)
 			throw new Error("Select choice is missing its value");
-		option = page
+		option = popup
 			.getByRole("option")
 			.and(
 				page.locator(
@@ -36,6 +41,7 @@ export async function selectChoice(locator: Locator, choice: SelectChoice) {
 			);
 	}
 	await expect(option).toHaveCount(1);
+	await expect(option).toBeVisible();
 	const selectedValue = isLabelChoice
 		? await option.getAttribute("data-value")
 		: expectedValue;
@@ -46,4 +52,6 @@ export async function selectChoice(locator: Locator, choice: SelectChoice) {
 		? page.locator(`[id="${quoteAttributeValue(triggerId)}"]`)
 		: locator;
 	await expect(trigger).toHaveAttribute("data-value", selectedValue);
+	await expect(trigger).toHaveAttribute("data-state", "closed");
+	await expect(popup).toBeHidden();
 }

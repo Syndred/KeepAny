@@ -163,11 +163,11 @@ test("project, account, subscription, located item, linked reminder and download
 	}
 });
 
-test("both languages fit key pages and the task dialog at target widths", async ({
-	browser,
-}) => {
-	for (const locale of ["en-US", "zh-CN"]) {
-		for (const width of [360, 390, 768, 1280, 1440]) {
+for (const locale of ["en-US", "zh-CN"] as const) {
+	for (const width of [360, 390, 768, 1280, 1440]) {
+		test(`${locale} key pages and the task dialog fit ${width}px`, async ({
+			browser,
+		}) => {
 			const context = await browser.newContext({
 				locale,
 				viewport: { width, height: 844 },
@@ -201,6 +201,6 @@ test("both languages fit key pages and the task dialog at target widths", async 
 			} finally {
 				await context.close();
 			}
-		}
+		});
 	}
-});
+}

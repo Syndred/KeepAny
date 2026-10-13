@@ -1,6 +1,7 @@
 import { mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { expect, type Locator, type Page, test } from "@playwright/test";
+import { aiCopy } from "../../apps/web/src/ai-copy";
 import {
 	inspectVisualKdbx,
 	recognitionFixture,
@@ -337,10 +338,24 @@ test("vault-stored model key automatically activates after unlocking without sen
 		await selectChoice(settings.locator("#ai-settings-vault-entry"), {
 			label: "Synthetic model key",
 		});
+		const vaultEntryId = await settings
+			.locator("#ai-settings-vault-entry")
+			.getAttribute("data-value");
+		expect(vaultEntryId).toBeTruthy();
 		await settings.locator("#ai-settings-auto-activate").check();
 		await settings
 			.getByRole("button", { name: "Save configuration", exact: true })
 			.click();
+		await expect(
+			settings
+				.getByRole("status")
+				.filter({ hasText: aiCopy.aiSettingsVaultSaved[1] }),
+		).toBeVisible();
+		expect(
+			await h.page.evaluate(() =>
+				JSON.parse(localStorage.getItem("keepany-ai-settings-v1") || "null"),
+			),
+		).toMatchObject({ keySource: "vault", autoActivate: true, vaultEntryId });
 		await h.page.goto("/assets/vault");
 		await h.page.locator("#password-vault-unlock-master").fill(visualMaster);
 		await h.page

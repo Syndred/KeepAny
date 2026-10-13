@@ -40,6 +40,24 @@ for (const zh of [true, false]) {
 			let language = page.getByRole("combobox", { name: /^(Language|语言)$/ });
 			await selectChoice(language, zh ? "zh-CN" : "en");
 			language = page.getByRole("combobox", { name: zh ? "语言" : "Language", exact: true });
+			const pointerValue = zh ? "en" : "zh-CN";
+			const pointerPopup = await assertPopup(page, language);
+			await pointerPopup
+				.getByRole("option")
+				.and(page.locator(`[role="option"][data-value="${pointerValue}"]`))
+				.click();
+			language = page.getByRole("combobox", {
+				name: pointerValue === "en" ? "Language" : "语言",
+				exact: true,
+			});
+			await expect(language).toHaveAttribute("data-value", pointerValue);
+			await expect(language).toHaveAttribute("data-state", "closed");
+			await expect(pointerPopup).toBeHidden();
+			await selectChoice(language, zh ? "zh-CN" : "en");
+			language = page.getByRole("combobox", {
+				name: zh ? "语言" : "Language",
+				exact: true,
+			});
 			const before = await language.getAttribute("data-value");
 			await assertPopup(page, language);
 			await page.getByRole("listbox").press("Escape");
