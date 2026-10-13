@@ -17,6 +17,7 @@ describe.each<PublicLocale>(["en", "zh-CN"])("public page in %s", (locale) => {
 		const schema = JSON.parse(schemaText ?? "");
 		expect(schema).toMatchObject({ name: "StackPerch", alternateName: "KeepAny", url: canonical });
 		expect(html).toContain('<title>StackPerch');
+		expect(html).toContain('<meta name="keywords" content="StackPerch, KeepAny,');
 		expect(html).toContain('<meta property="og:site_name" content="StackPerch"');
 		expect(html).toContain(`<link rel="canonical" href="${canonical}"`);
 		expect(html).toContain(`hrefLang="zh-CN" href="${config.siteUrl}zh/"`);

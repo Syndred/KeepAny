@@ -17,6 +17,7 @@ const copy = {
 		lang: "en",
 		title: "StackPerch — a local digital asset workspace for independent developers",
 		description: "StackPerch connects your projects, domains, accounts, subscriptions, and maintenance in one local workspace. Open-source core, no registration required.",
+		keywords: "StackPerch, KeepAny, local digital asset workspace, independent developers, projects, domains, accounts, subscriptions",
 		navFeatures: "What it does",
 		navTry: "Try locally",
 		language: "简体中文",
@@ -65,6 +66,7 @@ const copy = {
 		lang: "zh-CN",
 		title: "StackPerch — 独立开发者的本地数字资产工作台",
 		description: "StackPerch 把项目、域名、账号、订阅和维护事项连起来。开源本地核心，无需注册，支持简体中文和英语。",
+		keywords: "StackPerch, KeepAny, 本地数字资产工作台, 独立开发者, 项目, 域名, 账号, 订阅",
 		navFeatures: "可以做什么",
 		navTry: "本地试用",
 		language: "English",
@@ -142,6 +144,7 @@ export function renderPublicPage(locale: PublicLocale, config: PublicSiteConfig)
 				<meta name="viewport" content="width=device-width, initial-scale=1" />
 				<title>{c.title}</title>
 				<meta name="description" content={c.description} />
+				<meta name="keywords" content={c.keywords} />
 				<meta name="robots" content="index,follow" />
 				<link rel="canonical" href={canonical} />
 				<link rel="alternate" hrefLang="en" href={config.siteUrl} />
