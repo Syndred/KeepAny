@@ -1,4 +1,4 @@
-# KeepAny 开发约束
+# StackPerch 开发约束（原名 KeepAny）
 
 - 先阅读 README.md、docs/08-项目进度交接.md 和当前阶段验收要求。
 - 每次会话检查 git status/remote；有远端时 fetch，确认无覆盖风险后 fast-forward 更新。无远端如实记录，不虚构已同步。
@@ -15,3 +15,5 @@
 
 - 优先使用Ego浏览器；当前工作空间有自动化任务时新建隔离工作空间。
 - 反复检查：给开发者的实现说明不得进入用户UI。
+
+- 当前主品牌为 StackPerch；KeepAny 的 GitHub/Pages 旧入口及本机地址保留。数据库完整 schema（含 title）、存储键、KDBX 自定义字段、备份格式、同步/绑定/MCP 协议和旧环境变量属于兼容标识，不能按品牌文案全局替换。

@@ -75,3 +75,10 @@ jobs:
           archive="$(node --input-type=module -e 'import fs from "node:fs"; const files=fs.readdirSync("dist/preview").filter(name=>name.endsWith(".zip")); if(files.length!==1)throw Error("Expected one fresh preview"); process.stdout.write(`dist/preview/${files[0]}`);')"
           KEEPANY_PREVIEW_ARCHIVE="$archive" KEEPANY_RELEASE_TEST_PORT=4391 pnpm exec playwright test --config playwright.portable-release.config.ts --reporter=dot
           KEEPANY_PREVIEW_ARCHIVE="$archive" KEEPANY_RELEASE_TEST_PORT=4391 pnpm exec playwright test --config playwright.portable-offline.config.ts --reporter=dot
+      - name: Fetch published KeepAny upgrade baseline
+        run: git fetch --no-tags --depth=1 origin 64b98e7874a2fdd8d43c8e60de72a25de5800b25
+      - name: Verify KeepAny data and encrypted vault upgrade to StackPerch
+        shell: bash
+        run: |
+          archive="$(node --input-type=module -e 'import fs from "node:fs"; const files=fs.readdirSync("dist/preview").filter(name=>name.endsWith(".zip")); if(files.length!==1)throw Error("Expected one fresh preview"); process.stdout.write(`dist/preview/${files[0]}`);')"
+          KEEPANY_PREVIEW_ARCHIVE="$archive" pnpm exec playwright test --config playwright.brand-upgrade.config.ts --reporter=dot
