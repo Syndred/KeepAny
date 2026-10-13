@@ -1,0 +1,15 @@
+{
+  "archive": "/Users/syndred/.codex/worktrees/stackperch-brand/KeepAny/dist/preview/StackPerch-0.1.0-preview.cd12c582e405-portable.zip",
+  "platform": "darwin",
+  "sourceCommit": "cd12c582e4052f24a07aa38a9193a41be8b57380",
+  "sourceDirty": false,
+  "webFiles": 98,
+  "checks": [
+    "ZIP and per-file checksums, current web identity, source, launchers, license inventory, and clean external extraction",
+    "Production assets, HEAD, SPA navigation fallback, missing asset/API/dotfile rejection",
+    "Raw and encoded path traversal, malformed path, Host rejection, private state, loopback-only listener",
+    "Duplicate-start conflict, unauthenticated/cross-origin stop rejection, forged PID rejection, own-instance stop and cleanup",
+    "Occupied port leaves an unrelated HTTP service running; stop never sends process signals",
+    "Delivered darwin launcher starts without repository or project dependencies, then stops cleanly"
+  ]
+}
