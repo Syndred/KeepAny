@@ -14,12 +14,12 @@ export default defineConfig({ plugins: [react(), tailwindcss(), VitePWA({
   registerType:'autoUpdate', injectRegister:null,
   includeAssets: ['icons/*.png', 'icons/*.svg'],
   manifest: {
-    id:'/', name:'KeepAny', short_name:'KeepAny', start_url:'/', scope:'/',
+    id:'/', name:'StackPerch', short_name:'StackPerch', start_url:'/', scope:'/',
     theme_color:'#fff9ec', background_color:'#fff9ec', display:'standalone',
     icons:[
-      {src:'/icons/keepany-192.png',sizes:'192x192',type:'image/png',purpose:'any'},
-      {src:'/icons/keepany-512.png',sizes:'512x512',type:'image/png',purpose:'any'},
-      {src:'/icons/keepany-maskable-512.png',sizes:'512x512',type:'image/png',purpose:'maskable'},
+      {src:'/icons/stackperch-192.png',sizes:'192x192',type:'image/png',purpose:'any'},
+      {src:'/icons/stackperch-512.png',sizes:'512x512',type:'image/png',purpose:'any'},
+      {src:'/icons/stackperch-maskable-512.png',sizes:'512x512',type:'image/png',purpose:'maskable'},
     ],
   },
   workbox:{maximumFileSizeToCacheInBytes:5000000},

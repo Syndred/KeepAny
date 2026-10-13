@@ -296,7 +296,7 @@ export function RemoteBackupPanel({
 				</Button>
 				{receiptDownload && (
 					<Button asChild variant="primary">
-						<a href={receiptDownload} download="keepany-remote-receipt.json">
+						<a href={receiptDownload} download="stackperch-remote-receipt.json">
 							<Download size={16} />
 							{t("remoteSaveReceipt")}
 						</a>

@@ -16,7 +16,7 @@ export const reminderCopy: Record<string, [string, string]> = {
 	reminderSettingsInvalid: ["请检查提前天数、时间和时区。", "Check the lead time, clock time and time zone."],
 	reminderSettingsStale: ["提醒设置已在其他页面更新，请刷新后再修改。", "Reminder settings changed in another tab. Refresh before editing."],
 	reminderTest: ["发送测试通知", "Send a test notification"],
-	reminderTestTitle: ["KeepAny 提醒", "KeepAny reminder"],
+	reminderTestTitle: ["StackPerch 提醒", "StackPerch reminder"],
 	reminderTestBody: ["浏览器通知已可用。", "Browser notifications are available."],
 	reminderBrowserFailed: ["浏览器通知未能发出，请检查浏览器或系统通知设置。应用内提醒仍可查看。", "The browser notification could not be sent. Check browser or system notification settings. In-app reminders remain available."],
 	reminderArrived: ["有 {{count}} 项提醒需要查看。", "You have {{count}} reminders to review."],

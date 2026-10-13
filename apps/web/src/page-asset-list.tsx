@@ -555,7 +555,7 @@ export function AssetList() {
 	return (
 		<main className={kind === "vault" ? "page vault-page" : "page"}>
 			<PageTitle
-				eyebrow={kind === "project" ? "PROJECT LIBRARY" : kind === "account" ? "MY ACCOUNTS" : kind === "vault" ? t("vaultListEyebrow") : "KeepAny"}
+				eyebrow={kind === "project" ? "PROJECT LIBRARY" : kind === "account" ? "MY ACCOUNTS" : kind === "vault" ? t("vaultListEyebrow") : t("brandName")}
 				title={t(kind === "project" ? "projectListTitle" : kind === "account" ? "accountListTitle" : kind === "subscription" ? "subscriptionListTitle" : kind === "vault" ? "vaultListTitle" : "itemListTitle")}
 				subtitle={t(kind === "project" ? "projectListSubtitle" : kind === "account" ? "accountListSubtitle" : kind === "item" ? "itemListSubtitle" : kind === "vault" ? "vaultListSubtitle" : "summary")}
 				action={

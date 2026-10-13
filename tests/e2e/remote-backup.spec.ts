@@ -135,7 +135,7 @@ for (const variant of [
 				})
 				.click();
 			const download = await downloadPromise;
-			expect(download.suggestedFilename()).toBe("keepany-remote-receipt.json");
+			expect(download.suggestedFilename()).toBe("stackperch-remote-receipt.json");
 			const receiptPath = await download.path();
 			if (!receiptPath) throw Error("receipt was not saved");
 			const receipt = readFileSync(receiptPath);

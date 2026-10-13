@@ -137,7 +137,7 @@ async function approve(accountPage: Page, commercialOrigin: string, code: string
   await accountPage.goto(`${commercialOrigin}/settings/connect`);
   await accountPage.getByLabel('Connection code').fill(code);
   await accountPage.getByRole('button', { name: 'Review request' }).click();
-  await expect(accountPage.getByText('KeepAny Web', { exact: true })).toBeVisible();
+  await expect(accountPage.getByText('StackPerch Web', { exact: true })).toBeVisible();
   await accountPage.getByRole('button', { name: 'Approve request' }).click();
   const confirm = accountPage.getByRole('dialog');
   await confirm.getByRole('button', { name: 'Approve request' }).click();

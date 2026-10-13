@@ -279,7 +279,7 @@ export function ArchiveMigrationPanel({ configurationKey, syncBusy, onBusyChange
 						<label className="field"><span>{t("migrationVerifyFile")}</span><input type="file" accept=".ka1" disabled={busy || syncBusy} onChange={event => { setBackupFile(event.target.files?.[0] ?? null); setBackupVerified(false); }} /></label>
 					</div>
 					<div className="actions"><Button disabled={busy || syncBusy || backupPassword.length < 12 || !sourceAcknowledged || (!sourceBinding && !legacySourceLabel.trim())} onClick={createBackup}>{t("migrationCreateBackup")}</Button>
-						{backupUrl && <a className="button" href={backupUrl} download={`keepany-target-before-merge-${new Date().toISOString().slice(0, 10)}.ka1`}>{t("migrationDownloadBackup")}</a>}
+						{backupUrl && <a className="button" href={backupUrl} download={`stackperch-target-before-merge-${new Date().toISOString().slice(0, 10)}.ka1`}>{t("migrationDownloadBackup")}</a>}
 						<Button disabled={busy || syncBusy || !backupFile || !targetBackupHash} onClick={verifyBackup}>{t("migrationVerifyBackup")}</Button></div>
 					{backupVerified && <p role="status">{t("migrationBackupVerified")}</p>}
 				</div>

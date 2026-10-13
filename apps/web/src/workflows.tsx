@@ -1112,7 +1112,7 @@ export function IntakeTools({ onCsvStaged }: { onCsvStaged: () => void }) {
 			const address = URL.createObjectURL(blob);
 			setReadyDownload({
 				url: address,
-				name: `keepany-${new Date().toISOString().slice(0, 10)}.ka1`,
+				name: `stackperch-${new Date().toISOString().slice(0, 10)}.ka1`,
 			});
 			setMessage(t("backupReady"));
 		} catch {

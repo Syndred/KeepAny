@@ -481,7 +481,7 @@ test("project and account CRUD, intersecting filters, trash and actual backup re
 		await link.click();
 		const download = await downloadPromise;
 		expect(download.suggestedFilename()).toMatch(
-			/^keepany-\d{4}-\d{2}-\d{2}\.ka1$/,
+			/^stackperch-\d{4}-\d{2}-\d{2}\.ka1$/,
 		);
 		const backupPath = await download.path();
 		if (!backupPath) throw Error("The browser did not save the .ka1 file");

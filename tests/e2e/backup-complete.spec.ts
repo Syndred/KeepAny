@@ -186,7 +186,7 @@ test("formal backup restores full local graph, history, ledger, tombstones and o
 		const downloadEvent = page.waitForEvent("download");
 		await saveFile.click();
 		const download = await downloadEvent;
-		expect(download.suggestedFilename()).toMatch(/^keepany-\d{4}-\d{2}-\d{2}\.ka1$/);
+		expect(download.suggestedFilename()).toMatch(/^stackperch-\d{4}-\d{2}-\d{2}\.ka1$/);
 		const path = await download.path();
 		if (!path) throw Error("backup download missing");
 		expect(readFileSync(path).length).toBeGreaterThan(52);
