@@ -68,6 +68,8 @@ async function ready(origin: string, child: ChildProcess, path = '/', headers?: 
 }
 
 async function snapshotCommercial(destination: string): Promise<void> {
+  assert.ok((await stat(commercialCheckout).catch(() => undefined))?.isDirectory(),
+    'Commercial fixture checkout is unavailable; set KEEPANY_COMMERCIAL_CHECKOUT to an existing KeepAnyAdm checkout.');
   assert.equal(execFileSync('git', ['cat-file', '-t', commercialCommit], { cwd: commercialCheckout, encoding: 'utf8' }).trim(), 'commit');
   const lock = execFileSync('git', ['show', `${commercialCommit}:pnpm-lock.yaml`], { cwd: commercialCheckout });
   assert.ok(lock.equals(await readFile(join(commercialCheckout, 'pnpm-lock.yaml'))), 'Commercial dependencies differ from fixed commit');
@@ -225,6 +227,34 @@ test('official bound sync preserves encrypted records and photos across devices,
   let syncServer: ChildProcess | undefined;
   let web: ChildProcess | undefined;
   const contexts: BrowserContext[] = [];
+  // Diagnostics contain only route/status and fixed error classifications, never
+  // request headers, response credentials, asset contents or fixture secrets.
+  const network: { actor: string; method: string; path: string; status?: number; error?: string }[] = [];
+  const serviceErrors: string[] = [];
+  const responseDiagnostics: Promise<void>[] = [];
+  const watchNetwork = (page: Page, actor: string) => {
+    page.on('response', response => {
+      if (network.length >= 100) return;
+      const path = new URL(response.url()).pathname;
+      if (!path.startsWith('/sync/') && !path.startsWith('/workspaces') && !path.startsWith('/api/keepany/')) return;
+      const entry = { actor, method: response.request().method(), path, status: response.status(), error: undefined as string | undefined };
+      network.push(entry);
+      if (response.status() >= 400) responseDiagnostics.push((async () => {
+        try {
+          const body = await response.json() as { error?: unknown };
+          if (typeof body.error === 'string' && /^[a-z-]{1,64}$/.test(body.error)) entry.error = body.error;
+        } catch { /* HTML/proxy failures are represented by their HTTP status. */ }
+      })());
+    });
+    page.on('requestfailed', request => {
+      if (network.length >= 100) return;
+      const path = new URL(request.url()).pathname;
+      if (!path.startsWith('/sync/') && !path.startsWith('/workspaces') && !path.startsWith('/api/keepany/')) return;
+      const error = request.failure()?.errorText;
+      network.push({ actor, method: request.method(), path,
+        error: error?.match(/(?:net::)?ERR_[A-Z_]+/)?.[0] ?? 'request-failed' });
+    });
+  };
   try {
     await snapshotCommercial(snapshot);
     await mkdir(fixtureRoot);
@@ -249,7 +279,7 @@ test('official bound sync preserves encrypted records and photos across devices,
     const bridgeOrigin = `http://127.0.0.1:${await freePort()}`;
     const webOrigin = `http://127.0.0.1:${await freePort()}`;
     syncServer = spawn(process.execPath, ['--import', 'tsx', 'apps/sync-server/src/main.ts'], {
-      cwd: root, stdio: 'ignore', env: {
+      cwd: root, stdio: ['ignore', 'ignore', 'pipe'], env: {
         ...process.env, DATABASE_URL: databaseUrl, PGOPTIONS: `-c search_path=${schema}`,
         KEEPANY_SYNC_AUTH_MODE: 'bound', KEEPANY_SYNC_TOKEN: '',
         KEEPANY_BOUND_ISSUER: commercial.origin, KEEPANY_SYNC_PUBLIC_ORIGIN: webOrigin,
@@ -263,6 +293,12 @@ test('official bound sync preserves encrypted records and photos across devices,
         KEEPANY_S3_ACCESS_KEY_ID: 'official-test-key', KEEPANY_S3_SECRET_ACCESS_KEY: 'official-test-secret',
         HOST: '127.0.0.1', PORT: new URL(syncOrigin).port,
       },
+    });
+    syncServer.stderr?.on('data', chunk => {
+      for (const line of String(chunk).split('\n')) {
+        if (serviceErrors.length < 30 && /^KeepAny (?:bound state feed [a-z-]+ failed|sync database idle connection failed|sync proof cleanup failed)$/.test(line.trim()))
+          serviceErrors.push(line.trim());
+      }
     });
     bridge = spawn(process.execPath, ['--import', 'tsx', 'apps/binding-bridge/src/main.ts'], {
       cwd: root, stdio: 'ignore', env: { ...process.env,
@@ -297,6 +333,9 @@ test('official bound sync preserves encrypted records and photos across devices,
     const pageA = await contextA.newPage();
     const pageB = await contextB.newPage();
     const accountPage = await accountContext.newPage();
+    watchNetwork(pageA, 'A');
+    watchNetwork(pageB, 'B');
+    watchNetwork(accountPage, 'commercial');
     for (const page of [pageA, pageB, accountPage]) page.setDefaultTimeout(10_000);
     let refreshB = 0;
     pageB.on('request', request => {
@@ -461,6 +500,21 @@ test('official bound sync preserves encrypted records and photos across devices,
     await pageC.getByText(assetName, { exact: true }).first().click();
     await expect(pageC.locator('img.asset-image')).toHaveJSProperty('naturalWidth', 32);
     assert.deepEqual(errors, [], 'uncaught browser error');
+  } catch (error) {
+    await Promise.allSettled(responseDiagnostics);
+    let state: unknown = 'schema-not-created';
+    if (created) {
+      try {
+        state = (await scoped.query(`SELECT status,epoch,scopes,
+          state_observed_at<=clock_timestamp() AS observed,
+          state_expires_at>clock_timestamp() AS lease_valid
+          FROM sync_bound_bindings ORDER BY state_observed_at DESC LIMIT 10`)).rows;
+      } catch { state = 'state-query-failed'; }
+    }
+    await test.info().attach('official-sync-diagnostics', {
+      body: JSON.stringify({ network, serviceErrors, state }, null, 2), contentType: 'application/json',
+    });
+    throw error;
   } finally {
     const cleanupFailures: string[] = [];
     const clean = async (label: string, work: Promise<unknown>, timeoutMs = 7_000) => {
