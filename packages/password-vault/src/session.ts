@@ -246,7 +246,7 @@ export class VaultSession {
   async create(master: string): Promise<void> {
     return this.run(async (generation) => {
       if (this.snapshot.status !== 'empty') fail('vault-invalid');
-      const candidate = Kdbx.create(credentials(master, true), 'KeepAny');
+      const candidate = Kdbx.create(credentials(master, true), 'StackPerch');
       configureDatabase(candidate);
       await this.persist(candidate, null, generation);
     });
