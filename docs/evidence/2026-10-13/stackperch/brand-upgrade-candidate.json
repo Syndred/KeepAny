@@ -1,0 +1,123 @@
+{
+  "config": {
+    "argv": [
+      "/Users/syndred/.nvm/versions/node/v22.23.1/bin/node",
+      "/Users/syndred/.codex/worktrees/stackperch-brand/KeepAny/node_modules/@playwright/test/cli.js",
+      "test",
+      "--config",
+      "playwright.brand-upgrade.config.ts",
+      "--reporter=json"
+    ],
+    "configFile": "/Users/syndred/.codex/worktrees/stackperch-brand/KeepAny/playwright.brand-upgrade.config.ts",
+    "rootDir": "/Users/syndred/.codex/worktrees/stackperch-brand/KeepAny/tests/e2e",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "/Users/syndred/.codex/worktrees/stackperch-brand/KeepAny/test-results/brand-upgrade",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "",
+        "name": "",
+        "testDir": "/Users/syndred/.codex/worktrees/stackperch-brand/KeepAny/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "stackperch-upgrade.spec.ts"
+        ],
+        "timeout": 210000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "json"
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.63.0",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "stackperch-upgrade.spec.ts",
+      "file": "stackperch-upgrade.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "published KeepAny assets, vault fields, import draft and backup survive the StackPerch portable upgrade",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 210000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 90214,
+                  "errors": [],
+                  "stdout": [
+                    {
+                      "text": "{\n  \"oldCommit\": \"64b98e7874a2fdd8d43c8e60de72a25de5800b25\",\n  \"newCommit\": \"a03e7d0c0989b48bac54a5ef7748b12d5ba1d1ea\",\n  \"sourceDirty\": false,\n  \"oldWorkerHash\": \"5ff41208e093fc721e853741ccb93a0c3b71b6a2b7c3064ebff94922054e9bca\",\n  \"newWorkerHash\": \"36a962a0cc74fb1b74cc9763452a2c6cbf0b8402146b8a4777efa522d9550826\",\n  \"oldEntry\": \"/assets/index-BT82-H8O.js\",\n  \"newEntry\": \"/assets/index-D2miYO8z.js\",\n  \"assetIds\": [\n    \"0be8f159-96a1-4431-96a9-dee99f21d205\",\n    \"de26f2d1-c6eb-46d1-933b-cb5560dde39b\"\n  ],\n  \"vaultEntryIds\": [\n    \"6/oNR5cCY0BLjedL1QiNLw==\"\n  ],\n  \"aliasCount\": 1,\n  \"importDraftHash\": \"93eb71f5efb4148c9699fb4eaece9a208c28824b3eaeb12a9237077d3cde3d35\",\n  \"imageSha256\": \"6b2168118a1eea891b8776160ddf1ee68e6e2fffc74815602c8f4ef3086a9c5c\",\n  \"backupSha256\": \"febd4a7a04f10c5b425a777f811b86b78f1d7f71091772c2203ff88a13d54639\",\n  \"recordCount\": 2,\n  \"platform\": \"darwin\",\n  \"sameOriginUpgrade\": true,\n  \"cleanBackupRestore\": true\n}\n"
+                    }
+                  ],
+                  "stderr": [
+                    {
+                      "buffer": ""
+                    }
+                  ],
+                  "retry": 0,
+                  "startTime": "2026-10-13T01:45:11.827Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "1908169ed825bc0c0b71-5061188e9625dc35038a",
+          "file": "stackperch-upgrade.spec.ts",
+          "line": 139,
+          "column": 1
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-10-13T01:45:09.166Z",
+    "duration": 93859.22200000001,
+    "expected": 1,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}
