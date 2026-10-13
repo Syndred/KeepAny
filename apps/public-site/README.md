@@ -1,4 +1,6 @@
-# KeepAny 公开介绍页
+# StackPerch 公开介绍页
+
+StackPerch 原名 KeepAny，GitHub 仓库和现有 Pages 中英文入口保留。
 
 这是本地核心的中英文公开文档页，不是在线资产应用，也不是会员或支付网站。主内容通过 ReactDOMServer 生成静态 HTML，无需运行 JavaScript 即可阅读；按钮和文字链接复用应用组件，设计变量与样式复用 `apps/web/src/styles.css`。默认首页英文，`zh/` 为中文。
 
@@ -16,15 +18,16 @@ node scripts/build-public-site.mjs
 
 | 环境变量 | 默认与用途 |
 |---|---|
-| `KEEPANY_PUBLIC_SITE_URL` | `https://syndred.github.io/KeepAny/`，必须是无凭据、查询和片段的 HTTPS 地址；生成 canonical、hreflang、OG 和 sitemap |
-| `KEEPANY_PUBLIC_DOWNLOAD_URL` | GitHub Releases 列表；只能在实际发布后改为已存在的版本或资产地址 |
-| `KEEPANY_PUBLIC_SCREENSHOT_EN` | 本轮正式包的英文合成示例 PNG；也可明确指定已检查的公开 PNG 截图路径 |
-| `KEEPANY_PUBLIC_SCREENSHOT_ZH` | 本轮正式包的中文合成示例 PNG；发布前确认无个人资料、密钥或不明权利素材 |
+| `STACKPERCH_PUBLIC_SITE_URL` | `https://syndred.github.io/KeepAny/`，必须是无凭据、查询和片段的 HTTPS 地址；生成 canonical、hreflang、OG 和 sitemap |
+| `STACKPERCH_PUBLIC_DOWNLOAD_URL` | GitHub Releases 列表；只能在实际发布后改为已存在的版本或资产地址 |
+| `STACKPERCH_PUBLIC_SCREENSHOT_EN` | 本轮正式包的英文合成示例 PNG；也可明确指定已检查的公开 PNG 截图路径 |
+| `STACKPERCH_PUBLIC_SCREENSHOT_ZH` | 本轮正式包的中文合成示例 PNG；发布前确认无个人资料、密钥或不明权利素材 |
 
-默认站点地址是部署目标，不表示已经上线。部署、GitHub 仓库公开和下载包发布状态由根交接分别记录。
+保留原 `KEEPANY_PUBLIC_*` 环境变量作为兼容配置；对应 `STACKPERCH_PUBLIC_*` 有值时优先采用新变量。默认地址继续使用现有 GitHub Pages 路径，不以构建成功证明本轮已部署。部署、GitHub 仓库公开和下载包发布状态由根交接分别记录。
 
 ## 搜索与爬虫文件
 
+- 当前主品牌为 StackPerch，SoftwareApplication 的 `alternateName` 为 KeepAny；`keepany.svg` 旧资源名保留，页面使用 `stackperch.svg`。
 - 中英文 HTML 的 title、description、canonical、hreflang、OG 与 SoftwareApplication JSON-LD 来自页面实际内容，不编造评分、用户数、安全审计或托管可用性。
 - `sitemap.xml` 仅列公开中英文介绍页；`llms.txt` 提供客观产品范围与公开文档链接。`llms.txt` 不是保证被收录或推荐的机制。
 - 构建 `robots.txt` 模板允许普通搜索、`OAI-SearchBot`、`ChatGPT-User` 与 `GPTBot` 抓取公开内容；不包含用户本地库或私有服务地址。

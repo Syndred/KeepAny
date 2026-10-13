@@ -15,22 +15,22 @@ export type PublicSiteConfig = {
 const copy = {
 	en: {
 		lang: "en",
-		title: "KeepAny — a local digital asset workspace for independent developers",
-		description: "Connect your projects, domains, accounts, subscriptions, and maintenance in one local workspace. Open-source core, no registration required.",
+		title: "StackPerch — a local digital asset workspace for independent developers",
+		description: "StackPerch connects your projects, domains, accounts, subscriptions, and maintenance in one local workspace. Open-source core, no registration required.",
 		navFeatures: "What it does",
 		navTry: "Try locally",
 		language: "简体中文",
 		languageLabel: "Read this page in Simplified Chinese",
 		eyebrow: "Local first · Open source",
 		hero: "Your projects have connections. Keep them together.",
-		lead: "A local digital asset workspace for independent developers. Find the accounts, domains, subscriptions, and maintenance behind each project.",
+		lead: "StackPerch, formerly KeepAny, is a local digital asset workspace for independent developers. Find the accounts, domains, subscriptions, and maintenance behind each project.",
 		download: "View preview releases",
 		source: "Browse the source",
 		preview: "Early preview · Node.js 22+ · No registration",
-		screenshotAlt: "KeepAny overview with fictional project, email account, subscription, and maintenance records",
+		screenshotAlt: "StackPerch overview with fictional project, email account, subscription, and maintenance records",
 		screenshotCaption: "The actual app, shown with fictional sample records.",
 		problemTitle: "What still depends on that account?",
-		problem: "When you change an email or retire a project, scattered bookmarks and spreadsheets make it easy to miss a subscription or a login. KeepAny lets you record the connections and turn them into a checklist you can review.",
+		problem: "When you change an email or retire a project, scattered bookmarks and spreadsheets make it easy to miss a subscription or a login. StackPerch lets you record the connections and turn them into a checklist you can review.",
 		featuresTitle: "A workspace for records and the work around them",
 		features: [
 			{ title: "Projects and connections", text: "Connect project websites and domains to accounts, subscriptions, and devices. Search your records or follow the connection graph." },
@@ -39,7 +39,7 @@ const copy = {
 			{ title: "A separate password vault", text: "Keep login details in an encrypted KDBX vault with import and export. Passwords stay outside ordinary assets, search, MCP, and asset sync." },
 		],
 		tryTitle: "Try one project from start to restore",
-		tryLead: "Download a portable preview from the Releases page when available. It needs Node.js 22 or newer, with no Git, pnpm, or build step. Read that release's verified environments and limits.",
+		tryLead: "Download a StackPerch portable preview from the Releases page. Older KeepAny packages remain available there. It needs Node.js 22 or newer, with no Git, pnpm, or build step. Read that release's verified environments and limits.",
 		steps: [
 			"Extract the package. Run start.command on macOS, start.sh on Linux, or start.bat on Windows.",
 			"Open http://127.0.0.1:4180/. Choose Start with sample records in an empty Overview, then Add sample records in Settings, or create a fictional project.",
@@ -48,7 +48,7 @@ const copy = {
 		],
 		guide: "Read the trial guide",
 		dataTitle: "Local storage, with a way to take your data out",
-		data: "Records belong to the current browser profile and address. A different browser or port opens a different store; clearing site data can remove it. Download backups regularly and verify that they restore. The local core works without an official account or paid service.",
+		data: "Keep using the same browser profile and address to continue using your KeepAny records. Existing .ka1 backups and .kdbx vaults remain usable with their original passwords. Records belong to the current browser profile and address. A different browser or port opens a different store; clearing site data can remove it. Download backups regularly and verify that they restore. The local core works without an official account or paid service.",
 		ai: "AI is optional. Ordinary Q&A sends only limited fields from records you select. The vault's full-text AI import can send the current list, including passwords and notes, after you review the model, destination, and scope. It does not send your existing vault or master password. Review candidates before saving.",
 		limitsTitle: "An early preview with clear limits",
 		limits: "Local features have automated and browser verification, but defects may remain. Physical phones, every OS and browser, low-storage conditions, and sudden shutdowns have not all been verified. Password autofill, cross-device password sync, background email, and closed-page push are not provided.",
@@ -59,26 +59,26 @@ const copy = {
 		security: "Security reporting",
 		license: "AGPL-3.0-only",
 		readme: "README",
-		footer: "KeepAny · English and Simplified Chinese · Local core + optional future hosting",
+		footer: "StackPerch · English and Simplified Chinese · Local core + optional future hosting",
 	},
 	"zh-CN": {
 		lang: "zh-CN",
-		title: "KeepAny — 独立开发者的本地数字资产工作台",
-		description: "把项目、域名、账号、订阅和维护事项连起来。开源本地核心，无需注册，支持简体中文和英语。",
+		title: "StackPerch — 独立开发者的本地数字资产工作台",
+		description: "StackPerch 把项目、域名、账号、订阅和维护事项连起来。开源本地核心，无需注册，支持简体中文和英语。",
 		navFeatures: "可以做什么",
 		navTry: "本地试用",
 		language: "English",
 		languageLabel: "Read this page in English",
 		eyebrow: "本地优先 · 开源",
 		hero: "项目背后的账号与订阅，一起理清。",
-		lead: "独立开发者的本地数字资产工作台。把项目、域名、账号、订阅和维护事项连起来，找到下一步该处理的事。",
+		lead: "StackPerch（原名 KeepAny）是独立开发者的本地数字资产工作台。把项目、域名、账号、订阅和维护事项连起来，找到下一步该处理的事。",
 		download: "查看测试版发布",
 		source: "查看源码",
 		preview: "早期测试版 · Node.js 22+ · 无需注册",
-		screenshotAlt: "KeepAny 概览，展示虚构的项目、邮箱账号、订阅和维护资料",
+		screenshotAlt: "StackPerch 概览，展示虚构的项目、邮箱账号、订阅和维护资料",
 		screenshotCaption: "真实应用界面，内容为虚构的示例资料。",
 		problemTitle: "换个邮箱，会影响哪些服务？",
-		problem: "换邮箱或停掉一个项目时，分散的书签和表格容易漏掉账号、订阅和续费。KeepAny 记录它们之间的关联，再整理成你可以逐项核对的检查清单。",
+		problem: "换邮箱或停掉一个项目时，分散的书签和表格容易漏掉账号、订阅和续费。StackPerch 记录它们之间的关联，再整理成你可以逐项核对的检查清单。",
 		featuresTitle: "资料和围绕它的维护，放在一起",
 		features: [
 			{ title: "项目与关联", text: "把项目网站和域名与账号、订阅、设备连起来。搜索资料，或沿关系图找到依赖。" },
@@ -87,7 +87,7 @@ const copy = {
 			{ title: "独立密码库", text: "登录资料保存在加密 KDBX，支持导入与导出。密码不进入普通资产、搜索、MCP 或资产同步。" },
 		],
 		tryTitle: "用一个项目，试到备份恢复",
-		tryLead: "便携测试包发布后可从 Releases 下载。需要 Node.js 22 或更新版本，无需 Git、pnpm 或编译。实际验证的系统与限制以对应发布说明为准。",
+		tryLead: "从 Releases 下载 StackPerch 便携测试包，旧 KeepAny 测试包仍在同一入口提供。需要 Node.js 22 或更新版本，无需 Git、pnpm 或编译。实际验证的系统与限制以对应发布说明为准。",
 		steps: [
 			"解压便携包。macOS 用 start.command，Linux 用 start.sh，Windows 用 start.bat。",
 			"打开 http://127.0.0.1:4180/，空白概览点「用示例资料开始」，到设置点「加入示例资料」，或建立虚构项目。",
@@ -96,7 +96,7 @@ const copy = {
 		],
 		guide: "阅读试用指南",
 		dataTitle: "资料在本机，也能完整带走",
-		data: "资料属于当前浏览器配置和地址。换浏览器或端口会打开另一份资料，清除站点数据可能删除它。定期下载备份并验证恢复。本地核心无需官方账号，也不以付费为条件。",
+		data: "使用原浏览器配置、原地址即可继续使用 KeepAny 已有资料，旧 .ka1 备份和 .kdbx 密码库可用原密码恢复。资料属于当前浏览器配置和地址。换浏览器或端口会打开另一份资料，清除站点数据可能删除它。定期下载备份并验证恢复。本地核心无需官方账号，也不以付费为条件。",
 		ai: "AI 是可选的。普通问答仅发送你选择的有限资料字段；独立密码库的全文 AI 导入，在核对模型、地址和范围后，会发送本次清单，包括其中的密码和备注。它不发送已有全库或主密码。识别结果核对后才保存。",
 		limitsTitle: "早期测试版，范围说清楚",
 		limits: "本地功能已有自动化和浏览器验证，仍可能有缺陷。真实手机、所有系统与浏览器、低存储及突然断电等条件未全部验证。当前没有密码自动填充、跨设备密码同步、后台邮件或关页推送。",
@@ -107,7 +107,7 @@ const copy = {
 		security: "安全报告方式",
 		license: "AGPL-3.0-only",
 		readme: "README",
-		footer: "KeepAny · 简体中文与英语 · 本地核心＋未来可选托管",
+		footer: "StackPerch · 简体中文与英语 · 本地核心＋未来可选托管",
 	},
 } as const;
 
@@ -123,7 +123,8 @@ export function renderPublicPage(locale: PublicLocale, config: PublicSiteConfig)
 	const structuredData = {
 		"@context": "https://schema.org",
 		"@type": "SoftwareApplication",
-		name: "KeepAny",
+		name: "StackPerch",
+		alternateName: "KeepAny",
 		url: canonical,
 		description: c.description,
 		applicationCategory: "UtilitiesApplication",
@@ -147,7 +148,7 @@ export function renderPublicPage(locale: PublicLocale, config: PublicSiteConfig)
 				<link rel="alternate" hrefLang="zh-CN" href={`${config.siteUrl}zh/`} />
 				<link rel="alternate" hrefLang="x-default" href={config.siteUrl} />
 				<meta property="og:type" content="website" />
-				<meta property="og:site_name" content="KeepAny" />
+				<meta property="og:site_name" content="StackPerch" />
 				<meta property="og:title" content={c.title} />
 				<meta property="og:description" content={c.description} />
 				<meta property="og:url" content={canonical} />
@@ -158,15 +159,15 @@ export function renderPublicPage(locale: PublicLocale, config: PublicSiteConfig)
 				<meta property="og:image:width" content={String(config.screenshotSize.width)} />
 				<meta property="og:image:height" content={String(config.screenshotSize.height)} />
 				<meta name="twitter:card" content="summary_large_image" />
-				<link rel="icon" href={`${assets}keepany.svg`} type="image/svg+xml" />
+				<link rel="icon" href={`${assets}stackperch.svg`} type="image/svg+xml" />
 				<link rel="stylesheet" href={`${assets}public.css`} />
 				<script type="application/ld+json">{JSON.stringify(structuredData).replace(/</g, "\\u003c")}</script>
 			</head>
 			<body>
 				<div className="public-page">
 					<header className="public-header">
-						<a className="brand" href={isEnglish ? "./" : "../"} aria-label="KeepAny">
-							<span aria-hidden="true">K</span><span>KeepAny</span>
+						<a className="brand" href={isEnglish ? "./" : "../"} aria-label="StackPerch">
+							<span aria-hidden="true">S</span><span>StackPerch</span>
 						</a>
 						<nav aria-label={isEnglish ? "Main navigation" : "主导航"}>
 							<TextLink href="#features">{c.navFeatures}</TextLink>
