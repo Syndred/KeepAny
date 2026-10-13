@@ -1,8 +1,8 @@
-# Contributing to KeepAny / 参与贡献
+# Contributing to StackPerch / 参与贡献
 
-KeepAny is a local digital asset workspace for independent developers. The current focus is making the local preview understandable, easy to run, and reliable to recover. Commercial expansion is paused. Issues and pull requests in English or Simplified Chinese are welcome.
+StackPerch, formerly KeepAny, is a local digital asset workspace for independent developers. The current focus is making the local preview understandable, easy to run, and reliable to recover. Commercial expansion is paused. Issues and pull requests in English or Simplified Chinese are welcome.
 
-KeepAny 面向维护多个项目的独立开发者。当前优先完善本地试用、资料关联和备份恢复，商业功能暂停扩展。欢迎使用简体中文或英语提交问题与 PR。
+StackPerch（原名 KeepAny）面向维护多个项目的独立开发者。当前优先完善本地试用、资料关联和备份恢复，商业功能暂停扩展。欢迎使用简体中文或英语提交问题与 PR。
 
 ## Report a problem / 反馈问题
 

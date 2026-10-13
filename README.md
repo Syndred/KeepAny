@@ -1,20 +1,22 @@
-# KeepAny
+# StackPerch
 
 **独立开发者的本地数字资产工作台。把项目、域名、账号、订阅和维护事项连起来。**
 
-[English](README.en.md) · [试用指南](docs/试用指南.md) · [发布记录](https://github.com/Syndred/KeepAny/releases) · [反馈问题](https://github.com/Syndred/KeepAny/issues)
+[English](README.en.md) · [官网](https://syndred.github.io/KeepAny/zh/) · [试用指南](docs/试用指南.md) · [发布记录](https://github.com/Syndred/KeepAny/releases) · [反馈问题](https://github.com/Syndred/KeepAny/issues)
 
-一个项目用了哪个邮箱、在哪买的域名、有哪些订阅？换邮箱或停止维护时，还要处理哪些关联服务？KeepAny 把这些资料放进同一个本地工作区，让你沿着关联找到下一步。
+StackPerch 原名 KeepAny。仓库、官网、下载和问题反馈仍沿用原入口。
+
+一个项目用了哪个邮箱、在哪买的域名、有哪些订阅？换邮箱或停止维护时，还要处理哪些关联服务？StackPerch 把这些资料放进同一个本地工作区，让你沿着关联找到下一步。
 
 无需注册。简体中文和英语界面。本地核心采用 [AGPL-3.0-only](LICENSE) 开源；未来可选付费托管，当前官方云同步和付费服务未开放。
 
-![KeepAny 中文概览，使用虚构的项目、账号与订阅示例](docs/evidence/2026-10-11/preview/onboarding-zh-1280-sample.png)
+![StackPerch 中文概览，使用虚构的项目、账号与订阅示例](docs/evidence/2026-10-13/stackperch/onboarding-zh-1280-sample.png)
 
 *真实应用截图，内容为示例资料。*
 
 ## 下载与试用
 
-**当前为早期测试版。** 请从 [GitHub Releases](https://github.com/Syndred/KeepAny/releases) 获取标注 `Pre-release` 的 `KeepAny-…-portable.zip`。发布页会列出对应源码版本、校验值和已知限制；不要把 GitHub 的源码 ZIP 当成便携应用包。
+**当前为早期测试版。** 请从 [GitHub Releases](https://github.com/Syndred/KeepAny/releases) 获取标注 `Pre-release` 的 `StackPerch-…-portable.zip`。发布页会列出对应源码版本、校验值和已知限制；旧版 `KeepAny-…-portable.zip` 仍可从同一发布页获取。不要把 GitHub 的源码 ZIP 当成便携应用包。
 
 便携包需要 **[Node.js 22 或更新版本](https://nodejs.org/)**，无需 Git、pnpm 或编译源码。解压到一个固定文件夹后启动：
 
@@ -25,6 +27,8 @@
 | Windows | 双击 `start.bat` | 双击 `stop.bat` |
 
 打开 **[http://127.0.0.1:4180/](http://127.0.0.1:4180/)**。服务仅监听本机；关闭浏览器不会停止服务。若端口已被其他程序使用，启动器会提示，不会改用另一个端口。同浏览器、同地址会显示已有的本地资料；想从空白开始，请自行使用独立浏览器配置。
+
+原 KeepAny 的 `.ka1` 加密备份和 `.kdbx` 密码库可继续使用；仍需各自原密码。更名不改变本地数据位置，使用原浏览器、原地址即可沿用已有资料。
 
 旧版本升级前先下载并验证备份，保存当前编辑，关闭旧标签并停止旧服务，再用原浏览器、原地址打开新版。遇到应用更新提示，按提示保存修改后更新；端口冲突时先核查原服务。详见 [升级步骤](docs/试用指南.md#旧版本升级)，当前不保证所有旧 PWA 路径都已验证。
 
@@ -40,7 +44,7 @@
 
 ## 可以做什么
 
-| 你要处理的事 | KeepAny 提供的本地功能 |
+| 你要处理的事 | StackPerch 提供的本地功能 |
 |---|---|
 | 找到项目相关资料 | 项目、账号、订阅和实物；分类、标签、搜索与关系图 |
 | 记住维护和费用 | 待办、订阅账期与续费记录、实物保修及借还历史 |
@@ -90,6 +94,6 @@ pnpm build
 
 欢迎反馈：哪个步骤没完成、找一份资料用了多久、录入哪里费力。请附应用版本、系统、浏览器和可复现步骤，使用虚构资料；不要上传真实密码、API Key 或备份文件。安全问题请按 [安全报告指南](SECURITY.md) 处理。
 
-KeepAny 本地核心使用 [AGPL-3.0-only](LICENSE)。依赖声明与第三方材料见 [NOTICE.md](NOTICE.md)、[SBOM.spdx.json](SBOM.spdx.json) 和 [legal/third-party](legal/third-party)。商业使用须遵守相应许可证。
+StackPerch 本地核心使用 [AGPL-3.0-only](LICENSE)。依赖声明与第三方材料见 [NOTICE.md](NOTICE.md)、[SBOM.spdx.json](SBOM.spdx.json) 和 [legal/third-party](legal/third-party)。商业使用须遵守相应许可证。
 
-未来的付费服务计划解决托管、存储和运维；本地读写与完整导出不以付费为条件。官网、支付和运营后台属于独立的 KeepAnyAdm 商业仓库，不随本仓库分发。见 [产品边界](docs/00-产品范围与开放边界.md)。
+未来的付费服务计划解决托管、存储和运维；本地读写与完整导出不以付费为条件。商业网站、支付和运营后台属于独立的 KeepAnyAdm 商业仓库，不随本仓库分发。见 [产品边界](docs/00-产品范围与开放边界.md)。

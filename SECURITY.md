@@ -1,8 +1,8 @@
 # Security / 安全报告
 
-KeepAny is an early preview. Security-related tests and encryption implementations are not a claim that the entire product has been independently audited. Experimental sync, account binding, remote storage, and MCP have additional limits described in the release notes and project documentation.
+StackPerch, formerly KeepAny, is an early preview. Security-related tests and encryption implementations are not a claim that the entire product has been independently audited. Experimental sync, account binding, remote storage, and MCP have additional limits described in the release notes and project documentation.
 
-KeepAny 当前为早期测试版。加密实现和已有测试不等于完成独立安全审计。同步、账户绑定、远端存储和 MCP 仍有各自的实验边界，请以实际版本说明为准。
+StackPerch（原名 KeepAny）当前为早期测试版。加密实现和已有测试不等于完成独立安全审计。同步、账户绑定、远端存储和 MCP 仍有各自的实验边界，请以实际版本说明为准。
 
 ## Report privately / 私密报告
 

@@ -1,20 +1,22 @@
-# KeepAny
+# StackPerch
 
 **A local digital asset workspace for independent developers. Connect projects, domains, accounts, subscriptions, and maintenance.**
 
-[简体中文](README.md) · [Try KeepAny](docs/试用指南.md#english) · [Releases](https://github.com/Syndred/KeepAny/releases) · [Report an issue](https://github.com/Syndred/KeepAny/issues)
+[简体中文](README.md) · [Website](https://syndred.github.io/KeepAny/) · [Try StackPerch](docs/试用指南.md#english) · [Releases](https://github.com/Syndred/KeepAny/releases) · [Report an issue](https://github.com/Syndred/KeepAny/issues)
 
-Which email does a project use? Where is its domain registered? Which subscriptions still need attention when you change an email or retire a project? KeepAny keeps those records connected in one local workspace, so you can find what to do next.
+StackPerch was formerly KeepAny. The repository, website, downloads, and issue tracker keep their existing addresses.
+
+Which email does a project use? Where is its domain registered? Which subscriptions still need attention when you change an email or retire a project? StackPerch keeps those records connected in one local workspace, so you can find what to do next.
 
 No registration required. English and Simplified Chinese interfaces. The local core is open source under [AGPL-3.0-only](LICENSE). Optional paid hosting is planned; official cloud sync and paid services are not available yet.
 
-![KeepAny overview with fictional project, account, and subscription records](docs/evidence/2026-10-11/preview/onboarding-en-1280-sample.png)
+![StackPerch overview with fictional project, account, and subscription records](docs/evidence/2026-10-13/stackperch/onboarding-en-1280-sample.png)
 
 *Screenshot of the actual app using sample records.*
 
 ## Download and try
 
-**This is an early preview.** Download the `KeepAny-…-portable.zip` marked `Pre-release` from [GitHub Releases](https://github.com/Syndred/KeepAny/releases). Each release will identify its source revision, checksums, and known limits. GitHub's source ZIP is not the portable app.
+**This is an early preview.** Download the `StackPerch-…-portable.zip` marked `Pre-release` from [GitHub Releases](https://github.com/Syndred/KeepAny/releases). Each release will identify its source revision, checksums, and known limits. Earlier `KeepAny-…-portable.zip` packages remain available on the same Releases page. GitHub's source ZIP is not the portable app.
 
 The portable package requires **[Node.js 22 or newer](https://nodejs.org/)**. You do not need Git, pnpm, or a build step. Extract it to a folder you can keep:
 
@@ -25,6 +27,8 @@ The portable package requires **[Node.js 22 or newer](https://nodejs.org/)**. Yo
 | Windows | Double-click `start.bat` | Double-click `stop.bat` |
 
 Open **[http://127.0.0.1:4180/](http://127.0.0.1:4180/)**. The server listens only on your computer. Closing the browser does not stop it. If another program is using the port, the launcher reports it rather than choosing a different address. The same browser and address show your existing local records; use a separate browser profile to start empty.
+
+Existing KeepAny `.ka1` backups and `.kdbx` vaults remain usable with their original passwords. The rename does not move local data; keep the same browser profile and address to continue using your records.
 
 Before updating an existing installation, download and verify a backup, save your edits, close old tabs, and stop the old server. Open the new package in the same browser and at the same address. Save changes before accepting an app-update prompt; investigate the existing server if the port is occupied. See [upgrade steps](docs/试用指南.md#updating-an-existing-installation). Not every older PWA upgrade path has been verified.
 
@@ -49,7 +53,7 @@ See the [trial guide](docs/试用指南.md#english) for setup, storage, and reco
 | Keep login details | A separate encrypted KDBX vault with import, export, and reviewed batch import |
 | Take your data with you | Encrypted `.ka1` backup and restore for records, images, history, and the encrypted local vault |
 
-You can record domains in project details and maintenance tasks. KeepAny does not manage registrars or renew domains automatically. Bills and renewal records are your ledger; they do not confirm a third-party charge. Change checklists do not log in, rebind accounts, or cancel services for you.
+You can record domains in project details and maintenance tasks. StackPerch does not manage registrars or renew domains automatically. Bills and renewal records are your ledger; they do not confirm a third-party charge. Change checklists do not log in, rebind accounts, or cancel services for you.
 
 ## Data and AI
 
@@ -92,4 +96,4 @@ Tell us which step failed, how long it took to find a record, or where entry was
 
 The local core uses [AGPL-3.0-only](LICENSE). Third-party declarations and materials are in [NOTICE.md](NOTICE.md), [SBOM.spdx.json](SBOM.spdx.json), and [legal/third-party](legal/third-party). Commercial use must comply with the applicable licenses.
 
-Future paid services are intended to cover hosting, storage, and operations. Local access and complete export do not require payment. The website, billing, and operations belong to the separate KeepAnyAdm commercial repository and are not distributed here. See the Chinese [product boundaries](docs/00-产品范围与开放边界.md).
+Future paid services are intended to cover hosting, storage, and operations. Local access and complete export do not require payment. The commercial website, billing, and operations belong to the separate KeepAnyAdm commercial repository and are not distributed here. See the Chinese [product boundaries](docs/00-产品范围与开放边界.md).
