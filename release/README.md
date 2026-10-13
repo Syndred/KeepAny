@@ -1,6 +1,8 @@
-# KeepAny 本地测试版
+# StackPerch 本地测试版
 
-普通试用者请从 [GitHub Releases](https://github.com/Syndred/KeepAny/releases) 下载标注 `Pre-release` 的 `KeepAny-…-portable.zip`，按照包内 `START-HERE.md` 启动。便携包只需 Node.js 22+，不需要拉代码、安装 pnpm 或项目依赖。中英文入门见 [试用指南](../docs/试用指南.md)。发布状态和实际验证范围以对应 Release 为准。
+StackPerch 原名 KeepAny。现有 GitHub/Pages 地址、本机 4180 地址、旧备份格式及数据库标识保留；更新前保存编辑、备份并停止旧服务。以下历史验收记录保留当时名称和版本，以最新发布说明为准。
+
+普通试用者请从 [GitHub Releases](https://github.com/Syndred/KeepAny/releases) 下载标注 `Pre-release` 的 `StackPerch-…-portable.zip`，按照包内 `START-HERE.md` 启动。便携包只需 Node.js 22+，不需要拉代码、安装 pnpm 或项目依赖。中英文入门见 [试用指南](../docs/试用指南.md)。发布状态和实际验证范围以对应 Release 为准。
 
 维护者从**已提交的干净仓库**构建便携包：
 
@@ -70,7 +72,7 @@ pnpm exec playwright test --config playwright.release.config.ts --reporter=dot
 node scripts/phase0/verify-third-party-license-materials.mjs
 ```
 
-现有 Vite PWA 清单已包含安装图标，图形沿用应用 K 标志和统一颜色；矢量源位于 `apps/web/public/icons/keepany.svg`。隔离 Chromium 已在断网后实际解码清单及全部图标；没有把此结果当成真机已安装。本地包与阶段／生产发布边界见[最新交接](../docs/08-项目进度交接.md)。
+现有 Vite PWA 清单已包含安装图标，当前图形为应用 S 标志和统一颜色（旧 keepany 图标路径保留）；矢量源位于 `apps/web/public/icons/keepany.svg`。隔离 Chromium 已在断网后实际解码清单及全部图标；没有把此结果当成真机已安装。本地包与阶段／生产发布边界见[最新交接](../docs/08-项目进度交接.md)。
 
 ## 2026-09-30 人工账单与提醒更新
 

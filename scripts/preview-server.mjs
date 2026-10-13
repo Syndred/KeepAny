@@ -74,7 +74,7 @@ async function stop() {
       if (current.token !== state.token) throw Error('instance-changed');
     } catch (error) {
       if (error.code === 'ENOENT') {
-        console.log('KeepAny 本地服务已停止。 / KeepAny local server stopped.');
+        console.log('StackPerch 本地服务已停止。 / StackPerch local server stopped.');
         return;
       }
       throw error;
@@ -125,7 +125,7 @@ async function start() {
     server.close(async () => {
       clearTimeout(forceClose);
       await removeOwnState();
-      console.log('KeepAny 本地服务已停止。 / KeepAny local server stopped.');
+      console.log('StackPerch 本地服务已停止。 / StackPerch local server stopped.');
     });
     server.closeIdleConnections();
   }
@@ -202,7 +202,7 @@ async function start() {
     server.once('error', reject);
     server.listen(port, '127.0.0.1', resolve);
   });
-  console.log(`KeepAny ${release.version} (${release.sourceCommit.slice(0, 12)})\n${origin}/`);
+  console.log(`StackPerch ${release.version} (${release.sourceCommit.slice(0, 12)})\n${origin}/`);
   console.log('保持此终端打开；Ctrl+C 或运行 stop 脚本停止。 / Keep this terminal open; use Ctrl+C or the stop script to stop.');
   console.log('资料保存在当前浏览器中；使用同一浏览器和地址可继续使用已有资料。 / Data stays in this browser; the same browser and address retain existing data.');
   if (!noOpen) openBrowser(`${origin}/`);

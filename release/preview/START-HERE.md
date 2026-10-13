@@ -1,4 +1,8 @@
-# KeepAny 本地测试版 / Local preview
+# StackPerch 本地测试版 / Local preview
+
+StackPerch 原名 KeepAny。原 GitHub 与本机入口保留，旧 `.ka1` 和 KDBX 备份继续使用。
+
+StackPerch was formerly KeepAny. Existing GitHub and local entry points remain available; existing `.ka1` and KDBX backups stay compatible.
 
 把项目、账号、订阅和维护事项放在一起管理。无需注册，资料保存在当前浏览器。
 

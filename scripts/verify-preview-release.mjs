@@ -119,6 +119,18 @@ try {
     assert.equal(sha256(await readFile(join(packageRoot, path))), digest, `Delivered checksum: ${path}`);
   }
   const release = JSON.parse(await readFile(join(packageRoot, 'RELEASE.json'), 'utf8'));
+  assert.equal(release.productName, 'StackPerch', 'Current portable product name');
+  assert.equal(release.previousName, 'KeepAny', 'Previous name retained in release metadata');
+  assert.match([...packageNames][0], /^StackPerch-/, 'Current download name');
+  const manifest = JSON.parse(await readFile(join(packageRoot, 'web', 'manifest.webmanifest'), 'utf8'));
+  assert.equal(manifest.name, 'StackPerch');
+  assert.equal(manifest.short_name, 'StackPerch');
+  for (const field of ['id', 'start_url', 'scope']) assert.equal(manifest[field], '/', `PWA installation identity remains compatible: ${field}`);
+  for (const name of ['keepany.svg', 'keepany-180.png', 'keepany-192.png', 'keepany-512.png', 'keepany-maskable-512.png']) {
+    const previous = await readFile(join(packageRoot, 'web', 'icons', name));
+    const current = await readFile(join(packageRoot, 'web', 'icons', name.replace('keepany', 'stackperch')));
+    assert(previous.equals(current), `Old icon URL remains a current compatible resource: ${name}`);
+  }
   assert.deepEqual(release.applicationRoutes, await readApplicationRouteContract(join(packageRoot, 'source')), 'All delivered source application routes match the HTTP contract');
   const deliveredWeb = Object.keys(extracted).filter(path => path.startsWith(`${[...packageNames][0]}/web/`));
   assert.equal(deliveredWeb.length, release.webFiles.length, 'Only current web files shipped');
@@ -148,6 +160,7 @@ try {
   const index = await rawRequest('/');
   assert.equal(index.status, 200);
   assert(index.body.equals(indexBytes));
+  assert.match(index.body.toString(), /<title>StackPerch<\/title>/, 'Delivered application title');
   assert.equal(index.headers['x-content-type-options'], 'nosniff');
   for (const declared of release.applicationRoutes.paths) {
     const kinds = declared.includes('$kind') ? release.applicationRoutes.parameters.kind : ['project'];

@@ -41,7 +41,7 @@ await writeFile(join(output, 'package.json'), `${JSON.stringify({
   name: '@keepany/mcp-launcher',
   version: rootPackage.version,
   private: true,
-  description: 'KeepAny local MCP stdio launcher',
+  description: 'StackPerch local MCP stdio launcher (formerly KeepAny)',
   type: 'module',
   bin: { 'keepany-mcp': './bin/keepany-mcp.mjs' },
   files: ['bin', 'LICENSE', 'NOTICE.md', 'README.md'],

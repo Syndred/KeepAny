@@ -19,7 +19,7 @@ const sourceDirty = git(['status', '--porcelain', '--untracked-files=all']).leng
 if (sourceDirty && !allowDirty) throw Error('Commit reviewed source changes before packaging, or use --allow-dirty for an unpublished candidate.');
 const rootPackage = await json(join(root, 'package.json'));
 const version = `${rootPackage.version}-preview.${sourceCommit.slice(0, 12)}${sourceDirty ? '.dirty' : ''}`;
-const releaseName = `KeepAny-${version}-portable`;
+const releaseName = `StackPerch-${version}-portable`;
 const directory = join(root, 'dist', 'preview', releaseName);
 const webDirectory = join(root, 'apps', 'web', 'dist');
 const epoch = Number(process.env.SOURCE_DATE_EPOCH ?? git(['show', '-s', '--format=%ct', 'HEAD']));
@@ -28,7 +28,7 @@ const archiveTime = new Date(epoch * 1000);
 const sourcePathAllowed = path => /^(?:apps|packages|patches|scripts)\//.test(path)
   || /^legal\//.test(path)
   || /^release\/preview\//.test(path)
-  || ['docs/试用指南.md', 'docs/evidence/2026-10-11/preview/onboarding-en-1280-sample.png', 'docs/evidence/2026-10-11/preview/onboarding-zh-1280-sample.png'].includes(path)
+  || ['docs/试用指南.md', 'docs/evidence/2026-10-13/stackperch/onboarding-en-1280-sample.png', 'docs/evidence/2026-10-13/stackperch/onboarding-zh-1280-sample.png'].includes(path)
   || /^(?:package\.json|pnpm-lock\.yaml|pnpm-workspace\.yaml|tsconfig\.json|(?:vite|vitest|playwright)[\w.-]*\.config\.[\w]+|LICENSE|NOTICE\.md|SBOM\.spdx\.json|SECURITY\.md|CONTRIBUTING\.md|README(?:\.en)?\.md|\.gitignore)$/.test(path);
 const sourcePaths = [...new Set(execFileSync('git', ['ls-files', '-z', '--cached', '--others', '--exclude-standard'], { cwd: root, encoding: 'utf8', maxBuffer: 20 * 1024 * 1024 }).split('\0').filter(path => path && sourcePathAllowed(path)))].sort();
 const sourceSnapshot = new Map();
@@ -188,7 +188,7 @@ if (previewPackages.length !== licenses.length) throw Error('Distributed depende
 const spdxIds = new Set(previewPackages.map(pkg => pkg.SPDXID));
 await put('SBOM.spdx.json', `${JSON.stringify({
   ...repositorySbom,
-  name: `KeepAny portable preview ${version}`,
+  name: `StackPerch portable preview ${version}`,
   documentNamespace: `https://github.com/Syndred/KeepAny/preview/${sourceCommit}/${lockSha256}`,
   creationInfo: { creators: ['Tool: scripts/build-preview-release.mjs'], created: archiveTime.toISOString(), comment: licenseInventory.scope },
   annotations: [],
@@ -207,7 +207,7 @@ for (const [path, bytes] of sourceSnapshot) {
 }
 await put('source/SOURCE.md', `# Corresponding source / 对应源码\n\nCommit: ${sourceCommit}\nUncommitted changes included: ${sourceDirty}\n\n## Rebuild the application without Git / 无需 Git 重建应用\n\nFrom this source directory, with Node.js 22+ and pnpm ${rootPackage.packageManager?.split('@').at(-1)}:\n在此 source 目录安装开发依赖后即可重建 Web 应用：\n\n\`\`\`sh\npnpm install --frozen-lockfile\npnpm build\n\`\`\`\n\nThe result is apps/web/dist. This snapshot includes application source, local server, build scripts, patches, lockfile, SBOM and license materials. The public page source includes only its two fictional sample screenshots and the trial guide; use pnpm build:public-site to rebuild that separate documentation site. Unit tests colocated with the application source are retained. The root tests/e2e directory, historical release/web bundles, and other research/evidence files are excluded. The standalone snapshot supports the application build described above; full repository acceptance also requires the complete checkout and its development fixtures.\n产物位于 apps/web/dist。本快照包含应用、启动器、构建脚本、补丁、锁文件、SBOM 与许可材料；公开介绍页只附带两张虚构示例截图和试用指南，可用 pnpm build:public-site 单独重建。与应用源码同目录的单元测试随源码保留；根 tests/e2e 目录、历史 release/web 和其他研究/验收证据不随快照分发。此独立快照支持上述应用构建；完整仓库验收还需要完整检出及开发测试素材。\n\n## Repackage a release / 重建便携发布包\n\nThe portable packaging scripts require Git metadata and the complete reviewed repository. Do not run build:preview in this snapshot, which has no .git. For a clean release, check out the exact commit in a full repository and run:\n便携打包需要完整仓库和 Git 提交元数据，不能直接在此无 .git 的快照中执行 build:preview。正式干净版本请在完整仓库检出上述提交后运行：\n\n\`\`\`sh\ngit clone https://github.com/Syndred/KeepAny.git\ncd KeepAny\ngit checkout ${sourceCommit}\npnpm install --frozen-lockfile\npnpm build:preview\npnpm verify:preview\n\`\`\`\n\nA .dirty candidate includes uncommitted files identified by RELEASE.json sourceFiles; checking out its sourceCommit alone does not reproduce those candidate changes.\n.dirty 候选包含尚未提交的改动，由 RELEASE.json 的 sourceFiles 记录；仅检出 sourceCommit 不会重现这些未提交改动。\n`);
 const release = {
-  schema: 'keepany.portable-preview.v1', version, sourceCommit, sourceDirty,
+  schema: 'keepany.portable-preview.v1', productName: 'StackPerch', previousName: 'KeepAny', version, sourceCommit, sourceDirty,
   sourceUrl: `https://github.com/Syndred/KeepAny/tree/${sourceCommit}`,
   reproducibleArchiveTimestamp: archiveTime.toISOString(),
   node: '>=22', defaultOrigin: 'http://127.0.0.1:4180',
