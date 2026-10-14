@@ -1,0 +1,10 @@
+$ node scripts/build-legacy-site.mjs --mode redirect --mirror-source /tmp/stackperch-migration-published-site
+{
+  "mode": "redirect",
+  "output": "/Users/syndred/.codex/worktrees/repository-migration/KeepAny/dist/legacy-site",
+  "mirrorSource": "/tmp/stackperch-migration-published-site",
+  "prefixes": [
+    "KeepAny"
+  ],
+  "copiedStaticFiles": 5
+}

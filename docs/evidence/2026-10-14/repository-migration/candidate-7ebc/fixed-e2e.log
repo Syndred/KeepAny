@@ -1,0 +1,17 @@
+[WebServer] (node:40942) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 187 tests using 2 workers
+(node:40943) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:40944) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+················································································
+················································································
+···························
+  Slow test file: tests/e2e/password-vault.spec.ts (8.0m)
+  Slow test file: tests/e2e/password-smart-import-visual.spec.ts (6.8m)
+  Slow test file: tests/e2e/password-smart-import.spec.ts (5.9m)
+  Slow test file: tests/e2e/spacing-consistency.spec.ts (5.2m)
+  Consider running tests from slow files in parallel. See: https://playwright.dev/docs/test-parallel
+  187 passed (35.7m)

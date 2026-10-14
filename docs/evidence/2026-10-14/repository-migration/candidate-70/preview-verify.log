@@ -1,0 +1,16 @@
+$ node scripts/verify-preview-release.mjs
+{
+  "archive": "/Users/syndred/.codex/worktrees/repository-migration/KeepAny/dist/preview/StackPerch-0.1.0-preview.70efcd37975b-portable.zip",
+  "platform": "darwin",
+  "sourceCommit": "70efcd37975b582d18df286d390fa7574dce8210",
+  "sourceDirty": false,
+  "webFiles": 98,
+  "checks": [
+    "ZIP and per-file checksums, current web identity, source, launchers, license inventory, and clean external extraction",
+    "Production assets, HEAD, SPA navigation fallback, missing asset/API/dotfile rejection",
+    "Raw and encoded path traversal, malformed path, Host rejection, private state, loopback-only listener",
+    "Duplicate-start conflict, unauthenticated/cross-origin stop rejection, forged PID rejection, own-instance stop and cleanup",
+    "Occupied port leaves an unrelated HTTP service running; stop never sends process signals",
+    "Delivered darwin launcher starts without repository or project dependencies, then stops cleanly"
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "verifiedDocumentCommit": "467d3e36824737f55c82191e02af0b6f4573d1f3",
+  "currentRemoteMainAtCheckpoint": "467d3e36824737f55c82191e02af0b6f4573d1f3",
+  "legacyGitMainAtCheckpoint": "467d3e36824737f55c82191e02af0b6f4573d1f3",
+  "primaryFastForwardConfirmed": true,
+  "releaseSourceCommit": "7ebc2c349f4826759c8b2ef848e8c6133c0b3858",
+  "archiveRequests": [
+    {
+      "root": "/Users/syndred/.codex/worktrees/open-source-preview/KeepAny",
+      "returned": "queued",
+      "directoryStillExists": true
+    },
+    {
+      "root": "/Users/syndred/.codex/worktrees/stackperch-brand/KeepAny",
+      "returned": "queued",
+      "directoryStillExists": true
+    },
+    {
+      "root": "/Users/syndred/.codex/worktrees/repository-migration/KeepAny",
+      "returned": "queued",
+      "directoryStillExists": true
+    }
+  ],
+  "nextCommitScope": "Only final documentation status and raw verification logs; no release runtime change"
+}

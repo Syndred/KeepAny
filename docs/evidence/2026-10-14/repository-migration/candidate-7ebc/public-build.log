@@ -1,0 +1,5 @@
+$ node scripts/build-public-site.mjs
+Built public documentation: /Users/syndred/.codex/worktrees/repository-migration/KeepAny/dist/public-site
+Canonical base: https://syndred.github.io/StackPerch/
+Download link: https://github.com/Syndred/StackPerch/releases
+robots.txt at this path is only a template; verify the domain-root policy after deployment.

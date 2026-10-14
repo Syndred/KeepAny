@@ -1,0 +1,512 @@
+﻿2026-10-14T02:22:17.2549155Z Current runner version: '2.337.0'
+2026-10-14T02:22:17.2568284Z ##[group]Runner Image Provisioner
+2026-10-14T02:22:17.2568780Z Hosted Compute Agent
+2026-10-14T02:22:17.2569095Z Version: 20260901.588
+2026-10-14T02:22:17.2569445Z Commit: f88ec8081b781fac6c440065ac7ff9e710ce3d0b
+2026-10-14T02:22:17.2569862Z Build Date: 2026-09-01T19:56:44Z
+2026-10-14T02:22:17.2570555Z Worker ID: {ac085594-513b-471f-b19e-007537d13a9f}
+2026-10-14T02:22:17.2570954Z Azure Region: westus3
+2026-10-14T02:22:17.2571266Z ##[endgroup]
+2026-10-14T02:22:17.2572027Z ##[group]Operating System
+2026-10-14T02:22:17.2572362Z Microsoft Windows Server 2025
+2026-10-14T02:22:17.2572682Z 10.0.26100
+2026-10-14T02:22:17.2572974Z Datacenter
+2026-10-14T02:22:17.2573260Z ##[endgroup]
+2026-10-14T02:22:17.2573580Z ##[group]Runner Image
+2026-10-14T02:22:17.2573950Z Image: windows-2025-vs2026
+2026-10-14T02:22:17.2574269Z Version: 20260925.250.1
+2026-10-14T02:22:17.2575146Z Included Software: https://github.com/actions/runner-images/blob/win25-vs2026/20260925.250/images/windows/Windows2025-VS2026-Readme.md
+2026-10-14T02:22:17.2576023Z Image Release: https://github.com/actions/runner-images/releases/tag/win25-vs2026%2F20260925.250
+2026-10-14T02:22:17.2576547Z ##[endgroup]
+2026-10-14T02:22:17.2577143Z ##[group]GITHUB_TOKEN Permissions
+2026-10-14T02:22:17.2578307Z Contents: read
+2026-10-14T02:22:17.2578638Z Metadata: read
+2026-10-14T02:22:17.2578981Z ##[endgroup]
+2026-10-14T02:22:17.2580293Z Secret source: Actions
+2026-10-14T02:22:17.2580854Z Cache mode: write
+2026-10-14T02:22:17.2581259Z Prepare workflow directory
+2026-10-14T02:22:17.2799502Z Prepare all required actions
+2026-10-14T02:22:17.2831993Z Getting action download info
+2026-10-14T02:22:17.6059927Z Download action repository 'actions/checkout@v4' (SHA:11d5960a326750d5838078e36cf38b85af677262)
+2026-10-14T02:22:17.6912433Z Download action repository 'pnpm/action-setup@v4' (SHA:b906affcce14559ad1aafd4ab0e942779e9f58b1)
+2026-10-14T02:22:18.3292237Z Download action repository 'actions/setup-node@v4' (SHA:49933ea5288caeca8642d1e84afbd3f7d6820020)
+2026-10-14T02:22:18.4284616Z Download action repository 'actions/upload-artifact@v4' (SHA:ea165f8d65b6e75b540449e92b4886f43607fa02)
+2026-10-14T02:22:18.6500674Z Complete job name: preview (windows-latest)
+2026-10-14T02:22:18.8626099Z ##[group]Run actions/checkout@v4
+2026-10-14T02:22:18.8626752Z with:
+2026-10-14T02:22:18.8626977Z   repository: Syndred/StackPerch
+2026-10-14T02:22:18.8628932Z   token: ***
+2026-10-14T02:22:18.8629139Z   ssh-strict: true
+2026-10-14T02:22:18.8629356Z   ssh-user: git
+2026-10-14T02:22:18.8629571Z   persist-credentials: true
+2026-10-14T02:22:18.8629814Z   clean: true
+2026-10-14T02:22:18.8630033Z   sparse-checkout-cone-mode: true
+2026-10-14T02:22:18.8630287Z   fetch-depth: 1
+2026-10-14T02:22:18.8630500Z   fetch-tags: false
+2026-10-14T02:22:18.8630723Z   show-progress: true
+2026-10-14T02:22:18.8630949Z   lfs: false
+2026-10-14T02:22:18.8631146Z   submodules: false
+2026-10-14T02:22:18.8631369Z   set-safe-directory: true
+2026-10-14T02:22:18.8631638Z   allow-unsafe-pr-checkout: false
+2026-10-14T02:22:18.8631986Z ##[endgroup]
+2026-10-14T02:22:18.9543744Z Syncing repository: Syndred/StackPerch
+2026-10-14T02:22:18.9544748Z ##[group]Getting Git version info
+2026-10-14T02:22:18.9545130Z Working directory is 'D:\a\StackPerch\StackPerch'
+2026-10-14T02:22:19.0014861Z [command]"C:\Program Files\Git\bin\git.exe" version
+2026-10-14T02:22:19.3528382Z git version 2.55.0.windows.5
+2026-10-14T02:22:19.3563510Z ##[endgroup]
+2026-10-14T02:22:19.3576519Z Temporarily overriding HOME='D:\a\_temp\1ce8e20d-a068-45f0-8827-79988795f5c5' before making global git config changes
+2026-10-14T02:22:19.3578420Z Adding repository directory to the temporary git global config as a safe directory
+2026-10-14T02:22:19.3583924Z [command]"C:\Program Files\Git\bin\git.exe" config --global --add safe.directory D:\a\StackPerch\StackPerch
+2026-10-14T02:22:19.4104232Z Deleting the contents of 'D:\a\StackPerch\StackPerch'
+2026-10-14T02:22:19.4108524Z ##[group]Initializing the repository
+2026-10-14T02:22:19.4114270Z [command]"C:\Program Files\Git\bin\git.exe" init D:\a\StackPerch\StackPerch
+2026-10-14T02:22:19.4898214Z Initialized empty Git repository in D:/a/StackPerch/StackPerch/.git/
+2026-10-14T02:22:19.4928188Z [command]"C:\Program Files\Git\bin\git.exe" remote add origin https://github.com/Syndred/StackPerch
+2026-10-14T02:22:19.5427092Z ##[endgroup]
+2026-10-14T02:22:19.5428289Z ##[group]Disabling automatic garbage collection
+2026-10-14T02:22:19.5433018Z [command]"C:\Program Files\Git\bin\git.exe" config --local gc.auto 0
+2026-10-14T02:22:19.5620383Z ##[endgroup]
+2026-10-14T02:22:19.5628321Z ##[group]Setting up auth
+2026-10-14T02:22:19.5629593Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp core\.sshCommand
+2026-10-14T02:22:19.5818581Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :\""
+2026-10-14T02:22:20.8709676Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-10-14T02:22:20.8911148Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :\""
+2026-10-14T02:22:21.2581677Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-10-14T02:22:21.2789164Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "git config --local --show-origin --name-only --get-regexp remote.origin.url"
+2026-10-14T02:22:21.6757383Z [command]"C:\Program Files\Git\bin\git.exe" config --local http.https://github.com/.extraheader "AUTHORIZATION: basic ***"
+2026-10-14T02:22:21.6982971Z ##[endgroup]
+2026-10-14T02:22:21.6983413Z ##[group]Fetching the repository
+2026-10-14T02:22:21.6992324Z [command]"C:\Program Files\Git\bin\git.exe" -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +7ebc2c349f4826759c8b2ef848e8c6133c0b3858:refs/tags/v0.1.0-preview.20261014.2
+2026-10-14T02:22:32.2104446Z From https://github.com/Syndred/StackPerch
+2026-10-14T02:22:32.2105231Z  * [new ref]         7ebc2c349f4826759c8b2ef848e8c6133c0b3858 -> v0.1.0-preview.20261014.2
+2026-10-14T02:22:32.2155019Z ##[endgroup]
+2026-10-14T02:22:32.2162487Z ##[group]Determining the checkout info
+2026-10-14T02:22:32.2163103Z ##[endgroup]
+2026-10-14T02:22:32.2167037Z [command]"C:\Program Files\Git\bin\git.exe" sparse-checkout disable
+2026-10-14T02:22:32.2738756Z [command]"C:\Program Files\Git\bin\git.exe" config --local --unset-all extensions.worktreeConfig
+2026-10-14T02:22:32.2987935Z ##[group]Checking out the ref
+2026-10-14T02:22:32.2997091Z [command]"C:\Program Files\Git\bin\git.exe" checkout --progress --force refs/tags/v0.1.0-preview.20261014.2
+2026-10-14T02:22:33.8612567Z Updating files:  33% (1728/5224)
+2026-10-14T02:22:33.8855517Z Updating files:  34% (1777/5224)
+2026-10-14T02:22:33.9116644Z Updating files:  35% (1829/5224)
+2026-10-14T02:22:33.9438439Z Updating files:  36% (1881/5224)
+2026-10-14T02:22:33.9672120Z Updating files:  37% (1933/5224)
+2026-10-14T02:22:34.0022522Z Updating files:  38% (1986/5224)
+2026-10-14T02:22:34.0360158Z Updating files:  39% (2038/5224)
+2026-10-14T02:22:34.0718273Z Updating files:  40% (2090/5224)
+2026-10-14T02:22:34.1006656Z Updating files:  41% (2142/5224)
+2026-10-14T02:22:34.1323908Z Updating files:  42% (2195/5224)
+2026-10-14T02:22:34.1727535Z Updating files:  43% (2247/5224)
+2026-10-14T02:22:34.2208689Z Updating files:  44% (2299/5224)
+2026-10-14T02:22:34.2633745Z Updating files:  45% (2351/5224)
+2026-10-14T02:22:34.2999376Z Updating files:  46% (2404/5224)
+2026-10-14T02:22:34.3349695Z Updating files:  47% (2456/5224)
+2026-10-14T02:22:34.3364368Z Updating files:  47% (2506/5224)
+2026-10-14T02:22:34.3719121Z Updating files:  48% (2508/5224)
+2026-10-14T02:22:34.4057848Z Updating files:  49% (2560/5224)
+2026-10-14T02:22:34.4476286Z Updating files:  50% (2612/5224)
+2026-10-14T02:22:34.4834064Z Updating files:  51% (2665/5224)
+2026-10-14T02:22:34.5219475Z Updating files:  52% (2717/5224)
+2026-10-14T02:22:34.5599448Z Updating files:  53% (2769/5224)
+2026-10-14T02:22:34.5949417Z Updating files:  54% (2821/5224)
+2026-10-14T02:22:34.6514942Z Updating files:  55% (2874/5224)
+2026-10-14T02:22:35.1869299Z Updating files:  56% (2926/5224)
+2026-10-14T02:22:35.2182157Z Updating files:  57% (2978/5224)
+2026-10-14T02:22:35.2560809Z Updating files:  58% (3030/5224)
+2026-10-14T02:22:35.2629334Z Updating files:  59% (3083/5224)
+2026-10-14T02:22:35.2707206Z Updating files:  60% (3135/5224)
+2026-10-14T02:22:35.2787693Z Updating files:  61% (3187/5224)
+2026-10-14T02:22:35.2846994Z Updating files:  62% (3239/5224)
+2026-10-14T02:22:35.2940104Z Updating files:  63% (3292/5224)
+2026-10-14T02:22:35.3014372Z Updating files:  64% (3344/5224)
+2026-10-14T02:22:35.3082672Z Updating files:  65% (3396/5224)
+2026-10-14T02:22:35.3136514Z Updating files:  66% (3448/5224)
+2026-10-14T02:22:35.3397443Z Updating files:  67% (3501/5224)
+2026-10-14T02:22:35.3734342Z Updating files:  67% (3533/5224)
+2026-10-14T02:22:35.3826967Z Updating files:  68% (3553/5224)
+2026-10-14T02:22:35.3876171Z Updating files:  69% (3605/5224)
+2026-10-14T02:22:35.3934355Z Updating files:  70% (3657/5224)
+2026-10-14T02:22:35.4376687Z Updating files:  71% (3710/5224)
+2026-10-14T02:22:35.4690127Z Updating files:  72% (3762/5224)
+2026-10-14T02:22:35.5083569Z Updating files:  73% (3814/5224)
+2026-10-14T02:22:35.5342235Z Updating files:  74% (3866/5224)
+2026-10-14T02:22:35.5528215Z Updating files:  75% (3918/5224)
+2026-10-14T02:22:35.5621154Z Updating files:  76% (3971/5224)
+2026-10-14T02:22:35.5677837Z Updating files:  77% (4023/5224)
+2026-10-14T02:22:35.5723516Z Updating files:  78% (4075/5224)
+2026-10-14T02:22:35.5783205Z Updating files:  79% (4127/5224)
+2026-10-14T02:22:35.5835149Z Updating files:  80% (4180/5224)
+2026-10-14T02:22:35.5888202Z Updating files:  81% (4232/5224)
+2026-10-14T02:22:35.5941817Z Updating files:  82% (4284/5224)
+2026-10-14T02:22:35.6011790Z Updating files:  83% (4336/5224)
+2026-10-14T02:22:35.6077470Z Updating files:  84% (4389/5224)
+2026-10-14T02:22:35.6128029Z Updating files:  85% (4441/5224)
+2026-10-14T02:22:35.6183980Z Updating files:  86% (4493/5224)
+2026-10-14T02:22:35.6247048Z Updating files:  87% (4545/5224)
+2026-10-14T02:22:35.6382815Z Updating files:  88% (4598/5224)
+2026-10-14T02:22:35.6454552Z Updating files:  89% (4650/5224)
+2026-10-14T02:22:35.6502818Z Updating files:  90% (4702/5224)
+2026-10-14T02:22:35.6554714Z Updating files:  91% (4754/5224)
+2026-10-14T02:22:35.6685060Z Updating files:  92% (4807/5224)
+2026-10-14T02:22:35.6919352Z Updating files:  93% (4859/5224)
+2026-10-14T02:22:35.7211101Z Updating files:  94% (4911/5224)
+2026-10-14T02:22:35.7339623Z Updating files:  95% (4963/5224)
+2026-10-14T02:22:35.7470338Z Updating files:  96% (5016/5224)
+2026-10-14T02:22:35.7545395Z Updating files:  97% (5068/5224)
+2026-10-14T02:22:35.7617431Z Updating files:  98% (5120/5224)
+2026-10-14T02:22:35.7704297Z Updating files:  99% (5172/5224)
+2026-10-14T02:22:35.7704572Z Updating files: 100% (5224/5224)
+2026-10-14T02:22:35.7704785Z Updating files: 100% (5224/5224), done.
+2026-10-14T02:22:35.7807006Z Note: switching to 'refs/tags/v0.1.0-preview.20261014.2'.
+2026-10-14T02:22:35.7807255Z 
+2026-10-14T02:22:35.7807445Z You are in 'detached HEAD' state. You can look around, make experimental
+2026-10-14T02:22:35.7807870Z changes and commit them, and you can discard any commits you make in this
+2026-10-14T02:22:35.7808269Z state without impacting any branches by switching back to a branch.
+2026-10-14T02:22:35.7808499Z 
+2026-10-14T02:22:35.7808646Z If you want to create a new branch to retain commits you create, you may
+2026-10-14T02:22:35.7809017Z do so (now or later) by using -c with the switch command. Example:
+2026-10-14T02:22:35.7809523Z 
+2026-10-14T02:22:35.7809619Z   git switch -c <new-branch-name>
+2026-10-14T02:22:35.7809769Z 
+2026-10-14T02:22:35.7809851Z Or undo this operation with:
+2026-10-14T02:22:35.7809988Z 
+2026-10-14T02:22:35.7810061Z   git switch -
+2026-10-14T02:22:35.7810163Z 
+2026-10-14T02:22:35.7810345Z Turn off this advice by setting config variable advice.detachedHead to false
+2026-10-14T02:22:35.7810604Z 
+2026-10-14T02:22:35.7810799Z HEAD is now at 7ebc2c3 test: keep real dropdown clicks without imposing hover focus
+2026-10-14T02:22:35.8121387Z ##[endgroup]
+2026-10-14T02:22:35.8351714Z [command]"C:\Program Files\Git\bin\git.exe" log -1 --format=%H
+2026-10-14T02:22:35.8522334Z 7ebc2c349f4826759c8b2ef848e8c6133c0b3858
+2026-10-14T02:22:35.8929142Z ##[group]Run pnpm/action-setup@v4
+2026-10-14T02:22:35.8929323Z with:
+2026-10-14T02:22:35.8929430Z   version: 11.10.0
+2026-10-14T02:22:35.8929537Z   dest: ~/setup-pnpm
+2026-10-14T02:22:35.8929648Z   run_install: null
+2026-10-14T02:22:35.8929760Z   cache: false
+2026-10-14T02:22:35.8929873Z   cache_dependency_path: pnpm-lock.yaml
+2026-10-14T02:22:35.8930032Z   package_json_file: package.json
+2026-10-14T02:22:35.8930171Z   standalone: false
+2026-10-14T02:22:35.8930329Z ##[endgroup]
+2026-10-14T02:22:36.0069221Z ##[group]Running self-installer...
+2026-10-14T02:22:36.2892172Z (node:5352) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+2026-10-14T02:22:36.2892734Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-10-14T02:22:36.4892624Z Progress: resolved 1, reused 0, downloaded 0, added 0
+2026-10-14T02:22:36.4963179Z Packages: +1
+2026-10-14T02:22:36.4963330Z +
+2026-10-14T02:22:37.3925969Z Progress: resolved 1, reused 0, downloaded 1, added 1, done
+2026-10-14T02:22:37.5112027Z 
+2026-10-14T02:22:37.5112413Z dependencies:
+2026-10-14T02:22:37.5112628Z + pnpm 11.10.0 (12.11.2 is available)
+2026-10-14T02:22:37.5112739Z 
+2026-10-14T02:22:37.5200903Z Done in 1.3s
+2026-10-14T02:22:37.5362716Z ##[endgroup]
+2026-10-14T02:22:37.5363073Z Installation Completed!
+2026-10-14T02:22:37.5598696Z ##[group]Run actions/setup-node@v4
+2026-10-14T02:22:37.5598880Z with:
+2026-10-14T02:22:37.5598988Z   node-version: 22
+2026-10-14T02:22:37.5599091Z   cache: pnpm
+2026-10-14T02:22:37.5599188Z   always-auth: false
+2026-10-14T02:22:37.5599295Z   check-latest: false
+2026-10-14T02:22:37.5600551Z   token: ***
+2026-10-14T02:22:37.5600647Z env:
+2026-10-14T02:22:37.5600804Z   PNPM_HOME: C:\Users\runneradmin\setup-pnpm\node_modules\.bin
+2026-10-14T02:22:37.5600981Z ##[endgroup]
+2026-10-14T02:22:37.6708364Z (node:3340) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-10-14T02:22:37.6708980Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-10-14T02:22:37.6712793Z Found in cache @ C:\hostedtoolcache\windows\node\22.23.3\x64
+2026-10-14T02:22:37.6713234Z ##[group]Environment details
+2026-10-14T02:22:44.4971385Z node: v22.23.3
+2026-10-14T02:22:44.4971574Z npm: 10.9.9
+2026-10-14T02:22:44.4972177Z yarn: 1.22.22
+2026-10-14T02:22:44.4973020Z ##[endgroup]
+2026-10-14T02:22:44.5487472Z [command]C:\Windows\system32\cmd.exe /D /S /C "C:\Users\runneradmin\setup-pnpm\node_modules\.bin\pnpm.CMD store path --silent"
+2026-10-14T02:22:45.6265988Z D:\.pnpm-store\v11
+2026-10-14T02:22:45.9475156Z Cache hit for: node-cache-Windows-x64-pnpm-9b9f383f60954bb7372cbd2b547d0e8ced82a6e6009d8e97a0df391dc79d9818
+2026-10-14T02:22:45.9552512Z (node:3340) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+2026-10-14T02:22:47.2200260Z Received 62914560 of 151198747 (41.6%), 59.4 MBs/sec
+2026-10-14T02:22:48.2959004Z Received 134217728 of 151198747 (88.8%), 61.4 MBs/sec
+2026-10-14T02:22:48.6865030Z Received 151198747 of 151198747 (100.0%), 58.2 MBs/sec
+2026-10-14T02:22:48.6868378Z Cache Size: ~144 MB (151198747 B)
+2026-10-14T02:22:48.6947080Z [command]"C:\Program Files\Git\usr\bin\tar.exe" -xf D:/a/_temp/7084e496-a882-44b8-a8f8-6ea907cdfc32/cache.tzst -P -C D:/a/StackPerch/StackPerch --force-local --use-compress-program "zstd -d"
+2026-10-14T02:22:55.9276641Z Cache restored successfully
+2026-10-14T02:22:55.9369378Z Cache restored from key: node-cache-Windows-x64-pnpm-9b9f383f60954bb7372cbd2b547d0e8ced82a6e6009d8e97a0df391dc79d9818
+2026-10-14T02:22:55.9616047Z ##[group]Run pnpm install --frozen-lockfile
+2026-10-14T02:22:55.9616341Z [36;1mpnpm install --frozen-lockfile[0m
+2026-10-14T02:22:56.0138538Z shell: C:\Program Files\PowerShell\7\pwsh.EXE -command ". '{0}'"
+2026-10-14T02:22:56.0138737Z env:
+2026-10-14T02:22:56.0138891Z   PNPM_HOME: C:\Users\runneradmin\setup-pnpm\node_modules\.bin
+2026-10-14T02:22:56.0139090Z ##[endgroup]
+2026-10-14T02:22:56.8537968Z ? Verifying lockfile against supply-chain policies (758 entries)...
+2026-10-14T02:22:56.9620727Z Lockfile is up to date, resolution step is skipped
+2026-10-14T02:22:57.0075409Z Progress: resolved 1, reused 0, downloaded 0, added 0
+2026-10-14T02:22:57.0520816Z Packages: +627
+2026-10-14T02:22:57.0521199Z ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+2026-10-14T02:22:58.0086187Z Progress: resolved 627, reused 627, downloaded 0, added 9
+2026-10-14T02:22:59.0106861Z Progress: resolved 627, reused 627, downloaded 0, added 107
+2026-10-14T02:23:00.0154589Z Progress: resolved 627, reused 627, downloaded 0, added 233
+2026-10-14T02:23:01.0173245Z Progress: resolved 627, reused 627, downloaded 0, added 279
+2026-10-14T02:23:02.0180429Z Progress: resolved 627, reused 627, downloaded 0, added 524
+2026-10-14T02:23:02.4037543Z Progress: resolved 627, reused 627, downloaded 0, added 627, done
+2026-10-14T02:23:03.6194997Z ✓ Lockfile passes supply-chain policies (758 entries in 6.7s)
+2026-10-14T02:23:03.9537673Z 
+2026-10-14T02:23:03.9538378Z dependencies:
+2026-10-14T02:23:03.9538680Z + @ai-sdk/alibaba 2.0.58
+2026-10-14T02:23:03.9538879Z + @ai-sdk/anthropic 4.0.68
+2026-10-14T02:23:03.9539027Z + @ai-sdk/deepseek 3.0.56
+2026-10-14T02:23:03.9539176Z + @ai-sdk/google 4.0.85
+2026-10-14T02:23:03.9539316Z + @ai-sdk/minimax 3.0.45
+2026-10-14T02:23:03.9540057Z + @ai-sdk/moonshotai 3.0.60
+2026-10-14T02:23:03.9540281Z + @ai-sdk/openai 4.0.81
+2026-10-14T02:23:03.9540561Z + @ai-sdk/openai-compatible 3.0.59
+2026-10-14T02:23:03.9540860Z + @aws-sdk/client-s3 3.1141.0
+2026-10-14T02:23:03.9541088Z + @dnd-kit/core 6.3.1
+2026-10-14T02:23:03.9541284Z + @dnd-kit/sortable 10.0.0
+2026-10-14T02:23:03.9541492Z + @dnd-kit/utilities 3.2.2
+2026-10-14T02:23:03.9541703Z + @hono/node-server 2.1.1
+2026-10-14T02:23:03.9541925Z + @hookform/resolvers 5.9.1
+2026-10-14T02:23:03.9542162Z + @modelcontextprotocol/server 2.1.0
+2026-10-14T02:23:03.9542394Z + @noble/hashes 2.4.0
+2026-10-14T02:23:03.9542650Z + @openrouter/ai-sdk-provider 3.1.0
+2026-10-14T02:23:03.9542890Z + @radix-ui/react-dialog 1.1.23
+2026-10-14T02:23:03.9543122Z + @radix-ui/react-select 2.3.7
+2026-10-14T02:23:03.9543358Z + @radix-ui/react-slot 1.3.3
+2026-10-14T02:23:03.9543600Z + @tanstack/react-router 1.170.40
+2026-10-14T02:23:03.9543919Z + @xyflow/react 12.12.0
+2026-10-14T02:23:03.9544109Z + ai 7.0.122
+2026-10-14T02:23:03.9544282Z + better-auth 1.7.6
+2026-10-14T02:23:03.9544493Z + class-variance-authority 0.7.1
+2026-10-14T02:23:03.9544698Z + clsx 2.1.1
+2026-10-14T02:23:03.9544866Z + date-fns 4.4.0
+2026-10-14T02:23:03.9545044Z + dexie 4.4.2
+2026-10-14T02:23:03.9545246Z + fflate 0.8.3
+2026-10-14T02:23:03.9545432Z + hash-wasm 4.12.0
+2026-10-14T02:23:03.9545604Z + hono 4.13.10
+2026-10-14T02:23:03.9545768Z + i18next 26.4.2
+2026-10-14T02:23:03.9545937Z + jose 6.2.12
+2026-10-14T02:23:03.9546105Z + kdbxweb 2.1.1
+2026-10-14T02:23:03.9546299Z + libsodium-wrappers 0.8.4
+2026-10-14T02:23:03.9547841Z + lucide-react 1.48.0
+2026-10-14T02:23:03.9548035Z + motion 13.4.4
+2026-10-14T02:23:03.9548225Z + papaparse 5.7.0
+2026-10-14T02:23:03.9548421Z + pdfjs-dist 6.3.289
+2026-10-14T02:23:03.9548610Z + pg 8.23.0
+2026-10-14T02:23:03.9548779Z + react 19.3.0
+2026-10-14T02:23:03.9548962Z + react-dom 19.3.0
+2026-10-14T02:23:03.9549161Z + react-hook-form 7.89.0
+2026-10-14T02:23:03.9549387Z + react-i18next 17.0.15
+2026-10-14T02:23:03.9549578Z + rxdb 17.5.0
+2026-10-14T02:23:03.9549765Z + tailwind-merge 3.7.0
+2026-10-14T02:23:03.9549965Z + zod 4.6.5
+2026-10-14T02:23:03.9550062Z 
+2026-10-14T02:23:03.9554946Z devDependencies:
+2026-10-14T02:23:03.9555338Z + @biomejs/biome 2.5.14
+2026-10-14T02:23:03.9555574Z + @electric-sql/pglite 0.5.8
+2026-10-14T02:23:03.9555853Z + @modelcontextprotocol/client 2.1.0
+2026-10-14T02:23:03.9556113Z + @playwright/test 1.63.0
+2026-10-14T02:23:03.9556338Z + @tailwindcss/vite 4.3.3
+2026-10-14T02:23:03.9556559Z + @types/node 26.6.3
+2026-10-14T02:23:03.9556768Z + @types/papaparse 5.5.2
+2026-10-14T02:23:03.9556993Z + @types/pg 8.23.1
+2026-10-14T02:23:03.9557186Z + @types/react 19.3.0
+2026-10-14T02:23:03.9557383Z + @types/react-dom 19.3.0
+2026-10-14T02:23:03.9557597Z + @vitejs/plugin-react 6.1.1
+2026-10-14T02:23:03.9557806Z + esbuild 0.27.7
+2026-10-14T02:23:03.9557997Z + fake-indexeddb 6.2.5
+2026-10-14T02:23:03.9558197Z + tailwindcss 4.3.3
+2026-10-14T02:23:03.9558368Z + tsx 4.21.0
+2026-10-14T02:23:03.9558552Z + typescript 7.0.2
+2026-10-14T02:23:03.9558803Z + vite 8.3.1
+2026-10-14T02:23:03.9559000Z + vite-plugin-pwa 1.3.0
+2026-10-14T02:23:03.9559215Z + vitest 5.0.2
+2026-10-14T02:23:03.9559410Z + workbox-window 7.4.1
+2026-10-14T02:23:03.9559539Z 
+2026-10-14T02:23:04.0042591Z Done in 7.7s using pnpm v11.10.0
+2026-10-14T02:23:04.1761373Z ##[group]Run node scripts/build-preview-release.mjs
+2026-10-14T02:23:04.1761670Z [36;1mnode scripts/build-preview-release.mjs[0m
+2026-10-14T02:23:04.1813362Z shell: C:\Program Files\PowerShell\7\pwsh.EXE -command ". '{0}'"
+2026-10-14T02:23:04.1813607Z env:
+2026-10-14T02:23:04.1813842Z   PNPM_HOME: C:\Users\runneradmin\setup-pnpm\node_modules\.bin
+2026-10-14T02:23:04.1814114Z ##[endgroup]
+2026-10-14T02:23:08.2573664Z [36mvite v8.3.1 [32mbuilding client environment for production...[36m[39m
+2026-10-14T02:23:08.2680603Z transforming...
+2026-10-14T02:23:08.5552909Z [33m[plugin rolldown:vite-resolve] Module "crypto" has been externalized for browser compatibility, imported by "D:/a/StackPerch/StackPerch/node_modules/.pnpm/kdbxweb@2.1.1_patch_hash=05_d4a4eb1b6839e637a1f16fa3c5754fec/node_modules/kdbxweb/dist/kdbxweb.js". See https://vite.dev/guide/troubleshooting.html#module-externalized-for-browser-compatibility for more details.[39m
+2026-10-14T02:23:08.8293743Z ✓ 3598 modules transformed.
+2026-10-14T02:23:09.0018294Z rendering chunks...
+2026-10-14T02:23:09.2593298Z computing gzip size...
+2026-10-14T02:23:09.2746331Z apps/web/dist/manifest.webmanifest                                 0.46 kB
+2026-10-14T02:23:09.2746975Z apps/web/dist/index.html                                           2.20 kB │ gzip:   0.68 kB
+2026-10-14T02:23:09.2747557Z apps/web/dist/assets/pdf.worker.min-Dswkl-cV.mjs               1,265.41 kB
+2026-10-14T02:23:09.2748128Z apps/web/dist/assets/page-settings-DiB-a8p_.css                    0.54 kB │ gzip:   0.25 kB
+2026-10-14T02:23:09.2748719Z apps/web/dist/assets/task-card-DViOst4_.css                        0.76 kB │ gzip:   0.35 kB
+2026-10-14T02:23:09.2749526Z apps/web/dist/assets/file-picker-kgdqzVoW.css                      1.42 kB │ gzip:   0.53 kB
+2026-10-14T02:23:09.2750143Z apps/web/dist/assets/TaskRow-DfvVL7mv.css                          1.78 kB │ gzip:   0.59 kB
+2026-10-14T02:23:09.2750797Z apps/web/dist/assets/page-assistant-access-ITpHSpOj.css            2.26 kB │ gzip:   0.66 kB
+2026-10-14T02:23:09.2751422Z apps/web/dist/assets/page-tasks-YXFxri6W.css                       2.45 kB │ gzip:   0.79 kB
+2026-10-14T02:23:09.2752032Z apps/web/dist/assets/page-change-impact-2RQWMibu.css               2.52 kB │ gzip:   0.77 kB
+2026-10-14T02:23:09.2752838Z apps/web/dist/assets/ProjectWorkflowTaskRow-DKmdHiVb.css           2.67 kB │ gzip:   0.68 kB
+2026-10-14T02:23:09.2753238Z apps/web/dist/assets/select-BXU9zSte.css                           2.77 kB │ gzip:   0.94 kB
+2026-10-14T02:23:09.2753643Z apps/web/dist/assets/finance-D-K8HFFI.css                          2.91 kB │ gzip:   0.89 kB
+2026-10-14T02:23:09.2754032Z apps/web/dist/assets/page-asset-detail-JmrnaR_P.css                3.15 kB │ gzip:   0.99 kB
+2026-10-14T02:23:09.2754425Z apps/web/dist/assets/workflows-COZyU7wP.css                        3.41 kB │ gzip:   1.04 kB
+2026-10-14T02:23:09.2755063Z apps/web/dist/assets/page-project-workflow-DPRVu0WK.css            3.66 kB │ gzip:   0.93 kB
+2026-10-14T02:23:09.2755710Z apps/web/dist/assets/settings-intake-restoration-CYu80ifM.css      3.91 kB │ gzip:   1.05 kB
+2026-10-14T02:23:09.2756344Z apps/web/dist/assets/page-intake-S9-7tNOH.css                      5.81 kB │ gzip:   1.39 kB
+2026-10-14T02:23:09.2756980Z apps/web/dist/assets/page-collections-DQSJHAat.css                 5.93 kB │ gzip:   1.48 kB
+2026-10-14T02:23:09.2757640Z apps/web/dist/assets/page-overview-Dx-B4Czm.css                    6.11 kB │ gzip:   1.58 kB
+2026-10-14T02:23:09.2758278Z apps/web/dist/assets/page-asset-list-BFlWVlte.css                 26.68 kB │ gzip:   4.95 kB
+2026-10-14T02:23:09.2758943Z apps/web/dist/assets/PasswordVaultPanel-BE7dssVU.css              41.45 kB │ gzip:   7.05 kB
+2026-10-14T02:23:09.2759706Z apps/web/dist/assets/index-CMet_9Xx.css                           55.15 kB │ gzip:  10.91 kB
+2026-10-14T02:23:09.2760316Z apps/web/dist/assets/iso-C-fnorb9.js                               0.08 kB │ gzip:   0.10 kB
+2026-10-14T02:23:09.2763690Z apps/web/dist/assets/fields-cYel9wiS.js                            0.15 kB │ gzip:   0.11 kB
+2026-10-14T02:23:09.2764612Z apps/web/dist/assets/useLocation-CesW4bee.js                       0.15 kB │ gzip:   0.14 kB
+2026-10-14T02:23:09.2765262Z apps/web/dist/assets/useRouterState-9iSqitMX.js                    0.19 kB │ gzip:   0.17 kB
+2026-10-14T02:23:09.2765904Z apps/web/dist/assets/arrow-right-DaNfe9B3.js                       0.20 kB │ gzip:   0.18 kB
+2026-10-14T02:23:09.2766532Z apps/web/dist/assets/smartphone-DJShdI5S.js                        0.23 kB │ gzip:   0.21 kB
+2026-10-14T02:23:09.2767183Z apps/web/dist/assets/chevron-up-DYoa4Mqj.js                        0.26 kB │ gzip:   0.20 kB
+2026-10-14T02:23:09.2767803Z apps/web/dist/assets/external-link-OCVUYIFB.js                     0.29 kB │ gzip:   0.22 kB
+2026-10-14T02:23:09.2768459Z apps/web/dist/assets/lock-keyhole-DAa5Z27d.js                      0.29 kB │ gzip:   0.24 kB
+2026-10-14T02:23:09.2769148Z apps/web/dist/assets/refresh-cw-DyllSlzR.js                        0.36 kB │ gzip:   0.25 kB
+2026-10-14T02:23:09.2770145Z apps/web/dist/assets/triangle-alert-D0w4ox3U.js                    0.47 kB │ gzip:   0.30 kB
+2026-10-14T02:23:09.2770842Z apps/web/dist/assets/collection-model-BByCUpvw.js                  0.57 kB │ gzip:   0.35 kB
+2026-10-14T02:23:09.2771506Z apps/web/dist/assets/useMatch-BF3fwUzQ.js                          0.64 kB │ gzip:   0.40 kB
+2026-10-14T02:23:09.2772173Z apps/web/dist/assets/__vite-browser-external-BZ2iqd6L.js           0.75 kB │ gzip:   0.44 kB
+2026-10-14T02:23:09.2772847Z apps/web/dist/assets/money-DzXEqiUQ.js                             0.78 kB │ gzip:   0.46 kB
+2026-10-14T02:23:09.2773484Z apps/web/dist/assets/rxdb-store-D5AqwIQ8.js                        1.16 kB │ gzip:   0.62 kB
+2026-10-14T02:23:09.2774160Z apps/web/dist/assets/preload-helper-BZ1Pz5am.js                    1.21 kB │ gzip:   0.69 kB
+2026-10-14T02:23:09.2774855Z apps/web/dist/assets/file-picker-BnmmZl88.js                       1.22 kB │ gzip:   0.61 kB
+2026-10-14T02:23:09.2775520Z apps/web/dist/assets/bound-sync-C6CXghBI.js                        2.17 kB │ gzip:   0.92 kB
+2026-10-14T02:23:09.2776174Z apps/web/dist/assets/finance-DVyUdvii.js                           2.29 kB │ gzip:   0.70 kB
+2026-10-14T02:23:09.2777079Z apps/web/dist/assets/page-trash-BILwZN9u.js                        2.52 kB │ gzip:   1.02 kB
+2026-10-14T02:23:09.2777723Z apps/web/dist/assets/impact-DUW3Uslq.js                            2.62 kB │ gzip:   1.06 kB
+2026-10-14T02:23:09.2778366Z apps/web/dist/assets/ImpactTaskRow-DdBbdy_w.js                     3.06 kB │ gzip:   1.34 kB
+2026-10-14T02:23:09.2779048Z apps/web/dist/assets/createLucideIcon-Cv2NvGrq.js                  3.15 kB │ gzip:   1.52 kB
+2026-10-14T02:23:09.2780353Z apps/web/dist/assets/page-assistant-access-D7hbMuQl.js             4.16 kB │ gzip:   1.27 kB
+2026-10-14T02:23:09.2781767Z apps/web/dist/assets/button-CLLeZ0ME.js                            4.23 kB │ gzip:   1.86 kB
+2026-10-14T02:23:09.2782421Z apps/web/dist/assets/tslib.es6-BgElsgfY.js                         4.58 kB │ gzip:   1.78 kB
+2026-10-14T02:23:09.2783043Z apps/web/dist/assets/dialog-Bi5SJuBy.js                            5.13 kB │ gzip:   2.02 kB
+2026-10-14T02:23:09.2783695Z apps/web/dist/assets/workbox-window.prod.es5-Bd17z0YL.js           5.65 kB │ gzip:   2.20 kB
+2026-10-14T02:23:09.2784337Z apps/web/dist/assets/sha2-6eO_SsNp.js                              5.74 kB │ gzip:   2.80 kB
+2026-10-14T02:23:09.2785484Z apps/web/dist/assets/ProjectWorkflowTaskRow-Cy-FGUoi.js            6.14 kB │ gzip:   2.46 kB
+2026-10-14T02:23:09.2785959Z apps/web/dist/assets/page-tasks-DjTyZZiv.js                        6.23 kB │ gzip:   2.36 kB
+2026-10-14T02:23:09.2786364Z apps/web/dist/assets/browser-bridge-4KOWbNXl.js                    6.93 kB │ gzip:   2.36 kB
+2026-10-14T02:23:09.2786766Z apps/web/dist/assets/page-change-impact-wllUoiUs.js                7.05 kB │ gzip:   2.38 kB
+2026-10-14T02:23:09.2788628Z apps/web/dist/assets/page-overview-DkMmZdV-.js                     8.62 kB │ gzip:   2.51 kB
+2026-10-14T02:23:09.2789299Z apps/web/dist/assets/TaskRow-BDiEvlin.js                           9.82 kB │ gzip:   3.14 kB
+2026-10-14T02:23:09.2789673Z apps/web/dist/assets/link-Zfm1c1oB.js                             10.37 kB │ gzip:   4.69 kB
+2026-10-14T02:23:09.2790081Z apps/web/dist/assets/page-project-workflow-XfQTd10H.js            10.64 kB │ gzip:   2.87 kB
+2026-10-14T02:23:09.2790483Z apps/web/dist/assets/page-collections-Dd-oOMY5.js                 10.87 kB │ gzip:   3.61 kB
+2026-10-14T02:23:09.2790873Z apps/web/dist/assets/page-finance-ej4GYbjF.js                     11.97 kB │ gzip:   3.86 kB
+2026-10-14T02:23:09.2791326Z apps/web/dist/assets/useTranslation-3t-WiBRH.js                   13.92 kB │ gzip:   5.59 kB
+2026-10-14T02:23:09.2791977Z apps/web/dist/assets/papaparse.min-CxjvFXUz.js                    19.16 kB │ gzip:   7.06 kB
+2026-10-14T02:23:09.2792624Z apps/web/dist/assets/src-DwPKovAD.js                              19.47 kB │ gzip:   5.89 kB
+2026-10-14T02:23:09.2793118Z apps/web/dist/assets/src-BTOM3zGP.js                              23.24 kB │ gzip:   6.62 kB
+2026-10-14T02:23:09.2793583Z apps/web/dist/assets/page-asset-list-zYQXIcaD.js                  24.21 kB │ gzip:   7.73 kB
+2026-10-14T02:23:09.2794256Z apps/web/dist/assets/es2015-CHf_PN-9.js                           33.57 kB │ gzip:  11.71 kB
+2026-10-14T02:23:09.2794906Z apps/web/dist/assets/SelfHostSessionPanel-wc6uCWN1.js             33.88 kB │ gzip:  12.46 kB
+2026-10-14T02:23:09.2795561Z apps/web/dist/assets/src-DHqsrhm_.js                              43.99 kB │ gzip:  16.53 kB
+2026-10-14T02:23:09.2796198Z apps/web/dist/assets/sortable.esm-C096e-NT.js                     45.23 kB │ gzip:  14.85 kB
+2026-10-14T02:23:09.2796849Z apps/web/dist/assets/page-intake-BzM3yN5b.js                      47.12 kB │ gzip:  14.45 kB
+2026-10-14T02:23:09.2797490Z apps/web/dist/assets/select-D5OliYeh.js                           55.50 kB │ gzip:  19.23 kB
+2026-10-14T02:23:09.2798190Z apps/web/dist/assets/workflows-DUE69rwA.js                        83.78 kB │ gzip:  22.68 kB
+2026-10-14T02:23:09.2798821Z apps/web/dist/assets/schemas-CGTMZIIT.js                         100.03 kB │ gzip:  28.08 kB
+2026-10-14T02:23:09.2799474Z apps/web/dist/assets/page-settings-mKUwqYyc.js                   105.01 kB │ gzip:  28.05 kB
+2026-10-14T02:23:09.2800374Z apps/web/dist/assets/PasswordVaultPanel-ePk93BR-.js              119.55 kB │ gzip:  33.27 kB
+2026-10-14T02:23:09.2800820Z apps/web/dist/assets/task-card-CMKnJ4N5.js                       124.10 kB │ gzip:  40.29 kB
+2026-10-14T02:23:09.2801261Z apps/web/dist/assets/header-jGoQ5BCs.js                          201.42 kB │ gzip:  61.23 kB
+2026-10-14T02:23:09.2801921Z apps/web/dist/assets/page-asset-detail-DkWbupd-.js               246.98 kB │ gzip:  72.49 kB
+2026-10-14T02:23:09.2802551Z apps/web/dist/assets/src-CeltEqVL.js                             373.60 kB │ gzip: 110.33 kB
+2026-10-14T02:23:09.2803186Z apps/web/dist/assets/intake-pdf-9jagFBbZ.js                      431.20 kB │ gzip: 129.39 kB
+2026-10-14T02:23:09.2803825Z apps/web/dist/assets/src-D0wJuu0s.js                             442.78 kB │ gzip: 155.98 kB
+2026-10-14T02:23:09.2804240Z apps/web/dist/assets/index-D2miYO8z.js                           538.30 kB │ gzip: 173.11 kB
+2026-10-14T02:23:09.2804805Z apps/web/dist/assets/ai-settings-store-D8S-q_bQ.js               989.15 kB │ gzip: 240.97 kB
+2026-10-14T02:23:09.2805304Z 
+2026-10-14T02:23:09.2805603Z [33m[plugin builtin:vite-reporter] 
+2026-10-14T02:23:09.2805991Z (!) Some chunks are larger than 500 kB after minification. Consider:
+2026-10-14T02:23:09.2806410Z - Using dynamic import() to code-split the application
+2026-10-14T02:23:09.2807129Z - Use build.rolldownOptions.output.codeSplitting to improve chunking: https://rolldown.rs/reference/OutputOptions.codeSplitting
+2026-10-14T02:23:09.2807923Z - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.[39m
+2026-10-14T02:23:09.2843205Z [32m✓ built in 1.02s[39m
+2026-10-14T02:23:11.2292091Z 
+2026-10-14T02:23:11.2293000Z [36mPWA v1.3.0[39m
+2026-10-14T02:23:11.2293380Z mode      [35mgenerateSW[39m
+2026-10-14T02:23:11.2293753Z precache  [32m95 entries[39m [2m(4332.08 KiB)[22m
+2026-10-14T02:23:11.2294059Z files generated
+2026-10-14T02:23:11.2294259Z   [2mdist/sw.js[22m
+2026-10-14T02:23:11.2294503Z   [2mdist/workbox-9c191d2f.js[22m
+2026-10-14T02:23:11.3878599Z Verified 30 checked-in material files for 32 package versions (27 with upstream original text, 5 declared with labelled supplement, 0 unresolved).
+2026-10-14T02:23:12.1187240Z Built D:\a\StackPerch\StackPerch\dist\preview\StackPerch-0.1.0-preview.7ebc2c349f48-portable.zip
+2026-10-14T02:23:12.1187664Z 98 fresh web files; 132 distributed dependency license records; 388 source files.
+2026-10-14T02:23:12.1187985Z SHA-256 307bebf21b452e29dabce576ce5c6f88e8deca07a78b5083cc95cbc87f855d76
+2026-10-14T02:23:12.2805814Z ##[group]Run node scripts/verify-preview-release.mjs
+2026-10-14T02:23:12.2806097Z [36;1mnode scripts/verify-preview-release.mjs[0m
+2026-10-14T02:23:12.2853972Z shell: C:\Program Files\PowerShell\7\pwsh.EXE -command ". '{0}'"
+2026-10-14T02:23:12.2854171Z env:
+2026-10-14T02:23:12.2854333Z   PNPM_HOME: C:\Users\runneradmin\setup-pnpm\node_modules\.bin
+2026-10-14T02:23:12.2854524Z ##[endgroup]
+2026-10-14T02:23:29.8485878Z {
+2026-10-14T02:23:29.8486316Z   "archive": "D:\\a\\StackPerch\\StackPerch\\dist\\preview\\StackPerch-0.1.0-preview.7ebc2c349f48-portable.zip",
+2026-10-14T02:23:29.8486619Z   "platform": "win32",
+2026-10-14T02:23:29.8486810Z   "sourceCommit": "7ebc2c349f4826759c8b2ef848e8c6133c0b3858",
+2026-10-14T02:23:29.8486996Z   "sourceDirty": false,
+2026-10-14T02:23:29.8487115Z   "webFiles": 98,
+2026-10-14T02:23:29.8487224Z   "checks": [
+2026-10-14T02:23:29.8487600Z     "ZIP and per-file checksums, current web identity, source, launchers, license inventory, and clean external extraction",
+2026-10-14T02:23:29.8487998Z     "Production assets, HEAD, SPA navigation fallback, missing asset/API/dotfile rejection",
+2026-10-14T02:23:29.8488367Z     "Raw and encoded path traversal, malformed path, Host rejection, private state, loopback-only listener",
+2026-10-14T02:23:29.8488826Z     "Duplicate-start conflict, unauthenticated/cross-origin stop rejection, forged PID rejection, own-instance stop and cleanup",
+2026-10-14T02:23:29.8490170Z     "Occupied port leaves an unrelated HTTP service running; stop never sends process signals",
+2026-10-14T02:23:29.8490538Z     "Delivered win32 launcher starts without repository or project dependencies, then stops cleanly"
+2026-10-14T02:23:29.8490784Z   ]
+2026-10-14T02:23:29.8490885Z }
+2026-10-14T02:23:30.1311662Z ##[group]Run actions/upload-artifact@v4
+2026-10-14T02:23:30.1311959Z with:
+2026-10-14T02:23:30.1312434Z   name: StackPerch-preview-windows-latest
+2026-10-14T02:23:30.1312655Z   path: dist/preview/*.zip
+dist/preview/*.zip.sha256
+
+2026-10-14T02:23:30.1312834Z   if-no-files-found: error
+2026-10-14T02:23:30.1312964Z   compression-level: 6
+2026-10-14T02:23:30.1313080Z   overwrite: false
+2026-10-14T02:23:30.1313198Z   include-hidden-files: false
+2026-10-14T02:23:30.1313330Z env:
+2026-10-14T02:23:30.1313478Z   PNPM_HOME: C:\Users\runneradmin\setup-pnpm\node_modules\.bin
+2026-10-14T02:23:30.1313736Z ##[endgroup]
+2026-10-14T02:23:30.2549142Z (node:4692) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-10-14T02:23:30.2549586Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-10-14T02:23:30.2592774Z With the provided path, there will be 2 files uploaded
+2026-10-14T02:23:30.2595788Z Artifact name is valid!
+2026-10-14T02:23:30.2596777Z Root directory input is valid!
+2026-10-14T02:23:30.6327514Z Beginning upload of artifact content to blob storage
+2026-10-14T02:23:30.7326302Z (node:4692) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+2026-10-14T02:23:31.5468019Z Uploaded bytes 3682440
+2026-10-14T02:23:31.6025552Z Finished uploading artifact content to blob storage!
+2026-10-14T02:23:31.6026371Z SHA256 digest of uploaded artifact zip is e107a5e27fa5f9e187b60a9620c2c31c37463a2e1f41588d5d722085216956bd
+2026-10-14T02:23:31.6027754Z Finalizing artifact upload
+2026-10-14T02:23:31.8688472Z Artifact StackPerch-preview-windows-latest.zip successfully finalized. Artifact ID 11865408999
+2026-10-14T02:23:31.8689372Z Artifact StackPerch-preview-windows-latest has been successfully uploaded! Final size is 3682440 bytes. Artifact ID is 11865408999
+2026-10-14T02:23:31.8698274Z Artifact download URL: https://github.com/Syndred/StackPerch/actions/runs/38500663726/artifacts/11865408999
+2026-10-14T02:23:31.8960691Z Post job cleanup.
+2026-10-14T02:23:31.9967921Z (node:6736) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-10-14T02:23:31.9968411Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-10-14T02:23:31.9970159Z Cache hit occurred on the primary key node-cache-Windows-x64-pnpm-9b9f383f60954bb7372cbd2b547d0e8ced82a6e6009d8e97a0df391dc79d9818, not saving cache.
+2026-10-14T02:23:32.0166563Z Post job cleanup.
+2026-10-14T02:23:32.1273207Z Pruning is unnecessary.
+2026-10-14T02:23:32.1488381Z Post job cleanup.
+2026-10-14T02:23:32.2515199Z [command]"C:\Program Files\Git\bin\git.exe" version
+2026-10-14T02:23:32.2700267Z git version 2.55.0.windows.5
+2026-10-14T02:23:32.2745586Z Temporarily overriding HOME='D:\a\_temp\bf469bd4-5139-434f-8866-7fb55ecec836' before making global git config changes
+2026-10-14T02:23:32.2746159Z Adding repository directory to the temporary git global config as a safe directory
+2026-10-14T02:23:32.2751792Z [command]"C:\Program Files\Git\bin\git.exe" config --global --add safe.directory D:\a\StackPerch\StackPerch
+2026-10-14T02:23:32.2948227Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp core\.sshCommand
+2026-10-14T02:23:32.3132964Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :\""
+2026-10-14T02:23:32.6924441Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-10-14T02:23:32.7087673Z http.https://github.com/.extraheader
+2026-10-14T02:23:32.7116376Z [command]"C:\Program Files\Git\bin\git.exe" config --local --unset-all http.https://github.com/.extraheader
+2026-10-14T02:23:32.7331005Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :\""
+2026-10-14T02:23:33.1360232Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-10-14T02:23:33.1624470Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "git config --local --show-origin --name-only --get-regexp remote.origin.url"
+2026-10-14T02:23:33.5739391Z Cleaning up orphan processes
+2026-10-14T02:23:33.5842672Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, actions/setup-node@v4, actions/upload-artifact@v4, pnpm/action-setup@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+

@@ -1,5 +1,5 @@
 {
-  "status": "source CI, local full suites, both Pages deployments, public release/download and historical URL-only notes acceptance completed; final document commit/primary FF/archive pending",
+  "status": "Release acceptance completed; first document commit pushed and primary fast-forwarded; raw logs preserved; managed archive requests queued",
   "releaseSourceCommit": "7ebc2c349f4826759c8b2ef848e8c6133c0b3858",
   "releaseTag": "v0.1.0-preview.20261014.2",
   "archive": "StackPerch-0.1.0-preview.7ebc2c349f48-portable.zip",
@@ -8,7 +8,7 @@
     "candidate-70": "Historical local passed checks only; tag CI fixed 186 passed / 1 failed, so not accepted for release.",
     "candidate-7ebc": "Final clean source build/native/fixed bytes/site builders; only completed results copied.",
     "diagnostics": "Rejected-candidate failures and bounded synthetic diagnosis; not a proved product defect/root cause.",
-    "root screenshots and layout JSON": "Predeployment site proof from source70; final production screenshots pending.",
+    "root screenshots and layout JSON": "Predeployment proof from source70. Final production 390/1280 screenshots and readback are recorded separately in live/ui.",
     "baseline/old-downloads/git JSON and logs": "Actually captured public migration/download compatibility checks; checkpoint SHA explicitly recorded."
   },
   "nativeCi": {
@@ -24,8 +24,7 @@
     "note": "Source same SHA. Generated CI archives have their own digests and are not the final locally-built published archive."
   },
   "pending": [
-    "Document-only commit and final remote SHA readback",
-    "Primary working tree fast-forward and managed worktree archive final status"
+    "Managed worktree archive execution: tools returned queued, not deletion confirmation"
   ],
   "fullCi": {
     "runs": [
@@ -121,5 +120,6 @@
     "newlineNormalization": true,
     "assetSixMetadataFieldsUnchanged": true,
     "releaseIdentityTitleTagPrereleaseUnchanged": true
-  }
+  },
+  "documentReadback": "final-git-readback.json"
 }
