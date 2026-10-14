@@ -813,6 +813,9 @@ test("zh-CN atomic KDBX save supplementary import and cross-tab stale draft reco
 		await field(importer, "notes").fill(
 			"Synthetic draft survives cross-tab change",
 		);
+		await expect(h.page.locator(".pw-smart-draft-status")).toHaveText(
+			h.t("pwSmartDraftSaved"),
+		);
 		const secondPage = await h.context.newPage();
 		await secondPage.goto("/assets/vault");
 		await secondPage
