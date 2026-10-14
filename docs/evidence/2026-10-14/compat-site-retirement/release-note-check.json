@@ -1,0 +1,203 @@
+{
+  "releaseID": 412282614,
+  "releaseFields": {
+    "id": {
+      "before": 412282614,
+      "after": 412282614,
+      "unchanged": true
+    },
+    "name": {
+      "before": "StackPerch 0.1.0 Preview — Repository migration",
+      "after": "StackPerch 0.1.0 Preview — Repository migration",
+      "unchanged": true
+    },
+    "tag_name": {
+      "before": "v0.1.0-preview.20261014.2",
+      "after": "v0.1.0-preview.20261014.2",
+      "unchanged": true
+    },
+    "prerelease": {
+      "before": true,
+      "after": true,
+      "unchanged": true
+    },
+    "draft": {
+      "before": false,
+      "after": false,
+      "unchanged": true
+    },
+    "target_commitish": {
+      "before": "main",
+      "after": "main",
+      "unchanged": true
+    },
+    "created_at": {
+      "before": "2026-10-14T02:22:05Z",
+      "after": "2026-10-14T02:22:05Z",
+      "unchanged": true
+    },
+    "published_at": {
+      "before": "2026-10-14T03:00:04Z",
+      "after": "2026-10-14T03:00:04Z",
+      "unchanged": true
+    },
+    "html_url": {
+      "before": "https://github.com/Syndred/StackPerch/releases/tag/v0.1.0-preview.20261014.2",
+      "after": "https://github.com/Syndred/StackPerch/releases/tag/v0.1.0-preview.20261014.2",
+      "unchanged": true
+    },
+    "immutable": {
+      "before": false,
+      "after": false,
+      "unchanged": true
+    }
+  },
+  "assetsBefore": [
+    {
+      "id": 638965670,
+      "name": "StackPerch-0.1.0-preview.7ebc2c349f48-portable.zip",
+      "size": 3874914,
+      "digest": "sha256:48cf9866866b17efed4c3b28e6920e622af35ca58e122c34e72abc50f6741a47",
+      "created_at": "2026-10-14T02:31:54Z",
+      "updated_at": "2026-10-14T02:32:01Z"
+    },
+    {
+      "id": 638965915,
+      "name": "StackPerch-0.1.0-preview.7ebc2c349f48-portable.zip.sha256",
+      "size": 117,
+      "digest": "sha256:0e0e408038c28f0d14dcd0c0ee754d26dfbb542fd4eae48c4291df28233b0638",
+      "created_at": "2026-10-14T02:32:01Z",
+      "updated_at": "2026-10-14T02:32:02Z"
+    }
+  ],
+  "assetsAfter": [
+    {
+      "id": 638965670,
+      "name": "StackPerch-0.1.0-preview.7ebc2c349f48-portable.zip",
+      "size": 3874914,
+      "digest": "sha256:48cf9866866b17efed4c3b28e6920e622af35ca58e122c34e72abc50f6741a47",
+      "created_at": "2026-10-14T02:31:54Z",
+      "updated_at": "2026-10-14T02:32:01Z"
+    },
+    {
+      "id": 638965915,
+      "name": "StackPerch-0.1.0-preview.7ebc2c349f48-portable.zip.sha256",
+      "size": 117,
+      "digest": "sha256:0e0e408038c28f0d14dcd0c0ee754d26dfbb542fd4eae48c4291df28233b0638",
+      "created_at": "2026-10-14T02:32:01Z",
+      "updated_at": "2026-10-14T02:32:02Z"
+    }
+  ],
+  "assetsMetadataUnchanged": true,
+  "body": {
+    "exactBytesMatch": false,
+    "matchesIgnoringOneFinalNewline": false,
+    "bodyChanged": true,
+    "expectedCharacters": 2668,
+    "actualCharacters": 2694,
+    "expectedLineEndings": "LF",
+    "actualLineEndings": "CRLF",
+    "lineEndingDifferenceOnly": true,
+    "contentMatchesAfterLineEndingNormalization": true
+  },
+  "allRequestedInvariantsUnchanged": true,
+  "publishedSource": {
+    "sha": "7ebc2c349f4826759c8b2ef848e8c6133c0b3858",
+    "beforeBodyContainsSource": true,
+    "afterBodyContainsSource": true,
+    "apiTargetCommitishUnchanged": true,
+    "tagUnchanged": true,
+    "limitation": "Release API records target_commitish=main rather than dereferencing the annotated tag; this comparison establishes the API target/tag and body source citation are unchanged."
+  },
+  "sourceChangeStatistics": {
+    "commit": "fc5d4f5d9a36411393e3c0f8a04e6e0be42bef92",
+    "changedFiles": 20,
+    "modifiedFiles": 11,
+    "deletedFiles": 9,
+    "addedLines": 22,
+    "deletedLines": 549,
+    "files": [
+      {
+        "status": "M",
+        "path": "AGENTS.md"
+      },
+      {
+        "status": "M",
+        "path": "README.en.md"
+      },
+      {
+        "status": "M",
+        "path": "README.md"
+      },
+      {
+        "status": "D",
+        "path": "apps/legacy-site/README.md"
+      },
+      {
+        "status": "D",
+        "path": "apps/legacy-site/build.test.mjs"
+      },
+      {
+        "status": "D",
+        "path": "apps/legacy-site/page.test.ts"
+      },
+      {
+        "status": "D",
+        "path": "apps/legacy-site/page.tsx"
+      },
+      {
+        "status": "D",
+        "path": "apps/legacy-site/styles.css"
+      },
+      {
+        "status": "D",
+        "path": "apps/legacy-site/vendor/LICENSE.txt"
+      },
+      {
+        "status": "D",
+        "path": "apps/legacy-site/vendor/UPSTREAM.md"
+      },
+      {
+        "status": "D",
+        "path": "apps/legacy-site/vendor/redirect.html"
+      },
+      {
+        "status": "M",
+        "path": "apps/public-site/README.md"
+      },
+      {
+        "status": "M",
+        "path": "apps/public-site/page.test.ts"
+      },
+      {
+        "status": "M",
+        "path": "apps/public-site/page.tsx"
+      },
+      {
+        "status": "M",
+        "path": "docs/08-项目进度交接.md"
+      },
+      {
+        "status": "M",
+        "path": "docs/试用指南.md"
+      },
+      {
+        "status": "M",
+        "path": "package.json"
+      },
+      {
+        "status": "M",
+        "path": "release/README.md"
+      },
+      {
+        "status": "D",
+        "path": "scripts/build-legacy-site.mjs"
+      },
+      {
+        "status": "M",
+        "path": "scripts/build-public-site.mjs"
+      }
+    ]
+  },
+  "passedWithDocumentedLineEndingNormalization": true
+}

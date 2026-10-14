@@ -1,0 +1,23 @@
+{
+  "sourceCommit": "51b3dd73094718f812b4a07ed233feb697586b46",
+  "run_id": 38547663364,
+  "name": "Publish public documentation",
+  "branch": "main",
+  "event": "workflow_dispatch",
+  "status": "completed",
+  "conclusion": "success",
+  "html_url": "https://github.com/Syndred/StackPerch/actions/runs/38547663364",
+  "job_id": 115797622169,
+  "jobName": "deploy",
+  "jobConclusion": "success",
+  "site_url": "https://syndred.github.io/StackPerch/",
+  "sourceGateRuns": [
+    38544814106,
+    38544814152
+  ],
+  "runFile": "run-38547663364.json",
+  "jobsFile": "jobs-38547663364.json",
+  "logFile": "job-115797622169.log",
+  "retriggered": false,
+  "liveSiteAcceptance": "not performed by CI monitor; parent verifies actual public files"
+}
