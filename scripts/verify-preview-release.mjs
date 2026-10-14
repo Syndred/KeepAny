@@ -121,6 +121,11 @@ try {
   const release = JSON.parse(await readFile(join(packageRoot, 'RELEASE.json'), 'utf8'));
   assert.equal(release.productName, 'StackPerch', 'Current portable product name');
   assert.equal(release.previousName, 'KeepAny', 'Previous name retained in release metadata');
+  assert.equal(release.sourceUrl, `https://github.com/Syndred/StackPerch/tree/${release.sourceCommit}`, 'Corresponding source uses the current repository');
+  const sourceInstructions = await readFile(join(packageRoot, 'source', 'SOURCE.md'), 'utf8');
+  assert(sourceInstructions.includes('git clone https://github.com/Syndred/StackPerch.git\ncd StackPerch\n'), 'Rebuild instructions use the current clone URL and directory');
+  const distributedSbom = JSON.parse(await readFile(join(packageRoot, 'SBOM.spdx.json'), 'utf8'));
+  assert(distributedSbom.documentNamespace.startsWith(`https://github.com/Syndred/StackPerch/preview/${release.sourceCommit}/`), 'Distributed SBOM uses the current repository namespace');
   assert.match([...packageNames][0], /^StackPerch-/, 'Current download name');
   const manifest = JSON.parse(await readFile(join(packageRoot, 'web', 'manifest.webmanifest'), 'utf8'));
   assert.equal(manifest.name, 'StackPerch');
