@@ -2,9 +2,9 @@
 
 **A local digital asset workspace for independent developers. Connect projects, domains, accounts, subscriptions, and maintenance.**
 
-[简体中文](README.md) · [Website](https://syndred.github.io/KeepAny/) · [Try StackPerch](docs/试用指南.md#english) · [Releases](https://github.com/Syndred/KeepAny/releases) · [Report an issue](https://github.com/Syndred/KeepAny/issues)
+[简体中文](README.md) · [Website](https://syndred.github.io/StackPerch/) · [Try StackPerch](docs/试用指南.md#english) · [Releases](https://github.com/Syndred/StackPerch/releases) · [Report an issue](https://github.com/Syndred/StackPerch/issues)
 
-StackPerch was formerly KeepAny. The repository, website, downloads, and issue tracker keep their existing addresses.
+StackPerch was formerly KeepAny. The repository, website, downloads, and issue tracker now use StackPerch addresses. Older GitHub links redirect to the renamed repository, and the old website provides a redirect and direct links to the new site.
 
 Which email does a project use? Where is its domain registered? Which subscriptions still need attention when you change an email or retire a project? StackPerch keeps those records connected in one local workspace, so you can find what to do next.
 
@@ -16,7 +16,7 @@ No registration required. English and Simplified Chinese interfaces. The local c
 
 ## Download and try
 
-**This is an early preview.** Download the `StackPerch-…-portable.zip` marked `Pre-release` from [GitHub Releases](https://github.com/Syndred/KeepAny/releases). Each release will identify its source revision, checksums, and known limits. Earlier `KeepAny-…-portable.zip` packages remain available on the same Releases page. GitHub's source ZIP is not the portable app.
+**This is an early preview.** Download the `StackPerch-…-portable.zip` marked `Pre-release` from [GitHub Releases](https://github.com/Syndred/StackPerch/releases). Each release will identify its source revision, checksums, and known limits. Earlier `KeepAny-…-portable.zip` packages remain available on the same Releases page. GitHub's source ZIP is not the portable app.
 
 The portable package requires **[Node.js 22 or newer](https://nodejs.org/)**. You do not need Git, pnpm, or a build step. Extract it to a folder you can keep:
 

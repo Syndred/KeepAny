@@ -2,9 +2,9 @@
 
 **独立开发者的本地数字资产工作台。把项目、域名、账号、订阅和维护事项连起来。**
 
-[English](README.en.md) · [官网](https://syndred.github.io/KeepAny/zh/) · [试用指南](docs/试用指南.md) · [发布记录](https://github.com/Syndred/KeepAny/releases) · [反馈问题](https://github.com/Syndred/KeepAny/issues)
+[English](README.en.md) · [官网](https://syndred.github.io/StackPerch/zh/) · [试用指南](docs/试用指南.md) · [发布记录](https://github.com/Syndred/StackPerch/releases) · [反馈问题](https://github.com/Syndred/StackPerch/issues)
 
-StackPerch 原名 KeepAny。仓库、官网、下载和问题反馈仍沿用原入口。
+StackPerch 原名 KeepAny。仓库、官网、下载和问题反馈使用 StackPerch 正式地址。旧 GitHub 链接转到新仓库，旧官网提供新站跳转和直达链接。
 
 一个项目用了哪个邮箱、在哪买的域名、有哪些订阅？换邮箱或停止维护时，还要处理哪些关联服务？StackPerch 把这些资料放进同一个本地工作区，让你沿着关联找到下一步。
 
@@ -16,7 +16,7 @@ StackPerch 原名 KeepAny。仓库、官网、下载和问题反馈仍沿用原�
 
 ## 下载与试用
 
-**当前为早期测试版。** 请从 [GitHub Releases](https://github.com/Syndred/KeepAny/releases) 获取标注 `Pre-release` 的 `StackPerch-…-portable.zip`。发布页会列出对应源码版本、校验值和已知限制；旧版 `KeepAny-…-portable.zip` 仍可从同一发布页获取。不要把 GitHub 的源码 ZIP 当成便携应用包。
+**当前为早期测试版。** 请从 [GitHub Releases](https://github.com/Syndred/StackPerch/releases) 获取标注 `Pre-release` 的 `StackPerch-…-portable.zip`。发布页会列出对应源码版本、校验值和已知限制；旧版 `KeepAny-…-portable.zip` 仍可从同一发布页获取。不要把 GitHub 的源码 ZIP 当成便携应用包。
 
 便携包需要 **[Node.js 22 或更新版本](https://nodejs.org/)**，无需 Git、pnpm 或编译源码。解压到一个固定文件夹后启动：
 

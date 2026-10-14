@@ -6,9 +6,9 @@ StackPerch（原名 KeepAny）当前为早期测试版。加密实现和已有�
 
 ## Report privately / 私密报告
 
-If the repository's [Security page](https://github.com/Syndred/KeepAny/security) offers **Report a vulnerability**, use that private reporting form. This document does not imply that the form is enabled.
+If the repository's [Security page](https://github.com/Syndred/StackPerch/security) offers **Report a vulnerability**, use that private reporting form. This document does not imply that the form is enabled.
 
-若 Security 页显示 **Report a vulnerability**，请使用该私密报告入口。本文不代表该功能已启用。若入口不可用，请在 [普通 issue](https://github.com/Syndred/KeepAny/issues) 仅说明需要私密安全报告渠道及不含攻击细节的概要，等待维护者提供渠道后再传递完整材料。
+若 Security 页显示 **Report a vulnerability**，请使用该私密报告入口。本文不代表该功能已启用。若入口不可用，请在 [普通 issue](https://github.com/Syndred/StackPerch/issues) 仅说明需要私密安全报告渠道及不含攻击细节的概要，等待维护者提供渠道后再传递完整材料。
 
 Do not post passwords, API keys, master passwords, real vaults, backups, private records, or actionable exploit details publicly. Use fictional records and a minimal reproduction. Include the affected release or commit, component, impact, reproduction steps, and any proposed fix. No response-time SLA or bounty program is currently promised.
 

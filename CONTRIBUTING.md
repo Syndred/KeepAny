@@ -6,7 +6,7 @@ StackPerch（原名 KeepAny）面向维护多个项目的独立开发者。当�
 
 ## Report a problem / 反馈问题
 
-Search [existing issues](https://github.com/Syndred/KeepAny/issues) first. Include:
+Search [existing issues](https://github.com/Syndred/StackPerch/issues) first. Include:
 
 - App version or source commit, OS, browser, and language.
 - Reproduction steps, expected behavior, and actual behavior.
