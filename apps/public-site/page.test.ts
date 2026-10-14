@@ -31,7 +31,7 @@ describe.each<PublicLocale>(["en", "zh-CN"])("public page in %s", (locale) => {
 		}
 		expect(html).toContain(`${config.repositoryUrl}/blob/main/docs/试用指南.md`);
 		expect(html).toContain(locale === "en" ? "formerly KeepAny" : "原名 KeepAny");
-		expect(html).toContain(locale === "en" ? "The old KeepAny GitHub and website entries remain available." : "旧 KeepAny GitHub 和官网入口继续兼容。");
+		expect(html).toContain(locale === "en" ? "Older KeepAny GitHub links still redirect to StackPerch." : "旧 KeepAny GitHub 链接仍转到 StackPerch。");
 		expect(html).not.toContain("github.com/Syndred/KeepAny");
 		expect(html).not.toContain("syndred.github.io/KeepAny/");
 		expect(html).toContain(".ka1");

@@ -1,6 +1,0 @@
-@import "../public-site/styles.css";
-
-.legacy-page { max-width: 840px; }
-.legacy-card { gap: var(--space-6); }
-.legacy-card h1 { max-width: none; font-size: clamp(30px, 4vw, 44px); }
-.legacy-card p { max-width: 60ch; }

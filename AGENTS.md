@@ -14,8 +14,9 @@
 - 进度交接用中文：完成、未完成、验证证据、阻塞、下步、提交与部署状态分别记录。
 
 - 优先使用Ego浏览器；当前工作空间有自动化任务时新建隔离工作空间。
+- 不允许创建浏览器页签群组；自行创建的测试页签和临时资料在收尾时关闭或清理。
 - 反复检查：给开发者的实现说明不得进入用户UI。
 
-- 当前主品牌为 StackPerch；KeepAny 的 GitHub/Pages 旧入口及本机地址保留。数据库完整 schema（含 title）、存储键、KDBX 自定义字段、备份格式、同步/绑定/MCP 协议和旧环境变量属于兼容标识，不能按品牌文案全局替换。
+- 当前主品牌为 StackPerch；KeepAny 的 GitHub 旧入口及本机地址保留，旧官网兼容已按用户要求停用。数据库完整 schema（含 title）、存储键、KDBX 自定义字段、备份格式、同步/绑定/MCP 协议和旧环境变量属于兼容标识，不能按品牌文案全局替换。
 
-- 正式仓库为 `Syndred/StackPerch`；旧 GitHub 链接依靠平台重定向保留，禁止重新创建 `Syndred/KeepAny`。旧 Pages 由独立 `Syndred/syndred.github.io` 兼容站承接，本机 KeepAny 目录继续保留。
+- 正式仓库为 `Syndred/StackPerch`；旧 GitHub 链接依靠平台重定向保留，禁止重新创建 `Syndred/KeepAny`。正式官网为 `https://syndred.github.io/StackPerch/`；用户明确不需要 `Syndred/syndred.github.io` 兼容仓库，不得自动重建。本机 KeepAny 目录继续保留。

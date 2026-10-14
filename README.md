@@ -4,7 +4,7 @@
 
 [English](README.en.md) · [官网](https://syndred.github.io/StackPerch/zh/) · [试用指南](docs/试用指南.md) · [发布记录](https://github.com/Syndred/StackPerch/releases) · [反馈问题](https://github.com/Syndred/StackPerch/issues)
 
-StackPerch 原名 KeepAny。仓库、官网、下载和问题反馈使用 StackPerch 正式地址。旧 GitHub 链接转到新仓库，旧官网提供新站跳转和直达链接。
+StackPerch 原名 KeepAny。仓库、官网、下载和问题反馈使用 StackPerch 正式地址。旧 GitHub 链接仍转到新仓库；官网请使用上方的新地址。
 
 一个项目用了哪个邮箱、在哪买的域名、有哪些订阅？换邮箱或停止维护时，还要处理哪些关联服务？StackPerch 把这些资料放进同一个本地工作区，让你沿着关联找到下一步。
 

@@ -10,7 +10,6 @@
     "build:preview": "node scripts/build-preview-release.mjs",
     "verify:preview": "node scripts/verify-preview-release.mjs",
     "build:public-site": "node scripts/build-public-site.mjs",
-    "build:legacy-site": "node scripts/build-legacy-site.mjs",
     "build:mcp": "node scripts/build-mcp-launcher.mjs",
     "pack:mcp": "pnpm build:mcp && npm pack ./dist/mcp-launcher --pack-destination ./dist",
     "typecheck": "tsc --noEmit",
