@@ -2,14 +2,14 @@ import { describe, expect, it } from "vitest";
 import { renderPublicPage, type PublicLocale } from "./page";
 
 const config = {
-	siteUrl: "https://syndred.github.io/KeepAny/",
-	downloadUrl: "https://github.com/Syndred/KeepAny/releases",
-	repositoryUrl: "https://github.com/Syndred/KeepAny",
+	siteUrl: "https://syndred.github.io/StackPerch/",
+	downloadUrl: "https://github.com/Syndred/StackPerch/releases",
+	repositoryUrl: "https://github.com/Syndred/StackPerch",
 	screenshotSize: { width: 1280, height: 808 },
 };
 
 describe.each<PublicLocale>(["en", "zh-CN"])("public page in %s", (locale) => {
-	it("describes StackPerch while preserving the old name and canonical address", () => {
+	it("describes StackPerch while preserving the old name and using the new canonical address", () => {
 		const html = renderPublicPage(locale, config);
 		const canonical = `${config.siteUrl}${locale === "en" ? "" : "zh/"}`;
 		const schemaText = html.match(/<script type="application\/ld\+json">(.*?)<\/script>/)?.[1];
@@ -24,13 +24,16 @@ describe.each<PublicLocale>(["en", "zh-CN"])("public page in %s", (locale) => {
 		expect(html).not.toContain("stackperch.com");
 	});
 
-	it("keeps download, source, trial, and issue links on the existing repository", () => {
+	it("keeps download, source, trial, and issue links on the StackPerch repository", () => {
 		const html = renderPublicPage(locale, config);
 		for (const url of [config.downloadUrl, config.repositoryUrl, `${config.repositoryUrl}/issues`]) {
 			expect(html).toContain(`href="${url}"`);
 		}
 		expect(html).toContain(`${config.repositoryUrl}/blob/main/docs/试用指南.md`);
 		expect(html).toContain(locale === "en" ? "formerly KeepAny" : "原名 KeepAny");
+		expect(html).toContain(locale === "en" ? "The old KeepAny GitHub and website entries remain available." : "旧 KeepAny GitHub 和官网入口继续兼容。");
+		expect(html).not.toContain("github.com/Syndred/KeepAny");
+		expect(html).not.toContain("syndred.github.io/KeepAny/");
 		expect(html).toContain(".ka1");
 		expect(html).toContain(".kdbx");
 	});
