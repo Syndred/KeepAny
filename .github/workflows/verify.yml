@@ -50,9 +50,17 @@ jobs:
       - name: Verify committed web bundle
         run: node scripts/verify-local-release.mjs
       - name: Verify delivered files and offline backup flow
-        run: pnpm exec playwright test --config playwright.release.config.ts --reporter=dot
+        run: pnpm exec playwright test --config playwright.release.config.ts --reporter=dot --trace=retain-on-failure
       - name: Verify delivered sync files with isolated PostgreSQL and local HTTP
         run: pnpm exec playwright test --config playwright.sync-release.config.ts --reporter=dot
+      - name: Preserve failed browser evidence
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: failed-browser-${{ github.run_id }}-${{ github.run_attempt }}-${{ github.job }}
+          path: test-results/
+          retention-days: 7
+          if-no-files-found: ignore
 
   portable-workflows:
     runs-on: ubuntu-latest
@@ -73,7 +81,7 @@ jobs:
         shell: bash
         run: |
           archive="$(node --input-type=module -e 'import fs from "node:fs"; const files=fs.readdirSync("dist/preview").filter(name=>name.endsWith(".zip")); if(files.length!==1)throw Error("Expected one fresh preview"); process.stdout.write(`dist/preview/${files[0]}`);')"
-          KEEPANY_PREVIEW_ARCHIVE="$archive" KEEPANY_RELEASE_TEST_PORT=4391 pnpm exec playwright test --config playwright.portable-release.config.ts --reporter=dot
+          KEEPANY_PREVIEW_ARCHIVE="$archive" KEEPANY_RELEASE_TEST_PORT=4391 pnpm exec playwright test --config playwright.portable-release.config.ts --reporter=dot --trace=retain-on-failure
           KEEPANY_PREVIEW_ARCHIVE="$archive" KEEPANY_RELEASE_TEST_PORT=4391 pnpm exec playwright test --config playwright.portable-offline.config.ts --reporter=dot
       - name: Fetch published KeepAny upgrade baseline
         run: git fetch --no-tags --depth=1 origin 64b98e7874a2fdd8d43c8e60de72a25de5800b25
@@ -82,3 +90,11 @@ jobs:
         run: |
           archive="$(node --input-type=module -e 'import fs from "node:fs"; const files=fs.readdirSync("dist/preview").filter(name=>name.endsWith(".zip")); if(files.length!==1)throw Error("Expected one fresh preview"); process.stdout.write(`dist/preview/${files[0]}`);')"
           KEEPANY_PREVIEW_ARCHIVE="$archive" pnpm exec playwright test --config playwright.brand-upgrade.config.ts --reporter=dot
+      - name: Preserve failed browser evidence
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: failed-browser-${{ github.run_id }}-${{ github.run_attempt }}-${{ github.job }}
+          path: test-results/
+          retention-days: 7
+          if-no-files-found: ignore
