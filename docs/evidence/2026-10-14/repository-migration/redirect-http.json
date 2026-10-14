@@ -1,0 +1,38 @@
+[
+  {
+    "requested": "https://github.com/Syndred/KeepAny",
+    "exit": 0,
+    "result": "200\thttps://github.com/Syndred/StackPerch",
+    "error": ""
+  },
+  {
+    "requested": "https://github.com/Syndred/KeepAny/issues",
+    "exit": 0,
+    "result": "200\thttps://github.com/Syndred/StackPerch/issues",
+    "error": ""
+  },
+  {
+    "requested": "https://github.com/Syndred/KeepAny/releases",
+    "exit": 0,
+    "result": "200\thttps://github.com/Syndred/StackPerch/releases",
+    "error": ""
+  },
+  {
+    "requested": "https://github.com/Syndred/KeepAny/blob/main/README.md",
+    "exit": 0,
+    "result": "200\thttps://github.com/Syndred/StackPerch/blob/main/README.md",
+    "error": "curl: (56) The requested URL returned error: 503\n"
+  },
+  {
+    "requested": "https://syndred.github.io/KeepAny/",
+    "exit": 0,
+    "result": "200\thttps://syndred.github.io/KeepAny/",
+    "error": ""
+  },
+  {
+    "requested": "https://syndred.github.io/KeepAny/zh/",
+    "exit": 0,
+    "result": "200\thttps://syndred.github.io/KeepAny/zh/",
+    "error": ""
+  }
+]

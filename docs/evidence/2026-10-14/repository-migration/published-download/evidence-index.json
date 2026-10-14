@@ -1,0 +1,112 @@
+[
+  {
+    "path": "published-download/download-readback.json",
+    "bytes": 263,
+    "sha256": "9f305c1d1fc72cb31252e3056e6678132bede22d401009f8a57251fedd3e72dc"
+  },
+  {
+    "path": "published-download/download-sha.json",
+    "bytes": 63,
+    "sha256": "6185ccf0900ad1efbe2f21942eb72677298ab466d9ca06cdfd5397a0b8204d6b"
+  },
+  {
+    "path": "published-download/download-zip.json",
+    "bytes": 67,
+    "sha256": "a7224b067e4df72ac48af0698067601b4ccb7e911082b1c52abe31cd7bcdd769"
+  },
+  {
+    "path": "published-download/evidence/onboarding-en-1280-empty.png",
+    "bytes": 140236,
+    "sha256": "de9d7a67116f688dafad426789b567bedf4f57a46f96d44140b7173f63b12d67"
+  },
+  {
+    "path": "published-download/evidence/onboarding-en-1280-sample.png",
+    "bytes": 168490,
+    "sha256": "9020352f138c0d3bb58e243f37599c18b3de020355c41ea7d75f36deac40fb69"
+  },
+  {
+    "path": "published-download/evidence/onboarding-en-390-empty.png",
+    "bytes": 102026,
+    "sha256": "91c301b94e3e0bce5f121d65cf554de050b4917a03a9b94d01f71172a00a0283"
+  },
+  {
+    "path": "published-download/evidence/onboarding-en-390-sample.png",
+    "bytes": 124841,
+    "sha256": "e0011113576a05df96b8c82ddfa8b640a7190116fba424fdf09fec39adbd14b6"
+  },
+  {
+    "path": "published-download/evidence/onboarding-zh-1280-empty.png",
+    "bytes": 136397,
+    "sha256": "00d00b5920274c059c30e94b720c2b91af7fd120eaf4ad647ad4a7f65840eefd"
+  },
+  {
+    "path": "published-download/evidence/onboarding-zh-1280-sample.png",
+    "bytes": 163882,
+    "sha256": "891bea1495573234adb8785ba737cc403775299942eaaaae75019ab2dc73d0e9"
+  },
+  {
+    "path": "published-download/evidence/onboarding-zh-390-empty.png",
+    "bytes": 102277,
+    "sha256": "0065f0deb292207e9543591ef1ef10a03f3849f41eb03ebf5b5db450f9ee5538"
+  },
+  {
+    "path": "published-download/evidence/onboarding-zh-390-sample.png",
+    "bytes": 126604,
+    "sha256": "5d29264ca28b886c0f90a4fb59a85ac2c4af34633db33d1c0465510338c73f2a"
+  },
+  {
+    "path": "published-download/listeners-after.log",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "published-download/listeners-before.log",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "published-download/native-verification.log",
+    "bytes": 922,
+    "sha256": "b7eba34b26b0294b73ff5b2868c311207ba9d96b8d5286e557098f4356cce2f0"
+  },
+  {
+    "path": "published-download/node-version.log",
+    "bytes": 9,
+    "sha256": "b8139b18707113247bd3eba5bff8ee50ed8f6bfd5076113805af4e414abfdf23"
+  },
+  {
+    "path": "published-download/onboarding-verification.log",
+    "bytes": 841,
+    "sha256": "8705b68f71db33fb63f520e23c67c4637c961709717e4d7ae67ef0e99c415e80"
+  },
+  {
+    "path": "published-download/release-api.json",
+    "bytes": 9116,
+    "sha256": "955582f2f5f72eb1718dde53361410f42aae605d80a79ffbeca812f21e5e1fb4"
+  },
+  {
+    "path": "published-download/source-head.log",
+    "bytes": 41,
+    "sha256": "903da8270ddacf44669c4a334dbd2261d347307254861266cea6269471450338"
+  },
+  {
+    "path": "published-download/source-status-after.log",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "published-download/source-status-before.log",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "published-download/verification-summary.json",
+    "bytes": 1738,
+    "sha256": "be593acea294d8e9bcb4180d81d5376c8a4a369549217f8401c089d3dd859ca8"
+  },
+  {
+    "path": "published-download/验收记录.md",
+    "bytes": 1478,
+    "sha256": "744e35065efa13165bfca0ebb22c712f0811164775b7677a8949e16c6b20b1eb"
+  }
+]

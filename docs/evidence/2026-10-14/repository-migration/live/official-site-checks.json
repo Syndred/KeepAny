@@ -1,0 +1,98 @@
+{
+  "base": "https://syndred.github.io/StackPerch/",
+  "expectedDirectory": "dist/public-site",
+  "checks": [
+    {
+      "path": "llms.txt",
+      "curlExit": 0,
+      "response": "200 https://syndred.github.io/StackPerch/llms.txt 0",
+      "expectedSha256": "b15ffa8489cc7c47c8e9474d0e68ab532c6486eb3aacf79fc5433a46c3f01b2f",
+      "actualSha256": "b15ffa8489cc7c47c8e9474d0e68ab532c6486eb3aacf79fc5433a46c3f01b2f",
+      "matches": true,
+      "stderr": ""
+    },
+    {
+      "path": "index.html",
+      "curlExit": 0,
+      "response": "200 https://syndred.github.io/StackPerch/index.html 0",
+      "expectedSha256": "ff1f09af3d271370ae10c7c71e4e1b252446f166998d75dfdbfe51325f7110c4",
+      "actualSha256": "ff1f09af3d271370ae10c7c71e4e1b252446f166998d75dfdbfe51325f7110c4",
+      "matches": true,
+      "stderr": ""
+    },
+    {
+      "path": "sitemap.xml",
+      "curlExit": 0,
+      "response": "200 https://syndred.github.io/StackPerch/sitemap.xml 0",
+      "expectedSha256": "d9f705e146794366cb89f16fe818e70fe9813cc0d7402cca2fadf797d9fe93f0",
+      "actualSha256": "d9f705e146794366cb89f16fe818e70fe9813cc0d7402cca2fadf797d9fe93f0",
+      "matches": true,
+      "stderr": ""
+    },
+    {
+      "path": "robots.txt",
+      "curlExit": 0,
+      "response": "200 https://syndred.github.io/StackPerch/robots.txt 0",
+      "expectedSha256": "8bf8eb09364c68ace8e4227ae18890a702102e80f04fda2d0b9059fb9926d60c",
+      "actualSha256": "8bf8eb09364c68ace8e4227ae18890a702102e80f04fda2d0b9059fb9926d60c",
+      "matches": true,
+      "stderr": ""
+    },
+    {
+      "path": "zh/index.html",
+      "curlExit": 0,
+      "response": "200 https://syndred.github.io/StackPerch/zh/index.html 0",
+      "expectedSha256": "ac469131a871e9df2949d5ce1dffca0eab7aedbb23d760c96f86cb897516a623",
+      "actualSha256": "ac469131a871e9df2949d5ce1dffca0eab7aedbb23d760c96f86cb897516a623",
+      "matches": true,
+      "stderr": ""
+    },
+    {
+      "path": "assets/overview-zh.png",
+      "curlExit": 0,
+      "response": "200 https://syndred.github.io/StackPerch/assets/overview-zh.png 0",
+      "expectedSha256": "741fccb2d26aba645eb91c390db2056480f26cc149a26239d3c779c3ddd0730e",
+      "actualSha256": "741fccb2d26aba645eb91c390db2056480f26cc149a26239d3c779c3ddd0730e",
+      "matches": true,
+      "stderr": ""
+    },
+    {
+      "path": "assets/public.css",
+      "curlExit": 0,
+      "response": "200 https://syndred.github.io/StackPerch/assets/public.css 0",
+      "expectedSha256": "b486434a26668d094f0ed0efe555204a7c035736f47e304fbbe277b4a6dbc1a7",
+      "actualSha256": "b486434a26668d094f0ed0efe555204a7c035736f47e304fbbe277b4a6dbc1a7",
+      "matches": true,
+      "stderr": ""
+    },
+    {
+      "path": "assets/keepany.svg",
+      "curlExit": 0,
+      "response": "200 https://syndred.github.io/StackPerch/assets/keepany.svg 0",
+      "expectedSha256": "5a4fe285fb2509752dc322a0ef2ceb1b156466fbbec015fb92e422e910cab840",
+      "actualSha256": "5a4fe285fb2509752dc322a0ef2ceb1b156466fbbec015fb92e422e910cab840",
+      "matches": true,
+      "stderr": ""
+    },
+    {
+      "path": "assets/overview-en.png",
+      "curlExit": 0,
+      "response": "200 https://syndred.github.io/StackPerch/assets/overview-en.png 0",
+      "expectedSha256": "402c2cdc7aa9722b0260f18698878a465d1a0c8a40dd422cddedfeed86888db3",
+      "actualSha256": "402c2cdc7aa9722b0260f18698878a465d1a0c8a40dd422cddedfeed86888db3",
+      "matches": true,
+      "stderr": ""
+    },
+    {
+      "path": "assets/stackperch.svg",
+      "curlExit": 0,
+      "response": "200 https://syndred.github.io/StackPerch/assets/stackperch.svg 0",
+      "expectedSha256": "5a4fe285fb2509752dc322a0ef2ceb1b156466fbbec015fb92e422e910cab840",
+      "actualSha256": "5a4fe285fb2509752dc322a0ef2ceb1b156466fbbec015fb92e422e910cab840",
+      "matches": true,
+      "stderr": ""
+    }
+  ],
+  "passed": 10,
+  "total": 10
+}

@@ -1,0 +1,182 @@
+[
+  {
+    "locale": "en",
+    "width": 390,
+    "javaScriptDisabled": true,
+    "screenshot": "/tmp/stackperch-migration-site-proof/public-en-390-nojs.png",
+    "actions": [
+      {
+        "gap": "16px",
+        "items": [
+          {
+            "height": 47.5,
+            "href": "https://github.com/Syndred/StackPerch/releases"
+          },
+          {
+            "height": 47.5,
+            "href": "https://github.com/Syndred/StackPerch"
+          }
+        ]
+      },
+      {
+        "gap": "16px",
+        "items": [
+          {
+            "height": 47.5,
+            "href": "https://github.com/Syndred/StackPerch/issues"
+          },
+          {
+            "height": 32,
+            "href": "https://github.com/Syndred/StackPerch/blob/main/SECURITY.md"
+          }
+        ]
+      }
+    ],
+    "canonical": "https://syndred.github.io/StackPerch/",
+    "cardsGap": "24px",
+    "heading": "Your projects have connections. Keep them together.",
+    "images": [
+      {
+        "loaded": true,
+        "width": 1280
+      }
+    ],
+    "scrollWidth": 390,
+    "title": "StackPerch — a local digital asset workspace for independent developers"
+  },
+  {
+    "locale": "en",
+    "width": 1280,
+    "javaScriptDisabled": true,
+    "screenshot": "/tmp/stackperch-migration-site-proof/public-en-1280-nojs.png",
+    "actions": [
+      {
+        "gap": "16px",
+        "items": [
+          {
+            "height": 47.5,
+            "href": "https://github.com/Syndred/StackPerch/releases"
+          },
+          {
+            "height": 47.5,
+            "href": "https://github.com/Syndred/StackPerch"
+          }
+        ]
+      },
+      {
+        "gap": "16px",
+        "items": [
+          {
+            "height": 47.5,
+            "href": "https://github.com/Syndred/StackPerch/issues"
+          },
+          {
+            "height": 32,
+            "href": "https://github.com/Syndred/StackPerch/blob/main/SECURITY.md"
+          }
+        ]
+      }
+    ],
+    "canonical": "https://syndred.github.io/StackPerch/",
+    "cardsGap": "24px",
+    "heading": "Your projects have connections. Keep them together.",
+    "images": [
+      {
+        "loaded": true,
+        "width": 1280
+      }
+    ],
+    "scrollWidth": 1280,
+    "title": "StackPerch — a local digital asset workspace for independent developers"
+  },
+  {
+    "locale": "zh",
+    "width": 390,
+    "javaScriptDisabled": true,
+    "screenshot": "/tmp/stackperch-migration-site-proof/public-zh-390-nojs.png",
+    "actions": [
+      {
+        "gap": "16px",
+        "items": [
+          {
+            "height": 47.5,
+            "href": "https://github.com/Syndred/StackPerch/releases"
+          },
+          {
+            "height": 47.5,
+            "href": "https://github.com/Syndred/StackPerch"
+          }
+        ]
+      },
+      {
+        "gap": "16px",
+        "items": [
+          {
+            "height": 47.5,
+            "href": "https://github.com/Syndred/StackPerch/issues"
+          },
+          {
+            "height": 32,
+            "href": "https://github.com/Syndred/StackPerch/blob/main/SECURITY.md"
+          }
+        ]
+      }
+    ],
+    "canonical": "https://syndred.github.io/StackPerch/zh/",
+    "cardsGap": "24px",
+    "heading": "项目背后的账号与订阅，一起理清。",
+    "images": [
+      {
+        "loaded": true,
+        "width": 1280
+      }
+    ],
+    "scrollWidth": 390,
+    "title": "StackPerch — 独立开发者的本地数字资产工作台"
+  },
+  {
+    "locale": "zh",
+    "width": 1280,
+    "javaScriptDisabled": true,
+    "screenshot": "/tmp/stackperch-migration-site-proof/public-zh-1280-nojs.png",
+    "actions": [
+      {
+        "gap": "16px",
+        "items": [
+          {
+            "height": 47.5,
+            "href": "https://github.com/Syndred/StackPerch/releases"
+          },
+          {
+            "height": 47.5,
+            "href": "https://github.com/Syndred/StackPerch"
+          }
+        ]
+      },
+      {
+        "gap": "16px",
+        "items": [
+          {
+            "height": 47.5,
+            "href": "https://github.com/Syndred/StackPerch/issues"
+          },
+          {
+            "height": 32,
+            "href": "https://github.com/Syndred/StackPerch/blob/main/SECURITY.md"
+          }
+        ]
+      }
+    ],
+    "canonical": "https://syndred.github.io/StackPerch/zh/",
+    "cardsGap": "24px",
+    "heading": "项目背后的账号与订阅，一起理清。",
+    "images": [
+      {
+        "loaded": true,
+        "width": 1280
+      }
+    ],
+    "scrollWidth": 1280,
+    "title": "StackPerch — 独立开发者的本地数字资产工作台"
+  }
+]

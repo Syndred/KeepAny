@@ -1,0 +1,197 @@
+{
+  "base": "https://syndred.github.io/",
+  "expectedDirectory": "dist/legacy-site",
+  "checks": [
+    {
+      "path": "llms.txt",
+      "curlExit": 0,
+      "response": "200 https://syndred.github.io/llms.txt 0",
+      "expectedSha256": "b15ffa8489cc7c47c8e9474d0e68ab532c6486eb3aacf79fc5433a46c3f01b2f",
+      "actualSha256": "b15ffa8489cc7c47c8e9474d0e68ab532c6486eb3aacf79fc5433a46c3f01b2f",
+      "matches": true,
+      "stderr": ""
+    },
+    {
+      "path": "TRACE.json",
+      "curlExit": 0,
+      "response": "200 https://syndred.github.io/TRACE.json 0",
+      "expectedSha256": "22a1cd724a45dd2cf9eda99d70625acfd1a74220892db4dbd64efc27001f04bc",
+      "actualSha256": "22a1cd724a45dd2cf9eda99d70625acfd1a74220892db4dbd64efc27001f04bc",
+      "matches": true,
+      "stderr": ""
+    },
+    {
+      "path": "index.html",
+      "curlExit": 0,
+      "response": "200 https://syndred.github.io/index.html 0",
+      "expectedSha256": "e29cdc2fe621ecb8eaaa22df727a17d9db54b4fa2c3eff533c824c244c92c71d",
+      "actualSha256": "e29cdc2fe621ecb8eaaa22df727a17d9db54b4fa2c3eff533c824c244c92c71d",
+      "matches": true,
+      "stderr": ""
+    },
+    {
+      "path": "LICENSE",
+      "curlExit": 0,
+      "response": "200 https://syndred.github.io/LICENSE 0",
+      "expectedSha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee",
+      "actualSha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee",
+      "matches": true,
+      "stderr": ""
+    },
+    {
+      "path": "404.html",
+      "curlExit": 0,
+      "response": "200 https://syndred.github.io/404.html 0",
+      "expectedSha256": "20eab9930380f48edcbb624b8c124adc61bf30a796d988f31d556abee2c101b4",
+      "actualSha256": "20eab9930380f48edcbb624b8c124adc61bf30a796d988f31d556abee2c101b4",
+      "matches": true,
+      "stderr": ""
+    },
+    {
+      "path": "README.md",
+      "curlExit": 0,
+      "response": "200 https://syndred.github.io/README.md 0",
+      "expectedSha256": "d0b41876c90dffeb5d5611ba4a360b2a2e8a663a2e8799997d594021625ca791",
+      "actualSha256": "d0b41876c90dffeb5d5611ba4a360b2a2e8a663a2e8799997d594021625ca791",
+      "matches": true,
+      "stderr": ""
+    },
+    {
+      "path": "sitemap.xml",
+      "curlExit": 0,
+      "response": "200 https://syndred.github.io/sitemap.xml 0",
+      "expectedSha256": "d9f705e146794366cb89f16fe818e70fe9813cc0d7402cca2fadf797d9fe93f0",
+      "actualSha256": "d9f705e146794366cb89f16fe818e70fe9813cc0d7402cca2fadf797d9fe93f0",
+      "matches": true,
+      "stderr": ""
+    },
+    {
+      "path": "robots.txt",
+      "curlExit": 0,
+      "response": "200 https://syndred.github.io/robots.txt 0",
+      "expectedSha256": "8bf8eb09364c68ace8e4227ae18890a702102e80f04fda2d0b9059fb9926d60c",
+      "actualSha256": "8bf8eb09364c68ace8e4227ae18890a702102e80f04fda2d0b9059fb9926d60c",
+      "matches": true,
+      "stderr": ""
+    },
+    {
+      "path": "KeepAny/llms.txt",
+      "curlExit": 0,
+      "response": "200 https://syndred.github.io/KeepAny/llms.txt 0",
+      "expectedSha256": "b15ffa8489cc7c47c8e9474d0e68ab532c6486eb3aacf79fc5433a46c3f01b2f",
+      "actualSha256": "b15ffa8489cc7c47c8e9474d0e68ab532c6486eb3aacf79fc5433a46c3f01b2f",
+      "matches": true,
+      "stderr": ""
+    },
+    {
+      "path": "KeepAny/index.html",
+      "curlExit": 0,
+      "response": "200 https://syndred.github.io/KeepAny/index.html 0",
+      "expectedSha256": "e29cdc2fe621ecb8eaaa22df727a17d9db54b4fa2c3eff533c824c244c92c71d",
+      "actualSha256": "e29cdc2fe621ecb8eaaa22df727a17d9db54b4fa2c3eff533c824c244c92c71d",
+      "matches": true,
+      "stderr": ""
+    },
+    {
+      "path": "KeepAny/sitemap.xml",
+      "curlExit": 0,
+      "response": "200 https://syndred.github.io/KeepAny/sitemap.xml 0",
+      "expectedSha256": "d9f705e146794366cb89f16fe818e70fe9813cc0d7402cca2fadf797d9fe93f0",
+      "actualSha256": "d9f705e146794366cb89f16fe818e70fe9813cc0d7402cca2fadf797d9fe93f0",
+      "matches": true,
+      "stderr": ""
+    },
+    {
+      "path": "KeepAny/robots.txt",
+      "curlExit": 0,
+      "response": "200 https://syndred.github.io/KeepAny/robots.txt 0",
+      "expectedSha256": "8bf8eb09364c68ace8e4227ae18890a702102e80f04fda2d0b9059fb9926d60c",
+      "actualSha256": "8bf8eb09364c68ace8e4227ae18890a702102e80f04fda2d0b9059fb9926d60c",
+      "matches": true,
+      "stderr": ""
+    },
+    {
+      "path": "KeepAny/zh/index.html",
+      "curlExit": 0,
+      "response": "200 https://syndred.github.io/KeepAny/zh/index.html 0",
+      "expectedSha256": "2e080a68e0fbbce7f9515ef6305d41d99941b19b3dd1a8a33169747fb927e0b8",
+      "actualSha256": "2e080a68e0fbbce7f9515ef6305d41d99941b19b3dd1a8a33169747fb927e0b8",
+      "matches": true,
+      "stderr": ""
+    },
+    {
+      "path": "KeepAny/assets/overview-zh.png",
+      "curlExit": 0,
+      "response": "200 https://syndred.github.io/KeepAny/assets/overview-zh.png 0",
+      "expectedSha256": "741fccb2d26aba645eb91c390db2056480f26cc149a26239d3c779c3ddd0730e",
+      "actualSha256": "741fccb2d26aba645eb91c390db2056480f26cc149a26239d3c779c3ddd0730e",
+      "matches": true,
+      "stderr": ""
+    },
+    {
+      "path": "KeepAny/assets/public.css",
+      "curlExit": 0,
+      "response": "200 https://syndred.github.io/KeepAny/assets/public.css 0",
+      "expectedSha256": "b486434a26668d094f0ed0efe555204a7c035736f47e304fbbe277b4a6dbc1a7",
+      "actualSha256": "b486434a26668d094f0ed0efe555204a7c035736f47e304fbbe277b4a6dbc1a7",
+      "matches": true,
+      "stderr": ""
+    },
+    {
+      "path": "KeepAny/assets/keepany.svg",
+      "curlExit": 0,
+      "response": "200 https://syndred.github.io/KeepAny/assets/keepany.svg 0",
+      "expectedSha256": "5a4fe285fb2509752dc322a0ef2ceb1b156466fbbec015fb92e422e910cab840",
+      "actualSha256": "5a4fe285fb2509752dc322a0ef2ceb1b156466fbbec015fb92e422e910cab840",
+      "matches": true,
+      "stderr": ""
+    },
+    {
+      "path": "KeepAny/assets/overview-en.png",
+      "curlExit": 0,
+      "response": "200 https://syndred.github.io/KeepAny/assets/overview-en.png 0",
+      "expectedSha256": "402c2cdc7aa9722b0260f18698878a465d1a0c8a40dd422cddedfeed86888db3",
+      "actualSha256": "402c2cdc7aa9722b0260f18698878a465d1a0c8a40dd422cddedfeed86888db3",
+      "matches": true,
+      "stderr": ""
+    },
+    {
+      "path": "KeepAny/assets/stackperch.svg",
+      "curlExit": 0,
+      "response": "200 https://syndred.github.io/KeepAny/assets/stackperch.svg 0",
+      "expectedSha256": "5a4fe285fb2509752dc322a0ef2ceb1b156466fbbec015fb92e422e910cab840",
+      "actualSha256": "5a4fe285fb2509752dc322a0ef2ceb1b156466fbbec015fb92e422e910cab840",
+      "matches": true,
+      "stderr": ""
+    },
+    {
+      "path": "assets/redirect-template-LICENSE.txt",
+      "curlExit": 0,
+      "response": "200 https://syndred.github.io/assets/redirect-template-LICENSE.txt 0",
+      "expectedSha256": "23e89b886bfbc1d24317bb5d65e89ad6217301e2df9431814670d4316df9600b",
+      "actualSha256": "23e89b886bfbc1d24317bb5d65e89ad6217301e2df9431814670d4316df9600b",
+      "matches": true,
+      "stderr": ""
+    },
+    {
+      "path": "assets/stackperch.svg",
+      "curlExit": 0,
+      "response": "200 https://syndred.github.io/assets/stackperch.svg 0",
+      "expectedSha256": "5a4fe285fb2509752dc322a0ef2ceb1b156466fbbec015fb92e422e910cab840",
+      "actualSha256": "5a4fe285fb2509752dc322a0ef2ceb1b156466fbbec015fb92e422e910cab840",
+      "matches": true,
+      "stderr": ""
+    },
+    {
+      "path": "assets/legacy.css",
+      "curlExit": 0,
+      "response": "200 https://syndred.github.io/assets/legacy.css 0",
+      "expectedSha256": "b3368712da09814bdb52b6a6a2e1c5f0f105fb189dc5e705f2362370bc529913",
+      "actualSha256": "b3368712da09814bdb52b6a6a2e1c5f0f105fb189dc5e705f2362370bc529913",
+      "matches": true,
+      "stderr": ""
+    }
+  ],
+  "passed": 21,
+  "total": 21
+}

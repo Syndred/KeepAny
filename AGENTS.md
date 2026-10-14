@@ -17,3 +17,5 @@
 - 反复检查：给开发者的实现说明不得进入用户UI。
 
 - 当前主品牌为 StackPerch；KeepAny 的 GitHub/Pages 旧入口及本机地址保留。数据库完整 schema（含 title）、存储键、KDBX 自定义字段、备份格式、同步/绑定/MCP 协议和旧环境变量属于兼容标识，不能按品牌文案全局替换。
+
+- 正式仓库为 `Syndred/StackPerch`；旧 GitHub 链接依靠平台重定向保留，禁止重新创建 `Syndred/KeepAny`。旧 Pages 由独立 `Syndred/syndred.github.io` 兼容站承接，本机 KeepAny 目录继续保留。

@@ -1,0 +1,165 @@
+{
+  "checkedAt": "2026-10-14T01:22:12.489922+00:00",
+  "authentication": "anonymous; no cookies or Authorization headers",
+  "repositoryId": 1394372451,
+  "tls": "curl default certificate and hostname verification; ssl_verify_result=0",
+  "retryPolicy": {
+    "maxRetries": 2,
+    "delaySeconds": 1,
+    "note": "All retained stderr files are empty; this curl version does not expose num_retries in its JSON write-out."
+  },
+  "releases": [
+    {
+      "tag": "v0.1.0-preview.20261011",
+      "oldApiHttpStatus": 200,
+      "oldApiEffectiveUrl": "https://api.github.com/repositories/1394372451/releases/tags/v0.1.0-preview.20261011",
+      "releaseId": 409538906,
+      "releaseIdMatchesBeforeRename": true,
+      "oldAndNewNameSameApiIdentity": true,
+      "assetIdentities": [
+        {
+          "id": 630587485,
+          "name": "KeepAny-0.1.0-preview.64b98e7874a2-portable.zip",
+          "size": 3722909,
+          "digest": "sha256:bde21d3267d0a3c5e9abc326b06a3f4cad4841c3c95ae05b221344e49dde39ec",
+          "created_at": "2026-10-11T11:35:11Z",
+          "updated_at": "2026-10-11T11:35:16Z",
+          "beforeRenameIdentityCompared": false
+        },
+        {
+          "id": 630587601,
+          "name": "KeepAny-0.1.0-preview.64b98e7874a2-portable.zip.sha256",
+          "size": 114,
+          "digest": "sha256:0ecb041f3d1f4b95891daa19573d43bc37eca6cead0bfefc1ef962e9caed7550",
+          "created_at": "2026-10-11T11:35:16Z",
+          "updated_at": "2026-10-11T11:35:17Z",
+          "beforeRenameIdentityCompared": false
+        }
+      ],
+      "archiveDigestMatchesPublishedBaseline": true,
+      "checksumFileValid": true,
+      "downloads": [
+        {
+          "name": "KeepAny-0.1.0-preview.64b98e7874a2-portable.zip",
+          "oldDownloadUrl": "https://github.com/Syndred/KeepAny/releases/download/v0.1.0-preview.20261011/KeepAny-0.1.0-preview.64b98e7874a2-portable.zip",
+          "httpStatus": 200,
+          "effectiveUrl": "https://release-assets.githubusercontent.com/github-production-release-asset/1394372451/cfedb983-d51b-4088-b742-7ffd20aa3025?sp=r&sv=2018-11-09&sr=b&spr=https&se=2026-10-14T02%3A19%3A29Z&rscd=attachment%3B+filename%3DKeepAny-0.1.0-preview.64b98e7874a2-portable.zip&rsct=application%2Foctet-stream&skoid=96c2d410-5711-43a1-aedd-ab1947aa7ab0&sktid=398a6654-997b-47e9-b12b-9515b896b4de&skt=2026-10-14T01%3A19%3A28Z&ske=2026-10-14T02%3A19%3A29Z&sks=b&skv=2018-11-09&sig=Qxb3BhMy78jWjkvEss0OMZYmCQmG6MGn5J7Q7zSFIK4%3D&jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmVsZWFzZS1hc3NldHMuZ2l0aHVidXNlcmNvbnRlbnQuY29tIiwia2V5Ijoia2V5MSIsImV4cCI6MTc5MTk0MTE4NSwibmJmIjoxNzkxOTQwODg1LCJwYXRoIjoicmVsZWFzZWFzc2V0cHJvZHVjdGlvbi5ibG9iLmNvcmUud2luZG93cy5uZXQifQ.gKlv1OziVhLv86UCMiLThHTmaPAIUd6V1tm2o2ogHJ0&response-content-disposition=attachment%3B%20filename%3DKeepAny-0.1.0-preview.64b98e7874a2-portable.zip&response-content-type=application%2Foctet-stream",
+          "bytes": 3722909,
+          "sha256": "bde21d3267d0a3c5e9abc326b06a3f4cad4841c3c95ae05b221344e49dde39ec",
+          "apiAssetId": 630587485,
+          "apiDigest": "sha256:bde21d3267d0a3c5e9abc326b06a3f4cad4841c3c95ae05b221344e49dde39ec",
+          "retryCount": null,
+          "stderr": "",
+          "curlExitCode": 0,
+          "strictTlsVerified": true,
+          "httpStatusChain": [
+            301,
+            302,
+            200
+          ],
+          "retryMetricAvailable": false,
+          "stderrFile": "/tmp/stackperch-migration-post-rename-old-downloads/KeepAny-0.1.0-preview.64b98e7874a2-portable.zip.stderr.txt"
+        },
+        {
+          "name": "KeepAny-0.1.0-preview.64b98e7874a2-portable.zip.sha256",
+          "oldDownloadUrl": "https://github.com/Syndred/KeepAny/releases/download/v0.1.0-preview.20261011/KeepAny-0.1.0-preview.64b98e7874a2-portable.zip.sha256",
+          "httpStatus": 200,
+          "effectiveUrl": "https://release-assets.githubusercontent.com/github-production-release-asset/1394372451/cfae03d6-48f9-4b3c-bf18-e81d6400062f?sp=r&sv=2018-11-09&sr=b&spr=https&se=2026-10-14T02%3A10%3A09Z&rscd=attachment%3B+filename%3DKeepAny-0.1.0-preview.64b98e7874a2-portable.zip.sha256&rsct=application%2Foctet-stream&skoid=96c2d410-5711-43a1-aedd-ab1947aa7ab0&sktid=398a6654-997b-47e9-b12b-9515b896b4de&skt=2026-10-14T01%3A09%3A19Z&ske=2026-10-14T02%3A10%3A09Z&sks=b&skv=2018-11-09&sig=WgeMX8Jx9eUpP2jWnuvIUtT1%2BlYqZ2eiCkRZ59XV2qI%3D&jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmVsZWFzZS1hc3NldHMuZ2l0aHVidXNlcmNvbnRlbnQuY29tIiwia2V5Ijoia2V5MSIsImV4cCI6MTc5MTk0MTE4NSwibmJmIjoxNzkxOTQwODg1LCJwYXRoIjoicmVsZWFzZWFzc2V0cHJvZHVjdGlvbi5ibG9iLmNvcmUud2luZG93cy5uZXQifQ.gKlv1OziVhLv86UCMiLThHTmaPAIUd6V1tm2o2ogHJ0&response-content-disposition=attachment%3B%20filename%3DKeepAny-0.1.0-preview.64b98e7874a2-portable.zip.sha256&response-content-type=application%2Foctet-stream",
+          "bytes": 114,
+          "sha256": "0ecb041f3d1f4b95891daa19573d43bc37eca6cead0bfefc1ef962e9caed7550",
+          "apiAssetId": 630587601,
+          "apiDigest": "sha256:0ecb041f3d1f4b95891daa19573d43bc37eca6cead0bfefc1ef962e9caed7550",
+          "retryCount": null,
+          "stderr": "",
+          "curlExitCode": 0,
+          "strictTlsVerified": true,
+          "httpStatusChain": [
+            301,
+            302,
+            200
+          ],
+          "retryMetricAvailable": false,
+          "stderrFile": "/tmp/stackperch-migration-post-rename-old-downloads/KeepAny-0.1.0-preview.64b98e7874a2-portable.zip.sha256.stderr.txt"
+        }
+      ]
+    },
+    {
+      "tag": "v0.1.0-preview.20261013",
+      "oldApiHttpStatus": 200,
+      "oldApiEffectiveUrl": "https://api.github.com/repositories/1394372451/releases/tags/v0.1.0-preview.20261013",
+      "releaseId": 411209327,
+      "releaseIdMatchesBeforeRename": true,
+      "oldAndNewNameSameApiIdentity": true,
+      "assetIdentities": [
+        {
+          "id": 635695373,
+          "name": "StackPerch-0.1.0-preview.cd12c582e405-portable.zip",
+          "size": 3858892,
+          "digest": "sha256:3cea76c1334a0af7133254c749e872a94779f49e9f9b07aa5b85f1ab90e73dd7",
+          "created_at": "2026-10-13T02:58:14Z",
+          "updated_at": "2026-10-13T02:58:22Z",
+          "beforeRenameIdentityCompared": true
+        },
+        {
+          "id": 635695740,
+          "name": "StackPerch-0.1.0-preview.cd12c582e405-portable.zip.sha256",
+          "size": 117,
+          "digest": "sha256:e24199c29982af307f7e3654441389e27dd3766bfe09c8a9f3862fbd785cdfa9",
+          "created_at": "2026-10-13T02:58:22Z",
+          "updated_at": "2026-10-13T02:58:23Z",
+          "beforeRenameIdentityCompared": true
+        }
+      ],
+      "archiveDigestMatchesPublishedBaseline": true,
+      "checksumFileValid": true,
+      "downloads": [
+        {
+          "name": "StackPerch-0.1.0-preview.cd12c582e405-portable.zip",
+          "oldDownloadUrl": "https://github.com/Syndred/KeepAny/releases/download/v0.1.0-preview.20261013/StackPerch-0.1.0-preview.cd12c582e405-portable.zip",
+          "httpStatus": 200,
+          "effectiveUrl": "https://release-assets.githubusercontent.com/github-production-release-asset/1394372451/43a5ad58-533c-4c86-8350-652727e1de39?sp=r&sv=2018-11-09&sr=b&spr=https&se=2026-10-14T02%3A07%3A23Z&rscd=attachment%3B+filename%3DStackPerch-0.1.0-preview.cd12c582e405-portable.zip&rsct=application%2Foctet-stream&skoid=96c2d410-5711-43a1-aedd-ab1947aa7ab0&sktid=398a6654-997b-47e9-b12b-9515b896b4de&skt=2026-10-14T01%3A07%3A20Z&ske=2026-10-14T02%3A07%3A23Z&sks=b&skv=2018-11-09&sig=1qMiAOdshiiVz%2B8jh%2Fj5ALRp3kR2dqlA%2FDZmD126cpM%3D&jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmVsZWFzZS1hc3NldHMuZ2l0aHVidXNlcmNvbnRlbnQuY29tIiwia2V5Ijoia2V5MSIsImV4cCI6MTc5MTk0MTE4OCwibmJmIjoxNzkxOTQwODg4LCJwYXRoIjoicmVsZWFzZWFzc2V0cHJvZHVjdGlvbi5ibG9iLmNvcmUud2luZG93cy5uZXQifQ.86FH6rtJzZDVVrQwEziHcjp1veXrLVrr7fyrUiATUQ8&response-content-disposition=attachment%3B%20filename%3DStackPerch-0.1.0-preview.cd12c582e405-portable.zip&response-content-type=application%2Foctet-stream",
+          "bytes": 3858892,
+          "sha256": "3cea76c1334a0af7133254c749e872a94779f49e9f9b07aa5b85f1ab90e73dd7",
+          "apiAssetId": 635695373,
+          "apiDigest": "sha256:3cea76c1334a0af7133254c749e872a94779f49e9f9b07aa5b85f1ab90e73dd7",
+          "retryCount": null,
+          "stderr": "",
+          "curlExitCode": 0,
+          "strictTlsVerified": true,
+          "httpStatusChain": [
+            301,
+            302,
+            200
+          ],
+          "retryMetricAvailable": false,
+          "stderrFile": "/tmp/stackperch-migration-post-rename-old-downloads/StackPerch-0.1.0-preview.cd12c582e405-portable.zip.stderr.txt"
+        },
+        {
+          "name": "StackPerch-0.1.0-preview.cd12c582e405-portable.zip.sha256",
+          "oldDownloadUrl": "https://github.com/Syndred/KeepAny/releases/download/v0.1.0-preview.20261013/StackPerch-0.1.0-preview.cd12c582e405-portable.zip.sha256",
+          "httpStatus": 200,
+          "effectiveUrl": "https://release-assets.githubusercontent.com/github-production-release-asset/1394372451/f7c380d3-362d-468f-83d0-c34a88c6f863?sp=r&sv=2018-11-09&sr=b&spr=https&se=2026-10-14T02%3A09%3A15Z&rscd=attachment%3B+filename%3DStackPerch-0.1.0-preview.cd12c582e405-portable.zip.sha256&rsct=application%2Foctet-stream&skoid=96c2d410-5711-43a1-aedd-ab1947aa7ab0&sktid=398a6654-997b-47e9-b12b-9515b896b4de&skt=2026-10-14T01%3A08%3A49Z&ske=2026-10-14T02%3A09%3A15Z&sks=b&skv=2018-11-09&sig=jTC7pPZThipbB9gQkNzQWcFtf3kcbKlDOJs9ZO6slww%3D&jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmVsZWFzZS1hc3NldHMuZ2l0aHVidXNlcmNvbnRlbnQuY29tIiwia2V5Ijoia2V5MSIsImV4cCI6MTc5MTk0MTE5NiwibmJmIjoxNzkxOTQwODk2LCJwYXRoIjoicmVsZWFzZWFzc2V0cHJvZHVjdGlvbi5ibG9iLmNvcmUud2luZG93cy5uZXQifQ.v_DSvxOZKiBWhhzHuKHwaZ4M3NtulQSyXsFi2atiwVs&response-content-disposition=attachment%3B%20filename%3DStackPerch-0.1.0-preview.cd12c582e405-portable.zip.sha256&response-content-type=application%2Foctet-stream",
+          "bytes": 117,
+          "sha256": "e24199c29982af307f7e3654441389e27dd3766bfe09c8a9f3862fbd785cdfa9",
+          "apiAssetId": 635695740,
+          "apiDigest": "sha256:e24199c29982af307f7e3654441389e27dd3766bfe09c8a9f3862fbd785cdfa9",
+          "retryCount": null,
+          "stderr": "",
+          "curlExitCode": 0,
+          "strictTlsVerified": true,
+          "httpStatusChain": [
+            301,
+            302,
+            200
+          ],
+          "retryMetricAvailable": false,
+          "stderrFile": "/tmp/stackperch-migration-post-rename-old-downloads/StackPerch-0.1.0-preview.cd12c582e405-portable.zip.sha256.stderr.txt"
+        }
+      ]
+    }
+  ],
+  "limitations": [
+    "Release11 pre-rename asset IDs were not recorded in the supplied historical baseline. Current old/new API IDs and Oct11 creation/update timestamps are retained; ZIP digest and release ID match the historical baseline."
+  ],
+  "allDownloadStatusAndDigestChecksPassed": true
+}

@@ -1,0 +1,52 @@
+[
+  {
+    "day": 11,
+    "id": 409538906,
+    "bodyMatchesURLOnlyUpdateAfterNewlineNormalization": true,
+    "assetMetadataUnchanged": true,
+    "titleTagPrereleaseUnchanged": true,
+    "assets": [
+      {
+        "id": 630587485,
+        "name": "KeepAny-0.1.0-preview.64b98e7874a2-portable.zip",
+        "size": 3722909,
+        "digest": "sha256:bde21d3267d0a3c5e9abc326b06a3f4cad4841c3c95ae05b221344e49dde39ec",
+        "created_at": "2026-10-11T11:35:11Z",
+        "updated_at": "2026-10-11T11:35:16Z"
+      },
+      {
+        "id": 630587601,
+        "name": "KeepAny-0.1.0-preview.64b98e7874a2-portable.zip.sha256",
+        "size": 114,
+        "digest": "sha256:0ecb041f3d1f4b95891daa19573d43bc37eca6cead0bfefc1ef962e9caed7550",
+        "created_at": "2026-10-11T11:35:16Z",
+        "updated_at": "2026-10-11T11:35:17Z"
+      }
+    ]
+  },
+  {
+    "day": 13,
+    "id": 411209327,
+    "bodyMatchesURLOnlyUpdateAfterNewlineNormalization": true,
+    "assetMetadataUnchanged": true,
+    "titleTagPrereleaseUnchanged": true,
+    "assets": [
+      {
+        "id": 635695373,
+        "name": "StackPerch-0.1.0-preview.cd12c582e405-portable.zip",
+        "size": 3858892,
+        "digest": "sha256:3cea76c1334a0af7133254c749e872a94779f49e9f9b07aa5b85f1ab90e73dd7",
+        "created_at": "2026-10-13T02:58:14Z",
+        "updated_at": "2026-10-13T02:58:22Z"
+      },
+      {
+        "id": 635695740,
+        "name": "StackPerch-0.1.0-preview.cd12c582e405-portable.zip.sha256",
+        "size": 117,
+        "digest": "sha256:e24199c29982af307f7e3654441389e27dd3766bfe09c8a9f3862fbd785cdfa9",
+        "created_at": "2026-10-13T02:58:22Z",
+        "updated_at": "2026-10-13T02:58:23Z"
+      }
+    ]
+  }
+]

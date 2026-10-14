@@ -1,0 +1,51 @@
+{
+  "sourceCommit": "7ebc2c349f4826759c8b2ef848e8c6133c0b3858",
+  "sourceDirty": false,
+  "sha256": "48cf9866866b17efed4c3b28e6920e622af35ca58e122c34e72abc50f6741a47",
+  "bytes": 3874914,
+  "webFiles": 98,
+  "anonymousDownload": true,
+  "tlsVerification": true,
+  "verifiedAt": "2026-10-14T03:01:08.406348+00:00",
+  "releaseTag": "v0.1.0-preview.20261014.2",
+  "releaseUrl": "https://github.com/Syndred/StackPerch/releases/tag/v0.1.0-preview.20261014.2",
+  "sourceUrl": "https://github.com/Syndred/StackPerch/tree/7ebc2c349f4826759c8b2ef848e8c6133c0b3858",
+  "nativePlatform": "darwin",
+  "nativeCheckGroups": 6,
+  "onboardingPassed": 4,
+  "onboardingExpected": 4,
+  "locales": [
+    "zh-CN",
+    "en-US"
+  ],
+  "viewportWidths": [
+    390,
+    1280
+  ],
+  "screenshots": [
+    "onboarding-en-1280-empty.png",
+    "onboarding-en-1280-sample.png",
+    "onboarding-en-390-empty.png",
+    "onboarding-en-390-sample.png",
+    "onboarding-zh-1280-empty.png",
+    "onboarding-zh-1280-sample.png",
+    "onboarding-zh-390-empty.png",
+    "onboarding-zh-390-sample.png"
+  ],
+  "testPort": 4463,
+  "portEmptyBefore": true,
+  "portEmptyAfter": true,
+  "sourceCleanBefore": true,
+  "sourceCleanAfter": true,
+  "publicDownloadHttp": 200,
+  "publicChecksumHttp": 200,
+  "publicDownloadSslVerifyResult": 0,
+  "publicChecksumSslVerifyResult": 0,
+  "visuallyReviewedScreenshots": [
+    "onboarding-zh-1280-sample.png",
+    "onboarding-en-390-sample.png",
+    "onboarding-zh-390-empty.png",
+    "onboarding-en-1280-empty.png"
+  ],
+  "visualReview": "四幅桌面/移动、中英文、空状态/示例状态截图显示按钮与卡片有间距、无横向溢出；测试同时断言初始示例入口容器 gap >= 8px、两宽度文档无横向溢出。"
+}

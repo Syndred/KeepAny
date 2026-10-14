@@ -1,0 +1,36 @@
+[
+  {
+    "width": 390,
+    "screenshot": "/tmp/stackperch-migration-site-proof/legacy-404-390.png",
+    "actionsGap": "16px",
+    "heading": "Page not found · 页面未找到",
+    "links": [
+      {
+        "height": 47.5,
+        "href": "https://syndred.github.io/StackPerch/"
+      },
+      {
+        "height": 47.5,
+        "href": "https://syndred.github.io/StackPerch/zh/"
+      }
+    ],
+    "scrollWidth": 390
+  },
+  {
+    "width": 1280,
+    "screenshot": "/tmp/stackperch-migration-site-proof/legacy-404-1280.png",
+    "actionsGap": "16px",
+    "heading": "Page not found · 页面未找到",
+    "links": [
+      {
+        "height": 47.5,
+        "href": "https://syndred.github.io/StackPerch/"
+      },
+      {
+        "height": 47.5,
+        "href": "https://syndred.github.io/StackPerch/zh/"
+      }
+    ],
+    "scrollWidth": 1280
+  }
+]

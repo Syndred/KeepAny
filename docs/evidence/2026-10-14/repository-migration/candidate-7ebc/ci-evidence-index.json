@@ -1,0 +1,102 @@
+[
+  {
+    "path": "candidate-7ebc/ci/ci-summary.json",
+    "bytes": 2915,
+    "sha256": "b7f8124b5ec1093563bf9c2bf773468a26925c37986868e97e9e9755412d8617"
+  },
+  {
+    "path": "candidate-7ebc/ci/native-packages-summary.json",
+    "bytes": 6415,
+    "sha256": "0e1d02ce99755db4502d3e8338d72b743e3daef0974f389cb6018516a5fd575a"
+  },
+  {
+    "path": "candidate-7ebc/ci/run-38500663802-metadata-final.json",
+    "bytes": 13554,
+    "sha256": "98dd1ce0458e83c6a9b5f57d135aca36c9c3f4ef70927068b32f220423f1a826"
+  },
+  {
+    "path": "candidate-7ebc/ci/run-38500663802-jobs-final.json",
+    "bytes": 6811,
+    "sha256": "16cf87daa6627a06ea1f79954e036ae16d5c1503b96d951166576bffe991b10a"
+  },
+  {
+    "path": "candidate-7ebc/ci/run-38500663994-metadata-final.json",
+    "bytes": 13565,
+    "sha256": "d22239edf7350d66cc1692cfbe18cbf9a807902caaffb32b4a301669bf8611dd"
+  },
+  {
+    "path": "candidate-7ebc/ci/run-38500663994-jobs-final.json",
+    "bytes": 7045,
+    "sha256": "27f3a2df68c92867b199fb0ba19804057d4986f3ccd591017ed7df8f4efbf353"
+  },
+  {
+    "path": "candidate-7ebc/ci/run-38500663605-metadata-final.json",
+    "bytes": 13575,
+    "sha256": "f1d0f4106cdd93bcd3d6ffcf82ce55276dd579e193cb0690c3cf15b484cd8c49"
+  },
+  {
+    "path": "candidate-7ebc/ci/run-38500663605-jobs-final.json",
+    "bytes": 6811,
+    "sha256": "c52bb476d2f04748ccebd7bce7050b8138629fe5758e6a1fe346956b9ec7c484"
+  },
+  {
+    "path": "candidate-7ebc/ci/run-38500663726-metadata-final.json",
+    "bytes": 13586,
+    "sha256": "93ed6027a97e44e40fad666e740671a426e0e44978e3f1e46cb56fcd94120e0e"
+  },
+  {
+    "path": "candidate-7ebc/ci/run-38500663726-jobs-final.json",
+    "bytes": 7045,
+    "sha256": "71e604607fcee5568293ede76a0931bfbebb1b818be55775d13bf8e62dcae9fa"
+  },
+  {
+    "path": "candidate-7ebc/ci/job-115646581166.log",
+    "bytes": 41661,
+    "sha256": "86c036c4caa608978320062b53fffd74dff4e59cc752a798f05b280d6e379d98"
+  },
+  {
+    "path": "candidate-7ebc/ci/job-115646581416.log",
+    "bytes": 42094,
+    "sha256": "bb34e24b5fda081a706f8fe4af70655431fc1605bf7d0585f5e8b518d2271f41"
+  },
+  {
+    "path": "candidate-7ebc/ci/job-115646581445.log",
+    "bytes": 40688,
+    "sha256": "81601644ac93971a627e3d7f556a8b0f95265ec15acce77dd95e08bd369bcb2c"
+  },
+  {
+    "path": "candidate-7ebc/ci/job-115646581524.log",
+    "bytes": 144782,
+    "sha256": "31ca177680df6ad3fab889ad642cba28fda8a829adf8c980381e04eb00ce1708"
+  },
+  {
+    "path": "candidate-7ebc/ci/job-115646581650.log",
+    "bytes": 68401,
+    "sha256": "f42d0cd57513436f1193d4077f66e7fc7ca90dac8b1bf151aa8741b94d709df2"
+  },
+  {
+    "path": "candidate-7ebc/ci/job-115646582051.log",
+    "bytes": 39977,
+    "sha256": "4e6a3624e9aa6f312fa957f781db9ee404c321e003a4dd0173d94da7ab3ecb2d"
+  },
+  {
+    "path": "candidate-7ebc/ci/job-115646582265.log",
+    "bytes": 42897,
+    "sha256": "5e7e9798dc97f2535fc2ecf3443e5be8a14066cdc5d3b72322407672aa8b9509"
+  },
+  {
+    "path": "candidate-7ebc/ci/job-115646582303.log",
+    "bytes": 42123,
+    "sha256": "4c05db9755d7f919039d36add181761d6b9b3e62501ba4ea42e81b8ba4e71dd2"
+  },
+  {
+    "path": "candidate-7ebc/ci/job-115646582604.log",
+    "bytes": 144872,
+    "sha256": "d1004b26bfbda52a30ef13f589a611f45b1bcd7579546ccd784b9036f323ab5a"
+  },
+  {
+    "path": "candidate-7ebc/ci/job-115646582682.log",
+    "bytes": 68704,
+    "sha256": "4891d2f20c2b111ba72bee59a8a4aabcbcadd3c474ab1bb63a8fbcb9f6b0686c"
+  }
+]

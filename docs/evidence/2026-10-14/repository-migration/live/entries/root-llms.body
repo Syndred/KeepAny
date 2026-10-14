@@ -1,0 +1,32 @@
+# StackPerch
+
+> StackPerch, formerly KeepAny, is a local digital asset workspace for independent developers. It connects projects, domains recorded in project details, accounts, subscriptions, and maintenance.
+
+## Product facts
+
+- Local React application; English and Simplified Chinese interfaces.
+- Local use does not require registration or payment.
+- Source code uses AGPL-3.0-only; third-party materials retain their own licenses.
+- Portable preview requires Node.js 22+ and runs at http://127.0.0.1:4180/.
+- The repository and official website now use StackPerch addresses. The old KeepAny GitHub and public website entries remain compatible. New portable packages use the StackPerch name; older KeepAny packages remain available.
+- The rename preserves browser storage at the same origin and profile. Existing KeepAny .ka1 backups and .kdbx vaults remain usable with their original passwords.
+- Browser data is separated by origin and profile. Clearing site data can remove it. Download and verify encrypted .ka1 backups.
+- A separate encrypted KDBX vault stores passwords and persistent model keys. It is excluded from ordinary assets, global search, MCP, and asset sync.
+- AI is optional. The vault's explicitly approved full-text AI import sends the current list, which may include passwords and notes, to the selected provider. It does not send the existing vault or master password.
+- Early preview: not independently security-audited, and not verified on every device or browser.
+- Official cloud sync and paid services are not open. Optional hosting is planned; commercial expansion is paused.
+- Password autofill, cross-device password sync, background email, and closed-page push are not provided.
+- Experimental sync, account-binding, remote storage, and MCP are not necessary for local trial.
+
+## Public pages
+
+- [English product page](https://syndred.github.io/StackPerch/)
+- [中文产品介绍](https://syndred.github.io/StackPerch/zh/)
+- [English README](https://github.com/Syndred/StackPerch/blob/main/README.en.md)
+- [中文 README](https://github.com/Syndred/StackPerch/blob/main/README.md)
+- [Trial guide](https://github.com/Syndred/StackPerch/blob/main/docs/试用指南.md)
+- [Releases](https://github.com/Syndred/StackPerch/releases)
+- [Security reporting](https://github.com/Syndred/StackPerch/blob/main/SECURITY.md)
+- [Contributing](https://github.com/Syndred/StackPerch/blob/main/CONTRIBUTING.md)
+
+This file describes the public product documentation. It does not grant access to users' local records, passwords, backups, or private services, and does not promise search ranking or recommendations.

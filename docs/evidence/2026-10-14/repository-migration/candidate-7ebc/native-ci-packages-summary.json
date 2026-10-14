@@ -1,0 +1,104 @@
+[
+  {
+    "jobId": 115646581166,
+    "archiveSha256": "408ba23f08d64da8925e205b67dcf4ae97b0e0a35c37097a7d9acb4766bbe89b",
+    "archive": "/Users/runner/work/StackPerch/StackPerch/dist/preview/StackPerch-0.1.0-preview.7ebc2c349f48-portable.zip",
+    "platform": "darwin",
+    "sourceCommit": "7ebc2c349f4826759c8b2ef848e8c6133c0b3858",
+    "sourceDirty": false,
+    "webFiles": 98,
+    "checks": [
+      "ZIP and per-file checksums, current web identity, source, launchers, license inventory, and clean external extraction",
+      "Production assets, HEAD, SPA navigation fallback, missing asset/API/dotfile rejection",
+      "Raw and encoded path traversal, malformed path, Host rejection, private state, loopback-only listener",
+      "Duplicate-start conflict, unauthenticated/cross-origin stop rejection, forged PID rejection, own-instance stop and cleanup",
+      "Occupied port leaves an unrelated HTTP service running; stop never sends process signals",
+      "Delivered darwin launcher starts without repository or project dependencies, then stops cleanly"
+    ]
+  },
+  {
+    "jobId": 115646581416,
+    "archiveSha256": "307bebf21b452e29dabce576ce5c6f88e8deca07a78b5083cc95cbc87f855d76",
+    "archive": "D:\\a\\StackPerch\\StackPerch\\dist\\preview\\StackPerch-0.1.0-preview.7ebc2c349f48-portable.zip",
+    "platform": "win32",
+    "sourceCommit": "7ebc2c349f4826759c8b2ef848e8c6133c0b3858",
+    "sourceDirty": false,
+    "webFiles": 98,
+    "checks": [
+      "ZIP and per-file checksums, current web identity, source, launchers, license inventory, and clean external extraction",
+      "Production assets, HEAD, SPA navigation fallback, missing asset/API/dotfile rejection",
+      "Raw and encoded path traversal, malformed path, Host rejection, private state, loopback-only listener",
+      "Duplicate-start conflict, unauthenticated/cross-origin stop rejection, forged PID rejection, own-instance stop and cleanup",
+      "Occupied port leaves an unrelated HTTP service running; stop never sends process signals",
+      "Delivered win32 launcher starts without repository or project dependencies, then stops cleanly"
+    ]
+  },
+  {
+    "jobId": 115646581445,
+    "archiveSha256": "408ba23f08d64da8925e205b67dcf4ae97b0e0a35c37097a7d9acb4766bbe89b",
+    "archive": "/home/runner/work/StackPerch/StackPerch/dist/preview/StackPerch-0.1.0-preview.7ebc2c349f48-portable.zip",
+    "platform": "linux",
+    "sourceCommit": "7ebc2c349f4826759c8b2ef848e8c6133c0b3858",
+    "sourceDirty": false,
+    "webFiles": 98,
+    "checks": [
+      "ZIP and per-file checksums, current web identity, source, launchers, license inventory, and clean external extraction",
+      "Production assets, HEAD, SPA navigation fallback, missing asset/API/dotfile rejection",
+      "Raw and encoded path traversal, malformed path, Host rejection, private state, loopback-only listener",
+      "Duplicate-start conflict, unauthenticated/cross-origin stop rejection, forged PID rejection, own-instance stop and cleanup",
+      "Occupied port leaves an unrelated HTTP service running; stop never sends process signals",
+      "Delivered linux launcher starts without repository or project dependencies, then stops cleanly"
+    ]
+  },
+  {
+    "jobId": 115646582051,
+    "archiveSha256": "408ba23f08d64da8925e205b67dcf4ae97b0e0a35c37097a7d9acb4766bbe89b",
+    "archive": "/home/runner/work/StackPerch/StackPerch/dist/preview/StackPerch-0.1.0-preview.7ebc2c349f48-portable.zip",
+    "platform": "linux",
+    "sourceCommit": "7ebc2c349f4826759c8b2ef848e8c6133c0b3858",
+    "sourceDirty": false,
+    "webFiles": 98,
+    "checks": [
+      "ZIP and per-file checksums, current web identity, source, launchers, license inventory, and clean external extraction",
+      "Production assets, HEAD, SPA navigation fallback, missing asset/API/dotfile rejection",
+      "Raw and encoded path traversal, malformed path, Host rejection, private state, loopback-only listener",
+      "Duplicate-start conflict, unauthenticated/cross-origin stop rejection, forged PID rejection, own-instance stop and cleanup",
+      "Occupied port leaves an unrelated HTTP service running; stop never sends process signals",
+      "Delivered linux launcher starts without repository or project dependencies, then stops cleanly"
+    ]
+  },
+  {
+    "jobId": 115646582265,
+    "archiveSha256": "408ba23f08d64da8925e205b67dcf4ae97b0e0a35c37097a7d9acb4766bbe89b",
+    "archive": "/Users/runner/work/StackPerch/StackPerch/dist/preview/StackPerch-0.1.0-preview.7ebc2c349f48-portable.zip",
+    "platform": "darwin",
+    "sourceCommit": "7ebc2c349f4826759c8b2ef848e8c6133c0b3858",
+    "sourceDirty": false,
+    "webFiles": 98,
+    "checks": [
+      "ZIP and per-file checksums, current web identity, source, launchers, license inventory, and clean external extraction",
+      "Production assets, HEAD, SPA navigation fallback, missing asset/API/dotfile rejection",
+      "Raw and encoded path traversal, malformed path, Host rejection, private state, loopback-only listener",
+      "Duplicate-start conflict, unauthenticated/cross-origin stop rejection, forged PID rejection, own-instance stop and cleanup",
+      "Occupied port leaves an unrelated HTTP service running; stop never sends process signals",
+      "Delivered darwin launcher starts without repository or project dependencies, then stops cleanly"
+    ]
+  },
+  {
+    "jobId": 115646582303,
+    "archiveSha256": "307bebf21b452e29dabce576ce5c6f88e8deca07a78b5083cc95cbc87f855d76",
+    "archive": "D:\\a\\StackPerch\\StackPerch\\dist\\preview\\StackPerch-0.1.0-preview.7ebc2c349f48-portable.zip",
+    "platform": "win32",
+    "sourceCommit": "7ebc2c349f4826759c8b2ef848e8c6133c0b3858",
+    "sourceDirty": false,
+    "webFiles": 98,
+    "checks": [
+      "ZIP and per-file checksums, current web identity, source, launchers, license inventory, and clean external extraction",
+      "Production assets, HEAD, SPA navigation fallback, missing asset/API/dotfile rejection",
+      "Raw and encoded path traversal, malformed path, Host rejection, private state, loopback-only listener",
+      "Duplicate-start conflict, unauthenticated/cross-origin stop rejection, forged PID rejection, own-instance stop and cleanup",
+      "Occupied port leaves an unrelated HTTP service running; stop never sends process signals",
+      "Delivered win32 launcher starts without repository or project dependencies, then stops cleanly"
+    ]
+  }
+]
