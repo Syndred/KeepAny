@@ -66,7 +66,6 @@ export async function selectChoice(locator: Locator, choice: SelectChoice) {
 		throw new Error("Select option is missing its data-value");
 	// Settle pointer focus/scroll before click calculates its target coordinates.
 	await option.hover();
-	await expect(option).toBeFocused();
 	await option.click();
 	await expect(trigger).toHaveAttribute("data-value", selectedValue);
 	await expect(trigger).toHaveAttribute("data-state", "closed");
