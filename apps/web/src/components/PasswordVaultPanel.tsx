@@ -624,6 +624,36 @@ export function PasswordVaultPanel({
 
 	const message = messageKey ? t(messageKey) : notice ? t(notice) : "";
 
+	const vaultStatus = (
+		<div className="password-vault-header-meta">
+			<p>
+				{snapshot.status === "unlocked"
+					? t("pwVaultEntriesCount", { count: snapshot.entries.length })
+					: t("pwVaultSubtitle")}
+			</p>
+			<Badge
+				role="status"
+				tone={
+					snapshot.status === "unlocked"
+						? "success"
+						: snapshot.status === "empty"
+							? "warning"
+							: "muted"
+				}
+			>
+				{t(
+					snapshot.status === "unlocked"
+						? "pwVaultStatusUnlocked"
+						: snapshot.status === "empty"
+							? "pwVaultStatusEmpty"
+							: snapshot.status === "locked"
+								? "pwVaultStatusLocked"
+								: "pwVaultLoading",
+				)}
+			</Badge>
+		</div>
+	);
+
 	return (
 		<section className="password-vault-panel">
 			{accountLinksOpen && snapshot.status === "unlocked" && (
@@ -643,33 +673,7 @@ export function PasswordVaultPanel({
 			<header className="password-vault-header card-header">
 				<div>
 					<h1>{t("pwVaultTitle")}</h1>
-					<div className="password-vault-header-meta">
-						<p>
-							{snapshot.status === "unlocked"
-								? t("pwVaultEntriesCount", { count: snapshot.entries.length })
-								: t("pwVaultSubtitle")}
-						</p>
-						<Badge
-							role="status"
-							tone={
-								snapshot.status === "unlocked"
-									? "success"
-									: snapshot.status === "empty"
-										? "warning"
-										: "muted"
-							}
-						>
-							{t(
-								snapshot.status === "unlocked"
-									? "pwVaultStatusUnlocked"
-									: snapshot.status === "empty"
-										? "pwVaultStatusEmpty"
-										: snapshot.status === "locked"
-											? "pwVaultStatusLocked"
-											: "pwVaultLoading",
-							)}
-						</Badge>
-					</div>
+					{snapshot.status !== "unlocked" && vaultStatus}
 				</div>
 			</header>
 			{message && (
@@ -798,6 +802,7 @@ export function PasswordVaultPanel({
 							</VaultIconButton>
 						</div>
 					</div>
+					{vaultStatus}
 					{assetFilter && (
 						<div className="password-vault-filter">
 							<span>
