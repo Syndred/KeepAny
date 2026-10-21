@@ -468,6 +468,19 @@ for (const locale of ["zh-CN", "en"] as const)
 				).toHaveCount(0);
 				expect(mock.requests).toHaveLength(0);
                 const search = dialog.getByRole("searchbox", { name: t("pwConnectSearch") });
+                await expect(dialog.getByRole("heading", { name: t("pwConnectTitle"), exact: true })).toBeFocused();
+                await expect(dialog.locator('[role="alert"]')).toHaveCount(0);
+                const all = dialog.getByRole("button", { name: t("pwConnectSelectAll"), exact: true });
+                expect((await all.boundingBox())?.x).toBeLessThan((await search.boundingBox())?.x ?? 0);
+                await page.screenshot({ path: join(root, `connect-open-${locale}-${width}.png`) });
+                await search.click();
+                await expect(search).toBeFocused();
+                await expect(search).toHaveCSS("outline-style", "none");
+                await expect(dialog.locator(".vault-connect-search")).not.toHaveCSS("box-shadow", "none");
+                await page.screenshot({ path: join(root, `connect-search-${locale}-${width}.png`) });
+                await page.keyboard.press("Tab");
+                await expect(search).not.toBeFocused();
+
                 await search.fill("no-matching-account-synthetic");
                 await expect(dialog.locator(".vault-connect-account")).toHaveCount(0);
                 await expect(dialog.getByText(t("pwConnectNoResults"), { exact: true })).toBeVisible();
@@ -490,6 +503,19 @@ for (const locale of ["zh-CN", "en"] as const)
 				await dialog
 					.getByRole("button", { name: t("pwConnectSelectAll"), exact: true })
 					.click();
+
+                if (width > 760) {
+                    const viewport = page.viewportSize();
+                    await page.setViewportSize({ width, height: 600 });
+                    const scroller = dialog.locator(".vault-connect-accounts");
+                    await scroller.hover();
+                    await page.mouse.wheel(0, 500);
+                    await expect.poll(() => scroller.evaluate((element) => element.scrollTop)).toBeGreaterThan(0);
+                    await expect(scroller).toHaveCSS("scrollbar-width", "thin");
+                    await expect(dialog.getByRole("button", { name: t("pwConnectSave"), exact: true })).toBeInViewport();
+                    await page.screenshot({ path: join(root, `connect-scroll-${locale}-${width}.png`) });
+                    if (viewport) await page.setViewportSize(viewport);
+                }
 				await dialog
 					.getByRole("button", { name: t("pwConnectLocal"), exact: true })
 					.click();

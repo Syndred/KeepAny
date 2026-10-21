@@ -232,25 +232,13 @@ export function VaultAccountLinksDialog({
 		<Dialog
 			title={t("pwConnectTitle")}
 			className="vault-connect-dialog"
+			focusTitleOnOpen
 			closeDisabled={busy}
 			onClose={() => {
 				if (!running.current) onClose();
 			}}
 			headerActions={
 				<div className="vault-connect-toolbar">
-					<span className="vault-connect-count">
-						{t("pwConnectSelected", { count: selected.length })}
-					</span>
-					<label className="vault-connect-search">
-						<Search size={18} />
-						<input
-							type="search"
-							value={query}
-							onChange={(event) => setQuery(event.target.value)}
-							aria-label={t("pwConnectSearch")}
-							placeholder={t("pwConnectSearch")}
-						/>
-					</label>
 					<Button
 						size="small"
 						disabled={busy || stale || rows.length > 200}
@@ -268,6 +256,19 @@ export function VaultAccountLinksDialog({
 								: "pwConnectSelectAll",
 						)}
 					</Button>
+					<span className="vault-connect-count">
+						{t("pwConnectSelected", { count: selected.length })}
+					</span>
+					<label className="vault-connect-search">
+						<Search size={18} />
+						<input
+							type="search"
+							value={query}
+							onChange={(event) => setQuery(event.target.value)}
+							aria-label={t("pwConnectSearch")}
+							placeholder={t("pwConnectSearch")}
+						/>
+					</label>
 				</div>
 			}
 		>

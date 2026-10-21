@@ -10,8 +10,10 @@ export function Dialog({
 	returnFocusTo,
 	className,
 	headerActions,
+	focusTitleOnOpen = false,
 }: {
 	headerActions?: ReactNode;
+	focusTitleOnOpen?: boolean;
 	className?: string;
 	title: string;
 	children: ReactNode;
@@ -20,6 +22,7 @@ export function Dialog({
 	returnFocusTo?: () => HTMLElement | null;
 }) {
 	const { t } = useTranslation();
+	const titleRef = useRef<HTMLHeadingElement | null>(null);
 	const opener = useRef<HTMLElement | null>(null);
 	if (
 		!opener.current &&
@@ -35,6 +38,12 @@ export function Dialog({
 				<DialogPrimitive.Content
 					className={`dialog${className ? ` ${className}` : ""}`}
 					aria-describedby={undefined}
+					onOpenAutoFocus={(event) => {
+						if (focusTitleOnOpen) {
+							event.preventDefault();
+							titleRef.current?.focus();
+						}
+					}}
 					onCloseAutoFocus={(event) => {
 						event.preventDefault();
 						const target = returnFocusTo?.() ?? opener.current;
@@ -42,7 +51,12 @@ export function Dialog({
 					}}
 				>
 					<header>
-						<DialogPrimitive.Title>{title}</DialogPrimitive.Title>
+						<DialogPrimitive.Title
+							ref={titleRef}
+							tabIndex={focusTitleOnOpen ? -1 : undefined}
+						>
+							{title}
+						</DialogPrimitive.Title>
 						{headerActions}
 						<DialogPrimitive.Close
 							className="button icon ghost"
