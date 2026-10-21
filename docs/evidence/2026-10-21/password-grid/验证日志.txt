@@ -1,0 +1,54 @@
+
+ RUN  v5.0.2 /Users/syndred/Desktop/projects/KeepAny
+
+
+ Test Files  1 passed (1)
+      Tests  34 passed (34)
+   Start at  15:06:55
+   Duration  26.00s (tests 100%)
+
+
+[WebServer] (node:19811) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+
+Running 28 tests using 1 worker
+
+(node:19826) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1/28] tests/e2e/password-review-controls.spec.ts:134:2 › zh-CN 1280px delete, add and newest-reviewed order survive encrypted draft recovery
+[2/28] tests/e2e/password-review-controls.spec.ts:134:2 › en 390px delete, add and newest-reviewed order survive encrypted draft recovery
+[3/28] tests/e2e/password-review-controls.spec.ts:306:1 › delayed alias paste keeps sibling changes and ignores edited or locked fields
+[4/28] tests/e2e/password-review-controls.spec.ts:436:1 › a7be614 encrypted review and unfinished fragment survive a same-origin fixed-package upgrade
+tests/e2e/password-review-controls.spec.ts:436:1 › a7be614 encrypted review and unfinished fragment survive a same-origin fixed-package upgrade
+
+
+
+
+[5/28] tests/e2e/password-review-controls.spec.ts:665:1 › removing a target preserves candidate and fragment additions separately from their new-entry drafts
+[6/28] tests/e2e/password-review-controls.spec.ts:827:2 › zh-CN 390px field copy preserves hidden multiline passwords and compact identifier cards
+[7/28] tests/e2e/password-review-controls.spec.ts:827:2 › en 1280px field copy preserves hidden multiline passwords and compact identifier cards
+[8/28] tests/e2e/password-vault-grid.spec.ts:103:3 › zh-CN 1536 dense grid preserves fields, icon actions, detail navigation and locked secrets
+[9/28] tests/e2e/password-vault-grid.spec.ts:103:3 › zh-CN 390 dense grid preserves fields, icon actions, detail navigation and locked secrets
+[10/28] tests/e2e/password-vault-grid.spec.ts:103:3 › en 1536 dense grid preserves fields, icon actions, detail navigation and locked secrets
+[11/28] tests/e2e/password-vault-grid.spec.ts:103:3 › en 390 dense grid preserves fields, icon actions, detail navigation and locked secrets
+[12/28] tests/e2e/password-vault.spec.ts:249:2 › zh-CN 390px multiple login identifiers and same-platform accounts survive KDBX export and reopen
+[13/28] tests/e2e/password-vault.spec.ts:541:2 › zh-CN 390px app passwords show notes directly, save without a website and retain added details when edited
+[14/28] tests/e2e/password-vault.spec.ts:671:2 › zh-CN 390px passwords persist, lock, rotate and restore with assets
+[15/28] tests/e2e/password-vault.spec.ts:249:2 › zh-CN 1280px multiple login identifiers and same-platform accounts survive KDBX export and reopen
+[16/28] tests/e2e/password-vault.spec.ts:541:2 › zh-CN 1280px app passwords show notes directly, save without a website and retain added details when edited
+[17/28] tests/e2e/password-vault.spec.ts:671:2 › zh-CN 1280px passwords persist, lock, rotate and restore with assets
+[18/28] tests/e2e/password-vault.spec.ts:249:2 › en-US 390px multiple login identifiers and same-platform accounts survive KDBX export and reopen
+[19/28] tests/e2e/password-vault.spec.ts:541:2 › en-US 390px app passwords show notes directly, save without a website and retain added details when edited
+[20/28] tests/e2e/password-vault.spec.ts:671:2 › en-US 390px passwords persist, lock, rotate and restore with assets
+[21/28] tests/e2e/password-vault.spec.ts:249:2 › en-US 1280px multiple login identifiers and same-platform accounts survive KDBX export and reopen
+[22/28] tests/e2e/password-vault.spec.ts:541:2 › en-US 1280px app passwords show notes directly, save without a website and retain added details when edited
+[23/28] tests/e2e/password-vault.spec.ts:671:2 › en-US 1280px passwords persist, lock, rotate and restore with assets
+[24/28] tests/e2e/password-vault.spec.ts:997:1 › password changes lock a revealed editor in another tab; idle lock and clean KDBX import work
+[25/28] tests/e2e/vault-reference-release.spec.ts:414:3 › zh-CN 390px vault reference saves, archives and restores through the fixed UI
+[26/28] tests/e2e/vault-reference-release.spec.ts:414:3 › zh-CN 1280px vault reference saves, archives and restores through the fixed UI
+[27/28] tests/e2e/vault-reference-release.spec.ts:414:3 › en-US 390px vault reference saves, archives and restores through the fixed UI
+[28/28] tests/e2e/vault-reference-release.spec.ts:414:3 › en-US 1280px vault reference saves, archives and restores through the fixed UI
+  28 passed (5.1m)
