@@ -1022,3 +1022,28 @@ it('generates cryptographic passwords of requested length with every enabled cat
   expect(generatePassword(128)).toHaveLength(128);
   for (const length of [0, 11, 129, NaN, 12.5]) expect(() => generatePassword(length)).toThrow('vault-invalid');
 });
+
+describe('reviewed account links', () => {
+  it('writes a whole association batch once and preserves secrets, aliases, history and encrypted draft', async () => {
+    const { session, storage } = await created();
+    const a = await session.saveEntry({ ...draft, usernameAliases: ['other@example.test'] });
+    const b = await session.saveEntry({ ...draft, title: 'Second' });
+    await session.writeImportDraft('synthetic-private-draft', session.getSnapshot().revision!);
+    const before = session.getSnapshot().contentRevision!;
+    const writes = storage.writes;
+    await session.linkAccounts([{ entryId: a, accountId: 'public-a' }, { entryId: b, accountId: 'public-b' }], before);
+    expect(storage.writes).toBe(writes + 1);
+    expect(session.readEntry(a)).toMatchObject({ password: draft.password, notes: draft.notes, usernameAliases: ['other@example.test'], linkedAssetIds: [...draft.linkedAssetIds, 'public-a'] });
+    expect(session.readImportDraft()).toBe('synthetic-private-draft');
+    expect(session.history(a)).toHaveLength(1);
+    await expect(session.linkAccounts([{ entryId: a, accountId: 'wrong' }], before)).rejects.toThrow('vault-stale');
+    expect(session.readEntry(a).linkedAssetIds).not.toContain('wrong');
+    const current = session.getSnapshot().contentRevision!;
+    await session.linkAccounts([{ entryId: a, accountId: 'public-a' }], current);
+    expect(storage.writes).toBe(writes + 1);
+    await expect(session.linkAccounts([{ entryId: a, accountId: 'wrong' }, { entryId: 'missing', accountId: 'other' }], current)).rejects.toThrow();
+    expect(session.readEntry(a).linkedAssetIds).not.toContain('wrong');
+    session.lock();
+    await expect(session.linkAccounts([{ entryId: a, accountId: 'wrong' }], current)).rejects.toThrow('vault-locked');
+  });
+});

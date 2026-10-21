@@ -153,6 +153,9 @@ p { line-height: 1.5; }
 .remote-backup-panel .remote-backup-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .remote-backup-panel .remote-backup-fields > .wide { grid-column: 1 / -1; }
 .remote-backup-hint { display: block; color: var(--muted); line-height: 1.5; }
+.external-import-title { display: flex; align-items: center; gap: 10px; }
+.external-import-title svg { flex: none; }
+.external-import-file { grid-column: 1 / -1; }
 .external-import-panel { grid-column: 1 / -1; }
 .external-import-panel > :not(:first-child) { margin-top: 14px; }
 .external-import-preview { display: grid; gap: 12px; min-width: 0; margin-top: 18px; }

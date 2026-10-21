@@ -586,7 +586,7 @@ for (const variant of variants) {
 			await expect(page.getByRole("dialog")).toBeHidden();
 			const entry = page
 				.locator(".password-vault-entry-list .password-vault-entry")
-				.filter({ has: page.locator("strong", { hasText: appTitle }) });
+				.filter({ has: page.getByRole("heading", { name: appTitle, exact: true }) });
 			await expect(entry).toHaveCount(1);
 			await entry
 				.getByRole("button", { name: t("pwVaultEditEntry"), exact: true })

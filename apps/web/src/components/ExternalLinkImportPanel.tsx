@@ -11,6 +11,7 @@ import {
 } from "../../../../packages/connectors/src/externallink";
 import { saveBatch } from "../../../../packages/local-db/src";
 import { useAppContext } from "../view-shared";
+import { FilePicker } from "./ui/file-picker";
 import { Button } from "./ui/button";
 import { Select, SelectOption } from "./ui/select";
 
@@ -23,6 +24,7 @@ export function ExternalLinkImportPanel() {
 	const projects = data.assets.filter(
 		(asset) => asset.kind === "project" && !asset.deleted,
 	);
+	const [file, setFile] = useState<File | null>(null);
 	const [source, setSource] = useState<ExportData | null>(null);
 	const [profiles, setProfiles] = useState<{ id: string; name: string }[]>([]);
 	const [assetId, setAssetId] = useState("");
@@ -51,6 +53,7 @@ export function ExternalLinkImportPanel() {
 
 	async function loadFile(file: File | undefined) {
 		const generation = ++fileGeneration.current;
+		setFile(file ?? null);
 		setSource(null);
 		setProfiles([]);
 		setProfileId("");
@@ -136,13 +139,25 @@ export function ExternalLinkImportPanel() {
 	return (
 		<section className="card padded external-import-panel">
 			<div className="card-header">
-				<h2>
+				<h2 className="external-import-title">
 					<FileDown size={20} />
 					{t("extImportTitle")}
 				</h2>
 			</div>
 			<p>{t("extImportHint")}</p>
 			<div className="form-grid">
+				<div className="external-import-file">
+					<FilePicker
+						id="ext-file"
+						label={t("extExportFile")}
+						chooseLabel={t("chooseFile")}
+						emptyLabel={t("aiImportNoFile")}
+						file={file}
+						accept=".json,application/json"
+						disabled={busy}
+						onFileChange={(value) => void loadFile(value ?? undefined)}
+					/>
+				</div>
 				<div className="field">
 					<label htmlFor="ext-project">{t("extChooseProject")}</label>
 					<Select
@@ -164,16 +179,7 @@ export function ExternalLinkImportPanel() {
 						))}
 					</Select>
 				</div>
-				<div className="field">
-					<label htmlFor="ext-file">{t("extExportFile")}</label>
-					<input
-						id="ext-file"
-						type="file"
-						accept=".json,application/json"
-						disabled={busy}
-						onChange={(e) => void loadFile(e.target.files?.[0])}
-					/>
-				</div>
+
 				<div className="field">
 					<label htmlFor="ext-profile">{t("extChooseProfile")}</label>
 					<Select
@@ -273,8 +279,8 @@ export function ExternalLinkImportPanel() {
 						</p>
 					)}
 					<p>{t("extMediaReferenceHint")}</p>
-				<h3>{t("extLedgerPreview")}</h3>
-				<p>{t("extSnapshotHint")}</p>
+					<h3>{t("extLedgerPreview")}</h3>
+					<p>{t("extSnapshotHint")}</p>
 					{preview.rows.length ? (
 						preview.rows.map((row) => {
 							const existing = data.submissions.some(
@@ -317,7 +323,7 @@ export function ExternalLinkImportPanel() {
 												? row.preview.submittedAt.slice(0, 10)
 												: t("extMissingDate")}
 										</small>
-								{row.importable && <small>{evidence}</small>}
+										{row.importable && <small>{evidence}</small>}
 										{row.preview.issues.map((issue) => (
 											<small key={issue} className="field-error">
 												{issueLabel(issue)}
@@ -325,7 +331,9 @@ export function ExternalLinkImportPanel() {
 										))}
 										{existing && <small>{t("extExisting")}</small>}
 									</span>
-							<span className={`chip ${row.importable ? "" : "muted"}`}>{t(row.preview.status)}</span>
+									<span className={`chip ${row.importable ? "" : "muted"}`}>
+										{t(row.preview.status)}
+									</span>
 								</label>
 							);
 						})

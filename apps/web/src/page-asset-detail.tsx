@@ -1,9 +1,11 @@
+import { accountFamilyGraph } from "./account-family-graph";
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import {
 	Background,
 	Controls,
 	Position,
+	MarkerType,
 	ReactFlow,
 	useNodesInitialized,
 	useUpdateNodeInternals,
@@ -474,8 +476,10 @@ export function AssetDetail() {
 			}),
 		).values(),
 	).filter((item): item is Asset => !!item);
+	const family = kind === "account" && asset && !normalizedFilter ? accountFamilyGraph(asset.id, liveById, data.relations) : null;
+	const graphRelated = family?.neighbors ?? visibleRelated;
 	const graphEdges = Array.from(
-		visibleRelations
+		(family?.relations ?? visibleRelations)
 			.reduce((groups, relation) => {
 				const pair = JSON.stringify([relation.from, relation.to]);
 				const group = groups.get(pair) ?? [];
@@ -494,6 +498,7 @@ export function AssetDetail() {
 			source: group[0].from,
 			target: group[0].to,
 			type: "straight",
+			markerEnd: group.some(r => /^pw-link-(login|recovery)-/.test(r.id)) ? { type: MarkerType.ArrowClosed } : undefined,
 			label,
 			className: verified ? "relation-graph-edge--verified" : "relation-graph-edge--pending",
 			ariaLabel: `${label} · ${t(verified ? "relationGraphVerified" : group.length > 1 ? "relationGraphMixed" : "relationGraphPending")}`,
@@ -1528,7 +1533,7 @@ export function AssetDetail() {
 				</form>
 			</Dialog>}
 			<div className="detail-grid asset-detail-secondary">
-				<section className="card asset-relations-card">
+				<section id="account-relations" className="card asset-relations-card">
 					<div className="card-header">
 						<div>
 							<h2>{t("relations")}</h2>
@@ -1569,7 +1574,7 @@ export function AssetDetail() {
 										[
 											{
 												id: asset.id,
-												position: { x: Math.max(0, visibleRelated.length - 1) * 90 - 15, y: 100 },
+												position: family?.positions.get(asset.id) ?? { x: Math.max(0, visibleRelated.length - 1) * 90 - 15, y: 100 },
 												data: { label: <span className="asset-graph-label" title={asset.name}>{asset.name}</span> },
 												sourcePosition: Position.Bottom,
 												targetPosition: Position.Bottom,
@@ -1577,9 +1582,9 @@ export function AssetDetail() {
 												className: "asset-graph-center",
 												ariaLabel: asset.name,
 											},
-											...visibleRelated.map((a, i) => ({
+											...graphRelated.map((a, i) => ({
 												id: a.id,
-												position: {
+												position: family?.positions.get(a.id) ?? {
 													x: 20 + i * 180,
 													y: 240,
 												},
@@ -1600,7 +1605,7 @@ export function AssetDetail() {
 									nodesDraggable={false}
 									nodesConnectable={false}
 								>
-									<GraphNodeMeasurements nodeIds={JSON.stringify([asset.id, ...visibleRelated.map((item) => item.id)])} />
+									<GraphNodeMeasurements nodeIds={JSON.stringify([asset.id, ...graphRelated.map((item) => item.id)])} />
 									<Background />
 									<Controls showInteractive={false} />
 								</ReactFlow>
@@ -1702,7 +1707,7 @@ export function AssetDetail() {
 				<section className="card account-facts-card account-links-card"><h2>{t("accountBindings")}</h2>
 					{relations.length ? <ul>{relations.map((relation) => {
 						const linked = liveById.get(relation.from === asset.id ? relation.to : relation.from);
-						return linked ? <li key={relation.id}><span>{relation.label}</span><TextLink asChild><Link to="/assets/$kind/$id" params={{ kind: linked.kind, id: linked.id }} onClick={(event) => { event.preventDefault(); visitRelation(linked); }}><span>{linked.name}</span></Link></TextLink></li> : null;
+						return linked ? <li key={relation.id}><span>{relation.to === asset.id && relation.id.startsWith("pw-link-login-") ? t("pwConnectIncomingLogin") : relation.to === asset.id && relation.id.startsWith("pw-link-recovery-") ? t("pwConnectIncomingRecovery") : relation.label}</span><TextLink asChild><Link to="/assets/$kind/$id" params={{ kind: linked.kind, id: linked.id }} onClick={(event) => { event.preventDefault(); visitRelation(linked); }}><span>{linked.name}</span></Link></TextLink></li> : null;
 					})}</ul> : <p>{t("accountNoBindings")}</p>}
 				</section>
 				<section className="card account-facts-card account-security-card"><h2>{t("accountRecordsSecurity")}</h2><dl>

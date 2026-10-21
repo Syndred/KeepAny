@@ -842,14 +842,14 @@ const copy: Record<string, [string, string]> = {
 		"无法解密或检查远端备份。请核对密码及文件。",
 		"Could not decrypt or check the remote backup. Check the password and file.",
 	],
-	extImportTitle: ["导入 ExternalLink 台账", "Import ExternalLink ledger"],
+	extImportTitle: ["导入外链记录", "Import backlink records"],
 	extImportHint: [
-		"从 ExternalLink 设置导出 JSON，选择本机项目和对应资料，预览后只导入你勾选的记录。不会向外链站提交，也不会覆盖项目资料。",
-		"Export JSON from ExternalLink Settings, choose a local project and matching profile, then import only selected records. This does not submit to sites or overwrite project details.",
+		"选择 JSON 导出文件，匹配本机项目与来源资料，预览后导入所选记录。当前支持 ExternalLink 导出格式；其他资料可使用 CSV 导入。不会向外链站提交或覆盖项目资料。",
+		"Choose a JSON export, match a local project and source profile, then preview and import selected records. Currently supports the ExternalLink export format; use CSV import for other records. No site submissions or project details are changed.",
 	],
 	extChooseProject: ["选择本机项目", "Choose local project"],
-	extExportFile: ["ExternalLink 导出 JSON", "ExternalLink export JSON"],
-	extChooseProfile: ["选择 ExternalLink 资料", "Choose ExternalLink profile"],
+	extExportFile: ["JSON 导出文件", "JSON export file"],
+	extChooseProfile: ["选择来源资料", "Choose source profile"],
 	extInvalidExport: [
 		"导出文件无效、过大或版本不支持。",
 		"The export is invalid, too large or an unsupported version.",
@@ -1902,7 +1902,7 @@ Object.assign(copy, {
 		"确认后的资料会出现在这里。",
 		"Confirmed records will appear here.",
 	],
-	intakeExternalLinkImport: ["导入外链台账", "Import backlink ledger"],
+	intakeExternalLinkImport: ["导入外链记录", "Import backlink records"],
 	overviewEyebrow: ["本地数字资产工作台", "LOCAL DIGITAL ASSET WORKSPACE"],
 	overviewHero: ["项目、账号与订阅，一眼掌握。", "Your projects, accounts and subscriptions, connected."],
 	overviewHeroHint: [

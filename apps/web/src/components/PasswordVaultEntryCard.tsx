@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router";
 import {
 	ArrowUpRight,
 	Copy,
@@ -49,8 +50,6 @@ export function PasswordVaultEntryCard({
 	session,
 	assetsById,
 	busy,
-	detail = false,
-	onOpen,
 	onEdit,
 	onAddAnother,
 	onDelete,
@@ -61,8 +60,6 @@ export function PasswordVaultEntryCard({
 	session: PasswordVaultSession;
 	assetsById: Map<string, Asset>;
 	busy: boolean;
-	detail?: boolean;
-	onOpen: () => void;
 	onEdit: () => void;
 	onAddAnother: () => void;
 	onDelete: () => void;
@@ -114,7 +111,8 @@ export function PasswordVaultEntryCard({
 	);
 	return (
 		<TaskCard
-			className={`password-vault-entry${detail ? " password-vault-entry-detail" : ""}`}
+			className="password-vault-entry"
+			tabIndex={-1}
 			data-entry-id={entry.id}
 		>
 			<header className="password-vault-entry-heading">
@@ -122,19 +120,7 @@ export function PasswordVaultEntryCard({
 					<KeyRound size={22} />
 				</span>
 				<div className="password-vault-entry-heading-copy">
-					{detail ? (
-						<h2>{entry.title}</h2>
-					) : (
-						<button
-							type="button"
-							className="password-vault-entry-title"
-							onClick={onOpen}
-							aria-label={t("pwVaultOpenEntry", { name: entry.title })}
-						>
-							<strong>{entry.title}</strong>
-							<ArrowUpRight size={17} aria-hidden="true" />
-						</button>
-					)}
+					<h2 className="password-vault-entry-title">{entry.title}</h2>
 					<small>{t("pwVaultCreatedAt", { date })}</small>
 				</div>
 			</header>
@@ -231,11 +217,23 @@ export function PasswordVaultEntryCard({
 			{entry.linkedAssetIds.length > 0 && (
 				<div className="password-vault-linked-assets">
 					<Link2 size={14} aria-label={t("pwVaultLinkedAssets")} />
-					{entry.linkedAssetIds.map((id) => (
-						<span className="password-vault-linked-asset" key={id}>
-							{assetsById.get(id)?.name ?? t("pwVaultAssetUnavailable")}
-						</span>
-					))}
+					{entry.linkedAssetIds.map((id) =>
+						assetsById.has(id) ? (
+							<Link
+								className="password-vault-linked-asset"
+								key={id}
+								to="/assets/$kind/$id"
+								params={{ kind: assetsById.get(id)?.kind ?? "account", id }}
+								hash="account-relations"
+								title={t("pwConnectGraph")}
+							>
+								<Link2 size={14} />
+								{assetsById.get(id)?.name}
+							</Link>
+						) : (
+							<span key={id}>{t("pwVaultAssetUnavailable")}</span>
+						),
+					)}
 				</div>
 			)}
 			<footer className="actions password-vault-entry-actions">

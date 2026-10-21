@@ -1,3 +1,5 @@
+import { createHash } from "node:crypto";
+import { aiServer, model } from "./helpers/ai-workflow";
 import { createRequire } from "node:module";
 import { mkdirSync } from "node:fs";
 import { join } from "node:path";
@@ -26,7 +28,7 @@ const records: VaultEntryDraft[] = [
 	{
 		title: "Google · 工作",
 		username: "alex.work@example.com",
-		usernameAliases: ["studio@example.com"],
+		usernameAliases: ["alex@example.com"],
 		notes: "工作资料专用，项目文件统一保存在共享云盘。",
 	},
 	{
@@ -60,6 +62,7 @@ const records: VaultEntryDraft[] = [
 	linkedAssetIds: [],
 }));
 let fixture: Buffer;
+let fixtureIds: string[];
 test.beforeAll(async () => {
 	mkdirSync(root, { recursive: true });
 	const bundled = await build({
@@ -94,13 +97,19 @@ test.beforeAll(async () => {
 	await session.initialize();
 	await session.create(visualMaster);
 	for (const record of records) await session.saveEntry(record);
+	fixtureIds = records.map(
+		(record) =>
+			session
+				.getSnapshot()
+				.entries.find((entry) => entry.title === record.title)!.id,
+	);
 	fixture = Buffer.from(await session.exportKdbx());
 	session.lock();
 });
 
 for (const locale of ["zh-CN", "en"] as const)
 	for (const width of [1536, 390]) {
-		test(`${locale} ${width} dense grid preserves fields, icon actions, detail navigation and locked secrets`, async ({
+		test(`${locale} ${width} dense grid preserves fields, icon actions, legacy anchors and locked secrets`, async ({
 			browser,
 		}, info) => {
 			const context = await browser.newContext({
@@ -221,38 +230,19 @@ for (const locale of ["zh-CN", "en"] as const)
 				await expect(first.locator(".password-vault-secret")).toHaveText(
 					records[0].password,
 				);
-				await first
-					.getByRole("button", {
-						name: t("pwVaultOpenEntry", { name: records[0].title }),
-						exact: true,
-					})
-					.click();
-				await expect(page).toHaveURL(/#password-/);
-				await expect(cards).toHaveCount(0);
-				await expect(page.locator(".vault-privacy-note")).toHaveCount(0);
-				const detail = page.locator(".password-vault-entry-detail");
-				await expect(detail).toContainText(records[0].notes);
-				await expect(detail).not.toContainText(records[0].password);
-				await expect(page.locator(".toast")).toBeHidden({ timeout: 10000 });
-				await page.screenshot({
-					path: join(root, `detail-${locale}-${width}.png`),
-				});
-				await page.goBack();
-				await expect(cards).toHaveCount(6);
-				await expect(first).not.toContainText(records[0].password);
-				await first
-					.getByRole("button", {
-						name: t("pwVaultOpenEntry", { name: records[0].title }),
-						exact: true,
-					})
-					.click();
-				await page
-					.getByRole("button", { name: t("pwVaultBackToEntries"), exact: true })
-					.click();
-				await expect(cards).toHaveCount(6);
 				await expect(
-					first.locator(".password-vault-entry-title"),
-				).toBeFocused();
+					first.getByRole("heading", { name: records[0].title, exact: true }),
+				).toBeVisible();
+				await expect(page.locator(".password-vault-detail-view")).toHaveCount(
+					0,
+				);
+				await expect(cards).toHaveCount(6);
+				await first
+					.getByRole("button", {
+						name: t("pwVaultHidePasswordValue"),
+						exact: true,
+					})
+					.click();
 				// Real UI edits: unbroken long identifiers, multiline password and notes, valid URL.
 				await first
 					.getByRole("button", { name: t("pwVaultEditEntry"), exact: true })
@@ -367,7 +357,9 @@ for (const locale of ["zh-CN", "en"] as const)
 					.getByRole("button", { name: t("pwVaultUnlock"), exact: true })
 					.click();
 				await expect(cards).toHaveCount(6);
-				await expect(page.getByText(t("pwVaultStatusUnlocked"), { exact: true })).toHaveCount(1);
+				await expect(
+					page.getByText(t("pwVaultStatusUnlocked"), { exact: true }),
+				).toHaveCount(1);
 				await expect(page.locator(".password-vault-message")).toHaveCount(0);
 				await expect(first).not.toContainText("Second secret line");
 				await page.evaluate(() => {
@@ -400,12 +392,8 @@ for (const locale of ["zh-CN", "en"] as const)
 				await page
 					.getByRole("button", { name: t("pwVaultUnlock"), exact: true })
 					.click();
-				await first
-					.getByRole("button", {
-						name: t("pwVaultOpenEntry", { name: records[0].title }),
-						exact: true,
-					})
-					.click();
+				const legacyId = await first.getAttribute("data-entry-id");
+				await page.goto(`/assets/vault#password-${legacyId}`);
 				await page.reload();
 				await expect(page.locator(".password-vault-entry-detail")).toHaveCount(
 					0,
@@ -414,15 +402,276 @@ for (const locale of ["zh-CN", "en"] as const)
 				await page
 					.getByRole("button", { name: t("pwVaultUnlock"), exact: true })
 					.click();
-				await expect(
-					page.locator(".password-vault-entry-detail"),
-				).toContainText(longNotes);
-				await expect(
-					page.locator(".password-vault-entry-detail"),
-				).not.toContainText("Second secret line");
+				await expect(first).toContainText(longNotes);
+				await expect(first).not.toContainText("Second secret line");
 				expect(errors).toEqual([]);
 			} finally {
 				await context.close();
+			}
+		});
+	}
+
+for (const locale of ["zh-CN", "en"] as const)
+	for (const width of [390, 1536]) {
+		test(`${locale} ${width} reviewed account family persists without sending vault secrets`, async ({
+			browser,
+		}, info) => {
+			const mock = await aiServer();
+			const context = await browser.newContext({
+				locale,
+				viewport: { width, height: 1024 },
+			});
+			const t = visualCopy(locale);
+			await context.addInitScript(
+				({ locale, baseURL, model }) => {
+					localStorage.setItem("keepany-language", locale);
+					localStorage.setItem(
+						"keepany-ai-settings-v1",
+						JSON.stringify({
+							provider: "compatible",
+							baseURL,
+							model,
+							keySource: "none",
+						}),
+					);
+				},
+				{ locale, baseURL: mock.baseURL, model },
+			);
+			const page = await context.newPage();
+			const errors: string[] = [];
+			page.on("pageerror", (e) => errors.push(e.message));
+			try {
+				await page.goto("/assets/vault");
+				await page
+					.getByRole("button", { name: t("pwVaultImportEmpty"), exact: true })
+					.click();
+				await page.locator("#password-vault-import-file").setInputFiles({
+					name: "synthetic-family.kdbx",
+					mimeType: "application/octet-stream",
+					buffer: fixture,
+				});
+				await page
+					.locator("#password-vault-import-password")
+					.fill(visualMaster);
+				await page
+					.getByRole("dialog")
+					.getByRole("button", { name: t("pwVaultImportNow"), exact: true })
+					.click();
+				await expect(page.getByRole("dialog")).toBeHidden();
+				await page
+					.getByRole("button", { name: t("pwConnectTitle"), exact: true })
+					.click();
+				const dialog = page.getByRole("dialog");
+				await expect(dialog.locator(".vault-connect-account")).toHaveCount(6);
+				await expect(
+					dialog.locator('input[type="checkbox"]:checked'),
+				).toHaveCount(0);
+				expect(mock.requests).toHaveLength(0);
+				await dialog
+					.getByRole("button", { name: t("pwConnectSelectAll"), exact: true })
+					.click();
+				await dialog
+					.getByRole("button", { name: t("pwConnectLocal"), exact: true })
+					.click();
+				await expect(dialog.locator(".vault-connect-suggestion")).toHaveCount(
+					1,
+				);
+				const ids = fixtureIds.map(
+					(id) => `pw-account-${createHash("sha256").update(id).digest("hex")}`,
+				);
+				const hintRow = dialog
+					.locator(".vault-connect-account")
+					.filter({ hasText: records[2].title });
+				await hintRow
+					.getByRole("button", { name: t("pwConnectUseNotes"), exact: true })
+					.click();
+				await expect(hintRow.locator("textarea")).toHaveValue(records[2].notes);
+				expect(mock.requests).toHaveLength(0);
+				await dialog
+					.locator(".vault-connect-account")
+					.filter({ hasText: records[2].title })
+					.locator("textarea")
+					.fill(
+						"Signs in with Google personal. Google work uses this GitHub account for recovery (synthetic).",
+					);
+				mock.responses.push(
+					JSON.stringify({
+						relations: [
+							{
+								from: ids[2],
+								to: ids[0],
+								kind: "login",
+								evidence: "Explicit login hint",
+							},
+							{
+								from: ids[1],
+								to: ids[2],
+								kind: "recovery",
+								evidence: "Explicit recovery hint",
+							},
+						],
+					}),
+				);
+				await dialog
+					.getByRole("button", { name: t("pwConnectAi"), exact: true })
+					.click();
+				await expect(dialog.locator(".vault-connect-suggestion")).toHaveCount(
+					3,
+				);
+				const suggestions = dialog.locator(".vault-connect-suggestion");
+				await expect(
+					suggestions.nth(1).getByRole("checkbox"),
+				).not.toBeChecked();
+				await expect(
+					suggestions.nth(2).getByRole("checkbox"),
+				).not.toBeChecked();
+				expect(mock.requests).toHaveLength(1);
+				const sent = JSON.stringify(mock.requests[0].body);
+				for (const record of records) {
+					if (record.password) expect(sent).not.toContain(record.password);
+					expect(sent).not.toContain(record.notes);
+				}
+				expect(sent).not.toContain("backup@example.com");
+				await suggestions.nth(1).getByRole("checkbox").check();
+				await suggestions.nth(2).getByRole("checkbox").check();
+				expect(
+					await dialog.evaluate((el) => el.scrollWidth <= el.clientWidth + 1),
+				).toBe(true);
+				await expect(page.locator(".toast")).toBeHidden({ timeout: 10000 });
+				await page.screenshot({
+					path: join(root, `family-review-${locale}-${width}.png`),
+				});
+				if (locale === "zh-CN" && width === 1536) {
+					await page.evaluate(() => {
+						const original = IDBObjectStore.prototype.put;
+						IDBObjectStore.prototype.put = function (
+							...args: Parameters<IDBObjectStore["put"]>
+						) {
+							if (this.name === "passwordVault") {
+								IDBObjectStore.prototype.put = original;
+								throw new DOMException(
+									"Synthetic association fault",
+									"QuotaExceededError",
+								);
+							}
+							return original.apply(this, args);
+						};
+					});
+					await dialog
+						.getByRole("button", { name: t("pwConnectSave"), exact: true })
+						.click();
+					await expect(dialog.getByRole("status")).toHaveText(
+						t("pwConnectPartial"),
+					);
+					await expect(
+						page.locator(
+							".password-vault-entry-list .password-vault-linked-asset",
+						),
+					).toHaveCount(0);
+				}
+				await dialog
+					.getByRole("button", { name: t("pwConnectSave"), exact: true })
+					.click();
+				await expect(dialog).toBeHidden();
+				const links = page.locator(
+					".password-vault-entry-list .password-vault-linked-asset",
+				);
+				await expect(links).toHaveCount(6);
+				// Repeat with all records: existing accounts and exact identifier edges stay deduplicated.
+				await page
+					.getByRole("button", { name: t("pwConnectTitle"), exact: true })
+					.click();
+				await expect(dialog.locator(".vault-connect-account")).toHaveCount(6);
+				await expect(dialog).not.toContainText(t("pwConnectNew"));
+				await dialog
+					.getByRole("button", { name: t("pwConnectSelectAll"), exact: true })
+					.click();
+				await dialog
+					.getByRole("button", { name: t("pwConnectLocal"), exact: true })
+					.click();
+				await dialog
+					.getByRole("button", { name: t("pwConnectSave"), exact: true })
+					.click();
+				await expect(dialog).toBeHidden();
+				// Export/read the actual encrypted file to verify all original fields survived association.
+				const download = page.waitForEvent("download");
+				await page
+					.getByRole("button", { name: t("pwVaultExport"), exact: true })
+					.click();
+				const output = info.outputPath("linked.kdbx");
+				await (await download).saveAs(output);
+				const inspected = await inspectVisualKdbx(output);
+				expect(inspected).toHaveLength(6);
+				for (const record of records)
+					expect(
+						inspected.find((e) => e.draft.title === record.title)?.draft,
+					).toMatchObject({
+						password: record.password,
+						notes: record.notes,
+						username: record.username,
+					});
+				await links.filter({ hasText: records[0].title }).click();
+				await expect(page).toHaveURL(new RegExp(`/assets/account/${ids[0]}`));
+				await expect(page.locator(".react-flow__node")).toHaveCount(3);
+				await expect(page.locator(".react-flow__edge")).toHaveCount(3);
+				await expect(page.locator(".asset-relations-card")).toContainText(
+					t("pwConnectKind_login"),
+				);
+				await page.locator(".asset-relations-card").scrollIntoViewIfNeeded();
+				await page.screenshot({
+					path: join(root, `family-graph-${locale}-${width}.png`),
+				});
+				await page.reload();
+				await expect(page.locator(".react-flow__node")).toHaveCount(3);
+				await expect(page.locator(".react-flow__edge")).toHaveCount(3);
+				expect(
+					await page.evaluate(
+						() => document.documentElement.scrollWidth <= innerWidth + 1,
+					),
+				).toBe(true);
+				await page.goto("/assets/account");
+				await expect(page.locator(".asset-account-card")).toHaveCount(6);
+				for (const record of records)
+					await expect(
+						page
+							.locator(".asset-account-card")
+							.filter({ hasText: record.title }),
+					).toContainText(record.username);
+				await page.screenshot({
+					path: join(root, `accounts-${locale}-${width}.png`),
+				});
+				await page.goto("/intake");
+				const importTitle =
+					locale === "zh-CN" ? "导入外链记录" : "Import backlink records";
+				await page
+					.locator("details.intake-secondary")
+					.filter({ hasText: importTitle })
+					.locator("summary")
+					.click();
+				const importer = page.locator(".external-import-panel");
+				await expect(
+					importer.getByRole("heading", { name: importTitle, exact: true }),
+				).toBeVisible();
+				const heading = importer.locator(".external-import-title");
+				expect(
+					await heading.evaluate((el) => {
+						const a = el.getBoundingClientRect(),
+							b = el.querySelector("svg")!.getBoundingClientRect();
+						return Math.abs((a.top + a.bottom - b.top - b.bottom) / 2);
+					}),
+				).toBeLessThan(1);
+				expect(
+					await page.evaluate(
+						() => document.documentElement.scrollWidth <= innerWidth + 1,
+					),
+				).toBe(true);
+				await importer.screenshot({
+					path: join(root, `import-${locale}-${width}.png`),
+				});
+				expect(errors).toEqual([]);
+			} finally {
+				await context.close();
+				await mock.close();
 			}
 		});
 	}

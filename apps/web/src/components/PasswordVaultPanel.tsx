@@ -1,6 +1,7 @@
+import { VaultAccountLinksDialog } from "./VaultAccountLinksDialog";
 import { useNavigate, useRouterState } from "@tanstack/react-router";
 import {
-	ArrowLeft,
+	Network,
 	Check,
 	Download,
 	Eye,
@@ -115,9 +116,6 @@ export function PasswordVaultPanel({
 		usePasswordVault();
 	const navigate = useNavigate();
 	const hash = useRouterState({ select: (state) => state.location.hash });
-	const detailId = hash.startsWith("password-") ? hash.slice(9) : null;
-	const detailEntry = snapshot.entries.find((entry) => entry.id === detailId);
-	const listPosition = useRef({ hash: "", scroll: 0, id: "" });
 	const copyGeneration = useRef(0);
 	useEffect(
 		() => () => {
@@ -131,35 +129,16 @@ export function PasswordVaultPanel({
 				.getElementById("vault-trash")
 				?.scrollIntoView({ block: "start" });
 	}, [hash]);
-	function openDetail(id: string) {
-		listPosition.current = { hash, scroll: window.scrollY, id };
-		void navigate({
-			to: "/assets/$kind",
-			params: { kind: "vault" },
-			hash: `password-${id}`,
-		});
-	}
-	function closeDetail() {
-		void navigate({
-			to: "/assets/$kind",
-			params: { kind: "vault" },
-			hash: listPosition.current.hash,
-			resetScroll: false,
-		}).then(() => {
-			requestAnimationFrame(() => {
-				window.scrollTo(0, listPosition.current.scroll);
-				const cards = document.querySelectorAll<HTMLElement>(
-					".password-vault-entry-list .password-vault-entry",
-				);
-				const card = [...cards].find(
-					(node) => node.dataset.entryId === listPosition.current.id,
-				);
-				card
-					?.querySelector<HTMLButtonElement>(".password-vault-entry-title")
-					?.focus({ preventScroll: true });
-			});
-		});
-	}
+	useEffect(() => {
+		if (snapshot.status !== "unlocked" || !hash.startsWith("password-")) return;
+		const card = [
+			...document.querySelectorAll<HTMLElement>(
+				".password-vault-entry-list .password-vault-entry",
+			),
+		].find((node) => node.dataset.entryId === hash.slice(9));
+		card?.scrollIntoView({ block: "center" });
+		card?.focus({ preventScroll: true });
+	}, [hash, snapshot.status]);
 	const [readyError, setReadyError] = useState<string | null>(null);
 	const [messageKey, setMessageKey] = useState<string | null>(null);
 	const [busy, setBusy] = useState(false);
@@ -181,6 +160,7 @@ export function PasswordVaultPanel({
 	const [historyReveal, setHistoryReveal] = useState<number | null>(null);
 	const [importOpen, setImportOpen] = useState(false);
 	const [smartImportOpen, setSmartImportOpen] = useState(false);
+	const [accountLinksOpen, setAccountLinksOpen] = useState(false);
 	const [importFile, setImportFile] = useState<File | null>(null);
 	const [importPassword, setImportPassword] = useState("");
 	const [changeMasterOpen, setChangeMasterOpen] = useState(false);
@@ -208,6 +188,7 @@ export function PasswordVaultPanel({
 	useEffect(() => {
 		if (snapshot.status === "unlocked") return;
 		copyGeneration.current += 1;
+		setAccountLinksOpen(false);
 		setMessageKey(null);
 		setEditorId(null);
 		setDraft(null);
@@ -453,7 +434,6 @@ export function PasswordVaultPanel({
 		clearMessage();
 		try {
 			await session.trashEntry(entry.id);
-			if (detailId === entry.id) closeDetail();
 			announce("pwVaultSaved");
 		} catch (error) {
 			announce(
@@ -624,17 +604,15 @@ export function PasswordVaultPanel({
 		return assetsById.get(id)?.name ?? t("pwVaultAssetUnavailable");
 	}
 
-	function renderEntry(entry: PasswordVaultEntrySummary, detail = false) {
+	function renderEntry(entry: PasswordVaultEntrySummary) {
 		if (!session) return null;
 		return (
 			<PasswordVaultEntryCard
-				key={`${detail ? "detail" : "card"}:${entry.id}:${entry.modifiedAt}`}
+				key={`${entry.id}:${entry.modifiedAt}`}
 				entry={entry}
 				session={session}
-				detail={detail}
 				busy={busy}
 				assetsById={assetsById}
-				onOpen={() => openDetail(entry.id)}
 				onEdit={() => openEditor(entry.id)}
 				onAddAnother={() => openAnotherAccount(entry)}
 				onDelete={() => void deleteEntry(entry)}
@@ -648,6 +626,12 @@ export function PasswordVaultPanel({
 
 	return (
 		<section className="password-vault-panel">
+			{accountLinksOpen && snapshot.status === "unlocked" && (
+				<VaultAccountLinksDialog
+					onClose={() => setAccountLinksOpen(false)}
+					onSaved={() => notify?.(t("pwConnectSaved"))}
+				/>
+			)}
 			{smartImportOpen &&
 				(snapshot.status === "unlocked" ||
 					notice === "pwVaultLockedElsewhere") && (
@@ -733,33 +717,29 @@ export function PasswordVaultPanel({
 				<>
 					<div className="password-vault-toolbar">
 						<div className="password-vault-search field">
-							{detailId ? (
-								<VaultIconButton
-									label={t("pwVaultBackToEntries")}
-									onClick={closeDetail}
-								>
-									<ArrowLeft size={20} />
-								</VaultIconButton>
-							) : (
-								<>
-									<label
-										className="password-vault-sr"
-										htmlFor="password-vault-search-input"
-									>
-										{t("pwVaultSearch")}
-									</label>
-									<input
-										id="password-vault-search-input"
-										type="search"
-										value={search}
-										onChange={(event) => setSearch(event.target.value)}
-										placeholder={t("pwVaultSearch")}
-										autoComplete="off"
-									/>
-								</>
-							)}
+							<label
+								className="password-vault-sr"
+								htmlFor="password-vault-search-input"
+							>
+								{t("pwVaultSearch")}
+							</label>
+							<input
+								id="password-vault-search-input"
+								type="search"
+								value={search}
+								onChange={(event) => setSearch(event.target.value)}
+								placeholder={t("pwVaultSearch")}
+								autoComplete="off"
+							/>
 						</div>
 						<div className="actions">
+							<VaultIconButton
+								label={t("pwConnectTitle")}
+								disabled={busy}
+								onClick={() => setAccountLinksOpen(true)}
+							>
+								<Network size={18} />
+							</VaultIconButton>
 							<VaultIconButton
 								label={t("pwVaultLock")}
 								disabled={busy}
@@ -836,39 +816,23 @@ export function PasswordVaultPanel({
 						</div>
 					)}
 
-					{detailId ? (
-						<div className="password-vault-detail-view">
-							{detailEntry ? (
-								renderEntry(detailEntry, true)
-							) : (
-								<p role="status">{t("pwVaultEntryUnavailable")}</p>
-							)}
-						</div>
-					) : (
-						<div className="password-vault-entries-section">
-							{filteredEntries.length ? (
-								<div className="password-vault-entry-list">
-									{filteredEntries.map((entry) => renderEntry(entry))}
-								</div>
-							) : (
-								<div className="password-vault-empty">
-									<KeyRound size={22} />
-									<p>
-										{t(
-											normalizedSearch
-												? "pwVaultNoMatches"
-												: "pwVaultNoEntries",
-										)}
-									</p>
-								</div>
-							)}
-						</div>
-					)}
-					<div
-						className="password-vault-trash"
-						id="vault-trash"
-						hidden={Boolean(detailId)}
-					>
+					<div className="password-vault-entries-section">
+						{filteredEntries.length ? (
+							<div className="password-vault-entry-list">
+								{filteredEntries.map((entry) => renderEntry(entry))}
+							</div>
+						) : (
+							<div className="password-vault-empty">
+								<KeyRound size={22} />
+								<p>
+									{t(
+										normalizedSearch ? "pwVaultNoMatches" : "pwVaultNoEntries",
+									)}
+								</p>
+							</div>
+						)}
+					</div>
+					<div className="password-vault-trash" id="vault-trash">
 						<div className="password-vault-section-title">
 							<h3>
 								<Trash2 size={18} /> {t("pwVaultTrashTitle")}

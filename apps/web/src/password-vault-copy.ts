@@ -1,5 +1,86 @@
 /** Password vault copy kept separate so the shell can merge it into i18next. */
 export const passwordVaultCopy: Record<string, [string, string]> = {
+	pwConnectUseNotes: ["从本条备注填入线索", "Use this entry’s notes as a hint"],
+	pwConnectNotesLong: [
+		"备注超过 500 字，请仅摘取与登录或找回有关的内容。",
+		"Notes exceed 500 characters. Copy only the login or recovery details into the hint.",
+	],
+	pwConnectIncomingLogin: [
+		"通过此账号登录的账号",
+		"Accounts signing in through this account",
+	],
+	pwConnectIncomingRecovery: [
+		"通过此账号找回的账号",
+		"Accounts recovered through this account",
+	],
+	pwConnectTitle: ["关联账号", "Connect accounts"],
+	pwConnectGraph: ["查看账号与关联族谱", "View account and relationships"],
+	pwConnectIntro: [
+		"勾选要加入「账号」的条目，核对名称、账号和网址。保存后这些资料会进入普通账号资料及其备份／同步；密码、原备注和其他登录标识仍留在加密库。最多每次 200 条。",
+		"Select entries to add to Accounts and review their names, usernames and websites. These fields will enter regular account storage, backup and sync. Passwords, original notes and additional login identifiers remain encrypted. Up to 200 entries per batch.",
+	],
+	pwConnectLoadError: [
+		"无法准备账号，请检查是否存在多个同名账号或已删除的关联账号。",
+		"Could not prepare accounts. Check for ambiguous matches or deleted linked accounts.",
+	],
+	pwConnectSelectAll: ["全选", "Select all"],
+	pwConnectClear: ["取消选择", "Clear selection"],
+	pwConnectSelected: ["已选 {{count}} 条", "{{count}} selected"],
+	pwConnectEmpty: [
+		"暂无可关联的账号。请先填写登录账号；AI 密钥条目不会加入。",
+		"No eligible accounts. Add a username first. AI key entries are excluded.",
+	],
+	pwConnectNew: ["新建账号", "New account"],
+	pwConnectExisting: ["关联已有账号", "Existing account"],
+	pwConnectHint: [
+		"关联线索（可选，请勿填写密码）",
+		"Relationship hint (optional, no passwords)",
+	],
+	pwConnectHintExample: [
+		"例如：通过 Google 主账号登录；备用邮箱是…",
+		"E.g. sign in with my primary Google account; recovery email is…",
+	],
+	pwConnectLocal: ["识别相同登录标识", "Find shared login identifiers"],
+	pwConnectAiTitle: ["AI 关联建议", "AI relationship suggestions"],
+	pwConnectAiScope: [
+		"仅发送勾选账号的名称、主登录账号、网站域名和上方填写的线索。不发送密码；原备注不会自动发送，如需使用请先填入线索并检查。AI 建议需逐条勾选确认。",
+		"Send only selected names, primary usernames, website origins and the hints entered above. Passwords are not sent. Original notes are only included if you explicitly load them into a hint and review it. Select each AI suggestion to confirm it.",
+	],
+	pwConnectConfigure: ["前往设置连接 AI", "Connect AI in Settings"],
+	pwConnectAi: ["发送所选资料并分析", "Send selected details and analyze"],
+	pwConnectReview: ["核对关联关系", "Review relationships"],
+	pwConnectKind_identifier: ["相同登录标识", "Shared login identifier"],
+	pwConnectKind_login: ["通过此账号登录", "Signs in with this account"],
+	pwConnectKind_recovery: ["使用此账号找回", "Recovered through this account"],
+	pwConnectFound: [
+		"找到 {{count}} 条建议。请核对后勾选保存。",
+		"Found {{count}} suggestions. Review and select those to save.",
+	],
+	pwConnectAiError: [
+		"AI 未能给出有效结果，请检查连接和输入；已有资料未改动。",
+		"AI did not return valid results. Check the connection and input; existing records are unchanged.",
+	],
+	pwConnectSave: [
+		"保存账号及勾选关系",
+		"Save accounts and selected relationships",
+	],
+	pwConnectWorking: ["处理中…", "Working…"],
+	pwConnectSaved: [
+		"账号与关联已保存，可从卡片上的账号链接查看族谱。",
+		"Accounts and relationships saved. Open an account link on a card to view its graph.",
+	],
+	pwConnectSaveError: [
+		"未能保存，请关闭后重新核对。",
+		"Could not save. Close and review again.",
+	],
+	pwConnectPartial: [
+		"账号资料已保存，密码卡片尚未关联成功。重新解锁并再次关联即可继续，不会重复新建账号。",
+		"Account records were saved, but vault links were not. Unlock and connect again to finish without creating duplicate accounts.",
+	],
+	pwConnectStale: [
+		"密码库已变化，请关闭后重新核对。",
+		"The vault changed. Close and review again.",
+	],
 	pwSmartCopyField: ["复制{{field}}", "Copy {{field}}"],
 	pwSmartCopyFailed: [
 		"复制失败，请使用键盘或系统菜单复制。",

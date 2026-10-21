@@ -297,6 +297,39 @@ export class VaultSession {
     }));
   }
 
+  /** Link reviewed public account records in one encrypted write, without replacing entry content. */
+  async linkAccounts(items: { entryId: string; accountId: string }[], expectedContentRevision: string): Promise<void> {
+    const links = items.map(item => ({ ...item }));
+    if (!links.length || links.length > 200 || links.some(item => !item.entryId || !item.accountId || item.accountId.length > 96)) fail('vault-invalid');
+    return this.run(async (generation) => {
+      const db = this.unlocked();
+      if (this.contentRevision(db) !== expectedContentRevision) fail('vault-stale');
+      const unchanged = links.every(item => {
+        const entry = findEntry(db, item.entryId);
+        const draft = draftOf(entry);
+        if (isTrash(db, entry) || draft.aiKeyBinding) fail('vault-invalid');
+        return draft.linkedAssetIds.includes(item.accountId);
+      });
+      if (unchanged) {
+        const stored = await this.storage.read();
+        this.checkGeneration(generation);
+        if (stored?.revision !== this.record?.revision) fail('vault-stale');
+        return;
+      }
+      await this.mutate(generation, candidate => {
+        for (const item of links) {
+          const entry = findEntry(candidate, item.entryId);
+          if (isTrash(candidate, entry)) fail('vault-invalid');
+          const draft = draftOf(entry);
+          if (draft.aiKeyBinding) fail('vault-invalid');
+          if (draft.linkedAssetIds.includes(item.accountId)) continue;
+          entry.pushHistory();
+          applyDraft(entry, normalizeDraft({ ...draft, linkedAssetIds: [...draft.linkedAssetIds, item.accountId] }));
+        }
+      });
+    });
+  }
+
   readEntry(id: string): VaultEntryDraft { return draftOf(findEntry(this.unlocked(), id)); }
 
   /** Never exposes this unreviewed application state as a password entry. */

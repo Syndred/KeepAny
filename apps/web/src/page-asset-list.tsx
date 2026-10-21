@@ -447,7 +447,6 @@ export function AssetList() {
 	const { data, search, notify } = useAppContext();
 	const hash = useRouterState({ select: (state) => state.location.hash });
 	const focusAssetId = hash.startsWith("asset-") ? hash.slice(6) : undefined;
-	const passwordDetail = kind === "vault" && hash.startsWith("password-");
 	const { t, i18n } = useTranslation();
 	const backlinksByAsset = useMemo(() => {
 		const counts = new Map<string, { total: number; pending: number }>();
@@ -573,10 +572,10 @@ export function AssetList() {
 				<Suspense fallback={<div className="notice" role="status">{t("pwVaultLoading")}</div>}>
 					<PasswordVaultPanel assets={liveAssets(data)} notify={notify} focusAssetId={focusAssetId} />
 				</Suspense>
-				{!passwordDetail && <><div className="card-header vault-references-header"><h2>{t("vaultReferencesTitle")}</h2><Button size="icon" aria-label={t("vaultLinkEntry")} title={t("vaultLinkEntry")} disabled={data.pendingCategoryEdits.some((pending) => pending.kind === kind)} onClick={() => setEdit(true)}><Plus size={18} /></Button></div>
+				{<><div className="card-header vault-references-header"><h2>{t("vaultReferencesTitle")}</h2><Button size="icon" aria-label={t("vaultLinkEntry")} title={t("vaultLinkEntry")} disabled={data.pendingCategoryEdits.some((pending) => pending.kind === kind)} onClick={() => setEdit(true)}><Plus size={18} /></Button></div>
 				<div className="notice vault-privacy-note" role="note"><LockKeyhole size={16} aria-hidden="true" /><span>{t("vaultHint")}</span></div></>}
 			</>}
-			{!passwordDetail && <>
+			{<>
 			<CategoryStrip key={kind} kind={kind} chosen={category} choose={choose} />
 			{(availableTags.length > 0 || tag) && (
 				<div className="list-filters">
