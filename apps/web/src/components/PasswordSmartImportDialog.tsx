@@ -846,20 +846,26 @@ export function PasswordSmartImportDialog({
 			);
 		setChoices((current) => ({ ...current, [id]: choice }));
 	}
-	function addAnotherAccount(id: string) {
+	function addAnotherAccount(id?: string) {
 		if (running.current || outdated) return;
 		const target = candidates.find((row) => row.id === id);
-		if (!target) return;
+		if (id && !target) return;
 		if (candidates.length >= VAULT_IMPORT_MAX_ENTRIES) {
 			setMessage(t("pwSmartLimit"));
 			return;
 		}
 		const row: VaultImportCandidate = {
 			id: `vault-manual-${++manualSequence.current}`,
-			sourceLine: target.sourceLine,
+			sourceLine: target?.sourceLine ?? 1,
+			// A blank manual entry must not claim an unrelated source passage.
+			...(!target
+				? { sourceSnapshot: "" }
+				: target.sourceSnapshot !== undefined
+					? { sourceSnapshot: target.sourceSnapshot }
+					: {}),
 			draft: {
-				title: target.draft.title,
-				url: target.draft.url,
+				title: target?.draft.title ?? "",
+				url: target?.draft.url ?? "",
 				username: "",
 				password: "",
 				notes: "",
@@ -875,6 +881,65 @@ export function PasswordSmartImportDialog({
 			[row.id]: { selected: false, action: "new" },
 		}));
 		setMessage(t("pwSmartManualAdded"));
+	}
+	function removeCandidate(id: string) {
+		if (running.current || outdated || !session) return;
+		const rows = candidates.filter((row) => row.id !== id);
+		if (rows.length === candidates.length) return;
+		const nextPreview = previewCandidates(session, rows);
+		setChoices((current) =>
+			Object.fromEntries(
+				rows.map((row, index) => {
+					const beforeIndex = candidates.findIndex(
+						(before) => before.id === row.id,
+					);
+					const before = preview?.rows[beforeIndex];
+					const after = nextPreview?.rows[index];
+					const unchanged =
+						before &&
+						after &&
+						before.status === after.status &&
+						before.updateOnly === after.updateOnly &&
+						JSON.stringify(before.existingIds) ===
+							JSON.stringify(after.existingIds);
+					return [
+						row.id,
+						unchanged && current[row.id]
+							? current[row.id]
+							: {
+									selected: false,
+									action: row.updateTargetId
+										? "update"
+										: after?.status === "new"
+											? "new"
+											: "skip",
+									...(row.updateTargetId
+										? { targetId: row.updateTargetId }
+										: {}),
+								},
+					];
+				}),
+			),
+		);
+		setCandidates(rows);
+		setMessage("");
+	}
+	function removeFragment(id: string) {
+		if (running.current || outdated) return;
+		const group = issueGroups.find((item) => item.id === id);
+		if (!group) return;
+		const removed = new Set(
+			group.issues.map((issue) => `${issue.lineNumber}:${issue.code}`),
+		);
+		setIssues((current) =>
+			current.filter(
+				(issue) => !removed.has(`${issue.lineNumber}:${issue.code}`),
+			),
+		);
+		setFragmentStates((current) =>
+			Object.fromEntries(Object.entries(current).filter(([key]) => key !== id)),
+		);
+		setMessage("");
 	}
 	function applyFragment(
 		group: (typeof issueGroups)[number] & {
@@ -1491,6 +1556,8 @@ export function PasswordSmartImportDialog({
 							onDraft={updateDraft}
 							onChoice={choose}
 							onAddAnother={addAnotherAccount}
+							onRemoveCandidate={removeCandidate}
+							onRemoveFragment={removeFragment}
 							onApplyFragment={applyFragment}
 							onOrganize={() => setConfirmation("titles")}
 							organizeRecords={aiPreview.records}

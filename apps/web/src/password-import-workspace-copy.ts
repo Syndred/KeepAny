@@ -1,5 +1,19 @@
 export const passwordImportWorkspaceZh = {
+	pwWorkAddAccount: "新增账号",
+	pwWorkReviewHint: "逐条核对，也可补充遗漏的账号。",
+	pwWorkLatestReviewed: "最近核对的账号排在最前。",
+	pwWorkDelete: "删除这条",
+	pwWorkDeleteTitle: "删除这条记录？",
+	pwWorkDeleteHint:
+		"从本次导入清单移除这条记录及其填写内容。原始清单和密码库中已经保存的账号会保留。",
+	pwWorkDeleteConfirm: "确认删除",
+	pwWorkDeleted: "已从本次导入清单删除",
 	pwWorkApplied: "已保存本次补充",
+	pwWorkOrphanTargets: "原目标已删除的填写",
+	pwWorkOrphanTarget: "原目标已删除的填写 · {{name}}",
+	pwWorkOrphanHint:
+		"原目标已从本次清单删除。这份填写仍保留；核对后可作为新账号加入清单。",
+	pwWorkOrphanApply: "作为新账号核对",
 	pwSmartCopySourceLine: "复制原文第 {{line}} 行",
 	pwSmartPasteField: "粘贴{{field}}",
 	pwSmartPasteFailed: "无法读取剪贴板，请使用键盘或系统菜单粘贴。",
@@ -62,7 +76,21 @@ export const passwordImportWorkspaceEn: Record<
 	keyof typeof passwordImportWorkspaceZh,
 	string
 > = {
+	pwWorkAddAccount: "Add account",
+	pwWorkReviewHint: "Review each entry or add a missing account.",
+	pwWorkLatestReviewed: "Most recently reviewed accounts appear first.",
+	pwWorkDelete: "Delete entry",
+	pwWorkDeleteTitle: "Delete this entry?",
+	pwWorkDeleteHint:
+		"Remove this entry and its edits from this import. The original source and accounts already saved in your vault will be kept.",
+	pwWorkDeleteConfirm: "Delete entry",
+	pwWorkDeleted: "Entry removed from this import",
 	pwWorkApplied: "Your additions have been kept",
+	pwWorkOrphanTargets: "Edits for removed entries",
+	pwWorkOrphanTarget: "Edits for removed entry · {{name}}",
+	pwWorkOrphanHint:
+		"The original entry was removed from this import. Your edits are kept and can be reviewed as a new account.",
+	pwWorkOrphanApply: "Review as a new account",
 	pwSmartCopySourceLine: "Copy source line {{line}}",
 	pwSmartPasteField: "Paste {{field}}",
 	pwSmartPasteFailed:

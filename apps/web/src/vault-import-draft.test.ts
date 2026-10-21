@@ -143,6 +143,31 @@ function importDraft(): ImportDraft {
 }
 
 describe("encrypted import draft payload", () => {
+	it("keeps version 1 drafts compatible with and without review ordering", () => {
+		const oldDraft = importDraft();
+		if (!oldDraft.workspaceState) throw new Error("Missing test workspace");
+		expect(readImportDraft(JSON.stringify(oldDraft))).toEqual(oldDraft);
+		const ordered = {
+			...oldDraft,
+			workspaceState: {
+				...oldDraft.workspaceState,
+				reviewedOrder: ["recognized-2", "recognized-1"],
+			},
+		};
+		expect(readImportDraft(JSON.stringify(ordered))).toEqual(ordered);
+		expect(() =>
+			readImportDraft(
+				JSON.stringify({
+					...ordered,
+					workspaceState: {
+						...ordered.workspaceState,
+						reviewedOrder: Array(201).fill("recognized-1"),
+					},
+				}),
+			),
+		).toThrow();
+	});
+
 	it("restores AI results, source references, review choices and unapplied workspace edits", () => {
 		const draft = importDraft();
 		const restored = readImportDraft(JSON.stringify(draft));

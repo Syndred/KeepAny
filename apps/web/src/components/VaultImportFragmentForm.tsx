@@ -2,6 +2,11 @@ import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { VaultEntryDraft } from "../../../../packages/password-vault/src";
 import type { VaultImportCandidate } from "../vault-import-model";
+import {
+	copyVaultImportDraft as copyDraft,
+	orphanedVaultImportTargets,
+	resolveVaultImportTarget,
+} from "../vault-import-orphan";
 import { resolveVaultImportQuickFill } from "../vault-import-quick-fill";
 import type { VaultImportSourceExcerpt as SourceExcerpt } from "../vault-import-source";
 import { Button } from "./ui/button";
@@ -30,18 +35,6 @@ function blankDraft(): VaultEntryDraft {
 		notes: "",
 		linkedAssetIds: [],
 	};
-}
-
-function copyDraft(draft: VaultEntryDraft): VaultEntryDraft {
-	const copy = {
-		...draft,
-		linkedAssetIds: [...draft.linkedAssetIds],
-		...(draft.usernameAliases
-			? { usernameAliases: [...draft.usernameAliases] }
-			: {}),
-	};
-	delete copy.id;
-	return copy;
 }
 
 export function VaultImportFragmentForm({
@@ -126,12 +119,18 @@ export function VaultImportFragmentForm({
 	useEffect(() => {
 		onStateChange?.(draftState);
 	}, [draftState, onStateChange]);
-	const target = candidates.find(
-		(candidate) =>
-			candidate.id === targetId || candidate.aliasIds?.includes(targetId),
-	);
+	const target = resolveVaultImportTarget(targetId, candidates);
 	const draftKey = mode === "new" ? "new" : `target:${targetId}`;
 	const savedDraft = drafts.get(draftKey);
+	const orphaned = mode === "existing" && !!targetId && !target && !!savedDraft;
+	const orphanedTargets = orphanedVaultImportTargets(
+		[...drafts].flatMap(([key, draft]) =>
+			key.startsWith("target:")
+				? [[key, { targetId: key.slice(7), draft }] as const]
+				: [],
+		),
+		candidates,
+	);
 	const readOnlyIdentity =
 		mode === "existing" &&
 		!!target &&
@@ -156,7 +155,7 @@ export function VaultImportFragmentForm({
 					),
 				}
 			: currentDraft;
-	const canEdit = mode === "new" || !!target;
+	const canEdit = mode === "new" || !!target || orphaned;
 	const hasContent =
 		!!draft &&
 		(["title", "username", "password", "url", "notes"] as const).some(
@@ -170,7 +169,7 @@ export function VaultImportFragmentForm({
 		}
 		setMode("existing");
 		setTargetId(nextId);
-		const nextTarget = candidates.find((candidate) => candidate.id === nextId);
+		const nextTarget = resolveVaultImportTarget(nextId, candidates);
 		if (!nextTarget) return;
 		setDrafts((current) => {
 			const nextKey = `target:${nextId}`;
@@ -275,8 +274,22 @@ export function VaultImportFragmentForm({
 												: ""}
 										</SelectOption>
 									))}
+									{orphanedTargets.map(([key, state]) => (
+										<SelectOption key={key} value={state.targetId}>
+											{t("pwWorkOrphanTarget", {
+												name: state.draft.title || t("pwVaultEntryNew"),
+											})}
+											{" · "}
+											{state.draft.username || t("pwWorkNoUsername")}
+										</SelectOption>
+									))}
 								</Select>
 							</label>
+						)}
+						{orphaned && (
+							<p className="notice" role="status">
+								{t("pwWorkOrphanHint")}
+							</p>
 						)}
 						{draft && canEdit && (
 							<VaultImportDraftFields
@@ -314,14 +327,15 @@ export function VaultImportFragmentForm({
 								variant="primary"
 								onClick={() => {
 									if (!draft || !canEdit || !hasContent) return;
-									const applyTargetId = mode === "new" ? null : target?.id;
+									const applyTargetId =
+										mode === "new" || orphaned ? null : target?.id;
 									if (applyTargetId === undefined) return;
 									if (onApply(applyTargetId, copyDraft(draft)))
 										setExpanded(false);
 								}}
 								disabled={disabled || !canEdit || !hasContent}
 							>
-								{t("pwSmartFragmentApply")}
+								{t(orphaned ? "pwWorkOrphanApply" : "pwSmartFragmentApply")}
 							</Button>
 							<Button
 								type="button"

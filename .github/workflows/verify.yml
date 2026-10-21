@@ -49,6 +49,8 @@ jobs:
       - run: pnpm build
       - name: Verify committed web bundle
         run: node scripts/verify-local-release.mjs
+      - name: Fetch previous fixed package for encrypted draft recovery
+        run: git fetch --no-tags --depth=1 origin a7be6146bd34f24bdf495c3827bda69f7bd27a7d
       - name: Verify delivered files and offline backup flow
         run: pnpm exec playwright test --config playwright.release.config.ts --reporter=dot --trace=retain-on-failure
       - name: Verify delivered sync files with isolated PostgreSQL and local HTTP
@@ -77,6 +79,8 @@ jobs:
       - run: pnpm exec playwright install --with-deps chromium
       - name: Build and verify the actual portable preview
         run: pnpm build:preview && pnpm verify:preview
+      - name: Fetch previous fixed package for encrypted draft recovery
+        run: git fetch --no-tags --depth=1 origin a7be6146bd34f24bdf495c3827bda69f7bd27a7d
       - name: Exercise local workflows on the extracted portable server
         shell: bash
         run: |

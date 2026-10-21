@@ -36,6 +36,7 @@ import "../password-vault.css";
 import { withFilledVaultIdentifiers } from "../vault-import-model";
 import { PasswordSmartImportDialog } from "./PasswordSmartImportDialog";
 import { VaultLoginIdentifiers } from "./VaultLoginIdentifiers";
+import { VaultImportFieldActions } from "./VaultImportFieldActions";
 
 type PasswordVaultPanelProps = {
 	assets: Asset[];
@@ -820,8 +821,11 @@ export function PasswordVaultPanel({
 								setDraft={setDraft}
 								setShowPassword={setShowPassword}
 								setSelectedAssetId={setSelectedAssetId}
-								onCopy={(label, value) => void copyValue(label, value)}
 								onGenerate={fillGeneratedPassword}
+								onPasswordCopyError={(value) => {
+									setManualCopy({ label: t("pwVaultPasswordField"), value });
+									announce("pwVaultClipboardManual");
+								}}
 								t={t}
 							/>
 						)}
@@ -1256,10 +1260,11 @@ function EntryCard({
 				</small>
 			</div>
 			{!!entry.usernameAliases?.length && (
-				<div className="pw-smart-identifiers">
+				<div className="password-vault-identifiers">
+					<small>{t("pwSmartOtherIdentifiers")}</small>
 					{entry.usernameAliases.map((value, index) => (
 						<div
-							className="pw-smart-identifier-row"
+							className="password-vault-identifier-row"
 							key={value}
 							data-identifier-index={index + 2}
 						>
@@ -1321,8 +1326,8 @@ function EntryEditor({
 	setDraft,
 	setShowPassword,
 	setSelectedAssetId,
-	onCopy,
 	onGenerate,
+	onPasswordCopyError,
 	t,
 }: {
 	draft: PasswordVaultEntryDraft;
@@ -1336,8 +1341,8 @@ function EntryEditor({
 	>;
 	setShowPassword: (value: boolean) => void;
 	setSelectedAssetId: (value: string) => void;
-	onCopy: (label: string, value: string) => void;
 	onGenerate: () => void;
+	onPasswordCopyError: (value: string) => void;
 	t: (key: string, options?: Record<string, unknown>) => string;
 }) {
 	const [urlExpanded, setUrlExpanded] = useState(Boolean(draft.url));
@@ -1356,16 +1361,25 @@ function EntryEditor({
 					<label htmlFor="password-vault-entry-title">
 						{t("pwVaultTitleField")}
 					</label>
-					<input
-						id="password-vault-entry-title"
-						value={draft.title}
-						onChange={(event) => update("title", event.target.value)}
-						disabled={busy}
-						required
-						maxLength={160}
-					/>
+					<div className="pw-import-input-control">
+						<input
+							id="password-vault-entry-title"
+							value={draft.title}
+							onChange={(event) => update("title", event.target.value)}
+							disabled={busy}
+							required
+							maxLength={160}
+						/>
+						<VaultImportFieldActions
+							label={t("pwVaultTitleField")}
+							value={draft.title}
+							disabled={busy}
+							onPaste={(value) => update("title", value)}
+						/>
+					</div>
 				</div>
 				<VaultLoginIdentifiers
+					clipboardPaste
 					idPrefix="password-vault-entry"
 					values={draft.usernameAliases}
 					disabled={busy}
@@ -1382,53 +1396,63 @@ function EntryEditor({
 					<label htmlFor="password-vault-entry-password">
 						{t("pwVaultPasswordField")}
 					</label>
-					<div className="password-vault-password-input">
-						{/[\r\n]/.test(draft.password) ? (
-							<textarea
-								id="password-vault-entry-password"
-								value={showPassword ? draft.password : "••••••••"}
-								readOnly={!showPassword}
-								onChange={(event) => update("password", event.target.value)}
-								disabled={busy}
-								autoComplete="off"
-								spellCheck={false}
-								rows={3}
-								required
-							/>
-						) : (
-							<input
-								id="password-vault-entry-password"
-								type={showPassword ? "text" : "password"}
-								value={draft.password}
-								onChange={(event) => update("password", event.target.value)}
-								disabled={busy}
-								autoComplete="new-password"
-								placeholder={t("pwVaultPasswordPlaceholder")}
-								required
-							/>
-						)}
-						<Button
-							type="button"
-							size="icon"
-							variant="ghost"
-							aria-label={t(
-								showPassword ? "pwVaultHidePassword" : "pwVaultShowPassword",
+					<div className="pw-import-input-control">
+						<div className="password-vault-password-input">
+							{/[\r\n]/.test(draft.password) ? (
+								<textarea
+									id="password-vault-entry-password"
+									value={showPassword ? draft.password : "••••••••"}
+									readOnly={!showPassword}
+									onChange={(event) => update("password", event.target.value)}
+									disabled={busy}
+									autoComplete="off"
+									spellCheck={false}
+									rows={3}
+									required
+								/>
+							) : (
+								<input
+									id="password-vault-entry-password"
+									type={showPassword ? "text" : "password"}
+									value={draft.password}
+									onChange={(event) => update("password", event.target.value)}
+									disabled={busy}
+									autoComplete="new-password"
+									placeholder={t("pwVaultPasswordPlaceholder")}
+									required
+								/>
 							)}
-							onClick={() => setShowPassword(!showPassword)}
+							<Button
+								type="button"
+								size="icon"
+								variant="ghost"
+								aria-label={t(
+									showPassword ? "pwVaultHidePassword" : "pwVaultShowPassword",
+								)}
+								onClick={() => setShowPassword(!showPassword)}
+								disabled={busy}
+							>
+								{showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
+							</Button>
+							<Button
+								type="button"
+								size="icon"
+								variant="ghost"
+								aria-label={t("pwVaultGeneratePassword")}
+								onClick={onGenerate}
+								disabled={busy}
+							>
+								<WandSparkles size={17} />
+							</Button>
+						</div>
+						<VaultImportFieldActions
+							label={t("pwVaultPasswordField")}
+							copyLabel={t("pwVaultCopyPassword")}
+							onCopyError={onPasswordCopyError}
+							value={draft.password}
 							disabled={busy}
-						>
-							{showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
-						</Button>
-						<Button
-							type="button"
-							size="icon"
-							variant="ghost"
-							aria-label={t("pwVaultGeneratePassword")}
-							onClick={onGenerate}
-							disabled={busy}
-						>
-							<WandSparkles size={17} />
-						</Button>
+							onPaste={(value) => update("password", value)}
+						/>
 					</div>
 					<div className="actions password-vault-field-actions">
 						<Button
@@ -1438,14 +1462,6 @@ function EntryEditor({
 							disabled={busy}
 						>
 							<WandSparkles size={14} /> {t("pwVaultGeneratePassword")}
-						</Button>
-						<Button
-							type="button"
-							size="small"
-							onClick={() => onCopy("pwVaultPasswordField", draft.password)}
-							disabled={!draft.password || busy}
-						>
-							<Copy size={14} /> {t("pwVaultCopyPassword")}
 						</Button>
 					</div>
 				</div>
@@ -1469,30 +1485,46 @@ function EntryEditor({
 									</Button>
 								)}
 							</div>
-							<textarea
-								id="password-vault-entry-notes"
-								value={draft.notes}
-								onChange={(event) => update("notes", event.target.value)}
-								disabled={busy}
-								rows={4}
-								maxLength={20000}
-							/>
+							<div className="pw-import-input-control">
+								<textarea
+									id="password-vault-entry-notes"
+									value={draft.notes}
+									onChange={(event) => update("notes", event.target.value)}
+									disabled={busy}
+									rows={4}
+									maxLength={20000}
+								/>
+								<VaultImportFieldActions
+									label={t("pwVaultNotesField")}
+									value={draft.notes ?? ""}
+									disabled={busy}
+									onPaste={(value) => update("notes", value)}
+								/>
+							</div>
 						</div>
 						{urlExpanded && (
 							<div className="field">
 								<label htmlFor="password-vault-entry-url">
 									{t("pwVaultUrlOptionalField")}
 								</label>
-								<input
-									id="password-vault-entry-url"
-									type="url"
-									value={draft.url}
-									onChange={(event) => update("url", event.target.value)}
-									disabled={busy}
-									inputMode="url"
-									autoComplete="url"
-									placeholder="https://"
-								/>
+								<div className="pw-import-input-control">
+									<input
+										id="password-vault-entry-url"
+										type="url"
+										value={draft.url}
+										onChange={(event) => update("url", event.target.value)}
+										disabled={busy}
+										inputMode="url"
+										autoComplete="url"
+										placeholder="https://"
+									/>
+									<VaultImportFieldActions
+										label={t("pwVaultUrlField")}
+										value={draft.url ?? ""}
+										disabled={busy}
+										onPaste={(value) => update("url", value)}
+									/>
+								</div>
 							</div>
 						)}
 					</div>

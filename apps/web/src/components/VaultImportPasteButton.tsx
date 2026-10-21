@@ -1,5 +1,5 @@
 import { Check, ClipboardPaste } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "./ui/button";
 
@@ -17,9 +17,14 @@ export function VaultImportPasteButton({
 }) {
 	const { t } = useTranslation();
 	const generation = useRef(0);
+	const pasteHandler = useRef(onPaste);
 	const [status, setStatus] = useState<"idle" | "pending" | "done" | "error">(
 		"idle",
 	);
+	// A sibling identifier may change or be removed while this read is pending.
+	useLayoutEffect(() => {
+		pasteHandler.current = onPaste;
+	}, [onPaste]);
 	// biome-ignore lint/correctness/useExhaustiveDependencies: Cancel pending clipboard reads whenever the field changes or becomes disabled.
 	useEffect(() => {
 		generation.current += 1;
@@ -33,7 +38,6 @@ export function VaultImportPasteButton({
 			<Button
 				type="button"
 				size="icon"
-				variant="ghost"
 				aria-label={t("pwSmartPasteField", { field: label })}
 				title={t("pwSmartPasteField", { field: label })}
 				disabled={disabled || status === "pending"}
@@ -43,7 +47,7 @@ export function VaultImportPasteButton({
 					try {
 						const text = await navigator.clipboard.readText();
 						if (request !== generation.current) return;
-						onPaste(text);
+						pasteHandler.current(text);
 						setStatus("done");
 					} catch {
 						if (request === generation.current) setStatus("error");

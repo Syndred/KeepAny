@@ -1,5 +1,10 @@
 /** Password vault copy kept separate so the shell can merge it into i18next. */
 export const passwordVaultCopy: Record<string, [string, string]> = {
+	pwSmartCopyField: ["复制{{field}}", "Copy {{field}}"],
+	pwSmartCopyFailed: [
+		"复制失败，请使用键盘或系统菜单复制。",
+		"Could not copy. Use your keyboard or system menu to copy.",
+	],
 	pwSmartDraftSaving: ["正在加密保存草稿…", "Saving encrypted draft…"],
 	pwSmartDraftRetry: ["重试保存", "Retry saving"],
 	pwSmartInputMethods: ["输入方式", "Input methods"],

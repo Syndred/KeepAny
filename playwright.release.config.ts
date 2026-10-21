@@ -39,6 +39,7 @@ export default defineConfig({
 		"password-smart-import-visual.spec.ts",
 		"password-import-draft.spec.ts",
 		"password-import-draft-input.spec.ts",
+		"password-review-controls.spec.ts",
 		"themed-select.spec.ts",
 		"spacing-consistency.spec.ts",
 		"task-theme-release.spec.ts",

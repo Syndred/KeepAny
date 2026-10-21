@@ -294,7 +294,10 @@ for (const variant of variants) {
 			await dialog
 				.locator(".pw-smart-identifier-row")
 				.nth(2)
-				.getByRole("button")
+				.getByRole("button", {
+					name: t("pwVaultRemoveIdentifier", { count: 3 }),
+					exact: true,
+				})
 				.click();
 			await expectIdentifiers(dialog, aliases);
 			await page.locator("#password-vault-entry-notes").fill(notes);

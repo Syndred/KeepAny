@@ -5,6 +5,7 @@ import {
 	ChevronRight,
 	CircleCheck,
 	Plus,
+	Trash2,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -22,6 +23,11 @@ import {
 	buildVaultImportSourceExcerpt,
 	type VaultImportSourceExcerpt as SourceExcerpt,
 } from "../vault-import-source";
+import {
+	copyVaultImportDraft,
+	orphanedVaultImportTargets,
+	resolveVaultImportTarget,
+} from "../vault-import-orphan";
 import { Button } from "./ui/button";
 import { Dialog } from "./ui/dialog";
 import { Select, SelectOption } from "./ui/select";
@@ -55,6 +61,7 @@ export type WorkspaceIssueGroup = {
 type Filter = "pending" | "reviewed" | "all" | "duplicate";
 export type WorkspaceDraftState = {
 	filter: Filter;
+	reviewedOrder?: string[];
 	activeId: string;
 	targetSelection: string;
 	targetEdits: Record<
@@ -84,7 +91,9 @@ export type PasswordImportWorkspaceProps = {
 		value: string | string[],
 	) => void;
 	onChoice: (id: string, choice: WorkspaceChoice) => void;
-	onAddAnother: (id: string) => void;
+	onAddAnother: (id?: string) => void;
+	onRemoveCandidate: (id: string) => void;
+	onRemoveFragment: (id: string) => void;
 	onApplyFragment: (
 		group: WorkspaceIssueGroup,
 		targetId: string | null,
@@ -141,6 +150,8 @@ export function PasswordImportWorkspace(props: PasswordImportWorkspaceProps) {
 		onDraft,
 		onChoice,
 		onAddAnother,
+		onRemoveCandidate,
+		onRemoveFragment,
 		onApplyFragment,
 		onOrganize,
 		canOrganize = true,
@@ -160,6 +171,17 @@ export function PasswordImportWorkspace(props: PasswordImportWorkspaceProps) {
 				: "pending"),
 	);
 	const [activeId, setActiveId] = useState(initialState?.activeId ?? "");
+	const [reviewedOrder, setReviewedOrder] = useState(
+		initialState?.reviewedOrder ?? [],
+	);
+	const previousReviewed = useRef(
+		new Set(
+			candidates
+				.filter((row) => choices[row.id]?.selected)
+				.map((row) => row.id),
+		),
+	);
+	const [removeTarget, setRemoveTarget] = useState<Item | null>(null);
 	const [bulkOpen, setBulkOpen] = useState(false);
 	const [bulkIds, setBulkIds] = useState<Set<string>>(new Set());
 	const [notice, setNotice] = useState("");
@@ -186,13 +208,21 @@ export function PasswordImportWorkspace(props: PasswordImportWorkspaceProps) {
 		initialState?.targetFor ?? null,
 	);
 	const draftState = useMemo<WorkspaceDraftState>(
-		() => ({ filter, activeId, targetSelection, targetEdits, targetFor }),
-		[filter, activeId, targetSelection, targetEdits, targetFor],
+		() => ({
+			filter,
+			activeId,
+			reviewedOrder,
+			targetSelection,
+			targetEdits,
+			targetFor,
+		}),
+		[filter, activeId, reviewedOrder, targetSelection, targetEdits, targetFor],
 	);
 	useEffect(() => {
 		onStateChange?.(draftState);
 	}, [draftState, onStateChange]);
 	const addedFrom = useRef<string | null>(null);
+	const focusAddedId = useRef<string | null>(null);
 	const previousIds = useRef(new Set(candidates.map((row) => row.id)));
 	const editorRef = useRef<HTMLDivElement>(null);
 	const reviewed = (row: VaultImportCandidate, index: number) => {
@@ -221,7 +251,7 @@ export function PasswordImportWorkspace(props: PasswordImportWorkspaceProps) {
 			index,
 		})),
 	];
-	const visible = items.filter((item) =>
+	const filtered = items.filter((item) =>
 		item.candidate
 			? filter === "all" ||
 				(filter === "reviewed"
@@ -231,6 +261,21 @@ export function PasswordImportWorkspace(props: PasswordImportWorkspaceProps) {
 						: !reviewed(item.candidate, item.index))
 			: filter === "pending" || filter === "all",
 	);
+	const visible =
+		filter === "reviewed"
+			? [...filtered].sort((a, b) => {
+					const aRank = reviewedOrder.indexOf(a.id);
+					const bRank = reviewedOrder.indexOf(b.id);
+					return (
+						(aRank < 0
+							? reviewedOrder.length + candidates.length - a.index
+							: aRank) -
+						(bRank < 0
+							? reviewedOrder.length + candidates.length - b.index
+							: bRank)
+					);
+				})
+			: filtered;
 	const active = visible.find((item) => item.id === activeId) ?? visible[0];
 	const activeIndex = active
 		? visible.findIndex((item) => item.id === active.id)
@@ -279,11 +324,17 @@ export function PasswordImportWorkspace(props: PasswordImportWorkspaceProps) {
 		row && targetFor?.startsWith(`${row.id}:`)
 			? targetEdits[targetFor]
 			: undefined;
-	const target = currentTarget?.targetId
-		? fragmentTargets.find(
-				(candidate) => candidate.id === currentTarget.targetId,
-			)
-		: undefined;
+	const target = resolveVaultImportTarget(
+		currentTarget?.targetId,
+		fragmentTargets,
+	);
+	const targetOrphaned = !!currentTarget?.targetId && !target;
+	const orphanedTargets = orphanedVaultImportTargets(
+		Object.entries(targetEdits).filter(
+			([key]) => row && key.startsWith(`${row.id}:`),
+		),
+		fragmentTargets,
+	);
 	const targetReadonly = !!target?.updateTargetId;
 	const bulkEligible = candidates.filter(
 		(candidate, index) =>
@@ -292,6 +343,24 @@ export function PasswordImportWorkspace(props: PasswordImportWorkspaceProps) {
 			!validateVaultImportFields(candidate.draft).issues.length &&
 			!!candidate.draft.title.trim(),
 	);
+	const reviewedIds = candidates
+		.filter(reviewed)
+		.map((candidate) => candidate.id)
+		.join("\n");
+	useEffect(() => {
+		const ids = reviewedIds ? reviewedIds.split("\n") : [];
+		const current = new Set(ids);
+		const added = ids
+			.filter((id) => !previousReviewed.current.has(id))
+			.reverse();
+		previousReviewed.current = current;
+		setReviewedOrder((before) => {
+			const next = [
+				...new Set([...added, ...before, ...ids.slice().reverse()]),
+			].filter((id) => current.has(id));
+			return next.join("\n") === before.join("\n") ? before : next;
+		});
+	}, [reviewedIds]);
 
 	useEffect(() => {
 		if (active?.id && active.id !== activeId) setActiveId(active.id);
@@ -303,11 +372,27 @@ export function PasswordImportWorkspace(props: PasswordImportWorkspaceProps) {
 		);
 		previousIds.current = new Set(candidates.map((candidate) => candidate.id));
 		if (addedFrom.current && newRows.length) {
+			focusAddedId.current = newRows[newRows.length - 1].id;
 			setFilter("pending");
 			setActiveId(newRows[newRows.length - 1].id);
 			addedFrom.current = null;
 		}
 	}, [candidates]);
+	useEffect(() => {
+		if (
+			!focusAddedId.current ||
+			active?.id !== focusAddedId.current ||
+			disabled
+		)
+			return;
+		const input = document.getElementById(
+			`pw-smart-${focusAddedId.current}-title`,
+		);
+		if (input && editorRef.current?.contains(input)) {
+			input.focus();
+			focusAddedId.current = null;
+		}
+	}, [active?.id, disabled]);
 	useEffect(() => {
 		if (!notice) return;
 		const timer = window.setTimeout(() => setNotice(""), 3200);
@@ -373,10 +458,19 @@ export function PasswordImportWorkspace(props: PasswordImportWorkspaceProps) {
 			setTargetOpen(false);
 			return;
 		}
-		const selected = fragmentTargets.find(
-			(candidate) => candidate.id === targetSelection,
-		);
-		const key = `${row.id}:${selected?.id ?? "new"}`;
+		const selected = resolveVaultImportTarget(targetSelection, fragmentTargets);
+		const existingKey = `${row.id}:${targetSelection}`;
+		const aliasKey = selected
+			? Object.entries(targetEdits).find(
+					([key, state]) =>
+						key.startsWith(`${row.id}:`) &&
+						resolveVaultImportTarget(state.targetId, fragmentTargets)?.id ===
+							selected.id,
+				)?.[0]
+			: undefined;
+		const key = targetEdits[existingKey]
+			? existingKey
+			: (aliasKey ?? `${row.id}:${selected?.id ?? "new"}`);
 		setTargetEdits((current) =>
 			current[key]
 				? current
@@ -430,6 +524,27 @@ export function PasswordImportWorkspace(props: PasswordImportWorkspaceProps) {
 	const displayDraft = targetDraft ?? row?.draft;
 	return (
 		<div className="pw-import-workspace" data-view={filter}>
+			<div className="pw-work-toolbar">
+				<span role="status">
+					{notice ||
+						t(
+							filter === "reviewed"
+								? "pwWorkLatestReviewed"
+								: "pwWorkReviewHint",
+						)}
+				</span>
+				<Button
+					disabled={disabled || candidates.length >= VAULT_IMPORT_MAX_ENTRIES}
+					onClick={() => {
+						addedFrom.current = "new";
+						setTargetFor(null);
+						onAddAnother();
+					}}
+				>
+					<Plus size={18} />
+					{t("pwWorkAddAccount")}
+				</Button>
+			</div>
 			<aside className="pw-work-list" aria-label={t("pwWorkAll")}>
 				<div
 					className="pw-work-tabs"
@@ -556,11 +671,6 @@ export function PasswordImportWorkspace(props: PasswordImportWorkspaceProps) {
 				</div>
 			</aside>
 			<div className="pw-work-editor" ref={editorRef}>
-				{notice && (
-					<div className="pw-work-toast" role="status">
-						{notice}
-					</div>
-				)}
 				{!active && (
 					<div className="pw-work-empty">
 						<strong>{t("pwWorkEmpty")}</strong>
@@ -620,14 +730,32 @@ export function PasswordImportWorkspace(props: PasswordImportWorkspaceProps) {
 								</Button>
 							</div>
 						</div>
-						<VaultImportSourceExcerpt
-							key={`source:${row.id}`}
-							source={activeSource}
-							excerpt={excerpt}
-							candidates={sourceCandidates}
-							disabled={disabled}
-							onChangeTarget={changeTarget}
-						/>
+						{activeSource ? (
+							<VaultImportSourceExcerpt
+								key={`source:${row.id}`}
+								source={activeSource}
+								excerpt={excerpt}
+								candidates={sourceCandidates}
+								disabled={disabled}
+								onChangeTarget={changeTarget}
+							/>
+						) : (
+							<div className="actions">
+								<Button
+									size="small"
+									variant="ghost"
+									disabled={disabled}
+									onClick={changeTarget}
+								>
+									{t("pwSmartFragmentChangeTarget")}
+								</Button>
+							</div>
+						)}
+						{targetOrphaned && (
+							<p className="notice" role="status">
+								{t("pwWorkOrphanHint")}
+							</p>
+						)}
 						<VaultImportDraftFields
 							key={
 								currentTarget
@@ -752,6 +880,15 @@ export function PasswordImportWorkspace(props: PasswordImportWorkspaceProps) {
 								</div>
 							)}
 						<div className="pw-work-editor-footer">
+							<Button
+								variant="danger"
+								className="pw-work-delete"
+								disabled={disabled}
+								onClick={() => setRemoveTarget(active ?? null)}
+							>
+								<Trash2 size={17} />
+								{t("pwWorkDelete")}
+							</Button>
 							{currentTarget ? (
 								<>
 									<Button
@@ -773,18 +910,23 @@ export function PasswordImportWorkspace(props: PasswordImportWorkspaceProps) {
 													sourceLine: row.sourceLine,
 													sourceSnapshot: activeSource,
 												},
-												currentTarget.targetId,
-												displayDraft,
+												targetOrphaned
+													? null
+													: (target?.id ?? currentTarget.targetId),
+												copyVaultImportDraft(displayDraft),
 											);
 											if (applied) {
 												setTargetFor(null);
 												setNotice(t("pwWorkApplied"));
-												if (currentTarget.targetId)
-													setActiveId(currentTarget.targetId);
+												if (target) setActiveId(target.id);
 											}
 										}}
 									>
-										{t("pwWorkTargetApply")}
+										{t(
+											targetOrphaned
+												? "pwWorkOrphanApply"
+												: "pwWorkTargetApply",
+										)}
 									</Button>
 								</>
 							) : (
@@ -883,9 +1025,62 @@ export function PasswordImportWorkspace(props: PasswordImportWorkspaceProps) {
 								onApplyFragment(group, targetId, draft)
 							}
 						/>
+						<div className="pw-work-editor-footer">
+							<Button
+								variant="danger"
+								className="pw-work-delete"
+								disabled={disabled}
+								onClick={() =>
+									setRemoveTarget({
+										id: `fragment:${group.id}`,
+										group,
+										index: 0,
+									})
+								}
+							>
+								<Trash2 size={17} />
+								{t("pwWorkDelete")}
+							</Button>
+						</div>
 					</article>
 				))}
 			</div>
+			{removeTarget && (
+				<Dialog
+					title={t("pwWorkDeleteTitle")}
+					className="pw-work-modal"
+					onClose={() => setRemoveTarget(null)}
+				>
+					<p className="pw-work-modal-hint">{t("pwWorkDeleteHint")}</p>
+					<div className="actions">
+						<Button onClick={() => setRemoveTarget(null)}>{t("cancel")}</Button>
+						<Button
+							variant="danger"
+							disabled={disabled}
+							onClick={() => {
+								if (disabled) return;
+								if (removeTarget.candidate) {
+									onRemoveCandidate(removeTarget.candidate.id);
+									setTargetEdits((current) =>
+										Object.fromEntries(
+											Object.entries(current).filter(
+												([key]) =>
+													!key.startsWith(`${removeTarget.candidate?.id}:`),
+											),
+										),
+									);
+								} else if (removeTarget.group)
+									onRemoveFragment(removeTarget.group.id);
+								setTargetFor(null);
+								setRemoveTarget(null);
+								setNotice(t("pwWorkDeleted"));
+							}}
+						>
+							{t("pwWorkDeleteConfirm")}
+						</Button>
+					</div>
+				</Dialog>
+			)}
 			{bulkOpen && (
 				<Dialog
 					title={t("pwWorkBulk")}
@@ -989,6 +1184,21 @@ export function PasswordImportWorkspace(props: PasswordImportWorkspaceProps) {
 									{candidate.draft.username || t("pwWorkNoUsername")}
 								</button>
 							))}
+						{!!orphanedTargets.length && <p>{t("pwWorkOrphanTargets")}</p>}
+						{orphanedTargets.map(([key, state]) => (
+							<button
+								type="button"
+								aria-pressed={targetSelection === state.targetId}
+								key={key}
+								onClick={() => setTargetSelection(state.targetId as string)}
+							>
+								{t("pwWorkOrphanTarget", {
+									name: state.draft.title || t("pwVaultEntryNew"),
+								})}
+								{" · "}
+								{state.draft.username || t("pwWorkNoUsername")}
+							</button>
+						))}
 					</div>
 					<p className="pw-work-modal-footnote">{t("pwWorkTargetPreserved")}</p>
 					<div className="actions">

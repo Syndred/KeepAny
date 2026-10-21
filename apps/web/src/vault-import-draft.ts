@@ -99,6 +99,7 @@ const record = <T extends z.ZodType>(value: T) =>
 	z.record(key, value).refine((value) => Object.keys(value).length <= 2000);
 const workspace = z.object({
 	filter: z.enum(["pending", "reviewed", "all", "duplicate"]),
+	reviewedOrder: z.array(id).max(200).optional(),
 	activeId: key,
 	targetFor: key.nullable(),
 	targetSelection: key,

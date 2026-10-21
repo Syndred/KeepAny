@@ -470,6 +470,13 @@ for (const [locale, width] of [
 			let importer = await h.open();
 			await recognize(h, importer, source);
 			// An incomplete earlier row is omitted from engine preview; the duplicate link still targets the correct UI row.
+			await importer
+				.locator(".pw-work-list-row")
+				.filter({ hasText: "first@example.com" })
+				.click();
+			await expect(field(editor(importer), "username")).toHaveValue(
+				"first@example.com",
+			);
 			await field(editor(importer), "password").fill("");
 			await importer
 				.locator(".pw-work-list-row")

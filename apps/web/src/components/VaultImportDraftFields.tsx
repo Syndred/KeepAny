@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { VaultEntryDraft } from "../../../../packages/password-vault/src";
 import { Button } from "./ui/button";
-import { VaultImportPasteButton } from "./VaultImportPasteButton";
+import { VaultImportFieldActions } from "./VaultImportFieldActions";
 import { VaultLoginIdentifiers } from "./VaultLoginIdentifiers";
 import "../vault-import-fields.css";
 
@@ -63,10 +63,11 @@ export function VaultImportDraftFields({
 							spellCheck={false}
 							maxLength={256}
 						/>
-						<VaultImportPasteButton
+						<VaultImportFieldActions
 							label={t("pwVaultTitleField")}
 							value={draft.title ?? ""}
-							disabled={disabled || readOnlyIdentity}
+							disabled={disabled}
+							readOnly={readOnlyIdentity}
 							onPaste={(value) => onChange("title", value)}
 						/>
 					</div>
@@ -173,7 +174,7 @@ export function VaultImportDraftFields({
 								{revealed ? <EyeOff size={16} /> : <Eye size={16} />}
 							</Button>
 						</div>
-						<VaultImportPasteButton
+						<VaultImportFieldActions
 							label={t("pwVaultPasswordField")}
 							value={draft.password}
 							disabled={disabled}
@@ -221,7 +222,7 @@ export function VaultImportDraftFields({
 								spellCheck={false}
 								rows={2}
 							/>
-							<VaultImportPasteButton
+							<VaultImportFieldActions
 								label={t("pwVaultNotesField")}
 								value={draft.notes ?? ""}
 								disabled={disabled}
@@ -249,10 +250,11 @@ export function VaultImportDraftFields({
 									spellCheck={false}
 									placeholder="https://"
 								/>
-								<VaultImportPasteButton
+								<VaultImportFieldActions
 									label={t("pwVaultUrlField")}
 									value={draft.url ?? ""}
-									disabled={disabled || readOnlyIdentity}
+									disabled={disabled}
+									readOnly={readOnlyIdentity}
 									onPaste={(value) => onChange("url", value)}
 								/>
 							</div>
