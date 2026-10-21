@@ -26,13 +26,13 @@ const records: VaultEntryDraft[] = [
 	{
 		title: "Google · 工作",
 		username: "alex.work@example.com",
-		usernameAliases: ["studio@example.com", "+44 7700 900456"],
+		usernameAliases: ["studio@example.com"],
 		notes: "工作资料专用，项目文件统一保存在共享云盘。",
 	},
 	{
 		title: "GitHub",
 		username: "alex-dev",
-		usernameAliases: ["dev@example.com", "opensource@example.com"],
+		usernameAliases: [],
 		notes: "个人开发账号，用于代码仓库与开源项目。",
 	},
 	{
@@ -44,13 +44,13 @@ const records: VaultEntryDraft[] = [
 	{
 		title: "Notion",
 		username: "notes@example.com",
-		usernameAliases: ["alex-notes", "workspace@example.com"],
+		usernameAliases: [],
 		notes: "个人知识库，整理读书笔记、项目资料与周计划。",
 	},
 	{
 		title: "Cloudflare",
 		username: "admin@example.com",
-		usernameAliases: ["ops@example.com", "alex-admin"],
+		usernameAliases: ["ops@example.com"],
 		notes: "管理域名和网站，修改配置前先记录原有设置。",
 	},
 ].map((record, index) => ({
