@@ -15,8 +15,8 @@ export const passwordVaultCopy: Record<string, [string, string]> = {
 	pwConnectTitle: ["关联账号", "Connect accounts"],
 	pwConnectGraph: ["查看账号与关联族谱", "View account and relationships"],
 	pwConnectIntro: [
-		"勾选要加入「账号」的条目，核对名称、账号和网址。保存后这些资料会进入普通账号资料及其备份／同步；密码、原备注和其他登录标识仍留在加密库。最多每次 200 条。",
-		"Select entries to add to Accounts and review their names, usernames and websites. These fields will enter regular account storage, backup and sync. Passwords, original notes and additional login identifiers remain encrypted. Up to 200 entries per batch.",
+		"将所选名称、账号和网址加入账号列表；密码留在加密库。",
+		"Add selected names, usernames and websites to Accounts. Passwords stay in the vault.",
 	],
 	pwConnectLoadError: [
 		"无法准备账号，请检查是否存在多个同名账号或已删除的关联账号。",
@@ -39,22 +39,18 @@ export const passwordVaultCopy: Record<string, [string, string]> = {
 		"例如：通过 Google 主账号登录；备用邮箱是…",
 		"E.g. sign in with my primary Google account; recovery email is…",
 	],
-	pwConnectLocal: ["识别相同登录标识", "Find shared login identifiers"],
-	pwConnectLocalHint: [
-		"仅在本机匹配所选账号的邮箱和手机号，包含其他登录标识；不调用 AI，不保存资料。",
-		"Match emails and phone numbers, including additional login identifiers, locally. No AI request or records are saved.",
-	],
+	pwConnectLocal: ["本机匹配", "Match locally"],
 	pwConnectSaveHint: [
-		"将保存或关联 {{accounts}} 个账号、{{relations}} 条勾选关系。不勾选关系也可只保存账号；分析不会自动保存。",
-		"Save or link {{accounts}} accounts and {{relations}} selected relationships. With no relationships selected, only accounts are saved. Analysis does not save automatically.",
+		"{{accounts}} 个账号 · {{relations}} 条关系",
+		"{{accounts}} accounts · {{relations}} relationships",
 	],
-	pwConnectAiTitle: ["AI 关联建议", "AI relationship suggestions"],
+	pwConnectAiTitle: ["AI 关联", "AI relationships"],
 	pwConnectAiScope: [
-		"仅发送勾选账号的名称、全部登录标识、网站域名和当前线索。线索已预填本条备注，可修改或清空，请先检查是否含密码等敏感内容。不发送密码字段或未选条目。分析包含本机标识匹配，AI 登录／找回建议需逐条勾选确认。",
-		"Send only selected names, all login identifiers, website origins and current hints. Hints start with each entry’s notes; edit or clear them and check for sensitive content first. Password fields and unselected entries are not sent. Analysis includes local identifier matching. Review and select each AI login or recovery suggestion.",
+		"发送所选名称、全部登录标识、域名及线索，不含密码字段。",
+		"Sends selected names, all login identifiers, domains and hints. Excludes password fields.",
 	],
 	pwConnectConfigure: ["前往设置连接 AI", "Connect AI in Settings"],
-	pwConnectAi: ["发送所选资料并分析", "Send selected details and analyze"],
+	pwConnectAi: ["AI 分析", "Analyze with AI"],
 	pwConnectReview: ["核对关联关系", "Review relationships"],
 	pwConnectKind_identifier: ["相同登录标识", "Shared login identifier"],
 	pwConnectKind_login: ["通过此账号登录", "Signs in with this account"],
@@ -68,8 +64,8 @@ export const passwordVaultCopy: Record<string, [string, string]> = {
 		"AI did not return valid results. Check the connection and input; existing records are unchanged.",
 	],
 	pwConnectSave: [
-		"保存账号及勾选关系",
-		"Save accounts and selected relationships",
+		"保存",
+		"Save",
 	],
 	pwConnectWorking: ["处理中…", "Working…"],
 	pwConnectSaved: [

@@ -337,7 +337,6 @@ export function VaultAccountLinksDialog({
 								{t("pwConnectLocal")}
 							</Button>
 						</div>
-						<p>{t("pwConnectLocalHint")}</p>
 						<section className="vault-connect-ai">
 							<h3>{t("pwConnectAiTitle")}</h3>
 							<p>{t("pwConnectAiScope")}</p>
