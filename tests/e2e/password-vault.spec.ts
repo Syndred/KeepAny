@@ -209,18 +209,33 @@ async function expectEditorFieldLayout(dialog: Locator) {
 			);
 			const rectangle = control?.getBoundingClientRect();
 			const parent = control?.closest(".field")?.getBoundingClientRect();
+			const inputRow = control?.closest(".pw-import-input-control");
+			const actions = inputRow
+				?.querySelector(".pw-import-field-actions")
+				?.getBoundingClientRect();
+			const beside = !!rectangle && !!actions && actions.top < rectangle.bottom;
+			const gap = inputRow
+				? Number.parseFloat(getComputedStyle(inputRow).columnGap)
+				: 0;
 			return {
 				field,
 				width: rectangle?.width ?? 0,
 				height: rectangle?.height ?? 0,
-				parentWidth: parent?.width ?? 0,
+				availableWidth:
+					(parent?.width ?? 0) - (beside ? (actions?.width ?? 0) + gap : 0),
+				actionGap: beside
+					? (actions?.left ?? 0) - (rectangle?.right ?? 0)
+					: (actions?.top ?? 0) - (rectangle?.bottom ?? 0),
+				actionsOverflow: (actions?.right ?? 0) - (parent?.right ?? 0),
 				top: rectangle?.top ?? 0,
 			};
 		}),
 	);
 	for (const field of fields) {
 		expect(field.width).toBeGreaterThan(120);
-		expect(Math.abs(field.width - field.parentWidth)).toBeLessThanOrEqual(1);
+		expect(Math.abs(field.width - field.availableWidth)).toBeLessThanOrEqual(1);
+		expect(field.actionGap).toBeGreaterThanOrEqual(8);
+		expect(field.actionsOverflow).toBeLessThanOrEqual(1);
 		expect(Math.abs(field.height - 52)).toBeLessThanOrEqual(0.5);
 	}
 	expect(fields[1].top).toBeGreaterThan(fields[0].top);
