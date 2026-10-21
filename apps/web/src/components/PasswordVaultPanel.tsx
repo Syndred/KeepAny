@@ -670,10 +670,12 @@ export function PasswordVaultPanel({
 						onSaved={(message) => notify?.(message)}
 					/>
 				)}
-			<header className="password-vault-header card-header">
+			<header
+				className={`password-vault-header card-header${snapshot.status === "unlocked" ? " password-vault-header-inline" : ""}`}
+			>
 				<div>
 					<h1>{t("pwVaultTitle")}</h1>
-					{snapshot.status !== "unlocked" && vaultStatus}
+					{vaultStatus}
 				</div>
 			</header>
 			{message && (
@@ -802,7 +804,6 @@ export function PasswordVaultPanel({
 							</VaultIconButton>
 						</div>
 					</div>
-					{vaultStatus}
 					{assetFilter && (
 						<div className="password-vault-filter">
 							<span>
