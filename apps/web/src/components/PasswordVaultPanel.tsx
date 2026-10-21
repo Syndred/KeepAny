@@ -1,13 +1,11 @@
+import { useNavigate, useRouterState } from "@tanstack/react-router";
 import {
+	ArrowLeft,
 	Check,
-	Copy,
 	Download,
-	ExternalLink,
 	Eye,
 	EyeOff,
-	History,
 	KeyRound,
-	Link2,
 	Lock,
 	Plus,
 	RefreshCw,
@@ -31,7 +29,10 @@ import { Button } from "./ui/button";
 import { Dialog } from "./ui/dialog";
 import { Select, SelectOption } from "./ui/select";
 import { TaskCard } from "./ui/task-card";
-import { TextLink } from "./ui/text-link";
+import {
+	PasswordVaultEntryCard,
+	VaultIconButton,
+} from "./PasswordVaultEntryCard";
 import "../password-vault.css";
 import { withFilledVaultIdentifiers } from "../vault-import-model";
 import { PasswordSmartImportDialog } from "./PasswordSmartImportDialog";
@@ -112,6 +113,53 @@ export function PasswordVaultPanel({
 	const { t, i18n } = useTranslation();
 	const { snapshot, session, ensureReady, lock, notice, generatePassword } =
 		usePasswordVault();
+	const navigate = useNavigate();
+	const hash = useRouterState({ select: (state) => state.location.hash });
+	const detailId = hash.startsWith("password-") ? hash.slice(9) : null;
+	const detailEntry = snapshot.entries.find((entry) => entry.id === detailId);
+	const listPosition = useRef({ hash: "", scroll: 0, id: "" });
+	const copyGeneration = useRef(0);
+	useEffect(
+		() => () => {
+			copyGeneration.current += 1;
+		},
+		[],
+	);
+	useEffect(() => {
+		if (hash === "vault-trash")
+			document
+				.getElementById("vault-trash")
+				?.scrollIntoView({ block: "start" });
+	}, [hash]);
+	function openDetail(id: string) {
+		listPosition.current = { hash, scroll: window.scrollY, id };
+		void navigate({
+			to: "/assets/$kind",
+			params: { kind: "vault" },
+			hash: `password-${id}`,
+		});
+	}
+	function closeDetail() {
+		void navigate({
+			to: "/assets/$kind",
+			params: { kind: "vault" },
+			hash: listPosition.current.hash,
+			resetScroll: false,
+		}).then(() => {
+			requestAnimationFrame(() => {
+				window.scrollTo(0, listPosition.current.scroll);
+				const cards = document.querySelectorAll<HTMLElement>(
+					".password-vault-entry-list .password-vault-entry",
+				);
+				const card = [...cards].find(
+					(node) => node.dataset.entryId === listPosition.current.id,
+				);
+				card
+					?.querySelector<HTMLButtonElement>(".password-vault-entry-title")
+					?.focus({ preventScroll: true });
+			});
+		});
+	}
 	const [readyError, setReadyError] = useState<string | null>(null);
 	const [messageKey, setMessageKey] = useState<string | null>(null);
 	const [busy, setBusy] = useState(false);
@@ -159,6 +207,7 @@ export function PasswordVaultPanel({
 
 	useEffect(() => {
 		if (snapshot.status === "unlocked") return;
+		copyGeneration.current += 1;
 		setMessageKey(null);
 		setEditorId(null);
 		setDraft(null);
@@ -242,7 +291,18 @@ export function PasswordVaultPanel({
 	);
 
 	function announce(key: string) {
-		setMessageKey(key);
+		setMessageKey(
+			notify &&
+				[
+					"pwVaultSaved",
+					"pwVaultCopied",
+					"pwVaultImported",
+					"pwVaultExported",
+					"pwVaultHistoryRestored",
+				].includes(key)
+				? null
+				: key,
+		);
 		notify?.(t(key));
 	}
 
@@ -393,6 +453,7 @@ export function PasswordVaultPanel({
 		clearMessage();
 		try {
 			await session.trashEntry(entry.id);
+			if (detailId === entry.id) closeDetail();
 			announce("pwVaultSaved");
 		} catch (error) {
 			announce(
@@ -533,6 +594,8 @@ export function PasswordVaultPanel({
 	}
 
 	async function copyValue(labelKey: string, value: string) {
+		if (session?.getSnapshot().status !== "unlocked") return;
+		const request = ++copyGeneration.current;
 		if (!value) {
 			announce("pwVaultError");
 			return;
@@ -540,8 +603,18 @@ export function PasswordVaultPanel({
 		try {
 			if (!navigator.clipboard?.writeText) throw new Error("clipboard");
 			await navigator.clipboard.writeText(value);
+			if (
+				request !== copyGeneration.current ||
+				session?.getSnapshot().status !== "unlocked"
+			)
+				return;
 			announce("pwVaultCopied");
 		} catch {
+			if (
+				request !== copyGeneration.current ||
+				session?.getSnapshot().status !== "unlocked"
+			)
+				return;
 			setManualCopy({ label: t(labelKey), value });
 			announce("pwVaultClipboardManual");
 		}
@@ -551,10 +624,30 @@ export function PasswordVaultPanel({
 		return assetsById.get(id)?.name ?? t("pwVaultAssetUnavailable");
 	}
 
+	function renderEntry(entry: PasswordVaultEntrySummary, detail = false) {
+		if (!session) return null;
+		return (
+			<PasswordVaultEntryCard
+				key={`${detail ? "detail" : "card"}:${entry.id}:${entry.modifiedAt}`}
+				entry={entry}
+				session={session}
+				detail={detail}
+				busy={busy}
+				assetsById={assetsById}
+				onOpen={() => openDetail(entry.id)}
+				onEdit={() => openEditor(entry.id)}
+				onAddAnother={() => openAnotherAccount(entry)}
+				onDelete={() => void deleteEntry(entry)}
+				onHistory={() => void openHistory(entry)}
+				onCopy={(label, value) => void copyValue(label, value)}
+			/>
+		);
+	}
+
 	const message = messageKey ? t(messageKey) : notice ? t(notice) : "";
 
 	return (
-		<section className="password-vault-panel card padded">
+		<section className="password-vault-panel">
 			{smartImportOpen &&
 				(snapshot.status === "unlocked" ||
 					notice === "pwVaultLockedElsewhere") && (
@@ -565,11 +658,12 @@ export function PasswordVaultPanel({
 				)}
 			<header className="password-vault-header card-header">
 				<div>
-					<p className="password-vault-eyebrow">
-						<ShieldCheck size={16} /> {t("pwVaultTitle")}
+					<h1>{t("pwVaultTitle")}</h1>
+					<p>
+						{snapshot.status === "unlocked"
+							? t("pwVaultEntriesCount", { count: snapshot.entries.length })
+							: t("pwVaultSubtitle")}
 					</p>
-					<h2>{t("pwVaultTitle")}</h2>
-					<p>{t("pwVaultSubtitle")}</p>
 				</div>
 				<Badge
 					tone={
@@ -635,57 +729,90 @@ export function PasswordVaultPanel({
 			{snapshot.status === "unlocked" && (
 				<>
 					<div className="password-vault-toolbar">
-						<div className="password-vault-toolbar-copy">
-							<Badge tone="success">
-								<ShieldCheck size={14} /> {t("pwVaultStatusUnlocked")}
-							</Badge>
-							<small>{t("pwVaultToolbarHint")}</small>
+						<div className="password-vault-search field">
+							{detailId ? (
+								<VaultIconButton
+									label={t("pwVaultBackToEntries")}
+									onClick={closeDetail}
+								>
+									<ArrowLeft size={20} />
+								</VaultIconButton>
+							) : (
+								<>
+									<label
+										className="password-vault-sr"
+										htmlFor="password-vault-search-input"
+									>
+										{t("pwVaultSearch")}
+									</label>
+									<input
+										id="password-vault-search-input"
+										type="search"
+										value={search}
+										onChange={(event) => setSearch(event.target.value)}
+										placeholder={t("pwVaultSearch")}
+										autoComplete="off"
+									/>
+								</>
+							)}
 						</div>
 						<div className="actions">
-							<Button
-								size="small"
-								variant="primary"
-								disabled={busy}
-								onClick={openNewEditor}
-							>
-								<Plus size={15} /> {t("pwVaultNewEntry")}
-							</Button>
-							<Button
-								size="small"
-								disabled={busy}
-								onClick={() => setImportOpen(true)}
-							>
-								<Upload size={15} /> {t("pwVaultImport")}
-							</Button>
-							<Button
-								size="small"
-								disabled={busy}
-								onClick={() => setSmartImportOpen(true)}
-							>
-								<WandSparkles size={15} /> {t("pwSmartTitle")}
-							</Button>
-							<Button
-								size="small"
-								disabled={busy}
-								onClick={() => void exportVault()}
-							>
-								<Download size={15} /> {t("pwVaultExport")}
-							</Button>
-							<Button
-								size="small"
-								disabled={busy}
-								onClick={() => setChangeMasterOpen(true)}
-							>
-								<KeyRound size={15} /> {t("pwVaultChangeMaster")}
-							</Button>
-							<Button
-								size="small"
-								variant="ghost"
+							<VaultIconButton
+								label={t("pwVaultLock")}
 								disabled={busy}
 								onClick={lock}
 							>
-								<Lock size={15} /> {t("pwVaultLock")}
-							</Button>
+								<Lock size={18} />
+							</VaultIconButton>
+							<VaultIconButton
+								label={t("pwVaultImport")}
+								disabled={busy}
+								onClick={() => setImportOpen(true)}
+							>
+								<Upload size={18} />
+							</VaultIconButton>
+							<VaultIconButton
+								label={t("pwSmartTitle")}
+								disabled={busy}
+								onClick={() => setSmartImportOpen(true)}
+							>
+								<WandSparkles size={18} />
+							</VaultIconButton>
+							<VaultIconButton
+								label={t("pwVaultExport")}
+								disabled={busy}
+								onClick={() => void exportVault()}
+							>
+								<Download size={18} />
+							</VaultIconButton>
+							<VaultIconButton
+								label={t("pwVaultChangeMaster")}
+								disabled={busy}
+								onClick={() => setChangeMasterOpen(true)}
+							>
+								<KeyRound size={18} />
+							</VaultIconButton>
+							<VaultIconButton
+								label={t("pwVaultTrashTitle")}
+								disabled={busy}
+								onClick={() =>
+									void navigate({
+										to: "/assets/$kind",
+										params: { kind: "vault" },
+										hash: "vault-trash",
+									})
+								}
+							>
+								<Trash2 size={18} />
+							</VaultIconButton>
+							<VaultIconButton
+								label={t("pwVaultNewEntry")}
+								className="password-vault-new"
+								disabled={busy}
+								onClick={openNewEditor}
+							>
+								<Plus size={18} />
+							</VaultIconButton>
 						</div>
 					</div>
 					{assetFilter && (
@@ -705,55 +832,40 @@ export function PasswordVaultPanel({
 							</Button>
 						</div>
 					)}
-					<div className="password-vault-search field">
-						<label htmlFor="password-vault-search-input">
-							{t("pwVaultSearch")}
-						</label>
-						<input
-							id="password-vault-search-input"
-							type="search"
-							value={search}
-							onChange={(event) => setSearch(event.target.value)}
-							placeholder={t("pwVaultSearch")}
-							autoComplete="off"
-						/>
-					</div>
-					<div className="password-vault-entries-section">
-						<div className="password-vault-section-title">
-							<h3>{t("pwVaultEntries")}</h3>
-							<Badge tone="neutral">
-								{t("pwVaultEntriesCount", { count: filteredEntries.length })}
-							</Badge>
+
+					{detailId ? (
+						<div className="password-vault-detail-view">
+							{detailEntry ? (
+								renderEntry(detailEntry, true)
+							) : (
+								<p role="status">{t("pwVaultEntryUnavailable")}</p>
+							)}
 						</div>
-						{filteredEntries.length ? (
-							<div className="password-vault-entry-list">
-								{filteredEntries.map((entry) => (
-									<EntryCard
-										key={entry.id}
-										entry={entry}
-										assetsById={assetsById}
-										onEdit={() => openEditor(entry.id)}
-										onAddAnother={() => openAnotherAccount(entry)}
-										onDelete={() => void deleteEntry(entry)}
-										onHistory={() => void openHistory(entry)}
-										onCopy={(label, value) => void copyValue(label, value)}
-										t={t}
-										language={i18n.language}
-									/>
-								))}
-							</div>
-						) : (
-							<div className="password-vault-empty">
-								<KeyRound size={22} />
-								<p>
-									{t(
-										normalizedSearch ? "pwVaultNoMatches" : "pwVaultNoEntries",
-									)}
-								</p>
-							</div>
-						)}
-					</div>
-					<div className="password-vault-trash">
+					) : (
+						<div className="password-vault-entries-section">
+							{filteredEntries.length ? (
+								<div className="password-vault-entry-list">
+									{filteredEntries.map((entry) => renderEntry(entry))}
+								</div>
+							) : (
+								<div className="password-vault-empty">
+									<KeyRound size={22} />
+									<p>
+										{t(
+											normalizedSearch
+												? "pwVaultNoMatches"
+												: "pwVaultNoEntries",
+										)}
+									</p>
+								</div>
+							)}
+						</div>
+					)}
+					<div
+						className="password-vault-trash"
+						id="vault-trash"
+						hidden={Boolean(detailId)}
+					>
 						<div className="password-vault-section-title">
 							<h3>
 								<Trash2 size={18} /> {t("pwVaultTrashTitle")}
@@ -778,13 +890,13 @@ export function PasswordVaultPanel({
 											<Badge tone="muted">{t("pwVaultStatusLocked")}</Badge>
 										</div>
 										<div className="actions">
-											<Button
-												size="small"
+											<VaultIconButton
+												label={t("pwVaultRestoreEntry")}
 												disabled={busy}
 												onClick={() => void restoreEntry(entry)}
 											>
-												<Undo2 size={15} /> {t("pwVaultRestoreEntry")}
-											</Button>
+												<Undo2 size={18} />
+											</VaultIconButton>
 										</div>
 									</TaskCard>
 								))}
@@ -1210,109 +1322,6 @@ function LockedState({
 				<KeyRound size={15} /> {t("pwVaultForgotHint")}
 			</p>
 		</div>
-	);
-}
-
-function EntryCard({
-	entry,
-	onAddAnother,
-	assetsById,
-	onEdit,
-	onDelete,
-	onHistory,
-	onCopy,
-	t,
-	language,
-}: {
-	entry: PasswordVaultEntrySummary;
-	assetsById: Map<string, Asset>;
-	onEdit: () => void;
-	onAddAnother: () => void;
-	onDelete: () => void;
-	onHistory: () => void;
-	onCopy: (label: string, value: string) => void;
-	t: (key: string, options?: Record<string, unknown>) => string;
-	language: string;
-}) {
-	return (
-		<TaskCard className="password-vault-entry" data-entry-id={entry.id}>
-			<div className="password-vault-entry-main">
-				<div className="password-vault-entry-heading">
-					<div className="password-vault-entry-key">
-						<KeyRound size={18} />
-						<strong>{entry.title}</strong>
-					</div>
-					<Badge tone="neutral">{t("pwVaultStatusUnlocked")}</Badge>
-				</div>
-				<div className="password-vault-entry-meta">
-					<span>{entry.username || t("pwVaultNoLinkedAssets")}</span>
-					{entry.url && (
-						<TextLink href={entry.url} target="_blank" rel="noreferrer">
-							<span>{entry.url}</span>
-							<ExternalLink size={13} />
-						</TextLink>
-					)}
-				</div>
-				<small>
-					{t("pwVaultCreatedAt", {
-						date: formatDate(entry.modifiedAt, language),
-					})}
-				</small>
-			</div>
-			{!!entry.usernameAliases?.length && (
-				<div className="password-vault-identifiers">
-					<small>{t("pwSmartOtherIdentifiers")}</small>
-					{entry.usernameAliases.map((value, index) => (
-						<div
-							className="password-vault-identifier-row"
-							key={value}
-							data-identifier-index={index + 2}
-						>
-							<span>{value}</span>
-							<Button
-								type="button"
-								size="icon"
-								aria-label={t("pwVaultCopyIdentifier", { count: index + 2 })}
-								onClick={() => onCopy("pwVaultUsernameField", value)}
-							>
-								<Copy size={16} />
-							</Button>
-						</div>
-					))}
-				</div>
-			)}
-			{entry.linkedAssetIds.length > 0 && (
-				<div className="password-vault-linked-assets">
-					<Link2 size={14} />
-					{entry.linkedAssetIds.map((id) => (
-						<span className="password-vault-linked-asset" key={id}>
-							{assetsById.get(id)?.name ?? t("pwVaultAssetUnavailable")}
-						</span>
-					))}
-				</div>
-			)}
-			<div className="actions password-vault-entry-actions">
-				<Button
-					size="small"
-					onClick={() => onCopy("pwVaultUsernameField", entry.username)}
-					disabled={!entry.username}
-				>
-					<Copy size={14} /> {t("pwVaultCopyUsername")}
-				</Button>
-				<Button size="small" onClick={onAddAnother}>
-					<Plus size={14} /> {t("pwVaultAddAnotherAccount")}
-				</Button>
-				<Button size="small" onClick={onEdit}>
-					<RefreshCw size={14} /> {t("pwVaultEditEntry")}
-				</Button>
-				<Button size="small" onClick={onHistory}>
-					<History size={14} /> {t("pwVaultHistory")}
-				</Button>
-				<Button size="small" variant="danger" onClick={onDelete}>
-					<Trash2 size={14} /> {t("pwVaultDeleteEntry")}
-				</Button>
-			</div>
-		</TaskCard>
 	);
 }
 

@@ -35,6 +35,7 @@ export default defineConfig({
 		"archive-migration.spec.ts",
 		"vault-reference-release.spec.ts",
 		"password-vault.spec.ts",
+		"password-vault-grid.spec.ts",
 		"password-smart-import.spec.ts",
 		"password-smart-import-visual.spec.ts",
 		"password-import-draft.spec.ts",

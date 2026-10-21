@@ -325,6 +325,16 @@ export const passwordVaultCopy: Record<string, [string, string]> = {
 		"Import did not finish. Your vault is unchanged. Check the entries and retry.",
 	],
 	pwSmartLockClose: ["锁定并关闭", "Lock and close"],
+	pwVaultAccountShort: ["账号", "Account"],
+	pwVaultIdentifiersShort: ["登录标识", "Login IDs"],
+	pwVaultValueEmpty: ["未填写", "Not set"],
+	pwVaultNoPassword: ["未设置密码", "No password set"],
+	pwVaultOpenEntry: ["查看 {{name}}", "View {{name}}"],
+	pwVaultBackToEntries: ["返回密码列表", "Back to passwords"],
+	pwVaultEntryUnavailable: [
+		"此条目已移至回收站或不在当前密码库中。",
+		"This entry is in the recycle bin or is not in this vault.",
+	],
 	pwVaultTitle: ["密码库", "Password vault"],
 	pwVaultSubtitle: [
 		"密码只保存在本机加密库中。",

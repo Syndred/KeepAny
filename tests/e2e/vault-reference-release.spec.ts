@@ -25,8 +25,7 @@ const copyFor = (zh: boolean) =>
 				save: "保存",
 				language: "语言",
 				languageValue: "zh-CN",
-				heroFirst: "密码，妥善保管。",
-				heroSecond: "密码，妥善保管。",
+				heroTitle: "密码库",
 				note: "下方保留外部密码库的引用与关联；实际密码请存入上方的加密密码库。",
 				linkEntry: "关联密码库条目",
 				entryName: "条目名称",
@@ -47,8 +46,7 @@ const copyFor = (zh: boolean) =>
 				save: "Save",
 				language: "Language",
 				languageValue: "en",
-				heroFirst: "Keep your passwords close.",
-				heroSecond: "Keep your passwords close.",
+				heroTitle: "Password vault",
 				note: "Keep references and connections to external vaults below. Save passwords in the encrypted vault above.",
 				linkEntry: "Link vault entry",
 				entryName: "Entry name",
@@ -141,10 +139,9 @@ async function assertVaultTable(
 	width?: number,
 ) {
 	await page.goto("/assets/vault");
-	const hero = page.locator(".vault-page .page-header h1");
+	const hero = page.locator(".vault-page .password-vault-header h1");
 	await expect(hero).toBeVisible();
-	await expect(hero).toContainText(copy.heroFirst);
-	await expect(hero).toContainText(copy.heroSecond);
+	await expect(hero).toHaveText(copy.heroTitle);
 	const note = page.locator(".vault-privacy-note");
 	await expect(note).toBeVisible();
 	await expect(note).toHaveAttribute("role", "note");
