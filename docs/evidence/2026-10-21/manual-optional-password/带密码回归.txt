@@ -1,0 +1,13 @@
+[WebServer] (node:35744) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 4 tests using 1 worker
+
+(node:35754) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  1 tests/e2e/password-vault.spec.ts:541:2 › zh-CN 390px app passwords show notes directly, save without a website and retain added details when edited (5.4s)
+  ✓  2 tests/e2e/password-vault.spec.ts:541:2 › zh-CN 1280px app passwords show notes directly, save without a website and retain added details when edited (5.4s)
+  ✓  3 tests/e2e/password-vault.spec.ts:541:2 › en-US 390px app passwords show notes directly, save without a website and retain added details when edited (5.4s)
+  ✓  4 tests/e2e/password-vault.spec.ts:541:2 › en-US 1280px app passwords show notes directly, save without a website and retain added details when edited (5.4s)
+
+  4 passed (22.6s)

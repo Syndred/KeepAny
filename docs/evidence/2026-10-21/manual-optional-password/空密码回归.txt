@@ -1,0 +1,17 @@
+[WebServer] (node:35664) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 8 tests using 1 worker
+
+(node:35665) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  1 tests/e2e/password-smart-import.spec.ts:572:3 › zh-CN 390px optional passwords and unchanged source review save to KDBX (8.6s)
+  ✓  2 tests/e2e/password-smart-import.spec.ts:572:3 › zh-CN 1280px optional passwords and unchanged source review save to KDBX (8.2s)
+  ✓  3 tests/e2e/password-smart-import.spec.ts:572:3 › en 390px optional passwords and unchanged source review save to KDBX (8.4s)
+  ✓  4 tests/e2e/password-smart-import.spec.ts:572:3 › en 1280px optional passwords and unchanged source review save to KDBX (8.2s)
+  ✓  5 tests/e2e/password-vault.spec.ts:1098:2 › zh-CN 390px manual passwordless entries survive editing, reload and KDBX reimport (6.3s)
+  ✓  6 tests/e2e/password-vault.spec.ts:1098:2 › zh-CN 1280px manual passwordless entries survive editing, reload and KDBX reimport (6.4s)
+  ✓  7 tests/e2e/password-vault.spec.ts:1098:2 › en-US 390px manual passwordless entries survive editing, reload and KDBX reimport (6.3s)
+  ✓  8 tests/e2e/password-vault.spec.ts:1098:2 › en-US 1280px manual passwordless entries survive editing, reload and KDBX reimport (6.4s)
+
+  8 passed (59.6s)

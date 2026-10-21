@@ -1093,3 +1093,90 @@ test("password changes lock a revealed editor in another tab; idle lock and clea
 		await context.close();
 	}
 });
+
+for (const variant of variants) {
+	test(`${variant.locale} ${variant.width}px manual passwordless entries survive editing, reload and KDBX reimport`, async ({ browser }) => {
+		const t = copy(variant.locale);
+		const context = await browser.newContext({ locale: variant.locale, viewport: { width: variant.width, height: 1000 }, acceptDownloads: true });
+		const page = await context.newPage();
+		const errors: string[] = [];
+		page.on("pageerror", error => errors.push(error.message));
+		const title = "Synthetic third-party login";
+		const user = "passwordless@example.test";
+		try {
+			await language(page, variant.locale);
+			await page.goto("/assets/vault");
+			await page.locator("#password-vault-master").fill(master);
+			await page.locator("#password-vault-master-confirm").fill(master);
+			await page.getByRole("button", { name: t("pwVaultCreate"), exact: true }).click();
+			await page.getByRole("button", { name: t("pwVaultNewEntry"), exact: true }).click();
+			await page.locator("#password-vault-entry-title").fill(title);
+			await page.locator("#password-vault-entry-username").fill(user);
+			const field = page.getByLabel(t("pwVaultPasswordOptionalField"), { exact: true });
+			await expect(field).toHaveValue("");
+			await expect(field).not.toHaveAttribute("required", "");
+			await page.getByRole("button", { name: t("pwVaultAddIdentifier"), exact: true }).click();
+			await page.locator(".pw-smart-identifier-row input").fill("+15550000999");
+			await page.screenshot({ path: join(evidenceRoot, `passwordless-${variant.locale}-${variant.width}-new.png`), fullPage: true });
+			await page.getByRole("button", { name: t("pwVaultSaveEntry"), exact: true }).click();
+			await expect(page.getByRole("dialog")).toBeHidden();
+			const entries = page.locator(".password-vault-entry-list .password-vault-entry");
+			const first = entries.filter({ has: page.getByText(user, { exact: true }) });
+			await expect(first).toContainText(t("pwVaultNoPassword"));
+			await expect(first).toContainText("+15550000999");
+			// Editing can leave the password empty, and can clear an existing multiline password.
+			await first.getByRole("button", { name: t("pwVaultEditEntry"), exact: true }).click();
+			await page.locator("#password-vault-entry-notes").fill("Third-party sign-in");
+			await page.getByRole("button", { name: t("pwVaultSaveEntry"), exact: true }).click();
+			await expect(page.getByRole("dialog")).toBeHidden();
+			await first.getByRole("button", { name: t("pwVaultEditEntry"), exact: true }).click();
+			// Paste a multiline synthetic secret through the existing clipboard action.
+			await page.evaluate(() => Object.defineProperty(navigator, "clipboard", { configurable: true, value: { readText: async () => "Synthetic line one\nSynthetic line two" } }));
+			await page.locator(".password-vault-secret-field").getByRole("button", { name: /粘贴|Paste/ }).click();
+			await page.getByRole("button", { name: t("pwVaultSaveEntry"), exact: true }).click();
+			await expect(page.getByRole("dialog")).toBeHidden();
+			await first.getByRole("button", { name: t("pwVaultEditEntry"), exact: true }).click();
+			await expect(page.locator("textarea#password-vault-entry-password")).toBeVisible();
+			await page.getByRole("dialog").getByRole("button", { name: t("pwVaultShowPassword"), exact: true }).click();
+			await field.fill("");
+			await page.getByRole("button", { name: t("pwVaultSaveEntry"), exact: true }).click();
+			await expect(page.getByRole("dialog")).toBeHidden();
+			await first.getByRole("button", { name: t("pwVaultAddAnotherAccount"), exact: true }).click();
+			await page.locator("#password-vault-entry-username").fill("second-passwordless@example.test");
+			await expect(field).toHaveValue("");
+			await page.getByRole("button", { name: t("pwVaultSaveEntry"), exact: true }).click();
+			await expect(page.getByRole("dialog")).toBeHidden();
+			await expect(entries).toHaveCount(2);
+			await page.reload();
+			await unlock(page, t);
+			await expect(entries).toHaveCount(2);
+			for (const entry of await entries.all()) await expect(entry).toContainText(t("pwVaultNoPassword"));
+			await page.screenshot({ path: join(evidenceRoot, `passwordless-${variant.locale}-${variant.width}-saved.png`), fullPage: true });
+			const download = page.waitForEvent("download");
+			await page.getByRole("button", { name: t("pwVaultExport"), exact: true }).click();
+			const path = test.info().outputPath("passwordless.kdbx");
+			await (await download).saveAs(path);
+			const restoredContext = await browser.newContext({ locale: variant.locale });
+			try {
+				const restored = await restoredContext.newPage();
+				await language(restored, variant.locale);
+				await restored.goto("/assets/vault");
+				await restored.getByRole("button", { name: t("pwVaultImportEmpty"), exact: true }).click();
+				await restored.locator("#password-vault-import-file").setInputFiles(path);
+				await restored.locator("#password-vault-import-password").fill(master);
+				await restored.getByRole("button", { name: t("pwVaultImportNow"), exact: true }).click();
+				await expect(restored.getByRole("dialog")).toBeHidden();
+				const saved = restored.locator(".password-vault-entry-list .password-vault-entry");
+				await expect(saved).toHaveCount(2);
+				for (const entry of await saved.all()) {
+					await entry.getByRole("button", { name: t("pwVaultEditEntry"), exact: true }).click();
+					await expect(restored.locator("#password-vault-entry-password")).toHaveValue("");
+					await closeEditor(restored);
+				}
+				await expect(saved.filter({ has: restored.getByText(user, { exact: true }) })).toContainText("+15550000999");
+				await expect(saved.filter({ has: restored.getByText(user, { exact: true }) })).toContainText("Third-party sign-in");
+			} finally { await restoredContext.close(); }
+			expect(errors).toEqual([]);
+		} finally { await context.close(); }
+	});
+}

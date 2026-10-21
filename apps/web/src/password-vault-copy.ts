@@ -521,9 +521,10 @@ export const passwordVaultCopy: Record<string, [string, string]> = {
 	pwVaultAddAnotherAccount: ["新增同平台账号", "Add another account"],
 	pwVaultAddUrl: ["添加网址", "Add website URL"],
 	pwVaultPasswordField: ["密码", "Password"],
+	pwVaultPasswordOptionalField: ["密码（可选）", "Password (optional)"],
 	pwVaultPasswordPlaceholder: [
-		"输入密码，或使用生成器",
-		"Enter a password, or use the generator",
+		"可留空，例如使用第三方账号登录",
+		"Leave blank for third-party sign-in",
 	],
 	pwVaultUrlField: ["网址", "Website URL"],
 	pwVaultNotesField: ["备注", "Notes"],
@@ -606,7 +607,6 @@ export const passwordVaultCopy: Record<string, [string, string]> = {
 		"请填写条目标题。",
 		"Enter a title for this entry.",
 	],
-	pwVaultEntryPasswordRequired: ["请填写密码。", "Enter a password."],
 	pwVaultInvalidUrl: [
 		"请输入 http 或 https 网址。",
 		"Enter an http or https URL.",

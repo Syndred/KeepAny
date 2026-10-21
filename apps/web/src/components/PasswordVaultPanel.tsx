@@ -407,10 +407,6 @@ export function PasswordVaultPanel({
 			announce("pwVaultEntryTitleRequired");
 			return;
 		}
-		if (!next.password) {
-			announce("pwVaultEntryPasswordRequired");
-			return;
-		}
 		if (next.url && !/^https?:\/\//i.test(next.url)) {
 			announce("pwVaultInvalidUrl");
 			return;
@@ -1376,7 +1372,7 @@ function EntryEditor({
 				/>
 				<div className="field password-vault-password-field password-vault-secret-field">
 					<label htmlFor="password-vault-entry-password">
-						{t("pwVaultPasswordField")}
+						{t("pwVaultPasswordOptionalField")}
 					</label>
 					<div className="pw-import-input-control">
 						<div className="password-vault-password-input">
@@ -1390,7 +1386,6 @@ function EntryEditor({
 									autoComplete="off"
 									spellCheck={false}
 									rows={3}
-									required
 								/>
 							) : (
 								<input
@@ -1401,7 +1396,6 @@ function EntryEditor({
 									disabled={busy}
 									autoComplete="new-password"
 									placeholder={t("pwVaultPasswordPlaceholder")}
-									required
 								/>
 							)}
 							<Button
