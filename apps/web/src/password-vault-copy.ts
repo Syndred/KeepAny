@@ -1,9 +1,8 @@
 /** Password vault copy kept separate so the shell can merge it into i18next. */
 export const passwordVaultCopy: Record<string, [string, string]> = {
-	pwConnectUseNotes: ["从本条备注填入线索", "Use this entry’s notes as a hint"],
 	pwConnectNotesLong: [
-		"备注超过 500 字，请仅摘取与登录或找回有关的内容。",
-		"Notes exceed 500 characters. Copy only the login or recovery details into the hint.",
+		"线索超过 500 字，请删减到 500 字以内后再分析；原备注不会被修改。",
+		"Shorten the hint to 500 characters before analysis. The original notes will not change.",
 	],
 	pwConnectIncomingLogin: [
 		"通过此账号登录的账号",
@@ -41,10 +40,18 @@ export const passwordVaultCopy: Record<string, [string, string]> = {
 		"E.g. sign in with my primary Google account; recovery email is…",
 	],
 	pwConnectLocal: ["识别相同登录标识", "Find shared login identifiers"],
+	pwConnectLocalHint: [
+		"仅在本机匹配所选账号的邮箱和手机号，包含其他登录标识；不调用 AI，不保存资料。",
+		"Match emails and phone numbers, including additional login identifiers, locally. No AI request or records are saved.",
+	],
+	pwConnectSaveHint: [
+		"将保存或关联 {{accounts}} 个账号、{{relations}} 条勾选关系。不勾选关系也可只保存账号；分析不会自动保存。",
+		"Save or link {{accounts}} accounts and {{relations}} selected relationships. With no relationships selected, only accounts are saved. Analysis does not save automatically.",
+	],
 	pwConnectAiTitle: ["AI 关联建议", "AI relationship suggestions"],
 	pwConnectAiScope: [
-		"仅发送勾选账号的名称、主登录账号、网站域名和上方填写的线索。不发送密码；原备注不会自动发送，如需使用请先填入线索并检查。AI 建议需逐条勾选确认。",
-		"Send only selected names, primary usernames, website origins and the hints entered above. Passwords are not sent. Original notes are only included if you explicitly load them into a hint and review it. Select each AI suggestion to confirm it.",
+		"仅发送勾选账号的名称、全部登录标识、网站域名和当前线索。线索已预填本条备注，可修改或清空，请先检查是否含密码等敏感内容。不发送密码字段或未选条目。分析包含本机标识匹配，AI 登录／找回建议需逐条勾选确认。",
+		"Send only selected names, all login identifiers, website origins and current hints. Hints start with each entry’s notes; edit or clear them and check for sensitive content first. Password fields and unselected entries are not sent. Analysis includes local identifier matching. Review and select each AI login or recovery suggestion.",
 	],
 	pwConnectConfigure: ["前往设置连接 AI", "Connect AI in Settings"],
 	pwConnectAi: ["发送所选资料并分析", "Send selected details and analyze"],

@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { FileText, Network, WandSparkles } from "lucide-react";
+import { Network, WandSparkles } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { generateAiText } from "../../../../packages/ai/src";
@@ -63,7 +63,10 @@ export function VaultAccountLinksDialog({
 					(entry) =>
 						entry.username.trim() && !session.readEntry(entry.id).aiKeyBinding,
 				);
-			const result = await buildAccountLinkRows(entries, assets);
+			const notes = new Map(
+				entries.map((entry) => [entry.id, session.readEntry(entry.id).notes]),
+			);
+			const result = await buildAccountLinkRows(entries, assets, notes);
 			if (active.current) setRows(result);
 		};
 		void load()
@@ -86,25 +89,6 @@ export function VaultAccountLinksDialog({
 		setSuggestions([]);
 		setChosen([]);
 		setMessage("");
-	}
-	function fillHintFromNotes(entryId: string) {
-		if (busy || stale || !session) return;
-		try {
-			const notes = session.readEntry(entryId).notes;
-			if (notes.length > 500) {
-				setMessage(t("pwConnectNotesLong"));
-				return;
-			}
-			setRows((current) =>
-				current.map((row) =>
-					row.entryId === entryId ? { ...row, hint: notes } : row,
-				),
-			);
-			setSuggestions([]);
-			setChosen([]);
-		} catch {
-			setMessage(t("pwConnectStale"));
-		}
 	}
 	function proposeLocal() {
 		const result = sharedIdentifierSuggestions(selectedRows);
@@ -307,7 +291,11 @@ export function VaultAccountLinksDialog({
 											{t(row.isNew ? "pwConnectNew" : "pwConnectExisting")}
 										</small>
 									</label>
-									<p>{row.account.username}</p>
+									<div className="vault-connect-identifiers">
+										{row.loginIdentifiers.map((value) => (
+											<p key={value}>{value}</p>
+										))}
+									</div>
 									{row.account.url && <p>{row.account.url}</p>}
 									{selected.includes(row.entryId) && (
 										<>
@@ -332,15 +320,9 @@ export function VaultAccountLinksDialog({
 													}}
 												/>
 											</label>
-											<Button
-												variant="ghost"
-												size="small"
-												disabled={busy || stale || Boolean(row.hint)}
-												onClick={() => fillHintFromNotes(row.entryId)}
-											>
-												<FileText size={16} />
-												{t("pwConnectUseNotes")}
-											</Button>
+											{row.hint.length > 500 && (
+												<p role="alert">{t("pwConnectNotesLong")}</p>
+											)}
 										</>
 									)}
 								</section>
@@ -355,6 +337,7 @@ export function VaultAccountLinksDialog({
 								{t("pwConnectLocal")}
 							</Button>
 						</div>
+						<p>{t("pwConnectLocalHint")}</p>
 						<section className="vault-connect-ai">
 							<h3>{t("pwConnectAiTitle")}</h3>
 							<p>{t("pwConnectAiScope")}</p>
@@ -366,7 +349,13 @@ export function VaultAccountLinksDialog({
 								<Link to="/settings">{t("pwConnectConfigure")}</Link>
 							)}
 							<Button
-								disabled={busy || stale || !connection || !selected.length}
+								disabled={
+									busy ||
+									stale ||
+									!connection ||
+									!selected.length ||
+									selectedRows.some((row) => row.hint.length > 500)
+								}
 								onClick={() => void proposeAi()}
 							>
 								<WandSparkles size={16} />
@@ -412,6 +401,13 @@ export function VaultAccountLinksDialog({
 								))}
 							</section>
 						)}
+						<p>
+							{t("pwConnectSaveHint", {
+								accounts: new Set(selectedRows.map((row) => row.account.id))
+									.size,
+								relations: chosen.length,
+							})}
+						</p>
 						<div className="actions">
 							<Button
 								disabled={busy || stale || !selected.length}

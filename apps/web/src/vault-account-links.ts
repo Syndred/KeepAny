@@ -14,6 +14,7 @@ export type AccountLinkRow = {
 	account: Asset;
 	isNew: boolean;
 	identifiers: string[];
+	loginIdentifiers: string[];
 	hint: string;
 };
 export type AccountLinkSuggestion = {
@@ -50,6 +51,7 @@ export function normalizeLoginIdentifier(value: string): string {
 export async function buildAccountLinkRows(
 	entries: VaultEntrySummary[],
 	assets: Asset[],
+	notes: ReadonlyMap<string, string> = new Map(),
 ): Promise<AccountLinkRow[]> {
 	const result: AccountLinkRow[] = [];
 	for (const entry of entries) {
@@ -107,7 +109,16 @@ export async function buildAccountLinkRows(
 						.filter(Boolean),
 				),
 			],
-			hint: "",
+			loginIdentifiers: [
+				...new Set(
+					[
+						account.username,
+						entry.username,
+						...(entry.usernameAliases ?? []),
+					].filter((value) => value.trim()),
+				),
+			],
+			hint: notes.get(entry.id) ?? "",
 		});
 	}
 	return result;
@@ -163,10 +174,13 @@ export function dedupeSuggestions(
 	});
 }
 export function aiAccountLinkInput(rows: AccountLinkRow[]) {
+	if (rows.some((row) => row.hint.length > 500))
+		throw Error("account-link-input");
 	const input = rows.map((row) => ({
 		id: row.account.id,
 		name: row.account.name,
 		username: row.account.username,
+		loginIdentifiers: row.loginIdentifiers,
 		url: publicAccountUrl(row.account.url),
 		hint: row.hint,
 	}));

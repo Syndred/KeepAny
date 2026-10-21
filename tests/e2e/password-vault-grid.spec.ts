@@ -482,9 +482,13 @@ for (const locale of ["zh-CN", "en"] as const)
 				const hintRow = dialog
 					.locator(".vault-connect-account")
 					.filter({ hasText: records[2].title });
-				await hintRow
-					.getByRole("button", { name: t("pwConnectUseNotes"), exact: true })
-					.click();
+				await expect(hintRow.getByRole("button")).toHaveCount(0);
+				for (const record of records) {
+					const row = dialog.locator(".vault-connect-account").filter({ hasText: record.title });
+					await expect(row.locator("textarea")).toHaveValue(record.notes);
+					for (const alias of record.usernameAliases ?? []) await expect(row.locator(".vault-connect-identifiers")).toContainText(alias);
+				}
+				await dialog.locator(".vault-connect-account").filter({ hasText: records[3].title }).locator("textarea").fill("");
 				await expect(hintRow.locator("textarea")).toHaveValue(records[2].notes);
 				expect(mock.requests).toHaveLength(0);
 				await dialog
@@ -529,9 +533,11 @@ for (const locale of ["zh-CN", "en"] as const)
 				const sent = JSON.stringify(mock.requests[0].body);
 				for (const record of records) {
 					if (record.password) expect(sent).not.toContain(record.password);
-					expect(sent).not.toContain(record.notes);
+					for (const alias of record.usernameAliases ?? []) expect(sent).toContain(alias);
+					if (record === records[2] || record === records[3]) expect(sent).not.toContain(record.notes);
+					else expect(sent).toContain(record.notes);
 				}
-				expect(sent).not.toContain("backup@example.com");
+				expect(sent).toContain("Signs in with Google personal.");
 				await suggestions.nth(1).getByRole("checkbox").check();
 				await suggestions.nth(2).getByRole("checkbox").check();
 				expect(

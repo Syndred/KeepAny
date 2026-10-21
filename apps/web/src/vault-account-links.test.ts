@@ -50,6 +50,67 @@ describe("reviewed vault account associations", () => {
 			/password|linkedAssetIds|token=|private/,
 		);
 	});
+	it("prefills editable hints and includes all selected identifiers without copying notes to accounts", async () => {
+		const rows = await buildAccountLinkRows(
+			[
+				{
+					...entry("a", "Google", "a@example.test"),
+					usernameAliases: [
+						"backup@example.test",
+						"+44 7700 900123",
+						"handle-a",
+					],
+				},
+				{
+					...entry("b", "Other", "b@example.test"),
+					usernameAliases: ["unselected@example.test"],
+				},
+			],
+			[],
+			new Map([
+				["a", "Original recovery hint"],
+				["b", "Unselected note"],
+			]),
+		);
+		expect(rows[0].hint).toBe("Original recovery hint");
+		expect(rows[0].account.notes).toBe("");
+		expect(rows[0].loginIdentifiers).toEqual([
+			"a@example.test",
+			"backup@example.test",
+			"+44 7700 900123",
+			"handle-a",
+		]);
+		const input = aiAccountLinkInput([{ ...rows[0], hint: "Edited hint" }]);
+		expect(JSON.parse(input)[0]).toMatchObject({
+			hint: "Edited hint",
+			loginIdentifiers: rows[0].loginIdentifiers,
+		});
+		expect(input).not.toMatch(
+			/Original recovery hint|Unselected note|unselected@example/,
+		);
+		expect(
+			JSON.parse(aiAccountLinkInput([{ ...rows[0], hint: "" }]))[0].hint,
+		).toBe("");
+		expect(() =>
+			aiAccountLinkInput([
+				{ ...rows[0], loginIdentifiers: ["password: secret"] },
+			]),
+		).toThrow();
+	});
+	it("keeps long notes intact for review and blocks sending until shortened", async () => {
+		const long = "x".repeat(501);
+		const rows = await buildAccountLinkRows(
+			[entry("a", "Google", "a@example.test")],
+			[],
+			new Map([["a", long]]),
+		);
+		expect(rows[0].hint).toBe(long);
+		expect(() => aiAccountLinkInput(rows)).toThrow();
+		expect(() =>
+			aiAccountLinkInput([{ ...rows[0], hint: long.slice(0, 500) }]),
+		).not.toThrow();
+	});
+
 	it("reuses a single new account for duplicate entries within the same review", async () => {
 		const rows = await buildAccountLinkRows(
 			[
