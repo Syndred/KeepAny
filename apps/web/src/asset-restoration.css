@@ -5,6 +5,10 @@
 	gap: 12px;
 	min-width: 0;
 }
+.asset-category-toolbar + .list-filters {
+	margin-top: var(--space-4);
+}
+
 .asset-category-scroll {
 	flex: 1;
 	min-width: 0;

@@ -19,7 +19,7 @@
 .change-impact-snapshot { display: grid; gap: 5px; padding: 12px; border: 1px solid var(--line-soft); border-radius: 10px; background: var(--paper-soft); overflow-wrap: anywhere; }
 .change-impact-snapshot small { color: var(--muted); }
 .change-impact-snapshot p { margin: 0; }
-.change-impact-warning { margin-bottom: 0; }
+.change-impact-warning { margin: var(--space-4) 0 0; }
 .change-impact-tasks { display: grid; margin: 12px -18px; }
 .change-impact-tasks > div { display: flex; justify-content: space-between; gap: 8px; padding: 12px 18px; border-top: 1px solid var(--line-soft); }
 .change-impact-tasks > div:last-child { border-bottom: 1px solid var(--line-soft); }

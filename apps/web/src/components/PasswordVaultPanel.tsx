@@ -299,6 +299,7 @@ export function PasswordVaultPanel({
 					"pwVaultImported",
 					"pwVaultExported",
 					"pwVaultHistoryRestored",
+					"pwVaultMasterChanged",
 				].includes(key)
 				? null
 				: key,
@@ -399,7 +400,6 @@ export function PasswordVaultPanel({
 		try {
 			await session.unlock(master);
 			setMaster("");
-			announce("pwVaultStatusUnlocked");
 		} catch (error) {
 			announce(
 				errorCode(error) === "vault-password"
@@ -659,31 +659,34 @@ export function PasswordVaultPanel({
 			<header className="password-vault-header card-header">
 				<div>
 					<h1>{t("pwVaultTitle")}</h1>
-					<p>
-						{snapshot.status === "unlocked"
-							? t("pwVaultEntriesCount", { count: snapshot.entries.length })
-							: t("pwVaultSubtitle")}
-					</p>
+					<div className="password-vault-header-meta">
+						<p>
+							{snapshot.status === "unlocked"
+								? t("pwVaultEntriesCount", { count: snapshot.entries.length })
+								: t("pwVaultSubtitle")}
+						</p>
+						<Badge
+							role="status"
+							tone={
+								snapshot.status === "unlocked"
+									? "success"
+									: snapshot.status === "empty"
+										? "warning"
+										: "muted"
+							}
+						>
+							{t(
+								snapshot.status === "unlocked"
+									? "pwVaultStatusUnlocked"
+									: snapshot.status === "empty"
+										? "pwVaultStatusEmpty"
+										: snapshot.status === "locked"
+											? "pwVaultStatusLocked"
+											: "pwVaultLoading",
+							)}
+						</Badge>
+					</div>
 				</div>
-				<Badge
-					tone={
-						snapshot.status === "unlocked"
-							? "success"
-							: snapshot.status === "empty"
-								? "warning"
-								: "muted"
-					}
-				>
-					{t(
-						snapshot.status === "unlocked"
-							? "pwVaultStatusUnlocked"
-							: snapshot.status === "empty"
-								? "pwVaultStatusEmpty"
-								: snapshot.status === "locked"
-									? "pwVaultStatusLocked"
-									: "pwVaultLoading",
-					)}
-				</Badge>
 			</header>
 			{message && (
 				<p className="password-vault-message" role="status">

@@ -38,7 +38,7 @@
 .collections-organize-page > .collections-editor { grid-column: 2; max-width: none; }
 .collections-organize-nav { padding: 0; overflow: hidden; }
 .collections-organize-nav .card-header { margin: 0; padding: 16px 18px; border-bottom: 1px solid var(--line-soft); }
-.collections-organize-nav .card-header p { margin: 3px 0 0; color: var(--muted); font-size: 12px; }
+.collections-organize-nav .card-header p { margin: var(--space-2) 0 0; color: var(--muted); font-size: 12px; }
 .collections-nav .sortable-nav-item { position: relative; display: grid; grid-template-areas: "handle check label actions"; grid-template-columns: 44px 24px minmax(0, 1fr) 28px; align-items: center; gap: 7px; min-height: 60px; padding: 6px 14px; border-top: 1px solid var(--line-soft); background: var(--paper); }
 .collections-nav .sortable-nav-item:first-child { border-top: 0; }
 .collections-nav .sortable-nav-item.is-dragging { z-index: 2; background: var(--yellow-soft); box-shadow: var(--shadow); }

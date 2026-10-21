@@ -1,0 +1,1314 @@
+[
+  {
+    "locale": "zh-CN",
+    "width": 390,
+    "route": "/",
+    "overflow": 0,
+    "tight": [
+      {
+        "parent": "card overview-stat",
+        "a": "SPAN",
+        "b": "STRONG",
+        "gap": 5,
+        "text": "5"
+      },
+      {
+        "parent": "card overview-stat",
+        "a": "STRONG",
+        "b": "SMALL",
+        "gap": 5,
+        "text": "项目、账号、订阅和实物"
+      },
+      {
+        "parent": "card overview-stat",
+        "a": "SPAN",
+        "b": "STRONG",
+        "gap": 5,
+        "text": "3"
+      },
+      {
+        "parent": "card overview-stat",
+        "a": "STRONG",
+        "b": "SMALL",
+        "gap": 5,
+        "text": "其中 3 项需要本周处理"
+      },
+      {
+        "parent": "card overview-stat",
+        "a": "SPAN",
+        "b": "STRONG",
+        "gap": 5,
+        "text": "2"
+      },
+      {
+        "parent": "card overview-stat",
+        "a": "STRONG",
+        "b": "SMALL",
+        "gap": 5,
+        "text": "未核实或上次确认已超过 90 天"
+      }
+    ]
+  },
+  {
+    "locale": "zh-CN",
+    "width": 390,
+    "route": "/assets/project",
+    "overflow": 0,
+    "tight": []
+  },
+  {
+    "locale": "zh-CN",
+    "width": 390,
+    "route": "/assets/account",
+    "overflow": 0,
+    "tight": []
+  },
+  {
+    "locale": "zh-CN",
+    "width": 390,
+    "route": "/assets/subscription",
+    "overflow": 0,
+    "tight": []
+  },
+  {
+    "locale": "zh-CN",
+    "width": 390,
+    "route": "/assets/item",
+    "overflow": 0,
+    "tight": []
+  },
+  {
+    "locale": "zh-CN",
+    "width": 390,
+    "route": "/assets/vault",
+    "overflow": 0,
+    "tight": []
+  },
+  {
+    "locale": "zh-CN",
+    "width": 390,
+    "route": "/tasks",
+    "overflow": 0,
+    "tight": [
+      {
+        "parent": "card tasks-list-card",
+        "a": "tasks-cardhead",
+        "b": "list",
+        "gap": 0,
+        "text": "检查项目联系资料2026年10月22日关联资产: 林间笔记稍后提醒稍后 1 天待处理备份工作笔记本2026年10月24日关联资产:"
+      },
+      {
+        "parent": "card tasks-plan-card",
+        "a": "tasks-cardhead",
+        "b": "empty",
+        "gap": 0,
+        "text": "这里还没有内容"
+      }
+    ]
+  },
+  {
+    "locale": "zh-CN",
+    "width": 390,
+    "route": "/finance",
+    "overflow": 0,
+    "tight": []
+  },
+  {
+    "locale": "zh-CN",
+    "width": 390,
+    "route": "/intake",
+    "overflow": 0,
+    "tight": []
+  },
+  {
+    "locale": "zh-CN",
+    "width": 390,
+    "route": "/settings",
+    "overflow": 0,
+    "tight": []
+  },
+  {
+    "locale": "zh-CN",
+    "width": 390,
+    "route": "/trash",
+    "overflow": 0,
+    "tight": []
+  },
+  {
+    "locale": "zh-CN",
+    "width": 390,
+    "route": "/collections",
+    "overflow": 0,
+    "tight": [
+      {
+        "parent": "card collections-organize-nav",
+        "a": "card-header",
+        "b": "collections-nav",
+        "gap": 0,
+        "text": "概览待办项目账号订阅实物密码库按空格拾取，方向键移动，再按空格放下。"
+      }
+    ]
+  },
+  {
+    "locale": "zh-CN",
+    "width": 390,
+    "route": "/assistant-access",
+    "overflow": 0,
+    "tight": []
+  },
+  {
+    "locale": "zh-CN",
+    "width": 390,
+    "route": "/change-impact",
+    "overflow": 0,
+    "tight": []
+  },
+  {
+    "locale": "zh-CN",
+    "width": 390,
+    "route": "/assets/project/fa2fe1f8-38ef-479a-a2d5-ee657a2e1b1e",
+    "overflow": 0,
+    "tight": [
+      {
+        "parent": "card asset-project-reminders",
+        "a": "asset-quiet-empty",
+        "b": "asset-project-reminder-row asset-project-reminder-static",
+        "gap": 0,
+        "text": "↗下次巡检尚未安排巡检"
+      },
+      {
+        "parent": "card asset-project-costs",
+        "a": "asset-project-cost-grid",
+        "b": "asset-quiet-empty",
+        "gap": 0,
+        "text": "暂无独立域名"
+      },
+      {
+        "parent": "card asset-backlinks-card",
+        "a": "SUMMARY",
+        "b": "backlink-filters",
+        "gap": 0,
+        "text": "全部计划中已提交审核中已收录待核验未通过"
+      },
+      {
+        "parent": "card asset-backlinks-card",
+        "a": "backlink-filters",
+        "b": "asset-quiet-empty",
+        "gap": 0,
+        "text": "暂无"
+      },
+      {
+        "parent": "card asset-project-materials",
+        "a": "SUMMARY",
+        "b": "asset-project-materials-body",
+        "gap": 0,
+        "text": "查看投递素材编辑产品标题—推广链接—标签（逗号分隔）个人, 写作一句话描述整理写作与灵感的个人网站中篇介绍—完整介绍—功能介绍—定"
+      }
+    ]
+  },
+  {
+    "locale": "zh-CN",
+    "width": 390,
+    "route": "/assets/account/12bba24b-d287-43be-9c73-442890509216",
+    "overflow": 0,
+    "tight": [
+      {
+        "parent": "card account-facts-card",
+        "a": "DL",
+        "b": "chips",
+        "gap": 0,
+        "text": "工作"
+      },
+      {
+        "parent": "card account-facts-card account-security-card",
+        "a": "DL",
+        "b": "button",
+        "gap": 0,
+        "text": "管理这个账号的密码"
+      }
+    ]
+  },
+  {
+    "locale": "zh-CN",
+    "width": 390,
+    "route": "/assets/subscription/026dff73-f616-4e4e-94bf-7418b1967d39",
+    "overflow": 0,
+    "tight": []
+  },
+  {
+    "locale": "zh-CN",
+    "width": 390,
+    "route": "/assets/item/e48ee0e6-6e13-41a4-a428-29d22843dd1b",
+    "overflow": 0,
+    "tight": [
+      {
+        "parent": "card asset-item-photo-main",
+        "a": "asset-item-photo-stage",
+        "b": "asset-item-photo-actions",
+        "gap": 0,
+        "text": "添加图片细节照片"
+      }
+    ]
+  },
+  {
+    "locale": "zh-CN",
+    "width": 390,
+    "route": "/assets/vault/cc9a0af4-0044-431c-82bd-696339146794",
+    "overflow": 0,
+    "tight": []
+  },
+  {
+    "locale": "zh-CN",
+    "width": 390,
+    "route": "/collections/79183973-5cf0-4c18-9ef2-834f04979b85",
+    "overflow": 0,
+    "tight": []
+  },
+  {
+    "locale": "zh-CN",
+    "width": 390,
+    "route": "/assets/project/fa2fe1f8-38ef-479a-a2d5-ee657a2e1b1e/workflow/brand",
+    "overflow": 0,
+    "tight": [
+      {
+        "parent": "card project-workflow-card",
+        "a": "project-workflow-card-head",
+        "b": "project-workflow-task-list",
+        "gap": 0,
+        "text": "确认站点新资料 · 林间笔记https://example.com核实关联资产资料 · 工作笔记本核实关联资产资料 · 工作室邮箱"
+      },
+      {
+        "parent": "card project-workflow-card",
+        "a": "A",
+        "b": "A",
+        "gap": 0,
+        "text": "工作室邮箱账号"
+      },
+      {
+        "parent": "card project-workflow-card",
+        "a": "A",
+        "b": "A",
+        "gap": 0,
+        "text": "网站托管订阅"
+      }
+    ]
+  },
+  {
+    "locale": "zh-CN",
+    "width": 390,
+    "route": "/assets/project/fa2fe1f8-38ef-479a-a2d5-ee657a2e1b1e/workflow/close",
+    "overflow": 0,
+    "tight": [
+      {
+        "parent": "card project-workflow-card",
+        "a": "project-workflow-card-head",
+        "b": "project-workflow-task-list",
+        "gap": 0,
+        "text": "备份并验证恢复 · 林间笔记确认接收范围和管理账号 · 林间笔记处理关联订阅 · 网站托管核实关联资产交接 · 工作笔记本核实关联"
+      },
+      {
+        "parent": "card project-workflow-card",
+        "a": "A",
+        "b": "A",
+        "gap": 0,
+        "text": "工作室邮箱账号"
+      },
+      {
+        "parent": "card project-workflow-card",
+        "a": "A",
+        "b": "A",
+        "gap": 0,
+        "text": "网站托管订阅"
+      }
+    ]
+  },
+  {
+    "locale": "zh-CN",
+    "width": 390,
+    "errors": []
+  },
+  {
+    "locale": "zh-CN",
+    "width": 1440,
+    "route": "/",
+    "overflow": 0,
+    "tight": [
+      {
+        "parent": "card overview-stat",
+        "a": "SPAN",
+        "b": "STRONG",
+        "gap": 5,
+        "text": "5"
+      },
+      {
+        "parent": "card overview-stat",
+        "a": "STRONG",
+        "b": "SMALL",
+        "gap": 5,
+        "text": "项目、账号、订阅和实物"
+      },
+      {
+        "parent": "card overview-stat",
+        "a": "SPAN",
+        "b": "STRONG",
+        "gap": 5,
+        "text": "3"
+      },
+      {
+        "parent": "card overview-stat",
+        "a": "STRONG",
+        "b": "SMALL",
+        "gap": 5,
+        "text": "其中 3 项需要本周处理"
+      },
+      {
+        "parent": "card overview-stat",
+        "a": "SPAN",
+        "b": "STRONG",
+        "gap": 5,
+        "text": "2"
+      },
+      {
+        "parent": "card overview-stat",
+        "a": "STRONG",
+        "b": "SMALL",
+        "gap": 5,
+        "text": "未核实或上次确认已超过 90 天"
+      }
+    ]
+  },
+  {
+    "locale": "zh-CN",
+    "width": 1440,
+    "route": "/assets/project",
+    "overflow": 0,
+    "tight": []
+  },
+  {
+    "locale": "zh-CN",
+    "width": 1440,
+    "route": "/assets/account",
+    "overflow": 0,
+    "tight": []
+  },
+  {
+    "locale": "zh-CN",
+    "width": 1440,
+    "route": "/assets/subscription",
+    "overflow": 0,
+    "tight": []
+  },
+  {
+    "locale": "zh-CN",
+    "width": 1440,
+    "route": "/assets/item",
+    "overflow": 0,
+    "tight": []
+  },
+  {
+    "locale": "zh-CN",
+    "width": 1440,
+    "route": "/assets/vault",
+    "overflow": 0,
+    "tight": []
+  },
+  {
+    "locale": "zh-CN",
+    "width": 1440,
+    "route": "/tasks",
+    "overflow": 0,
+    "tight": [
+      {
+        "parent": "card tasks-list-card",
+        "a": "tasks-cardhead",
+        "b": "list",
+        "gap": 0,
+        "text": "检查项目联系资料2026年10月22日关联资产: 林间笔记稍后提醒稍后 1 天待处理备份工作笔记本2026年10月24日关联资产:"
+      },
+      {
+        "parent": "card tasks-plan-card",
+        "a": "tasks-cardhead",
+        "b": "empty",
+        "gap": 0,
+        "text": "这里还没有内容"
+      }
+    ]
+  },
+  {
+    "locale": "zh-CN",
+    "width": 1440,
+    "route": "/finance",
+    "overflow": 0,
+    "tight": []
+  },
+  {
+    "locale": "zh-CN",
+    "width": 1440,
+    "route": "/intake",
+    "overflow": 0,
+    "tight": []
+  },
+  {
+    "locale": "zh-CN",
+    "width": 1440,
+    "route": "/settings",
+    "overflow": 0,
+    "tight": []
+  },
+  {
+    "locale": "zh-CN",
+    "width": 1440,
+    "route": "/trash",
+    "overflow": 0,
+    "tight": []
+  },
+  {
+    "locale": "zh-CN",
+    "width": 1440,
+    "route": "/collections",
+    "overflow": 0,
+    "tight": [
+      {
+        "parent": "card collections-organize-nav",
+        "a": "card-header",
+        "b": "collections-nav",
+        "gap": 0,
+        "text": "概览待办项目账号订阅实物密码库按空格拾取，方向键移动，再按空格放下。"
+      }
+    ]
+  },
+  {
+    "locale": "zh-CN",
+    "width": 1440,
+    "route": "/assistant-access",
+    "overflow": 0,
+    "tight": []
+  },
+  {
+    "locale": "zh-CN",
+    "width": 1440,
+    "route": "/change-impact",
+    "overflow": 0,
+    "tight": []
+  },
+  {
+    "locale": "zh-CN",
+    "width": 1440,
+    "route": "/assets/project/4d247aef-9dcd-4679-becd-259b662ca32d",
+    "overflow": 0,
+    "tight": [
+      {
+        "parent": "card asset-project-reminders",
+        "a": "asset-quiet-empty",
+        "b": "asset-project-reminder-row asset-project-reminder-static",
+        "gap": 0,
+        "text": "↗下次巡检尚未安排巡检"
+      },
+      {
+        "parent": "card asset-project-costs",
+        "a": "asset-project-cost-grid",
+        "b": "asset-quiet-empty",
+        "gap": 0,
+        "text": "暂无独立域名"
+      },
+      {
+        "parent": "card asset-backlinks-card",
+        "a": "SUMMARY",
+        "b": "backlink-filters",
+        "gap": 0,
+        "text": "全部计划中已提交审核中已收录待核验未通过"
+      },
+      {
+        "parent": "card asset-backlinks-card",
+        "a": "backlink-filters",
+        "b": "asset-quiet-empty",
+        "gap": 0,
+        "text": "暂无"
+      },
+      {
+        "parent": "card asset-project-materials",
+        "a": "SUMMARY",
+        "b": "asset-project-materials-body",
+        "gap": 0,
+        "text": "查看投递素材编辑产品标题—推广链接—标签（逗号分隔）个人, 写作一句话描述整理写作与灵感的个人网站中篇介绍—完整介绍—功能介绍—定"
+      }
+    ]
+  },
+  {
+    "locale": "zh-CN",
+    "width": 1440,
+    "route": "/assets/account/44fd3ad9-d2da-46fe-a439-b1b2a00ede13",
+    "overflow": 0,
+    "tight": [
+      {
+        "parent": "card account-facts-card",
+        "a": "DL",
+        "b": "chips",
+        "gap": 0,
+        "text": "工作"
+      },
+      {
+        "parent": "card account-facts-card account-security-card",
+        "a": "DL",
+        "b": "button",
+        "gap": 0,
+        "text": "管理这个账号的密码"
+      }
+    ]
+  },
+  {
+    "locale": "zh-CN",
+    "width": 1440,
+    "route": "/assets/subscription/d2fe9dfa-8fb4-4dd2-94e4-863f463665ef",
+    "overflow": 0,
+    "tight": []
+  },
+  {
+    "locale": "zh-CN",
+    "width": 1440,
+    "route": "/assets/item/ba60471c-3593-40bc-8801-efc93ac2914a",
+    "overflow": 0,
+    "tight": [
+      {
+        "parent": "card asset-item-photo-main",
+        "a": "asset-item-photo-stage",
+        "b": "asset-item-photo-actions",
+        "gap": 0,
+        "text": "添加图片细节照片"
+      }
+    ]
+  },
+  {
+    "locale": "zh-CN",
+    "width": 1440,
+    "route": "/assets/vault/eadce7c9-6641-43f3-a926-9a73689a15ad",
+    "overflow": 0,
+    "tight": []
+  },
+  {
+    "locale": "zh-CN",
+    "width": 1440,
+    "route": "/collections/b3cb0142-6c1a-4707-8f2b-26a9285b0482",
+    "overflow": 0,
+    "tight": []
+  },
+  {
+    "locale": "zh-CN",
+    "width": 1440,
+    "route": "/assets/project/4d247aef-9dcd-4679-becd-259b662ca32d/workflow/brand",
+    "overflow": 0,
+    "tight": [
+      {
+        "parent": "card project-workflow-card",
+        "a": "project-workflow-card-head",
+        "b": "project-workflow-task-list",
+        "gap": 0,
+        "text": "确认站点新资料 · 林间笔记https://example.com核实关联资产资料 · 网站托管核实关联资产资料 · 工作室邮箱核"
+      },
+      {
+        "parent": "card project-workflow-card",
+        "a": "A",
+        "b": "A",
+        "gap": 0,
+        "text": "工作室邮箱账号"
+      },
+      {
+        "parent": "card project-workflow-card",
+        "a": "A",
+        "b": "A",
+        "gap": 0,
+        "text": "工作笔记本实物"
+      }
+    ]
+  },
+  {
+    "locale": "zh-CN",
+    "width": 1440,
+    "route": "/assets/project/4d247aef-9dcd-4679-becd-259b662ca32d/workflow/close",
+    "overflow": 0,
+    "tight": [
+      {
+        "parent": "card project-workflow-card",
+        "a": "project-workflow-card-head",
+        "b": "project-workflow-task-list",
+        "gap": 0,
+        "text": "备份并验证恢复 · 林间笔记确认接收范围和管理账号 · 林间笔记处理关联订阅 · 网站托管核实关联资产交接 · 工作室邮箱核实关联"
+      },
+      {
+        "parent": "card project-workflow-card",
+        "a": "A",
+        "b": "A",
+        "gap": 0,
+        "text": "工作室邮箱账号"
+      },
+      {
+        "parent": "card project-workflow-card",
+        "a": "A",
+        "b": "A",
+        "gap": 0,
+        "text": "工作笔记本实物"
+      }
+    ]
+  },
+  {
+    "locale": "zh-CN",
+    "width": 1440,
+    "errors": []
+  },
+  {
+    "locale": "en",
+    "width": 390,
+    "route": "/",
+    "overflow": 0,
+    "tight": [
+      {
+        "parent": "card overview-stat",
+        "a": "SPAN",
+        "b": "STRONG",
+        "gap": 5,
+        "text": "5"
+      },
+      {
+        "parent": "card overview-stat",
+        "a": "STRONG",
+        "b": "SMALL",
+        "gap": 5,
+        "text": "Projects, accounts, subscriptions and items"
+      },
+      {
+        "parent": "card overview-stat",
+        "a": "SPAN",
+        "b": "STRONG",
+        "gap": 5,
+        "text": "3"
+      },
+      {
+        "parent": "card overview-stat",
+        "a": "STRONG",
+        "b": "SMALL",
+        "gap": 5,
+        "text": "3 due this week"
+      },
+      {
+        "parent": "card overview-stat",
+        "a": "SPAN",
+        "b": "STRONG",
+        "gap": 5,
+        "text": "2"
+      },
+      {
+        "parent": "card overview-stat",
+        "a": "STRONG",
+        "b": "SMALL",
+        "gap": 5,
+        "text": "Unverified or last checked over 90 days ago"
+      }
+    ]
+  },
+  {
+    "locale": "en",
+    "width": 390,
+    "route": "/assets/project",
+    "overflow": 0,
+    "tight": []
+  },
+  {
+    "locale": "en",
+    "width": 390,
+    "route": "/assets/account",
+    "overflow": 0,
+    "tight": []
+  },
+  {
+    "locale": "en",
+    "width": 390,
+    "route": "/assets/subscription",
+    "overflow": 0,
+    "tight": []
+  },
+  {
+    "locale": "en",
+    "width": 390,
+    "route": "/assets/item",
+    "overflow": 0,
+    "tight": []
+  },
+  {
+    "locale": "en",
+    "width": 390,
+    "route": "/assets/vault",
+    "overflow": 0,
+    "tight": []
+  },
+  {
+    "locale": "en",
+    "width": 390,
+    "route": "/tasks",
+    "overflow": 0,
+    "tight": [
+      {
+        "parent": "card tasks-list-card",
+        "a": "tasks-cardhead",
+        "b": "list",
+        "gap": 0,
+        "text": "Review project contact detailsOct 22, 2026Related assets: Mori No"
+      },
+      {
+        "parent": "card tasks-plan-card",
+        "a": "tasks-cardhead",
+        "b": "empty",
+        "gap": 0,
+        "text": "Nothing here yet"
+      }
+    ]
+  },
+  {
+    "locale": "en",
+    "width": 390,
+    "route": "/finance",
+    "overflow": 0,
+    "tight": []
+  },
+  {
+    "locale": "en",
+    "width": 390,
+    "route": "/intake",
+    "overflow": 0,
+    "tight": []
+  },
+  {
+    "locale": "en",
+    "width": 390,
+    "route": "/settings",
+    "overflow": 0,
+    "tight": []
+  },
+  {
+    "locale": "en",
+    "width": 390,
+    "route": "/trash",
+    "overflow": 0,
+    "tight": []
+  },
+  {
+    "locale": "en",
+    "width": 390,
+    "route": "/collections",
+    "overflow": 0,
+    "tight": [
+      {
+        "parent": "card collections-organize-nav",
+        "a": "card-header",
+        "b": "collections-nav",
+        "gap": 0,
+        "text": "OverviewTasksProjectsAccountsSubscriptionsItemsPassword vaultPres"
+      }
+    ]
+  },
+  {
+    "locale": "en",
+    "width": 390,
+    "route": "/assistant-access",
+    "overflow": 0,
+    "tight": []
+  },
+  {
+    "locale": "en",
+    "width": 390,
+    "route": "/change-impact",
+    "overflow": 0,
+    "tight": []
+  },
+  {
+    "locale": "en",
+    "width": 390,
+    "route": "/assets/project/4eef9a79-b972-40b9-ae79-08d62d758972",
+    "overflow": 0,
+    "tight": [
+      {
+        "parent": "card asset-project-reminders",
+        "a": "asset-quiet-empty",
+        "b": "asset-project-reminder-row asset-project-reminder-static",
+        "gap": 0,
+        "text": "↗Next inspectionNo inspection scheduled"
+      },
+      {
+        "parent": "card asset-project-costs",
+        "a": "asset-project-cost-grid",
+        "b": "asset-quiet-empty",
+        "gap": 0,
+        "text": "No domains recorded"
+      },
+      {
+        "parent": "card asset-backlinks-card",
+        "a": "SUMMARY",
+        "b": "backlink-filters",
+        "gap": 0,
+        "text": "AllPlannedSubmittedIn reviewIndexedTo verifyRejected"
+      },
+      {
+        "parent": "card asset-backlinks-card",
+        "a": "backlink-filters",
+        "b": "asset-quiet-empty",
+        "gap": 0,
+        "text": "None"
+      },
+      {
+        "parent": "card asset-project-materials",
+        "a": "SUMMARY",
+        "b": "asset-project-materials-body",
+        "gap": 0,
+        "text": "View submission materialsEditProduct title—Promotional link—Tags "
+      }
+    ]
+  },
+  {
+    "locale": "en",
+    "width": 390,
+    "route": "/assets/account/37e96ebb-7543-4d4e-bb02-3442b6899313",
+    "overflow": 0,
+    "tight": [
+      {
+        "parent": "card account-facts-card",
+        "a": "DL",
+        "b": "chips",
+        "gap": 0,
+        "text": "Work"
+      },
+      {
+        "parent": "card account-facts-card account-security-card",
+        "a": "DL",
+        "b": "button",
+        "gap": 0,
+        "text": "Manage this account’s passwords"
+      }
+    ]
+  },
+  {
+    "locale": "en",
+    "width": 390,
+    "route": "/assets/subscription/ee4479ff-cb25-43d0-baa6-d99acf871ea1",
+    "overflow": 0,
+    "tight": []
+  },
+  {
+    "locale": "en",
+    "width": 390,
+    "route": "/assets/item/1608122f-5db7-4ce6-ae60-f237dcd22b1d",
+    "overflow": 0,
+    "tight": [
+      {
+        "parent": "card asset-item-photo-main",
+        "a": "asset-item-photo-stage",
+        "b": "asset-item-photo-actions",
+        "gap": 0,
+        "text": "Add imageDetail photos"
+      }
+    ]
+  },
+  {
+    "locale": "en",
+    "width": 390,
+    "route": "/assets/vault/ae4fa33c-28ca-43cf-8b64-e133f67a340c",
+    "overflow": 0,
+    "tight": []
+  },
+  {
+    "locale": "en",
+    "width": 390,
+    "route": "/collections/b852f2e0-0bd4-4b73-a766-139c37c7b98d",
+    "overflow": 0,
+    "tight": []
+  },
+  {
+    "locale": "en",
+    "width": 390,
+    "route": "/assets/project/4eef9a79-b972-40b9-ae79-08d62d758972/workflow/brand",
+    "overflow": 0,
+    "tight": [
+      {
+        "parent": "card project-workflow-card",
+        "a": "project-workflow-card-head",
+        "b": "project-workflow-task-list",
+        "gap": 0,
+        "text": "Confirm updated project profile · Mori Noteshttps://example.comRe"
+      },
+      {
+        "parent": "card project-workflow-card",
+        "a": "A",
+        "b": "A",
+        "gap": 0,
+        "text": "Studio MailAccounts"
+      },
+      {
+        "parent": "card project-workflow-card",
+        "a": "A",
+        "b": "A",
+        "gap": 0,
+        "text": "Cloud hostingSubscriptions"
+      }
+    ]
+  },
+  {
+    "locale": "en",
+    "width": 390,
+    "route": "/assets/project/4eef9a79-b972-40b9-ae79-08d62d758972/workflow/close",
+    "overflow": 0,
+    "tight": [
+      {
+        "parent": "card project-workflow-card",
+        "a": "project-workflow-card-head",
+        "b": "project-workflow-task-list",
+        "gap": 0,
+        "text": "Back up and test restore · Mori NotesConfirm handover scope and a"
+      },
+      {
+        "parent": "card project-workflow-card",
+        "a": "A",
+        "b": "A",
+        "gap": 0,
+        "text": "Studio MailAccounts"
+      },
+      {
+        "parent": "card project-workflow-card",
+        "a": "A",
+        "b": "A",
+        "gap": 0,
+        "text": "Cloud hostingSubscriptions"
+      }
+    ]
+  },
+  {
+    "locale": "en",
+    "width": 390,
+    "errors": []
+  },
+  {
+    "locale": "en",
+    "width": 1440,
+    "route": "/",
+    "overflow": 0,
+    "tight": [
+      {
+        "parent": "card overview-stat",
+        "a": "SPAN",
+        "b": "STRONG",
+        "gap": 5,
+        "text": "5"
+      },
+      {
+        "parent": "card overview-stat",
+        "a": "STRONG",
+        "b": "SMALL",
+        "gap": 5,
+        "text": "Projects, accounts, subscriptions and items"
+      },
+      {
+        "parent": "card overview-stat",
+        "a": "SPAN",
+        "b": "STRONG",
+        "gap": 5,
+        "text": "3"
+      },
+      {
+        "parent": "card overview-stat",
+        "a": "STRONG",
+        "b": "SMALL",
+        "gap": 5,
+        "text": "3 due this week"
+      },
+      {
+        "parent": "card overview-stat",
+        "a": "SPAN",
+        "b": "STRONG",
+        "gap": 5,
+        "text": "2"
+      },
+      {
+        "parent": "card overview-stat",
+        "a": "STRONG",
+        "b": "SMALL",
+        "gap": 5,
+        "text": "Unverified or last checked over 90 days ago"
+      }
+    ]
+  },
+  {
+    "locale": "en",
+    "width": 1440,
+    "route": "/assets/project",
+    "overflow": 0,
+    "tight": []
+  },
+  {
+    "locale": "en",
+    "width": 1440,
+    "route": "/assets/account",
+    "overflow": 0,
+    "tight": []
+  },
+  {
+    "locale": "en",
+    "width": 1440,
+    "route": "/assets/subscription",
+    "overflow": 0,
+    "tight": []
+  },
+  {
+    "locale": "en",
+    "width": 1440,
+    "route": "/assets/item",
+    "overflow": 0,
+    "tight": []
+  },
+  {
+    "locale": "en",
+    "width": 1440,
+    "route": "/assets/vault",
+    "overflow": 0,
+    "tight": []
+  },
+  {
+    "locale": "en",
+    "width": 1440,
+    "route": "/tasks",
+    "overflow": 0,
+    "tight": [
+      {
+        "parent": "card tasks-list-card",
+        "a": "tasks-cardhead",
+        "b": "list",
+        "gap": 0,
+        "text": "Review project contact detailsOct 22, 2026Related assets: Mori No"
+      },
+      {
+        "parent": "card tasks-plan-card",
+        "a": "tasks-cardhead",
+        "b": "empty",
+        "gap": 0,
+        "text": "Nothing here yet"
+      }
+    ]
+  },
+  {
+    "locale": "en",
+    "width": 1440,
+    "route": "/finance",
+    "overflow": 0,
+    "tight": []
+  },
+  {
+    "locale": "en",
+    "width": 1440,
+    "route": "/intake",
+    "overflow": 0,
+    "tight": []
+  },
+  {
+    "locale": "en",
+    "width": 1440,
+    "route": "/settings",
+    "overflow": 0,
+    "tight": []
+  },
+  {
+    "locale": "en",
+    "width": 1440,
+    "route": "/trash",
+    "overflow": 0,
+    "tight": []
+  },
+  {
+    "locale": "en",
+    "width": 1440,
+    "route": "/collections",
+    "overflow": 0,
+    "tight": [
+      {
+        "parent": "card collections-organize-nav",
+        "a": "card-header",
+        "b": "collections-nav",
+        "gap": 0,
+        "text": "OverviewTasksProjectsAccountsSubscriptionsItemsPassword vaultPres"
+      }
+    ]
+  },
+  {
+    "locale": "en",
+    "width": 1440,
+    "route": "/assistant-access",
+    "overflow": 0,
+    "tight": []
+  },
+  {
+    "locale": "en",
+    "width": 1440,
+    "route": "/change-impact",
+    "overflow": 0,
+    "tight": []
+  },
+  {
+    "locale": "en",
+    "width": 1440,
+    "route": "/assets/project/9706f5f7-a124-4ad4-8dd2-4a4775b8998b",
+    "overflow": 0,
+    "tight": [
+      {
+        "parent": "card asset-project-reminders",
+        "a": "asset-quiet-empty",
+        "b": "asset-project-reminder-row asset-project-reminder-static",
+        "gap": 0,
+        "text": "↗Next inspectionNo inspection scheduled"
+      },
+      {
+        "parent": "card asset-project-costs",
+        "a": "asset-project-cost-grid",
+        "b": "asset-quiet-empty",
+        "gap": 0,
+        "text": "No domains recorded"
+      },
+      {
+        "parent": "card asset-backlinks-card",
+        "a": "SUMMARY",
+        "b": "backlink-filters",
+        "gap": 0,
+        "text": "AllPlannedSubmittedIn reviewIndexedTo verifyRejected"
+      },
+      {
+        "parent": "card asset-backlinks-card",
+        "a": "backlink-filters",
+        "b": "asset-quiet-empty",
+        "gap": 0,
+        "text": "None"
+      },
+      {
+        "parent": "card asset-project-materials",
+        "a": "SUMMARY",
+        "b": "asset-project-materials-body",
+        "gap": 0,
+        "text": "View submission materialsEditProduct title—Promotional link—Tags "
+      }
+    ]
+  },
+  {
+    "locale": "en",
+    "width": 1440,
+    "route": "/assets/account/75f091a5-10ff-4810-895f-cf9596faff14",
+    "overflow": 0,
+    "tight": [
+      {
+        "parent": "card account-facts-card",
+        "a": "DL",
+        "b": "chips",
+        "gap": 0,
+        "text": "Work"
+      },
+      {
+        "parent": "card account-facts-card account-security-card",
+        "a": "DL",
+        "b": "button",
+        "gap": 0,
+        "text": "Manage this account’s passwords"
+      }
+    ]
+  },
+  {
+    "locale": "en",
+    "width": 1440,
+    "route": "/assets/subscription/2e56a3f1-e22e-4392-ba80-39c493d4d53d",
+    "overflow": 0,
+    "tight": []
+  },
+  {
+    "locale": "en",
+    "width": 1440,
+    "route": "/assets/item/1adae9e3-f8a9-484f-a73f-a0785a119929",
+    "overflow": 0,
+    "tight": [
+      {
+        "parent": "card asset-item-photo-main",
+        "a": "asset-item-photo-stage",
+        "b": "asset-item-photo-actions",
+        "gap": 0,
+        "text": "Add imageDetail photos"
+      }
+    ]
+  },
+  {
+    "locale": "en",
+    "width": 1440,
+    "route": "/assets/vault/1d323a1f-270a-4a60-8e22-6e0428466956",
+    "overflow": 0,
+    "tight": []
+  },
+  {
+    "locale": "en",
+    "width": 1440,
+    "route": "/collections/6f67980e-7221-45ac-a63a-fd03d3a0f560",
+    "overflow": 0,
+    "tight": []
+  },
+  {
+    "locale": "en",
+    "width": 1440,
+    "route": "/assets/project/9706f5f7-a124-4ad4-8dd2-4a4775b8998b/workflow/brand",
+    "overflow": 0,
+    "tight": [
+      {
+        "parent": "card project-workflow-card",
+        "a": "project-workflow-card-head",
+        "b": "project-workflow-task-list",
+        "gap": 0,
+        "text": "Confirm updated project profile · Mori Noteshttps://example.comRe"
+      },
+      {
+        "parent": "card project-workflow-card",
+        "a": "A",
+        "b": "A",
+        "gap": 0,
+        "text": "Studio MailAccounts"
+      },
+      {
+        "parent": "card project-workflow-card",
+        "a": "A",
+        "b": "A",
+        "gap": 0,
+        "text": "Work laptopItems"
+      }
+    ]
+  },
+  {
+    "locale": "en",
+    "width": 1440,
+    "route": "/assets/project/9706f5f7-a124-4ad4-8dd2-4a4775b8998b/workflow/close",
+    "overflow": 0,
+    "tight": [
+      {
+        "parent": "card project-workflow-card",
+        "a": "project-workflow-card-head",
+        "b": "project-workflow-task-list",
+        "gap": 0,
+        "text": "Back up and test restore · Mori NotesConfirm handover scope and a"
+      },
+      {
+        "parent": "card project-workflow-card",
+        "a": "A",
+        "b": "A",
+        "gap": 0,
+        "text": "Studio MailAccounts"
+      },
+      {
+        "parent": "card project-workflow-card",
+        "a": "A",
+        "b": "A",
+        "gap": 0,
+        "text": "Work laptopItems"
+      }
+    ]
+  },
+  {
+    "locale": "en",
+    "width": 1440,
+    "errors": []
+  }
+]

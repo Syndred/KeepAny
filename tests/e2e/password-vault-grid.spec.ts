@@ -367,6 +367,8 @@ for (const locale of ["zh-CN", "en"] as const)
 					.getByRole("button", { name: t("pwVaultUnlock"), exact: true })
 					.click();
 				await expect(cards).toHaveCount(6);
+				await expect(page.getByText(t("pwVaultStatusUnlocked"), { exact: true })).toHaveCount(1);
+				await expect(page.locator(".password-vault-message")).toHaveCount(0);
 				await expect(first).not.toContainText("Second secret line");
 				await page.evaluate(() => {
 					Object.defineProperty(navigator, "clipboard", {

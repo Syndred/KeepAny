@@ -63,3 +63,12 @@
 @media (max-width: 900px) {
   .intake-restored .intake-primary-grid { grid-template-columns: 1fr; }
 }
+
+.reminder-settings-form {
+	display: grid;
+	gap: var(--space-4);
+}
+.reminder-settings-form > p,
+.reminder-settings-form > .toolbar {
+	margin: 0;
+}

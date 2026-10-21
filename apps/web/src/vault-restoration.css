@@ -1,3 +1,24 @@
+.vault-page {
+	display: grid;
+	align-content: start;
+	gap: var(--space-6);
+}
+
+.page.vault-page > * + * {
+	margin-top: 0;
+}
+
+.vault-references-header {
+	margin: 0;
+	padding-top: var(--space-4);
+	border-top: 1px solid var(--line-soft);
+	align-items: center;
+}
+
+.vault-references-header h2 {
+	margin: 0;
+}
+
 .vault-page .page-header h1 {
 	white-space: pre-line;
 }
@@ -14,7 +35,7 @@
 }
 
 .vault-table-wrap {
-	margin-top: 16px;
+	margin-top: 0;
 	overflow-x: auto;
 	padding: 0;
 }

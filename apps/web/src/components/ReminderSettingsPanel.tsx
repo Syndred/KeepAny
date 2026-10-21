@@ -61,13 +61,13 @@ export function ReminderSettingsPanel() {
 	return <section className="card padded">
 		<h2>{t("reminderSettingsTitle")}</h2>
 		<p className="muted">{t("reminderRuntimeScope")}</p>
-		<form onSubmit={(event) => { event.preventDefault(); void persist(draft); }}>
+		<form className="reminder-settings-form" onSubmit={(event) => { event.preventDefault(); void persist(draft); }}>
 			<div className="form-grid">
 				<label><input type="checkbox" checked={draft.enabled} disabled={busy || data.loading} onChange={(event) => change({ enabled: event.target.checked })} /> {t("reminderEnabled")}</label>
 				<label><input type="checkbox" checked={draft.subscriptionEnabled} disabled={busy || data.loading} onChange={(event) => change({ subscriptionEnabled: event.target.checked })} /> {t("reminderSubscriptionEnabled")}</label>
-				<label htmlFor="reminder-lead-days">{t("reminderLeadDays")}<input className="field" id="reminder-lead-days" type="number" min="0" max="3650" required value={draft.leadDays} disabled={busy || data.loading} onChange={(event) => change({ leadDays: event.target.valueAsNumber })} /></label>
-				<label htmlFor="reminder-clock">{t("reminderClockTime")}<input className="field" id="reminder-clock" type="time" required value={draft.time} disabled={busy || data.loading} onChange={(event) => change({ time: event.target.value })} /></label>
-				<label htmlFor="reminder-time-zone">{t("reminderTimeZone")}<input className="field" id="reminder-time-zone" required value={draft.timeZone} disabled={busy || data.loading} onChange={(event) => change({ timeZone: event.target.value })} /></label>
+				<label className="field" htmlFor="reminder-lead-days">{t("reminderLeadDays")}<input id="reminder-lead-days" type="number" min="0" max="3650" required value={draft.leadDays} disabled={busy || data.loading} onChange={(event) => change({ leadDays: event.target.valueAsNumber })} /></label>
+				<label className="field" htmlFor="reminder-clock">{t("reminderClockTime")}<input id="reminder-clock" type="time" required value={draft.time} disabled={busy || data.loading} onChange={(event) => change({ time: event.target.value })} /></label>
+				<label className="field" htmlFor="reminder-time-zone">{t("reminderTimeZone")}<input id="reminder-time-zone" required value={draft.timeZone} disabled={busy || data.loading} onChange={(event) => change({ timeZone: event.target.value })} /></label>
 				<label><input type="checkbox" checked={draft.browserEnabled} disabled={busy || data.loading || (permission !== "granted" && !draft.browserEnabled)} onChange={(event) => change({ browserEnabled: event.target.checked })} /> {t("reminderBrowserEnabled")}</label>
 			</div>
 			<p role="status">{t(`reminderPermission_${permission}`)}</p>
