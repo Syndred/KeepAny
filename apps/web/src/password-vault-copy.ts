@@ -12,6 +12,10 @@ export const passwordVaultCopy: Record<string, [string, string]> = {
 		"通过此账号找回的账号",
 		"Accounts recovered through this account",
 	],
+	pwConnectSearch: ["搜索账号", "Search accounts"],
+	pwConnectAccountsHeading: ["账号与线索", "Accounts and hints"],
+	pwConnectNoResults: ["无匹配账号", "No matching accounts"],
+	pwConnectNoSuggestions: ["暂无关联建议", "No suggestions yet"],
 	pwConnectTitle: ["关联账号", "Connect accounts"],
 	pwConnectGraph: ["查看账号与关联族谱", "View account and relationships"],
 	pwConnectIntro: [
@@ -63,10 +67,7 @@ export const passwordVaultCopy: Record<string, [string, string]> = {
 		"AI 未能给出有效结果，请检查连接和输入；已有资料未改动。",
 		"AI did not return valid results. Check the connection and input; existing records are unchanged.",
 	],
-	pwConnectSave: [
-		"保存",
-		"Save",
-	],
+	pwConnectSave: ["保存", "Save"],
 	pwConnectWorking: ["处理中…", "Working…"],
 	pwConnectSaved: [
 		"账号与关联已保存，可从卡片上的账号链接查看族谱。",

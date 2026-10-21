@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Network, WandSparkles } from "lucide-react";
+import { Check, Network, Search, WandSparkles } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { generateAiText } from "../../../../packages/ai/src";
@@ -38,6 +38,7 @@ export function VaultAccountLinksDialog({
 	const { connection } = useAiConnection();
 	const base = useRef(snapshot.contentRevision);
 	const [rows, setRows] = useState<AccountLinkRow[]>([]);
+	const [query, setQuery] = useState("");
 	const [selected, setSelected] = useState<string[]>([]);
 	const [suggestions, setSuggestions] = useState<AccountLinkSuggestion[]>([]);
 	const [chosen, setChosen] = useState<number[]>([]);
@@ -94,7 +95,7 @@ export function VaultAccountLinksDialog({
 		const result = sharedIdentifierSuggestions(selectedRows);
 		setSuggestions(result);
 		setChosen(result.map((_, i) => i));
-		setMessage(t("pwConnectFound", { count: result.length }));
+		setMessage("");
 	}
 	async function proposeAi() {
 		if (running.current || !connection || !selectedRows.length || stale) return;
@@ -126,7 +127,7 @@ export function VaultAccountLinksDialog({
 			]);
 			setSuggestions(result);
 			setChosen(result.flatMap((r, i) => (r.kind === "identifier" ? [i] : [])));
-			setMessage(t("pwConnectFound", { count: result.length }));
+			setMessage("");
 		} catch {
 			if (active.current && !controller.signal.aborted)
 				setMessage(t("pwConnectAiError"));
@@ -221,6 +222,12 @@ export function VaultAccountLinksDialog({
 			if (active.current) setBusy(false);
 		}
 	}
+	const visibleRows = rows.filter((row) =>
+		[row.account.name, ...row.loginIdentifiers, row.account.url]
+			.join(" ")
+			.toLocaleLowerCase()
+			.includes(query.trim().toLocaleLowerCase()),
+	);
 	return (
 		<Dialog
 			title={t("pwConnectTitle")}
@@ -229,9 +236,42 @@ export function VaultAccountLinksDialog({
 			onClose={() => {
 				if (!running.current) onClose();
 			}}
+			headerActions={
+				<div className="vault-connect-toolbar">
+					<span className="vault-connect-count">
+						{t("pwConnectSelected", { count: selected.length })}
+					</span>
+					<label className="vault-connect-search">
+						<Search size={18} />
+						<input
+							type="search"
+							value={query}
+							onChange={(event) => setQuery(event.target.value)}
+							aria-label={t("pwConnectSearch")}
+							placeholder={t("pwConnectSearch")}
+						/>
+					</label>
+					<Button
+						size="small"
+						disabled={busy || stale || rows.length > 200}
+						onClick={() =>
+							select(
+								selected.length === rows.length
+									? []
+									: rows.map((row) => row.entryId),
+							)
+						}
+					>
+						{t(
+							selected.length === rows.length && rows.length
+								? "pwConnectClear"
+								: "pwConnectSelectAll",
+						)}
+					</Button>
+				</div>
+			}
 		>
 			<div className="vault-connect-content">
-				<p>{t("pwConnectIntro")}</p>
 				{stale && (
 					<p className="notice" role="alert">
 						{t("pwConnectStale")}
@@ -246,175 +286,192 @@ export function VaultAccountLinksDialog({
 					<p>{t("loading")}</p>
 				) : (
 					<>
-						<div className="actions">
-							<Button
-								size="small"
-								disabled={busy || stale || rows.length > 200}
-								onClick={() => select(rows.map((r) => r.entryId))}
-							>
-								{t("pwConnectSelectAll")}
-							</Button>
-							<Button
-								size="small"
-								variant="ghost"
-								disabled={busy}
-								onClick={() => select([])}
-							>
-								{t("pwConnectClear")}
-							</Button>
-							<span>{t("pwConnectSelected", { count: selected.length })}</span>
-						</div>
-						{!rows.length && <p>{t("pwConnectEmpty")}</p>}
-						<div className="vault-connect-accounts">
-							{rows.map((row) => (
-								<section className="vault-connect-account" key={row.entryId}>
-									<label className="vault-connect-choice">
-										<input
-											type="checkbox"
-											checked={selected.includes(row.entryId)}
-											disabled={
-												busy ||
-												stale ||
-												(!selected.includes(row.entryId) &&
-													selected.length >= 200)
-											}
-											onChange={(event) =>
-												select(
-													event.target.checked
-														? [...selected, row.entryId]
-														: selected.filter((id) => id !== row.entryId),
-												)
-											}
-										/>
-										<strong>{row.account.name}</strong>
-										<small>
-											{t(row.isNew ? "pwConnectNew" : "pwConnectExisting")}
-										</small>
-									</label>
-									<div className="vault-connect-identifiers">
-										{row.loginIdentifiers.map((value) => (
-											<p key={value}>{value}</p>
-										))}
-									</div>
-									{row.account.url && <p>{row.account.url}</p>}
-									{selected.includes(row.entryId) && (
-										<>
-											<label className="field">
-												<span>{t("pwConnectHint")}</span>
-												<textarea
-													rows={2}
-													maxLength={500}
-													value={row.hint}
-													disabled={busy}
-													placeholder={t("pwConnectHintExample")}
-													onChange={(event) => {
-														setRows(
-															rows.map((r) =>
-																r.entryId === row.entryId
-																	? { ...r, hint: event.target.value }
-																	: r,
-															),
-														);
-														setSuggestions([]);
-														setChosen([]);
-													}}
+						<div className="vault-connect-workspace">
+							<section className="vault-connect-account-pane">
+								<h3>{t("pwConnectAccountsHeading")}</h3>
+								{!rows.length && <p>{t("pwConnectEmpty")}</p>}
+								{rows.length > 0 && !visibleRows.length && (
+									<p>{t("pwConnectNoResults")}</p>
+								)}
+								<div className="vault-connect-accounts">
+									{visibleRows.map((row) => (
+										<section
+											className="vault-connect-account"
+											key={row.entryId}
+										>
+											<label className="vault-connect-choice">
+												<input
+													type="checkbox"
+													checked={selected.includes(row.entryId)}
+													disabled={
+														busy ||
+														stale ||
+														(!selected.includes(row.entryId) &&
+															selected.length >= 200)
+													}
+													onChange={(event) =>
+														select(
+															event.target.checked
+																? [...selected, row.entryId]
+																: selected.filter((id) => id !== row.entryId),
+														)
+													}
 												/>
+												<strong>{row.account.name}</strong>
+												<span className="vault-connect-primary">
+													{row.loginIdentifiers[0]}
+												</span>
+												<small>
+													{t(row.isNew ? "pwConnectNew" : "pwConnectExisting")}
+												</small>
 											</label>
-											{row.hint.length > 500 && (
-												<p role="alert">{t("pwConnectNotesLong")}</p>
-											)}
-										</>
-									)}
-								</section>
-							))}
-						</div>
-						<div className="actions">
-							<Button
-								disabled={busy || stale || !selected.length}
-								onClick={proposeLocal}
-							>
-								<Network size={16} />
-								{t("pwConnectLocal")}
-							</Button>
-						</div>
-						<section className="vault-connect-ai">
-							<h3>{t("pwConnectAiTitle")}</h3>
-							<p>{t("pwConnectAiScope")}</p>
-							{connection ? (
-								<p className="vault-connect-destination">
-									{connection.model} · {connection.baseURL}
-								</p>
-							) : (
-								<Link to="/settings">{t("pwConnectConfigure")}</Link>
-							)}
-							<Button
-								disabled={
-									busy ||
-									stale ||
-									!connection ||
-									!selected.length ||
-									selectedRows.some((row) => row.hint.length > 500)
-								}
-								onClick={() => void proposeAi()}
-							>
-								<WandSparkles size={16} />
-								{t("pwConnectAi")}
-							</Button>
-						</section>
-						{suggestions.length > 0 && (
-							<section className="vault-connect-suggestions">
-								<h3>{t("pwConnectReview")}</h3>
-								{suggestions.map((relation, index) => (
-									<label
-										className="vault-connect-suggestion"
-										key={`${relation.from}:${relation.to}:${relation.kind}`}
-									>
-										<input
-											type="checkbox"
-											disabled={busy || stale}
-											checked={chosen.includes(index)}
-											onChange={(e) =>
-												setChosen(
-													e.target.checked
-														? [...chosen, index]
-														: chosen.filter((i) => i !== index),
-												)
-											}
-										/>
-										<span>
-											<strong>
-												{
-													rows.find((r) => r.account.id === relation.from)
-														?.account.name
-												}{" "}
-												→{" "}
-												{
-													rows.find((r) => r.account.id === relation.to)
-														?.account.name
-												}
-											</strong>
-											<span>{label(relation.kind)}</span>
-											{relation.evidence && <small>{relation.evidence}</small>}
-										</span>
-									</label>
-								))}
+											<div className="vault-connect-details">
+												<div className="vault-connect-identifiers">
+													{row.loginIdentifiers.slice(1).map((value) => (
+														<p key={value}>{value}</p>
+													))}
+												</div>
+												{row.account.url && <p>{row.account.url}</p>}
+												{selected.includes(row.entryId) && (
+													<>
+														<label className="field">
+															<span className="sr-only">
+																{t("pwConnectHint")}
+															</span>
+															<textarea
+																rows={1}
+																maxLength={500}
+																value={row.hint}
+																disabled={busy}
+																placeholder={t("pwConnectHintExample")}
+																onChange={(event) => {
+																	setRows(
+																		rows.map((r) =>
+																			r.entryId === row.entryId
+																				? { ...r, hint: event.target.value }
+																				: r,
+																		),
+																	);
+																	setSuggestions([]);
+																	setChosen([]);
+																}}
+															/>
+														</label>
+														{row.hint.length > 500 && (
+															<p role="alert">{t("pwConnectNotesLong")}</p>
+														)}
+													</>
+												)}
+											</div>
+										</section>
+									))}
+								</div>
 							</section>
-						)}
-						<p>
-							{t("pwConnectSaveHint", {
-								accounts: new Set(selectedRows.map((row) => row.account.id))
-									.size,
-								relations: chosen.length,
-							})}
-						</p>
-						<div className="actions">
-							<Button
-								disabled={busy || stale || !selected.length}
-								onClick={() => void save()}
-							>
-								{t(busy ? "pwConnectWorking" : "pwConnectSave")}
-							</Button>
+							<section className="vault-connect-review-pane">
+								<h3 aria-live="polite">
+									{t("pwConnectReview")}{" "}
+									{suggestions.length > 0 && (
+										<span className="vault-connect-count">
+											{suggestions.length}
+										</span>
+									)}
+								</h3>
+								<div className="vault-connect-suggestions">
+									{!suggestions.length && (
+										<p className="vault-connect-empty">
+											{t("pwConnectNoSuggestions")}
+										</p>
+									)}
+									{suggestions.map((relation, index) => (
+										<label
+											className="vault-connect-suggestion"
+											key={`${relation.from}:${relation.to}:${relation.kind}`}
+										>
+											<input
+												type="checkbox"
+												disabled={busy || stale}
+												checked={chosen.includes(index)}
+												onChange={(e) =>
+													setChosen(
+														e.target.checked
+															? [...chosen, index]
+															: chosen.filter((i) => i !== index),
+													)
+												}
+											/>
+											<span>
+												<strong>
+													{
+														rows.find((r) => r.account.id === relation.from)
+															?.account.name
+													}{" "}
+													→{" "}
+													{
+														rows.find((r) => r.account.id === relation.to)
+															?.account.name
+													}
+												</strong>
+												<span>{label(relation.kind)}</span>
+												{relation.evidence && (
+													<small>{relation.evidence}</small>
+												)}
+											</span>
+										</label>
+									))}
+								</div>
+							</section>
 						</div>
+						<footer className="vault-connect-footer">
+							<div className="vault-connect-meta">
+								{connection ? (
+									<span className="vault-connect-destination">
+										{connection.model} · {connection.baseURL}
+									</span>
+								) : (
+									<Link to="/settings">{t("pwConnectConfigure")}</Link>
+								)}
+								<span>{t("pwConnectAiScope")}</span>
+							</div>
+							<div className="vault-connect-footer-actions">
+								<div className="vault-connect-analysis-actions">
+									<Button
+										disabled={busy || stale || !selected.length}
+										onClick={proposeLocal}
+									>
+										<Network size={16} />
+										{t("pwConnectLocal")}
+									</Button>
+									<Button
+										disabled={
+											busy ||
+											stale ||
+											!connection ||
+											!selected.length ||
+											selectedRows.some((row) => row.hint.length > 500)
+										}
+										onClick={() => void proposeAi()}
+									>
+										<WandSparkles size={16} />
+										{t("pwConnectAi")}
+									</Button>
+								</div>
+								<span className="vault-connect-save-count">
+									{t("pwConnectSaveHint", {
+										accounts: new Set(selectedRows.map((row) => row.account.id))
+											.size,
+										relations: chosen.length,
+									})}
+								</span>
+								<Button
+									variant="primary"
+									disabled={busy || stale || !selected.length}
+									onClick={() => void save()}
+								>
+									<Check size={16} />
+									{t(busy ? "pwConnectWorking" : "pwConnectSave")}
+								</Button>
+							</div>
+						</footer>
 					</>
 				)}
 			</div>

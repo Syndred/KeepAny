@@ -467,6 +467,26 @@ for (const locale of ["zh-CN", "en"] as const)
 					dialog.locator('input[type="checkbox"]:checked'),
 				).toHaveCount(0);
 				expect(mock.requests).toHaveLength(0);
+                const search = dialog.getByRole("searchbox", { name: t("pwConnectSearch") });
+                await search.fill("no-matching-account-synthetic");
+                await expect(dialog.locator(".vault-connect-account")).toHaveCount(0);
+                await expect(dialog.getByText(t("pwConnectNoResults"), { exact: true })).toBeVisible();
+                await search.fill(records[2].title);
+                await expect(dialog.locator(".vault-connect-account")).toHaveCount(1);
+                await search.fill("");
+                await expect(dialog.locator(".vault-connect-account")).toHaveCount(6);
+                const header = await dialog.locator(":scope > header").boundingBox();
+                const footer = await dialog.locator(".vault-connect-footer").boundingBox();
+                expect(header).toBeTruthy();
+                expect(footer).toBeTruthy();
+                expect(header?.height).toBeLessThan(width > 760 ? 100 : 150);
+                expect((footer?.y ?? 0) + (footer?.height ?? 0)).toBeLessThanOrEqual(page.viewportSize()?.height ?? 0);
+                if (width > 760) {
+                    const left = await dialog.locator(".vault-connect-account-pane").boundingBox();
+                    const right = await dialog.locator(".vault-connect-review-pane").boundingBox();
+                    expect(left?.y).toBe(right?.y);
+                    expect(right?.x).toBeGreaterThan(left?.x ?? 0);
+                }
 				await dialog
 					.getByRole("button", { name: t("pwConnectSelectAll"), exact: true })
 					.click();
