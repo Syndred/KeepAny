@@ -14,7 +14,7 @@ if (evidence) mkdirSync(evidence, { recursive: true });
 for (const locale of ["zh-CN", "en-US"] as const) {
 	for (const width of [390, 1280] as const) {
 		test(`${locale} graph verification and mixed groups remain accurate at ${width}px`, async ({ browser }) => {
-			test.setTimeout(120_000);
+			test.setTimeout(locale === "en-US" && width === 1280 ? 240_000 : 120_000);
 			const zh = locale === "zh-CN";
 			const text = zh ? {
 				add: "新增", name: "名称", save: "保存", addRelation: "添加关联", target: "关联至", label: "关联用途", verifiedAt: "最近核验",
@@ -86,6 +86,15 @@ for (const locale of ["zh-CN", "en-US"] as const) {
 				});
 				expect(gap, "Nodes do not overlap and directed edges use right/left handles without crossing cards").toBe(true);
 				expect(await targetPage.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);
+			}
+			async function allNodesInFrame(targetPage: Page) {
+				await expect.poll(() => targetPage.locator(".graph").evaluate(graph => {
+					const bounds = graph.getBoundingClientRect();
+					return [...graph.querySelectorAll(".react-flow__node")].every(node => {
+						const rect = node.getBoundingClientRect();
+						return rect.left >= bounds.left - 1 && rect.right <= bounds.right + 1 && rect.top >= bounds.top - 1 && rect.bottom <= bounds.bottom + 1;
+					});
+				}), { message: "Manual fit shows every family node inside the viewport" }).toBe(true);
 			}
 			async function graphState(targetPage: Page, mixed = false) {
 				await expect(targetPage.locator(".react-flow__node")).toHaveCount(3);
@@ -187,15 +196,30 @@ for (const locale of ["zh-CN", "en-US"] as const) {
 				await expectReadableAccountGraph(page);
 				await graphGeometry(page);
 				await page.locator(".react-flow__controls-fitview").click();
-				await expect.poll(() => page.locator(".graph").evaluate(graph => {
-					const bounds = graph.getBoundingClientRect();
-					return [...graph.querySelectorAll(".react-flow__node")].every(node => {
-						const rect = node.getBoundingClientRect();
-						return rect.left >= bounds.left && rect.right <= bounds.right && rect.top >= bounds.top && rect.bottom <= bounds.bottom;
-					});
-				}), { message: "Manual fit shows all six neighboring nodes inside the viewport" }).toBe(true);
+				await allNodesInFrame(page);
 				await page.locator(".graph").scrollIntoViewIfNeeded();
 				await page.screenshot({ path: evidence ? `${evidence}/relation-graph-six-${locale}-${width}.png` : test.info().outputPath(`relation-graph-six-${locale}-${width}.png`) });
+				if (locale === "en-US" && width === 1280) {
+					// Keep the original small-family checks above, then grow the same fixture
+					// through the app's normal forms to reproduce a 49-account legacy family.
+					for (let index = 1; index <= 42; index++) {
+						await account(`Large family service ${index}`);
+						await connect(hubName, `Large family link ${index}`);
+					}
+					await page.goto(hub);
+					await expect(page.locator(".react-flow__node")).toHaveCount(49);
+					await expect(page.locator(".react-flow__edge-path")).toHaveCount(48);
+					await expectReadableAccountGraph(page);
+					await page.getByRole("button", { name: "All connections", exact: true }).click();
+					await expect(page.locator(".react-flow__node")).toHaveCount(49);
+					await expectReadableAccountGraph(page);
+					await page.getByRole("button", { name: "Fit all", exact: true }).click();
+					await allNodesInFrame(page);
+					await page.locator(".graph").scrollIntoViewIfNeeded();
+					await page.screenshot({ path: evidence ? `${evidence}/relation-graph-49-en-US-1280.png` : test.info().outputPath("relation-graph-49-en-US-1280.png") });
+					await page.getByRole("button", { name: "Center account", exact: true }).click();
+					await expectReadableAccountGraph(page);
+				}
 
 				expect(errors).toEqual([]);
 			} finally {

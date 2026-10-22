@@ -103,7 +103,7 @@ function GraphNodeMeasurements({ nodeIds, focusId }: { nodeIds: string; focusId?
 			const nodes = (JSON.parse(nodeIds) as string[]).flatMap((id) => {
 				const entry = getInternalNode(id); return entry ? [entry] : [];
 			});
-			const fitted = getViewportForBounds(getNodesBounds(nodes), width, height, 0.1, 1, 0.2);
+			const fitted = getViewportForBounds(getNodesBounds(nodes), width, height, 0.01, 1, 0.2);
 			initializedViewport.current = viewportKey;
 			if (width < 700 || fitted.zoom < 0.55)
 				void setCenter(node.internals.positionAbsolute.x + accountGraphNodeSize.width / 2, node.internals.positionAbsolute.y + accountGraphNodeSize.height / 2, { zoom: 0.8 });
@@ -116,7 +116,7 @@ function GraphNodeMeasurements({ nodeIds, focusId }: { nodeIds: string; focusId?
 			const node = getInternalNode(focusId);
 			if (node) void setCenter(node.internals.positionAbsolute.x + accountGraphNodeSize.width / 2, node.internals.positionAbsolute.y + accountGraphNodeSize.height / 2, { zoom: 0.8 });
 		}}>{t("accountGraphFocus")}</Button>
-		<Button size="small" onClick={() => void fitView({ padding: 0.15, minZoom: 0.1, maxZoom: 1 })}>{t("accountGraphFit")}</Button>
+		<Button size="small" onClick={() => void fitView({ padding: 0.15, minZoom: 0.01, maxZoom: 1 })}>{t("accountGraphFit")}</Button>
 	</div></Panel> : null;
 }
 
@@ -1679,7 +1679,7 @@ export function AssetDetail() {
 									key={kind === "account" ? `${asset.id}:${graphScope}` : undefined}
 									fitView={kind !== "account"}
 									defaultViewport={kind === "account" ? { x: 0, y: 0, zoom: 0.8 } : undefined}
-									minZoom={0.1}
+									minZoom={kind === "account" ? 0.01 : 0.1}
 									nodes={graphNodes}
 									edges={graphEdges}
 									edgeTypes={accountEdgeTypes}
