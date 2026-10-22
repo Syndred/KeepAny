@@ -1,0 +1,18 @@
+{
+  "releaseCommit": "759a28898749a17a914dbe83eee1fd98ee636a56",
+  "snapshotOnly": true,
+  "runs": [
+    {
+      "name": "Verify portable preview",
+      "status": "queued",
+      "conclusion": null,
+      "url": "https://github.com/Syndred/StackPerch/actions/runs/39792891092"
+    },
+    {
+      "name": "Verify local release",
+      "status": "queued",
+      "conclusion": null,
+      "url": "https://github.com/Syndred/StackPerch/actions/runs/39792891449"
+    }
+  ]
+}
