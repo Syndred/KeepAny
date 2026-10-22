@@ -1,0 +1,298 @@
+{
+  "scope": "隔离合成资料截图筛选与来源校验；整体回归结果由验收记录另行记录。",
+  "sourceBuildCommit": "b56b24e",
+  "sourceRunDirectory": "/tmp/stackperch-20261022-release-evidence",
+  "plannedImageCount": 36,
+  "copiedImageCount": 36,
+  "pendingImages": [],
+  "files": [
+    {
+      "file": "journey-vault-zh-CN-390.png",
+      "source": "/tmp/stackperch-20261022-release-evidence/journey-vault-zh-CN-390.png",
+      "sha256": "99561d848958dd8499960c7687678ace800088e080fffec8235f31899d8a6a57",
+      "width": 390,
+      "height": 4367,
+      "bytes": 269243
+    },
+    {
+      "file": "journey-vault-zh-CN-1536.png",
+      "source": "/tmp/stackperch-20261022-release-evidence/journey-vault-zh-CN-1536.png",
+      "sha256": "6f5113e6d6ca21fac2ffad9a825868c6f5ccacb871fe6d85617c200c9518f133",
+      "width": 1536,
+      "height": 2039,
+      "bytes": 273331
+    },
+    {
+      "file": "journey-vault-en-390.png",
+      "source": "/tmp/stackperch-20261022-release-evidence/journey-vault-en-390.png",
+      "sha256": "da6d23918fa4e4094543f6e4badd0a6e1f531db9d413c961d3dd3a3b1ecad3ad",
+      "width": 390,
+      "height": 4479,
+      "bytes": 277679
+    },
+    {
+      "file": "journey-vault-en-1536.png",
+      "source": "/tmp/stackperch-20261022-release-evidence/journey-vault-en-1536.png",
+      "sha256": "4ece9f6da4505165cd55863beb01dd9cf260e6714fa04b4b6eea6fcb5b0f4d0e",
+      "width": 1536,
+      "height": 2080,
+      "bytes": 287807
+    },
+    {
+      "file": "journey-category-zh-CN-390.png",
+      "source": "/tmp/stackperch-20261022-release-evidence/journey-category-zh-CN-390.png",
+      "sha256": "cc97788dad47815d1895571c89c0fc59f98f6c21645953f684bc74391749803a",
+      "width": 390,
+      "height": 1024,
+      "bytes": 41413
+    },
+    {
+      "file": "journey-category-zh-CN-1536.png",
+      "source": "/tmp/stackperch-20261022-release-evidence/journey-category-zh-CN-1536.png",
+      "sha256": "af3d172c68b410318b6154ad0a42260933c57ef3ba0ecb4563f146aa449c52a4",
+      "width": 1536,
+      "height": 1028,
+      "bytes": 84359
+    },
+    {
+      "file": "journey-category-en-390.png",
+      "source": "/tmp/stackperch-20261022-release-evidence/journey-category-en-390.png",
+      "sha256": "362ab8f9da18ee10900f405f5967edf8213ed341a353cc30c5d887d1cfa7a2fb",
+      "width": 390,
+      "height": 1024,
+      "bytes": 39305
+    },
+    {
+      "file": "journey-category-en-1536.png",
+      "source": "/tmp/stackperch-20261022-release-evidence/journey-category-en-1536.png",
+      "sha256": "be08791b20e7b483c4ead4fb292791a62e8325d1e8d8cef443c7ed65d72cc669",
+      "width": 1536,
+      "height": 1028,
+      "bytes": 87462
+    },
+    {
+      "file": "journey-family-zh-CN-390.png",
+      "source": "/tmp/stackperch-20261022-release-evidence/journey-family-zh-CN-390.png",
+      "sha256": "9ba0ccdb25d1121781e061d631bba1cd7db06931f70f7e7519147098ef5ff3ee",
+      "width": 390,
+      "height": 1024,
+      "bytes": 70723
+    },
+    {
+      "file": "journey-family-zh-CN-1536.png",
+      "source": "/tmp/stackperch-20261022-release-evidence/journey-family-zh-CN-1536.png",
+      "sha256": "7f2ae5f40dfedb44fe1cbd1b7129c1182d3904a2dc494210fdff3323f3605bf0",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 128175
+    },
+    {
+      "file": "journey-family-en-390.png",
+      "source": "/tmp/stackperch-20261022-release-evidence/journey-family-en-390.png",
+      "sha256": "65d45103a1010656f0a7bc2ef83bd54a430177cd61cd28e660e093bba14dc251",
+      "width": 390,
+      "height": 1024,
+      "bytes": 59956
+    },
+    {
+      "file": "journey-family-en-1536.png",
+      "source": "/tmp/stackperch-20261022-release-evidence/journey-family-en-1536.png",
+      "sha256": "efbbc3eb7f8e07c9d6263126d9c05a43a156d1bf4b7e7c320dcf78da54d37fe9",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 120042
+    },
+    {
+      "file": "journey-connect-zh-CN-1536.png",
+      "source": "/tmp/stackperch-20261022-release-evidence/journey-connect-zh-CN-1536.png",
+      "sha256": "1e7f2785538c95f0e1b1e78f33133a1792ccdd119466bd8c7dd0b6c4ebdd1bf1",
+      "width": 1400,
+      "height": 900,
+      "bytes": 156478
+    },
+    {
+      "file": "journey-connect-en-1536.png",
+      "source": "/tmp/stackperch-20261022-release-evidence/journey-connect-en-1536.png",
+      "sha256": "61143f1010ffcaa2c847403767e4536bbda39b70cd261e9232cf22786dbbb77c",
+      "width": 1400,
+      "height": 900,
+      "bytes": 150892
+    },
+    {
+      "file": "family-review-zh-CN-390.png",
+      "source": "/tmp/stackperch-20261022-release-evidence/family-review-zh-CN-390.png",
+      "sha256": "abec048b16c526523df47d142aafe646863a5872c648c44734d664f7e5df52c3",
+      "width": 390,
+      "height": 1024,
+      "bytes": 93477
+    },
+    {
+      "file": "family-review-en-390.png",
+      "source": "/tmp/stackperch-20261022-release-evidence/family-review-en-390.png",
+      "sha256": "6e54f1e427526af5e48bba367ff87b98f8d0fb59a18dc06746376149b6434161",
+      "width": 390,
+      "height": 1024,
+      "bytes": 88401
+    },
+    {
+      "file": "accounts-zh-CN-390.png",
+      "source": "/tmp/stackperch-20261022-release-evidence/accounts-zh-CN-390.png",
+      "sha256": "65056e196825c83b1a3c01e404e63f1a95e022f047915f37b9c23f9271ffad97",
+      "width": 390,
+      "height": 1024,
+      "bytes": 70320
+    },
+    {
+      "file": "accounts-zh-CN-1536.png",
+      "source": "/tmp/stackperch-20261022-release-evidence/accounts-zh-CN-1536.png",
+      "sha256": "eea99ec34780146eddd9982fdd174493af147ec3f30100880ce7b21f91ccfa4e",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 146853
+    },
+    {
+      "file": "accounts-en-390.png",
+      "source": "/tmp/stackperch-20261022-release-evidence/accounts-en-390.png",
+      "sha256": "d932f39fc0009e04039cdf5410c97341d4093fdfbbb1d49f4ee111febdaac23e",
+      "width": 390,
+      "height": 1024,
+      "bytes": 65687
+    },
+    {
+      "file": "accounts-en-1536.png",
+      "source": "/tmp/stackperch-20261022-release-evidence/accounts-en-1536.png",
+      "sha256": "be6ec1ab648cbefa001305d811b51aa95d2bdd5dabae04564e821b7a3178275e",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 152468
+    },
+    {
+      "file": "grid-zh-CN-390.png",
+      "source": "/tmp/stackperch-20261022-release-evidence/grid-zh-CN-390.png",
+      "sha256": "ff7f50060e7b10d195b4dfaac65a6674e1efe55c52a7d52dc615c537899dea62",
+      "width": 390,
+      "height": 1024,
+      "bytes": 69731
+    },
+    {
+      "file": "grid-zh-CN-1536.png",
+      "source": "/tmp/stackperch-20261022-release-evidence/grid-zh-CN-1536.png",
+      "sha256": "1bd8b130bc9352b1befe2c9009d0e3dbe78d9f82d1c2ed7daf910bf959a4feb3",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 175859
+    },
+    {
+      "file": "grid-en-1536.png",
+      "source": "/tmp/stackperch-20261022-release-evidence/grid-en-1536.png",
+      "sha256": "00cae4d608cad68d349247023c79e06e45d8cab510bc76ff8f4fa5dc1ba79f7e",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 180599
+    },
+    {
+      "file": "relation-graph-zh-CN-390.png",
+      "source": "/tmp/stackperch-20261022-release-evidence/relation-graph-zh-CN-390.png",
+      "sha256": "65e93bcc9cdfafdcea0d4363708db9d4047ede84c1f2ff7b71fe4f2c6ba0d3b8",
+      "width": 390,
+      "height": 844,
+      "bytes": 54651
+    },
+    {
+      "file": "relation-graph-zh-CN-1280.png",
+      "source": "/tmp/stackperch-20261022-release-evidence/relation-graph-zh-CN-1280.png",
+      "sha256": "06533782a1124f92dcdd8d8bc51f44b59c497dd629eecc70ae6cd48047ed37f7",
+      "width": 1280,
+      "height": 844,
+      "bytes": 113864
+    },
+    {
+      "file": "relation-graph-en-US-390.png",
+      "source": "/tmp/stackperch-20261022-release-evidence/relation-graph-en-US-390.png",
+      "sha256": "7605face33df6517b45c382b39e1bfa3948abfd587062babc769306cf3449136",
+      "width": 390,
+      "height": 844,
+      "bytes": 46304
+    },
+    {
+      "file": "relation-graph-en-US-1280.png",
+      "source": "/tmp/stackperch-20261022-release-evidence/relation-graph-en-US-1280.png",
+      "sha256": "b162fb781c8cbc62ef09d33e7746fd0f254c6a6cfa5467c43357769df4ecea61",
+      "width": 1280,
+      "height": 844,
+      "bytes": 116132
+    },
+    {
+      "file": "relation-graph-six-zh-CN-390.png",
+      "source": "/tmp/stackperch-20261022-release-evidence/relation-graph-six-zh-CN-390.png",
+      "sha256": "2e6db5ee87d5b1cc4e5048183c4cdbc6168bbf61788176145dacf02457f5fb1b",
+      "width": 390,
+      "height": 844,
+      "bytes": 66118
+    },
+    {
+      "file": "relation-graph-six-zh-CN-1280.png",
+      "source": "/tmp/stackperch-20261022-release-evidence/relation-graph-six-zh-CN-1280.png",
+      "sha256": "7509af43cb7b2fbf617c2f7320a13bc49365331cd4cda2773e32f3a2497fa918",
+      "width": 1280,
+      "height": 844,
+      "bytes": 115038
+    },
+    {
+      "file": "relation-graph-six-en-US-390.png",
+      "source": "/tmp/stackperch-20261022-release-evidence/relation-graph-six-en-US-390.png",
+      "sha256": "10ab75a4c8680099f7b78cfdd4f8a2fb52801bc54f4389178f4715f8c9d9fe59",
+      "width": 390,
+      "height": 844,
+      "bytes": 65820
+    },
+    {
+      "file": "relation-graph-six-en-US-1280.png",
+      "source": "/tmp/stackperch-20261022-release-evidence/relation-graph-six-en-US-1280.png",
+      "sha256": "679e744c591c8474986e8aadcda5228f42e46f4c64abc8f9157ff99c90865804",
+      "width": 1280,
+      "height": 844,
+      "bytes": 113394
+    },
+    {
+      "file": "legacy-upgrade-graph-en-390.png",
+      "source": "/tmp/stackperch-20261022-release-evidence/legacy-upgrade-graph-en-390.png",
+      "sha256": "8ccc01c5b3e28df01d3cfb21db034003e61f39ba4566fa6eede56da8171c3abf",
+      "width": 390,
+      "height": 1024,
+      "bytes": 66185
+    },
+    {
+      "file": "legacy-upgrade-graph-zh-CN-1536.png",
+      "source": "/tmp/stackperch-20261022-release-evidence/legacy-upgrade-graph-zh-CN-1536.png",
+      "sha256": "65ffc97167886fdeb70bc0abf27e48bef1cbf306b97e6dbf59feac2b14a7bc67",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 160507
+    },
+    {
+      "file": "legacy-upgrade-review-en-390.png",
+      "source": "/tmp/stackperch-20261022-release-evidence/legacy-upgrade-review-en-390.png",
+      "sha256": "8dedbe8fd3be1ffb8327bd75593e6851db339b161d5c719c0d6ff100eee8a7a0",
+      "width": 390,
+      "height": 1024,
+      "bytes": 87056
+    },
+    {
+      "file": "legacy-upgrade-review-zh-CN-1536.png",
+      "source": "/tmp/stackperch-20261022-release-evidence/legacy-upgrade-review-zh-CN-1536.png",
+      "sha256": "6fb84ae67f336822bb4566d835c12ac3cc05dc6711c01a39877da2e1e7f5f22b",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 206089
+    },
+    {
+      "file": "relation-graph-49-en-US-1280.png",
+      "source": "/tmp/stackperch-20261022-release-evidence/relation-graph-49-en-US-1280.png",
+      "sha256": "5a507a217e1bafbbeb5d26f36e7697bf5ddea224274d03d08f79117cf69884a8",
+      "width": 1280,
+      "height": 844,
+      "bytes": 99025
+    }
+  ]
+}
