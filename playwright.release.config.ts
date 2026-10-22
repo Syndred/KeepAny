@@ -34,6 +34,8 @@ export default defineConfig({
 		"collections-route.spec.ts",
 		"relation-graph-verification.spec.ts",
 		"account-graph-readability.spec.ts",
+		"account-detail-dedupe.spec.ts",
+		"relation-topbar-return.spec.ts",
 		"restore-identity.spec.ts",
 		"archive-migration.spec.ts",
 		"vault-reference-release.spec.ts",
