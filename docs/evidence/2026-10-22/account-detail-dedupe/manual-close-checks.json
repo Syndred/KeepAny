@@ -1,0 +1,19 @@
+{
+  "origin": "http://127.0.0.1:42986",
+  "entry": "index-DpgIvRIE.js",
+  "onlySyntheticAccounts": true,
+  "accountsCreatedThroughVisibleForms": 5,
+  "relationsCreatedThroughVisibleForms": 4,
+  "profileDateSavedThroughKeyboardAndForm": true,
+  "profileAndRelationDatesDisplayed": true,
+  "editorCloseButton": true,
+  "assetDeleteConfirmationCloseButton": true,
+  "addRelationCloseButton": true,
+  "relationDeleteConfirmationCloseButton": true,
+  "taskEditorCloseButton": true,
+  "largeGraphCloseButton": true,
+  "imagePreviewCloseButton": true,
+  "relationsRetainedAfterCancel": 4,
+  "imageCountAfterPreviewClose": 0,
+  "privateOriginalDataUsed": false
+}

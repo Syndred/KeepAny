@@ -1,0 +1,106 @@
+[WebServer] (node:77562) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 1 test using 1 worker
+
+(node:77563) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+account-edge-diagnostic {"label":"connected-owner-with-a-long-email@example.test → Verified account · Verified link · 已核实","bounds":{"x":290,"y":675.421875,"width":24,"height":0},"display":"inline","visibility":"visible","opacity":"1","pathLength":24,"pathBounds":{},"pathDisplay":"inline","pathVisibility":"visible","active":{"tag":"SUMMARY","class":null,"label":null,"text":"读图说明"},"stage":"account-graph-stage is-ready","ready":"true","busy":"false"}
+account-edge-focused {
+  focused: true,
+  active: 'connected-owner-with-a-long-email@example.test → Verified account · Verified link · 已核实',
+  stage: 'account-graph-stage is-ready'
+}
+account-edge-diagnostic {"label":"Pending account → connected-owner-with-a-long-email@example.test · Pending link · 待核实","bounds":{"x":76,"y":675.421875,"width":24,"height":0},"display":"inline","visibility":"visible","opacity":"1","pathLength":24,"pathBounds":{},"pathDisplay":"inline","pathVisibility":"visible","active":{"tag":"BODY","class":null,"label":null,"text":"SStackPerch个人资产工作台个人工作区工作空间概览待办项目账号订阅实物密码库按空格拾取，方向键移动，再按空格放下。我的分类自定义侧边栏我我的工作区仅自己可见返回列表搜索全部资料⌘ K账号 · "},"stage":"account-graph-stage is-ready","ready":"true","busy":"false"}
+account-edge-focused {
+  focused: true,
+  active: 'Pending account → connected-owner-with-a-long-email@example.test · Pending link · 待核实',
+  stage: 'account-graph-stage is-ready'
+}
+account-edge-diagnostic {"label":"connected-owner-with-a-long-email@example.test → Verified account · Extra pending · Verified link · 含待核实关系","bounds":{"x":290,"y":583.421875,"width":24,"height":0},"display":"inline","visibility":"visible","opacity":"1","pathLength":24,"pathBounds":{},"pathDisplay":"inline","pathVisibility":"visible","active":{"tag":"BUTTON","class":"button ghost small","label":null,"text":"添加关联"},"stage":"account-graph-stage is-ready","ready":"true","busy":"false"}
+account-edge-focused {
+  focused: true,
+  active: 'connected-owner-with-a-long-email@example.test → Verified account · Extra pending · Verified link · 含待核实关系',
+  stage: 'account-graph-stage is-ready'
+}
+account-edge-diagnostic {"label":"Pending account → connected-owner-with-a-long-email@example.test · Pending link · 待核实","bounds":{"x":76,"y":583.421875,"width":24,"height":0},"display":"inline","visibility":"visible","opacity":"1","pathLength":24,"pathBounds":{},"pathDisplay":"inline","pathVisibility":"visible","active":{"tag":"BODY","class":null,"label":null,"text":"SStackPerch个人资产工作台个人工作区工作空间概览待办项目账号订阅实物密码库按空格拾取，方向键移动，再按空格放下。我的分类自定义侧边栏我我的工作区仅自己可见返回列表搜索全部资料⌘ K账号 · "},"stage":"account-graph-stage is-ready","ready":"true","busy":"false"}
+account-edge-focused {
+  focused: true,
+  active: 'Pending account → connected-owner-with-a-long-email@example.test · Pending link · 待核实',
+  stage: 'account-graph-stage is-ready'
+}
+account-edge-diagnostic {"label":"connected-owner-with-a-long-email@example.test → Verified account · Extra pending · Verified link · 含待核实关系","bounds":{"x":290,"y":675.421875,"width":24,"height":0},"display":"inline","visibility":"visible","opacity":"1","pathLength":24,"pathBounds":{},"pathDisplay":"inline","pathVisibility":"visible","active":{"tag":"SUMMARY","class":null,"label":null,"text":"读图说明"},"stage":"account-graph-stage is-ready","ready":"true","busy":"false"}
+account-edge-focused {
+  focused: true,
+  active: 'connected-owner-with-a-long-email@example.test → Verified account · Extra pending · Verified link · 含待核实关系',
+  stage: 'account-graph-stage is-ready'
+}
+account-edge-diagnostic {"label":"Pending account → connected-owner-with-a-long-email@example.test · Pending link · 待核实","bounds":{"x":76,"y":675.421875,"width":24,"height":0},"display":"inline","visibility":"visible","opacity":"1","pathLength":24,"pathBounds":{},"pathDisplay":"inline","pathVisibility":"visible","active":{"tag":"BODY","class":null,"label":null,"text":"SStackPerch个人资产工作台个人工作区工作空间概览待办项目账号订阅实物密码库按空格拾取，方向键移动，再按空格放下。我的分类自定义侧边栏我我的工作区仅自己可见返回列表搜索全部资料⌘ K账号 · "},"stage":"account-graph-stage is-ready","ready":"true","busy":"false"}
+account-edge-focused {
+  focused: true,
+  active: 'Pending account → connected-owner-with-a-long-email@example.test · Pending link · 待核实',
+  stage: 'account-graph-stage is-ready'
+}
+account-edge-diagnostic {"label":"connected-owner-with-a-long-email@example.test → Verified account · Verified link · 已核实","bounds":{"x":290,"y":260.421875,"width":24,"height":0},"display":"inline","visibility":"visible","opacity":"1","pathLength":24,"pathBounds":{},"pathDisplay":"inline","pathVisibility":"visible","active":{"tag":"BODY","class":null,"label":null,"text":"SStackPerch个人资产工作台个人工作区工作空间概览待办项目账号订阅实物密码库按空格拾取，方向键移动，再按空格放下。我的分类自定义侧边栏我我的工作区仅自己可见返回列表搜索全部资料⌘ K账号 · "},"stage":"account-graph-stage is-ready","ready":"true","busy":"false"}
+account-edge-focused {
+  focused: true,
+  active: 'connected-owner-with-a-long-email@example.test → Verified account · Verified link · 已核实',
+  stage: 'account-graph-stage is-ready'
+}
+account-edge-diagnostic {"label":"Pending account → connected-owner-with-a-long-email@example.test · Pending link · 待核实","bounds":{"x":76,"y":260.421875,"width":24,"height":0},"display":"inline","visibility":"visible","opacity":"1","pathLength":24,"pathBounds":{},"pathDisplay":"inline","pathVisibility":"visible","active":{"tag":"BODY","class":null,"label":null,"text":"SStackPerch个人资产工作台个人工作区工作空间概览待办项目账号订阅实物密码库按空格拾取，方向键移动，再按空格放下。我的分类自定义侧边栏我我的工作区仅自己可见返回列表搜索全部资料⌘ K账号 · "},"stage":"account-graph-stage is-ready","ready":"true","busy":"false"}
+account-edge-focused {
+  focused: true,
+  active: 'Pending account → connected-owner-with-a-long-email@example.test · Pending link · 待核实',
+  stage: 'account-graph-stage is-ready'
+}
+account-edge-diagnostic {"label":"connected-owner-with-a-long-email@example.test → Verified account · Verified link · 已核实","bounds":{"x":290,"y":675.421875,"width":24,"height":0},"display":"inline","visibility":"visible","opacity":"1","pathLength":24,"pathBounds":{},"pathDisplay":"inline","pathVisibility":"visible","active":{"tag":"SUMMARY","class":null,"label":null,"text":"读图说明"},"stage":"account-graph-stage is-ready","ready":"true","busy":"false"}
+account-edge-focused {
+  focused: true,
+  active: 'connected-owner-with-a-long-email@example.test → Verified account · Verified link · 已核实',
+  stage: 'account-graph-stage is-ready'
+}
+account-edge-diagnostic {"label":"Pending account → connected-owner-with-a-long-email@example.test · Pending link · 待核实","bounds":{"x":76,"y":675.421875,"width":24,"height":0},"display":"inline","visibility":"visible","opacity":"1","pathLength":24,"pathBounds":{},"pathDisplay":"inline","pathVisibility":"visible","active":{"tag":"BODY","class":null,"label":null,"text":"SStackPerch个人资产工作台个人工作区工作空间概览待办项目账号订阅实物密码库按空格拾取，方向键移动，再按空格放下。我的分类自定义侧边栏我我的工作区仅自己可见返回列表搜索全部资料⌘ K账号 · "},"stage":"account-graph-stage is-ready","ready":"true","busy":"false"}
+account-edge-focused {
+  focused: true,
+  active: 'Pending account → connected-owner-with-a-long-email@example.test · Pending link · 待核实',
+  stage: 'account-graph-stage is-ready'
+}
+account-edge-diagnostic {"label":"Pending account → connected-owner-with-a-long-email@example.test · Pending link · 待核实","bounds":{"x":76,"y":916.421875,"width":24,"height":0},"display":"inline","visibility":"visible","opacity":"1","pathLength":24,"pathBounds":{},"pathDisplay":"inline","pathVisibility":"visible","active":{"tag":"BUTTON","class":"button ghost small","label":null,"text":"添加关联"},"stage":"account-graph-stage is-ready","ready":"true","busy":"false"}
+account-edge-focused {
+  focused: true,
+  active: 'Pending account → connected-owner-with-a-long-email@example.test · Pending link · 待核实',
+  stage: 'account-graph-stage is-ready'
+}
+account-edge-diagnostic {"label":"connected-owner-with-a-long-email@example.test → Pending account · Reverse pending · 待核实","bounds":{"x":76,"y":438.421875,"width":24,"height":0},"display":"inline","visibility":"visible","opacity":"1","pathLength":24,"pathBounds":{},"pathDisplay":"inline","pathVisibility":"visible","active":{"tag":"BODY","class":null,"label":null,"text":"SStackPerch个人资产工作台个人工作区工作空间概览待办项目账号订阅实物密码库按空格拾取，方向键移动，再按空格放下。我的分类自定义侧边栏我我的工作区仅自己可见返回列表搜索全部资料⌘ K账号 · "},"stage":"account-graph-stage is-ready","ready":"true","busy":"false"}
+account-edge-focused {
+  focused: true,
+  active: 'connected-owner-with-a-long-email@example.test → Pending account · Reverse pending · 待核实',
+  stage: 'account-graph-stage is-ready'
+}
+account-edge-diagnostic {"label":"connected-owner-with-a-long-email@example.test → Verified account · Verified link · 已核实","bounds":{"x":290,"y":430.421875,"width":24,"height":0},"display":"inline","visibility":"visible","opacity":"1","pathLength":24,"pathBounds":{},"pathDisplay":"inline","pathVisibility":"visible","active":{"tag":"BODY","class":null,"label":null,"text":"SStackPerch个人资产工作台个人工作区工作空间概览待办项目账号订阅实物密码库按空格拾取，方向键移动，再按空格放下。我的分类自定义侧边栏我我的工作区仅自己可见返回列表搜索全部资料⌘ K账号 · "},"stage":"account-graph-stage is-ready","ready":"true","busy":"false"}
+account-edge-focused {
+  focused: true,
+  active: 'connected-owner-with-a-long-email@example.test → Verified account · Verified link · 已核实',
+  stage: 'account-graph-stage is-ready'
+}
+account-edge-diagnostic {"label":"Pending account → connected-owner-with-a-long-email@example.test · Pending link · 待核实","bounds":{"x":76,"y":430.421875,"width":24,"height":0},"display":"inline","visibility":"visible","opacity":"1","pathLength":24,"pathBounds":{},"pathDisplay":"inline","pathVisibility":"visible","active":{"tag":"BODY","class":null,"label":null,"text":"SStackPerch个人资产工作台个人工作区工作空间概览待办项目账号订阅实物密码库按空格拾取，方向键移动，再按空格放下。我的分类自定义侧边栏我我的工作区仅自己可见返回列表搜索全部资料⌘ K账号 · "},"stage":"account-graph-stage is-ready","ready":"true","busy":"false"}
+account-edge-focused {
+  focused: true,
+  active: 'Pending account → connected-owner-with-a-long-email@example.test · Pending link · 待核实',
+  stage: 'account-graph-stage is-ready'
+}
+account-edge-diagnostic {"label":"connected-owner-with-a-long-email@example.test → Verified account · Verified link · 已核实","bounds":{"x":290,"y":675.421875,"width":24,"height":0},"display":"inline","visibility":"visible","opacity":"1","pathLength":24,"pathBounds":{},"pathDisplay":"inline","pathVisibility":"visible","active":{"tag":"SUMMARY","class":null,"label":null,"text":"读图说明"},"stage":"account-graph-stage is-ready","ready":"true","busy":"false"}
+account-edge-focused {
+  focused: true,
+  active: 'connected-owner-with-a-long-email@example.test → Verified account · Verified link · 已核实',
+  stage: 'account-graph-stage is-ready'
+}
+account-edge-diagnostic {"label":"Pending account → connected-owner-with-a-long-email@example.test · Pending link · 待核实","bounds":{"x":76,"y":675.421875,"width":24,"height":0},"display":"inline","visibility":"visible","opacity":"1","pathLength":24,"pathBounds":{},"pathDisplay":"inline","pathVisibility":"visible","active":{"tag":"BODY","class":null,"label":null,"text":"SStackPerch个人资产工作台个人工作区工作空间概览待办项目账号订阅实物密码库按空格拾取，方向键移动，再按空格放下。我的分类自定义侧边栏我我的工作区仅自己可见返回列表搜索全部资料⌘ K账号 · "},"stage":"account-graph-stage is-ready","ready":"true","busy":"false"}
+account-edge-focused {
+  focused: true,
+  active: 'Pending account → connected-owner-with-a-long-email@example.test · Pending link · 待核实',
+  stage: 'account-graph-stage is-ready'
+}
+  ✓  1 tests/e2e/relation-graph-verification.spec.ts:16:3 › zh-CN graph verification and mixed groups remain accurate at 390px (19.7s)
+
+  1 passed (20.5s)

@@ -1,0 +1,295 @@
+[WebServer] (node:76442) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+
+Running 11 tests using 2 workers
+
+(node:76443) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+(node:76444) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1/11] tests/e2e/custom-category-release.spec.ts:73:2 › en-US fixed package category identity survives UI rename and encrypted clean restore
+[2/11] tests/e2e/account-detail-dedupe.spec.ts:167:2 › zh-CN 390px account detail merged actions, relationship evidence and recovery
+[3/11] tests/e2e/custom-category-release.spec.ts:73:2 › zh-CN fixed package category identity survives UI rename and encrypted clean restore
+  1) tests/e2e/account-detail-dedupe.spec.ts:167:2 › zh-CN 390px account detail merged actions, relationship evidence and recovery
+
+    Error: expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 1
+    + Received  + 5
+
+    - Array []
+    + Array [
+    +   "Failed to read the 'localStorage' property from 'Window': Access is denied for this document.",
+    +   "Failed to read the 'localStorage' property from 'Window': Access is denied for this document.",
+    +   "Failed to read the 'localStorage' property from 'Window': Access is denied for this document.",
+    + ]
+
+      362 | 			await expect(purposeRow(page, purposeB)).toContainText(`${source} B`);
+      363 | 			await screenshot(page, `account-detail-dedupe-restored-${locale}-${width}`);
+    > 364 | 			expect(errors).toEqual([]);
+          | 			               ^
+      365 | 		} finally { await context.close(); }
+      366 | 	});
+      367 |
+        at /Users/syndred/Desktop/projects/KeepAny/tests/e2e/account-detail-dedupe.spec.ts:364:19
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../../../../tmp/stackperch-account-dedupe-actions7-output/account-detail-dedupe-zh-C-60b14-nship-evidence-and-recovery/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../../../../tmp/stackperch-account-dedupe-actions7-output/account-detail-dedupe-zh-C-60b14-nship-evidence-and-recovery/error-context.md
+
+
+(node:76483) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[4/11] tests/e2e/account-detail-dedupe.spec.ts:368:2 › zh-CN 390px account detail images, manual tasks and impact checklist
+[5/11] tests/e2e/relation-topbar-return.spec.ts:4:1 › the single account topbar returns to a related source list or the direct account list
+  2) tests/e2e/account-detail-dedupe.spec.ts:368:2 › zh-CN 390px account detail images, manual tasks and impact checklist
+
+    Error: expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 1
+    + Received  + 3
+
+    - Array []
+    + Array [
+    +   "Failed to read the 'localStorage' property from 'Window': Access is denied for this document.",
+    + ]
+
+      480 | 			await expect(tasks.locator(".task-card")).toHaveCount(1);
+      481 | 			await expect(checklist.locator(".impact-task-row")).toHaveCount(2);
+    > 482 | 			expect(errors).toEqual([]);
+          | 			               ^
+      483 | 		} finally { await context.close(); }
+      484 | 	});
+      485 | }
+        at /Users/syndred/Desktop/projects/KeepAny/tests/e2e/account-detail-dedupe.spec.ts:482:19
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../../../../tmp/stackperch-account-dedupe-actions7-output/account-detail-dedupe-zh-C-83c27--tasks-and-impact-checklist/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../../../../tmp/stackperch-account-dedupe-actions7-output/account-detail-dedupe-zh-C-83c27--tasks-and-impact-checklist/error-context.md
+
+
+(node:76495) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[6/11] tests/e2e/account-detail-dedupe.spec.ts:167:2 › zh-CN 1536px account detail merged actions, relationship evidence and recovery
+  3) tests/e2e/account-detail-dedupe.spec.ts:167:2 › zh-CN 1536px account detail merged actions, relationship evidence and recovery
+
+    Error: expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 1
+    + Received  + 5
+
+    - Array []
+    + Array [
+    +   "Failed to read the 'localStorage' property from 'Window': Access is denied for this document.",
+    +   "Failed to read the 'localStorage' property from 'Window': Access is denied for this document.",
+    +   "Failed to read the 'localStorage' property from 'Window': Access is denied for this document.",
+    + ]
+
+      362 | 			await expect(purposeRow(page, purposeB)).toContainText(`${source} B`);
+      363 | 			await screenshot(page, `account-detail-dedupe-restored-${locale}-${width}`);
+    > 364 | 			expect(errors).toEqual([]);
+          | 			               ^
+      365 | 		} finally { await context.close(); }
+      366 | 	});
+      367 |
+        at /Users/syndred/Desktop/projects/KeepAny/tests/e2e/account-detail-dedupe.spec.ts:364:19
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../../../../tmp/stackperch-account-dedupe-actions7-output/account-detail-dedupe-zh-C-646f4-nship-evidence-and-recovery/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../../../../tmp/stackperch-account-dedupe-actions7-output/account-detail-dedupe-zh-C-646f4-nship-evidence-and-recovery/error-context.md
+
+
+(node:76519) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[7/11] tests/e2e/account-detail-dedupe.spec.ts:368:2 › zh-CN 1536px account detail images, manual tasks and impact checklist
+  4) tests/e2e/account-detail-dedupe.spec.ts:368:2 › zh-CN 1536px account detail images, manual tasks and impact checklist
+
+    Error: expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 1
+    + Received  + 3
+
+    - Array []
+    + Array [
+    +   "Failed to read the 'localStorage' property from 'Window': Access is denied for this document.",
+    + ]
+
+      480 | 			await expect(tasks.locator(".task-card")).toHaveCount(1);
+      481 | 			await expect(checklist.locator(".impact-task-row")).toHaveCount(2);
+    > 482 | 			expect(errors).toEqual([]);
+          | 			               ^
+      483 | 		} finally { await context.close(); }
+      484 | 	});
+      485 | }
+        at /Users/syndred/Desktop/projects/KeepAny/tests/e2e/account-detail-dedupe.spec.ts:482:19
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../../../../tmp/stackperch-account-dedupe-actions7-output/account-detail-dedupe-zh-C-8034b--tasks-and-impact-checklist/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../../../../tmp/stackperch-account-dedupe-actions7-output/account-detail-dedupe-zh-C-8034b--tasks-and-impact-checklist/error-context.md
+
+
+(node:76529) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[8/11] tests/e2e/account-detail-dedupe.spec.ts:167:2 › en-US 390px account detail merged actions, relationship evidence and recovery
+  5) tests/e2e/account-detail-dedupe.spec.ts:167:2 › en-US 390px account detail merged actions, relationship evidence and recovery
+
+    Error: expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 1
+    + Received  + 5
+
+    - Array []
+    + Array [
+    +   "Failed to read the 'localStorage' property from 'Window': Access is denied for this document.",
+    +   "Failed to read the 'localStorage' property from 'Window': Access is denied for this document.",
+    +   "Failed to read the 'localStorage' property from 'Window': Access is denied for this document.",
+    + ]
+
+      362 | 			await expect(purposeRow(page, purposeB)).toContainText(`${source} B`);
+      363 | 			await screenshot(page, `account-detail-dedupe-restored-${locale}-${width}`);
+    > 364 | 			expect(errors).toEqual([]);
+          | 			               ^
+      365 | 		} finally { await context.close(); }
+      366 | 	});
+      367 |
+        at /Users/syndred/Desktop/projects/KeepAny/tests/e2e/account-detail-dedupe.spec.ts:364:19
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../../../../tmp/stackperch-account-dedupe-actions7-output/account-detail-dedupe-en-U-b0bcc-nship-evidence-and-recovery/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../../../../tmp/stackperch-account-dedupe-actions7-output/account-detail-dedupe-en-U-b0bcc-nship-evidence-and-recovery/error-context.md
+
+
+(node:76594) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[9/11] tests/e2e/account-detail-dedupe.spec.ts:368:2 › en-US 390px account detail images, manual tasks and impact checklist
+  6) tests/e2e/account-detail-dedupe.spec.ts:368:2 › en-US 390px account detail images, manual tasks and impact checklist
+
+    Error: expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 1
+    + Received  + 3
+
+    - Array []
+    + Array [
+    +   "Failed to read the 'localStorage' property from 'Window': Access is denied for this document.",
+    + ]
+
+      480 | 			await expect(tasks.locator(".task-card")).toHaveCount(1);
+      481 | 			await expect(checklist.locator(".impact-task-row")).toHaveCount(2);
+    > 482 | 			expect(errors).toEqual([]);
+          | 			               ^
+      483 | 		} finally { await context.close(); }
+      484 | 	});
+      485 | }
+        at /Users/syndred/Desktop/projects/KeepAny/tests/e2e/account-detail-dedupe.spec.ts:482:19
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../../../../tmp/stackperch-account-dedupe-actions7-output/account-detail-dedupe-en-U-f25f3--tasks-and-impact-checklist/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../../../../tmp/stackperch-account-dedupe-actions7-output/account-detail-dedupe-en-U-f25f3--tasks-and-impact-checklist/error-context.md
+
+
+(node:76682) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[10/11] tests/e2e/account-detail-dedupe.spec.ts:167:2 › en-US 1536px account detail merged actions, relationship evidence and recovery
+  7) tests/e2e/account-detail-dedupe.spec.ts:167:2 › en-US 1536px account detail merged actions, relationship evidence and recovery
+
+    Error: expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 1
+    + Received  + 5
+
+    - Array []
+    + Array [
+    +   "Failed to read the 'localStorage' property from 'Window': Access is denied for this document.",
+    +   "Failed to read the 'localStorage' property from 'Window': Access is denied for this document.",
+    +   "Failed to read the 'localStorage' property from 'Window': Access is denied for this document.",
+    + ]
+
+      362 | 			await expect(basic.getByRole("link", { name: service.url, exact: true })).toBeVisible();
+      363 | 			await waitForAccountGraphLayout(page, { nodes: 2, edges: 1 });
+    > 364 | 			await setAccountRelationDetailsOpen(page);
+          | 			               ^
+      365 | 			await expect(details.locator(".relation-row")).toHaveCount(2);
+      366 | 			await expect(purposeRow(page, purposeA)).toContainText(source);
+      367 | 			await expect(purposeRow(page, purposeB)).toContainText(`${source} B`);
+        at /Users/syndred/Desktop/projects/KeepAny/tests/e2e/account-detail-dedupe.spec.ts:364:19
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../../../../tmp/stackperch-account-dedupe-actions7-output/account-detail-dedupe-en-U-eb6b2-nship-evidence-and-recovery/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../../../../tmp/stackperch-account-dedupe-actions7-output/account-detail-dedupe-en-U-eb6b2-nship-evidence-and-recovery/error-context.md
+
+
+(node:76731) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[11/11] tests/e2e/account-detail-dedupe.spec.ts:368:2 › en-US 1536px account detail images, manual tasks and impact checklist
+  8) tests/e2e/account-detail-dedupe.spec.ts:368:2 › en-US 1536px account detail images, manual tasks and impact checklist
+
+    Error: expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 1
+    + Received  + 3
+
+    - Array []
+    + Array [
+    +   "Failed to read the 'localStorage' property from 'Window': Access is denied for this document.",
+    + ]
+
+      480 | 			await screenshot(page, `account-detail-dedupe-media-tasks-${locale}-${width}`);
+      481 | 			await images.getByRole("button", { name: copy.removeImage, exact: true }).click();
+    > 482 | 			await expect(page.locator(".asset-image")).toHaveCount(0);
+          | 			               ^
+      483 | 			await page.reload();
+      484 | 			await expect(page.locator(".asset-image")).toHaveCount(0);
+      485 | 			await expect(tasks.locator(".task-card")).toHaveCount(1);
+        at /Users/syndred/Desktop/projects/KeepAny/tests/e2e/account-detail-dedupe.spec.ts:482:19
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../../../../tmp/stackperch-account-dedupe-actions7-output/account-detail-dedupe-en-U-f3181--tasks-and-impact-checklist/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../../../../tmp/stackperch-account-dedupe-actions7-output/account-detail-dedupe-en-U-f3181--tasks-and-impact-checklist/error-context.md
+
+
+  8 failed
+    tests/e2e/account-detail-dedupe.spec.ts:167:2 › zh-CN 390px account detail merged actions, relationship evidence and recovery
+    tests/e2e/account-detail-dedupe.spec.ts:368:2 › zh-CN 390px account detail images, manual tasks and impact checklist
+    tests/e2e/account-detail-dedupe.spec.ts:167:2 › zh-CN 1536px account detail merged actions, relationship evidence and recovery
+    tests/e2e/account-detail-dedupe.spec.ts:368:2 › zh-CN 1536px account detail images, manual tasks and impact checklist
+    tests/e2e/account-detail-dedupe.spec.ts:167:2 › en-US 390px account detail merged actions, relationship evidence and recovery
+    tests/e2e/account-detail-dedupe.spec.ts:368:2 › en-US 390px account detail images, manual tasks and impact checklist
+    tests/e2e/account-detail-dedupe.spec.ts:167:2 › en-US 1536px account detail merged actions, relationship evidence and recovery
+    tests/e2e/account-detail-dedupe.spec.ts:368:2 › en-US 1536px account detail images, manual tasks and impact checklist
+  3 passed (1.2m)

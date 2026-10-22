@@ -1,0 +1,26 @@
+[WebServer] (node:76784) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+
+Running 11 tests using 2 workers
+
+(node:76785) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+(node:76786) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1/11] tests/e2e/custom-category-release.spec.ts:73:2 › en-US fixed package category identity survives UI rename and encrypted clean restore
+[2/11] tests/e2e/account-detail-dedupe.spec.ts:172:2 › zh-CN 390px account detail merged actions, relationship evidence and recovery
+[3/11] tests/e2e/custom-category-release.spec.ts:73:2 › zh-CN fixed package category identity survives UI rename and encrypted clean restore
+[4/11] tests/e2e/account-detail-dedupe.spec.ts:373:2 › zh-CN 390px account detail images, manual tasks and impact checklist
+[5/11] tests/e2e/account-detail-dedupe.spec.ts:172:2 › zh-CN 1536px account detail merged actions, relationship evidence and recovery
+[6/11] tests/e2e/relation-topbar-return.spec.ts:4:1 › the single account topbar returns to a related source list or the direct account list
+[7/11] tests/e2e/account-detail-dedupe.spec.ts:373:2 › zh-CN 1536px account detail images, manual tasks and impact checklist
+[8/11] tests/e2e/account-detail-dedupe.spec.ts:172:2 › en-US 390px account detail merged actions, relationship evidence and recovery
+[9/11] tests/e2e/account-detail-dedupe.spec.ts:373:2 › en-US 390px account detail images, manual tasks and impact checklist
+[10/11] tests/e2e/account-detail-dedupe.spec.ts:172:2 › en-US 1536px account detail merged actions, relationship evidence and recovery
+[11/11] tests/e2e/account-detail-dedupe.spec.ts:373:2 › en-US 1536px account detail images, manual tasks and impact checklist
+  11 passed (1.1m)

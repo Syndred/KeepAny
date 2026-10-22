@@ -1,0 +1,46 @@
+[WebServer] (node:77517) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 1 test using 1 worker
+
+(node:77518) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+account-edge-diagnostic {"label":"connected-owner-with-a-long-email@example.test → Verified account · Verified link · 已核实","bounds":{"x":76,"y":675.421875,"width":24,"height":0},"display":"inline","visibility":"visible","opacity":"1","pathLength":24,"pathBounds":{},"pathDisplay":"inline","pathVisibility":"visible","active":{"tag":"SUMMARY","class":null,"label":null,"text":"读图说明"},"stage":"account-graph-stage is-ready","ready":"true","busy":"false"}
+  ✘  1 tests/e2e/relation-graph-verification.spec.ts:16:3 › zh-CN graph verification and mixed groups remain accurate at 390px (9.7s)
+
+
+  1) tests/e2e/relation-graph-verification.spec.ts:16:3 › zh-CN graph verification and mixed groups remain accurate at 390px
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator:  locator('.relation-graph-edge--verified')
+    Expected: visible
+    Received: hidden
+    Timeout:  5000ms
+
+    Call log:
+      - Expect "toBeVisible" locator('.relation-graph-edge--verified') with timeout 5000ms
+      - waiting for locator('.relation-graph-edge--verified')
+        14 × locator resolved to <g tabindex="0" role="group" aria-roledescription="edge" aria-describedby="react-flow__edge-desc-1" data-id="d988e3b9-3621-45d1-9d81-31f5ec082037" data-to="697dfb52-60f7-4772-abd0-b2c84989e276" data-from="9243644c-c79d-4a02-b8bb-2771f06c4528" data-testid="rf__edge-d988e3b9-3621-45d1-9d81-31f5ec082037" aria-label="connected-owner-with-a-long-email@example.test → Verified account · Verified link · 已核实" class="react-flow__edge react-flow__edge-accountConnection relation-graph-edge--verified nopan se…>…</g>
+           - unexpected value "hidden"
+
+
+      87 | 					return { label: element.getAttribute("aria-label"), bounds: { x: bounds.x, y: bounds.y, width: bounds.width, height: bounds.height }, display: style.display, visibility: style.visibility, opacity: style.opacity, pathLength: path?.getTotalLength(), pathBounds: path?.getBBox(), pathDisplay: path && getComputedStyle(path).display, pathVisibility: path && getComputedStyle(path).visibility, active: { tag: document.activeElement?.tagName, class: document.activeElement?.getAttribute("class"), label: document.activeElement?.getAttribute("aria-label"), text: document.activeElement?.textContent?.trim().slice(0, 100) }, stage: graph?.querySelector(".account-graph-stage")?.className, ready: graph?.getAttribute("data-layout-ready"), busy: graph?.getAttribute("aria-busy") };
+      88 | 				})));
+    > 89 | 				await expect(edge).toBeVisible();
+         | 				                   ^
+      90 | 				await expect(edge).toHaveAttribute("tabindex", "0");
+      91 | 				await edge.focus();
+      92 | 				await expect(edge).toBeFocused();
+        at selectConnection (/Users/syndred/Desktop/projects/KeepAny/tests/e2e/relation-graph-verification.spec.ts:89:24)
+        at graphState (/Users/syndred/Desktop/projects/KeepAny/tests/e2e/relation-graph-verification.spec.ts:134:17)
+        at /Users/syndred/Desktop/projects/KeepAny/tests/e2e/relation-graph-verification.spec.ts:166:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../../../../tmp/stackperch-account-dedupe-svg-diagnostic-output/relation-graph-verificatio-5929e-ps-remain-accurate-at-390px/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../../../../tmp/stackperch-account-dedupe-svg-diagnostic-output/relation-graph-verificatio-5929e-ps-remain-accurate-at-390px/error-context.md
+
+  1 failed
+    tests/e2e/relation-graph-verification.spec.ts:16:3 › zh-CN graph verification and mixed groups remain accurate at 390px

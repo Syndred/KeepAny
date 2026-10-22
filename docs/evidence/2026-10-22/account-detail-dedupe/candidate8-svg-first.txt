@@ -1,0 +1,167 @@
+[WebServer] (node:77326) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+
+Running 4 tests using 1 worker
+
+(node:77332) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1/4] tests/e2e/relation-graph-verification.spec.ts:16:3 › zh-CN graph verification and mixed groups remain accurate at 390px
+  1) tests/e2e/relation-graph-verification.spec.ts:16:3 › zh-CN graph verification and mixed groups remain accurate at 390px
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator:  locator('.relation-graph-edge--verified')
+    Expected: visible
+    Received: hidden
+    Timeout:  5000ms
+
+    Call log:
+      - Expect "toBeVisible" locator('.relation-graph-edge--verified') with timeout 5000ms
+      - waiting for locator('.relation-graph-edge--verified')
+        14 × locator resolved to <g tabindex="0" role="group" aria-roledescription="edge" aria-describedby="react-flow__edge-desc-1" data-id="cc1733f1-c30e-49e3-a37f-481a0e225be9" data-to="d8c6a720-faf1-4f60-b08e-efad0277a2fb" data-from="b09cb8ca-d7d1-47cc-b65f-a21b158e4752" data-testid="rf__edge-cc1733f1-c30e-49e3-a37f-481a0e225be9" aria-label="connected-owner-with-a-long-email@example.test → Verified account · Verified link · 已核实" class="react-flow__edge react-flow__edge-accountConnection relation-graph-edge--verified nopan se…>…</g>
+           - unexpected value "hidden"
+
+
+      80 | 			async function selectConnection(targetPage: Page, edge: Locator, from: string, to: string, labels: string[], status: string, key = "Enter") {
+      81 | 				await waitForAccountGraphLayout(targetPage);
+    > 82 | 				await expect(edge).toBeVisible();
+         | 				                   ^
+      83 | 				await expect(edge).toHaveAttribute("tabindex", "0");
+      84 | 				await edge.focus();
+      85 | 				await expect(edge).toBeFocused();
+        at selectConnection (/Users/syndred/Desktop/projects/KeepAny/tests/e2e/relation-graph-verification.spec.ts:82:24)
+        at graphState (/Users/syndred/Desktop/projects/KeepAny/tests/e2e/relation-graph-verification.spec.ts:127:17)
+        at /Users/syndred/Desktop/projects/KeepAny/tests/e2e/relation-graph-verification.spec.ts:159:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../../../../tmp/stackperch-account-dedupe-ready8-output/relation-graph-verificatio-5929e-ps-remain-accurate-at-390px/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../../../../tmp/stackperch-account-dedupe-ready8-output/relation-graph-verificatio-5929e-ps-remain-accurate-at-390px/error-context.md
+
+
+(node:77357) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[2/4] tests/e2e/relation-graph-verification.spec.ts:16:3 › zh-CN graph verification and mixed groups remain accurate at 1280px
+  2) tests/e2e/relation-graph-verification.spec.ts:16:3 › zh-CN graph verification and mixed groups remain accurate at 1280px
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator:  locator('.relation-graph-edge--verified')
+    Expected: visible
+    Received: hidden
+    Timeout:  5000ms
+
+    Call log:
+      - Expect "toBeVisible" locator('.relation-graph-edge--verified') with timeout 5000ms
+      - waiting for locator('.relation-graph-edge--verified')
+        14 × locator resolved to <g tabindex="0" role="group" aria-roledescription="edge" aria-describedby="react-flow__edge-desc-1" data-id="7bceac64-e8f0-4fa8-af38-4db394725f89" data-to="9586a10e-6ddb-44b1-9ce3-d7456aa362e3" data-from="2fae3af0-4af3-41fa-b43f-404c89fd0b8e" data-testid="rf__edge-7bceac64-e8f0-4fa8-af38-4db394725f89" aria-label="connected-owner-with-a-long-email@example.test → Verified account · Verified link · 已核实" class="react-flow__edge react-flow__edge-accountConnection relation-graph-edge--verified nopan se…>…</g>
+           - unexpected value "hidden"
+
+
+      80 | 			async function selectConnection(targetPage: Page, edge: Locator, from: string, to: string, labels: string[], status: string, key = "Enter") {
+      81 | 				await waitForAccountGraphLayout(targetPage);
+    > 82 | 				await expect(edge).toBeVisible();
+         | 				                   ^
+      83 | 				await expect(edge).toHaveAttribute("tabindex", "0");
+      84 | 				await edge.focus();
+      85 | 				await expect(edge).toBeFocused();
+        at selectConnection (/Users/syndred/Desktop/projects/KeepAny/tests/e2e/relation-graph-verification.spec.ts:82:24)
+        at graphState (/Users/syndred/Desktop/projects/KeepAny/tests/e2e/relation-graph-verification.spec.ts:127:17)
+        at /Users/syndred/Desktop/projects/KeepAny/tests/e2e/relation-graph-verification.spec.ts:159:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../../../../tmp/stackperch-account-dedupe-ready8-output/relation-graph-verificatio-a680c-s-remain-accurate-at-1280px/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../../../../tmp/stackperch-account-dedupe-ready8-output/relation-graph-verificatio-a680c-s-remain-accurate-at-1280px/error-context.md
+
+
+(node:77380) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[3/4] tests/e2e/relation-graph-verification.spec.ts:16:3 › en-US graph verification and mixed groups remain accurate at 390px
+  3) tests/e2e/relation-graph-verification.spec.ts:16:3 › en-US graph verification and mixed groups remain accurate at 390px
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator:  locator('.relation-graph-edge--verified')
+    Expected: visible
+    Received: hidden
+    Timeout:  5000ms
+
+    Call log:
+      - Expect "toBeVisible" locator('.relation-graph-edge--verified') with timeout 5000ms
+      - waiting for locator('.relation-graph-edge--verified')
+        14 × locator resolved to <g tabindex="0" role="group" aria-roledescription="edge" aria-describedby="react-flow__edge-desc-1" data-id="69112649-7894-4d88-9082-93d3f303c30e" data-to="d6aa018b-580c-4c93-afad-cfbe664e112a" data-from="f93b761b-ad49-4026-a538-d03a875ddf26" data-testid="rf__edge-69112649-7894-4d88-9082-93d3f303c30e" aria-label="connected-owner-with-a-long-email@example.test → Verified account · Verified link · Verified" class="react-flow__edge react-flow__edge-accountConnection relation-graph-edge--verified nop…>…</g>
+           - unexpected value "hidden"
+
+
+      80 | 			async function selectConnection(targetPage: Page, edge: Locator, from: string, to: string, labels: string[], status: string, key = "Enter") {
+      81 | 				await waitForAccountGraphLayout(targetPage);
+    > 82 | 				await expect(edge).toBeVisible();
+         | 				                   ^
+      83 | 				await expect(edge).toHaveAttribute("tabindex", "0");
+      84 | 				await edge.focus();
+      85 | 				await expect(edge).toBeFocused();
+        at selectConnection (/Users/syndred/Desktop/projects/KeepAny/tests/e2e/relation-graph-verification.spec.ts:82:24)
+        at graphState (/Users/syndred/Desktop/projects/KeepAny/tests/e2e/relation-graph-verification.spec.ts:127:17)
+        at /Users/syndred/Desktop/projects/KeepAny/tests/e2e/relation-graph-verification.spec.ts:159:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../../../../tmp/stackperch-account-dedupe-ready8-output/relation-graph-verificatio-fecab-ps-remain-accurate-at-390px/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../../../../tmp/stackperch-account-dedupe-ready8-output/relation-graph-verificatio-fecab-ps-remain-accurate-at-390px/error-context.md
+
+
+(node:77391) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[4/4] tests/e2e/relation-graph-verification.spec.ts:16:3 › en-US graph verification and mixed groups remain accurate at 1280px
+  4) tests/e2e/relation-graph-verification.spec.ts:16:3 › en-US graph verification and mixed groups remain accurate at 1280px
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator:  locator('.relation-graph-edge--verified')
+    Expected: visible
+    Received: hidden
+    Timeout:  5000ms
+
+    Call log:
+      - Expect "toBeVisible" locator('.relation-graph-edge--verified') with timeout 5000ms
+      - waiting for locator('.relation-graph-edge--verified')
+        14 × locator resolved to <g tabindex="0" role="group" aria-roledescription="edge" aria-describedby="react-flow__edge-desc-1" data-id="94291aaf-fafe-439d-9202-81b1fdead32e" data-to="16956c57-0d75-4702-ae5f-5113127b48c0" data-from="7251b35a-edd5-43e2-8c81-a6738aeb0cdb" data-testid="rf__edge-94291aaf-fafe-439d-9202-81b1fdead32e" aria-label="connected-owner-with-a-long-email@example.test → Verified account · Verified link · Verified" class="react-flow__edge react-flow__edge-accountConnection relation-graph-edge--verified nop…>…</g>
+           - unexpected value "hidden"
+
+
+      80 | 			async function selectConnection(targetPage: Page, edge: Locator, from: string, to: string, labels: string[], status: string, key = "Enter") {
+      81 | 				await waitForAccountGraphLayout(targetPage);
+    > 82 | 				await expect(edge).toBeVisible();
+         | 				                   ^
+      83 | 				await expect(edge).toHaveAttribute("tabindex", "0");
+      84 | 				await edge.focus();
+      85 | 				await expect(edge).toBeFocused();
+        at selectConnection (/Users/syndred/Desktop/projects/KeepAny/tests/e2e/relation-graph-verification.spec.ts:82:24)
+        at graphState (/Users/syndred/Desktop/projects/KeepAny/tests/e2e/relation-graph-verification.spec.ts:127:17)
+        at /Users/syndred/Desktop/projects/KeepAny/tests/e2e/relation-graph-verification.spec.ts:159:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../../../../tmp/stackperch-account-dedupe-ready8-output/relation-graph-verificatio-7d188-s-remain-accurate-at-1280px/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../../../../tmp/stackperch-account-dedupe-ready8-output/relation-graph-verificatio-7d188-s-remain-accurate-at-1280px/error-context.md
+
+
+  4 failed
+    tests/e2e/relation-graph-verification.spec.ts:16:3 › zh-CN graph verification and mixed groups remain accurate at 390px
+    tests/e2e/relation-graph-verification.spec.ts:16:3 › zh-CN graph verification and mixed groups remain accurate at 1280px
+    tests/e2e/relation-graph-verification.spec.ts:16:3 › en-US graph verification and mixed groups remain accurate at 390px
+    tests/e2e/relation-graph-verification.spec.ts:16:3 › en-US graph verification and mixed groups remain accurate at 1280px
