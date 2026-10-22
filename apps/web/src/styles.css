@@ -303,7 +303,6 @@ p { line-height: 1.5; }
 .overlay { position: fixed; inset: 0; z-index: 30; background: rgb(23 36 58 / 62%); }
 .dialog { position: fixed; top: 50%; left: 50%; z-index: 31; display: flex; flex-direction: column; gap: var(--space-4); width: min(calc(100vw - 32px), 550px); max-height: min(90dvh, 850px); overflow-y: auto; padding: 18px; border: 2px solid var(--line); border-radius: 16px; background: var(--paper); box-shadow: 7px 8px 0 var(--line); transform: translate(-50%, -50%); }
 .dialog > * { flex-shrink: 0; min-width: 0; margin-block: 0; }
-.dialog.account-detail-dialog .button, .dialog.account-detail-dialog .themed-select-trigger { min-width: 44px; min-height: 44px; }
 .dialog > .image-preview { margin-bottom: 0; }
 .dialog > header { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-3); margin-bottom: 0; }
 .dialog > header > * { min-width: 0; }
@@ -515,3 +514,4 @@ p { line-height: 1.5; }
 .asset-category-recovery p { margin: 0; overflow-wrap: anywhere; }
 .asset-category-recovery .actions { justify-content: flex-start; flex-wrap: wrap; }
 .asset-category-inline .list-row > .actions { flex-shrink: 0; margin: 0; }
+.dialog.account-detail-dialog .button, .dialog.account-detail-dialog .themed-select-trigger { min-width: 44px; min-height: 44px; }
