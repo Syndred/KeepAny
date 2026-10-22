@@ -128,9 +128,9 @@ function GraphControls({ layout }: { layout: AccountGraphLayout | null }) {
 
 function GraphMiniMap({ rootId }: { rootId: string }) {
 	const { setCenter, getViewport } = useReactFlow();
-	return <MiniMap style={{ width: 140, height: 90 }} pannable zoomable
+	return <MiniMap style={{ width: 140, height: 90 }} bgColor="var(--paper)" nodeStrokeColor="var(--line)" nodeStrokeWidth={1} maskStrokeColor="var(--line)" maskStrokeWidth={1} pannable zoomable
 		onClick={(_, point) => { void setCenter(point.x, point.y, { zoom: getViewport().zoom }); }}
-		nodeColor={(node) => node.id === rootId ? "var(--yellow)" : "var(--paper)"} />;
+		nodeColor={(node) => node.id === rootId ? "var(--yellow)" : "var(--muted)"} />;
 }
 
 function GraphContent({ props, expanded, restore, onExpand }: {
@@ -171,7 +171,7 @@ function GraphContent({ props, expanded, restore, onExpand }: {
 	const selected = groups.find((group) => group.some((relation) => relation.id === props.selectedEdgeId));
 	const nodes: AccountNode[] = layout ? [...layout.nodes].flatMap(([id, node]) => {
 		const asset = byId.get(id); if (!asset) return [];
-		return [{ id, type: "accountCard", position: { x: node.x, y: node.y },
+		return [{ id, type: "accountCard", position: { x: node.x, y: node.y }, width: node.width, height: node.height,
 			style: { width: node.width, height: node.height },
 			className: `${id === props.root.id ? "asset-graph-center" : "asset-graph-neighbor"}${props.matches.has(id) ? " asset-graph-match" : ""}`,
 			ariaLabel: [asset.name, asset.username].filter(Boolean).join(" · "),
