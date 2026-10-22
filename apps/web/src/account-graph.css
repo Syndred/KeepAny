@@ -33,3 +33,6 @@
 	.account-graph-action-buttons .button { flex: 1 1 auto; padding-inline: 10px; }
 	.dialog.account-graph-dialog { width: calc(100vw - 16px); height: calc(100dvh - 16px); padding: 12px; }
 }
+@media (max-width: 380px) {
+	.account-graph-navigation { flex-wrap: wrap; row-gap: 8px; }
+}
