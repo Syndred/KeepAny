@@ -1,7 +1,7 @@
 import 'fake-indexeddb/auto';
 import { describe, expect, it, vi } from 'vitest';
 import { zipSync, unzipSync, strToU8, strFromU8 } from 'fflate';
-import { assetSchema, historySchema, newAsset, submissionSchema, type Asset, type History, type Submission, type Task } from '../../domain/src';
+import { assetSchema, historySchema, newAsset, relationSchema, submissionSchema, type Asset, type History, type Relation, type Submission, type Task } from '../../domain/src';
 import { buildProjectWorkflowTasks, currentProjectWorkflowRound, recordProjectWorkflowTask } from '../../domain/src/project-workflow';
 import { inspectArchive, LocalRepository, openLocalRepository, type RecordRow } from './index';
 
@@ -51,6 +51,22 @@ const changedArchive = async (backup: Uint8Array, edit: (entries: Record<string,
 };
 
 describe('RxDB + free Dexie local repository', () => {
+  it('refuses to replace a relation that changed after review', async () => {
+    const db = await openLocalRepository(name());
+    try {
+      const from = project('From'), to = project('To');
+      await db.saveBatch([{ type: 'asset', value: from }, { type: 'asset', value: to }]);
+      const initial = relationSchema.parse({ id: crypto.randomUUID(), from: from.id, to: to.id,
+        label: 'Original', createdAt: new Date().toISOString() });
+      await db.save('relation', initial);
+      const latest = { ...initial, label: 'Edited by user' };
+      await db.saveRelationIfCurrent(initial, latest);
+      await expect(db.saveRelationIfCurrent(initial, { ...initial, deleted: true })).rejects.toThrow('stale');
+      expect(await db.get<Relation>('relation', initial.id)).toEqual(latest);
+      await db.saveRelationIfCurrent(latest, { ...latest, deleted: true });
+      expect((await db.get<Relation>('relation', initial.id))?.deleted).toBe(true);
+    } finally { await db.close(); }
+  });
   it('allows only one normalized category across concurrent calls and permits recreation after removal', async () => {
     const first = await openLocalRepository(name());
     try {

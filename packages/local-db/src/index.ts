@@ -2,7 +2,7 @@ import { createRxDatabase, type RxDatabase } from 'rxdb';
 import { getRxStorageDexie } from 'rxdb/plugins/storage-dexie';
 import Dexie, { type Table } from 'dexie';
 import { z } from 'zod';
-import { dueOnCycle, entitySchemas, normalizeCategoryName, type Asset, type AssetKind, type Category, type EntityType, type History, type Submission, type Task } from '../../domain/src';
+import { dueOnCycle, entitySchemas, normalizeCategoryName, type Asset, type AssetKind, type Category, type EntityType, type History, type Relation, type Submission, type Task } from '../../domain/src';
 import { canRecordProjectWorkflowTask, currentProjectWorkflowRound } from '../../domain/src/project-workflow';
 import { advanceTaskReminder, zonedParts } from '../../domain/src/task-reminder';
 import { zipSync, strToU8, strFromU8 } from 'fflate';
@@ -426,6 +426,11 @@ export class LocalRepository {
   async saveAssetIfCurrent(expected: Asset, next: Asset): Promise<RecordRow> {
     if (expected.id !== next.id || expected.kind !== next.kind) throw Error('asset-stale');
     return this.saveUnlocked('asset', next, rowFor('asset', expected).payload);
+  }
+
+  async saveRelationIfCurrent(expected: Relation, next: Relation): Promise<RecordRow> {
+    if (expected.id !== next.id || expected.from !== next.from || expected.to !== next.to) throw Error('relation-stale');
+    return this.saveUnlocked('relation', next, rowFor('relation', expected).payload);
   }
 
   async getPendingSubscriptionSave(assetId: string): Promise<PendingSubscriptionSave | null> {
@@ -2571,6 +2576,7 @@ export async function getPendingCategoryEdit(kind: AssetKind) { return (await de
 export async function retryCategoryEdit(kind: AssetKind, expectedOperationId?: string) { return (await defaultRepository()).retryCategoryEdit(kind, expectedOperationId); }
 export async function cancelCategoryEdit(kind: AssetKind, expectedOperationId?: string) { return (await defaultRepository()).cancelCategoryEdit(kind, expectedOperationId); }
 export async function saveAssetIfCurrent(expected: Asset, next: Asset) { return (await defaultRepository()).saveAssetIfCurrent(expected, next); }
+export async function saveRelationIfCurrent(expected: Relation, next: Relation) { return (await defaultRepository()).saveRelationIfCurrent(expected, next); }
 export async function saveSubscription(expected: Asset | null, next: Asset, links: ReadonlyArray<SubscriptionLink>) { return (await defaultRepository()).saveSubscription(expected, next, links); }
 export async function getPendingSubscriptionSave(assetId: string) { return (await defaultRepository()).getPendingSubscriptionSave(assetId); }
 export async function retrySubscriptionSave(assetId: string) { return (await defaultRepository()).retrySubscriptionSave(assetId); }

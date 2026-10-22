@@ -27,6 +27,29 @@ const candidates = () => parseVaultImportText(text).candidates;
 afterEach(() => vi.resetAllMocks());
 
 describe("local password paste parsing", () => {
+	it("keeps punctuation in explicit passwordless notes and still separates following fields", () => {
+		const result = parseVaultImportText(
+			"名称=Notion\n账号=demo.reader@gmail.com\n备注=使用 Google 登录，无独立密码; 请保留备注。",
+		);
+		expect(result.issues).toEqual([]);
+		expect(result.candidates).toHaveLength(1);
+		expect(result.candidates[0]).toMatchObject({
+			needsReview: true,
+			draft: {
+				title: "Notion",
+				username: "demo.reader@gmail.com",
+				password: "",
+				notes: "使用 Google 登录，无独立密码; 请保留备注。",
+			},
+		});
+		const inline = parseVaultImportText(
+			"title=Notion;username=demo@example.test;notes=One, two;password=explicit",
+		);
+		expect(inline.candidates[0].draft).toMatchObject({
+			notes: "One, two",
+			password: "explicit",
+		});
+	});
 	it("accepts passwordless sign-ins and requires explicit review without missing-field errors", () => {
 		for (const input of [
 			"title=Example;username=reader@example.test;notes=Google sign-in",

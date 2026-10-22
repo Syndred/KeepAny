@@ -422,7 +422,10 @@ export function parseVaultImportLine(line: string): {
 		} else {
 			// A whitespace boundary is syntax only when another known label follows.
 			// Keep ordinary spaces inside credentials unchanged.
-			const explicitBoundary = /[;|\t,，]/.exec(rest);
+			const explicitBoundary =
+				field === "notes"
+					? /[;|\t,，](?=\s*[^:=：;|\t,，]{1,40}\s*[:=：])/.exec(rest)
+					: /[;|\t,，]/.exec(rest);
 			const spacedBoundary = [
 				...rest.matchAll(/\s+([^:=：;|\t,，]{1,40}?)\s*[:=：]/g),
 			].find((match) => getField(match[1]));
