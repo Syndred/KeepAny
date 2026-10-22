@@ -1,0 +1,19 @@
+{
+  "head_sha": "10db6357f032618d7ea169aa424f9708eaf1e265",
+  "workflow_runs": [
+    {
+      "name": "Verify local release",
+      "status": "pending",
+      "conclusion": null,
+      "head_sha": "10db6357f032618d7ea169aa424f9708eaf1e265",
+      "url": "https://github.com/Syndred/StackPerch/actions/runs/39772750843"
+    },
+    {
+      "name": "Verify portable preview",
+      "status": "in_progress",
+      "conclusion": null,
+      "head_sha": "10db6357f032618d7ea169aa424f9708eaf1e265",
+      "url": "https://github.com/Syndred/StackPerch/actions/runs/39772750853"
+    }
+  ]
+}
