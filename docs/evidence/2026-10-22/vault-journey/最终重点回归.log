@@ -1,0 +1,74 @@
+[WebServer] (node:56423) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+
+Running 50 tests using 2 workers
+
+(node:56439) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+(node:56438) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1/50] tests/e2e/core-pages-matrix.spec.ts:9:3 › en-US overview, intake, settings and trash fit 360px
+[2/50] tests/e2e/intake-bulk-account-links.spec.ts:73:3 › zh-CN 390px bulk confirmation retains failures and links shared account identifiers once
+[3/50] tests/e2e/core-pages-matrix.spec.ts:9:3 › en-US overview, intake, settings and trash fit 390px
+[4/50] tests/e2e/intake-bulk-account-links.spec.ts:73:3 › zh-CN 1280px bulk confirmation retains failures and links shared account identifiers once
+[5/50] tests/e2e/core-pages-matrix.spec.ts:9:3 › en-US overview, intake, settings and trash fit 768px
+[6/50] tests/e2e/core-pages-matrix.spec.ts:9:3 › en-US overview, intake, settings and trash fit 1280px
+[7/50] tests/e2e/intake-bulk-account-links.spec.ts:73:3 › en 390px bulk confirmation retains failures and links shared account identifiers once
+[8/50] tests/e2e/core-pages-matrix.spec.ts:9:3 › en-US overview, intake, settings and trash fit 1440px
+[9/50] tests/e2e/core-pages-matrix.spec.ts:9:3 › zh-CN overview, intake, settings and trash fit 360px
+[10/50] tests/e2e/intake-bulk-account-links.spec.ts:73:3 › en 1280px bulk confirmation retains failures and links shared account identifiers once
+[11/50] tests/e2e/core-pages-matrix.spec.ts:9:3 › zh-CN overview, intake, settings and trash fit 390px
+[12/50] tests/e2e/local-core.spec.ts:24:1 › project, account, subscription, located item, linked reminder and downloaded backup survive a fresh browser restore
+[13/50] tests/e2e/core-pages-matrix.spec.ts:9:3 › zh-CN overview, intake, settings and trash fit 768px
+[14/50] tests/e2e/core-pages-matrix.spec.ts:9:3 › zh-CN overview, intake, settings and trash fit 1280px
+[15/50] tests/e2e/core-pages-matrix.spec.ts:9:3 › zh-CN overview, intake, settings and trash fit 1440px
+[16/50] tests/e2e/local-core.spec.ts:168:3 › en-US key pages and the task dialog fit 360px
+[17/50] tests/e2e/core-pages-matrix.spec.ts:161:1 › mobile topbar search opens from its keyboard-accessible button
+[18/50] tests/e2e/core-pages-matrix.spec.ts:174:2 › en-US settings language control has a name and choice persists
+[19/50] tests/e2e/local-core.spec.ts:168:3 › en-US key pages and the task dialog fit 390px
+[20/50] tests/e2e/core-pages-matrix.spec.ts:174:2 › zh-CN settings language control has a name and choice persists
+[21/50] tests/e2e/local-core.spec.ts:168:3 › en-US key pages and the task dialog fit 768px
+[22/50] tests/e2e/password-account-upgrade.spec.ts:234:2 › zh-CN 1536px upgrades legacy uncategorized hubs and isolates a deleted linked entry
+tests/e2e/password-account-upgrade.spec.ts:234:2 › zh-CN 1536px upgrades legacy uncategorized hubs and isolates a deleted linked entry
+-------------- RxDB Open Core RxStorage -------------------------------
+You are using the free Dexie.js based RxStorage implementation from RxDB https://rxdb.info/rx-storage-dexie.html?console=dexie 
+While this is a great option, we want to let you know that there are faster storage solutions available in our premium plugins.
+For professional users and production environments, we highly recommend considering these premium options to enhance performance and reliability.
+ https://rxdb.info/premium/?console=dexie 
+If you already purchased premium access you can disable this log by calling the setPremiumFlag() function from rxdb-premium/plugins/shared.
+---------------------------------------------------------------------
+
+[23/50] tests/e2e/local-core.spec.ts:168:3 › en-US key pages and the task dialog fit 1280px
+[24/50] tests/e2e/local-core.spec.ts:168:3 › en-US key pages and the task dialog fit 1440px
+[25/50] tests/e2e/local-core.spec.ts:168:3 › zh-CN key pages and the task dialog fit 360px
+[26/50] tests/e2e/local-core.spec.ts:168:3 › zh-CN key pages and the task dialog fit 390px
+[27/50] tests/e2e/local-core.spec.ts:168:3 › zh-CN key pages and the task dialog fit 768px
+[28/50] tests/e2e/local-core.spec.ts:168:3 › zh-CN key pages and the task dialog fit 1280px
+[29/50] tests/e2e/local-core.spec.ts:168:3 › zh-CN key pages and the task dialog fit 1440px
+[30/50] tests/e2e/password-account-upgrade.spec.ts:234:2 › en 390px upgrades legacy uncategorized hubs and isolates a deleted linked entry
+[31/50] tests/e2e/password-vault-grid.spec.ts:118:3 › zh-CN 1536 dense grid preserves fields, icon actions, legacy anchors and locked secrets
+[32/50] tests/e2e/password-vault-user-journey.spec.ts:185:2 › zh-CN passwordless labeled notes retain punctuation and prefill reviewed fields
+[33/50] tests/e2e/password-vault-user-journey.spec.ts:185:2 › en passwordless labeled notes retain punctuation and prefill reviewed fields
+[34/50] tests/e2e/password-vault-user-journey.spec.ts:229:3 › zh-CN 1536px user imports, categorizes and follows account identities before vault maintenance
+[35/50] tests/e2e/password-vault-grid.spec.ts:118:3 › zh-CN 390 dense grid preserves fields, icon actions, legacy anchors and locked secrets
+[36/50] tests/e2e/password-vault-grid.spec.ts:118:3 › en 1536 dense grid preserves fields, icon actions, legacy anchors and locked secrets
+[37/50] tests/e2e/password-vault-user-journey.spec.ts:229:3 › zh-CN 390px user imports, categorizes and follows account identities before vault maintenance
+[38/50] tests/e2e/password-vault-grid.spec.ts:118:3 › en 390 dense grid preserves fields, icon actions, legacy anchors and locked secrets
+[39/50] tests/e2e/password-vault-user-journey.spec.ts:229:3 › en 1536px user imports, categorizes and follows account identities before vault maintenance
+[40/50] tests/e2e/password-vault-grid.spec.ts:422:3 › zh-CN 390 reviewed account family persists without sending vault secrets
+[41/50] tests/e2e/password-vault-grid.spec.ts:422:3 › zh-CN 1536 reviewed account family persists without sending vault secrets
+[42/50] tests/e2e/password-vault-user-journey.spec.ts:229:3 › en 390px user imports, categorizes and follows account identities before vault maintenance
+[43/50] tests/e2e/password-vault-grid.spec.ts:422:3 › en 390 reviewed account family persists without sending vault secrets
+[44/50] tests/e2e/password-vault-grid.spec.ts:422:3 › en 1536 reviewed account family persists without sending vault secrets
+[45/50] tests/e2e/production-offline.spec.ts:6:1 › delivered installation manifest and icons remain available offline
+[46/50] tests/e2e/production-offline.spec.ts:41:1 › built PWA reopens offline, edits local data and downloads a backup
+[47/50] tests/e2e/relation-graph-verification.spec.ts:16:3 › zh-CN graph verification and mixed groups remain accurate at 390px
+[48/50] tests/e2e/relation-graph-verification.spec.ts:16:3 › zh-CN graph verification and mixed groups remain accurate at 1280px
+[49/50] tests/e2e/relation-graph-verification.spec.ts:16:3 › en-US graph verification and mixed groups remain accurate at 390px
+[50/50] tests/e2e/relation-graph-verification.spec.ts:16:3 › en-US graph verification and mixed groups remain accurate at 1280px
+  50 passed (3.6m)

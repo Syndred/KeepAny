@@ -1,0 +1,291 @@
+[WebServer] (node:54977) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+
+Running 214 tests using 2 workers
+
+(node:54980) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+(node:54981) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1/214] tests/e2e/ai-dialog-matrix.spec.ts:155:3 › en AI dialog selected-only request and error at 360px
+[2/214] tests/e2e/ai-account-import-release.spec.ts:15:3 › zh-CN account identifiers are reviewed, saved and retained at 390px
+[3/214] tests/e2e/ai-account-import-release.spec.ts:15:3 › zh-CN account identifiers are reviewed, saved and retained at 1280px
+[4/214] tests/e2e/ai-dialog-matrix.spec.ts:155:3 › en AI dialog selected-only request and error at 390px
+[5/214] tests/e2e/ai-account-import-release.spec.ts:15:3 › en account identifiers are reviewed, saved and retained at 390px
+[6/214] tests/e2e/ai-account-import-release.spec.ts:15:3 › en account identifiers are reviewed, saved and retained at 1280px
+[7/214] tests/e2e/ai-dialog-matrix.spec.ts:155:3 › en AI dialog selected-only request and error at 768px
+[8/214] tests/e2e/ai-key-persistence.spec.ts:134:2 › zh-CN 390px encrypted API key survives refresh, updates in place and stops on lock
+[9/214] tests/e2e/ai-dialog-matrix.spec.ts:155:3 › en AI dialog selected-only request and error at 1280px
+[10/214] tests/e2e/ai-key-persistence.spec.ts:134:2 › zh-CN 1280px encrypted API key survives refresh, updates in place and stops on lock
+[11/214] tests/e2e/ai-dialog-matrix.spec.ts:155:3 › en AI dialog selected-only request and error at 1440px
+[12/214] tests/e2e/ai-dialog-matrix.spec.ts:155:3 › zh-CN AI dialog selected-only request and error at 360px
+[13/214] tests/e2e/ai-key-persistence.spec.ts:134:2 › en 390px encrypted API key survives refresh, updates in place and stops on lock
+[14/214] tests/e2e/ai-dialog-matrix.spec.ts:155:3 › zh-CN AI dialog selected-only request and error at 390px
+[15/214] tests/e2e/ai-key-persistence.spec.ts:134:2 › en 1280px encrypted API key survives refresh, updates in place and stops on lock
+[16/214] tests/e2e/ai-dialog-matrix.spec.ts:155:3 › zh-CN AI dialog selected-only request and error at 768px
+[17/214] tests/e2e/ai-dialog-matrix.spec.ts:155:3 › zh-CN AI dialog selected-only request and error at 1280px
+[18/214] tests/e2e/ai-key-persistence.spec.ts:346:1 › vault API key with automatic activation disabled still requires explicit activation after unlock
+[19/214] tests/e2e/ai-release.spec.ts:25:3 › en delivered AI import, local search and confirmed reminder at 390px
+[20/214] tests/e2e/ai-dialog-matrix.spec.ts:155:3 › zh-CN AI dialog selected-only request and error at 1440px
+[21/214] tests/e2e/ai-release.spec.ts:25:3 › en delivered AI import, local search and confirmed reminder at 1280px
+[22/214] tests/e2e/ai-dialog-matrix.spec.ts:311:2 › en AI usage and entered-rate estimate at 390px
+[23/214] tests/e2e/ai-release.spec.ts:25:3 › zh-CN delivered AI import, local search and confirmed reminder at 390px
+[24/214] tests/e2e/ai-dialog-matrix.spec.ts:311:2 › zh-CN AI usage and entered-rate estimate at 390px
+[25/214] tests/e2e/ai-dialog-matrix.spec.ts:373:1 › AI rejects invalid success content, retries, filters deleted assets and sends once on double click
+[26/214] tests/e2e/ai-release.spec.ts:25:3 › zh-CN delivered AI import, local search and confirmed reminder at 1280px
+[27/214] tests/e2e/ai-dialog-matrix.spec.ts:462:1 › AI request does not follow a provider redirect with the synthetic key
+[28/214] tests/e2e/archive-migration.spec.ts:75:2 › explicit archive migration in en
+[29/214] tests/e2e/ai-dialog-matrix.spec.ts:494:1 › AI answer from a superseded question cannot appear under the edited question
+[30/214] tests/e2e/collections-ledger-release.spec.ts:114:2 › zh-CN 390 five asset types retain collection identity through trash and clean restore
+[31/214] tests/e2e/archive-migration.spec.ts:75:2 › explicit archive migration in zh-CN
+[32/214] tests/e2e/archive-migration.spec.ts:140:1 › existing target record requires an individual choice before migration
+[33/214] tests/e2e/collections-route.spec.ts:7:3 › zh-CN 390px organize subscription entry opens and reloads finance
+[34/214] tests/e2e/collections-route.spec.ts:7:3 › zh-CN 1280px organize subscription entry opens and reloads finance
+[35/214] tests/e2e/collections-route.spec.ts:7:3 › en-US 390px organize subscription entry opens and reloads finance
+[36/214] tests/e2e/collections-ledger-release.spec.ts:114:2 › en-US 1280 five asset types retain collection identity through trash and clean restore
+[37/214] tests/e2e/collections-route.spec.ts:7:3 › en-US 1280px organize subscription entry opens and reloads finance
+[38/214] tests/e2e/core-pages-matrix.spec.ts:9:3 › en-US overview, intake, settings and trash fit 360px
+[39/214] tests/e2e/core-pages-matrix.spec.ts:9:3 › en-US overview, intake, settings and trash fit 390px
+[40/214] tests/e2e/core-pages-matrix.spec.ts:9:3 › en-US overview, intake, settings and trash fit 768px
+[41/214] tests/e2e/custom-category-release.spec.ts:73:2 › en-US fixed package category identity survives UI rename and encrypted clean restore
+[42/214] tests/e2e/core-pages-matrix.spec.ts:9:3 › en-US overview, intake, settings and trash fit 1280px
+[43/214] tests/e2e/core-pages-matrix.spec.ts:9:3 › en-US overview, intake, settings and trash fit 1440px
+[44/214] tests/e2e/core-pages-matrix.spec.ts:9:3 › zh-CN overview, intake, settings and trash fit 360px
+[45/214] tests/e2e/custom-category-release.spec.ts:73:2 › zh-CN fixed package category identity survives UI rename and encrypted clean restore
+[46/214] tests/e2e/core-pages-matrix.spec.ts:9:3 › zh-CN overview, intake, settings and trash fit 390px
+[47/214] tests/e2e/core-pages-matrix.spec.ts:9:3 › zh-CN overview, intake, settings and trash fit 768px
+[48/214] tests/e2e/core-pages-matrix.spec.ts:9:3 › zh-CN overview, intake, settings and trash fit 1280px
+[49/214] tests/e2e/detail-entry-statistics.spec.ts:92:3 › zh-CN detail entries and live project statistics at 390px
+[50/214] tests/e2e/core-pages-matrix.spec.ts:9:3 › zh-CN overview, intake, settings and trash fit 1440px
+[51/214] tests/e2e/core-pages-matrix.spec.ts:161:1 › mobile topbar search opens from its keyboard-accessible button
+[52/214] tests/e2e/core-pages-matrix.spec.ts:174:2 › en-US settings language control has a name and choice persists
+[53/214] tests/e2e/core-pages-matrix.spec.ts:174:2 › zh-CN settings language control has a name and choice persists
+[54/214] tests/e2e/english-demo-release.spec.ts:35:2 › English sample records stay English across pages, details, menus and refresh at 390
+[55/214] tests/e2e/detail-entry-statistics.spec.ts:92:3 › zh-CN detail entries and live project statistics at 1280px
+[56/214] tests/e2e/english-demo-release.spec.ts:35:2 › English sample records stay English across pages, details, menus and refresh at 1280
+[57/214] tests/e2e/english-demo-release.spec.ts:99:1 › Chinese sample records use Chinese copy and switching language preserves saved content
+[58/214] tests/e2e/externallink-import.spec.ts:89:2 › en-US explicitly imports one evidenced ExternalLink row at 1280px
+[59/214] tests/e2e/detail-entry-statistics.spec.ts:92:3 › en-US detail entries and live project statistics at 390px
+[60/214] tests/e2e/externallink-import.spec.ts:89:2 › zh-CN explicitly imports one evidenced ExternalLink row at 390px
+[61/214] tests/e2e/finance-ledger-release.spec.ts:310:2 › zh-CN 390 finance ledger survives UI backup and clean restore
+[62/214] tests/e2e/detail-entry-statistics.spec.ts:92:3 › en-US detail entries and live project statistics at 1280px
+[63/214] tests/e2e/finance-ledger-release.spec.ts:310:2 › en-US 1280 finance ledger survives UI backup and clean restore
+[64/214] tests/e2e/global-search-release.spec.ts:62:2 › en-US fixed package global search navigates UI records and encrypted clean restore
+[65/214] tests/e2e/intake-asset-receipt.spec.ts:96:3 › en-US intake asset receipts retain snapshots and safe detail links at 390px
+[66/214] tests/e2e/global-search-release.spec.ts:62:2 › zh-CN fixed package global search navigates UI records and encrypted clean restore
+[67/214] tests/e2e/intake-asset-receipt.spec.ts:96:3 › en-US intake asset receipts retain snapshots and safe detail links at 1280px
+[68/214] tests/e2e/intake-asset-receipt.spec.ts:96:3 › zh-CN intake asset receipts retain snapshots and safe detail links at 390px
+[69/214] tests/e2e/intake-bulk-account-links.spec.ts:73:3 › zh-CN 390px bulk confirmation retains failures and links shared account identifiers once
+[70/214] tests/e2e/intake-bulk-account-links.spec.ts:73:3 › zh-CN 1280px bulk confirmation retains failures and links shared account identifiers once
+[71/214] tests/e2e/intake-asset-receipt.spec.ts:96:3 › zh-CN intake asset receipts retain snapshots and safe detail links at 1280px
+[72/214] tests/e2e/intake-expense.spec.ts:44:2 › zh-CN 390 PDF expense retains a draft, confirms once, and restores its receipt
+[73/214] tests/e2e/intake-bulk-account-links.spec.ts:73:3 › en 390px bulk confirmation retains failures and links shared account identifiers once
+[74/214] tests/e2e/intake-bulk-account-links.spec.ts:73:3 › en 1280px bulk confirmation retains failures and links shared account identifiers once
+[75/214] tests/e2e/intake-expense.spec.ts:44:2 › zh-CN 1280 PDF expense retains a draft, confirms once, and restores its receipt
+[76/214] tests/e2e/intake-pdf.spec.ts:10:75 › zh-CN 390 PDF text requires explicit type and confirmation, retains decisions
+[77/214] tests/e2e/intake-expense.spec.ts:44:2 › en-US 390 PDF expense retains a draft, confirms once, and restores its receipt
+[78/214] tests/e2e/intake-pdf.spec.ts:10:75 › zh-CN 1280 PDF text requires explicit type and confirmation, retains decisions
+[79/214] tests/e2e/intake-pdf.spec.ts:10:75 › en-US 390 PDF text requires explicit type and confirmation, retains decisions
+[80/214] tests/e2e/intake-pdf.spec.ts:10:75 › en-US 1280 PDF text requires explicit type and confirmation, retains decisions
+[81/214] tests/e2e/intake-expense.spec.ts:44:2 › en-US 1280 PDF expense retains a draft, confirms once, and restores its receipt
+[82/214] tests/e2e/intake-review-backup.spec.ts:29:42 › zh-CN downloaded encrypted backup restores CSV/PDF drafts, receipts and stable deduplication
+[83/214] tests/e2e/intake-review-backup.spec.ts:29:42 › en-US downloaded encrypted backup restores CSV/PDF drafts, receipts and stable deduplication
+[84/214] tests/e2e/intake-review-merge.spec.ts:65:42 › zh-CN 390 candidate merge requires choices, keeps selected drafts and decisions, and survives refresh/undo
+[85/214] tests/e2e/local-core.spec.ts:24:1 › project, account, subscription, located item, linked reminder and downloaded backup survive a fresh browser restore
+[86/214] tests/e2e/intake-review-merge.spec.ts:65:42 › en-US 390 candidate merge requires choices, keeps selected drafts and decisions, and survives refresh/undo
+[87/214] tests/e2e/local-core.spec.ts:168:3 › en-US key pages and the task dialog fit 360px
+[88/214] tests/e2e/local-core.spec.ts:168:3 › en-US key pages and the task dialog fit 390px
+[89/214] tests/e2e/local-core.spec.ts:168:3 › en-US key pages and the task dialog fit 768px
+[90/214] tests/e2e/password-import-draft-input.spec.ts:40:1 › zh-CN input source and unfinished line mapping recover after reload and unlock without AI requests
+[91/214] tests/e2e/local-core.spec.ts:168:3 › en-US key pages and the task dialog fit 1280px
+[92/214] tests/e2e/local-core.spec.ts:168:3 › en-US key pages and the task dialog fit 1440px
+[93/214] tests/e2e/local-core.spec.ts:168:3 › zh-CN key pages and the task dialog fit 360px
+[94/214] tests/e2e/local-core.spec.ts:168:3 › zh-CN key pages and the task dialog fit 390px
+[95/214] tests/e2e/local-core.spec.ts:168:3 › zh-CN key pages and the task dialog fit 768px
+[96/214] tests/e2e/local-core.spec.ts:168:3 › zh-CN key pages and the task dialog fit 1280px
+[97/214] tests/e2e/password-import-draft-input.spec.ts:121:1 › zh-CN saved draft keeps recognition edits when vault changes and recheck resets review selections without AI
+[98/214] tests/e2e/local-core.spec.ts:168:3 › zh-CN key pages and the task dialog fit 1440px
+[99/214] tests/e2e/password-import-draft.spec.ts:16:3 › zh-CN 1280px encrypted AI draft survives reload and lock without resending
+[100/214] tests/e2e/password-review-controls.spec.ts:134:2 › zh-CN 1280px delete, add and newest-reviewed order survive encrypted draft recovery
+[101/214] tests/e2e/password-import-draft.spec.ts:16:3 › zh-CN 390px encrypted AI draft survives reload and lock without resending
+[102/214] tests/e2e/password-review-controls.spec.ts:134:2 › en 390px delete, add and newest-reviewed order survive encrypted draft recovery
+[103/214] tests/e2e/password-import-draft.spec.ts:16:3 › en 1280px encrypted AI draft survives reload and lock without resending
+[104/214] tests/e2e/password-import-draft.spec.ts:16:3 › en 390px encrypted AI draft survives reload and lock without resending
+[105/214] tests/e2e/password-review-controls.spec.ts:306:1 › delayed alias paste keeps sibling changes and ignores edited or locked fields
+[106/214] tests/e2e/password-review-controls.spec.ts:436:1 › a7be614 encrypted review and unfinished fragment survive a same-origin fixed-package upgrade
+tests/e2e/password-review-controls.spec.ts:436:1 › a7be614 encrypted review and unfinished fragment survive a same-origin fixed-package upgrade
+
+
+
+
+[107/214] tests/e2e/password-import-draft.spec.ts:201:1 › failed encrypted draft save blocks close and preserves the last saved draft
+[108/214] tests/e2e/password-import-draft.spec.ts:271:1 › completing import and closing immediately clears the persisted draft
+[109/214] tests/e2e/password-review-controls.spec.ts:665:1 › removing a target preserves candidate and fragment additions separately from their new-entry drafts
+[110/214] tests/e2e/password-smart-import-visual.spec.ts:115:2 › zh-CN main 54 real candidates and review navigation
+[111/214] tests/e2e/password-review-controls.spec.ts:827:2 › zh-CN 390px field copy preserves hidden multiline passwords and compact identifier cards
+[112/214] tests/e2e/password-smart-import-visual.spec.ts:115:2 › en main 54 real candidates and review navigation
+  1) tests/e2e/password-review-controls.spec.ts:827:2 › zh-CN 390px field copy preserves hidden multiline passwords and compact identifier cards 
+
+    Error: expect(received).toBeGreaterThanOrEqual(expected)
+
+    Expected: >= 8
+    Received:    0
+
+      988 | 				};
+      989 | 			});
+    > 990 | 			expect(layout.gap).toBeGreaterThanOrEqual(8);
+          | 			                   ^
+      991 | 			expect(layout.gap).toBeLessThanOrEqual(24);
+      992 | 			expect(
+      993 | 				layout.heights.every((height) => height >= 44 && height <= 90),
+        at /Users/syndred/Desktop/projects/KeepAny/tests/e2e/password-review-controls.spec.ts:990:23
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/local-release/password-review-controls-z-e6ec7-nd-compact-identifier-cards/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/local-release/password-review-controls-z-e6ec7-nd-compact-identifier-cards/error-context.md
+
+
+(node:55446) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[113/214] tests/e2e/password-review-controls.spec.ts:827:2 › en 1280px field copy preserves hidden multiline passwords and compact identifier cards
+[114/214] tests/e2e/password-smart-import-visual.spec.ts:188:1 › zh-CN controlled provider confirmation failure and cancel states
+  2) tests/e2e/password-review-controls.spec.ts:827:2 › en 1280px field copy preserves hidden multiline passwords and compact identifier cards 
+
+    Error: expect(received).toBeGreaterThanOrEqual(expected)
+
+    Expected: >= 8
+    Received:    0
+
+      988 | 				};
+      989 | 			});
+    > 990 | 			expect(layout.gap).toBeGreaterThanOrEqual(8);
+          | 			                   ^
+      991 | 			expect(layout.gap).toBeLessThanOrEqual(24);
+      992 | 			expect(
+      993 | 				layout.heights.every((height) => height >= 44 && height <= 90),
+        at /Users/syndred/Desktop/projects/KeepAny/tests/e2e/password-review-controls.spec.ts:990:23
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/local-release/password-review-controls-e-f87ab-nd-compact-identifier-cards/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/local-release/password-review-controls-e-f87ab-nd-compact-identifier-cards/error-context.md
+
+
+(node:55516) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[115/214] tests/e2e/password-smart-import.spec.ts:83:3 › zh-CN 390px unresolved fragment draft survives partial mapping and saves exact entries
+[116/214] tests/e2e/password-smart-import-visual.spec.ts:296:1 › zh-CN account editing source copy and paste controls
+[117/214] tests/e2e/password-smart-import.spec.ts:83:3 › zh-CN 1280px unresolved fragment draft survives partial mapping and saves exact entries
+[118/214] tests/e2e/password-smart-import.spec.ts:83:3 › en 390px unresolved fragment draft survives partial mapping and saves exact entries
+[119/214] tests/e2e/password-smart-import.spec.ts:83:3 › en 1280px unresolved fragment draft survives partial mapping and saves exact entries
+[120/214] tests/e2e/password-smart-import-visual.spec.ts:433:1 › zh-CN mapping append original line numbers and return preservation
+[121/214] tests/e2e/password-smart-import.spec.ts:171:2 › zh-CN CSV and TSV preserve whitespace punctuation and reject invalid UTF-8
+[122/214] tests/e2e/password-smart-import.spec.ts:171:2 › en CSV and TSV preserve whitespace punctuation and reject invalid UTF-8
+[123/214] tests/e2e/password-smart-import-visual.spec.ts:526:1 › zh-CN duplicate conflict bulk tools save and draft close confirmations
+[124/214] tests/e2e/password-smart-import.spec.ts:239:1 › AI delayed response is discarded after close and a real other-tab model change
+[125/214] tests/e2e/password-smart-import.spec.ts:315:1 › vault-stored model key automatically activates after unlocking without sending the key in source
+[126/214] tests/e2e/password-smart-import.spec.ts:387:1 › target drafts preserve edits per target and incorporate later edits to untouched fields
+[127/214] tests/e2e/password-smart-import.spec.ts:451:2 › zh-CN same-platform accounts distinguish batch repeats from saved duplicates
+[128/214] tests/e2e/password-smart-import-visual.spec.ts:686:1 › zh-CN atomic KDBX save supplementary import and cross-tab stale draft recovery
+[129/214] tests/e2e/password-smart-import.spec.ts:451:2 › en same-platform accounts distinguish batch repeats from saved duplicates
+[130/214] tests/e2e/password-smart-import.spec.ts:572:3 › zh-CN 390px optional passwords and unchanged source review save to KDBX
+[131/214] tests/e2e/password-smart-import-visual.spec.ts:891:2 › zh-CN 390px unavailable model and multiline password controls
+[132/214] tests/e2e/password-smart-import.spec.ts:572:3 › zh-CN 1280px optional passwords and unchanged source review save to KDBX
+[133/214] tests/e2e/password-smart-import-visual.spec.ts:891:2 › en 390px unavailable model and multiline password controls
+[134/214] tests/e2e/password-smart-import.spec.ts:572:3 › en 390px optional passwords and unchanged source review save to KDBX
+[135/214] tests/e2e/password-smart-import-visual.spec.ts:983:1 › zh-CN website title preview excludes credentials and returned titles need review
+[136/214] tests/e2e/password-smart-import.spec.ts:572:3 › en 1280px optional passwords and unchanged source review save to KDBX
+[137/214] tests/e2e/password-smart-import-visual.spec.ts:1040:1 › zh-CN provider truncation and timeout preserve the existing review
+[138/214] tests/e2e/password-vault-grid.spec.ts:118:3 › zh-CN 1536 dense grid preserves fields, icon actions, legacy anchors and locked secrets
+[139/214] tests/e2e/password-smart-import-visual.spec.ts:1136:2 › zh-CN quick clipboard exact values and compact desktop layout
+[140/214] tests/e2e/password-smart-import-visual.spec.ts:1136:2 › en quick clipboard exact values and compact desktop layout
+[141/214] tests/e2e/password-vault-grid.spec.ts:118:3 › zh-CN 390 dense grid preserves fields, icon actions, legacy anchors and locked secrets
+[142/214] tests/e2e/password-vault-user-journey.spec.ts:185:2 › zh-CN passwordless labeled notes retain punctuation and prefill reviewed fields
+[143/214] tests/e2e/password-vault-user-journey.spec.ts:185:2 › en passwordless labeled notes retain punctuation and prefill reviewed fields
+[144/214] tests/e2e/password-vault-user-journey.spec.ts:229:3 › zh-CN 1536px user imports, categorizes and follows account identities before vault maintenance
+[145/214] tests/e2e/password-vault-grid.spec.ts:118:3 › en 1536 dense grid preserves fields, icon actions, legacy anchors and locked secrets
+[146/214] tests/e2e/password-vault-grid.spec.ts:118:3 › en 390 dense grid preserves fields, icon actions, legacy anchors and locked secrets
+[147/214] tests/e2e/password-vault-user-journey.spec.ts:229:3 › zh-CN 390px user imports, categorizes and follows account identities before vault maintenance
+[148/214] tests/e2e/password-vault-grid.spec.ts:422:3 › zh-CN 390 reviewed account family persists without sending vault secrets
+[149/214] tests/e2e/password-vault-grid.spec.ts:422:3 › zh-CN 1536 reviewed account family persists without sending vault secrets
+[150/214] tests/e2e/password-vault-user-journey.spec.ts:229:3 › en 1536px user imports, categorizes and follows account identities before vault maintenance
+[151/214] tests/e2e/password-vault-grid.spec.ts:422:3 › en 390 reviewed account family persists without sending vault secrets
+[152/214] tests/e2e/password-vault-user-journey.spec.ts:229:3 › en 390px user imports, categorizes and follows account identities before vault maintenance
+[153/214] tests/e2e/password-vault-grid.spec.ts:422:3 › en 1536 reviewed account family persists without sending vault secrets
+[154/214] tests/e2e/password-vault.spec.ts:249:2 › zh-CN 390px multiple login identifiers and same-platform accounts survive KDBX export and reopen
+[155/214] tests/e2e/preview-onboarding.spec.ts:8:3 › new zh-CN visitor can start with sample records at 390px
+[156/214] tests/e2e/preview-onboarding.spec.ts:8:3 › new zh-CN visitor can start with sample records at 1280px
+[157/214] tests/e2e/preview-onboarding.spec.ts:8:3 › new en-US visitor can start with sample records at 390px
+[158/214] tests/e2e/preview-onboarding.spec.ts:8:3 › new en-US visitor can start with sample records at 1280px
+[159/214] tests/e2e/production-offline.spec.ts:6:1 › delivered installation manifest and icons remain available offline
+[160/214] tests/e2e/production-offline.spec.ts:41:1 › built PWA reopens offline, edits local data and downloads a backup
+[161/214] tests/e2e/relation-graph-verification.spec.ts:16:3 › zh-CN graph verification and mixed groups remain accurate at 390px
+[162/214] tests/e2e/password-vault.spec.ts:541:2 › zh-CN 390px app passwords show notes directly, save without a website and retain added details when edited
+[163/214] tests/e2e/password-vault.spec.ts:671:2 › zh-CN 390px passwords persist, lock, rotate and restore with assets
+[164/214] tests/e2e/relation-graph-verification.spec.ts:16:3 › zh-CN graph verification and mixed groups remain accurate at 1280px
+[165/214] tests/e2e/password-vault.spec.ts:249:2 › zh-CN 1280px multiple login identifiers and same-platform accounts survive KDBX export and reopen
+[166/214] tests/e2e/relation-graph-verification.spec.ts:16:3 › en-US graph verification and mixed groups remain accurate at 390px
+[167/214] tests/e2e/password-vault.spec.ts:541:2 › zh-CN 1280px app passwords show notes directly, save without a website and retain added details when edited
+[168/214] tests/e2e/password-vault.spec.ts:671:2 › zh-CN 1280px passwords persist, lock, rotate and restore with assets
+[169/214] tests/e2e/relation-graph-verification.spec.ts:16:3 › en-US graph verification and mixed groups remain accurate at 1280px
+[170/214] tests/e2e/password-vault.spec.ts:249:2 › en-US 390px multiple login identifiers and same-platform accounts survive KDBX export and reopen
+[171/214] tests/e2e/restore-identity.spec.ts:73:42 › zh-CN ordinary restore preserves source identity and blocks a cross-workspace import
+[172/214] tests/e2e/restore-identity.spec.ts:73:42 › en-US ordinary restore preserves source identity and blocks a cross-workspace import
+[173/214] tests/e2e/password-vault.spec.ts:541:2 › en-US 390px app passwords show notes directly, save without a website and retain added details when edited
+[174/214] tests/e2e/restore-self-service-release.spec.ts:266:2 › zh-CN 390px fixed UI continues restore after a controlled record write interruption
+[175/214] tests/e2e/password-vault.spec.ts:671:2 › en-US 390px passwords persist, lock, rotate and restore with assets
+[176/214] tests/e2e/restore-self-service-release.spec.ts:266:2 › en-US 1280px fixed UI keeps current data after a controlled record write interruption
+[177/214] tests/e2e/spacing-consistency.spec.ts:492:2 › zh-CN 360px intake spacing keeps capture, backup and restore controls separated
+[178/214] tests/e2e/spacing-consistency.spec.ts:492:2 › zh-CN 390px intake spacing keeps capture, backup and restore controls separated
+[179/214] tests/e2e/spacing-consistency.spec.ts:492:2 › zh-CN 1280px intake spacing keeps capture, backup and restore controls separated
+[180/214] tests/e2e/spacing-consistency.spec.ts:492:2 › zh-CN 1440px intake spacing keeps capture, backup and restore controls separated
+[181/214] tests/e2e/password-vault.spec.ts:249:2 › en-US 1280px multiple login identifiers and same-platform accounts survive KDBX export and reopen
+[182/214] tests/e2e/spacing-consistency.spec.ts:492:2 › en-US 360px intake spacing keeps capture, backup and restore controls separated
+[183/214] tests/e2e/spacing-consistency.spec.ts:492:2 › en-US 390px intake spacing keeps capture, backup and restore controls separated
+[184/214] tests/e2e/spacing-consistency.spec.ts:492:2 › en-US 1280px intake spacing keeps capture, backup and restore controls separated
+[185/214] tests/e2e/spacing-consistency.spec.ts:492:2 › en-US 1440px intake spacing keeps capture, backup and restore controls separated
+[186/214] tests/e2e/spacing-consistency.spec.ts:627:2 › zh-CN 1280px settings sections, MCP, key access and AI pricing keep spacing
+[187/214] tests/e2e/spacing-consistency.spec.ts:627:2 › en-US 390px settings sections, MCP, key access and AI pricing keep spacing
+[188/214] tests/e2e/spacing-consistency.spec.ts:733:2 › zh-CN 360px forms and card grids keep field and action spacing
+[189/214] tests/e2e/password-vault.spec.ts:541:2 › en-US 1280px app passwords show notes directly, save without a website and retain added details when edited
+[190/214] tests/e2e/spacing-consistency.spec.ts:733:2 › zh-CN 390px forms and card grids keep field and action spacing
+[191/214] tests/e2e/password-vault.spec.ts:671:2 › en-US 1280px passwords persist, lock, rotate and restore with assets
+[192/214] tests/e2e/spacing-consistency.spec.ts:733:2 › zh-CN 1280px forms and card grids keep field and action spacing
+[193/214] tests/e2e/spacing-consistency.spec.ts:733:2 › zh-CN 1440px forms and card grids keep field and action spacing
+[194/214] tests/e2e/password-vault.spec.ts:997:1 › password changes lock a revealed editor in another tab; idle lock and clean KDBX import work
+[195/214] tests/e2e/spacing-consistency.spec.ts:733:2 › en-US 360px forms and card grids keep field and action spacing
+[196/214] tests/e2e/password-vault.spec.ts:1098:2 › zh-CN 390px manual passwordless entries survive editing, reload and KDBX reimport
+[197/214] tests/e2e/spacing-consistency.spec.ts:733:2 › en-US 390px forms and card grids keep field and action spacing
+[198/214] tests/e2e/password-vault.spec.ts:1098:2 › zh-CN 1280px manual passwordless entries survive editing, reload and KDBX reimport
+[199/214] tests/e2e/password-vault.spec.ts:1098:2 › en-US 390px manual passwordless entries survive editing, reload and KDBX reimport
+[200/214] tests/e2e/spacing-consistency.spec.ts:733:2 › en-US 1280px forms and card grids keep field and action spacing
+[201/214] tests/e2e/password-vault.spec.ts:1098:2 › en-US 1280px manual passwordless entries survive editing, reload and KDBX reimport
+[202/214] tests/e2e/spacing-consistency.spec.ts:733:2 › en-US 1440px forms and card grids keep field and action spacing
+[203/214] tests/e2e/task-theme-release.spec.ts:529:2 › zh-CN 390px completes the themed task workflow
+[204/214] tests/e2e/themed-select.spec.ts:35:3 › zh-CN 390: themed choices preserve keyboard, clearing, required fields and long labels
+[205/214] tests/e2e/themed-select.spec.ts:35:3 › zh-CN 1280: themed choices preserve keyboard, clearing, required fields and long labels
+[206/214] tests/e2e/task-theme-release.spec.ts:529:2 › zh-CN 1280px completes the themed task workflow
+[207/214] tests/e2e/themed-select.spec.ts:35:3 › en-US 390: themed choices preserve keyboard, clearing, required fields and long labels
+[208/214] tests/e2e/themed-select.spec.ts:35:3 › en-US 1280: themed choices preserve keyboard, clearing, required fields and long labels
+[209/214] tests/e2e/vault-reference-release.spec.ts:414:3 › zh-CN 390px vault reference saves, archives and restores through the fixed UI
+[210/214] tests/e2e/task-theme-release.spec.ts:529:2 › en-US 390px completes the themed task workflow
+[211/214] tests/e2e/task-theme-release.spec.ts:529:2 › en-US 1280px completes the themed task workflow
+[212/214] tests/e2e/vault-reference-release.spec.ts:414:3 › zh-CN 1280px vault reference saves, archives and restores through the fixed UI
+[213/214] tests/e2e/vault-reference-release.spec.ts:414:3 › en-US 390px vault reference saves, archives and restores through the fixed UI
+[214/214] tests/e2e/vault-reference-release.spec.ts:414:3 › en-US 1280px vault reference saves, archives and restores through the fixed UI
+  2 failed
+    tests/e2e/password-review-controls.spec.ts:827:2 › zh-CN 390px field copy preserves hidden multiline passwords and compact identifier cards 
+    tests/e2e/password-review-controls.spec.ts:827:2 › en 1280px field copy preserves hidden multiline passwords and compact identifier cards 
+  212 passed (10.4m)
