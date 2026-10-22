@@ -2,6 +2,8 @@ import { createRxDatabase, type RxDatabase } from 'rxdb';
 import { getRxStorageDexie } from 'rxdb/plugins/storage-dexie';
 import Dexie, { type Table } from 'dexie';
 import { z } from 'zod';
+import { trashPurgeRows, redactedTrashRow, type TrashPurgePlan, type TrashTarget } from './trash-purge';
+export type { TrashPurgePlan, TrashTarget } from './trash-purge';
 import { dueOnCycle, entitySchemas, normalizeCategoryName, type Asset, type AssetKind, type Category, type EntityType, type History, type Relation, type Submission, type Task } from '../../domain/src';
 import { canRecordProjectWorkflowTask, currentProjectWorkflowRound } from '../../domain/src/project-workflow';
 import { advanceTaskReminder, zonedParts } from '../../domain/src/task-reminder';
@@ -625,6 +627,12 @@ export class LocalRepository {
     if (type === 'asset' && this.renewalRecoveryError) throw Error('renewal-recovery-pending');
     const next = rowFor(type, value);
     const entity = parsedPayload(next) as Record<string, unknown>;
+    // A queued edit must not append personal contents to an already erased parent.
+    const erasedParentIds = type === 'relation' ? [entity.from, entity.to]
+      : ['task', 'history', 'submission'].includes(type) ? [entity.assetId] : [];
+    for (const id of erasedParentIds) {
+      if (typeof id === 'string' && id && (await this.get<{ purged?: boolean }>('asset', id))?.purged) throw Error('trash-purged');
+    }
     if (type === 'task') {
       const task = entity as unknown as Task;
       if (task.projectWorkflow?.step === 'closeDecision' && task.projectWorkflow.record) {
@@ -651,6 +659,7 @@ export class LocalRepository {
     if (current) {
       await current.incrementalModify((data: RecordRow) => {
         if (expectedPayload === null || (expectedPayload !== undefined && JSON.stringify(parsedPayload(data)) !== expectedPayload)) throw Error(type === 'task' ? 'task-stale' : type === 'preference' ? 'preference-stale' : type === 'submission' ? 'submission-stale' : 'asset-stale');
+        if ((parsedPayload(data) as { purged?: boolean }).purged && next.payload !== data.payload) throw Error('trash-purged');
         if (parsedPayload(data).deleted && !parsedPayload(next).deleted) throw Error('tombstone-restore-required');
         if (type === 'category') {
           const previous = parsedPayload(data) as Category, proposed = parsedPayload(next) as Category;
@@ -1174,7 +1183,8 @@ export class LocalRepository {
     const base = await this.fileStore.scopedBase.get(scopedKey(scope, journal.change.row.id));
     const current = await this.db.records.findOne(journal.change.row.id).exec();
     const localPayload = current ? canonical(current).payload : null;
-    if (localPayload === journal.change.row.payload || localPayload === (base?.payload ?? null)) return null;
+    if (localPayload === journal.change.row.payload ||
+      !(localPayload && JSON.parse(localPayload).purged) && localPayload === (base?.payload ?? null)) return null;
     return { rowId: journal.change.row.id, localPayload, remotePayload: journal.change.row.payload,
       basePayload: base?.payload ?? null, remoteVersion: journal.change.version };
   }
@@ -1226,7 +1236,9 @@ export class LocalRepository {
         this.db.records.storageInstance.findDocumentsById([journal.change.row.id], false)));
       const payload = current?.payload ?? null;
       const base = await this.fileStore.scopedBase.get(scopedKey(scope, journal.change.row.id));
-      if (journal.decision || payload === journal.change.row.payload || payload === (base?.payload ?? null)) throw Error('conflict-missing');
+      const purged = !!payload && !!JSON.parse(payload).purged && payload !== journal.change.row.payload;
+      if (purged && decision === 'remote') throw Error('trash-purged');
+      if (journal.decision || payload === journal.change.row.payload || (!purged && payload === (base?.payload ?? null))) throw Error('conflict-missing');
       if (payload !== journal.localPayload) {
         await this.fileStore.scopedPull.update(scope, { localPayload: payload });
         return true;
@@ -1281,6 +1293,51 @@ export class LocalRepository {
     });
   }
 
+  async previewTrashPurge(targets: readonly TrashTarget[]): Promise<TrashPurgePlan> {
+    return { targets: targets.map(target => ({ ...target })), rows: trashPurgeRows(await this.allRecords(), targets), at: Date.now() };
+  }
+
+  async purgeTrash(plan: TrashPurgePlan): Promise<void> {
+    if (!Number.isSafeInteger(plan.at) || plan.at < 0) throw Error('trash-invalid');
+    const attachmentIds = new Set<string>();
+    await this.fileStore.transaction('rw', restoreRecoveryTables(this.fileStore), async () => {
+      await this.fileStore.categoryEditJournal.count();
+      await assertRestoreRecoveryGate(this.fileStore);
+      // A pending durable write could otherwise put erased contents back after restart.
+      for (const table of [this.fileStore.journal, this.fileStore.importJournal, this.fileStore.archiveMerge,
+        this.fileStore.renewalJournal, this.fileStore.subscriptionSaveJournal, this.fileStore.categoryEditJournal,
+        this.fileStore.pullJournal, this.fileStore.scopedPull]) {
+        if (await table.count()) throw Error('trash-recovery-pending');
+      }
+      await Dexie.waitFor(Dexie.ignoreTransaction(async () => {
+        const rows = await this.allRecords();
+        const actual = trashPurgeRows(rows, plan.targets, true);
+        const expected = new Map(plan.rows.map(row => [row.id, row]));
+        if (!expected.size || expected.size !== plan.rows.length || trashPurgeRows(plan.rows, plan.targets).length !== expected.size || actual.some(row => !expected.has(row.id)) ||
+          plan.targets.some(target => !expected.has(key(target.type, target.id)))) throw Error('trash-stale');
+        const changes = [];
+        for (const before of plan.rows) {
+          validateRow(before);
+          const next = redactedTrashRow(before, plan.at);
+          const [raw] = await this.db.records.storageInstance.findDocumentsById([before.id], false);
+          if (!raw || raw.type !== before.type || (raw.payload !== before.payload && raw.payload !== next.payload)) throw Error('trash-stale');
+          if (before.type === 'asset') for (const id of (JSON.parse(before.payload) as Asset).attachments) attachmentIds.add(id);
+          if (raw.payload !== next.payload) changes.push({ previous: raw, document: { ...raw, ...next } });
+        }
+        if (changes.length) {
+          const result = await this.db.records.storageInstance.bulkWrite(changes, 'trash-purge');
+          if (result.error.length) throw Error(result.error.some(error => error.status === 409) ? 'trash-stale' : 'trash-write');
+        }
+      }));
+      const assetIds = new Set(plan.targets.filter(target => target.type === 'asset').map(target => target.id));
+      const reviews = (await this.fileStore.intakeReview.toArray()).filter(review =>
+        assetIds.has(review.asset.id) || !!review.expenseDraft && assetIds.has(review.expenseDraft.assetId));
+      await this.fileStore.intakeReview.bulkDelete(reviews.map(review => review.id));
+    });
+    // Reuse reference-aware cleanup; attachments shared by other records or queued sync writes stay protected.
+    for (const id of attachmentIds) await this.cleanupUnreferencedFile(id);
+  }
+
   // Explicit undo is the only local path that can revive a tombstone.
   async restoreEntity(type: EntityType, id: string): Promise<RecordRow> {
     if (type === 'task') {
@@ -1308,13 +1365,13 @@ export class LocalRepository {
     const document = await this.db.records.findOne(key(type, id)).exec();
     if (!document) throw Error('not-in-trash');
     const previous = parsedPayload(canonical(document)) as Record<string, unknown>;
-    if (!previous.deleted) throw Error('not-in-trash');
+    if (!previous.deleted || previous.purged) throw Error('not-in-trash');
     if (type === 'relation') await this.assertRelationEndpoints(previous as { from: string; to: string });
     let next: RecordRow | undefined;
     await document.incrementalModify(async (data: RecordRow) => {
       if (expectedPayload !== undefined && data.payload !== expectedPayload) throw Error('relation-stale');
       const current = parsedPayload(data) as Record<string, unknown>;
-      if (!current.deleted) throw Error('not-in-trash');
+      if (!current.deleted || current.purged) throw Error('not-in-trash');
       // The callback sees the latest tombstone after RxDB retries a concurrent write.
       // Check endpoints here too, immediately before this relation is made live.
       if (type === 'relation') await this.assertRelationEndpoints(current as { from: string; to: string });
@@ -1344,6 +1401,7 @@ export class LocalRepository {
       try {
         await existing.incrementalModify((data: RecordRow) => {
           if (data.payload === next.payload) throw duplicate;
+          if ((parsedPayload(data) as { purged?: boolean }).purged) throw conflict;
           if (parsedPayload(data).deleted && !parsedPayload(next).deleted) throw conflict;
           if (data.payload !== expectedPayload) throw conflict;
           return { ...data, ...next };
@@ -2260,7 +2318,7 @@ async function replayPullJournal(db: RxDatabase, store: FileStore, id: string): 
         const conflict = Symbol('sync-conflict');
         try {
           await Dexie.waitFor(Dexie.ignoreTransaction(() => current.incrementalModify((data: RecordRow) => {
-            if (data.payload !== (base?.payload ?? null)) throw conflict;
+            if (data.payload !== (base?.payload ?? null) || (parsedPayload(data) as { purged?: boolean }).purged) throw conflict;
             return { ...data, ...change.row };
           })));
         } catch (error) {
@@ -2390,6 +2448,7 @@ async function replayScopedPull(db: RxDatabase, store: FileStore, scope: string)
       await store.scopedPull.delete(scope);
     return 'applied';
   }
+  if (currentPayload && JSON.parse(currentPayload).purged && currentPayload !== row.payload && journal.decision !== 'local') return 'conflict';
   if (!journal.decision && currentPayload !== row.payload && currentPayload !== basePayload) return 'conflict';
   if (journal.decision === 'remote' && currentPayload !== journal.localPayload && currentPayload !== row.payload) {
     await store.scopedPull.update(scope, { decision: undefined, localPayload: currentPayload });
@@ -2612,6 +2671,8 @@ export async function setItemArchived(id: string, expectedStatus: 'active' | 'ar
 }
 export async function applyPulledBatch(changes: PulledRow[], cursorStart: number) { return (await defaultRepository()).applyPulledBatch(changes, cursorStart); }
 export async function syncCursor() { return (await defaultRepository()).syncCursor(); }
+export async function previewTrashPurge(targets: readonly TrashTarget[]) { return (await defaultRepository()).previewTrashPurge(targets); }
+export async function purgeTrash(plan: TrashPurgePlan) { return (await defaultRepository()).purgeTrash(plan); }
 export async function allRecords() { return (await defaultRepository()).allRecords(); }
 export async function deleteEntity(type: EntityType, id: string) { return (await defaultRepository()).deleteEntity(type, id); }
 export async function restoreEntity(type: EntityType, id: string) { return (await defaultRepository()).restoreEntity(type, id); }

@@ -57,8 +57,10 @@ async function addAccount<T extends Account>(page: Page, copy: Copy, account: T)
 	const dialog = page.getByRole("dialog");
 	await dialog.locator("#name").fill(account.name);
 	await selectChoice(dialog.locator("#category"), account.category ?? "other");
-	for (const field of ["username", "description", "url", "longDescription", "contact", "notes", "tags"] as const)
+	for (const field of ["username", "description", "url", "contact", "tags"] as const)
 		if (account[field]) await dialog.locator(`#${field}`).fill(account[field]);
+	const notes = [account.longDescription, account.notes].filter(Boolean).join("\n\n");
+	if (notes) await dialog.locator("#notes").fill(notes);
 	await dialog.getByRole("button", { name: copy.save, exact: true }).click();
 	await expect(dialog).toBeHidden();
 	const card = accountCard(page, account.name);
@@ -319,14 +321,9 @@ for (const locale of variants) for (const width of [390, 1536]) {
 			await expect(page.locator("main").getByText(description, { exact: true })).toHaveCount(1);
 			await expect(basic.getByText(description, { exact: true })).toBeVisible();
 			await expect(basic.getByText(service.contact, { exact: true })).toBeVisible();
-			await expect(basic.locator(".note")).toHaveText(service.notes);
+			await expect(basic.locator(".note")).toHaveText(`${service.longDescription}\n\n${service.notes}`);
 			await expect(basic.locator(".chips")).toContainText(service.tags);
-			const more = basic.locator("details.more");
-			await expect(more).toHaveJSProperty("open", false);
-			await more.locator("summary").click();
-			await expect(more.getByText(service.longDescription, { exact: true })).toBeVisible();
-			await more.locator("summary").click();
-			await expect(more).toHaveJSProperty("open", false);
+			await expect(basic.locator("details.more")).toHaveCount(0);
 			const popupPromise = page.waitForEvent("popup");
 			await basic.getByRole("link", { name: service.url, exact: true }).click();
 			const popup = await popupPromise;
@@ -355,9 +352,9 @@ for (const locale of variants) for (const width of [390, 1536]) {
 			await expect(dialog.locator("#accountProvider")).toHaveValue("Synthetic provider");
 			await expect(dialog.locator("#accountProfileVerifiedAt")).toHaveValue("2026-10-21");
 			await expect(dialog.locator("#contact")).toHaveValue(service.contact);
-			await expect(dialog.locator("#notes")).toHaveValue(service.notes);
+			await expect(dialog.locator("#notes")).toHaveValue(`${service.longDescription}\n\n${service.notes}`);
 			await expect(dialog.locator("#tags")).toHaveValue(service.tags);
-			await expect(dialog.locator("#longDescription")).toHaveValue(service.longDescription);
+			await expect(dialog.locator("#longDescription")).toHaveCount(0);
 			await dialog.getByRole("button", { name: copy.cancel, exact: true }).click();
 			await page.locator("#account-relations").getByRole("button", { name: copy.addRelation, exact: true }).click();
 			await page.keyboard.press("Escape");
@@ -454,7 +451,7 @@ for (const locale of variants) for (const width of [390, 1536]) {
 			await expect(basic).toContainText(updatedDescription);
 			await expect(basic).toContainText(service.username);
 			await expect(basic).toContainText(service.contact);
-			await expect(basic.locator(".note")).toHaveText(service.notes);
+			await expect(basic.locator(".note")).toHaveText(`${service.longDescription}\n\n${service.notes}`);
 			await expect(basic.locator(".chips")).toContainText(service.tags);
 			await expect(basic.getByRole("link", { name: service.url, exact: true })).toBeVisible();
 			await waitForAccountGraphLayout(page, { nodes: 2, edges: 1 });

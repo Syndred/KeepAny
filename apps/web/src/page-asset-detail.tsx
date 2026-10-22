@@ -1,3 +1,4 @@
+import { assetNotes } from "./asset-notes";
 import { accountFamilyGraph } from "./account-family-graph";
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
@@ -1605,13 +1606,7 @@ export function AssetDetail() {
 							))}
 						</div>
 					)}
-					{asset.longDescription && (
-						<details className="more">
-							<summary>{t("more")}</summary>
-							<p>{asset.longDescription}</p>
-						</details>
-					)}
-					{asset.notes && <p className="note">{asset.notes}</p>}
+					{assetNotes(asset) && <p className="note asset-supplemental-notes">{assetNotes(asset)}</p>}
 				</section>}
 				{asset.kind === "item" && <section className="card asset-item-evidence" aria-label={t("itemPhotosAndEvidence")}>
 					<div className="card-header"><h2>{t("itemPhotosAndEvidence")}</h2></div>
@@ -1746,8 +1741,7 @@ export function AssetDetail() {
 					{asset.contact && <div><dt>{t("contact")}</dt><dd>{asset.contact}</dd></div>}
 				</dl>
 				{asset.tags.length > 0 && <div className="chips">{asset.tags.map((tag) => <span className="chip" key={tag}>{tag}</span>)}</div>}
-				{asset.longDescription && <details className="more"><summary>{t("more")}</summary><p>{asset.longDescription}</p></details>}
-				{asset.notes && <p className="note">{asset.notes}</p>}
+				{assetNotes(asset) && <p className="note asset-supplemental-notes">{assetNotes(asset)}</p>}
 				</section>
 
 				<section className="card account-facts-card account-security-card"><h2>{t("accountRecordsSecurity")}</h2><dl>

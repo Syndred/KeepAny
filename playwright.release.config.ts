@@ -37,6 +37,7 @@ export default defineConfig({
 		"account-detail-dedupe.spec.ts",
 		"account-list-search.spec.ts",
 		"account-link-recovery.spec.ts",
+		"notes-trash-release.spec.ts",
 		"relation-topbar-return.spec.ts",
 		"restore-identity.spec.ts",
 		"archive-migration.spec.ts",

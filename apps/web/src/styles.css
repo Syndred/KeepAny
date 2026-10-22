@@ -515,3 +515,7 @@ p { line-height: 1.5; }
 .asset-category-recovery .actions { justify-content: flex-start; flex-wrap: wrap; }
 .asset-category-inline .list-row > .actions { flex-shrink: 0; margin: 0; }
 .dialog.account-detail-dialog .button, .dialog.account-detail-dialog .themed-select-trigger { min-width: 44px; min-height: 44px; }
+
+.asset-supplemental-notes { margin: 16px 0 0; }
+.dialog:has(> .asset-editor) { scroll-padding-block: 16px 108px; }
+.asset-editor textarea { scroll-margin-block: 16px 108px; }

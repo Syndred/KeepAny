@@ -48,6 +48,7 @@ import { AiWorkspaceDialog } from "./AiWorkspaceDialog";
 import { builtins as categoryOptions, useAppContext } from "./view-shared";
 import "./project-editor.css";
 import { Select, SelectOption } from "./components/ui/select";
+import { assetNotes, editAssetNotes } from "./asset-notes";
 
 type FieldName = keyof Asset;
 type ProjectFormFiles = { logo?: File; home?: File; products?: File[]; promo?: File };
@@ -373,7 +374,7 @@ export function AssetEditor({
 	}
 	return (
 		<Dialog title={asset ? t("edit") : t("newRecord")} className={kind === "account" ? "account-detail-dialog" : undefined} onClose={closeIfIdle}>
-			<form className={kind === "project" ? "project-editor" : undefined} onSubmit={(e) => void submit(e)}>
+			<form className={kind === "project" ? "project-editor" : "asset-editor"} onSubmit={(e) => void submit(e)}>
 				<div className="form-grid">
 					<Field
 						name="name"
@@ -716,24 +717,15 @@ export function AssetEditor({
 				</details>}
 				{kind === "vault" && <p className="notice">{t("vaultHint")}</p>}
 				{kind !== "project" && <div className="field">
-					<label htmlFor="longDescription">{t("longDescription")}</label>
-					<textarea
-						id="longDescription"
-						rows={3}
-						value={draft.longDescription}
-						onChange={(e) => set("longDescription", e.target.value)}
-						aria-invalid={!!errors.longDescription}
-						aria-describedby={errors.longDescription ? "longDescription-error" : undefined}
-					/>
-					{errors.longDescription && <small id="longDescription-error" className="field-error">{errors.longDescription}</small>}
-				</div>}
-				{kind !== "project" && <div className="field">
 					<label htmlFor="notes">{t("notes")}</label>
 					<textarea
 						id="notes"
 						rows={3}
-						value={draft.notes}
-						onChange={(e) => set("notes", e.target.value)}
+						value={assetNotes(draft)}
+						onChange={(e) => {
+							setDraft((current) => editAssetNotes(current, e.target.value));
+							setErrors((current) => ({ ...current, notes: "", longDescription: "" }));
+						}}
 						aria-invalid={!!errors.notes}
 						aria-describedby={errors.notes ? "notes-error" : undefined}
 					/>

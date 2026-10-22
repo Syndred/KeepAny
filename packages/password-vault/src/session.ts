@@ -472,6 +472,23 @@ export class VaultSession {
     }));
   }
 
+  async purgeEntries(ids: readonly string[], expectedContentRevision: string): Promise<void> {
+    const selected = [...ids];
+    if (!selected.length || selected.length > VAULT_MAX_ENTRIES || new Set(selected).size !== selected.length ||
+      selected.some(id => typeof id !== 'string' || !id || id.length > 128) || !expectedContentRevision) fail('vault-invalid');
+    return this.run(async (generation) => {
+      const db = this.unlocked();
+      if (this.contentRevision(db) !== expectedContentRevision) fail('vault-stale');
+      await this.mutate(generation, candidate => {
+        const entries = selected.map(id => findEntry(candidate, id));
+        if (entries.some(entry => !isTrash(candidate, entry))) fail('vault-invalid');
+        // kdbxweb removes the complete entry/history and records its UUID for safe KeePass merges.
+        for (const entry of entries) candidate.move(entry, undefined);
+        candidate.cleanup({ historyRules: false, customIcons: false, binaries: true });
+      });
+    });
+  }
+
   history(id: string): VaultHistoryItem[] {
     return findEntry(this.unlocked(), id).history.map((entry) => ({
       at: (entry.times.lastModTime ?? new Date(0)).toISOString(), draft: draftOf(entry),

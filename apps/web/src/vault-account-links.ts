@@ -566,7 +566,7 @@ export async function accountLinkRelationChanges(
 			suggestion.kind === "identifier" && !suggestion.identifierKind
 				? [suggestion.from, suggestion.to].sort()
 				: [suggestion.from, suggestion.to];
-		const id = suggestion.identifierKind
+		let id = suggestion.identifierKind
 			? await accountIdentityStableId("login-link", [
 					suggestion.from,
 					suggestion.identifierKind,
@@ -576,12 +576,15 @@ export async function accountLinkRelationChanges(
 					...endpoints,
 					suggestion.kind,
 				]);
+		while (existing.some(relation => relation.id === id && relation.purged))
+			id = await accountIdentityStableId("login-link", ["after-purge", id]);
 		const relationLabel = label(suggestion.kind, suggestion.identifierKind);
 		const same = existing.find((relation) => relation.id === id);
 		if (same && (same.from !== suggestion.from || same.to !== suggestion.to))
 			throw Error("account-link-conflict");
 		const equivalents = existing.filter(
 			(relation) =>
+				!relation.purged &&
 				relation.from === suggestion.from &&
 				relation.to === suggestion.to &&
 				(suggestion.identifierKind

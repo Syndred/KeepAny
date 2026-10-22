@@ -40,6 +40,51 @@ function deferred() {
 
 afterEach(() => vi.restoreAllMocks());
 
+describe('confirmed permanent deletion from password trash', () => {
+  it('removes the selected entry and history after reopen, retaining active entries and other trash', async () => {
+    const { session, storage } = await created();
+    const id = await session.saveEntry(draft);
+    await session.saveEntry({ ...draft, id, notes: 'Changed note' });
+    const keep = await session.saveEntry({ ...draft, title: 'Keep active' });
+    const otherTrash = await session.saveEntry({ ...draft, title: 'Keep other trash' });
+    await session.trashEntry(id);
+    await session.trashEntry(otherTrash);
+    await session.purgeEntries([id], session.getSnapshot().contentRevision as string);
+    expect(session.getSnapshot().entries.map(entry => entry.id)).toEqual([keep]);
+    expect(session.getSnapshot().trash.map(entry => entry.id)).toEqual([otherTrash]);
+    expect(() => session.history(id)).toThrow();
+    session.lock();
+    const reopened = new VaultSession(storage);
+    await reopened.initialize();
+    await reopened.unlock(master);
+    expect(reopened.getSnapshot().trash.map(entry => entry.id)).toEqual([otherTrash]);
+    expect(reopened.readEntry(keep)).toEqual(expect.objectContaining({ notes: draft.notes, password: draft.password }));
+    await expect(reopened.restoreEntry(id)).rejects.toThrow();
+    await reopened.purgeEntries([otherTrash], reopened.getSnapshot().contentRevision as string);
+    expect(reopened.getSnapshot().trash).toEqual([]);
+    reopened.lock();
+  });
+
+  it('rejects active entries, restored entries, stale confirmations, duplicates and locks without losing entries', async () => {
+    const { session, storage } = await created();
+    const id = await session.saveEntry(draft);
+    await expect(session.purgeEntries([id], session.getSnapshot().contentRevision as string)).rejects.toThrow('vault-invalid');
+    await session.trashEntry(id);
+    const stale = session.getSnapshot().contentRevision as string;
+    await session.restoreEntry(id);
+    await expect(session.purgeEntries([id], stale)).rejects.toThrow('vault-stale');
+    await session.trashEntry(id);
+    const revision = session.getSnapshot().contentRevision as string;
+    await expect(session.purgeEntries([id, id], revision)).rejects.toThrow('vault-invalid');
+    const write = vi.spyOn(storage, 'write').mockRejectedValueOnce(Error('vault-stale'));
+    await expect(session.purgeEntries([id], revision)).rejects.toThrow('vault-stale');
+    write.mockRestore();
+    expect(session.getSnapshot().trash.map(entry => entry.id)).toEqual([id]);
+    session.lock();
+    await expect(session.purgeEntries([id], revision)).rejects.toThrow('vault-locked');
+  });
+});
+
 describe('encrypted recoverable import drafts', () => {
   const payload = JSON.stringify({ version: 1, source: 'Synthetic source secret', candidates: [{ password: 'Synthetic unreviewed secret' }] });
 

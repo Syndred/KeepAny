@@ -635,6 +635,7 @@ export const passwordVaultCopy: Record<string, [string, string]> = {
 	pwVaultHistoryVersion: ["版本 {{count}}", "Version {{count}}"],
 	pwVaultHistoryRestore: ["恢复此版本", "Restore this version"],
 	pwVaultHistoryRestored: ["已恢复历史版本。", "History version restored."],
+	pwVaultPurgeWarning: ["将永久删除所选密码条目及其历史，无法从密码回收站恢复。账号和关系图保留。", "Permanently delete the selected password entries and their history. They cannot be restored from Password trash. Accounts and their graph are kept."],
 	pwVaultTrashTitle: ["密码回收站", "Password trash"],
 	pwVaultLinkedInTrash: ["{{name}}（已在回收站）", "{{name}} (in Trash)"],
 	pwVaultUnlink: ["解除关联", "Disconnect"],

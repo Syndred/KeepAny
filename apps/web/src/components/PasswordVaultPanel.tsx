@@ -1,3 +1,4 @@
+import "../trash.css";
 import { VaultAccountLinksDialog } from "./VaultAccountLinksDialog";
 import { useNavigate, useRouterState } from "@tanstack/react-router";
 import {
@@ -177,8 +178,10 @@ export function PasswordVaultPanel({
 	} | null>(null);
 	const [deleteTarget, setDeleteTarget] =
 		useState<PasswordVaultEntrySummary | null>(null);
+	const [purgeTarget, setPurgeTarget] = useState<{ entries: PasswordVaultEntrySummary[]; revision: string; all: boolean } | null>(null);
 	const [entryActionError, setEntryActionError] = useState("");
 	const entryActionRunning = useRef(false);
+	const purgeOpener = useRef<HTMLElement | null>(null);
 	const generateRequestRef = useRef(0);
 	const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -214,6 +217,7 @@ export function PasswordVaultPanel({
 		setManualCopy(null);
 		setUnlinkTarget(null);
 		setDeleteTarget(null);
+		setPurgeTarget(null);
 		setEntryActionError("");
 		setImportPassword("");
 		setImportOpen(false);
@@ -260,7 +264,7 @@ export function PasswordVaultPanel({
 		[visibleAssets],
 	);
 	const allAssetsById = useMemo(
-		() => new Map(assets.map((asset) => [asset.id, asset])),
+		() => new Map(assets.filter(asset => !asset.purged).map((asset) => [asset.id, asset])),
 		[assets],
 	);
 	const normalizedSearch = search.trim().toLocaleLowerCase(i18n.language);
@@ -462,6 +466,24 @@ export function PasswordVaultPanel({
 			setBusy(false);
 		}
 	}
+	async function purgeEntries() {
+		if (!purgeTarget || busy || entryActionRunning.current || !session) return;
+		entryActionRunning.current = true;
+		setBusy(true);
+		setEntryActionError("");
+		try {
+			await session.purgeEntries(purgeTarget.entries.map(entry => entry.id), purgeTarget.revision);
+			setPurgeTarget(null);
+			setMessageKey("trashDeleted");
+		} catch (error) { setEntryActionError(errorKey(error)); }
+		finally { entryActionRunning.current = false; setBusy(false); }
+	}
+	function reviewPurge(entries: PasswordVaultEntrySummary[], all = false) {
+		purgeOpener.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+		setEntryActionError("");
+		setPurgeTarget({ entries, revision: snapshot.contentRevision ?? "", all });
+	}
+
 	async function unlinkAsset() {
 		if (!unlinkTarget || busy || entryActionRunning.current || !session) return;
 		entryActionRunning.current = true;
@@ -907,10 +929,11 @@ export function PasswordVaultPanel({
 					</div>
 					<div className="password-vault-trash" id="vault-trash">
 						<div className="password-vault-section-title">
-							<h3>
+							<h3 tabIndex={-1}>
 								<Trash2 size={18} /> {t("pwVaultTrashTitle")}
 							</h3>
 							<small>{t("pwVaultTrashHint")}</small>
+							{snapshot.trash.length > 0 && <Button variant="danger" disabled={busy} onClick={() => reviewPurge(snapshot.trash, true)}>{t("emptyTrash")}</Button>}
 						</div>
 						{snapshot.trash.length ? (
 							<div className="password-vault-trash-list">
@@ -927,16 +950,11 @@ export function PasswordVaultPanel({
 													{entry.username || t("pwVaultNoLinkedAssets")}
 												</small>
 											</div>
-											<Badge tone="muted">{t("pwVaultStatusLocked")}</Badge>
+
 										</div>
 										<div className="actions">
-											<VaultIconButton
-												label={t("pwVaultRestoreEntry")}
-												disabled={busy}
-												onClick={() => void restoreEntry(entry)}
-											>
-												<Undo2 size={18} />
-											</VaultIconButton>
+											<Button disabled={busy} onClick={() => void restoreEntry(entry)}><Undo2 size={18} />{t("pwVaultRestoreEntry")}</Button>
+											<Button variant="danger" disabled={busy} onClick={() => reviewPurge([entry])}>{t("deletePermanently")}</Button>
 										</div>
 									</TaskCard>
 								))}
@@ -947,6 +965,16 @@ export function PasswordVaultPanel({
 					</div>
 				</>
 			)}
+			{purgeTarget && <Dialog className="password-vault-purge-dialog" title={t(purgeTarget.all ? "emptyTrash" : "deletePermanently")} closeDisabled={busy}
+				returnFocusTo={() => purgeOpener.current?.isConnected ? purgeOpener.current : document.querySelector<HTMLElement>(".password-vault-entry-trash .actions button, #vault-trash h3")}
+				onClose={() => { if (!entryActionRunning.current) setPurgeTarget(null); }}>
+				<p>{!purgeTarget.all ? purgeTarget.entries[0].title : t("emptyTrashConfirm", { count: purgeTarget.entries.length })}</p>
+				<p>{t("pwVaultPurgeWarning")}</p>
+				{entryActionError && <p className="field-error" role="alert">{t(entryActionError)}</p>}
+				<div className="actions"><Button disabled={busy} onClick={() => setPurgeTarget(null)}>{t("cancel")}</Button>
+					<Button variant="danger" disabled={busy} onClick={() => void purgeEntries()}>{t(busy ? "loading" : purgeTarget.all ? "emptyTrash" : "deletePermanently")}</Button></div>
+			</Dialog>}
+
 			{unlinkTarget && (
 				<Dialog
 					title={t("pwVaultUnlink")}

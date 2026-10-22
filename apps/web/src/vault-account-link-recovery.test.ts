@@ -217,6 +217,21 @@ describe("reviewed account link recovery", () => {
 		expect(reopened.blocked).toEqual([]);
 		expect(reopened.rows[0].identityAccounts[0].account.id).toBe(target.id);
 	});
+	it("creates a fresh deterministic line after permanent deletion without offering restoration", async () => {
+		const rows = await buildAccountLinkRows([entry], []);
+		const suggestions = sharedIdentifierSuggestions(rows);
+		const first = await accountLinkRelationChanges(suggestions, [], label);
+		const purged = { ...first.newRelations[0], label: "—", source: undefined, deleted: true, purged: true as const };
+		const second = await accountLinkRelationChanges(suggestions, [purged], label);
+		expect(second.deletedRelations).toEqual([]);
+		expect(second.newRelations).toHaveLength(1);
+		expect(second.newRelations[0].id).not.toBe(purged.id);
+		expect(second.newRelations[0].from).toBe(purged.from);
+		expect(second.newRelations[0].to).toBe(purged.to);
+		const retry = await accountLinkRelationChanges(suggestions, [purged, ...second.newRelations], label);
+		expect(retry.newRelations).toEqual([]);
+	});
+
 	it("restores a deleted line only in an explicit restoration plan, with the same id", async () => {
 		const rows = await buildAccountLinkRows([entry], []);
 		const suggestions = sharedIdentifierSuggestions(rows);

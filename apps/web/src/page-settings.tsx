@@ -591,7 +591,7 @@ export function SettingsPage() {
 				<h2>{t("trial")}</h2>
 				<p>{t("emptyHint")}</p>
 				<Button
-					disabled={data.loading || data.assets.length > 0 || seeding}
+					disabled={data.loading || data.assets.some(asset => !asset.purged) || seeding}
 					onClick={async () => {
 						setSeeding(true);
 						try {
