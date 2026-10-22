@@ -420,10 +420,10 @@ function ProjectCard({ asset, search, backlinks }: { asset: Asset; search: strin
 
 function AccountCard({ asset, search, connectionCount }: { asset: Asset; search: string; connectionCount: number }) {
 	const { t } = useTranslation();
-	const categoryLabel = niceCategory(asset.category, t).trim();
+	const categoryLabel = niceCategory(asset.category || "other", t).trim();
 	const Icon = asset.category === "email" ? Mail : asset.category === "phone" ? Smartphone : UserRound;
 	return <Link className={`asset-account-card list-row asset-account-${asset.category}`} to="/assets/$kind/$id" params={{ kind: asset.kind, id: asset.id }} onClick={() => rememberAssetList(asset, search)}>
-		<span className="asset-account-avatar"><Icon size={20} /></span><span className="asset-account-summary"><strong>{asset.name}</strong><small>{asset.username || asset.contact || asset.description || categoryLabel}</small><span className="asset-account-tags">{categoryLabel && <span className="chip">{categoryLabel}</span>}<span className="chip">{connectionCount} {t("relations")}</span></span></span>
+		<span className="asset-account-avatar"><Icon size={20} /></span><span className="asset-account-summary"><strong>{asset.name}</strong><small>{asset.username || asset.contact || asset.description || categoryLabel}</small><span className="asset-account-tags"><span className="chip">{categoryLabel}</span><span className="chip">{t("accountConnectionCount", { count: connectionCount })}</span></span></span>
 	</Link>;
 }
 
@@ -520,7 +520,7 @@ export function AssetList() {
 	const normalizedSearch = search.trim().toLocaleLowerCase();
 	const assets = allKindAssets.filter(
 		(a) =>
-			(!category || a.category === category || !!pendingCategory && [pendingCategory.beforeName, pendingCategory.afterName].includes(a.category)) &&
+			(!category || a.category === category || kind === "account" && category === "other" && !a.category || !!pendingCategory && [pendingCategory.beforeName, pendingCategory.afterName].includes(a.category)) &&
 			(!tag || a.tags.includes(tag)) &&
 			matchesAssetSearch(a, search),
 	);
@@ -606,7 +606,7 @@ export function AssetList() {
 				</table> : <div className="vault-reference-empty"><strong>{category || tag || normalizedSearch ? t("noMatches") : t("none")}</strong></div>}
 			</section>) : <section className={`asset-list-content ${kind === "project" ? "asset-project-grid" : kind === "account" ? "asset-account-grid" : "asset-library-grid"}`}>
 				{assets.length ? (
-					assets.map((a) => kind === "project" ? <ProjectCard asset={a} search={search} backlinks={backlinksByAsset.get(a.id) ?? { total: 0, pending: 0 }} key={a.id} /> : kind === "account" ? <AccountCard asset={a} search={search} connectionCount={data.relations.filter((relation) => !relation.deleted && liveIds.has(relation.from) && liveIds.has(relation.to) && (relation.from === a.id || relation.to === a.id)).length} key={a.id} /> : <LibraryCard asset={a} search={search} key={a.id} />)
+						assets.map((a) => kind === "project" ? <ProjectCard asset={a} search={search} backlinks={backlinksByAsset.get(a.id) ?? { total: 0, pending: 0 }} key={a.id} /> : kind === "account" ? <AccountCard asset={a} search={search} connectionCount={new Set(data.relations.filter((relation) => !relation.deleted && liveIds.has(relation.from) && liveIds.has(relation.to) && relation.from !== relation.to && (relation.from === a.id || relation.to === a.id)).map((relation) => relation.from === a.id ? relation.to : relation.from)).size} key={a.id} /> : <LibraryCard asset={a} search={search} key={a.id} />)
 				) : (
 					category || tag || normalizedSearch ? (
 						<div className="empty"><strong>{t("noMatches")}</strong></div>

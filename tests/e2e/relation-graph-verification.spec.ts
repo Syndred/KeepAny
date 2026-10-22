@@ -3,6 +3,7 @@ import { expect, test, type Page } from "@playwright/test";
 import { strFromU8, unzipSync } from "fflate";
 import { decryptBackup } from "../../packages/local-db/src/backup-crypto";
 import { selectChoice } from "./helpers/select-choice";
+import { expectReadableAccountGraph } from "./helpers/account-graph";
 
 test.use({ actionTimeout: 15_000 });
 const password = "graph-verification-backup";
@@ -55,33 +56,40 @@ for (const locale of ["zh-CN", "en-US"] as const) {
 			async function graphGeometry(targetPage: Page) {
 				for (const edge of await targetPage.locator(".react-flow__edge-path").all()) {
 					const path = await edge.getAttribute("d");
-					expect(path, "Relations connect directly without looping curves").toMatch(/^M[-\d.,\s]+L[-\d.,\s]+$/);
+					expect(path, "Connections use finite React Flow smooth-step paths").toMatch(/^M[-\d.,\s]+[LQ]/);
+					expect(path).not.toMatch(/NaN|Infinity/);
+					expect(await edge.evaluate(element => (element as SVGPathElement).getTotalLength())).toBeGreaterThan(0);
 				}
 				for (const label of await targetPage.locator(".asset-graph-label").all()) {
 					expect(await label.evaluate(element => element.scrollWidth <= element.clientWidth + 1), "Node labels fit inside their own box").toBe(true);
-					await expect(label).toHaveAttribute("title", await label.textContent() ?? "");
+					const title = await label.getAttribute("title");
+					expect(title).toContain(await label.locator("strong").textContent() ?? "");
+					if (await label.locator("small").count()) expect(title).toContain(await label.locator("small").textContent() ?? "");
 				}
 				const gap = await targetPage.locator(".graph").evaluate(graph => {
-					const center = graph.querySelector(".asset-graph-center")!.getBoundingClientRect();
-					const neighbors = [...graph.querySelectorAll(".asset-graph-neighbor")].map(node => node.getBoundingClientRect());
+					const nodes = [...graph.querySelectorAll(".react-flow__node")].map(node => node.getBoundingClientRect());
+					const apart = nodes.every((left, i) => nodes.slice(i + 1).every(right => left.right + 5 <= right.left || right.right + 5 <= left.left || left.bottom + 5 <= right.top || right.bottom + 5 <= left.top));
+					if (!apart) return false;
 					return [...graph.querySelectorAll<SVGPathElement>(".react-flow__edge-path")].every(path => {
-						const matrix = path.getScreenCTM()!;
+						const matrix = path.getScreenCTM();
+						if (!matrix) return false;
 						const endpoints = [path.getPointAtLength(0), path.getPointAtLength(path.getTotalLength())].map(point => new DOMPoint(point.x, point.y).matrixTransform(matrix));
-						const inGap = endpoints.every(point => point.y >= center.bottom - 5 && point.y <= Math.max(...neighbors.map(node => node.top)) + 5);
-						const nodes = [center, ...neighbors];
-						const clear = [0.1, 0.25, 0.5, 0.75, 0.9].every(fraction => {
+						const facing = nodes.some(node => Math.abs(endpoints[0].x - node.right) <= 5 && endpoints[0].y >= node.top && endpoints[0].y <= node.bottom)
+							&& nodes.some(node => Math.abs(endpoints[1].x - node.left) <= 5 && endpoints[1].y >= node.top && endpoints[1].y <= node.bottom);
+						const clear = Array.from({ length: 39 }, (_, index) => (index + 1) / 40).every(fraction => {
 							const point = path.getPointAtLength(path.getTotalLength() * fraction);
 							const screen = new DOMPoint(point.x, point.y).matrixTransform(matrix);
 							return nodes.every(node => screen.x <= node.left + 2 || screen.x >= node.right - 2 || screen.y <= node.top + 2 || screen.y >= node.bottom - 2);
 						});
-						return inGap && clear;
+						return facing && clear;
 					});
 				});
-				expect(gap, "Both incoming and outgoing edges use the facing sides of the nodes").toBe(true);
+				expect(gap, "Nodes do not overlap and directed edges use right/left handles without crossing cards").toBe(true);
 				expect(await targetPage.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);
 			}
 			async function graphState(targetPage: Page, mixed = false) {
 				await expect(targetPage.locator(".react-flow__node")).toHaveCount(3);
+				await expectReadableAccountGraph(targetPage);
 				for (const node of await targetPage.locator(".react-flow__node").all()) await expect(node).toBeVisible();
 				const solid = targetPage.locator(".relation-graph-edge--verified");
 				const dashed = targetPage.locator(".relation-graph-edge--pending");
@@ -89,7 +97,7 @@ for (const locale of ["zh-CN", "en-US"] as const) {
 				await expect(dashed).toHaveCount(mixed ? 2 : 1);
 				await expect(targetPage.getByText(text.legend, { exact: true })).toBeVisible();
 				if (!mixed) {
-					await expect(solid).toHaveAttribute("aria-label", `Verified link · ${text.verified}`);
+					await expect(solid).toHaveAttribute("aria-label", `${hubName} → Verified account · Verified link · ${text.verified}`);
 					await expect(solid.locator(".react-flow__edge-path")).toHaveCSS("stroke-dasharray", "none");
 				} else {
 					const mixedEdge = dashed.filter({ hasText: "Extra pending" });
@@ -97,6 +105,7 @@ for (const locale of ["zh-CN", "en-US"] as const) {
 					await expect(mixedEdge).toHaveAttribute("aria-label", new RegExp(` · ${text.mixed}$`));
 				}
 				for (const edge of await dashed.all()) await expect(edge.locator(".react-flow__edge-path")).toHaveCSS("stroke-dasharray", "5px, 4px");
+				await expect(dashed.filter({ hasText: "Pending link" })).toHaveAttribute("aria-label", `Pending account → ${hubName} · Pending link · ${text.pending}`);
 				await graphGeometry(targetPage);
 			}
 			try {
@@ -121,6 +130,20 @@ for (const locale of ["zh-CN", "en-US"] as const) {
 				await graphState(page);
 				await page.reload();
 				await graphState(page);
+				await connect("Pending account", "Reverse pending");
+				await expect(page.locator(".react-flow__edge-path")).toHaveCount(3);
+				const pendingLabel = page.locator(".react-flow__edge").filter({ hasText: "Pending link" }).locator(".react-flow__edge-textwrapper");
+				const reverseLabel = page.locator(".react-flow__edge").filter({ hasText: "Reverse pending" }).locator(".react-flow__edge-textwrapper");
+				await expect.poll(async () => {
+					const [left, right] = await Promise.all([pendingLabel.boundingBox(), reverseLabel.boundingBox()]);
+					return !!left && !!right && (left.x + left.width <= right.x || right.x + right.width <= left.x || left.y + left.height <= right.y || right.y + right.height <= left.y);
+				}, { message: "Reciprocal connection labels have separate readable lanes" }).toBe(true);
+				await graphGeometry(page);
+				await page.getByRole("button", { name: `${text.deleteRelation} · Reverse pending · Pending account`, exact: true }).click();
+				await page.getByRole("dialog").getByRole("button", { name: text.deleteRelation, exact: true }).click();
+				await expect(page.getByRole("dialog")).toBeHidden();
+				await graphState(page);
+				await page.locator(".react-flow__controls-fitview").click();
 				await page.locator(".react-flow__node").filter({ hasText: "Pending account" }).click();
 				await expect(page.getByRole("heading", { name: "Pending account", exact: true })).toBeVisible();
 				await expect(page.locator(".relation-graph-edge--pending")).toHaveCount(1);
@@ -161,14 +184,16 @@ for (const locale of ["zh-CN", "en-US"] as const) {
 				await page.goto(hub);
 				await expect(page.locator(".react-flow__node")).toHaveCount(7);
 				await expect(page.locator(".react-flow__edge-path")).toHaveCount(6);
+				await expectReadableAccountGraph(page);
 				await graphGeometry(page);
-				expect(await page.locator(".graph").evaluate(graph => {
+				await page.locator(".react-flow__controls-fitview").click();
+				await expect.poll(() => page.locator(".graph").evaluate(graph => {
 					const bounds = graph.getBoundingClientRect();
 					return [...graph.querySelectorAll(".react-flow__node")].every(node => {
 						const rect = node.getBoundingClientRect();
 						return rect.left >= bounds.left && rect.right <= bounds.right && rect.top >= bounds.top && rect.bottom <= bounds.bottom;
 					});
-				}), "Six neighboring nodes fit inside the graph viewport").toBe(true);
+				}), { message: "Manual fit shows all six neighboring nodes inside the viewport" }).toBe(true);
 				await page.locator(".graph").scrollIntoViewIfNeeded();
 				await page.screenshot({ path: evidence ? `${evidence}/relation-graph-six-${locale}-${width}.png` : test.info().outputPath(`relation-graph-six-${locale}-${width}.png`) });
 

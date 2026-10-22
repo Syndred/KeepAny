@@ -1,5 +1,51 @@
 /** Password vault copy kept separate so the shell can merge it into i18next. */
 export const passwordVaultCopy: Record<string, [string, string]> = {
+	accountConnectionCount: ["{{count}} 个关联", "{{count}} connections"],
+	accountGraphDirect: ["直接关联", "Direct"],
+	accountGraphFamily: ["完整关系", "All connections"],
+	accountGraphCounts: [
+		"{{direct}} 个直接关联 · {{indirect}} 个间接关联",
+		"{{direct}} direct · {{indirect}} indirect",
+	],
+	accountGraphSearch: [
+		"搜索名称、账号或关联",
+		"Search name, account or connection",
+	],
+	accountGraphSearchMatches: ["{{count}} 个匹配", "{{count}} matches"],
+	accountGraphCurrent: ["当前账号", "Current account"],
+	accountGraphFocus: ["定位当前", "Center account"],
+	accountGraphFit: ["查看全图", "Fit all"],
+	accountGraphDirection: [
+		"箭头指向登录或找回账号，可拖动、缩放查看。",
+		"Arrows point to login or recovery accounts. Drag or zoom to explore.",
+	],
+	pwConnectKind_email: ["登录邮箱", "Login email"],
+	pwConnectKind_phone: ["登录手机号", "Login phone"],
+	pwConnectUpdate: ["更新账号资料", "Update account details"],
+	pwConnectBatchLimit: [
+		"本次账号及关联过多，请分批选择后保存。",
+		"There are too many accounts and connections in this batch. Select fewer and save in batches.",
+	],
+	pwConnectIdentityInUse: [
+		"该邮箱或手机已有独立身份记录。请先处理原账号及其关联后再更换标识。",
+		"This email or phone has an identity record. Review the original account and its connections before changing the identifier.",
+	],
+	pwConnectOriginal: [
+		"原账号：{{name}} · {{username}}",
+		"Previously: {{name}} · {{username}}",
+	],
+	pwConnectReplace: [
+		"将清理 {{count}} 条旧标识关联",
+		"Removes {{count}} old identifier connections",
+	],
+	pwConnectBlocked: [
+		"{{count}} 条账号的关联存在冲突，请先检查已删除或重复的账号：{{names}}。其余条目可继续。",
+		"{{count}} accounts have conflicting links. Check deleted or duplicate accounts: {{names}}. You can continue with the other entries.",
+	],
+	pwConnectIdentityHint: [
+		"按登录标识建立关联，不代表第三方登录或找回方式。",
+		"Identifier connections do not confirm third-party sign-in or recovery.",
+	],
 	pwConnectNotesLong: [
 		"线索超过 500 字，请删减到 500 字以内后再分析；原备注不会被修改。",
 		"Shorten the hint to 500 characters before analysis. The original notes will not change.",
@@ -78,8 +124,8 @@ export const passwordVaultCopy: Record<string, [string, string]> = {
 		"Could not save. Close and review again.",
 	],
 	pwConnectPartial: [
-		"账号资料已保存，密码卡片尚未关联成功。重新解锁并再次关联即可继续，不会重复新建账号。",
-		"Account records were saved, but vault links were not. Unlock and connect again to finish without creating duplicate accounts.",
+		"部分账号或关系已保存，尚未完成。请重试；若已锁库，重新解锁后再次关联，不会重复新建。",
+		"Some account records or connections were saved, but the process is unfinished. Retry, or unlock and connect again if locked. Existing records will not be duplicated.",
 	],
 	pwConnectStale: [
 		"密码库已变化，请关闭后重新核对。",

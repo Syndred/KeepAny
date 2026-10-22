@@ -12,19 +12,21 @@ import { localRepository } from "../../../../packages/local-db/src";
 import { acquireAiConnection, useAiConnection } from "../ai-settings-store";
 import { parseAiJson } from "../ai-workflow-model";
 import {
-	accountLinkRelations,
 	accountLinkSystem,
 	aiAccountLinkInput,
 	buildAccountLinkRows,
+	buildAccountLinkSavePlan,
 	dedupeSuggestions,
 	readAiAccountLinks,
 	sharedIdentifierSuggestions,
 	type AccountLinkRow,
 	type AccountLinkSuggestion,
 } from "../vault-account-links";
+import { builtins, niceCategory, useAppContext } from "../view-shared";
 import { usePasswordVault } from "./PasswordVaultProvider";
 import { Button } from "./ui/button";
 import { Dialog } from "./ui/dialog";
+import { Select, SelectOption } from "./ui/select";
 
 export function VaultAccountLinksDialog({
 	onClose,
@@ -34,6 +36,7 @@ export function VaultAccountLinksDialog({
 	onSaved: () => void;
 }) {
 	const { t } = useTranslation();
+	const { data } = useAppContext();
 	const { session, snapshot } = usePasswordVault();
 	const { connection } = useAiConnection();
 	const base = useRef(snapshot.contentRevision);
@@ -42,6 +45,10 @@ export function VaultAccountLinksDialog({
 	const [selected, setSelected] = useState<string[]>([]);
 	const [suggestions, setSuggestions] = useState<AccountLinkSuggestion[]>([]);
 	const [chosen, setChosen] = useState<number[]>([]);
+	const [sourceAssets, setSourceAssets] = useState<Asset[]>([]);
+	const [sourceRelations, setSourceRelations] = useState<Relation[]>([]);
+	const [replaceCount, setReplaceCount] = useState(0);
+	const [blockedEntries, setBlockedEntries] = useState<string[]>([]);
 	const [busy, setBusy] = useState(false),
 		[loading, setLoading] = useState(true),
 		[message, setMessage] = useState("");
@@ -56,6 +63,7 @@ export function VaultAccountLinksDialog({
 			const repository = await localRepository();
 			if (!active.current) return;
 			const assets = await repository.list<Asset>("asset", true);
+			const relations = await repository.list<Relation>("relation", true);
 			if (!active.current || session.getSnapshot().status !== "unlocked")
 				return;
 			const entries = session
@@ -67,8 +75,28 @@ export function VaultAccountLinksDialog({
 			const notes = new Map(
 				entries.map((entry) => [entry.id, session.readEntry(entry.id).notes]),
 			);
-			const result = await buildAccountLinkRows(entries, assets, notes);
-			if (active.current) setRows(result);
+			let result: AccountLinkRow[];
+			const blocked: string[] = [];
+			try {
+				result = await buildAccountLinkRows(entries, assets, notes, relations);
+			} catch {
+				const eligible = [];
+				for (const entry of entries) {
+					try {
+						await buildAccountLinkRows([entry], assets, notes, relations);
+						eligible.push(entry);
+					} catch {
+						blocked.push(entry.title);
+					}
+				}
+				result = await buildAccountLinkRows(eligible, assets, notes, relations);
+			}
+			if (active.current) {
+				setRows(result);
+				setBlockedEntries(blocked);
+				setSourceAssets(assets);
+				setSourceRelations(relations);
+			}
 		};
 		void load()
 			.catch(() => {
@@ -83,8 +111,46 @@ export function VaultAccountLinksDialog({
 		};
 	}, [session, t]);
 	const selectedRows = rows.filter((row) => selected.includes(row.entryId));
-	const label = (kind: AccountLinkSuggestion["kind"]) =>
-		t(`pwConnectKind_${kind}`);
+	const label = (
+		kind: AccountLinkSuggestion["kind"],
+		identifierKind?: "email" | "phone",
+	) => t(`pwConnectKind_${identifierKind ?? kind}`);
+	const categoryOptions = [
+		...new Set([
+			...builtins.account,
+			...data.categories
+				.filter((category) => category.kind === "account" && !category.deleted)
+				.map((category) => category.name),
+			...rows.map((row) => row.account.category).filter(Boolean),
+		]),
+	];
+	const accountNames = new Map(
+		rows
+			.flatMap((row) => [
+				row.account,
+				...row.identityAccounts.map((identity) => identity.account),
+			])
+			.map((account) => [account.id, account.name]),
+	);
+	useEffect(() => {
+		let current = true;
+		void buildAccountLinkSavePlan(
+			rows.filter((row) => selected.includes(row.entryId)),
+			suggestions.filter((_, index) => chosen.includes(index)),
+			sourceAssets,
+			sourceRelations,
+			(kind, identity) => t(`pwConnectKind_${identity ?? kind}`),
+		)
+			.then((plan) => {
+				if (current) setReplaceCount(plan.replacedRelations.length);
+			})
+			.catch(() => {
+				if (current) setReplaceCount(0);
+			});
+		return () => {
+			current = false;
+		};
+	}, [rows, selected, suggestions, chosen, sourceAssets, sourceRelations, t]);
 	function select(ids: string[]) {
 		setSelected(ids);
 		setSuggestions([]);
@@ -163,43 +229,36 @@ export function VaultAccountLinksDialog({
 				session.getSnapshot().contentRevision !== base.current
 			)
 				throw Error("stale");
-			const expected: Asset[] = [],
-				items: { type: EntityType; value: unknown }[] = [];
-			const seen = new Set<string>();
-			for (const row of selectedRows) {
-				if (seen.has(row.account.id)) continue;
-				seen.add(row.account.id);
-				const found = current.find((a) => a.id === row.account.id);
-				if (found) {
-					if (
-						found.deleted ||
-						found.kind !== "account" ||
-						found.name !== row.account.name ||
-						found.username !== row.account.username ||
-						found.url !== row.account.url
-					)
-						throw Error("stale");
-					expected.push(found);
-				} else {
-					if (!row.isNew) throw Error("stale");
-					items.push({ type: "asset", value: row.account });
-				}
-			}
-			const relations = await accountLinkRelations(
+			const plan = await buildAccountLinkSavePlan(
+				selectedRows,
 				suggestions.filter((_, i) => chosen.includes(i)),
+				current,
 				existingRelations,
 				label,
 			);
-			items.push(
-				...relations.map((value) => ({ type: "relation" as const, value })),
-			);
+			const items: { type: EntityType; value: unknown }[] = [
+				...plan.newAssets.map((value) => ({ type: "asset" as const, value })),
+				...plan.newRelations.map((value) => ({
+					type: "relation" as const,
+					value,
+				})),
+			];
+			if (items.length > 1000) throw Error("account-link-batch-limit");
 			if (
 				!active.current ||
 				session.getSnapshot().contentRevision !== base.current
 			)
 				throw Error("stale");
-			if (items.length)
-				await repository.saveBatchIfAssetsCurrent(items, expected);
+			for (const update of plan.accountUpdates) {
+				await repository.saveAssetIfCurrent(update.expected, update.next);
+				savedAccounts = true;
+			}
+			if (items.length) {
+				await repository.saveBatchIfAssetsCurrent(items, plan.expectedAssets);
+				savedAccounts = true;
+			}
+			for (const update of plan.replacedRelations)
+				await repository.saveRelationIfCurrent(update.expected, update.next);
 			savedAccounts = true;
 			await session.linkAccounts(
 				selectedRows.map((row) => ({
@@ -212,10 +271,20 @@ export function VaultAccountLinksDialog({
 				onSaved();
 				onClose();
 			}
-		} catch {
+		} catch (error) {
 			if (active.current)
 				setMessage(
-					t(savedAccounts ? "pwConnectPartial" : "pwConnectSaveError"),
+					t(
+						error instanceof Error &&
+							error.message === "account-link-batch-limit"
+							? "pwConnectBatchLimit"
+							: error instanceof Error &&
+									error.message === "account-link-identity-in-use"
+								? "pwConnectIdentityInUse"
+								: savedAccounts
+									? "pwConnectPartial"
+									: "pwConnectSaveError",
+					),
 				);
 		} finally {
 			running.current = false;
@@ -273,6 +342,14 @@ export function VaultAccountLinksDialog({
 			}
 		>
 			<div className="vault-connect-content">
+				{blockedEntries.length > 0 && (
+					<p className="notice" role="alert">
+						{t("pwConnectBlocked", {
+							count: blockedEntries.length,
+							names: blockedEntries.join("、"),
+						})}
+					</p>
+				)}
 				{stale && (
 					<p className="notice" role="alert">
 						{t("pwConnectStale")}
@@ -323,7 +400,22 @@ export function VaultAccountLinksDialog({
 													{row.loginIdentifiers[0]}
 												</span>
 												<small>
-													{t(row.isNew ? "pwConnectNew" : "pwConnectExisting")}
+													{t(
+														row.isNew
+															? "pwConnectNew"
+															: row.originalAccount &&
+																	["name", "username", "url"].some(
+																		(key) =>
+																			row.account[
+																				key as "name" | "username" | "url"
+																			] !==
+																			row.originalAccount?.[
+																				key as "name" | "username" | "url"
+																			],
+																	)
+																? "pwConnectUpdate"
+																: "pwConnectExisting",
+													)}
 												</small>
 											</label>
 											<div className="vault-connect-details">
@@ -335,6 +427,58 @@ export function VaultAccountLinksDialog({
 												{row.account.url && <p>{row.account.url}</p>}
 												{selected.includes(row.entryId) && (
 													<>
+														<label
+															className="field vault-connect-category"
+															htmlFor={`vault-connect-category-${row.entryId}`}
+														>
+															<span>{t("category")}</span>
+															<Select
+																id={`vault-connect-category-${row.entryId}`}
+																value={row.account.category || "other"}
+																disabled={busy || stale}
+																aria-label={`${t("category")} ${row.account.name}`}
+																onValueChange={(category) => {
+																	setRows((current) =>
+																		current.map((item) =>
+																			item.account.id === row.account.id
+																				? {
+																						...item,
+																						account: {
+																							...item.account,
+																							category,
+																						},
+																					}
+																				: item,
+																		),
+																	);
+																	setSuggestions([]);
+																	setChosen([]);
+																}}
+															>
+																{categoryOptions.map((category) => (
+																	<SelectOption key={category} value={category}>
+																		{niceCategory(category, t)}
+																	</SelectOption>
+																))}
+															</Select>
+														</label>
+														{row.originalAccount &&
+															["name", "username", "url"].some(
+																(key) =>
+																	row.account[
+																		key as "name" | "username" | "url"
+																	] !==
+																	row.originalAccount?.[
+																		key as "name" | "username" | "url"
+																	],
+															) && (
+																<small>
+																	{t("pwConnectOriginal", {
+																		name: row.originalAccount.name,
+																		username: row.originalAccount.username,
+																	})}
+																</small>
+															)}
 														<label className="field">
 															<span className="sr-only">
 																{t("pwConnectHint")}
@@ -402,17 +546,12 @@ export function VaultAccountLinksDialog({
 											/>
 											<span>
 												<strong>
-													{
-														rows.find((r) => r.account.id === relation.from)
-															?.account.name
-													}{" "}
-													→{" "}
-													{
-														rows.find((r) => r.account.id === relation.to)
-															?.account.name
-													}
+													{accountNames.get(relation.from)} →{" "}
+													{accountNames.get(relation.to)}
 												</strong>
-												<span>{label(relation.kind)}</span>
+												<span>
+													{label(relation.kind, relation.identifierKind)}
+												</span>
 												{relation.evidence && (
 													<small>{relation.evidence}</small>
 												)}
@@ -420,9 +559,19 @@ export function VaultAccountLinksDialog({
 										</label>
 									))}
 								</div>
+								{suggestions.length > 0 && (
+									<p className="vault-connect-empty">
+										{t("pwConnectIdentityHint")}
+									</p>
+								)}
 							</section>
 						</div>
 						<footer className="vault-connect-footer">
+							{replaceCount > 0 && (
+								<p className="vault-connect-replacement" role="status">
+									{t("pwConnectReplace", { count: replaceCount })}
+								</p>
+							)}
 							<div className="vault-connect-meta">
 								{connection ? (
 									<span className="vault-connect-destination">

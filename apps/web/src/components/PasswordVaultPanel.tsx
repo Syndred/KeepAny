@@ -811,7 +811,15 @@ export function PasswordVaultPanel({
 								size="small"
 								variant="ghost"
 								disabled={busy}
-								onClick={() => setAssetFilter("")}
+								onClick={() => {
+									setAssetFilter("");
+									void navigate({
+										to: "/assets/$kind",
+										params: { kind: "vault" },
+										hash: "",
+										replace: true,
+									});
+								}}
 							>
 								<X size={14} /> {t("pwVaultClearAssetFilter")}
 							</Button>

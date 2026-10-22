@@ -162,8 +162,7 @@ async function identityTarget(
 		if (!/^login-link-[a-f0-9]{64}$/.test(relation.id)) continue;
 		const target = assets.find((asset) => asset.id === relation.to);
 		if (
-			!target ||
-			target.kind !== "account" ||
+			target?.kind !== "account" ||
 			identityValue(target, kind) !== identifier
 		)
 			continue;

@@ -38,7 +38,7 @@ export const icons = {
 };
 export const builtins: Record<AssetKind, string[]> = {
 	project: ["website", "repository", "tool"],
-	account: ["email", "phone", "social"],
+	account: ["email", "phone", "social", "other"],
 	subscription: ["software", "service"],
 	item: ["device", "other"],
 	vault: ["other"],

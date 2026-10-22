@@ -5,6 +5,11 @@ import { mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { build } from "esbuild";
 import { expect, test } from "@playwright/test";
+import { selectChoice } from "./helpers/select-choice";
+import {
+	expectReadableAccountGraph,
+	exerciseAccountGraphControls,
+} from "./helpers/account-graph";
 import type {
 	VaultEntryDraft,
 	VaultPersistence,
@@ -97,12 +102,13 @@ test.beforeAll(async () => {
 	await session.initialize();
 	await session.create(visualMaster);
 	for (const record of records) await session.saveEntry(record);
-	fixtureIds = records.map(
-		(record) =>
-			session
-				.getSnapshot()
-				.entries.find((entry) => entry.title === record.title)!.id,
-	);
+	fixtureIds = records.map((record) => {
+		const entry = session
+			.getSnapshot()
+			.entries.find((entry) => entry.title === record.title);
+		if (!entry) throw Error(`Missing synthetic vault entry: ${record.title}`);
+		return entry.id;
+	});
 	fixture = Buffer.from(await session.exportKdbx());
 	session.lock();
 });
@@ -467,61 +473,133 @@ for (const locale of ["zh-CN", "en"] as const)
 					dialog.locator('input[type="checkbox"]:checked'),
 				).toHaveCount(0);
 				expect(mock.requests).toHaveLength(0);
-                const search = dialog.getByRole("searchbox", { name: t("pwConnectSearch") });
-                await expect(dialog.getByRole("heading", { name: t("pwConnectTitle"), exact: true })).toBeFocused();
-                await expect(dialog.locator('[role="alert"]')).toHaveCount(0);
-                const all = dialog.getByRole("button", { name: t("pwConnectSelectAll"), exact: true });
-                expect((await all.boundingBox())?.x).toBeLessThan((await search.boundingBox())?.x ?? 0);
-                await page.screenshot({ path: join(root, `connect-open-${locale}-${width}.png`) });
-                await search.click();
-                await expect(search).toBeFocused();
-                await expect(search).toHaveCSS("outline-style", "none");
-                await expect(dialog.locator(".vault-connect-search")).not.toHaveCSS("box-shadow", "none");
-                await page.screenshot({ path: join(root, `connect-search-${locale}-${width}.png`) });
-                await page.keyboard.press("Tab");
-                await expect(search).not.toBeFocused();
+				const search = dialog.getByRole("searchbox", {
+					name: t("pwConnectSearch"),
+				});
+				await expect(
+					dialog.getByRole("heading", {
+						name: t("pwConnectTitle"),
+						exact: true,
+					}),
+				).toBeFocused();
+				await expect(dialog.locator('[role="alert"]')).toHaveCount(0);
+				const all = dialog.getByRole("button", {
+					name: t("pwConnectSelectAll"),
+					exact: true,
+				});
+				expect((await all.boundingBox())?.x).toBeLessThan(
+					(await search.boundingBox())?.x ?? 0,
+				);
+				await page.screenshot({
+					path: join(root, `connect-open-${locale}-${width}.png`),
+				});
+				await search.click();
+				await expect(search).toBeFocused();
+				await expect(search).toHaveCSS("outline-style", "none");
+				await expect(dialog.locator(".vault-connect-search")).not.toHaveCSS(
+					"box-shadow",
+					"none",
+				);
+				await page.screenshot({
+					path: join(root, `connect-search-${locale}-${width}.png`),
+				});
+				await page.keyboard.press("Tab");
+				await expect(search).not.toBeFocused();
 
-                await search.fill("no-matching-account-synthetic");
-                await expect(dialog.locator(".vault-connect-account")).toHaveCount(0);
-                await expect(dialog.getByText(t("pwConnectNoResults"), { exact: true })).toBeVisible();
-                await search.fill(records[2].title);
-                await expect(dialog.locator(".vault-connect-account")).toHaveCount(1);
-                await search.fill("");
-                await expect(dialog.locator(".vault-connect-account")).toHaveCount(6);
-                const header = await dialog.locator(":scope > header").boundingBox();
-                const footer = await dialog.locator(".vault-connect-footer").boundingBox();
-                expect(header).toBeTruthy();
-                expect(footer).toBeTruthy();
-                expect(header?.height).toBeLessThan(width > 760 ? 100 : 150);
-                expect((footer?.y ?? 0) + (footer?.height ?? 0)).toBeLessThanOrEqual(page.viewportSize()?.height ?? 0);
-                if (width > 760) {
-                    const left = await dialog.locator(".vault-connect-account-pane").boundingBox();
-                    const right = await dialog.locator(".vault-connect-review-pane").boundingBox();
-                    expect(left?.y).toBe(right?.y);
-                    expect(right?.x).toBeGreaterThan(left?.x ?? 0);
-                }
+				await search.fill("no-matching-account-synthetic");
+				await expect(dialog.locator(".vault-connect-account")).toHaveCount(0);
+				await expect(
+					dialog.getByText(t("pwConnectNoResults"), { exact: true }),
+				).toBeVisible();
+				await search.fill(records[2].title);
+				await expect(dialog.locator(".vault-connect-account")).toHaveCount(1);
+				await search.fill("");
+				await expect(dialog.locator(".vault-connect-account")).toHaveCount(6);
+				const header = await dialog.locator(":scope > header").boundingBox();
+				const footer = await dialog
+					.locator(".vault-connect-footer")
+					.boundingBox();
+				expect(header).toBeTruthy();
+				expect(footer).toBeTruthy();
+				expect(header?.height).toBeLessThan(width > 760 ? 100 : 150);
+				expect((footer?.y ?? 0) + (footer?.height ?? 0)).toBeLessThanOrEqual(
+					page.viewportSize()?.height ?? 0,
+				);
+				if (width > 760) {
+					const left = await dialog
+						.locator(".vault-connect-account-pane")
+						.boundingBox();
+					const right = await dialog
+						.locator(".vault-connect-review-pane")
+						.boundingBox();
+					expect(left?.y).toBe(right?.y);
+					expect(right?.x).toBeGreaterThan(left?.x ?? 0);
+				}
 				await dialog
 					.getByRole("button", { name: t("pwConnectSelectAll"), exact: true })
 					.click();
+				// Explicitly review mailbox records and service categories before identity matching.
+				for (const [index, category] of [
+					[0, "email"],
+					[1, "email"],
+					[2, "social"],
+					[3, "social"],
+				] as const) {
+					await selectChoice(
+						dialog
+							.locator(".vault-connect-account")
+							.filter({ hasText: records[index].title })
+							.getByRole("combobox"),
+						category,
+					);
+				}
 
-                if (width > 760) {
-                    const viewport = page.viewportSize();
-                    await page.setViewportSize({ width, height: 600 });
-                    const scroller = dialog.locator(".vault-connect-accounts");
-                    await scroller.hover();
-                    await page.mouse.wheel(0, 500);
-                    await expect.poll(() => scroller.evaluate((element) => element.scrollTop)).toBeGreaterThan(0);
-                    await expect(scroller).toHaveCSS("scrollbar-width", "thin");
-                    await expect(dialog.getByRole("button", { name: t("pwConnectSave"), exact: true })).toBeInViewport();
-                    await page.screenshot({ path: join(root, `connect-scroll-${locale}-${width}.png`) });
-                    if (viewport) await page.setViewportSize(viewport);
-                }
+				if (width > 760) {
+					const viewport = page.viewportSize();
+					await page.setViewportSize({ width, height: 600 });
+					const scroller = dialog.locator(".vault-connect-accounts");
+					await scroller.hover();
+					await page.mouse.wheel(0, 500);
+					await expect
+						.poll(() => scroller.evaluate((element) => element.scrollTop))
+						.toBeGreaterThan(0);
+					await expect(scroller).toHaveCSS("scrollbar-width", "thin");
+					await expect(
+						dialog.getByRole("button", {
+							name: t("pwConnectSave"),
+							exact: true,
+						}),
+					).toBeInViewport();
+					await page.screenshot({
+						path: join(root, `connect-scroll-${locale}-${width}.png`),
+					});
+					if (viewport) await page.setViewportSize(viewport);
+				}
 				await dialog
 					.getByRole("button", { name: t("pwConnectLocal"), exact: true })
 					.click();
 				await expect(dialog.locator(".vault-connect-suggestion")).toHaveCount(
-					1,
+					8,
 				);
+				const localSuggestions = dialog.locator(".vault-connect-suggestion");
+				await expect(
+					localSuggestions.filter({ hasText: "backup@example.com" }),
+				).toHaveCount(1);
+				await expect(
+					localSuggestions.filter({ hasText: "+447700900123" }),
+				).toHaveCount(1);
+				await expect(
+					localSuggestions.filter({ hasText: records[1].title }),
+				).toContainText(records[0].title);
+				await expect(
+					localSuggestions.filter({ hasText: records[4].title }),
+				).toContainText("notes@example.com");
+				await expect(
+					localSuggestions.filter({ hasText: t("pwConnectKind_email") }),
+				).toHaveCount(6);
+				await expect(
+					localSuggestions.filter({ hasText: t("pwConnectKind_phone") }),
+				).toHaveCount(2);
 				const ids = fixtureIds.map(
 					(id) => `pw-account-${createHash("sha256").update(id).digest("hex")}`,
 				);
@@ -530,11 +608,20 @@ for (const locale of ["zh-CN", "en"] as const)
 					.filter({ hasText: records[2].title });
 				await expect(hintRow.getByRole("button")).toHaveCount(0);
 				for (const record of records) {
-					const row = dialog.locator(".vault-connect-account").filter({ hasText: record.title });
+					const row = dialog
+						.locator(".vault-connect-account")
+						.filter({ hasText: record.title });
 					await expect(row.locator("textarea")).toHaveValue(record.notes);
-					for (const alias of record.usernameAliases ?? []) await expect(row.locator(".vault-connect-identifiers")).toContainText(alias);
+					for (const alias of record.usernameAliases ?? [])
+						await expect(
+							row.locator(".vault-connect-identifiers"),
+						).toContainText(alias);
 				}
-				await dialog.locator(".vault-connect-account").filter({ hasText: records[3].title }).locator("textarea").fill("");
+				await dialog
+					.locator(".vault-connect-account")
+					.filter({ hasText: records[3].title })
+					.locator("textarea")
+					.fill("");
 				await expect(hintRow.locator("textarea")).toHaveValue(records[2].notes);
 				expect(mock.requests).toHaveLength(0);
 				await dialog
@@ -566,26 +653,36 @@ for (const locale of ["zh-CN", "en"] as const)
 					.getByRole("button", { name: t("pwConnectAi"), exact: true })
 					.click();
 				await expect(dialog.locator(".vault-connect-suggestion")).toHaveCount(
-					3,
+					10,
 				);
 				const suggestions = dialog.locator(".vault-connect-suggestion");
+				const loginSuggestion = suggestions.filter({
+					has: page.getByText(t("pwConnectKind_login"), { exact: true }),
+				});
+				const recoverySuggestion = suggestions.filter({
+					has: page.getByText(t("pwConnectKind_recovery"), { exact: true }),
+				});
+				await expect(loginSuggestion.getByRole("checkbox")).not.toBeChecked();
 				await expect(
-					suggestions.nth(1).getByRole("checkbox"),
-				).not.toBeChecked();
-				await expect(
-					suggestions.nth(2).getByRole("checkbox"),
+					recoverySuggestion.getByRole("checkbox"),
 				).not.toBeChecked();
 				expect(mock.requests).toHaveLength(1);
 				const sent = JSON.stringify(mock.requests[0].body);
 				for (const record of records) {
 					if (record.password) expect(sent).not.toContain(record.password);
-					for (const alias of record.usernameAliases ?? []) expect(sent).toContain(alias);
-					if (record === records[2] || record === records[3]) expect(sent).not.toContain(record.notes);
+					for (const alias of record.usernameAliases ?? [])
+						expect(sent).toContain(alias);
+					if (record === records[2] || record === records[3])
+						expect(sent).not.toContain(record.notes);
 					else expect(sent).toContain(record.notes);
 				}
 				expect(sent).toContain("Signs in with Google personal.");
-				await suggestions.nth(1).getByRole("checkbox").check();
-				await suggestions.nth(2).getByRole("checkbox").check();
+				await expect(loginSuggestion).toContainText(records[2].title);
+				await expect(loginSuggestion).toContainText(records[0].title);
+				await expect(recoverySuggestion).toContainText(records[1].title);
+				await expect(recoverySuggestion).toContainText(records[2].title);
+				await loginSuggestion.getByRole("checkbox").check();
+				await recoverySuggestion.getByRole("checkbox").check();
 				expect(
 					await dialog.evaluate((el) => el.scrollWidth <= el.clientWidth + 1),
 				).toBe(true);
@@ -664,8 +761,28 @@ for (const locale of ["zh-CN", "en"] as const)
 					});
 				await links.filter({ hasText: records[0].title }).click();
 				await expect(page).toHaveURL(new RegExp(`/assets/account/${ids[0]}`));
-				await expect(page.locator(".react-flow__node")).toHaveCount(3);
-				await expect(page.locator(".react-flow__edge")).toHaveCount(3);
+				await expect(page.locator(".react-flow__node")).toHaveCount(5);
+				await expect(page.locator(".react-flow__edge")).toHaveCount(4);
+				await expectReadableAccountGraph(page);
+				await page
+					.getByRole("button", {
+						name: locale === "zh-CN" ? "完整关系" : "All connections",
+						exact: true,
+					})
+					.click();
+				await expect(page.locator(".react-flow__node")).toHaveCount(5);
+				await expect(page.locator(".react-flow__edge")).toHaveCount(5);
+				await expectReadableAccountGraph(page);
+				await expect(
+					page
+						.locator(".react-flow__node")
+						.filter({ hasText: "backup@example.com" }),
+				).toHaveCount(1);
+				await expect(
+					page
+						.locator(".react-flow__node")
+						.filter({ hasText: "+447700900123" }),
+				).toHaveCount(1);
 				await expect(page.locator(".asset-relations-card")).toContainText(
 					t("pwConnectKind_login"),
 				);
@@ -673,22 +790,35 @@ for (const locale of ["zh-CN", "en"] as const)
 				await page.screenshot({
 					path: join(root, `family-graph-${locale}-${width}.png`),
 				});
+				await exerciseAccountGraphControls(page);
 				await page.reload();
-				await expect(page.locator(".react-flow__node")).toHaveCount(3);
-				await expect(page.locator(".react-flow__edge")).toHaveCount(3);
+				await expect(page.locator(".react-flow__node")).toHaveCount(5);
+				await expect(page.locator(".react-flow__edge")).toHaveCount(4);
+				await expectReadableAccountGraph(page);
 				expect(
 					await page.evaluate(
 						() => document.documentElement.scrollWidth <= innerWidth + 1,
 					),
 				).toBe(true);
 				await page.goto("/assets/account");
-				await expect(page.locator(".asset-account-card")).toHaveCount(6);
+				await expect(page.locator(".asset-account-card")).toHaveCount(13);
 				for (const record of records)
 					await expect(
 						page
 							.locator(".asset-account-card")
 							.filter({ hasText: record.title }),
 					).toContainText(record.username);
+				for (const record of records.slice(0, 2))
+					await expect(
+						page
+							.locator(".asset-account-card")
+							.filter({ hasText: record.title }),
+					).toContainText(locale === "zh-CN" ? "邮箱" : "Email");
+				await expect(
+					page
+						.locator(".asset-account-card")
+						.filter({ hasText: "backup@example.com" }),
+				).toContainText(locale === "zh-CN" ? "邮箱" : "Email");
 				await page.screenshot({
 					path: join(root, `accounts-${locale}-${width}.png`),
 				});
@@ -707,8 +837,10 @@ for (const locale of ["zh-CN", "en"] as const)
 				const heading = importer.locator(".external-import-title");
 				expect(
 					await heading.evaluate((el) => {
+						const icon = el.querySelector("svg");
+						if (!icon) throw Error("Import heading has no icon");
 						const a = el.getBoundingClientRect(),
-							b = el.querySelector("svg")!.getBoundingClientRect();
+							b = icon.getBoundingClientRect();
 						return Math.abs((a.top + a.bottom - b.top - b.bottom) / 2);
 					}),
 				).toBeLessThan(1);

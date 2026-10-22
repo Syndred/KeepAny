@@ -3,6 +3,7 @@ import { defineConfig } from "@playwright/test";
 // Test the committed delivery files, without serving development source.
 const port = Number(process.env.KEEPANY_RELEASE_TEST_PORT ?? "4181");
 const baseURL = `http://127.0.0.1:${port}`;
+const webDir = process.env.KEEPANY_RELEASE_WEB_DIR ?? "../../release/web";
 process.env.KEEPANY_PRODUCTION_OFFLINE = "1";
 process.env.KEEPANY_PDF_RELEASE = "1";
 process.env.KEEPANY_EVIDENCE_DIR ??= "docs/evidence/2026-09-30/delivery";
@@ -37,6 +38,8 @@ export default defineConfig({
 		"vault-reference-release.spec.ts",
 		"password-vault.spec.ts",
 		"password-vault-grid.spec.ts",
+		"password-vault-user-journey.spec.ts",
+		"password-account-upgrade.spec.ts",
 		"password-smart-import.spec.ts",
 		"password-smart-import-visual.spec.ts",
 		"password-import-draft.spec.ts",
@@ -53,7 +56,7 @@ export default defineConfig({
 	workers: 2,
 	use: { baseURL, screenshot: "only-on-failure" },
 	webServer: {
-		command: `node node_modules/vite/bin/vite.js preview apps/web --outDir ../../release/web --host 127.0.0.1 --port ${port} --strictPort`,
+		command: `node node_modules/vite/bin/vite.js preview apps/web --outDir ${webDir} --host 127.0.0.1 --port ${port} --strictPort`,
 		url: baseURL,
 		reuseExistingServer: false,
 		timeout: 30_000,
