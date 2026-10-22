@@ -42,7 +42,7 @@
 .sidebar-tools-menu { display: grid; gap: 2px; padding: 6px; border: 2px solid var(--line); border-radius: 12px; background: var(--paper); box-shadow: 3px 4px 0 var(--line); }
 .topbar { min-height: 64px; gap: 10px; }
 .topbar-page-label { flex: none; font-size: 12px; font-weight: 650; }
-.topbar-back-link { display: inline-flex; align-items: center; gap: 5px; width: fit-content; color: var(--ink); text-decoration: none; }
+.topbar-back-link { display: inline-flex; align-items: center; gap: 5px; width: fit-content; min-width: 44px; min-height: 44px; color: var(--ink); text-decoration: none; }
 .topbar-back-link:hover { text-decoration: underline; }
 .topbar-spacer { flex: 1; }
 .top-search { width: 190px; min-height: 34px; border: 2px solid var(--line); border-radius: 999px; background: var(--paper); color: var(--ink); }
