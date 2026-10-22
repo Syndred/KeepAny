@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import {
-	Background, BaseEdge, ControlButton, Controls, Handle, MarkerType, MiniMap, Panel, Position,
+	Background, BaseEdge, Controls, Handle, MarkerType, MiniMap, Panel, Position,
 	ReactFlow, ReactFlowProvider, getViewportForBounds, useReactFlow, useStore,
 	useUpdateNodeInternals,
 	type Edge, type EdgeChange, type EdgeProps, type Node, type NodeProps,
@@ -29,12 +29,18 @@ type Props = {
 	onVisit: (asset: Asset) => void;
 };
 
+function accountLabel(asset: Asset) {
+	const username = asset.name.trim() === asset.username.trim() ? "" : asset.username;
+	return { username, text: [asset.name, username].filter(Boolean).join(" · ") };
+}
+
 function AccountCard({ data }: NodeProps<AccountNode>) {
 	const { t } = useTranslation();
-	const label = <span className="asset-graph-label" title={[data.asset.name, data.asset.username].filter(Boolean).join(" · ")}>
+	const display = accountLabel(data.asset);
+	const label = <span className="asset-graph-label" title={display.text}>
 		{data.current && <span className="asset-graph-current">{t("accountGraphCurrent")}</span>}
 		<strong>{data.asset.name}</strong>
-		{data.asset.username && <small>{data.asset.username}</small>}
+		{display.username && <small>{display.username}</small>}
 	</span>;
 	return <>
 		<div className="account-graph-card">
@@ -127,11 +133,9 @@ function GraphActions({ layout, rootId, expanded, onExpand, onNavigationHost }: 
 	</div>;
 }
 
-function GraphControls({ layout }: { layout: AccountGraphLayout | null }) {
+function GraphControls() {
 	const { t } = useTranslation();
-	const { setViewport } = useReactFlow();
-	const width = useStore((state) => state.width), height = useStore((state) => state.height);
-	return <Controls orientation="horizontal" aria-label={t("accountGraphControls")} showInteractive={false} showFitView={false}><ControlButton className="react-flow__controls-fitview" aria-label={t("accountGraphFitControl")} title={t("accountGraphFitControl")} disabled={!layout} onClick={() => { if (layout && width && height) void setViewport(fittedViewport(layout, width, height)); }}><Maximize2 size={16} /></ControlButton></Controls>;
+	return <Controls orientation="horizontal" aria-label={t("accountGraphControls")} showInteractive={false} showFitView={false} />;
 }
 
 function GraphMiniMap({ rootId }: { rootId: string }) {
@@ -183,7 +187,7 @@ function GraphContent({ props, expanded, restore, onExpand }: {
 		return [{ id, type: "accountCard", position: { x: node.x, y: node.y }, width: node.width, height: node.height,
 			style: { width: node.width, height: node.height },
 			className: `${id === props.root.id ? "asset-graph-center" : "asset-graph-neighbor"}${props.matches.has(id) ? " asset-graph-match" : ""}`,
-			ariaLabel: [asset.name, asset.username].filter(Boolean).join(" · "),
+			ariaLabel: accountLabel(asset).text,
 			domAttributes: { "data-node-width": node.width, "data-node-height": node.height } as NonNullable<AccountNode["domAttributes"]> & { "data-node-width": number; "data-node-height": number },
 			data: { asset, current: id === props.root.id, handles: node.handles, visit: props.onVisit } }];
 	}) : [];
@@ -215,7 +219,7 @@ function GraphContent({ props, expanded, restore, onExpand }: {
 				deleteKeyCode={null} multiSelectionKeyCode={null} selectionKeyCode={null} nodesDraggable={false} nodesConnectable={false}>
 				<GraphViewport layout={layout} layoutKey={inputKey} layoutSize={size} rootId={props.root.id} restore={restore} onSize={setSize} onReady={setReadyKey} />
 				<Background />
-				{navigationHost && createPortal(<><GraphControls layout={layout} />{props.assets.length > 12 && <GraphMiniMap rootId={props.root.id} />}</>, navigationHost)}
+				{navigationHost && createPortal(<><GraphControls />{props.assets.length > 12 && <GraphMiniMap rootId={props.root.id} />}</>, navigationHost)}
 				{selected && <Panel position="bottom-right" className="account-graph-selection-panel nodrag nopan"><section className="account-graph-connection-details" aria-label={t("accountGraphSelection")}>
 					<div className="account-graph-selection-header"><p className="account-graph-selection-title"><strong>{byId.get(selected[0].from)?.name}</strong><span aria-hidden="true"> → </span><strong>{byId.get(selected[0].to)?.name}</strong></p><Button className="account-graph-selection-close" aria-label={t("close")} onClick={() => props.onSelectEdge(null)}><X size={18} /></Button></div>
 					<ul className="account-graph-selection-labels">{[...new Set(selected.map((relation) => relation.label))].map((label) => <li key={label}>{label}</li>)}</ul>
