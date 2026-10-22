@@ -62,7 +62,7 @@ const emptyLayout = (): AccountGraphLayout => ({ nodes: new Map(), edges: new Ma
 const pairKey = (from: string, to: string) => JSON.stringify([from, to]);
 const samePoint = (a: Point, b: Point) => Math.abs(a.x - b.x) < epsilon && Math.abs(a.y - b.y) < epsilon;
 
-function buildModel(rootId: string, ids: string[], pairs: Pair[]): Model {
+function buildModel(rootId: string, ids: string[], pairs: Pair[], compact = ids.length > 24): Model {
 	const adjacency = new Map(ids.map((id) => [id, new Set<string>()]));
 	for (const pair of pairs) {
 		adjacency.get(pair.from)?.add(pair.to);
@@ -102,7 +102,6 @@ function buildModel(rootId: string, ids: string[], pairs: Pair[]): Model {
 		else rightWeight += weight;
 	}
 	for (const id of frontier) side.set(id, branchSides.get(branchOf.get(id) ?? id) ?? -1);
-	const compact = ids.length > 24;
 	const nodes = new Map(ids.map((id, index): [string, ModelNode] => {
 		const current = id === rootId;
 		return [id, {
@@ -277,6 +276,14 @@ function clone(layout: AccountGraphLayout): AccountGraphLayout {
 		bounds: { ...layout.bounds },
 	};
 }
+function readingScale(layout: AccountGraphLayout, rootId: string, viewport: { width: number; height: number }) {
+	const root = layout.nodes.get(rootId);
+	if (!root) return 0;
+	const x = root.x + root.width / 2, y = root.y + root.height / 2;
+	const width = Math.max(x - layout.bounds.x, layout.bounds.x + layout.bounds.width - x) * 2 + 16;
+	const height = Math.max(y - layout.bounds.y, layout.bounds.y + layout.bounds.height - y) * 2 + 16;
+	return Math.min(1, viewport.width / width, viewport.height / height);
+}
 async function calculate(model: Model, viewport: { width: number; height: number }) {
 	const maxBank = Math.max(...[-1, 1].map((side) => [...model.nodes.values()].filter((node) => node.side === side).length));
 	const nodeHeight = [...model.nodes.values()].find((node) => node.id !== model.rootId)?.height ?? 64;
@@ -288,7 +295,7 @@ async function calculate(model: Model, viewport: { width: number; height: number
 		try {
 			const result = await candidate(model, split);
 			if (!validGeometry(result, model)) continue;
-			const score = Math.min(1, viewport.width / result.bounds.width, viewport.height / result.bounds.height);
+			const score = readingScale(result, model.rootId, viewport);
 			if (score > bestScore + 0.000001) { best = result; bestScore = score; }
 			if (score >= 1) return result;
 		} catch { /* A failed split cannot replace the standard layout fallback. */ }
@@ -314,7 +321,16 @@ export async function layoutAccountGraph(rootId: string, assets: Asset[], relati
 	const key = JSON.stringify([rootId, ids, pairs.map((pair) => pair.key), size]);
 	let pending = cache.get(key);
 	if (!pending) {
-		pending = calculate(buildModel(rootId, ids, pairs), size);
+		pending = (async () => {
+			const natural = await calculate(buildModel(rootId, ids, pairs), size);
+			if (ids.length >= 12 && ids.length <= 24 && readingScale(natural, rootId, size) < 11 / 12) {
+				try {
+					const compact = await calculate(buildModel(rootId, ids, pairs, true), size);
+					if (readingScale(compact, rootId, size) > readingScale(natural, rootId, size) + 0.000001) return compact;
+				} catch { /* Keep the valid natural layout if compact routing fails its audit. */ }
+			}
+			return natural;
+		})();
 		cache.set(key, pending);
 		if (cache.size > maxCacheEntries) cache.delete(cache.keys().next().value ?? "");
 		const current = pending;

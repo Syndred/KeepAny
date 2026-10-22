@@ -47,6 +47,12 @@ function verifyGeometry(layout: AccountGraphLayout, relations: Relation[]) {
 function snapshot(layout: AccountGraphLayout) {
 	return { nodes: [...layout.nodes].sort(([a], [b]) => a.localeCompare(b)), edges: [...layout.edges].sort(([a], [b]) => a.localeCompare(b)), bounds: layout.bounds };
 }
+function centeredReadingScale(layout: AccountGraphLayout, rootId: string, viewport: { width: number; height: number }) {
+	const root = layout.nodes.get(rootId);
+	if (!root) throw Error("Missing current account");
+	const x = root.x + root.width / 2, y = root.y + root.height / 2, bounds = layout.bounds;
+	return Math.min(1, viewport.width / (Math.max(x - bounds.x, bounds.x + bounds.width - x) * 2 + 16), viewport.height / (Math.max(y - bounds.y, bounds.y + bounds.height - y) * 2 + 16));
+}
 afterEach(() => vi.restoreAllMocks());
 
 describe("account graph layout", () => {
@@ -64,12 +70,45 @@ describe("account graph layout", () => {
 		const zoom = Math.min(1, viewport.width / layout.bounds.width, viewport.height / layout.bounds.height);
 		expect(zoom * 14).toBeGreaterThanOrEqual(total === 12 ? 14 : 13);
 		expect(zoom * 12).toBeGreaterThanOrEqual(total === 12 ? 12 : 11);
+		expect(centeredReadingScale(layout, fixture.root, viewport)).toBeGreaterThanOrEqual(11 / 12);
 		for (const entry of fixture.assets.slice(1)) expect(layout.nodes.get(entry.id)?.width).toBe(total > 24 ? 160 : 190);
 		const sourceSides = new Set(fixture.relations.map((entry) => {
 			const edge = layout.edges.get(key(entry.from, entry.to));
 			return layout.nodes.get(entry.from)?.handles.find((handle) => handle.id === edge?.sourceHandle)?.side;
 		}));
 		expect(sourceSides).toEqual(new Set(["left", "right"]));
+	});
+	it.each([0, 1, 9])("fits the 12-account reciprocal/cross-side family at a 964×570 stage using responsive compact cards (ID order %i)", async (seed) => {
+		const names = ["mail", "phoneA", "phoneB", "docs", "code", "design", "hosting", "video", "analytics", "shop", "learning", "tracker"];
+		const ids = new Map(names.map((name, index) => [name, `responsive-${seed}-${String((index + seed) % names.length).padStart(2, "0")}`]));
+		const id = (name: string) => ids.get(name) ?? name;
+		const assets = names.map((name) => asset(id(name)));
+		const pairs = [...names.slice(3).map((name) => [name, "mail"]), ["docs", "mail"], ["code", "phoneA"], ["design", "phoneB"], ["mail", "phoneA"], ["phoneA", "code"], ["mail", "docs"]];
+		const relations = pairs.map(([from, to], index) => relation(id(from), id(to), `responsive-${seed}-${index}`));
+		const viewport = { width: 964, height: 570 };
+		const initial = await layoutAccountGraph(id("mail"), assets, relations, viewport);
+		const root = initial.nodes.get(id("mail"));
+		if (!root) throw Error("Missing responsive graph root");
+		const left = names.slice(3).find((name) => (initial.nodes.get(id(name))?.x ?? Infinity) < root.x);
+		const right = names.slice(3).find((name) => (initial.nodes.get(id(name))?.x ?? -Infinity) > root.x);
+		if (!left || !right) throw Error("Missing responsive graph bank");
+		relations.push(relation(id(left), id(right), `responsive-cross-${seed}`));
+		const layout = await layoutAccountGraph(id("mail"), assets, relations, viewport);
+		verifyGeometry(layout, relations);
+		expect(layout.nodes.size).toBe(12);
+		expect(layout.nodes.get(id("docs"))?.width).toBe(160);
+		expect(layout.nodes.get(id("mail"))?.width).toBe(180);
+		const scale = centeredReadingScale(layout, id("mail"), viewport);
+		expect(scale).toBeGreaterThan(11 / 12);
+		const current = layout.nodes.get(id("mail"));
+		if (!current) throw Error("Missing compact graph root");
+		const center = { x: current.x + current.width / 2, y: current.y + current.height / 2 };
+		for (const node of layout.nodes.values()) {
+			const x = viewport.width / 2 + (node.x - center.x) * scale, y = viewport.height / 2 + (node.y - center.y) * scale;
+			expect(x).toBeGreaterThanOrEqual(8); expect(y).toBeGreaterThanOrEqual(8);
+			expect(x + node.width * scale).toBeLessThanOrEqual(viewport.width - 8);
+			expect(y + node.height * scale).toBeLessThanOrEqual(viewport.height - 8);
+		}
 	});
 	it("is stable across collection ordering, multiple purposes and fresh metadata", async () => {
 		const fixture = star(12, "stable"), backup = structuredClone(fixture);
