@@ -1,0 +1,297 @@
+{
+  "snapshots": [
+    {
+      "stage": "initial",
+      "nodes": [
+        "pw-account-38127d71d388793c696e357a8c64b9c4617a2396e8b3ffd7d63c9a6824a3bf00",
+        "pw-account-54daeb57bed90289347003d9f8c006d470a623e7c04a5c0480ded6cdb449e0f3",
+        "pw-account-aa5056994afbfda9a0b53c97256a49e4e49c457a4febc4bbe248a9b888e3fe1d",
+        "pw-account-f3a4f012bbbc74ce882f5bcda6bfc046c6488edb49bc9da074f7026cab26cbd2"
+      ],
+      "edges": [
+        "login-link-197fe08b113319faa6e4b2bbddaa0749c264436eb5a93e5d5ccf34cc6e7753c7",
+        "login-link-41f6ed29464fff5c81e9e3e361faad6d35f0991f0c9e2d88b97a245215d18d6c",
+        "login-link-bf1a154fbec475546d7d861d6a6167e1453ca9a6bef0a8ab031041d08717a1f4"
+      ]
+    },
+    {
+      "stage": "repeat-link",
+      "nodes": [
+        "pw-account-38127d71d388793c696e357a8c64b9c4617a2396e8b3ffd7d63c9a6824a3bf00",
+        "pw-account-54daeb57bed90289347003d9f8c006d470a623e7c04a5c0480ded6cdb449e0f3",
+        "pw-account-aa5056994afbfda9a0b53c97256a49e4e49c457a4febc4bbe248a9b888e3fe1d",
+        "pw-account-f3a4f012bbbc74ce882f5bcda6bfc046c6488edb49bc9da074f7026cab26cbd2"
+      ],
+      "edges": [
+        "login-link-197fe08b113319faa6e4b2bbddaa0749c264436eb5a93e5d5ccf34cc6e7753c7",
+        "login-link-41f6ed29464fff5c81e9e3e361faad6d35f0991f0c9e2d88b97a245215d18d6c",
+        "login-link-bf1a154fbec475546d7d861d6a6167e1453ca9a6bef0a8ab031041d08717a1f4"
+      ]
+    },
+    {
+      "stage": "before-line-delete",
+      "nodes": [
+        "pw-account-38127d71d388793c696e357a8c64b9c4617a2396e8b3ffd7d63c9a6824a3bf00",
+        "pw-account-54daeb57bed90289347003d9f8c006d470a623e7c04a5c0480ded6cdb449e0f3",
+        "pw-account-aa5056994afbfda9a0b53c97256a49e4e49c457a4febc4bbe248a9b888e3fe1d",
+        "pw-account-f3a4f012bbbc74ce882f5bcda6bfc046c6488edb49bc9da074f7026cab26cbd2"
+      ],
+      "edges": [
+        "login-link-197fe08b113319faa6e4b2bbddaa0749c264436eb5a93e5d5ccf34cc6e7753c7",
+        "login-link-41f6ed29464fff5c81e9e3e361faad6d35f0991f0c9e2d88b97a245215d18d6c",
+        "login-link-bf1a154fbec475546d7d861d6a6167e1453ca9a6bef0a8ab031041d08717a1f4"
+      ]
+    },
+    {
+      "stage": "line-restored",
+      "nodes": [
+        "pw-account-38127d71d388793c696e357a8c64b9c4617a2396e8b3ffd7d63c9a6824a3bf00",
+        "pw-account-54daeb57bed90289347003d9f8c006d470a623e7c04a5c0480ded6cdb449e0f3",
+        "pw-account-aa5056994afbfda9a0b53c97256a49e4e49c457a4febc4bbe248a9b888e3fe1d",
+        "pw-account-f3a4f012bbbc74ce882f5bcda6bfc046c6488edb49bc9da074f7026cab26cbd2"
+      ],
+      "edges": [
+        "login-link-197fe08b113319faa6e4b2bbddaa0749c264436eb5a93e5d5ccf34cc6e7753c7",
+        "login-link-41f6ed29464fff5c81e9e3e361faad6d35f0991f0c9e2d88b97a245215d18d6c",
+        "login-link-bf1a154fbec475546d7d861d6a6167e1453ca9a6bef0a8ab031041d08717a1f4"
+      ]
+    },
+    {
+      "stage": "before-line-delete",
+      "nodes": [
+        "pw-account-38127d71d388793c696e357a8c64b9c4617a2396e8b3ffd7d63c9a6824a3bf00",
+        "pw-account-54daeb57bed90289347003d9f8c006d470a623e7c04a5c0480ded6cdb449e0f3",
+        "pw-account-aa5056994afbfda9a0b53c97256a49e4e49c457a4febc4bbe248a9b888e3fe1d",
+        "pw-account-f3a4f012bbbc74ce882f5bcda6bfc046c6488edb49bc9da074f7026cab26cbd2"
+      ],
+      "edges": [
+        "login-link-197fe08b113319faa6e4b2bbddaa0749c264436eb5a93e5d5ccf34cc6e7753c7",
+        "login-link-41f6ed29464fff5c81e9e3e361faad6d35f0991f0c9e2d88b97a245215d18d6c",
+        "login-link-bf1a154fbec475546d7d861d6a6167e1453ca9a6bef0a8ab031041d08717a1f4"
+      ]
+    },
+    {
+      "stage": "line-purged",
+      "nodes": [
+        "pw-account-38127d71d388793c696e357a8c64b9c4617a2396e8b3ffd7d63c9a6824a3bf00",
+        "pw-account-54daeb57bed90289347003d9f8c006d470a623e7c04a5c0480ded6cdb449e0f3",
+        "pw-account-f3a4f012bbbc74ce882f5bcda6bfc046c6488edb49bc9da074f7026cab26cbd2"
+      ],
+      "edges": [
+        "login-link-197fe08b113319faa6e4b2bbddaa0749c264436eb5a93e5d5ccf34cc6e7753c7",
+        "login-link-41f6ed29464fff5c81e9e3e361faad6d35f0991f0c9e2d88b97a245215d18d6c"
+      ]
+    },
+    {
+      "stage": "line-reimported",
+      "nodes": [
+        "pw-account-38127d71d388793c696e357a8c64b9c4617a2396e8b3ffd7d63c9a6824a3bf00",
+        "pw-account-54daeb57bed90289347003d9f8c006d470a623e7c04a5c0480ded6cdb449e0f3",
+        "pw-account-aa5056994afbfda9a0b53c97256a49e4e49c457a4febc4bbe248a9b888e3fe1d",
+        "pw-account-f3a4f012bbbc74ce882f5bcda6bfc046c6488edb49bc9da074f7026cab26cbd2"
+      ],
+      "edges": [
+        "login-link-197fe08b113319faa6e4b2bbddaa0749c264436eb5a93e5d5ccf34cc6e7753c7",
+        "login-link-41f6ed29464fff5c81e9e3e361faad6d35f0991f0c9e2d88b97a245215d18d6c",
+        "login-link-49a7fa7773453abb19657fc22df852738b5a0566865d466cfc3b22557b3cefe5"
+      ]
+    },
+    {
+      "stage": "leaf-trashed",
+      "nodes": [
+        "pw-account-38127d71d388793c696e357a8c64b9c4617a2396e8b3ffd7d63c9a6824a3bf00",
+        "pw-account-54daeb57bed90289347003d9f8c006d470a623e7c04a5c0480ded6cdb449e0f3",
+        "pw-account-f3a4f012bbbc74ce882f5bcda6bfc046c6488edb49bc9da074f7026cab26cbd2"
+      ],
+      "edges": [
+        "login-link-197fe08b113319faa6e4b2bbddaa0749c264436eb5a93e5d5ccf34cc6e7753c7",
+        "login-link-41f6ed29464fff5c81e9e3e361faad6d35f0991f0c9e2d88b97a245215d18d6c"
+      ]
+    },
+    {
+      "stage": "leaf-restored",
+      "nodes": [
+        "pw-account-38127d71d388793c696e357a8c64b9c4617a2396e8b3ffd7d63c9a6824a3bf00",
+        "pw-account-54daeb57bed90289347003d9f8c006d470a623e7c04a5c0480ded6cdb449e0f3",
+        "pw-account-aa5056994afbfda9a0b53c97256a49e4e49c457a4febc4bbe248a9b888e3fe1d",
+        "pw-account-f3a4f012bbbc74ce882f5bcda6bfc046c6488edb49bc9da074f7026cab26cbd2"
+      ],
+      "edges": [
+        "login-link-197fe08b113319faa6e4b2bbddaa0749c264436eb5a93e5d5ccf34cc6e7753c7",
+        "login-link-41f6ed29464fff5c81e9e3e361faad6d35f0991f0c9e2d88b97a245215d18d6c",
+        "login-link-49a7fa7773453abb19657fc22df852738b5a0566865d466cfc3b22557b3cefe5"
+      ]
+    },
+    {
+      "stage": "leaf-purged",
+      "nodes": [
+        "pw-account-38127d71d388793c696e357a8c64b9c4617a2396e8b3ffd7d63c9a6824a3bf00",
+        "pw-account-54daeb57bed90289347003d9f8c006d470a623e7c04a5c0480ded6cdb449e0f3",
+        "pw-account-f3a4f012bbbc74ce882f5bcda6bfc046c6488edb49bc9da074f7026cab26cbd2"
+      ],
+      "edges": [
+        "login-link-197fe08b113319faa6e4b2bbddaa0749c264436eb5a93e5d5ccf34cc6e7753c7",
+        "login-link-41f6ed29464fff5c81e9e3e361faad6d35f0991f0c9e2d88b97a245215d18d6c"
+      ]
+    },
+    {
+      "stage": "leaf-reimported",
+      "nodes": [
+        "pw-account-38127d71d388793c696e357a8c64b9c4617a2396e8b3ffd7d63c9a6824a3bf00",
+        "pw-account-54daeb57bed90289347003d9f8c006d470a623e7c04a5c0480ded6cdb449e0f3",
+        "pw-account-e17a0e275323bb180078d5ba1d626dd2465de29432ce7338a147f56fbd2184c9",
+        "pw-account-f3a4f012bbbc74ce882f5bcda6bfc046c6488edb49bc9da074f7026cab26cbd2"
+      ],
+      "edges": [
+        "login-link-197fe08b113319faa6e4b2bbddaa0749c264436eb5a93e5d5ccf34cc6e7753c7",
+        "login-link-41f6ed29464fff5c81e9e3e361faad6d35f0991f0c9e2d88b97a245215d18d6c",
+        "login-link-f29f702b3304d65245e38040a9be469599be7ad7ba11def4f4f387527a6ee87e"
+      ]
+    },
+    {
+      "stage": "center-trashed",
+      "nodes": [
+        "pw-account-54daeb57bed90289347003d9f8c006d470a623e7c04a5c0480ded6cdb449e0f3"
+      ],
+      "edges": []
+    },
+    {
+      "stage": "center-restored",
+      "nodes": [
+        "pw-account-38127d71d388793c696e357a8c64b9c4617a2396e8b3ffd7d63c9a6824a3bf00",
+        "pw-account-54daeb57bed90289347003d9f8c006d470a623e7c04a5c0480ded6cdb449e0f3",
+        "pw-account-e17a0e275323bb180078d5ba1d626dd2465de29432ce7338a147f56fbd2184c9",
+        "pw-account-f3a4f012bbbc74ce882f5bcda6bfc046c6488edb49bc9da074f7026cab26cbd2"
+      ],
+      "edges": [
+        "login-link-197fe08b113319faa6e4b2bbddaa0749c264436eb5a93e5d5ccf34cc6e7753c7",
+        "login-link-41f6ed29464fff5c81e9e3e361faad6d35f0991f0c9e2d88b97a245215d18d6c",
+        "login-link-f29f702b3304d65245e38040a9be469599be7ad7ba11def4f4f387527a6ee87e"
+      ]
+    },
+    {
+      "stage": "center-purged",
+      "nodes": [
+        "pw-account-54daeb57bed90289347003d9f8c006d470a623e7c04a5c0480ded6cdb449e0f3"
+      ],
+      "edges": []
+    },
+    {
+      "stage": "center-reimported",
+      "nodes": [
+        "pw-account-38127d71d388793c696e357a8c64b9c4617a2396e8b3ffd7d63c9a6824a3bf00",
+        "pw-account-54daeb57bed90289347003d9f8c006d470a623e7c04a5c0480ded6cdb449e0f3",
+        "pw-account-9f31b30a1f5fb42268f9e1d285c6a118627f161061783e01c8f3ba42596f939f",
+        "pw-account-e17a0e275323bb180078d5ba1d626dd2465de29432ce7338a147f56fbd2184c9"
+      ],
+      "edges": [
+        "login-link-29013c5ddddcdd61ea42bde142f4c4c1e0268103a67096ade9e6f0751dfef0a5",
+        "login-link-a622aaf2fbf4f5e0251455a090c060be30e5f4b9cb908a077b0f47aba51b8c48",
+        "login-link-b01fefff366d560259de1fd85bf7694cc8f2888bab595c283357909cf6cdbd8c"
+      ]
+    },
+    {
+      "stage": "reimport-before-restore",
+      "nodes": [
+        "pw-account-38127d71d388793c696e357a8c64b9c4617a2396e8b3ffd7d63c9a6824a3bf00",
+        "pw-account-54daeb57bed90289347003d9f8c006d470a623e7c04a5c0480ded6cdb449e0f3",
+        "pw-account-5c78697b8ce1bac11a3f01d36adb63afd5f8aa843294dec847f11f66748311df",
+        "pw-account-9f31b30a1f5fb42268f9e1d285c6a118627f161061783e01c8f3ba42596f939f"
+      ],
+      "edges": [
+        "login-link-a622aaf2fbf4f5e0251455a090c060be30e5f4b9cb908a077b0f47aba51b8c48",
+        "login-link-b01fefff366d560259de1fd85bf7694cc8f2888bab595c283357909cf6cdbd8c",
+        "login-link-cd2e2a3e20f96dbd3fcfba2af17779220d59c6d6ed19f5ce85fd06e1555d8d88"
+      ]
+    },
+    {
+      "stage": "old-duplicate-purged",
+      "nodes": [
+        "pw-account-38127d71d388793c696e357a8c64b9c4617a2396e8b3ffd7d63c9a6824a3bf00",
+        "pw-account-54daeb57bed90289347003d9f8c006d470a623e7c04a5c0480ded6cdb449e0f3",
+        "pw-account-5c78697b8ce1bac11a3f01d36adb63afd5f8aa843294dec847f11f66748311df",
+        "pw-account-9f31b30a1f5fb42268f9e1d285c6a118627f161061783e01c8f3ba42596f939f"
+      ],
+      "edges": [
+        "login-link-a622aaf2fbf4f5e0251455a090c060be30e5f4b9cb908a077b0f47aba51b8c48",
+        "login-link-b01fefff366d560259de1fd85bf7694cc8f2888bab595c283357909cf6cdbd8c",
+        "login-link-cd2e2a3e20f96dbd3fcfba2af17779220d59c6d6ed19f5ce85fd06e1555d8d88"
+      ]
+    },
+    {
+      "stage": "password-restored",
+      "nodes": [
+        "pw-account-38127d71d388793c696e357a8c64b9c4617a2396e8b3ffd7d63c9a6824a3bf00",
+        "pw-account-54daeb57bed90289347003d9f8c006d470a623e7c04a5c0480ded6cdb449e0f3",
+        "pw-account-5c78697b8ce1bac11a3f01d36adb63afd5f8aa843294dec847f11f66748311df",
+        "pw-account-9f31b30a1f5fb42268f9e1d285c6a118627f161061783e01c8f3ba42596f939f"
+      ],
+      "edges": [
+        "login-link-a622aaf2fbf4f5e0251455a090c060be30e5f4b9cb908a077b0f47aba51b8c48",
+        "login-link-b01fefff366d560259de1fd85bf7694cc8f2888bab595c283357909cf6cdbd8c",
+        "login-link-cd2e2a3e20f96dbd3fcfba2af17779220d59c6d6ed19f5ce85fd06e1555d8d88"
+      ]
+    },
+    {
+      "stage": "password-purged",
+      "nodes": [
+        "pw-account-38127d71d388793c696e357a8c64b9c4617a2396e8b3ffd7d63c9a6824a3bf00",
+        "pw-account-54daeb57bed90289347003d9f8c006d470a623e7c04a5c0480ded6cdb449e0f3",
+        "pw-account-5c78697b8ce1bac11a3f01d36adb63afd5f8aa843294dec847f11f66748311df",
+        "pw-account-9f31b30a1f5fb42268f9e1d285c6a118627f161061783e01c8f3ba42596f939f"
+      ],
+      "edges": [
+        "login-link-a622aaf2fbf4f5e0251455a090c060be30e5f4b9cb908a077b0f47aba51b8c48",
+        "login-link-b01fefff366d560259de1fd85bf7694cc8f2888bab595c283357909cf6cdbd8c",
+        "login-link-cd2e2a3e20f96dbd3fcfba2af17779220d59c6d6ed19f5ce85fd06e1555d8d88"
+      ]
+    },
+    {
+      "stage": "password-reimported",
+      "nodes": [
+        "pw-account-38127d71d388793c696e357a8c64b9c4617a2396e8b3ffd7d63c9a6824a3bf00",
+        "pw-account-54daeb57bed90289347003d9f8c006d470a623e7c04a5c0480ded6cdb449e0f3",
+        "pw-account-5c78697b8ce1bac11a3f01d36adb63afd5f8aa843294dec847f11f66748311df",
+        "pw-account-9f31b30a1f5fb42268f9e1d285c6a118627f161061783e01c8f3ba42596f939f"
+      ],
+      "edges": [
+        "login-link-a622aaf2fbf4f5e0251455a090c060be30e5f4b9cb908a077b0f47aba51b8c48",
+        "login-link-b01fefff366d560259de1fd85bf7694cc8f2888bab595c283357909cf6cdbd8c",
+        "login-link-cd2e2a3e20f96dbd3fcfba2af17779220d59c6d6ed19f5ce85fd06e1555d8d88"
+      ]
+    },
+    {
+      "stage": "all-reimported",
+      "nodes": [
+        "pw-account-2d523688cc60ce7271814b3cfe29657ecd8c5db2c7612b28e68756ac65f368c3",
+        "pw-account-4d9b11d11aaf70a982b759cccf4dab1313d41525d699fbf3f11d50b63635f795",
+        "pw-account-564495849e1f6f20e1ebd8d86244b4ec8010097c42325cd819a42616056b58e0",
+        "pw-account-c6f563c94598bd77d07967653c052077e31bf26a3a690ee05ede5f4aa7c8fde4"
+      ],
+      "edges": [
+        "login-link-0cb364edd105e06ff1c3e63fb6782db796dff824755f1ee70ad09ad0f1dc3719",
+        "login-link-156f3391d84a5cfcf482e0c4021f68d399abbbefd60a693b6dc7859c8ea831e7",
+        "login-link-f053e6720322c7579792dadcecc7e18d6599a959a9af2737d472be434d2fde12"
+      ]
+    },
+    {
+      "stage": "final-repeat",
+      "nodes": [
+        "pw-account-2d523688cc60ce7271814b3cfe29657ecd8c5db2c7612b28e68756ac65f368c3",
+        "pw-account-4d9b11d11aaf70a982b759cccf4dab1313d41525d699fbf3f11d50b63635f795",
+        "pw-account-564495849e1f6f20e1ebd8d86244b4ec8010097c42325cd819a42616056b58e0",
+        "pw-account-c6f563c94598bd77d07967653c052077e31bf26a3a690ee05ede5f4aa7c8fde4"
+      ],
+      "edges": [
+        "login-link-0cb364edd105e06ff1c3e63fb6782db796dff824755f1ee70ad09ad0f1dc3719",
+        "login-link-156f3391d84a5cfcf482e0c4021f68d399abbbefd60a693b6dc7859c8ea831e7",
+        "login-link-f053e6720322c7579792dadcecc7e18d6599a959a9af2737d472be434d2fde12"
+      ]
+    }
+  ],
+  "liveAssets": 4,
+  "liveRelations": 3,
+  "kdbxEntries": 4,
+  "stalePointers": 0,
+  "pageErrors": []
+}

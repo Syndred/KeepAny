@@ -1,0 +1,41 @@
+{
+  "entry": "/assets/index-Dkv9zv09.js",
+  "unitTests": 192,
+  "regressionBeforeCreationCopy": 39,
+  "finalLifecycleScenarios": [
+    {
+      "scenario": "en-1536-lifecycle",
+      "snapshots": 22,
+      "accounts": 4,
+      "relations": 3,
+      "passwords": 4,
+      "stalePointers": 0
+    },
+    {
+      "scenario": "en-390-lifecycle",
+      "snapshots": 22,
+      "accounts": 4,
+      "relations": 3,
+      "passwords": 4,
+      "stalePointers": 0
+    },
+    {
+      "scenario": "zh-CN-1536-lifecycle",
+      "snapshots": 22,
+      "accounts": 4,
+      "relations": 3,
+      "passwords": 4,
+      "stalePointers": 0
+    },
+    {
+      "scenario": "zh-CN-390-lifecycle",
+      "snapshots": 22,
+      "accounts": 4,
+      "relations": 3,
+      "passwords": 4,
+      "stalePointers": 0
+    }
+  ],
+  "originalDataPreserved": true,
+  "publicSitePublished": false
+}

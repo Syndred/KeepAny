@@ -1,0 +1,16 @@
+{
+  "locale": "en",
+  "viewport": {
+    "width": 1218,
+    "height": 808
+  },
+  "controlledProvider": true,
+  "captured": [
+    {
+      "state": "00-main",
+      "screenshot": "00-main-en-1218.png",
+      "assertion": "1218x808 compact review with seven pending accounts, an alias, and row copy / field paste.",
+      "visualReview": "待逐图人工对照最终参考图；测试通过不代表像素一致"
+    }
+  ]
+}
