@@ -302,7 +302,7 @@ export function AssetDetail() {
 	const [deleteBusy, setDeleteBusy] = useState(false);
 	const deleteInFlight = useRef(false);
 	const [relationEdit, setRelationEdit] = useState(false);
-	const [relationToDelete, setRelationToDelete] = useState<Relation | null>(
+	const [relationToDelete, setRelationToDelete] = useState<Relation[] | null>(
 		null,
 	);
 	const [relationDeleteError, setRelationDeleteError] = useState("");
@@ -750,11 +750,16 @@ export function AssetDetail() {
 		setRelationBusy(true);
 		setRelationDeleteError("");
 		try {
-			await deleteEntity("relation", relationToDelete.id);
+			const repository = await localRepository();
+			for (const relation of relationToDelete) {
+				if ((await repository.get<Relation>("relation", relation.id))?.deleted) continue;
+				await repository.saveRelationIfCurrent(relation, { ...relation, deleted: true });
+			}
 			setRelationToDelete(null);
-			notify(t("saved"));
+			setSelectedGraphEdgeId(null);
+			notify(t("relationDisconnected"));
 		} catch {
-			setRelationDeleteError(t("error"));
+			setRelationDeleteError(t("relationDisconnectError"));
 		} finally {
 			relationInFlight.current = false;
 			setRelationBusy(false);
@@ -1347,7 +1352,7 @@ export function AssetDetail() {
 							aria-label={`${t("deleteRelation")} · ${relation.label} · ${neighbor.name}`}
 							onClick={() => {
 								setRelationDeleteError("");
-								setRelationToDelete(relation);
+								setRelationToDelete([relation]);
 							}}
 						>
 							{t("remove")}
@@ -1413,7 +1418,7 @@ export function AssetDetail() {
 						if (!deleteInFlight.current) setDeleteOpen(false);
 					}}
 				>
-					<p>{t("deleteConfirm")}</p>
+					<p>{t(kind === "account" ? "accountTrashConfirm" : "deleteConfirm")}</p>
 					{deleteError && <p className="field-error" role="alert">{deleteError}</p>}
 					<div className="actions">
 						<Button disabled={deleteBusy} onClick={() => setDeleteOpen(false)}>
@@ -1668,7 +1673,7 @@ export function AssetDetail() {
 							{t("addRelation")}
 						</Button>
 					</div>
-					{relations.length ? (
+					{relations.length || kind === "account" ? (
 						<>
 							{kind === "account" ? <div className="account-graph-toolbar">
 								<div className="actions">
@@ -1678,7 +1683,7 @@ export function AssetDetail() {
 								{relationSearch}
 								<details className="account-graph-guide"><summary>{t("accountGraphHelp")}</summary><p><span>{t("accountGraphDirection")}</span><span>{t("relationGraphLegend")}</span></p></details>
 							</div> : relations.length >= 5 ? relationSearch : null}
-							{kind === "account" ? <Suspense fallback={<p role="status">{t("loading")}</p>}><AccountFamilyGraphView root={asset} assets={[asset, ...graphRelated]} relations={displayedFamily?.relations ?? relations} matches={graphMatches} selectedEdgeId={selectedGraphEdgeId} onSelectEdge={setSelectedGraphEdgeId} onVisit={visitRelation} /></Suspense> : <section className="graph" aria-label={t("relations")}>
+							{kind === "account" ? <Suspense fallback={<p role="status">{t("loading")}</p>}><AccountFamilyGraphView root={asset} assets={[asset, ...graphRelated]} relations={displayedFamily?.relations ?? relations} matches={graphMatches} selectedEdgeId={selectedGraphEdgeId} onSelectEdge={setSelectedGraphEdgeId} onVisit={visitRelation} onDeleteRelations={(items) => { setRelationDeleteError(""); setRelationToDelete(items); }} /></Suspense> : <section className="graph" aria-label={t("relations")}>
 								<ReactFlow
 									fitView
 									minZoom={0.1}
@@ -1696,7 +1701,7 @@ export function AssetDetail() {
 									<Controls showInteractive={false} />
 								</ReactFlow>
 							</section>}
-							{kind === "account" ? <details className="account-relation-details" open={relationDetailsOpen} onToggle={(event) => setRelationDetailsOpen(event.currentTarget.open)}>
+							{kind === "account" ? visibleRelations.length > 0 && <details className="account-relation-details" open={relationDetailsOpen} onToggle={(event) => setRelationDetailsOpen(event.currentTarget.open)}>
 								<summary>{t("accountGraphDetails", { count: visibleRelations.length })}</summary>
 								{relationList}
 							</details> : relationList}
@@ -2099,8 +2104,9 @@ export function AssetDetail() {
 					}}
 				>
 					<p style={{ overflowWrap: "anywhere" }}>
-						{t("deleteRelationConfirm", { label: relationToDelete.label })}
+						{relationToDelete.length === 1 ? t("deleteRelationConfirm", { label: relationToDelete[0].label }) : t("relationDisconnectGroup", { count: relationToDelete.length })}
 					</p>
+					{relationToDelete.length > 1 && <ul>{[...new Set(relationToDelete.map((relation) => relation.label))].map((label) => <li key={label}>{label}</li>)}</ul>}
 					{relationDeleteError && (
 						<p className="field-error" role="alert">
 							{relationDeleteError}

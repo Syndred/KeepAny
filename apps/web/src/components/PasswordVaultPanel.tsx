@@ -168,6 +168,17 @@ export function PasswordVaultPanel({
 	const [newMaster, setNewMaster] = useState("");
 	const [newMasterConfirm, setNewMasterConfirm] = useState("");
 	const [manualCopy, setManualCopy] = useState<ManualCopy | null>(null);
+	const [unlinkTarget, setUnlinkTarget] = useState<{
+		entryId: string;
+		assetId: string;
+		entryName: string;
+		assetName: string;
+		revision: string;
+	} | null>(null);
+	const [deleteTarget, setDeleteTarget] =
+		useState<PasswordVaultEntrySummary | null>(null);
+	const [entryActionError, setEntryActionError] = useState("");
+	const entryActionRunning = useRef(false);
 	const generateRequestRef = useRef(0);
 	const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -201,6 +212,9 @@ export function PasswordVaultPanel({
 		setHistoryRows([]);
 		setHistoryReveal(null);
 		setManualCopy(null);
+		setUnlinkTarget(null);
+		setDeleteTarget(null);
+		setEntryActionError("");
 		setImportPassword("");
 		setImportOpen(false);
 		if (notice !== "pwVaultLockedElsewhere") setSmartImportOpen(false);
@@ -244,6 +258,10 @@ export function PasswordVaultPanel({
 	const assetsById = useMemo(
 		() => new Map(visibleAssets.map((asset) => [asset.id, asset])),
 		[visibleAssets],
+	);
+	const allAssetsById = useMemo(
+		() => new Map(assets.map((asset) => [asset.id, asset])),
+		[assets],
 	);
 	const normalizedSearch = search.trim().toLocaleLowerCase(i18n.language);
 	const scopedEntries = useMemo(
@@ -425,19 +443,42 @@ export function PasswordVaultPanel({
 	}
 
 	async function deleteEntry(entry: PasswordVaultEntrySummary) {
-		if (busy || !session) return;
+		if (busy || entryActionRunning.current || !session) return;
+		entryActionRunning.current = true;
 		setBusy(true);
 		clearMessage();
 		try {
 			await session.trashEntry(entry.id);
+			setDeleteTarget(null);
 			announce("pwVaultSaved");
 		} catch (error) {
-			announce(
+			setEntryActionError(
 				errorCode(error) === "vault-password"
 					? "pwVaultCurrentMasterWrong"
 					: errorKey(error),
 			);
 		} finally {
+			entryActionRunning.current = false;
+			setBusy(false);
+		}
+	}
+	async function unlinkAsset() {
+		if (!unlinkTarget || busy || entryActionRunning.current || !session) return;
+		entryActionRunning.current = true;
+		setBusy(true);
+		setEntryActionError("");
+		try {
+			await session.unlinkAsset(
+				unlinkTarget.entryId,
+				unlinkTarget.assetId,
+				unlinkTarget.revision,
+			);
+			setUnlinkTarget(null);
+			setMessageKey("pwVaultUnlinked");
+		} catch (error) {
+			setEntryActionError(errorKey(error));
+		} finally {
+			entryActionRunning.current = false;
 			setBusy(false);
 		}
 	}
@@ -608,10 +649,28 @@ export function PasswordVaultPanel({
 				entry={entry}
 				session={session}
 				busy={busy}
-				assetsById={assetsById}
+				assetsById={allAssetsById}
 				onEdit={() => openEditor(entry.id)}
 				onAddAnother={() => openAnotherAccount(entry)}
-				onDelete={() => void deleteEntry(entry)}
+				onDelete={() => {
+					clearMessage();
+					setEntryActionError("");
+					setDeleteTarget(entry);
+				}}
+				onUnlink={(assetId) => {
+					const revision = snapshot.contentRevision;
+					if (!revision || busy) return;
+					clearMessage();
+					setEntryActionError("");
+					setUnlinkTarget({
+						entryId: entry.id,
+						assetId,
+						entryName: entry.title,
+						assetName:
+							allAssetsById.get(assetId)?.name ?? t("pwVaultAssetUnavailable"),
+						revision,
+					});
+				}}
 				onHistory={() => void openHistory(entry)}
 				onCopy={(label, value) => void copyValue(label, value)}
 			/>
@@ -777,8 +836,11 @@ export function PasswordVaultPanel({
 							>
 								<KeyRound size={18} />
 							</VaultIconButton>
-							<VaultIconButton
-								label={t("pwVaultTrashTitle")}
+							<Button
+								size="small"
+								variant="ghost"
+								type="button"
+								className="password-vault-trash-open"
 								disabled={busy}
 								onClick={() =>
 									void navigate({
@@ -789,7 +851,8 @@ export function PasswordVaultPanel({
 								}
 							>
 								<Trash2 size={18} />
-							</VaultIconButton>
+								{t("pwVaultTrashTitle")}
+							</Button>
 							<VaultIconButton
 								label={t("pwVaultNewEntry")}
 								className="password-vault-new"
@@ -883,6 +946,77 @@ export function PasswordVaultPanel({
 						)}
 					</div>
 				</>
+			)}
+			{unlinkTarget && (
+				<Dialog
+					title={t("pwVaultUnlink")}
+					returnFocusTo={() =>
+						[
+							...document.querySelectorAll<HTMLElement>(
+								".password-vault-entry-list .password-vault-entry",
+							),
+						].find((card) => card.dataset.entryId === unlinkTarget.entryId) ??
+						null
+					}
+					closeDisabled={busy}
+					onClose={() => {
+						if (!entryActionRunning.current) setUnlinkTarget(null);
+					}}
+				>
+					<p>
+						{t("pwVaultUnlinkConfirm", {
+							entry: unlinkTarget.entryName,
+							asset: unlinkTarget.assetName,
+						})}
+					</p>
+					<p>{t("pwVaultUnlinkHint")}</p>
+					{entryActionError && (
+						<p className="field-error" role="alert">
+							{t(entryActionError)}
+						</p>
+					)}
+					<div className="actions">
+						<Button disabled={busy} onClick={() => setUnlinkTarget(null)}>
+							{t("cancel")}
+						</Button>
+						<Button
+							variant="danger"
+							disabled={busy}
+							onClick={() => void unlinkAsset()}
+						>
+							{t("pwVaultUnlink")}
+						</Button>
+					</div>
+				</Dialog>
+			)}
+			{deleteTarget && (
+				<Dialog
+					title={t("pwVaultDeleteEntry")}
+					closeDisabled={busy}
+					onClose={() => {
+						if (!entryActionRunning.current) setDeleteTarget(null);
+					}}
+				>
+					<p>{deleteTarget.title}</p>
+					<p>{t("pwVaultTrashEntryHint")}</p>
+					{entryActionError && (
+						<p className="field-error" role="alert">
+							{t(entryActionError)}
+						</p>
+					)}
+					<div className="actions">
+						<Button disabled={busy} onClick={() => setDeleteTarget(null)}>
+							{t("cancel")}
+						</Button>
+						<Button
+							variant="danger"
+							disabled={busy}
+							onClick={() => void deleteEntry(deleteTarget)}
+						>
+							{t("pwVaultDeleteEntry")}
+						</Button>
+					</div>
+				</Dialog>
 			)}
 			{editorId && (
 				<Dialog

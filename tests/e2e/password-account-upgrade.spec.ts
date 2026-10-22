@@ -231,7 +231,7 @@ for (const { locale, width } of [
 	{ locale: "zh-CN", width: 1536 },
 	{ locale: "en", width: 390 },
 ] as const) {
-	test(`${locale} ${width}px upgrades legacy uncategorized hubs and isolates a deleted linked entry`, async ({
+	test(`${locale} ${width}px upgrades selected legacy hubs and keeps an unselected deleted account in trash`, async ({
 		browser,
 	}, info) => {
 		const zh = locale === "zh-CN",
@@ -263,14 +263,19 @@ for (const { locale, width } of [
 				.getByRole("button", { name: t("pwConnectTitle"), exact: true })
 				.click();
 			const dialog = page.getByRole("dialog");
-			await expect(dialog.locator(".vault-connect-account")).toHaveCount(5);
-			await expect(dialog.getByRole("alert")).toHaveText(
-				t("pwConnectBlocked", { count: 1, names: blockedName }),
-			);
+			await expect(dialog.locator(".vault-connect-account")).toHaveCount(6);
+			await expect(dialog.locator(".vault-connect-conflict")).toHaveCount(0);
 			await expect(dialog).not.toContainText(t("pwConnectLoadError"));
-			await dialog
-				.getByRole("button", { name: t("pwConnectSelectAll"), exact: true })
-				.click();
+			for (const record of records.slice(0, 5))
+				await dialog
+					.locator(".vault-connect-account")
+					.filter({
+						has: page.locator("strong", {
+							hasText: new RegExp(`^${record.title}$`),
+						}),
+					})
+					.getByRole("checkbox")
+					.check();
 			await expect(
 				dialog.getByText(t("pwConnectSelected", { count: 5 }), { exact: true }),
 			).toBeVisible();

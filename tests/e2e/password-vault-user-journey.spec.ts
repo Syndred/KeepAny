@@ -172,7 +172,7 @@ async function mobileToolbarLayout(page: Page) {
 		if (row) row.push(box);
 		else rows.push([box]);
 	}
-	expect(rows.map((row) => row.length)).toEqual([4, 4]);
+	expect(rows.map((row) => row.length)).toEqual([5, 3]);
 	for (const row of rows) {
 		const sorted = [...row].sort((a, b) => a.left - b.left);
 		for (let i = 1; i < sorted.length; i++)
@@ -531,6 +531,7 @@ for (const locale of ["zh-CN", "en"] as const)
 				await entry("QQ QA")
 					.getByRole("button", { name: t("pwVaultDeleteEntry"), exact: true })
 					.click();
+				await page.getByRole("dialog").getByRole("button", { name: t("pwVaultDeleteEntry"), exact: true }).click();
 				await expect(entries).toHaveCount(records.length - 1);
 				await page
 					.getByRole("button", { name: t("pwVaultTrashTitle"), exact: true })

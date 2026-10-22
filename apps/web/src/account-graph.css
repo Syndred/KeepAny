@@ -32,3 +32,4 @@
 	.account-family-graph .account-graph-view-actions { padding: 10px; }
 	.dialog.account-graph-dialog { width: calc(100vw - 16px); height: calc(100dvh - 16px); padding: 12px; }
 }
+.account-graph-disconnect { min-height: 44px; margin-top: 12px; }

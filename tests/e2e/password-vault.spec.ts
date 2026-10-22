@@ -799,6 +799,7 @@ for (const variant of variants) {
 			await entry
 				.getByRole("button", { name: t("pwVaultDeleteEntry"), exact: true })
 				.click();
+			await page.getByRole("dialog").getByRole("button", { name: t("pwVaultDeleteEntry"), exact: true }).click();
 			await expect(entry).toHaveCount(0);
 			await page
 				.getByRole("button", { name: t("pwVaultRestoreEntry"), exact: true })

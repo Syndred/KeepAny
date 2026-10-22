@@ -333,6 +333,29 @@ export class VaultSession {
 
   readEntry(id: string): VaultEntryDraft { return draftOf(findEntry(this.unlocked(), id)); }
 
+  /** Disconnect one reviewed asset without changing either the asset or entry fields. */
+  async unlinkAsset(entryId: string, assetId: string, expectedContentRevision: string): Promise<void> {
+    if (!entryId || !assetId || assetId.length > 96) fail('vault-invalid');
+    return this.run(async generation => {
+      const db = this.unlocked();
+      if (this.contentRevision(db) !== expectedContentRevision) fail('vault-stale');
+      const entry = findEntry(db, entryId);
+      if (isTrash(db, entry)) fail('vault-invalid');
+      if (!draftOf(entry).linkedAssetIds.includes(assetId)) {
+        const stored = await this.storage.read();
+        this.checkGeneration(generation);
+        if (stored?.revision !== this.record?.revision) fail('vault-stale');
+        return;
+      }
+      await this.mutate(generation, candidate => {
+        const target = findEntry(candidate, entryId);
+        target.pushHistory();
+        const draft = draftOf(target);
+        applyDraft(target, normalizeDraft({ ...draft, linkedAssetIds: draft.linkedAssetIds.filter(id => id !== assetId) }));
+      });
+    });
+  }
+
   /** Never exposes this unreviewed application state as a password entry. */
   readImportDraft(): string | null { return readImportDraft(this.unlocked()); }
 

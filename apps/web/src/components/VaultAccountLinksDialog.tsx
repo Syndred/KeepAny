@@ -143,11 +143,7 @@ export function VaultAccountLinksDialog({
 			abort.current?.abort();
 		};
 	}, [load, t]);
-	async function resolve(
-		blocked: BlockedAccountLink,
-		accountId: string,
-		restore: boolean,
-	) {
+	async function resolve(blocked: BlockedAccountLink, accountId: string) {
 		if (
 			running.current ||
 			stale ||
@@ -160,9 +156,7 @@ export function VaultAccountLinksDialog({
 		setMessage("");
 		try {
 			const next = { ...resolutions.current };
-			if (restore) {
-				await (await localRepository()).restoreEntity("asset", accountId);
-			} else if (blocked.conflict.scope === "account") {
+			if (blocked.conflict.scope === "account") {
 				next.accounts = new Map(next.accounts).set(blocked.entry.id, accountId);
 			} else {
 				next.identities = new Map(next.identities).set(
@@ -538,9 +532,7 @@ export function VaultAccountLinksDialog({
 											blocked={blocked}
 											assets={sourceAssets}
 											disabled={busy || stale}
-											onResolve={(id, restore) =>
-												void resolve(blocked, id, restore)
-											}
+											onResolve={(id) => void resolve(blocked, id)}
 										/>
 									))}
 									{visibleRows.map((row) => (

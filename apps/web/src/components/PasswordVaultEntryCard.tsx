@@ -10,6 +10,7 @@ import {
 	Pencil,
 	Plus,
 	Trash2,
+	Unlink,
 } from "lucide-react";
 import {
 	type ButtonHTMLAttributes,
@@ -55,6 +56,7 @@ export function PasswordVaultEntryCard({
 	onDelete,
 	onHistory,
 	onCopy,
+	onUnlink,
 }: {
 	entry: PasswordVaultEntrySummary;
 	session: PasswordVaultSession;
@@ -65,6 +67,7 @@ export function PasswordVaultEntryCard({
 	onDelete: () => void;
 	onHistory: () => void;
 	onCopy: (label: string, value: string) => void;
+	onUnlink: (assetId: string) => void;
 }) {
 	const { t, i18n } = useTranslation();
 	const [revealed, setRevealed] = useState(false);
@@ -217,23 +220,44 @@ export function PasswordVaultEntryCard({
 			{entry.linkedAssetIds.length > 0 && (
 				<div className="password-vault-linked-assets">
 					<Link2 size={14} aria-label={t("pwVaultLinkedAssets")} />
-					{entry.linkedAssetIds.map((id) =>
-						assetsById.has(id) ? (
-							<Link
-								className="password-vault-linked-asset"
-								key={id}
-								to="/assets/$kind/$id"
-								params={{ kind: assetsById.get(id)?.kind ?? "account", id }}
-								hash="account-relations"
-								title={t("pwConnectGraph")}
+					{entry.linkedAssetIds.map((id) => (
+						<div className="password-vault-linked-connection" key={id}>
+							{assetsById.has(id) && !assetsById.get(id)?.deleted ? (
+								<Link
+									className="password-vault-linked-asset"
+									key={id}
+									to="/assets/$kind/$id"
+									params={{ kind: assetsById.get(id)?.kind ?? "account", id }}
+									hash="account-relations"
+									title={t("pwConnectGraph")}
+								>
+									<Link2 size={14} />
+									{assetsById.get(id)?.name}
+								</Link>
+							) : (
+								<span className="password-vault-unavailable">
+									{assetsById.get(id)?.deleted
+										? t("pwVaultLinkedInTrash", {
+												name: assetsById.get(id)?.name,
+											})
+										: t("pwVaultAssetUnavailable")}
+								</span>
+							)}
+							<Button
+								size="small"
+								variant="ghost"
+								disabled={busy}
+								onClick={() => onUnlink(id)}
+								aria-label={t("pwVaultUnlinkNamed", {
+									name:
+										assetsById.get(id)?.name ?? t("pwVaultAssetUnavailable"),
+								})}
 							>
-								<Link2 size={14} />
-								{assetsById.get(id)?.name}
-							</Link>
-						) : (
-							<span key={id}>{t("pwVaultAssetUnavailable")}</span>
-						),
-					)}
+								<Unlink size={16} />
+								{t("pwVaultUnlink")}
+							</Button>
+						</div>
+					))}
 				</div>
 			)}
 			<footer className="actions password-vault-entry-actions">
@@ -258,14 +282,17 @@ export function PasswordVaultEntryCard({
 				>
 					<History size={18} />
 				</VaultIconButton>
-				<VaultIconButton
-					label={t("pwVaultDeleteEntry")}
+				<Button
+					size="small"
+					variant="ghost"
+					type="button"
 					className="password-vault-delete"
 					disabled={busy}
 					onClick={onDelete}
 				>
 					<Trash2 size={18} />
-				</VaultIconButton>
+					{t("pwVaultDeleteEntry")}
+				</Button>
 			</footer>
 		</TaskCard>
 	);

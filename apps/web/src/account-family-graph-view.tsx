@@ -8,7 +8,7 @@ import {
 	useUpdateNodeInternals,
 	type Edge, type EdgeChange, type EdgeProps, type Node, type NodeProps,
 } from "@xyflow/react";
-import { LocateFixed, Maximize2, Minimize2, Scan, X } from "lucide-react";
+import { LocateFixed, Maximize2, Minimize2, Scan, Trash2, X } from "lucide-react";
 import type { Asset, Relation } from "../../../packages/domain/src";
 import { layoutAccountGraph, type AccountGraphLayout, type AccountGraphHandle } from "./account-graph-layout";
 import { Button } from "./components/ui/button";
@@ -27,6 +27,7 @@ type Props = {
 	selectedEdgeId: string | null;
 	onSelectEdge: (id: string | null) => void;
 	onVisit: (asset: Asset) => void;
+	onDeleteRelations?: (relations: Relation[]) => void;
 };
 
 function accountLabel(asset: Asset) {
@@ -225,6 +226,7 @@ function GraphContent({ props, expanded, restore, onExpand, onCollapse }: {
 					<div className="account-graph-selection-header"><p className="account-graph-selection-title"><strong>{byId.get(selected[0].from)?.name}</strong><span aria-hidden="true"> → </span><strong>{byId.get(selected[0].to)?.name}</strong></p><Button className="account-graph-selection-close" aria-label={t("close")} onClick={() => props.onSelectEdge(null)}><X size={18} /></Button></div>
 					<ul className="account-graph-selection-labels">{[...new Set(selected.map((relation) => relation.label))].map((label) => <li key={label}>{label}</li>)}</ul>
 					<p className="account-graph-selection-status" role="status">{t(selected.every((relation) => !!relation.verifiedAt) ? "relationGraphVerified" : selected.some((relation) => !!relation.verifiedAt) ? "relationGraphMixed" : "relationGraphPending")}</p>
+					{props.onDeleteRelations && <Button className="account-graph-disconnect" variant="danger" size="small" onClick={() => props.onDeleteRelations?.(selected)}><Trash2 size={16} />{t("deleteRelation")}</Button>}
 				</section></Panel>}
 			</ReactFlow>
 			{!ready && <p className="account-graph-state" role={error ? "alert" : "status"}>{t(error ? "accountGraphUnavailable" : "loading")}</p>}

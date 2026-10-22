@@ -1024,6 +1024,30 @@ it('generates cryptographic passwords of requested length with every enabled cat
 });
 
 describe('reviewed account links', () => {
+  it('disconnects a single asset with revision protection and keeps secrets, other links, draft and history', async () => {
+    const { session, storage } = await created();
+    const id = await session.saveEntry({ ...draft, linkedAssetIds: ['remove-this', 'keep-account', 'keep-project'], usernameAliases: ['alias@example.test'] });
+    const revision = session.getSnapshot().revision;
+    if (!revision) throw Error('test-revision');
+    await session.writeImportDraft('keep-private-draft', revision);
+    const before = session.getSnapshot().contentRevision;
+    if (!before) throw Error('test-content-revision');
+    const writes = storage.writes;
+    await session.unlinkAsset(id, 'remove-this', before);
+    expect(storage.writes).toBe(writes + 1);
+    expect(session.readEntry(id)).toMatchObject({ ...draft, linkedAssetIds: ['keep-account', 'keep-project'], usernameAliases: ['alias@example.test'] });
+    expect(session.readImportDraft()).toBe('keep-private-draft');
+    expect(session.history(id)[0].draft.linkedAssetIds).toEqual(['remove-this', 'keep-account', 'keep-project']);
+    await expect(session.unlinkAsset(id, 'keep-account', before)).rejects.toThrow('vault-stale');
+    const current = session.getSnapshot().contentRevision;
+    if (!current) throw Error('test-content-revision');
+    await session.unlinkAsset(id, 'remove-this', current);
+    expect(storage.writes).toBe(writes + 1);
+    session.lock();
+    await expect(session.unlinkAsset(id, 'keep-account', current)).rejects.toThrow('vault-locked');
+    await session.unlock(master);
+    expect(session.readEntry(id).linkedAssetIds).toEqual(['keep-account', 'keep-project']);
+  });
   it('replaces only chosen account links atomically and retains unrelated links and encrypted content', async () => {
     const { session, storage } = await created();
     const id = await session.saveEntry({ ...draft, usernameAliases: ['alias@example.test'], linkedAssetIds: ['deleted-account', 'other-account', 'preserved-project'] });

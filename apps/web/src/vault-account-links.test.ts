@@ -516,7 +516,7 @@ describe("reviewed vault account associations", () => {
 			).replacedRelations,
 		).toEqual([]);
 	});
-	it("rejects deleted or ambiguous identity targets and never revives deleted linked accounts", async () => {
+	it("keeps deleted identity targets in trash while allowing re-import and rejects ambiguous active targets", async () => {
 		const original = {
 			...newAsset("account"),
 			id: "identity",
@@ -524,18 +524,21 @@ describe("reviewed vault account associations", () => {
 			username: "owner@example.test",
 		};
 		const source = entry("a", "Notion", "owner@example.test");
-		await expect(
-			buildAccountLinkRows([source], [{ ...original, deleted: true }]),
-		).rejects.toThrow("account-link-conflict");
+		const [fresh] = await buildAccountLinkRows(
+			[source],
+			[{ ...original, deleted: true }],
+		);
+		expect(fresh.identityAccounts[0].account.id).not.toBe(original.id);
+		expect(fresh.identityAccounts[0].isNew).toBe(true);
 		await expect(
 			buildAccountLinkRows([source], [original, { ...original, id: "second" }]),
 		).rejects.toThrow("account-link-ambiguous");
-		await expect(
-			buildAccountLinkRows(
-				[{ ...source, linkedAssetIds: [original.id] }],
-				[{ ...original, deleted: true }],
-			),
-		).rejects.toThrow("account-link-conflict");
+		const [reimported] = await buildAccountLinkRows(
+			[{ ...source, linkedAssetIds: [original.id] }],
+			[{ ...original, deleted: true }],
+		);
+		expect(reimported.account.id).not.toBe(original.id);
+		expect(reimported.replaceAccountIds).toEqual([original.id]);
 	});
 	it("offers removal of legacy numeric-username links without manufacturing phone identities", async () => {
 		const rows = await buildAccountLinkRows(
@@ -686,14 +689,14 @@ describe("reviewed vault account associations", () => {
 		);
 		expect(plan.newAssets).toEqual([rows[0].account]);
 		expect(plan.newRelations[0].to).toBe(identity.id);
-		await expect(
-			buildAccountLinkRows(
-				[entry("new", "Notion", identity.username)],
-				[existingService, { ...identity, deleted: true }],
-				new Map(),
-				[relation],
-			),
-		).rejects.toThrow("account-link-conflict");
+		const [replacement] = await buildAccountLinkRows(
+			[entry("new", "Notion", identity.username)],
+			[existingService, { ...identity, deleted: true }],
+			new Map(),
+			[relation],
+		);
+		expect(replacement.identityAccounts[0].account.id).not.toBe(identity.id);
+		expect(replacement.identityAccounts[0].isNew).toBe(true);
 	});
 	it("does not treat arbitrary same-endpoint edges as proof that an identity relationship replaced a legacy hub", async () => {
 		const rows = await buildAccountLinkRows(
@@ -880,12 +883,15 @@ describe("reviewed vault account associations", () => {
 			),
 		).rejects.toThrow("account-link-identity-in-use");
 	});
-	it("rejects ambiguous and deleted account matches instead of overwriting", async () => {
+	it("leaves deleted accounts untouched and rejects ambiguous active matches", async () => {
 		const e = entry("a", "Google", "a@example.test");
 		const [row] = await buildAccountLinkRows([e], []);
-		await expect(
-			buildAccountLinkRows([e], [{ ...row.account, deleted: true }]),
-		).rejects.toThrow();
+		const [fresh] = await buildAccountLinkRows(
+			[e],
+			[{ ...row.account, deleted: true }],
+		);
+		expect(fresh.account.id).not.toBe(row.account.id);
+		expect(fresh.isNew).toBe(true);
 		await expect(
 			buildAccountLinkRows(
 				[e],
@@ -991,6 +997,12 @@ describe("reviewed vault account associations", () => {
 		]);
 		expect(result.neighbors.map((a) => a.id).sort()).toEqual(["b", "c"]);
 		expect(result.relations).toHaveLength(3);
-		expect(result.relations.map((relation) => [relation.from, relation.to])).toEqual([["a", "b"], ["b", "c"], ["c", "a"]]);
+		expect(
+			result.relations.map((relation) => [relation.from, relation.to]),
+		).toEqual([
+			["a", "b"],
+			["b", "c"],
+			["c", "a"],
+		]);
 	});
 });

@@ -23,7 +23,7 @@ test("desktop shell follows the frozen frame and keeps real navigation reachable
 		expect(geometry).toMatchObject({ frameLeft: 8, frameRadius: "18px", shellWidth: 1180, sidebarBorder: "3px", searchWidth: 190, searchBorder: "2px", horizontalOverflow: false });
 		expect(geometry.shellLeft).toBeGreaterThanOrEqual(48);
 		expect(geometry.sidebarRight).toBeGreaterThan(240);
-		await expect(page.locator(".sidebar-customize")).toHaveAttribute("href", "/collections");
+		await expect(page.locator(".sidebar-customize[href='/collections']")).toHaveCount(1);
 		await expect(page.locator(".sidebar-collection-manage")).toHaveCount(0);
 		await expect(page.locator(".sidebar-tools-menu")).toHaveCount(0);
 		await page.screenshot({ path: `/tmp/keepany-shell-${suffix}-1280.png` });
@@ -42,7 +42,8 @@ test("desktop shell follows the frozen frame and keeps real navigation reachable
 		await expect(page.locator(".top-search-panel")).toHaveCount(0);
 		await expect.poll(() => page.evaluate(() => sessionStorage.getItem("keepany-search"))).toBe("");
 		await page.locator(".sidebar-user").click();
-		await expect(page.locator(".sidebar-tools-menu a")).toHaveCount(3);
+		await expect(page.locator(".sidebar-tools-menu a")).toHaveCount(2);
+		await expect(page.locator(".sidebar-trash")).toBeVisible();
 		await page.locator(".sidebar-user").click();
 		await page.locator(".top-ai-wrap button").click();
 		await expect(page.locator(".top-ai-menu a")).toHaveCount(2);

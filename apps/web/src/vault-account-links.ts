@@ -18,7 +18,7 @@ import {
 export type AccountLinkIdentityKind = "email" | "phone";
 export class AccountLinkConflict extends Error {
 	constructor(
-		readonly reason: "deleted" | "ambiguous" | "incompatible",
+		readonly reason: "ambiguous" | "incompatible",
 		readonly scope: "account" | "identity",
 		readonly accounts: Asset[],
 		readonly identifier = "",
@@ -156,6 +156,18 @@ function identityValue(asset: Asset, kind: AccountLinkIdentityKind): string {
 	return kind === "email" ? emailIdentifier(value) : phoneIdentifier(value);
 }
 
+/** Re-import creates a new record after deletion; a tombstone is never revived. */
+async function availableAccountId(
+	prefix: string,
+	baseId: string,
+	assets: Asset[],
+): Promise<string> {
+	let id = baseId;
+	while (assets.some((asset) => asset.id === id && asset.deleted))
+		id = await accountIdentityStableId(prefix, ["after-delete", id]);
+	return id;
+}
+
 async function identityTarget(
 	kind: AccountLinkIdentityKind,
 	identifier: string,
@@ -165,11 +177,12 @@ async function identityTarget(
 ): Promise<AccountLinkIdentity> {
 	const provider =
 		kind === "email" ? identifier.slice(identifier.lastIndexOf("@") + 1) : "";
-	const id = await accountIdentityStableId("login-identity", [
+	const baseId = await accountIdentityStableId("login-identity", [
 		kind,
 		provider.toLowerCase(),
 		identifier.toLowerCase(),
 	]);
+	const id = await availableAccountId("login-identity", baseId, assets);
 	const stable = assets.find((asset) => asset.id === id);
 	const resolution = resolutions.identities?.get(`${kind}:${identifier}`);
 	const resolved = resolution
@@ -233,22 +246,8 @@ async function identityTarget(
 			[stable],
 			`${kind}:${identifier}`,
 		);
-	if (stable?.deleted && !resolved && linked.length !== 1)
-		throw new AccountLinkConflict(
-			"deleted",
-			"identity",
-			[stable],
-			`${kind}:${identifier}`,
-		);
 	const existing =
 		resolved ?? (usableStable ? stable : undefined) ?? linked[0] ?? live[0];
-	if (!existing && matches.some((asset) => asset.deleted))
-		throw new AccountLinkConflict(
-			"deleted",
-			"identity",
-			matches.filter((asset) => asset.deleted),
-			`${kind}:${identifier}`,
-		);
 	return {
 		kind,
 		identifier,
@@ -280,7 +279,11 @@ export async function buildAccountLinkRows(
 		]
 			.map((n) => n.toString(16).padStart(2, "0"))
 			.join("");
-		const id = `pw-account-${hash}`;
+		const id = await availableAccountId(
+			"pw-account",
+			`pw-account-${hash}`,
+			assets,
+		);
 		const stable = assets.find((a) => a.id === id);
 		const resolution = resolutions.accounts?.get(entry.id);
 		const resolved = resolution
@@ -303,21 +306,10 @@ export async function buildAccountLinkRows(
 				asset.kind === "account" &&
 				entry.linkedAssetIds.includes(asset.id),
 		);
-		if (!resolved && deletedLinked.length)
-			throw new AccountLinkConflict("deleted", "account", deletedLinked);
 		if (!resolved && linked.length > 1)
 			throw new AccountLinkConflict("ambiguous", "account", linked);
-		if (
-			!resolved &&
-			!linked.length &&
-			stable &&
-			(stable.deleted || stable.kind !== "account")
-		)
-			throw new AccountLinkConflict(
-				stable.deleted ? "deleted" : "incompatible",
-				"account",
-				[stable],
-			);
+		if (!resolved && !linked.length && stable && stable.kind !== "account")
+			throw new AccountLinkConflict("incompatible", "account", [stable]);
 		const matches = assets.filter(
 			(a) =>
 				!a.deleted &&
@@ -398,7 +390,7 @@ export async function buildAccountLinkRows(
 								(asset) => asset.id === assetId && asset.kind === "account",
 							),
 					)
-				: [],
+				: deletedLinked.map((asset) => asset.id),
 		});
 	}
 	const targets = new Map<string, AccountLinkIdentity>();

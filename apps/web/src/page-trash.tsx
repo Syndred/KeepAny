@@ -87,7 +87,7 @@ export function TrashPage() {
 							);
 							const to = data.assets.find((asset) => asset.id === relation.to);
 							return (
-								<div className="list-row relation-row" key={relation.id}>
+								<div className="list-row relation-row" key={relation.id} data-relation-id={relation.id}>
 									<Trash2 size={18} />
 									<div className="relation-info">
 										<strong>

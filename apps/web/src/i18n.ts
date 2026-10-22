@@ -287,6 +287,11 @@ const copy: Record<string, [string, string]> = {
 	],
 	filterRelations: ["筛选关系", "Filter connections"],
 	deleteRelation: ["删除关系", "Delete connection"],
+	relationDisconnected: ["关联已解除", "Connection removed"],
+	relationDisconnectGroup: ["将这条连线的 {{count}} 条关系移入回收站？两端账号和密码都保留。", "Move all {{count}} relationships on this line to Trash? Both accounts and passwords are kept."],
+	relationDisconnectGroup_one: ["将这条连线的 {{count}} 条关系移入回收站？两端账号和密码都保留。", "Move the relationship on this line to Trash? Both accounts and passwords are kept."],
+	relationDisconnectGroup_other: ["将这条连线的 {{count}} 条关系移入回收站？两端账号和密码都保留。", "Move all {{count}} relationships on this line to Trash? Both accounts and passwords are kept."],
+	relationDisconnectError: ["关联已变更或尚未完全解除，请关闭后重新核对。已解除的关系可在回收站恢复。", "The connections changed or were only partly removed. Close and review again. Removed connections can be restored from Trash."],
 	deleteRelationConfirm: [
 		"将“{{label}}”关系移到回收站？两端资产会保留。",
 		"Move the “{{label}}” connection to trash? Both assets stay in place.",

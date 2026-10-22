@@ -278,6 +278,7 @@ export function AppShell() {
 							onNavigate={() => setMobile(false)}
 						/>
 					</nav>
+					<Link to="/trash" className="sidebar-trash sidebar-customize" aria-current={pathname === "/trash" ? "page" : undefined} onClick={() => setMobile(false)}><Trash2 size={18}/>{t("trash")}</Link>
 					<div className="sidebar-custom">
 						<div className="sidebar-section-label">{t("collectionsTitle")}</div>
 						{collections.map((collection) => <Link key={collection.id} to="/collections/$id" params={{ id: collection.id }} className="sidebar-category sidebar-collection" aria-current={collectionDetailId === collection.id ? "page" : undefined} onClick={() => setMobile(false)} title={collection.name}><span>{collection.name}</span></Link>)}
@@ -285,7 +286,7 @@ export function AppShell() {
 						<Link to="/collections" className="sidebar-customize" aria-current={/^\/collections\/?$/.test(pathname) ? "page" : undefined} onClick={() => setMobile(false)}><Plus size={15}/>{t("customizeSidebar")}</Link>
 					</div>
 					<div className="side-bottom">
-						{toolsOpen && <div className="sidebar-tools-menu"><Link to="/intake" onClick={() => { setToolsOpen(false); setMobile(false); }}><Plus size={18}/>{t("intake")}</Link><Link to="/trash" onClick={() => { setToolsOpen(false); setMobile(false); }}><Trash2 size={18}/>{t("trash")}</Link><Link to="/settings" onClick={() => { setToolsOpen(false); setMobile(false); }}><Settings size={18}/>{t("settings")}</Link></div>}
+						{toolsOpen && <div className="sidebar-tools-menu"><Link to="/intake" onClick={() => { setToolsOpen(false); setMobile(false); }}><Plus size={18}/>{t("intake")}</Link><Link to="/settings" onClick={() => { setToolsOpen(false); setMobile(false); }}><Settings size={18}/>{t("settings")}</Link></div>}
 						<button type="button" className="sidebar-user" aria-expanded={toolsOpen} onClick={() => setToolsOpen((open) => !open)}><span>{t("meInitial")}</span><span><strong>{t("myWorkspace")}</strong><small>{t("privateWorkspace")}</small></span><ChevronDown size={14} aria-hidden="true" /></button>
 					</div>
 				</aside>

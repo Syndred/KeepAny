@@ -21,7 +21,7 @@ const entry = {
 const label = () => "Login email";
 
 describe("reviewed account link recovery", () => {
-	it("identifies the deleted account without reviving it or blocking unrelated entries", async () => {
+	it("re-imports under a new stable id without reviving deleted accounts or blocking unrelated entries", async () => {
 		const [original] = await buildAccountLinkRows([entry], []);
 		const deleted = { ...original.account, deleted: true };
 		const source = { ...entry, linkedAssetIds: [deleted.id] };
@@ -34,11 +34,19 @@ describe("reviewed account link recovery", () => {
 			new Map(),
 			[],
 		);
-		expect(review.rows.map((row) => row.entryId)).toEqual(["other"]);
-		expect(review.blocked[0]).toMatchObject({
-			entry: source,
-			conflict: { scope: "account", reason: "deleted", accounts: [deleted] },
-		});
+		expect(review.rows.map((row) => row.entryId)).toEqual([entry.id, "other"]);
+		expect(review.blocked).toEqual([]);
+		expect(review.rows[0].account.id).not.toBe(deleted.id);
+		expect(review.rows[0].isNew).toBe(true);
+		expect(review.rows[0].replaceAccountIds).toEqual([deleted.id]);
+		const retry = await buildAccountLinkRows([source], [deleted]);
+		expect(retry[0].account.id).toBe(review.rows[0].account.id);
+		const again = await buildAccountLinkRows(
+			[source],
+			[deleted, { ...retry[0].account, deleted: true }],
+		);
+		expect(again[0].account.id).not.toBe(deleted.id);
+		expect(again[0].account.id).not.toBe(retry[0].account.id);
 		expect(deleted.deleted).toBe(true);
 		const restored = await buildAccountLinkReview(
 			[source],
@@ -117,7 +125,7 @@ describe("reviewed account link recovery", () => {
 			),
 		).rejects.toThrow("account-link-stale");
 	});
-	it("uses the chosen email identity on retry without reviving a deleted identity", async () => {
+	it("reuses the active email identity on retry while leaving an old identity deleted", async () => {
 		const [initial] = await buildAccountLinkRows([entry], []);
 		const deleted = { ...initial.identityAccounts[0].account, deleted: true };
 		const target = { ...deleted, id: "chosen-email", deleted: false };
@@ -128,11 +136,8 @@ describe("reviewed account link recovery", () => {
 			new Map(),
 			[],
 		);
-		expect(blocked.blocked[0].conflict).toMatchObject({
-			scope: "identity",
-			reason: "deleted",
-			accounts: [deleted],
-		});
+		expect(blocked.blocked).toEqual([]);
+		expect(blocked.rows[0].identityAccounts[0].account.id).toBe(target.id);
 		const rows = await buildAccountLinkRows([entry], assets, new Map(), [], {
 			identities: new Map([["email:owner@example.test", target.id]]),
 		});
