@@ -372,7 +372,7 @@ export function AssetEditor({
 		}
 	}
 	return (
-		<Dialog title={asset ? t("edit") : t("newRecord")} onClose={closeIfIdle}>
+		<Dialog title={asset ? t("edit") : t("newRecord")} className={kind === "account" ? "account-detail-dialog" : undefined} onClose={closeIfIdle}>
 			<form className={kind === "project" ? "project-editor" : undefined} onSubmit={(e) => void submit(e)}>
 				<div className="form-grid">
 					<Field
@@ -767,10 +767,12 @@ export function AssetEditor({
 export function TaskEditor({
 	assetId = "",
 	mode = "simple",
+	className,
 	onClose,
 }: {
 	assetId?: string;
 	mode?: "simple" | "maintenance";
+	className?: string;
 	onClose: () => void;
 }) {
 	const { t } = useTranslation();
@@ -833,7 +835,7 @@ export function TaskEditor({
 	}
 	if (mode === "maintenance") return <MaintenancePlanEditor onClose={onClose} />;
 	return (
-		<Dialog title={t("newTask")} onClose={closeIfIdle}>
+		<Dialog title={t("newTask")} className={className} onClose={closeIfIdle}>
 			<form onSubmit={(e) => void submit(e)}>
 				<div className="form-grid">
 					<Field

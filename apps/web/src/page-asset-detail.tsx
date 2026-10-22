@@ -1407,6 +1407,7 @@ export function AssetDetail() {
 			</div>}
 			{deleteOpen && (
 				<Dialog
+					className={kind === "account" ? "account-detail-dialog" : undefined}
 					title={t("delete")}
 					onClose={() => {
 						if (!deleteInFlight.current) setDeleteOpen(false);
@@ -2019,11 +2020,12 @@ export function AssetDetail() {
 						</div>
 					}
 				>
-					<TaskEditor assetId={asset.id} onClose={() => setTaskEdit(false)} />
+					<TaskEditor assetId={asset.id} className={kind === "account" ? "account-detail-dialog" : undefined} onClose={() => setTaskEdit(false)} />
 				</Suspense>
 			)}
 			{relationEdit && (
 				<Dialog
+					className={kind === "account" ? "account-detail-dialog" : undefined}
 					title={t("addRelation")}
 					onClose={() => {
 						if (!relationInFlight.current) setRelationEdit(false);
@@ -2093,6 +2095,7 @@ export function AssetDetail() {
 			)}
 			{relationToDelete && (
 				<Dialog
+					className={kind === "account" ? "account-detail-dialog" : undefined}
 					title={t("deleteRelation")}
 					onClose={() => {
 						if (!relationInFlight.current) {
@@ -2196,7 +2199,7 @@ export function AssetDetail() {
 				</Dialog>
 			)}
 			{pendingImage && (
-				<Dialog title={t("preview")} onClose={() => setPendingImage(null)}>
+				<Dialog className={kind === "account" ? "account-detail-dialog" : undefined} title={t("preview")} onClose={() => setPendingImage(null)}>
 					{pendingImageUrl && (
 						<img
 							className="image-preview"
