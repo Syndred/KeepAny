@@ -1,6 +1,8 @@
 /** Password vault copy kept separate so the shell can merge it into i18next. */
 export const passwordVaultCopy: Record<string, [string, string]> = {
 	accountConnectionCount: ["{{count}} 个关联", "{{count}} connections"],
+	accountConnectionCount_one: ["{{count}} 个关联", "{{count}} connection"],
+	accountConnectionCount_other: ["{{count}} 个关联", "{{count}} connections"],
 	accountGraphDirect: ["直接关联", "Direct"],
 	accountGraphFamily: ["完整关系", "All connections"],
 	accountGraphCounts: [
