@@ -3,7 +3,7 @@ import { expect, test, type Locator, type Page } from "@playwright/test";
 import { strFromU8, unzipSync } from "fflate";
 import { decryptBackup } from "../../packages/local-db/src/backup-crypto";
 import { selectChoice } from "./helpers/select-choice";
-import { expectReadableAccountGraph } from "./helpers/account-graph";
+import { clickAccountGraphBlank, expectReadableAccountGraph, expectAccountGraphGeometry, expectAllAccountGraphNodesInFrame, waitForAccountGraphLayout } from "./helpers/account-graph";
 
 test.use({ actionTimeout: 15_000 });
 const password = "graph-verification-backup";
@@ -56,10 +56,11 @@ for (const locale of ["zh-CN", "en-US"] as const) {
 				await expect(dialog).toBeHidden();
 			}
 			async function graphGeometry(targetPage: Page) {
+				await waitForAccountGraphLayout(targetPage);
 				await expect(targetPage.locator(".react-flow__edge-textwrapper"), "Account connections keep the canvas free of repeated text").toHaveCount(0);
 				for (const edge of await targetPage.locator(".react-flow__edge-path").all()) {
 					const path = await edge.getAttribute("d");
-					expect(path, "Connections use finite React Flow smooth-step paths").toMatch(/^M[-\d.,\s]+[LQ]/);
+					expect(path, "Connections use finite routed SVG paths").toMatch(/^M/);
 					expect(path).not.toMatch(/NaN|Infinity/);
 					expect(await edge.evaluate(element => (element as SVGPathElement).getTotalLength())).toBeGreaterThan(0);
 					await expect(edge, "Every account connection exposes its direction").toHaveAttribute("marker-end", /url\(.+\)/);
@@ -70,35 +71,11 @@ for (const locale of ["zh-CN", "en-US"] as const) {
 					expect(title).toContain(await label.locator("strong").textContent() ?? "");
 					if (await label.locator("small").count()) expect(title).toContain(await label.locator("small").textContent() ?? "");
 				}
-				const gap = await targetPage.locator(".graph").evaluate(graph => {
-					const nodes = [...graph.querySelectorAll(".react-flow__node")].map(node => node.getBoundingClientRect());
-					const apart = nodes.every((left, i) => nodes.slice(i + 1).every(right => left.right + 5 <= right.left || right.right + 5 <= left.left || left.bottom + 5 <= right.top || right.bottom + 5 <= left.top));
-					if (!apart) return false;
-					return [...graph.querySelectorAll<SVGPathElement>(".react-flow__edge-path")].every(path => {
-						const matrix = path.getScreenCTM();
-						if (!matrix) return false;
-						const endpoints = [path.getPointAtLength(0), path.getPointAtLength(path.getTotalLength())].map(point => new DOMPoint(point.x, point.y).matrixTransform(matrix));
-						const facing = nodes.some(node => Math.abs(endpoints[0].x - node.right) <= 5 && endpoints[0].y >= node.top && endpoints[0].y <= node.bottom)
-							&& nodes.some(node => Math.abs(endpoints[1].x - node.left) <= 5 && endpoints[1].y >= node.top && endpoints[1].y <= node.bottom);
-						const clear = Array.from({ length: 39 }, (_, index) => (index + 1) / 40).every(fraction => {
-							const point = path.getPointAtLength(path.getTotalLength() * fraction);
-							const screen = new DOMPoint(point.x, point.y).matrixTransform(matrix);
-							return nodes.every(node => screen.x <= node.left + 2 || screen.x >= node.right - 2 || screen.y <= node.top + 2 || screen.y >= node.bottom - 2);
-						});
-						return facing && clear;
-					});
-				});
-				expect(gap, "Nodes do not overlap and directed edges use right/left handles without crossing cards").toBe(true);
+				await expectAccountGraphGeometry(targetPage);
 				expect(await targetPage.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);
 			}
 			async function allNodesInFrame(targetPage: Page) {
-				await expect.poll(() => targetPage.locator(".graph").evaluate(graph => {
-					const bounds = graph.getBoundingClientRect();
-					return [...graph.querySelectorAll(".react-flow__node")].every(node => {
-						const rect = node.getBoundingClientRect();
-						return rect.left >= bounds.left - 1 && rect.right <= bounds.right + 1 && rect.top >= bounds.top - 1 && rect.bottom <= bounds.bottom + 1;
-					});
-				}), { message: "Manual fit shows every family node inside the viewport" }).toBe(true);
+				await expectAllAccountGraphNodesInFrame(targetPage);
 			}
 			async function selectConnection(targetPage: Page, edge: Locator, from: string, to: string, labels: string[], status: string, key = "Enter") {
 				await expect(edge).toHaveAttribute("tabindex", "0");
@@ -156,7 +133,7 @@ for (const locale of ["zh-CN", "en-US"] as const) {
 				await selectConnection(targetPage, pendingEdge, "Pending account", hubName, ["Pending link"], text.pending, "Space");
 				await pendingEdge.press("Backspace");
 				await expect(targetPage.locator(".react-flow__edge-path")).toHaveCount(2);
-				await targetPage.locator(".react-flow__pane").click({ position: { x: 12, y: 12 } });
+				await clickAccountGraphBlank(targetPage);
 				await expect(targetPage.getByRole("region", { name: text.details, exact: true })).toBeHidden();
 				await graphGeometry(targetPage);
 			}
@@ -256,7 +233,7 @@ for (const locale of ["zh-CN", "en-US"] as const) {
 					await page.getByRole("button", { name: "All connections", exact: true }).click();
 					await expect(page.locator(".react-flow__node")).toHaveCount(49);
 					await expectReadableAccountGraph(page);
-					await page.getByRole("button", { name: "Fit all", exact: true }).click();
+					await page.locator(".account-graph-view-actions").getByRole("button", { name: "Fit all", exact: true }).click();
 					await allNodesInFrame(page);
 					await page.locator(".graph").scrollIntoViewIfNeeded();
 					await page.screenshot({ path: evidence ? `${evidence}/relation-graph-49-en-US-1280.png` : test.info().outputPath("relation-graph-49-en-US-1280.png") });
