@@ -109,7 +109,14 @@ for (const locale of ["zh-CN", "en-US"] as const) {
 				const dashed = targetPage.locator(".relation-graph-edge--pending");
 				await expect(solid).toHaveCount(mixed ? 0 : 1);
 				await expect(dashed).toHaveCount(mixed ? 2 : 1);
-				await expect(targetPage.getByText(text.legend, { exact: true })).toBeVisible();
+				const guide = targetPage.locator("details.account-graph-guide");
+				await expect(guide).toHaveCount(1);
+				const expanded = targetPage.getByRole("dialog", { name: /^(账号族谱|Account connections)$/, exact: true });
+				if (!(await expanded.isVisible()) && !(await guide.evaluate(element => (element as HTMLDetailsElement).open))) {
+					await guide.locator(":scope > summary").click();
+				}
+				await expect(guide).toHaveJSProperty("open", true);
+				await expect(guide.getByText(text.legend, { exact: true })).toBeVisible();
 				let selected: Locator;
 				if (!mixed) {
 					await expect(solid).toHaveAttribute("aria-label", `${hubName} → Verified account · Verified link · ${text.verified}`);
