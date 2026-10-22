@@ -126,6 +126,13 @@ function GraphControls({ layout }: { layout: AccountGraphLayout | null }) {
 	return <Controls aria-label={t("accountGraphControls")} showInteractive={false} showFitView={false}><ControlButton className="react-flow__controls-fitview" aria-label={t("accountGraphFit")} title={t("accountGraphFit")} disabled={!layout} onClick={() => { if (layout && width && height) void setViewport(fittedViewport(layout, width, height)); }}><Maximize2 size={16} /></ControlButton></Controls>;
 }
 
+function GraphMiniMap({ rootId }: { rootId: string }) {
+	const { setCenter, getViewport } = useReactFlow();
+	return <MiniMap style={{ width: 140, height: 90 }} pannable zoomable
+		onClick={(_, point) => { void setCenter(point.x, point.y, { zoom: getViewport().zoom }); }}
+		nodeColor={(node) => node.id === rootId ? "var(--yellow)" : "var(--paper)"} />;
+}
+
 function GraphContent({ props, expanded, restore, onExpand }: {
 	props: Props; expanded: boolean; restore: Bookmark | null;
 	onExpand: (bookmark: Bookmark) => void;
@@ -200,7 +207,7 @@ function GraphContent({ props, expanded, restore, onExpand }: {
 				<GraphViewport layout={layout} layoutKey={inputKey} rootId={props.root.id} restore={restore} onSize={setSize} onReady={setReadyKey} />
 				<Background />
 				<GraphControls layout={layout} />
-				{nodes.length > 12 && !selected && <MiniMap style={{ width: 140, height: 90 }} pannable zoomable nodeColor={(node) => node.id === props.root.id ? "var(--yellow)" : "var(--paper)"} />}
+				{nodes.length > 12 && !selected && <GraphMiniMap rootId={props.root.id} />}
 				{selected && <Panel position="bottom-right" className="account-graph-selection-panel nodrag nopan"><section className="account-graph-connection-details" aria-label={t("accountGraphSelection")}>
 					<div className="account-graph-selection-header"><p className="account-graph-selection-title"><strong>{byId.get(selected[0].from)?.name}</strong><span aria-hidden="true"> → </span><strong>{byId.get(selected[0].to)?.name}</strong></p><Button className="account-graph-selection-close" aria-label={t("close")} onClick={() => props.onSelectEdge(null)}><X size={18} /></Button></div>
 					<ul className="account-graph-selection-labels">{[...new Set(selected.map((relation) => relation.label))].map((label) => <li key={label}>{label}</li>)}</ul>
