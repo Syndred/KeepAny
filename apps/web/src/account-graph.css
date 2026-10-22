@@ -21,6 +21,8 @@
 .account-graph-navigation .react-flow__controls-button svg { fill: currentColor; }
 .account-graph-navigation .react-flow__controls,
 .account-graph-navigation .react-flow__minimap { position: static; margin: 0; background: var(--paper); }
+.account-graph-navigation .react-flow__controls { gap: 10px; border: 0; background: transparent; box-shadow: none; overflow: visible; }
+.account-graph-navigation .react-flow__controls-button { border: 1px solid var(--line); border-radius: 8px; box-shadow: 2px 3px 0 var(--line); }
 .dialog.account-graph-dialog { width: calc(100vw - 32px); height: calc(100dvh - 32px); max-width: none; max-height: none; overflow: hidden; padding: 16px; }
 .account-graph-dialog > header { align-items: center; flex: none; min-height: 44px; }
 .account-graph-dialog > header .button.icon { width: 44px; height: 44px; }
