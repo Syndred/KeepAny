@@ -514,8 +514,8 @@ export const passwordVaultCopy: Record<string, [string, string]> = {
 	pwVaultUnlock: ["解锁密码库", "Unlock vault"],
 	pwVaultLockedTitle: ["密码库已锁定", "Password vault is locked"],
 	pwVaultLockedHint: [
-		"输入主密码解锁。忘记密码时只能使用原主密码或恢复其他备份，无法自动重置。",
-		"Enter the master password to unlock. If you forget it, use the original master password or restore another backup; it cannot be reset automatically.",
+		"输入主密码解锁。",
+		"Enter the master password to unlock.",
 	],
 	pwVaultForgotHint: [
 		"忘记密码时只能使用原主密码或恢复其他备份，无法自动重置。",
@@ -672,6 +672,7 @@ export const passwordVaultCopy: Record<string, [string, string]> = {
 	pwVaultClose: ["关闭", "Close"],
 	pwVaultCopied: ["已复制", "Copied"],
 	pwVaultSaved: ["密码条目已保存。", "Password entry saved."],
+	pwVaultCreated: ["密码库已创建。", "Password vault created."],
 	pwVaultImported: ["KDBX 已导入。", "KDBX imported."],
 	pwVaultExported: ["备份已导出。", "Backup exported."],
 	pwVaultMasterChanged: ["主密码已更新。", "Master password updated."],

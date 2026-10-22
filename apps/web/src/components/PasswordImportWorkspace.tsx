@@ -943,28 +943,20 @@ export function PasswordImportWorkspace(props: PasswordImportWorkspaceProps) {
 											{t("pwWorkUndo")}
 										</Button>
 									)}
-									<Button
-										variant="ghost"
-										disabled={disabled}
-										onClick={() => {
-											setNotice(t("pwWorkSkipped"));
-											navigate(1);
-										}}
-									>
-										{t("pwWorkSkip")}
-									</Button>
-									<Button
-										variant="primary"
-										disabled={
-											disabled ||
-											plan?.status === "duplicate" ||
-											unresolvedConflict
-										}
-										onClick={isReviewed ? () => navigate(1) : finish}
-									>
-										{t(isReviewed ? "pwWorkNext" : "pwWorkCompleteNext")}
-										<ArrowRight size={20} />
-									</Button>
+									{!isReviewed && (
+										<Button
+											variant="primary"
+											disabled={
+												disabled ||
+												plan?.status === "duplicate" ||
+												unresolvedConflict
+											}
+											onClick={finish}
+										>
+											{t("pwWorkCompleteNext")}
+											<ArrowRight size={20} />
+										</Button>
+									)}
 								</>
 							)}
 						</div>

@@ -297,6 +297,7 @@ export function PasswordVaultPanel({
 		setMessageKey(
 			notify &&
 				[
+					"pwVaultCreated",
 					"pwVaultSaved",
 					"pwVaultCopied",
 					"pwVaultImported",
@@ -387,7 +388,7 @@ export function PasswordVaultPanel({
 			await session.create(master);
 			setMaster("");
 			setMasterConfirm("");
-			announce("pwVaultSaved");
+			announce("pwVaultCreated");
 		} catch (error) {
 			announce(errorKey(error));
 		} finally {
@@ -744,7 +745,7 @@ export function PasswordVaultPanel({
 					notice === "pwVaultLockedElsewhere") && (
 					<PasswordSmartImportDialog
 						onClose={() => setSmartImportOpen(false)}
-						onSaved={(message) => notify?.(message)}
+						onLinkAccounts={() => setAccountLinksOpen(true)}
 					/>
 				)}
 			<header

@@ -138,10 +138,10 @@ function errorCopy(error: unknown) {
 
 export function PasswordSmartImportDialog({
 	onClose,
-	onSaved,
+	onLinkAccounts,
 }: {
 	onClose: () => void;
-	onSaved: (message: string) => void;
+	onLinkAccounts: () => void;
 }) {
 	const { t } = useTranslation();
 	const navigate = useNavigate();
@@ -1189,7 +1189,6 @@ export function PasswordSmartImportDialog({
 			}
 			setReceipt(result);
 			setStage(remaining.length || issues.length ? "review" : "saved");
-			onSaved(t("pwSmartSaved", result));
 		} catch (error) {
 			if (current === generation.current) setMessage(t(errorCopy(error)));
 		} finally {
@@ -1276,7 +1275,7 @@ export function PasswordSmartImportDialog({
 							)}
 						</div>
 					)}
-					{(stage !== "input" || hasReview) && (
+					{stage !== "saved" && (stage !== "input" || hasReview) && (
 						<Select
 							contentClassName="pw-smart-select-menu"
 							className="pw-smart-input-menu"
@@ -1565,22 +1564,13 @@ export function PasswordSmartImportDialog({
 						/>
 						<div className="pw-smart-footer">
 							<div className="pw-smart-counts">
-								<strong>
-									{t("pwSmartReviewedCount", { count: selected.length })}
-								</strong>
-								<span>{t("pwSmartPendingCount", { count: pendingCount })}</span>
+								{pendingCount > 0 && (
+									<span>
+										{t("pwSmartPendingCount", { count: pendingCount })}
+									</span>
+								)}
 							</div>
 							<div className="actions">
-								<Button
-									onClick={() => setConfirmation("lock")}
-									disabled={busy === "save"}
-								>
-									<Lock size={18} />
-									{t("pwSmartLockClose")}
-								</Button>
-								<Button onClick={() => editSource()} disabled={!!busy}>
-									{t("pwSmartBack")}
-								</Button>
 								<Button
 									variant="primary"
 									onClick={() => setConfirmation("save")}
@@ -1605,9 +1595,11 @@ export function PasswordSmartImportDialog({
 							<Button
 								variant="primary"
 								disabled={draftClosing}
-								onClick={() => void preserveAndClose()}
+								onClick={async () => {
+									if (await preserveAndClose()) onLinkAccounts();
+								}}
 							>
-								{t("pwVaultClose")}
+								{t("pwConnectTitle")}
 							</Button>
 						</div>
 					</>

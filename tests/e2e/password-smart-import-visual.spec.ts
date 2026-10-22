@@ -20,6 +20,23 @@ const aiButton = (scope: Locator) =>
 		name: /^(用 AI 识别|用 .* 识别清单|Recognize with AI|Use AI|Recognize list with .*)$/,
 		exact: true,
 	});
+async function lockImport(page: Page) {
+	await page
+		.getByRole("combobox", {
+			name: /^(导入操作菜单|Import actions)$/,
+			exact: true,
+		})
+		.click();
+	await page
+		.getByRole("option", { name: /^(锁定并关闭|Lock and close)$/, exact: true })
+		.click();
+	await expect(
+		page.getByRole("dialog", {
+			name: /^(锁定并关闭？|Lock and close\?)$/,
+			exact: true,
+		}),
+	).toBeVisible();
+}
 async function confirmRecognition(page: Page) {
 	await page
 		.getByRole("button", {
@@ -137,7 +154,7 @@ for (const locale of ["zh-CN", "en"] as const) {
 				"Synthetic unfinished note kept in this dialog",
 			);
 			await importer
-				.getByRole("button", { name: /^(暂时跳过|Skip for now)$/, exact: true })
+				.getByRole("button", { name: /^(下一条|Next entry)$/, exact: true })
 				.click();
 			await row(importer, "dev@example.com").click();
 			await expect(field(importer, "notes")).toHaveValue(
@@ -145,7 +162,7 @@ for (const locale of ["zh-CN", "en"] as const) {
 			);
 			await evidence.capture(
 				"06-D",
-				"Skip advances while preserving the previous candidate's notes.",
+				"Navigation advances while preserving the previous candidate's notes.",
 			);
 			await importer
 				.getByRole("button", {
@@ -613,9 +630,7 @@ test("zh-CN duplicate conflict bulk tools save and draft close confirmations", a
 			.last()
 			.getByRole("button", { name: "关闭", exact: true })
 			.click();
-		await importer
-			.getByRole("button", { name: h.t("pwSmartLockClose"), exact: true })
-			.click();
+		await lockImport(h.page);
 		await evidence.capture(
 			"10-B",
 			"Lock-close confirms clearing only this unimported draft.",
@@ -860,9 +875,7 @@ test("zh-CN atomic KDBX save supplementary import and cross-tab stale draft reco
 			editor(importer).getByRole("combobox", { name: "保存方式", exact: true }),
 		).toHaveAttribute("data-value", "skip");
 		await secondPage.close();
-		await importer
-			.getByRole("button", { name: h.t("pwSmartLockClose"), exact: true })
-			.click();
+		await lockImport(h.page);
 		await h.page
 			.getByRole("dialog")
 			.last()

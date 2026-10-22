@@ -55,6 +55,7 @@ export function FilePicker({
 					accept={accept}
 					disabled={disabled}
 					tabIndex={-1}
+					aria-hidden="true"
 					aria-label={label}
 					onClick={(event) => {
 						// Clear the browser's remembered path so choosing the same file again

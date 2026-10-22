@@ -293,7 +293,8 @@ test("completing import and closing immediately clears the persisted draft", asy
 			.getByRole("button", { name: "确认导入", exact: true })
 			.click();
 		await expect(importer.locator(".pw-smart-receipt")).toBeVisible();
-		await importer
+		await h.page
+			.locator(".password-smart-import-dialog > header")
 			.getByRole("button", { name: h.t("pwVaultClose"), exact: true })
 			.click();
 		await expect(importer).toHaveCount(0);
