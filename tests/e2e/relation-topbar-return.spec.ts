@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { selectChoice } from "./helpers/select-choice";
 
-test("topbar and detail return to the source list after opening a related asset", async ({ page }) => {
+test("the single account topbar returns to a related source list or the direct account list", async ({ page }) => {
 	async function add(kind: "project" | "account", name: string) {
 		await page.goto(`/assets/${kind}`);
 		await page.getByRole("button", { name: "Add", exact: true }).click();
@@ -23,12 +23,17 @@ test("topbar and detail return to the source list after opening a related asset"
 		await page.locator(".react-flow__node").filter({ hasText: "Linked login" }).click();
 		await expect(page).toHaveURL(/\/assets\/account\//);
 		await expect(page.getByRole("heading", { name: "Linked login" })).toBeVisible();
+		await expect(page.locator(".topbar-back-link")).toHaveCount(1);
+		await expect(page.getByRole("main").locator(".back-link")).toHaveCount(0);
 	}
 	await openLinked();
 	await page.locator(".topbar-back-link").click();
 	await expect(page).toHaveURL(/\/assets\/project$/);
-	await page.getByText("Source project", { exact: true }).first().click();
-	await openLinked();
-	await page.getByRole("main").getByRole("link", { name: "Back to list" }).click();
-	await expect(page).toHaveURL(/\/assets\/project$/);
+	await page.goto("/assets/account");
+	await page.locator(".asset-account-card").filter({ hasText: "Linked login" }).click();
+	await expect(page).toHaveURL(/\/assets\/account\//);
+	await expect(page.locator(".topbar-back-link")).toHaveCount(1);
+	await expect(page.getByRole("main").locator(".back-link")).toHaveCount(0);
+	await page.locator(".topbar-back-link").click();
+	await expect(page).toHaveURL(/\/assets\/account$/);
 });

@@ -12,8 +12,8 @@ for (const locale of ["zh-CN", "en-US"] as const) {
 			const errors: string[] = [];
 			page.on("pageerror", (error) => errors.push(error.message));
 			const copy = locale === "zh-CN"
-				? { add: "新增", save: "保存", edit: "编辑资料", provider: "服务商", profileDate: "账号资料核实日期", relationDate: "最近关系核验", paused: "已暂停", active: "使用中" }
-				: { add: "Add", save: "Save", edit: "Edit profile", provider: "Provider", profileDate: "Account profile reviewed", relationDate: "Last connection verified", paused: "Paused", active: "Active" };
+				? { add: "新增", save: "保存", edit: "编辑", provider: "服务商", profileDate: "账号资料核实日期", relationDate: "最近关系核验", paused: "已暂停", active: "使用中" }
+				: { add: "Add", save: "Save", edit: "Edit", provider: "Provider", profileDate: "Account profile reviewed", relationDate: "Last connection verified", paused: "Paused", active: "Active" };
 			try {
 				await page.goto("/assets/account");
 				await page.getByRole("button", { name: copy.add, exact: true }).click();
@@ -33,7 +33,10 @@ for (const locale of ["zh-CN", "en-US"] as const) {
 				await expect(basic).toContainText("Mail service");
 				await expect(basic).toContainText("Project access");
 				await expect(basic).toContainText(copy.paused);
-				await basic.getByRole("button", { name: copy.edit }).click();
+				const edit = page.locator(".page-header").getByRole("button", { name: copy.edit, exact: true });
+				await expect(edit).toHaveCount(1);
+				await expect(basic.getByRole("button", { name: /^(编辑资料|Edit profile)$/, exact: true })).toHaveCount(0);
+				await edit.click();
 				await expect(dialog.locator("#accountProvider")).toHaveValue("Mail service");
 				await dialog.locator("#accountProvider").fill("Updated provider");
 				await dialog.locator("#description").fill("Backup access");
