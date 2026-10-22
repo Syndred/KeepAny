@@ -27,6 +27,7 @@ import { usePasswordVault } from "./PasswordVaultProvider";
 import { Button } from "./ui/button";
 import { Dialog } from "./ui/dialog";
 import { Select, SelectOption } from "./ui/select";
+import { TextLink } from "./ui/text-link";
 
 export function VaultAccountLinksDialog({
 	onClose,
@@ -578,7 +579,7 @@ export function VaultAccountLinksDialog({
 										{connection.model} · {connection.baseURL}
 									</span>
 								) : (
-									<Link to="/settings">{t("pwConnectConfigure")}</Link>
+									<TextLink asChild><Link to="/settings">{t("pwConnectConfigure")}</Link></TextLink>
 								)}
 								<span>{t("pwConnectAiScope")}</span>
 							</div>
