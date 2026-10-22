@@ -298,9 +298,10 @@ export class VaultSession {
   }
 
   /** Link reviewed public account records in one encrypted write, without replacing entry content. */
-  async linkAccounts(items: { entryId: string; accountId: string }[], expectedContentRevision: string): Promise<void> {
-    const links = items.map(item => ({ ...item }));
-    if (!links.length || links.length > 200 || links.some(item => !item.entryId || !item.accountId || item.accountId.length > 96)) fail('vault-invalid');
+  async linkAccounts(items: { entryId: string; accountId: string; replaceAccountIds?: string[] }[], expectedContentRevision: string): Promise<void> {
+    const links = items.map(item => ({ ...item, replaceAccountIds: [...(item.replaceAccountIds ?? [])] }));
+    if (!links.length || links.length > 200 || links.some(item => !item.entryId || !item.accountId || item.accountId.length > 96 || item.replaceAccountIds.length > 200 || item.replaceAccountIds.some(id => !id || id.length > 96))) fail('vault-invalid');
+    const unchangedLink = (draft: VaultEntryDraft, item: typeof links[number]) => draft.linkedAssetIds.includes(item.accountId) && !draft.linkedAssetIds.some(id => id !== item.accountId && item.replaceAccountIds.includes(id));
     return this.run(async (generation) => {
       const db = this.unlocked();
       if (this.contentRevision(db) !== expectedContentRevision) fail('vault-stale');
@@ -308,7 +309,7 @@ export class VaultSession {
         const entry = findEntry(db, item.entryId);
         const draft = draftOf(entry);
         if (isTrash(db, entry) || draft.aiKeyBinding) fail('vault-invalid');
-        return draft.linkedAssetIds.includes(item.accountId);
+        return unchangedLink(draft, item);
       });
       if (unchanged) {
         const stored = await this.storage.read();
@@ -322,9 +323,9 @@ export class VaultSession {
           if (isTrash(candidate, entry)) fail('vault-invalid');
           const draft = draftOf(entry);
           if (draft.aiKeyBinding) fail('vault-invalid');
-          if (draft.linkedAssetIds.includes(item.accountId)) continue;
+          if (unchangedLink(draft, item)) continue;
           entry.pushHistory();
-          applyDraft(entry, normalizeDraft({ ...draft, linkedAssetIds: [...draft.linkedAssetIds, item.accountId] }));
+          applyDraft(entry, normalizeDraft({ ...draft, linkedAssetIds: [...new Set([...draft.linkedAssetIds.filter(id => !item.replaceAccountIds.includes(id)), item.accountId])] }));
         }
       });
     });

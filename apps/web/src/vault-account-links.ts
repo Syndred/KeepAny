@@ -16,6 +16,24 @@ import {
 } from "./account-identities";
 
 export type AccountLinkIdentityKind = "email" | "phone";
+export class AccountLinkConflict extends Error {
+	constructor(
+		readonly reason: "deleted" | "ambiguous" | "incompatible",
+		readonly scope: "account" | "identity",
+		readonly accounts: Asset[],
+		readonly identifier = "",
+	) {
+		super(
+			reason === "ambiguous"
+				? "account-link-ambiguous"
+				: "account-link-conflict",
+		);
+	}
+}
+export type AccountLinkResolutions = {
+	accounts?: ReadonlyMap<string, string>;
+	identities?: ReadonlyMap<string, string>;
+};
 export type AccountLinkIdentity = {
 	kind: AccountLinkIdentityKind;
 	identifier: string;
@@ -33,6 +51,7 @@ export type AccountLinkRow = {
 	identityAccounts: AccountLinkIdentity[];
 	loginIdentifiers: string[];
 	hint: string;
+	replaceAccountIds: string[];
 };
 export type AccountLinkSuggestion = {
 	from: string;
@@ -50,6 +69,7 @@ export type AccountLinkSavePlan = {
 	accountUpdates: { expected: Asset; next: Asset }[];
 	newRelations: Relation[];
 	replacedRelations: { expected: Relation; next: Relation }[];
+	restoredRelations: Relation[];
 	expectedAssets: Asset[];
 };
 export const accountLinkOutput = z.object({
@@ -141,6 +161,7 @@ async function identityTarget(
 	identifier: string,
 	assets: Asset[],
 	relations: Relation[],
+	resolutions: AccountLinkResolutions,
 ): Promise<AccountLinkIdentity> {
 	const provider =
 		kind === "email" ? identifier.slice(identifier.lastIndexOf("@") + 1) : "";
@@ -150,13 +171,18 @@ async function identityTarget(
 		identifier.toLowerCase(),
 	]);
 	const stable = assets.find((asset) => asset.id === id);
+	const resolution = resolutions.identities?.get(`${kind}:${identifier}`);
+	const resolved = resolution
+		? assets.find((asset) => asset.id === resolution)
+		: undefined;
 	if (
-		stable &&
-		(stable.deleted ||
-			stable.kind !== "account" ||
-			identityValue(stable, kind) !== identifier)
+		resolution &&
+		(!resolved ||
+			resolved.deleted ||
+			resolved.kind !== "account" ||
+			identityValue(resolved, kind) !== identifier)
 	)
-		throw Error("account-link-conflict");
+		throw Error("account-link-stale");
 	const linkedTargets = new Set<string>();
 	for (const relation of relations) {
 		if (!/^login-link-[a-f0-9]{64}$/.test(relation.id)) continue;
@@ -184,11 +210,45 @@ async function identityTarget(
 	);
 	const live = matches.filter((asset) => !asset.deleted);
 	const linked = live.filter((asset) => linkedTargets.has(asset.id));
-	if (!stable && (linked.length > 1 || (!linked.length && live.length > 1)))
-		throw Error("account-link-ambiguous");
-	const existing = stable ?? linked[0] ?? live[0];
+	const usableStable =
+		stable &&
+		!stable.deleted &&
+		stable.kind === "account" &&
+		identityValue(stable, kind) === identifier;
+	if (
+		!resolved &&
+		!usableStable &&
+		(linked.length > 1 || (!stable && !linked.length && live.length > 1))
+	)
+		throw new AccountLinkConflict(
+			"ambiguous",
+			"identity",
+			linked.length ? linked : live,
+			`${kind}:${identifier}`,
+		);
+	if (stable && !usableStable && !stable.deleted && !resolved && !linked.length)
+		throw new AccountLinkConflict(
+			"incompatible",
+			"identity",
+			[stable],
+			`${kind}:${identifier}`,
+		);
+	if (stable?.deleted && !resolved && linked.length !== 1)
+		throw new AccountLinkConflict(
+			"deleted",
+			"identity",
+			[stable],
+			`${kind}:${identifier}`,
+		);
+	const existing =
+		resolved ?? (usableStable ? stable : undefined) ?? linked[0] ?? live[0];
 	if (!existing && matches.some((asset) => asset.deleted))
-		throw Error("account-link-conflict");
+		throw new AccountLinkConflict(
+			"deleted",
+			"identity",
+			matches.filter((asset) => asset.deleted),
+			`${kind}:${identifier}`,
+		);
 	return {
 		kind,
 		identifier,
@@ -210,6 +270,7 @@ export async function buildAccountLinkRows(
 	assets: Asset[],
 	notes: ReadonlyMap<string, string> = new Map(),
 	relations: Relation[] = [],
+	resolutions: AccountLinkResolutions = {},
 ): Promise<AccountLinkRow[]> {
 	const result: AccountLinkRow[] = [];
 	for (const entry of entries) {
@@ -221,24 +282,42 @@ export async function buildAccountLinkRows(
 			.join("");
 		const id = `pw-account-${hash}`;
 		const stable = assets.find((a) => a.id === id);
-		if (stable?.deleted || (stable && stable.kind !== "account"))
-			throw Error("account-link-conflict");
+		const resolution = resolutions.accounts?.get(entry.id);
+		const resolved = resolution
+			? assets.find((asset) => asset.id === resolution)
+			: undefined;
+		if (
+			resolution &&
+			(!resolved || resolved.deleted || resolved.kind !== "account")
+		)
+			throw Error("account-link-stale");
 		const linked = assets.filter(
 			(a) =>
 				!a.deleted &&
 				a.kind === "account" &&
 				entry.linkedAssetIds.includes(a.id),
 		);
+		const deletedLinked = assets.filter(
+			(asset) =>
+				asset.deleted &&
+				asset.kind === "account" &&
+				entry.linkedAssetIds.includes(asset.id),
+		);
+		if (!resolved && deletedLinked.length)
+			throw new AccountLinkConflict("deleted", "account", deletedLinked);
+		if (!resolved && linked.length > 1)
+			throw new AccountLinkConflict("ambiguous", "account", linked);
 		if (
-			assets.some(
-				(asset) =>
-					asset.deleted &&
-					asset.kind === "account" &&
-					entry.linkedAssetIds.includes(asset.id),
-			)
+			!resolved &&
+			!linked.length &&
+			stable &&
+			(stable.deleted || stable.kind !== "account")
 		)
-			throw Error("account-link-conflict");
-		if (linked.length > 1) throw Error("account-link-ambiguous");
+			throw new AccountLinkConflict(
+				stable.deleted ? "deleted" : "incompatible",
+				"account",
+				[stable],
+			);
 		const matches = assets.filter(
 			(a) =>
 				!a.deleted &&
@@ -247,33 +326,35 @@ export async function buildAccountLinkRows(
 				(normalizeLoginIdentifier(a.username) || a.username.trim()) ===
 					(normalizeLoginIdentifier(entry.username) || entry.username.trim()),
 		);
-		if (!linked.length && !stable && matches.length > 1)
-			throw Error("account-link-ambiguous");
+		if (!resolved && !linked.length && !stable && matches.length > 1)
+			throw new AccountLinkConflict("ambiguous", "account", matches);
 		const suggestedCategory = suggestAccountCategory(entry);
 		const identityKind =
 			suggestedCategory === "email" || suggestedCategory === "phone"
 				? suggestedCategory
 				: null;
 		const ownIdentifier = normalizeLoginIdentifier(entry.username);
-		let existing = linked[0] ?? stable ?? matches[0];
+		let existing = resolved ?? linked[0] ?? stable ?? matches[0];
 		if (!existing && identityKind && ownIdentifier) {
 			const identity = await identityTarget(
 				identityKind,
 				ownIdentifier.slice(ownIdentifier.indexOf(":") + 1),
 				assets,
 				relations,
+				resolutions,
 			);
 			if (!identity.isNew) existing = identity.account;
 		}
 		const planned = result.find(
 			(row) =>
-				(row.account.name === entry.title.trim() &&
+				(!existing || row.account.id === existing.id) &&
+				((row.account.name === entry.title.trim() &&
 					(normalizeLoginIdentifier(row.account.username) ||
 						row.account.username.trim()) ===
 						(ownIdentifier || entry.username.trim())) ||
-				(identityKind &&
-					row.suggestedCategory === identityKind &&
-					normalizeLoginIdentifier(row.account.username) === ownIdentifier),
+					(identityKind &&
+						row.suggestedCategory === identityKind &&
+						normalizeLoginIdentifier(row.account.username) === ownIdentifier)),
 		);
 		const originalAccount = existing ?? planned?.originalAccount ?? null;
 		const account =
@@ -309,6 +390,15 @@ export async function buildAccountLinkRows(
 				),
 			],
 			hint: notes.get(entry.id) ?? "",
+			replaceAccountIds: resolved
+				? entry.linkedAssetIds.filter(
+						(assetId) =>
+							assetId !== resolved.id &&
+							assets.some(
+								(asset) => asset.id === assetId && asset.kind === "account",
+							),
+					)
+				: [],
 		});
 	}
 	const targets = new Map<string, AccountLinkIdentity>();
@@ -323,12 +413,52 @@ export async function buildAccountLinkRows(
 					identifier.slice(split + 1),
 					assets,
 					relations,
+					resolutions,
 				);
 				targets.set(identifier, target);
 			}
 			row.identityAccounts.push(target);
 		}
 	return result;
+}
+export type BlockedAccountLink = {
+	entry: VaultEntrySummary;
+	conflict: AccountLinkConflict;
+};
+export async function buildAccountLinkReview(
+	entries: VaultEntrySummary[],
+	assets: Asset[],
+	notes: ReadonlyMap<string, string>,
+	relations: Relation[],
+	resolutions: AccountLinkResolutions = {},
+): Promise<{ rows: AccountLinkRow[]; blocked: BlockedAccountLink[] }> {
+	const eligible: VaultEntrySummary[] = [],
+		blocked: BlockedAccountLink[] = [];
+	for (const entry of entries) {
+		try {
+			await buildAccountLinkRows(
+				[entry],
+				assets,
+				notes,
+				relations,
+				resolutions,
+			);
+			eligible.push(entry);
+		} catch (error) {
+			if (!(error instanceof AccountLinkConflict)) throw error;
+			blocked.push({ entry, conflict: error });
+		}
+	}
+	return {
+		rows: await buildAccountLinkRows(
+			eligible,
+			assets,
+			notes,
+			relations,
+			resolutions,
+		),
+		blocked,
+	};
 }
 export function publicAccountUrl(value: string): string {
 	try {
@@ -423,7 +553,22 @@ export async function accountLinkRelations(
 	existing: Relation[],
 	label: AccountLinkLabel,
 ): Promise<Relation[]> {
+	return (await accountLinkRelationChanges(suggestions, existing, label))
+		.newRelations;
+}
+export async function accountLinkRelationChanges(
+	suggestions: AccountLinkSuggestion[],
+	existing: Relation[],
+	label: AccountLinkLabel,
+): Promise<{
+	newRelations: Relation[];
+	deletedRelations: { suggestion: AccountLinkSuggestion; relation: Relation }[];
+}> {
 	const result: Relation[] = [];
+	const deletedRelations: {
+		suggestion: AccountLinkSuggestion;
+		relation: Relation;
+	}[] = [];
 	for (const suggestion of dedupeSuggestions(suggestions)) {
 		const endpoints =
 			suggestion.kind === "identifier" && !suggestion.identifierKind
@@ -455,8 +600,16 @@ export async function accountLinkRelations(
 						value.toLowerCase() === relation.label.trim().toLowerCase(),
 				),
 		);
-		// Stable IDs make retries and language changes idempotent, including intentionally deleted edges.
-		if (same || equivalents.length) continue;
+		if (
+			(same && !same.deleted) ||
+			equivalents.some((relation) => !relation.deleted)
+		)
+			continue;
+		const deleted = same ?? equivalents[0];
+		if (deleted) {
+			deletedRelations.push({ suggestion, relation: deleted });
+			continue;
+		}
 		result.push(
 			relationSchema.parse({
 				id,
@@ -469,7 +622,7 @@ export async function accountLinkRelations(
 			}),
 		);
 	}
-	return result;
+	return { newRelations: result, deletedRelations };
 }
 
 function sameAsset(
@@ -502,12 +655,14 @@ export async function buildAccountLinkSavePlan(
 	assets: Asset[],
 	relations: Relation[],
 	label: AccountLinkLabel,
+	reviewedDeletedRelations?: readonly Relation[],
 ): Promise<AccountLinkSavePlan> {
 	const plan: AccountLinkSavePlan = {
 		newAssets: [],
 		accountUpdates: [],
 		newRelations: [],
 		replacedRelations: [],
+		restoredRelations: [],
 		expectedAssets: [],
 	};
 	const newById = new Map<string, Asset>(),
@@ -606,11 +761,30 @@ export async function buildAccountLinkSavePlan(
 			newById.set(identity.account.id, identity.account);
 		}
 	}
-	plan.newRelations = await accountLinkRelations(chosen, relations, label);
+	const changes = await accountLinkRelationChanges(chosen, relations, label);
+	plan.newRelations = changes.newRelations;
+	if (reviewedDeletedRelations) {
+		for (const { relation } of changes.deletedRelations) {
+			const reviewed = reviewedDeletedRelations.find(
+				(item) => item.id === relation.id,
+			);
+			if (
+				!reviewed ||
+				JSON.stringify(relationSchema.parse(reviewed)) !==
+					JSON.stringify(relationSchema.parse(relation))
+			)
+				throw Error("account-link-stale");
+			plan.restoredRelations.push(relation);
+		}
+	}
 	// Do not create an orphan target when a matching relationship was intentionally deleted.
 	const liveOrNewRelations = [
 		...relations.filter((relation) => !relation.deleted),
 		...plan.newRelations,
+		...plan.restoredRelations.map((relation) => ({
+			...relation,
+			deleted: false,
+		})),
 	];
 	const used = new Set(
 		liveOrNewRelations.flatMap((relation) => [relation.from, relation.to]),

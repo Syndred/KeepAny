@@ -1295,11 +1295,16 @@ export class LocalRepository {
     return this.restoreEntityUnlocked(type, id);
   }
 
-  private async restoreEntityUnlocked(type: EntityType, id: string): Promise<RecordRow> {
-    return withCategoryMutationGate(this.db, this.fileStore, [{ type, id }], () => this.restoreEntityRecord(type, id));
+  async restoreRelationIfCurrent(expected: Relation): Promise<RecordRow> {
+    if (!expected.deleted) throw Error('relation-stale');
+    return this.restoreEntityUnlocked('relation', expected.id, rowFor('relation', expected).payload);
   }
 
-  private async restoreEntityRecord(type: EntityType, id: string): Promise<RecordRow> {
+  private async restoreEntityUnlocked(type: EntityType, id: string, expectedPayload?: string): Promise<RecordRow> {
+    return withCategoryMutationGate(this.db, this.fileStore, [{ type, id }], () => this.restoreEntityRecord(type, id, expectedPayload));
+  }
+
+  private async restoreEntityRecord(type: EntityType, id: string, expectedPayload?: string): Promise<RecordRow> {
     const document = await this.db.records.findOne(key(type, id)).exec();
     if (!document) throw Error('not-in-trash');
     const previous = parsedPayload(canonical(document)) as Record<string, unknown>;
@@ -1307,6 +1312,7 @@ export class LocalRepository {
     if (type === 'relation') await this.assertRelationEndpoints(previous as { from: string; to: string });
     let next: RecordRow | undefined;
     await document.incrementalModify(async (data: RecordRow) => {
+      if (expectedPayload !== undefined && data.payload !== expectedPayload) throw Error('relation-stale');
       const current = parsedPayload(data) as Record<string, unknown>;
       if (!current.deleted) throw Error('not-in-trash');
       // The callback sees the latest tombstone after RxDB retries a concurrent write.

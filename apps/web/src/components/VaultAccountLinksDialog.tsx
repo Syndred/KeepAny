@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { Check, Network, Search, WandSparkles } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { generateAiText } from "../../../../packages/ai/src";
 import type {
@@ -13,14 +13,17 @@ import { acquireAiConnection, useAiConnection } from "../ai-settings-store";
 import { parseAiJson } from "../ai-workflow-model";
 import {
 	accountLinkSystem,
+	accountLinkRelationChanges,
 	aiAccountLinkInput,
-	buildAccountLinkRows,
+	buildAccountLinkReview,
 	buildAccountLinkSavePlan,
 	dedupeSuggestions,
 	readAiAccountLinks,
 	sharedIdentifierSuggestions,
 	type AccountLinkRow,
 	type AccountLinkSuggestion,
+	type AccountLinkResolutions,
+	type BlockedAccountLink,
 } from "../vault-account-links";
 import { builtins, niceCategory, useAppContext } from "../view-shared";
 import { usePasswordVault } from "./PasswordVaultProvider";
@@ -28,6 +31,7 @@ import { Button } from "./ui/button";
 import { Dialog } from "./ui/dialog";
 import { Select, SelectOption } from "./ui/select";
 import { TextLink } from "./ui/text-link";
+import { VaultAccountLinkConflict } from "./VaultAccountLinkConflict";
 
 export function VaultAccountLinksDialog({
 	onClose,
@@ -46,10 +50,17 @@ export function VaultAccountLinksDialog({
 	const [selected, setSelected] = useState<string[]>([]);
 	const [suggestions, setSuggestions] = useState<AccountLinkSuggestion[]>([]);
 	const [chosen, setChosen] = useState<number[]>([]);
+	const [deletedSuggestions, setDeletedSuggestions] = useState<
+		{ index: number; relation: Relation }[]
+	>([]);
 	const [sourceAssets, setSourceAssets] = useState<Asset[]>([]);
 	const [sourceRelations, setSourceRelations] = useState<Relation[]>([]);
 	const [replaceCount, setReplaceCount] = useState(0);
-	const [blockedEntries, setBlockedEntries] = useState<string[]>([]);
+	const [blockedEntries, setBlockedEntries] = useState<BlockedAccountLink[]>(
+		[],
+	);
+	const resolutions = useRef<AccountLinkResolutions>({});
+	const resolvedFocus = useRef("");
 	const [busy, setBusy] = useState(false),
 		[loading, setLoading] = useState(true),
 		[message, setMessage] = useState("");
@@ -57,9 +68,8 @@ export function VaultAccountLinksDialog({
 		active = useRef(true),
 		abort = useRef<AbortController | null>(null);
 	const stale = snapshot.contentRevision !== base.current;
-	useEffect(() => {
-		active.current = true;
-		const load = async () => {
+	const load = useCallback(
+		async (nextResolutions = resolutions.current) => {
 			if (!session) return;
 			const repository = await localRepository();
 			if (!active.current) return;
@@ -76,29 +86,51 @@ export function VaultAccountLinksDialog({
 			const notes = new Map(
 				entries.map((entry) => [entry.id, session.readEntry(entry.id).notes]),
 			);
-			let result: AccountLinkRow[];
-			const blocked: string[] = [];
-			try {
-				result = await buildAccountLinkRows(entries, assets, notes, relations);
-			} catch {
-				const eligible = [];
-				for (const entry of entries) {
-					try {
-						await buildAccountLinkRows([entry], assets, notes, relations);
-						eligible.push(entry);
-					} catch {
-						blocked.push(entry.title);
-					}
-				}
-				result = await buildAccountLinkRows(eligible, assets, notes, relations);
-			}
-			if (active.current) {
-				setRows(result);
+			const { rows: result, blocked } = await buildAccountLinkReview(
+				entries,
+				assets,
+				notes,
+				relations,
+				nextResolutions,
+			);
+			if (
+				active.current &&
+				session.getSnapshot().status === "unlocked" &&
+				session.getSnapshot().contentRevision === base.current
+			) {
+				resolutions.current = nextResolutions;
+				setRows((previous) =>
+					result.map((row) => {
+						const prior = previous.find(
+							(item) =>
+								item.entryId === row.entryId &&
+								item.account.id === row.account.id,
+						);
+						return prior
+							? {
+									...row,
+									hint: prior.hint,
+									account: { ...row.account, category: prior.account.category },
+								}
+							: row;
+					}),
+				);
+				setSelected((current) =>
+					current.filter((id) => result.some((row) => row.entryId === id)),
+				);
 				setBlockedEntries(blocked);
 				setSourceAssets(assets);
 				setSourceRelations(relations);
+				setSuggestions([]);
+				setChosen([]);
+				setDeletedSuggestions([]);
 			}
-		};
+			return { rows: result, blocked };
+		},
+		[session],
+	);
+	useEffect(() => {
+		active.current = true;
 		void load()
 			.catch(() => {
 				if (active.current) setMessage(t("pwConnectLoadError"));
@@ -110,7 +142,65 @@ export function VaultAccountLinksDialog({
 			active.current = false;
 			abort.current?.abort();
 		};
-	}, [session, t]);
+	}, [load, t]);
+	async function resolve(
+		blocked: BlockedAccountLink,
+		accountId: string,
+		restore: boolean,
+	) {
+		if (
+			running.current ||
+			stale ||
+			!session ||
+			session.getSnapshot().status !== "unlocked"
+		)
+			return;
+		running.current = true;
+		setBusy(true);
+		setMessage("");
+		try {
+			const next = { ...resolutions.current };
+			if (restore) {
+				await (await localRepository()).restoreEntity("asset", accountId);
+			} else if (blocked.conflict.scope === "account") {
+				next.accounts = new Map(next.accounts).set(blocked.entry.id, accountId);
+			} else {
+				next.identities = new Map(next.identities).set(
+					blocked.conflict.identifier,
+					accountId,
+				);
+			}
+			const result = await load(next);
+			if (
+				active.current &&
+				result?.rows.some((row) => row.entryId === blocked.entry.id)
+			) {
+				resolvedFocus.current = blocked.entry.id;
+				setSelected((current) =>
+					current.includes(blocked.entry.id) || current.length >= 200
+						? current
+						: [...current, blocked.entry.id],
+				);
+				setMessage(t("pwConnectResolved"));
+			}
+		} catch {
+			if (active.current) setMessage(t("pwConnectResolveError"));
+		} finally {
+			running.current = false;
+			if (active.current) setBusy(false);
+		}
+	}
+	useEffect(() => {
+		if (!busy && resolvedFocus.current) {
+			const control = document.getElementById(
+				`vault-connect-choice-${resolvedFocus.current}`,
+			);
+			if (control) {
+				control.focus();
+				resolvedFocus.current = "";
+			}
+		}
+	}, [busy]);
 	const selectedRows = rows.filter((row) => selected.includes(row.entryId));
 	const label = (
 		kind: AccountLinkSuggestion["kind"],
@@ -141,6 +231,9 @@ export function VaultAccountLinksDialog({
 			sourceAssets,
 			sourceRelations,
 			(kind, identity) => t(`pwConnectKind_${identity ?? kind}`),
+			deletedSuggestions
+				.filter((item) => chosen.includes(item.index))
+				.map((item) => item.relation),
 		)
 			.then((plan) => {
 				if (current) setReplaceCount(plan.replacedRelations.length);
@@ -151,18 +244,68 @@ export function VaultAccountLinksDialog({
 		return () => {
 			current = false;
 		};
-	}, [rows, selected, suggestions, chosen, sourceAssets, sourceRelations, t]);
+	}, [
+		rows,
+		selected,
+		suggestions,
+		chosen,
+		deletedSuggestions,
+		sourceAssets,
+		sourceRelations,
+		t,
+	]);
 	function select(ids: string[]) {
 		setSelected(ids);
 		setSuggestions([]);
 		setChosen([]);
 		setMessage("");
 	}
-	function proposeLocal() {
-		const result = sharedIdentifierSuggestions(selectedRows);
+	async function applySuggestions(
+		result: AccountLinkSuggestion[],
+		localOnly: boolean,
+	) {
+		const changes = await accountLinkRelationChanges(
+			result,
+			sourceRelations,
+			label,
+		);
+		if (
+			!active.current ||
+			session?.getSnapshot().contentRevision !== base.current
+		)
+			return;
+		const deleted = new Set(
+			changes.deletedRelations.map((item) => item.suggestion),
+		);
 		setSuggestions(result);
-		setChosen(result.map((_, i) => i));
+		setDeletedSuggestions(
+			changes.deletedRelations.map((item) => ({
+				index: result.indexOf(item.suggestion),
+				relation: item.relation,
+			})),
+		);
+		setChosen(
+			result.flatMap((suggestion, index) =>
+				!deleted.has(suggestion) &&
+				(localOnly || suggestion.kind === "identifier")
+					? [index]
+					: [],
+			),
+		);
 		setMessage("");
+	}
+	async function proposeLocal() {
+		if (running.current || stale) return;
+		running.current = true;
+		setBusy(true);
+		try {
+			await applySuggestions(sharedIdentifierSuggestions(selectedRows), true);
+		} catch {
+			if (active.current) setMessage(t("pwConnectLoadError"));
+		} finally {
+			running.current = false;
+			if (active.current) setBusy(false);
+		}
 	}
 	async function proposeAi() {
 		if (running.current || !connection || !selectedRows.length || stale) return;
@@ -192,9 +335,7 @@ export function VaultAccountLinksDialog({
 				...sharedIdentifierSuggestions(selectedRows),
 				...readAiAccountLinks(parseAiJson(response.text), selectedRows),
 			]);
-			setSuggestions(result);
-			setChosen(result.flatMap((r, i) => (r.kind === "identifier" ? [i] : [])));
-			setMessage("");
+			await applySuggestions(result, false);
 		} catch {
 			if (active.current && !controller.signal.aborted)
 				setMessage(t("pwConnectAiError"));
@@ -236,6 +377,9 @@ export function VaultAccountLinksDialog({
 				current,
 				existingRelations,
 				label,
+				deletedSuggestions
+					.filter((item) => chosen.includes(item.index))
+					.map((item) => item.relation),
 			);
 			const items: { type: EntityType; value: unknown }[] = [
 				...plan.newAssets.map((value) => ({ type: "asset" as const, value })),
@@ -260,11 +404,14 @@ export function VaultAccountLinksDialog({
 			}
 			for (const update of plan.replacedRelations)
 				await repository.saveRelationIfCurrent(update.expected, update.next);
+			for (const relation of plan.restoredRelations)
+				await repository.restoreRelationIfCurrent(relation);
 			savedAccounts = true;
 			await session.linkAccounts(
 				selectedRows.map((row) => ({
 					entryId: row.entryId,
 					accountId: row.account.id,
+					replaceAccountIds: row.replaceAccountIds,
 				})),
 				base.current,
 			);
@@ -292,11 +439,20 @@ export function VaultAccountLinksDialog({
 			if (active.current) setBusy(false);
 		}
 	}
-	const visibleRows = rows.filter((row) =>
-		[row.account.name, ...row.loginIdentifiers, row.account.url]
+	const matchesQuery = (values: string[]) =>
+		values
 			.join(" ")
 			.toLocaleLowerCase()
-			.includes(query.trim().toLocaleLowerCase()),
+			.includes(query.trim().toLocaleLowerCase());
+	const visibleRows = rows.filter((row) =>
+		matchesQuery([row.account.name, ...row.loginIdentifiers, row.account.url]),
+	);
+	const visibleBlocked = blockedEntries.filter(({ entry, conflict }) =>
+		matchesQuery([
+			entry.title,
+			entry.username,
+			...conflict.accounts.map((account) => account.name),
+		]),
 	);
 	return (
 		<Dialog
@@ -311,7 +467,9 @@ export function VaultAccountLinksDialog({
 				<div className="vault-connect-toolbar">
 					<Button
 						size="small"
-						disabled={busy || stale || rows.length > 200}
+						disabled={
+							busy || loading || stale || !rows.length || rows.length > 200
+						}
 						onClick={() =>
 							select(
 								selected.length === rows.length
@@ -347,7 +505,6 @@ export function VaultAccountLinksDialog({
 					<p className="notice" role="alert">
 						{t("pwConnectBlocked", {
 							count: blockedEntries.length,
-							names: blockedEntries.join("、"),
 						})}
 					</p>
 				)}
@@ -368,11 +525,24 @@ export function VaultAccountLinksDialog({
 						<div className="vault-connect-workspace">
 							<section className="vault-connect-account-pane">
 								<h3>{t("pwConnectAccountsHeading")}</h3>
-								{!rows.length && <p>{t("pwConnectEmpty")}</p>}
-								{rows.length > 0 && !visibleRows.length && (
-									<p>{t("pwConnectNoResults")}</p>
+								{!rows.length && !blockedEntries.length && (
+									<p>{t("pwConnectEmpty")}</p>
 								)}
+								{(rows.length > 0 || blockedEntries.length > 0) &&
+									!visibleRows.length &&
+									!visibleBlocked.length && <p>{t("pwConnectNoResults")}</p>}
 								<div className="vault-connect-accounts">
+									{visibleBlocked.map((blocked) => (
+										<VaultAccountLinkConflict
+											key={blocked.entry.id}
+											blocked={blocked}
+											assets={sourceAssets}
+											disabled={busy || stale}
+											onResolve={(id, restore) =>
+												void resolve(blocked, id, restore)
+											}
+										/>
+									))}
 									{visibleRows.map((row) => (
 										<section
 											className="vault-connect-account"
@@ -380,6 +550,7 @@ export function VaultAccountLinksDialog({
 										>
 											<label className="vault-connect-choice">
 												<input
+													id={`vault-connect-choice-${row.entryId}`}
 													type="checkbox"
 													checked={selected.includes(row.entryId)}
 													disabled={
@@ -553,6 +724,13 @@ export function VaultAccountLinksDialog({
 												<span>
 													{label(relation.kind, relation.identifierKind)}
 												</span>
+												{deletedSuggestions.some(
+													(item) => item.index === index,
+												) && (
+													<small className="vault-connect-deleted-relation">
+														{t("pwConnectRestoreRelation")}
+													</small>
+												)}
 												{relation.evidence && (
 													<small>{relation.evidence}</small>
 												)}
@@ -579,7 +757,9 @@ export function VaultAccountLinksDialog({
 										{connection.model} · {connection.baseURL}
 									</span>
 								) : (
-									<TextLink asChild><Link to="/settings">{t("pwConnectConfigure")}</Link></TextLink>
+									<TextLink asChild>
+										<Link to="/settings">{t("pwConnectConfigure")}</Link>
+									</TextLink>
 								)}
 								<span>{t("pwConnectAiScope")}</span>
 							</div>
@@ -587,7 +767,7 @@ export function VaultAccountLinksDialog({
 								<div className="vault-connect-analysis-actions">
 									<Button
 										disabled={busy || stale || !selected.length}
-										onClick={proposeLocal}
+										onClick={() => void proposeLocal()}
 									>
 										<Network size={16} />
 										{t("pwConnectLocal")}

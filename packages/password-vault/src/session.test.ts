@@ -1024,6 +1024,32 @@ it('generates cryptographic passwords of requested length with every enabled cat
 });
 
 describe('reviewed account links', () => {
+  it('replaces only chosen account links atomically and retains unrelated links and encrypted content', async () => {
+    const { session, storage } = await created();
+    const id = await session.saveEntry({ ...draft, usernameAliases: ['alias@example.test'], linkedAssetIds: ['deleted-account', 'other-account', 'preserved-project'] });
+    const revision = session.getSnapshot().revision;
+    if (!revision) throw Error('missing-test-revision');
+    await session.writeImportDraft('preserved-private-import', revision);
+    const before = session.getSnapshot().contentRevision;
+    if (!before) throw Error('missing-test-content-revision');
+    const change = { entryId: id, accountId: 'chosen-account', replaceAccountIds: ['deleted-account', 'other-account'] };
+    await expect(session.linkAccounts([change, { entryId: 'missing-entry', accountId: 'other' }], before)).rejects.toThrow();
+    expect(session.readEntry(id).linkedAssetIds).toEqual(['deleted-account', 'other-account', 'preserved-project']);
+    const writes = storage.writes;
+    await session.linkAccounts([change], before);
+    expect(storage.writes).toBe(writes + 1);
+    expect(session.readEntry(id)).toMatchObject({ ...draft, usernameAliases: ['alias@example.test'], linkedAssetIds: ['preserved-project', 'chosen-account'] });
+    expect(session.readImportDraft()).toBe('preserved-private-import');
+    expect(session.history(id)).toHaveLength(1);
+    await expect(session.linkAccounts([change], before)).rejects.toThrow('vault-stale');
+    const current = session.getSnapshot().contentRevision;
+    if (!current) throw Error('missing-test-content-revision');
+    await session.linkAccounts([change], current);
+    expect(storage.writes).toBe(writes + 1);
+    session.lock();
+    await session.unlock(master);
+    expect(session.readEntry(id).linkedAssetIds).toEqual(['preserved-project', 'chosen-account']);
+  });
   it('writes a whole association batch once and preserves secrets, aliases, history and encrypted draft', async () => {
     const { session, storage } = await created();
     const a = await session.saveEntry({ ...draft, usernameAliases: ['other@example.test'] });

@@ -330,6 +330,30 @@ describe('RxDB + free Dexie local repository', () => {
     await db.close();
   });
 
+  it('restores only the exact reviewed relation tombstone and rechecks endpoints', async () => {
+    const db = await openLocalRepository(name());
+    try {
+      const from = project('Reviewed source');
+      const to = { ...newAsset('account'), name: 'Reviewed target' };
+      await db.save('asset', from);
+      await db.save('asset', to);
+      const reviewed = relationSchema.parse({ id: 'reviewed-restore', from: from.id, to: to.id, label: 'Login email', createdAt: '2026-10-22T00:00:00Z', deleted: true });
+      await db.save('relation', reviewed);
+      const edited = { ...reviewed, source: 'Changed after review' };
+      await db.saveRelationIfCurrent(reviewed, edited);
+      await expect(db.restoreRelationIfCurrent(reviewed)).rejects.toThrow('relation-stale');
+      expect(await db.get('relation', reviewed.id)).toEqual(edited);
+      await db.deleteEntity('asset', to.id);
+      await expect(db.restoreRelationIfCurrent(edited)).rejects.toThrow('relation-endpoint');
+      expect((await db.get<Relation>('relation', reviewed.id))?.deleted).toBe(true);
+      await db.restoreEntity('asset', to.id);
+      const result = await db.restoreRelationIfCurrent(edited);
+      expect(JSON.parse(result.payload)).toEqual({ ...edited, deleted: false });
+      await expect(db.restoreRelationIfCurrent({ ...edited, deleted: false })).rejects.toThrow('relation-stale');
+      expect(await db.list('relation')).toHaveLength(1);
+    } finally { await db.close(); }
+  });
+
   it('rechecks relation endpoints at the final restore write and keeps legacy source absent', async () => {
     const db = await openLocalRepository(name());
     const projectAsset = project('Legacy source');
