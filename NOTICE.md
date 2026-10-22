@@ -2,8 +2,8 @@
 
 本清单由 `node scripts/phase0/generate-legal-artifacts.mjs` 根据当前 `pnpm-lock.yaml`、实际安装树和各包 `package.json` 生成。精确版本的上游许可证原文索引见 [`legal/third-party/manifest.json`](legal/third-party/manifest.json)，本文件记录包内许可声明和包根目录中的许可/NOTICE 文件指纹；并非法律兼容性结论或可直接分发的完整第三方许可证正文包。
 
-- 锁文件 SHA-256：`1e2944563a6dc96c9a1841da3a870f2660c6c978f5fb730eb19177e074c0f0ff`
-- 已安装包版本：629；直接运行依赖：48；直接开发依赖：20。
+- 锁文件 SHA-256：`9b263d97679a39b857cd2be5f4cdaa50f30ea7d3d7ce05e6843633c023f26a93`
+- 已安装包版本：628；直接运行依赖：48；直接开发依赖：20。
 - 包根目录缺少许可证正文：32；27 项保存上游正文，5 项保存精确声明与明确标注的规范补充，0 项未解决。规范补充不冒充上游原文件或补造版权。
 - 项目源码许可证：根目录 `LICENSE` 为 AGPL-3.0-only；发布前仍需由版权持有人确认，并完成依赖兼容性复核。
 - 本轮未复制 HomeInventory、Wallos、DomainMOD、Homebox 的业务源码；该四项仅在 `docs/03-开源业务模块复用审计.md` 中作为候选和参考登记。
@@ -184,8 +184,6 @@
 | `@better-fetch/fetch@1.3.2` | 传递依赖 | `MIT` | `node_modules/.pnpm/@better-fetch+fetch@1.3.2/node_modules/@better-fetch/fetch/LICENSE` (SHA-256 `54d710e643b5fd218f0c29cddea92432b2c730dddd594c7047c97993dd9f9a59`) |
 | `@biomejs/biome@2.5.14` | development | `MIT OR Apache-2.0` | 包根目录无 LICENSE/LICENCE/COPYING/NOTICE |
 | `@biomejs/cli-darwin-arm64@2.5.14` | 传递依赖 | `MIT OR Apache-2.0` | 包根目录无 LICENSE/LICENCE/COPYING/NOTICE |
-| `@dagrejs/dagre@3.1.1` | production | `MIT` | `node_modules/.pnpm/@dagrejs+dagre@3.1.1/node_modules/@dagrejs/dagre/LICENSE` (SHA-256 `6a349742a6cb219d5a2fc8d0844f6d89a6efc62e20c664450d884fc7ff2d6015`) |
-| `@dagrejs/graphlib@4.0.5` | 传递依赖 | `MIT` | `node_modules/.pnpm/@dagrejs+graphlib@4.0.5/node_modules/@dagrejs/graphlib/LICENSE` (SHA-256 `6a349742a6cb219d5a2fc8d0844f6d89a6efc62e20c664450d884fc7ff2d6015`) |
 | `@dnd-kit/accessibility@3.1.1` | 传递依赖 | `MIT` | `node_modules/.pnpm/@dnd-kit+accessibility@3.1.1_react@19.3.0/node_modules/@dnd-kit/accessibility/LICENSE` (SHA-256 `537607e3f1533ad2c5b12978967f5ab27f34ffb7e626e321017a7ccca6cc24ff`) |
 | `@dnd-kit/core@6.3.1` | production | `MIT` | `node_modules/.pnpm/@dnd-kit+core@6.3.1_react-dom@19.3.0_react@19.3.0__react@19.3.0/node_modules/@dnd-kit/core/LICENSE` (SHA-256 `537607e3f1533ad2c5b12978967f5ab27f34ffb7e626e321017a7ccca6cc24ff`) |
 | `@dnd-kit/sortable@10.0.0` | production | `MIT` | `node_modules/.pnpm/@dnd-kit+sortable@10.0.0_@dnd-kit+core@6.3.1_react-dom@19.3.0_react@19.3.0__react@19.3.0__react@19.3.0/node_modules/@dnd-kit/sortable/LICENSE` (SHA-256 `537607e3f1533ad2c5b12978967f5ab27f34ffb7e626e321017a7ccca6cc24ff`) |
@@ -373,6 +371,7 @@
 | `dunder-proto@1.0.1` | 传递依赖 | `MIT` | `node_modules/.pnpm/dunder-proto@1.0.1/node_modules/dunder-proto/LICENSE` (SHA-256 `2b770a704c15de238c3f622b01b0044ddd60b49ee30608ea6991ebf19db7a7a1`) |
 | `ejs@3.1.10` | 传递依赖 | `Apache-2.0` | `node_modules/.pnpm/ejs@3.1.10/node_modules/ejs/LICENSE` (SHA-256 `cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30`) |
 | `electron-to-chromium@1.5.439` | 传递依赖 | `ISC` | `node_modules/.pnpm/electron-to-chromium@1.5.439/node_modules/electron-to-chromium/LICENSE` (SHA-256 `25ba5c59dad3e0dd8f9540beaa0f0a86a10e3aec35af5fdc8e88c5f6a5c0d8c6`) |
+| `elkjs@0.12.0` | production | `EPL-2.0 OR GPL-3.0-or-later` | `node_modules/.pnpm/elkjs@0.12.0/node_modules/elkjs/LICENSE.md` (SHA-256 `637e81f4a1b6b4079535c499fca05e238cf7605c1ff5b76d60d7da7ce96700c9`) |
 | `enhanced-resolve@5.25.1` | 传递依赖 | `MIT` | `node_modules/.pnpm/enhanced-resolve@5.25.1/node_modules/enhanced-resolve/LICENSE` (SHA-256 `9068a8782d2fb4c6e432cfa25334efa56f722822180570802bf86e71b6003b1e`) |
 | `err-code@3.0.1` | 传递依赖 | `MIT` | 包根目录无 LICENSE/LICENCE/COPYING/NOTICE |
 | `es-abstract@1.24.2` | 传递依赖 | `MIT` | `node_modules/.pnpm/es-abstract@1.24.2/node_modules/es-abstract/LICENSE` (SHA-256 `210549bd75abec340599f291e5ecd95b9acd0d8a713543838ab42f6f462b16bc`) |
