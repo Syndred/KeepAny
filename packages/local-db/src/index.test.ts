@@ -416,6 +416,88 @@ describe('RxDB + free Dexie local repository', () => {
     await recovered.close();
   });
 
+  for (const mixedEntrypoints of [false, true]) {
+    it(`keeps a committed stable identity and relation across two repository instances using ${mixedEntrypoints ? 'mixed batch entrypoints' : 'reviewed batches'}`, async () => {
+      const dbName = name(), first = await openLocalRepository(dbName);
+      const second = new LocalRepository(first.db, first.fileStore);
+      // The existing same-process queue is not sufficient across tabs: assert both
+      // repository wrappers also request the shared browser lock for this database.
+      const request = vi.fn(async (_name: string, action: () => Promise<unknown>) => action());
+      vi.stubGlobal('navigator', { ...globalThis.navigator, locks: { request } });
+      const source = { ...newAsset('account'), name: 'Synthetic dependent account' };
+      const identity = { ...newAsset('account'), id: `login-identity-${'a'.repeat(64)}`,
+        name: 'Synthetic mailbox', username: 'synthetic@example.test', category: 'email' };
+      const relation = relationSchema.parse({ id: `login-link-${'b'.repeat(64)}`, from: source.id, to: identity.id,
+        label: 'Login email', source: identity.username, createdAt: new Date().toISOString() });
+      const items = [{ type: 'asset' as const, value: identity }, { type: 'relation' as const, value: relation }];
+      try {
+        await first.save('asset', source);
+        const attempts = await Promise.allSettled([
+          mixedEntrypoints ? first.saveBatch(items) : first.saveBatchIfAssetsCurrent(items, [source]),
+          second.saveBatchIfAssetsCurrent(items, [source]),
+        ]);
+        expect(attempts.filter(result => result.status === 'fulfilled')).toHaveLength(1);
+        expect(attempts.filter(result => result.status === 'rejected')).toHaveLength(1);
+        expect((attempts.find(result => result.status === 'rejected') as PromiseRejectedResult).reason.message).toBe('batch-existing');
+        expect(await first.get<Asset>('asset', identity.id)).toEqual(identity);
+        expect(await second.get<Relation>('relation', relation.id)).toEqual(relation);
+        expect(await first.allRecords()).toHaveLength(3);
+        expect(await first.fileStore.importJournal.count()).toBe(0);
+        expect(request).toHaveBeenCalledTimes(2);
+        expect(request).toHaveBeenCalledWith(`keepany-batch:${dbName}`, expect.any(Function));
+        await expect(second.saveBatchIfAssetsCurrent(items, [source])).rejects.toThrow('batch-existing');
+        expect(await second.get<Asset>('asset', identity.id)).toEqual(identity);
+        expect(await second.get<Relation>('relation', relation.id)).toEqual(relation);
+        expect(await first.fileStore.importJournal.count()).toBe(0);
+      } finally {
+        await first.close();
+        vi.unstubAllGlobals();
+      }
+      const reopened = await openLocalRepository(dbName);
+      try {
+        expect(await reopened.get<Asset>('asset', identity.id)).toEqual(identity);
+        expect(await reopened.get<Relation>('relation', relation.id)).toEqual(relation);
+        expect(await reopened.fileStore.importJournal.count()).toBe(0);
+      } finally { await reopened.close(); }
+    });
+  }
+
+  it('waits for the shared browser batch lock before recovering an interrupted import on open', async () => {
+    const dbName = name(), interrupted = await openLocalRepository(dbName);
+    const asset = project('Interrupted batch'), row: RecordRow = {
+      id: `asset:${asset.id}`, type: 'asset', payload: JSON.stringify(asset), updatedAt: Date.now(),
+    };
+    await interrupted.fileStore.importJournal.put({ id: 'waiting-batch-recovery', rows: [row] });
+    await interrupted.db.records.insert(row);
+    await interrupted.close();
+    let enter = () => {}, release = () => {};
+    const entered = new Promise<void>(resolve => { enter = resolve; });
+    const held = new Promise<void>(resolve => { release = resolve; });
+    const request = vi.fn(async (lockName: string, action: () => Promise<unknown>) => {
+      if (lockName === `keepany-batch:${dbName}`) { enter(); await held; }
+      return action();
+    });
+    vi.stubGlobal('navigator', { ...globalThis.navigator, locks: { request } });
+    let resolved = false;
+    const opening = openLocalRepository(dbName).then(repository => { resolved = true; return repository; });
+    try {
+      await entered;
+      expect(resolved).toBe(false);
+      await interrupted.fileStore.open();
+      expect(await interrupted.fileStore.importJournal.count()).toBe(1);
+      release();
+      const recovered = await opening;
+      expect(await recovered.allRecords()).toHaveLength(0);
+      expect(await recovered.fileStore.importJournal.count()).toBe(0);
+      expect(request).toHaveBeenCalledWith(`keepany-batch:${dbName}`, expect.any(Function));
+    } finally {
+      release();
+      await (await opening).close();
+      interrupted.fileStore.close();
+      vi.unstubAllGlobals();
+    }
+  });
+
   it('records one renewal under simultaneous calls, rejects the stale snapshot, and restores the exact pair from backup', async () => {
     const db = await openLocalRepository(name());
     const { expected, next, event } = renewalFixture();

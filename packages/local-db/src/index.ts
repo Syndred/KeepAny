@@ -749,12 +749,13 @@ export class LocalRepository {
 
   // New records only. A durable journal rolls back partial writes after errors or interruption.
   async saveBatch(items: ReadonlyArray<{ type: EntityType; value: unknown }>): Promise<number> {
+    const run = () => withRenewalLock(`keepany-batch:${this.db.name}`, () => this.saveBatchUnlocked(items));
     return items.some(item => item.type === 'task')
-      ? withRenewalLock(`keepany-task:${this.db.name}`, () => this.saveBatchUnlocked(items)) : this.saveBatchUnlocked(items);
+      ? withRenewalLock(`keepany-task:${this.db.name}`, run) : run();
   }
 
   async saveBatchIfAssetsCurrent(items: ReadonlyArray<{ type: EntityType; value: unknown }>, expectedAssets: readonly Asset[]): Promise<number> {
-    return this.saveBatchUnlocked(items, expectedAssets);
+    return withRenewalLock(`keepany-batch:${this.db.name}`, () => this.saveBatchUnlocked(items, expectedAssets));
   }
 
   private async saveBatchUnlocked(items: ReadonlyArray<{ type: EntityType; value: unknown }>, expectedAssets: readonly Asset[] = []): Promise<number> {
@@ -2422,7 +2423,10 @@ export async function openLocalRepository(name: string): Promise<LocalRepository
     db = await createRxDatabase({ name, storage: getRxStorageDexie(), multiInstance: true });
     await db.addCollections({ records: { schema: recordSchema } });
     const openedDb = db;
-    for (const entry of await store.importJournal.toArray()) if (!entry.reviewedExpense) await rollbackImport(db, store, entry.id);
+    // Another tab may still own an active batch; only recover its journal after the shared lock is released.
+    await withRenewalLock(`keepany-batch:${name}`, async () => {
+      for (const entry of await store.importJournal.toArray()) if (!entry.reviewedExpense) await rollbackImport(openedDb, store, entry.id);
+    });
     const repository = new LocalRepository(db, store);
     if (name === 'keepany-v1') {
       try { await repository.retryIntakeReviewMigration(); }
