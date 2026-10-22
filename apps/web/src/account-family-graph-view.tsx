@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import {
@@ -97,14 +98,17 @@ function GraphViewport({ layout, layoutKey, rootId, restore, onSize, onReady }: 
 	return null;
 }
 
-function GraphActions({ layout, rootId, expanded, onExpand }: {
+function GraphActions({ layout, rootId, expanded, onExpand, onNavigationHost }: {
 	layout: AccountGraphLayout | null; rootId: string; expanded: boolean;
 	onExpand: (bookmark: Bookmark) => void;
+	onNavigationHost: (host: HTMLDivElement | null) => void;
 }) {
 	const { t } = useTranslation();
 	const { setCenter, setViewport, getViewport } = useReactFlow();
 	const width = useStore((state) => state.width), height = useStore((state) => state.height);
 	return <div className="account-graph-view-actions">
+		<div className="account-graph-navigation" ref={onNavigationHost} />
+		<div className="account-graph-action-buttons">
 		<Button size="small" disabled={!layout} onClick={() => {
 			const node = layout?.nodes.get(rootId);
 			if (node) void setCenter(node.x + node.width / 2, node.y + node.height / 2, { zoom: 1 });
@@ -116,6 +120,7 @@ function GraphActions({ layout, rootId, expanded, onExpand }: {
 			const nearest = layout && [...layout.nodes].sort(([, a], [, b]) => Math.hypot(a.x + a.width / 2 - center.x, a.y + a.height / 2 - center.y) - Math.hypot(b.x + b.width / 2 - center.x, b.y + b.height / 2 - center.y))[0];
 			onExpand({ id: nearest?.[0] ?? rootId, zoom: view.zoom });
 		}}><Maximize2 size={15} />{t("accountGraphExpand")}</Button>}
+		</div>
 	</div>;
 }
 
@@ -123,12 +128,12 @@ function GraphControls({ layout }: { layout: AccountGraphLayout | null }) {
 	const { t } = useTranslation();
 	const { setViewport } = useReactFlow();
 	const width = useStore((state) => state.width), height = useStore((state) => state.height);
-	return <Controls aria-label={t("accountGraphControls")} showInteractive={false} showFitView={false}><ControlButton className="react-flow__controls-fitview" aria-label={t("accountGraphFit")} title={t("accountGraphFit")} disabled={!layout} onClick={() => { if (layout && width && height) void setViewport(fittedViewport(layout, width, height)); }}><Maximize2 size={16} /></ControlButton></Controls>;
+	return <Controls orientation="horizontal" aria-label={t("accountGraphControls")} showInteractive={false} showFitView={false}><ControlButton className="react-flow__controls-fitview" aria-label={t("accountGraphFitControl")} title={t("accountGraphFitControl")} disabled={!layout} onClick={() => { if (layout && width && height) void setViewport(fittedViewport(layout, width, height)); }}><Maximize2 size={16} /></ControlButton></Controls>;
 }
 
 function GraphMiniMap({ rootId }: { rootId: string }) {
 	const { setCenter, getViewport } = useReactFlow();
-	return <MiniMap style={{ width: 140, height: 90 }} bgColor="var(--paper)" nodeStrokeColor="var(--line)" nodeStrokeWidth={1} maskStrokeColor="var(--line)" maskStrokeWidth={1} pannable zoomable
+	return <MiniMap style={{ width: 140, height: 64 }} bgColor="var(--paper)" nodeStrokeColor="var(--line)" nodeStrokeWidth={1} maskColor="color-mix(in srgb, var(--ink) 14%, transparent)" maskStrokeColor="var(--line)" maskStrokeWidth={1} pannable zoomable
 		onClick={(_, point) => { void setCenter(point.x, point.y, { zoom: getViewport().zoom }); }}
 		nodeColor={(node) => node.id === rootId ? "var(--yellow)" : "var(--muted)"} />;
 }
@@ -139,6 +144,7 @@ function GraphContent({ props, expanded, restore, onExpand }: {
 }) {
 	const { t } = useTranslation();
 	const [size, setSize] = useState({ width: 0, height: 0 });
+	const [navigationHost, setNavigationHost] = useState<HTMLDivElement | null>(null);
 	const [result, setResult] = useState<{ key: string; layout: AccountGraphLayout | null; error: boolean }>({ key: "", layout: null, error: false });
 	const [readyKey, setReadyKey] = useState("");
 	const inputKey = JSON.stringify([props.root.id, props.assets.map((asset) => asset.id).sort(), props.relations.map((relation) => [relation.id, relation.from, relation.to, relation.deleted]).sort(), size.width, size.height]);
@@ -197,7 +203,7 @@ function GraphContent({ props, expanded, restore, onExpand }: {
 		else if (changes.some((change) => change.type === "select" && change.id === props.selectedEdgeId && !change.selected)) props.onSelectEdge(null);
 	}
 	return <section className={`graph account-family-graph${expanded ? " account-family-graph--expanded" : ""}`} aria-label={t("relations")} aria-busy={!ready && !error} data-layout-ready={ready}>
-		<GraphActions layout={layout} rootId={props.root.id} expanded={expanded} onExpand={onExpand} />
+		<GraphActions layout={layout} rootId={props.root.id} expanded={expanded} onExpand={onExpand} onNavigationHost={setNavigationHost} />
 		<div className={`account-graph-stage${ready ? " is-ready" : ""}`}>
 			<ReactFlow nodes={nodes} edges={edges} nodeTypes={nodeTypes} edgeTypes={edgeTypes}
 				ariaLabelConfig={{ "controls.zoomIn.ariaLabel": t("accountGraphZoomIn"), "controls.zoomOut.ariaLabel": t("accountGraphZoomOut"), "minimap.ariaLabel": t("accountGraphMap") }}
@@ -206,8 +212,7 @@ function GraphContent({ props, expanded, restore, onExpand }: {
 				deleteKeyCode={null} multiSelectionKeyCode={null} selectionKeyCode={null} nodesDraggable={false} nodesConnectable={false}>
 				<GraphViewport layout={layout} layoutKey={inputKey} rootId={props.root.id} restore={restore} onSize={setSize} onReady={setReadyKey} />
 				<Background />
-				<GraphControls layout={layout} />
-				{nodes.length > 12 && !selected && <GraphMiniMap rootId={props.root.id} />}
+				{navigationHost && createPortal(<><GraphControls layout={layout} />{props.assets.length > 12 && <GraphMiniMap rootId={props.root.id} />}</>, navigationHost)}
 				{selected && <Panel position="bottom-right" className="account-graph-selection-panel nodrag nopan"><section className="account-graph-connection-details" aria-label={t("accountGraphSelection")}>
 					<div className="account-graph-selection-header"><p className="account-graph-selection-title"><strong>{byId.get(selected[0].from)?.name}</strong><span aria-hidden="true"> → </span><strong>{byId.get(selected[0].to)?.name}</strong></p><Button className="account-graph-selection-close" aria-label={t("close")} onClick={() => props.onSelectEdge(null)}><X size={18} /></Button></div>
 					<ul className="account-graph-selection-labels">{[...new Set(selected.map((relation) => relation.label))].map((label) => <li key={label}>{label}</li>)}</ul>

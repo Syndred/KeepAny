@@ -1,5 +1,7 @@
-.graph.account-family-graph { display: flex; flex-direction: column; height: clamp(640px, 74vh, 760px); min-height: 0; margin: 0 16px 16px; overflow: hidden; }
-.account-family-graph .account-graph-view-actions { display: flex; flex: none; justify-content: flex-end; flex-wrap: wrap; gap: 10px; padding: 12px; border-bottom: 1px solid var(--line-soft); background: var(--paper); }
+.graph.account-family-graph { display: flex; flex-direction: column; height: clamp(660px, 74vh, 760px); min-height: 0; margin: 0 16px 16px; overflow: hidden; }
+.account-family-graph .account-graph-view-actions { display: flex; flex: none; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; padding: 12px; border-bottom: 1px solid var(--line-soft); background: var(--paper); }
+.account-graph-navigation { display: flex; flex: none; align-items: center; gap: 12px; }
+.account-graph-action-buttons { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; margin-left: auto; }
 .account-family-graph .account-graph-view-actions .button { min-height: 44px; }
 .account-graph-stage { position: relative; flex: 1; min-height: 0; }
 .account-graph-stage:not(.is-ready) .react-flow__viewport { visibility: hidden; }
@@ -15,13 +17,19 @@
 .account-family-graph .asset-graph-match .account-graph-card { outline: 3px solid var(--yellow); outline-offset: 4px; }
 .account-family-graph .react-flow__handle { width: 5px; height: 5px; min-width: 0; min-height: 0; border: 0; background: var(--muted); }
 .account-family-graph .react-flow__controls-button { width: 44px; height: 44px; }
-.account-family-graph .react-flow__minimap { width: 140px; height: 90px; margin: 12px; background: var(--paper); }
+.account-graph-navigation .react-flow__controls-button { color: var(--ink); }
+.account-graph-navigation .react-flow__controls-button svg { fill: currentColor; }
+.account-graph-navigation .react-flow__controls,
+.account-graph-navigation .react-flow__minimap { position: static; margin: 0; background: var(--paper); }
 .dialog.account-graph-dialog { width: calc(100vw - 32px); height: calc(100dvh - 32px); max-width: none; max-height: none; overflow: hidden; padding: 16px; }
 .account-graph-dialog > header { align-items: center; flex: none; min-height: 44px; }
+.account-graph-dialog > header .button.icon { width: 44px; height: 44px; }
 .account-graph-dialog > .graph.account-family-graph { flex: 1; height: auto; min-height: 0; margin: 0; }
 @media (max-width: 700px) {
-	.graph.account-family-graph { height: 560px; }
+	.graph.account-family-graph { height: 640px; }
 	.account-family-graph .account-graph-view-actions { justify-content: flex-start; gap: 8px; padding: 10px; }
-	.account-family-graph .account-graph-view-actions .button { flex: 1 1 auto; padding-inline: 10px; }
+	.account-graph-action-buttons { order: 1; width: 100%; gap: 8px; }
+	.account-graph-navigation { order: 2; flex-basis: 100%; justify-content: space-between; }
+	.account-graph-action-buttons .button { flex: 1 1 auto; padding-inline: 10px; }
 	.dialog.account-graph-dialog { width: calc(100vw - 16px); height: calc(100dvh - 16px); padding: 12px; }
 }

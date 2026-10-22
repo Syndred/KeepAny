@@ -17,6 +17,7 @@ export const passwordVaultCopy: Record<string, [string, string]> = {
 	accountGraphCurrent: ["当前账号", "Current account"],
 	accountGraphFocus: ["定位当前", "Center account"],
 	accountGraphFit: ["查看全图", "Fit all"],
+	accountGraphFitControl: ["适应视图", "Fit view"],
 	accountGraphExpand: ["扩大画布", "Expand graph"],
 	accountGraphZoomIn: ["放大", "Zoom in"],
 	accountGraphZoomOut: ["缩小", "Zoom out"],
