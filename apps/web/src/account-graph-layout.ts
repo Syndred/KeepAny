@@ -71,9 +71,10 @@ function buildModel(rootId: string, ids: string[], pairs: Pair[]): Model {
 	const depth = new Map([[rootId, 0]]);
 	const side = new Map<string, Side>([[rootId, 0]]);
 	const first = [...(adjacency.get(rootId) ?? [])].sort();
-	for (const [index, id] of first.entries()) {
+	const branchOf = new Map<string, string>();
+	for (const id of first) {
 		depth.set(id, 1);
-		side.set(id, index < Math.ceil(first.length / 2) ? -1 : 1);
+		branchOf.set(id, id);
 	}
 	const frontier = [...first];
 	for (let index = 0; index < frontier.length; index++) {
@@ -81,10 +82,26 @@ function buildModel(rootId: string, ids: string[], pairs: Pair[]): Model {
 		for (const id of [...(adjacency.get(parent) ?? [])].sort()) {
 			if (depth.has(id)) continue;
 			depth.set(id, (depth.get(parent) ?? 0) + 1);
-			side.set(id, side.get(parent) ?? -1);
+			branchOf.set(id, branchOf.get(parent) ?? parent);
 			frontier.push(id);
 		}
 	}
+	// Count each node only in its first BFS branch, even when branches share edges.
+	const weights = new Map(first.map((id) => [id, 0]));
+	for (const id of frontier) {
+		const branch = branchOf.get(id);
+		if (branch) weights.set(branch, (weights.get(branch) ?? 0) + 1);
+	}
+	const branchSides = new Map<string, Side>();
+	let leftWeight = 0, rightWeight = 0;
+	// Keep branches intact; one dominant branch can still produce an asymmetric family.
+	for (const [id, weight] of [...weights].sort(([a, aw], [b, bw]) => bw - aw || a.localeCompare(b))) {
+		const branchSide = leftWeight <= rightWeight ? -1 : 1;
+		branchSides.set(id, branchSide);
+		if (branchSide === -1) leftWeight += weight;
+		else rightWeight += weight;
+	}
+	for (const id of frontier) side.set(id, branchSides.get(branchOf.get(id) ?? id) ?? -1);
 	const compact = ids.length > 24;
 	const nodes = new Map(ids.map((id, index): [string, ModelNode] => {
 		const current = id === rootId;

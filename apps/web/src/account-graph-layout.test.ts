@@ -82,6 +82,29 @@ describe("account graph layout", () => {
 		first.edges.clear();
 		expect(snapshot(await layoutAccountGraph(fixture.root, fixture.assets, fixture.relations, { width: 1100, height: 560 }))).toEqual(snapshot(reordered));
 	});
+	it("balances unique BFS branch weights [11, 10, 1, 1] as 12/11 instead of 21/2", async () => {
+		const rootId = "weighted-root", ids = [rootId], relations: Relation[] = [];
+		for (const [index, weight] of [11, 10, 1, 1].entries()) {
+			const branch = `weighted-${String.fromCharCode(97 + index)}`;
+			ids.push(branch); relations.push(relation(branch, rootId));
+			for (let leaf = 1; leaf < weight; leaf++) {
+				const id = `${branch}-${String(leaf).padStart(2, "0")}`;
+				ids.push(id); relations.push(relation(id, branch));
+			}
+		}
+		const assets = ids.map(asset);
+		const layout = await layoutAccountGraph(rootId, assets, relations, { width: 1100, height: 560 });
+		verifyGeometry(layout, relations);
+		const root = layout.nodes.get(rootId);
+		if (!root) throw Error("Missing weighted graph root");
+		const left = [...layout.nodes].filter(([id, node]) => id !== rootId && node.x + node.width <= root.x).map(([id]) => id);
+		const right = [...layout.nodes].filter(([id, node]) => id !== rootId && node.x >= root.x + root.width).map(([id]) => id);
+		expect([left.length, right.length]).toEqual([12, 11]);
+		expect(left).toEqual(expect.arrayContaining(["weighted-a", "weighted-d"]));
+		expect(right).toEqual(expect.arrayContaining(["weighted-b", "weighted-c"]));
+		const reordered = await layoutAccountGraph(rootId, [...assets].reverse(), [...relations].reverse(), { width: 1101, height: 560 });
+		expect(snapshot(reordered)).toEqual(snapshot(layout));
+	});
 	it("keeps cycle and reciprocal records in their actual directions with separate ports", async () => {
 		const ids = ["cycle-a", "cycle-b", "cycle-c", "cycle-d"];
 		const relations = [relation(ids[0], ids[1]), relation(ids[1], ids[0]), relation(ids[1], ids[2]), relation(ids[2], ids[0]), relation(ids[2], ids[3])];
