@@ -94,7 +94,7 @@ apps/web/dist/assets/index-BWAQJLV7.js                           547.94 kB │ g
 apps/web/dist/assets/ai-settings-store-i1g0tz5X.js               989.15 kB │ gzip: 240.97 kB
 apps/web/dist/assets/account-family-graph-view-D0YPm-sz.js     1,450.93 kB │ gzip: 449.70 kB
 
-[plugin builtin:vite-reporter] 
+[plugin builtin:vite-reporter]
 (!) Some chunks are larger than 500 kB after minification. Consider:
 - Using dynamic import() to code-split the application
 - Use build.rolldownOptions.output.codeSplitting to improve chunking: https://rolldown.rs/reference/OutputOptions.codeSplitting

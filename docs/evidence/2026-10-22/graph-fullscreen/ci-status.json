@@ -1,0 +1,24 @@
+{
+  "head": "0c3e42a7808032504cd7d5cd38ae69089b93f610",
+  "total": 2,
+  "runs": [
+    {
+      "id": 39740444308,
+      "name": "Verify local release",
+      "status": "in_progress",
+      "conclusion": null,
+      "url": "https://github.com/Syndred/StackPerch/actions/runs/39740444308",
+      "createdAt": "2026-10-22T07:26:01Z",
+      "updatedAt": "2026-10-22T07:26:04Z"
+    },
+    {
+      "id": 39740444236,
+      "name": "Verify portable preview",
+      "status": "in_progress",
+      "conclusion": null,
+      "url": "https://github.com/Syndred/StackPerch/actions/runs/39740444236",
+      "createdAt": "2026-10-22T07:26:01Z",
+      "updatedAt": "2026-10-22T07:26:38Z"
+    }
+  ]
+}
