@@ -1,7 +1,7 @@
-import { z } from "zod";
 import { assetSchema, newAsset, relationSchema, type Asset, type Relation } from "../../../packages/domain/src";
 import { localRepository, type LocalRepository } from "../../../packages/local-db/src";
 import { getReviewedCandidate, type ReviewedCandidate } from "../../../packages/local-db/src/intake-review";
+import { accountIdentityStableId as stableId, emailIdentifier, phoneIdentifier, identityRelationLabels } from "./account-identities";
 
 export type AccountIdentityKind = "email" | "phone" | "provider";
 export interface AccountIdentityPreview {
@@ -27,19 +27,6 @@ export interface ReviewedAccountLinksResult {
 	previews: Array<{ candidateId: string; identities: AccountIdentityPreview[] }>;
 }
 
-function emailIdentifier(value: string): string {
-	const trimmed = value.trim();
-	return z.email().safeParse(trimmed).success ? trimmed.toLowerCase() : "";
-}
-function phoneIdentifier(value: string): string {
-	const trimmed = value.trim();
-	if (!/^[+\d() -]+$/.test(trimmed)) return "";
-	const digits = trimmed.replace(/[() -]/g, "");
-	if (/^1[3-9]\d{9}$/.test(digits)) return digits;
-	if (/^\+861[3-9]\d{9}$/.test(digits)) return digits.slice(3);
-	// A country code must be explicit outside the supplied Chinese mobile format.
-	return /^\+[1-9]\d{6,14}$/.test(digits) ? digits : "";
-}
 function githubAccount(asset: Asset): boolean {
 	if (asset.kind !== "account") return false;
 	if (asset.accountProvider.trim().toLowerCase() === "github") return true;
@@ -66,10 +53,6 @@ export function previewAccountIdentity(asset: Asset, row?: Pick<ReviewedCandidat
 	return identities;
 }
 
-async function stableId(prefix: string, values: string[]): Promise<string> {
-	const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(JSON.stringify(values))));
-	return `${prefix}-${Array.from(digest, (byte) => byte.toString(16).padStart(2, "0")).join("")}`;
-}
 function identityIdentifier(asset: Asset, identity: AccountIdentityPreview): string {
 	const value = asset.username.trim() || asset.name.trim();
 	return identity.kind === "email" ? emailIdentifier(value)
@@ -143,7 +126,7 @@ export async function ensureReviewedAccountLinks(input: ReviewedCandidate[], opt
 				const same = relations.find((relation) => relation.id === relationId);
 				if (same && (same.from !== source.id || same.to !== target.id)) { unresolved("changed-target"); continue; }
 				const equivalent = relations.filter((relation) => relation.from === source.id && relation.to === target.id &&
-					["登录邮箱", "登录手机号", "登录方式", "登录账号", "Login email", "Login phone", "Login provider", "Login account", label].some((item) => item.toLowerCase() === relation.label.trim().toLowerCase()));
+					[...identityRelationLabels, label].some((item) => item.toLowerCase() === relation.label.trim().toLowerCase()));
 				const existing = (same && !same.deleted ? same : undefined) ?? equivalent.find((relation) => !relation.deleted);
 				if (existing) {
 					result.existingRelations++;

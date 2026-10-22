@@ -8,12 +8,29 @@ import {
 } from "../../../packages/domain/src";
 import type { VaultEntrySummary } from "../../../packages/password-vault/src";
 import { hasExplicitImportSecret } from "./ai-import-input";
+import {
+	accountIdentityStableId,
+	emailIdentifier,
+	phoneIdentifier,
+	identityRelationLabels,
+} from "./account-identities";
+
+export type AccountLinkIdentityKind = "email" | "phone";
+export type AccountLinkIdentity = {
+	kind: AccountLinkIdentityKind;
+	identifier: string;
+	account: Asset;
+	isNew: boolean;
+};
 
 export type AccountLinkRow = {
 	entryId: string;
 	account: Asset;
+	originalAccount: Asset | null;
+	suggestedCategory: string;
 	isNew: boolean;
 	identifiers: string[];
+	identityAccounts: AccountLinkIdentity[];
 	loginIdentifiers: string[];
 	hint: string;
 };
@@ -21,7 +38,19 @@ export type AccountLinkSuggestion = {
 	from: string;
 	to: string;
 	kind: "identifier" | "login" | "recovery";
+	identifierKind?: AccountLinkIdentityKind;
 	evidence: string;
+};
+export type AccountLinkLabel = (
+	kind: AccountLinkSuggestion["kind"],
+	identifierKind?: AccountLinkIdentityKind,
+) => string;
+export type AccountLinkSavePlan = {
+	newAssets: Asset[];
+	accountUpdates: { expected: Asset; next: Asset }[];
+	newRelations: Relation[];
+	replacedRelations: { expected: Relation; next: Relation }[];
+	expectedAssets: Asset[];
 };
 export const accountLinkOutput = z.object({
 	relations: z
@@ -39,19 +68,149 @@ export const accountLinkSystem = `Return JSON {"relations":[{"from":"account id"
 
 export function normalizeLoginIdentifier(value: string): string {
 	const text = value.trim().normalize("NFKC");
-	if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(text))
-		return `email:${text.toLowerCase()}`;
-	if (/^\+?[\d ()-]{7,}$/.test(text)) {
-		const digits = text.replace(/[ ()-]/g, "");
-		if (/^\+?\d{7,15}$/.test(digits)) return `phone:${digits}`;
-	}
+	const email = emailIdentifier(text),
+		phone = phoneIdentifier(text);
+	if (email) return `email:${email}`;
+	if (phone) return `phone:${phone}`;
 	// Usernames are platform-specific; never relate different services just by a short handle.
 	return "";
+}
+
+/** Identify mailbox/phone records themselves, never classify a service by its username alone. */
+export function suggestAccountCategory(
+	entry: Pick<VaultEntrySummary, "title" | "username" | "url">,
+): string {
+	const primary = normalizeLoginIdentifier(entry.username);
+	const title = entry.title.trim().normalize("NFKC");
+	if (primary && normalizeLoginIdentifier(title) === primary)
+		return primary.split(":")[0];
+	if (primary.startsWith("email:")) {
+		const mailboxName =
+			/^(?:g[ -]?mail|outlook|hotmail|yahoo|proton(?:mail)?|fastmail|tutanota|tuta|icloud|qq\s*(?:mail|邮箱)|(?:163|126|yeah)\s*(?:mail|邮箱)?|gmail邮箱|谷歌|网易邮箱|阿里邮箱|腾讯邮箱|邮箱)(?:[\s._\-\d（(]|$)/iu;
+		const googleAccountName =
+			/^google(?:[\s._-]*\d+|[\s._-]+(?:personal|work|primary|main|account|账号)(?:[\s._-]*\d+)?)?$/iu;
+		if (mailboxName.test(title) || googleAccountName.test(title))
+			return "email";
+		try {
+			const host = new URL(entry.url).hostname.toLowerCase();
+			if (
+				[
+					"gmail.com",
+					"mail.google.com",
+					"accounts.google.com",
+					"outlook.com",
+					"outlook.live.com",
+					"account.live.com",
+					"login.live.com",
+					"hotmail.com",
+					"mail.yahoo.com",
+					"mail.qq.com",
+					"mail.163.com",
+					"mail.126.com",
+					"mail.yeah.net",
+					"mail.aliyun.com",
+					"proton.me",
+					"protonmail.com",
+					"fastmail.com",
+					"tuta.com",
+					"tutanota.com",
+				].includes(host)
+			)
+				return "email";
+		} catch {
+			/* A missing website is valid. */
+		}
+	}
+	if (
+		primary.startsWith("phone:") &&
+		/^(?:手机|手机号|电话|电话号码|移动号码|phone|mobile|telephone|tel)(?:[\s:：._-]*(?:[+\d ()-]+|主号|副号|个人|工作|personal|work|primary|main))?$/iu.test(
+			title,
+		)
+	)
+		return "phone";
+	return "other";
+}
+
+function identityValue(asset: Asset, kind: AccountLinkIdentityKind): string {
+	const value = asset.username.trim() || asset.name.trim();
+	return kind === "email" ? emailIdentifier(value) : phoneIdentifier(value);
+}
+
+async function identityTarget(
+	kind: AccountLinkIdentityKind,
+	identifier: string,
+	assets: Asset[],
+	relations: Relation[],
+): Promise<AccountLinkIdentity> {
+	const provider =
+		kind === "email" ? identifier.slice(identifier.lastIndexOf("@") + 1) : "";
+	const id = await accountIdentityStableId("login-identity", [
+		kind,
+		provider.toLowerCase(),
+		identifier.toLowerCase(),
+	]);
+	const stable = assets.find((asset) => asset.id === id);
+	if (
+		stable &&
+		(stable.deleted ||
+			stable.kind !== "account" ||
+			identityValue(stable, kind) !== identifier)
+	)
+		throw Error("account-link-conflict");
+	const linkedTargets = new Set<string>();
+	for (const relation of relations) {
+		if (!/^login-link-[a-f0-9]{64}$/.test(relation.id)) continue;
+		const target = assets.find((asset) => asset.id === relation.to);
+		if (
+			!target ||
+			target.kind !== "account" ||
+			identityValue(target, kind) !== identifier
+		)
+			continue;
+		if (
+			relation.id ===
+			(await accountIdentityStableId("login-link", [
+				relation.from,
+				kind,
+				relation.to,
+			]))
+		)
+			linkedTargets.add(target.id);
+	}
+	const matches = assets.filter(
+		(asset) =>
+			asset.kind === "account" &&
+			(asset.category === kind || linkedTargets.has(asset.id)) &&
+			identityValue(asset, kind) === identifier,
+	);
+	const live = matches.filter((asset) => !asset.deleted);
+	const linked = live.filter((asset) => linkedTargets.has(asset.id));
+	if (!stable && (linked.length > 1 || (!linked.length && live.length > 1)))
+		throw Error("account-link-ambiguous");
+	const existing = stable ?? linked[0] ?? live[0];
+	if (!existing && matches.some((asset) => asset.deleted))
+		throw Error("account-link-conflict");
+	return {
+		kind,
+		identifier,
+		isNew: !existing,
+		account:
+			existing ??
+			assetSchema.parse({
+				...newAsset("account"),
+				id,
+				name: identifier.slice(0, 160),
+				category: kind,
+				username: identifier,
+				accountProvider: provider,
+			}),
+	};
 }
 export async function buildAccountLinkRows(
 	entries: VaultEntrySummary[],
 	assets: Asset[],
 	notes: ReadonlyMap<string, string> = new Map(),
+	relations: Relation[] = [],
 ): Promise<AccountLinkRow[]> {
 	const result: AccountLinkRow[] = [];
 	for (const entry of entries) {
@@ -71,6 +230,15 @@ export async function buildAccountLinkRows(
 				a.kind === "account" &&
 				entry.linkedAssetIds.includes(a.id),
 		);
+		if (
+			assets.some(
+				(asset) =>
+					asset.deleted &&
+					asset.kind === "account" &&
+					entry.linkedAssetIds.includes(asset.id),
+			)
+		)
+			throw Error("account-link-conflict");
 		if (linked.length > 1) throw Error("account-link-ambiguous");
 		const matches = assets.filter(
 			(a) =>
@@ -82,45 +250,85 @@ export async function buildAccountLinkRows(
 		);
 		if (!linked.length && !stable && matches.length > 1)
 			throw Error("account-link-ambiguous");
-		const existing = linked[0] ?? stable ?? matches[0];
+		const suggestedCategory = suggestAccountCategory(entry);
+		const identityKind =
+			suggestedCategory === "email" || suggestedCategory === "phone"
+				? suggestedCategory
+				: null;
+		const ownIdentifier = normalizeLoginIdentifier(entry.username);
+		let existing = linked[0] ?? stable ?? matches[0];
+		if (!existing && identityKind && ownIdentifier) {
+			const identity = await identityTarget(
+				identityKind,
+				ownIdentifier.slice(ownIdentifier.indexOf(":") + 1),
+				assets,
+				relations,
+			);
+			if (!identity.isNew) existing = identity.account;
+		}
 		const planned = result.find(
 			(row) =>
-				row.account.name === entry.title.trim() &&
-				row.account.username === entry.username,
+				(row.account.name === entry.title.trim() &&
+					(normalizeLoginIdentifier(row.account.username) ||
+						row.account.username.trim()) ===
+						(ownIdentifier || entry.username.trim())) ||
+				(identityKind &&
+					row.suggestedCategory === identityKind &&
+					normalizeLoginIdentifier(row.account.username) === ownIdentifier),
 		);
+		const originalAccount = existing ?? planned?.originalAccount ?? null;
 		const account =
-			existing ??
 			planned?.account ??
 			assetSchema.parse({
-				...newAsset("account"),
-				id,
+				...(existing ?? newAsset("account")),
+				id: existing?.id ?? id,
 				name: entry.title,
 				username: entry.username,
 				url: publicAccountUrl(entry.url),
+				category: existing?.category || suggestedCategory,
 			});
+		const identifiers = [
+			...new Set(
+				[entry.username, ...(entry.usernameAliases ?? [])]
+					.map(normalizeLoginIdentifier)
+					.filter(Boolean),
+			),
+		];
 		result.push({
 			entryId: entry.id,
 			account,
-			isNew: !existing,
-			identifiers: [
-				...new Set(
-					[entry.username, ...(entry.usernameAliases ?? [])]
-						.map(normalizeLoginIdentifier)
-						.filter(Boolean),
-				),
-			],
+			originalAccount,
+			suggestedCategory,
+			isNew: !originalAccount,
+			identifiers,
+			identityAccounts: [],
 			loginIdentifiers: [
 				...new Set(
-					[
-						account.username,
-						entry.username,
-						...(entry.usernameAliases ?? []),
-					].filter((value) => value.trim()),
+					[entry.username, ...(entry.usernameAliases ?? [])].filter((value) =>
+						value.trim(),
+					),
 				),
 			],
 			hint: notes.get(entry.id) ?? "",
 		});
 	}
+	const targets = new Map<string, AccountLinkIdentity>();
+	for (const row of result)
+		for (const identifier of row.identifiers) {
+			let target = targets.get(identifier);
+			if (!target) {
+				const split = identifier.indexOf(":"),
+					kind = identifier.slice(0, split) as AccountLinkIdentityKind;
+				target = await identityTarget(
+					kind,
+					identifier.slice(split + 1),
+					assets,
+					relations,
+				);
+				targets.set(identifier, target);
+			}
+			row.identityAccounts.push(target);
+		}
 	return result;
 }
 export function publicAccountUrl(value: string): string {
@@ -137,24 +345,28 @@ export function sharedIdentifierSuggestions(
 	rows: AccountLinkRow[],
 ): AccountLinkSuggestion[] {
 	const result: AccountLinkSuggestion[] = [];
-	const groups = new Map<string, string[]>();
 	for (const row of rows)
-		for (const identifier of row.identifiers) {
-			const members = groups.get(identifier) ?? [];
-			if (!members.includes(row.account.id)) members.push(row.account.id);
-			groups.set(identifier, members);
-		}
-	// A shared-identifier family uses a stable hub, avoiding a quadratic wall of duplicate edges.
-	for (const members of groups.values()) {
-		members.sort();
-		for (const id of members.slice(1))
+		for (const identity of row.identityAccounts) {
+			const owner = rows.find(
+				(candidate) =>
+					(candidate.account.category === identity.kind ||
+						candidate.suggestedCategory === identity.kind) &&
+					normalizeLoginIdentifier(
+						candidate.account.username || candidate.account.name,
+					) === `${identity.kind}:${identity.identifier}`,
+			);
+			const target = identity.isNew
+				? (owner?.account ?? identity.account)
+				: identity.account;
+			if (row.account.id === target.id) continue;
 			result.push({
-				from: members[0],
-				to: id,
+				from: row.account.id,
+				to: target.id,
 				kind: "identifier",
-				evidence: "",
+				identifierKind: identity.kind,
+				evidence: identity.identifier,
 			});
-	}
+		}
 
 	return dedupeSuggestions(result);
 }
@@ -164,10 +376,10 @@ export function dedupeSuggestions(
 	const seen = new Set<string>();
 	return rows.filter((row) => {
 		const endpoints =
-			row.kind === "identifier"
+			row.kind === "identifier" && !row.identifierKind
 				? [row.from, row.to].sort()
 				: [row.from, row.to];
-		const key = JSON.stringify([...endpoints, row.kind]);
+		const key = JSON.stringify([...endpoints, row.kind, row.identifierKind]);
 		if (seen.has(key)) return false;
 		seen.add(key);
 		return true;
@@ -210,41 +422,48 @@ export function readAiAccountLinks(
 export async function accountLinkRelations(
 	suggestions: AccountLinkSuggestion[],
 	existing: Relation[],
-	label: (kind: AccountLinkSuggestion["kind"]) => string,
+	label: AccountLinkLabel,
 ): Promise<Relation[]> {
 	const result: Relation[] = [];
 	for (const suggestion of dedupeSuggestions(suggestions)) {
 		const endpoints =
-			suggestion.kind === "identifier"
+			suggestion.kind === "identifier" && !suggestion.identifierKind
 				? [suggestion.from, suggestion.to].sort()
 				: [suggestion.from, suggestion.to];
-		const bytes = new TextEncoder().encode(
-			JSON.stringify([...endpoints, suggestion.kind]),
+		const id = suggestion.identifierKind
+			? await accountIdentityStableId("login-link", [
+					suggestion.from,
+					suggestion.identifierKind,
+					suggestion.to,
+				])
+			: await accountIdentityStableId(`pw-link-${suggestion.kind}`, [
+					...endpoints,
+					suggestion.kind,
+				]);
+		const relationLabel = label(suggestion.kind, suggestion.identifierKind);
+		const same = existing.find((relation) => relation.id === id);
+		if (same && (same.from !== suggestion.from || same.to !== suggestion.to))
+			throw Error("account-link-conflict");
+		const equivalents = existing.filter(
+			(relation) =>
+				relation.from === suggestion.from &&
+				relation.to === suggestion.to &&
+				(suggestion.identifierKind
+					? [...identityRelationLabels, relationLabel]
+					: [relationLabel]
+				).some(
+					(value) =>
+						value.toLowerCase() === relation.label.trim().toLowerCase(),
+				),
 		);
-		const hash = [
-			...new Uint8Array(await crypto.subtle.digest("SHA-256", bytes)),
-		]
-			.map((n) => n.toString(16).padStart(2, "0"))
-			.join("");
-		const id = `pw-link-${suggestion.kind}-${hash}`;
 		// Stable IDs make retries and language changes idempotent, including intentionally deleted edges.
-		if (
-			existing.some(
-				(r) =>
-					r.id === id ||
-					(!r.deleted &&
-						r.label === label(suggestion.kind) &&
-						r.from === suggestion.from &&
-						r.to === suggestion.to),
-			)
-		)
-			continue;
+		if (same || equivalents.length) continue;
 		result.push(
 			relationSchema.parse({
 				id,
 				from: suggestion.from,
 				to: suggestion.to,
-				label: label(suggestion.kind),
+				label: relationLabel,
 				source: suggestion.evidence || undefined,
 				createdAt: new Date().toISOString(),
 				verifiedAt: new Date().toISOString().slice(0, 10),
@@ -252,4 +471,288 @@ export async function accountLinkRelations(
 		);
 	}
 	return result;
+}
+
+function sameAsset(
+	left: Asset,
+	right: Asset,
+	ignoreUpdatedAt = false,
+): boolean {
+	const l = assetSchema.parse(left),
+		r = assetSchema.parse(right);
+	if (ignoreUpdatedAt) {
+		l.updatedAt = "";
+		r.updatedAt = "";
+	}
+	return JSON.stringify(l) === JSON.stringify(r);
+}
+
+function suggestionKey(suggestion: AccountLinkSuggestion): string {
+	return JSON.stringify([
+		suggestion.from,
+		suggestion.to,
+		suggestion.kind,
+		suggestion.identifierKind,
+	]);
+}
+
+/** Build an auditable plan; callers apply CAS updates, then the existing new-record batch. */
+export async function buildAccountLinkSavePlan(
+	rows: AccountLinkRow[],
+	suggestions: AccountLinkSuggestion[],
+	assets: Asset[],
+	relations: Relation[],
+	label: AccountLinkLabel,
+): Promise<AccountLinkSavePlan> {
+	const plan: AccountLinkSavePlan = {
+		newAssets: [],
+		accountUpdates: [],
+		newRelations: [],
+		replacedRelations: [],
+		expectedAssets: [],
+	};
+	const newById = new Map<string, Asset>(),
+		expected = new Map<string, Asset>(),
+		selected = new Map<string, AccountLinkRow>();
+	for (const row of rows) {
+		const duplicate = selected.get(row.account.id);
+		if (duplicate && !sameAsset(duplicate.account, row.account))
+			throw Error("account-link-conflict");
+		if (duplicate) continue;
+		selected.set(row.account.id, row);
+		const next = assetSchema.parse(row.account);
+		if (next.deleted || next.kind !== "account")
+			throw Error("account-link-conflict");
+		const current = assets.find((asset) => asset.id === next.id);
+		if (!current) {
+			if (!row.isNew || row.originalAccount) throw Error("account-link-stale");
+			newById.set(next.id, next);
+			continue;
+		}
+		if (current.deleted || current.kind !== "account")
+			throw Error("account-link-stale");
+		if (
+			row.originalAccount &&
+			normalizeLoginIdentifier(row.originalAccount.username) !==
+				normalizeLoginIdentifier(next.username)
+		) {
+			const wasIdentity =
+				["email", "phone"].includes(row.originalAccount.category) ||
+				["email", "phone"].includes(row.suggestedCategory) ||
+				row.originalAccount.id.startsWith("login-identity-");
+			const hasIncoming = relations.some(
+				(relation) =>
+					!relation.deleted &&
+					relation.to === next.id &&
+					assets.some((asset) => asset.id === relation.from && !asset.deleted),
+			);
+			if (
+				wasIdentity &&
+				(hasIncoming || row.originalAccount.id.startsWith("login-identity-"))
+			)
+				throw Error("account-link-identity-in-use");
+		}
+		if (sameAsset(current, next, true)) {
+			expected.set(current.id, current);
+			continue;
+		}
+		if (!row.originalAccount || !sameAsset(current, row.originalAccount))
+			throw Error("account-link-stale");
+		const updated = assetSchema.parse({
+			...next,
+			updatedAt: new Date().toISOString(),
+		});
+		plan.accountUpdates.push({ expected: current, next: updated });
+		expected.set(current.id, updated);
+	}
+	const local = new Map(
+		sharedIdentifierSuggestions(rows).map((suggestion) => [
+			suggestionKey(suggestion),
+			suggestion,
+		]),
+	);
+	const chosen = dedupeSuggestions(suggestions);
+	const identities = new Map(
+		rows.flatMap((row) =>
+			row.identityAccounts.map(
+				(identity) => [identity.account.id, identity] as const,
+			),
+		),
+	);
+	for (const suggestion of chosen) {
+		if (suggestion.from === suggestion.to || !selected.has(suggestion.from))
+			throw Error("account-link-output");
+		if (suggestion.kind === "identifier") {
+			const proposed = local.get(suggestionKey(suggestion));
+			if (!proposed || proposed.evidence !== suggestion.evidence)
+				throw Error("account-link-stale");
+		} else if (
+			!selected.has(suggestion.to) ||
+			!suggestion.evidence.trim() ||
+			suggestion.evidence.length > 300 ||
+			hasExplicitImportSecret(suggestion.evidence)
+		)
+			throw Error("account-link-output");
+		if (selected.has(suggestion.to)) continue;
+		const identity = identities.get(suggestion.to);
+		if (!identity || suggestion.identifierKind !== identity.kind)
+			throw Error("account-link-output");
+		const current = assets.find((asset) => asset.id === identity.account.id);
+		if (current) {
+			if (current.deleted || !sameAsset(current, identity.account))
+				throw Error("account-link-stale");
+			expected.set(current.id, current);
+		} else {
+			if (!identity.isNew) throw Error("account-link-stale");
+			newById.set(identity.account.id, identity.account);
+		}
+	}
+	plan.newRelations = await accountLinkRelations(chosen, relations, label);
+	// Do not create an orphan target when a matching relationship was intentionally deleted.
+	const liveOrNewRelations = [
+		...relations.filter((relation) => !relation.deleted),
+		...plan.newRelations,
+	];
+	const used = new Set(
+		liveOrNewRelations.flatMap((relation) => [relation.from, relation.to]),
+	);
+	plan.newAssets = [...newById.values()].filter(
+		(asset) => selected.has(asset.id) || used.has(asset.id),
+	);
+	plan.expectedAssets = [...expected.values()];
+	const confirmedIdentities: AccountLinkSuggestion[] = [];
+	for (const suggestion of chosen) {
+		if (suggestion.kind !== "identifier" || !suggestion.identifierKind)
+			continue;
+		const identityId = await accountIdentityStableId("login-link", [
+			suggestion.from,
+			suggestion.identifierKind,
+			suggestion.to,
+		]);
+		if (
+			liveOrNewRelations.some(
+				(relation) =>
+					relation.from === suggestion.from &&
+					relation.to === suggestion.to &&
+					(relation.id === identityId ||
+						identityRelationLabels.some(
+							(value) =>
+								value.toLowerCase() === relation.label.trim().toLowerCase(),
+						)),
+			)
+		)
+			confirmedIdentities.push(suggestion);
+	}
+	for (const relation of relations) {
+		if (
+			!relation.deleted &&
+			/^login-link-[a-f0-9]{64}$/.test(relation.id) &&
+			selected.has(relation.from)
+		) {
+			const source = selected.get(relation.from),
+				target = assets.find(
+					(asset) =>
+						asset.id === relation.to &&
+						!asset.deleted &&
+						asset.kind === "account",
+				);
+			if (source && target)
+				for (const kind of ["email", "phone"] as const) {
+					const identifier = identityValue(target, kind);
+					if (
+						!identifier ||
+						source.identifiers.includes(`${kind}:${identifier}`)
+					)
+						continue;
+					const labels =
+						kind === "email"
+							? ["登录邮箱", "Login email"]
+							: ["登录手机号", "Login phone"];
+					if (
+						!labels.includes(relation.label) ||
+						(relation.source &&
+							normalizeLoginIdentifier(relation.source) !==
+								`${kind}:${identifier}`)
+					)
+						continue;
+					if (
+						relation.id ===
+						(await accountIdentityStableId("login-link", [
+							relation.from,
+							kind,
+							relation.to,
+						]))
+					)
+						plan.replacedRelations.push({
+							expected: relation,
+							next: relationSchema.parse({ ...relation, deleted: true }),
+						});
+				}
+		}
+		if (
+			relation.deleted ||
+			!/^pw-link-identifier-[a-f0-9]{64}$/.test(relation.id) ||
+			!selected.has(relation.from) ||
+			!selected.has(relation.to)
+		)
+			continue;
+		if (
+			!["相同登录标识", "Shared login identifier"].includes(relation.label) ||
+			relation.source
+		)
+			continue;
+		const endpoints = [relation.from, relation.to].sort();
+		const oldId = await accountIdentityStableId("pw-link-identifier", [
+			...endpoints,
+			"identifier",
+		]);
+		if (relation.id !== oldId) continue;
+		const left = selected.get(relation.from),
+			right = selected.get(relation.to);
+		if (!left || !right) continue;
+		const common = left.identifiers.filter((identifier) =>
+			right.identifiers.includes(identifier),
+		);
+		const legacyNumeric = (row: AccountLinkRow) =>
+			row.loginIdentifiers
+				.map((value) => value.trim().normalize("NFKC"))
+				.filter((value) => /^\+?[\d ()-]{7,}$/.test(value))
+				.map((value) => value.replace(/[ ()-]/g, ""))
+				.filter(
+					(value) =>
+						/^\+?\d{7,15}$/.test(value) && !normalizeLoginIdentifier(value),
+				);
+		const obsoleteNumeric =
+			!common.length &&
+			left.account.category !== "phone" &&
+			right.account.category !== "phone" &&
+			legacyNumeric(left).some((value) => legacyNumeric(right).includes(value));
+		const replaced = common.some((identifier) => {
+			const [kind, value] = [
+				identifier.slice(0, identifier.indexOf(":")),
+				identifier.slice(identifier.indexOf(":") + 1),
+			];
+			const links = confirmedIdentities.filter(
+				(suggestion) =>
+					suggestion.identifierKind === kind && suggestion.evidence === value,
+			);
+			const hasSource = (source: string, target: string) =>
+				source === target ||
+				links.some(
+					(suggestion) =>
+						suggestion.from === source && suggestion.to === target,
+				);
+			return links.some(
+				(suggestion) =>
+					hasSource(relation.from, suggestion.to) &&
+					hasSource(relation.to, suggestion.to),
+			);
+		});
+		if (replaced || obsoleteNumeric)
+			plan.replacedRelations.push({
+				expected: relation,
+				next: relationSchema.parse({ ...relation, deleted: true }),
+			});
+	}
+	return plan;
 }
