@@ -123,7 +123,7 @@ function GraphControls({ layout }: { layout: AccountGraphLayout | null }) {
 	const { t } = useTranslation();
 	const { setViewport } = useReactFlow();
 	const width = useStore((state) => state.width), height = useStore((state) => state.height);
-	return <Controls showInteractive={false} showFitView={false}><ControlButton className="react-flow__controls-fitview" aria-label={t("accountGraphFit")} title={t("accountGraphFit")} disabled={!layout} onClick={() => { if (layout && width && height) void setViewport(fittedViewport(layout, width, height)); }}><Maximize2 size={16} /></ControlButton></Controls>;
+	return <Controls aria-label={t("accountGraphControls")} showInteractive={false} showFitView={false}><ControlButton className="react-flow__controls-fitview" aria-label={t("accountGraphFit")} title={t("accountGraphFit")} disabled={!layout} onClick={() => { if (layout && width && height) void setViewport(fittedViewport(layout, width, height)); }}><Maximize2 size={16} /></ControlButton></Controls>;
 }
 
 function GraphContent({ props, expanded, restore, onExpand }: {
@@ -193,13 +193,14 @@ function GraphContent({ props, expanded, restore, onExpand }: {
 		<GraphActions layout={layout} rootId={props.root.id} expanded={expanded} onExpand={onExpand} />
 		<div className={`account-graph-stage${ready ? " is-ready" : ""}`}>
 			<ReactFlow nodes={nodes} edges={edges} nodeTypes={nodeTypes} edgeTypes={edgeTypes}
+				ariaLabelConfig={{ "controls.zoomIn.ariaLabel": t("accountGraphZoomIn"), "controls.zoomOut.ariaLabel": t("accountGraphZoomOut"), "minimap.ariaLabel": t("accountGraphMap") }}
 				minZoom={0.01} maxZoom={2} defaultViewport={{ x: 0, y: 0, zoom: 1 }}
 				nodesFocusable={false} edgesFocusable onEdgesChange={changeEdges} onPaneClick={() => props.onSelectEdge(null)}
 				deleteKeyCode={null} multiSelectionKeyCode={null} selectionKeyCode={null} nodesDraggable={false} nodesConnectable={false}>
 				<GraphViewport layout={layout} layoutKey={inputKey} rootId={props.root.id} restore={restore} onSize={setSize} onReady={setReadyKey} />
 				<Background />
 				<GraphControls layout={layout} />
-				{nodes.length > 12 && !selected && <MiniMap pannable zoomable nodeColor={(node) => node.id === props.root.id ? "var(--yellow)" : "var(--paper)"} />}
+				{nodes.length > 12 && !selected && <MiniMap style={{ width: 140, height: 90 }} pannable zoomable nodeColor={(node) => node.id === props.root.id ? "var(--yellow)" : "var(--paper)"} />}
 				{selected && <Panel position="bottom-right" className="account-graph-selection-panel nodrag nopan"><section className="account-graph-connection-details" aria-label={t("accountGraphSelection")}>
 					<div className="account-graph-selection-header"><p className="account-graph-selection-title"><strong>{byId.get(selected[0].from)?.name}</strong><span aria-hidden="true"> → </span><strong>{byId.get(selected[0].to)?.name}</strong></p><Button className="account-graph-selection-close" aria-label={t("close")} onClick={() => props.onSelectEdge(null)}><X size={18} /></Button></div>
 					<ul className="account-graph-selection-labels">{[...new Set(selected.map((relation) => relation.label))].map((label) => <li key={label}>{label}</li>)}</ul>

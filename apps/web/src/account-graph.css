@@ -1,4 +1,4 @@
-.graph.account-family-graph { display: flex; flex-direction: column; height: clamp(620px, 74vh, 760px); min-height: 0; margin: 0 16px 16px; overflow: hidden; }
+.graph.account-family-graph { display: flex; flex-direction: column; height: clamp(640px, 74vh, 760px); min-height: 0; margin: 0 16px 16px; overflow: hidden; }
 .account-family-graph .account-graph-view-actions { display: flex; flex: none; justify-content: flex-end; flex-wrap: wrap; gap: 10px; padding: 12px; border-bottom: 1px solid var(--line-soft); background: var(--paper); }
 .account-family-graph .account-graph-view-actions .button { min-height: 44px; }
 .account-graph-stage { position: relative; flex: 1; min-height: 0; }
@@ -23,6 +23,5 @@
 	.graph.account-family-graph { height: 560px; }
 	.account-family-graph .account-graph-view-actions { justify-content: flex-start; gap: 8px; padding: 10px; }
 	.account-family-graph .account-graph-view-actions .button { flex: 1 1 auto; padding-inline: 10px; }
-	.account-family-graph .react-flow__minimap { width: 112px; height: 76px; }
 	.dialog.account-graph-dialog { width: calc(100vw - 16px); height: calc(100dvh - 16px); padding: 12px; }
 }
