@@ -1,5 +1,6 @@
 /** Password vault copy kept separate so the shell can merge it into i18next. */
 export const passwordVaultCopy: Record<string, [string, string]> = {
+	accountImpactGuide: ["按生成时的关联逐项核对，关联变更后请复核旧待办；完成只记录本机检查，不会更新第三方资料。", "Check the saved connections and review older tasks when connections change. Completing a task records a local check; it does not update other services."],
 	accountConnectionCount: ["{{count}} 个关联", "{{count}} connections"],
 	accountConnectionCount_one: ["{{count}} 个关联", "{{count}} connection"],
 	accountConnectionCount_other: ["{{count}} 个关联", "{{count}} connections"],

@@ -1756,7 +1756,7 @@ export function AssetDetail() {
 					<div className="card-header">
 						<div>
 							<h2>{t("impact")}</h2>
-							<p>{t("impactHint")}</p>
+							<p>{t("accountImpactGuide")}</p>
 						</div>
 						<Button
 							size="small"
@@ -1766,12 +1766,6 @@ export function AssetDetail() {
 							{t("makeChecklist")} · {impactPendingCount}
 						</Button>
 					</div>
-					<p className="subtitle">{t("impactSnapshotHint")}</p>
-					{impactPendingCount > 0 && (
-						<p className="notice" role="status">
-							{t("impactNewRelations", { count: impactPendingCount })}
-						</p>
-					)}
 					<fieldset className="tabs task-filters" aria-label={t("taskFilter")}>
 						{(["all", "pending", "done"] as const).map((value) => (
 							<button
