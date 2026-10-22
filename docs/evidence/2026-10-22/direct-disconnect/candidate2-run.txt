@@ -1,0 +1,221 @@
+[WebServer] (node:90459) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+
+Running 20 tests using 2 workers
+
+(node:90463) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+(node:90462) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1/20] tests/e2e/password-account-upgrade.spec.ts:234:2 › zh-CN 1536px upgrades selected legacy hubs and keeps an unselected deleted account in trash
+[2/20] tests/e2e/account-link-recovery.spec.ts:228:2 › zh-CN 1536px disconnects, deletes, restores and re-imports without reviving trashed accounts
+tests/e2e/password-account-upgrade.spec.ts:234:2 › zh-CN 1536px upgrades selected legacy hubs and keeps an unselected deleted account in trash
+-------------- RxDB Open Core RxStorage -------------------------------
+You are using the free Dexie.js based RxStorage implementation from RxDB https://rxdb.info/rx-storage-dexie.html?console=dexie
+While this is a great option, we want to let you know that there are faster storage solutions available in our premium plugins.
+For professional users and production environments, we highly recommend considering these premium options to enhance performance and reliability.
+ https://rxdb.info/premium/?console=dexie
+If you already purchased premium access you can disable this log by calling the setPremiumFlag() function from rxdb-premium/plugins/shared.
+---------------------------------------------------------------------
+
+tests/e2e/account-link-recovery.spec.ts:228:2 › zh-CN 1536px disconnects, deletes, restores and re-imports without reviving trashed accounts
+-------------- RxDB Open Core RxStorage -------------------------------
+You are using the free Dexie.js based RxStorage implementation from RxDB https://rxdb.info/rx-storage-dexie.html?console=dexie
+While this is a great option, we want to let you know that there are faster storage solutions available in our premium plugins.
+For professional users and production environments, we highly recommend considering these premium options to enhance performance and reliability.
+ https://rxdb.info/premium/?console=dexie
+If you already purchased premium access you can disable this log by calling the setPremiumFlag() function from rxdb-premium/plugins/shared.
+---------------------------------------------------------------------
+
+[3/20] tests/e2e/password-account-upgrade.spec.ts:234:2 › en 390px upgrades selected legacy hubs and keeps an unselected deleted account in trash
+[4/20] tests/e2e/password-vault-user-journey.spec.ts:185:2 › zh-CN passwordless labeled notes retain punctuation and prefill reviewed fields
+[5/20] tests/e2e/password-vault-user-journey.spec.ts:185:2 › en passwordless labeled notes retain punctuation and prefill reviewed fields
+  1) tests/e2e/account-link-recovery.spec.ts:228:2 › zh-CN 1536px disconnects, deletes, restores and re-imports without reviving trashed accounts
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByRole('dialog', { name: '账号族谱', exact: true })
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" getByRole('dialog', { name: '账号族谱', exact: true }) with timeout 5000ms
+      - waiting for getByRole('dialog', { name: '账号族谱', exact: true })
+
+
+      467 | 				.click();
+      468 | 			await expect(deletion).toBeHidden();
+    > 469 | 			await expect(expanded).toBeVisible();
+          | 			                       ^
+      470 | 			await expect(expanded.locator(".react-flow__edge")).toHaveCount(0);
+      471 | 			await expanded
+      472 | 				.getByRole("button", { name: zh ? "关闭" : "Close", exact: true })
+        at /Users/syndred/Desktop/projects/KeepAny/tests/e2e/account-link-recovery.spec.ts:469:27
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../../../../tmp/stackperch-unlink-output2/account-link-recovery-zh-C-45c5e-t-reviving-trashed-accounts/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../../../../tmp/stackperch-unlink-output2/account-link-recovery-zh-C-45c5e-t-reviving-trashed-accounts/error-context.md
+
+
+(node:90486) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[6/20] tests/e2e/account-link-recovery.spec.ts:228:2 › en 1536px disconnects, deletes, restores and re-imports without reviving trashed accounts
+tests/e2e/account-link-recovery.spec.ts:228:2 › en 1536px disconnects, deletes, restores and re-imports without reviving trashed accounts
+-------------- RxDB Open Core RxStorage -------------------------------
+You are using the free Dexie.js based RxStorage implementation from RxDB https://rxdb.info/rx-storage-dexie.html?console=dexie
+While this is a great option, we want to let you know that there are faster storage solutions available in our premium plugins.
+For professional users and production environments, we highly recommend considering these premium options to enhance performance and reliability.
+ https://rxdb.info/premium/?console=dexie
+If you already purchased premium access you can disable this log by calling the setPremiumFlag() function from rxdb-premium/plugins/shared.
+---------------------------------------------------------------------
+
+[7/20] tests/e2e/password-vault-user-journey.spec.ts:229:3 › zh-CN 1536px user imports, categorizes and follows account identities before vault maintenance
+  2) tests/e2e/account-link-recovery.spec.ts:228:2 › en 1536px disconnects, deletes, restores and re-imports without reviving trashed accounts
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByRole('dialog', { name: 'Account connections', exact: true })
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" getByRole('dialog', { name: 'Account connections', exact: true }) with timeout 5000ms
+      - waiting for getByRole('dialog', { name: 'Account connections', exact: true })
+
+
+      467 | 				.click();
+      468 | 			await expect(deletion).toBeHidden();
+    > 469 | 			await expect(expanded).toBeVisible();
+          | 			                       ^
+      470 | 			await expect(expanded.locator(".react-flow__edge")).toHaveCount(0);
+      471 | 			await expanded
+      472 | 				.getByRole("button", { name: zh ? "关闭" : "Close", exact: true })
+        at /Users/syndred/Desktop/projects/KeepAny/tests/e2e/account-link-recovery.spec.ts:469:27
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../../../../tmp/stackperch-unlink-output2/account-link-recovery-en-1-3a484-t-reviving-trashed-accounts/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../../../../tmp/stackperch-unlink-output2/account-link-recovery-en-1-3a484-t-reviving-trashed-accounts/error-context.md
+
+
+(node:90520) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[8/20] tests/e2e/password-vault-user-journey.spec.ts:229:3 › zh-CN 390px user imports, categorizes and follows account identities before vault maintenance
+[9/20] tests/e2e/account-link-recovery.spec.ts:228:2 › zh-CN 390px disconnects, deletes, restores and re-imports without reviving trashed accounts
+tests/e2e/account-link-recovery.spec.ts:228:2 › zh-CN 390px disconnects, deletes, restores and re-imports without reviving trashed accounts
+-------------- RxDB Open Core RxStorage -------------------------------
+You are using the free Dexie.js based RxStorage implementation from RxDB https://rxdb.info/rx-storage-dexie.html?console=dexie
+While this is a great option, we want to let you know that there are faster storage solutions available in our premium plugins.
+For professional users and production environments, we highly recommend considering these premium options to enhance performance and reliability.
+ https://rxdb.info/premium/?console=dexie
+If you already purchased premium access you can disable this log by calling the setPremiumFlag() function from rxdb-premium/plugins/shared.
+---------------------------------------------------------------------
+
+[10/20] tests/e2e/password-vault-user-journey.spec.ts:229:3 › en 1536px user imports, categorizes and follows account identities before vault maintenance
+  3) tests/e2e/account-link-recovery.spec.ts:228:2 › zh-CN 390px disconnects, deletes, restores and re-imports without reviving trashed accounts
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByRole('dialog', { name: '账号族谱', exact: true })
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" getByRole('dialog', { name: '账号族谱', exact: true }) with timeout 5000ms
+      - waiting for getByRole('dialog', { name: '账号族谱', exact: true })
+
+
+      467 | 				.click();
+      468 | 			await expect(deletion).toBeHidden();
+    > 469 | 			await expect(expanded).toBeVisible();
+          | 			                       ^
+      470 | 			await expect(expanded.locator(".react-flow__edge")).toHaveCount(0);
+      471 | 			await expanded
+      472 | 				.getByRole("button", { name: zh ? "关闭" : "Close", exact: true })
+        at /Users/syndred/Desktop/projects/KeepAny/tests/e2e/account-link-recovery.spec.ts:469:27
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../../../../tmp/stackperch-unlink-output2/account-link-recovery-zh-C-a6950-t-reviving-trashed-accounts/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../../../../tmp/stackperch-unlink-output2/account-link-recovery-zh-C-a6950-t-reviving-trashed-accounts/error-context.md
+
+
+(node:90538) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[11/20] tests/e2e/account-link-recovery.spec.ts:228:2 › en 390px disconnects, deletes, restores and re-imports without reviving trashed accounts
+tests/e2e/account-link-recovery.spec.ts:228:2 › en 390px disconnects, deletes, restores and re-imports without reviving trashed accounts
+-------------- RxDB Open Core RxStorage -------------------------------
+You are using the free Dexie.js based RxStorage implementation from RxDB https://rxdb.info/rx-storage-dexie.html?console=dexie
+While this is a great option, we want to let you know that there are faster storage solutions available in our premium plugins.
+For professional users and production environments, we highly recommend considering these premium options to enhance performance and reliability.
+ https://rxdb.info/premium/?console=dexie
+If you already purchased premium access you can disable this log by calling the setPremiumFlag() function from rxdb-premium/plugins/shared.
+---------------------------------------------------------------------
+
+[12/20] tests/e2e/password-vault-user-journey.spec.ts:229:3 › en 390px user imports, categorizes and follows account identities before vault maintenance
+  4) tests/e2e/account-link-recovery.spec.ts:228:2 › en 390px disconnects, deletes, restores and re-imports without reviving trashed accounts
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByRole('dialog', { name: 'Account connections', exact: true })
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" getByRole('dialog', { name: 'Account connections', exact: true }) with timeout 5000ms
+      - waiting for getByRole('dialog', { name: 'Account connections', exact: true })
+
+
+      467 | 				.click();
+      468 | 			await expect(deletion).toBeHidden();
+    > 469 | 			await expect(expanded).toBeVisible();
+          | 			                       ^
+      470 | 			await expect(expanded.locator(".react-flow__edge")).toHaveCount(0);
+      471 | 			await expanded
+      472 | 				.getByRole("button", { name: zh ? "关闭" : "Close", exact: true })
+        at /Users/syndred/Desktop/projects/KeepAny/tests/e2e/account-link-recovery.spec.ts:469:27
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../../../../tmp/stackperch-unlink-output2/account-link-recovery-en-3-c71bf-t-reviving-trashed-accounts/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../../../../tmp/stackperch-unlink-output2/account-link-recovery-en-3-c71bf-t-reviving-trashed-accounts/error-context.md
+
+
+(node:90557) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[13/20] tests/e2e/password-vault.spec.ts:671:2 › zh-CN 390px passwords persist, lock, rotate and restore with assets
+[14/20] tests/e2e/password-vault.spec.ts:671:2 › zh-CN 1280px passwords persist, lock, rotate and restore with assets
+[15/20] tests/e2e/relation-graph-verification.spec.ts:16:3 › zh-CN graph verification and mixed groups remain accurate at 390px
+[16/20] tests/e2e/password-vault.spec.ts:671:2 › en-US 390px passwords persist, lock, rotate and restore with assets
+[17/20] tests/e2e/password-vault.spec.ts:671:2 › en-US 1280px passwords persist, lock, rotate and restore with assets
+[18/20] tests/e2e/relation-graph-verification.spec.ts:16:3 › zh-CN graph verification and mixed groups remain accurate at 1280px
+[19/20] tests/e2e/relation-graph-verification.spec.ts:16:3 › en-US graph verification and mixed groups remain accurate at 390px
+[20/20] tests/e2e/relation-graph-verification.spec.ts:16:3 › en-US graph verification and mixed groups remain accurate at 1280px
+  4 failed
+    tests/e2e/account-link-recovery.spec.ts:228:2 › zh-CN 1536px disconnects, deletes, restores and re-imports without reviving trashed accounts
+    tests/e2e/account-link-recovery.spec.ts:228:2 › en 1536px disconnects, deletes, restores and re-imports without reviving trashed accounts
+    tests/e2e/account-link-recovery.spec.ts:228:2 › zh-CN 390px disconnects, deletes, restores and re-imports without reviving trashed accounts
+    tests/e2e/account-link-recovery.spec.ts:228:2 › en 390px disconnects, deletes, restores and re-imports without reviving trashed accounts
+  16 passed (3.3m)

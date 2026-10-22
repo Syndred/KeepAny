@@ -1,0 +1,581 @@
+$ vitest run apps/web/src/vault-account-link-recovery.test.ts apps/web/src/vault-account-links.test.ts apps/web/src/i18n.test.ts
+
+ RUN  v5.0.2 /Users/syndred/Desktop/projects/KeepAny
+
+ ❯ apps/web/src/vault-account-link-recovery.test.ts (8 tests | 2 failed) 24ms
+   ❯ reviewed account link recovery (8)
+     × identifies the deleted account without reviving it or blocking unrelated entries 12ms
+     × uses the chosen email identity on retry without reviving a deleted identity 1ms
+ ❯ apps/web/src/vault-account-links.test.ts (23 tests | 3 failed) 31ms
+   ❯ reviewed vault account associations (23)
+     × rejects deleted or ambiguous identity targets and never revives deleted linked accounts 4ms
+     × reuses a custom-category mailbox established by a verifiable identity relation 1ms
+     × rejects ambiguous and deleted account matches instead of overwriting 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  apps/web/src/vault-account-link-recovery.test.ts > reviewed account link recovery > identifies the deleted account without reviving it or blocking unrelated entries
+AssertionError: expected [ 'recovery-entry', 'other' ] to deeply equal [ 'other' ]
+
+- Expected
++ Received
+
+  [
++   "recovery-entry",
+    "other",
+  ]
+
+ ❯ apps/web/src/vault-account-link-recovery.test.ts:37:49
+     35|    [],
+     36|   );
+     37|   expect(review.rows.map((row) => row.entryId)).toEqual(["other"]);
+       |                                                 ^
+     38|   expect(review.blocked[0]).toMatchObject({
+     39|    entry: source,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  apps/web/src/vault-account-link-recovery.test.ts > reviewed account link recovery > uses the chosen email identity on retry without reviving a deleted identity
+TypeError: Cannot read properties of undefined (reading 'conflict')
+ ❯ apps/web/src/vault-account-link-recovery.test.ts:131:29
+    129|    [],
+    130|   );
+    131|   expect(blocked.blocked[0].conflict).toMatchObject({
+       |                             ^
+    132|    scope: "identity",
+    133|    reason: "deleted",
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  apps/web/src/vault-account-links.test.ts > reviewed vault account associations > rejects deleted or ambiguous identity targets and never revives deleted linked accounts
+AssertionError: promise resolved "[ { entryId: 'a', …(9) } ]" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+[
+  {
+    "account": {
+      "accountProfileVerifiedAt": "",
+      "accountProvider": "",
+      "amount": 0,
+      "attachments": [],
+      "billingAnchor": "",
+      "borrower": "",
+      "cancelledAt": "",
+      "category": "other",
+      "contact": "",
+      "createdAt": "2026-10-22T10:33:49.614Z",
+      "currency": "CNY",
+      "cycle": "month",
+      "deleted": false,
+      "description": "",
+      "discountAmount": 0,
+      "discountUntil": "",
+      "dueDate": "",
+      "id": "pw-account-ca978112ca1bbdcafac231b39a23dc4da786eff8147c4e72b9807785afee48bb",
+      "interval": 1,
+      "itemExpectedReturnDate": "",
+      "itemLifecycleStatus": null,
+      "itemMedia": {
+        "coverId": "",
+        "detailIds": [],
+        "receiptIds": [],
+      },
+      "itemPurchasePriceKnown": false,
+      "itemStartDate": "",
+      "itemStatusDate": "",
+      "itemWarrantyStatus": null,
+      "kind": "account",
+      "lastItemEventId": "",
+      "lastRenewalId": "",
+      "lastSubscriptionSaveId": "",
+      "location": "",
+      "longDescription": "",
+      "name": "Notion",
+      "notes": "",
+      "projectDomains": [],
+      "projectEmail": "",
+      "projectFeatures": "",
+      "projectInspectionDate": "",
+      "projectLaunchMonth": "",
+      "projectMedia": {
+        "homeScreenshotId": "",
+        "logoId": "",
+        "productScreenshotIds": [],
+        "promoCoverId": "",
+      },
+      "projectMediumDescription": "",
+      "projectPricing": "",
+      "projectPricingType": "",
+      "projectPromoUrl": "",
+      "projectTitle": "",
+      "purchaseDate": "",
+      "renewalCount": 0,
+      "status": "active",
+      "subscriptionPaymentMethod": "",
+      "tags": [],
+      "trialEndsAt": "",
+      "updatedAt": "2026-10-22T10:33:49.614Z",
+      "url": "https://example.test",
+      "username": "owner@example.test",
+      "warrantyDate": "",
+    },
+    "entryId": "a",
+    "hint": "",
+    "identifiers": [
+      "email:owner@example.test",
+    ],
+    "identityAccounts": [
+      {
+        "account": {
+          "accountProfileVerifiedAt": "",
+          "accountProvider": "example.test",
+          "amount": 0,
+          "attachments": [],
+          "billingAnchor": "",
+          "borrower": "",
+          "cancelledAt": "",
+          "category": "email",
+          "contact": "",
+          "createdAt": "2026-10-22T10:33:49.614Z",
+          "currency": "CNY",
+          "cycle": "month",
+          "deleted": false,
+          "description": "",
+          "discountAmount": 0,
+          "discountUntil": "",
+          "dueDate": "",
+          "id": "login-identity-fa66cd8823a68e634141dc30513e16e8e487835f9218154864a1a5b01bfe0d46",
+          "interval": 1,
+          "itemExpectedReturnDate": "",
+          "itemLifecycleStatus": null,
+          "itemMedia": {
+            "coverId": "",
+            "detailIds": [],
+            "receiptIds": [],
+          },
+          "itemPurchasePriceKnown": false,
+          "itemStartDate": "",
+          "itemStatusDate": "",
+          "itemWarrantyStatus": null,
+          "kind": "account",
+          "lastItemEventId": "",
+          "lastRenewalId": "",
+          "lastSubscriptionSaveId": "",
+          "location": "",
+          "longDescription": "",
+          "name": "owner@example.test",
+          "notes": "",
+          "projectDomains": [],
+          "projectEmail": "",
+          "projectFeatures": "",
+          "projectInspectionDate": "",
+          "projectLaunchMonth": "",
+          "projectMedia": {
+            "homeScreenshotId": "",
+            "logoId": "",
+            "productScreenshotIds": [],
+            "promoCoverId": "",
+          },
+          "projectMediumDescription": "",
+          "projectPricing": "",
+          "projectPricingType": "",
+          "projectPromoUrl": "",
+          "projectTitle": "",
+          "purchaseDate": "",
+          "renewalCount": 0,
+          "status": "active",
+          "subscriptionPaymentMethod": "",
+          "tags": [],
+          "trialEndsAt": "",
+          "updatedAt": "2026-10-22T10:33:49.614Z",
+          "url": "",
+          "username": "owner@example.test",
+          "warrantyDate": "",
+        },
+        "identifier": "owner@example.test",
+        "isNew": true,
+        "kind": "email",
+      },
+    ],
+    "isNew": true,
+    "loginIdentifiers": [
+      "owner@example.test",
+    ],
+    "originalAccount": null,
+    "replaceAccountIds": [],
+    "suggestedCategory": "other",
+  },
+]
+
+ ❯ apps/web/src/vault-account-links.test.ts:529:4
+    527|   await expect(
+    528|    buildAccountLinkRows([source], [{ ...original, deleted: true }]),
+    529|   ).rejects.toThrow("account-link-conflict");
+       |    ^
+    530|   await expect(
+    531|    buildAccountLinkRows([source], [original, { ...original, id: "secon…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  apps/web/src/vault-account-links.test.ts > reviewed vault account associations > reuses a custom-category mailbox established by a verifiable identity relation
+AssertionError: promise resolved "[ { entryId: 'new', …(9) } ]" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+[
+  {
+    "account": {
+      "accountProfileVerifiedAt": "",
+      "accountProvider": "",
+      "amount": 0,
+      "attachments": [],
+      "billingAnchor": "",
+      "borrower": "",
+      "cancelledAt": "",
+      "category": "other",
+      "contact": "",
+      "createdAt": "2026-10-22T10:33:49.620Z",
+      "currency": "CNY",
+      "cycle": "month",
+      "deleted": false,
+      "description": "",
+      "discountAmount": 0,
+      "discountUntil": "",
+      "dueDate": "",
+      "id": "pw-account-11507a0e2f5e69d5dfa40a62a1bd7b6ee57e6bcd85c67c9b8431b36fff21c437",
+      "interval": 1,
+      "itemExpectedReturnDate": "",
+      "itemLifecycleStatus": null,
+      "itemMedia": {
+        "coverId": "",
+        "detailIds": [],
+        "receiptIds": [],
+      },
+      "itemPurchasePriceKnown": false,
+      "itemStartDate": "",
+      "itemStatusDate": "",
+      "itemWarrantyStatus": null,
+      "kind": "account",
+      "lastItemEventId": "",
+      "lastRenewalId": "",
+      "lastSubscriptionSaveId": "",
+      "location": "",
+      "longDescription": "",
+      "name": "Notion",
+      "notes": "",
+      "projectDomains": [],
+      "projectEmail": "",
+      "projectFeatures": "",
+      "projectInspectionDate": "",
+      "projectLaunchMonth": "",
+      "projectMedia": {
+        "homeScreenshotId": "",
+        "logoId": "",
+        "productScreenshotIds": [],
+        "promoCoverId": "",
+      },
+      "projectMediumDescription": "",
+      "projectPricing": "",
+      "projectPricingType": "",
+      "projectPromoUrl": "",
+      "projectTitle": "",
+      "purchaseDate": "",
+      "renewalCount": 0,
+      "status": "active",
+      "subscriptionPaymentMethod": "",
+      "tags": [],
+      "trialEndsAt": "",
+      "updatedAt": "2026-10-22T10:33:49.620Z",
+      "url": "https://example.test",
+      "username": "owner@example.test",
+      "warrantyDate": "",
+    },
+    "entryId": "new",
+    "hint": "",
+    "identifiers": [
+      "email:owner@example.test",
+    ],
+    "identityAccounts": [
+      {
+        "account": {
+          "accountProfileVerifiedAt": "",
+          "accountProvider": "example.test",
+          "amount": 0,
+          "attachments": [],
+          "billingAnchor": "",
+          "borrower": "",
+          "cancelledAt": "",
+          "category": "email",
+          "contact": "",
+          "createdAt": "2026-10-22T10:33:49.621Z",
+          "currency": "CNY",
+          "cycle": "month",
+          "deleted": false,
+          "description": "",
+          "discountAmount": 0,
+          "discountUntil": "",
+          "dueDate": "",
+          "id": "login-identity-fa66cd8823a68e634141dc30513e16e8e487835f9218154864a1a5b01bfe0d46",
+          "interval": 1,
+          "itemExpectedReturnDate": "",
+          "itemLifecycleStatus": null,
+          "itemMedia": {
+            "coverId": "",
+            "detailIds": [],
+            "receiptIds": [],
+          },
+          "itemPurchasePriceKnown": false,
+          "itemStartDate": "",
+          "itemStatusDate": "",
+          "itemWarrantyStatus": null,
+          "kind": "account",
+          "lastItemEventId": "",
+          "lastRenewalId": "",
+          "lastSubscriptionSaveId": "",
+          "location": "",
+          "longDescription": "",
+          "name": "owner@example.test",
+          "notes": "",
+          "projectDomains": [],
+          "projectEmail": "",
+          "projectFeatures": "",
+          "projectInspectionDate": "",
+          "projectLaunchMonth": "",
+          "projectMedia": {
+            "homeScreenshotId": "",
+            "logoId": "",
+            "productScreenshotIds": [],
+            "promoCoverId": "",
+          },
+          "projectMediumDescription": "",
+          "projectPricing": "",
+          "projectPricingType": "",
+          "projectPromoUrl": "",
+          "projectTitle": "",
+          "purchaseDate": "",
+          "renewalCount": 0,
+          "status": "active",
+          "subscriptionPaymentMethod": "",
+          "tags": [],
+          "trialEndsAt": "",
+          "updatedAt": "2026-10-22T10:33:49.621Z",
+          "url": "",
+          "username": "owner@example.test",
+          "warrantyDate": "",
+        },
+        "identifier": "owner@example.test",
+        "isNew": true,
+        "kind": "email",
+      },
+    ],
+    "isNew": true,
+    "loginIdentifiers": [
+      "owner@example.test",
+    ],
+    "originalAccount": null,
+    "replaceAccountIds": [],
+    "suggestedCategory": "other",
+  },
+]
+
+ ❯ apps/web/src/vault-account-links.test.ts:696:4
+    694|     [relation],
+    695|    ),
+    696|   ).rejects.toThrow("account-link-conflict");
+       |    ^
+    697|  });
+    698|  it("does not treat arbitrary same-endpoint edges as proof that an ide…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  apps/web/src/vault-account-links.test.ts > reviewed vault account associations > rejects ambiguous and deleted account matches instead of overwriting
+AssertionError: promise resolved "[ { entryId: 'a', …(9) } ]" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+[
+  {
+    "account": {
+      "accountProfileVerifiedAt": "",
+      "accountProvider": "",
+      "amount": 0,
+      "attachments": [],
+      "billingAnchor": "",
+      "borrower": "",
+      "cancelledAt": "",
+      "category": "email",
+      "contact": "",
+      "createdAt": "2026-10-22T10:33:49.624Z",
+      "currency": "CNY",
+      "cycle": "month",
+      "deleted": false,
+      "description": "",
+      "discountAmount": 0,
+      "discountUntil": "",
+      "dueDate": "",
+      "id": "pw-account-832ca7305711fcc6e8596ffedca0074b0f4c40ca18ca8e2e7bfb414e011a5bfd",
+      "interval": 1,
+      "itemExpectedReturnDate": "",
+      "itemLifecycleStatus": null,
+      "itemMedia": {
+        "coverId": "",
+        "detailIds": [],
+        "receiptIds": [],
+      },
+      "itemPurchasePriceKnown": false,
+      "itemStartDate": "",
+      "itemStatusDate": "",
+      "itemWarrantyStatus": null,
+      "kind": "account",
+      "lastItemEventId": "",
+      "lastRenewalId": "",
+      "lastSubscriptionSaveId": "",
+      "location": "",
+      "longDescription": "",
+      "name": "Google",
+      "notes": "",
+      "projectDomains": [],
+      "projectEmail": "",
+      "projectFeatures": "",
+      "projectInspectionDate": "",
+      "projectLaunchMonth": "",
+      "projectMedia": {
+        "homeScreenshotId": "",
+        "logoId": "",
+        "productScreenshotIds": [],
+        "promoCoverId": "",
+      },
+      "projectMediumDescription": "",
+      "projectPricing": "",
+      "projectPricingType": "",
+      "projectPromoUrl": "",
+      "projectTitle": "",
+      "purchaseDate": "",
+      "renewalCount": 0,
+      "status": "active",
+      "subscriptionPaymentMethod": "",
+      "tags": [],
+      "trialEndsAt": "",
+      "updatedAt": "2026-10-22T10:33:49.624Z",
+      "url": "https://example.test",
+      "username": "a@example.test",
+      "warrantyDate": "",
+    },
+    "entryId": "a",
+    "hint": "",
+    "identifiers": [
+      "email:a@example.test",
+    ],
+    "identityAccounts": [
+      {
+        "account": {
+          "accountProfileVerifiedAt": "",
+          "accountProvider": "example.test",
+          "amount": 0,
+          "attachments": [],
+          "billingAnchor": "",
+          "borrower": "",
+          "cancelledAt": "",
+          "category": "email",
+          "contact": "",
+          "createdAt": "2026-10-22T10:33:49.624Z",
+          "currency": "CNY",
+          "cycle": "month",
+          "deleted": false,
+          "description": "",
+          "discountAmount": 0,
+          "discountUntil": "",
+          "dueDate": "",
+          "id": "login-identity-bb62fa05793a202443e1e5d21c62d6498a83dc01caabeb619e0c4b3c983d83cf",
+          "interval": 1,
+          "itemExpectedReturnDate": "",
+          "itemLifecycleStatus": null,
+          "itemMedia": {
+            "coverId": "",
+            "detailIds": [],
+            "receiptIds": [],
+          },
+          "itemPurchasePriceKnown": false,
+          "itemStartDate": "",
+          "itemStatusDate": "",
+          "itemWarrantyStatus": null,
+          "kind": "account",
+          "lastItemEventId": "",
+          "lastRenewalId": "",
+          "lastSubscriptionSaveId": "",
+          "location": "",
+          "longDescription": "",
+          "name": "a@example.test",
+          "notes": "",
+          "projectDomains": [],
+          "projectEmail": "",
+          "projectFeatures": "",
+          "projectInspectionDate": "",
+          "projectLaunchMonth": "",
+          "projectMedia": {
+            "homeScreenshotId": "",
+            "logoId": "",
+            "productScreenshotIds": [],
+            "promoCoverId": "",
+          },
+          "projectMediumDescription": "",
+          "projectPricing": "",
+          "projectPricingType": "",
+          "projectPromoUrl": "",
+          "projectTitle": "",
+          "purchaseDate": "",
+          "renewalCount": 0,
+          "status": "active",
+          "subscriptionPaymentMethod": "",
+          "tags": [],
+          "trialEndsAt": "",
+          "updatedAt": "2026-10-22T10:33:49.624Z",
+          "url": "",
+          "username": "a@example.test",
+          "warrantyDate": "",
+        },
+        "identifier": "a@example.test",
+        "isNew": true,
+        "kind": "email",
+      },
+    ],
+    "isNew": true,
+    "loginIdentifiers": [
+      "a@example.test",
+    ],
+    "originalAccount": null,
+    "replaceAccountIds": [],
+    "suggestedCategory": "email",
+  },
+]
+
+ ❯ apps/web/src/vault-account-links.test.ts:888:4
+    886|   await expect(
+    887|    buildAccountLinkRows([e], [{ ...row.account, deleted: true }]),
+    888|   ).rejects.toThrow();
+       |    ^
+    889|   await expect(
+    890|    buildAccountLinkRows(
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  2 failed | 1 passed (3)
+      Tests  5 failed | 29 passed (34)
+   Start at  18:33:49
+   Duration  242ms (transform 42%, import 36%, tests 21%, worker 1%)
+
+[ELIFECYCLE] Test failed. See above for more details.
