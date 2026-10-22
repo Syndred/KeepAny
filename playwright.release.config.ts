@@ -35,6 +35,7 @@ export default defineConfig({
 		"relation-graph-verification.spec.ts",
 		"account-graph-readability.spec.ts",
 		"account-detail-dedupe.spec.ts",
+		"account-list-search.spec.ts",
 		"relation-topbar-return.spec.ts",
 		"restore-identity.spec.ts",
 		"archive-migration.spec.ts",

@@ -173,6 +173,9 @@ const copy: Record<string, [string, string]> = {
 	collectionNameExample: ["例如：创作工作室", "For example: Creative Studio"],
 	assetCategories: ["按类型分类", "By asset type"],
 	search: ["搜索资产、标签…", "Search assets, tags…"],
+	accountListSearch: ["搜索账号", "Search accounts"],
+	accountListSearchHint: ["搜索名称、账号或服务商", "Search name, account or provider"],
+	accountListClearSearch: ["清空账号搜索", "Clear account search"],
 	globalSearch: ["搜索全部资料", "Search all records"],
 	globalSearchHint: [
 		"搜索资产、账单、收录、待办…",

@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
 	DndContext,
@@ -16,7 +16,7 @@ import {
 	useSortable,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { ArrowRight, Code2, CreditCard, GripVertical, LockKeyhole, Mail, Package, Plus, Shield, Smartphone, UserRound } from "lucide-react";
+import { ArrowRight, Code2, CreditCard, GripVertical, LockKeyhole, Mail, Package, Plus, Search, Shield, Smartphone, UserRound, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { normalizeCategoryName, type Asset, type AssetKind, type Category } from "../../../packages/domain/src";
 import { cancelCategoryEdit, createCategory, deleteCustomCategory, editCustomCategory, fileUrl, localRepository, retryCategoryEdit, save, saveAssetIfCurrent } from "../../../packages/local-db/src";
@@ -92,10 +92,12 @@ function CategoryStrip({
 	kind,
 	chosen,
 	choose,
+	searchControl,
 }: {
 	kind: AssetKind;
 	chosen: string;
 	choose: (x: string, id?: string) => void;
+	searchControl?: ReactNode;
 }) {
 	const { data, notify } = useAppContext();
 	const { t, i18n } = useTranslation();
@@ -261,7 +263,7 @@ function CategoryStrip({
 	}
 	return (
 		<>
-			<div className="asset-category-toolbar">
+			<div className={`asset-category-toolbar${searchControl ? " asset-category-toolbar--search" : ""}`}>
 			<div className="asset-category-scroll tabs">
 				<button
 					type="button"
@@ -279,6 +281,7 @@ function CategoryStrip({
 					<Plus size={14} />
 				</button>
 			</div>
+			{searchControl}
 			<Button variant="ghost" size="small" className="asset-category-manage" disabled={categoryBusy} onClick={openManager}>{t("manage")}</Button>
 			</div>
 			{data.categoryEditsError && <p className="field-error" role="alert">{t("error")}</p>}
@@ -446,6 +449,14 @@ export function AssetList() {
 	}) ?? {}) as { kind?: string };
 	const kind = validKind(rawKind ?? "project");
 	const { data, search, notify } = useAppContext();
+	const [accountSearch, setAccountSearch] = useState(() => sessionStorage.getItem("keepany-account-list-search") || "");
+	const accountSearchRef = useRef<HTMLInputElement>(null);
+	const accountQuery = kind === "account" ? accountSearch : "";
+	const listSearch = accountQuery ? JSON.stringify([search, accountQuery]) : search;
+	function changeAccountSearch(value: string) {
+		setAccountSearch(value);
+		sessionStorage.setItem("keepany-account-list-search", value);
+	}
 	const hash = useRouterState({ select: (state) => state.location.hash });
 	const focusAssetId = hash.startsWith("asset-") ? hash.slice(6) : undefined;
 	const { t, i18n } = useTranslation();
@@ -518,12 +529,12 @@ export function AssetList() {
 	const availableTags = [...new Set(allKindAssets.flatMap((asset) => asset.tags))].sort(
 		(a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }),
 	);
-	const normalizedSearch = search.trim().toLocaleLowerCase();
+	const normalizedSearch = `${search} ${accountQuery}`.trim().toLocaleLowerCase();
 	const assets = allKindAssets.filter(
 		(a) =>
 			(!category || a.category === category || kind === "account" && category === "other" && !a.category || !!pendingCategory && [pendingCategory.beforeName, pendingCategory.afterName].includes(a.category)) &&
 			(!tag || a.tags.includes(tag)) &&
-			matchesAssetSearch(a, search),
+			matchesAssetSearch(a, search) && matchesAssetSearch(a, accountQuery),
 	);
 	const restored = useRef("");
 	useEffect(() => {
@@ -536,7 +547,7 @@ export function AssetList() {
 					tag?: string;
 					search?: string;
 				};
-				if (saved.category !== category || (saved.tag || "") !== tag || saved.search !== search) {
+				if (saved.category !== category || (saved.tag || "") !== tag || saved.search !== listSearch) {
 					// Navigation clears the shell's temporary query. Keep the position
 					// pending until the matching filters return instead of consuming it.
 					return;
@@ -552,7 +563,7 @@ export function AssetList() {
 			restored.current = kind;
 		});
 		return () => cancelAnimationFrame(frame);
-	}, [kind, category, tag, search, data.loading, assets.length]);
+	}, [kind, category, tag, listSearch, data.loading, assets.length]);
 	return (
 		<main className={kind === "vault" ? "page vault-page" : "page"}>
 			{kind !== "vault" && <PageTitle
@@ -577,7 +588,11 @@ export function AssetList() {
 				<div className="notice vault-privacy-note" role="note"><LockKeyhole size={16} aria-hidden="true" /><span>{t("vaultHint")}</span></div></>}
 			</>}
 			{<>
-			<CategoryStrip key={kind} kind={kind} chosen={category} choose={choose} />
+			<CategoryStrip key={kind} kind={kind} chosen={category} choose={choose} searchControl={kind === "account" ? <div className="asset-account-search">
+				<Search size={18} aria-hidden="true" />
+				<input ref={accountSearchRef} type="search" aria-label={t("accountListSearch")} placeholder={t("accountListSearchHint")} autoComplete="off" value={accountSearch} onChange={(event) => changeAccountSearch(event.target.value)} onKeyDown={(event) => { if (event.key === "Escape") { event.stopPropagation(); changeAccountSearch(""); } }} />
+				{accountSearch && <Button variant="ghost" size="icon" aria-label={t("accountListClearSearch")} onClick={() => { changeAccountSearch(""); accountSearchRef.current?.focus(); }}><X size={18} /></Button>}
+			</div> : undefined} />
 			{(availableTags.length > 0 || tag) && (
 				<div className="list-filters">
 					<label htmlFor="asset-tag-filter">{t("filterTag")}</label>
@@ -607,7 +622,7 @@ export function AssetList() {
 				</table> : <div className="vault-reference-empty"><strong>{category || tag || normalizedSearch ? t("noMatches") : t("none")}</strong></div>}
 			</section>) : <section className={`asset-list-content ${kind === "project" ? "asset-project-grid" : kind === "account" ? "asset-account-grid" : "asset-library-grid"}`}>
 				{assets.length ? (
-						assets.map((a) => kind === "project" ? <ProjectCard asset={a} search={search} backlinks={backlinksByAsset.get(a.id) ?? { total: 0, pending: 0 }} key={a.id} /> : kind === "account" ? <AccountCard asset={a} search={search} connectionCount={new Set(data.relations.filter((relation) => !relation.deleted && liveIds.has(relation.from) && liveIds.has(relation.to) && relation.from !== relation.to && (relation.from === a.id || relation.to === a.id)).map((relation) => relation.from === a.id ? relation.to : relation.from)).size} key={a.id} /> : <LibraryCard asset={a} search={search} key={a.id} />)
+						assets.map((a) => kind === "project" ? <ProjectCard asset={a} search={listSearch} backlinks={backlinksByAsset.get(a.id) ?? { total: 0, pending: 0 }} key={a.id} /> : kind === "account" ? <AccountCard asset={a} search={listSearch} connectionCount={new Set(data.relations.filter((relation) => !relation.deleted && liveIds.has(relation.from) && liveIds.has(relation.to) && relation.from !== relation.to && (relation.from === a.id || relation.to === a.id)).map((relation) => relation.from === a.id ? relation.to : relation.from)).size} key={a.id} /> : <LibraryCard asset={a} search={listSearch} key={a.id} />)
 				) : (
 					category || tag || normalizedSearch ? (
 						<div className="empty"><strong>{t("noMatches")}</strong></div>
