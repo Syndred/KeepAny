@@ -45,17 +45,10 @@ import { RemoteBackupPanel } from "./components/RemoteBackupPanel";
 import { RestoreRecoveryPanel } from "./components/RestoreRecoveryPanel";
 import { stageCsvForReview } from "./intake-csv";
 import { AiWorkspaceDialog } from "./AiWorkspaceDialog";
-import { useAppContext } from "./view-shared";
+import { builtins as categoryOptions, useAppContext } from "./view-shared";
 import "./project-editor.css";
 import { Select, SelectOption } from "./components/ui/select";
 
-const categoryOptions: Record<AssetKind, string[]> = {
-	project: ["website", "repository", "tool"],
-	account: ["email", "phone", "social"],
-	subscription: ["software", "service"],
-	item: ["device", "other"],
-	vault: ["other"],
-};
 type FieldName = keyof Asset;
 type ProjectFormFiles = { logo?: File; home?: File; products?: File[]; promo?: File };
 const projectImageTypes = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
