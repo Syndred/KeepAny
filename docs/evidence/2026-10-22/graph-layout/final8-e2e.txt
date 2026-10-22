@@ -1,0 +1,47 @@
+
+Running 6 tests using 2 workers
+
+  ✓  2 tests/e2e/account-graph-readability.spec.ts:974:3 › zh-CN 1280px multi-source identities preserve connection purposes across reload and edits (26.7s)
+  ✓  1 tests/e2e/account-graph-readability.spec.ts:974:3 › zh-CN 390px multi-source identities preserve connection purposes across reload and edits (32.0s)
+  ✘  4 tests/e2e/account-graph-readability.spec.ts:974:3 › en-US 390px multi-source identities preserve connection purposes across reload and edits (29.8s)
+  ✓  5 tests/e2e/account-graph-readability.spec.ts:974:3 › en-US 1280px multi-source identities preserve connection purposes across reload and edits (26.2s)
+  ✓  3 tests/e2e/account-graph-readability.spec.ts:974:3 › zh-CN 1536px multi-source identities preserve connection purposes across reload and edits (2.6m)
+  ✓  6 tests/e2e/account-graph-readability.spec.ts:974:3 › en-US 1536px multi-source identities preserve connection purposes across reload and edits (2.5m)
+
+
+  1) tests/e2e/account-graph-readability.spec.ts:974:3 › en-US 390px multi-source identities preserve connection purposes across reload and edits
+
+    Error: expect(locator).toHaveClass(expected) failed
+
+    Locator: locator('.react-flow__edge[aria-label^="QA Docs Cloud → QA Studio mailbox ·"]')
+    Expected pattern: /selected/
+    Received string:  "react-flow__edge react-flow__edge-accountConnection relation-graph-edge--pending nopan selectable"
+    Timeout: 5000ms
+
+    Call log:
+      - Expect "toHaveClass" locator('.react-flow__edge[aria-label^="QA Docs Cloud → QA Studio mailbox ·"]') with timeout 5000ms
+      - waiting for locator('.react-flow__edge[aria-label^="QA Docs Cloud → QA Studio mailbox ·"]')
+        14 × locator resolved to <g tabindex="0" role="group" aria-roledescription="edge" aria-describedby="react-flow__edge-desc-1" data-id="20393c5d-8826-4ef7-b1c3-4f939f5585b2" data-to="5bc46477-7ee5-4e51-b250-0b3b9ad9831a" data-from="4dbb237d-f0ad-446e-aba2-ea3ab1a1dcb7" data-testid="rf__edge-20393c5d-8826-4ef7-b1c3-4f939f5585b2" class="react-flow__edge react-flow__edge-accountConnection relation-graph-edge--pending nopan selectable" aria-label="QA Docs Cloud → QA Studio mailbox · Login email · Recovery email · Includes conn…>…</g>
+           - unexpected value "react-flow__edge react-flow__edge-accountConnection relation-graph-edge--pending nopan selectable"
+
+
+      475 | 	const edge = graphEdge(page, from, to);
+      476 | 	await expect(page.locator(".react-flow__edge.selected")).toHaveCount(1);
+    > 477 | 	await expect(edge).toHaveClass(/selected/);
+          | 	                   ^
+      478 | 	const panel = page.locator(".account-graph-selection-panel");
+      479 | 	await expect(panel).toHaveCount(1);
+      480 | 	await expect(
+        at expectSelection (/Users/syndred/Desktop/projects/KeepAny/tests/e2e/account-graph-readability.spec.ts:477:21)
+        at selectionJourney (/Users/syndred/Desktop/projects/KeepAny/tests/e2e/account-graph-readability.spec.ts:909:16)
+        at /Users/syndred/Desktop/projects/KeepAny/tests/e2e/account-graph-readability.spec.ts:1032:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../../../../tmp/stackperch-graph-layout-final8-qa/account-graph-readability--913a5-ses-across-reload-and-edits/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../../../../tmp/stackperch-graph-layout-final8-qa/account-graph-readability--913a5-ses-across-reload-and-edits/error-context.md
+
+  1 failed
+    tests/e2e/account-graph-readability.spec.ts:974:3 › en-US 390px multi-source identities preserve connection purposes across reload and edits
+  5 passed (4.0m)

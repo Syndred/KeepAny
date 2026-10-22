@@ -1,0 +1,19 @@
+{
+  "source": "Chrome 独立验收页面，经真实表单新建",
+  "entry": "index-CHZG36kN.js",
+  "accounts": 24,
+  "connections": 23,
+  "zoom": {
+    "before": 0.9529412520559212,
+    "afterPlus": 1.1435293097245065,
+    "afterMinus": 0.9529412520559212,
+    "afterMiniMapWheelUp": 2
+  },
+  "navigation": {
+    "gap": 13,
+    "insideHorizontal": true,
+    "mapNodes": 24,
+    "stageHeight": 567,
+    "stageWidth": 1160
+  }
+}

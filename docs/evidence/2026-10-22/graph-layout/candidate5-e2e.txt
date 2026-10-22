@@ -1,0 +1,7 @@
+
+Running 6 tests using 1 worker
+
+  ✓  1 tests/e2e/account-graph-readability.spec.ts:970:3 › zh-CN 390px multi-source identities preserve connection purposes across reload and edits (30.5s)
+  ✓  2 tests/e2e/account-graph-readability.spec.ts:970:3 › zh-CN 1280px multi-source identities preserve connection purposes across reload and edits (25.4s)
+  ✓  3 tests/e2e/account-graph-readability.spec.ts:970:3 › zh-CN 1536px multi-source identities preserve connection purposes across reload and edits (2.6m)
+  ✘  4 tests/e2e/account-graph-readability.spec.ts:970:3 › en-US 390px multi-source identities preserve connection purposes across reload and edits (30.1s)

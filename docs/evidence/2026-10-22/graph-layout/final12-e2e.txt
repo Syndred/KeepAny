@@ -1,0 +1,13 @@
+
+Running 8 tests using 2 workers
+
+  ✓  1 tests/e2e/account-graph-readability.spec.ts:1242:3 › zh-CN 1280px multi-source identities preserve connection purposes across reload and edits (27.9s)
+  ✓  2 tests/e2e/account-graph-readability.spec.ts:1242:3 › zh-CN 390px multi-source identities preserve connection purposes across reload and edits (33.4s)
+  ✓  4 tests/e2e/account-graph-readability.spec.ts:1242:3 › en-US 390px multi-source identities preserve connection purposes across reload and edits (33.3s)
+  ✓  5 tests/e2e/account-graph-readability.spec.ts:1242:3 › en-US 1280px multi-source identities preserve connection purposes across reload and edits (27.4s)
+  ✓  3 tests/e2e/account-graph-readability.spec.ts:1242:3 › zh-CN 1536px multi-source identities preserve connection purposes across reload and edits (2.5m)
+  ✓  7 tests/e2e/account-graph-readability.spec.ts:1383:2 › zh-CN 390px graph navigation controls stay reachable and change the real viewport (35.8s)
+  ✓  6 tests/e2e/account-graph-readability.spec.ts:1242:3 › en-US 1536px multi-source identities preserve connection purposes across reload and edits (2.6m)
+  ✓  8 tests/e2e/account-graph-readability.spec.ts:1383:2 › en-US 1536px graph navigation controls stay reachable and change the real viewport (34.4s)
+
+  8 passed (4.2m)

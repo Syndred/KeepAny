@@ -1,0 +1,482 @@
+[
+  {
+    "seed": 0,
+    "cross": [
+      "code",
+      "docs"
+    ],
+    "old": {
+      "zoom": 1,
+      "bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 790,
+        "height": 470
+      },
+      "atOne": 83,
+      "atFit": 83
+    },
+    "next": {
+      "zoom": 1,
+      "centeredZoom": 1,
+      "bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 816,
+        "height": 462
+      },
+      "atOne": 185,
+      "atFit": 185
+    }
+  },
+  {
+    "seed": 1,
+    "cross": [
+      "design",
+      "docs"
+    ],
+    "old": {
+      "zoom": 1,
+      "bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 780,
+        "height": 470
+      },
+      "atOne": 0,
+      "atFit": 0
+    },
+    "next": {
+      "zoom": 1,
+      "centeredZoom": 0.9836734693877551,
+      "bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 796,
+        "height": 462
+      },
+      "atOne": 185,
+      "atFit": 185
+    }
+  },
+  {
+    "seed": 2,
+    "cross": [
+      "docs",
+      "code"
+    ],
+    "old": {
+      "zoom": 0.9678714859437751,
+      "bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 980,
+        "height": 490
+      },
+      "atOne": 0,
+      "atFit": 0
+    },
+    "next": {
+      "zoom": 0.9525691699604744,
+      "centeredZoom": 0.9233716475095786,
+      "bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 996,
+        "height": 482
+      },
+      "atOne": 183,
+      "atFit": 176
+    }
+  },
+  {
+    "seed": 3,
+    "cross": [
+      "design",
+      "docs"
+    ],
+    "old": {
+      "zoom": 0.9776876267748479,
+      "bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 970,
+        "height": 468.5
+      },
+      "atOne": 0,
+      "atFit": 0
+    },
+    "next": {
+      "zoom": 0.9678714859437751,
+      "centeredZoom": 0.9305019305019305,
+      "bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 980,
+        "height": 460.5
+      },
+      "atOne": 184,
+      "atFit": 179
+    }
+  },
+  {
+    "seed": 4,
+    "cross": [
+      "code",
+      "docs"
+    ],
+    "old": {
+      "zoom": 1,
+      "bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 790,
+        "height": 468.5
+      },
+      "atOne": 102,
+      "atFit": 102
+    },
+    "next": {
+      "zoom": 1,
+      "centeredZoom": 1,
+      "bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 800,
+        "height": 460.5
+      },
+      "atOne": 143,
+      "atFit": 143
+    }
+  },
+  {
+    "seed": 5,
+    "cross": [
+      "design",
+      "docs"
+    ],
+    "old": {
+      "zoom": 0.9776876267748479,
+      "bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 970,
+        "height": 468.5
+      },
+      "atOne": 0,
+      "atFit": 0
+    },
+    "next": {
+      "zoom": 0.9678714859437751,
+      "centeredZoom": 0.9305019305019305,
+      "bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 980,
+        "height": 460.5
+      },
+      "atOne": 184,
+      "atFit": 179
+    }
+  },
+  {
+    "seed": 6,
+    "cross": [
+      "design",
+      "docs"
+    ],
+    "old": {
+      "zoom": 1,
+      "bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 780,
+        "height": 470
+      },
+      "atOne": 0,
+      "atFit": 0
+    },
+    "next": {
+      "zoom": 1,
+      "centeredZoom": 0.9836734693877551,
+      "bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 796,
+        "height": 462
+      },
+      "atOne": 185,
+      "atFit": 185
+    }
+  },
+  {
+    "seed": 7,
+    "cross": [
+      "design",
+      "docs"
+    ],
+    "old": {
+      "zoom": 0.9776876267748479,
+      "bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 970,
+        "height": 468.5
+      },
+      "atOne": 0,
+      "atFit": 0
+    },
+    "next": {
+      "zoom": 0.9678714859437751,
+      "centeredZoom": 0.9305019305019305,
+      "bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 980,
+        "height": 460.5
+      },
+      "atOne": 184,
+      "atFit": 179
+    }
+  },
+  {
+    "seed": 8,
+    "cross": [
+      "docs",
+      "analytics"
+    ],
+    "old": {
+      "zoom": 1,
+      "bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 780,
+        "height": 470
+      },
+      "atOne": 0,
+      "atFit": 0
+    },
+    "next": {
+      "zoom": 1,
+      "centeredZoom": 0.9525691699604744,
+      "bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 796,
+        "height": 462
+      },
+      "atOne": 185,
+      "atFit": 185
+    }
+  },
+  {
+    "seed": 9,
+    "cross": [
+      "design",
+      "docs"
+    ],
+    "old": {
+      "zoom": 0.9776876267748479,
+      "bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 970,
+        "height": 468.5
+      },
+      "atOne": 0,
+      "atFit": 0
+    },
+    "next": {
+      "zoom": 0.9678714859437751,
+      "centeredZoom": 0.9305019305019305,
+      "bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 980,
+        "height": 460.5
+      },
+      "atOne": 184,
+      "atFit": 179
+    }
+  },
+  {
+    "seed": 10,
+    "cross": [
+      "docs",
+      "code"
+    ],
+    "old": {
+      "zoom": 0.9678714859437751,
+      "bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 980,
+        "height": 490
+      },
+      "atOne": 0,
+      "atFit": 0
+    },
+    "next": {
+      "zoom": 0.9525691699604744,
+      "centeredZoom": 0.9233716475095786,
+      "bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 996,
+        "height": 482
+      },
+      "atOne": 183,
+      "atFit": 176
+    }
+  },
+  {
+    "seed": 11,
+    "cross": [
+      "docs",
+      "code"
+    ],
+    "old": {
+      "zoom": 0.9737373737373738,
+      "bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 974,
+        "height": 468.5
+      },
+      "atOne": 0,
+      "atFit": 0
+    },
+    "next": {
+      "zoom": 0.964,
+      "centeredZoom": 0.9233716475095786,
+      "bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 984,
+        "height": 460.5
+      },
+      "atOne": 142,
+      "atFit": 138
+    }
+  },
+  {
+    "seed": 12,
+    "cross": [
+      "code",
+      "docs"
+    ],
+    "old": {
+      "zoom": 1,
+      "bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 790,
+        "height": 470
+      },
+      "atOne": 83,
+      "atFit": 83
+    },
+    "next": {
+      "zoom": 1,
+      "centeredZoom": 1,
+      "bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 816,
+        "height": 462
+      },
+      "atOne": 185,
+      "atFit": 185
+    }
+  },
+  {
+    "seed": 13,
+    "cross": [
+      "design",
+      "docs"
+    ],
+    "old": {
+      "zoom": 1,
+      "bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 780,
+        "height": 470
+      },
+      "atOne": 0,
+      "atFit": 0
+    },
+    "next": {
+      "zoom": 1,
+      "centeredZoom": 0.9836734693877551,
+      "bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 796,
+        "height": 462
+      },
+      "atOne": 185,
+      "atFit": 185
+    }
+  },
+  {
+    "seed": 14,
+    "cross": [
+      "design",
+      "docs"
+    ],
+    "old": {
+      "zoom": 1,
+      "bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 780,
+        "height": 470
+      },
+      "atOne": 0,
+      "atFit": 0
+    },
+    "next": {
+      "zoom": 1,
+      "centeredZoom": 0.9836734693877551,
+      "bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 796,
+        "height": 462
+      },
+      "atOne": 185,
+      "atFit": 185
+    }
+  },
+  {
+    "seed": 15,
+    "cross": [
+      "design",
+      "docs"
+    ],
+    "old": {
+      "zoom": 0.9776876267748479,
+      "bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 970,
+        "height": 468.5
+      },
+      "atOne": 0,
+      "atFit": 0
+    },
+    "next": {
+      "zoom": 0.9678714859437751,
+      "centeredZoom": 0.9305019305019305,
+      "bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 980,
+        "height": 460.5
+      },
+      "atOne": 184,
+      "atFit": 179
+    }
+  }
+]

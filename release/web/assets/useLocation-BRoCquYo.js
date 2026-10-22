@@ -1,0 +1,1 @@
+import{i as e,n as t}from"./link-DOnaC9DF.js";import{i as n}from"./chevron-up-CI_tiWuf.js";function r(r){let i=e();return t(i.stores.location,n(r,i))}export{r as t};

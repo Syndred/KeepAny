@@ -1,0 +1,68 @@
+{
+  "viewport": {
+    "width": 1219,
+    "height": 685
+  },
+  "old": {
+    "bounds": {
+      "x": 0,
+      "y": 0,
+      "width": 1104,
+      "height": 490.5
+    },
+    "route": {
+      "points": [
+        {
+          "x": 420,
+          "y": 434.5
+        },
+        {
+          "x": 440,
+          "y": 434.5
+        },
+        {
+          "x": 440,
+          "y": 260
+        },
+        {
+          "x": 470,
+          "y": 260
+        }
+      ],
+      "sourceHandle": "source-right--8",
+      "targetHandle": "target-left--8"
+    },
+    "patches": 0
+  },
+  "next": {
+    "bounds": {
+      "x": 0,
+      "y": 0,
+      "width": 1114,
+      "height": 482.5
+    },
+    "route": {
+      "points": [
+        {
+          "x": 416,
+          "y": 430.5
+        },
+        {
+          "x": 442,
+          "y": 430.5
+        },
+        {
+          "x": 442,
+          "y": 256
+        },
+        {
+          "x": 484,
+          "y": 256
+        }
+      ],
+      "sourceHandle": "source-right--8",
+      "targetHandle": "target-left--8"
+    },
+    "patches": 150
+  }
+}

@@ -1,0 +1,550 @@
+{
+  "viewport": "translate(91.5px, 58.5px) scale(1)",
+  "frame": {
+    "x": 256,
+    "y": 257.484375,
+    "width": 963,
+    "height": 587,
+    "top": 257.484375,
+    "right": 1219,
+    "bottom": 844.484375,
+    "left": 256
+  },
+  "nodes": [
+    {
+      "id": "13d2ecb8-7afc-4423-ba50-21786e36d887",
+      "label": "QA Studio mailbox · graph.owner@example.test",
+      "transform": "translate(384px, 218px)",
+      "width": "180",
+      "height": "76"
+    },
+    {
+      "id": "2b4f0ab6-7f39-47c2-bcec-6273c64b2609",
+      "label": "QA Sketch Board · graph.owner@example.test",
+      "transform": "translate(200px, 16px)",
+      "width": "160",
+      "height": "60"
+    },
+    {
+      "id": "4605df42-c703-40eb-ad78-777d35efc0dd",
+      "label": "QA Code Forge · graph.owner@example.test",
+      "transform": "translate(604px, 394px)",
+      "width": "160",
+      "height": "60"
+    },
+    {
+      "id": "5993cea7-e97f-43fc-9dbb-1a0808612a20",
+      "label": "QA Backup mobile · +8613800138000",
+      "transform": "translate(16px, 16px)",
+      "width": "160",
+      "height": "60"
+    },
+    {
+      "id": "63182bf0-abc5-4017-b2e6-c041b140baec",
+      "label": "QA Learning Workspace · graph.owner@example.test",
+      "transform": "translate(604px, 226px)",
+      "width": "160",
+      "height": "60"
+    },
+    {
+      "id": "77aff884-00d2-4a44-844c-7d1d28b44a5d",
+      "label": "QA Commerce Desk · graph.owner@example.test",
+      "transform": "translate(200px, 310px)",
+      "width": "160",
+      "height": "60"
+    },
+    {
+      "id": "890c99e2-dc65-48ab-afe8-46bd5d6f0b2d",
+      "label": "QA Docs Cloud · graph.owner@example.test",
+      "transform": "translate(604px, 16px)",
+      "width": "160",
+      "height": "60"
+    },
+    {
+      "id": "9e4bba5b-5554-4c88-8282-524809909796",
+      "label": "QA Issue Tracker · graph.owner@example.test",
+      "transform": "translate(200px, 226px)",
+      "width": "160",
+      "height": "60"
+    },
+    {
+      "id": "cbfb9710-710a-4f3a-82d4-9467000085a1",
+      "label": "QA Video Studio · graph.owner@example.test",
+      "transform": "translate(604px, 310px)",
+      "width": "160",
+      "height": "60"
+    },
+    {
+      "id": "e17f05bf-2ebe-4199-8316-ff9a0b406d63",
+      "label": "QA Analytics Console · graph.owner@example.test",
+      "transform": "translate(200px, 142px)",
+      "width": "160",
+      "height": "60"
+    },
+    {
+      "id": "e38c785c-3bcd-4c26-b210-4fe43df25db4",
+      "label": "QA Host Panel · graph.owner@example.test",
+      "transform": "translate(604px, 142px)",
+      "width": "160",
+      "height": "60"
+    },
+    {
+      "id": "fc3444ce-e62f-4b11-b6d5-2fde6bc3017d",
+      "label": "QA Primary mobile · +447700900101",
+      "transform": "translate(200px, 394px)",
+      "width": "160",
+      "height": "60"
+    }
+  ],
+  "edges": [
+    {
+      "order": 0,
+      "id": "0b0347a2-470d-4f08-af50-16905b773115",
+      "from": "4605df42-c703-40eb-ad78-777d35efc0dd",
+      "to": "13d2ecb8-7afc-4423-ba50-21786e36d887",
+      "label": "QA Code Forge → QA Studio mailbox · Login email · Verified",
+      "path": "M604,424 L594,424 L594,256 L564,256",
+      "interactionWidth": "20"
+    },
+    {
+      "order": 1,
+      "id": "136b1628-5a46-4342-9eb1-75ef0b53d841",
+      "from": "e17f05bf-2ebe-4199-8316-ff9a0b406d63",
+      "to": "13d2ecb8-7afc-4423-ba50-21786e36d887",
+      "label": "QA Analytics Console → QA Studio mailbox · Login email · Verified",
+      "path": "M360,172 L370,172 L370,256 L384,256",
+      "interactionWidth": "20"
+    },
+    {
+      "order": 2,
+      "id": "32a32504-5efc-4708-995f-33a577c26421",
+      "from": "9e4bba5b-5554-4c88-8282-524809909796",
+      "to": "13d2ecb8-7afc-4423-ba50-21786e36d887",
+      "label": "QA Issue Tracker → QA Studio mailbox · Login email · Verified",
+      "path": "M360,256 L384,256",
+      "interactionWidth": "20"
+    },
+    {
+      "order": 3,
+      "id": "485bd852-edc2-4bfe-8073-2908ea36c6fa",
+      "from": "890c99e2-dc65-48ab-afe8-46bd5d6f0b2d",
+      "to": "13d2ecb8-7afc-4423-ba50-21786e36d887",
+      "label": "QA Docs Cloud → QA Studio mailbox · Recovery email · Login email · Includes connections to verify",
+      "path": "M604,54 L584,54 L584,264 L564,264",
+      "interactionWidth": "20"
+    },
+    {
+      "order": 4,
+      "id": "4ea95384-fc44-42c4-ba55-aa83d0b8dca2",
+      "from": "4605df42-c703-40eb-ad78-777d35efc0dd",
+      "to": "fc3444ce-e62f-4b11-b6d5-2fde6bc3017d",
+      "label": "QA Code Forge → QA Primary mobile · Login phone · Verified",
+      "path": "M604,432 L360,432",
+      "interactionWidth": "20"
+    },
+    {
+      "order": 5,
+      "id": "6680d3ca-a197-49ea-929b-7f2bd0ebc25b",
+      "from": "cbfb9710-710a-4f3a-82d4-9467000085a1",
+      "to": "13d2ecb8-7afc-4423-ba50-21786e36d887",
+      "label": "QA Video Studio → QA Studio mailbox · Login email · Verified",
+      "path": "M604,340 L594,340 L594,256 L564,256",
+      "interactionWidth": "20"
+    },
+    {
+      "order": 6,
+      "id": "7b072128-be22-4a6c-b449-06d921036f95",
+      "from": "2b4f0ab6-7f39-47c2-bcec-6273c64b2609",
+      "to": "13d2ecb8-7afc-4423-ba50-21786e36d887",
+      "label": "QA Sketch Board → QA Studio mailbox · Login email · Verified",
+      "path": "M360,46 L370,46 L370,256 L384,256",
+      "interactionWidth": "20"
+    },
+    {
+      "order": 7,
+      "id": "875d18d3-12a7-4180-8a61-84324eb6188e",
+      "from": "63182bf0-abc5-4017-b2e6-c041b140baec",
+      "to": "13d2ecb8-7afc-4423-ba50-21786e36d887",
+      "label": "QA Learning Workspace → QA Studio mailbox · Login email · Verified",
+      "path": "M604,256 L564,256",
+      "interactionWidth": "20"
+    },
+    {
+      "order": 8,
+      "id": "8be32f9e-bd14-4631-b30e-323021251b88",
+      "from": "2b4f0ab6-7f39-47c2-bcec-6273c64b2609",
+      "to": "890c99e2-dc65-48ab-afe8-46bd5d6f0b2d",
+      "label": "QA Sketch Board → QA Docs Cloud · Linked account · Verified",
+      "path": "M360,46 L604,46",
+      "interactionWidth": "20"
+    },
+    {
+      "order": 9,
+      "id": "9886f6cf-57f1-413f-8c9d-f9279c9a9ba0",
+      "from": "fc3444ce-e62f-4b11-b6d5-2fde6bc3017d",
+      "to": "4605df42-c703-40eb-ad78-777d35efc0dd",
+      "label": "QA Primary mobile → QA Code Forge · Linked account · To verify",
+      "path": "M360,416 L604,416",
+      "interactionWidth": "20"
+    },
+    {
+      "order": 10,
+      "id": "99457fde-d75b-4c73-8af5-740a00659b27",
+      "from": "77aff884-00d2-4a44-844c-7d1d28b44a5d",
+      "to": "13d2ecb8-7afc-4423-ba50-21786e36d887",
+      "label": "QA Commerce Desk → QA Studio mailbox · Login email · Verified",
+      "path": "M360,340 L370,340 L370,256 L384,256",
+      "interactionWidth": "20"
+    },
+    {
+      "order": 11,
+      "id": "b465750a-e73b-4be9-98de-5317dffc1b45",
+      "from": "13d2ecb8-7afc-4423-ba50-21786e36d887",
+      "to": "890c99e2-dc65-48ab-afe8-46bd5d6f0b2d",
+      "label": "QA Studio mailbox → QA Docs Cloud · Linked account · Verified",
+      "path": "M564,248 L574,248 L574,38 L604,38",
+      "interactionWidth": "20"
+    },
+    {
+      "order": 12,
+      "id": "b65fcf1e-aecb-4653-a2a1-67a08a9673cf",
+      "from": "2b4f0ab6-7f39-47c2-bcec-6273c64b2609",
+      "to": "5993cea7-e97f-43fc-9dbb-1a0808612a20",
+      "label": "QA Sketch Board → QA Backup mobile · Recovery phone · Verified",
+      "path": "M200,46 L176,46",
+      "interactionWidth": "20"
+    },
+    {
+      "order": 13,
+      "id": "b7a73f3b-e004-4ddb-998b-15ea273fbdbb",
+      "from": "13d2ecb8-7afc-4423-ba50-21786e36d887",
+      "to": "fc3444ce-e62f-4b11-b6d5-2fde6bc3017d",
+      "label": "QA Studio mailbox → QA Primary mobile · Recovery phone · Verified",
+      "path": "M384,256 L370,256 L370,424 L360,424",
+      "interactionWidth": "20"
+    },
+    {
+      "order": 14,
+      "id": "ef69668e-afed-4403-a42d-f93880cabf3e",
+      "from": "e38c785c-3bcd-4c26-b210-4fe43df25db4",
+      "to": "13d2ecb8-7afc-4423-ba50-21786e36d887",
+      "label": "QA Host Panel → QA Studio mailbox · Login email · Verified",
+      "path": "M604,172 L594,172 L594,256 L564,256",
+      "interactionWidth": "20"
+    }
+  ],
+  "targetProbe": {
+    "id": "485bd852-edc2-4bfe-8073-2908ea36c6fa",
+    "visibleSamples": 124,
+    "centeredOnTarget": 53,
+    "stableSamples": 0,
+    "centerOwnerCounts": {
+      "8be32f9e-bd14-4631-b30e-323021251b88": 10,
+      "485bd852-edc2-4bfe-8073-2908ea36c6fa": 53,
+      "ef69668e-afed-4403-a42d-f93880cabf3e": 50,
+      "6680d3ca-a197-49ea-929b-7f2bd0ebc25b": 11
+    },
+    "examples": [
+      {
+        "x": 932,
+        "y": 372,
+        "owners": [
+          "b465750a-e73b-4be9-98de-5317dffc1b45",
+          "b465750a-e73b-4be9-98de-5317dffc1b45",
+          "b465750a-e73b-4be9-98de-5317dffc1b45",
+          "8be32f9e-bd14-4631-b30e-323021251b88",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa",
+          "8be32f9e-bd14-4631-b30e-323021251b88",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa"
+        ]
+      },
+      {
+        "x": 932,
+        "y": 374,
+        "owners": [
+          "b465750a-e73b-4be9-98de-5317dffc1b45",
+          "b465750a-e73b-4be9-98de-5317dffc1b45",
+          "b465750a-e73b-4be9-98de-5317dffc1b45",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa"
+        ]
+      },
+      {
+        "x": 932,
+        "y": 376,
+        "owners": [
+          "b465750a-e73b-4be9-98de-5317dffc1b45",
+          "b465750a-e73b-4be9-98de-5317dffc1b45",
+          "b465750a-e73b-4be9-98de-5317dffc1b45",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa"
+        ]
+      },
+      {
+        "x": 932,
+        "y": 378,
+        "owners": [
+          "b465750a-e73b-4be9-98de-5317dffc1b45",
+          "b465750a-e73b-4be9-98de-5317dffc1b45",
+          "b465750a-e73b-4be9-98de-5317dffc1b45",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa"
+        ]
+      },
+      {
+        "x": 932,
+        "y": 380,
+        "owners": [
+          "b465750a-e73b-4be9-98de-5317dffc1b45",
+          "b465750a-e73b-4be9-98de-5317dffc1b45",
+          "b465750a-e73b-4be9-98de-5317dffc1b45",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa"
+        ]
+      },
+      {
+        "x": 932,
+        "y": 382,
+        "owners": [
+          "b465750a-e73b-4be9-98de-5317dffc1b45",
+          "b465750a-e73b-4be9-98de-5317dffc1b45",
+          "b465750a-e73b-4be9-98de-5317dffc1b45",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa"
+        ]
+      },
+      {
+        "x": 932,
+        "y": 384,
+        "owners": [
+          "b465750a-e73b-4be9-98de-5317dffc1b45",
+          "b465750a-e73b-4be9-98de-5317dffc1b45",
+          "b465750a-e73b-4be9-98de-5317dffc1b45",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa"
+        ]
+      },
+      {
+        "x": 932,
+        "y": 386,
+        "owners": [
+          "b465750a-e73b-4be9-98de-5317dffc1b45",
+          "b465750a-e73b-4be9-98de-5317dffc1b45",
+          "b465750a-e73b-4be9-98de-5317dffc1b45",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa"
+        ]
+      },
+      {
+        "x": 932,
+        "y": 388,
+        "owners": [
+          "b465750a-e73b-4be9-98de-5317dffc1b45",
+          "b465750a-e73b-4be9-98de-5317dffc1b45",
+          "b465750a-e73b-4be9-98de-5317dffc1b45",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa"
+        ]
+      },
+      {
+        "x": 932,
+        "y": 390,
+        "owners": [
+          "b465750a-e73b-4be9-98de-5317dffc1b45",
+          "b465750a-e73b-4be9-98de-5317dffc1b45",
+          "b465750a-e73b-4be9-98de-5317dffc1b45",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa"
+        ]
+      },
+      {
+        "x": 932,
+        "y": 392,
+        "owners": [
+          "b465750a-e73b-4be9-98de-5317dffc1b45",
+          "b465750a-e73b-4be9-98de-5317dffc1b45",
+          "b465750a-e73b-4be9-98de-5317dffc1b45",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa"
+        ]
+      },
+      {
+        "x": 932,
+        "y": 394,
+        "owners": [
+          "b465750a-e73b-4be9-98de-5317dffc1b45",
+          "b465750a-e73b-4be9-98de-5317dffc1b45",
+          "b465750a-e73b-4be9-98de-5317dffc1b45",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa"
+        ]
+      },
+      {
+        "x": 932,
+        "y": 396,
+        "owners": [
+          "b465750a-e73b-4be9-98de-5317dffc1b45",
+          "b465750a-e73b-4be9-98de-5317dffc1b45",
+          "b465750a-e73b-4be9-98de-5317dffc1b45",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa"
+        ]
+      },
+      {
+        "x": 932,
+        "y": 398,
+        "owners": [
+          "b465750a-e73b-4be9-98de-5317dffc1b45",
+          "b465750a-e73b-4be9-98de-5317dffc1b45",
+          "b465750a-e73b-4be9-98de-5317dffc1b45",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa"
+        ]
+      },
+      {
+        "x": 932,
+        "y": 400,
+        "owners": [
+          "b465750a-e73b-4be9-98de-5317dffc1b45",
+          "b465750a-e73b-4be9-98de-5317dffc1b45",
+          "b465750a-e73b-4be9-98de-5317dffc1b45",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa"
+        ]
+      },
+      {
+        "x": 932,
+        "y": 402,
+        "owners": [
+          "b465750a-e73b-4be9-98de-5317dffc1b45",
+          "b465750a-e73b-4be9-98de-5317dffc1b45",
+          "b465750a-e73b-4be9-98de-5317dffc1b45",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa"
+        ]
+      },
+      {
+        "x": 932,
+        "y": 404,
+        "owners": [
+          "b465750a-e73b-4be9-98de-5317dffc1b45",
+          "b465750a-e73b-4be9-98de-5317dffc1b45",
+          "b465750a-e73b-4be9-98de-5317dffc1b45",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa"
+        ]
+      },
+      {
+        "x": 932,
+        "y": 406,
+        "owners": [
+          "b465750a-e73b-4be9-98de-5317dffc1b45",
+          "b465750a-e73b-4be9-98de-5317dffc1b45",
+          "b465750a-e73b-4be9-98de-5317dffc1b45",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa"
+        ]
+      },
+      {
+        "x": 932,
+        "y": 408,
+        "owners": [
+          "b465750a-e73b-4be9-98de-5317dffc1b45",
+          "b465750a-e73b-4be9-98de-5317dffc1b45",
+          "b465750a-e73b-4be9-98de-5317dffc1b45",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa"
+        ]
+      },
+      {
+        "x": 932,
+        "y": 410,
+        "owners": [
+          "b465750a-e73b-4be9-98de-5317dffc1b45",
+          "b465750a-e73b-4be9-98de-5317dffc1b45",
+          "b465750a-e73b-4be9-98de-5317dffc1b45",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa",
+          "485bd852-edc2-4bfe-8073-2908ea36c6fa"
+        ]
+      }
+    ]
+  }
+}

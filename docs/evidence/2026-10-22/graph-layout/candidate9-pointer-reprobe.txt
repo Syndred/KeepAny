@@ -1,0 +1,41 @@
+
+Running 2 tests using 1 worker
+
+  ✓  1 tests/e2e/account-graph-readability.spec.ts:1004:3 › en-US 390px multi-source identities preserve connection purposes across reload and edits (31.9s)
+  ✘  2 tests/e2e/account-graph-readability.spec.ts:1004:3 › en-US 390px multi-source identities preserve connection purposes across reload and edits (29.7s)
+
+
+  1) tests/e2e/account-graph-readability.spec.ts:1004:3 › en-US 390px multi-source identities preserve connection purposes across reload and edits
+
+    Error: The line has a visible integer-pixel target with a clear 4px interaction area, including after hover
+
+    The line has a visible integer-pixel target with a clear 4px interaction area, including after hover
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: true
+    Received: false
+
+    Call Log:
+    - Timeout 5000ms exceeded while waiting on the predicate
+
+      471 | 			},
+      472 | 		)
+    > 473 | 		.toBe(true);
+          | 		 ^
+      474 | 	if (!point) throw Error("graph-readability-edge-not-clickable");
+      475 | 	await page.mouse.click(
+      476 | 		(point as { x: number; y: number }).x,
+        at clickGraphEdge (/Users/syndred/Desktop/projects/KeepAny/tests/e2e/account-graph-readability.spec.ts:473:4)
+        at selectionJourney (/Users/syndred/Desktop/projects/KeepAny/tests/e2e/account-graph-readability.spec.ts:938:2)
+        at /Users/syndred/Desktop/projects/KeepAny/tests/e2e/account-graph-readability.spec.ts:1062:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../../../../tmp/stackperch-graph-layout-candidate9-pointer-reprobe-qa/account-graph-readability--913a5-ses-across-reload-and-edits-repeat1/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../../../../tmp/stackperch-graph-layout-candidate9-pointer-reprobe-qa/account-graph-readability--913a5-ses-across-reload-and-edits-repeat1/error-context.md
+
+  1 failed
+    tests/e2e/account-graph-readability.spec.ts:1004:3 › en-US 390px multi-source identities preserve connection purposes across reload and edits
+  1 passed (1.0m)

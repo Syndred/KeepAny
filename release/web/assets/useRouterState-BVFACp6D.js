@@ -1,0 +1,1 @@
+import{i as e,n as t}from"./link-DOnaC9DF.js";import{i as n}from"./chevron-up-CI_tiWuf.js";function r(r){let i=e({warn:r?.router===void 0}),a=r?.router||i;return t(a.stores.__store,n(r,a))}export{r as t};
