@@ -1,5 +1,6 @@
 .account-empty-primary { display: none; }
 .asset-detail-account .button, .asset-detail-account .task-filters button { min-width: 44px; min-height: 44px; }
+.asset-detail-account .task-filters { gap: 10px; }
 .asset-detail-account .more > summary { min-height: 44px; padding-block: 12px; cursor: pointer; }
 .asset-detail-account .image-item { gap: 10px; }
 .account-facts-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; min-width: 0; }
