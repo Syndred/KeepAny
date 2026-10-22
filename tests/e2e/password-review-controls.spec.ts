@@ -974,8 +974,25 @@ for (const { locale, width } of [
 					...element.querySelectorAll(".password-vault-identifier-row"),
 				];
 				const boxes = aliasRows.map((row) => row.getBoundingClientRect());
+				const values = aliasRows.map((row) => {
+					const value = row.querySelector(".password-vault-value");
+					if (!value) throw Error("Expected identifier value");
+					const box = value.getBoundingClientRect();
+					const style = getComputedStyle(value);
+					const topPadding = Number.parseFloat(style.paddingTop);
+					const bottomPadding = Number.parseFloat(style.paddingBottom);
+					return { top: box.top + topPadding, bottom: box.bottom - bottomPadding, topPadding, bottomPadding };
+				});
 				return {
-					gap: boxes[1].top - boxes[0].bottom,
+					// The approved divider layout has adjacent row boxes; its whitespace
+					// belongs inside each value, rather than an additional grid gap.
+					gap: values[1].top - values[0].bottom,
+					rowGaps: boxes.slice(1).map((box, index) => box.top - boxes[index].bottom),
+					valuePadding: values.flatMap((value) => [value.topPadding, value.bottomPadding]),
+					dividers: aliasRows.map((row) => {
+						const style = getComputedStyle(row);
+						return { width: Number.parseFloat(style.borderTopWidth), style: style.borderTopStyle, color: style.borderTopColor };
+					}),
 					heights: boxes.map((box) => box.height),
 					actionHeights: [
 						...element.querySelectorAll(".password-vault-entry-actions button"),
@@ -989,6 +1006,9 @@ for (const { locale, width } of [
 			});
 			expect(layout.gap).toBeGreaterThanOrEqual(8);
 			expect(layout.gap).toBeLessThanOrEqual(24);
+			expect(layout.rowGaps.every((gap) => Math.abs(gap) <= 1)).toBe(true);
+			expect(layout.valuePadding.every((padding) => padding >= 8)).toBe(true);
+			expect(layout.dividers.every((divider) => divider.width >= 1 && divider.style === "solid" && !["transparent", "rgba(0, 0, 0, 0)"].includes(divider.color))).toBe(true);
 			expect(
 				layout.heights.every((height) => height >= 44 && height <= 90),
 			).toBe(true);
