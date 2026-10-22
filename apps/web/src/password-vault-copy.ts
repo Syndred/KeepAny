@@ -17,6 +17,9 @@ export const passwordVaultCopy: Record<string, [string, string]> = {
 	accountGraphCurrent: ["当前账号", "Current account"],
 	accountGraphFocus: ["定位当前", "Center account"],
 	accountGraphFit: ["查看全图", "Fit all"],
+	accountGraphExpand: ["扩大画布", "Expand graph"],
+	accountGraphTitle: ["账号族谱", "Account connections"],
+	accountGraphUnavailable: ["暂时无法显示关系图，仍可从下方列表查看关联。", "The graph is unavailable. You can still view connections in the list below."],
 	accountGraphSelection: ["关联详情", "Connection details"],
 	accountGraphDirection: [
 		"箭头表示关联方向，点选连线查看用途。",

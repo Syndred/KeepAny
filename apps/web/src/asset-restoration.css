@@ -867,9 +867,6 @@
 .asset-detail-account.has-relations > .impact-checklist {
 	order: 6;
 }
-.asset-detail-account.has-relations .graph {
-	height: 350px;
-}
 .asset-detail-item .asset-detail-primary {
 	grid-template-columns: minmax(0, 1.25fr) minmax(245px, 0.75fr);
 }
