@@ -79,7 +79,13 @@ for (const locale of ["zh-CN", "en-US"] as const) {
 			}
 			async function selectConnection(targetPage: Page, edge: Locator, from: string, to: string, labels: string[], status: string, key = "Enter") {
 				await waitForAccountGraphLayout(targetPage);
-				await expect(edge).toBeVisible();
+				// A horizontal SVG group has zero bbox height even when its stroke is visible.
+				await expect(edge).toHaveCSS("visibility", "visible");
+				await expect(edge).not.toHaveCSS("display", "none");
+				const path = edge.locator(".react-flow__edge-path");
+				await expect(path).toHaveCSS("visibility", "visible");
+				await expect(path).not.toHaveCSS("display", "none");
+				expect(await path.evaluate(element => (element as SVGPathElement).getTotalLength())).toBeGreaterThan(0);
 				await expect(edge).toHaveAttribute("tabindex", "0");
 				await edge.focus();
 				await expect(edge).toBeFocused();
