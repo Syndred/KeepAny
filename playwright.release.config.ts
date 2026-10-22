@@ -33,6 +33,7 @@ export default defineConfig({
 		"intake-asset-receipt.spec.ts",
 		"collections-route.spec.ts",
 		"relation-graph-verification.spec.ts",
+		"account-graph-readability.spec.ts",
 		"restore-identity.spec.ts",
 		"archive-migration.spec.ts",
 		"vault-reference-release.spec.ts",
