@@ -32,8 +32,13 @@ type Copy = ReturnType<typeof copyFor>;
 type Account = { name: string; username?: string; category?: "phone" | "other"; description?: string; url?: string; longDescription?: string; contact?: string; notes?: string; tags?: string };
 
 async function openSession(browser: Browser, locale: Locale, width: number) {
+	const baseURL = test.info().project.use.baseURL;
+	if (!baseURL) throw Error("Account detail acceptance requires a configured application baseURL");
+	const appOrigin = new URL(baseURL).origin;
 	const context = await browser.newContext({ locale, viewport: { width, height: 1000 }, reducedMotion: "reduce", timezoneId: "Asia/Shanghai" });
-	await context.addInitScript(language => localStorage.setItem("keepany-language", language), locale === "en-US" ? "en" : locale);
+	await context.addInitScript(({ language, appOrigin }) => {
+		if (location.origin === appOrigin) localStorage.setItem("keepany-language", language);
+	}, { language: locale === "en-US" ? "en" : locale, appOrigin });
 	await context.route("https://example.test/**", route => route.fulfill({ contentType: "text/html", body: "<!doctype html><html><title>Synthetic external page</title><h1>Local acceptance destination</h1></html>" }));
 	const errors: string[] = [];
 	context.on("page", page => page.on("pageerror", error => errors.push(error.message)));
