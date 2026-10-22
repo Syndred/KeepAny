@@ -1,0 +1,45 @@
+[WebServer] (node:88398) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+
+Running 12 tests using 2 workers
+
+(node:88400) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+(node:88399) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1/12] tests/e2e/password-account-upgrade.spec.ts:234:2 › zh-CN 1536px upgrades legacy uncategorized hubs and isolates a deleted linked entry
+[2/12] tests/e2e/account-link-recovery.spec.ts:227:2 › zh-CN 1536px recovers deleted accounts, resolves duplicates, and explicitly restores deleted lines
+tests/e2e/account-link-recovery.spec.ts:227:2 › zh-CN 1536px recovers deleted accounts, resolves duplicates, and explicitly restores deleted lines
+-------------- RxDB Open Core RxStorage -------------------------------
+You are using the free Dexie.js based RxStorage implementation from RxDB https://rxdb.info/rx-storage-dexie.html?console=dexie
+While this is a great option, we want to let you know that there are faster storage solutions available in our premium plugins.
+For professional users and production environments, we highly recommend considering these premium options to enhance performance and reliability.
+ https://rxdb.info/premium/?console=dexie
+If you already purchased premium access you can disable this log by calling the setPremiumFlag() function from rxdb-premium/plugins/shared.
+---------------------------------------------------------------------
+
+tests/e2e/password-account-upgrade.spec.ts:234:2 › zh-CN 1536px upgrades legacy uncategorized hubs and isolates a deleted linked entry
+-------------- RxDB Open Core RxStorage -------------------------------
+You are using the free Dexie.js based RxStorage implementation from RxDB https://rxdb.info/rx-storage-dexie.html?console=dexie
+While this is a great option, we want to let you know that there are faster storage solutions available in our premium plugins.
+For professional users and production environments, we highly recommend considering these premium options to enhance performance and reliability.
+ https://rxdb.info/premium/?console=dexie
+If you already purchased premium access you can disable this log by calling the setPremiumFlag() function from rxdb-premium/plugins/shared.
+---------------------------------------------------------------------
+
+[3/12] tests/e2e/password-account-upgrade.spec.ts:234:2 › en 390px upgrades legacy uncategorized hubs and isolates a deleted linked entry
+[4/12] tests/e2e/account-link-recovery.spec.ts:227:2 › en 1536px recovers deleted accounts, resolves duplicates, and explicitly restores deleted lines
+[5/12] tests/e2e/password-vault-user-journey.spec.ts:185:2 › zh-CN passwordless labeled notes retain punctuation and prefill reviewed fields
+[6/12] tests/e2e/password-vault-user-journey.spec.ts:185:2 › en passwordless labeled notes retain punctuation and prefill reviewed fields
+[7/12] tests/e2e/password-vault-user-journey.spec.ts:229:3 › zh-CN 1536px user imports, categorizes and follows account identities before vault maintenance
+[8/12] tests/e2e/account-link-recovery.spec.ts:227:2 › zh-CN 390px recovers deleted accounts, resolves duplicates, and explicitly restores deleted lines
+[9/12] tests/e2e/account-link-recovery.spec.ts:227:2 › en 390px recovers deleted accounts, resolves duplicates, and explicitly restores deleted lines
+[10/12] tests/e2e/password-vault-user-journey.spec.ts:229:3 › zh-CN 390px user imports, categorizes and follows account identities before vault maintenance
+[11/12] tests/e2e/password-vault-user-journey.spec.ts:229:3 › en 1536px user imports, categorizes and follows account identities before vault maintenance
+[12/12] tests/e2e/password-vault-user-journey.spec.ts:229:3 › en 390px user imports, categorizes and follows account identities before vault maintenance
+  12 passed (1.1m)
