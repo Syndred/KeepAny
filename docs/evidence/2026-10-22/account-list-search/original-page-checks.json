@@ -1,0 +1,16 @@
+{
+  "entry": "/assets/index-DplYMAb0.js",
+  "accounts": {
+    "before": 57,
+    "after": 57,
+    "allIdsPreserved": true
+  },
+  "positiveMatches": 7,
+  "noMatches": 0,
+  "afterClear": {
+    "cards": 57,
+    "inputFocused": true,
+    "query": ""
+  },
+  "afterEscape": 57
+}
