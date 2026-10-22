@@ -17,9 +17,10 @@ export const passwordVaultCopy: Record<string, [string, string]> = {
 	accountGraphCurrent: ["当前账号", "Current account"],
 	accountGraphFocus: ["定位当前", "Center account"],
 	accountGraphFit: ["查看全图", "Fit all"],
+	accountGraphSelection: ["关联详情", "Connection details"],
 	accountGraphDirection: [
-		"箭头指向登录或找回账号，可拖动、缩放查看。",
-		"Arrows point to login or recovery accounts. Drag or zoom to explore.",
+		"箭头表示关联方向，点选连线查看用途。",
+		"Arrows show the connection direction. Select a line to view its purpose.",
 	],
 	pwConnectKind_email: ["登录邮箱", "Login email"],
 	pwConnectKind_phone: ["登录手机号", "Login phone"],

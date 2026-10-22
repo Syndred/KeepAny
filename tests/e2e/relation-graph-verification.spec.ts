@@ -1,5 +1,5 @@
 import { mkdirSync, readFileSync } from "node:fs";
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
 import { strFromU8, unzipSync } from "fflate";
 import { decryptBackup } from "../../packages/local-db/src/backup-crypto";
 import { selectChoice } from "./helpers/select-choice";
@@ -19,10 +19,12 @@ for (const locale of ["zh-CN", "en-US"] as const) {
 			const text = zh ? {
 				add: "新增", name: "名称", save: "保存", addRelation: "添加关联", target: "关联至", label: "关联用途", verifiedAt: "最近核验",
 				verified: "已核实", pending: "待核实", mixed: "含待核实关系", legend: "实线为已核实关系，虚线含待核实关系",
+				details: "关联详情", close: "关闭",
 				deleteRelation: "删除关系", backup: "创建备份", download: "保存备份文件", preview: "预览", restore: /确认 ·/, restored: /已恢复 \d+ 条记录/,
 			} : {
 				add: "Add", name: "Name", save: "Save", addRelation: "Add connection", target: "Connect to", label: "Connection label", verifiedAt: "Last verified",
 				verified: "Verified", pending: "To verify", mixed: "Includes connections to verify", legend: "Solid lines are verified; dashed lines include connections to verify.",
+				details: "Connection details", close: "Close",
 				deleteRelation: "Delete connection", backup: "Create backup", download: "Save backup file", preview: "Preview", restore: /Confirm ·/, restored: /Restored \d+ records/,
 			};
 			const context = await browser.newContext({ locale, viewport: { width, height: 844 }, acceptDownloads: true });
@@ -54,11 +56,13 @@ for (const locale of ["zh-CN", "en-US"] as const) {
 				await expect(dialog).toBeHidden();
 			}
 			async function graphGeometry(targetPage: Page) {
+				await expect(targetPage.locator(".react-flow__edge-textwrapper"), "Account connections keep the canvas free of repeated text").toHaveCount(0);
 				for (const edge of await targetPage.locator(".react-flow__edge-path").all()) {
 					const path = await edge.getAttribute("d");
 					expect(path, "Connections use finite React Flow smooth-step paths").toMatch(/^M[-\d.,\s]+[LQ]/);
 					expect(path).not.toMatch(/NaN|Infinity/);
 					expect(await edge.evaluate(element => (element as SVGPathElement).getTotalLength())).toBeGreaterThan(0);
+					await expect(edge, "Every account connection exposes its direction").toHaveAttribute("marker-end", /url\(.+\)/);
 				}
 				for (const label of await targetPage.locator(".asset-graph-label").all()) {
 					expect(await label.evaluate(element => element.scrollWidth <= element.clientWidth + 1), "Node labels fit inside their own box").toBe(true);
@@ -96,6 +100,30 @@ for (const locale of ["zh-CN", "en-US"] as const) {
 					});
 				}), { message: "Manual fit shows every family node inside the viewport" }).toBe(true);
 			}
+			async function selectConnection(targetPage: Page, edge: Locator, from: string, to: string, labels: string[], status: string, key = "Enter") {
+				await expect(edge).toHaveAttribute("tabindex", "0");
+				await edge.focus();
+				await edge.press(key);
+				await expect(targetPage.locator(".react-flow__edge.selected")).toHaveCount(1);
+				await expect(edge).toHaveClass(/\bselected\b/);
+				await expect(edge.locator(".react-flow__edge-path")).toHaveCSS("stroke-width", "4px");
+				const panel = targetPage.getByRole("region", { name: text.details, exact: true });
+				await expect(targetPage.locator(".account-graph-selection-panel")).toHaveCount(1);
+				await expect(panel).toBeVisible();
+				await expect(panel.locator(".account-graph-selection-title")).toHaveText(`${from} → ${to}`);
+				await expect.poll(async () => (await panel.locator(".account-graph-selection-labels > li").allTextContents()).sort()).toEqual([...labels].sort());
+				await expect(panel.locator(".account-graph-selection-status")).toHaveText(status);
+				for (const other of await targetPage.locator(".react-flow__edge:not(.selected) .react-flow__edge-path").all()) await expect(other).toHaveCSS("opacity", "0.25");
+				const clear = await panel.evaluate(element => {
+					const bounds = element.getBoundingClientRect();
+					return [...element.querySelectorAll("p, li, button")].every(child => {
+						const rect = child.getBoundingClientRect();
+						return child.scrollWidth <= child.clientWidth + 1 && rect.left >= bounds.left - 1 && rect.right <= bounds.right + 1;
+					});
+				});
+				expect(clear, "Selected connection details wrap inside one readable panel").toBe(true);
+				return panel;
+			}
 			async function graphState(targetPage: Page, mixed = false) {
 				await expect(targetPage.locator(".react-flow__node")).toHaveCount(3);
 				await expectReadableAccountGraph(targetPage);
@@ -105,16 +133,31 @@ for (const locale of ["zh-CN", "en-US"] as const) {
 				await expect(solid).toHaveCount(mixed ? 0 : 1);
 				await expect(dashed).toHaveCount(mixed ? 2 : 1);
 				await expect(targetPage.getByText(text.legend, { exact: true })).toBeVisible();
+				let selected: Locator;
 				if (!mixed) {
 					await expect(solid).toHaveAttribute("aria-label", `${hubName} → Verified account · Verified link · ${text.verified}`);
 					await expect(solid.locator(".react-flow__edge-path")).toHaveCSS("stroke-dasharray", "none");
+					selected = await selectConnection(targetPage, solid, hubName, "Verified account", ["Verified link"], text.verified);
 				} else {
-					const mixedEdge = dashed.filter({ hasText: "Extra pending" });
-					await expect(mixedEdge).toContainText("Verified link");
+					const mixedEdge = dashed.and(targetPage.locator('[aria-label*="Extra pending"]'));
 					await expect(mixedEdge).toHaveAttribute("aria-label", new RegExp(` · ${text.mixed}$`));
+					expect([
+						`${hubName} → Verified account · Verified link · Extra pending · ${text.mixed}`,
+						`${hubName} → Verified account · Extra pending · Verified link · ${text.mixed}`,
+					]).toContain(await mixedEdge.getAttribute("aria-label"));
+					selected = await selectConnection(targetPage, mixedEdge, hubName, "Verified account", ["Verified link", "Extra pending"], text.mixed);
 				}
+				await selected.getByRole("button", { name: text.close, exact: true }).click();
+				await expect(selected).toBeHidden();
+				await expect(targetPage.locator(".react-flow__edge.selected")).toHaveCount(0);
 				for (const edge of await dashed.all()) await expect(edge.locator(".react-flow__edge-path")).toHaveCSS("stroke-dasharray", "5px, 4px");
-				await expect(dashed.filter({ hasText: "Pending link" })).toHaveAttribute("aria-label", `Pending account → ${hubName} · Pending link · ${text.pending}`);
+				const pendingEdge = dashed.and(targetPage.locator('[aria-label*="Pending link"]'));
+				await expect(pendingEdge).toHaveAttribute("aria-label", `Pending account → ${hubName} · Pending link · ${text.pending}`);
+				await selectConnection(targetPage, pendingEdge, "Pending account", hubName, ["Pending link"], text.pending, "Space");
+				await pendingEdge.press("Backspace");
+				await expect(targetPage.locator(".react-flow__edge-path")).toHaveCount(2);
+				await targetPage.locator(".react-flow__pane").click({ position: { x: 12, y: 12 } });
+				await expect(targetPage.getByRole("region", { name: text.details, exact: true })).toBeHidden();
 				await graphGeometry(targetPage);
 			}
 			try {
@@ -141,12 +184,12 @@ for (const locale of ["zh-CN", "en-US"] as const) {
 				await graphState(page);
 				await connect("Pending account", "Reverse pending");
 				await expect(page.locator(".react-flow__edge-path")).toHaveCount(3);
-				const pendingLabel = page.locator(".react-flow__edge").filter({ hasText: "Pending link" }).locator(".react-flow__edge-textwrapper");
-				const reverseLabel = page.locator(".react-flow__edge").filter({ hasText: "Reverse pending" }).locator(".react-flow__edge-textwrapper");
-				await expect.poll(async () => {
-					const [left, right] = await Promise.all([pendingLabel.boundingBox(), reverseLabel.boundingBox()]);
-					return !!left && !!right && (left.x + left.width <= right.x || right.x + right.width <= left.x || left.y + left.height <= right.y || right.y + right.height <= left.y);
-				}, { message: "Reciprocal connection labels have separate readable lanes" }).toBe(true);
+				const pendingEdge = page.locator('.react-flow__edge[aria-label*="Pending link"]');
+				const reverseEdge = page.locator('.react-flow__edge[aria-label*="Reverse pending"]');
+				await selectConnection(page, pendingEdge, "Pending account", hubName, ["Pending link"], text.pending);
+				const reverseDetails = await selectConnection(page, reverseEdge, hubName, "Pending account", ["Reverse pending"], text.pending);
+				await expect(reverseDetails).not.toContainText("Pending link");
+				await reverseDetails.getByRole("button", { name: text.close, exact: true }).click();
 				await graphGeometry(page);
 				await page.getByRole("button", { name: `${text.deleteRelation} · Reverse pending · Pending account`, exact: true }).click();
 				await page.getByRole("dialog").getByRole("button", { name: text.deleteRelation, exact: true }).click();

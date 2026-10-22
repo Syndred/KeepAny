@@ -15,10 +15,11 @@ import {
 	useReactFlow,
 	useStore,
 	type Edge,
+	type EdgeChange,
 	type EdgeProps,
 	type Node,
 } from "@xyflow/react";
-import { ArrowDownRight, ArrowLeft, Check, ExternalLink, Plus } from "lucide-react";
+import { ArrowDownRight, ArrowLeft, Check, ExternalLink, Plus, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import {
 	type Asset,
@@ -120,13 +121,13 @@ function GraphNodeMeasurements({ nodeIds, focusId }: { nodeIds: string; focusId?
 	</div></Panel> : null;
 }
 
-/** Keep reciprocal labels apart while reusing React Flow's path and label renderer. */
+/** Keep the established routes; account connection details live in one selection panel. */
 function AccountConnectionEdge(props: EdgeProps) {
 	const returnsLeft = props.sourceX > props.targetX;
 	const laneIndex = typeof props.data?.targetLaneIndex === "number" ? props.data.targetLaneIndex : 0;
 	const laneCount = typeof props.data?.targetLaneCount === "number" ? props.data.targetLaneCount : 1;
 	const returnTop = typeof props.data?.returnTop === "number" ? props.data.returnTop : Math.min(props.sourceY, props.targetY) - accountGraphNodeSize.height / 2 - 48;
-	const [path, labelX, labelY] = getSmoothStepPath({
+	const [path] = getSmoothStepPath({
 		...props,
 		borderRadius: 12,
 		offset: 24,
@@ -134,10 +135,7 @@ function AccountConnectionEdge(props: EdgeProps) {
 		// A return edge exits above the whole graph, including other cards in its path.
 		centerY: returnsLeft ? returnTop : undefined,
 	});
-	return <BaseEdge id={props.id} path={path} labelX={labelX} labelY={labelY}
-		label={props.label} labelStyle={props.labelStyle} labelShowBg={props.labelShowBg}
-		labelBgStyle={props.labelBgStyle} labelBgPadding={props.labelBgPadding}
-		labelBgBorderRadius={props.labelBgBorderRadius} style={props.style}
+	return <BaseEdge id={props.id} path={path} style={props.style}
 		markerEnd={props.markerEnd} markerStart={props.markerStart} interactionWidth={props.interactionWidth} />;
 }
 const accountEdgeTypes = { accountConnection: AccountConnectionEdge };
@@ -367,6 +365,7 @@ export function AssetDetail() {
 	const [relationError, setRelationError] = useState("");
 	const [relationFilter, setRelationFilter] = useState("");
 	const [graphScope, setGraphScope] = useState<"direct" | "family">("direct");
+	const [selectedGraphEdgeId, setSelectedGraphEdgeId] = useState<string | null>(null);
 	const centerId = asset?.id;
 	const relationReturnId = sessionStorage.getItem("keepany-relation-return-id");
 	const relationReturnKind = sessionStorage.getItem("keepany-relation-return-kind");
@@ -378,8 +377,21 @@ export function AssetDetail() {
 		void navigate({ to: "/assets/$kind/$id", params: { kind: target.kind, id: target.id } });
 	}
 	useEffect(() => {
-		if (centerId) { setRelationFilter(""); setGraphScope("direct"); }
+		if (centerId) { setRelationFilter(""); setGraphScope("direct"); setSelectedGraphEdgeId(null); }
 	}, [centerId]);
+	function changeGraphScope(scope: "direct" | "family") {
+		setSelectedGraphEdgeId(null);
+		setGraphScope(scope);
+	}
+	function changeGraphEdges(changes: EdgeChange[]) {
+		setSelectedGraphEdgeId((current) => {
+			// React Flow emits deselection and selection together. Keep only its last selected edge.
+			let selected: string | null = null;
+			for (const change of changes) if (change.type === "select" && change.selected) selected = change.id;
+			if (selected) return selected;
+			return changes.some((change) => change.type === "select" && change.id === current && !change.selected) ? null : current;
+		});
+	}
 	const [submissionEdit, setSubmissionEdit] = useState(false);
 	const [backlinkFilter, setBacklinkFilter] = useState<"all" | Submission["status"]>("all");
 	const [backlinksOpen, setBacklinksOpen] = useState(false);
@@ -552,7 +564,7 @@ export function AssetDetail() {
 	}
 	const graphDestinations = [...new Set((displayedFamily?.relations ?? visibleRelations).map((relation) => relation.to))].sort();
 	const graphTop = displayedFamily ? Math.min(...[...displayedFamily.positions.values()].map((position) => position.y)) : 0;
-	const graphEdges = Array.from(
+	const graphRelationGroups = Array.from(
 		(displayedFamily?.relations ?? visibleRelations)
 			.reduce((groups, relation) => {
 				const pair = JSON.stringify([relation.from, relation.to]);
@@ -562,10 +574,17 @@ export function AssetDetail() {
 				return groups;
 			}, new Map<string, Relation[]>())
 			.values(),
-	).map((group): Edge => {
+	);
+	const selectedGraphGroup = kind === "account" ? graphRelationGroups.find((group) => group[0].id === selectedGraphEdgeId) : undefined;
+	const selectedGraphLabels = [...new Set(selectedGraphGroup?.map((relation) => relation.label) ?? [])];
+	const selectedGraphStatus = selectedGraphGroup?.every((relation) => !!relation.verifiedAt) ? "relationGraphVerified"
+		: selectedGraphGroup?.some((relation) => !!relation.verifiedAt) ? "relationGraphMixed" : "relationGraphPending";
+	const graphEdges = graphRelationGroups.map((group): Edge => {
 		const verified = group.every((relation) => !!relation.verifiedAt);
 		const mixed = group.some((relation) => !!relation.verifiedAt) && !verified;
-		const label = group.length > 2
+		const labels = [...new Set(group.map((relation) => relation.label))];
+		const selected = kind === "account" && selectedGraphGroup === group;
+		const label = kind === "account" ? labels.join(" · ") : group.length > 2
 			? `${graphLabel(group[0].label)} · +${group.length - 1}`
 			: group.map((relation) => graphLabel(relation.label)).join(" · ");
 		return {
@@ -573,15 +592,17 @@ export function AssetDetail() {
 			source: group[0].from,
 			target: group[0].to,
 			type: kind === "account" ? "accountConnection" : "smoothstep",
-			data: { targetLaneIndex: graphDestinations.indexOf(group[0].to), targetLaneCount: graphDestinations.length, returnTop: graphTop - 48 - graphDestinations.indexOf(group[0].to) * 32 },
-			markerEnd: group.every(r => r.id.startsWith("pw-link-identifier-")) ? undefined : { type: MarkerType.ArrowClosed },
+			data: { labels, targetLaneIndex: graphDestinations.indexOf(group[0].to), targetLaneCount: graphDestinations.length, returnTop: graphTop - 48 - graphDestinations.indexOf(group[0].to) * 32 },
+			markerEnd: kind !== "account" && group.every(r => r.id.startsWith("pw-link-identifier-")) ? undefined : { type: MarkerType.ArrowClosed },
 			label,
+			...(kind === "account" ? { selected, selectable: true, focusable: true, deletable: false, zIndex: selected ? 2 : 0 } : {}),
 			className: verified ? "relation-graph-edge--verified" : "relation-graph-edge--pending",
 			ariaLabel: `${liveById.get(group[0].from)?.name} → ${liveById.get(group[0].to)?.name} · ${label} · ${t(verified ? "relationGraphVerified" : mixed ? "relationGraphMixed" : "relationGraphPending")}`,
 			style: {
 				stroke: verified ? "var(--green)" : "var(--muted)",
-				strokeWidth: 2,
+				strokeWidth: selected ? 4 : 2,
 				strokeDasharray: verified ? "none" : "5 4",
+				...(kind === "account" ? { opacity: selectedGraphGroup && !selected ? 0.25 : 1 } : {}),
 			},
 		};
 	});
@@ -1654,8 +1675,8 @@ export function AssetDetail() {
 						<>
 							{kind === "account" && <div className="account-graph-toolbar">
 								<div className="actions">
-									<Button size="small" variant={graphScope === "direct" ? "primary" : "default"} aria-pressed={graphScope === "direct"} onClick={() => setGraphScope("direct")}>{t("accountGraphDirect")}</Button>
-									<Button size="small" variant={graphScope === "family" ? "primary" : "default"} aria-pressed={graphScope === "family"} onClick={() => setGraphScope("family")}>{t("accountGraphFamily")}</Button>
+									<Button size="small" variant={graphScope === "direct" ? "primary" : "default"} aria-pressed={graphScope === "direct"} onClick={() => changeGraphScope("direct")}>{t("accountGraphDirect")}</Button>
+									<Button size="small" variant={graphScope === "family" ? "primary" : "default"} aria-pressed={graphScope === "family"} onClick={() => changeGraphScope("family")}>{t("accountGraphFamily")}</Button>
 								</div>
 								<p><span>{t("accountGraphDirection")}</span><span>{t("relationGraphLegend")}</span></p>
 							</div>}
@@ -1684,6 +1705,12 @@ export function AssetDetail() {
 									edges={graphEdges}
 									edgeTypes={accountEdgeTypes}
 									nodesFocusable={kind !== "account"}
+									edgesFocusable={kind === "account" ? true : undefined}
+									onEdgesChange={kind === "account" ? changeGraphEdges : undefined}
+									onPaneClick={kind === "account" ? () => setSelectedGraphEdgeId(null) : undefined}
+									deleteKeyCode={kind === "account" ? null : undefined}
+									multiSelectionKeyCode={kind === "account" ? null : undefined}
+									selectionKeyCode={kind === "account" ? null : undefined}
 									onNodeClick={(_, node) => {
 										const target = liveById.get(node.id);
 										if (target) visitRelation(target);
@@ -1694,6 +1721,16 @@ export function AssetDetail() {
 									<GraphNodeMeasurements nodeIds={JSON.stringify([asset.id, ...graphRelated.map((item) => item.id)])} focusId={kind === "account" ? asset.id : undefined} />
 									<Background />
 									<Controls showInteractive={false} />
+									{selectedGraphGroup && <Panel position="bottom-right" className="account-graph-selection-panel nodrag nopan">
+										<section className="account-graph-connection-details" aria-label={t("accountGraphSelection")}>
+											<div className="account-graph-selection-header">
+												<p className="account-graph-selection-title"><strong>{liveById.get(selectedGraphGroup[0].from)?.name}</strong><span aria-hidden="true"> → </span><strong>{liveById.get(selectedGraphGroup[0].to)?.name}</strong></p>
+												<Button size="icon" className="account-graph-selection-close" aria-label={t("close")} onClick={() => setSelectedGraphEdgeId(null)}><X size={18} /></Button>
+											</div>
+											<ul className="account-graph-selection-labels">{selectedGraphLabels.map((label) => <li key={label}>{label}</li>)}</ul>
+											<p className="account-graph-selection-status" role="status">{t(selectedGraphStatus)}</p>
+										</section>
+									</Panel>}
 								</ReactFlow>
 							</section>
 							{visibleRelations.length ? (
