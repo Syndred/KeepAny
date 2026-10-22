@@ -142,7 +142,7 @@ function buildModel(rootId: string, ids: string[], pairs: Pair[], compact = ids.
 	return { rootId, nodes, edges, twin };
 }
 
-async function runElk(model: Model, split: number, side?: Side): Promise<AccountGraphLayout> {
+async function runElk(model: Model, split: number, edgeSpacing: number | undefined, side?: Side): Promise<AccountGraphLayout> {
 	const nodes = [...model.nodes.values()].filter((node) => side === undefined || node.id === model.rootId || node.side === side);
 	const ids = new Set(nodes.map((node) => node.id));
 	const edges = model.edges.filter((edge) => ids.has(edge.from) && ids.has(edge.to));
@@ -159,6 +159,10 @@ async function runElk(model: Model, split: number, side?: Side): Promise<Account
 			"org.eclipse.elk.layered.nodePlacement.bk.fixedAlignment": "BALANCED",
 			"org.eclipse.elk.layered.mergeEdges": "false",
 			"org.eclipse.elk.randomSeed": "1",
+			...(edgeSpacing === undefined ? {} : {
+				"org.eclipse.elk.spacing.edgeEdge": String(edgeSpacing),
+				"org.eclipse.elk.layered.spacing.edgeEdgeBetweenLayers": String(edgeSpacing),
+			}),
 		},
 		children: nodes.map((node): ElkNode => ({
 			id: node.internalId, width: node.width, height: node.height,
@@ -206,19 +210,19 @@ function setBounds(layout: AccountGraphLayout) {
 	translate(layout, margin - Math.min(...xs), margin - Math.min(...ys));
 	layout.bounds = { x: 0, y: 0, width: Math.max(...xs) - Math.min(...xs) + margin * 2, height: Math.max(...ys) - Math.min(...ys) + margin * 2 };
 }
-async function candidate(model: Model, split: number) {
+async function candidate(model: Model, split: number, edgeSpacing: number | undefined) {
 	if (!model.twin) {
-		const result = await runElk(model, split);
+		const result = await runElk(model, split, edgeSpacing);
 		setBounds(result);
 		return result;
 	}
 	const sides: Side[] = [-1, 1].filter((side): side is -1 | 1 => [...model.nodes.values()].some((node) => node.side === side));
 	if (!sides.length) {
-		const result = await runElk(model, 1);
+		const result = await runElk(model, 1, edgeSpacing);
 		setBounds(result);
 		return result;
 	}
-	const halves = await Promise.all(sides.map((side) => runElk(model, split, side)));
+	const halves = await Promise.all(sides.map((side) => runElk(model, split, edgeSpacing, side)));
 	const result = emptyLayout();
 	for (const half of halves) {
 		const root = half.nodes.get(model.rootId);
@@ -285,6 +289,8 @@ function readingScale(layout: AccountGraphLayout, rootId: string, viewport: { wi
 	return Math.min(1, viewport.width / width, viewport.height / height);
 }
 async function calculate(model: Model, viewport: { width: number; height: number }) {
+	// Increase route separation for the scaled-down mobile overview.
+	const edgeSpacing = viewport.width < 700 ? 32 : undefined;
 	const maxBank = Math.max(...[-1, 1].map((side) => [...model.nodes.values()].filter((node) => node.side === side).length));
 	const nodeHeight = [...model.nodes.values()].find((node) => node.id !== model.rootId)?.height ?? 64;
 	const rows = Math.max(1, Math.floor((viewport.height - margin * 2 + gap) / (nodeHeight + gap)));
@@ -293,7 +299,7 @@ async function calculate(model: Model, viewport: { width: number; height: number
 	let best: AccountGraphLayout | undefined, bestScore = -1;
 	for (const split of splits) {
 		try {
-			const result = await candidate(model, split);
+			const result = await candidate(model, split, edgeSpacing);
 			if (!validGeometry(result, model)) continue;
 			const score = readingScale(result, model.rootId, viewport);
 			if (score > bestScore + 0.000001) { best = result; bestScore = score; }
