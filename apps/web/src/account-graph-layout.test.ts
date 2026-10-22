@@ -135,11 +135,16 @@ describe("account graph layout", () => {
 			expect(y + node.height * scale).toBeLessThanOrEqual(viewport.height - 8);
 		}
 	});
-	it.each([-1, 1, 8, 11])("keeps the mailbox edge independently selectable in a mobile reciprocal/cross-side overview (ID order %i)", async (seed) => {
+	it.each([
+		...[-1, 1, 8, 11].map((seed) => ({ seed, width: 318, height: 570, zoom: 0.28 })),
+		...[-2, ...Array.from({ length: 16 }, (_, index) => index)].map((seed) => ({ seed, width: 1219, height: 685, zoom: 1 })),
+	])("keeps the mailbox edge independently selectable in a reciprocal/cross-side overview at width $width (ID order $seed)", async ({ seed, width, height, zoom }) => {
 		const names = ["mail", "phoneA", "phoneB", "docs", "code", "design", "hosting", "video", "analytics", "shop", "learning", "tracker"];
-		const order = seed === -1 ? ["phoneA", "hosting", "docs", "video", "code", "analytics", "shop", "learning", "tracker", "design", "phoneB", "mail"] : [...names];
+		// Preserve the relative ID order from the real desktop failure without copying browser IDs.
+		const capturedOrder = ["mail", "analytics", "design", "code", "hosting", "learning", "shop", "phoneB", "phoneA", "docs", "tracker", "video"];
+		const order = seed === -2 ? capturedOrder : seed === -1 ? ["phoneA", "hosting", "docs", "video", "code", "analytics", "shop", "learning", "tracker", "design", "phoneB", "mail"] : [...names];
 		let random = seed + 29;
-		if (seed !== -1) for (let index = order.length - 1; index > 0; index--) {
+		if (seed >= 0) for (let index = order.length - 1; index > 0; index--) {
 			random = (Math.imul(random, 1664525) + 1013904223) >>> 0;
 			const other = random % (index + 1);
 			[order[index], order[other]] = [order[other], order[index]];
@@ -149,18 +154,19 @@ describe("account graph layout", () => {
 		const assets = names.map((name) => asset(id(name)));
 		const pairs = [...names.slice(3).map((name) => [name, "mail"]), ["docs", "mail"], ["code", "phoneA"], ["design", "phoneB"], ["mail", "phoneA"], ["phoneA", "code"], ["mail", "docs"]];
 		const relations = pairs.map(([from, to], index) => relation(id(from), id(to), `pointer-${seed}-${index}`));
-		const viewport = { width: 318, height: 570 };
+		const viewport = { width, height };
 		const initial = await layoutAccountGraph(id("mail"), assets, relations, viewport), root = initial.nodes.get(id("mail"));
-		if (!root) throw Error("Missing mobile graph root");
+		if (!root) throw Error("Missing pointer graph root");
 		const left = names.slice(3).find((name) => (initial.nodes.get(id(name))?.x ?? Infinity) < root.x);
 		const right = names.slice(3).find((name) => (initial.nodes.get(id(name))?.x ?? -Infinity) > root.x);
-		if (!left || !right) throw Error("Missing mobile graph bank");
+		if (!left || !right) throw Error("Missing pointer graph bank");
 		if (seed === -1) expect([left, right]).toEqual(["docs", "hosting"]);
+		if (seed === -2) expect([left, right]).toEqual(["docs", "code"]);
 		relations.push(relation(id(left), id(right), `pointer-cross-${seed}`));
 		const layout = await layoutAccountGraph(id("mail"), assets, relations, viewport);
 		verifyGeometry(layout, relations);
 		const fittedZoom = Math.min(1, viewport.width / (layout.bounds.width + 16), viewport.height / (layout.bounds.height + 16));
-		expect(hasExclusivePointerPatch(layout, key(id("docs"), id("mail")), 0.28)).toBe(true);
+		expect(hasExclusivePointerPatch(layout, key(id("docs"), id("mail")), zoom)).toBe(true);
 		expect(hasExclusivePointerPatch(layout, key(id("docs"), id("mail")), fittedZoom)).toBe(true);
 	});
 	it("is stable across collection ordering, multiple purposes and fresh metadata", async () => {

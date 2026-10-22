@@ -53,7 +53,7 @@ type ModelEdge = Pair & {
 type Model = { rootId: string; nodes: Map<string, ModelNode>; edges: ModelEdge[]; twin: boolean };
 
 const elk = new ELK();
-const margin = 16;
+const margin = 12;
 const gap = 24;
 const epsilon = 0.01;
 const cache = new Map<string, Promise<AccountGraphLayout>>();
@@ -289,8 +289,8 @@ function readingScale(layout: AccountGraphLayout, rootId: string, viewport: { wi
 	return Math.min(1, viewport.width / width, viewport.height / height);
 }
 async function calculate(model: Model, viewport: { width: number; height: number }) {
-	// Increase route separation for the scaled-down mobile overview.
-	const edgeSpacing = viewport.width < 700 ? 32 : undefined;
+	// Reserve more route separation for the scaled-down mobile overview.
+	const edgeSpacing = viewport.width < 700 ? 32 : 16;
 	const maxBank = Math.max(...[-1, 1].map((side) => [...model.nodes.values()].filter((node) => node.side === side).length));
 	const nodeHeight = [...model.nodes.values()].find((node) => node.id !== model.rootId)?.height ?? 64;
 	const rows = Math.max(1, Math.floor((viewport.height - margin * 2 + gap) / (nodeHeight + gap)));
