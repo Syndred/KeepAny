@@ -380,6 +380,8 @@ test("crowded graph filters neighbors and clears filter on center change", async
 		await expect(
 			page.getByRole("heading", { name: neighbors[4] }),
 		).toBeVisible();
+		await expect(page.getByLabel("Find connections", { exact: true })).toBeVisible();
+		await expect(page.getByLabel("Filter connections", { exact: true })).toHaveCount(0);
 		await page.goto("/assets/project");
 		await page.getByText(project, { exact: true }).first().click();
 		await expect(filter).toHaveValue("");

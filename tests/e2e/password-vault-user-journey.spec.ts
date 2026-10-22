@@ -433,7 +433,7 @@ for (const locale of ["zh-CN", "en"] as const)
 				await exerciseAccountGraphControls(page);
 				await page
 					.locator(".account-graph-view-actions")
-					.getByRole("button", { name: /^(查看全图|Fit all)$/, exact: true })
+					.getByRole("button", { name: /^(适应画布|Fit all)$/, exact: true })
 					.click();
 				const cloudNodeLink = page
 					.locator(".asset-graph-link")

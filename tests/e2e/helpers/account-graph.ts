@@ -8,6 +8,19 @@ export function accountGraphCanvas(page: Page) {
 	return activeAccountGraph(page).locator(".react-flow");
 }
 
+export async function setAccountRelationDetailsOpen(page: Page, open = true) {
+	const details = page.locator("details.account-relation-details");
+	await expect(details).toHaveCount(1);
+	if (
+		(await details.evaluate(
+			(element) => (element as HTMLDetailsElement).open,
+		)) !== open
+	)
+		await details.locator(":scope > summary").click();
+	await expect(details).toHaveJSProperty("open", open);
+	return details;
+}
+
 export async function waitForAccountGraphLayout(
 	page: Page,
 	expected: { nodes?: number; edges?: number } = {},
@@ -545,6 +558,8 @@ async function expectUsefulAccountGraphFit(page: Page) {
 
 export async function exerciseAccountGraphControls(page: Page) {
 	const graph = await waitForAccountGraphLayout(page);
+	await expect(graph.locator(".react-flow__controls-button")).toHaveCount(2);
+	await expect(graph.locator(".react-flow__controls-fitview")).toHaveCount(0);
 	const initial = await graphViewport(page);
 	await graph.locator(".react-flow__controls-zoomin").click();
 	await expect
@@ -562,8 +577,6 @@ export async function exerciseAccountGraphControls(page: Page) {
 		expect(bounds?.width).toBeGreaterThanOrEqual(44);
 		expect(bounds?.height).toBeGreaterThanOrEqual(44);
 	}
-	await graph.locator(".react-flow__controls-fitview").click();
-	const controlFit = await expectUsefulAccountGraphFit(page);
 	const actions = graph.locator(".account-graph-view-actions");
 	await expect(actions).toBeVisible();
 	const center = actions.getByRole("button", {
@@ -571,16 +584,14 @@ export async function exerciseAccountGraphControls(page: Page) {
 		exact: true,
 	});
 	const fitAll = actions.getByRole("button", {
-		name: /^(查看全图|Fit all)$/,
+		name: /^(适应画布|Fit all)$/,
 		exact: true,
 	});
+	await expect(fitAll).toHaveCount(1);
 	await center.click();
 	await expectReadableAccountGraph(page);
 	await fitAll.click();
-	const actionFit = await expectUsefulAccountGraphFit(page);
-	expect(actionFit.zoom).toBeCloseTo(controlFit.zoom, 3);
-	expect(actionFit.x).toBeCloseTo(controlFit.x, 1);
-	expect(actionFit.y).toBeCloseTo(controlFit.y, 1);
+	await expectUsefulAccountGraphFit(page);
 	await center.click();
 	await expectReadableAccountGraph(page);
 }
@@ -753,12 +764,18 @@ export async function expectCanvasActionsOutsideStage(page: Page) {
 	await graph.locator(".account-graph-view-actions").scrollIntoViewIfNeeded();
 	await expect(navigation).toBeVisible();
 	await expect(navigation.locator(".react-flow__controls")).toHaveCount(1);
+	await expect(navigation.locator(".react-flow__controls-button")).toHaveCount(
+		2,
+	);
 	await expect(
-		navigation.getByRole("button", {
-			name: /^(适应视图|Fit view)$/,
-			exact: true,
-		}),
+		navigation.locator(".react-flow__controls-zoomin"),
 	).toBeVisible();
+	await expect(
+		navigation.locator(".react-flow__controls-zoomout"),
+	).toBeVisible();
+	await expect(navigation.locator(".react-flow__controls-fitview")).toHaveCount(
+		0,
+	);
 	const [actions, stage] = await Promise.all([
 		graph.locator(".account-graph-view-actions").boundingBox(),
 		graph.locator(".react-flow").boundingBox(),

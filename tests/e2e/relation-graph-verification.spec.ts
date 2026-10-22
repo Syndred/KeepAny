@@ -3,7 +3,7 @@ import { expect, test, type Locator, type Page } from "@playwright/test";
 import { strFromU8, unzipSync } from "fflate";
 import { decryptBackup } from "../../packages/local-db/src/backup-crypto";
 import { selectChoice } from "./helpers/select-choice";
-import { clickAccountGraphBlank, expectReadableAccountGraph, expectAccountGraphGeometry, expectAllAccountGraphNodesInFrame, waitForAccountGraphLayout } from "./helpers/account-graph";
+import { clickAccountGraphBlank, expectReadableAccountGraph, expectAccountGraphGeometry, expectAllAccountGraphNodesInFrame, setAccountRelationDetailsOpen, waitForAccountGraphLayout } from "./helpers/account-graph";
 
 test.use({ actionTimeout: 15_000 });
 const password = "graph-verification-backup";
@@ -20,12 +20,12 @@ for (const locale of ["zh-CN", "en-US"] as const) {
 				add: "新增", name: "名称", save: "保存", addRelation: "添加关联", target: "关联至", label: "关联用途", verifiedAt: "最近核验",
 				verified: "已核实", pending: "待核实", mixed: "含待核实关系", legend: "实线为已核实关系，虚线含待核实关系",
 				details: "关联详情", close: "关闭",
-				deleteRelation: "删除关系", backup: "创建备份", download: "保存备份文件", preview: "预览", restore: /确认 ·/, restored: /已恢复 \d+ 条记录/,
+				deleteRelation: "删除关系", fit: "适应画布", backup: "创建备份", download: "保存备份文件", preview: "预览", restore: /确认 ·/, restored: /已恢复 \d+ 条记录/,
 			} : {
 				add: "Add", name: "Name", save: "Save", addRelation: "Add connection", target: "Connect to", label: "Connection label", verifiedAt: "Last verified",
 				verified: "Verified", pending: "To verify", mixed: "Includes connections to verify", legend: "Solid lines are verified; dashed lines include connections to verify.",
 				details: "Connection details", close: "Close",
-				deleteRelation: "Delete connection", backup: "Create backup", download: "Save backup file", preview: "Preview", restore: /Confirm ·/, restored: /Restored \d+ records/,
+				deleteRelation: "Delete connection", fit: "Fit all", backup: "Create backup", download: "Save backup file", preview: "Preview", restore: /Confirm ·/, restored: /Restored \d+ records/,
 			};
 			const context = await browser.newContext({ locale, viewport: { width, height: 844 }, acceptDownloads: true });
 			const contexts = [context];
@@ -153,6 +153,7 @@ for (const locale of ["zh-CN", "en-US"] as const) {
 				await graphState(page, true);
 				await page.reload();
 				await graphState(page, true);
+				await setAccountRelationDetailsOpen(page);
 				await page.getByRole("button", { name: `${text.deleteRelation} · Extra pending · Verified account`, exact: true }).click();
 				await page.getByRole("dialog").getByRole("button", { name: text.deleteRelation, exact: true }).click();
 				await expect(page.getByRole("dialog")).toBeHidden();
@@ -168,11 +169,12 @@ for (const locale of ["zh-CN", "en-US"] as const) {
 				await expect(reverseDetails).not.toContainText("Pending link");
 				await reverseDetails.getByRole("button", { name: text.close, exact: true }).click();
 				await graphGeometry(page);
+				await setAccountRelationDetailsOpen(page);
 				await page.getByRole("button", { name: `${text.deleteRelation} · Reverse pending · Pending account`, exact: true }).click();
 				await page.getByRole("dialog").getByRole("button", { name: text.deleteRelation, exact: true }).click();
 				await expect(page.getByRole("dialog")).toBeHidden();
 				await graphState(page);
-				await page.locator(".react-flow__controls-fitview").click();
+				await page.locator(".account-graph-view-actions").getByRole("button", { name: text.fit, exact: true }).click();
 				await page.locator(".react-flow__node").filter({ hasText: "Pending account" }).click();
 				await expect(page.getByRole("heading", { name: "Pending account", exact: true })).toBeVisible();
 				await expect(page.locator(".relation-graph-edge--pending")).toHaveCount(1);
@@ -215,7 +217,7 @@ for (const locale of ["zh-CN", "en-US"] as const) {
 				await expect(page.locator(".react-flow__edge-path")).toHaveCount(6);
 				await expectReadableAccountGraph(page);
 				await graphGeometry(page);
-				await page.locator(".react-flow__controls-fitview").click();
+				await page.locator(".account-graph-view-actions").getByRole("button", { name: text.fit, exact: true }).click();
 				await allNodesInFrame(page);
 				await page.locator(".graph").scrollIntoViewIfNeeded();
 				await page.screenshot({ path: evidence ? `${evidence}/relation-graph-six-${locale}-${width}.png` : test.info().outputPath(`relation-graph-six-${locale}-${width}.png`) });

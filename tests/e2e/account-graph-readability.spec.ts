@@ -26,6 +26,7 @@ import {
 	exerciseAccountGraphControls,
 	exerciseAccountGraphMiniMap,
 	panAccountGraphNodeIntoView,
+	setAccountRelationDetailsOpen,
 	visibleGraphNodeIds,
 	waitForAccountGraphLayout,
 } from "./helpers/account-graph";
@@ -39,7 +40,7 @@ if (evidence) mkdirSync(evidence, { recursive: true });
 const accounts = [
 	{
 		key: "mail",
-		name: "QA Studio mailbox",
+		name: "graph.owner@example.test",
 		username: "graph.owner@example.test",
 		category: "email",
 	},
@@ -179,9 +180,9 @@ function copy(locale: string) {
 				duplicate: "这条同方向、同用途的关系已存在。",
 				selection: "关联详情",
 				close: "关闭",
-				fit: "查看全图",
+				fit: "适应画布",
 				center: "定位当前",
-				expand: "扩大画布",
+				expand: "大图查看",
 				verified: "已核实",
 				mixed: "含待核实关系",
 				pending: "待核实",
@@ -263,8 +264,16 @@ function accountId(hrefs: Map<AccountKey, string>, key: AccountKey) {
 	if (!id) throw Error(`Missing scenario account ID: ${key}`);
 	return id;
 }
-function connectionText(connection: Connection, text: Copy) {
-	return `${account(connection.from).name} → ${account(connection.to).name} · ${text.purposes[connection.purpose]}`;
+function connectionRow(connection: Connection, text: Copy) {
+	const endpoints = [
+		account(connection.from).name,
+		account(connection.to).name,
+	];
+	return {
+		endpoints,
+		path: endpoints.join(" → "),
+		purpose: text.purposes[connection.purpose],
+	};
 }
 async function addScenarioConnection(
 	page: Page,
@@ -289,15 +298,35 @@ async function addScenarioConnection(
 			.fill("2026-10-22");
 	await editor.getByRole("button", { name: text.save, exact: true }).click();
 	await expect(editor).toBeHidden();
-	await expect(
-		page
-			.locator(".relation-list .relation-info > small")
-			.filter({ hasText: connectionText(connection, text) }),
-	).toHaveCount(1);
+	const expected = connectionRow(connection, text);
+	const row = page
+		.locator(".relation-list .relation-row")
+		.filter({
+			has: page
+				.locator(".relation-endpoints")
+				.filter({ hasText: expected.path }),
+		})
+		.filter({
+			has: page
+				.locator(".relation-purpose")
+				.filter({ hasText: expected.purpose }),
+		});
+	await expect(row).toHaveCount(1);
+	await expect(row.locator(".relation-endpoints")).toHaveText(expected.path);
+	await expect(row.locator(".relation-info strong")).toHaveText(
+		expected.endpoints,
+	);
+	await expect(row.locator(".relation-purpose")).toHaveText(expected.purpose);
 }
 
 async function fullFamily(page: Page, expected: Connection[], text: Copy) {
+	const details = page.locator("details.account-relation-details");
+	await expect(details).toHaveCount(1);
+	const detailsOpen = await details.evaluate(
+		(element) => (element as HTMLDetailsElement).open,
+	);
 	await page.getByRole("button", { name: text.family, exact: true }).click();
+	await expect(details).toHaveJSProperty("open", detailsOpen);
 	const pairCount = new Set(
 		expected.map((connection) => `${connection.from}:${connection.to}`),
 	).size;
@@ -313,19 +342,21 @@ async function fullFamily(page: Page, expected: Connection[], text: Copy) {
 		await expect(edge).toHaveAttribute("marker-end", /url\(.+\)/);
 	const rows = page.locator(".relation-list .relation-row");
 	await expect(rows).toHaveCount(expected.length);
-	const actual = await rows.evaluateAll((elements) =>
-		elements
-			.map(
-				(row) =>
-					row
-						.querySelector(".relation-info > small")
-						?.textContent?.replace(/\s+/g, " ")
-						.trim() ?? "",
-			)
+	const actual = await rows.evaluateAll((elements) => {
+		const normalized = (element: Element | null) =>
+			element?.textContent?.replace(/\s+/g, " ").trim() ?? "";
+		return elements.map((row) => ({
+			endpoints: [...row.querySelectorAll(".relation-info strong")].map(
+				normalized,
+			),
+			path: normalized(row.querySelector(".relation-endpoints")),
+			purpose: normalized(row.querySelector(".relation-purpose")),
+		}));
+	});
+	expect(actual.map((row) => JSON.stringify(row)).sort()).toEqual(
+		expected
+			.map((connection) => JSON.stringify(connectionRow(connection, text)))
 			.sort(),
-	);
-	expect(actual).toEqual(
-		expected.map((connection) => connectionText(connection, text)).sort(),
 	);
 	expect(
 		await page.evaluate(
@@ -823,6 +854,9 @@ async function expandAndRestoreSelection(
 	await recordAccountGraphCamera(page, "before-expand-filter");
 	const beforeFilter = await viewportPosition(page);
 	await filter.fill("QA Docs");
+	const details = page.locator("details.account-relation-details");
+	await expect(details).toHaveJSProperty("open", true);
+	await expect(details.locator(".relation-row").first()).toBeVisible();
 	await recordAccountGraphCamera(page, "after-expand-filter");
 	await expectAccountGraphCameraUnchanged(
 		page,
@@ -902,6 +936,24 @@ async function expectBalancedScenario(
 	expected: Connection[],
 ) {
 	const graph = await waitForAccountGraphLayout(page);
+	for (const key of ["mail", "docs"] as const) {
+		const record = account(key);
+		const node = graph.locator(
+			`.react-flow__node[data-id="${accountId(hrefs, key)}"]`,
+		);
+		const label = node.locator(".asset-graph-label");
+		const username =
+			record.name.trim() === record.username.trim() ? "" : record.username;
+		const accessibleName = [record.name, username].filter(Boolean).join(" · ");
+		await expect(label.locator("strong")).toHaveText(record.name);
+		await expect(label.locator("small")).toHaveCount(username ? 1 : 0);
+		if (username) {
+			await expect(label.locator("small")).toHaveText(username);
+			await expect(label.locator("small")).toBeVisible();
+		}
+		await expect(label).toHaveAttribute("title", accessibleName);
+		await expect(node).toHaveAttribute("aria-label", accessibleName);
+	}
 	await expectAccountGraphGeometry(
 		page,
 		expected.map((edge) => ({
@@ -1268,6 +1320,10 @@ for (const locale of ["zh-CN", "en-US"] as const) {
 					await addScenarioConnection(page, hrefs, connection, text);
 				const rootHref = detailsHref(hrefs, "mail");
 				await page.goto(rootHref);
+				const details = page.locator("details.account-relation-details");
+				await expect(details).toHaveJSProperty("open", false);
+				await expect(details.locator(".relation-row").first()).toBeAttached();
+				await expect(details.locator(".relation-row").first()).toBeHidden();
 				await fullFamily(page, baseline, text);
 				const across = await crossSideConnection(page, hrefs);
 				await addScenarioConnection(page, hrefs, across, text);
@@ -1303,9 +1359,18 @@ for (const locale of ["zh-CN", "en-US"] as const) {
 				await reopenFamily(context, rootHref, baseline, text, errors);
 				await exerciseLatestLayoutRequest(page, hrefs, baseline, text);
 				for (let repeat = 0; repeat < 2; repeat++) {
+					const open = repeat === 0;
+					await setAccountRelationDetailsOpen(page, open);
+					if (open)
+						await expect(
+							details.locator(".relation-row").first(),
+						).toBeVisible();
+					else
+						await expect(details.locator(".relation-row").first()).toBeHidden();
 					await page
 						.getByRole("button", { name: text.direct, exact: true })
 						.click();
+					await expect(details).toHaveJSProperty("open", open);
 					await fullFamily(page, baseline, text);
 				}
 
@@ -1325,6 +1390,7 @@ for (const locale of ["zh-CN", "en-US"] as const) {
 				// Removing one purpose must preserve the other purpose for the same source and target.
 				const removed = initialConnections[0];
 				await page.goto(detailsHref(hrefs, removed.from));
+				await setAccountRelationDetailsOpen(page);
 				await page
 					.getByRole("button", {
 						name: `${text.remove} · ${text.purposes[removed.purpose]} · ${account(removed.to).name}`,
