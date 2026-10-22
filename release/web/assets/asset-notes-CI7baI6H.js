@@ -1,0 +1,1 @@
+function e(e){let{longDescription:t,notes:n}=e;return t.trim()?n.trim()?t.trim()===n.trim()?n:`${t}\n\n${n}`:t:n}function t(t,n){return n===e(t)?t:{...t,longDescription:``,notes:n}}export{t as n,e as t};
