@@ -13,7 +13,7 @@ import { ImpactTaskRow } from "./ImpactTaskRow";
 import { ProjectWorkflowTaskRow } from "./ProjectWorkflowTaskRow";
 import { MaintenanceTaskRow } from "./MaintenanceTaskRow";
 import { date, useAppContext } from "./view-shared";
-export function TaskRow({ task }: { task: Task }) {
+export function TaskRow({ task, hideRelated = false }: { task: Task; hideRelated?: boolean }) {
 	const { t, i18n } = useTranslation();
 	const { data, notify } = useAppContext();
 	const [busy, setBusy] = useState(false);
@@ -81,7 +81,7 @@ export function TaskRow({ task }: { task: Task }) {
 					<small>{t("reminderSavedZone", { timeZone: task.reminder.timeZone })}</small>
 					<small>{t("reminderSavedLead", { count: task.reminder.leadMinutes })} · {task.reminder.rule.mode === "once" ? t("reminderSavedOnce") : t(`reminderSavedRepeat_${task.reminder.rule.mode}_${task.reminder.rule.unit}`, { count: task.reminder.rule.every })}</small>
 				</> : <small>{date(task.dueDate, i18n.language)}</small>}
-				{task.assetId && <small>{t("related")}: {related ? <TextLink asChild><Link to="/assets/$kind/$id" params={{ kind: related.kind, id: related.id }}>{related.name}</Link></TextLink> : t("taskRelatedMissing")}</small>}
+				{task.assetId && !hideRelated && <small>{t("related")}: {related ? <TextLink asChild><Link to="/assets/$kind/$id" params={{ kind: related.kind, id: related.id }}>{related.name}</Link></TextLink> : t("taskRelatedMissing")}</small>}
 				{completionHistory.length ? (
 					<small>{t("impactCompletedHistory")}: {completionHistory.map((value) => new Date(value).toLocaleString(i18n.language)).join(" · ")}</small>
 				) : null}

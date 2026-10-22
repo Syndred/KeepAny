@@ -310,6 +310,7 @@ export function AssetDetail() {
 	const relationInFlight = useRef(false);
 	const [relationError, setRelationError] = useState("");
 	const [relationFilter, setRelationFilter] = useState("");
+	const [relationDetailsOpen, setRelationDetailsOpen] = useState(false);
 	const [graphScope, setGraphScope] = useState<"direct" | "family">("direct");
 	const [selectedGraphEdgeId, setSelectedGraphEdgeId] = useState<string | null>(null);
 	const centerId = asset?.id;
@@ -323,7 +324,7 @@ export function AssetDetail() {
 		void navigate({ to: "/assets/$kind/$id", params: { kind: target.kind, id: target.id } });
 	}
 	useEffect(() => {
-		if (centerId) { setRelationFilter(""); setGraphScope("direct"); setSelectedGraphEdgeId(null); }
+		if (centerId) { setRelationFilter(""); setRelationDetailsOpen(false); setGraphScope("direct"); setSelectedGraphEdgeId(null); }
 	}, [centerId]);
 	function changeGraphScope(scope: "direct" | "family") {
 		setSelectedGraphEdgeId(null);
@@ -588,8 +589,6 @@ export function AssetDetail() {
 	})).values()).filter((linked): linked is Asset => !!linked);
 	const relatedAccounts = relatedAssets.filter((linked) => linked.kind === "account");
 	const accountVerifiedAt = relations.map((relation) => relation.verifiedAt).filter(Boolean).sort().at(-1) ?? "";
-	const accountProjects = relatedAssets.filter((linked) => linked.kind === "project");
-	const accountVaults = relatedAssets.filter((linked) => linked.kind === "vault");
 	const relatedSubscriptions = relatedAssets.filter((linked) => linked.kind === "subscription" && linked.status === "active");
 	const pendingBacklinks = submissions.filter((entry) => entry.status === "verify");
 	const histories = data.history
@@ -1286,6 +1285,80 @@ export function AssetDetail() {
 					)}
 				</section>
 	);
+	const relationSearch = <div className="field relation-filter">
+		<label className={kind === "account" ? "account-relation-search-label" : undefined} htmlFor="relation-filter">
+			{t(kind === "account" ? "accountGraphSearchLabel" : "filterRelations")}
+		</label>
+		<input
+			id="relation-filter"
+			type="search"
+			placeholder={kind === "account" ? t("accountGraphSearch") : undefined}
+			value={relationFilter}
+			onChange={(event) => { setRelationFilter(event.target.value); if (event.target.value.trim()) setRelationDetailsOpen(true); }}
+		/>
+		{kind === "account" && normalizedFilter && <small role="status">{t("accountGraphSearchMatches", { count: graphMatches.size })}</small>}
+	</div>;
+	const relationList = visibleRelations.length ? (
+		<div className="list relation-list">
+			{visibleRelations.map((relation) => {
+				const neighbor = liveById.get(
+					relation.from === asset.id ? relation.to : relation.from,
+				);
+				const indirectTarget = relation.from !== asset.id && relation.to !== asset.id ? liveById.get(relation.to) : undefined;
+				if (!neighbor) return null;
+				return (
+					<div className="list-row relation-row" key={relation.id}>
+						<div className="relation-info">
+							{kind === "account" ? <>
+								<span className="relation-endpoints">{(["from", "to"] as const).map((side) => {
+									const id = relation[side];
+									const endpoint = liveById.get(id);
+									if (!endpoint) return null;
+									return <span key={side}>{side === "to" && <span> → </span>}{id === asset.id ? <strong>{endpoint.name}</strong> : <TextLink asChild><Link to="/assets/$kind/$id" params={{ kind: endpoint.kind, id: endpoint.id }} onClick={(event) => { event.preventDefault(); visitRelation(endpoint); }}><strong>{endpoint.name}</strong></Link></TextLink>}</span>;
+								})}</span>
+								<small className="relation-purpose">{relation.label}</small>
+							</> : <>
+							<TextLink asChild><Link
+								to="/assets/$kind/$id"
+										params={{ kind: neighbor.kind, id: neighbor.id }}
+										onClick={(event) => { event.preventDefault(); visitRelation(neighbor); }}
+							>
+								<strong>{neighbor.name}</strong>
+							</Link></TextLink>
+							{indirectTarget && <><span aria-hidden="true"> → </span><TextLink asChild><Link to="/assets/$kind/$id" params={{ kind: indirectTarget.kind, id: indirectTarget.id }} onClick={(event) => { event.preventDefault(); visitRelation(indirectTarget); }}><strong>{indirectTarget.name}</strong></Link></TextLink></>}
+							<small>
+								{liveById.get(relation.from)?.name} →{" "}
+								{liveById.get(relation.to)?.name} · {relation.label}
+							</small>
+							</>}
+							{(relation.source || relation.verifiedAt) && (
+								<small>
+									{relation.source &&
+										`${t("relationSource")}: ${relation.source}`}
+									{relation.source && relation.verifiedAt && " · "}
+									{relation.verifiedAt &&
+										`${t("verifiedAt")}: ${date(relation.verifiedAt, i18n.language)}`}
+								</small>
+							)}
+						</div>
+						<Button
+							variant="ghost"
+							size="small"
+							aria-label={`${t("deleteRelation")} · ${relation.label} · ${neighbor.name}`}
+							onClick={() => {
+								setRelationDeleteError("");
+								setRelationToDelete(relation);
+							}}
+						>
+							{t("remove")}
+						</Button>
+					</div>
+				);
+			})}
+		</div>
+	) : (
+		asset.kind === "project" ? <p className="asset-quiet-empty">{t("noMatches")}</p> : <Empty hint={false} />
+	);
 	return (
 		<main className={`page asset-detail asset-detail-${kind}${relations.length ? " has-relations" : ""}`}>
 			{kind === "project" && <div className="asset-project-action-bar">
@@ -1297,7 +1370,7 @@ export function AssetDetail() {
 			</div>}
 			<div className="page-header">
 				<div>
-					{kind !== "project" && <TextLink asChild><Link className="back-link" to="/assets/$kind" params={{ kind: returnKind }} onClick={() => { sessionStorage.removeItem("keepany-relation-return-id"); sessionStorage.removeItem("keepany-relation-return-kind"); }}>
+					{kind !== "project" && kind !== "account" && <TextLink asChild><Link className="back-link" to="/assets/$kind" params={{ kind: returnKind }} onClick={() => { sessionStorage.removeItem("keepany-relation-return-id"); sessionStorage.removeItem("keepany-relation-return-kind"); }}>
 						<ArrowLeft size={16} />
 						{t("back")}
 					</Link></TextLink>}
@@ -1305,9 +1378,9 @@ export function AssetDetail() {
 						{t(kind)} · {niceCategory(asset.category || (kind === "account" ? "other" : ""), t)}
 					</div>
 					{kind === "project" && projectMedia.logoId ? <div className="asset-project-hero-brand"><div className="asset-project-hero-logo"><ImageTile id={projectMedia.logoId} /></div><h1>{asset.name}</h1></div> : <h1>{asset.name}</h1>}
-					<p className="subtitle">
+					{kind !== "account" && <p className="subtitle">
 						{asset.description || asset.url || t("local")}
-					</p>
+					</p>}
 					{kind === "project" && <div className="asset-project-hero-meta"><span>{niceCategory(asset.category, t)}</span>{asset.status && <span>{t(asset.status)}</span>}{asset.url && <a href={asset.url} target="_blank" rel="noopener noreferrer">{asset.url}<ExternalLink size={13} /></a>}</div>}
 					{kind === "project" && <div className="asset-project-hero-actions">
 						<Button onClick={() => scrollToFold("asset-project-materials", setMaterialsOpen)}>{t("projectViewMaterials")}<ArrowDownRight size={15} /></Button>
@@ -1596,28 +1669,14 @@ export function AssetDetail() {
 					</div>
 					{relations.length ? (
 						<>
-							{kind === "account" && <div className="account-graph-toolbar">
+							{kind === "account" ? <div className="account-graph-toolbar">
 								<div className="actions">
 									<Button size="small" variant={graphScope === "direct" ? "primary" : "default"} aria-pressed={graphScope === "direct"} onClick={() => changeGraphScope("direct")}>{t("accountGraphDirect")}</Button>
 									<Button size="small" variant={graphScope === "family" ? "primary" : "default"} aria-pressed={graphScope === "family"} onClick={() => changeGraphScope("family")}>{t("accountGraphFamily")}</Button>
 								</div>
-								<p><span>{t("accountGraphDirection")}</span><span>{t("relationGraphLegend")}</span></p>
-							</div>}
-							{(kind === "account" || relations.length >= 5) && (
-								<div className="field relation-filter">
-									<label htmlFor="relation-filter">
-										{t("filterRelations")}
-									</label>
-									<input
-										id="relation-filter"
-										type="search"
-										placeholder={kind === "account" ? t("accountGraphSearch") : undefined}
-										value={relationFilter}
-										onChange={(event) => setRelationFilter(event.target.value)}
-									/>
-									{kind === "account" && normalizedFilter && <small role="status">{t("accountGraphSearchMatches", { count: graphMatches.size })}</small>}
-								</div>
-							)}
+								{relationSearch}
+								<details className="account-graph-guide"><summary>{t("accountGraphHelp")}</summary><p><span>{t("accountGraphDirection")}</span><span>{t("relationGraphLegend")}</span></p></details>
+							</div> : relations.length >= 5 ? relationSearch : null}
 							{kind === "account" ? <Suspense fallback={<p role="status">{t("loading")}</p>}><AccountFamilyGraphView key={`${asset.id}:${graphScope}`} root={asset} assets={[asset, ...graphRelated]} relations={displayedFamily?.relations ?? relations} matches={graphMatches} selectedEdgeId={selectedGraphEdgeId} onSelectEdge={setSelectedGraphEdgeId} onVisit={visitRelation} /></Suspense> : <section className="graph" aria-label={t("relations")}>
 								<ReactFlow
 									fitView
@@ -1636,57 +1695,10 @@ export function AssetDetail() {
 									<Controls showInteractive={false} />
 								</ReactFlow>
 							</section>}
-							{visibleRelations.length ? (
-								<div className="list relation-list">
-									{visibleRelations.map((relation) => {
-										const neighbor = liveById.get(
-											relation.from === asset.id ? relation.to : relation.from,
-										);
-										const indirectTarget = relation.from !== asset.id && relation.to !== asset.id ? liveById.get(relation.to) : undefined;
-										if (!neighbor) return null;
-										return (
-											<div className="list-row relation-row" key={relation.id}>
-												<div className="relation-info">
-													<TextLink asChild><Link
-														to="/assets/$kind/$id"
-																params={{ kind: neighbor.kind, id: neighbor.id }}
-																onClick={(event) => { event.preventDefault(); visitRelation(neighbor); }}
-													>
-														<strong>{neighbor.name}</strong>
-													</Link></TextLink>
-													{indirectTarget && <><span aria-hidden="true"> → </span><TextLink asChild><Link to="/assets/$kind/$id" params={{ kind: indirectTarget.kind, id: indirectTarget.id }} onClick={(event) => { event.preventDefault(); visitRelation(indirectTarget); }}><strong>{indirectTarget.name}</strong></Link></TextLink></>}
-													<small>
-														{liveById.get(relation.from)?.name} →{" "}
-														{liveById.get(relation.to)?.name} · {relation.label}
-													</small>
-													{(relation.source || relation.verifiedAt) && (
-														<small>
-															{relation.source &&
-																`${t("relationSource")}: ${relation.source}`}
-															{relation.source && relation.verifiedAt && " · "}
-															{relation.verifiedAt &&
-																`${t("verifiedAt")}: ${date(relation.verifiedAt, i18n.language)}`}
-														</small>
-													)}
-												</div>
-												<Button
-													variant="ghost"
-													size="small"
-													aria-label={`${t("deleteRelation")} · ${relation.label} · ${neighbor.name}`}
-													onClick={() => {
-														setRelationDeleteError("");
-														setRelationToDelete(relation);
-													}}
-												>
-													{t("remove")}
-												</Button>
-											</div>
-										);
-									})}
-								</div>
-							) : (
-								asset.kind === "project" ? <p className="asset-quiet-empty">{t("noMatches")}</p> : <Empty hint={false} />
-							)}
+							{kind === "account" ? <details className="account-relation-details" open={relationDetailsOpen} onToggle={(event) => setRelationDetailsOpen(event.currentTarget.open)}>
+								<summary>{t("accountGraphDetails", { count: visibleRelations.length })}</summary>
+								{relationList}
+							</details> : relationList}
 						</>
 					) : (
 						asset.kind === "project" ? <p className="asset-quiet-empty">{t("none")}</p> : <Empty hint={false} />
@@ -1710,7 +1722,7 @@ export function AssetDetail() {
 					{ownTasks.length ? (
 						<div className="list">
 							{ownTasks.map((task) => (
-								<TaskRow key={task.id} task={task} />
+								<TaskRow key={task.id} task={task} hideRelated={kind === "account"} />
 							))}
 						</div>
 					) : (
@@ -1719,12 +1731,11 @@ export function AssetDetail() {
 				</section>
 			</div>
 			{asset.kind === "account" && <div className="account-facts-grid">
-				<section className="card account-facts-card"><div className="account-facts-heading"><h2>{t("accountBasicInfo")}</h2><Button size="small" onClick={() => setEdit(true)}>{t("accountEditProfile")}</Button></div><dl>
+				<section className="card account-facts-card"><div className="account-facts-heading"><h2>{t("accountBasicInfo")}</h2></div><dl>
 					<div><dt>{t("accountProvider")}</dt><dd>{asset.accountProvider || t("accountNotRecorded")}</dd></div>
-					<div><dt>{t("username")}</dt><dd>{asset.username || t("accountNotRecorded")}</dd></div>
+					{asset.username.trim() !== asset.name.trim() && <div><dt>{t("username")}</dt><dd>{asset.username || t("accountNotRecorded")}</dd></div>}
 					<div><dt>{t("status")}</dt><dd>{t(asset.status)}</dd></div>
 					<div><dt>{t("accountPurpose")}</dt><dd>{asset.description || t("accountNotRecorded")}</dd></div>
-					<div><dt>{t("category")}</dt><dd>{niceCategory(asset.category || "other", t)}</dd></div>
 					{asset.url && <div><dt>{t("url")}</dt><dd><TextLink href={asset.url} target="_blank" rel="noopener noreferrer"><span>{asset.url}</span></TextLink></dd></div>}
 					{asset.contact && <div><dt>{t("contact")}</dt><dd>{asset.contact}</dd></div>}
 				</dl>
@@ -1732,17 +1743,10 @@ export function AssetDetail() {
 				{asset.longDescription && <details className="more"><summary>{t("more")}</summary><p>{asset.longDescription}</p></details>}
 				{asset.notes && <p className="note">{asset.notes}</p>}
 				</section>
-				<section className="card account-facts-card account-links-card"><h2>{t("accountBindings")}</h2>
-					{relations.length ? <ul>{relations.map((relation) => {
-						const linked = liveById.get(relation.from === asset.id ? relation.to : relation.from);
-						return linked ? <li key={relation.id}><span>{relation.to === asset.id && /^(pw-link-login-|login-link-)/.test(relation.id) ? t("pwConnectIncomingLogin") : relation.to === asset.id && relation.id.startsWith("pw-link-recovery-") ? t("pwConnectIncomingRecovery") : relation.label}</span><TextLink asChild><Link to="/assets/$kind/$id" params={{ kind: linked.kind, id: linked.id }} onClick={(event) => { event.preventDefault(); visitRelation(linked); }}><span>{linked.name}</span></Link></TextLink></li> : null;
-					})}</ul> : <p>{t("accountNoBindings")}</p>}
-				</section>
+
 				<section className="card account-facts-card account-security-card"><h2>{t("accountRecordsSecurity")}</h2><dl>
-					<div><dt>{t("accountRelatedProjects")}</dt><dd>{accountProjects.length ? accountProjects.map((linked) => linked.name).join(" · ") : t("accountNotRecorded")}</dd></div>
 					<div><dt>{t("accountProfileVerifiedAt")}</dt><dd>{asset.accountProfileVerifiedAt ? date(asset.accountProfileVerifiedAt, i18n.language) : t("accountNotRecorded")}</dd></div>
 					<div><dt>{t("accountRelationVerifiedAt")}</dt><dd>{accountVerifiedAt ? date(accountVerifiedAt, i18n.language) : t("accountNotRecorded")}</dd></div>
-					<div><dt>{t("accountVaultReferences")}</dt><dd>{accountVaults.length ? accountVaults.map((linked) => linked.name).join(" · ") : t("accountNotRecorded")}</dd></div>
 				</dl><Button asChild><Link to="/assets/$kind" params={{ kind: "vault" }} hash={`asset-${asset.id}`}>{t("accountOpenPasswords")}<ArrowDownRight size={16} /></Link></Button></section>
 			</div>}
 			{asset.kind === "account" && attachmentSection}
