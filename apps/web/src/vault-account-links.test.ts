@@ -991,6 +991,6 @@ describe("reviewed vault account associations", () => {
 		]);
 		expect(result.neighbors.map((a) => a.id).sort()).toEqual(["b", "c"]);
 		expect(result.relations).toHaveLength(3);
-		expect(result.positions.get("b")).not.toEqual(result.positions.get("c"));
+		expect(result.relations.map((relation) => [relation.from, relation.to])).toEqual([["a", "b"], ["b", "c"], ["c", "a"]]);
 	});
 });

@@ -1,0 +1,163 @@
+import ELK, { type ElkLayoutArguments, type ElkNode } from "elkjs/lib/elk.bundled.js";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { newAsset, type Asset, type Relation } from "../../../packages/domain/src";
+import { layoutAccountGraph, type AccountGraphLayout } from "./account-graph-layout";
+
+const asset = (id: string): Asset => ({ ...newAsset("account"), id, name: id });
+const relation = (from: string, to: string, id = `${from}-${to}`): Relation => ({ id, from, to, label: "Login email", createdAt: "", verifiedAt: "", deleted: false });
+const key = (from: string, to: string) => JSON.stringify([from, to]);
+function star(total: number, prefix = "star") {
+	const root = `${prefix}-root`, assets = [asset(root), ...Array.from({ length: total - 1 }, (_, index) => asset(`${prefix}-service-${String(index).padStart(2, "0")}`))];
+	return { root, assets, relations: assets.slice(1).map((entry) => relation(entry.id, root)) };
+}
+function verifyGeometry(layout: AccountGraphLayout, relations: Relation[]) {
+	const nodes = [...layout.nodes.values()];
+	expect(layout.edges.size).toBe(new Set(relations.map((entry) => key(entry.from, entry.to))).size);
+	for (const [index, a] of nodes.entries()) {
+		expect([a.x, a.y, a.width, a.height].every(Number.isFinite)).toBe(true);
+		expect(a.x).toBeGreaterThanOrEqual(layout.bounds.x);
+		expect(a.y).toBeGreaterThanOrEqual(layout.bounds.y);
+		expect(a.x + a.width).toBeLessThanOrEqual(layout.bounds.x + layout.bounds.width);
+		expect(a.y + a.height).toBeLessThanOrEqual(layout.bounds.y + layout.bounds.height);
+		for (const b of nodes.slice(index + 1)) expect(a.x + a.width <= b.x || b.x + b.width <= a.x || a.y + a.height <= b.y || b.y + b.height <= a.y).toBe(true);
+	}
+	for (const pair of new Map(relations.map((entry) => [key(entry.from, entry.to), entry])).values()) {
+		const edge = layout.edges.get(key(pair.from, pair.to)), source = layout.nodes.get(pair.from), target = layout.nodes.get(pair.to);
+		expect(edge).toBeDefined(); expect(source).toBeDefined(); expect(target).toBeDefined();
+		if (!edge || !source || !target) throw Error("Missing layout endpoint");
+		const from = source.handles.find((handle) => handle.id === edge.sourceHandle), to = target.handles.find((handle) => handle.id === edge.targetHandle);
+		expect(from?.type).toBe("source"); expect(to?.type).toBe("target");
+		if (!from || !to) throw Error("Missing layout handle");
+		expect(edge.points[0]).toEqual({ x: source.x + from.x, y: source.y + from.y });
+		expect(edge.points.at(-1)).toEqual({ x: target.x + to.x, y: target.y + to.y });
+		expect(from.x).toBe(from.side === "left" ? 0 : source.width);
+		expect(to.x).toBe(to.side === "left" ? 0 : target.width);
+		for (let index = 1; index < edge.points.length; index++) {
+			const a = edge.points[index - 1], b = edge.points[index];
+			expect([a.x, a.y, b.x, b.y].every(Number.isFinite)).toBe(true);
+			expect(a.x === b.x || a.y === b.y).toBe(true);
+			const steps = Math.ceil(Math.hypot(a.x - b.x, a.y - b.y) / 4);
+			for (let step = 1; step < steps; step++) {
+				const x = a.x + (b.x - a.x) * step / steps, y = a.y + (b.y - a.y) * step / steps;
+				expect(nodes.some((node) => x > node.x + 0.01 && x < node.x + node.width - 0.01 && y > node.y + 0.01 && y < node.y + node.height - 0.01), `Path ${pair.from} → ${pair.to} stays outside every card`).toBe(false);
+			}
+		}
+	}
+}
+function snapshot(layout: AccountGraphLayout) {
+	return { nodes: [...layout.nodes].sort(([a], [b]) => a.localeCompare(b)), edges: [...layout.edges].sort(([a], [b]) => a.localeCompare(b)), bounds: layout.bounds };
+}
+afterEach(() => vi.restoreAllMocks());
+
+describe("account graph layout", () => {
+	it.each([12, 24, 49])("balances a %i-account shared mailbox on both sides with readable fit candidates", async (total) => {
+		const fixture = star(total), viewport = total === 49 ? { width: 1230, height: 740 } : { width: 1100, height: 560 };
+		const layout = await layoutAccountGraph(fixture.root, fixture.assets, fixture.relations, viewport);
+		verifyGeometry(layout, fixture.relations);
+		const root = layout.nodes.get(fixture.root);
+		if (!root) throw Error("Missing current account");
+		const left = [...layout.nodes].filter(([id, node]) => id !== fixture.root && node.x + node.width <= root.x), right = [...layout.nodes].filter(([id, node]) => id !== fixture.root && node.x >= root.x + root.width);
+		expect(left.length + right.length).toBe(total - 1);
+		expect(Math.abs(left.length - right.length)).toBeLessThanOrEqual(1);
+		expect(root.x + root.width / 2).toBeCloseTo(layout.bounds.width / 2, 0);
+		expect(Math.abs(root.y + root.height / 2 - layout.bounds.height / 2)).toBeLessThanOrEqual(1);
+		const zoom = Math.min(1, viewport.width / layout.bounds.width, viewport.height / layout.bounds.height);
+		expect(zoom * 14).toBeGreaterThanOrEqual(total === 12 ? 14 : 13);
+		expect(zoom * 12).toBeGreaterThanOrEqual(total === 12 ? 12 : 11);
+		for (const entry of fixture.assets.slice(1)) expect(layout.nodes.get(entry.id)?.width).toBe(total > 24 ? 160 : 190);
+		const sourceSides = new Set(fixture.relations.map((entry) => {
+			const edge = layout.edges.get(key(entry.from, entry.to));
+			return layout.nodes.get(entry.from)?.handles.find((handle) => handle.id === edge?.sourceHandle)?.side;
+		}));
+		expect(sourceSides).toEqual(new Set(["left", "right"]));
+	});
+	it("is stable across collection ordering, multiple purposes and fresh metadata", async () => {
+		const fixture = star(12, "stable"), backup = structuredClone(fixture);
+		const first = await layoutAccountGraph(fixture.root, fixture.assets, fixture.relations, { width: 1100, height: 560 });
+		const reordered = await layoutAccountGraph(fixture.root, [...fixture.assets].reverse(), [...fixture.relations].reverse().concat({ ...fixture.relations[0], id: "another-purpose", label: "Recovery phone" }), { width: 1100, height: 560 });
+		expect(snapshot(reordered)).toEqual(snapshot(first));
+		expect(fixture).toEqual(backup);
+		const root = first.nodes.get(fixture.root);
+		if (root) root.x = -999;
+		first.edges.clear();
+		expect(snapshot(await layoutAccountGraph(fixture.root, fixture.assets, fixture.relations, { width: 1100, height: 560 }))).toEqual(snapshot(reordered));
+	});
+	it("keeps cycle and reciprocal records in their actual directions with separate ports", async () => {
+		const ids = ["cycle-a", "cycle-b", "cycle-c", "cycle-d"];
+		const relations = [relation(ids[0], ids[1]), relation(ids[1], ids[0]), relation(ids[1], ids[2]), relation(ids[2], ids[0]), relation(ids[2], ids[3])];
+		const layout = await layoutAccountGraph(ids[0], ids.map(asset), relations, { width: 1100, height: 560 });
+		verifyGeometry(layout, relations);
+		const forward = layout.edges.get(key(ids[0], ids[1])), reverse = layout.edges.get(key(ids[1], ids[0]));
+		expect(forward?.points).not.toEqual(reverse ? [...reverse.points].reverse() : []);
+		for (const pair of relations.slice(0, 2)) {
+			const edge = layout.edges.get(key(pair.from, pair.to));
+			const node = layout.nodes.get(pair.from), handle = node?.handles.find((handle) => handle.id === edge?.sourceHandle);
+			expect(Math.abs((handle?.y ?? 0) - (node?.height ?? 0) / 2)).toBe(8);
+		}
+	});
+	it("routes shared email/phone, cross-side paths and multi-hop chains without dropping purposes", async () => {
+		const ids = ["email", "phone", ...Array.from({ length: 10 }, (_, index) => `mixed-${index}`)];
+		const pairs = [["mixed-0", "email"], ["mixed-0", "phone"], ["phone", "mixed-0"], ["email", "phone"], ["phone", "email"], ["mixed-1", "mixed-2"], ["mixed-2", "email"], ["mixed-3", "mixed-4"], ["mixed-4", "mixed-5"], ["mixed-5", "phone"], ["mixed-6", "email"], ["mixed-7", "phone"], ["mixed-8", "email"], ["mixed-9", "phone"]];
+		const relations = pairs.map(([from, to]) => relation(from, to));
+		const layout = await layoutAccountGraph("email", ids.map(asset), relations, { width: 1100, height: 560 });
+		verifyGeometry(layout, relations);
+		expect(layout.nodes.size).toBe(12);
+		expect(layout.edges.size).toBe(14);
+	});
+	it("excludes deleted, missing, self and disconnected records without altering input", async () => {
+		const assets = [asset("live-root"), asset("live-b"), { ...asset("deleted"), deleted: true }, asset("outside")];
+		const relations = [relation("live-root", "live-b"), relation("live-b", "deleted"), relation("deleted", "outside"), relation("live-root", "missing"), relation("live-root", "live-root"), { ...relation("live-b", "outside"), deleted: true }];
+		const layout = await layoutAccountGraph("live-root", assets, relations, { width: 0, height: Number.NaN });
+		expect([...layout.nodes.keys()].sort()).toEqual(["live-b", "live-root"]);
+		verifyGeometry(layout, relations.slice(0, 1));
+		const empty = await layoutAccountGraph("deleted", assets, relations, { width: 1100, height: 560 });
+		expect(empty.nodes.size).toBe(0); expect(empty.edges.size).toBe(0); expect(empty.bounds.width).toBe(0);
+	});
+	it.each([24, 49])("audits mixed %i-account cross-side families with cycles and shared identities", async (total) => {
+		const identities = ["mixed-email-1", "mixed-email-2", "mixed-phone-1", "mixed-phone-2"];
+		const services = Array.from({ length: total - identities.length }, (_, index) => `mixed-service-${String(index).padStart(2, "0")}`);
+		const pairs = services.map((id, index) => [id, identities[index % identities.length]]);
+		services.forEach((id, index) => { if (index % 3 === 0) pairs.push([id, identities[(index + 1) % identities.length]]); });
+		pairs.push([identities[0], identities[1]], [identities[1], identities[2]], [identities[2], identities[0]], [identities[0], services[0]], [services[1], services[2]], [services[2], services[3]]);
+		const relations = pairs.map(([from, to]) => relation(from, to));
+		const assets = [...identities, ...services].map(asset);
+		const layout = await layoutAccountGraph(identities[0], assets, relations, { width: 1230, height: 740 });
+		verifyGeometry(layout, relations);
+		expect(layout.nodes.size).toBe(total);
+		expect([...layout.edges.keys()].sort()).toEqual([...new Set(relations.map((entry) => key(entry.from, entry.to)))].sort());
+	});
+	it("shares ordinary center ports instead of making 48 mailbox handles", async () => {
+		const fixture = star(49, "handles");
+		const layout = await layoutAccountGraph(fixture.root, fixture.assets, fixture.relations, { width: 1230, height: 740 });
+		expect(layout.nodes.get(fixture.root)?.handles).toHaveLength(2);
+		for (const node of layout.nodes.values()) for (const handle of node.handles) expect(handle.y).toBe(node.height / 2);
+	});
+	it("falls back to audited NONE routes when all split routes are malformed", async () => {
+		const prototype = ELK.prototype as InstanceType<typeof ELK>;
+		const original = prototype.layout, calls: string[] = [];
+		vi.spyOn(prototype, "layout").mockImplementation(function <T extends ElkNode>(this: InstanceType<typeof ELK>, graph: T, args?: ElkLayoutArguments): Promise<T> {
+			const strategy = graph.layoutOptions?.["org.eclipse.elk.layered.layerUnzipping.strategy"] ?? "";
+			calls.push(strategy);
+			return original.call(this, graph, args).then((result) => {
+				if (strategy === "ALTERNATING" && result.edges?.[0]?.sections?.[0]) result.edges[0].sections[0].startPoint.x = Number.NaN;
+				return result as T;
+			});
+		});
+		const fixture = star(24, "fallback");
+		const layout = await layoutAccountGraph(fixture.root, fixture.assets, fixture.relations, { width: 1100, height: 560 });
+		verifyGeometry(layout, fixture.relations);
+		expect(calls).toContain("ALTERNATING"); expect(calls).toContain("NONE");
+	});
+	it("rejects every invalid candidate rather than rendering unverified routes", async () => {
+		const prototype = ELK.prototype as InstanceType<typeof ELK>;
+		const original = prototype.layout;
+		vi.spyOn(prototype, "layout").mockImplementation(function <T extends ElkNode>(this: InstanceType<typeof ELK>, graph: T, args?: ElkLayoutArguments): Promise<T> {
+			return original.call(this, graph, args).then((result) => {
+				if (result.edges?.[0]?.sections?.[0]) result.edges[0].sections[0].startPoint.x = Number.NaN;
+				return result as T;
+			});
+		});
+		const fixture = star(12, "unavailable");
+		await expect(layoutAccountGraph(fixture.root, fixture.assets, fixture.relations, { width: 1100, height: 560 })).rejects.toThrow("account-graph-layout-unavailable");
+	});
+});
