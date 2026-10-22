@@ -250,12 +250,12 @@ for (const { locale, width } of [
 		page.on("pageerror", (error) => errors.push(error.message));
 		async function openConnections() {
 			await page.goto("/assets/vault");
-			if (await page.locator("#password-vault-unlock-master").isVisible()) {
-				await page.locator("#password-vault-unlock-master").fill(visualMaster);
-				await page
-					.getByRole("button", { name: t("pwVaultUnlock"), exact: true })
-					.click();
-			}
+			const unlock = page.locator("#password-vault-unlock-master");
+			await expect(unlock).toBeVisible();
+			await unlock.fill(visualMaster);
+			await page
+				.getByRole("button", { name: t("pwVaultUnlock"), exact: true })
+				.click();
 			await expect(page.locator(".password-vault-entry")).toHaveCount(
 				records.length,
 			);
@@ -395,6 +395,11 @@ for (const { locale, width } of [
 			await expect(page.locator(".asset-account-card")).toHaveCount(1);
 			await expect(page.locator(".asset-account-card")).toContainText(phone);
 			await page.goto(`/assets/account/${accountIds[0]}`);
+			await expect(page.locator(".react-flow__node")).toHaveCount(3);
+			await expect(page.locator(".react-flow__edge")).toHaveCount(2);
+			await page
+				.getByRole("button", { name: t("accountGraphFamily"), exact: true })
+				.click();
 			await expect(page.locator(".react-flow__node")).toHaveCount(6);
 			await expect(page.locator(".react-flow__edge")).toHaveCount(6);
 			await expectReadableAccountGraph(page);
@@ -420,16 +425,18 @@ for (const { locale, width } of [
 			await (await downloading).saveAs(path);
 			const encrypted = await inspectVisualKdbx(path);
 			expect(encrypted).toHaveLength(records.length);
-			for (const [index, record] of records.entries())
-				expect(
-					encrypted.find((item) => item.draft.title === record.title)?.draft,
-				).toMatchObject({
+			for (const [index, record] of records.entries()) {
+				const draft = encrypted.find(
+					(item) => item.draft.title === record.title,
+				)?.draft;
+				expect(draft).toMatchObject({
 					username: record.username,
-					usernameAliases: record.usernameAliases,
 					password,
 					notes: `Synthetic encrypted notes for ${record.title}`,
 					linkedAssetIds: [accountIds[index]],
 				});
+				expect(draft?.usernameAliases ?? []).toEqual(record.usernameAliases);
+			}
 			const second = await downloadState(page, zh, "upgraded-repeated.ka1");
 			const sorted = <T extends { id: string }>(items: T[]) =>
 				[...items].sort((left, right) => left.id.localeCompare(right.id));
