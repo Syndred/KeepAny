@@ -52,7 +52,7 @@ function AccountConnectionEdge(props: EdgeProps) {
 	if (!points?.length) return null;
 	// Serialize the layout engine's obstacle-avoiding route without replacing its bends.
 	const path = points.map((point, index) => `${index ? "L" : "M"}${point.x},${point.y}`).join(" ");
-	return <BaseEdge id={props.id} path={path} style={props.style} markerEnd={props.markerEnd} interactionWidth={16} />;
+	return <BaseEdge id={props.id} path={path} style={props.style} markerEnd={props.markerEnd} />;
 }
 const nodeTypes = { accountCard: AccountCard };
 const edgeTypes = { accountConnection: AccountConnectionEdge };
