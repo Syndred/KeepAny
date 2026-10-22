@@ -78,8 +78,11 @@ for (const locale of ["zh-CN", "en-US"] as const) {
 				await expectAllAccountGraphNodesInFrame(targetPage);
 			}
 			async function selectConnection(targetPage: Page, edge: Locator, from: string, to: string, labels: string[], status: string, key = "Enter") {
+				await waitForAccountGraphLayout(targetPage);
+				await expect(edge).toBeVisible();
 				await expect(edge).toHaveAttribute("tabindex", "0");
 				await edge.focus();
+				await expect(edge).toBeFocused();
 				await edge.press(key);
 				await expect(targetPage.locator(".react-flow__edge.selected")).toHaveCount(1);
 				await expect(edge).toHaveClass(/\bselected\b/);
