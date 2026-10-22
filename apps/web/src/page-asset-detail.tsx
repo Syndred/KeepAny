@@ -1725,7 +1725,7 @@ export function AssetDetail() {
 										<section className="account-graph-connection-details" aria-label={t("accountGraphSelection")}>
 											<div className="account-graph-selection-header">
 												<p className="account-graph-selection-title"><strong>{liveById.get(selectedGraphGroup[0].from)?.name}</strong><span aria-hidden="true"> → </span><strong>{liveById.get(selectedGraphGroup[0].to)?.name}</strong></p>
-												<Button size="icon" className="account-graph-selection-close" aria-label={t("close")} onClick={() => setSelectedGraphEdgeId(null)}><X size={18} /></Button>
+												<Button className="account-graph-selection-close" aria-label={t("close")} onClick={() => setSelectedGraphEdgeId(null)}><X size={18} /></Button>
 											</div>
 											<ul className="account-graph-selection-labels">{selectedGraphLabels.map((label) => <li key={label}>{label}</li>)}</ul>
 											<p className="account-graph-selection-status" role="status">{t(selectedGraphStatus)}</p>
