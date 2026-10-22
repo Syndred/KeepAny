@@ -1,5 +1,6 @@
 import { createRxDatabase, type RxDatabase } from 'rxdb';
 import { getRxStorageDexie } from 'rxdb/plugins/storage-dexie';
+import { conflictsWithAccountRestore } from '../../domain/src/account-identity';
 import Dexie, { type Table } from 'dexie';
 import { z } from 'zod';
 import { trashPurgeRows, redactedTrashRow, type TrashPurgePlan, type TrashTarget } from './trash-purge';
@@ -24,6 +25,9 @@ export type { DeleteCustomCategoryInput, EditCustomCategoryInput, PendingCategor
 
 // This transport shape is consumed by the web app's RxDB observer.
 export interface RecordRow { id: string; type: EntityType; payload: string; updatedAt: number }
+export class AccountRestoreConflict extends Error {
+  constructor(readonly existingId: string) { super('account-restore-conflict'); }
+}
 interface StoredFile { id: string; blob: Blob; name: string }
 interface Journal { id: string; rows: RecordRow[]; intakeReview?: ReviewedCandidate[]; sourceBinding?: DatasetBinding; passwordVault?: VaultRecord }
 export interface RestoreRecoveryToken { journalId: string; planHash: string; datasetProof: string }
@@ -1366,12 +1370,24 @@ export class LocalRepository {
     if (!document) throw Error('not-in-trash');
     const previous = parsedPayload(canonical(document)) as Record<string, unknown>;
     if (!previous.deleted || previous.purged) throw Error('not-in-trash');
+    const assertUniqueAccount = async (value: Record<string, unknown>) => {
+      if (type !== 'asset' || value.kind !== 'account') return;
+      // Read storage while holding the cross-tab mutation gate; an RxDB query may
+      // still cache the state from before another tab re-imported the account.
+      const query = this.db.records.find({ selector: { type: 'asset' } });
+      const rows = (await this.db.records.storageInstance.query(query.getPreparedQuery())).documents as RecordRow[];
+      const duplicate = rows.map(row => parsedPayload(row) as Asset).find(asset =>
+        !asset.deleted && asset.id !== id && conflictsWithAccountRestore(value as Asset, asset));
+      if (duplicate) throw new AccountRestoreConflict(duplicate.id);
+    };
+    await assertUniqueAccount(previous);
     if (type === 'relation') await this.assertRelationEndpoints(previous as { from: string; to: string });
     let next: RecordRow | undefined;
     await document.incrementalModify(async (data: RecordRow) => {
       if (expectedPayload !== undefined && data.payload !== expectedPayload) throw Error('relation-stale');
       const current = parsedPayload(data) as Record<string, unknown>;
       if (!current.deleted || current.purged) throw Error('not-in-trash');
+      await assertUniqueAccount(current);
       // The callback sees the latest tombstone after RxDB retries a concurrent write.
       // Check endpoints here too, immediately before this relation is made live.
       if (type === 'relation') await this.assertRelationEndpoints(current as { from: string; to: string });

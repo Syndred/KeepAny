@@ -1,6 +1,8 @@
 
 .list-row.trash-row > .trash-row-actions { flex: 0 0 auto; gap: 12px; margin: 0; }
 .trash-row-actions .button { min-height: 44px; }
+.trash-restore-error { flex: 1 0 100%; display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.trash-restore-error a { min-height: 44px; display: inline-flex; align-items: center; }
 @media (max-width: 600px) {
   .list-row.trash-row > .trash-row-actions { flex: 1 0 100%; justify-content: flex-end; padding-top: 4px; }
 }

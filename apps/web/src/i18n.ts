@@ -253,6 +253,8 @@ const copy: Record<string, [string, string]> = {
 	trashChanged: ["回收站内容已变化，请关闭后重新确认。", "Trash has changed. Close this dialog and review it again."],
 	trashDeleteFailed: ["删除未完成，请重试；如有未完成的保存或恢复，请先处理。", "Deletion did not finish. Retry after completing any pending save or recovery."],
 	trashDeleted: ["已彻底删除", "Permanently deleted"],
+	trashAccountExists: ["已存在相同账号，未恢复旧记录。如保留现有账号，可彻底删除此记录。", "This account already exists, so the old record was not restored. To keep the current account, delete this record permanently."],
+	trashViewAccount: ["查看已有账号", "View existing account"],
 	notes: ["备注", "Notes"],
 	attachments: ["图片", "Images"],
 	month: ["月", "Month"],

@@ -1,5 +1,6 @@
 import "./trash.css";
 import { useRef, useState } from "react";
+import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { Trash2 } from "lucide-react";
 import {
@@ -8,9 +9,11 @@ import {
 	type TrashPurgePlan,
 	type TrashTarget,
 	restoreEntity,
+	AccountRestoreConflict,
 } from "../../../packages/local-db/src";
 import { Button } from "./components/ui/button";
 import { Dialog } from "./components/ui/dialog";
+import { TextLink } from "./components/ui/text-link";
 import { Empty, PageTitle, date, useAppContext } from "./view-shared";
 export function TrashPage() {
 	const { data, notify } = useAppContext();
@@ -21,6 +24,9 @@ export function TrashPage() {
 	);
 	const [restoring, setRestoring] = useState("");
 	const [errors, setErrors] = useState<Record<string, string>>({});
+	const [existingAccounts, setExistingAccounts] = useState<
+		Record<string, string>
+	>({});
 	const inFlight = useRef(false);
 	const [purgePlan, setPurgePlan] = useState<{
 		plan: TrashPurgePlan;
@@ -76,10 +82,19 @@ export function TrashPage() {
 		inFlight.current = true;
 		setRestoring(id);
 		setErrors((current) => ({ ...current, [id]: "" }));
+		setExistingAccounts((current) => ({ ...current, [id]: "" }));
 		try {
 			await restoreEntity(type, id);
 			notify(t("saved"));
 		} catch (error) {
+			if (error instanceof AccountRestoreConflict) {
+				setErrors((current) => ({ ...current, [id]: t("trashAccountExists") }));
+				setExistingAccounts((current) => ({
+					...current,
+					[id]: error.existingId,
+				}));
+				return;
+			}
 			const relation =
 				type === "relation"
 					? data.relations.find((item) => item.id === id)
@@ -240,9 +255,22 @@ export function TrashPage() {
 									</Button>
 								</div>
 								{errors[a.id] && (
-									<small className="field-error" role="alert">
-										{errors[a.id]}
-									</small>
+									<div className="trash-restore-error" role="alert">
+										<small className="field-error">{errors[a.id]}</small>
+										{existingAccounts[a.id] && (
+											<TextLink asChild>
+												<Link
+													to="/assets/$kind/$id"
+													params={{
+														kind: "account",
+														id: existingAccounts[a.id],
+													}}
+												>
+													{t("trashViewAccount")}
+												</Link>
+											</TextLink>
+										)}
+									</div>
 								)}
 							</div>
 						))}

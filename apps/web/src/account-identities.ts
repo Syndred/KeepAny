@@ -1,19 +1,7 @@
-import { z } from "zod";
-
-/** Shared with reviewed intake: numeric usernames are not phone numbers. */
-export function emailIdentifier(value: string): string {
-	const trimmed = value.trim();
-	return z.email().safeParse(trimmed).success ? trimmed.toLowerCase() : "";
-}
-
-export function phoneIdentifier(value: string): string {
-	const trimmed = value.trim();
-	if (!/^[+\d() -]+$/.test(trimmed)) return "";
-	const digits = trimmed.replace(/[() -]/g, "");
-	if (/^1[3-9]\d{9}$/.test(digits)) return digits;
-	if (/^\+861[3-9]\d{9}$/.test(digits)) return digits.slice(3);
-	return /^\+[1-9]\d{6,14}$/.test(digits) ? digits : "";
-}
+export {
+	emailIdentifier,
+	phoneIdentifier,
+} from "../../../packages/domain/src/account-identity";
 
 /** These IDs are part of the existing intake format; keep the input order. */
 export async function accountIdentityStableId(
