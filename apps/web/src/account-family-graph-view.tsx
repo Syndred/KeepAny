@@ -69,8 +69,9 @@ function fittedViewport(layout: AccountGraphLayout, width: number, height: numbe
 	return getViewportForBounds({ x: bounds.x - 8, y: bounds.y - 8, width: bounds.width + 16, height: bounds.height + 16 }, width, height, 0.01, 1, 0);
 }
 
-function GraphViewport({ layout, layoutKey, rootId, restore, onSize, onReady }: {
+function GraphViewport({ layout, layoutKey, layoutSize, rootId, restore, onSize, onReady }: {
 	layout: AccountGraphLayout | null; layoutKey: string; rootId: string; restore: Bookmark | null;
+	layoutSize: { width: number; height: number };
 	onSize: (size: { width: number; height: number }) => void; onReady: (key: string) => void;
 }) {
 	const width = useStore((state) => state.width);
@@ -79,10 +80,12 @@ function GraphViewport({ layout, layoutKey, rootId, restore, onSize, onReady }: 
 	const updateNodeInternals = useUpdateNodeInternals();
 	const { setCenter, setViewport } = useReactFlow();
 	const pendingRestore = useRef(restore);
+	const appliedLayout = useRef("");
 	useEffect(() => { if (width && height) onSize({ width: Math.round(width), height: Math.round(height) }); }, [width, height, onSize]);
 	useEffect(() => { if (layout) updateNodeInternals([...layout.nodes.keys()]); }, [layout, updateNodeInternals]);
 	useEffect(() => {
-		if (!layout || !measured || !width || !height) return;
+		if (!layout || !measured || !width || !height || appliedLayout.current === layoutKey
+			|| Math.round(width) !== layoutSize.width || Math.round(height) !== layoutSize.height) return;
 		let active = true;
 		const frame = requestAnimationFrame(() => {
 			const fitted = fittedViewport(layout, width, height, rootId);
@@ -91,10 +94,10 @@ function GraphViewport({ layout, layoutKey, rootId, restore, onSize, onReady }: 
 			const operation = anchor && (bookmark || fitted.zoom < 11 / 12)
 				? setCenter(anchor.x + anchor.width / 2, anchor.y + anchor.height / 2, { zoom: bookmark?.zoom ?? 1 })
 				: setViewport(fitted);
-			void operation.then(() => { if (active) { pendingRestore.current = null; onReady(layoutKey); } });
+			void operation.then(() => { if (active) { appliedLayout.current = layoutKey; pendingRestore.current = null; onReady(layoutKey); } });
 		});
 		return () => { active = false; cancelAnimationFrame(frame); };
-	}, [layout, layoutKey, measured, width, height, rootId, setCenter, setViewport, onReady]);
+	}, [layout, layoutKey, layoutSize.width, layoutSize.height, measured, width, height, rootId, setCenter, setViewport, onReady]);
 	return null;
 }
 
@@ -210,7 +213,7 @@ function GraphContent({ props, expanded, restore, onExpand }: {
 				minZoom={0.01} maxZoom={2} defaultViewport={{ x: 0, y: 0, zoom: 1 }}
 				nodesFocusable={false} edgesFocusable onEdgesChange={changeEdges} onPaneClick={() => props.onSelectEdge(null)}
 				deleteKeyCode={null} multiSelectionKeyCode={null} selectionKeyCode={null} nodesDraggable={false} nodesConnectable={false}>
-				<GraphViewport layout={layout} layoutKey={inputKey} rootId={props.root.id} restore={restore} onSize={setSize} onReady={setReadyKey} />
+				<GraphViewport layout={layout} layoutKey={inputKey} layoutSize={size} rootId={props.root.id} restore={restore} onSize={setSize} onReady={setReadyKey} />
 				<Background />
 				{navigationHost && createPortal(<><GraphControls layout={layout} />{props.assets.length > 12 && <GraphMiniMap rootId={props.root.id} />}</>, navigationHost)}
 				{selected && <Panel position="bottom-right" className="account-graph-selection-panel nodrag nopan"><section className="account-graph-connection-details" aria-label={t("accountGraphSelection")}>
