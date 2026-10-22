@@ -1,0 +1,36 @@
+{
+  "origin": "http://127.0.0.1:42987",
+  "syntheticAccounts": 4,
+  "syntheticRelations": 3,
+  "controls": {
+    "count": 4,
+    "target": 44,
+    "icon": 18
+  },
+  "visits": [
+    {
+      "current": "代码仓库",
+      "dialog": 1,
+      "edges": 3,
+      "nodes": 4
+    },
+    {
+      "current": "设计平台",
+      "dialog": 1,
+      "edges": 3,
+      "nodes": 4
+    },
+    {
+      "current": "业务平台",
+      "dialog": 1,
+      "edges": 3,
+      "nodes": 4
+    }
+  ],
+  "mergedViewAction": {
+    "afterZoom": "回到当前",
+    "afterFit": "回到当前",
+    "resetVerified": true
+  },
+  "closeIconVerified": true
+}

@@ -1,0 +1,54 @@
+{
+  "entry": "/assets/index-BWAQJLV7.js",
+  "beforeUpgradeUnexpectedExit": true,
+  "accounts": {
+    "before": 56,
+    "after": 56,
+    "allIdsPreserved": true
+  },
+  "direct": {
+    "nodes": 10,
+    "edges": 9,
+    "allIdsDirectionsAndPurposesPreserved": true
+  },
+  "family": {
+    "nodes": 36,
+    "edges": 39,
+    "allIdsDirectionsAndPurposesPreserved": true
+  },
+  "realAccountVisits": [
+    {
+      "dialog": 1,
+      "edges": 39,
+      "nodes": 36
+    },
+    {
+      "dialog": 1,
+      "edges": 39,
+      "nodes": 36
+    },
+    {
+      "dialog": 1,
+      "edges": 39,
+      "nodes": 36
+    }
+  ],
+  "originalDraft": {
+    "observedAtStart": {
+      "path": "/assets/vault",
+      "dialogs": 1,
+      "reviewed": 4
+    },
+    "observedAtEnd": {
+      "dialogs": 0,
+      "entry": [
+        "/assets/index-DpgIvRIE.js"
+      ],
+      "path": "/",
+      "reviewed": null
+    },
+    "operatedInThisRun": false,
+    "refreshedInThisRun": false,
+    "encryptedContentsNotInspected": true
+  }
+}

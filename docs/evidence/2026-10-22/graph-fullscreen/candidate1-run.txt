@@ -1,0 +1,15 @@
+[WebServer] (node:80102) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+
+Running 4 tests using 1 worker
+
+(node:80103) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1/4] tests/e2e/account-detail-dedupe.spec.ts:172:2 › zh-CN 390px graph fullscreen stays open across connected accounts with four merged icon controls
+[2/4] tests/e2e/account-detail-dedupe.spec.ts:172:2 › zh-CN 1536px graph fullscreen stays open across connected accounts with four merged icon controls
+[3/4] tests/e2e/account-detail-dedupe.spec.ts:172:2 › en-US 390px graph fullscreen stays open across connected accounts with four merged icon controls
+[4/4] tests/e2e/account-detail-dedupe.spec.ts:172:2 › en-US 1536px graph fullscreen stays open across connected accounts with four merged icon controls
+  4 passed (38.8s)
