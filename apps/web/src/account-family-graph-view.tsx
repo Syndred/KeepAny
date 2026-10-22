@@ -3,12 +3,12 @@ import { createPortal } from "react-dom";
 import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import {
-	Background, BaseEdge, Controls, Handle, MarkerType, MiniMap, Panel, Position,
+	Background, BaseEdge, ControlButton, Controls, Handle, MarkerType, MiniMap, Panel, Position,
 	ReactFlow, ReactFlowProvider, getViewportForBounds, useReactFlow, useStore,
 	useUpdateNodeInternals,
 	type Edge, type EdgeChange, type EdgeProps, type Node, type NodeProps,
 } from "@xyflow/react";
-import { Maximize2, X } from "lucide-react";
+import { LocateFixed, Maximize2, Minimize2, Scan, X } from "lucide-react";
 import type { Asset, Relation } from "../../../packages/domain/src";
 import { layoutAccountGraph, type AccountGraphLayout, type AccountGraphHandle } from "./account-graph-layout";
 import { Button } from "./components/ui/button";
@@ -107,35 +107,35 @@ function GraphViewport({ layout, layoutKey, layoutSize, rootId, restore, onSize,
 	return null;
 }
 
-function GraphActions({ layout, rootId, expanded, onExpand, onNavigationHost }: {
+function GraphControls({ layout, rootId, expanded, onExpand, onCollapse }: {
 	layout: AccountGraphLayout | null; rootId: string; expanded: boolean;
 	onExpand: (bookmark: Bookmark) => void;
-	onNavigationHost: (host: HTMLDivElement | null) => void;
+	onCollapse: () => void;
 }) {
 	const { t } = useTranslation();
 	const { setCenter, setViewport, getViewport } = useReactFlow();
 	const width = useStore((state) => state.width), height = useStore((state) => state.height);
-	return <div className="account-graph-view-actions">
-		<div className="account-graph-navigation" ref={onNavigationHost} />
-		<div className="account-graph-action-buttons">
-		<Button size="small" disabled={!layout} onClick={() => {
+	const [x, y, zoom] = useStore((state) => state.transform);
+	const fitted = layout && width && height ? fittedViewport(layout, width, height) : null;
+	const root = layout?.nodes.get(rootId);
+	const returnToCurrent = !!root && (Math.abs(zoom - 1) > 1 / 12
+		|| Math.hypot((root.x + root.width / 2) * zoom + x - width / 2, (root.y + root.height / 2) * zoom + y - height / 2) > 24);
+	const viewLabel = t(returnToCurrent ? "accountGraphFocus" : "accountGraphFit");
+	const expandLabel = t(expanded ? "accountGraphCollapse" : "accountGraphExpand");
+	return <Controls orientation="horizontal" aria-label={t("accountGraphControls")} showInteractive={false} showFitView={false}>
+		<ControlButton className="account-graph-view-toggle" title={viewLabel} aria-label={viewLabel} disabled={!fitted} onClick={() => {
 			const node = layout?.nodes.get(rootId);
-			if (node) void setCenter(node.x + node.width / 2, node.y + node.height / 2, { zoom: 1 });
-		}}>{t("accountGraphFocus")}</Button>
-		<Button size="small" disabled={!layout || !width || !height} onClick={() => { if (layout) void setViewport(fittedViewport(layout, width, height)); }}>{t("accountGraphFit")}</Button>
-		{!expanded && <Button id="account-graph-expand" size="small" disabled={!layout} onClick={() => {
+			if (returnToCurrent && node) void setCenter(node.x + node.width / 2, node.y + node.height / 2, { zoom: 1 });
+			else if (fitted) void setViewport(fitted);
+		}}>{returnToCurrent ? <LocateFixed size={18} /> : <Scan size={18} />}</ControlButton>
+		<ControlButton id="account-graph-expand" className="account-graph-fullscreen" title={expandLabel} aria-label={expandLabel} aria-pressed={expanded} disabled={!layout} onClick={() => {
+			if (expanded) { onCollapse(); return; }
 			const view = getViewport();
 			const center = { x: (width / 2 - view.x) / view.zoom, y: (height / 2 - view.y) / view.zoom };
 			const nearest = layout && [...layout.nodes].sort(([, a], [, b]) => Math.hypot(a.x + a.width / 2 - center.x, a.y + a.height / 2 - center.y) - Math.hypot(b.x + b.width / 2 - center.x, b.y + b.height / 2 - center.y))[0];
 			onExpand({ id: nearest?.[0] ?? rootId, zoom: view.zoom });
-		}}><Maximize2 size={15} />{t("accountGraphExpand")}</Button>}
-		</div>
-	</div>;
-}
-
-function GraphControls() {
-	const { t } = useTranslation();
-	return <Controls orientation="horizontal" aria-label={t("accountGraphControls")} showInteractive={false} showFitView={false} />;
+		}}>{expanded ? <Minimize2 size={18} /> : <Maximize2 size={18} />}</ControlButton>
+	</Controls>;
 }
 
 function GraphMiniMap({ rootId }: { rootId: string }) {
@@ -145,9 +145,10 @@ function GraphMiniMap({ rootId }: { rootId: string }) {
 		nodeColor={(node) => node.id === rootId ? "var(--yellow)" : "var(--muted)"} />;
 }
 
-function GraphContent({ props, expanded, restore, onExpand }: {
+function GraphContent({ props, expanded, restore, onExpand, onCollapse }: {
 	props: Props; expanded: boolean; restore: Bookmark | null;
 	onExpand: (bookmark: Bookmark) => void;
+	onCollapse: () => void;
 }) {
 	const { t } = useTranslation();
 	const [size, setSize] = useState({ width: 0, height: 0 });
@@ -210,7 +211,7 @@ function GraphContent({ props, expanded, restore, onExpand }: {
 		else if (changes.some((change) => change.type === "select" && change.id === props.selectedEdgeId && !change.selected)) props.onSelectEdge(null);
 	}
 	return <section className={`graph account-family-graph${expanded ? " account-family-graph--expanded" : ""}`} aria-label={t("relations")} aria-busy={!ready && !error} data-layout-ready={ready}>
-		<GraphActions layout={layout} rootId={props.root.id} expanded={expanded} onExpand={onExpand} onNavigationHost={setNavigationHost} />
+		<div className="account-graph-view-actions"><div className="account-graph-navigation" ref={setNavigationHost} /></div>
 		<div className={`account-graph-stage${ready ? " is-ready" : ""}`}>
 			<ReactFlow nodes={nodes} edges={edges} nodeTypes={nodeTypes} edgeTypes={edgeTypes}
 				ariaLabelConfig={{ "controls.zoomIn.ariaLabel": t("accountGraphZoomIn"), "controls.zoomOut.ariaLabel": t("accountGraphZoomOut"), "minimap.ariaLabel": t("accountGraphMap") }}
@@ -219,7 +220,7 @@ function GraphContent({ props, expanded, restore, onExpand }: {
 				deleteKeyCode={null} multiSelectionKeyCode={null} selectionKeyCode={null} nodesDraggable={false} nodesConnectable={false}>
 				<GraphViewport layout={layout} layoutKey={inputKey} layoutSize={size} rootId={props.root.id} restore={restore} onSize={setSize} onReady={setReadyKey} />
 				<Background />
-				{navigationHost && createPortal(<><GraphControls />{props.assets.length > 12 && <GraphMiniMap rootId={props.root.id} />}</>, navigationHost)}
+				{navigationHost && createPortal(<><GraphControls layout={layout} rootId={props.root.id} expanded={expanded} onExpand={onExpand} onCollapse={onCollapse} />{props.assets.length > 12 && <GraphMiniMap rootId={props.root.id} />}</>, navigationHost)}
 				{selected && <Panel position="bottom-right" className="account-graph-selection-panel nodrag nopan"><section className="account-graph-connection-details" aria-label={t("accountGraphSelection")}>
 					<div className="account-graph-selection-header"><p className="account-graph-selection-title"><strong>{byId.get(selected[0].from)?.name}</strong><span aria-hidden="true"> → </span><strong>{byId.get(selected[0].to)?.name}</strong></p><Button className="account-graph-selection-close" aria-label={t("close")} onClick={() => props.onSelectEdge(null)}><X size={18} /></Button></div>
 					<ul className="account-graph-selection-labels">{[...new Set(selected.map((relation) => relation.label))].map((label) => <li key={label}>{label}</li>)}</ul>
@@ -234,8 +235,14 @@ function GraphContent({ props, expanded, restore, onExpand }: {
 export function AccountFamilyGraphView(props: Props) {
 	const { t } = useTranslation();
 	const [expanded, setExpanded] = useState(false);
-	const [restore, setRestore] = useState<Bookmark | null>(null);
-	const normalBookmark = useRef<Bookmark | null>(null);
-	const canvas = <GraphContent props={props} expanded={expanded} restore={restore} onExpand={(bookmark) => { normalBookmark.current = bookmark; setRestore(null); setExpanded(true); }} />;
-	return <ReactFlowProvider>{expanded ? <Dialog title={t("accountGraphTitle")} className="account-graph-dialog" focusTitleOnOpen returnFocusTo={() => document.getElementById("account-graph-expand")} onClose={() => { setRestore(normalBookmark.current); setExpanded(false); }}>{canvas}</Dialog> : canvas}</ReactFlowProvider>;
+	const [restore, setRestore] = useState<{ rootId: string; bookmark: Bookmark } | null>(null);
+	const normalBookmark = useRef<{ rootId: string; bookmark: Bookmark } | null>(null);
+	function closeExpanded() {
+		const previous = normalBookmark.current;
+		setRestore({ rootId: props.root.id, bookmark: previous?.rootId === props.root.id ? previous.bookmark : { id: props.root.id, zoom: 1 } });
+		setExpanded(false);
+	}
+	// Keep the dialog mounted while changing accounts; only reset the canvas and its camera.
+	const canvas = <GraphContent key={props.root.id} props={props} expanded={expanded} restore={restore?.rootId === props.root.id ? restore.bookmark : null} onCollapse={closeExpanded} onExpand={(bookmark) => { normalBookmark.current = { rootId: props.root.id, bookmark }; setRestore(null); setExpanded(true); }} />;
+	return <ReactFlowProvider>{expanded ? <Dialog title={t("accountGraphTitle")} className="account-graph-dialog" focusTitleOnOpen returnFocusTo={() => document.getElementById("account-graph-expand")} onClose={closeExpanded}>{canvas}</Dialog> : canvas}</ReactFlowProvider>;
 }

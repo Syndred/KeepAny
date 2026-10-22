@@ -324,7 +324,7 @@ export function AssetDetail() {
 		void navigate({ to: "/assets/$kind/$id", params: { kind: target.kind, id: target.id } });
 	}
 	useEffect(() => {
-		if (centerId) { setRelationFilter(""); setRelationDetailsOpen(false); setGraphScope("direct"); setSelectedGraphEdgeId(null); }
+		if (centerId) { setRelationFilter(""); setRelationDetailsOpen(false); setSelectedGraphEdgeId(null); }
 	}, [centerId]);
 	function changeGraphScope(scope: "direct" | "family") {
 		setSelectedGraphEdgeId(null);
@@ -1678,7 +1678,7 @@ export function AssetDetail() {
 								{relationSearch}
 								<details className="account-graph-guide"><summary>{t("accountGraphHelp")}</summary><p><span>{t("accountGraphDirection")}</span><span>{t("relationGraphLegend")}</span></p></details>
 							</div> : relations.length >= 5 ? relationSearch : null}
-							{kind === "account" ? <Suspense fallback={<p role="status">{t("loading")}</p>}><AccountFamilyGraphView key={`${asset.id}:${graphScope}`} root={asset} assets={[asset, ...graphRelated]} relations={displayedFamily?.relations ?? relations} matches={graphMatches} selectedEdgeId={selectedGraphEdgeId} onSelectEdge={setSelectedGraphEdgeId} onVisit={visitRelation} /></Suspense> : <section className="graph" aria-label={t("relations")}>
+							{kind === "account" ? <Suspense fallback={<p role="status">{t("loading")}</p>}><AccountFamilyGraphView root={asset} assets={[asset, ...graphRelated]} relations={displayedFamily?.relations ?? relations} matches={graphMatches} selectedEdgeId={selectedGraphEdgeId} onSelectEdge={setSelectedGraphEdgeId} onVisit={visitRelation} /></Suspense> : <section className="graph" aria-label={t("relations")}>
 								<ReactFlow
 									fitView
 									minZoom={0.1}

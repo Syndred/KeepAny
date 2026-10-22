@@ -31,7 +31,6 @@
 .account-relation-details > .relation-list { padding: 0; }
 .account-relation-details .relation-endpoints { display: block; line-height: 1.6; overflow-wrap: anywhere; }
 .account-relation-details .relation-row { gap: 12px; }
-.account-graph-view-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
 .account-graph-selection-panel { z-index: 20; width: 360px; max-width: calc(100% - 88px); padding: 12px; border: 2px solid var(--line); border-radius: 12px; background: var(--paper); box-shadow: var(--shadow); color: var(--ink); }
 .account-graph-selection-panel section { display: grid; gap: 10px; min-width: 0; max-height: 240px; overflow-y: auto; }
 .account-graph-selection-header { display: flex; align-items: flex-start; gap: 10px; }

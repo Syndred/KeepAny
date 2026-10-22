@@ -1,8 +1,6 @@
 .graph.account-family-graph { display: flex; flex-direction: column; height: clamp(660px, 74vh, 760px); min-height: 0; margin: 0 16px 16px; overflow: hidden; }
-.account-family-graph .account-graph-view-actions { display: flex; flex: none; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; padding: 12px; border-bottom: 1px solid var(--line-soft); background: var(--paper); }
-.account-graph-navigation { display: flex; flex: none; align-items: center; gap: 12px; }
-.account-graph-action-buttons { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; margin-left: auto; }
-.account-family-graph .account-graph-view-actions .button { min-height: 44px; }
+.account-family-graph .account-graph-view-actions { flex: none; padding: 12px; border-bottom: 1px solid var(--line-soft); background: var(--paper); }
+.account-graph-navigation { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
 .account-graph-stage { position: relative; flex: 1; min-height: 0; }
 .account-graph-stage:not(.is-ready) .react-flow__viewport { visibility: hidden; }
 .account-graph-state { position: absolute; inset: 0; display: grid; place-content: center; margin: 0; padding: 24px; background: var(--paper); color: var(--muted); text-align: center; pointer-events: none; }
@@ -18,10 +16,12 @@
 .account-family-graph .react-flow__handle { width: 5px; height: 5px; min-width: 0; min-height: 0; border: 0; background: var(--muted); }
 .account-family-graph .react-flow__controls-button { width: 44px; height: 44px; }
 .account-graph-navigation .react-flow__controls-button { color: var(--ink); }
-.account-graph-navigation .react-flow__controls-button svg { fill: currentColor; }
+.account-graph-navigation .react-flow__controls-button svg { flex: none; width: 18px; height: 18px; max-width: 18px; max-height: 18px; fill: currentColor; }
+.account-graph-navigation .account-graph-view-toggle svg,
+.account-graph-navigation .account-graph-fullscreen svg { fill: none; }
 .account-graph-navigation .react-flow__controls,
 .account-graph-navigation .react-flow__minimap { position: static; margin: 0; background: var(--paper); }
-.account-graph-navigation .react-flow__controls { gap: 10px; border: 0; background: transparent; box-shadow: none; overflow: visible; }
+.account-graph-navigation .react-flow__controls { flex: none; gap: 10px; border: 0; background: transparent; box-shadow: none; overflow: visible; }
 .account-graph-navigation .react-flow__controls-button { border: 1px solid var(--line); border-radius: 8px; box-shadow: 2px 3px 0 var(--line); }
 .dialog.account-graph-dialog { width: calc(100vw - 32px); height: calc(100dvh - 32px); max-width: none; max-height: none; overflow: hidden; padding: 16px; }
 .account-graph-dialog > header { align-items: center; flex: none; min-height: 44px; }
@@ -29,12 +29,6 @@
 .account-graph-dialog > .graph.account-family-graph { flex: 1; height: auto; min-height: 0; margin: 0; }
 @media (max-width: 700px) {
 	.graph.account-family-graph { height: 640px; }
-	.account-family-graph .account-graph-view-actions { justify-content: flex-start; gap: 8px; padding: 10px; }
-	.account-graph-action-buttons { order: 1; width: 100%; gap: 8px; }
-	.account-graph-navigation { order: 2; flex-basis: 100%; justify-content: space-between; }
-	.account-graph-action-buttons .button { flex: 1 1 auto; padding-inline: 10px; }
+	.account-family-graph .account-graph-view-actions { padding: 10px; }
 	.dialog.account-graph-dialog { width: calc(100vw - 16px); height: calc(100dvh - 16px); padding: 12px; }
-}
-@media (max-width: 380px) {
-	.account-graph-navigation { flex-wrap: wrap; row-gap: 8px; }
 }

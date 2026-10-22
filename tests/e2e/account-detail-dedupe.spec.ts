@@ -1,7 +1,7 @@
 import { mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { expect, test, type Browser, type Locator, type Page } from "@playwright/test";
-import { activeAccountGraph, setAccountRelationDetailsOpen, waitForAccountGraphLayout } from "./helpers/account-graph";
+import { activeAccountGraph, expectAllAccountGraphNodesInFrame, expectCanvasActionsOutsideStage, fitAccountGraph, setAccountRelationDetailsOpen, waitForAccountGraphLayout } from "./helpers/account-graph";
 import { selectChoice } from "./helpers/select-choice";
 
 // Production-bundle acceptance: fixtures are created only through visible forms.
@@ -12,7 +12,7 @@ type Locale = (typeof variants)[number];
 const copyFor = (locale: Locale) => locale === "zh-CN" ? {
 	add: "新增", save: "保存", cancel: "取消", edit: "编辑", close: "关闭",
 	trash: "移至回收站", restore: "恢复", addRelation: "添加关联", deleteRelation: "删除关系",
-	fit: "适应画布", focus: "定位当前", expand: "大图查看", zoomIn: "放大", zoomOut: "缩小",
+	fit: "适应画布", focus: "回到当前", expand: "全屏查看", zoomIn: "放大", zoomOut: "缩小",
 	direct: "直接关联", family: "完整关系", category: "分类", phone: "手机", other: "其他",
 	username: "账号标识", password: "管理这个账号的密码", addImage: "添加图片", replaceImage: "替换图片",
 	removeImage: "移除图片", confirm: "确认", complete: "完成", reopen: "重新打开",
@@ -21,7 +21,7 @@ const copyFor = (locale: Locale) => locale === "zh-CN" ? {
 } : {
 	add: "Add", save: "Save", cancel: "Cancel", edit: "Edit", close: "Close",
 	trash: "Move to trash", restore: "Restore", addRelation: "Add connection", deleteRelation: "Delete connection",
-	fit: "Fit all", focus: "Center account", expand: "Expand graph", zoomIn: "Zoom in", zoomOut: "Zoom out",
+	fit: "Fit all", focus: "Back to current", expand: "Expand graph", zoomIn: "Zoom in", zoomOut: "Zoom out",
 	direct: "Direct", family: "All connections", category: "Category", phone: "Phone", other: "Other",
 	username: "Username / identifier", password: "Manage this account’s passwords", addImage: "Add image", replaceImage: "Replace image",
 	removeImage: "Remove image", confirm: "Confirm", complete: "Complete", reopen: "Reopen",
@@ -154,7 +154,7 @@ async function assertGeometry(page: Page, scope: Locator = page.locator("main.as
 async function assertGraphActions(page: Page, copy: Copy) {
 	const graph = await waitForAccountGraphLayout(page, { nodes: 2, edges: 1 });
 	await expect(graph.getByRole("button", { name: copy.fit, exact: true })).toHaveCount(1);
-	await expect(graph.locator(".react-flow__controls button")).toHaveCount(2);
+	await expect(graph.locator(".react-flow__controls button")).toHaveCount(4);
 	await expect(graph.locator(".react-flow__controls-fitview")).toHaveCount(0);
 	await graph.getByRole("button", { name: copy.fit, exact: true }).click();
 	const fit = await camera(page);
@@ -169,6 +169,103 @@ async function assertGraphActions(page: Page, copy: Copy) {
 }
 
 for (const locale of variants) for (const width of [390, 1536]) {
+	test(`${locale} ${width}px graph fullscreen stays open across connected accounts with four merged icon controls`, async ({ browser }) => {
+		test.setTimeout(150_000);
+		const { context, page, errors, copy } = await openSession(browser, locale, width);
+		const records: Awaited<ReturnType<typeof addAccount>>[] = [];
+		try {
+			for (const name of ["Graph Mail", "Graph Studio", "Graph Design", "Graph Backup"])
+				records.push(await addAccount(page, copy, { name, username: `${name.toLowerCase().replaceAll(" ", ".")}@example.test` }));
+			for (let index = 0; index < records.length; index++) {
+				await page.goto(records[index].href);
+				await addRelation(page, copy, records[(index + 1) % records.length].name, `Connection ${index + 1}`, "Synthetic full screen acceptance");
+			}
+			await page.goto(records[0].href);
+			let graph = await waitForAccountGraphLayout(page, { nodes: 3, edges: 2 });
+			const controls = graph.locator(".react-flow__controls");
+			await expect(controls.locator("button")).toHaveCount(4);
+			for (const button of await controls.locator("button").all()) await expect(button).toHaveText("");
+			await expect(graph.locator(".account-graph-view-toggle")).toHaveCount(1);
+			await expect(graph.getByRole("button", { name: copy.focus, exact: true })).toHaveCount(0);
+			await expect(graph.getByRole("button", { name: copy.fit, exact: true })).toHaveCount(1);
+			await expectCanvasActionsOutsideStage(page);
+			await assertGeometry(page, graph);
+			const smallView = await camera(page);
+			await graph.getByRole("button", { name: copy.fit, exact: true }).click();
+			if (width === 1536) {
+				await unchangedCamera(page, smallView);
+				await expect(graph.getByRole("button", { name: copy.focus, exact: true })).toHaveCount(0);
+			} else await graph.getByRole("button", { name: copy.focus, exact: true }).click();
+			await graph.getByRole("button", { name: copy.zoomIn, exact: true }).click();
+			await expect(graph.getByRole("button", { name: copy.focus, exact: true })).toHaveCount(1);
+			await graph.getByRole("button", { name: copy.focus, exact: true }).click();
+			await expect.poll(async () => (await camera(page)).zoom).toBeCloseTo(1, 3);
+			await expect(graph.getByRole("button", { name: copy.fit, exact: true })).toHaveCount(1);
+			await page.getByRole("button", { name: copy.family, exact: true }).click();
+			graph = await waitForAccountGraphLayout(page, { nodes: 4, edges: 4 });
+			const expectedIds = records.map(record => record.id).sort();
+			const directions = await graph.locator(".react-flow__edge").evaluateAll(edges => edges.map(edge => [edge.getAttribute("data-from"), edge.getAttribute("data-to")]).sort());
+			await graph.getByRole("button", { name: copy.expand, exact: true }).click();
+			const dialog = page.getByRole("dialog");
+			await expect(dialog).toBeVisible();
+			const dialogHandle = await dialog.elementHandle();
+			const exitLabel = locale === "zh-CN" ? "退出全屏" : "Exit expanded view";
+			await expect(dialog.getByRole("button", { name: exitLabel, exact: true })).toHaveAttribute("aria-pressed", "true");
+			for (const record of records.slice(1)) {
+				await waitForAccountGraphLayout(page, { nodes: 4, edges: 4 });
+				await fitAccountGraph(page);
+				await expectAllAccountGraphNodesInFrame(page);
+				const edge = activeAccountGraph(page).locator(".react-flow__edge").first();
+				await edge.focus();
+				await page.keyboard.press("Enter");
+				await expect(activeAccountGraph(page).locator(".account-graph-connection-details")).toHaveCount(1);
+				await activeAccountGraph(page).locator(`.react-flow__node[data-id="${record.id}"] a.asset-graph-link`).click();
+				await expect(page).toHaveURL(new RegExp(`${record.href}$`));
+				await expect(dialog, "Following a related account keeps the expanded graph open").toBeVisible();
+				graph = await waitForAccountGraphLayout(page, { nodes: 4, edges: 4 });
+				await expect(graph.locator(".asset-graph-center")).toHaveAttribute("data-id", record.id);
+				expect(await graph.locator(".react-flow__node").evaluateAll(nodes => nodes.map(node => node.getAttribute("data-id")).sort())).toEqual(expectedIds);
+				expect(await graph.locator(".react-flow__edge").evaluateAll(edges => edges.map(edge => [edge.getAttribute("data-from"), edge.getAttribute("data-to")]).sort())).toEqual(directions);
+				expect(await dialogHandle?.evaluate(element => element.isConnected), "Account navigation must preserve the same dialog").toBe(true);
+				expect(await dialog.evaluate(element => element.contains(document.activeElement)), "Keyboard focus stays inside the expanded graph after account navigation").toBe(true);
+				await expect(graph.locator(".account-graph-connection-details")).toHaveCount(0);
+				await expectCanvasActionsOutsideStage(page);
+				await assertGeometry(page, dialog);
+			}
+			await page.goBack();
+			await expect(page).toHaveURL(new RegExp(`${records[2].href}$`));
+			await expect(dialog).toBeVisible();
+			await waitForAccountGraphLayout(page, { nodes: 4, edges: 4 });
+			await page.goForward();
+			await expect(page).toHaveURL(new RegExp(`${records[3].href}$`));
+			await expect(dialog).toBeVisible();
+			await waitForAccountGraphLayout(page, { nodes: 4, edges: 4 });
+			await screenshot(page, `graph-fullscreen-after-three-account-visits-${locale}-${width}`);
+			await dialog.getByRole("button", { name: exitLabel, exact: true }).click();
+			await expect(dialog).toBeHidden();
+			graph = await waitForAccountGraphLayout(page, { nodes: 4, edges: 4 });
+			await expect(graph.locator(".asset-graph-center")).toHaveAttribute("data-id", records[3].id);
+			await expect(graph.getByRole("button", { name: copy.expand, exact: true })).toBeFocused();
+			expect((await camera(page)).zoom).toBeCloseTo(1, 3);
+			await expect(page.getByRole("button", { name: copy.family, exact: true })).toHaveAttribute("aria-pressed", "true");
+			for (const closeMethod of ["escape", "header"] as const) {
+				await graph.getByRole("button", { name: copy.expand, exact: true }).click();
+				await waitForAccountGraphLayout(page, { nodes: 4, edges: 4 });
+				if (closeMethod === "escape") await page.keyboard.press("Escape");
+				else await dialog.locator(":scope > header").getByRole("button", { name: copy.close, exact: true }).click();
+				await expect(dialog).toBeHidden();
+				graph = await waitForAccountGraphLayout(page, { nodes: 4, edges: 4 });
+				await expect(graph.getByRole("button", { name: copy.expand, exact: true })).toBeFocused();
+			}
+			await page.getByRole("button", { name: copy.direct, exact: true }).click();
+			await waitForAccountGraphLayout(page, { nodes: 3, edges: 2 });
+			await page.reload();
+			await waitForAccountGraphLayout(page, { nodes: 3, edges: 2 });
+			await screenshot(page, `graph-four-icon-controls-${locale}-${width}`);
+			expect(errors).toEqual([]);
+		} finally { await context.close(); }
+	});
+
 	test(`${locale} ${width}px account detail merged actions, relationship evidence and recovery`, async ({ browser }) => {
 		test.setTimeout(180_000);
 		const { context, page, errors, copy } = await openSession(browser, locale, width);

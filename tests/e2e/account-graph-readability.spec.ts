@@ -25,6 +25,8 @@ import {
 	expectReadableAccountGraph,
 	exerciseAccountGraphControls,
 	exerciseAccountGraphMiniMap,
+	fitAccountGraph,
+	focusAccountGraph,
 	panAccountGraphNodeIntoView,
 	setAccountRelationDetailsOpen,
 	visibleGraphNodeIds,
@@ -181,8 +183,8 @@ function copy(locale: string) {
 				selection: "关联详情",
 				close: "关闭",
 				fit: "适应画布",
-				center: "定位当前",
-				expand: "大图查看",
+				center: "回到当前",
+				expand: "全屏查看",
 				verified: "已核实",
 				mixed: "含待核实关系",
 				pending: "待核实",
@@ -210,7 +212,7 @@ function copy(locale: string) {
 				selection: "Connection details",
 				close: "Close",
 				fit: "Fit all",
-				center: "Center account",
+				center: "Back to current",
 				expand: "Expand graph",
 				verified: "Verified",
 				mixed: "Includes connections to verify",
@@ -1111,10 +1113,7 @@ async function largeFamilyCheckpoints(
 					),
 					animations: "disabled",
 				});
-			await activeAccountGraph(page)
-				.locator(".account-graph-view-actions")
-				.getByRole("button", { name: text.fit, exact: true })
-				.click();
+			await fitAccountGraph(page);
 			await expectAllAccountGraphNodesInFrame(page);
 			await expectAccountGraphGeometry(
 				page,
@@ -1156,10 +1155,7 @@ async function selectionJourney(
 ) {
 	await exerciseAccountGraphControls(page);
 	await expectNoSelection(page);
-	await activeAccountGraph(page)
-		.locator(".account-graph-view-actions")
-		.getByRole("button", { name: text.fit, exact: true })
-		.click();
+	await fitAccountGraph(page);
 	await expectAllAccountGraphNodesInFrame(page);
 	await recordAccountGraphCamera(page, "before-first-mouse");
 	const beforeFirstMouse = await viewportPosition(page);
@@ -1248,10 +1244,7 @@ async function selectionJourney(
 		beforeBlank,
 		"Clearing the selection on blank canvas",
 	);
-	await activeAccountGraph(page)
-		.locator(".account-graph-view-actions")
-		.getByRole("button", { name: text.fit, exact: true })
-		.click();
+	await fitAccountGraph(page);
 	await expectAllAccountGraphNodesInFrame(page);
 	await recordAccountGraphCamera(page, "after-second-fit-all");
 	const beforeSecondMouse = await viewportPosition(page);
@@ -1338,9 +1331,7 @@ for (const locale of ["zh-CN", "en-US"] as const) {
 				else {
 					for (const id of await visibleGraphNodeIds(activeAccountGraph(page)))
 						await panAccountGraphNodeIntoView(page, id);
-					await activeAccountGraph(page)
-						.getByRole("button", { name: text.center, exact: true })
-						.click();
+					await focusAccountGraph(page);
 					await expectReadableAccountGraph(page);
 				}
 				await page.locator(".asset-relations-card").scrollIntoViewIfNeeded();

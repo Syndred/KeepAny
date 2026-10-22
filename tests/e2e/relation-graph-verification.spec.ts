@@ -255,7 +255,7 @@ for (const locale of ["zh-CN", "en-US"] as const) {
 					await allNodesInFrame(page);
 					await page.locator(".graph").scrollIntoViewIfNeeded();
 					await page.screenshot({ path: evidence ? `${evidence}/relation-graph-49-en-US-1280.png` : test.info().outputPath("relation-graph-49-en-US-1280.png") });
-					await page.getByRole("button", { name: "Center account", exact: true }).click();
+					await page.getByRole("button", { name: "Back to current", exact: true }).click();
 					await expectReadableAccountGraph(page);
 				}
 

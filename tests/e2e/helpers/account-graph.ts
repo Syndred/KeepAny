@@ -558,7 +558,7 @@ async function expectUsefulAccountGraphFit(page: Page) {
 
 export async function exerciseAccountGraphControls(page: Page) {
 	const graph = await waitForAccountGraphLayout(page);
-	await expect(graph.locator(".react-flow__controls-button")).toHaveCount(2);
+	await expect(graph.locator(".react-flow__controls-button")).toHaveCount(4);
 	await expect(graph.locator(".react-flow__controls-fitview")).toHaveCount(0);
 	const initial = await graphViewport(page);
 	await graph.locator(".react-flow__controls-zoomin").click();
@@ -576,24 +576,29 @@ export async function exerciseAccountGraphControls(page: Page) {
 		const bounds = await control.boundingBox();
 		expect(bounds?.width).toBeGreaterThanOrEqual(44);
 		expect(bounds?.height).toBeGreaterThanOrEqual(44);
+		const icon = await control.locator("svg").boundingBox();
+		expect(icon?.width, "Navigation icons stay legible inside their touch targets").toBeGreaterThanOrEqual(18);
+		expect(icon?.height).toBeGreaterThanOrEqual(18);
 	}
 	const actions = graph.locator(".account-graph-view-actions");
 	await expect(actions).toBeVisible();
-	const center = actions.getByRole("button", {
-		name: /^(定位当前|Center account)$/,
-		exact: true,
-	});
-	const fitAll = actions.getByRole("button", {
-		name: /^(适应画布|Fit all)$/,
-		exact: true,
-	});
-	await expect(fitAll).toHaveCount(1);
-	await center.click();
+	await expect(actions.locator(".account-graph-view-toggle")).toHaveCount(1);
+	await focusAccountGraph(page);
 	await expectReadableAccountGraph(page);
-	await fitAll.click();
+	await fitAccountGraph(page);
 	await expectUsefulAccountGraphFit(page);
-	await center.click();
+	await focusAccountGraph(page);
 	await expectReadableAccountGraph(page);
+}
+
+export async function focusAccountGraph(page: Page) {
+	const focus = activeAccountGraph(page).getByRole("button", { name: /^(回到当前|Back to current)$/, exact: true });
+	if (await focus.count()) await focus.click();
+}
+
+export async function fitAccountGraph(page: Page) {
+	await focusAccountGraph(page);
+	await activeAccountGraph(page).getByRole("button", { name: /^(适应画布|Fit all)$/, exact: true }).click();
 }
 
 export async function exerciseAccountGraphMiniMap(page: Page) {
@@ -751,10 +756,7 @@ export async function exerciseAccountGraphMiniMap(page: Page) {
 				"The reverse map wheel actually decreases the graph reading scale",
 		})
 		.toBeLessThan(wheelZoomed.zoom);
-	await graph
-		.locator(".account-graph-view-actions")
-		.getByRole("button", { name: /^(定位当前|Center account)$/, exact: true })
-		.click();
+	await focusAccountGraph(page);
 	await expectReadableAccountGraph(page);
 }
 
@@ -765,7 +767,7 @@ export async function expectCanvasActionsOutsideStage(page: Page) {
 	await expect(navigation).toBeVisible();
 	await expect(navigation.locator(".react-flow__controls")).toHaveCount(1);
 	await expect(navigation.locator(".react-flow__controls-button")).toHaveCount(
-		2,
+		4,
 	);
 	await expect(
 		navigation.locator(".react-flow__controls-zoomin"),
@@ -806,6 +808,9 @@ export async function expectCanvasActionsOutsideStage(page: Page) {
 		const bounds = await control.boundingBox();
 		expect(bounds?.width).toBeGreaterThanOrEqual(44);
 		expect(bounds?.height).toBeGreaterThanOrEqual(44);
+		const icon = await control.locator("svg").boundingBox();
+		expect(icon?.width).toBeGreaterThanOrEqual(18);
+		expect(icon?.height).toBeGreaterThanOrEqual(18);
 	}
 	const clipping = await graph
 		.locator(".account-graph-view-actions")
