@@ -1601,16 +1601,6 @@ function EntryEditor({
 							onPaste={(value) => update("password", value)}
 						/>
 					</div>
-					<div className="actions password-vault-field-actions">
-						<Button
-							type="button"
-							size="small"
-							onClick={onGenerate}
-							disabled={busy}
-						>
-							<WandSparkles size={14} /> {t("pwVaultGeneratePassword")}
-						</Button>
-					</div>
 				</div>
 				<div className="password-vault-more-info password-vault-optional">
 					<div className="password-vault-more-info-fields">

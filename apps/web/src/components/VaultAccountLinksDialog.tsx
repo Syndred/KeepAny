@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { Check, Network, Search, WandSparkles } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { generateAiText } from "../../../../packages/ai/src";
 import type {
@@ -50,6 +50,8 @@ export function VaultAccountLinksDialog({
 	const [selected, setSelected] = useState<string[]>([]);
 	const [suggestions, setSuggestions] = useState<AccountLinkSuggestion[]>([]);
 	const [chosen, setChosen] = useState<number[]>([]);
+	const [matchedLocalKey, setMatchedLocalKey] = useState<string | null>(null);
+	const [autoMatching, setAutoMatching] = useState(false);
 	const [deletedSuggestions, setDeletedSuggestions] = useState<
 		{ index: number; relation: Relation }[]
 	>([]);
@@ -124,6 +126,7 @@ export function VaultAccountLinksDialog({
 				setSuggestions([]);
 				setChosen([]);
 				setDeletedSuggestions([]);
+				setMatchedLocalKey(null);
 			}
 			return { rows: result, blocked };
 		},
@@ -195,11 +198,21 @@ export function VaultAccountLinksDialog({
 			}
 		}
 	}, [busy]);
-	const selectedRows = rows.filter((row) => selected.includes(row.entryId));
-	const label = (
-		kind: AccountLinkSuggestion["kind"],
-		identifierKind?: "email" | "phone",
-	) => t(`pwConnectKind_${identifierKind ?? kind}`);
+	const selectedRows = useMemo(
+		() => rows.filter((row) => selected.includes(row.entryId)),
+		[rows, selected],
+	);
+	const localCandidates = useMemo(
+		() => sharedIdentifierSuggestions(selectedRows),
+		[selectedRows],
+	);
+	const localKey = JSON.stringify(localCandidates);
+	const matching = autoMatching || matchedLocalKey !== localKey;
+	const label = useCallback(
+		(kind: AccountLinkSuggestion["kind"], identifierKind?: "email" | "phone") =>
+			t(`pwConnectKind_${identifierKind ?? kind}`),
+		[t],
+	);
 	const categoryOptions = [
 		...new Set([
 			...builtins.account,
@@ -252,48 +265,111 @@ export function VaultAccountLinksDialog({
 		setSelected(ids);
 		setSuggestions([]);
 		setChosen([]);
+		setDeletedSuggestions([]);
+		setMatchedLocalKey(null);
 		setMessage("");
 	}
-	async function applySuggestions(
-		result: AccountLinkSuggestion[],
-		localOnly: boolean,
-	) {
-		const changes = await accountLinkRelationChanges(
-			result,
-			sourceRelations,
-			label,
+	const applySuggestions = useCallback(
+		async (
+			result: AccountLinkSuggestion[],
+			localOnly: boolean,
+			isCurrent: () => boolean = () => true,
+		) => {
+			const changes = await accountLinkRelationChanges(
+				result,
+				sourceRelations,
+				label,
+			);
+			if (
+				!isCurrent() ||
+				!active.current ||
+				session?.getSnapshot().contentRevision !== base.current
+			)
+				return false;
+			const deleted = new Set(
+				changes.deletedRelations.map((item) => item.suggestion),
+			);
+			setSuggestions(result);
+			setDeletedSuggestions(
+				changes.deletedRelations.map((item) => ({
+					index: result.indexOf(item.suggestion),
+					relation: item.relation,
+				})),
+			);
+			setChosen(
+				result.flatMap((suggestion, index) =>
+					!deleted.has(suggestion) &&
+					(localOnly || suggestion.kind === "identifier")
+						? [index]
+						: [],
+				),
+			);
+			setMessage("");
+			return true;
+		},
+		[sourceRelations, label, session],
+	);
+	useEffect(() => {
+		if (loading || busy || stale || matchedLocalKey === localKey) return;
+		let current = true;
+		setAutoMatching(true);
+		void (async () => {
+			try {
+				const applied = await applySuggestions(
+					localCandidates,
+					true,
+					() => current,
+				);
+				if (current) {
+					if (applied) setMatchedLocalKey(localKey);
+					setAutoMatching(false);
+				}
+			} catch {
+				if (current) {
+					setMessage(t("pwConnectLoadError"));
+					setAutoMatching(false);
+				}
+			}
+		})();
+		return () => {
+			current = false;
+		};
+	}, [
+		loading,
+		busy,
+		stale,
+		matchedLocalKey,
+		localKey,
+		localCandidates,
+		applySuggestions,
+		t,
+	]);
+	function clearAiSuggestions() {
+		const retained = suggestions.flatMap((suggestion, index) =>
+			suggestion.kind === "identifier" ? [{ suggestion, index }] : [],
 		);
-		if (
-			!active.current ||
-			session?.getSnapshot().contentRevision !== base.current
-		)
-			return;
-		const deleted = new Set(
-			changes.deletedRelations.map((item) => item.suggestion),
-		);
-		setSuggestions(result);
-		setDeletedSuggestions(
-			changes.deletedRelations.map((item) => ({
-				index: result.indexOf(item.suggestion),
-				relation: item.relation,
-			})),
-		);
+		setSuggestions(retained.map((item) => item.suggestion));
 		setChosen(
-			result.flatMap((suggestion, index) =>
-				!deleted.has(suggestion) &&
-				(localOnly || suggestion.kind === "identifier")
-					? [index]
-					: [],
+			retained.flatMap((item, index) =>
+				chosen.includes(item.index) ? [index] : [],
 			),
 		);
-		setMessage("");
+		setDeletedSuggestions(
+			deletedSuggestions.flatMap((item) => {
+				const index = retained.findIndex(
+					(candidate) => candidate.index === item.index,
+				);
+				return index < 0 ? [] : [{ ...item, index }];
+			}),
+		);
 	}
 	async function proposeLocal() {
-		if (running.current || stale) return;
+		if (running.current || autoMatching || stale) return;
 		running.current = true;
 		setBusy(true);
 		try {
-			await applySuggestions(sharedIdentifierSuggestions(selectedRows), true);
+			if (await applySuggestions(localCandidates, true))
+				setMatchedLocalKey(localKey);
 		} catch {
 			if (active.current) setMessage(t("pwConnectLoadError"));
 		} finally {
@@ -302,7 +378,14 @@ export function VaultAccountLinksDialog({
 		}
 	}
 	async function proposeAi() {
-		if (running.current || !connection || !selectedRows.length || stale) return;
+		if (
+			running.current ||
+			matching ||
+			!connection ||
+			!selectedRows.length ||
+			stale
+		)
+			return;
 		running.current = true;
 		setBusy(true);
 		setMessage("");
@@ -342,6 +425,7 @@ export function VaultAccountLinksDialog({
 	async function save() {
 		if (
 			running.current ||
+			matching ||
 			!session ||
 			!selectedRows.length ||
 			stale ||
@@ -531,7 +615,7 @@ export function VaultAccountLinksDialog({
 											key={blocked.entry.id}
 											blocked={blocked}
 											assets={sourceAssets}
-											disabled={busy || stale}
+											disabled={busy || autoMatching || stale}
 											onResolve={(id) => void resolve(blocked, id)}
 										/>
 									))}
@@ -602,6 +686,7 @@ export function VaultAccountLinksDialog({
 																disabled={busy || stale}
 																aria-label={`${t("category")} ${row.account.name}`}
 																onValueChange={(category) => {
+																	setMatchedLocalKey(null);
 																	setRows((current) =>
 																		current.map((item) =>
 																			item.account.id === row.account.id
@@ -617,6 +702,7 @@ export function VaultAccountLinksDialog({
 																	);
 																	setSuggestions([]);
 																	setChosen([]);
+																	setDeletedSuggestions([]);
 																}}
 															>
 																{categoryOptions.map((category) => (
@@ -661,8 +747,7 @@ export function VaultAccountLinksDialog({
 																				: r,
 																		),
 																	);
-																	setSuggestions([]);
-																	setChosen([]);
+																	clearAiSuggestions();
 																}}
 															/>
 														</label>
@@ -676,7 +761,10 @@ export function VaultAccountLinksDialog({
 									))}
 								</div>
 							</section>
-							<section className="vault-connect-review-pane">
+							<section
+								className="vault-connect-review-pane"
+								aria-busy={matching}
+							>
 								<h3 aria-live="polite">
 									{t("pwConnectReview")}{" "}
 									{suggestions.length > 0 && (
@@ -698,7 +786,7 @@ export function VaultAccountLinksDialog({
 										>
 											<input
 												type="checkbox"
-												disabled={busy || stale}
+												disabled={busy || matching || stale}
 												checked={chosen.includes(index)}
 												onChange={(e) =>
 													setChosen(
@@ -723,9 +811,13 @@ export function VaultAccountLinksDialog({
 														{t("pwConnectRestoreRelation")}
 													</small>
 												)}
-												{relation.evidence && (
-													<small>{relation.evidence}</small>
-												)}
+												{relation.evidence &&
+													![
+														accountNames.get(relation.from),
+														accountNames.get(relation.to),
+													].includes(relation.evidence.trim()) && (
+														<small>{relation.evidence}</small>
+													)}
 											</span>
 										</label>
 									))}
@@ -758,7 +850,7 @@ export function VaultAccountLinksDialog({
 							<div className="vault-connect-footer-actions">
 								<div className="vault-connect-analysis-actions">
 									<Button
-										disabled={busy || stale || !selected.length}
+										disabled={busy || autoMatching || stale || !selected.length}
 										onClick={() => void proposeLocal()}
 									>
 										<Network size={16} />
@@ -767,6 +859,7 @@ export function VaultAccountLinksDialog({
 									<Button
 										disabled={
 											busy ||
+											matching ||
 											stale ||
 											!connection ||
 											!selected.length ||
@@ -787,7 +880,7 @@ export function VaultAccountLinksDialog({
 								</span>
 								<Button
 									variant="primary"
-									disabled={busy || stale || !selected.length}
+									disabled={busy || matching || stale || !selected.length}
 									onClick={() => void save()}
 								>
 									<Check size={16} />

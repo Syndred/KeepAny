@@ -39,6 +39,7 @@ export default defineConfig({
 		"account-link-recovery.spec.ts",
 		"notes-trash-release.spec.ts",
 		"account-lifecycle-release.spec.ts",
+		"vault-dual-login.spec.ts",
 		"relation-topbar-return.spec.ts",
 		"restore-identity.spec.ts",
 		"archive-migration.spec.ts",
