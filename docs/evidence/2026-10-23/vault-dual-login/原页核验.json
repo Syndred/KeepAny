@@ -1,0 +1,31 @@
+{
+  "entry": "/assets/index-CqZiw7vM.js",
+  "beforeAccounts": 57,
+  "afterAccounts": 58,
+  "allOriginalAccountsRetained": true,
+  "newIdentityAssets": 1,
+  "vaultEntryCountBefore": 54,
+  "vaultEntryCountAfter": 54,
+  "beforeGraph": {
+    "nodes": 2,
+    "edges": 1
+  },
+  "afterGraph": {
+    "nodes": 3,
+    "edges": 2
+  },
+  "repeatImportStable": true,
+  "emailAndPhoneSelectable": true,
+  "originalManualPurposeRetained": true,
+  "trashUnchanged": true,
+  "encryptedBackupVerifiedInChrome": true,
+  "privateFieldsAndIdsOmitted": true,
+  "syntheticCleanup": {
+    "vault": {
+      "entries": 0,
+      "trashEmpty": true
+    },
+    "accounts": 0,
+    "ordinaryTrashEmpty": true
+  }
+}

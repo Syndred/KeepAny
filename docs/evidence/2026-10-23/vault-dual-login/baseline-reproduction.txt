@@ -1,0 +1,46 @@
+[WebServer] (node:15466) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+
+Running 1 test using 1 worker
+
+(node:15467) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1/1] tests/e2e/vault-dual-login.spec.ts:15:2 › zh-CN 1536px creates both login connections when saving without pressing local match
+  1) tests/e2e/vault-dual-login.spec.ts:15:2 › zh-CN 1536px creates both login connections when saving without pressing local match 
+
+    Error: expect(locator).toHaveCount(expected) failed
+
+    Locator:  locator('.vault-connect-dialog').locator('.vault-connect-suggestion')
+    Expected: 2
+    Received: 0
+    Timeout:  5000ms
+
+    Call log:
+      - Expect "toHaveCount" locator('.vault-connect-dialog').locator('.vault-connect-suggestion') with timeout 5000ms
+      - waiting for locator('.vault-connect-dialog').locator('.vault-connect-suggestion')
+        14 × locator resolved to 0 elements
+           - unexpected value "0"
+
+
+      32 | 			await dialog.getByRole("checkbox",{name:new RegExp(`^${title}`)}).check();
+      33 | 			const suggestions=dialog.locator(".vault-connect-suggestion");
+    > 34 | 			await expect(suggestions).toHaveCount(2);
+         | 			                          ^
+      35 | 			await expect(suggestions.filter({hasText:email})).toHaveCount(1);
+      36 | 			await expect(suggestions.filter({hasText:phone})).toHaveCount(1);
+      37 | 			await expect(suggestions.locator("input:checked")).toHaveCount(2);
+        at connections (/Users/syndred/Desktop/projects/KeepAny/tests/e2e/vault-dual-login.spec.ts:34:30)
+        at /Users/syndred/Desktop/projects/KeepAny/tests/e2e/vault-dual-login.spec.ts:66:16
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../../../../tmp/stackperch-dual-login-pw-baseline/vault-dual-login-zh-CN-153-f4c63-ithout-pressing-local-match/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../../../../tmp/stackperch-dual-login-pw-baseline/vault-dual-login-zh-CN-153-f4c63-ithout-pressing-local-match/error-context.md
+
+
+  1 failed
+    tests/e2e/vault-dual-login.spec.ts:15:2 › zh-CN 1536px creates both login connections when saving without pressing local match 
