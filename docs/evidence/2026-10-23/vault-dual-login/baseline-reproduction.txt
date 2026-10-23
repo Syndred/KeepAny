@@ -9,7 +9,7 @@ Running 1 test using 1 worker
 
 
 [1/1] tests/e2e/vault-dual-login.spec.ts:15:2 › zh-CN 1536px creates both login connections when saving without pressing local match
-  1) tests/e2e/vault-dual-login.spec.ts:15:2 › zh-CN 1536px creates both login connections when saving without pressing local match 
+  1) tests/e2e/vault-dual-login.spec.ts:15:2 › zh-CN 1536px creates both login connections when saving without pressing local match
 
     Error: expect(locator).toHaveCount(expected) failed
 
@@ -43,4 +43,4 @@ Running 1 test using 1 worker
 
 
   1 failed
-    tests/e2e/vault-dual-login.spec.ts:15:2 › zh-CN 1536px creates both login connections when saving without pressing local match 
+    tests/e2e/vault-dual-login.spec.ts:15:2 › zh-CN 1536px creates both login connections when saving without pressing local match
