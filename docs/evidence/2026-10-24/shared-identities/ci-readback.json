@@ -1,0 +1,21 @@
+{
+  "packageCommit": "4bca7ccbb451700aa172b8173221ee513c4e8973",
+  "runs": [
+    {
+      "id": 40047096084,
+      "name": "Verify local release",
+      "headSha": "4bca7ccbb451700aa172b8173221ee513c4e8973",
+      "status": "in_progress",
+      "conclusion": null,
+      "url": "https://github.com/Syndred/StackPerch/actions/runs/40047096084"
+    },
+    {
+      "id": 40047096003,
+      "name": "Verify portable preview",
+      "headSha": "4bca7ccbb451700aa172b8173221ee513c4e8973",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/Syndred/StackPerch/actions/runs/40047096003"
+    }
+  ]
+}

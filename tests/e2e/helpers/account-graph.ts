@@ -756,6 +756,13 @@ export async function exerciseAccountGraphMiniMap(page: Page) {
 				"The reverse map wheel actually decreases the graph reading scale",
 		})
 		.toBeLessThan(wheelZoomed.zoom);
+	// The combined control treats a small offset/zoom as already near current.
+	// Expose its return action with a real zoom step before requiring exact focus.
+	const returnToCurrent = graph.getByRole("button", { name: /^(回到当前|Back to current)$/, exact: true });
+	if (!(await returnToCurrent.count())) {
+		await graph.getByRole("button", { name: /^(缩小|Zoom out)$/, exact: true }).click();
+		await expect(returnToCurrent).toBeVisible();
+	}
 	await focusAccountGraph(page);
 	await expectReadableAccountGraph(page);
 }

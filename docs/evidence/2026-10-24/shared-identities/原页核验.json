@@ -1,0 +1,31 @@
+{
+  "entryScript": "index-BXz3v6b-.js",
+  "encryptedKdbxBackupDownloadCompleted": true,
+  "accountCountBefore": 58,
+  "accountCountAfter": 58,
+  "accountIdsUnchanged": true,
+  "accountCardFieldsUnchanged": true,
+  "vaultCountBefore": 56,
+  "vaultCountAfter": 56,
+  "trashContentUnchanged": true,
+  "mailboxBefore": {
+    "nodes": 2,
+    "edges": 1
+  },
+  "mailboxAfter": {
+    "nodes": 12,
+    "edges": 11
+  },
+  "expectedDependentAccounts": 11,
+  "expectedAccountIdsAllPresent": true,
+  "noUnexpectedGraphNode": true,
+  "allEdgesPointToMailbox": true,
+  "previousEdgeRetained": true,
+  "repeatSaveIdsUnchanged": true,
+  "reloadIdsUnchanged": true,
+  "fullscreenAcrossNodeVisitAndReturn": true,
+  "noAiRequest": true,
+  "realMasterOrPasswordRead": false,
+  "vaultLockedAtHandoff": true,
+  "originalTabGrouped": false
+}

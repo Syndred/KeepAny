@@ -1,0 +1,45 @@
+[WebServer] (node:51200) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+
+Running 1 test using 1 worker
+
+(node:51201) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1/1] tests/e2e/account-shared-identity.spec.ts:36:3 › zh-CN 1536px keeps shared email and phone complete across existing accounts and lifecycle changes
+  1) tests/e2e/account-shared-identity.spec.ts:36:3 › zh-CN 1536px keeps shared email and phone complete across existing accounts and lifecycle changes
+
+    Error: expect(locator).toHaveCount(expected) failed
+
+    Locator:  locator('.vault-connect-dialog').locator('.vault-connect-suggestion')
+    Expected: 7
+    Received: 2
+    Timeout:  5000ms
+
+    Call log:
+      - Expect "toHaveCount" locator('.vault-connect-dialog').locator('.vault-connect-suggestion') with timeout 5000ms
+      - waiting for locator('.vault-connect-dialog').locator('.vault-connect-suggestion')
+        14 × locator resolved to 2 elements
+           - unexpected value "2"
+
+
+      248 | 				await password(names.unused, email);
+      249 | 				const first = await connect(names.latest);
+    > 250 | 				await expect(first.locator(".vault-connect-suggestion")).toHaveCount(7);
+          | 				                                                         ^
+      251 | 				await expect(
+      252 | 					first
+      253 | 						.locator(".vault-connect-suggestion")
+        at /Users/syndred/Desktop/projects/KeepAny/tests/e2e/account-shared-identity.spec.ts:250:62
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../../../../tmp/stackperch-mailbox-old-2-pw/account-shared-identity-zh-51558-ounts-and-lifecycle-changes/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../../../../tmp/stackperch-mailbox-old-2-pw/account-shared-identity-zh-51558-ounts-and-lifecycle-changes/error-context.md
+
+
+  1 failed
+    tests/e2e/account-shared-identity.spec.ts:36:3 › zh-CN 1536px keeps shared email and phone complete across existing accounts and lifecycle changes

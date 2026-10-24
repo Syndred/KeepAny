@@ -1,0 +1,349 @@
+[WebServer] (node:52109) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+
+Running 24 tests using 2 workers
+
+(node:52111) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+(node:52110) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1/24] tests/e2e/account-detail-dedupe.spec.ts:174:2 › zh-CN 390px graph fullscreen stays open across connected accounts with four merged icon controls
+[2/24] tests/e2e/account-graph-readability.spec.ts:1287:3 › zh-CN 390px multi-source identities preserve connection purposes across reload and edits
+[3/24] tests/e2e/account-detail-dedupe.spec.ts:271:2 › zh-CN 390px account detail merged actions, relationship evidence and recovery
+  1) tests/e2e/account-graph-readability.spec.ts:1287:3 › zh-CN 390px multi-source identities preserve connection purposes across reload and edits
+
+    Error: expect(locator).toBeHidden() failed
+
+    Locator:  getByRole('dialog')
+    Expected: hidden
+    Received: visible
+    Timeout:  5000ms
+
+    Call log:
+      - Expect "toBeHidden" getByRole('dialog') with timeout 5000ms
+      - waiting for getByRole('dialog')
+        14 × locator resolved to <div role="dialog" tabindex="-1" id="radix-_r_0_" data-state="open" aria-labelledby="radix-_r_1_" class="dialog account-detail-dialog">…</div>
+           - unexpected value "visible"
+
+
+      300 | 			.fill("2026-10-22");
+      301 | 	await editor.getByRole("button", { name: text.save, exact: true }).click();
+    > 302 | 	await expect(editor).toBeHidden();
+          | 	                     ^
+      303 | 	const expected = connectionRow(connection, text);
+      304 | 	const row = page
+      305 | 		.locator(".relation-list .relation-row")
+        at addScenarioConnection (/Users/syndred/Desktop/projects/KeepAny/tests/e2e/account-graph-readability.spec.ts:302:23)
+        at /Users/syndred/Desktop/projects/KeepAny/tests/e2e/account-graph-readability.spec.ts:1313:6
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../../../../tmp/stackperch-mailbox-ui-pw/account-graph-readability--831b5-ses-across-reload-and-edits/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../../../../tmp/stackperch-mailbox-ui-pw/account-graph-readability--831b5-ses-across-reload-and-edits/error-context.md
+
+
+(node:52173) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[4/24] tests/e2e/account-graph-readability.spec.ts:1287:3 › zh-CN 1280px multi-source identities preserve connection purposes across reload and edits
+[5/24] tests/e2e/account-detail-dedupe.spec.ts:467:2 › zh-CN 390px account detail images, manual tasks and impact checklist
+[6/24] tests/e2e/account-detail-dedupe.spec.ts:174:2 › zh-CN 1536px graph fullscreen stays open across connected accounts with four merged icon controls
+  2) tests/e2e/account-graph-readability.spec.ts:1287:3 › zh-CN 1280px multi-source identities preserve connection purposes across reload and edits
+
+    Error: expect(locator).toBeHidden() failed
+
+    Locator:  getByRole('dialog')
+    Expected: hidden
+    Received: visible
+    Timeout:  5000ms
+
+    Call log:
+      - Expect "toBeHidden" getByRole('dialog') with timeout 5000ms
+      - waiting for getByRole('dialog')
+        14 × locator resolved to <div role="dialog" tabindex="-1" id="radix-_r_0_" data-state="open" aria-labelledby="radix-_r_1_" class="dialog account-detail-dialog">…</div>
+           - unexpected value "visible"
+
+
+      300 | 			.fill("2026-10-22");
+      301 | 	await editor.getByRole("button", { name: text.save, exact: true }).click();
+    > 302 | 	await expect(editor).toBeHidden();
+          | 	                     ^
+      303 | 	const expected = connectionRow(connection, text);
+      304 | 	const row = page
+      305 | 		.locator(".relation-list .relation-row")
+        at addScenarioConnection (/Users/syndred/Desktop/projects/KeepAny/tests/e2e/account-graph-readability.spec.ts:302:23)
+        at /Users/syndred/Desktop/projects/KeepAny/tests/e2e/account-graph-readability.spec.ts:1313:6
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../../../../tmp/stackperch-mailbox-ui-pw/account-graph-readability--13403-ses-across-reload-and-edits/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../../../../tmp/stackperch-mailbox-ui-pw/account-graph-readability--13403-ses-across-reload-and-edits/error-context.md
+
+
+[7/24] tests/e2e/account-detail-dedupe.spec.ts:271:2 › zh-CN 1536px account detail merged actions, relationship evidence and recovery
+(node:52185) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[8/24] tests/e2e/account-graph-readability.spec.ts:1287:3 › zh-CN 1536px multi-source identities preserve connection purposes across reload and edits
+[9/24] tests/e2e/account-detail-dedupe.spec.ts:467:2 › zh-CN 1536px account detail images, manual tasks and impact checklist
+[10/24] tests/e2e/account-detail-dedupe.spec.ts:174:2 › en-US 390px graph fullscreen stays open across connected accounts with four merged icon controls
+  3) tests/e2e/account-graph-readability.spec.ts:1287:3 › zh-CN 1536px multi-source identities preserve connection purposes across reload and edits
+
+    Error: expect(locator).toBeHidden() failed
+
+    Locator:  getByRole('dialog')
+    Expected: hidden
+    Received: visible
+    Timeout:  5000ms
+
+    Call log:
+      - Expect "toBeHidden" getByRole('dialog') with timeout 5000ms
+      - waiting for getByRole('dialog')
+        14 × locator resolved to <div role="dialog" tabindex="-1" id="radix-_r_0_" data-state="open" aria-labelledby="radix-_r_1_" class="dialog account-detail-dialog">…</div>
+           - unexpected value "visible"
+
+
+      300 | 			.fill("2026-10-22");
+      301 | 	await editor.getByRole("button", { name: text.save, exact: true }).click();
+    > 302 | 	await expect(editor).toBeHidden();
+          | 	                     ^
+      303 | 	const expected = connectionRow(connection, text);
+      304 | 	const row = page
+      305 | 		.locator(".relation-list .relation-row")
+        at addScenarioConnection (/Users/syndred/Desktop/projects/KeepAny/tests/e2e/account-graph-readability.spec.ts:302:23)
+        at /Users/syndred/Desktop/projects/KeepAny/tests/e2e/account-graph-readability.spec.ts:1313:6
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../../../../tmp/stackperch-mailbox-ui-pw/account-graph-readability--a890a-ses-across-reload-and-edits/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../../../../tmp/stackperch-mailbox-ui-pw/account-graph-readability--a890a-ses-across-reload-and-edits/error-context.md
+
+
+(node:52204) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[11/24] tests/e2e/account-graph-readability.spec.ts:1287:3 › en-US 390px multi-source identities preserve connection purposes across reload and edits
+[12/24] tests/e2e/account-detail-dedupe.spec.ts:271:2 › en-US 390px account detail merged actions, relationship evidence and recovery
+  4) tests/e2e/account-graph-readability.spec.ts:1287:3 › en-US 390px multi-source identities preserve connection purposes across reload and edits
+
+    Error: expect(locator).toBeHidden() failed
+
+    Locator:  getByRole('dialog')
+    Expected: hidden
+    Received: visible
+    Timeout:  5000ms
+
+    Call log:
+      - Expect "toBeHidden" getByRole('dialog') with timeout 5000ms
+      - waiting for getByRole('dialog')
+        14 × locator resolved to <div role="dialog" tabindex="-1" id="radix-_r_0_" data-state="open" aria-labelledby="radix-_r_1_" class="dialog account-detail-dialog">…</div>
+           - unexpected value "visible"
+
+
+      300 | 			.fill("2026-10-22");
+      301 | 	await editor.getByRole("button", { name: text.save, exact: true }).click();
+    > 302 | 	await expect(editor).toBeHidden();
+          | 	                     ^
+      303 | 	const expected = connectionRow(connection, text);
+      304 | 	const row = page
+      305 | 		.locator(".relation-list .relation-row")
+        at addScenarioConnection (/Users/syndred/Desktop/projects/KeepAny/tests/e2e/account-graph-readability.spec.ts:302:23)
+        at /Users/syndred/Desktop/projects/KeepAny/tests/e2e/account-graph-readability.spec.ts:1313:6
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../../../../tmp/stackperch-mailbox-ui-pw/account-graph-readability--913a5-ses-across-reload-and-edits/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../../../../tmp/stackperch-mailbox-ui-pw/account-graph-readability--913a5-ses-across-reload-and-edits/error-context.md
+
+
+(node:52229) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[13/24] tests/e2e/account-graph-readability.spec.ts:1287:3 › en-US 1280px multi-source identities preserve connection purposes across reload and edits
+[14/24] tests/e2e/account-detail-dedupe.spec.ts:467:2 › en-US 390px account detail images, manual tasks and impact checklist
+[15/24] tests/e2e/account-detail-dedupe.spec.ts:174:2 › en-US 1536px graph fullscreen stays open across connected accounts with four merged icon controls
+[16/24] tests/e2e/account-detail-dedupe.spec.ts:271:2 › en-US 1536px account detail merged actions, relationship evidence and recovery
+  5) tests/e2e/account-graph-readability.spec.ts:1287:3 › en-US 1280px multi-source identities preserve connection purposes across reload and edits
+
+    Error: expect(locator).toBeHidden() failed
+
+    Locator:  getByRole('dialog')
+    Expected: hidden
+    Received: visible
+    Timeout:  5000ms
+
+    Call log:
+      - Expect "toBeHidden" getByRole('dialog') with timeout 5000ms
+      - waiting for getByRole('dialog')
+        14 × locator resolved to <div role="dialog" tabindex="-1" id="radix-_r_0_" data-state="open" aria-labelledby="radix-_r_1_" class="dialog account-detail-dialog">…</div>
+           - unexpected value "visible"
+
+
+      300 | 			.fill("2026-10-22");
+      301 | 	await editor.getByRole("button", { name: text.save, exact: true }).click();
+    > 302 | 	await expect(editor).toBeHidden();
+          | 	                     ^
+      303 | 	const expected = connectionRow(connection, text);
+      304 | 	const row = page
+      305 | 		.locator(".relation-list .relation-row")
+        at addScenarioConnection (/Users/syndred/Desktop/projects/KeepAny/tests/e2e/account-graph-readability.spec.ts:302:23)
+        at /Users/syndred/Desktop/projects/KeepAny/tests/e2e/account-graph-readability.spec.ts:1313:6
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../../../../tmp/stackperch-mailbox-ui-pw/account-graph-readability--8bc15-ses-across-reload-and-edits/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../../../../tmp/stackperch-mailbox-ui-pw/account-graph-readability--8bc15-ses-across-reload-and-edits/error-context.md
+
+
+(node:52255) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[17/24] tests/e2e/account-graph-readability.spec.ts:1287:3 › en-US 1536px multi-source identities preserve connection purposes across reload and edits
+[18/24] tests/e2e/account-detail-dedupe.spec.ts:467:2 › en-US 1536px account detail images, manual tasks and impact checklist
+[19/24] tests/e2e/notes-trash-release.spec.ts:162:3 › zh-CN 390px consolidates legacy notes and confirms both trash workflows
+tests/e2e/notes-trash-release.spec.ts:162:3 › zh-CN 390px consolidates legacy notes and confirms both trash workflows
+-------------- RxDB Open Core RxStorage -------------------------------
+You are using the free Dexie.js based RxStorage implementation from RxDB https://rxdb.info/rx-storage-dexie.html?console=dexie
+While this is a great option, we want to let you know that there are faster storage solutions available in our premium plugins.
+For professional users and production environments, we highly recommend considering these premium options to enhance performance and reliability.
+ https://rxdb.info/premium/?console=dexie
+If you already purchased premium access you can disable this log by calling the setPremiumFlag() function from rxdb-premium/plugins/shared.
+---------------------------------------------------------------------
+
+  6) tests/e2e/account-graph-readability.spec.ts:1287:3 › en-US 1536px multi-source identities preserve connection purposes across reload and edits
+
+    Error: expect(locator).toBeHidden() failed
+
+    Locator:  getByRole('dialog')
+    Expected: hidden
+    Received: visible
+    Timeout:  5000ms
+
+    Call log:
+      - Expect "toBeHidden" getByRole('dialog') with timeout 5000ms
+      - waiting for getByRole('dialog')
+        14 × locator resolved to <div role="dialog" tabindex="-1" id="radix-_r_0_" data-state="open" aria-labelledby="radix-_r_1_" class="dialog account-detail-dialog">…</div>
+           - unexpected value "visible"
+
+
+      300 | 			.fill("2026-10-22");
+      301 | 	await editor.getByRole("button", { name: text.save, exact: true }).click();
+    > 302 | 	await expect(editor).toBeHidden();
+          | 	                     ^
+      303 | 	const expected = connectionRow(connection, text);
+      304 | 	const row = page
+      305 | 		.locator(".relation-list .relation-row")
+        at addScenarioConnection (/Users/syndred/Desktop/projects/KeepAny/tests/e2e/account-graph-readability.spec.ts:302:23)
+        at /Users/syndred/Desktop/projects/KeepAny/tests/e2e/account-graph-readability.spec.ts:1313:6
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../../../../tmp/stackperch-mailbox-ui-pw/account-graph-readability--a32f5-ses-across-reload-and-edits/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../../../../tmp/stackperch-mailbox-ui-pw/account-graph-readability--a32f5-ses-across-reload-and-edits/error-context.md
+
+
+(node:52281) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[20/24] tests/e2e/account-graph-readability.spec.ts:1440:2 › zh-CN 390px graph navigation controls stay reachable and change the real viewport
+[21/24] tests/e2e/notes-trash-release.spec.ts:162:3 › zh-CN 1536px consolidates legacy notes and confirms both trash workflows
+[22/24] tests/e2e/notes-trash-release.spec.ts:162:3 › en 390px consolidates legacy notes and confirms both trash workflows
+[23/24] tests/e2e/notes-trash-release.spec.ts:162:3 › en 1536px consolidates legacy notes and confirms both trash workflows
+  7) tests/e2e/account-graph-readability.spec.ts:1440:2 › zh-CN 390px graph navigation controls stay reachable and change the real viewport
+
+    Error: expect(locator).toBeHidden() failed
+
+    Locator:  getByRole('dialog')
+    Expected: hidden
+    Received: visible
+    Timeout:  5000ms
+
+    Call log:
+      - Expect "toBeHidden" getByRole('dialog') with timeout 5000ms
+      - waiting for getByRole('dialog')
+        14 × locator resolved to <div role="dialog" tabindex="-1" id="radix-_r_0_" data-state="open" aria-labelledby="radix-_r_1_" class="dialog account-detail-dialog">…</div>
+           - unexpected value "visible"
+
+
+      300 | 			.fill("2026-10-22");
+      301 | 	await editor.getByRole("button", { name: text.save, exact: true }).click();
+    > 302 | 	await expect(editor).toBeHidden();
+          | 	                     ^
+      303 | 	const expected = connectionRow(connection, text);
+      304 | 	const row = page
+      305 | 		.locator(".relation-list .relation-row")
+        at addScenarioConnection (/Users/syndred/Desktop/projects/KeepAny/tests/e2e/account-graph-readability.spec.ts:302:23)
+        at /Users/syndred/Desktop/projects/KeepAny/tests/e2e/account-graph-readability.spec.ts:1471:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../../../../tmp/stackperch-mailbox-ui-pw/account-graph-readability--89275-nd-change-the-real-viewport/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../../../../tmp/stackperch-mailbox-ui-pw/account-graph-readability--89275-nd-change-the-real-viewport/error-context.md
+
+
+(node:52484) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[24/24] tests/e2e/account-graph-readability.spec.ts:1440:2 › en-US 1536px graph navigation controls stay reachable and change the real viewport
+  8) tests/e2e/account-graph-readability.spec.ts:1440:2 › en-US 1536px graph navigation controls stay reachable and change the real viewport
+
+    Error: expect(locator).toBeHidden() failed
+
+    Locator:  getByRole('dialog')
+    Expected: hidden
+    Received: visible
+    Timeout:  5000ms
+
+    Call log:
+      - Expect "toBeHidden" getByRole('dialog') with timeout 5000ms
+      - waiting for getByRole('dialog')
+        14 × locator resolved to <div role="dialog" tabindex="-1" id="radix-_r_0_" data-state="open" aria-labelledby="radix-_r_1_" class="dialog account-detail-dialog">…</div>
+           - unexpected value "visible"
+
+
+      300 | 			.fill("2026-10-22");
+      301 | 	await editor.getByRole("button", { name: text.save, exact: true }).click();
+    > 302 | 	await expect(editor).toBeHidden();
+          | 	                     ^
+      303 | 	const expected = connectionRow(connection, text);
+      304 | 	const row = page
+      305 | 		.locator(".relation-list .relation-row")
+        at addScenarioConnection (/Users/syndred/Desktop/projects/KeepAny/tests/e2e/account-graph-readability.spec.ts:302:23)
+        at /Users/syndred/Desktop/projects/KeepAny/tests/e2e/account-graph-readability.spec.ts:1471:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../../../../tmp/stackperch-mailbox-ui-pw/account-graph-readability--37c67-nd-change-the-real-viewport/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../../../../tmp/stackperch-mailbox-ui-pw/account-graph-readability--37c67-nd-change-the-real-viewport/error-context.md
+
+
+  8 failed
+    tests/e2e/account-graph-readability.spec.ts:1287:3 › zh-CN 390px multi-source identities preserve connection purposes across reload and edits
+    tests/e2e/account-graph-readability.spec.ts:1287:3 › zh-CN 1280px multi-source identities preserve connection purposes across reload and edits
+    tests/e2e/account-graph-readability.spec.ts:1287:3 › zh-CN 1536px multi-source identities preserve connection purposes across reload and edits
+    tests/e2e/account-graph-readability.spec.ts:1287:3 › en-US 390px multi-source identities preserve connection purposes across reload and edits
+    tests/e2e/account-graph-readability.spec.ts:1287:3 › en-US 1280px multi-source identities preserve connection purposes across reload and edits
+    tests/e2e/account-graph-readability.spec.ts:1287:3 › en-US 1536px multi-source identities preserve connection purposes across reload and edits
+    tests/e2e/account-graph-readability.spec.ts:1440:2 › zh-CN 390px graph navigation controls stay reachable and change the real viewport
+    tests/e2e/account-graph-readability.spec.ts:1440:2 › en-US 1536px graph navigation controls stay reachable and change the real viewport
+  16 passed (3.0m)

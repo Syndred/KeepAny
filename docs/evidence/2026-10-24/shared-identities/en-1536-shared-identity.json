@@ -1,0 +1,276 @@
+{
+  "snapshots": [
+    {
+      "stage": "initial-complete-mailbox",
+      "nodes": [
+        "4f4f411f-8496-4c0b-b894-290d20e8126d",
+        "7187b679-40ff-4cbc-aabe-beeb35fe5623",
+        "7ec6c6c5-9404-4ff0-8f20-5cbac26d895b",
+        "login-identity-a1f22fb61eae9a3ea2d043dec52c6c3e3173fb7e292f1a3fb6017642a11d9f72",
+        "pw-account-b2834f52fce38c76f08c41913b1467d9f00ae28c46ddb34e9705a5f0b609baec"
+      ],
+      "edges": [
+        "login-link-82f71bb114890c033a41ef301848ac555091f807b7fb20aaf3ab0499ce5179f3",
+        "login-link-9f9a17aaf4980c461a4c1d711645577c83485b8a5cecadccbdd7acda431eb4a8",
+        "login-link-a8e710081ade67e84e9ffd9beaca9246134e02f162a05942a08ba3c767c25f6f",
+        "login-link-e426779237c182ba06b8cf2f2dce52941f61dfce749a20960d76e1a0b051a071"
+      ]
+    },
+    {
+      "stage": "initial-complete-phone",
+      "nodes": [
+        "7714b5f1-d3c0-4a00-bd4b-887e08cd9401",
+        "7ec6c6c5-9404-4ff0-8f20-5cbac26d895b",
+        "login-identity-63ab0391917f4a9ca7a093e8c0c8505a4b9510a854033fd7aefc2b57bb43242d",
+        "pw-account-b2834f52fce38c76f08c41913b1467d9f00ae28c46ddb34e9705a5f0b609baec"
+      ],
+      "edges": [
+        "login-link-0d6b64631a8ad58f896dafe914c1964ace568b1b4fbcf5e2ba9055f300beeca6",
+        "login-link-c472a93c33ee9e51ad78ce97e266642e38e20bcb8c65b37cd72bab79c4b9dc90",
+        "login-link-d68591fb13be5ca01a2c71d4a8e9910b000ab8a906e1f20f804af0e83f70a7ab"
+      ]
+    },
+    {
+      "stage": "repeat-import",
+      "nodes": [
+        "4f4f411f-8496-4c0b-b894-290d20e8126d",
+        "7187b679-40ff-4cbc-aabe-beeb35fe5623",
+        "7ec6c6c5-9404-4ff0-8f20-5cbac26d895b",
+        "login-identity-a1f22fb61eae9a3ea2d043dec52c6c3e3173fb7e292f1a3fb6017642a11d9f72",
+        "pw-account-b2834f52fce38c76f08c41913b1467d9f00ae28c46ddb34e9705a5f0b609baec"
+      ],
+      "edges": [
+        "login-link-82f71bb114890c033a41ef301848ac555091f807b7fb20aaf3ab0499ce5179f3",
+        "login-link-9f9a17aaf4980c461a4c1d711645577c83485b8a5cecadccbdd7acda431eb4a8",
+        "login-link-a8e710081ade67e84e9ffd9beaca9246134e02f162a05942a08ba3c767c25f6f",
+        "login-link-e426779237c182ba06b8cf2f2dce52941f61dfce749a20960d76e1a0b051a071"
+      ]
+    },
+    {
+      "stage": "new-account-after-identity",
+      "nodes": [
+        "4f4f411f-8496-4c0b-b894-290d20e8126d",
+        "7187b679-40ff-4cbc-aabe-beeb35fe5623",
+        "7ec6c6c5-9404-4ff0-8f20-5cbac26d895b",
+        "85b8c6b4-ed18-4d8a-98b9-aadf8bed6abe",
+        "login-identity-a1f22fb61eae9a3ea2d043dec52c6c3e3173fb7e292f1a3fb6017642a11d9f72",
+        "pw-account-b2834f52fce38c76f08c41913b1467d9f00ae28c46ddb34e9705a5f0b609baec"
+      ],
+      "edges": [
+        "login-link-3b62d4924e1bd7813ba45fc99c07d2a8ce4728bdb0b80b9b62aa9f343616ea2a",
+        "login-link-82f71bb114890c033a41ef301848ac555091f807b7fb20aaf3ab0499ce5179f3",
+        "login-link-9f9a17aaf4980c461a4c1d711645577c83485b8a5cecadccbdd7acda431eb4a8",
+        "login-link-a8e710081ade67e84e9ffd9beaca9246134e02f162a05942a08ba3c767c25f6f",
+        "login-link-e426779237c182ba06b8cf2f2dce52941f61dfce749a20960d76e1a0b051a071"
+      ]
+    },
+    {
+      "stage": "primary-changed-away",
+      "nodes": [
+        "7187b679-40ff-4cbc-aabe-beeb35fe5623",
+        "7ec6c6c5-9404-4ff0-8f20-5cbac26d895b",
+        "85b8c6b4-ed18-4d8a-98b9-aadf8bed6abe",
+        "login-identity-a1f22fb61eae9a3ea2d043dec52c6c3e3173fb7e292f1a3fb6017642a11d9f72",
+        "pw-account-b2834f52fce38c76f08c41913b1467d9f00ae28c46ddb34e9705a5f0b609baec"
+      ],
+      "edges": [
+        "login-link-3b62d4924e1bd7813ba45fc99c07d2a8ce4728bdb0b80b9b62aa9f343616ea2a",
+        "login-link-9f9a17aaf4980c461a4c1d711645577c83485b8a5cecadccbdd7acda431eb4a8",
+        "login-link-a8e710081ade67e84e9ffd9beaca9246134e02f162a05942a08ba3c767c25f6f",
+        "login-link-e426779237c182ba06b8cf2f2dce52941f61dfce749a20960d76e1a0b051a071"
+      ]
+    },
+    {
+      "stage": "identity-created-after-account",
+      "nodes": [
+        "4f4f411f-8496-4c0b-b894-290d20e8126d",
+        "62b453e0-c51e-48e4-8834-946d2d70cd02"
+      ],
+      "edges": [
+        "login-link-167802a0168c9fd759af49a4f31474653a9955b8dbc3567a27c9e22d437f33f8"
+      ]
+    },
+    {
+      "stage": "primary-round-trip",
+      "nodes": [
+        "4f4f411f-8496-4c0b-b894-290d20e8126d",
+        "7187b679-40ff-4cbc-aabe-beeb35fe5623",
+        "7ec6c6c5-9404-4ff0-8f20-5cbac26d895b",
+        "85b8c6b4-ed18-4d8a-98b9-aadf8bed6abe",
+        "login-identity-a1f22fb61eae9a3ea2d043dec52c6c3e3173fb7e292f1a3fb6017642a11d9f72",
+        "pw-account-b2834f52fce38c76f08c41913b1467d9f00ae28c46ddb34e9705a5f0b609baec"
+      ],
+      "edges": [
+        "login-link-3b62d4924e1bd7813ba45fc99c07d2a8ce4728bdb0b80b9b62aa9f343616ea2a",
+        "login-link-82f71bb114890c033a41ef301848ac555091f807b7fb20aaf3ab0499ce5179f3",
+        "login-link-9f9a17aaf4980c461a4c1d711645577c83485b8a5cecadccbdd7acda431eb4a8",
+        "login-link-a8e710081ade67e84e9ffd9beaca9246134e02f162a05942a08ba3c767c25f6f",
+        "login-link-e426779237c182ba06b8cf2f2dce52941f61dfce749a20960d76e1a0b051a071"
+      ]
+    },
+    {
+      "stage": "old-primary-detached",
+      "nodes": [
+        "62b453e0-c51e-48e4-8834-946d2d70cd02"
+      ],
+      "edges": []
+    },
+    {
+      "stage": "before-line-delete",
+      "nodes": [
+        "4f4f411f-8496-4c0b-b894-290d20e8126d",
+        "7187b679-40ff-4cbc-aabe-beeb35fe5623",
+        "7ec6c6c5-9404-4ff0-8f20-5cbac26d895b",
+        "85b8c6b4-ed18-4d8a-98b9-aadf8bed6abe",
+        "login-identity-a1f22fb61eae9a3ea2d043dec52c6c3e3173fb7e292f1a3fb6017642a11d9f72",
+        "pw-account-b2834f52fce38c76f08c41913b1467d9f00ae28c46ddb34e9705a5f0b609baec"
+      ],
+      "edges": [
+        "login-link-3b62d4924e1bd7813ba45fc99c07d2a8ce4728bdb0b80b9b62aa9f343616ea2a",
+        "login-link-82f71bb114890c033a41ef301848ac555091f807b7fb20aaf3ab0499ce5179f3",
+        "login-link-9f9a17aaf4980c461a4c1d711645577c83485b8a5cecadccbdd7acda431eb4a8",
+        "login-link-a8e710081ade67e84e9ffd9beaca9246134e02f162a05942a08ba3c767c25f6f",
+        "login-link-e426779237c182ba06b8cf2f2dce52941f61dfce749a20960d76e1a0b051a071"
+      ]
+    },
+    {
+      "stage": "deleted-line-stays-deleted",
+      "nodes": [
+        "4f4f411f-8496-4c0b-b894-290d20e8126d",
+        "7ec6c6c5-9404-4ff0-8f20-5cbac26d895b",
+        "85b8c6b4-ed18-4d8a-98b9-aadf8bed6abe",
+        "login-identity-a1f22fb61eae9a3ea2d043dec52c6c3e3173fb7e292f1a3fb6017642a11d9f72",
+        "pw-account-b2834f52fce38c76f08c41913b1467d9f00ae28c46ddb34e9705a5f0b609baec"
+      ],
+      "edges": [
+        "login-link-3b62d4924e1bd7813ba45fc99c07d2a8ce4728bdb0b80b9b62aa9f343616ea2a",
+        "login-link-82f71bb114890c033a41ef301848ac555091f807b7fb20aaf3ab0499ce5179f3",
+        "login-link-a8e710081ade67e84e9ffd9beaca9246134e02f162a05942a08ba3c767c25f6f",
+        "login-link-e426779237c182ba06b8cf2f2dce52941f61dfce749a20960d76e1a0b051a071"
+      ]
+    },
+    {
+      "stage": "line-restored",
+      "nodes": [
+        "4f4f411f-8496-4c0b-b894-290d20e8126d",
+        "7187b679-40ff-4cbc-aabe-beeb35fe5623",
+        "7ec6c6c5-9404-4ff0-8f20-5cbac26d895b",
+        "85b8c6b4-ed18-4d8a-98b9-aadf8bed6abe",
+        "login-identity-a1f22fb61eae9a3ea2d043dec52c6c3e3173fb7e292f1a3fb6017642a11d9f72",
+        "pw-account-b2834f52fce38c76f08c41913b1467d9f00ae28c46ddb34e9705a5f0b609baec"
+      ],
+      "edges": [
+        "login-link-3b62d4924e1bd7813ba45fc99c07d2a8ce4728bdb0b80b9b62aa9f343616ea2a",
+        "login-link-82f71bb114890c033a41ef301848ac555091f807b7fb20aaf3ab0499ce5179f3",
+        "login-link-9f9a17aaf4980c461a4c1d711645577c83485b8a5cecadccbdd7acda431eb4a8",
+        "login-link-a8e710081ade67e84e9ffd9beaca9246134e02f162a05942a08ba3c767c25f6f",
+        "login-link-e426779237c182ba06b8cf2f2dce52941f61dfce749a20960d76e1a0b051a071"
+      ]
+    },
+    {
+      "stage": "before-line-delete",
+      "nodes": [
+        "4f4f411f-8496-4c0b-b894-290d20e8126d",
+        "7187b679-40ff-4cbc-aabe-beeb35fe5623",
+        "7ec6c6c5-9404-4ff0-8f20-5cbac26d895b",
+        "85b8c6b4-ed18-4d8a-98b9-aadf8bed6abe",
+        "login-identity-a1f22fb61eae9a3ea2d043dec52c6c3e3173fb7e292f1a3fb6017642a11d9f72",
+        "pw-account-b2834f52fce38c76f08c41913b1467d9f00ae28c46ddb34e9705a5f0b609baec"
+      ],
+      "edges": [
+        "login-link-3b62d4924e1bd7813ba45fc99c07d2a8ce4728bdb0b80b9b62aa9f343616ea2a",
+        "login-link-82f71bb114890c033a41ef301848ac555091f807b7fb20aaf3ab0499ce5179f3",
+        "login-link-9f9a17aaf4980c461a4c1d711645577c83485b8a5cecadccbdd7acda431eb4a8",
+        "login-link-a8e710081ade67e84e9ffd9beaca9246134e02f162a05942a08ba3c767c25f6f",
+        "login-link-e426779237c182ba06b8cf2f2dce52941f61dfce749a20960d76e1a0b051a071"
+      ]
+    },
+    {
+      "stage": "purged-line-not-recreated-by-another-import",
+      "nodes": [
+        "4f4f411f-8496-4c0b-b894-290d20e8126d",
+        "7ec6c6c5-9404-4ff0-8f20-5cbac26d895b",
+        "85b8c6b4-ed18-4d8a-98b9-aadf8bed6abe",
+        "login-identity-a1f22fb61eae9a3ea2d043dec52c6c3e3173fb7e292f1a3fb6017642a11d9f72",
+        "pw-account-b2834f52fce38c76f08c41913b1467d9f00ae28c46ddb34e9705a5f0b609baec"
+      ],
+      "edges": [
+        "login-link-3b62d4924e1bd7813ba45fc99c07d2a8ce4728bdb0b80b9b62aa9f343616ea2a",
+        "login-link-82f71bb114890c033a41ef301848ac555091f807b7fb20aaf3ab0499ce5179f3",
+        "login-link-a8e710081ade67e84e9ffd9beaca9246134e02f162a05942a08ba3c767c25f6f",
+        "login-link-e426779237c182ba06b8cf2f2dce52941f61dfce749a20960d76e1a0b051a071"
+      ]
+    },
+    {
+      "stage": "explicit-source-reimport",
+      "nodes": [
+        "4f4f411f-8496-4c0b-b894-290d20e8126d",
+        "7187b679-40ff-4cbc-aabe-beeb35fe5623",
+        "7ec6c6c5-9404-4ff0-8f20-5cbac26d895b",
+        "85b8c6b4-ed18-4d8a-98b9-aadf8bed6abe",
+        "login-identity-a1f22fb61eae9a3ea2d043dec52c6c3e3173fb7e292f1a3fb6017642a11d9f72",
+        "pw-account-b2834f52fce38c76f08c41913b1467d9f00ae28c46ddb34e9705a5f0b609baec"
+      ],
+      "edges": [
+        "login-link-3b62d4924e1bd7813ba45fc99c07d2a8ce4728bdb0b80b9b62aa9f343616ea2a",
+        "login-link-82f71bb114890c033a41ef301848ac555091f807b7fb20aaf3ab0499ce5179f3",
+        "login-link-a8e710081ade67e84e9ffd9beaca9246134e02f162a05942a08ba3c767c25f6f",
+        "login-link-ccc89ae4841ff60597f6115658d6bc2d963e4eace5875fcc208eecc335e3e5cb",
+        "login-link-e426779237c182ba06b8cf2f2dce52941f61dfce749a20960d76e1a0b051a071"
+      ]
+    },
+    {
+      "stage": "account-deleted",
+      "nodes": [
+        "4f4f411f-8496-4c0b-b894-290d20e8126d",
+        "7187b679-40ff-4cbc-aabe-beeb35fe5623",
+        "7ec6c6c5-9404-4ff0-8f20-5cbac26d895b",
+        "login-identity-a1f22fb61eae9a3ea2d043dec52c6c3e3173fb7e292f1a3fb6017642a11d9f72",
+        "pw-account-b2834f52fce38c76f08c41913b1467d9f00ae28c46ddb34e9705a5f0b609baec"
+      ],
+      "edges": [
+        "login-link-82f71bb114890c033a41ef301848ac555091f807b7fb20aaf3ab0499ce5179f3",
+        "login-link-a8e710081ade67e84e9ffd9beaca9246134e02f162a05942a08ba3c767c25f6f",
+        "login-link-ccc89ae4841ff60597f6115658d6bc2d963e4eace5875fcc208eecc335e3e5cb",
+        "login-link-e426779237c182ba06b8cf2f2dce52941f61dfce749a20960d76e1a0b051a071"
+      ]
+    },
+    {
+      "stage": "account-restored",
+      "nodes": [
+        "4f4f411f-8496-4c0b-b894-290d20e8126d",
+        "7187b679-40ff-4cbc-aabe-beeb35fe5623",
+        "7ec6c6c5-9404-4ff0-8f20-5cbac26d895b",
+        "85b8c6b4-ed18-4d8a-98b9-aadf8bed6abe",
+        "login-identity-a1f22fb61eae9a3ea2d043dec52c6c3e3173fb7e292f1a3fb6017642a11d9f72",
+        "pw-account-b2834f52fce38c76f08c41913b1467d9f00ae28c46ddb34e9705a5f0b609baec"
+      ],
+      "edges": [
+        "login-link-3b62d4924e1bd7813ba45fc99c07d2a8ce4728bdb0b80b9b62aa9f343616ea2a",
+        "login-link-82f71bb114890c033a41ef301848ac555091f807b7fb20aaf3ab0499ce5179f3",
+        "login-link-a8e710081ade67e84e9ffd9beaca9246134e02f162a05942a08ba3c767c25f6f",
+        "login-link-ccc89ae4841ff60597f6115658d6bc2d963e4eace5875fcc208eecc335e3e5cb",
+        "login-link-e426779237c182ba06b8cf2f2dce52941f61dfce749a20960d76e1a0b051a071"
+      ]
+    },
+    {
+      "stage": "account-purged-and-recreated",
+      "nodes": [
+        "4a864b0b-41aa-4169-8e12-6a1b26fe01ab",
+        "4f4f411f-8496-4c0b-b894-290d20e8126d",
+        "7187b679-40ff-4cbc-aabe-beeb35fe5623",
+        "7ec6c6c5-9404-4ff0-8f20-5cbac26d895b",
+        "login-identity-a1f22fb61eae9a3ea2d043dec52c6c3e3173fb7e292f1a3fb6017642a11d9f72",
+        "pw-account-b2834f52fce38c76f08c41913b1467d9f00ae28c46ddb34e9705a5f0b609baec"
+      ],
+      "edges": [
+        "login-link-82f71bb114890c033a41ef301848ac555091f807b7fb20aaf3ab0499ce5179f3",
+        "login-link-a8e710081ade67e84e9ffd9beaca9246134e02f162a05942a08ba3c767c25f6f",
+        "login-link-b58bc9b4690e122661d0f012c8df4905ce60f3c5c006e4879681eb9f4737e120",
+        "login-link-ccc89ae4841ff60597f6115658d6bc2d963e4eace5875fcc208eecc335e3e5cb",
+        "login-link-e426779237c182ba06b8cf2f2dce52941f61dfce749a20960d76e1a0b051a071"
+      ]
+    }
+  ],
+  "pageErrors": []
+}

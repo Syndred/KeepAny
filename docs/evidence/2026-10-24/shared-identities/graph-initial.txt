@@ -1,0 +1,68 @@
+[WebServer] (node:52720) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+
+Running 8 tests using 2 workers
+
+(node:52721) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+(node:52722) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1/8] tests/e2e/account-graph-readability.spec.ts:1295:3 › zh-CN 1280px multi-source identities preserve connection purposes across reload and edits
+[2/8] tests/e2e/account-graph-readability.spec.ts:1295:3 › zh-CN 390px multi-source identities preserve connection purposes across reload and edits
+[3/8] tests/e2e/account-graph-readability.spec.ts:1295:3 › zh-CN 1536px multi-source identities preserve connection purposes across reload and edits
+[4/8] tests/e2e/account-graph-readability.spec.ts:1295:3 › en-US 390px multi-source identities preserve connection purposes across reload and edits
+[5/8] tests/e2e/account-graph-readability.spec.ts:1295:3 › en-US 1280px multi-source identities preserve connection purposes across reload and edits
+[6/8] tests/e2e/account-graph-readability.spec.ts:1295:3 › en-US 1536px multi-source identities preserve connection purposes across reload and edits
+[7/8] tests/e2e/account-graph-readability.spec.ts:1448:2 › zh-CN 390px graph navigation controls stay reachable and change the real viewport
+  1) tests/e2e/account-graph-readability.spec.ts:1295:3 › en-US 1536px multi-source identities preserve connection purposes across reload and edits
+
+    Error: The current account is centered in the usable canvas
+
+    The current account is centered in the usable canvas
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: true
+    Received: false
+
+    Call Log:
+    - Timeout 5000ms exceeded while waiting on the predicate
+
+       at helpers/account-graph.ts:262
+
+      260 | 				{ message: "The current account is centered in the usable canvas" },
+      261 | 			)
+    > 262 | 			.toBe(true);
+          | 			 ^
+      263 | 	}
+      264 | }
+      265 |
+        at expectReadableAccountGraph (/Users/syndred/Desktop/projects/KeepAny/tests/e2e/helpers/account-graph.ts:262:5)
+        at exerciseAccountGraphMiniMap (/Users/syndred/Desktop/projects/KeepAny/tests/e2e/helpers/account-graph.ts:760:2)
+        at largeFamilyCheckpoints (/Users/syndred/Desktop/projects/KeepAny/tests/e2e/account-graph-readability.spec.ts:1115:4)
+        at /Users/syndred/Desktop/projects/KeepAny/tests/e2e/account-graph-readability.spec.ts:1435:6
+
+    attachment #1: account-graph-camera (application/x-ndjson) ─────────────────────────────────────
+    ../../../../../tmp/stackperch-mailbox-graph-final-2-pw/account-graph-readability--a32f5-ses-across-reload-and-edits/attachments/account-graph-camera-9c0143c835e0ea07a3092cf2a90529a06bf22878.jsonl
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../../../../tmp/stackperch-mailbox-graph-final-2-pw/account-graph-readability--a32f5-ses-across-reload-and-edits/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../../../../tmp/stackperch-mailbox-graph-final-2-pw/account-graph-readability--a32f5-ses-across-reload-and-edits/error-context.md
+
+
+(node:52863) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[8/8] tests/e2e/account-graph-readability.spec.ts:1448:2 › en-US 1536px graph navigation controls stay reachable and change the real viewport
+  1 failed
+    tests/e2e/account-graph-readability.spec.ts:1295:3 › en-US 1536px multi-source identities preserve connection purposes across reload and edits
+  7 passed (4.2m)
