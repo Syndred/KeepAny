@@ -339,6 +339,10 @@ async function fullFamily(page: Page, expected: Connection[], text: Copy) {
 	const nodeCount = new Set(expected.flatMap((edge) => [edge.from, edge.to]))
 		.size;
 	await waitForAccountGraphLayout(page, { nodes: nodeCount, edges: pairCount });
+	// A scope toggle can retain the user's overview camera. Request reading focus
+	// explicitly before checking centered, readable text; selection checks still
+	// assert that mouse/keyboard interaction alone never changes the camera.
+	await focusAccountGraph(page);
 	await expectReadableAccountGraph(page);
 	await expect(page.locator(".react-flow__edge")).toHaveCount(pairCount);
 	await expect(
