@@ -217,3 +217,25 @@ describe("reviewed account identity links", () => {
 		} finally { await repository.close(); }
 	});
 });
+
+it("joins older ordinary accounts when a reviewed import first creates the shared identity",async()=>{
+ const repo=await openLocalRepository(repoName());
+ const older={...newAsset("account"),name:"Previously saved",category:"other",username:"READER@example.test",url:"https://example.test/deep?keep=yes",notes:"private untouched note"};
+ try{
+  await repo.save("asset",older);const row=fixture(80);await accept(repo,[row]);
+  const result=await ensure(repo,[row]);expect(result).toMatchObject({createdAssets:1,createdRelations:2});
+  expect(await repo.get("asset",older.id)).toEqual(older);
+  const lines=await repo.list<Relation>("relation");expect(lines.filter(line=>line.from===older.id)).toHaveLength(1);
+  expect(await ensure(repo,[row])).toMatchObject({createdAssets:0,createdRelations:0});
+ }finally{await repo.close();}
+});
+
+it("keeps a deliberately deleted older connection deleted during a different reviewed import",async()=>{
+ const repo=await openLocalRepository(repoName());
+ try{
+  const first=fixture(90);await accept(repo,[first]);await ensure(repo,[first]);
+  const [line]=await repo.list<Relation>("relation");await repo.saveRelationIfCurrent(line,{...line,deleted:true});
+  const second=fixture(91);await accept(repo,[second]);await ensure(repo,[second]);
+  const live=await repo.list<Relation>("relation");expect(live).toHaveLength(1);expect(live[0].from).toBe(second.asset.id);
+ }finally{await repo.close();}
+});

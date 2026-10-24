@@ -275,6 +275,8 @@ const copy: Record<string, [string, string]> = {
 	],
 	none: ["暂无", "None"],
 	loading: ["正在打开资料…", "Opening your data…"],
+	accountRelationsPending: ["账号已保存，关联尚未完成。请重试保存。", "The account was saved, but its connections are unfinished. Save again to retry."],
+	accountIdentityAmbiguous: ["相同邮箱或手机号对应多个身份账号，请先在账号列表核对重复项。", "Multiple identity accounts use this email or phone. Review the duplicates in Accounts first."],
 	error: ["操作未完成，请重试。", "Could not finish. Please try again."],
 	saved: ["已保存", "Saved"],
 	invalid: ["请检查此项", "Please check this field"],

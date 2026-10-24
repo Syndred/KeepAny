@@ -2,6 +2,7 @@ import { assetSchema, newAsset, relationSchema, type Asset, type Relation } from
 import { localRepository, type LocalRepository } from "../../../packages/local-db/src";
 import { getReviewedCandidate, type ReviewedCandidate } from "../../../packages/local-db/src/intake-review";
 import { accountIdentityStableId as stableId, emailIdentifier, phoneIdentifier, identityRelationLabels } from "./account-identities";
+import { saveAccountWithIdentityLinks } from "./account-identity-save";
 
 export type AccountIdentityKind = "email" | "phone" | "provider";
 export interface AccountIdentityPreview {
@@ -143,6 +144,12 @@ export async function ensureReviewedAccountLinks(input: ReviewedCandidate[], opt
 				result.createdRelations++;
 				result.links.push({ candidateId, identity, target, relation, status: "created" });
 			}
+		}
+		const identities = new Map(result.links.filter(link => link.identity.kind !== "provider").map(link => [link.target.id, link.target]));
+		for (const target of identities.values()) {
+			const before = new Set((await repository.list<Relation>("relation", true)).map(line => line.id));
+			await saveAccountWithIdentityLinks(target, target, (_kind, identityKind) => options.labels[identityKind ?? "email"], repository);
+			result.createdRelations += (await repository.list<Relation>("relation")).filter(line => !before.has(line.id)).length;
 		}
 		return result;
 	});

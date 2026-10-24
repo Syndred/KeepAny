@@ -40,6 +40,7 @@ export default defineConfig({
 		"notes-trash-release.spec.ts",
 		"account-lifecycle-release.spec.ts",
 		"vault-dual-login.spec.ts",
+		"account-shared-identity.spec.ts",
 		"relation-topbar-return.spec.ts",
 		"restore-identity.spec.ts",
 		"archive-migration.spec.ts",

@@ -159,11 +159,15 @@ function account(key: AccountKey) {
 		return {
 			key,
 			name: `QA Additional Service ${key.slice(6)}`,
-			username: "graph.owner@example.test",
+			username: `graph.owner.${key}.username`,
 			category: "other" as const,
 		};
 	if (!record) throw Error(`Missing graph scenario account: ${key}`);
-	return record;
+	// These scenarios enter every purpose manually. Shared primary/alias auto-linking
+	// is covered by account-shared-identity.spec.ts; keep long service usernames here.
+	return record.category === "other"
+		? { ...record, username: `graph.owner.${key}.username` }
+		: record;
 }
 function copy(locale: string) {
 	return locale === "zh-CN"

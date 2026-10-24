@@ -14,6 +14,7 @@ import {
 	syntheticKey,
 } from "./helpers/ai-workflow";
 import { selectChoice } from "./helpers/select-choice";
+import { setAccountRelationDetailsOpen } from "./helpers/account-graph";
 
 const password = "synthetic-bulk-account-links-backup-password";
 const email = "reader@example.test";
@@ -338,24 +339,28 @@ for (const language of ["zh-CN", "en"] as const) {
 				await expect(page).toHaveURL(`/assets/account/${service("Portal").id}`);
 				const facts = page.locator(".account-facts-grid");
 				await expect(facts).toContainText(email);
-				await expect(facts).toContainText(zh ? "登录邮箱" : "Login email");
+				let details = await setAccountRelationDetailsOpen(page);
+				await expect(details).toContainText(zh ? "登录邮箱" : "Login email");
+				await expect(details.locator(".relation-row")).toHaveCount(1);
+				await expect(facts).not.toContainText(zh ? "登录邮箱" : "Login email");
 				await page.reload();
 				await expect(facts).toContainText(email);
+				details = await setAccountRelationDetailsOpen(page);
 				await expect(
-					facts.locator(`a[href="/assets/account/${emailNodes[0].id}"]`),
+					details.locator(`a[href="/assets/account/${emailNodes[0].id}"]`),
 				).toBeVisible();
 				const website = facts.getByRole("link", { name: service("Portal").url, exact: true });
-				const binding = facts.locator(`a[href="/assets/account/${emailNodes[0].id}"]`);
+				const binding = details.locator(`a[href="/assets/account/${emailNodes[0].id}"]`);
 				for (const link of [website, binding]) {
 					await expect(link).toHaveCSS("color", "rgb(23, 36, 58)");
 					await expect(link).toHaveCSS("background-color", "rgb(255, 240, 184)");
 					await expect(link).toHaveCSS("text-decoration-color", "rgb(255, 210, 76)");
-					await expect(link.locator("span")).toHaveCSS("color", "rgb(23, 36, 58)");
+					await expect(link.locator(":scope > span, :scope > strong")).toHaveCSS("color", "rgb(23, 36, 58)");
 					expect(await link.evaluate(element => element.scrollWidth <= element.clientWidth + 1)).toBe(true);
 					await link.hover();
 					await expect(link).toHaveCSS("background-color", "rgb(255, 210, 76)");
 					await expect(link).toHaveCSS("color", "rgb(23, 36, 58)");
-					await expect(link.locator("span")).toHaveCSS("color", "rgb(23, 36, 58)");
+					await expect(link.locator(":scope > span, :scope > strong")).toHaveCSS("color", "rgb(23, 36, 58)");
 					await page.mouse.move(0, 0);
 					await link.press("Tab");
 					await page.keyboard.press("Shift+Tab");
@@ -364,20 +369,23 @@ for (const language of ["zh-CN", "en"] as const) {
 					await expect(link).toHaveCSS("background-color", "rgb(255, 210, 76)");
 					await expect(link).toHaveCSS("outline-style", "solid");
 				}
-				await facts.screenshot({ path: `${evidence}/account-links-${language}-${width}.png` });
-				await facts
+				await details.screenshot({ path: `${evidence}/account-links-${language}-${width}.png` });
+				await details
 					.locator(`a[href="/assets/account/${emailNodes[0].id}"]`)
 					.click();
 				await expect(page).toHaveURL(`/assets/account/${emailNodes[0].id}`);
-				await expect(facts).toContainText("Portal");
-				await expect(facts).toContainText("Hosting");
+				details = await setAccountRelationDetailsOpen(page);
+				await expect(details).toContainText("Portal");
+				await expect(details).toContainText("Hosting");
+				await expect(details.locator(".relation-row")).toHaveCount(2);
 				await checkLayout(page, facts, width);
 				await page.screenshot({
 					path: `${evidence}/shared-email-${language}-${width}.png`,
 					fullPage: true,
 				});
-				await facts.getByRole("link", { name: "Portal", exact: true }).click();
+				await details.getByRole("link", { name: "Portal", exact: true }).click();
 				await expect(page).toHaveURL(`/assets/account/${service("Portal").id}`);
+				await setAccountRelationDetailsOpen(page);
 				await expect(binding).toHaveCSS("color", "rgb(23, 36, 58)");
 				await checkLayout(page, facts, width);
 				await facts.screenshot({ path: `${evidence}/account-links-return-${language}-${width}.png` });
@@ -419,9 +427,11 @@ for (const language of ["zh-CN", "en"] as const) {
 					await expect(restored.locator(".account-facts-grid")).toContainText(
 						email,
 					);
-					await expect(restored.locator(".account-facts-grid")).toContainText(
+					const restoredDetails = await setAccountRelationDetailsOpen(restored);
+					await expect(restoredDetails).toContainText(
 						zh ? "登录邮箱" : "Login email",
 					);
+					await expect(restoredDetails.locator(".relation-row")).toHaveCount(1);
 					await checkLayout(
 						restored,
 						restored.locator(".account-facts-grid"),

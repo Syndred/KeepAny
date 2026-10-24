@@ -49,6 +49,8 @@ import { builtins as categoryOptions, useAppContext } from "./view-shared";
 import "./project-editor.css";
 import { Select, SelectOption } from "./components/ui/select";
 import { assetNotes, editAssetNotes } from "./asset-notes";
+import { saveAccountWithIdentityLinks, AccountIdentitySavePending } from "./account-identity-save";
+import { AccountLinkConflict } from "./vault-account-links";
 
 type FieldName = keyof Asset;
 type ProjectFormFiles = { logo?: File; home?: File; products?: File[]; promo?: File };
@@ -145,7 +147,7 @@ export function AssetEditor({
 			(original && (kind === "project" || kind === "account" || kind === "subscription") ? assetSchema.parse(original) : original) ?? {
 				...newAsset(kind),
 				name: "",
-				category: categoryOptions[kind][0],
+				category: kind === "account" ? "other" : categoryOptions[kind][0],
 			},
 	);
 	const [amount, setAmount] = useState(
@@ -309,7 +311,11 @@ export function AssetEditor({
 				{ id: projectId, kind: "project" as const, label: t("subscriptionProject") },
 				{ id: accountId, kind: "account" as const, label: t("subscriptionLoginAccount") },
 			].filter((link) => !!link.id) : [];
-			if (kind === "subscription") {
+			if (kind === "account") {
+				saveAttempted = true;
+				originalRef.current = await saveAccountWithIdentityLinks(original ?? null, assetToSave,
+					(linkKind, identifierKind) => t(`pwConnectKind_${identifierKind ?? linkKind}`));
+			} else if (kind === "subscription") {
 				saveAttempted = true;
 				originalRef.current = await saveSubscription(original ?? null, assetToSave, selectedLinks);
 			} else if (original) {
@@ -331,6 +337,11 @@ export function AssetEditor({
 			}
 			onClose();
 		} catch (error) {
+			if (error instanceof AccountIdentitySavePending) {
+				originalRef.current = error.savedAccount;
+				setFailure(t("accountRelationsPending"));
+				return;
+			}
 			if (kind === "subscription" && candidate && error instanceof Error && error.message === "subscription-relations-pending") {
 				setPendingConnections(true);
 				try {
@@ -361,7 +372,11 @@ export function AssetEditor({
 				}
 			}
 			const reason = error instanceof Error ? error.message : "";
-			setFailure(t(reason === "asset-stale" ? "assetStale" :
+			setFailure(t(error instanceof AccountLinkConflict ? "accountIdentityAmbiguous" :
+				reason === "account-link-identity-in-use" ? "pwConnectIdentityInUse" :
+				reason === "account-link-batch-limit" ? "pwConnectBatchLimit" :
+				reason === "account-link-stale" ? "assetStale" :
+				reason === "asset-stale" ? "assetStale" :
 				reason === "relation-endpoint" ? "subscriptionRelationUnavailable" :
 				reason === "subscription-relations-pending" ? "subscriptionRelationsNotSaved" :
 				reason === "asset-stale-renewal" ? "renewalStale" :

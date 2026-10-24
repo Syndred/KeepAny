@@ -20,6 +20,8 @@ import {
 	dedupeSuggestions,
 	readAiAccountLinks,
 	sharedIdentifierSuggestions,
+	existingAccountLinkRows,
+	reviewableAccountLinkSuggestions,
 	type AccountLinkRow,
 	type AccountLinkSuggestion,
 	type AccountLinkResolutions,
@@ -202,9 +204,21 @@ export function VaultAccountLinksDialog({
 		() => rows.filter((row) => selected.includes(row.entryId)),
 		[rows, selected],
 	);
+	const reviewRows = useMemo(
+		() => [
+			...selectedRows,
+			...existingAccountLinkRows(
+				selectedRows,
+				sourceAssets,
+				rows,
+				sourceRelations,
+			),
+		],
+		[selectedRows, sourceAssets, rows, sourceRelations],
+	);
 	const localCandidates = useMemo(
-		() => sharedIdentifierSuggestions(selectedRows),
-		[selectedRows],
+		() => sharedIdentifierSuggestions(reviewRows),
+		[reviewRows],
 	);
 	const localKey = JSON.stringify(localCandidates);
 	const matching = autoMatching || matchedLocalKey !== localKey;
@@ -223,17 +237,19 @@ export function VaultAccountLinksDialog({
 		]),
 	];
 	const accountNames = new Map(
-		rows
-			.flatMap((row) => [
+		[
+			...sourceAssets,
+			...rows.flatMap((row) => [
 				row.account,
 				...row.identityAccounts.map((identity) => identity.account),
-			])
-			.map((account) => [account.id, account.name]),
+			]),
+			...reviewRows.map((row) => row.account),
+		].map((account) => [account.id, account.name]),
 	);
 	useEffect(() => {
 		let current = true;
 		void buildAccountLinkSavePlan(
-			rows.filter((row) => selected.includes(row.entryId)),
+			reviewRows,
 			suggestions.filter((_, index) => chosen.includes(index)),
 			sourceAssets,
 			sourceRelations,
@@ -252,8 +268,7 @@ export function VaultAccountLinksDialog({
 			current = false;
 		};
 	}, [
-		rows,
-		selected,
+		reviewRows,
 		suggestions,
 		chosen,
 		deletedSuggestions,
@@ -271,10 +286,15 @@ export function VaultAccountLinksDialog({
 	}
 	const applySuggestions = useCallback(
 		async (
-			result: AccountLinkSuggestion[],
+			proposals: AccountLinkSuggestion[],
 			localOnly: boolean,
 			isCurrent: () => boolean = () => true,
 		) => {
+			const result = await reviewableAccountLinkSuggestions(
+				reviewRows,
+				sourceRelations,
+				proposals,
+			);
 			const changes = await accountLinkRelationChanges(
 				result,
 				sourceRelations,
@@ -307,7 +327,7 @@ export function VaultAccountLinksDialog({
 			setMessage("");
 			return true;
 		},
-		[sourceRelations, label, session],
+		[reviewRows, sourceRelations, label, session],
 	);
 	useEffect(() => {
 		if (loading || busy || stale || matchedLocalKey === localKey) return;
@@ -409,7 +429,7 @@ export function VaultAccountLinksDialog({
 			)
 				return;
 			const result = dedupeSuggestions([
-				...sharedIdentifierSuggestions(selectedRows),
+				...localCandidates,
 				...readAiAccountLinks(parseAiJson(response.text), selectedRows),
 			]);
 			await applySuggestions(result, false);
@@ -450,7 +470,7 @@ export function VaultAccountLinksDialog({
 			)
 				throw Error("stale");
 			const plan = await buildAccountLinkSavePlan(
-				selectedRows,
+				reviewRows,
 				suggestions.filter((_, i) => chosen.includes(i)),
 				current,
 				existingRelations,

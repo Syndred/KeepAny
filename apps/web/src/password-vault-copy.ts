@@ -74,8 +74,8 @@ export const passwordVaultCopy: Record<string, [string, string]> = {
 	pwConnectResolveError: ["未能处理关联，请关闭后重新检查。", "Could not resolve the connection. Close and check again."],
 	pwConnectRestoreRelation: ["此关系已删除，勾选后保存可恢复。", "This connection was deleted. Select it and save to restore."],
 	pwConnectIdentityHint: [
-		"按登录标识建立关联，不代表第三方登录或找回方式。",
-		"Identifier connections do not confirm third-party sign-in or recovery.",
+		"同时核对使用相同邮箱或手机号的已有账号。标识相同不代表第三方登录或找回方式。",
+		"Also reviews existing accounts using the same email or phone. Shared identifiers do not confirm third-party sign-in or recovery.",
 	],
 	pwConnectNotesLong: [
 		"线索超过 500 字，请删减到 500 字以内后再分析；原备注不会被修改。",

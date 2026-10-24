@@ -15,6 +15,7 @@ import {
 	emailIdentifier,
 	phoneIdentifier,
 	identityRelationLabels,
+	publishedLoginIdentifier,
 } from "./account-identities";
 
 export type AccountLinkIdentityKind = "email" | "phone";
@@ -54,6 +55,8 @@ export type AccountLinkRow = {
 	loginIdentifiers: string[];
 	hint: string;
 	replaceAccountIds: string[];
+	contextOnly?: boolean;
+	published?: boolean;
 };
 export type AccountLinkSuggestion = {
 	from: string;
@@ -383,6 +386,7 @@ export async function buildAccountLinkRows(
 							),
 					)
 				: deletedLinked.map((asset) => asset.id),
+			published: entry.linkedAssetIds.includes(account.id),
 		});
 	}
 	const targets = new Map<string, AccountLinkIdentity>();
@@ -483,6 +487,112 @@ export function sharedIdentifierSuggestions(
 
 	return dedupeSuggestions(result);
 }
+
+/** Existing accounts share the selected identity without re-importing their fields or passwords. */
+export function existingAccountLinkRows(
+	selectedRows: AccountLinkRow[],
+	assets: Asset[],
+	knownVaultRows: AccountLinkRow[] = [],
+	relations: Relation[] = [],
+): AccountLinkRow[] {
+	const selected = new Set(selectedRows.map((row) => row.account.id));
+	const identities = new Map<string, AccountLinkIdentity>(
+		selectedRows.flatMap((row) =>
+			row.identityAccounts.map(
+				(identity) =>
+					[`${identity.kind}:${identity.identifier}`, identity] as const,
+			),
+		),
+	);
+	if (!identities.size) return [];
+	return assets.flatMap((asset) => {
+		if (
+			asset.kind !== "account" ||
+			asset.deleted ||
+			asset.purged ||
+			selected.has(asset.id)
+		)
+			return [];
+		const primary = normalizeLoginIdentifier(asset.username || asset.name);
+		// A second mailbox/phone record is an identity ambiguity, not a dependent service.
+		if (
+			asset.id.startsWith("login-identity-") ||
+			(["email", "phone"].includes(asset.category) &&
+				primary.startsWith(`${asset.category}:`))
+		)
+			return [];
+		const published = knownVaultRows.filter(
+			(row) =>
+				row.published &&
+				!row.isNew &&
+				row.originalAccount?.id === asset.id &&
+				normalizeLoginIdentifier(row.account.username) ===
+					normalizeLoginIdentifier(asset.username),
+		);
+		const identifiers = [
+			...new Set(
+				[
+					normalizeLoginIdentifier(asset.username),
+					...published.flatMap((row) => row.identifiers),
+					...relations
+						.filter((line) => line.from === asset.id)
+						.map((line) => publishedLoginIdentifier(line, assets)),
+				].filter(Boolean),
+			),
+		];
+		const matches = identifiers.flatMap((identifier) => {
+			const identity = identities.get(identifier);
+			return identity ? [identity] : [];
+		});
+		if (!matches.length) return [];
+		return [
+			{
+				entryId: `existing:${asset.id}`,
+				account: asset,
+				originalAccount: asset,
+				suggestedCategory: asset.category,
+				isNew: false,
+				identifiers,
+				identityAccounts: matches,
+				loginIdentifiers: [asset.username],
+				hint: "",
+				replaceAccountIds: [],
+				contextOnly: true,
+			},
+		];
+	});
+}
+
+/** A different import must not recreate a deliberately purged connection. */
+export async function reviewableAccountLinkSuggestions(
+	rows: AccountLinkRow[],
+	relations: Relation[],
+	suggestions = sharedIdentifierSuggestions(rows),
+): Promise<AccountLinkSuggestion[]> {
+	const contextIds = new Set(
+		rows.filter((row) => row.contextOnly).map((row) => row.account.id),
+	);
+	const purgedIds = new Set(
+		relations
+			.filter((relation) => relation.purged)
+			.map((relation) => relation.id),
+	);
+	const result: AccountLinkSuggestion[] = [];
+	for (const suggestion of suggestions) {
+		if (contextIds.has(suggestion.from)) {
+			if (suggestion.kind !== "identifier" || !suggestion.identifierKind)
+				continue;
+			const id = await accountIdentityStableId("login-link", [
+				suggestion.from,
+				suggestion.identifierKind,
+				suggestion.to,
+			]);
+			if (purgedIds.has(id)) continue;
+		}
+		result.push(suggestion);
+	}
+	return result;
+}
 export function dedupeSuggestions(
 	rows: AccountLinkSuggestion[],
 ): AccountLinkSuggestion[] {
@@ -499,6 +609,7 @@ export function dedupeSuggestions(
 	});
 }
 export function aiAccountLinkInput(rows: AccountLinkRow[]) {
+	rows = rows.filter((row) => !row.contextOnly);
 	if (rows.some((row) => row.hint.length > 500))
 		throw Error("account-link-input");
 	const input = rows.map((row) => ({
@@ -519,7 +630,9 @@ export function readAiAccountLinks(
 	rows: AccountLinkRow[],
 ): AccountLinkSuggestion[] {
 	const output = accountLinkOutput.parse(value);
-	const ids = new Set(rows.map((row) => row.account.id));
+	const ids = new Set(
+		rows.filter((row) => !row.contextOnly).map((row) => row.account.id),
+	);
 	if (
 		output.relations.some(
 			(r) =>
@@ -655,6 +768,9 @@ export async function buildAccountLinkSavePlan(
 	const newById = new Map<string, Asset>(),
 		expected = new Map<string, Asset>(),
 		selected = new Map<string, AccountLinkRow>();
+	const editable = new Set(
+		rows.filter((row) => !row.contextOnly).map((row) => row.account.id),
+	);
 	for (const row of rows) {
 		const duplicate = selected.get(row.account.id);
 		if (duplicate && !sameAsset(duplicate.account, row.account))
@@ -665,6 +781,12 @@ export async function buildAccountLinkSavePlan(
 		if (next.deleted || next.kind !== "account")
 			throw Error("account-link-conflict");
 		const current = assets.find((asset) => asset.id === next.id);
+		if (row.contextOnly) {
+			if (row.isNew || !current || current.deleted || !sameAsset(current, next))
+				throw Error("account-link-stale");
+			expected.set(current.id, current);
+			continue;
+		}
 		if (!current) {
 			if (!row.isNew || row.originalAccount) throw Error("account-link-stale");
 			newById.set(next.id, next);
@@ -672,22 +794,31 @@ export async function buildAccountLinkSavePlan(
 		}
 		if (current.deleted || current.kind !== "account")
 			throw Error("account-link-stale");
-		if (
-			row.originalAccount &&
-			normalizeLoginIdentifier(row.originalAccount.username) !==
-				normalizeLoginIdentifier(next.username)
-		) {
+		if (row.originalAccount) {
 			const wasIdentity =
 				["email", "phone"].includes(row.originalAccount.category) ||
 				["email", "phone"].includes(row.suggestedCategory) ||
 				row.originalAccount.id.startsWith("login-identity-");
-			const hasIncoming = relations.some(
-				(relation) =>
-					!relation.deleted &&
-					relation.to === next.id &&
-					assets.some((asset) => asset.id === relation.from && !asset.deleted),
-			);
+			const changedIdentifier =
+				normalizeLoginIdentifier(
+					row.originalAccount.username ||
+						(wasIdentity ? row.originalAccount.name : ""),
+				) !==
+				normalizeLoginIdentifier(
+					next.username || (wasIdentity ? next.name : ""),
+				);
+			const hasIncoming =
+				changedIdentifier &&
+				relations.some(
+					(relation) =>
+						!relation.deleted &&
+						relation.to === next.id &&
+						assets.some(
+							(asset) => asset.id === relation.from && !asset.deleted,
+						),
+				);
 			if (
+				changedIdentifier &&
 				wasIdentity &&
 				(hasIncoming || row.originalAccount.id.startsWith("login-identity-"))
 			)
@@ -707,10 +838,9 @@ export async function buildAccountLinkSavePlan(
 		expected.set(current.id, updated);
 	}
 	const local = new Map(
-		sharedIdentifierSuggestions(rows).map((suggestion) => [
-			suggestionKey(suggestion),
-			suggestion,
-		]),
+		(await reviewableAccountLinkSuggestions(rows, relations)).map(
+			(suggestion) => [suggestionKey(suggestion), suggestion],
+		),
 	);
 	const chosen = dedupeSuggestions(suggestions);
 	const identities = new Map(
@@ -728,6 +858,8 @@ export async function buildAccountLinkSavePlan(
 			if (!proposed || proposed.evidence !== suggestion.evidence)
 				throw Error("account-link-stale");
 		} else if (
+			!editable.has(suggestion.from) ||
+			!editable.has(suggestion.to) ||
 			!selected.has(suggestion.to) ||
 			!suggestion.evidence.trim() ||
 			suggestion.evidence.length > 300 ||
@@ -807,7 +939,7 @@ export async function buildAccountLinkSavePlan(
 		if (
 			!relation.deleted &&
 			/^login-link-[a-f0-9]{64}$/.test(relation.id) &&
-			selected.has(relation.from)
+			editable.has(relation.from)
 		) {
 			const source = selected.get(relation.from),
 				target = assets.find(
@@ -852,8 +984,8 @@ export async function buildAccountLinkSavePlan(
 		if (
 			relation.deleted ||
 			!/^pw-link-identifier-[a-f0-9]{64}$/.test(relation.id) ||
-			!selected.has(relation.from) ||
-			!selected.has(relation.to)
+			!editable.has(relation.from) ||
+			!editable.has(relation.to)
 		)
 			continue;
 		if (
