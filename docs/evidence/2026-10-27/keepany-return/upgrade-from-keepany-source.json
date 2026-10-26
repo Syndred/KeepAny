@@ -1,0 +1,25 @@
+{
+  "oldCommit": "64b98e7874a2fdd8d43c8e60de72a25de5800b25",
+  "oldBrand": "KeepAny",
+  "newCommit": "5488791f21700e7cda587091d4e656ec08b9e946",
+  "sourceDirty": false,
+  "oldWorkerHash": "5ff41208e093fc721e853741ccb93a0c3b71b6a2b7c3064ebff94922054e9bca",
+  "newWorkerHash": "6baf415e36f8b4daf6e6e30adafa50096d4f8f187daa42271fbc026b5ff17ee6",
+  "oldEntry": "/assets/index-BT82-H8O.js",
+  "newEntry": "/assets/index-Df5R4iNi.js",
+  "assetIds": [
+    "0d7c52bb-0bfb-46e2-a47f-87e771c4ec60",
+    "63e10df7-5a17-4549-aaa9-c99c34b6925e"
+  ],
+  "vaultEntryIds": [
+    "1cbUUX/sUxFpUHwlM1oD4A=="
+  ],
+  "aliasCount": 1,
+  "importDraftHash": "7d8c94a524aa4b879209fdd5e332572dc4bb5af72b27154a4163179e71b569f2",
+  "imageSha256": "6b2168118a1eea891b8776160ddf1ee68e6e2fffc74815602c8f4ef3086a9c5c",
+  "backupSha256": "51114582beda781ab7de001f466a9d1b7d2bcb5abb9219036401095d99c5060b",
+  "recordCount": 2,
+  "platform": "darwin",
+  "sameOriginUpgrade": true,
+  "cleanBackupRestore": true
+}
