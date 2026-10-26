@@ -3,7 +3,9 @@ import { mkdirSync, readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { join } from "node:path";
 import { expect, type Page, test } from "@playwright/test";
+import Dexie from "dexie";
 import { build } from "esbuild";
+import { indexedDB, IDBKeyRange } from "fake-indexeddb";
 import { strFromU8, unzipSync } from "fflate";
 import { newAsset, type AssetKind } from "../../packages/domain/src";
 import { openLocalRepository } from "../../packages/local-db/src";
@@ -29,6 +31,10 @@ const kinds: AssetKind[] = ["account", "subscription", "item", "vault"];
 let fixture: Buffer;
 
 test.beforeAll(async () => {
+	// Another spec can load Dexie before this worker installs fake IndexedDB.
+	// Refresh its captured APIs for this Node-only synthetic backup fixture.
+	Dexie.dependencies.indexedDB = indexedDB;
+	Dexie.dependencies.IDBKeyRange = IDBKeyRange;
 	mkdirSync(evidence, { recursive: true });
 	const result = await build({
 		entryPoints: ["packages/password-vault/src/index.ts"],
