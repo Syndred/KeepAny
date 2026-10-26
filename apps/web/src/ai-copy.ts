@@ -22,8 +22,8 @@ export const aiCopy: Record<string, [string, string]> = {
 	],
 	aiSettingsBaseUrl: ["API 地址", "API base URL"],
 	aiSettingsBaseUrlHint: [
-		"填写服务商或自部署模型的 API 地址。兼容服务支持本机 HTTP 或远端 HTTPS，无需在 StackPerch 下载模型。",
-		"Enter your provider's or self-hosted model's API URL. Compatible services support local HTTP or remote HTTPS. StackPerch does not download models.",
+		"填写服务商或自部署模型的 API 地址。兼容服务支持本机 HTTP 或远端 HTTPS，无需在 KeepAny 下载模型。",
+		"Enter your provider's or self-hosted model's API URL. Compatible services support local HTTP or remote HTTPS. KeepAny does not download models.",
 	],
 	aiSettingsModel: ["模型名称或接入点 ID", "Model name or endpoint ID"],
 	aiSettingsModelHint: [

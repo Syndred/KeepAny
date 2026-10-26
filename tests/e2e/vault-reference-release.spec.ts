@@ -9,6 +9,7 @@ import {
 import type { Asset, Relation } from "../../packages/domain/src";
 import { inspectArchive, type RecordRow } from "../../packages/local-db/src";
 import { decryptBackup } from "../../packages/local-db/src/backup-crypto";
+import { setAccountRelationDetailsOpen, waitForAccountGraphLayout } from "./helpers/account-graph";
 import { selectChoice } from "./helpers/select-choice";
 
 const password = "vault-reference-release-backup";
@@ -34,6 +35,7 @@ const copyFor = (zh: boolean) =>
 				verified: "核实时间",
 				linked: "已关联",
 				vaultLabel: "密码库",
+				managePasswords: "管理这个账号的密码",
 				backup: "创建备份",
 				download: "保存备份文件",
 				preview: "预览",
@@ -55,6 +57,7 @@ const copyFor = (zh: boolean) =>
 				verified: "Verified",
 				linked: "Linked",
 				vaultLabel: "Password vault",
+				managePasswords: "Manage this account’s passwords",
 				backup: "Create backup",
 				download: "Save backup file",
 				preview: "Preview",
@@ -260,11 +263,22 @@ async function assertVaultDetails(page: Page, accountHref: string) {
 	).toHaveAttribute("href", accountHref);
 }
 
-async function assertAccountDetails(page: Page) {
+async function assertAccountDetails(page: Page, copy: Copy, accountId: string, vaultHref: string) {
 	await expect(
 		page.getByRole("heading", { name: accountName, exact: true }),
 	).toBeVisible();
-	await expect(page.locator(".account-security-card")).toContainText(vaultName);
+	const details = await setAccountRelationDetailsOpen(page);
+	const relation = details.locator(".relation-row").filter({ hasText: vaultName });
+	await expect(relation).toHaveCount(1);
+	await expect(relation).toBeVisible();
+	await expect(relation).toContainText(accountName);
+	await expect(relation).toContainText(copy.vaultLabel);
+	await expect(relation).toContainText("2026");
+	await expect(relation.getByRole("link", { name: vaultName, exact: true })).toHaveAttribute("href", vaultHref);
+	await expect(page.locator(".account-security-card").getByRole("link", {
+		name: copy.managePasswords, exact: true,
+	})).toHaveAttribute("href", `/assets/vault#asset-${accountId}`);
+	await waitForAccountGraphLayout(page, { nodes: 2, edges: 1 });
 }
 
 async function downloadAndInspect(
@@ -381,7 +395,7 @@ async function restoreIntoCleanContext(
 			.getByRole("link", { name: accountName, exact: true })
 			.click();
 		await expect(page).toHaveURL(new RegExp(`${accountHref}$`));
-		await assertAccountDetails(page);
+		await assertAccountDetails(page, copy, accountId, vaultHref);
 		await expect(
 			page.evaluate(
 				() => document.documentElement.scrollWidth <= window.innerWidth + 1,
@@ -445,7 +459,7 @@ for (const locale of ["zh-CN", "en-US"] as const) {
 					.getByRole("link", { name: accountName, exact: true })
 					.click();
 				await expect(sourcePage).toHaveURL(new RegExp(`${account.href}$`));
-				await assertAccountDetails(sourcePage);
+				await assertAccountDetails(sourcePage, copy, account.id, vault.href);
 				await sourcePage.goto("/assets/vault");
 				await expect(
 					sourcePage.evaluate(

@@ -1,0 +1,39 @@
+{
+  "baseCommit": "1939e3020ffd924818b91f20eb0c847bcd2eec77",
+  "unit": {
+    "filesPassed": 95,
+    "testsPassed": 928,
+    "exit": 0,
+    "durationSeconds": 52.3,
+    "database": "isolated PostgreSQL 17.11, own disposable container"
+  },
+  "onboarding": {
+    "testsPassed": 4,
+    "durationSeconds": 3.6,
+    "exit": 0
+  },
+  "graph": {
+    "targetedPassed": 2,
+    "distinctFullFilePassed": 8,
+    "thresholdsUnchanged": true
+  },
+  "legacyAssertions": {
+    "distinctScenariosPassed": 10,
+    "referenceReadyRerunPassed": 4
+  },
+  "public": {
+    "componentTests": 6,
+    "noJsWidths": [
+      390,
+      1280
+    ],
+    "locales": [
+      "zh-CN",
+      "en"
+    ],
+    "overflow": false,
+    "buttonGapPx": 16,
+    "cardGapPx": 24
+  },
+  "scope": "No runtime layout redesign, no commercial feature expansion; schema/storage/encryption/protocol identities preserved; old S icon aliases retained"
+}

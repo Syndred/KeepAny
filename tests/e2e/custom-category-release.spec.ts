@@ -98,8 +98,9 @@ for (const locale of ["en-US", "zh-CN"]) {
 				await page.goto(`/assets/${kind}`);
 				await rename(page, zh, renamedCategory(kind), `${kind} Second`, `${kind} First`);
 				await page.locator("main .asset-list-content a").click();
-				await expect(page.getByRole("main").getByText(renamedCategory(kind), { exact: true }).first()).toBeVisible();
 				const category = page.locator(".asset-detail .eyebrow");
+				await expect(category).toBeVisible();
+				await expect(category).toContainText(renamedCategory(kind));
 				expect(await category.evaluate(element => {
 					const rect = element.getBoundingClientRect();
 					const header = element.closest(".page-header")!.getBoundingClientRect();

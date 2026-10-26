@@ -1,0 +1,187 @@
+{
+  "scope": "fix 10 stale UI assertions from existing base CI, only 3 existing e2e specs; runtime untouched",
+  "command": "KEEPANY_RELEASE_TEST_PORT=4473 KEEPANY_RELEASE_WEB_DIR=dist KEEPANY_EVIDENCE_DIR=/tmp/keepany-brand-return/legacy-assertions/evidence ./node_modules/.bin/playwright test tests/e2e/custom-category-release.spec.ts tests/e2e/password-vault.spec.ts tests/e2e/vault-reference-release.spec.ts --config playwright.release.config.ts --grep 'category identity survives UI rename|multiple login identifiers and same-platform accounts|vault reference saves, archives and restores' --output /tmp/keepany-brand-return/legacy-assertions/runner --reporter=line",
+  "result": {
+    "passed": 10,
+    "failed": 0,
+    "skipped": 0,
+    "retries": 0,
+    "durationReported": "1.5m",
+    "exitCode": 0
+  },
+  "groups": {
+    "customCategory": 2,
+    "passwordVaultIdentifiers": 4,
+    "vaultReferences": 4
+  },
+  "sourceTests": [
+    "tests/e2e/custom-category-release.spec.ts",
+    "tests/e2e/password-vault.spec.ts",
+    "tests/e2e/vault-reference-release.spec.ts"
+  ],
+  "preservedAssertions": [
+    "long-name header wrapping and page overflow",
+    "category identity and encrypted clean restore",
+    "password field layout, actual eye hit areas, exact credentials and alias export/reopen",
+    "entry actions at least 15.5px gap (16px target)",
+    "vault row fields, verified date and exact href",
+    "vault/account/relationship identities in original and restored encrypted archives"
+  ],
+  "currentUiAssertions": [
+    "category is part of real detail eyebrow, including kind prefix",
+    "exactly one current password generation control, 44px actual right-edge click and generated length24",
+    "external vault relation read through existing connection detail; exact management link asset hash"
+  ],
+  "typecheckExitCode": 0,
+  "diffCheckExitCode": 0,
+  "entryAtCompletion": "/assets/index-Df5R4iNi.js",
+  "port4473Listener": false,
+  "syntheticDownloadsDeleted": [
+    {
+      "path": "runner/vault-reference-release-zh-770f7-stores-through-the-fixed-UI/vault-reference-zh-CN-1280.ka1",
+      "bytes": 1500,
+      "sha256": "29c94088064c4ef30e920ad5a021679c8eaf34293c3de3bdbd0d5a9f8dd150f6"
+    },
+    {
+      "path": "runner/vault-reference-release-zh-770f7-stores-through-the-fixed-UI/vault-reference-restored-zh-CN-1280.ka1",
+      "bytes": 1500,
+      "sha256": "0c1eca8cdc3be9d2f082b6b23af779ad9d7ec684655d771ffac3dc99e8d48375"
+    },
+    {
+      "path": "runner/password-vault-zh-CN-390px-dde50-vive-KDBX-export-and-reopen/multi-login-identifiers.kdbx",
+      "bytes": 5397,
+      "sha256": "a10e688c33b181af8e6cd72eb09b04c8be8fa732f8f08a48a169d7a49d4cbe35"
+    },
+    {
+      "path": "runner/password-vault-zh-CN-1280p-eada6-vive-KDBX-export-and-reopen/multi-login-identifiers.kdbx",
+      "bytes": 5397,
+      "sha256": "65c7a754c016e83a8415328604244ba7e5ec10533e94cc4efada9d713815fdd3"
+    },
+    {
+      "path": "runner/password-vault-en-US-390px-d3ff2-vive-KDBX-export-and-reopen/multi-login-identifiers.kdbx",
+      "bytes": 5397,
+      "sha256": "ac6a8c8edf0d33252f67b4a7ea077860002249ce9b187a38c945efd598be50f2"
+    },
+    {
+      "path": "runner/password-vault-en-US-1280p-9ed91-vive-KDBX-export-and-reopen/multi-login-identifiers.kdbx",
+      "bytes": 5397,
+      "sha256": "1fa3ec97212ffd8b9423f61ee781052acaf0d5444b7c295866ee094bf1fb5614"
+    },
+    {
+      "path": "runner/vault-reference-release-en-60aff-stores-through-the-fixed-UI/vault-reference-en-US-390.ka1",
+      "bytes": 1482,
+      "sha256": "37a58c8f6f8dff47003ce5f4c63485b24dd8cc550a9d17bb7d2ca3b1c4f73482"
+    },
+    {
+      "path": "runner/vault-reference-release-en-60aff-stores-through-the-fixed-UI/vault-reference-restored-en-US-390.ka1",
+      "bytes": 1482,
+      "sha256": "939914bf31e27604d026b83f74422e9db0278c1e0b17972829097e92867f56c1"
+    },
+    {
+      "path": "runner/vault-reference-release-zh-f49b3-stores-through-the-fixed-UI/vault-reference-restored-zh-CN-390.ka1",
+      "bytes": 1496,
+      "sha256": "a00a253021952cc98f4a6c5deceee6930a0115900a02823574e091456ae45eff"
+    },
+    {
+      "path": "runner/vault-reference-release-zh-f49b3-stores-through-the-fixed-UI/vault-reference-zh-CN-390.ka1",
+      "bytes": 1496,
+      "sha256": "8fe6195571c981c450eed15b53a034a1051e6fad69d4f9ae3449a77afcdf8e02"
+    },
+    {
+      "path": "runner/vault-reference-release-en-62fde-stores-through-the-fixed-UI/vault-reference-en-US-1280.ka1",
+      "bytes": 1477,
+      "sha256": "36fa8bc18e6ce39862b847745d2acd06eab03ead37fa1d7cfb0d90d69e4fb42f"
+    },
+    {
+      "path": "runner/vault-reference-release-en-62fde-stores-through-the-fixed-UI/vault-reference-restored-en-US-1280.ka1",
+      "bytes": 1477,
+      "sha256": "ce8f8c43109858fad4f55320e623081c6363e88dae0a450f70e0deab57327db3"
+    },
+    {
+      "path": "ref-ready-runner/vault-reference-release-zh-770f7-stores-through-the-fixed-UI/vault-reference-zh-CN-1280.ka1",
+      "bytes": 1496,
+      "sha256": "6bd8208150941274f3d791bf61e8d746eacab0a64850126221f7dd68ad710614"
+    },
+    {
+      "path": "ref-ready-runner/vault-reference-release-zh-770f7-stores-through-the-fixed-UI/vault-reference-restored-zh-CN-1280.ka1",
+      "bytes": 1496,
+      "sha256": "fc39f9c1b2b993f540e2110f1008e5709944f52f2598de2e10f3ee63d2539f17"
+    },
+    {
+      "path": "ref-ready-runner/vault-reference-release-en-60aff-stores-through-the-fixed-UI/vault-reference-en-US-390.ka1",
+      "bytes": 1481,
+      "sha256": "7366b5f65f6a2dbb1ee2d5d4749d8e8cfefb6134b656c4de7d66d2945197058a"
+    },
+    {
+      "path": "ref-ready-runner/vault-reference-release-en-60aff-stores-through-the-fixed-UI/vault-reference-restored-en-US-390.ka1",
+      "bytes": 1481,
+      "sha256": "0c46fa48aee5257034341dc5deb709984f1ee29bb2ab7fb40ff8857b1e516348"
+    },
+    {
+      "path": "ref-ready-runner/vault-reference-release-zh-f49b3-stores-through-the-fixed-UI/vault-reference-restored-zh-CN-390.ka1",
+      "bytes": 1491,
+      "sha256": "6f8555f070b567bffcd01e0d58306b723085a56ca77eddd21d060d06c5d0440a"
+    },
+    {
+      "path": "ref-ready-runner/vault-reference-release-zh-f49b3-stores-through-the-fixed-UI/vault-reference-zh-CN-390.ka1",
+      "bytes": 1491,
+      "sha256": "174d2ad4a81c9e2e1c9c9c1f4f611edd2e84eed39e518df83a67c6f92ff12825"
+    },
+    {
+      "path": "ref-ready-runner/vault-reference-release-en-62fde-stores-through-the-fixed-UI/vault-reference-en-US-1280.ka1",
+      "bytes": 1479,
+      "sha256": "b712d04d11b606e1ec29705112937d00e1a8cdeb11c5a93e7d45c99f326adb10"
+    },
+    {
+      "path": "ref-ready-runner/vault-reference-release-en-62fde-stores-through-the-fixed-UI/vault-reference-restored-en-US-1280.ka1",
+      "bytes": 1480,
+      "sha256": "15216f76a9ade0c1b9ce5bbccf1154be10c2e7fabd2067755ea55461c32d9cd0"
+    }
+  ],
+  "visualBoundary": "Initial restored captures were too early and showed graph loading; final reference4 rerun waits stable real2 nodes/1 edge. New screenshots have loaded content. Mobile preserves the existing 1x current-node-centered viewport; the left neighbor can be partly outside the viewport, and the expanded relationship detail displays the complete names. No runtime/layout change.",
+  "remainingBaseFailures": "2 graph assertions owned by parent analysis agent; not claimed fixed here",
+  "commitOrPush": "none",
+  "initialScreenshotsReviewed": [
+    "evidence/password-identifiers-en-US-390-editor.png",
+    "evidence/password-identifiers-zh-CN-1280-notes-actions.png",
+    "runner/vault-reference-release-en-60aff-stores-through-the-fixed-UI/vault-reference-restored-en-US-390.png",
+    "runner/custom-category-release-zh-a240d-and-encrypted-clean-restore/category-fixed-restored-zh-CN-390.png"
+  ],
+  "finalGraphReadyReverification": {
+    "command": "KEEPANY_RELEASE_TEST_PORT=4473 KEEPANY_RELEASE_WEB_DIR=dist KEEPANY_EVIDENCE_DIR=/tmp/keepany-brand-return/legacy-assertions/ref-ready-evidence ./node_modules/.bin/playwright test tests/e2e/vault-reference-release.spec.ts --config playwright.release.config.ts --output /tmp/keepany-brand-return/legacy-assertions/ref-ready-runner --reporter=line",
+    "passed": 4,
+    "failed": 0,
+    "skipped": 0,
+    "retries": 0,
+    "durationReported": "1.3m",
+    "exitCode": 0,
+    "helpersReused": [
+      "setAccountRelationDetailsOpen",
+      "waitForAccountGraphLayout(page,{nodes:2,edges:1})"
+    ],
+    "readiness": [
+      "aria-busy false",
+      "data-layout-ready true",
+      "two frame stable node dimensions/transforms and nonempty edge paths"
+    ],
+    "verifiedBothSourceAndRestored": true,
+    "log": "ref-ready.log"
+  },
+  "finalUniqueCoverage": {
+    "customCategory": 2,
+    "passwordVaultIdentifiers": 4,
+    "vaultReferencesWithStableGraph": 4,
+    "totalDistinct": 10,
+    "note": "initial10 plus reference4 rerun are 10 distinct scenarios, not14"
+  },
+  "acceptedFinalReferenceScreenshots": [
+    "ref-ready-runner/vault-reference-release-zh-770f7-stores-through-the-fixed-UI/vault-reference-restored-zh-CN-1280.png",
+    "ref-ready-runner/vault-reference-release-en-60aff-stores-through-the-fixed-UI/vault-reference-restored-en-US-390.png",
+    "ref-ready-runner/vault-reference-release-zh-f49b3-stores-through-the-fixed-UI/vault-reference-restored-zh-CN-390.png",
+    "ref-ready-runner/vault-reference-release-en-62fde-stores-through-the-fixed-UI/vault-reference-restored-en-US-1280.png"
+  ],
+  "finalScreenshotsReviewed": [
+    "ref-ready-runner/vault-reference-release-en-60aff-stores-through-the-fixed-UI/vault-reference-restored-en-US-390.png",
+    "ref-ready-runner/vault-reference-release-zh-770f7-stores-through-the-fixed-UI/vault-reference-restored-zh-CN-1280.png"
+  ]
+}

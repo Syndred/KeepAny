@@ -251,7 +251,7 @@ export function AppShell() {
 					className={`sidebar ${mobile ? "open" : ""}`}
 				>
 					<div className="brand">
-						<span className="brand-mark" aria-hidden="true">S</span>
+						<span className="brand-mark" aria-hidden="true">K</span>
 						<div>
 							<strong>{t("brandName")}</strong>
 							<small>{t("workspaceTagline")}</small>

@@ -249,7 +249,7 @@ export function McpPanel() {
 							<a
 								className="button"
 								href={download.url}
-								download="stackperch-mcp-request.json"
+								download="keepany-mcp-request.json"
 							>
 								{t("mcpDownloadRequest")}
 							</a>

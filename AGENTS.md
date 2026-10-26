@@ -1,4 +1,4 @@
-# StackPerch 开发约束（原名 KeepAny）
+# KeepAny 开发约束（曾用名 StackPerch）
 
 - 先阅读 README.md、docs/08-项目进度交接.md 和当前阶段验收要求。
 - 每次会话检查 git status/remote；有远端时 fetch，确认无覆盖风险后 fast-forward 更新。无远端如实记录，不虚构已同步。
@@ -18,6 +18,6 @@
 - 不允许创建浏览器页签群组；自行创建的测试页签和临时资料在收尾时关闭或清理。
 - 反复检查：给开发者的实现说明不得进入用户UI。
 
-- 当前主品牌为 StackPerch；KeepAny 的 GitHub 旧入口及本机地址保留，旧官网兼容已按用户要求停用。数据库完整 schema（含 title）、存储键、KDBX 自定义字段、备份格式、同步/绑定/MCP 协议和旧环境变量属于兼容标识，不能按品牌文案全局替换。
+- 用户于2026-10-27明确要求恢复 KeepAny 主品牌。StackPerch 仅作为曾用名和历史兼容入口保留；本机地址不变。数据库完整 schema（含 title）、存储键、KDBX 自定义字段、备份格式、同步/绑定/MCP 协议和旧环境变量属于兼容标识，不能按品牌文案全局替换。
 
-- 正式仓库为 `Syndred/StackPerch`；旧 GitHub 链接依靠平台重定向保留，禁止重新创建 `Syndred/KeepAny`。正式官网为 `https://syndred.github.io/StackPerch/`；用户明确不需要 `Syndred/syndred.github.io` 兼容仓库，不得自动重建。本机 KeepAny 目录继续保留。
+- 正式仓库恢复为 `Syndred/KeepAny`，必须重命名同一仓库并保留ID、提交历史、Issues和发布，不能新建同名仓库冒充恢复。StackPerch 的旧 GitHub 链接由平台重定向保留，禁止占回该名称破坏跳转。正式官网为 `https://syndred.github.io/KeepAny/`，不承诺旧 StackPerch Pages 可用。用户不需要 `Syndred/syndred.github.io` 兼容仓库，不得自动重建。本机 KeepAny 目录和4180继续保留。

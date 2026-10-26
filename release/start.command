@@ -19,7 +19,7 @@ if [[ -f "$PID_FILE" ]]; then
   if [[ "$old_pid" == <-> ]] && kill -0 "$old_pid" 2>/dev/null; then
     command_line=$(ps -p "$old_pid" -o command=)
     if [[ "$command_line" == *"vite/bin/vite.js preview apps/web"*"--port 4180"* ]]; then
-      print "StackPerch 已在运行：$URL （PID $old_pid）"
+      print "KeepAny 已在运行：$URL （PID $old_pid）"
       exit 0
     fi
     print -u2 "PID 已被其他进程使用，请检查 $PID_FILE"
@@ -29,7 +29,7 @@ if [[ -f "$PID_FILE" ]]; then
 fi
 
 print "$$" > "$PID_FILE"
-print "StackPerch 本地版启动中：$URL"
+print "KeepAny 本地版启动中：$URL"
 print "在另一个终端执行 ./release/stop.command 停止。"
 exec node node_modules/vite/bin/vite.js preview apps/web \
   --outDir ../../release/web --host 127.0.0.1 --port 4180 --strictPort

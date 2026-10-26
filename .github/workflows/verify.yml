@@ -89,11 +89,18 @@ jobs:
           KEEPANY_PREVIEW_ARCHIVE="$archive" KEEPANY_RELEASE_TEST_PORT=4391 pnpm exec playwright test --config playwright.portable-offline.config.ts --reporter=dot
       - name: Fetch published KeepAny upgrade baseline
         run: git fetch --no-tags --depth=1 origin 64b98e7874a2fdd8d43c8e60de72a25de5800b25
-      - name: Verify KeepAny data and encrypted vault upgrade to StackPerch
+      - name: Verify published KeepAny data and encrypted vault compatibility
         shell: bash
         run: |
           archive="$(node --input-type=module -e 'import fs from "node:fs"; const files=fs.readdirSync("dist/preview").filter(name=>name.endsWith(".zip")); if(files.length!==1)throw Error("Expected one fresh preview"); process.stdout.write(`dist/preview/${files[0]}`);')"
           KEEPANY_PREVIEW_ARCHIVE="$archive" pnpm exec playwright test --config playwright.brand-upgrade.config.ts --reporter=dot
+      - name: Fetch published StackPerch upgrade baseline
+        run: git fetch --no-tags --depth=1 origin 7ebc2c349f4826759c8b2ef848e8c6133c0b3858
+      - name: Verify StackPerch data and encrypted vault upgrade to KeepAny
+        shell: bash
+        run: |
+          archive="$(node --input-type=module -e 'import fs from "node:fs"; const files=fs.readdirSync("dist/preview").filter(name=>name.endsWith(".zip")); if(files.length!==1)throw Error("Expected one fresh preview"); process.stdout.write(`dist/preview/${files[0]}`);')"
+          KEEPANY_PREVIEW_ARCHIVE="$archive" pnpm exec playwright test --config playwright.brand-return.config.ts --reporter=dot
       - name: Preserve failed browser evidence
         if: failure()
         uses: actions/upload-artifact@v4

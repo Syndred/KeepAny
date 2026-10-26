@@ -52,7 +52,7 @@ export async function launchMcp(options: LaunchOptions): Promise<RunningLauncher
       requestNonce: request.requestNonce, appOrigin: request.appOrigin, expiresAt,
     });
     // Only the official MCP SDK writes to stdout. stderr reveals the file path, never the secret.
-    process.stderr.write(`StackPerch MCP pairing file: ${pairingPath}\n`);
+    process.stderr.write(`KeepAny MCP pairing file: ${pairingPath}\n`);
     stdio = await serveKeepAnyMcpStdio({ store: bridge.store, authority,
       grantId: grant.id, grantSecret: grant.secret,
       onPreview: preview => bridge?.publishPreview(preview) });
@@ -106,7 +106,7 @@ async function main() {
     opening = launchMcp(parseArgs(process.argv.slice(2)));
     active = await opening;
   } catch (error) {
-    process.stderr.write(`StackPerch MCP launcher: ${error instanceof LauncherError ? error.code : 'startup-failed'}\n`);
+    process.stderr.write(`KeepAny MCP launcher: ${error instanceof LauncherError ? error.code : 'startup-failed'}\n`);
     process.exitCode = 1;
     return;
   }

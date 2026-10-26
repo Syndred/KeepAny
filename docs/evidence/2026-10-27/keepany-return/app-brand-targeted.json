@@ -1,0 +1,105 @@
+{
+  "scope": "apps/web current display names, default new KDBX name and existing test assertions",
+  "unitChecks": [
+    {
+      "command": "./node_modules/.bin/vitest run packages/password-vault/src/session.test.ts --reporter=dot",
+      "filesPassed": 1,
+      "testsPassed": 40,
+      "durationSeconds": 36.01,
+      "exitCode": 0,
+      "newCompatibilityCase": "new KeepAny vault names; old StackPerch metadata/group names, password record and encrypted import draft survive import/edit/reopen/export"
+    },
+    {
+      "command": "./node_modules/.bin/vitest run apps/web/src/i18n.test.ts apps/web/src/reminders.test.ts apps/web/src/ai-workflow-model.test.ts --reporter=dot",
+      "filesPassed": 3,
+      "testsPassed": 20,
+      "durationSeconds": 0.447,
+      "exitCode": 0
+    }
+  ],
+  "typecheck": {
+    "command": "./node_modules/.bin/tsc --noEmit",
+    "exitCode": 0
+  },
+  "lint": {
+    "checkedFiles": 14,
+    "errors": 0,
+    "warnings": 3,
+    "warningsWereUnchanged": [
+      "session.getSnapshot().revision!",
+      "session.getSnapshot().contentRevision!",
+      "session.getSnapshot().contentRevision!"
+    ]
+  },
+  "icons": [
+    {
+      "name": "keepany.svg",
+      "matchesReference": true,
+      "reference": "2d4a6f6",
+      "sha256": "732b7a6c0e3e480c7188ffd6019c59f05f36ef1405324f3dd2992199b26c89b6"
+    },
+    {
+      "name": "keepany-180.png",
+      "matchesReference": true,
+      "reference": "2d4a6f6",
+      "sha256": "dd6ff1d05df487de0a519ae420cded9b26d843b70739196c903d0487fbc2aff2"
+    },
+    {
+      "name": "keepany-192.png",
+      "matchesReference": true,
+      "reference": "2d4a6f6",
+      "sha256": "b656c4a7617c9f74510353fd0dbf87209f1d84aca18a8f747561597073b38bd5"
+    },
+    {
+      "name": "keepany-512.png",
+      "matchesReference": true,
+      "reference": "2d4a6f6",
+      "sha256": "1ca881dd0054d427dfe7e655bb92c451d37b5690c8c5e0f0fa4d945f3b74d906"
+    },
+    {
+      "name": "keepany-maskable-512.png",
+      "matchesReference": true,
+      "reference": "2d4a6f6",
+      "sha256": "7657b8708b70be5c91e58497598573f651f36670a807f8f2bc203afcad1ec6bd"
+    },
+    {
+      "name": "stackperch.svg",
+      "matchesReference": true,
+      "reference": "HEAD",
+      "sha256": "5a4fe285fb2509752dc322a0ef2ceb1b156466fbbec015fb92e422e910cab840"
+    },
+    {
+      "name": "stackperch-180.png",
+      "matchesReference": true,
+      "reference": "HEAD",
+      "sha256": "955a3ef281e96a2d3f2da3d391119161f73f7675a44d2fd01532ac70878a9dd8"
+    },
+    {
+      "name": "stackperch-192.png",
+      "matchesReference": true,
+      "reference": "HEAD",
+      "sha256": "74161035ffacf5a96c36aa1db58376cbb15ed20ca3ad88cd36d3809a72f384e4"
+    },
+    {
+      "name": "stackperch-512.png",
+      "matchesReference": true,
+      "reference": "HEAD",
+      "sha256": "5ce6f664d5c7bfe62be949b9d2337649c06eb1b1ddddafac60226bacae6db233"
+    },
+    {
+      "name": "stackperch-maskable-512.png",
+      "matchesReference": true,
+      "reference": "HEAD",
+      "sha256": "b9ef80d776d33eda4f41261582d420252b31e0056b2af2de9920651b61063c7e"
+    }
+  ],
+  "untouchedCompatibility": [
+    "RxDB schema incl title",
+    "browser storage names/keys",
+    "PWA id/start_url/scope",
+    "KDBX custom fields and backup format",
+    "protocols/environment variables/ports"
+  ],
+  "buildNotRun": "parent owns build and generated release/web",
+  "sourceCommitOrPush": "not committed or pushed by this agent"
+}

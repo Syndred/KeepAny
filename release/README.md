@@ -1,8 +1,8 @@
-# StackPerch 本地测试版
+# KeepAny 本地测试版
 
-StackPerch 原名 KeepAny。正式仓库为 [Syndred/StackPerch](https://github.com/Syndred/StackPerch)，[官网](https://syndred.github.io/StackPerch/)使用 StackPerch 地址；旧 GitHub 链接仍转到新仓库。本机 4180 地址、旧备份格式及数据库标识保留；更新前保存编辑、备份并停止旧服务。以下历史验收记录保留当时名称和版本，以最新发布说明为准。
+项目统一使用 KeepAny，曾以 StackPerch 名称发布。正式仓库为 [Syndred/KeepAny](https://github.com/Syndred/KeepAny)，[官网](https://syndred.github.io/KeepAny/)使用 KeepAny 地址；旧 StackPerch GitHub 链接仍转到同一仓库。本机 4180 地址、旧备份格式及数据库标识保留；更新前保存编辑、备份并停止旧服务。以下历史验收记录保留当时名称和版本，以最新发布说明为准。
 
-普通试用者请从 [GitHub Releases](https://github.com/Syndred/StackPerch/releases) 下载标注 `Pre-release` 的 `StackPerch-…-portable.zip`，按照包内 `START-HERE.md` 启动。便携包只需 Node.js 22+，不需要拉代码、安装 pnpm 或项目依赖。中英文入门见 [试用指南](../docs/试用指南.md)。发布状态和实际验证范围以对应 Release 为准。
+普通试用者请从 [GitHub Releases](https://github.com/Syndred/KeepAny/releases) 下载标注 `Pre-release` 的 `KeepAny-…-portable.zip`，按照包内 `START-HERE.md` 启动。便携包只需 Node.js 22+，不需要拉代码、安装 pnpm 或项目依赖。中英文入门见 [试用指南](../docs/试用指南.md)。发布状态和实际验证范围以对应 Release 为准。
 
 维护者从**已提交的干净仓库**构建便携包：
 

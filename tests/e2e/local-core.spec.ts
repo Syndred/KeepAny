@@ -101,7 +101,7 @@ test("project, account, subscription, located item, linked reminder and download
 		await saveFile.click();
 		const download = await downloadPromise;
 		expect(download.suggestedFilename()).toMatch(
-			/^stackperch-\d{4}-\d{2}-\d{2}\.ka1$/,
+			/^keepany-\d{4}-\d{2}-\d{2}\.ka1$/,
 		);
 		const backupPath = await download.path();
 		if (!backupPath) throw Error("download file did not land");

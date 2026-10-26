@@ -22,7 +22,7 @@ node scripts/phase0/verify-third-party-license-materials.mjs --release
 
 ## elkjs 0.12.0 源码与分发说明
 
-账号关系布局直接使用未修改的 `elkjs@0.12.0` npm 包。包内原始声明为 `EPL-2.0 OR GPL-3.0-or-later`，StackPerch 本次按 **Eclipse Public License 2.0（EPL-2.0）** 分支使用和分发该依赖，保留原版权、免责声明及次级许可通知。该程序的源码按 EPL-2.0 提供，可从以下固定地址取得源码与构建材料；StackPerch 没有修改或另行授权这些上游文件。
+账号关系布局直接使用未修改的 `elkjs@0.12.0` npm 包。包内原始声明为 `EPL-2.0 OR GPL-3.0-or-later`，KeepAny 本次按 **Eclipse Public License 2.0（EPL-2.0）** 分支使用和分发该依赖，保留原版权、免责声明及次级许可通知。该程序的源码按 EPL-2.0 提供，可从以下固定地址取得源码与构建材料；KeepAny 没有修改或另行授权这些上游文件。
 
 - elkjs：[`ff5771d7165445c42c408bb8a090c8035272218c` 源码](https://github.com/kieler/elkjs/tree/ff5771d7165445c42c408bb8a090c8035272218c)及[该提交源码归档](https://github.com/kieler/elkjs/archive/ff5771d7165445c42c408bb8a090c8035272218c.tar.gz)。该提交同时对应 npm `gitHead`、GitHub `0.12.0` 标签和 [npm 发布 provenance](https://registry.npmjs.org/-/npm/v1/attestations/elkjs@0.12.0)记录。
 - ELK 算法源码：[ELK 0.12.0 标签提交 `323312916048544e4e594eab3303cdb0d01e2929`](https://github.com/eclipse-elk/elk/tree/323312916048544e4e594eab3303cdb0d01e2929)及[源码归档](https://github.com/eclipse-elk/elk/archive/323312916048544e4e594eab3303cdb0d01e2929.tar.gz)。此版本映射依据 [elkjs 官方发布说明](https://github.com/kieler/elkjs/releases/tag/0.12.0)，不是从 npm 版本号推断的精确二进制重现结论。上游[版权／第三方说明](https://github.com/eclipse-elk/elk/blob/323312916048544e4e594eab3303cdb0d01e2929/NOTICE.md)随该源码归档保留。

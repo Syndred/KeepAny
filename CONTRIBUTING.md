@@ -1,12 +1,12 @@
-# Contributing to StackPerch / 参与贡献
+# Contributing to KeepAny / 参与贡献
 
-StackPerch, formerly KeepAny, is a local digital asset workspace for independent developers. The current focus is making the local preview understandable, easy to run, and reliable to recover. Commercial expansion is paused. Issues and pull requests in English or Simplified Chinese are welcome.
+KeepAny is a local digital asset workspace for independent developers. The current focus is making the local preview understandable, easy to run, and reliable to recover. Commercial expansion is paused. Issues and pull requests in English or Simplified Chinese are welcome.
 
-StackPerch（原名 KeepAny）面向维护多个项目的独立开发者。当前优先完善本地试用、资料关联和备份恢复，商业功能暂停扩展。欢迎使用简体中文或英语提交问题与 PR。
+KeepAny 面向维护多个项目的独立开发者。当前优先完善本地试用、资料关联和备份恢复，商业功能暂停扩展。欢迎使用简体中文或英语提交问题与 PR。
 
 ## Report a problem / 反馈问题
 
-Search [existing issues](https://github.com/Syndred/StackPerch/issues) first. Include:
+Search [existing issues](https://github.com/Syndred/KeepAny/issues) first. Include:
 
 - App version or source commit, OS, browser, and language.
 - Reproduction steps, expected behavior, and actual behavior.

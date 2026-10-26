@@ -1,0 +1,39 @@
+{
+  "checkedAtUTC": "2026-10-26T22:42:59.147846+00:00",
+  "ownedSourceFiles": [
+    "tests/e2e/account-graph-readability.spec.ts",
+    "tests/e2e/helpers/account-graph.ts"
+  ],
+  "productSourceChangedByThisAgent": false,
+  "entryObservedAfterTests": "/assets/index-Df5R4iNi.js",
+  "target": {
+    "exitCode": 0,
+    "durationSeconds": 220.47315875,
+    "passed": 2,
+    "failed": 0,
+    "workers": 1
+  },
+  "matrix": {
+    "exitCode": 0,
+    "durationSeconds": 374.19634170800003,
+    "passed": 8,
+    "failed": 0,
+    "workers": 2
+  },
+  "keptAssertions": [
+    "3px reading center",
+    "12px minimum name / 11px minimum identifier / original base fonts",
+    "card boundaries and obscuring checks per actually panned node",
+    "all-node overview frame boundaries",
+    "edge/source/target geometry and backup/reload/edit relationships",
+    "24 and 49 node reading/overview/control cases"
+  ],
+  "cleanup": {
+    "port4474Listening": false,
+    "syntheticBackupFilesRemoved": 0,
+    "removed": []
+  },
+  "originalPort4180Touched": false,
+  "committedByThisAgent": false,
+  "pushedByThisAgent": false
+}

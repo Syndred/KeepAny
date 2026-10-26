@@ -123,7 +123,7 @@ const fileSummary = pkg => pkg.legalFiles.length
   : '包根目录无 LICENSE/LICENCE/COPYING/NOTICE';
 
 const notice = [
-  '# StackPerch 第三方依赖声明与核查状态',
+  '# KeepAny 第三方依赖声明与核查状态',
   '',
   '本清单由 `node scripts/phase0/generate-legal-artifacts.mjs` 根据当前 `pnpm-lock.yaml`、实际安装树和各包 `package.json` 生成。精确版本的上游许可证原文索引见 [`legal/third-party/manifest.json`](legal/third-party/manifest.json)，本文件记录包内许可声明和包根目录中的许可/NOTICE 文件指纹；并非法律兼容性结论或可直接分发的完整第三方许可证正文包。',
   '',
@@ -178,7 +178,7 @@ const sbom = {
   spdxVersion: 'SPDX-2.3',
   dataLicense: 'CC0-1.0',
   SPDXID: 'SPDXRef-DOCUMENT',
-  name: `StackPerch installed pnpm inventory ${lockSha256.slice(0, 12)}`,
+  name: `KeepAny installed pnpm inventory ${lockSha256.slice(0, 12)}`,
   documentNamespace: `urn:uuid:${uuid}`,
   creationInfo: {
     creators: ['Tool: scripts/phase0/generate-legal-artifacts.mjs'],

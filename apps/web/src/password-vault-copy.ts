@@ -712,8 +712,8 @@ export const passwordVaultCopy: Record<string, [string, string]> = {
 		"Automatic copying failed. Use manual copy instead.",
 	],
 	pwVaultExportFilename: [
-		"stackperch-password-vault.kdbx",
-		"stackperch-password-vault.kdbx",
+		"keepany-password-vault.kdbx",
+		"keepany-password-vault.kdbx",
 	],
 	pwVaultStatusUnlocked: ["已解锁", "Unlocked"],
 	pwVaultStatusLocked: ["已锁定", "Locked"],

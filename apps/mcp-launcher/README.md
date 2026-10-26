@@ -1,4 +1,4 @@
-# StackPerch 本机 MCP 启动器（原名 KeepAny）
+# KeepAny 本机 MCP 启动器
 
 现有 `keepany-mcp` 命令、`@keepany` 包名和 `~/.keepany` 配置路径保留，已有客户端配置无需因品牌更名而修改。
 
@@ -6,7 +6,7 @@
 
 ## macOS 本机安装包
 
-需要 Node.js `>=20.19.0`、npm；从本仓库构建 tarball 还需要 pnpm。安装包提供 `keepany-mcp` 命令，运行时无需 StackPerch 源码目录、pnpm、tsx 或 `cwd`。npm 安装会获取包声明的三个运行依赖，离线安装需要这些依赖已在 npm 缓存中。当前是**本机安装技术验证包**，没有发布到 npm，也没有完成第三方许可证再分发核查。
+需要 Node.js `>=20.19.0`、npm；从本仓库构建 tarball 还需要 pnpm。安装包提供 `keepany-mcp` 命令，运行时无需 KeepAny 源码目录、pnpm、tsx 或 `cwd`。npm 安装会获取包声明的三个运行依赖，离线安装需要这些依赖已在 npm 缓存中。当前是**本机安装技术验证包**，没有发布到 npm，也没有完成第三方许可证再分发核查。
 
 ```bash
 pnpm install --frozen-lockfile
@@ -24,7 +24,7 @@ npm install -g --prefix "$HOME/.local/keepany-mcp" ./dist/keepany-mcp-launcher-0
       "command": "/Users/你的用户名/.local/keepany-mcp/bin/keepany-mcp",
       "args": [
         "--request",
-        "/Users/你的用户名/Downloads/stackperch-mcp-request.json",
+        "/Users/你的用户名/Downloads/keepany-mcp-request.json",
         "--pairing-file",
         "/Users/你的用户名/.keepany/mcp/pairing.json"
       ]
@@ -37,14 +37,14 @@ npm install -g --prefix "$HOME/.local/keepany-mcp" ./dist/keepany-mcp-launcher-0
 
 ## 连接步骤
 
-1. 在 StackPerch Web 的 MCP 设置中选择资产、可读字段、可写字段和有效期，下载请求 JSON。请求包含资产 ID，但没有配对密钥；保存后五分钟内启动 MCP 客户端。
+1. 在 KeepAny Web 的 MCP 设置中选择资产、可读字段、可写字段和有效期，下载请求 JSON。请求包含资产 ID，但没有配对密钥；保存后五分钟内启动 MCP 客户端。
 2. 将上面的绝对路径换成自己机器上的路径，加入支持 stdio 的 MCP 客户端配置。`--request` 必填；示例用固定的 `--pairing-file` 路径，方便从客户端启动后在 Web 选择。目标父目录由默认启动器建立为当前用户的 `0700` 私有目录；已有同名配对文件时会拒绝覆盖，须先核查旧进程与文件。未指定配对路径时会在 `~/.keepany/mcp/` 建立随机文件名。测试或显式隔离时可加 `--state-dir /绝对/私有目录`，该目录须**预先存在**、非符号链接、属当前用户、权限恰为 `0700`；授权状态和默认配对文件都写入该目录。
 3. MCP 客户端启动后，启动器只向 **stderr** 输出配对文件路径。在 Web 设置中手动选择该文件，核对范围并批准。文件为 `0600`、仅新建不覆盖；成功配对或两分钟超时即删除。请求过期时重新下载并启动新进程。
 
 源码开发时也可在仓库根目录直接运行：
 
 ```bash
-pnpm exec tsx apps/mcp-launcher/src/main.ts --request /绝对/路径/stackperch-mcp-request.json
+pnpm exec tsx apps/mcp-launcher/src/main.ts --request /绝对/路径/keepany-mcp-request.json
 ```
 
 配对前 MCP 工具返回 `bridge-unpaired`。授权后，读取只返回选中资产和字段。`preview_asset_update` 把准确旧值、新值送到 Web 的待批准队列；用户在 Web 中另行批准后，`confirm_asset_update` 才能按版本比较写入。关掉 MCP 客户端会撤销本进程授权、关闭 loopback 桥并删除尚存的配对文件。持久权限状态位于 `~/.keepany/mcp/authority.json`，含授权哈希、回执及不含字段值的审计。不要手动删除未决操作回执；`operation-uncertain` 必须人工核对。

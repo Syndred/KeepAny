@@ -13,9 +13,12 @@ import type * as VaultEngine from '../../packages/password-vault/src/engine';
 import { activeWorkerSource, originalImage, startPackage, stopPackage, unusedPort } from './helpers/portable-upgrade';
 import { selectChoice } from './helpers/select-choice';
 
-// This published baseline includes aliases, asset links and encrypted import drafts.
+// Published baselines must include aliases, asset links and encrypted import drafts.
 // The older 8f9a1b5 fixture cannot establish password-vault compatibility.
-const oldCommit = '64b98e7874a2fdd8d43c8e60de72a25de5800b25';
+const oldCommit = process.env.KEEPANY_UPGRADE_BASE_COMMIT ?? '64b98e7874a2fdd8d43c8e60de72a25de5800b25';
+if (!/^[a-f0-9]{40}$/i.test(oldCommit)) throw Error('KEEPANY_UPGRADE_BASE_COMMIT must be a full 40-hex commit SHA');
+const oldBrand = process.env.KEEPANY_UPGRADE_BASE_BRAND ?? 'KeepAny';
+if (oldBrand !== 'KeepAny' && oldBrand !== 'StackPerch') throw Error('KEEPANY_UPGRADE_BASE_BRAND must be KeepAny or StackPerch');
 const master = 'Synthetic brand upgrade master 2026!';
 const backupPassword = 'Synthetic brand upgrade outer backup!';
 const loginPassword = 'Synthetic upgrade login only!42';
@@ -136,7 +139,7 @@ async function checkDraft(page: Page) {
   await expect(importer).toHaveCount(0);
 }
 
-test('published KeepAny assets, vault fields, import draft and backup survive the StackPerch portable upgrade', async () => {
+test('published assets, vault fields, import draft and backup survive the current KeepAny portable upgrade', async () => {
   const root = process.cwd();
   const directory = mkdtempSync(join(tmpdir(), 'keepany-stackperch-upgrade-'));
   const oldPackage = join(directory, 'old-package');
@@ -157,7 +160,7 @@ test('published KeepAny assets, vault fields, import draft and backup survive th
   try {
     mkdirSync(join(oldPackage, 'web'), { recursive: true });
     const release = extractCandidate(root, newPackage);
-    expect(release.productName).toBe('StackPerch');
+    expect(release.productName).toBe('KeepAny');
     // The published fixed package retains historical resources and exceeds the
     // original fixture's stdout buffer. Write its archive to this temporary tree.
     const oldArchive = join(directory, 'published-web.tar');
@@ -165,9 +168,13 @@ test('published KeepAny assets, vault fields, import draft and backup survive th
     const extracted = spawnSync('tar', ['-xf', oldArchive, '-C', join(oldPackage, 'web'), '--strip-components=2']);
     if (extracted.status !== 0) throw Error('Published baseline web extraction failed');
     cpSync(join(newPackage, 'preview-server.mjs'), join(oldPackage, 'preview-server.mjs'));
-    writeFileSync(join(oldPackage, 'RELEASE.json'), JSON.stringify({ version: 'published-64b98e7874a2',
-      sourceCommit: oldCommit, applicationRoutes: release.applicationRoutes }));
+    writeFileSync(join(oldPackage, 'RELEASE.json'), JSON.stringify({ version: `published-${oldCommit.slice(0, 12)}`,
+      productName: oldBrand, sourceCommit: oldCommit, applicationRoutes: release.applicationRoutes }));
     for (const file of release.webFiles) expect(sha256(readFileSync(join(newPackage, 'web', file.path)))).toBe(file.sha256);
+    for (const packageRoot of [oldPackage, newPackage]) {
+      const manifest = JSON.parse(readFileSync(join(packageRoot, 'web', 'manifest.webmanifest'), 'utf8'));
+      expect(manifest).toMatchObject({ id: '/', start_url: '/', scope: '/' });
+    }
     const entry = (path: string) => readFileSync(path, 'utf8').match(/<script[^>]+type="module"[^>]+src="([^"]+)"/)?.[1];
     const oldEntry = entry(join(oldPackage, 'web', 'index.html'));
     const newEntry = entry(join(newPackage, 'web', 'index.html'));
@@ -184,6 +191,8 @@ test('published KeepAny assets, vault fields, import draft and backup survive th
     const page = context.pages()[0] ?? await context.newPage();
     page.on('pageerror', error => errors.push(error.message));
     await page.goto(`${origin}/settings`);
+    await expect(page).toHaveTitle(oldBrand);
+    await expect(page.locator('.brand strong')).toHaveText(oldBrand);
     await selectChoice(page.getByRole('combobox', { name: '语言', exact: true }), 'en');
     await expect(page.getByRole('heading', { name: 'Language', exact: true })).toBeVisible();
     const projectPath = await addAsset(page, origin, 'project', project);
@@ -264,7 +273,7 @@ test('published KeepAny assets, vault fields, import draft and backup survive th
     expect(sha256(await activeWorkerSource(context, origin))).toBe(oldWorkerHash);
     const oldDatabaseNames = await page.evaluate(async () => (await indexedDB.databases()).map(db => db.name).sort());
 
-    stage = 'close the published PWA and reopen the same origin under StackPerch';
+    stage = 'close the published PWA and reopen the same origin under KeepAny';
     for (const tab of context.pages()) await tab.close();
     await context.close(); context = undefined;
     await stopPackage(oldPackage, oldService); oldService = undefined;
@@ -282,8 +291,8 @@ test('published KeepAny assets, vault fields, import draft and backup survive th
     }, { timeout: 30_000, intervals: [250, 500, 1000] }).toBe(newWorkerHash);
     await upgraded.reload();
     await expect.poll(() => upgraded.locator('script[type="module"]').getAttribute('src')).toBe(newEntry);
-    await expect(upgraded.locator('.brand strong')).toHaveText('StackPerch');
-    await expect(upgraded).toHaveTitle('StackPerch');
+    await expect(upgraded.locator('.brand strong')).toHaveText('KeepAny');
+    await expect(upgraded).toHaveTitle('KeepAny');
     expect(sha256(Buffer.from(await originalImage(upgraded)))).toBe(sha256(imageBytes));
     expect(await upgraded.evaluate(async () => (await indexedDB.databases()).map(db => db.name).sort())).toEqual(oldDatabaseNames);
     await upgraded.goto(`${origin}/settings`);
@@ -298,7 +307,7 @@ test('published KeepAny assets, vault fields, import draft and backup survive th
     expect(upgradedVault).toEqual(oldVault);
     await checkDraft(upgraded);
 
-    stage = 'restore the old KA1 into an independent clean StackPerch browser';
+    stage = 'restore the old KA1 into an independent clean KeepAny browser';
     restoredContext = await chromium.launchPersistentContext(join(directory, 'clean-restore-profile'), {
       locale: 'en-US', acceptDownloads: true, viewport: { width: 390, height: 844 } });
     restoredContext.setDefaultTimeout(12_000);
@@ -327,7 +336,7 @@ test('published KeepAny assets, vault fields, import draft and backup survive th
     expect(await downloadVault(restored, join(directory, 'restored-vault.kdbx'))).toEqual(oldVault);
     await checkDraft(restored);
     expect(errors).toEqual([]);
-    console.log(JSON.stringify({ oldCommit, newCommit: release.sourceCommit, sourceDirty: release.sourceDirty,
+    console.log(JSON.stringify({ oldCommit, oldBrand, newCommit: release.sourceCommit, sourceDirty: release.sourceDirty,
       oldWorkerHash, newWorkerHash, oldEntry, newEntry, assetIds: [projectId, accountId],
       vaultEntryIds: oldVault.ids, aliasCount: oldVault.aliasCount, importDraftHash: oldVault.importDraftHash,
       imageSha256: sha256(imageBytes), backupSha256: sha256(backupBytes),
@@ -336,7 +345,7 @@ test('published KeepAny assets, vault fields, import draft and backup survive th
     // Keep failure stage useful without dumping draft/source/password field values.
     const sourceLocation = error instanceof Error ? error.stack?.split('\n')
       .find(line => line.trimStart().startsWith('at ') && line.includes('stackperch-upgrade.spec.ts'))?.trim() : undefined;
-    throw Error(`StackPerch compatibility failed at: ${stage}${sourceLocation ? ` (${sourceLocation})` : ''}`);
+    throw Error(`KeepAny compatibility failed at: ${stage}${sourceLocation ? ` (${sourceLocation})` : ''}`);
   } finally {
     // Attempt every cleanup even if a browser or server fails to close.
     const cleanup = await Promise.allSettled([

@@ -4,7 +4,7 @@ set -euo pipefail
 ROOT=${0:A:h:h}
 PID_FILE="$ROOT/release/.local-demo-server.pid"
 if [[ ! -f "$PID_FILE" ]]; then
-  print "StackPerch 英文演示服务未运行。"
+  print "KeepAny 英文演示服务未运行。"
   exit 0
 fi
 pid=$(<"$PID_FILE")
@@ -14,7 +14,7 @@ if [[ "$pid" != <-> ]]; then
 fi
 if ! kill -0 "$pid" 2>/dev/null; then
   rm -f "$PID_FILE"
-  print "StackPerch 英文演示服务已停止。"
+  print "KeepAny 英文演示服务已停止。"
   exit 0
 fi
 command_line=$(ps -p "$pid" -o command=)
@@ -26,7 +26,7 @@ kill "$pid"
 for attempt in {1..50}; do
   if ! kill -0 "$pid" 2>/dev/null; then
     rm -f "$PID_FILE"
-    print "StackPerch 英文演示服务已停止。"
+    print "KeepAny 英文演示服务已停止。"
     exit 0
   fi
   sleep 0.1

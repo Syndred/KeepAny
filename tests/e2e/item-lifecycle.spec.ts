@@ -178,7 +178,7 @@ test("item loan, return, maintenance, reminder and task history survive trash an
 		const downloadEvent = page.waitForEvent("download");
 		await page.getByRole("link", { name: "Save backup file" }).click();
 		const download = await downloadEvent;
-		expect(download.suggestedFilename()).toMatch(/^stackperch-\d{4}-\d{2}-\d{2}\.ka1$/);
+		expect(download.suggestedFilename()).toMatch(/^keepany-\d{4}-\d{2}-\d{2}\.ka1$/);
 		const backupPath = await download.path();
 		if (!backupPath) throw Error("item backup download missing");
 		expect(readFileSync(backupPath).length).toBeGreaterThan(52);

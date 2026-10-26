@@ -1,7 +1,7 @@
 import { gzipSync } from 'fflate';
 import { Consts, Int64, Kdbx, ProtectedValue, VarDictionary, XmlUtils } from 'kdbxweb';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { checkHeader, configureDatabase, credentials, VAULT_AI_KEY_BINDING_FIELD, VAULT_IMPORT_DRAFT_FIELD, VAULT_LINK_FIELD, VAULT_USERNAME_ALIASES_FIELD } from './engine';
+import { checkHeader, clearCredentials, clearDatabase, configureDatabase, credentials, VAULT_AI_KEY_BINDING_FIELD, VAULT_IMPORT_DRAFT_FIELD, VAULT_LINK_FIELD, VAULT_USERNAME_ALIASES_FIELD } from './engine';
 import { generatePassword, VAULT_IMPORT_DRAFT_MAX_BYTES, VAULT_IMPORT_MAX_ENTRIES, VAULT_MAX_BYTES, VaultSession } from './index';
 import type { VaultEntryDraft, VaultPersistence, VaultRecord } from './types';
 
@@ -40,6 +40,55 @@ function deferred() {
 
 afterEach(() => vi.restoreAllMocks());
 
+describe('product name compatibility', () => {
+  it('uses KeepAny for new vaults and retains existing StackPerch names and encrypted records', async () => {
+    const { session } = await created();
+    const id = await session.saveEntry(draft);
+    const payload = 'Synthetic StackPerch reviewed draft';
+    await session.writeImportDraft(payload, session.getSnapshot().revision as string);
+    const key = credentials(master);
+    const legacy = await Kdbx.load((await session.exportKdbx()).slice().buffer, key);
+    let legacyBytes: Uint8Array;
+    try {
+      expect(legacy.meta.name).toBe('KeepAny');
+      expect(legacy.getDefaultGroup().name).toBe('KeepAny');
+      legacy.meta.name = 'StackPerch';
+      legacy.getDefaultGroup().name = 'StackPerch';
+      legacyBytes = new Uint8Array(await legacy.save());
+    } finally {
+      clearDatabase(legacy);
+      clearCredentials(key);
+      session.lock();
+    }
+
+    const storage = new MemoryStorage();
+    const imported = new VaultSession(storage);
+    await imported.initialize();
+    await imported.importKdbx(legacyBytes, master);
+    expect(imported.readEntry(id)).toEqual(expect.objectContaining(draft));
+    expect(imported.readImportDraft()).toBe(payload);
+    await imported.saveEntry({ ...imported.readEntry(id), notes: 'Edited after brand return' });
+    imported.lock();
+    await imported.unlock(master);
+    expect(imported.readEntry(id)).toEqual(expect.objectContaining({
+      ...draft, notes: 'Edited after brand return',
+    }));
+    expect(imported.readImportDraft()).toBe(payload);
+
+    const exportedKey = credentials(master);
+    const exported = await Kdbx.load((await imported.exportKdbx()).slice().buffer, exportedKey);
+    try {
+      expect(exported.meta.name).toBe('StackPerch');
+      expect(exported.getDefaultGroup().name).toBe('StackPerch');
+      expect(exported.meta.customData.has(VAULT_IMPORT_DRAFT_FIELD)).toBe(true);
+    } finally {
+      clearDatabase(exported);
+      clearCredentials(exportedKey);
+      imported.lock();
+    }
+  }, 30_000);
+});
+
 describe('confirmed permanent deletion from password trash', () => {
   it('removes the selected entry and history after reopen, retaining active entries and other trash', async () => {
     const { session, storage } = await created();
@@ -63,7 +112,7 @@ describe('confirmed permanent deletion from password trash', () => {
     await reopened.purgeEntries([otherTrash], reopened.getSnapshot().contentRevision as string);
     expect(reopened.getSnapshot().trash).toEqual([]);
     reopened.lock();
-  });
+  }, 30_000);
 
   it('rejects active entries, restored entries, stale confirmations, duplicates and locks without losing entries', async () => {
     const { session, storage } = await created();

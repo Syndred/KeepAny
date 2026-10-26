@@ -322,9 +322,15 @@ for (const variant of variants) {
 			await field.fill(password);
 			await exerciseEye(page, field, t, password);
 			await expectEditorFieldLayout(dialog);
-			await expectActionSpacing(
-				dialog.locator(".password-vault-field-actions"),
-			);
+			const generate = dialog.getByRole("button", {
+				name: t("pwVaultGeneratePassword"),
+				exact: true,
+			});
+			await expect(generate).toHaveCount(1);
+			await expect(dialog.locator(".password-vault-field-actions")).toHaveCount(0);
+			await pointerClick(page, generate, 0.98);
+			await expect(field).toHaveValue(/^.{24}$/);
+			await field.fill(password);
 			if (variant.locale === "en-US")
 				expect(await dialog.innerText()).not.toMatch(/[\u4e00-\u9fff]/);
 			expect(

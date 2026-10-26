@@ -1,0 +1,113 @@
+{
+  "baselineFailure": {
+    "commit": "1939e30",
+    "runId": 40048011609,
+    "unitPassed": 926,
+    "unitFailed": 1,
+    "scenario": "confirmed permanent deletion from password trash > removes the selected entry and history after reopen, retaining active entries and other trash",
+    "reportedDurationMs": 5277,
+    "oldBudgetMs": 5000,
+    "failure": "test timeout; no failing functional assertion reported",
+    "sourceLog": "/tmp/keepany-brand-return/base-ci/unit.log"
+  },
+  "operationEvidence": {
+    "parameters": "real Argon2id, 64 MiB, 3 iterations; unchanged",
+    "derivations": 19,
+    "breakdown": [
+      {
+        "operation": "create",
+        "count": 1,
+        "derivationsEach": 1
+      },
+      {
+        "operation": "saveEntry",
+        "count": 4,
+        "derivationsEach": 2
+      },
+      {
+        "operation": "trashEntry",
+        "count": 2,
+        "derivationsEach": 2
+      },
+      {
+        "operation": "purgeEntries",
+        "count": 2,
+        "derivationsEach": 2
+      },
+      {
+        "operation": "unlock",
+        "count": 1,
+        "derivationsEach": 1
+      },
+      {
+        "operation": "restoreEntry on deleted UUID (rejects after candidate load)",
+        "count": 1,
+        "derivationsEach": 1
+      }
+    ],
+    "sourcePaths": [
+      "packages/password-vault/src/session.ts:create/mutate/persist/saveEntry/trashEntry/restoreEntry/purgeEntries/unlock",
+      "packages/password-vault/src/engine.ts:configureDatabase"
+    ]
+  },
+  "change": {
+    "scope": "only the failed permanent-deletion lifecycle it",
+    "newBudgetMs": 30000,
+    "basis": "matches existing explicit 30s crypto-lifecycle cases in the same file",
+    "unchanged": [
+      "all original assertions",
+      "real encryption parameters",
+      "business/runtime functions",
+      "global Vitest configuration",
+      "retries"
+    ]
+  },
+  "localReverification": {
+    "command": "./node_modules/.bin/vitest run packages/password-vault/src/session.test.ts --reporter=verbose",
+    "testsPassed": 40,
+    "testsFailed": 0,
+    "fileDurationSeconds": 37.42,
+    "affectedScenarioDurationMs": 2088,
+    "newBrandCompatibilityDurationMs": 1781,
+    "exitCode": 0,
+    "log": "/tmp/keepany-brand-return/app-vault-session-budget.log"
+  },
+  "baselineOptions": {
+    "commitEnv": "KEEPANY_UPGRADE_BASE_COMMIT",
+    "defaultCommit": "64b98e7874a2fdd8d43c8e60de72a25de5800b25",
+    "validation": "full 40 hex characters",
+    "brandEnv": "KEEPANY_UPGRADE_BASE_BRAND",
+    "allowedBrands": [
+      "KeepAny",
+      "StackPerch"
+    ],
+    "defaultBrand": "KeepAny",
+    "releaseLabel": "published-${oldCommit.slice(0, 12)}",
+    "oldUiAssertions": "actual title and sidebar brand must equal selected baseline brand",
+    "currentTargetBrand": "KeepAny",
+    "pwaIdentityAssertions": "both old/current manifests retain id/start_url/scope /",
+    "collectionChecks": "/tmp/keepany-brand-return/upgrade-baseline-option-checks.json",
+    "realUpgradeExecution": "parent owns final portable ZIP validation; list-only checks are not recorded as real upgrades",
+    "historicalManifestsVerified": [
+      {
+        "commit": "64b98e7874a2fdd8d43c8e60de72a25de5800b25",
+        "name": "KeepAny",
+        "id": "/",
+        "start_url": "/",
+        "scope": "/"
+      },
+      {
+        "commit": "7ebc2c349f4826759c8b2ef848e8c6133c0b3858",
+        "name": "StackPerch",
+        "id": "/",
+        "start_url": "/",
+        "scope": "/"
+      }
+    ]
+  },
+  "finalChecks": {
+    "typecheckExitCode": 0,
+    "diffCheckExitCode": 0
+  },
+  "commitOrPush": "none"
+}

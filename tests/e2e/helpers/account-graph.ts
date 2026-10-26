@@ -592,8 +592,15 @@ export async function exerciseAccountGraphControls(page: Page) {
 }
 
 export async function focusAccountGraph(page: Page) {
-	const focus = activeAccountGraph(page).getByRole("button", { name: /^(回到当前|Back to current)$/, exact: true });
-	if (await focus.count()) await focus.click();
+	const graph = await waitForAccountGraphLayout(page);
+	const focus = graph.getByRole("button", { name: /^(回到当前|Back to current)$/, exact: true });
+	if (await focus.count() === 0) {
+		// The combined view control can show Fit all inside its small center dead zone.
+		// Enter its reading-focus state through the actual zoom control first.
+		await graph.locator(".react-flow__controls-zoomout").click();
+		await expect(focus).toBeVisible();
+	}
+	await focus.click();
 }
 
 export async function fitAccountGraph(page: Page) {

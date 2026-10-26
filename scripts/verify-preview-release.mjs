@@ -119,22 +119,29 @@ try {
     assert.equal(sha256(await readFile(join(packageRoot, path))), digest, `Delivered checksum: ${path}`);
   }
   const release = JSON.parse(await readFile(join(packageRoot, 'RELEASE.json'), 'utf8'));
-  assert.equal(release.productName, 'StackPerch', 'Current portable product name');
-  assert.equal(release.previousName, 'KeepAny', 'Previous name retained in release metadata');
-  assert.equal(release.sourceUrl, `https://github.com/Syndred/StackPerch/tree/${release.sourceCommit}`, 'Corresponding source uses the current repository');
+  assert.equal(release.productName, 'KeepAny', 'Current portable product name');
+  assert.equal(release.previousName, 'StackPerch', 'Previous name retained in release metadata');
+  assert.equal(release.sourceUrl, `https://github.com/Syndred/KeepAny/tree/${release.sourceCommit}`, 'Corresponding source uses the current repository');
   const sourceInstructions = await readFile(join(packageRoot, 'source', 'SOURCE.md'), 'utf8');
-  assert(sourceInstructions.includes('git clone https://github.com/Syndred/StackPerch.git\ncd StackPerch\n'), 'Rebuild instructions use the current clone URL and directory');
+  assert(sourceInstructions.includes('git clone https://github.com/Syndred/KeepAny.git\ncd KeepAny\n'), 'Rebuild instructions use the current clone URL and directory');
   const distributedSbom = JSON.parse(await readFile(join(packageRoot, 'SBOM.spdx.json'), 'utf8'));
-  assert(distributedSbom.documentNamespace.startsWith(`https://github.com/Syndred/StackPerch/preview/${release.sourceCommit}/`), 'Distributed SBOM uses the current repository namespace');
-  assert.match([...packageNames][0], /^StackPerch-/, 'Current download name');
+  assert(distributedSbom.documentNamespace.startsWith(`https://github.com/Syndred/KeepAny/preview/${release.sourceCommit}/`), 'Distributed SBOM uses the current repository namespace');
+  assert.match([...packageNames][0], /^KeepAny-/, 'Current download name');
   const manifest = JSON.parse(await readFile(join(packageRoot, 'web', 'manifest.webmanifest'), 'utf8'));
-  assert.equal(manifest.name, 'StackPerch');
-  assert.equal(manifest.short_name, 'StackPerch');
+  assert.equal(manifest.name, 'KeepAny');
+  assert.equal(manifest.short_name, 'KeepAny');
   for (const field of ['id', 'start_url', 'scope']) assert.equal(manifest[field], '/', `PWA installation identity remains compatible: ${field}`);
+  for (const icon of [
+    { src: '/icons/keepany-192.png', sizes: '192x192', purpose: 'any' },
+    { src: '/icons/keepany-512.png', sizes: '512x512', purpose: 'any' },
+    { src: '/icons/keepany-maskable-512.png', sizes: '512x512', purpose: 'maskable' },
+  ]) assert(manifest.icons.some(item => item.src === icon.src && item.sizes === icon.sizes && item.type === 'image/png' && item.purpose === icon.purpose), `PWA uses the current KeepAny icon: ${icon.src}`);
   for (const name of ['keepany.svg', 'keepany-180.png', 'keepany-192.png', 'keepany-512.png', 'keepany-maskable-512.png']) {
-    const previous = await readFile(join(packageRoot, 'web', 'icons', name));
-    const current = await readFile(join(packageRoot, 'web', 'icons', name.replace('keepany', 'stackperch')));
-    assert(previous.equals(current), `Old icon URL remains a current compatible resource: ${name}`);
+    for (const resource of [name, name.replace('keepany', 'stackperch')]) {
+      const delivered = await readFile(join(packageRoot, 'web', 'icons', resource));
+      const source = await readFile(join(packageRoot, 'source', 'apps', 'web', 'public', 'icons', resource));
+      assert(delivered.length > 0 && delivered.equals(source), `Current or historical icon resource matches its corresponding source: ${resource}`);
+    }
   }
   assert.deepEqual(release.applicationRoutes, await readApplicationRouteContract(join(packageRoot, 'source')), 'All delivered source application routes match the HTTP contract');
   const deliveredWeb = Object.keys(extracted).filter(path => path.startsWith(`${[...packageNames][0]}/web/`));
@@ -165,7 +172,8 @@ try {
   const index = await rawRequest('/');
   assert.equal(index.status, 200);
   assert(index.body.equals(indexBytes));
-  assert.match(index.body.toString(), /<title>StackPerch<\/title>/, 'Delivered application title');
+  assert.match(index.body.toString(), /<title>KeepAny<\/title>/, 'Delivered application title');
+  assert(index.body.toString().includes('href="/icons/keepany.svg"'), 'Delivered application uses the current KeepAny favicon');
   assert.equal(index.headers['x-content-type-options'], 'nosniff');
   for (const declared of release.applicationRoutes.paths) {
     const kinds = declared.includes('$kind') ? release.applicationRoutes.parameters.kind : ['project'];

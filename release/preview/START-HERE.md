@@ -1,8 +1,8 @@
-# StackPerch 本地测试版 / Local preview
+# KeepAny 本地测试版 / Local preview
 
-StackPerch 原名 KeepAny。正式仓库已更名为 `Syndred/StackPerch`，旧 GitHub 链接转到新仓库。本机入口和旧 `.ka1`、KDBX 备份继续使用。
+项目统一使用 KeepAny，曾以 StackPerch 名称发布。正式仓库为 `Syndred/KeepAny`，旧 StackPerch GitHub 链接转到同一仓库。本机入口和旧 `.ka1`、KDBX 备份继续使用。
 
-StackPerch was formerly KeepAny. The repository is now `Syndred/StackPerch`; older GitHub links redirect to it. The local address and existing `.ka1` and KDBX backups remain compatible.
+KeepAny was previously published as StackPerch. The repository is `Syndred/KeepAny`; older StackPerch GitHub links redirect to it. The local address and existing `.ka1` and KDBX backups remain compatible.
 
 把项目、账号、订阅和维护事项放在一起管理。无需注册，资料保存在当前浏览器。
 
@@ -37,6 +37,6 @@ This is a portable browser preview requiring Node.js. It does not start sync, co
 
 `RELEASE.json` records version, source commit, and file fingerprints. `SHA256SUMS.txt` verifies package files; the adjacent `.sha256` verifies the ZIP. `source/` contains the corresponding build source, lockfile, and scripts. `LICENSE` is AGPL-3.0-only; third-party materials are under `legal/`. `SBOM.spdx.json` is the dependency inventory, and `legal/preview-license-inventory.json` records collected materials and missing items.
 
-源码与问题反馈 / Source and issues: https://github.com/Syndred/StackPerch
+源码与问题反馈 / Source and issues: https://github.com/Syndred/KeepAny
 
-官网 / Website: https://syndred.github.io/StackPerch/
+官网 / Website: https://syndred.github.io/KeepAny/

@@ -1334,14 +1334,15 @@ for (const locale of ["zh-CN", "en-US"] as const) {
 				await page.goto(rootHref);
 				await fullFamily(page, baseline, text);
 				await expectBalancedScenario(page, hrefs, baseline);
-				if (width >= 1280)
-					await expectReadableAccountGraph(page, { all: true });
-				else {
-					for (const id of await visibleGraphNodeIds(activeAccountGraph(page)))
-						await panAccountGraphNodeIntoView(page, id);
-					await focusAccountGraph(page);
-					await expectReadableAccountGraph(page);
-				}
+				// Overview certifies all-node bounds; reading mode certifies every card at
+				// its usable text size through the same panning used for narrow canvases.
+				await fitAccountGraph(page);
+				await expectAllAccountGraphNodesInFrame(page);
+				await focusAccountGraph(page);
+				for (const id of await visibleGraphNodeIds(activeAccountGraph(page)))
+					await panAccountGraphNodeIntoView(page, id);
+				await focusAccountGraph(page);
+				await expectReadableAccountGraph(page);
 				await page.locator(".asset-relations-card").scrollIntoViewIfNeeded();
 				await expect(page.locator(".toast")).toBeHidden({ timeout: 10_000 });
 				if (evidence)

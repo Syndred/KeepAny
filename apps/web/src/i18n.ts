@@ -11,7 +11,7 @@ import { reminderCopy } from "./reminder-copy";
 import { smartImportCopy } from "./smart-import-copy";
 
 const copy: Record<string, [string, string]> = {
-	brandName: ["StackPerch", "StackPerch"],
+	brandName: ["KeepAny", "KeepAny"],
 	overview: ["概览", "Overview"],
 	tasks: ["待办", "Tasks"],
 	project: ["项目", "Projects"],
@@ -67,7 +67,7 @@ const copy: Record<string, [string, string]> = {
 		"无法读取本机连接状态。",
 		"Could not read the connection on this device.",
 	],
-	bindingDeviceName: ["StackPerch 网页", "StackPerch Web"],
+	bindingDeviceName: ["KeepAny 网页", "KeepAny Web"],
 	bindingState_active: ["授权有效", "Authorization is active"],
 	bindingState_inactive: ["授权暂不可用", "Authorization is inactive"],
 	bindingState_device_limit: ["设备数量已达上限", "Device limit reached"],
@@ -230,7 +230,7 @@ const copy: Record<string, [string, string]> = {
 	itemStatus_retired: ["已退役", "Marked retired"],
 	itemStatusLocalHint: [
 		"这只是本机记录的状态，不证明转卖或处置已在外部完成。",
-		"This status is recorded on this device. It does not verify a sale or disposal outside StackPerch.",
+		"This status is recorded on this device. It does not verify a sale or disposal outside KeepAny.",
 	],
 	itemStatusLoanedGuard: [
 		"请先归还物品，再记录转卖或退役。",
@@ -488,8 +488,8 @@ const copy: Record<string, [string, string]> = {
 	],
 	recordedAmount: ["本机记录金额", "Locally recorded amount"],
 	renewalLocalHint: [
-		"只在 StackPerch 记录，不会向服务商付款；金额留空时使用本期预计金额。",
-		"This only records in StackPerch. No payment is sent; leave the amount blank to use the estimate.",
+		"只在 KeepAny 记录，不会向服务商付款；金额留空时使用本期预计金额。",
+		"This only records in KeepAny. No payment is sent; leave the amount blank to use the estimate.",
 	],
 	renewalStale: [
 		"账期已变化，请刷新后再记录。",

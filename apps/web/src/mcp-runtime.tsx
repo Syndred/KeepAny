@@ -187,7 +187,7 @@ export function McpRuntimeProvider({
 		const url = URL.createObjectURL(new Blob([JSON.stringify(request)], { type: "application/json" }));
 		const link = document.createElement("a");
 		link.href = url;
-		link.download = `stackperch-mcp-request-${request.requestNonce}.json`;
+		link.download = `keepany-mcp-request-${request.requestNonce}.json`;
 		document.body.append(link);
 		link.click();
 		link.remove();
