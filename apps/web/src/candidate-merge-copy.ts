@@ -25,4 +25,6 @@ export const candidateMergeCopy: Record<string, [string, string]> = {
   reviewMergePriceKnown: ['已记录购入价格', 'Purchase price recorded'],
   reviewMergeYes: ['是', 'Yes'],
   reviewMergeNo: ['否', 'No'],
+  reviewMergeEmpty: ['未填写', 'Not filled in'],
+  reviewMergeDraftInvalid: ['此字段未填写完整或格式有误，请返回候选修正后再选择。', 'This value is incomplete or invalid. Correct it in the candidate before selecting it.'],
 };

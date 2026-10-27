@@ -67,6 +67,8 @@ export function IntakeReview() {
 	const [expenseIntents, setExpenseIntents] = useState<Array<{ candidateId: string; historyId: string; committed: boolean }>>([]);
 	const [mergeIntents, setMergeIntents] = useState<PendingReviewedAssetMerge[]>([]);
 	const [mergeCandidate, setMergeCandidate] = useState<ReviewedCandidate | null>(null);
+	const [mergeDraftErrors, setMergeDraftErrors] = useState<Record<string, string>>({});
+	const mergeOpener = useRef<HTMLElement | null>(null);
 	const [mergeRecoveryBusy, setMergeRecoveryBusy] = useState(false);
 	const mergeRecoveryInFlight = useRef(false);
 	const [migrationPending, setMigrationPending] = useState(false);
@@ -178,11 +180,20 @@ export function IntakeReview() {
 
 	async function openMerge(id: string) {
 		if (bulkInFlight.current || inFlight.current.has(id)) return;
+		mergeOpener.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+		inFlight.current.add(id); setWorkingId(id);
 		try {
 			await flushEdits();
 			const latest = await getReviewedCandidate(id);
-			if (latest?.status === "pending") setMergeCandidate(latest);
+			if (latest?.status === "pending") {
+				const invalid: Record<string, string> = {};
+				const amount = amountDrafts[id]; const interval = intervalDrafts[id];
+				if (amount !== undefined && (!amount.trim() || !Number.isSafeInteger(parseMinorUnits(amount, latest.asset.currency)))) invalid.amount = amount;
+				if (interval !== undefined && (!interval.trim() || !Number.isInteger(Number(interval)) || Number(interval) < 1 || Number(interval) > 100)) invalid.interval = interval;
+				setMergeDraftErrors(invalid); setMergeCandidate(latest);
+			}
 		} catch { setMessageId(id); setMessage(t("error")); }
+		finally { inFlight.current.delete(id); setWorkingId(""); }
 	}
 	async function merge(input: ConfirmReviewedAssetMergeInput) {
 		const id = input.expectedCandidate.id;
@@ -608,6 +619,6 @@ export function IntakeReview() {
 				</div>
 			</section>; })}
 		</div>}
-		{mergeCandidate && <CandidateMergeDialog candidate={mergeCandidate} assets={liveAssets(data)} onClose={() => setMergeCandidate(null)} onMerge={merge} />}
+		{mergeCandidate && <CandidateMergeDialog candidate={mergeCandidate} invalidDrafts={mergeDraftErrors} returnFocusTo={() => mergeOpener.current} assets={liveAssets(data)} onClose={() => setMergeCandidate(null)} onMerge={merge} />}
 	</div>;
 }

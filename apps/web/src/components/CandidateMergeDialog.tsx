@@ -30,8 +30,10 @@ export function CandidateMergeReceipt({ receipt }: { receipt: ReviewedAssetMerge
     </div>
   </details>;
 }
-export function CandidateMergeDialog({ candidate, assets, onClose, onMerge }: {
+export function CandidateMergeDialog({ candidate, invalidDrafts = {}, returnFocusTo, assets, onClose, onMerge }: {
   candidate: ReviewedCandidate; assets: Asset[]; onClose: () => void;
+  invalidDrafts?: Record<string, string>;
+  returnFocusTo?: () => HTMLElement | null;
   onMerge: (input: ConfirmReviewedAssetMergeInput) => Promise<void>;
 }) {
   const { t, i18n } = useTranslation();
@@ -55,7 +57,7 @@ export function CandidateMergeDialog({ candidate, assets, onClose, onMerge }: {
         ? 'reviewMergeInvalid' : code === 'review-merge-stale' || code === 'review-merge-conflict' ? 'reviewMergeChanged' : 'reviewMergeFailed'));
     } finally { inFlight.current = false; setBusy(false); }
   }
-  return <Dialog title={t('reviewMergeTitle')} onClose={close} closeDisabled={busy} className="candidate-merge-dialog">
+  return <Dialog title={t('reviewMergeTitle')} onClose={close} returnFocusTo={returnFocusTo} closeDisabled={busy} className="candidate-merge-dialog">
     <form onSubmit={event => { event.preventDefault(); void submit(); }}>
       <p>{candidate.fileName} · {candidate.asset.name}</p>
       <p className="muted">{t('reviewMergeHint')}</p>
@@ -68,14 +70,18 @@ export function CandidateMergeDialog({ candidate, assets, onClose, onMerge }: {
       </label>
       {!targets.length && <p>{t('reviewMergeNoTarget')}</p>}
       {expectedTarget && <div className="candidate-merge-fields">
-        {reviewedMergeFieldsForKind(expectedTarget.kind).map(field => <label className="candidate-merge-field" key={field}>
-          <span className="candidate-merge-check"><input type="checkbox" disabled={busy || frozen} aria-label={t('reviewMergeUseField', { field: t(mergeFieldKey(field)) })}
+        {reviewedMergeFieldsForKind(expectedTarget.kind).map(field => {
+          const draftInvalid = Object.hasOwn(invalidDrafts, field);
+          const missing = candidate.ai?.missingFields.includes(field);
+          const invalid = draftInvalid || missing;
+          return <label className="candidate-merge-field" key={field}>
+          <span className="candidate-merge-check"><input type="checkbox" disabled={busy || frozen || invalid} aria-label={t('reviewMergeUseField', { field: t(mergeFieldKey(field)) })}
             checked={fields.includes(field)} onChange={event => {
               setFields(current => event.target.checked ? [...current, field] : current.filter(item => item !== field)); setError('');
             }} /><strong>{t(mergeFieldKey(field))}</strong></span>
           <span><small>{t('reviewMergeCurrent')}</small><span className="candidate-merge-value">{mergeFieldValue(expectedTarget, field, i18n.language, t)}</span></span>
-          <span><small>{t('reviewMergeIncoming')}</small><span className="candidate-merge-value">{mergeFieldValue(candidate.asset, field, i18n.language, t)}</span></span>
-        </label>)}
+          <span><small>{t('reviewMergeIncoming')}</small><span className="candidate-merge-value">{draftInvalid ? invalidDrafts[field] || t('reviewMergeEmpty') : missing ? t('reviewMergeEmpty') : mergeFieldValue(candidate.asset, field, i18n.language, t)}</span>{invalid && <small className="field-error">{t('reviewMergeDraftInvalid')}</small>}</span>
+        </label>; })}
       </div>}
       {error && <p role="alert" className="field-error">{error}</p>}
       <div className="actions"><Button type="submit" variant="primary" disabled={busy || !expectedTarget}>{busy ? t('loading') : t('reviewMergeConfirm')}</Button>
