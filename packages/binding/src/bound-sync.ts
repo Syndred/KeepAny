@@ -11,7 +11,10 @@ export interface BoundSyncAccess {
 	/** Recheck the exact local binding after each network response, before queue writes. */
 	assertCurrent(): Promise<void>;
 	/** The proof and access token are created for this one resource request only. */
-	headers(method: "GET" | "POST" | "PUT", publicUrl: string): Promise<Record<"Authorization" | "DPoP", string>>;
+	headers(
+		method: "GET" | "POST" | "PUT",
+		publicUrl: string,
+	): Promise<Record<"Authorization" | "DPoP", string>>;
 }
 
 const resourcePaths = new Set([
@@ -22,9 +25,13 @@ const resourcePaths = new Set([
 	"/sync/pull",
 	"/workspaces",
 ]);
-const attachmentPath = /^\/workspaces\/[0-9a-f-]{36}\/attachments\/[0-9a-f-]{36}$/i;
+const attachmentPath =
+	/^\/workspaces\/[0-9a-f-]{36}\/attachments\/[0-9a-f-]{36}$/i;
 
-function sameScopes(left: StoredBinding["allowedScopes"], right: StoredBinding["allowedScopes"]): boolean {
+function sameScopes(
+	left: StoredBinding["allowedScopes"],
+	right: StoredBinding["allowedScopes"],
+): boolean {
 	return [...left].sort().join(" ") === [...right].sort().join(" ");
 }
 
@@ -38,20 +45,26 @@ export async function createBoundSyncAccess(input: {
 	const resourceOrigin = validatedIssuer(input.resourceOrigin).origin;
 	const original = await input.repository.activeBinding();
 	if (!original) throw Error("binding-not-active");
-	if (!original.allowedScopes.includes("sync:read") || !original.allowedScopes.includes("sync:write"))
+	if (
+		!original.allowedScopes.includes("sync:read") ||
+		!original.allowedScopes.includes("sync:write")
+	)
 		throw Error("binding-access-scope");
-	if (!await input.repository.credential(original.bindingId))
+	if (!(await input.repository.credential(original.bindingId)))
 		throw Error("binding-credential-expired");
 
 	let cached: { token: string; usableUntil: number } | undefined;
 	let refreshing: Promise<void> | undefined;
 	const assertCurrent = async () => {
 		const current = await input.repository.activeBinding();
-		if (!current || current.bindingId !== original.bindingId ||
+		if (
+			!current ||
+			current.bindingId !== original.bindingId ||
 			current.localAccountId !== original.localAccountId ||
 			current.instanceIdHash !== original.instanceIdHash ||
 			current.subject !== original.subject ||
-			!sameScopes(current.allowedScopes, original.allowedScopes))
+			!sameScopes(current.allowedScopes, original.allowedScopes)
+		)
 			throw Error("binding-not-active");
 		const credential = await input.repository.credential(original.bindingId);
 		if (!credential || Date.parse(credential.expiresAt) <= Date.now())
@@ -71,14 +84,19 @@ export async function createBoundSyncAccess(input: {
 				if (!result.scope.split(" ").includes("sync:read"))
 					throw Error("binding-access-scope");
 				await assertCurrent();
-				const usableUntil = Math.min(Date.parse(result.accessExpiresAt), Date.now() + 60_000) - 5_000;
+				const usableUntil =
+					Math.min(Date.parse(result.accessExpiresAt), Date.now() + 60_000) -
+					5_000;
 				if (usableUntil <= Date.now()) throw Error("binding-access-expired");
 				cached = { token: result.accessToken, usableUntil };
-			})().finally(() => { refreshing = undefined; });
+			})().finally(() => {
+				refreshing = undefined;
+			});
 		}
 		await refreshing;
 		await assertCurrent();
-		if (!cached || Date.now() >= cached.usableUntil) throw Error("binding-access-expired");
+		if (!cached || Date.now() >= cached.usableUntil)
+			throw Error("binding-access-expired");
 		return cached.token;
 	};
 	return {
@@ -90,13 +108,20 @@ export async function createBoundSyncAccess(input: {
 			if (method !== "GET" && method !== "POST" && method !== "PUT")
 				throw Error("binding-resource-method");
 			const url = new URL(publicUrl);
-			if (url.origin !== resourceOrigin || publicUrl.includes("?") || publicUrl.includes("#") ||
-				url.username || url.password || url.search || url.hash ||
-				!(resourcePaths.has(url.pathname) || attachmentPath.test(url.pathname)))
+			if (
+				url.origin !== resourceOrigin ||
+				publicUrl.includes("?") ||
+				publicUrl.includes("#") ||
+				url.username ||
+				url.password ||
+				url.search ||
+				url.hash ||
+				!(resourcePaths.has(url.pathname) || attachmentPath.test(url.pathname))
+			)
 				throw Error("binding-resource-url");
 			const token = await accessToken();
 			const proof = await createBoundResourceProof({
-				deviceKey: await input.repository.deviceKey(),
+				deviceKey: await input.repository.deviceSigner(),
 				method,
 				publicUrl: url.href,
 				accessToken: token,

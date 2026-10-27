@@ -213,7 +213,7 @@ export async function readBindingState(input: {
 	if (!credential || Date.parse(credential.expiresAt) <= Date.now())
 		throw Error("binding-credential-expired");
 	const proof = await createDeviceProof({
-		deviceKey: await input.repository.deviceKey(),
+		deviceKey: await input.repository.deviceSigner(),
 		refreshToken: credential.refreshToken,
 		endpointUrl: input.transport.endpoint("/api/keepany/v1/bindings/state"),
 	});
@@ -251,7 +251,7 @@ export async function refreshAndStoreBoundAccess(input: {
 	if (!binding.allowedScopes.includes(requiredScope))
 		throw Error("binding-access-scope");
 	const pending = await input.repository.beginRefresh(binding.bindingId);
-	const deviceKey = await input.repository.deviceKey();
+	const deviceKey = await input.repository.deviceSigner();
 	const proof = await createDeviceProof({
 		deviceKey,
 		refreshToken: pending.refreshToken,
@@ -295,10 +295,14 @@ export async function refreshAndStoreBoundAccess(input: {
 		expiresAt: result.refreshExpiresAt,
 	});
 	const current = await input.repository.activeBinding();
-	if (current?.bindingId !== binding.bindingId || current.subject !== binding.subject ||
+	if (
+		current?.bindingId !== binding.bindingId ||
+		current.subject !== binding.subject ||
 		current.localAccountId !== binding.localAccountId ||
 		current.instanceIdHash !== binding.instanceIdHash ||
-		[...current.allowedScopes].sort().join(" ") !== [...binding.allowedScopes].sort().join(" "))
+		[...current.allowedScopes].sort().join(" ") !==
+			[...binding.allowedScopes].sort().join(" ")
+	)
 		throw Error("binding-not-active");
 	return {
 		accessToken: result.accessToken,
@@ -319,7 +323,7 @@ export async function startBindingChallenge(input: {
 	interval: number;
 }> {
 	const identity = await input.repository.identity();
-	const deviceKey = await input.repository.deviceKey();
+	const deviceKey = await input.repository.deviceSigner();
 	const result = await input.transport.request(
 		identity.instanceId,
 		input.instanceName,
