@@ -33,8 +33,8 @@ function AccountTabs({ passwords, references }: { passwords: boolean; references
 	const { t } = useTranslation();
 	return <nav className="workspace-navigation" aria-label={t("accountsWorkspace")}>
 		<Link to="/accounts" aria-current={!passwords ? "page" : undefined}>{t("workspaceAllAccounts")}</Link>
-		<Link to="/assets/$kind" params={{ kind: "vault" }} aria-current={passwords && !references ? "page" : undefined}>{t("workspacePasswords")}</Link>
-		<Link to="/assets/$kind" params={{ kind: "vault" }} hash="vault-references" aria-current={references ? "page" : undefined}>{t("workspacePasswordReferences")}</Link>
+		<Link to="/assets/$kind" params={{ kind: "vault" }} activeOptions={{ includeHash: true }} aria-current={passwords && !references ? "page" : undefined}>{t("workspacePasswords")}</Link>
+		<Link to="/assets/$kind" params={{ kind: "vault" }} hash="vault-references" activeOptions={{ includeHash: true }} aria-current={references ? "page" : undefined}>{t("workspacePasswordReferences")}</Link>
 	</nav>;
 }
 

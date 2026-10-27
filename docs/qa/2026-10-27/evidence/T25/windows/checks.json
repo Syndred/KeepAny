@@ -1,0 +1,44 @@
+{
+  "baseline": "f659db1",
+  "date": "2026-10-27",
+  "environment": "Windows Node24.21.0 Playwright1.63.0 isolated Chromium source port4205",
+  "stats": {
+    "startTime": "2026-10-27T06:02:35.671Z",
+    "duration": 64504.548,
+    "expected": 8,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "productIssue": {
+    "id": "QA-003",
+    "before": {
+      "selector": ".workspace-navigation a[aria-current=page]",
+      "expected": 1,
+      "actual": 2,
+      "firstFailure": "test-results/source/qa-t25-windows-en-1280-T25-e8c73-ellation-and-one-active-tab"
+    },
+    "fix": "Two AccountTabs Links add activeOptions.includeHash=true",
+    "retest": "Four locales/width combinations, external references and passwords each have one current tab"
+  },
+  "cases": [
+    "T25-01 unique KDBX password persisted and reloaded, encrypted unimported draft persisted and reloaded, ordinary search excludes secrets with positive account search controls",
+    "T25-04 invalid protocol rejected, cancel create, legal create, edit cancel/save and reload, legal popup intercepted locally, delete cancel/confirm"
+  ],
+  "combinations": [
+    "zh-CN 390",
+    "zh-CN 1280",
+    "en 390",
+    "en 1280"
+  ],
+  "modelRequests": 0,
+  "typecheck": "passed",
+  "changedFilesLint": "passed",
+  "screenshots": 4,
+  "priorFixtureFailures": [
+    "Popup first navigation needed context.route instead of page.route",
+    "Restored private draft uses review fields instead of source textarea",
+    "Chinese current labels Passwords and invalid field message were corrected to actual i18n values"
+  ],
+  "delivery": "source only; no build/deployment/release update"
+}
