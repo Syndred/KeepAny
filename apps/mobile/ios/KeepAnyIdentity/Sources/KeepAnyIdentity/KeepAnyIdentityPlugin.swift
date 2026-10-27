@@ -90,7 +90,10 @@ public final class KeepAnyIdentityPlugin: CAPPlugin, CAPBridgedPlugin {
     public let pluginMethods: [CAPPluginMethod] = ["initialize", "readState", "compareAndSet", "publicKey", "sign"].map { CAPPluginMethod(name: $0, returnType: CAPPluginReturnPromise) }
     private static let store = IdentitySecureStore()
     private func run(_ call: CAPPluginCall, keys: Set<String>, action: @escaping () throws -> JSObject) {
-        guard Set(call.options.keys) == keys else { call.reject("binding-native-unavailable", "binding-native-unavailable"); return }
+        guard call.options.count == keys.count, call.options.keys.allSatisfy({ key in
+            guard let name = key as? String else { return false }
+            return keys.contains(name)
+        }) else { call.reject("binding-native-unavailable", "binding-native-unavailable"); return }
         DispatchQueue.global(qos: .utility).async {
             do { call.resolve(try action()) } catch { call.reject("binding-native-unavailable", "binding-native-unavailable") }
         }

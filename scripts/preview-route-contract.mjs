@@ -16,7 +16,7 @@ export async function readApplicationRouteContract(root) {
         build.onResolve({ filter: /^[^./]/ }, args => isAbsolute(args.path) ? undefined : ({ path: import.meta.resolve(args.path), external: true }));
         build.onResolve({ filter: /^\.\/AppShell$/ }, () => ({ path: 'AppShell', namespace: 'preview-route-shell' }));
         build.onLoad({ filter: /.*/, namespace: 'preview-route-shell' }, () => ({ contents: 'export const AppShell = () => null;', loader: 'js' }));
-        build.onResolve({ filter: /^\.\/page-/ }, args => ({ path: args.path, external: true }));
+        build.onResolve({ filter: /^\.\/(?:page-|MobileMorePage$)/ }, args => ({ path: args.path, external: true }));
       },
     }],
   });

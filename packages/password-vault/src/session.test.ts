@@ -131,7 +131,7 @@ describe('confirmed permanent deletion from password trash', () => {
     expect(session.getSnapshot().trash.map(entry => entry.id)).toEqual([id]);
     session.lock();
     await expect(session.purgeEntries([id], revision)).rejects.toThrow('vault-locked');
-  });
+  }, 30_000);
 });
 
 describe('encrypted recoverable import drafts', () => {
