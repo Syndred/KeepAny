@@ -115,15 +115,32 @@ public static class KeepAnyPrivateFiles {
   static string ReadState(string p) {try{return Read(p,true,8388608);}catch(InvalidOperationException e){if(e.Message=="ENOENT")return null;throw;}}
   static string Keep(Lease lease) {string token=Guid.NewGuid().ToString();Leases.Add(token,lease);return token;}
   static void Delete(FileStream file) {DISPOSITION d=new DISPOSITION {delete=true};if(!SetFileInformationByHandle(file.SafeFileHandle,4,ref d,1))throw Native();}
-  static void RenameHandle(SafeFileHandle file,string destination) {
+  static void RenameHandle(SafeFileHandle file,string destination,bool replace=true) {
     byte[] name=Encoding.Unicode.GetBytes(destination);int root=IntPtr.Size==8?8:4,length=root+IntPtr.Size,offset=length+4,size=offset+name.Length+2;
     IntPtr buffer=Marshal.AllocHGlobal(size);
-    try {for(int i=0;i<size;i++)Marshal.WriteByte(buffer,i,0);Marshal.WriteInt32(buffer,0,1);Marshal.WriteInt32(buffer,length,name.Length);Marshal.Copy(name,0,IntPtr.Add(buffer,offset),name.Length);if(!SetInformation(file,3,buffer,(uint)size))throw Native();}
+    try {for(int i=0;i<size;i++)Marshal.WriteByte(buffer,i,0);Marshal.WriteInt32(buffer,0,replace?1:0);Marshal.WriteInt32(buffer,length,name.Length);Marshal.Copy(name,0,IntPtr.Add(buffer,offset),name.Length);if(!SetInformation(file,3,buffer,(uint)size))throw Native();}
     finally{Marshal.FreeHGlobal(buffer);}
   }
   static object Execute(Dictionary<string,object> request) {
     string op=(string)request["op"],path=request.ContainsKey("path")?PathChecked((string)request["path"]):null;
-    if(op=="release") {string token=(string)request["token"];Lease lease;if(Leases.TryGetValue(token,out lease)){Leases.Remove(token);try{if(lease.transaction)Delete(lease.file);}finally{lease.Dispose();}}return true;}
+    if(op=="release") {
+      string token=(string)request["token"];Lease lease;
+      if(Leases.TryGetValue(token,out lease)) {
+        Leases.Remove(token);
+        try {
+          if(lease.transaction) {
+            // CREATE_NEW returns ACCESS_DENIED while a deleted lock still has
+            // shared readers. Vacate its fixed name atomically using the held
+            // identity before marking that exact completed lock for deletion.
+            // The retained private parent chain covers this sibling, and a
+            // collision fails without replacing any existing destination.
+            RenameHandle(lease.file.SafeFileHandle,lease.path+".lock."+Guid.NewGuid().ToString()+".released",false);
+            Delete(lease.file);
+          }
+        } finally {lease.Dispose();}
+      }
+      return true;
+    }
     if(op=="prepare"||op=="commit") {
       Lease lease;if(!Leases.TryGetValue((string)request["token"],out lease)||!lease.transaction)throw Error("unknown-transaction");
       if(op=="prepare") {

@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { execFile, spawn } from 'node:child_process';
 import { once } from 'node:events';
 import { promisify } from 'node:util';
-import { rm, stat } from 'node:fs/promises';
+import { open, rm, stat } from 'node:fs/promises';
 import { join } from 'node:path';
 import { FileAuthorityStorage } from './file-storage';
 import { McpAuthority } from './authority';
@@ -40,6 +40,24 @@ describe('local authority state', () => {
     expect(state.grants).toEqual([]);
     expect(state.operations).toEqual([]);
   }, 30_000);
+
+  it.runIf(process.platform === 'win32')('completes the next exclusive update while a released lock still has shared readers', async () => {
+    const dir = await privateTestDirectory('keepany-mcp-delete-pending-'); dirs.push(dir);
+    const path = join(dir, 'state.json'), storage = new FileAuthorityStorage(path);
+    await storage.update(state => { state.audit.push({ id: 'confirmed-before-contention', at: 1, grantId: 'synthetic', action: 'list', outcome: 'allowed' }); });
+    const owner = await nativePrivateFiles.transaction(path);
+    // A shared-delete observer extends the real Windows delete-pending window
+    // between the releasing owner's disposition change and its final close.
+    const observer = await open(`${path}.lock`, 'r');
+    try {
+      await owner.release();
+      await expect(storage.update(state => {
+        state.audit.push({ id: 'confirmed-after-contention', at: 2, grantId: 'synthetic', action: 'list', outcome: 'allowed' });
+      })).resolves.toBeUndefined();
+      expect(observer.fd).toBeGreaterThanOrEqual(0);
+      expect((await storage.read()).audit.map(row => row.id)).toEqual(['confirmed-before-contention', 'confirmed-after-contention']);
+    } finally { await observer.close(); await owner.release(); }
+  }, 20_000);
 
   it('keeps a crashed owner lock and fails closed without altering confirmed state', async () => {
     const dir = await privateTestDirectory('keepany-mcp-crash-'); dirs.push(dir);
