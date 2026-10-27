@@ -1,5 +1,6 @@
 import { intakeWithdrawalCopy } from './intake-withdrawal-copy';
 import { collectionsCopy } from './collections-copy';
+import { relationCopy } from './relation-copy';
 import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
 import { aiCopy } from "./ai-copy";
@@ -24,6 +25,7 @@ import { nativeConnectionsCopy } from "./native-connections-copy";
 
 const copy: Record<string, [string, string]> = {
   ...collectionsCopy,
+  ...relationCopy,
   ...intakeWithdrawalCopy,
 	...nativeDatasetsCopy,
 	brandName: ["KeepAny", "KeepAny"],

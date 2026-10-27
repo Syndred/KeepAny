@@ -46,6 +46,7 @@ import { TextLink } from "./components/ui/text-link";
 import { Button } from "./components/ui/button";
 import { Dialog } from "./components/ui/dialog";
 import "./asset-restoration.css";
+import "./relation-direction.css";
 import "./account-detail.css";
 import "./backlink-ledger.css";
 import "./workspaces.css";
@@ -368,6 +369,7 @@ export function AssetDetail() {
 		setRelationLabel(relation?.label ?? ""); setRelationSource(relation?.source ?? "");
 		setRelationVerifiedAt(relation?.verifiedAt ? validCalendarDay(relation.verifiedAt.slice(0, 10)) ? relation.verifiedAt.slice(0, 10) : relation.verifiedAt : "");
 		setRelationTarget(relation ? relation.from === centerId ? relation.to : relation.from : "");
+		setRelationDirection(relation && relation.from !== centerId ? "incoming" : "outgoing");
 		setRelationEdit(true);
 	}
 	const [submissionEdit, setSubmissionEdit] = useState(false);
@@ -418,6 +420,7 @@ export function AssetDetail() {
 		return () => URL.revokeObjectURL(url);
 	}, [pendingImage]);
 	const [relationTarget, setRelationTarget] = useState("");
+	const [relationDirection, setRelationDirection] = useState<"outgoing" | "incoming">("outgoing");
 	const [relationLabel, setRelationLabel] = useState("");
 	const [relationSource, setRelationSource] = useState("");
 	const [relationVerifiedAt, setRelationVerifiedAt] = useState("");
@@ -713,7 +716,8 @@ export function AssetDetail() {
 			!relationLabel.trim()
 		) { setRelationError(t("graphRelationUnavailable")); return; }
 		if (relationVerifiedAt && relationVerifiedAt !== relationEditBase?.verifiedAt && !validCalendarDay(relationVerifiedAt)) { setRelationError(t("graphInvalidDate")); return; }
-		const from = relationEditBase?.from ?? asset.id, to = relationEditBase?.to ?? target.id;
+		const from = relationEditBase?.from ?? (relationDirection === "incoming" ? target.id : asset.id);
+		const to = relationEditBase?.to ?? (relationDirection === "incoming" ? asset.id : target.id);
 		if (
 			data.relations.some(
 				(r) =>
@@ -2074,6 +2078,14 @@ export function AssetDetail() {
 										</SelectOption>
 									))}
 							</Select>
+						</div>
+						<div className="field">
+							<label htmlFor="relation-direction">{t("relationDirection")}</label>
+							<Select id="relation-direction" contentClassName="relation-direction-options" value={relationDirection} disabled={!!relationEditBase || relationBusy} onValueChange={(value) => setRelationDirection(value === "incoming" ? "incoming" : "outgoing")}>
+								<SelectOption value="outgoing">{t("relationDirectionOutgoing")}</SelectOption>
+								<SelectOption value="incoming">{t("relationDirectionIncoming")}</SelectOption>
+							</Select>
+							{relationEditBase && <p className="subtitle">{t("relationDirectionFixed")}</p>}
 						</div>
 						<div className="field">
 							<label htmlFor="relation-label">{t("relationLabel")}</label>
