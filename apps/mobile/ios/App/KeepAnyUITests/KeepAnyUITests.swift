@@ -225,6 +225,273 @@ final class KeepAnyUITests: XCTestCase {
         app.terminate()
     }
 
+    // This slice covers the actual project editor's text fields. Dates, media,
+    // domains and related records require separate native picker/workflow cases.
+    private struct ProjectTextField {
+        let key: String
+        let label: String
+        let value: String
+        let multiline: Bool
+        let group: String?
+    }
+
+    private var projectNavigationTop: CGFloat?
+    private var projectLinkAXValue: String?
+    private var projectOriginalID: String?
+
+    private func projectRecordID(_ value: String?) -> String? {
+        value.flatMap { URL(string: $0)?.lastPathComponent }
+            .flatMap { UUID(uuidString: $0)?.uuidString.lowercased() }
+    }
+
+    private func reachProjectControl(_ element: XCUIElement, in app: XCUIApplication) {
+        dismissInputToolbar(app)
+        let web = app.webViews.firstMatch
+        let navigation = app.otherElements.matching(NSPredicate(
+            format: "label BEGINSWITH %@ OR label BEGINSWITH %@", "Main navigation", "主要导航"
+        )).firstMatch
+        if navigation.exists { projectNavigationTop = navigation.frame.minY }
+        // Radix may hide the underlying navigation from AX while a modal is
+        // open. Keep its measured screen boundary, never invent a safe inset.
+        guard let navigationTop = projectNavigationTop else {
+            XCTFail("Measure the actual fixed navigation before opening the project editor")
+            return
+        }
+        for attempt in 0..<18 {
+            let frame = element.frame
+            let keyboard = app.keyboards.firstMatch
+            let bottom = keyboard.exists ? min(navigationTop, keyboard.frame.minY) : navigationTop
+            if element.isHittable && frame.width > 0 && frame.height > 0
+                && frame.minX >= web.frame.minX && frame.maxX <= web.frame.maxX
+                && frame.minY >= web.frame.minY + 8 && frame.maxY <= bottom - 8 { return }
+            // Scroll the dialog in either direction; edits reopen at the top,
+            // whereas verification and cancellation start deep in the form.
+            let down = frame.height > 0 ? frame.minY < web.frame.minY + 8 : attempt >= 9
+            let start = web.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: down ? 0.3 : 0.7))
+            let end = web.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: down ? 0.7 : 0.3))
+            start.press(forDuration: 0.05, thenDragTo: end)
+        }
+        capture(app, "project-control-unreachable-\(element.label)")
+        captureHierarchy(app, "project-control-unreachable-\(element.label)")
+        XCTFail("Project control must be fully visible above the keyboard and fixed navigation: \(element.label)")
+    }
+
+    private func projectTextControl(_ field: ProjectTextField, in app: XCUIApplication) -> XCUIElement {
+        let control = field.multiline ? app.textViews[field.label].firstMatch : app.textFields[field.label].firstMatch
+        if !control.exists, let group = field.group {
+            let button = app.buttons[group].firstMatch
+            let summary = button.exists ? button : app.staticTexts[group].firstMatch
+            XCTAssertTrue(summary.waitForExistence(timeout: 5), "Missing project editor group: \(group)")
+            reachProjectControl(summary, in: app)
+            summary.tap()
+        }
+        XCTAssertTrue(control.waitForExistence(timeout: 5), "Missing labelled project field: \(field.label)")
+        return control
+    }
+
+    private func replaceProjectText(_ control: XCUIElement, with value: String, in app: XCUIApplication) {
+        reachProjectControl(control, in: app)
+        control.tap()
+        let existing = control.value as? String ?? ""
+        if !existing.isEmpty {
+            // A tap can place the caret in the middle of a long value. Use
+            // the real edit menu rather than assuming backspace starts at end.
+            control.press(forDuration: 1.1)
+            let all = NSPredicate(format: "label == %@ OR label == %@", "Select All", "全选")
+            let menuItem = app.menuItems.matching(all).firstMatch
+            let button = app.buttons.matching(all).firstMatch
+            let selectAll = menuItem.waitForExistence(timeout: 2) ? menuItem : button
+            guard selectAll.waitForExistence(timeout: 2) && selectAll.isHittable else {
+                captureHierarchy(app, "project-select-all-unavailable-\(control.label)")
+                XCTFail("Native text replacement requires a reachable Select All action")
+                return
+            }
+            selectAll.tap()
+            control.typeText(XCUIKeyboardKey.delete.rawValue)
+            XCTAssertEqual(control.value as? String ?? "", "", "Replacement must clear the complete original value")
+        }
+        control.typeText(value)
+        XCTAssertEqual(control.value as? String, value)
+        dismissInputToolbar(app)
+    }
+
+    private func projectCategoryControl(in app: XCUIApplication, label: String) -> XCUIElement {
+        let predicate = NSPredicate(format: "label BEGINSWITH %@", label)
+        let popup = app.popUpButtons.matching(predicate).firstMatch
+        if popup.exists { return popup }
+        let button = app.buttons.matching(predicate).firstMatch
+        XCTAssertTrue(button.exists, "Project category must expose an accessible select control")
+        return button
+    }
+
+    private func verifyProjectTextFields(_ fields: [ProjectTextField], in app: XCUIApplication,
+                                         phase: String, language: String, marker: String,
+                                         category: String, categoryLabel: String) throws {
+        var observed: [String: String] = [:]
+        for field in fields {
+            let control = projectTextControl(field, in: app)
+            reachProjectControl(control, in: app)
+            observed[field.key] = control.value as? String ?? "<missing AX value>"
+            XCTAssertEqual(observed[field.key], field.value, "\(phase): \(field.key)")
+        }
+        let select = projectCategoryControl(in: app, label: categoryLabel)
+        reachProjectControl(select, in: app)
+        let categoryAX = "\(select.label) \(select.value as? String ?? "")"
+        XCTAssertTrue(categoryAX.contains(category), "\(phase): non-default category retained: \(categoryAX)")
+        var expectedPayload: [String: Any] = Dictionary(uniqueKeysWithValues: fields.map { ($0.key, $0.value as Any) })
+        expectedPayload["tags"] = ["iosfull", "synthetic"]
+        expectedPayload["category"] = "repository"
+        expectedPayload["kind"] = "project"
+        expectedPayload["projectLaunchMonth"] = ""
+        expectedPayload["projectInspectionDate"] = ""
+        let linkID = projectRecordID(projectLinkAXValue)
+        if let originalID = projectOriginalID { XCTAssertEqual(linkID, originalID, "Project ID must survive cancellation and rename") }
+        let manifest: [String: Any] = [
+            "language": language, "phase": phase, "marker": marker,
+            "expectedPayloadFields": expectedPayload,
+            "observedAX": observed, "expectedCategory": "repository", "categoryAX": categoryAX,
+            "projectLinkAXValue": projectLinkAXValue as Any? ?? NSNull(),
+            "recordId": linkID as Any? ?? NSNull(),
+            "initialRecordId": projectOriginalID as Any? ?? NSNull(),
+            "nativeSQLiteSameIDAndPayload": "PENDING: compare this marker with native SQLite artifact; AX is not database proof"
+        ]
+        let attachment = XCTAttachment(data: try JSONSerialization.data(withJSONObject: manifest, options: [.prettyPrinted, .sortedKeys]),
+                                       uniformTypeIdentifier: "public.json")
+        attachment.name = "project-text-fields-\(language)-\(phase).json"
+        attachment.lifetime = .keepAlways
+        add(attachment)
+        capture(app, "project-text-fields-\(language)-\(phase)")
+        captureHierarchy(app, "project-text-fields-\(language)-\(phase)-AX")
+    }
+
+    private func verifyProjectTextFieldsColdStart(_ chinese: Bool) throws {
+        let language = chinese ? "zh-Hans" : "en"
+        func text(_ zh: String, _ en: String) -> String { chinese ? zh : en }
+        let app = application(language)
+        projectNavigationTop = nil
+        projectLinkAXValue = nil
+        projectOriginalID = nil
+        let marker = "iOS simulator persistence fixture full-fields \(language) \(UUID().uuidString.prefix(8))"
+        let categoryLabel = text("分类", "Category")
+        let category = text("仓库", "Repositories")
+        let intro = text("介绍与定价", "Introduction and pricing")
+        let contact = text("联系方式", "Contact details")
+        var fields = [
+            ProjectTextField(key: "name", label: text("名称", "Name"), value: marker, multiline: false, group: nil),
+            ProjectTextField(key: "url", label: text("网址", "URL"), value: "https://ios-full.example.test/\(language)", multiline: false, group: nil),
+            ProjectTextField(key: "contact", label: text("联系方式", "Contact"), value: "Synthetic contact \(language)", multiline: false, group: nil),
+            ProjectTextField(key: "description", label: text("简短描述", "Short description"), value: "Synthetic short \(language)", multiline: false, group: nil),
+            ProjectTextField(key: "projectTitle", label: text("产品标题", "Product title"), value: "Synthetic product \(language)", multiline: false, group: nil),
+            ProjectTextField(key: "projectPromoUrl", label: text("推广链接", "Promotional link"), value: "https://ios-full.example.test/promo/\(language)", multiline: false, group: nil),
+            ProjectTextField(key: "tags", label: text("标签（逗号分隔）", "Tags (comma separated)"), value: "iosfull, synthetic", multiline: false, group: nil),
+            ProjectTextField(key: "projectMediumDescription", label: text("中篇介绍", "Medium description"), value: "Synthetic medium \(language)\nSecond medium line", multiline: true, group: intro),
+            ProjectTextField(key: "longDescription", label: text("完整介绍", "Full description"), value: "Synthetic full \(language)\nSecond full line", multiline: true, group: intro),
+            ProjectTextField(key: "projectFeatures", label: text("功能介绍", "Features"), value: "Synthetic feature A\nSynthetic feature B", multiline: true, group: intro),
+            ProjectTextField(key: "projectPricing", label: text("定价说明", "Pricing details"), value: "Synthetic free tier\nSynthetic paid tier", multiline: true, group: intro),
+            ProjectTextField(key: "projectPricingType", label: text("定价类型", "Pricing type"), value: "Synthetic freemium", multiline: false, group: intro),
+            ProjectTextField(key: "projectEmail", label: text("商务邮箱", "Business email"), value: "ios-full-\(language.lowercased())@example.test", multiline: false, group: contact),
+            ProjectTextField(key: "notes", label: text("内部备注", "Internal notes"), value: "Synthetic internal \(language)\nRetain after rename", multiline: true, group: contact)
+        ]
+        app.launch()
+        defer { app.terminate() }
+        let assets = app.links[text("资产", "Assets")].firstMatch
+        XCTAssertTrue(assets.waitForExistence(timeout: 30))
+        assets.tap()
+        let addAsset = app.buttons[text("新增资产", "Add asset")].firstMatch
+        reachProjectControl(addAsset, in: app)
+        addAsset.tap()
+        app.buttons[text("继续", "Continue")].firstMatch.tap()
+        let select = projectCategoryControl(in: app, label: categoryLabel)
+        reachProjectControl(select, in: app)
+        select.tap()
+        let option = app.descendants(matching: .any).matching(NSPredicate(format: "label == %@", category))
+            .allElementsBoundByIndex.first { $0.isHittable }
+        guard let option else { XCTFail("Non-default category option must be accessible"); return }
+        option.tap()
+        for field in fields { replaceProjectText(projectTextControl(field, in: app), with: field.value, in: app) }
+        try verifyProjectTextFields(fields, in: app, phase: "before-save", language: language, marker: marker, category: category, categoryLabel: categoryLabel)
+        let save = app.buttons[text("保存", "Save")].firstMatch
+        reachProjectControl(save, in: app)
+        save.tap()
+        let project = app.links.matching(NSPredicate(format: "label CONTAINS %@", marker)).firstMatch
+        XCTAssertTrue(project.waitForExistence(timeout: 20))
+        projectLinkAXValue = project.value as? String
+        projectOriginalID = projectRecordID(projectLinkAXValue)
+        capture(app, "project-text-fields-\(language)-saved")
+        app.terminate()
+        app.launch()
+        XCTAssertTrue(assets.waitForExistence(timeout: 30))
+        assets.tap()
+        XCTAssertTrue(project.waitForExistence(timeout: 20))
+        projectLinkAXValue = project.value as? String
+        reachProjectControl(project, in: app)
+        captureHierarchy(app, "project-text-fields-\(language)-cold-start-link")
+        project.tap()
+        let edit = app.buttons[text("编辑", "Edit")].firstMatch
+        XCTAssertTrue(edit.waitForExistence(timeout: 10))
+        capture(app, "project-text-fields-\(language)-cold-start-detail")
+        let materials = app.buttons[text("查看投递素材", "View submission materials")].firstMatch
+        reachProjectControl(materials, in: app)
+        materials.tap()
+        // Verify actual detail content, then editor values; neither replaces
+        // the subsequent native SQLite ID/payload comparison in CI evidence.
+        for field in fields where field.multiline || field.key == "projectTitle" || field.key == "projectEmail" {
+            let firstLine = field.value.components(separatedBy: "\n")[0]
+            let value = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@", firstLine)).firstMatch
+            XCTAssertTrue(value.waitForExistence(timeout: 5), "Missing saved submission material: \(field.key)")
+            XCTAssertEqual(value.label.split(whereSeparator: { $0.isWhitespace }).joined(separator: " "),
+                           field.value.split(whereSeparator: { $0.isWhitespace }).joined(separator: " "),
+                           "Detail must retain the complete material: \(field.key)")
+            reachProjectControl(value, in: app)
+        }
+        capture(app, "project-text-fields-\(language)-materials")
+        captureHierarchy(app, "project-text-fields-\(language)-materials-AX")
+        reachProjectControl(edit, in: app)
+        edit.tap()
+        try verifyProjectTextFields(fields, in: app, phase: "cold-start-edit", language: language, marker: marker, category: category, categoryLabel: categoryLabel)
+        for key in ["name", "projectMediumDescription", "notes"] {
+            let field = fields.first { $0.key == key }!
+            replaceProjectText(projectTextControl(field, in: app), with: "Cancelled \(key)", in: app)
+        }
+        let cancel = app.buttons[text("取消", "Cancel")].firstMatch
+        reachProjectControl(cancel, in: app)
+        cancel.tap()
+        XCTAssertTrue(edit.waitForExistence(timeout: 10))
+        reachProjectControl(edit, in: app)
+        edit.tap()
+        try verifyProjectTextFields(fields, in: app, phase: "after-cancel", language: language, marker: marker, category: category, categoryLabel: categoryLabel)
+        let originalName = fields.removeFirst()
+        let renamed = ProjectTextField(key: "name", label: originalName.label, value: marker + " renamed", multiline: false, group: nil)
+        fields.insert(renamed, at: 0)
+        replaceProjectText(projectTextControl(renamed, in: app), with: renamed.value, in: app)
+        reachProjectControl(save, in: app)
+        save.tap()
+        XCTAssertTrue(edit.waitForExistence(timeout: 10))
+        app.terminate()
+        app.launch()
+        XCTAssertTrue(assets.waitForExistence(timeout: 30))
+        assets.tap()
+        let renamedProject = app.links.matching(NSPredicate(format: "label CONTAINS %@", renamed.value)).firstMatch
+        XCTAssertTrue(renamedProject.waitForExistence(timeout: 20))
+        projectLinkAXValue = renamedProject.value as? String
+        reachProjectControl(renamedProject, in: app)
+        renamedProject.tap()
+        XCTAssertTrue(edit.waitForExistence(timeout: 10))
+        reachProjectControl(edit, in: app)
+        edit.tap()
+        try verifyProjectTextFields(fields, in: app, phase: "renamed-cold-start", language: language, marker: marker, category: category, categoryLabel: categoryLabel)
+        reachProjectControl(cancel, in: app)
+        cancel.tap()
+    }
+
+    func testEnglishProjectTextFieldsSurviveColdStartCancelAndRename() throws {
+        try verifyProjectTextFieldsColdStart(false)
+    }
+
+    func testChineseProjectTextFieldsSurviveColdStartCancelAndRename() throws {
+        try verifyProjectTextFieldsColdStart(true)
+    }
+
     func testChineseNavigationUsesTheNativeLanguage() {
         let app = application("zh-Hans")
         app.launch()
