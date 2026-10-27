@@ -215,6 +215,143 @@ it('round-trips actual KDBX and KA1 crypto, keeps secrets out of ordinary SQL, p
   restored.lock();
 }, 30_000);
 
+it('M0-08 rejects the second stale KDBX writer, reopens exact committed bytes and retries only its intended entry once', async () => {
+  const { openRepositoryFromBackend } = await import('../../local-db/src');
+  const { store, db, files, connect } = await fixture();
+  const sideA = new NativeFileStore('native-vault-two-writers', store);
+  const repositoryA = await openRepositoryFromBackend(sideA.records, sideA);
+  const account = { ...newAsset('account'), name: 'Synthetic vault association' };
+  await repositoryA.save('asset', account);
+  const ordinaryBefore = () => Object.fromEntries(['records', ...sideTableNames].map(table => [table, db.prepare(`SELECT * FROM "${table}" ORDER BY id`).all()]));
+  const ordinaryRows = ordinaryBefore();
+  const master = `Synthetic-M0-08-master-${crypto.randomUUID()}`;
+  const passwords = Array.from({ length: 5 }, () => `Synthetic-M0-08-${crypto.randomUUID()}`);
+  const seed = new VaultSession({ read: () => repositoryA.readPasswordVault(), write: (bytes, revision) => repositoryA.savePasswordVault(bytes, revision) });
+  await seed.initialize(); await seed.create(master);
+  const ids: string[] = [];
+  for (let index = 0; index < 3; index++) {
+    const id = await seed.saveEntry({ title: `Synthetic private K${index + 1}`, username: `synthetic-${index}@example.test`,
+      usernameAliases: [`alias-${index}@example.test`, `exact-alias-${index}`], password: passwords[index],
+      url: `https://example.test/vault/${index}`, notes: `Synthetic encrypted note ${index}`, linkedAssetIds: [account.id] });
+    await seed.saveEntry({ ...seed.readEntry(id), notes: `Synthetic established history ${index}` });
+    ids.push(id);
+  }
+  seed.lock();
+  const second = await connect();
+  expect(second.db).not.toBe(db);
+  const sideB = new NativeFileStore('native-vault-two-writers', second.store);
+  const repositoryB = await openRepositoryFromBackend(sideB.records, sideB);
+  const first = new VaultSession({ read: () => repositoryA.readPasswordVault(), write: (bytes, revision) => repositoryA.savePasswordVault(bytes, revision) });
+  const stale = new VaultSession({ read: () => repositoryB.readPasswordVault(), write: (bytes, revision) => repositoryB.savePasswordVault(bytes, revision) });
+  await Promise.all([first.initialize(), stale.initialize()]);
+  await Promise.all([first.unlock(master), stale.unlock(master)]);
+  const capture = (session: VaultSession) => ids.map(id => {
+    const summary = session.getSnapshot().entries.find(entry => entry.id === id);
+    if (!summary) throw Error('synthetic-vault-entry-missing');
+    return { entry: session.readEntry(id), history: session.history(id), summary };
+  });
+  const readVault = async (repository: typeof repositoryA) => {
+    const value = await repository.readPasswordVault();
+    if (!value) throw Error('synthetic-vault-missing');
+    return value;
+  };
+  const pointer = (connection: DatabaseSync) => {
+    const value = connection.prepare('SELECT * FROM passwordVault').get();
+    if (!value) throw Error('synthetic-vault-pointer-missing');
+    return value;
+  };
+  // Compare every field/history without printing plaintext values in a failing diff.
+  const exact = (actual: unknown, expected: unknown) => expect(JSON.stringify(actual) === JSON.stringify(expected)).toBe(true);
+  const bytesEqual = (actual: Uint8Array, expected: Uint8Array) => expect(actual.length === expected.length && actual.every((value, index) => value === expected[index])).toBe(true);
+  const base = capture(first);
+  exact(capture(stale), base);
+  expect(base.map(entry => entry.history.length)).toEqual([1, 1, 1]);
+  const baseline = await repositoryA.readPasswordVault();
+  if (!baseline) throw Error('synthetic-vault-missing');
+  expect(first.getSnapshot().revision).toBe(baseline.revision);
+  expect(stale.getSnapshot().revision).toBe(baseline.revision);
+  const originalPointer = pointer(db);
+  bytesEqual(await files.read(String(originalPointer.path)), baseline.bytes);
+  db.exec(`CREATE TABLE synthetic_vault_pointer_writes(revision TEXT PRIMARY KEY);
+    CREATE TRIGGER synthetic_count_vault_pointer AFTER UPDATE OF revision ON passwordVault BEGIN
+      INSERT INTO synthetic_vault_pointer_writes(revision) VALUES(NEW.revision); END;`);
+  const writeCount = (connection: DatabaseSync) => {
+    const value = connection.prepare('SELECT count(*) AS n FROM synthetic_vault_pointer_writes').get();
+    if (!value) throw Error('synthetic-write-count-missing');
+    return Number(value.n);
+  };
+  const nextK1 = { ...base[0].entry, password: passwords[3], notes: 'Synthetic first writer committed K1' };
+  const pendingK2 = { ...base[1].entry, password: passwords[4], notes: 'Synthetic second writer intended K2' };
+  expect(await first.saveEntry(nextK1)).toBe(ids[0]);
+  const afterFirst = capture(first);
+  exact(afterFirst[0].entry, nextK1);
+  exact(afterFirst[0].history, [...base[0].history, { at: base[0].summary.modifiedAt, draft: base[0].entry }]);
+  exact(afterFirst.slice(1), base.slice(1));
+  const committed = await repositoryA.readPasswordVault();
+  if (!committed) throw Error('synthetic-vault-missing');
+  expect(committed.revision).not.toBe(baseline.revision);
+  expect(committed.bytes.some((value, index) => value !== baseline.bytes[index])).toBe(true);
+  const committedPointer = pointer(db);
+  const pathsAfterFirst = (await files.list()).sort();
+  expect(writeCount(db)).toBe(1);
+  const staleSnapshot = stale.getSnapshot();
+  await expect(stale.saveEntry(pendingK2)).rejects.toThrow('vault-stale');
+  expect(stale.getSnapshot()).toBe(staleSnapshot);
+  exact(capture(stale), base);
+  expect(db.prepare('SELECT * FROM passwordVault').get()).toEqual(committedPointer);
+  bytesEqual((await readVault(repositoryB)).bytes, committed.bytes);
+  bytesEqual(await files.read(String(committedPointer.path)), committed.bytes);
+  bytesEqual(await files.read(String(originalPointer.path)), baseline.bytes);
+  expect((await files.list()).sort()).toEqual(pathsAfterFirst);
+  expect(writeCount(second.db)).toBe(1);
+  first.lock(); stale.lock();
+  await repositoryA.close(); opened.delete(store);
+  await repositoryB.close(); opened.delete(second.store);
+
+  const reopened = await connect();
+  const reopenedSide = new NativeFileStore('native-vault-two-writers', reopened.store);
+  const returned = await openRepositoryFromBackend(reopenedSide.records, reopenedSide);
+  const retry = new VaultSession({ read: () => returned.readPasswordVault(), write: (bytes, revision) => returned.savePasswordVault(bytes, revision) });
+  await retry.initialize();
+  expect(retry.getSnapshot().status).toBe('locked');
+  expect(retry.getSnapshot().revision).toBe(committed.revision);
+  bytesEqual((await readVault(returned)).bytes, committed.bytes);
+  await retry.unlock(master);
+  exact(capture(retry), afterFirst);
+  expect(writeCount(reopened.db)).toBe(1);
+  expect(await retry.saveEntry(pendingK2)).toBe(ids[1]);
+  const afterRetry = capture(retry);
+  exact(afterRetry[0], afterFirst[0]);
+  exact(afterRetry[1].entry, pendingK2);
+  exact(afterRetry[1].history, [...base[1].history, { at: base[1].summary.modifiedAt, draft: base[1].entry }]);
+  exact(afterRetry[2], base[2]);
+  const retried = await returned.readPasswordVault();
+  if (!retried) throw Error('synthetic-vault-missing');
+  expect(retried.revision).not.toBe(committed.revision);
+  expect(retried.bytes.some((value, index) => value !== committed.bytes[index])).toBe(true);
+  expect(writeCount(reopened.db)).toBe(2);
+  retry.lock();
+  await returned.close(); opened.delete(reopened.store);
+
+  const final = await connect();
+  const finalSide = new NativeFileStore('native-vault-two-writers', final.store);
+  const finalRepository = await openRepositoryFromBackend(finalSide.records, finalSide);
+  const finalSession = new VaultSession({ read: () => finalRepository.readPasswordVault(), write: (bytes, revision) => finalRepository.savePasswordVault(bytes, revision) });
+  await finalSession.initialize();
+  bytesEqual((await readVault(finalRepository)).bytes, retried.bytes);
+  await finalSession.unlock(master);
+  exact(capture(finalSession), afterRetry);
+  expect(finalSession.getSnapshot().revision).toBe(retried.revision);
+  expect(writeCount(final.db)).toBe(2);
+  exact(Object.fromEntries(['records', ...sideTableNames].map(table => [table, final.db.prepare(`SELECT * FROM "${table}" ORDER BY id`).all()])), ordinaryRows);
+  const sql = ['records', ...sideTableNames, 'passwordVault', 'synthetic_vault_pointer_writes'].map(table => JSON.stringify(final.db.prepare(`SELECT * FROM "${table}"`).all())).join('');
+  const privateValues = [master, ...passwords, nextK1.notes, pendingK2.notes,
+    ...base.flatMap(({ entry }) => [entry.title, entry.username, entry.url, entry.notes, ...(entry.usernameAliases ?? [])])];
+  expect(privateValues.some(value => sql.includes(value))).toBe(false);
+  finalSession.lock();
+  await finalRepository.close(); opened.delete(final.store);
+}, 30_000);
+
 it('keeps application trash separate from internal rollback tombstones and reruns CAS modifiers', async () => {
   const { store } = await fixture();
   const backend = new NativeFileStore('native-test', store).records;
