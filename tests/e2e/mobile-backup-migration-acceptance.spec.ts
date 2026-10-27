@@ -63,7 +63,7 @@ for (const zh of [true, false]) {
     const save = page.getByRole('link', { name: zh ? '保存或分享文件' : 'Save or share file', exact: true });
     await expect(save).toBeVisible();
     await save.click();
-    const notice = page.locator('.notice[role=status]');
+    const notice = page.locator('.intake-backup-status[role=status]');
     await expect(notice).toContainText(zh ? '已取消保存或分享' : 'Save or share cancelled');
     const first = await page.evaluate(() => (window as unknown as { __deliveryTest: { count: number; magic: string; name: string; bytes: number } }).__deliveryTest);
     expect(first).toMatchObject({ count: 1, magic: 'KEEPANY1' });

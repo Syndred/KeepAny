@@ -7,6 +7,93 @@ import { decryptBackup } from '../../packages/local-db/src/backup-crypto';
 const deliveryPath = '/src/file-delivery.ts';
 const password = 'Synthetic-export-only-2026';
 
+type DeliveryFeedback = { mode: string; calls: { name: string; magic: string; bytes: number }[];
+  pending: Record<number, (status: 'saved' | 'opened' | 'cancelled') => void> };
+
+for (const zh of [true, false]) {
+  test(`${zh ? 'zh-CN' : 'en'} backup delivery result stays beside Save and belongs to its current file`, async ({ browser }, info) => {
+    const context = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true });
+    const page = await context.newPage();
+    try {
+      await page.addInitScript(language => localStorage.setItem('keepany-language', language), zh ? 'zh-CN' : 'en');
+      await page.goto('/intake?nativeDeliveryFixture=1');
+      await page.evaluate(async path => {
+        if ((window as unknown as { __deliveryFeedback?: DeliveryFeedback }).__deliveryFeedback) return;
+        // Same supported registration as the existing delivery integration cases.
+        // A production fixture may register before the real app entry instead.
+        const state: DeliveryFeedback = { mode: 'saved', calls: [], pending: {} };
+        Object.assign(window, { __deliveryFeedback: state });
+        const { registerFileDeliveryHandler } = await import(path);
+        registerFileDeliveryHandler(async (request: { name: string; bytes: Uint8Array }) => {
+          const id = state.calls.push({ name: request.name, magic: new TextDecoder().decode(request.bytes.slice(0, 8)), bytes: request.bytes.length });
+          if (state.mode === 'failure') throw Error('synthetic-delivery-failure');
+          if (state.mode === 'pending') return new Promise(resolve => { state.pending[id] = status => { delete state.pending[id]; resolve({ status }); }; });
+          return { status: state.mode };
+        });
+      }, deliveryPath);
+      const mode = async (value: string) => page.evaluate(value => { (window as unknown as { __deliveryFeedback: DeliveryFeedback }).__deliveryFeedback.mode = value; }, value);
+      const pendingId = async () => {
+        await expect.poll(() => page.evaluate(() => Object.keys((window as unknown as { __deliveryFeedback: DeliveryFeedback }).__deliveryFeedback.pending).length)).toBe(1);
+        return page.evaluate(() => Number(Object.keys((window as unknown as { __deliveryFeedback: DeliveryFeedback }).__deliveryFeedback.pending)[0]));
+      };
+      const finish = async (id: number, status: 'saved' | 'opened' | 'cancelled') => page.evaluate(({ id, status }) => {
+        (window as unknown as { __deliveryFeedback: DeliveryFeedback }).__deliveryFeedback.pending[id](status);
+      }, { id, status });
+      const create = page.getByRole('button', { name: zh ? '创建备份' : 'Create backup', exact: true });
+      const save = page.getByRole('link', { name: zh ? '保存或分享文件' : 'Save or share file', exact: true });
+      const hint = page.locator('.intake-backup-status');
+      const readyText = zh ? '加密文件已生成' : 'Encrypted file ready';
+      const savedText = zh ? '文件已保存，并已读回核对' : 'The file was saved and read back for verification';
+      await page.locator('#backup-password').fill(password);
+      await create.tap();
+      await expect(save).toBeVisible();
+      const firstUrl = await save.getAttribute('href');
+      await expect(hint).toContainText(readyText);
+      await save.tap();
+      await expect(page.locator('.intake-tools')).toContainText(savedText);
+      await page.screenshot({ path: info.outputPath('saved-near-link.png'), fullPage: false });
+      await expect(hint).toContainText(savedText);
+      await expect(hint).toBeInViewport();
+      expect(await page.evaluate(() => matchMedia('(pointer: coarse)').matches)).toBe(true);
+      const geometry = { save: await save.boundingBox(), hint: await hint.boundingBox(), viewport: page.viewportSize() };
+      expect(geometry.hint!.y).toBeGreaterThanOrEqual(geometry.save!.y + geometry.save!.height);
+      await info.attach('saved-hint-natural-geometry', { body: JSON.stringify(geometry), contentType: 'application/json' });
+      for (const [result, text] of [['cancelled', zh ? '已取消保存或分享' : 'Save or share cancelled'],
+        ['opened', zh ? '返回应用不代表文件已保存' : 'returning to the app does not confirm it was saved'],
+        ['failure', zh ? '无法打开文件保存或分享' : 'Could not prepare the file']] as const) {
+        await mode(result); await save.tap(); await expect(hint).toContainText(text);
+        await expect(hint).not.toContainText(savedText);
+        await expect(save).not.toHaveAttribute('aria-disabled', 'true');
+        expect(await save.getAttribute('href')).toBe(firstUrl);
+      }
+      expect(await page.evaluate(async url => { try { return (await fetch(url!)).ok; } catch { return false; } }, firstUrl)).toBe(true);
+      await mode('pending'); await save.tap(); const oldId = await pendingId();
+      await expect(hint).toContainText(zh ? '正在准备系统保存或分享界面' : 'Preparing the system save or share sheet');
+      await page.locator('#backup-password').fill(`${password}-changed`);
+      await expect(save).toHaveCount(0);
+      await expect.poll(() => page.evaluate(async url => { try { return (await fetch(url!)).ok; } catch { return false; } }, firstUrl)).toBe(false);
+      await create.tap(); await expect(save).toBeVisible(); await expect(hint).toContainText(readyText);
+      const secondUrl = await save.getAttribute('href'); expect(secondUrl).not.toBe(firstUrl);
+      await finish(oldId, 'saved'); await expect(hint).toContainText(readyText); await expect(hint).not.toContainText(savedText);
+      // New backup while the previous delivery is unresolved; same filename,
+      // distinct object URL. Its late result must not clear the new failure.
+      await mode('pending'); await save.tap(); const staleId = await pendingId();
+      await create.tap(); await expect(save).toBeVisible(); await expect(hint).toContainText(readyText);
+      expect(await save.getAttribute('href')).not.toBe(secondUrl);
+      await expect.poll(() => page.evaluate(async url => { try { return (await fetch(url!)).ok; } catch { return false; } }, secondUrl)).toBe(false);
+      await mode('failure'); await save.tap();
+      await expect(hint).toContainText(zh ? '无法打开文件保存或分享' : 'Could not prepare the file');
+      await finish(staleId, 'saved');
+      await expect(hint).toContainText(zh ? '无法打开文件保存或分享' : 'Could not prepare the file');
+      await mode('opened'); await save.tap();
+      await expect(hint).toContainText(zh ? '返回应用不代表文件已保存' : 'returning to the app does not confirm it was saved');
+      const requests = await page.evaluate(() => (window as unknown as { __deliveryFeedback: DeliveryFeedback }).__deliveryFeedback.calls);
+      expect(requests).toHaveLength(8);
+      expect(requests.every(request => request.magic === 'KEEPANY1' && request.bytes > 52 && request.name.endsWith('.ka1'))).toBe(true);
+    } finally { await context.close(); }
+  });
+}
+
 test('Web keeps a real encrypted backup download without a native handler', async ({ page }) => {
   await page.addInitScript(() => localStorage.setItem('keepany-language', 'en'));
   await page.goto('/intake');
@@ -46,7 +133,7 @@ for (const zh of [true, false]) {
     const save = page.getByRole('link', { name: zh ? '保存或分享文件' : 'Save or share file', exact: true });
     await expect(save).toBeVisible();
     await save.click();
-    const notice = page.locator('.notice[role=status]');
+    const notice = page.locator('.intake-backup-status[role=status]');
     await expect(notice).toContainText(zh ? '已取消保存或分享' : 'Save or share cancelled');
     const first = await page.evaluate(() => (window as unknown as { __deliveryTest: { count: number; magic: string; name: string; bytes: number } }).__deliveryTest);
     expect(first).toMatchObject({ count: 1, magic: 'KEEPANY1' });

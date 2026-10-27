@@ -56,7 +56,7 @@ import { manualTaskDedupeKey, prepareTaskEdit } from "./task-edit";
 import { saveTaskIfCurrent, saveManualTaskIfCurrent } from "../../../packages/local-db/src";
 import { readUrlMetadata } from "./intake-url";
 import { ExportFileLink } from "./components/ExportFileLink";
-import { hasFileDeliveryHandler } from "./file-delivery";
+import { hasFileDeliveryHandler, type FileDeliveryMessage } from "./file-delivery";
 
 type FieldName = keyof Asset;
 type ProjectFormFiles = { logo?: File; home?: File; products?: File[]; promo?: File };
@@ -1031,7 +1031,9 @@ export function IntakeTools({ onCsvStaged }: { onCsvStaged: () => void }) {
 	const [readyDownload, setReadyDownload] = useState<{
 		url: string;
 		name: string;
+		deliveryMessage?: FileDeliveryMessage;
 	} | null>(null);
+	const readyDownloadUrl = readyDownload?.url;
 	const activeAssets = data.assets.filter(asset => !asset.deleted && asset.kind !== "vault");
 	const recentAssets = [...activeAssets].sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 5);
 	useEffect(() => {
@@ -1117,9 +1119,9 @@ export function IntakeTools({ onCsvStaged }: { onCsvStaged: () => void }) {
 	}, [t]);
 	useEffect(() => {
 		return () => {
-			if (readyDownload) URL.revokeObjectURL(readyDownload.url);
+			if (readyDownloadUrl) URL.revokeObjectURL(readyDownloadUrl);
 		};
-	}, [readyDownload]);
+	}, [readyDownloadUrl]);
 	function invalidateRestorePreview() {
 		const generation = ++restoreGeneration.current;
 		setInspecting(false);
@@ -1558,11 +1560,13 @@ export function IntakeTools({ onCsvStaged }: { onCsvStaged: () => void }) {
 						</Button>
 						{readyDownload && (
 							<Button asChild variant="primary">
-								<ExportFileLink href={readyDownload.url} download={readyDownload.name} onDeliveryMessage={key => setMessage(t(key))}><Download size={16} />{t("saveBackupFile")}</ExportFileLink>
+								<ExportFileLink href={readyDownload.url} download={readyDownload.name} onDeliveryMessage={key => setReadyDownload(current =>
+									current?.url === readyDownload.url && current.name === readyDownload.name
+										? { ...current, deliveryMessage: key } : current)}><Download size={16} />{t("saveBackupFile")}</ExportFileLink>
 							</Button>
 						)}
 					</div>
-					<p className="intake-backup-status" role="status">{readyDownload ? t(hasFileDeliveryHandler() ? "exportFileReady" : "backupReady") : t("intakeBackupIdle")}</p>
+					<p className="intake-backup-status" role="status">{readyDownload ? t(readyDownload.deliveryMessage ?? (hasFileDeliveryHandler() ? "exportFileReady" : "backupReady")) : t("intakeBackupIdle")}</p>
 					<RestoreRecoveryPanel />
 					<NativeDatasetPanel />
 					<details className="intake-secondary">
