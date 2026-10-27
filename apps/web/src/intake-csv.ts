@@ -18,7 +18,10 @@ export async function stageCsvForReview(file: File): Promise<number> {
 	try {
 		const bytes = await file.arrayBuffer();
 		const hash = await fingerprint(bytes);
-		const parsed = Papa.parse<Record<string, string>>(new TextDecoder().decode(bytes), { header: true, skipEmptyLines: true });
+		// Keep the original BOM and line endings for review and encrypted backup.
+		// Papa handles a UTF-8 BOM itself; do not normalize the saved source text.
+		const sourceText = new TextDecoder("utf-8", { fatal: true, ignoreBOM: true }).decode(bytes);
+		const parsed = Papa.parse<Record<string, string>>(sourceText, { header: true, skipEmptyLines: true });
 		if (parsed.errors.length || parsed.data.length > maxRows || !parsed.data.length) throw Error("invalid");
 		const importedAt = new Date().toISOString();
 		for (const [index, source] of parsed.data.entries()) {
@@ -33,6 +36,7 @@ export async function stageCsvForReview(file: File): Promise<number> {
 			if (asset.success) staged.push({
 				id: `csv-${hash}-${index + 2}`, fileHash: hash, fileName: file.name,
 				rowNumber: index + 2, asset: asset.data, status: "pending",
+				...(staged.length ? { sourceTextRef: hash } : { sourceText }),
 			});
 		}
 		if (!staged.length) throw Error("invalid");
