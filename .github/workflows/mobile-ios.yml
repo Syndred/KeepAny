@@ -92,6 +92,7 @@ jobs:
               fi
               sqlite3 -readonly "$task_database" 'SELECT type,count(*) FROM records GROUP BY type;' >> test-results/ios/sqlite-fixture-check.txt 2>&1 || true
               sqlite3 -readonly "$task_database" "SELECT id,json_extract(payload,'$.name'),json_extract(payload,'$.kind') FROM records WHERE type='asset' AND json_extract(payload,'$.name') LIKE 'iOS simulator persistence fixture%';" >> test-results/ios/sqlite-fixture-check.txt 2>&1 || true
+              sqlite3 -readonly "$task_database" "SELECT id,json_extract(payload,'$.name'),json_extract(payload,'$.done'),json_extract(payload,'$.deleted'),json_array_length(json_extract(payload,'$.completionHistory')) FROM records WHERE type='task' AND json_extract(payload,'$.name') LIKE 'iOS ordinary task fixture%';" >> test-results/ios/sqlite-fixture-check.txt 2>&1 || true
             done < <(find "$app_data/Library" -type f \( -name '*SQLite.db' -o -name '*.sqlite3' -o -name '*.db' \) ! -path '*/WebKit/*' -print0)
           fi
           xcrun xcresulttool export attachments --path test-results/ios/acceptance.xcresult --output-path test-results/ios/ui-attachments || true

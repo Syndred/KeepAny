@@ -23,6 +23,19 @@ final class KeepAnyUITests: XCTestCase {
         add(attachment)
     }
 
+    private func dismissInputToolbar(_ app: XCUIApplication) {
+        for label in ["Done", "完成"] {
+            let done = app.toolbars.buttons[label].firstMatch
+            if done.exists && done.isHittable { done.tap(); return }
+        }
+    }
+
+    private func tapReachable(_ element: XCUIElement, in app: XCUIApplication) {
+        for _ in 0..<8 { if element.isHittable { break }; app.swipeUp() }
+        XCTAssertTrue(element.isHittable)
+        element.tap()
+    }
+
     private func verifyDatePicker(_ language: String, tasks: String, startDate: String) {
         let app = application(language)
         app.launch()
@@ -64,6 +77,75 @@ final class KeepAnyUITests: XCTestCase {
 
     func testChineseDateInputPresentsNativePicker() {
         verifyDatePicker("zh-Hans", tasks: "待办", startDate: "开始日期")
+    }
+
+    func testOrdinaryTaskValidationColdStartCompletionAndDeleteCancellation() {
+        for chinese in [false, true] {
+            let language = chinese ? "zh-Hans" : "en"
+            let app = application(language)
+            let fixture = "iOS ordinary task fixture \(language)"
+            let tasks = chinese ? "待办" : "Tasks"
+            let create = chinese ? "新建待办" : "New task"
+            let save = chinese ? "保存" : "Save"
+            let cancel = chinese ? "取消" : "Cancel"
+            let nameLabel = chinese ? "名称" : "Name"
+            let taskName = app.staticTexts[fixture].firstMatch
+            app.launch()
+            let navigation = app.links[tasks].firstMatch
+            XCTAssertTrue(navigation.waitForExistence(timeout: 30))
+            navigation.tap()
+            let addTask = app.buttons[create].firstMatch
+            XCTAssertTrue(addTask.waitForExistence(timeout: 10))
+            addTask.tap()
+            app.buttons[save].firstMatch.tap()
+            XCTAssertTrue(app.staticTexts[chinese ? "此项不能为空" : "This field is required"].firstMatch.waitForExistence(timeout: 10))
+            let name = app.textFields[nameLabel].firstMatch
+            name.tap()
+            name.typeText(fixture)
+            dismissInputToolbar(app)
+            app.buttons[cancel].firstMatch.tap()
+            XCTAssertFalse(taskName.exists, "Cancelling a new task must not create it")
+            addTask.tap()
+            XCTAssertTrue(name.waitForExistence(timeout: 10))
+            name.tap()
+            name.typeText(fixture)
+            dismissInputToolbar(app)
+            let saveTask = app.buttons[save].firstMatch
+            for _ in 0..<6 { if saveTask.isHittable { break }; app.swipeUp() }
+            XCTAssertTrue(saveTask.isHittable)
+            saveTask.tap()
+            XCTAssertTrue(taskName.waitForExistence(timeout: 15))
+            capture(app, "task-created-\(language)")
+            app.terminate()
+            app.launch()
+            XCTAssertTrue(navigation.waitForExistence(timeout: 30))
+            navigation.tap()
+            XCTAssertTrue(taskName.waitForExistence(timeout: 15))
+            tapReachable(app.buttons[chinese ? "完成" : "Complete"].firstMatch, in: app)
+            let completed = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", chinese ? "已完成 ·" : "Completed ·")).firstMatch
+            XCTAssertTrue(completed.waitForExistence(timeout: 10))
+            completed.tap()
+            XCTAssertTrue(taskName.waitForExistence(timeout: 10))
+            tapReachable(app.buttons[chinese ? "重新打开" : "Reopen"].firstMatch, in: app)
+            app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", chinese ? "待处理 ·" : "Pending ·")).firstMatch.tap()
+            XCTAssertTrue(taskName.waitForExistence(timeout: 10))
+            let delete = app.buttons[chinese ? "删除" : "Delete"].firstMatch
+            tapReachable(delete, in: app)
+            XCTAssertTrue(app.staticTexts[chinese ? "删除待办" : "Delete task"].firstMatch.waitForExistence(timeout: 10))
+            app.buttons[cancel].firstMatch.tap()
+            XCTAssertTrue(taskName.exists)
+            tapReachable(delete, in: app)
+            guard let confirm = app.buttons[chinese ? "删除" : "Delete"].allElementsBoundByIndex.last(where: { $0.isHittable }) else {
+                XCTFail("Delete confirmation must have a reachable action")
+                app.terminate()
+                return
+            }
+            confirm.tap()
+            XCTAssertTrue(taskName.waitForNonExistence(timeout: 15))
+            capture(app, "task-deleted-\(language)")
+            captureHierarchy(app, "task-final-\(language)")
+            app.terminate()
+        }
     }
 
     func testEnglishProjectSurvivesApplicationTermination() {
