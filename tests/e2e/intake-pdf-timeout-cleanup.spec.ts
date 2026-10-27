@@ -2,7 +2,7 @@ import { expect, test, type BrowserContext } from "@playwright/test";
 import { pdf } from "./fixtures/pdf";
 import { sourceModuleUrl } from "./helpers/source-module-url";
 
-type PdfFault = "none" | "text-and-terminate" | "terminate";
+type PdfFault = "none" | "text-and-terminate" | "terminate" | "handshake";
 type PdfWorkerEvent = { workerId: number; direction: "to-worker" | "from-worker"; action: string; blocked: boolean; at: number };
 type PdfTimeoutProbe = { fault: PdfFault; workers: { id: number; terminated: boolean }[]; events: PdfWorkerEvent[]; unhandled: number };
 declare global { interface Window { pdfTimeoutProbe: PdfTimeoutProbe } }
@@ -30,7 +30,9 @@ async function observeRealPdfWorker(context: BrowserContext, fault: PdfFault) {
 			override postMessage(message: unknown, transferOrOptions: Transferable[] | StructuredSerializeOptions = []) {
 				if (this.pdfId !== undefined && message && typeof message === "object" && "action" in message && typeof message.action === "string") {
 					const mode = window.pdfTimeoutProbe.fault;
-					const blocked = mode !== "none" && message.action === "Terminate" || mode === "text-and-terminate" && message.action === "GetTextContent";
+					const blocked = (mode === "text-and-terminate" || mode === "terminate") && message.action === "Terminate"
+						|| mode === "text-and-terminate" && message.action === "GetTextContent"
+						|| mode === "handshake" && message.action === "test";
 					window.pdfTimeoutProbe.events.push({ workerId: this.pdfId, direction: "to-worker", action: message.action, blocked, at: performance.now() });
 					// Lose only these outbound messages. All document loading, page
 					// parsing and other replies still use the official real worker.
@@ -73,6 +75,47 @@ test("legal synthetic PDF uses the official worker and closes it after text extr
 		expect(await ordinaryRecordCount(page)).toBe(0);
 		expect(probe.unhandled).toBe(0);
 		await info.attach("real-worker-control", { body: JSON.stringify(probe), contentType: "application/json" });
+	} finally {
+		await info.attach("real-worker-final", { body: JSON.stringify(await page.evaluate(() => window.pdfTimeoutProbe).catch(() => null)), contentType: "application/json" });
+		await context.close();
+	}
+});
+
+test("PDF initialization handshake loss returns the original 30s timeout and terminates the created worker", async ({ browser }, info) => {
+	const context = await browser.newContext({ viewport: { width: 412, height: 820 } });
+	await observeRealPdfWorker(context, "handshake");
+	const page = await context.newPage();
+	try {
+		await page.goto("/intake");
+		await page.getByRole("button", { name: "PDF document", exact: true }).click();
+		await expect(page.locator("#csv-file")).toBeEnabled();
+		const startedAt = Date.now();
+		await page.locator("#csv-file").setInputFiles({ name: "worker-handshake-loss.pdf", mimeType: "application/pdf",
+			buffer: pdf(["Synthetic initialization ownership control"], false, { inheritedResources: true }) });
+		// The unmodified worker module must actually announce ready. Only its
+		// outbound test requests are lost; no parsed data or reply is fabricated.
+		await expect.poll(() => page.evaluate(() => window.pdfTimeoutProbe.events.some(event => event.direction === "from-worker" && event.action === "ready"))).toBe(true);
+		await expect(page.locator("#csv-file")).toBeDisabled();
+		const timeoutNotice = page.locator('.notice[role="status"]').filter({ hasText: /Reading the PDF timed out/ });
+		const returnedWithinBudget = await timeoutNotice.waitFor({ state: "visible", timeout: Math.max(1, 35_000 - (Date.now() - startedAt)) })
+			.then(() => true, () => false);
+		const probe = await page.evaluate(() => window.pdfTimeoutProbe);
+		const observed = { fault: "handshake", elapsedMs: Date.now() - startedAt, returnedWithinBudget, probe,
+			inputEnabled: await page.locator("#csv-file").isEnabled(), ordinaryRecords: await ordinaryRecordCount(page),
+			reviewRows: await page.locator(".intake-review-row").count(), notice: await page.locator('.notice[role="status"]').allTextContents() };
+		await info.attach("worker-handshake-timeout-observation", { body: JSON.stringify(observed, null, 2), contentType: "application/json" });
+		await page.screenshot({ path: info.outputPath("pdf-handshake-after-real-deadline.png"), fullPage: true, timeout: 5_000 });
+		expect(probe.workers).toHaveLength(1);
+		expect(probe.events.filter(event => event.action === "test" && event.blocked).length).toBeGreaterThanOrEqual(1);
+		expect(probe.events.some(event => event.direction === "from-worker" && event.action === "ready")).toBe(true);
+		expect(probe.events.some(event => event.action === "GetDoc")).toBe(false);
+		expect(observed.elapsedMs).toBeGreaterThanOrEqual(29_500);
+		expect(returnedWithinBudget).toBe(true);
+		expect(observed.inputEnabled).toBe(true);
+		expect(observed.ordinaryRecords).toBe(0);
+		expect(observed.reviewRows).toBe(0);
+		expect(probe.workers.every(worker => worker.terminated), "The product must own and terminate the raw worker even before the initialization handshake completes").toBe(true);
+		expect(probe.unhandled).toBe(0);
 	} finally {
 		await info.attach("real-worker-final", { body: JSON.stringify(await page.evaluate(() => window.pdfTimeoutProbe).catch(() => null)), contentType: "application/json" });
 		await context.close();
