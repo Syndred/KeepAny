@@ -87,7 +87,7 @@ it('exports a stable ticket before activation, then binds the current private au
       expect(await session.checkPreview(expiring.previewId)).toBe(false);
       await expect(session.decidePreview(expiring.previewId, true)).rejects.toThrow('mcp-native-preview-stale');
     } finally { clock.mockRestore(); }
-    await session.close(); expect(f.active).toBe(false); expect(f.onStopped).toHaveBeenLastCalledWith(true);
+    await session.close(); expect(f.active).toBe(false); expect(f.onStopped).toHaveBeenLastCalledWith(true, false);
     expect((await f.storage.read()).grants[0].revokedAt).toBeDefined();
   } finally { await client.close(); await session.close(); }
 });
@@ -124,7 +124,7 @@ it('distinguishes stopped IO from unconfirmed durable revocation and supports an
   expect(f.active).toBe(false); expect(f.onStopped).toHaveBeenLastCalledWith(false);
   expect((await f.storage.read()).grants[0].revokedAt).toBeUndefined();
   failing = false; await session.close(); expect((await f.storage.read()).grants[0].revokedAt).toBeDefined();
-  expect(f.onStopped).toHaveBeenLastCalledWith(true);
+  expect(f.onStopped).toHaveBeenLastCalledWith(true, false);
 });
 
 it('keeps private canonical-store diagnostics behind a fixed trusted decision error', async () => {

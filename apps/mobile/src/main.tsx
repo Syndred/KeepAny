@@ -20,6 +20,10 @@ import { registerPlatformConnections } from '../../web/src/platform-connections'
 import { registerAiFetchFactory } from '../../../packages/ai/src';
 import { createNativeAiFetchFactory } from '../../../packages/platform-native/src/ai-transport';
 import { resetNativeMcpTransport } from '../../../packages/platform-native/src/native-mcp-transport';
+import { prepareNativeMcpSession } from '../../../packages/platform-native/src/native-mcp-session';
+import { registerPlatformMcp } from '../../web/src/platform-mcp';
+import { RxdbMcpAssetStore } from '../../../packages/mcp/src/rxdb-store';
+import { Capacitor } from '@capacitor/core';
 import '../../../apps/web/src/styles.css';
 
 const startupCopy = {
@@ -49,9 +53,23 @@ async function start() {
   registerAiFetchFactory(createNativeAiFetchFactory());
   registerSyncFetchFactory(createNativeSyncFetchFactory(connections.sessionFetch));
   const datasets = await openNativeDatasetManager();
+  let datasetEpoch = 0;
+  datasets.subscribe(event => { if (event === 'active') datasetEpoch++; });
   registerDatasetAdapter(datasets);
   registerRepositoryFactory(() => datasets.openActive());
   await localRepository();
+  if (Capacitor.isPluginAvailable('KeepAnyMcpAuthority') && Capacitor.isPluginAvailable('KeepAnyMcpTransport')) {
+    registerPlatformMcp({ prepare: options => prepareNativeMcpSession({ ...options, loadContext: async () => {
+      const epoch = datasetEpoch;
+      const active = (await datasets.list()).filter(dataset => dataset.active);
+      if (active.length !== 1) throw Error('mcp-native-dataset-unavailable');
+      const repository = await localRepository();
+      const assertCurrent = () => { if (datasetEpoch !== epoch) throw Error('mcp-native-dataset-changed'); };
+      assertCurrent();
+      return { datasetName: active[0].name, store: new RxdbMcpAssetStore(repository), assertCurrent,
+        onInvalidated: listener => datasets.subscribe(event => { if (event === 'active') listener(); }) };
+    } }) });
+  }
   datasets.subscribe(event => { if (event === 'active') location.reload(); });
   await installNativeLifecycle();
   const [{ RouterProvider }, { router }] = await Promise.all([

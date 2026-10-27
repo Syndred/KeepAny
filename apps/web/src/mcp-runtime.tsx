@@ -1,8 +1,6 @@
 import {
-	createContext,
 	type ReactNode,
 	useCallback,
-	useContext,
 	useEffect,
 	useRef,
 	useState,
@@ -14,8 +12,6 @@ import type { BridgeScope } from "../../../packages/mcp/src/bridge";
 import {
 	readableFields,
 	writableFields,
-	type ReadField,
-	type WriteField,
 } from "../../../packages/mcp/src/fields";
 import type { RxdbMcpAssetStore } from "../../../packages/mcp/src/rxdb-store";
 import type { PreviewResult } from "../../../packages/mcp/src/service";
@@ -23,41 +19,12 @@ import { Button } from "./components/ui/button";
 import { Dialog } from "./components/ui/dialog";
 import { hasFileDeliveryHandler } from "./file-delivery";
 import { Capacitor } from '@capacitor/core';
-
-export type McpRequest = {
-	kind: "keepany-mcp-local-request-v1";
-	appOrigin: string;
-	assetIds: string[];
-	readFields: ReadField[];
-	writeFields: WriteField[];
-	ttlMs: number;
-	createdAt: number;
-	requestNonce: string;
-};
-type McpStatus = "idle" | "pairing" | "connected" | "error";
-type RequestInput = Pick<McpRequest, "assetIds" | "readFields" | "writeFields" | "ttlMs">;
-type Runtime = {
-	localConnectionAvailable: boolean;
-	status: McpStatus;
-	scope: BridgeScope | null;
-	expiresAt: number | null;
-	audit: BrowserAuditEntry[];
-	revokedAt: number | null;
-	refreshAudit(): Promise<void>;
-	prepared: McpRequest | null;
-	error: string | null;
-	prepare(input: RequestInput): void;
-	invalidatePrepared(): void;
-	importPairing(file: File): Promise<void>;
-	revoke(): Promise<void>;
-};
-const context = createContext<Runtime | null>(null);
-
-export function useMcpRuntime(): Runtime {
-	const value = useContext(context);
-	if (!value) throw Error("missing-mcp-runtime");
-	return value;
-}
+import { McpRuntimeContext as context, type McpRequest, type McpStatus, type RequestInput } from './mcp-context';
+import { McpPreviewApprovalDialog } from './components/McpPreviewApprovalDialog';
+import { NativeMcpRuntimeProvider } from './native-mcp-runtime';
+import { getPlatformMcp } from './platform-mcp';
+export { useMcpRuntime } from './mcp-context';
+export type { McpRequest } from './mcp-context';
 
 const same = (left: readonly string[], right: readonly string[]) =>
 	left.length === right.length && left.every((item, index) => item === right[index]);
@@ -95,12 +62,6 @@ function pairingFile(raw: unknown, request: McpRequest): { url: string; pairingS
 	return { url: value.url, pairingSecret: value.pairingSecret };
 }
 
-function valueText(value: unknown): string {
-	if (value === undefined || value === null || value === "") return "—";
-	if (typeof value === "string") return value;
-	return JSON.stringify(value);
-}
-
 export function McpRuntimeProvider({
 	assets,
 	children,
@@ -108,6 +69,12 @@ export function McpRuntimeProvider({
 	assets: Asset[];
 	children: ReactNode;
 }) {
+  const adapter = getPlatformMcp();
+  return adapter ? <NativeMcpRuntimeProvider assets={assets} adapter={adapter}>{children}</NativeMcpRuntimeProvider>
+    : <WebMcpRuntimeProvider assets={assets}>{children}</WebMcpRuntimeProvider>;
+}
+
+function WebMcpRuntimeProvider({ assets, children }: { assets: Asset[]; children: ReactNode }) {
 	const { t } = useTranslation();
 	// The shipped native entry has no local MCP adapter. Other native HTTP
 	// adapters do not implement the desktop launcher's bridge or authority.
@@ -123,6 +90,7 @@ export function McpRuntimeProvider({
 	const [previews, setPreviews] = useState<PreviewResult[]>([]);
 	const [previewCurrent, setPreviewCurrent] = useState(false);
 	const [previewChecking, setPreviewChecking] = useState(false);
+	const [previewDecisionError, setPreviewDecisionError] = useState<{ previewId: string; key: string } | null>(null);
 	const [busy, setBusy] = useState(false);
 	const clientRef = useRef<BrowserMcpBridgeClient | null>(null);
 	const storeRef = useRef<RxdbMcpAssetStore | null>(null);
@@ -412,6 +380,7 @@ export function McpRuntimeProvider({
 		if (!current || !client || !store || decisionInFlightRef.current) return;
 		decisionInFlightRef.current = true;
 		setBusy(true);
+		setError(null); setPreviewDecisionError(null);
 		try {
 			const row = await store.get(current.assetId);
 			const matches = Boolean(row && row.version === current.expectedVersion &&
@@ -428,6 +397,7 @@ export function McpRuntimeProvider({
 			setPreviews(items => items.filter(item => item.previewId !== current.previewId));
 		} catch {
 			setError("mcpConnectionFailed");
+			setPreviewDecisionError({ previewId: current.previewId, key: 'mcpConnectionFailed' });
 		} finally {
 			decisionInFlightRef.current = false;
 			setBusy(false);
@@ -451,23 +421,9 @@ export function McpRuntimeProvider({
 				<Button disabled={busy} onClick={() => answerScope(true)}>{t("mcpScopeApprovalApprove")}</Button>
 			</div>
 		</Dialog>}
-		{localConnectionAvailable && preview && <Dialog title={t("mcpWriteApprovalTitle")} onClose={() => void decidePreview(false)}>
-			<p>{t("mcpWriteApprovalHint")}</p>
-			<p className="mcp-preview-asset">{t("mcpPreviewAsset")}: {assets.find(asset => asset.id === preview.assetId)?.name ?? preview.assetId}</p>
-			<div className="mcp-preview-changes">
-				{preview.changes.map(change => <div key={change.field} className="mcp-preview-change">
-					<strong>{t(`mcpField_${change.field}`)}</strong>
-					<div><small>{t("mcpValueBefore")}</small><p>{valueText(change.before)}</p></div>
-					<div><small>{t("mcpValueAfter")}</small><p>{valueText(change.after)}</p></div>
-				</div>)}
-			</div>
-			{!previewChecking && !previewCurrent && <p role="alert">{t("mcpPreviewExpired")}</p>}
-			<div className="actions">
-				<Button disabled={busy} onClick={() => void decidePreview(false)}>{t("mcpWriteApprovalDeny")}</Button>
-				<Button disabled={busy || previewChecking || !previewCurrent} onClick={() => void decidePreview(true)}>
-					{t("mcpWriteApprovalApprove")}
-				</Button>
-			</div>
-		</Dialog>}
+		{localConnectionAvailable && preview && <McpPreviewApprovalDialog preview={preview} assets={assets}
+      busy={busy} checking={previewChecking} current={previewCurrent}
+      error={previewDecisionError?.previewId === preview.previewId ? previewDecisionError.key : null}
+      decide={approved => void decidePreview(approved)} />}
 	</context.Provider>;
 }

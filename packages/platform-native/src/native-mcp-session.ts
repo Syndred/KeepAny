@@ -17,7 +17,7 @@ export type NativeMcpSessionOptions = {
   onClient(request: MobileMcpClientRequest): void;
   onAuthorized(request: MobileMcpClientRequest, expiresAt: number): void;
   onPreviews(previews: PreviewResult[]): void;
-  onStopped(confirmed: boolean): void;
+  onStopped(confirmed: boolean, writeMayHaveApplied?: boolean): void;
 };
 type Dependencies = {
   authorityStorage(dataset: string): AuthorityStorage;
@@ -70,7 +70,7 @@ export async function prepareNativeMcpSession(options: NativeMcpSessionOptions, 
       const grantId = controller?.grantId;
       const state = grantId ? await authority.storage.read() : undefined;
       return { writeMayHaveApplied: Boolean(state?.operations.some(receipt => receipt.grantId === grantId && receipt.state === 'pending')) };
-    }).then(result => { try { options.onStopped(true); } catch {} return result; }, () => {
+    }).then(result => { try { options.onStopped(true, result.writeMayHaveApplied); } catch {} return result; }, () => {
       // Stop or durable revocation may lack an acknowledgement. The JS guard
       // is closed; do not claim native IO or storage confirmed the cleanup.
       closing = undefined; try { options.onStopped(false); } catch {}
