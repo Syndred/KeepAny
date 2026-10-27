@@ -5,9 +5,12 @@ export interface FileDeliveryRequest {
 }
 
 // Opening a system share sheet does not prove that another app saved the file.
-export interface FileDeliveryResult { status: "opened" | "cancelled" }
+export interface FileDeliveryResult { status: "opened" | "cancelled" | "saved" }
 export type FileDeliveryHandler = (request: FileDeliveryRequest) => Promise<FileDeliveryResult>;
-export type FileDeliveryMessage = "exportFileOpening" | "exportFileOpened" | "exportFileCancelled" | "exportFileFailed";
+export type FileDeliveryMessage = "exportFileOpening" | "exportFileOpened" | "exportFileSaved" | "exportFileCancelled" | "exportFileFailed";
+export function fileDeliveryMessage(result: FileDeliveryResult): FileDeliveryMessage {
+  return result.status === 'cancelled' ? 'exportFileCancelled' : result.status === 'saved' ? 'exportFileSaved' : 'exportFileOpened';
+}
 
 let handler: FileDeliveryHandler | undefined;
 

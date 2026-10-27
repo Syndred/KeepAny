@@ -40,7 +40,7 @@ import { withFilledVaultIdentifiers } from "../vault-import-model";
 import { PasswordSmartImportDialog } from "./PasswordSmartImportDialog";
 import { VaultLoginIdentifiers } from "./VaultLoginIdentifiers";
 import { VaultImportFieldActions } from "./VaultImportFieldActions";
-import { deliverExportFile, hasFileDeliveryHandler } from "../file-delivery";
+import { deliverExportFile, hasFileDeliveryHandler, fileDeliveryMessage } from "../file-delivery";
 import "../file-delivery-copy";
 
 type PasswordVaultPanelProps = {
@@ -593,7 +593,7 @@ export function PasswordVaultPanel({
 				announce("exportFileOpening");
 				try {
 					const result = await deliverExportFile({ name: t("pwVaultExportFilename"), mimeType: "application/octet-stream", bytes });
-					announce(result.status === "cancelled" ? "exportFileCancelled" : "exportFileOpened");
+					announce(fileDeliveryMessage(result));
 				} catch {
 					announce("exportFileFailed");
 				}

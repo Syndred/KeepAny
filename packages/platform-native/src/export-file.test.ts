@@ -2,10 +2,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
   platform: 'android', plugins: true, cache: new Map<string, string>(),
-  canShare: vi.fn(), share: vi.fn(), writeFile: vi.fn(), readFile: vi.fn(), getUri: vi.fn(), readdir: vi.fn(), rmdir: vi.fn(),
+  canShare: vi.fn(), share: vi.fn(), saveDocument: vi.fn(), writeFile: vi.fn(), readFile: vi.fn(), getUri: vi.fn(), readdir: vi.fn(), rmdir: vi.fn(),
 }));
 
-vi.mock('@capacitor/core', () => ({ Capacitor: {
+vi.mock('@capacitor/core', () => ({ registerPlugin: () => ({ save: mocks.saveDocument }), Capacitor: {
   getPlatform: () => mocks.platform,
   isNativePlatform: () => mocks.platform !== 'web',
   isPluginAvailable: () => mocks.plugins,
@@ -22,7 +22,7 @@ const input = () => ({ name: 'keepany-synthetic.ka1', mimeType: 'application/oct
 
 beforeEach(() => {
   vi.resetAllMocks();
-  mocks.platform = 'android'; mocks.plugins = true; mocks.cache.clear();
+  mocks.platform = 'ios'; mocks.plugins = true; mocks.cache.clear();
   mocks.canShare.mockResolvedValue({ value: true });
   mocks.share.mockResolvedValue({ activityType: 'synthetic-target' });
   mocks.readdir.mockResolvedValue({ files: [] });
@@ -35,6 +35,17 @@ beforeEach(() => {
 });
 
 describe('native generated-file delivery (plugin contract mocks, not device proof)', () => {
+  it('reports Android saved only after the document provider returns a matching readback receipt', async () => {
+    mocks.platform = 'android';
+    mocks.saveDocument.mockImplementation(async (request: { size: number; sha256: string }) => ({ status: 'saved', size: request.size, sha256: request.sha256 }));
+    await expect(exportNativeFile(input())).resolves.toEqual({ status: 'saved' });
+    expect(mocks.share).not.toHaveBeenCalled();
+    expect(mocks.cache.size).toBe(0);
+    mocks.saveDocument.mockResolvedValueOnce({ status: 'saved', size: input().bytes.length, sha256: '0'.repeat(64) });
+    await expect(exportNativeFile(input())).rejects.toThrow('native-export-receipt');
+    mocks.saveDocument.mockResolvedValueOnce({ status: 'cancelled' });
+    await expect(exportNativeFile(input())).resolves.toEqual({ status: 'cancelled' });
+  });
   it('writes only cache, verifies bytes, preserves the filename and never claims external save', async () => {
     await expect(exportNativeFile(input())).resolves.toEqual({ status: 'opened' });
     const write = mocks.writeFile.mock.calls[0][0];

@@ -1,10 +1,13 @@
-import { Capacitor } from '@capacitor/core';
+import { Capacitor, registerPlugin } from '@capacitor/core';
 import { Directory, Filesystem } from '@capacitor/filesystem';
 import { Share } from '@capacitor/share';
 import { nativePlatform } from './index';
 
 export interface NativeExportRequest { name: string; mimeType: string; bytes: Uint8Array }
-export interface NativeExportResult { status: 'opened' | 'cancelled' }
+export interface NativeExportResult { status: 'opened' | 'cancelled' | 'saved' }
+const documents = registerPlugin<{
+  save(request: { source: string; name: string; mimeType: string; size: number; sha256: string }): Promise<{ status: 'saved' | 'cancelled'; size?: number; sha256?: string }>;
+}>('KeepAnyFiles');
 
 const directory = Directory.Cache;
 const root = 'exports';
@@ -39,12 +42,12 @@ async function removeExpiredExports(): Promise<void> {
 
 /** User initiated only. Cache exports never become the core data or vault store. */
 export async function exportNativeFile(request: NativeExportRequest): Promise<NativeExportResult> {
-  nativePlatform();
-  if (!Capacitor.isPluginAvailable('Filesystem') || !Capacitor.isPluginAvailable('Share')) throw Error('native-export-unavailable');
+  const platform = nativePlatform();
+  if (!Capacitor.isPluginAvailable('Filesystem') || !Capacitor.isPluginAvailable(platform === 'android' ? 'KeepAnyFiles' : 'Share')) throw Error('native-export-unavailable');
   if (inFlight) throw Error('native-export-busy');
   if (!request.name || request.name.length > 180 || /[/\\:*?"<>|]/.test(request.name) ||
     Array.from(request.name).some(character => character.charCodeAt(0) < 32 || character.charCodeAt(0) === 127) ||
-    !/\.(?:ka1|kdbx|json)$/i.test(request.name) || !(request.bytes instanceof Uint8Array) || !request.bytes.length ||
+    !/\.(?:ka1|kdbx|json)$/i.test(request.name) || !(request.bytes instanceof Uint8Array) || !request.bytes.length || request.bytes.length > 100 * 1024 * 1024 + 52 ||
     !['application/octet-stream', 'application/json', 'application/x-keepass2'].includes(request.mimeType)) throw Error('native-export-invalid');
   inFlight = true;
   const folder = `${root}/${crypto.randomUUID()}`;
@@ -53,7 +56,7 @@ export async function exportNativeFile(request: NativeExportRequest): Promise<Na
   try {
     // Snapshot before the first await: callers may update their generated file.
     const bytes = new Uint8Array(request.bytes);
-    if (!(await Share.canShare()).value) throw Error('native-export-unavailable');
+    if (platform !== 'android' && !(await Share.canShare()).value) throw Error('native-export-unavailable');
     await removeExpiredExports();
     const expectedHash = await digest(bytes);
     await Filesystem.writeFile({ path, directory, data: base64(bytes), recursive: true });
@@ -62,6 +65,12 @@ export async function exportNativeFile(request: NativeExportRequest): Promise<Na
     const binary = atob(readback.data);
     const actual = Uint8Array.from(binary, character => character.charCodeAt(0));
     if (actual.length !== bytes.length || await digest(actual) !== expectedHash) throw Error('native-export-readback');
+    if (platform === 'android') {
+      const result = await documents.save({ source: path, name: request.name, mimeType: request.mimeType, size: bytes.length, sha256: expectedHash });
+      if (result.status === 'cancelled') return { status: 'cancelled' };
+      if (result.status !== 'saved' || result.size !== bytes.length || result.sha256 !== expectedHash) throw Error('native-export-receipt');
+      return { status: 'saved' };
+    }
     const { uri } = await Filesystem.getUri({ path, directory });
     if (!/^file:\/\//.test(uri)) throw Error('native-export-location');
     try {

@@ -1,6 +1,6 @@
 import { forwardRef, useEffect, useRef, useState, type AnchorHTMLAttributes } from "react";
 import { useTranslation } from "react-i18next";
-import { deliverExportUrl, hasFileDeliveryHandler, type FileDeliveryMessage } from "../file-delivery";
+import { deliverExportUrl, hasFileDeliveryHandler, fileDeliveryMessage, type FileDeliveryMessage } from "../file-delivery";
 import "../file-delivery-copy";
 
 type Props = Omit<AnchorHTMLAttributes<HTMLAnchorElement>, "href" | "download"> & {
@@ -37,7 +37,7 @@ export const ExportFileLink = forwardRef<HTMLAnchorElement, Props>(function Expo
 				if (mounted.current && currentSource.current === source) onDeliveryMessage(key);
 			};
 			void deliverExportUrl(href, download).then(result => {
-				report(result.status === "cancelled" ? "exportFileCancelled" : "exportFileOpened");
+				report(fileDeliveryMessage(result));
 			}).catch(() => {
 				report("exportFileFailed");
 			}).finally(() => { inFlight.current = false; if (mounted.current) setBusy(false); });
