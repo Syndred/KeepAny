@@ -209,6 +209,11 @@ export function PasswordVaultProvider({ children }: { children: ReactNode }) {
 	}, [emit]);
 
 	useEffect(() => {
+		window.addEventListener('keepany-native-background', lock);
+		return () => window.removeEventListener('keepany-native-background', lock);
+	}, [lock]);
+
+	useEffect(() => {
 		if (snapshot.status === "unlocked") setNotice(null);
 	}, [snapshot.status]);
 
