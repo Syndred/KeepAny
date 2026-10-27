@@ -82,6 +82,24 @@ async function addRelation(page: Page, copy: Copy, target: string, purpose: stri
 	if (verifiedAt) await dialog.locator("#relation-verified").fill(verifiedAt);
 	await dialog.getByRole("button", { name: copy.save, exact: true }).click();
 	await expect(dialog).toBeHidden();
+	const edge = activeAccountGraph(page).locator(".react-flow__edge").and(page.getByLabel(new RegExp(` · ${purpose} · `)));
+	await expect(edge).toHaveCount(1);
+	const id = await edge.getAttribute("data-relation-id");
+	if (!id) throw Error("Created relation has no graph ID");
+	return id;
+}
+
+async function expectRelationEdges(page: Page, entries: { id: string; purpose: string; from: string; to: string }[]) {
+	const graph = await waitForAccountGraphLayout(page, { nodes: 2, edges: entries.length });
+	expect(await graph.locator(".react-flow__edge").evaluateAll(edges => edges.map(edge => edge.getAttribute("data-relation-id")).sort())).toEqual(entries.map(entry => entry.id).sort());
+	for (const entry of entries) {
+	 const edge = graph.locator(`.react-flow__edge[data-relation-id="${entry.id}"]`);
+	 await expect(edge).toHaveAttribute("data-from", entry.from);
+	 await expect(edge).toHaveAttribute("data-to", entry.to);
+	 await expect(edge).toHaveAttribute("aria-label", new RegExp(` · ${entry.purpose} · `));
+	 await expect(edge.locator(".react-flow__edge-path")).toHaveCount(1);
+	}
+	return graph;
 }
 
 function purposeRow(page: Page, purpose: string) {
@@ -154,7 +172,7 @@ async function assertGeometry(page: Page, scope: Locator = page.locator("main.as
 }
 
 async function assertGraphActions(page: Page, copy: Copy) {
-	const graph = await waitForAccountGraphLayout(page, { nodes: 2, edges: 1 });
+	const graph = await waitForAccountGraphLayout(page, { nodes: 2, edges: 2 });
 	await expect(graph.getByRole("button", { name: copy.fit, exact: true })).toHaveCount(1);
 	await expect(graph.locator(".react-flow__controls button")).toHaveCount(4);
 	await expect(graph.locator(".react-flow__controls-fitview")).toHaveCount(0);
@@ -222,7 +240,7 @@ for (const locale of variants) for (const width of [390, 1536]) {
 				await page.keyboard.press("Enter");
 				await expect(activeAccountGraph(page).locator(".account-graph-connection-details")).toHaveCount(1);
 				await activeAccountGraph(page).locator(`.react-flow__node[data-id="${record.id}"] a.asset-graph-link`).click();
-				await expect(page).toHaveURL(new RegExp(`${record.href}$`));
+				await expect(page).toHaveURL(new RegExp(`${record.href}#account-relations$`));
 				await expect(dialog, "Following a related account keeps the expanded graph open").toBeVisible();
 				graph = await waitForAccountGraphLayout(page, { nodes: 4, edges: 4 });
 				await expect(graph.locator(".asset-graph-center")).toHaveAttribute("data-id", record.id);
@@ -235,11 +253,11 @@ for (const locale of variants) for (const width of [390, 1536]) {
 				await assertGeometry(page, dialog);
 			}
 			await page.goBack();
-			await expect(page).toHaveURL(new RegExp(`${records[2].href}$`));
+			await expect(page).toHaveURL(new RegExp(`${records[2].href}#account-relations$`));
 			await expect(dialog).toBeVisible();
 			await waitForAccountGraphLayout(page, { nodes: 4, edges: 4 });
 			await page.goForward();
-			await expect(page).toHaveURL(new RegExp(`${records[3].href}$`));
+			await expect(page).toHaveURL(new RegExp(`${records[3].href}#account-relations$`));
 			await expect(dialog).toBeVisible();
 			await waitForAccountGraphLayout(page, { nodes: 4, edges: 4 });
 			await screenshot(page, `graph-fullscreen-after-three-account-visits-${locale}-${width}`);
@@ -359,11 +377,12 @@ for (const locale of variants) for (const width of [390, 1536]) {
 			await page.locator("#account-relations").getByRole("button", { name: copy.addRelation, exact: true }).click();
 			await page.keyboard.press("Escape");
 			await expect(dialog).toBeHidden();
-			await addRelation(page, copy, phone.name, purposeA, source);
-			await addRelation(page, copy, phone.name, purposeB, `${source} B`, "2026-10-20");
+			let relationAId = await addRelation(page, copy, phone.name, purposeA, source);
+			const relationBId = await addRelation(page, copy, phone.name, purposeB, `${source} B`, "2026-10-20");
 			await page.reload();
 			const details = page.locator("details.account-relation-details");
 			await expect(details).toHaveJSProperty("open", false);
+			await expectRelationEdges(page, [{ id: relationAId, purpose: purposeA, from: service.id, to: phone.id }, { id: relationBId, purpose: purposeB, from: service.id, to: phone.id }]);
 			await assertGraphActions(page, copy);
 			const graph = activeAccountGraph(page);
 			const phoneNode = graph.locator(`.react-flow__node[data-id="${phone.id}"] .asset-graph-label`);
@@ -389,18 +408,21 @@ for (const locale of variants) for (const width of [390, 1536]) {
 			await page.locator("#relation-filter").fill("");
 			await expect(details.locator(".relation-row")).toHaveCount(2);
 			await unchangedCamera(page, before);
-			const edge = graph.locator(".react-flow__edge");
-			await edge.focus();
-			await page.keyboard.press("Enter");
-			await expect(graph.locator(".account-graph-connection-details")).toContainText(purposeA);
-			await expect(graph.locator(".account-graph-connection-details")).toContainText(purposeB);
+			for (const [id, purpose, other] of [[relationBId, purposeB, purposeA], [relationAId, purposeA, purposeB]]) {
+				const edge = graph.locator(`.react-flow__edge[data-relation-id="${id}"]`);
+				await edge.focus();
+				await edge.press("Enter");
+				await expect(graph.locator(".account-graph-connection-details")).toContainText(purpose);
+				await expect(graph.locator(".account-graph-connection-details")).not.toContainText(other);
+				await unchangedCamera(page, before);
+			}
 			await unchangedCamera(page, before);
 			await graph.getByRole("button", { name: copy.expand, exact: true }).click();
-			await waitForAccountGraphLayout(page, { nodes: 2, edges: 1 });
+			await waitForAccountGraphLayout(page, { nodes: 2, edges: 2 });
 			await expect(page.getByRole("dialog").locator(".account-graph-connection-details")).toContainText(purposeA);
 			await page.keyboard.press("Escape");
 			await expect(page.getByRole("dialog")).toBeHidden();
-			await waitForAccountGraphLayout(page, { nodes: 2, edges: 1 });
+			await waitForAccountGraphLayout(page, { nodes: 2, edges: 2 });
 			await expect(graph.getByRole("button", { name: copy.expand, exact: true })).toBeFocused();
 			expect((await camera(page)).zoom).toBeCloseTo(before.zoom, 3);
 			await expect(graph.locator(".account-graph-connection-details")).toContainText(purposeA);
@@ -411,12 +433,12 @@ for (const locale of variants) for (const width of [390, 1536]) {
 			await page.locator(".account-graph-guide > summary").click();
 			for (const scope of [copy.direct, copy.family]) {
 				await page.locator(".account-graph-toolbar").getByRole("button", { name: scope, exact: true }).click();
-				await waitForAccountGraphLayout(page, { nodes: 2, edges: 1 });
+				await waitForAccountGraphLayout(page, { nodes: 2, edges: 2 });
 			}
-			await purposeRow(page, purposeA).getByRole("button").click();
+			await purposeRow(page, purposeA).getByRole("button", { name: `${copy.deleteRelation} · ${purposeA} · ${phone.name}`, exact: true }).click();
 			await dialog.getByRole("button", { name: copy.cancel, exact: true }).click();
 			await expect(details.locator(".relation-row")).toHaveCount(2);
-			await purposeRow(page, purposeA).getByRole("button").click();
+			await purposeRow(page, purposeA).getByRole("button", { name: `${copy.deleteRelation} · ${purposeA} · ${phone.name}`, exact: true }).click();
 			await dialog.getByRole("button", { name: copy.deleteRelation, exact: true }).click();
 			await expect(dialog).toBeHidden();
 			await expect(purposeRow(page, purposeA)).toHaveCount(0);
@@ -424,13 +446,14 @@ for (const locale of variants) for (const width of [390, 1536]) {
 			await page.reload();
 			await setAccountRelationDetailsOpen(page);
 			await expect(details.locator(".relation-row")).toHaveCount(1);
-			await addRelation(page, copy, phone.name, purposeA, source);
+			relationAId = await addRelation(page, copy, phone.name, purposeA, source);
 			await expect(details.locator(".relation-row")).toHaveCount(2);
+			await expectRelationEdges(page, [{ id: relationAId, purpose: purposeA, from: service.id, to: phone.id }, { id: relationBId, purpose: purposeB, from: service.id, to: phone.id }]);
 			await page.locator(".account-security-card").getByRole("link", { name: copy.password, exact: true }).click();
 			await expect(page).toHaveURL(new RegExp(`/assets/vault#asset-${service.id}$`));
 			await page.goBack();
 			await expect(page).toHaveURL(new RegExp(`${service.href}$`));
-			await waitForAccountGraphLayout(page, { nodes: 2, edges: 1 });
+			await waitForAccountGraphLayout(page, { nodes: 2, edges: 2 });
 			await setAccountRelationDetailsOpen(page);
 			await assertGeometry(page);
 			await screenshot(page, `account-detail-dedupe-main-${locale}-${width}`);
@@ -454,7 +477,7 @@ for (const locale of variants) for (const width of [390, 1536]) {
 			await expect(basic.locator(".note")).toHaveText(`${service.longDescription}\n\n${service.notes}`);
 			await expect(basic.locator(".chips")).toContainText(service.tags);
 			await expect(basic.getByRole("link", { name: service.url, exact: true })).toBeVisible();
-			await waitForAccountGraphLayout(page, { nodes: 2, edges: 1 });
+			await waitForAccountGraphLayout(page, { nodes: 2, edges: 2 });
 			await setAccountRelationDetailsOpen(page);
 			await expect(details.locator(".relation-row")).toHaveCount(2);
 			await expect(purposeRow(page, purposeA)).toContainText(source);
@@ -472,8 +495,8 @@ for (const locale of variants) for (const width of [390, 1536]) {
 			const target = await addAccount(page, copy, { name: `Target ${suffix}`, username: `target.${suffix}@example.test` });
 			const owner = await addAccount(page, copy, { name: `Media ${suffix}`, username: `media.${suffix}@example.test` });
 			await accountCard(page, owner.name).click();
-			await addRelation(page, copy, target.name, purposeA, "Synthetic checklist source");
-			await addRelation(page, copy, target.name, purposeB, "Synthetic recovery source", "2026-10-20");
+			const relationAId = await addRelation(page, copy, target.name, purposeA, "Synthetic checklist source");
+			const relationBId = await addRelation(page, copy, target.name, purposeB, "Synthetic recovery source", "2026-10-20");
 			const images = page.locator(".asset-attachments-card");
 			const first = await syntheticPng(page, "#2468ac"), replacement = await syntheticPng(page, "#d87129");
 			const dialog = page.getByRole("dialog");
@@ -569,7 +592,7 @@ for (const locale of variants) for (const width of [390, 1536]) {
 			await expect(page.locator(".impact-task-row").filter({ hasText: purposeA })).toHaveCount(1);
 			await page.goBack();
 			await expect(page).toHaveURL(new RegExp(`${owner.href}$`));
-			await waitForAccountGraphLayout(page, { nodes: 2, edges: 1 });
+			await expectRelationEdges(page, [{ id: relationAId, purpose: purposeA, from: owner.id, to: target.id }, { id: relationBId, purpose: purposeB, from: owner.id, to: target.id }]);
 			await assertGeometry(page);
 			await screenshot(page, `account-detail-dedupe-media-tasks-${locale}-${width}`);
 			await images.getByRole("button", { name: copy.removeImage, exact: true }).click();

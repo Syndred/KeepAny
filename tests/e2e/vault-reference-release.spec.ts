@@ -252,8 +252,9 @@ async function assertVaultDetails(page: Page, accountHref: string) {
 	await expect(
 		page.getByRole("heading", { name: vaultName, exact: true }),
 	).toBeVisible();
+	await setAccountRelationDetailsOpen(page);
 	const relation = page
-		.locator(".relation-row")
+		.locator("details.account-relation-details .relation-row")
 		.filter({ hasText: accountName });
 	await expect(relation).toHaveCount(1);
 	await expect(relation).toContainText(accountName);
@@ -394,7 +395,7 @@ async function restoreIntoCleanContext(
 			.filter({ hasText: accountName })
 			.getByRole("link", { name: accountName, exact: true })
 			.click();
-		await expect(page).toHaveURL(new RegExp(`${accountHref}$`));
+		await expect(page).toHaveURL(new RegExp(`${accountHref}#account-relations$`));
 		await assertAccountDetails(page, copy, accountId, vaultHref);
 		await expect(
 			page.evaluate(
@@ -458,7 +459,7 @@ for (const locale of ["zh-CN", "en-US"] as const) {
 					.filter({ hasText: accountName })
 					.getByRole("link", { name: accountName, exact: true })
 					.click();
-				await expect(sourcePage).toHaveURL(new RegExp(`${account.href}$`));
+				await expect(sourcePage).toHaveURL(new RegExp(`${account.href}#account-relations$`));
 				await assertAccountDetails(sourcePage, copy, account.id, vault.href);
 				await sourcePage.goto("/assets/vault");
 				await expect(

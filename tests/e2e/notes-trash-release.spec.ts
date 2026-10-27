@@ -311,6 +311,7 @@ for (const locale of ["zh-CN", "en"])
 				await page.goto("/trash");
 				row = page.locator('.trash-row[data-asset-id="purge-first"]');
 				await row.getByRole("button", { name: purge, exact: true }).click();
+				await expect(page.getByRole("dialog")).toBeVisible();
 				await expect(page.getByRole("dialog")).toContainText(
 					zh ? "无法从回收站恢复" : "cannot restore",
 				);
@@ -351,9 +352,11 @@ for (const locale of ["zh-CN", "en"])
 				await cancelDialog();
 				await expect(row).toBeVisible();
 				await row.getByRole("button", { name: purge, exact: true }).click();
+				await expect(page.getByRole("dialog")).toBeVisible();
 				await page.keyboard.press("Escape");
 				await expect(page.getByRole("dialog")).toBeHidden();
 				await row.getByRole("button", { name: purge, exact: true }).click();
+				await expect(page.getByRole("dialog")).toBeVisible();
 				await page
 					.getByRole("dialog")
 					.getByRole("button", { name: purge, exact: true })

@@ -14,8 +14,17 @@ import { selectChoice } from "./helpers/select-choice";
 async function openFinance(page: Page) {
 	const menu = page.locator(".mobile-menu");
 	if (await menu.isVisible()) await menu.click();
-	await page.locator('.nav a[href="/finance"]').click();
+	await page.locator('.sidebar .nav a[href="/assets"]').click();
+	await expect(page).toHaveURL(/\/assets$/);
+	await page.locator('.workspace-navigation a[href="/finance"]').click();
 	await expect(page).toHaveURL(/\/finance$/);
+}
+
+async function openTasks(page: Page) {
+	const mobileTasks = page.locator('.mobile-tabbar a[href="/tasks"]');
+	if (await mobileTasks.isVisible()) await mobileTasks.click();
+	else await page.locator('.top-actions a[href="/tasks"]').click();
+	await expect(page).toHaveURL(/\/tasks$/);
 }
 
 // This slice accepts the actual delivery bundle through UI only. No development-module imports.
@@ -296,7 +305,7 @@ for (const language of ["en", "zh-CN"] as const) {
 				await reminderDialog
 					.getByRole("button", { name: copy.close, exact: true })
 					.click();
-				await page.locator('.top-actions a[href="/tasks"]').click();
+				await openTasks(page);
 				await expect(page.locator(".tasks-list-card .list-row")).toHaveCount(0);
 				reminderDialog = await openAssistant(page, copy);
 				await reminderDialog
@@ -325,7 +334,7 @@ for (const language of ["en", "zh-CN"] as const) {
 				await reminderDialog
 					.getByRole("button", { name: copy.close, exact: true })
 					.click();
-				await page.locator('.top-actions a[href="/tasks"]').click();
+				await openTasks(page);
 				const taskRows = page.locator(".tasks-list-card .list-row");
 				await expect(taskRows).toHaveCount(1);
 				const taskId = await taskRows.getAttribute("id");

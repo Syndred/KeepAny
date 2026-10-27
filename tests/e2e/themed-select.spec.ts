@@ -1,3 +1,4 @@
+import { expectKeyboardFocusRing } from "./helpers/focus-contract";
 import { expect, test, type Locator, type Page } from "@playwright/test";
 import { selectChoice } from "./helpers/select-choice";
 
@@ -63,7 +64,7 @@ for (const zh of [true, false]) {
 			await page.getByRole("listbox").press("Escape");
 			await expect(page.getByRole("listbox")).toBeHidden();
 			await expect(language).toBeFocused();
-			await expect(language).toHaveCSS("outline-color", "rgb(255, 210, 76)");
+			await expectKeyboardFocusRing(language);
 			await expect(language).toHaveAttribute("data-value", before ?? "");
 			await language.press("ArrowDown");
 			const languagePopup = page.getByRole("listbox");

@@ -1,3 +1,4 @@
+import { expectKeyboardFocusRing } from "./helpers/focus-contract";
 import { mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { expect, type Page, test } from "@playwright/test";
@@ -60,7 +61,7 @@ for (const width of [390, 1280]) {
 				["/intake", "Import & backup"], ["/trash", "Trash"], ["/settings", "Settings"],
 			] as const) {
 				await page.goto(route);
-				await expect(page.getByText(expected, { exact: true }).first()).toBeVisible();
+				await expect(page.locator("main").getByText(expected, { exact: true }).first()).toBeVisible();
 				await englishOnly(page);
 				if (route === "/intake") {
 					const picker = page.locator(".file-picker-control").first();
@@ -68,12 +69,12 @@ for (const width of [390, 1280]) {
 					await choose.press("Tab");
 					await page.keyboard.press("Shift+Tab");
 					await expect(choose).toBeFocused();
-					await expect(choose).toHaveCSS("outline-color", "rgb(255, 210, 76)");
+					await expectKeyboardFocusRing(choose);
 					await expect(picker).toHaveCSS("box-shadow", "rgb(255, 210, 76) 0px 0px 0px 3px");
 					await page.screenshot({ path: join(evidence, `en-${width}-file-focus.png`) });
 				}
 				await page.reload();
-				await expect(page.getByText(expected, { exact: true }).first()).toBeVisible();
+				await expect(page.locator("main").getByText(expected, { exact: true }).first()).toBeVisible();
 				await englishOnly(page);
 				if (route === "/" || route === "/assets/vault" || route === "/finance")
 					await page.screenshot({ path: join(evidence, `en-${width}-${route === "/" ? "overview" : route.split("/").at(-1)}.png`), fullPage: true });
@@ -83,7 +84,7 @@ for (const width of [390, 1280]) {
 				await page.locator(`main a[href^="/assets/${kind}/"]`).filter({ hasText: name }).first().click();
 				await expect(page.getByRole("heading", { name, exact: true })).toBeVisible();
 				await englishOnly(page);
-				await page.getByRole("button", { name: "Edit", exact: true }).click();
+				await page.locator(kind === "project" ? ".asset-project-action-bar" : ".page-header").getByRole("button", { name: "Edit", exact: true }).click();
 				await expect(page.getByRole("dialog")).toBeVisible();
 				await englishOnly(page);
 				await page.getByRole("dialog").getByRole("button", { name: "Cancel", exact: true }).click();

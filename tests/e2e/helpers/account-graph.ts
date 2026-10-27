@@ -34,7 +34,7 @@ export async function waitForAccountGraphLayout(
 			expected.nodes,
 		);
 	if (expected.edges !== undefined)
-		await expect(graph.locator(".react-flow__edge-path")).toHaveCount(
+		await expect(graph.locator(".react-flow__edge")).toHaveCount(
 			expected.edges,
 		);
 	await expect
@@ -63,13 +63,10 @@ export async function waitForAccountGraphLayout(
 					return (
 						before === signature() &&
 						element.getAttribute("data-layout-ready") === "true" &&
-						[
-							...element.querySelectorAll<SVGPathElement>(
-								".react-flow__edge-path",
-							),
-						].every(
-							(path) => !!path.getAttribute("d") && path.getTotalLength() > 0,
-						)
+						[...element.querySelectorAll(".react-flow__edge")].every(edge => {
+							const paths = [...edge.querySelectorAll<SVGPathElement>(".react-flow__edge-path")];
+							return paths.length > 0 && paths.every(path => !!path.getAttribute("d")?.trim() && path.getTotalLength() > 0);
+						})
 					);
 				}),
 			{

@@ -124,7 +124,9 @@ for (const locale of ["zh-CN", "en"] as const)
 				if (cold) await page.goto("/assets/vault");
 				else {
 					if (width < 768) await page.locator(".mobile-menu").click();
-					await page.locator('.sidebar .nav a[href="/assets/vault"]').click();
+					await page.locator('.sidebar .nav a[href="/accounts"]').click();
+					await expect(page).toHaveURL(/\/accounts$/);
+					await page.locator('.workspace-navigation a[href="/assets/vault"]').click();
 				}
 				await expect(
 					page

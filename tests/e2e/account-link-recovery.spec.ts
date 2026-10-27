@@ -445,7 +445,7 @@ for (const { locale, width } of [
 			await edge.press("Enter");
 			await expect(edge).toHaveClass(/\bselected\b/);
 			const deleteLine = expanded.getByRole("button", {
-				name: zh ? "删除关系" : "Delete connection",
+				name: `${zh ? "删除关系" : "Delete connection"} · ${line.label}`,
 				exact: true,
 			});
 			await expect(deleteLine).toBeVisible();

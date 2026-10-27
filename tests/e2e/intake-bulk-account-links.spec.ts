@@ -1,3 +1,4 @@
+import { expectKeyboardFocusRing } from "./helpers/focus-contract";
 import { mkdirSync, readFileSync } from "node:fs";
 import { expect, type Page, test } from "@playwright/test";
 import { strFromU8, unzipSync } from "fflate";
@@ -365,7 +366,7 @@ for (const language of ["zh-CN", "en"] as const) {
 					await link.press("Tab");
 					await page.keyboard.press("Shift+Tab");
 					await expect(link).toBeFocused();
-					await expect(link).toHaveCSS("outline-color", "rgb(255, 210, 76)");
+					await expectKeyboardFocusRing(link);
 					await expect(link).toHaveCSS("background-color", "rgb(255, 210, 76)");
 					await expect(link).toHaveCSS("outline-style", "solid");
 				}
@@ -373,7 +374,7 @@ for (const language of ["zh-CN", "en"] as const) {
 				await details
 					.locator(`a[href="/assets/account/${emailNodes[0].id}"]`)
 					.click();
-				await expect(page).toHaveURL(`/assets/account/${emailNodes[0].id}`);
+				await expect(page).toHaveURL(`/assets/account/${emailNodes[0].id}#account-relations`);
 				details = await setAccountRelationDetailsOpen(page);
 				await expect(details).toContainText("Portal");
 				await expect(details).toContainText("Hosting");
@@ -384,7 +385,7 @@ for (const language of ["zh-CN", "en"] as const) {
 					fullPage: true,
 				});
 				await details.getByRole("link", { name: "Portal", exact: true }).click();
-				await expect(page).toHaveURL(`/assets/account/${service("Portal").id}`);
+				await expect(page).toHaveURL(`/assets/account/${service("Portal").id}#account-relations`);
 				await setAccountRelationDetailsOpen(page);
 				await expect(binding).toHaveCSS("color", "rgb(23, 36, 58)");
 				await checkLayout(page, facts, width);
