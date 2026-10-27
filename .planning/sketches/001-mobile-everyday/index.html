@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'none'; form-action 'none'; base-uri 'self'">
+<title>KeepAny · 手机日常使用草图</title>
+<link rel="icon" href="../../../apps/web/public/icons/keepany.svg">
+<link rel="stylesheet" href="../themes/default.css">
+<link rel="stylesheet" href="../mobile-preview.css">
+<script src="../mobile-preview.js" defer></script>
+</head>
+<body data-board="daily">
+<div class="studio">
+  <div class="studio-kicker"><span class="studio-dot"></span> KEEPANY / MOBILE DESIGN STUDY / 2026.10</div>
+  <header class="studio-title">
+    <h1 id="studio-title"></h1>
+    <nav class="studio-links" aria-label="草图预览">
+      <a href="../001-mobile-everyday/index.html" data-cross-link="../001-mobile-everyday/index.html" aria-current="page" data-i18n="daily"></a>
+      <a href="../002-mobile-restore/index.html" data-cross-link="../002-mobile-restore/index.html"  data-i18n="transfer"></a>
+    </nav>
+  </header>
+  <p class="studio-note" data-i18n="demo"></p>
+  <div class="studio-controls" aria-label="草图控制">
+    <div class="variant-controls">
+      <button type="button" data-variant="a" aria-pressed="true"></button>
+      <button type="button" data-variant="b" aria-pressed="false"></button>
+    </div>
+    <label class="control-field"><span>Language</span><select id="language" aria-label="Preview language"><option value="zh">简体中文</option><option value="en">English</option></select></label>
+    <label class="control-field"><span data-i18n="stateLabel"></span><select id="ui-state" aria-label="演示状态"><option value="populated" data-i18n="populated"></option><option value="empty" data-i18n="empty"></option></select></label>
+    <label class="control-field"><span data-i18n="widthLabel"></span><select id="width" aria-label="Preview width"><option value="board" data-i18n="board"></option><option value="360">360px</option><option value="390">390px</option><option value="430">430px</option></select></label>
+    <label class="control-field"><input type="checkbox" id="annotations"><span data-i18n="measure"></span></label>
+    <label class="control-field"><span data-i18n="theme"></span><select id="theme-switcher" aria-label="Theme"><option value="default" data-i18n="themeName"></option></select></label>
+    <label class="control-field screen-select mobile-only"><span data-i18n="screenLabel"></span><select id="screen-selector" aria-label="Preview screen"></select></label>
+  </div>
+  <p class="studio-caption"><strong id="caption"></strong><span data-i18n="compare"></span></p>
+  <div class="board" id="board"></div>
+  <footer class="studio-footer"><span data-i18n="footer"></span><a href="../../../docs/mobile/Capacitor-SQLite迁移方案-20261027.md" data-i18n="plan"></a></footer>
+</div>
+<div class="annotation-tooltip" id="measurement" hidden></div>
+</body>
+</html>
+
