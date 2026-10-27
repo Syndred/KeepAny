@@ -9,6 +9,7 @@ overrides:
   kdbxweb>fflate: 0.8.3
 
 patchedDependencies:
+  '@capacitor/android@8.5.3': e87a75698415c8c529e52a251397c541c9ea5dafb8360b4df9f498b01b677ecd
   kdbxweb@2.1.1: 05d88aeba2ef24ee4ce6aca8b710a2037b8b6f16f46983369b7e5b93e6a31be7
 
 importers:
@@ -47,7 +48,7 @@ importers:
         version: 8.1.1(@capacitor/core@8.5.3)
       '@capacitor/android':
         specifier: 8.5.3
-        version: 8.5.3(@capacitor/core@8.5.3)
+        version: 8.5.3(patch_hash=e87a75698415c8c529e52a251397c541c9ea5dafb8360b4df9f498b01b677ecd)(@capacitor/core@8.5.3)
       '@capacitor/app':
         specifier: ^8.1.2
         version: 8.1.2(@capacitor/core@8.5.3)
@@ -255,7 +256,7 @@ importers:
         version: 8.1.1(@capacitor/core@8.5.3)
       '@capacitor/android':
         specifier: 8.5.3
-        version: 8.5.3(@capacitor/core@8.5.3)
+        version: 8.5.3(patch_hash=e87a75698415c8c529e52a251397c541c9ea5dafb8360b4df9f498b01b677ecd)(@capacitor/core@8.5.3)
       '@capacitor/app':
         specifier: 8.1.2
         version: 8.1.2(@capacitor/core@8.5.3)
@@ -5696,7 +5697,7 @@ snapshots:
       '@capacitor/core': 8.5.3
       jeep-sqlite: 2.8.0
 
-  '@capacitor/android@8.5.3(@capacitor/core@8.5.3)':
+  '@capacitor/android@8.5.3(patch_hash=e87a75698415c8c529e52a251397c541c9ea5dafb8360b4df9f498b01b677ecd)(@capacitor/core@8.5.3)':
     dependencies:
       '@capacitor/core': 8.5.3
 

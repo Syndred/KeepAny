@@ -14,3 +14,4 @@ overrides:
   'kdbxweb>fflate': 0.8.3
 patchedDependencies:
   kdbxweb@2.1.1: patches/kdbxweb@2.1.1.patch
+  '@capacitor/android@8.5.3': patches/@capacitor__android@8.5.3.patch
