@@ -78,6 +78,17 @@ for (const zh of [true, false]) {
       expect(readback).toEqual(staged);
       await restored.page.locator('.intake-review-row').nth(1).getByRole('button', { name: c.confirm, exact: true }).click();
       await expect.poll(async () => (await records(restored.page)).length).toBe(2);
+      const withdrawal = restored.page.locator('.intake-review-row').first();
+      const withdraw = zh ? '撤销收录' : 'Withdraw acceptance';
+      await withdrawal.getByRole('button', { name: withdraw, exact: true }).click();
+      await restored.page.getByRole('dialog').getByRole('button', { name: c.cancel, exact: true }).click();
+      expect((await records(restored.page)).filter((row: { deleted: boolean }) => !row.deleted)).toHaveLength(2);
+      await withdrawal.getByRole('button', { name: withdraw, exact: true }).click();
+      await restored.page.getByRole('dialog').getByRole('button', { name: withdraw, exact: true }).click();
+      await expect(withdrawal).toContainText(zh ? '已撤销' : 'Withdrawn');
+      const remaining = await restored.page.evaluate(async path => (await (await import(path)).listReviewedCandidates()), '/src/intake-review-store.ts');
+      expect(remaining.map((row: { status: string }) => row.status)).toEqual(['withdrawn', 'accepted', 'pending']);
+      expect(remaining.every((row: { sourceText: string }) => row.sourceText === source.replaceAll('\r\n', '\n'))).toBe(true);
       await capture(restored.page, `${language}-F14-text-ka1-continued`);
     } finally { await restored.context.close(); }
   });
