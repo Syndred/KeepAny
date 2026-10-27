@@ -1,0 +1,103 @@
+import XCTest
+import Foundation
+import NIOCore
+import NIOPosix
+@testable import KeepAnyMcpTransportCore
+
+private final class TestClock {
+    private let lock = NSLock()
+    private var ticks: UInt64 = 1_000_000
+    func now() -> UInt64 { lock.lock(); defer { lock.unlock() }; return ticks }
+    func advance(seconds: UInt64) { lock.lock(); ticks += seconds * 1_000_000_000; lock.unlock() }
+}
+final class PreparationTests: XCTestCase {
+    private func send(_ endpoint: McpEndpoint, events: Events, server: McpTransport) throws {
+        let client = try TLSProbe(endpoint)
+        try client.send("POST /pair HTTP/1.1\r\nHost: 127.0.0.1:\(URL(string: endpoint.endpoint)!.port!)\r\nContent-Length: 2\r\n\r\n{}")
+        let request = try events.request()
+        XCTAssertEqual(request.instanceId, endpoint.instanceId)
+        try server.responseStart(instanceId: request.instanceId, requestId: request.requestId, status: 200, headers: [:])
+        try server.responseWrite(instanceId: request.instanceId, requestId: request.requestId, chunkBase64: "e30=")
+        try server.responseEnd(instanceId: request.instanceId, requestId: request.requestId)
+        XCTAssertTrue(String(decoding: try client.reply(), as: UTF8.self).hasSuffix("\r\n\r\n{}"))
+    }
+    private func same(_ before: McpEndpoint, _ after: McpEndpoint, file: StaticString = #filePath, line: UInt = #line) {
+        XCTAssertEqual(before.instanceId, after.instanceId, file: file, line: line)
+        XCTAssertEqual(before.endpoint, after.endpoint, file: file, line: line)
+        XCTAssertEqual(before.certificatePem, after.certificatePem, file: file, line: line)
+        XCTAssertEqual(before.spkiSha256, after.spkiSha256, file: file, line: line)
+    }
+    func testPrepareDoesNotListenAndPausePreservesIdentityUntilExplicitActivate() throws {
+        let events = Events(), server = McpTransport { events.append($0) }; defer { try? server.reset() }
+        let prepared = try server.prepare(address: "127.0.0.1")
+        XCTAssertThrowsError(try TLSProbe(prepared), "Prepare must not listen even before the system share UI")
+        XCTAssertThrowsError(try server.prepare(address: "127.0.0.1"))
+        XCTAssertThrowsError(try server.start(address: "127.0.0.1"))
+        XCTAssertThrowsError(try server.activate(instanceId: UUID().uuidString))
+        try server.pause()
+        XCTAssertThrowsError(try TLSProbe(prepared), "Share/background never implicitly activates")
+        let activated = try server.activate(instanceId: prepared.instanceId)
+        same(prepared, activated)
+        try send(activated, events: events, server: server)
+        try server.pause()
+        XCTAssertTrue(events.stopped(activated.instanceId))
+        XCTAssertThrowsError(try TLSProbe(activated), "Active listener must stop on pause")
+        XCTAssertThrowsError(try server.activate(instanceId: activated.instanceId))
+    }
+    func testOccupiedPreparedPortFailsWithoutReplacingExportedTuple() throws {
+        let events = Events(), server = McpTransport { events.append($0) }; defer { try? server.reset() }
+        let prepared = try server.prepare(address: "127.0.0.1")
+        let group = MultiThreadedEventLoopGroup(numberOfThreads: 1)
+        defer { try? group.syncShutdownGracefully() }
+        let occupied = try ServerBootstrap(group: group).childChannelInitializer { $0.close() }
+            .bind(host: "127.0.0.1", port: URL(string: prepared.endpoint)!.port!).wait()
+        defer { try? occupied.close().wait() }
+        XCTAssertThrowsError(try server.activate(instanceId: prepared.instanceId))
+        XCTAssertTrue(events.stopped(prepared.instanceId))
+        XCTAssertThrowsError(try server.activate(instanceId: prepared.instanceId), "Failed activation must be re-prepared and re-exported")
+        let next = try server.prepare(address: "127.0.0.1")
+        XCTAssertNotEqual(next.instanceId, prepared.instanceId)
+        XCTAssertNotEqual(next.spkiSha256, prepared.spkiSha256)
+        XCTAssertThrowsError(try server.stop(instanceId: prepared.instanceId), "Stale stop must not clear the newly prepared identity")
+        same(next, try server.activate(instanceId: next.instanceId))
+        try send(next, events: events, server: server)
+    }
+    func testTwoMinuteTTLUsesMonotonicClockAndPauseDoesNotExtendIt() throws {
+        let clock = TestClock(), events = Events()
+        let server = McpTransport(now: { clock.now() }) { events.append($0) }; defer { try? server.reset() }
+        let prepared = try server.prepare(address: "127.0.0.1")
+        clock.advance(seconds: 119); try server.pause()
+        clock.advance(seconds: 1)
+        XCTAssertThrowsError(try server.activate(instanceId: prepared.instanceId))
+        XCTAssertTrue(events.stopped(prepared.instanceId))
+        let next = try server.prepare(address: "127.0.0.1")
+        same(next, try server.activate(instanceId: next.instanceId))
+        try send(next, events: events, server: server)
+        // This is a deterministic core clock-injection check of the fixed
+        // production 120s boundary, not an actual two-minute device wait.
+    }
+    func testResetAndExplicitStopClearPreparedWithoutReplay() throws {
+        let events = Events(), server = McpTransport { events.append($0) }; defer { try? server.reset() }
+        let first = try server.prepare(address: "127.0.0.1")
+        try server.reset(); XCTAssertTrue(events.stopped(first.instanceId))
+        XCTAssertThrowsError(try server.activate(instanceId: first.instanceId))
+        let second = try server.prepare(address: "127.0.0.1")
+        try server.stop(instanceId: second.instanceId); XCTAssertTrue(events.stopped(second.instanceId))
+        XCTAssertThrowsError(try server.activate(instanceId: second.instanceId))
+        let third = try server.prepare(address: "127.0.0.1")
+        XCTAssertNotEqual(first.spkiSha256, third.spkiSha256)
+        same(third, try server.activate(instanceId: third.instanceId))
+        try send(third, events: events, server: server)
+        XCTAssertThrowsError(try events.request(timeout: 0.2), "Cleared preparations do not replay")
+    }
+    func testDestroyClearsPreparedAndNotifiesStopped() throws {
+        let events = Events()
+        var server: McpTransport? = McpTransport { events.append($0) }
+        let prepared = try server!.prepare(address: "127.0.0.1")
+        weak var released = server
+        server = nil
+        XCTAssertNil(released)
+        XCTAssertTrue(events.stopped(prepared.instanceId))
+        XCTAssertThrowsError(try TLSProbe(prepared))
+    }
+}

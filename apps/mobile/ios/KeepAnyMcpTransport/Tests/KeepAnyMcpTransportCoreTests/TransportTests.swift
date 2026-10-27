@@ -8,7 +8,7 @@ import X509
 import Crypto
 @testable import KeepAnyMcpTransportCore
 
-private final class Events {
+final class Events {
     private let condition = NSCondition()
     private var rows: [McpTransportEvent] = []
     func append(_ row: McpTransportEvent) { condition.lock(); rows.append(row); condition.broadcast(); condition.unlock() }
@@ -64,7 +64,7 @@ private final class ResponseBytes: ChannelInboundHandler {
         context.fireChannelInactive()
     }
 }
-private final class TLSProbe {
+final class TLSProbe {
     let group = MultiThreadedEventLoopGroup(numberOfThreads: 1)
     let channel: Channel
     let result: EventLoopFuture<Data>

@@ -25,17 +25,62 @@ public final class McpTransport {
     private let callbacks = DispatchQueue(label: "keepany.mcp.events")
     private let event: (McpTransportEvent) -> Void
     private var active: TransportSession?
+    private var prepared: PreparedSession?
+    private let now: () -> UInt64
 
-    public init(event: @escaping (McpTransportEvent) -> Void) { self.event = event }
+    public init(event: @escaping (McpTransportEvent) -> Void) { self.event = event; now = { DispatchTime.now().uptimeNanoseconds } }
+    // Clock injection is internal to the core test target; the bridge always
+    // uses the real monotonic clock and fixed 120-second lifetime.
+    init(now: @escaping () -> UInt64, event: @escaping (McpTransportEvent) -> Void) { self.event = event; self.now = now }
     deinit { try? reset() }
 
     public func start(address: String) throws -> McpEndpoint {
         try lifecycle.sync {
-            guard active == nil else { throw McpTransportError.unavailable }
-            try AddressPolicy.requireLocal(address)
-            let identity = try EphemeralIdentity(address: address)
+            let endpoint = try prepareLocked(address: address)
+            return try activateLocked(instanceId: endpoint.instanceId)
+        }
+    }
+    public func prepare(address: String) throws -> McpEndpoint { try lifecycle.sync { try prepareLocked(address: address) } }
+    public func activate(instanceId: String) throws -> McpEndpoint { try lifecycle.sync { try activateLocked(instanceId: instanceId) } }
+    private func prepareLocked(address: String) throws -> McpEndpoint {
+        expirePrepared()
+        guard active == nil, prepared == nil else { throw McpTransportError.unavailable }
+        try AddressPolicy.requireLocal(address)
+        let identity = try EphemeralIdentity(address: address)
+        let port = try AddressPolicy.unusedPort(address)
+        let value = PreparedSession(address: address, port: port, identity: identity, deadline: now() + 120_000_000_000)
+        let timer = DispatchSource.makeTimerSource(queue: lifecycle)
+        let id = value.id
+        timer.schedule(deadline: .now() + .seconds(120))
+        timer.setEventHandler { [weak self] in
+            guard let self, self.prepared?.id == id else { return }
+            self.clearPrepared()
+        }
+        value.timer = timer
+        prepared = value
+        timer.resume()
+        return value.endpoint
+    }
+    private func expirePrepared() { if let prepared, now() >= prepared.deadline { clearPrepared() } }
+    private func clearPrepared() {
+        guard let value = prepared else { return }
+        let id = value.id
+        prepared = nil; value.timer?.cancel(); value.timer = nil
+        callbacks.async { [event] in event(.stopped(instanceId: id)) }
+    }
+    private func activateLocked(instanceId: String) throws -> McpEndpoint {
+        expirePrepared()
+        guard active == nil, let value = prepared, value.id == instanceId else { throw McpTransportError.stale }
+        prepared = nil; value.timer?.cancel(); value.timer = nil
+        // Interface removal or occupied port requires a fresh prepare/export;
+        // never replace the endpoint or pin already exported by the caller.
+        do { try AddressPolicy.requireLocal(value.address) }
+        catch {
+            callbacks.async { [event] in event(.stopped(instanceId: instanceId)) }
+            throw McpTransportError.unavailable
+        }
             let group = MultiThreadedEventLoopGroup(numberOfThreads: 1)
-            let session = TransportSession(group: group, identity: identity) { [callbacks, event] value in
+            let session = TransportSession(id: value.id, group: group, identity: value.identity) { [callbacks, event] value in
                 callbacks.async { event(value) }
             }
             do {
@@ -63,29 +108,33 @@ public final class McpTransport {
                             return channel.eventLoop.makeFailedFuture(error)
                         }
                     }
-                let server = try bootstrap.bind(host: address, port: 0).wait()
-                guard let port = server.localAddress?.port, port > 0 else { try? server.close().wait(); throw McpTransportError.unavailable }
+                let server = try bootstrap.bind(host: value.address, port: value.port).wait()
+                guard server.localAddress?.port == value.port else { try? server.close().wait(); throw McpTransportError.unavailable }
                 session.listener = server
                 active = session
-                return McpEndpoint(instanceId: session.id, endpoint: "https://\(address):\(port)/mcp", certificatePem: identity.certificatePem, spkiSha256: identity.spkiSha256)
+                return value.endpoint
             } catch {
                 try? session.loop.submit { session.stop() }.wait()
                 try? group.syncShutdownGracefully()
                 throw McpTransportError.unavailable
             }
-        }
     }
     public func stop(instanceId: String) throws {
         try lifecycle.sync {
-            guard let session = active, session.id == instanceId else { throw McpTransportError.stale }
-            try shutdown(session)
+            expirePrepared()
+            if let session = active, session.id == instanceId { try shutdown(session) }
+            else if prepared?.id == instanceId { clearPrepared() }
+            else { throw McpTransportError.stale }
         }
     }
     /// Reset is intentionally unscoped for the earliest new-WebView bootstrap.
     /// It shares the exact same queue as start, so no old start resurrects later.
     public func reset() throws {
-        try lifecycle.sync { if let session = active { try shutdown(session) } }
+        try lifecycle.sync { clearPrepared(); if let session = active { try shutdown(session) } }
     }
+    /// System export/share may pause the UI. Only a prepared identity survives;
+    /// an active listener always stops and requires a new pairing export.
+    public func pause() throws { try lifecycle.sync { expirePrepared(); if let session = active { try shutdown(session) } } }
     private func shutdown(_ session: TransportSession) throws {
         active = nil
         var failure: Error?
@@ -143,6 +192,16 @@ public final class McpTransport {
     }
 }
 
+private final class PreparedSession {
+    let id = UUID().uuidString
+    let address: String, port: Int, identity: EphemeralIdentity, deadline: UInt64
+    var timer: DispatchSourceTimer?
+    var endpoint: McpEndpoint { McpEndpoint(instanceId: id, endpoint: "https://\(address):\(port)/mcp", certificatePem: identity.certificatePem, spkiSha256: identity.spkiSha256) }
+    init(address: String, port: Int, identity: EphemeralIdentity, deadline: UInt64) {
+        self.address = address; self.port = port; self.identity = identity; self.deadline = deadline
+    }
+}
+
 private final class PendingRequest {
     let id = UUID().uuidString
     let channel: Channel
@@ -155,7 +214,7 @@ private final class PendingRequest {
 }
 
 private final class TransportSession {
-    let id = UUID().uuidString
+    let id: String
     let group: MultiThreadedEventLoopGroup
     let loop: EventLoop
     var tls: NIOSSLContext?
@@ -163,8 +222,8 @@ private final class TransportSession {
     let event: (McpTransportEvent) -> Void
     private var requests: [String: PendingRequest] = [:]
     private var stopped = false
-    init(group: MultiThreadedEventLoopGroup, identity: EphemeralIdentity, event: @escaping (McpTransportEvent) -> Void) {
-        self.group = group; loop = group.next(); tls = identity.context; self.event = event
+    init(id: String, group: MultiThreadedEventLoopGroup, identity: EphemeralIdentity, event: @escaping (McpTransportEvent) -> Void) {
+        self.id = id; self.group = group; loop = group.next(); tls = identity.context; self.event = event
     }
     func admit(_ channel: Channel) -> PendingRequest? {
         loop.preconditionInEventLoop()

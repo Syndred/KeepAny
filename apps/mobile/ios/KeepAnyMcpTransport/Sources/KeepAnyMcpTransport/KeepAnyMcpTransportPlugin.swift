@@ -10,6 +10,8 @@ public final class KeepAnyMcpTransportPlugin: CAPPlugin, CAPBridgedPlugin {
     public let jsName = "KeepAnyMcpTransport"
     public let pluginMethods: [CAPPluginMethod] = [
         CAPPluginMethod(name: "start", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "prepare", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "activate", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "stop", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "reset", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "cancel", returnType: CAPPluginReturnPromise),
@@ -34,14 +36,19 @@ public final class KeepAnyMcpTransportPlugin: CAPPlugin, CAPBridgedPlugin {
     public override func load() {
         // Observing lifecycle does not initialize or start the lazy listener.
         setForeground(UIApplication.shared.applicationState == .active)
-        for name in [UIApplication.willResignActiveNotification, UIApplication.didEnterBackgroundNotification, UIApplication.willTerminateNotification] {
+        for name in [UIApplication.willResignActiveNotification, UIApplication.didEnterBackgroundNotification] {
             observers.append(NotificationCenter.default.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
                 guard let self else { return }
                 self.setForeground(false)
-                self.worker.async { [weak self] in try? self?.transport.reset() }
+                self.worker.async { [weak self] in try? self?.transport.pause() }
             })
         }
         observers.append(NotificationCenter.default.addObserver(forName: UIApplication.didBecomeActiveNotification, object: nil, queue: .main) { [weak self] _ in self?.setForeground(true) })
+        observers.append(NotificationCenter.default.addObserver(forName: UIApplication.willTerminateNotification, object: nil, queue: .main) { [weak self] _ in
+            guard let self else { return }
+            self.setForeground(false)
+            self.worker.async { [weak self] in try? self?.transport.reset() }
+        })
     }
     deinit {
         for observer in observers { NotificationCenter.default.removeObserver(observer) }
@@ -80,6 +87,23 @@ public final class KeepAnyMcpTransportPlugin: CAPPlugin, CAPBridgedPlugin {
     @objc public func reset(_ call: CAPPluginCall) {
         guard exact(call, []) else { call.reject("Invalid transport request", "native-mcp-transport"); return }
         perform(call) { [self] in try transport.reset(); return [:] }
+    }
+    @objc public func prepare(_ call: CAPPluginCall) {
+        guard exact(call, ["address"]), let address = call.getString("address") else { call.reject("Invalid transport request", "native-mcp-transport"); return }
+        perform(call) { [self] in
+            guard isForeground() else { throw McpTransportError.unavailable }
+            let endpoint = try transport.prepare(address: address)
+            return ["instanceId": endpoint.instanceId, "endpoint": endpoint.endpoint, "certificatePem": endpoint.certificatePem, "spkiSha256": endpoint.spkiSha256]
+        }
+    }
+    @objc public func activate(_ call: CAPPluginCall) {
+        guard exact(call, ["instanceId"]), let instance = id(call, "instanceId") else { call.reject("Invalid transport request", "native-mcp-transport"); return }
+        perform(call) { [self] in
+            guard isForeground() else { throw McpTransportError.unavailable }
+            let endpoint = try transport.activate(instanceId: instance)
+            guard isForeground() else { try? transport.stop(instanceId: instance); throw McpTransportError.unavailable }
+            return ["instanceId": endpoint.instanceId, "endpoint": endpoint.endpoint, "certificatePem": endpoint.certificatePem, "spkiSha256": endpoint.spkiSha256]
+        }
     }
     @objc public func stop(_ call: CAPPluginCall) {
         guard exact(call, ["instanceId"]), let instance = id(call, "instanceId") else { call.reject("Invalid transport request", "native-mcp-transport"); return }

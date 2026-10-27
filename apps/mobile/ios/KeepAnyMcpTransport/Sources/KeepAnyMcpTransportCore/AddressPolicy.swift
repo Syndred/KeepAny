@@ -40,4 +40,45 @@ enum AddressPolicy {
         }
         throw McpTransportError.unavailable
     }
+    /// Reserve an OS-selected port with bind only (never listen), then release
+    /// it. Activation must later acquire this exact port or fail visibly.
+    static func unusedPort(_ address: String) throws -> Int {
+        #if canImport(Darwin)
+        let descriptor = Darwin.socket(AF_INET, SOCK_STREAM, 0)
+        #else
+        let descriptor = Glibc.socket(AF_INET, Int32(SOCK_STREAM.rawValue), 0)
+        #endif
+        guard descriptor >= 0 else { throw McpTransportError.unavailable }
+        defer {
+            #if canImport(Darwin)
+            Darwin.close(descriptor)
+            #else
+            Glibc.close(descriptor)
+            #endif
+        }
+        var socket = sockaddr_in()
+        #if canImport(Darwin)
+        socket.sin_len = UInt8(MemoryLayout<sockaddr_in>.size)
+        #endif
+        socket.sin_family = sa_family_t(AF_INET)
+        guard inet_pton(AF_INET, address, &socket.sin_addr) == 1 else { throw McpTransportError.invalid }
+        let bound = withUnsafePointer(to: &socket) { pointer in
+            pointer.withMemoryRebound(to: sockaddr.self, capacity: 1) { address in
+                #if canImport(Darwin)
+                Darwin.bind(descriptor, address, socklen_t(MemoryLayout<sockaddr_in>.size))
+                #else
+                Glibc.bind(descriptor, address, socklen_t(MemoryLayout<sockaddr_in>.size))
+                #endif
+            }
+        }
+        guard bound == 0 else { throw McpTransportError.unavailable }
+        var length = socklen_t(MemoryLayout<sockaddr_in>.size)
+        let result = withUnsafeMutablePointer(to: &socket) { pointer in
+            pointer.withMemoryRebound(to: sockaddr.self, capacity: 1) { address in
+                getsockname(descriptor, address, &length)
+            }
+        }
+        guard result == 0 else { throw McpTransportError.unavailable }
+        return Int(UInt16(bigEndian: socket.sin_port))
+    }
 }
