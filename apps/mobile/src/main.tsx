@@ -17,6 +17,8 @@ import { createNativeBindingPlatform, createNativeSyncFetchFactory } from '../..
 import { registerSyncFetchFactory } from '../../../packages/sync-client/src/platform-fetch';
 import { createNativeConnections } from '../../../packages/platform-native/src/connections';
 import { registerPlatformConnections } from '../../web/src/platform-connections';
+import { registerAiFetchFactory } from '../../../packages/ai/src';
+import { createNativeAiFetchFactory } from '../../../packages/platform-native/src/ai-transport';
 import '../../../apps/web/src/styles.css';
 
 const startupCopy = {
@@ -42,6 +44,7 @@ async function start() {
   registerPlatformBinding(createNativeBindingPlatform(import.meta.env.VITE_KEEPANY_BINDING_ISSUER, import.meta.env.VITE_KEEPANY_OFFICIAL_SYNC_ORIGIN));
   const connections = createNativeConnections();
   registerPlatformConnections(connections);
+  registerAiFetchFactory(createNativeAiFetchFactory());
   registerSyncFetchFactory(createNativeSyncFetchFactory(connections.sessionFetch));
   const datasets = await openNativeDatasetManager();
   registerDatasetAdapter(datasets);

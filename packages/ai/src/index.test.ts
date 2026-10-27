@@ -6,6 +6,7 @@ import {
 	aiProviderIds,
 	generateAiText,
 	providerPresets,
+	registerAiFetchFactory,
 } from "./index";
 
 type RecordedRequest = {
@@ -63,6 +64,23 @@ afterEach(() => {
 });
 
 describe("AI provider connection layer", () => {
+	it("keeps Web fetch by default and replaces only the selected generation through an explicit platform factory", async () => {
+		const web = mockFetch(openAiResponse());
+		web.mockRejectedValue(new TypeError("synthetic browser fetch failure"));
+		const input = connection("openai", "https://ai.synthetic.test/v1");
+		await expect(generateAiText(input, { prompt: "synthetic" })).rejects.toMatchObject({ code: "request-failed" });
+		const native = vi.fn(async () => new Response(JSON.stringify(openAiResponse()), { headers: { "content-type": "application/json" } }));
+		const factory = vi.fn((_connection: AiConnection, _options: { timeoutMs: number }) => native as typeof fetch), remove = registerAiFetchFactory(factory);
+		try {
+			expect((await generateAiText(input, { prompt: "synthetic", timeoutMs: 120000 })).text).toBe("ok");
+			expect(factory).toHaveBeenCalledWith(input, { timeoutMs: 120000 });
+			expect(Object.isFrozen(factory.mock.calls[0][0])).toBe(true);
+			expect(native).toHaveBeenCalledOnce(); expect(web).toHaveBeenCalledOnce();
+		} finally { remove(); }
+		web.mockResolvedValue(new Response(JSON.stringify(openAiResponse()), { headers: { "content-type": "application/json" } }));
+		expect((await generateAiText(input, { prompt: "synthetic" })).text).toBe("ok");
+		expect(web).toHaveBeenCalledTimes(2); expect(native).toHaveBeenCalledOnce();
+	});
 	it("exposes editable presets for every supported provider", () => {
 		expect(Object.keys(providerPresets).sort()).toEqual(
 			[...aiProviderIds].sort(),

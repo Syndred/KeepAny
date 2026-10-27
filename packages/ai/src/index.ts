@@ -37,6 +37,14 @@ export type AiConnection = {
 	apiKey: string;
 };
 
+export type AiFetchFactory = (connection: Readonly<AiConnection>, options: { timeoutMs: number }) => typeof fetch;
+let platformFetchFactory: AiFetchFactory | undefined;
+/** Platform bootstrap only. Web keeps its standard fetch; no global patch. */
+export function registerAiFetchFactory(factory: AiFetchFactory): () => void {
+	platformFetchFactory = factory;
+	return () => { if (platformFetchFactory === factory) platformFetchFactory = undefined; };
+}
+
 export type AiProviderPreset = {
 	baseURL: string;
 	model: string;
@@ -295,9 +303,10 @@ function isChatCompletionsProvider(provider: AiProviderId): boolean {
 function secureFetch(
 	input: RequestInfo | URL,
 	init?: RequestInit,
+	fetcher: typeof fetch = globalThis.fetch,
 ): Promise<Response> {
-	const headers = new Headers(init?.headers);
-	return globalThis.fetch(input, {
+	const headers = new Headers(init?.headers !== undefined ? init.headers : input instanceof Request ? input.headers : undefined);
+	return fetcher(input, {
 		...init,
 		credentials: "omit",
 		redirect: "error",
@@ -331,8 +340,9 @@ function compatibleBaseURL(connection: AiConnection): string {
 	return normalizeBaseURL(connection.baseURL, true);
 }
 
-function createLanguageModel(connection: AiConnection): LanguageModel {
-	const fetcher = secureFetch;
+function createLanguageModel(connection: AiConnection, timeoutMs: number): LanguageModel {
+	const platformFetch = platformFetchFactory?.(Object.freeze({ ...connection }), { timeoutMs }) ?? globalThis.fetch;
+	const fetcher: typeof fetch = (input, init) => secureFetch(input, init, platformFetch);
 	const baseURL = isChatCompletionsProvider(connection.provider)
 		? compatibleBaseURL(connection)
 		: normalizeBaseURL(connection.baseURL, false);
@@ -459,7 +469,7 @@ export async function generateAiText(
 				] as unknown as ModelMessage["content"])
 			: options.prompt;
 		const result = await generateText({
-			model: createLanguageModel(connection),
+			model: createLanguageModel(connection, timeoutMs),
 			messages: [{ role: "user", content } as ModelMessage],
 			system: asPrompt(options.system, options.json === true),
 			providerOptions:
