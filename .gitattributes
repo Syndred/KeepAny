@@ -2,3 +2,7 @@ release/web/** -whitespace linguist-generated=true
 # Preserve public upstream package evidence byte-for-byte, including whitespace.
 legal/third-party/evidence/** -text -whitespace
 legal/third-party/texts/** -text
+LICENSE text eol=lf
+pnpm-lock.yaml text eol=lf
+pnpm-workspace.yaml text eol=lf
+patches/** text eol=lf

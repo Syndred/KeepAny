@@ -68,7 +68,7 @@ for (const [pnpmLicense, entries] of Object.entries(grouped)) {
       const legalFiles = [];
       for (const name of legalNames) {
         const bytes = await readFile(resolve(directory, name));
-        legalFiles.push({ path: `${relative(root, directory)}/${name}`, sha256: sha256(bytes) });
+        legalFiles.push({ path: `${relative(root, directory).replaceAll('\\', '/')}/${name}`, sha256: sha256(bytes) });
       }
       const repository = typeof metadata.repository === 'string'
         ? metadata.repository
@@ -82,7 +82,7 @@ for (const [pnpmLicense, entries] of Object.entries(grouped)) {
         repository,
         repositoryDirectory: metadata.repository?.directory ?? null,
         homepage: metadata.homepage ?? null,
-        metadataPath: `${relative(root, directory)}/package.json`,
+        metadataPath: `${relative(root, directory).replaceAll('\\', '/')}/package.json`,
         legalFiles,
         missingLicenseText: !legalNames.some(name => /^(license|licence|copying)(\.|$)/i.test(name)),
         directScope: Object.hasOwn(rootPackage.dependencies ?? {}, metadata.name) ? 'production'
