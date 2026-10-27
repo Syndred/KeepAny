@@ -1,7 +1,7 @@
 import { expect, test, type Page, type TestInfo } from '@playwright/test';
 import type { Asset, Relation } from '../../packages/domain/src';
 import { selectChoice } from './helpers/select-choice';
-import { fitAccountGraph, setAccountRelationDetailsOpen, waitForAccountGraphLayout } from './helpers/account-graph';
+import { expectAllAccountGraphNodesInFrame, fitAccountGraph, setAccountRelationDetailsOpen, waitForAccountGraphLayout } from './helpers/account-graph';
 import { sourceModuleUrl } from './helpers/source-module-url';
 
 // Fresh F06 evidence. Navigation/selectors reuse relation-lifecycle and graph helpers;
@@ -164,6 +164,7 @@ for (const zh of [true, false]) {
         await page.goto(`/assets/account/${endpoint.id}`);
         await waitForAccountGraphLayout(page, { nodes: 2, edges: 2 });
         await fitAccountGraph(page);
+        await expectAllAccountGraphNodesInFrame(page);
         for (const relation of [forward, reverse]) {
           const edge = page.locator(`.react-flow__edge[data-relation-id="${relation.id}"]`);
           await expect(edge).toHaveAttribute('data-from', relation.from);
