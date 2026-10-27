@@ -90,13 +90,20 @@ window.KeepAnySketchFlows = function (env) {
   const saved=()=>`<div class="notice"><div><strong>${esc(T('saved'))}</strong></div></div>`;
   const listRow=(name,sub,a)=>`<button type="button" class="menu-row" data-action="flow:${a}">${icon('NotebookPen')}<div><strong>${esc(name)}</strong><span class="sub">${esc(sub)}</span></div>${icon('ChevronRight')}</button>`;
   const db={assets:[],deleted:[],ledger:[{name:'Website hosting',amount:'98',currency:'CNY',type:'expense',date:'2026-10-03'},{name:'WriteDesk',amount:'12',currency:'USD',type:'expense',date:'2026-10-12'}],collections:[{name:'Forest Notes',notes:'Project / account / plan / item'}],categories:[{name:'Work',tags:'Personal, Essential'}],references:[{name:'External vault reference',url:'https://example.com/vault',notes:'Reference only'}],graph:[{name:'Work email → Website hosting',direction:'Login',source:'Manual review',checked:'2026-10-27'}],backlinks:[{name:'Example Directory',url:'https://directory.example',status:'verify',date:'2026-10-20',evidence:'Manual receipt'}],promo:[{name:'Forest Notes',url:'https://forestnotes.example',notes:'Personal writing and ideas'}],borrow:[{name:'Work laptop',borrower:'Alex',returnDate:'2026-11-05',status:'loaned'}],maintenance:[{name:'Device inspection',date:'2026-10-20',notes:'Battery and storage checked'}],receipts:[{name:'Purchase receipt',date:'2024-05-10',notes:'Original image · demo'}],repeat:[{name:'Review domain renewal',date:'2026-11-01',repeat:'month'}],notes:[{name:'Maintenance notes',notes:'Review once a month.'}],history:[{name:'Primary login updated',date:'2026-10-24',notes:'••••••••••••'}],taskHistory:[]};
+  Object.assign(db,{graph:[
+    {id:'relation-login',name:'Work email → Website hosting',from:'workmail',to:'hosting',labelKey:'login',direction:'Login email',sourceKey:'manual',checked:'2026-10-27'},
+    {id:'relation-maintain',name:'Website hosting → Forest Notes',from:'hosting',to:'project',labelKey:'manage',direction:'Maintenance account',sourceKey:'manual',checked:'2026-10-25'},
+    {id:'relation-subscription',name:'Hosting subscription → Website hosting',from:'hosting-sub',to:'hosting',labelKey:'usedBy',direction:'Uses account',sourceKey:'manual',checked:''},
+    {id:'relation-registrar',name:'Domain registrar → Forest Notes',from:'registrar',to:'project',labelKey:'owns',direction:'Parent project',sourceKey:'manual',checked:''}
+  ]});
+  const graph=window.KeepAnySketchGraph({esc,icon,t:env.t,lang:env.lang,phones,records:()=>db.graph,render:env.render,handle:env.handle,open:i=>env.handle(i,'module:graph')});
   const edits=new Map(),loginEdits=new Map(),pendingLogins=new Map(),taskLog=[],workflow={};
   let serial=0,aiConfig={endpoint:'https://api.example.com/v1',model:'demo-model'},syncMode='local';
   const moduleNames=['collections','categories','references','graph','backlinks','promo','borrow','maintenance','receipts','repeat','notes','history','taskHistory'];
   function recordFields(key,r={}) {
     let s=field('name',r.name||'');
     if(['backlinks','promo','references'].includes(key))s+=field('url',r.url||'https://example.com','url');
-    if(key==='graph')s+=field('direction',r.direction||'')+field('source',r.source||'')+field('checked',r.checked||'2026-10-27','date');
+    if(key==='graph')s+=graph.fields(r)+field('direction',r.direction||'')+field('source',r.source||graph.T(r.sourceKey||'manual'))+field('checked',r.checked||'','date');
     if(key==='borrow')s+=field('borrower',r.borrower||'')+field('returnDate',r.returnDate||'2026-11-05','date')+field('status',r.status||'loaned','text',[['loaned','loaned'],['returned','returned']]);
     if(key==='backlinks')s+=field('status',r.status||'planned','text',['planned','submitted','verify','indexed'].map(x=>[x,x]))+field('evidence',r.evidence||'');
     if(['maintenance','backlinks','receipts','repeat'].includes(key))s+=field('date',r.date||'2026-10-27','date');
@@ -106,7 +113,7 @@ window.KeepAnySketchFlows = function (env) {
     return s+field('notes',r.notes||'','textarea');
   }
   function overviewRecords(p,key){const data=key==='taskHistory'?taskLog:db[key]||[];return `<h1>${esc(env.t(key))}</h1>${key==='history'&&!env.unlocked()?hint('restoreLogin')+button('unlock','unlock'):card(data.length?data.map((r,i)=>listRow(r.name,[r.date,r.status?T(r.status):'',r.amount?`${r.currency} ${r.amount}`:'',r.notes].filter(Boolean).join(' · '),`record:${key}:${i}`)).join(''):hint('empty'))}${!['history','taskHistory'].includes(key)?button('record',`record:${key}:new`,true):''}${['graph','backlinks','borrow'].includes(key)?hint('noteOnly'):''}${key==='graph'?`<div class="card">${env.menuRow('Folder','forest','','asset:project')}${env.menuRow('KeyRound','workmail','','account:workmail')}${env.menuRow('CreditCard','hosting','','asset:hosting-sub')}</div>`:''}`;}
-  function moduleView(p){const key=p.module;
+  function moduleView(p){const key=p.module;if(key==='graph')return graph.view(p);
     if(moduleNames.includes(key))return overviewRecords(p,key);
     if(key==='linkReview')return `<h1>${esc(env.t(key))}</h1>${hint('restoreLogin')}${env.unlocked()?card(listRow(env.t('vaultOnly'),env.t('hosting'),'link-choice')):button('unlock','unlock')}`;
     if(key==='projectWorkflows'||key==='changeImpact')return `<h1>${esc(env.t(key))}</h1>${hint('noteOnly')}<div class="filter-tabs">${['rename','closeProject'].map(k=>`<button data-action="flow:workflow-tab:${k}" class="${(p.workflowTab||'rename')===k?'active':''}">${esc(T(k))}</button>`).join('')}</div>${card(['checkMail','checkDomain','checkSub'].map((k,i)=>`<div class="field-row"><div><strong>${esc(T(k))}</strong><p class="sub">${esc(T(workflow[(p.workflowTab||'rename')+i]||'pending'))}</p></div><select class="form-input workflow-select" data-flow-work="${(p.workflowTab||'rename')+i}">${['pending','done','blocked','na'].map(x=>`<option value="${x}" ${workflow[(p.workflowTab||'rename')+i]===x?'selected':''}>${esc(T(x))}</option>`).join('')}</select></div>`).join(''))}`;
@@ -164,7 +171,7 @@ window.KeepAnySketchFlows = function (env) {
     if(key==='link-choice')return {title:'linkReview',body:card(env.t('vaultOnly'))+form('link',field('owner',env.t('hosting')))};
     return null;
   }
-  function handle(i,a){const p=phones[i];
+  function handle(i,a){const p=phones[i];if(graph.handle(i,a))return true;
     if(['panel:smartImport','panel:importVault'].includes(a)&&!env.unlocked()){p.afterUnlockModal=a.slice(6);p.modal='unlock';env.render();return true;}
     if(a==='new'&&p.page==='module'){if(p.module==='costs')a='flow:ledger-new';else if(moduleNames.includes(p.module))a=`flow:record:${p.module}:new`;else return false;}
     if(a==='new'&&p.page==='tasks')a='flow:task-add';
@@ -185,7 +192,7 @@ window.KeepAnySketchFlows = function (env) {
     else if(kind==='asset-edit')p.modal='edit';
     else if(['asset-delete','record-delete','ledger-delete','trash-remove'].includes(kind)){p.deleteKind=kind;p.modal='flow:confirm-delete';}
     else if(kind==='delete-confirm'){
-      if(p.deleteKind==='record-delete'){const row=db[p.recordKey].splice(Number(p.recordIndex),1)[0];db.deleted.push({...row,scope:p.recordKey});}
+      if(p.deleteKind==='record-delete'){if(p.recordKey==='graph')graph.clearSelection(p);const row=db[p.recordKey].splice(Number(p.recordIndex),1)[0];db.deleted.push({...row,scope:p.recordKey});}
       if(p.deleteKind==='ledger-delete'){const row=db.ledger.splice(p.editLedger,1)[0];db.deleted.push({...row,scope:'ledger'});}
       if(p.deleteKind==='asset-delete'){const id=p.asset||p.page;db.deleted.push({name:edits.get(id)?.name||env.t(id==='item'?'laptop':'forest'),scope:'assets',id});env.hideAsset(id);p.page='assets';}
       if(p.deleteKind==='trash-remove')db.deleted.splice(p.trashIndex,1);
@@ -207,10 +214,11 @@ window.KeepAnySketchFlows = function (env) {
     env.render();return true;
   }
   function submit(formEl,i){const kind=formEl.dataset.flowForm;if(!kind)return false;const p=phones[i],d=Object.fromEntries(new FormData(formEl)),fail=k=>{formEl.querySelector('[role="alert"]').textContent=T(k);};
+    if(kind==='record'&&p.recordKey==='graph'&&d.from===d.to){formEl.querySelector('[role="alert"]').textContent=graph.T('invalid');return true;}
     if(['asset','ledger','task','record'].includes(kind)&&(!d.name?.trim()||d.amount!==undefined&&(!Number.isFinite(Number(d.amount))||Number(d.amount)<0))){fail('required');return true;}
     if(kind==='asset'){const id=p.assetNew?'sample-'+(++serial):p.asset||p.page;edits.set(id,d);if(p.assetNew)db.assets.push({id,kind:p.assetKind,name:d.name,meta:d.tags,main:d.due||d.bought||'',side:T('local'),foot:d.amount?`${d.currency} ${d.amount}`:'',icon:p.assetKind==='item'?'Package':'Folder'});p.page='assets';p.modal=null;env.setPopulated();}
     else if(kind==='ledger'){if(p.editLedger!=null)db.ledger[p.editLedger]=d;else db.ledger.push(d);p.module='costs';p.page='module';p.ledgerType=d.type;p.modal=null;}
-    else if(kind==='record'){if(p.recordKey==='collections')d.members=new FormData(formEl).getAll('members');if(p.recordIndex==='new')db[p.recordKey].push(d);else db[p.recordKey][Number(p.recordIndex)]=d;p.modal=null;}
+    else if(kind==='record'){if(p.recordKey==='graph'){const prior=p.recordIndex==='new'?null:db.graph[Number(p.recordIndex)];d.id=prior?.id||'relation-demo-'+(++serial);}if(p.recordKey==='collections')d.members=new FormData(formEl).getAll('members');if(p.recordIndex==='new')db[p.recordKey].push(d);else db[p.recordKey][Number(p.recordIndex)]=d;p.modal=null;}
     else if(kind==='task'){tasks.push({label:d.name,done:false,date:d.date});p.page='tasks';p.modal=null;}
     else if(kind==='login'){const key=p.account+':'+(p.loginIndex||0);p.partial=env.state()==='partial';(p.partial?pendingLogins:loginEdits).set(key,d);p.modal=null;env.ensureLogin(p.account);}
     else if(kind==='cancel-plan'){edits.set(p.asset||'hosting-sub',{...edits.get(p.asset||'hosting-sub'),...d,name:edits.get(p.asset||'hosting-sub')?.name||env.t('hosting')});p.modal=null;}
@@ -225,5 +233,5 @@ window.KeepAnySketchFlows = function (env) {
     env.render();return true;
   }
   document.addEventListener('change',e=>{const key=e.target.dataset.flowWork;if(key){workflow[key]=e.target.value;env.render();}});
-  return {T,moduleView,sheet,handle,submit,edits,loginEdits,addedAssets:()=>db.assets,assetSheet,addDeleted:r=>db.deleted.push(r)};
+  return {T,moduleView,sheet,handle,submit,edits,loginEdits,addedAssets:()=>db.assets,assetSheet,addDeleted:r=>db.deleted.push(r),graphPreview:(p,id)=>graph.preview(p,id)};
 };
