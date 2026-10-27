@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/react-router";
+import { Capacitor } from "@capacitor/core";
 import { useTranslation } from "react-i18next";
 import { ArrowRight, ArrowUpRight, Bell, CalendarDays, Layers2, Plus, ScanEye, TriangleAlert } from "lucide-react";
 import type { Asset } from "../../../packages/domain/src";
@@ -50,7 +51,7 @@ export function Overview() {
   };
   return <main className="page overview-page">
     <section className="overview-hero">
-      <div><span className="eyebrow">{t("overviewEyebrow")}</span><h1>{t("overviewHero")}</h1><p>{t("overviewHeroHint")}</p></div>
+      <div><span className="eyebrow">{t("overviewEyebrow")}</span><h1>{t("overviewHero")}</h1><p>{t(Capacitor.isNativePlatform() ? "overviewNativeHeroHint" : "overviewHeroHint")}</p></div>
       <Link to="/assets/$kind" params={{ kind: "project" }} className="button overview-hero-action"><ArrowUpRight size={16}/>{t("exploreProjects")}</Link>
     </section>
     <div className="overview-intake-bar"><strong>{t("overviewCollectHint")}</strong><Link className="button" to="/intake"><Plus size={15}/>{t("quickIntake")}</Link><Link className="button" to="/tasks">{t("viewTasks")} <ArrowRight size={15}/></Link></div>
