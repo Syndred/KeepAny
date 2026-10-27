@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'none'; form-action 'none'; base-uri 'self'">
+<title>KeepAny · 资产与账号整合草图 v2</title>
+<link rel="icon" href="../../../apps/web/public/icons/keepany.svg"><link rel="stylesheet" href="../themes/default.css"><link rel="stylesheet" href="../mobile-preview.css"><link rel="stylesheet" href="../mobile-unified.css"><script src="../mobile-unified.js" defer></script>
+</head>
+<body class="unified">
+<div class="studio">
+  <div class="studio-kicker"><span class="studio-dot"></span> KEEPANY / MOBILE DESIGN STUDY / V2</div>
+  <header class="studio-title"><h1 data-i18n="studioTitle"></h1><nav class="studio-links" aria-label="设计资料"><a href="../../../docs/mobile/手机功能整合与完整覆盖-v2-20261027.md" data-i18n="coverageDoc"></a><a href="../002-mobile-restore/index.html" data-i18n="restoreSketch"></a></nav></header>
+  <p class="studio-note" data-i18n="studioNote"></p>
+  <div class="studio-controls" aria-label="草图控制">
+    <div class="variant-controls"><button type="button" data-variant="a" aria-pressed="true" data-i18n="variantA"></button><button type="button" data-variant="b" aria-pressed="false" data-i18n="variantB"></button></div>
+    <label class="control-field"><span>Language</span><select id="language" aria-label="Preview language"><option value="zh">简体中文</option><option value="en">English</option></select></label>
+    <label class="control-field"><span data-i18n="state"></span><select id="ui-state" aria-label="Demo state"><option value="populated" data-i18n="populated"></option><option value="empty" data-i18n="empty"></option><option value="unknown" data-i18n="unknownDates"></option><option value="partial" data-i18n="partialState"></option></select></label>
+    <label class="control-field detail-picker"><span data-i18n="detailPreview"></span><select id="detail-selector" aria-label="Detail preview"><option value="project" data-i18n="project"></option><option value="domain" data-i18n="domain"></option><option value="subscription" data-i18n="subscription"></option><option value="item" data-i18n="item"></option><option value="account" data-i18n="account"></option></select></label>
+    <label class="control-field"><span data-i18n="widthLabel"></span><select id="width" aria-label="Preview width"><option value="board" data-i18n="board"></option><option value="360">360px</option><option value="390">390px</option><option value="430">430px</option></select></label>
+    <label class="control-field screen-select mobile-only"><span data-i18n="screenLabel"></span><select id="screen-selector" aria-label="Preview screen"></select></label>
+  </div>
+  <p class="studio-caption"><strong data-i18n="caption"></strong><span data-i18n="compare"></span></p>
+  <div class="board" id="board"></div>
+  <footer class="studio-footer"><span data-i18n="footer"></span><a href="../../../docs/mobile/Capacitor-SQLite迁移方案-20261027.md" data-i18n="migrationDoc"></a></footer>
+</div>
+</body>
+</html>
