@@ -1,0 +1,20 @@
+
+QA_DEADLINE {"guard":"qa-deadline","event":"started","version":1,"startedAt":"2026-10-27T05:17:04.196Z","deadlineAt":"2026-10-27T05:32:04.196Z","budgetMs":900000,"observedAt":"2026-10-27T05:23:30.364Z","remainingMs":513832,"expired":false}
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+locator.fill: Timeout 30000ms exceeded.
+Call log:
+[2m  - waiting for getByRole('dialog').getByLabel('URL', { exact: true })[22m
+
+    at /Users/syndred/Desktop/projects/KeepAny/.gstack/qa-runtime/T25-extra.mjs:19:43 {
+  log: [
+    "  - waiting for getByRole('dialog').getByLabel('URL', { exact: true })"
+  ],
+  name: 'TimeoutError'
+}
+
+Node.js v22.23.1
+
+QA_DEADLINE {"guard":"qa-deadline","event":"finished","observedAt":"2026-10-27T05:24:12.447Z","deadlineAt":"2026-10-27T05:32:04.196Z","timedOut":false,"exitCode":1}

@@ -1,0 +1,29 @@
+{
+  "sourceCommit": "8a83669",
+  "typecheck": {
+    "command": "node node_modules/typescript/bin/tsc --noEmit",
+    "exitCode": 0
+  },
+  "unit": {
+    "command": "node node_modules/vitest/vitest.mjs run apps/web/src/workspace-navigation.test.ts apps/web/src/workspace-summary.test.ts apps/web/src/i18n.test.ts",
+    "filesPassed": 3,
+    "testsPassed": 12,
+    "exitCode": 0
+  },
+  "browser": {
+    "command": "KEEPANY_E2E_PORT=4205 KEEPANY_EVIDENCE_DIR=docs/qa/2026-10-27/evidence/integration/screenshots node node_modules/@playwright/test/cli.js test tests/e2e/workspace-navigation.regression.spec.ts tests/e2e/workspace-summary-qa.spec.ts tests/e2e/qa-account-journey.spec.ts --grep 'en(-US)? 1280px' --workers=1 --reporter=json --output=test-results/qa-integration",
+    "stats": {
+      "startTime": "2026-10-27T05:28:11.544Z",
+      "duration": 17109.707,
+      "expected": 3,
+      "skipped": 0,
+      "unexpected": 0,
+      "flaky": 0
+    }
+  },
+  "limits": [
+    "Mac isolated Chromium source verification only",
+    "fixed release/web, Windows, Ego and real mobile not run",
+    "remaining 90 master cases not complete"
+  ]
+}

@@ -1,0 +1,88 @@
+--- BEGIN UNTRUSTED EXTERNAL CONTENT (source: http://127.0.0.1:4205/assets/vault#vault-references) ---
+[
+  {
+    "index": 0,
+    "action": "http://127.0.0.1:4205/assets/vault#vault-references",
+    "method": "get",
+    "fields": [
+      {
+        "tag": "input",
+        "type": "password",
+        "id": "password-vault-master",
+        "required": true,
+        "value": "[redacted]"
+      },
+      {
+        "tag": "input",
+        "type": "password",
+        "id": "password-vault-master-confirm",
+        "required": true,
+        "value": "[redacted]"
+      }
+    ]
+  },
+  {
+    "index": 1,
+    "action": "http://127.0.0.1:4205/assets/vault#vault-references",
+    "method": "get",
+    "fields": [
+      {
+        "tag": "input",
+        "type": "text",
+        "name": "name",
+        "id": "name",
+        "value": "QA-reference-T25"
+      },
+      {
+        "tag": "select",
+        "type": "select-one",
+        "value": "other",
+        "options": [
+          {
+            "value": "other",
+            "text": "Other"
+          }
+        ]
+      },
+      {
+        "tag": "input",
+        "type": "url",
+        "name": "url",
+        "id": "url",
+        "value": "javascript:alert(1)"
+      },
+      {
+        "tag": "input",
+        "type": "text",
+        "name": "location",
+        "id": "location"
+      },
+      {
+        "tag": "select",
+        "type": "select-one",
+        "options": [
+          {
+            "value": "",
+            "text": ""
+          },
+          {
+            "value": "__keepany_select_empty__",
+            "text": "Select"
+          }
+        ]
+      },
+      {
+        "tag": "input",
+        "type": "text",
+        "name": "tags",
+        "id": "tags"
+      },
+      {
+        "tag": "textarea",
+        "type": "textarea",
+        "id": "notes"
+      }
+    ]
+  }
+]
+--- END UNTRUSTED EXTERNAL CONTENT ---

@@ -1,0 +1,886 @@
+{
+  "config": {
+    "argv": [
+      "/Users/syndred/.nvm/versions/node/v22.23.1/bin/node",
+      "/Users/syndred/Desktop/projects/KeepAny/node_modules/@playwright/test/cli.js",
+      "test",
+      "tests/e2e/global-search.spec.ts",
+      "tests/e2e/notes-trash-release.spec.ts",
+      "tests/e2e/english-demo-release.spec.ts",
+      "tests/e2e/vault-reference-release.spec.ts",
+      "--workers=1",
+      "--reporter=json",
+      "--output=test-results/qa-T25"
+    ],
+    "configFile": "/Users/syndred/Desktop/projects/KeepAny/playwright.config.ts",
+    "rootDir": "/Users/syndred/Desktop/projects/KeepAny/tests/e2e",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "/Users/syndred/Desktop/projects/KeepAny/test-results/qa-T25",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "",
+        "name": "",
+        "testDir": "/Users/syndred/Desktop/projects/KeepAny/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 45000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "json"
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.63.0",
+    "workers": 1,
+    "webServer": {
+      "command": "pnpm dev --port 4204 --strictPort",
+      "url": "http://127.0.0.1:4204",
+      "reuseExistingServer": true,
+      "timeout": 30000
+    }
+  },
+  "suites": [
+    {
+      "title": "english-demo-release.spec.ts",
+      "file": "english-demo-release.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "English sample records stay English across pages, details, menus and refresh at 390",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 7289,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-27T05:17:06.090Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "5d24a8c89f27c33962a7-429447c84f59d945f8bc",
+          "file": "english-demo-release.spec.ts",
+          "line": 35,
+          "column": 2
+        },
+        {
+          "title": "English sample records stay English across pages, details, menus and refresh at 1280",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 7861,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-27T05:17:13.473Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "5d24a8c89f27c33962a7-9af93793bcc05362b5db",
+          "file": "english-demo-release.spec.ts",
+          "line": 35,
+          "column": 2
+        },
+        {
+          "title": "Chinese sample records use Chinese copy and switching language preserves saved content",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1580,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-27T05:17:21.340Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "5d24a8c89f27c33962a7-50de6eb54cc8ac2d3a75",
+          "file": "english-demo-release.spec.ts",
+          "line": 99,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "global-search.spec.ts",
+      "file": "global-search.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "en-US global search locates four sources, clears same-hash filters and bounds 15 long results at 390px",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3179,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-27T05:17:22.942Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "22b67ba9afbd6958fb19-d4a3fdebddf28eed2ed5",
+          "file": "global-search.spec.ts",
+          "line": 56,
+          "column": 3
+        },
+        {
+          "title": "en-US global search locates four sources, clears same-hash filters and bounds 15 long results at 1280px",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2820,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-27T05:17:26.127Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "22b67ba9afbd6958fb19-56a4e6da96d79f714f27",
+          "file": "global-search.spec.ts",
+          "line": 56,
+          "column": 3
+        },
+        {
+          "title": "zh-CN global search locates four sources, clears same-hash filters and bounds 15 long results at 390px",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2784,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-27T05:17:28.952Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "22b67ba9afbd6958fb19-5b3d2b4b65850de0015a",
+          "file": "global-search.spec.ts",
+          "line": 56,
+          "column": 3
+        },
+        {
+          "title": "zh-CN global search locates four sources, clears same-hash filters and bounds 15 long results at 1280px",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2725,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-27T05:17:31.741Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "22b67ba9afbd6958fb19-9f3ec12ccf024dae5a92",
+          "file": "global-search.spec.ts",
+          "line": 56,
+          "column": 3
+        },
+        {
+          "title": "same-page intake search reads a candidate confirmed in another tab without replacing a queued draft",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1519,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-27T05:17:34.470Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "22b67ba9afbd6958fb19-b0cd82a248564e60697c",
+          "file": "global-search.spec.ts",
+          "line": 152,
+          "column": 1
+        },
+        {
+          "title": "a late target read does not replace a candidate draft queued after search navigation",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1284,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-27T05:17:35.994Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "22b67ba9afbd6958fb19-ddca8584454c65869944",
+          "file": "global-search.spec.ts",
+          "line": 192,
+          "column": 1
+        },
+        {
+          "title": "rejected candidate autosave keeps its draft and error on first and repeated search hashes",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1484,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-27T05:17:37.282Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "22b67ba9afbd6958fb19-c5f12304a13c589efc57",
+          "file": "global-search.spec.ts",
+          "line": 237,
+          "column": 1
+        },
+        {
+          "title": "failed candidate metadata read conservatively excludes asset descriptions while public names remain searchable",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 636,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-27T05:17:38.771Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "22b67ba9afbd6958fb19-f5f66ce1039a79abab49",
+          "file": "global-search.spec.ts",
+          "line": 281,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "notes-trash-release.spec.ts",
+      "file": "notes-trash-release.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "zh-CN 390px consolidates legacy notes and confirms both trash workflows",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 12552,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [
+                    {
+                      "text": "-------------- RxDB Open Core RxStorage -------------------------------\nYou are using the free Dexie.js based RxStorage implementation from RxDB https://rxdb.info/rx-storage-dexie.html?console=dexie \nWhile this is a great option, we want to let you know that there are faster storage solutions available in our premium plugins.\nFor professional users and production environments, we highly recommend considering these premium options to enhance performance and reliability.\n https://rxdb.info/premium/?console=dexie \nIf you already purchased premium access you can disable this log by calling the setPremiumFlag() function from rxdb-premium/plugins/shared.\n---------------------------------------------------------------------\n"
+                    }
+                  ],
+                  "retry": 0,
+                  "startTime": "2026-10-27T05:17:39.744Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "3635f1c9d960a4b101f3-9be44199201de8a946ff",
+          "file": "notes-trash-release.spec.ts",
+          "line": 164,
+          "column": 3
+        },
+        {
+          "title": "zh-CN 1536px consolidates legacy notes and confirms both trash workflows",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 12890,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-27T05:17:55.113Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "3635f1c9d960a4b101f3-34eb8fd82ea900c9de55",
+          "file": "notes-trash-release.spec.ts",
+          "line": 164,
+          "column": 3
+        },
+        {
+          "title": "en 390px consolidates legacy notes and confirms both trash workflows",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 12349,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-27T05:18:08.008Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "3635f1c9d960a4b101f3-7e41e329c12f4d7bcde5",
+          "file": "notes-trash-release.spec.ts",
+          "line": 164,
+          "column": 3
+        },
+        {
+          "title": "en 1536px consolidates legacy notes and confirms both trash workflows",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 11572,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-27T05:18:20.362Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "3635f1c9d960a4b101f3-4f7717494593784678b2",
+          "file": "notes-trash-release.spec.ts",
+          "line": 164,
+          "column": 3
+        }
+      ]
+    },
+    {
+      "title": "vault-reference-release.spec.ts",
+      "file": "vault-reference-release.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "zh-CN 390px vault reference saves, archives and restores through the fixed UI",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 32282,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-27T05:18:31.945Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "vault-table-scroll-initial",
+                      "contentType": "application/json",
+                      "body": "ewogICJzY3JvbGxMZWZ0IjogMCwKICAic2Nyb2xsV2lkdGgiOiA3MjAsCiAgImNsaWVudFdpZHRoIjogMzYyLAogICJmb2N1c2VkIjogdHJ1ZSwKICAib3ZlcmZsb3dYIjogImF1dG8iLAogICJvdmVyZmxvd1kiOiAiYXV0byIsCiAgInRhYkluZGV4IjogMCwKICAiYWN0aXZlVGFnTmFtZSI6ICJTRUNUSU9OIiwKICAiYWN0aXZlQ2xhc3NOYW1lIjogImNhcmQgdmF1bHQtdGFibGUtd3JhcCBhc3NldC1saXN0LWNvbnRlbnQiLAogICJzZWxlY3Rpb24iOiAiIiwKICAic2NyaXB0U291cmNlcyI6IFsKICAgICJodHRwOi8vMTI3LjAuMC4xOjQyMDQvQHZpdGUvY2xpZW50IiwKICAgICJodHRwOi8vMTI3LjAuMC4xOjQyMDQvc3JjL21haW4udHN4IgogIF0KfQ=="
+                    },
+                    {
+                      "name": "vault-table-scroll-after-right",
+                      "contentType": "application/json",
+                      "body": "ewogICJzY3JvbGxMZWZ0IjogMzIwLAogICJzY3JvbGxXaWR0aCI6IDcyMCwKICAiY2xpZW50V2lkdGgiOiAzNjIsCiAgImZvY3VzZWQiOiB0cnVlLAogICJvdmVyZmxvd1giOiAiYXV0byIsCiAgIm92ZXJmbG93WSI6ICJhdXRvIiwKICAidGFiSW5kZXgiOiAwLAogICJhY3RpdmVUYWdOYW1lIjogIlNFQ1RJT04iLAogICJhY3RpdmVDbGFzc05hbWUiOiAiY2FyZCB2YXVsdC10YWJsZS13cmFwIGFzc2V0LWxpc3QtY29udGVudCIsCiAgInNlbGVjdGlvbiI6ICIiLAogICJzY3JpcHRTb3VyY2VzIjogWwogICAgImh0dHA6Ly8xMjcuMC4wLjE6NDIwNC9Adml0ZS9jbGllbnQiLAogICAgImh0dHA6Ly8xMjcuMC4wLjE6NDIwNC9zcmMvbWFpbi50c3giCiAgXQp9"
+                    },
+                    {
+                      "name": "vault-table-scroll-after-left",
+                      "contentType": "application/json",
+                      "body": "ewogICJzY3JvbGxMZWZ0IjogMCwKICAic2Nyb2xsV2lkdGgiOiA3MjAsCiAgImNsaWVudFdpZHRoIjogMzYyLAogICJmb2N1c2VkIjogdHJ1ZSwKICAib3ZlcmZsb3dYIjogImF1dG8iLAogICJvdmVyZmxvd1kiOiAiYXV0byIsCiAgInRhYkluZGV4IjogMCwKICAiYWN0aXZlVGFnTmFtZSI6ICJTRUNUSU9OIiwKICAiYWN0aXZlQ2xhc3NOYW1lIjogImNhcmQgdmF1bHQtdGFibGUtd3JhcCBhc3NldC1saXN0LWNvbnRlbnQiLAogICJzZWxlY3Rpb24iOiAiIiwKICAic2NyaXB0U291cmNlcyI6IFsKICAgICJodHRwOi8vMTI3LjAuMC4xOjQyMDQvQHZpdGUvY2xpZW50IiwKICAgICJodHRwOi8vMTI3LjAuMC4xOjQyMDQvc3JjL21haW4udHN4IgogIF0KfQ=="
+                    },
+                    {
+                      "name": "vault-table-scroll-initial",
+                      "contentType": "application/json",
+                      "body": "ewogICJzY3JvbGxMZWZ0IjogMCwKICAic2Nyb2xsV2lkdGgiOiA3MjAsCiAgImNsaWVudFdpZHRoIjogMzYyLAogICJmb2N1c2VkIjogdHJ1ZSwKICAib3ZlcmZsb3dYIjogImF1dG8iLAogICJvdmVyZmxvd1kiOiAiYXV0byIsCiAgInRhYkluZGV4IjogMCwKICAiYWN0aXZlVGFnTmFtZSI6ICJTRUNUSU9OIiwKICAiYWN0aXZlQ2xhc3NOYW1lIjogImNhcmQgdmF1bHQtdGFibGUtd3JhcCBhc3NldC1saXN0LWNvbnRlbnQiLAogICJzZWxlY3Rpb24iOiAiIiwKICAic2NyaXB0U291cmNlcyI6IFsKICAgICJodHRwOi8vMTI3LjAuMC4xOjQyMDQvQHZpdGUvY2xpZW50IiwKICAgICJodHRwOi8vMTI3LjAuMC4xOjQyMDQvc3JjL21haW4udHN4IgogIF0KfQ=="
+                    },
+                    {
+                      "name": "vault-table-scroll-after-right",
+                      "contentType": "application/json",
+                      "body": "ewogICJzY3JvbGxMZWZ0IjogMzIwLAogICJzY3JvbGxXaWR0aCI6IDcyMCwKICAiY2xpZW50V2lkdGgiOiAzNjIsCiAgImZvY3VzZWQiOiB0cnVlLAogICJvdmVyZmxvd1giOiAiYXV0byIsCiAgIm92ZXJmbG93WSI6ICJhdXRvIiwKICAidGFiSW5kZXgiOiAwLAogICJhY3RpdmVUYWdOYW1lIjogIlNFQ1RJT04iLAogICJhY3RpdmVDbGFzc05hbWUiOiAiY2FyZCB2YXVsdC10YWJsZS13cmFwIGFzc2V0LWxpc3QtY29udGVudCIsCiAgInNlbGVjdGlvbiI6ICIiLAogICJzY3JpcHRTb3VyY2VzIjogWwogICAgImh0dHA6Ly8xMjcuMC4wLjE6NDIwNC9Adml0ZS9jbGllbnQiLAogICAgImh0dHA6Ly8xMjcuMC4wLjE6NDIwNC9zcmMvbWFpbi50c3giCiAgXQp9"
+                    },
+                    {
+                      "name": "vault-table-scroll-after-left",
+                      "contentType": "application/json",
+                      "body": "ewogICJzY3JvbGxMZWZ0IjogMCwKICAic2Nyb2xsV2lkdGgiOiA3MjAsCiAgImNsaWVudFdpZHRoIjogMzYyLAogICJmb2N1c2VkIjogdHJ1ZSwKICAib3ZlcmZsb3dYIjogImF1dG8iLAogICJvdmVyZmxvd1kiOiAiYXV0byIsCiAgInRhYkluZGV4IjogMCwKICAiYWN0aXZlVGFnTmFtZSI6ICJTRUNUSU9OIiwKICAiYWN0aXZlQ2xhc3NOYW1lIjogImNhcmQgdmF1bHQtdGFibGUtd3JhcCBhc3NldC1saXN0LWNvbnRlbnQiLAogICJzZWxlY3Rpb24iOiAiIiwKICAic2NyaXB0U291cmNlcyI6IFsKICAgICJodHRwOi8vMTI3LjAuMC4xOjQyMDQvQHZpdGUvY2xpZW50IiwKICAgICJodHRwOi8vMTI3LjAuMC4xOjQyMDQvc3JjL21haW4udHN4IgogIF0KfQ=="
+                    },
+                    {
+                      "name": "vault-table-scroll-initial",
+                      "contentType": "application/json",
+                      "body": "ewogICJzY3JvbGxMZWZ0IjogMCwKICAic2Nyb2xsV2lkdGgiOiA3MjAsCiAgImNsaWVudFdpZHRoIjogMzYyLAogICJmb2N1c2VkIjogdHJ1ZSwKICAib3ZlcmZsb3dYIjogImF1dG8iLAogICJvdmVyZmxvd1kiOiAiYXV0byIsCiAgInRhYkluZGV4IjogMCwKICAiYWN0aXZlVGFnTmFtZSI6ICJTRUNUSU9OIiwKICAiYWN0aXZlQ2xhc3NOYW1lIjogImNhcmQgdmF1bHQtdGFibGUtd3JhcCBhc3NldC1saXN0LWNvbnRlbnQiLAogICJzZWxlY3Rpb24iOiAiIiwKICAic2NyaXB0U291cmNlcyI6IFsKICAgICJodHRwOi8vMTI3LjAuMC4xOjQyMDQvQHZpdGUvY2xpZW50IiwKICAgICJodHRwOi8vMTI3LjAuMC4xOjQyMDQvc3JjL21haW4udHN4IgogIF0KfQ=="
+                    },
+                    {
+                      "name": "vault-table-scroll-after-right",
+                      "contentType": "application/json",
+                      "body": "ewogICJzY3JvbGxMZWZ0IjogMzIwLAogICJzY3JvbGxXaWR0aCI6IDcyMCwKICAiY2xpZW50V2lkdGgiOiAzNjIsCiAgImZvY3VzZWQiOiB0cnVlLAogICJvdmVyZmxvd1giOiAiYXV0byIsCiAgIm92ZXJmbG93WSI6ICJhdXRvIiwKICAidGFiSW5kZXgiOiAwLAogICJhY3RpdmVUYWdOYW1lIjogIlNFQ1RJT04iLAogICJhY3RpdmVDbGFzc05hbWUiOiAiY2FyZCB2YXVsdC10YWJsZS13cmFwIGFzc2V0LWxpc3QtY29udGVudCIsCiAgInNlbGVjdGlvbiI6ICIiLAogICJzY3JpcHRTb3VyY2VzIjogWwogICAgImh0dHA6Ly8xMjcuMC4wLjE6NDIwNC9Adml0ZS9jbGllbnQiLAogICAgImh0dHA6Ly8xMjcuMC4wLjE6NDIwNC9zcmMvbWFpbi50c3giCiAgXQp9"
+                    },
+                    {
+                      "name": "vault-table-scroll-after-left",
+                      "contentType": "application/json",
+                      "body": "ewogICJzY3JvbGxMZWZ0IjogMCwKICAic2Nyb2xsV2lkdGgiOiA3MjAsCiAgImNsaWVudFdpZHRoIjogMzYyLAogICJmb2N1c2VkIjogdHJ1ZSwKICAib3ZlcmZsb3dYIjogImF1dG8iLAogICJvdmVyZmxvd1kiOiAiYXV0byIsCiAgInRhYkluZGV4IjogMCwKICAiYWN0aXZlVGFnTmFtZSI6ICJTRUNUSU9OIiwKICAiYWN0aXZlQ2xhc3NOYW1lIjogImNhcmQgdmF1bHQtdGFibGUtd3JhcCBhc3NldC1saXN0LWNvbnRlbnQiLAogICJzZWxlY3Rpb24iOiAiIiwKICAic2NyaXB0U291cmNlcyI6IFsKICAgICJodHRwOi8vMTI3LjAuMC4xOjQyMDQvQHZpdGUvY2xpZW50IiwKICAgICJodHRwOi8vMTI3LjAuMC4xOjQyMDQvc3JjL21haW4udHN4IgogIF0KfQ=="
+                    },
+                    {
+                      "name": "vault-table-scroll-initial",
+                      "contentType": "application/json",
+                      "body": "ewogICJzY3JvbGxMZWZ0IjogMCwKICAic2Nyb2xsV2lkdGgiOiA3MjAsCiAgImNsaWVudFdpZHRoIjogMzYyLAogICJmb2N1c2VkIjogdHJ1ZSwKICAib3ZlcmZsb3dYIjogImF1dG8iLAogICJvdmVyZmxvd1kiOiAiYXV0byIsCiAgInRhYkluZGV4IjogMCwKICAiYWN0aXZlVGFnTmFtZSI6ICJTRUNUSU9OIiwKICAiYWN0aXZlQ2xhc3NOYW1lIjogImNhcmQgdmF1bHQtdGFibGUtd3JhcCBhc3NldC1saXN0LWNvbnRlbnQiLAogICJzZWxlY3Rpb24iOiAiIiwKICAic2NyaXB0U291cmNlcyI6IFsKICAgICJodHRwOi8vMTI3LjAuMC4xOjQyMDQvQHZpdGUvY2xpZW50IiwKICAgICJodHRwOi8vMTI3LjAuMC4xOjQyMDQvc3JjL21haW4udHN4IgogIF0KfQ=="
+                    },
+                    {
+                      "name": "vault-table-scroll-after-right",
+                      "contentType": "application/json",
+                      "body": "ewogICJzY3JvbGxMZWZ0IjogMzIwLAogICJzY3JvbGxXaWR0aCI6IDcyMCwKICAiY2xpZW50V2lkdGgiOiAzNjIsCiAgImZvY3VzZWQiOiB0cnVlLAogICJvdmVyZmxvd1giOiAiYXV0byIsCiAgIm92ZXJmbG93WSI6ICJhdXRvIiwKICAidGFiSW5kZXgiOiAwLAogICJhY3RpdmVUYWdOYW1lIjogIlNFQ1RJT04iLAogICJhY3RpdmVDbGFzc05hbWUiOiAiY2FyZCB2YXVsdC10YWJsZS13cmFwIGFzc2V0LWxpc3QtY29udGVudCIsCiAgInNlbGVjdGlvbiI6ICIiLAogICJzY3JpcHRTb3VyY2VzIjogWwogICAgImh0dHA6Ly8xMjcuMC4wLjE6NDIwNC9Adml0ZS9jbGllbnQiLAogICAgImh0dHA6Ly8xMjcuMC4wLjE6NDIwNC9zcmMvbWFpbi50c3giCiAgXQp9"
+                    },
+                    {
+                      "name": "vault-table-scroll-after-left",
+                      "contentType": "application/json",
+                      "body": "ewogICJzY3JvbGxMZWZ0IjogMCwKICAic2Nyb2xsV2lkdGgiOiA3MjAsCiAgImNsaWVudFdpZHRoIjogMzYyLAogICJmb2N1c2VkIjogdHJ1ZSwKICAib3ZlcmZsb3dYIjogImF1dG8iLAogICJvdmVyZmxvd1kiOiAiYXV0byIsCiAgInRhYkluZGV4IjogMCwKICAiYWN0aXZlVGFnTmFtZSI6ICJTRUNUSU9OIiwKICAiYWN0aXZlQ2xhc3NOYW1lIjogImNhcmQgdmF1bHQtdGFibGUtd3JhcCBhc3NldC1saXN0LWNvbnRlbnQiLAogICJzZWxlY3Rpb24iOiAiIiwKICAic2NyaXB0U291cmNlcyI6IFsKICAgICJodHRwOi8vMTI3LjAuMC4xOjQyMDQvQHZpdGUvY2xpZW50IiwKICAgICJodHRwOi8vMTI3LjAuMC4xOjQyMDQvc3JjL21haW4udHN4IgogIF0KfQ=="
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "c34c947a40b123aa7f79-af7eb535ec9eec10c699",
+          "file": "vault-reference-release.spec.ts",
+          "line": 428,
+          "column": 3
+        },
+        {
+          "title": "zh-CN 1280px vault reference saves, archives and restores through the fixed UI",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 9865,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-27T05:19:04.231Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "c34c947a40b123aa7f79-33bbfdd2bddbcdb087ee",
+          "file": "vault-reference-release.spec.ts",
+          "line": 428,
+          "column": 3
+        },
+        {
+          "title": "en-US 390px vault reference saves, archives and restores through the fixed UI",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 31381,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-27T05:19:14.100Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "vault-table-scroll-initial",
+                      "contentType": "application/json",
+                      "body": "ewogICJzY3JvbGxMZWZ0IjogMCwKICAic2Nyb2xsV2lkdGgiOiA3MjAsCiAgImNsaWVudFdpZHRoIjogMzYyLAogICJmb2N1c2VkIjogdHJ1ZSwKICAib3ZlcmZsb3dYIjogImF1dG8iLAogICJvdmVyZmxvd1kiOiAiYXV0byIsCiAgInRhYkluZGV4IjogMCwKICAiYWN0aXZlVGFnTmFtZSI6ICJTRUNUSU9OIiwKICAiYWN0aXZlQ2xhc3NOYW1lIjogImNhcmQgdmF1bHQtdGFibGUtd3JhcCBhc3NldC1saXN0LWNvbnRlbnQiLAogICJzZWxlY3Rpb24iOiAiIiwKICAic2NyaXB0U291cmNlcyI6IFsKICAgICJodHRwOi8vMTI3LjAuMC4xOjQyMDQvQHZpdGUvY2xpZW50IiwKICAgICJodHRwOi8vMTI3LjAuMC4xOjQyMDQvc3JjL21haW4udHN4IgogIF0KfQ=="
+                    },
+                    {
+                      "name": "vault-table-scroll-after-right",
+                      "contentType": "application/json",
+                      "body": "ewogICJzY3JvbGxMZWZ0IjogMzIwLAogICJzY3JvbGxXaWR0aCI6IDcyMCwKICAiY2xpZW50V2lkdGgiOiAzNjIsCiAgImZvY3VzZWQiOiB0cnVlLAogICJvdmVyZmxvd1giOiAiYXV0byIsCiAgIm92ZXJmbG93WSI6ICJhdXRvIiwKICAidGFiSW5kZXgiOiAwLAogICJhY3RpdmVUYWdOYW1lIjogIlNFQ1RJT04iLAogICJhY3RpdmVDbGFzc05hbWUiOiAiY2FyZCB2YXVsdC10YWJsZS13cmFwIGFzc2V0LWxpc3QtY29udGVudCIsCiAgInNlbGVjdGlvbiI6ICIiLAogICJzY3JpcHRTb3VyY2VzIjogWwogICAgImh0dHA6Ly8xMjcuMC4wLjE6NDIwNC9Adml0ZS9jbGllbnQiLAogICAgImh0dHA6Ly8xMjcuMC4wLjE6NDIwNC9zcmMvbWFpbi50c3giCiAgXQp9"
+                    },
+                    {
+                      "name": "vault-table-scroll-after-left",
+                      "contentType": "application/json",
+                      "body": "ewogICJzY3JvbGxMZWZ0IjogMCwKICAic2Nyb2xsV2lkdGgiOiA3MjAsCiAgImNsaWVudFdpZHRoIjogMzYyLAogICJmb2N1c2VkIjogdHJ1ZSwKICAib3ZlcmZsb3dYIjogImF1dG8iLAogICJvdmVyZmxvd1kiOiAiYXV0byIsCiAgInRhYkluZGV4IjogMCwKICAiYWN0aXZlVGFnTmFtZSI6ICJTRUNUSU9OIiwKICAiYWN0aXZlQ2xhc3NOYW1lIjogImNhcmQgdmF1bHQtdGFibGUtd3JhcCBhc3NldC1saXN0LWNvbnRlbnQiLAogICJzZWxlY3Rpb24iOiAiIiwKICAic2NyaXB0U291cmNlcyI6IFsKICAgICJodHRwOi8vMTI3LjAuMC4xOjQyMDQvQHZpdGUvY2xpZW50IiwKICAgICJodHRwOi8vMTI3LjAuMC4xOjQyMDQvc3JjL21haW4udHN4IgogIF0KfQ=="
+                    },
+                    {
+                      "name": "vault-table-scroll-initial",
+                      "contentType": "application/json",
+                      "body": "ewogICJzY3JvbGxMZWZ0IjogMCwKICAic2Nyb2xsV2lkdGgiOiA3MjAsCiAgImNsaWVudFdpZHRoIjogMzYyLAogICJmb2N1c2VkIjogdHJ1ZSwKICAib3ZlcmZsb3dYIjogImF1dG8iLAogICJvdmVyZmxvd1kiOiAiYXV0byIsCiAgInRhYkluZGV4IjogMCwKICAiYWN0aXZlVGFnTmFtZSI6ICJTRUNUSU9OIiwKICAiYWN0aXZlQ2xhc3NOYW1lIjogImNhcmQgdmF1bHQtdGFibGUtd3JhcCBhc3NldC1saXN0LWNvbnRlbnQiLAogICJzZWxlY3Rpb24iOiAiIiwKICAic2NyaXB0U291cmNlcyI6IFsKICAgICJodHRwOi8vMTI3LjAuMC4xOjQyMDQvQHZpdGUvY2xpZW50IiwKICAgICJodHRwOi8vMTI3LjAuMC4xOjQyMDQvc3JjL21haW4udHN4IgogIF0KfQ=="
+                    },
+                    {
+                      "name": "vault-table-scroll-after-right",
+                      "contentType": "application/json",
+                      "body": "ewogICJzY3JvbGxMZWZ0IjogMzIwLAogICJzY3JvbGxXaWR0aCI6IDcyMCwKICAiY2xpZW50V2lkdGgiOiAzNjIsCiAgImZvY3VzZWQiOiB0cnVlLAogICJvdmVyZmxvd1giOiAiYXV0byIsCiAgIm92ZXJmbG93WSI6ICJhdXRvIiwKICAidGFiSW5kZXgiOiAwLAogICJhY3RpdmVUYWdOYW1lIjogIlNFQ1RJT04iLAogICJhY3RpdmVDbGFzc05hbWUiOiAiY2FyZCB2YXVsdC10YWJsZS13cmFwIGFzc2V0LWxpc3QtY29udGVudCIsCiAgInNlbGVjdGlvbiI6ICIiLAogICJzY3JpcHRTb3VyY2VzIjogWwogICAgImh0dHA6Ly8xMjcuMC4wLjE6NDIwNC9Adml0ZS9jbGllbnQiLAogICAgImh0dHA6Ly8xMjcuMC4wLjE6NDIwNC9zcmMvbWFpbi50c3giCiAgXQp9"
+                    },
+                    {
+                      "name": "vault-table-scroll-after-left",
+                      "contentType": "application/json",
+                      "body": "ewogICJzY3JvbGxMZWZ0IjogMCwKICAic2Nyb2xsV2lkdGgiOiA3MjAsCiAgImNsaWVudFdpZHRoIjogMzYyLAogICJmb2N1c2VkIjogdHJ1ZSwKICAib3ZlcmZsb3dYIjogImF1dG8iLAogICJvdmVyZmxvd1kiOiAiYXV0byIsCiAgInRhYkluZGV4IjogMCwKICAiYWN0aXZlVGFnTmFtZSI6ICJTRUNUSU9OIiwKICAiYWN0aXZlQ2xhc3NOYW1lIjogImNhcmQgdmF1bHQtdGFibGUtd3JhcCBhc3NldC1saXN0LWNvbnRlbnQiLAogICJzZWxlY3Rpb24iOiAiIiwKICAic2NyaXB0U291cmNlcyI6IFsKICAgICJodHRwOi8vMTI3LjAuMC4xOjQyMDQvQHZpdGUvY2xpZW50IiwKICAgICJodHRwOi8vMTI3LjAuMC4xOjQyMDQvc3JjL21haW4udHN4IgogIF0KfQ=="
+                    },
+                    {
+                      "name": "vault-table-scroll-initial",
+                      "contentType": "application/json",
+                      "body": "ewogICJzY3JvbGxMZWZ0IjogMCwKICAic2Nyb2xsV2lkdGgiOiA3MjAsCiAgImNsaWVudFdpZHRoIjogMzYyLAogICJmb2N1c2VkIjogdHJ1ZSwKICAib3ZlcmZsb3dYIjogImF1dG8iLAogICJvdmVyZmxvd1kiOiAiYXV0byIsCiAgInRhYkluZGV4IjogMCwKICAiYWN0aXZlVGFnTmFtZSI6ICJTRUNUSU9OIiwKICAiYWN0aXZlQ2xhc3NOYW1lIjogImNhcmQgdmF1bHQtdGFibGUtd3JhcCBhc3NldC1saXN0LWNvbnRlbnQiLAogICJzZWxlY3Rpb24iOiAiIiwKICAic2NyaXB0U291cmNlcyI6IFsKICAgICJodHRwOi8vMTI3LjAuMC4xOjQyMDQvQHZpdGUvY2xpZW50IiwKICAgICJodHRwOi8vMTI3LjAuMC4xOjQyMDQvc3JjL21haW4udHN4IgogIF0KfQ=="
+                    },
+                    {
+                      "name": "vault-table-scroll-after-right",
+                      "contentType": "application/json",
+                      "body": "ewogICJzY3JvbGxMZWZ0IjogMzIwLAogICJzY3JvbGxXaWR0aCI6IDcyMCwKICAiY2xpZW50V2lkdGgiOiAzNjIsCiAgImZvY3VzZWQiOiB0cnVlLAogICJvdmVyZmxvd1giOiAiYXV0byIsCiAgIm92ZXJmbG93WSI6ICJhdXRvIiwKICAidGFiSW5kZXgiOiAwLAogICJhY3RpdmVUYWdOYW1lIjogIlNFQ1RJT04iLAogICJhY3RpdmVDbGFzc05hbWUiOiAiY2FyZCB2YXVsdC10YWJsZS13cmFwIGFzc2V0LWxpc3QtY29udGVudCIsCiAgInNlbGVjdGlvbiI6ICIiLAogICJzY3JpcHRTb3VyY2VzIjogWwogICAgImh0dHA6Ly8xMjcuMC4wLjE6NDIwNC9Adml0ZS9jbGllbnQiLAogICAgImh0dHA6Ly8xMjcuMC4wLjE6NDIwNC9zcmMvbWFpbi50c3giCiAgXQp9"
+                    },
+                    {
+                      "name": "vault-table-scroll-after-left",
+                      "contentType": "application/json",
+                      "body": "ewogICJzY3JvbGxMZWZ0IjogMCwKICAic2Nyb2xsV2lkdGgiOiA3MjAsCiAgImNsaWVudFdpZHRoIjogMzYyLAogICJmb2N1c2VkIjogdHJ1ZSwKICAib3ZlcmZsb3dYIjogImF1dG8iLAogICJvdmVyZmxvd1kiOiAiYXV0byIsCiAgInRhYkluZGV4IjogMCwKICAiYWN0aXZlVGFnTmFtZSI6ICJTRUNUSU9OIiwKICAiYWN0aXZlQ2xhc3NOYW1lIjogImNhcmQgdmF1bHQtdGFibGUtd3JhcCBhc3NldC1saXN0LWNvbnRlbnQiLAogICJzZWxlY3Rpb24iOiAiIiwKICAic2NyaXB0U291cmNlcyI6IFsKICAgICJodHRwOi8vMTI3LjAuMC4xOjQyMDQvQHZpdGUvY2xpZW50IiwKICAgICJodHRwOi8vMTI3LjAuMC4xOjQyMDQvc3JjL21haW4udHN4IgogIF0KfQ=="
+                    },
+                    {
+                      "name": "vault-table-scroll-initial",
+                      "contentType": "application/json",
+                      "body": "ewogICJzY3JvbGxMZWZ0IjogMCwKICAic2Nyb2xsV2lkdGgiOiA3MjAsCiAgImNsaWVudFdpZHRoIjogMzYyLAogICJmb2N1c2VkIjogdHJ1ZSwKICAib3ZlcmZsb3dYIjogImF1dG8iLAogICJvdmVyZmxvd1kiOiAiYXV0byIsCiAgInRhYkluZGV4IjogMCwKICAiYWN0aXZlVGFnTmFtZSI6ICJTRUNUSU9OIiwKICAiYWN0aXZlQ2xhc3NOYW1lIjogImNhcmQgdmF1bHQtdGFibGUtd3JhcCBhc3NldC1saXN0LWNvbnRlbnQiLAogICJzZWxlY3Rpb24iOiAiIiwKICAic2NyaXB0U291cmNlcyI6IFsKICAgICJodHRwOi8vMTI3LjAuMC4xOjQyMDQvQHZpdGUvY2xpZW50IiwKICAgICJodHRwOi8vMTI3LjAuMC4xOjQyMDQvc3JjL21haW4udHN4IgogIF0KfQ=="
+                    },
+                    {
+                      "name": "vault-table-scroll-after-right",
+                      "contentType": "application/json",
+                      "body": "ewogICJzY3JvbGxMZWZ0IjogMzIwLAogICJzY3JvbGxXaWR0aCI6IDcyMCwKICAiY2xpZW50V2lkdGgiOiAzNjIsCiAgImZvY3VzZWQiOiB0cnVlLAogICJvdmVyZmxvd1giOiAiYXV0byIsCiAgIm92ZXJmbG93WSI6ICJhdXRvIiwKICAidGFiSW5kZXgiOiAwLAogICJhY3RpdmVUYWdOYW1lIjogIlNFQ1RJT04iLAogICJhY3RpdmVDbGFzc05hbWUiOiAiY2FyZCB2YXVsdC10YWJsZS13cmFwIGFzc2V0LWxpc3QtY29udGVudCIsCiAgInNlbGVjdGlvbiI6ICIiLAogICJzY3JpcHRTb3VyY2VzIjogWwogICAgImh0dHA6Ly8xMjcuMC4wLjE6NDIwNC9Adml0ZS9jbGllbnQiLAogICAgImh0dHA6Ly8xMjcuMC4wLjE6NDIwNC9zcmMvbWFpbi50c3giCiAgXQp9"
+                    },
+                    {
+                      "name": "vault-table-scroll-after-left",
+                      "contentType": "application/json",
+                      "body": "ewogICJzY3JvbGxMZWZ0IjogMCwKICAic2Nyb2xsV2lkdGgiOiA3MjAsCiAgImNsaWVudFdpZHRoIjogMzYyLAogICJmb2N1c2VkIjogdHJ1ZSwKICAib3ZlcmZsb3dYIjogImF1dG8iLAogICJvdmVyZmxvd1kiOiAiYXV0byIsCiAgInRhYkluZGV4IjogMCwKICAiYWN0aXZlVGFnTmFtZSI6ICJTRUNUSU9OIiwKICAiYWN0aXZlQ2xhc3NOYW1lIjogImNhcmQgdmF1bHQtdGFibGUtd3JhcCBhc3NldC1saXN0LWNvbnRlbnQiLAogICJzZWxlY3Rpb24iOiAiIiwKICAic2NyaXB0U291cmNlcyI6IFsKICAgICJodHRwOi8vMTI3LjAuMC4xOjQyMDQvQHZpdGUvY2xpZW50IiwKICAgICJodHRwOi8vMTI3LjAuMC4xOjQyMDQvc3JjL21haW4udHN4IgogIF0KfQ=="
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "c34c947a40b123aa7f79-c9771af147112d545e30",
+          "file": "vault-reference-release.spec.ts",
+          "line": 428,
+          "column": 3
+        },
+        {
+          "title": "en-US 1280px vault reference saves, archives and restores through the fixed UI",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 9585,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-27T05:19:45.486Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "c34c947a40b123aa7f79-17d0da2a77b07b608bcf",
+          "file": "vault-reference-release.spec.ts",
+          "line": 428,
+          "column": 3
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-10-27T05:17:04.436Z",
+    "duration": 170708.63400000002,
+    "expected": 19,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

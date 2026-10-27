@@ -1,0 +1,57 @@
+import { chromium, expect } from '@playwright/test';
+import { mkdir } from 'node:fs/promises';
+const out='docs/qa/2026-10-27/evidence/T25/run-001/screenshots';
+await mkdir(out,{recursive:true});
+const browser=await chromium.launch({headless:true});
+const results=[];
+try {
+ for(const locale of ['en-US','zh-CN']) for(const width of [390,1280]) {
+  const zh=locale==='zh-CN';
+  const c=await browser.newContext({locale,viewport:{width,height:844}});
+  const p=await c.newPage();const errors=[];p.on('pageerror',e=>errors.push(e.message));
+  const label={add:zh?'关联密码库条目':'Link vault entry',name:zh?'条目名称':'Entry name',save:zh?'保存':'Save',cancel:zh?'取消':'Cancel',edit:zh?'编辑':'Edit',trash:zh?'移至回收站':'Move to trash',store:zh?'保管位置':'Stored in'};
+  const name=`QA external reference ${locale} ${width}`;
+  try {
+   await p.goto('http://127.0.0.1:4205/assets/vault#vault-references');
+   await p.getByRole('main').getByRole('button',{name:label.add,exact:true}).click();
+   let d=p.getByRole('dialog');
+   await d.getByLabel(label.name,{exact:true}).fill(name);
+   await d.getByLabel('URL',{exact:true}).fill('javascript:alert(1)');
+   await expect(d.getByLabel(label.name,{exact:true})).toHaveValue(name);
+   await expect(d.getByLabel('URL',{exact:true})).toHaveValue('javascript:alert(1)');
+   await d.getByRole('button',{name:label.save,exact:true}).click();
+   await expect(d).toBeVisible();await expect(d.getByText(zh?'请检查此字段':'Please check this field',{exact:true})).toBeVisible();
+   await p.screenshot({path:`${out}/reference-invalid-${locale}-${width}.png`});
+   await d.getByRole('button',{name:label.cancel,exact:true}).click();
+   await p.reload();await expect(p.getByRole('row').filter({hasText:name})).toHaveCount(0);
+   await p.getByRole('main').getByRole('button',{name:label.add,exact:true}).click();d=p.getByRole('dialog');
+   await d.getByLabel(label.name,{exact:true}).fill(name);
+   await d.getByLabel('URL',{exact:true}).fill('https://example.test/vault-entry');
+   await d.getByLabel(label.store,{exact:true}).fill('Synthetic external vault');
+   await expect(d.getByLabel('URL',{exact:true})).toHaveValue('https://example.test/vault-entry');
+   await d.getByRole('button',{name:label.save,exact:true}).click();await expect(d).toBeHidden();
+   const row=p.getByRole('row').filter({hasText:name});await expect(row).toContainText('Synthetic external vault');
+   await row.getByRole('link',{name,exact:true}).click();await expect(p.getByRole('heading',{name,exact:true})).toBeVisible();
+   const url=p.url();
+   await p.getByRole('button',{name:label.edit,exact:true}).first().click();d=p.getByRole('dialog');
+   await d.getByLabel(label.name,{exact:true}).fill(name+' canceled');
+   await d.getByRole('button',{name:label.cancel,exact:true}).click();await p.reload();
+   await expect(p.getByRole('heading',{name,exact:true})).toBeVisible();
+   await p.getByRole('button',{name:label.edit,exact:true}).first().click();d=p.getByRole('dialog');
+   await d.getByLabel(label.name,{exact:true}).fill(name+' edited');
+   await d.getByRole('button',{name:label.save,exact:true}).click();await expect(d).toBeHidden();await p.reload();
+   await expect(p.getByRole('heading',{name:name+' edited',exact:true})).toBeVisible();
+   await expect(p.getByRole('link').filter({hasText:'example.test'}).first()).toHaveAttribute('href','https://example.test/vault-entry');
+   await p.screenshot({path:`${out}/reference-edited-${locale}-${width}.png`,fullPage:true});
+   await p.getByRole('button',{name:label.trash,exact:true}).click();d=p.getByRole('dialog');
+   await d.getByRole('button',{name:label.cancel,exact:true}).click();await p.reload();
+   await expect(p.getByRole('heading',{name:name+' edited',exact:true})).toBeVisible();
+   await p.getByRole('button',{name:label.trash,exact:true}).click();d=p.getByRole('dialog');
+   await d.getByRole('button',{name:label.trash,exact:true}).click();await expect(d).toBeHidden();
+   await p.goto(url);await expect(p.getByRole('heading',{name:name+' edited',exact:true})).toHaveCount(0);
+   expect(errors).toEqual([]);expect(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
+   results.push({locale,width,invalidProtocol:'rejected',cancelCreate:'no record',editCancel:'original retained',editSave:'persisted',deleteCancel:'retained',deleteConfirm:'removed',pageErrors:errors});
+  } finally {await c.close();}
+ }
+ console.log(JSON.stringify({status:'passed',results},null,2));
+} finally {await browser.close();}

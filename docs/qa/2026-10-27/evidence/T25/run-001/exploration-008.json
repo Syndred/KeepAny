@@ -1,0 +1,6 @@
+{
+  "observationCommand": "bun /Users/syndred/.codex/toolchains/gstack/bin/gstack-qa-deadline run docs/qa/2026-10-27/evidence/T25/run-001/deadline.json -- /Users/syndred/.codex/toolchains/gstack/browse/dist/browse fill @e2 QA-reference-T25",
+  "observed": "Filled @e2\n",
+  "hypothesis": "名称已填；填入javascript协议，仅检验表单拒绝，不打开或执行链接。",
+  "nextCommand": "bun /Users/syndred/.codex/toolchains/gstack/bin/gstack-qa-deadline run docs/qa/2026-10-27/evidence/T25/run-001/deadline.json -- /Users/syndred/.codex/toolchains/gstack/browse/dist/browse fill @e4 'javascript:alert(1)'"
+}

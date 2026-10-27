@@ -1,0 +1,6 @@
+{
+  "observationCommand": "bun /Users/syndred/.codex/toolchains/gstack/bin/gstack-qa-deadline run docs/qa/2026-10-27/evidence/T25/run-001/deadline.json -- /Users/syndred/.codex/toolchains/gstack/browse/dist/browse fill @e4 'javascript:alert(1)'",
+  "observed": "Filled @e4\n",
+  "hypothesis": "URL已填；读取已观察到的表单控件实际值，确认未静默丢失后再提交本机合成记录。",
+  "nextCommand": "bun /Users/syndred/.codex/toolchains/gstack/bin/gstack-qa-deadline run docs/qa/2026-10-27/evidence/T25/run-001/deadline.json -- /Users/syndred/.codex/toolchains/gstack/browse/dist/browse forms"
+}

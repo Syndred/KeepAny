@@ -1,0 +1,6 @@
+{
+  "observationCommand": "bun /Users/syndred/.codex/toolchains/gstack/bin/gstack-qa-deadline run docs/qa/2026-10-27/evidence/T25/run-001/deadline.json -- /Users/syndred/.codex/toolchains/gstack/browse/dist/browse click @e26",
+  "observed": "Clicked @e26 → now at http://127.0.0.1:4205/assets/vault#vault-references\n",
+  "hypothesis": "外部引用弹窗已打开，读取字段以核对网址协议与取消操作。",
+  "nextCommand": "bun /Users/syndred/.codex/toolchains/gstack/bin/gstack-qa-deadline run docs/qa/2026-10-27/evidence/T25/run-001/deadline.json -- /Users/syndred/.codex/toolchains/gstack/browse/dist/browse snapshot -i"
+}

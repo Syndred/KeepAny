@@ -1,0 +1,6 @@
+{
+  "observationCommand": "bun /Users/syndred/.codex/toolchains/gstack/bin/gstack-qa-deadline run docs/qa/2026-10-27/evidence/T25/run-001/deadline.json -- /Users/syndred/.codex/toolchains/gstack/browse/dist/browse text",
+  "observed": "--- BEGIN UNTRUSTED EXTERNAL CONTENT (source: http://127.0.0.1:4205/assets/vault#vault-references) ---\nKKeepAnyPersonal asset workspacePersonal workspaceWorkspaceOverviewTasksAssetsAccountsPress Space to pick up, arrow keys to move, then Space to drop.TrashCollectionsCustomize sidebarMeMy workspaceOnly visible hereBack to overviewSearch all records⌘ KAll accountsPasswordsExternal referencesPassword vaultPasswords stay in the encrypted vault on this device.Not set upSet up your local password vaultSet a master password with at least 12 characters, or import an existing KDBX backup.Master passwordConfirm master password Create vault Import and set up vaultExternal vault referencesKeep references and connections to external vaults below. Save passwords in the encrypted vault above.AllOtherManageNone\n--- END UNTRUSTED EXTERNAL CONTENT ---\n",
+  "hypothesis": "gstack已证实非法协议拒绝和取消后无新增；补充独立四个中英390/1280完整流程，核对合法引用的编辑取消/保存及删除取消/确认，不访问外站。",
+  "nextCommand": "bun /Users/syndred/.codex/toolchains/gstack/bin/gstack-qa-deadline run docs/qa/2026-10-27/evidence/T25/run-001/deadline.json -- node .gstack/qa-runtime/T25-extra.mjs"
+}

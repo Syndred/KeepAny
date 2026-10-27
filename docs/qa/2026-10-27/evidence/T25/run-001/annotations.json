@@ -1,0 +1,8 @@
+{
+  "evidence": [],
+  "limits": [
+    "Browser native regressions 19 passed on source b06208b; fixed package not rerun.",
+    "Supplemental four-variant script stopped at a localized URL label mismatch; its aggregate result is not passed.",
+    "Unique KDBX secret exclusion and full supplemental zh flow remain for Windows."
+  ]
+}

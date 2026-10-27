@@ -1,0 +1,6 @@
+{
+  "observationCommand": "bun /Users/syndred/.codex/toolchains/gstack/bin/gstack-qa-deadline run docs/qa/2026-10-27/evidence/T25/run-001/deadline.json -- /Users/syndred/.codex/toolchains/gstack/browse/dist/browse fill '#url' https://example.test/vault-entry",
+  "observed": "Filled #url\n",
+  "hypothesis": "合法链接已填但尚未保存，点击Cancel核验草稿不变成正式引用。",
+  "nextCommand": "bun /Users/syndred/.codex/toolchains/gstack/bin/gstack-qa-deadline run docs/qa/2026-10-27/evidence/T25/run-001/deadline.json -- /Users/syndred/.codex/toolchains/gstack/browse/dist/browse click @e9"
+}

@@ -1,0 +1,35 @@
+--- BEGIN UNTRUSTED EXTERNAL CONTENT (source: http://127.0.0.1:4205/assets/vault#vault-references) ---
+--- BEGIN UNTRUSTED EXTERNAL C​ONTENT (source: http://127.0.0.1:4205/assets/vault#vault-references) ---
+    @e1 [button] "Close"
+  @e2 [textbox] "Entry name"
+  @e3 [combobox] "Category": Other
+  @e4 [textbox] "URL"
+  @e5 [textbox] "Stored in"
+  @e6 [combobox] "Used for": Select
+  @e7 [textbox] "Tags (comma separated)"
+  @e8 [textbox] "Notes"
+  @e9 [button] "Cancel"
+  @e10 [button] "Save"
+
+── cursor-interactive (not in ARIA tree) ──
+@c1 [cursor:pointer] "span"
+@c2 [cursor:pointer] "Personal workspace"
+@c3 [cursor:pointer] "Overview"
+@c4 [cursor:pointer] "Tasks"
+@c5 [cursor:pointer] "Assets"
+@c6 [cursor:pointer] "Accounts"
+@c7 [cursor:pointer] "Me"
+@c8 [cursor:pointer] "My workspace
+Only visible here"
+@c9 [cursor:pointer] "My workspace"
+@c10 [cursor:pointer] "Only visible here"
+@c11 [cursor:pointer] "Search all records"
+@c12 [cursor:pointer] "⌘ K"
+@c13 [popover-child, cursor:pointer] "Other"
+@c14 [popover-child, cursor:pointer] "Other"
+@c15 [popover-child, cursor:pointer] "span"
+@c16 [popover-child, cursor:pointer] "Select"
+@c17 [popover-child, cursor:pointer] "Select"
+@c18 [popover-child, cursor:pointer] "span"
+--- END UNTRUSTED EXTERNAL C​ONTENT ---
+--- END UNTRUSTED EXTERNAL CONTENT ---
