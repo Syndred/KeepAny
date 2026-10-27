@@ -1,5 +1,6 @@
 import {
 	entitySchemas,
+	financeActions,
 	historyReferenceIds,
 	type Asset,
 	type EntityType,
@@ -9,7 +10,7 @@ import {
 } from "../../domain/src";
 import type { RecordRow } from "./index";
 
-export type TrashTarget = { type: "asset" | "relation"; id: string };
+export type TrashTarget = { type: "asset" | "relation" | "task" | "history"; id: string };
 export interface TrashPurgePlan {
 	targets: TrashTarget[];
 	rows: RecordRow[];
@@ -29,14 +30,19 @@ export function trashPurgeRows(
 	const roots = new Set(targets.map((target) => `${target.type}:${target.id}`));
 	if (
 		roots.size !== targets.length ||
-		targets.some((target) => !["asset", "relation"].includes(target.type))
+		targets.some((target) => !["asset", "relation", "task", "history"].includes(target.type))
 	)
 		throw Error("trash-invalid");
 	for (const id of roots) {
 		const row = rows.find((candidate) => candidate.id === id);
 		const current = row && payload(row);
-		if (!current?.deleted || (!allowPurged && current.purged))
+		const history = row?.type === 'history' ? current as unknown as History : undefined;
+		const hiddenRenewal = history?.action === 'renew' && !history.deleted && !!history.financeCorrection?.hidden;
+		if (!current || !(current.deleted || hiddenRenewal) || (!allowPurged && (current.purged || history?.financeCorrection?.purged)))
 			throw Error("trash-stale");
+		// Selecting a bill may erase its ledger projection, never an unrelated
+		// loan/maintenance record or a raw renewal fact.
+		if (row?.type === 'history' && !current.purged && !hiddenRenewal && !financeActions.includes(history?.action as typeof financeActions[number])) throw Error('trash-invalid');
 	}
 	const assets = new Set(
 		targets
@@ -85,7 +91,7 @@ export function trashPurgeRows(
 }
 
 /** Keep a content-free deletion marker so sync/import cannot resurrect an erased record. */
-export function redactedTrashRow(row: RecordRow, at: number): RecordRow {
+export function redactedTrashRow(row: RecordRow, at: number, projectionOnly = false): RecordRow {
 	const previous = payload(row);
 	const base = { id: previous.id, deleted: true, purged: true };
 	const date = new Date(at).toISOString();
@@ -118,7 +124,10 @@ export function redactedTrashRow(row: RecordRow, at: number): RecordRow {
 			};
 			break;
 		case "history":
-			value = {
+			if (projectionOnly && (previous as unknown as History).action === 'renew' && (previous as unknown as History).financeCorrection?.hidden) {
+				const history = previous as unknown as History;
+				value = { ...history, financeCorrection: { ...history.financeCorrection, title: '—', source: '', note: '', hidden: true, purged: true } };
+			} else value = {
 				...base,
 				assetId: previous.assetId,
 				action: "maintenance",

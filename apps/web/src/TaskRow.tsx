@@ -4,11 +4,12 @@ import { Check } from "lucide-react";
 import { lazy, Suspense, useRef, useState } from "react";
 import { dueOnCycle, type Task } from "../../../packages/domain/src";
 import { rescheduleTaskReminder, zonedParts } from "../../../packages/domain/src/task-reminder";
-import { saveTaskIfCurrent, setTaskDone } from "../../../packages/local-db/src";
+import { saveTaskIfCurrent, setTaskDone, deleteTaskIfCurrent } from "../../../packages/local-db/src";
 import { Badge } from "./components/ui/badge";
 import { TaskCard } from "./components/ui/task-card";
 import { TextLink } from "./components/ui/text-link";
 import { Button } from "./components/ui/button";
+import { Dialog } from './components/ui/dialog';
 import { ImpactTaskRow } from "./ImpactTaskRow";
 import { ProjectWorkflowTaskRow } from "./ProjectWorkflowTaskRow";
 import { MaintenanceTaskRow } from "./MaintenanceTaskRow";
@@ -20,6 +21,8 @@ export function TaskRow({ task, hideRelated = false }: { task: Task; hideRelated
 	const [busy, setBusy] = useState(false);
 	const inFlight = useRef(false);
 	const [editing, setEditing] = useState(false);
+	const [deleteBase, setDeleteBase] = useState<Task | null>(null);
+	const [deleteError, setDeleteError] = useState('');
 	if (task.impactSnapshot) return <ImpactTaskRow task={task} />;
 	if (task.projectWorkflow) return <ProjectWorkflowTaskRow task={task} />;
 	if (task.maintenancePlan) return <MaintenanceTaskRow task={task} />;
@@ -90,6 +93,7 @@ export function TaskRow({ task, hideRelated = false }: { task: Task; hideRelated
 			</div>
 			<div className="impact-task-actions">
 				<Button size="small" disabled={busy} onClick={() => setEditing(true)}>{t("edit")}</Button>
+				<Button size="small" variant="danger" disabled={busy} onClick={() => { setDeleteBase(task); setDeleteError(''); }}>{t('taskDeleteAction')}</Button>
 				{!task.done && <>
 					<label htmlFor={`task-due-${task.id}`}>{t("remindLater")}</label>
 					<input className="field" id={`task-due-${task.id}`} type="date" value={task.dueDate} disabled={busy} onChange={(event) => void reschedule(event.target.value)} />
@@ -98,6 +102,15 @@ export function TaskRow({ task, hideRelated = false }: { task: Task; hideRelated
 				<Badge tone={task.done ? "success" : "pending"}>{t(task.done ? "done" : "pending")}</Badge>
 			</div>
 			{editing && <Suspense fallback={null}><TaskEditor task={task} onClose={() => setEditing(false)} /></Suspense>}
+			{deleteBase && <Dialog title={t('taskDeleteTitle')} closeDisabled={busy} onClose={() => { if (!inFlight.current) setDeleteBase(null); }}>
+				<p>{t('taskDeletePrompt', { name: deleteBase.name })}</p>
+				{deleteError && <p className="field-error" role="alert">{deleteError}</p>}
+				<div className="actions"><Button disabled={busy} onClick={() => setDeleteBase(null)}>{t('cancel')}</Button><Button variant="danger" disabled={busy} onClick={() => {
+					if (inFlight.current) return;
+					inFlight.current = true; setBusy(true); setDeleteError('');
+					void deleteTaskIfCurrent(deleteBase).then(() => { setDeleteBase(null); notify(t('saved')); }).catch(error => setDeleteError(t(error instanceof Error && error.message === 'task-stale' ? 'workflowTaskStale' : 'error'))).finally(() => { inFlight.current = false; setBusy(false); });
+				}}>{t('taskDeleteAction')}</Button></div>
+			</Dialog>}
 		</TaskCard>
 	);
 }

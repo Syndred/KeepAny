@@ -131,7 +131,7 @@ export const historySchema=z.object({
  financeCorrection:z.object({
   title:z.string().trim().max(160).optional(),source:z.string().trim().max(300).optional(),note:z.string(),
   eventDate:z.string().refine(validDateOnly,'date'),amount:z.number().int().min(0).max(Number.MAX_SAFE_INTEGER),
-  currency:z.enum(currencies),hidden:z.boolean().default(false),
+  currency:z.enum(currencies),hidden:z.boolean().default(false),purged:z.literal(true).optional(),
   assetIds:z.array(z.string().min(1).max(96)).min(1).max(100).refine(ids=>new Set(ids).size===ids.length,'finance-assets').optional(),
  }).optional(),
  createdAt:z.string(),deleted:z.boolean().default(false),purged:z.literal(true).optional(),
@@ -141,6 +141,7 @@ export const historySchema=z.object({
    !value.assetIds.includes(value.assetId) || new Set(value.assetIds).size!==value.assetIds.length))
    ctx.addIssue({code:'custom',path:['assetIds'],message:'finance-assets'});
  if(value.financeCorrection && value.action!=='renew')ctx.addIssue({code:'custom',path:['financeCorrection'],message:'renew-only'});
+ if(value.financeCorrection?.purged && !value.financeCorrection.hidden)ctx.addIssue({code:'custom',path:['financeCorrection','hidden'],message:'purged-hidden'});
  if(value.action==='itemStatus' && (value.itemStatusBefore===undefined || !value.itemStatusAfter || !value.eventDate))ctx.addIssue({code:'custom',path:['itemStatusAfter'],message:'item-status'});
  if(value.expectedReturnDate && value.action!=='loan')ctx.addIssue({code:'custom',path:['expectedReturnDate'],message:'loan-only'});
  if(value.expectedReturnDate && value.eventDate && value.expectedReturnDate<value.eventDate)ctx.addIssue({code:'custom',path:['expectedReturnDate'],message:'before-loan'});

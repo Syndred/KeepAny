@@ -30,6 +30,11 @@ export type { DeleteCustomCategoryInput, EditCustomCategoryInput, PendingCategor
 
 // Shared transport shape. Storage metadata stays outside the business payload.
 export interface RecordRow { id: string; type: EntityType; payload: string; updatedAt: number }
+function isPurgedPayload(type: EntityType, payload: string | null | undefined): boolean {
+  if (!payload) return false;
+  const value = JSON.parse(payload) as { purged?: boolean; financeCorrection?: { purged?: boolean } };
+  return !!value.purged || type === 'history' && !!value.financeCorrection?.purged;
+}
 export class AccountRestoreConflict extends Error {
   constructor(readonly existingId: string) { super('account-restore-conflict'); }
 }
@@ -652,7 +657,37 @@ export class LocalRepository {
 
   async saveTaskIfCurrent(expected: Task, next: Task): Promise<RecordRow> {
     if (expected.id !== next.id || expected.projectWorkflow?.roundId !== next.projectWorkflow?.roundId) throw Error('task-stale');
+    if (expected.assetId !== next.assetId && !expected.impactSnapshot && !expected.projectWorkflow && !expected.maintenancePlan) return this.saveManualTaskIfCurrent(expected, next);
     return withRenewalLock(`keepany-task:${this.records.name}`, () => this.saveUnlocked('task', next, rowFor('task', expected).payload));
+  }
+
+  /** Ordinary task form saves validate a newly selected target under the mutation gate. */
+  async saveManualTaskIfCurrent(expected: Task | null, value: Task): Promise<RecordRow> {
+    const next = entitySchemas.task.parse(value);
+    const special = (task: Task) => !!(task.impactSnapshot || task.projectWorkflow || task.maintenancePlan);
+    if (next.deleted || next.purged || special(next) || expected && (expected.deleted || expected.purged || special(expected) ||
+      expected.id !== next.id || expected.createdAt !== next.createdAt || expected.done !== next.done || expected.completedAt !== next.completedAt ||
+      JSON.stringify(expected.completionHistory) !== JSON.stringify(next.completionHistory))) throw Error('task-stale');
+    return withRenewalLock(`keepany-task:${this.records.name}`, () => withCategoryMutationGate(this.records, this.fileStore,
+      [{ type: 'task', id: next.id }, ...(next.assetId ? [{ type: 'asset' as const, id: next.assetId }] : [])], async scope => {
+        const repository = this.withStorage(scope);
+        if (next.assetId && (!expected || expected.assetId !== next.assetId)) {
+          const target = await repository.get<Asset>('asset', next.assetId);
+          if (!target || target.deleted || target.purged) throw Error('task-target-changed');
+        }
+        return repository.saveEntityUnlocked('task', next, expected ? rowFor('task', expected).payload : null);
+      }));
+  }
+
+  async deleteTaskIfCurrent(expected: Task): Promise<RecordRow> {
+    if (expected.deleted || expected.purged || expected.impactSnapshot || expected.projectWorkflow || expected.maintenancePlan) throw Error('task-stale');
+    return this.saveTaskIfCurrent(expected, { ...expected, deleted: true });
+  }
+
+  async restoreTaskIfCurrent(expected: Task): Promise<RecordRow> {
+    if (!expected.deleted || expected.purged || expected.impactSnapshot || expected.projectWorkflow || expected.maintenancePlan) throw Error('task-stale');
+    return withRenewalLock(`keepany-task:${this.records.name}`, () => this.restoreEntityUnlocked('task', expected.id, rowFor('task', expected).payload))
+      .catch(error => { if (error instanceof Error && error.message === 'not-in-trash') throw Error('task-stale'); throw error; });
   }
 
   async saveSubmissionIfCurrent(expected: Submission, next: Submission): Promise<RecordRow> {
@@ -681,7 +716,7 @@ export class LocalRepository {
   async saveFinanceEntryIfCurrent(expected: History, value: History): Promise<RecordRow> {
     const next = entitySchemas.history.parse(value);
     if (expected.id !== next.id || expected.action !== next.action || expected.createdAt !== next.createdAt ||
-      expected.deleted || expected.purged || !(expected.action === 'renew' || financeActions.includes(expected.action as typeof financeActions[number]))) throw Error('history-stale');
+      expected.deleted || expected.purged || expected.financeCorrection?.purged || next.financeCorrection?.purged || !(expected.action === 'renew' || financeActions.includes(expected.action as typeof financeActions[number]))) throw Error('history-stale');
     if (expected.action === 'renew') {
       const originalFields = (entry: History) => JSON.stringify({ ...entry, assetIds: undefined, financeCorrection: undefined });
       if (originalFields(next) !== originalFields(expected)) throw Error('finance-renewal-immutable');
@@ -705,6 +740,21 @@ export class LocalRepository {
       return [asset.id, asset] as const;
     }));
     if (ids.some(id => { const target = targets.get(id); return !target || target.deleted || target.purged || target.kind === 'vault'; })) throw Error('finance-target-changed');
+  }
+
+  /** Unhide a ledger projection, never replay a renewal or restore an erased fact. */
+  async restoreFinanceEntryIfCurrent(expected: History): Promise<RecordRow> {
+    if (expected.purged || expected.financeCorrection?.purged) throw Error('history-stale');
+    if (expected.action === 'renew') {
+      if (expected.deleted || !expected.financeCorrection?.hidden) throw Error('history-stale');
+      return this.saveFinanceEntryIfCurrent(expected, { ...expected, financeCorrection: { ...expected.financeCorrection, hidden: false } });
+    }
+    if (!expected.deleted || !financeActions.includes(expected.action as typeof financeActions[number])) throw Error('history-stale');
+    return withRenewalLock(`keepany-renewal:${this.records.name}`, async () => {
+      await this.settleRenewalJournals();
+      return this.restoreEntityUnlocked('history', expected.id, rowFor('history', expected).payload)
+        .catch(error => { if (error instanceof Error && error.message === 'not-in-trash') throw Error('history-stale'); throw error; });
+    });
   }
 
   async archiveProjectIfWorkflowComplete(expectedProject: Asset, expectedRoundId: string): Promise<RecordRow> {
@@ -821,7 +871,7 @@ return repositoryGate6.saveEntityUnlocked(type, value, expectedPayload, subscrip
     if (current) {
       await this.records.modify(current.id, (data: RecordRow) => {
         if (expectedPayload === null || (expectedPayload !== undefined && JSON.stringify(parsedPayload(data)) !== expectedPayload)) throw Error(type === 'task' ? 'task-stale' : type === 'preference' ? 'preference-stale' : type === 'submission' ? 'submission-stale' : type === 'history' ? 'history-stale' : 'asset-stale');
-        if ((parsedPayload(data) as { purged?: boolean }).purged && next.payload !== data.payload) throw Error('trash-purged');
+        if (isPurgedPayload(type, data.payload) && next.payload !== data.payload) throw Error('trash-purged');
         if (parsedPayload(data).deleted && !parsedPayload(next).deleted) throw Error('tombstone-restore-required');
         if (type === 'category') {
           const previous = parsedPayload(data) as Category, proposed = parsedPayload(next) as Category;
@@ -1372,7 +1422,7 @@ return repositoryGate6.saveEntityUnlocked(type, value, expectedPayload, subscrip
     const current = await this.records.get(journal.change.row.id);
     const localPayload = current ? canonical(current).payload : null;
     if (localPayload === journal.change.row.payload ||
-      !(localPayload && JSON.parse(localPayload).purged) && localPayload === (base?.payload ?? null)) return null;
+      !isPurgedPayload(journal.change.row.type, localPayload) && localPayload === (base?.payload ?? null)) return null;
     return { rowId: journal.change.row.id, localPayload, remotePayload: journal.change.row.payload,
       basePayload: base?.payload ?? null, remoteVersion: journal.change.version };
   }
@@ -1427,7 +1477,7 @@ return repositoryGate6.saveEntityUnlocked(type, value, expectedPayload, subscrip
         repositoryTx16.records.getMany([journal.change.row.id], false));
       const payload = current?.payload ?? null;
       const base = await repositoryTx16.fileStore.scopedBase.get(scopedKey(scope, journal.change.row.id));
-      const purged = !!payload && !!JSON.parse(payload).purged && payload !== journal.change.row.payload;
+      const purged = isPurgedPayload(journal.change.row.type, payload) && payload !== journal.change.row.payload;
       if (purged && decision === 'remote') throw Error('trash-purged');
       if (journal.decision || payload === journal.change.row.payload || (!purged && payload === (base?.payload ?? null))) throw Error('conflict-missing');
       if (payload !== journal.localPayload) {
@@ -1514,7 +1564,9 @@ return repositoryGate6.saveEntityUnlocked(type, value, expectedPayload, subscrip
         const changes = [];
         for (const before of plan.rows) {
           validateRow(before);
-          const next = redactedTrashRow(before, plan.at);
+          const projectionOnly = before.type === 'history' && plan.targets.some(target => target.type === 'history' && key('history', target.id) === before.id) &&
+            !historyReferenceIds(JSON.parse(before.payload) as History).some(id => plan.targets.some(target => target.type === 'asset' && target.id === id));
+          const next = redactedTrashRow(before, plan.at, projectionOnly);
           const [raw] = await repositoryTx18.records.getMany([before.id], false);
           if (!raw || raw.type !== before.type || (raw.payload !== before.payload && raw.payload !== next.payload)) throw Error('trash-stale');
           if (before.type === 'asset') for (const id of (JSON.parse(before.payload) as Asset).attachments) attachmentIds.add(id);
@@ -1582,13 +1634,25 @@ return repositoryGate9.restoreEntityRecord(type, id, expectedPayload);
       if (duplicate) throw new AccountRestoreConflict(duplicate.id);
     };
     await assertUniqueAccount(previous);
+    const assertRestoreTargets = async (value: Record<string, unknown>) => {
+      if (type === 'history' && financeActions.includes(value.action as typeof financeActions[number])) await this.assertFinanceTargets(value as unknown as History);
+      if (type === 'task') {
+        const task = value as unknown as Task;
+        const target = task.assetId ? await this.get<Asset>('asset', task.assetId) : null;
+        if (target?.purged) throw Error('trash-purged');
+        if (task.assetId && (!target || target.deleted)) throw Error('task-target-changed');
+        if (!task.done && task.dedupeKey && (await this.list<Task>('task')).some(other => other.id !== task.id && !other.done && other.dedupeKey === task.dedupeKey)) throw Error('task-duplicate');
+      }
+    };
+    await assertRestoreTargets(previous);
     if (type === 'relation') await this.assertRelationEndpoints(previous as { from: string; to: string });
     let next: RecordRow | undefined;
     await this.records.modify(document.id, async (data: RecordRow) => {
-      if (expectedPayload !== undefined && data.payload !== expectedPayload) throw Error('relation-stale');
+      if (expectedPayload !== undefined && data.payload !== expectedPayload) throw Error(type === 'task' ? 'task-stale' : type === 'history' ? 'history-stale' : 'relation-stale');
       const current = parsedPayload(data) as Record<string, unknown>;
       if (!current.deleted || current.purged) throw Error('not-in-trash');
       await assertUniqueAccount(current);
+      await assertRestoreTargets(current);
       // The callback sees the latest tombstone after RxDB retries a concurrent write.
       // Check endpoints here too, immediately before this relation is made live.
       if (type === 'relation') await this.assertRelationEndpoints(current as { from: string; to: string });
@@ -1620,7 +1684,7 @@ return repositoryGate9.restoreEntityRecord(type, id, expectedPayload);
       try {
         await this.records.modify(existing.id, (data: RecordRow) => {
           if (data.payload === next.payload) throw duplicate;
-          if ((parsedPayload(data) as { purged?: boolean }).purged) throw conflict;
+          if (isPurgedPayload(type, data.payload)) throw conflict;
           if (parsedPayload(data).deleted && !parsedPayload(next).deleted) throw conflict;
           if (data.payload !== expectedPayload) throw conflict;
           return { ...data, ...next };
@@ -2575,7 +2639,7 @@ async function replayPullJournal(_db: RecordBackend, store: FileStore, id: strin
         const conflict = Symbol('sync-conflict');
         try {
           await store.outsideTransaction(() => db.modify(current.id, (data: RecordRow) => {
-            if (data.payload !== (base?.payload ?? null) || (parsedPayload(data) as { purged?: boolean }).purged) throw conflict;
+            if (data.payload !== (base?.payload ?? null) || isPurgedPayload(change.row.type, data.payload)) throw conflict;
             return { ...data, ...change.row };
           }));
         } catch (error) {
@@ -2707,7 +2771,7 @@ async function replayScopedPull(_db: RecordBackend, store: FileStore, scope: str
       await store.scopedPull.delete(scope);
     return 'applied';
   }
-  if (currentPayload && JSON.parse(currentPayload).purged && currentPayload !== row.payload && journal.decision !== 'local') return 'conflict';
+  if (isPurgedPayload(row.type, currentPayload) && currentPayload !== row.payload && journal.decision !== 'local') return 'conflict';
   if (!journal.decision && currentPayload !== row.payload && currentPayload !== basePayload) return 'conflict';
   if (journal.decision === 'remote' && currentPayload !== journal.localPayload && currentPayload !== row.payload) {
     await store.scopedPull.update(scope, { decision: undefined, localPayload: currentPayload });
@@ -2929,10 +2993,14 @@ export async function getPendingSubscriptionSave(assetId: string) { return (awai
 export async function retrySubscriptionSave(assetId: string) { return (await defaultRepository()).retrySubscriptionSave(assetId); }
 export async function abandonSubscriptionSave(assetId: string) { return (await defaultRepository()).abandonSubscriptionSave(assetId); }
 export async function saveTaskIfCurrent(expected: Task, next: Task) { return (await defaultRepository()).saveTaskIfCurrent(expected, next); }
+export async function saveManualTaskIfCurrent(expected: Task | null, next: Task) { return (await defaultRepository()).saveManualTaskIfCurrent(expected, next); }
+export async function deleteTaskIfCurrent(expected: Task) { return (await defaultRepository()).deleteTaskIfCurrent(expected); }
+export async function restoreTaskIfCurrent(expected: Task) { return (await defaultRepository()).restoreTaskIfCurrent(expected); }
 export async function saveSubmissionIfCurrent(expected: Submission, next: Submission) { return (await defaultRepository()).saveSubmissionIfCurrent(expected, next); }
 export async function deleteSubmissionIfCurrent(expected: Submission) { return (await defaultRepository()).deleteSubmissionIfCurrent(expected); }
 export async function createFinanceEntry(value: History) { return (await defaultRepository()).createFinanceEntry(value); }
 export async function saveFinanceEntryIfCurrent(expected: History, next: History) { return (await defaultRepository()).saveFinanceEntryIfCurrent(expected, next); }
+export async function restoreFinanceEntryIfCurrent(expected: History) { return (await defaultRepository()).restoreFinanceEntryIfCurrent(expected); }
 export async function archiveProjectIfWorkflowComplete(expectedProject: Asset, expectedRoundId: string) {
   return (await defaultRepository()).archiveProjectIfWorkflowComplete(expectedProject, expectedRoundId);
 }
