@@ -3,6 +3,7 @@ import { syncPullResponseSchema, syncPushResponseSchema, type SyncChange, type S
 import { generateWorkspaceKey, openSyncChangeEnvelope, ReplayGuard, sealEnvelope, type RecoveryWrap } from '../../crypto/src';
 import type { LocalRepository, RecordRow, ScopedConflict, ScopedOutbox } from '../../local-db/src';
 import { SelfHostAttachmentSync } from './attachment-sync';
+import { fetchSync } from './platform-fetch';
 
 export type SyncStatus = 'local' | 'pending' | 'syncing' | 'synced' | 'conflict' | 'failed';
 export interface SyncReport { status: SyncStatus; pending: number; cursor: number; conflict: ScopedConflict | null; error?: string }
@@ -91,7 +92,7 @@ async function request<T>(endpoint: string, auth: RequestAuthorization, method: 
   await auth.bound?.assertCurrent();
   const boundHeaders = auth.bound ? await auth.bound.headers(method, url) : {};
   await auth.bound?.assertCurrent();
-  const response = await fetch(url, {
+  const response = await fetchSync(endpoint, url, {
     method, headers: { ...boundHeaders, ...(auth.token === undefined ? {} : { Authorization: `Bearer ${auth.token}` }),
       ...(auth.sessionAccountId === undefined ? {} : { 'X-KeepAny-Account-Id': auth.sessionAccountId }),
       ...(method === 'POST' ? { 'Content-Type': 'application/json' } : {}) },

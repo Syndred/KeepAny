@@ -2,6 +2,7 @@ import { z } from 'zod';
 import type { LocalRepository, RecordRow, ScopedAttachmentUploadPlan } from '../../local-db/src';
 import { openAttachment, sealAttachment } from './attachment-codec';
 import type { BoundSyncAuthorizer } from './index';
+import { fetchSync } from './platform-fetch';
 
 const ciphertextType = 'application/vnd.keepany.ciphertext';
 const maxObjectBytes = 4 * 1024 * 1024;
@@ -45,7 +46,7 @@ export class SelfHostAttachmentSync {
     await this.assertCurrent();
     const headers = await this.requestHeaders('GET', url);
     await this.assertCurrent();
-    const response = await fetch(url, { method: 'GET', headers,
+    const response = await fetchSync(this.endpoint, url, { method: 'GET', headers,
       cache: 'no-store', credentials: this.requestCredentials(), signal: AbortSignal.timeout(30_000) });
     await this.assertCurrent();
     if (response.status === 404) return null;
@@ -85,7 +86,7 @@ export class SelfHostAttachmentSync {
     await this.assertCurrent();
     const headers = await this.requestHeaders('PUT', url);
     await this.assertCurrent();
-    const response = await fetch(url, { method: 'PUT', headers: {
+    const response = await fetchSync(this.endpoint, url, { method: 'PUT', headers: {
       ...headers, 'Content-Type': ciphertextType,
       'X-Ciphertext-SHA256': object.sha256,
     }, body, cache: 'no-store', credentials: this.requestCredentials(), signal: AbortSignal.timeout(30_000) });

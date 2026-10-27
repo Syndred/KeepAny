@@ -7,6 +7,7 @@ public class MainActivity extends BridgeActivity {
     @Override public void onCreate(Bundle savedInstanceState) {
         registerPlugin(KeepAnyMetadataPlugin.class);
         registerPlugin(KeepAnyFilesPlugin.class);
+        registerPlugin(KeepAnyIdentityPlugin.class);
         super.onCreate(savedInstanceState);
     }
 }

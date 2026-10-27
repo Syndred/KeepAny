@@ -1,7 +1,7 @@
 diff --git a/capacitor/src/main/java/com/getcapacitor/MessageHandler.java b/capacitor/src/main/java/com/getcapacitor/MessageHandler.java
 --- a/capacitor/src/main/java/com/getcapacitor/MessageHandler.java
 +++ b/capacitor/src/main/java/com/getcapacitor/MessageHandler.java
-@@ -31,8 +31,9 @@ public class MessageHandler {
+@@ -26,8 +26,9 @@ public class MessageHandler {
          if (WebViewFeature.isFeatureSupported(WebViewFeature.WEB_MESSAGE_LISTENER) && !bridge.getConfig().isUsingLegacyBridge()) {
              WebViewCompat.WebMessageListener capListener = (view, message, sourceOrigin, isMainFrame, replyProxy) -> {
                  if (isMainFrame) {
@@ -12,3 +12,17 @@ diff --git a/capacitor/src/main/java/com/getcapacitor/MessageHandler.java b/capa
                  } else {
                      Logger.warn("Plugin execution is allowed in Main Frame only");
                  }
+diff --git a/capacitor/src/main/java/com/getcapacitor/plugin/util/CapacitorHttpUrlConnection.java b/capacitor/src/main/java/com/getcapacitor/plugin/util/CapacitorHttpUrlConnection.java
+--- a/capacitor/src/main/java/com/getcapacitor/plugin/util/CapacitorHttpUrlConnection.java
++++ b/capacitor/src/main/java/com/getcapacitor/plugin/util/CapacitorHttpUrlConnection.java
+@@ -211,9 +211,7 @@ public class CapacitorHttpUrlConnection implements ICapacitorHttpUrlConnection {
+             this.writeRequestBody(dataString != null ? dataString : "");
+         } else if (bodyType != null && bodyType.equals("file")) {
+             try (DataOutputStream os = new DataOutputStream(connection.getOutputStream())) {
+-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+-                    os.write(Base64.getDecoder().decode(body.toString()));
+-                }
++                os.write(android.util.Base64.decode(body.toString(), android.util.Base64.DEFAULT));
+                 os.flush();
+             }
+         } else if (contentType.contains("application/x-www-form-urlencoded")) {

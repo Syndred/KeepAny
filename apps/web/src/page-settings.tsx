@@ -2,8 +2,6 @@ import { Link, useLocation } from "@tanstack/react-router";
 import { Capacitor } from "@capacitor/core";
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { bridgeBindingKeys, createBindingBridgeFetch } from "../../../packages/binding/src/bridge";
-import { BindingTransport } from "../../../packages/binding/src/remote";
 import { defaultBindingRepository, type StoredBinding } from "../../../packages/binding/src/store";
 import { localRepository, type DatasetBinding } from "../../../packages/local-db/src";
 import type { SelfHostSyncClient, SyncReport } from "../../../packages/sync-client/src";
@@ -20,6 +18,7 @@ import { PageTitle, useAppContext } from "./view-shared";
 import "./settings-intake-restoration.css";
 import { Select, SelectOption } from "./components/ui/select";
 import { getPlatformSetting, setPlatformSetting } from "./platform-settings";
+import { allowsOfficialResource, bindingClient, isBindingConfigured } from "./platform-binding";
 const SelfHostSessionPanel = lazy(() => import("./components/SelfHostSessionPanel").then(module => ({ default: module.SelfHostSessionPanel })));
 type AccessMode = "token" | "session" | "official";
 const officialWorkspaceKey = (accountId: string) => `keepany-official-workspace:${accountId}`;
@@ -28,12 +27,11 @@ const bindingIssuer = import.meta.env.VITE_KEEPANY_BINDING_ISSUER;
 const bindingBridgeOrigin = import.meta.env.VITE_KEEPANY_BINDING_BRIDGE_ORIGIN;
 
 async function officialAccess() {
-	if (officialOrigin !== window.location.origin || typeof bindingIssuer !== "string" || typeof bindingBridgeOrigin !== "string") throw Error("sync-auth");
+	if (!allowsOfficialResource(officialOrigin) || !isBindingConfigured(bindingIssuer, bindingBridgeOrigin)) throw Error("sync-auth");
 	const { createBoundSyncAccess } = await import("../../../packages/binding/src/bound-sync");
 	return createBoundSyncAccess({
 		repository: defaultBindingRepository(),
-		transport: new BindingTransport(bindingIssuer, createBindingBridgeFetch(bindingIssuer, bindingBridgeOrigin)),
-		keys: bridgeBindingKeys(bindingIssuer, bindingBridgeOrigin),
+		...bindingClient(bindingIssuer, bindingBridgeOrigin),
 		resourceOrigin: officialOrigin,
 	});
 }
@@ -60,8 +58,7 @@ export function SettingsPage() {
 	const { t, i18n } = useTranslation();
 	const nativeApp = Capacitor.isNativePlatform();
 	const location = useLocation();
-	const officialAvailable = typeof officialOrigin === "string" && officialOrigin === window.location.origin &&
-		typeof bindingIssuer === "string" && typeof bindingBridgeOrigin === "string";
+	const officialAvailable = allowsOfficialResource(officialOrigin) && isBindingConfigured(bindingIssuer, bindingBridgeOrigin);
 	const [persistent, setPersistent] = useState<boolean | null>(null);
 	const [requested, setRequested] = useState(false);
 	const [seeding, setSeeding] = useState(false);

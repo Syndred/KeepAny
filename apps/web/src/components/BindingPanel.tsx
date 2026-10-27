@@ -2,11 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { z } from "zod";
 import {
-	bridgeBindingKeys,
-	createBindingBridgeFetch,
-} from "../../../../packages/binding/src/bridge";
-import {
-	BindingTransport,
 	pollAndConsumeBinding,
 	readBindingState,
 	startBindingChallenge,
@@ -19,12 +14,12 @@ import {
 } from "../../../../packages/binding/src/store";
 import { Button } from "./ui/button";
 import { Dialog } from "./ui/dialog";
+import { allowsOfficialResource, bindingClient, fetchBindingResource, isBindingConfigured } from "../platform-binding";
 
 const issuer = import.meta.env.VITE_KEEPANY_BINDING_ISSUER;
 const bridgeOrigin = import.meta.env.VITE_KEEPANY_BINDING_BRIDGE_ORIGIN;
 const officialOrigin = import.meta.env.VITE_KEEPANY_OFFICIAL_SYNC_ORIGIN;
-const configured =
-	typeof issuer === "string" && typeof bridgeOrigin === "string";
+const configured = isBindingConfigured(issuer, bridgeOrigin);
 const devicesSchema = z.object({ devices: z.array(z.object({
 	bindingId: z.uuid(),
 	status: z.enum(["active", "inactive", "device_limit", "credential_expired", "revoked", "unavailable"]),
@@ -34,13 +29,7 @@ type BoundDevice = z.infer<typeof devicesSchema>["devices"][number];
 
 function client() {
 	if (!configured) throw Error("binding-unconfigured");
-	return {
-		transport: new BindingTransport(
-			issuer,
-			createBindingBridgeFetch(issuer, bridgeOrigin),
-		),
-		keys: bridgeBindingKeys(issuer, bridgeOrigin),
-	};
+	return bindingClient(issuer, bridgeOrigin);
 }
 
 export function BindingPanel({
@@ -49,9 +38,7 @@ export function BindingPanel({
 	onBindingChange?: (binding: StoredBinding | undefined) => void;
 }) {
 	const { t } = useTranslation();
-	const officialConfigured =
-		typeof officialOrigin === "string" &&
-		officialOrigin === window.location.origin;
+	const officialConfigured = allowsOfficialResource(officialOrigin);
 	const [binding, setBinding] = useState<StoredBinding>();
 	const [pending, setPending] = useState<PendingBinding>();
 	const [busy, setBusy] = useState(false);
@@ -135,7 +122,7 @@ export function BindingPanel({
 			const access = await createBoundSyncAccess({ repository, ...client(), resourceOrigin: officialOrigin });
 			if (access.bindingId !== binding.bindingId) throw Error("binding-not-active");
 			const url = `${officialOrigin}/sync/devices`;
-			const response = await fetch(url, { headers: await access.headers("GET", url), cache: "no-store" });
+			const response = await fetchBindingResource(url, { headers: await access.headers("GET", url), cache: "no-store" });
 			await access.assertCurrent();
 			if (!response.ok) throw Error("binding-device-list");
 			const result = devicesSchema.parse(await response.json());
