@@ -2,6 +2,11 @@ name: Publish public documentation
 
 on:
   workflow_dispatch:
+    inputs:
+      verified_release_commit:
+        description: 'Optional full SHA of a passed release when only public documentation changed'
+        required: false
+        type: string
 
 permissions:
   contents: read
@@ -22,20 +27,48 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
-      - name: Require successful release and portable package checks for this commit
+      - name: Require successful product checks and verify documentation-only changes
         uses: actions/github-script@v7
+        env:
+          VERIFIED_RELEASE_COMMIT: ${{ inputs.verified_release_commit }}
         with:
           script: |
+            const verifiedSha = process.env.VERIFIED_RELEASE_COMMIT || context.sha;
+            if (!/^[a-f0-9]{40}$/.test(verifiedSha)) {
+              throw new Error('The verified release must be a full commit SHA.');
+            }
+            if (verifiedSha !== context.sha) {
+              const { data: comparison } = await github.rest.repos.compareCommitsWithBasehead({
+                owner: context.repo.owner, repo: context.repo.repo,
+                basehead: `${verifiedSha}...${context.sha}`
+              });
+              if (!['ahead', 'identical'].includes(comparison.status) ||
+                  !Array.isArray(comparison.files) || comparison.files.length >= 300) {
+                throw new Error('The deployment must descend from the verified release with a complete small diff.');
+              }
+              const publicDocumentation = path => [
+                'README.md', 'README.en.md', 'docs/试用指南.md',
+                'docs/08-项目进度交接.md', 'scripts/build-public-site.mjs',
+                '.github/workflows/public-site.yml'
+              ].includes(path) || path.startsWith('docs/evidence/') || path.startsWith('apps/public-site/');
+              const disallowed = comparison.files.filter(file =>
+                !publicDocumentation(file.filename) ||
+                (file.previous_filename && !publicDocumentation(file.previous_filename)));
+              if (disallowed.length) {
+                throw new Error(`Product changes require new release checks: ${disallowed.map(file => file.filename).join(', ')}`);
+              }
+              core.info(`Reusing product checks from ${verifiedSha}; only ${comparison.files.length} public documentation files changed.`);
+            }
             const { data } = await github.rest.actions.listWorkflowRunsForRepo({
               owner: context.repo.owner, repo: context.repo.repo,
-              head_sha: context.sha, per_page: 100
+              head_sha: verifiedSha, per_page: 100
             });
             for (const name of ['Verify local release', 'Verify portable preview']) {
               const run = data.workflow_runs
                 .filter(run => run.name === name && run.event === 'push')
                 .sort((a, b) => b.id - a.id)[0];
               if (!run || run.status !== 'completed' || run.conclusion !== 'success') {
-                core.setFailed(`${name} must pass on ${context.sha} before publishing documentation.`);
+                core.setFailed(`${name} must pass on ${verifiedSha} before publishing documentation.`);
               }
             }
       - uses: pnpm/action-setup@v4
@@ -46,6 +79,7 @@ jobs:
           node-version: '22'
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - run: pnpm exec vitest run apps/public-site/page.test.ts
       - run: pnpm build:public-site
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v4

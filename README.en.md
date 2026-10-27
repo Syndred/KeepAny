@@ -16,7 +16,7 @@ No registration required. English and Simplified Chinese interfaces. The local c
 
 ## Download and try
 
-**This is an early preview.** Download the `KeepAny-…-portable.zip` marked `Pre-release` from [GitHub Releases](https://github.com/Syndred/KeepAny/releases). Each release will identify its source revision, checksums, and known limits. Historical `StackPerch-…-portable.zip` packages remain available on the same Releases page. GitHub's source ZIP is not the portable app.
+**This is an early preview.** Download the `KeepAny-…-portable.zip` marked `Pre-release` from [GitHub Releases](https://github.com/Syndred/KeepAny/releases). The Releases page provides only the current preview, with its source revision, checksums, and known limits. GitHub's source ZIP is not the portable app.
 
 The portable package requires **[Node.js 22 or newer](https://nodejs.org/)**. You do not need Git, pnpm, or a build step. Extract it to a folder you can keep:
 

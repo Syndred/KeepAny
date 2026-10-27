@@ -1,0 +1,93 @@
+{
+  "latestArchive": "KeepAny-0.1.0-preview.21a534e35dea-portable.zip",
+  "latestSha256": "a0493de6917a4831321a6ecb3bf9e6046bb1a7f599ed6a15fc1b7a2d60f5c563",
+  "movedToTrash": [
+    {
+      "from": "/Users/syndred/Desktop/projects/KeepAny/dist/preview/KeepAny-0.1.0-preview.64b98e7874a2-portable.zip",
+      "trash": "/Users/syndred/.Trash/KeepAny-old-previews-20261027-094504/0/KeepAny-0.1.0-preview.64b98e7874a2-portable.zip",
+      "kind": "file"
+    },
+    {
+      "from": "/Users/syndred/Desktop/projects/KeepAny/dist/preview/KeepAny-0.1.0-preview.64b98e7874a2-portable.zip.sha256",
+      "trash": "/Users/syndred/.Trash/KeepAny-old-previews-20261027-094504/0/KeepAny-0.1.0-preview.64b98e7874a2-portable.zip.sha256",
+      "kind": "file"
+    },
+    {
+      "from": "/Users/syndred/Desktop/projects/KeepAny/dist/preview/KeepAny-0.1.0-preview.7ef1b99c68c6-portable.zip",
+      "trash": "/Users/syndred/.Trash/KeepAny-old-previews-20261027-094504/0/KeepAny-0.1.0-preview.7ef1b99c68c6-portable.zip",
+      "kind": "file"
+    },
+    {
+      "from": "/Users/syndred/Desktop/projects/KeepAny/dist/preview/KeepAny-0.1.0-preview.7ef1b99c68c6-portable.zip.sha256",
+      "trash": "/Users/syndred/.Trash/KeepAny-old-previews-20261027-094504/0/KeepAny-0.1.0-preview.7ef1b99c68c6-portable.zip.sha256",
+      "kind": "file"
+    },
+    {
+      "from": "/Users/syndred/Desktop/projects/KeepAny/dist/preview/StackPerch-0.1.0-preview.7ebc2c349f48-portable.zip",
+      "trash": "/Users/syndred/.Trash/KeepAny-old-previews-20261027-094504/0/StackPerch-0.1.0-preview.7ebc2c349f48-portable.zip",
+      "kind": "file"
+    },
+    {
+      "from": "/Users/syndred/Desktop/projects/KeepAny/dist/preview/StackPerch-0.1.0-preview.7ebc2c349f48-portable.zip.sha256",
+      "trash": "/Users/syndred/.Trash/KeepAny-old-previews-20261027-094504/0/StackPerch-0.1.0-preview.7ebc2c349f48-portable.zip.sha256",
+      "kind": "file"
+    },
+    {
+      "from": "/Users/syndred/Desktop/projects/KeepAny/dist/preview/StackPerch-0.1.0-preview.cd12c582e405-portable",
+      "trash": "/Users/syndred/.Trash/KeepAny-old-previews-20261027-094504/0/StackPerch-0.1.0-preview.cd12c582e405-portable",
+      "kind": "directory"
+    },
+    {
+      "from": "/Users/syndred/Desktop/projects/KeepAny/dist/preview/StackPerch-0.1.0-preview.cd12c582e405-portable.zip",
+      "trash": "/Users/syndred/.Trash/KeepAny-old-previews-20261027-094504/0/StackPerch-0.1.0-preview.cd12c582e405-portable.zip",
+      "kind": "file"
+    },
+    {
+      "from": "/Users/syndred/Desktop/projects/KeepAny/dist/preview/StackPerch-0.1.0-preview.cd12c582e405-portable.zip.sha256",
+      "trash": "/Users/syndred/.Trash/KeepAny-old-previews-20261027-094504/0/StackPerch-0.1.0-preview.cd12c582e405-portable.zip.sha256",
+      "kind": "file"
+    },
+    {
+      "from": "/Users/syndred/.codex/worktrees/keepany-brand-return/KeepAny/dist/preview/KeepAny-0.1.0-preview.65636dbb650e-portable",
+      "trash": "/Users/syndred/.Trash/KeepAny-old-previews-20261027-094504/1/KeepAny-0.1.0-preview.65636dbb650e-portable",
+      "kind": "directory"
+    },
+    {
+      "from": "/Users/syndred/.codex/worktrees/keepany-brand-return/KeepAny/dist/preview/KeepAny-0.1.0-preview.65636dbb650e-portable.zip",
+      "trash": "/Users/syndred/.Trash/KeepAny-old-previews-20261027-094504/1/KeepAny-0.1.0-preview.65636dbb650e-portable.zip",
+      "kind": "file"
+    },
+    {
+      "from": "/Users/syndred/.codex/worktrees/keepany-brand-return/KeepAny/dist/preview/KeepAny-0.1.0-preview.65636dbb650e-portable.zip.sha256",
+      "trash": "/Users/syndred/.Trash/KeepAny-old-previews-20261027-094504/1/KeepAny-0.1.0-preview.65636dbb650e-portable.zip.sha256",
+      "kind": "file"
+    },
+    {
+      "from": "/Users/syndred/.codex/worktrees/keepany-brand-return/KeepAny/dist/preview/KeepAny-0.1.0-preview.7ef1b99c68c6-portable",
+      "trash": "/Users/syndred/.Trash/KeepAny-old-previews-20261027-094504/1/KeepAny-0.1.0-preview.7ef1b99c68c6-portable",
+      "kind": "directory"
+    },
+    {
+      "from": "/Users/syndred/.codex/worktrees/keepany-brand-return/KeepAny/dist/preview/KeepAny-0.1.0-preview.7ef1b99c68c6-portable.zip",
+      "trash": "/Users/syndred/.Trash/KeepAny-old-previews-20261027-094504/1/KeepAny-0.1.0-preview.7ef1b99c68c6-portable.zip",
+      "kind": "file"
+    },
+    {
+      "from": "/Users/syndred/.codex/worktrees/keepany-brand-return/KeepAny/dist/preview/KeepAny-0.1.0-preview.7ef1b99c68c6-portable.zip.sha256",
+      "trash": "/Users/syndred/.Trash/KeepAny-old-previews-20261027-094504/1/KeepAny-0.1.0-preview.7ef1b99c68c6-portable.zip.sha256",
+      "kind": "file"
+    }
+  ],
+  "movedEntryCount": 15,
+  "remaining": {
+    "/Users/syndred/Desktop/projects/KeepAny/dist/preview": [
+      "KeepAny-0.1.0-preview.21a534e35dea-portable.zip",
+      "KeepAny-0.1.0-preview.21a534e35dea-portable.zip.sha256"
+    ],
+    "/Users/syndred/.codex/worktrees/keepany-brand-return/KeepAny/dist/preview": [
+      "KeepAny-0.1.0-preview.21a534e35dea-portable",
+      "KeepAny-0.1.0-preview.21a534e35dea-portable.zip",
+      "KeepAny-0.1.0-preview.21a534e35dea-portable.zip.sha256"
+    ]
+  }
+}

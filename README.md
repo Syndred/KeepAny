@@ -16,7 +16,7 @@
 
 ## 下载与试用
 
-**当前为早期测试版。** 请从 [GitHub Releases](https://github.com/Syndred/KeepAny/releases) 获取标注 `Pre-release` 的 `KeepAny-…-portable.zip`。发布页会列出对应源码版本、校验值和已知限制；历史 `StackPerch-…-portable.zip` 仍可从同一发布页获取。不要把 GitHub 的源码 ZIP 当成便携应用包。
+**当前为早期测试版。** 请从 [GitHub Releases](https://github.com/Syndred/KeepAny/releases) 获取标注 `Pre-release` 的 `KeepAny-…-portable.zip`。发布页仅提供当前测试版，并列出对应源码版本、校验值和已知限制。不要把 GitHub 的源码 ZIP 当成便携应用包。
 
 便携包需要 **[Node.js 22 或更新版本](https://nodejs.org/)**，无需 Git、pnpm 或编译源码。解压到一个固定文件夹后启动：
 

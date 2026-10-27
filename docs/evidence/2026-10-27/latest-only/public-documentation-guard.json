@@ -1,0 +1,48 @@
+{
+  "verifiedProduct": "21a534e35dead372b8d0d2d468592ad74b32eddd",
+  "cases": [
+    {
+      "case": "only public documentation",
+      "expectedAllowed": true,
+      "actualAllowed": true,
+      "error": null
+    },
+    {
+      "case": "runtime change is refused",
+      "expectedAllowed": false,
+      "actualAllowed": false,
+      "error": "Product changes require new release checks: apps/web/src/App.tsx"
+    },
+    {
+      "case": "rename from runtime into documentation is refused",
+      "expectedAllowed": false,
+      "actualAllowed": false,
+      "error": "Product changes require new release checks: docs/evidence/moved.txt"
+    },
+    {
+      "case": "unrelated or divergent baseline is refused",
+      "expectedAllowed": false,
+      "actualAllowed": false,
+      "error": "The deployment must descend from the verified release with a complete small diff."
+    },
+    {
+      "case": "possibly truncated 300-file diff is refused",
+      "expectedAllowed": false,
+      "actualAllowed": false,
+      "error": "The deployment must descend from the verified release with a complete small diff."
+    },
+    {
+      "case": "missing successful package gate is refused",
+      "expectedAllowed": false,
+      "actualAllowed": false,
+      "error": "Verify portable preview must pass on 21a534e35dead372b8d0d2d468592ad74b32eddd before publishing documentation."
+    },
+    {
+      "case": "invalid baseline SHA is refused",
+      "expectedAllowed": false,
+      "actualAllowed": false,
+      "error": "The verified release must be a full commit SHA."
+    }
+  ],
+  "allPassed": true
+}
