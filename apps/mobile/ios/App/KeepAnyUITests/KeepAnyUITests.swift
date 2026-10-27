@@ -201,7 +201,10 @@ final class KeepAnyUITests: XCTestCase {
         XCTAssertTrue(save.isHittable)
         capture(app, "before-project-save-en")
         save.tap()
-        let project = app.links.matching(NSPredicate(format: "label CONTAINS %@", "iOS simulator persistence fixture")).firstMatch
+        // 544 exposed both a full-card composite link and exact-name inner
+        // links. The composite crosses the fixed navigation and can throw
+        // Activation point invalid even while its inner title is reachable.
+        let project = app.links.matching(NSPredicate(format: "label == %@", "iOS simulator persistence fixture")).firstMatch
         let visibleBeforeTermination = project.waitForExistence(timeout: 15)
         capture(app, "project-save-result-en")
         let hierarchy = XCTAttachment(string: app.debugDescription)
@@ -217,9 +220,11 @@ final class KeepAnyUITests: XCTestCase {
         capture(app, "project-reopened-en")
         XCTAssertTrue(visibleBeforeTermination && visibleAfterTermination,
                       "Project visible immediately: \(visibleBeforeTermination); after termination: \(visibleAfterTermination)")
-        for _ in 0..<8 { if project.isHittable { break }; app.swipeUp() }
+        reachProjectControl(project, in: app)
+        capture(app, "persisted-project-before-open-en")
+        captureHierarchy(app, "persisted-project-before-open-en-AX")
         XCTAssertTrue(project.isHittable, "Persisted project must be reachable by scrolling")
-        project.tap()
+        tapProjectControl(project, in: app)
         XCTAssertTrue(app.buttons["Edit"].firstMatch.waitForExistence(timeout: 10))
         capture(app, "persisted-project-detail-en")
         app.terminate()
@@ -392,7 +397,7 @@ final class KeepAnyUITests: XCTestCase {
         dismissInputToolbar(app)
     }
 
-    private func projectCategoryControl(in app: XCUIApplication, label: String) -> XCUIElement {
+    private func existingProjectCategoryControl(in app: XCUIApplication, label: String) -> XCUIElement? {
         let predicate = NSPredicate(format: "label BEGINSWITH %@", label)
         let combo = app.comboBoxes.matching(predicate).firstMatch
         let popup = app.popUpButtons.matching(predicate).firstMatch
@@ -402,20 +407,23 @@ final class KeepAnyUITests: XCTestCase {
         // frame is wrong, so read its semantics but activate the HTML label.
         let other = app.webViews.firstMatch.descendants(matching: .other).matching(
             NSPredicate(format: "label == %@ AND value != nil", label)).firstMatch
-        // The preceding dialog transition need not have reached the native AX
-        // tree when the click returns. Wait for a labelled interactive control.
+        return [combo, popup, other, button].first { $0.exists }
+    }
+
+    private func projectCategoryControl(in app: XCUIApplication, label: String) -> XCUIElement {
+        var control: XCUIElement?
+        // Re-resolve the semantic select after a dialog/picker transition;
+        // native tap completion does not prove React/AX has updated its value.
         let ready = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in
-            combo.exists || popup.exists || button.exists || other.exists
+            control = self.existingProjectCategoryControl(in: app, label: label)
+            return control != nil
         }, object: nil)
         if XCTWaiter.wait(for: [ready], timeout: 10) != .completed {
             capture(app, "project-category-control-missing")
             captureHierarchy(app, "project-category-control-missing-AX")
         }
-        if combo.exists { return combo }
-        if popup.exists { return popup }
-        if other.exists { return other }
-        XCTAssertTrue(button.exists, "Project category must expose an accessible select control")
-        return button
+        XCTAssertNotNil(control, "Project category must expose an accessible select control")
+        return control ?? app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", label)).firstMatch
     }
 
     private func verifyProjectTextFields(_ fields: [ProjectTextField], in app: XCUIApplication,
@@ -508,12 +516,30 @@ final class KeepAnyUITests: XCTestCase {
         XCTAssertEqual(XCTWaiter.wait(for: [optionsReady], timeout: 10), .completed)
         guard let option else { XCTFail("Non-default category option must be accessible"); return }
         option.tap()
-        XCTAssertTrue("\(select.label) \(select.value as? String ?? "")".contains(category))
+        let selectionUpdated = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in
+            guard let current = self.existingProjectCategoryControl(in: app, label: categoryLabel) else { return false }
+            return "\(current.label) \(current.value as? String ?? "")".contains(category)
+        }, object: nil)
+        let selectionResult = XCTWaiter.wait(for: [selectionUpdated], timeout: 10)
+        let selectedControl = existingProjectCategoryControl(in: app, label: categoryLabel)
+        let selectedAX = selectedControl.map { "\($0.label) \($0.value as? String ?? "")" } ?? "<missing semantic control>"
+        // 544 stopped before retaining the post-selection tree. Keep both
+        // success and failure observations; never retap or accept a raw slug.
+        capture(app, "project-category-after-selection-\(language)")
+        captureHierarchy(app, "project-category-after-selection-\(language)-AX")
+        let categoryEvidence: [String: Any] = ["language": language, "expectedVisibleCategory": category,
+                                              "observedCategoryAX": selectedAX, "settled": selectionResult == .completed]
+        let categoryAttachment = XCTAttachment(data: try JSONSerialization.data(withJSONObject: categoryEvidence, options: [.prettyPrinted, .sortedKeys]), uniformTypeIdentifier: "public.json")
+        categoryAttachment.name = "project-category-after-selection-\(language).json"
+        categoryAttachment.lifetime = .keepAlways
+        add(categoryAttachment)
+        XCTAssertEqual(selectionResult, .completed, "The selected category must reach the genuine semantic control: \(selectedAX)")
+        XCTAssertTrue(selectedAX.contains(category), "Non-default category must actually be selected")
         for field in fields { replaceProjectText(projectTextControl(field, in: app), with: field.value, in: app) }
         try verifyProjectTextFields(fields, in: app, phase: "before-save", language: language, marker: marker, category: category, categoryLabel: categoryLabel)
         let save = app.buttons[text("保存", "Save")].firstMatch
         tapProjectControl(save, in: app)
-        let project = app.links.matching(NSPredicate(format: "label CONTAINS %@", marker)).firstMatch
+        let project = app.links.matching(NSPredicate(format: "label == %@", marker)).firstMatch
         XCTAssertTrue(project.waitForExistence(timeout: 20))
         projectLinkAXValue = project.value as? String
         projectOriginalID = projectRecordID(projectLinkAXValue)
@@ -566,7 +592,7 @@ final class KeepAnyUITests: XCTestCase {
         app.launch()
         XCTAssertTrue(assets.waitForExistence(timeout: 30))
         assets.tap()
-        let renamedProject = app.links.matching(NSPredicate(format: "label CONTAINS %@", renamed.value)).firstMatch
+        let renamedProject = app.links.matching(NSPredicate(format: "label == %@", renamed.value)).firstMatch
         XCTAssertTrue(renamedProject.waitForExistence(timeout: 20))
         projectLinkAXValue = renamedProject.value as? String
         tapProjectControl(renamedProject, in: app)
@@ -637,10 +663,19 @@ final class KeepAnyUITests: XCTestCase {
         capture(app, "ios-mcp-prepare-en-no-initial-grant")
         let configure = app.links["Configure local access"].firstMatch
         tapProjectControl(configure, in: app)
-        let address = app.textFields["This device’s private IPv4 address"].firstMatch
+        // 544 AX includes the associated hint in this field's accessible name.
+        let addressControls = app.textFields.matching(NSPredicate(format: "label BEGINSWITH %@", "This device’s private IPv4 address"))
+        let address = addressControls.firstMatch
         let nativeControlsAvailable = address.waitForExistence(timeout: 15)
+        capture(app, "ios-mcp-prepare-en-settings-before-scope")
         captureHierarchy(app, "ios-mcp-prepare-en-settings-before-scope-AX")
         XCTAssertTrue(nativeControlsAvailable, "The real native MCP controls must be available; unsupported is a failure")
+        XCTAssertEqual(addressControls.count, 1, "The actual labelled native address field must be unambiguous")
+        let stateUnavailable = app.staticTexts["Access status could not be confirmed. Try again, or stop the connection."].firstMatch
+        let initialStatus = XCTAttachment(string: "nativeStateUnavailablePresentInAX=\(stateUnavailable.exists); locatorMatches=\(addressControls.count); prepare/ready/stop contract remains required")
+        initialStatus.name = "ios-mcp-prepare-en-initial-state-diagnostic"
+        initialStatus.lifetime = .keepAlways
+        add(initialStatus)
         let selected = mcpCheckboxes(in: app).filter { $0.label == marker }
         XCTAssertEqual(selected.count, 1, "Only the newly created synthetic project can be the selected scope")
         guard let selected = selected.first else { return }
@@ -670,6 +705,8 @@ final class KeepAnyUITests: XCTestCase {
         let prepare = app.buttons["Prepare pairing file"].firstMatch
         XCTAssertTrue(prepare.waitForExistence(timeout: 10))
         reachProjectControl(prepare, in: app)
+        capture(app, "ios-mcp-prepare-en-before-prepare")
+        captureHierarchy(app, "ios-mcp-prepare-en-before-prepare-AX")
         XCTAssertTrue(prepare.isEnabled)
         tapProjectControl(prepare, in: app)
         let ready = app.staticTexts[readyText].firstMatch
