@@ -15,6 +15,21 @@ private final class WeakTransport {
     init(_ value: McpTransport?) { self.value = value }
 }
 final class PreparationTests: XCTestCase {
+    override class func setUp() {
+        mcpCoreCaseStage("class-setup-before", name: "PreparationTests")
+        super.setUp()
+        mcpCoreCaseStage("class-setup-after", name: "PreparationTests")
+    }
+    override func setUpWithError() throws {
+        mcpCoreCaseStage("case-start", name: name)
+        try super.setUpWithError()
+        mcpCoreCaseStage("case-setup-complete", name: name)
+    }
+    override func tearDownWithError() throws {
+        mcpCoreCaseStage("case-teardown-before", name: name)
+        defer { mcpCoreCaseStage("case-teardown-after", name: name) }
+        try super.tearDownWithError()
+    }
     private func send(_ endpoint: McpEndpoint, events: Events, server: McpTransport) throws {
         let client = try TLSProbe(endpoint)
         try client.send("POST /pair HTTP/1.1\r\nHost: 127.0.0.1:\(URL(string: endpoint.endpoint)!.port!)\r\nContent-Length: 2\r\n\r\n{}")

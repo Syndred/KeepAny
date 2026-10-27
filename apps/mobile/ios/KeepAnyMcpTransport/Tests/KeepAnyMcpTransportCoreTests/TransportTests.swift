@@ -9,6 +9,13 @@ import X509
 import Crypto
 @testable import KeepAnyMcpTransportCore
 
+func mcpCoreCaseStage(_ phase: String, name: String) {
+    // Write directly to stderr, independently of XCTest's suite/case stdout.
+    // Only runner metadata is emitted; no fixture body, certificate or key.
+    let line = "KeepAny Core case \(phase) pid=\(ProcessInfo.processInfo.processIdentifier) uptime=\(ProcessInfo.processInfo.systemUptime) name=\(name)\n"
+    FileHandle.standardError.write(Data(line.utf8))
+}
+
 final class Events {
     private let condition = NSCondition()
     private var rows: [McpTransportEvent] = []
@@ -253,6 +260,21 @@ final class TLSProbe {
 }
 
 final class TransportTests: XCTestCase {
+    override class func setUp() {
+        mcpCoreCaseStage("class-setup-before", name: "TransportTests")
+        super.setUp()
+        mcpCoreCaseStage("class-setup-after", name: "TransportTests")
+    }
+    override func setUpWithError() throws {
+        mcpCoreCaseStage("case-start", name: name)
+        try super.setUpWithError()
+        mcpCoreCaseStage("case-setup-complete", name: name)
+    }
+    override func tearDownWithError() throws {
+        mcpCoreCaseStage("case-teardown-before", name: name)
+        defer { mcpCoreCaseStage("case-teardown-after", name: name) }
+        try super.tearDownWithError()
+    }
     private func raw(_ endpoint: McpEndpoint, path: String = "/mcp", body: String = "{}", extra: String = "") -> String {
         "POST \(path) HTTP/1.1\r\nHost: 127.0.0.1:\(URL(string: endpoint.endpoint)!.port!)\r\nContent-Type: application/json\r\nContent-Length: \(body.utf8.count)\r\n\(extra)\r\n\(body)"
     }
