@@ -13,6 +13,31 @@ const patchSchema = z.object({
   url: z.string().max(2_000).optional(),
 }).strict();
 
+// Shared wire contracts only. Trusted approval remains outside the tool surface.
+export const keepAnyMcpToolContracts = {
+  list_assets: {
+    description: 'List only the assets and fields included in the active local grant.',
+    inputSchema: z.object({ query: z.string().max(160).optional(), limit: z.number().int().min(1).max(100).optional() }).strict(),
+    annotations: { readOnlyHint: true },
+  },
+  get_asset: {
+    description: 'Read one selected asset, projected to the locally approved fields.',
+    inputSchema: z.object({ id: z.string().min(1).max(96) }).strict(),
+    annotations: { readOnlyHint: true },
+  },
+  preview_asset_update: {
+    description: 'Preview one permitted asset update. A trusted local caller must separately approve the exact preview before confirmation.',
+    inputSchema: z.object({ id: z.string().min(1).max(96), operationId: z.string().regex(/^[A-Za-z0-9_-]{8,96}$/), patch: patchSchema }).strict(),
+    annotations: { readOnlyHint: true },
+  },
+  confirm_asset_update: {
+    description: 'Apply a previously previewed update only after out-of-band local approval. Reusing an operation ID is idempotent.',
+    inputSchema: z.object({ id: z.string().min(1).max(96), operationId: z.string().regex(/^[A-Za-z0-9_-]{8,96}$/),
+      previewId: z.string().uuid(), patch: patchSchema }).strict(),
+    annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true },
+  },
+} as const;
+
 export interface LocalMcpOptions {
   store: McpAssetStore;
   authority: McpAuthority;
@@ -33,30 +58,13 @@ const response = (work: Promise<unknown>) => work.then(value => ({
 export function createKeepAnyMcpServer(options: LocalMcpOptions) {
   const service = new McpAssetService(options.store, options.authority, options.grantId, options.grantSecret);
   const server = new McpServer({ name: 'keepany-local', version: '0.1.0' });
-  server.registerTool('list_assets', {
-    description: 'List only the assets and fields included in the active local grant.',
-    inputSchema: z.object({ query: z.string().max(160).optional(), limit: z.number().int().min(1).max(100).optional() }).strict(),
-    annotations: { readOnlyHint: true },
-  }, ({ query, limit }) => response(service.listAssets(query, limit)));
-  server.registerTool('get_asset', {
-    description: 'Read one selected asset, projected to the locally approved fields.',
-    inputSchema: z.object({ id: z.string().min(1).max(96) }).strict(),
-    annotations: { readOnlyHint: true },
-  }, ({ id }) => response(service.getAsset(id)));
-  server.registerTool('preview_asset_update', {
-    description: 'Preview one permitted asset update. A trusted local caller must separately approve the exact preview before confirmation.',
-    inputSchema: z.object({ id: z.string().min(1).max(96), operationId: z.string().regex(/^[A-Za-z0-9_-]{8,96}$/), patch: patchSchema }).strict(),
-    annotations: { readOnlyHint: true },
-  }, ({ id, operationId, patch }) => response(service.previewUpdate(id, operationId, patch).then(async preview => {
+  server.registerTool('list_assets', keepAnyMcpToolContracts.list_assets, ({ query, limit }) => response(service.listAssets(query, limit)));
+  server.registerTool('get_asset', keepAnyMcpToolContracts.get_asset, ({ id }) => response(service.getAsset(id)));
+  server.registerTool('preview_asset_update', keepAnyMcpToolContracts.preview_asset_update, ({ id, operationId, patch }) => response(service.previewUpdate(id, operationId, patch).then(async preview => {
     await options.onPreview?.(preview);
     return preview;
   })));
-  server.registerTool('confirm_asset_update', {
-    description: 'Apply a previously previewed update only after out-of-band local approval. Reusing an operation ID is idempotent.',
-    inputSchema: z.object({ id: z.string().min(1).max(96), operationId: z.string().regex(/^[A-Za-z0-9_-]{8,96}$/),
-      previewId: z.string().uuid(), patch: patchSchema }).strict(),
-    annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true },
-  }, ({ id, operationId, previewId, patch }) => response(service.confirmUpdate({ id, operationId, previewId, patch })));
+  server.registerTool('confirm_asset_update', keepAnyMcpToolContracts.confirm_asset_update, ({ id, operationId, previewId, patch }) => response(service.confirmUpdate({ id, operationId, previewId, patch })));
   return server;
 }
 

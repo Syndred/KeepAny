@@ -8,8 +8,8 @@ const output = join(root, 'dist', 'mcp-launcher');
 const executable = join(output, 'bin', 'keepany-mcp.mjs');
 const rootPackage = JSON.parse(await readFile(join(root, 'package.json'), 'utf8'));
 const dependencies = Object.fromEntries(
-  ['@modelcontextprotocol/server', '@noble/hashes', 'zod']
-    .map(name => [name, rootPackage.dependencies[name]]),
+  ['@modelcontextprotocol/server', '@modelcontextprotocol/client', '@noble/hashes', 'zod']
+    .map(name => [name, rootPackage.dependencies[name] ?? rootPackage.devDependencies[name]]),
 );
 if (Object.values(dependencies).some(version => typeof version !== 'string')) {
   throw Error('mcp-runtime-dependency-missing');

@@ -7,6 +7,7 @@ import { startLocalMcpBridge } from '../../../packages/mcp/src/bridge';
 import { serveKeepAnyMcpStdio } from '../../../packages/mcp/src/server';
 import { defaultAuthorityPath, defaultPairingPath, prepareDefaultDirectory, prepareStateDirectory, writePairingFile } from './pairing-file';
 import { LauncherError, readLaunchRequest } from './request';
+import { launchMobileMcp, MobileLaunchError } from './mobile-launch';
 
 const pairingLifetimeMs = 2 * 60_000;
 
@@ -117,4 +118,39 @@ async function main() {
   if (process.stdin.readableEnded) shutdown();
 }
 
-if (process.argv[1] && import.meta.url === pathToFileURL(realpathSync(process.argv[1])).href) void main();
+async function mobileMain(argv: string[]) {
+  const controller = new AbortController();
+  let running: Awaited<ReturnType<typeof launchMobileMcp>> | undefined;
+  let opening: Promise<Awaited<ReturnType<typeof launchMobileMcp>>> | undefined;
+  let stopped = false;
+  const close = (code = 0) => {
+    if (stopped) return;
+    stopped = true; controller.abort();
+    void opening?.then(value => value.close()).catch(() => {}).finally(() => { stopPrivateFilesHelper(); process.exitCode = code; });
+  };
+  process.stdin.once('end', () => close()); process.stdin.once('close', () => close());
+  process.once('SIGINT', () => close(130)); process.once('SIGTERM', () => close(143));
+  try {
+    let pairingPath: string | undefined, connectionPath: string | undefined, stateDir: string | undefined;
+    for (let i = 0; i < argv.length; i += 2) {
+      const flag = argv[i], value = argv[i + 1];
+      if (!value) throw new MobileLaunchError('invalid-arguments');
+      if (flag === '--mobile-pairing' && !pairingPath) pairingPath = value;
+      else if (flag === '--mobile-connection' && !connectionPath) connectionPath = value;
+      else if (flag === '--state-dir' && !stateDir) stateDir = value;
+      else throw new MobileLaunchError('invalid-arguments');
+    }
+    opening = launchMobileMcp({ pairingPath, connectionPath, stateDir, signal: controller.signal });
+    running = await opening;
+    if (stopped || process.stdin.readableEnded) await running.close();
+  } catch (error) {
+    if (!stopped) { process.stderr.write(`KeepAny MCP launcher: ${error instanceof MobileLaunchError ? error.code : 'mobile-mcp-unavailable'}\n`); process.exitCode = 1; }
+    stopPrivateFilesHelper();
+  }
+}
+
+if (process.argv[1] && import.meta.url === pathToFileURL(realpathSync(process.argv[1])).href) {
+  const args = process.argv.slice(2);
+  if (args.includes('--mobile-pairing') || args.includes('--mobile-connection')) void mobileMain(args);
+  else void main();
+}
