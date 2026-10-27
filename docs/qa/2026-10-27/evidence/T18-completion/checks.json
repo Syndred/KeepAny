@@ -25,7 +25,59 @@
   "controlledMetadata": "Same handler invoked by intercepted API with exact test-only loopback origin; real HTTP GET; normal route separately verified with public page and private rejection",
   "portable": {
     "spec": "tests/e2e/qa-t18-portable-completion.spec.ts",
-    "status": "prepared; pending rebuilt candidate"
+    "status": "passed",
+    "stats": {
+      "startTime": "2026-10-27T08:46:45.265Z",
+      "duration": 17363.219999999998,
+      "expected": 2,
+      "skipped": 0,
+      "unexpected": 0,
+      "flaky": 0
+    },
+    "report": "test-results/completion-t18-production-results.json",
+    "artifact": {
+      "path": "dist/preview/KeepAny-0.1.0-preview.745565a93c5d.dirty-portable.zip",
+      "sha256": "925736b7aa36efc098f85bcf400d3fec954e89f339b3e83af9a5fee161fe77c9",
+      "sourceCommit": "745565a93c5dfa3b6e2ff2a3496c105c7ac5234b",
+      "sourceDirty": true,
+      "baseURL": "http://127.0.0.1:4211"
+    },
+    "scenarios": [
+      {
+        "test": "T18 portable zh-CN 390: public metadata, exact CSV and downloaded backup restore without source imports",
+        "status": "expected",
+        "records": 2,
+        "candidates": 3,
+        "sourceCarriers": 1,
+        "sourceRefs": 2,
+        "sourceRequests": [],
+        "pageerrors": [],
+        "privateProbe": {
+          "status": 422,
+          "value": {
+            "error": "metadata-private"
+          }
+        }
+      },
+      {
+        "test": "T18 portable en 1280: public metadata, exact CSV and downloaded backup restore without source imports",
+        "status": "expected",
+        "records": 2,
+        "candidates": 3,
+        "sourceCarriers": 1,
+        "sourceRefs": 2,
+        "sourceRequests": [],
+        "pageerrors": [],
+        "privateProbe": {
+          "status": 422,
+          "value": {
+            "error": "metadata-private"
+          }
+        }
+      }
+    ],
+    "readback": "Actual downloaded KA1 decrypted offline; restored through UI in clean context; downloaded again and all records/reviews equal",
+    "contexts": "finally closed; controller-managed 4211 and PG untouched"
   },
   "rawSource": "UTF-8 BOM + CRLF retained exactly, one full source per fileHash; refs for other rows",
   "sourceStats": {

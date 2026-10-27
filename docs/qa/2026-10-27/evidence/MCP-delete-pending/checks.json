@@ -37,7 +37,31 @@
     }
   ],
   "security": "Held handle, protected private parent chain, no-replace random sibling; no ACL/FileID/reparse/atomic replacement relaxation; original crash lock remains fail-closed",
-  "bundledValidation": "pending rebuilt CLI, candidate and 16-case matrix by controller",
+  "bundledValidation": {
+    "status": "passed",
+    "stats": {
+      "startTime": "2026-10-27T08:42:56.915Z",
+      "duration": 207487.678,
+      "expected": 16,
+      "skipped": 0,
+      "unexpected": 0,
+      "flaky": 0
+    },
+    "report": "test-results/completion-mcp-production-results.json",
+    "executable": "dist/mcp-launcher/bin/keepany-mcp.mjs",
+    "executableSha256": "74014043c328f3574e6badb8ca36e1322ade41eaf343af62d180eb749e6876a8",
+    "containsRetiredLockFix": true,
+    "containsNoReplace": true,
+    "artifact": {
+      "path": "dist/preview/KeepAny-0.1.0-preview.745565a93c5d.dirty-portable.zip",
+      "sha256": "925736b7aa36efc098f85bcf400d3fec954e89f339b3e83af9a5fee161fe77c9",
+      "sourceCommit": "745565a93c5dfa3b6e2ff2a3496c105c7ac5234b",
+      "sourceDirty": true,
+      "baseURL": "http://127.0.0.1:4211"
+    },
+    "screenshots": "test-results/completion-mcp-production-shots",
+    "contexts": "All test contexts and SDK connections finally closed; controller-managed 4211/PG untouched"
+  },
   "functionalGreen": "test-results/mcp-delete-pending-contract-green.json",
   "platform": "Windows native NTFS synthetic private fixtures",
   "files": [

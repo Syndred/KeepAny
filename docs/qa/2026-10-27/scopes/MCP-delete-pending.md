@@ -29,12 +29,15 @@
 |原并发测试不改断言，独立5轮|每轮3进程×8更新，24条audit且24个唯一ID；5轮均通过。按名称筛选时的其他5项是未选执行，不折算成安全通过。|`test-results/mcp-original-concurrent-round-1.json` 至 `-5.json`。|
 |完整file-storage|6/6通过，0失败/跳过。|`test-results/mcp-storage-fix-final.json`。|
 |完整MCP模块|8文件51/51通过，0失败/跳过。|`test-results/mcp-all-fix-final.json`。|
+|最终真实便携Web＋新bundled SDK|原16条全部通过，207.488秒，0失败/跳过/重试。|`test-results/completion-mcp-production-results.json`。|
 |类型与lint|类型通过；2个改动文件lint零诊断、diff检查通过。|本机命令输出。|
 
 完整MCP仍实测ACL与其他principal/null或空DACL/owner拒绝、junction和父链不能替换、同用户tmp路径替换和内容写入、准确8MiB/边界+1、只读状态替换失败后保持原身份与内容、崩溃锁fail closed、force-terminate后已确认操作读回等原负例。
 
-## 未完成、交付与清理
+## 最终打包续验、交付与清理
 
-源码修复与本机安全相邻已闭环；主控需要重新执行全仓真实PG整合、重新构建bundled CLI和便携候选，并对最终包重跑既有16场景矩阵。不能用本报告51/51替代打包后的交付证据。
+主控重新构建 `dist/mcp-launcher/bin/keepany-mcp.mjs` 后，本包实际回读CLI SHA256为 `74014043c328f3574e6badb8ca36e1322ade41eaf343af62d180eb749e6876a8`，bundle中含32b442c的released锁修复及no-replace分支。使用该真实可执行文件，通过MCP SDK StdioClientTransport连接主控4211的新便携Web，原 `mcp-web.spec.ts` 与 `mcp-dialog-matrix.spec.ts` **16/16全部通过**。这是真实打包SDK与生产网页操作，另列于源码51项，未用源码计数代替交付验证。
 
-所有本包观察句柄均finally关闭；辅助进程随私有helper关闭，测试只清理各自创建的合成目录。未推送、未发布官网/Release、未更新4180，未删除或重写旧证据。机器摘要见 [MCP-delete-pending/checks.json](../evidence/MCP-delete-pending/checks.json)。
+生产候选为 `KeepAny-0.1.0-preview.745565a93c5d.dirty-portable.zip`，实际ZIP SHA256 `925736b7aa36efc098f85bcf400d3fec954e89f339b3e83af9a5fee161fe77c9`。正式manifest sourceDirty=true，不隐去候选标记。中英360/390/768/1280/1440范围、精确scope授权、单记录写入预览批准/拒绝、撤销、过期/多页变化等仍执行原断言；报告统计16 expected、0 unexpected/skipped/flaky。矩阵截图仅保留忽略目录 `test-results/completion-mcp-production-shots`，不再提交重复大图。
+
+所有本包观察句柄、浏览器context和SDK连接均finally关闭；辅助进程随私有helper关闭，测试只清理各自创建的合成目录。4211和PG由主控管理，本包未停服；不重试gstack补probe或已被拒的图清理。本轮最终文档由主控统一串行提交与推送；未发布官网/Release、未更新4180，未删除或重写旧证据。机器摘要见 [MCP-delete-pending/checks.json](../evidence/MCP-delete-pending/checks.json)。

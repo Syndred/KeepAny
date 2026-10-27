@@ -1,0 +1,14 @@
+{
+  "date": "2026-10-27",
+  "sourceCommit": "7df5d0e1c42d9b09337b80f2c35f5839ab2c74ff",
+  "sourceDirty": true,
+  "sourceFiles": 437,
+  "webFiles": 103,
+  "compared": [
+    "current source",
+    "build",
+    "actual portable files",
+    "actual HTTP 4211"
+  ],
+  "failures": []
+}
