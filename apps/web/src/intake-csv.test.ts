@@ -36,3 +36,13 @@ test("invalid UTF-8 and oversized CSV never stage incomplete original content", 
 	await expect(stageCsvForReview(new File([new Uint8Array(2 * 1024 * 1024 + 1)], "large.csv"))).rejects.toThrow("limit");
 	expect(stage).not.toHaveBeenCalled();
 });
+
+
+test("explicit expense rows retain exact column strings for review without guessing unknown amounts or currency", async () => {
+  const original = 'kind,name,amount,currency,eventDate,assetId,note\r\nexpense,Invoice one,12.34,USD,2026-10-27,owner,Keep original\r\nexpense,Invoice two,unknown,unmapped,, ,Unmapped evidence\r\n';
+  expect(await stageCsvForReview(new File([original], 'expenses.csv'))).toBe(2);
+  const rows = stage.mock.calls[0]?.[0] as Array<{ id: string; reviewMode: string; sourceText?: string; expenseDraft: { amount: string; currency: string; currencyConfirmed: boolean; eventDate: string; assetId: string } }>;
+  expect(rows[0]).toMatchObject({ reviewMode: 'expense', sourceText: original, expenseDraft: { amount: '12.34', currency: 'USD', currencyConfirmed: true, eventDate: '2026-10-27', assetId: 'owner' } });
+  expect(rows[1]).toMatchObject({ reviewMode: 'expense', expenseDraft: { amount: 'unknown', currencyConfirmed: false, eventDate: '', assetId: '' } });
+  expect(rows[0].id).not.toBe(rows[1].id);
+});

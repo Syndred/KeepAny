@@ -1,3 +1,4 @@
+import { intakeWithdrawalCopy } from './intake-withdrawal-copy';
 import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
 import { aiCopy } from "./ai-copy";
@@ -20,6 +21,7 @@ import { impactNoteCopy } from "./impact-note-copy";
 import { mobileServicesCopy } from "./mobile-services-copy";
 
 const copy: Record<string, [string, string]> = {
+  ...intakeWithdrawalCopy,
 	...nativeDatasetsCopy,
 	brandName: ["KeepAny", "KeepAny"],
 	settingsStorageFailed: ["部分设置未能保存，请重试。", "Some settings could not be saved. Please try again."],

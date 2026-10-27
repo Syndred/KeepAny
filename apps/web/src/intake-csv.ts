@@ -1,5 +1,5 @@
 import Papa from "papaparse";
-import { assetSchema, newAsset, type AssetKind } from "../../../packages/domain/src";
+import { assetSchema, currencies, newAsset, type AssetKind } from "../../../packages/domain/src";
 import { stageReviewedCandidates, type ReviewedCandidate } from "./intake-review-store";
 
 const importKinds = ["project", "account", "subscription", "item"] as const;
@@ -25,7 +25,8 @@ export async function stageCsvForReview(file: File): Promise<number> {
 		if (parsed.errors.length || parsed.data.length > maxRows || !parsed.data.length) throw Error("invalid");
 		const importedAt = new Date().toISOString();
 		for (const [index, source] of parsed.data.entries()) {
-			const kind = source.kind?.trim() as AssetKind;
+			const isExpense = source.kind?.trim() === "expense";
+			const kind = (isExpense ? "item" : source.kind?.trim()) as AssetKind;
 			if (!importKinds.includes(kind as typeof importKinds[number]) || !source.name?.trim()) continue;
 			const asset = assetSchema.safeParse({
 				...newAsset(kind), id: `csv-${hash.slice(0, 48)}-${index + 2}`,
@@ -36,6 +37,11 @@ export async function stageCsvForReview(file: File): Promise<number> {
 			if (asset.success) staged.push({
 				id: `csv-${hash}-${index + 2}`, fileHash: hash, fileName: file.name,
 				rowNumber: index + 2, asset: asset.data, status: "pending",
+				...((isExpense || ["amount", "currency", "eventDate"].some(key => key in source)) ? {
+					...(isExpense ? { reviewMode: "expense" as const } : {}),
+					expenseDraft: { assetId: source.assetId?.trim() ?? "", title: source.name.trim(), amount: source.amount?.trim() ?? "",
+						currency: currencies.includes(source.currency?.trim() as typeof currencies[number]) ? source.currency.trim() as typeof currencies[number] : "CNY" as const,
+						currencyConfirmed: currencies.includes(source.currency?.trim() as typeof currencies[number]), eventDate: source.eventDate?.trim() ?? "", source: source.source?.trim() ?? file.name, note: source.note ?? "" } } : {}),
 				...(staged.length ? { sourceTextRef: hash } : { sourceText }),
 			});
 		}

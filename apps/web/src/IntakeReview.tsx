@@ -3,13 +3,14 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { assetSchema, duplicates, formatMinorUnits, inputFromMinorUnits, historySchema, parseMinorUnits, type Asset } from "../../../packages/domain/src";
 import { allRecords, localRepository, saveBatch } from "../../../packages/local-db/src";
+import { Dialog } from "./components/ui/dialog";
 import { Button } from "./components/ui/button";
 import { FinanceEntryFields, type FinanceEntryDraft } from "./components/FinanceEntryFields";
 import { date, liveAssets, useAppContext } from "./view-shared";
 import "./finance.css";
 import {
 	decideReviewedCandidate, editReviewedCandidate, getReviewedCandidate,
-	listReviewedCandidates, editReviewedExpenseDraft, setReviewedCandidateMode, type ReviewedCandidate,
+	listReviewedCandidates, editReviewedExpenseDraft, setReviewedCandidateMode, canReviewExpense, reviewedCandidateExpenseHistoryId, type ReviewedCandidate,
 	confirmReviewedAssetMerge, pendingReviewedAssetMerges, retryReviewedAssetMerges, cancelReviewedAssetMerge,
 } from "./intake-review-store";
 import { CandidateMergeDialog, CandidateMergeReceipt } from "./components/CandidateMergeDialog";
@@ -62,6 +63,11 @@ export function IntakeReview() {
 	const [intervalDrafts, setIntervalDrafts] = useState<Record<string, string>>({});
 	const [amountDrafts, setAmountDrafts] = useState<Record<string, string>>({});
 	const [savingIds, setSavingIds] = useState(new Set<string>());
+	const [withdrawCandidate, setWithdrawCandidate] = useState<ReviewedCandidate | null>(null);
+	const [withdrawError, setWithdrawError] = useState("");
+	const [withdrawBusy, setWithdrawBusy] = useState(false);
+	const withdrawalInFlight = useRef(false);
+	const [withdrawIntents, setWithdrawIntents] = useState<Array<{candidateId: string; committed: boolean}>>([]);
 	const [expenseRecoveryPending, setExpenseRecoveryPending] = useState(false);
 	const [expenseRecoveryBusy, setExpenseRecoveryBusy] = useState(false);
 	const [expenseIntents, setExpenseIntents] = useState<Array<{ candidateId: string; historyId: string; committed: boolean }>>([]);
@@ -113,7 +119,7 @@ export function IntakeReview() {
 			await Promise.allSettled([...pendingSaves.current.values()]);
 			if (!isCurrent()) return;
 			if (revision !== reviewRevision.current) continue;
-			const [items, pending, merges] = await Promise.all([listReviewedCandidates(), repository.pendingReviewedExpenseConfirmations(), pendingReviewedAssetMerges()]);
+			const [items, pending, merges, withdrawals] = await Promise.all([listReviewedCandidates(), repository.pendingReviewedExpenseConfirmations(), pendingReviewedAssetMerges(), repository.pendingReviewedWithdrawals()]);
 			if (!isCurrent()) return;
 			// Another row remains editable during confirmation. A read started before
 			// that edit must not replace its newer optimistic or persisted value.
@@ -128,6 +134,7 @@ export function IntakeReview() {
 			setMigrationPending(!!repository.intakeReviewMigrationError);
 			setExpenseIntents(pending);
 			setMergeIntents(merges);
+			setWithdrawIntents(withdrawals);
 			setExpenseRecoveryPending(pending.length > 0 || !!repository.intakeExpenseRecoveryError);
 			return;
 		}
@@ -143,6 +150,27 @@ export function IntakeReview() {
 		void refresh(() => active).catch(() => { if (active) setMessage(t("error")); });
 		return () => { active = false; };
 	}, [t, refresh]);
+    async function abandonWithdrawal() {
+      if (!withdrawCandidate || withdrawalInFlight.current) return;
+      withdrawalInFlight.current = true; setWithdrawBusy(true);
+      try {
+        await mutateReview(async () => (await localRepository()).cancelReviewedWithdrawal(withdrawCandidate.id));
+        await refresh(); setWithdrawCandidate(null);
+      } catch { setWithdrawError(t('reviewWithdrawPending')); }
+      finally { withdrawalInFlight.current = false; setWithdrawBusy(false); }
+    }
+    async function withdrawOne() {
+      if (!withdrawCandidate || withdrawalInFlight.current) return;
+      withdrawalInFlight.current = true; setWithdrawBusy(true); setWithdrawError('');
+      try {
+        await mutateReview(async () => (await localRepository()).withdrawReviewedCandidate(withdrawCandidate));
+        await refresh(); setWithdrawCandidate(null); notify(t('reviewWithdrawn'));
+      } catch (error) {
+        const code = error instanceof Error ? error.message : '';
+        setWithdrawError(t(code === 'review-withdraw-missing-receipt' ? 'reviewWithdrawMissingReceipt' : code === 'review-withdraw-conflict' || code === 'review-withdraw-stale' ? 'reviewWithdrawConflict' : 'reviewWithdrawPending'));
+        await refresh().catch(() => {});
+      } finally { withdrawalInFlight.current = false; setWithdrawBusy(false); }
+    }
 	async function retryMigration() {
 		if (migrationInFlight.current) return;
 		migrationInFlight.current = true;
@@ -273,13 +301,13 @@ export function IntakeReview() {
 	function selectType(id: string, value: string) {
 		const row = editableRow(id);
 		if (!row) return;
-		if (value === "expense" && row.source === "pdf") {
+		if (value === "expense" && canReviewExpense(row)) {
 			const expenseDraft = row.expenseDraft ?? { assetId: "", title: row.asset.name, amount: "", currency: "CNY" as const, eventDate: "", source: row.fileName, note: "" };
 			queueEdit(id, { ...row, reviewMode: "expense", expenseDraft }, () => setReviewedCandidateMode(id, "expense", expenseDraft));
 		} else {
 			const asset = { ...row.asset, kind: value as Asset["kind"] };
-			queueEdit(id, { ...row, ...(row.source === "pdf" ? { reviewMode: "asset" as const } : {}), asset, kindSelected: true }, async () => {
-				if (row.source === "pdf" && !(await setReviewedCandidateMode(id, "asset"))) return false;
+			queueEdit(id, { ...row, ...(canReviewExpense(row) ? { reviewMode: "asset" as const } : {}), asset, kindSelected: true }, async () => {
+				if (canReviewExpense(row) && !(await setReviewedCandidateMode(id, "asset"))) return false;
 				return editReviewedCandidate(id, asset, true);
 			});
 		}
@@ -288,7 +316,7 @@ export function IntakeReview() {
 	function editExpense(id: string, change: Partial<FinanceEntryDraft>) {
 		const row = editableRow(id);
 		if (!row?.expenseDraft) return;
-		const expenseDraft = { ...row.expenseDraft, ...change };
+		const expenseDraft = { ...row.expenseDraft, ...change, ...(change.currency ? { currencyConfirmed: true } : {}) };
 		queueEdit(id, { ...row, expenseDraft }, () => editReviewedExpenseDraft(id, expenseDraft));
 	}
 
@@ -318,9 +346,9 @@ export function IntakeReview() {
 			if (row.reviewMode === "expense") {
 				const draft = row.expenseDraft;
 				const amount = draft ? parseMinorUnits(draft.amount, draft.currency) : Number.NaN;
-				if (!draft?.amount.trim() || !Number.isSafeInteger(amount) || amount <= 0) {
+				if (!draft?.amount.trim() || draft.currencyConfirmed === false || !Number.isSafeInteger(amount) || amount <= 0) {
 				throw new ReviewValidationError(t("financeInvalidAmount")); }
-				if (!historySchema.safeParse({ ...draft, id: `pdf-expense-${row.fileHash}`, action: "expense", amount, createdAt: new Date().toISOString(), deleted: false }).success) {
+				if (!historySchema.safeParse({ ...draft, id: reviewedCandidateExpenseHistoryId(row), action: "expense", amount, createdAt: new Date().toISOString(), deleted: false }).success) {
 				throw new ReviewValidationError(t("financeInvalidRecord"));
 			}
 			await (await localRepository()).confirmReviewedExpense(row);
@@ -350,7 +378,11 @@ export function IntakeReview() {
 			throw new ReviewValidationError(t("reviewInvalidCandidate")); }
 			const repository = await localRepository();
 			const alreadySaved = await repository.get<Asset>("asset", candidate.data.id);
-			if (!alreadySaved) {
+			if (alreadySaved) {
+			const semantic = (asset: Asset) => JSON.stringify({ ...asset, updatedAt: "" });
+			if (semantic(alreadySaved) !== semantic(candidate.data)) throw new ReviewValidationError(t("reviewChanged"));
+		}
+		if (!alreadySaved) {
 				const existing = (await allRecords()).filter((item) => item.type === "asset").map((item) => JSON.parse(item.payload) as Asset);
 				if (duplicates(candidate.data, existing).length) {
 				throw new ReviewValidationError(t("duplicate")); }
@@ -360,7 +392,7 @@ export function IntakeReview() {
 						!(await repository.get<Asset>("asset", candidate.data.id))) throw error;
 				}
 			}
-			await decideReviewedCandidate(id, "accepted");
+			await decideReviewedCandidate(id, "accepted", alreadySaved ?? candidate.data);
 		const receipt = await getReviewedCandidate(id);
 		const saved = await repository.get<Asset>("asset", candidate.data.id);
 		if (receipt?.status !== "accepted" || !saved || saved.deleted) throw new ReviewValidationError(t("reviewChanged"));
@@ -571,11 +603,11 @@ export function IntakeReview() {
 						{row.ai.relatedName && <p>{t("aiRelatedSuggestion", { name: row.ai.relatedName })}</p>}
 					</div>}
 				</>}
-				{row.status === "accepted" && row.reviewMode === "expense" && row.expenseDraft && <div className="intake-expense-receipt">
+				{(row.status === "accepted" || row.status === "withdrawn") && row.reviewMode === "expense" && row.expenseDraft && <div className="intake-expense-receipt">
 					<strong>{row.expenseDraft.title}</strong>
 					<span>{formatMinorUnits(parseMinorUnits(row.expenseDraft.amount, row.expenseDraft.currency), row.expenseDraft.currency, i18n.language)} · {date(row.expenseDraft.eventDate, i18n.language)}</span>
 					<small>{assetsById.get(row.expenseDraft.assetId)?.name ?? t("financeMissingAsset")} · {row.expenseDraft.source}</small>
-					<Link to="/finance">{t("reviewViewFinance")}</Link>
+					{row.status === "accepted" && <Link to="/finance">{t("reviewViewFinance")}</Link>}
 				</div>}
 				{row.status !== "pending" && row.reviewMode !== "expense" && <div className="intake-expense-receipt">
 					<strong>{row.asset.name}</strong>
@@ -589,13 +621,15 @@ export function IntakeReview() {
 						: <small>{t("taskRelatedMissing")}</small>)}
 					{row.merge && <CandidateMergeReceipt receipt={row.merge} />}
 				</div>}
+				{row.status === "withdrawn" && <p role="status">{t('reviewWithdrawn')}</p>}
+                {row.status === 'accepted' && <div className="actions"><Button disabled={bulkBusy || !!workingId || withdrawBusy} onClick={() => { setWithdrawCandidate(row); setWithdrawError(''); }}>{t(withdrawIntents.some(intent => intent.candidateId === row.id) ? 'reviewWithdrawRetry' : 'reviewWithdrawAcceptance')}</Button></div>}
 				{row.status === "pending" && <>
 					<div className="intake-review-fields">
-					<div className="field"><label htmlFor={`${row.id}-kind`}>{t("intakeRecordType")}</label><Select id={`${row.id}-kind`} value={row.reviewMode === "expense" ? "expense" : row.source === "pdf" && !row.kindSelected ? "" : row.asset.kind} disabled={disabled} onValueChange={(selectValue) => selectType(row.id, selectValue)}><SelectOption value="" disabled>{t("reviewSelectKind")}</SelectOption>{importKinds.map((kind) => <SelectOption value={kind} key={kind}>{t(kind)}</SelectOption>)}{row.source === "pdf" && <SelectOption value="expense">{t("reviewExpense")}</SelectOption>}</Select></div>
+					<div className="field"><label htmlFor={`${row.id}-kind`}>{t("intakeRecordType")}</label><Select id={`${row.id}-kind`} value={row.reviewMode === "expense" ? "expense" : row.source === "pdf" && !row.kindSelected ? "" : row.asset.kind} disabled={disabled} onValueChange={(selectValue) => selectType(row.id, selectValue)}><SelectOption value="" disabled>{t("reviewSelectKind")}</SelectOption>{importKinds.map((kind) => <SelectOption value={kind} key={kind}>{t(kind)}</SelectOption>)}{canReviewExpense(row) && <SelectOption value="expense">{t("reviewExpense")}</SelectOption>}</Select></div>
 					{row.reviewMode === "expense" && row.expenseDraft ? <>
-						<p className="muted intake-review-wide">{t("reviewExpenseHint")}</p>
+						<p className="muted intake-review-wide">{t(row.source === undefined ? "reviewExpenseCsvCheck" : "reviewExpenseHint")}</p>
 						{!targets.length && <div className="notice intake-review-wide"><p>{t("financeNoTarget")}</p><div className="actions"><Button asChild><Link to="/assets/$kind" params={{ kind: "subscription" }}>{t("financeGoSubscriptions")}</Link></Button><Button asChild><Link to="/assets/$kind" params={{ kind: "account" }}>{t("financeGoAccounts")}</Link></Button></div></div>}
-						<FinanceEntryFields draft={row.expenseDraft} targets={targets} disabled={disabled} idPrefix={row.id} onChange={(change) => editExpense(row.id, change)} />
+						<FinanceEntryFields draft={row.expenseDraft} currencyUnconfirmed={row.expenseDraft.currencyConfirmed === false} preserveCurrency={row.source === undefined} targets={targets} disabled={disabled} idPrefix={row.id} onChange={(change) => editExpense(row.id, change)} />
 					</> : <>
 						<div className="field"><label htmlFor={`${row.id}-name`}>{t("name")}</label><input id={`${row.id}-name`} value={row.asset.name} disabled={disabled} onChange={(event) => edit(row.id, "name", event.target.value)} /></div>
 						<div className="field intake-review-url"><label htmlFor={`${row.id}-url`}>{t("url")}</label><input id={`${row.id}-url`} value={row.asset.url} disabled={disabled} onChange={(event) => edit(row.id, "url", event.target.value)} /></div>
@@ -619,6 +653,11 @@ export function IntakeReview() {
 				</div>
 			</section>; })}
 		</div>}
+        {withdrawCandidate && <Dialog title={t('reviewWithdrawTitle')} closeDisabled={withdrawBusy} onClose={() => { if (!withdrawalInFlight.current) setWithdrawCandidate(null); }}>
+          <p>{t(withdrawCandidate.merge ? 'reviewWithdrawMergePrompt' : withdrawCandidate.reviewMode === 'expense' ? 'reviewWithdrawExpensePrompt' : 'reviewWithdrawAssetPrompt', { name: withdrawCandidate.asset.name })}</p>
+          {withdrawError && <p role="alert" className="field-error">{withdrawError}</p>}
+          <div className="actions">{withdrawIntents.some(intent => intent.candidateId === withdrawCandidate.id && !intent.committed) && <Button disabled={withdrawBusy} onClick={() => void abandonWithdrawal()}>{t("reviewWithdrawCancel")}</Button>}<Button disabled={withdrawBusy} onClick={() => setWithdrawCandidate(null)}>{t('cancel')}</Button><Button variant="danger" disabled={withdrawBusy} onClick={() => void withdrawOne()}>{t('reviewWithdrawAcceptance')}</Button></div>
+        </Dialog>}
 		{mergeCandidate && <CandidateMergeDialog candidate={mergeCandidate} invalidDrafts={mergeDraftErrors} returnFocusTo={() => mergeOpener.current} assets={liveAssets(data)} onClose={() => setMergeCandidate(null)} onMerge={merge} />}
 	</div>;
 }

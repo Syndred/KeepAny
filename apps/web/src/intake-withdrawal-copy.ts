@@ -1,0 +1,15 @@
+export const intakeWithdrawalCopy: Record<string, [string, string]> = {
+  reviewWithdrawAcceptance: ['撤销收录', 'Withdraw acceptance'],
+  reviewWithdrawTitle: ['撤销这条收录', 'Withdraw this acceptance'],
+  reviewWithdrawAssetPrompt: ['撤销“{{name}}”的本次收录？本次新建的资产会移入回收站，其他资产保留；原文与审核记录保留。', 'Withdraw this acceptance of “{{name}}”? The newly created asset moves to trash. Other assets, the original text and the review record are kept.'],
+  reviewWithdrawExpensePrompt: ['撤销“{{name}}”的本次支出收录？只撤回这条账单，订阅日期与续费记录保持；原文与审核记录保留。', 'Withdraw this expense acceptance of “{{name}}”? Only this transaction is withdrawn. Subscription dates, renewal records, the original text and the review record are kept.'],
+  reviewWithdrawMergePrompt: ['撤销“{{name}}”的本次合并？只有目标资料仍与本次合并结果完全一致时，才恢复合并前内容。原文与审核记录保留。', 'Withdraw this merge of “{{name}}”? The previous content is restored only if the target still exactly matches this merge result. The original text and review record are kept.'],
+  reviewWithdrawn: ['本次收录已撤销，原文和审核记录已保留。', 'This acceptance was withdrawn. The original text and review record are kept.'],
+  reviewStatusWithdrawn: ['已撤销', 'Withdrawn'],
+  reviewWithdrawCancel: ['放弃本次撤销', 'Abandon this withdrawal'],
+  reviewWithdrawRetry: ['重试撤销', 'Retry withdrawal'],
+  reviewWithdrawPending: ['撤销尚未完成，记录已保留；可以重试。', 'Withdrawal is unfinished. The records are kept; you can retry.'],
+  reviewWithdrawConflict: ['这条资料在收录后已更改，不能自动撤销。请先核对最新资料。', 'This record changed after acceptance and cannot be withdrawn automatically. Review the latest record first.'],
+  reviewWithdrawMissingReceipt: ['这条历史审核没有完整的原始保存快照，无法安全自动撤销。请核对现有资料。', 'This older review has no complete original save snapshot. Automatic withdrawal is unavailable; review the current record.'],
+  reviewExpenseCsvCheck: ['请对照原始CSV核对金额、币种、日期和归属；未识别的字段需手动填写，确认前不会创建账单。', 'Check the amount, currency, date and owner against the original CSV. Fill unrecognized fields manually. No transaction is created before confirmation.'],
+};

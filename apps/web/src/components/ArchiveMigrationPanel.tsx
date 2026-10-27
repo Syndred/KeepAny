@@ -48,8 +48,8 @@ function fieldValue(value: unknown): string {
 	return JSON.stringify(value);
 }
 
-const reviewStatusKey = (status: "pending" | "accepted" | "ignored") =>
-	status === "pending" ? "reviewStatusPending" : status === "accepted" ? "reviewStatusAccepted" : "reviewStatusIgnored";
+const reviewStatusKey = (status: "pending" | "accepted" | "ignored" | "withdrawn") =>
+	status === "pending" ? "reviewStatusPending" : status === "accepted" ? "reviewStatusAccepted" : status === "withdrawn" ? "reviewStatusWithdrawn" : "reviewStatusIgnored";
 
 function reviewDifferences(source: ReviewedCandidate, target: ReviewedCandidate | null) {
 	return [

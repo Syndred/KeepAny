@@ -6,6 +6,7 @@ import * as merge from '../../../packages/local-db/src/intake-asset-merge';
 export type ReviewedCandidate = review.ReviewedCandidate;
 export type ReviewedExpenseDraft = review.ReviewedExpenseDraft;
 export type ReviewedMergeField = review.ReviewedMergeField;
+export { canReviewExpense, reviewedCandidateExpenseHistoryId } from '../../../packages/local-db/src/intake-review';
 export { reviewedMergeFieldsForKind } from '../../../packages/local-db/src/intake-review';
 export { previewReviewedAssetMerge } from '../../../packages/local-db/src/intake-asset-merge';
 
@@ -52,8 +53,8 @@ export async function editReviewedExpenseDraft(id: string, draft: ReviewedExpens
   return review.editReviewedExpenseDraft((await localRepository()).fileStore, id, draft);
 }
 
-export async function decideReviewedCandidate(id: string, status: "accepted" | "ignored"): Promise<void> {
+export async function decideReviewedCandidate(id: string, status: "accepted" | "ignored", acceptedAsset?: Asset): Promise<void> {
   const repository = await localRepository();
   return review.decideReviewedCandidate(repository.fileStore, id, status,
-    async assetId => !!(await repository.get('asset', assetId)));
+    async assetId => !!(await repository.get('asset', assetId)), acceptedAsset);
 }

@@ -20,6 +20,7 @@ import { assertReviewedAssetReferences, cancelReviewedExpenseConfirmation, confi
   parseReviewedCandidates, pendingReviewedExpenseConfirmations, replayReviewedExpense, sameReviewedCandidate,
   retainReviewedCsvSources,
   type PendingReviewedExpenseConfirmation, type ReviewedCandidate, type ReviewedImportJournal } from './intake-review';
+import { cancelReviewedWithdrawal, withdrawReviewedCandidate, replayReviewedWithdrawal, pendingReviewedWithdrawals, type PendingReviewedWithdrawal } from './intake-withdrawal';
 import { replayReviewedAssetMerge } from './intake-asset-merge';
 import { pendingSubscriptionSave, replaySubscriptionSave, subscriptionSaveComplete, type PendingSubscriptionSave, type SubscriptionLink, type SubscriptionSaveJournal } from './subscription-save';
 import { assertCategoryMutationAllowed, cancelCategoryEdit as cancelCategoryEditIntent, deleteCustomCategory as deleteCustomCategoryIntent,
@@ -460,6 +461,24 @@ export class LocalRepository {
     });
   }
 
+  async withdrawReviewedCandidate(expected: ReviewedCandidate): Promise<void> {
+    return withRenewalLock(`keepany-renewal:${this.records.name}`, async () => {
+      await this.settleRenewalJournals();
+      await this.settleSubscriptionSaves();
+      await withdrawReviewedCandidate(this.records, this.fileStore, expected);
+    });
+  }
+  async cancelReviewedWithdrawal(candidateId: string): Promise<'cancelled' | 'completed'> {
+    return withRenewalLock(`keepany-renewal:${this.records.name}`, () => cancelReviewedWithdrawal(this.records, this.fileStore, candidateId));
+  }
+  async pendingReviewedWithdrawals(): Promise<PendingReviewedWithdrawal[]> { return pendingReviewedWithdrawals(this.records, this.fileStore); }
+  async retryReviewedWithdrawals(): Promise<void> {
+    return withRenewalLock(`keepany-renewal:${this.records.name}`, () => this.settleReviewedWithdrawals());
+  }
+  private async settleReviewedWithdrawals(): Promise<void> {
+    for (const entry of await this.fileStore.importJournal.toArray()) if (entry.reviewedWithdrawal) await replayReviewedWithdrawal(this.records, this.fileStore, entry.id);
+  }
+
   private async settleReviewedExpenseConfirmations(): Promise<void> {
     for (const entry of await this.fileStore.importJournal.toArray()) {
       if (!entry.reviewedExpense) continue;
@@ -471,6 +490,7 @@ export class LocalRepository {
       }
     }
     this.intakeExpenseRecoveryError = null;
+    await this.settleReviewedWithdrawals();
   }
 
   async allRecords(): Promise<RecordRow[]> {
@@ -688,6 +708,12 @@ export class LocalRepository {
     if (!expected.deleted || expected.purged || expected.impactSnapshot || expected.projectWorkflow || expected.maintenancePlan) throw Error('task-stale');
     return withRenewalLock(`keepany-task:${this.records.name}`, () => this.restoreEntityUnlocked('task', expected.id, rowFor('task', expected).payload))
       .catch(error => { if (error instanceof Error && error.message === 'not-in-trash') throw Error('task-stale'); throw error; });
+  }
+
+  async restoreSubmissionIfCurrent(expected: Submission): Promise<RecordRow> {
+    if (!expected.deleted || expected.purged) throw Error('submission-stale');
+    return this.restoreEntityUnlocked('submission', expected.id, rowFor('submission', expected).payload)
+      .catch(error => { if (error instanceof Error && ['relation-stale', 'not-in-trash'].includes(error.message)) throw Error('submission-stale'); throw error; });
   }
 
   async saveSubmissionIfCurrent(expected: Submission, next: Submission): Promise<RecordRow> {
@@ -2299,6 +2325,7 @@ async function assertNoPendingReviewedConfirmations(store: FileStore): Promise<v
   const entries = await store.importJournal.toArray();
   if (entries.some(entry => entry.reviewedExpense)) throw Error('review-expense-pending');
   if (entries.some(entry => entry.reviewedAssetMerge)) throw Error('review-merge-pending');
+  if (entries.some(entry => entry.reviewedWithdrawal)) throw Error('review-withdraw-pending');
 }
 async function recoverReviewedAssetMerges(db: RecordBackend, store: FileStore): Promise<void> {
   for (const entry of await store.importJournal.toArray()) {
@@ -2807,7 +2834,7 @@ export async function openRepositoryFromBackend(openedDb: RecordBackend, store: 
   const name = openedDb.name;
     // Another tab may still own an active batch; only recover its journal after the shared lock is released.
     await withRenewalLock(`keepany-batch:${name}`, async () => {
-      for (const entry of await store.importJournal.toArray()) if (!entry.reviewedExpense && !entry.reviewedAssetMerge) await rollbackImport(openedDb, store, entry.id);
+      for (const entry of await store.importJournal.toArray()) if (!entry.reviewedExpense && !entry.reviewedAssetMerge && !entry.reviewedWithdrawal) await rollbackImport(openedDb, store, entry.id);
     });
     const repository = new LocalRepository(openedDb, store);
     if (legacyReview && name === 'keepany-v1') {
@@ -2996,6 +3023,7 @@ export async function saveTaskIfCurrent(expected: Task, next: Task) { return (aw
 export async function saveManualTaskIfCurrent(expected: Task | null, next: Task) { return (await defaultRepository()).saveManualTaskIfCurrent(expected, next); }
 export async function deleteTaskIfCurrent(expected: Task) { return (await defaultRepository()).deleteTaskIfCurrent(expected); }
 export async function restoreTaskIfCurrent(expected: Task) { return (await defaultRepository()).restoreTaskIfCurrent(expected); }
+export async function restoreSubmissionIfCurrent(expected: Submission) { return (await defaultRepository()).restoreSubmissionIfCurrent(expected); }
 export async function saveSubmissionIfCurrent(expected: Submission, next: Submission) { return (await defaultRepository()).saveSubmissionIfCurrent(expected, next); }
 export async function deleteSubmissionIfCurrent(expected: Submission) { return (await defaultRepository()).deleteSubmissionIfCurrent(expected); }
 export async function createFinanceEntry(value: History) { return (await defaultRepository()).createFinanceEntry(value); }

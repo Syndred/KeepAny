@@ -2,6 +2,8 @@ import Dexie from 'dexie';
 import type { RecordBackend, SideTable, SideStoreRuntime, SideTableRef } from './storage-contracts';
 import { z } from 'zod';
 import { assetSchema, currencies, historySchema, parseMinorUnits, type Asset, type History } from '../../domain/src';
+import { reviewedAcceptanceSchema } from './intake-receipt';
+import type { ReviewedWithdrawalIntent } from './intake-withdrawal';
 import type { RecordRow } from './index';
 
 // Review rows are drafts. Preserve invalid editable text so users can continue
@@ -9,7 +11,7 @@ import type { RecordRow } from './index';
 const draftText = z.string().max(1024 * 1024);
 export const reviewedExpenseDraftSchema = z.object({
   assetId: z.string().max(96), title: draftText, amount: draftText,
-  currency: z.enum(currencies), eventDate: draftText, source: draftText, note: draftText,
+  currency: z.enum(currencies), currencyConfirmed: z.boolean().optional(), eventDate: draftText, source: draftText, note: draftText,
 }).strict();
 export type ReviewedExpenseDraft = z.infer<typeof reviewedExpenseDraftSchema>;
 const draftAssetSchema = z.unknown().transform((value, context) => {
@@ -63,7 +65,8 @@ export const reviewedCandidateSchema = z.object({
   reviewMode: z.enum(['asset', 'expense']).optional(), expenseDraft: reviewedExpenseDraftSchema.optional(),
   historyId: z.string().max(96).optional(),
   merge: reviewedAssetMergeReceiptSchema.optional(),
-  status: z.enum(['pending', 'accepted', 'ignored']),
+  acceptedRecord: reviewedAcceptanceSchema.optional(), withdrawnAt: z.string().datetime().optional(),
+  status: z.enum(['pending', 'accepted', 'ignored', 'withdrawn']),
 }).strict().superRefine((row, context) => {
   const suffix = row.source === 'pdf' ? '' : `-${row.rowNumber}`;
   const prefix = row.source === 'pdf' ? 'pdf' : row.source === 'ai' ? 'ai' : row.source === 'text' ? 'text' : 'csv';
@@ -72,20 +75,27 @@ export const reviewedCandidateSchema = z.object({
     (row.source === 'pdf' ? row.rowNumber !== 1 || !row.sourceText : row.source === 'ai' ? row.rowNumber < 1 || !row.sourceText || !row.ai : row.source === 'text' ? !row.sourceText : row.rowNumber < 2)) {
     context.addIssue({ code: 'custom', message: 'review-id' });
   }
+  if ((row.status === 'withdrawn') !== !!row.withdrawnAt || row.acceptedRecord && (!['accepted', 'withdrawn'].includes(row.status) ||
+    (row.reviewMode === 'expense' ? row.acceptedRecord.type !== 'history' || row.acceptedRecord.value.id !== row.historyId : row.merge || row.acceptedRecord.type !== 'asset' || row.acceptedRecord.value.id !== row.asset.id))) context.addIssue({ code: 'custom', message: 'review-acceptance' });
+  if (row.acceptedRecord) {
+    const record = row.acceptedRecord;
+    const expected = record.type === 'history' ? expenseHistory(row, record.value.createdAt) : assetSchema.safeParse({ ...row.asset, name: row.asset.name.trim(), updatedAt: record.value.updatedAt }).data;
+    if (!expected || record.value.deleted || record.value.purged || JSON.stringify(record.value) !== JSON.stringify(expected)) context.addIssue({ code: 'custom', message: 'review-acceptance-snapshot' });
+  }
   if ((row.source === 'ai') !== Boolean(row.ai)) context.addIssue({ code: 'custom', message: 'review-ai-source' });
   if (row.sourceTextRef && (row.source || row.sourceText !== undefined || row.sourceTextRef !== row.fileHash)) context.addIssue({ code: 'custom', message: 'review-source-reference' });
   if (row.source && row.sourceText && row.sourceText.length > 20000) context.addIssue({ code: 'custom', message: 'review-source-limit' });
-  if (row.merge && (row.status !== 'accepted' || row.reviewMode === 'expense' || row.merge.before.kind !== row.asset.kind ||
+  if (row.merge && (!['accepted', 'withdrawn'].includes(row.status) || row.reviewMode === 'expense' || row.merge.before.kind !== row.asset.kind ||
     row.merge.targetId === row.asset.id)) context.addIssue({ code: 'custom', message: 'review-merge-receipt' });
   if (row.reviewMode === 'expense') {
-    if (row.source !== 'pdf' || !row.expenseDraft || (row.status === 'accepted' &&
-      (row.historyId !== reviewedExpenseHistoryId(row.fileHash) || !expenseHistory(row)))) {
+    if (!canReviewExpense(row) || !row.expenseDraft || (['accepted', 'withdrawn'].includes(row.status) &&
+      (row.historyId !== reviewedCandidateExpenseHistoryId(row) || !expenseHistory(row)))) {
       context.addIssue({ code: 'custom', message: 'review-expense' });
     }
   } else if (row.historyId !== undefined || (row.status === 'accepted' && !row.merge && (!assetSchema.safeParse(row.asset).success ||
     (row.source === 'pdf' && !row.kindSelected)))) context.addIssue({ code: 'custom', message: 'review-accepted' });
   if (row.status === 'accepted' && !row.merge && row.source === 'ai' && row.asset.kind === 'subscription' && row.ai?.missingFields.some(field => ['amount', 'currency', 'cycle'].includes(field))) context.addIssue({ code: 'custom', message: 'review-ai-missing' });
-  if (row.status !== 'accepted' && row.historyId !== undefined) context.addIssue({ code: 'custom', message: 'review-history' });
+  if (!['accepted', 'withdrawn'].includes(row.status) && row.historyId !== undefined) context.addIssue({ code: 'custom', message: 'review-history' });
 });
 
 export type ReviewedCandidate = z.infer<typeof reviewedCandidateSchema>;
@@ -98,7 +108,7 @@ export interface IntakeReviewStorage {
   waitFor: SideStoreRuntime['waitFor'];
 }
 export interface ReviewedImportJournal {
-  id: string; rows: RecordRow[]; reviewedExpense?: ReviewedCandidate;
+  id: string; rows: RecordRow[]; reviewedExpense?: ReviewedCandidate; reviewedWithdrawal?: ReviewedWithdrawalIntent;
   reviewedAssetMerge?: { expectedCandidate: ReviewedCandidate; receipt: ReviewedAssetMergeReceipt };
 }
 export interface ReviewedExpenseStorage extends IntakeReviewStorage {
@@ -111,13 +121,15 @@ export interface PendingReviewedExpenseConfirmation {
 }
 
 export const reviewedExpenseHistoryId = (fileHash: string): string => `pdf-expense-${fileHash}`;
+export const canReviewExpense = (row: Pick<ReviewedCandidate, 'source'>): boolean => row.source === 'pdf' || row.source === undefined;
+export const reviewedCandidateExpenseHistoryId = (row: Pick<ReviewedCandidate, 'source' | 'fileHash' | 'rowNumber'>): string => row.source === 'pdf' ? reviewedExpenseHistoryId(row.fileHash) : `csv-expense-${row.fileHash}-${row.rowNumber}`;
 export const reviewedExpenseJournalId = (candidateId: string): string => `review-expense:${candidateId}`;
 
 // Draft strings may be incomplete. Validation happens only at confirmation.
-function expenseHistory(row: { fileHash: string; expenseDraft?: ReviewedExpenseDraft }, createdAt = new Date().toISOString()): History | null {
+function expenseHistory(row: Pick<ReviewedCandidate, 'source' | 'fileHash' | 'rowNumber' | 'expenseDraft'>, createdAt = new Date().toISOString()): History | null {
   const draft = row.expenseDraft;
-  if (!draft?.amount.trim() || draft.amount.trim().length > 32) return null;
-  const parsed = historySchema.safeParse({ id: reviewedExpenseHistoryId(row.fileHash), action: 'expense',
+  if (!draft?.amount.trim() || draft.amount.trim().length > 32 || draft.currencyConfirmed === false) return null;
+  const parsed = historySchema.safeParse({ id: reviewedCandidateExpenseHistoryId(row), action: 'expense',
     assetId: draft.assetId, title: draft.title.trim(), amount: parseMinorUnits(draft.amount, draft.currency),
     currency: draft.currency, eventDate: draft.eventDate, source: draft.source.trim(), note: draft.note,
     createdAt, deleted: false });
@@ -227,7 +239,7 @@ export async function editReviewedCandidate(store: IntakeReviewStorage, id: stri
 }
 
 export async function decideReviewedCandidate(store: IntakeReviewStorage, id: string,
-  status: 'accepted' | 'ignored', assetExists: (assetId: string) => Promise<boolean>): Promise<void> {
+  status: 'accepted' | 'ignored', assetExists: (assetId: string) => Promise<boolean>, acceptedAsset?: Asset): Promise<void> {
   const row = await getReviewedCandidate(store, id);
   if (row?.status !== 'pending') return;
   if (status === 'accepted' && row.reviewMode === 'expense') throw Error('review-expense-confirm-required');
@@ -237,7 +249,12 @@ export async function decideReviewedCandidate(store: IntakeReviewStorage, id: st
     const current = await store.intakeReview.get(id);
     if (current?.status !== 'pending') return;
     if (!sameReviewedCandidate(current, row)) throw Error('review-stale');
-    await store.intakeReview.put(reviewedCandidateSchema.parse({ ...current, status }));
+    if (acceptedAsset && (acceptedAsset.id !== current.asset.id || acceptedAsset.deleted || status !== 'accepted')) throw Error('review-stale');
+    if (acceptedAsset) {
+      const actual = await store.outsideTransaction(() => storedEntity(store.records, 'asset', acceptedAsset.id));
+      if (JSON.stringify(actual) !== JSON.stringify(acceptedAsset)) throw Error('review-stale');
+    }
+    await store.intakeReview.put(reviewedCandidateSchema.parse({ ...current, status, ...(acceptedAsset ? { acceptedRecord: { type: 'asset', value: acceptedAsset } } : {}) }));
   });
 }
 
@@ -246,6 +263,7 @@ function reviewTransaction<T>(store: IntakeReviewStorage, action: (scope: Intake
 }
 async function assertReviewEditable(store: IntakeReviewStorage, id: string): Promise<void> {
   if (await store.importJournal?.get(reviewedExpenseJournalId(id))) throw Error('review-expense-pending');
+  if (await store.importJournal?.get(`review-withdraw:${id}`)) throw Error('review-withdraw-pending');
   if (await store.importJournal?.get(`review-merge:${id}`)) throw Error('review-merge-pending');
 }
 
@@ -255,7 +273,7 @@ export async function setReviewedCandidateMode(store: IntakeReviewStorage, id: s
     await assertReviewEditable(store, id);
     const row = await getReviewedCandidate(store, id);
     if (row?.status !== 'pending') return false;
-    if (row.source !== 'pdf') throw Error('review-expense-invalid');
+    if (!canReviewExpense(row)) throw Error('review-expense-invalid');
     await store.intakeReview.put(reviewedCandidateSchema.parse({ ...row, reviewMode,
       ...(reviewMode === 'expense' ? { expenseDraft: row.expenseDraft ?? initialDraft ?? {
         assetId: '', title: row.asset.name, amount: '', currency: 'CNY', eventDate: '', source: row.fileName, note: '',
@@ -269,7 +287,7 @@ export async function editReviewedExpenseDraft(store: IntakeReviewStorage, id: s
     await assertReviewEditable(store, id);
     const row = await getReviewedCandidate(store, id);
     if (row?.status !== 'pending') return false;
-    if (row.source !== 'pdf' || row.reviewMode !== 'expense') throw Error('review-expense-invalid');
+    if (!canReviewExpense(row) || row.reviewMode !== 'expense') throw Error('review-expense-invalid');
     await store.intakeReview.put(reviewedCandidateSchema.parse({ ...row, expenseDraft }));
     return true;
   });
@@ -283,7 +301,7 @@ async function storedEntity(db: RecordBackend, type: 'asset' | 'history', id: st
 /** Freeze the exact reviewed draft before crossing the FileStore/RxDB boundary. */
 export async function confirmReviewedExpense(db: RecordBackend, store: ReviewedExpenseStorage, input: ReviewedCandidate): Promise<History> {
   const expected = reviewedCandidateSchema.parse(input);
-  if (expected.source !== 'pdf' || expected.reviewMode !== 'expense' || expected.status === 'ignored') throw Error('review-expense-invalid');
+  if (!canReviewExpense(expected) || expected.reviewMode !== 'expense' || expected.status === 'ignored') throw Error('review-expense-invalid');
   const history = expenseHistory(expected);
   if (!history) throw Error('review-expense-invalid');
   const id = reviewedExpenseJournalId(expected.id);
@@ -301,7 +319,7 @@ export async function confirmReviewedExpense(db: RecordBackend, store: ReviewedE
       return;
     }
     if (current.status === 'accepted') {
-      if (current.reviewMode !== 'expense' || !sameReviewedCandidate(current, { ...expected, status: 'accepted', historyId: history.id })) throw Error('review-expense-stale');
+      if (current.reviewMode !== 'expense' || !sameReviewedCandidate(current, { ...expected, status: 'accepted', historyId: history.id, ...(current.acceptedRecord ? { acceptedRecord: current.acceptedRecord } : {}) })) throw Error('review-expense-stale');
       const saved = await store.outsideTransaction(() => storedEntity(db, 'history', history.id));
       if (!matchesExpenseReceipt(current, saved)) throw Error('review-expense-recovery-conflict');
       return;
@@ -333,10 +351,11 @@ export async function replayReviewedExpense(_db: RecordBackend, store: ReviewedE
     const planned = journal.rows[0];
     if (!parsed.success || parsed.data.status !== 'pending' || parsed.data.reviewMode !== 'expense' ||
       journal.rows.length !== 1 || planned?.type !== 'history' || id !== reviewedExpenseJournalId(parsed.data.id)) throw Error('review-expense-recovery-conflict');
-    const before = parsed.data, accepted = reviewedCandidateSchema.parse({ ...before, status: 'accepted', historyId: reviewedExpenseHistoryId(before.fileHash) });
+    const before = parsed.data;
     let history: unknown;
     try { history = JSON.parse(planned.payload); } catch { throw Error('review-expense-recovery-conflict'); }
     if (!matchesExpenseReceipt(before, history) || planned.id !== `history:${history.id}` || history.deleted) throw Error('review-expense-recovery-conflict');
+    const accepted = reviewedCandidateSchema.parse({ ...before, status: 'accepted', historyId: reviewedCandidateExpenseHistoryId(before), acceptedRecord: { type: 'history', value: history } });
     const current = await getReviewedCandidate(store, before.id);
     if (!current || (!sameReviewedCandidate(current, before) && !sameReviewedCandidate(current, accepted))) throw Error('review-expense-recovery-conflict');
     const confirmedHistory = history;
@@ -366,7 +385,7 @@ export async function pendingReviewedExpenseConfirmations(db: RecordBackend, sto
     if (!journal.reviewedExpense) continue;
     const parsed = reviewedCandidateSchema.safeParse(journal.reviewedExpense);
     if (!parsed.success || journal.id !== reviewedExpenseJournalId(parsed.data.id)) throw Error('review-expense-recovery-conflict');
-    const historyId = reviewedExpenseHistoryId(parsed.data.fileHash);
+    const historyId = reviewedCandidateExpenseHistoryId(parsed.data);
     pending.push({ candidateId: parsed.data.id, historyId, committed: !!await storedEntity(db, 'history', historyId) });
   }
   return pending;
@@ -386,7 +405,7 @@ export async function cancelReviewedExpenseConfirmation(db: RecordBackend, store
     const current = await getReviewedCandidate(store, candidateId);
     if (!parsed.success || parsed.data.id !== candidateId || parsed.data.status !== 'pending' ||
       !current || !sameReviewedCandidate(current, parsed.data)) throw Error('review-expense-recovery-conflict');
-    const history = await store.outsideTransaction(() => storedEntity(db, 'history', reviewedExpenseHistoryId(parsed.data.fileHash)));
+    const history = await store.outsideTransaction(() => storedEntity(db, 'history', reviewedCandidateExpenseHistoryId(parsed.data)));
     if (history) return false;
     await store.importJournal.delete(id);
     return true;

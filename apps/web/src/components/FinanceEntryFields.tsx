@@ -9,11 +9,11 @@ export type FinanceEntryDraft = {
 };
 
 /** Shared fields for manually reviewed transactions and ordinary ledger entries. */
-export function FinanceEntryFields({ draft, targets, onChange, disabled, idPrefix, allowMultiple = false, preserveCurrency = false }: {
+export function FinanceEntryFields({ draft, targets, onChange, disabled, idPrefix, allowMultiple = false, preserveCurrency = false, currencyUnconfirmed = false }: {
 	draft: FinanceEntryDraft; targets: Asset[];
 	onChange: (change: Partial<FinanceEntryDraft>) => void;
 	disabled: boolean; idPrefix: string;
-	allowMultiple?: boolean; preserveCurrency?: boolean;
+	allowMultiple?: boolean; preserveCurrency?: boolean; currencyUnconfirmed?: boolean;
 }) {
 	const { t } = useTranslation();
 	return <>
@@ -31,7 +31,7 @@ export function FinanceEntryFields({ draft, targets, onChange, disabled, idPrefi
 			</label>)}
 		</fieldset>}
 		<div className="field"><label htmlFor={`${idPrefix}-title`}>{t("financeRecordTitle")}</label><input id={`${idPrefix}-title`} value={draft.title} disabled={disabled} onChange={(event) => onChange({ title: event.target.value })} /></div>
-		<div className="finance-form-pair"><div className="field"><label htmlFor={`${idPrefix}-amount`}>{t("financeAmount")}</label><input id={`${idPrefix}-amount`} inputMode="decimal" value={draft.amount} disabled={disabled} onChange={(event) => onChange({ amount: event.target.value })} /></div><div className="field"><label htmlFor={`${idPrefix}-currency`}>{t("currency")}</label><Select id={`${idPrefix}-currency`} value={draft.currency} disabled={disabled} onValueChange={(selectValue) => onChange({ currency: selectValue as typeof currencies[number] })}>{currencies.map((currency) => <SelectOption key={currency} value={currency}>{currency}</SelectOption>)}</Select></div></div>
+		<div className="finance-form-pair"><div className="field"><label htmlFor={`${idPrefix}-amount`}>{t("financeAmount")}</label><input id={`${idPrefix}-amount`} inputMode="decimal" value={draft.amount} disabled={disabled} onChange={(event) => onChange({ amount: event.target.value })} /></div><div className="field"><label htmlFor={`${idPrefix}-currency`}>{t("currency")}</label><Select id={`${idPrefix}-currency`} value={currencyUnconfirmed ? "" : draft.currency} disabled={disabled} onValueChange={(selectValue) => onChange({ currency: selectValue as typeof currencies[number] })}><SelectOption value="" disabled>{t("aiChooseField")}</SelectOption>{currencies.map((currency) => <SelectOption key={currency} value={currency}>{currency}</SelectOption>)}</Select></div></div>
 		<div className="field"><label htmlFor={`${idPrefix}-date`}>{t("financeDate")}</label><input id={`${idPrefix}-date`} type="date" value={draft.eventDate} disabled={disabled} onChange={(event) => onChange({ eventDate: event.target.value })} /></div>
 		<div className="field"><label htmlFor={`${idPrefix}-source`}>{t("financeSource")}</label><input id={`${idPrefix}-source`} value={draft.source} disabled={disabled} onChange={(event) => onChange({ source: event.target.value })} /></div>
 		<div className="field"><label htmlFor={`${idPrefix}-note`}>{t("financeNote")}</label><textarea id={`${idPrefix}-note`} rows={2} value={draft.note} disabled={disabled} onChange={(event) => onChange({ note: event.target.value })} /></div>
