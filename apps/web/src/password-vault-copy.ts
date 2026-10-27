@@ -650,6 +650,7 @@ export const passwordVaultCopy: Record<string, [string, string]> = {
 		"Entries moved to trash can still be restored.",
 	],
 	pwVaultTrashEmpty: ["回收站为空。", "Trash is empty."],
+	pwVaultImportUnlockToContinue: ["密码库已锁定。解锁后可继续导入刚选择的加密文件；请重新输入备份密码。", "The vault is locked. Unlock it to continue importing the selected encrypted file, then enter the backup password again."],
 	pwVaultImportTitle: ["导入 KDBX 备份", "Import KDBX backup"],
 	pwVaultImportHint: [
 		"选择本机 KDBX 文件并输入它的解密密码。导入后会保留现有条目。",

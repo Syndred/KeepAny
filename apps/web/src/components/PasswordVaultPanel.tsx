@@ -227,7 +227,8 @@ export function PasswordVaultPanel({
 		setPurgeTarget(null);
 		setEntryActionError("");
 		setImportPassword("");
-		setImportOpen(false);
+		// Keep the ciphertext file input mounted while an OS picker locks the vault.
+		// All plaintext is cleared; resuming still requires the master password.
 		if (notice !== "pwVaultLockedElsewhere") setSmartImportOpen(false);
 		setChangeMasterOpen(false);
 		setBusy(false);
@@ -804,7 +805,7 @@ export function PasswordVaultPanel({
 					onImport={() => setImportOpen(true)}
 				/>
 			)}
-			{snapshot.status === "locked" && (
+			{snapshot.status === "locked" && !importOpen && (
 				<LockedState
 					busy={busy}
 					master={master}
@@ -1182,6 +1183,12 @@ export function PasswordVaultPanel({
 						}
 					}}
 				>
+					{snapshot.status === "locked" && <>
+						<p>{t("pwVaultImportUnlockToContinue")}</p>
+						<LockedState busy={busy} master={master} showMaster={showMaster} setMaster={setMaster} setShowMaster={setShowMaster} onUnlock={unlockVault} />
+						<Button type="button" disabled={busy} onClick={() => { setImportOpen(false); setImportFile(null); setImportPassword(""); }}>{t("cancel")}</Button>
+					</>}
+					<div hidden={snapshot.status === "locked"}>
 					<form
 						className="password-vault-dialog-form"
 						onSubmit={(event) => void importVault(event)}
@@ -1223,7 +1230,7 @@ export function PasswordVaultPanel({
 							<Button
 								type="button"
 								disabled={busy}
-								onClick={() => setImportOpen(false)}
+								onClick={() => { setImportOpen(false); setImportFile(null); setImportPassword(""); }}
 							>
 								{t("cancel")}
 							</Button>
@@ -1232,6 +1239,7 @@ export function PasswordVaultPanel({
 							</Button>
 						</div>
 					</form>
+					</div>
 				</Dialog>
 			)}
 			{changeMasterOpen && (
