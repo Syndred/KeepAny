@@ -50,6 +50,7 @@ jobs:
           set -o pipefail
           xcodebuild -project apps/mobile/ios/App/App.xcodeproj -scheme App \
             -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
+            -arch "$(uname -m)" ONLY_ACTIVE_ARCH=YES \
             -derivedDataPath test-results/ios-derived CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO \
             build 2>&1 | tee test-results/ios/build.log
       - name: Install and launch in an available iPhone simulator
@@ -57,14 +58,30 @@ jobs:
         run: |
           set -euo pipefail
           simulator_id="$(node --input-type=module -e 'import fs from "node:fs";const devices=JSON.parse(fs.readFileSync("test-results/ios/devices.json","utf8"));const phone=Object.values(devices.devices).flat().find(d=>d.isAvailable&&d.name.startsWith("iPhone"));if(!phone||!/^[A-F0-9-]{36}$/i.test(phone.udid))throw Error("No available iPhone simulator");process.stdout.write(phone.udid);')"
+          echo "KEEPANY_CI_SIMULATOR=$simulator_id" >> "$GITHUB_ENV"
           xcrun simctl boot "$simulator_id"
           xcrun simctl bootstatus "$simulator_id" -b
           xcrun simctl install "$simulator_id" test-results/ios-derived/Build/Products/Debug-iphonesimulator/App.app
           xcrun simctl launch "$simulator_id" io.github.syndred.keepany | tee test-results/ios/launch.txt
           sleep 10
           xcrun simctl io "$simulator_id" screenshot test-results/ios/startup-en.png
-          xcrun simctl terminate "$simulator_id" io.github.syndred.keepany
-          xcrun simctl shutdown "$simulator_id"
+          set -o pipefail
+          xcodebuild -project apps/mobile/ios/App/App.xcodeproj -scheme KeepAnyAcceptance \
+            -configuration Debug -sdk iphonesimulator -destination "id=$simulator_id" \
+            -derivedDataPath test-results/ios-derived -resultBundlePath test-results/ios/acceptance.xcresult \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO test 2>&1 | tee test-results/ios/ui-tests.log
+          xcrun simctl launch "$simulator_id" io.github.syndred.keepany
+          sleep 3
+          xcrun simctl io "$simulator_id" screenshot test-results/ios/after-tests.png
+      - name: Capture simulator diagnostics and clean up the test application
+        if: always() && env.KEEPANY_CI_SIMULATOR != ''
+        shell: bash
+        run: |
+          xcrun simctl spawn "$KEEPANY_CI_SIMULATOR" log show --last 5m --style compact \
+            --predicate 'process == "App" OR subsystem BEGINSWITH "com.apple.WebKit"' > test-results/ios/runtime.log 2>&1 || true
+          xcrun simctl io "$KEEPANY_CI_SIMULATOR" screenshot test-results/ios/final-state.png || true
+          xcrun simctl terminate "$KEEPANY_CI_SIMULATOR" io.github.syndred.keepany || true
+          xcrun simctl shutdown "$KEEPANY_CI_SIMULATOR" || true
       - name: Preserve toolchain, build and startup evidence
         if: always()
         uses: actions/upload-artifact@v4
