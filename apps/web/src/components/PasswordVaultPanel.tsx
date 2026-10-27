@@ -40,6 +40,8 @@ import { withFilledVaultIdentifiers } from "../vault-import-model";
 import { PasswordSmartImportDialog } from "./PasswordSmartImportDialog";
 import { VaultLoginIdentifiers } from "./VaultLoginIdentifiers";
 import { VaultImportFieldActions } from "./VaultImportFieldActions";
+import { deliverExportFile, hasFileDeliveryHandler } from "../file-delivery";
+import "../file-delivery-copy";
 
 type PasswordVaultPanelProps = {
 	assets: Asset[];
@@ -587,6 +589,16 @@ export function PasswordVaultPanel({
 		clearMessage();
 		try {
 			const bytes = await session.exportKdbx();
+			if (hasFileDeliveryHandler()) {
+				announce("exportFileOpening");
+				try {
+					const result = await deliverExportFile({ name: t("pwVaultExportFilename"), mimeType: "application/octet-stream", bytes });
+					announce(result.status === "cancelled" ? "exportFileCancelled" : "exportFileOpened");
+				} catch {
+					announce("exportFileFailed");
+				}
+				return;
+			}
 			const url = URL.createObjectURL(
 				new Blob([new Uint8Array(bytes).buffer], {
 					type: "application/octet-stream",

@@ -12,6 +12,8 @@ import { decryptBackup, encryptBackup } from "../../../../packages/local-db/src/
 import type { SyncReport } from "../../../../packages/sync-client/src";
 import type { ReviewedCandidate } from "../../../../packages/local-db/src/intake-review";
 import { Button } from "./ui/button";
+import { ExportFileLink } from "./ExportFileLink";
+import { hasFileDeliveryHandler } from "../file-delivery";
 
 interface Props {
 	configurationKey: string;
@@ -164,7 +166,7 @@ export function ArchiveMigrationPanel({ configurationKey, syncBusy, onBusyChange
 		if (downloadUrl.current) URL.revokeObjectURL(downloadUrl.current);
 		downloadUrl.current = url; setBackupUrl(url);
 		setTargetBackupHash(await digest(plain)); setBackupVerified(false); setBackupFile(null);
-		setMessage("migrationBackupReady");
+		setMessage(hasFileDeliveryHandler() ? "exportFileReady" : "migrationBackupReady");
 	});
 	const verifyBackup = () => void doWork(async () => {
 		if (!backupFile || !targetBackupHash || !backupPassword) throw Error("migrationBackupRequired");
@@ -279,7 +281,7 @@ export function ArchiveMigrationPanel({ configurationKey, syncBusy, onBusyChange
 						<label className="field"><span>{t("migrationVerifyFile")}</span><input type="file" accept=".ka1" disabled={busy || syncBusy} onChange={event => { setBackupFile(event.target.files?.[0] ?? null); setBackupVerified(false); }} /></label>
 					</div>
 					<div className="actions"><Button disabled={busy || syncBusy || backupPassword.length < 12 || !sourceAcknowledged || (!sourceBinding && !legacySourceLabel.trim())} onClick={createBackup}>{t("migrationCreateBackup")}</Button>
-						{backupUrl && <a className="button" href={backupUrl} download={`keepany-target-before-merge-${new Date().toISOString().slice(0, 10)}.ka1`}>{t("migrationDownloadBackup")}</a>}
+						{backupUrl && <ExportFileLink className="button" href={backupUrl} download={`keepany-target-before-merge-${new Date().toISOString().slice(0, 10)}.ka1`} onDeliveryMessage={setMessage}>{t("migrationDownloadBackup")}</ExportFileLink>}
 						<Button disabled={busy || syncBusy || !backupFile || !targetBackupHash} onClick={verifyBackup}>{t("migrationVerifyBackup")}</Button></div>
 					{backupVerified && <p role="status">{t("migrationBackupVerified")}</p>}
 				</div>

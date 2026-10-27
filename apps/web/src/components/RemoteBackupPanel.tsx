@@ -15,6 +15,7 @@ import {
 } from "../../../../packages/local-db/src";
 import { Button } from "./ui/button";
 import { Select, SelectOption } from "./ui/select";
+import { ExportFileLink } from "./ExportFileLink";
 
 type RemoteKind = "s3" | "webdav";
 
@@ -296,10 +297,10 @@ export function RemoteBackupPanel({
 				</Button>
 				{receiptDownload && (
 					<Button asChild variant="primary">
-						<a href={receiptDownload} download="keepany-remote-receipt.json">
+						<ExportFileLink href={receiptDownload} download="keepany-remote-receipt.json" onDeliveryMessage={key => setStatus(t(key))}>
 							<Download size={16} />
 							{t("remoteSaveReceipt")}
-						</a>
+						</ExportFileLink>
 					</Button>
 				)}
 			</div>

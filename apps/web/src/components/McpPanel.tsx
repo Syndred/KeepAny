@@ -10,6 +10,8 @@ import { type McpRequest, useMcpRuntime } from "../mcp-runtime";
 import { useAppContext } from "../view-shared";
 import { Button } from "./ui/button";
 import { Select, SelectOption } from "./ui/select";
+import { ExportFileLink } from "./ExportFileLink";
+import { hasFileDeliveryHandler, type FileDeliveryMessage } from "../file-delivery";
 
 const durations = [
 	{ value: 5 * 60_000, key: "mcpDuration5m" },
@@ -32,12 +34,14 @@ export function McpPanel() {
 	const [ttlMs, setTtlMs] = useState<number>(durations[2].value);
 	const [busy, setBusy] = useState(false);
 	const [localError, setLocalError] = useState<string | null>(null);
+	const [deliveryMessage, setDeliveryMessage] = useState<FileDeliveryMessage | null>(null);
 	const [download, setDownload] = useState<{
 		request: McpRequest;
 		url: string;
 	} | null>(null);
 
 	useEffect(() => {
+		setDeliveryMessage(null);
 		if (!prepared) {
 			setDownload(null);
 			return;
@@ -246,18 +250,19 @@ export function McpPanel() {
 							{t("mcpCreateRequest")}
 						</Button>
 						{requestCurrent && download?.request === prepared && (
-							<a
+							<ExportFileLink
 								className="button"
 								href={download.url}
 								download="keepany-mcp-request.json"
+								onDeliveryMessage={setDeliveryMessage}
 							>
 								{t("mcpDownloadRequest")}
-							</a>
+							</ExportFileLink>
 						)}
 					</div>
 					{prepared && (
 						<p role="status">
-							{t(requestCurrent ? "mcpRequestReady" : "mcpSelectionChanged")}
+							{t(requestCurrent ? deliveryMessage ?? (hasFileDeliveryHandler() ? "exportRequestReady" : "mcpRequestReady") : "mcpSelectionChanged")}
 						</p>
 					)}
 					<label className="field mcp-import">

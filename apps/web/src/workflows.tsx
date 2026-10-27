@@ -54,6 +54,8 @@ import { AccountLinkConflict } from "./vault-account-links";
 import { manualTaskDedupeKey, prepareTaskEdit } from "./task-edit";
 import { saveTaskIfCurrent } from "../../../packages/local-db/src";
 import { readUrlMetadata } from "./intake-url";
+import { ExportFileLink } from "./components/ExportFileLink";
+import { hasFileDeliveryHandler } from "./file-delivery";
 
 type FieldName = keyof Asset;
 type ProjectFormFiles = { logo?: File; home?: File; products?: File[]; promo?: File };
@@ -1141,7 +1143,7 @@ export function IntakeTools({ onCsvStaged }: { onCsvStaged: () => void }) {
 				url: address,
 				name: `keepany-${new Date().toISOString().slice(0, 10)}.ka1`,
 			});
-			setMessage(t("backupReady"));
+			setMessage(t(hasFileDeliveryHandler() ? "exportFileReady" : "backupReady"));
 		} catch {
 			setMessage(t("error"));
 		} finally {
@@ -1537,11 +1539,11 @@ export function IntakeTools({ onCsvStaged }: { onCsvStaged: () => void }) {
 						</Button>
 						{readyDownload && (
 							<Button asChild variant="primary">
-								<a href={readyDownload.url} download={readyDownload.name}><Download size={16} />{t("saveBackupFile")}</a>
+								<ExportFileLink href={readyDownload.url} download={readyDownload.name} onDeliveryMessage={key => setMessage(t(key))}><Download size={16} />{t("saveBackupFile")}</ExportFileLink>
 							</Button>
 						)}
 					</div>
-					<p className="intake-backup-status" role="status">{readyDownload ? t("backupReady") : t("intakeBackupIdle")}</p>
+					<p className="intake-backup-status" role="status">{readyDownload ? t(hasFileDeliveryHandler() ? "exportFileReady" : "backupReady") : t("intakeBackupIdle")}</p>
 					<RestoreRecoveryPanel />
 					<details className="intake-secondary">
 						<summary>{t("restoreBackup")}</summary>

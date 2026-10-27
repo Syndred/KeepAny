@@ -21,6 +21,7 @@ import type { RxdbMcpAssetStore } from "../../../packages/mcp/src/rxdb-store";
 import type { PreviewResult } from "../../../packages/mcp/src/service";
 import { Button } from "./components/ui/button";
 import { Dialog } from "./components/ui/dialog";
+import { hasFileDeliveryHandler } from "./file-delivery";
 
 export type McpRequest = {
 	kind: "keepany-mcp-local-request-v1";
@@ -184,6 +185,9 @@ export function McpRuntimeProvider({
 		};
 		setPrepared(request);
 		setError(null);
+		// Native export is a separate, explicit click on the request-file link.
+		// Preparing an authorization request must never open a Share sheet.
+		if (hasFileDeliveryHandler()) return;
 		const url = URL.createObjectURL(new Blob([JSON.stringify(request)], { type: "application/json" }));
 		const link = document.createElement("a");
 		link.href = url;
