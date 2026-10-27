@@ -23,6 +23,10 @@ type Dependencies = {
   authorityStorage(dataset: string): AuthorityStorage;
   prepareTransport: typeof prepareNativeMcpTransport;
 };
+function decisionFailure(error: unknown): Error {
+  const known = error instanceof Error && ['mcp-native-stopped', 'mcp-native-preview-stale'].includes(error.message);
+  return Error(known ? error.message : 'mcp-native-decision-failed');
+}
 
 /** Owns one immutable native dataset and one exported pairing ticket. The UI
  * must deliver its file first, then explicitly activate the foreground server. */
@@ -51,6 +55,12 @@ export async function prepareNativeMcpSession(options: NativeMcpSessionOptions, 
     transportGuard();
   };
   const publishPreviews = () => options.onPreviews(structuredClone([...previews.values()].filter(preview => preview.expiresAt > Date.now())));
+  const prunePreviews = () => { for (const [id, preview] of previews) if (preview.expiresAt <= Date.now()) previews.delete(id); };
+  const matchesPreview = async (preview: PreviewResult) => {
+    const row = await context.store.get(preview.assetId); assertActive();
+    return Boolean(row && row.version === preview.expectedVersion && preview.expiresAt > Date.now() &&
+      preview.changes.every(change => JSON.stringify(row.asset[change.field]) === JSON.stringify(change.before)));
+  };
   const close = (): Promise<{ writeMayHaveApplied: boolean }> => {
     if (closing) return closing;
     phase = 'closed'; try { unsubscribe(); } catch {} previews.clear();
@@ -61,8 +71,8 @@ export async function prepareNativeMcpSession(options: NativeMcpSessionOptions, 
       const state = grantId ? await authority.storage.read() : undefined;
       return { writeMayHaveApplied: Boolean(state?.operations.some(receipt => receipt.grantId === grantId && receipt.state === 'pending')) };
     }).then(result => { try { options.onStopped(true); } catch {} return result; }, () => {
-      // Native IO has stopped even when the durable revocation acknowledgement
-      // failed. Keep that distinction visible and permit an explicit retry.
+      // Stop or durable revocation may lack an acknowledgement. The JS guard
+      // is closed; do not claim native IO or storage confirmed the cleanup.
       closing = undefined; try { options.onStopped(false); } catch {}
       throw Error('mcp-native-revoke-unconfirmed');
     });
@@ -77,6 +87,7 @@ export async function prepareNativeMcpSession(options: NativeMcpSessionOptions, 
       onPreview: async (grantId, preview) => {
         assertActive();
         if (grantId !== controller?.grantId) throw Error('mcp-native-stopped');
+        prunePreviews();
         if (previews.size >= 16 && !previews.has(preview.previewId)) {
           await authority.rejectPreview(grantId, preview.previewId); throw Error('mcp-native-preview-limit');
         }
@@ -87,10 +98,10 @@ export async function prepareNativeMcpSession(options: NativeMcpSessionOptions, 
     return {
       pairingFile: structuredClone(owner.pairingFile),
       async activate() {
-        context.assertCurrent();
-        if (phase !== 'prepared') throw Error('mcp-native-stopped');
-        phase = 'activating';
         try {
+          context.assertCurrent();
+          if (phase !== 'prepared') throw Error('mcp-native-stopped');
+          phase = 'activating';
           await ticket.activate({ createHandler: (_, guard) => {
             context.assertCurrent();
             if (phase !== 'activating') throw Error('mcp-native-stopped');
@@ -99,23 +110,43 @@ export async function prepareNativeMcpSession(options: NativeMcpSessionOptions, 
           assertActive();
         } catch { await close().catch(() => {}); throw Error('mcp-native-transport'); }
       },
-      async decideClient(clientNonce: string, approved: boolean) { assertActive(); await owner.decideClient(clientNonce, approved); assertActive(); },
+      async decideClient(clientNonce: string, approved: boolean) {
+        try { assertActive(); await owner.decideClient(clientNonce, approved); assertActive(); }
+        catch (error) { throw decisionFailure(error); }
+      },
       async decidePreview(previewId: string, approved: boolean) {
+        try {
         assertActive(); const preview = previews.get(previewId), grantId = owner.grantId;
         if (!preview || !grantId) throw Error('mcp-native-preview-stale');
-        const row = await context.store.get(preview.assetId); assertActive();
-        const current = Boolean(row && row.version === preview.expectedVersion && preview.expiresAt > Date.now() &&
-          preview.changes.every(change => JSON.stringify(row.asset[change.field]) === JSON.stringify(change.before)));
+        if (preview.expiresAt <= Date.now()) {
+          previews.delete(previewId); publishPreviews();
+          if (approved) throw Error('mcp-native-preview-stale');
+          return;
+        }
+        const current = await matchesPreview(preview);
         if (!approved || !current) await authority.rejectPreview(grantId, previewId);
         else await authority.approvePreview(grantId, previewId);
         assertActive(); previews.delete(previewId); publishPreviews();
         if (approved && !current) throw Error('mcp-native-preview-stale');
+        } catch (error) { throw decisionFailure(error); }
+      },
+      async checkPreview(previewId: string) {
+        try {
+          assertActive(); const preview = previews.get(previewId);
+          return preview ? await matchesPreview(preview) : false;
+        } catch { throw Error('mcp-native-preview-check-failed'); }
+      },
+      pendingPreviews() {
+        try { assertActive(); prunePreviews(); return structuredClone([...previews.values()]); }
+        catch { throw Error('mcp-native-stopped'); }
       },
       async auditEntries() {
+        try {
         context.assertCurrent();
         const grantId = owner.grantId;
         const entries = grantId ? (await authority.auditEntries(grantId)).slice(-100) : [];
         context.assertCurrent(); return entries;
+        } catch { throw Error('mcp-native-audit-unavailable'); }
       },
       close,
     };

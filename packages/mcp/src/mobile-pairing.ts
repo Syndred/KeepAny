@@ -71,7 +71,11 @@ export function createMobileMcpPairing(options: {
   let closing: Promise<void> | undefined;
   let client: MobileMcpClientRequest | undefined;
   let issued: Awaited<ReturnType<McpAuthority['issueGrant']>> | undefined;
-  let allocatedId: string | undefined;
+  const allocatedIds = new Set<string>();
+  const revokeAllocations = async () => {
+    const state = await options.authority.storage.read();
+    for (const id of allocatedIds) if (state.grants.some(grant => grant.id === id && grant.revokedAt === undefined)) await options.authority.revokeGrant(id);
+  };
   const assertActive = () => { if (closed) throw Error('mcp-mobile-stopped'); options.assertAvailable(); };
   const http = createKeepAnyMcpHttpHandler({ endpoint: file.endpoint, authority: options.authority, store: options.store,
     assertAvailable: assertActive, onPreview: options.onPreview });
@@ -122,10 +126,14 @@ export function createMobileMcpPairing(options: {
       if (!approved) { denied = true; return; }
       deciding = true;
       try {
+        // An explicit retry must first resolve this session's earlier uncertain
+        // allocations. Never overwrite the only identity of a committed grant.
+        await revokeAllocations(); validTicket();
         const rows = await options.store.list(file.scope.assetIds); validTicket();
         if (rows.length !== file.scope.assetIds.length || new Set(rows.map(row => row.asset.id)).size !== file.scope.assetIds.length ||
           rows.some(row => row.asset.deleted || !file.scope.assetIds.includes(row.asset.id))) throw Error('mcp-mobile-scope-invalid');
-        const grant = await options.authority.issueGrant(file.scope, id => { allocatedId = id; });
+        const grant = await options.authority.issueGrant(file.scope, id => { allocatedIds.add(id); });
+        allocatedIds.add(grant.id);
         try { validTicket(); }
         catch { await options.authority.revokeGrant(grant.id); throw Error('mcp-mobile-stopped'); }
         issued = grant;
@@ -140,8 +148,8 @@ export function createMobileMcpPairing(options: {
       closing = Promise.resolve().then(async () => {
         const closingHttp = http.close();
         try {
-          const id = issued?.id ?? allocatedId;
-          if (id && (await options.authority.storage.read()).grants.some(grant => grant.id === id)) await options.authority.revokeGrant(id);
+          if (issued) allocatedIds.add(issued.id);
+          await revokeAllocations();
         }
         finally { await closingHttp; }
       }).catch(error => { closing = undefined; throw error; });

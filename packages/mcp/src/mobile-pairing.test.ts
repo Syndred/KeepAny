@@ -136,10 +136,13 @@ it('revokes the exact allocated grant when its durable write succeeds but the ac
     return result;
   });
   await expect(f.controller.decideClient(f.join.clientNonce, true)).rejects.toThrow();
+  await f.controller.decideClient(f.join.clientNonce, true);
+  const recovered = (await f.storage.read()).grants.filter(grant => grant.id !== other.id);
+  expect(recovered).toHaveLength(2); expect(recovered[0].revokedAt).toBeDefined();
   await f.controller.close();
   const state = await f.storage.read();
-  expect(state.grants).toHaveLength(2);
-  expect(state.grants.find(grant => grant.id !== other.id)?.revokedAt).toBeDefined();
+  expect(state.grants).toHaveLength(3);
+  expect(state.grants.filter(grant => grant.id !== other.id).every(grant => grant.revokedAt !== undefined)).toBe(true);
   expect((await f.authority.requireGrant(other.id, other.secret)).revokedAt).toBeUndefined();
   expect((await f.pair()).status).toBe(503);
 });

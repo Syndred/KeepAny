@@ -167,7 +167,18 @@ it('preserves non-ASCII bytes across chunks and never sends a bridge chunk large
 it('still stops native IO and removes listeners when the protocol close throws synchronously', async () => {
   const test = fixture(), handler = idleHandler(); handler.close = () => { throw Error('private failure'); };
   const session = await startNativeMcpTransport({ address: '127.0.0.1', createHandler: () => handler }, test.bridge);
-  await session.close(); expect(test.bridge.stop).toHaveBeenCalledOnce(); expect(test.callbacks.size).toBe(0);
+  await expect(session.close()).rejects.toThrow('mcp-native-stop-unconfirmed');
+  expect(test.bridge.stop).toHaveBeenCalledOnce(); expect(test.callbacks.size).toBe(0);
+});
+
+it('does not claim IO stopped after a failed native stop and permits an explicit retry', async () => {
+  const test = fixture(), stopped = vi.fn(); let failing = true;
+  test.bridge.stop = vi.fn(async () => { if (failing) throw Error('private stop diagnostic'); });
+  const session = await startNativeMcpTransport({ address: '127.0.0.1', createHandler: idleHandler, onStopped: stopped }, test.bridge);
+  await expect(session.close()).rejects.toThrow('mcp-native-stop-unconfirmed');
+  expect(stopped).not.toHaveBeenCalled(); expect(() => session.assertAvailable()).toThrow('mcp-native-stopped');
+  failing = false; await session.close();
+  expect(test.bridge.stop).toHaveBeenCalledTimes(2); expect(stopped).toHaveBeenCalledOnce();
 });
 
 it('a bridge acknowledgement failure never replays the handler and frees the slot for a distinct retry', async () => {

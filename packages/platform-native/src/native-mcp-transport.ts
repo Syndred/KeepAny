@@ -85,11 +85,17 @@ export async function startNativeMcpTransport(options: {
   if (!privateAddress(options.address) || !Capacitor.isNativePlatform() || !Capacitor.isPluginAvailable('KeepAnyMcpTransport')) throw Error('mcp-native-transport');
   let endpoint: NativeMcpEndpoint | undefined, handler: NativeMcpRequestHandler | undefined;
   let closed = false, closing: Promise<void> | undefined;
+  let stoppedNotified = false;
   const listeners: PluginListenerHandle[] = [], pending = new Map<string, AbortController>();
   const stoppedEarly = new Set<string>();
   let resolveReady!: () => void;
   const ready = new Promise<void>(resolve => { resolveReady = resolve; });
   const assertAvailable = () => { if (closed || !endpoint || !handler) throw Error('mcp-native-stopped'); };
+  const notifyStopped = () => {
+    if (stoppedNotified) return;
+    stoppedNotified = true;
+    try { options.onStopped?.(); } catch { /* A UI callback cannot own native IO. */ }
+  };
   const close = (): Promise<void> => {
     if (closing) return closing;
     closed = true;
@@ -100,11 +106,12 @@ export async function startNativeMcpTransport(options: {
       // guards observe cancellation immediately, including a queued CAS.
       const work = [Promise.resolve().then(() => handler?.close()),
         Promise.resolve().then(() => endpoint ? bridge.stop({ instanceId: endpoint.instanceId }) : undefined)];
-      await Promise.allSettled(work);
-      await Promise.allSettled(listeners.map(listener => Promise.resolve().then(() => listener.remove())));
+      const results = await Promise.allSettled(work);
+      const removed = await Promise.allSettled(listeners.map(listener => Promise.resolve().then(() => listener.remove())));
       pending.clear();
-      try { options.onStopped?.(); } catch { /* UI callbacks cannot keep a listener alive. */ }
-    });
+      if (results[1].status === 'fulfilled') notifyStopped();
+      if ([...results, ...removed].some(result => result.status === 'rejected')) throw Error('mcp-native-stop-unconfirmed');
+    }).catch(() => { closing = undefined; throw Error('mcp-native-stop-unconfirmed'); });
     return closing;
   };
   const process = async (event: unknown) => {
@@ -167,7 +174,7 @@ export async function startNativeMcpTransport(options: {
     listeners.push(await bridge.addListener('mcpStopped', event => {
       const row = instance.safeParse(event);
       if (!row.success) return;
-      if (endpoint) { if (row.data.instanceId === endpoint.instanceId) void close(); }
+      if (endpoint) { if (row.data.instanceId === endpoint.instanceId) { notifyStopped(); void close().catch(() => {}); } }
       else if (stoppedEarly.size < 8) stoppedEarly.add(row.data.instanceId);
     }));
     const info = await bridge.start({ address: options.address });
@@ -175,12 +182,13 @@ export async function startNativeMcpTransport(options: {
     // native listener created by this call is still stopped in the catch path.
     if (uuid.safeParse(info?.instanceId).success) endpoint = info;
     endpoint = checkedEndpoint(info, options.address);
-    if (closed || stoppedEarly.has(endpoint.instanceId)) throw Error('mcp-native-stopped');
+    if (stoppedEarly.has(endpoint.instanceId)) { notifyStopped(); throw Error('mcp-native-stopped'); }
+    if (closed) throw Error('mcp-native-stopped');
     handler = options.createHandler(endpoint, assertAvailable);
     resolveReady();
     return { endpoint, close, assertAvailable };
   } catch {
-    await close(); throw Error('mcp-native-transport');
+    await close().catch(() => {}); throw Error('mcp-native-transport');
   }
 }
 

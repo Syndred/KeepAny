@@ -70,11 +70,23 @@ it('exports a stable ticket before activation, then binds the current private au
     const response = await client.callTool({ name: 'preview_asset_update', arguments: { id: approved.scope.assetIds[0], operationId: 'native-stale-preview', patch: { name: 'Model proposal' } } });
     const preview = (response.structuredContent as { result: PreviewResult }).result;
     expect(f.onPreviews).toHaveBeenLastCalledWith([preview]);
+    expect(await session.checkPreview(preview.previewId)).toBe(true);
     f.changeAsset();
+    expect(await session.checkPreview(preview.previewId)).toBe(false);
     await expect(session.decidePreview(preview.previewId, true)).rejects.toThrow('mcp-native-preview-stale');
     expect(f.onPreviews).toHaveBeenLastCalledWith([]);
     expect((await f.storage.read()).previews[0].rejectedAt).toBeDefined();
     expect((await session.auditEntries()).some(entry => entry.action === 'reject')).toBe(true);
+    const expiringResponse = await client.callTool({ name: 'preview_asset_update', arguments: {
+      id: approved.scope.assetIds[0], operationId: 'native-expired-preview', patch: { name: 'Another model proposal' },
+    } });
+    const expiring = (expiringResponse.structuredContent as { result: PreviewResult }).result;
+    const clock = vi.spyOn(Date, 'now').mockReturnValue(expiring.expiresAt + 1);
+    try {
+      expect(session.pendingPreviews()).toEqual([]);
+      expect(await session.checkPreview(expiring.previewId)).toBe(false);
+      await expect(session.decidePreview(expiring.previewId, true)).rejects.toThrow('mcp-native-preview-stale');
+    } finally { clock.mockRestore(); }
     await session.close(); expect(f.active).toBe(false); expect(f.onStopped).toHaveBeenLastCalledWith(true);
     expect((await f.storage.read()).grants[0].revokedAt).toBeDefined();
   } finally { await client.close(); await session.close(); }
@@ -113,4 +125,15 @@ it('distinguishes stopped IO from unconfirmed durable revocation and supports an
   expect((await f.storage.read()).grants[0].revokedAt).toBeUndefined();
   failing = false; await session.close(); expect((await f.storage.read()).grants[0].revokedAt).toBeDefined();
   expect(f.onStopped).toHaveBeenLastCalledWith(true);
+});
+
+it('keeps private canonical-store diagnostics behind a fixed trusted decision error', async () => {
+  const f = fixture(), session = await prepareNativeMcpSession(f.options, f.dependencies);
+  try {
+    await session.activate();
+    const context = await f.options.loadContext();
+    vi.spyOn(context.store, 'list').mockRejectedValue(Error('SYNTHETIC_PRIVATE_STORAGE_DIAGNOSTIC'));
+    await expect(join(f, session)).rejects.toThrow('mcp-native-decision-failed');
+    expect((await f.storage.read()).grants).toHaveLength(0);
+  } finally { await session.close(); }
 });
