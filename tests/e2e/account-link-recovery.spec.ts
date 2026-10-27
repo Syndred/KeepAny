@@ -26,6 +26,7 @@ import {
 } from "./fixtures/password-smart-import-visual";
 import { selectChoice } from "./helpers/select-choice";
 import { waitForAccountGraphLayout } from "./helpers/account-graph";
+import { initializeNodeIndexedDB } from "./helpers/node-indexeddb";
 
 test.setTimeout(150_000);
 const evidence =
@@ -55,6 +56,7 @@ function stable(prefix: string, values: string[]) {
 }
 
 test.beforeAll(async () => {
+	initializeNodeIndexedDB();
 	mkdirSync(evidence, { recursive: true });
 	const bundled = await build({
 		entryPoints: ["packages/password-vault/src/index.ts"],

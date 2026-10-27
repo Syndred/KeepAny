@@ -20,6 +20,7 @@ import type {
 	VaultSession,
 } from "../../packages/password-vault/src";
 import { expectReadableAccountGraph } from "./helpers/account-graph";
+import { initializeNodeIndexedDB } from "./helpers/node-indexeddb";
 import {
 	inspectVisualKdbx,
 	visualCopy,
@@ -85,6 +86,7 @@ function stableId(prefix: string, values: string[]) {
 // Prepare an actual legacy RxDB archive and encrypted KDBX in an ephemeral Node
 // database. Browser writes use the fixed app's normal backup restore UI only.
 test.beforeAll(async () => {
+	initializeNodeIndexedDB();
 	mkdirSync(evidence, { recursive: true });
 	const bundled = await build({
 		entryPoints: ["packages/password-vault/src/index.ts"],
