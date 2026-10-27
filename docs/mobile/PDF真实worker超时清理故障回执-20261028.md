@@ -2,11 +2,11 @@
 
 ## 结论与范围
 
-**独立软件B已确认一条超时清理红，尚未修产品源。** 合法合成PDF经正式worker成功准备后，精确丢失 `GetTextContent` 和 `Terminate` 两类消息，实际35,022ms仍未返回超时提示，文件输入一直禁用、本次worker仍未被产品terminate。正常对照解析、候选及worker释放均通过；普通资产/history均0。
+**首次独立软件B确认超时清理红，后续获准修复并已完成定向软件绿；Native新包仍待。** 合法合成PDF经正式worker成功准备后，精确丢失 `GetTextContent` 和 `Terminate` 两类消息，首次实际35,022ms仍未返回超时提示，文件输入一直禁用、本次worker仍未被产品terminate。正常对照解析、候选及worker释放均通过；普通资产/history均0。以下保留首次红，后续修复/回归另节追加。
 
 这是可控worker消息不响应的独立失败处理合同，**不能据此推断N17 Android 20001样本曾卡PDF清理**。主控已另行定位该Native片的PDF正确返回20k limit/input enabled，之后截图因应用在后台而挂；两者不混因。
 
-本片仅拥有新 `tests/e2e/intake-pdf-timeout-cleanup.spec.ts` 和本回执。没有改 `intake-pdf.ts`、`pdf-worker.ts`、PDF/core-js兼容方案、AI、workflow或设备；没有安装/重装node_modules、push或触发CI。
+首次故障片仅拥有新 `tests/e2e/intake-pdf-timeout-cleanup.spec.ts` 和本回执，提交`182c3526`时没有改产品源。取得真实红后主控另授权 `intake-pdf.ts`，并依据实际trace授权旧PDF测试的enabled同步点。全程未改 `pdf-worker.ts`/PDF/core-js兼容import、AI、workflow或设备；没有安装/重装node_modules、push或触发CI。
 
 ## 官方及安装代码依据
 
@@ -71,3 +71,45 @@ JSON报告包含附件及准确时序；故障截图为 `browser-output/intake-p
 - 当前两条正式测试保留预期成功断言，故障测试仍红，不用test.fail/skip掩盖。此提交是故障回归及回执，**不是PDF修复完成**。
 - 主控决定并分配源码所有权后，再实现有界错误清理：本次读取应握有独立worker终止控制，不让无回应的destroy ACK挡住原超时；保持正常成功清理与既有预算，需原同一故障链红→绿及正常对照相邻。当前不擅自改源或替上游destroy实现。
 - Native/iOS、真实系统内存压力、浏览器崩溃等未在此片实测，不能外推。当前Apple自然运行不因本片被取消或重启。
+
+## 获准修复：独占worker与原30秒清理边界
+
+主控在首红后授权修改 `apps/web/src/intake-pdf.ts`。每次通过官方公开 `PDFWorker.create({verbosity:0})` 创建独占worker并传入getDocument，不引用私有`_transport/_worker`，也不共享或停止其他读取的worker。
+
+正常提取及正常 `loadingTask.destroy()` ACK清理均在同一原30秒operation race内。外层finally清timer后直接调用本次 `worker.destroy()`，不再无界await未回ACK的destroy；额外task.destroy只作带catch的best-effort。读取已失败时保留原错误，清理异常不抹掉已知NoText/Limit；到deadline时也保留已确定读取错误。没有降低30秒、10MB、20页、20k文字限制，没有改PDF/core-js兼容方案。
+
+新测试扩为正常control、文本+Terminate失ACK、仅Terminate失ACK三个用例。文本+Terminate在同context连续两次，再解除故障并真实重读健康PDF；仅Terminate也随后同context健康重读。100秒的单条测试上限仅容纳两次真实30秒操作与收尾，**没有延长产品deadline或35秒单次观测断言**。
+
+| 修复后真实B | 结果 |
+|---|---|
+| 正常control | 合法PDF正常提取、候选1、实际worker释放、普通asset/history0 |
+| 文本+Terminate失ACK第1次 | 30443ms，pdfTimeout对应UI出现，input enabled，worker0已terminate，review/普通0，页面unhandledrejection0 |
+| 同context第2次同故障 | 30333ms，worker0/1均已terminate，输入恢复，review/普通0，unhandled0 |
+| 同context解除故障后第3次 | 正式worker2提取出新合成文字，候选1、全部3worker已terminate、普通0 |
+| 仅Terminate失ACK | 正常文本提取后ACK不回，30444ms返回pdfTimeout；输入恢复、worker0 terminate、review/普通0、unhandled0 |
+| 仅Terminate之后同context健康重读 | worker1正常提取/候选1、全部worker terminate、普通0 |
+
+该矩阵3 passed/0 skipped，100.5秒，是原同根红→绿。不是把测试关闭context记作产品清理；worker/input状态都在测试context关闭前核对。
+
+## 原9B的测试前置竞态与最终回归
+
+首次相邻回归8绿/1红：旧 `intake-pdf.spec.ts` 的zh-CN1280在blank.pdf期待NoText，却仍见上一轮renamed.pdf的“已准备1候选”。**不是产品NoText红**：trace确认renamed上传49854.7ms后input disabled，旧断言仅检查已存在的Confirmed行即可通过，blank在50031.7ms被Playwright setInputFiles强行提交；50042/50054ms快照仍disabled。真实用户无法选择该禁用输入。未改测试的一次定向复验也通过，首轮race证据仍保留。
+
+按主控明确追加授权，仅在旧spec七次选文件的前后加入14个 `#csv-file` enabled等待。静态移除这14行后与HEAD旧文件逐字一致，原候选、确认、金额、原ID、无文字/坏文件/超限、忽略/去重、布局等断言全保留，没有扩大5秒断言窗口。
+
+加同步后原9B全部通过（61.3秒）：两语390旧缺API/worker/完整review/error路径、合法资源继承control、主+worker/独立worker Promise缺口、两语390/1280原确认/去重等。首轮前置race原始log/trace单列，不用新绿覆盖。所有截图输出均用自有ignored KEEPANY_EVIDENCE_DIR，未写历史docs/evidence。
+
+另将当前源构建到独立 `test-results/pdf-timeout-cleanup/production-dist`，Vite生产build成功；在4238 preview跑原真实生产worker smoke **1通过，2.0秒**。该test删除主/worker最低缺失API，仍由正式打包worker解析合法PDF、预览文字、确认按钮未选type前禁用，worker starts=1。没有覆盖frozen mobile dist/APK，也不冒称Native。
+
+## 修复后证据及提交状态
+
+| 文件（同一ignored目录） | SHA256 |
+|---|---|
+| green.log（3个超时/恢复用例） | `501bb6f179453060996ae0243c892628548685b7b3a3c7238a5e39a016152f03` |
+| green-report.json（含逐次观察附件） | `47ca762fec6c816b333f06d4b9476d8ad42f898c617d0a450d8192294cb35653` |
+| regression.log（8/1，测试前置） | `3451f8eea4c274e47f09d722c830afe02e4ad38189e797daa67db1991912c70e` |
+| settled-regression.log（9通过） | `1c5e88fda255997e98f7d8d824a4fad12e9f9ce5c97703e4b051e3b3dfe85ba3` |
+| production-build.log | `46786fc1ec8d1fc1cd875fea358312ef457c66bc4e5f6da7db9b4df0ab53a5de` |
+| production.log（1通过） | `3d5b022baea11cfd918fd198a87423c512ce91d644ad7f40eadbbe785e24442b` |
+
+targeted tsc覆盖读取源/两spec，biome lint3文件与diff-check通过；4238已收尾。所有修改仅本次读取源、新timeout spec、获准同步的旧PDF spec和本回执，没有碰其他agent dirty或设备。未push，等待主控统一N18冻结。Native新包、iOS、真实worker崩溃/内存压力仍待；N17正常20k已绿与此修复的独立故障合同分开，不写因果。

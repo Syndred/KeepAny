@@ -16,7 +16,9 @@ for (const locale of ["zh-CN", "en-US"]) for (const width of [390, 1280]) test(`
 		await page.goto('/intake');
 		await page.getByRole('button', { name: zh ? 'PDF 文档' : 'PDF document', exact: true }).click();
 		const buffer = pdf(['Invoice reference 123', 'Service total USD 12.00']);
+		await expect(page.locator('#csv-file')).toBeEnabled();
 		await page.locator('#csv-file').setInputFiles({ name: 'invoice.pdf', mimeType: 'application/pdf', buffer });
+		await expect(page.locator('#csv-file')).toBeEnabled();
 		const row = page.locator('.intake-review-row');
 		await expect(row).toHaveCount(1);
 		const batch = page.locator('.intake-review-batch').filter({ has: row });
@@ -32,7 +34,9 @@ for (const locale of ["zh-CN", "en-US"]) for (const width of [390, 1280]) test(`
 		await expect(row).toContainText(zh ? '已确认' : 'Confirmed');
 		await page.reload();
 		await page.getByRole('button', { name: zh ? 'PDF 文档' : 'PDF document', exact: true }).click();
+		await expect(page.locator('#csv-file')).toBeEnabled();
 		await page.locator('#csv-file').setInputFiles({ name: 'renamed.pdf', mimeType: 'application/pdf', buffer });
+		await expect(page.locator('#csv-file')).toBeEnabled();
 		await expect(row).toHaveCount(1);
 		await expect(row).toContainText(zh ? '已确认' : 'Confirmed');
 		if (process.env.KEEPANY_PDF_RELEASE === "1") {
@@ -60,22 +64,32 @@ for (const locale of ["zh-CN", "en-US"]) for (const width of [390, 1280]) test(`
 			expect(assets[0].value).toMatchObject({ name: 'Reviewed invoice', kind: 'subscription', amount: 0, description: 'Manually reviewed USD 12.00' });
 			expect(data.filter((record: {type: string}) => record.type === 'history')).toHaveLength(0);
 		}
+		await expect(page.locator('#csv-file')).toBeEnabled();
 		await page.locator('#csv-file').setInputFiles({ name: 'blank.pdf', mimeType: 'application/pdf', buffer: pdf([]) });
+		await expect(page.locator('#csv-file')).toBeEnabled();
 		await expect(page.locator('.notice[role="status"]')).toContainText(zh ? '未读取到文字' : 'no readable text');
 		await expect(row).toHaveCount(1);
+		await expect(page.locator('#csv-file')).toBeEnabled();
 		await page.locator('#csv-file').setInputFiles({ name: 'broken.pdf', mimeType: 'application/pdf', buffer: Buffer.from('%PDF-1.4\n') });
+		await expect(page.locator('#csv-file')).toBeEnabled();
 		await expect(page.locator('.notice[role="status"]')).toContainText(zh ? '未生成候选' : 'No candidate');
 		await expect(row).toHaveCount(1);
+		await expect(page.locator('#csv-file')).toBeEnabled();
 		await page.locator('#csv-file').setInputFiles({ name: 'oversize.pdf', mimeType: 'application/pdf', buffer: Buffer.alloc(10 * 1024 * 1024 + 1) });
+		await expect(page.locator('#csv-file')).toBeEnabled();
 		await expect(page.locator('.notice[role="status"]')).toContainText('10 MB');
 		await expect(row).toHaveCount(1);
 		const ignored = pdf(['中文账单服务费用'], true);
+		await expect(page.locator('#csv-file')).toBeEnabled();
 		await page.locator('#csv-file').setInputFiles({ name: 'ignore.pdf', mimeType: 'application/pdf', buffer: ignored });
+		await expect(page.locator('#csv-file')).toBeEnabled();
 		const ignoredRow = page.getByRole('region', { name: 'ignore.pdf', exact: true }).locator('.intake-review-row');
 		await expect(ignoredRow.getByLabel(zh ? '简短描述' : 'Short description')).toHaveValue('中文账单服务费用');
 		await ignoredRow.getByRole('button', { name: zh ? '忽略' : 'Ignore', exact: true }).click();
 		await expect(ignoredRow).toContainText(zh ? '已忽略' : 'Ignored');
+		await expect(page.locator('#csv-file')).toBeEnabled();
 		await page.locator('#csv-file').setInputFiles({ name: 'ignore-again.pdf', mimeType: 'application/pdf', buffer: ignored });
+		await expect(page.locator('#csv-file')).toBeEnabled();
 		await expect(row).toHaveCount(2);
 		await expect(ignoredRow).toContainText(zh ? '已忽略' : 'Ignored');
 		expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
