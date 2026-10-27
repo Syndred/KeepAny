@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { historySchema } from './index';
+import { effectiveFinanceEntry, historyAssetIds, historyReferenceIds, historySchema } from './index';
 
 const base = {
   id: crypto.randomUUID(), assetId: crypto.randomUUID(), action: 'expense',
@@ -26,5 +26,31 @@ describe('manual finance history', () => {
       { amount: undefined }, { amount: 0 }, { amount: 1.5 }, { amount: -1 },
       { currency: undefined }, { currency: 'BTC' },
     ]) expect(historySchema.safeParse({ ...base, ...patch }).success, JSON.stringify(patch)).toBe(false);
+  });
+
+  it('keeps legacy ownership and requires explicit unique bill owners', () => {
+    const legacy = historySchema.parse(base);
+    expect(legacy).not.toHaveProperty('assetIds');
+    expect(historyAssetIds(legacy)).toEqual([base.assetId]);
+    const second = crypto.randomUUID();
+    const shared = historySchema.parse({ ...base, assetIds: [base.assetId, second] });
+    expect(historyAssetIds(shared)).toEqual([base.assetId, second]);
+    for (const assetIds of [[], [second], [base.assetId, base.assetId]])
+      expect(historySchema.safeParse({ ...base, assetIds }).success).toBe(false);
+    expect(historySchema.safeParse({ ...base, action: 'maintenance', assetIds: [base.assetId] }).success).toBe(false);
+  });
+
+  it('separates corrected or hidden renewal bills from the preserved renewal fact and source reference', () => {
+    const owner = crypto.randomUUID();
+    const renewal = historySchema.parse({ ...base, action: 'renew', billDate: base.eventDate,
+      financeCorrection: { title: 'Corrected invoice', note: 'Corrected evidence', amount: 2001, currency: 'JPY',
+        eventDate: '2026-10-25', assetIds: [owner], hidden: true } });
+    expect(effectiveFinanceEntry(renewal)).toMatchObject({ amount: 2001, currency: 'JPY', billDate: '2026-10-25', deleted: true });
+    expect(renewal).toMatchObject({ amount: 1299, currency: 'CNY', billDate: base.eventDate, deleted: false });
+    expect(historyAssetIds(renewal)).toEqual([owner]);
+    expect(historyReferenceIds(renewal)).toEqual([base.assetId, owner]);
+    expect(historySchema.safeParse({ ...base, financeCorrection: renewal.financeCorrection }).success).toBe(false);
+    for (const assetIds of [[], [owner, owner]]) expect(historySchema.safeParse({ ...renewal,
+      financeCorrection: { ...renewal.financeCorrection, assetIds } }).success).toBe(false);
   });
 });

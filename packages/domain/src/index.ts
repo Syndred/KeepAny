@@ -120,6 +120,7 @@ export type Submission=z.infer<typeof submissionSchema>;
 export const financeActions=['expense','topup','refund','balance'] as const;
 export const historySchema=z.object({
  id:z.string().min(1).max(96),assetId:z.string().min(1).max(96),
+ assetIds:z.array(z.string().min(1).max(96)).min(1).max(100).optional(),
  action:z.enum(['loan','return','renew','maintenance','itemStatus',...financeActions]),
  title:z.string().trim().max(160).optional(),source:z.string().trim().max(300).optional(),
  note:z.string(),borrower:z.string().max(200).optional(),
@@ -127,9 +128,19 @@ export const historySchema=z.object({
  itemStatusBefore:z.enum(itemLifecycleStatuses).nullable().optional(),itemStatusAfter:z.enum(itemLifecycleStatuses).optional(),
  eventDate:z.string().refine(validDateOnly,'date').optional(),billDate:z.string().refine(validDateOnly,'date').optional(),
  amount:z.number().int().min(0).max(Number.MAX_SAFE_INTEGER).optional(),currency:z.enum(currencies).optional(),
+ financeCorrection:z.object({
+  title:z.string().trim().max(160).optional(),source:z.string().trim().max(300).optional(),note:z.string(),
+  eventDate:z.string().refine(validDateOnly,'date'),amount:z.number().int().min(0).max(Number.MAX_SAFE_INTEGER),
+  currency:z.enum(currencies),hidden:z.boolean().default(false),
+  assetIds:z.array(z.string().min(1).max(96)).min(1).max(100).refine(ids=>new Set(ids).size===ids.length,'finance-assets').optional(),
+ }).optional(),
  createdAt:z.string(),deleted:z.boolean().default(false),purged:z.literal(true).optional(),
 }).superRefine((value,ctx)=>{
  if(value.purged&&!value.deleted)ctx.addIssue({code:'custom',path:['purged'],message:'purged'});
+ if(value.assetIds && (!financeActions.includes(value.action as typeof financeActions[number]) ||
+   !value.assetIds.includes(value.assetId) || new Set(value.assetIds).size!==value.assetIds.length))
+   ctx.addIssue({code:'custom',path:['assetIds'],message:'finance-assets'});
+ if(value.financeCorrection && value.action!=='renew')ctx.addIssue({code:'custom',path:['financeCorrection'],message:'renew-only'});
  if(value.action==='itemStatus' && (value.itemStatusBefore===undefined || !value.itemStatusAfter || !value.eventDate))ctx.addIssue({code:'custom',path:['itemStatusAfter'],message:'item-status'});
  if(value.expectedReturnDate && value.action!=='loan')ctx.addIssue({code:'custom',path:['expectedReturnDate'],message:'loan-only'});
  if(value.expectedReturnDate && value.eventDate && value.expectedReturnDate<value.eventDate)ctx.addIssue({code:'custom',path:['expectedReturnDate'],message:'before-loan'});
@@ -140,6 +151,20 @@ export const historySchema=z.object({
  if(!value.currency)ctx.addIssue({code:'custom',path:['currency'],message:'currency'});
 });
 export type History=z.infer<typeof historySchema>;
+/** Legacy records keep their primary assetId; explicit bill ownership never creates another bill. */
+export function historyAssetIds(entry: Pick<History,'assetId'|'assetIds'|'financeCorrection'>): string[] {
+ return entry.financeCorrection?.assetIds ? [...entry.financeCorrection.assetIds] : [...new Set([entry.assetId,...(entry.assetIds??[])])];
+}
+/** References include the immutable renewal source as well as current bill owners. */
+export function historyReferenceIds(entry: Pick<History,'assetId'|'assetIds'|'financeCorrection'>): string[] {
+ return [...new Set([entry.assetId,...(entry.assetIds??[]),...historyAssetIds(entry)])];
+}
+/** A renewal remains a renewal fact; its optional bill correction only changes ledger presentation. */
+export function effectiveFinanceEntry(entry: History): History {
+ const correction=entry.financeCorrection;
+ return correction ? {...entry,title:correction.title,source:correction.source,note:correction.note,eventDate:correction.eventDate,
+  amount:correction.amount,currency:correction.currency,billDate:correction.eventDate,deleted:entry.deleted||correction.hidden} : entry;
+}
 export function newAsset(kind:AssetKind):Asset{const now=new Date().toISOString();return assetSchema.parse({id:crypto.randomUUID(),kind,name:'Untitled',...(kind==='item'?{itemLifecycleStatus:'inUse',itemWarrantyStatus:'unverified'}:{}),createdAt:now,updatedAt:now});}
 export function calendarDayDistance(from:string,to:string){return (parseDateOnly(to).getTime()-parseDateOnly(from).getTime())/86_400_000;}
 export function nextDue(date:string,cycle:Asset['cycle'],interval=1){return dueOnCycle(date,cycle,interval,1);}

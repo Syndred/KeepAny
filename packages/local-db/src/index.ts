@@ -5,7 +5,7 @@ import Dexie, { type Table } from 'dexie';
 import { z } from 'zod';
 import { trashPurgeRows, redactedTrashRow, type TrashPurgePlan, type TrashTarget } from './trash-purge';
 export type { TrashPurgePlan, TrashTarget } from './trash-purge';
-import { dueOnCycle, entitySchemas, normalizeCategoryName, type Asset, type AssetKind, type Category, type EntityType, type History, type Relation, type Submission, type Task } from '../../domain/src';
+import { dueOnCycle, entitySchemas, financeActions, historyAssetIds, historyReferenceIds, normalizeCategoryName, type Asset, type AssetKind, type Category, type EntityType, type History, type Relation, type Submission, type Task } from '../../domain/src';
 import { canRecordProjectWorkflowTask, currentProjectWorkflowRound } from '../../domain/src/project-workflow';
 import { advanceTaskReminder, zonedParts } from '../../domain/src/task-reminder';
 import { zipSync, strToU8, strFromU8 } from 'fflate';
@@ -558,6 +558,49 @@ export class LocalRepository {
     return this.saveUnlocked('submission', next, rowFor('submission', expected).payload);
   }
 
+  async deleteSubmissionIfCurrent(expected: Submission): Promise<RecordRow> {
+    if (expected.deleted || expected.purged) throw Error('submission-stale');
+    return this.saveUnlocked('submission', { ...expected, deleted: true }, rowFor('submission', expected).payload);
+  }
+
+  /** One confirmed bill, with any number of explicit ordinary-asset owners. */
+  async createFinanceEntry(value: History): Promise<RecordRow> {
+    const next = entitySchemas.history.parse(value);
+    if (next.deleted || !financeActions.includes(next.action as typeof financeActions[number])) throw Error('finance-invalid');
+    return withCategoryMutationGate(this.db, this.fileStore, [], async () => {
+      await this.assertFinanceTargets(next);
+      return this.saveEntityUnlocked('history', next, null);
+    });
+  }
+
+  /** Keep the original ID/action/time and reject an edit or deletion based on stale contents. */
+  async saveFinanceEntryIfCurrent(expected: History, value: History): Promise<RecordRow> {
+    const next = entitySchemas.history.parse(value);
+    if (expected.id !== next.id || expected.action !== next.action || expected.createdAt !== next.createdAt ||
+      expected.deleted || expected.purged || !(expected.action === 'renew' || financeActions.includes(expected.action as typeof financeActions[number]))) throw Error('history-stale');
+    if (expected.action === 'renew') {
+      const originalFields = (entry: History) => JSON.stringify({ ...entry, assetIds: undefined, financeCorrection: undefined });
+      if (originalFields(next) !== originalFields(expected)) throw Error('finance-renewal-immutable');
+    }
+    return withRenewalLock(`keepany-renewal:${this.db.name}`, async () => {
+      await this.settleRenewalJournals();
+      return withCategoryMutationGate(this.db, this.fileStore, [], async () => {
+        if (!next.deleted && !next.financeCorrection?.hidden) await this.assertFinanceTargets(next);
+        return this.saveEntityUnlocked('history', next, rowFor('history', expected).payload);
+      });
+    });
+  }
+
+  private async assertFinanceTargets(entry: History): Promise<void> {
+    const ids = historyAssetIds(entry);
+    const rows = await this.db.records.storageInstance.findDocumentsById(ids.map(id => key('asset', id)), false);
+    const targets = new Map(rows.map(row => {
+      const asset = entitySchemas.asset.parse(JSON.parse(row.payload));
+      return [asset.id, asset] as const;
+    }));
+    if (ids.some(id => { const target = targets.get(id); return !target || target.deleted || target.purged || target.kind === 'vault'; })) throw Error('finance-target-changed');
+  }
+
   async archiveProjectIfWorkflowComplete(expectedProject: Asset, expectedRoundId: string): Promise<RecordRow> {
     if (expectedProject.kind !== 'project' || expectedProject.deleted || expectedProject.status === 'archived' || !expectedRoundId) throw Error('workflow-stale');
     return withRenewalLock(`keepany-task:${this.db.name}`, async () => {
@@ -633,10 +676,12 @@ export class LocalRepository {
     const entity = parsedPayload(next) as Record<string, unknown>;
     // A queued edit must not append personal contents to an already erased parent.
     const erasedParentIds = type === 'relation' ? [entity.from, entity.to]
-      : ['task', 'history', 'submission'].includes(type) ? [entity.assetId] : [];
+      : type === 'history' ? historyReferenceIds(entity as unknown as History)
+      : ['task', 'submission'].includes(type) ? [entity.assetId] : [];
     for (const id of erasedParentIds) {
       if (typeof id === 'string' && id && (await this.get<{ purged?: boolean }>('asset', id))?.purged) throw Error('trash-purged');
     }
+    if (type === 'history' && (entity.assetIds || entity.financeCorrection) && !entity.deleted && !(entity.financeCorrection as History['financeCorrection'])?.hidden) await this.assertFinanceTargets(entity as unknown as History);
     if (type === 'task') {
       const task = entity as unknown as Task;
       if (task.projectWorkflow?.step === 'closeDecision' && task.projectWorkflow.record) {
@@ -662,7 +707,7 @@ export class LocalRepository {
     const current = await this.db.records.findOne(next.id).exec();
     if (current) {
       await current.incrementalModify((data: RecordRow) => {
-        if (expectedPayload === null || (expectedPayload !== undefined && JSON.stringify(parsedPayload(data)) !== expectedPayload)) throw Error(type === 'task' ? 'task-stale' : type === 'preference' ? 'preference-stale' : type === 'submission' ? 'submission-stale' : 'asset-stale');
+        if (expectedPayload === null || (expectedPayload !== undefined && JSON.stringify(parsedPayload(data)) !== expectedPayload)) throw Error(type === 'task' ? 'task-stale' : type === 'preference' ? 'preference-stale' : type === 'submission' ? 'submission-stale' : type === 'history' ? 'history-stale' : 'asset-stale');
         if ((parsedPayload(data) as { purged?: boolean }).purged && next.payload !== data.payload) throw Error('trash-purged');
         if (parsedPayload(data).deleted && !parsedPayload(next).deleted) throw Error('tombstone-restore-required');
         if (type === 'category') {
@@ -684,7 +729,7 @@ export class LocalRepository {
         return { ...data, ...next };
       });
     } else {
-      if (expectedPayload !== undefined && expectedPayload !== null) throw Error(type === 'task' ? 'task-stale' : type === 'preference' ? 'preference-stale' : type === 'submission' ? 'submission-stale' : 'asset-stale');
+      if (expectedPayload !== undefined && expectedPayload !== null) throw Error(type === 'task' ? 'task-stale' : type === 'preference' ? 'preference-stale' : type === 'submission' ? 'submission-stale' : type === 'history' ? 'history-stale' : 'asset-stale');
       if (type === 'asset' && entity.kind === 'item' &&
         (entity.status !== 'active' || entity.borrower ||
           (entity.itemLifecycleStatus !== null && entity.itemLifecycleStatus !== 'inUse') || entity.itemStatusDate)) throw Error('item-action-required');
@@ -692,7 +737,7 @@ export class LocalRepository {
         await this.db.records.insert(next);
       } catch (error) {
         if (!(await this.db.records.findOne(next.id).exec())) throw error;
-        if (expectedPayload !== undefined) throw Error(type === 'task' ? 'task-stale' : type === 'preference' ? 'preference-stale' : type === 'submission' ? 'submission-stale' : 'asset-stale');
+        if (expectedPayload !== undefined) throw Error(type === 'task' ? 'task-stale' : type === 'preference' ? 'preference-stale' : type === 'submission' ? 'submission-stale' : type === 'history' ? 'history-stale' : 'asset-stale');
         return this.saveEntityUnlocked(type, value, undefined, subscriptionSave, attachmentsChecked);
       }
     }
@@ -2668,6 +2713,9 @@ export async function retrySubscriptionSave(assetId: string) { return (await def
 export async function abandonSubscriptionSave(assetId: string) { return (await defaultRepository()).abandonSubscriptionSave(assetId); }
 export async function saveTaskIfCurrent(expected: Task, next: Task) { return (await defaultRepository()).saveTaskIfCurrent(expected, next); }
 export async function saveSubmissionIfCurrent(expected: Submission, next: Submission) { return (await defaultRepository()).saveSubmissionIfCurrent(expected, next); }
+export async function deleteSubmissionIfCurrent(expected: Submission) { return (await defaultRepository()).deleteSubmissionIfCurrent(expected); }
+export async function createFinanceEntry(value: History) { return (await defaultRepository()).createFinanceEntry(value); }
+export async function saveFinanceEntryIfCurrent(expected: History, next: History) { return (await defaultRepository()).saveFinanceEntryIfCurrent(expected, next); }
 export async function archiveProjectIfWorkflowComplete(expectedProject: Asset, expectedRoundId: string) {
   return (await defaultRepository()).archiveProjectIfWorkflowComplete(expectedProject, expectedRoundId);
 }
@@ -2800,6 +2848,7 @@ function validateReferences(rows: RecordRow[], attachmentIds: Set<string>): void
     if ((row.type === 'submission' || row.type === 'history') && !assetIds.has(value.assetId as string)) {
       throw Error(`archive-${row.type}-reference`);
     }
+    if (row.type === 'history' && historyReferenceIds(value as unknown as History).some(id => !assetIds.has(id))) throw Error('archive-history-reference');
   }
 }
 

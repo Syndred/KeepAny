@@ -1,7 +1,9 @@
 import {
 	entitySchemas,
+	historyReferenceIds,
 	type Asset,
 	type EntityType,
+	type History,
 	type Relation,
 	type Task,
 } from "../../domain/src";
@@ -58,7 +60,8 @@ export function trashPurgeRows(
 			if (roots.has(row.id)) return true;
 			const value = payload(row);
 			if (row.type === "relation") return relations.has(String(value.id));
-			if (row.type === "history" || row.type === "submission")
+			if (row.type === "history") return historyReferenceIds(value as unknown as History).some(id => assets.has(id));
+			if (row.type === "submission")
 				return assets.has(String(value.assetId));
 			if (row.type === "task") {
 				const task = value as unknown as Task;
