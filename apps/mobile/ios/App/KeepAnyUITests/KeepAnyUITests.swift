@@ -308,18 +308,41 @@ final class KeepAnyUITests: XCTestCase {
             }
             selectAll.tap()
             control.typeText(XCUIKeyboardKey.delete.rawValue)
+            let cleared = XCTNSPredicateExpectation(predicate: NSPredicate(format: "value == %@", ""), object: control)
+            if XCTWaiter.wait(for: [cleared], timeout: 10) != .completed {
+                capture(app, "project-text-clear-incomplete")
+                captureHierarchy(app, "project-text-clear-incomplete-AX")
+            }
             XCTAssertEqual(control.value as? String ?? "", "", "Replacement must clear the complete original value")
         }
         control.typeText(value)
+        // typeText can return while WKWebView is still receiving the native
+        // keyboard events. Never save a partial value or type a second copy.
+        let typed = XCTNSPredicateExpectation(predicate: NSPredicate(format: "value == %@", value), object: control)
+        if XCTWaiter.wait(for: [typed], timeout: 20) != .completed {
+            capture(app, "project-text-input-incomplete")
+            captureHierarchy(app, "project-text-input-incomplete-AX")
+        }
         XCTAssertEqual(control.value as? String, value)
         dismissInputToolbar(app)
     }
 
     private func projectCategoryControl(in app: XCUIApplication, label: String) -> XCUIElement {
         let predicate = NSPredicate(format: "label BEGINSWITH %@", label)
+        let combo = app.comboBoxes.matching(predicate).firstMatch
         let popup = app.popUpButtons.matching(predicate).firstMatch
-        if popup.exists { return popup }
         let button = app.buttons.matching(predicate).firstMatch
+        // The preceding dialog transition need not have reached the native AX
+        // tree when the click returns. Wait for a labelled interactive control.
+        let ready = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in
+            combo.exists || popup.exists || button.exists
+        }, object: nil)
+        if XCTWaiter.wait(for: [ready], timeout: 10) != .completed {
+            capture(app, "project-category-control-missing")
+            captureHierarchy(app, "project-category-control-missing-AX")
+        }
+        if combo.exists { return combo }
+        if popup.exists { return popup }
         XCTAssertTrue(button.exists, "Project category must expose an accessible select control")
         return button
     }

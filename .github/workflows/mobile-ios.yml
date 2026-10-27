@@ -72,6 +72,7 @@ jobs:
         env:
           KEEPANY_MCP_STAGE_FILE: ${{ github.workspace }}/test-results/ios/mcp-stage-events.ndjson
           KEEPANY_MCP_PUBLIC_CERTIFICATE_FILE: ${{ github.workspace }}/test-results/ios/mcp-public-certificate.pem
+          KEEPANY_NODE_MCP_PROBE_FILE: ${{ github.workspace }}/scripts/ios-mcp-node-probe.ts
         run: |
           set -o pipefail
           mkdir -p test-results/ios
