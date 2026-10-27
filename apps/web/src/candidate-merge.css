@@ -1,0 +1,15 @@
+.candidate-merge-dialog form { display: grid; gap: 14px; min-width: 0; }
+.candidate-merge-dialog form > p, .candidate-merge-receipt p { margin: 0; overflow-wrap: anywhere; }
+.candidate-merge-fields { display: grid; gap: 10px; min-width: 0; }
+.candidate-merge-field { display: grid; grid-template-columns: minmax(100px, .8fr) minmax(0, 1fr) minmax(0, 1fr); gap: 10px; padding: 10px; border: 1px solid var(--line-soft); border-radius: 8px; background: var(--paper-soft); min-width: 0; }
+.candidate-merge-field > * { min-width: 0; overflow-wrap: anywhere; }
+.candidate-merge-field small { display: block; color: var(--muted); }
+.candidate-merge-value { display: block; white-space: pre-wrap; overflow-wrap: anywhere; }
+.candidate-merge-check { display: flex; align-items: start; gap: 8px; }
+.candidate-merge-check input { width: 18px; height: 18px; flex: none; margin-top: 2px; }
+.candidate-merge-receipt { display: grid; gap: 10px; min-width: 0; }
+.candidate-merge-receipt summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; }
+@media (max-width: 600px) {
+  .candidate-merge-field { grid-template-columns: 1fr; }
+  .candidate-merge-check { min-height: 32px; align-items: center; }
+}

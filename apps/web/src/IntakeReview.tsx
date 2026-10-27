@@ -10,7 +10,10 @@ import "./finance.css";
 import {
 	decideReviewedCandidate, editReviewedCandidate, getReviewedCandidate,
 	listReviewedCandidates, editReviewedExpenseDraft, setReviewedCandidateMode, type ReviewedCandidate,
+	confirmReviewedAssetMerge, pendingReviewedAssetMerges, retryReviewedAssetMerges, cancelReviewedAssetMerge,
 } from "./intake-review-store";
+import { CandidateMergeDialog, CandidateMergeReceipt } from "./components/CandidateMergeDialog";
+import type { ConfirmReviewedAssetMergeInput, PendingReviewedAssetMerge } from "../../../packages/local-db/src/intake-asset-merge";
 import "./intake-review.css";
 import { ensureReviewedAccountLinks, previewAccountIdentity } from "./intake-account-links";
 import { useSearchRowLocation } from "./search-location";
@@ -62,6 +65,10 @@ export function IntakeReview() {
 	const [expenseRecoveryPending, setExpenseRecoveryPending] = useState(false);
 	const [expenseRecoveryBusy, setExpenseRecoveryBusy] = useState(false);
 	const [expenseIntents, setExpenseIntents] = useState<Array<{ candidateId: string; historyId: string; committed: boolean }>>([]);
+	const [mergeIntents, setMergeIntents] = useState<PendingReviewedAssetMerge[]>([]);
+	const [mergeCandidate, setMergeCandidate] = useState<ReviewedCandidate | null>(null);
+	const [mergeRecoveryBusy, setMergeRecoveryBusy] = useState(false);
+	const mergeRecoveryInFlight = useRef(false);
 	const [migrationPending, setMigrationPending] = useState(false);
 	const [migrationBusy, setMigrationBusy] = useState(false);
 	const migrationInFlight = useRef(false);
@@ -104,7 +111,7 @@ export function IntakeReview() {
 			await Promise.allSettled([...pendingSaves.current.values()]);
 			if (!isCurrent()) return;
 			if (revision !== reviewRevision.current) continue;
-			const [items, pending] = await Promise.all([listReviewedCandidates(), repository.pendingReviewedExpenseConfirmations()]);
+			const [items, pending, merges] = await Promise.all([listReviewedCandidates(), repository.pendingReviewedExpenseConfirmations(), pendingReviewedAssetMerges()]);
 			if (!isCurrent()) return;
 			// Another row remains editable during confirmation. A read started before
 			// that edit must not replace its newer optimistic or persisted value.
@@ -118,6 +125,7 @@ export function IntakeReview() {
 			}));
 			setMigrationPending(!!repository.intakeReviewMigrationError);
 			setExpenseIntents(pending);
+			setMergeIntents(merges);
 			setExpenseRecoveryPending(pending.length > 0 || !!repository.intakeExpenseRecoveryError);
 			return;
 		}
@@ -166,6 +174,43 @@ export function IntakeReview() {
 			notify(t(result === "completed" ? "financeRecordSaved" : "reviewExpenseCancelled"));
 		} catch { setMessage(t("error")); await refresh().catch(() => undefined); }
 		finally { inFlight.current.delete(id); setWorkingId(""); }
+	}
+
+	async function openMerge(id: string) {
+		if (bulkInFlight.current || inFlight.current.has(id)) return;
+		try {
+			await flushEdits();
+			const latest = await getReviewedCandidate(id);
+			if (latest?.status === "pending") setMergeCandidate(latest);
+		} catch { setMessageId(id); setMessage(t("error")); }
+	}
+	async function merge(input: ConfirmReviewedAssetMergeInput) {
+		const id = input.expectedCandidate.id;
+		if (bulkInFlight.current || inFlight.current.has(id)) throw Error("review-merge-pending");
+		inFlight.current.add(id); setWorkingId(id);
+		try {
+			await mutateReview(() => withReviewLock(id, () => confirmReviewedAssetMerge(input)));
+			setMergeCandidate(null);
+			setSelectedIds(current => { const next = new Set(current); next.delete(id); return next; });
+			await refresh();
+			notify(t("reviewMergeSaved"));
+		} catch (error) { await refresh().catch(() => undefined); throw error; }
+		finally { inFlight.current.delete(id); setWorkingId(""); }
+	}
+	async function recoverMerges(cancelId?: string) {
+		if (mergeRecoveryInFlight.current) return;
+		mergeRecoveryInFlight.current = true; setMergeRecoveryBusy(true);
+		try {
+			const result = await mutateReview(async () => {
+				if (cancelId) return cancelReviewedAssetMerge(cancelId);
+				await retryReviewedAssetMerges();
+				return undefined;
+			});
+			await refresh();
+			setMessage("");
+			if (cancelId) notify(t(result === "cancelled" ? "reviewMergeCancelled" : "reviewMergeSaved"));
+		} catch { setMessageId(cancelId ?? ""); setMessage(t("reviewMergeChanged")); await refresh().catch(() => undefined); }
+		finally { mergeRecoveryInFlight.current = false; setMergeRecoveryBusy(false); }
 	}
 
 	function queueEdit(id: string, nextRow: ReviewedCandidate, action: () => Promise<boolean>) {
@@ -312,7 +357,7 @@ export function IntakeReview() {
 	}
 
 	async function completeLinks(items: ReviewedCandidate[]) {
-		return ensureReviewedAccountLinks(items, {
+		return ensureReviewedAccountLinks(items.filter(row => !row.merge), {
 			labels: {
 				email: t("reviewEmailLink"),
 				phone: t("reviewPhoneLink"),
@@ -477,6 +522,7 @@ export function IntakeReview() {
 			<Button disabled={migrationBusy} onClick={() => void retryMigration()}>{t("reviewRetryMigration")}</Button>
 		</div>}
 		{expenseRecoveryPending && <div role="alert" className="notice"><p>{t("reviewExpenseRecoveryHint")}</p><Button disabled={expenseRecoveryBusy} onClick={() => void retryExpenses()}>{t("reviewExpenseRetry")}</Button></div>}
+		{mergeIntents.length > 0 && <div role="alert" className="notice"><p>{t("reviewMergePending")}</p><Button disabled={mergeRecoveryBusy || !!workingId || bulkBusy} onClick={() => void recoverMerges()}>{t("reviewMergeRetry")}</Button></div>}
 		{message && !messageId && <p role="status" className="intake-review-message">{message}</p>}
 		{rows.length > 0 && <div className="intake-review-list">
 			<h3>{t("reviewCandidates")}</h3>
@@ -495,12 +541,13 @@ export function IntakeReview() {
 					{batch.items.some(row => row.status === "accepted" && row.asset.kind === "account") && <Button disabled={busy} onClick={() => void repairLinks(batch.key, batch.items)}>{t("reviewCompleteLinks")}</Button>}
 				</div>
 				{batchMessages[batch.key] && <p className="intake-review-message" role="status">{batchMessages[batch.key]}</p>}
-				{batch.sourceText && <details className="intake-review-original"><summary>{t("reviewPdfOriginal")}</summary><pre className="intake-pdf-text">{batch.sourceText}</pre></details>}
+				{batch.sourceText && <details className="intake-review-original"><summary>{t(batch.items[0].source ? "reviewPdfOriginal" : "reviewMergeOriginal")}</summary><pre className="intake-pdf-text">{batch.sourceText}</pre></details>}
 				<div className="intake-review-batch-rows">
 			{batch.items.map((row) => {
 				const intent = expenseIntents.find((entry) => entry.candidateId === row.id);
-				const disabled = bulkBusy || workingId === row.id || !!intent;
-				const currentAsset = row.status === "accepted" ? assetsById.get(row.asset.id) : undefined;
+				const mergeIntent = mergeIntents.find((entry) => entry.candidateId === row.id);
+				const disabled = bulkBusy || workingId === row.id || !!intent || !!mergeIntent;
+				const currentAsset = row.status === "accepted" ? assetsById.get(row.merge?.targetId ?? row.asset.id) : undefined;
 				const savedAsset = currentAsset && !currentAsset.deleted ? currentAsset : undefined;
 				const savedLinks = savedAsset?.kind === "account" ? data.relations.filter(relation => !relation.deleted && relation.from === savedAsset.id).flatMap(relation => { const target = assetsById.get(relation.to); return target && !target.deleted ? [{ relation, target }] : []; }) : [];
 				return <div className="intake-review-row" key={row.id} id={`intake-review-${row.id}`} tabIndex={-1}>
@@ -529,6 +576,7 @@ export function IntakeReview() {
 					{row.status === "accepted" && (savedAsset
 						? <Link to="/assets/$kind/$id" params={{ kind: savedAsset.kind, id: savedAsset.id }}>{t("reviewViewAsset")}: {savedAsset.name}</Link>
 						: <small>{t("taskRelatedMissing")}</small>)}
+					{row.merge && <CandidateMergeReceipt receipt={row.merge} />}
 				</div>}
 				{row.status === "pending" && <>
 					<div className="intake-review-fields">
@@ -552,7 +600,7 @@ export function IntakeReview() {
 					</div>
 					{(rowErrors[row.id] || (message && messageId === row.id)) && <p role="alert" className="field-error">{rowErrors[row.id] || message}</p>}
 					{savingIds.has(row.id) && <small role="status">{t("reviewSaving")}</small>}
-					{intent ? <div className="actions"><Button variant="primary" disabled={bulkBusy || workingId === row.id} onClick={() => void decide(row.id, "accepted")}>{t("reviewExpenseRetry")}</Button>{!intent.committed && <Button disabled={bulkBusy || workingId === row.id} onClick={() => void cancelExpense(row.id)}>{t("reviewExpenseCancel")}</Button>}</div> : <div className="actions"><Button variant="primary" disabled={bulkBusy || workingId === row.id || savingIds.has(row.id) || (row.reviewMode === "expense" ? !targets.length : row.source === "pdf" && !row.kindSelected)} onClick={() => void decide(row.id, "accepted")}>{t(row.reviewMode === "expense" ? "reviewConfirmExpense" : "reviewConfirm")}</Button><Button disabled={bulkBusy || workingId === row.id || savingIds.has(row.id)} onClick={() => void decide(row.id, "ignored")}>{t("reviewIgnore")}</Button></div>}
+					{mergeIntent ? <div className="actions"><Button disabled={mergeRecoveryBusy || bulkBusy || !!workingId} onClick={() => void recoverMerges()}>{t("reviewMergeRetry")}</Button>{!mergeIntent.committed && <Button disabled={mergeRecoveryBusy || bulkBusy || !!workingId} onClick={() => void recoverMerges(row.id)}>{t("reviewMergeCancel")}</Button>}</div> : intent ? <div className="actions"><Button variant="primary" disabled={bulkBusy || workingId === row.id} onClick={() => void decide(row.id, "accepted")}>{t("reviewExpenseRetry")}</Button>{!intent.committed && <Button disabled={bulkBusy || workingId === row.id} onClick={() => void cancelExpense(row.id)}>{t("reviewExpenseCancel")}</Button>}</div> : <div className="actions"><Button variant="primary" disabled={bulkBusy || workingId === row.id || savingIds.has(row.id) || (row.reviewMode === "expense" ? !targets.length : row.source === "pdf" && !row.kindSelected)} onClick={() => void decide(row.id, "accepted")}>{t(row.reviewMode === "expense" ? "reviewConfirmExpense" : "reviewConfirm")}</Button>{row.reviewMode !== "expense" && <Button disabled={disabled || savingIds.has(row.id) || (row.source === "pdf" && !row.kindSelected)} onClick={() => void openMerge(row.id)}>{t("reviewMerge")}</Button>}<Button disabled={bulkBusy || workingId === row.id || savingIds.has(row.id)} onClick={() => void decide(row.id, "ignored")}>{t("reviewIgnore")}</Button></div>}
 				</>}
 
 			</div>;
@@ -560,5 +608,6 @@ export function IntakeReview() {
 				</div>
 			</section>; })}
 		</div>}
+		{mergeCandidate && <CandidateMergeDialog candidate={mergeCandidate} assets={liveAssets(data)} onClose={() => setMergeCandidate(null)} onMerge={merge} />}
 	</div>;
 }
