@@ -55,7 +55,7 @@
 ```powershell
 # 自有4236已由本片关闭；主控下次需独立启动再运行
 $env:KEEPANY_E2E_PORT='4236'
-node node_modules/@playwright/test/cli.js test tests/e2e/intake-pdf-compatibility.spec.ts --workers=1 --output=test-results/pdf-compatibility/recheck-output
+node node_modules/@playwright/test/cli.js test tests/e2e/intake-pdf-compatibility.spec.ts --grep 'N16 missing APIs|control with native' --workers=1 --output=test-results/pdf-compatibility/recheck-output
 ```
 
 测试 helper/兼容 E2E 是原 PDF 流程的真实输入扩展，不是另造提取或存储实现。实际 30s 超时分支本片没有等时故障注入，源码定时器未改；加密 PDF、所有字体/特殊文档、所有旧 WebView、物理设备与 iOS 不外推。
@@ -63,3 +63,25 @@ node node_modules/@playwright/test/cli.js test tests/e2e/intake-pdf-compatibilit
 为 N17 owner 留小型公开合成输入 `test-results/pdf-compatibility/native-synthetic/`：继承资源、中文、image-only、空白、损坏、21页、20001字符。manifest SHA `283103420d08f4916682d6b3344225090a54d3d371d76f92735cf87f15dbc6f0`；关键继承资源 PDF 683B/SHA `a3d884367a63416634b2613377d4f20c816d14f44a45494cc11688a96837bf07`。没有向设备推送这些文件或操作设备；只有正式新包后才由 owner 操作原生 picker 核验。
 
 本片新建 browser/context 均 finally 正常关闭，自有 Vite/4236 已停止，无下载服务或并行浏览器遗留；合成证据按本回执保留供复验。已 fetch origin、主线无缺失；精确提交只包含两行产品改动、一个既有 fixture 小扩展、新兼容 E2E 和本回执。没有改共享 node_modules、lockfile、Native、其他 agent 文件，没有 push/触发 CI；N16 实际 PDF 尚未验证，更不能以本 B green 宣称 Native 已修复。
+
+## 最低线 Promise 缺口续记：独立 B 仍 red
+
+当前133修已独立提交 `e56a677226021bfd2249af7ec08aeec139bcf3a0`，不阻止保留这一真实修复。其后按 owning source 的 WebView111/iOS16.4 最低线，新增两个**预期成功**的合同用例，没有 skip/xfail 或把准确 unsupported 当完成。仅模拟缺 API，不模拟完整旧版 JS parser、所有浏览器行为或真实 iOS 系统。
+
+| 缺失条件/操作 | 最终实际 B |
+| --- | --- |
+| 主页面应用模块前删 Promise，真实 worker 请求也配置先删 → 同合法继承资源 PDF 应 preview | 候选0，主模块先拒绝，workerStarts=0；直接调用同一正式 readPdfText 返回 `TypeError: Promise.withResolvers is not a function`；UI 通用 Could not finish。不能声称此例已运行 worker |
+| 主 Promise 保留，只在实际 worker 模块前删 Promise → 同 PDF 应 preview | 主 before Promise=function；真实 worker before Promise=undefined，legacy worker after Map/Uint8=function 而 Promise 仍 undefined；实际 workerStarts=2（原 UI 一次＋限3秒只读提取 probe 一次），workerPromiseErrors=2，pageerror 两条 Promise 错误；候选0，UI 到原30秒超时提示，probe 仍 pending |
+
+可信最终运行 `test-results/pdf-compatibility/tagged-worker-run.txt`（SHA `c9b5665182d9ab0999d61a8d6494f68863ce0fc59af7133a55e01fe5add1ae08`）：**当前133两语完整流程+合法控制3 passed，最低线2 failed，58.3s**。独立 `minimum-runtime-observations.json` 与失败截图保留在 `tagged-worker-output/**`，不含私密资料或伪造 DB 写入。只读 probe 重读同一合成 PDF，没有 stage/确认/资产回放。context 收尾关闭了实际 worker，没有留后台解析。
+
+测试自审发现并修正过一次重要误差：原路由也命中 Vite `pdf.worker…mjs?url` 的**主线程 URL 模块**，其 worker-only 红实际上 workerStarts=0，因此那一版不算独立 worker 证据。尝试依赖 sec-fetch-dest 过滤时，本机路由拿不到该头，造成未注入与能力探针断言失败，也不算产品红。最终仅实际 Worker 构造器对 PDF worker URL 加专用 query；只给此请求加前缀，跳过 `?url` 与 fake-worker 主线程 import。probe 证明真实 worker 起点与能力变化。此前当前133的 actual worker Map 错误仍保留，最终3项 green也重新执行，不能把错误的 worker-only 结果混用。
+
+当前 legacy worker 是无静态 imports 的上游单文件 bundle，前缀删 API 发生在其代码执行前；**后续若增加有静态 imports 的自有 worker entry，必须改为受控 bootstrap 先删 API 再 dynamic import 真模块，并排除 bootstrap 递归**，不能在 ESM imports 已执行后才删掉兼容实现制造假红。
+
+```powershell
+# 这两项当前明确 red；依赖/worker兼容修复后必须真正转绿
+node node_modules/@playwright/test/cli.js test tests/e2e/intake-pdf-compatibility.spec.ts --grep 'minimum-runtime' --workers=1 --output=test-results/pdf-compatibility/minimum-recheck-output
+```
+
+本续记只扩测试/证据，产品仍为 e56 的两行 import。没有提高 minWebView/iOS 下限，没有手抄 Promise polyfill、修改共享 node_modules/lock 或新增依赖。官方 core-js 子模块、配套 worker entry 与分发许可的后续方案由主控统筹；最低线 gap 保持 active，不能称全兼容。最终 tsc/定向 Biome 通过，4236 和自有 context 已关闭；不 ADB、不 push、不触发 CI。
