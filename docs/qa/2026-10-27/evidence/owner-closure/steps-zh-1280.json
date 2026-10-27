@@ -1,0 +1,120 @@
+{
+  "tag": "zh-1280",
+  "mode": "portable-real-UI-no-source-imports",
+  "observations": [
+    {
+      "id": "S01",
+      "operation": "从空白资料进入设置，选择语言并刷新",
+      "expected": "语言偏好保存；不注入数据库或语言存储键。",
+      "actual": "正式设置控件及刷新后为中文，进入收录页。",
+      "passed": true
+    },
+    {
+      "id": "S02",
+      "operation": "表格入口点击文件选择器，选择真实UTF-8 CSV文件",
+      "expected": "生成3条待确认候选，不自动入库。",
+      "actual": "实际文件选择完成，候选数3，状态均pending。",
+      "passed": true
+    },
+    {
+      "id": "S03",
+      "operation": "展开CSV原始全文",
+      "expected": "BOM、CRLF、引号内换行及重复行逐字保留。",
+      "actual": "原文严格相等，UTF-8 SHA256=ddbc117e0c33d346a65777f2bcc2054d841539c4a8239fa7fb7484aa459eb73a。",
+      "passed": true
+    },
+    {
+      "id": "S04",
+      "operation": "清空第三候选名称并尝试确认",
+      "expected": "必填错误可见，候选保留，不生成资产。",
+      "actual": "请核对名称、网址和字段长度。",
+      "passed": true
+    },
+    {
+      "id": "S05",
+      "operation": "修正第三候选名称后刷新",
+      "expected": "未选草稿保持，原CSV不变。",
+      "actual": "修改稿持久化，全文逐字相等。",
+      "passed": true
+    },
+    {
+      "id": "S06",
+      "operation": "只确认首条，再尝试确认第二条同名同URL候选",
+      "expected": "仅首条保存；第二条明确拒绝重复，第三条待审核。",
+      "actual": "真实下载备份：1资产，三候选accepted/pending/pending。",
+      "passed": true
+    },
+    {
+      "id": "S07",
+      "operation": "修改第二候选名称、网址与描述，再选择合并目标",
+      "expected": "只改草稿；默认所有字段不选，展示现有值和候选值。",
+      "actual": "明确选中原项目，勾选0，原/候选URL同时可见。",
+      "passed": true
+    },
+    {
+      "id": "S08",
+      "operation": "不勾选字段直接确认",
+      "expected": "显示错误且弹窗保留。",
+      "actual": "请至少选择一个字段，并检查所选字段是否完整。",
+      "passed": true
+    },
+    {
+      "id": "S09",
+      "operation": "勾选描述后取消，再实际下载回读",
+      "expected": "目标整条不变，候选仍pending，焦点回合并按钮。",
+      "actual": "取消后完整资产严格相等，审核未确认，焦点正确。",
+      "passed": true
+    },
+    {
+      "id": "S10",
+      "operation": "重开合并，只选描述并确认",
+      "expected": "不沿用取消的勾选；仅description变更，保留原ID与未选字段。",
+      "actual": "备份完整对象比较：只有description和updatedAt变化，merge.fields精确为description；资产数仍1。",
+      "passed": true
+    },
+    {
+      "id": "S11",
+      "operation": "刷新后展开合并记录并点击目标链接",
+      "expected": "旧值、新值、字段决定和原目标链接可回读。",
+      "actual": "合并旧/新描述可见，打开原项目ID。",
+      "passed": true
+    },
+    {
+      "id": "S12",
+      "operation": "从待办页通过表单新增一个普通任务",
+      "expected": "创建1条任务，日期按填写值保存。",
+      "actual": "正式表单新增唯一任务，任务日期2026-10-28。",
+      "passed": true
+    },
+    {
+      "id": "S13",
+      "operation": "窄/宽屏真实鼠标完成→重开→再次完成",
+      "expected": "每次单击生效，两条完成历史保留；不使用DOM.click或Space替代。",
+      "actual": "鼠标三次动作及刷新通过；真实备份1任务、done=true、completionHistory两条。",
+      "passed": true
+    },
+    {
+      "id": "S14",
+      "operation": "备份回读CSV全文载体与未选草稿",
+      "expected": "全文单份及2个引用完整，第三候选仍pending且保留修改名。",
+      "actual": "1份全文+2引用，第三候选未确认，修改稿保持。",
+      "passed": true
+    },
+    {
+      "id": "S15",
+      "operation": "干净浏览器资料中用正式文件选择器预览并恢复KA1",
+      "expected": "预览列明范围，确认才恢复，刷新后记录与审核完整。",
+      "actual": "实际选择下载的KA1，确认恢复后刷新；全部records和intake-review逐字段严格相等。",
+      "passed": true
+    },
+    {
+      "id": "S16",
+      "operation": "恢复后展开原文和合并记录，检查窄屏布局及异常",
+      "expected": "全文和合并审计可读；无横向溢出，无源码导入或页面异常。",
+      "actual": "width=1280, scrollWidth=1280；pageerror0，源码请求0；恢复后原文和合并旧/新值保持。",
+      "passed": true
+    }
+  ],
+  "errors": [],
+  "sourceRequests": []
+}

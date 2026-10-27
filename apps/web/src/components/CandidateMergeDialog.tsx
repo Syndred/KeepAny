@@ -24,8 +24,8 @@ export function CandidateMergeReceipt({ receipt }: { receipt: ReviewedAssetMerge
     <div className="candidate-merge-fields">
       {receipt.fields.map(field => <div className="candidate-merge-field" key={field}>
         <strong>{t(mergeFieldKey(field))}</strong>
-        <div><small>{t('reviewMergeCurrent')}</small><p>{mergeFieldValue(receipt.before, field, i18n.language, t)}</p></div>
-        <div><small>{t('reviewMergeIncoming')}</small><p>{mergeFieldValue(receipt.after, field, i18n.language, t)}</p></div>
+        <div><small>{t('reviewMergeCurrent')}</small><p className="candidate-merge-value">{mergeFieldValue(receipt.before, field, i18n.language, t)}</p></div>
+        <div><small>{t('reviewMergeIncoming')}</small><p className="candidate-merge-value">{mergeFieldValue(receipt.after, field, i18n.language, t)}</p></div>
       </div>)}
     </div>
   </details>;

@@ -1,0 +1,13 @@
+{
+  "sourceCommit": "7a7507e3cfcf92349930cc7ab07ecf1ba0d0929c",
+  "sourceDirty": true,
+  "zip": "dist\\preview\\KeepAny-0.1.0-preview.7a7507e3cfcf.dirty-portable.zip",
+  "zipBytes": 4863692,
+  "zipSha256": "ac6446f9f8a58fb8fd461b292b9aa399feb2d67ec589c06e5f82ae465c3d8d7f",
+  "sources": 437,
+  "webFiles": 103,
+  "allCurrentSourcePackageZipHashesMatch": true,
+  "allWebDiskZipHttpHashesMatch": true,
+  "serverCodeUnchangedFromPrevious": true,
+  "checks": "No file extraction, deletion, user4180 or real user data involved."
+}

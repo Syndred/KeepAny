@@ -784,5 +784,12 @@
     "ownService4212": "preview-server.mjs stop返回本地服务已停止",
     "user4180": "未访问或替换",
     "blockedOldArtifacts": "未清理、未纳入本轮提交"
+  },
+  "followUpResolution": {
+    "date": "2026-10-27",
+    "report": "../../窄屏点击与CSV合并补验.md",
+    "M33": "已按原序复现并定位全页截图恢复滚动条引起的命中变化；重设视口后3组鼠标通过。",
+    "M68": "已在本机Playwright正式文件选择器重新选择CSV，原文、字段合并、错误/取消/保存/刷新/KA1干净恢复四组合通过。",
+    "productFix": "7a7507e3额外修复审计多行值显示；前轮observations和passed=false保留为历史，未改写。"
   }
 }
