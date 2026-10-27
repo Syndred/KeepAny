@@ -168,10 +168,17 @@ final class TLSProbe {
             var config = TLSConfiguration.makeClientConfiguration()
             config.minimumTLSVersion = maximumTLSVersion == .tlsv11 ? .tlsv1 : .tlsv12
             config.maximumTLSVersion = maximumTLSVersion
-            // Actual chain + hostname verification, never a custom accept-all
-            // callback. A single session certificate is trusted for this probe.
+            // Chain verification trusts only this exact session leaf through
+            // Security.framework. NIOSSL still performs its normal IP SAN check.
             config.certificateVerification = .fullVerification
-            if trusted { config.trustRoots = .certificates([try NIOSSLCertificate(bytes: Array(endpoint.certificatePem.utf8), format: .pem)]) }
+            let sessionTrust: SessionLeafTrust?
+            if trusted {
+                sessionTrust = try SessionLeafTrust(certificatePem: endpoint.certificatePem, spkiSha256: endpoint.spkiSha256)
+                // The callback owns the sole explicit leaf anchor. Do not load
+                // system roots or append roots to an ambient trust store.
+                config.trustRoots = .certificates([])
+            }
+            else { sessionTrust = nil }
             let tls = try NIOSSLContext(configuration: config)
             let sink = received
             channel = try ClientBootstrap(group: group).connectTimeout(.seconds(3)).channelInitializer { channel in
@@ -180,7 +187,11 @@ final class TLSProbe {
                     // fullVerification still checks the actual peer IP SAN.
                     let pipeline = channel.pipeline.syncOperations
                     sink.mark("initializing")
-                    try pipeline.addHandler(NIOSSLClientHandler(context: tls, serverHostname: hostname))
+                    if let sessionTrust {
+                        try pipeline.addHandler(NIOSSLClientHandler(context: tls, serverHostname: hostname, customVerificationCallback: sessionTrust.callback))
+                    } else {
+                        try pipeline.addHandler(NIOSSLClientHandler(context: tls, serverHostname: hostname))
+                    }
                     try pipeline.addHandler(sink)
                     sink.mark("pipeline-installed")
                     return channel.eventLoop.makeSucceededFuture(())
