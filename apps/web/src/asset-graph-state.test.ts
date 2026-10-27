@@ -36,6 +36,35 @@ describe('shared asset graph presentation', () => {
     expect(consumeGraphReturn(account.id)).toEqual({ id: project.id, kind: 'project' });
     expect(graphReturnTarget(account.id)).toBeUndefined();
   });
+  it('carries the chosen connection scope through visits while retaining each center and return state', () => {
+    const project = { ...newAsset('project'), id: 'scope-project' };
+    const account = { ...newAsset('account'), id: 'scope-account' };
+    const item = { ...newAsset('item'), id: 'scope-item' };
+    const originalAssets = structuredClone([project, account, item]);
+    const source = graphViewState(project.id), target = graphViewState(account.id);
+    source.scope = 'family'; source.filter = 'source filter'; source.selected = 'source edge';
+    target.filter = 'target filter'; target.selected = 'target edge'; target.detailsOpen = true;
+    target.camera = { x: 10, y: 20, zoom: 0.8 };
+    target.expandedCamera = { x: 30, y: 40, zoom: 1.2 };
+    target.positions = { [account.id]: { x: 8, y: -9 } };
+    const targetPresentation = structuredClone(target);
+    rememberGraphVisit(project, account);
+    expect(graphViewState(account.id)).toEqual({ ...targetPresentation, scope: 'family' });
+    expect(graphViewState(project.id).scope).toBe('family');
+    // A new explicit choice applies to the next graph visit, but going back
+    // restores the previous center's own scope, filter and camera.
+    target.scope = 'direct'; graphViewState(item.id).scope = 'family';
+    rememberGraphVisit(account, item);
+    expect(graphViewState(item.id).scope).toBe('direct');
+    expect(consumeGraphReturn(item.id)).toEqual({ id: account.id, kind: 'account' });
+    expect(graphViewState(account.id)).toEqual({ ...targetPresentation, scope: 'direct' });
+    expect(consumeGraphReturn(account.id)).toEqual({ id: project.id, kind: 'project' });
+    expect(source).toMatchObject({ scope: 'family', filter: 'source filter', selected: 'source edge' });
+    expect(graphViewState('scope-unrelated').scope).toBe('direct');
+    rememberGraphVisit(project, project);
+    expect(graphReturnTarget(project.id)).toBeUndefined();
+    expect([project, account, item]).toEqual(originalAssets);
+  });
   it('can recover an isolated indirect branch after reload without reviving tombstones in the active graph', () => {
     const project = { ...newAsset('project'), id: 'history-project' }, account = { ...newAsset('account'), id: 'history-account' }, item = { ...newAsset('item'), id: 'history-item', deleted: true };
     const link: Relation = { id: 'history-direct', from: project.id, to: account.id, label: 'Direct', verifiedAt: '', createdAt: '', deleted: false };
