@@ -58,7 +58,8 @@ final class PreparationTests: XCTestCase {
         let next = try server.prepare(address: "127.0.0.1")
         XCTAssertNotEqual(next.instanceId, prepared.instanceId)
         XCTAssertNotEqual(next.spkiSha256, prepared.spkiSha256)
-        XCTAssertThrowsError(try server.stop(instanceId: prepared.instanceId), "Stale stop must not clear the newly prepared identity")
+        XCTAssertNoThrow(try server.stop(instanceId: prepared.instanceId), "A known stopped instance can be acknowledged without clearing the newly prepared identity")
+        XCTAssertThrowsError(try server.stop(instanceId: UUID().uuidString))
         same(next, try server.activate(instanceId: next.instanceId))
         try send(next, events: events, server: server)
     }
@@ -70,6 +71,7 @@ final class PreparationTests: XCTestCase {
         clock.advance(seconds: 1)
         XCTAssertThrowsError(try server.activate(instanceId: prepared.instanceId))
         XCTAssertTrue(events.stopped(prepared.instanceId))
+        XCTAssertNoThrow(try server.stop(instanceId: prepared.instanceId), "TTL may have stopped before the bridge acknowledged it")
         let next = try server.prepare(address: "127.0.0.1")
         same(next, try server.activate(instanceId: next.instanceId))
         try send(next, events: events, server: server)
@@ -99,5 +101,33 @@ final class PreparationTests: XCTestCase {
         XCTAssertNil(released)
         XCTAssertTrue(events.stopped(prepared.instanceId))
         XCTAssertThrowsError(try TLSProbe(prepared))
+    }
+    func testLostStopAcknowledgementRetryCannotStopTheNewActiveInstance() throws {
+        let events = Events(), server = McpTransport { events.append($0) }; defer { try? server.reset() }
+        let first = try server.start(address: "127.0.0.1")
+        try server.stop(instanceId: first.instanceId)
+        XCTAssertTrue(events.stopped(first.instanceId))
+        // The caller intentionally ignores the first completion/event, as if
+        // the bridge reply was lost. An explicit retry must be confirmable.
+        XCTAssertNoThrow(try server.stop(instanceId: first.instanceId))
+        let next = try server.start(address: "127.0.0.1")
+        XCTAssertNoThrow(try server.stop(instanceId: first.instanceId))
+        XCTAssertThrowsError(try server.stop(instanceId: UUID().uuidString))
+        try send(next, events: events, server: server)
+        XCTAssertEqual(events.stoppedCount(first.instanceId), 1)
+    }
+    func testKnownStoppedIdentitiesAreBoundedAndDoNotAuthorizeUnknownStops() throws {
+        let events = Events(), server = McpTransport { events.append($0) }; defer { try? server.reset() }
+        var ids: [String] = []
+        for _ in 0..<17 {
+            let prepared = try server.prepare(address: "127.0.0.1")
+            try server.stop(instanceId: prepared.instanceId); ids.append(prepared.instanceId)
+        }
+        XCTAssertThrowsError(try server.stop(instanceId: ids[0]), "Oldest confirmation must be evicted from the 16-ID bound")
+        XCTAssertNoThrow(try server.stop(instanceId: ids[16]))
+        let next = try server.start(address: "127.0.0.1")
+        XCTAssertNoThrow(try server.stop(instanceId: ids[16]))
+        XCTAssertThrowsError(try server.stop(instanceId: UUID().uuidString))
+        try send(next, events: events, server: server)
     }
 }

@@ -37,8 +37,12 @@ final class Events {
         }
         return true
     }
+    func stoppedCount(_ id: String) -> Int {
+        condition.lock(); defer { condition.unlock() }
+        return rows.filter { if case .stopped(let instance) = $0 { return instance == id }; return false }.count
+    }
 }
-private enum ProbeFailure: Error { case noRequest, timeout }
+private enum ProbeFailure: Error { case noRequest, timeout, closed }
 
 private final class ResponseBytes: ChannelInboundHandler {
     typealias InboundIn = ByteBuffer
@@ -54,7 +58,10 @@ private final class ResponseBytes: ChannelInboundHandler {
         bytes.append(contentsOf: part)
         lock.lock(); observed += part.count; lock.unlock()
     }
-    func fail(_ error: Error) { if !done { done = true; promise.fail(error) } }
+    func fail(_ error: Error) {
+        promise.futureResult.eventLoop.preconditionInEventLoop()
+        if !done { done = true; promise.fail(error) }
+    }
     func errorCaught(context: ChannelHandlerContext, error: Error) {
         fail(error)
         context.close(promise: nil)
@@ -70,7 +77,7 @@ final class TLSProbe {
     let result: EventLoopFuture<Data>
     private let received: ResponseBytes
     var observedBytes: Int { received.observedBytes }
-    init(_ endpoint: McpEndpoint, trusted: Bool = true, hostname: String = "127.0.0.1", timeout: Int64 = 5, maximumTLSVersion: TLSVersion? = nil) throws {
+    init(_ endpoint: McpEndpoint, trusted: Bool = true, hostname: String? = nil, timeout: Int64 = 5, maximumTLSVersion: TLSVersion? = nil) throws {
         let loop = group.next(), reply = loop.makePromise(of: Data.self)
         result = reply.futureResult
         received = ResponseBytes(reply)
@@ -86,13 +93,29 @@ final class TLSProbe {
             let sink = received
             channel = try ClientBootstrap(group: group).connectTimeout(.seconds(3)).channelInitializer { channel in
                 do {
-                    return channel.pipeline.addHandlers(try NIOSSLClientHandler(context: tls, serverHostname: hostname), sink)
-                } catch { return channel.eventLoop.makeFailedFuture(error) }
+                    // NIOSSL rejects IP literals in SNI. With nil SNI, its
+                    // fullVerification still checks the actual peer IP SAN.
+                    let pipeline = channel.pipeline.syncOperations
+                    try pipeline.addHandler(NIOSSLClientHandler(context: tls, serverHostname: hostname))
+                    try pipeline.addHandler(sink)
+                    return channel.eventLoop.makeSucceededFuture(())
+                } catch {
+                    sink.fail(error)
+                    return channel.eventLoop.makeFailedFuture(error)
+                }
             }.connect(host: "127.0.0.1", port: URL(string: endpoint.endpoint)!.port!).wait()
             let connected = channel
             let deadline = loop.scheduleTask(in: .seconds(timeout)) { sink.fail(ProbeFailure.timeout); connected.close(promise: nil) }
             result.whenComplete { _ in deadline.cancel() }
-        } catch { try? group.syncShutdownGracefully(); throw error }
+        } catch {
+            // Configuration or handler construction can fail before the sink
+            // is installed, so channelInactive cannot own completion there.
+            // Settle on its event loop before destroying the group/promise.
+            let sink = received
+            try? loop.submit { sink.fail(error) }.wait()
+            try? group.syncShutdownGracefully()
+            throw error
+        }
     }
     func send(_ data: Data) throws {
         var bytes = channel.allocator.buffer(capacity: data.count); bytes.writeBytes(data)
@@ -101,11 +124,21 @@ final class TLSProbe {
     func send(_ text: String) throws { try send(Data(text.utf8)) }
     func reply() throws -> Data { try result.wait() }
     func assertNoBytes(file: StaticString = #filePath, line: UInt = #line) {
-        do { XCTAssertTrue(try reply().isEmpty, file: file, line: line) }
+        do {
+            // Evaluate outside XCTest's throwing autoclosure: otherwise XCTest
+            // consumes the error and makes the surrounding catch unreachable.
+            let bytes = try reply()
+            XCTAssertTrue(bytes.isEmpty, file: file, line: line)
+        }
         catch { XCTAssertFalse(error is ProbeFailure, "Must close, not hang", file: file, line: line) }
         XCTAssertEqual(observedBytes, 0, file: file, line: line)
     }
-    deinit { try? channel.close().wait(); try? group.syncShutdownGracefully() }
+    deinit {
+        try? channel.close().wait()
+        let sink = received
+        try? channel.eventLoop.submit { sink.fail(ProbeFailure.closed) }.wait()
+        try? group.syncShutdownGracefully()
+    }
 }
 
 final class TransportTests: XCTestCase {
@@ -155,7 +188,8 @@ final class TransportTests: XCTestCase {
         XCTAssertTrue(events.stopped(endpoint.instanceId))
         let next = try server.start(address: "127.0.0.1")
         XCTAssertNotEqual(endpoint.instanceId, next.instanceId); XCTAssertNotEqual(endpoint.spkiSha256, next.spkiSha256)
-        XCTAssertThrowsError(try server.stop(instanceId: endpoint.instanceId))
+        XCTAssertNoThrow(try server.stop(instanceId: endpoint.instanceId), "Known stopped ID can be acknowledged again without stopping the new session")
+        XCTAssertThrowsError(try server.stop(instanceId: UUID().uuidString))
         let nextClient = try TLSProbe(next); try nextClient.send(raw(next, path: "/pair"))
         let nextRequest = try events.request(); try respond(server, nextRequest)
         XCTAssertFalse(try nextClient.reply().isEmpty)
@@ -163,23 +197,53 @@ final class TransportTests: XCTestCase {
         XCTAssertTrue(events.stopped(next.instanceId))
         XCTAssertThrowsError(try server.responseStart(instanceId: next.instanceId, requestId: nextRequest.requestId, status: 200, headers: [:]))
     }
-    func testUntrustedAndWrongHostnameAreTLSFailures() throws {
+    func testUntrustedAndWrongIPIdentityAreTLSFailures() throws {
         let server = McpTransport { _ in }; defer { try? server.reset() }
         let endpoint = try server.start(address: "127.0.0.1")
-        for options in [(false, "127.0.0.1"), (true, "wrong.keepany.test")] {
-            let client = try TLSProbe(endpoint, trusted: options.0, hostname: options.1)
+        let untrusted = try TLSProbe(endpoint, trusted: false)
+        try? untrusted.send(raw(endpoint))
+        XCTAssertThrowsError(try untrusted.reply()) { error in
+            XCTAssertTrue(error is NIOSSLError || error is NIOSSLExtraError, "Must be TLS failure, not DNS/timeout: \(type(of: error))")
+        }
+        // The transport only publishes IP endpoints. NIOSSL checks remote IP
+        // SAN even when a DNS SNI was provided, so a made-up DNS name would not
+        // actually prove IP identity rejection. Serve a trusted certificate for
+        // a different IP on 127.0.0.1 instead; retain fullVerification.
+        let wrongIdentity = try EphemeralIdentity(address: "127.0.0.2")
+        let group = MultiThreadedEventLoopGroup(numberOfThreads: 1)
+        defer { try? group.syncShutdownGracefully() }
+        let wrongServer = try ServerBootstrap(group: group).childChannelInitializer { channel in
             do {
-                try? client.send(raw(endpoint)); _ = try client.reply()
-                XCTFail("Invalid trust or hostname unexpectedly passed")
-            } catch {
-                XCTAssertTrue(error is NIOSSLError || error is NIOSSLExtraError, "Must be TLS failure, not DNS/timeout: \(type(of: error))")
-            }
+                try channel.pipeline.syncOperations.addHandler(NIOSSLServerHandler(context: wrongIdentity.context))
+                return channel.eventLoop.makeSucceededFuture(())
+            } catch { return channel.eventLoop.makeFailedFuture(error) }
+        }.bind(host: "127.0.0.1", port: 0).wait()
+        defer { try? wrongServer.close().wait() }
+        let wrongEndpoint = McpEndpoint(instanceId: UUID().uuidString, endpoint: "https://127.0.0.1:\(wrongServer.localAddress!.port!)/mcp", certificatePem: wrongIdentity.certificatePem, spkiSha256: wrongIdentity.spkiSha256)
+        let wrongIP = try TLSProbe(wrongEndpoint)
+        try? wrongIP.send(raw(wrongEndpoint))
+        XCTAssertThrowsError(try wrongIP.reply()) { error in
+            XCTAssertEqual(error as? NIOSSLExtraError, .failedToValidateHostname, "Trusted chain must fail the actual IP SAN check")
         }
         let legacy = try TLSProbe(endpoint, maximumTLSVersion: .tlsv11)
         try? legacy.send(raw(endpoint))
         XCTAssertThrowsError(try legacy.reply()) { error in
             XCTAssertTrue(error is NIOSSLError || error is NIOSSLExtraError, "Legacy TLS must fail at TLS, not a generic timeout")
         }
+    }
+    func testInitializerFailuresCompletePromiseBeforeShutdownAndNextProbeConnects() throws {
+        let events = Events(), server = McpTransport { events.append($0) }; defer { try? server.reset() }
+        let endpoint = try server.start(address: "127.0.0.1")
+        // Reproduce the initializer branch which previously leaked line74's
+        // promise and trapped before the intended SNI error could surface.
+        XCTAssertThrowsError(try TLSProbe(endpoint, hostname: "127.0.0.1")) { error in
+            XCTAssertEqual(error as? NIOSSLExtraError, .cannotUseIPAddressInSNI)
+        }
+        let invalidCertificate = McpEndpoint(instanceId: endpoint.instanceId, endpoint: endpoint.endpoint, certificatePem: "invalid PEM", spkiSha256: endpoint.spkiSha256)
+        XCTAssertThrowsError(try TLSProbe(invalidCertificate))
+        let client = try TLSProbe(endpoint)
+        try client.send(raw(endpoint)); try respond(server, events.request())
+        XCTAssertFalse(try client.reply().isEmpty)
     }
     func testMalformedAndDuplicateHTTPNeverReachBridge() throws {
         let events = Events(), server = McpTransport { events.append($0) }; defer { try? server.reset() }

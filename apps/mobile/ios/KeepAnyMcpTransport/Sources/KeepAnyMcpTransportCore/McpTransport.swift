@@ -27,6 +27,7 @@ public final class McpTransport {
     private var active: TransportSession?
     private var prepared: PreparedSession?
     private let now: () -> UInt64
+    private var knownStopped: [String] = []
 
     public init(event: @escaping (McpTransportEvent) -> Void) { self.event = event; now = { DispatchTime.now().uptimeNanoseconds } }
     // Clock injection is internal to the core test target; the bridge always
@@ -66,6 +67,15 @@ public final class McpTransport {
         guard let value = prepared else { return }
         let id = value.id
         prepared = nil; value.timer?.cancel(); value.timer = nil
+        confirmStopped(id)
+    }
+    /// Only identities this controller actually finished stopping are safe to
+    /// acknowledge after a lost bridge reply/event. Unknown IDs never gain that
+    /// status, and the bounded record contains no private key or grant secret.
+    private func confirmStopped(_ id: String) {
+        guard !knownStopped.contains(id) else { return }
+        knownStopped.append(id)
+        if knownStopped.count > 16 { knownStopped.removeFirst(knownStopped.count - 16) }
         callbacks.async { [event] in event(.stopped(instanceId: id)) }
     }
     private func activateLocked(instanceId: String) throws -> McpEndpoint {
@@ -76,54 +86,62 @@ public final class McpTransport {
         // never replace the endpoint or pin already exported by the caller.
         do { try AddressPolicy.requireLocal(value.address) }
         catch {
-            callbacks.async { [event] in event(.stopped(instanceId: instanceId)) }
+            confirmStopped(instanceId)
             throw McpTransportError.unavailable
         }
-            let group = MultiThreadedEventLoopGroup(numberOfThreads: 1)
-            let session = TransportSession(id: value.id, group: group, identity: value.identity) { [callbacks, event] value in
-                callbacks.async { event(value) }
-            }
-            do {
-                let bootstrap = ServerBootstrap(group: group)
-                    .serverChannelOption(ChannelOptions.backlog, value: 8)
-                    .childChannelOption(ChannelOptions.socketOption(.tcp_nodelay), value: 1)
-                    .childChannelOption(ChannelOptions.maxMessagesPerRead, value: 1)
-                    .childChannelInitializer { [weak session] channel in
-                        guard let session, let tls = session.tls, let request = session.admit(channel) else { return channel.close() }
-                        let ssl = NIOSSLServerHandler(context: tls)
-                        var limits = NIOHTTPDecoderLimitConfiguration()
-                        limits.maxHeaderFieldSize = HTTPPolicy.headerLimit
-                        limits.maxHeaderListSize = HTTPPolicy.headerLimit
-                        limits.maxHeaderFieldCount = HTTPPolicy.headerCount
-                        return channel.pipeline.addHandler(ssl).flatMap {
-                            channel.pipeline.configureHTTPServerPipeline(
-                                withPipeliningAssistance: false,
-                                withErrorHandling: false,
-                                withDecoderLimitConfiguration: limits
-                            )
-                        }.flatMap {
-                            channel.pipeline.addHandler(RequestHandler(session: session, request: request))
-                        }.flatMapError { error in
-                            session.cancel(request.id)
-                            return channel.eventLoop.makeFailedFuture(error)
-                        }
+        let group = MultiThreadedEventLoopGroup(numberOfThreads: 1)
+        let session = TransportSession(id: value.id, group: group, identity: value.identity) { [callbacks, event] value in
+            callbacks.async { event(value) }
+        }
+        do {
+            let bootstrap = ServerBootstrap(group: group)
+                .serverChannelOption(ChannelOptions.backlog, value: 8)
+                .childChannelOption(ChannelOptions.socketOption(.tcp_nodelay), value: 1)
+                .childChannelOption(ChannelOptions.maxMessagesPerRead, value: 1)
+                .childChannelInitializer { [weak session] channel in
+                    guard let session, let tls = session.tls, let request = session.admit(channel) else { return channel.close() }
+                    var limits = NIOHTTPDecoderLimitConfiguration()
+                    limits.maxHeaderFieldSize = HTTPPolicy.headerLimit
+                    limits.maxHeaderListSize = HTTPPolicy.headerLimit
+                    limits.maxHeaderFieldCount = HTTPPolicy.headerCount
+                    do {
+                        // Bootstrap invokes this initializer on the child's
+                        // event loop. Do not send non-Sendable SSL handlers
+                        // through the cross-thread async addHandler API.
+                        let pipeline = channel.pipeline.syncOperations
+                        try pipeline.addHandler(NIOSSLServerHandler(context: tls))
+                        try pipeline.configureHTTPServerPipeline(
+                            withPipeliningAssistance: false,
+                            withErrorHandling: false,
+                            withEncoderConfiguration: .init(),
+                            withDecoderLimitConfiguration: limits
+                        )
+                        try pipeline.addHandler(RequestHandler(session: session, request: request))
+                        return channel.eventLoop.makeSucceededFuture(())
+                    } catch {
+                        session.cancel(request.id)
+                        return channel.eventLoop.makeFailedFuture(error)
                     }
-                let server = try bootstrap.bind(host: value.address, port: value.port).wait()
-                guard server.localAddress?.port == value.port else { try? server.close().wait(); throw McpTransportError.unavailable }
-                session.listener = server
-                active = session
-                return value.endpoint
-            } catch {
-                try? session.loop.submit { session.stop() }.wait()
-                try? group.syncShutdownGracefully()
-                throw McpTransportError.unavailable
-            }
+                }
+            let server = try bootstrap.bind(host: value.address, port: value.port).wait()
+            guard server.localAddress?.port == value.port else { try? server.close().wait(); throw McpTransportError.unavailable }
+            session.listener = server
+            active = session
+            return value.endpoint
+        } catch {
+            var cleanupFailed = false
+            do { try session.loop.submit { session.stop() }.wait() } catch { cleanupFailed = true }
+            do { try group.syncShutdownGracefully() } catch { cleanupFailed = true }
+            if !cleanupFailed { confirmStopped(value.id) }
+            throw McpTransportError.unavailable
+        }
     }
     public func stop(instanceId: String) throws {
         try lifecycle.sync {
             expirePrepared()
             if let session = active, session.id == instanceId { try shutdown(session) }
             else if prepared?.id == instanceId { clearPrepared() }
+            else if knownStopped.contains(instanceId) { return }
             else { throw McpTransportError.stale }
         }
     }
@@ -143,6 +161,7 @@ public final class McpTransport {
         session.listener = nil
         do { try session.group.syncShutdownGracefully() } catch { failure = failure ?? error }
         if let failure { throw failure }
+        confirmStopped(session.id)
     }
     private func withSession<T>(_ id: String, _ operation: (TransportSession) throws -> T) throws -> T {
         try lifecycle.sync {
@@ -260,7 +279,6 @@ private final class TransportSession {
         stopped = true
         for id in Array(requests.keys) { cancel(id) }
         tls = nil
-        event(.stopped(instanceId: id))
     }
     func finish(_ id: String) throws -> EventLoopFuture<Void> {
         let request = try self.request(id)
