@@ -1,0 +1,10 @@
+
+Running 2 tests using 1 worker
+
+(node:41468) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1/2] tests/e2e/workspace-summary-qa.spec.ts:162:2 › T02 zh-CN supplemental asset layouts keep controls reachable
+[2/2] tests/e2e/workspace-summary-qa.spec.ts:162:2 › T02 en supplemental asset layouts keep controls reachable
+  2 passed (2.8s)

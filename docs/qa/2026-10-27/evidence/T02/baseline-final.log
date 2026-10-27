@@ -1,0 +1,18 @@
+
+Running 10 tests using 1 worker
+
+(node:41278) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1/10] tests/e2e/finance-ledger.spec.ts:45:1 › ledger records confirmed spending, preserves renewal history and reads back after refresh
+[2/10] tests/e2e/finance-ledger.spec.ts:92:1 › invalid record stays unsaved and a missing related asset offers creation paths
+[3/10] tests/e2e/finance-linked-assets.spec.ts:29:2 › finance shows recorded subscription connections in zh-CN
+[4/10] tests/e2e/finance-linked-assets.spec.ts:29:2 › finance shows recorded subscription connections in en
+[5/10] tests/e2e/finance-linked-assets.spec.ts:50:1 › finance creates and edits real subscriptions without adding a payment record
+[6/10] tests/e2e/finance-linked-assets.spec.ts:83:1 › finance connections remain readable on mobile
+[7/10] tests/e2e/unified-workspaces.spec.ts:53:2 › zh-CN 390px merged navigation, asset facts and original editors remain reachable
+[8/10] tests/e2e/unified-workspaces.spec.ts:53:2 › zh-CN 1280px merged navigation, asset facts and original editors remain reachable
+[9/10] tests/e2e/unified-workspaces.spec.ts:53:2 › en 390px merged navigation, asset facts and original editors remain reachable
+[10/10] tests/e2e/unified-workspaces.spec.ts:53:2 › en 1280px merged navigation, asset facts and original editors remain reachable
+  10 passed (21.4s)

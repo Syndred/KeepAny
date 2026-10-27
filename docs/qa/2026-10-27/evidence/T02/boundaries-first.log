@@ -1,0 +1,160 @@
+
+Running 4 tests using 1 worker
+
+(node:40223) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1/4] tests/e2e/workspace-summary-qa.spec.ts:64:2 › T02 zh-CN 390px date boundaries progress money and original paths
+  1) tests/e2e/workspace-summary-qa.spec.ts:64:2 › T02 zh-CN 390px date boundaries progress money and original paths › T02-03: deleted tasks excluded and expiry boundaries
+
+    Error: expect(locator).toContainText(expected) failed
+
+    Locator: locator('.workspace-asset-grid').locator('.asset-project-card').filter({ hasText: 'T02 project' })
+    Expected substring: "2 / 2"
+    Received string:    "T02 projectT02 projectTT02 project使用中待办完成 1 / 2关联年费预计¥1,000.00JP¥500US$160.08部分费用尚未记录已记录支出JP¥500US$12.00外链 0 条 · 0 条待核验"
+    Timeout: 5000ms
+
+    Call log:
+      - Expect "toContainText" locator('.workspace-asset-grid').locator('.asset-project-card').filter({ hasText: 'T02 project' }) with timeout 5000ms
+      - waiting for locator('.workspace-asset-grid').locator('.asset-project-card').filter({ hasText: 'T02 project' })
+        13 × locator resolved to <a class="asset-project-card list-row " href="/assets/project/72f5efc0-00d6-4bc6-808f-15b41383abff">…</a>
+           - unexpected value "T02 projectT02 projectTT02 project使用中待办完成 1 / 2关联年费预计¥1,000.00JP¥500US$160.08部分费用尚未记录已记录支出JP¥500US$12.00外链 0 条 · 0 条待核验"
+
+
+      124 | 			await page.goto("/assets");
+      125 | 			await page.reload();
+    > 126 | 			await expect(project()).toContainText("2 / 2");
+          | 			                        ^
+      127 | 		});
+      128 |
+      129 | 		await test.step("T02-04: separate currencies duplicate links and persisted fee change", async () => {
+        at /Users/syndred/.codex/worktrees/keepany-qa-summary/KeepAny/tests/e2e/workspace-summary-qa.spec.ts:126:28
+        at /Users/syndred/.codex/worktrees/keepany-qa-summary/KeepAny/tests/e2e/workspace-summary-qa.spec.ts:115:3
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/source/workspace-summary-qa-T02-z-da3d1-ss-money-and-original-paths/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/source/workspace-summary-qa-T02-z-da3d1-ss-money-and-original-paths/error-context.md
+
+
+(node:40259) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[2/4] tests/e2e/workspace-summary-qa.spec.ts:64:2 › T02 zh-CN 1280px date boundaries progress money and original paths
+  2) tests/e2e/workspace-summary-qa.spec.ts:64:2 › T02 zh-CN 1280px date boundaries progress money and original paths › T02-03: deleted tasks excluded and expiry boundaries
+
+    Error: expect(locator).toContainText(expected) failed
+
+    Locator: locator('.workspace-asset-grid').locator('.asset-project-card').filter({ hasText: 'T02 project' })
+    Expected substring: "2 / 2"
+    Received string:    "T02 projectT02 projectTT02 project使用中待办完成 1 / 2关联年费预计¥1,000.00JP¥500US$160.08部分费用尚未记录已记录支出JP¥500US$12.00外链 0 条 · 0 条待核验"
+    Timeout: 5000ms
+
+    Call log:
+      - Expect "toContainText" locator('.workspace-asset-grid').locator('.asset-project-card').filter({ hasText: 'T02 project' }) with timeout 5000ms
+      - waiting for locator('.workspace-asset-grid').locator('.asset-project-card').filter({ hasText: 'T02 project' })
+        13 × locator resolved to <a class="asset-project-card list-row " href="/assets/project/8f501989-a105-4254-8e88-413162be20a4">…</a>
+           - unexpected value "T02 projectT02 projectTT02 project使用中待办完成 1 / 2关联年费预计¥1,000.00JP¥500US$160.08部分费用尚未记录已记录支出JP¥500US$12.00外链 0 条 · 0 条待核验"
+
+
+      124 | 			await page.goto("/assets");
+      125 | 			await page.reload();
+    > 126 | 			await expect(project()).toContainText("2 / 2");
+          | 			                        ^
+      127 | 		});
+      128 |
+      129 | 		await test.step("T02-04: separate currencies duplicate links and persisted fee change", async () => {
+        at /Users/syndred/.codex/worktrees/keepany-qa-summary/KeepAny/tests/e2e/workspace-summary-qa.spec.ts:126:28
+        at /Users/syndred/.codex/worktrees/keepany-qa-summary/KeepAny/tests/e2e/workspace-summary-qa.spec.ts:115:3
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/source/workspace-summary-qa-T02-z-5ef02-ss-money-and-original-paths/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/source/workspace-summary-qa-T02-z-5ef02-ss-money-and-original-paths/error-context.md
+
+
+(node:40278) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[3/4] tests/e2e/workspace-summary-qa.spec.ts:64:2 › T02 en 390px date boundaries progress money and original paths
+  3) tests/e2e/workspace-summary-qa.spec.ts:64:2 › T02 en 390px date boundaries progress money and original paths › T02-03: deleted tasks excluded and expiry boundaries
+
+    Error: expect(locator).toContainText(expected) failed
+
+    Locator: locator('.workspace-asset-grid').locator(':scope > a').filter({ has: locator('strong').filter({ hasText: 'T02 subscription 1' }) }).locator('.workspace-asset-metrics > strong')
+    Expected substring: "1 day overdue"
+    Received string:    "1 days overdue"
+    Timeout: 5000ms
+
+    Call log:
+      - Expect "toContainText" locator('.workspace-asset-grid').locator(':scope > a').filter({ has: locator('strong').filter({ hasText: 'T02 subscription 1' }) }).locator('.workspace-asset-metrics > strong') with timeout 5000ms
+      - waiting for locator('.workspace-asset-grid').locator(':scope > a').filter({ has: locator('strong').filter({ hasText: 'T02 subscription 1' }) }).locator('.workspace-asset-metrics > strong')
+        14 × locator resolved to <strong>…</strong>
+           - unexpected value "1 days overdue"
+
+
+      116 | 			await expect(project()).toContainText("1 / 2");
+      117 | 			for (const [index, expected] of [[0, t("workspaceDueToday")], [1, locale === "en" ? "1 day overdue" : "已过期 1 天"], [2, locale === "en" ? "1 day left" : "剩余 1 天"], [3, t("workspaceDateMissing")]] as const) {
+    > 118 | 				await expect(card(`T02 subscription ${index}`).locator(".workspace-asset-metrics > strong")).toContainText(expected);
+          | 				                                                                                             ^
+      119 | 				await expect(grid.locator(".workspace-domain-card").filter({ hasText: `boundary-${index}.example` }).locator(":scope > strong")).toContainText(expected);
+      120 | 			}
+      121 | 			await expect(summary.locator("section").nth(3).locator("strong")).toHaveText("4");
+        at /Users/syndred/.codex/worktrees/keepany-qa-summary/KeepAny/tests/e2e/workspace-summary-qa.spec.ts:118:98
+        at /Users/syndred/.codex/worktrees/keepany-qa-summary/KeepAny/tests/e2e/workspace-summary-qa.spec.ts:115:3
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/source/workspace-summary-qa-T02-e-146b9-ss-money-and-original-paths/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/source/workspace-summary-qa-T02-e-146b9-ss-money-and-original-paths/error-context.md
+
+
+(node:40323) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[4/4] tests/e2e/workspace-summary-qa.spec.ts:64:2 › T02 en 1280px date boundaries progress money and original paths
+  4) tests/e2e/workspace-summary-qa.spec.ts:64:2 › T02 en 1280px date boundaries progress money and original paths › T02-03: deleted tasks excluded and expiry boundaries
+
+    Error: expect(locator).toContainText(expected) failed
+
+    Locator: locator('.workspace-asset-grid').locator(':scope > a').filter({ has: locator('strong').filter({ hasText: 'T02 subscription 1' }) }).locator('.workspace-asset-metrics > strong')
+    Expected substring: "1 day overdue"
+    Received string:    "1 days overdue"
+    Timeout: 5000ms
+
+    Call log:
+      - Expect "toContainText" locator('.workspace-asset-grid').locator(':scope > a').filter({ has: locator('strong').filter({ hasText: 'T02 subscription 1' }) }).locator('.workspace-asset-metrics > strong') with timeout 5000ms
+      - waiting for locator('.workspace-asset-grid').locator(':scope > a').filter({ has: locator('strong').filter({ hasText: 'T02 subscription 1' }) }).locator('.workspace-asset-metrics > strong')
+        14 × locator resolved to <strong>…</strong>
+           - unexpected value "1 days overdue"
+
+
+      116 | 			await expect(project()).toContainText("1 / 2");
+      117 | 			for (const [index, expected] of [[0, t("workspaceDueToday")], [1, locale === "en" ? "1 day overdue" : "已过期 1 天"], [2, locale === "en" ? "1 day left" : "剩余 1 天"], [3, t("workspaceDateMissing")]] as const) {
+    > 118 | 				await expect(card(`T02 subscription ${index}`).locator(".workspace-asset-metrics > strong")).toContainText(expected);
+          | 				                                                                                             ^
+      119 | 				await expect(grid.locator(".workspace-domain-card").filter({ hasText: `boundary-${index}.example` }).locator(":scope > strong")).toContainText(expected);
+      120 | 			}
+      121 | 			await expect(summary.locator("section").nth(3).locator("strong")).toHaveText("4");
+        at /Users/syndred/.codex/worktrees/keepany-qa-summary/KeepAny/tests/e2e/workspace-summary-qa.spec.ts:118:98
+        at /Users/syndred/.codex/worktrees/keepany-qa-summary/KeepAny/tests/e2e/workspace-summary-qa.spec.ts:115:3
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/source/workspace-summary-qa-T02-e-33d8e-ss-money-and-original-paths/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/source/workspace-summary-qa-T02-e-33d8e-ss-money-and-original-paths/error-context.md
+
+
+  4 failed
+    tests/e2e/workspace-summary-qa.spec.ts:64:2 › T02 zh-CN 390px date boundaries progress money and original paths
+    tests/e2e/workspace-summary-qa.spec.ts:64:2 › T02 zh-CN 1280px date boundaries progress money and original paths
+    tests/e2e/workspace-summary-qa.spec.ts:64:2 › T02 en 390px date boundaries progress money and original paths
+    tests/e2e/workspace-summary-qa.spec.ts:64:2 › T02 en 1280px date boundaries progress money and original paths
