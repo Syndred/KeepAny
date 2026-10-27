@@ -260,6 +260,10 @@ const copy: Record<string, [string, string]> = {
 		"资料已在另一处更新，请重新打开后再保存。",
 		"This record changed elsewhere. Reopen it before saving.",
 	],
+	assetFilesUnavailable: [
+		"图片或附件已不可用。请重新打开资料核对后再保存。",
+		"An image or attachment is unavailable. Reopen the record and check its files before saving.",
+	],
 	assetDeleteStale: [
 		"资料已更新，删除未执行。请关闭弹窗核对最新资料后重试。",
 		"This record changed. Nothing was deleted. Close this dialog, review the latest record, and try again.",

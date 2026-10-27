@@ -188,6 +188,10 @@ export function AssetEditor({
 	const [tagsInput, setTagsInput] = useState(() => original?.tags.join(", ") ?? "");
 	const [busy, setBusy] = useState(false);
 	const [failure, setFailure] = useState("");
+	const failureElement = useRef<HTMLParagraphElement>(null);
+	useEffect(() => {
+		if (failure && !busy) failureElement.current?.scrollIntoView({ block: "nearest" });
+	}, [failure, busy]);
 	const [pendingConnections, setPendingConnections] = useState(false);
 	const [checkingConnections, setCheckingConnections] = useState(kind === "subscription");
 	const [projectFiles, setProjectFiles] = useState<ProjectFormFiles>({});
@@ -399,6 +403,7 @@ export function AssetEditor({
 				reason === "account-link-batch-limit" ? "pwConnectBatchLimit" :
 				reason === "account-link-stale" ? "assetStale" :
 				reason === "asset-stale" ? "assetStale" :
+				original && reason === "attachment-missing" ? "assetFilesUnavailable" :
 				reason === "relation-endpoint" ? "subscriptionRelationUnavailable" :
 				reason === "subscription-relations-pending" ? "subscriptionRelationsNotSaved" :
 				reason === "asset-stale-renewal" ? "renewalStale" :
@@ -769,7 +774,7 @@ export function AssetEditor({
 					{errors.notes && <small id="notes-error" className="field-error">{errors.notes}</small>}
 				</div>}
 				{failure && (
-					<p className="field-error" role="alert">
+					<p ref={failureElement} className="field-error" role="alert">
 						{failure}
 					</p>
 				)}

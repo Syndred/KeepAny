@@ -189,3 +189,116 @@ for (const language of ['zh-CN', 'en'] as const) test(`F02-06 ${language} pendin
     await context.close();
   }
 });
+
+async function alertIntersectionRatio(alert: Locator) {
+  return alert.evaluate(element => new Promise<number>(resolve => { const observer = new IntersectionObserver(entries => { observer.disconnect(); resolve(entries[0].intersectionRatio); }); observer.observe(element); }));
+}
+async function replacementPng(page: Page, color: string) {
+  const data = await page.evaluate(fill => { const canvas = document.createElement('canvas'); canvas.width = 8; canvas.height = 8;
+    const paint = canvas.getContext('2d'); if (!paint) throw Error('synthetic-canvas-unavailable'); paint.fillStyle = fill; paint.fillRect(0, 0, 8, 8); return canvas.toDataURL('image/png').split(',')[1]; }, color);
+  return Buffer.from(data, 'base64');
+}
+function imageRoleId(asset: Asset, kind: 'project' | 'item') { return kind === 'project' ? asset.projectMedia?.logoId : asset.itemMedia?.coverId; }
+async function replaceImageThroughUi(page: Page, zh: boolean, kind: 'project' | 'item', color: string, name: string) {
+  const buffer = await replacementPng(page, color);
+  if (kind === 'project') {
+    const dialog = await openEditor(page, zh);
+    await dialog.locator('#projectLogoFile').setInputFiles({ name, mimeType: 'image/png', buffer });
+    await dialog.getByRole('button', { name: zh ? '保存' : 'Save', exact: true }).tap(); await expect(dialog).toBeHidden();
+  } else {
+    await page.locator('.asset-item-photo-actions').getByRole('button', { name: zh ? '替换图片' : 'Replace image', exact: true }).tap();
+    await page.locator('.asset-attachments-card input[type=file]').setInputFiles({ name, mimeType: 'image/png', buffer });
+    const preview = page.getByRole('dialog'); await expect(preview.locator('img.image-preview')).toBeVisible();
+    await preview.getByRole('button', { name: zh ? '确认' : 'Confirm', exact: true }).tap(); await expect(preview).toBeHidden();
+    await expect(page.locator('.asset-item-photo-stage img')).toBeVisible();
+  }
+}
+function preserveImageReplacement(before: Snapshot, after: Snapshot, id: string, kind: 'project' | 'item') {
+  expect(after.rows.map(row => row.id)).toEqual(before.rows.map(row => row.id));
+  for (const row of before.rows.filter(row => row.id !== `asset:${id}`)) expect(after.rows.find(value => value.id === row.id)).toEqual(row);
+  const old = targetAsset(before, id), current = targetAsset(after, id), oldId = imageRoleId(old, kind), newId = imageRoleId(current, kind);
+  if (!oldId || !newId) throw Error('synthetic-image-role-missing');
+  expect(newId).not.toBe(oldId); expect(current.attachments).toContain(newId); expect(current.attachments).not.toContain(oldId);
+  const oldFile = before.files.find(file => file.id === oldId), newFile = after.files.find(file => file.id === newId);
+  if (!oldFile || !newFile) throw Error('synthetic-image-file-missing');
+  expect(newFile.sha256).not.toBe(oldFile.sha256); expect(after.files.some(file => file.id === oldId)).toBe(false);
+  expect(after.files.filter(file => file.id !== newId)).toEqual(before.files.filter(file => file.id !== oldId));
+  const editableMedia = kind === 'project' ? 'projectMedia' : 'itemMedia';
+  for (const key of Object.keys(old) as (keyof Asset)[]) if (!['attachments', editableMedia, 'updatedAt'].includes(key)) expect(current[key], `image replacement retained ${key}`).toEqual(old[key]);
+  if (kind === 'project') expect(current.projectMedia).toEqual({ ...old.projectMedia, logoId: newId });
+  else expect(current.itemMedia).toEqual({ ...old.itemMedia, coverId: newId });
+  return { id: newId, sha256: newFile.sha256 };
+}
+for (const language of ['zh-CN', 'en'] as const) for (const kind of ['project', 'item'] as const) test(`F02-06 ${language} ${kind} two Pages actual image replacement rejects stale edit and delete`, async ({ browser }, info) => {
+  test.setTimeout(90_000); const zh = language === 'zh-CN';
+  const context = await browser.newContext({ locale: language, viewport: { width: 390, height: 844 }, hasTouch: true, timezoneId: 'Asia/Shanghai' });
+  await context.addInitScript(value => localStorage.setItem('keepany-language', value), language);
+  const first = await context.newPage(), second = await context.newPage(), errors: string[] = [];
+  for (const page of [first, second]) page.on('pageerror', error => errors.push(error.message));
+  const write = (name: string, value: unknown) => writeFileSync(info.outputPath(name), JSON.stringify(value, null, 2));
+  try {
+    await first.goto('/'); const ids = await seed(first), id = ids.targets[kind], url = `/assets/${kind}/${id}`;
+    await first.goto(url); await second.goto(url); const before = await snapshot(first); write('before-image-replacement.json', before);
+    let dialog = await openEditor(first, zh); await dialog.locator('#name').fill(`A unsaved image-era ${kind}`); const draft = await formValues(dialog); write('a-image-era-draft.json', draft);
+    await replaceImageThroughUi(second, zh, kind, '#8042d7', `b-first-${kind}.png`);
+    const firstImage = await snapshot(second); const firstFile = preserveImageReplacement(before, firstImage, id, kind); write('b-first-real-image-save.json', firstImage);
+    await dialog.getByRole('button', { name: zh ? '保存' : 'Save', exact: true }).tap(); await expect(dialog).toBeVisible();
+    write('after-image-stale-save.json', await snapshot(first)); write('after-image-stale-save-ui.json', { alert: await dialog.getByRole('alert').innerText(), form: await formValues(dialog) });
+    await expect(dialog.getByRole('alert')).toHaveText(zh ? '图片或附件已不可用。请重新打开资料核对后再保存。' : 'An image or attachment is unavailable. Reopen the record and check its files before saving.');
+    expect(await formValues(dialog)).toEqual(draft); expect(await snapshot(first)).toEqual(firstImage);
+    await expect.poll(() => alertIntersectionRatio(dialog.getByRole('alert'))).toBeGreaterThan(0);
+    const alertVisibility = await alertIntersectionRatio(dialog.getByRole('alert'));
+    write('image-stale-save-visibility.json', { language, kind, intersectionRatio: alertVisibility });
+    await first.screenshot({ path: info.outputPath(`image-stale-edit-${language}-${kind}.png`), fullPage: true });
+    await dialog.getByRole('button', { name: zh ? '取消' : 'Cancel', exact: true }).tap(); await expect(dialog).toBeHidden(); await first.reload();
+    dialog = await openDelete(first, zh); await replaceImageThroughUi(second, zh, kind, '#1d9fba', `b-second-${kind}.png`);
+    const secondImage = await snapshot(second); const finalFile = preserveImageReplacement(firstImage, secondImage, id, kind); write('b-second-real-image-save.json', secondImage);
+    await dialog.getByRole('button', { name: zh ? '移至回收站' : 'Move to trash', exact: true }).tap(); await expect(dialog).toBeVisible();
+    await expect(dialog.getByRole('alert')).toHaveText(zh ? '资料已更新，删除未执行。请关闭弹窗核对最新资料后重试。' : 'This record changed. Nothing was deleted. Close this dialog, review the latest record, and try again.');
+    await expect.poll(() => alertIntersectionRatio(dialog.getByRole('alert'))).toBeGreaterThan(0);
+    const rejected = await snapshot(first); write('after-image-stale-delete.json', rejected); expect(rejected).toEqual(secondImage);
+    await first.screenshot({ path: info.outputPath(`image-stale-delete-${language}-${kind}.png`), fullPage: true });
+    await dialog.getByRole('button', { name: zh ? '取消' : 'Cancel', exact: true }).tap(); await expect(dialog).toBeHidden(); await first.reload();
+    dialog = await openDelete(first, zh); await dialog.getByRole('button', { name: zh ? '移至回收站' : 'Move to trash', exact: true }).tap(); await expect(dialog).toBeHidden(); await expect(first).toHaveURL(new RegExp(`/assets/${kind}$`));
+    const deleted = await snapshot(second); write('after-current-image-delete.json', deleted); expect(deleted.files).toEqual(secondImage.files); expect(targetAsset(deleted, id)).toMatchObject({ id, deleted: true });
+    for (const row of secondImage.rows.filter(row => row.id !== `asset:${id}`)) expect(deleted.rows.find(value => value.id === row.id)).toEqual(row);
+    await first.goto('/trash'); const row = first.locator(`[data-asset-id="${id}"]`); await row.getByRole('button', { name: zh ? '恢复' : 'Restore', exact: true }).tap(); await expect(row).toBeHidden(); await first.goto(url); await first.reload();
+    const restored = await snapshot(first); write('after-latest-image-ui-restore.json', restored); expect(restored.files).toEqual(secondImage.files); const asset = targetAsset(restored, id), latest = targetAsset(secondImage, id);
+    expect({ ...asset, updatedAt: latest.updatedAt }).toEqual(latest); expect(imageRoleId(asset, kind)).toBe(finalFile.id); expect(restored.files.find(file => file.id === finalFile.id)?.sha256).toBe(finalFile.sha256);
+    for (const original of secondImage.rows.filter(value => value.id !== `asset:${id}`)) expect(restored.rows.find(value => value.id === original.id)).toEqual(original);
+    const role = kind === 'project' ? '[data-project-media-role="logoId"]' : '.asset-item-photo-stage';
+    if (kind === 'project') { const group = first.locator('#asset-project-materials'); if (await group.getAttribute('open') === null) await group.locator(':scope > summary').tap(); }
+    await expect(first.locator(role).locator('img.asset-image').first()).toBeVisible(); expect(errors).toEqual([]);
+    await first.screenshot({ path: info.outputPath(`latest-image-restored-${language}-${kind}.png`), fullPage: true });
+    write('image-result.json', { language, kind, id, layer: 'B two real UI Pages / actual PNG file selection', firstFile, finalFile, staleEditDraftPreserved: true, staleDeleteRejected: true, latestImageRestoredSameId: true, unrelatedRowsHistoryAndFilesPreserved: true });
+  } finally { write('image-page-errors.json', errors); try { write('image-final-observed.json', await snapshot(second)); } catch { write('image-final-observed-unavailable.json', { code: 'browser-observation-unavailable' }); } await context.close(); }
+});
+
+for (const language of ['zh-CN', 'en'] as const) test(`F02-06 ${language} file disappeared without a record change gives accurate guidance (C-assisted B)`, async ({ browser }, info) => {
+  const zh = language === 'zh-CN', context = await browser.newContext({ locale: language, viewport: { width: 390, height: 844 }, hasTouch: true });
+  await context.addInitScript(value => localStorage.setItem('keepany-language', value), language);
+  const page = await context.newPage(), errors: string[] = []; page.on('pageerror', error => errors.push(error.message));
+  const write = (name: string, value: unknown) => writeFileSync(info.outputPath(name), JSON.stringify(value, null, 2));
+  try {
+    await page.goto('/'); const ids = await seed(page), id = ids.targets.project; await page.goto(`/assets/project/${id}`);
+    const before = await snapshot(page), fileId = targetAsset(before, id).projectMedia?.logoId; if (!fileId) throw Error('synthetic-logo-missing');
+    const dialog = await openEditor(page, zh); await dialog.locator('#name').fill('Preserve this draft after a file fault'); const draft = await formValues(dialog);
+    // Explicit C fault: remove only our synthetic Blob, leaving the actual record and every row revision untouched.
+    await page.evaluate(async ({ repositoryPath, fileId }) => {
+      const repository = await (await import(repositoryPath)).localRepository(); const file = await repository.fileStore.blobs.get(fileId); if (!file) throw Error('synthetic-file-missing');
+      (window as unknown as { __syntheticMissingFile: typeof file }).__syntheticMissingFile = file; await repository.fileStore.blobs.delete(fileId);
+    }, { repositoryPath, fileId });
+    const missing = await snapshot(page); expect(missing.rows).toEqual(before.rows); expect(missing.files).toEqual(before.files.filter(file => file.id !== fileId)); write('unchanged-record-missing-file.json', missing);
+    await dialog.getByRole('button', { name: zh ? '保存' : 'Save', exact: true }).tap(); await expect(dialog).toBeVisible();
+    await expect(dialog.getByRole('alert')).toHaveText(zh ? '图片或附件已不可用。请重新打开资料核对后再保存。' : 'An image or attachment is unavailable. Reopen the record and check its files before saving.');
+    await expect.poll(() => alertIntersectionRatio(dialog.getByRole('alert'))).toBeGreaterThan(0);
+    write('missing-file-error-visibility.json', { language, intersectionRatio: await alertIntersectionRatio(dialog.getByRole('alert')) });
+    expect(await formValues(dialog)).toEqual(draft); const rejected = await snapshot(page); expect(rejected).toEqual(missing); write('unchanged-record-after-rejected-save.json', rejected);
+    await page.screenshot({ path: info.outputPath(`missing-file-unchanged-record-${language}.png`), fullPage: true });
+    await dialog.getByRole('button', { name: zh ? '取消' : 'Cancel', exact: true }).tap(); await expect(dialog).toBeHidden(); expect(await snapshot(page)).toEqual(missing); expect(errors).toEqual([]);
+    write('missing-file-result.json', { language, layer: 'C-assisted B: synthetic referenced file removed, record unchanged', id, allRowsAndRevisionsUnchanged: true, draftRetained: true, fileSpecificGuidance: true, noElsewhereClaim: true });
+  } finally {
+    await page.evaluate(async repositoryPath => { const file = (window as unknown as { __syntheticMissingFile?: { id: string } }).__syntheticMissingFile; if (file) await (await (await import(repositoryPath)).localRepository()).fileStore.blobs.put(file); }, repositoryPath).catch(() => {});
+    await context.close();
+  }
+});
