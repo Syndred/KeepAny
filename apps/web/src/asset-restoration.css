@@ -185,7 +185,7 @@
 }
 .asset-browser-body {
 	position: relative;
-	height: 205px;
+	height: calc(100% - 30px);
 	display: grid;
 	place-items: center;
 	overflow: hidden;
