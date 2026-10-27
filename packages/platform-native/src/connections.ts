@@ -39,6 +39,14 @@ function reply(result: Reply, body: BodyInit | null): Response {
 function checkNative() {
   if (!Capacitor.isNativePlatform() || !Capacitor.isPluginAvailable('KeepAnyConnections')) throw Error('native-connections-unavailable');
 }
+async function backupCall<T>(action: () => Promise<T>): Promise<T> {
+  try { return await action(); }
+  catch (error) {
+    // Only the native bridge's stable code denotes a checked byte budget.
+    // Do not inspect exception text or expose TLS/auth/platform details.
+    throw Error(error && typeof error === 'object' && 'code' in error && error.code === 'native-connections-limit' ? 'backup-size' : 'native-connections-failed');
+  }
+}
 async function bodyBytes(input: RequestInfo | URL, init: RequestInit): Promise<Uint8Array> {
   const body = init.body;
   if (body === undefined || body === null) return input instanceof Request && !['GET', 'HEAD'].includes(input.method) ? new Uint8Array(await input.clone().arrayBuffer()) : new Uint8Array();
@@ -115,16 +123,16 @@ export function createNativeConnections(bridge: ConnectionsPlugin = plugin): Pla
               if (bytes.length > backupLimit) throw Error('backup-size');
               for (let offset = 0; offset < bytes.length; offset += chunkSize) {
                 if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
-                await bridge.backupWrite({ requestId: id, bodyBase64: encode(bytes.subarray(offset, offset + chunkSize)) });
+                await backupCall(() => bridge.backupWrite({ requestId: id, bodyBase64: encode(bytes.subarray(offset, offset + chunkSize)) }));
               }
             }
-            const result = await bridge.backupRequest({ requestId: id, url: url.href, method, headers });
+            const result = await backupCall(() => bridge.backupRequest({ requestId: id, url: url.href, method, headers }));
             if (result.size > backupLimit) throw Error('backup-size');
             const chunks: Uint8Array[] = [];
             let offset = 0;
             if (method === 'GET') while (offset < result.size) {
               if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
-              const chunk = decode((await bridge.backupRead({ requestId: id, offset })).bodyBase64, chunkSize);
+              const chunk = decode((await backupCall(() => bridge.backupRead({ requestId: id, offset }))).bodyBase64, chunkSize);
               if (!chunk.length || offset + chunk.length > result.size) throw Error('native-connections-response');
               chunks.push(chunk); offset += chunk.length;
             }

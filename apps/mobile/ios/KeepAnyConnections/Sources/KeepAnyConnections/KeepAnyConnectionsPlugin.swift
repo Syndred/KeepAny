@@ -1,7 +1,11 @@
 import Foundation
 import Capacitor
 
-private enum ConnectionFailure: Error { case failed }
+private enum ConnectionFailure: Error { case failed, limit }
+private func failureCode(_ error: Error) -> String {
+    if let failure = error as? ConnectionFailure, case .limit = failure { return "native-connections-limit" }
+    return "native-connections-failed"
+}
 private let backupLimit = 100 * 1024 * 1024 + 1024
 private let chunkSize = 256 * 1024
 private func target(_ text: String) throws -> URL {
@@ -35,6 +39,7 @@ private final class BoundedRequest: NSObject, URLSessionDataDelegate, URLSession
     var size = 0
     var head: HTTPURLResponse?
     var failed = false
+    private var limitExceeded = false
     var session: URLSession?
     private let taskLock = NSLock()
     private var task: URLSessionTask?
@@ -67,11 +72,13 @@ private final class BoundedRequest: NSObject, URLSessionDataDelegate, URLSession
         else { completionHandler(.cancelAuthenticationChallenge, nil) }
     }
     func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive response: URLResponse, completionHandler: @escaping (URLSession.ResponseDisposition) -> Void) {
-        guard let head = response as? HTTPURLResponse, (200..<600).contains(head.statusCode), !(300..<400).contains(head.statusCode), response.expectedContentLength <= Int64(limit) else { failed = true; completionHandler(.cancel); return }
+        guard let head = response as? HTTPURLResponse, (200..<600).contains(head.statusCode), !(300..<400).contains(head.statusCode) else { failed = true; completionHandler(.cancel); return }
+        if response.expectedContentLength > Int64(limit) { failed = true; limitExceeded = output != nil; completionHandler(.cancel); return }
         self.head = head; completionHandler(.allow)
     }
     func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive bytes: Data) {
-        guard !failed, size + bytes.count <= limit else { failed = true; dataTask.cancel(); return }
+        guard !failed else { return }
+        guard bytes.count <= limit - size else { failed = true; limitExceeded = output != nil; dataTask.cancel(); return }
         do { if let file { try file.write(contentsOf: bytes) } else { data.append(bytes) }; size += bytes.count }
         catch { failed = true; dataTask.cancel() }
     }
@@ -80,6 +87,9 @@ private final class BoundedRequest: NSObject, URLSessionDataDelegate, URLSession
             try? file?.close(); session.finishTasksAndInvalidate(); self.session = nil
             taskLock.lock(); self.task = nil; taskLock.unlock()
         }
+        // URLSession reports NSURLErrorCancelled after a delegate rejects an
+        // oversized response. Preserve the checked cause across that callback.
+        guard !limitExceeded else { completion(.failure(ConnectionFailure.limit)); return }
         guard error == nil, !failed, let head, let url = head.url else { completion(.failure(ConnectionFailure.failed)); return }
         var headers: [String: String] = [:]
         for name in ["content-type", "content-length"] { if let value = head.value(forHTTPHeaderField: name) { headers[name] = value } }
@@ -133,7 +143,7 @@ public final class KeepAnyConnectionsPlugin: CAPPlugin, CAPBridgedPlugin {
         files[id] = url; return url
     }
     private func invoke(_ call: CAPPluginCall, _ action: @escaping () throws -> Void) {
-        queue.async { do { try action() } catch { call.reject("native-connections-failed", "native-connections-failed") } }
+        queue.async { do { try action() } catch { let code = failureCode(error); call.reject(code, code) } }
     }
     @objc public func openSession(_ call: CAPPluginCall) { invoke(call) {
         try self.fields(call, ["origin"]); let text = try self.string(call, "origin"), url = try target(text)
@@ -163,14 +173,14 @@ public final class KeepAnyConnectionsPlugin: CAPPlugin, CAPBridgedPlugin {
         }
         var upload: URL?, output: URL?
         let limit: Int
-        if backup { let local = try file(id); guard !sealed.contains(id) else { throw ConnectionFailure.failed }; sealed.insert(id); if method == "PUT" { let size = (try FileManager.default.attributesOfItem(atPath: local.path)[.size] as? NSNumber)?.intValue ?? 0; guard size > 0, size <= backupLimit else { throw ConnectionFailure.failed } }; upload = method == "PUT" ? local : nil; output = method == "GET" ? local : nil; limit = method == "GET" ? backupLimit : 8192 }
+        if backup { let local = try file(id); guard !sealed.contains(id) else { throw ConnectionFailure.failed }; sealed.insert(id); if method == "PUT" { let size = (try FileManager.default.attributesOfItem(atPath: local.path)[.size] as? NSNumber)?.intValue ?? 0; guard size > 0 else { throw ConnectionFailure.failed }; guard size <= backupLimit else { throw ConnectionFailure.limit } }; upload = method == "PUT" ? local : nil; output = method == "GET" ? local : nil; limit = method == "GET" ? backupLimit : 8192 }
         else { limit = url.path.contains("/attachments/") ? 4 * 1024 * 1024 : 8 * 1024 * 1024; let data = try bytes(call, limit); guard method != "GET" || data.isEmpty else { throw ConnectionFailure.failed }; if method != "GET" { request.httpBody = data } }
         let job = try BoundedRequest(limit: limit, output: output) { result in self.queue.async {
             self.active.removeValue(forKey: id)
             self.owners.removeValue(forKey: id)
             guard self.cancelled[id] == nil, backup || self.sessions[sessionId] === owner else { call.reject("native-connections-failed", "native-connections-failed"); return }
             switch result {
-            case .failure: call.reject("native-connections-failed", "native-connections-failed")
+            case .failure(let error): let code = backup ? failureCode(error) : "native-connections-failed"; call.reject(code, code)
             case .success(let (reply, cookies)):
                 if let owner { for cookie in cookies { owner.cookies.removeAll { $0.name == cookie.name && $0.domain == cookie.domain && $0.path == cookie.path }; if (cookie.expiresDate ?? .distantFuture) > Date() { owner.cookies.append(cookie) } }; if owner.cookies.count > 256 { owner.cookies.removeAll() } }
                 var value: [String: Any] = ["status": reply.status, "headers": reply.headers, "size": reply.size]
@@ -185,7 +195,7 @@ public final class KeepAnyConnectionsPlugin: CAPPlugin, CAPBridgedPlugin {
         try self.fields(call, ["requestId", "bodyBase64"]); let id = try self.string(call, "requestId"), data = try self.bytes(call, chunkSize)
         guard !data.isEmpty, !self.sealed.contains(id) else { throw ConnectionFailure.failed }
         let url = try self.file(id), handle = try FileHandle(forWritingTo: url); defer { try? handle.close() }
-        let length = try handle.seekToEnd(); guard length + UInt64(data.count) <= UInt64(backupLimit) else { throw ConnectionFailure.failed }; try handle.write(contentsOf: data); call.resolve()
+        let length = try handle.seekToEnd(); guard length + UInt64(data.count) <= UInt64(backupLimit) else { throw ConnectionFailure.limit }; try handle.write(contentsOf: data); call.resolve()
     } }
     @objc public func backupRead(_ call: CAPPluginCall) { invoke(call) {
         try self.fields(call, ["requestId", "offset"]); let id = try self.string(call, "requestId"); try self.live(id)

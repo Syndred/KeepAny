@@ -10,6 +10,8 @@ import okhttp3.*;
 final class ConnectionsHttp implements AutoCloseable {
     static final int BACKUP_LIMIT = 100 * 1024 * 1024 + 1024, CHUNK = 256 * 1024, JSON_LIMIT = 8 * 1024 * 1024;
     static final class Failure extends IOException { Failure() { super("native-connections-failed"); } }
+    static final class LimitFailure extends IOException { LimitFailure() { super("native-connections-limit"); } }
+    static String failureCode(Throwable error) { return error instanceof LimitFailure ? "native-connections-limit" : "native-connections-failed"; }
     interface ClientFactory { OkHttpClient create(CookieJar cookies); }
     static final class Result {
         final int status; final long size; final Map<String,String> headers; final byte[] body;
@@ -101,10 +103,10 @@ final class ConnectionsHttp implements AutoCloseable {
         synchronized(this){live(id);if(calls.size()>=4||calls.containsKey(id)||session!=null&&session.closed)throw new Failure();calls.put(id,call);if(session!=null)owners.put(id,session);}
         try(Response response=call.execute()) {
             if(response.code()<200||response.code()>=600||response.code()>=300&&response.code()<400||!response.request().url().equals(request.url()))throw new Failure();
-            ResponseBody body=response.body();if(body==null||body.contentLength()>limit)throw new Failure();
+            ResponseBody body=response.body();if(body==null)throw new Failure();if(body.contentLength()>limit)throw output==null?new Failure():new LimitFailure();
             long total=0;ByteArrayOutputStream bytes=output==null?new ByteArrayOutputStream():null;
             try(InputStream input=body.byteStream();OutputStream sink=output==null?bytes:new FileOutputStream(output)) {
-                byte[] buffer=new byte[8192];int count;while((count=input.read(buffer))!=-1){live(id);total+=count;if(total>limit)throw new Failure();sink.write(buffer,0,count);}
+                byte[] buffer=new byte[8192];int count;while((count=input.read(buffer))!=-1){live(id);total+=count;if(total>limit)throw output==null?new Failure():new LimitFailure();sink.write(buffer,0,count);}
             }
             live(id);return new Result(response.code(),total,responseHeaders(response),bytes==null?null:bytes.toByteArray());
         } finally { synchronized(this){calls.remove(id);owners.remove(id);}client.connectionPool().evictAll(); }
@@ -121,7 +123,7 @@ final class ConnectionsHttp implements AutoCloseable {
         file=new File(root,"transfer-"+id+".bin");if(!file.createNewFile())throw new Failure();files.put(id,file);return file;
     }
     synchronized void backupWrite(String id,byte[] bytes) throws IOException {
-        if(bytes.length==0||bytes.length>CHUNK||sealed.contains(id))throw new Failure();File file=transfer(id);if(file.length()+bytes.length>BACKUP_LIMIT)throw new Failure();
+        if(bytes.length==0||bytes.length>CHUNK||sealed.contains(id))throw new Failure();File file=transfer(id);if(file.length()+bytes.length>BACKUP_LIMIT)throw new LimitFailure();
         try(FileOutputStream out=new FileOutputStream(file,true)){out.write(bytes);}
     }
     Result backupRequest(String id,String input,String method,Map<String,String> headers) throws IOException {
@@ -130,7 +132,7 @@ final class ConnectionsHttp implements AutoCloseable {
         File file=transfer(id);
         synchronized(this){if(sealed.contains(id))throw new Failure();sealed.add(id);}
         if(method.equals("PUT")) {
-            if(file.length()==0||file.length()>BACKUP_LIMIT)throw new Failure();
+            if(file.length()==0)throw new Failure();if(file.length()>BACKUP_LIMIT)throw new LimitFailure();
             return execute(id,request(url,method,headers,new byte[0],file,null),null,8192,null);
         }
         return execute(id,request(url,method,headers,new byte[0],null,null),null,BACKUP_LIMIT,file);

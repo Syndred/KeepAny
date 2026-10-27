@@ -13,6 +13,45 @@ function bridge(): ConnectionsPlugin {
     backupRead: vi.fn(async () => ({ bodyBase64: '' })), cancel: vi.fn(async () => {}) };
 }
 afterEach(() => { state.native = true; state.available = true; vi.restoreAllMocks(); });
+it.each(['declared', 'streamed'])('maps a stable native %s limit rejection to the existing backup-size error and cleans the transfer', async () => {
+  const native = bridge(), adapter = createNativeConnections(native), url = 'https://backup.example.test/object.ka1';
+  native.backupRequest = vi.fn(async () => { throw Object.assign(new Error('native-connections-limit'), { code: 'native-connections-limit' }); });
+  const transport = createWebDavTransport({ objectUrl: url, authorization: async () => 'Basic synthetic', fetchImpl: adapter.backupFetch([{ url, method: 'GET' }]) });
+  await expect(transport.get()).rejects.toThrow(/^backup-size$/);
+  expect(native.backupRead).not.toHaveBeenCalled();
+  expect(native.cancel).toHaveBeenCalledOnce();
+  expect(native.cancel).toHaveBeenCalledWith({ requestId: vi.mocked(native.backupRequest).mock.calls[0][0].requestId });
+});
+it.each(['backupWrite', 'backupRequest', 'backupRead'] as const)('maps only stable native codes, sanitizes unknown %s failures and always cleans up', async action => {
+  const native = bridge(), adapter = createNativeConnections(native), url = 'https://backup.example.test/object.ka1';
+  native.backupRequest = vi.fn(async () => ({ status: 200, headers: {}, size: 1 }));
+  const request = adapter.backupFetch([{ url, method: 'GET' }, { url, method: 'PUT' }]);
+  const invoke = () => request(url, action === 'backupWrite' ? { method: 'PUT', body: Uint8Array.of(1) } : {});
+  vi.spyOn(native, action).mockRejectedValueOnce(Object.assign(new Error('private TLS/auth detail must not cross the bridge'), { code: 'native-connections-failed' }))
+    .mockRejectedValueOnce(new Error('native-connections-limit'))
+    .mockRejectedValueOnce({ code: 'native-connections-limit', message: 'must not forward details' });
+  await expect(invoke()).rejects.toThrow(/^native-connections-failed$/);
+  await expect(invoke()).rejects.toThrow(/^native-connections-failed$/);
+  await expect(invoke()).rejects.toThrow(/^backup-size$/);
+  expect(native.cancel).toHaveBeenCalledTimes(3);
+});
+it('does not misclassify corrupt base64 as a backup limit and cleans the transfer', async () => {
+  const native = bridge(), adapter = createNativeConnections(native), url = 'https://backup.example.test/object.ka1';
+  native.backupRequest = vi.fn(async () => ({ status: 200, headers: {}, size: 1 }));
+  native.backupRead = vi.fn(async () => ({ bodyBase64: '%%%=' }));
+  await expect(adapter.backupFetch([{ url, method: 'GET' }])(url)).rejects.toThrow(/^native-connections-response$/);
+  expect(native.cancel).toHaveBeenCalledOnce();
+});
+it('preserves the checked size error when cleanup also fails and keeps HTTP authentication failures as HTTP results', async () => {
+  const native = bridge(), adapter = createNativeConnections(native), url = 'https://backup.example.test/object.ka1';
+  const request = adapter.backupFetch([{ url, method: 'GET' }]);
+  native.cancel = vi.fn(async () => { throw Error('private cleanup detail'); });
+  native.backupRequest = vi.fn(async () => { throw { code: 'native-connections-limit' }; });
+  await expect(request(url)).rejects.toThrow(/^backup-size$/);
+  native.backupRequest = vi.fn(async () => ({ status: 401, headers: {}, size: 0 }));
+  await expect(request(url)).resolves.toHaveProperty('status', 401);
+  expect(native.cancel).toHaveBeenCalledTimes(2);
+});
 it('requires registration and explicit HTTPS confirmation without issuing a request or falling back to Web', async () => {
   const web = vi.spyOn(globalThis, 'fetch');
   await expect(openPlatformSession(origin, true)).rejects.toThrow('unavailable');
