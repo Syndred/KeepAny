@@ -19,6 +19,7 @@ import { createNativeConnections } from '../../../packages/platform-native/src/c
 import { registerPlatformConnections } from '../../web/src/platform-connections';
 import { registerAiFetchFactory } from '../../../packages/ai/src';
 import { createNativeAiFetchFactory } from '../../../packages/platform-native/src/ai-transport';
+import { resetNativeMcpTransport } from '../../../packages/platform-native/src/native-mcp-transport';
 import '../../../apps/web/src/styles.css';
 
 const startupCopy = {
@@ -34,6 +35,7 @@ reactRoot.render(<main className="page"><h1>KeepAny</h1><p role="status">{transl
 
 async function start() {
   nativePlatform();
+  await resetNativeMcpTransport();
   registerPlatformSettings(await hydrateNativePreferences());
   const { default: i18n } = await import('../../web/src/i18n');
   for (const [language, copy] of Object.entries(startupCopy)) i18n.addResourceBundle(language, 'translation', copy, true, true);

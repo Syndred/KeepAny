@@ -58,6 +58,13 @@ jobs:
             -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
             -derivedDataPath test-results/ios-derived CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO \
             build 2>&1 | tee test-results/ios/build.log
+      - name: Exercise native MCP core over real loopback TLS sockets
+        shell: bash
+        run: |
+          set -o pipefail
+          swift test --package-path apps/mobile/ios/KeepAnyMcpTransport \
+            --scratch-path test-results/ios-mcp-derived --jobs 2 \
+            2>&1 | tee test-results/ios/mcp-transport-tests.log
       - name: Install and launch in an available iPhone simulator
         shell: bash
         run: |

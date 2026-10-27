@@ -4,6 +4,7 @@ import KeepAnyMetadata
 import KeepAnyIdentity
 import KeepAnyConnections
 import KeepAnyMcpAuthority
+import KeepAnyMcpTransport
 
 final class KeepAnyBridgeViewController: CAPBridgeViewController {
     override func viewDidLoad() {
@@ -30,5 +31,6 @@ final class KeepAnyBridgeViewController: CAPBridgeViewController {
         bridge?.registerPluginInstance(KeepAnyIdentityPlugin())
         bridge?.registerPluginInstance(KeepAnyConnectionsPlugin())
         bridge?.registerPluginInstance(KeepAnyMcpAuthorityPlugin())
+        bridge?.registerPluginInstance(KeepAnyMcpTransportPlugin())
     }
 }
