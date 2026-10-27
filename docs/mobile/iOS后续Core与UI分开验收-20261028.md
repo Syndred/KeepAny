@@ -29,3 +29,5 @@ f7 run40567103655/job122411199305已自然failure，并非超时或人为取消�
 下一轮只在原身份测试增加公开X509签名自验，并把自造临时公有证书导出到独立artifact文件，使用系统OpenSSL严格检查purpose/IP/显式信任锚；绝不导出私钥、票据或authority状态。源API为固定[Swift Certificates 1.21.1的isValidSignature](https://github.com/apple/swift-certificates/blob/1.21.1/Sources/X509/CertificatePublicKey.swift)。同时核对[NIOSSL 2.37.5 trustRoots/验证接线](https://github.com/apple/swift-nio-ssl/blob/2.37.5/Sources/NIOSSL/SSLContext.swift)：显式certificates使用BoringSSL验证，不能将其混称系统默认Security验证。未复制或修改上游代码。
 
 生产`EphemeralIdentity.swift` SHA仍`cc64a2cabc4d17593683cc514842d9684059c321cd4088c6887f4f4df3f31fe0`，未改CA能力、证书有效期、IP SAN或信任方式。未提供自定义接受所有证书回调。签名自验／独立OpenSSL／新8UI均待下一Apple实际执行，不能写已修。全部7个实际workflow shell块已提取并通过`bash -n`，不是Windows上执行Apple或完整Actions语义验证。
+
+后续把既有Xcode缓存拆为同版本的restore/save，App真实编译成功即保存同一path/key，独立Core后来失败不再丢弃成功编译缓存。没有skip-build：后续xcodebuild仍实际构建并检查改动。此仅减少重复定位等待，不继承旧case通过状态；真实缓存写入/恢复仍待Actions证据。
