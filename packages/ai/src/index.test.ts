@@ -57,10 +57,98 @@ function bodyOf(request: RecordedRequest): Record<string, unknown> {
 	return JSON.parse(String(request.init?.body)) as Record<string, unknown>;
 }
 
+function hideAbortSignalStatics(): () => void {
+	const names = ["any", "timeout"] as const;
+	const descriptors = names.map((name) => Object.getOwnPropertyDescriptor(AbortSignal, name));
+	for (const name of names) Object.defineProperty(AbortSignal, name, { configurable: true, value: undefined });
+	return () => {
+		for (const [index, name] of names.entries()) {
+			const descriptor = descriptors[index];
+			if (descriptor) Object.defineProperty(AbortSignal, name, descriptor);
+			else Reflect.deleteProperty(AbortSignal, name);
+		}
+	};
+}
+
 afterEach(() => {
 	vi.useRealTimers();
 	vi.unstubAllGlobals();
 	vi.restoreAllMocks();
+});
+
+describe("minimum WebView AbortSignal API compatibility", () => {
+	it("uses the real provider path and disposes the caller and timer after success without static helpers", async () => {
+		vi.useFakeTimers();
+		const restore = hideAbortSignalStatics();
+		const web = mockFetch(openAiResponse());
+		const native = vi.fn(async (_input: RequestInfo | URL, _init?: RequestInit) =>
+			new Response(JSON.stringify(openAiResponse()), { headers: { "content-type": "application/json" } }));
+		const removeFactory = registerAiFetchFactory(() => native as typeof fetch);
+		const caller = new AbortController();
+		const add = vi.spyOn(caller.signal, "addEventListener");
+		const remove = vi.spyOn(caller.signal, "removeEventListener");
+		try {
+			expect((await generateAiText(connection("compatible", "https://minimum-api.synthetic.test/v1"),
+				{ prompt: "synthetic", signal: caller.signal })).text).toBe("ok");
+			expect(native).toHaveBeenCalledOnce();
+			expect(web).not.toHaveBeenCalled();
+			expect(String(native.mock.calls[0][0])).toBe("https://minimum-api.synthetic.test/v1/chat/completions");
+			expect(remove).toHaveBeenCalledWith("abort", add.mock.calls[0][1]);
+			expect(vi.getTimerCount()).toBe(0);
+			caller.abort();
+			expect(native.mock.calls[0][1]?.signal?.aborted).toBe(false);
+		} finally { restore(); removeFactory(); }
+	});
+
+	it.each([30_000, 120_000])("keeps the exact %i ms deadline and one provider request without static helpers", async (duration) => {
+		vi.useFakeTimers();
+		const restore = hideAbortSignalStatics();
+		const fetch = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => await new Promise<Response>((_resolve, reject) => {
+			const abort = () => reject(new DOMException("Aborted", "AbortError"));
+			if (init?.signal?.aborted) abort();
+			else init?.signal?.addEventListener("abort", abort, { once: true });
+		}));
+		vi.stubGlobal("fetch", fetch);
+		try {
+			let settled = false;
+			const pending = generateAiText(connection("compatible", "https://minimum-api.synthetic.test/v1"),
+				{ prompt: "synthetic", ...(duration === 30_000 ? {} : { timeoutMs: duration }) })
+				.catch((error: unknown) => { settled = true; return error; });
+			await vi.advanceTimersByTimeAsync(duration - 1);
+			expect(fetch).toHaveBeenCalledOnce();
+			expect(settled).toBe(false);
+			await vi.advanceTimersByTimeAsync(1);
+			expect(await pending).toMatchObject({ code: "timeout", message: "timeout" });
+			expect(fetch.mock.calls[0][1]?.signal?.aborted).toBe(true);
+			expect(fetch).toHaveBeenCalledOnce();
+			expect(vi.getTimerCount()).toBe(0);
+		} finally { restore(); }
+	});
+
+	it("cancels an in-flight provider request and disposes its deadline without static helpers", async () => {
+		vi.useFakeTimers();
+		const restore = hideAbortSignalStatics();
+		const caller = new AbortController();
+		const add = vi.spyOn(caller.signal, "addEventListener");
+		const remove = vi.spyOn(caller.signal, "removeEventListener");
+		const fetch = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => await new Promise<Response>((_resolve, reject) => {
+			const abort = () => reject(new DOMException("Aborted", "AbortError"));
+			if (init?.signal?.aborted) abort();
+			else init?.signal?.addEventListener("abort", abort, { once: true });
+		}));
+		vi.stubGlobal("fetch", fetch);
+		try {
+			const pending = generateAiText(connection("compatible", "https://minimum-api.synthetic.test/v1"),
+				{ prompt: "synthetic", timeoutMs: 120_000, signal: caller.signal }).catch((error: unknown) => error);
+			await vi.advanceTimersByTimeAsync(10);
+			expect(fetch).toHaveBeenCalledOnce();
+			caller.abort();
+			expect(await pending).toMatchObject({ code: "cancelled", message: "cancelled" });
+			expect(fetch.mock.calls[0][1]?.signal?.aborted).toBe(true);
+			expect(remove).toHaveBeenCalledWith("abort", add.mock.calls[0][1]);
+			expect(vi.getTimerCount()).toBe(0);
+		} finally { restore(); }
+	});
 });
 
 describe("AI provider connection layer", () => {

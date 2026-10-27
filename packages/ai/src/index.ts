@@ -480,8 +480,10 @@ export async function generateAiText(
 					: undefined,
 			maxOutputTokens,
 			maxRetries: 0,
+			// Our controller already enforces the total deadline and disposes it
+			// below. A second SDK timeout merges signals with AbortSignal.any,
+			// which is absent at the supported WebView 111 / iOS 16.4 floor.
 			abortSignal: combined.signal,
-			timeout: { totalMs: timeoutMs },
 			telemetry: {
 				isEnabled: false,
 				recordInputs: false,
