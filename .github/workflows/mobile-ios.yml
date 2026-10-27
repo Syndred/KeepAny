@@ -77,11 +77,33 @@ jobs:
           xcrun simctl launch "$simulator_id" io.github.syndred.keepany | tee test-results/ios/launch.txt
           sleep 10
           xcrun simctl io "$simulator_id" screenshot test-results/ios/startup-en.png
+          app_data="$(xcrun simctl get_app_container "$simulator_id" io.github.syndred.keepany data)"
+          fixture_observer_pid=''
+          fixture_observer_exit=0
+          stop_fixture_observer() {
+            if [[ -z "$fixture_observer_pid" ]]; then return; fi
+            local active_pid
+            for active_pid in $(jobs -pr); do
+              if [[ "$active_pid" == "$fixture_observer_pid" ]]; then
+                kill -TERM "$active_pid" 2>/dev/null || true
+              fi
+            done
+            if wait "$fixture_observer_pid"; then fixture_observer_exit=0; else fixture_observer_exit=$?; fi
+            fixture_observer_pid=''
+          }
+          trap stop_fixture_observer EXIT
+          node scripts/observe-ios-project-fixtures.mjs --app-data "$app_data" \
+            --output test-results/ios/project-fixture-observer &
+          fixture_observer_pid=$!
           set -o pipefail
           xcodebuild -project apps/mobile/ios/App/App.xcodeproj -scheme KeepAnyAcceptance \
             -configuration Debug -sdk iphonesimulator -destination "id=$simulator_id" \
             -derivedDataPath test-results/ios-derived -resultBundlePath test-results/ios/acceptance.xcresult \
             CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO test 2>&1 | tee test-results/ios/ui-tests.log
+          stop_fixture_observer
+          if [[ "$fixture_observer_exit" != 0 ]]; then exit "$fixture_observer_exit"; fi
+          node --input-type=module -e 'import fs from "node:fs";const summary=JSON.parse(fs.readFileSync("test-results/ios/project-fixture-observer/summary.json","utf8"));if(!summary.normalStop||summary.verification?.complete!==true)throw Error("ios-project-fixture-verification-incomplete");console.log(JSON.stringify({nativeProjectFixtureVerification:summary.verification}));'
+          trap - EXIT
           xcrun simctl launch "$simulator_id" io.github.syndred.keepany
           sleep 3
           xcrun simctl io "$simulator_id" screenshot test-results/ios/after-tests.png
