@@ -84,6 +84,7 @@ export const nativePrivateFiles = {
   checkDirectory(path: string) { return call<void>('checkDirectory', { path }); },
   readRequest(path: string) { return call<string>('readRequest', { path }); },
   readState(path: string) { return call<string | null>('readState', { path }); },
+  readMobileSecret(path: string) { return call<{ text: string; identity: string }>('readMobileSecret', { path }); },
   inspect(path: string) { return call<string>('inspect', { path }); },
   createFile(path: string, data: string) { return call<string>('createFile', { path, data }); },
   pairing(path: string, data: string) { return lease('pairing', { path, data }); },

@@ -113,6 +113,19 @@ public static class KeepAnyPrivateFiles {
     }
   }
   static string ReadState(string p) {try{return Read(p,true,8388608);}catch(InvalidOperationException e){if(e.Message=="ENOENT")return null;throw;}}
+  // Secret import is bounded and keeps a read-only handle that denies writes
+  // and deletion, unlike the intentionally less restrictive proposal reader.
+  static object ReadMobileSecret(string p) {
+    using(SafeFileHandle h=Checked(p,GR,false,true,SR)) {
+      INFO before=Info(h);if(before.high!=0||before.low==0||before.low>65536)throw Error("unsafe-size");
+      string identity=Identity(before);
+      using(FileStream file=new FileStream(h,FileAccess.Read))using(StreamReader reader=new StreamReader(file,new UTF8Encoding(false,true),false)) {
+        string text=reader.ReadToEnd();Private(file.SafeFileHandle);
+        if(Identity(Info(file.SafeFileHandle))!=identity)throw Error("unsafe-file");
+        return new Dictionary<string,object>{{"text",text},{"identity",identity}};
+      }
+    }
+  }
   static string Keep(Lease lease) {string token=Guid.NewGuid().ToString();Leases.Add(token,lease);return token;}
   static void Delete(FileStream file) {DISPOSITION d=new DISPOSITION {delete=true};if(!SetFileInformationByHandle(file.SafeFileHandle,4,ref d,1))throw Native();}
   static void RenameHandle(SafeFileHandle file,string destination,bool replace=true) {
@@ -175,6 +188,7 @@ public static class KeepAnyPrivateFiles {
     try {
       if(op=="readRequest")return Read(path,false,65536);
       if(op=="readState")return ReadState(path);
+      if(op=="readMobileSecret")return ReadMobileSecret(path);
       if(op=="inspect") {using(SafeFileHandle h=Checked(path,0,false,true,SR|SW|SD))return Identity(Info(h));}
       if(op=="createFile"||op=="pairing") {
         FileStream file=NewFile(path,op=="pairing");
