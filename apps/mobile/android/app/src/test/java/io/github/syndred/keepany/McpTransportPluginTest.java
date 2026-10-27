@@ -22,6 +22,10 @@ public class McpTransportPluginTest {
     @Before public void setup(){plugin=new KeepAnyMcpTransportPlugin();}
     @After public void finish() throws Exception {plugin.handleOnDestroy();Field field=KeepAnyMcpTransportPlugin.class.getDeclaredField("lifecycle");field.setAccessible(true);assertTrue(((ExecutorService)field.get(plugin)).awaitTermination(5,TimeUnit.SECONDS));}
     private Call start(){Call call=new Call(new JSObject().put("address","127.0.0.1"));plugin.start(call);return call;}
+    private Call prepare(){Call call=new Call(new JSObject().put("address","127.0.0.1"));plugin.prepare(call);return call;}
+    private Call activate(JSObject info){Call call=new Call(new JSObject().put("instanceId",info.getString("instanceId")));plugin.activate(call);return call;}
+    private Object field(String name) throws Exception{Field field=KeepAnyMcpTransportPlugin.class.getDeclaredField(name);field.setAccessible(true);return field.get(plugin);}
+    private void drained() throws Exception{((ExecutorService)field("lifecycle")).submit(()->{}).get(5,TimeUnit.SECONDS);}
     private void closed(String endpoint) throws Exception{int port=new URI(endpoint).getPort();long deadline=System.nanoTime()+TimeUnit.SECONDS.toNanos(2);do{try(Socket socket=new Socket(Proxy.NO_PROXY)){socket.connect(new InetSocketAddress("127.0.0.1",port),500);}catch(ConnectException expected){return;}Thread.sleep(20);}while(System.nanoTime()<deadline);fail("old listener remains open: "+endpoint);}
     @Test public void resetQueuedDuringStartStopsOldBeforeNextStartAndStaleStopCannotTouchNew() throws Exception {
         Call first=start(),reset=new Call(new JSObject());plugin.reset(reset);Call second=start();JSObject old=first.value();reset.value();JSObject current=second.value();
@@ -43,5 +47,29 @@ public class McpTransportPluginTest {
         final String[] endpoint={null};Call broken=new Call(new JSObject().put("address","127.0.0.1")){
             @Override public void resolve(JSObject value){endpoint[0]=value.getString("endpoint");throw new IllegalStateException("synthetic acknowledgement failure");}
         };plugin.start(broken);assertEquals("mcp-transport-failed",broken.failure());assertNotNull(endpoint[0]);closed(endpoint[0]);assertNotNull(start().value().getString("instanceId"));
+    }
+    @Test public void preparedIdentitySurvivesSystemPickerPauseAndActivatesSameFourValues() throws Exception {
+        JSObject info=prepare().value();closed(info.getString("endpoint"));ScheduledFuture<?> timer=(ScheduledFuture<?>)field("preparedExpiry");
+        assertEquals("mcp-transport-active",prepare().failure());plugin.handleOnPause();drained();assertNotNull(field("active"));closed(info.getString("endpoint"));
+        assertEquals("mcp-transport-failed",activate(info).failure());assertNotNull(field("active"));plugin.handleOnResume();JSObject activated=activate(info).value();
+        for(String key:new String[]{"instanceId","endpoint","certificatePem","spkiSha256"})assertEquals(key,info.getString(key),activated.getString(key));assertTrue(timer.isCancelled());assertTrue(((McpHttpsServer)field("active")).isActive());
+        assertEquals("mcp-transport-active",activate(info).failure());assertTrue(((McpHttpsServer)field("active")).isActive());
+        plugin.handleOnPause();drained();assertNull(field("active"));closed(info.getString("endpoint"));plugin.handleOnResume();assertEquals("mcp-transport-stale",activate(info).failure());
+    }
+    @Test public void preparedPortCollisionFailsClosedAndRequiresNewPreparation() throws Exception {
+        JSObject info=prepare().value();int port=new URI(info.getString("endpoint")).getPort();
+        try(ServerSocket owner=new ServerSocket()){owner.setReuseAddress(false);owner.bind(new InetSocketAddress("127.0.0.1",port));
+            assertEquals("mcp-transport-failed",activate(info).failure());assertNull(field("active"));assertEquals("mcp-transport-stale",activate(info).failure());
+        }
+        JSObject next=prepare().value();assertNotEquals(info.getString("instanceId"),next.getString("instanceId"));assertNotEquals(info.getString("spkiSha256"),next.getString("spkiSha256"));activate(next).value();
+    }
+    @Test public void resetDestroysPreparedIdentityAndOldTimerCannotStopNewActive() throws Exception {
+        JSObject old=prepare().value();McpHttpsServer prepared=(McpHttpsServer)field("active");ScheduledFuture<?> timer=(ScheduledFuture<?>)field("preparedExpiry");
+        Call reset=new Call(new JSObject());plugin.reset(reset);reset.value();assertTrue(timer.isCancelled());assertNull(field("active"));try{prepared.certificatePem();fail("stopped prepared identity retained");}catch(McpHttpsServer.Failure expected){}
+        JSObject current=start().value();Call oldStop=new Call(new JSObject().put("instanceId",old.getString("instanceId")));plugin.stop(oldStop);oldStop.value();assertEquals(current.getString("instanceId"),((McpHttpsServer)field("active")).instanceId);
+    }
+    @Test public void preparedExpiresAfterProductionTwoMinutesWithoutNetwork() throws Exception {
+        long begin=System.nanoTime();JSObject info=prepare().value();closed(info.getString("endpoint"));ScheduledFuture<?> timer=(ScheduledFuture<?>)field("preparedExpiry");
+        timer.get(125,TimeUnit.SECONDS);long millis=TimeUnit.NANOSECONDS.toMillis(System.nanoTime()-begin);assertTrue("expiry "+millis,millis>=118000&&millis<125000);assertNull(field("active"));closed(info.getString("endpoint"));assertEquals("mcp-transport-stale",activate(info).failure());assertNotNull(prepare().value().getString("instanceId"));
     }
 }

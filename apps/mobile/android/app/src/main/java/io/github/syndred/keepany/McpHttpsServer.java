@@ -20,7 +20,7 @@ import java.util.function.BooleanSupplier;
 
 /** Native TLS/HTTP IO only. The trusted JS owner handles MCP, pairing, grants and approval. */
 final class McpHttpsServer implements AutoCloseable {
-    static final int REQUEST_LIMIT=1_000_000, RESPONSE_LIMIT=8*1024*1024, CHUNK_LIMIT=256*1024, HEADER_LIMIT=16*1024, HEADER_COUNT=64, DEADLINE_MS=30000, FLIGHTS=4;
+    static final int REQUEST_LIMIT=1_000_000, RESPONSE_LIMIT=8*1024*1024, CHUNK_LIMIT=256*1024, HEADER_LIMIT=16*1024, HEADER_COUNT=64, DEADLINE_MS=30000, FLIGHTS=4, PREPARE_MS=120000;
     static final class Failure extends Exception {Failure(){super("mcp-transport-failed");}Failure(String code){super(code);}}
     interface Events {void request(Request request);void cancelled(String instanceId,String requestId);void stopped(String instanceId);}
     static final class Request {
@@ -40,6 +40,8 @@ final class McpHttpsServer implements AutoCloseable {
     private SslContext tls;
     private Channel listener;
     private boolean stopped;
+    private int port;
+    private long preparedUntilNanos,preparedUntilMillis;
     private final String address;
     private McpHttpsServer(String address,Events events){this.address=address;this.events=events;}
     private static final class Buffer extends ByteArrayOutputStream {
@@ -61,20 +63,37 @@ final class McpHttpsServer implements AutoCloseable {
         while(interfaces!=null&&interfaces.hasMoreElements()){NetworkInterface network=interfaces.nextElement();if(!network.isUp())continue;Enumeration<InetAddress> addresses=network.getInetAddresses();while(addresses.hasMoreElements())if(address.equals(addresses.nextElement()))return address;}
         throw new Failure();
     }
-    static McpHttpsServer start(String address,Events events,BooleanSupplier permitted) throws Exception {
+    static McpHttpsServer prepare(String address,Events events,BooleanSupplier permitted) throws Exception {
         McpHttpsServer server=new McpHttpsServer(address,events);
         try {
             InetAddress local=checkedAddress(address);if(!permitted.getAsBoolean())throw new Failure();server.identity=McpTlsIdentity.create(address);server.tls=server.identity.context();
-            server.boss=new NioEventLoopGroup(1);server.workers=new NioEventLoopGroup(1);
-            ServerBootstrap bootstrap=new ServerBootstrap().group(server.boss,server.workers).channel(NioServerSocketChannel.class)
-                .option(ChannelOption.SO_REUSEADDR,false).childOption(ChannelOption.TCP_NODELAY,true).childHandler(new ChannelInitializer<SocketChannel>(){
-                    protected void initChannel(SocketChannel channel){server.install(channel);}
-                });
-            if(!permitted.getAsBoolean())throw new Failure();server.listener=bootstrap.bind(new InetSocketAddress(local,0)).sync().channel();
+            // Reserve no listener while the system file picker/share sheet backgrounds the app.
+            // A competing bind is detected at activate; never silently replace this exported URL.
+            try(ServerSocket probe=new ServerSocket()){probe.setReuseAddress(false);probe.bind(new InetSocketAddress(local,0),1);server.port=probe.getLocalPort();}
+            server.preparedUntilNanos=System.nanoTime()+TimeUnit.MILLISECONDS.toNanos(PREPARE_MS);server.preparedUntilMillis=System.currentTimeMillis()+PREPARE_MS;
             if(!permitted.getAsBoolean())throw new Failure();return server;
         } catch(Exception failure){server.close();throw new Failure();}
     }
-    String endpoint() throws Failure {synchronized(lock){if(stopped||listener==null)throw new Failure();return "https://"+address+":"+((InetSocketAddress)listener.localAddress()).getPort()+"/mcp";}}
+    static McpHttpsServer start(String address,Events events,BooleanSupplier permitted) throws Exception {
+        McpHttpsServer server=prepare(address,events,permitted);server.activate(permitted);return server;
+    }
+    boolean isPrepared(){synchronized(lock){return !stopped&&identity!=null&&listener==null;}}
+    boolean isActive(){synchronized(lock){return !stopped&&listener!=null;}}
+    long preparationRemainingNanos(){return Math.max(0,Math.min(preparedUntilNanos-System.nanoTime(),TimeUnit.MILLISECONDS.toNanos(preparedUntilMillis-System.currentTimeMillis())));}
+    void activate(BooleanSupplier permitted) throws Exception {
+        synchronized(lock){if(stopped||identity==null||listener!=null)throw new Failure("mcp-transport-stale");}
+        try {
+            if(preparationRemainingNanos()==0||!permitted.getAsBoolean())throw new Failure();
+            InetAddress local=checkedAddress(address);boss=new NioEventLoopGroup(1);workers=new NioEventLoopGroup(1);
+            ServerBootstrap bootstrap=new ServerBootstrap().group(boss,workers).channel(NioServerSocketChannel.class)
+                .option(ChannelOption.SO_REUSEADDR,false).childOption(ChannelOption.TCP_NODELAY,true).childHandler(new ChannelInitializer<SocketChannel>(){
+                    protected void initChannel(SocketChannel channel){install(channel);}
+                });
+            if(!permitted.getAsBoolean())throw new Failure();listener=bootstrap.bind(new InetSocketAddress(local,port)).sync().channel();
+            if(preparationRemainingNanos()==0||!permitted.getAsBoolean())throw new Failure();
+        } catch(Exception failure){close();throw new Failure();}
+    }
+    String endpoint() throws Failure {synchronized(lock){if(stopped||port<=0)throw new Failure();return "https://"+address+":"+port+"/mcp";}}
     String certificatePem() throws Failure {synchronized(lock){if(stopped||identity==null)throw new Failure();return identity.certificatePem;}}
     String spkiSha256() throws Failure {synchronized(lock){if(stopped||identity==null)throw new Failure();return identity.spkiSha256;}}
     int pendingCount(){synchronized(lock){return pending.size();}}
