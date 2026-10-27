@@ -1,0 +1,69 @@
+{
+  "driver": "gstack browse.exe, isolated Chromium",
+  "port": 4210,
+  "syntheticOnly": true,
+  "observations": [
+    {
+      "id": 30,
+      "exitCode": 0,
+      "observed": {
+        "url": "http://127.0.0.1:4210/settings",
+        "language": "",
+        "text": "K\nKeepAny\nPersonal asset workspace\nPersonal workspace\nWorkspace\nOverview\nTasks\n2\nAssets\nAccounts\nTrash\nCollections\n工作室资料\nCustomize sidebar\nMe\nMy workspace\nOnly visible here\nBack to overview\nSettings\nLanguage\nEnglish\nDevice storage\n\nClearing browser data removes local records. Back up regularly.\n\nRequest persistent storage\nCreate backup\nNotifications and reminders\n\nReminders are checked while the app is open. No notifications are sent after it closes. Reopening sends missed notifications from the past 7 days; older overdue items remain visible in the app. Each occurrence is notified once.\n\n Enable in-app reminders\n Default renewal reminders\nDays before renewal\nReminder time\nTime zone\n Browser notifications\n\nClick Allow to request notification permission.\n\nSave\nAllow browser notifications\nAssistant access\nAuthorize local connections separately; choose records when asking a service.\nConnections & sync\nConnect an account or your own service when needed.\nMore options\nOptional actions such as sample records.",
+        "overflow": false
+      }
+    },
+    {
+      "id": 31,
+      "exitCode": 0,
+      "observed": {
+        "url": "http://127.0.0.1:4210/settings",
+        "language": "",
+        "text": "K\nKeepAny\nPersonal asset workspace\nPersonal workspace\nWorkspace\nOverview\nTasks\n2\nAssets\nAccounts\nTrash\nCollections\n工作室资料\nCustomize sidebar\nMe\nMy workspace\nOnly visible here\nBack to overview\nSettings\nLanguage\nEnglish\nDevice storage\n\nClearing browser data removes local records. Back up regularly.\n\nRequest persistent storage\nCreate backup\nNotifications and reminders\n\nReminders are checked while the app is open. No notifications are sent after it closes. Reopening sends missed notifications from the past 7 days; older overdue items remain visible in the app. Each occurrence is notified once.\n\n Enable in-app reminders\n Default renewal reminders\nDays before renewal\nReminder time\nTime zone\n Browser notifications\n\nClick Allow to request notification permission.\n\nSave\nAllow browser notifications\nAssistant access\nAuthorize local connections separately; choose records when asking a service.\nConnections & sync\nConnect an account or your own service when needed.\nMore options\nOptional actions such as sample records.",
+        "overflow": false
+      }
+    },
+    {
+      "id": 32,
+      "exitCode": 0,
+      "observed": {
+        "url": "http://127.0.0.1:4210/settings",
+        "language": "en",
+        "text": "K\nKeepAny\nPersonal asset workspace\nPersonal workspace\nWorkspace\nOverview\nTasks\n2\nAssets\nAccounts\nTrash\nCollections\n工作室资料\nCustomize sidebar\nMe\nMy workspace\nOnly visible here\nBack to overview\nSettings\nLanguage\nEnglish\nDevice storage\n\nClearing browser data removes local records. Back up regularly.\n\nRequest persistent storage\nCreate backup\nNotifications and reminders\n\nReminders are checked while the app is open. No notifications are sent after it closes. Reopening sends missed notifications from the past 7 days; older overdue items remain visible in the app. Each occurrence is notified once.\n\n Enable in-app reminders\n Default renewal reminders\nDays before renewal\nReminder time\nTime zone\n Browser notifications\n\nClick Allow to request notification permission.\n\nSave\nAllow browser notifications\nAssistant access\nAuthorize local connections separately; choose records when asking a service.\nConnections & sync\nConnect an account or your own service when needed.\nMore options\nOptional actions such as sample records.",
+        "overflow": false
+      }
+    },
+    {
+      "id": 39,
+      "exitCode": 0,
+      "observed": {
+        "url": "http://127.0.0.1:4210/settings",
+        "language": "zh-CN",
+        "settingsVisible": true,
+        "overflow": false
+      }
+    }
+  ],
+  "hashes": {
+    "apps/web/index.html": "95941019a657b446e8abcd1f53bb038ba018f515a256eccecbf6980f745347fb",
+    "apps/web/src/i18n.ts": "02f1edeefd768cc05dea64560f68f8ebf2d54f1fe1d21bcf762287ec3f4d4f9f",
+    "tests/e2e/qa-document-language.spec.ts": "536de64dcd2d6ae0624983d98b5ad14c7a00e11b6567fc3b627b73a74af1329d"
+  },
+  "browser": {
+    "passed": 2,
+    "failed": 0,
+    "seconds": 4.8
+  },
+  "unit": {
+    "passed": 9,
+    "failed": 0
+  },
+  "typecheck": 0,
+  "lint": 0,
+  "toolVerdict": "inconclusive: browser-only materializer has no functional evidence rows",
+  "limits": [
+    "Not whole-project acceptance.",
+    "Pre-repair observations superseded; final repair uses current browser journeys.",
+    "No physical screen-reader verification."
+  ]
+}

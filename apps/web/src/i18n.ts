@@ -2517,6 +2517,12 @@ export const resources = {
 		),
 	},
 };
+i18n.on("languageChanged", () => {
+	if (typeof document !== "undefined") {
+		document.documentElement.lang =
+			i18n.resolvedLanguage === "zh-CN" ? "zh-CN" : "en";
+	}
+});
 i18n.use(initReactI18next).init({
 	resources,
 	lng:
