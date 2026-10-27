@@ -18,10 +18,7 @@ async function fixture(repository: Repository, kind: AssetKind = 'project') {
     name: 'Beta', memberIds: [assets[0].id, assets[2].id], reservedNames: ['website', '网站', 'All', '全部'] } satisfies EditCustomCategoryInput };
 }
 function operationStore(repository: Repository, fileStore = repository.fileStore): CategoryEditOperationStore {
-  return { categoryEditJournal: fileStore.categoryEditJournal, transaction: fileStore.transaction.bind(fileStore),
-    recoveryTables: [fileStore.journal, fileStore.importJournal, fileStore.pullJournal, fileStore.scopedPull,
-      fileStore.scopedOutbox, fileStore.scopedAttachmentUploads, fileStore.archiveMerge,
-      fileStore.renewalJournal, fileStore.subscriptionSaveJournal] };
+  return fileStore;
 }
 function failWrite(repository: Repository, count = 2) {
   const storage = repository.db.records.storageInstance, original = storage.bulkWrite.bind(storage);
@@ -202,13 +199,13 @@ it('guards dedicated subscription save/renewal and physical-item archive/history
 it('rejects export if a second FileStore handle freezes an uncommitted category intent after the initial recovery pass', async () => {
   const repository = await openLocalRepository(databaseName());
   const FileStore = repository.fileStore.constructor as new (name: string) => Repository['fileStore'];
-  const secondStore = new FileStore(repository.db.name);
+  const secondStore = new FileStore(repository.records.name);
   try {
     const { input } = await fixture(repository), read = repository.allRecords.bind(repository);
     const failure = failWrite(repository, 1);
     const concurrent = vi.spyOn(repository, 'allRecords').mockImplementationOnce(async () => {
       const snapshot = await read();
-      await expect(editCustomCategory(repository.db, operationStore(repository, secondStore), input)).rejects.toThrow('injected-category-write');
+      await expect(editCustomCategory(repository.records, operationStore(repository, secondStore), input)).rejects.toThrow('injected-category-write');
       return snapshot;
     });
     await expect(repository.exportArchive()).rejects.toThrow('category-edit-pending');
@@ -269,11 +266,11 @@ it('retains conflicting intent and newer external fields on retry, cancellation 
 it('uses one native FileStore gate for two handles, without repository locks, and never applies a competing intent', async () => {
   const repository = await openLocalRepository(databaseName());
   const FileStore = repository.fileStore.constructor as new (name: string) => Repository['fileStore'];
-  const secondStore = new FileStore(repository.db.name), second = new LocalRepository(repository.db, secondStore);
+  const secondStore = new FileStore(repository.records.name), second = new LocalRepository(repository.records, secondStore);
   try {
     const { input } = await fixture(repository);
-    const results = await Promise.allSettled([editCustomCategory(repository.db, operationStore(repository), input),
-      editCustomCategory(repository.db, operationStore(repository, secondStore), { ...input, name: 'Competing' })]);
+    const results = await Promise.allSettled([editCustomCategory(repository.records, operationStore(repository), input),
+      editCustomCategory(repository.records, operationStore(repository, secondStore), { ...input, name: 'Competing' })]);
     expect(results.filter(result => result.status === 'fulfilled')).toHaveLength(1);
     expect(results.filter(result => result.status === 'rejected')).toHaveLength(1);
     expect(await repository.fileStore.categoryEditJournal.count()).toBe(0);
@@ -281,7 +278,7 @@ it('uses one native FileStore gate for two handles, without repository locks, an
     expect(['Beta', 'Competing']).toContain(currentCategory?.name);
     const freshAssets = await repository.list<Asset>('asset', true);
     const failure = failWrite(repository, 2);
-    await expect(editCustomCategory(repository.db, operationStore(repository), { ...input,
+    await expect(editCustomCategory(repository.records, operationStore(repository), { ...input,
       expectedCategory: currentCategory as Category, expectedAssets: freshAssets, name: 'Final' })).rejects.toThrow('injected-category-write');
     failure.mockRestore();
     await expect(second.save('asset', asset('project', 'Blocked by other handle'))).rejects.toThrow('category-edit-pending');

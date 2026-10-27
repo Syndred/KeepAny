@@ -1,4 +1,3 @@
-import { liveQuery } from "dexie";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -72,16 +71,8 @@ export function RestoreRecoveryPanel() {
 		let stopRecords: (() => void) | undefined;
 		void localRepository().then((repository) => {
 			if (!active) return;
-			const journalSubscription = liveQuery(() => getPendingRestoreRecoveries()).subscribe({
-				next: () => { if (active) void refresh(); },
-				error: () => { if (active) setReadError(true); },
-			});
-			const recordsSubscription = repository.db.records.find().$.subscribe({
-				next: () => { if (active) void refresh(); },
-				error: () => { if (active) setReadError(true); },
-			});
-			stopJournal = () => journalSubscription.unsubscribe();
-			stopRecords = () => recordsSubscription.unsubscribe();
+			stopRecords = repository.subscribe(() => { if (active) void refresh(); });
+			void refresh();
 		}).catch(() => { if (active) setReadError(true); });
 		return () => {
 			active = false;

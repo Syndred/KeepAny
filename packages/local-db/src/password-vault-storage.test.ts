@@ -16,8 +16,8 @@ async function repository() {
 }
 function secondHandle(first: LocalRepository) {
   const Store = first.fileStore.constructor as new (name: string) => LocalRepository['fileStore'];
-  const store = new Store(first.db.name); extraStores.push(store);
-  return new LocalRepository(first.db, store, first.recoveryState);
+  const store = new Store(first.records.name); extraStores.push(store);
+  return new LocalRepository(first.records, store, first.recoveryState);
 }
 afterEach(async () => {
   vi.restoreAllMocks();

@@ -29,8 +29,8 @@ async function binding(accountId = 'restore-owner'): Promise<DatasetBinding> {
 }
 function secondHandle(first: LocalRepository) {
   const Store = first.fileStore.constructor as new (name: string) => LocalRepository['fileStore'];
-  const store = new Store(first.db.name); extraStores.push(store);
-  return new LocalRepository(first.db, store, first.recoveryState);
+  const store = new Store(first.records.name); extraStores.push(store);
+  return new LocalRepository(first.records, store, first.recoveryState);
 }
 async function pendingToken(target: LocalRepository): Promise<RestoreRecoveryToken> {
   const pending = await target.getPendingRestoreRecoveries(); expect(pending).toHaveLength(1); return pending[0].token;
@@ -65,7 +65,7 @@ it('acquires the native mutation gate before invoking a callback with no categor
   });
   await started;
   let callbackEntered = false;
-  const mutation = withCategoryMutationGate(target.db, other.fileStore, [], async () => { callbackEntered = true; return 'mutated'; });
+  const mutation = withCategoryMutationGate(target.records, other.fileStore, [], async () => { callbackEntered = true; return 'mutated'; });
   const outcomes = Promise.allSettled([holding, mutation]);
   try {
     await new Promise(resolve => setTimeout(resolve, 10)); expect(callbackEntered).toBe(false);
@@ -148,9 +148,9 @@ it('retains declared-source recovery when the claimed binding is missing', async
 
 it('allows pure local keep-current and leaves unrelated journals and the warning intact', async () => {
   const target = await repository();
-  await target.fileStore.journal.bulkAdd([{ id: 'one', rows: [] }, { id: 'two', rows: [] }]);
+  for (const value of [{ id: 'one', rows: [] }, { id: 'two', rows: [] }]) await target.fileStore.journal.add(value);
   const [first] = await target.getPendingRestoreRecoveries(); await target.abandonRestoreRecovery(first.token);
-  expect(await target.fileStore.journal.toCollection().primaryKeys()).toEqual(['two']);
+  expect(await target.fileStore.journal.keys()).toEqual(['two']);
   expect(target.restoreRecoveryError).toBe('restore-recovery-pending'); expect(await target.getDatasetBinding()).toBeNull();
   await target.abandonRestoreRecovery((await target.getPendingRestoreRecoveries())[0].token);
   expect(target.restoreRecoveryError).toBeNull(); expect(await target.claimDatasetBinding(await binding())).toBeTruthy();

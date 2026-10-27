@@ -60,7 +60,7 @@ describe('confirmed finance ledger mutations', () => {
   });
 
   it('rejects stale edits and deletion across two instances, then deletes only the reviewed bill', async () => {
-    const first = await openLocalRepository(databaseName()), second = new LocalRepository(first.db, first.fileStore);
+    const first = await openLocalRepository(databaseName()), second = new LocalRepository(first.records, first.fileStore);
     try {
       const asset = newAsset('account'); await first.save('asset', asset);
       const entry = bill(asset.id), unrelated = bill(asset.id);

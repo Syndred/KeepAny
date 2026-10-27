@@ -2,6 +2,9 @@ import { createRxDatabase, type RxDatabase } from 'rxdb';
 import { getRxStorageDexie } from 'rxdb/plugins/storage-dexie';
 import { conflictsWithAccountRestore } from '../../domain/src/account-identity';
 import Dexie, { type Table } from 'dexie';
+import type { RecordBackend, SideTable, SideStoreRuntime, SideTableRef } from './storage-contracts';
+import { WebRecordBackend, WebSideTable, WebSideRuntime } from './web-storage';
+export type { RecordBackend, StoredRecord, SideTable, SideStoreRuntime } from './storage-contracts';
 import { z } from 'zod';
 import { trashPurgeRows, redactedTrashRow, type TrashPurgePlan, type TrashTarget } from './trash-purge';
 export type { TrashPurgePlan, TrashTarget } from './trash-purge';
@@ -25,7 +28,7 @@ import { assertCategoryMutationAllowed, cancelCategoryEdit as cancelCategoryEdit
 export type { PendingSubscriptionSave, SubscriptionLink } from './subscription-save';
 export type { DeleteCustomCategoryInput, EditCustomCategoryInput, PendingCategoryEdit } from './category-edit';
 
-// This transport shape is consumed by the web app's RxDB observer.
+// Shared transport shape. Storage metadata stays outside the business payload.
 export interface RecordRow { id: string; type: EntityType; payload: string; updatedAt: number }
 export class AccountRestoreConflict extends Error {
   constructor(readonly existingId: string) { super('account-restore-conflict'); }
@@ -82,7 +85,7 @@ export interface PendingArchiveMerge {
   changedCandidates: number;
 }
 
-class FileStore extends Dexie {
+class RawWebFileStore extends Dexie {
   blobs!: Table<StoredFile, string>;
   journal!: Table<Journal, string>;
   importJournal!: Table<ImportJournal, string>;
@@ -137,26 +140,99 @@ class FileStore extends Dexie {
   }
 }
 
+export interface FileStore extends SideStoreRuntime {
+  readonly recoveryTables: SideTableRef[];
+  blobs: SideTable<StoredFile>;
+  journal: SideTable<Journal>;
+  importJournal: SideTable<ImportJournal>;
+  renewalJournal: SideTable<RenewalJournal>;
+  syncBase: SideTable<SyncBase>;
+  syncMeta: SideTable<{ id: string; cursor: number }>;
+  pullJournal: SideTable<PullJournal>;
+  scopedBase: SideTable<ScopedBase>;
+  scopedMeta: SideTable<{ id: string; cursor: number; keyFingerprint?: string; keyEpoch?: number }>;
+  scopedOutbox: SideTable<ScopedOutbox>;
+  scopedPull: SideTable<ScopedPullJournal>;
+  datasetBinding: SideTable<StoredDatasetBinding>;
+  scopedAttachmentUploads: SideTable<StoredScopedAttachmentUploadPlan>;
+  archiveMerge: SideTable<ArchiveMergeJournal>;
+  subscriptionSaveJournal: SideTable<SubscriptionSaveJournal>;
+  intakeReview: SideTable<ReviewedCandidate>;
+  categoryEditJournal: SideTable<CategoryEditJournal>;
+  passwordVault: SideTable<VaultRecord>;
+}
+class WebFileStore extends WebSideRuntime implements FileStore {
+  get recoveryTables(): SideTableRef[] {
+    return [this.journal, this.importJournal, this.pullJournal, this.scopedPull, this.scopedOutbox,
+      this.scopedAttachmentUploads, this.archiveMerge, this.renewalJournal, this.subscriptionSaveJournal];
+  }
+  declare blobs: SideTable<StoredFile>;
+  declare journal: SideTable<Journal>;
+  declare importJournal: SideTable<ImportJournal>;
+  declare renewalJournal: SideTable<RenewalJournal>;
+  declare syncBase: SideTable<SyncBase>;
+  declare syncMeta: SideTable<{ id: string; cursor: number }>;
+  declare pullJournal: SideTable<PullJournal>;
+  declare scopedBase: SideTable<ScopedBase>;
+  declare scopedMeta: SideTable<{ id: string; cursor: number; keyFingerprint?: string; keyEpoch?: number }>;
+  declare scopedOutbox: SideTable<ScopedOutbox>;
+  declare scopedPull: SideTable<ScopedPullJournal>;
+  declare datasetBinding: SideTable<StoredDatasetBinding>;
+  declare scopedAttachmentUploads: SideTable<StoredScopedAttachmentUploadPlan>;
+  declare archiveMerge: SideTable<ArchiveMergeJournal>;
+  declare subscriptionSaveJournal: SideTable<SubscriptionSaveJournal>;
+  declare intakeReview: SideTable<ReviewedCandidate>;
+  declare categoryEditJournal: SideTable<CategoryEditJournal>;
+  declare passwordVault: SideTable<VaultRecord>;
+  constructor(name: string, records?: RecordBackend) {
+    const raw = new RawWebFileStore(name);
+    super(raw, records);
+    this.blobs = new WebSideTable(raw.blobs);
+    this.journal = new WebSideTable(raw.journal);
+    this.importJournal = new WebSideTable(raw.importJournal);
+    this.renewalJournal = new WebSideTable(raw.renewalJournal);
+    this.syncBase = new WebSideTable(raw.syncBase);
+    this.syncMeta = new WebSideTable(raw.syncMeta);
+    this.pullJournal = new WebSideTable(raw.pullJournal);
+    this.scopedBase = new WebSideTable(raw.scopedBase);
+    this.scopedMeta = new WebSideTable(raw.scopedMeta);
+    this.scopedOutbox = new WebSideTable(raw.scopedOutbox);
+    this.scopedPull = new WebSideTable(raw.scopedPull);
+    this.datasetBinding = new WebSideTable(raw.datasetBinding);
+    this.scopedAttachmentUploads = new WebSideTable(raw.scopedAttachmentUploads);
+    this.archiveMerge = new WebSideTable(raw.archiveMerge);
+    this.subscriptionSaveJournal = new WebSideTable(raw.subscriptionSaveJournal);
+    this.intakeReview = new WebSideTable(raw.intakeReview);
+    this.categoryEditJournal = new WebSideTable(raw.categoryEditJournal);
+    this.passwordVault = new WebSideTable(raw.passwordVault);
+  }
+}
+
 interface DefaultRepositoryState {
-  fileStore?: FileStore;
-  resources?: Promise<{ db: RxDatabase; fileStore: FileStore; recoveryState?: RepositoryRecoveryState }>;
+  factory?: () => Promise<LocalRepository>;
+  fileStore?: WebFileStore;
+  resources?: Promise<{ db: RxDatabase; records: RecordBackend; fileStore: FileStore; recoveryState?: RepositoryRecoveryState }>;
 }
 interface RepositoryRecoveryState { syncError: string | null; restoreError: string | null; renewalError: string | null; subscriptionError?: string | null; intakeError?: string | null; intakeExpenseError?: string | null; categoryEditError?: string | null }
 // Vite HMR re-evaluates this module while the old RxDB remains open. Keep the resource across reloads.
 const defaultGlobal = globalThis as typeof globalThis & { __keepanyLocalDbState?: DefaultRepositoryState };
 if (!defaultGlobal.__keepanyLocalDbState) defaultGlobal.__keepanyLocalDbState = {};
 const defaultState = defaultGlobal.__keepanyLocalDbState;
-if (!defaultState.fileStore?.subscriptionSaveJournal || !defaultState.fileStore?.intakeReview || !defaultState.fileStore?.categoryEditJournal || !defaultState.fileStore?.passwordVault) {
-  // A Vite HMR module may retain an older Dexie handle. Rebind the shared
-  // RxDB handle to the upgraded file store.
-  defaultState.fileStore?.close();
-  const upgradedStore = new FileStore('keepany');
-  defaultState.fileStore = upgradedStore;
-  if (defaultState.resources) {
-    defaultState.resources = defaultState.resources.then(resource => ({ ...resource, fileStore: upgradedStore }));
-  }
+// Create browser storage lazily: importing archive codecs on Native must not open IndexedDB.
+function defaultFiles(): WebFileStore {
+  if (!defaultState.fileStore) defaultState.fileStore = new WebFileStore('keepany');
+  return defaultState.fileStore;
 }
-export const files = defaultState.fileStore;
+export function webFiles(): FileStore { return defaultFiles(); }
+/** Lazy compatibility handle; importing the module never creates a browser store. */
+export const files = new Proxy({} as FileStore, {
+  get(_target, property) {
+    if (defaultState.factory) throw Error('web-files-unavailable');
+    const store = defaultFiles();
+    const value = Reflect.get(store, property);
+    return typeof value === 'function' ? value.bind(store) : value;
+  },
+});
 const recordSchema = {
   title: 'KeepAny entity', version: 0, primaryKey: 'id', type: 'object',
   properties: {
@@ -169,8 +245,7 @@ const recordSchema = {
 } as const;
 
 const key = (type: EntityType, id: string) => `${type}:${id}`;
-const canonical = (doc: { toJSON(): Record<string, unknown> }): RecordRow => {
-  const value = doc.toJSON();
+const canonical = (value: RecordRow): RecordRow => {
   return { id: value.id as string, type: value.type as EntityType, payload: value.payload as string, updatedAt: value.updatedAt as number };
 };
 const parseEntity = (type: EntityType, value: unknown): { id: string; deleted: boolean } =>
@@ -194,8 +269,32 @@ async function withRenewalLock<T>(name: string, action: () => Promise<T>): Promi
 }
 
 export class LocalRepository {
-  constructor(readonly db: RxDatabase, readonly fileStore: FileStore,
-    readonly recoveryState: RepositoryRecoveryState = { syncError: null, restoreError: null, renewalError: null }) {}
+  readonly records: RecordBackend;
+  private readonly webDb?: RxDatabase;
+  constructor(db: RecordBackend | RxDatabase, readonly fileStore: FileStore,
+    readonly recoveryState: RepositoryRecoveryState = { syncError: null, restoreError: null, renewalError: null }) {
+    this.records = 'getMany' in db ? db as RecordBackend : new WebRecordBackend(db);
+    this.webDb = this.records.webDatabase;
+    if (fileStore instanceof WebSideRuntime) fileStore.bindRecords(this.records);
+  }
+  /** Browser-only diagnostic compatibility. Product logic uses records. */
+  get db(): RxDatabase { if (!this.webDb) throw Error('web-database-unavailable'); return this.webDb; }
+  private withStorage(scope: FileStore): LocalRepository { return new LocalRepository(scope.records, scope, this.recoveryState); }
+  subscribe(listener: () => void): () => void {
+    const records = this.records.subscribe(listener), side = this.fileStore.subscribe(listener);
+    return () => { records(); side(); };
+  }
+  observe<T>(read: (repository: LocalRepository) => Promise<T>, observer: { next(value: T): void; error(error: unknown): void }): () => void {
+    let active = true, generation = 0;
+    const refresh = () => {
+      const current = ++generation;
+      void read(this).then(value => { if (active && current === generation) observer.next(value); },
+        error => { if (active && current === generation) observer.error(error); });
+    };
+    const unsubscribe = this.subscribe(refresh);
+    refresh();
+    return () => { active = false; generation++; unsubscribe(); };
+  }
   get syncRecoveryError(): string | null { return this.recoveryState.syncError; }
   set syncRecoveryError(value: string | null) { this.recoveryState.syncError = value; }
   get restoreRecoveryError(): string | null { return this.recoveryState.restoreError; }
@@ -219,15 +318,17 @@ export class LocalRepository {
   async savePasswordVault(input: Uint8Array, expectedRevision: string | null): Promise<VaultRecord> {
     const bytes = checkedPasswordVaultBytes(input);
     if (expectedRevision !== null && typeof expectedRevision !== 'string') throw Error('vault-invalid');
-    return this.fileStore.transaction('rw', restoreRecoveryTables(this.fileStore), async () => {
-      if (await this.fileStore.journal.count()) throw Error('restore-recovery-pending');
-      await assertRestoreRecoveryGate(this.fileStore);
-      if (await this.fileStore.importJournal.count() || await this.fileStore.pullJournal.count() ||
-        await this.fileStore.scopedPull.count()) throw Error('vault-recovery-pending');
-      const current = await this.fileStore.passwordVault.get('local');
+    return this.fileStore.transaction('rw', restoreRecoveryTables(this.fileStore), async (scopeTx1) => {
+      const repositoryTx1 = this.withStorage(scopeTx1);
+
+      if (await repositoryTx1.fileStore.journal.count()) throw Error('restore-recovery-pending');
+      await assertRestoreRecoveryGate(repositoryTx1.fileStore);
+      if (await repositoryTx1.fileStore.importJournal.count() || await repositoryTx1.fileStore.pullJournal.count() ||
+        await repositoryTx1.fileStore.scopedPull.count()) throw Error('vault-recovery-pending');
+      const current = await repositoryTx1.fileStore.passwordVault.get('local');
       if ((current?.revision ?? null) !== expectedRevision) throw Error('vault-stale');
       const record: VaultRecord = { id: 'local', revision: crypto.randomUUID(), bytes, updatedAt: new Date().toISOString() };
-      await this.fileStore.passwordVault.put(record);
+      await repositoryTx1.fileStore.passwordVault.put(record);
       return checkedPasswordVaultRecord(record);
     });
   }
@@ -239,7 +340,7 @@ export class LocalRepository {
   private async settleCategoryEdits(kind?: AssetKind, expectedOperationId?: string): Promise<void> {
     const pendingKinds = kind ? [kind] : (await this.fileStore.categoryEditJournal.toArray()).map(entry => entry.id);
     for (const pendingKind of pendingKinds) {
-      try { await replayCategoryEdit(this.db, this.fileStore, pendingKind, expectedOperationId); }
+      try { await replayCategoryEdit(this.records, this.fileStore, pendingKind, expectedOperationId); }
       catch (error) {
         if (error instanceof Error && error.message === 'category-stale') throw error;
         this.categoryEditRecoveryError = error instanceof Error && error.message === 'category-edit-conflict' ? error.message : 'category-edit-pending';
@@ -250,17 +351,17 @@ export class LocalRepository {
   }
 
   async retryCategoryEdit(kind: AssetKind, expectedOperationId?: string): Promise<void> {
-    await withRenewalLock(`keepany-renewal:${this.db.name}`, () => this.settleCategoryEdits(kind, expectedOperationId));
+    await withRenewalLock(`keepany-renewal:${this.records.name}`, () => this.settleCategoryEdits(kind, expectedOperationId));
   }
 
   async retryAllCategoryEdits(): Promise<void> {
-    await withRenewalLock(`keepany-renewal:${this.db.name}`, () => this.settleCategoryEdits());
+    await withRenewalLock(`keepany-renewal:${this.records.name}`, () => this.settleCategoryEdits());
   }
 
   async cancelCategoryEdit(kind: AssetKind, expectedOperationId?: string): Promise<void> {
-    await withRenewalLock(`keepany-renewal:${this.db.name}`, async () => {
+    await withRenewalLock(`keepany-renewal:${this.records.name}`, async () => {
       try {
-        await cancelCategoryEditIntent(this.db, this.fileStore, kind, expectedOperationId);
+        await cancelCategoryEditIntent(this.records, this.fileStore, kind, expectedOperationId);
         if (!(await this.fileStore.categoryEditJournal.count())) this.categoryEditRecoveryError = null;
       } catch (error) {
         if (error instanceof Error && error.message === 'category-stale') throw error;
@@ -279,20 +380,14 @@ export class LocalRepository {
   }
 
   private async changeCustomCategory(input: EditCustomCategoryInput | DeleteCustomCategoryInput, deleting: boolean): Promise<Category> {
-    return withRenewalLock(`keepany-renewal:${this.db.name}`, async () => {
+    return withRenewalLock(`keepany-renewal:${this.records.name}`, async () => {
       await this.settleRenewalJournals();
       await this.settleSubscriptionSaves();
       await this.settleReviewedExpenseConfirmations();
       try {
-        const store = {
-          categoryEditJournal: this.fileStore.categoryEditJournal,
-          transaction: this.fileStore.transaction.bind(this.fileStore),
-          recoveryTables: [this.fileStore.journal, this.fileStore.importJournal, this.fileStore.pullJournal,
-            this.fileStore.scopedPull, this.fileStore.scopedOutbox, this.fileStore.scopedAttachmentUploads,
-            this.fileStore.archiveMerge, this.fileStore.renewalJournal, this.fileStore.subscriptionSaveJournal],
-        };
-        const result = deleting ? await deleteCustomCategoryIntent(this.db, store, input)
-          : await editCustomCategoryIntent(this.db, store, input as EditCustomCategoryInput);
+        const store = this.fileStore;
+        const result = deleting ? await deleteCustomCategoryIntent(this.records, store, input)
+          : await editCustomCategoryIntent(this.records, store, input as EditCustomCategoryInput);
         if (!(await this.fileStore.categoryEditJournal.count())) this.categoryEditRecoveryError = null;
         return result;
       } catch (error) {
@@ -307,7 +402,7 @@ export class LocalRepository {
   }
 
   async retryIntakeReviewMigration(): Promise<void> {
-    if (this.db.name !== 'keepany-v1') return;
+    if (!this.webDb || this.records.name !== 'keepany-v1') return;
     try {
       const records = await this.allRecords();
       const assetIds = new Set(records.filter(row => row.type === 'asset')
@@ -321,13 +416,13 @@ export class LocalRepository {
   }
 
   async confirmReviewedExpense(expected: ReviewedCandidate): Promise<History> {
-    return withRenewalLock(`keepany-renewal:${this.db.name}`, async () => {
+    return withRenewalLock(`keepany-renewal:${this.records.name}`, async () => {
       if (this.intakeReviewMigrationError) await this.retryIntakeReviewMigration();
       await this.settleRenewalJournals();
       await this.settleSubscriptionSaves();
       if (await this.pendingArchiveMerge()) throw Error('archive-merge-pending');
       try {
-        const history = await confirmReviewedExpense(this.db, this.fileStore, expected);
+        const history = await confirmReviewedExpense(this.records, this.fileStore, expected);
         if (!(await this.fileStore.importJournal.toArray()).some(entry => entry.reviewedExpense)) this.intakeExpenseRecoveryError = null;
         return history;
       } catch (error) {
@@ -339,17 +434,17 @@ export class LocalRepository {
   }
 
   async retryReviewedExpenseConfirmations(): Promise<void> {
-    await withRenewalLock(`keepany-renewal:${this.db.name}`, () => this.settleReviewedExpenseConfirmations());
+    await withRenewalLock(`keepany-renewal:${this.records.name}`, () => this.settleReviewedExpenseConfirmations());
   }
 
   async pendingReviewedExpenseConfirmations(): Promise<PendingReviewedExpenseConfirmation[]> {
-    return pendingReviewedExpenseConfirmations(this.db, this.fileStore);
+    return pendingReviewedExpenseConfirmations(this.records, this.fileStore);
   }
 
   async cancelReviewedExpenseConfirmation(candidateId: string): Promise<'cancelled' | 'completed'> {
-    return withRenewalLock(`keepany-renewal:${this.db.name}`, async () => {
+    return withRenewalLock(`keepany-renewal:${this.records.name}`, async () => {
       try {
-        const outcome = await cancelReviewedExpenseConfirmation(this.db, this.fileStore, candidateId);
+        const outcome = await cancelReviewedExpenseConfirmation(this.records, this.fileStore, candidateId);
         if (!(await this.fileStore.importJournal.toArray()).some(entry => entry.reviewedExpense)) this.intakeExpenseRecoveryError = null;
         return outcome;
       } catch (error) {
@@ -363,7 +458,7 @@ export class LocalRepository {
   private async settleReviewedExpenseConfirmations(): Promise<void> {
     for (const entry of await this.fileStore.importJournal.toArray()) {
       if (!entry.reviewedExpense) continue;
-      try { await replayReviewedExpense(this.db, this.fileStore, entry.id); }
+      try { await replayReviewedExpense(this.records, this.fileStore, entry.id); }
       catch (error) {
         this.intakeExpenseRecoveryError = error instanceof Error && error.message.startsWith('review-expense-')
           ? error.message : 'review-expense-pending';
@@ -374,16 +469,16 @@ export class LocalRepository {
   }
 
   async allRecords(): Promise<RecordRow[]> {
-    return (await this.db.records.find().exec()).map(canonical);
+    return (await this.records.list()).map(canonical);
   }
 
   async get<T>(type: EntityType, id: string): Promise<T | null> {
-    const doc = await this.db.records.findOne(key(type, id)).exec();
+    const doc = await this.records.get(key(type, id));
     return doc ? JSON.parse(canonical(doc).payload) as T : null;
   }
 
   async list<T>(type: EntityType, includeDeleted = false): Promise<T[]> {
-    const docs = await this.db.records.find({ selector: { type } }).exec();
+    const docs = await this.records.list(type);
     return docs.map(doc => JSON.parse(canonical(doc).payload) as T)
       .filter(value => includeDeleted || !(value as { deleted?: boolean }).deleted);
   }
@@ -397,7 +492,7 @@ export class LocalRepository {
   async save(type: EntityType, value: unknown): Promise<RecordRow> {
     const task = type === 'task' ? entitySchemas.task.parse(value) : null;
     if (task) {
-      return withRenewalLock(`keepany-task:${this.db.name}`, () => this.saveUnlocked(type, value));
+      return withRenewalLock(`keepany-task:${this.records.name}`, () => this.saveUnlocked(type, value));
     }
     return this.saveUnlocked(type, value);
   }
@@ -406,10 +501,11 @@ export class LocalRepository {
     const trimmed = name.trim();
     const normalized = normalizeCategoryName(trimmed);
     if (!normalized) throw Error('category-name');
-    return withRenewalLock(`keepany-category:${this.db.name}:${kind}:${normalized}`, () =>
-      withCategoryMutationGate(this.db, this.fileStore, [{ type: 'category', id: '', kind }], async () => {
-      const query = this.db.records.find({ selector: { type: 'category' } });
-      const categories = (await this.db.records.storageInstance.query(query.getPreparedQuery())).documents
+    return withRenewalLock(`keepany-category:${this.records.name}:${kind}:${normalized}`, () =>
+      withCategoryMutationGate(this.records, this.fileStore, [{ type: 'category', id: '', kind }], async (scopeGate1) => {
+        const repositoryGate1 = this.withStorage(scopeGate1);
+
+      const categories = (await repositoryGate1.records.list('category'))
         .map((row: RecordRow) => entitySchemas.category.parse(JSON.parse(row.payload)));
       if (categories.some(category => category.kind === kind && !category.deleted &&
         normalizeCategoryName(category.name) === normalized)) throw Error('category-duplicate');
@@ -422,13 +518,13 @@ export class LocalRepository {
         id: `${prefix}-${sequence}`, kind, name: trimmed, order, deleted: false,
       });
       try {
-        await this.db.records.insert(rowFor('category', category));
+        await repositoryGate1.records.insert(rowFor('category', category));
       } catch (error) {
-        if (await this.get<Category>('category', category.id)) throw Error('category-duplicate');
+        if (await repositoryGate1.get<Category>('category', category.id)) throw Error('category-duplicate');
         throw error;
       }
       return category;
-    }));
+      }));
   }
 
   async saveAssetIfCurrent(expected: Asset, next: Asset): Promise<RecordRow> {
@@ -442,15 +538,15 @@ export class LocalRepository {
   }
 
   async getPendingSubscriptionSave(assetId: string): Promise<PendingSubscriptionSave | null> {
-    return pendingSubscriptionSave(this.db, this.fileStore, assetId);
+    return pendingSubscriptionSave(this.records, this.fileStore, assetId);
   }
 
   private async settleSubscriptionSaves(assetId?: string): Promise<void> {
     const journals = assetId
-      ? await this.fileStore.subscriptionSaveJournal.where('assetId').equals(assetId).toArray()
+      ? await this.fileStore.subscriptionSaveJournal.equals('assetId', assetId)
       : await this.fileStore.subscriptionSaveJournal.toArray();
     for (const journal of journals) {
-      try { await replaySubscriptionSave(this.db, this.fileStore, journal.id); }
+      try { await replaySubscriptionSave(this.records, this.fileStore, journal.id); }
       catch (error) {
         this.subscriptionRecoveryError = error instanceof Error ? error.message : 'subscription-relations-pending';
         throw Error('subscription-relations-pending');
@@ -460,18 +556,18 @@ export class LocalRepository {
   }
 
   async retrySubscriptionSave(assetId: string): Promise<void> {
-    await withRenewalLock(`keepany-renewal:${this.db.name}`, () => this.settleSubscriptionSaves(assetId));
+    await withRenewalLock(`keepany-renewal:${this.records.name}`, () => this.settleSubscriptionSaves(assetId));
   }
 
   async retryAllSubscriptionSaves(): Promise<void> {
-    await withRenewalLock(`keepany-renewal:${this.db.name}`, () => this.settleSubscriptionSaves());
+    await withRenewalLock(`keepany-renewal:${this.records.name}`, () => this.settleSubscriptionSaves());
   }
 
   // Abandon only the remaining relation intent. Asset fields and relations already
   // accepted by RxDB stay in place and can be reviewed through normal editing.
   async abandonSubscriptionSave(assetId: string): Promise<void> {
-    await withRenewalLock(`keepany-renewal:${this.db.name}`, async () => {
-      await this.fileStore.subscriptionSaveJournal.where('assetId').equals(assetId).delete();
+    await withRenewalLock(`keepany-renewal:${this.records.name}`, async () => {
+      await this.fileStore.subscriptionSaveJournal.deleteEquals('assetId', assetId);
       if (!(await this.fileStore.subscriptionSaveJournal.count())) this.subscriptionRecoveryError = null;
     });
   }
@@ -486,10 +582,10 @@ export class LocalRepository {
       links.some(link => !['project', 'account'].includes(link.kind) || !link.id || link.id === proposed.id)) {
       throw Error('subscription-save-invalid');
     }
-    return withRenewalLock(`keepany-renewal:${this.db.name}`, async () => {
+    return withRenewalLock(`keepany-renewal:${this.records.name}`, async () => {
       await this.settleRenewalJournals();
       await this.settleSubscriptionSaves(proposed.id);
-      const [current] = await this.db.records.storageInstance.findDocumentsById([key('asset', proposed.id)], false);
+      const [current] = await this.records.getMany([key('asset', proposed.id)], false);
       if (expected ? !current || JSON.stringify(parsedPayload(current as RecordRow)) !== rowFor('asset', expected).payload : !!current) {
         throw Error('asset-stale');
       }
@@ -509,27 +605,31 @@ export class LocalRepository {
         expectedMarker: expected?.lastSubscriptionSaveId ?? '', next: rowFor('asset', next), relations };
       for (const fileId of next.attachments) if (!(await this.fileStore.blobs.get(fileId))) throw Error('attachment-missing');
       try {
-        await this.fileStore.transaction('rw', this.fileStore.subscriptionSaveJournal, this.fileStore.categoryEditJournal, async () => {
-          await assertCategoryMutationAllowed(this.db, this.fileStore, [{ type: 'asset', id: next.id, kind: next.kind }]);
-          await this.fileStore.subscriptionSaveJournal.add(journal);
+        await this.fileStore.transaction('rw', [this.fileStore.subscriptionSaveJournal, this.fileStore.categoryEditJournal], async (scopeTx2) => {
+          const repositoryTx2 = this.withStorage(scopeTx2);
+
+          await assertCategoryMutationAllowed(repositoryTx2.records, repositoryTx2.fileStore, [{ type: 'asset', id: next.id, kind: next.kind }]);
+          await repositoryTx2.fileStore.subscriptionSaveJournal.add(journal);
         });
       } catch (error) {
         if (await this.getPendingSubscriptionSave(next.id)) throw Error('subscription-relations-pending');
         throw error;
       }
       try {
-        await this.fileStore.transaction('rw', this.fileStore.subscriptionSaveJournal, this.fileStore.categoryEditJournal, async () => {
-          await assertCategoryMutationAllowed(this.db, this.fileStore, [{ type: 'asset', id: next.id, kind: next.kind }]);
+        await this.fileStore.transaction('rw', [this.fileStore.subscriptionSaveJournal, this.fileStore.categoryEditJournal], async (scopeTx3) => {
+          const repositoryTx3 = this.withStorage(scopeTx3);
+
+          await assertCategoryMutationAllowed(repositoryTx3.records, repositoryTx3.fileStore, [{ type: 'asset', id: next.id, kind: next.kind }]);
           // A second tab may cancel an uncommitted intent before this transaction
           // starts. Never commit the asset after its recovery record has disappeared.
-          if (!(await this.fileStore.subscriptionSaveJournal.get(id))) throw Error('asset-stale');
-          await Dexie.waitFor(Dexie.ignoreTransaction(() => this.saveEntityUnlocked('asset', next,
-            expected ? rowFor('asset', expected).payload : null, true, true)));
+          if (!(await repositoryTx3.fileStore.subscriptionSaveJournal.get(id))) throw Error('asset-stale');
+          await repositoryTx3.fileStore.outsideTransaction(() => repositoryTx3.saveEntityUnlocked('asset', next,
+            expected ? rowFor('asset', expected).payload : null, true, true));
         });
       } catch (error) {
         try {
-          const outcome = await replaySubscriptionSave(this.db, this.fileStore, id);
-          if (outcome === 'committed' || await subscriptionSaveComplete(this.db, journal)) return next;
+          const outcome = await replaySubscriptionSave(this.records, this.fileStore, id);
+          if (outcome === 'committed' || await subscriptionSaveComplete(this.records, journal)) return next;
         } catch (recoveryError) {
           this.subscriptionRecoveryError = recoveryError instanceof Error ? recoveryError.message : 'subscription-relations-pending';
           throw Error('subscription-relations-pending');
@@ -537,8 +637,8 @@ export class LocalRepository {
         throw error;
       }
       try {
-        if (await replaySubscriptionSave(this.db, this.fileStore, id) !== 'committed' &&
-          !(await subscriptionSaveComplete(this.db, journal))) throw Error('asset-stale');
+        if (await replaySubscriptionSave(this.records, this.fileStore, id) !== 'committed' &&
+          !(await subscriptionSaveComplete(this.records, journal))) throw Error('asset-stale');
       }
       catch (error) {
         if (error instanceof Error && error.message === 'asset-stale') throw error;
@@ -552,7 +652,7 @@ export class LocalRepository {
 
   async saveTaskIfCurrent(expected: Task, next: Task): Promise<RecordRow> {
     if (expected.id !== next.id || expected.projectWorkflow?.roundId !== next.projectWorkflow?.roundId) throw Error('task-stale');
-    return withRenewalLock(`keepany-task:${this.db.name}`, () => this.saveUnlocked('task', next, rowFor('task', expected).payload));
+    return withRenewalLock(`keepany-task:${this.records.name}`, () => this.saveUnlocked('task', next, rowFor('task', expected).payload));
   }
 
   async saveSubmissionIfCurrent(expected: Submission, next: Submission): Promise<RecordRow> {
@@ -569,9 +669,11 @@ export class LocalRepository {
   async createFinanceEntry(value: History): Promise<RecordRow> {
     const next = entitySchemas.history.parse(value);
     if (next.deleted || !financeActions.includes(next.action as typeof financeActions[number])) throw Error('finance-invalid');
-    return withCategoryMutationGate(this.db, this.fileStore, [], async () => {
-      await this.assertFinanceTargets(next);
-      return this.saveEntityUnlocked('history', next, null);
+    return withCategoryMutationGate(this.records, this.fileStore, [], async (scopeGate2) => {
+      const repositoryGate2 = this.withStorage(scopeGate2);
+
+      await repositoryGate2.assertFinanceTargets(next);
+      return repositoryGate2.saveEntityUnlocked('history', next, null);
     });
   }
 
@@ -584,18 +686,20 @@ export class LocalRepository {
       const originalFields = (entry: History) => JSON.stringify({ ...entry, assetIds: undefined, financeCorrection: undefined });
       if (originalFields(next) !== originalFields(expected)) throw Error('finance-renewal-immutable');
     }
-    return withRenewalLock(`keepany-renewal:${this.db.name}`, async () => {
+    return withRenewalLock(`keepany-renewal:${this.records.name}`, async () => {
       await this.settleRenewalJournals();
-      return withCategoryMutationGate(this.db, this.fileStore, [], async () => {
-        if (!next.deleted && !next.financeCorrection?.hidden) await this.assertFinanceTargets(next);
-        return this.saveEntityUnlocked('history', next, rowFor('history', expected).payload);
+      return withCategoryMutationGate(this.records, this.fileStore, [], async (scopeGate3) => {
+        const repositoryGate3 = this.withStorage(scopeGate3);
+
+        if (!next.deleted && !next.financeCorrection?.hidden) await repositoryGate3.assertFinanceTargets(next);
+        return repositoryGate3.saveEntityUnlocked('history', next, rowFor('history', expected).payload);
       });
     });
   }
 
   private async assertFinanceTargets(entry: History): Promise<void> {
     const ids = historyAssetIds(entry);
-    const rows = await this.db.records.storageInstance.findDocumentsById(ids.map(id => key('asset', id)), false);
+    const rows = await this.records.getMany(ids.map(id => key('asset', id)), false);
     const targets = new Map(rows.map(row => {
       const asset = entitySchemas.asset.parse(JSON.parse(row.payload));
       return [asset.id, asset] as const;
@@ -605,7 +709,7 @@ export class LocalRepository {
 
   async archiveProjectIfWorkflowComplete(expectedProject: Asset, expectedRoundId: string): Promise<RecordRow> {
     if (expectedProject.kind !== 'project' || expectedProject.deleted || expectedProject.status === 'archived' || !expectedRoundId) throw Error('workflow-stale');
-    return withRenewalLock(`keepany-task:${this.db.name}`, async () => {
+    return withRenewalLock(`keepany-task:${this.records.name}`, async () => {
       const tasks = await this.list<Task>('task', true);
       const round = currentProjectWorkflowRound(tasks, expectedProject.id, 'close');
       if (!round.length || round[0].projectWorkflow?.roundId !== expectedRoundId ||
@@ -623,13 +727,15 @@ export class LocalRepository {
 
   async saveReminderPreferenceIfCurrent(expected: { id: string; value: unknown } | null, next: { id: string; value: unknown }, expectedAsset?: Asset): Promise<RecordRow> {
     if (next.id !== 'reminder-settings' || (expected && expected.id !== next.id)) throw Error('preference-stale');
-    return withCategoryMutationGate(this.db, this.fileStore, [], async () => {
+    return withCategoryMutationGate(this.records, this.fileStore, [], async (scopeGate4) => {
+      const repositoryGate4 = this.withStorage(scopeGate4);
+
       if (expectedAsset) {
-        const [row] = await this.db.records.storageInstance.findDocumentsById([key('asset', expectedAsset.id)], false);
+        const [row] = await repositoryGate4.records.getMany([key('asset', expectedAsset.id)], false);
         const current = row ? entitySchemas.asset.parse(JSON.parse(row.payload)) : null;
         if (!current || current.deleted || current.kind !== 'subscription' || current.status !== 'active' || JSON.stringify(current) !== rowFor('asset', expectedAsset).payload) throw Error('asset-stale');
       }
-      return this.saveEntityUnlocked('preference', next, expected ? rowFor('preference', expected).payload : null);
+      return repositoryGate4.saveEntityUnlocked('preference', next, expected ? rowFor('preference', expected).payload : null);
     });
   }
 
@@ -637,9 +743,11 @@ export class LocalRepository {
   // Persist an at-most-once receipt before the synchronous notification callback.
   async deliverReminderIfCurrent(input: { id: string; sourceType: 'task' | 'asset'; expected: Task | Asset; expectedPreference: { id: string; value: unknown } | null; scheduledAt: string }, deliver: () => void): Promise<boolean> {
     if (!/^reminder-delivery:[a-f0-9]{64}$/.test(input.id) || !Number.isFinite(Date.parse(input.scheduledAt)) || Date.parse(input.scheduledAt) > Date.now()) throw Error('reminder-invalid');
-    return withCategoryMutationGate(this.db, this.fileStore, [], async () => {
+    return withCategoryMutationGate(this.records, this.fileStore, [], async (scopeGate5) => {
+      const repositoryGate5 = this.withStorage(scopeGate5);
+
       const read = async (type: EntityType, id: string) => {
-        const [row] = await this.db.records.storageInstance.findDocumentsById([key(type, id)], false);
+        const [row] = await repositoryGate5.records.getMany([key(type, id)], false);
         return row ? parsedPayload(row as RecordRow) : null;
       };
       const current = await read(input.sourceType, input.expected.id);
@@ -655,7 +763,7 @@ export class LocalRepository {
       const settings = await read('preference', 'reminder-settings');
       if (JSON.stringify(settings) !== JSON.stringify(input.expectedPreference ? entitySchemas.preference.parse(input.expectedPreference) : null)) return false;
       if (await read('preference', input.id)) return false;
-      await this.saveEntityUnlocked('preference', { id: input.id, value: { sourceType: input.sourceType, sourceId: input.expected.id, scheduledAt: input.scheduledAt, deliveredAt: new Date().toISOString() } }, null);
+      await repositoryGate5.saveEntityUnlocked('preference', { id: input.id, value: { sourceType: input.sourceType, sourceId: input.expected.id, scheduledAt: input.scheduledAt, deliveredAt: new Date().toISOString() } }, null);
       deliver();
       return true;
     });
@@ -668,8 +776,11 @@ export class LocalRepository {
     if (type === 'asset') for (const id of (entity as Asset).attachments) {
       if (!(await this.fileStore.blobs.get(id))) throw Error('attachment-missing');
     }
-    return withCategoryMutationGate(this.db, this.fileStore, [{ type, id: entity.id, ...('kind' in entity ? { kind: entity.kind } : {}) }],
-      () => this.saveEntityUnlocked(type, value, expectedPayload, subscriptionSave, true));
+    return withCategoryMutationGate(this.records, this.fileStore, [{ type, id: entity.id, ...('kind' in entity ? { kind: entity.kind } : {}) }],
+      async (scopeGate6) => {
+      const repositoryGate6 = this.withStorage(scopeGate6);
+return repositoryGate6.saveEntityUnlocked(type, value, expectedPayload, subscriptionSave, true);
+    });
   }
 
   private async saveEntityUnlocked(type: EntityType, value: unknown, expectedPayload?: string | null, subscriptionSave = false, attachmentsChecked = false): Promise<RecordRow> {
@@ -706,9 +817,9 @@ export class LocalRepository {
       const tasks = await this.list<{ id: string; dedupeKey: string; done: boolean }>('task');
       if (tasks.some(task => task.id !== entity.id && task.dedupeKey === entity.dedupeKey && !task.done)) throw Error('task-duplicate');
     }
-    const current = await this.db.records.findOne(next.id).exec();
+    const current = await this.records.get(next.id);
     if (current) {
-      await current.incrementalModify((data: RecordRow) => {
+      await this.records.modify(current.id, (data: RecordRow) => {
         if (expectedPayload === null || (expectedPayload !== undefined && JSON.stringify(parsedPayload(data)) !== expectedPayload)) throw Error(type === 'task' ? 'task-stale' : type === 'preference' ? 'preference-stale' : type === 'submission' ? 'submission-stale' : type === 'history' ? 'history-stale' : 'asset-stale');
         if ((parsedPayload(data) as { purged?: boolean }).purged && next.payload !== data.payload) throw Error('trash-purged');
         if (parsedPayload(data).deleted && !parsedPayload(next).deleted) throw Error('tombstone-restore-required');
@@ -736,9 +847,9 @@ export class LocalRepository {
         (entity.status !== 'active' || entity.borrower ||
           (entity.itemLifecycleStatus !== null && entity.itemLifecycleStatus !== 'inUse') || entity.itemStatusDate)) throw Error('item-action-required');
       try {
-        await this.db.records.insert(next);
+        await this.records.insert(next);
       } catch (error) {
-        if (!(await this.db.records.findOne(next.id).exec())) throw error;
+        if (!(await this.records.get(next.id))) throw error;
         if (expectedPayload !== undefined) throw Error(type === 'task' ? 'task-stale' : type === 'preference' ? 'preference-stale' : type === 'submission' ? 'submission-stale' : type === 'history' ? 'history-stale' : 'asset-stale');
         return this.saveEntityUnlocked(type, value, undefined, subscriptionSave, attachmentsChecked);
       }
@@ -750,9 +861,11 @@ export class LocalRepository {
   async setTaskDone(id: string, expectedDone: boolean, expectedReminderAt?: string, expectedTask?: Task): Promise<Task> {
     if (expectedTask && expectedTask.id !== id) throw Error('task-stale');
     const expectedPayload = expectedTask ? rowFor('task', expectedTask).payload : undefined;
-    return withRenewalLock(`keepany-task:${this.db.name}`, async () => {
-      return withCategoryMutationGate(this.db, this.fileStore, [], async () => {
-      const current = await this.db.records.findOne(key('task', id)).exec();
+    return withRenewalLock(`keepany-task:${this.records.name}`, async () => {
+      return withCategoryMutationGate(this.records, this.fileStore, [], async (scopeGate7) => {
+        const repositoryGate7 = this.withStorage(scopeGate7);
+
+      const current = await repositoryGate7.records.get(key('task', id));
       if (!current) throw Error('task-stale');
       const before = entitySchemas.task.parse(JSON.parse(canonical(current).payload));
       if (expectedPayload !== undefined && JSON.stringify(before) !== expectedPayload) throw Error('task-stale');
@@ -762,15 +875,15 @@ export class LocalRepository {
       const nextDueDate = recurringReminder ? zonedParts(recurringReminder.at, recurringReminder.timeZone).date : before.dueDate;
       const nextDedupeKey = recurringReminder && before.dedupeKey.startsWith('manual:') ? `${before.dedupeKey.slice(0, before.dedupeKey.lastIndexOf(':'))}:${nextDueDate}` : before.dedupeKey;
       if (recurringReminder && nextDedupeKey) {
-        const tasks = await this.list<Task>('task');
+        const tasks = await repositoryGate7.list<Task>('task');
         if (tasks.some(task => task.id !== id && !task.done && task.dedupeKey === nextDedupeKey)) throw Error('task-duplicate');
       }
       if (expectedDone && before.dedupeKey) {
-        const tasks = await this.list<Task>('task');
+        const tasks = await repositoryGate7.list<Task>('task');
         if (tasks.some(task => task.id !== id && !task.done && task.dedupeKey === before.dedupeKey)) throw Error('task-duplicate');
       }
       let result: Task | null = null;
-      await current.incrementalModify((data: RecordRow) => {
+      await repositoryGate7.records.modify(current.id, (data: RecordRow) => {
         const task = entitySchemas.task.parse(JSON.parse(data.payload));
         if (expectedPayload !== undefined && JSON.stringify(task) !== expectedPayload) throw Error('task-stale');
         if (task.deleted || task.done !== expectedDone || (task.reminder?.rule.mode !== undefined && task.reminder.rule.mode !== 'once' && task.reminder.at !== expectedReminderAt)) throw Error('task-stale');
@@ -788,13 +901,15 @@ export class LocalRepository {
   }
 
   async setItemArchived(id: string, expectedStatus: 'active' | 'archived'): Promise<Asset> {
-    return withRenewalLock(`keepany-renewal:${this.db.name}`, async () => {
+    return withRenewalLock(`keepany-renewal:${this.records.name}`, async () => {
       await this.settleRenewalJournals();
-      return withCategoryMutationGate(this.db, this.fileStore, [{ type: 'asset', id, kind: 'item' }], async () => {
-      const current = await this.db.records.findOne(key('asset', id)).exec();
+      return withCategoryMutationGate(this.records, this.fileStore, [{ type: 'asset', id, kind: 'item' }], async (scopeGate8) => {
+        const repositoryGate8 = this.withStorage(scopeGate8);
+
+      const current = await repositoryGate8.records.get(key('asset', id));
       if (!current) throw Error('item-stale');
       let result: Asset | null = null;
-      await current.incrementalModify((data: RecordRow) => {
+      await repositoryGate8.records.modify(current.id, (data: RecordRow) => {
         const item = entitySchemas.asset.parse(JSON.parse(data.payload));
         if (item.kind !== 'item' || item.deleted || item.status !== expectedStatus || item.borrower) throw Error('item-stale');
         result = entitySchemas.asset.parse({ ...item, status: expectedStatus === 'active' ? 'archived' : 'active',
@@ -809,13 +924,13 @@ export class LocalRepository {
 
   // New records only. A durable journal rolls back partial writes after errors or interruption.
   async saveBatch(items: ReadonlyArray<{ type: EntityType; value: unknown }>): Promise<number> {
-    const run = () => withRenewalLock(`keepany-batch:${this.db.name}`, () => this.saveBatchUnlocked(items));
+    const run = () => withRenewalLock(`keepany-batch:${this.records.name}`, () => this.saveBatchUnlocked(items));
     return items.some(item => item.type === 'task')
-      ? withRenewalLock(`keepany-task:${this.db.name}`, run) : run();
+      ? withRenewalLock(`keepany-task:${this.records.name}`, run) : run();
   }
 
   async saveBatchIfAssetsCurrent(items: ReadonlyArray<{ type: EntityType; value: unknown }>, expectedAssets: readonly Asset[]): Promise<number> {
-    return withRenewalLock(`keepany-batch:${this.db.name}`, () => this.saveBatchUnlocked(items, expectedAssets));
+    return withRenewalLock(`keepany-batch:${this.records.name}`, () => this.saveBatchUnlocked(items, expectedAssets));
   }
 
   private async saveBatchUnlocked(items: ReadonlyArray<{ type: EntityType; value: unknown }>, expectedAssets: readonly Asset[] = []): Promise<number> {
@@ -838,7 +953,7 @@ export class LocalRepository {
     const taskKeys = new Set<string>();
     const existingTasks = await this.list<{ id: string; dedupeKey: string; done: boolean }>('task');
     for (const row of rows) {
-      if (await this.db.records.findOne(row.id).exec()) throw Error('batch-existing');
+      if (await this.records.get(row.id)) throw Error('batch-existing');
       const value = parsedPayload(row) as Record<string, unknown>;
       if (row.type === 'relation' && !value.deleted) {
         for (const endpoint of [value.from, value.to] as string[]) {
@@ -857,9 +972,9 @@ export class LocalRepository {
       }
     }
     const expected = expectedAssets.map(asset => rowFor('asset', entitySchemas.asset.parse(asset)));
-    const assertAssetsCurrent = async () => {
+    const assertAssetsCurrent = async (records: RecordBackend) => {
       for (const asset of expected) {
-        const [current] = await this.db.records.storageInstance.findDocumentsById([asset.id], false);
+        const [current] = await records.getMany([asset.id], false);
         if (!current || JSON.stringify(parsedPayload(current as RecordRow)) !== asset.payload) throw Error('asset-stale');
       }
     };
@@ -869,37 +984,41 @@ export class LocalRepository {
       return { type: row.type, id: value.id, ...('kind' in value ? { kind: value.kind } : {}) };
     });
     await this.fileStore.transaction('rw', [this.fileStore.categoryEditJournal, this.fileStore.importJournal,
-      this.fileStore.journal, this.fileStore.archiveMerge], async () => {
-      if (await this.fileStore.journal.count()) throw Error('restore-recovery-pending');
-      if (await this.fileStore.archiveMerge.count()) throw Error('archive-merge-pending');
-      await assertCategoryMutationAllowed(this.db, this.fileStore, targets);
-      await Dexie.waitFor(Dexie.ignoreTransaction(assertAssetsCurrent));
-      await this.fileStore.importJournal.put({ id, rows });
+      this.fileStore.journal, this.fileStore.archiveMerge], async (scopeTx4) => {
+      const repositoryTx4 = this.withStorage(scopeTx4);
+
+      if (await repositoryTx4.fileStore.journal.count()) throw Error('restore-recovery-pending');
+      if (await repositoryTx4.fileStore.archiveMerge.count()) throw Error('archive-merge-pending');
+      await assertCategoryMutationAllowed(repositoryTx4.records, repositoryTx4.fileStore, targets);
+      await repositoryTx4.fileStore.outsideTransaction(() => assertAssetsCurrent(repositoryTx4.records));
+      await repositoryTx4.fileStore.importJournal.put({ id, rows });
     });
     try {
       await this.fileStore.transaction('rw', [this.fileStore.categoryEditJournal, this.fileStore.importJournal,
-        this.fileStore.journal, this.fileStore.archiveMerge], async () => {
-        if (await this.fileStore.journal.count()) throw Error('restore-recovery-pending');
-        if (await this.fileStore.archiveMerge.count()) throw Error('archive-merge-pending');
-        await assertCategoryMutationAllowed(this.db, this.fileStore, targets);
-        if (!(await this.fileStore.importJournal.get(id))) throw Error('batch-insert-failed');
-        const result = await Dexie.waitFor(Dexie.ignoreTransaction(async () => {
-          await assertAssetsCurrent();
-          return this.db.records.bulkInsert(rows);
-        }));
+        this.fileStore.journal, this.fileStore.archiveMerge], async (scopeTx5) => {
+        const repositoryTx5 = this.withStorage(scopeTx5);
+
+        if (await repositoryTx5.fileStore.journal.count()) throw Error('restore-recovery-pending');
+        if (await repositoryTx5.fileStore.archiveMerge.count()) throw Error('archive-merge-pending');
+        await assertCategoryMutationAllowed(repositoryTx5.records, repositoryTx5.fileStore, targets);
+        if (!(await repositoryTx5.fileStore.importJournal.get(id))) throw Error('batch-insert-failed');
+        const result = await repositoryTx5.fileStore.outsideTransaction(async () => {
+          await assertAssetsCurrent(repositoryTx5.records);
+          return repositoryTx5.records.insertMany(rows);
+        });
         if (result.error.length) throw Error('batch-insert-failed');
-        await this.fileStore.importJournal.delete(id);
+        await repositoryTx5.fileStore.importJournal.delete(id);
       });
       return rows.length;
     } catch (error) {
-      await rollbackImport(this.db, this.fileStore, id);
+      await rollbackImport(this.records, this.fileStore, id);
       throw error;
     }
   }
 
   private async settleRenewalJournals(): Promise<void> {
     for (const entry of await this.fileStore.renewalJournal.toArray()) {
-      try { await replayRenewalJournal(this.db, this.fileStore, entry.id); }
+      try { await replayRenewalJournal(this.records, this.fileStore, entry.id); }
       catch (error) {
         this.renewalRecoveryError = error instanceof Error ? error.message : 'renewal-recovery-pending';
         throw Error('renewal-recovery-pending');
@@ -970,14 +1089,14 @@ export class LocalRepository {
 
   private async recordHistoryPair(expected: Asset, next: Asset, event: History,
     kind: 'renewal' | 'item'): Promise<void> {
-    const lockName = `keepany-renewal:${this.db.name}`;
+    const lockName = `keepany-renewal:${this.records.name}`;
     await withRenewalLock(lockName, async () => {
       await this.settleRenewalJournals();
       for (let attempt = 0; attempt < 3; attempt++) {
         // Direct storage writes can leave RxDocument._data at an older revision until
         // its change event arrives. Read the storage revision used by the CAS itself.
-        const [current] = await this.db.records.storageInstance.findDocumentsById([key('asset', expected.id)], false);
-        const [existingHistory] = await this.db.records.storageInstance.findDocumentsById([key('history', event.id)], false);
+        const [current] = await this.records.getMany([key('asset', expected.id)], false);
+        const [existingHistory] = await this.records.getMany([key('history', event.id)], false);
         if (!current || existingHistory) throw Error(kind === 'item' ? 'item-stale' : 'renewal-stale');
         const currentRow = current as RecordRow;
         const currentAsset = entitySchemas.asset.parse(JSON.parse(currentRow.payload));
@@ -985,28 +1104,32 @@ export class LocalRepository {
         const nextRow = rowFor('asset', next);
         const historyRow = rowFor('history', event);
         const journalId = crypto.randomUUID();
-        await this.fileStore.transaction('rw', this.fileStore.categoryEditJournal, this.fileStore.renewalJournal, async () => {
-          await assertCategoryMutationAllowed(this.db, this.fileStore, [{ type: 'asset', id: expected.id, kind: expected.kind }]);
-          await this.fileStore.renewalJournal.add({ id: journalId, assetId: expected.id,
+        await this.fileStore.transaction('rw', [this.fileStore.categoryEditJournal, this.fileStore.renewalJournal], async (scopeTx6) => {
+          const repositoryTx6 = this.withStorage(scopeTx6);
+
+          await assertCategoryMutationAllowed(repositoryTx6.records, repositoryTx6.fileStore, [{ type: 'asset', id: expected.id, kind: expected.kind }]);
+          await repositoryTx6.fileStore.renewalJournal.add({ id: journalId, assetId: expected.id,
             expectedPayload: currentRow.payload, next: nextRow, history: historyRow });
         });
         try {
-          await this.fileStore.transaction('rw', this.fileStore.categoryEditJournal, this.fileStore.renewalJournal, async () => {
-            await assertCategoryMutationAllowed(this.db, this.fileStore, [{ type: 'asset', id: expected.id, kind: expected.kind }]);
-            if (!(await this.fileStore.renewalJournal.get(journalId))) throw Error(kind === 'item' ? 'item-stale' : 'renewal-stale');
-            const result = await Dexie.waitFor(Dexie.ignoreTransaction(() => this.db.records.storageInstance.bulkWrite([
-              { previous: current, document: { ...current, ...nextRow } },
-              { document: { ...historyRow, _deleted: false, _attachments: {} } },
-            ], `keepany-${kind}`)));
+          await this.fileStore.transaction('rw', [this.fileStore.categoryEditJournal, this.fileStore.renewalJournal], async (scopeTx7) => {
+            const repositoryTx7 = this.withStorage(scopeTx7);
+
+            await assertCategoryMutationAllowed(repositoryTx7.records, repositoryTx7.fileStore, [{ type: 'asset', id: expected.id, kind: expected.kind }]);
+            if (!(await repositoryTx7.fileStore.renewalJournal.get(journalId))) throw Error(kind === 'item' ? 'item-stale' : 'renewal-stale');
+            const result = await repositoryTx7.fileStore.outsideTransaction(() => repositoryTx7.records.compareAndWrite([
+              { previous: current, next: { ...current, ...nextRow } },
+              { previous: null, next: historyRow },
+            ], `keepany-${kind}`));
             if (result.error.length) throw Error(result.error.some(error => error.status === 409) ?
               (kind === 'item' ? 'item-stale' : 'renewal-stale') : `${kind}-write-failed`);
             // A failed cleanup leaves a committed pair that replay can recognize.
-            await this.fileStore.renewalJournal.delete(journalId).catch(() => {});
+            await repositoryTx7.fileStore.renewalJournal.delete(journalId).catch(() => {});
           });
           return;
         } catch (error) {
           let outcome: 'committed' | 'cancelled';
-          try { outcome = await replayRenewalJournal(this.db, this.fileStore, journalId); }
+          try { outcome = await replayRenewalJournal(this.records, this.fileStore, journalId); }
           catch (recoveryError) {
             this.renewalRecoveryError = recoveryError instanceof Error ? recoveryError.message : 'renewal-recovery-pending';
             throw Error('renewal-recovery-pending');
@@ -1035,13 +1158,15 @@ export class LocalRepository {
   // RxDB records are one local dataset. Only an explicit migration may attach them to another remote.
   async claimDatasetBinding(binding: DatasetBinding): Promise<DatasetBinding> {
     await validateDatasetBinding(binding);
-    return withRenewalLock(`keepany-renewal:${this.db.name}`, async () => {
+    return withRenewalLock(`keepany-renewal:${this.records.name}`, async () => {
       await this.fileStore.transaction('rw', [this.fileStore.datasetBinding, this.fileStore.scopedMeta,
         this.fileStore.scopedBase, this.fileStore.scopedOutbox, this.fileStore.scopedPull,
         this.fileStore.scopedAttachmentUploads, this.fileStore.syncBase, this.fileStore.syncMeta,
-        this.fileStore.pullJournal, this.fileStore.journal], async () => {
-          if (await this.fileStore.journal.count()) throw Error('restore-recovery-pending');
-          await claimDatasetBindingInTransaction(this.fileStore, binding);
+        this.fileStore.pullJournal, this.fileStore.journal], async (scopeTx8) => {
+        const repositoryTx8 = this.withStorage(scopeTx8);
+
+          if (await repositoryTx8.fileStore.journal.count()) throw Error('restore-recovery-pending');
+          await claimDatasetBindingInTransaction(repositoryTx8.fileStore, binding);
       });
       return { ...binding };
     });
@@ -1080,21 +1205,23 @@ export class LocalRepository {
     if (!/^[a-f0-9]{64}$/.test(fingerprint) || !Number.isSafeInteger(keyEpoch) || keyEpoch < 1) throw Error('sync-key');
     return this.fileStore.transaction('rw', [this.fileStore.datasetBinding, this.fileStore.scopedMeta,
       this.fileStore.scopedBase, this.fileStore.scopedOutbox, this.fileStore.scopedPull,
-      this.fileStore.scopedAttachmentUploads, this.fileStore.journal], async () => {
-      if (await this.fileStore.journal.count()) throw Error('restore-recovery-pending');
-      const binding = await this.fileStore.datasetBinding.get('active');
+      this.fileStore.scopedAttachmentUploads, this.fileStore.journal], async (scopeTx9) => {
+      const repositoryTx9 = this.withStorage(scopeTx9);
+
+      if (await repositoryTx9.fileStore.journal.count()) throw Error('restore-recovery-pending');
+      const binding = await repositoryTx9.fileStore.datasetBinding.get('active');
       if (binding && binding.scope !== scope) throw Error('sync-dataset-bound');
-      const existing = await this.fileStore.scopedMeta.get(scope);
+      const existing = await repositoryTx9.fileStore.scopedMeta.get(scope);
       const [base, outbox, pull, uploads] = await Promise.all([
-        this.fileStore.scopedBase.where('scope').equals(scope).count(),
-        this.fileStore.scopedOutbox.where('scope').equals(scope).count(),
-        this.fileStore.scopedPull.get(scope),
-        this.fileStore.scopedAttachmentUploads.where('scope').equals(scope).count(),
+        (await repositoryTx9.fileStore.scopedBase.equals('scope', scope)).length,
+        (await repositoryTx9.fileStore.scopedOutbox.equals('scope', scope)).length,
+        repositoryTx9.fileStore.scopedPull.get(scope),
+        (await repositoryTx9.fileStore.scopedAttachmentUploads.equals('scope', scope)).length,
       ]);
       const trusted = Boolean((existing?.cursor ?? 0) > 0 || base || outbox || pull || uploads);
       if (existing?.keyFingerprint === fingerprint && existing.keyEpoch === keyEpoch) return trusted ? 'trusted' : 'provisional';
       if (trusted || (existing?.keyEpoch && keyEpoch < existing.keyEpoch)) throw Error('sync-key-mismatch');
-      await this.fileStore.scopedMeta.put({ id: scope, cursor: 0, keyFingerprint: fingerprint, keyEpoch });
+      await repositoryTx9.fileStore.scopedMeta.put({ id: scope, cursor: 0, keyFingerprint: fingerprint, keyEpoch });
       return 'provisional';
     });
   }
@@ -1106,7 +1233,7 @@ export class LocalRepository {
   async listScopedOutbox(scope: string): Promise<ScopedOutbox[]> {
     await this.assertArchiveMergeSyncAllowed();
     assertScope(scope);
-    return this.fileStore.scopedOutbox.where('scope').equals(scope).toArray();
+    return this.fileStore.scopedOutbox.equals('scope', scope);
   }
 
   async getScopedAttachmentUpload(scope: string, attachmentId: string): Promise<ScopedAttachmentUploadPlan | null> {
@@ -1124,15 +1251,17 @@ export class LocalRepository {
     const snapshot = copyAttachmentPlan(plan);
     await validateAttachmentPlan(snapshot);
     const id = scopedKey(snapshot.scope, snapshot.attachmentId);
-    await this.fileStore.transaction('rw', [this.fileStore.datasetBinding, this.fileStore.scopedAttachmentUploads, this.fileStore.journal], async () => {
-      if (await this.fileStore.journal.count()) throw Error('restore-recovery-pending');
-      const binding = await this.fileStore.datasetBinding.get('active');
+    await this.fileStore.transaction('rw', [this.fileStore.datasetBinding, this.fileStore.scopedAttachmentUploads, this.fileStore.journal], async (scopeTx10) => {
+      const repositoryTx10 = this.withStorage(scopeTx10);
+
+      if (await repositoryTx10.fileStore.journal.count()) throw Error('restore-recovery-pending');
+      const binding = await repositoryTx10.fileStore.datasetBinding.get('active');
       if (binding?.scope !== snapshot.scope) throw Error('sync-dataset-bound');
-      const existing = await this.fileStore.scopedAttachmentUploads.get(id);
+      const existing = await repositoryTx10.fileStore.scopedAttachmentUploads.get(id);
       if (existing) {
         if (!sameAttachmentPlan(existing, snapshot)) throw Error('sync-attachment-plan-conflict');
       } else {
-        await this.fileStore.scopedAttachmentUploads.add({ id, ...snapshot });
+        await repositoryTx10.fileStore.scopedAttachmentUploads.add({ id, ...snapshot });
       }
     });
     return snapshot;
@@ -1142,11 +1271,13 @@ export class LocalRepository {
     await this.assertArchiveMergeSyncAllowed();
     assertScope(scope);
     z.uuid().parse(attachmentId);
-    await this.fileStore.transaction('rw', [this.fileStore.datasetBinding, this.fileStore.scopedAttachmentUploads, this.fileStore.journal], async () => {
-      if (await this.fileStore.journal.count()) throw Error('restore-recovery-pending');
-      const binding = await this.fileStore.datasetBinding.get('active');
+    await this.fileStore.transaction('rw', [this.fileStore.datasetBinding, this.fileStore.scopedAttachmentUploads, this.fileStore.journal], async (scopeTx11) => {
+      const repositoryTx11 = this.withStorage(scopeTx11);
+
+      if (await repositoryTx11.fileStore.journal.count()) throw Error('restore-recovery-pending');
+      const binding = await repositoryTx11.fileStore.datasetBinding.get('active');
       if (binding?.scope !== scope) throw Error('sync-dataset-bound');
-      await this.fileStore.scopedAttachmentUploads.delete(scopedKey(scope, attachmentId));
+      await repositoryTx11.fileStore.scopedAttachmentUploads.delete(scopedKey(scope, attachmentId));
     });
   }
 
@@ -1187,19 +1318,21 @@ export class LocalRepository {
       ((await this.scopedBaseFor(scope, row.id))?.version ?? 0) || operation.tombstone !== Boolean(parsedPayload(row).deleted)) throw Error('outbox-context');
     const id = scopedKey(scope, row.id);
     return this.fileStore.transaction('rw', [this.fileStore.archiveMerge, this.fileStore.scopedOutbox,
-      this.fileStore.subscriptionSaveJournal, this.fileStore.importJournal, this.fileStore.categoryEditJournal, this.fileStore.journal], async () => {
-      if (await this.fileStore.journal.count()) throw Error('restore-recovery-pending');
-      if (await this.fileStore.categoryEditJournal.count()) throw Error('category-edit-pending');
-      if (await this.fileStore.subscriptionSaveJournal.count()) throw Error('subscription-relations-pending');
-      await assertNoPendingReviewedConfirmations(this.fileStore);
-      const pending = await this.fileStore.archiveMerge.get('active');
+      this.fileStore.subscriptionSaveJournal, this.fileStore.importJournal, this.fileStore.categoryEditJournal, this.fileStore.journal], async (scopeTx12) => {
+      const repositoryTx12 = this.withStorage(scopeTx12);
+
+      if (await repositoryTx12.fileStore.journal.count()) throw Error('restore-recovery-pending');
+      if (await repositoryTx12.fileStore.categoryEditJournal.count()) throw Error('category-edit-pending');
+      if (await repositoryTx12.fileStore.subscriptionSaveJournal.count()) throw Error('subscription-relations-pending');
+      await assertNoPendingReviewedConfirmations(repositoryTx12.fileStore);
+      const pending = await repositoryTx12.fileStore.archiveMerge.get('active');
       if (pending && pending.phase !== 'syncing') throw Error('archive-merge-sync-paused');
-      const existing = await this.fileStore.scopedOutbox.get(id);
+      const existing = await repositoryTx12.fileStore.scopedOutbox.get(id);
       if (existing) return existing;
-      const current = await Dexie.waitFor(Dexie.ignoreTransaction(() => this.db.records.findOne(row.id).exec()));
+      const current = await repositoryTx12.fileStore.outsideTransaction(() => repositoryTx12.records.get(row.id));
       if (!current || canonical(current).payload !== row.payload) throw Error('outbox-stale');
       const item = { id, scope, row, operation };
-      await this.fileStore.scopedOutbox.add(item);
+      await repositoryTx12.fileStore.scopedOutbox.add(item);
       return item;
     });
   }
@@ -1208,22 +1341,26 @@ export class LocalRepository {
     assertScope(scope);
     const item = (await this.listScopedOutbox(scope)).find(entry => entry.operation.operationId === operationId);
     if (!item || version !== item.operation.expectedVersion + 1) throw Error('outbox-ack');
-    await this.fileStore.transaction('rw', this.fileStore.scopedBase, this.fileStore.scopedOutbox, this.fileStore.journal, async () => {
-      if (await this.fileStore.journal.count()) throw Error('restore-recovery-pending');
-      const current = await this.fileStore.scopedOutbox.get(item.id);
+    await this.fileStore.transaction('rw', [this.fileStore.scopedBase, this.fileStore.scopedOutbox, this.fileStore.journal], async (scopeTx13) => {
+      const repositoryTx13 = this.withStorage(scopeTx13);
+
+      if (await repositoryTx13.fileStore.journal.count()) throw Error('restore-recovery-pending');
+      const current = await repositoryTx13.fileStore.scopedOutbox.get(item.id);
       if (current?.operation.operationId !== operationId) throw Error('outbox-ack');
-      await this.fileStore.scopedBase.put({ id: item.id, scope, rowId: item.row.id, payload: item.row.payload,
+      await repositoryTx13.fileStore.scopedBase.put({ id: item.id, scope, rowId: item.row.id, payload: item.row.payload,
         row: item.row, version, operationId, keyEpoch, ciphertext: item.operation.ciphertext });
-      await this.fileStore.scopedOutbox.delete(item.id);
+      await repositoryTx13.fileStore.scopedOutbox.delete(item.id);
     });
   }
 
   async blockScopedOutbox(scope: string, operationId: string): Promise<void> {
     const item = (await this.listScopedOutbox(scope)).find(entry => entry.operation.operationId === operationId);
     if (!item) throw Error('outbox-missing');
-    await this.fileStore.transaction('rw', this.fileStore.scopedOutbox, this.fileStore.journal, async () => {
-      if (await this.fileStore.journal.count()) throw Error('restore-recovery-pending');
-      await this.fileStore.scopedOutbox.update(item.id, { blocked: true });
+    await this.fileStore.transaction('rw', [this.fileStore.scopedOutbox, this.fileStore.journal], async (scopeTx14) => {
+      const repositoryTx14 = this.withStorage(scopeTx14);
+
+      if (await repositoryTx14.fileStore.journal.count()) throw Error('restore-recovery-pending');
+      await repositoryTx14.fileStore.scopedOutbox.update(item.id, { blocked: true });
     });
   }
 
@@ -1232,7 +1369,7 @@ export class LocalRepository {
     const journal = await this.fileStore.scopedPull.get(scope);
     if (!journal || journal.decision) return null;
     const base = await this.fileStore.scopedBase.get(scopedKey(scope, journal.change.row.id));
-    const current = await this.db.records.findOne(journal.change.row.id).exec();
+    const current = await this.records.get(journal.change.row.id);
     const localPayload = current ? canonical(current).payload : null;
     if (localPayload === journal.change.row.payload ||
       !(localPayload && JSON.parse(localPayload).purged) && localPayload === (base?.payload ?? null)) return null;
@@ -1250,20 +1387,22 @@ export class LocalRepository {
     const previous = await this.fileStore.scopedPull.get(scope);
     if (previous && (previous.change.sequence !== change.sequence || previous.change.row.payload !== change.row.payload)) throw Error('pull-pending');
     if (!previous) {
-      const current = await this.db.records.findOne(change.row.id).exec();
+      const current = await this.records.get(change.row.id);
       await this.fileStore.transaction('rw', [this.fileStore.archiveMerge, this.fileStore.scopedPull,
-        this.fileStore.subscriptionSaveJournal, this.fileStore.importJournal, this.fileStore.categoryEditJournal, this.fileStore.journal], async () => {
-        if (await this.fileStore.journal.count()) throw Error('restore-recovery-pending');
-        if (await this.fileStore.categoryEditJournal.count()) throw Error('category-edit-pending');
-        if (await this.fileStore.subscriptionSaveJournal.count()) throw Error('subscription-relations-pending');
-        await assertNoPendingReviewedConfirmations(this.fileStore);
-        const pending = await this.fileStore.archiveMerge.get('active');
+        this.fileStore.subscriptionSaveJournal, this.fileStore.importJournal, this.fileStore.categoryEditJournal, this.fileStore.journal], async (scopeTx15) => {
+        const repositoryTx15 = this.withStorage(scopeTx15);
+
+        if (await repositoryTx15.fileStore.journal.count()) throw Error('restore-recovery-pending');
+        if (await repositoryTx15.fileStore.categoryEditJournal.count()) throw Error('category-edit-pending');
+        if (await repositoryTx15.fileStore.subscriptionSaveJournal.count()) throw Error('subscription-relations-pending');
+        await assertNoPendingReviewedConfirmations(repositoryTx15.fileStore);
+        const pending = await repositoryTx15.fileStore.archiveMerge.get('active');
         if (pending && pending.phase !== 'syncing') throw Error('archive-merge-sync-paused');
-        await this.fileStore.scopedPull.add({ id: scope, scope, cursorStart: cursor, change,
+        await repositoryTx15.fileStore.scopedPull.add({ id: scope, scope, cursorStart: cursor, change,
           localPayload: current ? canonical(current).payload : null });
       });
     }
-    return replayScopedPull(this.db, this.fileStore, scope);
+    return replayScopedPull(this.records, this.fileStore, scope);
   }
 
   async resumeScopedPull(scope: string): Promise<'applied' | 'conflict' | 'none'> {
@@ -1271,34 +1410,35 @@ export class LocalRepository {
     assertScope(scope);
     await this.assertDatasetScope(scope);
     if (!(await this.fileStore.scopedPull.get(scope))) return 'none';
-    return replayScopedPull(this.db, this.fileStore, scope);
+    return replayScopedPull(this.records, this.fileStore, scope);
   }
 
   async resolveScopedConflict(scope: string, decision: 'local' | 'remote'): Promise<void> {
     await this.assertArchiveMergeSyncAllowed();
     assertScope(scope);
     await this.assertDatasetScope(scope);
-    const changed = await this.fileStore.transaction('rw', this.fileStore.scopedPull, this.fileStore.scopedBase,
-      this.fileStore.journal, async () => {
-      if (await this.fileStore.journal.count()) throw Error('restore-recovery-pending');
-      const journal = await this.fileStore.scopedPull.get(scope);
+    const changed = await this.fileStore.transaction('rw', [this.fileStore.scopedPull, this.fileStore.scopedBase, this.fileStore.journal], async (scopeTx16) => {
+      const repositoryTx16 = this.withStorage(scopeTx16);
+
+      if (await repositoryTx16.fileStore.journal.count()) throw Error('restore-recovery-pending');
+      const journal = await repositoryTx16.fileStore.scopedPull.get(scope);
       if (!journal) throw Error('conflict-missing');
-      const [current] = await Dexie.waitFor(Dexie.ignoreTransaction(() =>
-        this.db.records.storageInstance.findDocumentsById([journal.change.row.id], false)));
+      const [current] = await repositoryTx16.fileStore.outsideTransaction(() =>
+        repositoryTx16.records.getMany([journal.change.row.id], false));
       const payload = current?.payload ?? null;
-      const base = await this.fileStore.scopedBase.get(scopedKey(scope, journal.change.row.id));
+      const base = await repositoryTx16.fileStore.scopedBase.get(scopedKey(scope, journal.change.row.id));
       const purged = !!payload && !!JSON.parse(payload).purged && payload !== journal.change.row.payload;
       if (purged && decision === 'remote') throw Error('trash-purged');
       if (journal.decision || payload === journal.change.row.payload || (!purged && payload === (base?.payload ?? null))) throw Error('conflict-missing');
       if (payload !== journal.localPayload) {
-        await this.fileStore.scopedPull.update(scope, { localPayload: payload });
+        await repositoryTx16.fileStore.scopedPull.update(scope, { localPayload: payload });
         return true;
       }
-      await this.fileStore.scopedPull.update(scope, { decision });
+      await repositoryTx16.fileStore.scopedPull.update(scope, { decision });
       return false;
     });
     if (changed) throw Error('conflict-local-changed');
-    if (await replayScopedPull(this.db, this.fileStore, scope) !== 'applied') throw Error('conflict-unresolved');
+    if (await replayScopedPull(this.records, this.fileStore, scope) !== 'applied') throw Error('conflict-unresolved');
   }
 
   // The cursor is committed only after every decrypted record in the page is durable.
@@ -1313,14 +1453,16 @@ export class LocalRepository {
       validateRow(change.row);
     }
     const id = crypto.randomUUID();
-    await this.fileStore.transaction('rw', this.fileStore.pullJournal, this.fileStore.categoryEditJournal, this.fileStore.journal, async () => {
-      if (await this.fileStore.journal.count()) throw Error('restore-recovery-pending');
-      if (await this.fileStore.categoryEditJournal.count()) throw Error('category-edit-pending');
-      if (await this.fileStore.pullJournal.count()) throw Error('pull-pending');
-      await this.fileStore.pullJournal.put({ id, cursorStart, changes });
+    await this.fileStore.transaction('rw', [this.fileStore.pullJournal, this.fileStore.categoryEditJournal, this.fileStore.journal], async (scopeTx17) => {
+      const repositoryTx17 = this.withStorage(scopeTx17);
+
+      if (await repositoryTx17.fileStore.journal.count()) throw Error('restore-recovery-pending');
+      if (await repositoryTx17.fileStore.categoryEditJournal.count()) throw Error('category-edit-pending');
+      if (await repositoryTx17.fileStore.pullJournal.count()) throw Error('pull-pending');
+      await repositoryTx17.fileStore.pullJournal.put({ id, cursorStart, changes });
     });
     try {
-      await replayPullJournal(this.db, this.fileStore, id);
+      await replayPullJournal(this.records, this.fileStore, id);
       return cursorStart + changes.length;
     } catch (error) {
       this.syncRecoveryError = error instanceof Error ? error.message : 'pull-failed';
@@ -1329,12 +1471,13 @@ export class LocalRepository {
   }
 
   async deleteEntity(type: EntityType, id: string): Promise<RecordRow> {
-    return withRenewalLock(`keepany-renewal:${this.db.name}`, async () => {
+    return withRenewalLock(`keepany-renewal:${this.records.name}`, async () => {
       if (type === 'asset' || type === 'history') await this.settleRenewalJournals();
       const current = await this.get<Record<string, unknown>>(type, id);
       if (!current) throw Error('not-found');
       if (current.deleted) {
-        const row = await this.db.records.findOne(key(type, id)).exec();
+        const row = await this.records.get(key(type, id));
+        if (!row) throw Error('not-found');
         return canonical(row);
       }
       const tombstone = { ...current, deleted: true, ...(type === 'asset' ? { updatedAt: new Date().toISOString() } : {}) };
@@ -1351,17 +1494,19 @@ export class LocalRepository {
   async purgeTrash(plan: TrashPurgePlan): Promise<void> {
     if (!Number.isSafeInteger(plan.at) || plan.at < 0) throw Error('trash-invalid');
     const attachmentIds = new Set<string>();
-    await this.fileStore.transaction('rw', restoreRecoveryTables(this.fileStore), async () => {
-      await this.fileStore.categoryEditJournal.count();
-      await assertRestoreRecoveryGate(this.fileStore);
+    await this.fileStore.transaction('rw', restoreRecoveryTables(this.fileStore), async (scopeTx18) => {
+      const repositoryTx18 = this.withStorage(scopeTx18);
+
+      await repositoryTx18.fileStore.categoryEditJournal.count();
+      await assertRestoreRecoveryGate(repositoryTx18.fileStore);
       // A pending durable write could otherwise put erased contents back after restart.
-      for (const table of [this.fileStore.journal, this.fileStore.importJournal, this.fileStore.archiveMerge,
-        this.fileStore.renewalJournal, this.fileStore.subscriptionSaveJournal, this.fileStore.categoryEditJournal,
-        this.fileStore.pullJournal, this.fileStore.scopedPull]) {
+      for (const table of [repositoryTx18.fileStore.journal, repositoryTx18.fileStore.importJournal, repositoryTx18.fileStore.archiveMerge,
+        repositoryTx18.fileStore.renewalJournal, repositoryTx18.fileStore.subscriptionSaveJournal, repositoryTx18.fileStore.categoryEditJournal,
+        repositoryTx18.fileStore.pullJournal, repositoryTx18.fileStore.scopedPull]) {
         if (await table.count()) throw Error('trash-recovery-pending');
       }
-      await Dexie.waitFor(Dexie.ignoreTransaction(async () => {
-        const rows = await this.allRecords();
+      await repositoryTx18.fileStore.outsideTransaction(async () => {
+        const rows = await repositoryTx18.allRecords();
         const actual = trashPurgeRows(rows, plan.targets, true);
         const expected = new Map(plan.rows.map(row => [row.id, row]));
         if (!expected.size || expected.size !== plan.rows.length || trashPurgeRows(plan.rows, plan.targets).length !== expected.size || actual.some(row => !expected.has(row.id)) ||
@@ -1370,26 +1515,26 @@ export class LocalRepository {
         for (const before of plan.rows) {
           validateRow(before);
           const next = redactedTrashRow(before, plan.at);
-          const [raw] = await this.db.records.storageInstance.findDocumentsById([before.id], false);
+          const [raw] = await repositoryTx18.records.getMany([before.id], false);
           if (!raw || raw.type !== before.type || (raw.payload !== before.payload && raw.payload !== next.payload)) throw Error('trash-stale');
           if (before.type === 'asset') for (const id of (JSON.parse(before.payload) as Asset).attachments) attachmentIds.add(id);
-          if (raw.payload !== next.payload) changes.push({ previous: raw, document: { ...raw, ...next } });
+          if (raw.payload !== next.payload) changes.push({ previous: raw, next: { ...raw, ...next } });
         }
         if (changes.length) {
-          const result = await this.db.records.storageInstance.bulkWrite(changes, 'trash-purge');
+          const result = await repositoryTx18.records.compareAndWrite(changes, 'trash-purge');
           if (result.error.length) throw Error(result.error.some(error => error.status === 409) ? 'trash-stale' : 'trash-write');
         }
-      }));
+      });
       const assetIds = new Set(plan.targets.filter(target => target.type === 'asset').map(target => target.id));
-      const allReviews = await this.fileStore.intakeReview.toArray();
+      const allReviews = await repositoryTx18.fileStore.intakeReview.toArray();
       const reviews = allReviews.filter(review =>
         assetIds.has(review.asset.id) || !!review.merge && assetIds.has(review.merge.targetId) ||
         !!review.expenseDraft && assetIds.has(review.expenseDraft.assetId));
       const remainingReviews = retainReviewedCsvSources(allReviews, new Set(reviews.map(review => review.id)));
-      await this.fileStore.intakeReview.bulkDelete(reviews.map(review => review.id));
+      await repositoryTx18.fileStore.intakeReview.bulkDelete(reviews.map(review => review.id));
       for (const review of remainingReviews) {
         const before = allReviews.find(row => row.id === review.id);
-        if (before && !sameReviewedCandidate(before, review)) await this.fileStore.intakeReview.put(review);
+        if (before && !sameReviewedCandidate(before, review)) await repositoryTx18.fileStore.intakeReview.put(review);
       }
     });
     // Reuse reference-aware cleanup; attachments shared by other records or queued sync writes stay protected.
@@ -1399,10 +1544,10 @@ export class LocalRepository {
   // Explicit undo is the only local path that can revive a tombstone.
   async restoreEntity(type: EntityType, id: string): Promise<RecordRow> {
     if (type === 'task') {
-      return withRenewalLock(`keepany-task:${this.db.name}`, () => this.restoreEntityUnlocked(type, id));
+      return withRenewalLock(`keepany-task:${this.records.name}`, () => this.restoreEntityUnlocked(type, id));
     }
     if (type === 'asset' || type === 'history') {
-      return withRenewalLock(`keepany-renewal:${this.db.name}`, async () => {
+      return withRenewalLock(`keepany-renewal:${this.records.name}`, async () => {
         await this.settleRenewalJournals();
         return this.restoreEntityUnlocked(type, id);
       });
@@ -1416,11 +1561,14 @@ export class LocalRepository {
   }
 
   private async restoreEntityUnlocked(type: EntityType, id: string, expectedPayload?: string): Promise<RecordRow> {
-    return withCategoryMutationGate(this.db, this.fileStore, [{ type, id }], () => this.restoreEntityRecord(type, id, expectedPayload));
+    return withCategoryMutationGate(this.records, this.fileStore, [{ type, id }], async (scopeGate9) => {
+      const repositoryGate9 = this.withStorage(scopeGate9);
+return repositoryGate9.restoreEntityRecord(type, id, expectedPayload);
+    });
   }
 
   private async restoreEntityRecord(type: EntityType, id: string, expectedPayload?: string): Promise<RecordRow> {
-    const document = await this.db.records.findOne(key(type, id)).exec();
+    const document = await this.records.get(key(type, id));
     if (!document) throw Error('not-in-trash');
     const previous = parsedPayload(canonical(document)) as Record<string, unknown>;
     if (!previous.deleted || previous.purged) throw Error('not-in-trash');
@@ -1428,8 +1576,7 @@ export class LocalRepository {
       if (type !== 'asset' || value.kind !== 'account') return;
       // Read storage while holding the cross-tab mutation gate; an RxDB query may
       // still cache the state from before another tab re-imported the account.
-      const query = this.db.records.find({ selector: { type: 'asset' } });
-      const rows = (await this.db.records.storageInstance.query(query.getPreparedQuery())).documents as RecordRow[];
+      const rows = await this.records.list('asset');
       const duplicate = rows.map(row => parsedPayload(row) as Asset).find(asset =>
         !asset.deleted && asset.id !== id && conflictsWithAccountRestore(value as Asset, asset));
       if (duplicate) throw new AccountRestoreConflict(duplicate.id);
@@ -1437,7 +1584,7 @@ export class LocalRepository {
     await assertUniqueAccount(previous);
     if (type === 'relation') await this.assertRelationEndpoints(previous as { from: string; to: string });
     let next: RecordRow | undefined;
-    await document.incrementalModify(async (data: RecordRow) => {
+    await this.records.modify(document.id, async (data: RecordRow) => {
       if (expectedPayload !== undefined && data.payload !== expectedPayload) throw Error('relation-stale');
       const current = parsedPayload(data) as Record<string, unknown>;
       if (!current.deleted || current.purged) throw Error('not-in-trash');
@@ -1455,21 +1602,23 @@ export class LocalRepository {
   // An exact base snapshot prevents silent last-write-wins. Replayed writes are idempotent.
   async applyIncoming(type: EntityType, value: unknown, expectedPayload: string | null): Promise<'applied' | 'duplicate' | 'conflict'> {
     await this.assertArchiveMergeSyncAllowed();
-    return this.fileStore.transaction('rw', this.fileStore.categoryEditJournal, this.fileStore.journal, async () => {
-      if (await this.fileStore.journal.count()) throw Error('restore-recovery-pending');
-      await assertCategoryMutationAllowed(this.db, this.fileStore, [], true);
-      return Dexie.waitFor(Dexie.ignoreTransaction(() => this.applyIncomingUnlocked(type, value, expectedPayload)));
+    return this.fileStore.transaction('rw', [this.fileStore.categoryEditJournal, this.fileStore.journal], async (scopeTx19) => {
+      const repositoryTx19 = this.withStorage(scopeTx19);
+
+      if (await repositoryTx19.fileStore.journal.count()) throw Error('restore-recovery-pending');
+      await assertCategoryMutationAllowed(repositoryTx19.records, repositoryTx19.fileStore, [], true);
+      return repositoryTx19.fileStore.outsideTransaction(() => repositoryTx19.applyIncomingUnlocked(type, value, expectedPayload));
     });
   }
 
   private async applyIncomingUnlocked(type: EntityType, value: unknown, expectedPayload: string | null): Promise<'applied' | 'duplicate' | 'conflict'> {
     const next = rowFor(type, value);
-    const existing = await this.db.records.findOne(next.id).exec();
+    const existing = await this.records.get(next.id);
     if (existing) {
       const duplicate = Symbol('duplicate');
       const conflict = Symbol('conflict');
       try {
-        await existing.incrementalModify((data: RecordRow) => {
+        await this.records.modify(existing.id, (data: RecordRow) => {
           if (data.payload === next.payload) throw duplicate;
           if ((parsedPayload(data) as { purged?: boolean }).purged) throw conflict;
           if (parsedPayload(data).deleted && !parsedPayload(next).deleted) throw conflict;
@@ -1485,10 +1634,10 @@ export class LocalRepository {
     }
     if (expectedPayload !== null) return 'conflict';
     try {
-      await this.db.records.insert(next);
+      await this.records.insert(next);
       return 'applied';
     } catch (error) {
-      if (!(await this.db.records.findOne(next.id).exec())) throw error;
+      if (!(await this.records.get(next.id))) throw error;
       return this.applyIncomingUnlocked(type, value, expectedPayload);
     }
   }
@@ -1518,14 +1667,16 @@ export class LocalRepository {
     if (!(input.bytes instanceof Uint8Array) || input.bytes.length > 20 * 1024 * 1024) throw Error('file-size');
     const bytes = new Uint8Array(input.bytes);
     if (!/^[a-f0-9]{64}$/.test(sha256) || await sha(bytes) !== sha256) throw Error('sync-attachment-integrity');
-    await this.fileStore.transaction('rw', this.fileStore.blobs, this.fileStore.journal, async () => {
-      if (await this.fileStore.journal.count()) throw Error('restore-recovery-pending');
-      const existing = await this.fileStore.blobs.get(id);
+    await this.fileStore.transaction('rw', [this.fileStore.blobs, this.fileStore.journal], async (scopeTx20) => {
+      const repositoryTx20 = this.withStorage(scopeTx20);
+
+      if (await repositoryTx20.fileStore.journal.count()) throw Error('restore-recovery-pending');
+      const existing = await repositoryTx20.fileStore.blobs.get(id);
       if (existing) {
         if (existing.name !== name || existing.blob.type !== type || existing.blob.size !== bytes.length ||
-          !sameBytes(new Uint8Array(await Dexie.waitFor(existing.blob.arrayBuffer())), bytes)) throw Error('sync-attachment-conflict');
+          !sameBytes(new Uint8Array(await repositoryTx20.fileStore.waitFor(existing.blob.arrayBuffer())), bytes)) throw Error('sync-attachment-conflict');
       } else {
-        await this.fileStore.blobs.add({ id, name, blob: new Blob([new Uint8Array(bytes)], { type }) });
+        await repositoryTx20.fileStore.blobs.add({ id, name, blob: new Blob([new Uint8Array(bytes)], { type }) });
       }
     });
   }
@@ -1539,21 +1690,23 @@ export class LocalRepository {
   // Tombstones and durable journals still protect their referenced images.
   async cleanupUnreferencedFile(id: string): Promise<boolean> {
     z.string().uuid().parse(id);
-    return this.fileStore.transaction('rw', restoreRecoveryTables(this.fileStore), async () => {
+    return this.fileStore.transaction('rw', restoreRecoveryTables(this.fileStore), async (scopeTx21) => {
+      const repositoryTx21 = this.withStorage(scopeTx21);
+
       // Read records and their durable intents after acquiring the same gate
       // used by restore. Otherwise an old record snapshot can pair with an
       // already-cleared restore journal and delete a newly referenced image.
-      await this.fileStore.journal.count();
-      if ((await this.protectedFileIds()).has(id)) return false;
-      if (!(await this.fileStore.blobs.get(id))) return false;
-      await this.fileStore.blobs.delete(id);
+      await repositoryTx21.fileStore.journal.count();
+      if ((await repositoryTx21.protectedFileIds()).has(id)) return false;
+      if (!(await repositoryTx21.fileStore.blobs.get(id))) return false;
+      await repositoryTx21.fileStore.blobs.delete(id);
       return true;
     });
   }
 
   async collectOrphanFiles(): Promise<number> {
     const protectedIds = await this.protectedFileIds();
-    const candidates = (await this.fileStore.blobs.toCollection().primaryKeys())
+    const candidates = (await this.fileStore.blobs.keys())
       .filter(id => !protectedIds.has(id));
     let removed = 0;
     for (const id of candidates) if (await this.cleanupUnreferencedFile(id)) removed++;
@@ -1561,7 +1714,7 @@ export class LocalRepository {
   }
 
   private async protectedFileIds(): Promise<Set<string>> {
-    const rows = await Dexie.waitFor(Dexie.ignoreTransaction(() => storedRestoreRows(this.db)));
+    const rows = await this.fileStore.outsideTransaction(() => storedRestoreRows(this.records));
     const [restores, imports, pulls, scopedOutbox, scopedPull, renewals, subscriptionSaves, categoryEdits] = await Promise.all([
       this.fileStore.journal.toArray(), this.fileStore.importJournal.toArray(), this.fileStore.pullJournal.toArray(),
       this.fileStore.scopedOutbox.toArray(), this.fileStore.scopedPull.toArray(), this.fileStore.renewalJournal.toArray(),
@@ -1622,7 +1775,7 @@ export class LocalRepository {
   async applyArchiveMerge(bytes: Uint8Array, choices: Record<string, ArchiveMergeChoice>,
     expectedFingerprint: string): Promise<{ imported: number; replaced: number; skipped: number;
       review?: { imported: number; replaced: number; skipped: number } }> {
-    return withRenewalLock(`keepany-renewal:${this.db.name}`, async () => {
+    return withRenewalLock(`keepany-renewal:${this.records.name}`, async () => {
       if (this.intakeReviewMigrationError) await this.retryIntakeReviewMigration();
       await this.settleRenewalJournals();
       await this.settleSubscriptionSaves();
@@ -1711,35 +1864,41 @@ export class LocalRepository {
         targetFingerprint: expectedFingerprint, changes, intakeReviewChanges, addedFileIds, insertedFileIds: [] };
       await this.fileStore.transaction('rw', [this.fileStore.archiveMerge, this.fileStore.scopedOutbox,
         this.fileStore.scopedPull, this.fileStore.scopedAttachmentUploads, this.fileStore.intakeReview,
-        this.fileStore.importJournal, this.fileStore.journal, this.fileStore.categoryEditJournal, this.fileStore.passwordVault], async () => {
-          if (await this.fileStore.categoryEditJournal.count()) throw Error('category-edit-pending');
-          if (await this.fileStore.archiveMerge.get('active')) throw Error('archive-merge-pending');
-          if (await this.fileStore.importJournal.count() || await this.fileStore.journal.count()) throw Error('archive-merge-recovery-pending');
-          if (await this.fileStore.scopedOutbox.count() || await this.fileStore.scopedPull.count() ||
-            await this.fileStore.scopedAttachmentUploads.count()) throw Error('archive-merge-recovery-pending');
-          if (reviewFingerprint(parseReviewedCandidates(await this.fileStore.intakeReview.toArray())) !==
+        this.fileStore.importJournal, this.fileStore.journal, this.fileStore.categoryEditJournal, this.fileStore.passwordVault], async (scopeTx22) => {
+        const repositoryTx22 = this.withStorage(scopeTx22);
+
+          if (await repositoryTx22.fileStore.categoryEditJournal.count()) throw Error('category-edit-pending');
+          if (await repositoryTx22.fileStore.archiveMerge.get('active')) throw Error('archive-merge-pending');
+          if (await repositoryTx22.fileStore.importJournal.count() || await repositoryTx22.fileStore.journal.count()) throw Error('archive-merge-recovery-pending');
+          if (await repositoryTx22.fileStore.scopedOutbox.count() || await repositoryTx22.fileStore.scopedPull.count() ||
+            await repositoryTx22.fileStore.scopedAttachmentUploads.count()) throw Error('archive-merge-recovery-pending');
+          if (reviewFingerprint(parseReviewedCandidates(await repositoryTx22.fileStore.intakeReview.toArray())) !==
             reviewFingerprint(targetReview)) throw Error('archive-merge-stale');
-          await assertArchiveMergePasswordVault(this.fileStore, passwordVault);
-          if (((await this.fileStore.passwordVault.get('local'))?.revision ?? null) !== targetVaultRevision) throw Error('archive-merge-stale');
-          await this.fileStore.archiveMerge.add(journal);
-        });
+          await assertArchiveMergePasswordVault(repositoryTx22.fileStore, passwordVault);
+          if (((await repositoryTx22.fileStore.passwordVault.get('local'))?.revision ?? null) !== targetVaultRevision) throw Error('archive-merge-stale');
+          await repositoryTx22.fileStore.archiveMerge.add(journal);
+      });
       try {
         for (const id of addedFileIds) {
           const attachment = sourceFiles.get(id);
           if (!attachment) throw Error('archive-attachment-reference');
           const content = entries[`files/${id}`];
-          await this.fileStore.transaction('rw', this.fileStore.blobs, this.fileStore.archiveMerge, async () => {
-            if (await this.fileStore.blobs.get(id)) throw Error('archive-merge-image-conflict');
-            await this.fileStore.blobs.add({ id, name: attachment.name,
+          await this.fileStore.transaction('rw', [this.fileStore.blobs, this.fileStore.archiveMerge], async (scopeTx23) => {
+            const repositoryTx23 = this.withStorage(scopeTx23);
+
+            if (await repositoryTx23.fileStore.blobs.get(id)) throw Error('archive-merge-image-conflict');
+            await repositoryTx23.fileStore.blobs.add({ id, name: attachment.name,
               blob: new Blob([content as BlobPart], { type: attachment.type }) });
-            const current = await this.fileStore.archiveMerge.get('active');
+            const current = await repositoryTx23.fileStore.archiveMerge.get('active');
             if (current?.phase !== 'applying') throw Error('archive-merge-pending');
-            await this.fileStore.archiveMerge.update('active', { insertedFileIds: [...current.insertedFileIds, id] });
+            await repositoryTx23.fileStore.archiveMerge.update('active', { insertedFileIds: [...current.insertedFileIds, id] });
           });
         }
-        for (const change of changes) await writeArchiveMergeRow(this.db, change.before, change.after);
-        await this.fileStore.transaction('rw', this.fileStore.intakeReview, async () => {
-          for (const change of intakeReviewChanges) await writeArchiveMergeReview(this.fileStore, change.before, change.after);
+        for (const change of changes) await writeArchiveMergeRow(this.records, change.before, change.after);
+        await this.fileStore.transaction('rw', this.fileStore.intakeReview, async (scopeTx24) => {
+          const repositoryTx24 = this.withStorage(scopeTx24);
+
+          for (const change of intakeReviewChanges) await writeArchiveMergeReview(repositoryTx24.fileStore, change.before, change.after);
         });
         const actual = await this.allRecords();
         validateReferences(actual, attachmentIdsIn(actual));
@@ -1748,42 +1907,45 @@ export class LocalRepository {
         await this.fileStore.archiveMerge.update('active', { phase: 'applied' });
         return { imported, replaced, skipped, ...(intakeReview.length ? { review } : {}) };
       } catch (error) {
-        await rollbackArchiveMergeJournal(this.db, this.fileStore).catch(() => {});
+        await rollbackArchiveMergeJournal(this.records, this.fileStore).catch(() => {});
         throw error;
       }
     });
   }
 
   async rollbackArchiveMerge(): Promise<void> {
-    return withRenewalLock(`keepany-renewal:${this.db.name}`, async () => {
+    return withRenewalLock(`keepany-renewal:${this.records.name}`, async () => {
       const journal = await this.fileStore.archiveMerge.get('active');
       if (!journal) return;
       if (journal.phase === 'syncing') throw Error('archive-merge-sync-started');
-      await rollbackArchiveMergeJournal(this.db, this.fileStore);
+      await rollbackArchiveMergeJournal(this.records, this.fileStore);
     });
   }
 
   async finalizeArchiveMerge(): Promise<void> {
-    await this.fileStore.transaction('rw', this.fileStore.archiveMerge, async () => {
-      const journal = await this.fileStore.archiveMerge.get('active');
+    await this.fileStore.transaction('rw', this.fileStore.archiveMerge, async (scopeTx25) => {
+      const repositoryTx25 = this.withStorage(scopeTx25);
+
+      const journal = await repositoryTx25.fileStore.archiveMerge.get('active');
       if (journal?.phase !== 'applied') throw Error('archive-merge-not-applied');
-      await this.fileStore.archiveMerge.update('active', { phase: 'syncing' });
+      await repositoryTx25.fileStore.archiveMerge.update('active', { phase: 'syncing' });
     });
   }
 
   async completeArchiveMerge(): Promise<void> {
-    await this.fileStore.transaction('rw', this.fileStore.archiveMerge, this.fileStore.scopedOutbox,
-      this.fileStore.scopedPull, this.fileStore.scopedAttachmentUploads, async () => {
-        const journal = await this.fileStore.archiveMerge.get('active');
+    await this.fileStore.transaction('rw', [this.fileStore.archiveMerge, this.fileStore.scopedOutbox, this.fileStore.scopedPull, this.fileStore.scopedAttachmentUploads], async (scopeTx26) => {
+      const repositoryTx26 = this.withStorage(scopeTx26);
+
+        const journal = await repositoryTx26.fileStore.archiveMerge.get('active');
         if (journal?.phase !== 'syncing') throw Error('archive-merge-not-syncing');
-        if (await this.fileStore.scopedOutbox.count() || await this.fileStore.scopedPull.count() ||
-          await this.fileStore.scopedAttachmentUploads.count()) throw Error('archive-merge-sync-pending');
-        await this.fileStore.archiveMerge.delete('active');
-      });
+        if (await repositoryTx26.fileStore.scopedOutbox.count() || await repositoryTx26.fileStore.scopedPull.count() ||
+          await repositoryTx26.fileStore.scopedAttachmentUploads.count()) throw Error('archive-merge-sync-pending');
+        await repositoryTx26.fileStore.archiveMerge.delete('active');
+    });
   }
 
   async exportArchive(): Promise<Uint8Array> {
-    return withRenewalLock(`keepany-renewal:${this.db.name}`, async () => {
+    return withRenewalLock(`keepany-renewal:${this.records.name}`, async () => {
       if (this.intakeReviewMigrationError) await this.retryIntakeReviewMigration();
       await this.settleRenewalJournals();
       await this.settleSubscriptionSaves();
@@ -1812,16 +1974,18 @@ export class LocalRepository {
       // A second tab may change records while attachments are read. Fail the
       // export instead of returning a mixed record/image snapshot.
       await this.fileStore.transaction('r', [this.fileStore.intakeReview, this.fileStore.importJournal,
-        this.fileStore.categoryEditJournal, this.fileStore.passwordVault, this.fileStore.journal], async () => {
-        if ((await this.fileStore.journal.toArray()).some(entry => entry.passwordVault !== undefined)) throw Error('restore-recovery-pending');
-        if (await this.fileStore.categoryEditJournal.count()) throw Error('category-edit-pending');
-        await assertNoPendingReviewedConfirmations(this.fileStore);
-        const actual = await Dexie.waitFor(Dexie.ignoreTransaction(() => this.allRecords()));
+        this.fileStore.categoryEditJournal, this.fileStore.passwordVault, this.fileStore.journal], async (scopeTx27) => {
+        const repositoryTx27 = this.withStorage(scopeTx27);
+
+        if ((await repositoryTx27.fileStore.journal.toArray()).some(entry => entry.passwordVault !== undefined)) throw Error('restore-recovery-pending');
+        if (await repositoryTx27.fileStore.categoryEditJournal.count()) throw Error('category-edit-pending');
+        await assertNoPendingReviewedConfirmations(repositoryTx27.fileStore);
+        const actual = await repositoryTx27.fileStore.outsideTransaction(() => repositoryTx27.allRecords());
         if (JSON.stringify(actual.sort((a, b) => a.id.localeCompare(b.id))) !==
           JSON.stringify([...rows].sort((a, b) => a.id.localeCompare(b.id)))) throw Error('archive-export-stale');
-        if (reviewFingerprint(parseReviewedCandidates(await this.fileStore.intakeReview.toArray())) !==
+        if (reviewFingerprint(parseReviewedCandidates(await repositoryTx27.fileStore.intakeReview.toArray())) !==
           reviewFingerprint(intakeReview)) throw Error('archive-export-stale');
-        const actualVault = await this.fileStore.passwordVault.get('local');
+        const actualVault = await repositoryTx27.fileStore.passwordVault.get('local');
         if ((actualVault?.revision ?? null) !== (passwordVault?.revision ?? null) ||
           !!actualVault !== !!passwordVault || actualVault && passwordVault && !sameBytes(actualVault.bytes, passwordVault.bytes)) {
           throw Error('archive-export-stale');
@@ -1850,7 +2014,7 @@ export class LocalRepository {
   }
 
   async restoreArchive(bytes: Uint8Array): Promise<number> {
-    return withRenewalLock(`keepany-renewal:${this.db.name}`, async () => {
+    return withRenewalLock(`keepany-renewal:${this.records.name}`, async () => {
       if (this.intakeReviewMigrationError) await this.retryIntakeReviewMigration();
       await this.settleRenewalJournals();
       await this.settleSubscriptionSaves();
@@ -1863,7 +2027,7 @@ export class LocalRepository {
       assertPasswordVaultRestoreConflict(await this.readPasswordVault(), passwordVault);
       // Validate all conflicts before writing attachments or a journal.
       for (const row of rows) {
-        const current = await this.db.records.findOne(row.id).exec();
+        const current = await this.records.get(row.id);
         if (current && canonical(current).payload !== row.payload) throw Error('restore-conflict');
       }
       await assertReviewRestoreConflicts(this.fileStore, intakeReview);
@@ -1879,38 +2043,40 @@ export class LocalRepository {
         this.fileStore.categoryEditJournal, this.fileStore.datasetBinding, this.fileStore.scopedMeta,
         this.fileStore.scopedBase, this.fileStore.scopedOutbox, this.fileStore.scopedPull,
         this.fileStore.scopedAttachmentUploads, this.fileStore.syncBase, this.fileStore.syncMeta,
-        this.fileStore.pullJournal, this.fileStore.passwordVault], async () => {
-        if (await this.fileStore.categoryEditJournal.count()) throw Error('category-edit-pending');
-        await assertNoPendingReviewedConfirmations(this.fileStore);
-        if (await this.fileStore.archiveMerge.count()) throw Error('archive-merge-pending');
-        if (await this.fileStore.journal.count()) throw Error('restore-recovery-pending');
-        await assertRestoreIdentity(this.fileStore, manifest.sourceBinding);
-        assertPasswordVaultRestoreConflict(await this.fileStore.passwordVault.get('local') ?? null, passwordVault);
+        this.fileStore.pullJournal, this.fileStore.passwordVault], async (scopeTx28) => {
+        const repositoryTx28 = this.withStorage(scopeTx28);
+
+        if (await repositoryTx28.fileStore.categoryEditJournal.count()) throw Error('category-edit-pending');
+        await assertNoPendingReviewedConfirmations(repositoryTx28.fileStore);
+        if (await repositoryTx28.fileStore.archiveMerge.count()) throw Error('archive-merge-pending');
+        if (await repositoryTx28.fileStore.journal.count()) throw Error('restore-recovery-pending');
+        await assertRestoreIdentity(repositoryTx28.fileStore, manifest.sourceBinding);
+        assertPasswordVaultRestoreConflict(await repositoryTx28.fileStore.passwordVault.get('local') ?? null, passwordVault);
         // Preserve provenance together with the files and durable restore plan.
         // A clean-browser restore must not silently become a transfer to another owner.
-        if (manifest.sourceBinding) await claimDatasetBindingInTransaction(this.fileStore, manifest.sourceBinding);
-        await assertReviewRestoreConflicts(this.fileStore, intakeReview);
+        if (manifest.sourceBinding) await claimDatasetBindingInTransaction(repositoryTx28.fileStore, manifest.sourceBinding);
+        await assertReviewRestoreConflicts(repositoryTx28.fileStore, intakeReview);
         for (const attachment of manifest.attachments) {
-          const existing = await this.fileStore.blobs.get(attachment.id);
+          const existing = await repositoryTx28.fileStore.blobs.get(attachment.id);
           if (existing) {
             if (existing.name !== attachment.name || existing.blob.type !== attachment.type ||
               existing.blob.size !== attachment.size ||
-              !sameBytes(new Uint8Array(await Dexie.waitFor(existing.blob.arrayBuffer())), entries[`files/${attachment.id}`])) {
+              !sameBytes(new Uint8Array(await repositoryTx28.fileStore.waitFor(existing.blob.arrayBuffer())), entries[`files/${attachment.id}`])) {
               throw Error('restore-conflict');
             }
           } else {
-            await this.fileStore.blobs.add({
+            await repositoryTx28.fileStore.blobs.add({
               id: attachment.id, name: attachment.name,
               blob: new Blob([entries[`files/${attachment.id}`] as BlobPart], { type: attachment.type }),
             });
           }
         }
-        await this.fileStore.journal.put({ id: journalId, rows, intakeReview,
+        await repositoryTx28.fileStore.journal.put({ id: journalId, rows, intakeReview,
           ...(passwordVault ? { passwordVault } : {}),
           ...(manifest.sourceBinding ? { sourceBinding: manifest.sourceBinding } : {}) });
-    });
+      });
     try {
-      await replayJournal(this.db, this.fileStore, journalId);
+      await replayJournal(this.records, this.fileStore, journalId);
       this.restoreRecoveryError = null;
     } catch (error) {
       this.restoreRecoveryError = error instanceof Error ? error.message : 'restore-failed';
@@ -1921,19 +2087,21 @@ export class LocalRepository {
   }
 
   async getPendingRestoreRecoveries(): Promise<PendingRestoreRecovery[]> {
-    return this.fileStore.transaction('r', restoreRecoveryTables(this.fileStore), async () => {
-      const journals = await this.fileStore.journal.toArray();
+    return this.fileStore.transaction('r', restoreRecoveryTables(this.fileStore), async (scopeTx29) => {
+      const repositoryTx29 = this.withStorage(scopeTx29);
+
+      const journals = await repositoryTx29.fileStore.journal.toArray();
       if (!journals.length) return [];
-      const snapshot = await restoreRecoverySnapshot(this.db, this.fileStore);
+      const snapshot = await restoreRecoverySnapshot(repositoryTx29.records, repositoryTx29.fileStore);
       const pending: PendingRestoreRecovery[] = [];
-      for (const journal of journals) pending.push(await describeRestoreRecovery(this.db, this.fileStore, journal, snapshot));
+      for (const journal of journals) pending.push(await describeRestoreRecovery(repositoryTx29.records, repositoryTx29.fileStore, journal, snapshot));
       return pending;
     });
   }
 
   async retryRestoreRecovery(expected: RestoreRecoveryToken): Promise<'completed'> {
     try {
-      await replayJournal(this.db, this.fileStore, expected.journalId, expected);
+      await replayJournal(this.records, this.fileStore, expected.journalId, expected);
       this.restoreRecoveryError = await this.fileStore.journal.count() ? 'restore-recovery-pending' : null;
       return 'completed';
     } catch (error) {
@@ -1944,26 +2112,28 @@ export class LocalRepository {
   }
 
   async abandonRestoreRecovery(expected: RestoreRecoveryToken): Promise<'kept-current'> {
-    await this.fileStore.transaction('rw', restoreRecoveryTables(this.fileStore), async () => {
-      const journal = await this.fileStore.journal.get(expected.journalId);
+    await this.fileStore.transaction('rw', restoreRecoveryTables(this.fileStore), async (scopeTx30) => {
+      const repositoryTx30 = this.withStorage(scopeTx30);
+
+      const journal = await repositoryTx30.fileStore.journal.get(expected.journalId);
       if (!journal) throw Error('restore-recovery-stale');
-      const snapshot = await restoreRecoverySnapshot(this.db, this.fileStore);
-      await assertRestoreRecoveryToken(this.db, this.fileStore, journal, snapshot, expected);
+      const snapshot = await restoreRecoverySnapshot(repositoryTx30.records, repositoryTx30.fileStore);
+      await assertRestoreRecoveryToken(repositoryTx30.records, repositoryTx30.fileStore, journal, snapshot, expected);
       checkedRestoreJournal(journal);
-      await assertRestoreRecoverySource(snapshot.proof, journal.sourceBinding, true);
-      await assertRestoreRecoveryGate(this.fileStore);
+      await assertRestoreRecoverySource(repositoryTx30.fileStore, snapshot.proof, journal.sourceBinding, true);
+      await assertRestoreRecoveryGate(repositoryTx30.fileStore);
       assertRestoreRecoveryReferences(snapshot.rows, snapshot.candidates, snapshot.files);
-      await assertRestoreRecoveryFilesReadable(snapshot.rows, snapshot.files);
+      await assertRestoreRecoveryFilesReadable(repositoryTx30.fileStore, snapshot.rows, snapshot.files);
       // Preserve every current record, candidate, attachment and provenance proof.
       // Only this exact frozen intent is abandoned; no rollback is implied.
-      await this.fileStore.journal.delete(journal.id);
+      await repositoryTx30.fileStore.journal.delete(journal.id);
     });
     this.restoreRecoveryError = await this.fileStore.journal.count() ? 'restore-recovery-pending' : null;
     return 'kept-current';
   }
 
   async close(): Promise<void> {
-    await this.db.close();
+    await this.records.close();
     this.fileStore.close();
   }
 }
@@ -1981,9 +2151,9 @@ function restoreRecoveryTables(store: FileStore) {
 }
 async function restoreDatasetProof(store: FileStore): Promise<RestoreDatasetProof> {
   const [stored, meta, base, outbox, pulls, uploads, oldBase, oldMeta, oldPull] = await Promise.all([
-    store.datasetBinding.get('active'), store.scopedMeta.toCollection().primaryKeys(),
-    store.scopedBase.orderBy('scope').uniqueKeys(), store.scopedOutbox.orderBy('scope').uniqueKeys(),
-    store.scopedPull.toArray(), store.scopedAttachmentUploads.orderBy('scope').uniqueKeys(),
+    store.datasetBinding.get('active'), store.scopedMeta.keys(),
+    store.scopedBase.distinct('scope'), store.scopedOutbox.distinct('scope'),
+    store.scopedPull.toArray(), store.scopedAttachmentUploads.distinct('scope'),
     store.syncBase.count(), store.syncMeta.count(), store.pullJournal.count(),
   ]);
   const binding = stored ? { endpoint: stored.endpoint, accountId: stored.accountId,
@@ -1991,23 +2161,21 @@ async function restoreDatasetProof(store: FileStore): Promise<RestoreDatasetProo
   return { binding, scopes: [...new Set([...meta, ...base, ...outbox, ...uploads,
     ...pulls.flatMap(pull => [pull.id, pull.scope])])].map(String).sort(), legacy: Boolean(oldBase || oldMeta || oldPull) };
 }
-async function assertRestoreRecoverySource(proof: RestoreDatasetProof, source: DatasetBinding | undefined,
+async function assertRestoreRecoverySource(store: FileStore, proof: RestoreDatasetProof, source: DatasetBinding | undefined,
   requireClaim: boolean): Promise<void> {
   if (proof.binding && (!source || !sameDatasetBinding(proof.binding, source))) throw Error('restore-source-identity');
-  if (source) await Dexie.waitFor(validateDatasetBinding(source));
-  if (proof.binding) await Dexie.waitFor(validateDatasetBinding(proof.binding));
+  if (source) await store.waitFor(validateDatasetBinding(source));
+  if (proof.binding) await store.waitFor(validateDatasetBinding(proof.binding));
   if (requireClaim && source && !proof.binding) throw Error('restore-source-identity');
   if (proof.legacy || proof.scopes.length > 1) throw Error('sync-dataset-ambiguous');
   const binding = proof.binding ?? (requireClaim ? null : source);
   if (!binding && proof.scopes.length) throw Error('sync-dataset-ambiguous');
   if (binding && proof.scopes.some(scope => scope !== binding.scope)) throw Error('sync-dataset-bound');
 }
-async function storedRestoreRows(db: RxDatabase): Promise<RecordRow[]> {
-  const query = db.records.find();
-  const { documents } = await db.records.storageInstance.query(query.getPreparedQuery());
-  return documents.map((row: RecordRow) => ({ id: row.id, type: row.type, payload: row.payload, updatedAt: row.updatedAt }));
+async function storedRestoreRows(db: RecordBackend): Promise<RecordRow[]> {
+  return (await db.list()).map(canonical);
 }
-async function restoreRecoverySnapshot(db: RxDatabase, store: FileStore): Promise<RestoreRecoverySnapshot> {
+async function restoreRecoverySnapshot(db: RecordBackend, store: FileStore): Promise<RestoreRecoverySnapshot> {
   // FileStore reads stay in the owning transaction. Only RxDB work escapes it;
   // reading a locked FileStore table from ignoreTransaction would self-deadlock.
   const [proof, candidates, files, storedVault] = await Promise.all([
@@ -2015,8 +2183,8 @@ async function restoreRecoverySnapshot(db: RxDatabase, store: FileStore): Promis
   ]);
   const passwordVault = storedVault ? checkedPasswordVaultRecord(storedVault) : null;
   proof.passwordVault = passwordVault ? { revision: passwordVault.revision,
-    sha256: await Dexie.waitFor(sha(passwordVault.bytes)) } : null;
-  const rows = await Dexie.waitFor(Dexie.ignoreTransaction(() => storedRestoreRows(db)));
+    sha256: await store.waitFor(sha(passwordVault.bytes)) } : null;
+  const rows = await store.outsideTransaction(() => storedRestoreRows(db));
   return { proof, rows, candidates, files: new Map(files.map(file => [file.id, file])), passwordVault };
 }
 function checkedRestoreJournal(journal: Journal): Journal {
@@ -2033,7 +2201,7 @@ function checkedRestoreJournal(journal: Journal): Journal {
       ...(journal.passwordVault !== undefined ? { passwordVault: checkedPasswordVaultRecord(journal.passwordVault) } : {}) };
   } catch { throw Error('restore-recovery-invalid'); }
 }
-async function restoreRecoveryToken(db: RxDatabase, store: FileStore, journal: Journal,
+async function restoreRecoveryToken(db: RecordBackend, store: FileStore, journal: Journal,
   proof: RestoreDatasetProof): Promise<RestoreRecoveryToken> {
   const scopes = [...new Set([...proof.scopes, ...(proof.binding ? [proof.binding.scope] : [])])].sort();
   // Hash the encrypted bytes directly rather than expanding a 16 MiB KDBX
@@ -2041,15 +2209,15 @@ async function restoreRecoveryToken(db: RxDatabase, store: FileStore, journal: J
   const tokenPlan = journal.passwordVault?.bytes instanceof Uint8Array ? { ...journal,
     passwordVault: { id: journal.passwordVault.id, revision: journal.passwordVault.revision,
       updatedAt: journal.passwordVault.updatedAt, size: journal.passwordVault.bytes.length,
-      sha256: await Dexie.waitFor(sha(journal.passwordVault.bytes)) } } : journal;
-  const [planHash, datasetProof] = await Dexie.waitFor(Promise.all([
+      sha256: await store.waitFor(sha(journal.passwordVault.bytes)) } } : journal;
+  const [planHash, datasetProof] = await store.waitFor(Promise.all([
     sha(strToU8(JSON.stringify(tokenPlan))),
     sha(strToU8(JSON.stringify({ db: db.name, store: store.name, binding: proof.binding, scopes,
       legacy: proof.legacy, passwordVault: proof.passwordVault ?? null }))),
   ]));
   return { journalId: journal.id, planHash, datasetProof };
 }
-async function assertRestoreRecoveryToken(db: RxDatabase, store: FileStore, journal: Journal,
+async function assertRestoreRecoveryToken(db: RecordBackend, store: FileStore, journal: Journal,
   snapshot: RestoreRecoverySnapshot, expected: RestoreRecoveryToken): Promise<void> {
   const actual = await restoreRecoveryToken(db, store, journal, snapshot.proof);
   if (!expected || actual.journalId !== expected.journalId || actual.planHash !== expected.planHash ||
@@ -2067,7 +2235,7 @@ async function assertNoPendingReviewedConfirmations(store: FileStore): Promise<v
   if (entries.some(entry => entry.reviewedExpense)) throw Error('review-expense-pending');
   if (entries.some(entry => entry.reviewedAssetMerge)) throw Error('review-merge-pending');
 }
-async function recoverReviewedAssetMerges(db: RxDatabase, store: FileStore): Promise<void> {
+async function recoverReviewedAssetMerges(db: RecordBackend, store: FileStore): Promise<void> {
   for (const entry of await store.importJournal.toArray()) {
     if (entry.reviewedAssetMerge) await replayReviewedAssetMerge(db, store, entry.id);
   }
@@ -2091,10 +2259,10 @@ function assertRestoreRecoveryReferences(rows: RecordRow[], candidates: Reviewed
       !attachmentSchema.shape.name.safeParse(file.name).success || file.blob.size > 20 * 1024 * 1024) throw Error('archive-attachment-reference');
   }
 }
-async function assertRestoreRecoveryFilesReadable(rows: RecordRow[], files: Map<string, StoredFile>): Promise<void> {
+async function assertRestoreRecoveryFilesReadable(store: FileStore, rows: RecordRow[], files: Map<string, StoredFile>): Promise<void> {
   for (const id of attachmentIdsIn(rows)) {
     const file = files.get(id);
-    if (!file || (await Dexie.waitFor(file.blob.arrayBuffer())).byteLength !== file.blob.size) throw Error('archive-attachment-reference');
+    if (!file || (await store.waitFor(file.blob.arrayBuffer())).byteLength !== file.blob.size) throw Error('archive-attachment-reference');
   }
 }
 function plannedRestoreSnapshot(journal: Journal, snapshot: RestoreRecoverySnapshot) {
@@ -2116,7 +2284,7 @@ function plannedRestoreSnapshot(journal: Journal, snapshot: RestoreRecoverySnaps
   }
   return { rows: [...rows.values()], candidates: [...candidates.values()] };
 }
-async function describeRestoreRecovery(db: RxDatabase, store: FileStore, journal: Journal,
+async function describeRestoreRecovery(db: RecordBackend, store: FileStore, journal: Journal,
   snapshot: RestoreRecoverySnapshot): Promise<PendingRestoreRecovery> {
   const token = await restoreRecoveryToken(db, store, journal, snapshot.proof);
   const current = new Map(snapshot.rows.map(row => [row.id, row]));
@@ -2133,7 +2301,7 @@ async function describeRestoreRecovery(db: RxDatabase, store: FileStore, journal
     presentEqual, missing, different, canRetry: false, canAbandon: false, reason: null };
   try {
     const checked = checkedRestoreJournal(journal);
-    await assertRestoreRecoverySource(snapshot.proof, checked.sourceBinding, true);
+    await assertRestoreRecoverySource(store, snapshot.proof, checked.sourceBinding, true);
     await assertRestoreRecoveryGate(store);
     try {
       const planned = plannedRestoreSnapshot(checked, snapshot);
@@ -2148,8 +2316,10 @@ async function describeRestoreRecovery(db: RxDatabase, store: FileStore, journal
   return result;
 }
 
-async function replayJournal(db: RxDatabase, store: FileStore, id: string, expected?: RestoreRecoveryToken): Promise<void> {
-  await store.transaction('rw', restoreRecoveryTables(store), async () => {
+async function replayJournal(_db: RecordBackend, store: FileStore, id: string, expected?: RestoreRecoveryToken): Promise<void> {
+  await store.transaction('rw', restoreRecoveryTables(store), async (store) => {
+    const db = store.records;
+
     const entry = await store.journal.get(id);
     if (!entry) {
       if (expected) throw Error('restore-recovery-stale');
@@ -2158,27 +2328,27 @@ async function replayJournal(db: RxDatabase, store: FileStore, id: string, expec
     const snapshot = await restoreRecoverySnapshot(db, store);
     if (expected) await assertRestoreRecoveryToken(db, store, entry, snapshot, expected);
     const journal = checkedRestoreJournal(entry);
-    await assertRestoreRecoverySource(snapshot.proof, journal.sourceBinding, true);
+    await assertRestoreRecoverySource(store, snapshot.proof, journal.sourceBinding, true);
     await assertRestoreRecoveryGate(store);
     const planned = plannedRestoreSnapshot(journal, snapshot);
     assertRestoreRecoveryReferences(planned.rows, planned.candidates, snapshot.files);
-    await assertRestoreRecoveryFilesReadable(planned.rows, snapshot.files);
-    const restored = await Dexie.waitFor(Dexie.ignoreTransaction(async () => {
+    await assertRestoreRecoveryFilesReadable(store, planned.rows, snapshot.files);
+    const restored = await store.outsideTransaction(async () => {
       for (const row of journal.rows) {
-        const [current] = await db.records.storageInstance.findDocumentsById([row.id], false);
+        const [current] = await db.getMany([row.id], false);
         if (current) {
           if (current.payload !== row.payload) throw Error('restore-conflict');
           continue;
         }
-        try { await db.records.insert(row); }
+        try { await db.insert(row); }
         catch (error) {
-          const [raced] = await db.records.storageInstance.findDocumentsById([row.id], false);
+          const [raced] = await db.getMany([row.id], false);
           if (!raced) throw error;
           if (raced.payload !== row.payload) throw Error('restore-conflict');
         }
       }
       return storedRestoreRows(db);
-    }));
+    });
     assertRestoreRecoveryReferences(restored, planned.candidates, snapshot.files);
     for (const candidate of journal.intakeReview ?? []) if (!(await store.intakeReview.get(candidate.id))) await store.intakeReview.add(candidate);
     if (journal.passwordVault && !snapshot.passwordVault) await store.passwordVault.add(checkedPasswordVaultRecord(journal.passwordVault));
@@ -2250,32 +2420,32 @@ function sameMergeRow(left: RecordRow | null, right: RecordRow | null): boolean 
     left.payload === right.payload && left.updatedAt === right.updatedAt;
 }
 
-async function writeArchiveMergeRow(db: RxDatabase, before: RecordRow | null, after: RecordRow | null): Promise<void> {
+async function writeArchiveMergeRow(db: RecordBackend, before: RecordRow | null, after: RecordRow | null): Promise<void> {
   const id = after?.id ?? before?.id;
   if (!id) throw Error('archive-merge-row');
-  const [raw] = await db.records.storageInstance.findDocumentsById([id], true);
-  const current = raw && !raw._deleted ? raw as RecordRow : null;
+  const [raw] = await db.getMany([id], true);
+  const current = raw && !raw.internalDeleted ? raw as RecordRow : null;
   if (!sameMergeRow(current, before)) throw Error('archive-merge-race');
   if (sameMergeRow(before, after)) return;
-  const document = after
-    ? { ...raw, ...after, _deleted: false, _attachments: raw?._attachments ?? {} }
-    : { ...raw, _deleted: true };
-  const result = await db.records.storageInstance.bulkWrite([{ ...(raw ? { previous: raw } : {}), document }], 'archive-merge');
+  const next = after ?? raw;
+  if (!next) throw Error('archive-merge-row');
+  const result = await db.compareAndWrite([{ previous: raw ?? null, next, internalDeleted: !after }], 'archive-merge');
   if (result.error.length) throw Error(result.error.some(error => error.status === 409) ? 'archive-merge-race' : 'archive-merge-write');
 }
 
-async function rollbackArchiveMergeJournal(db: RxDatabase, store: FileStore): Promise<void> {
+async function rollbackArchiveMergeJournal(db: RecordBackend, store: FileStore): Promise<void> {
   const journal = await store.archiveMerge.get('active');
   if (!journal) return;
   if (journal.phase === 'syncing') throw Error('archive-merge-sync-started');
   // Preflight all rows before mutating any. A partially reverted prior attempt
   // is accepted, but a third-party edit leaves the journal intact.
   for (const change of journal.changes) {
-    const [raw] = await db.records.storageInstance.findDocumentsById([change.after.id], true);
-    const current = raw && !raw._deleted ? raw as RecordRow : null;
+    const [raw] = await db.getMany([change.after.id], true);
+    const current = raw && !raw.internalDeleted ? raw as RecordRow : null;
     if (!sameMergeRow(current, change.after) && !sameMergeRow(current, change.before)) throw Error('archive-merge-rollback-conflict');
   }
-  await store.transaction('rw', store.intakeReview, async () => {
+  await store.transaction('rw', store.intakeReview, async (store) => {
+
     for (const change of journal.intakeReviewChanges ?? []) {
       const current = await store.intakeReview.get(change.after.id) ?? null;
       if (!sameMergeReview(current, change.before) && !sameMergeReview(current, change.after)) {
@@ -2289,14 +2459,15 @@ async function rollbackArchiveMergeJournal(db: RxDatabase, store: FileStore): Pr
     }
   });
   for (const change of [...journal.changes].reverse()) {
-    const [raw] = await db.records.storageInstance.findDocumentsById([change.after.id], true);
-    const current = raw && !raw._deleted ? raw as RecordRow : null;
+    const [raw] = await db.getMany([change.after.id], true);
+    const current = raw && !raw.internalDeleted ? raw as RecordRow : null;
     if (sameMergeRow(current, change.before)) continue;
     await writeArchiveMergeRow(db, change.after, change.before);
   }
-  const rows = (await db.records.find().exec()).map(canonical);
+  const rows = (await db.list()).map(canonical);
   const referenced = attachmentIdsIn(rows);
-  await store.transaction('rw', store.blobs, store.archiveMerge, async () => {
+  await store.transaction('rw', [store.blobs, store.archiveMerge], async (store) => {
+
     for (const id of journal.insertedFileIds) {
       if (referenced.has(id)) throw Error('archive-merge-rollback-conflict');
       await store.blobs.delete(id);
@@ -2305,29 +2476,31 @@ async function rollbackArchiveMergeJournal(db: RxDatabase, store: FileStore): Pr
   });
 }
 
-async function rollbackImport(db: RxDatabase, store: FileStore, id: string): Promise<void> {
-  await store.transaction('rw', store.importJournal, store.categoryEditJournal, async () => {
+async function rollbackImport(_db: RecordBackend, store: FileStore, id: string): Promise<void> {
+  await store.transaction('rw', [store.importJournal, store.categoryEditJournal], async (store) => {
+    const db = store.records;
+
     const journal = await store.importJournal.get(id);
     if (!journal) return;
-    await Dexie.waitFor(Dexie.ignoreTransaction(async () => {
+    await store.outsideTransaction(async () => {
       for (const row of journal.rows) {
-        const current = await db.records.findOne(row.id).exec();
+        const current = await db.get(row.id);
         if (!current) continue;
         if (canonical(current).payload !== row.payload) throw Error('import-rollback-conflict');
-        await current.remove();
+        await db.remove(current.id, current.revision);
       }
-    }));
+    });
     await store.importJournal.delete(id);
   });
 }
 
 // A completed storage batch is atomic. If RxDB reports a per-row CAS conflict,
 // repair only this journal's own history row; never rewind an unrelated asset update.
-async function replayRenewalJournal(db: RxDatabase, store: FileStore, id: string): Promise<'committed' | 'cancelled'> {
+async function replayRenewalJournal(db: RecordBackend, store: FileStore, id: string): Promise<'committed' | 'cancelled'> {
   const journal = await store.renewalJournal.get(id);
   if (!journal) return 'cancelled';
-  const [asset] = await db.records.storageInstance.findDocumentsById([journal.next.id], false);
-  const [history] = await db.records.storageInstance.findDocumentsById([journal.history.id], false);
+  const [asset] = await db.getMany([journal.next.id], false);
+  const [history] = await db.getMany([journal.history.id], false);
   const assetPayload = asset ? asset.payload : null;
   const historyPayload = history ? history.payload : null;
   if (historyPayload && historyPayload !== journal.history.payload) throw Error('renewal-recovery-conflict');
@@ -2340,9 +2513,9 @@ async function replayRenewalJournal(db: RxDatabase, store: FileStore, id: string
   // Old v7 journals have no marker, so keep their exact-payload recovery behavior.
   if (assetPayload === journal.next.payload || (nextMarker && currentMarker === nextMarker)) {
     if (!history) {
-      try { await db.records.insert(journal.history); }
+      try { await db.insert(journal.history); }
       catch (error) {
-        const raced = await db.records.findOne(journal.history.id).exec();
+        const raced = await db.get(journal.history.id);
         if (!raced || canonical(raced).payload !== journal.history.payload) throw error;
       }
     }
@@ -2356,9 +2529,9 @@ async function replayRenewalJournal(db: RxDatabase, store: FileStore, id: string
     throw Error('renewal-recovery-conflict');
   }
   if (history) {
-    const document = await db.records.findOne(journal.history.id).exec();
+    const document = await db.get(journal.history.id);
     if (!document) throw Error('renewal-recovery-conflict');
-    await document.remove();
+    await db.remove(document.id, document.revision);
   }
   await store.renewalJournal.delete(id);
   return 'cancelled';
@@ -2379,9 +2552,11 @@ async function assertRowAttachmentsAvailable(store: FileStore, row: RecordRow): 
   }
 }
 
-async function replayPullJournal(db: RxDatabase, store: FileStore, id: string): Promise<void> {
+async function replayPullJournal(_db: RecordBackend, store: FileStore, id: string): Promise<void> {
   return store.transaction('rw', [store.pullJournal, store.syncMeta, store.syncBase,
-    store.journal, store.categoryEditJournal], async () => {
+    store.journal, store.categoryEditJournal], async (store) => {
+    const db = store.records;
+
     if (await store.journal.count()) throw Error('restore-recovery-pending');
     if (await store.categoryEditJournal.count()) throw Error('category-edit-pending');
   const journal = await store.pullJournal.get(id);
@@ -2389,7 +2564,7 @@ async function replayPullJournal(db: RxDatabase, store: FileStore, id: string): 
   if (((await store.syncMeta.get('cursor'))?.cursor ?? 0) !== journal.cursorStart) throw Error('cursor-mismatch');
   for (const change of journal.changes) {
     validateRow(change.row);
-    const current = await Dexie.waitFor(Dexie.ignoreTransaction(() => db.records.findOne(change.row.id).exec()));
+    const current = await store.outsideTransaction(() => db.get(change.row.id));
     const base = await store.syncBase.get(change.row.id);
     const currentPayload = current ? canonical(current).payload : null;
     if (currentPayload !== change.row.payload) {
@@ -2397,18 +2572,18 @@ async function replayPullJournal(db: RxDatabase, store: FileStore, id: string): 
       if (current) {
         const conflict = Symbol('sync-conflict');
         try {
-          await Dexie.waitFor(Dexie.ignoreTransaction(() => current.incrementalModify((data: RecordRow) => {
+          await store.outsideTransaction(() => db.modify(current.id, (data: RecordRow) => {
             if (data.payload !== (base?.payload ?? null) || (parsedPayload(data) as { purged?: boolean }).purged) throw conflict;
             return { ...data, ...change.row };
-          })));
+          }));
         } catch (error) {
           if (error === conflict) throw Error('sync-conflict');
           throw error;
         }
       } else {
-        try { await Dexie.waitFor(Dexie.ignoreTransaction(() => db.records.insert(change.row))); }
+        try { await store.outsideTransaction(() => db.insert(change.row)); }
         catch (error) {
-          const raced = await Dexie.waitFor(Dexie.ignoreTransaction(() => db.records.findOne(change.row.id).exec()));
+          const raced = await store.outsideTransaction(() => db.get(change.row.id));
           if (!raced || canonical(raced).payload !== change.row.payload) throw error;
         }
       }
@@ -2465,7 +2640,7 @@ function sameDatasetBinding(a: DatasetBinding, b: DatasetBinding): boolean {
 }
 
 async function assertRestoreIdentity(store: FileStore, source?: DatasetBinding): Promise<void> {
-  await assertRestoreRecoverySource(await restoreDatasetProof(store), source, false);
+  await assertRestoreRecoverySource(store, await restoreDatasetProof(store), source, false);
 }
 
 // Caller validates the identity and includes every table below in one Dexie transaction.
@@ -2473,11 +2648,11 @@ async function claimDatasetBindingInTransaction(store: FileStore, binding: Datas
   const existing = await store.datasetBinding.get('active');
   if (existing && !sameDatasetBinding(existing, binding)) throw Error('sync-dataset-bound');
   const [meta, base, outbox, pulls, uploads, oldBaseCount, oldMetaCount, oldPullCount] = await Promise.all([
-    store.scopedMeta.toCollection().primaryKeys(),
-    store.scopedBase.orderBy('scope').uniqueKeys(),
-    store.scopedOutbox.orderBy('scope').uniqueKeys(),
-    store.scopedPull.toCollection().primaryKeys(),
-    store.scopedAttachmentUploads.orderBy('scope').uniqueKeys(),
+    store.scopedMeta.keys(),
+    store.scopedBase.distinct('scope'),
+    store.scopedOutbox.distinct('scope'),
+    store.scopedPull.keys(),
+    store.scopedAttachmentUploads.distinct('scope'),
     store.syncBase.count(), store.syncMeta.count(), store.pullJournal.count(),
   ]);
   // The pre-scoped prototype has no remote identity, so its provenance cannot be inferred.
@@ -2505,9 +2680,11 @@ async function validateDatasetBinding(binding: DatasetBinding): Promise<void> {
   if (binding.scope !== `${digest}:${binding.workspaceId}`) throw Error('sync-dataset-identity');
 }
 
-async function replayScopedPull(db: RxDatabase, store: FileStore, scope: string): Promise<'applied' | 'conflict'> {
+async function replayScopedPull(_db: RecordBackend, store: FileStore, scope: string): Promise<'applied' | 'conflict'> {
   return store.transaction('rw', [store.scopedPull, store.scopedMeta, store.scopedBase,
-    store.scopedOutbox, store.journal, store.categoryEditJournal, store.blobs], async () => {
+    store.scopedOutbox, store.journal, store.categoryEditJournal, store.blobs], async (store) => {
+    const db = store.records;
+
   if (await store.journal.count()) throw Error('restore-recovery-pending');
   if (await store.categoryEditJournal.count()) throw Error('category-edit-pending');
   const journal = await store.scopedPull.get(scope);
@@ -2517,7 +2694,7 @@ async function replayScopedPull(db: RxDatabase, store: FileStore, scope: string)
   validateRow(row);
   await assertRowAttachmentsAvailable(store, row);
   const id = scopedKey(scope, row.id);
-  const current = await Dexie.waitFor(Dexie.ignoreTransaction(() => db.records.findOne(row.id).exec()));
+  const current = await store.outsideTransaction(() => db.get(row.id));
   const currentPayload = current ? canonical(current).payload : null;
   const base = await store.scopedBase.get(id);
   const basePayload = base?.payload ?? null;
@@ -2537,14 +2714,14 @@ async function replayScopedPull(db: RxDatabase, store: FileStore, scope: string)
   if (journal.decision !== 'local' && currentPayload !== row.payload) {
     if (journal.decision !== 'remote' && currentPayload !== basePayload) return 'conflict';
     if (current) {
-      await Dexie.waitFor(Dexie.ignoreTransaction(() => current.incrementalModify((data: RecordRow) => {
+      await store.outsideTransaction(() => db.modify(current.id, (data: RecordRow) => {
         if (data.payload !== currentPayload) throw Error('pull-race');
         return { ...data, ...row };
-      })));
+      }));
     } else {
-      try { await Dexie.waitFor(Dexie.ignoreTransaction(() => db.records.insert(row))); }
+      try { await store.outsideTransaction(() => db.insert(row)); }
       catch (error) {
-        const raced = await Dexie.waitFor(Dexie.ignoreTransaction(() => db.records.findOne(row.id).exec()));
+        const raced = await store.outsideTransaction(() => db.get(row.id));
         if (!raced || canonical(raced).payload !== row.payload) throw error;
       }
     }
@@ -2560,20 +2737,14 @@ async function replayScopedPull(db: RxDatabase, store: FileStore, scope: string)
   });
 }
 
-export async function openLocalRepository(name: string): Promise<LocalRepository> {
-  if (!/^[a-z][a-z0-9-]{2,60}$/.test(name)) throw Error('database-name');
-  const store = name === 'keepany-v1' ? files : new FileStore(name);
-  let db: RxDatabase | undefined;
-  try {
-    db = await createRxDatabase({ name, storage: getRxStorageDexie(), multiInstance: true });
-    await db.addCollections({ records: { schema: recordSchema } });
-    const openedDb = db;
+export async function openRepositoryFromBackend(openedDb: RecordBackend, store: FileStore, legacyReview = false): Promise<LocalRepository> {
+  const name = openedDb.name;
     // Another tab may still own an active batch; only recover its journal after the shared lock is released.
     await withRenewalLock(`keepany-batch:${name}`, async () => {
       for (const entry of await store.importJournal.toArray()) if (!entry.reviewedExpense && !entry.reviewedAssetMerge) await rollbackImport(openedDb, store, entry.id);
     });
-    const repository = new LocalRepository(db, store);
-    if (name === 'keepany-v1') {
+    const repository = new LocalRepository(openedDb, store);
+    if (legacyReview && name === 'keepany-v1') {
       try { await repository.retryIntakeReviewMigration(); }
       catch { /* Keep local assets readable and preserve the legacy review database. */ }
     }
@@ -2604,7 +2775,7 @@ export async function openLocalRepository(name: string): Promise<LocalRepository
       catch { /* Keep the durable journal and expose it through pendingArchiveMerge. */ }
     }
     for (const entry of await store.journal.toArray()) {
-      try { await replayJournal(db, store, entry.id); }
+      try { await replayJournal(openedDb, store, entry.id); }
       catch (error) {
         // Keep an interrupted journal for manual recovery without locking users out of local data.
         repository.restoreRecoveryError = error instanceof Error ? error.message : 'restore-failed';
@@ -2612,40 +2783,61 @@ export async function openLocalRepository(name: string): Promise<LocalRepository
       }
     }
     for (const entry of await store.pullJournal.toArray()) {
-      try { await replayPullJournal(db, store, entry.id); }
+      try { await replayPullJournal(openedDb, store, entry.id); }
       catch (error) { repository.syncRecoveryError = error instanceof Error ? error.message : 'pull-failed'; break; }
     }
     const pendingScopedPulls = await store.scopedPull.toArray();
     if (pendingScopedPulls.length) {
       const binding = await store.datasetBinding.get('active');
       const [meta, base, outbox, uploads] = await Promise.all([
-        store.scopedMeta.toCollection().primaryKeys(), store.scopedBase.orderBy('scope').uniqueKeys(),
-        store.scopedOutbox.orderBy('scope').uniqueKeys(), store.scopedAttachmentUploads.orderBy('scope').uniqueKeys(),
+        store.scopedMeta.keys(), store.scopedBase.distinct('scope'),
+        store.scopedOutbox.distinct('scope'), store.scopedAttachmentUploads.distinct('scope'),
       ]);
       const scopes = new Set([...meta, ...base, ...outbox, ...uploads, ...pendingScopedPulls.map(entry => entry.scope)]);
       if (scopes.size > 1) repository.syncRecoveryError = 'sync-dataset-ambiguous';
       else if (binding && scopes.size && !scopes.has(binding.scope)) repository.syncRecoveryError = 'sync-dataset-bound';
       else {
         for (const entry of pendingScopedPulls) {
-          try { await replayScopedPull(db, store, entry.scope); }
+          try { await replayScopedPull(openedDb, store, entry.scope); }
           catch (error) { repository.syncRecoveryError = error instanceof Error ? error.message : 'pull-failed'; break; }
         }
       }
     }
     return repository;
+}
+
+export async function openLocalRepository(name: string): Promise<LocalRepository> {
+  if (!/^[a-z][a-z0-9-]{2,60}$/.test(name)) throw Error('database-name');
+  const store = name === 'keepany-v1' ? defaultFiles() : new WebFileStore(name);
+  let db: RxDatabase | undefined;
+  try {
+    db = await createRxDatabase({ name, storage: getRxStorageDexie(), multiInstance: true });
+    await db.addCollections({ records: { schema: recordSchema } });
+    const openedDb = new WebRecordBackend(db);
+    store.bindRecords(openedDb);
+    return await openRepositoryFromBackend(openedDb, store, name === 'keepany-v1');
   } catch (error) {
     await db?.close();
-    if (store !== files) store.close();
+    if (store !== defaultState.fileStore) store.close();
     throw error;
   }
 }
 
 let singleton: Promise<LocalRepository> | undefined;
+/** Install before any page starts reading. Native failures never open the Web default. */
+export function registerRepositoryFactory(factory: () => Promise<LocalRepository>): void {
+  if (singleton || defaultState.resources) throw Error('repository-already-started');
+  defaultState.factory = factory;
+}
+
 function defaultRepository(): Promise<LocalRepository> {
+  if (!singleton && defaultState.factory) {
+    singleton = defaultState.factory().catch(error => { singleton = undefined; throw error; });
+  }
   if (!singleton) {
     if (!defaultState.resources) {
       defaultState.resources = openLocalRepository('keepany-v1')
-        .then(repository => ({ db: repository.db, fileStore: repository.fileStore,
+        .then(repository => ({ db: repository.db, records: repository.records, fileStore: repository.fileStore,
           recoveryState: repository.recoveryState }))
         .catch(error => { defaultState.resources = undefined; throw error; });
     }
@@ -2669,19 +2861,19 @@ function defaultRepository(): Promise<LocalRepository> {
       if (resource.recoveryState.intakeError === undefined) resource.recoveryState.intakeError = null;
       if (resource.recoveryState.intakeExpenseError === undefined) resource.recoveryState.intakeExpenseError = null;
       if (resource.recoveryState.categoryEditError === undefined) resource.recoveryState.categoryEditError = null;
-      const repository = new LocalRepository(resource.db, resource.fileStore, resource.recoveryState);
+      const repository = new LocalRepository(resource.records, resource.fileStore, resource.recoveryState);
       try { await repository.retryIntakeReviewMigration(); }
       catch { /* The shared migration error stays visible while local CRUD remains usable. */ }
-      await withRenewalLock(`keepany-renewal:${resource.db.name}`, async () => {
+      await withRenewalLock(`keepany-renewal:${resource.records.name}`, async () => {
         for (const entry of await resource.fileStore.renewalJournal.toArray()) {
-          try { await replayRenewalJournal(resource.db, resource.fileStore, entry.id); }
+          try { await replayRenewalJournal(resource.records, resource.fileStore, entry.id); }
           catch (error) {
             repository.renewalRecoveryError = error instanceof Error ? error.message : 'renewal-recovery-pending';
             break;
           }
         }
         for (const entry of await resource.fileStore.subscriptionSaveJournal.toArray()) {
-          try { await replaySubscriptionSave(resource.db, resource.fileStore, entry.id); }
+          try { await replaySubscriptionSave(resource.records, resource.fileStore, entry.id); }
           catch (error) {
             repository.subscriptionRecoveryError = error instanceof Error ? error.message : 'subscription-relations-pending';
             break;
@@ -2689,18 +2881,18 @@ function defaultRepository(): Promise<LocalRepository> {
         }
         if (!(await resource.fileStore.subscriptionSaveJournal.count())) repository.subscriptionRecoveryError = null;
         if ((await resource.fileStore.archiveMerge.get('active'))?.phase === 'applying') {
-          try { await rollbackArchiveMergeJournal(resource.db, resource.fileStore); }
+          try { await rollbackArchiveMergeJournal(resource.records, resource.fileStore); }
           catch { /* Pending state remains visible for explicit recovery. */ }
         }
       });
       try { await repository.retryReviewedExpenseConfirmations(); }
       catch { /* Pending confirmation stays frozen and can be retried explicitly. */ }
-      try { await recoverReviewedAssetMerges(resource.db, resource.fileStore); }
+      try { await recoverReviewedAssetMerges(resource.records, resource.fileStore); }
       catch { /* Pending merge stays visible through its durable candidate intent. */ }
       try { await repository.retryAllCategoryEdits(); }
       catch { /* The persisted direction and conflict remain available for recovery. */ }
       for (const entry of await resource.fileStore.journal.toArray()) {
-        try { await replayJournal(resource.db, resource.fileStore, entry.id); }
+        try { await replayJournal(resource.records, resource.fileStore, entry.id); }
         catch (error) {
           repository.restoreRecoveryError = error instanceof Error ? error.message : 'restore-failed';
           break;

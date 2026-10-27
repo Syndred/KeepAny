@@ -12,8 +12,8 @@ export class RxdbMcpAssetStore implements McpAssetStore {
   constructor(private readonly repository: LocalRepository) {}
 
   async get(id: string): Promise<AssetSnapshot | null> {
-    const document = await this.repository.db.records.findOne(`asset:${id}`).exec();
-    return document ? snapshot(document.toJSON() as RecordRow) : null;
+    const document = await this.repository.records.get(`asset:${id}`);
+    return document ? snapshot(document) : null;
   }
 
   async list(ids: readonly string[]): Promise<AssetSnapshot[]> {
@@ -26,12 +26,12 @@ export class RxdbMcpAssetStore implements McpAssetStore {
     await assertCanCommit?.();
     const parsedNext = assetSchema.parse(next);
     if (parsedNext.id !== id || parsedNext.deleted) throw Error('invalid-asset-update');
-    const document = await this.repository.db.records.findOne(`asset:${id}`).exec();
+    const document = await this.repository.records.get(`asset:${id}`);
     if (!document) return 'conflict';
     await assertCanCommit?.();
     const conflict = Symbol('conflict');
     try {
-      await document.incrementalModify(async (data: RecordRow) => {
+      await this.repository.records.modify(document.id, async (data: RecordRow) => {
         // RxDB may queue or retry this modifier after the initial read. This is
         // the last application-controlled point before each storage write.
         await assertCanCommit?.();

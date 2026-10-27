@@ -1,5 +1,4 @@
-import Dexie, { type Table } from 'dexie';
-import type { RxDatabase } from 'rxdb';
+import type { RecordBackend, SideTable, SideStoreRuntime, SideTableRef } from './storage-contracts';
 import { z } from 'zod';
 import { assetSchema, categorySchema, entitySchemas, kinds, normalizeCategoryName, type Asset, type AssetKind, type Category, type EntityType } from '../../domain/src';
 import type { RecordRow } from './index';
@@ -30,11 +29,14 @@ export interface PendingCategoryEdit {
   deleting: boolean;
 }
 export interface CategoryEditStore {
-  categoryEditJournal: Table<CategoryEditJournal, string>;
-  transaction: Dexie['transaction'];
+  categoryEditJournal: SideTable<CategoryEditJournal>;
+  transaction<T>(mode: 'r' | 'rw', tables: SideTableRef | readonly (SideTableRef | string)[], action: (scope: this) => Promise<T>): Promise<T>;
+  records: RecordBackend;
+  outsideTransaction: SideStoreRuntime['outsideTransaction'];
+  waitFor: SideStoreRuntime['waitFor'];
 }
 export interface CategoryEditOperationStore extends CategoryEditStore {
-  recoveryTables: Array<Pick<Table<{ id: string }, string>, 'name' | 'count'>>;
+  recoveryTables: Array<Pick<SideTable<{ id: string }>, 'name' | 'count'>>;
 }
 export interface CategoryMutationTarget { type: EntityType; id: string; kind?: AssetKind }
 
@@ -47,32 +49,33 @@ const sameRow = (a: RecordRow | null, b: RecordRow): boolean => !!a && a.id === 
   a.payload === b.payload && a.updatedAt === b.updatedAt;
 const sameEntity = (a: unknown, b: unknown): boolean => JSON.stringify(a) === JSON.stringify(b);
 
-async function storedRow(db: RxDatabase, id: string): Promise<RecordRow | null> {
-  const [raw] = await db.records.storageInstance.findDocumentsById([id], false);
+async function storedRow(db: RecordBackend, id: string): Promise<RecordRow | null> {
+  const [raw] = await db.getMany([id], false);
   return raw ? canonical(raw as RecordRow) : null;
 }
-async function storedRows(db: RxDatabase, type: EntityType): Promise<RecordRow[]> {
-  const query = db.records.find({ selector: { type } });
-  return (await db.records.storageInstance.query(query.getPreparedQuery())).documents.map((row: RecordRow) => canonical(row));
+async function storedRows(db: RecordBackend, type: EntityType): Promise<RecordRow[]> {
+  return (await db.list(type)).map(canonical);
 }
 function entity(row: RecordRow) { return entitySchemas[row.type].parse(JSON.parse(row.payload)); }
 
 // Every public mutation of a category or asset shares this table with intent
 // creation and replay. IndexedDB supplies cross-tab exclusion without Web Locks.
-export async function withCategoryMutationGate<T>(db: RxDatabase, store: CategoryEditStore,
-  targets: CategoryMutationTarget[], action: () => Promise<T>, allKinds = false): Promise<T> {
-  return store.transaction('rw', store.categoryEditJournal, async () => {
+export async function withCategoryMutationGate<S extends CategoryEditStore, T>(_db: RecordBackend, store: S,
+  targets: CategoryMutationTarget[], action: (scope: S) => Promise<T>, allKinds = false): Promise<T> {
+  return store.transaction('rw', store.categoryEditJournal, async (store) => {
+    const db = store.records;
+
     // The callback can run before a queued native transaction obtains its lock.
     // Acquire it with a FileStore request before starting any separate RxDB work.
     await store.categoryEditJournal.count();
     await assertCategoryMutationAllowed(db, store, targets, allKinds);
-    return Dexie.waitFor(Dexie.ignoreTransaction(action));
+    return store.outsideTransaction(() => action(store));
   });
 }
 
 // Called inside the caller's FileStore transaction when it also owns another
 // journal table. Avoid nested overlapping IndexedDB transactions and lock cycles.
-export async function assertCategoryMutationAllowed(db: RxDatabase, store: CategoryEditStore,
+export async function assertCategoryMutationAllowed(db: RecordBackend, store: CategoryEditStore,
   targets: CategoryMutationTarget[], allKinds = false): Promise<void> {
   if (allKinds && await store.categoryEditJournal.count()) throw Error('category-edit-pending');
   const kinds = new Set<AssetKind>();
@@ -82,7 +85,7 @@ export async function assertCategoryMutationAllowed(db: RxDatabase, store: Categ
       if (kind) kinds.add(kind);
     } else if (target.type === 'asset' || target.type === 'category') {
       if (target.kind) kinds.add(target.kind);
-      const current = await Dexie.waitFor(Dexie.ignoreTransaction(() => storedRow(db, `${target.type}:${target.id}`)));
+      const current = await store.outsideTransaction(() => storedRow(db, `${target.type}:${target.id}`));
       if (current) kinds.add((entity(current) as Asset | Category).kind);
     }
   }
@@ -118,52 +121,56 @@ function checkedJournal(input: CategoryEditJournal): CategoryEditJournal {
   return journal;
 }
 
-async function preflight(db: RxDatabase, journal: CategoryEditJournal): Promise<void> {
+async function preflight(db: RecordBackend, journal: CategoryEditJournal): Promise<void> {
   for (const change of journal.changes) {
     const current = await storedRow(db, change.before.id);
     if (!sameRow(current, change.before) && !sameRow(current, change.after)) throw Error('category-edit-conflict');
   }
 }
-async function writeChange(db: RxDatabase, before: RecordRow, after: RecordRow): Promise<void> {
-  const [raw] = await db.records.storageInstance.findDocumentsById([before.id], true);
-  const current = raw && !raw._deleted ? canonical(raw as RecordRow) : null;
+async function writeChange(db: RecordBackend, before: RecordRow, after: RecordRow): Promise<void> {
+  const [raw] = await db.getMany([before.id], true);
+  const current = raw && !raw.internalDeleted ? canonical(raw as RecordRow) : null;
   if (sameRow(current, after)) return;
   if (!sameRow(current, before)) throw Error('category-edit-conflict');
-  const result = await db.records.storageInstance.bulkWrite([{ previous: raw,
-    document: { ...raw, ...after } }], 'category-edit');
+  const result = await db.compareAndWrite([{ previous: raw,
+    next: { ...raw, ...after } }], 'category-edit');
   if (result.error.length) throw Error(result.error.some(error => error.status === 409) ? 'category-edit-conflict' : 'category-edit-pending');
 }
 
-export async function replayCategoryEdit(db: RxDatabase, store: CategoryEditStore, kind: AssetKind,
+export async function replayCategoryEdit(_db: RecordBackend, store: CategoryEditStore, kind: AssetKind,
   expectedOperationId?: string): Promise<void> {
-  await store.transaction('rw', store.categoryEditJournal, async () => {
+  await store.transaction('rw', store.categoryEditJournal, async (store) => {
+    const db = store.records;
+
     const entry = await store.categoryEditJournal.get(kind);
     if (expectedOperationId !== undefined && entry?.operationId !== expectedOperationId) throw Error('category-stale');
     if (!entry) return;
     const journal = checkedJournal(entry);
-    await Dexie.waitFor(Dexie.ignoreTransaction(async () => {
+    await store.outsideTransaction(async () => {
       await preflight(db, journal);
       const changes = journal.phase === 'rolling-back' ? [...journal.changes].reverse() : journal.changes;
       for (const change of changes) await writeChange(db,
         journal.phase === 'rolling-back' ? change.after : change.before,
         journal.phase === 'rolling-back' ? change.before : change.after);
-    }));
+    });
     await store.categoryEditJournal.delete(kind);
   });
 }
 
-export async function cancelCategoryEdit(db: RxDatabase, store: CategoryEditStore, kind: AssetKind,
+export async function cancelCategoryEdit(db: RecordBackend, store: CategoryEditStore, kind: AssetKind,
   expectedOperationId?: string): Promise<void> {
   // Commit the rollback direction before crossing into RxDB. A crash during undo
   // must resume the undo, even when some original rows have already returned.
   let operationId: string | undefined;
-  await store.transaction('rw', store.categoryEditJournal, async () => {
+  await store.transaction('rw', store.categoryEditJournal, async (store) => {
+    const db = store.records;
+
     const entry = await store.categoryEditJournal.get(kind);
     if (expectedOperationId !== undefined && entry?.operationId !== expectedOperationId) throw Error('category-stale');
     if (!entry) return;
     const journal = checkedJournal(entry);
     operationId = journal.operationId;
-    await Dexie.waitFor(Dexie.ignoreTransaction(() => preflight(db, journal)));
+    await store.outsideTransaction(() => preflight(db, journal));
     await store.categoryEditJournal.put({ ...journal, phase: 'rolling-back' });
   });
   if (operationId) await replayCategoryEdit(db, store, kind, operationId);
@@ -179,17 +186,17 @@ export async function pendingCategoryEdit(store: CategoryEditStore, kind: AssetK
     deleting: after.deleted };
 }
 
-export async function editCustomCategory(db: RxDatabase, store: CategoryEditOperationStore,
+export async function editCustomCategory(db: RecordBackend, store: CategoryEditOperationStore,
   input: EditCustomCategoryInput): Promise<Category> {
   return changeCustomCategory(db, store, input, false);
 }
 
-export async function deleteCustomCategory(db: RxDatabase, store: CategoryEditOperationStore,
+export async function deleteCustomCategory(db: RecordBackend, store: CategoryEditOperationStore,
   input: DeleteCustomCategoryInput): Promise<Category> {
   return changeCustomCategory(db, store, { ...input, name: input.expectedCategory.name, memberIds: [], reservedNames: [] }, true);
 }
 
-async function changeCustomCategory(db: RxDatabase, store: CategoryEditOperationStore,
+async function changeCustomCategory(db: RecordBackend, store: CategoryEditOperationStore,
   input: EditCustomCategoryInput, deleting: boolean): Promise<Category> {
   const expected = categorySchema.parse(input.expectedCategory);
   if (expected.deleted ||
@@ -202,10 +209,12 @@ async function changeCustomCategory(db: RxDatabase, store: CategoryEditOperation
   const selected = new Set(input.memberIds);
   if (input.memberIds.some(id => !expectedAssets.some(asset => asset.id === id && !asset.deleted))) throw Error('category-edit-invalid');
   let planned: CategoryEditJournal | undefined;
-  await store.transaction('rw', [store.categoryEditJournal, ...store.recoveryTables.map(table => table.name)], async () => {
+  await store.transaction('rw', [store.categoryEditJournal, ...store.recoveryTables.map(table => table.name)], async (store) => {
+    const db = store.records;
+
     if (await store.categoryEditJournal.get(expected.kind)) throw Error('category-edit-pending');
     for (const table of store.recoveryTables) if (await table.count()) throw Error('category-edit-pending');
-    planned = await Dexie.waitFor(Dexie.ignoreTransaction(async () => {
+    planned = await store.outsideTransaction(async () => {
       const categoryRow = await storedRow(db, `category:${expected.id}`);
       if (!categoryRow || !sameEntity(categorySchema.parse(entity(categoryRow)), expected)) throw Error('category-stale');
       const categories = await storedRows(db, 'category');
@@ -241,7 +250,7 @@ async function changeCustomCategory(db: RxDatabase, store: CategoryEditOperation
               : [...new Set(preference.value.map(value => value === expected.name ? name : value))] }), updatedAt: now } });
       }
       return { id: expected.kind, operationId: crypto.randomUUID(), phase: 'applying', changes };
-    }));
+    });
     await store.categoryEditJournal.add(planned);
   });
   if (!planned) throw Error('category-edit-pending');

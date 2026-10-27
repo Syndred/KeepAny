@@ -36,7 +36,7 @@ it('carries a real pending restore warning through the public default entry and 
   const hot = await import('./index');
   const reused = await hot.localRepository();
   expect(reused).not.toBe(reopened);
-  expect(reused.db).toBe(reopened.db);
+  expect(reused.records).toBe(reopened.records);
   expect(reused.fileStore).toBe(reopened.fileStore);
   expect(reused.restoreRecoveryError).toBe('restore-conflict');
   expect(reused.syncRecoveryError).toBe('pull-failed');

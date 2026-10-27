@@ -1,5 +1,4 @@
-import Dexie from 'dexie';
-import type { RxDatabase } from 'rxdb';
+import type { RecordBackend, } from './storage-contracts';
 import { assetSchema, type Asset } from '../../domain/src';
 import { assertCategoryMutationAllowed, type CategoryEditStore } from './category-edit';
 import type { RecordRow } from './index';
@@ -34,8 +33,8 @@ export function previewReviewedAssetMerge(input: ConfirmReviewedAssetMergeInput,
   return receipt.data;
 }
 
-async function storedTarget(db: RxDatabase, id: string): Promise<Asset | null> {
-  const [raw] = await db.records.storageInstance.findDocumentsById([`asset:${id}`], false);
+async function storedTarget(db: RecordBackend, id: string): Promise<Asset | null> {
+  const [raw] = await db.getMany([`asset:${id}`], false);
   return raw ? assetSchema.parse(JSON.parse((raw as RecordRow).payload)) : null;
 }
 function acceptedCandidate(candidate: ReviewedCandidate, receipt: ReviewedAssetMergeReceipt): ReviewedCandidate {
@@ -43,13 +42,15 @@ function acceptedCandidate(candidate: ReviewedCandidate, receipt: ReviewedAssetM
 }
 
 /** Freeze the selected values before crossing the FileStore/RxDB transaction boundary. */
-export async function confirmReviewedAssetMerge(db: RxDatabase, store: ReviewedAssetMergeStorage,
+export async function confirmReviewedAssetMerge(db: RecordBackend, store: ReviewedAssetMergeStorage,
   input: ConfirmReviewedAssetMergeInput): Promise<Asset> {
   const expected = reviewedCandidateSchema.parse(input.expectedCandidate);
   const id = reviewedAssetMergeJournalId(expected.id);
   let receipt = previewReviewedAssetMerge(input);
   await store.transaction('rw', [store.intakeReview, store.importJournal, store.categoryEditJournal,
-    ...(store.archiveMerge ? [store.archiveMerge.name] : []), ...(store.journal ? [store.journal.name] : [])], async () => {
+    ...(store.archiveMerge ? [store.archiveMerge.name] : []), ...(store.journal ? [store.journal.name] : [])], async (store) => {
+    const db = store.records;
+
     if (await store.archiveMerge?.count()) throw Error('archive-merge-pending');
     if (await store.journal?.count()) throw Error('restore-recovery-pending');
     await assertCategoryMutationAllowed(db, store, [{ type: 'asset', id: receipt.targetId, kind: receipt.before.kind }]);
@@ -71,7 +72,7 @@ export async function confirmReviewedAssetMerge(db: RxDatabase, store: ReviewedA
     }
     if (!sameReviewedCandidate(current, expected)) throw Error('review-merge-stale');
     if ((await store.importJournal.toArray()).some(journal => journal.reviewedAssetMerge?.receipt.targetId === receipt.targetId)) throw Error('review-merge-pending');
-    const target = await Dexie.waitFor(Dexie.ignoreTransaction(() => storedTarget(db, receipt.targetId)));
+    const target = await store.outsideTransaction(() => storedTarget(db, receipt.targetId));
     if (!same(target, receipt.before)) throw Error('review-merge-stale');
     await store.importJournal.add({ id, reviewedAssetMerge: { expectedCandidate: expected, receipt }, rows: [{
       id: `asset:${receipt.targetId}`, type: 'asset', payload: JSON.stringify(receipt.after), updatedAt: Date.parse(receipt.recordedAt),
@@ -86,8 +87,10 @@ export async function confirmReviewedAssetMerge(db: RxDatabase, store: ReviewedA
 }
 
 /** CAS writes preserve unrelated edits; a crash retains the frozen intent for retry. */
-export async function replayReviewedAssetMerge(db: RxDatabase, store: ReviewedAssetMergeStorage, id: string): Promise<Asset | null> {
-  return store.transaction('rw', store.intakeReview, store.importJournal, store.categoryEditJournal, async () => {
+export async function replayReviewedAssetMerge(_db: RecordBackend, store: ReviewedAssetMergeStorage, id: string): Promise<Asset | null> {
+  return store.transaction('rw', [store.intakeReview, store.importJournal, store.categoryEditJournal], async (store) => {
+    const db = store.records;
+
     const journal = await store.importJournal.get(id);
     if (!journal) return null;
     const intent = journal.reviewedAssetMerge;
@@ -100,21 +103,21 @@ export async function replayReviewedAssetMerge(db: RxDatabase, store: ReviewedAs
     const accepted = acceptedCandidate(expected, receipt), current = await getReviewedCandidate(store, expected.id);
     if (!current || (!sameReviewedCandidate(current, expected) && !sameReviewedCandidate(current, accepted))) throw Error('review-merge-conflict');
     await assertCategoryMutationAllowed(db, store, [{ type: 'asset', id: receipt.targetId, kind: receipt.before.kind }]);
-    await Dexie.waitFor(Dexie.ignoreTransaction(async () => {
-      const [raw] = await db.records.storageInstance.findDocumentsById([planned.id], true);
-      const target = raw && !raw._deleted ? assetSchema.parse(JSON.parse((raw as RecordRow).payload)) : null;
+    await store.outsideTransaction(async () => {
+      const [raw] = await db.getMany([planned.id], true);
+      const target = raw && !raw.internalDeleted ? assetSchema.parse(JSON.parse((raw as RecordRow).payload)) : null;
       if (same(target, receipt.after)) return;
       if (!same(target, receipt.before)) throw Error('review-merge-conflict');
-      const result = await db.records.storageInstance.bulkWrite([{ previous: raw, document: { ...raw, ...planned } }], 'intake-asset-merge');
+      const result = await db.compareAndWrite([{ previous: raw, next: { ...raw, ...planned } }], 'intake-asset-merge');
       if (result.error.length) throw Error(result.error.some(error => error.status === 409) ? 'review-merge-conflict' : 'review-merge-pending');
-    }));
+    });
     await store.intakeReview.put(accepted);
     await store.importJournal.delete(id);
     return receipt.after;
   });
 }
 
-export async function pendingReviewedAssetMerges(db: RxDatabase, store: ReviewedAssetMergeStorage): Promise<PendingReviewedAssetMerge[]> {
+export async function pendingReviewedAssetMerges(db: RecordBackend, store: ReviewedAssetMergeStorage): Promise<PendingReviewedAssetMerge[]> {
   const pending: PendingReviewedAssetMerge[] = [];
   for (const entry of await store.importJournal.toArray()) {
     if (!entry.reviewedAssetMerge) continue;
@@ -126,16 +129,18 @@ export async function pendingReviewedAssetMerges(db: RxDatabase, store: Reviewed
   return pending;
 }
 
-export async function cancelReviewedAssetMerge(db: RxDatabase, store: ReviewedAssetMergeStorage, candidateId: string): Promise<'cancelled' | 'completed'> {
+export async function cancelReviewedAssetMerge(db: RecordBackend, store: ReviewedAssetMergeStorage, candidateId: string): Promise<'cancelled' | 'completed'> {
   const id = reviewedAssetMergeJournalId(candidateId);
-  const cancelled = await store.transaction('rw', store.intakeReview, store.importJournal, async () => {
+  const cancelled = await store.transaction('rw', [store.intakeReview, store.importJournal], async (store) => {
+    const db = store.records;
+
     const journal = await store.importJournal.get(id);
     if (!journal) return true;
     const intent = journal.reviewedAssetMerge;
     if (!intent || intent.expectedCandidate.id !== candidateId) throw Error('review-merge-conflict');
     const current = await getReviewedCandidate(store, candidateId);
     if (!current || !sameReviewedCandidate(current, intent.expectedCandidate)) throw Error('review-merge-conflict');
-    const target = await Dexie.waitFor(Dexie.ignoreTransaction(() => storedTarget(db, intent.receipt.targetId)));
+    const target = await store.outsideTransaction(() => storedTarget(db, intent.receipt.targetId));
     if (same(target, intent.receipt.after)) return false;
     if (!same(target, intent.receipt.before)) throw Error('review-merge-conflict');
     await store.importJournal.delete(id);
