@@ -39,15 +39,16 @@ export function NativeDatasetPanel() {
     {datasets.map(row => <article key={row.name} className="padded">
       <strong>{row.name === 'keepany-v1' ? t('localDatasetInitial') : t('localDatasetRestored', { date: new Date(row.createdAt).toLocaleString(i18n.language) })}</strong>
       <div className="actions">{row.active ? <span>{t('localDatasetActive')}</span> : row.phase === 'retained' ?
-        <Button disabled={busy} variant="default" onClick={() => setConfirm({ row, action: 'switch' })}>{t('localDatasetSwitch')}</Button> : <>
+        <Button disabled={busy} variant="default" onClick={() => { setError(false); setConfirm({ row, action: 'switch' }); }}>{t('localDatasetSwitch')}</Button> : <>
           <span>{t('localDatasetPending')}</span>
           {row.phase === 'candidate' && <Button disabled={busy} onClick={() => void perform(row, 'resume')}>{t('localDatasetResume')}</Button>}
-          <Button disabled={busy} variant="default" onClick={() => setConfirm({ row, action: 'abandon' })}>{t('localDatasetAbandon')}</Button>
+          <Button disabled={busy} variant="default" onClick={() => { setError(false); setConfirm({ row, action: 'abandon' }); }}>{t('localDatasetAbandon')}</Button>
         </>}</div>
     </article>)}
-    {error && <p role="alert">{t('localDatasetFailure')}</p>}
+    {error && !confirm && <p role="alert">{t('localDatasetFailure')}</p>}
     {confirm && <Dialog title={t(confirm.action === 'switch' ? 'localDatasetSwitch' : 'localDatasetAbandon')} onClose={() => { if (!inFlight.current) setConfirm(null); }} closeDisabled={busy}>
       <p>{t(confirm.action === 'switch' ? 'localDatasetSwitchConfirm' : 'localDatasetAbandonConfirm')}</p>
+      {error && <p role="alert">{t('localDatasetFailure')}</p>}
       <div className="actions"><Button variant="default" disabled={busy} onClick={() => setConfirm(null)}>{t('cancel')}</Button>
         <Button disabled={busy} onClick={() => void perform(confirm.row, confirm.action)}>{t('confirm')}</Button></div>
     </Dialog>}
