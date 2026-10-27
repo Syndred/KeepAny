@@ -168,8 +168,8 @@ function GraphMiniMap({ rootId }: { rootId: string }) {
 		nodeColor={(node) => node.id === rootId ? "var(--yellow)" : "var(--muted)"} />;
 }
 
-function GraphContent({ props, expanded, restore, onExpand, onCollapse }: {
-	props: Props; expanded: boolean; restore: Bookmark | null;
+function GraphContent({ props, expanded, restore, restoreFocus, onExpand, onCollapse }: {
+	props: Props; expanded: boolean; restore: Bookmark | null; restoreFocus: boolean;
 	onExpand: (bookmark: Bookmark) => void;
 	onCollapse: () => void;
 }) {
@@ -197,11 +197,16 @@ function GraphContent({ props, expanded, restore, onExpand, onCollapse }: {
 	const error = result.key === inputKey && result.error;
 	const restoredFocus = useRef(false);
 	useEffect(() => {
-		if (ready && restore && !expanded && !restoredFocus.current) {
-			restoredFocus.current = true;
-			document.getElementById("account-graph-expand")?.focus();
+		// A newly visited center need not have a normal-view camera bookmark.
+		// Collapsing still returns focus to its own enabled toolbar control.
+		if (ready && restoreFocus && !expanded && !restoredFocus.current) {
+			const button = navigationHost?.querySelector<HTMLButtonElement>("#account-graph-expand");
+			if (button?.isConnected && !button.disabled) {
+				button.focus();
+				restoredFocus.current = document.activeElement === button;
+			}
 		}
-	}, [ready, restore, expanded]);
+	}, [ready, restoreFocus, expanded, navigationHost]);
 	const byId = new Map(props.assets.map((asset) => [asset.id, asset]));
 	const connections = props.relations.filter(relation => !relation.deleted && byId.has(relation.from) && byId.has(relation.to) && relation.from !== relation.to);
 	const selectedRelation = connections.find(relation => relation.id === props.selectedEdgeId);
@@ -297,15 +302,17 @@ export function AccountFamilyGraphView(props: Props) {
 	const { t } = useTranslation();
 	const [expanded, setExpanded] = useState(false);
 	const [restore, setRestore] = useState<{ rootId: string; bookmark: Bookmark } | null>(null);
+	const [focusAfterCollapse, setFocusAfterCollapse] = useState<string | null>(null);
 	const normalBookmark = useRef<{ rootId: string; bookmark: Bookmark } | null>(null);
 	function closeExpanded() {
 		const previous = normalBookmark.current;
 		const camera = previous?.rootId === props.root.id ? previous.bookmark : graphViewState(props.root.id).camera;
 		setRestore(camera ? { rootId: props.root.id, bookmark: camera } : null);
+		setFocusAfterCollapse(props.root.id);
 		setExpanded(false);
 	}
 	// Keep the dialog mounted while changing accounts; only reset the canvas and its camera.
 	const saved = graphViewState(props.root.id);
-	const canvas = <GraphContent key={props.root.id} props={props} expanded={expanded} restore={restore?.rootId === props.root.id ? restore.bookmark : expanded ? saved.expandedCamera ?? saved.camera ?? null : saved.camera ?? null} onCollapse={closeExpanded} onExpand={(bookmark) => { normalBookmark.current = { rootId: props.root.id, bookmark }; setRestore(null); saved.camera = bookmark; saved.expandedCamera = bookmark; setExpanded(true); }} />;
+	const canvas = <GraphContent key={props.root.id} props={props} expanded={expanded} restore={restore?.rootId === props.root.id ? restore.bookmark : expanded ? saved.expandedCamera ?? saved.camera ?? null : saved.camera ?? null} restoreFocus={focusAfterCollapse === props.root.id} onCollapse={closeExpanded} onExpand={(bookmark) => { normalBookmark.current = { rootId: props.root.id, bookmark }; setRestore(null); setFocusAfterCollapse(null); saved.camera = bookmark; saved.expandedCamera = bookmark; setExpanded(true); }} />;
 	return <ReactFlowProvider>{expanded ? <Dialog title={t(props.root.kind === "account" ? "accountGraphTitle" : "graphTitle")} className="account-graph-dialog" focusTitleOnOpen returnFocusTo={() => document.getElementById("account-graph-expand")} onClose={closeExpanded}>{canvas}</Dialog> : canvas}</ReactFlowProvider>;
 }
