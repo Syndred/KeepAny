@@ -81,7 +81,15 @@ private final class BoundedRequest: NSObject, URLSessionDataDelegate, URLSession
 public final class KeepAnyConnectionsPlugin: CAPPlugin, CAPBridgedPlugin {
     public let identifier = "KeepAnyConnectionsPlugin"
     public let jsName = "KeepAnyConnections"
-    public let pluginMethods = ["openSession", "closeSession", "sessionRequest", "backupWrite", "backupRequest", "backupRead", "cancel"].map { CAPPluginMethod(name: $0, returnType: CAPPluginReturnPromise) }
+    public let pluginMethods: [CAPPluginMethod] = [
+        CAPPluginMethod(name: "openSession", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "closeSession", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "sessionRequest", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "backupWrite", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "backupRequest", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "backupRead", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "cancel", returnType: CAPPluginReturnPromise)
+    ]
     private let queue = DispatchQueue(label: "KeepAny.Connections")
     private var sessions: [String: MemorySession] = [:]
     private var files: [String: URL] = [:]
