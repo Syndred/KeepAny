@@ -65,12 +65,33 @@ jobs:
         shell: bash
         env:
           KEEPANY_MCP_STAGE_FILE: ${{ github.workspace }}/test-results/ios/mcp-stage-events.ndjson
+          KEEPANY_MCP_PUBLIC_CERTIFICATE_FILE: ${{ github.workspace }}/test-results/ios/mcp-public-certificate.pem
         run: |
           set -o pipefail
           mkdir -p test-results/ios
           swift test --package-path apps/mobile/ios/KeepAnyMcpTransport \
             --scratch-path test-results/ios-mcp-derived --jobs 2 \
             2>&1 | tee test-results/ios/mcp-transport-tests.log
+      - name: Diagnose the generated public MCP certificate without changing trust
+        if: ${{ always() && !cancelled() && steps.compile_ios.outcome == 'success' }}
+        shell: bash
+        run: |
+          certificate=test-results/ios/mcp-public-certificate.pem
+          if [[ ! -f "$certificate" ]]; then
+            printf 'Public certificate diagnostic unavailable.\n' > test-results/ios/mcp-certificate-diagnostic.txt
+            exit 0
+          fi
+          openssl_bin="$(command -v openssl)"
+          if [[ -x /opt/homebrew/opt/openssl@3/bin/openssl ]]; then
+            openssl_bin=/opt/homebrew/opt/openssl@3/bin/openssl
+          fi
+          "$openssl_bin" version > test-results/ios/mcp-certificate-diagnostic.txt
+          "$openssl_bin" x509 -in "$certificate" -noout -text >> test-results/ios/mcp-certificate-diagnostic.txt 2>&1
+          if "$openssl_bin" verify -trusted "$certificate" -purpose sslserver -verify_ip 127.0.0.1 "$certificate" >> test-results/ios/mcp-certificate-diagnostic.txt 2>&1; then
+            printf 'verify_exit=0\n' >> test-results/ios/mcp-certificate-diagnostic.txt
+          else
+            printf 'verify_exit=%s\n' "$?" >> test-results/ios/mcp-certificate-diagnostic.txt
+          fi
       - name: Install and launch in an available iPhone simulator
         if: ${{ always() && !cancelled() && steps.compile_ios.outcome == 'success' }}
         timeout-minutes: 25

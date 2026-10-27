@@ -17,3 +17,15 @@
 依据[GitHub状态条件](https://docs.github.com/en/actions/reference/workflows-and-actions/expressions#status-check-functions)与[steps outcome](https://docs.github.com/en/actions/reference/workflows-and-actions/contexts#steps-context)，以及[窄审回执中的只读建议](手机最低运行时API窄审及AI兼容修复-20261028.md)。本地diff检查无误；真实GitHub条件、17Core和8UI待此变更下一次实际运行验证，不能仅凭YAML判断验收通过。
 
 分支提交、不合main、不改4180/4196或发布生产；同一当前Apple run允许自然结束后再统一触发下一候选。
+
+## f7实际结果与下一轮证书分层诊断
+
+f7 run40567103655/job122411199305已自然failure，并非超时或人为取消。App编译成功；SwiftPM实际Build complete 209.33s后，17个XCTest在0.587s内完成，2个case通过、15个失败（14 unexpected）。主要为实际trusted TLS握手`CERTIFICATE_VERIFY_FAILED`，wrong-IP阴性也因链先失败未到达预期IP SAN错误；不把它算作正确SAN拒绝。30秒预算等依赖TLS成功的测试没有到达原断言。后续8UI被旧workflow默认success条件跳过，5405解耦尚未在此run生效。
+
+独立stage文件实际存在：43773B，17次case-start/setup-complete/teardown-after均完整；失败cleanup先settle再close/shutdown，随后deinit记录already-started并退出。它证明本轮所有case确已退出，不能据此反推旧4de无case日志的挂点已唯一定位。原fail和其余未验条件保留。
+
+原始附件12763857605为339346B，下载严格HTTPS且ZIP SHA256与GitHub摘要相同：`d7387c18a8a6975ef4510e64deee5d1d504addaa8a5be757b5fe53beae20b9a1`。已解压在本机toolchains/evidence/ios-ci-f7e8a30b；Core log SHA`c9081c099e2a50d0dbb003ae4f07ac52aaf186fd8e53e2fcb09d416db782d13e`，stage SHA`0dc22b9fad22d0f5786976f44adc474dbc162f1f53d7db38d88af27d8787b08a`。job logs连接器返回Transport closed，未反复重试或虚构完整job日志；实际结论来自校验后的附件。
+
+下一轮只在原身份测试增加公开X509签名自验，并把自造临时公有证书导出到独立artifact文件，使用系统OpenSSL严格检查purpose/IP/显式信任锚；绝不导出私钥、票据或authority状态。源API为固定[Swift Certificates 1.21.1的isValidSignature](https://github.com/apple/swift-certificates/blob/1.21.1/Sources/X509/CertificatePublicKey.swift)。同时核对[NIOSSL 2.37.5 trustRoots/验证接线](https://github.com/apple/swift-nio-ssl/blob/2.37.5/Sources/NIOSSL/SSLContext.swift)：显式certificates使用BoringSSL验证，不能将其混称系统默认Security验证。未复制或修改上游代码。
+
+生产`EphemeralIdentity.swift` SHA仍`cc64a2cabc4d17593683cc514842d9684059c321cd4088c6887f4f4df3f31fe0`，未改CA能力、证书有效期、IP SAN或信任方式。未提供自定义接受所有证书回调。签名自验／独立OpenSSL／新8UI均待下一Apple实际执行，不能写已修。全部7个实际workflow shell块已提取并通过`bash -n`，不是Windows上执行Apple或完整Actions语义验证。

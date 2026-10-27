@@ -288,6 +288,14 @@ final class TransportTests: XCTestCase {
         XCTAssertEqual(first.spkiSha256.count, 64)
         XCTAssertEqual(first.certificatePem.components(separatedBy: "BEGIN CERTIFICATE").count, 2)
         let cert = try Certificate(pemEncoded: first.certificatePem)
+        XCTAssertTrue(cert.publicKey.isValidSignature(cert.signature, for: cert), "The ephemeral certificate must verify its own signature")
+        // Public certificate only, for independent strict OpenSSL diagnostics.
+        // No private key, ticket or authority state is exported by this probe.
+        if let path = ProcessInfo.processInfo.environment["KEEPANY_MCP_PUBLIC_CERTIFICATE_FILE"] {
+            guard path.hasPrefix("/") else { return XCTFail("Public certificate diagnostic requires an absolute path") }
+            do { try Data(first.certificatePem.utf8).write(to: URL(fileURLWithPath: path), options: .withoutOverwriting) }
+            catch { XCTFail("Could not preserve the generated public certificate") }
+        }
         let key = try P256.Signing.PublicKey(derRepresentation: Data(try cert.publicKey.serializeAsPEM().derBytes))
         XCTAssertEqual(SHA256.hash(data: key.derRepresentation).map { String(format: "%02x", $0) }.joined(), first.spkiSha256)
         XCTAssertTrue(String(describing: try cert.extensions.subjectAlternativeNames).contains("IPAddress([127, 0, 0, 1])"))
