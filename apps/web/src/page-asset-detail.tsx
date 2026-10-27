@@ -367,6 +367,7 @@ export function AssetDetail() {
 	function openRelationEditor(relation?: Relation) {
 		setRelationEditBase(relation ?? null); setRelationStale(false); setRelationError("");
 		setRelationLabel(relation?.label ?? ""); setRelationSource(relation?.source ?? "");
+		setRelationLabelTouched(false);
 		setRelationVerifiedAt(relation?.verifiedAt ? validCalendarDay(relation.verifiedAt.slice(0, 10)) ? relation.verifiedAt.slice(0, 10) : relation.verifiedAt : "");
 		setRelationTarget(relation ? relation.from === centerId ? relation.to : relation.from : "");
 		setRelationDirection(relation && relation.from !== centerId ? "incoming" : "outgoing");
@@ -422,6 +423,7 @@ export function AssetDetail() {
 	const [relationTarget, setRelationTarget] = useState("");
 	const [relationDirection, setRelationDirection] = useState<"outgoing" | "incoming">("outgoing");
 	const [relationLabel, setRelationLabel] = useState("");
+	const [relationLabelTouched, setRelationLabelTouched] = useState(false);
 	const [relationSource, setRelationSource] = useState("");
 	const [relationVerifiedAt, setRelationVerifiedAt] = useState("");
 	const [submissionName, setSubmissionName] = useState("");
@@ -750,6 +752,7 @@ export function AssetDetail() {
 			setRelationEdit(false);
 			setRelationEditBase(null);
 			setRelationLabel("");
+			setRelationLabelTouched(false);
 			setRelationTarget("");
 			setRelationSource("");
 			setRelationVerifiedAt("");
@@ -2092,9 +2095,14 @@ export function AssetDetail() {
 							<input
 								id="relation-label"
 								value={relationLabel}
+								required aria-required="true"
+								aria-invalid={relationLabelTouched && !relationLabel.trim() ? true : undefined}
+								aria-describedby={relationLabelTouched && !relationLabel.trim() ? "relation-label-error" : undefined}
 								maxLength={100} disabled={relationBusy}
 								onChange={(e) => setRelationLabel(e.target.value)}
+								onBlur={() => setRelationLabelTouched(true)}
 							/>
+							{relationLabelTouched && !relationLabel.trim() && <p id="relation-label-error" className="field-error" role="alert">{t("relationLabelRequired")}</p>}
 						</div>
 						<div className="field">
 							<label htmlFor="relation-source">{t("relationSource")}</label>

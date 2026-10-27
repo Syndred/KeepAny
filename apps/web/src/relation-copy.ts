@@ -1,4 +1,5 @@
 export const relationCopy: Record<string, [string, string]> = {
+  relationLabelRequired: ['请填写关联用途。', 'Enter a connection label.'],
   relationDirection: ['关系方向', 'Connection direction'],
   relationDirectionOutgoing: ['当前资产 → 所选资产', 'Current asset → Selected asset'],
   relationDirectionIncoming: ['所选资产 → 当前资产', 'Selected asset → Current asset'],
