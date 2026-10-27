@@ -1593,6 +1593,13 @@
       "homepage": "https://mozilla.github.io/pdf.js/",
       "npmGitHead": "1c8020a7d4e43668ac287a3ecf9a8dbea17e4c56",
       "status": "verified",
+      "localModifications": {
+        "patch": "patches/pdfjs-dist@6.3.289.patch",
+        "files": ["legacy/build/pdf.mjs"],
+        "upstreamSourcePath": "src/display/api.js",
+        "summary": "Retain a private pending Worker immediately after construction; transfer ownership on successful initialization and terminate it on early failure or destroy. Preserve the official handshake and fake-worker fallback. Only the legacy display build imported by KeepAny is patched; worker code and LICENSE bytes are unchanged.",
+        "retainedTests": ["tests/e2e/intake-pdf-timeout-cleanup.spec.ts", "tests/e2e/intake-pdf.spec.ts", "tests/e2e/intake-pdf-compatibility.spec.ts"]
+      },
       "materials": [
         "pdfjs-dist-6.3.289-license"
       ],

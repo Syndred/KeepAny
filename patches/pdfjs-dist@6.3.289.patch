@@ -1,0 +1,44 @@
+diff --git a/legacy/build/pdf.mjs b/legacy/build/pdf.mjs
+index 993f3505..29b7cae7 100644
+--- a/legacy/build/pdf.mjs
++++ b/legacy/build/pdf.mjs
+@@ -22767,6 +22767,8 @@ class PDFWorker {
+   #messageHandler = null;
+   #port = null;
+   #webWorker = null;
++  // KeepAny modification: retain and terminate a worker before initialization completes.
++  #pendingWorker = null;
+   static #fakeWorkerId = 0;
+   static #isWorkerDisabled = false;
+   static #workerPorts = new WeakMap();
+@@ -22844,11 +22846,13 @@ class PDFWorker {
+       const worker = new Worker(workerSrc, {
+         type: "module"
+       });
++      this.#pendingWorker = worker;
+       const messageHandler = new MessageHandler("main", "worker", worker);
+       const terminateEarly = () => {
+         ac.abort();
+         messageHandler.destroy();
+         worker.terminate();
++        this.#pendingWorker = null;
+         if (this.destroyed) {
+           this.#capability.reject(new Error("Worker was destroyed"));
+         } else {
+@@ -22872,6 +22876,7 @@ class PDFWorker {
+         this.#messageHandler = messageHandler;
+         this.#port = worker;
+         this.#webWorker = worker;
++        this.#pendingWorker = null;
+         this.#resolve();
+       });
+       messageHandler.on("ready", data => {
+@@ -22922,6 +22927,8 @@ class PDFWorker {
+     this.destroyed = true;
+     this.#webWorker?.terminate();
+     this.#webWorker = null;
++    this.#pendingWorker?.terminate();
++    this.#pendingWorker = null;
+     PDFWorker.#workerPorts.delete(this.#port);
+     this.#port = null;
+     this.#messageHandler?.destroy();

@@ -6,6 +6,7 @@ type PdfFault = "none" | "text-and-terminate" | "terminate" | "handshake";
 type PdfWorkerEvent = { workerId: number; direction: "to-worker" | "from-worker"; action: string; blocked: boolean; at: number };
 type PdfTimeoutProbe = { fault: PdfFault; workers: { id: number; terminated: boolean }[]; events: PdfWorkerEvent[]; unhandled: number };
 declare global { interface Window { pdfTimeoutProbe: PdfTimeoutProbe } }
+declare global { interface Window { pdfFallbackProbe: { faults: number; terminated: number } } }
 
 async function observeRealPdfWorker(context: BrowserContext, fault: PdfFault) {
 	await context.addInitScript((dropMessages) => {
@@ -175,6 +176,59 @@ for (const fault of ["text-and-terminate", "terminate"] as const) test(`PDF ${fa
 		await info.attach("same-context-recovered", { body: JSON.stringify(recovered), contentType: "application/json" });
 	} finally {
 		await info.attach("real-worker-final", { body: JSON.stringify(await page.evaluate(() => window.pdfTimeoutProbe).catch(() => null)), contentType: "application/json" });
+		await context.close();
+	}
+});
+
+for (const fault of ["constructor", "module"] as const) test(`PDF official fallback remains usable after a real worker ${fault} failure`, async ({ browser }, info) => {
+	const context = await browser.newContext({ viewport: { width: 412, height: 820 } });
+	await context.addInitScript((mode) => {
+		if (location.protocol === "http:" || location.protocol === "https:") localStorage.setItem("keepany-language", "en");
+		window.pdfFallbackProbe = { faults: 0, terminated: 0 };
+		const NativeWorker = window.Worker;
+		window.Worker = class extends NativeWorker {
+			private pdfWorker: boolean;
+			constructor(url: string | URL, options?: WorkerOptions) {
+				const pdfWorker = /pdf[.-]worker/.test(new URL(url, location.href).pathname) && options?.type === "module";
+				if (pdfWorker && mode === "constructor") {
+					window.pdfFallbackProbe.faults++;
+					throw new DOMException("Synthetic worker constructor failure", "SecurityError");
+				}
+				// A real missing module causes the native Worker error event. The
+				// official main-thread fallback still imports its unmodified URL.
+				super(pdfWorker && mode === "module" ? new URL("/synthetic-missing-pdf-worker.js", location.href) : url, options);
+				this.pdfWorker = pdfWorker;
+				if (pdfWorker) this.addEventListener("error", () => { window.pdfFallbackProbe.faults++; });
+			}
+			override terminate() {
+				if (this.pdfWorker) window.pdfFallbackProbe.terminated++;
+				super.terminate();
+			}
+		};
+	}, fault);
+	const page = await context.newPage();
+	try {
+		await page.goto("/intake");
+		await page.getByRole("button", { name: "PDF document", exact: true }).click();
+		await expect(page.locator("#csv-file")).toBeEnabled();
+		await page.locator("#csv-file").setInputFiles({ name: `official-fallback-${fault}.pdf`, mimeType: "application/pdf",
+			buffer: pdf(["Synthetic official fallback text"], false, { inheritedResources: true }) });
+		await expect.poll(() => page.evaluate(() => window.pdfFallbackProbe.faults)).toBe(1);
+		await expect(page.locator("#csv-file")).toBeEnabled({ timeout: 35_000 });
+		await expect(page.locator(".intake-review-row")).toHaveCount(1);
+		await expect(page.locator(".intake-review-row").getByLabel("Short description")).toHaveValue("Synthetic official fallback text");
+		await expect(page.locator("#csv-file")).toBeEnabled();
+		const probe = await page.evaluate(() => window.pdfFallbackProbe);
+		await info.attach(`official-fallback-${fault}`, { body: JSON.stringify(probe), contentType: "application/json" });
+		expect(probe.faults).toBe(1);
+		expect(probe.terminated).toBe(fault === "module" ? 1 : 0);
+		expect(await ordinaryRecordCount(page)).toBe(0);
+	} finally {
+		await info.attach(`official-fallback-${fault}-final`, { body: JSON.stringify(await page.evaluate(() => ({
+			probe: window.pdfFallbackProbe,
+			inputEnabled: !(document.querySelector<HTMLInputElement>("#csv-file")?.disabled ?? true),
+			notice: Array.from(document.querySelectorAll('.notice[role="status"]'), element => element.textContent),
+		})).catch(() => null)), contentType: "application/json" });
 		await context.close();
 	}
 });

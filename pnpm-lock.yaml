@@ -11,6 +11,7 @@ overrides:
 patchedDependencies:
   '@capacitor/android@8.5.3': e45a45c11a25f5072b0b46863dc0bf6dc6b6f68ae6505487455e014cdac0c40d
   kdbxweb@2.1.1: 05d88aeba2ef24ee4ce6aca8b710a2037b8b6f16f46983369b7e5b93e6a31be7
+  pdfjs-dist@6.3.289: 1ea7b1ab5e5676afb6c41a055a6e5a0de8ee29230f627b3bd526ba0b07bf18e3
 
 importers:
 
@@ -162,7 +163,7 @@ importers:
         version: 5.7.0
       pdfjs-dist:
         specifier: 6.3.289
-        version: 6.3.289
+        version: 6.3.289(patch_hash=1ea7b1ab5e5676afb6c41a055a6e5a0de8ee29230f627b3bd526ba0b07bf18e3)
       pg:
         specifier: 8.23.0
         version: 8.23.0
@@ -8023,7 +8024,7 @@ snapshots:
       lru-cache: 11.5.3
       minipass: 7.1.3
 
-  pdfjs-dist@6.3.289:
+  pdfjs-dist@6.3.289(patch_hash=1ea7b1ab5e5676afb6c41a055a6e5a0de8ee29230f627b3bd526ba0b07bf18e3):
     optionalDependencies:
       '@napi-rs/canvas': 1.0.9
 
