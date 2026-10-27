@@ -1,8 +1,9 @@
 import { expect, test } from "@playwright/test";
 import { selectChoice } from "./helpers/select-choice";
+import { sourceModuleUrl } from "./helpers/source-module-url";
 
-const repositoryUrl = `/@fs${process.cwd()}/packages/local-db/src/index.ts`;
-const domainUrl = `/@fs${process.cwd()}/packages/domain/src/index.ts`;
+const repositoryUrl = sourceModuleUrl("packages/local-db/src/index.ts");
+const domainUrl = sourceModuleUrl("packages/domain/src/index.ts");
 
 for (const locale of ["en", "zh-CN"] as const) {
 	test(`${locale} public fields and item location share global and filtered list search`, async ({

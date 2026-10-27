@@ -28,6 +28,7 @@ for (const language of ['en', 'zh-CN'] as const) test(`two tag filters intersect
   await expect(cards).toHaveCount(60);
   const search = page.getByRole('searchbox', { name: String(labels.accountListSearch) });
   await search.fill('Tag account');
+  await page.screenshot({ path: info.outputPath(`selected-two-tags-${language}-390.png`), fullPage: false });
   const card = cards.nth(50);
   await card.scrollIntoViewIfNeeded();
   const clickedName = await card.locator('strong').innerText();
