@@ -1,0 +1,25 @@
+{
+  "workingDirectories": [
+    "/Users/syndred/Desktop/projects/KeepAny",
+    "/Users/syndred/.codex/worktrees/keepany-brand-return/KeepAny",
+    "/Users/syndred/.codex/worktrees/mobile-sqlite-design/KeepAny"
+  ],
+  "deletedOldDirectoriesAbsent": [
+    "open-source-preview",
+    "stackperch-brand",
+    "repository-migration",
+    "compat-site-retirement",
+    "password-import-review"
+  ],
+  "remoteRefsAfterCleanupBeforeReceipt": {
+    "refs/heads/codex/mobile-sqlite-design": "85549b9b2449943832a7613642cbc3f6850a3ace",
+    "refs/heads/main": "df9ccff076a52992a68acf9fc8b01c1cf58d9157",
+    "refs/tags/v0.1.0-preview.20261027": "21a534e35dead372b8d0d2d468592ad74b32eddd"
+  },
+  "mainWorkingTreeCleanBeforeReceipt": true,
+  "productSourceUnmodified": true,
+  "mobileHeadPreserved": "85549b9b2449943832a7613642cbc3f6850a3ace",
+  "noOldStash": true,
+  "noOldAutomation": true,
+  "oneTimeCloudTriggerAbsent": true
+}

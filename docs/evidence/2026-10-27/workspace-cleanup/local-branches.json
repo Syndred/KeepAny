@@ -1,0 +1,19 @@
+{
+  "deletedMergedBranches": [
+    "codex/encrypted-import-draft",
+    "codex/import-copy-paste",
+    "codex/import-duplicate-origin",
+    "codex/open-source-preview",
+    "codex/optional-import-password",
+    "codex/password-review-controls",
+    "codex/repository-migration",
+    "codex/smart-import-visual",
+    "codex/stackperch-brand"
+  ],
+  "remainingBranches": [
+    "codex/keepany-brand-return",
+    "codex/mobile-sqlite-design",
+    "main"
+  ],
+  "note": "The old preview branch tracked an older upstream; after proving it is already in main, its obsolete upstream was unset and normal git branch -d succeeded. No force removal was used."
+}

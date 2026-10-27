@@ -1,0 +1,56 @@
+{
+  "oldWorktrees": [
+    {
+      "name": "open-source-preview",
+      "path": "/Users/syndred/.codex/worktrees/open-source-preview/KeepAny",
+      "head": "64b98e7874a2fdd8d43c8e60de72a25de5800b25",
+      "clean": true,
+      "commitsNotInMain": 0,
+      "directThreadCwdOwners": []
+    },
+    {
+      "name": "stackperch-brand",
+      "path": "/Users/syndred/.codex/worktrees/stackperch-brand/KeepAny",
+      "head": "330ba2916f6ae72f26d9ce55769380ddf4b7c402",
+      "clean": true,
+      "commitsNotInMain": 0,
+      "directThreadCwdOwners": []
+    },
+    {
+      "name": "repository-migration",
+      "path": "/Users/syndred/.codex/worktrees/repository-migration/KeepAny",
+      "head": "467d3e36824737f55c82191e02af0b6f4573d1f3",
+      "clean": true,
+      "commitsNotInMain": 0,
+      "directThreadCwdOwners": []
+    },
+    {
+      "name": "compat-site-retirement",
+      "path": "/Users/syndred/.codex/worktrees/compat-site-retirement/KeepAny",
+      "head": "a7be6146bd34f24bdf495c3827bda69f7bd27a7d",
+      "clean": true,
+      "commitsNotInMain": 0,
+      "directThreadCwdOwners": []
+    },
+    {
+      "name": "password-import-review",
+      "path": "/Users/syndred/.codex/worktrees/password-import-review/KeepAny",
+      "head": "9d46071260241c013042e58b17bc4032403bf7d5",
+      "clean": true,
+      "commitsNotInMain": 0,
+      "directThreadCwdOwners": []
+    }
+  ],
+  "preservedMobileTask": {
+    "id": "01a17a7d-a67f-7293-b4b5-afa513fd71b1",
+    "title": "评估手机端架构方案",
+    "branch": "codex/mobile-sqlite-design",
+    "unmergedCommits": 7
+  },
+  "runtimeOccupantsOfOldDirectories": [],
+  "managedArchiveResult": "Another active task still uses this worktree; no direct thread cwd owner or runtime occupant was found",
+  "legacyAutomationDeleted": {
+    "id": "keepany",
+    "name": "KeepAny每小时自检与验收派工"
+  }
+}

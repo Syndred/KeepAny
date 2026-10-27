@@ -1,0 +1,22 @@
+[
+  {
+    "threadId": "01a129dd-7a53-7cf3-b505-f3f9e41759a0",
+    "phase": "旧测试版打包辅助任务",
+    "archived": true
+  },
+  {
+    "threadId": "01a132e0-ec4c-7b12-bb6b-ebb8e81edd55",
+    "phase": "旧 StackPerch 公开站辅助任务",
+    "archived": true
+  },
+  {
+    "threadId": "01a137dd-9779-7ef2-9853-2bfb9a3eefca",
+    "phase": "旧仓库及官网迁移辅助任务",
+    "archived": true
+  },
+  {
+    "threadId": "01a139a9-56de-75f3-8f51-af9d2199bb16",
+    "phase": "旧兼容站退役辅助任务",
+    "archived": true
+  }
+]
