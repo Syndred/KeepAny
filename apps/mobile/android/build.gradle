@@ -17,6 +17,18 @@ buildscript {
 
 apply from: "variables.gradle"
 
+// The SDK publishes API 37 as the explicit 37.0 platform. All Capacitor library
+// projects inherit the same compile SDK without patching installed dependencies.
+subprojects { child ->
+    ['com.android.application', 'com.android.library'].each { pluginId ->
+        child.plugins.withId(pluginId) {
+            child.extensions.configure('android') { extension ->
+                extension.compileSdkMinor = rootProject.ext.compileSdkMinorVersion
+            }
+        }
+    }
+}
+
 allprojects {
     repositories {
         google()

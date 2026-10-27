@@ -1,4 +1,11 @@
 export interface UrlMetadata { url: string; title: string; description: string }
+export interface UrlMetadataHtml { url: string; html: string }
+export type NativeMetadataHandler = (url: string, options: { signal?: AbortSignal }) => Promise<UrlMetadataHtml>;
+let nativeHandler: NativeMetadataHandler | undefined;
+export function registerNativeMetadataHandler(handler: NativeMetadataHandler): () => void {
+	nativeHandler = handler;
+	return () => { if (nativeHandler === handler) nativeHandler = undefined; };
+}
 
 /** Parse in an inert template: no script execution, image loads or page render. */
 export function parseUrlMetadataHtml(url: string, html: string): UrlMetadata {
@@ -21,6 +28,15 @@ export function parseUrlMetadataHtml(url: string, html: string): UrlMetadata {
 export async function readUrlMetadata(url: string, options: { signal?: AbortSignal } = {}): Promise<UrlMetadata> {
 	const target = new URL(url);
 	if (!["http:", "https:"].includes(target.protocol) || target.username || target.password || url.length > 2048) throw Error("metadata-url");
+	target.hash = "";
+	if (nativeHandler) {
+		const value = await nativeHandler(target.href, options);
+		if (typeof value.url !== "string" || typeof value.html !== "string" || value.html.length > 1024 * 1024) throw Error("metadata-invalid");
+		const resolved = new URL(value.url);
+		if (!["http:", "https:"].includes(resolved.protocol) || resolved.username || resolved.password || value.url.length > 2048) throw Error("metadata-invalid");
+		resolved.hash = "";
+		return parseUrlMetadataHtml(resolved.href, value.html);
+	}
 	const response = await fetch("/__keepany_intake__/url-metadata", {
 		method: "POST", credentials: "omit", signal: options.signal,
 		headers: { "content-type": "application/json", "x-keepany-intake": "metadata" },
