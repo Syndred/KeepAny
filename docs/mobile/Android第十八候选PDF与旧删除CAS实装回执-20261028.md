@@ -43,6 +43,8 @@ N18 源 `60303f5d53d0f8d72b90dac2b8f1979bb4804da6`，APK 23694603 B，实际安�
 
 逐次操作：电脑preview→手机明确批准→手机正式打开删除确认保留旧快照→电脑confirm收到applied→手机点旧删除确认。预期提示资料已更新且不删除，实际8次均显示准确stale，真实SDK读到新名称、deleted=false。每个operationId独立，不用audit总数代替幂等或应用证明。
 
+| operationId | 类型／语言 | 本次总耗时 | 实际结果 |
+| --- | --- | --- | --- |
 | n18-delete-project-en-001 | project / en | 7946 ms | applied → stale=true；最新名称可读=true |
 | n18-delete-account-en-001 | account / en | 12802 ms | applied → stale=true；最新名称可读=true |
 | n18-delete-subscription-en-001 | subscription / en | 12831 ms | applied → stale=true；最新名称可读=true |
