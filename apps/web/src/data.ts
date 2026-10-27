@@ -143,7 +143,7 @@ export async function seed(t: (key: string) => string, language: string, existin
 		{ name: t("sampleReviewTask"), assetId: a.id, dueDate: day(1) },
 		{ name: t("sampleBackupTask"), assetId: d.id, dueDate: day(3) },
 	].map(value => ({ ...value, id: crypto.randomUUID(), createdAt }));
-	const collections = readCollections(existingCollections);
+	const collections = readCollections(existingCollections), retainedCollections = readCollections(existingCollections, true);
 	const collectionName = t("sampleCollection");
 	const addCollection = collections.length < 8 && !collections.some(collection => normalizeCategoryName(collection.name) === normalizeCategoryName(collectionName));
 	await saveBatch([
@@ -155,7 +155,7 @@ export async function seed(t: (key: string) => string, language: string, existin
 			source: t("sampleBillSource"), note: "", amount: c.amount, currency, eventDate: day(-30), createdAt,
 		} },
 		...(addCollection ? [{ type: "preference" as const, value: { id: COLLECTIONS_PREFERENCE_ID, value: [
-			...collections, { id: crypto.randomUUID(), name: collectionName, assetIds: [a.id, b.id, c.id, d.id, e.id] },
+			...retainedCollections, { id: crypto.randomUUID(), name: collectionName, assetIds: [a.id, b.id, c.id, d.id, e.id] },
 		] } }] : []),
 	]);
 }

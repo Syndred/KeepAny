@@ -31,6 +31,7 @@ export function CollectionsPage() {
 	const pathname = useLocation({ select: (location) => location.pathname });
 	const selectedId = collectionIdFromPath(pathname);
 	const collections = readCollections(data.preferences.find((item) => item.id === COLLECTIONS_PREFERENCE_ID)?.value);
+	const deletedCollections = readCollections(data.preferences.find((item) => item.id === COLLECTIONS_PREFERENCE_ID)?.value, true).filter(item => item.deleted);
 	const selected = collections.find((item) => item.id === selectedId);
 	const assets = liveAssets(data);
 	const assetById = new Map(assets.map((asset) => [asset.id, asset]));
@@ -126,15 +127,15 @@ export function CollectionsPage() {
 		try {
 			const repository = await localRepository();
 			const current = await repository.get<{ id: string; value: unknown }>("preference", COLLECTIONS_PREFERENCE_ID);
-			const latest = readCollections(current?.value);
+			const latest = readCollections(current?.value, true);
 			const existing = latest.find((item) => item.id === editor.id);
-			if (!editor.creating && !existing) { setError(t("collectionMissing")); return; }
+			if (!editor.creating && (!existing || existing.deleted)) { setError(t("collectionMissing")); return; }
 			if (!editor.creating && JSON.stringify(existing) !== JSON.stringify(editor.original)) {
 				setError(t("collectionChanged"));
 				return;
 			}
-			if (editor.creating && latest.length >= 8) { setError(t("collectionLimit")); return; }
-			if (latest.some((item) => item.id !== editor.id && normalizeCategoryName(item.name) === normalizeCategoryName(name))) {
+			if (editor.creating && latest.filter(item => !item.deleted).length >= 8) { setError(t("collectionLimit")); return; }
+			if (latest.some((item) => !item.deleted && item.id !== editor.id && normalizeCategoryName(item.name) === normalizeCategoryName(name))) {
 				setError(t("collectionDuplicate"));
 				return;
 			}
@@ -168,13 +169,13 @@ export function CollectionsPage() {
 		try {
 			const repository = await localRepository();
 			const current = await repository.get<{ id: string; value: unknown }>("preference", COLLECTIONS_PREFERENCE_ID);
-			const latest = readCollections(current?.value);
+			const latest = readCollections(current?.value, true);
 			const existing = latest.find((item) => item.id === deleteTarget.id);
 			if (JSON.stringify(existing) !== JSON.stringify(deleteTarget)) {
 				setError(t("collectionChanged"));
 				return;
 			}
-			await savePreferenceIfCurrent(current, { id: COLLECTIONS_PREFERENCE_ID, value: latest.filter((item) => item.id !== deleteTarget.id) });
+			await savePreferenceIfCurrent(current, { id: COLLECTIONS_PREFERENCE_ID, value: latest.map(item => item.id === deleteTarget.id ? { ...item, deleted: true, deletedAt: new Date().toISOString() } : item) });
 			setDeleteTarget(null);
 			setEditor(selectedId ? null : newDraft());
 			notify(t("saved"));
@@ -185,6 +186,23 @@ export function CollectionsPage() {
 			inFlight.current = false;
 			setBusy(false);
 		}
+	};
+	const restoreCollection = async (expected: AssetCollection) => {
+		if (inFlight.current) return;
+		inFlight.current = true; setBusy(true); setError("");
+		try {
+			const repository = await localRepository();
+			const current = await repository.get<{ id: string; value: unknown }>("preference", COLLECTIONS_PREFERENCE_ID);
+			const latest = readCollections(current?.value, true), existing = latest.find(item => item.id === expected.id);
+			if (!existing?.deleted || JSON.stringify(existing) !== JSON.stringify(expected)) { setError(t("collectionChanged")); return; }
+			const live = latest.filter(item => !item.deleted);
+			if (live.length >= 8) { setError(t("collectionLimit")); return; }
+			if (live.some(item => normalizeCategoryName(item.name) === normalizeCategoryName(expected.name))) { setError(t("collectionRestoreDuplicate")); return; }
+			const restored: AssetCollection = { id: existing.id, name: existing.name, assetIds: existing.assetIds };
+			await savePreferenceIfCurrent(current, { id: COLLECTIONS_PREFERENCE_ID, value: latest.map(item => item.id === existing.id ? restored : item) });
+			notify(t("saved")); await navigate({ to: "/collections/$id", params: { id: restored.id } });
+		} catch (cause) { setError(t(cause instanceof Error && cause.message === "preference-stale" ? "collectionChanged" : "error")); }
+		finally { inFlight.current = false; setBusy(false); }
 	};
 	const memberAssets = selected?.assetIds.map((id) => assetById.get(id)).filter((asset): asset is Asset => !!asset) ?? [];
 	const normalizedSearch = search.trim().toLocaleLowerCase();
@@ -259,6 +277,10 @@ export function CollectionsPage() {
 						<div className="actions"><Button size="small" onClick={() => openEdit(collection)}>{t("edit")}</Button><Button size="small" variant="danger" onClick={() => { setError(""); setDeleteTarget(collection); }}>{t("collectionDelete")}</Button></div>
 				</article>;
 				})}
+			</section>}
+			{organizing && deletedCollections.length > 0 && <section className="card padded collections-deleted" aria-label={t("collectionDeletedTitle")}>
+				<h2>{t("collectionDeletedTitle")}</h2><p>{t("collectionDeletedHint")}</p>
+				{deletedCollections.map(item => <div className="list-row" key={item.id} data-deleted-collection-id={item.id}><strong>{item.name}</strong><Button disabled={busy} onClick={() => void restoreCollection(item)} aria-label={`${t("restore")} · ${item.name}`}>{t("restore")}</Button></div>)}
 			</section>}
 			{deleteTarget && <Dialog title={t("collectionDelete")} onClose={() => { if (!inFlight.current) setDeleteTarget(null); }}>
 				<p>{t("collectionDeleteHint")}</p>
