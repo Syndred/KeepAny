@@ -1,0 +1,81 @@
+{
+  "moduleCommit": "38a4de9",
+  "environment": "Windows isolated Chromium; source port 4207",
+  "credentialRed": {
+    "candidateCount": 1,
+    "assets": 0,
+    "final": "1 passed within final six",
+    "targetRequests": 0,
+    "fixedBy": "workflows entry rejects username/password before fallback",
+    "report": "test-results/T18-credential-red-final-results.json"
+  },
+  "publicTarget": "https://example.com/",
+  "reports": [
+    "test-results/T18-core-unit-final.json",
+    "test-results/T18-completion-guard-final-results.json"
+  ],
+  "date": "2026-10-27",
+  "unit": {
+    "success": true,
+    "failed": 0,
+    "pending": 0,
+    "total": 10,
+    "passed": 10
+  },
+  "controlledMetadata": "Same handler invoked by intercepted API with exact test-only loopback origin; real HTTP GET; normal route separately verified with public page and private rejection",
+  "portable": {
+    "spec": "tests/e2e/qa-t18-portable-completion.spec.ts",
+    "status": "prepared; pending rebuilt candidate"
+  },
+  "rawSource": "UTF-8 BOM + CRLF retained exactly, one full source per fileHash; refs for other rows",
+  "sourceStats": {
+    "startTime": "2026-10-27T08:20:23.46Z",
+    "duration": 20806.908000000003,
+    "expected": 6,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "testedSourceFiles": [
+    {
+      "bytes": 2455,
+      "path": "apps/web/src/intake-csv.ts",
+      "sha256": "7e25c73c43423327100fb6aea1cf2066c96586272408e4fb13fcbb7932206d63"
+    },
+    {
+      "bytes": 2181,
+      "path": "apps/web/src/intake-url.ts",
+      "sha256": "e8179fd3d8a939f7709aa27489a303dde1ffeb5ce07b2e04ddeb8a3ecbea7aba"
+    },
+    {
+      "bytes": 10105,
+      "path": "scripts/intake-url-metadata.mjs",
+      "sha256": "3a1ea268042469e044adf7b46ee4a807ef0dfddcf7fd9560296af5abf9a24446"
+    },
+    {
+      "bytes": 70788,
+      "path": "apps/web/src/workflows.tsx",
+      "sha256": "ad894f62ff6d063bcfabe805632af6332f9ca374e0c4f1b41931ee2b46b9fb2b"
+    },
+    {
+      "bytes": 1959,
+      "path": "apps/web/vite.config.ts",
+      "sha256": "58e79e5a6e30f5e80aae8027c0710daeab211e8e168930139506068273befd12"
+    },
+    {
+      "bytes": 10882,
+      "path": "scripts/preview-server.mjs",
+      "sha256": "f1d91ccc0ef4750e2496283e0c9296697e8cb342e6b87f2fe24e0475839437de"
+    },
+    {
+      "bytes": 25103,
+      "path": "packages/local-db/src/intake-review.ts",
+      "sha256": "27d6b16bbf1cac75af493a0b1f365824e8f8a924f8704e76b9b532bcbdaff1d5"
+    },
+    {
+      "bytes": 4926,
+      "path": "apps/web/src/settings-intake-restoration.css",
+      "sha256": "71534028e4259723cef8a0609e0e82b03e7303a1804931140a5fc3c45185db59"
+    }
+  ]
+}
