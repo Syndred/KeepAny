@@ -50,7 +50,26 @@ async function observeRealPdfWorker(context: BrowserContext, fault: PdfFault) {
 	}, fault);
 }
 
-const ordinaryRecordCount = async (page: import("@playwright/test").Page) => page.evaluate(async (module) => {
+const ordinaryRecordCount = async (page: import("@playwright/test").Page) => process.env.KEEPANY_PDF_RELEASE === "1" ? page.evaluate(async () => {
+	// Production has no source-module URLs. Inspect the existing RxDB Dexie
+	// records database read-only; never create a missing database or write rows.
+	const name = "rxdb-dexie-keepany-v1--0--records";
+	if (!(await indexedDB.databases()).some(database => database.name === name)) throw Error("records database missing");
+	const database = await new Promise<IDBDatabase>((resolve, reject) => {
+		const request = indexedDB.open(name);
+		request.onupgradeneeded = () => { request.transaction?.abort(); reject(Error("unexpected database creation")); };
+		request.onerror = () => reject(request.error);
+		request.onsuccess = () => resolve(request.result);
+	});
+	try {
+		return await new Promise<number>((resolve, reject) => {
+			const request = database.transaction("docs", "readonly").objectStore("docs").getAll();
+			request.onerror = () => reject(request.error);
+			request.onsuccess = () => resolve(request.result.filter((row: { type: string; _deleted: boolean | number }) =>
+				!row._deleted && (row.type === "asset" || row.type === "history")).length);
+		});
+	} finally { database.close(); }
+}) : page.evaluate(async (module) => {
 	const { allRecords } = await import(module);
 	return (await allRecords()).filter((row: { type: string }) => row.type === "asset" || row.type === "history").length;
 }, sourceModuleUrl("packages/local-db/src/index.ts"));
@@ -219,10 +238,17 @@ for (const fault of ["constructor", "module"] as const) test(`PDF official fallb
 		await expect(page.locator(".intake-review-row").getByLabel("Short description")).toHaveValue("Synthetic official fallback text");
 		await expect(page.locator("#csv-file")).toBeEnabled();
 		const probe = await page.evaluate(() => window.pdfFallbackProbe);
-		await info.attach(`official-fallback-${fault}`, { body: JSON.stringify(probe), contentType: "application/json" });
+		const mainThreadHandler = await page.evaluate(() => typeof (window as typeof window & {
+			pdfjsWorker?: { WorkerMessageHandler?: { setup?: unknown } };
+		}).pdfjsWorker?.WorkerMessageHandler?.setup === "function");
+		const ordinaryRecords = await ordinaryRecordCount(page);
+		await info.attach(`official-fallback-${fault}`, { body: JSON.stringify({ probe, mainThreadHandler, ordinaryRecords,
+			inputEnabled: await page.locator("#csv-file").isEnabled(), reviewRows: await page.locator(".intake-review-row").count() }), contentType: "application/json" });
+		await page.screenshot({ path: info.outputPath(`official-fallback-${fault}-preview-en.png`), fullPage: true });
 		expect(probe.faults).toBe(1);
 		expect(probe.terminated).toBe(fault === "module" ? 1 : 0);
-		expect(await ordinaryRecordCount(page)).toBe(0);
+		expect(mainThreadHandler).toBe(true);
+		expect(ordinaryRecords).toBe(0);
 	} finally {
 		await info.attach(`official-fallback-${fault}-final`, { body: JSON.stringify(await page.evaluate(() => ({
 			probe: window.pdfFallbackProbe,
