@@ -154,7 +154,7 @@ test('self-hosted sessions keep two users, encrypted records and photos in separ
     const serverOrigin = `http://127.0.0.1:${serverPort}`;
     const webOrigin = `http://127.0.0.1:${webPort}`;
     let serverLog = '';
-    syncServer = spawn('node_modules/.bin/tsx', ['apps/sync-server/src/main.ts'], {
+    syncServer = spawn(process.execPath, ['--import', 'tsx', 'apps/sync-server/src/main.ts'], {
       cwd: process.cwd(), stdio: 'pipe', env: {
         ...process.env, DATABASE_URL: databaseUrl, PGOPTIONS: `-c search_path=${schema}`,
         KEEPANY_SYNC_AUTH_MODE: 'self-host-session', KEEPANY_SYNC_PUBLIC_ORIGIN: webOrigin,
@@ -170,7 +170,7 @@ test('self-hosted sessions keep two users, encrypted records and photos in separ
     syncServer.stderr?.on('data', chunk => { serverLog += String(chunk).slice(0, 1000); });
     await waitForUrl(`${serverOrigin}/healthz`, syncServer, () => serverLog);
     let webLog = '';
-    web = spawn('node_modules/.bin/vite', ['apps/web', '--host', '127.0.0.1', '--port', String(webPort), '--strictPort'], {
+    web = spawn(process.execPath, ['node_modules/vite/bin/vite.js', 'apps/web', '--host', '127.0.0.1', '--port', String(webPort), '--strictPort'], {
       cwd: process.cwd(), stdio: 'pipe', env: { ...process.env, KEEPANY_SELFHOST_DEV_PROXY_TARGET: serverOrigin },
     });
     web.stdout?.on('data', chunk => { webLog += String(chunk).slice(0, 1000); });
@@ -186,9 +186,25 @@ test('self-hosted sessions keep two users, encrypted records and photos in separ
     await signUp(pageA, emailA, 'Session A', password);
     const accountA = await identity(pageA);
     const workspaceA = await createWorkspace(pageA);
+    // A real local KDBX must remain outside asset/attachment synchronization.
+    await pageA.goto(`${webOrigin}/assets/vault`);
+    await pageA.locator('#password-vault-master').fill('Synthetic isolated vault master!42');
+    await pageA.locator('#password-vault-master-confirm').fill('Synthetic isolated vault master!42');
+    await pageA.getByRole('button', { name: 'Create vault', exact: true }).click();
+    await pageA.getByRole('button', { name: 'New entry', exact: true }).click();
+    await pageA.locator('#password-vault-entry-title').fill('Synthetic local-only sync boundary');
+    await pageA.locator('#password-vault-entry-username').fill('local-vault@example.invalid');
+    await pageA.locator('#password-vault-entry-password').fill('Synthetic local-only secret!42');
+    await pageA.getByRole('button', { name: 'Save entry', exact: true }).click();
+    await expect(pageA.getByRole('dialog')).toBeHidden();
+    await pageA.reload();
+    await pageA.locator('#password-vault-unlock-master').fill('Synthetic isolated vault master!42');
+    await pageA.getByRole('button', { name: 'Unlock vault', exact: true }).click();
+    await expect(pageA.locator('.password-vault-entry-list .password-vault-entry')).toHaveCount(1);
     await addRecordWithPhoto(pageA, webOrigin, recordA);
     await sync(pageA, webOrigin, workspaceA, 'This sync completed');
     expect((await pool.query('SELECT count(*)::int AS count FROM sync_attachments WHERE workspace_id=$1', [workspaceA.workspaceId])).rows[0].count).toBe(2);
+    expect((await pool.query('SELECT kind FROM sync_documents WHERE workspace_id=$1', [workspaceA.workspaceId])).rows).toEqual([{ kind: 'asset' }]);
     expect([...objects.values()].every(bytes => !bytes.includes(png) && !bytes.includes(Buffer.from(recordA)))).toBe(true);
 
     await selectSession(pageB, webOrigin);
@@ -221,6 +237,9 @@ test('self-hosted sessions keep two users, encrypted records and photos in separ
     await pageC.getByText(recordA, { exact: true }).first().click();
     await expect(pageC.locator('img.asset-image')).toHaveJSProperty('naturalWidth', 32);
     expect(await pageC.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+    await pageC.goto(`${webOrigin}/assets/vault`);
+    await expect(pageC.locator('#password-vault-master')).toBeVisible();
+    await expect(pageC.locator('#password-vault-unlock-master')).toHaveCount(0);
 
     const workspacesB = await requestAs(pageB, '/workspaces', { accountId: accountB });
     expect(workspacesB.status).toBe(200);

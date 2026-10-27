@@ -1,0 +1,129 @@
+{
+  "date": "2026-10-27",
+  "scope": "T24 second Windows round; independent PostgreSQL",
+  "installation": {
+    "source": "https://get.enterprisedb.com/postgresql/postgresql-17.11-5-windows-x64-binaries.zip",
+    "bytes": 381531864,
+    "sha256": "80379b2c04d51c30225532e0ae04509899141e9957ed096fe749d7fd9df8f82f",
+    "officialChecksumMatched": true,
+    "extractedFiles": 1563,
+    "extractedBytes": 140784906,
+    "runtime": "C:\\Users\\Administrator\\.codex\\toolchains\\postgresql\\17.11-5\\pgsql",
+    "selected": [
+      "bin",
+      "lib",
+      "share",
+      "copyright/license if present"
+    ],
+    "serviceInstalled": false
+  },
+  "runtime": {
+    "pgRoot": "C:/Users/Administrator/.codex/toolchains/postgresql/17.11-5/pgsql",
+    "data": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\test-results\\T24-round2\\data-49f87e3a",
+    "port": 61090,
+    "host": "127.0.0.1",
+    "database": "keepanyqa",
+    "user": "keepanyqa",
+    "pid": 18044,
+    "auth": "scram-sha-256",
+    "version": "postgres (PostgreSQL) 17.11"
+  },
+  "database": {
+    "version": "PostgreSQL 17.11 on x86_64-windows, compiled by msvc-19.44.35229, 64-bit",
+    "listenAddresses": "127.0.0.1",
+    "remainingTestSchemas": []
+  },
+  "unit": {
+    "total": 7,
+    "passed": 7,
+    "failed": 0,
+    "skipped": 0,
+    "success": true,
+    "realPostgresCases": 6,
+    "configurationContractCases": 1,
+    "report": "test-results/T24-round2/pg-unit.json"
+  },
+  "browser": {
+    "startTime": "2026-10-27T06:53:13.444Z",
+    "duration": 59404.051,
+    "expected": 3,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0,
+    "report": "test-results/T24-round2/pg-browser.json",
+    "tests": [
+      {
+        "title": "encrypted photo survives lost upload acknowledgment and rejects missing or changed objects before pull",
+        "ok": true
+      },
+      {
+        "title": "self-hosted sessions keep two users, encrypted records and photos in separate workspaces",
+        "ok": true
+      },
+      {
+        "title": "isolated browsers keep one local dataset on its remote through retry, conflict, tombstone and A-B-A configuration",
+        "ok": true
+      }
+    ]
+  },
+  "officialBound": {
+    "startTime": "2026-10-27T07:10:39.372Z",
+    "duration": 153867.64299999998,
+    "expected": 1,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0,
+    "report": "test-results/T24-round2/pg-official.json",
+    "source": {
+      "repository": "Syndred/KeepAnyAdm",
+      "repositoryId": 1394374935,
+      "private": true,
+      "checkout": "C:/Users/Administrator/Desktop/project/KeepAnyAdm",
+      "fixedCommit": "7589b6d087a778cbddb9c99d3e7af5f76cf1e2d3",
+      "packageManager": "pnpm@11.10.0",
+      "frozenLockfile": true,
+      "lockfileSha256": "8ee4c3629fbc2eaa252fc90d6008d59419c963838c6239ec733e9e94f97c774f",
+      "installedPackages": 887,
+      "reused": 885,
+      "downloaded": 2,
+      "installScripts": false
+    },
+    "earlierDiagnostic": {
+      "startTime": "2026-10-27T06:54:37.422Z",
+      "duration": 1311.4769999999999,
+      "expected": 0,
+      "skipped": 0,
+      "unexpected": 1,
+      "flaky": 0,
+      "report": "test-results/T24-round2/pg-official-blocker.json",
+      "outcome": "Initially missing commercial fixture. Verified original repository was then cloned separately; final full test passed."
+    },
+    "coverage": [
+      "real synthetic Plus fixture and DPoP browser approvals",
+      "encrypted record and image roundtrip across two contexts",
+      "lost ACK retry preserves single operation",
+      "foreign workspace and wrong key refused",
+      "60-second access JWT refresh",
+      "commercial revoke reaches PostgreSQL tombstone",
+      "synthetic Plus expiry refuses further cloud sync",
+      "local CRUD and ka1 encrypted backup/restore after revoke in fresh context"
+    ],
+    "launchCompatibility": [
+      "canonical Windows long temporary path",
+      "fixed Git ZIP extracted by existing fflate",
+      "private current-user-only Windows ACL checked instead of POSIX mode",
+      "Node invokes pinned Paraglide and archived test launcher Drizzle CLI",
+      "local writable Vite caches and exact snapshot/dependency fs.allow roots",
+      "Windows taskkill only for recorded owned child process tree"
+    ]
+  },
+  "productChanges": false,
+  "cleanup": {
+    "browserAndHttp": "All test contexts and owned Hono, bridge, Vite, object HTTP processes exited; no4207 or51906 listener remains",
+    "testSchemas": [],
+    "commercial": "Per-run archived snapshot, synthetic SQLite accounts, signing/reader keys and temporary files removed by test finally; no matching child process remains",
+    "postgres": "Parent may use this isolated cluster; stop exact runtime/data from metadata with pg_ctl -m fast -w stop",
+    "archive": "Official381531864-byte ZIP removed after checksum and extraction",
+    "initialEmptyData": "First stopped empty test cluster remains; automatic approval denied recursive deletion and no deletion retry was attempted"
+  }
+}

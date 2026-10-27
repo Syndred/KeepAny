@@ -7,13 +7,14 @@ import assert from 'node:assert/strict';
 import { execFileSync, spawn, type ChildProcess } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 import { once } from 'node:events';
-import { copyFile, mkdir, mkdtemp, readFile, rm, stat, writeFile } from 'node:fs/promises';
+import { copyFile, mkdir, mkdtemp, readFile, readdir, realpath, rm, stat, symlink, writeFile } from 'node:fs/promises';
 import { createServer as createHttpServer } from 'node:http';
 import { createServer as createNetServer } from 'node:net';
 import { tmpdir } from 'node:os';
-import { dirname, join, resolve } from 'node:path';
+import { delimiter, dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { expect, test, type BrowserContext, type Page } from '@playwright/test';
+import { unzipSync } from 'fflate';
 import pg from 'pg';
 import { migrateSyncDatabase } from '../../apps/sync-server/src/migrate';
 import { selectChoice } from "./helpers/select-choice";
@@ -27,6 +28,25 @@ const databaseUrl = process.env.KEEPANY_TEST_DATABASE_URL;
 const evidenceDir = process.env.KEEPANY_SYNC_EVIDENCE_DIR ?? resolve(root, 'docs/evidence/2026-09-29');
 const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAACAAAAAYCAIAAAAUMWhjAAAAhUlEQVR4nLXNuRXCQBAE0WJCIQlZikEJYZLZ5iGfLOTyYI85Wu3NlPEfn2Pja/vzhXT2c7fzfS+A2rDuV2jYKKgMmzSJYfPcysYCoGysAWqGC6BgeAGyRgAgZcQA4kYYIGhkACJGEsBt5AF8RgnAYVQBVoYAYGpoAMaGDGBgKIGuIQb+jQtZ/TPNXBjnggAAAABJRU5ErkJggg==', 'base64');
 const pause = (ms: number) => new Promise(done => setTimeout(done, ms));
+
+function windowsPrivate(path: string, create = false): void {
+  execFileSync('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', `
+    $ErrorActionPreference = 'Stop'
+    $sid = [System.Security.Principal.WindowsIdentity]::GetCurrent().User
+    $path = $env:KEEPANY_FIXTURE_PRIVATE_PATH
+    ${create ? `$acl = New-Object System.Security.AccessControl.DirectorySecurity
+    $acl.SetAccessRuleProtection($true, $false)
+    $rule = New-Object System.Security.AccessControl.FileSystemAccessRule($sid, 'FullControl', 'ContainerInherit,ObjectInherit', 'None', 'Allow')
+    $acl.AddAccessRule($rule)
+    [System.IO.Directory]::SetAccessControl($path, $acl)` : ''}
+    $acl = if ([System.IO.Directory]::Exists($path)) { [System.IO.Directory]::GetAccessControl($path) } else { [System.IO.File]::GetAccessControl($path) }
+    $rules = $acl.GetAccessRules($true, $true, [System.Security.Principal.SecurityIdentifier])
+    if ($rules.Count -eq 0) { throw 'fixture-acl-empty' }
+    foreach ($rule in $rules) {
+      if ($rule.IdentityReference -ne $sid -or $rule.AccessControlType -ne 'Allow') { throw 'fixture-acl-not-private' }
+    }
+  `], { env: { ...process.env, KEEPANY_FIXTURE_PRIVATE_PATH: path }, stdio: 'pipe' });
+}
 
 async function bounded(label: string, work: Promise<unknown>, timeoutMs = 7_000): Promise<void> {
   let timer: ReturnType<typeof setTimeout> | undefined;
@@ -49,6 +69,10 @@ async function freePort(): Promise<number> {
 
 async function stop(child: ChildProcess | undefined): Promise<void> {
   if (!child || child.exitCode !== null || child.signalCode !== null) return;
+  if (process.platform === 'win32' && child.pid) {
+    execFileSync('taskkill', ['/pid', String(child.pid), '/t', '/f'], { stdio: 'pipe' });
+    return;
+  }
   await new Promise<void>(done => {
     const timeout = setTimeout(() => child.kill('SIGKILL'), 7_000);
     child.once('exit', () => { clearTimeout(timeout); done(); });
@@ -74,18 +98,51 @@ async function snapshotCommercial(destination: string): Promise<void> {
   const lock = execFileSync('git', ['show', `${commercialCommit}:pnpm-lock.yaml`], { cwd: commercialCheckout });
   assert.ok(lock.equals(await readFile(join(commercialCheckout, 'pnpm-lock.yaml'))), 'Commercial dependencies differ from fixed commit');
   await mkdir(destination);
-  const archive = execFileSync('git', ['archive', '--format=tar', commercialCommit], {
+  const archive = execFileSync('git', ['archive', `--format=${process.platform === 'win32' ? 'zip' : 'tar'}`, commercialCommit], {
     cwd: commercialCheckout, maxBuffer: 256 * 1024 * 1024,
   });
-  execFileSync('tar', ['-xf', '-', '-C', destination], { input: archive });
-  execFileSync('cp', [process.platform === 'darwin' ? '-cR' : '-R',
-    join(commercialCheckout, 'node_modules'), join(destination, 'node_modules')]);
+  if (process.platform === 'win32') {
+    for (const [name, content] of Object.entries(unzipSync(archive))) {
+      const target = resolve(destination, name);
+      assert.ok(target.startsWith(`${destination}\\`), 'fixture-archive-path-outside-snapshot');
+      if (name.endsWith('/')) await mkdir(target, { recursive: true });
+      else { await mkdir(dirname(target), { recursive: true }); await writeFile(target, content); }
+    }
+  } else execFileSync('tar', ['-xf', '-', '-C', destination], { input: archive });
+  if (process.platform === 'win32') {
+    // Keep writable Vite caches inside the disposable snapshot. Windows Node
+    // recursive mkdir cannot reliably create cache parents through a junction.
+    await mkdir(join(destination, 'node_modules'));
+    for (const entry of await readdir(join(commercialCheckout, 'node_modules'), { withFileTypes: true })) {
+      if (entry.name.startsWith('.vite')) continue;
+      const source = join(commercialCheckout, 'node_modules', entry.name);
+      const target = join(destination, 'node_modules', entry.name);
+      if (entry.isDirectory() || entry.isSymbolicLink()) await symlink(source, target, 'junction');
+      else await copyFile(source, target);
+    }
+    // Only adapt the archived test launcher's pnpm executable call. Its routes,
+    // seed data and all business implementation remain at the fixed commit.
+    const launcher = join(destination, 'scripts/binding-integration-server.ts');
+    const source = await readFile(launcher, 'utf8');
+    const invocation = /"pnpm",\s*\[\s*"exec",\s*"drizzle-kit",/g;
+    assert.equal([...source.matchAll(invocation)].length, 1, 'fixed-fixture-launcher-drift');
+    await writeFile(launcher, source.replace(invocation,
+      'process.execPath, [resolve("node_modules/drizzle-kit/bin.cjs"),'));
+    const viteConfig = join(destination, 'vite.config.ts');
+    const viteSource = await readFile(viteConfig, 'utf8');
+    assert.equal(viteSource.split('port: 3000,').length, 2, 'fixed-fixture-vite-config-drift');
+    await writeFile(viteConfig, viteSource.replace('port: 3000,',
+      `port: 3000, fs: { allow: ${JSON.stringify([destination, commercialCheckout])} },`));
+  } else {
+    execFileSync('cp', [process.platform === 'darwin' ? '-cR' : '-R',
+      join(commercialCheckout, 'node_modules'), join(destination, 'node_modules')]);
+  }
   await copyFile(join(destination, 'src/config/db/schema.sqlite.ts'), join(destination, 'src/config/db/schema.ts'));
   await mkdir(join(destination, '.accept-bin'));
   await writeFile(join(destination, '.accept-bin/pnpm'),
     '#!/bin/sh\n[ "$1" = exec ] && [ "$2" = drizzle-kit ] || exit 64\nshift 2\nexec "$PWD/node_modules/.bin/drizzle-kit" "$@"\n',
     { mode: 0o755 });
-  execFileSync(join(destination, 'node_modules/.bin/paraglide-js'), [
+  execFileSync(process.execPath, [join(destination, 'node_modules/@inlang/paraglide-js/bin/run.js'),
     'compile', '--project', './project.inlang', '--outdir', './src/paraglide',
     '--strategy', 'url', 'cookie', 'baseLocale', '--output-structure', 'message-modules', '--silent',
   ], { cwd: destination, timeout: 45_000, maxBuffer: 2 * 1024 * 1024 });
@@ -95,22 +152,36 @@ async function startCommercial(snapshot: string, fixtureRoot: string): Promise<{
   child: ChildProcess; origin: string; secretsPath: string;
 }> {
   const child = spawn(process.execPath, ['--import', 'tsx', 'scripts/binding-integration-server.ts', '--bound-state-fixture'], {
-    cwd: snapshot, env: { ...process.env, TMPDIR: fixtureRoot,
-      PATH: `${join(snapshot, '.accept-bin')}:${process.env.PATH ?? ''}` },
+    cwd: snapshot, env: { ...process.env, TMPDIR: fixtureRoot, TMP: fixtureRoot, TEMP: fixtureRoot,
+      PATH: `${join(snapshot, '.accept-bin')}${delimiter}${process.env.PATH ?? ''}` },
     stdio: ['ignore', 'pipe', 'pipe'],
   });
   let output = '';
+  let diagnostics = '';
+  let serviceDiagnostics = '';
   let errorBytes = 0;
   child.stdout?.on('data', chunk => { output = `${output}${String(chunk)}`.slice(-16_000); });
-  child.stderr?.on('data', chunk => { errorBytes += Buffer.byteLength(chunk); });
+  child.stderr?.on('data', chunk => {
+    errorBytes += Buffer.byteLength(chunk);
+    diagnostics = `${diagnostics}${String(chunk)}`.slice(-8_000);
+  });
   try {
     for (let attempt = 0; attempt < 300; attempt++) {
-      if (child.exitCode !== null) throw Error(`commercial-exited-${child.exitCode}-stderr-bytes-${errorBytes}`);
+      for (const directory of await readdir(fixtureRoot)) {
+        const log = await readFile(join(fixtureRoot, directory, 'vite.log'), 'utf8').catch(() => '');
+        if (log) serviceDiagnostics = log.slice(-8_000);
+      }
+      if (child.exitCode !== null) {
+        const safe = `${diagnostics}\n${serviceDiagnostics}`.split('\n').filter(line => line.trim()
+          && !/password|token|cookie|private.*key|BEGIN /i.test(line)).map(line => line.slice(0, 300));
+        throw Error(`commercial-exited-${child.exitCode}-stderr-bytes-${errorBytes}: ${safe.join(' | ')}`);
+      }
       const origin = output.match(/^Commercial fixture: (http:\/\/127\.0\.0\.1:\d+)$/m)?.[1];
       const secretsPath = output.match(/^Private test material \(mode 0600, read locally if needed\): (.+)$/m)?.[1];
       if (origin && secretsPath && output.includes('Synthetic binding ID:')) {
         assert.ok(secretsPath.startsWith(fixtureRoot), 'fixture-secret-outside-private-root');
-        assert.equal((await stat(secretsPath)).mode & 0o077, 0, 'fixture-secret-not-private');
+        if (process.platform === 'win32') windowsPrivate(secretsPath);
+        else assert.equal((await stat(secretsPath)).mode & 0o077, 0, 'fixture-secret-not-private');
         return { child, origin, secretsPath };
       }
       await pause(200);
@@ -198,7 +269,8 @@ async function revoke(accountPage: Page, commercialOrigin: string, bindingId: st
 test('official bound sync preserves encrypted records and photos across devices, retries and revocation', async ({ browser }) => {
   test.skip(!databaseUrl, 'Requires KEEPANY_TEST_DATABASE_URL; creates and drops a random schema.');
   test.setTimeout(420_000);
-  const temporary = await mkdtemp(join(tmpdir(), 'keepany-official-e2e-'));
+  const temporary = await realpath(await mkdtemp(join(tmpdir(), 'keepany-official-e2e-')));
+  if (process.platform === 'win32') windowsPrivate(temporary, true);
   const snapshot = join(temporary, 'commercial');
   const fixtureRoot = join(temporary, 'fixture');
   const schema = `keepany_official_${randomUUID().replaceAll('-', '')}`;

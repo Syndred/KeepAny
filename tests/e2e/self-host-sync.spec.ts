@@ -88,7 +88,7 @@ test('isolated browsers keep one local dataset on its remote through retry, conf
     await migrateSyncDatabase(pool);
     const port = await freePort();
     const endpoint = `http://127.0.0.1:${port}`;
-    child = spawn('node_modules/.bin/tsx', ['apps/sync-server/src/main.ts'], {
+    child = spawn(process.execPath, ['--import', 'tsx', 'apps/sync-server/src/main.ts'], {
       cwd: process.cwd(), stdio: 'pipe', env: {
         ...process.env, DATABASE_URL: databaseUrl, PGOPTIONS: `-c search_path=${schema}`,
         KEEPANY_SYNC_AUTH_MODE: 'self-host', KEEPANY_SYNC_TOKEN: token,
