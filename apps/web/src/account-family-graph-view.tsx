@@ -4,21 +4,23 @@ import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import {
 	Background, BaseEdge, ControlButton, Controls, Handle, MarkerType, MiniMap, Panel, Position,
-	ReactFlow, ReactFlowProvider, getViewportForBounds, useReactFlow, useStore,
+	ReactFlow, ReactFlowProvider, getSmoothStepPath, getViewportForBounds, useReactFlow, useStore,
 	useUpdateNodeInternals,
-	type Edge, type EdgeChange, type EdgeProps, type Node, type NodeProps,
+	type Edge, type EdgeChange, type EdgeProps, type Node, type NodeChange, type NodeProps,
 } from "@xyflow/react";
-import { LocateFixed, Maximize2, Minimize2, Scan, Trash2, X } from "lucide-react";
+import { ArrowLeft, LocateFixed, Maximize2, Minimize2, Pencil, Scan, Trash2, X } from "lucide-react";
 import type { Asset, Relation } from "../../../packages/domain/src";
 import { layoutAccountGraph, type AccountGraphLayout, type AccountGraphHandle } from "./account-graph-layout";
+import { graphViewState, type GraphCamera } from "./account-family-graph";
 import { Button } from "./components/ui/button";
 import { Dialog } from "./components/ui/dialog";
+import { date } from "./view-shared";
 import "./account-graph.css";
 
 type AccountNode = Node<{
 	asset: Asset; current: boolean; handles: AccountGraphHandle[]; visit: (asset: Asset) => void;
 }, "accountCard">;
-type Bookmark = { id: string; zoom: number };
+type Bookmark = GraphCamera;
 type Props = {
 	root: Asset;
 	assets: Asset[];
@@ -27,7 +29,10 @@ type Props = {
 	selectedEdgeId: string | null;
 	onSelectEdge: (id: string | null) => void;
 	onVisit: (asset: Asset) => void;
-	onDeleteRelations?: (relations: Relation[]) => void;
+	onDeleteRelation?: (relation: Relation) => void;
+	onEditRelation?: (relation: Relation) => void;
+	onReturn?: () => void;
+	returnLabel?: string;
 };
 
 function accountLabel(asset: Asset) {
@@ -39,13 +44,13 @@ function AccountCard({ data }: NodeProps<AccountNode>) {
 	const { t } = useTranslation();
 	const display = accountLabel(data.asset);
 	const label = <span className="asset-graph-label" title={display.text}>
-		{data.current && <span className="asset-graph-current">{t("accountGraphCurrent")}</span>}
+		{data.current && <span className="asset-graph-current">{t(data.asset.kind === "account" ? "accountGraphCurrent" : "graphCurrentAsset")}</span>}
 		<strong>{data.asset.name}</strong>
 		{display.username && <small>{display.username}</small>}
 	</span>;
 	return <>
 		<div className="account-graph-card">
-			{data.current ? label : <Link className="asset-graph-link" to="/assets/$kind/$id" params={{ kind: data.asset.kind, id: data.asset.id }} onClick={(event) => { event.preventDefault(); event.stopPropagation(); data.visit(data.asset); }}>{label}</Link>}
+			{data.current ? label : <Link draggable={false} className="asset-graph-link" to="/assets/$kind/$id" params={{ kind: data.asset.kind, id: data.asset.id }} onClick={(event) => { event.preventDefault(); event.stopPropagation(); data.visit(data.asset); }}>{label}</Link>}
 		</div>
 		{data.handles.map((handle) => <Handle key={handle.id} id={handle.id} type={handle.type}
 			position={handle.side === "left" ? Position.Left : Position.Right} isConnectable={false}
@@ -58,11 +63,18 @@ function AccountConnectionEdge(props: EdgeProps) {
 	const points = props.data?.points as { x: number; y: number }[] | undefined;
 	if (!points?.length) return null;
 	// Serialize the layout engine's obstacle-avoiding route without replacing its bends.
-	const path = points.map((point, index) => `${index ? "L" : "M"}${point.x},${point.y}`).join(" ");
+	const path = props.data?.moved
+		? getSmoothStepPath({ sourceX: props.sourceX, sourceY: props.sourceY, sourcePosition: props.sourcePosition, targetX: props.targetX, targetY: props.targetY, targetPosition: props.targetPosition })[0]
+		: points.map((point, index) => `${index ? "L" : "M"}${point.x},${point.y}`).join(" ");
 	return <BaseEdge id={props.id} path={path} style={props.style} markerEnd={props.markerEnd} />;
 }
 const nodeTypes = { accountCard: AccountCard };
 const edgeTypes = { accountConnection: AccountConnectionEdge };
+
+function anchoredCamera(layout: AccountGraphLayout | null, center: { x: number; y: number; zoom: number }): Bookmark {
+	const nearest = layout && [...layout.nodes].sort(([, a], [, b]) => Math.hypot(a.x + a.width / 2 - center.x, a.y + a.height / 2 - center.y) - Math.hypot(b.x + b.width / 2 - center.x, b.y + b.height / 2 - center.y))[0];
+	return nearest ? { ...center, anchorId: nearest[0], offsetX: center.x - nearest[1].x - nearest[1].width / 2, offsetY: center.y - nearest[1].y - nearest[1].height / 2 } : center;
+}
 
 function fittedViewport(layout: AccountGraphLayout, width: number, height: number, rootId?: string) {
 	let bounds = layout.bounds;
@@ -76,8 +88,10 @@ function fittedViewport(layout: AccountGraphLayout, width: number, height: numbe
 	return getViewportForBounds({ x: bounds.x - 8, y: bounds.y - 8, width: bounds.width + 16, height: bounds.height + 16 }, width, height, 0.01, 1, 0);
 }
 
-function GraphViewport({ layout, layoutKey, layoutSize, rootId, restore, onSize, onReady }: {
+function GraphViewport({ layout, layoutKey, layoutSize, rootId, restore, onSize, onReady, refreshKey, positions }: {
 	layout: AccountGraphLayout | null; layoutKey: string; rootId: string; restore: Bookmark | null;
+	refreshKey: string;
+	positions: Record<string, { x: number; y: number }>;
 	layoutSize: { width: number; height: number };
 	onSize: (size: { width: number; height: number }) => void; onReady: (key: string) => void;
 }) {
@@ -88,8 +102,14 @@ function GraphViewport({ layout, layoutKey, layoutSize, rootId, restore, onSize,
 	const { setCenter, setViewport } = useReactFlow();
 	const pendingRestore = useRef(restore);
 	const appliedLayout = useRef("");
+	const lastMeasurement = useRef<{ layout: AccountGraphLayout | null; key: string }>({ layout: null, key: "" });
+	useEffect(() => { if (appliedLayout.current !== layoutKey) pendingRestore.current = restore; }, [layoutKey, restore]);
 	useEffect(() => { if (width && height) onSize({ width: Math.round(width), height: Math.round(height) }); }, [width, height, onSize]);
-	useEffect(() => { if (layout) updateNodeInternals([...layout.nodes.keys()]); }, [layout, updateNodeInternals]);
+	useEffect(() => {
+		if (!layout || measured && lastMeasurement.current.layout === layout && lastMeasurement.current.key === refreshKey) return;
+		lastMeasurement.current = { layout, key: refreshKey };
+		updateNodeInternals([...layout.nodes.keys()]);
+	}, [layout, measured, refreshKey, updateNodeInternals]);
 	useEffect(() => {
 		if (!layout || !measured || !width || !height || appliedLayout.current === layoutKey
 			|| Math.round(width) !== layoutSize.width || Math.round(height) !== layoutSize.height) return;
@@ -97,14 +117,16 @@ function GraphViewport({ layout, layoutKey, layoutSize, rootId, restore, onSize,
 		const frame = requestAnimationFrame(() => {
 			const fitted = fittedViewport(layout, width, height, rootId);
 			const bookmark = pendingRestore.current;
-			const anchor = layout.nodes.get(bookmark?.id ?? rootId) ?? layout.nodes.get(rootId);
-			const operation = anchor && (bookmark || fitted.zoom < 11 / 12)
-				? setCenter(anchor.x + anchor.width / 2, anchor.y + anchor.height / 2, { zoom: bookmark?.zoom ?? 1 })
+			const anchor = layout.nodes.get(rootId);
+			const restoredAnchor = bookmark?.anchorId ? layout.nodes.get(bookmark.anchorId) : undefined;
+			const restoredCenter = restoredAnchor && bookmark?.anchorId ? { x: restoredAnchor.x + restoredAnchor.width / 2 + (positions[bookmark.anchorId]?.x ?? 0) + (bookmark.offsetX ?? 0), y: restoredAnchor.y + restoredAnchor.height / 2 + (positions[bookmark.anchorId]?.y ?? 0) + (bookmark.offsetY ?? 0) } : bookmark;
+			const operation = bookmark && restoredCenter ? setCenter(restoredCenter.x, restoredCenter.y, { zoom: bookmark.zoom }) : anchor && fitted.zoom < 11 / 12
+				? setCenter(anchor.x + anchor.width / 2, anchor.y + anchor.height / 2, { zoom: 1 })
 				: setViewport(fitted);
 			void operation.then(() => { if (active) { appliedLayout.current = layoutKey; pendingRestore.current = null; onReady(layoutKey); } });
 		});
 		return () => { active = false; cancelAnimationFrame(frame); };
-	}, [layout, layoutKey, layoutSize.width, layoutSize.height, measured, width, height, rootId, setCenter, setViewport, onReady]);
+	}, [layout, layoutKey, layoutSize.width, layoutSize.height, measured, width, height, rootId, positions, setCenter, setViewport, onReady]);
 	return null;
 }
 
@@ -133,8 +155,7 @@ function GraphControls({ layout, rootId, expanded, onExpand, onCollapse }: {
 			if (expanded) { onCollapse(); return; }
 			const view = getViewport();
 			const center = { x: (width / 2 - view.x) / view.zoom, y: (height / 2 - view.y) / view.zoom };
-			const nearest = layout && [...layout.nodes].sort(([, a], [, b]) => Math.hypot(a.x + a.width / 2 - center.x, a.y + a.height / 2 - center.y) - Math.hypot(b.x + b.width / 2 - center.x, b.y + b.height / 2 - center.y))[0];
-			onExpand({ id: nearest?.[0] ?? rootId, zoom: view.zoom });
+			onExpand(anchoredCamera(layout, { ...center, zoom: view.zoom }));
 		}}>{expanded ? <Minimize2 size={18} /> : <Maximize2 size={18} />}</ControlButton>
 	</Controls>;
 }
@@ -151,7 +172,9 @@ function GraphContent({ props, expanded, restore, onExpand, onCollapse }: {
 	onExpand: (bookmark: Bookmark) => void;
 	onCollapse: () => void;
 }) {
-	const { t } = useTranslation();
+	const { t, i18n } = useTranslation();
+	const presentation = graphViewState(props.root.id);
+	const [positions, setPositions] = useState(() => ({ ...presentation.positions }));
 	const [size, setSize] = useState({ width: 0, height: 0 });
 	const [navigationHost, setNavigationHost] = useState<HTMLDivElement | null>(null);
 	const [result, setResult] = useState<{ key: string; layout: AccountGraphLayout | null; error: boolean }>({ key: "", layout: null, error: false });
@@ -184,7 +207,13 @@ function GraphContent({ props, expanded, restore, onExpand, onCollapse }: {
 		all.set(pair, [...all.get(pair) ?? [], relation]); return all;
 	}, new Map<string, Relation[]>()).values());
 	const selected = groups.find((group) => group.some((relation) => relation.id === props.selectedEdgeId));
-	const nodes: AccountNode[] = layout ? [...layout.nodes].flatMap(([id, node]) => {
+	const positionedLayout = layout ? { ...layout, nodes: new Map([...layout.nodes].map(([id, node]) => [id, { ...node, x: node.x + (positions[id]?.x ?? 0), y: node.y + (positions[id]?.y ?? 0) }])), bounds: { ...layout.bounds } } : null;
+	if (positionedLayout?.nodes.size) {
+		const entries = [...positionedLayout.nodes.values()];
+		const minX = Math.min(...entries.map(node => node.x)), minY = Math.min(...entries.map(node => node.y));
+		positionedLayout.bounds = { x: minX - 12, y: minY - 12, width: Math.max(...entries.map(node => node.x + node.width)) - minX + 24, height: Math.max(...entries.map(node => node.y + node.height)) - minY + 24 };
+	}
+	const nodes: AccountNode[] = positionedLayout ? [...positionedLayout.nodes].flatMap(([id, node]) => {
 		const asset = byId.get(id); if (!asset) return [];
 		return [{ id, type: "accountCard", position: { x: node.x, y: node.y }, width: node.width, height: node.height,
 			style: { width: node.width, height: node.height },
@@ -199,7 +228,7 @@ function GraphContent({ props, expanded, restore, onExpand, onCollapse }: {
 		const labels = [...new Set(group.map((relation) => relation.label))];
 		const active = group === selected;
 		return [{ id: group[0].id, source: group[0].from, target: group[0].to, sourceHandle: route.sourceHandle, targetHandle: route.targetHandle,
-			type: "accountConnection", data: { points: route.points, labels }, label: labels.join(" · "),
+			type: "accountConnection", data: { points: route.points, labels, moved: !!positions[group[0].from] || !!positions[group[0].to] }, label: labels.join(" · "),
 			domAttributes: { "data-from": group[0].from, "data-to": group[0].to } as NonNullable<Edge["domAttributes"]> & { "data-from": string; "data-to": string },
 			markerEnd: { type: MarkerType.ArrowClosed }, selected: active, selectable: true, focusable: true, deletable: false, zIndex: active ? 2 : 0,
 			className: verified ? "relation-graph-edge--verified" : "relation-graph-edge--pending",
@@ -211,22 +240,49 @@ function GraphContent({ props, expanded, restore, onExpand, onCollapse }: {
 		if (chosen) props.onSelectEdge(chosen.id);
 		else if (changes.some((change) => change.type === "select" && change.id === props.selectedEdgeId && !change.selected)) props.onSelectEdge(null);
 	}
+	function changeNodes(changes: NodeChange<AccountNode>[]) {
+		if (!layout) return;
+		const moves = changes.filter(change => change.type === "position" && change.position);
+		if (!moves.length) return;
+		setPositions(previous => {
+			const next = { ...previous };
+			for (const move of moves) {
+				if (move.type !== "position" || !move.position) continue;
+				const original = layout.nodes.get(move.id);
+				if (original) next[move.id] = { x: move.position.x - original.x, y: move.position.y - original.y };
+			}
+			presentation.positions = next;
+			return next;
+		});
+	}
 	return <section className={`graph account-family-graph${expanded ? " account-family-graph--expanded" : ""}`} aria-label={t("relations")} aria-busy={!ready && !error} data-layout-ready={ready}>
 		<div className="account-graph-view-actions"><div className="account-graph-navigation" ref={setNavigationHost} /></div>
 		<div className={`account-graph-stage${ready ? " is-ready" : ""}`}>
 			<ReactFlow nodes={nodes} edges={edges} nodeTypes={nodeTypes} edgeTypes={edgeTypes}
 				ariaLabelConfig={{ "controls.zoomIn.ariaLabel": t("accountGraphZoomIn"), "controls.zoomOut.ariaLabel": t("accountGraphZoomOut"), "minimap.ariaLabel": t("accountGraphMap") }}
 				minZoom={0.01} maxZoom={2} defaultViewport={{ x: 0, y: 0, zoom: 1 }}
-				nodesFocusable={false} edgesFocusable onEdgesChange={changeEdges} onPaneClick={() => props.onSelectEdge(null)}
-				deleteKeyCode={null} multiSelectionKeyCode={null} selectionKeyCode={null} nodesDraggable={false} nodesConnectable={false}>
-				<GraphViewport layout={layout} layoutKey={inputKey} layoutSize={size} rootId={props.root.id} restore={restore} onSize={setSize} onReady={setReadyKey} />
+				nodesFocusable edgesFocusable onNodesChange={changeNodes} onEdgesChange={changeEdges} onPaneClick={() => props.onSelectEdge(null)}
+				onMoveEnd={(_, viewport) => {
+					if (!ready) return;
+					const camera = anchoredCamera(positionedLayout, { x: (size.width / 2 - viewport.x) / viewport.zoom, y: (size.height / 2 - viewport.y) / viewport.zoom, zoom: viewport.zoom });
+					if (expanded) presentation.expandedCamera = camera; else presentation.camera = camera;
+				}}
+				deleteKeyCode={null} multiSelectionKeyCode={null} selectionKeyCode={null} nodesDraggable nodesConnectable={false}>
+				<GraphViewport layout={layout} positions={positions} layoutKey={inputKey} refreshKey={JSON.stringify(props.relations)} layoutSize={size} rootId={props.root.id} restore={restore} onSize={setSize} onReady={setReadyKey} />
 				<Background />
-				{navigationHost && createPortal(<><GraphControls layout={layout} rootId={props.root.id} expanded={expanded} onExpand={onExpand} onCollapse={onCollapse} />{props.assets.length > 12 && <GraphMiniMap rootId={props.root.id} />}</>, navigationHost)}
+				{navigationHost && createPortal(<><GraphControls layout={positionedLayout} rootId={props.root.id} expanded={expanded} onExpand={onExpand} onCollapse={onCollapse} />{props.assets.length > 12 && <GraphMiniMap rootId={props.root.id} />}{props.onReturn && <Button className="graph-return" size="small" onClick={props.onReturn}><ArrowLeft size={14} />{props.returnLabel}</Button>}</>, navigationHost)}
 				{selected && <Panel position="bottom-right" className="account-graph-selection-panel nodrag nopan"><section className="account-graph-connection-details" aria-label={t("accountGraphSelection")}>
 					<div className="account-graph-selection-header"><p className="account-graph-selection-title"><strong>{byId.get(selected[0].from)?.name}</strong><span aria-hidden="true"> → </span><strong>{byId.get(selected[0].to)?.name}</strong></p><Button className="account-graph-selection-close" aria-label={t("close")} onClick={() => props.onSelectEdge(null)}><X size={18} /></Button></div>
-					<ul className="account-graph-selection-labels">{[...new Set(selected.map((relation) => relation.label))].map((label) => <li key={label}>{label}</li>)}</ul>
+					<ul className="account-graph-selection-labels">{selected.map((relation) => <li key={relation.id} data-relation-id={relation.id}>
+						<strong>{relation.label}</strong>
+						<dl className="graph-relation-metadata"><div><dt>{t("relationSource")}</dt><dd>{relation.source || t("graphNotRecorded")}</dd></div><div><dt>{t("verifiedAt")}</dt><dd>{relation.verifiedAt ? date(relation.verifiedAt, i18n.language) : t("graphNotRecorded")}</dd></div></dl>
+						<small>{t(relation.verifiedAt ? "relationGraphVerified" : "relationGraphPending")}</small>
+						<div className="actions graph-relation-actions">
+							{props.onEditRelation && <Button size="small" aria-label={`${t("editRelation")} · ${relation.label}`} onClick={() => props.onEditRelation?.(relation)}><Pencil size={14} />{t("edit")}</Button>}
+							{props.onDeleteRelation && <Button variant="danger" size="small" aria-label={`${t("deleteRelation")} · ${relation.label}`} onClick={() => props.onDeleteRelation?.(relation)}><Trash2 size={14} />{t("remove")}</Button>}
+						</div>
+					</li>)}</ul>
 					<p className="account-graph-selection-status" role="status">{t(selected.every((relation) => !!relation.verifiedAt) ? "relationGraphVerified" : selected.some((relation) => !!relation.verifiedAt) ? "relationGraphMixed" : "relationGraphPending")}</p>
-					{props.onDeleteRelations && <Button className="account-graph-disconnect" variant="danger" size="small" onClick={() => props.onDeleteRelations?.(selected)}><Trash2 size={16} />{t("deleteRelation")}</Button>}
 				</section></Panel>}
 			</ReactFlow>
 			{!ready && <p className="account-graph-state" role={error ? "alert" : "status"}>{t(error ? "accountGraphUnavailable" : "loading")}</p>}
@@ -241,10 +297,12 @@ export function AccountFamilyGraphView(props: Props) {
 	const normalBookmark = useRef<{ rootId: string; bookmark: Bookmark } | null>(null);
 	function closeExpanded() {
 		const previous = normalBookmark.current;
-		setRestore({ rootId: props.root.id, bookmark: previous?.rootId === props.root.id ? previous.bookmark : { id: props.root.id, zoom: 1 } });
+		const camera = previous?.rootId === props.root.id ? previous.bookmark : graphViewState(props.root.id).camera;
+		setRestore(camera ? { rootId: props.root.id, bookmark: camera } : null);
 		setExpanded(false);
 	}
 	// Keep the dialog mounted while changing accounts; only reset the canvas and its camera.
-	const canvas = <GraphContent key={props.root.id} props={props} expanded={expanded} restore={restore?.rootId === props.root.id ? restore.bookmark : null} onCollapse={closeExpanded} onExpand={(bookmark) => { normalBookmark.current = { rootId: props.root.id, bookmark }; setRestore(null); setExpanded(true); }} />;
-	return <ReactFlowProvider>{expanded ? <Dialog title={t("accountGraphTitle")} className="account-graph-dialog" focusTitleOnOpen returnFocusTo={() => document.getElementById("account-graph-expand")} onClose={closeExpanded}>{canvas}</Dialog> : canvas}</ReactFlowProvider>;
+	const saved = graphViewState(props.root.id);
+	const canvas = <GraphContent key={props.root.id} props={props} expanded={expanded} restore={restore?.rootId === props.root.id ? restore.bookmark : expanded ? saved.expandedCamera ?? saved.camera ?? null : saved.camera ?? null} onCollapse={closeExpanded} onExpand={(bookmark) => { normalBookmark.current = { rootId: props.root.id, bookmark }; setRestore(null); saved.camera = bookmark; saved.expandedCamera = bookmark; setExpanded(true); }} />;
+	return <ReactFlowProvider>{expanded ? <Dialog title={t(props.root.kind === "account" ? "accountGraphTitle" : "graphTitle")} className="account-graph-dialog" focusTitleOnOpen returnFocusTo={() => document.getElementById("account-graph-expand")} onClose={closeExpanded}>{canvas}</Dialog> : canvas}</ReactFlowProvider>;
 }

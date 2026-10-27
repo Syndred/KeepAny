@@ -672,7 +672,7 @@ async function expectSelection(
 	expect(
 		(
 			await panel
-				.locator(".account-graph-selection-labels > li")
+				.locator(".account-graph-selection-labels > li > strong")
 				.allTextContents()
 		)
 			.map((value) => value.trim())

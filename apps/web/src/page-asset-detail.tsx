@@ -1,18 +1,7 @@
 import { assetNotes } from "./asset-notes";
-import { accountFamilyGraph } from "./account-family-graph";
+import { accountFamilyGraph, consumeGraphReturn, graphReturnTarget, graphViewState, recoverableGraphRelations, rememberGraphVisit } from "./account-family-graph";
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import {
-	Background,
-	Controls,
-	Position,
-	MarkerType,
-	ReactFlow,
-	useUpdateNodeInternals,
-	useStore,
-	type Edge,
-	type Node,
-} from "@xyflow/react";
 import { ArrowDownRight, ArrowLeft, Check, ExternalLink, Plus } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import {
@@ -32,6 +21,7 @@ import {
 	monthlyMinorUnits,
 	parseMinorUnits,
 	projectDomainSchema,
+	relationSchema,
 	submissionSchema,
 } from "../../../packages/domain/src";
 import { buildImpactTasks, upgradeLegacyImpactTasks } from "../../../packages/domain/src/impact";
@@ -80,23 +70,6 @@ const TaskEditor = lazy(() =>
 );
 const AccountFamilyGraphView = lazy(() => import("./account-family-graph-view").then((module) => ({ default: module.AccountFamilyGraphView })));
 const PasswordVaultPanel = lazy(() => import("./components/PasswordVaultPanel").then((module) => ({ default: module.PasswordVaultPanel })));
-function GraphNodeMeasurements({ nodeIds }: { nodeIds: string }) {
-	// Controlled nodes do not receive the library's dimensions change unless onNodesChange
-	// is wired. Observe measured internals instead of the stale user-node readiness flag.
-	const initialized = useStore((state) => state.nodeLookup.size > 0 && [...state.nodeLookup.values()].every((node) =>
-		!!node.measured.width && !!node.measured.height && !!node.internals.handleBounds));
-	const updateNodeInternals = useUpdateNodeInternals();
-	useEffect(() => {
-		// An async collection refresh can leave new nodes without measured handle bounds.
-		if (!initialized) updateNodeInternals(JSON.parse(nodeIds) as string[]);
-	}, [initialized, nodeIds, updateNodeInternals]);
-	return null;
-}
-
-function graphLabel(value: string) {
-	const chars = Array.from(value);
-	return chars.length > 18 ? `${chars.slice(0, 18).join("")}…` : value;
-}
 function validCalendarDay(value: string) {
 	if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
 	const parsed = new Date(`${value}T12:00:00Z`);
@@ -332,7 +305,9 @@ export function AssetDetail() {
 	const [deleteBusy, setDeleteBusy] = useState(false);
 	const deleteInFlight = useRef(false);
 	const [relationEdit, setRelationEdit] = useState(false);
-	const [relationToDelete, setRelationToDelete] = useState<Relation[] | null>(
+	const [relationEditBase, setRelationEditBase] = useState<Relation | null>(null);
+	const [relationStale, setRelationStale] = useState(false);
+	const [relationToDelete, setRelationToDelete] = useState<Relation | null>(
 		null,
 	);
 	const [relationDeleteError, setRelationDeleteError] = useState("");
@@ -343,23 +318,39 @@ export function AssetDetail() {
 	const [relationDetailsOpen, setRelationDetailsOpen] = useState(false);
 	const [graphScope, setGraphScope] = useState<"direct" | "family">("direct");
 	const [selectedGraphEdgeId, setSelectedGraphEdgeId] = useState<string | null>(null);
+	const [relationRestoreError, setRelationRestoreError] = useState("");
 	const centerId = asset?.id;
+	const graphReturn = centerId ? graphReturnTarget(centerId) : undefined;
 	const relationReturnId = sessionStorage.getItem("keepany-relation-return-id");
 	const relationReturnKind = sessionStorage.getItem("keepany-relation-return-kind");
 	const returnKind = relationReturnId === asset?.id && relationReturnKind && validKind(relationReturnKind) === relationReturnKind ? relationReturnKind : kind;
 	const catalogReturn = returnKind === kind && asset ? readWorkspaceReturn(asset.id) : null;
 	function visitRelation(target: Asset) {
 		if (!asset || target.id === asset.id) return;
+		rememberGraphVisit(asset, target);
 		if (relationReturnId !== asset.id || !relationReturnKind) sessionStorage.setItem("keepany-relation-return-kind", kind);
 		sessionStorage.setItem("keepany-relation-return-id", target.id);
-		void navigate({ to: "/assets/$kind/$id", params: { kind: target.kind, id: target.id } });
+		void navigate({ to: "/assets/$kind/$id", params: { kind: target.kind, id: target.id }, hash: "account-relations" });
 	}
 	useEffect(() => {
-		if (centerId) { setRelationFilter(""); setRelationDetailsOpen(false); setSelectedGraphEdgeId(null); }
+		if (centerId) {
+			const state = graphViewState(centerId);
+			setRelationFilter(state.filter); setRelationDetailsOpen(state.detailsOpen); setSelectedGraphEdgeId(state.selected); setGraphScope(state.scope);
+			setRelationEdit(false); setRelationEditBase(null); setRelationToDelete(null); setRelationRestoreError("");
+		}
 	}, [centerId]);
 	function changeGraphScope(scope: "direct" | "family") {
 		setSelectedGraphEdgeId(null);
 		setGraphScope(scope);
+		if (centerId) { graphViewState(centerId).scope = scope; graphViewState(centerId).selected = null; }
+	}
+	function selectGraphEdge(id: string | null) { setSelectedGraphEdgeId(id); if (centerId) graphViewState(centerId).selected = id; }
+	function openRelationEditor(relation?: Relation) {
+		setRelationEditBase(relation ?? null); setRelationStale(false); setRelationError("");
+		setRelationLabel(relation?.label ?? ""); setRelationSource(relation?.source ?? "");
+		setRelationVerifiedAt(relation?.verifiedAt ? validCalendarDay(relation.verifiedAt.slice(0, 10)) ? relation.verifiedAt.slice(0, 10) : relation.verifiedAt : "");
+		setRelationTarget(relation ? relation.from === centerId ? relation.to : relation.from : "");
+		setRelationEdit(true);
 	}
 	const [submissionEdit, setSubmissionEdit] = useState(false);
 	const [backlinkFilter, setBacklinkFilter] = useState<"all" | Submission["status"]>("all");
@@ -498,10 +489,9 @@ export function AssetDetail() {
 			liveById.has(r.from) &&
 			liveById.has(r.to),
 	), [data.relations, asset?.id, liveById]);
-	const normalizedFilter =
-		kind === "account" || relations.length >= 5 ? relationFilter.trim().toLocaleLowerCase() : "";
-	const family = useMemo(() => kind === "account" && centerId ? accountFamilyGraph(centerId, liveById, data.relations) : null, [kind, centerId, liveById, data.relations]);
-	const scopedRelations = kind === "account" && graphScope === "family" ? family?.relations ?? relations : relations;
+	const normalizedFilter = relationFilter.trim().toLocaleLowerCase();
+	const family = useMemo(() => centerId ? accountFamilyGraph(centerId, liveById, data.relations) : null, [centerId, liveById, data.relations]);
+	const scopedRelations = graphScope === "family" ? family?.relations ?? relations : relations;
 	const visibleRelations = normalizedFilter
 		? scopedRelations.filter((relation) => {
 				const from = liveById.get(relation.from), to = liveById.get(relation.to);
@@ -531,59 +521,9 @@ export function AssetDetail() {
 			}
 		}
 	}
-	const graphRelationGroups = Array.from(
-		(displayedFamily?.relations ?? visibleRelations)
-			.reduce((groups, relation) => {
-				const pair = JSON.stringify([relation.from, relation.to]);
-				const group = groups.get(pair) ?? [];
-				group.push(relation);
-				groups.set(pair, group);
-				return groups;
-			}, new Map<string, Relation[]>())
-			.values(),
-	);
-	const graphEdges = kind === "account" ? [] : graphRelationGroups.map((group): Edge => {
-		const verified = group.every((relation) => !!relation.verifiedAt);
-		const mixed = group.some((relation) => !!relation.verifiedAt) && !verified;
-		const labels = [...new Set(group.map((relation) => relation.label))];
-		const label = group.length > 2
-			? `${graphLabel(group[0].label)} · +${group.length - 1}`
-			: group.map((relation) => graphLabel(relation.label)).join(" · ");
-		return {
-			id: group[0].id,
-			source: group[0].from,
-			target: group[0].to,
-			type: "smoothstep",
-			data: { labels },
-			markerEnd: group.every(r => r.id.startsWith("pw-link-identifier-")) ? undefined : { type: MarkerType.ArrowClosed },
-			label,
-			className: verified ? "relation-graph-edge--verified" : "relation-graph-edge--pending",
-			ariaLabel: `${liveById.get(group[0].from)?.name} → ${liveById.get(group[0].to)?.name} · ${label} · ${t(verified ? "relationGraphVerified" : mixed ? "relationGraphMixed" : "relationGraphPending")}`,
-			style: {
-				stroke: verified ? "var(--green)" : "var(--muted)",
-				strokeWidth: 2,
-				strokeDasharray: verified ? "none" : "5 4",
-			},
-		};
-	});
-	const graphNodes: Node[] = asset && kind !== "account" ? [asset, ...visibleRelated].map((entry, index) => {
-		const current = entry.id === asset.id;
-		const label = <span key={entry.id} className="asset-graph-label" title={[entry.name, entry.username].filter(Boolean).join(" · ")}>
-			<strong>{entry.name}</strong>
-		</span>;
-		return {
-			id: entry.id,
-			position: current
-				? { x: Math.max(0, visibleRelated.length - 1) * 90 - 15, y: 100 }
-				: { x: 20 + (index - 1) * 180, y: 240 },
-			data: { label },
-			sourcePosition: current ? Position.Bottom : Position.Top,
-			targetPosition: current ? Position.Bottom : Position.Top,
-			type: "default",
-			className: `${current ? "asset-graph-center" : "asset-graph-neighbor"}${graphMatches.has(entry.id) ? " asset-graph-match" : ""}`,
-			ariaLabel: [entry.name, entry.username].filter(Boolean).join(" · "),
-		};
-	}) : [];
+	const recoverableIds = useMemo(() => new Set(centerId ? recoverableGraphRelations(centerId, data.assets, data.relations).map(relation => relation.id) : []), [centerId, data.assets, data.relations]);
+	const deletedRelations = data.relations.filter(relation => relation.deleted && !relation.purged
+		&& (graphViewState(centerId ?? "").removed?.includes(relation.id) || relation.from === centerId || relation.to === centerId || recoverableIds.has(relation.id)));
 	const ownTasks = data.tasks.filter(
 		(x) => !x.deleted && x.assetId === asset?.id && !x.impactSnapshot,
 	);
@@ -741,13 +681,14 @@ export function AssetDetail() {
 			target.deleted ||
 			target.id === asset.id ||
 			!relationLabel.trim()
-		)
-			return;
+		) { setRelationError(t("graphRelationUnavailable")); return; }
+		if (relationVerifiedAt && relationVerifiedAt !== relationEditBase?.verifiedAt && !validCalendarDay(relationVerifiedAt)) { setRelationError(t("graphInvalidDate")); return; }
+		const from = relationEditBase?.from ?? asset.id, to = relationEditBase?.to ?? target.id;
 		if (
-			relations.some(
+			data.relations.some(
 				(r) =>
-					r.from === asset.id &&
-					r.to === target.id &&
+					!r.deleted && r.id !== relationEditBase?.id && r.from === from &&
+					r.to === to &&
 					r.label.toLocaleLowerCase() ===
 						relationLabel.trim().toLocaleLowerCase(),
 			)
@@ -759,28 +700,44 @@ export function AssetDetail() {
 		setRelationBusy(true);
 		setRelationError("");
 		try {
-			await save("relation", {
-				id: crypto.randomUUID(),
-				from: asset.id,
-				to: target.id,
+			const next = relationSchema.parse({
+				...(relationEditBase ?? {}),
+				id: relationEditBase?.id ?? crypto.randomUUID(),
+				from,
+				to,
 				label: relationLabel.trim(),
-				...(relationSource.trim() ? { source: relationSource.trim() } : {}),
-				createdAt: new Date().toISOString(),
-				verifiedAt: relationVerifiedAt,
+				source: relationSource.trim(),
+				createdAt: relationEditBase?.createdAt ?? new Date().toISOString(),
+				verifiedAt: relationEditBase && relationVerifiedAt === relationEditBase.verifiedAt.slice(0, 10) ? relationEditBase.verifiedAt : relationVerifiedAt,
 				deleted: false,
 			});
+			if (relationEditBase) await (await localRepository()).saveRelationIfCurrent(relationEditBase, next);
+			else await save("relation", next);
 			setRelationEdit(false);
+			setRelationEditBase(null);
 			setRelationLabel("");
 			setRelationTarget("");
 			setRelationSource("");
 			setRelationVerifiedAt("");
 			notify(t("saved"));
-		} catch {
-			setRelationError(t("error"));
+		} catch (error) {
+			// Shared record CAS currently reports asset-stale for relation payload conflicts.
+			const stale = !!relationEditBase && error instanceof Error && ["relation-stale", "asset-stale"].includes(error.message);
+			setRelationStale(stale); setRelationError(t(stale ? "graphRelationStale" : error instanceof Error && error.message === "relation-endpoint" ? "graphRelationUnavailable" : "error"));
 		} finally {
 			relationInFlight.current = false;
 			setRelationBusy(false);
 		}
+	}
+	async function reviewLatestRelation() {
+		if (!relationEditBase || relationInFlight.current) return;
+		relationInFlight.current = true; setRelationBusy(true);
+		try {
+			const latest = await (await localRepository()).get<Relation>("relation", relationEditBase.id);
+			if (!latest || latest.deleted) { setRelationError(t("graphRelationUnavailable")); return; }
+			setRelationEditBase(latest); setRelationStale(false); setRelationError(t("graphRelationRebased"));
+		} catch { setRelationError(t("error")); }
+		finally { relationInFlight.current = false; setRelationBusy(false); }
 	}
 	async function confirmRelationDelete() {
 		if (!relationToDelete || relationInFlight.current) return;
@@ -789,12 +746,10 @@ export function AssetDetail() {
 		setRelationDeleteError("");
 		try {
 			const repository = await localRepository();
-			for (const relation of relationToDelete) {
-				if ((await repository.get<Relation>("relation", relation.id))?.deleted) continue;
-				await repository.saveRelationIfCurrent(relation, { ...relation, deleted: true });
-			}
+			await repository.saveRelationIfCurrent(relationToDelete, { ...relationToDelete, deleted: true });
+			if (centerId) { const state = graphViewState(centerId); state.removed = [...new Set([...(state.removed ?? []), relationToDelete.id])]; }
 			setRelationToDelete(null);
-			setSelectedGraphEdgeId(null);
+			selectGraphEdge(null);
 			notify(t("relationDisconnected"));
 		} catch {
 			setRelationDeleteError(t("relationDisconnectError"));
@@ -802,6 +757,15 @@ export function AssetDetail() {
 			relationInFlight.current = false;
 			setRelationBusy(false);
 		}
+	}
+	async function restoreGraphRelation(relation: Relation) {
+		if (relationInFlight.current) return;
+		relationInFlight.current = true; setRelationBusy(true); setRelationRestoreError("");
+		try {
+			await (await localRepository()).restoreRelationIfCurrent(relation);
+			notify(t("graphRelationRestored"));
+		} catch { setRelationRestoreError(t("graphRestoreError")); }
+		finally { relationInFlight.current = false; setRelationBusy(false); }
 	}
 	async function addSubmission() {
 		if (!asset || submissionInFlight.current) return;
@@ -1337,7 +1301,7 @@ export function AssetDetail() {
 			type="search"
 			placeholder={kind === "account" ? t("accountGraphSearch") : undefined}
 			value={relationFilter}
-			onChange={(event) => { setRelationFilter(event.target.value); if (event.target.value.trim()) setRelationDetailsOpen(true); }}
+			onChange={(event) => { const value = event.target.value; setRelationFilter(value); if (centerId) graphViewState(centerId).filter = value; if (value.trim()) { setRelationDetailsOpen(true); if (centerId) graphViewState(centerId).detailsOpen = true; } }}
 		/>
 		{kind === "account" && normalizedFilter && <small role="status">{t("accountGraphSearchMatches", { count: graphMatches.size })}</small>}
 	</div>;
@@ -1384,17 +1348,20 @@ export function AssetDetail() {
 								</small>
 							)}
 						</div>
+						<div className="actions graph-relation-actions">
+						<Button size="small" aria-label={`${t("editRelation")} · ${relation.label} · ${neighbor.name}`} onClick={() => openRelationEditor(relation)}>{t("edit")}</Button>
 						<Button
 							variant="ghost"
 							size="small"
 							aria-label={`${t("deleteRelation")} · ${relation.label} · ${neighbor.name}`}
 							onClick={() => {
 								setRelationDeleteError("");
-								setRelationToDelete([relation]);
+								setRelationToDelete(relation);
 							}}
 						>
 							{t("remove")}
 						</Button>
+						</div>
 					</div>
 				);
 			})}
@@ -1696,51 +1663,34 @@ export function AssetDetail() {
 						<Button
 							variant="ghost"
 							size="small"
-							onClick={() => {
-								setRelationError("");
-								setRelationEdit(true);
-							}}
+							onClick={() => openRelationEditor()}
 						>
 							<Plus size={14} />
 							{t("addRelation")}
 						</Button>
 					</div>
-					{relations.length || kind === "account" ? (
+					{relations.length || kind === "account" || kind === "project" ? (
 						<>
-							{kind === "account" ? <div className="account-graph-toolbar">
+							{<div className="account-graph-toolbar">
 								<div className="actions">
 									<Button size="small" variant={graphScope === "direct" ? "primary" : "default"} aria-pressed={graphScope === "direct"} onClick={() => changeGraphScope("direct")}>{t("accountGraphDirect")}</Button>
 									<Button size="small" variant={graphScope === "family" ? "primary" : "default"} aria-pressed={graphScope === "family"} onClick={() => changeGraphScope("family")}>{t("accountGraphFamily")}</Button>
 								</div>
 								{relationSearch}
 								<details className="account-graph-guide"><summary>{t("accountGraphHelp")}</summary><p><span>{t("accountGraphDirection")}</span><span>{t("relationGraphLegend")}</span></p></details>
-							</div> : relations.length >= 5 ? relationSearch : null}
-							{kind === "account" ? <Suspense fallback={<p role="status">{t("loading")}</p>}><AccountFamilyGraphView root={asset} assets={[asset, ...graphRelated]} relations={displayedFamily?.relations ?? relations} matches={graphMatches} selectedEdgeId={selectedGraphEdgeId} onSelectEdge={setSelectedGraphEdgeId} onVisit={visitRelation} onDeleteRelations={(items) => { setRelationDeleteError(""); setRelationToDelete(items); }} /></Suspense> : <section className="graph" aria-label={t("relations")}>
-								<ReactFlow
-									fitView
-									minZoom={0.1}
-									nodes={graphNodes}
-									edges={graphEdges}
-									onNodeClick={(_, node) => {
-										const target = liveById.get(node.id);
-										if (target) visitRelation(target);
-									}}
-									nodesDraggable={false}
-									nodesConnectable={false}
-								>
-									<GraphNodeMeasurements nodeIds={JSON.stringify([asset.id, ...graphRelated.map((item) => item.id)])} />
-									<Background />
-									<Controls showInteractive={false} />
-								</ReactFlow>
-							</section>}
-							{kind === "account" ? visibleRelations.length > 0 && <details className="account-relation-details" open={relationDetailsOpen} onToggle={(event) => setRelationDetailsOpen(event.currentTarget.open)}>
+							</div>}
+							<Suspense fallback={<p role="status">{t("loading")}</p>}><AccountFamilyGraphView root={asset} assets={[asset, ...graphRelated]} relations={displayedFamily?.relations ?? relations} matches={graphMatches} selectedEdgeId={selectedGraphEdgeId} onSelectEdge={selectGraphEdge} onVisit={visitRelation} onEditRelation={openRelationEditor} returnLabel={graphReturn ? t("graphBackTo", { name: liveById.get(graphReturn.id)?.name ?? t("back") }) : undefined} onReturn={graphReturn && liveById.has(graphReturn.id) ? () => { const target = consumeGraphReturn(asset.id); if (target) void navigate({ to: "/assets/$kind/$id", params: { kind: target.kind, id: target.id }, hash: "account-relations" }); } : undefined} onDeleteRelation={(relation) => { setRelationDeleteError(""); setRelationToDelete(relation); }} /></Suspense>
+							{visibleRelations.length > 0 && <details className="account-relation-details" open={relationDetailsOpen} onToggle={(event) => { const value = event.currentTarget.open; setRelationDetailsOpen(value); if (centerId) graphViewState(centerId).detailsOpen = value; }}>
 								<summary>{t("accountGraphDetails", { count: visibleRelations.length })}</summary>
 								{relationList}
-							</details> : relationList}
+							</details>}
+
 						</>
 					) : (
 						asset.kind === "project" ? <p className="asset-quiet-empty">{t("none")}</p> : <Empty hint={false} />
 					)}
+					{deletedRelations.length > 0 && <details className="graph-deleted-relations"><summary>{t("graphDeletedConnections", { count: deletedRelations.length })}</summary><div className="list relation-list">{deletedRelations.map(relation => <div className="list-row relation-row" key={relation.id} data-deleted-relation-id={relation.id}><div className="relation-info"><strong>{data.assets.find(asset => asset.id === relation.from)?.name || t("graphEndpointUnavailable")} → {data.assets.find(asset => asset.id === relation.to)?.name || t("graphEndpointUnavailable")}</strong><small>{relation.label}</small><small>{relation.source || t("graphNotRecorded")} · {date(relation.verifiedAt, i18n.language)}</small></div><Button size="small" disabled={relationBusy || !liveById.has(relation.from) || !liveById.has(relation.to)} aria-label={`${t("restore")} · ${relation.label}`} onClick={() => void restoreGraphRelation(relation)}>{t("restore")}</Button></div>)}</div>{relationRestoreError && <p className="field-error" role="alert">{relationRestoreError}</p>}<TextLink asChild><Link to="/trash">{t("trash")}</Link></TextLink></details>}
+
 				</section>
 				<section className="card asset-tasks-card">
 					<div className="card-header">
@@ -2066,7 +2016,7 @@ export function AssetDetail() {
 			{relationEdit && (
 				<Dialog
 					className={kind === "account" ? "account-detail-dialog" : undefined}
-					title={t("addRelation")}
+					title={t(relationEditBase ? "editRelation" : "addRelation")}
 					onClose={() => {
 						if (!relationInFlight.current) setRelationEdit(false);
 					}}
@@ -2077,6 +2027,7 @@ export function AssetDetail() {
 							<Select
 								id="relation-target"
 								value={relationTarget}
+								disabled={!!relationEditBase || relationBusy}
 								onValueChange={(selectValue) => setRelationTarget(selectValue)}
 							>
 								<SelectOption value="">{t("selectAsset")}</SelectOption>
@@ -2094,6 +2045,7 @@ export function AssetDetail() {
 							<input
 								id="relation-label"
 								value={relationLabel}
+								maxLength={100} disabled={relationBusy}
 								onChange={(e) => setRelationLabel(e.target.value)}
 							/>
 						</div>
@@ -2102,6 +2054,7 @@ export function AssetDetail() {
 							<input
 								id="relation-source"
 								value={relationSource}
+								maxLength={500} disabled={relationBusy}
 								onChange={(e) => setRelationSource(e.target.value)}
 							/>
 						</div>
@@ -2109,8 +2062,9 @@ export function AssetDetail() {
 							<label htmlFor="relation-verified">{t("verifiedAt")}</label>
 							<input
 								id="relation-verified"
-								type="date"
+								type={relationEditBase?.verifiedAt && !validCalendarDay(relationEditBase.verifiedAt.slice(0, 10)) ? "text" : "date"}
 								value={relationVerifiedAt}
+								disabled={relationBusy}
 								onChange={(e) => setRelationVerifiedAt(e.target.value)}
 							/>
 						</div>
@@ -2120,11 +2074,14 @@ export function AssetDetail() {
 							{relationError}
 						</p>
 					)}
+					{relationEditBase && <p className="subtitle">{data.assets.find(asset => asset.id === relationEditBase.from)?.name || t("graphEndpointUnavailable")} → {data.assets.find(asset => asset.id === relationEditBase.to)?.name || t("graphEndpointUnavailable")}</p>}
+					{relationStale && <><p className="subtitle">{t("graphLatestRelation", { label: data.relations.find(item => item.id === relationEditBase?.id)?.label ?? t("graphNotRecorded"), source: data.relations.find(item => item.id === relationEditBase?.id)?.source || t("graphNotRecorded"), verified: data.relations.find(item => item.id === relationEditBase?.id)?.verifiedAt || t("graphNotRecorded") })}</p><Button disabled={relationBusy} onClick={() => void reviewLatestRelation()}>{t("graphReviewLatest")}</Button></>}
+
 					<div className="actions">
 						<Button
 							variant="primary"
 							disabled={
-								!relationTarget || !relationLabel.trim() || relationBusy
+								!relationTarget || !relationLabel.trim() || relationBusy || relationStale
 							}
 							onClick={() => void addRelation()}
 						>
@@ -2145,9 +2102,8 @@ export function AssetDetail() {
 					}}
 				>
 					<p style={{ overflowWrap: "anywhere" }}>
-						{relationToDelete.length === 1 ? t("deleteRelationConfirm", { label: relationToDelete[0].label }) : t("relationDisconnectGroup", { count: relationToDelete.length })}
+						{t("deleteRelationConfirm", { label: relationToDelete.label })}
 					</p>
-					{relationToDelete.length > 1 && <ul>{[...new Set(relationToDelete.map((relation) => relation.label))].map((label) => <li key={label}>{label}</li>)}</ul>}
 					{relationDeleteError && (
 						<p className="field-error" role="alert">
 							{relationDeleteError}

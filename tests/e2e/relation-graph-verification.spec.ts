@@ -104,7 +104,7 @@ for (const locale of ["zh-CN", "en-US"] as const) {
 				await expect(targetPage.locator(".account-graph-selection-panel")).toHaveCount(1);
 				await expect(panel).toBeVisible();
 				await expect(panel.locator(".account-graph-selection-title")).toHaveText(`${from} → ${to}`);
-				await expect.poll(async () => (await panel.locator(".account-graph-selection-labels > li").allTextContents()).sort()).toEqual([...labels].sort());
+				await expect.poll(async () => (await panel.locator(".account-graph-selection-labels > li > strong").allTextContents()).sort()).toEqual([...labels].sort());
 				await expect(panel.locator(".account-graph-selection-status")).toHaveText(status);
 				for (const other of await targetPage.locator(".react-flow__edge:not(.selected) .react-flow__edge-path").all()) await expect(other).toHaveCSS("opacity", "0.25");
 				const clear = await panel.evaluate(element => {

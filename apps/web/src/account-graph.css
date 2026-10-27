@@ -33,3 +33,27 @@
 	.dialog.account-graph-dialog { width: calc(100vw - 16px); height: calc(100dvh - 16px); padding: 12px; }
 }
 .account-graph-disconnect { min-height: 44px; margin-top: 12px; }
+.account-graph-selection-panel { width: 380px; max-width: calc(100% - 24px); }
+.account-graph-selection-panel section { max-height: min(320px, 45dvh); }
+.account-graph-selection-labels { list-style: none; padding: 0; }
+.account-graph-selection-labels > li { display: grid; gap: 8px; padding-block: 8px; border-top: 1px solid var(--line-soft); }
+.graph-relation-metadata { display: grid; gap: 5px; margin: 0; }
+.graph-relation-metadata > div { display: grid; grid-template-columns: minmax(70px, 0.35fr) minmax(0, 1fr); gap: 8px; }
+.graph-relation-metadata dt { color: var(--muted); }
+.graph-relation-metadata dd { margin: 0; overflow-wrap: anywhere; white-space: pre-wrap; }
+.graph-relation-actions { gap: 8px; flex-wrap: wrap; }
+.graph-relation-actions .button { min-height: 44px; }
+.asset-relations-card .relation-row { flex-wrap: wrap; }
+.asset-relations-card .relation-info { min-width: min(200px, 100%); overflow-wrap: anywhere; }
+.asset-relations-card .account-graph-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 0 16px 12px; }
+.asset-relations-card .relation-filter { flex: 1; min-width: min(220px, 100%); }
+.graph-return { min-height: 44px; max-width: 100%; white-space: normal; }
+.graph-deleted-relations { margin: 0 16px 16px; border-top: 1px solid var(--line-soft); }
+.graph-deleted-relations > summary { min-height: 44px; padding: 14px 0; font-size: 13px; font-weight: 750; cursor: pointer; }
+.graph-deleted-relations > .relation-list { padding: 0; }
+.account-family-graph .react-flow__node { cursor: grab; }
+.account-family-graph .react-flow__node.dragging { cursor: grabbing; }
+@media (max-width: 700px) {
+	.asset-relations-card .account-graph-toolbar .relation-filter { order: 2; flex-basis: 100%; }
+	.account-graph-selection-panel { margin: 12px; }
+}
