@@ -3,6 +3,7 @@ import {
   Consts, CryptoEngine, Int64, Kdbx, KdbxCredentials, type KdbxEntry, ProtectedValue, VarDictionary,
 } from 'kdbxweb';
 import { checkHeader, fail, safeError } from './header';
+import { restoreLocalEditState, VAULT_EDIT_STATE_FIELD } from './edit-state';
 import type { VaultEntryDraft, VaultEntrySummary } from './types';
 
 export { checkBytes, checkHeader, fail, safeError, VAULT_MAX_BYTES } from './header';
@@ -93,6 +94,7 @@ export async function loadDatabase(bytes: Uint8Array, key: KdbxCredentials): Pro
         }
       }
     }
+    restoreLocalEditState(db);
     return db;
   } catch (error) { clearDatabase(db); clearCredentials(key); throw safeError(error); }
 }
@@ -245,6 +247,8 @@ export function clearDatabase(db: Kdbx | null): void {
   const importDraft = db.meta.customData.get(VAULT_IMPORT_DRAFT_FIELD);
   if (importDraft) importDraft.value = undefined;
   db.meta.customData.delete(VAULT_IMPORT_DRAFT_FIELD);
+  db.meta.customData.delete(VAULT_EDIT_STATE_FIELD);
+  db.removeLocalEditState();
   clearCredentials(db.credentials);
   db.xml = undefined;
 }

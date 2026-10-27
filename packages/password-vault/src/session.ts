@@ -1,4 +1,5 @@
 import { Kdbx, KdbxCredentials } from 'kdbxweb';
+import { persistLocalEditState } from './edit-state';
 import {
   applyDraft, checkBytes, clearCredentials, clearDatabase, configureDatabase, credentials, draftOf, fail,
   encodeImportDraft, findEntry, isTrash, loadDatabase, nextKdbxTime, normalizeDraft,
@@ -229,7 +230,10 @@ export class VaultSession {
     try {
       // An empty-vault import adopts already authenticated ciphertext verbatim.
       // Editing later may serialize it, but must retain its supported version/KDF.
-      if (!adoptedBytes) candidate.meta.customData.set(VAULT_CONTENT_REVISION_FIELD, { value: preservedContentRevision ?? crypto.randomUUID() });
+      if (!adoptedBytes) {
+        candidate.meta.customData.set(VAULT_CONTENT_REVISION_FIELD, { value: preservedContentRevision ?? crypto.randomUUID() });
+        persistLocalEditState(candidate);
+      }
       const bytes = adoptedBytes ? adoptedBytes.slice() : new Uint8Array(await candidate.save());
       checkBytes(bytes);
       this.checkGeneration(generation);
