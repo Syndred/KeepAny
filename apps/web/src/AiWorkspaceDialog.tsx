@@ -26,6 +26,7 @@ import {
 } from "../../../packages/local-db/src";
 import { acquireAiConnection, useAiConnection } from "./ai-settings-store";
 import { type AiUsage, estimateAiCost } from "./ai-usage";
+import { aiRequestErrorKey } from './ai-request-error';
 import {
 	executeSearchPlan,
 	parseAiJson,
@@ -103,6 +104,10 @@ export function AiWorkspaceDialog({
 		[error, setError] = useState(""),
 		[usage, setUsage] = useState<AiUsage | null>(null),
 		[returnedModel, setReturnedModel] = useState<string | null>(null);
+	const errorElement = useRef<HTMLParagraphElement>(null);
+	useEffect(() => {
+		if (error) errorElement.current?.scrollIntoView({ block: 'nearest' });
+	}, [error]);
 	const [inputPrice, setInputPrice] = useState(""),
 		[outputPrice, setOutputPrice] = useState(""),
 		[priceCurrency, setPriceCurrency] = useState("");
@@ -301,7 +306,7 @@ export function AiWorkspaceDialog({
 						cause instanceof Error && cause.message === "ai-ask-limit"
 							? "aiAskLimit"
 							: cause instanceof AiClientError
-								? "aiError"
+								? aiRequestErrorKey(cause, 'workspace')
 								: mode === "ask"
 									? "aiInvalidResponse"
 									: "aiInvalid",
@@ -940,7 +945,7 @@ export function AiWorkspaceDialog({
 				</section>
 			)}
 			{error && (
-				<p className="field-error" role="alert">
+				<p className="field-error" role="alert" ref={errorElement}>
 					{error}
 				</p>
 			)}

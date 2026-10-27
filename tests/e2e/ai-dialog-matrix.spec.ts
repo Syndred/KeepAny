@@ -108,6 +108,46 @@ const copies = {
 	},
 } as const;
 
+for (const language of ['en', 'zh-CN'] as const) {
+  test(`${language} AI timeout explains the cause and keeps the original input at 390px`, async ({ browser }) => {
+    const mock = await aiServer();
+    const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
+    const copy = copies[language];
+    await context.addInitScript(value => localStorage.setItem('keepany-language', value), language);
+    const page = await context.newPage();
+    let release!: () => void;
+    const gate = new Promise<void>(resolve => { release = resolve; });
+    try {
+      const name = `Timeout selected ${language}`;
+      await addProject(page, copy, name, 'ordinary timeout fixture');
+      const { dialog } = await openAi(page, copy);
+      await dialog.getByLabel(copy.endpoint).fill(mock.endpoint);
+      await dialog.getByLabel(copy.model).fill('synthetic-model');
+      await dialog.getByLabel(copy.key).fill(syntheticKey);
+      await dialog.getByRole('checkbox', { name, exact: true }).check();
+      await dialog.getByLabel(copy.question).fill('Keep this exact ordinary question');
+      await page.clock.install();
+      mock.plans.push({ status: 200, answer: 'obsolete timeout answer', gate });
+      await dialog.getByRole('button', { name: copy.send, exact: true }).click();
+      await expect.poll(() => mock.requests.length).toBe(1);
+      await page.clock.fastForward(30_001);
+      await expect(dialog.getByRole('alert')).toHaveText(language === 'en'
+        ? 'The request timed out. Your input is still here. Try again.' : '请求超时，输入已保留。请重试。');
+      await expect(dialog.getByRole('alert')).toBeInViewport({ ratio: 0.95 });
+      await expect(dialog.getByLabel(copy.question)).toHaveValue('Keep this exact ordinary question');
+      await expect(dialog.getByRole('checkbox', { name, exact: true })).toBeChecked();
+      release();
+      await expect(dialog.getByText('obsolete timeout answer', { exact: true })).toHaveCount(0);
+      mkdirSync(evidence, { recursive: true });
+      await page.screenshot({ path: `${evidence}/ai-timeout-${language}-390.png` });
+      mock.plans.push({ status: 200, answer: 'Current retry after timeout' });
+      await dialog.getByRole('button', { name: copy.send, exact: true }).click();
+      await expect(dialog.getByText('Current retry after timeout', { exact: true })).toBeVisible();
+      expect(mock.requests).toHaveLength(2);
+    } finally { release?.(); await context.close(); await mock.close(); }
+  });
+}
+
 async function addProject(
 	page: Page,
 	copy: typeof copies.en | (typeof copies)["zh-CN"],

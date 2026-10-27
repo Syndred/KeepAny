@@ -1,5 +1,7 @@
 /** Chinese and English copy for AI configuration; merged into i18next by the shell. */
 export const aiCopy: Record<string, [string, string]> = {
+	aiRequestTimeout: ["请求超时，输入已保留。请重试。", "The request timed out. Your input is still here. Try again."],
+	aiNativeRequestFailed: ["连接未成功。请检查地址、模型、密钥与网络连接。", "Connection failed. Check the URL, model, key and network connection."],
 	aiSettingsTitle: ["连接 AI 模型", "Connect an AI model"],
 	aiSettingsHint: [
 		"选择自己的模型，用于整理导入、查找资料和安排提醒。每次处理前都可以核对将发送的资料。",

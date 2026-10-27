@@ -22,6 +22,7 @@ import {
 import { Button } from "./ui/button";
 import { Select, SelectOption } from "./ui/select";
 import { TextLink } from "./ui/text-link";
+import { aiRequestErrorKey } from '../ai-request-error';
 import "./AiSettingsPanel.css";
 
 const providerCopy: Record<AiProviderId, string> = {
@@ -482,7 +483,7 @@ export function AiSettingsPanel() {
 				!request.signal.aborted &&
 				generation.current === current
 			)
-				reportError(caught, "aiSettingsTestFailed");
+				reportError(caught, aiRequestErrorKey(caught, 'settings'));
 		} finally {
 			if (mounted.current && generation.current === current) {
 				setBusy(false);
