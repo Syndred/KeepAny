@@ -31,6 +31,8 @@ const startupCopy = {
   en: { mobileLocalOpenFailed: 'Your local data could not be opened. Please try again.', mobileRetry: 'Try again', mobileOpening: 'Opening your local data…' },
 };
 type StartupKey = keyof typeof startupCopy.en;
+type StartupStage = 'platform' | 'preferences' | 'translations' | 'adapters' | 'datasets' | 'repository' | 'lifecycle' | 'router';
+let startupStage: StartupStage = 'platform';
 let translate = (key: StartupKey) => startupCopy[navigator.language.startsWith('zh') ? 'zh-CN' : 'en'][key];
 const rootElement = document.getElementById('root');
 if (!rootElement) throw Error('missing-app-root');
@@ -43,10 +45,13 @@ async function start() {
   // MCP is optional: this failure must not prevent opening ordinary records.
   // Its factory independently requires an acknowledged reset before any IO.
   void resetNativeMcpTransport().catch(() => {});
+  startupStage = 'preferences';
   registerPlatformSettings(await hydrateNativePreferences());
+  startupStage = 'translations';
   const { default: i18n } = await import('../../web/src/i18n');
   for (const [language, copy] of Object.entries(startupCopy)) i18n.addResourceBundle(language, 'translation', copy, true, true);
   translate = key => i18n.t(key);
+  startupStage = 'adapters';
   registerFileDeliveryHandler(exportNativeFile);
   registerNativeMetadataHandler(readNativeMetadataHtml);
   registerBindingRepositoryFactory(createNativeBindingRepository);
@@ -55,11 +60,13 @@ async function start() {
   registerPlatformConnections(connections);
   registerAiFetchFactory(createNativeAiFetchFactory());
   registerSyncFetchFactory(createNativeSyncFetchFactory(connections.sessionFetch));
+  startupStage = 'datasets';
   const datasets = await openNativeDatasetManager();
   let datasetEpoch = 0;
   datasets.subscribe(event => { if (event === 'active') datasetEpoch++; });
   registerDatasetAdapter(datasets);
   registerRepositoryFactory(() => datasets.openActive());
+  startupStage = 'repository';
   await localRepository();
   if (Capacitor.isPluginAvailable('KeepAnyMcpAuthority') && Capacitor.isPluginAvailable('KeepAnyMcpTransport')) {
     registerPlatformMcp(createNativeMcpPlatform({ loadContext: async () => {
@@ -74,7 +81,9 @@ async function start() {
     } }));
   }
   datasets.subscribe(event => { if (event === 'active') location.reload(); });
+  startupStage = 'lifecycle';
   await installNativeLifecycle();
+  startupStage = 'router';
   const [{ RouterProvider }, { router }] = await Promise.all([
     import('@tanstack/react-router'), import('../../web/src/router'),
   ]);
@@ -83,9 +92,10 @@ async function start() {
 }
 void start().catch((error: unknown) => {
   const code = error instanceof Error && /^(?:native|repository|database)-[a-z-]+$/.test(error.message) ? error.message : 'startup-failed';
-  console.error('KeepAny startup:', code);
+  // Fixed stage metadata only: never expose plugin messages, paths or values.
+  console.error('KeepAny startup:', code, startupStage);
   reactRoot.render(
-    <main className="page"><h1>KeepAny</h1><p role="alert">{translate('mobileLocalOpenFailed')}</p>
+    <main className="page" data-startup-stage={startupStage}><h1>KeepAny</h1><p role="alert">{translate('mobileLocalOpenFailed')}</p>
       <button type="button" onClick={() => location.reload()}>{translate('mobileRetry')}</button></main>,
   );
 });
