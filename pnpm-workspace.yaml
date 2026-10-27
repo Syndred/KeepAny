@@ -14,6 +14,7 @@ overrides:
   'kdbxweb>@xmldom/xmldom': 0.8.15
   'kdbxweb>fflate': 0.8.3
 patchedDependencies:
+  '@capacitor-community/sqlite@8.1.1': patches/@capacitor-community__sqlite@8.1.1.patch
   kdbxweb@2.1.1: patches/kdbxweb@2.1.1.patch
   '@capacitor/android@8.5.3': patches/@capacitor__android@8.5.3.patch
   pdfjs-dist@6.3.289: patches/pdfjs-dist@6.3.289.patch

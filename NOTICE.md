@@ -2,7 +2,7 @@
 
 本清单由 `node scripts/phase0/generate-legal-artifacts.mjs` 根据当前 `pnpm-lock.yaml`、实际安装树和各包 `package.json` 生成。精确版本的上游许可证原文索引见 [`legal/third-party/manifest.json`](legal/third-party/manifest.json)，本文件记录包内许可声明和包根目录中的许可/NOTICE 文件指纹；并非法律兼容性结论或可直接分发的完整第三方许可证正文包。
 
-- 锁文件 SHA-256：`2778e8ab3fc85abc51ea9a15cb71b381885d3f0f3ffbe40a4f36e1275a5e0099`
+- 锁文件 SHA-256：`db0388769a391a8718551762f8f59c87406c72c2b171a5a891267bf1c4024f97`
 - 已安装包版本：723；直接运行依赖：57；直接开发依赖：21。
 - 当前安装树包根目录缺少许可证正文：39，逐项状态见下表。独立历史材料索引合计34个版本：29项保存上游正文，5项保存精确声明与明确标注的规范补充，0项未解决。索引还可包含自带正文的补充登记，不把索引总数当作当前缺正文包的覆盖数。规范补充不冒充上游原文件或补造版权。
 - 项目源码许可证：根目录 `LICENSE` 为 AGPL-3.0-only；发布前仍需由版权持有人确认，并完成依赖兼容性复核。
@@ -191,7 +191,7 @@
 | `@better-fetch/fetch@1.3.2` | 传递依赖 | `MIT` | `node_modules/.pnpm/@better-fetch+fetch@1.3.2/node_modules/@better-fetch/fetch/LICENSE` (SHA-256 `54d710e643b5fd218f0c29cddea92432b2c730dddd594c7047c97993dd9f9a59`) |
 | `@biomejs/biome@2.5.14` | development | `MIT OR Apache-2.0` | 包根目录无 LICENSE/LICENCE/COPYING/NOTICE |
 | `@biomejs/cli-win32-x64@2.5.14` | 传递依赖 | `MIT OR Apache-2.0` | 包根目录无 LICENSE/LICENCE/COPYING/NOTICE |
-| `@capacitor-community/sqlite@8.1.1` | production | `MIT` | `node_modules/.pnpm/@capacitor-community+sqlite@8.1.1_@capacitor+core@8.5.3/node_modules/@capacitor-community/sqlite/LICENSE` (SHA-256 `f138ef5563fe07869aeaa54d14117c8a1111656d3a8d274917ec185f1dc02ce3`) |
+| `@capacitor-community/sqlite@8.1.1` | production | `MIT` | `node_modules/.pnpm/@capacitor-community+sqlite_b74153aea3f9e843aa1e1c465c73d97e/node_modules/@capacitor-community/sqlite/LICENSE` (SHA-256 `f138ef5563fe07869aeaa54d14117c8a1111656d3a8d274917ec185f1dc02ce3`) |
 | `@capacitor/android@8.5.3` | production | `MIT` | `node_modules/.pnpm/@capacitor+android@8.5.3_pa_237a1ecc6a883ff28956063aeac890bd/node_modules/@capacitor/android/LICENSE` (SHA-256 `9c6ebf3e5ab832ba4d5af38f340978e1fedbfee6e3d23662dfdb8917a9d864dd`) |
 | `@capacitor/app@8.1.2` | production | `MIT` | `node_modules/.pnpm/@capacitor+app@8.1.2_@capacitor+core@8.5.3/node_modules/@capacitor/app/LICENSE` (SHA-256 `e8f989836e88732576472006444b65fd3d7d3c2455becdaaa4d82cd0dd43110f`) |
 | `@capacitor/cli@8.5.3` | development | `MIT` | `node_modules/.pnpm/@capacitor+cli@8.5.3/node_modules/@capacitor/cli/LICENSE` (SHA-256 `9c6ebf3e5ab832ba4d5af38f340978e1fedbfee6e3d23662dfdb8917a9d864dd`) |

@@ -9,6 +9,7 @@ overrides:
   kdbxweb>fflate: 0.8.3
 
 patchedDependencies:
+  '@capacitor-community/sqlite@8.1.1': 1e02335e4fcc4c59799be06c9abdc337d7f09b78bfa945624d16c4145a94d349
   '@capacitor/android@8.5.3': e45a45c11a25f5072b0b46863dc0bf6dc6b6f68ae6505487455e014cdac0c40d
   kdbxweb@2.1.1: 05d88aeba2ef24ee4ce6aca8b710a2037b8b6f16f46983369b7e5b93e6a31be7
   pdfjs-dist@6.3.289: 1ea7b1ab5e5676afb6c41a055a6e5a0de8ee29230f627b3bd526ba0b07bf18e3
@@ -46,7 +47,7 @@ importers:
         version: 3.1141.0
       '@capacitor-community/sqlite':
         specifier: 8.1.1
-        version: 8.1.1(@capacitor/core@8.5.3)
+        version: 8.1.1(patch_hash=1e02335e4fcc4c59799be06c9abdc337d7f09b78bfa945624d16c4145a94d349)(@capacitor/core@8.5.3)
       '@capacitor/android':
         specifier: 8.5.3
         version: 8.5.3(patch_hash=e45a45c11a25f5072b0b46863dc0bf6dc6b6f68ae6505487455e014cdac0c40d)(@capacitor/core@8.5.3)
@@ -257,7 +258,7 @@ importers:
     dependencies:
       '@capacitor-community/sqlite':
         specifier: 8.1.1
-        version: 8.1.1(@capacitor/core@8.5.3)
+        version: 8.1.1(patch_hash=1e02335e4fcc4c59799be06c9abdc337d7f09b78bfa945624d16c4145a94d349)(@capacitor/core@8.5.3)
       '@capacitor/android':
         specifier: 8.5.3
         version: 8.5.3(patch_hash=e45a45c11a25f5072b0b46863dc0bf6dc6b6f68ae6505487455e014cdac0c40d)(@capacitor/core@8.5.3)
@@ -5699,7 +5700,7 @@ snapshots:
   '@biomejs/cli-win32-x64@2.5.14':
     optional: true
 
-  '@capacitor-community/sqlite@8.1.1(@capacitor/core@8.5.3)':
+  '@capacitor-community/sqlite@8.1.1(patch_hash=1e02335e4fcc4c59799be06c9abdc337d7f09b78bfa945624d16c4145a94d349)(@capacitor/core@8.5.3)':
     dependencies:
       '@capacitor/core': 8.5.3
       jeep-sqlite: 2.8.0

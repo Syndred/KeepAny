@@ -2,21 +2,21 @@
   "spdxVersion": "SPDX-2.3",
   "dataLicense": "CC0-1.0",
   "SPDXID": "SPDXRef-DOCUMENT",
-  "name": "KeepAny installed pnpm inventory 2778e8ab3fc8",
-  "documentNamespace": "urn:uuid:2778e8ab-3fc8-4abc-a1ea-9a15cb71b381",
+  "name": "KeepAny installed pnpm inventory db0388769a39",
+  "documentNamespace": "urn:uuid:db038876-9a39-4a87-a855-1762f8f59c87",
   "creationInfo": {
     "creators": [
       "Tool: scripts/phase0/generate-legal-artifacts.mjs"
     ],
-    "created": "2026-10-27T20:34:39Z",
+    "created": "2026-10-27T22:14:56Z",
     "comment": "Installed-tree snapshot; creation time is retained for the same lock SHA-256 so --check can compare deterministic output."
   },
   "annotations": [
     {
-      "annotationDate": "2026-10-27T20:34:39Z",
+      "annotationDate": "2026-10-27T22:14:56Z",
       "annotationType": "OTHER",
       "annotator": "Tool: scripts/phase0/generate-legal-artifacts.mjs",
-      "comment": "pnpm-lock.yaml SHA-256: 2778e8ab3fc85abc51ea9a15cb71b381885d3f0f3ffbe40a4f36e1275a5e0099; installed package versions: 723; missing root license text: 39."
+      "comment": "pnpm-lock.yaml SHA-256: db0388769a391a8718551762f8f59c87406c72c2b171a5a891267bf1c4024f97; installed package versions: 723; missing root license text: 39."
     }
   ],
   "documentDescribes": [
@@ -2341,7 +2341,7 @@
       "licenseConcluded": "NOASSERTION",
       "licenseDeclared": "MIT",
       "copyrightText": "NOASSERTION",
-      "sourceInfo": "Installed metadata: node_modules/.pnpm/@capacitor-community+sqlite@8.1.1_@capacitor+core@8.5.3/node_modules/@capacitor-community/sqlite/package.json; package-root license/notice files: node_modules/.pnpm/@capacitor-community+sqlite@8.1.1_@capacitor+core@8.5.3/node_modules/@capacitor-community/sqlite/LICENSE sha256:f138ef5563fe07869aeaa54d14117c8a1111656d3a8d274917ec185f1dc02ce3; metadata repository: git+https://github.com/capacitor-community/sqlite.git; direct scope: production."
+      "sourceInfo": "Installed metadata: node_modules/.pnpm/@capacitor-community+sqlite_b74153aea3f9e843aa1e1c465c73d97e/node_modules/@capacitor-community/sqlite/package.json; package-root license/notice files: node_modules/.pnpm/@capacitor-community+sqlite_b74153aea3f9e843aa1e1c465c73d97e/node_modules/@capacitor-community/sqlite/LICENSE sha256:f138ef5563fe07869aeaa54d14117c8a1111656d3a8d274917ec185f1dc02ce3; metadata repository: git+https://github.com/capacitor-community/sqlite.git; direct scope: production."
     },
     {
       "SPDXID": "SPDXRef-Package-135",

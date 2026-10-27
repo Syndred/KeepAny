@@ -1,0 +1,16 @@
+diff --git a/android/src/main/java/com/getcapacitor/community/database/sqlite/SQLite/Database.java b/android/src/main/java/com/getcapacitor/community/database/sqlite/SQLite/Database.java
+--- a/android/src/main/java/com/getcapacitor/community/database/sqlite/SQLite/Database.java
++++ b/android/src/main/java/com/getcapacitor/community/database/sqlite/SQLite/Database.java
+@@ -357,7 +357,12 @@
+     public void close() throws Exception {
+         if (_db.isOpen()) {
+             try {
++                // Reloading the WebView may abandon an unfinished transaction.
++                // Release its thread-owned session before closing the pool.
++                while (_db.inTransaction()) {
++                    _db.endTransaction();
++                }
+                 _db.close();
+                 _isOpen = false;
+                 return;
+             } catch (Exception e) {

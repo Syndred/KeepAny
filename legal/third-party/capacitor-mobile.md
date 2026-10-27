@@ -15,6 +15,16 @@ SQLite原文件核对：`src/definitions.ts`、`android/build.gradle`、`ios/Plu
 
 发布前仍须按实际 Android/iOS 解析产物更新 SBOM 和完整原生传递依赖许可；本文件不能代替最终安装包法律清单。
 
+## Android SQLite 重载事务收尾补丁（2026-10-28）
+
+上述“未修改插件”为最初接入状态；本片开始仅修改以下固定发布包文件。
+
+- 包 `@capacitor-community/sqlite@8.1.1`，上游 `v8.1.1` tag peeled commit `3f3f71606c8f292a3d6d841937bcfc5b5c45aeb5`。原路径 `android/src/main/java/com/getcapacitor/community/database/sqlite/SQLite/Database.java`，发布包原文件 SHA256 `d17cdd1d021cf5475713946535e833d4d78cd4ed78b219c0e5ac6da917d6cc50`。
+- MIT，版权2020–2024 Quéau Jean Pierre；原 LICENSE 保留，SHA256 `f138ef5563fe07869aeaa54d14117c8a1111656d3a8d274917ec185f1dc02ce3`。不复制 ShipAny 或其他商业实现。
+- 精确修改 `Database.close()`：在原 `_db.close()` 前，对当前原生线程仍在进行的事务调用 `endTransaction()`，直到嵌套层退出；不标记成功，未提交写入回滚。原异常传播保持，不吞错误、不全局关闭其他连接、不重建/换库或降低持久性。
+- 补丁 `patches/@capacitor-community__sqlite@8.1.1.patch`，SHA256 `1e02335e4fcc4c59799be06c9abdc337d7f09b78bfa945624d16c4145a94d349`，由 pnpm patchedDependencies/锁文件重现。上游测试文件未删改，未执行上游完整测试；新增独立 Android OS 回归覆盖正常关闭/另一活连接、真实文档替换后的未提交事务、写入提交与回滚、SQL SAVEPOINT及原生嵌套事务。
+- 原版真实 OS 已复现首新 BEGIN `database-locked`，见 [原始实装回执](../../docs/mobile/AndroidSQLite重载事务OS复现实装回执-20261028.md)。补丁尚待新 APK 与同 OS 回归，不因代码或编译通过提前认绿。其范围限同一个插件执行线程的事务收尾；不能修复已丢失句柄的旧进程孤儿锁，也不声称覆盖任意跨线程调用。
+
 ## Android 桥接重载回包时序补丁
 
 - 固定包：`@capacitor/android@8.5.3`，npm registry `gitHead` 为 `06e3e1984337f836a4c28b2afc92faa977dea315`；远端 `8.5.3` tag ref 为 `7d5168d70eb41ad0d77f2cba6adcd8c8702bc1d8`，两种指针分别记录，不假定相同。

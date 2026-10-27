@@ -15,4 +15,4 @@ include ':capacitor-share'
 project(':capacitor-share').projectDir = new File('../../../node_modules/.pnpm/@capacitor+share@8.0.3_@capacitor+core@8.5.3/node_modules/@capacitor/share/android')
 
 include ':capacitor-community-sqlite'
-project(':capacitor-community-sqlite').projectDir = new File('../../../node_modules/.pnpm/@capacitor-community+sqlite@8.1.1_@capacitor+core@8.5.3/node_modules/@capacitor-community/sqlite/android')
+project(':capacitor-community-sqlite').projectDir = new File('../../../node_modules/.pnpm/@capacitor-community+sqlite_b74153aea3f9e843aa1e1c465c73d97e/node_modules/@capacitor-community/sqlite/android')
