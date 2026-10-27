@@ -7,7 +7,8 @@ import type { AssetSnapshot, McpAssetStore, PreviewResult } from './service';
 
 type Action = 'get' | 'list' | 'compareAndSet';
 type Request = { id: string; action: Action; args: unknown[]; expiresAt: number };
-type Pending = Request & { resolve: (value: unknown) => void; reject: (error: Error) => void; timer: ReturnType<typeof setTimeout> };
+type Pending = Request & { resolve: (value: unknown) => void; reject: (error: Error) => void; timer: ReturnType<typeof setTimeout>;
+  assertCanCommit?: () => void | Promise<void> };
 
 const secret = () => randomBytes(32).toString('base64url');
 const equal = (left: string, right: string) => {
@@ -179,6 +180,11 @@ export async function startLocalMcpBridge(options: LocalBridgeOptions): Promise<
         const item = typeof body.id === 'string' ? pending.get(body.id) : undefined;
         if (item?.action !== 'compareAndSet' || Date.now() >= item.expiresAt)
           throw new McpAccessError('request-expired');
+        // This closure stays in the trusted owner process. The browser can
+        // ask to recheck this exact pending write, never supply an approval.
+        await item.assertCanCommit?.();
+        if (pending.get(item.id) !== item || Date.now() >= item.expiresAt)
+          throw new McpAccessError('request-expired');
         reply(response, 204); return;
       }
       if (request.url === '/pending-previews') {
@@ -231,7 +237,7 @@ export async function startLocalMcpBridge(options: LocalBridgeOptions): Promise<
   const address = server.address() as AddressInfo;
   const url = `http://127.0.0.1:${address.port}`;
 
-  const call = async (action: Action, args: unknown[]) => {
+  const call = async (action: Action, args: unknown[], assertCanCommit?: () => void | Promise<void>) => {
     await allowed();
     if (!sessionSecret || Date.now() >= sessionExpiresAt) throw new McpAccessError('bridge-unpaired');
     if (pending.size >= 16) throw new McpAccessError('bridge-busy');
@@ -239,7 +245,7 @@ export async function startLocalMcpBridge(options: LocalBridgeOptions): Promise<
     const expiresAt = Date.now() + requestTimeoutMs;
     const value = await new Promise<unknown>((resolve, reject) => {
       const timer = setTimeout(() => { pending.delete(id); reject(new McpAccessError('bridge-timeout')); }, requestTimeoutMs);
-      const item: Pending = { id, action, args, expiresAt, resolve, reject, timer };
+      const item: Pending = { id, action, args, expiresAt, resolve, reject, timer, assertCanCommit };
       pending.set(id, item);
       queue.push({ id, action, args, expiresAt });
     });
@@ -269,9 +275,9 @@ export async function startLocalMcpBridge(options: LocalBridgeOptions): Promise<
         return { asset, version: row.version };
       });
     },
-    async compareAndSet(id, version, next) {
+    async compareAndSet(id, version, next, assertCanCommit) {
       if (!grant.assetIds.includes(id)) throw new McpAccessError('asset-denied');
-      const value = await call('compareAndSet', [id, version, next]);
+      const value = await call('compareAndSet', [id, version, next], assertCanCommit);
       if (value !== 'applied' && value !== 'conflict') throw new McpAccessError('invalid-browser-result');
       return value;
     },

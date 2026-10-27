@@ -6,6 +6,7 @@ export interface McpAssetStore {
   get(id: string): Promise<AssetSnapshot | null>;
   list(ids: readonly string[]): Promise<AssetSnapshot[]>;
   // Must reject a concurrent change. The caller must never use a blind save here.
+  // When supplied, await assertCanCommit before every actual storage write attempt.
   compareAndSet(id: string, expectedVersion: string, next: Asset,
     assertCanCommit?: () => void | Promise<void>): Promise<'applied' | 'conflict'>;
 }
@@ -40,6 +41,7 @@ export class McpAssetService {
       .filter(row => !term || Object.values(row).some(value => typeof value === 'string' && value.toLocaleLowerCase().includes(term)))
       .slice(0, limit);
     await this.authority.record({ grantId: grant.id, action: 'list', outcome: 'allowed' });
+    await this.grant(); // A slow repository/audit must not release data after revocation.
     return visible;
   }
 
@@ -52,6 +54,7 @@ export class McpAssetService {
     const snapshot = await this.store.get(id);
     if (!snapshot || !allowedRead(grant, snapshot.asset)) throw new McpAccessError('asset-not-found');
     await this.authority.record({ grantId: grant.id, action: 'get', outcome: 'allowed', assetId: id, fieldNames: grant.readFields });
+    await this.grant();
     return project(grant, snapshot.asset);
   }
 
@@ -70,8 +73,10 @@ export class McpAssetService {
     const changes = fields.filter(field => JSON.stringify(snapshot.asset[field]) !== JSON.stringify(next[field]))
       .map(field => ({ field, before: snapshot.asset[field], after: next[field] }));
     if (!changes.length) throw new McpAccessError('no-change');
+    await this.grant();
     const preview = await this.authority.createPreview({ grantId: grant.id, operationId, assetId: id,
       expectedVersion: snapshot.version, patchHash: patchHash(patch) });
+    await this.grant();
     return { previewId: preview.id, operationId, assetId: id, expectedVersion: preview.expectedVersion,
       expiresAt: preview.expiresAt, changes };
   }
@@ -124,7 +129,13 @@ export class McpAssetService {
       previewId: input.previewId, patchHash: hash, assetId: input.id });
     await this.grant(); // Catch revocation that happened while the preview and reservation were checked.
     // If the store throws, keep pending: replay might duplicate a write whose acknowledgement was lost.
-    const result = await this.store.compareAndSet(input.id, preview.expectedVersion, next);
+    const result = await this.store.compareAndSet(input.id, preview.expectedVersion, next, async () => {
+      // A canonical repository can queue/retry its modifier after the reads
+      // above. Recheck at each actual write attempt, including direct SDK
+      // adapters that do not pass through the browser bridge's revoke fence.
+      await this.grant();
+      await this.authority.approvedPreview(grant.id, input.previewId, input.operationId, input.id, hash);
+    });
     if (result === 'conflict') {
       await this.authority.cancelPendingOperation(grant.id, input.operationId);
       await this.authority.record({ grantId: grant.id, action: 'confirm', outcome: 'conflict', assetId: input.id,

@@ -33,6 +33,30 @@ const fixture = async () => {
 };
 
 describe('local MCP capability boundary', () => {
+  it.each(['list', 'get', 'preview'] as const)('does not release a direct %s result after revocation while storage is reading', async action => {
+    const { authority, store, asset, grant } = await fixture();
+    let entered!: () => void;
+    let release!: () => void;
+    const started = new Promise<void>(resolve => { entered = resolve; });
+    const proceed = new Promise<void>(resolve => { release = resolve; });
+    const pausedStore: McpAssetStore = {
+      async get(id) { const result = await store.get(id); entered(); await proceed; return result; },
+      async list(ids) { const result = await store.list(ids); entered(); await proceed; return result; },
+      compareAndSet: (id, version, next) => store.compareAndSet(id, version, next),
+    };
+    const service = new McpAssetService(pausedStore, authority, grant.id, grant.secret);
+    const work = (action === 'list' ? service.listAssets() : action === 'get' ? service.getAsset(asset.id)
+      : service.previewUpdate(asset.id, 'direct-preview-revoked', { name: 'Must not publish' }))
+      .then(value => value, error => error as Error);
+    await started;
+    await authority.revokeGrant(grant.id);
+    release();
+    const result = await work;
+    expect(result).toBeInstanceOf(Error);
+    expect((result as Error).message).toBe('grant-denied');
+    expect((await store.get(asset.id))?.asset.name).toBe(asset.name);
+  });
+
   it('shows only granted assets and fields; denies wrong secret and revoked grants', async () => {
     const { authority, store, asset, other, grant, service } = await fixture();
     expect(await service.listAssets()).toEqual([{ id: asset.id, name: 'Visible project' }]);
