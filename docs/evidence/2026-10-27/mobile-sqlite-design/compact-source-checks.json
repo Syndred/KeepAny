@@ -1,0 +1,61 @@
+{
+  "scope": "Final compact restore sketch; source file must remain visible",
+  "checks": [
+    {
+      "language": "zh",
+      "width": 360,
+      "filename": "keepany-2026-10-26.ka1",
+      "pageOverflow": false,
+      "screenOverflow": false
+    },
+    {
+      "language": "zh",
+      "width": 390,
+      "filename": "keepany-2026-10-26.ka1",
+      "pageOverflow": false,
+      "screenOverflow": false
+    },
+    {
+      "language": "zh",
+      "width": 430,
+      "filename": "keepany-2026-10-26.ka1",
+      "pageOverflow": false,
+      "screenOverflow": false
+    },
+    {
+      "language": "zh",
+      "width": 1280,
+      "filename": "keepany-2026-10-26.ka1",
+      "pageOverflow": false,
+      "screenOverflow": false
+    },
+    {
+      "language": "en",
+      "width": 360,
+      "filename": "keepany-2026-10-26.ka1",
+      "pageOverflow": false,
+      "screenOverflow": false
+    },
+    {
+      "language": "en",
+      "width": 390,
+      "filename": "keepany-2026-10-26.ka1",
+      "pageOverflow": false,
+      "screenOverflow": false
+    },
+    {
+      "language": "en",
+      "width": 430,
+      "filename": "keepany-2026-10-26.ka1",
+      "pageOverflow": false,
+      "screenOverflow": false
+    },
+    {
+      "language": "en",
+      "width": 1280,
+      "filename": "keepany-2026-10-26.ka1",
+      "pageOverflow": false,
+      "screenOverflow": false
+    }
+  ]
+}
