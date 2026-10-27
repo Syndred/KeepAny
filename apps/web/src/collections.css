@@ -19,6 +19,7 @@
 .collections-option { display: flex; align-items: flex-start; gap: 8px; min-width: 0; padding: 4px 0; cursor: pointer; }
 .collections-option input { flex: none; margin-top: 3px; }
 .collections-option span { overflow-wrap: anywhere; }
+.collections-nav .nav-visibility-hitarea { grid-area: check; display: flex; align-items: center; justify-content: center; }
 .collections-member-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; align-items: start; }
 .collections-member-card { display: grid; min-width: 0; overflow: hidden; border: 2px solid var(--line); border-radius: 17px; background: var(--paper); box-shadow: var(--shadow); color: var(--ink); text-decoration: none; }
 .collections-member-card:hover { transform: translateY(-2px); box-shadow: 4px 6px 0 var(--line); }
@@ -70,4 +71,11 @@
 }
 @media (max-width: 430px) {
   .collections-member-grid { grid-template-columns: minmax(0, 1fr); }
+}
+@media (pointer: coarse) {
+  .collections-nav .sortable-nav-item { grid-template-columns: 44px 44px minmax(0, 1fr) 44px; }
+  .collections-nav .nav-drag-handle, .collections-nav .nav-order-actions button { width: 44px; min-width: 44px; min-height: 44px; }
+  .collections-nav .nav-order-actions { gap: 4px; }
+  .collections-nav .nav-visibility-hitarea { min-width: 44px; min-height: 44px; }
+  .collections-option { min-height: 44px; align-items: center; }
 }

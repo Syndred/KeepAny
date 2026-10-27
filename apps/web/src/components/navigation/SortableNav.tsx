@@ -61,7 +61,7 @@ function NavRow({ item, index, count, activePath, onNavigate, onMove, onVisibili
     {visible ? <Link to={item.to} activeOptions={{ exact: true }} className={`sortable-nav-link${active ? ' active' : ''}`} aria-current={active ? 'page' : undefined} onClick={onNavigate} title={item.label}>
       <Icon size={17}/><span className="nav-label">{item.label}</span>{item.badge != null && item.badge > 0 && <Badge className="nav-count" tone="neutral">{item.badge}</Badge>}
     </Link> : <span className="sortable-nav-link nav-link-placeholder"><Icon size={17}/><span>{item.label}</span></span>}
-    {manageMode && <input
+    {manageMode && <label className="nav-visibility-hitarea"><input
       type="checkbox"
       className="nav-visibility-toggle"
       checked={visible}
@@ -69,7 +69,7 @@ function NavRow({ item, index, count, activePath, onNavigate, onMove, onVisibili
       onChange={(event) => onVisibilityChange?.(item.id, event.target.checked)}
       aria-label={`${t('showNavItem')}: ${item.label}`}
       title={item.visibilityLockReason ?? `${t(visible ? 'hideNavItem' : 'showNavItem')}: ${item.label}`}
-    />}
+    /></label>}
     {manageMode && <div className="nav-order-actions">
       <button type="button" onClick={() => onMove(item.id, -1)} disabled={index === 0} aria-label={`${t('navMoveUp')} ${item.label}`} title={t('navMoveUp')}><ChevronUp size={14}/></button>
       <button type="button" onClick={() => onMove(item.id, 1)} disabled={index === count - 1} aria-label={`${t('navMoveDown')} ${item.label}`} title={t('navMoveDown')}><ChevronDown size={14}/></button>

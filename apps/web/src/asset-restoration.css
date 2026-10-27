@@ -35,6 +35,9 @@
 	padding: 5px;
 	border-radius: 9px;
 }
+@media (pointer: coarse) {
+	.asset-category-scroll .asset-category-add { min-width: 44px; }
+}
 .asset-category-manage {
 	flex: none;
 }
