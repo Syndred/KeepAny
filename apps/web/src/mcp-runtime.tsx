@@ -40,6 +40,8 @@ type Runtime = {
 	scope: BridgeScope | null;
 	expiresAt: number | null;
 	audit: BrowserAuditEntry[];
+	revokedAt: number | null;
+	refreshAudit(): Promise<void>;
 	prepared: McpRequest | null;
 	error: string | null;
 	prepare(input: RequestInput): void;
@@ -109,6 +111,7 @@ export function McpRuntimeProvider({
 	const [scope, setScope] = useState<BridgeScope | null>(null);
 	const [expiresAt, setExpiresAt] = useState<number | null>(null);
 	const [audit, setAudit] = useState<BrowserAuditEntry[]>([]);
+	const [revokedAt, setRevokedAt] = useState<number | null>(null);
 	const [prepared, setPrepared] = useState<McpRequest | null>(null);
 	const [error, setError] = useState<string | null>(null);
 	const [pendingScope, setPendingScope] = useState<BridgeScope | null>(null);
@@ -141,7 +144,6 @@ export function McpRuntimeProvider({
 		setPreviews([]);
 		setScope(null);
 		setExpiresAt(null);
-		setAudit([]);
 	}, []);
 
 	useEffect(() => {
@@ -283,6 +285,8 @@ export function McpRuntimeProvider({
 			controllerRef.current = controller;
 			const generation = ++generationRef.current;
 			setScope(selected);
+			setAudit([]);
+			setRevokedAt(null);
 			setExpiresAt(client.sessionExpiresAt);
 			setStatus("connected");
 			setPrepared(null);
@@ -329,6 +333,15 @@ export function McpRuntimeProvider({
 		}
 	}, [prepared, status, stopLocal]);
 
+	const refreshAudit = useCallback(async () => {
+		const client = clientRef.current;
+		if (!client) return;
+		try {
+			const entries = await client.auditEntries();
+			if (clientRef.current === client) setAudit(entries);
+		} catch { /* Keep the last confirmed audit snapshot when the bridge is unavailable. */ }
+	}, []);
+
 	const revoke = useCallback(async () => {
 		const client = clientRef.current;
 		if (!client) {
@@ -337,18 +350,25 @@ export function McpRuntimeProvider({
 			return;
 		}
 		setBusy(true);
+		const generation = generationRef.current;
+		let completedCurrent = false;
 		try {
 			const result = await client.revokeGrant();
+			if (clientRef.current !== client) return;
+			completedCurrent = true;
+			// This is the device's acknowledgement time, not a fabricated server audit row.
+			setRevokedAt(Date.now());
 			stopLocal();
 			setStatus("idle");
 			setPrepared(null);
 			setError(result.writeMayHaveApplied ? "mcpWriteMayHaveApplied" : null);
 		} catch {
+			if (clientRef.current !== client) throw Error("mcpRevokeUnconfirmed");
 			setError("mcpRevokeUnconfirmed");
 			setStatus("connected");
 			throw Error("mcpRevokeUnconfirmed");
 		} finally {
-			setBusy(false);
+			if (completedCurrent || generationRef.current === generation) setBusy(false);
 		}
 	}, [stopLocal]);
 
@@ -399,7 +419,7 @@ export function McpRuntimeProvider({
 		}
 	};
 
-	return <context.Provider value={{ status, scope, expiresAt, audit, prepared, error, prepare, invalidatePrepared, importPairing, revoke }}>
+	return <context.Provider value={{ status, scope, expiresAt, audit, revokedAt, refreshAudit, prepared, error, prepare, invalidatePrepared, importPairing, revoke }}>
 		{children}
 		{pendingScope && <Dialog title={t("mcpScopeApprovalTitle")} onClose={() => answerScope(false)} returnFocusTo={() => document.getElementById("mcp-panel-title")}>
 			<p>{t("mcpScopeApprovalHint")}</p>

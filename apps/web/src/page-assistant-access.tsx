@@ -1,29 +1,21 @@
 import { Link } from "@tanstack/react-router";
-import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "./components/ui/button";
 import { useMcpRuntime } from "./mcp-runtime";
 import { liveAssets, PageTitle, useAppContext } from "./view-shared";
 import "./page-assistant-access.css";
+import { McpRevokeButton } from './components/McpRevokeButton';
 
 export function AssistantAccessPage() {
 	const { data } = useAppContext();
 	const { t, i18n } = useTranslation();
 	const runtime = useMcpRuntime();
-	const [busy, setBusy] = useState(false);
 	const connected = runtime.status === "connected" && runtime.scope !== null &&
 		(runtime.expiresAt ?? 0) > Date.now();
 	const assetsById = new Map(liveAssets(data).map((asset) => [asset.id, asset]));
 	const dateTime = (time: number) => new Intl.DateTimeFormat(i18n.language, {
 		dateStyle: "medium", timeStyle: "short",
 	}).format(time);
-	const revoke = async () => {
-		if (busy) return;
-		setBusy(true);
-		try { await runtime.revoke(); }
-		catch { /* The runtime displays the verified revocation error. */ }
-		finally { setBusy(false); }
-	};
 	return <main className="page assistant-access-page">
 		<PageTitle eyebrow={t("assistantAccessEyebrow")} title={t("assistantAccessTitle")}
 			subtitle={t("assistantAccessSubtitle")} />
@@ -34,7 +26,7 @@ export function AssistantAccessPage() {
 				{connected && runtime.scope ? <div className="assistant-access-connection">
 					<div className="assistant-access-connection-head"><div><strong>{t("assistantAccessLocalConnection")}</strong>
 						{runtime.expiresAt && <small>{t("assistantAccessExpires", { time: dateTime(runtime.expiresAt) })}</small>}</div>
-						<Button disabled={busy} onClick={() => void revoke()}>{t("mcpRevoke")}</Button></div>
+						<McpRevokeButton /></div>
 					<div className="assistant-access-scope"><strong>{t("assistantAccessSelectedRecords")}</strong>
 						<div className="assistant-access-chips">{runtime.scope.assetIds.map((id) => <span className="chip" key={id}>{assetsById.get(id)?.name ?? t("mcpAssetUnavailable")}</span>)}</div></div>
 					<div className="assistant-access-scope"><strong>{t("mcpReadFields")}</strong>
@@ -48,7 +40,8 @@ export function AssistantAccessPage() {
 			</section>
 			<div className="assistant-access-side">
 				<section className="card padded assistant-access-history"><h2>{t("assistantAccessRecent")}</h2>
-					{connected && runtime.audit.length ? <ol>{runtime.audit.map((entry) => <li key={entry.id}>
+					{!connected && (runtime.audit.length > 0 || runtime.revokedAt !== null) && <p>{t('mcpAuditRetainedHint')}</p>}
+					{runtime.audit.length > 0 || runtime.revokedAt !== null ? <ol>{runtime.revokedAt !== null && <li data-mcp-revoked-receipt><strong>{t('assistantAccessAction_revoke')}</strong><small>{dateTime(runtime.revokedAt)} · {t('mcpRevokeDeviceReceipt')}</small></li>}{runtime.audit.map((entry) => <li key={entry.id}>
 						<strong>{t(`assistantAccessAction_${entry.action}`)}</strong>
 						<small>{dateTime(entry.at)} · {t(`assistantAccessOutcome_${entry.outcome}`)}{entry.assetId ? ` · ${assetsById.get(entry.assetId)?.name ?? t("mcpAssetUnavailable")}` : ""}</small>
 					</li>)}</ol> : <p>{t(connected ? "assistantAccessNoRecent" : "assistantAccessRecentRequiresConnection")}</p>}

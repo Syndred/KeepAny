@@ -12,6 +12,7 @@ import { Button } from "./ui/button";
 import { Select, SelectOption } from "./ui/select";
 import { ExportFileLink } from "./ExportFileLink";
 import { hasFileDeliveryHandler, type FileDeliveryMessage } from "../file-delivery";
+import { McpRevokeButton } from './McpRevokeButton';
 
 const durations = [
 	{ value: 5 * 60_000, key: "mcpDuration5m" },
@@ -25,7 +26,7 @@ const same = (left: readonly string[], right: readonly string[]) =>
 export function McpPanel() {
 	const { t } = useTranslation();
 	const { data } = useAppContext();
-	const { status, scope, prepared, error, prepare, invalidatePrepared, importPairing, revoke } =
+	const { status, scope, prepared, error, prepare, invalidatePrepared, importPairing } =
 		useMcpRuntime();
 	const assets = data.assets.filter((asset) => !asset.deleted);
 	const [assetIds, setAssetIds] = useState<string[]>([]);
@@ -128,19 +129,7 @@ export function McpPanel() {
 								: t("mcpNoWrite")}
 						</dd>
 					</dl>
-					<Button
-						disabled={busy}
-						variant="danger"
-						onClick={() => {
-							setBusy(true);
-							setLocalError(null);
-							void revoke()
-								.catch(() => setLocalError("mcpRevokeUnconfirmed"))
-								.finally(() => setBusy(false));
-						}}
-					>
-						{t("mcpRevoke")}
-					</Button>
+					<McpRevokeButton disabled={busy} />
 				</div>
 			) : (
 				<>

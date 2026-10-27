@@ -283,6 +283,7 @@ test('formal Web grants one RxDB record to an isolated official SDK stdio client
     }
     uiStage = 'revoking-after-check-write-5';
     await panel.getByRole('button', { name: '撤销本机授权' }).click();
+    await page.getByRole('dialog', { name: '撤销本机授权', exact: true }).getByRole('button', { name: '撤销本机授权', exact: true }).click();
     await expect(panel.getByRole('button', { name: '生成连接请求' })).toBeVisible();
     await expect(panel.getByRole('alert')).toContainText('修改正在处理，可能已保存');
     expect(abortedWriteCheck).toBe(true);

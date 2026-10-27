@@ -128,7 +128,8 @@ async function launch(path: string, privateDir: string, suffix: string) {
     if (process.platform === 'win32') await nativePrivateFiles.checkDirectory(privateDir);
     else expect((await stat(privateDir)).mode & 0o777).toBe(0o700);
     await assertPrivateTestFile(pairingPath, expect);
-    return { client, transport, pairingPath };
+    const { url } = JSON.parse(await readFile(pairingPath, 'utf8')) as { url: string };
+    return { client, transport, pairingPath, url };
   } catch (error) {
     await client.close().catch(() => undefined);
     await transport.close().catch(() => undefined);
@@ -264,11 +265,40 @@ for (const language of languages) for (const width of widths) {
       expect(result<Record<string, unknown>>(await connection.client.callTool({ name: 'get_asset', arguments: { id: request.assetIds[0] } })))
         .toEqual({ id: request.assetIds[0], name: selected, description: approvedValue });
       await panel.getByRole('button', { name: language.revoke }).click();
+      const revocation = page.getByRole('dialog', { name: language.revoke, exact: true });
+      await expect(revocation).toBeVisible();
+      await revocation.getByRole('button', { name: language.code === 'en' ? 'Cancel' : '取消', exact: true }).click();
+      expect(result<Record<string, unknown>>(await connection.client.callTool({ name: 'get_asset', arguments: { id: request.assetIds[0] } })))
+        .toEqual({ id: request.assetIds[0], name: selected, description: approvedValue });
+      await page.getByRole('button', { name: language.code === 'en' ? 'AI assistant and access' : 'AI 助手与授权', exact: true }).click();
+      await page.getByRole('link', { name: language.code === 'en' ? 'Assistant access' : '助手授权', exact: true }).click();
+      await page.getByRole('button', { name: language.revoke, exact: true }).click();
+      await revocation.getByRole('button', { name: language.code === 'en' ? 'Cancel' : '取消', exact: true }).click();
+      expect((await connection.client.callTool({ name: 'get_asset', arguments: { id: request.assetIds[0] } })).isError).not.toBe(true);
+      await page.getByRole('button', { name: language.revoke, exact: true }).click();
+      await page.route(`${connection.url}/revoke-grant`, route => route.abort());
+      await revocation.getByRole('button', { name: language.revoke, exact: true }).click();
+      await expect(revocation.getByRole('alert')).toBeVisible();
+      await expect(page.locator('[data-mcp-revoked-receipt]')).toHaveCount(0);
+      await page.unroute(`${connection.url}/revoke-grant`);
+      await revocation.getByRole('button', { name: language.revoke, exact: true }).click();
+      await expect(page.locator('.assistant-access-connection')).toHaveCount(0);
+      const history = page.locator('.assistant-access-history');
+      await expect(history.locator('[data-mcp-revoked-receipt]')).toContainText(language.code === 'en' ? 'revocation confirmation' : '撤销确认');
+      expect(await history.locator('li').count()).toBeGreaterThan(1);
+      for (const value of [before, outside, rejectedValue, approvedValue]) await expect(history).not.toContainText(value);
+      expect(await history.evaluate(element => element.scrollWidth <= element.clientWidth + 1)).toBe(true);
+      expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
+      await history.scrollIntoViewIfNeeded();
+      await page.screenshot({ path: join(evidence, `mcp-audit-retained-${language.code}-${width}.png`), fullPage: true });
+      await page.getByRole('link', { name: language.code === 'en' ? 'Configure local access' : '配置本机授权', exact: true }).click();
+      await ensureAssistantOpen(page);
       await expect(panel.getByRole('button', { name: language.create })).toBeVisible();
       const revoked = await connection.client.callTool({ name: 'get_asset', arguments: { id: request.assetIds[0] } });
       expect(revoked.isError).toBe(true);
       expect(JSON.stringify(revoked)).toContain('grant-denied');
       const authority = await readFile(join(privateDir, 'authority.json'), 'utf8');
+      expect((JSON.parse(authority) as { audit: Array<{ action: string; outcome: string }> }).audit.some(entry => entry.action === 'revoke' && entry.outcome === 'allowed')).toBe(true);
       for (const value of [selected, excluded, before, outside, approvedValue]) expect(authority).not.toContain(value);
       expect(pageErrors).toEqual([]);
     } finally {
