@@ -113,7 +113,6 @@ jobs:
           xcrun simctl launch "$simulator_id" io.github.syndred.keepany | tee test-results/ios/launch.txt
           sleep 10
           xcrun simctl io "$simulator_id" screenshot test-results/ios/startup-en.png
-          app_data="$(xcrun simctl get_app_container "$simulator_id" io.github.syndred.keepany data)"
           fixture_observer_pid=''
           fixture_observer_exit=0
           stop_fixture_observer() {
@@ -128,7 +127,8 @@ jobs:
             fixture_observer_pid=''
           }
           trap stop_fixture_observer EXIT
-          node scripts/observe-ios-project-fixtures.mjs --app-data "$app_data" \
+          node scripts/observe-ios-project-fixtures.mjs --simulator-id "$simulator_id" \
+            --bundle-id io.github.syndred.keepany \
             --output test-results/ios/project-fixture-observer &
           fixture_observer_pid=$!
           set -o pipefail
@@ -138,7 +138,7 @@ jobs:
             CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO test 2>&1 | tee test-results/ios/ui-tests.log
           stop_fixture_observer
           if [[ "$fixture_observer_exit" != 0 ]]; then exit "$fixture_observer_exit"; fi
-          node --input-type=module -e 'import fs from "node:fs";const summary=JSON.parse(fs.readFileSync("test-results/ios/project-fixture-observer/summary.json","utf8"));if(!summary.normalStop||summary.verification?.complete!==true)throw Error("ios-project-fixture-verification-incomplete");console.log(JSON.stringify({nativeProjectFixtureVerification:summary.verification}));'
+          node --input-type=module -e 'import fs from "node:fs";const summary=JSON.parse(fs.readFileSync("test-results/ios/project-fixture-observer/summary.json","utf8"));if(!summary.normalStop||summary.binding?.mode!=="simctl"||summary.binding?.resolver!=="simctl"||summary.binding?.baselineCaptured!==true||summary.health?.status!=="healthy"||summary.health?.fatalError||summary.verification?.complete!==true)throw Error("ios-project-fixture-verification-incomplete");console.log(JSON.stringify({nativeProjectFixtureVerification:summary.verification}));'
           trap - EXIT
           xcrun simctl launch "$simulator_id" io.github.syndred.keepany
           sleep 3
