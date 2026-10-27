@@ -213,6 +213,20 @@ it('rejects writes through nested read-only or expired scopes instead of acknowl
   expect(await side.syncMeta.toArray()).toEqual([]);
 });
 
+it('rolls back a failed nested scope even if the outer operation catches its error', async () => {
+  const { store } = await fixture();
+  const side = new NativeFileStore('native-test', store);
+  await side.transaction('rw', side.syncMeta, async outer => {
+    await outer.syncMeta.put({ id: 'outer', cursor: 1 });
+    await expect(outer.transaction('rw', outer.syncMeta, async inner => {
+      await inner.syncMeta.put({ id: 'inner', cursor: 2 });
+      throw Error('nested-failure');
+    })).rejects.toThrow('nested-failure');
+    await outer.syncMeta.put({ id: 'outer-after', cursor: 3 });
+  });
+  expect(await side.syncMeta.keys()).toEqual(['outer', 'outer-after']);
+});
+
 it('collects replaced and rolled-back immutable files while retaining active images and journal ciphertext', async () => {
   const { store, files } = await fixture();
   const side = new NativeFileStore('native-test', store);
@@ -299,3 +313,52 @@ it('edits intake drafts and expense review through shared scoped transactions wi
   expect(await review.editReviewedExpenseDraft(side, pdf.id, { ...expense, amount: '1.25' })).toBe(true);
   expect((await side.intakeReview.get(pdf.id))?.expenseDraft?.amount).toBe('1.25');
 }, 5000);
+
+it('restores into a verified new dataset, preserves the source after interruption, and can switch back without rewriting original IDs', async () => {
+  const { NativeDatasetManager } = await import('./datasets');
+  const { openRepositoryFromBackend } = await import('../../local-db/src');
+  const control = await fixture();
+  const slots = new Map<string, Awaited<ReturnType<typeof fixture>>>();
+  const used = new Set<string>();
+  let failCandidate = true;
+  const factory = async (name: string) => {
+    let slot = slots.get(name);
+    if (!slot) { slot = await fixture(); slots.set(name, slot); }
+    const current = used.has(name) ? (await slot.connect()).store : slot.store;
+    used.add(name);
+    slot.state.failWrite = failCandidate && name.startsWith('keepany-data-');
+    const side = new NativeFileStore(name, current);
+    return openRepositoryFromBackend(side.records, side);
+  };
+  const manager = await NativeDatasetManager.open(control.store.driver, factory, async name => slots.has(name));
+  const original = await manager.openActive();
+  const originalAsset = { ...newAsset('project'), name: 'Retained original' };
+  await original.save('asset', originalAsset);
+  const incoming = await factory('incoming-library');
+  const imageId = await incoming.putFile(new File([Uint8Array.of(1, 2, 3)], 'source.png', { type: 'image/png' }));
+  const incomingAsset = { ...newAsset('item'), name: 'Incoming original ID', attachments: [imageId] };
+  await incoming.save('asset', incomingAsset);
+  const archive = await incoming.exportArchive();
+  await expect(original.restoreArchive(archive)).rejects.toThrow('synthetic-no-space');
+  const first = await manager.list();
+  const pendingName = first.find(row => row.phase === 'candidate')?.name;
+  expect(pendingName).toBeDefined();
+  expect(first.find(row => row.active)?.name).toBe('keepany-v1');
+  expect(await original.get('asset', originalAsset.id)).toMatchObject({ name: originalAsset.name });
+  failCandidate = false;
+  expect(await original.restoreArchive(archive)).toBe(1);
+  expect((await manager.list()).find(row => row.active)?.name).toBe(pendingName);
+  expect((await manager.list()).filter(row => row.name.startsWith('keepany-data-'))).toHaveLength(1);
+  const restored = await manager.openActive();
+  expect(await restored.get('asset', incomingAsset.id)).toMatchObject({ id: incomingAsset.id, attachments: [imageId] });
+  expect(await restored.get('asset', originalAsset.id)).toBeNull();
+  await restored.close();
+  await original.close();
+  await manager.switchTo('keepany-v1');
+  const returned = await manager.openActive();
+  expect(await returned.get('asset', originalAsset.id)).toMatchObject({ id: originalAsset.id, name: originalAsset.name });
+  expect(await returned.get('asset', incomingAsset.id)).toBeNull();
+  await returned.close();
+  slots.delete('keepany-v1');
+  await expect(manager.openActive()).rejects.toThrow('native-dataset-missing');
+}, 10_000);

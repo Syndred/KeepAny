@@ -13,6 +13,7 @@ export const sideTableNames = ['journal', 'importJournal', 'renewalJournal', 'sy
   'scopedBase', 'scopedMeta', 'scopedOutbox', 'scopedPull', 'datasetBinding', 'scopedAttachmentUploads',
   'archiveMerge', 'subscriptionSaveJournal', 'intakeReview', 'categoryEditJournal'] as const;
 export type SideTableName = typeof sideTableNames[number];
+interface ScopeToken { active: boolean; rollbackOnly?: boolean; parent?: ScopeToken }
 
 async function hash(bytes: Uint8Array): Promise<string> {
   return Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', bytes as BufferSource)), value => value.toString(16).padStart(2, '0')).join('');
@@ -29,9 +30,11 @@ function checkRecord(row: NativeRecord) {
 export class NativeStore {
   private tail: Promise<unknown> = Promise.resolve();
   private closed = false;
+  private closing: Promise<void> | undefined;
+  private nestedTail: Promise<unknown> = Promise.resolve();
   private listeners = new Set<() => void>();
   private constructor(readonly driver: SqlDriver, readonly files: PersistentFiles, private scoped = false, private readOnly = false,
-    private scopeToken?: { active: boolean; parent?: { active: boolean } }) {}
+    private scopeToken?: ScopeToken) {}
 
   static async open(driver: SqlDriver, files: PersistentFiles): Promise<NativeStore> {
     const store = new NativeStore(driver, files);
@@ -39,7 +42,8 @@ export class NativeStore {
       await files.rootUri();
       const [{ user_version: version }] = await driver.query<{ user_version: number }>('PRAGMA user_version');
       if (version > 1) throw Error('native-schema-newer');
-      await driver.execute(`BEGIN IMMEDIATE;
+      await driver.execute('BEGIN IMMEDIATE');
+      try { await driver.execute(`
         CREATE TABLE IF NOT EXISTS records(id TEXT PRIMARY KEY, type TEXT NOT NULL, payload TEXT NOT NULL, updated_at INTEGER NOT NULL, revision INTEGER NOT NULL, internal_deleted INTEGER NOT NULL DEFAULT 0);
         CREATE INDEX IF NOT EXISTS records_type ON records(type);
         ${sideTableNames.map(name => `CREATE TABLE IF NOT EXISTS "${name}"(id TEXT PRIMARY KEY, payload TEXT NOT NULL, scope TEXT, assetId TEXT, fileHash TEXT, status TEXT);
@@ -49,7 +53,9 @@ export class NativeStore {
         CREATE UNIQUE INDEX IF NOT EXISTS subscriptionSaveJournal_assetId ON subscriptionSaveJournal(assetId);
         CREATE TABLE IF NOT EXISTS blobs(id TEXT PRIMARY KEY, path TEXT NOT NULL UNIQUE, name TEXT NOT NULL, mime TEXT NOT NULL, size INTEGER NOT NULL, sha256 TEXT NOT NULL);
         CREATE TABLE IF NOT EXISTS passwordVault(id TEXT PRIMARY KEY CHECK(id='local'), path TEXT NOT NULL UNIQUE, name TEXT NOT NULL, mime TEXT NOT NULL, size INTEGER NOT NULL, sha256 TEXT NOT NULL, revision TEXT NOT NULL, updated_at TEXT NOT NULL);
-        PRAGMA user_version=1; COMMIT;`);
+        PRAGMA user_version=1;`);
+        await driver.execute('COMMIT');
+      } catch (error) { await driver.execute('ROLLBACK').catch(() => {}); throw error; }
       return store;
     } catch (error) { await driver.close(); throw error; }
   }
@@ -82,18 +88,33 @@ export class NativeStore {
   transaction<T>(readOnly: boolean, action: (scope: NativeStore) => Promise<T>): Promise<T> {
     if (this.scoped) {
       if (this.readOnly && !readOnly) return Promise.reject(Error('native-read-only-transaction'));
-      return this.serial(async () => {
-        const token = { active: true, parent: this.scopeToken };
+      const next = this.nestedTail.then(() => this.serial(async () => {
+        const token: ScopeToken = { active: true, parent: this.scopeToken };
         const nested = new NativeStore(this.driver, this.files, true, this.readOnly || readOnly, token);
         nested.listeners = this.listeners;
-        try { return await action(nested); } finally { token.active = false; }
-      });
+        const savepoint = `nested_${crypto.randomUUID().replaceAll('-', '')}`;
+        if (!readOnly) await this.driver.execute(`SAVEPOINT ${savepoint}`);
+        try {
+          const result = await action(nested);
+          if (token.rollbackOnly) throw Error('native-transaction-aborted');
+          if (!readOnly) await this.driver.execute(`RELEASE SAVEPOINT ${savepoint}`);
+          return result;
+        } catch (error) {
+          if (!readOnly) {
+            try { await this.driver.execute(`ROLLBACK TO SAVEPOINT ${savepoint}`); await this.driver.execute(`RELEASE SAVEPOINT ${savepoint}`); }
+            catch { for (let ancestor: ScopeToken | undefined = token; ancestor; ancestor = ancestor.parent) ancestor.rollbackOnly = true; }
+          }
+          throw error;
+        } finally { token.active = false; }
+      }));
+      this.nestedTail = next.catch(() => {});
+      return next;
     }
     return this.serial(() => this.commit(async () => {
-      const token = { active: true };
+      const token: ScopeToken = { active: true };
       const scope = new NativeStore(this.driver, this.files, true, readOnly, token);
       scope.listeners = this.listeners;
-      try { return await action(scope); } finally { token.active = false; }
+      try { const result = await action(scope); if (token.rollbackOnly) throw Error('native-transaction-aborted'); return result; } finally { token.active = false; }
     }, !readOnly));
   }
   allRecords(type?: EntityType): Promise<NativeRecord[]> {
@@ -215,6 +236,8 @@ export class NativeStore {
   }
   async close(): Promise<void> {
     if (this.scoped) throw Error('native-scoped-close');
-    await this.serial(async () => { this.closed = true; this.listeners.clear(); await this.driver.close(); });
+    if (this.closed) return;
+    if (!this.closing) this.closing = this.serial(async () => { this.closed = true; this.listeners.clear(); await this.driver.close(); });
+    await this.closing;
   }
 }

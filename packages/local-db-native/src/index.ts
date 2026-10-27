@@ -1,12 +1,12 @@
 import { nativeFiles } from '../../platform-native/src';
-import { openNativeDriver } from './driver';
+import { openNativeDriver, nativeDatabaseExists, deleteCandidateDatabase } from './driver';
 import { NativeStore } from './store';
 import { NativeFileStore } from './repository-storage';
 export { NativeStore } from './store';
 export type { NativeRecord, SideTableName } from './store';
 export type { SqlDriver } from './driver';
 export async function openNativeStore(name: string): Promise<NativeStore> {
-  return NativeStore.open(await openNativeDriver(name), nativeFiles());
+  return NativeStore.open(await openNativeDriver(name), nativeFiles(name));
 }
 export async function openNativeRepository(name = 'keepany-v1') {
   const store = await openNativeStore(name);
@@ -24,4 +24,13 @@ export async function openNativeRepository(name = 'keepany-v1') {
     });
     return repository;
   } catch (error) { await store.close(); throw error; }
+}
+export async function openNativeDatasetManager() {
+  const { NativeDatasetManager } = await import('./datasets');
+  return NativeDatasetManager.open(await openNativeDriver('keepany-control'), openNativeRepository, nativeDatabaseExists, async name => {
+    await deleteCandidateDatabase(name);
+    const files = nativeFiles(name);
+    await files.rootUri();
+    for (const path of await files.list()) await files.remove(path);
+  });
 }

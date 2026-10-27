@@ -40,12 +40,18 @@ export async function openNativeDriver(name: string): Promise<SqlDriver> {
     // Android's execSQL rejects PRAGMAs that return rows. WAL negotiation is a
     // query; only the non-row settings belong to execute.
     const mode = await connection.query('PRAGMA journal_mode=WAL');
-    await connection.execute('PRAGMA synchronous=FULL; PRAGMA foreign_keys=ON;', false);
+    await connection.execute('PRAGMA synchronous=FULL;\nPRAGMA foreign_keys=ON;', false);
     const durability = await connection.query('PRAGMA synchronous');
     if (mode.values?.[0]?.journal_mode !== 'wal' || durability.values?.[0]?.synchronous !== 2) throw Error('native-sqlite-durability');
     return {
       uri: url,
-      async execute(sql) { await connection.execute(sql, false); },
+      async execute(sql) {
+        const statement = sql.trim().replace(/;$/, '').toUpperCase();
+        if (statement === 'BEGIN IMMEDIATE' || statement === 'BEGIN') await connection.beginTransaction();
+        else if (statement === 'COMMIT') await connection.commitTransaction();
+        else if (statement === 'ROLLBACK') await connection.rollbackTransaction();
+        else await connection.execute(sql, false);
+      },
       async query<T extends SqlRow>(sql: string, values: SqlValue[] = []) {
         return (await connection.query(sql, values)).values as T[] ?? [];
       },
@@ -56,4 +62,19 @@ export async function openNativeDriver(name: string): Promise<SqlDriver> {
     await sqlite.closeConnection(name, false).catch(() => {});
     throw error;
   }
+}
+export async function nativeDatabaseExists(name: string): Promise<boolean> {
+  nativePlatform();
+  if (!/^[a-z][a-z0-9-]{2,60}$/.test(name)) throw Error('database-name');
+  return (await CapacitorSQLite.isDatabase({ database: name })).result === true;
+}
+export async function deleteCandidateDatabase(name: string): Promise<void> {
+  nativePlatform();
+  // This maintenance entry can never remove the original or control database.
+  if (!/^keepany-data-[0-9a-f-]{36}$/.test(name)) throw Error('native-dataset-invalid');
+  if (!(await nativeDatabaseExists(name))) return;
+  const sqlite = await connectionManager();
+  const connection = await sqlite.createConnection(name, false, 'no-encryption', 1, false);
+  try { await connection.delete(); }
+  finally { await sqlite.closeConnection(name, false); }
 }

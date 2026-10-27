@@ -13,10 +13,12 @@ import { taskEditCopy } from "./task-edit-copy";
 import { financeCopy } from "./finance-copy";
 import { candidateMergeCopy } from "./candidate-merge-copy";
 import { getPlatformSetting } from "./platform-settings";
+import { nativeDatasetsCopy } from './native-datasets-copy';
 import { mobileCopy } from "./mobile-copy";
 import { fileDeliveryCopy } from "./file-delivery-copy";
 
 const copy: Record<string, [string, string]> = {
+	...nativeDatasetsCopy,
 	brandName: ["KeepAny", "KeepAny"],
 	settingsStorageFailed: ["部分设置未能保存，请重试。", "Some settings could not be saved. Please try again."],
 	nativeStorageHint: ["资料保存在此应用中。清除应用数据或卸载会移除这些资料，请定期另存备份。", "Your records are stored in this app. Clearing app data or uninstalling removes them. Save a separate backup regularly."],
@@ -1983,6 +1985,10 @@ Object.assign(copy, {
 	overviewHeroHint: [
 		"看清项目依赖，记下续费与维护事项。资料保存在当前浏览器。",
 		"See project dependencies and track renewals and maintenance. Records stay in this browser.",
+	],
+	overviewNativeHeroHint: [
+		"看清项目依赖，记下续费与维护事项。资料保存在此应用中。",
+		"See project dependencies and track renewals and maintenance. Your records stay in this app.",
 	],
 	exploreProjects: ["探索我的项目", "Explore my projects"],
 	overviewCollectHint: [

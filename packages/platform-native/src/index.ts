@@ -23,14 +23,17 @@ export interface PersistentFiles {
   list(): Promise<string[]>;
 }
 
-const root = 'Application Support/KeepAny';
-function checkedPath(path: string): string {
+function checkedPath(root: string, path: string): string {
   if (!/^(?:files|vaults|recovery)\/[a-z0-9-]+(?:\.(?:bin|kdbx|ka1))?$/.test(path)) throw Error('native-file-path');
   return `${root}/${path}`;
 }
 
-export function nativeFiles(): PersistentFiles {
+export function nativeFiles(dataset = 'keepany-v1'): PersistentFiles {
   nativePlatform();
+  if (!/^[a-z][a-z0-9-]{2,60}$/.test(dataset)) throw Error('database-name');
+  // Retain the first candidate's default path. Every subsequent dataset owns a
+  // separate directory so its garbage collector cannot delete another's files.
+  const root = dataset === 'keepany-v1' ? 'Application Support/KeepAny' : `Application Support/KeepAny/datasets/${dataset}`;
   if (!Capacitor.isPluginAvailable('Filesystem')) throw Error('native-files-unavailable');
   // LIBRARY_NO_CLOUD maps to Library on iOS and internal filesDir on Android.
   // Independent exports provide recovery; app files do not promise iCloud backup.
@@ -54,22 +57,22 @@ export function nativeFiles(): PersistentFiles {
     async write(path, bytes) {
       let binary = '';
       for (let start = 0; start < bytes.length; start += 8192) binary += String.fromCharCode(...bytes.subarray(start, start + 8192));
-      await Filesystem.writeFile({ path: checkedPath(path), directory, data: btoa(binary), recursive: true });
+      await Filesystem.writeFile({ path: checkedPath(root, path), directory, data: btoa(binary), recursive: true });
     },
     async read(path) {
-      const { data } = await Filesystem.readFile({ path: checkedPath(path), directory });
+      const { data } = await Filesystem.readFile({ path: checkedPath(root, path), directory });
       if (typeof data !== 'string') throw Error('native-file-format');
       const binary = atob(data);
       return Uint8Array.from(binary, char => char.charCodeAt(0));
     },
-    async remove(path) { await Filesystem.deleteFile({ path: checkedPath(path), directory }); },
+    async remove(path) { await Filesystem.deleteFile({ path: checkedPath(root, path), directory }); },
     async list() {
       const result: string[] = [];
       for (const child of ['files', 'vaults', 'recovery']) {
         const { files } = await Filesystem.readdir({ path: `${root}/${child}`, directory });
         for (const file of files) if (file.type === 'file') {
           const path = `${child}/${file.name}`;
-          checkedPath(path);
+          checkedPath(root, path);
           result.push(path);
         }
       }
