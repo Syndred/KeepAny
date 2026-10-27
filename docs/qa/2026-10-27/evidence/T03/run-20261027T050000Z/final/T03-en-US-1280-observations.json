@@ -1,0 +1,22 @@
+{
+  "locale": "en-US",
+  "width": 1280,
+  "accountId": "1bbba42a-0140-438d-ba02-835a7675b898",
+  "relationId": "fbb7e2c7-d7dc-4e77-b97f-baf9fe3ea73a",
+  "accountCount": 2,
+  "spacing": {
+    "gap": 12,
+    "overflow": false
+  },
+  "pageErrors": [],
+  "checks": [
+    "empty name rejected without write",
+    "invalid URL focused without write",
+    "double-click creates one account",
+    "category and all fields persist after reload",
+    "cancel preserves existing fields",
+    "provider-only edit preserves notes and relation",
+    "same-provider distinct usernames remain separate",
+    "category/tag/search intersection and clear preserve remaining filters"
+  ]
+}

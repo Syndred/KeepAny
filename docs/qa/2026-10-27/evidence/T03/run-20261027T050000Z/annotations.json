@@ -1,0 +1,7 @@
+{
+  "evidence": [],
+  "limits": [
+    "Browser-only gstack discovery; final acceptance uses the 23 native browser tests in native-results.json.",
+    "Gstack exploration checkpoint 013 write failed; its screenshot after service restart is not used for acceptance."
+  ]
+}

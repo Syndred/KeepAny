@@ -1,0 +1,6 @@
+{
+  "observationCommand": "bun /Users/syndred/.codex/toolchains/gstack/bin/gstack-qa-deadline run docs/qa/2026-10-27/evidence/T03/run-20261027T050000Z/deadline.json -- /Users/syndred/.codex/toolchains/gstack/browse/dist/browse fill '#name' 'Gstack QA synthetic account'",
+  "observed": "Filled #name",
+  "hypothesis": "精确定位成功填写名称；以唯一无效URL挑战网址校验，其余必填满足。",
+  "nextCommand": "bun /Users/syndred/.codex/toolchains/gstack/bin/gstack-qa-deadline run docs/qa/2026-10-27/evidence/T03/run-20261027T050000Z/deadline.json -- /Users/syndred/.codex/toolchains/gstack/browse/dist/browse fill '#url' 'invalid-url'"
+}
