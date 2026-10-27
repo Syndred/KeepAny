@@ -492,6 +492,146 @@ final class KeepAnyUITests: XCTestCase {
         try verifyProjectTextFieldsColdStart(true)
     }
 
+    // Native bridge smoke test: real authority initialization and transport
+    // preparation only. It deliberately never opens export or activates TLS IO.
+    private func mcpCheckboxes(in app: XCUIApplication) -> [XCUIElement] {
+        let checkboxes = app.webViews.firstMatch.descendants(matching: .checkBox).allElementsBoundByIndex
+        if !checkboxes.isEmpty { return checkboxes }
+        let switches = app.webViews.firstMatch.descendants(matching: .switch).allElementsBoundByIndex
+        XCTAssertFalse(switches.isEmpty, "The actual MCP scope must expose native-accessible checkbox controls")
+        return switches
+    }
+
+    private func mcpCheckboxIsChecked(_ control: XCUIElement) -> Bool {
+        if let value = control.value as? String {
+            switch value.lowercased() {
+            case "1", "checked", "on": return true
+            case "0", "unchecked", "off": return false
+            default: break
+            }
+        } else if let value = control.value as? NSNumber { return value.boolValue }
+        XCTFail("MCP checkbox must expose an unambiguous checked value: \(control.label)")
+        return false
+    }
+
+    func testEnglishNativeMcpPreparesAndExplicitlyStopsWithoutExportOrGrant() throws {
+        let app = application("en")
+        let marker = "iOS MCP prepare fixture \(UUID().uuidString.prefix(8))"
+        let readyText = "The pairing file is ready. Export it through the system, then start waiting for your computer. The ticket expires in two minutes."
+        projectNavigationTop = nil
+        app.launch()
+        defer { app.terminate() }
+        let assets = app.links["Assets"].firstMatch
+        XCTAssertTrue(assets.waitForExistence(timeout: 30))
+        assets.tap()
+        let addAsset = app.buttons["Add asset"].firstMatch
+        reachProjectControl(addAsset, in: app)
+        addAsset.tap()
+        app.buttons["Continue"].firstMatch.tap()
+        let name = app.textFields["Name"].firstMatch
+        XCTAssertTrue(name.waitForExistence(timeout: 10))
+        replaceProjectText(name, with: marker, in: app)
+        let save = app.buttons["Save"].firstMatch
+        reachProjectControl(save, in: app)
+        save.tap()
+        let project = app.links.matching(NSPredicate(format: "label CONTAINS %@", marker)).firstMatch
+        XCTAssertTrue(project.waitForExistence(timeout: 20), "The isolated project must be saved through the actual UI before selecting scope")
+        capture(app, "ios-mcp-prepare-en-project-created")
+
+        app.links["More"].firstMatch.tap()
+        let access = app.links.matching(NSPredicate(format: "label BEGINSWITH %@", "Assistant access")).firstMatch
+        XCTAssertTrue(access.waitForExistence(timeout: 10))
+        reachProjectControl(access, in: app)
+        access.tap()
+        let noConnection = app.staticTexts["No active local connection"].firstMatch
+        XCTAssertTrue(noConnection.waitForExistence(timeout: 10))
+        capture(app, "ios-mcp-prepare-en-no-initial-grant")
+        let configure = app.links["Configure local access"].firstMatch
+        reachProjectControl(configure, in: app)
+        configure.tap()
+        let address = app.textFields["This device’s private IPv4 address"].firstMatch
+        let nativeControlsAvailable = address.waitForExistence(timeout: 15)
+        captureHierarchy(app, "ios-mcp-prepare-en-settings-before-scope-AX")
+        XCTAssertTrue(nativeControlsAvailable, "The real native MCP controls must be available; unsupported is a failure")
+        let selected = mcpCheckboxes(in: app).filter { $0.label == marker }
+        XCTAssertEqual(selected.count, 1, "Only the newly created synthetic project can be the selected scope")
+        guard let selected = selected.first else { return }
+        XCTAssertFalse(mcpCheckboxIsChecked(selected))
+        reachProjectControl(selected, in: app)
+        selected.tap()
+        XCTAssertTrue(mcpCheckboxIsChecked(selected))
+        replaceProjectText(address, with: "127.0.0.1", in: app)
+
+        let fieldLabels = ["Type", "Name", "Category", "Tags", "Short description", "URL", "Status", "Next date"]
+        let editableLabels = ["Name", "Category", "Tags", "Short description", "URL"]
+        let allCheckboxes = mcpCheckboxes(in: app)
+        for label in fieldLabels {
+            let controls = allCheckboxes.filter { $0.label == label }
+            XCTAssertEqual(controls.count, editableLabels.contains(label) ? 2 : 1, "Both real read and edit controls must be accounted for: \(label)")
+            for (index, control) in controls.enumerated() {
+                XCTAssertEqual(mcpCheckboxIsChecked(control), label == "Name" && index == 0,
+                               "Only readable Name may be checked; all editable fields must be unchecked")
+            }
+        }
+        // These are the other settings sections' actual checkboxes, outside MCP.
+        let otherSettings = ["Enable in-app reminders", "Default renewal reminders", "Browser notifications",
+                             "Activate this key automatically after unlocking the vault"]
+        let recordCheckboxes = allCheckboxes.filter { !fieldLabels.contains($0.label) && !otherSettings.contains($0.label) }
+        XCTAssertEqual(recordCheckboxes.filter { mcpCheckboxIsChecked($0) }.map { $0.label }, [marker],
+                       "No other record may be included in the real native scope")
+        captureHierarchy(app, "ios-mcp-prepare-en-selected-name-only-scope-AX")
+        let prepare = app.buttons["Prepare pairing file"].firstMatch
+        XCTAssertTrue(prepare.waitForExistence(timeout: 10))
+        reachProjectControl(prepare, in: app)
+        XCTAssertTrue(prepare.isEnabled)
+        prepare.tap()
+        let ready = app.staticTexts[readyText].firstMatch
+        let reachedReady = ready.waitForExistence(timeout: 45)
+        capture(app, "ios-mcp-prepare-en-prepare-result")
+        captureHierarchy(app, "ios-mcp-prepare-en-prepare-result-AX")
+        XCTAssertTrue(reachedReady, "Actual iOS authority/Keychain and transport prepare must complete; unsupported or an error is not success")
+        let export = app.links["Save or share file"].firstMatch
+        let activate = app.buttons["Start waiting for computer"].firstMatch
+        XCTAssertTrue(export.waitForExistence(timeout: 5))
+        XCTAssertTrue(activate.waitForExistence(timeout: 5))
+        XCTAssertFalse(activate.isEnabled, "Preparing without actual system delivery must not permit listener activation")
+        XCTAssertFalse(app.staticTexts["Access granted"].exists)
+        XCTAssertFalse(app.staticTexts["Waiting for a computer request. Check the client, comparison code and permissions on this device before approving."].exists)
+        let stop = app.buttons["Stop connection"].firstMatch
+        reachProjectControl(stop, in: app)
+        capture(app, "ios-mcp-prepare-en-ready-activation-disabled")
+        XCTAssertTrue(stop.isEnabled)
+        stop.tap()
+        XCTAssertTrue(export.waitForNonExistence(timeout: 15), "Stop must discard the real prepared pairing file")
+        XCTAssertTrue(activate.waitForNonExistence(timeout: 15))
+        XCTAssertTrue(ready.waitForNonExistence(timeout: 15))
+        XCTAssertTrue(stop.waitForNonExistence(timeout: 15), "A failed/unconfirmed stop must not be accepted")
+        XCTAssertTrue(prepare.isEnabled)
+        capture(app, "ios-mcp-prepare-en-explicitly-stopped")
+        captureHierarchy(app, "ios-mcp-prepare-en-explicitly-stopped-AX")
+        app.links["More"].firstMatch.tap()
+        XCTAssertTrue(access.waitForExistence(timeout: 10))
+        reachProjectControl(access, in: app)
+        access.tap()
+        XCTAssertTrue(noConnection.waitForExistence(timeout: 10))
+        XCTAssertFalse(app.staticTexts["Access granted"].exists)
+        capture(app, "ios-mcp-prepare-en-no-final-grant")
+        captureHierarchy(app, "ios-mcp-prepare-en-no-final-grant-AX")
+        let manifest: [String: Any] = [
+            "language": "en", "marker": marker, "address": "127.0.0.1",
+            "selectedRecordNames": [marker], "readFields": ["name"], "writeFields": [String](),
+            "readyReached": reachedReady, "activationDisabledBeforeDelivery": true,
+            "explicitStopConfirmedByUI": true, "noActiveLocalConnectionAfterStop": true,
+            "systemExportAttempted": false, "listenerActivated": false, "externalSDKTested": false,
+            "evidenceBoundary": "Actual iOS UI prepare/stop only; no claim of system delivery, active TLS traffic, external pairing or storage encryption audit"
+        ]
+        let attachment = XCTAttachment(data: try JSONSerialization.data(withJSONObject: manifest, options: [.prettyPrinted, .sortedKeys]),
+                                       uniformTypeIdentifier: "public.json")
+        attachment.name = "ios-mcp-prepare-en-ui-checkpoint.json"
+        attachment.lifetime = .keepAlways
+        add(attachment)
+    }
+
     func testChineseNavigationUsesTheNativeLanguage() {
         let app = application("zh-Hans")
         app.launch()
