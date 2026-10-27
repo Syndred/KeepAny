@@ -40,6 +40,26 @@ function deferred() {
 
 afterEach(() => vi.restoreAllMocks());
 
+it('reports a sanitized storage failure and preserves the old entry and history until the same draft is retried', async () => {
+  const { session, storage } = await created();
+  const id = await session.saveEntry(draft);
+  const previous = storage.record && { ...storage.record, bytes: storage.record.bytes.slice() };
+  const history = session.history(id), before = session.getSnapshot();
+  const write = vi.spyOn(storage, 'write').mockRejectedValueOnce(new Error('synthetic denied file with private path'));
+  const next = { ...draft, id, notes: 'Retried synthetic update' };
+  await expect(session.saveEntry(next)).rejects.toThrow(/^vault-storage$/);
+  expect(storage.record).toEqual(previous);
+  expect(session.readEntry(id).notes).toBe(draft.notes);
+  expect(session.history(id)).toEqual(history);
+  expect(session.getSnapshot().revision).toBe(before.revision);
+  write.mockRestore();
+  await session.saveEntry(next);
+  expect(session.readEntry(id).notes).toBe(next.notes);
+  expect(session.history(id)).toHaveLength(history.length + 1);
+  expect(session.getSnapshot().entries).toHaveLength(1);
+  session.lock();
+}, 30_000);
+
 describe('product name compatibility', () => {
   it('uses KeepAny for new vaults and retains existing StackPerch names and encrypted records', async () => {
     const { session } = await created();
@@ -184,7 +204,7 @@ describe('encrypted recoverable import drafts', () => {
     const snapshot = session.getSnapshot();
     const bytes = storage.record?.bytes.slice();
     vi.spyOn(storage, 'write').mockRejectedValueOnce(new Error('synthetic failure'));
-    await expect(session.writeImportDraft('replacement', revision)).rejects.toThrow('vault-invalid');
+    await expect(session.writeImportDraft('replacement', revision)).rejects.toThrow('vault-storage');
     expect(session.readImportDraft()).toBe(payload);
     expect(session.getSnapshot()).toBe(snapshot);
     expect(storage.record?.bytes).toEqual(bytes);
@@ -752,7 +772,7 @@ describe('real encrypted local KDBX session', () => {
         ],
         preview.revision,
       ),
-    ).rejects.toThrow('vault-invalid');
+    ).rejects.toThrow('vault-storage');
     expect(write).toHaveBeenCalledOnce();
     expect(session.getSnapshot()).toBe(snapshot);
     expect(session.readEntry(id).password).toBe(draft.password);

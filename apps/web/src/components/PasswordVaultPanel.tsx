@@ -85,6 +85,8 @@ function errorKey(error: unknown): string {
 		case "stale":
 		case "vault-stale":
 			return "pwVaultConflict";
+		case "vault-storage":
+			return "pwVaultSaveFailed";
 		case "size":
 		case "vault-size":
 			return "pwVaultTooLarge";

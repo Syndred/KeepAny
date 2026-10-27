@@ -19,7 +19,7 @@ export function checkBytes(bytes: Uint8Array): void {
 function number(value: unknown): unknown { return value instanceof Int64 ? value.value : value; }
 
 export function safeError(error: unknown): Error {
-  if (error instanceof Error && /^vault-(locked|stale|password|invalid|size|kdf|missing)$/.test(error.message)) return new Error(error.message);
+  if (error instanceof Error && /^vault-(locked|stale|password|invalid|size|kdf|missing|storage)$/.test(error.message)) return new Error(error.message);
   if (error instanceof KdbxError && error.code === Consts.ErrorCodes.InvalidKey) return new Error('vault-password');
   return new Error('vault-invalid');
 }

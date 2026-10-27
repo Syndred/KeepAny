@@ -684,6 +684,10 @@ export const passwordVaultCopy: Record<string, [string, string]> = {
 		"密码库操作未完成，请重试。",
 		"The vault operation could not finish. Try again.",
 	],
+	pwVaultSaveFailed: [
+		"无法确认密码库已保存。请检查存储空间或文件访问权限，然后重试。",
+		"The vault save could not be confirmed. Check storage space or file access, then try again.",
+	],
 	pwVaultRetry: ["重试打开密码库", "Retry opening vault"],
 	pwVaultBusy: ["正在处理…", "Working…"],
 	pwVaultPasswordTooShort: [

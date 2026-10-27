@@ -231,7 +231,12 @@ export class VaultSession {
       const bytes = new Uint8Array(await candidate.save());
       checkBytes(bytes);
       this.checkGeneration(generation);
-      const record = await this.storage.write(bytes, expectedRevision);
+      let record: VaultRecord;
+      try { record = await this.storage.write(bytes, expectedRevision); }
+      catch (error) {
+        if (error instanceof Error && error.message === 'vault-stale') throw error;
+        throw new Error('vault-storage');
+      }
       this.checkGeneration(generation);
       clearDatabase(this.db);
       this.record = { ...record, bytes: record.bytes.slice() };
