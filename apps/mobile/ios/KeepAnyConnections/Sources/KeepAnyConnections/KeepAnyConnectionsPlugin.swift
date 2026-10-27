@@ -78,7 +78,7 @@ private final class BoundedRequest: NSObject, URLSessionDataDelegate, URLSession
     func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
         defer {
             try? file?.close(); session.finishTasksAndInvalidate(); self.session = nil
-            taskLock.lock(); task = nil; taskLock.unlock()
+            taskLock.lock(); self.task = nil; taskLock.unlock()
         }
         guard error == nil, !failed, let head, let url = head.url else { completion(.failure(ConnectionFailure.failed)); return }
         var headers: [String: String] = [:]
