@@ -50,7 +50,6 @@ jobs:
           set -o pipefail
           xcodebuild -project apps/mobile/ios/App/App.xcodeproj -scheme KeepAnyAcceptance \
             -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
-            -arch "$(uname -m)" ONLY_ACTIVE_ARCH=YES \
             -derivedDataPath test-results/ios-derived CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO \
             build 2>&1 | tee test-results/ios/build.log
       - name: Install and launch in an available iPhone simulator
