@@ -78,6 +78,26 @@ describe("asset workspace summaries", () => {
 	});
 });
 
+describe("multi-owner corrected bills", () => {
+	it("counts each bill once globally and once per project across direct and subscription ownership", () => {
+		const project = newAsset("project"), subscription = newAsset("subscription"), item = newAsset("item");
+		const relation = relationSchema.parse({ id: "linked", from: project.id, to: subscription.id, label: "uses", createdAt: project.createdAt });
+		const bill = historySchema.parse({ id: "bill", assetId: subscription.id, assetIds: [subscription.id, project.id, item.id], action: "expense", title: "Bill", amount: 200, currency: "CNY", eventDate: "2026-10-27", createdAt: project.createdAt, note: "" });
+		const summary = buildWorkspaceSummary({ assets: [project, subscription, item], relations: [relation], history: [bill, bill], tasks: [], today: "2026-10-27" });
+		expect(summary.spending.get("CNY")).toBe(200n);
+		for (const owner of [project, subscription, item]) expect(summary.summaries.get(owner.id)?.spending.get("CNY")).toBe(200n);
+		const correction = { amount: 350, currency: "USD" as const, eventDate: "2026-10-28", title: "Corrected", source: "", note: "", hidden: false, assetIds: [item.id] };
+		const renewal = historySchema.parse({ ...bill, assetIds: undefined, action: "renew", billDate: "2026-10-27", financeCorrection: correction });
+		const corrected = buildWorkspaceSummary({ assets: [project, subscription, item], relations: [relation], history: [renewal], tasks: [], today: "2026-10-27" });
+		expect(corrected.spending).toEqual(new Map([["USD", 350n]]));
+		expect(corrected.summaries.get(subscription.id)?.spending.size).toBe(0);
+		expect(corrected.summaries.get(item.id)?.spending.get("USD")).toBe(350n);
+		const removed = buildWorkspaceSummary({ assets: [project, subscription, item], relations: [relation], history: [{ ...renewal, financeCorrection: { ...correction, hidden: true } }], tasks: [], today: "2026-10-27" });
+		expect(removed.spending.size).toBe(0);
+		expect(renewal.amount).toBe(200);
+	});
+});
+
 describe("one account view across ordinary metadata and unlocked vault summaries", () => {
 	it("uses explicit live account IDs, keeps shared entries and does not create ordinary assets", () => {
 		const first = newAsset("account"), second = newAsset("account");

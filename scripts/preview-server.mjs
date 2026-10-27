@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { Hono } from 'hono';
 import { createAdaptorServer } from '@hono/node-server';
 import { serveStatic } from '@hono/node-server/serve-static';
+import { createUrlMetadataHandler, intakeMetadataPath } from './intake-url-metadata.mjs';
 
 const packageRoot = dirname(fileURLToPath(import.meta.url));
 const statePath = join(packageRoot, '.keepany-preview-server.json');
@@ -156,6 +157,8 @@ async function start() {
     setTimeout(shutdown, 50);
     return context.json({ stopping: true });
   });
+  const readMetadata = createUrlMetadataHandler(origin);
+  app.all(intakeMetadataPath, context => readMetadata(context.req.raw));
   app.use('*', async (context, next) => {
     if (!['GET', 'HEAD'].includes(context.req.method)) return context.text('Method not allowed', 405);
     await next();

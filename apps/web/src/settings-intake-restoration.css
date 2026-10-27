@@ -60,6 +60,9 @@
 .intake-restored .intake-recent .list-row a { min-width: 0; color: var(--ink); font-weight: 700; text-decoration: none; overflow-wrap: anywhere; }
 .intake-restored .intake-recent .list-row a:hover { text-decoration: underline; }
 .intake-restored .intake-recent .list-row > span { color: var(--muted); font-size: 12px; }
+.intake-restored .import-preview label { display: block; margin-top: var(--space-3); margin-bottom: var(--space-2); }
+.intake-restored .import-preview textarea { display: block; width: 100%; min-height: 96px; resize: vertical; }
+.intake-restored .import-preview small { overflow-wrap: anywhere; }
 @media (max-width: 900px) {
   .intake-restored .intake-primary-grid { grid-template-columns: 1fr; }
 }

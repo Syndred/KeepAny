@@ -24,6 +24,8 @@ import {
 	type Submission,
 	type Relation,
 	actualCharge,
+	effectiveFinanceEntry,
+	historyAssetIds,
 	dueOnCycle,
 	inputFromMinorUnits,
 	itemLifecycleStatuses,
@@ -44,6 +46,7 @@ import {
 	save,
 	saveAssetIfCurrent,
 	saveSubmissionIfCurrent,
+	deleteSubmissionIfCurrent,
 	saveBatch,
 	setItemArchived,
 } from "../../../packages/local-db/src";
@@ -147,6 +150,9 @@ function SubmissionRow({ submission }: { submission: Submission }) {
 	const [error, setError] = useState("");
 	const [busy, setBusy] = useState(false);
 	const inFlight = useRef(false);
+	const [deleteBase, setDeleteBase] = useState<Submission | null>(null);
+	const [deleteError, setDeleteError] = useState("");
+	const [deleteStale, setDeleteStale] = useState(false);
 	useEffect(() => {
 		if (editing) return;
 		setName(submission.name);
@@ -283,7 +289,19 @@ function SubmissionRow({ submission }: { submission: Submission }) {
 					setConflict(false);
 					setEditing(true);
 				}}>{t(submission.status === "verify" ? "backlinkCheck" : submission.status === "planned" ? "edit" : "backlinkUpdate")}</Button>}
+				{!editing && <Button size="small" disabled={busy} onClick={() => { setDeleteBase(submission); setDeleteError(""); setDeleteStale(false); }}>{t("backlinkDeleteAction")}</Button>}
 				</div>
+				{deleteBase && <Dialog title={t("backlinkDelete")} closeDisabled={busy} onClose={() => { if (!inFlight.current) setDeleteBase(null); }}>
+					<p>{t("backlinkDeleteConfirm", { name: deleteBase.name })}</p>
+					{deleteError && <p className="field-error" role="alert">{deleteError}</p>}
+					<div className="actions"><Button disabled={busy} onClick={() => setDeleteBase(null)}>{t("cancel")}</Button><Button variant="danger" disabled={busy || deleteStale} onClick={async () => {
+						if (inFlight.current) return;
+						inFlight.current = true; setBusy(true);
+						try { await deleteSubmissionIfCurrent(deleteBase); setDeleteBase(null); notify(t("saved")); }
+						catch (cause) { const stale = cause instanceof Error && cause.message === "submission-stale"; setDeleteStale(stale); setDeleteError(t(stale ? "assetStale" : "error")); }
+						finally { inFlight.current = false; setBusy(false); }
+					}}>{t("backlinkDeleteAction")}</Button></div>
+				</Dialog>}
 			</td>
 		</tr>
 	);
@@ -606,7 +624,14 @@ export function AssetDetail() {
 	const pendingBacklinks = submissions.filter((entry) => entry.status === "verify");
 	const histories = data.history
 		.filter((x) => !x.deleted && x.assetId === asset?.id)
+		.map(entry => entry.action === "renew" ? entry : effectiveFinanceEntry(entry))
+		.filter(entry => !entry.deleted)
 		.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+	const assetBills = data.history
+		.filter(entry => historyAssetIds(entry).includes(asset?.id ?? ""))
+		.map(effectiveFinanceEntry)
+		.filter(entry => !entry.deleted && ["expense", "topup", "refund", "balance", "renew"].includes(entry.action))
+		.sort((a, b) => (b.eventDate || b.billDate || b.createdAt).localeCompare(a.eventDate || a.billDate || a.createdAt));
 	if (!asset)
 		return (
 			<main className="page">
@@ -1850,6 +1875,15 @@ export function AssetDetail() {
 					{attachmentSection}
 				</div>
 			</details>}
+			{assetBills.length > 0 && <section className="card asset-finance-card">
+				<div className="card-header"><h2>{t("workspaceLedger")}</h2><TextLink asChild><Link to="/finance">{t("financeTitle")}</Link></TextLink></div>
+				<div className="list">{assetBills.map(entry => <div className="list-row" key={entry.id} data-bill-id={entry.id}>
+					<div><strong>{entry.title || (entry.action === "renew" ? t("financeRenewalRecorded") : t(`financeAction${entry.action[0].toUpperCase()}${entry.action.slice(1)}`))}</strong>
+						<small>{date(entry.eventDate || entry.billDate || entry.createdAt.slice(0, 10), i18n.language)}{entry.source ? ` · ${entry.source}` : ""}{entry.note ? ` · ${entry.note}` : ""}</small>
+						<small>{historyAssetIds(entry).map(id => data.assets.find(value => value.id === id)?.name ?? t("financeMissingAsset")).join(" · ")}</small>
+					</div>{entry.amount !== undefined && entry.currency && <b>{money(entry.amount, entry.currency, i18n.language)}</b>}
+				</div>)}</div>
+			</section>}
 			{(asset.kind === "item" || asset.kind === "subscription") && (
 				<section className="card">
 					<div className="card-header">

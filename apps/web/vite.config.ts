@@ -2,6 +2,7 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import { VitePWA } from 'vite-plugin-pwa';
+import { createUrlMetadataMiddleware } from '../../scripts/intake-url-metadata.mjs';
 const selfHostProxy = process.env.KEEPANY_SELFHOST_DEV_PROXY_TARGET;
 if (selfHostProxy) {
   const target = new URL(selfHostProxy);
@@ -10,7 +11,18 @@ if (selfHostProxy) {
 }
 const proxy = selfHostProxy ? Object.fromEntries(['/api/auth', '/sync', '/workspaces'].map(path =>
   [path, { target: selfHostProxy, changeOrigin: true }])) : undefined;
-export default defineConfig({ plugins: [react(), tailwindcss(), VitePWA({
+export default defineConfig({ plugins: [react(), tailwindcss(), {
+  name: 'keepany-intake-url',
+  configureServer(server) {
+    let metadataMiddleware;
+    server.middlewares.use((request, response, next) => {
+      const address = server.httpServer?.address();
+      if (!address || typeof address === 'string') return next();
+      metadataMiddleware ??= createUrlMetadataMiddleware(`http://127.0.0.1:${address.port}`);
+      return metadataMiddleware(request, response, next);
+    });
+  },
+}, VitePWA({
   registerType:'autoUpdate', injectRegister:null,
   includeAssets: ['icons/*.png', 'icons/*.svg'],
   manifest: {

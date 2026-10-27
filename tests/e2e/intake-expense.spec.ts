@@ -71,7 +71,7 @@ for (const locale of ["zh-CN", "en-US"]) for (const width of [390, 1280]) {
 			await selectChoice(row.getByLabel(zh ? "资料类型" : "Record type"), "expense");
 			await row.getByRole("button", { name: zh ? "确认支出" : "Confirm expense", exact: true }).click();
 			await expect(row.getByRole("alert")).toContainText(zh ? "金额" : "amount");
-			await selectChoice(row.getByLabel(zh ? "关联订阅或账号" : "Subscription or account"), { label: zh ? "Cloud service · 订阅" : "Cloud service · Subscriptions" });
+			await selectChoice(row.getByLabel(zh ? "关联资产" : "Related asset"), { label: zh ? "Cloud service · 订阅" : "Cloud service · Subscriptions" });
 			await row.getByLabel(zh ? "名称" : "Title", { exact: true }).fill("September cloud invoice");
 			await row.getByLabel(zh ? "金额" : "Amount", { exact: true }).fill("98.xx");
 			await selectChoice(row.getByLabel(zh ? "币种" : "Currency", { exact: true }), "USD");

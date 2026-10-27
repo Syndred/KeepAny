@@ -10,6 +10,7 @@ import "./tasks-page.css";
 import { useSearchRowLocation } from "./search-location";
 import { Select, SelectOption } from "./components/ui/select";
 import { Badge } from "./components/ui/badge";
+import { taskWithinDateRange, validTaskDate, validTaskDateRange, type TaskDateRange } from "./task-edit";
 
 const TaskEditor = lazy(() =>
 	import("./workflows").then((module) => ({ default: module.TaskEditor })),
@@ -17,6 +18,14 @@ const TaskEditor = lazy(() =>
 
 type TaskFilter = "all" | "pending" | "done";
 const taskFilterKey = "keepany-task-filter";
+const taskDateRangeKey = "keepany-task-date-range";
+function readTaskDateRange(): TaskDateRange {
+	try {
+		const value = JSON.parse(sessionStorage.getItem(taskDateRangeKey) ?? "null");
+		if (value && typeof value.from === "string" && typeof value.to === "string" && validTaskDate(value.from) && validTaskDate(value.to)) return { from: value.from, to: value.to };
+	} catch { /* Invalid or unavailable preferences use an unfiltered list. */ }
+	return { from: "", to: "" };
+}
 function readTaskFilter(): TaskFilter {
 	try {
 		const value = sessionStorage.getItem(taskFilterKey);
@@ -29,6 +38,10 @@ export function TaskPage() {
 	const { t, i18n } = useTranslation();
 	const [edit, setEdit] = useState<"simple" | "maintenance" | null>(null);
 	const [filter, setFilter] = useState<TaskFilter>(readTaskFilter);
+	const [dateRange, setDateRange] = useState<TaskDateRange>(readTaskDateRange);
+	useEffect(() => {
+		try { sessionStorage.setItem(taskDateRangeKey, JSON.stringify(dateRange)); } catch { /* Preferences are optional. */ }
+	}, [dateRange]);
 	useEffect(() => {
 		try { sessionStorage.setItem(taskFilterKey, filter); }
 		catch { /* The task list remains usable when session storage is unavailable. */ }
@@ -52,11 +65,12 @@ export function TaskPage() {
 		done: tasks.filter((task) => task.done).length,
 	};
 	const visibleTasks = tasks.filter(
-		(task) => filter === "all" || (filter === "done" ? task.done : !task.done),
+		(task) => (filter === "all" || (filter === "done" ? task.done : !task.done)) && taskWithinDateRange(task, dateRange),
 	);
 	const plans = tasks.filter((task) => task.maintenancePlan);
 	useSearchRowLocation("task-", tasks.map((task) => task.id), visibleTasks.map((task) => task.id), () => {
 		setFilter("all");
+		setDateRange({ from: "", to: "" });
 		try {
 			const target = decodeURIComponent(taskHash.replace(/^#/, ""));
 			if (target.startsWith("task-") && plans.some((task) => task.id === target.slice(5))) setSelectedPlanId(target.slice(5));
@@ -98,6 +112,12 @@ export function TaskPage() {
 					</Button>
 				</div>
 			</div>
+			<fieldset className="task-date-range" aria-label={t("taskDateRange")}>
+				<label htmlFor="task-date-from">{t("taskDateFrom")}<input className="field" id="task-date-from" type="date" value={dateRange.from} onChange={event => setDateRange({ ...dateRange, from: event.target.value })} /></label>
+				<label htmlFor="task-date-to">{t("taskDateTo")}<input className="field" id="task-date-to" type="date" value={dateRange.to} onChange={event => setDateRange({ ...dateRange, to: event.target.value })} /></label>
+				<Button disabled={!dateRange.from && !dateRange.to} onClick={() => setDateRange({ from: "", to: "" })}>{t("taskClearDates")}</Button>
+			</fieldset>
+			{!validTaskDateRange(dateRange) && <p className="field-error" role="alert">{t("taskDateRangeInvalid")}</p>}
 			<div className="tasks-columns">
 				<section className="card tasks-list-card" aria-labelledby="tasks-list-heading">
 					<div className="tasks-cardhead">
@@ -139,6 +159,7 @@ export function TaskPage() {
 							type="button"
 							onClick={() => {
 								setFilter("all");
+									setDateRange({ from: "", to: "" });
 								requestAnimationFrame(() => document.getElementById(`task-${selectedPlan.id}`)?.scrollIntoView({ block: "center" }));
 							}}
 						>{t("viewTasks")} →</button>

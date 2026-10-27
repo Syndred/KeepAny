@@ -1,4 +1,4 @@
-import { calendarDayDistance, monthlyMinorUnits, type Asset, type History, type Relation, type Task } from "../../../packages/domain/src";
+import { calendarDayDistance, effectiveFinanceEntry, historyAssetIds, monthlyMinorUnits, type Asset, type History, type Relation, type Task } from "../../../packages/domain/src";
 import type { VaultEntrySummary } from "../../../packages/password-vault/src";
 
 export type MoneyTotals = Map<string, bigint>;
@@ -31,15 +31,22 @@ export function buildWorkspaceSummary(input: {
 	const purchases: MoneyTotals = new Map();
 	const monthly: MoneyTotals = new Map();
 	const seenHistory = new Set<string>();
-	for (const entry of input.history) {
-		const asset = byId.get(entry.assetId);
-		if (!asset || asset.kind === "vault" || entry.deleted || seenHistory.has(entry.id) ||
+	const spendingEntries = new Map<string, History>();
+	const entriesByAsset = new Map<string, Set<string>>();
+	for (const original of input.history) {
+		const entry = effectiveFinanceEntry(original);
+		const owners = historyAssetIds(original).filter(id => { const asset = byId.get(id); return asset && asset.kind !== "vault"; });
+		if (!owners.length || entry.deleted || seenHistory.has(entry.id) ||
 			(entry.action !== "expense" && entry.action !== "renew") ||
 			entry.amount === undefined || !Number.isSafeInteger(entry.amount) || entry.amount < 0 || !entry.currency) continue;
 		seenHistory.add(entry.id);
-		const totals = spendingByAsset.get(entry.assetId) ?? new Map<string, bigint>();
-		add(totals, entry.currency, BigInt(entry.amount));
-		spendingByAsset.set(entry.assetId, totals);
+		spendingEntries.set(entry.id, entry);
+		for (const owner of owners) {
+			const totals = spendingByAsset.get(owner) ?? new Map<string, bigint>();
+			add(totals, entry.currency, BigInt(entry.amount));
+			spendingByAsset.set(owner, totals);
+			const ids = entriesByAsset.get(owner) ?? new Set<string>(); ids.add(entry.id); entriesByAsset.set(owner, ids);
+		}
 		add(spending, entry.currency, BigInt(entry.amount));
 	}
 	const tasksByAsset = new Map<string, { done: number; total: number }>();
@@ -82,12 +89,15 @@ export function buildWorkspaceSummary(input: {
 			if (remainingDays !== null && remainingDays >= 0 && remainingDays <= 30) upcoming += 1;
 		}
 		if (asset.kind === "project") {
+			const projectEntries = new Set(entriesByAsset.get(asset.id));
 			for (const subscriptionId of subscriptionsByProject.get(asset.id) ?? []) {
 				const subscription = byId.get(subscriptionId);
 				if (!subscription) continue;
 				if (subscription.status === "active") add(row.monthly, subscription.currency, monthlyMinorUnits(subscription));
-				for (const [currency, amount] of spendingByAsset.get(subscriptionId) ?? []) add(row.spending, currency, amount);
+				for (const id of entriesByAsset.get(subscriptionId) ?? []) projectEntries.add(id);
 			}
+			row.spending = new Map();
+			for (const id of projectEntries) { const entry = spendingEntries.get(id); if (entry?.currency && entry.amount !== undefined) add(row.spending, entry.currency, BigInt(entry.amount)); }
 			for (const [currency, amount] of row.monthly) add(row.annual, currency, amount * 12n);
 			for (const domain of asset.projectDomains ?? []) if (domain.annualAmount !== null) add(row.annual, domain.currency, BigInt(domain.annualAmount));
 		}

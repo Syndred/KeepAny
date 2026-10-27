@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { Link } from "@tanstack/react-router";
 import { Check } from "lucide-react";
-import { useRef, useState } from "react";
+import { lazy, Suspense, useRef, useState } from "react";
 import { dueOnCycle, type Task } from "../../../packages/domain/src";
 import { rescheduleTaskReminder, zonedParts } from "../../../packages/domain/src/task-reminder";
 import { saveTaskIfCurrent, setTaskDone } from "../../../packages/local-db/src";
@@ -13,11 +13,13 @@ import { ImpactTaskRow } from "./ImpactTaskRow";
 import { ProjectWorkflowTaskRow } from "./ProjectWorkflowTaskRow";
 import { MaintenanceTaskRow } from "./MaintenanceTaskRow";
 import { date, useAppContext } from "./view-shared";
+const TaskEditor = lazy(() => import("./workflows").then(module => ({ default: module.TaskEditor })));
 export function TaskRow({ task, hideRelated = false }: { task: Task; hideRelated?: boolean }) {
 	const { t, i18n } = useTranslation();
 	const { data, notify } = useAppContext();
 	const [busy, setBusy] = useState(false);
 	const inFlight = useRef(false);
+	const [editing, setEditing] = useState(false);
 	if (task.impactSnapshot) return <ImpactTaskRow task={task} />;
 	if (task.projectWorkflow) return <ProjectWorkflowTaskRow task={task} />;
 	if (task.maintenancePlan) return <MaintenanceTaskRow task={task} />;
@@ -87,6 +89,7 @@ export function TaskRow({ task, hideRelated = false }: { task: Task; hideRelated
 				) : null}
 			</div>
 			<div className="impact-task-actions">
+				<Button size="small" disabled={busy} onClick={() => setEditing(true)}>{t("edit")}</Button>
 				{!task.done && <>
 					<label htmlFor={`task-due-${task.id}`}>{t("remindLater")}</label>
 					<input className="field" id={`task-due-${task.id}`} type="date" value={task.dueDate} disabled={busy} onChange={(event) => void reschedule(event.target.value)} />
@@ -94,6 +97,7 @@ export function TaskRow({ task, hideRelated = false }: { task: Task; hideRelated
 				</>}
 				<Badge tone={task.done ? "success" : "pending"}>{t(task.done ? "done" : "pending")}</Badge>
 			</div>
+			{editing && <Suspense fallback={null}><TaskEditor task={task} onClose={() => setEditing(false)} /></Suspense>}
 		</TaskCard>
 	);
 }

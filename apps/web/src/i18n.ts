@@ -9,6 +9,9 @@ import {
 import { passwordVaultCopy } from "./password-vault-copy";
 import { reminderCopy } from "./reminder-copy";
 import { smartImportCopy } from "./smart-import-copy";
+import { taskEditCopy } from "./task-edit-copy";
+import { financeCopy } from "./finance-copy";
+import { candidateMergeCopy } from "./candidate-merge-copy";
 
 const copy: Record<string, [string, string]> = {
 	brandName: ["KeepAny", "KeepAny"],
@@ -2490,6 +2493,9 @@ Object.assign(
 	aiWorkflowCopy,
 	reminderCopy,
 	smartImportCopy,
+	taskEditCopy,
+	financeCopy,
+	candidateMergeCopy,
 );
 Object.assign(
 	copy,

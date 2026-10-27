@@ -51,6 +51,9 @@ import { Select, SelectOption } from "./components/ui/select";
 import { assetNotes, editAssetNotes } from "./asset-notes";
 import { saveAccountWithIdentityLinks, AccountIdentitySavePending } from "./account-identity-save";
 import { AccountLinkConflict } from "./vault-account-links";
+import { manualTaskDedupeKey, prepareTaskEdit } from "./task-edit";
+import { saveTaskIfCurrent } from "../../../packages/local-db/src";
+import { readUrlMetadata } from "./intake-url";
 
 type FieldName = keyof Asset;
 type ProjectFormFiles = { logo?: File; home?: File; products?: File[]; promo?: File };
@@ -93,6 +96,7 @@ function Field({
 	onChange,
 	type = "text",
 	autoComplete,
+	disabled,
 	error,
 	children,
 }: {
@@ -102,6 +106,7 @@ function Field({
 	onChange?: (s: string) => void;
 	type?: string;
 	autoComplete?: string;
+	disabled?: boolean;
 	error?: string;
 	children?: React.ReactNode;
 }) {
@@ -114,6 +119,7 @@ function Field({
 					name={name}
 					type={type}
 					autoComplete={autoComplete}
+					disabled={disabled}
 					step={type === "number" ? "any" : undefined}
 					value={value ?? ""}
 					onChange={(e) => onChange?.(e.target.value)}
@@ -786,18 +792,21 @@ export function AssetEditor({
 
 export function TaskEditor({
 	assetId = "",
+	task: initialTask,
 	mode = "simple",
 	className,
 	onClose,
 }: {
 	assetId?: string;
+	task?: Task;
 	mode?: "simple" | "maintenance";
 	className?: string;
 	onClose: () => void;
 }) {
 	const { t } = useTranslation();
-	const [name, setName] = useState("");
-	const [dueDate, setDueDate] = useState("");
+	const [task] = useState(initialTask);
+	const [name, setName] = useState(task?.name ?? "");
+	const [dueDate, setDueDate] = useState(task?.dueDate ?? "");
 	const [nameError, setNameError] = useState("");
 	const [dueDateError, setDueDateError] = useState("");
 	const [failure, setFailure] = useState("");
@@ -837,17 +846,11 @@ export function TaskEditor({
 		inFlight.current = true;
 		setBusy(true);
 		try {
-			const normalizedName = name.trim().normalize("NFKC").replace(/\s+/g, " ").toLocaleLowerCase("en");
-			const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(normalizedName));
-			const hash = Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
-			const dedupeKey = `manual:${assetId || "global"}:${hash}:${dueDate || "none"}`;
-			await save("task", {
-				...parsed.data,
-				dedupeKey,
-			});
+			if (task) await saveTaskIfCurrent(task, await prepareTaskEdit(task, name, dueDate));
+			else await save("task", { ...parsed.data, dedupeKey: await manualTaskDedupeKey(name, assetId, dueDate) });
 			onClose();
 		} catch (error) {
-			setFailure(error instanceof Error && error.message === "task-duplicate" ? t("taskDuplicatePending") : t("error"));
+			setFailure(error instanceof Error && error.message === "task-duplicate" ? t("taskDuplicatePending") : error instanceof Error && error.message === "task-stale" ? t("workflowTaskStale") : t("error"));
 		} finally {
 			inFlight.current = false;
 			setBusy(false);
@@ -855,11 +858,12 @@ export function TaskEditor({
 	}
 	if (mode === "maintenance") return <MaintenancePlanEditor onClose={onClose} />;
 	return (
-		<Dialog title={t("newTask")} className={className} onClose={closeIfIdle}>
+		<Dialog title={t(task ? "editTask" : "newTask")} className={className} onClose={closeIfIdle} closeDisabled={busy}>
 			<form onSubmit={(e) => void submit(e)}>
 				<div className="form-grid">
 					<Field
 						name="taskName"
+						disabled={busy}
 						label={t("name")}
 						value={name}
 						onChange={(value) => { setName(value); setNameError(""); setFailure(""); }}
@@ -867,6 +871,7 @@ export function TaskEditor({
 					/>
 					<Field
 						name="taskDue"
+						disabled={busy}
 						label={t("date")}
 						type="date"
 						value={dueDate}
@@ -993,6 +998,9 @@ export function IntakeTools({ onCsvStaged }: { onCsvStaged: () => void }) {
 	const [candidateGeneration, setCandidateGeneration] = useState<number | null>(null);
 	const [url, setUrl] = useState("");
 	const [message, setMessage] = useState("");
+	const [urlLoading, setUrlLoading] = useState(false);
+	const urlRequest = useRef<AbortController | null>(null);
+	useEffect(() => () => urlRequest.current?.abort(), []);
 	const [busy, setBusy] = useState(false);
 	const [csvBusy, setCsvBusy] = useState(false);
 	const [inspecting, setInspecting] = useState(false);
@@ -1015,6 +1023,8 @@ export function IntakeTools({ onCsvStaged }: { onCsvStaged: () => void }) {
 	}, [photoFile]);
 	function changeMode(next: typeof mode) {
 		if (importing.current) return;
+		urlRequest.current?.abort();
+		setUrlLoading(false);
 		importGeneration.current++;
 		setCandidates([]);
 		setCandidateGeneration(null);
@@ -1223,18 +1233,27 @@ export function IntakeTools({ onCsvStaged }: { onCsvStaged: () => void }) {
 	}
 	async function previewUrl() {
 		const generation = ++importGeneration.current;
+		urlRequest.current?.abort();
+		const controller = new AbortController();
+		urlRequest.current = controller;
+		setUrlLoading(true);
+		setMessage("");
 		setCandidates([]);
 		setCandidateGeneration(null);
 		try {
 			const address = new URL(url);
-			if (!["http:", "https:"].includes(address.protocol)) throw Error("url");
+			if (!["http:", "https:"].includes(address.protocol) || address.username || address.password || url.length > 2048) throw Error("url");
+			let metadata: { title: string; description: string } | null = null;
+			try { metadata = await readUrlMetadata(address.toString(), { signal: controller.signal }); }
+			catch { if (controller.signal.aborted) return; }
 			const existing = (await allRecords())
 				.filter((r) => r.type === "asset")
 				.map((r) => JSON.parse(r.payload) as Asset);
 			if (generation !== importGeneration.current) return;
 			const asset = {
 				...newAsset("project"),
-				name: address.hostname,
+				name: metadata?.title || address.hostname,
+				description: metadata?.description ?? "",
 				category: "website",
 				url: address.toString(),
 			};
@@ -1242,9 +1261,11 @@ export function IntakeTools({ onCsvStaged }: { onCsvStaged: () => void }) {
 			previewExisting.current = existing;
 			setCandidates([{ asset, duplicate, invalid: false, selected: !duplicate }]);
 			setCandidateGeneration(generation);
-			setMessage(t("preview"));
+			setMessage(t(metadata ? "preview" : "intakeUrlMetadataFallback"));
 		} catch {
 			if (generation === importGeneration.current) setMessage(t("invalid"));
+		} finally {
+			if (generation === importGeneration.current) setUrlLoading(false);
 		}
 	}
 	async function previewManual() {
@@ -1337,6 +1358,8 @@ export function IntakeTools({ onCsvStaged }: { onCsvStaged: () => void }) {
 									value={url}
 									disabled={busy || inspecting}
 									onChange={(event) => {
+										urlRequest.current?.abort();
+										setUrlLoading(false);
 										importGeneration.current++;
 										setUrl(event.target.value);
 										setCandidates([]);
@@ -1345,8 +1368,8 @@ export function IntakeTools({ onCsvStaged }: { onCsvStaged: () => void }) {
 									placeholder="https://your-project.com"
 								/>
 							</div>
-							<Button variant="primary" onClick={() => void previewUrl()} disabled={busy || inspecting || !url}>
-								<Link2 size={16} />{t("intakePreviewRecords")}
+							<Button variant="primary" onClick={() => void previewUrl()} disabled={busy || inspecting || urlLoading || !url}>
+								<Link2 size={16} />{t(urlLoading ? "loading" : "intakePreviewRecords")}
 							</Button>
 						</>
 					)}
@@ -1458,6 +1481,14 @@ export function IntakeTools({ onCsvStaged }: { onCsvStaged: () => void }) {
 												), previewExisting.current));
 											}}
 										/>
+										{mode === "url" && <>
+											<label htmlFor={`url-description-${candidate.asset.id}`}>{t("description")}</label>
+											<textarea id={`url-description-${candidate.asset.id}`} value={candidate.asset.description} disabled={busy} maxLength={2000} onChange={event => {
+												const description = event.target.value;
+												setCandidates(current => validateImportCandidates(current.map(item => item.asset.id === candidate.asset.id ? { ...item, asset: { ...item.asset, description } } : item), previewExisting.current));
+											}} />
+											<small>{candidate.asset.url}</small>
+										</>}
 										{candidate.invalid && <small className="field-error">{t(candidate.asset.name.trim() ? "invalid" : "required")}</small>}
 									</div>
 									<span className={`chip ${candidate.duplicate || candidate.invalid ? "warn" : ""}`}>{t(candidate.invalid ? "invalid" : candidate.duplicate ? "duplicate" : "ready")}</span>
