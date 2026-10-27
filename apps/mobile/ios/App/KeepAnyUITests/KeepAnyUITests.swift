@@ -244,36 +244,103 @@ final class KeepAnyUITests: XCTestCase {
             .flatMap { UUID(uuidString: $0)?.uuidString.lowercased() }
     }
 
+    private func projectDialog(in app: XCUIApplication) -> XCUIElement? {
+        app.webViews.firstMatch.descendants(matching: .other)
+            .matching(NSPredicate(format: "label ENDSWITH %@", ", web dialog"))
+            .allElementsBoundByIndex.last { $0.frame.width > 0 && $0.frame.height > 0 }
+    }
+
+    private func isProjectFooterAction(_ element: XCUIElement) -> Bool {
+        element.elementType == .button && ["Save", "Cancel", "保存", "取消"].contains(element.label)
+    }
+
+    private func projectVisibleBounds(for element: XCUIElement, in app: XCUIApplication) -> CGRect? {
+        let web = app.webViews.firstMatch.frame
+        let keyboard = app.keyboards.firstMatch
+        if let dialog = projectDialog(in: app) {
+            // A modal is above the underlying navigation. Use its actual AX
+            // rectangle, not the cached boundary of that hidden underlay.
+            var bounds = dialog.frame.intersection(web).insetBy(dx: 1, dy: 8)
+            let footerLabels = ["Save", "Cancel", "保存", "取消"]
+            if !isProjectFooterAction(element) {
+                let footer = dialog.descendants(matching: .button)
+                    .matching(NSPredicate(format: "label IN %@", footerLabels))
+                    .allElementsBoundByIndex.map { $0.frame }
+                    .filter { $0.width > 0 && $0.height > 0 && bounds.intersects($0) }
+                if let footerTop = footer.map({ $0.minY }).min() {
+                    // The existing sticky footer has 12pt top padding. Body
+                    // fields must be above it, even when AX says hittable.
+                    bounds.size.height = max(0, min(bounds.maxY, footerTop - 12) - bounds.minY)
+                }
+            }
+            if keyboard.exists {
+                bounds.size.height = max(0, min(bounds.maxY, keyboard.frame.minY - 8) - bounds.minY)
+            }
+            return bounds
+        }
+        guard let navigationTop = projectNavigationTop else { return nil }
+        let bottom = keyboard.exists ? min(navigationTop, keyboard.frame.minY) : navigationTop
+        return CGRect(x: web.minX, y: web.minY + 8, width: web.width,
+                      height: max(0, bottom - 8 - (web.minY + 8)))
+    }
+
     private func reachProjectControl(_ element: XCUIElement, in app: XCUIApplication) {
         dismissInputToolbar(app)
         let web = app.webViews.firstMatch
         let navigation = app.otherElements.matching(NSPredicate(
             format: "label BEGINSWITH %@ OR label BEGINSWITH %@", "Main navigation", "主要导航"
         )).firstMatch
-        if navigation.exists { projectNavigationTop = navigation.frame.minY }
-        // Radix may hide the underlying navigation from AX while a modal is
-        // open. Keep its measured screen boundary, never invent a safe inset.
-        guard let navigationTop = projectNavigationTop else {
-            XCTFail("Measure the actual fixed navigation before opening the project editor")
-            return
+        if projectDialog(in: app) == nil && navigation.exists {
+            projectNavigationTop = navigation.frame.minY
         }
         for attempt in 0..<18 {
             let frame = element.frame
-            let keyboard = app.keyboards.firstMatch
-            let bottom = keyboard.exists ? min(navigationTop, keyboard.frame.minY) : navigationTop
-            if element.isHittable && frame.width > 0 && frame.height > 0
-                && frame.minX >= web.frame.minX && frame.maxX <= web.frame.maxX
-                && frame.minY >= web.frame.minY + 8 && frame.maxY <= bottom - 8 { return }
+            guard let bounds = projectVisibleBounds(for: element, in: app) else {
+                XCTFail("Measure the actual fixed navigation before using a page control")
+                return
+            }
+            // The original helper rejected a visibly unobstructed modal Save.
+            // Its log did not separate the navigation and hittability gates.
+            // Permit a bounded coordinate tap only for modal footer actions;
+            // body and page controls still require native hittability.
+            if element.exists && frame.width > 0 && frame.height > 0 && bounds.contains(frame)
+                && (element.isHittable || (isProjectFooterAction(element) && projectDialog(in: app) != nil)) { return }
             // Scroll the dialog in either direction; edits reopen at the top,
             // whereas verification and cancellation start deep in the form.
-            let down = frame.height > 0 ? frame.minY < web.frame.minY + 8 : attempt >= 9
-            let start = web.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: down ? 0.3 : 0.7))
-            let end = web.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: down ? 0.7 : 0.3))
+            let down = frame.height > 0 ? frame.minY < bounds.minY : attempt >= 9
+            let start = app.coordinate(withNormalizedOffset: .zero).withOffset(
+                CGVector(dx: bounds.midX, dy: bounds.minY + bounds.height * (down ? 0.3 : 0.7)))
+            let end = app.coordinate(withNormalizedOffset: .zero).withOffset(
+                CGVector(dx: bounds.midX, dy: bounds.minY + bounds.height * (down ? 0.7 : 0.3)))
             start.press(forDuration: 0.05, thenDragTo: end)
         }
         capture(app, "project-control-unreachable-\(element.label)")
         captureHierarchy(app, "project-control-unreachable-\(element.label)")
-        XCTFail("Project control must be fully visible above the keyboard and fixed navigation: \(element.label)")
+        let keyboardDescription = app.keyboards.firstMatch.exists ? String(describing: app.keyboards.firstMatch.frame) : "absent"
+        let geometry = XCTAttachment(string: "element=\(element.frame); hittable=\(element.isHittable); web=\(web.frame); dialog=\(String(describing: projectDialog(in: app)?.frame)); bounds=\(String(describing: projectVisibleBounds(for: element, in: app))); navigationTop=\(String(describing: projectNavigationTop)); keyboard=\(keyboardDescription)")
+        geometry.name = "project-control-unreachable-geometry"
+        geometry.lifetime = .keepAlways
+        add(geometry)
+        XCTFail("Project control must be fully visible in its current layer, above keyboard and sticky footer: \(element.label)")
+    }
+
+    private func tapProjectControl(_ element: XCUIElement, in app: XCUIApplication) {
+        reachProjectControl(element, in: app)
+        guard let bounds = projectVisibleBounds(for: element, in: app),
+              element.exists, element.isEnabled, element.frame.width > 0, element.frame.height > 0,
+              bounds.contains(element.frame) else {
+            XCTFail("Refuse to tap a hidden, covered or disabled project control: \(element.label)")
+            return
+        }
+        if element.isHittable { element.tap() }
+        else if isProjectFooterAction(element), let dialog = projectDialog(in: app),
+                dialog.descendants(matching: .button).matching(NSPredicate(format: "label == %@", element.label))
+                    .allElementsBoundByIndex.contains(where: { $0.frame == element.frame }) {
+            // The real native pointer stays within the validated visible rect;
+            // the following business assertions must still prove its effect.
+            app.coordinate(withNormalizedOffset: .zero).withOffset(
+                CGVector(dx: element.frame.midX, dy: element.frame.midY)).tap()
+        } else { XCTFail("A page control must be natively hittable") }
     }
 
     private func projectTextControl(_ field: ProjectTextField, in app: XCUIApplication) -> XCUIElement {
@@ -282,16 +349,14 @@ final class KeepAnyUITests: XCTestCase {
             let button = app.buttons[group].firstMatch
             let summary = button.exists ? button : app.staticTexts[group].firstMatch
             XCTAssertTrue(summary.waitForExistence(timeout: 5), "Missing project editor group: \(group)")
-            reachProjectControl(summary, in: app)
-            summary.tap()
+            tapProjectControl(summary, in: app)
         }
         XCTAssertTrue(control.waitForExistence(timeout: 5), "Missing labelled project field: \(field.label)")
         return control
     }
 
     private func replaceProjectText(_ control: XCUIElement, with value: String, in app: XCUIApplication) {
-        reachProjectControl(control, in: app)
-        control.tap()
+        tapProjectControl(control, in: app)
         let existing = control.value as? String ?? ""
         if !existing.isEmpty {
             // A tap can place the caret in the middle of a long value. Use
@@ -332,10 +397,15 @@ final class KeepAnyUITests: XCTestCase {
         let combo = app.comboBoxes.matching(predicate).firstMatch
         let popup = app.popUpButtons.matching(predicate).firstMatch
         let button = app.buttons.matching(predicate).firstMatch
+        // iOS 26 WKWebView exposes the actual labelled combobox as Other with
+        // a value, distinct from the wrapper Other whose value is nil. Its AX
+        // frame is wrong, so read its semantics but activate the HTML label.
+        let other = app.webViews.firstMatch.descendants(matching: .other).matching(
+            NSPredicate(format: "label == %@ AND value != nil", label)).firstMatch
         // The preceding dialog transition need not have reached the native AX
         // tree when the click returns. Wait for a labelled interactive control.
         let ready = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in
-            combo.exists || popup.exists || button.exists
+            combo.exists || popup.exists || button.exists || other.exists
         }, object: nil)
         if XCTWaiter.wait(for: [ready], timeout: 10) != .completed {
             capture(app, "project-category-control-missing")
@@ -343,6 +413,7 @@ final class KeepAnyUITests: XCTestCase {
         }
         if combo.exists { return combo }
         if popup.exists { return popup }
+        if other.exists { return other }
         XCTAssertTrue(button.exists, "Project category must expose an accessible select control")
         return button
     }
@@ -358,7 +429,7 @@ final class KeepAnyUITests: XCTestCase {
             XCTAssertEqual(observed[field.key], field.value, "\(phase): \(field.key)")
         }
         let select = projectCategoryControl(in: app, label: categoryLabel)
-        reachProjectControl(select, in: app)
+        reachProjectControl(app.staticTexts[categoryLabel].firstMatch, in: app)
         let categoryAX = "\(select.label) \(select.value as? String ?? "")"
         XCTAssertTrue(categoryAX.contains(category), "\(phase): non-default category retained: \(categoryAX)")
         var expectedPayload: [String: Any] = Dictionary(uniqueKeysWithValues: fields.map { ($0.key, $0.value as Any) })
@@ -421,21 +492,27 @@ final class KeepAnyUITests: XCTestCase {
         XCTAssertTrue(assets.waitForExistence(timeout: 30))
         assets.tap()
         let addAsset = app.buttons[text("新增资产", "Add asset")].firstMatch
-        reachProjectControl(addAsset, in: app)
-        addAsset.tap()
+        tapProjectControl(addAsset, in: app)
         app.buttons[text("继续", "Continue")].firstMatch.tap()
         let select = projectCategoryControl(in: app, label: categoryLabel)
-        reachProjectControl(select, in: app)
-        select.tap()
-        let option = app.descendants(matching: .any).matching(NSPredicate(format: "label == %@", category))
-            .allElementsBoundByIndex.first { $0.isHittable }
+        XCTAssertTrue(select.exists)
+        // The associated visible HTML label activates the genuine select via
+        // normal native touch, avoiding the erroneous Other AX rectangle.
+        tapProjectControl(app.staticTexts[categoryLabel].firstMatch, in: app)
+        var option: XCUIElement?
+        let optionsReady = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in
+            option = app.descendants(matching: .any).matching(NSPredicate(format: "label == %@", category))
+                .allElementsBoundByIndex.first { $0.isHittable }
+            return option != nil
+        }, object: nil)
+        XCTAssertEqual(XCTWaiter.wait(for: [optionsReady], timeout: 10), .completed)
         guard let option else { XCTFail("Non-default category option must be accessible"); return }
         option.tap()
+        XCTAssertTrue("\(select.label) \(select.value as? String ?? "")".contains(category))
         for field in fields { replaceProjectText(projectTextControl(field, in: app), with: field.value, in: app) }
         try verifyProjectTextFields(fields, in: app, phase: "before-save", language: language, marker: marker, category: category, categoryLabel: categoryLabel)
         let save = app.buttons[text("保存", "Save")].firstMatch
-        reachProjectControl(save, in: app)
-        save.tap()
+        tapProjectControl(save, in: app)
         let project = app.links.matching(NSPredicate(format: "label CONTAINS %@", marker)).firstMatch
         XCTAssertTrue(project.waitForExistence(timeout: 20))
         projectLinkAXValue = project.value as? String
@@ -449,13 +526,12 @@ final class KeepAnyUITests: XCTestCase {
         projectLinkAXValue = project.value as? String
         reachProjectControl(project, in: app)
         captureHierarchy(app, "project-text-fields-\(language)-cold-start-link")
-        project.tap()
+        tapProjectControl(project, in: app)
         let edit = app.buttons[text("编辑", "Edit")].firstMatch
         XCTAssertTrue(edit.waitForExistence(timeout: 10))
         capture(app, "project-text-fields-\(language)-cold-start-detail")
         let materials = app.buttons[text("查看投递素材", "View submission materials")].firstMatch
-        reachProjectControl(materials, in: app)
-        materials.tap()
+        tapProjectControl(materials, in: app)
         // Verify actual detail content, then editor values; neither replaces
         // the subsequent native SQLite ID/payload comparison in CI evidence.
         for field in fields where field.multiline || field.key == "projectTitle" || field.key == "projectEmail" {
@@ -469,26 +545,22 @@ final class KeepAnyUITests: XCTestCase {
         }
         capture(app, "project-text-fields-\(language)-materials")
         captureHierarchy(app, "project-text-fields-\(language)-materials-AX")
-        reachProjectControl(edit, in: app)
-        edit.tap()
+        tapProjectControl(edit, in: app)
         try verifyProjectTextFields(fields, in: app, phase: "cold-start-edit", language: language, marker: marker, category: category, categoryLabel: categoryLabel)
         for key in ["name", "projectMediumDescription", "notes"] {
             let field = fields.first { $0.key == key }!
             replaceProjectText(projectTextControl(field, in: app), with: "Cancelled \(key)", in: app)
         }
         let cancel = app.buttons[text("取消", "Cancel")].firstMatch
-        reachProjectControl(cancel, in: app)
-        cancel.tap()
+        tapProjectControl(cancel, in: app)
         XCTAssertTrue(edit.waitForExistence(timeout: 10))
-        reachProjectControl(edit, in: app)
-        edit.tap()
+        tapProjectControl(edit, in: app)
         try verifyProjectTextFields(fields, in: app, phase: "after-cancel", language: language, marker: marker, category: category, categoryLabel: categoryLabel)
         let originalName = fields.removeFirst()
         let renamed = ProjectTextField(key: "name", label: originalName.label, value: marker + " renamed", multiline: false, group: nil)
         fields.insert(renamed, at: 0)
         replaceProjectText(projectTextControl(renamed, in: app), with: renamed.value, in: app)
-        reachProjectControl(save, in: app)
-        save.tap()
+        tapProjectControl(save, in: app)
         XCTAssertTrue(edit.waitForExistence(timeout: 10))
         app.terminate()
         app.launch()
@@ -497,14 +569,11 @@ final class KeepAnyUITests: XCTestCase {
         let renamedProject = app.links.matching(NSPredicate(format: "label CONTAINS %@", renamed.value)).firstMatch
         XCTAssertTrue(renamedProject.waitForExistence(timeout: 20))
         projectLinkAXValue = renamedProject.value as? String
-        reachProjectControl(renamedProject, in: app)
-        renamedProject.tap()
+        tapProjectControl(renamedProject, in: app)
         XCTAssertTrue(edit.waitForExistence(timeout: 10))
-        reachProjectControl(edit, in: app)
-        edit.tap()
+        tapProjectControl(edit, in: app)
         try verifyProjectTextFields(fields, in: app, phase: "renamed-cold-start", language: language, marker: marker, category: category, categoryLabel: categoryLabel)
-        reachProjectControl(cancel, in: app)
-        cancel.tap()
+        tapProjectControl(cancel, in: app)
     }
 
     func testEnglishProjectTextFieldsSurviveColdStartCancelAndRename() throws {
@@ -548,15 +617,13 @@ final class KeepAnyUITests: XCTestCase {
         XCTAssertTrue(assets.waitForExistence(timeout: 30))
         assets.tap()
         let addAsset = app.buttons["Add asset"].firstMatch
-        reachProjectControl(addAsset, in: app)
-        addAsset.tap()
+        tapProjectControl(addAsset, in: app)
         app.buttons["Continue"].firstMatch.tap()
         let name = app.textFields["Name"].firstMatch
         XCTAssertTrue(name.waitForExistence(timeout: 10))
         replaceProjectText(name, with: marker, in: app)
         let save = app.buttons["Save"].firstMatch
-        reachProjectControl(save, in: app)
-        save.tap()
+        tapProjectControl(save, in: app)
         let project = app.links.matching(NSPredicate(format: "label CONTAINS %@", marker)).firstMatch
         XCTAssertTrue(project.waitForExistence(timeout: 20), "The isolated project must be saved through the actual UI before selecting scope")
         capture(app, "ios-mcp-prepare-en-project-created")
@@ -564,14 +631,12 @@ final class KeepAnyUITests: XCTestCase {
         app.links["More"].firstMatch.tap()
         let access = app.links.matching(NSPredicate(format: "label BEGINSWITH %@", "Assistant access")).firstMatch
         XCTAssertTrue(access.waitForExistence(timeout: 10))
-        reachProjectControl(access, in: app)
-        access.tap()
+        tapProjectControl(access, in: app)
         let noConnection = app.staticTexts["No active local connection"].firstMatch
         XCTAssertTrue(noConnection.waitForExistence(timeout: 10))
         capture(app, "ios-mcp-prepare-en-no-initial-grant")
         let configure = app.links["Configure local access"].firstMatch
-        reachProjectControl(configure, in: app)
-        configure.tap()
+        tapProjectControl(configure, in: app)
         let address = app.textFields["This device’s private IPv4 address"].firstMatch
         let nativeControlsAvailable = address.waitForExistence(timeout: 15)
         captureHierarchy(app, "ios-mcp-prepare-en-settings-before-scope-AX")
@@ -580,8 +645,7 @@ final class KeepAnyUITests: XCTestCase {
         XCTAssertEqual(selected.count, 1, "Only the newly created synthetic project can be the selected scope")
         guard let selected = selected.first else { return }
         XCTAssertFalse(mcpCheckboxIsChecked(selected))
-        reachProjectControl(selected, in: app)
-        selected.tap()
+        tapProjectControl(selected, in: app)
         XCTAssertTrue(mcpCheckboxIsChecked(selected))
         replaceProjectText(address, with: "127.0.0.1", in: app)
 
@@ -607,7 +671,7 @@ final class KeepAnyUITests: XCTestCase {
         XCTAssertTrue(prepare.waitForExistence(timeout: 10))
         reachProjectControl(prepare, in: app)
         XCTAssertTrue(prepare.isEnabled)
-        prepare.tap()
+        tapProjectControl(prepare, in: app)
         let ready = app.staticTexts[readyText].firstMatch
         let reachedReady = ready.waitForExistence(timeout: 45)
         capture(app, "ios-mcp-prepare-en-prepare-result")
@@ -624,7 +688,7 @@ final class KeepAnyUITests: XCTestCase {
         reachProjectControl(stop, in: app)
         capture(app, "ios-mcp-prepare-en-ready-activation-disabled")
         XCTAssertTrue(stop.isEnabled)
-        stop.tap()
+        tapProjectControl(stop, in: app)
         XCTAssertTrue(export.waitForNonExistence(timeout: 15), "Stop must discard the real prepared pairing file")
         XCTAssertTrue(activate.waitForNonExistence(timeout: 15))
         XCTAssertTrue(ready.waitForNonExistence(timeout: 15))
@@ -634,8 +698,7 @@ final class KeepAnyUITests: XCTestCase {
         captureHierarchy(app, "ios-mcp-prepare-en-explicitly-stopped-AX")
         app.links["More"].firstMatch.tap()
         XCTAssertTrue(access.waitForExistence(timeout: 10))
-        reachProjectControl(access, in: app)
-        access.tap()
+        tapProjectControl(access, in: app)
         XCTAssertTrue(noConnection.waitForExistence(timeout: 10))
         XCTAssertFalse(app.staticTexts["Access granted"].exists)
         capture(app, "ios-mcp-prepare-en-no-final-grant")
