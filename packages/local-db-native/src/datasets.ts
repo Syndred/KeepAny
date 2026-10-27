@@ -22,6 +22,15 @@ export class NativeDatasetManager {
   private listeners = new Set<(event: 'active' | 'catalog') => void>();
   private constructor(private control: SqlDriver, private factory: DatasetFactory, private exists: (name: string) => Promise<boolean>, private discard?: (name: string) => Promise<void>) {}
   static async open(control: SqlDriver, factory: DatasetFactory, exists: (name: string) => Promise<boolean>, discard?: (name: string) => Promise<void>): Promise<NativeDatasetManager> {
+    // Existing control databases use 0; 1 is also supported. Never initialize
+    // an unknown future schema or replace its active dataset with an empty one.
+    try {
+      const [{ user_version: version }] = await control.query<{ user_version: number }>('PRAGMA user_version');
+      if (version > 1) throw Error('native-schema-newer');
+    } catch (error) {
+      await control.close().catch(() => {});
+      throw error;
+    }
     await control.execute('BEGIN IMMEDIATE');
     try { await control.execute(`
       CREATE TABLE IF NOT EXISTS local_datasets(name TEXT PRIMARY KEY, created_at TEXT NOT NULL, phase TEXT NOT NULL);

@@ -585,3 +585,188 @@ it('restores into a verified new dataset, preserves the source after interruptio
   slots.delete('keepany-v1');
   await expect(manager.openActive()).rejects.toThrow('native-dataset-missing');
 }, 10_000);
+
+// The version comes from an actual random disk database, not a mocked PRAGMA.
+// The adapter delegates all SQL to Node SQLite; this does not test Capacitor or
+// Android/iOS connection setup. Keep the entire logical schema and file set.
+function futureSchemaDriver(path: string, trace: string[] = []) {
+  const database = new DatabaseSync(path);
+  let closed = false;
+  const driver: SqlDriver = {
+    uri: pathToFileURL(path).href,
+    async execute(sql) { trace.push('execute'); database.exec(sql); },
+    async query<T extends SqlRow>(sql: string, values = []) { trace.push(sql === 'PRAGMA user_version' ? 'version' : 'query'); return database.prepare(sql).all(...values) as T[]; },
+    async run(sql, values = []) { trace.push('run'); return Number(database.prepare(sql).run(...values).changes); },
+    async close() { trace.push('close'); database.close(); closed = true; },
+  };
+  return { database, driver, isClosed: () => closed };
+}
+function futureSchemaSnapshot(database: DatabaseSync) {
+  const schema = database.prepare('SELECT name,type,tbl_name,sql FROM sqlite_master ORDER BY name').all();
+  return {
+    version: database.prepare('PRAGMA user_version').get(),
+    schema,
+    tables: Object.fromEntries(schema.filter(item => item.type === 'table').map(item => {
+      const name = String(item.name);
+      return [name, database.prepare(`SELECT * FROM "${name.replaceAll('"', '""')}" ORDER BY rowid`).all()];
+    })),
+  };
+}
+async function futureSchemaFileHashes(files: PersistentFiles) {
+  const result: Array<{ path: string; size: number; sha256: string }> = [];
+  for (const path of (await files.list()).sort()) {
+    const bytes = await files.read(path);
+    result.push({ path, size: bytes.length, sha256: Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', bytes as BufferSource)), value => value.toString(16).padStart(2, '0')).join('') });
+  }
+  return result;
+}
+
+it('M0-03/X-07 refuses a future on-disk data schema through openActive without changing rows, original files, control pointer or creating fallback storage', async () => {
+  const { fileURLToPath } = await import('node:url');
+  const { NativeDatasetManager } = await import('./datasets');
+  const { openRepositoryFromBackend } = await import('../../local-db/src');
+  const { store, db, files } = await fixture();
+  const path = fileURLToPath(store.driver.uri), root = dirname(path);
+  // Reuse the existing local-db synthetic image fixture; no real user input.
+  const png = Uint8Array.from(Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aGdEAAAAASUVORK5CYII=', 'base64'));
+  const imageId = await store.putFile(png, 'future-schema-original.png', 'image/png');
+  const asset = { ...newAsset('item'), name: 'Synthetic future-schema item', title: 'Preserved legacy title',
+    attachments: [imageId], itemMedia: { coverId: imageId, detailIds: [], receiptIds: [] } };
+  const original: NativeRecord = { id: `asset:${asset.id}`, type: 'asset', payload: JSON.stringify(asset), updatedAt: Date.now() };
+  await store.saveRecords([{ next: original, expected: null }]);
+  await store.saveSideRow('intakeReview', { id: 'future-schema-review', originalText: 'Synthetic review remains unchanged' } as { id: string });
+  const vault = new VaultSession(store.vaultPersistence());
+  await vault.initialize(); await vault.create('Synthetic-future-schema-master'); vault.lock();
+  const pointers = db.prepare('SELECT * FROM passwordVault').all();
+  expect(pointers).toHaveLength(1);
+  expect(await futureSchemaFileHashes(files)).toHaveLength(2);
+
+  const control = futureSchemaDriver(join(root, 'control.sqlite'));
+  const name = `keepany-data-${crypto.randomUUID()}`, requests: string[] = [], trace: string[] = [];
+  let attempted: ReturnType<typeof futureSchemaDriver> | undefined;
+  let unexpectedlyOpened: NativeStore | undefined;
+  try {
+    const manager = await NativeDatasetManager.open(control.driver, async requested => {
+      requests.push(requested);
+      if (requested !== name) throw Error('synthetic-unexpected-dataset');
+      attempted = futureSchemaDriver(path, trace);
+      unexpectedlyOpened = await NativeStore.open(attempted.driver, files);
+      opened.add(unexpectedlyOpened);
+      const side = new NativeFileStore(requested, unexpectedlyOpened);
+      return openRepositoryFromBackend(side.records, side);
+    }, async requested => requested === name);
+    // Fixture construction only: emulate a future release already owning this
+    // pointer. Runtime actions below use the actual manager/store entry points.
+    control.database.prepare("INSERT INTO local_datasets(name,created_at,phase) VALUES(?,?,'active')").run(name, new Date().toISOString());
+    control.database.prepare("UPDATE local_datasets SET phase='retained' WHERE name='keepany-v1'").run();
+    control.database.prepare('UPDATE active_dataset SET name=?,initialized=1 WHERE id=1').run(name);
+    db.exec("CREATE TABLE future_schema_canary(id TEXT PRIMARY KEY, title TEXT NOT NULL); INSERT INTO future_schema_canary VALUES('future-one','Synthetic future canary'); PRAGMA user_version=77;");
+    const beforeData = futureSchemaSnapshot(db), beforeControl = futureSchemaSnapshot(control.database);
+    const beforeFiles = await futureSchemaFileHashes(files);
+    await store.close(); opened.delete(store);
+    const beforeDataBytes = await readFile(path), beforeControlBytes = await readFile(join(root, 'control.sqlite'));
+    const beforeNames = (await readdir(root)).sort();
+
+    await expect(manager.openActive()).rejects.toThrow('native-schema-newer');
+    expect(requests).toEqual([name]);
+    expect(trace).toEqual(['version', 'close']);
+    expect(attempted?.isClosed()).toBe(true);
+    expect(await readFile(path)).toEqual(beforeDataBytes);
+    expect(await readFile(join(root, 'control.sqlite'))).toEqual(beforeControlBytes);
+    expect((await readdir(root)).sort()).toEqual(beforeNames);
+    expect(await futureSchemaFileHashes(files)).toEqual(beforeFiles);
+    const reopened = new DatabaseSync(path, { readOnly: true });
+    try {
+      expect(futureSchemaSnapshot(reopened)).toEqual(beforeData);
+      expect(reopened.prepare('PRAGMA user_version').get()).toEqual({ user_version: 77 });
+      expect(reopened.prepare('SELECT payload FROM records WHERE id=?').get(original.id)?.payload).toBe(original.payload);
+      expect(reopened.prepare('SELECT * FROM passwordVault').all()).toEqual(pointers);
+    } finally { reopened.close(); }
+    expect(futureSchemaSnapshot(control.database)).toEqual(beforeControl);
+    expect((await manager.list()).find(dataset => dataset.active)?.name).toBe(name);
+  } finally {
+    vault.lock();
+    if (unexpectedlyOpened) { await unexpectedlyOpened.close(); opened.delete(unexpectedlyOpened); }
+    if (attempted && !attempted.isClosed()) await attempted.driver.close();
+    await control.driver.close();
+  }
+}, 20_000);
+
+it('M0-03/X-07 refuses a future on-disk control schema before any write or factory call and preserves its complete active metadata', async () => {
+  const { NativeDatasetManager } = await import('./datasets');
+  const root = await mkdtemp(join(tmpdir(), 'keepany-future-control-')); roots.push(root);
+  const path = join(root, 'control.sqlite'), trace: string[] = [];
+  const control = futureSchemaDriver(path, trace);
+  let factoryCalls = 0, existsCalls = 0;
+  const factory = async () => { factoryCalls++; throw Error('synthetic-unexpected-factory'); };
+  const exists = async () => { existsCalls++; return true; };
+  try {
+    await NativeDatasetManager.open(control.driver, factory, exists);
+    const name = `keepany-data-${crypto.randomUUID()}`;
+    control.database.prepare("INSERT INTO local_datasets(name,created_at,phase) VALUES(?,?,'active')").run(name, new Date().toISOString());
+    control.database.prepare("UPDATE local_datasets SET phase='retained' WHERE name='keepany-v1'").run();
+    control.database.prepare('UPDATE active_dataset SET name=?,initialized=1 WHERE id=1').run(name);
+    control.database.prepare('INSERT INTO native_restores(id,database_name,previous_name,archive_hash,fingerprint,phase) VALUES(?,?,?,?,?,?)')
+      .run(crypto.randomUUID(), `keepany-data-${crypto.randomUUID()}`, name, 'a'.repeat(64), 'b'.repeat(64), 'prepared');
+    control.database.exec("CREATE TABLE future_control_canary(id TEXT PRIMARY KEY, title TEXT NOT NULL); INSERT INTO future_control_canary VALUES('future-one','Synthetic future control title'); PRAGMA user_version=77;");
+    const before = futureSchemaSnapshot(control.database), beforeBytes = await readFile(path), beforeNames = (await readdir(root)).sort();
+    trace.length = 0;
+    await expect(NativeDatasetManager.open(control.driver, factory, exists)).rejects.toThrow('native-schema-newer');
+    expect(trace).toEqual(['version', 'close']);
+    expect(control.isClosed()).toBe(true);
+    expect(factoryCalls).toBe(0); expect(existsCalls).toBe(0);
+    expect(await readFile(path)).toEqual(beforeBytes);
+    expect((await readdir(root)).sort()).toEqual(beforeNames);
+    const reopened = new DatabaseSync(path, { readOnly: true });
+    try { expect(futureSchemaSnapshot(reopened)).toEqual(before); expect(reopened.prepare('PRAGMA user_version').get()).toEqual({ user_version: 77 }); }
+    finally { reopened.close(); }
+  } finally { if (!control.isClosed()) await control.driver.close(); }
+});
+
+it.each([0, 1])('opens supported control schema %i without changing its version or existing complete metadata', async version => {
+  const { NativeDatasetManager } = await import('./datasets');
+  const root = await mkdtemp(join(tmpdir(), 'keepany-known-control-')); roots.push(root);
+  const path = join(root, 'control.sqlite'), control = futureSchemaDriver(path);
+  let factoryCalls = 0, existsCalls = 0;
+  const factory = async () => { factoryCalls++; throw Error('synthetic-unexpected-factory'); };
+  const exists = async () => { existsCalls++; return true; };
+  try {
+    control.database.exec(`PRAGMA user_version=${version}`);
+    await NativeDatasetManager.open(control.driver, factory, exists);
+    const name = `keepany-data-${crypto.randomUUID()}`;
+    control.database.prepare("INSERT INTO local_datasets(name,created_at,phase) VALUES(?,?,'active')").run(name, new Date().toISOString());
+    control.database.prepare("UPDATE local_datasets SET phase='retained' WHERE name='keepany-v1'").run();
+    control.database.prepare('UPDATE active_dataset SET name=?,initialized=1 WHERE id=1').run(name);
+    control.database.prepare('INSERT INTO native_restores(id,database_name,previous_name,archive_hash,fingerprint,phase) VALUES(?,?,?,?,?,?)')
+      .run(crypto.randomUUID(), `keepany-data-${crypto.randomUUID()}`, name, 'a'.repeat(64), 'b'.repeat(64), 'prepared');
+    const before = futureSchemaSnapshot(control.database), beforeBytes = await readFile(path);
+    const manager = await NativeDatasetManager.open(control.driver, factory, exists);
+    expect(futureSchemaSnapshot(control.database)).toEqual(before);
+    expect(control.database.prepare('PRAGMA user_version').get()).toEqual({ user_version: version });
+    expect(await readFile(path)).toEqual(beforeBytes);
+    expect((await manager.list()).find(dataset => dataset.active)?.name).toBe(name);
+    expect(factoryCalls).toBe(0); expect(existsCalls).toBe(0);
+  } finally { await control.driver.close(); }
+});
+
+it('preserves an actual SQLite control PRAGMA read error while attempting only its owned connection close', async () => {
+  const { NativeDatasetManager } = await import('./datasets');
+  const root = await mkdtemp(join(tmpdir(), 'keepany-control-query-failure-')); roots.push(root);
+  const trace: string[] = [], control = futureSchemaDriver(join(root, 'control.sqlite'), trace);
+  // A genuine closed SQLite handle makes PRAGMA fail, then close also fails.
+  // This is a C lifecycle error case, not an Android/iOS I/O fault injection.
+  control.database.close();
+  let firstReadError: unknown, returnedError: unknown, factoryCalls = 0, existsCalls = 0;
+  const failed: SqlDriver = { ...control.driver,
+    async query<T extends SqlRow>(sql: string, values = []) {
+      try { return await control.driver.query<T>(sql, values); }
+      catch (error) { firstReadError = error; throw error; }
+    } };
+  try {
+    await NativeDatasetManager.open(failed, async () => { factoryCalls++; throw Error('synthetic-unexpected-factory'); }, async () => { existsCalls++; return true; });
+  } catch (error) { returnedError = error; }
+  expect(firstReadError).toBeInstanceOf(Error);
+  expect(returnedError === firstReadError).toBe(true);
+  expect(trace).toEqual(['version', 'close']);
+  expect(factoryCalls).toBe(0); expect(existsCalls).toBe(0);
+});
