@@ -1546,6 +1546,15 @@ return repositoryGate6.saveEntityUnlocked(type, value, expectedPayload, subscrip
     }
   }
 
+  async deleteAssetIfCurrent(expected: Asset): Promise<RecordRow> {
+    const snapshot = entitySchemas.asset.parse(expected);
+    if (snapshot.deleted || snapshot.purged) throw Error('asset-stale');
+    return withRenewalLock(`keepany-renewal:${this.records.name}`, async () => {
+      await this.settleRenewalJournals();
+      return this.saveAssetIfCurrent(snapshot, { ...snapshot, deleted: true, updatedAt: new Date().toISOString() });
+    });
+  }
+
   async deleteEntity(type: EntityType, id: string): Promise<RecordRow> {
     return withRenewalLock(`keepany-renewal:${this.records.name}`, async () => {
       if (type === 'asset' || type === 'history') await this.settleRenewalJournals();
@@ -3052,6 +3061,7 @@ export async function previewTrashPurge(targets: readonly TrashTarget[]) { retur
 export async function purgeTrash(plan: TrashPurgePlan) { return (await defaultRepository()).purgeTrash(plan); }
 export async function allRecords() { return (await defaultRepository()).allRecords(); }
 export async function deleteEntity(type: EntityType, id: string) { return (await defaultRepository()).deleteEntity(type, id); }
+export async function deleteAssetIfCurrent(expected: Asset) { return (await defaultRepository()).deleteAssetIfCurrent(expected); }
 export async function restoreEntity(type: EntityType, id: string) { return (await defaultRepository()).restoreEntity(type, id); }
 export async function putFile(file: File) { return (await defaultRepository()).putFile(file); }
 export async function fileUrl(id: string) { return (await defaultRepository()).fileUrl(id); }

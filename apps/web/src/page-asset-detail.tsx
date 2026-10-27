@@ -28,7 +28,7 @@ import {
 import { buildImpactTasks, upgradeLegacyImpactTasks } from "../../../packages/domain/src/impact";
 import {
 	cleanupUnreferencedFile,
-	deleteEntity,
+	deleteAssetIfCurrent,
 	fileUrl,
 	localRepository,
 	putFile,
@@ -319,10 +319,18 @@ export function AssetDetail() {
 		const frame = requestAnimationFrame(() => document.getElementById(detailHash)?.scrollIntoView({ block: "start" }));
 		return () => cancelAnimationFrame(frame);
 	}, [asset?.id, asset?.kind, detailHash]);
-	const [deleteOpen, setDeleteOpen] = useState(false);
+	const [deleteBase, setDeleteBase] = useState<Asset | null>(null);
 	const [deleteError, setDeleteError] = useState("");
 	const [deleteBusy, setDeleteBusy] = useState(false);
 	const deleteInFlight = useRef(false);
+	const deleteScope = useRef({ id: params.id, kind, active: true });
+	useEffect(() => {
+		const scope = { id: params.id, kind, active: true };
+		deleteScope.current = scope;
+		setDeleteBase(null);
+		setDeleteError("");
+		return () => { scope.active = false; };
+	}, [params.id, kind]);
 	const [reactivateProjectBase, setReactivateProjectBase] = useState<Asset | null>(null);
 	const [reactivateProjectBusy, setReactivateProjectBusy] = useState(false);
 	const [reactivateProjectError, setReactivateProjectError] = useState("");
@@ -712,16 +720,21 @@ export function AssetDetail() {
 		} finally { reactivateProjectInFlight.current = false; setReactivateProjectBusy(false); }
 	}
 	async function confirmDelete() {
-		if (!asset || deleteInFlight.current) return;
+		if (!deleteBase || deleteBase.id !== params.id || deleteBase.kind !== kind || deleteInFlight.current) return;
+		const expected = deleteBase;
+		const scope = deleteScope.current;
+		if (!scope.active || scope.id !== expected.id || scope.kind !== expected.kind) return;
 		deleteInFlight.current = true;
 		setDeleteBusy(true);
 		setDeleteError("");
 		try {
-			await deleteEntity("asset", asset.id);
-			setDeleteOpen(false);
+			await deleteAssetIfCurrent(expected);
+			if (!scope.active || scope !== deleteScope.current) return;
+			setDeleteBase(null);
 			await navigate({ to: "/assets/$kind", params: { kind } });
 			notify(t("saved"));
 		} catch (error) {
+			if (!scope.active || scope !== deleteScope.current) return;
 			const reason = error instanceof Error ? error.message : "";
 			setDeleteError(t(["asset-stale", "attachment-missing"].includes(reason) ? "assetDeleteStale" : "error"));
 		} finally {
@@ -1435,7 +1448,7 @@ export function AssetDetail() {
 				<Button variant="primary" onClick={() => setSubmissionEdit(true)}><Plus size={14} />{t("addSubmission")}</Button>
 				<Button asChild><Link to="/assets/project/$id/workflow/$flow" params={{ id: asset.id, flow: "brand" }}>{t("workflowBrandEntry")}</Link></Button>
 				<Button asChild><Link to="/assets/project/$id/workflow/$flow" params={{ id: asset.id, flow: "close" }}>{t("workflowCloseEntry")}</Link></Button>
-				<Button variant="danger" disabled={deleteBusy} onClick={() => { setDeleteError(""); setDeleteOpen(true); }}>{t("delete")}</Button>
+				<Button variant="danger" disabled={deleteBusy} onClick={() => { setDeleteError(""); setDeleteBase(structuredClone(asset)); }}>{t("delete")}</Button>
 			</div>}
 			<div className="page-header">
 				<div>
@@ -1463,7 +1476,7 @@ export function AssetDetail() {
 					<Button
 						variant="danger"
 						disabled={deleteBusy}
-						onClick={() => { setDeleteError(""); setDeleteOpen(true); }}
+						onClick={() => { setDeleteError(""); setDeleteBase(structuredClone(asset)); }}
 					>
 						{t("delete")}
 					</Button>
@@ -1479,18 +1492,19 @@ export function AssetDetail() {
 				{reactivateProjectError && <p className="field-error" role="alert">{reactivateProjectError}</p>}
 				<div className="actions"><Button disabled={reactivateProjectBusy} onClick={() => setReactivateProjectBase(null)}>{t("cancel")}</Button><Button variant="primary" disabled={reactivateProjectBusy || reactivateProjectStale} onClick={() => void confirmProjectReactivation()}>{t("reactivateProject")}</Button></div>
 			</Dialog>}
-			{deleteOpen && (
+			{deleteBase && deleteBase.id === asset.id && (
 				<Dialog
 					className={kind === "account" ? "account-detail-dialog" : undefined}
 					title={t("delete")}
+					closeDisabled={deleteBusy}
 					onClose={() => {
-						if (!deleteInFlight.current) setDeleteOpen(false);
+						if (!deleteInFlight.current) setDeleteBase(null);
 					}}
 				>
 					<p>{t(kind === "account" ? "accountTrashConfirm" : "deleteConfirm")}</p>
 					{deleteError && <p className="field-error" role="alert">{deleteError}</p>}
 					<div className="actions">
-						<Button disabled={deleteBusy} onClick={() => setDeleteOpen(false)}>
+						<Button disabled={deleteBusy} onClick={() => setDeleteBase(null)}>
 							{t("cancel")}
 						</Button>
 						<Button
