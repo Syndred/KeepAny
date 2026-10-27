@@ -193,6 +193,7 @@ export function AiSettingsPanel() {
 	const settingsRef = useRef(ai.settings);
 	const savingRef = useRef(false);
 	const saveGeneration = useRef(0);
+	const expectedSettings = useRef<ReturnType<typeof normalizeAiSettings> | null | undefined>(undefined);
 	draftRef.current = draft;
 	settingsRef.current = ai.settings;
 	const invalidateTest = useCallback(() => {
@@ -203,7 +204,8 @@ export function AiSettingsPanel() {
 		setTestResult(null);
 	}, []);
 	useEffect(() => {
-		saveGeneration.current += 1;
+		// The confirmed publication of this save is not an external draft change.
+		if (expectedSettings.current === undefined || JSON.stringify(ai.settings) !== JSON.stringify(expectedSettings.current)) saveGeneration.current += 1;
 		if (ai.settings) setDraft({ ...ai.settings, apiKey: "" });
 		else setDraft(createDefaultAiConfiguration("deepseek", "vault"));
 	}, [ai.settings]);
@@ -316,7 +318,7 @@ export function AiSettingsPanel() {
 					return;
 				}
 			}
-			await ai.saveConfiguration({
+			const configuration = {
 				...input,
 				...(savedEntryId ? { vaultEntryId: savedEntryId } : {}),
 				apiKey:
@@ -325,7 +327,9 @@ export function AiSettingsPanel() {
 					hasSessionKey
 						? undefined
 						: input.apiKey,
-			});
+			};
+			expectedSettings.current = normalizeAiSettings(configuration);
+			await ai.saveConfiguration(configuration);
 			if (!mounted.current || saveGeneration.current !== current) return;
 			setDraft({
 				...input,
@@ -347,6 +351,7 @@ export function AiSettingsPanel() {
 				setError("aiSettingsVaultConfigSaveFailed");
 			} else if (isCurrent()) reportError(caught, "aiSettingsVaultSaveFailed");
 		} finally {
+			expectedSettings.current = undefined;
 			savingRef.current = false;
 			if (mounted.current) setSaving(false);
 		}
@@ -360,6 +365,7 @@ export function AiSettingsPanel() {
 		setMessage("");
 		setError("");
 		try {
+			expectedSettings.current = null;
 			await ai.clearConfiguration();
 			if (!mounted.current || saveGeneration.current !== current) return;
 			setDraft(createDefaultAiConfiguration("deepseek", "vault"));
@@ -368,6 +374,7 @@ export function AiSettingsPanel() {
 		} catch (caught) {
 			if (mounted.current) reportError(caught);
 		} finally {
+			expectedSettings.current = undefined;
 			savingRef.current = false;
 			if (mounted.current) setSaving(false);
 		}
