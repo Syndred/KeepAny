@@ -39,16 +39,18 @@ test("sidebar organizer shows the original two-column workflow and saves order, 
 	await page.screenshot({ path: join(tmpdir(), "keepany-organize-en-1144.png"), fullPage: true });
 
 	await nav.getByRole("checkbox", { name: "Show sidebar item: Accounts" }).uncheck();
-	await expect.poll(() => preference(page, "sidebarHidden")).toContain("account");
-	await nav.getByRole("button", { name: "Move up Projects" }).click();
-	await expect.poll(() => preference(page, "sidebarOrder")).toEqual(["overview", "project", "tasks", "account", "subscription", "item", "vault"]);
+	await expect.poll(() => preference(page, "sidebarHidden")).toContain("accounts");
+	await nav.getByRole("button", { name: "Move up Assets" }).click();
+	await expect.poll(() => preference(page, "sidebarOrder")).toEqual(["overview", "assets", "tasks", "accounts"]);
 	await page.reload();
 	await expect(nav.getByRole("checkbox", { name: "Show sidebar item: Accounts" })).not.toBeChecked();
-	await expect(nav.locator(".sortable-nav-item").nth(1)).toContainText("Projects");
+	await expect(nav.locator(".sortable-nav-item").nth(1)).toContainText("Assets");
 
 	await editor.getByLabel("Collection name").fill("Creative studio");
+	await expect(editor.getByLabel("Collection name")).toHaveValue("Creative studio");
 	await editor.getByRole("checkbox", { name: "Organize project" }).check();
 	await editor.getByRole("checkbox", { name: "Organize account" }).check();
+	await expect(editor.getByLabel("Collection name")).toHaveValue("Creative studio");
 	await editor.getByRole("button", { name: "Save collection" }).click();
 	await expect(page).toHaveURL(/\/collections\/[0-9a-f-]+$/);
 	await expect(page.getByText("2 assets")).toBeVisible();

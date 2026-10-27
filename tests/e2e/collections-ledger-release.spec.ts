@@ -11,9 +11,9 @@ const kinds = ["project", "account", "subscription", "item", "vault"] as const;
 const names = Object.fromEntries(kinds.map((kind) => [kind, `Travel ${kind}`]));
 const longCategory = "C".repeat(60);
 const copyFor = (zh: boolean) => zh ? {
-	add: "新增", name: "名称", save: "保存", create: "新建分类", newCategory: "新增分类", edit: "编辑分类", collectionName: "分类名称", collectionSave: "保存分类", another: "新建另一个", cancel: "取消", move: "移至回收站", restore: "恢复", statusChange: "记录状态变更", statusSave: "保存状态", idle: "闲置", backup: "创建备份", download: "保存备份文件", preview: "预览", confirm: /确认 ·/, restored: /已恢复 \d+ 条记录/, sidebar: "侧边栏入口", hideVault: "显示侧栏入口: 密码库", moveItem: "上移 实物", item: "实物", subscription: "订阅", duplicate: "已存在",
+	add: "新增", name: "名称", save: "保存", create: "新建分类", newCategory: "新增分类", edit: "编辑分类", collectionName: "分类名称", collectionSave: "保存分类", another: "新建另一个", cancel: "取消", move: "移至回收站", restore: "恢复", statusChange: "记录状态变更", statusSave: "保存状态", idle: "闲置", backup: "创建备份", download: "保存备份文件", preview: "预览", confirm: /确认 ·/, restored: /已恢复 \d+ 条记录/, sidebar: "侧边栏入口", hideAccounts: "显示侧栏入口: 账号", moveAssets: "上移 资产", item: "实物", subscription: "订阅", assets: "资产", tasks: "待办", duplicate: "已存在",
 } : {
-	add: "Add", name: "Name", save: "Save", create: "New collection", newCategory: "New category", edit: "Edit collection", collectionName: "Collection name", collectionSave: "Save collection", another: "Create another", cancel: "Cancel", move: "Move to trash", restore: "Restore", statusChange: "Record status change", statusSave: "Save status", idle: "Idle", backup: "Create backup", download: "Save backup file", preview: "Preview", confirm: /Confirm ·/, restored: /Restored \d+ records/, sidebar: "Sidebar sections", hideVault: "Show sidebar item: Password vault", moveItem: "Move up Items", item: "Items", subscription: "Subscriptions", duplicate: "already exists",
+	add: "Add", name: "Name", save: "Save", create: "New collection", newCategory: "New category", edit: "Edit collection", collectionName: "Collection name", collectionSave: "Save collection", another: "Create another", cancel: "Cancel", move: "Move to trash", restore: "Restore", statusChange: "Record status change", statusSave: "Save status", idle: "Idle", backup: "Create backup", download: "Save backup file", preview: "Preview", confirm: /Confirm ·/, restored: /Restored \d+ records/, sidebar: "Sidebar sections", hideAccounts: "Show sidebar item: Accounts", moveAssets: "Move up Assets", item: "Items", subscription: "Subscriptions", assets: "Assets", tasks: "Tasks", duplicate: "already exists",
 };
 type Copy = ReturnType<typeof copyFor>;
 type SavedCollection = { id: string; name: string; assetIds: string[] };
@@ -146,9 +146,9 @@ for (const variant of [{ locale: "zh-CN", width: 390 }, { locale: "en-US", width
 			await page.goto("/collections");
 			await assertSidebarCategory(page, variant.width);
 			const sections = page.getByRole("region", { name: copy.sidebar, exact: true });
-			await expect(sections.getByRole("checkbox", { name: copy.hideVault, exact: true })).toHaveCSS("accent-color", "rgb(255, 210, 76)");
-			await sections.getByRole("button", { name: copy.moveItem, exact: true }).click();
-			await sections.getByRole("checkbox", { name: copy.hideVault, exact: true }).uncheck();
+			await expect(sections.getByRole("checkbox", { name: copy.hideAccounts, exact: true })).toHaveCSS("accent-color", "rgb(255, 210, 76)");
+			await sections.getByRole("button", { name: copy.moveAssets, exact: true }).click();
+			await sections.getByRole("checkbox", { name: copy.hideAccounts, exact: true }).uncheck();
 			const editor = page.getByRole("region", { name: copy.create, exact: true });
 			await editor.getByLabel(copy.collectionName, { exact: true }).fill("Travel cabinet");
 			for (const kind of kinds) await editor.getByRole("checkbox", { name: names[kind], exact: true }).check();
@@ -212,7 +212,7 @@ for (const variant of [{ locale: "zh-CN", width: 390 }, { locale: "en-US", width
 				await restored.goto("/collections");
 				await assertSidebarCategory(restored, variant.width);
 				const restoredSections = restored.getByRole("region", { name: copy.sidebar, exact: true });
-				await expect(restoredSections.getByRole("checkbox", { name: copy.hideVault, exact: true })).not.toBeChecked();
+				await expect(restoredSections.getByRole("checkbox", { name: copy.hideAccounts, exact: true })).not.toBeChecked();
 				const sectionOrder = await restoredSections.locator(".sortable-nav-link").allTextContents();
 				// Read the saved preferences too, without relying on fixture writes or app internals.
 				const after = await download(restored, copy);
@@ -222,7 +222,7 @@ for (const variant of [{ locale: "zh-CN", width: 390 }, { locale: "en-US", width
 					expect(before.preferences.find((row) => row.id === id)).toBeDefined();
 					expect(after.preferences.find((row) => row.id === id)).toEqual(before.preferences.find((row) => row.id === id));
 				}
-				expect(sectionOrder.indexOf(copy.item)).toBeLessThan(sectionOrder.indexOf(copy.subscription));
+				expect(sectionOrder.indexOf(copy.assets)).toBeLessThan(sectionOrder.indexOf(copy.tasks));
 				expect(errors).toEqual([]);
 			} finally { await destination.close(); }
 		} finally { await source.close(); }

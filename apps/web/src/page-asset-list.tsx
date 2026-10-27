@@ -37,6 +37,10 @@ import {
 	validKind,
 } from "./view-shared";
 import { Select, SelectOption } from "./components/ui/select";
+import { AssetMetrics } from "./components/AssetMetrics";
+import { useWorkspaceSummary } from "./use-workspace-summary";
+import type { AssetSummary } from "./workspace-summary";
+import { workspaceReturnKey } from "./workspace-return";
 const AssetEditor = lazy(() =>
 	import("./workflows").then((module) => ({ default: module.AssetEditor })),
 );
@@ -398,6 +402,7 @@ export function ProjectPreview({ asset }: { asset: Asset }) {
 }
 
 function rememberAssetList(asset: Asset, search: string) {
+	sessionStorage.removeItem(workspaceReturnKey);
 	sessionStorage.setItem(`keepany-scroll-${asset.kind}`, String(window.scrollY));
 	sessionStorage.setItem(`keepany-scroll-filter-${asset.kind}`, JSON.stringify({
 		category: sessionStorage.getItem(`keepany-category-${asset.kind}`) || "",
@@ -406,40 +411,41 @@ function rememberAssetList(asset: Asset, search: string) {
 	}));
 }
 
-function ProjectCard({ asset, search, backlinks }: { asset: Asset; search: string; backlinks: { total: number; pending: number } }) {
+export function ProjectCard({ asset, search, backlinks, summary, onOpen }: { asset: Asset; search: string; backlinks: { total: number; pending: number }; summary?: AssetSummary; onOpen?: () => void }) {
 	const { t } = useTranslation();
 	const repository = asset.category === "repository";
 	const domain = assetDomain(asset.url);
-	return <Link className={`asset-project-card list-row ${repository ? "is-repository" : ""}`} to="/assets/$kind/$id" params={{ kind: asset.kind, id: asset.id }} onClick={() => rememberAssetList(asset, search)}>
+	return <Link className={`asset-project-card list-row ${repository ? "is-repository" : ""}`} to="/assets/$kind/$id" params={{ kind: asset.kind, id: asset.id }} onClick={() => { rememberAssetList(asset, search); onOpen?.(); }}>
 		<div className="asset-project-cover">
 			<ProjectPreview asset={asset} />
 		</div>
 		<div className="asset-project-info"><div className="asset-project-heading"><span className="asset-project-avatar">{Array.from(asset.name)[0]?.toLocaleUpperCase() || "•"}</span><strong>{asset.name}</strong>{asset.status && <span className="chip">{t(asset.status)}</span>}</div>
 			<p>{asset.description || niceCategory(asset.category, t)}</p>
+			<AssetMetrics asset={asset} summary={summary} />
 			<div className="asset-project-foot"><span>{domain || niceCategory(asset.category, t)}</span><span className="asset-project-backlinks">{t("projectCardBacklinks", { count: backlinks.total, pending: backlinks.pending })}<ArrowRight size={14} aria-hidden="true" /></span></div>
 		</div>
 	</Link>;
 }
 
-function AccountCard({ asset, search, connectionCount }: { asset: Asset; search: string; connectionCount: number }) {
+function AccountCard({ asset, search, connectionCount, passwordCount }: { asset: Asset; search: string; connectionCount: number; passwordCount?: number }) {
 	const { t } = useTranslation();
 	const categoryLabel = niceCategory(asset.category || "other", t).trim();
 	const subtitle = [asset.username, asset.contact, asset.description].map((value) => value.trim()).find((value) => value && value !== asset.name.trim());
 	const Icon = asset.category === "email" ? Mail : asset.category === "phone" ? Smartphone : UserRound;
 	return <Link className={`asset-account-card list-row asset-account-${asset.category}`} to="/assets/$kind/$id" params={{ kind: asset.kind, id: asset.id }} onClick={() => rememberAssetList(asset, search)}>
-		<span className="asset-account-avatar"><Icon size={20} /></span><span className="asset-account-summary"><strong>{asset.name}</strong>{subtitle && <small>{subtitle}</small>}<span className="asset-account-tags"><span className="chip">{categoryLabel}</span><span className="chip">{t("accountConnectionCount", { count: connectionCount })}</span></span></span>
+		<span className="asset-account-avatar"><Icon size={20} /></span><span className="asset-account-summary"><strong>{asset.name}</strong>{subtitle && <small>{subtitle}</small>}<span className="asset-account-tags"><span className="chip">{categoryLabel}</span><span className="chip">{t("accountConnectionCount", { count: connectionCount })}</span>{passwordCount !== undefined && <span className="chip">{t("workspacePasswordCount", { count: passwordCount })}</span>}</span></span>
 	</Link>;
 }
 
-function LibraryCard({ asset, search }: { asset: Asset; search: string }) {
+export function LibraryCard({ asset, search, summary, onOpen }: { asset: Asset; search: string; summary?: AssetSummary; onOpen?: () => void }) {
 	const { t, i18n } = useTranslation();
 	const Icon = asset.kind === "subscription" ? CreditCard : asset.kind === "vault" ? Shield : Package;
 	const coverId = asset.kind === "item" ? asset.itemMedia?.coverId : asset.attachments[0];
-	return <Link className="asset-library-card list-row" to="/assets/$kind/$id" params={{ kind: asset.kind, id: asset.id }} onClick={() => rememberAssetList(asset, search)}>
+	return <Link className="asset-library-card list-row" to="/assets/$kind/$id" params={{ kind: asset.kind, id: asset.id }} onClick={() => { rememberAssetList(asset, search); onOpen?.(); }}>
 		<div className="asset-library-cover"><AssetCover asset={asset} imageId={coverId} />{!coverId && <><Icon size={40} strokeWidth={1.7} /><span>{niceCategory(asset.category, t)}</span></>}</div>
 		<div className="asset-library-body"><strong>{asset.name}</strong><small>{asset.description || asset.location || niceCategory(asset.category, t)}</small><div className="asset-library-meta">
-			{asset.kind === "subscription" ? <><span>{money(asset.amount, asset.currency, i18n.language)}</span><span>{asset.interval} {t(asset.cycle)}</span>{asset.dueDate && <span>{t("dueDate")}: {date(asset.dueDate, i18n.language)}</span>}</> : asset.kind === "vault" ? <><span>{niceCategory(asset.category, t)}</span>{asset.url && <span>{asset.url}</span>}</> : <><span>{niceCategory(asset.category, t)}</span>{asset.location && <span>{asset.location}</span>}{asset.warrantyDate && <span>{t("warrantyDate")}: {date(asset.warrantyDate, i18n.language)}</span>}</>}
-		</div><div className="asset-library-foot"><span className="chip">{asset.kind === "item" ? asset.itemLifecycleStatus ? t(`itemStatus_${asset.itemLifecycleStatus}`) : t("itemStatusUnrecorded") : t(asset.status)}</span>{asset.kind === "item" && asset.status !== "active" && <span className="chip">{t(asset.status)}</span>}<ArrowRight size={14} aria-hidden="true" /></div></div>
+			{asset.kind === "subscription" ? <><span>{money(asset.amount, asset.currency, i18n.language)}</span><span>{asset.interval} {t(asset.cycle)}</span>{asset.dueDate && <span>{t("dueDate")}: {date(asset.dueDate, i18n.language)}</span>}</> : asset.kind === "vault" ? <>{asset.category && <span>{niceCategory(asset.category, t)}</span>}{asset.url && <span>{asset.url}</span>}</> : <>{asset.category && <span>{niceCategory(asset.category, t)}</span>}{asset.location && <span>{asset.location}</span>}{asset.warrantyDate && <span>{t("warrantyDate")}: {date(asset.warrantyDate, i18n.language)}</span>}</>}
+		</div><AssetMetrics asset={asset} summary={summary} /><div className="asset-library-foot"><span className="chip">{asset.kind === "item" ? asset.itemLifecycleStatus ? t(`itemStatus_${asset.itemLifecycleStatus}`) : t("itemStatusUnrecorded") : t(asset.status)}</span>{asset.kind === "item" && asset.status !== "active" && <span className="chip">{t(asset.status)}</span>}<ArrowRight size={14} aria-hidden="true" /></div></div>
 	</Link>;
 }
 
@@ -448,14 +454,30 @@ export function AssetList() {
 		select: (s) => s.matches.at(-1)?.params,
 	}) ?? {}) as { kind?: string };
 	const kind = validKind(rawKind ?? "project");
+	return <AssetKindList kind={kind} />;
+}
+
+export type AccountListFilters = { search: string; category: string; tag: string };
+export function AssetKindList({ kind, beforeList, afterList, passwordCounts, onAccountFiltersChange, privateSearch = false }: {
+	kind: AssetKind; beforeList?: ReactNode; afterList?: ReactNode;
+	passwordCounts?: ReadonlyMap<string, number>;
+	onAccountFiltersChange?: (filters: AccountListFilters) => void;
+	privateSearch?: boolean;
+}) {
 	const { data, search, notify } = useAppContext();
+	const workspace = useWorkspaceSummary();
 	const [accountSearch, setAccountSearch] = useState(() => sessionStorage.getItem("keepany-account-list-search") || "");
 	const accountSearchRef = useRef<HTMLInputElement>(null);
+	const wasPrivateSearch = useRef(privateSearch);
+	useEffect(() => {
+		if (wasPrivateSearch.current && !privateSearch) setAccountSearch(sessionStorage.getItem("keepany-account-list-search") ?? "");
+		wasPrivateSearch.current = privateSearch;
+	}, [privateSearch]);
 	const accountQuery = kind === "account" ? accountSearch : "";
-	const listSearch = accountQuery ? JSON.stringify([search, accountQuery]) : search;
+	const listSearch = privateSearch ? "" : accountQuery ? JSON.stringify([search, accountQuery]) : search;
 	function changeAccountSearch(value: string) {
 		setAccountSearch(value);
-		sessionStorage.setItem("keepany-account-list-search", value);
+		if (!privateSearch) sessionStorage.setItem("keepany-account-list-search", value);
 	}
 	const hash = useRouterState({ select: (state) => state.location.hash });
 	const focusAssetId = hash.startsWith("asset-") ? hash.slice(6) : undefined;
@@ -494,6 +516,7 @@ export function AssetList() {
 		),
 	);
 	const tag = tags[kind] || "";
+	useEffect(() => { onAccountFiltersChange?.({ search: accountSearch, category, tag }); }, [onAccountFiltersChange, accountSearch, category, tag]);
 	const chooseTag = (value: string) => {
 		sessionStorage.setItem(`keepany-tag-${kind}`, value);
 		setTags((prev) => ({ ...prev, [kind]: value }));
@@ -568,8 +591,8 @@ export function AssetList() {
 		<main className={kind === "vault" ? "page vault-page" : "page"}>
 			{kind !== "vault" && <PageTitle
 				eyebrow={kind === "project" ? "PROJECT LIBRARY" : kind === "account" ? "MY ACCOUNTS" : t("brandName")}
-				title={t(kind === "project" ? "projectListTitle" : kind === "account" ? "accountListTitle" : kind === "subscription" ? "subscriptionListTitle" : "itemListTitle")}
-				subtitle={t(kind === "project" ? "projectListSubtitle" : kind === "account" ? "accountListSubtitle" : kind === "item" ? "itemListSubtitle" : "summary")}
+				title={t(kind === "project" ? "projectListTitle" : kind === "account" ? "accountsWorkspace" : kind === "subscription" ? "subscriptionListTitle" : "itemListTitle")}
+				subtitle={t(kind === "project" ? "projectListSubtitle" : kind === "account" ? "workspaceAccountSubtitle" : kind === "item" ? "itemListSubtitle" : "summary")}
 				action={
 					<>
 						{kind === "subscription" && <Button asChild><Link to="/finance">{t("financeViewLedger")}</Link></Button>}
@@ -584,9 +607,10 @@ export function AssetList() {
 				<Suspense fallback={<div className="notice" role="status">{t("pwVaultLoading")}</div>}>
 					<PasswordVaultPanel assets={data.assets} notify={notify} focusAssetId={focusAssetId} />
 				</Suspense>
-				{<><div className="card-header vault-references-header"><h2>{t("vaultReferencesTitle")}</h2><Button size="icon" aria-label={t("vaultLinkEntry")} title={t("vaultLinkEntry")} disabled={data.pendingCategoryEdits.some((pending) => pending.kind === kind)} onClick={() => setEdit(true)}><Plus size={18} /></Button></div>
+				{<><div className="card-header vault-references-header" id="vault-references"><h2>{t("vaultReferencesTitle")}</h2><Button size="icon" aria-label={t("vaultLinkEntry")} title={t("vaultLinkEntry")} disabled={data.pendingCategoryEdits.some((pending) => pending.kind === kind)} onClick={() => setEdit(true)}><Plus size={18} /></Button></div>
 				<div className="notice vault-privacy-note" role="note"><LockKeyhole size={16} aria-hidden="true" /><span>{t("vaultHint")}</span></div></>}
 			</>}
+			{beforeList}
 			{<>
 			<CategoryStrip key={kind} kind={kind} chosen={category} choose={choose} searchControl={kind === "account" ? <div className="asset-account-search">
 				<Search size={18} aria-hidden="true" />
@@ -622,9 +646,9 @@ export function AssetList() {
 				</table> : <div className="vault-reference-empty"><strong>{category || tag || normalizedSearch ? t("noMatches") : t("none")}</strong></div>}
 			</section>) : <section className={`asset-list-content ${kind === "project" ? "asset-project-grid" : kind === "account" ? "asset-account-grid" : "asset-library-grid"}`}>
 				{assets.length ? (
-						assets.map((a) => kind === "project" ? <ProjectCard asset={a} search={listSearch} backlinks={backlinksByAsset.get(a.id) ?? { total: 0, pending: 0 }} key={a.id} /> : kind === "account" ? <AccountCard asset={a} search={listSearch} connectionCount={new Set(data.relations.filter((relation) => !relation.deleted && liveIds.has(relation.from) && liveIds.has(relation.to) && relation.from !== relation.to && (relation.from === a.id || relation.to === a.id)).map((relation) => relation.from === a.id ? relation.to : relation.from)).size} key={a.id} /> : <LibraryCard asset={a} search={listSearch} key={a.id} />)
+						assets.map((a) => kind === "project" ? <ProjectCard asset={a} search={listSearch} summary={workspace.summaries.get(a.id)} backlinks={backlinksByAsset.get(a.id) ?? { total: 0, pending: 0 }} key={a.id} /> : kind === "account" ? <AccountCard asset={a} search={listSearch} passwordCount={passwordCounts?.get(a.id)} connectionCount={new Set(data.relations.filter((relation) => !relation.deleted && liveIds.has(relation.from) && liveIds.has(relation.to) && relation.from !== relation.to && (relation.from === a.id || relation.to === a.id)).map((relation) => relation.from === a.id ? relation.to : relation.from)).size} key={a.id} /> : <LibraryCard asset={a} search={listSearch} summary={workspace.summaries.get(a.id)} key={a.id} />)
 				) : (
-					category || tag || normalizedSearch ? (
+					afterList ? null : category || tag || normalizedSearch ? (
 						<div className="empty"><strong>{t("noMatches")}</strong></div>
 					) : (
 						<Empty />
@@ -632,6 +656,7 @@ export function AssetList() {
 				)}
 			</section>}
 			</>}
+			{afterList}
 			{edit && (
 				<Suspense
 					fallback={

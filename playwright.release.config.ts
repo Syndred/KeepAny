@@ -13,6 +13,7 @@ export default defineConfig({
 	outputDir: "test-results/local-release",
 	testMatch: [
 		"preview-onboarding.spec.ts",
+		"unified-workspaces-release.spec.ts",
 		"core-pages-matrix.spec.ts",
 		"ai-release.spec.ts",
 		"ai-key-persistence.spec.ts",

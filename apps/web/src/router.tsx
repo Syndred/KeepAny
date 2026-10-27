@@ -20,7 +20,17 @@ const taskRoute = createRoute({
 export const listRoute = createRoute({
 	getParentRoute: () => rootRoute,
 	path: "/assets/$kind",
-	component: lazyRouteComponent(() => import("./page-asset-list"), "AssetList"),
+	component: lazyRouteComponent(() => import("./page-workspaces"), "WorkspaceLegacyRoute"),
+});
+const assetsWorkspaceRoute = createRoute({
+	getParentRoute: () => rootRoute,
+	path: "/assets",
+	component: lazyRouteComponent(() => import("./page-workspaces"), "AssetsWorkspace"),
+});
+const accountsWorkspaceRoute = createRoute({
+	getParentRoute: () => rootRoute,
+	path: "/accounts",
+	component: lazyRouteComponent(() => import("./page-workspaces"), "AccountsWorkspace"),
 });
 export const detailRoute = createRoute({
 	getParentRoute: () => rootRoute,
@@ -58,7 +68,7 @@ const collectionDetailRoute = createRoute({
 const financeRoute = createRoute({
 	getParentRoute: () => rootRoute,
 	path: "/finance",
-	component: lazyRouteComponent(() => import("./page-finance"), "FinancePage"),
+	component: lazyRouteComponent(() => import("./page-workspaces"), "FinanceWorkspaceRoute"),
 });
 const intakeRoute = createRoute({
 	getParentRoute: () => rootRoute,
@@ -82,6 +92,8 @@ const routeTree = rootRoute.addChildren([
 	indexRoute,
 	taskRoute,
 	listRoute,
+	assetsWorkspaceRoute,
+	accountsWorkspaceRoute,
 	detailRoute,
 	projectWorkflowRoute,
 	changeImpactRoute,

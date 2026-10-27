@@ -955,11 +955,12 @@ for (const variant of variants) {
 					await restorePage.locator(".mobile-menu").click();
 				await restorePage
 					.getByRole("link", {
-						name: zh ? "密码库" : "Password vault",
+						name: zh ? "账号" : "Accounts",
 						exact: true,
 					})
 					.first()
 					.click();
+				await restorePage.locator(".workspace-navigation").getByRole("link", { name: zh ? "密码管理" : "Passwords", exact: true }).click();
 				await unlock(restorePage, t, nextMaster);
 				await expect(
 					restorePage.locator(

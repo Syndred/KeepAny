@@ -13,6 +13,7 @@ export type SortableNavItem = {
   label: string;
   icon: ComponentType<{ size?: number }>;
   badge?: number;
+  active?: boolean;
   visible?: boolean;
   visibilityLocked?: boolean;
   visibilityLockReason?: string;
@@ -39,7 +40,7 @@ function NavRow({ item, index, count, activePath, onNavigate, onMove, onVisibili
 }) {
   const { t } = useTranslation();
   const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } = useSortable({ id: item.id });
-  const active = item.to === '/' ? activePath === '/' : activePath === item.to || activePath.startsWith(`${item.to}/`);
+  const active = item.active ?? (item.to === '/' ? activePath === '/' : activePath === item.to || activePath.startsWith(`${item.to}/`));
   const Icon = item.icon;
   const visible = item.visible !== false;
 

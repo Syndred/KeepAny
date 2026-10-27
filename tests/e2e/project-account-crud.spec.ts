@@ -284,6 +284,7 @@ test("project and account CRUD, intersecting filters, trash and actual backup re
 		await saveDialog(page);
 
 		const accountDialog = await add(page, "account", account);
+		await selectChoice(accountDialog.getByLabel("Category"), "email");
 		await accountDialog
 			.getByLabel("Username / identifier")
 			.fill("e".repeat(301));
@@ -742,7 +743,7 @@ for (const locale of ["en-US", "zh-CN"] as const) {
 									contactDetails: "联系方式",
 							edit: "编辑",
 							project: "每个项目，都有自己的档案。",
-							account: "每个账号，都有来有往。",
+							account: "账号",
 						}
 					: {
 							add: "Add",
@@ -754,7 +755,7 @@ for (const locale of ["en-US", "zh-CN"] as const) {
 									contactDetails: "Contact details",
 							edit: "Edit",
 							project: "Every project has its own file.",
-							account: "Every account has connections.",
+							account: "Accounts",
 						};
 			try {
 				for (const [kind, label] of [

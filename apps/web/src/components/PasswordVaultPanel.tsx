@@ -45,6 +45,7 @@ type PasswordVaultPanelProps = {
 	assets: Asset[];
 	notify?: (message: string) => void;
 	focusAssetId?: string;
+	embedded?: boolean;
 };
 
 type ManualCopy = { label: string; value: string };
@@ -111,7 +112,9 @@ export function PasswordVaultPanel({
 	assets,
 	notify,
 	focusAssetId,
+	embedded = false,
 }: PasswordVaultPanelProps) {
+	const Heading = embedded ? "h2" : "h1";
 	const { t, i18n } = useTranslation();
 	const { snapshot, session, ensureReady, lock, notice, generatePassword } =
 		usePasswordVault();
@@ -752,7 +755,7 @@ export function PasswordVaultPanel({
 				className={`password-vault-header card-header${snapshot.status === "unlocked" ? " password-vault-header-inline" : ""}`}
 			>
 				<div>
-					<h1>{t("pwVaultTitle")}</h1>
+					<Heading>{t("pwVaultTitle")}</Heading>
 					{vaultStatus}
 				</div>
 			</header>

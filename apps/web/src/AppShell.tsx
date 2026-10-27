@@ -6,6 +6,7 @@ import {
 	Bell,
 	ChevronDown,
 	LayoutDashboard,
+	Layers,
 	Menu,
 	Plus,
 	Search,
@@ -23,7 +24,7 @@ import {
 	SortableNav,
 	type SortableNavItem,
 } from "./components/navigation/SortableNav";
-import { AppContext, icons, kinds, liveAssets } from "./view-shared";
+import { AppContext, kinds, liveAssets } from "./view-shared";
 import { McpRuntimeProvider } from "./mcp-runtime";
 import { PasswordVaultProvider } from "./components/PasswordVaultProvider";
 import { buildGlobalSearchIndex, searchGlobalIndex, type GlobalSearchLabels } from "./global-search";
@@ -33,14 +34,11 @@ import { ReminderRuntime } from "./ReminderRuntime";
 const AiDialog = lazy(() =>
 	import("./workflows").then((module) => ({ default: module.AiDialog })),
 );
-const SIDEBAR_IDS = ["overview", "tasks", ...kinds];
+import { workspaceGroupIds, workspaceNavHidden, workspaceNavIds, workspaceNavOrder, workspacePathGroup } from "./workspace-navigation";
+import { readWorkspaceReturn } from "./workspace-return";
+const SIDEBAR_IDS = workspaceNavIds;
 
-function normalizeHiddenNavIds(value: unknown, ids: string[]): string[] {
-	if (!Array.isArray(value)) return [];
-	const hidden = [...new Set(value.filter((id): id is string => typeof id === "string" && id !== "overview" && ids.includes(id)))];
-	if (kinds.every((kind) => hidden.includes(kind))) return hidden.filter((id) => id !== "project");
-	return hidden;
-}
+const normalizeHiddenNavIds = workspaceNavHidden;
 
 export function AppShell() {
 	const data = useData();
@@ -139,12 +137,8 @@ export function AppShell() {
 			icon: Bell,
 			badge: openTasks,
 		},
-		...kinds.map((kind) => ({
-			id: kind,
-			to: kind === "subscription" ? "/finance" : `/assets/${kind}`,
-			label: t(kind),
-			icon: icons[kind],
-		})),
+		{ id: "assets", to: "/assets", label: t("assetsWorkspace"), icon: Layers, active: workspacePathGroup(pathname) === "assets" },
+		{ id: "accounts", to: "/accounts", label: t("accountsWorkspace"), icon: UserRound, active: workspacePathGroup(pathname) === "accounts" },
 	];
 	const customCategories = data.categories.filter((category) => !category.deleted);
 	const collections = readCollections(data.preferences.find((preference) => preference.id === COLLECTIONS_PREFERENCE_ID)?.value);
@@ -168,6 +162,9 @@ export function AppShell() {
 	const relationReturnKind = sessionStorage.getItem("keepany-relation-return-kind");
 	const hasRelationReturn = Boolean(detailKind && relationReturnId === detailMatch?.[2] && relationReturnKind && kinds.includes(relationReturnKind as (typeof kinds)[number]));
 	const detailReturnKind = hasRelationReturn ? relationReturnKind as (typeof kinds)[number] : detailKind;
+	let detailAssetId: string | undefined;
+	try { detailAssetId = detailMatch ? decodeURIComponent(detailMatch[2]) : undefined; } catch { /* Malformed links have no saved return target. */ }
+	const workspaceReturn = detailAssetId && !hasRelationReturn ? readWorkspaceReturn(detailAssetId) : null;
 	function selectCategory(kind: string, category: string, categoryId: string) {
 		sessionStorage.setItem(`keepany-category-${kind}`, category);
 		sessionStorage.setItem(`keepany-category-id-${kind}`, categoryId);
@@ -185,8 +182,8 @@ export function AppShell() {
 			? savedNavOrder.filter((id): id is string => typeof id === "string")
 			: []);
 	const savedHiddenIds = data.preferences.find((preference) => preference.id === "sidebarHidden")?.value;
-	const hiddenIds = normalizeHiddenNavIds(pendingHiddenIds ?? savedHiddenIds, SIDEBAR_IDS);
-	const visibleAssetKindCount = kinds.filter((kind) => !hiddenIds.includes(kind)).length;
+	const hiddenIds = normalizeHiddenNavIds(pendingHiddenIds ?? savedHiddenIds);
+	const visibleAssetKindCount = workspaceGroupIds.filter((kind) => !hiddenIds.includes(kind)).length;
 	useEffect(() => {
 		if (
 			pendingNavOrder &&
@@ -196,19 +193,19 @@ export function AppShell() {
 			setPendingNavOrder(null);
 	}, [pendingNavOrder, savedNavOrder]);
 	useEffect(() => {
-		if (pendingHiddenIds && JSON.stringify(pendingHiddenIds) === JSON.stringify(normalizeHiddenNavIds(savedHiddenIds, SIDEBAR_IDS))) {
+		if (pendingHiddenIds && JSON.stringify(pendingHiddenIds) === JSON.stringify(normalizeHiddenNavIds(savedHiddenIds))) {
 			setPendingHiddenIds(null);
 		}
 	}, [pendingHiddenIds, savedHiddenIds]);
 	const orderedNavigation = [...navigation].sort((a, b) => {
-		const ai = navOrder.indexOf(a.id),
-			bi = navOrder.indexOf(b.id);
+		const ai = workspaceNavOrder(navOrder).indexOf(a.id),
+			bi = workspaceNavOrder(navOrder).indexOf(b.id);
 		return (
 			(ai < 0 ? navigation.length : ai) - (bi < 0 ? navigation.length : bi)
 		);
 	}).map((item) => {
 		const visible = !hiddenIds.includes(item.id);
-		const mustKeepAsset = kinds.includes(item.id as (typeof kinds)[number]) && visible && visibleAssetKindCount === 1;
+		const mustKeepAsset = workspaceGroupIds.includes(item.id) && visible && visibleAssetKindCount === 1;
 		return {
 			...item,
 			visible,
@@ -218,7 +215,7 @@ export function AppShell() {
 	});
 	function changeVisibility(id: string, visible: boolean) {
 		if (id === "overview" || !SIDEBAR_IDS.includes(id)) return;
-		const next = normalizeHiddenNavIds(visible ? hiddenIds.filter((item) => item !== id) : [...hiddenIds, id], SIDEBAR_IDS);
+		const next = normalizeHiddenNavIds(visible ? hiddenIds.filter((item) => item !== id) : [...hiddenIds, id]);
 		if (!visible && !next.includes(id)) {
 			setToast(t("navAtLeastOneAsset"));
 			return;
@@ -309,7 +306,7 @@ export function AppShell() {
 						>
 							<Menu size={20} />
 						</Button>
-						{detailKind ? <Link className="topbar-page-label topbar-back-link" to="/assets/$kind" params={{ kind: detailReturnKind ?? detailKind }} onClick={hasRelationReturn ? () => { sessionStorage.removeItem("keepany-relation-return-id"); sessionStorage.removeItem("keepany-relation-return-kind"); } : undefined}><ArrowLeft size={15}/>{t("back")}</Link> : workflowProjectId ? <Link className="topbar-page-label topbar-back-link" to="/assets/$kind/$id" params={{ kind: "project", id: workflowProjectId }}><ArrowLeft size={15}/>{t("workflowBackToProject")}</Link> : collectionDetailId ? <Link className="topbar-page-label topbar-back-link" to="/collections"><ArrowLeft size={15}/>{t("collectionBack")}</Link> : pathname !== "/" ? <Link className="topbar-page-label topbar-back-link" to="/"><ArrowLeft size={15}/>{t("backToOverview")}</Link> : <strong className="topbar-page-label">{currentHeading}</strong>}
+						{detailKind && workspaceReturn ? <Link className="topbar-page-label topbar-back-link" to={workspaceReturn.view === "domains" ? "/assets/$kind" : "/assets"} params={workspaceReturn.view === "domains" ? { kind: "domains" } : {}}><ArrowLeft size={15}/>{t("back")}</Link> : detailKind ? <Link className="topbar-page-label topbar-back-link" to="/assets/$kind" params={{ kind: detailReturnKind ?? detailKind }} onClick={hasRelationReturn ? () => { sessionStorage.removeItem("keepany-relation-return-id"); sessionStorage.removeItem("keepany-relation-return-kind"); } : undefined}><ArrowLeft size={15}/>{t("back")}</Link> : workflowProjectId ? <Link className="topbar-page-label topbar-back-link" to="/assets/$kind/$id" params={{ kind: "project", id: workflowProjectId }}><ArrowLeft size={15}/>{t("workflowBackToProject")}</Link> : collectionDetailId ? <Link className="topbar-page-label topbar-back-link" to="/collections"><ArrowLeft size={15}/>{t("collectionBack")}</Link> : pathname !== "/" ? <Link className="topbar-page-label topbar-back-link" to="/"><ArrowLeft size={15}/>{t("backToOverview")}</Link> : <strong className="topbar-page-label">{currentHeading}</strong>}
 						<div className="topbar-spacer"/>
 						<button className="top-search top-search-trigger" type="button" aria-label={t("globalSearch")} aria-expanded={searchOpen} onClick={() => { if (searchOpen) { setSearchOpen(false); setSearch(""); } else { setSearchOpen(true); window.requestAnimationFrame(() => topSearchInputRef.current?.focus()); } }}><Search size={17} /><span>{t("globalSearch")}</span>
 							<kbd>⌘ K</kbd>

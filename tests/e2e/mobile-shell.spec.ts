@@ -16,7 +16,7 @@ test("project workflow stays above the fold with a usable mobile drawer in both 
 		await page.getByRole("button", { name: language === "en" ? "Navigation" : "导航" }).click();
 		await expect(sidebar).toHaveClass(/open/);
 		await expect.poll(() => sidebar.evaluate((element) => element.getBoundingClientRect().left)).toBeGreaterThanOrEqual(0);
-		await expect(sidebar.getByRole("link", { name: language === "en" ? "Projects" : "项目" })).toBeVisible();
+		await expect(sidebar.getByRole("link", { name: language === "en" ? "Assets" : "资产", exact: true })).toBeVisible();
 		await page.locator(".mobile-scrim").click({ position: { x: 375, y: 100 } });
 		await expect(sidebar).not.toHaveClass(/open/);
 		await expect(page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).resolves.toBe(true);

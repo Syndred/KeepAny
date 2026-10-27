@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from "@tanstack/react-router";
-import { Bell, FolderPlus, LayoutDashboard, Pencil, Plus, Trash2 } from "lucide-react";
+import { Bell, FolderPlus, LayoutDashboard, Layers, Pencil, Plus, Trash2, UserRound } from "lucide-react";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { normalizeCategoryName, type Asset, type AssetKind } from "../../../packages/domain/src";
@@ -12,19 +12,11 @@ import { PageTitle, icons, kinds, liveAssets, niceCategory, useAppContext } from
 import "./collections.css";
 
 type CollectionDraft = AssetCollection & { creating: boolean; original?: AssetCollection };
-const sidebarIds = ["overview", "tasks", ...kinds];
+import { workspaceGroupIds, workspaceNavHidden, workspaceNavIds, workspaceNavOrder } from "./workspace-navigation";
+const sidebarIds = workspaceNavIds;
 const newDraft = (): CollectionDraft => ({ id: crypto.randomUUID(), name: "", assetIds: [], creating: true });
-
-function orderedSidebarIds(value: unknown): string[] {
-	const saved = Array.isArray(value) ? value.filter((id): id is string => typeof id === "string" && sidebarIds.includes(id)) : [];
-	return [...new Set([...saved, ...sidebarIds])];
-}
-
-function hiddenSidebarIds(value: unknown): string[] {
-	if (!Array.isArray(value)) return [];
-	const hidden = [...new Set(value.filter((id): id is string => typeof id === "string" && id !== "overview" && sidebarIds.includes(id)))];
-	return kinds.every((kind) => hidden.includes(kind)) ? hidden.filter((id) => id !== "project") : hidden;
-}
+const orderedSidebarIds = workspaceNavOrder;
+const hiddenSidebarIds = workspaceNavHidden;
 
 function collectionIdFromPath(pathname: string): string | null {
 	const match = /^\/collections\/([^/]+)\/?$/.exec(pathname);
@@ -56,14 +48,14 @@ export function CollectionsPage() {
 	const savedHidden = data.preferences.find((item) => item.id === "sidebarHidden");
 	const sidebarOrder = orderedSidebarIds(pendingOrder ?? savedOrder?.value);
 	const sidebarHidden = hiddenSidebarIds(pendingHidden ?? savedHidden?.value);
-	const visibleAssetKinds = kinds.filter((kind) => !sidebarHidden.includes(kind)).length;
+	const visibleAssetKinds = workspaceGroupIds.filter((kind) => !sidebarHidden.includes(kind)).length;
 	const sidebarItems: SortableNavItem[] = sidebarOrder.map((id) => ({
 		id,
-		to: id === "overview" ? "/" : id === "tasks" ? "/tasks" : id === "subscription" ? "/finance" : `/assets/${id}`,
-		label: t(id === "overview" ? "overview" : id === "tasks" ? "tasks" : id),
-		icon: id === "overview" ? LayoutDashboard : id === "tasks" ? Bell : icons[id as AssetKind],
+		to: id === "overview" ? "/" : id === "tasks" ? "/tasks" : id === "accounts" ? "/accounts" : "/assets",
+		label: t(id === "assets" ? "assetsWorkspace" : id === "accounts" ? "accountsWorkspace" : id),
+		icon: id === "overview" ? LayoutDashboard : id === "tasks" ? Bell : id === "assets" ? Layers : UserRound,
 		visible: !sidebarHidden.includes(id),
-		visibilityLocked: id === "overview" || (kinds.includes(id as AssetKind) && !sidebarHidden.includes(id) && visibleAssetKinds === 1),
+		visibilityLocked: id === "overview" || (workspaceGroupIds.includes(id) && !sidebarHidden.includes(id) && visibleAssetKinds === 1),
 		visibilityLockReason: id === "overview" ? t("navAlwaysVisible") : visibleAssetKinds === 1 ? t("navAtLeastOneAsset") : undefined,
 	}));
 
@@ -105,7 +97,7 @@ export function CollectionsPage() {
 	};
 	const changeVisibility = (id: string, visible: boolean) => {
 		if (id === "overview" || !sidebarIds.includes(id)) return;
-		if (!visible && kinds.includes(id as AssetKind) && visibleAssetKinds === 1) { setNavError(t("navAtLeastOneAsset")); return; }
+		if (!visible && workspaceGroupIds.includes(id) && visibleAssetKinds === 1) { setNavError(t("navAtLeastOneAsset")); return; }
 		const next = hiddenSidebarIds(visible ? sidebarHidden.filter((item) => item !== id) : [...sidebarHidden, id]);
 		void updateSidebar("sidebarHidden", next);
 	};

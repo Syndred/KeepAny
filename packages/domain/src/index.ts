@@ -141,6 +141,7 @@ export const historySchema=z.object({
 });
 export type History=z.infer<typeof historySchema>;
 export function newAsset(kind:AssetKind):Asset{const now=new Date().toISOString();return assetSchema.parse({id:crypto.randomUUID(),kind,name:'Untitled',...(kind==='item'?{itemLifecycleStatus:'inUse',itemWarrantyStatus:'unverified'}:{}),createdAt:now,updatedAt:now});}
+export function calendarDayDistance(from:string,to:string){return (parseDateOnly(to).getTime()-parseDateOnly(from).getTime())/86_400_000;}
 export function nextDue(date:string,cycle:Asset['cycle'],interval=1){return dueOnCycle(date,cycle,interval,1);}
 export function monthlyMinorUnits(asset:Asset):bigint{
   const periods=BigInt(asset.interval);

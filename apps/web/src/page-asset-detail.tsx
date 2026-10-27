@@ -53,6 +53,8 @@ import { Dialog } from "./components/ui/dialog";
 import "./asset-restoration.css";
 import "./account-detail.css";
 import "./backlink-ledger.css";
+import "./workspaces.css";
+import { readWorkspaceReturn } from "./workspace-return";
 import { ProjectPreview } from "./page-asset-list";
 import { TaskRow } from "./TaskRow";
 import { ImpactTaskRow } from "./ImpactTaskRow";
@@ -74,6 +76,7 @@ const TaskEditor = lazy(() =>
 	import("./workflows").then((module) => ({ default: module.TaskEditor })),
 );
 const AccountFamilyGraphView = lazy(() => import("./account-family-graph-view").then((module) => ({ default: module.AccountFamilyGraphView })));
+const PasswordVaultPanel = lazy(() => import("./components/PasswordVaultPanel").then((module) => ({ default: module.PasswordVaultPanel })));
 function GraphNodeMeasurements({ nodeIds }: { nodeIds: string }) {
 	// Controlled nodes do not receive the library's dimensions change unless onNodesChange
 	// is wired. Observe measured internals instead of the stale user-node readiness flag.
@@ -290,6 +293,7 @@ export function AssetDetail() {
 	const params = (useRouterState({ select: (s) => s.matches.at(-1)?.params }) ??
 		{}) as { kind?: string; id?: string };
 	const kind = validKind(params.kind ?? "project");
+	const detailHash = useRouterState({ select: (state) => state.location.hash });
 	const { data, notify } = useAppContext();
 	const { t, i18n } = useTranslation();
 	const navigate = useNavigate();
@@ -298,6 +302,13 @@ export function AssetDetail() {
 		(a) => a.id === params.id && a.kind === kind && !a.deleted,
 	);
 	const [edit, setEdit] = useState(false);
+	const [passwordsFor, setPasswordsFor] = useState<string | null>(null);
+	const passwordsOpen = !!asset && passwordsFor === asset.id;
+	useEffect(() => {
+		if (!asset?.id || asset.kind !== "project" || !detailHash.startsWith("project-domain")) return;
+		const frame = requestAnimationFrame(() => document.getElementById(detailHash)?.scrollIntoView({ block: "start" }));
+		return () => cancelAnimationFrame(frame);
+	}, [asset?.id, asset?.kind, detailHash]);
 	const [deleteOpen, setDeleteOpen] = useState(false);
 	const [deleteError, setDeleteError] = useState("");
 	const [deleteBusy, setDeleteBusy] = useState(false);
@@ -318,6 +329,7 @@ export function AssetDetail() {
 	const relationReturnId = sessionStorage.getItem("keepany-relation-return-id");
 	const relationReturnKind = sessionStorage.getItem("keepany-relation-return-kind");
 	const returnKind = relationReturnId === asset?.id && relationReturnKind && validKind(relationReturnKind) === relationReturnKind ? relationReturnKind : kind;
+	const catalogReturn = returnKind === kind && asset ? readWorkspaceReturn(asset.id) : null;
 	function visitRelation(target: Asset) {
 		if (!asset || target.id === asset.id) return;
 		if (relationReturnId !== asset.id || !relationReturnKind) sessionStorage.setItem("keepany-relation-return-kind", kind);
@@ -1376,7 +1388,7 @@ export function AssetDetail() {
 			</div>}
 			<div className="page-header">
 				<div>
-					{kind !== "project" && kind !== "account" && <TextLink asChild><Link className="back-link" to="/assets/$kind" params={{ kind: returnKind }} onClick={() => { sessionStorage.removeItem("keepany-relation-return-id"); sessionStorage.removeItem("keepany-relation-return-kind"); }}>
+					{kind !== "project" && kind !== "account" && <TextLink asChild><Link className="back-link" to={catalogReturn?.view === "all" ? "/assets" : "/assets/$kind"} params={catalogReturn?.view === "all" ? {} : { kind: catalogReturn?.view === "domains" ? "domains" : returnKind }} onClick={() => { sessionStorage.removeItem("keepany-relation-return-id"); sessionStorage.removeItem("keepany-relation-return-kind"); }}>
 						<ArrowLeft size={16} />
 						{t("back")}
 					</Link></TextLink>}
@@ -1627,14 +1639,14 @@ export function AssetDetail() {
 				</section>}
 				{asset.kind !== "project" && asset.kind !== "account" && attachmentSection}
 			</div>
-			{asset.kind === "project" && <section className="card asset-project-costs">
+			{asset.kind === "project" && <section className="card asset-project-costs" id="project-domains">
 				<div className="card-header"><h2>{t("projectDomainCosts")}</h2><Button size="small" onClick={() => openDomain()}><Plus size={14} />{t("projectAddDomain")}</Button></div>
 				<div className="asset-project-cost-grid">
 					<div><small>{t("projectMonthlyCost")}</small><strong>{formatTotals(monthlyByCurrency)}</strong><small>{relatedSubscriptions.length} {t("projectLinkedSubscriptions")}</small></div>
 					<div><small>{t("projectAnnualEstimate")}</small><strong>{formatTotals(annualByCurrency)}</strong>{incompleteCost && <small>{t("projectCostPartial")}</small>}</div>
 					<div><small>{t("projectNextRenewal")}</small><strong>{nextRenewal ? date(nextRenewal, i18n.language) : "—"}</strong><small>{projectDomains.length} {t("projectDomain")}</small></div>
 				</div>
-				{projectDomains.length ? <div className="asset-project-domain-list">{projectDomains.map((domain) => <div className="asset-project-domain-row" key={domain.id}><div><strong>{domain.name}</strong><small>{[domain.registrar, domain.accountId ? liveById.get(domain.accountId)?.name : "", domain.annualAmount === null ? "" : `${money(domain.annualAmount, domain.currency, i18n.language)} / ${t("year")}`].filter(Boolean).join(" · ") || "—"}</small><span>{t("projectExpiry")}: {date(domain.expiryDate, i18n.language)} · {t("projectAutoRenew")}: {t(domain.autoRenew === "on" ? "projectAutoRenewOn" : domain.autoRenew === "off" ? "projectAutoRenewOff" : "projectAutoRenewUnknown")}</span></div><Button size="small" onClick={() => openDomain(domain)}>{t("edit")}</Button></div>)}</div> : <p className="asset-quiet-empty">{t("projectNoDomains")}</p>}
+				{projectDomains.length ? <div className="asset-project-domain-list">{projectDomains.map((domain) => <div className="asset-project-domain-row" key={domain.id} id={`project-domain-${domain.id}`}><div><strong>{domain.name}</strong><small>{[domain.registrar, domain.accountId ? liveById.get(domain.accountId)?.name : "", domain.annualAmount === null ? "" : `${money(domain.annualAmount, domain.currency, i18n.language)} / ${t("year")}`].filter(Boolean).join(" · ") || "—"}</small><span>{t("projectExpiry")}: {date(domain.expiryDate, i18n.language)} · {t("projectAutoRenew")}: {t(domain.autoRenew === "on" ? "projectAutoRenewOn" : domain.autoRenew === "off" ? "projectAutoRenewOff" : "projectAutoRenewUnknown")}</span></div><Button size="small" onClick={() => openDomain(domain)}>{t("edit")}</Button></div>)}</div> : <p className="asset-quiet-empty">{t("projectNoDomains")}</p>}
 				<details className="asset-project-linked-subscriptions"><summary>{t("projectLinkedSubscriptions")} · {relatedSubscriptions.length}</summary>{relatedSubscriptions.length ? relatedSubscriptions.map((linked) => <Link key={linked.id} to="/assets/$kind/$id" params={{ kind: linked.kind, id: linked.id }} onClick={(event) => { event.preventDefault(); visitRelation(linked); }}><strong>{linked.name}</strong><span>{money(linked.amount, linked.currency, i18n.language)} / {t(linked.cycle)} · {date(linked.dueDate, i18n.language)}</span></Link>) : <p className="asset-quiet-empty">{t("none")}</p>}</details>
 			</section>}
 			{asset.kind === "project" && domainEditing && domainDraft && <Dialog title={domainEditing === "new" ? t("projectAddDomain") : t("projectEditDomain")} onClose={() => { if (!domainBusy) setDomainEditing(null); }}>
@@ -1747,8 +1759,9 @@ export function AssetDetail() {
 				<section className="card account-facts-card account-security-card"><h2>{t("accountRecordsSecurity")}</h2><dl>
 					<div><dt>{t("accountProfileVerifiedAt")}</dt><dd>{asset.accountProfileVerifiedAt ? date(asset.accountProfileVerifiedAt, i18n.language) : t("accountNotRecorded")}</dd></div>
 					<div><dt>{t("accountRelationVerifiedAt")}</dt><dd>{accountVerifiedAt ? date(accountVerifiedAt, i18n.language) : t("accountNotRecorded")}</dd></div>
-				</dl><Button asChild><Link to="/assets/$kind" params={{ kind: "vault" }} hash={`asset-${asset.id}`}>{t("accountOpenPasswords")}<ArrowDownRight size={16} /></Link></Button></section>
+				</dl><div className="workspace-password-actions"><Button aria-expanded={passwordsOpen} onClick={() => setPasswordsFor((current) => current === asset.id ? null : asset.id)}>{t(passwordsOpen ? "workspaceHidePasswords" : "workspaceShowPasswords")}</Button><Button asChild><Link to="/assets/$kind" params={{ kind: "vault" }} hash={`asset-${asset.id}`}>{t("accountOpenPasswords")}<ArrowDownRight size={16} /></Link></Button></div></section>
 			</div>}
+			{asset.kind === "account" && passwordsOpen && <section className="card account-passwords-section"><Suspense fallback={<div className="notice" role="status">{t("pwVaultLoading")}</div>}><PasswordVaultPanel assets={data.assets} notify={notify} focusAssetId={asset.id} embedded /></Suspense></section>}
 			{asset.kind === "account" && attachmentSection}
 			{asset.kind === "account" && (
 				<section className="card impact-checklist">
