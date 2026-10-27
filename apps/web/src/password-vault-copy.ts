@@ -505,8 +505,8 @@ export const passwordVaultCopy: Record<string, [string, string]> = {
 	pwVaultLoading: ["正在打开密码库…", "Opening the password vault…"],
 	pwVaultEmptyTitle: ["建立你的本机密码库", "Set up your local password vault"],
 	pwVaultEmptyHint: [
-		"设置一个至少 12 位的主密码，或导入已有的 KDBX 备份。",
-		"Set a master password with at least 12 characters, or import an existing KDBX backup.",
+		"设置一个至少 6 位的主密码，或导入已有的 KDBX 备份。",
+		"Set a master password with at least 6 characters, or import an existing KDBX backup.",
 	],
 	pwVaultCreate: ["创建密码库", "Create vault"],
 	pwVaultMasterPassword: ["主密码", "Master password"],
@@ -687,8 +687,12 @@ export const passwordVaultCopy: Record<string, [string, string]> = {
 	pwVaultRetry: ["重试打开密码库", "Retry opening vault"],
 	pwVaultBusy: ["正在处理…", "Working…"],
 	pwVaultPasswordTooShort: [
-		"主密码至少需要 12 个字符。",
-		"The master password must be at least 12 characters.",
+		"主密码至少需要 6 个字符。",
+		"The master password must be at least 6 characters.",
+	],
+	pwVaultShortMasterRisk: [
+		"短主密码更容易被离线猜解。建议使用至少 12 位的长密码或短语。",
+		"Short master passwords are easier to guess offline. Use a password or passphrase of at least 12 characters for stronger protection.",
 	],
 	pwVaultPasswordMismatch: [
 		"两次输入的主密码不一致。",

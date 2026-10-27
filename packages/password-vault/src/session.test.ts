@@ -851,6 +851,33 @@ describe('real encrypted local KDBX session', () => {
     ]);
   }, 30_000);
 
+  it('preserves entries across six-character master creation, rotation and KDBX import', async () => {
+    const storage = new MemoryStorage();
+    const session = new VaultSession(storage);
+    await session.initialize();
+    await expect(session.create('bad05')).rejects.toThrow('vault-invalid');
+    expect(storage.writes).toBe(0);
+    await session.create('test06');
+    const id = await session.saveEntry(draft);
+    session.lock();
+    await session.unlock('test06');
+    const before = storage.record?.bytes.slice();
+    await expect(session.changeMasterPassword('test06', 'bad05')).rejects.toThrow('vault-invalid');
+    expect(storage.record?.bytes).toEqual(before);
+    await session.changeMasterPassword('test06', 'next06');
+    session.lock();
+    await expect(session.unlock('test06')).rejects.toThrow('vault-password');
+    await session.unlock('next06');
+    expect(session.readEntry(id)).toEqual(expect.objectContaining(draft));
+
+    const imported = new VaultSession(new MemoryStorage());
+    await imported.initialize();
+    await imported.importKdbx(await session.exportKdbx(), 'next06');
+    expect(imported.readEntry(id)).toEqual(expect.objectContaining(draft));
+    imported.lock();
+    session.lock();
+  }, 30_000);
+
   it('rotates master credentials only after verifying the current password', async () => {
     const { session, storage } = await created();
     const id = await session.saveEntry(draft);

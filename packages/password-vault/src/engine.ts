@@ -4,6 +4,7 @@ import {
 } from 'kdbxweb';
 import { checkHeader, fail, safeError } from './header';
 import type { VaultEntryDraft, VaultEntrySummary } from './types';
+import { MIN_MASTER_PASSWORD_LENGTH } from './policy';
 
 export { checkBytes, checkHeader, fail, safeError, VAULT_MAX_BYTES } from './header';
 export const VAULT_LINK_FIELD = 'KeepAny.LinkedAssetIds';
@@ -56,7 +57,7 @@ CryptoEngine.setArgon2Impl(async (password, salt, memory, iterations, length, pa
 });
 
 export function credentials(password: string, creating = false): KdbxCredentials {
-  if (typeof password !== 'string' || password.length > 1024 || password.length < (creating ? 12 : 1)) fail('vault-invalid');
+  if (typeof password !== 'string' || password.length > 1024 || password.length < (creating ? MIN_MASTER_PASSWORD_LENGTH : 1)) fail('vault-invalid');
   return new KdbxCredentials(ProtectedValue.fromString(password));
 }
 
