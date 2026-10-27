@@ -1,5 +1,17 @@
 import { expect, test } from "@playwright/test";
 
+test('cold backup tool reveals the password form after its page finishes loading', async ({ page }) => {
+	await page.setViewportSize({ width: 390, height: 844 });
+	await page.goto('/more');
+	await expect(page.locator('.mobile-more-page')).toBeVisible();
+	await page.route('**/src/workflows.tsx*', async route => {
+		await new Promise(resolve => setTimeout(resolve, 800));
+		await route.continue();
+	});
+	await page.locator('.mobile-more-page a[href="/intake#backup-password"]').click();
+	await expect(page.locator('#backup-password')).toBeInViewport();
+});
+
 const languages = [
 	{ language: "zh-CN", nav: "主要导航", tabs: ["概览", "资产", "账号", "待办", "更多"], more: "更多", back: "返回更多", ai: "询问 AI 助手", model: "模型与助手设置", connections: "账号绑定与实验同步选项", categories: "项目分类与标签", references: "外部密码引用", backup: "创建备份" },
 	{ language: "en", nav: "Main navigation", tabs: ["Overview", "Assets", "Accounts", "Tasks", "More"], more: "More", back: "Back to More", ai: "Ask AI assistant", model: "Model and assistant settings", connections: "Account binding and experimental sync options", categories: "Project categories and tags", references: "External password references", backup: "Create backup" },
