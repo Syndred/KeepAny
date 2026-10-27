@@ -2,9 +2,9 @@
 
 本清单由 `node scripts/phase0/generate-legal-artifacts.mjs` 根据当前 `pnpm-lock.yaml`、实际安装树和各包 `package.json` 生成。精确版本的上游许可证原文索引见 [`legal/third-party/manifest.json`](legal/third-party/manifest.json)，本文件记录包内许可声明和包根目录中的许可/NOTICE 文件指纹；并非法律兼容性结论或可直接分发的完整第三方许可证正文包。
 
-- 锁文件 SHA-256：`1c0db516803a2892c077c6e1919601c3e01fac8b34b1f71e104c437560e75d5a`
-- 已安装包版本：722；直接运行依赖：56；直接开发依赖：21。
-- 包根目录缺少许可证正文：39；27 项保存上游正文，5 项保存精确声明与明确标注的规范补充，0 项未解决。规范补充不冒充上游原文件或补造版权。
+- 锁文件 SHA-256：`2778e8ab3fc85abc51ea9a15cb71b381885d3f0f3ffbe40a4f36e1275a5e0099`
+- 已安装包版本：723；直接运行依赖：57；直接开发依赖：21。
+- 当前安装树包根目录缺少许可证正文：39，逐项状态见下表。独立历史材料索引合计34个版本：29项保存上游正文，5项保存精确声明与明确标注的规范补充，0项未解决。索引还可包含自带正文的补充登记，不把索引总数当作当前缺正文包的覆盖数。规范补充不冒充上游原文件或补造版权。
 - 项目源码许可证：根目录 `LICENSE` 为 AGPL-3.0-only；发布前仍需由版权持有人确认，并完成依赖兼容性复核。
 - 本轮未复制 HomeInventory、Wallos、DomainMOD、Homebox 的业务源码；该四项仅在 `docs/03-开源业务模块复用审计.md` 中作为候选和参考登记。
 
@@ -385,6 +385,7 @@
 | `common-tags@1.8.2` | 传递依赖 | `MIT` | `node_modules/.pnpm/common-tags@1.8.2/node_modules/common-tags/license.md` (SHA-256 `eae4e510daa2d573a96dbdc6a4a11e8bd2ce67f53c0b5a373682cb56fcdebc9a`) |
 | `convert-source-map@2.0.0` | 传递依赖 | `MIT` | `node_modules/.pnpm/convert-source-map@2.0.0/node_modules/convert-source-map/LICENSE` (SHA-256 `1fa6ee8bb95a81ae3d73a5bd074a3ac380ffec13697051063ca1a601921b91db`) |
 | `cookie-es@3.1.1` | 传递依赖 | `MIT` | `node_modules/.pnpm/cookie-es@3.1.1/node_modules/cookie-es/LICENSE` (SHA-256 `f57270b85c3922414c061e36b93f7c74420b8facf5ccf729202d5ff5b7cd7608`) |
+| `core-js@3.50.0` | production | `MIT` | `node_modules/core-js/LICENSE` (SHA-256 `b87653fff2d44426ab5cd4723cee3b1364dc8d35a0acdf098c54689543123bf8`) |
 | `core-js-compat@3.50.0` | 传递依赖 | `MIT` | `node_modules/.pnpm/core-js-compat@3.50.0/node_modules/core-js-compat/LICENSE` (SHA-256 `b87653fff2d44426ab5cd4723cee3b1364dc8d35a0acdf098c54689543123bf8`) |
 | `core-util-is@1.0.3` | 传递依赖 | `MIT` | `node_modules/.pnpm/core-util-is@1.0.3/node_modules/core-util-is/LICENSE` (SHA-256 `33b734d60042d0fe0c92dd1fc1e874193a1c899ec3e276a2eb935d2d0bf5b710`) |
 | `cross-spawn@7.0.6` | 传递依赖 | `MIT` | `node_modules/.pnpm/cross-spawn@7.0.6/node_modules/cross-spawn/LICENSE` (SHA-256 `aaa78451b6fecd1b9c4594c796c133c0e90cad100372ff8bc6de615e9ef9adf1`) |
@@ -596,7 +597,7 @@
 | `path-key@3.1.1` | 传递依赖 | `MIT` | `node_modules/.pnpm/path-key@3.1.1/node_modules/path-key/license` (SHA-256 `48da2f39e100d4085767e94966b43f4fa95ff6a0698fba57ed460914e35f94a0`) |
 | `path-parse@1.0.7` | 传递依赖 | `MIT` | `node_modules/.pnpm/path-parse@1.0.7/node_modules/path-parse/LICENSE` (SHA-256 `3f4609137f65070541b9214300ea0d640af8192857de0eeb2b03403003d9228a`) |
 | `path-scurry@2.0.2` | 传递依赖 | `BlueOak-1.0.0` | `node_modules/.pnpm/path-scurry@2.0.2/node_modules/path-scurry/LICENSE.md` (SHA-256 `8a1af140fdfbf5afd3df27f7e662f989c5b963a300020dfafce42033cae9e004`) |
-| `pdfjs-dist@6.3.289` | production | `Apache-2.0` | `node_modules/.pnpm/pdfjs-dist@6.3.289/node_modules/pdfjs-dist/LICENSE` (SHA-256 `0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594`) |
+| `pdfjs-dist@6.3.289` | production | `Apache-2.0` | `node_modules/pdfjs-dist/LICENSE` (SHA-256 `0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594`) |
 | `pend@1.2.0` | 传递依赖 | `MIT` | `node_modules/.pnpm/pend@1.2.0/node_modules/pend/LICENSE` (SHA-256 `7e64acffcb0d20d33f5a86949ffd4a99ae045b10c7332a9c3a58635876c16880`) |
 | `pg@8.23.0` | production | `MIT` | `node_modules/.pnpm/pg@8.23.0/node_modules/pg/LICENSE` (SHA-256 `192b8f5c96900f04a1271dec39688655d7416c1c6ea84a508e18b50d2b6751f3`) |
 | `pg-cloudflare@1.4.0` | 传递依赖 | `MIT` | `node_modules/.pnpm/pg-cloudflare@1.4.0/node_modules/pg-cloudflare/LICENSE` (SHA-256 `192b8f5c96900f04a1271dec39688655d7416c1c6ea84a508e18b50d2b6751f3`) |

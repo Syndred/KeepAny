@@ -58,8 +58,21 @@ for (const [pnpmLicense, entries] of Object.entries(grouped)) {
   for (const entry of entries) {
     if (entry.versions.length !== entry.paths.length) throw new Error(`Version/path mismatch: ${entry.name}`);
     for (let i = 0; i < entry.versions.length; i++) {
-      const directory = entry.paths[i];
-      const metadata = await readJson(resolve(directory, 'package.json'));
+      let directory = entry.paths[i];
+      let metadata;
+      try {
+        metadata = await readJson(resolve(directory, 'package.json'));
+      } catch (error) {
+        // An explicitly linked direct dependency can live outside pnpm's virtual
+        // store. Read the actual build-facing link only when the reported path
+        // is absent; the exact name/version check below still applies.
+        const direct = Object.hasOwn(rootPackage.dependencies ?? {}, entry.name)
+          || Object.hasOwn(rootPackage.devDependencies ?? {}, entry.name);
+        if (error.code !== 'ENOENT' || !direct) throw error;
+        if (!/^(?:@[a-z0-9._-]+\/)?[a-z0-9._-]+$/i.test(entry.name)) throw error;
+        directory = resolve(root, 'node_modules', entry.name);
+        metadata = await readJson(resolve(directory, 'package.json'));
+      }
       if (metadata.name !== entry.name || metadata.version !== entry.versions[i]) {
         throw new Error(`Installed package mismatch: ${entry.name}@${entry.versions[i]}`);
       }
