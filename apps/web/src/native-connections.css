@@ -1,0 +1,3 @@
+@media (pointer: coarse) {
+  .sync-panel :is(.field input, .themed-select-trigger) { min-height: 44px; }
+}

@@ -36,13 +36,22 @@ export function createNativeBindingPlatform(issuer: unknown, resource: unknown):
 }
 
 /** Each explicitly configured self-host origin gets its own pinned transport. */
-export function createNativeSyncFetchFactory() {
+export function createNativeSyncFetchFactory(sessionFetch?: (origin: string) => typeof fetch | undefined) {
   const clients = new Map<string, typeof fetch>();
   return (endpoint: string): typeof fetch => {
     const origin = serviceOrigin(endpoint);
     let client = clients.get(origin);
     if (!client) {
-      client = createNativeServiceFetch(origin, allowSyncRoute);
+      const service = createNativeServiceFetch(origin, allowSyncRoute);
+      client = (input, init) => {
+        const credentials = init?.credentials ?? (input instanceof Request ? input.credentials : undefined);
+        if (credentials === 'include') {
+          const session = sessionFetch?.(origin);
+          if (!session) return Promise.reject(Error('native-session-required'));
+          return session(input, init);
+        }
+        return service(input, init);
+      };
       if (clients.size >= 16) clients.delete(clients.keys().next().value as string);
       clients.set(origin, client);
     }

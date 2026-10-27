@@ -245,6 +245,15 @@ export async function listBoundWorkspaces(endpoint: string, bound: BoundSyncAuth
     .map(workspace => workspace.workspaceId);
 }
 
+export async function listSessionWorkspaces(endpoint: string, accountId: string): Promise<string[]> {
+  const origin = normalizeEndpoint(endpoint);
+  if (await getSessionIdentity(origin) !== accountId) throw Error('sync-account-mismatch');
+  const response = await request(origin, { sessionAccountId: accountId }, 'GET', '/workspaces',
+    z.object({ workspaces: z.array(z.object({ workspaceId: workspaceSchema,
+      canRead: z.boolean(), canWrite: z.boolean() })) }));
+  return response.workspaces.filter(workspace => workspace.canRead && workspace.canWrite).map(workspace => workspace.workspaceId);
+}
+
 export async function createBoundWorkspace(endpoint: string, bound: BoundSyncAuthorizer): Promise<string> {
   const authorizer = checkedBound(bound);
   await getBoundIdentity(endpoint, authorizer);

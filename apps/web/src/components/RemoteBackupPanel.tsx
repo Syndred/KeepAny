@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { CloudUpload, Download } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { backupPlatformFetch } from "../platform-connections";
 import {
 	createS3PresignedTransport,
 	createWebDavTransport,
@@ -95,9 +96,11 @@ export function RemoteBackupPanel({
 			return createS3PresignedTransport({
 				putUrl: readOnly ? getUrl.trim() : putUrl.trim(),
 				getUrl: getUrl.trim(),
+				fetchImpl: backupPlatformFetch([{ url: readOnly ? getUrl.trim() : putUrl.trim(), method: "PUT" }, { url: getUrl.trim(), method: "GET" }]),
 			});
 		return createWebDavTransport({
 			objectUrl: davUrl.trim(),
+			fetchImpl: backupPlatformFetch([{ url: davUrl.trim(), method: "PUT" }, { url: davUrl.trim(), method: "GET" }]),
 			authorization:
 				davUser || davPassword
 					? async () => basicAuthorization(davUser, davPassword)

@@ -16,6 +16,7 @@ import { seed } from "./data";
 import { COLLECTIONS_PREFERENCE_ID } from "./collection-model";
 import { PageTitle, useAppContext } from "./view-shared";
 import "./settings-intake-restoration.css";
+import "./native-connections.css";
 import { Select, SelectOption } from "./components/ui/select";
 import { getPlatformSetting, setPlatformSetting } from "./platform-settings";
 import { allowsOfficialResource, bindingClient, isBindingConfigured } from "./platform-binding";
@@ -91,6 +92,7 @@ export function SettingsPage() {
 	const [workspaceId, setWorkspaceId] = useState(() => accessMode === "official" ? "" : getPlatformSetting("keepany-selfhost-workspace") ?? "");
 	const [token, setToken] = useState("");
 	const [sessionAccountId, setSessionAccountId] = useState<string | null>(null);
+	const [sessionEndpoint, setSessionEndpoint] = useState(() => nativeApp ? "" : window.location.origin);
 	const [officialBinding, setOfficialBinding] = useState<StoredBinding>();
 	const [availableWorkspaces, setAvailableWorkspaces] = useState<string[]>([]);
 	const [workspaceKey, setWorkspaceKey] = useState("");
@@ -113,7 +115,7 @@ export function SettingsPage() {
 	const bindingIdentity = useRef<string | null | undefined>(undefined);
 	const accessModeRef = useRef(accessMode);
 	accessModeRef.current = accessMode;
-	const syncEndpoint = accessMode === "official" ? officialOrigin ?? "" : accessMode === "session" ? window.location.origin : endpoint;
+	const syncEndpoint = accessMode === "official" ? officialOrigin ?? "" : accessMode === "session" ? sessionEndpoint : endpoint;
 	const officialAccountId = officialBinding?.allowedScopes.includes("sync:write") ? officialBinding.subject : null;
 	const hasAccess = accessMode === "official" ? Boolean(officialAccountId) : accessMode === "session" ? Boolean(sessionAccountId) : Boolean(token);
 	const uiBusy = syncBusy || migrationBusy || keyAccessBusy || settingsBusy;
@@ -187,17 +189,12 @@ export function SettingsPage() {
 			const bound = await officialAccess();
 			if (bound.accountId !== accountId) throw Error("sync-account-mismatch");
 			const { getBoundIdentity, listBoundWorkspaces } = await import("../../../packages/sync-client/src");
-			if (await getBoundIdentity(window.location.origin, bound) !== accountId) throw Error("sync-account-mismatch");
-			return listBoundWorkspaces(window.location.origin, bound);
+			if (!officialOrigin || await getBoundIdentity(officialOrigin, bound) !== accountId) throw Error("sync-account-mismatch");
+			return listBoundWorkspaces(officialOrigin, bound);
 		}
-		const { getSessionIdentity } = await import("../../../packages/sync-client/src");
-		if (await getSessionIdentity(window.location.origin) !== accountId) throw Error("sync-account-mismatch");
-		const response = await fetch(`${window.location.origin}/workspaces`, { credentials: "include", cache: "no-store",
-			headers: { "X-KeepAny-Account-Id": accountId } });
-		if (!response.ok) throw Error(response.status === 401 || response.status === 403 ? "sync-auth" : `sync-http-${response.status}`);
-		const body = await response.json() as { workspaces?: { workspaceId: string }[] };
-		return (body.workspaces ?? []).map(item => item.workspaceId);
-	}, []);
+		const { listSessionWorkspaces } = await import("../../../packages/sync-client/src");
+		return listSessionWorkspaces(sessionEndpoint, accountId);
+	}, [sessionEndpoint]);
 	useEffect(() => {
 		const accountId = accessMode === "session" ? sessionAccountId : accessMode === "official" ? officialAccountId : null;
 		if (!accountId || (accessMode !== "session" && accessMode !== "official")) return;
@@ -510,12 +507,17 @@ export function SettingsPage() {
 					setWorkspaceKey("");
 					setNeedsKeySave(false);
 					setToken("");
+					if (mode !== "session") {
+						sessionAccountRef.current = null;
+						setSessionAccountId(null);
+						if (nativeApp) setSessionEndpoint("");
+					}
 					if (mode !== "official") await setPlatformSetting("keepany-selfhost-access-mode", mode);
 				}); }}><SelectOption value="token">{t("syncTokenMode")}</SelectOption><SelectOption value="session">{t("syncSessionMode")}</SelectOption>{officialAvailable && <SelectOption value="official">{t("syncOfficialMode")}</SelectOption>}</Select></label>
-				{accessMode === "session" && <><p>{t("syncSessionOriginHint")}</p><Suspense fallback={<p>{t("syncSessionChecking")}</p>}><SelfHostSessionPanel disabled={uiBusy} onSessionChange={changeSession} /></Suspense></>}
+				{accessMode === "session" && <>{!nativeApp && <p>{t("syncSessionOriginHint")}</p>}<Suspense fallback={<p>{t("syncSessionChecking")}</p>}><SelfHostSessionPanel disabled={uiBusy} onSessionChange={changeSession} onEndpointChange={origin => { invalidateConfig(); setSessionEndpoint(origin); }} /></Suspense></>}
 				{accessMode === "official" && <p role="status">{t(hasAccess ? "syncOfficialReady" : "syncOfficialAuthorize")}</p>}
 				<div className="form-grid">
-					<label className="field"><span>{t("syncServerUrl")}</span><input value={syncEndpoint} disabled={uiBusy} readOnly={accessMode !== "token"} onChange={event => editConfig(() => setEndpoint(event.target.value))} placeholder="https://sync.example.com" autoComplete="url" /></label>
+					{!(nativeApp && accessMode === "session") && <label className="field"><span>{t("syncServerUrl")}</span><input value={syncEndpoint} disabled={uiBusy} readOnly={accessMode !== "token"} onChange={event => editConfig(() => setEndpoint(event.target.value))} placeholder="https://sync.example.com" autoComplete="url" /></label>}
 					{accessMode === "token" && <label className="field"><span>{t("syncAccessToken")}</span><input type="password" value={token} disabled={uiBusy} onChange={event => editConfig(() => setToken(event.target.value))} autoComplete="off" /></label>}
 					<label className="field"><span>{t("syncWorkspace")}</span><input value={workspaceId} disabled={uiBusy || !hasAccess} onChange={event => editConfig(() => setWorkspaceId(event.target.value))} autoComplete="off" /></label>
 					<label className="field"><span>{t("syncWorkspaceKey")}</span><input type={showKey ? "text" : "password"} value={workspaceKey} disabled={uiBusy || !hasAccess} onChange={event => editConfig(() => setWorkspaceKey(event.target.value))} autoComplete="off" /><small>{t(accessMode === "token" ? "syncKeyHint" : "syncSessionKeyHint")}</small></label>
