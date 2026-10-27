@@ -10,6 +10,8 @@ pnpm mobile:build
 pnpm mobile:sync
 ```
 
+应用运行要求Android API24+与System WebView111+，iOS16.4+。这是正式共享前端已解析出的Vite构建基线（chrome111/safari16.4/ios16.4）；Android较旧WebView会显示更新提示并保留资料。编译SDK版本与设备运行最低系统不同，不把API37编译要求说成只能在Android17运行。
+
 Android需要JDK21+、Android SDK API37.0与Build Tools；应用target仍36。URL元数据桥使用OkHttp5.5.1的证书安全修复，其Android AAR要求37.0编译平台；AGP8.13会保留“已测试到36.1”的兼容警告，本项目未关闭该警告，当前实际Java/资源构建按回执核验。Windows可显式指定本机工具路径，运行：
 
 ```powershell

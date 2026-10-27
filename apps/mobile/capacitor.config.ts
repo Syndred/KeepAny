@@ -6,8 +6,8 @@ const config: CapacitorConfig = {
   // Plugin arguments can contain credentials. Never send bridge payloads to OS logs.
   loggingBehavior: 'none',
   webDir: 'dist',
-  server: { androidScheme: 'https' },
-  android: { allowMixedContent: false },
+  server: { androidScheme: 'https', errorPath: 'unsupported-webview.html' },
+  android: { allowMixedContent: false, minWebViewVersion: 111 },
   ios: { contentInset: 'always', preferredContentMode: 'mobile' },
   plugins: {
     CapacitorSQLite: {
