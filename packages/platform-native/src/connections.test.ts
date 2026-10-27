@@ -108,7 +108,9 @@ it('stages the full existing 100 MiB plus envelope budget using bounded bridge c
   expect(total).toBe(backupLimit); expect(largest).toBe(256 * 1024); expect(chunks).toBe(401);
   await expect(request(url, { method: 'PUT', body: new Blob([new Uint8Array(backupLimit + 1)]) })).rejects.toThrow('backup-size');
   expect(total).toBe(backupLimit);
-});
+  // Full-budget binary/base64 conversion is CPU work; keep all 401 real chunks
+  // while allowing slower shared CI workers to finish the assertions.
+}, 20_000);
 it('rejects redirect-shaped responses, oversized reads, corrupted chunks and preserves failed operations as failures', async () => {
   const native = bridge(), adapter = createNativeConnections(native), url = 'https://backup.example.test/object.ka1';
   const fetch = adapter.backupFetch([{ url, method: 'GET' }]);

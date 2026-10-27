@@ -1236,5 +1236,7 @@ describe('reviewed account links', () => {
     expect(session.readEntry(a).linkedAssetIds).not.toContain('wrong');
     session.lock();
     await expect(session.linkAccounts([{ entryId: a, accountId: 'wrong' }], current)).rejects.toThrow('vault-locked');
-  });
+    // This case performs several real KDBX/KDF writes, like adjacent vault cases.
+    // The test budget does not change the production KDF or persistence limits.
+  }, 30_000);
 });

@@ -6,7 +6,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import { EventEmitter } from 'node:events';
-import test from 'node:test';
+import { test } from 'vitest';
 import { DATABASE_RELATIVE_PATH, FIXTURE_QUERY, createProjectFixtureObserver, querySqliteReadonly } from './observe-ios-project-fixtures.mjs';
 
 const fixture = (language = 'en', token = 'aBcD1234', id = randomUUID()) => ({
@@ -18,7 +18,7 @@ async function environment(t) {
   const relativeRoot = path.relative(await fs.realpath(os.tmpdir()), root);
   assert.ok(!relativeRoot.startsWith('..') && !path.isAbsolute(relativeRoot) && path.basename(root).startsWith('keepany-observer-'));
   const appData = path.join(root, 'app data'); const output = path.join(root, 'own observer output');
-  await fs.mkdir(appData); t.after(() => fs.rm(root, { recursive: true, force: true }));
+  await fs.mkdir(appData); t.onTestFinished(() => fs.rm(root, { recursive: true, force: true }));
   const database = path.join(appData, DATABASE_RELATIVE_PATH);
   async function createDatabase(rows) {
     await fs.mkdir(path.dirname(database), { recursive: true });
@@ -37,7 +37,7 @@ async function environment(t) {
   }
   async function observe(options = {}) {
     const observer = await createProjectFixtureObserver({ appData, output, runQuery: sqliteRunner, ...options });
-    t.after(() => observer.finish(false)); return observer;
+    t.onTestFinished(() => observer.finish(false)); return observer;
   }
   const readRows = async () => (await fs.readFile(path.join(output, 'fixtures.ndjson'), 'utf8')).split('\n').filter(Boolean).map(line => JSON.parse(line));
   return { root, appData, output, database, createDatabase, sqliteRunner, observe, readRows };
