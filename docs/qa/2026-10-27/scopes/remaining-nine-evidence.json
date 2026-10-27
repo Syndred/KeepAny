@@ -1,0 +1,73 @@
+{
+  "verifiedAt": "2026-10-27T08:39:10Z",
+  "sourceScope": "Original nine remaining acceptance cases; source-level verification only",
+  "remote": "f72ac57315491f4641dfb2efc8764587d131c740",
+  "independentRed": {
+    "observedAt": "2026-10-27T08:28:00Z",
+    "driver": "Vite 4209 + isolated Chromium + synthetic AI subscription candidates",
+    "cases": [
+      {
+        "field": "amount",
+        "uiDraft": "",
+        "targetBefore": 555,
+        "mergeDisplayed": "Amount\nCurrent value\n$5.55\nCandidate value\n$12.34",
+        "targetAfter": 1234
+      },
+      {
+        "field": "interval",
+        "uiDraft": "0",
+        "targetBefore": 3,
+        "mergeDisplayed": "Every\nCurrent value\n3\nCandidate value\n1",
+        "targetAfter": 1
+      }
+    ],
+    "expected": "Selected invalid or cleared candidate fields cannot adopt their preceding persisted values",
+    "fixtureFailure": "An earlier interval probe used Interval instead of the existing Every translation; locator timeout is not product evidence"
+  },
+  "independentFocusRed": {
+    "log": "test-results/verifier-nine-final.log",
+    "test": "zh 390 T19-01 explicit selected-field merge, cancel and refresh",
+    "assertion": "Merge button must regain focus after cancel",
+    "observed": "inactive",
+    "cause": "The pending read disabled the opener before Dialog captured document.activeElement"
+  },
+  "independentGreen": {
+    "command": "KEEPANY_E2E_PORT=4209 KEEPANY_EVIDENCE_DIR=test-results/verifier-nine/screenshots node node_modules/@playwright/test/cli.js test tests/e2e/qa-t19-merge-drafts.spec.ts tests/e2e/qa-t19-merge-completion.spec.ts --config=playwright.windows-qa.config.ts --workers=1 --max-failures=1 --reporter=line --output=test-results/verifier-nine-fixed",
+    "log": "test-results/verifier-nine-fixed.log",
+    "passed": 7,
+    "failed": 0,
+    "seconds": 34.9,
+    "newAssertions": [
+      "Blank amount and interval 0 remain visible as invalid drafts and cannot be selected",
+      "AI missing currency cannot be selected",
+      "Cancel preserves original target, pending decision and entered invalid drafts",
+      "Selecting only description succeeds and preserves amount 555, USD currency and interval 3",
+      "Target identity, unselected fields and merge before/after receipt survive refresh",
+      "Existing focus-return, failed-write retry and changed-target assertions remain intact"
+    ]
+  },
+  "independentSearchRedGreen": {
+    "input": "Schema-valid expense with a vault source and an additional ordinary account owner",
+    "expectedFinanceEntries": 0,
+    "actualBefore": 1,
+    "actualAfter": 0,
+    "fixedCommit": "745565a",
+    "namedTest": "rejects vault or missing bill sources even when they also claim an ordinary account owner"
+  },
+  "independentNamedUnitChecks": {
+    "passed": 7,
+    "fullSuiteRun": false,
+    "names": [
+      "corrects and removes a renewal bill without changing its fact, subscription schedule or renewal identity",
+      "counts each bill once globally and once per project across direct and subscription ownership",
+      "rejects stale saves and duplicate pending renames",
+      "replays an interruption after the RxDB CAS without losing the old values or duplicating the asset",
+      "stores a near-2MiB CSV once for 200 candidates",
+      "same-origin API rejects cross-origin, missing header, wrong Host, wrong body and client-supplied exceptions",
+      "rejects vault or missing bill sources even when they also claim an ordinary account owner"
+    ],
+    "note": "Each was selected by name with Vitest -t. Other cases were not executed by these spot checks and are not counted as passing."
+  },
+  "deliveryPackage": "pending parent verification; no 104/104 completion claim",
+  "cleanup": "Both isolated probe browsers and Vite 4209 were closed normally; no user 4180 or real profile was used"
+}
