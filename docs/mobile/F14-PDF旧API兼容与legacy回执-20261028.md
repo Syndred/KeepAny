@@ -1,6 +1,6 @@
 # F14 PDF 旧 API 兼容与 legacy 回执（2026-10-28）
 
-完成最小两行产品修复：PDF 主模块与 worker 同时切换现有 `pdfjs-dist@6.3.289` 的配套 legacy 构建。新增兼容 B 实测 3/3、原 PDF 相邻 B 4/4 通过；原 modern 在当前 Native 缺失 API 条件下的**真实功能红**保留。没有升级依赖、复制上游源码、自写全局 polyfill、改 Native/OS 最低版本或业务存储。
+先完成主模块/worker 配套 legacy 两行修复，再接入同一官方 core-js Promise 子模块的主/worker 独立入口：已知最低线两项 Promise red 已实转 green，当前兼容/原 PDF 相邻共9项 B 通过，另有生产打包 worker 实际 B 1项通过。此前 modern 与最低线的真实红证据均保留。没有复制上游源码、自写 polyfill、改 Native/OS 最低版本或业务存储；精确依赖/lock/许可证由主控独立提交，见最终续记。
 
 **边界：本片是共享浏览器 B，不是 Android/iOS Native 实跑。N16 不包含本修复，待主控冻结新 N17 后由设备 owner 实验；不能据此核销 F14 全组。** 全部文件与资料是自造 PDF，未使用私密 fixture、设备、KDBX、真实凭据或 paid provider。
 
@@ -30,6 +30,8 @@
 
 ## 最小修复后的逐项复验
 
+本节为 e56 的首次 legacy 修复证据；后续 Promise 双入口修复与最新验证见文末。
+
 产品 `apps/web/src/intake-pdf.ts` 仅两条 import 变化。10MiB、20 页、20000 字符、30s、useWorkerFetch=false/useWasm=false、错误映射/destroy、先 preview 后逐条确认、无 OCR/无猜金额/无自动写入均保留原代码。
 
 | 实际操作 → 预期 | 最终 B 实际 |
@@ -58,13 +60,13 @@ $env:KEEPANY_E2E_PORT='4236'
 node node_modules/@playwright/test/cli.js test tests/e2e/intake-pdf-compatibility.spec.ts --grep 'N16 missing APIs|control with native' --workers=1 --output=test-results/pdf-compatibility/recheck-output
 ```
 
-测试 helper/兼容 E2E 是原 PDF 流程的真实输入扩展，不是另造提取或存储实现。实际 30s 超时分支本片没有等时故障注入，源码定时器未改；加密 PDF、所有字体/特殊文档、所有旧 WebView、物理设备与 iOS 不外推。
+测试 helper/兼容 E2E 是原 PDF 流程的真实输入扩展，不是另造提取或存储实现。当前133回归没有等时故障注入；后续最低线 worker red 实际达到原30s超时，见续记，源码定时器未改。加密 PDF、所有字体/特殊文档、所有旧 WebView、物理设备与 iOS 不外推。
 
 为 N17 owner 留小型公开合成输入 `test-results/pdf-compatibility/native-synthetic/`：继承资源、中文、image-only、空白、损坏、21页、20001字符。manifest SHA `283103420d08f4916682d6b3344225090a54d3d371d76f92735cf87f15dbc6f0`；关键继承资源 PDF 683B/SHA `a3d884367a63416634b2613377d4f20c816d14f44a45494cc11688a96837bf07`。没有向设备推送这些文件或操作设备；只有正式新包后才由 owner 操作原生 picker 核验。
 
 本片新建 browser/context 均 finally 正常关闭，自有 Vite/4236 已停止，无下载服务或并行浏览器遗留；合成证据按本回执保留供复验。已 fetch origin、主线无缺失；精确提交只包含两行产品改动、一个既有 fixture 小扩展、新兼容 E2E 和本回执。没有改共享 node_modules、lockfile、Native、其他 agent 文件，没有 push/触发 CI；N16 实际 PDF 尚未验证，更不能以本 B green 宣称 Native 已修复。
 
-## 最低线 Promise 缺口续记：独立 B 仍 red
+## 首次最低线 Promise 缺口续记：独立 B red（历史）
 
 当前133修已独立提交 `e56a677226021bfd2249af7ec08aeec139bcf3a0`，不阻止保留这一真实修复。其后按 owning source 的 WebView111/iOS16.4 最低线，新增两个**预期成功**的合同用例，没有 skip/xfail 或把准确 unsupported 当完成。仅模拟缺 API，不模拟完整旧版 JS parser、所有浏览器行为或真实 iOS 系统。
 
@@ -85,3 +87,30 @@ node node_modules/@playwright/test/cli.js test tests/e2e/intake-pdf-compatibilit
 ```
 
 本续记只扩测试/证据，产品仍为 e56 的两行 import。没有提高 minWebView/iOS 下限，没有手抄 Promise polyfill、修改共享 node_modules/lock 或新增依赖。官方 core-js 子模块、配套 worker entry 与分发许可的后续方案由主控统筹；最低线 gap 保持 active，不能称全兼容。最终 tsc/定向 Biome 通过，4236 和自有 context 已关闭；不 ADB、不 push、不触发 CI。
+
+## 官方 Promise 双入口修复：已知两项 red → green
+
+主控固定 `core-js@3.50.0` 官方直接依赖（MIT，gitHead `486e8d62611aa2f5f2321329b0c168135bf22861`），自行负责 package.json、lock-only 与分发许可。本片没有 stage/提交这几个主控文件，也没有常规重装共享 node_modules。主控明确单模块已可解析后才启动本轮 B；本机是官方单包隔离安装加单一 junction，CI 仍应按已锁 direct dependency 正常安装。
+
+- `intake-pdf.ts` 先加载 `core-js/actual/promise/with-resolvers.js`，再加载同版本 legacy 主模块。
+- 新 `apps/web/src/pdf-worker.ts` 独立先加载**同一个**官方子模块，再加载 `pdfjs-dist/legacy/build/pdf.worker.mjs`；主模块通过 Vite `./pdf-worker.ts?worker&url` 获得真实打包 URL，不把含裸 imports 的 TypeScript 当静态文件复制。
+- 使用成熟模块，没有手抄 Promise 实现；主与 worker 是两个独立 realm，未靠只补主页侥幸通过，也没提高 minWebView111/iOS16.4。10MiB/20页/20000字/30s、预览确认、无OCR、原错误/任务清理等实现继续保持。
+
+测试升级为**受控 module worker bootstrap**：仅对实际 PDF module Worker 创建自有 Blob entry，最早删目标 API、发送 before 探针，再 `await import(真实产品worker URL)`，发送 after。真实 entry 的静态 imports 因而发生在删除之后，不再使用 response 前缀/路由，不改 ?url 主模块、不污染 fake-worker import、不递归创建 worker。terminate 时 revoke 自有 Blob URL；context finally 关闭。解析、文档字节、消息处理、预览和 repository 写入仍全部使用正式实现。
+
+两项原 red 按相同合法继承资源 PDF 和预期成功断言原样复验，另补下述明确断言：
+
+| 原 red | 最新实际 B |
+| --- | --- |
+| 主+worker Promise 都缺 | 主 before Promise=undefined；worker before Map/Uint8/Promise 全 undefined，after 全 function；实际 workerStarts=1、错误0、完整合成原文候选1；主 Promise 恢复为 function、普通 asset/history records仍0 |
+| 主 Promise 原有、worker Promise 缺 | 主 before Promise=function；worker before Promise=undefined，after 三项 function；真实 workerStarts=1、错误0、可读取同一完整原文、普通 records0 |
+
+两项没有 skip/xfail，也没有换成“unsupported即通过”。失败时才保留限3s只读重读 probe；成功路径不增加第二次解析，before/after 来自原 UI 的同一 worker。
+
+本轮冻结消费者：自有4236、watch/HMR关闭，独立缓存 `test-results/pdf-compatibility/corejs-vite-cache`，显式优化官方子模块与 legacy 主模块；本机隔离包的外部真实路径只在**临时测试 server** 的 fs.allow 精确加入，没有放宽产品配置。优化预热后，兼容5项＋原 PDF 中英390/1280四项 **9/9，38.2s**。日志 `corejs-final-run.txt` SHA `fe24a678a1d4c6a352d869008d426b51ac48eed4f1837f1d9ca84c72313fb944`，小型探针/截图在 `corejs-final-output/**`；原两项 red 文件没有覆盖。
+
+另外独立 Web 生产 Vite 构建输出到本片新建 `test-results/pdf-compatibility/production-corejs-check`，没有覆盖 mobile/dist、冻结 APK 或旧产物。构建成功，保留原 chunk-size 提示；真正生成 `assets/pdf-worker-cX0JqcII.js` 1270587 B，SHA `64d491d1a29c75d5565286f2e865047612dbeaa18256a394be604dc806edae0e`，含独立 Promise 兼容实现与 PDF worker。使用这份**生产产物**的 preview，在主和真实 worker 都缺基线 API 的 fresh context 中实际选择同一合法 PDF，原文提取/待审核与 disabled确认、before→after/worker1/错误0 全通过：**1/1，1.7s**。不是仅 dev server 预优化成功，也不是只看生成文件。构建日志 SHA `eacabfb7615e0dc6786ecf5e86c86ebfb89a0766f7d65482b14b27d052417446`；生产 B 日志 `corejs-production-run.txt` SHA `85689a95699d500a59b58ad90b7d973779dfabc4a2412ea297b67c51112b6ce6`。
+
+新增生产烟测不导入源码测试 API，可用正式静态产物运行；原完整兼容5项与原PDF4项仍验证真实写入、重复、中文、空白/图像无字/坏文件和三种预算。最新 tsc、定向 Biome四文件通过。开发 server 和生产 preview 共用自有4236且先后关闭，所有自建 context/worker已收尾；没有ADB、Gradle、push或CI操作。
+
+**关闭的是已知 Map/Uint8 与 Promise 的软件兼容缺口。** 删除 API 的现代浏览器 B 不等于真的 WebView111或Safari16.4引擎；不能据此推断所有老语法、字体、特殊PDF、物理设备或iOS均已通过。N16没有这些后续修复，Native PDF仍待主控新17正式包和设备owner原流程复验。当前产品最低线保持原值，不再以legacy125+/Safari18+悄悄缩小原合同。

@@ -1,5 +1,6 @@
+import "core-js/actual/promise/with-resolvers.js";
 import { getDocument, GlobalWorkerOptions } from "pdfjs-dist/legacy/build/pdf.mjs";
-import workerUrl from "pdfjs-dist/legacy/build/pdf.worker.min.mjs?url";
+import workerUrl from "./pdf-worker.ts?worker&url";
 import { newAsset } from "../../../packages/domain/src";
 import { stageReviewedCandidates } from "./intake-review-store";
 

@@ -8,8 +8,8 @@ type Capabilities = { mapComputed: string; fromBase64: string; withResolvers: st
 type ObservedRecord = { type: string; payload: { id: string; kind: string; name: string; description: string } };
 declare global { interface Window { pdfCompatibility: { before: Capabilities; workers: { stage: string; capabilities: Capabilities }[]; workerStarts: number; workerMapErrors: number; workerPromiseErrors: number } } }
 
-/** Only remove the two APIs missing on the actual N16 Chrome133 WebView.
- * Real PDF.js module/worker, PDF bytes, extraction and repository writes remain intact.
+/** Simulate N16's two API gaps and optional older-runtime Promise gaps.
+ * Bootstrap deletes before the real module graph; extraction/storage stay intact.
  */
 async function simulateN16MissingApis(context: BrowserContext, promiseGap: 'none' | 'both' | 'worker' = 'none') {
   await context.addInitScript(promiseGap => {
@@ -21,10 +21,18 @@ async function simulateN16MissingApis(context: BrowserContext, promiseGap: 'none
     window.pdfCompatibility = { before: capabilities(), workers: [], workerStarts: 0, workerMapErrors: 0, workerPromiseErrors: 0 };
     const NativeWorker = window.Worker;
     window.Worker = class extends NativeWorker {
+      private pdfBootstrapUrl?: string;
       constructor(url: string | URL, options?: WorkerOptions) {
         const workerUrl = new URL(url, location.href);
-        if (/pdf\.worker(?:\.min)?\.mjs$/.test(workerUrl.pathname)) workerUrl.searchParams.set('keepany_pdf_test_worker', '1');
-        super(workerUrl, options);
+        const pdfWorker = /pdf[.-]worker/.test(workerUrl.pathname) && options?.type === 'module';
+        const probe = (stage: string) => `globalThis.postMessage({__keepanyPdfCompatibility:{stage:${JSON.stringify(stage)},capabilities:{mapComputed:typeof Map.prototype.getOrInsertComputed,fromBase64:typeof Uint8Array.fromBase64,withResolvers:typeof Promise.withResolvers}}});\n`;
+        // This bootstrap is the real worker's entry point: delete first, then
+        // dynamic import. Static dependencies of the product entry run later.
+        // No URL-module/fake-worker rewriting and no recursive new Worker.
+        const source = `Reflect.deleteProperty(Map.prototype,'getOrInsertComputed');Reflect.deleteProperty(Uint8Array,'fromBase64');${promiseGap === 'none' ? '' : "Reflect.deleteProperty(Promise,'withResolvers');"}\n${probe('before')}await import(${JSON.stringify(workerUrl.href)});\n${probe('after')}`;
+        const bootstrap = pdfWorker ? URL.createObjectURL(new Blob([source], { type: 'text/javascript' })) : undefined;
+        super(bootstrap ?? workerUrl, options);
+        this.pdfBootstrapUrl = bootstrap;
         window.pdfCompatibility.workerStarts++;
         this.addEventListener('error', event => {
           if (event.message.includes('withResolvers')) window.pdfCompatibility.workerPromiseErrors++;
@@ -35,19 +43,13 @@ async function simulateN16MissingApis(context: BrowserContext, promiseGap: 'none
           if (typeof message === 'string' && message.includes('getOrInsertComputed')) window.pdfCompatibility.workerMapErrors++;
         });
       }
+      override terminate() {
+        super.terminate();
+        if (this.pdfBootstrapUrl) URL.revokeObjectURL(this.pdfBootstrapUrl);
+        this.pdfBootstrapUrl = undefined;
+      }
     };
   }, promiseGap);
-  await context.route(/pdf\.worker(?:\.min)?\.mjs(?:\?.*)?$/, async route => {
-    // Only the actual test-owned Worker constructor adds this marker. Vite's
-    // ?url importer and PDF.js page-thread fallback never receive the prefix.
-    if (new URL(route.request().url()).searchParams.get('keepany_pdf_test_worker') !== '1') {
-      await route.continue(); return;
-    }
-    const response = await route.fetch();
-    const probe = (stage: string) => `globalThis.postMessage({__keepanyPdfCompatibility:{stage:${JSON.stringify(stage)},capabilities:{mapComputed:typeof Map.prototype.getOrInsertComputed,fromBase64:typeof Uint8Array.fromBase64,withResolvers:typeof Promise.withResolvers}}});\n`;
-    const before = `Reflect.deleteProperty(Map.prototype,'getOrInsertComputed');Reflect.deleteProperty(Uint8Array,'fromBase64');${promiseGap === 'none' ? '' : "Reflect.deleteProperty(Promise,'withResolvers');"}\n${probe('before')}`;
-    await route.fulfill({ response, body: `${before}${await response.text()}\n${probe('after')}` });
-  });
 }
 
 for (const language of ['zh-CN', 'en'] as const) test(`PDF N16 missing APIs ${language} 390 real text/worker/review/error paths`, async ({ browser }, testInfo) => {
@@ -154,14 +156,27 @@ for (const gap of ['both', 'worker'] as const) test(`PDF minimum-runtime Promise
   const page = await context.newPage(); const errors: string[] = [];
   page.on('pageerror', error => errors.push(error.message));
   const buffer = pdf(['Synthetic valid inherited resource text'], false, { inheritedResources: true });
+  let completed = false;
   try {
     await page.goto('/intake'); await page.getByRole('button', { name: 'PDF document', exact: true }).click();
     expect((await page.evaluate(() => window.pdfCompatibility.before)).withResolvers).toBe(gap === 'both' ? 'undefined' : 'function');
     await page.locator('#csv-file').setInputFiles({ name: 'minimum-runtime-valid.pdf', mimeType: 'application/pdf', buffer });
     await expect(page.locator('.intake-review-row')).toHaveCount(1);
     await expect(page.locator('.intake-review-row').getByLabel('Short description')).toHaveValue('Synthetic valid inherited resource text');
+    await expect.poll(() => page.evaluate(() => window.pdfCompatibility.workers.length)).toBeGreaterThanOrEqual(2);
+    const runtime = await page.evaluate(() => window.pdfCompatibility);
+    expect(runtime.workerStarts).toBeGreaterThan(0);
+    expect(runtime.workers.find(probe => probe.stage === 'before')?.capabilities.withResolvers).toBe('undefined');
+    expect(runtime.workers.find(probe => probe.stage === 'after')?.capabilities).toEqual({ mapComputed: 'function', fromBase64: 'function', withResolvers: 'function' });
+    expect(runtime.workerPromiseErrors).toBe(0); expect(errors).toEqual([]);
+    expect(await page.evaluate(() => typeof Reflect.get(Promise, 'withResolvers'))).toBe('function');
+    expect(await page.evaluate(async module => {
+      const { allRecords } = await import(module);
+      return (await allRecords()).filter((row: { type: string }) => row.type === 'asset' || row.type === 'history').length;
+    }, sourceModuleUrl('packages/local-db/src/index.ts'))).toBe(0);
+    completed = true;
   } finally {
-    const directRead = await page.evaluate(async ({ module, bytes }) => {
+    const directRead = completed ? { outcome: 'not-needed-preview-read' } : await page.evaluate(async ({ module, bytes }) => {
       let timer: ReturnType<typeof setTimeout> | undefined;
       try {
         return await Promise.race([
@@ -179,4 +194,28 @@ for (const gap of ['both', 'worker'] as const) test(`PDF minimum-runtime Promise
     await testInfo.attach('minimum-runtime-observations', { path: observedPath, contentType: 'application/json' });
     await context.close();
   }
+});
+
+test('PDF bundled worker smoke keeps actual extraction when main and worker lack baseline APIs', async ({ browser }, testInfo) => {
+  const context = await browser.newContext({ locale: 'en', viewport: { width: 390, height: 844 } });
+  await simulateN16MissingApis(context, 'both');
+  await context.addInitScript(() => localStorage.setItem('keepany-language', 'en'));
+  const page = await context.newPage(); const errors: string[] = [];
+  page.on('pageerror', error => errors.push(error.message));
+  try {
+    await page.goto('/intake'); await page.getByRole('button', { name: 'PDF document', exact: true }).click();
+    await page.locator('#csv-file').setInputFiles({ name: 'bundled-readable.pdf', mimeType: 'application/pdf', buffer: pdf(['Synthetic bundled inherited resource text'], false, { inheritedResources: true }) });
+    const row = page.locator('.intake-review-row'); await expect(row).toHaveCount(1);
+    await expect(row.getByLabel('Short description')).toHaveValue('Synthetic bundled inherited resource text');
+    await expect(row.getByRole('button', { name: 'Confirm and save', exact: true })).toBeDisabled();
+    await expect.poll(() => page.evaluate(() => window.pdfCompatibility.workers.length)).toBeGreaterThanOrEqual(2);
+    const runtime = await page.evaluate(() => window.pdfCompatibility);
+    expect(runtime.before.withResolvers).toBe('undefined'); expect(runtime.workerStarts).toBe(1);
+    expect(runtime.workers[0].capabilities.withResolvers).toBe('undefined');
+    expect(runtime.workers[1].capabilities).toEqual({ mapComputed: 'function', fromBase64: 'function', withResolvers: 'function' });
+    expect(runtime.workerPromiseErrors).toBe(0); expect(errors).toEqual([]);
+    const evidencePath = testInfo.outputPath('bundled-worker-observations.json'); writeFileSync(evidencePath, JSON.stringify(runtime, null, 2));
+    await testInfo.attach('bundled-worker-observations', { path: evidencePath, contentType: 'application/json' });
+    await page.screenshot({ path: testInfo.outputPath('bundled-pdf-preview-en.png'), fullPage: true });
+  } finally { await context.close(); }
 });
