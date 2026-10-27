@@ -368,7 +368,7 @@ p { line-height: 1.5; }
 .search-results a strong { min-width: 0; overflow-wrap: anywhere; }
 .search-results a:hover { background: var(--yellow-soft); }
 .search-results small { color: var(--muted); }
-.list-filters { display: flex; align-items: center; gap: 8px; margin: 0 0 12px; }
+.list-filters { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0 0 12px; }
 .list-filters label { font-size: 13px; font-weight: 700; }
 .list-filters .themed-select-root { display: block; max-width: min(100%, 280px); min-width: 0; }
 .list-filters .themed-select-trigger { max-width: min(100%, 280px); min-width: 0; }

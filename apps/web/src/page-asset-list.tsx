@@ -41,6 +41,7 @@ import { AssetMetrics } from "./components/AssetMetrics";
 import { useWorkspaceSummary } from "./use-workspace-summary";
 import type { AssetSummary } from "./workspace-summary";
 import { workspaceReturnKey } from "./workspace-return";
+import { assetListFilterSnapshot, readAssetTagFilters, saveAssetTagFilters } from "./asset-list-filters";
 const AssetEditor = lazy(() =>
 	import("./workflows").then((module) => ({ default: module.AssetEditor })),
 );
@@ -404,11 +405,7 @@ export function ProjectPreview({ asset }: { asset: Asset }) {
 function rememberAssetList(asset: Asset, search: string) {
 	sessionStorage.removeItem(workspaceReturnKey);
 	sessionStorage.setItem(`keepany-scroll-${asset.kind}`, String(window.scrollY));
-	sessionStorage.setItem(`keepany-scroll-filter-${asset.kind}`, JSON.stringify({
-		category: sessionStorage.getItem(`keepany-category-${asset.kind}`) || "",
-		tag: sessionStorage.getItem(`keepany-tag-${asset.kind}`) || "",
-		search,
-	}));
+	sessionStorage.setItem(`keepany-scroll-filter-${asset.kind}`, JSON.stringify(assetListFilterSnapshot(asset.kind, search)));
 }
 
 export function ProjectCard({ asset, search, backlinks, summary, onOpen }: { asset: Asset; search: string; backlinks: { total: number; pending: number }; summary?: AssetSummary; onOpen?: () => void }) {
@@ -510,17 +507,18 @@ export function AssetKindList({ kind, beforeList, afterList, passwordCounts, onA
 	useEffect(() => {
 		if (selectedCategory) sessionStorage.setItem(`keepany-category-${kind}`, selectedCategory.name);
 	}, [kind, selectedCategory]);
-	const [tags, setTags] = useState<Record<string, string>>(() =>
-		Object.fromEntries(
-			kinds.map((k) => [k, sessionStorage.getItem(`keepany-tag-${k}`) || ""]),
-		),
+	const [tags, setTags] = useState<Record<string, string[]>>(() =>
+		Object.fromEntries(kinds.map((key) => [key, readAssetTagFilters(key)])),
 	);
-	const tag = tags[kind] || "";
+	const selectedTags = tags[kind] ?? [];
+	const tag = selectedTags[0] ?? "";
+	const tagSignature = JSON.stringify(selectedTags);
 	useEffect(() => { onAccountFiltersChange?.({ search: accountSearch, category, tag }); }, [onAccountFiltersChange, accountSearch, category, tag]);
-	const chooseTag = (value: string) => {
-		sessionStorage.setItem(`keepany-tag-${kind}`, value);
-		setTags((prev) => ({ ...prev, [kind]: value }));
+	const changeTags = (values: string[]) => {
+		saveAssetTagFilters(kind, values);
+		setTags((prev) => ({ ...prev, [kind]: readAssetTagFilters(kind) }));
 	};
+	const chooseTag = (value: string) => changeTags(value ? [value] : []);
 	const choose = (value: string, id?: string) => {
 		const categoryId = id ?? data.categories.find((item) => item.kind === kind && !item.deleted && item.name === value)?.id ?? "";
 		sessionStorage.setItem(`keepany-category-${kind}`, value);
@@ -556,7 +554,7 @@ export function AssetKindList({ kind, beforeList, afterList, passwordCounts, onA
 	const assets = allKindAssets.filter(
 		(a) =>
 			(!category || a.category === category || kind === "account" && category === "other" && !a.category || !!pendingCategory && [pendingCategory.beforeName, pendingCategory.afterName].includes(a.category)) &&
-			(!tag || a.tags.includes(tag)) &&
+			selectedTags.every(value => a.tags.includes(value)) &&
 			matchesAssetSearch(a, search) && matchesAssetSearch(a, accountQuery),
 	);
 	const restored = useRef("");
@@ -568,9 +566,10 @@ export function AssetKindList({ kind, beforeList, afterList, passwordCounts, onA
 				const saved = JSON.parse(savedFilter) as {
 					category?: string;
 					tag?: string;
+					tags?: string[];
 					search?: string;
 				};
-				if (saved.category !== category || (saved.tag || "") !== tag || saved.search !== listSearch) {
+				if (saved.category !== category || JSON.stringify(saved.tags ?? (saved.tag ? [saved.tag] : [])) !== tagSignature || saved.search !== listSearch) {
 					// Navigation clears the shell's temporary query. Keep the position
 					// pending until the matching filters return instead of consuming it.
 					return;
@@ -586,7 +585,7 @@ export function AssetKindList({ kind, beforeList, afterList, passwordCounts, onA
 			restored.current = kind;
 		});
 		return () => cancelAnimationFrame(frame);
-	}, [kind, category, tag, listSearch, data.loading, assets.length]);
+	}, [kind, category, tagSignature, listSearch, data.loading, assets.length]);
 	return (
 		<main className={kind === "vault" ? "page vault-page" : "page"}>
 			{kind !== "vault" && <PageTitle
@@ -625,6 +624,16 @@ export function AssetKindList({ kind, beforeList, afterList, passwordCounts, onA
 						{tag && !availableTags.includes(tag) && <SelectOption value={tag}>{tag}</SelectOption>}
 						{availableTags.map((value) => <SelectOption key={value} value={value}>{value}</SelectOption>)}
 					</Select>
+					{tag && availableTags.some(value => !selectedTags.includes(value)) && <>
+						<label htmlFor="asset-tag-filter-add">{t("assetTagAddFilter")}</label>
+						<Select id="asset-tag-filter-add" value="" onValueChange={value => { if (value) changeTags([...selectedTags, value]); }}>
+							<SelectOption value="">{t("assetTagAddFilter")}</SelectOption>
+							{availableTags.filter(value => !selectedTags.includes(value)).map(value => <SelectOption key={value} value={value}>{value}</SelectOption>)}
+						</Select>
+					</>}
+					{selectedTags.map(value => <span className="chip" key={value} data-selected-asset-tag={value}>
+						{value}<Button size="icon" variant="ghost" aria-label={t("assetTagRemoveFilter", { tag: value })} onClick={() => changeTags(selectedTags.filter(tag => tag !== value))}><X size={16} /></Button>
+					</span>)}
 				</div>
 			)}
 			{kind === "vault" ? (

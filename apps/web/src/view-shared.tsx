@@ -1,3 +1,4 @@
+import { assetListFilterSnapshot } from "./asset-list-filters";
 import { createContext, useContext } from "react";
 import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
@@ -127,12 +128,7 @@ export function AssetRow({
 				);
 				sessionStorage.setItem(
 					`keepany-scroll-filter-${asset.kind}`,
-					JSON.stringify({
-						category:
-							sessionStorage.getItem(`keepany-category-${asset.kind}`) || "",
-						tag: sessionStorage.getItem(`keepany-tag-${asset.kind}`) || "",
-						search,
-					}),
+					JSON.stringify(assetListFilterSnapshot(asset.kind, search)),
 				);
 			}}
 		>

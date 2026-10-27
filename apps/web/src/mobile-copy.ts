@@ -1,4 +1,6 @@
 const copy: Record<string, [string, string]> = {
+	assetTagAddFilter: ["再选一个标签", "Add another tag"],
+	assetTagRemoveFilter: ["移除标签筛选：{{tag}}", "Remove tag filter: {{tag}}"],
 	mobileMore: ["更多", "More"],
 	mobileMainNavigation: ["主要导航", "Main navigation"],
 	mobileMoreSubtitle: ["整理资料、保护备份和管理连接。", "Organize your records, backups and connections."],
