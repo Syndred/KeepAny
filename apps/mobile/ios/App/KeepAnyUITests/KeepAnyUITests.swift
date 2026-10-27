@@ -43,7 +43,9 @@ final class KeepAnyUITests: XCTestCase {
         let tasksLink = app.links[tasks].firstMatch
         XCTAssertTrue(tasksLink.waitForExistence(timeout: 30))
         tasksLink.tap()
-        let kinds: [XCUIElement.ElementType] = [.popUpButton, .datePicker, .textField, .button]
+        // The actual WKWebView AX tree exposes these HTML date inputs as
+        // labelled Other elements (179x44), separate from their StaticText labels.
+        let kinds: [XCUIElement.ElementType] = [.popUpButton, .datePicker, .textField, .button, .other]
         var control: XCUIElement?
         let reachable = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in
             control = kinds.lazy.flatMap { kind in
@@ -122,12 +124,12 @@ final class KeepAnyUITests: XCTestCase {
             navigation.tap()
             XCTAssertTrue(taskName.waitForExistence(timeout: 15))
             tapReachable(app.buttons[chinese ? "完成" : "Complete"].firstMatch, in: app)
-            let completed = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", chinese ? "已完成 ·" : "Completed ·")).firstMatch
+            let completed = app.switches.matching(NSPredicate(format: "label BEGINSWITH %@", chinese ? "已完成 ·" : "Completed ·")).firstMatch
             XCTAssertTrue(completed.waitForExistence(timeout: 10))
             completed.tap()
             XCTAssertTrue(taskName.waitForExistence(timeout: 10))
             tapReachable(app.buttons[chinese ? "重新打开" : "Reopen"].firstMatch, in: app)
-            app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", chinese ? "待处理 ·" : "Pending ·")).firstMatch.tap()
+            app.switches.matching(NSPredicate(format: "label BEGINSWITH %@", chinese ? "待处理 ·" : "Pending ·")).firstMatch.tap()
             XCTAssertTrue(taskName.waitForExistence(timeout: 10))
             let delete = app.buttons[chinese ? "删除" : "Delete"].firstMatch
             tapReachable(delete, in: app)
