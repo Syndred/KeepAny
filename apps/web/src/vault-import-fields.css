@@ -25,7 +25,7 @@
 }
 .pw-import-draft-fields .field input:focus-visible,
 .pw-import-draft-fields .field textarea:focus-visible {
-	outline: 3px solid var(--yellow);
+	outline: 3px solid var(--focus-ring);
 	outline-offset: 2px;
 }
 .pw-import-draft-fields .field > label,
