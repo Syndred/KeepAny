@@ -107,7 +107,8 @@ export class McpAuthority {
   constructor(readonly storage: AuthorityStorage, private readonly now = () => Date.now()) {}
 
   // Trusted app/CLI only. Never expose this operation as an MCP tool.
-  async issueGrant(input: { assetIds: string[]; readFields: ReadField[]; writeFields?: WriteField[]; ttlMs: number }) {
+  async issueGrant(input: { assetIds: string[]; readFields: ReadField[]; writeFields?: WriteField[]; ttlMs: number },
+    onAllocated?: (grantId: string) => void) {
     const ids = [...new Set(input.assetIds)];
     const reads = [...new Set(input.readFields)];
     const writes = [...new Set(input.writeFields ?? [])];
@@ -121,6 +122,10 @@ export class McpAuthority {
     const at = this.now();
     const grant: Grant = { id: randomUUID(), secretHash: secretDigest(secret), assetIds: ids,
       readFields: reads, writeFields: writes, createdAt: at, expiresAt: at + input.ttlMs };
+    // A trusted owner can retain this non-secret identity before persistence.
+    // If the commit succeeds but its acknowledgement is lost, it can revoke
+    // exactly this attempted grant without guessing or touching other grants.
+    onAllocated?.(grant.id);
     await this.storage.update(state => {
       state.grants.push(grant);
       audit(state, { at, grantId: grant.id, action: 'grant', outcome: 'allowed' });
