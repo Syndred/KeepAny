@@ -42,9 +42,9 @@ jobs:
       - uses: actions/cache/restore@v4
         with:
           path: test-results/ios-derived
-          key: ios-derived-${{ runner.os }}-${{ hashFiles('test-results/ios/xcode.txt', 'pnpm-lock.yaml', 'apps/mobile/ios/**/Package.resolved') }}-${{ github.sha }}
+          key: ios-derived-simulator-adhoc-v1-${{ runner.os }}-${{ hashFiles('test-results/ios/xcode.txt', 'pnpm-lock.yaml', 'apps/mobile/ios/**/Package.resolved') }}-${{ github.sha }}
           restore-keys: |
-            ios-derived-${{ runner.os }}-${{ hashFiles('test-results/ios/xcode.txt', 'pnpm-lock.yaml', 'apps/mobile/ios/**/Package.resolved') }}-
+            ios-derived-simulator-adhoc-v1-${{ runner.os }}-${{ hashFiles('test-results/ios/xcode.txt', 'pnpm-lock.yaml', 'apps/mobile/ios/**/Package.resolved') }}-
       - run: pnpm install --frozen-lockfile
       - name: Build shared mobile sources and sync native packages
         run: |
@@ -55,17 +55,56 @@ jobs:
         timeout-minutes: 15
         shell: bash
         run: |
-          set -o pipefail
+          set -euo pipefail
+          # Simulator-only signing verification. Never manufacture a Team ID or
+          # grant a shared Keychain group when Xcode did not produce an App ID.
+          cat > test-results/ios/verify-simulator-signature.mjs <<'NODE'
+          import fs from 'node:fs';
+          import { spawnSync } from 'node:child_process';
+          const [app, phase] = process.argv.slice(2);
+          const builtApp = 'test-results/ios-derived/Build/Products/Debug-iphonesimulator/App.app';
+          const installed = ['installed-before', 'installed-after'].includes(phase);
+          if (!['compile', 'test', 'installed-before', 'installed-after'].includes(phase) || (installed ? typeof app !== 'string' || !app.startsWith('/') || !app.endsWith('/App.app') : app !== builtApp)) throw Error('ios-signature-input');
+          const result = { phase, signatureVerified: false, adHoc: false, bundleMatches: false, applicationIdentifier: null, applicationIdentityPresent: false, applicationIdentityMatchesBundle: false, keychainGroupsDefaultOnly: false, noSharedAppGroups: false, binaryMatchesBuild: false };
+          function fail(code) { fs.writeFileSync(`test-results/ios/signature-${phase}.json`, JSON.stringify({ ...result, error: code }, null, 2)); throw Error(code); }
+          function run(command, args, input) { const value = spawnSync(command, args, { input, encoding: 'utf8' }); if (value.status !== 0 || value.error) fail('ios-simulator-signature-tool-failed'); return value; }
+          run('codesign', ['--verify', '--strict', app]); result.signatureVerified = true;
+          const details = run('codesign', ['--display', '--verbose=4', app]);
+          result.adHoc = /^Signature=adhoc$/m.test(details.stderr);
+          const bundle = run('/usr/libexec/PlistBuddy', ['-c', 'Print :CFBundleIdentifier', `${app}/Info.plist`]).stdout.trim();
+          result.bundleMatches = bundle === 'io.github.syndred.keepany';
+          const executable = run('/usr/libexec/PlistBuddy', ['-c', 'Print :CFBundleExecutable', `${app}/Info.plist`]).stdout.trim();
+          if (executable !== 'App') fail('ios-simulator-executable-invalid');
+          try { result.binaryMatchesBuild = fs.readFileSync(`${app}/App`).equals(fs.readFileSync(`${builtApp}/App`)); } catch { fail('ios-simulator-executable-unreadable'); }
+          const signed = run('codesign', ['--display', '--entitlements', ':-', app]);
+          if (!signed.stdout.trim()) fail('ios-simulator-application-identity-missing');
+          let entitlements; try { entitlements = JSON.parse(run('plutil', ['-convert', 'json', '-o', '-', '-'], signed.stdout).stdout); } catch { fail('ios-simulator-entitlements-invalid'); }
+          if (!entitlements || typeof entitlements !== 'object' || Array.isArray(entitlements)) fail('ios-simulator-entitlements-invalid');
+          const identity = entitlements['application-identifier'];
+          // An App ID is public signing identity, never a credential. Preserve
+          // it for diagnosis without treating an unexpected shape as absent.
+          result.applicationIdentifier = typeof identity === 'string' ? identity : null;
+          result.applicationIdentityPresent = typeof identity === 'string' && identity.length > 0;
+          if (!result.applicationIdentityPresent) fail('ios-simulator-application-identity-missing');
+          result.applicationIdentityMatchesBundle = identity.length > bundle.length + 1 && identity.endsWith(`.${bundle}`) && !identity.includes('*');
+          const groups = entitlements['keychain-access-groups'];
+          result.keychainGroupsDefaultOnly = groups === undefined || Array.isArray(groups) && groups.every(group => group === identity);
+          const appGroups = entitlements['com.apple.security.application-groups'];
+          result.noSharedAppGroups = appGroups === undefined || Array.isArray(appGroups) && appGroups.length === 0;
+          if (!Object.values(result).every(value => typeof value !== 'boolean' || value)) fail('ios-simulator-signature-identity-invalid');
+          fs.writeFileSync(`test-results/ios/signature-${phase}.json`, JSON.stringify(result, null, 2)); console.log(JSON.stringify(result));
+          NODE
           xcodebuild -project apps/mobile/ios/App/App.xcodeproj -scheme KeepAnyAcceptance \
             -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
-            -derivedDataPath test-results/ios-derived CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO \
+            -derivedDataPath test-results/ios-derived CODE_SIGN_IDENTITY='-' CODE_SIGNING_ALLOWED=YES CODE_SIGNING_REQUIRED=YES \
             build 2>&1 | tee test-results/ios/build.log
+          node test-results/ios/verify-simulator-signature.mjs test-results/ios-derived/Build/Products/Debug-iphonesimulator/App.app compile
       - name: Preserve the successful application build for later verification attempts
         if: ${{ always() && !cancelled() && steps.compile_ios.outcome == 'success' }}
         uses: actions/cache/save@v4
         with:
           path: test-results/ios-derived
-          key: ios-derived-${{ runner.os }}-${{ hashFiles('test-results/ios/xcode.txt', 'pnpm-lock.yaml', 'apps/mobile/ios/**/Package.resolved') }}-${{ github.sha }}
+          key: ios-derived-simulator-adhoc-v1-${{ runner.os }}-${{ hashFiles('test-results/ios/xcode.txt', 'pnpm-lock.yaml', 'apps/mobile/ios/**/Package.resolved') }}-${{ github.sha }}
       - name: Exercise native MCP core over real loopback TLS sockets
         timeout-minutes: 12
         shell: bash
@@ -110,6 +149,8 @@ jobs:
           xcrun simctl boot "$simulator_id"
           xcrun simctl bootstatus "$simulator_id" -b
           xcrun simctl install "$simulator_id" test-results/ios-derived/Build/Products/Debug-iphonesimulator/App.app
+          installed_app="$(xcrun simctl get_app_container "$simulator_id" io.github.syndred.keepany app)"
+          node test-results/ios/verify-simulator-signature.mjs "$installed_app" installed-before
           xcrun simctl launch "$simulator_id" io.github.syndred.keepany | tee test-results/ios/launch.txt
           sleep 10
           xcrun simctl io "$simulator_id" screenshot test-results/ios/startup-en.png
@@ -134,11 +175,24 @@ jobs:
             > test-results/ios/project-fixture-observer.log 2>&1 &
           fixture_observer_pid=$!
           set -o pipefail
+          set +e
           xcodebuild -project apps/mobile/ios/App/App.xcodeproj -scheme KeepAnyAcceptance \
             -configuration Debug -sdk iphonesimulator -destination "id=$simulator_id" \
             -derivedDataPath test-results/ios-derived -resultBundlePath test-results/ios/acceptance.xcresult \
-            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO test 2>&1 | tee test-results/ios/ui-tests.log
+            CODE_SIGN_IDENTITY='-' CODE_SIGNING_ALLOWED=YES CODE_SIGNING_REQUIRED=YES test 2>&1 | tee test-results/ios/ui-tests.log
+          ui_test_exit=${PIPESTATUS[0]}
+          set -e
           stop_fixture_observer
+          post_signature_exit=0
+          if ! node test-results/ios/verify-simulator-signature.mjs test-results/ios-derived/Build/Products/Debug-iphonesimulator/App.app test; then post_signature_exit=1; fi
+          if installed_app="$(xcrun simctl get_app_container "$simulator_id" io.github.syndred.keepany app 2>/dev/null)"; then
+            if ! node test-results/ios/verify-simulator-signature.mjs "$installed_app" installed-after; then post_signature_exit=1; fi
+          else
+            printf '{"phase":"installed-after","error":"ios-simulator-installed-app-unavailable"}\n' > test-results/ios/signature-installed-after.json
+            post_signature_exit=1
+          fi
+          if [[ "$ui_test_exit" != 0 ]]; then exit "$ui_test_exit"; fi
+          if [[ "$post_signature_exit" != 0 ]]; then exit "$post_signature_exit"; fi
           if [[ "$fixture_observer_exit" != 0 ]]; then exit "$fixture_observer_exit"; fi
           node --input-type=module -e 'import fs from "node:fs";const summary=JSON.parse(fs.readFileSync("test-results/ios/project-fixture-observer/summary.json","utf8"));if(!summary.normalStop||summary.binding?.mode!=="simctl"||summary.binding?.resolver!=="simctl"||summary.binding?.baselineCaptured!==true||summary.health?.status!=="healthy"||summary.health?.fatalError||summary.verification?.complete!==true)throw Error("ios-project-fixture-verification-incomplete");console.log(JSON.stringify({nativeProjectFixtureVerification:summary.verification}));'
           trap - EXIT

@@ -398,16 +398,23 @@ final class KeepAnyUITests: XCTestCase {
     }
 
     private func existingProjectCategoryControl(in app: XCUIApplication, label: String) -> XCUIElement? {
-        let predicate = NSPredicate(format: "label BEGINSWITH %@", label)
-        let combo = app.comboBoxes.matching(predicate).firstMatch
-        let popup = app.popUpButtons.matching(predicate).firstMatch
-        let button = app.buttons.matching(predicate).firstMatch
+        let predicate = NSPredicate(format: "label == %@", label)
         // iOS 26 WKWebView exposes the actual labelled combobox as Other with
         // a value, distinct from the wrapper Other whose value is nil. Its AX
         // frame is wrong, so read its semantics but activate the HTML label.
-        let other = app.webViews.firstMatch.descendants(matching: .other).matching(
-            NSPredicate(format: "label == %@ AND value != nil", label)).firstMatch
-        return [combo, popup, other, button].first { $0.exists }
+        let queries = [app.comboBoxes.matching(predicate), app.popUpButtons.matching(predicate),
+                       app.webViews.firstMatch.descendants(matching: .other).matching(predicate),
+                       app.buttons.matching(predicate)]
+        // A wrapper can satisfy `value != nil` while XCTest returns an empty
+        // String. The real select in the 114285 AX artifact has the nonempty
+        // translated value; do not stop at the first empty wrapper.
+        for query in queries {
+            for candidate in query.allElementsBoundByIndex {
+                if let value = candidate.value as? String,
+                   !value.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { return candidate }
+            }
+        }
+        return nil
     }
 
     private func projectCategoryControl(in app: XCUIApplication, label: String) -> XCUIElement {
@@ -438,8 +445,9 @@ final class KeepAnyUITests: XCTestCase {
         }
         let select = projectCategoryControl(in: app, label: categoryLabel)
         reachProjectControl(app.staticTexts[categoryLabel].firstMatch, in: app)
-        let categoryAX = "\(select.label) \(select.value as? String ?? "")"
-        XCTAssertTrue(categoryAX.contains(category), "\(phase): non-default category retained: \(categoryAX)")
+        let categoryValue = select.value as? String
+        let categoryAX = "\(select.label) \(categoryValue ?? "")"
+        XCTAssertEqual(categoryValue, category, "\(phase): complete translated category must be retained")
         var expectedPayload: [String: Any] = Dictionary(uniqueKeysWithValues: fields.map { ($0.key, $0.value as Any) })
         expectedPayload["tags"] = ["iosfull", "synthetic"]
         expectedPayload["category"] = "repository"
@@ -518,11 +526,12 @@ final class KeepAnyUITests: XCTestCase {
         option.tap()
         let selectionUpdated = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in
             guard let current = self.existingProjectCategoryControl(in: app, label: categoryLabel) else { return false }
-            return "\(current.label) \(current.value as? String ?? "")".contains(category)
+            return (current.value as? String) == category
         }, object: nil)
         let selectionResult = XCTWaiter.wait(for: [selectionUpdated], timeout: 10)
         let selectedControl = existingProjectCategoryControl(in: app, label: categoryLabel)
-        let selectedAX = selectedControl.map { "\($0.label) \($0.value as? String ?? "")" } ?? "<missing semantic control>"
+        let selectedValue = selectedControl?.value as? String
+        let selectedAX = selectedControl.map { "\($0.label) \(selectedValue ?? "")" } ?? "<missing semantic control>"
         // 544 stopped before retaining the post-selection tree. Keep both
         // success and failure observations; never retap or accept a raw slug.
         capture(app, "project-category-after-selection-\(language)")
@@ -534,7 +543,7 @@ final class KeepAnyUITests: XCTestCase {
         categoryAttachment.lifetime = .keepAlways
         add(categoryAttachment)
         XCTAssertEqual(selectionResult, .completed, "The selected category must reach the genuine semantic control: \(selectedAX)")
-        XCTAssertTrue(selectedAX.contains(category), "Non-default category must actually be selected")
+        XCTAssertEqual(selectedValue, category, "Non-default category must actually be selected")
         for field in fields { replaceProjectText(projectTextControl(field, in: app), with: field.value, in: app) }
         try verifyProjectTextFields(fields, in: app, phase: "before-save", language: language, marker: marker, category: category, categoryLabel: categoryLabel)
         let save = app.buttons[text("保存", "Save")].firstMatch
@@ -709,11 +718,14 @@ final class KeepAnyUITests: XCTestCase {
         captureHierarchy(app, "ios-mcp-prepare-en-before-prepare-AX")
         XCTAssertTrue(prepare.isEnabled)
         tapProjectControl(prepare, in: app)
-        let ready = app.staticTexts[readyText].firstMatch
+        // Identifier subscripts reject strings longer than 128 characters.
+        // Predicate equality still requires the complete, exact user message.
+        let ready = app.staticTexts.matching(NSPredicate(format: "label == %@", readyText)).firstMatch
         let reachedReady = ready.waitForExistence(timeout: 45)
         capture(app, "ios-mcp-prepare-en-prepare-result")
         captureHierarchy(app, "ios-mcp-prepare-en-prepare-result-AX")
         XCTAssertTrue(reachedReady, "Actual iOS authority/Keychain and transport prepare must complete; unsupported or an error is not success")
+        XCTAssertEqual(ready.label, readyText)
         let export = app.links["Save or share file"].firstMatch
         let activate = app.buttons["Start waiting for computer"].firstMatch
         XCTAssertTrue(export.waitForExistence(timeout: 5))
