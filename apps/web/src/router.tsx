@@ -88,6 +88,11 @@ const settingsRoute = createRoute({
 		"SettingsPage",
 	),
 });
+const moreRoute = createRoute({
+	getParentRoute: () => rootRoute,
+	path: "/more",
+	component: lazyRouteComponent(() => import("./MobileMorePage"), "MobileMorePage"),
+});
 const routeTree = rootRoute.addChildren([
 	indexRoute,
 	taskRoute,
@@ -104,6 +109,7 @@ const routeTree = rootRoute.addChildren([
 	intakeRoute,
 	trashRoute,
 	settingsRoute,
+	moreRoute,
 ]);
 export const router = createRouter({ routeTree, defaultPreload: "intent" });
 declare module "@tanstack/react-router" {

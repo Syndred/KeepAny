@@ -8,6 +8,7 @@ import {
 	LayoutDashboard,
 	Layers,
 	Menu,
+	MoreHorizontal,
 	Plus,
 	Search,
 	Settings,
@@ -30,6 +31,8 @@ import { PasswordVaultProvider } from "./components/PasswordVaultProvider";
 import { buildGlobalSearchIndex, searchGlobalIndex, type GlobalSearchLabels } from "./global-search";
 import { requestSearchLocation } from "./search-location";
 import "./shell-restoration.css";
+import "./mobile-shell.css";
+import "./mobile-copy";
 import { ReminderRuntime } from "./ReminderRuntime";
 const AiDialog = lazy(() =>
 	import("./workflows").then((module) => ({ default: module.AiDialog })),
@@ -144,6 +147,7 @@ export function AppShell() {
 	const collections = readCollections(data.preferences.find((preference) => preference.id === COLLECTIONS_PREFERENCE_ID)?.value);
 	const currentKind = kinds.find((kind) => pathname.startsWith(`/assets/${kind}`));
 	const currentHeading = pathname === "/" ? t("overview") : currentKind ? t(currentKind) :
+		pathname === "/more" ? t("mobileMore") : pathname === "/assets" ? t("assetsWorkspace") : pathname === "/accounts" ? t("accountsWorkspace") :
 		pathname === "/tasks" ? t("tasks") : pathname === "/intake" ? t("intake") :
 		pathname === "/trash" ? t("trash") : t("settings");
 	const detailMatch = /^\/assets\/([^/]+)\/([^/]+)\/?$/.exec(pathname);
@@ -165,6 +169,8 @@ export function AppShell() {
 	let detailAssetId: string | undefined;
 	try { detailAssetId = detailMatch ? decodeURIComponent(detailMatch[2]) : undefined; } catch { /* Malformed links have no saved return target. */ }
 	const workspaceReturn = detailAssetId && !hasRelationReturn ? readWorkspaceReturn(detailAssetId) : null;
+	const mobileTab = pathname === "/" ? "overview" : pathname === "/tasks" || pathname === "/change-impact" ? "tasks" : workspacePathGroup(pathname) ?? "more";
+	const toolReturnToMore = ["/intake", "/trash", "/settings", "/assistant-access", "/collections"].some((path) => pathname === path || pathname.startsWith(`${path}/`));
 	function selectCategory(kind: string, category: string, categoryId: string) {
 		sessionStorage.setItem(`keepany-category-${kind}`, category);
 		sessionStorage.setItem(`keepany-category-id-${kind}`, categoryId);
@@ -306,7 +312,7 @@ export function AppShell() {
 						>
 							<Menu size={20} />
 						</Button>
-						{detailKind && workspaceReturn ? <Link className="topbar-page-label topbar-back-link" to={workspaceReturn.view === "domains" ? "/assets/$kind" : "/assets"} params={workspaceReturn.view === "domains" ? { kind: "domains" } : {}}><ArrowLeft size={15}/>{t("back")}</Link> : detailKind ? <Link className="topbar-page-label topbar-back-link" to="/assets/$kind" params={{ kind: detailReturnKind ?? detailKind }} onClick={hasRelationReturn ? () => { sessionStorage.removeItem("keepany-relation-return-id"); sessionStorage.removeItem("keepany-relation-return-kind"); } : undefined}><ArrowLeft size={15}/>{t("back")}</Link> : workflowProjectId ? <Link className="topbar-page-label topbar-back-link" to="/assets/$kind/$id" params={{ kind: "project", id: workflowProjectId }}><ArrowLeft size={15}/>{t("workflowBackToProject")}</Link> : collectionDetailId ? <Link className="topbar-page-label topbar-back-link" to="/collections"><ArrowLeft size={15}/>{t("collectionBack")}</Link> : pathname !== "/" ? <Link className="topbar-page-label topbar-back-link" to="/"><ArrowLeft size={15}/>{t("backToOverview")}</Link> : <strong className="topbar-page-label">{currentHeading}</strong>}
+						{detailKind && workspaceReturn ? <Link className="topbar-page-label topbar-back-link" to={workspaceReturn.view === "domains" ? "/assets/$kind" : "/assets"} params={workspaceReturn.view === "domains" ? { kind: "domains" } : {}}><ArrowLeft size={15}/>{t("back")}</Link> : detailKind ? <Link className="topbar-page-label topbar-back-link" to="/assets/$kind" params={{ kind: detailReturnKind ?? detailKind }} onClick={hasRelationReturn ? () => { sessionStorage.removeItem("keepany-relation-return-id"); sessionStorage.removeItem("keepany-relation-return-kind"); } : undefined}><ArrowLeft size={15}/>{t("back")}</Link> : workflowProjectId ? <Link className="topbar-page-label topbar-back-link" to="/assets/$kind/$id" params={{ kind: "project", id: workflowProjectId }}><ArrowLeft size={15}/>{t("workflowBackToProject")}</Link> : collectionDetailId ? <Link className="topbar-page-label topbar-back-link" to="/collections"><ArrowLeft size={15}/>{t("collectionBack")}</Link> : toolReturnToMore ? <><Link className="topbar-page-label topbar-back-link mobile-more-back" to="/more"><ArrowLeft size={15}/>{t("mobileBackToMore")}</Link><Link className="topbar-page-label topbar-back-link desktop-tool-back" to="/"><ArrowLeft size={15}/>{t("backToOverview")}</Link></> : pathname !== "/" ? <Link className="topbar-page-label topbar-back-link" to="/"><ArrowLeft size={15}/>{t("backToOverview")}</Link> : <strong className="topbar-page-label">{currentHeading}</strong>}
 						<div className="topbar-spacer"/>
 						<button className="top-search top-search-trigger" type="button" aria-label={t("globalSearch")} aria-expanded={searchOpen} onClick={() => { if (searchOpen) { setSearchOpen(false); setSearch(""); } else { setSearchOpen(true); window.requestAnimationFrame(() => topSearchInputRef.current?.focus()); } }}><Search size={17} /><span>{t("globalSearch")}</span>
 							<kbd>⌘ K</kbd>
@@ -349,6 +355,17 @@ export function AppShell() {
 						<Outlet />
 					)}
 				</div>
+				<nav className="mobile-tabbar" aria-label={t("mobileMainNavigation")}>
+					{([
+						{ id: "overview", to: "/", label: "overview", icon: LayoutDashboard },
+						{ id: "assets", to: "/assets", label: "assetsWorkspace", icon: Layers },
+						{ id: "accounts", to: "/accounts", label: "accountsWorkspace", icon: UserRound },
+						{ id: "tasks", to: "/tasks", label: "tasks", icon: Bell },
+						{ id: "more", to: "/more", label: "mobileMore", icon: MoreHorizontal },
+					] as const).map(({ id, to, label, icon: Icon }) => <Link key={id} to={to} aria-current={mobileTab === id ? "page" : undefined}>
+						<span className="mobile-tabbar-icon"><Icon size={21} aria-hidden />{id === "tasks" && openTasks > 0 && <span className="mobile-tabbar-badge" aria-hidden>{openTasks > 99 ? "99+" : openTasks}</span>}</span><span>{t(label)}</span>
+					</Link>)}
+				</nav>
 			</div>
 			{data.error && (
 				<div className="toast error" role="alert">
