@@ -1,6 +1,7 @@
 {
-  "verifiedAt": "2026-10-27T08:39:10Z",
-  "sourceScope": "Original nine remaining acceptance cases; source-level verification only",
+  "verifiedAt": "2026-10-27T09:04:48Z",
+  "status": "passed",
+  "sourceScope": "Original nine remaining acceptance cases; independent source review plus final parent delivery evidence audit",
   "remote": "f72ac57315491f4641dfb2efc8764587d131c740",
   "independentRed": {
     "observedAt": "2026-10-27T08:28:00Z",
@@ -68,6 +69,72 @@
     ],
     "note": "Each was selected by name with Vitest -t. Other cases were not executed by these spot checks and are not counted as passing."
   },
-  "deliveryPackage": "pending parent verification; no 104/104 completion claim",
-  "cleanup": "Both isolated probe browsers and Vite 4209 were closed normally; no user 4180 or real profile was used"
+  "deliveryPackage": {
+    "firstRuntimeCandidate": {
+      "path": "dist/preview/KeepAny-0.1.0-preview.745565a93c5d.dirty-portable.zip",
+      "bytes": 4863698,
+      "sha256": "925736b7aa36efc098f85bcf400d3fec954e89f339b3e83af9a5fee161fe77c9",
+      "executedCases": { "finance": 8, "mergeTaskAndLink": 6, "mcp": 16, "sources": 2 },
+      "passed": 32,
+      "failed": 0,
+      "skipped": 0,
+      "flaky": 0
+    },
+    "finalCandidate": {
+      "path": "dist/preview/KeepAny-0.1.0-preview.7df5d0e1c42d.dirty-portable.zip",
+      "sourceCommit": "7df5d0e1c42d9b09337b80f2c35f5839ab2c74ff",
+      "sourceDirty": true,
+      "bytes": 4863722,
+      "sha256": "b006efe09f347cab8d9d2dae3ec5d0af6f0d8f9e23fd3569a70788356e97db2a",
+      "freshAffectedSourceCases": 6,
+      "freshProductionCases": 2,
+      "windowsLauncherReverified": true,
+      "notClaimed": "The 32 baseline cases were not rerun against the final ZIP"
+    },
+    "independentRuntimeIdentity": {
+      "webFiles": 103,
+      "sourceFiles": 437,
+      "failures": [],
+      "sourceDifferencesBetweenCandidates": ["apps/web/vite.config.ts"],
+      "difference": "Type annotation only: ReturnType<typeof createUrlMetadataMiddleware> | undefined",
+      "webCompared": ["first ZIP", "final ZIP", "final extracted portable files", "current build"],
+      "sourceCompared": ["final ZIP", "final extracted portable sources", "current source"],
+      "localServerSha256": "bdb55f5760141e6905efe35cd6b97f3829683229176bd589507cfb4b1f9d32ad",
+      "mcpCliSha256": "74014043c328f3574e6badb8ca36e1322ade41eaf343af62d180eb749e6876a8"
+    },
+    "rawEvidence": [
+      "docs/qa/2026-10-27/evidence/T14-portable-completion/checks.json",
+      "test-results/T14-portable-final.log",
+      "test-results/T14-portable-final/.last-run.json",
+      "test-results/test-results/completion-portable-core.json",
+      "test-results/completion-mcp-production-results.json",
+      "test-results/completion-t18-production-results.json",
+      "test-results/completion-final-affected-source.json",
+      "test-results/completion-final-affected-production.json",
+      "test-results/completion-final-package-verification.json"
+    ]
+  },
+  "finalFullUnitAudit": {
+    "raw": "test-results/completion-pg/final-frozen.json",
+    "sha256": "57b557268fe430c83c5e7edb9ff8eb573061131b20d4c274a17e2d4bdeb615c0",
+    "success": true,
+    "total": 998,
+    "passed": 998,
+    "failed": 0,
+    "pending": 0,
+    "suites": 188,
+    "failedSuites": 0,
+    "realPostgresAssertionsPassed": 7
+  },
+  "originalContractAudit": {
+    "baseline": "f72ac57:docs/qa/2026-10-27/测试总表.md",
+    "originalRows": 104,
+    "currentRows": 104,
+    "idPreconditionStepsExpectedDifferences": 0,
+    "originalPassed": 95,
+    "originalPassedNowNotPassed": []
+  },
+  "optionalGstackProbes": "NOT_RUN; automatic approval rejected first probe, no retry; never counted as passing product evidence",
+  "lintLimit": "50 scoped files passed; two extra control-character regex diagnostics are on an unchanged baseline defensive line",
+  "cleanup": "4205-4209, 4211 and PG52393 have no listeners; connection env is absent. No user 4180 or real profile was used. PG schema zero and normal stop are parent receipt evidence, not a new query after shutdown."
 }

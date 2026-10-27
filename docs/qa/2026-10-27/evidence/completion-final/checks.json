@@ -65,7 +65,10 @@
     "browser": 7,
     "namedUnitProbes": 7,
     "report": "scopes/剩余九条独立复核.md",
-    "reportStatusAtItsCreation": "human_needed because portable evidence had not run; final portable results below close this requirement"
+    "reportStatusAtItsCreation": "human_needed because portable evidence had not run; final portable results below close this requirement",
+    "finalStatus": "passed",
+    "finalHumanVerification": 0,
+    "finalFingerprintMatches": true
   },
   "portable": {
     "firstRuntimeCandidate": "dist/preview/KeepAny-0.1.0-preview.745565a93c5d.dirty-portable.zip",
@@ -225,5 +228,12 @@
     "Windows isolated Chromium and synthetic local services/data; no physical device or native POSIX execution in this session",
     "No real provider or live commercial account acceptance",
     "Package remains unpublished; source fixes do not update user4180"
-  ]
+  ],
+  "delivery": {
+    "firstNormalPushVerified": true,
+    "firstRemoteCommit": "20b1b317dc3db1ac39f1f5b4b55620af60513db2",
+    "repository": "Syndred/KeepAny",
+    "branch": "main",
+    "followupChanges": "Pure documentation and final independent audit status; final remote head checked after push"
+  }
 }
