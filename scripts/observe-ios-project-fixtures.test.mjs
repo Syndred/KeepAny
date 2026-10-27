@@ -428,14 +428,15 @@ test('default sqlite parser classifies actual corruption diagnostics as fixed fa
   }
 });
 
-test('both owned CLIs force-kill and drain a child with a TERM handler on deadline and ready-state abort', async () => {
-  // Windows force-terminates even SIGTERM; real TERM resistance is exercised
-  // when this same test runs on macOS/POSIX. No process outside this test is signalled.
-  for (const kind of ['sqlite', 'simctl']) for (const abort of [false, true]) {
+// Windows force-terminates even SIGTERM; real TERM resistance is exercised
+// when these same tests run on macOS/POSIX. No unrelated process is signalled.
+for (const kind of ['sqlite', 'simctl']) for (const abort of [false, true]) {
+  test(`owned ${kind} force-kills and drains a TERM-handler child on ${abort ? 'ready-state abort' : 'deadline'}`, async () => {
     const controller = new AbortController(); let child; let closed = false; let rescued = false; let resolveReady; let killSignal;
     const ready = new Promise(resolve => { resolveReady = resolve; });
     const execFileImpl = (_command, _args, options, callback) => {
       killSignal = options.killSignal;
+      assert.equal(options.timeout, 1500);
       child = execFile(process.execPath, ['-e', "process.on('SIGTERM',()=>{});process.stdout.write('ready');setInterval(()=>{},1000)"], options, callback);
       child.stdout.on('data', () => resolveReady()); child.once('close', () => { closed = true; }); return child;
     };
@@ -452,5 +453,5 @@ test('both owned CLIs force-kill and drain a child with a TERM handler on deadli
       assert.equal(killSignal, 'SIGKILL');
       assert.ok(performance.now() - start < 4500, 'owned close must precede the safety-net deadline');
     } finally { clearTimeout(rescue); if (child && !closed) child.kill('SIGKILL'); }
-  }
-});
+  });
+}
