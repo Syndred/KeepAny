@@ -26,9 +26,10 @@ export type SortableNavProps = {
   onVisibilityChange?: (id: string, visible: boolean) => void;
   onNavigate: () => void;
   manageMode?: boolean;
+  disabled?: boolean;
 };
 
-function NavRow({ item, index, count, activePath, onNavigate, onMove, onVisibilityChange, manageMode }: {
+function NavRow({ item, index, count, activePath, onNavigate, onMove, onVisibilityChange, manageMode, disabled }: {
   item: SortableNavItem;
   index: number;
   count: number;
@@ -37,9 +38,10 @@ function NavRow({ item, index, count, activePath, onNavigate, onMove, onVisibili
   onMove: (id: string, direction: -1 | 1) => void;
   onVisibilityChange?: (id: string, visible: boolean) => void;
   manageMode: boolean;
+  disabled: boolean;
 }) {
   const { t } = useTranslation();
-  const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } = useSortable({ id: item.id });
+  const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } = useSortable({ id: item.id, disabled });
   const active = item.active ?? (item.to === '/' ? activePath === '/' : activePath === item.to || activePath.startsWith(`${item.to}/`));
   const Icon = item.icon;
   const visible = item.visible !== false;
@@ -53,6 +55,7 @@ function NavRow({ item, index, count, activePath, onNavigate, onMove, onVisibili
       ref={setActivatorNodeRef}
       type="button"
       className="nav-drag-handle"
+      disabled={disabled}
       {...attributes}
       {...listeners}
       aria-label={`${item.label} ${t('drag')}`}
@@ -65,19 +68,19 @@ function NavRow({ item, index, count, activePath, onNavigate, onMove, onVisibili
       type="checkbox"
       className="nav-visibility-toggle"
       checked={visible}
-      disabled={item.visibilityLocked}
+      disabled={disabled || item.visibilityLocked}
       onChange={(event) => onVisibilityChange?.(item.id, event.target.checked)}
       aria-label={`${t('showNavItem')}: ${item.label}`}
       title={item.visibilityLockReason ?? `${t(visible ? 'hideNavItem' : 'showNavItem')}: ${item.label}`}
     /></label>}
     {manageMode && <div className="nav-order-actions">
-      <button type="button" onClick={() => onMove(item.id, -1)} disabled={index === 0} aria-label={`${t('navMoveUp')} ${item.label}`} title={t('navMoveUp')}><ChevronUp size={14}/></button>
-      <button type="button" onClick={() => onMove(item.id, 1)} disabled={index === count - 1} aria-label={`${t('navMoveDown')} ${item.label}`} title={t('navMoveDown')}><ChevronDown size={14}/></button>
+      <button type="button" onClick={() => onMove(item.id, -1)} disabled={disabled || index === 0} aria-label={`${t('navMoveUp')} ${item.label}`} title={t('navMoveUp')}><ChevronUp size={14}/></button>
+      <button type="button" onClick={() => onMove(item.id, 1)} disabled={disabled || index === count - 1} aria-label={`${t('navMoveDown')} ${item.label}`} title={t('navMoveDown')}><ChevronDown size={14}/></button>
     </div>}
   </div>;
 }
 
-export function SortableNav({ items, activePath, onOrderChange, onVisibilityChange, onNavigate, manageMode = false }: SortableNavProps) {
+export function SortableNav({ items, activePath, onOrderChange, onVisibilityChange, onNavigate, manageMode = false, disabled = false }: SortableNavProps) {
   const { t } = useTranslation();
   const ids = items.map(item => item.id);
   const sensors = useSensors(
@@ -86,6 +89,7 @@ export function SortableNav({ items, activePath, onOrderChange, onVisibilityChan
   );
 
   function move(id: string, direction: -1 | 1) {
+    if (disabled) return;
     const from = ids.indexOf(id);
     const to = from + direction;
     if (from < 0 || to < 0 || to >= ids.length) return;
@@ -93,6 +97,7 @@ export function SortableNav({ items, activePath, onOrderChange, onVisibilityChan
   }
 
   function finishDrag(event: DragEndEvent) {
+    if (disabled) return;
     if (!event.over || event.active.id === event.over.id) return;
     const from = ids.indexOf(String(event.active.id));
     const to = ids.indexOf(String(event.over.id));
@@ -114,6 +119,6 @@ export function SortableNav({ items, activePath, onOrderChange, onVisibilityChan
       },
     }}
   ><SortableContext items={ids} strategy={verticalListSortingStrategy}>
-      {items.map((item, index) => <NavRow key={item.id} item={item} index={index} count={items.length} activePath={activePath} onNavigate={onNavigate} onMove={move} onVisibilityChange={onVisibilityChange} manageMode={manageMode}/>)}
+      {items.map((item, index) => <NavRow key={item.id} item={item} index={index} count={items.length} activePath={activePath} onNavigate={onNavigate} onMove={move} onVisibilityChange={onVisibilityChange} manageMode={manageMode} disabled={disabled}/>)}
     </SortableContext></DndContext>;
 }

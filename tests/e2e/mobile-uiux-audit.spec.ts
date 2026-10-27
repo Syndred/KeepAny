@@ -153,3 +153,52 @@ for (const locale of ['zh-CN', 'en'] as const) for (const width of [360,390,430]
     expect(findings,`${locale}/${width} geometry findings`).toEqual([]);
   });
 }
+
+for(const locale of ['zh-CN','en'] as const) test(`${locale} 390 sidebar pending acknowledgement, cancelled reload, navigation wait, failure and CAS rollback`,async({page},info)=>{
+  await page.setViewportSize({width:390,height:844});await page.addInitScript(language=>localStorage.setItem('keepany-language',language),locale);await page.goto('/collections');
+  const t=(key:keyof typeof resources.en.translation)=>resources[locale].translation[key];
+  await expect(page.locator('.collections-nav .sortable-nav-item').first()).toBeVisible();
+  await page.evaluate(async path=>{
+    const repository=await(await import(path)).localRepository(), original=repository.savePreferenceIfCurrent.bind(repository);
+    const state={mode:'delay',calls:0,release:()=>{}};Object.assign(window,{sidebarPendingChecks:state});
+    repository.savePreferenceIfCurrent=async(expected:{id:string;value:unknown}|null,next:{id:string;value:unknown})=>{
+      if(!['sidebarOrder','sidebarHidden'].includes(next.id))return original(expected,next);
+      state.calls++;const mode=state.mode;if(mode!=='real')await new Promise<void>(resolve=>{state.release=resolve;});
+      if(mode==='failure')throw Error('synthetic-write-failure');
+      if(mode==='stale')await original(expected,{id:next.id,value:['accounts','assets','tasks','overview']});
+      return original(expected,next);
+    };
+  },sourceModuleUrl('packages/local-db/src/index.ts'));
+  const state=()=>page.evaluate(()=>(window as unknown as{sidebarPendingChecks:{calls:number}}).sidebarPendingChecks.calls);
+  const release=()=>page.evaluate(()=>(window as unknown as{sidebarPendingChecks:{release:()=>void}}).sidebarPendingChecks.release());
+  const setMode=(mode:string)=>page.evaluate(mode=>{(window as unknown as{sidebarPendingChecks:{mode:string}}).sidebarPendingChecks.mode=mode;},mode);
+  const pref=(id:string)=>page.evaluate(async({path,id})=>(await(await(await import(path)).localRepository()).get('preference',id))?.value,{path:sourceModuleUrl('packages/local-db/src/index.ts'),id});
+  const rows=page.locator('.collections-nav .sortable-nav-item');
+  const initialNames=await rows.locator('.nav-drag-handle').evaluateAll(elements=>elements.map(element=>element.getAttribute('aria-label')));
+  await rows.first().locator('.nav-order-actions button').last().tap();
+  await expect(page.getByRole('status').filter({hasText:t('organizeSaving')})).toBeInViewport();
+  await expect(page.locator('.collections-nav')).toHaveAttribute('aria-busy','true');
+  for(const button of await page.locator('.collections-nav button').all())await expect(button).toBeDisabled();
+  await rows.first().locator('.nav-order-actions button').last().tap({force:true});expect(await state()).toBe(1);expect(await pref('sidebarOrder')).toBeUndefined();
+  const dialogPromise=page.waitForEvent('dialog'),reload=page.evaluate(()=>location.reload()).catch(()=>null),dialog=await dialogPromise;
+  expect(dialog.type()).toBe('beforeunload');await dialog.dismiss();await reload;expect(await page.evaluate(()=>location.pathname)).toBe('/collections');
+  await page.screenshot({path:info.outputPath('pending-cancelled-reload.png')});
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
+  await page.locator('.mobile-tabbar a[href="/more"]').tap();await expect(page).toHaveURL(/\/collections$/);await expect(page.locator('.collections-nav')).toHaveAttribute('aria-busy','true');
+  await release();await expect(page).toHaveURL(/\/more$/);await expect(page.getByRole('status').filter({hasText:t('saved')})).toBeVisible();
+  expect(await pref('sidebarOrder')).toEqual(['tasks','overview','assets','accounts']);
+  await page.locator('main a[href="/collections"]').tap();
+  await expect(rows.nth(1).locator('.nav-drag-handle')).toHaveAttribute('aria-label',initialNames[0]??'');
+  await setMode('failure');const toggleName=await page.locator('.collections-nav input.nav-visibility-toggle:not(:disabled)').first().getAttribute('aria-label');if(!toggleName)throw Error('missing-toggle-name');const toggle=page.getByRole('checkbox',{name:toggleName,exact:true});await toggle.locator('..').tap();await expect(toggle).not.toBeChecked();
+  await expect(page.locator('.collections-nav')).toHaveAttribute('aria-busy','true');await release();
+  await expect(page.locator('.collections-nav-error')).toHaveText(t('error'));await expect(toggle).toBeChecked();expect(await pref('sidebarHidden')).toBeUndefined();expect(await state()).toBe(2);
+  await page.locator('.mobile-tabbar a[href="/more"]').tap();await expect(page).toHaveURL(/\/more$/);await page.locator('main a[href="/collections"]').tap();
+  await setMode('stale');await rows.first().locator('.nav-order-actions button').last().tap();await expect(page.locator('.collections-nav')).toHaveAttribute('aria-busy','true');await release();
+  await expect(page.locator('.collections-nav-error')).toHaveText(t('organizeChanged'));expect(await pref('sidebarOrder')).toEqual(['accounts','assets','tasks','overview']);
+  await expect(rows.first().locator('.nav-drag-handle')).toHaveAttribute('aria-label',initialNames[3]??'');expect(await state()).toBe(3);
+  await page.screenshot({path:info.outputPath('stale-cas-rollback.png')});
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
+  await setMode('real');await rows.first().locator('.nav-order-actions button').last().tap();await expect(page.locator('.collections-nav')).toHaveAttribute('aria-busy','false');
+  await expect(page.getByRole('status').filter({hasText:t('saved')})).toBeVisible();expect(await pref('sidebarOrder')).toEqual(['assets','accounts','tasks','overview']);expect(await state()).toBe(4);
+  await info.attach('pending-results',{body:JSON.stringify({locale,calls:await state(),cancelledReload:true,navigationWaited:true,failureRolledBack:true,externalCasPreserved:true,explicitRetrySaved:true}),contentType:'application/json'});
+});

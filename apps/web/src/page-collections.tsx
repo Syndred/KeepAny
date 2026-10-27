@@ -1,4 +1,4 @@
-import { Link, useLocation, useNavigate } from "@tanstack/react-router";
+import { Link, useBlocker, useLocation, useNavigate } from "@tanstack/react-router";
 import { Bell, FolderPlus, LayoutDashboard, Layers, Pencil, Plus, Trash2, UserRound } from "lucide-react";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
@@ -45,6 +45,12 @@ export function CollectionsPage() {
 	const [pendingHidden, setPendingHidden] = useState<string[] | null>(null);
 	const [navError, setNavError] = useState("");
 	const navInFlight = useRef(false);
+	const [navBusy, setNavBusy] = useState(false);
+	const navWrite = useRef<Promise<unknown> | null>(null);
+	useBlocker({
+		shouldBlockFn: async () => { try { await navWrite.current; } catch { /* The operation reports its own failure and restores the view. */ } return false; },
+		enableBeforeUnload: () => navInFlight.current,
+	});
 	const savedOrder = data.preferences.find((item) => item.id === "sidebarOrder");
 	const savedHidden = data.preferences.find((item) => item.id === "sidebarHidden");
 	const sidebarOrder = orderedSidebarIds(pendingOrder ?? savedOrder?.value);
@@ -86,15 +92,21 @@ export function CollectionsPage() {
 	const updateSidebar = async (id: "sidebarOrder" | "sidebarHidden", value: string[]) => {
 		if (navInFlight.current) return;
 		navInFlight.current = true;
+		setNavBusy(true);
 		setNavError("");
 		if (id === "sidebarOrder") setPendingOrder(value); else setPendingHidden(value);
 		try {
 			const expected = data.preferences.find((item) => item.id === id);
-			await savePreferenceIfCurrent(expected ?? null, { id, value });
+			const write = savePreferenceIfCurrent(expected ?? null, { id, value });
+			navWrite.current = write;
+			await write;
+			notify(t("saved"));
 		} catch (cause) {
 			if (id === "sidebarOrder") setPendingOrder(null); else setPendingHidden(null);
-			setNavError(t(cause instanceof Error && cause.message === "preference-stale" ? "organizeChanged" : "error"));
-		} finally { navInFlight.current = false; }
+			const message = t(cause instanceof Error && cause.message === "preference-stale" ? "organizeChanged" : "error");
+			setNavError(message);
+			notify(message);
+		} finally { navWrite.current = null; navInFlight.current = false; setNavBusy(false); }
 	};
 	const changeVisibility = (id: string, visible: boolean) => {
 		if (id === "overview" || !sidebarIds.includes(id)) return;
@@ -221,8 +233,9 @@ export function CollectionsPage() {
 			{organizing ? (
 				<section className="card collections-organize-nav" aria-label={t("organizeNavTitle")}>
 					<div className="card-header"><div><h2>{t("organizeNavTitle")}</h2><p>{t("organizeNavHint")}</p></div></div>
-					<div className="collections-nav"><SortableNav items={sidebarItems} activePath="/collections" manageMode onNavigate={() => {}}
+					<div className="collections-nav" aria-busy={navBusy}><SortableNav items={sidebarItems} activePath="/collections" manageMode disabled={navBusy} onNavigate={() => {}}
 						onOrderChange={(ids) => void updateSidebar("sidebarOrder", ids)} onVisibilityChange={changeVisibility} /></div>
+					{navBusy && <div className="toast" role="status">{t("organizeSaving")}</div>}
 					{navError && <p className="field-error collections-nav-error" role="alert">{navError}</p>}
 				</section>
 			) : selected ? (
