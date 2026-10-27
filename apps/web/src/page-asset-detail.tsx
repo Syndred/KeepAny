@@ -358,9 +358,12 @@ export function AssetDetail() {
 	const [materialsOpen, setMaterialsOpen] = useState(false);
 	const [domainEditing, setDomainEditing] = useState<string | null>(null);
 	const [domainDraft, setDomainDraft] = useState<ProjectDomain | null>(null);
+	const [domainBase, setDomainBase] = useState<Asset | null>(null);
+	const [domainDeleteConfirm, setDomainDeleteConfirm] = useState(false);
 	const [domainFee, setDomainFee] = useState("");
 	const [domainError, setDomainError] = useState("");
 	const [domainBusy, setDomainBusy] = useState(false);
+	const domainInFlight = useRef(false);
 	const [submissionNameError, setSubmissionNameError] = useState("");
 	const [submissionUrlError, setSubmissionUrlError] = useState("");
 	const [submissionSaveError, setSubmissionSaveError] = useState("");
@@ -610,18 +613,22 @@ export function AssetDetail() {
 		requestAnimationFrame(() => document.getElementById(id)?.scrollIntoView({ block: "start", behavior: "smooth" }));
 	}
 	function openDomain(domain?: ProjectDomain) {
+		if (asset?.kind !== "project") return;
 		const next = domain ?? { id: crypto.randomUUID(), name: "", registrar: "", accountId: "", expiryDate: "", annualAmount: null, currency: "CNY", autoRenew: "unknown" } as ProjectDomain;
+		setDomainBase(asset);
+		setDomainDeleteConfirm(false);
 		setDomainDraft(next);
 		setDomainFee(next.annualAmount === null ? "" : inputFromMinorUnits(next.annualAmount, next.currency));
 		setDomainEditing(domain?.id ?? "new");
 		setDomainError("");
 	}
 	async function storeDomains(next: ProjectDomain[]) {
-		if (asset?.kind !== "project") return;
-		await saveAssetIfCurrent(asset, { ...asset, projectDomains: next, updatedAt: new Date().toISOString() });
+		if (domainBase?.kind !== "project") throw Error("asset-stale");
+		await saveAssetIfCurrent(domainBase, { ...domainBase, projectDomains: next, updatedAt: new Date().toISOString() });
 	}
 	async function saveDomain() {
-		if (!domainDraft || !domainEditing || domainBusy) return;
+		if (!domainDraft || !domainEditing || !domainBase || domainInFlight.current || domainDeleteConfirm) return;
+		const baseDomains = domainBase.projectDomains ?? [];
 		let fee: number | null;
 		try { fee = domainFee.trim() === "" ? null : parseMinorUnits(domainFee, domainDraft.currency); }
 		catch { setDomainError(t("invalid")); return; }
@@ -630,30 +637,34 @@ export function AssetDetail() {
 			setDomainError(t(!parsed.success && parsed.error.issues.some((issue) => issue.path[0] === "name") ? "projectDomainNameInvalid" : "invalid"));
 			return;
 		}
-		if (projectDomains.some((domain) => domain.id !== domainEditing && domain.name.toLowerCase() === parsed.data.name.toLowerCase())) {
+		if (baseDomains.some((domain) => domain.id !== domainEditing && domain.name.toLowerCase() === parsed.data.name.toLowerCase())) {
 			setDomainError(t("duplicate"));
 			return;
 		}
+		domainInFlight.current = true;
 		setDomainBusy(true);
 		setDomainError("");
 		try {
-			await storeDomains(domainEditing === "new" ? [...projectDomains, parsed.data] : projectDomains.map((entry) => entry.id === domainEditing ? parsed.data : entry));
+			await storeDomains(domainEditing === "new" ? [...baseDomains, parsed.data] : baseDomains.map((entry) => entry.id === domainEditing ? parsed.data : entry));
 			setDomainEditing(null);
 			notify(t("saved"));
 		} catch (error) {
 			setDomainError(t(error instanceof Error && error.message === "asset-stale" ? "assetStale" : "error"));
-		} finally { setDomainBusy(false); }
+		} finally { domainInFlight.current = false; setDomainBusy(false); }
 	}
 	async function removeDomain() {
-		if (!domainEditing || domainEditing === "new" || domainBusy) return;
+		if (!domainEditing || domainEditing === "new" || !domainBase || !domainDeleteConfirm || domainInFlight.current) return;
+		domainInFlight.current = true;
 		setDomainBusy(true);
+		setDomainError("");
 		try {
-			await storeDomains(projectDomains.filter((entry) => entry.id !== domainEditing));
+			await storeDomains((domainBase.projectDomains ?? []).filter((entry) => entry.id !== domainEditing));
 			setDomainEditing(null);
+			setDomainDeleteConfirm(false);
 			notify(t("saved"));
 		} catch (error) {
 			setDomainError(t(error instanceof Error && error.message === "asset-stale" ? "assetStale" : "error"));
-		} finally { setDomainBusy(false); }
+		} finally { domainInFlight.current = false; setDomainBusy(false); }
 	}
 	async function confirmDelete() {
 		if (!asset || deleteInFlight.current) return;
@@ -1641,7 +1652,12 @@ export function AssetDetail() {
 				{projectDomains.length ? <div className="asset-project-domain-list">{projectDomains.map((domain) => <div className="asset-project-domain-row" key={domain.id} id={`project-domain-${domain.id}`}><div><strong>{domain.name}</strong><small>{[domain.registrar, domain.accountId ? liveById.get(domain.accountId)?.name : "", domain.annualAmount === null ? "" : `${money(domain.annualAmount, domain.currency, i18n.language)} / ${t("year")}`].filter(Boolean).join(" · ") || "—"}</small><span>{t("projectExpiry")}: {date(domain.expiryDate, i18n.language)} · {t("projectAutoRenew")}: {t(domain.autoRenew === "on" ? "projectAutoRenewOn" : domain.autoRenew === "off" ? "projectAutoRenewOff" : "projectAutoRenewUnknown")}</span></div><Button size="small" onClick={() => openDomain(domain)}>{t("edit")}</Button></div>)}</div> : <p className="asset-quiet-empty">{t("projectNoDomains")}</p>}
 				<details className="asset-project-linked-subscriptions"><summary>{t("projectLinkedSubscriptions")} · {relatedSubscriptions.length}</summary>{relatedSubscriptions.length ? relatedSubscriptions.map((linked) => <Link key={linked.id} to="/assets/$kind/$id" params={{ kind: linked.kind, id: linked.id }} onClick={(event) => { event.preventDefault(); visitRelation(linked); }}><strong>{linked.name}</strong><span>{money(linked.amount, linked.currency, i18n.language)} / {t(linked.cycle)} · {date(linked.dueDate, i18n.language)}</span></Link>) : <p className="asset-quiet-empty">{t("none")}</p>}</details>
 			</section>}
-			{asset.kind === "project" && domainEditing && domainDraft && <Dialog title={domainEditing === "new" ? t("projectAddDomain") : t("projectEditDomain")} onClose={() => { if (!domainBusy) setDomainEditing(null); }}>
+			{asset.kind === "project" && domainEditing && domainDraft && <Dialog title={domainDeleteConfirm ? t("projectDomainDelete") : domainEditing === "new" ? t("projectAddDomain") : t("projectEditDomain")} closeDisabled={domainBusy} onClose={() => { if (!domainInFlight.current) { if (domainDeleteConfirm) setDomainDeleteConfirm(false); else setDomainEditing(null); } }}>
+				{domainDeleteConfirm ? <>
+					<p>{t("projectDomainDeleteConfirm", { name: domainBase?.projectDomains?.find(entry => entry.id === domainEditing)?.name ?? domainDraft.name })}</p>
+					{domainError && <p role="alert" className="field-error">{domainError}</p>}
+					<div className="actions"><Button type="button" disabled={domainBusy} onClick={() => setDomainDeleteConfirm(false)}>{t("cancel")}</Button><Button type="button" variant="danger" disabled={domainBusy} onClick={() => void removeDomain()}>{t("confirm")}</Button></div>
+				</> :
 				<form className="asset-project-domain-form" onSubmit={(event) => { event.preventDefault(); void saveDomain(); }}>
 					<label className="field">{t("projectDomain")}<input disabled={domainBusy} required value={domainDraft.name} onChange={(event) => setDomainDraft({ ...domainDraft, name: event.target.value })} placeholder="example.com" /></label>
 					<label className="field">{t("projectRegistrar")}<input disabled={domainBusy} value={domainDraft.registrar} onChange={(event) => setDomainDraft({ ...domainDraft, registrar: event.target.value })} /></label>
@@ -1650,8 +1666,8 @@ export function AssetDetail() {
 					<label className="field">{t("projectAnnualFee")}<span className="asset-project-fee-row"><input disabled={domainBusy} inputMode="decimal" value={domainFee} onChange={(event) => setDomainFee(event.target.value)} /><Select disabled={domainBusy} aria-label={t("currency")} value={domainDraft.currency} onValueChange={(selectValue) => { const currency = selectValue as ProjectDomain["currency"]; setDomainDraft({ ...domainDraft, currency }); setDomainFee(""); }}><SelectOption>CNY</SelectOption><SelectOption>USD</SelectOption><SelectOption>EUR</SelectOption><SelectOption>GBP</SelectOption><SelectOption>JPY</SelectOption></Select></span></label>
 					<label htmlFor="project-domain-auto-renew" className="field">{t("projectAutoRenew")}<Select id="project-domain-auto-renew" disabled={domainBusy} value={domainDraft.autoRenew} onValueChange={(selectValue) => setDomainDraft({ ...domainDraft, autoRenew: selectValue as ProjectDomain["autoRenew"] })}><SelectOption value="unknown">{t("projectAutoRenewUnknown")}</SelectOption><SelectOption value="on">{t("projectAutoRenewOn")}</SelectOption><SelectOption value="off">{t("projectAutoRenewOff")}</SelectOption></Select></label>
 					{domainError && <p role="alert" className="field-error">{domainError}</p>}
-					<div className="actions"><Button type="submit" variant="primary" disabled={domainBusy}>{t("save")}</Button>{domainEditing !== "new" && <Button type="button" variant="danger" disabled={domainBusy} onClick={() => void removeDomain()}>{t("projectDomainDelete")}</Button>}<Button type="button" disabled={domainBusy} onClick={() => setDomainEditing(null)}>{t("cancel")}</Button></div>
-				</form>
+					<div className="actions"><Button type="submit" variant="primary" disabled={domainBusy}>{t("save")}</Button>{domainEditing !== "new" && <Button type="button" variant="danger" disabled={domainBusy} onClick={() => { setDomainError(""); setDomainDeleteConfirm(true); }}>{t("projectDomainDelete")}</Button>}<Button type="button" disabled={domainBusy} onClick={() => setDomainEditing(null)}>{t("cancel")}</Button></div>
+				</form>}
 			</Dialog>}
 			<div className="detail-grid asset-detail-secondary">
 				<section id="account-relations" className="card asset-relations-card">

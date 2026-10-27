@@ -2300,6 +2300,7 @@ Object.assign(copy, {
 	projectCostPartial: ["部分费用尚未记录", "Some costs are not recorded"],
 	projectDomainNameInvalid: ["请输入有效域名", "Enter a valid domain"],
 	projectDomainDelete: ["删除域名", "Delete domain"],
+	projectDomainDeleteConfirm: ["删除域名“{{name}}”？这只会删除此项目中的域名记录。", "Delete domain “{{name}}”? This removes only its record from this project."],
 	projectEditDomain: ["编辑域名", "Edit domain"],
 	projectMaterialsShort: ["一句话描述", "Short description"],
 	projectMaterialsLong: ["完整介绍", "Full description"],
