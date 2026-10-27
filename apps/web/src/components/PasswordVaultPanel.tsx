@@ -21,6 +21,7 @@ import {
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { Asset } from "../../../../packages/domain/src";
+import { MIN_MASTER_PASSWORD_LENGTH } from "../../../../packages/password-vault/src/policy";
 import {
 	type PasswordVaultEntryDraft,
 	type PasswordVaultEntrySummary,
@@ -52,7 +53,7 @@ type PasswordVaultPanelProps = {
 
 type ManualCopy = { label: string; value: string };
 
-const MIN_MASTER_LENGTH = 12;
+const MIN_MASTER_LENGTH = MIN_MASTER_PASSWORD_LENGTH;
 
 function blankDraft(linkedAssetId?: string): PasswordVaultEntryDraft {
 	return {
@@ -1279,6 +1280,8 @@ export function PasswordVaultPanel({
 								autoComplete="new-password"
 								disabled={busy}
 								required
+								minLength={MIN_MASTER_LENGTH}
+								aria-describedby="password-vault-change-master-risk"
 							/>
 						</div>
 						<div className="field">
@@ -1293,10 +1296,14 @@ export function PasswordVaultPanel({
 								autoComplete="new-password"
 								disabled={busy}
 								required
+								minLength={MIN_MASTER_LENGTH}
 							/>
 						</div>
 						<p className="password-vault-dialog-hint">
 							{t("pwVaultPasswordTooShort")}
+						</p>
+						<p className="notice" id="password-vault-change-master-risk" role="note">
+							{t("pwVaultShortMasterRisk")}
 						</p>
 						<div className="actions">
 							<Button
@@ -1382,6 +1389,7 @@ function EmptyState({
 							disabled={busy}
 							required
 							minLength={MIN_MASTER_LENGTH}
+							aria-describedby="password-vault-create-master-risk"
 						/>
 						<Button
 							type="button"
@@ -1412,6 +1420,9 @@ function EmptyState({
 						minLength={MIN_MASTER_LENGTH}
 					/>
 				</div>
+				<p className="notice" id="password-vault-create-master-risk" role="note">
+					{t("pwVaultShortMasterRisk")}
+				</p>
 				<div className="actions">
 					<Button type="submit" variant="primary" disabled={busy}>
 						<ShieldCheck size={16} /> {t("pwVaultCreate")}
