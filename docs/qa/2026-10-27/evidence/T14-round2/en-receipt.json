@@ -1,0 +1,146 @@
+{
+  "locale": "en",
+  "port": 4208,
+  "ids": {
+    "project": "927bc818-5b88-4946-938e-59f07cf8d27b",
+    "item": "2cd26aba-78a5-48ec-9ff5-535d63760ab4",
+    "account": "cb8af713-5ca8-4c24-8971-504c1cbe86b9",
+    "subscription": "f5812037-5f57-48bb-b8ce-b1c7d7caa8e6",
+    "renewal": "5c0260bb-8d18-442f-beaf-bc026f951d79"
+  },
+  "targetOptions": [
+    "Select a subscription or account",
+    "T14 Billing account · Accounts",
+    "T14 Subscription · Subscriptions"
+  ],
+  "ledgerControls": [
+    {
+      "text": "T14 confirmed invoiceExpense · T14 Subscription · Oct 20, 2026 · Synthetic statementCN¥12.34",
+      "controls": []
+    },
+    {
+      "text": "T14 SubscriptionRecorded renewal · T14 Subscription · Oct 15, 2026 · No source recorded · T14 original renewalCN¥5.00",
+      "controls": []
+    }
+  ],
+  "historyCount": 2,
+  "entries": [
+    {
+      "id": "5c0260bb-8d18-442f-beaf-bc026f951d79",
+      "assetId": "f5812037-5f57-48bb-b8ce-b1c7d7caa8e6",
+      "action": "renew",
+      "note": "T14 original renewal",
+      "billDate": "2026-10-15",
+      "amount": 500,
+      "currency": "CNY",
+      "createdAt": "2026-10-27T06:56:38.429Z",
+      "deleted": false
+    },
+    {
+      "id": "70e1978c-6572-449d-a59c-72b185684579",
+      "assetId": "f5812037-5f57-48bb-b8ce-b1c7d7caa8e6",
+      "action": "expense",
+      "title": "T14 confirmed invoice",
+      "source": "Synthetic statement",
+      "note": "",
+      "eventDate": "2026-10-20",
+      "amount": 1234,
+      "currency": "CNY",
+      "createdAt": "2026-10-27T06:56:39.358Z",
+      "deleted": false
+    }
+  ],
+  "updatedSubscription": {
+    "id": "f5812037-5f57-48bb-b8ce-b1c7d7caa8e6",
+    "amount": 2550,
+    "dueDate": "2026-12-22"
+  },
+  "invalidAndCancelPreservedHistory": true,
+  "refreshPreservedHistory": true,
+  "routes": [
+    {
+      "kind": "project",
+      "buttons": [
+        "Personal workspace",
+        "",
+        "",
+        "",
+        "",
+        "MeMy workspaceOnly visible here",
+        "Search all records⌘ K",
+        "",
+        "Edit",
+        "Add backlink",
+        "Move to trash",
+        "View submission materials",
+        "View backlinks",
+        "Add domain",
+        "Add connection",
+        "",
+        "",
+        "",
+        "Remove",
+        "Add"
+      ],
+      "financeLinks": [
+        "View bills"
+      ]
+    },
+    {
+      "kind": "item",
+      "buttons": [
+        "Personal workspace",
+        "",
+        "",
+        "",
+        "",
+        "MeMy workspaceOnly visible here",
+        "Search all records⌘ K",
+        "",
+        "Edit",
+        "Move to trash",
+        "Add image",
+        "Detail photos",
+        "Record status change",
+        "Edit location",
+        "Add image",
+        "Add image",
+        "Add image",
+        "Add image",
+        "Add connection",
+        "Add",
+        "Lend item",
+        "Archive item",
+        "Log maintenance"
+      ],
+      "financeLinks": []
+    },
+    {
+      "kind": "subscription",
+      "buttons": [
+        "Personal workspace",
+        "",
+        "",
+        "",
+        "",
+        "MeMy workspaceOnly visible here",
+        "Search all records⌘ K",
+        "",
+        "Edit",
+        "Move to trash",
+        "Add image",
+        "Add connection",
+        "",
+        "",
+        "",
+        "Remove",
+        "Remove",
+        "Add",
+        "Record renewal"
+      ],
+      "financeLinks": [
+        "View bills"
+      ]
+    }
+  ]
+}

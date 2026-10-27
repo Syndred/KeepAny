@@ -1,0 +1,18 @@
+{
+  "date": "2026-10-27",
+  "candidate": "1bb1c081b43310605fe3fe7bef9ec361a94afa93",
+  "port": 4208,
+  "testFile": "tests/e2e/qa-t14-round2.spec.ts",
+  "command": "KEEPANY_E2E_PORT=4208 node node_modules/@playwright/test/cli.js test tests/e2e/qa-t14-round2.spec.ts --config=playwright.windows-qa.config.ts --workers=1 --output=test-results/T14-round2 --reporter=line",
+  "exitCode": 0,
+  "passed": 2,
+  "failed": 0,
+  "seconds": 10.4,
+  "gsdGoalResult": "gaps_found",
+  "originalComplete": 0,
+  "originalPartial": 4,
+  "productChanged": false,
+  "fixed4180Touched": false,
+  "deployed": false,
+  "screenshots": ["zh-CN-390.png", "en-1280.png"]
+}
