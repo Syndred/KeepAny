@@ -22,6 +22,13 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+    packaging {
+        resources {
+            // JAR lookup indexes are not used by Android; retain combined legal notices.
+            excludes += ['META-INF/INDEX.LIST']
+            merges += ['META-INF/io.netty.versions.properties', 'META-INF/LICENSE', 'META-INF/NOTICE', 'META-INF/LICENSE.md']
+        }
+    }
 }
 
 repositories {
@@ -32,6 +39,9 @@ repositories {
 
 dependencies {
     implementation 'com.squareup.okhttp3:okhttp:5.5.1'
+    implementation 'io.netty:netty-codec-http:4.1.139.Final'
+    implementation 'io.netty:netty-handler:4.1.139.Final'
+    implementation 'org.bouncycastle:bcpkix-jdk18on:1.86'
     implementation fileTree(include: ['*.jar'], dir: 'libs')
     implementation "androidx.appcompat:appcompat:$androidxAppCompatVersion"
     implementation "androidx.coordinatorlayout:coordinatorlayout:$androidxCoordinatorLayoutVersion"
