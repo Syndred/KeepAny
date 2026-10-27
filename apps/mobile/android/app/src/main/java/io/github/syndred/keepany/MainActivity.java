@@ -9,6 +9,7 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(KeepAnyFilesPlugin.class);
         registerPlugin(KeepAnyIdentityPlugin.class);
         registerPlugin(KeepAnyConnectionsPlugin.class);
+        registerPlugin(KeepAnyMcpAuthorityPlugin.class);
         super.onCreate(savedInstanceState);
     }
 }
