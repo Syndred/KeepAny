@@ -4,13 +4,14 @@ import { expect, test, type Page } from "@playwright/test";
 import { resources } from "../../apps/web/src/i18n";
 import { passwordVaultCopy } from "../../apps/web/src/password-vault-copy";
 import { selectChoice } from "./helpers/select-choice";
+import { sourceModuleUrl } from "./helpers/source-module-url";
 
 test.use({ timezoneId: "Asia/Shanghai" });
 test.setTimeout(90_000);
 const evidence = process.env.KEEPANY_EVIDENCE_DIR ?? "/tmp/keepany-unified-workspaces";
 mkdirSync(evidence, { recursive: true });
-const repositoryPath = `/@fs${process.cwd()}/packages/local-db/src/index.ts`;
-const domainPath = `/@fs${process.cwd()}/packages/domain/src/index.ts`;
+const repositoryPath = sourceModuleUrl('packages/local-db/src/index.ts');
+const domainPath = sourceModuleUrl('packages/domain/src/index.ts');
 const master = "Synthetic merged account master 2026!";
 
 async function ordinaryAssets(page: Page) {

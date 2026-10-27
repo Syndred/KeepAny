@@ -245,6 +245,9 @@ const copy: Record<string, [string, string]> = {
 	accountListSearch: ["搜索账号", "Search accounts"],
 	accountListSearchHint: ["搜索名称、账号或服务商", "Search name, account or provider"],
 	accountListClearSearch: ["清空账号搜索", "Clear account search"],
+	assetListSearch: ["搜索当前列表", "Search this list"],
+	assetListSearchHint: ["搜索名称、标签或说明", "Search name, tags or description"],
+	assetListClearSearch: ["清空列表搜索", "Clear list search"],
 	globalSearch: ["搜索全部资料", "Search all records"],
 	globalSearchHint: [
 		"搜索资产、账单、收录、待办…",

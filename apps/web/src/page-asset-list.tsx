@@ -464,17 +464,27 @@ export function AssetKindList({ kind, beforeList, afterList, passwordCounts, onA
 	const { data, search, notify } = useAppContext();
 	const workspace = useWorkspaceSummary();
 	const [accountSearch, setAccountSearch] = useState(() => sessionStorage.getItem("keepany-account-list-search") || "");
+	const [ordinarySearches, setOrdinarySearches] = useState<Record<string, string>>(() =>
+		Object.fromEntries(["project", "item", "subscription"].map(key => [key, sessionStorage.getItem(`keepany-${key}-list-search`) || ""])),
+	);
 	const accountSearchRef = useRef<HTMLInputElement>(null);
 	const wasPrivateSearch = useRef(privateSearch);
 	useEffect(() => {
 		if (wasPrivateSearch.current && !privateSearch) setAccountSearch(sessionStorage.getItem("keepany-account-list-search") ?? "");
 		wasPrivateSearch.current = privateSearch;
 	}, [privateSearch]);
-	const accountQuery = kind === "account" ? accountSearch : "";
-	const listSearch = privateSearch ? "" : accountQuery ? JSON.stringify([search, accountQuery]) : search;
+	const localQuery = kind === "account" ? accountSearch : ordinarySearches[kind] ?? "";
+	const listSearch = privateSearch ? "" : localQuery ? JSON.stringify([search, localQuery]) : search;
 	function changeAccountSearch(value: string) {
 		setAccountSearch(value);
 		if (!privateSearch) sessionStorage.setItem("keepany-account-list-search", value);
+	}
+	function changeListSearch(value: string) {
+		if (kind === "account") changeAccountSearch(value);
+		else {
+			setOrdinarySearches(previous => ({ ...previous, [kind]: value }));
+			if (!privateSearch) sessionStorage.setItem(`keepany-${kind}-list-search`, value);
+		}
 	}
 	const hash = useRouterState({ select: (state) => state.location.hash });
 	const focusAssetId = hash.startsWith("asset-") ? hash.slice(6) : undefined;
@@ -550,12 +560,12 @@ export function AssetKindList({ kind, beforeList, afterList, passwordCounts, onA
 	const availableTags = [...new Set(allKindAssets.flatMap((asset) => asset.tags))].sort(
 		(a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }),
 	);
-	const normalizedSearch = `${search} ${accountQuery}`.trim().toLocaleLowerCase();
+	const normalizedSearch = `${search} ${localQuery}`.trim().toLocaleLowerCase();
 	const assets = allKindAssets.filter(
 		(a) =>
 			(!category || a.category === category || kind === "account" && category === "other" && !a.category || !!pendingCategory && [pendingCategory.beforeName, pendingCategory.afterName].includes(a.category)) &&
 			selectedTags.every(value => a.tags.includes(value)) &&
-			matchesAssetSearch(a, search) && matchesAssetSearch(a, accountQuery),
+			matchesAssetSearch(a, search) && matchesAssetSearch(a, localQuery),
 	);
 	const restored = useRef("");
 	useEffect(() => {
@@ -611,10 +621,10 @@ export function AssetKindList({ kind, beforeList, afterList, passwordCounts, onA
 			</>}
 			{beforeList}
 			{<>
-			<CategoryStrip key={kind} kind={kind} chosen={category} choose={choose} searchControl={kind === "account" ? <div className="asset-account-search">
+			<CategoryStrip key={kind} kind={kind} chosen={category} choose={choose} searchControl={kind !== "vault" ? <div className="asset-account-search">
 				<Search size={18} aria-hidden="true" />
-				<input ref={accountSearchRef} type="search" aria-label={t("accountListSearch")} placeholder={t("accountListSearchHint")} autoComplete="off" value={accountSearch} onChange={(event) => changeAccountSearch(event.target.value)} onKeyDown={(event) => { if (event.key === "Escape") { event.stopPropagation(); changeAccountSearch(""); } }} />
-				{accountSearch && <Button variant="ghost" size="icon" aria-label={t("accountListClearSearch")} onClick={() => { changeAccountSearch(""); accountSearchRef.current?.focus(); }}><X size={18} /></Button>}
+				<input ref={accountSearchRef} type="search" aria-label={t(kind === "account" ? "accountListSearch" : "assetListSearch")} placeholder={t(kind === "account" ? "accountListSearchHint" : "assetListSearchHint")} autoComplete="off" value={localQuery} onChange={(event) => changeListSearch(event.target.value)} onKeyDown={(event) => { if (event.key === "Escape") { event.stopPropagation(); changeListSearch(""); } }} />
+				{localQuery && <Button variant="ghost" size="icon" aria-label={t(kind === "account" ? "accountListClearSearch" : "assetListClearSearch")} onClick={() => { changeListSearch(""); accountSearchRef.current?.focus(); }}><X size={18} /></Button>}
 			</div> : undefined} />
 			{(availableTags.length > 0 || tag) && (
 				<div className="list-filters">
