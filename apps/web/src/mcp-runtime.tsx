@@ -22,6 +22,7 @@ import type { PreviewResult } from "../../../packages/mcp/src/service";
 import { Button } from "./components/ui/button";
 import { Dialog } from "./components/ui/dialog";
 import { hasFileDeliveryHandler } from "./file-delivery";
+import { Capacitor } from '@capacitor/core';
 
 export type McpRequest = {
 	kind: "keepany-mcp-local-request-v1";
@@ -36,6 +37,7 @@ export type McpRequest = {
 type McpStatus = "idle" | "pairing" | "connected" | "error";
 type RequestInput = Pick<McpRequest, "assetIds" | "readFields" | "writeFields" | "ttlMs">;
 type Runtime = {
+	localConnectionAvailable: boolean;
 	status: McpStatus;
 	scope: BridgeScope | null;
 	expiresAt: number | null;
@@ -107,6 +109,9 @@ export function McpRuntimeProvider({
 	children: ReactNode;
 }) {
 	const { t } = useTranslation();
+	// The shipped native entry has no local MCP adapter. Other native HTTP
+	// adapters do not implement the desktop launcher's bridge or authority.
+	const localConnectionAvailable = !Capacitor.isNativePlatform();
 	const [status, setStatus] = useState<McpStatus>("idle");
 	const [scope, setScope] = useState<BridgeScope | null>(null);
 	const [expiresAt, setExpiresAt] = useState<number | null>(null);
@@ -145,6 +150,12 @@ export function McpRuntimeProvider({
 		setScope(null);
 		setExpiresAt(null);
 	}, []);
+	useEffect(() => {
+		if (localConnectionAvailable) return;
+		stopLocal();
+		setStatus("idle");
+		setPrepared(null);
+	}, [localConnectionAvailable, stopLocal]);
 
 	useEffect(() => {
 		const leave = () => {
@@ -158,6 +169,7 @@ export function McpRuntimeProvider({
 	}, [stopLocal]);
 
 	const prepare = useCallback((input: RequestInput) => {
+		if (!localConnectionAvailable || Capacitor.isNativePlatform()) { setError("mcpNativeUnavailable"); throw Error("mcpNativeUnavailable"); }
 		if (clientRef.current || approvalRef.current || status === "pairing") throw Error("mcpSelectionInvalid");
 		const assetSet = new Set(assets.filter(asset => !asset.deleted).map(asset => asset.id));
 		const ids = [...new Set(input.assetIds)];
@@ -198,7 +210,7 @@ export function McpRuntimeProvider({
 		link.click();
 		link.remove();
 		window.setTimeout(() => URL.revokeObjectURL(url), 10_000);
-	}, [assets, status]);
+	}, [assets, status, localConnectionAvailable]);
 	const invalidatePrepared = useCallback(() => {
 		setPrepared(null);
 		setError(current =>
@@ -209,7 +221,7 @@ export function McpRuntimeProvider({
 	const answerScope = (approved: boolean) => {
 		const resolve = approvalRef.current;
 		if (!resolve || scopeDecisionInFlightRef.current) return;
-		if (!approved) {
+		if (!approved || !localConnectionAvailable || Capacitor.isNativePlatform()) {
 			approvalRef.current = null;
 			setPendingScope(null);
 			resolve(false);
@@ -246,6 +258,7 @@ export function McpRuntimeProvider({
 	};
 
 	const importPairing = useCallback(async (file: File) => {
+		if (!localConnectionAvailable || Capacitor.isNativePlatform()) { setError("mcpNativeUnavailable"); throw Error("mcpNativeUnavailable"); }
 		if (!prepared || clientRef.current || status === "pairing" || file.size > 20_000) {
 			setError("mcpPairingInvalid");
 			throw Error("mcpPairingInvalid");
@@ -270,6 +283,7 @@ export function McpRuntimeProvider({
 				...pairing,
 				store,
 				approve: selected => {
+					if (Capacitor.isNativePlatform()) return Promise.resolve(false);
 					if (!selectedScope(selected, prepared)) return Promise.resolve(false);
 					return new Promise<boolean>(resolve => {
 						approvalRef.current = resolve;
@@ -278,6 +292,7 @@ export function McpRuntimeProvider({
 				},
 			});
 			const selected = await client.pair();
+			if (Capacitor.isNativePlatform()) throw Error("mcpNativeUnavailable");
 			if (!selectedScope(selected, prepared)) throw Error("mcpPairingInvalid");
 			clientRef.current = client;
 			storeRef.current = store;
@@ -327,11 +342,11 @@ export function McpRuntimeProvider({
 			approvalRef.current = null;
 			setPendingScope(null);
 			setStatus("error");
-			setError(cause instanceof Error && cause.message === "mcpPairingInvalid" ? "mcpPairingInvalid" :
+			setError(cause instanceof Error && cause.message === "mcpNativeUnavailable" ? "mcpNativeUnavailable" : cause instanceof Error && cause.message === "mcpPairingInvalid" ? "mcpPairingInvalid" :
 				cause instanceof Error && cause.message === "bridge-approval-denied" ? "mcpApprovalDenied" : "mcpConnectionFailed");
 			throw cause;
 		}
-	}, [prepared, status, stopLocal]);
+	}, [prepared, status, stopLocal, localConnectionAvailable]);
 
 	const refreshAudit = useCallback(async () => {
 		const client = clientRef.current;
@@ -419,9 +434,9 @@ export function McpRuntimeProvider({
 		}
 	};
 
-	return <context.Provider value={{ status, scope, expiresAt, audit, revokedAt, refreshAudit, prepared, error, prepare, invalidatePrepared, importPairing, revoke }}>
+	return <context.Provider value={{ localConnectionAvailable, status: localConnectionAvailable ? status : "idle", scope: localConnectionAvailable ? scope : null, expiresAt: localConnectionAvailable ? expiresAt : null, audit, revokedAt, refreshAudit, prepared: localConnectionAvailable ? prepared : null, error, prepare, invalidatePrepared, importPairing, revoke }}>
 		{children}
-		{pendingScope && <Dialog title={t("mcpScopeApprovalTitle")} onClose={() => answerScope(false)} returnFocusTo={() => document.getElementById("mcp-panel-title")}>
+		{localConnectionAvailable && pendingScope && <Dialog title={t("mcpScopeApprovalTitle")} onClose={() => answerScope(false)} returnFocusTo={() => document.getElementById("mcp-panel-title")}>
 			<p>{t("mcpScopeApprovalHint")}</p>
 			<ul className="mcp-scope-list">
 				{pendingScope.assetIds.map(id =>
@@ -436,7 +451,7 @@ export function McpRuntimeProvider({
 				<Button disabled={busy} onClick={() => answerScope(true)}>{t("mcpScopeApprovalApprove")}</Button>
 			</div>
 		</Dialog>}
-		{preview && <Dialog title={t("mcpWriteApprovalTitle")} onClose={() => void decidePreview(false)}>
+		{localConnectionAvailable && preview && <Dialog title={t("mcpWriteApprovalTitle")} onClose={() => void decidePreview(false)}>
 			<p>{t("mcpWriteApprovalHint")}</p>
 			<p className="mcp-preview-asset">{t("mcpPreviewAsset")}: {assets.find(asset => asset.id === preview.assetId)?.name ?? preview.assetId}</p>
 			<div className="mcp-preview-changes">

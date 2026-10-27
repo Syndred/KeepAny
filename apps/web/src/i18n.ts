@@ -1,4 +1,5 @@
 import { intakeWithdrawalCopy } from './intake-withdrawal-copy';
+import { mcpPlatformCopy } from './mcp-platform-copy';
 import { projectWorkflowCopy } from './project-workflow-copy';
 import { collectionsCopy } from './collections-copy';
 import { relationCopy } from './relation-copy';
@@ -25,6 +26,7 @@ import { mobileServicesCopy } from "./mobile-services-copy";
 import { nativeConnectionsCopy } from "./native-connections-copy";
 
 const copy: Record<string, [string, string]> = {
+  ...mcpPlatformCopy,
   ...projectWorkflowCopy,
   ...collectionsCopy,
   ...relationCopy,

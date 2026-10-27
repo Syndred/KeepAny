@@ -19,10 +19,10 @@ export function AssistantAccessPage() {
 	return <main className="page assistant-access-page">
 		<PageTitle eyebrow={t("assistantAccessEyebrow")} title={t("assistantAccessTitle")}
 			subtitle={t("assistantAccessSubtitle")} />
-		<div className="assistant-access-banner" role="note">{t("assistantAccessBanner")}</div>
+		<div className="assistant-access-banner" role="note">{t(runtime.localConnectionAvailable ? "assistantAccessBanner" : "mcpNativeUnavailable")}</div>
 		<div className="assistant-access-grid">
 			<section className="card padded assistant-access-connections">
-				<div className="assistant-access-section-head"><h2>{t("assistantAccessConnections")}</h2><p>{t("assistantAccessConnectionHint")}</p></div>
+				<div className="assistant-access-section-head"><h2>{t("assistantAccessConnections")}</h2>{runtime.localConnectionAvailable && <p>{t("assistantAccessConnectionHint")}</p>}</div>
 				{connected && runtime.scope ? <div className="assistant-access-connection">
 					<div className="assistant-access-connection-head"><div><strong>{t("assistantAccessLocalConnection")}</strong>
 						{runtime.expiresAt && <small>{t("assistantAccessExpires", { time: dateTime(runtime.expiresAt) })}</small>}</div>
@@ -33,7 +33,7 @@ export function AssistantAccessPage() {
 						<div className="assistant-access-chips">{runtime.scope.readFields.map((field) => <span className="chip" key={field}>{t(`mcpField_${field}`)}</span>)}</div></div>
 					<div className="assistant-access-scope"><strong>{t("mcpWriteFields")}</strong>
 						<p>{runtime.scope.writeFields.length ? runtime.scope.writeFields.map((field) => t(`mcpField_${field}`)).join(" · ") : t("mcpNoWrite")}</p></div>
-				</div> : <div className="assistant-access-empty"><strong>{t("assistantAccessNoConnection")}</strong><p>{t("assistantAccessNoConnectionHint")}</p></div>}
+				</div> : <div className="assistant-access-empty"><strong>{t("assistantAccessNoConnection")}</strong><p>{t(runtime.localConnectionAvailable ? "assistantAccessNoConnectionHint" : "mcpNativeLocalDataHint")}</p></div>}
 				{runtime.error && <p role="alert">{t(runtime.error)}</p>}
 				<div className="actions"><Button asChild><Link to="/settings" hash="assistant">{t("assistantAccessConfigure")}</Link></Button>
 					<Button onClick={() => window.dispatchEvent(new Event("keepany-open-ai-dialog"))}>{t("settingsAskAssistant")}</Button></div>
@@ -44,12 +44,12 @@ export function AssistantAccessPage() {
 					{runtime.audit.length > 0 || runtime.revokedAt !== null ? <ol>{runtime.revokedAt !== null && <li data-mcp-revoked-receipt><strong>{t('assistantAccessAction_revoke')}</strong><small>{dateTime(runtime.revokedAt)} · {t('mcpRevokeDeviceReceipt')}</small></li>}{runtime.audit.map((entry) => <li key={entry.id}>
 						<strong>{t(`assistantAccessAction_${entry.action}`)}</strong>
 						<small>{dateTime(entry.at)} · {t(`assistantAccessOutcome_${entry.outcome}`)}{entry.assetId ? ` · ${assetsById.get(entry.assetId)?.name ?? t("mcpAssetUnavailable")}` : ""}</small>
-					</li>)}</ol> : <p>{t(connected ? "assistantAccessNoRecent" : "assistantAccessRecentRequiresConnection")}</p>}
+					</li>)}</ol> : <p>{t(!runtime.localConnectionAvailable ? "mcpNativeNoActivity" : connected ? "assistantAccessNoRecent" : "assistantAccessRecentRequiresConnection")}</p>}
 				</section>
 				<section className="card assistant-access-allowed"><h2>{t("assistantAccessAllowed")}</h2>
 					{connected ? <ul><li>{t("assistantAccessSearchSelected")}</li><li>{t("assistantAccessReadSelected")}</li>
 						{runtime.scope?.writeFields.length ? <li>{t("assistantAccessWriteApproval")}</li> : null}</ul>
-						: <p>{t("assistantAccessAllowedEmpty")}</p>}
+						: <p>{t(runtime.localConnectionAvailable ? "assistantAccessAllowedEmpty" : "mcpNativeNoAccess")}</p>}
 				</section>
 			</div>
 		</div>

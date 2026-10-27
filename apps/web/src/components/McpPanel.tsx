@@ -26,7 +26,7 @@ const same = (left: readonly string[], right: readonly string[]) =>
 export function McpPanel() {
 	const { t } = useTranslation();
 	const { data } = useAppContext();
-	const { status, scope, prepared, error, prepare, invalidatePrepared, importPairing } =
+	const { localConnectionAvailable, status, scope, prepared, error, prepare, invalidatePrepared, importPairing } =
 		useMcpRuntime();
 	const assets = data.assets.filter((asset) => !asset.deleted);
 	const [assetIds, setAssetIds] = useState<string[]>([]);
@@ -60,7 +60,7 @@ export function McpPanel() {
 
 	const availableIds = new Set(assets.map((asset) => asset.id));
 	const selectedIds = assetIds.filter((id) => availableIds.has(id));
-	const canPrepare = selectedIds.length > 0 && readFields.length > 0;
+	const canPrepare = localConnectionAvailable && selectedIds.length > 0 && readFields.length > 0;
 	const requestCurrent = Boolean(
 		prepared &&
 			prepared.ttlMs === ttlMs &&
@@ -97,7 +97,7 @@ export function McpPanel() {
 	return (
 		<section className="card padded mcp-panel">
 			<h2 id="mcp-panel-title" tabIndex={-1}>{t("mcpTitle")}</h2>
-			<p>{t("mcpHint")}</p>
+			<p>{t(localConnectionAvailable ? "mcpHint" : "mcpNativeUnavailable")}</p>
 			{connected ? (
 				<div className="mcp-active">
 					<p role="status">
@@ -135,7 +135,7 @@ export function McpPanel() {
 				<>
 					<fieldset
 						className="mcp-options"
-						disabled={busy || status === "pairing"}
+						disabled={!localConnectionAvailable || busy || status === "pairing"}
 					>
 						<legend>{t("mcpAssets")}</legend>
 						{assets.length ? (
@@ -160,7 +160,7 @@ export function McpPanel() {
 					</fieldset>
 					<fieldset
 						className="mcp-options"
-						disabled={busy || status === "pairing"}
+						disabled={!localConnectionAvailable || busy || status === "pairing"}
 					>
 						<legend>{t("mcpReadFields")}</legend>
 						<div className="mcp-options-list mcp-field-list">
@@ -180,7 +180,7 @@ export function McpPanel() {
 					</fieldset>
 					<fieldset
 						className="mcp-options"
-						disabled={busy || status === "pairing"}
+						disabled={!localConnectionAvailable || busy || status === "pairing"}
 					>
 						<legend>{t("mcpWriteFields")}</legend>
 						<div className="mcp-options-list mcp-field-list">
@@ -204,7 +204,7 @@ export function McpPanel() {
 						<span>{t("mcpDuration")}</span>
 						<Select id="mcp-duration"
 							value={String(ttlMs)}
-							disabled={busy || status === "pairing"}
+							disabled={!localConnectionAvailable || busy || status === "pairing"}
 							onValueChange={(selectValue) => {
 								invalidatePrepared();
 								setTtlMs(Number(selectValue));
@@ -231,14 +231,14 @@ export function McpPanel() {
 										writeFields,
 										ttlMs,
 									});
-								} catch {
-									setLocalError("mcpSelectionInvalid");
+								} catch (cause) {
+									setLocalError(cause instanceof Error && cause.message === "mcpNativeUnavailable" ? "mcpNativeUnavailable" : "mcpSelectionInvalid");
 								}
 							}}
 						>
 							{t("mcpCreateRequest")}
 						</Button>
-						{requestCurrent && download?.request === prepared && (
+						{localConnectionAvailable && requestCurrent && download?.request === prepared && (
 							<ExportFileLink
 								className="button"
 								href={download.url}
@@ -259,7 +259,7 @@ export function McpPanel() {
 						<input
 							type="file"
 							accept=".json,application/json"
-							disabled={!requestCurrent || busy || status === "pairing"}
+							disabled={!localConnectionAvailable || !requestCurrent || busy || status === "pairing"}
 							onChange={(event) => {
 								const file = event.target.files?.[0];
 								event.target.value = "";
@@ -271,7 +271,7 @@ export function McpPanel() {
 									.finally(() => setBusy(false));
 							}}
 						/>
-						<small>{t("mcpPairingHint")}</small>
+						{localConnectionAvailable && <small>{t("mcpPairingHint")}</small>}
 					</label>
 				</>
 			)}
