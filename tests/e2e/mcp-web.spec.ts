@@ -221,7 +221,7 @@ test('formal Web grants one RxDB record to an isolated official SDK stdio client
     expect(result<Record<string, unknown>>(await client.callTool({ name: 'get_asset', arguments: { id: request.assetIds[0] } }))).toEqual({ id: request.assetIds[0], name: after });
 
     await page.getByRole('button', { name: 'Navigation' }).click();
-    await page.getByRole('navigation', { name: 'Navigation' }).getByRole('link', { name: 'Assets', exact: true }).click();
+    await page.locator('.sidebar').getByRole('navigation', { name: 'Navigation', exact: true }).getByRole('link', { name: 'Assets', exact: true }).click();
     await expect(page.getByText(after, { exact: true }).first()).toBeVisible();
     await expect(page.getByText(before, { exact: true })).toHaveCount(0);
     await page.getByRole('button', { name: 'Navigation' }).click();
