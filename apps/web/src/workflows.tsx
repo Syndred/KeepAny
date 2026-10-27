@@ -53,7 +53,7 @@ import { assetNotes, editAssetNotes } from "./asset-notes";
 import { saveAccountWithIdentityLinks, AccountIdentitySavePending } from "./account-identity-save";
 import { AccountLinkConflict } from "./vault-account-links";
 import { manualTaskDedupeKey, prepareTaskEdit } from "./task-edit";
-import { saveTaskIfCurrent } from "../../../packages/local-db/src";
+import { saveTaskIfCurrent, saveManualTaskIfCurrent } from "../../../packages/local-db/src";
 import { readUrlMetadata } from "./intake-url";
 import { ExportFileLink } from "./components/ExportFileLink";
 import { hasFileDeliveryHandler } from "./file-delivery";
@@ -807,7 +807,9 @@ export function TaskEditor({
 	onClose: () => void;
 }) {
 	const { t } = useTranslation();
+	const { data } = useAppContext();
 	const [task] = useState(initialTask);
+	const [targetAssetId, setTargetAssetId] = useState(initialTask?.assetId ?? assetId);
 	const [name, setName] = useState(task?.name ?? "");
 	const [dueDate, setDueDate] = useState(task?.dueDate ?? "");
 	const [nameError, setNameError] = useState("");
@@ -831,7 +833,7 @@ export function TaskEditor({
 		const candidate = {
 			id: crypto.randomUUID(),
 			name: name.trim(),
-			assetId,
+			assetId: targetAssetId,
 			dueDate,
 			done: false,
 			completedAt: "",
@@ -849,11 +851,11 @@ export function TaskEditor({
 		inFlight.current = true;
 		setBusy(true);
 		try {
-			if (task) await saveTaskIfCurrent(task, await prepareTaskEdit(task, name, dueDate));
-			else await save("task", { ...parsed.data, dedupeKey: await manualTaskDedupeKey(name, assetId, dueDate) });
+			if (task) await saveTaskIfCurrent(task, await prepareTaskEdit({ ...task, assetId: targetAssetId }, name, dueDate));
+			else await saveManualTaskIfCurrent(null, { ...parsed.data, dedupeKey: await manualTaskDedupeKey(name, targetAssetId, dueDate) });
 			onClose();
 		} catch (error) {
-			setFailure(error instanceof Error && error.message === "task-duplicate" ? t("taskDuplicatePending") : error instanceof Error && error.message === "task-stale" ? t("workflowTaskStale") : t("error"));
+			setFailure(error instanceof Error && error.message === "task-duplicate" ? t("taskDuplicatePending") : error instanceof Error && error.message === 'task-target-changed' ? t('taskTargetChanged') : error instanceof Error && error.message === "task-stale" ? t("workflowTaskStale") : t("error"));
 		} finally {
 			inFlight.current = false;
 			setBusy(false);
@@ -864,6 +866,13 @@ export function TaskEditor({
 		<Dialog title={t(task ? "editTask" : "newTask")} className={className} onClose={closeIfIdle} closeDisabled={busy}>
 			<form onSubmit={(e) => void submit(e)}>
 				<div className="form-grid">
+					<Field name="taskAsset" label={t('taskTargetAsset')}>
+						<Select id="taskAsset" value={targetAssetId} disabled={busy} onValueChange={value => { setTargetAssetId(value); setFailure(''); }}>
+							<SelectOption value="">{t('taskNoTarget')}</SelectOption>
+							{data.assets.filter(asset => !asset.deleted && !asset.purged).map(asset => <SelectOption key={asset.id} value={asset.id}>{asset.name}</SelectOption>)}
+							{targetAssetId && !data.assets.some(asset => asset.id === targetAssetId && !asset.deleted && !asset.purged) && <SelectOption value={targetAssetId} disabled>{t('taskRelatedMissing')}</SelectOption>}
+						</Select>
+					</Field>
 					<Field
 						name="taskName"
 						disabled={busy}
