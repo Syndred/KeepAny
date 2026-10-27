@@ -385,7 +385,7 @@
 | `common-tags@1.8.2` | 传递依赖 | `MIT` | `node_modules/.pnpm/common-tags@1.8.2/node_modules/common-tags/license.md` (SHA-256 `eae4e510daa2d573a96dbdc6a4a11e8bd2ce67f53c0b5a373682cb56fcdebc9a`) |
 | `convert-source-map@2.0.0` | 传递依赖 | `MIT` | `node_modules/.pnpm/convert-source-map@2.0.0/node_modules/convert-source-map/LICENSE` (SHA-256 `1fa6ee8bb95a81ae3d73a5bd074a3ac380ffec13697051063ca1a601921b91db`) |
 | `cookie-es@3.1.1` | 传递依赖 | `MIT` | `node_modules/.pnpm/cookie-es@3.1.1/node_modules/cookie-es/LICENSE` (SHA-256 `f57270b85c3922414c061e36b93f7c74420b8facf5ccf729202d5ff5b7cd7608`) |
-| `core-js@3.50.0` | production | `MIT` | `node_modules/core-js/LICENSE` (SHA-256 `b87653fff2d44426ab5cd4723cee3b1364dc8d35a0acdf098c54689543123bf8`) |
+| `core-js@3.50.0` | production | `MIT` | `node_modules/.pnpm/core-js@3.50.0/node_modules/core-js/LICENSE` (SHA-256 `b87653fff2d44426ab5cd4723cee3b1364dc8d35a0acdf098c54689543123bf8`) |
 | `core-js-compat@3.50.0` | 传递依赖 | `MIT` | `node_modules/.pnpm/core-js-compat@3.50.0/node_modules/core-js-compat/LICENSE` (SHA-256 `b87653fff2d44426ab5cd4723cee3b1364dc8d35a0acdf098c54689543123bf8`) |
 | `core-util-is@1.0.3` | 传递依赖 | `MIT` | `node_modules/.pnpm/core-util-is@1.0.3/node_modules/core-util-is/LICENSE` (SHA-256 `33b734d60042d0fe0c92dd1fc1e874193a1c899ec3e276a2eb935d2d0bf5b710`) |
 | `cross-spawn@7.0.6` | 传递依赖 | `MIT` | `node_modules/.pnpm/cross-spawn@7.0.6/node_modules/cross-spawn/LICENSE` (SHA-256 `aaa78451b6fecd1b9c4594c796c133c0e90cad100372ff8bc6de615e9ef9adf1`) |
@@ -597,7 +597,7 @@
 | `path-key@3.1.1` | 传递依赖 | `MIT` | `node_modules/.pnpm/path-key@3.1.1/node_modules/path-key/license` (SHA-256 `48da2f39e100d4085767e94966b43f4fa95ff6a0698fba57ed460914e35f94a0`) |
 | `path-parse@1.0.7` | 传递依赖 | `MIT` | `node_modules/.pnpm/path-parse@1.0.7/node_modules/path-parse/LICENSE` (SHA-256 `3f4609137f65070541b9214300ea0d640af8192857de0eeb2b03403003d9228a`) |
 | `path-scurry@2.0.2` | 传递依赖 | `BlueOak-1.0.0` | `node_modules/.pnpm/path-scurry@2.0.2/node_modules/path-scurry/LICENSE.md` (SHA-256 `8a1af140fdfbf5afd3df27f7e662f989c5b963a300020dfafce42033cae9e004`) |
-| `pdfjs-dist@6.3.289` | production | `Apache-2.0` | `node_modules/pdfjs-dist/LICENSE` (SHA-256 `0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594`) |
+| `pdfjs-dist@6.3.289` | production | `Apache-2.0` | `node_modules/.pnpm/pdfjs-dist@6.3.289_patch_ha_a67392e80b66205936003bcd034996af/node_modules/pdfjs-dist/LICENSE` (SHA-256 `0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594`) |
 | `pend@1.2.0` | 传递依赖 | `MIT` | `node_modules/.pnpm/pend@1.2.0/node_modules/pend/LICENSE` (SHA-256 `7e64acffcb0d20d33f5a86949ffd4a99ae045b10c7332a9c3a58635876c16880`) |
 | `pg@8.23.0` | production | `MIT` | `node_modules/.pnpm/pg@8.23.0/node_modules/pg/LICENSE` (SHA-256 `192b8f5c96900f04a1271dec39688655d7416c1c6ea84a508e18b50d2b6751f3`) |
 | `pg-cloudflare@1.4.0` | 传递依赖 | `MIT` | `node_modules/.pnpm/pg-cloudflare@1.4.0/node_modules/pg-cloudflare/LICENSE` (SHA-256 `192b8f5c96900f04a1271dec39688655d7416c1c6ea84a508e18b50d2b6751f3`) |

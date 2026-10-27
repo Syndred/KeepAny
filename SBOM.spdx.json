@@ -4629,7 +4629,7 @@
       "licenseConcluded": "NOASSERTION",
       "licenseDeclared": "MIT",
       "copyrightText": "NOASSERTION",
-      "sourceInfo": "Installed metadata: node_modules/core-js/package.json; package-root license/notice files: node_modules/core-js/LICENSE sha256:b87653fff2d44426ab5cd4723cee3b1364dc8d35a0acdf098c54689543123bf8; metadata repository: git+https://github.com/zloirock/core-js.git; direct scope: production. Third-party material manifest status: verified; materials: core-js-3.50.0-license; note: verified upstream source files recorded in legal/third-party/manifest.json",
+      "sourceInfo": "Installed metadata: node_modules/.pnpm/core-js@3.50.0/node_modules/core-js/package.json; package-root license/notice files: node_modules/.pnpm/core-js@3.50.0/node_modules/core-js/LICENSE sha256:b87653fff2d44426ab5cd4723cee3b1364dc8d35a0acdf098c54689543123bf8; metadata repository: git+https://github.com/zloirock/core-js.git; direct scope: production. Third-party material manifest status: verified; materials: core-js-3.50.0-license; note: verified upstream source files recorded in legal/third-party/manifest.json",
       "homepage": "https://core-js.io"
     },
     {
@@ -7082,7 +7082,7 @@
       "licenseConcluded": "NOASSERTION",
       "licenseDeclared": "Apache-2.0",
       "copyrightText": "NOASSERTION",
-      "sourceInfo": "Installed metadata: node_modules/pdfjs-dist/package.json; package-root license/notice files: node_modules/pdfjs-dist/LICENSE sha256:0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594; metadata repository: git+https://github.com/mozilla/pdf.js.git; direct scope: production. Third-party material manifest status: verified; materials: pdfjs-dist-6.3.289-license; note: verified upstream source files recorded in legal/third-party/manifest.json",
+      "sourceInfo": "Installed metadata: node_modules/.pnpm/pdfjs-dist@6.3.289_patch_ha_a67392e80b66205936003bcd034996af/node_modules/pdfjs-dist/package.json; package-root license/notice files: node_modules/.pnpm/pdfjs-dist@6.3.289_patch_ha_a67392e80b66205936003bcd034996af/node_modules/pdfjs-dist/LICENSE sha256:0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594; metadata repository: git+https://github.com/mozilla/pdf.js.git; direct scope: production. Third-party material manifest status: verified; materials: pdfjs-dist-6.3.289-license; note: verified upstream source files recorded in legal/third-party/manifest.json",
       "homepage": "https://mozilla.github.io/pdf.js/"
     },
     {
