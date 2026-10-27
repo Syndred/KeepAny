@@ -10,7 +10,7 @@ pnpm mobile:build
 pnpm mobile:sync
 ```
 
-Android需要JDK21+、Android SDK API36与Build Tools。Windows可显式指定本机工具路径，运行：
+Android需要JDK21+、Android SDK API37.0与Build Tools；应用target仍36。URL元数据桥使用OkHttp5.5.1的证书安全修复，其Android AAR要求37.0编译平台；AGP8.13会保留“已测试到36.1”的兼容警告，本项目未关闭该警告，当前实际Java/资源构建按回执核验。Windows可显式指定本机工具路径，运行：
 
 ```powershell
 ./scripts/build-mobile-android.ps1 -JavaPath <JDK目录> -SdkPath <Android-SDK目录>

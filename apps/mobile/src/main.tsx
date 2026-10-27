@@ -8,6 +8,8 @@ import { exportNativeFile } from '../../../packages/platform-native/src/export-f
 import { hydrateNativePreferences } from '../../../packages/platform-native/src/preferences';
 import { registerPlatformSettings } from '../../web/src/platform-settings';
 import { registerDatasetAdapter } from '../../web/src/native-datasets';
+import { registerNativeMetadataHandler } from '../../web/src/intake-url';
+import { readNativeMetadataHtml } from '../../../packages/platform-native/src/metadata';
 import '../../../apps/web/src/styles.css';
 
 const startupCopy = {
@@ -28,6 +30,7 @@ async function start() {
   for (const [language, copy] of Object.entries(startupCopy)) i18n.addResourceBundle(language, 'translation', copy, true, true);
   translate = key => i18n.t(key);
   registerFileDeliveryHandler(exportNativeFile);
+  registerNativeMetadataHandler(readNativeMetadataHtml);
   const datasets = await openNativeDatasetManager();
   registerDatasetAdapter(datasets);
   registerRepositoryFactory(() => datasets.openActive());

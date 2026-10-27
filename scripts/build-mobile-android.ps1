@@ -5,7 +5,7 @@ param(
 $ErrorActionPreference = 'Stop'
 $taskRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 if (-not $JavaPath -or -not (Test-Path -LiteralPath (Join-Path $JavaPath 'bin/java.exe'))) { throw 'Set JAVA_HOME or pass -JavaPath for JDK 21+.' }
-if (-not $SdkPath -or -not (Test-Path -LiteralPath (Join-Path $SdkPath 'platforms/android-36/android.jar'))) { throw 'Set ANDROID_HOME or pass -SdkPath for Android API 36.' }
+if (-not $SdkPath -or -not (Test-Path -LiteralPath (Join-Path $SdkPath 'platforms/android-37.0/android.jar'))) { throw 'Set ANDROID_HOME or pass -SdkPath for Android API 37.0 (target remains 36).' }
 $env:JAVA_HOME = [IO.Path]::GetFullPath($JavaPath)
 $env:ANDROID_HOME = [IO.Path]::GetFullPath($SdkPath)
 # JDK 21 Windows AF_UNIX selector pipes fail on some short-name TEMP aliases.
