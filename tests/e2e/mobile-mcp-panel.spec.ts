@@ -247,6 +247,13 @@ for (const language of ['zh-CN', 'en'] as const) {
     await expect(activate).toBeDisabled(); expect(await page.evaluate(() => window.nativeMcpPanel.activated)).toBe(0);
     await exportFile.tap(); await expect(panel.getByRole('status')).toHaveText(copy.exportFileCancelled); await expect(activate).toBeDisabled();
     await page.evaluate(() => { window.nativeMcpPanel.delivery = 'failed'; }); await exportFile.tap(); await expect(panel.getByRole('status')).toHaveText(copy.exportFileFailed); await expect(activate).toBeDisabled();
+    await page.evaluate(() => { window.nativeMcpPanel.delivery = 'saved'; }); await exportFile.tap();
+    await expect(panel.getByRole('status')).toHaveText(language === 'en'
+      ? 'The pairing file was saved and read back for verification. Give it only to a trusted computer.'
+      : '配对文件已保存，并已读回核对。请仅交给你信任的电脑。');
+    await expect(panel.getByRole('status')).not.toContainText(language === 'en' ? 'password' : '密码');
+    await expect(activate).toBeEnabled(); expect(await page.evaluate(() => window.nativeMcpPanel.activated)).toBe(0);
+    await panel.getByRole('status').screenshot({ path: info.outputPath('native-mcp-saved-receipt.png') });
     await page.evaluate(() => { window.nativeMcpPanel.delivery = 'opened'; }); await exportFile.tap(); await expect(panel.getByRole('status')).toHaveText(copy.exportFileOpened);
     await expect(activate).toBeEnabled(); expect(await page.evaluate(() => window.nativeMcpPanel.activated)).toBe(0);
     const inputBox = await panel.locator('#mcp-native-address').boundingBox(); if (!inputBox) throw Error('missing-input'); expect(inputBox.height).toBeGreaterThanOrEqual(44);

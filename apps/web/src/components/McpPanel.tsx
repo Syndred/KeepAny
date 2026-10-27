@@ -320,7 +320,7 @@ export function McpPanel() {
 						</p>
 					)}
 					{native && <>
-						{native.phase === 'prepared' && <p role="status">{t(nativeCurrent ? deliveryMessage ?? 'mcpNativeTicketReady' : 'mcpNativePairExpired')}</p>}
+						{native.phase === 'prepared' && <p role="status">{t(nativeCurrent ? deliveryMessage === 'exportFileSaved' ? 'mcpNativeFileSaved' : deliveryMessage ?? 'mcpNativeTicketReady' : 'mcpNativePairExpired')}</p>}
 						{(native.phase === 'preparing' || native.phase === 'activating') && <p role="status">{t('mcpNativePreparing')}</p>}
 						{native.phase === 'waiting' && <p role="status">{t('mcpNativeWaiting')}</p>}
 					</>}

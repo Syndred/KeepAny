@@ -8,6 +8,7 @@ export const mcpPlatformCopy: Record<string, [string, string]> = {
   mcpNativeAddressHint: ['手动填写此设备在当前网络中的私有 IPv4 地址。电脑须能访问该地址；不会自动扫描网络。', 'Enter this device’s private IPv4 address on the current network. Your computer must be able to reach it. No network scan is performed.'],
   mcpNativePrepare: ['准备配对文件', 'Prepare pairing file'],
   mcpNativeTicketReady: ['配对文件已准备。请先通过系统导出，再开始等待电脑。票据两分钟后过期。', 'The pairing file is ready. Export it through the system, then start waiting for your computer. The ticket expires in two minutes.'],
+  mcpNativeFileSaved: ['配对文件已保存，并已读回核对。请仅交给你信任的电脑。', 'The pairing file was saved and read back for verification. Give it only to a trusted computer.'],
   mcpNativeActivate: ['开始等待电脑', 'Start waiting for computer'],
   mcpNativeWaiting: ['正在等待电脑请求。请在此设备核对客户端、核对码和权限后明确批准。', 'Waiting for a computer request. Check the client, comparison code and permissions on this device before approving.'],
   mcpNativePreparing: ['正在准备连接…', 'Preparing connection…'],
