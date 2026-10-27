@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { useRouterState } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { Plus } from "lucide-react";
@@ -15,11 +15,24 @@ const TaskEditor = lazy(() =>
 	import("./workflows").then((module) => ({ default: module.TaskEditor })),
 );
 
+type TaskFilter = "all" | "pending" | "done";
+const taskFilterKey = "keepany-task-filter";
+function readTaskFilter(): TaskFilter {
+	try {
+		const value = sessionStorage.getItem(taskFilterKey);
+		return value === "pending" || value === "done" ? value : "all";
+	} catch { return "all"; }
+}
+
 export function TaskPage() {
 	const { data } = useAppContext();
 	const { t, i18n } = useTranslation();
 	const [edit, setEdit] = useState<"simple" | "maintenance" | null>(null);
-	const [filter, setFilter] = useState<"all" | "pending" | "done">("all");
+	const [filter, setFilter] = useState<TaskFilter>(readTaskFilter);
+	useEffect(() => {
+		try { sessionStorage.setItem(taskFilterKey, filter); }
+		catch { /* The task list remains usable when session storage is unavailable. */ }
+	}, [filter]);
 	const [selectedPlanId, setSelectedPlanId] = useState("");
 	const taskHash = useRouterState({ select: (state) => state.location.hash });
 	const tasks = data.tasks
