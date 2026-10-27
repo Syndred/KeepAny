@@ -54,7 +54,7 @@ export type ReviewedAssetMergeReceipt = z.infer<typeof reviewedAssetMergeReceipt
 export const reviewedCandidateSchema = z.object({
   id: z.string().min(1).max(100), fileHash: z.string().regex(/^[a-f0-9]{64}$/),
   fileName: z.string().min(1).max(1024), rowNumber: z.number().int().min(1).max(100000),
-  source: z.enum(['pdf', 'ai']).optional(), sourceText: z.string().max(2 * 1024 * 1024).optional(),
+  source: z.enum(['pdf', 'ai', 'text']).optional(), sourceText: z.string().max(2 * 1024 * 1024).optional(),
   sourceTextRef: z.string().regex(/^[a-f0-9]{64}$/).optional(),
   ai: z.object({ provider: z.string().min(1).max(64), model: z.string().min(1).max(160),
     evidence: z.string().min(1).max(2000), missingFields: z.array(z.string().max(60)).max(20),
@@ -66,10 +66,10 @@ export const reviewedCandidateSchema = z.object({
   status: z.enum(['pending', 'accepted', 'ignored']),
 }).strict().superRefine((row, context) => {
   const suffix = row.source === 'pdf' ? '' : `-${row.rowNumber}`;
-  const prefix = row.source === 'pdf' ? 'pdf' : row.source === 'ai' ? 'ai' : 'csv';
+  const prefix = row.source === 'pdf' ? 'pdf' : row.source === 'ai' ? 'ai' : row.source === 'text' ? 'text' : 'csv';
   if (row.id !== `${prefix}-${row.fileHash}${suffix}` ||
     row.asset.id !== `${prefix}-${row.fileHash.slice(0, 48)}${suffix}` ||
-    (row.source === 'pdf' ? row.rowNumber !== 1 || !row.sourceText : row.source === 'ai' ? row.rowNumber < 1 || !row.sourceText || !row.ai : row.rowNumber < 2)) {
+    (row.source === 'pdf' ? row.rowNumber !== 1 || !row.sourceText : row.source === 'ai' ? row.rowNumber < 1 || !row.sourceText || !row.ai : row.source === 'text' ? !row.sourceText : row.rowNumber < 2)) {
     context.addIssue({ code: 'custom', message: 'review-id' });
   }
   if ((row.source === 'ai') !== Boolean(row.ai)) context.addIssue({ code: 'custom', message: 'review-ai-source' });

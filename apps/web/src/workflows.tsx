@@ -984,10 +984,12 @@ function validateImportCandidates(candidates: ImportCandidate[], existing: Asset
 		};
 	});
 }
+import { TextCapture } from "./components/TextCapture";
+
 export function IntakeTools({ onCsvStaged }: { onCsvStaged: () => void }) {
 	const { t } = useTranslation();
 	const { data, notify } = useAppContext();
-	const [mode, setMode] = useState<"url" | "image" | "csv" | "pdf" | "manual">("url");
+	const [mode, setMode] = useState<"url" | "image" | "csv" | "pdf" | "manual" | "text">("url");
 	const [manualKind, setManualKind] = useState<AssetKind>("project");
 	const [manualName, setManualName] = useState("");
 	const [photoAssetId, setPhotoAssetId] = useState("");
@@ -1350,6 +1352,7 @@ export function IntakeTools({ onCsvStaged }: { onCsvStaged: () => void }) {
 						<legend>{t("intakeMode")}</legend>
 						{([
 							["url", "intakeModeUrl"],
+							["text", "intakeModeText"],
 							["image", "intakeModeImage"],
 							["csv", "intakeModeCsv"],
 							["pdf", "intakeModePdf"],
@@ -1360,6 +1363,7 @@ export function IntakeTools({ onCsvStaged }: { onCsvStaged: () => void }) {
 							</button>
 						))}
 					</fieldset>
+					{mode === "text" && <TextCapture onStaged={onCsvStaged} />}
 					{mode === "url" && (
 						<>
 							<div className="field">
