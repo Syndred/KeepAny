@@ -59,6 +59,7 @@ jobs:
             -derivedDataPath test-results/ios-derived CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO \
             build 2>&1 | tee test-results/ios/build.log
       - name: Exercise native MCP core over real loopback TLS sockets
+        timeout-minutes: 12
         shell: bash
         run: |
           set -o pipefail
