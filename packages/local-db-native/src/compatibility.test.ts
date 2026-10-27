@@ -17,6 +17,7 @@ import type { SqlDriver, SqlRow } from './driver';
 
 it('restores Web KA1 into SQLite and exports it back to a clean Web repository with IDs, review drafts, images and KDBX unchanged', async () => {
   const root = await mkdtemp(join(tmpdir(), 'keepany-compat-'));
+  if (!resolve(root).startsWith(`${resolve(tmpdir())}${sep}keepany-compat-`)) throw Error('unsafe-test-cleanup');
   const web = await openLocalRepository(`compat-web-${crypto.randomUUID().slice(0, 8)}`);
   const returnedWeb = await openLocalRepository(`compat-return-${crypto.randomUUID().slice(0, 8)}`);
   const db = new DatabaseSync(join(root, 'native.db'));
@@ -72,7 +73,6 @@ it('restores Web KA1 into SQLite and exports it back to a clean Web repository w
     expect(returnedVault.readEntry(uuid).linkedAssetIds).toEqual([asset.id]); returnedVault.lock();
   } finally {
     await native.close(); await web.close(); await returnedWeb.close();
-    if (!resolve(root).startsWith(`${resolve(tmpdir())}${sep}keepany-compat-`)) throw Error('unsafe-test-cleanup');
     await rm(root, { recursive: true, force: true });
   }
 }, 30_000);

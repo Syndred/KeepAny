@@ -15,6 +15,7 @@ import type { PersistentFiles } from '../packages/platform-native/src/index.ts';
 // timings/RSS belong to this Node host, never to Android, iOS or React rendering.
 const output = resolve(process.argv[2] ?? 'test-results/native-storage-performance.json');
 const root = await mkdtemp(join(tmpdir(), 'keepany-performance-'));
+if (!resolve(root).startsWith(`${resolve(tmpdir())}${sep}keepany-performance-`)) throw Error('unsafe-benchmark-cleanup');
 const opened = new Set<LocalRepository>();
 const results: Record<string, unknown>[] = [];
 let peakRss = process.memoryUsage().rss;
@@ -73,6 +74,5 @@ try {
 } finally {
   clearInterval(sampler);
   for (const repository of opened) await repository.close();
-  if (!resolve(root).startsWith(`${resolve(tmpdir())}${sep}keepany-performance-`)) throw Error('unsafe-benchmark-cleanup');
   await rm(root, { recursive: true, force: true });
 }
