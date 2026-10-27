@@ -811,6 +811,7 @@ const copy: Record<string, [string, string]> = {
 		"请选择不超过 20 MB 的 JPEG、PNG、WebP 或 GIF。",
 		"Choose a JPEG, PNG, WebP or GIF up to 20 MB.",
 	],
+	imageSaveFailed: ["图片未能保存，请重试。", "The image could not be saved. Try again."],
 	selectAsset: ["选择资产", "Select an asset"],
 	noMatches: ["没有匹配的记录", "No matching records"],
 	deleteConfirm: [

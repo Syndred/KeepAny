@@ -957,7 +957,7 @@ export function AssetDetail() {
 			notify(t("saved"));
 		} catch (error) {
 			if (fileId) await cleanupUnreferencedFile(fileId).catch(() => false);
-			notify(t(error instanceof Error && error.message === "asset-stale" ? "assetStale" : "uploadError"));
+			notify(t(error instanceof Error && error.message === "asset-stale" ? "assetStale" : "imageSaveFailed"));
 		} finally {
 			setUploading(false);
 			imageInFlight.current = false;
