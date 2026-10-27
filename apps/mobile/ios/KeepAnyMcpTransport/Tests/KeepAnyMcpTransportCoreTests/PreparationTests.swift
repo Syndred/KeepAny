@@ -10,6 +10,10 @@ private final class TestClock {
     func now() -> UInt64 { lock.lock(); defer { lock.unlock() }; return ticks }
     func advance(seconds: UInt64) { lock.lock(); ticks += seconds * 1_000_000_000; lock.unlock() }
 }
+private final class WeakTransport {
+    weak var value: McpTransport?
+    init(_ value: McpTransport?) { self.value = value }
+}
 final class PreparationTests: XCTestCase {
     private func send(_ endpoint: McpEndpoint, events: Events, server: McpTransport) throws {
         let client = try TLSProbe(endpoint)
@@ -96,9 +100,9 @@ final class PreparationTests: XCTestCase {
         let events = Events()
         var server: McpTransport? = McpTransport { events.append($0) }
         let prepared = try server!.prepare(address: "127.0.0.1")
-        weak var released = server
+        let released = WeakTransport(server)
         server = nil
-        XCTAssertNil(released)
+        XCTAssertNil(released.value)
         XCTAssertTrue(events.stopped(prepared.instanceId))
         XCTAssertThrowsError(try TLSProbe(prepared))
     }
