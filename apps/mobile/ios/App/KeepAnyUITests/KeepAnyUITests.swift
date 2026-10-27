@@ -16,6 +16,56 @@ final class KeepAnyUITests: XCTestCase {
         add(attachment)
     }
 
+    private func captureHierarchy(_ app: XCUIApplication, _ name: String) {
+        let attachment = XCTAttachment(string: app.debugDescription)
+        attachment.name = name
+        attachment.lifetime = .keepAlways
+        add(attachment)
+    }
+
+    private func verifyDatePicker(_ language: String, tasks: String, startDate: String) {
+        let app = application(language)
+        app.launch()
+        defer { app.terminate() }
+        let tasksLink = app.links[tasks].firstMatch
+        XCTAssertTrue(tasksLink.waitForExistence(timeout: 30))
+        tasksLink.tap()
+        let kinds: [XCUIElement.ElementType] = [.popUpButton, .datePicker, .textField, .button]
+        var control: XCUIElement?
+        let reachable = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in
+            control = kinds.lazy.flatMap { kind in
+                app.webViews.descendants(matching: kind)
+                    .matching(NSPredicate(format: "label BEGINSWITH %@", startDate))
+                    .allElementsBoundByIndex
+            }.first { $0.isHittable }
+            return control != nil
+        }, object: nil)
+        let result = XCTWaiter.wait(for: [reachable], timeout: 10)
+        captureHierarchy(app, "date-control-before-\(language)")
+        XCTAssertEqual(result, .completed)
+        guard let control else {
+            XCTFail("No accessible, reachable native date control for \(startDate)")
+            return
+        }
+        let bounds = app.webViews.firstMatch.frame
+        XCTAssertGreaterThanOrEqual(control.frame.minX, bounds.minX - 1)
+        XCTAssertLessThanOrEqual(control.frame.maxX, bounds.maxX + 1)
+        control.tap()
+        let picker = app.datePickers.firstMatch
+        let presented = picker.waitForExistence(timeout: 10)
+        capture(app, "native-date-picker-\(language)")
+        captureHierarchy(app, "date-control-presented-\(language)")
+        XCTAssertTrue(presented, "Tapping the actual date input must present a native date picker")
+    }
+
+    func testEnglishDateInputPresentsNativePicker() {
+        verifyDatePicker("en", tasks: "Tasks", startDate: "Start date")
+    }
+
+    func testChineseDateInputPresentsNativePicker() {
+        verifyDatePicker("zh-Hans", tasks: "待办", startDate: "开始日期")
+    }
+
     func testEnglishProjectSurvivesApplicationTermination() {
         let app = application("en")
         app.launch()
