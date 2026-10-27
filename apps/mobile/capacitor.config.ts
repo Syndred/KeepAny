@@ -3,6 +3,8 @@ import type { CapacitorConfig } from '@capacitor/cli';
 const config: CapacitorConfig = {
   appId: 'io.github.syndred.keepany',
   appName: 'KeepAny',
+  // Plugin arguments can contain credentials. Never send bridge payloads to OS logs.
+  loggingBehavior: 'none',
   webDir: 'dist',
   server: { androidScheme: 'https' },
   android: { allowMixedContent: false },
