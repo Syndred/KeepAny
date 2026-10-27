@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { Plus } from "lucide-react";
-import { lazy, Suspense, useRef, useState, type FormEvent } from "react";
+import { lazy, Suspense, useEffect, useRef, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import {
 	effectiveFinanceEntry, financeActions, formatMinorUnits, historyAssetIds, historySchema, inputFromMinorUnits, monthlyMinorUnits,
@@ -14,6 +14,7 @@ import { date, liveAssets, PageTitle, useAppContext } from "./view-shared";
 import "./finance.css";
 import { useSearchRowLocation } from "./search-location";
 import { Select, SelectOption } from "./components/ui/select";
+import { emptyFinanceFilters, financeCurrencies, financeFilterStorageKey, matchesFinanceFilters, readFinanceFilters, validFinanceRange, type FinanceFilters } from './finance-filter-state';
 
 type ManualAction = typeof financeActions[number];
 type LedgerAction = ManualAction | "renew";
@@ -54,9 +55,16 @@ export function FinancePage() {
 	const [busy, setBusy] = useState(false);
 	const inFlight = useRef(false);
 	const [error, setError] = useState("");
-	const [typeFilter, setTypeFilter] = useState<LedgerAction | "all">("all");
-	const [assetFilter, setAssetFilter] = useState("");
-	const [sourceFilter, setSourceFilter] = useState("all");
+	const [filters, setFilters] = useState<FinanceFilters>(() => {
+		try { return readFinanceFilters(sessionStorage.getItem(financeFilterStorageKey)); } catch { return { ...emptyFinanceFilters }; }
+	});
+	const { type: typeFilter, asset: assetFilter, source: sourceFilter } = filters;
+	const setTypeFilter = (type: FinanceFilters['type']) => setFilters(current => ({ ...current, type }));
+	const setAssetFilter = (asset: string) => setFilters(current => ({ ...current, asset }));
+	const setSourceFilter = (source: string) => setFilters(current => ({ ...current, source }));
+	useEffect(() => {
+		try { sessionStorage.setItem(financeFilterStorageKey, JSON.stringify(filters)); } catch { /* Filtering remains available without optional session storage. */ }
+	}, [filters]);
 	const [draft, setDraft] = useState<EntryDraft>(() => ({ action: "expense", assetId: "", title: "", amount: "", currency: "CNY", eventDate: today(), source: "", note: "" }));
 	const thisMonth = today().slice(0, 7);
 	const planned = groupedMoney(subscriptions.filter((asset) => asset.status === "active")
@@ -74,13 +82,14 @@ export function FinancePage() {
 	}
 	const balances = groupedMoney([...latestBalances.values()].flatMap((entry) =>
 		entry.currency && entry.amount !== undefined ? [{ currency: entry.currency, amount: entry.amount }] : []));
-	const sources = [...new Set(records.map((entry) => entry.source?.trim()).filter((source): source is string => !!source))].sort((a, b) => a.localeCompare(b));
-	const hasEmptySource = records.some((entry) => !entry.source?.trim());
-	const filtered = records.filter((entry) => (typeFilter === "all" || entry.action === typeFilter) && (!assetFilter || historyAssetIds(entry).includes(assetFilter))
-		&& (sourceFilter === "all" || (sourceFilter === "empty" ? !entry.source?.trim() : entry.source?.trim() === sourceFilter.slice(7))))
+	const sources = [...new Set([...records.map((entry) => entry.source?.trim()), ...(sourceFilter.startsWith('source:') ? [sourceFilter.slice(7)] : [])].filter((source): source is string => !!source))].sort((a, b) => a.localeCompare(b));
+	const hasEmptySource = sourceFilter === 'empty' || records.some((entry) => !entry.source?.trim());
+	const filterAssetIds = [...new Set([...records.flatMap(historyAssetIds), ...(assetFilter ? [assetFilter] : [])])];
+	const validRange = validFinanceRange(filters);
+	const filtered = records.filter((entry) => matchesFinanceFilters(entry, filters, historyAssetIds(entry).map(id => assetsById.get(id)?.name ?? t('financeMissingAsset'))))
 		.sort((a, b) => (b.eventDate || b.billDate || b.createdAt).localeCompare(a.eventDate || a.billDate || a.createdAt) || b.createdAt.localeCompare(a.createdAt));
 	useSearchRowLocation("finance-entry-", records.map((entry) => entry.id), filtered.map((entry) => entry.id), () => {
-		setTypeFilter("all"); setAssetFilter(""); setSourceFilter("all");
+		setFilters({ ...emptyFinanceFilters });
 	});
 	function relatedAssets(subscriptionId: string) {
 		return Array.from(new Map(data.relations.filter((relation) => !relation.deleted && (relation.from === subscriptionId || relation.to === subscriptionId))
@@ -169,7 +178,14 @@ export function FinancePage() {
 		</section>
 		<div className="finance-columns">
 			<section className="card"><div className="card-header"><h2>{t("financeRecentRecords")}</h2></div>
-				<div className="finance-filters"><label htmlFor="finance-filter-type" className="field">{t("financeFilterType")}<Select id="finance-filter-type" value={typeFilter} onValueChange={(selectValue) => setTypeFilter(selectValue as LedgerAction | "all")}><SelectOption value="all">{t("all")}</SelectOption>{(["expense","topup","refund","balance","renew"] as const).map((action) => <SelectOption key={action} value={action}>{action === "renew" ? t("financeRenewalRecorded") : t(`financeAction${action[0].toUpperCase()}${action.slice(1)}`)}</SelectOption>)}</Select></label><label htmlFor="finance-filter-asset" className="field">{t("financeFilterAsset")}<Select id="finance-filter-asset" value={assetFilter} onValueChange={(selectValue) => setAssetFilter(selectValue)}><SelectOption value="">{t("all")}</SelectOption>{[...new Set(records.flatMap(historyAssetIds))].map((id) => <SelectOption key={id} value={id}>{assetsById.get(id)?.name ?? t("financeMissingAsset")}</SelectOption>)}</Select></label><label htmlFor="finance-filter-source" className="field">{t("financeFilterSource")}<Select id="finance-filter-source" value={sourceFilter} onValueChange={(selectValue) => setSourceFilter(selectValue)}><SelectOption value="all">{t("all")}</SelectOption>{hasEmptySource && <SelectOption value="empty">{t("financeNoSource")}</SelectOption>}{sources.map((source) => <SelectOption key={source} value={`source:${source}`}>{source}</SelectOption>)}</Select></label></div>
+				<div className="finance-filters"><label htmlFor="finance-filter-type" className="field">{t("financeFilterType")}<Select id="finance-filter-type" value={typeFilter} onValueChange={(selectValue) => setTypeFilter(selectValue as LedgerAction | "all")}><SelectOption value="all">{t("all")}</SelectOption>{(["expense","topup","refund","balance","renew"] as const).map((action) => <SelectOption key={action} value={action}>{action === "renew" ? t("financeRenewalRecorded") : t(`financeAction${action[0].toUpperCase()}${action.slice(1)}`)}</SelectOption>)}</Select></label><label htmlFor="finance-filter-asset" className="field">{t("financeFilterAsset")}<Select id="finance-filter-asset" value={assetFilter} onValueChange={(selectValue) => setAssetFilter(selectValue)}><SelectOption value="">{t("all")}</SelectOption>{filterAssetIds.map((id) => <SelectOption key={id} value={id}>{assetsById.get(id)?.name ?? t("financeMissingAsset")}</SelectOption>)}</Select></label><label htmlFor="finance-filter-source" className="field">{t("financeFilterSource")}<Select id="finance-filter-source" value={sourceFilter} onValueChange={(selectValue) => setSourceFilter(selectValue)}><SelectOption value="all">{t("all")}</SelectOption>{hasEmptySource && <SelectOption value="empty">{t("financeNoSource")}</SelectOption>}{sources.map((source) => <SelectOption key={source} value={`source:${source}`}>{source}</SelectOption>)}</Select></label>
+                    <label htmlFor="finance-filter-currency" className="field">{t('financeFilterCurrency')}<Select id="finance-filter-currency" value={filters.currency} onValueChange={currency => setFilters(current => ({ ...current, currency }))}><SelectOption value="all">{t('all')}</SelectOption>{financeCurrencies.map(currency => <SelectOption key={currency} value={currency}>{currency}</SelectOption>)}</Select></label>
+                    <label htmlFor="finance-filter-from" className="field">{t('financeFilterFrom')}<input id="finance-filter-from" type="date" value={filters.from} aria-invalid={!validRange} aria-describedby={!validRange ? 'finance-filter-date-error' : undefined} onChange={event => setFilters(current => ({ ...current, from: event.target.value }))} /></label>
+                    <label htmlFor="finance-filter-to" className="field">{t('financeFilterTo')}<input id="finance-filter-to" type="date" value={filters.to} aria-invalid={!validRange} aria-describedby={!validRange ? 'finance-filter-date-error' : undefined} onChange={event => setFilters(current => ({ ...current, to: event.target.value }))} /></label>
+                    <label htmlFor="finance-filter-query" className="field">{t('financeFilterQuery')}<input id="finance-filter-query" type="search" maxLength={2000} value={filters.query} onChange={event => setFilters(current => ({ ...current, query: event.target.value }))} /></label>
+                    <Button onClick={() => setFilters({ ...emptyFinanceFilters })}>{t('financeFilterClear')}</Button>
+                </div>
+                {!validRange && <p id="finance-filter-date-error" className="field-error" role="alert">{t('financeFilterDateInvalid')}</p>}
 				{filtered.length ? <div className="list">{filtered.map((entry) => <div className="list-row finance-entry" key={entry.id} id={`finance-entry-${entry.id}`} tabIndex={-1}>
 					<div className="finance-entry-content"><strong>{entry.title || assetsById.get(entry.assetId)?.name || historyLabel(entry)}</strong><small>{historyLabel(entry)} · {historyAssetIds(entry).map(id => assetsById.get(id)?.name ?? t("financeMissingAsset")).join(" · ")} · {date(entry.eventDate || entry.billDate || entry.createdAt.slice(0,10), i18n.language)} · {entry.source?.trim() || t("financeNoSource")}{entry.note ? ` · ${entry.note}` : ""}</small></div>
 					{entry.amount !== undefined && entry.currency && <b>{formatMinorUnits(entry.amount,entry.currency,i18n.language)}</b>}
