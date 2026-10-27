@@ -5,7 +5,7 @@ import * as fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
-import { EventEmitter } from 'node:events';
+import { EventEmitter, getEventListeners } from 'node:events';
 import { test } from 'vitest';
 import { DATABASE_RELATIVE_PATH, FIXTURE_QUERY, createProjectFixtureObserver, createSimctlContainerResolver, querySqliteReadonly } from './observe-ios-project-fixtures.mjs';
 
@@ -441,6 +441,29 @@ test('default sqlite parser classifies actual corruption diagnostics as fixed fa
 
 // Windows force-terminates even SIGTERM; real TERM resistance is exercised
 // when these same tests run on macOS/POSIX. No unrelated process is signalled.
+for (const kind of ['sqlite', 'simctl']) for (const duringSpawn of [false, true]) {
+  test(`owned ${kind} cancellation explicitly kills before waiting for close${duringSpawn ? ' even during spawn' : ''}`, async () => {
+    const controller = new AbortController(); const signals = []; let releaseClose; let settled = false;
+    const execFileImpl = (_command, _args, options, callback) => {
+      assert.equal(options.signal, undefined, 'do not delegate abort to execFile/spawn default SIGTERM');
+      const child = new EventEmitter();
+      releaseClose = () => child.emit('close');
+      child.kill = signal => { signals.push(signal); callback({ killed: true }, '', ''); return true; };
+      if (duringSpawn) controller.abort();
+      return child;
+    };
+    const result = kind === 'sqlite' ? querySqliteReadonly('synthetic', { signal: controller.signal, execFileImpl })
+      : createSimctlContainerResolver({ simulatorId, bundleId, execFileImpl })({ signal: controller.signal });
+    result.then(() => { settled = true; }, () => { settled = true; });
+    if (!duringSpawn) controller.abort();
+    await Promise.resolve();
+    assert.deepEqual(signals, ['SIGKILL']); assert.equal(settled, false, 'callback alone must not finish before owned close');
+    releaseClose();
+    await assert.rejects(result, { observerCode: 'query-cancelled' });
+    assert.equal(getEventListeners(controller.signal, 'abort').length, 0);
+  });
+}
+
 for (const kind of ['sqlite', 'simctl']) for (const abort of [false, true]) {
   test(`owned ${kind} force-kills and drains a TERM-handler child on ${abort ? 'ready-state abort' : 'deadline'}`, async () => {
     const controller = new AbortController(); let child; let closed = false; let rescued = false; let resolveReady; let killSignal;

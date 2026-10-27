@@ -27,6 +27,16 @@ const BUNDLE = /^[a-zA-Z][a-zA-Z0-9-]*(?:\.[a-zA-Z0-9-]+)+$/;
 const publicError = code => Object.assign(new Error(code), { observerCode: code });
 const digest = value => createHash('sha256').update(value).digest('hex');
 
+function abortOwnedChild(child, signal) {
+  if (!signal) return;
+  // execFile forwards signal to spawn but not its killSignal. Handle abort
+  // explicitly so POSIX cancellation uses the same hard stop as the deadline.
+  const abort = () => child.kill('SIGKILL');
+  child.once('close', () => signal.removeEventListener('abort', abort));
+  signal.addEventListener('abort', abort, { once: true });
+  if (signal.aborted) abort();
+}
+
 export function createSimctlContainerResolver({ simulatorId, bundleId, execFileImpl = execFile } = {}) {
   if (!UUID.test(simulatorId ?? '') || !BUNDLE.test(bundleId ?? '')) throw publicError('invalid-options');
   return ({ signal } = {}) => new Promise((resolve, reject) => {
@@ -49,12 +59,13 @@ export function createSimctlContainerResolver({ simulatorId, bundleId, execFileI
     };
     try {
       const child = execFileImpl('xcrun', ['simctl', 'get_app_container', simulatorId, bundleId, 'data'], {
-        encoding: 'utf8', timeout: 1500, maxBuffer: 16 * 1024, windowsHide: true, signal, killSignal: 'SIGKILL',
+        encoding: 'utf8', timeout: 1500, maxBuffer: 16 * 1024, windowsHide: true, killSignal: 'SIGKILL',
       }, (error, stdout) => {
         outcome = error ? { code: signal?.aborted || error.name === 'AbortError' ? 'query-cancelled' : 'container-unavailable' } : { stdout };
         complete();
       });
       child.once('close', () => { closed = true; complete(); });
+      abortOwnedChild(child, signal);
     } catch { reject(publicError('container-unavailable')); }
   });
 }
@@ -85,7 +96,7 @@ export function querySqliteReadonly(database, { signal, execFileImpl = execFile 
     try {
       const child = execFileImpl('sqlite3', args, {
         encoding: 'utf8', timeout: 1500, maxBuffer: MAX_BYTES,
-        windowsHide: true, signal, killSignal: 'SIGKILL',
+        windowsHide: true, killSignal: 'SIGKILL',
       }, (error, stdout, stderr) => {
         if (!error) { outcome = { stdout }; complete(); return; }
         let code = 'query-failed';
@@ -98,6 +109,7 @@ export function querySqliteReadonly(database, { signal, execFileImpl = execFile 
         outcome = { code }; complete();
       });
       child.once('close', () => { closed = true; complete(); });
+      abortOwnedChild(child, signal);
     } catch {
       reject(publicError('query-failed'));
     }
