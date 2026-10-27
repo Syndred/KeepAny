@@ -2,12 +2,13 @@ import { expect, test, type Page } from "@playwright/test";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { sourceModuleUrl } from "./helpers/source-module-url";
 import { selectChoice } from "./helpers/select-choice";
+import type { History } from "../../packages/domain/src";
 
 const repositoryPath = sourceModuleUrl("packages/local-db/src/index.ts");
 const domainPath = sourceModuleUrl("packages/domain/src/index.ts");
 const evidence = "docs/qa/2026-10-27/evidence/T14-round2";
 
-async function history(page: Page) {
+async function history(page: Page): Promise<History[]> {
 	return page.evaluate(async (path) => {
 		const { localRepository } = await import(path);
 		return (await (await localRepository()).list("history")).sort((a: { id: string }, b: { id: string }) => a.id.localeCompare(b.id));
@@ -53,8 +54,8 @@ for (const locale of ["zh-CN", "en"] as const) {
 		await expect(dialog).toBeHidden();
 		await expect(page.locator(".finance-entry")).toHaveCount(2);
 		const confirmed = await history(page);
-		expect(confirmed.find((row: any) => row.title === "T14 confirmed invoice")).toMatchObject({ assetId: ids.subscription, amount: 1234, currency: "CNY", eventDate: "2026-10-20", source: "Synthetic statement" });
-		expect(confirmed.find((row: any) => row.id === ids.renewal)).toMatchObject({ amount: 500, billDate: "2026-10-15", note: "T14 original renewal" });
+		expect(confirmed.find((row) => row.title === "T14 confirmed invoice")).toMatchObject({ assetId: ids.subscription, amount: 1234, currency: "CNY", eventDate: "2026-10-20", source: "Synthetic statement" });
+		expect(confirmed.find((row) => row.id === ids.renewal)).toMatchObject({ amount: 500, billDate: "2026-10-15", note: "T14 original renewal" });
 		const ledgerControls = await page.locator(".finance-entry").evaluateAll((rows) => rows.map((row) => ({ text: row.textContent, controls: Array.from(row.querySelectorAll("button,a,input")).map((el) => el.textContent) })));
 		await linked.getByRole("button", { name: locale === "en" ? "Edit" : "编辑", exact: true }).click();
 		const editor = page.getByRole("dialog");
