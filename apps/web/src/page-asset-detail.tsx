@@ -323,6 +323,11 @@ export function AssetDetail() {
 	const [deleteError, setDeleteError] = useState("");
 	const [deleteBusy, setDeleteBusy] = useState(false);
 	const deleteInFlight = useRef(false);
+	const [reactivateProjectBase, setReactivateProjectBase] = useState<Asset | null>(null);
+	const [reactivateProjectBusy, setReactivateProjectBusy] = useState(false);
+	const [reactivateProjectError, setReactivateProjectError] = useState("");
+	const [reactivateProjectStale, setReactivateProjectStale] = useState(false);
+	const reactivateProjectInFlight = useRef(false);
 	const [relationEdit, setRelationEdit] = useState(false);
 	const [relationEditBase, setRelationEditBase] = useState<Relation | null>(null);
 	const [relationStale, setRelationStale] = useState(false);
@@ -689,6 +694,22 @@ export function AssetDetail() {
 		} catch (error) {
 			setDomainError(t(error instanceof Error && error.message === "asset-stale" ? "assetStale" : "error"));
 		} finally { domainInFlight.current = false; setDomainBusy(false); }
+	}
+	async function confirmProjectReactivation() {
+		const expected = reactivateProjectBase;
+		if (expected?.kind !== "project" || expected.status !== "archived" || expected.deleted || reactivateProjectStale || reactivateProjectInFlight.current) return;
+		reactivateProjectInFlight.current = true;
+		setReactivateProjectBusy(true);
+		setReactivateProjectError("");
+		try {
+			await saveAssetIfCurrent(expected, { ...expected, status: "active", updatedAt: new Date().toISOString() });
+			setReactivateProjectBase(null);
+			notify(t("saved"));
+		} catch (cause) {
+			const stale = cause instanceof Error && cause.message === "asset-stale";
+			setReactivateProjectStale(stale);
+			setReactivateProjectError(t(stale ? "assetStale" : "error"));
+		} finally { reactivateProjectInFlight.current = false; setReactivateProjectBusy(false); }
 	}
 	async function confirmDelete() {
 		if (!asset || deleteInFlight.current) return;
@@ -1410,6 +1431,7 @@ export function AssetDetail() {
 		<main className={`page asset-detail asset-detail-${kind}${relations.length ? " has-relations" : ""}`}>
 			{kind === "project" && <div className="asset-project-action-bar">
 				<Button onClick={() => setEdit(true)}>{t("edit")}</Button>
+				{asset.status === "archived" && <Button disabled={reactivateProjectBusy} onClick={() => { setReactivateProjectBase(structuredClone(asset)); setReactivateProjectError(""); setReactivateProjectStale(false); }}>{t("reactivateProject")}</Button>}
 				<Button variant="primary" onClick={() => setSubmissionEdit(true)}><Plus size={14} />{t("addSubmission")}</Button>
 				<Button asChild><Link to="/assets/project/$id/workflow/$flow" params={{ id: asset.id, flow: "brand" }}>{t("workflowBrandEntry")}</Link></Button>
 				<Button asChild><Link to="/assets/project/$id/workflow/$flow" params={{ id: asset.id, flow: "close" }}>{t("workflowCloseEntry")}</Link></Button>
@@ -1452,6 +1474,11 @@ export function AssetDetail() {
 				<div><small>{t("projectIndexed")}</small><strong>{submissions.filter((entry) => entry.status === "indexed").length}</strong></div>
 				<div><small>{t("projectNeedsReview")}</small><strong>{submissions.filter((entry) => entry.status === "verify").length}</strong></div>
 			</div>}
+			{reactivateProjectBase && <Dialog title={t("reactivateProject")} closeDisabled={reactivateProjectBusy} onClose={() => { if (!reactivateProjectInFlight.current) setReactivateProjectBase(null); }}>
+				<p>{t("reactivateProjectConfirm")}</p>
+				{reactivateProjectError && <p className="field-error" role="alert">{reactivateProjectError}</p>}
+				<div className="actions"><Button disabled={reactivateProjectBusy} onClick={() => setReactivateProjectBase(null)}>{t("cancel")}</Button><Button variant="primary" disabled={reactivateProjectBusy || reactivateProjectStale} onClick={() => void confirmProjectReactivation()}>{t("reactivateProject")}</Button></div>
+			</Dialog>}
 			{deleteOpen && (
 				<Dialog
 					className={kind === "account" ? "account-detail-dialog" : undefined}

@@ -1,4 +1,5 @@
 import { intakeWithdrawalCopy } from './intake-withdrawal-copy';
+import { projectWorkflowCopy } from './project-workflow-copy';
 import { collectionsCopy } from './collections-copy';
 import { relationCopy } from './relation-copy';
 import i18n from "i18next";
@@ -24,6 +25,7 @@ import { mobileServicesCopy } from "./mobile-services-copy";
 import { nativeConnectionsCopy } from "./native-connections-copy";
 
 const copy: Record<string, [string, string]> = {
+  ...projectWorkflowCopy,
   ...collectionsCopy,
   ...relationCopy,
   ...intakeWithdrawalCopy,
