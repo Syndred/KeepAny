@@ -1,14 +1,15 @@
 import { constants } from 'node:fs';
-import { chmod, mkdtemp, open, rename, rm, symlink, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { open, rename, rm, symlink, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import { readLaunchRequest, parseLaunchRequest } from './request';
 import { prepareStateDirectory, writePairingFile, type PairingFilePayload } from './pairing-file';
+import { stopPrivateFilesHelper } from '../../../packages/mcp/src/node-private-files';
+import { assertPrivateTestFile, fixtureDirectoryMode, privateTestDirectory } from '../../../packages/mcp/src/node-private-files.test-support';
 
 const directories: string[] = [];
-afterEach(async () => { await Promise.all(directories.splice(0).map(directory => rm(directory, { recursive: true, force: true }))); });
-const temporary = async () => { const directory = await mkdtemp(join(tmpdir(), 'keepany-mcp-launcher-')); directories.push(directory); return directory; };
+afterEach(async () => { stopPrivateFilesHelper(); await Promise.all(directories.splice(0).map(directory => rm(directory, { recursive: true, force: true, maxRetries: 20, retryDelay: 25 }))); });
+const temporary = async () => { const directory = await privateTestDirectory('keepany-mcp-launcher-'); directories.push(directory); return directory; };
 const request = (now = Date.now()) => ({
   kind: 'keepany-mcp-local-request-v1', appOrigin: 'http://127.0.0.1:5173',
   assetIds: ['asset-1'], readFields: ['name'], writeFields: ['name'],
@@ -49,11 +50,11 @@ describe('trusted local request parsing', () => {
 describe('one-time private pairing file', () => {
   it('creates 0600 without replacing an existing path and deletes only its own inode', async () => {
     const directory = await temporary();
-    await chmod(directory, 0o700);
+    await fixtureDirectoryMode(directory, 0o700);
     const path = join(directory, 'pairing.json');
     const file = await writePairingFile(path, pairing());
     const opened = await open(path, constants.O_RDONLY | constants.O_NOFOLLOW);
-    expect((await opened.stat()).mode & 0o777).toBe(0o600);
+    await assertPrivateTestFile(path, expect);
     expect(JSON.parse(await opened.readFile('utf8'))).toMatchObject({ kind: 'keepany-mcp-pairing-v1' });
     await opened.close();
     await expect(writePairingFile(path, pairing())).rejects.toThrow('pairing-file-exists');
@@ -68,22 +69,22 @@ describe('one-time private pairing file', () => {
     const replacement = await open(path, constants.O_RDONLY);
     expect(await replacement.readFile('utf8')).toBe('someone else');
     await replacement.close();
-  });
+  }, 20_000);
 
   it('rejects symlink, group-readable directory and relative path', async () => {
     const directory = await temporary();
     const privateDir = join(directory, 'private');
-    await chmod(directory, 0o755);
+    await fixtureDirectoryMode(directory, 0o755);
     await expect(writePairingFile(join(directory, 'pair.json'), pairing())).rejects.toThrow('pairing-directory-unsafe');
-    await chmod(directory, 0o700);
+    await fixtureDirectoryMode(directory, 0o700);
     await expect(writePairingFile('pair.json', pairing())).rejects.toThrow('pairing-path-not-absolute');
     await symlink(directory, privateDir);
     await expect(writePairingFile(join(privateDir, 'pair.json'), pairing())).rejects.toThrow('pairing-directory-unsafe');
     await expect(prepareStateDirectory('relative')).rejects.toThrow('state-directory-not-absolute');
     await expect(prepareStateDirectory(privateDir)).rejects.toThrow('pairing-directory-unsafe');
-    await chmod(directory, 0o755);
+    await fixtureDirectoryMode(directory, 0o755);
     await expect(prepareStateDirectory(directory)).rejects.toThrow('pairing-directory-unsafe');
-    await chmod(directory, 0o700);
+    await fixtureDirectoryMode(directory, 0o700);
     expect(await prepareStateDirectory(directory)).toBe(directory);
-  });
+  }, 20_000);
 });

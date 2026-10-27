@@ -3,6 +3,7 @@ import { open, mkdir, lstat, readFile, rename, unlink } from 'node:fs/promises';
 import { dirname } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import type { AuthorityState, AuthorityStorage } from './authority';
+import { nativePrivateFiles } from './node-private-files';
 
 const initial: AuthorityState = { grants: [], previews: [], operations: [], audit: [] };
 const pause = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
@@ -15,6 +16,10 @@ export class FileAuthorityStorage implements AuthorityStorage {
 
   private async prepare() {
     const directory = dirname(this.path);
+    if (process.platform === 'win32') {
+      await nativePrivateFiles.createDirectory(directory);
+      return;
+    }
     await mkdir(directory, { recursive: true, mode: 0o700 });
     const dir = await lstat(directory);
     if (!dir.isDirectory() || dir.isSymbolicLink() || (dir.mode & 0o077) !== 0) throw Error('authority-directory-permissions');
@@ -28,6 +33,10 @@ export class FileAuthorityStorage implements AuthorityStorage {
 
   async read(): Promise<AuthorityState> {
     await this.prepare();
+    if (process.platform === 'win32') {
+      const data = await nativePrivateFiles.readState(this.path);
+      return data === null ? structuredClone(initial) : this.parse(data);
+    }
     try {
       const value = JSON.parse(await readFile(this.path, 'utf8')) as AuthorityState;
       if (!Array.isArray(value.grants) || !Array.isArray(value.previews) ||
@@ -39,8 +48,32 @@ export class FileAuthorityStorage implements AuthorityStorage {
     }
   }
 
+  private parse(data: string): AuthorityState {
+    const value = JSON.parse(data) as AuthorityState;
+    if (!Array.isArray(value.grants) || !Array.isArray(value.previews) ||
+      !Array.isArray(value.operations) || !Array.isArray(value.audit)) throw Error('authority-file-invalid');
+    return value;
+  }
+
+  private async updateWindows<T>(change: (state: AuthorityState) => T | Promise<T>): Promise<T> {
+    await this.prepare();
+    let transaction: Awaited<ReturnType<typeof nativePrivateFiles.transaction>> | undefined;
+    for (let attempt = 0; attempt < 100; attempt++) {
+      try { transaction = await nativePrivateFiles.transaction(this.path); break; }
+      catch (error) { if ((error as NodeJS.ErrnoException).code !== 'EEXIST') throw error; await pause(50); }
+    }
+    if (!transaction) throw Error('authority-locked');
+    try {
+      const state = transaction.data === null ? structuredClone(initial) : this.parse(transaction.data);
+      const result = await change(state);
+      await transaction.commit(JSON.stringify(state));
+      return result;
+    } finally { await transaction.release(); }
+  }
+
   async update<T>(change: (state: AuthorityState) => T | Promise<T>): Promise<T> {
     const work = this.queue.then(async () => {
+      if (process.platform === 'win32') return this.updateWindows(change);
       await this.prepare();
       const lockPath = `${this.path}.lock`;
       let lock: Awaited<ReturnType<typeof open>> | undefined;

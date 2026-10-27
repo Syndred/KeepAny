@@ -4,6 +4,7 @@ import { lstat, mkdir, open, unlink } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { dirname, isAbsolute, join } from 'node:path';
 import { LauncherError } from './request';
+import { nativePrivateFiles } from '../../../packages/mcp/src/node-private-files';
 
 export interface PairingFilePayload {
   kind: 'keepany-mcp-pairing-v1';
@@ -23,6 +24,12 @@ export function defaultAuthorityPath(directory = join(homedir(), '.keepany', 'mc
 }
 
 async function verifyPrivateDirectory(path: string) {
+  if (process.platform === 'win32') {
+    await nativePrivateFiles.checkDirectory(path).catch(error => {
+      throw new LauncherError((error as Error).message === 'ENOENT' ? 'pairing-directory-unavailable' : 'pairing-directory-unsafe');
+    });
+    return;
+  }
   const stat = await lstat(path).catch(() => { throw new LauncherError('pairing-directory-unavailable'); });
   if (!stat.isDirectory() || stat.isSymbolicLink() || (stat.mode & 0o777) !== 0o700 ||
     (typeof process.getuid === 'function' && stat.uid !== process.getuid())) {
@@ -34,6 +41,10 @@ export async function prepareDefaultDirectory() {
   const base = join(homedir(), '.keepany');
   const directory = join(base, 'mcp');
   for (const item of [base, directory]) {
+    if (process.platform === 'win32') {
+      await nativePrivateFiles.createDirectory(item).catch(() => { throw new LauncherError('pairing-directory-unsafe'); });
+      continue;
+    }
     await mkdir(item, { mode: 0o700 }).catch(error => {
       if ((error as NodeJS.ErrnoException).code !== 'EEXIST') throw new LauncherError('pairing-directory-unavailable');
     });
@@ -58,6 +69,12 @@ export interface PairingFile {
 export async function writePairingFile(path: string, payload: PairingFilePayload): Promise<PairingFile> {
   if (!isAbsolute(path)) throw new LauncherError('pairing-path-not-absolute');
   await verifyPrivateDirectory(dirname(path));
+  if (process.platform === 'win32') {
+    const file = await nativePrivateFiles.pairing(path, JSON.stringify(payload)).catch(error => {
+      throw new LauncherError((error as Error).message === 'EEXIST' ? 'pairing-file-exists' : 'pairing-file-unavailable');
+    });
+    return { path, remove: file.release, removeSync: file.releaseOnExit };
+  }
   let file: Awaited<ReturnType<typeof open>>;
   try {
     file = await open(path, constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL | constants.O_NOFOLLOW, 0o600);

@@ -1,12 +1,14 @@
 import { Client } from '@modelcontextprotocol/client';
 import { StdioClientTransport } from '@modelcontextprotocol/client/stdio';
 import { expect, type Browser, type Page, test } from '@playwright/test';
-import { chmod, mkdir, mkdtemp, readFile, rm, stat } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { mkdir, readFile, rm, stat } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { selectChoice } from "./helpers/select-choice";
+import { nativePrivateFiles, stopPrivateFilesHelper } from '../../packages/mcp/src/node-private-files';
+import { assertPrivateTestFile, privateTestDirectory } from '../../packages/mcp/src/node-private-files.test-support';
 
 const repo = resolve('.');
+const packagedExecutable = process.env.KEEPANY_MCP_EXECUTABLE;
 const evidence = process.env.KEEPANY_MCP_EVIDENCE_DIR ?? join(repo, 'docs/evidence/2026-09-29');
 test.beforeAll(async () => { await mkdir(evidence, { recursive: true }); });
 const evidenceSuffix = process.env.KEEPANY_MCP_EVIDENCE_MODE === 'preview' ? '-preview' : '';
@@ -115,7 +117,7 @@ async function launch(path: string, privateDir: string, suffix: string) {
   const childEnv = Object.fromEntries(Object.entries(process.env).filter((entry): entry is [string, string] => entry[1] !== undefined));
   const transport = new StdioClientTransport({
     command: process.execPath,
-    args: ['--import', 'tsx', join(repo, 'apps/mcp-launcher/src/main.ts'), '--request', path,
+    args: [...(packagedExecutable ? [packagedExecutable] : ['--import', 'tsx', join(repo, 'apps/mcp-launcher/src/main.ts')]), '--request', path,
       '--pairing-file', pairingPath, '--state-dir', privateDir],
     cwd: repo, env: childEnv, stderr: 'pipe',
   });
@@ -123,8 +125,9 @@ async function launch(path: string, privateDir: string, suffix: string) {
   try {
     await client.connect(transport);
     await waitFor(async () => stat(pairingPath).then(() => true, () => false));
-    expect((await stat(privateDir)).mode & 0o777).toBe(0o700);
-    expect((await stat(pairingPath)).mode & 0o777).toBe(0o600);
+    if (process.platform === 'win32') await nativePrivateFiles.checkDirectory(privateDir);
+    else expect((await stat(privateDir)).mode & 0o777).toBe(0o700);
+    await assertPrivateTestFile(pairingPath, expect);
     return { client, transport, pairingPath };
   } catch (error) {
     await client.close().catch(() => undefined);
@@ -136,8 +139,7 @@ async function launch(path: string, privateDir: string, suffix: string) {
 async function fixture(browser: Browser, language: Language, width: number) {
   const context = await browser.newContext({ locale: language.locale, viewport: { width, height: 850 }, acceptDownloads: true });
   const page = await context.newPage();
-  const privateDir = await mkdtemp(join(tmpdir(), 'keepany-mcp-dialog-extra-'));
-  await chmod(privateDir, 0o700);
+  const privateDir = await privateTestDirectory('keepany-mcp-dialog-extra-');
   const mark = crypto.randomUUID().slice(0, 8);
   const selected = `Scope selected ${mark}`;
   const excluded = `Scope excluded ${mark}`;
@@ -151,11 +153,13 @@ async function fixture(browser: Browser, language: Language, width: number) {
     return { context, page, privateDir, selected, excluded, before, outside,
       close: async () => {
         await context.close().catch(() => undefined);
-        await rm(privateDir, { recursive: true, force: true });
+        stopPrivateFilesHelper();
+        await rm(privateDir, { recursive: true, force: true, maxRetries: 20, retryDelay: 25 });
       } };
   } catch (error) {
     await context.close().catch(() => undefined);
-    await rm(privateDir, { recursive: true, force: true });
+    stopPrivateFilesHelper();
+    await rm(privateDir, { recursive: true, force: true, maxRetries: 20, retryDelay: 25 });
     throw error;
   }
 }
@@ -175,8 +179,7 @@ for (const language of languages) for (const width of widths) {
     test.setTimeout(120_000);
     const context = await browser.newContext({ locale: language.locale, viewport: { width, height: 850 }, acceptDownloads: true });
     const page = await context.newPage();
-    const privateDir = await mkdtemp(join(tmpdir(), 'keepany-mcp-dialog-'));
-    await chmod(privateDir, 0o700);
+    const privateDir = await privateTestDirectory('keepany-mcp-dialog-');
     let connection: Awaited<ReturnType<typeof launch>> | undefined;
     const pageErrors: string[] = [];
     page.on('pageerror', error => pageErrors.push(error.message));
@@ -272,7 +275,8 @@ for (const language of languages) for (const width of widths) {
       await connection?.client.close().catch(() => undefined);
       await connection?.transport.close().catch(() => undefined);
       await context.close();
-      await rm(privateDir, { recursive: true, force: true });
+      stopPrivateFilesHelper();
+      await rm(privateDir, { recursive: true, force: true, maxRetries: 20, retryDelay: 25 });
     }
   });
 }

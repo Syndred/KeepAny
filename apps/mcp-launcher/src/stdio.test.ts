@@ -1,15 +1,16 @@
 import { Client } from '@modelcontextprotocol/client';
 import { StdioClientTransport } from '@modelcontextprotocol/client/stdio';
-import { access, chmod, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { access, chmod, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterEach, describe, expect, it } from 'vitest';
 import { newAsset } from '../../../packages/domain/src';
 import { BrowserMcpBridgeClient } from '../../../packages/mcp/src/browser-bridge';
+import { privateTestDirectory } from '../../../packages/mcp/src/node-private-files.test-support';
+import { stopPrivateFilesHelper } from '../../../packages/mcp/src/node-private-files';
 
 const directories: string[] = [];
-afterEach(async () => { await Promise.all(directories.splice(0).map(directory => rm(directory, { recursive: true, force: true }))); });
+afterEach(async () => { stopPrivateFilesHelper(); await Promise.all(directories.splice(0).map(directory => rm(directory, { recursive: true, force: true, maxRetries: 20, retryDelay: 25 }))); });
 
 const waitFor = async (check: () => Promise<boolean>, timeoutMs = 10_000) => {
   const deadline = Date.now() + timeoutMs;
@@ -22,7 +23,7 @@ const waitFor = async (check: () => Promise<boolean>, timeoutMs = 10_000) => {
 
 describe('official SDK stdio launcher', () => {
   it('serves only the paired, approved browser projection and removes the one-time file', async () => {
-    const directory = await mkdtemp(join(tmpdir(), 'keepany-mcp-stdio-'));
+    const directory = await privateTestDirectory('keepany-mcp-stdio-');
     directories.push(directory);
     await chmod(directory, 0o700);
     const home = join(directory, 'home');
@@ -40,8 +41,8 @@ describe('official SDK stdio launcher', () => {
     const main = fileURLToPath(new URL('./main.ts', import.meta.url));
     const env = Object.fromEntries(Object.entries(process.env).filter((entry): entry is [string, string] => entry[1] !== undefined));
     const transport = new StdioClientTransport({
-      command: join(repo, 'node_modules', '.bin', 'tsx'),
-      args: [main, '--request', requestPath, '--pairing-file', pairingPath, '--state-dir', directory],
+      command: process.execPath,
+      args: ['--import', 'tsx', main, '--request', requestPath, '--pairing-file', pairingPath, '--state-dir', directory],
       cwd: repo, env: { ...env, HOME: home }, stderr: 'pipe',
     });
     let stderr = '';
@@ -90,7 +91,7 @@ describe('official SDK stdio launcher', () => {
   }, 20_000);
 
   it('deletes an unpaired secret file and closes on SIGTERM', async () => {
-    const directory = await mkdtemp(join(tmpdir(), 'keepany-mcp-signal-'));
+    const directory = await privateTestDirectory('keepany-mcp-signal-');
     directories.push(directory);
     await chmod(directory, 0o700);
     const home = join(directory, 'home');
@@ -105,8 +106,8 @@ describe('official SDK stdio launcher', () => {
     const repo = fileURLToPath(new URL('../../../', import.meta.url));
     const main = fileURLToPath(new URL('./main.ts', import.meta.url));
     const env = Object.fromEntries(Object.entries(process.env).filter((entry): entry is [string, string] => entry[1] !== undefined));
-    const transport = new StdioClientTransport({ command: join(repo, 'node_modules', '.bin', 'tsx'),
-      args: [main, '--request', requestPath, '--pairing-file', pairingPath, '--state-dir', directory],
+    const transport = new StdioClientTransport({ command: process.execPath,
+      args: ['--import', 'tsx', main, '--request', requestPath, '--pairing-file', pairingPath, '--state-dir', directory],
       cwd: repo, env: { ...env, HOME: home }, stderr: 'pipe' });
     const client = new Client({ name: 'keepany-signal-test', version: '1.0.0' });
     try {

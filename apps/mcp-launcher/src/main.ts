@@ -1,6 +1,7 @@
 import { realpathSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 import { McpAuthority } from '../../../packages/mcp/src/authority';
+import { stopPrivateFilesHelper } from '../../../packages/mcp/src/node-private-files';
 import { FileAuthorityStorage } from '../../../packages/mcp/src/file-storage';
 import { startLocalMcpBridge } from '../../../packages/mcp/src/bridge';
 import { serveKeepAnyMcpStdio } from '../../../packages/mcp/src/server';
@@ -39,7 +40,8 @@ export async function launchMcp(options: LaunchOptions): Promise<RunningLauncher
     if (pairingTimer) clearTimeout(pairingTimer);
     closing = (async () => {
       await Promise.allSettled([stdio?.close(), bridge?.close(), pairingFile?.remove()]);
-      await authority.revokeGrant(grant.id);
+      try { await authority.revokeGrant(grant.id); }
+      finally { if (process.platform === 'win32') stopPrivateFilesHelper(); }
     })();
     return closing;
   };

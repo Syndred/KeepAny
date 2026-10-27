@@ -1,0 +1,46 @@
+{
+  "date": "2026-10-27",
+  "baseline": "1bb1c08",
+  "platform": "win32",
+  "node": "24.21.0",
+  "scope": "Independent phase0 native primitives only; not T23 product acceptance",
+  "sourceHashes": [
+    {
+      "path": "test-results/mcp-native-probe.cs",
+      "sha256": "595446979a43bb60113cb481f5ae91cfc7a4b06932a4db01e5f0b0ebd9a92a80"
+    },
+    {
+      "path": "test-results/mcp-native-probe.ps1",
+      "sha256": "5eb6efad66276339f5222e2ccf7297fdb49872f090fc03e6d248ed6b291fc87b"
+    },
+    {
+      "path": "test-results/mcp-doc-browser-probe.mjs",
+      "sha256": "826d9761898305c50cbdee49865d26d337474abfe438153d0fc3901dda0aff25"
+    }
+  ],
+  "checks": {
+    "privateDirectory": true,
+    "privateRead": true,
+    "exclusiveCreate": true,
+    "symbolicRejected": true,
+    "hardLinkRejected": true,
+    "adsRejected": true,
+    "broadAclRejected": true,
+    "replacementRetained": true,
+    "deleteOwned": true,
+    "parentRenameDenied": true,
+    "deleteOnCloseInitiallyExists": true,
+    "browserFileReadWhileDocHeld": true,
+    "forceTerminationDeletesPairing": true
+  },
+  "count": 13,
+  "allPassed": true,
+  "productChanges": false,
+  "userSettingsChanges": false,
+  "limitations": [
+    "No complete parent-chain/reparse traversal implementation",
+    "No authority atomic replacement or concurrency integration",
+    "No full MCP stdio/browser acceptance",
+    "Native prototype remains unaudited"
+  ]
+}

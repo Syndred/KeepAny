@@ -2,6 +2,7 @@ import { constants } from 'node:fs';
 import { open } from 'node:fs/promises';
 import { isAbsolute } from 'node:path';
 import { z } from 'zod';
+import { nativePrivateFiles } from '../../../packages/mcp/src/node-private-files';
 import { readableFields, writableFields, type ReadField, type WriteField } from '../../../packages/mcp/src/fields';
 
 const maxAgeMs = 5 * 60_000;
@@ -54,6 +55,15 @@ export function parseLaunchRequest(input: unknown, now = Date.now()): LocalLaunc
 
 export async function readLaunchRequest(path: string, now = Date.now()): Promise<LocalLaunchRequest> {
   if (!isAbsolute(path)) throw new LauncherError('request-path-not-absolute');
+  if (process.platform === 'win32') {
+    const text = await nativePrivateFiles.readRequest(path).catch(error => {
+      const unsafe = ['unsafe-size', 'unsafe-owner'].includes((error as Error).message);
+      throw new LauncherError(unsafe ? 'request-file-unsafe' : 'request-file-unavailable');
+    });
+    let input: unknown;
+    try { input = JSON.parse(text); } catch { throw new LauncherError('invalid-request'); }
+    return parseLaunchRequest(input, now);
+  }
   const file = await open(path, constants.O_RDONLY | constants.O_NOFOLLOW).catch(() => {
     throw new LauncherError('request-file-unavailable');
   });

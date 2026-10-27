@@ -1,11 +1,12 @@
 import { Client } from '@modelcontextprotocol/client';
 import { StdioClientTransport } from '@modelcontextprotocol/client/stdio';
 import { expect, type Page, test } from '@playwright/test';
-import { access, chmod, mkdir, mkdtemp, readFile, rm, stat } from 'node:fs/promises';
+import { access, mkdir, readFile, rm, stat } from 'node:fs/promises';
 import { request as httpRequest } from 'node:http';
-import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { selectChoice } from "./helpers/select-choice";
+import { nativePrivateFiles, stopPrivateFilesHelper } from '../../packages/mcp/src/node-private-files';
+import { assertPrivateTestFile, privateTestDirectory } from '../../packages/mcp/src/node-private-files.test-support';
 
 const repo = resolve('.');
 const packagedExecutable = process.env.KEEPANY_MCP_EXECUTABLE;
@@ -89,8 +90,7 @@ test('formal Web grants one RxDB record to an isolated official SDK stdio client
       }
     } catch { /* URL is diagnostic data only. */ }
   });
-  const privateDir = await mkdtemp(join(tmpdir(), 'keepany-mcp-web-'));
-  await chmod(privateDir, 0o700);
+  const privateDir = await privateTestDirectory('keepany-mcp-web-');
   const pairingPath = join(privateDir, 'pairing.json');
   let client: Client | undefined;
   let transport: StdioClientTransport | undefined;
@@ -146,8 +146,8 @@ test('formal Web grants one RxDB record to an isolated official SDK stdio client
 
     const childEnv = Object.fromEntries(Object.entries(process.env).filter((entry): entry is [string, string] => entry[1] !== undefined));
     transport = new StdioClientTransport({
-      command: packagedExecutable ?? process.execPath,
-      args: [...(packagedExecutable ? [] : ['--import', 'tsx', join(repo, 'apps/mcp-launcher/src/main.ts')]),
+      command: process.execPath,
+      args: [...(packagedExecutable ? [packagedExecutable] : ['--import', 'tsx', join(repo, 'apps/mcp-launcher/src/main.ts')]),
         '--request', requestPath, '--pairing-file', pairingPath, '--state-dir', privateDir],
       cwd: packagedExecutable ? privateDir : repo, env: childEnv, stderr: 'pipe',
     });
@@ -157,8 +157,9 @@ test('formal Web grants one RxDB record to an isolated official SDK stdio client
     await client.connect(transport);
     uiStage = 'waiting-for-pairing-file';
     await waitFor(() => exists(pairingPath), 15_000, 'pairing-file');
-    expect((await stat(privateDir)).mode & 0o777).toBe(0o700);
-    expect((await stat(pairingPath)).mode & 0o777).toBe(0o600);
+    if (process.platform === 'win32') await nativePrivateFiles.checkDirectory(privateDir);
+    else expect((await stat(privateDir)).mode & 0o777).toBe(0o700);
+    await assertPrivateTestFile(pairingPath, expect);
     const pairing = JSON.parse(await readFile(pairingPath, 'utf8')) as {
       kind: string; url: string; pairingSecret: string; requestNonce: string; appOrigin: string; expiresAt: number;
     };
@@ -220,7 +221,7 @@ test('formal Web grants one RxDB record to an isolated official SDK stdio client
     expect(result<Record<string, unknown>>(await client.callTool({ name: 'get_asset', arguments: { id: request.assetIds[0] } }))).toEqual({ id: request.assetIds[0], name: after });
 
     await page.getByRole('button', { name: 'Navigation' }).click();
-    await page.getByRole('navigation', { name: 'Navigation' }).getByRole('link', { name: 'Projects' }).click();
+    await page.getByRole('navigation', { name: 'Navigation' }).getByRole('link', { name: 'Assets', exact: true }).click();
     await expect(page.getByText(after, { exact: true }).first()).toBeVisible();
     await expect(page.getByText(before, { exact: true })).toHaveCount(0);
     await page.getByRole('button', { name: 'Navigation' }).click();
@@ -305,6 +306,7 @@ test('formal Web grants one RxDB record to an isolated official SDK stdio client
     await client?.close().catch(() => undefined);
     await transport?.close().catch(() => undefined);
     await context.close();
-    await rm(privateDir, { recursive: true, force: true });
+    stopPrivateFilesHelper();
+    await rm(privateDir, { recursive: true, force: true, maxRetries: 20, retryDelay: 25 });
   }
 });
