@@ -84,7 +84,8 @@ export function createNativeConnections(bridge: ConnectionsPlugin = plugin): Pla
           const limit = /\/attachments\//.test(url.pathname) ? 4 * 1024 * 1024 : 8 * 1024 * 1024;
           if (bytes.length > limit || method === 'GET' && bytes.length) throw Error('native-connections-limit');
           const id = crypto.randomUUID();
-          const result = await run(id, init.signal ?? (input instanceof Request ? input.signal : undefined), () => bridge.sessionRequest({ requestId: id, sessionId, url: url.href, method, headers, bodyBase64: encode(bytes) }));
+          const signal = init.signal !== undefined ? init.signal : input instanceof Request ? input.signal : undefined;
+          const result = await run(id, signal, () => bridge.sessionRequest({ requestId: id, sessionId, url: url.href, method, headers, bodyBase64: encode(bytes) }));
           if (closed) throw Error('native-session-closed');
           const received = decode(result.bodyBase64, limit);
           if (received.length !== result.size) throw Error('native-connections-response');

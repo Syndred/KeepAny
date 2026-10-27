@@ -123,3 +123,14 @@ it('lets explicit init signals override an aborted Request, including explicit n
   expect(native.backupRequest).toHaveBeenCalledTimes(2);
   expect(native.backupRequest).toHaveBeenLastCalledWith(expect.objectContaining({ headers: {} }));
 });
+
+it('honors explicit null cancellation overrides for a session Request without reviving inherited cancellation', async () => {
+  const native = bridge(), adapter = createNativeConnections(native), connection = await adapter.openSession(origin);
+  const original = new AbortController(); original.abort();
+  const request = new Request(`${origin}/api/auth/get-session`, { signal: original.signal });
+  await expect(connection.fetch(request)).rejects.toMatchObject({ name: 'AbortError' });
+  expect(native.sessionRequest).not.toHaveBeenCalled();
+  await expect(connection.fetch(request, { signal: null })).resolves.toHaveProperty('status', 200);
+  expect(native.sessionRequest).toHaveBeenCalledTimes(1);
+  await connection.close();
+});
