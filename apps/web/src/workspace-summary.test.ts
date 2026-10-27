@@ -5,9 +5,25 @@ import { buildWorkspaceSummary, daysBetween, partitionAccountPasswords } from ".
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { AssetMetrics } from "./components/AssetMetrics";
-import "./i18n";
+import i18n from "./i18n";
 
 describe("asset workspace summaries", () => {
+	it("uses the correct day count in English while preserving Chinese date copy", () => {
+		// Regression: T02-ISSUE-001 — one day was rendered as "1 days".
+		// Found by /qa on 2026-10-27.
+		// Report: docs/qa/2026-10-27/scopes/T02.md
+		const english = i18n.getFixedT("en");
+		const chinese = i18n.getFixedT("zh-CN");
+		for (const count of [0, 1, 2]) {
+			const unit = count === 1 ? "day" : "days";
+			expect(english("workspaceOwnedDays", { count })).toBe(`Owned for ${count} ${unit}`);
+			expect(english("workspaceRemainingDays", { count })).toBe(`${count} ${unit} left`);
+			expect(english("workspaceOverdueDays", { count })).toBe(`${count} ${unit} overdue`);
+			expect(chinese("workspaceOwnedDays", { count })).toBe(`已购买 ${count} 天`);
+			expect(chinese("workspaceRemainingDays", { count })).toBe(`剩余 ${count} 天`);
+			expect(chinese("workspaceOverdueDays", { count })).toBe(`已过期 ${count} 天`);
+		}
+	});
 	it("renders legacy project records that predate optional domain metadata", () => {
 		const project = newAsset("project");
 		Reflect.deleteProperty(project, "projectDomains");
