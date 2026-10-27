@@ -2026,8 +2026,9 @@ return repositoryGate9.restoreEntityRecord(type, id, expectedPayload);
       await assertRestoreIdentity(this.fileStore, manifest.sourceBinding);
       assertPasswordVaultRestoreConflict(await this.readPasswordVault(), passwordVault);
       // Validate all conflicts before writing attachments or a journal.
+      const currentRows = new Map((await this.records.getMany(rows.map(row => row.id))).map(row => [row.id, row]));
       for (const row of rows) {
-        const current = await this.records.get(row.id);
+        const current = currentRows.get(row.id);
         if (current && canonical(current).payload !== row.payload) throw Error('restore-conflict');
       }
       await assertReviewRestoreConflicts(this.fileStore, intakeReview);
@@ -2334,7 +2335,8 @@ async function replayJournal(_db: RecordBackend, store: FileStore, id: string, e
     assertRestoreRecoveryReferences(planned.rows, planned.candidates, snapshot.files);
     await assertRestoreRecoveryFilesReadable(store, planned.rows, snapshot.files);
     const restored = await store.outsideTransaction(async () => {
-      for (const row of journal.rows) {
+      if (db.restoreRowsIfIdentical) await db.restoreRowsIfIdentical(journal.rows);
+      else for (const row of journal.rows) {
         const [current] = await db.getMany([row.id], false);
         if (current) {
           if (current.payload !== row.payload) throw Error('restore-conflict');

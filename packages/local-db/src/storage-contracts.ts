@@ -17,6 +17,8 @@ export interface RecordBackend {
   list(type?: EntityType): Promise<StoredRecord[]>;
   insert(row: RecordRow): Promise<void>;
   insertMany(rows: readonly RecordRow[]): Promise<WriteResult>;
+  /** Optional atomic native restore: retain identical rows; reject any conflicting active payload. */
+  restoreRowsIfIdentical?(rows: readonly RecordRow[]): Promise<void>;
   modify(id: string, modifier: (row: RecordRow) => RecordRow | Promise<RecordRow>): Promise<void>;
   compareAndWrite(changes: readonly RecordChange[], context: string): Promise<WriteResult>;
   remove(id: string, expectedRevision: string): Promise<void>;

@@ -9,6 +9,7 @@ export interface SqlDriver {
   execute(sql: string): Promise<void>;
   query<T extends SqlRow = SqlRow>(sql: string, values?: SqlValue[]): Promise<T[]>;
   run(sql: string, values?: SqlValue[]): Promise<number>;
+  runBatch?(statements: readonly { sql: string; values: SqlValue[] }[]): Promise<void>;
   close(): Promise<void>;
 }
 let nativeConnections: Promise<SQLiteConnection> | undefined;
@@ -56,6 +57,13 @@ export async function openNativeDriver(name: string): Promise<SqlDriver> {
         return (await connection.query(sql, values)).values as T[] ?? [];
       },
       async run(sql, values = []) { return (await connection.run(sql, values, false)).changes?.changes ?? 0; },
+      async runBatch(statements) {
+        for (let offset = 0; offset < statements.length; offset += 100) {
+          // Separate bound statements avoid the plugin's multi-row SQL string rewrite.
+          const result = await connection.executeSet(statements.slice(offset, offset + 100).map(({ sql, values }) => ({ statement: sql, values })), false);
+          if (!Number.isInteger(result.changes?.changes) || (result.changes?.changes ?? -1) < 0) throw Error('native-sqlite-batch');
+        }
+      },
       async close() { await sqlite.closeConnection(name, false); },
     };
   } catch (error) {

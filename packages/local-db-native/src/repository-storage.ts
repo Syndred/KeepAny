@@ -18,6 +18,20 @@ async function readRecord(driver: SqlDriver, id: string): Promise<StoredRecord |
   const [row] = await driver.query<RawRecord>('SELECT * FROM records WHERE id=?', [id]);
   return row ? stored(row) : null;
 }
+async function readRecords(driver: SqlDriver, ids: readonly string[]): Promise<Map<string, StoredRecord>> {
+  const found = new Map<string, StoredRecord>();
+  for (let offset = 0; offset < ids.length; offset += 500) {
+    const chunk = ids.slice(offset, offset + 500);
+    for (const row of await driver.query<RawRecord>(`SELECT * FROM records WHERE id IN (${chunk.map(() => '?').join(',')})`, [...chunk])) found.set(row.id, stored(row));
+  }
+  return found;
+}
+const upsertRecord = 'INSERT INTO records(id,type,payload,updated_at,revision,internal_deleted) VALUES(?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET type=excluded.type,payload=excluded.payload,updated_at=excluded.updated_at,revision=excluded.revision,internal_deleted=excluded.internal_deleted';
+async function writeRecords(driver: SqlDriver, rows: readonly { next: RecordRow; revision: number; internalDeleted: boolean }[]) {
+  const statements = rows.map(({ next, revision, internalDeleted }) => ({ sql: upsertRecord, values: [next.id, next.type, next.payload, next.updatedAt, revision, internalDeleted ? 1 : 0] }));
+  if (driver.runBatch) await driver.runBatch(statements);
+  else for (const { sql, values } of statements) await driver.run(sql, values);
+}
 export class NativeRecordBackend implements RecordBackend {
   constructor(readonly name: string, readonly store: NativeStore) {}
   async get(id: string, includeInternalDeleted = false): Promise<StoredRecord | null> {
@@ -66,18 +80,27 @@ export class NativeRecordBackend implements RecordBackend {
     for (const change of changes) checkRow(change.next);
     if (new Set(changes.map(change => change.next.id)).size !== changes.length) return Promise.reject(Error('native-record-duplicate'));
     return this.store.writeSql(async driver => {
-      const current = new Map<string, StoredRecord | null>();
-      for (const change of changes) current.set(change.next.id, await readRecord(driver, change.next.id));
+      const current = await readRecords(driver, changes.map(change => change.next.id));
       const error = changes.filter(change => {
         const found = current.get(change.next.id);
         return change.previous ? !found || change.previous.id !== change.next.id || found.revision !== change.previous.revision : !!found && !found.internalDeleted;
       }).map(change => ({ documentId: change.next.id, status: 409 }));
       if (error.length) return { success: [], error };
-      for (const { next, internalDeleted = false } of changes) {
-        await driver.run('INSERT INTO records(id,type,payload,updated_at,revision,internal_deleted) VALUES(?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET type=excluded.type,payload=excluded.payload,updated_at=excluded.updated_at,revision=excluded.revision,internal_deleted=excluded.internal_deleted',
-          [next.id, next.type, next.payload, next.updatedAt, Number(current.get(next.id)?.revision ?? 0) + 1, internalDeleted ? 1 : 0]);
-      }
+      await writeRecords(driver, changes.map(({ next, internalDeleted = false }) => ({ next, internalDeleted, revision: Number(current.get(next.id)?.revision ?? 0) + 1 })));
       return { success: changes.map(change => change.next.id), error: [] };
+    });
+  }
+  async restoreRowsIfIdentical(rows: readonly RecordRow[]): Promise<void> {
+    for (const row of rows) checkRow(row);
+    if (new Set(rows.map(row => row.id)).size !== rows.length) throw Error('native-record-duplicate');
+    await this.store.writeSql(async driver => {
+      const current = await readRecords(driver, rows.map(row => row.id));
+      for (const row of rows) {
+        const previous = current.get(row.id);
+        if (previous && !previous.internalDeleted && previous.payload !== row.payload) throw Error('restore-conflict');
+      }
+      await writeRecords(driver, rows.filter(row => !current.has(row.id) || current.get(row.id)?.internalDeleted)
+        .map(next => ({ next, revision: Number(current.get(next.id)?.revision ?? 0) + 1, internalDeleted: false })));
     });
   }
   async remove(id: string, expectedRevision: string): Promise<void> {

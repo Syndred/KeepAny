@@ -23,7 +23,7 @@ async function fixture() {
   const root = await mkdtemp(join(tmpdir(), 'keepany-native-'));
   roots.push(root);
   const path = join(root, 'keepany.db');
-  const state = { failWrite: false, corruptRead: false };
+  const state = { failWrite: false, corruptRead: false, failBatchAfter: null as number | null, batchCalls: 0 };
   const files: PersistentFiles = {
     async rootUri() { return pathToFileURL(root).href; },
     async write(relative, bytes) {
@@ -50,6 +50,13 @@ async function fixture() {
       async execute(sql) { db.exec(sql); },
       async query<T extends SqlRow>(sql: string, values = []) { return db.prepare(sql).all(...values) as T[]; },
       async run(sql, values = []) { return Number(db.prepare(sql).run(...values).changes); },
+      async runBatch(statements) {
+        state.batchCalls++;
+        for (const [index, { sql, values }] of statements.entries()) {
+          if (index === state.failBatchAfter) throw Error('synthetic-batch-failure');
+          db.prepare(sql).run(...values);
+        }
+      },
       async close() { db.close(); },
     };
     const store = await NativeStore.open(driver, files);
@@ -62,6 +69,27 @@ function row(name: string): NativeRecord {
   const asset = { ...newAsset('project'), name };
   return { id: `asset:${asset.id}`, type: 'asset', payload: JSON.stringify(asset), updatedAt: Date.now() };
 }
+
+it('restores missing rows in an atomic bound batch, preserves identical revisions and rolls back a mid-batch failure', async () => {
+  const { store, state, connect } = await fixture();
+  const side = new NativeFileStore('batch-native', store);
+  const originals = [row("quoted ' 项目"), row('Second'), row('Third')];
+  await side.records.restoreRowsIfIdentical([originals[0]]);
+  const previous = await side.records.get(originals[0].id);
+  state.failBatchAfter = 1;
+  await expect(side.records.restoreRowsIfIdentical(originals)).rejects.toThrow('synthetic-batch-failure');
+  expect(await side.records.list()).toEqual([previous]);
+  state.failBatchAfter = null;
+  await side.records.restoreRowsIfIdentical(originals);
+  expect(await side.records.get(originals[0].id)).toEqual(previous);
+  expect((await side.records.list()).map(value => value.id).sort()).toEqual(originals.map(value => value.id).sort());
+  const changed = { ...originals[0], payload: JSON.stringify({ ...JSON.parse(originals[0].payload), name: 'Conflicting' }) };
+  await expect(side.records.restoreRowsIfIdentical([row('Must not appear'), changed])).rejects.toThrow('restore-conflict');
+  expect((await side.records.list()).length).toBe(3);
+  expect(state.batchCalls).toBe(3);
+  await store.close(); opened.delete(store);
+  expect((await (await connect()).store.allRecords()).sort((a, b) => a.id.localeCompare(b.id))).toEqual([...originals].sort((a, b) => a.id.localeCompare(b.id)));
+});
 
 it('persists complete original fields and side tables on disk, then reopens and rejects stale atomic batches', async () => {
   const { store, connect, db } = await fixture();
