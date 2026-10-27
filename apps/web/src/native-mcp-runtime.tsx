@@ -23,6 +23,7 @@ export function NativeMcpRuntimeProvider({ assets, adapter, children }: { assets
   const [expiresAt, setExpiresAt] = useState<number | null>(null);
   const [audit, setAudit] = useState<BrowserAuditEntry[]>([]);
   const [revokedAt, setRevokedAt] = useState<number | null>(null);
+  const [historyStatus, setHistoryStatus] = useState<'loading' | 'ready' | 'error'>(adapter.history ? 'loading' : 'ready');
   const [error, setError] = useState<string | null>(null);
   const [previews, setPreviews] = useState<PreviewResult[]>([]);
   const [decisionBusy, setDecisionBusy] = useState(false);
@@ -30,7 +31,9 @@ export function NativeMcpRuntimeProvider({ assets, adapter, children }: { assets
   const [previewCurrent, setPreviewCurrent] = useState(false);
   const [previewError, setPreviewError] = useState<{ previewId: string; key: string } | null>(null);
   const sessionRef = useRef<NativeMcpSession | null>(null), generation = useRef(0);
+  const historyRead = useRef(0);
   const cleanupRef = useRef(new Set<NativeMcpSession>());
+  const preparationCleanup = useRef<(() => Promise<void>) | null>(null);
   const phaseRef = useRef<NativeMcpPhase>('idle'), scopeRef = useRef<BridgeScope | null>(null);
   const deliveredRef = useRef(false), preparing = useRef(false), deciding = useRef(false);
   const changePhase = useCallback((value: NativeMcpPhase) => { phaseRef.current = value; setPhase(value); }, []);
@@ -39,45 +42,68 @@ export function NativeMcpRuntimeProvider({ assets, adapter, children }: { assets
     setPreparedFile(null); deliveredRef.current = false; setDelivered(false);
     setPreviewError(null);
   }, []);
+  const refreshAudit = useCallback(async () => {
+    const session = sessionRef.current, ownGeneration = generation.current;
+    const read = adapter.history?.bind(adapter) ?? (session ? async () => ({ entries: await session.auditEntries(), lastRevokedAt: null }) : null);
+    if (!read) return;
+    const ownRead = ++historyRead.current;
+    const current = () => historyRead.current === ownRead && (adapter.history ||
+      generation.current === ownGeneration && sessionRef.current === session);
+    if (adapter.history) setHistoryStatus('loading');
+    try {
+      const history = await read();
+      if (!current()) return;
+      setAudit(history.entries);
+      if (adapter.history) {
+        setRevokedAt(history.lastRevokedAt); setHistoryStatus('ready');
+        setError(current => current === 'mcpNativeStateUnavailable' ? null : current);
+      }
+    } catch {
+      if (current()) {
+        if (adapter.history) setHistoryStatus('error');
+        setError(previous => previous === null || previous === 'mcpNativeStateUnavailable' ? 'mcpNativeStateUnavailable' : previous);
+      }
+    }
+  }, [adapter]);
   const stop = useCallback(async () => {
     const sessions = [...new Set([...cleanupRef.current, ...(sessionRef.current ? [sessionRef.current] : [])])];
-    const wasAuthorized = scopeRef.current !== null;
+    const cleanup = preparationCleanup.current;
     const ownGeneration = ++generation.current;
     setPendingClient(null); setPreviews([]); setPreparedFile(null); deliveredRef.current = false; setDelivered(false);
-    if (!sessions.length) { clearConnection(); changePhase('idle'); setError(null); return; }
+    if (!sessions.length && !cleanup) { clearConnection(); changePhase('idle'); setError(null); return; }
     try {
-      const results = await Promise.allSettled(sessions.map(async session => {
+      const operations = sessions.map(async session => {
         cleanupRef.current.add(session);
         const result = await session.close(); cleanupRef.current.delete(session);
         if (sessionRef.current === session) sessionRef.current = null;
         return result;
-      }));
+      });
+      if (cleanup) operations.push((async () => {
+        await cleanup();
+        if (preparationCleanup.current === cleanup) preparationCleanup.current = null;
+        return { writeMayHaveApplied: false };
+      })());
+      const results = await Promise.allSettled(operations);
       if (results.some(result => result.status === 'rejected')) throw Error('mcpNativeStopUnconfirmed');
       if (generation.current !== ownGeneration) return;
       clearConnection(); changePhase('idle');
-      if (wasAuthorized) setRevokedAt(Date.now());
       setError(results.some(result => result.status === 'fulfilled' && result.value.writeMayHaveApplied) ? 'mcpWriteMayHaveApplied' : null);
-      try { const entries = await sessions[sessions.length - 1].auditEntries(); if (generation.current === ownGeneration) setAudit(entries); } catch {}
+      if (adapter.history) await refreshAudit();
+      else if (sessions.length) try { const entries = await sessions[sessions.length - 1].auditEntries(); if (generation.current === ownGeneration) setAudit(entries); } catch {}
     } catch {
       if (generation.current === ownGeneration) { clearConnection(); changePhase('error'); setError('mcpNativeStopUnconfirmed'); }
       // Keep the closed session identity so an explicit stop can retry an
       // unacknowledged native stop or durable revocation safely.
       throw Error('mcpRevokeUnconfirmed');
     }
-  }, [changePhase, clearConnection]);
-  const refreshAudit = useCallback(async () => {
-    const session = sessionRef.current, ownGeneration = generation.current;
-    if (!session) return;
-    try { const entries = await session.auditEntries(); if (generation.current === ownGeneration && sessionRef.current === session) setAudit(entries); }
-    catch { if (generation.current === ownGeneration) setError('mcpNativeStateUnavailable'); }
-  }, []);
+  }, [adapter, changePhase, clearConnection, refreshAudit]);
 
   const prepare = useCallback(async (address: string, requested: MobileMcpScope) => {
     if (preparing.current) return;
     preparing.current = true;
     let ownGeneration: number | undefined;
     try {
-      if (sessionRef.current || cleanupRef.current.size) await stop();
+      if (sessionRef.current || cleanupRef.current.size || preparationCleanup.current) await stop();
       ownGeneration = ++generation.current;
       const liveIds = new Set(assets.filter(asset => !asset.deleted).map(asset => asset.id));
       if (requested.assetIds.some(id => !liveIds.has(id))) throw Error('mcpSelectionInvalid');
@@ -87,17 +113,17 @@ export function NativeMcpRuntimeProvider({ assets, adapter, children }: { assets
         onAuthorized: (request, expiry) => {
           if (generation.current !== ownGeneration) return;
           const granted: BridgeScope = { assetIds: [...request.scope.assetIds], readFields: [...request.scope.readFields], writeFields: [...request.scope.writeFields] };
-          scopeRef.current = granted; setScope(granted); setExpiresAt(expiry); setRevokedAt(null); setPendingClient(null);
-          setPreparedFile(null); setAudit([]); changePhase('authorized');
+          scopeRef.current = granted; setScope(granted); setExpiresAt(expiry); setPendingClient(null);
+          setPreparedFile(null); if (!adapter.history) setAudit([]); changePhase('authorized');
+          void refreshAudit();
         },
         onPreviews: values => { if (generation.current === ownGeneration) setPreviews(values); },
         onStopped: (confirmed, writeMayHaveApplied) => {
           if (generation.current !== ownGeneration) return;
-          const hadScope = scopeRef.current !== null;
           if (confirmed) sessionRef.current = null;
           clearConnection(); changePhase(confirmed ? 'idle' : 'error');
-          if (confirmed && hadScope) setRevokedAt(Date.now());
           setError(confirmed ? writeMayHaveApplied ? 'mcpWriteMayHaveApplied' : null : 'mcpNativeStopUnconfirmed');
+          if (confirmed) void refreshAudit();
         },
       });
       if (generation.current !== ownGeneration) {
@@ -110,12 +136,22 @@ export function NativeMcpRuntimeProvider({ assets, adapter, children }: { assets
         return;
       }
       sessionRef.current = session; setPreparedFile(session.pairingFile); changePhase('prepared');
-    } catch {
+      void refreshAudit();
+    } catch (cause) {
+      if (cause instanceof Error && cause.message === 'mcp-native-revoke-unconfirmed') {
+        preparationCleanup.current = adapter.cleanupUnreturnedPreparation?.bind(adapter) ??
+          (async () => { throw Error('mcp-native-revoke-unconfirmed'); });
+        // A cancelled prepare can reject after its UI generation was retired.
+        // Retain the factory's unreturned allocation until its exact cleanup
+        // is acknowledged; an empty session list is not a native stop receipt.
+        if (!sessionRef.current) { changePhase('error'); setError('mcpNativeStopUnconfirmed'); }
+        throw Error('mcpNativeStopUnconfirmed');
+      }
       if (ownGeneration !== undefined && generation.current !== ownGeneration) return;
       if (ownGeneration === undefined) throw Error('mcpNativeStopUnconfirmed');
       setError('mcpNativePrepareFailed'); changePhase('error'); throw Error('mcpNativePrepareFailed');
     } finally { preparing.current = false; }
-  }, [adapter, assets, changePhase, clearConnection, stop]);
+  }, [adapter, assets, changePhase, clearConnection, refreshAudit, stop]);
   const reportDelivery = useCallback((message: FileDeliveryMessage) => {
     if (phaseRef.current !== 'prepared') return;
     const ready = message === 'exportFileSaved' || message === 'exportFileOpened';
@@ -150,6 +186,12 @@ export function NativeMcpRuntimeProvider({ assets, adapter, children }: { assets
     finally { deciding.current = false; setDecisionBusy(false); }
   }, [pendingClient, refreshAudit, stop]);
   const preview = previews[0];
+  useEffect(() => {
+    void refreshAudit();
+    const foreground = () => { void refreshAudit(); };
+    window.addEventListener('keepany-native-foreground', foreground);
+    return () => { historyRead.current++; window.removeEventListener('keepany-native-foreground', foreground); };
+  }, [refreshAudit]);
   useEffect(() => {
     if (!preview) { setPreviewCurrent(false); return; }
     const session = sessionRef.current; let active = true;
@@ -204,7 +246,7 @@ export function NativeMcpRuntimeProvider({ assets, adapter, children }: { assets
   return <McpRuntimeContext.Provider value={{ localConnectionAvailable: true, status, scope, expiresAt, audit, revokedAt,
     refreshAudit, prepared: null, error, prepare: () => { throw Error('mcpNativePrepareFailed'); }, invalidatePrepared,
     importPairing: async () => { throw Error('mcpPairingInvalid'); }, revoke: stop,
-    native: { phase, preparedFile, delivered, pendingClient, prepare, reportDelivery, activate, decideClient } }}>
+    native: { phase, historyStatus, preparedFile, delivered, pendingClient, prepare, reportDelivery, activate, decideClient } }}>
     {children}
     {pendingClient && <Dialog title={t('mcpNativeCompareTitle')} closeDisabled={decisionBusy} onClose={() => { void decideClient(false); }}>
       <p>{t('mcpNativeScopeApprovalHint')}</p>

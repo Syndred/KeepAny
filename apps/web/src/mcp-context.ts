@@ -14,6 +14,7 @@ export type RequestInput = Pick<McpRequest, 'assetIds' | 'readFields' | 'writeFi
 export type NativeMcpPhase = 'idle' | 'preparing' | 'prepared' | 'activating' | 'waiting' | 'authorized' | 'error';
 export interface NativeMcpRuntime {
   phase: NativeMcpPhase;
+  historyStatus: 'loading' | 'ready' | 'error';
   preparedFile: MobileMcpPairingFile | null;
   delivered: boolean;
   pendingClient: MobileMcpClientRequest | null;

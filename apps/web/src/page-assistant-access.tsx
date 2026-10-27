@@ -40,11 +40,14 @@ export function AssistantAccessPage() {
 			</section>
 			<div className="assistant-access-side">
 				<section className="card padded assistant-access-history"><h2>{t("assistantAccessRecent")}</h2>
-					{!connected && (runtime.audit.length > 0 || runtime.revokedAt !== null) && <p>{t('mcpAuditRetainedHint')}</p>}
-					{runtime.audit.length > 0 || runtime.revokedAt !== null ? <ol>{runtime.revokedAt !== null && <li data-mcp-revoked-receipt><strong>{t('assistantAccessAction_revoke')}</strong><small>{dateTime(runtime.revokedAt)} · {t('mcpRevokeDeviceReceipt')}</small></li>}{runtime.audit.map((entry) => <li key={entry.id}>
+					{!connected && (runtime.audit.length > 0 || runtime.revokedAt !== null) && <p>{t(runtime.native ? 'mcpNativeAuditRetainedHint' : 'mcpAuditRetainedHint')}</p>}
+					{runtime.native?.historyStatus === 'loading' && <p role="status">{t('mcpNativeHistoryLoading')}</p>}
+					{runtime.native?.historyStatus === 'error' && <p role="status">{t('mcpNativeHistoryUnavailable')}</p>}
+					{runtime.audit.length > 0 || runtime.revokedAt !== null ? <ol>{runtime.revokedAt !== null && <li data-mcp-revoked-receipt><strong>{t('assistantAccessAction_revoke')}</strong><small>{dateTime(runtime.revokedAt)} · {t(runtime.native ? 'mcpNativeRevokedTime' : 'mcpRevokeDeviceReceipt')}</small></li>}{runtime.audit.map((entry) => <li key={entry.id}>
 						<strong>{t(`assistantAccessAction_${entry.action}`)}</strong>
 						<small>{dateTime(entry.at)} · {t(`assistantAccessOutcome_${entry.outcome}`)}{entry.assetId ? ` · ${assetsById.get(entry.assetId)?.name ?? t("mcpAssetUnavailable")}` : ""}</small>
-					</li>)}</ol> : <p>{t(!runtime.localConnectionAvailable ? "mcpNativeNoActivity" : connected ? "assistantAccessNoRecent" : "assistantAccessRecentRequiresConnection")}</p>}
+					</li>)}</ol> : (!runtime.native || runtime.native.historyStatus === 'ready') && <p>{t(runtime.native || !runtime.localConnectionAvailable ? "mcpNativeNoActivity" : connected ? "assistantAccessNoRecent" : "assistantAccessRecentRequiresConnection")}</p>}
+					{runtime.native && <div className="actions"><Button disabled={runtime.native.historyStatus === 'loading'} onClick={() => { void runtime.refreshAudit(); }}>{t('mcpNativeRefreshHistory')}</Button></div>}
 				</section>
 				<section className="card assistant-access-allowed"><h2>{t("assistantAccessAllowed")}</h2>
 					{connected ? <ul><li>{t("assistantAccessSearchSelected")}</li><li>{t("assistantAccessReadSelected")}</li>

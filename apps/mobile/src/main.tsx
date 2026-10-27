@@ -19,8 +19,8 @@ import { createNativeConnections } from '../../../packages/platform-native/src/c
 import { registerPlatformConnections } from '../../web/src/platform-connections';
 import { registerAiFetchFactory } from '../../../packages/ai/src';
 import { createNativeAiFetchFactory } from '../../../packages/platform-native/src/ai-transport';
+import { createNativeMcpPlatform } from '../../../packages/platform-native/src/native-mcp-platform';
 import { resetNativeMcpTransport } from '../../../packages/platform-native/src/native-mcp-transport';
-import { prepareNativeMcpSession } from '../../../packages/platform-native/src/native-mcp-session';
 import { registerPlatformMcp } from '../../web/src/platform-mcp';
 import { RxdbMcpAssetStore } from '../../../packages/mcp/src/rxdb-store';
 import { Capacitor } from '@capacitor/core';
@@ -39,7 +39,10 @@ reactRoot.render(<main className="page"><h1>KeepAny</h1><p role="status">{transl
 
 async function start() {
   nativePlatform();
-  await resetNativeMcpTransport();
+  // Attempt stale WebView IO cleanup even if local-data startup later fails.
+  // MCP is optional: this failure must not prevent opening ordinary records.
+  // Its factory independently requires an acknowledged reset before any IO.
+  void resetNativeMcpTransport().catch(() => {});
   registerPlatformSettings(await hydrateNativePreferences());
   const { default: i18n } = await import('../../web/src/i18n');
   for (const [language, copy] of Object.entries(startupCopy)) i18n.addResourceBundle(language, 'translation', copy, true, true);
@@ -59,7 +62,7 @@ async function start() {
   registerRepositoryFactory(() => datasets.openActive());
   await localRepository();
   if (Capacitor.isPluginAvailable('KeepAnyMcpAuthority') && Capacitor.isPluginAvailable('KeepAnyMcpTransport')) {
-    registerPlatformMcp({ prepare: options => prepareNativeMcpSession({ ...options, loadContext: async () => {
+    registerPlatformMcp(createNativeMcpPlatform({ loadContext: async () => {
       const epoch = datasetEpoch;
       const active = (await datasets.list()).filter(dataset => dataset.active);
       if (active.length !== 1) throw Error('mcp-native-dataset-unavailable');
@@ -68,7 +71,7 @@ async function start() {
       assertCurrent();
       return { datasetName: active[0].name, store: new RxdbMcpAssetStore(repository), assertCurrent,
         onInvalidated: listener => datasets.subscribe(event => { if (event === 'active') listener(); }) };
-    } }) });
+    } }));
   }
   datasets.subscribe(event => { if (event === 'active') location.reload(); });
   await installNativeLifecycle();

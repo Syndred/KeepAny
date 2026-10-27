@@ -9,24 +9,28 @@ import { resources } from '../../apps/web/src/i18n';
 
 type Fixture = { delivery: 'saved' | 'opened' | 'cancelled' | 'failed' | 'deferred'; deliveries: number; prepares: number; activated: number; stops: number;
   failPrepare: boolean; failActivate: boolean; failStop: boolean; resolveDelivery?: () => void;
-  join(): Promise<number>; connect(): Promise<void>; read(): Promise<unknown>; close(): Promise<void>; grants(): Promise<number> };
+  historyCalls: number; failHistory: boolean; deferHistory: boolean; resolveHistory?: () => void; rejectHistory?: () => void;
+  failPrepareUnconfirmed: boolean; failPreparationCleanup: boolean; preparationCleanups: number;
+  deferPrepareFailure: boolean; resolvePrepareFailure?: () => void;
+  join(): Promise<number>; connect(): Promise<void>; read(): Promise<unknown>; close(): Promise<void>; grants(): Promise<number>; pendingReceipt(): Promise<void> };
 declare global { interface Window { nativeMcpPanel: Fixture } }
 test.use({ viewport: { width: 390, height: 844 }, hasTouch: true });
-async function install(page: Page, language: 'zh-CN' | 'en') {
+async function install(page: Page, language: 'zh-CN' | 'en', historyMode?: 'retained' | 'failed' | 'empty') {
   await page.addInitScript(language => localStorage.setItem('keepany-language', language), language); await page.goto('/assets/project');
   await page.getByRole('button', { name: language === 'en' ? 'Add' : '新增', exact: true }).tap();
   const dialog = page.getByRole('dialog'); await dialog.getByLabel(language === 'en' ? 'Name' : '名称', { exact: true }).fill('Mobile MCP selected record');
   await dialog.getByRole('button', { name: language === 'en' ? 'Save' : '保存', exact: true }).tap(); await expect(dialog).toBeHidden();
   await page.evaluate(async paths => {
-    const [{ localRepository }, { RxdbMcpAssetStore }, { MemoryAuthorityStorage }, { prepareNativeMcpSession }, { registerPlatformMcp }, { registerFileDeliveryHandler }, sdkModule] = await Promise.all([
-      import(paths.repository), import(paths.store), import(paths.authority), import(paths.session), import(paths.platform), import(paths.delivery), import(paths.client),
+    const [{ localRepository }, { RxdbMcpAssetStore }, { MemoryAuthorityStorage }, { prepareNativeMcpSession }, { registerPlatformMcp }, { registerFileDeliveryHandler }, sdkModule, { readNativeMcpHistory }] = await Promise.all([
+      import(paths.repository), import(paths.store), import(paths.authority), import(paths.session), import(paths.platform), import(paths.delivery), import(paths.client), import(paths.history),
     ]);
     const repository = await localRepository(), store = new RxdbMcpAssetStore(repository), storage = new MemoryAuthorityStorage();
     let handler: NativeMcpRequestHandler | undefined, session: NativeMcpSession | undefined, sdk: Client | undefined, active = false;
     let grant: { grantId: string; grantSecret: string } | undefined;
     const clientNonce = crypto.randomUUID();
     const state: Fixture = { delivery: 'cancelled', deliveries: 0, prepares: 0, activated: 0, stops: 0,
-      failPrepare: false, failActivate: false, failStop: false,
+      failPrepare: false, failActivate: false, failStop: false, historyCalls: 0, failHistory: paths.historyMode === 'failed', deferHistory: false,
+      failPrepareUnconfirmed: false, failPreparationCleanup: false, preparationCleanups: 0, deferPrepareFailure: false,
       async join() {
         if (!handler || !session) throw Error('not-active'); const file = session.pairingFile;
         const response = await handler.fetch(new Request(new URL('/pair', file.endpoint), { method: 'POST', headers: { 'content-type': 'application/json' },
@@ -44,8 +48,25 @@ async function install(page: Page, language: 'zh-CN' | 'en') {
       async read() { if (!sdk) throw Error('not-connected'); return sdk.callTool({ name: 'list_assets', arguments: {} }); },
       async close() { await sdk?.close(); await session?.close(); },
       async grants() { return (await storage.read()).grants.filter((g: { revokedAt?: number }) => !g.revokedAt).length; },
+      async pendingReceipt() {
+        const activeGrant = grant, activeSession = session;
+        if (!activeGrant || !activeSession) throw Error('no-active-grant');
+        await storage.update((value: import('../../packages/mcp/src/authority').AuthorityState) => value.operations.push({
+          operationId: 'history_uncertainty_fixture', grantId: activeGrant.grantId, previewId: crypto.randomUUID(), patchHash: 'c'.repeat(64),
+          assetId: activeSession.pairingFile.scope.assetIds[0], state: 'pending', createdAt: Date.now(),
+        }));
+      },
     };
     window.nativeMcpPanel = state;
+    if (paths.historyMode && paths.historyMode !== 'empty') {
+      await storage.update((value: import('../../packages/mcp/src/authority').AuthorityState) => {
+        const id = crypto.randomUUID(), at = Date.UTC(2026, 9, 20, 12);
+        value.grants.push({ id, secretHash: 'b'.repeat(64), assetIds: ['history_fixture'], readFields: ['name'], writeFields: [],
+          createdAt: at, expiresAt: at + 300000, revokedAt: at + 1234 });
+        value.audit.push({ id: crypto.randomUUID(), grantId: id, at, action: 'grant', outcome: 'allowed' },
+          { id: crypto.randomUUID(), grantId: id, at: at + 1234, action: 'revoke', outcome: 'allowed' });
+      });
+    }
     registerFileDeliveryHandler(async (request: FileDeliveryRequest) => {
       state.deliveries++; const text = new TextDecoder().decode(request.bytes), file = JSON.parse(text);
       if (text !== JSON.stringify(file) || file.kind !== 'keepany-mcp-mobile-pairing-v1' || file.scope.assetIds.length !== 1) throw Error('unexpected-export');
@@ -53,8 +74,23 @@ async function install(page: Page, language: 'zh-CN' | 'en') {
       if (state.delivery === 'deferred') { await new Promise<void>(resolve => { state.resolveDelivery = resolve; }); return { status: 'opened' }; }
       return { status: state.delivery };
     });
-    registerPlatformMcp({ async prepare(options: Omit<NativeMcpSessionOptions, 'loadContext'>) {
+    registerPlatformMcp({ ...(paths.historyMode ? { async history() {
+      state.historyCalls++; if (state.failHistory) throw Error('synthetic-history-private-diagnostic');
+      const snapshot = await readNativeMcpHistory('browser-panel-fixture', { storageFactory: () => storage });
+      if (state.deferHistory) { state.deferHistory = false; await new Promise<void>((resolve, reject) => {
+        state.resolveHistory = resolve; state.rejectHistory = () => reject(Error('synthetic-history-private-diagnostic'));
+      }); }
+      return snapshot;
+    } } : {}), async cleanupUnreturnedPreparation() {
+      state.preparationCleanups++;
+      if (state.failPreparationCleanup) { state.failPreparationCleanup = false; throw Error('mcp-native-revoke-unconfirmed'); }
+    }, async prepare(options: Omit<NativeMcpSessionOptions, 'loadContext'>) {
       state.prepares++; if (state.failPrepare) { state.failPrepare = false; throw Error('synthetic-prepare-failure'); }
+      if (state.failPrepareUnconfirmed) {
+        state.failPrepareUnconfirmed = false;
+        if (state.deferPrepareFailure) await new Promise<void>(resolve => { state.resolvePrepareFailure = resolve; });
+        throw Error('mcp-native-revoke-unconfirmed');
+      }
       session = await prepareNativeMcpSession({ ...options, loadContext: async () => ({ datasetName: 'browser-panel-fixture', store,
         assertCurrent() {}, onInvalidated() { return () => {}; } }) }, {
         authorityStorage: () => storage,
@@ -76,7 +112,8 @@ async function install(page: Page, language: 'zh-CN' | 'en') {
     await repository.saveAssetIfCurrent(asset, { ...asset, notes: 'excluded-private-note' });
   }, { repository: sourceModuleUrl('packages/local-db/src/index.ts'), store: sourceModuleUrl('packages/mcp/src/rxdb-store.ts'),
     authority: sourceModuleUrl('packages/mcp/src/authority.ts'), session: sourceModuleUrl('packages/platform-native/src/native-mcp-session.ts'),
-    client: sourceModuleUrl(fileURLToPath(import.meta.resolve('@modelcontextprotocol/client'))), platform: '/src/platform-mcp.ts', delivery: '/src/file-delivery.ts' });
+    client: sourceModuleUrl(fileURLToPath(import.meta.resolve('@modelcontextprotocol/client'))), platform: '/src/platform-mcp.ts', delivery: '/src/file-delivery.ts',
+    history: sourceModuleUrl('packages/platform-native/src/native-mcp-history.ts'), historyMode });
   await page.locator('.mobile-tabbar a[href="/more"]').tap(); await page.locator('main a[href="/settings#assistant"]').tap();
   const panel = page.locator('.mcp-panel'); await expect(panel.locator('#mcp-native-address')).toBeVisible();
   await panel.getByLabel('Mobile MCP selected record', { exact: true }).check();
@@ -85,6 +122,124 @@ async function install(page: Page, language: 'zh-CN' | 'en') {
 
 for (const language of ['zh-CN', 'en'] as const) {
   const copy = resources[language].translation;
+  test(`${language} unreturned prepare cleanup needs a real stop acknowledgement and keeps late failures visible`, async ({ page }) => {
+    const panel = await install(page, language), prepare = panel.getByRole('button', { name: copy.mcpNativePrepare, exact: true });
+    await page.evaluate(() => { window.nativeMcpPanel.failPrepareUnconfirmed = true; window.nativeMcpPanel.failPreparationCleanup = true; });
+    await prepare.tap(); await expect(panel.getByRole('alert')).toHaveText(copy.mcpNativeStopUnconfirmed);
+    await expect(prepare).toBeDisabled(); await expect(panel.getByRole('link', { name: copy.exportFileOpen, exact: true })).toHaveCount(0);
+    await panel.getByRole('button', { name: copy.mcpNativeStop, exact: true }).tap();
+    await expect(panel.getByRole('alert')).toHaveText(copy.mcpNativeStopUnconfirmed); await expect(prepare).toBeDisabled();
+    expect(await page.evaluate(() => window.nativeMcpPanel.preparationCleanups)).toBe(1);
+    await panel.getByRole('button', { name: copy.mcpNativeStop, exact: true }).tap();
+    await expect(panel.getByRole('alert')).toHaveCount(0); await expect(prepare).toBeEnabled();
+    expect(await page.evaluate(() => window.nativeMcpPanel.preparationCleanups)).toBe(2);
+    await page.evaluate(() => { window.nativeMcpPanel.failPrepareUnconfirmed = true; window.nativeMcpPanel.deferPrepareFailure = true; });
+    await prepare.tap(); await page.waitForFunction(() => Boolean(window.nativeMcpPanel.resolvePrepareFailure));
+    await page.evaluate(() => { window.dispatchEvent(new Event('keepany-native-background')); window.nativeMcpPanel.resolvePrepareFailure?.(); });
+    await expect(panel.getByRole('alert')).toHaveText(copy.mcpNativeStopUnconfirmed); await expect(prepare).toBeDisabled();
+    await panel.getByRole('button', { name: copy.mcpNativeStop, exact: true }).tap();
+    await expect(panel.getByRole('alert')).toHaveCount(0); await expect(prepare).toBeEnabled();
+    expect(await page.evaluate(() => window.nativeMcpPanel.preparationCleanups)).toBe(3);
+    await prepare.tap(); await expect(panel.getByRole('link', { name: copy.exportFileOpen, exact: true })).toBeVisible();
+    await page.evaluate(() => window.nativeMcpPanel.close());
+  });
+
+  test(`${language} native history reads retained metadata before pairing and ignores an obsolete refresh`, async ({ page }, info) => {
+    await install(page, language, 'retained');
+    await page.locator('.mobile-tabbar a[href="/more"]').tap(); await page.locator('main a[href="/assistant-access"]').tap();
+    const history = page.locator('.assistant-access-history');
+    await expect(history).toContainText(copy.mcpNativeAuditRetainedHint);
+    await expect(history).not.toContainText(copy.mcpAuditRetainedHint);
+    await expect(history.locator('ol > li')).toHaveCount(3);
+    const stamp = await page.evaluate(language => new Intl.DateTimeFormat(language, { dateStyle: 'medium', timeStyle: 'short' }).format(Date.UTC(2026, 9, 20, 12) + 1234), language);
+    await expect(history.locator('[data-mcp-revoked-receipt]')).toContainText(stamp);
+    await expect(history.locator('[data-mcp-revoked-receipt]')).toContainText(copy.mcpNativeRevokedTime);
+    expect(await page.evaluate(async () => ({ prepares: window.nativeMcpPanel.prepares, activated: window.nativeMcpPanel.activated, grants: await window.nativeMcpPanel.grants() }))).toEqual({ prepares: 0, activated: 0, grants: 0 });
+    await page.evaluate(() => { window.nativeMcpPanel.deferHistory = true; window.dispatchEvent(new Event('keepany-native-foreground')); });
+    await page.waitForFunction(() => Boolean(window.nativeMcpPanel.resolveHistory));
+    await expect(history.getByRole('status')).toHaveText(copy.mcpNativeHistoryLoading);
+    await page.evaluate(() => { window.nativeMcpPanel.failHistory = true; window.dispatchEvent(new Event('keepany-native-foreground')); });
+    await expect(history.getByRole('status')).toHaveText(copy.mcpNativeHistoryUnavailable);
+    await page.evaluate(() => window.nativeMcpPanel.resolveHistory?.());
+    await expect(history.getByRole('status')).toHaveText(copy.mcpNativeHistoryUnavailable);
+    await expect(history.locator('ol > li')).toHaveCount(3);
+    await expect(page.getByRole('alert')).toHaveText(copy.mcpNativeStateUnavailable);
+    await page.evaluate(() => { window.nativeMcpPanel.failHistory = false; });
+    await history.getByRole('button', { name: copy.mcpNativeRefreshHistory, exact: true }).tap();
+    await expect(history.getByRole('status')).toHaveCount(0); await expect(page.getByRole('alert')).toHaveCount(0);
+    await expect(history.locator('[data-mcp-revoked-receipt]')).toContainText(stamp);
+    expect(await page.evaluate(() => window.nativeMcpPanel.stops)).toBe(0);
+    const refreshBounds = await history.getByRole('button', { name: copy.mcpNativeRefreshHistory, exact: true }).boundingBox();
+    if (!refreshBounds) throw Error('missing-history-refresh');
+    expect(refreshBounds.width).toBeGreaterThanOrEqual(44); expect(refreshBounds.height).toBeGreaterThanOrEqual(44);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);
+    await info.attach('history-touch-bounds', { body: JSON.stringify({ language, viewport: 390, refreshBounds }), contentType: 'application/json' });
+    await page.screenshot({ path: info.outputPath('native-history-retained.png'), fullPage: true });
+  });
+
+  test(`${language} unavailable cold history remains distinct from an empty history and can retry`, async ({ page }) => {
+    await install(page, language, 'failed');
+    await page.locator('.mobile-tabbar a[href="/more"]').tap(); await page.locator('main a[href="/assistant-access"]').tap();
+    const history = page.locator('.assistant-access-history');
+    await expect(history.getByRole('status')).toHaveText(copy.mcpNativeHistoryUnavailable);
+    await expect(history).not.toContainText(copy.mcpNativeNoActivity);
+    await expect(page.getByRole('alert')).toHaveText(copy.mcpNativeStateUnavailable);
+    await expect(page.locator('body')).not.toContainText('synthetic-history-private-diagnostic');
+    expect(await page.evaluate(() => window.nativeMcpPanel.prepares)).toBe(0);
+    await page.evaluate(() => { window.nativeMcpPanel.failHistory = false; });
+    await history.getByRole('button', { name: copy.mcpNativeRefreshHistory, exact: true }).tap();
+    await expect(history.locator('ol > li')).toHaveCount(3); await expect(page.getByRole('alert')).toHaveCount(0);
+  });
+
+  test(`${language} an active history read failure leaves the explicitly approved SDK scope usable`, async ({ page }) => {
+    const panel = await install(page, language, 'empty');
+    await panel.getByRole('button', { name: copy.mcpNativePrepare, exact: true }).tap();
+    await page.evaluate(() => { window.nativeMcpPanel.delivery = 'saved'; });
+    await panel.getByRole('link', { name: copy.exportFileOpen, exact: true }).tap();
+    await panel.getByRole('button', { name: copy.mcpNativeActivate, exact: true }).tap();
+    expect(await page.evaluate(() => window.nativeMcpPanel.join())).toBe(202);
+    await page.getByRole('dialog', { name: copy.mcpNativeCompareTitle }).getByRole('button', { name: copy.mcpScopeApprovalApprove, exact: true }).tap();
+    await expect(panel.getByRole('status')).toHaveText(copy.mcpNativeGranted);
+    expect(await page.evaluate(() => window.nativeMcpPanel.join())).toBe(200);
+    await page.evaluate(() => window.nativeMcpPanel.connect());
+    await page.evaluate(() => { window.nativeMcpPanel.failHistory = true; window.dispatchEvent(new Event('keepany-native-foreground')); });
+    await expect(panel.getByRole('alert')).toHaveText(copy.mcpNativeStateUnavailable);
+    await expect(panel.getByRole('status')).toHaveText(copy.mcpNativeGranted);
+    expect(JSON.stringify(await page.evaluate(() => window.nativeMcpPanel.read()))).toContain('Mobile MCP selected record');
+    expect(await page.evaluate(() => ({ prepares: window.nativeMcpPanel.prepares, activated: window.nativeMcpPanel.activated, stops: window.nativeMcpPanel.stops }))).toEqual({ prepares: 1, activated: 1, stops: 0 });
+    await page.evaluate(() => window.nativeMcpPanel.close());
+  });
+
+  for (const outcome of ['stop-unconfirmed', 'write-uncertain'] as const) {
+    test(`${language} history failure preserves ${outcome} after leaving the foreground`, async ({ page }) => {
+      const panel = await install(page, language, 'empty');
+      await panel.getByRole('button', { name: copy.mcpNativePrepare, exact: true }).tap();
+      await page.evaluate(() => { window.nativeMcpPanel.delivery = 'saved'; });
+      await panel.getByRole('link', { name: copy.exportFileOpen, exact: true }).tap();
+      await panel.getByRole('button', { name: copy.mcpNativeActivate, exact: true }).tap();
+      expect(await page.evaluate(() => window.nativeMcpPanel.join())).toBe(202);
+      await page.getByRole('dialog', { name: copy.mcpNativeCompareTitle }).getByRole('button', { name: copy.mcpScopeApprovalApprove, exact: true }).tap();
+      await expect(panel.getByRole('status')).toHaveText(copy.mcpNativeGranted);
+      expect(await page.evaluate(() => window.nativeMcpPanel.join())).toBe(200);
+      if (outcome === 'stop-unconfirmed') {
+        await page.evaluate(() => { window.nativeMcpPanel.deferHistory = true; window.dispatchEvent(new Event('keepany-native-foreground')); });
+        await page.waitForFunction(() => Boolean(window.nativeMcpPanel.rejectHistory));
+        await page.evaluate(() => { window.nativeMcpPanel.failStop = true; window.dispatchEvent(new Event('keepany-native-background')); });
+        await expect(panel.getByRole('alert')).toHaveText(copy.mcpNativeStopUnconfirmed);
+        await page.evaluate(() => window.nativeMcpPanel.rejectHistory?.());
+        await expect(panel.getByRole('alert')).toHaveText(copy.mcpNativeStopUnconfirmed);
+        await expect(panel.getByRole('button', { name: copy.mcpNativePrepare, exact: true })).toBeDisabled();
+        await panel.getByRole('button', { name: copy.mcpNativeStop, exact: true }).tap();
+        await expect(panel.getByRole('alert')).toHaveCount(0);
+      } else {
+        await page.evaluate(() => window.nativeMcpPanel.pendingReceipt());
+        await page.evaluate(() => { window.nativeMcpPanel.failHistory = true; window.dispatchEvent(new Event('keepany-native-background')); });
+        await expect(panel.getByRole('alert')).toHaveText(copy.mcpWriteMayHaveApplied);
+      }
+      await page.evaluate(() => window.nativeMcpPanel.close());
+    });
+  }
+
   test(`${language} 390 native panel requires system delivery and explicit activation before trusted SDK approval`, async ({ page }, info) => {
     const panel = await install(page, language), prepare = panel.getByRole('button', { name: copy.mcpNativePrepare, exact: true });
     await expect(panel.locator('input[type=file]')).toHaveCount(0); await prepare.tap();
