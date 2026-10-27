@@ -58,10 +58,42 @@ export function AppShell() {
 	const aiMenuRef = useRef<HTMLDivElement>(null);
 	const [toolsOpen, setToolsOpen] = useState(false);
 	const [mobile, setMobile] = useState(false);
+	const mobileSidebarRef = useRef<HTMLElement>(null);
 	const [pendingNavOrder, setPendingNavOrder] = useState<string[] | null>(null);
 	const [pendingHiddenIds, setPendingHiddenIds] = useState<string[] | null>(null);
 	const pathname = useRouterState({ select: (s) => s.location.pathname });
 	const navigate = useNavigate();
+	useEffect(() => {
+		const media = window.matchMedia("(max-width: 760px)");
+		const panel = mobileSidebarRef.current;
+		if (!mobile || !media.matches || !panel) return;
+		const controls = () => Array.from(panel.querySelectorAll<HTMLElement>(
+			'button:not(:disabled),a[href],input:not(:disabled),select:not(:disabled),textarea:not(:disabled),[tabindex]:not([tabindex="-1"])',
+		)).filter(element => element.tabIndex >= 0 && element.getClientRects().length > 0 && getComputedStyle(element).visibility !== "hidden");
+		const frame = window.requestAnimationFrame(() => controls()[0]?.focus({ preventScroll: true }));
+		const keys = (event: KeyboardEvent) => {
+			if (event.defaultPrevented || !media.matches) return;
+			if (event.target instanceof Element && event.target.closest('[role="listbox"],[role="menu"]')) return;
+			if (event.key === "Escape") { event.preventDefault(); setMobile(false); return; }
+			if (event.key !== "Tab") return;
+			const items = controls(), first = items[0], last = items.at(-1);
+			if (!first || !last) return;
+			if (!panel.contains(document.activeElement) || (!event.shiftKey && document.activeElement === last)) {
+				event.preventDefault(); first.focus();
+			} else if (event.shiftKey && document.activeElement === first) {
+				event.preventDefault(); last.focus();
+			}
+		};
+		const resize = () => { if (!media.matches) setMobile(false); };
+		window.addEventListener("keydown", keys);
+		media.addEventListener("change", resize);
+		return () => {
+			window.cancelAnimationFrame(frame);
+			window.removeEventListener("keydown", keys);
+			media.removeEventListener("change", resize);
+			if (media.matches) document.querySelector<HTMLButtonElement>(".mobile-menu")?.focus({ preventScroll: true });
+		};
+	}, [mobile]);
 	useEffect(() => {
 		if (pathname) { setSearchOpen(false); setSearch(""); setAiMenu(false); setToolsOpen(false); setMobile(false); }
 	}, [pathname]);
@@ -251,6 +283,10 @@ export function AppShell() {
 			<McpRuntimeProvider assets={liveAssets(data)}>
 			<div className="shell">
 				<aside
+					ref={mobileSidebarRef}
+					id="keepany-sidebar"
+					{...(mobile ? { role: "dialog" as const, "aria-modal": true } : {})}
+					aria-label={t("navigation")}
 					className={`sidebar ${mobile ? "open" : ""}`}
 				>
 					<div className="brand">
@@ -297,11 +333,12 @@ export function AppShell() {
 					<button
 						type="button"
 						className="mobile-scrim"
+						tabIndex={-1}
 						aria-label={t("close")}
 						onClick={() => setMobile(false)}
 					/>
 				)}
-				<div className="main">
+				<div className="main" inert={mobile || undefined}>
 					<header className="topbar">
 						<Button
 							className="mobile-menu"
@@ -309,6 +346,8 @@ export function AppShell() {
 							size="icon"
 							onClick={() => setMobile(true)}
 							aria-label={t("navigation")}
+							aria-controls="keepany-sidebar"
+							aria-expanded={mobile}
 						>
 							<Menu size={20} />
 						</Button>
