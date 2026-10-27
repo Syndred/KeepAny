@@ -48,7 +48,7 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          xcodebuild -project apps/mobile/ios/App/App.xcodeproj -scheme App \
+          xcodebuild -project apps/mobile/ios/App/App.xcodeproj -scheme KeepAnyAcceptance \
             -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
             -arch "$(uname -m)" ONLY_ACTIVE_ARCH=YES \
             -derivedDataPath test-results/ios-derived CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO \
