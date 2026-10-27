@@ -1,6 +1,6 @@
 # F23 Android 正式 Context 初始化诊断回执（2026-10-28）
 
-本片仅诊断独立 MCP authority 的 Android OS/Bridge 入口，不代表手机 MCP 配对、SDK 或完整 F23 已通过。所有 scope、alias 和 marker 均由测试现场随机生成；没有读取或清除 N15 原失败 scope、普通资料、KDBX、Prefs 或他人测试目录。
+本片仅诊断独立 MCP authority 的 Android OS/Bridge 入口，不代表手机 MCP 配对、SDK 或完整 F23 已通过。测试代码直接操作的 scope、alias 和 marker 均现场随机生成；没有直接读取或清除 N15 原失败 scope、普通资料、KDBX、Prefs 或他人测试目录。正式 App 启动的 metadata 初始化副作用另在 N16 续记说明。
 
 ## 实际环境与原始红证据
 
@@ -52,3 +52,32 @@ adb -s emulator-5580 shell am instrument -w -r -e class io.github.syndred.keepan
 ## 收尾与安全交接
 
 N15 测试包已单独卸载，主包 SHA 保持。已通过可见 More → Passwords 返回原 `keepany-v1` 的 Password vault Locked 页，主密码框为空，没有输入密码或展开记录；截图 `test-results/native-mcp-authority-diagnostic/return-n15-locked.png` 已目检。无本片 CDP/forward，未把设备交给其他 agent。设备当前无人操作，等待主控 N16 冻结和正式交接；本轮不自行安装 dirty target。精确提交仅最小 Java 修复、新诊断测试和本回执。
+
+## N16 实装续记：正式 Context 红 → 绿（2026-10-28）
+
+上述“待 N16”是首次提交时的状态。主控正式冻结 N16 后，仅按明确交接覆盖安装固定 target，再执行两个指定 class，没有修改测试预期或重建/安装 dirty 主包。先核 N15 实际 base SHA `0f60…9615b`，再核固定 N16 文件、源码回执及安装后的实际 base APK：
+
+- 源码 `4de5a460e00ecc7ece5b36acca0d5234d35c960e`；APK 23694526 B，SHA `e56714ffe7e31caad4fc1800834e5967eda4412c1127606451d6d3bfef3c3c66`，安装后及收尾实际 base 均一致。
+- 源码冻结回执 `test-results/native-candidates/KeepAny-sixteenth-4de5a460-source.json`，SHA `c1da339f83a46d23f4f411fd58b5e50e91ac1b9867a74ca40475c2ebfd095562`；测试 APK 仍为本片固定 `08029b92…2590eb`。
+- 实际执行新诊断 6 项 + 原隔离 6 项，7.372 秒，`OK (12 tests)`，没有 skip/failure。完整脱敏输出 `test-results/native-mcp-authority-diagnostic/run-n16.txt`，SHA `71fb1489a92352126c66d502e7915d4a25420aca4383cfa0e9c51bac0f025427`。这是本次实际 OS/Bridge 结果，不继承原 N6 或编译结论。
+
+| 测试/实际操作 | 预期 → N16 实际 |
+| --- | --- |
+| a 正式 Context 初始化/幂等/重开 | absolute!=canonical 仍真实存在；initialize、read、existing initialize、新实例 read、原 revision/payload 比较全部成功，关闭原 N15 a 红 |
+| b 首阶段 backend 跟踪 | hasFile/hasKey/createKey/key/commit/read 完整通过，无 first failure，关闭原 N15 b 红 |
+| c 真实密钥/codec/AtomicFile | hasFile、密钥、snapshot/seal、commit/read/open-disk、open-own-memory-frame 全部通过，关闭原 N15 c 红 |
+| d 正式 Activity Bridge | 仅合法随机 scope，桥日志关闭；正式注册实例 initialize ACK resolved=true，readState ACK/UUID revision/四数组 shape 通过，关闭原 N15 d 红 |
+| e 精确 `.enc` 真实 symlink | 正常实际 Context 控制先通过；initialize/read 均固定拒绝，链接仍在供显式清理、marker 原字节保持、key 不存在；After 不跟随 unlink/marker/空目录清理均通过 |
+| f 自有隔离 namespace 真实 symlink | 随机 child 的正常 namespace 控制先通过；链接 namespace 后 initialize/read 拒绝，链接/marker/key 断言及精确清理均通过；未替换正式 namespace root |
+| 原隔离 `realKeyStoreNoBackupPermissionsAndReopen` | 实际 AndroidKeyStore AES256/GCM、不可导出、owner-only 目录/密文、元数据加密与重开通过 |
+| 原隔离 `twoRealInstancesCasRaceAndScopeIsolation` | 两实例同 revision 竞态仅一胜、旧 revision 拒绝、另一 scope 的原密文/空状态保持 |
+| 原隔离 `wrongScopeAndTamperedCiphertextCannotResetAuthority` | 错 scope/AAD 与坏密文均 fail closed，不静默初始化；测试自己还原后读回通过 |
+| 原隔离 `missingKeyOrMissingFileFailsClosedAndKeepsOtherHalf` | 缺 key 或缺 file 不补空 state，另一半保持，通过 |
+| 原隔离 `realAtomicFileWriteFailureKeepsCommittedRevisionAndCanRetry` | 仅测试自有 AtomicFile blocker 造成失败；原 revision/密文保持，解除 blocker 后同依据安全重试通过 |
+| 原隔离 `platformJsonRejectsUnknownRawSecretAndFieldValueMetadata` | 未知字段/raw secret/字段值拒绝，原密文与 revision 不变，通过 |
+
+新六项的 After 各报告随机 alias 不存在、精确 `.enc/.bak/.new` 不存在；两个 guard 的链接、marker、自有目录清理全部通过。原六项各自 After 的精确 alias 和随机子目录清理断言通过，未枚举其他 alias 或正式 namespace。**N16 main 的正式启动会自然执行当前 `keepany-v1` 的 history initialize/独立 reset，可能创建该资料集的空 authority metadata；这不是测试随机 scope，也没有被本片枚举、读取或清理。** 原失败 candidate scope 同样未清除。普通 SQL/KDBX/Prefs 未直接读写，本轮没有把所有 App 副作用概括为“只有随机 scope touched”。
+
+收尾已只卸载 `io.github.syndred.keepany.test`，`pm path` 无测试包；正式主包 SHA 保持 N16。通过可见导航回原 Passwords tab，Locked/空 master 输入框截图 `test-results/native-mcp-authority-diagnostic/return-n16-locked-final.png` 已目检，SHA `9c896ba8dbc611e7509d61ace75f1a0a729f3ae06b82b6d2293346cc85d42dd5`。无 CDP、无自建 forward，无后台测试 runner；设备无人操作并交主控 **READY**。固定非敏感交接为 `test-results/native-mcp-authority-diagnostic/handoff-n16.json`。
+
+本片关闭 authority 正式 Context/Bridge 初始化与守卫缺口；不据此宣称正式 Prepare 配对文件/激活 TLS、电脑 SDK、审批写入、冷启历史整链或全部 F23 已通过。原 N15 四 red 原件与当时 shell 误推断的说明继续保留。后续主控安排真实整链，不由本片加跑。
