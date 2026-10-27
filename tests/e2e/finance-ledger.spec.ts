@@ -34,7 +34,7 @@ async function record(page: Page, input: { type: string; asset: string; title: s
 	await page.getByRole("button", { name: "Record transaction" }).click();
 	const dialog = page.getByRole("dialog", { name: "Record transaction" });
 	await selectChoice(dialog.getByLabel("Record type"), input.type);
-	await selectChoice(dialog.getByLabel("Subscription or account"), input.asset);
+	await selectChoice(dialog.getByLabel("Related asset"), input.asset);
 	await dialog.getByLabel("Title").fill(input.title);
 	await dialog.getByLabel("Amount").fill(input.amount);
 	if (input.currency) await selectChoice(dialog.getByLabel("Currency"), input.currency);
@@ -94,14 +94,14 @@ test("invalid record stays unsaved and a missing related asset offers creation p
 	await page.goto("/finance");
 	await page.getByRole("button", { name: "Record transaction" }).click();
 	const dialog = page.getByRole("dialog", { name: "Record transaction" });
-	await expect(dialog.getByText("Add a subscription or account before recording a transaction.")).toBeVisible();
+	await expect(dialog.getByText("Add an asset before recording a transaction.")).toBeVisible();
 	await expect(dialog.getByRole("link", { name: "Add subscription" })).toHaveAttribute("href", "/assets/subscription");
 	await expect(dialog.getByRole("link", { name: "Add account" })).toHaveAttribute("href", "/assets/account");
 	await dialog.getByRole("button", { name: "Close" }).click();
 	const ids = await seedLedger(page);
 	await page.getByRole("button", { name: "Record transaction" }).click();
 	const form = page.getByRole("dialog", { name: "Record transaction" });
-	await selectChoice(form.getByLabel("Subscription or account"), ids.subscriptionId);
+	await selectChoice(form.getByLabel("Related asset"), ids.subscriptionId);
 	await form.getByLabel("Title").fill("Invalid expense");
 	await form.getByLabel("Amount").fill("0");
 	await form.getByLabel("Payment source (optional)").fill("Statement");
