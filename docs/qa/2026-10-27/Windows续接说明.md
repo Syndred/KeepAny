@@ -1,3 +1,5 @@
+> 第二轮更新：95/104通过、9项功能缺口待继续；MCP Windows和独立PG/商业绑定阻塞已闭环。GSD Core1.19.0与gstack1.91.268.0已在Windows安装并实际使用。952/952单测、生产Web＋打包CLI16/16及便携语言2/2通过。最新细节见[Windows验收记录](Windows验收记录.md)，以下首轮和Mac数据均为历史快照。
+
 # Windows 继续测试说明
 
 > Windows已于2026-10-27按本说明续接并完成本轮104项结果核对：88通过、9待继续、4Windows MCP阻塞、3独立PG条件未具备。下文“14完成/88未执行”是接手时历史快照，不再代表当前状态；请先读[Windows本轮验收记录](Windows验收记录.md)及[最新总表](测试总表.md)。正式源码复跑配置为`playwright.windows-qa.config.ts`。

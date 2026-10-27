@@ -50,3 +50,8 @@
 - `release/retained-assets.json` 与 HEAD 中 release/web 路径交叉统计旧资源。
 
 核查未连接用户数据库、未读取浏览器资料、未更新4180或发布。
+# 第二轮补充（2026-10-27）
+
+新增Windows MCP安全后端与回归后，当前Git跟踪的`apps/`＋`packages/`共342个文件、3,482,435字节（3.32MiB）；本轮最终便携ZIP为4,813,121字节（约4.59MiB）。GSD、gstack、Bun、PostgreSQL和各自依赖均在用户工具目录或同级独立商业仓，不进入KeepAny Git。
+
+下文405.16MiB Git pack与367.08MiB PNG对象是接手时对“四百多MB拉取”的实际基线，仍解释原下载的大头。第二轮没有重写历史、删已有证据或动release/web；只删除当前工作树图片也不会移除已有Git历史对象。旧候选包的本轮清理被自动审批拒绝后保留在忽略dist目录，具体见最新Windows验收记录。

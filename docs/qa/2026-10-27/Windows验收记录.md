@@ -1,4 +1,35 @@
-# Windows 本轮验收记录
+# Windows 第二轮验收记录
+
+2026-10-27。已按用户要求在Windows安装并实际使用GSD Core1.19.0、gstack1.91.268.0，继续同一份总表。每次先核对status/remote、fetch并fast-forward确认；origin/main仍为f659db1，本轮在其后的本地提交上完成。工具身份、配置备份与范围见[安装回执](测试工具-Windows安装.md)。
+
+## 当前结论
+
+**104条已全部执行：95通过，9项功能缺口待继续，0阻塞、0条件未具备、0未执行。整个项目仍未全部验收通过。** 子代理完成执行和回执不等于每条需求已经实现。
+
+剩余编号：T14-01～04（项目/实物记账、既有账单编辑/删除、多资产归属）、T16-03（既有待办名称编辑及日期筛选）、T18-01/02（CSV原始全文、网页元数据）、T19-01/04（普通候选逐字段合并、单条外链删除）。[T14第二轮](scopes/T14-round2.md)用GSD goal-backward与实际中英UI再核对，2条新增行为测试通过，原四条要求仍全部为部分；没有删除要求或用旁路冒充通过。
+
+## 完成、修复与证据
+
+- **独立PG补齐**：[T24第二轮](scopes/T24-round2.md)安装官方来源PostgreSQL17.11到用户工具目录，7/7单测、3/3自托管浏览器、原官方绑定完整流程1/1通过。原KeepAnyAdm同级独立仓库固定7589b6d完整SHA及原锁，商业路由/合同未改；仅一次性测试启动配置适配Windows，真实DPoP、令牌刷新、撤销、密文图片和ka1恢复均执行，没有复制商业业务进核心。
+- **Windows MCP闭环**：[T23第二轮](scopes/T23-round2.md)新增系统PowerShell/.NET固定Win32原语后端，检查同句柄SID/DACL/FileID、父链/reparse/hardlink/ADS，原子私密创建和真实句柄替换；配对秘密拒绝共享写并由DELETE_ON_CLOSE清理。范围、秘密排除、审批/回执协议和POSIX分支保留。独立[GSD复核](scopes/T23-independent-review.md)实证发现的超8MiB写后自锁、tmp路径替换及tmp内容改写三项均修复并独立复验；最终生产便携Web＋bundled官方SDK矩阵16/16过，本包22单测过。
+- **文档语言修复**：[gstack补充复核](scopes/gstack-round2.md)真实发现html缺lang；9df5764同步初始化/切换语言的文档声明。先红后绿，源码中英2/2、真实便携中英2/2，覆盖切换、刷新和密码页hash导航；相关9单测过。gstack自有materializer的浏览器模式裁决仍为inconclusive，未冒称它提供全项目自动认证。
+- **最终全仓**：独立PG环境下952/952单测，180 suites全部通过，0失败/跳过、exit0，128秒。全仓类型检查、35个改动文件lint零警告/错误。初轮951中一条ACL清理夹具失败，随后952行为全过但误收5份test-results中的Playwright副本；两次非绿均保留，修复仅排除生成test-results目录，正式952条未减少。最终[小回执](evidence/integration-round2/checks.json)含三次结果、产品哈希和包身份。
+
+## 最终便携候选与边界
+
+最终本机候选为`dist/preview/KeepAny-0.1.0-preview.d9db69ed54cd.dirty-portable.zip`，4,813,121字节（约4.59MiB），SHA256 `1b8de82cb9ce8dab9403257d4184cbe2ce71822cd780be8ae822dc0f5ad1ae76`。产品源码提交d9db69e；dirty仅表示打包时尚有本轮交接文档待提交，产品差异已核对为空。102个Web文件与实际通过生产浏览器矩阵的9df5764候选逐文件SHA完全一致；最终MCP bundle SHA为`01f98849e55e3743a64b7364d4679fec6d023a1a1bddda95da13adf5d75d4c37`。
+
+最终ZIP、逐文件校验、完整源码/许可、离仓解压、真实Windows启动停止、Host/路径/状态及停止安全再次验证通过。没有声称Windows断电强持久性、macOS/Linux本轮运行、物理双设备、Ego、真实第三方供应商或线上付费账户通过。
+
+## 清理、提交与部署
+
+本轮GSD/gstack/Bun/PG只在用户工具目录，不进入Git。gstack自建浏览器已停止；4207/4208/4209/4210/4211及PG61090无监听。PG全部keepany测试schema回读0、精确cluster正常停止，私密连接文件已删除；商业合成账户/私钥/SQLite/快照已清理，用户4180和原浏览器未动。
+
+自动审批拒绝了早期合成ACL夹具、空PG/商业临时目录及两份旧便携候选的清理，均返回blocked by policy而无详细原因；已记录并保留，未拆命令或换工具重试删除。最终候选保留，旧02a4622/9df5764候选也因该拒绝仍存在；不把它们误称为最终交付。
+
+本轮本地提交：9df5764文档语言、e4fc05c独立PG/绑定测试、8114afa记账缺口复核、75698c5生成夹具隔离与测试类型、d9db69e Windows MCP，最终总表/工具/交接另提交。**尚未推送、未部署，release/web、官网、公开Release和用户4180均未更新。** 后续按原总表明确并实现9条缺失能力，涉及新界面按AGENTS先草图确认后再实现、逐项复验。
+
+# Windows 首轮验收记录（88/104，历史快照）
 
 2026-10-27。用户要求继续验收并解释四百多MB下载。会话开始检查干净main、origin，fetch后fast-forward确认f659db1为最新远端；没有重建仓库、改历史或替换数据。
 
