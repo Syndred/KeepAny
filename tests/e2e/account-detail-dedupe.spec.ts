@@ -1,4 +1,4 @@
-import { mkdirSync } from "node:fs";
+import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { expect, test, type Browser, type Locator, type Page } from "@playwright/test";
 import { activeAccountGraph, expectAllAccountGraphNodesInFrame, expectCanvasActionsOutsideStage, fitAccountGraph, setAccountRelationDetailsOpen, waitForAccountGraphLayout } from "./helpers/account-graph";
@@ -124,7 +124,13 @@ async function unchangedCamera(page: Page, before: Awaited<ReturnType<typeof cam
 async function screenshot(page: Page, name: string) {
 	if (!evidence) return;
 	mkdirSync(evidence, { recursive: true });
-	await page.screenshot({ path: join(evidence, `${name}.png`), fullPage: true, animations: "disabled" });
+	const before = await page.evaluate(() => ({ innerWidth, innerHeight }));
+	const dialogVisible = await page.locator('[role="dialog"]:visible').count() > 0;
+	const fullPage = !dialogVisible;
+	await page.screenshot({ path: join(evidence, `${name}.png`), fullPage, animations: "disabled" });
+	const after = await page.evaluate(() => ({ innerWidth, innerHeight }));
+	writeFileSync(join(evidence, `${name}.viewport.json`), JSON.stringify({ dialogVisible, fullPage, before, after }, null, 2));
+	expect(after, "Capturing the visible dialog must preserve its natural viewport").toEqual(before);
 }
 
 function formattedDay(value: string, locale: Locale) {
