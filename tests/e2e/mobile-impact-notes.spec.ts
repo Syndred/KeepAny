@@ -1,0 +1,64 @@
+import { expect, test } from '@playwright/test';
+import { resources } from '../../apps/web/src/i18n';
+import { selectChoice } from './helpers/select-choice';
+import { sourceModuleUrl } from './helpers/source-module-url';
+
+test.use({ viewport: { width: 390, height: 844 } });
+for (const language of ['en', 'zh-CN'] as const) test(`impact evidence remains separate from frozen relations and completion in ${language}`, async ({ page }, info) => {
+  test.setTimeout(90_000);
+  const labels = resources[language].translation;
+  const t = (key: string) => String(labels[key]);
+  await page.addInitScript(value => localStorage.setItem('keepany-language', value), language);
+  const suffix = crypto.randomUUID().slice(0, 7);
+  const projectName = `Evidence project ${suffix}`, accountName = `Evidence account ${suffix}`;
+  async function create(kind: 'project' | 'account', name: string) {
+    await page.goto(`/assets/${kind}`);
+    await page.getByRole('button', { name: t('add'), exact: true }).click();
+    const dialog = page.getByRole('dialog');
+    await dialog.getByLabel(t('name'), { exact: true }).fill(name);
+    await dialog.getByRole('button', { name: t('save'), exact: true }).click();
+    await expect(dialog).toBeHidden();
+    await page.getByText(name, { exact: true }).first().click();
+  }
+  await create('project', projectName);
+  await create('account', accountName);
+  await expect(page.locator('.mobile-tabbar [aria-current="page"]')).toHaveCount(1);
+  await expect(page.locator('.mobile-tabbar a[href="/accounts"]')).toHaveAttribute('aria-current', 'page');
+  await page.getByRole('button', { name: t('addRelation'), exact: true }).click();
+  const dialog = page.getByRole('dialog');
+  await selectChoice(dialog.getByLabel(t('target')), { label: projectName });
+  await dialog.getByLabel(t('relationLabel')).fill('Synthetic relation evidence');
+  await dialog.getByRole('button', { name: t('save'), exact: true }).click();
+  await expect(dialog).toBeHidden();
+  const checklist = page.locator('.impact-checklist');
+  await checklist.getByRole('button', { name: new RegExp(`^${t('makeChecklist')}`) }).click();
+  const row = checklist.locator('.impact-task-row');
+  await expect(row).toHaveCount(1);
+  const note = row.getByLabel(language === 'en' ? 'Check evidence or note' : '核对证据或备注');
+  const save = row.getByRole('button', { name: language === 'en' ? 'Save check record' : '保存核对记录' });
+  await expect(note).toBeVisible();
+  await expect(save).toBeDisabled();
+  const first = `Checked synthetic receipt ${suffix}\nNo external change claimed.`;
+  await note.fill(first);
+  await save.click();
+  await expect(row.getByText(first, { exact: true })).toBeVisible();
+  await expect(note).toHaveValue('');
+  await row.getByRole('button', { name: new RegExp(`^${t('complete')}`) }).click();
+  await expect(row.getByRole('button', { name: new RegExp(`^${t('reopen')}`) })).toBeVisible();
+  await note.fill(`Second local check ${suffix}`);
+  await save.click();
+  await expect(row.getByText(`Second local check ${suffix}`, { exact: true })).toBeVisible();
+  const read = async () => page.evaluate(async path => {
+    const { localRepository } = await import(/* @vite-ignore */ path);
+    return (await (await localRepository()).list('task')).find((task: { impactSnapshot?: unknown }) => task.impactSnapshot);
+  }, sourceModuleUrl('packages/local-db/src/index.ts'));
+  const before = await read();
+  expect(before.done).toBe(true);
+  expect(before.impactNotes.map((entry: { text: string }) => entry.text)).toEqual([first, `Second local check ${suffix}`]);
+  expect(before.completionHistory).toHaveLength(1);
+  await page.reload();
+  await expect(row.getByText(first, { exact: true })).toBeVisible();
+  expect(await read()).toEqual(before);
+  await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.screenshot({ path: info.outputPath(`impact-notes-${language}-390.png`), fullPage: true });
+});

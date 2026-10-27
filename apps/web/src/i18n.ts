@@ -16,6 +16,8 @@ import { getPlatformSetting } from "./platform-settings";
 import { nativeDatasetsCopy } from './native-datasets-copy';
 import { mobileCopy } from "./mobile-copy";
 import { fileDeliveryCopy } from "./file-delivery-copy";
+import { impactNoteCopy } from "./impact-note-copy";
+import { mobileServicesCopy } from "./mobile-services-copy";
 
 const copy: Record<string, [string, string]> = {
 	...nativeDatasetsCopy,
@@ -2553,6 +2555,8 @@ Object.assign(
 	candidateMergeCopy,
 	mobileCopy,
 	fileDeliveryCopy,
+	impactNoteCopy,
+	mobileServicesCopy,
 );
 Object.assign(
 	copy,

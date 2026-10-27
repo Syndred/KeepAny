@@ -21,6 +21,7 @@ export function ImpactTaskRow({
 	const { data, notify } = useAppContext();
 	const { t, i18n } = useTranslation();
 	const [busy, setBusy] = useState(false);
+	const [note, setNote] = useState("");
 	if (!snapshot) return null;
 	const related = data.assets.find(
 		(asset) => asset.id === snapshot.relatedAssetId && !asset.deleted,
@@ -46,8 +47,10 @@ export function ImpactTaskRow({
 		try {
 			await saveTaskIfCurrent(task, { ...task, ...patch });
 			notify(t("saved"));
+			return true;
 		} catch (cause) {
 			notify(t(cause instanceof Error && cause.message === "task-stale" ? "workflowTaskStale" : "error"));
+			return false;
 		} finally {
 			setBusy(false);
 		}
@@ -100,6 +103,27 @@ export function ImpactTaskRow({
 				{completionHistory.length > 0 && (
 					<small>{t("impactCompletedHistory")}: {completionHistory.map((value) => new Date(value).toLocaleString(i18n.language)).join(" · ")}</small>
 				)}
+				{task.impactNotes?.length ? <section aria-label={t("impactEvidenceHistory")}>
+					<strong>{t("impactEvidenceHistory")}</strong>
+					{task.impactNotes.map(entry => <div key={entry.id}>
+						<small>{new Date(entry.recordedAt).toLocaleString(i18n.language)}</small>
+						<p style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>{entry.text}</p>
+					</div>)}
+				</section> : null}
+				<form onSubmit={(event) => {
+					event.preventDefault();
+					if (busy || !note.trim() || (task.impactNotes?.length ?? 0) >= 100) return;
+					void update({ impactNotes: [...(task.impactNotes ?? []), { id: crypto.randomUUID(), text: note.trim(), recordedAt: new Date().toISOString() }] })
+						.then(saved => { if (saved) setNote(""); });
+				}}>
+					<label className="field" htmlFor={`impact-note-${task.id}`}>
+						<span>{t("impactEvidenceNote")}</span>
+						<textarea id={`impact-note-${task.id}`} value={note} maxLength={2000} rows={2}
+							disabled={busy || (task.impactNotes?.length ?? 0) >= 100} onChange={event => setNote(event.target.value)} />
+					</label>
+					{(task.impactNotes?.length ?? 0) >= 100 && <small>{t("impactEvidenceLimit")}</small>}
+					<Button type="submit" disabled={busy || !note.trim() || (task.impactNotes?.length ?? 0) >= 100}>{t("impactSaveEvidence")}</Button>
+				</form>
 				{showTaskLink && (
 					<small><TextLink asChild><Link to="/tasks" hash={`task-${task.id}`}>{t("viewTask")}</Link></TextLink></small>
 				)}

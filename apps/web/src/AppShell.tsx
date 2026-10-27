@@ -362,7 +362,7 @@ export function AppShell() {
 						{ id: "accounts", to: "/accounts", label: "accountsWorkspace", icon: UserRound },
 						{ id: "tasks", to: "/tasks", label: "tasks", icon: Bell },
 						{ id: "more", to: "/more", label: "mobileMore", icon: MoreHorizontal },
-					] as const).map(({ id, to, label, icon: Icon }) => <Link key={id} to={to} aria-current={mobileTab === id ? "page" : undefined}>
+					] as const).map(({ id, to, label, icon: Icon }) => <Link key={id} to={to} activeOptions={{ exact: true }} aria-current={mobileTab === id ? "page" : undefined}>
 						<span className="mobile-tabbar-icon"><Icon size={21} aria-hidden />{id === "tasks" && openTasks > 0 && <span className="mobile-tabbar-badge" aria-hidden>{openTasks > 99 ? "99+" : openTasks}</span>}</span><span>{t(label)}</span>
 					</Link>)}
 				</nav>
