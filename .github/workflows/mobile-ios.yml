@@ -42,9 +42,9 @@ jobs:
       - uses: actions/cache/restore@v4
         with:
           path: test-results/ios-derived
-          key: ios-derived-simulator-adhoc-v1-${{ runner.os }}-${{ hashFiles('test-results/ios/xcode.txt', 'pnpm-lock.yaml', 'apps/mobile/ios/**/Package.resolved') }}-${{ github.sha }}
+          key: ios-derived-simulator-app-identity-v2-${{ runner.os }}-${{ hashFiles('test-results/ios/xcode.txt', 'pnpm-lock.yaml', 'apps/mobile/ios/**/Package.resolved') }}-${{ github.sha }}
           restore-keys: |
-            ios-derived-simulator-adhoc-v1-${{ runner.os }}-${{ hashFiles('test-results/ios/xcode.txt', 'pnpm-lock.yaml', 'apps/mobile/ios/**/Package.resolved') }}-
+            ios-derived-simulator-app-identity-v2-${{ runner.os }}-${{ hashFiles('test-results/ios/xcode.txt', 'pnpm-lock.yaml', 'apps/mobile/ios/**/Package.resolved') }}-
       - run: pnpm install --frozen-lockfile
       - name: Build shared mobile sources and sync native packages
         run: |
@@ -56,8 +56,18 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          # Simulator-only signing verification. Never manufacture a Team ID or
-          # grant a shared Keychain group when Xcode did not produce an App ID.
+          # Only the App target's Simulator Debug setting consumes this file.
+          # Xcode expands its real bundle setting; no production Team ID or
+          # shared Keychain group is invented for the CI simulator namespace.
+          cat > "$GITHUB_WORKSPACE/test-results/ios/simulator-app-identity.plist" <<'PLIST'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0"><dict>
+          <key>application-identifier</key><string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+          </dict></plist>
+          PLIST
+          plutil -lint "$GITHUB_WORKSPACE/test-results/ios/simulator-app-identity.plist"
+          plutil -lint apps/mobile/ios/App/App.xcodeproj/project.pbxproj
           cat > test-results/ios/verify-simulator-signature.mjs <<'NODE'
           import fs from 'node:fs';
           import { spawnSync } from 'node:child_process';
@@ -65,7 +75,7 @@ jobs:
           const builtApp = 'test-results/ios-derived/Build/Products/Debug-iphonesimulator/App.app';
           const installed = ['installed-before', 'installed-after'].includes(phase);
           if (!['compile', 'test', 'installed-before', 'installed-after'].includes(phase) || (installed ? typeof app !== 'string' || !app.startsWith('/') || !app.endsWith('/App.app') : app !== builtApp)) throw Error('ios-signature-input');
-          const result = { phase, signatureVerified: false, adHoc: false, bundleMatches: false, applicationIdentifier: null, applicationIdentityPresent: false, applicationIdentityMatchesBundle: false, keychainGroupsDefaultOnly: false, noSharedAppGroups: false, binaryMatchesBuild: false };
+          const result = { phase, signatureVerified: false, adHoc: false, bundleMatches: false, applicationIdentifier: null, applicationIdentityPresent: false, applicationIdentityMatchesBundle: false, keychainGroupsDefaultOnly: false, noSharedAppGroups: false, binaryMatchesBuild: false, entitlementKeys: [], getTaskAllow: { present: false, value: null } };
           function fail(code) { fs.writeFileSync(`test-results/ios/signature-${phase}.json`, JSON.stringify({ ...result, error: code }, null, 2)); throw Error(code); }
           function run(command, args, input) { const value = spawnSync(command, args, { input, encoding: 'utf8' }); if (value.status !== 0 || value.error) fail('ios-simulator-signature-tool-failed'); return value; }
           run('codesign', ['--verify', '--strict', app]); result.signatureVerified = true;
@@ -80,23 +90,27 @@ jobs:
           if (!signed.stdout.trim()) fail('ios-simulator-application-identity-missing');
           let entitlements; try { entitlements = JSON.parse(run('plutil', ['-convert', 'json', '-o', '-', '-'], signed.stdout).stdout); } catch { fail('ios-simulator-entitlements-invalid'); }
           if (!entitlements || typeof entitlements !== 'object' || Array.isArray(entitlements)) fail('ios-simulator-entitlements-invalid');
+          result.entitlementKeys = Object.keys(entitlements).sort();
+          result.getTaskAllow = { present: Object.hasOwn(entitlements, 'get-task-allow'), value: typeof entitlements['get-task-allow'] === 'boolean' ? entitlements['get-task-allow'] : null };
           const identity = entitlements['application-identifier'];
           // An App ID is public signing identity, never a credential. Preserve
           // it for diagnosis without treating an unexpected shape as absent.
           result.applicationIdentifier = typeof identity === 'string' ? identity : null;
           result.applicationIdentityPresent = typeof identity === 'string' && identity.length > 0;
           if (!result.applicationIdentityPresent) fail('ios-simulator-application-identity-missing');
-          result.applicationIdentityMatchesBundle = identity.length > bundle.length + 1 && identity.endsWith(`.${bundle}`) && !identity.includes('*');
+          result.applicationIdentityMatchesBundle = identity === bundle;
           const groups = entitlements['keychain-access-groups'];
           result.keychainGroupsDefaultOnly = groups === undefined || Array.isArray(groups) && groups.every(group => group === identity);
           const appGroups = entitlements['com.apple.security.application-groups'];
           result.noSharedAppGroups = appGroups === undefined || Array.isArray(appGroups) && appGroups.length === 0;
-          if (!Object.values(result).every(value => typeof value !== 'boolean' || value)) fail('ios-simulator-signature-identity-invalid');
+          const required = ['signatureVerified', 'adHoc', 'bundleMatches', 'applicationIdentityPresent', 'applicationIdentityMatchesBundle', 'keychainGroupsDefaultOnly', 'noSharedAppGroups', 'binaryMatchesBuild'];
+          if (!required.every(key => result[key] === true)) fail('ios-simulator-signature-identity-invalid');
           fs.writeFileSync(`test-results/ios/signature-${phase}.json`, JSON.stringify(result, null, 2)); console.log(JSON.stringify(result));
           NODE
           xcodebuild -project apps/mobile/ios/App/App.xcodeproj -scheme KeepAnyAcceptance \
             -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
             -derivedDataPath test-results/ios-derived CODE_SIGN_IDENTITY='-' CODE_SIGNING_ALLOWED=YES CODE_SIGNING_REQUIRED=YES \
+            KEEPANY_CI_SIMULATOR_ENTITLEMENTS="$GITHUB_WORKSPACE/test-results/ios/simulator-app-identity.plist" \
             build 2>&1 | tee test-results/ios/build.log
           node test-results/ios/verify-simulator-signature.mjs test-results/ios-derived/Build/Products/Debug-iphonesimulator/App.app compile
       - name: Preserve the successful application build for later verification attempts
@@ -104,7 +118,7 @@ jobs:
         uses: actions/cache/save@v4
         with:
           path: test-results/ios-derived
-          key: ios-derived-simulator-adhoc-v1-${{ runner.os }}-${{ hashFiles('test-results/ios/xcode.txt', 'pnpm-lock.yaml', 'apps/mobile/ios/**/Package.resolved') }}-${{ github.sha }}
+          key: ios-derived-simulator-app-identity-v2-${{ runner.os }}-${{ hashFiles('test-results/ios/xcode.txt', 'pnpm-lock.yaml', 'apps/mobile/ios/**/Package.resolved') }}-${{ github.sha }}
       - name: Exercise native MCP core over real loopback TLS sockets
         timeout-minutes: 12
         shell: bash
@@ -179,6 +193,7 @@ jobs:
           xcodebuild -project apps/mobile/ios/App/App.xcodeproj -scheme KeepAnyAcceptance \
             -configuration Debug -sdk iphonesimulator -destination "id=$simulator_id" \
             -derivedDataPath test-results/ios-derived -resultBundlePath test-results/ios/acceptance.xcresult \
+            KEEPANY_CI_SIMULATOR_ENTITLEMENTS="$GITHUB_WORKSPACE/test-results/ios/simulator-app-identity.plist" \
             CODE_SIGN_IDENTITY='-' CODE_SIGNING_ALLOWED=YES CODE_SIGNING_REQUIRED=YES test 2>&1 | tee test-results/ios/ui-tests.log
           ui_test_exit=${PIPESTATUS[0]}
           set -e
