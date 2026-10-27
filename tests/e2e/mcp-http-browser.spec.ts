@@ -1,11 +1,13 @@
 import { expect, test } from '@playwright/test';
 import { fileURLToPath } from 'node:url';
 
-test('portable official MCP HTTP handler runs in an actual browser without a Node bridge', async ({ page }) => {
+for (const missingJson of [false, true]) {
+test(`portable official MCP HTTP handler runs in a browser, missing Response.json: ${missingJson}`, async ({ page }) => {
   await page.goto('/');
   const root = process.cwd().replaceAll('\\', '/');
   const clientEntry = fileURLToPath(import.meta.resolve('@modelcontextprotocol/client')).replaceAll('\\', '/');
-  const result = await page.evaluate(async ({ root, clientEntry }) => {
+  const result = await page.evaluate(async ({ root, clientEntry, missingJson }) => {
+    if (missingJson) Object.defineProperty(Response, 'json', { value: undefined, configurable: true, writable: true });
     const path = `/@fs/${root}`;
     const [{ createKeepAnyMcpHttpHandler }, { McpAuthority, MemoryAuthorityStorage }, { newAsset }, { Client, StreamableHTTPClientTransport }] = await Promise.all([
       import(`${path}/packages/mcp/src/http-handler.ts`), import(`${path}/packages/mcp/src/authority.ts`),
@@ -38,7 +40,8 @@ test('portable official MCP HTTP handler runs in an actual browser without a Nod
         leaked: JSON.stringify(reply).includes(asset.notes), spoofedHostStatus: denied.status,
         nativeEvidence: false, listenerCreated: false };
     } finally { await client.close(); await handler.close(); }
-  }, { root, clientEntry });
+  }, { root, clientEntry, missingJson });
   expect(result).toEqual({ tools: ['confirm_asset_update', 'get_asset', 'list_assets', 'preview_asset_update'],
     names: ['Browser protocol selected'], leaked: false, spoofedHostStatus: 403, nativeEvidence: false, listenerCreated: false });
 });
+}

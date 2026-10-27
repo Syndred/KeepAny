@@ -37,6 +37,33 @@ async function fixture() {
 }
 
 describe('portable authenticated official MCP HTTP adapter (no native listener)', () => {
+  it('fills only a missing standard JSON response method without changing fetch or native validation', async () => {
+    const descriptor = Object.getOwnPropertyDescriptor(Response, 'json');
+    const fetcher = globalThis.fetch;
+    let f: Awaited<ReturnType<typeof fixture>> | undefined;
+    try {
+      Object.defineProperty(Response, 'json', { value: undefined, configurable: true, writable: true });
+      f = await fixture();
+      const response = Response.json({ text: '中文' }, { status: 201, headers: { 'x-fixture': '1' } });
+      expect(response.status).toBe(201);
+      expect(response.headers.get('content-type')).toBe('application/json');
+      expect(response.headers.get('x-fixture')).toBe('1');
+      expect(await response.json()).toEqual({ text: '中文' });
+      expect(Response.json(null, { headers: { 'content-type': 'application/problem+json' } }).headers.get('content-type')).toBe('application/problem+json');
+      expect(() => Response.json(undefined)).toThrow(TypeError);
+      expect(() => Response.json(1n)).toThrow(TypeError);
+      expect(() => Response.json({}, { status: 204 })).toThrow(TypeError);
+      expect(globalThis.fetch).toBe(fetcher);
+    } finally {
+      await f?.handler.close();
+      if (descriptor) Object.defineProperty(Response, 'json', descriptor);
+    }
+    const existing = Response.json;
+    const unchanged = await fixture();
+    try { expect(Response.json).toBe(existing); }
+    finally { await unchanged.handler.close(); }
+  });
+
   it('uses the official SDK for scoped reads, trusted approval, idempotent writes and revocation', async () => {
     const f = await fixture();
     try {

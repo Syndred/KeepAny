@@ -18,6 +18,21 @@ type Options = {
 };
 const failure = (status: number, code: string) => Response.json({ error: code }, { status,
   headers: { 'cache-control': 'no-store', 'x-content-type-options': 'nosniff' } });
+function ensureJsonResponse() {
+  if (typeof Response.json === 'function') return;
+  // The SDK also calls this standard static method. WebView 111 predates it.
+  // Follow Fetch's JSON serialization/header/constructor steps, retaining all
+  // native status validation. Existing implementations are never replaced.
+  // https://fetch.spec.whatwg.org/#dom-response-json
+  Object.defineProperty(Response, 'json', { configurable: true, writable: true,
+    value: function json(data: unknown, init?: ResponseInit): Response {
+      const body = JSON.stringify(data);
+      if (body === undefined) throw new TypeError('JSON value cannot be serialized');
+      const headers = new Headers(init?.headers);
+      if (!headers.has('content-type')) headers.set('content-type', 'application/json');
+      return new Response(body, { ...init, headers });
+    } });
+}
 async function abortable<T>(signal: AbortSignal, work: () => Promise<T>): Promise<T> {
   if (signal.aborted) throw new McpAccessError('request-cancelled');
   let abort!: () => void;
@@ -33,6 +48,7 @@ async function abortable<T>(signal: AbortSignal, work: () => Promise<T>): Promis
  * durable private authority storage, lifecycle shutdown and trusted approval UI.
  * This function never opens a listener or issues/approves a grant. */
 export function createKeepAnyMcpHttpHandler(options: Options) {
+  ensureJsonResponse();
   const endpoint = new URL(options.endpoint);
   if ((endpoint.protocol !== 'https:' && !(endpoint.protocol === 'http:' &&
     ['127.0.0.1', 'localhost', '[::1]'].includes(endpoint.hostname))) ||
