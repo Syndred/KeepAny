@@ -6,7 +6,7 @@
 
 本材料是再分发核对资料，不是整体法律兼容性结论。原清单覆盖2026-10-01安装树中包根目录缺少许可证正文的32个版本；2026-10-28另登记手机PDF兼容实现实际使用的core-js 3.50.0及pdfjs-dist 6.3.289。当前共34个版本：29项有精确上游正文，5项有精确MIT声明和明确标注的规范补充，0项授权／材料未解决，共32份正文与声明证据。这个历史材料索引不是当前全部依赖清单。五项未找到的上游独立LICENSE仍如实记录；原包未提供版权通知，原始作者字段被保存但不推断为版权归属。生产bundle的实际模块集合和平台原生包仍需按具体构建产物独立确认。
 
-手机Vite构建另输出`third-party-notices.md`，由实际bundle的模块生成。core-js与PDF.js原文均按精确npm gitHead下载并与安装文件逐字节相等；源文件、commit、SHA和npm完整性值见manifest。仅使用上游模块，未复制或修改其实现；保留`tests/e2e/intake-pdf-compatibility.spec.ts`及原PDF收录相邻测试，覆盖主线程／独立worker缺失API、继承资源PDF、预览确认与原限制。最低WebView111／iOS16.4不变，软件兼容注入测试不替代实际旧系统验收。
+手机Vite构建另输出`third-party-notices.md`，由实际bundle的模块生成。core-js与PDF.js的LICENSE原文均按精确npm gitHead下载并与安装文件逐字节相等；源文件、commit、SHA和npm完整性值见manifest。core-js实现未改；PDF.js 6.3.289的`legacy/build/pdf.mjs`有单列的`patches/pdfjs-dist@6.3.289.patch`：仅补初始化握手完成前的Worker所有权与销毁，保留官方握手和fake-worker回退，不改worker实现或LICENSE。对应原源码`src/display/api.js`、固定commit及修改点见manifest的`localModifications`。保留`tests/e2e/intake-pdf-timeout-cleanup.spec.ts`、`intake-pdf-compatibility.spec.ts`及原PDF收录相邻测试，覆盖真实worker故障清理、主线程／独立worker缺失API、继承资源PDF、预览确认与原限制。最低WebView111／iOS16.4不变，软件兼容注入测试不替代实际旧系统验收。
 
 使用以下只读命令核验已提交材料，不会读取 `node_modules`，也不会联网、生成或修改文件：
 
