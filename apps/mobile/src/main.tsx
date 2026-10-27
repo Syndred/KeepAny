@@ -15,6 +15,8 @@ import { createNativeBindingRepository } from '../../../packages/platform-native
 import { registerPlatformBinding } from '../../web/src/platform-binding';
 import { createNativeBindingPlatform, createNativeSyncFetchFactory } from '../../../packages/platform-native/src/binding-transport';
 import { registerSyncFetchFactory } from '../../../packages/sync-client/src/platform-fetch';
+import { createNativeConnections } from '../../../packages/platform-native/src/connections';
+import { registerPlatformConnections } from '../../web/src/platform-connections';
 import '../../../apps/web/src/styles.css';
 
 const startupCopy = {
@@ -38,7 +40,9 @@ async function start() {
   registerNativeMetadataHandler(readNativeMetadataHtml);
   registerBindingRepositoryFactory(createNativeBindingRepository);
   registerPlatformBinding(createNativeBindingPlatform(import.meta.env.VITE_KEEPANY_BINDING_ISSUER, import.meta.env.VITE_KEEPANY_OFFICIAL_SYNC_ORIGIN));
-  registerSyncFetchFactory(createNativeSyncFetchFactory());
+  const connections = createNativeConnections();
+  registerPlatformConnections(connections);
+  registerSyncFetchFactory(createNativeSyncFetchFactory(connections.sessionFetch));
   const datasets = await openNativeDatasetManager();
   registerDatasetAdapter(datasets);
   registerRepositoryFactory(() => datasets.openActive());

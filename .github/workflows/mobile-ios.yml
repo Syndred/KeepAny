@@ -39,6 +39,12 @@ jobs:
           xcodebuild -version | tee test-results/ios/xcode.txt
           swift --version | tee test-results/ios/swift.txt
           xcrun simctl list devices available --json > test-results/ios/devices.json
+      - uses: actions/cache@v4
+        with:
+          path: test-results/ios-derived
+          key: ios-derived-${{ runner.os }}-${{ hashFiles('test-results/ios/xcode.txt', 'pnpm-lock.yaml', 'apps/mobile/ios/**/Package.resolved') }}-${{ github.sha }}
+          restore-keys: |
+            ios-derived-${{ runner.os }}-${{ hashFiles('test-results/ios/xcode.txt', 'pnpm-lock.yaml', 'apps/mobile/ios/**/Package.resolved') }}-
       - run: pnpm install --frozen-lockfile
       - name: Build shared mobile sources and sync native packages
         run: |
@@ -76,6 +82,15 @@ jobs:
         if: always() && env.KEEPANY_CI_SIMULATOR != ''
         shell: bash
         run: |
+          app_data="$(xcrun simctl get_app_container "$KEEPANY_CI_SIMULATOR" io.github.syndred.keepany data 2>/dev/null || true)"
+          if [[ -n "$app_data" && -d "$app_data" ]]; then
+            while IFS= read -r -d '' task_database; do
+              printf 'Database: %s\n' "${task_database#"$app_data"/}" >> test-results/ios/sqlite-fixture-check.txt
+              sqlite3 -readonly "$task_database" 'SELECT type,count(*) FROM records GROUP BY type;' >> test-results/ios/sqlite-fixture-check.txt 2>&1 || true
+              sqlite3 -readonly "$task_database" "SELECT id,json_extract(payload,'$.name'),json_extract(payload,'$.kind') FROM records WHERE type='asset' AND json_extract(payload,'$.name') LIKE 'iOS simulator persistence fixture%';" >> test-results/ios/sqlite-fixture-check.txt 2>&1 || true
+            done < <(find "$app_data/Library" -type f \( -name '*SQLite.db' -o -name '*.sqlite3' -o -name '*.db' \) ! -path '*/WebKit/*' -print0)
+          fi
+          xcrun xcresulttool export attachments --path test-results/ios/acceptance.xcresult --output-path test-results/ios/ui-attachments || true
           xcrun simctl spawn "$KEEPANY_CI_SIMULATOR" log show --last 5m --style compact \
             --predicate 'process == "App" OR subsystem BEGINSWITH "com.apple.WebKit"' > test-results/ios/runtime.log 2>&1 || true
           xcrun simctl io "$KEEPANY_CI_SIMULATOR" screenshot test-results/ios/final-state.png || true

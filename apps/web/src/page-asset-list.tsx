@@ -589,7 +589,7 @@ export function AssetKindList({ kind, beforeList, afterList, passwordCounts, onA
 	return (
 		<main className={kind === "vault" ? "page vault-page" : "page"}>
 			{kind !== "vault" && <PageTitle
-				eyebrow={kind === "project" ? "PROJECT LIBRARY" : kind === "account" ? "MY ACCOUNTS" : t("brandName")}
+				eyebrow={t(kind === "project" ? "assetProjectEyebrow" : kind === "account" ? "assetAccountEyebrow" : "brandName")}
 				title={t(kind === "project" ? "projectListTitle" : kind === "account" ? "accountsWorkspace" : kind === "subscription" ? "subscriptionListTitle" : "itemListTitle")}
 				subtitle={t(kind === "project" ? "projectListSubtitle" : kind === "account" ? "workspaceAccountSubtitle" : kind === "item" ? "itemListSubtitle" : "summary")}
 				action={

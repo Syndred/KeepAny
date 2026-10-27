@@ -1,4 +1,6 @@
 const copy: Record<string, [string, string]> = {
+	assetProjectEyebrow: ["项目资料", "PROJECT LIBRARY"],
+	assetAccountEyebrow: ["我的账号", "MY ACCOUNTS"],
 	assetTagAddFilter: ["再选一个标签", "Add another tag"],
 	assetTagRemoveFilter: ["移除标签筛选：{{tag}}", "Remove tag filter: {{tag}}"],
 	mobileMore: ["更多", "More"],
