@@ -1,0 +1,239 @@
+{
+  "date": "2026-10-27",
+  "acceptance": {
+    "total": 104,
+    "passed": 104,
+    "partial": 0,
+    "blocked": 0,
+    "notRun": 0,
+    "originalIdsPreconditionsStepsAndExpectationsPreserved": true,
+    "originalPassing95Retained": true,
+    "completedRemainingIds": [
+      "T14-01",
+      "T14-02",
+      "T14-03",
+      "T14-04",
+      "T16-03",
+      "T18-01",
+      "T18-02",
+      "T19-01",
+      "T19-04"
+    ]
+  },
+  "runtime": {
+    "threadId": "01a17c5e-0453-77e2-9120-5a926a5d68be",
+    "actualModel": "gpt-6.1-sol",
+    "actualReasoningEffort": "xhigh",
+    "provider": "openai",
+    "fastModeConfigured": true,
+    "serviceTierConfigured": "priority",
+    "actualTurnServiceTierSeparateField": null,
+    "budgetRequested": false
+  },
+  "unit": {
+    "passed": 998,
+    "total": 998,
+    "failed": 0,
+    "skipped": 0,
+    "suites": 188,
+    "success": true,
+    "raw": "test-results/completion-pg/final-frozen.json",
+    "sha256": "57b557268fe430c83c5e7edb9ff8eb573061131b20d4c274a17e2d4bdeb615c0",
+    "priorFailedRun": {
+      "total": 994,
+      "passed": 993,
+      "failed": 1,
+      "skipped": 0,
+      "cause": "Windows native-file-5 delete-pending lock",
+      "productFix": "32b442c65cf5469c6776e047297a3251534b89e6"
+    }
+  },
+  "typecheck": {
+    "exitCode": 0
+  },
+  "lint": {
+    "changedFilesPassing": 50,
+    "errorsInThoseFiles": 0,
+    "preExistingExtraScriptDiagnostics": 2,
+    "baselineUnchangedPath": "scripts/preview-server.mjs control-character rejection regex",
+    "raw": "test-results/completion-final-scoped-lint.log",
+    "initialExpandedScan": "test-results/completion-final-lint.log"
+  },
+  "independentGsd": {
+    "sourceTruths": 9,
+    "passed": 9,
+    "browser": 7,
+    "namedUnitProbes": 7,
+    "report": "scopes/剩余九条独立复核.md",
+    "reportStatusAtItsCreation": "human_needed because portable evidence had not run; final portable results below close this requirement",
+    "finalStatus": "passed",
+    "finalHumanVerification": 0,
+    "finalFingerprintMatches": true
+  },
+  "portable": {
+    "firstRuntimeCandidate": "dist/preview/KeepAny-0.1.0-preview.745565a93c5d.dirty-portable.zip",
+    "total": 32,
+    "passed": 32,
+    "failed": 0,
+    "skipped": 0,
+    "flaky": 0,
+    "finance": {
+      "executed": 8,
+      "passed": 8,
+      "failed": 0,
+      "skipped": 0,
+      "retried": 0,
+      "duration_seconds": 47.6,
+      "exit_code": 0,
+      "source_imports_executed_in_browser": false,
+      "fixture": "test-results/T14-completion-fixture/fixture.ka1",
+      "command": "KEEPANY_T14_PORTABLE=1; playwright test tests/e2e/qa-t14-completion.spec.ts --config=test-results/completion-portable.config.ts --workers=1 --reporter=json --output=test-results/T14-portable-final",
+      "raw_log": "test-results/T14-portable-final.log",
+      "native_last_run": "test-results/T14-portable-final/.last-run.json",
+      "native_last_run_status": "passed",
+      "native_last_run_failedTests": [],
+      "case_titles": [
+        "tests\\e2e\\qa-t14-completion.spec.ts:93:3 › zh-CN 390 T14-01..04 shared bill editing deletion renewal preservation and backup",
+        "tests\\e2e\\qa-t14-completion.spec.ts:93:3 › zh-CN 1280 T14-01..04 shared bill editing deletion renewal preservation and backup",
+        "tests\\e2e\\qa-t14-completion.spec.ts:93:3 › en-US 390 T14-01..04 shared bill editing deletion renewal preservation and backup",
+        "tests\\e2e\\qa-t14-completion.spec.ts:93:3 › en-US 1280 T14-01..04 shared bill editing deletion renewal preservation and backup",
+        "tests\\e2e\\qa-t14-completion.spec.ts:207:1 › T14 true second-tab edits and deletion reject stale review without overwriting latest bill",
+        "tests\\e2e\\qa-t14-completion.spec.ts:236:1 › T14 360 768 1440 keyboard cancellation and layout keep fields and actions reachable",
+        "tests\\e2e\\qa-t14-completion.spec.ts:264:32 › zh reviewed PDF field merge preserves search privacy, ordinary unselected fields and clean restore",
+        "tests\\e2e\\qa-t14-completion.spec.ts:264:32 › en reviewed PDF field merge preserves search privacy, ordinary unselected fields and clean restore"
+      ]
+    },
+    "mergeTasksAndDeletion": {
+      "startTime": "2026-10-27T08:42:49.970Z",
+      "duration": 43476.700000000004,
+      "expected": 6,
+      "skipped": 0,
+      "unexpected": 0,
+      "flaky": 0,
+      "raw": "test-results/test-results/completion-portable-core.json",
+      "sha256": "daa736608334b20fd4e8a6a77142d16afc992e7b168849a7d05cd2479a1a56ca"
+    },
+    "bundledMcp": {
+      "startTime": "2026-10-27T08:42:56.915Z",
+      "duration": 207487.678,
+      "expected": 16,
+      "skipped": 0,
+      "unexpected": 0,
+      "flaky": 0,
+      "raw": "test-results/completion-mcp-production-results.json",
+      "sha256": "31e37d3eb1422636f516936cbd2492238e3fba39c075cd9b01fd8b4191d47b08"
+    },
+    "urlAndCsv": {
+      "passed": 2,
+      "failed": 0,
+      "skipped": 0,
+      "flaky": 0,
+      "durationMs": 17363,
+      "report": "evidence/T18-completion/checks.json",
+      "browserSourceImports": [],
+      "pageErrors": []
+    },
+    "finalRebuiltCandidateAffectedRecheck": {
+      "source": {
+        "startTime": "2026-10-27T08:58:03.209Z",
+        "duration": 20442.348,
+        "expected": 6,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      },
+      "production": {
+        "startTime": "2026-10-27T08:58:03.230Z",
+        "duration": 17135.665,
+        "expected": 2,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      },
+      "runtimeIdentical": {
+        "oldCandidate": "dist/preview/KeepAny-0.1.0-preview.745565a93c5d.dirty-portable",
+        "newCandidate": "dist/preview/KeepAny-0.1.0-preview.7df5d0e1c42d.dirty-portable",
+        "webFilesIdentical": 103,
+        "localServerIdentical": true,
+        "localServerSha256": "bdb55f5760141e6905efe35cd6b97f3829683229176bd589507cfb4b1f9d32ad",
+        "sourceDifferences": [
+          "apps/web/vite.config.ts"
+        ],
+        "change": "Type annotation only: ReturnType<typeof createUrlMetadataMiddleware> | undefined",
+        "cliSha256": "74014043c328f3574e6badb8ca36e1322ade41eaf343af62d180eb749e6876a8"
+      },
+      "basis": "Only a development config type annotation changed; all 103 browser files and the local server are byte-identical. The 32 baseline behaviors transfer by exact runtime identity; affected source 6 and final package 2 were executed afresh, not claimed as 32 reruns."
+    }
+  },
+  "candidate": {
+    "path": "dist/preview/KeepAny-0.1.0-preview.7df5d0e1c42d.dirty-portable.zip",
+    "bytes": 4863722,
+    "sha256": "b006efe09f347cab8d9d2dae3ec5d0af6f0d8f9e23fd3569a70788356e97db2a",
+    "sourceCommit": "7df5d0e1c42d9b09337b80f2c35f5839ab2c74ff",
+    "sourceDirty": true,
+    "sourceFileCount": 437,
+    "webFileCount": 103,
+    "identityFailures": [],
+    "identity": "identity.json",
+    "dirtyScope": "QA report/tests and 10 untracked duplicate screenshots only; product diff was empty before build and all 437 distributed sources match current bytes",
+    "launcherVerification": {
+      "archive": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\preview\\KeepAny-0.1.0-preview.7df5d0e1c42d.dirty-portable.zip",
+      "platform": "win32",
+      "sourceCommit": "7df5d0e1c42d9b09337b80f2c35f5839ab2c74ff",
+      "sourceDirty": true,
+      "webFiles": 103,
+      "checks": [
+        "ZIP and per-file checksums, current web identity, source, launchers, license inventory, and clean external extraction",
+        "Production assets, HEAD, SPA navigation fallback, missing asset/API/dotfile rejection",
+        "Raw and encoded path traversal, malformed path, Host rejection, private state, loopback-only listener",
+        "Duplicate-start conflict, unauthenticated/cross-origin stop rejection, forged PID rejection, own-instance stop and cleanup",
+        "Occupied port leaves an unrelated HTTP service running; stop never sends process signals",
+        "Delivered win32 launcher starts without repository or project dependencies, then stops cleanly"
+      ]
+    }
+  },
+  "mcpCli": {
+    "path": "dist/mcp-launcher/bin/keepany-mcp.mjs",
+    "sha256": "74014043c328f3574e6badb8ca36e1322ade41eaf343af62d180eb749e6876a8",
+    "bundledBrowserCases": 16
+  },
+  "cleanup": {
+    "sourceAndPortableServersStopped": true,
+    "testSchemasRemaining": 0,
+    "postgresPort": 52393,
+    "postgresNormallyStopped": true,
+    "connectionEnvRemoved": true,
+    "contextsAndSdkClosed": true,
+    "blockedDuplicateScreenshotsRetained": 10,
+    "blockedHistoricalTargetsNotRetried": true,
+    "stoppedSyntheticClusterRetained": true,
+    "stoppedSyntheticClusterCleanup": "Automatic approval rejected removal of test-results/completion-pg/data-c42c9f66 after normal stop; blocked by policy, no reason supplied; not retried"
+  },
+  "gstack": {
+    "version": "1.91.268.0",
+    "preambleRan": true,
+    "browserRuntimeReady": true,
+    "browserProbesRan": 0,
+    "status": "NOT_RUN: automatic approval rejected first browser probe, blocked by policy, no reason supplied; no alternate retry",
+    "report": "evidence/gstack-completion/结果.md"
+  },
+  "deployment": {
+    "user4180Changed": false,
+    "websitePublished": false,
+    "releasePublished": false,
+    "gitHistoryRewritten": false,
+    "commercialBusinessCopied": false
+  },
+  "limits": [
+    "Windows isolated Chromium and synthetic local services/data; no physical device or native POSIX execution in this session",
+    "No real provider or live commercial account acceptance",
+    "Package remains unpublished; source fixes do not update user4180"
+  ],
+  "delivery": {
+    "firstNormalPushVerified": true,
+    "firstRemoteCommit": "20b1b317dc3db1ac39f1f5b4b55620af60513db2",
+    "repository": "Syndred/KeepAny",
+    "branch": "main",
+    "followupChanges": "Pure documentation and final independent audit status; final remote head checked after push"
+  }
+}

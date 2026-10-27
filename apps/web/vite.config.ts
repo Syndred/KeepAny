@@ -14,7 +14,7 @@ const proxy = selfHostProxy ? Object.fromEntries(['/api/auth', '/sync', '/worksp
 export default defineConfig({ plugins: [react(), tailwindcss(), {
   name: 'keepany-intake-url',
   configureServer(server) {
-    let metadataMiddleware;
+    let metadataMiddleware: ReturnType<typeof createUrlMetadataMiddleware> | undefined;
     server.middlewares.use((request, response, next) => {
       const address = server.httpServer?.address();
       if (!address || typeof address === 'string') return next();

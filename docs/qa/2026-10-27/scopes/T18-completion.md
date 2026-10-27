@@ -27,12 +27,20 @@
 
 中英代表图在 [T18-completion](../evidence/T18-completion/)。已工具目检中文390原文、中文390/英文1280元数据预览：原文换行、名称/description/来源/确认入口可见，description改为统一字段宽度后不再和URL叠挤；页面可滚动，实际确认操作通过。
 
-## 未完成与下步
+## 最终便携候选实际续验
 
-- 已增加无浏览器源码导入的 `qa-t18-portable-completion.spec.ts`，待主控重打最终便携候选后执行：真实默认URL接口、UI确认/取消、CSV原文、实际下载KA1及干净隔离context恢复/刷新/再下载逐条相等。
-- 大CSV完整备份/恢复及sourceText载体被清理时转移，由普通审核数据层小包补证；不以CSV stage单测代替真实备份。
-- 主控已修复URL description字段对齐和凭据URL手动fallback问题，本包最终6场景复验通过。后续新便携候选仍须重新验收，不能以源码结果替代。
+最终本机候选为 `KeepAny-0.1.0-preview.745565a93c5d.dirty-portable.zip`，版本manifest的sourceCommit为 `745565a93c5dfa3b6e2ff2a3496c105c7ac5234b`、sourceDirty为true。实际回读ZIP SHA256为 `925736b7aa36efc098f85bcf400d3fec954e89f339b3e83af9a5fee161fe77c9`，在主控启动的4211验收；没有把源码服务冒充便携服务。
+
+`qa-t18-portable-completion.spec.ts` 最终 **2/2通过，17.363秒，0失败/跳过/重试**，报告 `test-results/completion-t18-production-results.json`。中文390、英文1280均从正式UI读取公网Example Domain标题、取消后实际备份为零记录，再确认人工修改的名称/description并刷新。默认接口拒绝合成loopback目标，返回422 metadata-private；探针使用127.0.0.1:1，未将用户4180作为目标。
+
+两组合均选择CSV、确认首条、拒绝重复、保留另两条待审核资料及修改稿，实际下载KA1并在干净context正式预览/恢复/刷新，再下载解密逐字段相等：2资产、3候选、原BOM/CRLF全文1份及2个引用完整。两个context均记录 `sourceRequests=[]`、`pageerror=[]`，没有浏览器 `/@fs/` 或 `/@vite/` 源码注入。已目检 [中文390恢复图](../evidence/T18-completion/T18-portable-zh-CN-390.png) 和 [英文1280恢复图](../evidence/T18-completion/T18-portable-en-1280.png)，原文、已确认项、待审核修改稿和操作可读，无页面横向溢出。
+
+近2MiB/200行的完整备份与独立库恢复、载体移除后的原文转移、缺carrier归档拒绝，已由 [T19普通审核数据层回执](T19-completion.md) 补齐：单份原文＋199引用、候选JSON小于3MiB，不提高原备份预算。普通CSV原文与URL元数据两个缺口已有本轮源码、异常路径及新候选交付包证据；最终104项总表由主控统一收口。
 
 ## 提交、部署与清理
 
-独立解析/抓取与单测提交 `38a4de9`。主控拥有workflows、Vite与便携server接线，普通审核小包拥有review schema与原文引用持久化。未推送、未发布官网/Release、未替换4180。全部测试context由finally关闭，4207测试服务已退出；临时大报告留忽略目录。新便携候选身份和最终总表结论由主控统一回读后补记。
+独立解析/抓取与单测提交 `38a4de9`，源码验收小回执 `ce6d841`。主控拥有workflows、Vite与便携server接线，普通审核小包拥有review schema与原文引用持久化。最终生产续验文档由主控统一串行提交与推送；未发布官网/Release、未替换4180。全部本包测试context已finally关闭，4207源码测试服务早已退出，4211和PG由主控管理，本包没有停服或更改。临时报告与原生备份下载留忽略目录；机器回执已补最终包身份及两条结果。
+
+## 最终候选类型标注收口补验
+
+主控收尾补开发配置缓存变量的显式类型，运行代码不变；重打7df5d0e最终候选（SHA256 b006efe0…e97db2a），103Web和本机服务与前述32项通过的首候选逐字节一致。仍实际补跑源码6/6（20.4秒）、最终生产2/2（17.1秒）及Windows启动器，全部通过；原始回执为test-results/completion-final-affected-source.json、completion-final-affected-production.json，完整身份和限制见主控最终记录。没有把首候选全部32场景冒称重跑在最终ZIP。

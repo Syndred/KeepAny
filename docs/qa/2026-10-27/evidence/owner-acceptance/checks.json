@@ -1,0 +1,788 @@
+{
+  "date": "2026-10-27",
+  "executor": "本会话主控；未委派本轮操作",
+  "method": "浏览器工具真实点击/键盘/导航/刷新；DOM只读核对；未调用产品API或写DB准备验收数据",
+  "sourceHeadAtStart": "0e30a0ce719f22867b2575739f5b5dfec1867ed4",
+  "runtime": "dist/preview/KeepAny-0.1.0-preview.7df5d0e1c42d.dirty-portable",
+  "runtimeZipSha256": "b006efe09f347cab8d9d2dae3ec5d0af6f0d8f9e23fd3569a70788356e97db2a",
+  "url": "http://127.0.0.1:4212/",
+  "browser": "隔离Chromium；非Ego/物理手机",
+  "context": "keepany-owner-review-20261027",
+  "languages": [
+    "zh-CN",
+    "en"
+  ],
+  "viewports": [
+    "1280x900",
+    "390x844"
+  ],
+  "scope": "本轮72个动作；不是重跑104个完整用例，case关联表示覆盖其中部分步骤",
+  "originalContract": "../../测试总表.md",
+  "records": [
+    {
+      "id": "M01",
+      "cases": [
+        "T01-01"
+      ],
+      "operation": "在全新隔离浏览器打开便携包首页",
+      "expected": "出现概览；空白资料计数为0；有账号、资产、待办及收录入口。",
+      "actual": "页面标题KeepAny，已记录资产0、未来30天待处理0；概览及四个入口可见。",
+      "passed": true
+    },
+    {
+      "id": "M02",
+      "cases": [
+        "T01-01",
+        "T10-01"
+      ],
+      "operation": "点击「探索我的项目」",
+      "expected": "进入项目列表，空态有新增入口。",
+      "actual": "地址为/assets/project，显示项目档案空态和「新增」按钮。",
+      "passed": true
+    },
+    {
+      "id": "M03",
+      "cases": [
+        "T10-01"
+      ],
+      "operation": "点击「新增」",
+      "expected": "显示新增项目表单，保存前不创建记录。",
+      "actual": "弹出「新增记录」，名称为空，分类网站，网址/描述可填写，保存/取消可用。",
+      "passed": true
+    },
+    {
+      "id": "M04",
+      "cases": [
+        "T10-01"
+      ],
+      "operation": "填写项目名称、网址和描述",
+      "expected": "输入值完整显示，仍停在未保存表单。",
+      "actual": "三字段分别显示「主控验收项目20261027」、https://owner-review.example.test/及本轮核对描述；弹窗仍打开。",
+      "passed": true
+    },
+    {
+      "id": "M05",
+      "cases": [
+        "T10-01"
+      ],
+      "operation": "点击保存项目",
+      "expected": "表单关闭，只新增一个项目卡片。",
+      "actual": "弹窗关闭；项目列表出现一张「主控验收项目20261027」卡片，详情ID为be0c3d14-f1e9-4d69-afdc-277df0f6f397。",
+      "passed": true
+    },
+    {
+      "id": "M06",
+      "cases": [
+        "T10-01"
+      ],
+      "operation": "刷新项目列表",
+      "expected": "刚保存的项目仍存在，网址和描述不丢失。",
+      "actual": "刷新后同一ID的唯一卡片仍显示原名称、owner-review.example.test和完整描述。",
+      "passed": true
+    },
+    {
+      "id": "M07",
+      "cases": [
+        "T10-01",
+        "T16-01"
+      ],
+      "operation": "点击项目卡片进入详情",
+      "expected": "打开原项目；能看到待办和外链等原入口。",
+      "actual": "进入同一项目ID详情，标题正确；待办「新增」、新增外链、编辑入口可见。",
+      "passed": true
+    },
+    {
+      "id": "M08",
+      "cases": [
+        "T16-01"
+      ],
+      "operation": "在项目详情的待办区点击新增",
+      "expected": "出现新建待办表单，保存后归属当前项目。",
+      "actual": "出现「新建待办」弹窗，名称/日期为空，保存与取消可用。",
+      "passed": true
+    },
+    {
+      "id": "M09",
+      "cases": [
+        "T16-01"
+      ],
+      "operation": "填写待办名称和2026-10-28日期",
+      "expected": "输入完整显示，尚未保存。",
+      "actual": "名称显示「主控验收待办-原名称」，日期显示2026-10-28，弹窗仍在。",
+      "passed": true
+    },
+    {
+      "id": "M10",
+      "cases": [
+        "T16-01"
+      ],
+      "operation": "保存待办",
+      "expected": "弹窗关闭；项目详情出现一条关联该项目的待办。",
+      "actual": "弹窗关闭，详情显示唯一待办「主控验收待办-原名称」，关联项目名称与ID正确，侧栏待办计数1。",
+      "passed": true
+    },
+    {
+      "id": "M11",
+      "cases": [
+        "T16-03"
+      ],
+      "operation": "打开已存待办编辑",
+      "expected": "名称及先前填写的2026-10-28日期都回显。",
+      "actual": "名称正确，但日期为空。该差异待复核：此前浏览器工具对原生日期控件的填充是否真正触发了表单变更，不能直接标通过。",
+      "passed": false,
+      "classification": "首次工具输入差异；原生键盘路径M12～M15通过"
+    },
+    {
+      "id": "M12",
+      "cases": [
+        "T16-03"
+      ],
+      "operation": "用原生键盘依次输入年、月、日并Tab提交日期",
+      "expected": "日期显示2026-10-28，随后保存应可刷新回读。",
+      "actual": "原生年月日分段显示2026、10、28，Date值2026-10-28。",
+      "passed": true
+    },
+    {
+      "id": "M13",
+      "cases": [
+        "T16-03"
+      ],
+      "operation": "保存原生键盘输入的待办日期",
+      "expected": "弹窗关闭，任务显示10月28日。",
+      "actual": "任务行显示「2026年10月28日」，焦点回到该行编辑按钮。",
+      "passed": true
+    },
+    {
+      "id": "M14",
+      "cases": [
+        "T16-03"
+      ],
+      "operation": "刷新项目详情回读日期",
+      "expected": "日期仍为2026-10-28。",
+      "actual": "刷新后仍显示2026年10月28日；原生键盘输入、保存、刷新路径正常。M11首次工具填充差异保留；本轮未复现为产品持久化缺陷，不把首次不符合预期改写成通过。",
+      "passed": true,
+      "resolves": "M11"
+    },
+    {
+      "id": "M15",
+      "cases": [
+        "T16-03"
+      ],
+      "operation": "重新打开待办编辑",
+      "expected": "回显原名称与已保存日期。",
+      "actual": "名称「主控验收待办-原名称」、日期2026-10-28均准确回显。",
+      "passed": true
+    },
+    {
+      "id": "M16",
+      "cases": [
+        "T16-03"
+      ],
+      "operation": "将待办名称改为「这个改动应该取消」",
+      "expected": "只改未保存输入，日期仍保留。",
+      "actual": "表单显示新草稿名称，日期仍为2026-10-28。",
+      "passed": true
+    },
+    {
+      "id": "M17",
+      "cases": [
+        "T16-03"
+      ],
+      "operation": "点击取消编辑",
+      "expected": "弹窗关闭，原名称与日期不变。",
+      "actual": "返回任务行，仍为「主控验收待办-原名称」及2026年10月28日，编辑按钮重新获得焦点。",
+      "passed": true
+    },
+    {
+      "id": "M18",
+      "cases": [
+        "T16-03"
+      ],
+      "operation": "取消后再次打开编辑",
+      "expected": "被取消的新名称不残留。",
+      "actual": "回显仍是原名称、2026-10-28，没有「这个改动应该取消」。",
+      "passed": true
+    },
+    {
+      "id": "M19",
+      "cases": [
+        "T16-03"
+      ],
+      "operation": "清空待办名称",
+      "expected": "输入框变为空，日期不变。",
+      "actual": "名称框为空，日期仍为2026-10-28。",
+      "passed": true
+    },
+    {
+      "id": "M20",
+      "cases": [
+        "T16-03"
+      ],
+      "operation": "在工具清空名称后点击保存",
+      "expected": "必填校验应阻止保存并保留表单。",
+      "actual": "弹窗关闭，任务仍为原名称；本次工具清空输入疑未触发表单状态，须用原生键盘重复，不判通过。",
+      "passed": false,
+      "classification": "首次工具清空差异；原生键盘必填路径M21～M22通过"
+    },
+    {
+      "id": "M21",
+      "cases": [
+        "T16-03"
+      ],
+      "operation": "重开编辑，用Ctrl+A及Backspace原生清空名称",
+      "expected": "实际键盘事件清空输入，避免工具直接赋值产生假象。",
+      "actual": "键盘清空后名称无值且获得焦点，日期仍2026-10-28。",
+      "passed": true
+    },
+    {
+      "id": "M22",
+      "cases": [
+        "T16-03"
+      ],
+      "operation": "原生清空后点击保存",
+      "expected": "显示必填错误，弹窗不关闭，保留日期。",
+      "actual": "名称标invalid=true，显示「此项不能为空」，弹窗保留且日期仍2026-10-28。原生路径符合预期，M20工具清空差异已复核。",
+      "passed": true,
+      "resolves": "M20"
+    },
+    {
+      "id": "M23",
+      "cases": [
+        "T16-03"
+      ],
+      "operation": "把名称补为「主控验收待办-修改成功」并用键盘提交输入",
+      "expected": "必填错误消失，名称显示新值，日期保留。",
+      "actual": "名称新值正确，必填错误消失，日期2026-10-28。",
+      "passed": true
+    },
+    {
+      "id": "M24",
+      "cases": [
+        "T16-03"
+      ],
+      "operation": "保存修改后的待办名称",
+      "expected": "弹窗关闭，行内显示新名称，原日期不变。",
+      "actual": "任务行显示「主控验收待办-修改成功」、2026年10月28日。",
+      "passed": true
+    },
+    {
+      "id": "M25",
+      "cases": [
+        "T16-03"
+      ],
+      "operation": "刷新后回读修改结果",
+      "expected": "新名称、原日期及项目关联保持。",
+      "actual": "刷新后新名称仍为「主控验收待办-修改成功」，日期仍2026年10月28日。",
+      "passed": true
+    },
+    {
+      "id": "M26",
+      "cases": [
+        "T16-03"
+      ],
+      "operation": "点击待办导航",
+      "expected": "全局待办列表显示同一任务，并可按日期/状态筛选。",
+      "actual": "列表显示1条「主控验收待办-修改成功」、原日期及项目链接；开始/结束日期、状态筛选可用。",
+      "passed": true
+    },
+    {
+      "id": "M27",
+      "cases": [
+        "T16-03"
+      ],
+      "operation": "把开始日期设为2026-10-29",
+      "expected": "到期10月28日的任务被排除，结果数0。",
+      "actual": "开始日期显示10月29日；近期任务0，出现空态，原总任务数仍1。",
+      "passed": true
+    },
+    {
+      "id": "M28",
+      "cases": [
+        "T16-03"
+      ],
+      "operation": "把开始日期退回2026-10-28",
+      "expected": "边界当天的任务重新出现。",
+      "actual": "日期为10月28日，同一待办与项目链接重新出现，包含边界日。",
+      "passed": true
+    },
+    {
+      "id": "M29",
+      "cases": [
+        "T16-03"
+      ],
+      "operation": "点击任务的关联项目链接",
+      "expected": "进入原项目详情。",
+      "actual": "地址切换到原项目be0c3d14-f1e9-4d69-afdc-277df0f6f397。",
+      "passed": true
+    },
+    {
+      "id": "M30",
+      "cases": [
+        "T16-03"
+      ],
+      "operation": "浏览器返回待办页",
+      "expected": "筛选日期和同一任务保留。",
+      "actual": "返回/tasks，开始日期仍2026-10-28，新名称任务仍在。",
+      "passed": true
+    },
+    {
+      "id": "M31",
+      "cases": [
+        "T16-03"
+      ],
+      "operation": "刷新待办页",
+      "expected": "日期筛选和已保存新名称保留。",
+      "actual": "刷新仍显示开始日期2026-10-28及同一新名称任务。截图已在会话展示，实际CSS宽度另行核对。",
+      "passed": true
+    },
+    {
+      "id": "M32",
+      "cases": [
+        "T16-03"
+      ],
+      "operation": "设置390×844 CSS视口并目检日期筛选与任务操作",
+      "expected": "主要日期/编辑/完成操作可见；页面无横向滚动。",
+      "actual": "实际innerWidth=390、scrollWidth=375；日期筛选及任务编辑/稍后提醒可见，截图已在会话展示。仅为隔离Chromium模拟宽度，不是真机。",
+      "passed": true
+    },
+    {
+      "id": "M33",
+      "cases": [
+        "T16-02"
+      ],
+      "operation": "首次用浏览器工具鼠标点击「完成」",
+      "expected": "待处理变0、已完成变1。",
+      "actual": "第一次工具点击后计数暂未变化；保留这一观察，不把点击返回成功当成操作成功。",
+      "passed": false,
+      "classification": "首次390工具点击未确认；M34键盘及M35～M36桌面鼠标通过，未单独定位首次窄屏点击原因"
+    },
+    {
+      "id": "M34",
+      "cases": [
+        "T16-02"
+      ],
+      "operation": "保持按钮焦点，用原生Space激活完成",
+      "expected": "完成任务并显示完成记录。",
+      "actual": "待处理0、已完成1，显示完成记录2026/10/27 17:28:51，按钮变「重新打开」，出现已保存提示；控制台无error。",
+      "passed": true
+    },
+    {
+      "id": "M35",
+      "cases": [
+        "T16-02"
+      ],
+      "operation": "恢复1280宽后，鼠标点击「重新打开」",
+      "expected": "任务恢复待处理，完成历史仍保留。",
+      "actual": "待处理1、已完成0，按钮恢复「完成」，先前完成记录仍显示，出现已保存。",
+      "passed": true
+    },
+    {
+      "id": "M36",
+      "cases": [
+        "T16-02"
+      ],
+      "operation": "1280宽鼠标再次点击完成",
+      "expected": "重新完成并累积两条完成历史，不覆盖第一次。",
+      "actual": "待处理0、已完成1；历史显示17:28:51和17:30:17两次，鼠标流程正常。首次390工具点击未生效观察保留，未伪装成成功。",
+      "passed": true,
+      "resolves": "M33（桌面原步骤和键盘路径已重做；窄屏工具首次动作单独保留）"
+    },
+    {
+      "id": "M37",
+      "cases": [
+        "T02-03"
+      ],
+      "operation": "点击资产汇总",
+      "expected": "项目待办进度随完成状态更新。",
+      "actual": "唯一项目卡片显示「待办完成1/1」，进度条value1、max1。",
+      "passed": true
+    },
+    {
+      "id": "M38",
+      "cases": [
+        "T12-01"
+      ],
+      "operation": "点击新增资产",
+      "expected": "可选择资产类型，不直接保存资产。",
+      "actual": "弹出新增资产类型选择，默认项目；有继续/取消，无新记录。",
+      "passed": true
+    },
+    {
+      "id": "M39",
+      "cases": [
+        "T12-01"
+      ],
+      "operation": "打开资产类型列表",
+      "expected": "列出项目、实物、订阅、域名。",
+      "actual": "列表显示四种类型。",
+      "passed": true
+    },
+    {
+      "id": "M40",
+      "cases": [
+        "T12-01"
+      ],
+      "operation": "选择实物",
+      "expected": "类型变成实物，继续前不保存。",
+      "actual": "选择框显示实物，仍停在类型弹窗。",
+      "passed": true
+    },
+    {
+      "id": "M41",
+      "cases": [
+        "T12-01"
+      ],
+      "operation": "点击继续打开实物表单",
+      "expected": "出现实物名称、价格、日期等字段，不变成项目表单。",
+      "actual": "显示实物新增表单，分类数码设备，含购入价/币种/保修等字段。",
+      "passed": true
+    },
+    {
+      "id": "M42",
+      "cases": [
+        "T12-01"
+      ],
+      "operation": "原生键盘填写实物名称",
+      "expected": "名称按输入值填入，其余未填字段保持未知。",
+      "actual": "输入「主控验收实物20261027」，未填写购入价和日期。",
+      "passed": true
+    },
+    {
+      "id": "M43",
+      "cases": [
+        "T12-01",
+        "T02-02"
+      ],
+      "operation": "保存实物",
+      "expected": "新增独立实物，不把未填日期/金额伪造为已知值。",
+      "actual": "汇总变成2项资产；新实物ID0522f4b3-456c-434f-b84c-0d71a05c1b6f，显示未记录购买日期/未记录金额。",
+      "passed": true
+    },
+    {
+      "id": "M44",
+      "cases": [
+        "T14-01"
+      ],
+      "operation": "点击费用账本入口",
+      "expected": "账本可达，新建资产不自动伪造费用。",
+      "actual": "进入/finance，收支暂无记录，本月已记录支出暂无记录，项目/实物创建未自动产生付款。",
+      "passed": true
+    },
+    {
+      "id": "M45",
+      "cases": [
+        "T14-01"
+      ],
+      "operation": "点击记一笔",
+      "expected": "弹出记账表单，可关联已有项目/实物，确认前不落库。",
+      "actual": "记账弹窗默认主归属实物，另有项目复选项；币种CNY，日期2026-10-27。",
+      "passed": true
+    },
+    {
+      "id": "M46",
+      "cases": [
+        "T14-01",
+        "T14-02"
+      ],
+      "operation": "勾选项目归属，填写费用名称及三位小数12.345",
+      "expected": "两个资产被明确选中，非法精度在保存时拒绝。",
+      "actual": "主归属实物、项目复选项checked；名称主控验收费用、金额12.345，CNY及日期保持。",
+      "passed": true
+    },
+    {
+      "id": "M47",
+      "cases": [
+        "T14-02",
+        "T14-04"
+      ],
+      "operation": "提交12.345金额",
+      "expected": "拒绝超出CNY最小单位精度的金额，保留已填内容。",
+      "actual": "弹窗保留、显示「请输入有效金额」，名称/金额/两资产选择均保留。",
+      "passed": true
+    },
+    {
+      "id": "M48",
+      "cases": [
+        "T14-02"
+      ],
+      "operation": "删除金额末位，改为12.34",
+      "expected": "有效金额显示，错误提示消失，其他草稿保持。",
+      "actual": "金额12.34，项目选择仍checked，费用名称未变，错误提示消失。",
+      "passed": true
+    },
+    {
+      "id": "M49",
+      "cases": [
+        "T14-01",
+        "T14-03"
+      ],
+      "operation": "保存12.34费用",
+      "expected": "只新增一张双归属账单，总账计一次12.34。",
+      "actual": "收支只有「主控验收费用」一行，显示实物＋项目两个归属；本月支出¥12.34，不是24.68。",
+      "passed": true
+    },
+    {
+      "id": "M50",
+      "cases": [
+        "T14-02",
+        "T14-04"
+      ],
+      "operation": "打开既有账单编辑",
+      "expected": "回显原金额、日期及两项归属，仍是原账单。",
+      "actual": "编辑框显示12.34、2026-10-27、实物主归属与项目checked；行ID为d9e0a1cf-38ec-4bc8-8a34-52bcc4229c50。",
+      "passed": true
+    },
+    {
+      "id": "M51",
+      "cases": [
+        "T14-04"
+      ],
+      "operation": "将已有账单金额改为-2并提交",
+      "expected": "非法金额拒绝保存，弹窗和草稿保留。",
+      "actual": "金额显示-2，出现「请输入有效金额」，弹窗未关闭。",
+      "passed": true
+    },
+    {
+      "id": "M52",
+      "cases": [
+        "T14-04"
+      ],
+      "operation": "取消非法金额编辑",
+      "expected": "恢复原账单，金额及总额仍12.34。",
+      "actual": "弹窗关闭，唯一账单及月支出都为¥12.34，没有保存-2。",
+      "passed": true
+    },
+    {
+      "id": "M53",
+      "cases": [
+        "T14-04"
+      ],
+      "operation": "把已有账单金额改为45.67、日期改为10月26日并保存",
+      "expected": "原账单被更新，不另增一行；两项归属保留，合计45.67。",
+      "actual": "仅一行主控验收费用，显示45.67、2026年10月26日、实物＋项目；本月已记录支出45.67。",
+      "passed": true
+    },
+    {
+      "id": "M54",
+      "cases": [
+        "T14-04"
+      ],
+      "operation": "刷新费用账本",
+      "expected": "已修改金额、日期、双归属仍在，记录数不增加。",
+      "actual": "刷新后仍仅一笔45.67、10月26日、实物＋项目，月合计45.67。",
+      "passed": true
+    },
+    {
+      "id": "M55",
+      "cases": [
+        "T14-03",
+        "T14-04"
+      ],
+      "operation": "编辑账单，取消项目归属后保存",
+      "expected": "仅保留实物归属，金额与单笔记录不变。",
+      "actual": "行上只显示主控验收实物20261027，仍仅一行45.67，月合计45.67。",
+      "passed": true
+    },
+    {
+      "id": "M56",
+      "cases": [
+        "T14-04"
+      ],
+      "operation": "点击删除账单，再点击取消",
+      "expected": "确认框标明账单名称；取消后原记录和合计保留。",
+      "actual": "确认框显示主控验收费用；取消后仍一行45.67、月合计45.67，焦点返回删除按钮。",
+      "passed": true
+    },
+    {
+      "id": "M57",
+      "cases": [
+        "T14-04"
+      ],
+      "operation": "重新删除同一账单并确认",
+      "expected": "删除这一笔，列表和汇总同步移除。",
+      "actual": "提示账单已删除，收支记录与本月支出均显示暂无记录。",
+      "passed": true
+    },
+    {
+      "id": "M58",
+      "cases": [
+        "T14-04"
+      ],
+      "operation": "删除后刷新账本",
+      "expected": "已删除账单不恢复，汇总保持空。",
+      "actual": "刷新后本月支出和收支列表均暂无记录。",
+      "passed": true
+    },
+    {
+      "id": "M59",
+      "cases": [
+        "T19-04"
+      ],
+      "operation": "进入项目，打开新增外链",
+      "expected": "新增表单默认计划中，未提交时不伪造提交日期。",
+      "actual": "表单状态计划中，提交日期为空且disabled；显示名称、网址、依据。",
+      "passed": true
+    },
+    {
+      "id": "M60",
+      "cases": [
+        "T19-04"
+      ],
+      "operation": "保存计划中外链A",
+      "expected": "仅本地登记，项目外链数加1，提交和核验日期留空。",
+      "actual": "外链记录1，A状态计划中，提交日期/最近核验/依据均—，已收录0、需要核验0。",
+      "passed": true
+    },
+    {
+      "id": "M61",
+      "cases": [
+        "T19-04"
+      ],
+      "operation": "再新增计划中外链B，作为相邻保留记录",
+      "expected": "A和B独立存在，计数2。",
+      "actual": "列表同时显示主控验收外链B保留和主控验收外链A，外链记录2。",
+      "passed": true
+    },
+    {
+      "id": "M62",
+      "cases": [
+        "T19-04"
+      ],
+      "operation": "删除A时先取消",
+      "expected": "确认框明确A，取消后A/B和计数均不变。",
+      "actual": "确认框显示删除主控验收外链A；取消后A/B都在、计数2，焦点返回A删除按钮。",
+      "passed": true
+    },
+    {
+      "id": "M63",
+      "cases": [
+        "T19-04"
+      ],
+      "operation": "确认删除A",
+      "expected": "仅A移除，B保留，计数2变1。",
+      "actual": "A消失，B保留且网址仍/b；外链记录1。",
+      "passed": true
+    },
+    {
+      "id": "M64",
+      "cases": [
+        "T19-04"
+      ],
+      "operation": "删除A后刷新并展开外链表",
+      "expected": "A不恢复、B仍在，项目与其待办未受影响。",
+      "actual": "外链1且仅B；项目原名、URL、待办修改名/10月28日/完成历史保持。",
+      "passed": true
+    },
+    {
+      "id": "M65",
+      "cases": [
+        "T18-02"
+      ],
+      "operation": "快速收录输入https://example.com/并预览",
+      "expected": "实际读取公开网页标题，只展示候选，确认前不入库。",
+      "actual": "等加载结束后名称为Example Domain，URL正确、显示可导入；最近收录仍只有原项目和实物。",
+      "passed": true
+    },
+    {
+      "id": "M66",
+      "cases": [
+        "T18-02"
+      ],
+      "operation": "未确认网址候选时切换到手动模式",
+      "expected": "取消网址预览，不生成资产。",
+      "actual": "网址候选消失，最近收录仍原两资产，无Example Domain。",
+      "passed": true
+    },
+    {
+      "id": "M67",
+      "cases": [
+        "T18-02"
+      ],
+      "operation": "输入javascript:alert(1)并预览",
+      "expected": "拒绝非法协议，无候选、不执行脚本、不入库。",
+      "actual": "显示请检查此项，无预览候选，原两条最近收录保持。",
+      "passed": true
+    },
+    {
+      "id": "M68",
+      "cases": [
+        "T18-01",
+        "T19-01"
+      ],
+      "operation": "通过CSV选择器选择本轮两行合成source.csv",
+      "expected": "浏览器读取文件，生成候选后逐步核对原文及字段合并。",
+      "actual": "浏览器工具在上传前拒绝文件路径：不在其配置的workspace roots内。未生成候选，未执行本轮CSV原文/合并操作；不计产品通过或失败。已有前轮源码及便携包专项证据仍单独保留。",
+      "passed": false,
+      "classification": "tool_blocked"
+    },
+    {
+      "id": "M69",
+      "cases": [
+        "T25-02"
+      ],
+      "operation": "从设置语言控件切换英语，再进入Tasks",
+      "expected": "界面文案切英语，既有中文数据与筛选、完成状态保持。",
+      "actual": "Settings/Language/Tasks/Start date/Edit均英文；中文待办名保留，10月28日筛选、Completed1和两次完成历史保持。浏览器原生日期控件名称随浏览器系统语言，未当成应用翻译。",
+      "passed": true
+    },
+    {
+      "id": "M70",
+      "cases": [
+        "T25-02"
+      ],
+      "operation": "英语Tasks页刷新",
+      "expected": "英语偏好持久化，记录及日期不变。",
+      "actual": "刷新后仍为英文，原任务和完成历史、10月28日筛选保持。",
+      "passed": true
+    },
+    {
+      "id": "M71",
+      "cases": [
+        "T16-03",
+        "T25-02"
+      ],
+      "operation": "英语编辑框改名后Cancel",
+      "expected": "编辑框双语完整；取消后原名、日期、完成状态保留。",
+      "actual": "Edit task/Name/Date/Cancel/Save均英文；取消后原中文名称、Oct28、Completed和历史保留，焦点回Edit。",
+      "passed": true
+    },
+    {
+      "id": "M72",
+      "cases": [
+        "T16-03",
+        "T25-02"
+      ],
+      "operation": "英语待办页切390×844，目检页面并读取控制台",
+      "expected": "待办和操作可达，无页面横向溢出或本次控制台错误。",
+      "actual": "innerWidth390，文档scrollWidth/clientWidth均375；名称、日期、Edit、Completed和筛选在图中可见；当前及工具保留的最近三次导航error列表为空。只代表这组页面，不代表全104条均无错误。",
+      "passed": true
+    }
+  ],
+  "artifacts": {
+    "csv": "source.csv",
+    "finalSnapshot": "final-snapshot.txt",
+    "screenshots": "会话内展示中文/英文窄屏图；工具拒绝文件路径，没有保存截图文件"
+  },
+  "limitations": [
+    "M11/M20首次工具输入与状态差异保留，原生键盘重做正常。",
+    "M33首次窄屏工具点击未确认；键盘和桌面鼠标路径通过，首次原因未定位。",
+    "M68 CSV上传被浏览器工具workspace roots限制拒绝；本轮CSV原文与字段合并未执行，旧专项证据单列。",
+    "没有重做104条的全部操作、故障注入、真实KA1/KDBX导出恢复或受控服务。"
+  ],
+  "documentVerification": {
+    "original104DefinitionsUnchanged": true,
+    "ownerActions": 72,
+    "expectedObservations": 68,
+    "initialDifferences": 3,
+    "toolBlocked": 1,
+    "localLinksResolved": 157,
+    "gitDiffCheck": "exit0",
+    "firstStaticCheckDifference": "Git默认转义中文文件名，使文档范围判断失败；改用git diff --name-only -z读取精确路径后全部检查通过。未更改业务断言或产品。"
+  },
+  "cleanup": {
+    "ownPage2": "已关闭；既有page1未关闭",
+    "ownService4212": "preview-server.mjs stop返回本地服务已停止",
+    "user4180": "未访问或替换",
+    "blockedOldArtifacts": "未清理、未纳入本轮提交"
+  }
+}

@@ -7,7 +7,7 @@
     "T14-04",
     "adjacent finance search and PDF merge privacy"
   ],
-  "status": "source_complete_portable_integration_pending",
+  "status": "source_and_final_portable_complete",
   "environment": {
     "os": "Windows",
     "node": "24.21.0",
@@ -116,5 +116,6 @@
     "Renewal facts remain unchanged; corrected or hidden bill projections do not roll back subscription renewal.",
     "Current source and tests frozen; final package and all-repository results belong to the root integration receipt.",
     "All fixture secrets and source markers are synthetic; no external supplier or real-device verification is claimed."
-  ]
+  ],
+  "portable_receipt": "docs/qa/2026-10-27/evidence/T14-portable-completion/checks.json"
 }
