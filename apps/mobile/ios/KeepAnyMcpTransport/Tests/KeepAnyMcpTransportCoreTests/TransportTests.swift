@@ -10,10 +10,7 @@ import Crypto
 @testable import KeepAnyMcpTransportCore
 
 func mcpCoreCaseStage(_ phase: String, name: String) {
-    // Write directly to stderr, independently of XCTest's suite/case stdout.
-    // Only runner metadata is emitted; no fixture body, certificate or key.
-    let line = "KeepAny Core case \(phase) pid=\(ProcessInfo.processInfo.processIdentifier) uptime=\(ProcessInfo.processInfo.systemUptime) name=\(name)\n"
-    FileHandle.standardError.write(Data(line.utf8))
+    StageTrace.caseEvent(phase, name: name)
 }
 
 final class Events {
@@ -125,9 +122,7 @@ private final class ProbeCleanup {
         self.group = group; self.loop = loop; self.sink = sink
     }
     func stage(_ phase: String) {
-        // stderr is written immediately, including during an eventual CI
-        // timeout. No endpoint, certificate, payload or temporary key is logged.
-        FileHandle.standardError.write(Data("KeepAny TLS probe [\(id)] \(phase)\n".utf8))
+        StageTrace.probeEvent(phase, id: id)
     }
     func attach(_ channel: Channel) { connected = channel; stage("tcp-connected") }
     func run(origin: String) {
