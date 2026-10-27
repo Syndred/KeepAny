@@ -26,34 +26,65 @@ const draftAssetSchema = z.unknown().transform((value, context) => {
   return { ...result.data, ...editable.data };
 });
 
+export const reviewedMergeFields = ['name', 'url', 'description', 'category', 'tags', 'username',
+  'amount', 'currency', 'cycle', 'interval', 'dueDate', 'itemPurchasePriceKnown'] as const;
+export type ReviewedMergeField = typeof reviewedMergeFields[number];
+export function reviewedMergeFieldsForKind(kind: Asset['kind']): ReviewedMergeField[] {
+  const common: ReviewedMergeField[] = ['name', 'url', 'description', 'category', 'tags'];
+  return kind === 'account' ? [...common, 'username'] : kind === 'subscription'
+    ? [...common, 'amount', 'currency', 'cycle', 'interval', 'dueDate'] : kind === 'item'
+      ? [...common, 'amount', 'currency', 'itemPurchasePriceKnown'] : kind === 'project' ? common : [];
+}
+export const reviewedAssetMergeReceiptSchema = z.object({
+  targetId: z.string().min(1).max(96), fields: z.array(z.enum(reviewedMergeFields)).min(1).max(reviewedMergeFields.length),
+  before: assetSchema, after: assetSchema, recordedAt: z.string().datetime(),
+}).strict().superRefine((receipt, context) => {
+  const allowed = reviewedMergeFieldsForKind(receipt.before.kind);
+  if (receipt.before.id !== receipt.targetId || receipt.after.id !== receipt.targetId ||
+    receipt.before.kind !== receipt.after.kind || receipt.before.deleted || receipt.after.deleted ||
+    receipt.before.purged || receipt.after.purged || new Set(receipt.fields).size !== receipt.fields.length ||
+    receipt.fields.some(field => !allowed.includes(field)) ||
+    Object.keys(receipt.before).some(key => key !== 'updatedAt' && !receipt.fields.includes(key as ReviewedMergeField) &&
+      JSON.stringify(receipt.before[key as keyof Asset]) !== JSON.stringify(receipt.after[key as keyof Asset]))) {
+    context.addIssue({ code: 'custom', message: 'review-merge-receipt' });
+  }
+});
+export type ReviewedAssetMergeReceipt = z.infer<typeof reviewedAssetMergeReceiptSchema>;
+
 export const reviewedCandidateSchema = z.object({
   id: z.string().min(1).max(100), fileHash: z.string().regex(/^[a-f0-9]{64}$/),
   fileName: z.string().min(1).max(1024), rowNumber: z.number().int().min(1).max(100000),
-  source: z.enum(['pdf', 'ai']).optional(), sourceText: z.string().max(20000).optional(),
+  source: z.enum(['pdf', 'ai']).optional(), sourceText: z.string().max(2 * 1024 * 1024).optional(),
+  sourceTextRef: z.string().regex(/^[a-f0-9]{64}$/).optional(),
   ai: z.object({ provider: z.string().min(1).max(64), model: z.string().min(1).max(160),
     evidence: z.string().min(1).max(2000), missingFields: z.array(z.string().max(60)).max(20),
     relatedName: z.string().max(160).default('') }).strict().optional(),
   kindSelected: z.boolean().optional(), asset: draftAssetSchema,
   reviewMode: z.enum(['asset', 'expense']).optional(), expenseDraft: reviewedExpenseDraftSchema.optional(),
   historyId: z.string().max(96).optional(),
+  merge: reviewedAssetMergeReceiptSchema.optional(),
   status: z.enum(['pending', 'accepted', 'ignored']),
 }).strict().superRefine((row, context) => {
   const suffix = row.source === 'pdf' ? '' : `-${row.rowNumber}`;
   const prefix = row.source === 'pdf' ? 'pdf' : row.source === 'ai' ? 'ai' : 'csv';
   if (row.id !== `${prefix}-${row.fileHash}${suffix}` ||
     row.asset.id !== `${prefix}-${row.fileHash.slice(0, 48)}${suffix}` ||
-    (row.source === 'pdf' ? row.rowNumber !== 1 || !row.sourceText : row.source === 'ai' ? row.rowNumber < 1 || !row.sourceText || !row.ai : row.rowNumber < 2 || row.sourceText !== undefined)) {
+    (row.source === 'pdf' ? row.rowNumber !== 1 || !row.sourceText : row.source === 'ai' ? row.rowNumber < 1 || !row.sourceText || !row.ai : row.rowNumber < 2)) {
     context.addIssue({ code: 'custom', message: 'review-id' });
   }
   if ((row.source === 'ai') !== Boolean(row.ai)) context.addIssue({ code: 'custom', message: 'review-ai-source' });
+  if (row.sourceTextRef && (row.source || row.sourceText !== undefined || row.sourceTextRef !== row.fileHash)) context.addIssue({ code: 'custom', message: 'review-source-reference' });
+  if (row.source && row.sourceText && row.sourceText.length > 20000) context.addIssue({ code: 'custom', message: 'review-source-limit' });
+  if (row.merge && (row.status !== 'accepted' || row.reviewMode === 'expense' || row.merge.before.kind !== row.asset.kind ||
+    row.merge.targetId === row.asset.id)) context.addIssue({ code: 'custom', message: 'review-merge-receipt' });
   if (row.reviewMode === 'expense') {
     if (row.source !== 'pdf' || !row.expenseDraft || (row.status === 'accepted' &&
       (row.historyId !== reviewedExpenseHistoryId(row.fileHash) || !expenseHistory(row)))) {
       context.addIssue({ code: 'custom', message: 'review-expense' });
     }
-  } else if (row.historyId !== undefined || (row.status === 'accepted' && (!assetSchema.safeParse(row.asset).success ||
+  } else if (row.historyId !== undefined || (row.status === 'accepted' && !row.merge && (!assetSchema.safeParse(row.asset).success ||
     (row.source === 'pdf' && !row.kindSelected)))) context.addIssue({ code: 'custom', message: 'review-accepted' });
-  if (row.status === 'accepted' && row.source === 'ai' && row.asset.kind === 'subscription' && row.ai?.missingFields.some(field => ['amount', 'currency', 'cycle'].includes(field))) context.addIssue({ code: 'custom', message: 'review-ai-missing' });
+  if (row.status === 'accepted' && !row.merge && row.source === 'ai' && row.asset.kind === 'subscription' && row.ai?.missingFields.some(field => ['amount', 'currency', 'cycle'].includes(field))) context.addIssue({ code: 'custom', message: 'review-ai-missing' });
   if (row.status !== 'accepted' && row.historyId !== undefined) context.addIssue({ code: 'custom', message: 'review-history' });
 });
 
@@ -65,6 +96,7 @@ export interface IntakeReviewStorage {
 }
 export interface ReviewedImportJournal {
   id: string; rows: RecordRow[]; reviewedExpense?: ReviewedCandidate;
+  reviewedAssetMerge?: { expectedCandidate: ReviewedCandidate; receipt: ReviewedAssetMergeReceipt };
 }
 export interface ReviewedExpenseStorage extends IntakeReviewStorage {
   importJournal: Table<ReviewedImportJournal, string>;
@@ -99,7 +131,23 @@ function matchesExpenseReceipt(row: ReviewedCandidate, value: unknown): value is
 export function parseReviewedCandidates(value: unknown): ReviewedCandidate[] {
   const rows = z.array(reviewedCandidateSchema).max(100000).parse(value);
   if (new Set(rows.map(row => row.id)).size !== rows.length) throw Error('archive-review-id');
+  const csvSources = new Set(rows.filter(row => !row.source && row.sourceText !== undefined).map(row => row.fileHash));
+  if (rows.some(row => row.sourceTextRef && !csvSources.has(row.sourceTextRef))) throw Error('archive-review-source-reference');
   return rows;
+}
+
+/** Keep one original CSV text when its carrier is removed with a purged asset. */
+export function retainReviewedCsvSources(rows: ReviewedCandidate[], removedIds: Set<string>): ReviewedCandidate[] {
+  const result = rows.filter(row => !removedIds.has(row.id));
+  const sources = new Map(rows.filter(row => !row.source && row.sourceText !== undefined).map(row => [row.fileHash, row.sourceText as string]));
+  for (const [fileHash, sourceText] of sources) {
+    const remaining = result.filter(row => !row.source && row.fileHash === fileHash);
+    if (!remaining.length || remaining.some(row => row.sourceText !== undefined)) continue;
+    const carrier = remaining[0], index = result.findIndex(row => row.id === carrier.id);
+    const { sourceTextRef: _reference, ...rest } = carrier;
+    result[index] = { ...rest, sourceText };
+  }
+  return parseReviewedCandidates(result);
 }
 
 export function sameReviewedCandidate(left: ReviewedCandidate, right: ReviewedCandidate): boolean {
@@ -111,7 +159,7 @@ export function assertReviewedAssetReferences(rows: ReviewedCandidate[], assetId
     if (row.reviewMode === 'expense') {
       if (!row.historyId || !matchesExpenseReceipt(row, histories.get(row.historyId)) ||
         !assetIds.has(row.expenseDraft?.assetId ?? '')) throw Error('archive-review-history-reference');
-    } else if (!assetIds.has(row.asset.id)) throw Error('archive-review-asset-reference');
+    } else if (!assetIds.has(row.merge?.targetId ?? row.asset.id)) throw Error('archive-review-asset-reference');
   }
 }
 
@@ -193,6 +241,7 @@ function reviewTransaction<T>(store: IntakeReviewStorage, action: () => Promise<
 }
 async function assertReviewEditable(store: IntakeReviewStorage, id: string): Promise<void> {
   if (await store.importJournal?.get(reviewedExpenseJournalId(id))) throw Error('review-expense-pending');
+  if (await store.importJournal?.get(`review-merge:${id}`)) throw Error('review-merge-pending');
 }
 
 export async function setReviewedCandidateMode(store: IntakeReviewStorage, id: string, reviewMode: 'asset' | 'expense',

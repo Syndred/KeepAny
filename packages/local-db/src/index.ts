@@ -15,7 +15,9 @@ export type { VaultRecord } from './password-vault-storage';
 import type { SyncOperation } from '../../contracts/src';
 import { assertReviewedAssetReferences, cancelReviewedExpenseConfirmation, confirmReviewedExpense, migrateLegacyIntakeReview,
   parseReviewedCandidates, pendingReviewedExpenseConfirmations, replayReviewedExpense, sameReviewedCandidate,
+  retainReviewedCsvSources,
   type PendingReviewedExpenseConfirmation, type ReviewedCandidate, type ReviewedImportJournal } from './intake-review';
+import { replayReviewedAssetMerge } from './intake-asset-merge';
 import { pendingSubscriptionSave, replaySubscriptionSave, subscriptionSaveComplete, type PendingSubscriptionSave, type SubscriptionLink, type SubscriptionSaveJournal } from './subscription-save';
 import { assertCategoryMutationAllowed, cancelCategoryEdit as cancelCategoryEditIntent, deleteCustomCategory as deleteCustomCategoryIntent,
   editCustomCategory as editCustomCategoryIntent, pendingCategoryEdit, replayCategoryEdit, withCategoryMutationGate,
@@ -1054,7 +1056,7 @@ export class LocalRepository {
     if (await this.fileStore.journal.count()) throw Error('restore-recovery-pending');
     if (await this.fileStore.categoryEditJournal.count()) throw Error('category-edit-pending');
     if (await this.fileStore.subscriptionSaveJournal.count()) throw Error('subscription-relations-pending');
-    if ((await this.fileStore.importJournal.toArray()).some(entry => entry.reviewedExpense)) throw Error('review-expense-pending');
+    await assertNoPendingReviewedConfirmations(this.fileStore);
     const pending = await this.fileStore.archiveMerge.get('active');
     if (pending && pending.phase !== 'syncing') throw Error('archive-merge-sync-paused');
   }
@@ -1189,7 +1191,7 @@ export class LocalRepository {
       if (await this.fileStore.journal.count()) throw Error('restore-recovery-pending');
       if (await this.fileStore.categoryEditJournal.count()) throw Error('category-edit-pending');
       if (await this.fileStore.subscriptionSaveJournal.count()) throw Error('subscription-relations-pending');
-      if ((await this.fileStore.importJournal.toArray()).some(entry => entry.reviewedExpense)) throw Error('review-expense-pending');
+      await assertNoPendingReviewedConfirmations(this.fileStore);
       const pending = await this.fileStore.archiveMerge.get('active');
       if (pending && pending.phase !== 'syncing') throw Error('archive-merge-sync-paused');
       const existing = await this.fileStore.scopedOutbox.get(id);
@@ -1254,7 +1256,7 @@ export class LocalRepository {
         if (await this.fileStore.journal.count()) throw Error('restore-recovery-pending');
         if (await this.fileStore.categoryEditJournal.count()) throw Error('category-edit-pending');
         if (await this.fileStore.subscriptionSaveJournal.count()) throw Error('subscription-relations-pending');
-        if ((await this.fileStore.importJournal.toArray()).some(entry => entry.reviewedExpense)) throw Error('review-expense-pending');
+        await assertNoPendingReviewedConfirmations(this.fileStore);
         const pending = await this.fileStore.archiveMerge.get('active');
         if (pending && pending.phase !== 'syncing') throw Error('archive-merge-sync-paused');
         await this.fileStore.scopedPull.add({ id: scope, scope, cursorStart: cursor, change,
@@ -1379,9 +1381,16 @@ export class LocalRepository {
         }
       }));
       const assetIds = new Set(plan.targets.filter(target => target.type === 'asset').map(target => target.id));
-      const reviews = (await this.fileStore.intakeReview.toArray()).filter(review =>
-        assetIds.has(review.asset.id) || !!review.expenseDraft && assetIds.has(review.expenseDraft.assetId));
+      const allReviews = await this.fileStore.intakeReview.toArray();
+      const reviews = allReviews.filter(review =>
+        assetIds.has(review.asset.id) || !!review.merge && assetIds.has(review.merge.targetId) ||
+        !!review.expenseDraft && assetIds.has(review.expenseDraft.assetId));
+      const remainingReviews = retainReviewedCsvSources(allReviews, new Set(reviews.map(review => review.id)));
       await this.fileStore.intakeReview.bulkDelete(reviews.map(review => review.id));
+      for (const review of remainingReviews) {
+        const before = allReviews.find(row => row.id === review.id);
+        if (before && !sameReviewedCandidate(before, review)) await this.fileStore.intakeReview.put(review);
+      }
     });
     // Reuse reference-aware cleanup; attachments shared by other records or queued sync writes stay protected.
     for (const id of attachmentIds) await this.cleanupUnreferencedFile(id);
@@ -1806,7 +1815,7 @@ export class LocalRepository {
         this.fileStore.categoryEditJournal, this.fileStore.passwordVault, this.fileStore.journal], async () => {
         if ((await this.fileStore.journal.toArray()).some(entry => entry.passwordVault !== undefined)) throw Error('restore-recovery-pending');
         if (await this.fileStore.categoryEditJournal.count()) throw Error('category-edit-pending');
-        if ((await this.fileStore.importJournal.toArray()).some(entry => entry.reviewedExpense)) throw Error('review-expense-pending');
+        await assertNoPendingReviewedConfirmations(this.fileStore);
         const actual = await Dexie.waitFor(Dexie.ignoreTransaction(() => this.allRecords()));
         if (JSON.stringify(actual.sort((a, b) => a.id.localeCompare(b.id))) !==
           JSON.stringify([...rows].sort((a, b) => a.id.localeCompare(b.id)))) throw Error('archive-export-stale');
@@ -1872,7 +1881,7 @@ export class LocalRepository {
         this.fileStore.scopedAttachmentUploads, this.fileStore.syncBase, this.fileStore.syncMeta,
         this.fileStore.pullJournal, this.fileStore.passwordVault], async () => {
         if (await this.fileStore.categoryEditJournal.count()) throw Error('category-edit-pending');
-        if ((await this.fileStore.importJournal.toArray()).some(entry => entry.reviewedExpense)) throw Error('review-expense-pending');
+        await assertNoPendingReviewedConfirmations(this.fileStore);
         if (await this.fileStore.archiveMerge.count()) throw Error('archive-merge-pending');
         if (await this.fileStore.journal.count()) throw Error('restore-recovery-pending');
         await assertRestoreIdentity(this.fileStore, manifest.sourceBinding);
@@ -2051,7 +2060,17 @@ async function assertRestoreRecoveryGate(store: FileStore): Promise<void> {
   if (await store.renewalJournal.count()) throw Error('renewal-recovery-pending');
   if (await store.subscriptionSaveJournal.count()) throw Error('subscription-relations-pending');
   if (await store.archiveMerge.count()) throw Error('archive-merge-pending');
-  if ((await store.importJournal.toArray()).some(entry => entry.reviewedExpense)) throw Error('review-expense-pending');
+  await assertNoPendingReviewedConfirmations(store);
+}
+async function assertNoPendingReviewedConfirmations(store: FileStore): Promise<void> {
+  const entries = await store.importJournal.toArray();
+  if (entries.some(entry => entry.reviewedExpense)) throw Error('review-expense-pending');
+  if (entries.some(entry => entry.reviewedAssetMerge)) throw Error('review-merge-pending');
+}
+async function recoverReviewedAssetMerges(db: RxDatabase, store: FileStore): Promise<void> {
+  for (const entry of await store.importJournal.toArray()) {
+    if (entry.reviewedAssetMerge) await replayReviewedAssetMerge(db, store, entry.id);
+  }
 }
 function assertRestoreRecoveryReferences(rows: RecordRow[], candidates: ReviewedCandidate[], files: Map<string, StoredFile>): void {
   let parsed: ReviewedCandidate[];
@@ -2551,7 +2570,7 @@ export async function openLocalRepository(name: string): Promise<LocalRepository
     const openedDb = db;
     // Another tab may still own an active batch; only recover its journal after the shared lock is released.
     await withRenewalLock(`keepany-batch:${name}`, async () => {
-      for (const entry of await store.importJournal.toArray()) if (!entry.reviewedExpense) await rollbackImport(openedDb, store, entry.id);
+      for (const entry of await store.importJournal.toArray()) if (!entry.reviewedExpense && !entry.reviewedAssetMerge) await rollbackImport(openedDb, store, entry.id);
     });
     const repository = new LocalRepository(db, store);
     if (name === 'keepany-v1') {
@@ -2576,6 +2595,8 @@ export async function openLocalRepository(name: string): Promise<LocalRepository
     });
     try { await repository.retryReviewedExpenseConfirmations(); }
     catch { /* Keep the frozen receipt intent visible without blocking unrelated local CRUD. */ }
+    try { await recoverReviewedAssetMerges(openedDb, store); }
+    catch { /* Preserve the merge intent and any newer target edit for explicit review. */ }
     try { await repository.retryAllCategoryEdits(); }
     catch { /* Preserve conflicting category intents while keeping local data readable. */ }
     if ((await store.archiveMerge.get('active'))?.phase === 'applying') {
@@ -2674,6 +2695,8 @@ function defaultRepository(): Promise<LocalRepository> {
       });
       try { await repository.retryReviewedExpenseConfirmations(); }
       catch { /* Pending confirmation stays frozen and can be retried explicitly. */ }
+      try { await recoverReviewedAssetMerges(resource.db, resource.fileStore); }
+      catch { /* Pending merge stays visible through its durable candidate intent. */ }
       try { await repository.retryAllCategoryEdits(); }
       catch { /* The persisted direction and conflict remain available for recovery. */ }
       for (const entry of await resource.fileStore.journal.toArray()) {
