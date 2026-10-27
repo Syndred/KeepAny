@@ -1,0 +1,50 @@
+{
+  "date": "2026-10-27",
+  "sourceCommit": "5c52efe",
+  "baseCommit": "6dafe59",
+  "unit": {
+    "files": 6,
+    "passed": 28
+  },
+  "changedSourceLint": {
+    "files": 13,
+    "errors": 0,
+    "warnings": 0
+  },
+  "finalSourceFlowBatch": {
+    "passed": 6,
+    "scope": "中英390/1280合并工作流5项和移动导航1项"
+  },
+  "finalFixedPackage": {
+    "entry": "assets/index-CYrYqThj.js",
+    "currentFiles": 102,
+    "retainedFiles": 2590,
+    "browserBatches": [
+      9,
+      6
+    ],
+    "passedDistinctScenarios": 15
+  },
+  "localAddress": "http://127.0.0.1:4180/assets",
+  "realUserDataUsed": false,
+  "publicWebsiteDeployed": false,
+  "githubReleasePublished": false,
+  "screenshots": {
+    "fixed-accounts-en-1280.png": "aa420f37bc6a3f864da3fa225af401098958fc75db3534cfd0edf5c74446539d",
+    "fixed-accounts-en-390.png": "31a0bf9277b48ea7b09f636054f06b945dfc75b9f75774fa833965e88ba15c0a",
+    "fixed-accounts-zh-1280.png": "3e02e8f70b90b1a47575a9486cce7eb90da5f3874f1955fd74a001ae81e113fc",
+    "fixed-accounts-zh-390.png": "dcc47e954f28c19d42a32c467116377f9b394cf647ca0a6af4c99c070a035a92",
+    "fixed-assets-en-1280.png": "1da2ab0ba589e0f45362e4e66cc9a8eff07c9f2538391c6158188a0bd1873b97",
+    "fixed-assets-en-390.png": "1ec243d95816096fb32c4380e9fa8891a889c962f7c23f2819aa99045b723498",
+    "fixed-assets-zh-1280.png": "8e5d099fd7963ebda599ca5c32a9e24871f77de3cecea61bad66d90583d9dd94",
+    "fixed-assets-zh-390.png": "15fd59cdec48df838efee7e70776db4df82c974487ef33badecbaefe2c1a67e9",
+    "source-accounts-en-1280.png": "d3270b3613372433973adf59bc32bd7293d81045cb0f46797dd24a3a46b973a7",
+    "source-accounts-en-390.png": "d26299c8b4e5ddc9c1baa3c700176b20b5f3a48acc0252785180560bc810c2fa",
+    "source-accounts-zh-CN-1280.png": "fdefd95021f99b2b8399c15ece2fd03444164bfca0cf99e918a131fe0c984467",
+    "source-accounts-zh-CN-390.png": "e80d002b16e5c1cc36afc0437c956ee03dc2b2ca0c6c181e8bb248202de7e23c",
+    "source-assets-en-1280.png": "df439a3dcb96fd1e38dd2e836b685da30cf1d3cc17880fe736ed01f9eeca5db2",
+    "source-assets-en-390.png": "291b5c45c8befc53f4a1fd00c3ffdd796189d9d5eaee937d4a62c1e4786afcb4",
+    "source-assets-zh-CN-1280.png": "414933b49487ae9265bc562148960c7103fe84d44c440f3aca5f27a21903491e",
+    "source-assets-zh-CN-390.png": "2d31935a9d6b12e81eb42a9155157c7f09799b45c2716e589a19cb44c3863ac2"
+  }
+}
