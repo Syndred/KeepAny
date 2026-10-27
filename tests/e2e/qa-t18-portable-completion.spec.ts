@@ -62,7 +62,7 @@ for (const [locale, width] of [["zh-CN", 390], ["en", 1280]] as const) test(`T18
 		await expect(preview).toHaveCount(0);
 		await page.reload();
 		const blocked = await page.evaluate(async () => {
-			const response = await fetch("/__keepany_intake__/url-metadata", { method: "POST", headers: { "content-type": "application/json", "x-keepany-intake": "metadata" }, body: JSON.stringify({ url: "http://127.0.0.1:4180/" }) });
+			const response = await fetch("/__keepany_intake__/url-metadata", { method: "POST", headers: { "content-type": "application/json", "x-keepany-intake": "metadata" }, body: JSON.stringify({ url: "http://127.0.0.1:1/" }) });
 			return { status: response.status, value: await response.json() };
 		});
 		expect(blocked).toEqual({ status: 422, value: { error: "metadata-private" } });
