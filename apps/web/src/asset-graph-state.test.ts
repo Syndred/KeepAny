@@ -74,4 +74,12 @@ describe('shared asset graph presentation', () => {
     expect(accountFamilyGraph(project.id, new Map([project, account, item].map(asset => [asset.id, asset])), [link, removed, outside]).relations).toEqual([link]);
     expect(removed.deleted).toBe(true); expect(item.deleted).toBe(true);
   });
+  it('retains the active scope when a new destination evicts the oldest center at the cache limit', () => {
+    const source = { ...newAsset('account'), id: 'cache-limit-source' };
+    const target = { ...newAsset('account'), id: 'cache-limit-destination' };
+    graphViewState(source.id).scope = 'family';
+    for (let index = 0; index < 63; index++) graphViewState(`cache-limit-other-${index}`);
+    rememberGraphVisit(source, target);
+    expect(graphViewState(target.id).scope).toBe('family');
+  });
 });

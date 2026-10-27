@@ -24,7 +24,8 @@ export function rememberGraphVisit(from: Asset, to: Asset) {
 	if (from.id === to.id) return;
 	// Following a node continues the current connection scope. Keep the
 	// destination's own filter/camera and the source's return state separate.
-	graphViewState(to.id).scope = graphViewState(from.id).scope;
+	const scope = graphViewState(from.id).scope;
+	graphViewState(to.id).scope = scope;
 	if (returnTrail.at(-1)?.to !== from.id) returnTrail.length = 0;
 	returnTrail.push({ from: { id: from.id, kind: from.kind }, to: to.id });
 	if (returnTrail.length > 32) returnTrail.shift();
