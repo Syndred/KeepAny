@@ -241,7 +241,18 @@ test('existing output is not overwritten, and output inside app-data is rejected
 test('CLI invalid arguments emit only fixed public metadata, never the supplied private argument', async () => {
   const result = await new Promise(resolve => execFile(process.execPath, [path.resolve('scripts/observe-ios-project-fixtures.mjs'), '--private-marker'], (error, stdout, stderr) => resolve({ error, stdout, stderr })));
   assert.equal(result.error.code, 1); assert.equal(result.stderr, ''); assert.doesNotMatch(result.stdout, /private-marker/);
-  assert.deepEqual(JSON.parse(result.stdout), { observer: 'ios-project-fixtures', status: 'failed', code: 'observer-unavailable' });
+  assert.deepEqual(JSON.parse(result.stdout), { observer: 'ios-project-fixtures', status: 'failed', code: 'invalid-options' });
+});
+
+test('CLI initialization failure retains its fixed category without exposing an app-data path or creating evidence', async t => {
+  const env = await environment(t);
+  const missing = path.join(env.root, 'private-missing-app-data');
+  const result = await new Promise(resolve => execFile(process.execPath, [path.resolve('scripts/observe-ios-project-fixtures.mjs'),
+    '--app-data', missing, '--output', env.output], (error, stdout, stderr) => resolve({ error, stdout, stderr })));
+  assert.equal(result.error.code, 1); assert.equal(result.stderr, '');
+  assert.deepEqual(JSON.parse(result.stdout), { observer: 'ios-project-fixtures', status: 'failed', code: 'invalid-app-data' });
+  assert.ok(!result.stdout.includes(missing) && !result.stdout.includes(env.root));
+  await assert.rejects(fs.stat(env.output), { code: 'ENOENT' });
 });
 
 const coded = code => Object.assign(new Error(`private diagnostic for ${code}`), { observerCode: code });

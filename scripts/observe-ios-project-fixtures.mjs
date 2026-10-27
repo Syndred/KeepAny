@@ -364,8 +364,13 @@ export async function main(args = process.argv.slice(2)) {
     const summary = await observer.run({ signal: controller.signal });
     process.stdout.write(`${JSON.stringify({ observer: 'ios-project-fixtures', status: summary.status,
       appendedSnapshots: summary.appendedSnapshots, errorCount: Object.values(summary.errors).reduce((sum, value) => sum + value, 0) })}\n`);
-  } catch {
-    process.stdout.write(`${JSON.stringify({ observer: 'ios-project-fixtures', status: 'failed', code: 'observer-unavailable' })}\n`);
+  } catch (error) {
+    // Preserve only enumerated failure categories. Never emit CLI arguments,
+    // app-data paths, SQLite stderr or arbitrary exception messages.
+    const code = ERROR_CODES.has(error?.observerCode)
+      || ['invalid-options', 'invalid-app-data', 'output-unavailable'].includes(error?.observerCode)
+      ? error.observerCode : 'observer-unavailable';
+    process.stdout.write(`${JSON.stringify({ observer: 'ios-project-fixtures', status: 'failed', code })}\n`);
     process.exitCode = 1;
   } finally {
     process.off('SIGINT', stop); process.off('SIGTERM', stop);
