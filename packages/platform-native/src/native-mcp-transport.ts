@@ -4,6 +4,8 @@ import { MCP_HTTP_REQUEST_LIMIT, MCP_HTTP_RESPONSE_LIMIT, type McpInboundHttp } 
 
 export interface NativeMcpTransportPlugin {
   reset(): Promise<void>;
+  prepare(options: { address: string }): Promise<NativeMcpEndpoint>;
+  activate(options: { instanceId: string }): Promise<NativeMcpEndpoint>;
   start(options: { address: string }): Promise<NativeMcpEndpoint>;
   stop(options: { instanceId: string }): Promise<void>;
   cancel(options: { instanceId: string; requestId: string }): Promise<void>;
@@ -180,4 +182,49 @@ export async function startNativeMcpTransport(options: {
   } catch {
     await close(); throw Error('mcp-native-transport');
   }
+}
+
+/** Preparing and exporting a ticket must precede opening the foreground
+ * listener: a system Save/Share activity can pause the application. */
+export async function prepareNativeMcpTransport(address: string, bridge: NativeMcpTransportPlugin = native) {
+  if (!privateAddress(address) || !Capacitor.isNativePlatform() || !Capacitor.isPluginAvailable('KeepAnyMcpTransport')) throw Error('mcp-native-transport');
+  let info: NativeMcpEndpoint | undefined;
+  try { info = await bridge.prepare({ address }); info = checkedEndpoint(info, address); }
+  catch {
+    if (uuid.safeParse(info?.instanceId).success && info) await bridge.stop({ instanceId: info.instanceId }).catch(() => {});
+    throw Error('mcp-native-transport');
+  }
+  const endpoint = info;
+  let phase: 'prepared' | 'activating' | 'active' | 'closed' = 'prepared';
+  let active: Awaited<ReturnType<typeof startNativeMcpTransport>> | undefined;
+  return {
+    endpoint,
+    async activate(options: Omit<Parameters<typeof startNativeMcpTransport>[0], 'address'>) {
+      if (phase !== 'prepared') throw Error('mcp-native-transport');
+      phase = 'activating';
+      const delegated: NativeMcpTransportPlugin = {
+        reset: () => bridge.reset(), prepare: row => bridge.prepare(row), activate: row => bridge.activate(row),
+        start: async () => {
+          const result = await bridge.activate({ instanceId: endpoint.instanceId });
+          if (['instanceId', 'endpoint', 'certificatePem', 'spkiSha256'].some(key => result[key as keyof NativeMcpEndpoint] !== endpoint[key as keyof NativeMcpEndpoint])) throw Error('mcp-native-transport');
+          return result;
+        },
+        stop: row => bridge.stop(row), cancel: row => bridge.cancel(row),
+        responseStart: row => bridge.responseStart(row), responseWrite: row => bridge.responseWrite(row), responseEnd: row => bridge.responseEnd(row),
+        addListener: (event, listener) => bridge.addListener(event, listener),
+      };
+      try {
+        const session = await startNativeMcpTransport({ ...options, address }, delegated);
+        if (phase !== 'activating') { await session.close(); throw Error('mcp-native-transport'); }
+        active = session; phase = 'active'; return session;
+      } catch {
+        phase = 'closed'; await bridge.stop({ instanceId: endpoint.instanceId }).catch(() => {}); throw Error('mcp-native-transport');
+      }
+    },
+    async close() {
+      phase = 'closed';
+      if (active) await active.close();
+      else await bridge.stop({ instanceId: endpoint.instanceId });
+    },
+  };
 }

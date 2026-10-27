@@ -3,14 +3,15 @@ const platform = vi.hoisted(() => ({ native: true, available: true }));
 vi.mock('@capacitor/core', () => ({ Capacitor: { isNativePlatform: () => platform.native, isPluginAvailable: () => platform.available }, registerPlugin: () => ({}) }));
 import { McpAuthority, MemoryAuthorityStorage } from '../../mcp/src/authority';
 import { createKeepAnyMcpHttpHandler } from '../../mcp/src/http-handler';
-import { resetNativeMcpTransport, startNativeMcpTransport, type NativeMcpTransportPlugin, type NativeMcpRequestHandler } from './native-mcp-transport';
+import { prepareNativeMcpTransport, resetNativeMcpTransport, startNativeMcpTransport, type NativeMcpTransportPlugin, type NativeMcpRequestHandler } from './native-mcp-transport';
 
 const endpoint = { instanceId: crypto.randomUUID(), endpoint: 'https://127.0.0.1:9448/mcp',
   certificatePem: `-----BEGIN CERTIFICATE-----\n${'A'.repeat(64)}\n-----END CERTIFICATE-----\n`, spkiSha256: 'a'.repeat(64) };
 function fixture() {
   const callbacks = new Map<string, (event: unknown) => void>(), responses = new Map<string, { status: number; chunks: string[] }>();
   const bridge: NativeMcpTransportPlugin = {
-    reset: vi.fn(async () => {}), start: vi.fn(async () => endpoint), stop: vi.fn(async () => {}), cancel: vi.fn(async () => {}),
+    reset: vi.fn(async () => {}), prepare: vi.fn(async () => endpoint), activate: vi.fn(async () => endpoint),
+    start: vi.fn(async () => endpoint), stop: vi.fn(async () => {}), cancel: vi.fn(async () => {}),
     addListener: vi.fn(async (name, callback) => { callbacks.set(name, callback); return { remove: vi.fn(async () => { callbacks.delete(name); }) }; }),
     responseStart: vi.fn(async row => { responses.set(row.requestId, { status: row.status, chunks: [] }); }),
     responseWrite: vi.fn(async row => { responses.get(row.requestId)?.chunks.push(row.chunkBase64); }),
@@ -34,6 +35,29 @@ it('bootstrap resets an existing native listener without creating a port and fai
   await expect(resetNativeMcpTransport(test.bridge)).rejects.toThrow('mcp-native-transport');
   platform.available = false;
   expect(await resetNativeMcpTransport(test.bridge)).toBe(false);
+});
+
+it('prepares export metadata without an active listener and activates only the exact same endpoint and certificate', async () => {
+  const test = fixture(), createHandler = vi.fn(idleHandler);
+  const prepared = await prepareNativeMcpTransport('127.0.0.1', test.bridge);
+  expect(prepared.endpoint).toEqual(endpoint); expect(test.bridge.activate).not.toHaveBeenCalled();
+  expect(test.bridge.start).not.toHaveBeenCalled(); expect(createHandler).not.toHaveBeenCalled();
+  await prepared.activate({ createHandler });
+  expect(test.bridge.activate).toHaveBeenCalledWith({ instanceId: endpoint.instanceId });
+  expect(createHandler).toHaveBeenCalledOnce();
+  await expect(prepared.activate({ createHandler })).rejects.toThrow('mcp-native-transport');
+  await prepared.close();
+});
+
+it('rejects activation identity or port substitution and still stops its exact prepared native instance', async () => {
+  for (const changed of [{ spkiSha256: 'b'.repeat(64) }, { endpoint: 'https://127.0.0.1:9450/mcp' }, { instanceId: crypto.randomUUID() }]) {
+    const test = fixture(), createHandler = vi.fn(idleHandler);
+    const prepared = await prepareNativeMcpTransport('127.0.0.1', test.bridge);
+    test.bridge.activate = vi.fn(async () => ({ ...endpoint, ...changed }));
+    await expect(prepared.activate({ createHandler })).rejects.toThrow('mcp-native-transport');
+    expect(createHandler).not.toHaveBeenCalled(); expect(test.bridge.stop).toHaveBeenCalledWith({ instanceId: endpoint.instanceId });
+    expect(test.callbacks.size).toBe(0);
+  }
 });
 
 it('passes actual parser Host separately to the official SDK protocol and preserves its real finite response in bounded chunks', async () => {
