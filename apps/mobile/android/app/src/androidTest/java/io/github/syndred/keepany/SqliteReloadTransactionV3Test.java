@@ -162,6 +162,7 @@ public final class SqliteReloadTransactionV3Test {
     private void replaceRealDocumentAfterBegin(String name) throws Exception { replaceRealDocumentAfterBegin(name, false); }
     @SuppressLint("SetJavaScriptEnabled")
     private void replaceRealDocumentAfterBegin(String name, boolean withSavepoint) throws Exception {
+        deferred.add(name);
         DocumentBridge bridge = new DocumentBridge(name, withSavepoint);
         AtomicReference<WebView> web = new AtomicReference<>();
         InstrumentationRegistry.getInstrumentation().runOnMainSync(() -> {
@@ -267,10 +268,14 @@ public final class SqliteReloadTransactionV3Test {
     @After public void finishOnlyOwned() throws Exception {
         for (WebView view : views) InstrumentationRegistry.getInstrumentation().runOnMainSync(() -> { view.removeJavascriptInterface("Probe"); view.destroy(); });
         for (Map.Entry<String, Database> entry : direct.entrySet()) {
+            try { nativeStep("observe-owned-direct-transaction-before-close", () -> { if (entry.getValue().isOpen() && entry.getValue().getDb().inTransaction()) deferred.add(entry.getKey()); return null; }); }
+            catch (Exception error) { deferred.add(entry.getKey()); event("owned-direct-transaction-check", "rejected", code(error)); }
             try { nativeStep("close-owned-direct-connection", () -> { if (entry.getValue().isOpen()) entry.getValue().close(); return null; }); }
             catch (Exception error) { deferred.add(entry.getKey()); event("owned-direct-close-cleanup", "rejected", code(error)); }
         }
         for (String name : new ArrayList<>(connected)) {
+            try { if (nativeStep("observe-owned-transaction-before-close", () -> sqlite.isTransactionActive(name))) deferred.add(name); }
+            catch (Exception error) { deferred.add(name); event("owned-transaction-check", "rejected", code(error)); }
             try { close(name); } catch (Exception error) { deferred.add(name); event("owned-close-cleanup", "rejected", code(error)); }
         }
         for (String name : owned) {
