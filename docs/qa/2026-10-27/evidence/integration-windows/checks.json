@@ -1,0 +1,259 @@
+{
+  "date": "2026-10-27",
+  "baseline": "f659db1cfe08e7f18c1f15974b83416f092cfd3f",
+  "environment": "Windows Node24.21.0 Playwright1.63.0 isolated Chromium; source4205; isolated portable4391/4403/random",
+  "unit": {
+    "total": 937,
+    "passed": 924,
+    "failed": 7,
+    "skipped": 6,
+    "success": false,
+    "unresolved": "6 MCP Windows POSIX-permission/no-follow cases; keep security checks",
+    "timeoutRetest": {
+      "passed": 2,
+      "failed": 0
+    },
+    "skips": [
+      {
+        "file": "apps/sync-server/src/bound-state-writer-db.test.ts",
+        "name": "applies signed state with PostgreSQL CAS across writers and retains revoked tombstones"
+      },
+      {
+        "file": "apps/sync-server/src/bound-state-writer-db.test.ts",
+        "name": "admits at most 32 non-revoked IDs across PostgreSQL writers without starving accepted IDs"
+      },
+      {
+        "file": "apps/sync-server/src/real-client.test.ts",
+        "name": "syncs two RxDB clients through real HTTP and PostgreSQL across lost ack, conflict and tombstone"
+      },
+      {
+        "file": "apps/sync-server/src/real-migration.test.ts",
+        "name": "upgrades a historical accepted change through 003-008 in real PostgreSQL"
+      },
+      {
+        "file": "apps/sync-server/src/real-postgres.test.ts",
+        "name": "runs two offline clients through Hono, PostgreSQL and signed S3 HTTP"
+      },
+      {
+        "file": "apps/sync-server/src/self-host-session.test.ts",
+        "name": "isolates two Better Auth users, workspaces, records, attachments and memberships over real Hono HTTP and PG"
+      }
+    ]
+  },
+  "runs": [
+    {
+      "source": "test-results/integration-original-results.json",
+      "stats": {
+        "startTime": "2026-10-27T06:20:16.372Z",
+        "duration": 42420.788,
+        "expected": 6,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      }
+    },
+    {
+      "source": "test-results/integration-windows-first.json",
+      "stats": {
+        "startTime": "2026-10-27T06:04:13.069Z",
+        "duration": 34351.014,
+        "expected": 4,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      }
+    },
+    {
+      "source": "test-results/integration-windows-middle.json",
+      "stats": {
+        "startTime": "2026-10-27T06:10:29.209Z",
+        "duration": 37945.803,
+        "expected": 6,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      }
+    },
+    {
+      "source": "test-results/integration-task-search.json",
+      "stats": {
+        "startTime": "2026-10-27T06:11:31.519Z",
+        "duration": 16008.433,
+        "expected": 2,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      }
+    },
+    {
+      "source": "test-results/T06-supplement-final-results.json",
+      "stats": {
+        "startTime": "2026-10-27T06:10:03.989Z",
+        "duration": 19391.374,
+        "expected": 2,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      }
+    },
+    {
+      "source": "test-results/T07-supplement-fixed-results.json",
+      "stats": {
+        "startTime": "2026-10-27T06:07:45.030Z",
+        "duration": 15797.658,
+        "expected": 2,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      }
+    },
+    {
+      "source": "test-results/T13-results.json",
+      "stats": {
+        "startTime": "2026-10-27T06:09:01.370Z",
+        "duration": 63195.985,
+        "expected": 8,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      }
+    },
+    {
+      "source": "test-results/T13-leap-results.json",
+      "stats": {
+        "startTime": "2026-10-27T06:12:04.382Z",
+        "duration": 3948.4390000000003,
+        "expected": 2,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      }
+    },
+    {
+      "source": "test-results/T14-results.json",
+      "stats": {
+        "startTime": "2026-10-27T06:10:48.505Z",
+        "duration": 49449.83,
+        "expected": 8,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      }
+    },
+    {
+      "source": "test-results/T20-results.json",
+      "stats": {
+        "startTime": "2026-10-27T06:13:22.217Z",
+        "duration": 88018.088,
+        "expected": 5,
+        "skipped": 0,
+        "unexpected": 1,
+        "flaky": 0
+      }
+    },
+    {
+      "source": "test-results/T20-final-results.json",
+      "stats": {
+        "startTime": "2026-10-27T06:16:23.156Z",
+        "duration": 10333.496,
+        "expected": 1,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      }
+    },
+    {
+      "source": "test-results/T20-full-vault-final-results.json",
+      "stats": {
+        "startTime": "2026-10-27T06:18:00.673Z",
+        "duration": 34274.826,
+        "expected": 1,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      }
+    },
+    {
+      "source": "test-results/T20-supplement-results.json",
+      "stats": {
+        "startTime": "2026-10-27T06:17:01.754Z",
+        "duration": 14543.55,
+        "expected": 2,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      }
+    },
+    {
+      "source": "test-results/T24-results.json",
+      "stats": {
+        "startTime": "2026-10-27T06:15:44.543Z",
+        "duration": 19886.448,
+        "expected": 1,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      }
+    },
+    {
+      "source": "test-results/T26-upgrade-results.json",
+      "stats": {
+        "startTime": "2026-10-27T06:21:44.042Z",
+        "duration": 10361.060000000001,
+        "expected": 1,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      }
+    },
+    {
+      "source": "test-results/T26-active-upgrade-results.json",
+      "stats": {
+        "startTime": "2026-10-27T06:24:58.979Z",
+        "duration": 6930.329,
+        "expected": 1,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      }
+    },
+    {
+      "source": "test-results/T26-quota-results.json",
+      "stats": {
+        "startTime": "2026-10-27T06:21:54.833Z",
+        "duration": 81572.316,
+        "expected": 2,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      }
+    },
+    {
+      "source": "test-results/T26-portable-results.json",
+      "stats": {
+        "startTime": "2026-10-27T06:23:37.865Z",
+        "duration": 27207.551000000003,
+        "expected": 7,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      }
+    },
+    {
+      "source": "test-results/final-source-smoke.json",
+      "stats": {
+        "startTime": "2026-10-27T06:35:16.358Z",
+        "duration": 40585.042,
+        "expected": 7,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      }
+    }
+  ],
+  "notes": [
+    "Runs overlap; do not sum them as distinct baseline cases.",
+    "Full unit run remains red; isolated crypto timeout retest does not erase Windows MCP failures.",
+    "Source4205 and portable package evidence are separate; user4180 was not touched."
+  ]
+}

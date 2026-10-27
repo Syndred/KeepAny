@@ -1,0 +1,115 @@
+{
+  "kind": "s3",
+  "locale": "en-US",
+  "width": 1280,
+  "fixture": {
+    "projectId": "5ef888eb-9e4a-4a14-b04c-e2f34aba9b36",
+    "imageId": "d194e3e3-866e-45e0-b705-5ba0c94716fc"
+  },
+  "ciphertextBytes": 1921,
+  "ciphertextSha256": "245f67aca1b96b389a19b719026ae4443f8f88b3d1baebe19e8a42083e6235aa",
+  "requestLog": [
+    {
+      "method": "PUT",
+      "path": "/object.ka1",
+      "status": 401,
+      "bytes": 0,
+      "authenticated": false,
+      "tls": "TLSv1.3"
+    },
+    {
+      "method": "PUT",
+      "path": "/object.ka1",
+      "status": 0,
+      "bytes": 0,
+      "authenticated": true,
+      "tls": "TLSv1.3"
+    },
+    {
+      "method": "PUT",
+      "path": "/object.ka1",
+      "status": 0,
+      "bytes": 0,
+      "authenticated": true,
+      "tls": "TLSv1.3"
+    },
+    {
+      "method": "PUT",
+      "path": "/object.ka1",
+      "status": 201,
+      "bytes": 1921,
+      "authenticated": true,
+      "tls": "TLSv1.3"
+    },
+    {
+      "method": "GET",
+      "path": "/object.ka1",
+      "status": 200,
+      "bytes": 1921,
+      "authenticated": true,
+      "tls": "TLSv1.3"
+    },
+    {
+      "method": "PUT",
+      "path": "/object.ka1",
+      "status": 201,
+      "bytes": 1921,
+      "authenticated": true,
+      "tls": "TLSv1.3"
+    },
+    {
+      "method": "GET",
+      "path": "/object.ka1",
+      "status": 200,
+      "bytes": 1921,
+      "authenticated": true,
+      "tls": "TLSv1.3"
+    },
+    {
+      "method": "GET",
+      "path": "/object.ka1",
+      "status": 200,
+      "bytes": 1921,
+      "authenticated": true,
+      "tls": "TLSv1.3"
+    },
+    {
+      "method": "GET",
+      "path": "/object.ka1",
+      "status": 200,
+      "bytes": 1921,
+      "authenticated": true,
+      "tls": "TLSv1.3"
+    },
+    {
+      "method": "GET",
+      "path": "/object.ka1",
+      "status": 200,
+      "bytes": 1921,
+      "authenticated": true,
+      "tls": "TLSv1.3"
+    },
+    {
+      "method": "GET",
+      "path": "/download.ka1",
+      "status": 200,
+      "bytes": 1921,
+      "authenticated": true,
+      "tls": "TLSv1.3"
+    }
+  ],
+  "originalImageBytes": 68,
+  "restoredRows": 4,
+  "restoredFiles": 1,
+  "pageErrors": [],
+  "checks": [
+    "401 rejected",
+    "socket disconnect retried",
+    "corrupt readback rejected",
+    "no receipt before held GET completes",
+    "ciphertext and receipt hash verified",
+    "refresh clears credentials and receipt field",
+    "bad password/tamper preserve local sentinel",
+    "actual HTTPS object downloaded and restored with exact IDs/payloads/image bytes"
+  ]
+}

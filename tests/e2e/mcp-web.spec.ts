@@ -146,8 +146,8 @@ test('formal Web grants one RxDB record to an isolated official SDK stdio client
 
     const childEnv = Object.fromEntries(Object.entries(process.env).filter((entry): entry is [string, string] => entry[1] !== undefined));
     transport = new StdioClientTransport({
-      command: packagedExecutable ?? join(repo, 'node_modules/.bin/tsx'),
-      args: [...(packagedExecutable ? [] : [join(repo, 'apps/mcp-launcher/src/main.ts')]),
+      command: packagedExecutable ?? process.execPath,
+      args: [...(packagedExecutable ? [] : ['--import', 'tsx', join(repo, 'apps/mcp-launcher/src/main.ts')]),
         '--request', requestPath, '--pairing-file', pairingPath, '--state-dir', privateDir],
       cwd: packagedExecutable ? privateDir : repo, env: childEnv, stderr: 'pipe',
     });

@@ -2,10 +2,11 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { expect, test } from "@playwright/test";
 import { selectChoice } from "./helpers/select-choice";
+import { sourceModuleUrl } from "./helpers/source-module-url";
 
 const evidence = process.env.KEEPANY_EVIDENCE_DIR;
-const repositoryPath = `/@fs${process.cwd()}/packages/local-db/src/index.ts`;
-const domainPath = `/@fs${process.cwd()}/packages/domain/src/index.ts`;
+const repositoryPath = sourceModuleUrl("packages/local-db/src/index.ts");
+const domainPath = sourceModuleUrl("packages/domain/src/index.ts");
 
 // Healthy-contract extension for T03-01/02/04. Existing profile/search tests do not
 // jointly check canceled fields, unchanged relation IDs and a double-click create.

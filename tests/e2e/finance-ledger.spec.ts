@@ -1,8 +1,9 @@
 import { expect, test, type Page } from "@playwright/test";
 import { selectChoice } from "./helpers/select-choice";
+import { sourceModuleUrl } from "./helpers/source-module-url";
 
-const repositoryModuleUrl = `/@fs${process.cwd()}/packages/local-db/src/index.ts`;
-const domainModuleUrl = `/@fs${process.cwd()}/packages/domain/src/index.ts`;
+const repositoryModuleUrl = sourceModuleUrl("packages/local-db/src/index.ts");
+const domainModuleUrl = sourceModuleUrl("packages/domain/src/index.ts");
 
 async function seedLedger(page: Page) {
 	return page.evaluate(async ({ repositoryPath, domainPath }) => {

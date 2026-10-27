@@ -5,8 +5,9 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { selectChoice } from "./helpers/select-choice";
 
-const domainPath = `/@fs${process.cwd()}/packages/domain/src/index.ts`;
-const repositoryPath = `/@fs${process.cwd()}/packages/local-db/src/index.ts`;
+import { sourceModuleUrl } from "./helpers/source-module-url";
+const domainPath = sourceModuleUrl("packages/domain/src/index.ts");
+const repositoryPath = sourceModuleUrl("packages/local-db/src/index.ts");
 
 async function seedTargets(page: Page) {
 	return page.evaluate(async ({ domainPath, repositoryPath }) => {

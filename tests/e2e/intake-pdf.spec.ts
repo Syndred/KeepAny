@@ -2,6 +2,7 @@ import { expect, test } from "@playwright/test";
 import { mkdirSync } from "node:fs";
 import { pdf } from "./fixtures/pdf";
 import { selectChoice } from "./helpers/select-choice";
+import { sourceModuleUrl } from "./helpers/source-module-url";
 
 const evidence = process.env.KEEPANY_EVIDENCE_DIR ?? "docs/evidence/2026-09-30";
 mkdirSync(evidence, { recursive: true });
@@ -53,7 +54,7 @@ for (const locale of ["zh-CN", "en-US"]) for (const width of [390, 1280]) test(`
 			const data = await page.evaluate(async (path) => {
 				const { allRecords } = await import(path);
 				return (await allRecords()).map((record: { type: string; payload: string }) => ({ type: record.type, value: JSON.parse(record.payload) }));
-			}, `/@fs${process.cwd()}/packages/local-db/src/index.ts`);
+			}, sourceModuleUrl("packages/local-db/src/index.ts"));
 			const assets = data.filter((record: {type: string}) => record.type === 'asset');
 			expect(assets).toHaveLength(1);
 			expect(assets[0].value).toMatchObject({ name: 'Reviewed invoice', kind: 'subscription', amount: 0, description: 'Manually reviewed USD 12.00' });

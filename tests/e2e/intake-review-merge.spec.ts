@@ -100,7 +100,7 @@ for (const locale of ['zh-CN', 'en-US']) test(`${locale} 390 candidate merge req
     const sourceLink = sourcePage.getByRole('link', { name: zh ? '保存备份文件' : 'Save backup file' }); await expect(sourceLink).toBeVisible();
     const sourceFile = await saveDownload(sourcePage, sourceLink, 'source-candidates.ka1'), sourceData = await contents(sourceFile, sourcePassword);
     let baseline: Awaited<ReturnType<typeof contents>> | undefined;
-    for (const [round, choices] of [['first', ['source', 'target', 'source']], ['second', ['target', 'source', 'target']]] as const) {
+    for (const [round, choices] of [['first', ['source', 'target', 'source']], ['second', ['target', 'source', 'target']], ['stale', ['source', 'target', 'source']]] as const) {
       await configure(targetPage, 3213, targetWorkspace); const panel = targetPage.locator('.migration-panel');
       await panel.locator('input[type="file"]').first().setInputFiles(sourceFile);
       await panel.locator('input[type="password"]').first().fill(sourcePassword);
@@ -145,7 +145,7 @@ for (const locale of ['zh-CN', 'en-US']) test(`${locale} 390 candidate merge req
       expect(merged.candidates).toEqual(sourceData.candidates.map((candidate, index) => choices[index] === 'source' ? candidate : before.candidates[index]));
       expect(merged.records).toEqual(sourceData.records);
       await targetPage.reload(); await expect(targetPage.locator('.intake-review-row')).toHaveCount(3);
-      if (round === 'first') {
+      if (round !== 'second') {
         await expect(targetPage.locator('.intake-review-row').nth(0).getByLabel(zh ? '资料类型' : 'Record type')).toHaveAttribute("data-value", 'account');
         await expect(targetPage.locator('.intake-review-row').nth(1).getByLabel(zh ? '名称' : 'Name', { exact: true })).toHaveValue('Target pending decision');
         await expect(targetPage.locator('.intake-review-row').nth(2)).toContainText(zh ? '已确认' : 'Confirmed');
@@ -153,6 +153,21 @@ for (const locale of ['zh-CN', 'en-US']) test(`${locale} 390 candidate merge req
         await expect(targetPage.locator('.intake-review-row').nth(0).getByLabel(zh ? '资料类型' : 'Record type')).toHaveAttribute("data-value", 'item');
         await expect(targetPage.locator('.intake-review-row').nth(1)).toContainText(zh ? '已忽略' : 'Ignored');
         await expect(targetPage.locator('.intake-review-row').nth(2)).toContainText(zh ? '已忽略' : 'Ignored');
+      }
+      if (round === 'stale') {
+        const draft = targetPage.locator('.intake-review-row').nth(0);
+        await draft.getByLabel(zh ? '名称' : 'Name', { exact: true }).fill('Later local draft after merge');
+        await expect(draft.getByRole('status')).toHaveCount(0);
+        await targetPage.goto('/settings#connections');
+        await panel.getByRole('button', { name: zh ? '撤销本机合并' : 'Undo local merge', exact: true }).click();
+        await expect(panel).toContainText(zh ? '合并后的资料又发生变化，无法安全撤销。' : 'Merged records changed again, so the undo cannot safely proceed.');
+        const afterRejectedUndo = await snapshot(targetPage, zh, 'later-edit-survives-rejected-undo.ka1');
+        expect(afterRejectedUndo.candidates[0].asset.name).toBe('Later local draft after merge');
+        expect(afterRejectedUndo.candidates.slice(1)).toEqual(merged.candidates.slice(1));
+        expect(afterRejectedUndo.records).toEqual(merged.records);
+        // This separate third merge tests the conflict guard without replacing
+        // either original round's successful full-record rollback assertions.
+        continue;
       }
       await targetPage.goto('/settings#connections');
       await panel.getByRole('button', { name: zh ? '撤销本机合并' : 'Undo local merge', exact: true }).click();

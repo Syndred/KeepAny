@@ -2,14 +2,15 @@ import { mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { expect, test, type Page } from "@playwright/test";
 import { resources } from "../../apps/web/src/i18n";
+import { sourceModuleUrl } from "./helpers/source-module-url";
 
 // Healthy-contract coverage for T02: the original merged-workspace fixture uses
 // only one past purchase date and future expiry dates. These cases exercise the
 // date boundaries, deleted task, duplicate relation and separate currencies.
 const evidence = process.env.KEEPANY_EVIDENCE_DIR ?? "/tmp/keepany-summary-qa";
 mkdirSync(evidence, { recursive: true });
-const repositoryPath = `/@fs${process.cwd()}/packages/local-db/src/index.ts`;
-const domainPath = `/@fs${process.cwd()}/packages/domain/src/index.ts`;
+const repositoryPath = sourceModuleUrl("packages/local-db/src/index.ts");
+const domainPath = sourceModuleUrl("packages/domain/src/index.ts");
 
 test.use({ timezoneId: "Asia/Shanghai" });
 test.setTimeout(120_000);

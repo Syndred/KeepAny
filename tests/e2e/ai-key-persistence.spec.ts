@@ -56,11 +56,15 @@ async function openVault(page: Page, language: Language, width: number) {
 	if (width === 390) await page.locator(".mobile-menu").click();
 	await page
 		.getByRole("link", {
-			name: language === "zh-CN" ? "密码库" : "Password vault",
+			name: language === "zh-CN" ? "账号" : "Accounts",
 			exact: true,
 		})
 		.first()
 		.click();
+	await page.locator(".workspace-navigation").getByRole("link", {
+		name: language === "zh-CN" ? "密码管理" : "Passwords",
+		exact: true,
+	}).click();
 	await expect(page).toHaveURL(/\/assets\/vault/);
 }
 

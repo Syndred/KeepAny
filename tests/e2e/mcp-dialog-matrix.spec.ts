@@ -114,8 +114,8 @@ async function launch(path: string, privateDir: string, suffix: string) {
   const pairingPath = join(privateDir, `pairing-${suffix}.json`);
   const childEnv = Object.fromEntries(Object.entries(process.env).filter((entry): entry is [string, string] => entry[1] !== undefined));
   const transport = new StdioClientTransport({
-    command: join(repo, 'node_modules/.bin/tsx'),
-    args: [join(repo, 'apps/mcp-launcher/src/main.ts'), '--request', path,
+    command: process.execPath,
+    args: ['--import', 'tsx', join(repo, 'apps/mcp-launcher/src/main.ts'), '--request', path,
       '--pairing-file', pairingPath, '--state-dir', privateDir],
     cwd: repo, env: childEnv, stderr: 'pipe',
   });

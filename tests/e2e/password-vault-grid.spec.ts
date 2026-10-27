@@ -168,10 +168,19 @@ for (const locale of ["zh-CN", "en"] as const)
 				expect(new Set(geometry.map((box) => Math.round(box.x))).size).toBe(
 					width === 1536 ? 3 : 1,
 				);
-				if (width === 1536)
+				if (width === 1536) {
+					// The unified Accounts workspace adds a navigation row above the
+					// original grid. Keep the grid's density budget, excluding that row.
+					const navigationHeight = await page.locator(".workspace-navigation")
+						.evaluate((node) => node.getBoundingClientRect().height);
 					expect(
-						Math.max(...geometry.map((box) => box.bottom)),
+						Math.max(...geometry.map((box) => box.bottom)) - navigationHeight,
 					).toBeLessThanOrEqual(1024);
+					await cards.last().locator(".password-vault-entry-actions")
+						.scrollIntoViewIfNeeded();
+					await expect(cards.last().locator(".password-vault-entry-actions"))
+						.toBeInViewport();
+				}
 				for (let i = 0; i < records.length; i++) {
 					const card = cards.filter({ hasText: records[i].title });
 					for (const value of [

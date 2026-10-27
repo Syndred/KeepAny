@@ -1,7 +1,8 @@
 import { expect, test } from "@playwright/test";
 import { selectChoice } from "./helpers/select-choice";
 
-const repositoryUrl = `/@fs${process.cwd().replaceAll("\\", "/")}/packages/local-db/src/index.ts`;
+import { sourceModuleUrl } from "./helpers/source-module-url";
+const repositoryUrl = sourceModuleUrl("packages/local-db/src/index.ts");
 
 for (const outcome of ["saved", "failed", "ignored"] as const) test(`a delayed confirmation refresh keeps a different row's ${outcome} kind edit`, async ({ page }) => {
 	await page.goto("/intake");

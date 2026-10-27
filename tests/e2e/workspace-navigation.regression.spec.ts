@@ -1,14 +1,15 @@
 import { mkdirSync } from "node:fs";
-import { join, resolve } from "node:path";
+import { join } from "node:path";
 import { expect, test, type Page } from "@playwright/test";
 import { resources } from "../../apps/web/src/i18n";
 import { selectChoice } from "./helpers/select-choice";
 import { passwordVaultCopy } from "../../apps/web/src/password-vault-copy";
+import { sourceModuleUrl } from "./helpers/source-module-url";
 
 const evidence = process.env.KEEPANY_EVIDENCE_DIR ?? "/tmp/keepany-navigation";
 mkdirSync(evidence, { recursive: true });
-const repositoryPath = `/@fs${resolve("packages/local-db/src/index.ts")}`;
-const domainPath = `/@fs${resolve("packages/domain/src/index.ts")}`;
+const repositoryPath = sourceModuleUrl("packages/local-db/src/index.ts");
+const domainPath = sourceModuleUrl("packages/domain/src/index.ts");
 
 async function ordinaryRecords(page: Page) {
 	return page.evaluate(async path => {

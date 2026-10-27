@@ -1,0 +1,11 @@
+{
+  "date": "2026-10-27",
+  "baseline": "f659db1",
+  "environment": "Windows; Node24.21.0; Playwright1.63.0; isolated Chromium; source4205",
+  "focused": { "spec": "tests/e2e/qa-t19-windows.spec.ts", "passed": 4, "failed": 0, "skipped": 0, "durationSeconds": 18.8, "matrix": ["zh-CN390", "zh-CN1280", "en-US390", "en-US1280"] },
+  "supportedMigrationUndo": { "spec": "tests/e2e/intake-review-merge.spec.ts", "passed": 2, "failed": 0, "skipped": 0, "durationSeconds": 49.9, "matrix": ["zh-CN390", "en-US390"], "checks": ["Original two rounds of explicit choices and full rollback retained", "Third merge edits a changed candidate then rejects unsafe rollback", "Later edit and other candidates/records survive refused rollback"] },
+  "tableStatus": { "T19-01": "partial: ordinary per-field existing-asset merge UI absent", "T19-02": "passed for supported batch retry and local migration undo", "T19-03": "passed for formal synthetic export import", "T19-04": "partial: separate backlink deletion UI absent" },
+  "lint": "Checked2files. No fixes applied. Exit0.",
+  "productChanges": false,
+  "limitations": ["Only synthetic local data; no external submissions or real provider verification", "Migration sync endpoints are controlled Playwright routes", "No Ego/physical device/fixed package acceptance", "Not a full pass of T19-01 or T19-04"]
+}

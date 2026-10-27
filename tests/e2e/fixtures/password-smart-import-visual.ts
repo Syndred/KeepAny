@@ -160,11 +160,15 @@ export async function visualHarness(
 		if (viewport.width < 768) await page.locator(".mobile-menu").click();
 		await page
 			.getByRole("link", {
-				name: locale === "zh-CN" ? "密码库" : "Password vault",
+				name: locale === "zh-CN" ? "账号" : "Accounts",
 				exact: true,
 			})
 			.first()
 			.click();
+		await page.locator(".workspace-navigation").getByRole("link", {
+			name: locale === "zh-CN" ? "密码管理" : "Passwords",
+			exact: true,
+		}).click();
 	}
 	async function createVault() {
 		await page.locator("#password-vault-master").fill(visualMaster);

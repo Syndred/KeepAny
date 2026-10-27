@@ -1,0 +1,18 @@
+{
+  "date": "2026-10-27",
+  "baseline": "f659db1",
+  "spec": "tests/e2e/qa-t22-windows.spec.ts",
+  "command": "node node_modules/@playwright/test/cli.js test tests/e2e/qa-t22-windows.spec.ts -c test-results/qa-windows.config.ts --workers=1 --reporter=line --output=test-results/T22-final-image",
+  "result": { "passed": 4, "failed": 0, "skipped": 0, "durationSeconds": 26.6 },
+  "matrix": ["s3 zh-CN390", "s3 en-US1280", "webdav zh-CN390", "webdav en-US1280"],
+  "transport": "Actual Node HTTPS socket service on random127.0.0.1 port; restricted local CONNECT tunnel routes only keepany-storage.test and its current port; TLSv1.3",
+  "certificate": "Synthetic self-signed certificate generated in-memory by PowerShell/.NET; isolated test contexts accept it; no system trust changes",
+  "responseMocking": false,
+  "requestLogs": ["T22-s3-zh-CN-390-checks.json", "T22-s3-en-US-1280-checks.json", "T22-webdav-zh-CN-390-checks.json", "T22-webdav-en-US-1280-checks.json"],
+  "coverage": ["No successful receipt before actual GET readback", "Authenticated encrypted PUT/GET and receipt SHA256", "401, sustained socket disconnect and corrupt readback failures followed by retry", "Saved receipt file reimport after refresh", "Wrong password/tamper reject and retain independent local sentinel", "Native HTTPS KA1 download and formal clean restore:4 recordIDs/payloads and1 original PNG ID/type/name/68bytes plus actual image decode"],
+  "typecheck": "tsc --noEmit --pretty false exit0",
+  "lint": "Checked1file. No fixes applied. Exit0.",
+  "productChanges": false,
+  "cleanup": "All owned Chromium contexts, HTTPS listeners and CONNECT sockets closed in finally; no system proxy/hosts/trust changes",
+  "limitations": ["Synthetic local S3 presigned transport semantics, not full AWS signing or real provider certification", "No real buckets/production credentials/Ego/physical devices/fixed package acceptance"]
+}

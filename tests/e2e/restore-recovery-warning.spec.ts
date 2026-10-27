@@ -2,7 +2,8 @@ import { mkdirSync } from 'node:fs';
 import { expect, test } from '@playwright/test';
 import { selectChoice } from "./helpers/select-choice";
 
-const modulePath = `/@fs${process.cwd()}/packages/local-db/src/index.ts`;
+import { sourceModuleUrl } from "./helpers/source-module-url";
+const modulePath = sourceModuleUrl("packages/local-db/src/index.ts");
 const evidence = process.env.KEEPANY_EVIDENCE_DIR ?? 'docs/evidence/2026-09-29';
 
 test('a partial image restore keeps local data readable and warns after refresh in both languages', async ({ browser }) => {

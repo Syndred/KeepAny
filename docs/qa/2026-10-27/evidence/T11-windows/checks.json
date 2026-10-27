@@ -1,0 +1,71 @@
+{
+  "date": "2026-10-27",
+  "baseline": "f659db1cfe08e7f18c1f15974b83416f092cfd3f",
+  "environment": "Windows, Node 24.21.0, isolated Playwright Chromium, source 127.0.0.1:4205",
+  "scope": "T11-01..04",
+  "stats": {
+    "startTime": "2026-10-27T06:07:30.083Z",
+    "duration": 53627.513999999996,
+    "expected": 8,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "errors": [],
+  "tests": [
+    {
+      "title": "T11-03/04 zh-CN 390px brand snapshots and evidence-gated local archive",
+      "status": "passed",
+      "durationMs": 9119
+    },
+    {
+      "title": "T11-03/04 zh-CN 1280px brand snapshots and evidence-gated local archive",
+      "status": "passed",
+      "durationMs": 8740
+    },
+    {
+      "title": "T11-03/04 en 390px brand snapshots and evidence-gated local archive",
+      "status": "passed",
+      "durationMs": 9246
+    },
+    {
+      "title": "T11-03/04 en 1280px brand snapshots and evidence-gated local archive",
+      "status": "passed",
+      "durationMs": 9138
+    },
+    {
+      "title": "T11-01/02 zh-CN 390px materials and role images preserve cancellation and failures",
+      "status": "passed",
+      "durationMs": 3741
+    },
+    {
+      "title": "T11-01/02 zh-CN 1280px materials and role images preserve cancellation and failures",
+      "status": "passed",
+      "durationMs": 3802
+    },
+    {
+      "title": "T11-01/02 en 390px materials and role images preserve cancellation and failures",
+      "status": "passed",
+      "durationMs": 5077
+    },
+    {
+      "title": "T11-01/02 en 1280px materials and role images preserve cancellation and failures",
+      "status": "passed",
+      "durationMs": 3999
+    }
+  ],
+  "firstRun": {
+    "passed": 4,
+    "failed": 4,
+    "issues": [
+      "Three workflow assertions read a snapshot before the final asynchronous save finished. Wait for persisted data-outcome and record block.",
+      "One media assertion read blob cleanup before the asynchronous removal completed. Retain bounded polling for absence of the removed blob."
+    ]
+  },
+  "productChanges": [],
+  "limitations": [
+    "Isolated Chromium, not Ego native or physical mobile acceptance.",
+    "No external platform actions or paid services.",
+    "No release/web, 4180, deployment or published package update."
+  ]
+}

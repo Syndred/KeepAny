@@ -1,0 +1,78 @@
+{
+  "date": "2026-10-27",
+  "baseline": "f659db1cfe08e7f18c1f15974b83416f092cfd3f",
+  "environment": "Windows, Node24.21.0, isolated Playwright Chromium, source4205",
+  "scope": "T12-01..04",
+  "uniquePassed": 7,
+  "tests": [
+    {
+      "title": "T12-01..03 zh-CN 390px item facts, double-click borrowing and reminder deduplication",
+      "status": "passed",
+      "durationMs": 6482,
+      "source": "T12-run001"
+    },
+    {
+      "title": "T12-01..03 zh-CN 1280px item facts, double-click borrowing and reminder deduplication",
+      "status": "passed",
+      "durationMs": 6193,
+      "source": "T12-run001"
+    },
+    {
+      "title": "T12-01..03 en 390px item facts, double-click borrowing and reminder deduplication",
+      "status": "passed",
+      "durationMs": 7359,
+      "source": "T12-run001"
+    },
+    {
+      "title": "T12-01..03 en 1280px item facts, double-click borrowing and reminder deduplication",
+      "status": "passed",
+      "durationMs": 8106,
+      "source": "T12-run001"
+    },
+    {
+      "title": "T12-04 zh-CN 390px stale in-flight item action rejects another tab's location edit",
+      "status": "passed",
+      "durationMs": 2138,
+      "source": "T12-conflict-run002"
+    },
+    {
+      "title": "T12-04 en 1280px stale in-flight item action rejects another tab's location edit",
+      "status": "passed",
+      "durationMs": 2047,
+      "source": "T12-conflict-run002"
+    },
+    {
+      "title": "item actions use the local calendar day across time zones and an open page crossing midnight",
+      "status": "passed",
+      "durationMs": 13343,
+      "source": "T12-calendar"
+    }
+  ],
+  "firstRunStats": {
+    "startTime": "2026-10-27T06:11:11.645Z",
+    "duration": 33822.608,
+    "expected": 4,
+    "skipped": 0,
+    "unexpected": 2,
+    "flaky": 0
+  },
+  "conflictRetestStats": {
+    "startTime": "2026-10-27T06:12:12.823Z",
+    "duration": 4930.263,
+    "expected": 2,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "calendarStats": {
+    "startTime": "2026-10-27T06:11:21.821Z",
+    "duration": 14389.391,
+    "expected": 1,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "firstFailure": "Two new conflict fixture assertions omitted the established U+2063 location separator. Corrected the expected persisted value, retained full-record equality and stale-action assertions.",
+  "productChanges": [],
+  "legacyTestChange": "item-lifecycle.spec.ts only uses shared sourceModuleUrl for Windows fixture imports."
+}

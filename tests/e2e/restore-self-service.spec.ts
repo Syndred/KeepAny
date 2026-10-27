@@ -4,7 +4,8 @@ import type { Asset } from "../../packages/domain/src";
 import { inspectArchive, type RecordRow } from "../../packages/local-db/src";
 import { decryptBackup } from "../../packages/local-db/src/backup-crypto";
 
-const repositoryModuleUrl = `/@fs${process.cwd()}/packages/local-db/src/index.ts`;
+import { sourceModuleUrl } from "./helpers/source-module-url";
+const repositoryModuleUrl = sourceModuleUrl("packages/local-db/src/index.ts");
 const password = "restore-recovery-ui-password-2026";
 
 const copyFor = (zh: boolean) => zh ? {
@@ -188,8 +189,8 @@ test("en-US 1280 local third-version conflict can keep current data and abandon 
 		const panel = await expectPendingPanel(cleanPage, copy, [2, 0, 1, 1, 0]);
 		await cleanPage.screenshot({ path: test.info().outputPath("restore-self-service-abandon-en-1280-pending.png"), fullPage: true });
 
-		await cleanPage.locator('a[href="/assets/account"]').click();
-		await expect(cleanPage).toHaveURL(/\/assets\/account$/);
+		await cleanPage.locator('a[href="/accounts"]').first().click();
+		await expect(cleanPage).toHaveURL(/\/accounts$/);
 		await expect(cleanPage.locator("main .asset-account-card").first()).toBeVisible();
 		let presentName = "";
 		for (const name of names) {
@@ -213,8 +214,8 @@ test("en-US 1280 local third-version conflict can keep current data and abandon 
 		await expect(panel).toBeHidden();
 
 		await cleanPage.reload();
-		await cleanPage.locator('a[href="/assets/account"]').click();
-		await expect(cleanPage).toHaveURL(/\/assets\/account$/);
+		await cleanPage.locator('a[href="/accounts"]').first().click();
+		await expect(cleanPage).toHaveURL(/\/accounts$/);
 		await expect(cleanPage.locator("main .asset-account-card").filter({ hasText: presentName })).toBeVisible();
 		await expect(cleanPage.locator("main .asset-account-card").filter({ hasText: missingName })).toHaveCount(0);
 		await cleanPage.locator("main .asset-account-card").filter({ hasText: presentName }).click();

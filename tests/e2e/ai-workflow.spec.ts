@@ -11,10 +11,11 @@ import {
 	syntheticKey,
 } from "./helpers/ai-workflow";
 import { selectChoice } from "./helpers/select-choice";
+import { sourceModuleUrl } from "./helpers/source-module-url";
 
-const repositoryUrl = `/@fs${process.cwd()}/packages/local-db/src/index.ts`;
-const reviewUrl = `/@fs${process.cwd()}/apps/web/src/intake-review-store.ts`;
-const aiSettingsUrl = `/@fs${process.cwd()}/apps/web/src/ai-settings-store.ts`;
+const repositoryUrl = sourceModuleUrl("packages/local-db/src/index.ts");
+const reviewUrl = "/src/intake-review-store.ts";
+const aiSettingsUrl = "/src/ai-settings-store.ts";
 async function readRecords(page: Page) {
 	return page.evaluate(async (path) => {
 		const { localRepository } = await import(path);

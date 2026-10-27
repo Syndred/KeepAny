@@ -3,7 +3,8 @@ import { expect, type Page, test } from "@playwright/test";
 import { selectChoice } from "./helpers/select-choice";
 
 const evidence = process.env.KEEPANY_EVIDENCE_DIR ?? "docs/evidence/2026-09-29";
-const repositoryModuleUrl = `/@fs${process.cwd()}/packages/local-db/src/index.ts`;
+import { sourceModuleUrl } from "./helpers/source-module-url";
+const repositoryModuleUrl = sourceModuleUrl("packages/local-db/src/index.ts");
 
 type ItemState = {
 	asset: Record<string, unknown>;

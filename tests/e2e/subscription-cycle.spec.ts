@@ -1,9 +1,10 @@
 import { mkdirSync } from "node:fs";
 import { expect, type Page, test } from "@playwright/test";
 import { selectChoice } from "./helpers/select-choice";
+import { sourceModuleUrl } from "./helpers/source-module-url";
 
 const evidence = process.env.KEEPANY_EVIDENCE_DIR ?? "docs/evidence/2026-09-29";
-const repositoryModuleUrl = `/@fs${process.cwd()}/packages/local-db/src/index.ts`;
+const repositoryModuleUrl = sourceModuleUrl("packages/local-db/src/index.ts");
 
 function nextDate(page: Page, label: string) {
 	return page.locator("dt").filter({ hasText: label }).locator("..").locator("dd");

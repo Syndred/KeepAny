@@ -6,7 +6,8 @@ import { decryptBackup, encryptBackup } from "../../packages/local-db/src/backup
 import { selectChoice } from "./helpers/select-choice";
 
 const evidence = process.env.KEEPANY_EVIDENCE_DIR ?? "docs/evidence/2026-09-29";
-const repositoryModuleUrl = `/@fs${process.cwd()}/packages/local-db/src/index.ts`;
+import { sourceModuleUrl } from "./helpers/source-module-url";
+const repositoryModuleUrl = sourceModuleUrl("packages/local-db/src/index.ts");
 
 type Snapshot = {
 	rows: { id: string; type: string; payload: string; updatedAt: number }[];
@@ -176,6 +177,17 @@ test("formal backup restores full local graph, history, ledger, tombstones and o
 			expect(file.type).toBe("image/png");
 			expect(file.bytes).toEqual(imageBytes[Number(file.name.match(/camera-(\d+)\.png/)?.[1]) - 1]);
 		}
+		await page.goto("/assets/vault");
+		await page.locator("#password-vault-master").fill("Synthetic full-archive master!42");
+		await page.locator("#password-vault-master-confirm").fill("Synthetic full-archive master!42");
+		await page.getByRole("button", { name: "Create vault", exact: true }).click();
+		await page.getByRole("button", { name: "New entry", exact: true }).click();
+		await page.locator("#password-vault-entry-title").fill("Full graph synthetic credential");
+		await page.locator("#password-vault-entry-username").fill("full-archive@example.test");
+		await page.locator("#password-vault-entry-password").fill("Synthetic full-archive secret!42");
+		await page.getByRole("button", { name: "Save entry", exact: true }).click();
+		await expect(page.getByRole("dialog")).toBeHidden();
+		const vaultBytes = await page.evaluate(async modulePath => Array.from((await (await (await import(modulePath)).localRepository()).readPasswordVault()).bytes), repositoryModuleUrl);
 
 		await page.goto("/intake");
 		await page.locator("#backup-password").fill(password);
@@ -242,6 +254,11 @@ test("formal backup restores full local graph, history, ledger, tombstones and o
 			await expect(restored.locator(".list-row").filter({ hasText: task }).getByText("Completed")).toBeVisible();
 			await restored.goto("/trash");
 			await expect(restored.getByText(deletedProject)).toBeVisible();
+			expect(await restored.evaluate(async modulePath => Array.from((await (await (await import(modulePath)).localRepository()).readPasswordVault()).bytes), repositoryModuleUrl)).toEqual(vaultBytes);
+			await restored.goto("/assets/vault");
+			await restored.locator("#password-vault-unlock-master").fill("Synthetic full-archive master!42");
+			await restored.getByRole("button", { name: "Unlock vault", exact: true }).click();
+			await expect(restored.locator(".password-vault-entry-list .password-vault-entry")).toContainText("full-archive@example.test");
 			await restored.goto("/settings");
 			await selectChoice(restored.locator("section.card").filter({ has: restored.getByRole("heading", { name: "Language" }) }).getByRole("combobox"), "zh-CN");
 			await restored.goto("/intake");
