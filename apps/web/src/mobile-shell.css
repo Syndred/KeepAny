@@ -44,3 +44,9 @@
   .shell .topbar { gap: 6px; padding-inline: 10px; }
   .shell .topbar-page-label { font-size: 11px; }
 }
+
+@media (pointer: coarse) {
+  .shell .top-search-panel-input input { min-height: 44px; }
+  .shell .top-search-panel-input > button { flex: none; width: 44px; min-height: 44px; }
+  .shell .top-search-panel-close { min-width: 44px; min-height: 44px; }
+}
