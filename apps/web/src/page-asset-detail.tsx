@@ -1,4 +1,5 @@
 import { assetNotes } from "./asset-notes";
+import { relationTargetLabels } from "./relation-target-labels";
 import { accountFamilyGraph, consumeGraphReturn, graphReturnTarget, graphViewState, recoverableGraphRelations, rememberGraphVisit } from "./account-family-graph";
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
@@ -2066,11 +2067,10 @@ export function AssetDetail() {
 								onValueChange={(selectValue) => setRelationTarget(selectValue)}
 							>
 								<SelectOption value="">{t("selectAsset")}</SelectOption>
-								{liveAssets(data)
-									.filter((a) => a.id !== asset.id)
-									.map((a) => (
+									{relationTargetLabels(liveAssets(data).filter((a) => a.id !== asset.id), (kind) => t(kind))
+									.map(({ asset: a, label }) => (
 										<SelectOption key={a.id} value={a.id}>
-											{a.name}
+											{label}
 										</SelectOption>
 									))}
 							</Select>
