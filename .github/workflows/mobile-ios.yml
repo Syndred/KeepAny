@@ -86,6 +86,10 @@ jobs:
           if [[ -n "$app_data" && -d "$app_data" ]]; then
             while IFS= read -r -d '' task_database; do
               printf 'Database: %s\n' "${task_database#"$app_data"/}" >> test-results/ios/sqlite-fixture-check.txt
+              if [[ "$(sqlite3 -readonly "$task_database" "SELECT count(*) FROM sqlite_master WHERE type='table' AND name='records';")" != "1" ]]; then
+                printf 'No asset records table (control database).\n' >> test-results/ios/sqlite-fixture-check.txt
+                continue
+              fi
               sqlite3 -readonly "$task_database" 'SELECT type,count(*) FROM records GROUP BY type;' >> test-results/ios/sqlite-fixture-check.txt 2>&1 || true
               sqlite3 -readonly "$task_database" "SELECT id,json_extract(payload,'$.name'),json_extract(payload,'$.kind') FROM records WHERE type='asset' AND json_extract(payload,'$.name') LIKE 'iOS simulator persistence fixture%';" >> test-results/ios/sqlite-fixture-check.txt 2>&1 || true
             done < <(find "$app_data/Library" -type f \( -name '*SQLite.db' -o -name '*.sqlite3' -o -name '*.db' \) ! -path '*/WebKit/*' -print0)

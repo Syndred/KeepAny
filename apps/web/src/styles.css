@@ -268,6 +268,13 @@ p { line-height: 1.5; }
   line-height: 1.4;
 }
 .field textarea, textarea.field { min-height: 84px; resize: vertical; }
+.field input:is([type="date"], [type="time"], [type="datetime-local"], [type="month"], [type="week"]),
+input.field:is([type="date"], [type="time"], [type="datetime-local"], [type="month"], [type="week"]) {
+  -webkit-appearance: none;
+  appearance: none;
+  box-sizing: border-box;
+  max-width: 100%;
+}
 .field input[type="checkbox"], .field input[type="radio"] { display: inline-block; width: 18px; height: 18px; min-height: 18px; padding: 0; accent-color: var(--accent); }
 .field input[type="file"] { min-height: 40px; padding: 5px; }
 .field input::placeholder, .field textarea::placeholder { color: #747b84; }

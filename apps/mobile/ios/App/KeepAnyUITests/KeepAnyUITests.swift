@@ -63,6 +63,11 @@ final class KeepAnyUITests: XCTestCase {
         capture(app, "project-reopened-en")
         XCTAssertTrue(visibleBeforeTermination && visibleAfterTermination,
                       "Project visible immediately: \(visibleBeforeTermination); after termination: \(visibleAfterTermination)")
+        for _ in 0..<8 { if project.isHittable { break }; app.swipeUp() }
+        XCTAssertTrue(project.isHittable, "Persisted project must be reachable by scrolling")
+        project.tap()
+        XCTAssertTrue(app.buttons["Edit"].firstMatch.waitForExistence(timeout: 10))
+        capture(app, "persisted-project-detail-en")
         app.terminate()
     }
 

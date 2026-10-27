@@ -29,5 +29,5 @@
 	.tasks-toolbar-actions { width: 100%; }
 }
 .task-date-range { display: flex; min-width: 0; flex-wrap: wrap; align-items: end; gap: var(--space-3); border: 0; padding: 0; margin: var(--space-4) 0; }
-.task-date-range label { display: grid; gap: var(--space-2); flex: 1 1 160px; min-width: 0; }
+.task-date-range label { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-2); flex: 1 1 160px; min-width: 0; }
 .task-date-range input { width: 100%; min-width: 0; }
