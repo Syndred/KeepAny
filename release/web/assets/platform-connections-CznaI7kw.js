@@ -1,0 +1,1 @@
+import{t as e}from"./dist-BuPJsc9T.js";async function t(e,t){if(t)throw Error(`native-connections-unavailable`);if(e!==window.location.origin)throw Error(`session-origin`);return{origin:e,fetch,close:async()=>{}}}function n(t){if(e.isNativePlatform())throw Error(`native-connections-unavailable`);return fetch}export{t as n,n as t};

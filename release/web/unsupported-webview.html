@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>KeepAny</title>
+<style>body{margin:0;background:#fff9ec;color:#29281f;font:17px/1.65 system-ui,sans-serif}main{max-width:34rem;margin:12vh auto;padding:24px}h1{font-size:30px}p{margin:16px 0}</style></head>
+<body><main><h1>KeepAny</h1><p id="message"></p><p id="data"></p></main>
+<script>
+(function(){
+  var messages={
+    'zh-CN':{webviewUpdate:'请更新 Android System WebView，然后重新打开 KeepAny。',systemUpdate:'当前界面无法打开。请确认系统已更新，然后重新打开 KeepAny。',webviewData:'如仍无法打开，请保留应用与本机资料，联系反馈支持。'},
+    en:{webviewUpdate:'Update Android System WebView, then reopen KeepAny.',systemUpdate:'This screen could not open. Check for system updates, then reopen KeepAny.',webviewData:'If the app still cannot open, keep the app and its local data and contact support.'}
+  };
+  var language=(navigator.language||'en').indexOf('zh')===0?'zh-CN':'en';
+  document.documentElement.lang=language;
+  document.getElementById('message').textContent=messages[language][/Android/i.test(navigator.userAgent)?'webviewUpdate':'systemUpdate'];
+  document.getElementById('data').textContent=messages[language].webviewData;
+})();
+</script></body></html>

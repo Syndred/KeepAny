@@ -41,8 +41,13 @@ const retained = [...releaseFiles]
   .filter(([path]) => !builtFiles.has(path))
   .map(([path, contents]) => [path, createHash("sha256").update(contents).digest("hex")]);
 
+// This exact module was shipped before the bundled PDF worker replaced it.
+// Preserve old open clients without admitting arbitrary retained module files.
+const legacyModule = ["assets/pdf.worker.min-Dswkl-cV.mjs", "8ab0e5e30031b4a06ecfddd5ae9562f0227f830ee7ec9ed1a968b134243d2386"];
+
 // Only old versioned chunks and PWA runtime files may outlive the current build.
-for (const [path] of retained) {
+for (const [path, digest] of retained) {
+  if (path === legacyModule[0] && digest === legacyModule[1]) continue;
   if (!/^assets\/[\w.-]+-[\w-]+\.(?:js|css)$/.test(path)
     && !/^workbox-[a-f\d]+\.js$/.test(path)
     && path !== "registerSW.js") {
