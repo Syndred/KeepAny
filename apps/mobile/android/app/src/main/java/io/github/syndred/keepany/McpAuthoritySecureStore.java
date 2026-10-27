@@ -54,7 +54,10 @@ public final class McpAuthoritySecureStore {
         private final Context context;
         NativeBackend(Context context){this.context=context;}
         private File root() throws Exception {
-            File root=new File(context.getNoBackupFilesDir(),"keepany-mcp-authority-v1");
+            // Android may return an OS-owned directory alias. Normalize only
+            // that trusted base; reject symlinks in our namespace and files.
+            File base=context.getNoBackupFilesDir().getCanonicalFile();
+            File root=new File(base,"keepany-mcp-authority-v1");
             if(!root.isDirectory()&&!root.mkdirs()||!root.getCanonicalFile().equals(root.getAbsoluteFile()))throw new McpAuthorityCodec.Failure();
             if(!root.setReadable(false,false)||!root.setWritable(false,false)||!root.setExecutable(false,false)||!root.setReadable(true,true)||!root.setWritable(true,true)||!root.setExecutable(true,true))throw new McpAuthorityCodec.Failure();
             return root;
