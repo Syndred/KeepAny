@@ -225,10 +225,12 @@ export class VaultSession {
     this.publish(this.record ? 'locked' : 'empty');
   }
 
-  private async persist(candidate: Kdbx, expectedRevision: string | null, generation: number, preservedContentRevision?: string): Promise<void> {
+  private async persist(candidate: Kdbx, expectedRevision: string | null, generation: number, preservedContentRevision?: string, adoptedBytes?: Uint8Array): Promise<void> {
     try {
-      candidate.meta.customData.set(VAULT_CONTENT_REVISION_FIELD, { value: preservedContentRevision ?? crypto.randomUUID() });
-      const bytes = new Uint8Array(await candidate.save());
+      // An empty-vault import adopts already authenticated ciphertext verbatim.
+      // Editing later may serialize it, but must retain its supported version/KDF.
+      if (!adoptedBytes) candidate.meta.customData.set(VAULT_CONTENT_REVISION_FIELD, { value: preservedContentRevision ?? crypto.randomUUID() });
+      const bytes = adoptedBytes ? adoptedBytes.slice() : new Uint8Array(await candidate.save());
       checkBytes(bytes);
       this.checkGeneration(generation);
       let record: VaultRecord;
@@ -525,7 +527,6 @@ export class VaultSession {
         clearCredentials(candidate.credentials);
         candidate.credentials = nextCredentials;
         candidate.meta.keyChanged = new Date();
-        configureDatabase(candidate);
         await this.persist(candidate, record.revision, generation);
       } catch (error) { clearDatabase(candidate); throw error; }
       finally {
@@ -558,8 +559,7 @@ export class VaultSession {
       try { this.checkGeneration(generation); }
       catch (error) { clearDatabase(imported); throw error; }
       if (this.snapshot.status === 'empty') {
-        configureDatabase(imported);
-        await this.persist(imported, null, generation);
+        await this.persist(imported, null, generation, undefined, bytes);
         return;
       }
       try { await this.mutate(generation, (candidate) => {
@@ -589,7 +589,6 @@ export class VaultSession {
             for (const historical of added.history) historical.uuid = entry.uuid;
           }
         }
-        configureDatabase(candidate);
       }); }
       catch (error) { clearDatabase(imported); throw error; }
       // Upstream same-vault merge may adopt groups/entries by reference. Those fields are now
