@@ -311,11 +311,7 @@ export async function expectAccountGraphGeometry(
 					.sort(),
 			);
 		expect(pairs).toEqual(
-			[
-				...new Set(
-					expected.map((edge) => JSON.stringify([edge.from, edge.to])),
-				),
-			].sort(),
+			expected.map((edge) => JSON.stringify([edge.from, edge.to])).sort(),
 		);
 	}
 	const problems = await graph.locator(".react-flow").evaluate((canvas) => {
@@ -335,19 +331,10 @@ export async function expectAccountGraphGeometry(
 		);
 		const zoom = Math.hypot(transform.a, transform.b);
 		for (const node of nodes) {
-			const allowed = node.current
-				? [
-						[190, 76],
-						[180, 76],
-					]
-				: [
-						[190, 64],
-						[160, 60],
-					];
+			const allowedWidths = node.current ? [190, 180] : [190, 160];
+			const baseHeight = node.current ? 76 : node.width === 160 ? 60 : 64;
 			if (
-				!allowed.some(
-					([width, height]) => node.width === width && node.height === height,
-				) ||
+				(!allowedWidths.includes(node.width) || !(node.height === baseHeight || node.height > baseHeight && node.height % 8 === 0)) ||
 				Math.abs(node.rect.width / zoom - node.width) > 1 ||
 				Math.abs(node.rect.height / zoom - node.height) > 1
 			)

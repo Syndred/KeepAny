@@ -13,7 +13,7 @@ if (evidence) mkdirSync(evidence, { recursive: true });
 
 for (const locale of ["zh-CN", "en-US"] as const) {
 	for (const width of [390, 1280] as const) {
-		test(`${locale} graph verification and mixed groups remain accurate at ${width}px`, async ({ browser }) => {
+		test(`${locale} graph verification and independent same-endpoint connections remain accurate at ${width}px`, async ({ browser }) => {
 			test.setTimeout(locale === "en-US" && width === 1280 ? 240_000 : 120_000);
 			const zh = locale === "zh-CN";
 			const text = zh ? {
@@ -123,7 +123,7 @@ for (const locale of ["zh-CN", "en-US"] as const) {
 				for (const node of await targetPage.locator(".react-flow__node").all()) await expect(node).toBeVisible();
 				const solid = targetPage.locator(".relation-graph-edge--verified");
 				const dashed = targetPage.locator(".relation-graph-edge--pending");
-				await expect(solid).toHaveCount(mixed ? 0 : 1);
+				await expect(solid).toHaveCount(1);
 				await expect(dashed).toHaveCount(mixed ? 2 : 1);
 				const guide = targetPage.locator("details.account-graph-guide");
 				await expect(guide).toHaveCount(1);
@@ -139,13 +139,12 @@ for (const locale of ["zh-CN", "en-US"] as const) {
 					await expect(solid.locator(".react-flow__edge-path")).toHaveCSS("stroke-dasharray", "none");
 					selected = await selectConnection(targetPage, solid, hubName, "Verified account", ["Verified link"], text.verified);
 				} else {
-					const mixedEdge = dashed.and(targetPage.locator('[aria-label*="Extra pending"]'));
-					await expect(mixedEdge).toHaveAttribute("aria-label", new RegExp(` · ${text.mixed}$`));
-					expect([
-						`${hubName} → Verified account · Verified link · Extra pending · ${text.mixed}`,
-						`${hubName} → Verified account · Extra pending · Verified link · ${text.mixed}`,
-					]).toContain(await mixedEdge.getAttribute("aria-label"));
-					selected = await selectConnection(targetPage, mixedEdge, hubName, "Verified account", ["Verified link", "Extra pending"], text.mixed);
+					const pendingParallel = dashed.and(targetPage.locator('[aria-label*="Extra pending"]'));
+					await expect(pendingParallel).toHaveAttribute("aria-label", `${hubName} → Verified account · Extra pending · ${text.pending}`);
+					selected = await selectConnection(targetPage, pendingParallel, hubName, "Verified account", ["Extra pending"], text.pending);
+					await expect(selected).not.toContainText("Verified link");
+					await selected.getByRole("button", { name: text.close, exact: true }).click();
+					selected = await selectConnection(targetPage, solid, hubName, "Verified account", ["Verified link"], text.verified);
 				}
 				await selected.getByRole("button", { name: text.close, exact: true }).click();
 				await expect(selected).toBeHidden();
@@ -155,7 +154,7 @@ for (const locale of ["zh-CN", "en-US"] as const) {
 				await expect(pendingEdge).toHaveAttribute("aria-label", `Pending account → ${hubName} · Pending link · ${text.pending}`);
 				await selectConnection(targetPage, pendingEdge, "Pending account", hubName, ["Pending link"], text.pending, "Space");
 				await pendingEdge.press("Backspace");
-				await expect(targetPage.locator(".react-flow__edge-path")).toHaveCount(2);
+				await expect(targetPage.locator(".react-flow__edge-path")).toHaveCount(mixed ? 3 : 2);
 				await clickAccountGraphBlank(targetPage);
 				await expect(targetPage.getByRole("region", { name: text.details, exact: true })).toBeHidden();
 				await graphGeometry(targetPage);

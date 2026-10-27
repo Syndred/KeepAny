@@ -60,13 +60,14 @@ function AccountCard({ data }: NodeProps<AccountNode>) {
 }
 
 function AccountConnectionEdge(props: EdgeProps) {
+	const width = useStore(state => state.width);
 	const points = props.data?.points as { x: number; y: number }[] | undefined;
 	if (!points?.length) return null;
 	// Serialize the layout engine's obstacle-avoiding route without replacing its bends.
 	const path = props.data?.moved
 		? getSmoothStepPath({ sourceX: props.sourceX, sourceY: props.sourceY, sourcePosition: props.sourcePosition, targetX: props.targetX, targetY: props.targetY, targetPosition: props.targetPosition })[0]
 		: points.map((point, index) => `${index ? "L" : "M"}${point.x},${point.y}`).join(" ");
-	return <BaseEdge id={props.id} path={path} style={props.style} markerEnd={props.markerEnd} />;
+	return <BaseEdge id={props.id} path={path} style={props.style} markerEnd={props.markerEnd} interactionWidth={Math.round(width) < 700 ? 32 : 20} />;
 }
 const nodeTypes = { accountCard: AccountCard };
 const edgeTypes = { accountConnection: AccountConnectionEdge };
@@ -175,6 +176,7 @@ function GraphContent({ props, expanded, restore, onExpand, onCollapse }: {
 	const { t, i18n } = useTranslation();
 	const presentation = graphViewState(props.root.id);
 	const [positions, setPositions] = useState(() => ({ ...presentation.positions }));
+	const [measurements, setMeasurements] = useState<Record<string, { width: number; height: number }>>({});
 	const [size, setSize] = useState({ width: 0, height: 0 });
 	const [navigationHost, setNavigationHost] = useState<HTMLDivElement | null>(null);
 	const [result, setResult] = useState<{ key: string; layout: AccountGraphLayout | null; error: boolean }>({ key: "", layout: null, error: false });
@@ -201,12 +203,9 @@ function GraphContent({ props, expanded, restore, onExpand, onCollapse }: {
 		}
 	}, [ready, restore, expanded]);
 	const byId = new Map(props.assets.map((asset) => [asset.id, asset]));
-	const groups = Array.from(props.relations.reduce((all, relation) => {
-		if (relation.deleted || !byId.has(relation.from) || !byId.has(relation.to) || relation.from === relation.to) return all;
-		const pair = JSON.stringify([relation.from, relation.to]);
-		all.set(pair, [...all.get(pair) ?? [], relation]); return all;
-	}, new Map<string, Relation[]>()).values());
-	const selected = groups.find((group) => group.some((relation) => relation.id === props.selectedEdgeId));
+	const connections = props.relations.filter(relation => !relation.deleted && byId.has(relation.from) && byId.has(relation.to) && relation.from !== relation.to);
+	const selectedRelation = connections.find(relation => relation.id === props.selectedEdgeId);
+	const selected = selectedRelation ? [selectedRelation] : undefined;
 	const positionedLayout = layout ? { ...layout, nodes: new Map([...layout.nodes].map(([id, node]) => [id, { ...node, x: node.x + (positions[id]?.x ?? 0), y: node.y + (positions[id]?.y ?? 0) }])), bounds: { ...layout.bounds } } : null;
 	if (positionedLayout?.nodes.size) {
 		const entries = [...positionedLayout.nodes.values()];
@@ -216,23 +215,22 @@ function GraphContent({ props, expanded, restore, onExpand, onCollapse }: {
 	const nodes: AccountNode[] = positionedLayout ? [...positionedLayout.nodes].flatMap(([id, node]) => {
 		const asset = byId.get(id); if (!asset) return [];
 		return [{ id, type: "accountCard", position: { x: node.x, y: node.y }, width: node.width, height: node.height,
+			measured: measurements[id],
 			style: { width: node.width, height: node.height },
 			className: `${id === props.root.id ? "asset-graph-center" : "asset-graph-neighbor"}${props.matches.has(id) ? " asset-graph-match" : ""}`,
 			ariaLabel: accountLabel(asset).text,
 			domAttributes: { "data-node-width": node.width, "data-node-height": node.height } as NonNullable<AccountNode["domAttributes"]> & { "data-node-width": number; "data-node-height": number },
 			data: { asset, current: id === props.root.id, handles: node.handles, visit: props.onVisit } }];
 	}) : [];
-	const edges: Edge[] = layout ? groups.flatMap((group) => {
-		const route = layout.edges.get(JSON.stringify([group[0].from, group[0].to])); if (!route) return [];
-		const verified = group.every((relation) => !!relation.verifiedAt), mixed = group.some((relation) => !!relation.verifiedAt) && !verified;
-		const labels = [...new Set(group.map((relation) => relation.label))];
-		const active = group === selected;
-		return [{ id: group[0].id, source: group[0].from, target: group[0].to, sourceHandle: route.sourceHandle, targetHandle: route.targetHandle,
-			type: "accountConnection", data: { points: route.points, labels, moved: !!positions[group[0].from] || !!positions[group[0].to] }, label: labels.join(" · "),
-			domAttributes: { "data-from": group[0].from, "data-to": group[0].to } as NonNullable<Edge["domAttributes"]> & { "data-from": string; "data-to": string },
+	const edges: Edge[] = layout ? connections.flatMap((relation) => {
+		const route = layout.edges.get(relation.id); if (!route) return [];
+		const verified = !!relation.verifiedAt, active = relation.id === props.selectedEdgeId;
+		return [{ id: relation.id, source: relation.from, target: relation.to, sourceHandle: route.sourceHandle, targetHandle: route.targetHandle,
+			type: "accountConnection", data: { points: route.points, labels: [relation.label], moved: !!positions[relation.from] || !!positions[relation.to] }, label: relation.label,
+			domAttributes: { "data-from": relation.from, "data-to": relation.to, "data-relation-id": relation.id } as NonNullable<Edge["domAttributes"]> & { "data-from": string; "data-to": string; "data-relation-id": string },
 			markerEnd: { type: MarkerType.ArrowClosed }, selected: active, selectable: true, focusable: true, deletable: false, zIndex: active ? 2 : 0,
 			className: verified ? "relation-graph-edge--verified" : "relation-graph-edge--pending",
-			ariaLabel: `${byId.get(group[0].from)?.name} → ${byId.get(group[0].to)?.name} · ${labels.join(" · ")} · ${t(verified ? "relationGraphVerified" : mixed ? "relationGraphMixed" : "relationGraphPending")}`,
+			ariaLabel: `${byId.get(relation.from)?.name} → ${byId.get(relation.to)?.name} · ${relation.label} · ${t(verified ? "relationGraphVerified" : "relationGraphPending")}`,
 			style: { stroke: verified ? "var(--green)" : "var(--muted)", strokeWidth: active ? 4 : 2, strokeDasharray: verified ? "none" : "5 4", opacity: selected && !active ? 0.25 : 1 } }];
 	}) : [];
 	function changeEdges(changes: EdgeChange[]) {
@@ -241,6 +239,12 @@ function GraphContent({ props, expanded, restore, onExpand, onCollapse }: {
 		else if (changes.some((change) => change.type === "select" && change.id === props.selectedEdgeId && !change.selected)) props.onSelectEdge(null);
 	}
 	function changeNodes(changes: NodeChange<AccountNode>[]) {
+		const dimensions = changes.filter((change): change is Extract<NodeChange<AccountNode>, { type: "dimensions" }> => change.type === "dimensions" && !!change.dimensions);
+		if (dimensions.length) setMeasurements(previous => {
+			const next = { ...previous };
+			for (const change of dimensions) if (change.dimensions) next[change.id] = change.dimensions;
+			return next;
+		});
 		if (!layout) return;
 		const moves = changes.filter(change => change.type === "position" && change.position);
 		if (!moves.length) return;
@@ -273,16 +277,15 @@ function GraphContent({ props, expanded, restore, onExpand, onCollapse }: {
 				{navigationHost && createPortal(<><GraphControls layout={positionedLayout} rootId={props.root.id} expanded={expanded} onExpand={onExpand} onCollapse={onCollapse} />{props.assets.length > 12 && <GraphMiniMap rootId={props.root.id} />}{props.onReturn && <Button className="graph-return" size="small" onClick={props.onReturn}><ArrowLeft size={14} />{props.returnLabel}</Button>}</>, navigationHost)}
 				{selected && <Panel position="bottom-right" className="account-graph-selection-panel nodrag nopan"><section className="account-graph-connection-details" aria-label={t("accountGraphSelection")}>
 					<div className="account-graph-selection-header"><p className="account-graph-selection-title"><strong>{byId.get(selected[0].from)?.name}</strong><span aria-hidden="true"> → </span><strong>{byId.get(selected[0].to)?.name}</strong></p><Button className="account-graph-selection-close" aria-label={t("close")} onClick={() => props.onSelectEdge(null)}><X size={18} /></Button></div>
+					<p className="account-graph-selection-status" role="status">{t(selected[0].verifiedAt ? "relationGraphVerified" : "relationGraphPending")}</p>
 					<ul className="account-graph-selection-labels">{selected.map((relation) => <li key={relation.id} data-relation-id={relation.id}>
 						<strong>{relation.label}</strong>
 						<dl className="graph-relation-metadata"><div><dt>{t("relationSource")}</dt><dd>{relation.source || t("graphNotRecorded")}</dd></div><div><dt>{t("verifiedAt")}</dt><dd>{relation.verifiedAt ? date(relation.verifiedAt, i18n.language) : t("graphNotRecorded")}</dd></div></dl>
-						<small>{t(relation.verifiedAt ? "relationGraphVerified" : "relationGraphPending")}</small>
 						<div className="actions graph-relation-actions">
 							{props.onEditRelation && <Button size="small" aria-label={`${t("editRelation")} · ${relation.label}`} onClick={() => props.onEditRelation?.(relation)}><Pencil size={14} />{t("edit")}</Button>}
 							{props.onDeleteRelation && <Button variant="danger" size="small" aria-label={`${t("deleteRelation")} · ${relation.label}`} onClick={() => props.onDeleteRelation?.(relation)}><Trash2 size={14} />{t("remove")}</Button>}
 						</div>
 					</li>)}</ul>
-					<p className="account-graph-selection-status" role="status">{t(selected.every((relation) => !!relation.verifiedAt) ? "relationGraphVerified" : selected.some((relation) => !!relation.verifiedAt) ? "relationGraphMixed" : "relationGraphPending")}</p>
 				</section></Panel>}
 			</ReactFlow>
 			{!ready && <p className="account-graph-state" role={error ? "alert" : "status"}>{t(error ? "accountGraphUnavailable" : "loading")}</p>}

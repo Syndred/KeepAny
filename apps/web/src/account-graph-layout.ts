@@ -54,15 +54,16 @@ type Model = { rootId: string; nodes: Map<string, ModelNode>; edges: ModelEdge[]
 
 const elk = new ELK();
 const margin = 12;
-const gap = 24;
+const gap = 20;
 const epsilon = 0.01;
 const cache = new Map<string, Promise<AccountGraphLayout>>();
 const maxCacheEntries = 16;
 const emptyLayout = (): AccountGraphLayout => ({ nodes: new Map(), edges: new Map(), bounds: { x: 0, y: 0, width: 0, height: 0 } });
 const pairKey = (from: string, to: string) => JSON.stringify([from, to]);
+const unorderedPairKey = (from: string, to: string) => from < to ? pairKey(from, to) : pairKey(to, from);
 const samePoint = (a: Point, b: Point) => Math.abs(a.x - b.x) < epsilon && Math.abs(a.y - b.y) < epsilon;
 
-function buildModel(rootId: string, ids: string[], pairs: Pair[], compact = ids.length > 24): Model {
+function buildModel(rootId: string, ids: string[], pairs: Pair[], compact = ids.length > 24, laneStep = 16): Model {
 	const adjacency = new Map(ids.map((id) => [id, new Set<string>()]));
 	for (const pair of pairs) {
 		adjacency.get(pair.from)?.add(pair.to);
@@ -102,12 +103,22 @@ function buildModel(rootId: string, ids: string[], pairs: Pair[], compact = ids.
 		else rightWeight += weight;
 	}
 	for (const id of frontier) side.set(id, branchSides.get(branchOf.get(id) ?? id) ?? -1);
+	const lanes = new Map<string, Pair[]>();
+	for (const pair of pairs) {
+		const key = unorderedPairKey(pair.from, pair.to);
+		lanes.set(key, [...lanes.get(key) ?? [], pair]);
+	}
+	const laneCount = new Map<string, number>();
+	for (const siblings of lanes.values()) for (const pair of siblings) {
+		laneCount.set(pair.from, Math.max(laneCount.get(pair.from) ?? 1, siblings.length));
+		laneCount.set(pair.to, Math.max(laneCount.get(pair.to) ?? 1, siblings.length));
+	}
 	const nodes = new Map(ids.map((id, index): [string, ModelNode] => {
 		const current = id === rootId;
 		return [id, {
 			id, internalId: `n-${index}`, side: side.get(id) ?? 0, depth: depth.get(id) ?? 0,
 			width: compact ? current ? 180 : 160 : 190,
-			height: current ? 76 : compact ? 60 : 64,
+			height: Math.max(current ? 76 : compact ? 60 : 64, ((laneCount.get(id) ?? 1) - 1) * laneStep + 24),
 			ports: new Map(), handles: new Map(),
 		}];
 	}));
@@ -115,20 +126,20 @@ function buildModel(rootId: string, ids: string[], pairs: Pair[], compact = ids.
 		const a = nodes.get(left), b = nodes.get(right);
 		return (a ? a.side * a.depth : 0) - (b ? b.side * b.depth : 0) || left.localeCompare(right);
 	};
-	const keys = new Set(pairs.map((pair) => pair.key));
 	const edges = pairs.map((pair, index): ModelEdge => {
 		const reversed = compare(pair.from, pair.to) > 0;
 		const layoutFrom = reversed ? pair.to : pair.from, layoutTo = reversed ? pair.from : pair.to;
 		const source = nodes.get(layoutFrom), target = nodes.get(layoutTo);
 		if (!source || !target) throw Error("account-graph-layout-unavailable");
-		const reciprocal = keys.has(pairKey(pair.to, pair.from));
-		const offset = reciprocal ? reversed ? 8 : -8 : 0;
-		const fromPort = reciprocal ? `p-${index}-east` : `${source.internalId}-east`;
-		const toPort = reciprocal ? `p-${index}-west` : `${target.internalId}-west`;
+		const siblings = lanes.get(unorderedPairKey(pair.from, pair.to)) ?? [pair];
+		const separate = siblings.length > 1;
+		const offset = (siblings.indexOf(pair) - (siblings.length - 1) / 2) * laneStep;
+		const fromPort = separate ? `p-${index}-east` : `${source.internalId}-east`;
+		const toPort = separate ? `p-${index}-west` : `${target.internalId}-west`;
 		source.ports.set(fromPort, { id: fromPort, x: source.width, y: source.height / 2 + offset });
 		target.ports.set(toPort, { id: toPort, x: 0, y: target.height / 2 + offset });
 		const sourceSide = reversed ? "left" : "right", targetSide = reversed ? "right" : "left";
-		const sourceHandle = `source-${sourceSide}-${offset}`, targetHandle = `target-${targetSide}-${offset}`;
+		const sourceHandle = `source-${sourceSide}-${separate ? `p${index}` : "shared"}`, targetHandle = `target-${targetSide}-${separate ? `p${index}` : "shared"}`;
 		const actualSource = nodes.get(pair.from), actualTarget = nodes.get(pair.to);
 		if (!actualSource || !actualTarget) throw Error("account-graph-layout-unavailable");
 		actualSource.handles.set(sourceHandle, { id: sourceHandle, type: "source", side: sourceSide, x: reversed ? 0 : actualSource.width, y: actualSource.height / 2 + offset });
@@ -267,8 +278,11 @@ function validGeometry(layout: AccountGraphLayout, model: Model) {
 			if (![a.x, a.y, b.x, b.y].every(Number.isFinite) || Math.abs(a.x - b.x) > epsilon && Math.abs(a.y - b.y) > epsilon) return false;
 			if (nodes.some((node) => segmentEntersNode(a, b, node))) return false;
 		}
-		const reciprocal = layout.edges.get(pairKey(relation.to, relation.from));
-		if (reciprocal && edge.points.length === reciprocal.points.length && edge.points.every((point, index) => samePoint(point, reciprocal.points[reciprocal.points.length - 1 - index]))) return false;
+		for (const peer of model.edges) {
+			if (peer.key === relation.key || !((peer.from === relation.from && peer.to === relation.to) || (peer.from === relation.to && peer.to === relation.from))) continue;
+			const other = layout.edges.get(peer.key);
+			if (other && edge.points.length === other.points.length && (edge.points.every((point, index) => samePoint(point, other.points[index])) || edge.points.every((point, index) => samePoint(point, other.points[other.points.length - 1 - index])))) return false;
+		}
 	}
 	return true;
 }
@@ -288,6 +302,42 @@ function readingScale(layout: AccountGraphLayout, rootId: string, viewport: { wi
 	const height = Math.max(y - layout.bounds.y, layout.bounds.y + layout.bounds.height - y) * 2 + 16;
 	return Math.min(1, viewport.width / width, viewport.height / height);
 }
+function selectableParallelRoutes(layout: AccountGraphLayout, model: Model, viewport: { width: number; height: number }) {
+	const siblings = new Map<string, string[]>();
+	for (const edge of model.edges) {
+		const key = unorderedPairKey(edge.from, edge.to);
+		siblings.set(key, [...siblings.get(key) ?? [], edge.key]);
+	}
+	const ids = [...siblings.values()].filter(group => group.length > 1).flat();
+	if (!ids.length) return true;
+	const fit = Math.min(1, viewport.width / (layout.bounds.width + 16), viewport.height / (layout.bounds.height + 16));
+	const hitRadius = viewport.width < 700 ? 16 : 10;
+	const scales = viewport.width < 700 ? [1, fit, 0.28] : [1, fit];
+	const distance = (point: Point, points: Point[]) => Math.min(...points.slice(1).map((to, index) => {
+		const from = points[index], dx = to.x - from.x, dy = to.y - from.y;
+		const fraction = Math.max(0, Math.min(1, ((point.x - from.x) * dx + (point.y - from.y) * dy) / (dx * dx + dy * dy || 1)));
+		return Math.hypot(point.x - from.x - fraction * dx, point.y - from.y - fraction * dy);
+	}));
+	for (const id of ids) for (const zoom of scales) {
+		const jitter = Math.min(2, hitRadius * zoom * 0.8);
+		const route = layout.edges.get(id)?.points;
+		if (!route) return false;
+		const others = [...layout.edges].filter(([key]) => key !== id).map(([, edge]) => edge.points);
+		let found = false;
+		for (let index = 1; index < route.length && !found; index++) {
+			const from = route[index - 1], to = route[index], length = Math.hypot(to.x - from.x, to.y - from.y);
+			for (let step = 1; step < length; step += 1 / zoom) {
+				const center = { x: Math.round((from.x + (to.x - from.x) * step / length) * zoom) / zoom, y: Math.round((from.y + (to.y - from.y) * step / length) * zoom) / zoom };
+				if ([-jitter, 0, jitter].every(dx => [-jitter, 0, jitter].every(dy => {
+					const point = { x: center.x + dx / zoom, y: center.y + dy / zoom };
+					return distance(point, route) < hitRadius && others.every(other => distance(point, other) > hitRadius) && [...layout.nodes.values()].every(node => point.x < node.x || point.x > node.x + node.width || point.y < node.y || point.y > node.y + node.height);
+				}))) { found = true; break; }
+			}
+		}
+		if (!found) return false;
+	}
+	return true;
+}
 async function calculate(model: Model, viewport: { width: number; height: number }) {
 	// Reserve more route separation for the scaled-down mobile overview.
 	const edgeSpacing = viewport.width < 700 ? 32 : 16;
@@ -295,12 +345,12 @@ async function calculate(model: Model, viewport: { width: number; height: number
 	const nodeHeight = [...model.nodes.values()].find((node) => node.id !== model.rootId)?.height ?? 64;
 	const rows = Math.max(1, Math.floor((viewport.height - margin * 2 + gap) / (nodeHeight + gap)));
 	const preferred = Math.max(1, Math.min(4, Math.ceil(maxBank / rows)));
-	const splits = [...new Set([preferred, preferred === 1 ? 2 : preferred - 1, 1])];
+	const splits = [...new Set([preferred, preferred === 1 ? 2 : preferred - 1, 1, 3, 4])];
 	let best: AccountGraphLayout | undefined, bestScore = -1;
-	for (const split of splits) {
+	for (const spacing of viewport.width >= 700 ? [edgeSpacing, 12, 8] : [edgeSpacing]) for (const split of splits) {
 		try {
-			const result = await candidate(model, split, edgeSpacing);
-			if (!validGeometry(result, model)) continue;
+			const result = await candidate(model, split, spacing);
+			if (!validGeometry(result, model) || !selectableParallelRoutes(result, model, viewport)) continue;
 			const score = readingScale(result, model.rootId, viewport);
 			if (score > bestScore + 0.000001) { best = result; bestScore = score; }
 			if (score >= 1) return result;
@@ -316,22 +366,20 @@ export async function layoutAccountGraph(rootId: string, assets: Asset[], relati
 	if (!live.has(rootId)) return emptyLayout();
 	const family = accountFamilyGraph(rootId, live, relations);
 	const ids = [rootId, ...family.neighbors.map((asset) => asset.id)].sort();
-	const pairs = [...new Map(family.relations.map((relation) => {
-		const key = pairKey(relation.from, relation.to);
-		return [key, { key, from: relation.from, to: relation.to }] as const;
-	})).values()].sort((a, b) => a.key.localeCompare(b.key));
+	const pairs = family.relations.map((relation) => ({ key: relation.id, from: relation.from, to: relation.to })).sort((a, b) => pairKey(a.from, a.to).localeCompare(pairKey(b.from, b.to)) || a.key.localeCompare(b.key));
 	const size = {
 		width: Number.isFinite(viewport.width) && viewport.width > 0 ? Math.max(1, Math.round(viewport.width)) : 1100,
 		height: Number.isFinite(viewport.height) && viewport.height > 0 ? Math.max(1, Math.round(viewport.height)) : 560,
 	};
-	const key = JSON.stringify([rootId, ids, pairs.map((pair) => pair.key), size]);
+	const key = JSON.stringify([rootId, ids, pairs.map((pair) => [pair.key, pair.from, pair.to]), size]);
 	let pending = cache.get(key);
 	if (!pending) {
 		pending = (async () => {
-			const natural = await calculate(buildModel(rootId, ids, pairs), size);
+			const laneStep = size.width < 700 ? 32 : 16;
+			const natural = await calculate(buildModel(rootId, ids, pairs, ids.length > 24, laneStep), size);
 			if (ids.length >= 12 && ids.length <= 24 && readingScale(natural, rootId, size) < 11 / 12) {
 				try {
-					const compact = await calculate(buildModel(rootId, ids, pairs, true), size);
+					const compact = await calculate(buildModel(rootId, ids, pairs, true, laneStep), size);
 					if (readingScale(compact, rootId, size) > readingScale(natural, rootId, size) + 0.000001) return compact;
 				} catch { /* Keep the valid natural layout if compact routing fails its audit. */ }
 			}

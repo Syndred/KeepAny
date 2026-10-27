@@ -311,7 +311,7 @@ async function addScenarioConnection(
 	await expect(editor).toBeHidden();
 	const expected = connectionRow(connection, text);
 	const row = page
-		.locator(".relation-list .relation-row")
+		.locator(".account-relation-details .relation-list .relation-row")
 		.filter({
 			has: page
 				.locator(".relation-endpoints")
@@ -338,9 +338,7 @@ async function fullFamily(page: Page, expected: Connection[], text: Copy) {
 	);
 	await page.getByRole("button", { name: text.family, exact: true }).click();
 	await expect(details).toHaveJSProperty("open", detailsOpen);
-	const pairCount = new Set(
-		expected.map((connection) => `${connection.from}:${connection.to}`),
-	).size;
+	const pairCount = expected.length;
 	const nodeCount = new Set(expected.flatMap((edge) => [edge.from, edge.to]))
 		.size;
 	await waitForAccountGraphLayout(page, { nodes: nodeCount, edges: pairCount });
@@ -355,7 +353,7 @@ async function fullFamily(page: Page, expected: Connection[], text: Copy) {
 	).toHaveCount(0);
 	for (const edge of await page.locator(".react-flow__edge-path").all())
 		await expect(edge).toHaveAttribute("marker-end", /url\(.+\)/);
-	const rows = page.locator(".relation-list .relation-row");
+	const rows = page.locator(".account-relation-details .relation-list .relation-row");
 	await expect(rows).toHaveCount(expected.length);
 	const actual = await rows.evaluateAll((elements) => {
 		const normalized = (element: Element | null) =>
@@ -458,9 +456,9 @@ async function expectBackupConnections(
 	}
 }
 
-function graphEdge(page: Page, from: AccountKey, to: AccountKey) {
+function graphEdge(page: Page, from: AccountKey, to: AccountKey, label: string) {
 	return page.locator(
-		`.react-flow__edge[aria-label^="${account(from).name} → ${account(to).name} ·"]`,
+		`.react-flow__edge[aria-label^="${account(from).name} → ${account(to).name} · ${label} ·"]`,
 	);
 }
 
@@ -654,7 +652,8 @@ async function expectSelection(
 	connections: Connection[],
 	text: Copy,
 ) {
-	const edge = graphEdge(page, from, to);
+	expect(connections).toHaveLength(1);
+	const edge = graphEdge(page, from, to, text.purposes[connections[0].purpose]);
 	await expect(page.locator(".react-flow__edge.selected")).toHaveCount(1);
 	await expect(edge).toHaveClass(/selected/);
 	const panel = page.locator(".account-graph-selection-panel");
@@ -1172,16 +1171,22 @@ async function selectionJourney(
 	await expectAllAccountGraphNodesInFrame(page);
 	await recordAccountGraphCamera(page, "before-first-mouse");
 	const beforeFirstMouse = await viewportPosition(page);
-	const duplicatePair = expected.filter(
+	const parallelPair = expected.filter(
 		(item) => item.from === "docs" && item.to === "mail",
 	);
-	const emailEdge = graphEdge(page, "docs", "mail");
+	for (const connection of parallelPair) {
+		await clickGraphEdge(page, graphEdge(page, "docs", "mail", text.purposes[connection.purpose]));
+		const selected = await expectSelection(page, "docs", "mail", [connection], text);
+		await selected.getByRole("button", { name: text.close, exact: true }).click();
+	}
+	const selectedPair = parallelPair.filter(connection => connection.purpose === "email");
+	const emailEdge = graphEdge(page, "docs", "mail", text.purposes.email);
 	await clickGraphEdge(page, emailEdge);
 	const panel = await expectSelection(
 		page,
 		"docs",
 		"mail",
-		duplicatePair,
+		selectedPair,
 		text,
 	);
 	await recordAccountGraphCamera(page, "after-first-mouse");
@@ -1191,7 +1196,7 @@ async function selectionJourney(
 		"Selecting a line with the mouse",
 	);
 	await expectSelectionGeometry(panel, text);
-	await expandAndRestoreSelection(page, duplicatePair, text);
+	await expandAndRestoreSelection(page, selectedPair, text);
 	await recordAccountGraphCamera(page, "after-expand-and-restore");
 	if (evidence)
 		await page.screenshot({
@@ -1211,7 +1216,7 @@ async function selectionJourney(
 	await tabToEdge(page, emailEdge);
 	const beforeEnter = await viewportPosition(page);
 	await page.keyboard.press("Enter");
-	await expectSelection(page, "docs", "mail", duplicatePair, text);
+	await expectSelection(page, "docs", "mail", selectedPair, text);
 	await recordAccountGraphCamera(page, "after-email-enter");
 	await expectAccountGraphCameraUnchanged(
 		page,
@@ -1221,17 +1226,17 @@ async function selectionJourney(
 	const beforeDelete = await viewportPosition(page);
 	await page.keyboard.press("Backspace");
 	await page.keyboard.press("Delete");
-	await expectSelection(page, "docs", "mail", duplicatePair, text);
+	await expectSelection(page, "docs", "mail", selectedPair, text);
 	await recordAccountGraphCamera(page, "after-readonly-delete");
 	await expectAccountGraphCameraUnchanged(
 		page,
 		beforeDelete,
 		"Read-only Delete and Backspace",
 	);
-	await expect(page.locator(".relation-list .relation-row")).toHaveCount(
+	await expect(page.locator(".account-relation-details .relation-list .relation-row")).toHaveCount(
 		expected.length,
 	);
-	const phoneEdge = graphEdge(page, "code", "phoneA");
+	const phoneEdge = graphEdge(page, "code", "phoneA", text.purposes.phone);
 	await tabToEdge(page, phoneEdge);
 	const beforeSpace = await viewportPosition(page);
 	await page.keyboard.press("Space");
@@ -1262,7 +1267,7 @@ async function selectionJourney(
 	await recordAccountGraphCamera(page, "after-second-fit-all");
 	const beforeSecondMouse = await viewportPosition(page);
 	await clickGraphEdge(page, emailEdge);
-	await expectSelection(page, "docs", "mail", duplicatePair, text);
+	await expectSelection(page, "docs", "mail", selectedPair, text);
 	await expectAccountGraphCameraUnchanged(
 		page,
 		beforeSecondMouse,
@@ -1419,7 +1424,7 @@ for (const locale of ["zh-CN", "en-US"] as const) {
 				await page
 					.getByRole("button", { name: text.family, exact: true })
 					.focus();
-				await tabToEdge(page, graphEdge(page, "docs", "mail"));
+				await tabToEdge(page, graphEdge(page, "docs", "mail", text.purposes.recoveryEmail));
 				await page.keyboard.press("Enter");
 				await expectSelection(
 					page,

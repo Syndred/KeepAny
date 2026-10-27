@@ -14,9 +14,9 @@ describe('shared asset graph presentation', () => {
     const graph = accountFamilyGraph(project.id, new Map(assets.map(asset => [asset.id, asset])), relations);
     expect(graph.relations.map(relation => relation.id)).toEqual(relations.map(relation => relation.id));
     const layout = await layoutAccountGraph(project.id, assets, relations, { width: 390, height: 560 });
-    expect(layout.nodes.size).toBe(3); expect(layout.edges.size).toBe(3);
-    expect(layout.edges.has(JSON.stringify([account.id, project.id]))).toBe(true);
-    expect(layout.edges.has(JSON.stringify([project.id, account.id]))).toBe(true);
+    expect(layout.nodes.size).toBe(3); expect(layout.edges.size).toBe(4);
+    expect(layout.edges.has("reverse")).toBe(true);
+    expect(layout.edges.has("primary")).toBe(true);
   });
   it('retains filter, camera and drag offsets separately for each center without mutating assets', () => {
     const asset = { ...newAsset('project'), id: 'state-project' };

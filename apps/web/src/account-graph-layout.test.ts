@@ -5,14 +5,14 @@ import { layoutAccountGraph, type AccountGraphLayout } from "./account-graph-lay
 
 const asset = (id: string): Asset => ({ ...newAsset("account"), id, name: id });
 const relation = (from: string, to: string, id = `${from}-${to}`): Relation => ({ id, from, to, label: "Login email", createdAt: "", verifiedAt: "", deleted: false });
-const key = (from: string, to: string) => JSON.stringify([from, to]);
+const key = (from: string, to: string) => `${from}-${to}`;
 function star(total: number, prefix = "star") {
 	const root = `${prefix}-root`, assets = [asset(root), ...Array.from({ length: total - 1 }, (_, index) => asset(`${prefix}-service-${String(index).padStart(2, "0")}`))];
 	return { root, assets, relations: assets.slice(1).map((entry) => relation(entry.id, root)) };
 }
 function verifyGeometry(layout: AccountGraphLayout, relations: Relation[]) {
 	const nodes = [...layout.nodes.values()];
-	expect(layout.edges.size).toBe(new Set(relations.map((entry) => key(entry.from, entry.to))).size);
+	expect(layout.edges.size).toBe(new Set(relations.map((entry) => entry.id)).size);
 	for (const [index, a] of nodes.entries()) {
 		expect([a.x, a.y, a.width, a.height].every(Number.isFinite)).toBe(true);
 		expect(a.x).toBeGreaterThanOrEqual(layout.bounds.x);
@@ -21,8 +21,8 @@ function verifyGeometry(layout: AccountGraphLayout, relations: Relation[]) {
 		expect(a.y + a.height).toBeLessThanOrEqual(layout.bounds.y + layout.bounds.height);
 		for (const b of nodes.slice(index + 1)) expect(a.x + a.width <= b.x || b.x + b.width <= a.x || a.y + a.height <= b.y || b.y + b.height <= a.y).toBe(true);
 	}
-	for (const pair of new Map(relations.map((entry) => [key(entry.from, entry.to), entry])).values()) {
-		const edge = layout.edges.get(key(pair.from, pair.to)), source = layout.nodes.get(pair.from), target = layout.nodes.get(pair.to);
+	for (const pair of relations) {
+		const edge = layout.edges.get(pair.id), source = layout.nodes.get(pair.from), target = layout.nodes.get(pair.to);
 		expect(edge).toBeDefined(); expect(source).toBeDefined(); expect(target).toBeDefined();
 		if (!edge || !source || !target) throw Error("Missing layout endpoint");
 		const from = source.handles.find((handle) => handle.id === edge.sourceHandle), to = target.handles.find((handle) => handle.id === edge.targetHandle);
@@ -53,7 +53,7 @@ function centeredReadingScale(layout: AccountGraphLayout, rootId: string, viewpo
 	const x = root.x + root.width / 2, y = root.y + root.height / 2, bounds = layout.bounds;
 	return Math.min(1, viewport.width / (Math.max(x - bounds.x, bounds.x + bounds.width - x) * 2 + 16), viewport.height / (Math.max(y - bounds.y, bounds.y + bounds.height - y) * 2 + 16));
 }
-function hasExclusivePointerPatch(layout: AccountGraphLayout, edgeKey: string, zoom: number) {
+function hasExclusivePointerPatch(layout: AccountGraphLayout, edgeKey: string, zoom: number, hitRadius = 10) {
 	type Point = { x: number; y: number };
 	const route = layout.edges.get(edgeKey)?.points;
 	if (!route) return false;
@@ -67,11 +67,11 @@ function hasExclusivePointerPatch(layout: AccountGraphLayout, edgeKey: string, z
 		const a = route[index - 1], b = route[index], length = Math.hypot(b.x - a.x, b.y - a.y);
 		for (let offset = 1; offset < length; offset += 1 / zoom) {
 			const center = { x: Math.round((a.x + (b.x - a.x) * offset / length) * zoom) / zoom, y: Math.round((a.y + (b.y - a.y) * offset / length) * zoom) / zoom };
-			// React Flow's 20px layout-space hit stroke must contain all nine screen-space points,
+			// The actual React Flow hit stroke (32px on narrow stages, 20px on wide) must contain all nine screen-space points,
 			// with no other edge or card able to receive any of those pointer events.
 			if ([-2, 0, 2].every((dx) => [-2, 0, 2].every((dy) => {
 				const point = { x: center.x + dx / zoom, y: center.y + dy / zoom };
-				return distance(point, route) < 10 && otherRoutes.every((path) => distance(point, path) > 10)
+				return distance(point, route) < hitRadius && otherRoutes.every((path) => distance(point, path) > hitRadius)
 					&& [...layout.nodes.values()].every((node) => point.x < node.x || point.x > node.x + node.width || point.y < node.y || point.y > node.y + node.height);
 			}))) return true;
 		}
@@ -98,7 +98,7 @@ describe("account graph layout", () => {
 		expect(centeredReadingScale(layout, fixture.root, viewport)).toBeGreaterThanOrEqual(11 / 12);
 		for (const entry of fixture.assets.slice(1)) expect(layout.nodes.get(entry.id)?.width).toBe(total > 24 ? 160 : 190);
 		const sourceSides = new Set(fixture.relations.map((entry) => {
-			const edge = layout.edges.get(key(entry.from, entry.to));
+			const edge = layout.edges.get(entry.id);
 			return layout.nodes.get(entry.from)?.handles.find((handle) => handle.id === edge?.sourceHandle)?.side;
 		}));
 		expect(sourceSides).toEqual(new Set(["left", "right"]));
@@ -123,11 +123,12 @@ describe("account graph layout", () => {
 		expect(layout.nodes.size).toBe(12);
 		expect(layout.nodes.get(id("docs"))?.width).toBe(160);
 		expect(layout.nodes.get(id("mail"))?.width).toBe(180);
-		const scale = centeredReadingScale(layout, id("mail"), viewport);
+		// Fit all centers the complete bounds; focus-current is a separate 1:1 camera mode.
+		const scale = Math.min(1, viewport.width / (layout.bounds.width + 16), viewport.height / (layout.bounds.height + 16));
 		expect(scale).toBeGreaterThan(11 / 12);
 		const current = layout.nodes.get(id("mail"));
 		if (!current) throw Error("Missing compact graph root");
-		const center = { x: current.x + current.width / 2, y: current.y + current.height / 2 };
+		const center = { x: layout.bounds.x + layout.bounds.width / 2, y: layout.bounds.y + layout.bounds.height / 2 };
 		for (const node of layout.nodes.values()) {
 			const x = viewport.width / 2 + (node.x - center.x) * scale, y = viewport.height / 2 + (node.y - center.y) * scale;
 			expect(x).toBeGreaterThanOrEqual(8); expect(y).toBeGreaterThanOrEqual(8);
@@ -166,19 +167,38 @@ describe("account graph layout", () => {
 		const layout = await layoutAccountGraph(id("mail"), assets, relations, viewport);
 		verifyGeometry(layout, relations);
 		const fittedZoom = Math.min(1, viewport.width / (layout.bounds.width + 16), viewport.height / (layout.bounds.height + 16));
-		expect(hasExclusivePointerPatch(layout, key(id("docs"), id("mail")), zoom)).toBe(true);
-		expect(hasExclusivePointerPatch(layout, key(id("docs"), id("mail")), fittedZoom)).toBe(true);
+		for (const entry of relations.filter(relation => relation.from === id("docs") && relation.to === id("mail"))) {
+			expect(hasExclusivePointerPatch(layout, entry.id, zoom, width < 700 ? 16 : 10)).toBe(true);
+			expect(hasExclusivePointerPatch(layout, entry.id, fittedZoom, width < 700 ? 16 : 10)).toBe(true);
+		}
 	});
 	it("is stable across collection ordering, multiple purposes and fresh metadata", async () => {
 		const fixture = star(12, "stable"), backup = structuredClone(fixture);
 		const first = await layoutAccountGraph(fixture.root, fixture.assets, fixture.relations, { width: 1100, height: 560 });
-		const reordered = await layoutAccountGraph(fixture.root, [...fixture.assets].reverse(), [...fixture.relations].reverse().concat({ ...fixture.relations[0], id: "another-purpose", label: "Recovery phone" }), { width: 1100, height: 560 });
+		const reordered = await layoutAccountGraph(fixture.root, [...fixture.assets].reverse(), [...fixture.relations].reverse().map(relation => ({...relation, source:"fresh source", verifiedAt:"2026-10-27"})), { width: 1100, height: 560 });
 		expect(snapshot(reordered)).toEqual(snapshot(first));
 		expect(fixture).toEqual(backup);
+		const parallel = [...fixture.relations, { ...fixture.relations[0], id: "another-purpose", label: "Recovery phone" }];
+		const multiple = await layoutAccountGraph(fixture.root, fixture.assets, parallel, { width: 1100, height: 560 });
+		verifyGeometry(multiple, parallel);
+		expect(multiple.edges.size).toBe(first.edges.size + 1);
+		expect(multiple.edges.get("another-purpose")?.points).not.toEqual(multiple.edges.get(fixture.relations[0].id)?.points);
 		const root = first.nodes.get(fixture.root);
 		if (root) root.x = -999;
 		first.edges.clear();
 		expect(snapshot(await layoutAccountGraph(fixture.root, fixture.assets, fixture.relations, { width: 1100, height: 560 }))).toEqual(snapshot(reordered));
+	});
+	it.each([24, 49])("retains every parallel relationship in a %i-node mobile family", async (total) => {
+		const fixture = star(total, `mobile-parallel-${total}`);
+		const parallel = { ...fixture.relations[0], id: `mobile-purpose-${total}`, label: "Recovery source" };
+		const reverse = { ...fixture.relations[0], id: `mobile-reverse-${total}`, from: fixture.root, to: fixture.relations[0].from };
+		const records = [...fixture.relations, parallel, reverse];
+		const layout = await layoutAccountGraph(fixture.root, fixture.assets, records, { width: 302, height: 570 });
+		verifyGeometry(layout, records);
+		expect(layout.nodes.size).toBe(total);
+		expect(layout.edges.size).toBe(records.length);
+		expect(layout.edges.get(parallel.id)?.points).not.toEqual(layout.edges.get(fixture.relations[0].id)?.points);
+		expect(hasExclusivePointerPatch(layout, parallel.id, 1, 16)).toBe(true);
 	});
 	it("balances unique BFS branch weights [11, 10, 1, 1] as 12/11 instead of 21/2", async () => {
 		const rootId = "weighted-root", ids = [rootId], relations: Relation[] = [];
@@ -211,7 +231,7 @@ describe("account graph layout", () => {
 		const forward = layout.edges.get(key(ids[0], ids[1])), reverse = layout.edges.get(key(ids[1], ids[0]));
 		expect(forward?.points).not.toEqual(reverse ? [...reverse.points].reverse() : []);
 		for (const pair of relations.slice(0, 2)) {
-			const edge = layout.edges.get(key(pair.from, pair.to));
+			const edge = layout.edges.get(pair.id);
 			const node = layout.nodes.get(pair.from), handle = node?.handles.find((handle) => handle.id === edge?.sourceHandle);
 			expect(Math.abs((handle?.y ?? 0) - (node?.height ?? 0) / 2)).toBe(8);
 		}
@@ -245,7 +265,7 @@ describe("account graph layout", () => {
 		const layout = await layoutAccountGraph(identities[0], assets, relations, { width: 1230, height: 740 });
 		verifyGeometry(layout, relations);
 		expect(layout.nodes.size).toBe(total);
-		expect([...layout.edges.keys()].sort()).toEqual([...new Set(relations.map((entry) => key(entry.from, entry.to)))].sort());
+		expect([...layout.edges.keys()].sort()).toEqual([...new Set(relations.map((entry) => entry.id))].sort());
 	});
 	it.each([318, 1230])("shares ordinary center ports instead of making 48 mailbox handles at viewport width %i", async (width) => {
 		const fixture = star(49, `handles-${width}`);

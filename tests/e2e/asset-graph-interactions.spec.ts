@@ -27,9 +27,25 @@ async function storedRelation(page: Page, id: string) {
 async function ready(page: Page) {
   await expect(page.locator('.account-family-graph')).toHaveAttribute('data-layout-ready', 'true');
 }
-async function selectPair(page: Page) {
-  const edge = page.locator('.react-flow__edge[data-from="graph-project"][data-to="graph-account"]');
-  await edge.focus(); await edge.press('Enter');
+async function selectGraphRelation(page: Page, id = 'graph-primary', pointer = false) {
+  const edge = page.locator(`.react-flow__edge[data-relation-id="${id}"]`);
+  if (pointer) {
+    await page.locator('.react-flow').evaluate(element => element.scrollIntoView({ block: 'center' }));
+    let point: {x:number;y:number}|null = null;
+    await expect.poll(async () => {
+      point = await edge.evaluate(element => {
+        const path=element.querySelector<SVGPathElement>('.react-flow__edge-path'), matrix=path?.getScreenCTM();
+        if(!path||!matrix)return null; const length=path.getTotalLength();
+        for(let at=1;at<length;at+=1/Math.hypot(matrix.a,matrix.b)) {
+          const local=path.getPointAtLength(at),screen=new DOMPoint(local.x,local.y).matrixTransform(matrix),x=Math.round(screen.x),y=Math.round(screen.y);
+          if([-2,0,2].every(dx=>[-2,0,2].every(dy=>document.elementFromPoint(x+dx,y+dy)?.closest('.react-flow__edge')===element)))return {x,y};
+        }
+        return null;
+      });return !!point;
+    }).toBe(true);
+    if(!point)throw Error('independent-edge-target-missing');
+    await page.mouse.click((point as {x:number;y:number}).x,(point as {x:number;y:number}).y);
+  } else { await edge.focus(); await edge.press('Enter'); }
   await expect(page.locator('.account-graph-connection-details')).toBeVisible();
   return page.locator('.account-graph-connection-details');
 }
@@ -40,6 +56,7 @@ for (const language of ['en', 'zh-CN'] as const) {
       test.setTimeout(120_000);
       const errors: string[] = [];
       page.on('pageerror', error => errors.push(error.message));
+      page.on('console', message => { if (message.text().includes('[React Flow]')) errors.push(message.text()); });
       const zh = language === 'zh-CN';
       const text = { save: zh ? '保存' : 'Save', edit: zh ? '编辑关系' : 'Edit connection', remove: zh ? '删除关系' : 'Delete connection', close: zh ? '关闭' : 'Close', restore: zh ? '恢复' : 'Restore', family: zh ? '完整关系' : 'All connections', expand: zh ? '全屏查看' : 'Expand graph', collapse: zh ? '退出全屏' : 'Exit expanded view' };
       await page.addInitScript(value => localStorage.setItem('keepany-language', value), language);
@@ -58,18 +75,26 @@ for (const language of ['en', 'zh-CN'] as const) {
         await page.locator('.graph').evaluate(element => element.scrollIntoView({ block: 'start' }));
         await page.screenshot({ path: evidence ? join(evidence, `${kind}-current-${language}-${width}.png`) : info.outputPath(`${kind}-current-${language}-${width}.png`), fullPage: false });
         await expect(page.locator('#relation-filter')).toBeVisible();
-        const panel = await selectPair(page);
+        const panel = await selectGraphRelation(page, 'graph-primary', true);
         await expect(panel.locator('[data-relation-id="graph-primary"]')).toContainText('Original source');
         await expect(panel.locator('[data-relation-id="graph-primary"]')).toContainText('2026');
-        await expect(panel.locator('[data-relation-id="graph-recovery"]')).toContainText('Unverified source');
-        await expect(panel.locator('[data-relation-id="graph-recovery"]')).toContainText(zh ? '未记录' : 'Not recorded');
-        await expect(panel.getByRole('button', { name: new RegExp(`^${text.edit} ·`) })).toHaveCount(2);
-        await expect(panel.getByRole('button', { name: new RegExp(`^${text.remove} ·`) })).toHaveCount(2);
-        await expect(page.locator('.react-flow__edge[data-from="graph-account"][data-to="graph-project"] .react-flow__edge-path')).toHaveAttribute('marker-end', /url/);
-        await expect(page.locator('.react-flow__edge[data-from="graph-project"][data-to="graph-account"] .react-flow__edge-path')).toHaveCSS('stroke-dasharray', '5px, 4px');
-        await panel.scrollIntoViewIfNeeded();
-        await page.screenshot({ path: evidence ? join(evidence, `${kind}-selected-${language}-${width}.png`) : info.outputPath(`${kind}-selected-${language}-${width}.png`), fullPage: false });
+        await expect(panel.locator('[data-relation-id="graph-recovery"]')).toHaveCount(0);
+        await expect(panel.getByRole('button', { name: new RegExp(`^${text.edit} ·`) })).toHaveCount(1);
+        await expect(panel.getByRole('button', { name: new RegExp(`^${text.remove} ·`) })).toHaveCount(1);
+        await expect(page.locator('.react-flow__edge[data-relation-id="graph-primary"] .react-flow__edge-path')).toHaveCSS('stroke-dasharray', 'none');
+        const primaryPath = await page.locator('.react-flow__edge[data-relation-id="graph-primary"] .react-flow__edge-path').getAttribute('d');
+        const recoveryPath = await page.locator('.react-flow__edge[data-relation-id="graph-recovery"] .react-flow__edge-path').getAttribute('d');
+        expect(primaryPath).not.toBe(recoveryPath);
         await panel.getByRole('button', { name: text.close, exact: true }).click();
+        const pending = await selectGraphRelation(page, 'graph-recovery', true);
+        await expect(pending.locator('[data-relation-id="graph-recovery"]')).toContainText('Unverified source');
+        await expect(pending.locator('[data-relation-id="graph-recovery"]')).toContainText(zh ? '未记录' : 'Not recorded');
+        await expect(pending.locator('[data-relation-id="graph-primary"]')).toHaveCount(0);
+        await expect(page.locator('.react-flow__edge[data-from="graph-account"][data-to="graph-project"] .react-flow__edge-path')).toHaveAttribute('marker-end', /url/);
+        await expect(page.locator('.react-flow__edge[data-relation-id="graph-recovery"] .react-flow__edge-path')).toHaveCSS('stroke-dasharray', '5px, 4px');
+        await pending.scrollIntoViewIfNeeded();
+        await page.screenshot({ path: evidence ? join(evidence, `${kind}-selected-${language}-${width}.png`) : info.outputPath(`${kind}-selected-${language}-${width}.png`), fullPage: false });
+        await pending.getByRole('button', { name: text.close, exact: true }).click();
         await page.getByRole('button', { name: text.family, exact: true }).click();
         await ready(page); await expect(page.locator('.react-flow__node')).toHaveCount(4);
         await page.locator('#relation-filter').fill('Subscription source');
@@ -107,7 +132,7 @@ for (const language of ['en', 'zh-CN'] as const) {
         expect(expandedRoot.x).toBeLessThan(expandedCanvas.x + expandedCanvas.width);
         expect(expandedRoot.y + expandedRoot.height).toBeGreaterThan(expandedCanvas.y);
         expect(expandedRoot.y).toBeLessThan(expandedCanvas.y + expandedCanvas.height);
-        const expandedPanel = await selectPair(page);
+        const expandedPanel = await selectGraphRelation(page);
         await expandedPanel.getByRole('button', { name: `${text.edit} · Primary`, exact: true }).click();
         const expandedEditor = page.getByRole('dialog', { name: text.edit, exact: true });
         await expandedEditor.locator('#relation-source').fill(`Original source · ${kind}`);
@@ -139,7 +164,7 @@ for (const language of ['en', 'zh-CN'] as const) {
         await page.screenshot({ path: evidence ? join(evidence, `${kind}-${language}-${width}.png`) : info.outputPath(`${kind}-${language}-${width}.png`), fullPage: false });
       }
       // Edit uses real optimistic concurrency: external write happens after opening the draft.
-      const panel = await selectPair(page);
+      const panel = await selectGraphRelation(page, 'graph-recovery');
       await panel.getByRole('button', { name: `${text.edit} · Recovery`, exact: true }).click();
       const editor = page.getByRole('dialog', { name: text.edit, exact: true });
       await editor.locator('#relation-label').fill('Recovery edited');
@@ -158,7 +183,7 @@ for (const language of ['en', 'zh-CN'] as const) {
       await editor.getByRole('button', { name: text.save, exact: true }).click();
       await expect(editor).toBeHidden();
       expect(await storedRelation(page, 'graph-recovery')).toMatchObject({ id: 'graph-recovery', source: 'Edited source', verifiedAt: '2026-10-25', label: 'Recovery edited', deleted: false });
-      await selectPair(page);
+      await selectGraphRelation(page, 'graph-recovery');
       await page.locator('.account-graph-connection-details').getByRole('button', { name: `${text.remove} · Recovery edited`, exact: true }).click();
       const removal = page.getByRole('dialog', { name: text.remove, exact: true });
       await removal.getByRole('button', { name: text.remove, exact: true }).click();
