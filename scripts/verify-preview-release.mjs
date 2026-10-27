@@ -108,7 +108,11 @@ try {
   assert.equal(packageNames.size, 1, 'ZIP has one root folder');
   if (process.platform === 'win32') {
     const literal = value => `'${value.replaceAll("'", "''")}'`;
-    execFileSync('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', `Expand-Archive -LiteralPath ${literal(archivePath)} -DestinationPath ${literal(temp)}`], { stdio: 'pipe' });
+    // PowerShell 7 exports its module path to child processes. Windows
+    // PowerShell 5 must discover its own compatible Archive module instead.
+    const archiveEnv = { ...process.env };
+    for (const key of Object.keys(archiveEnv)) if (key.toLowerCase() === 'psmodulepath') delete archiveEnv[key];
+    execFileSync('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', `Expand-Archive -LiteralPath ${literal(archivePath)} -DestinationPath ${literal(temp)}`], { stdio: 'pipe', env: archiveEnv });
   } else execFileSync('unzip', ['-q', archivePath, '-d', temp], { stdio: 'pipe' });
   packageRoot = join(temp, [...packageNames][0]);
   assert(!packageRoot.startsWith(root), 'Runs outside repository');

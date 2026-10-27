@@ -2,7 +2,7 @@ import { execFileSync, spawnSync } from "node:child_process";
 import { cpSync, existsSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { createServer } from "node:http";
 import { tmpdir } from "node:os";
-import { extname, join, resolve } from "node:path";
+import { extname, join, resolve, sep } from "node:path";
 import type { AddressInfo } from "node:net";
 import { expect, test } from "@playwright/test";
 
@@ -19,7 +19,7 @@ test("old controlled tab upgrades on the same origin without losing its project,
 	const server = createServer((request, response) => {
 		const pathname = decodeURIComponent(new URL(request.url ?? "/", "http://localhost").pathname);
 		const candidate = resolve(directory, `.${pathname}`);
-		const file = candidate.startsWith(`${directory}/`) && existsSync(candidate) && statSync(candidate).isFile() ? candidate : join(directory, "index.html");
+		const file = candidate.startsWith(`${directory}${sep}`) && existsSync(candidate) && statSync(candidate).isFile() ? candidate : join(directory, "index.html");
 		response.setHeader("Content-Type", contentTypes[extname(file)] ?? "application/octet-stream");
 		response.setHeader("Cache-Control", "no-cache");
 		response.end(readFileSync(file));
