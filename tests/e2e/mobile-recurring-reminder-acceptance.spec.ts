@@ -6,6 +6,7 @@ import { decryptBackup } from '../../packages/local-db/src/backup-crypto';
 import { inspectArchive } from '../../packages/local-db/src';
 import { selectChoice } from './helpers/select-choice';
 import { sourceModuleUrl } from './helpers/source-module-url';
+import { aiServer, labels, model, openAssistant, syntheticKey } from './helpers/ai-workflow';
 
 const repo = sourceModuleUrl('packages/local-db/src/index.ts');
 const domain = sourceModuleUrl('packages/domain/src/index.ts');
@@ -41,7 +42,7 @@ async function saveEvidence(info: TestInfo, name: string, value: unknown) {
   await info.attach(name, { path, contentType: 'application/json' });
 }
 
-async function exportAndReadInOtherZone(browser: Browser, page: Page, locale: 'zh-CN' | 'en', info: TestInfo, expected: Awaited<ReturnType<typeof snapshot>>) {
+async function exportAndReadInOtherZone(browser: Browser, page: Page, locale: 'zh-CN' | 'en', info: TestInfo, expected: Awaited<ReturnType<typeof snapshot>>, restoredRow = '.maintenance-task-row') {
   const t = (key: string) => (resources[locale].translation as Record<string,string>)[key] ?? key;
   await page.goto('/intake');
   await page.locator('#backup-password').fill(backupPassword);
@@ -72,11 +73,13 @@ async function exportAndReadInOtherZone(browser: Browser, page: Page, locale: 'z
     expect(result.assets).toEqual(expected.assets);
     expect(result.preference).toEqual(expected.preference);
     expect(await derivedInstants(restored)).toEqual(expectedInstants);
-    await restored.goto('/settings');
-    await expect(restored.locator('#reminder-clock')).toHaveValue('09:00');
-    await expect(restored.locator('#reminder-time-zone')).toHaveValue('America/New_York');
+    if (expected.preference) {
+      await restored.goto('/settings');
+      await expect(restored.locator('#reminder-clock')).toHaveValue(expected.preference.value.time);
+      await expect(restored.locator('#reminder-time-zone')).toHaveValue(expected.preference.value.timeZone);
+    }
     await restored.goto('/tasks');
-    await expect(restored.locator('.maintenance-task-row')).toHaveCount(1);
+    await expect(restored.locator(restoredRow)).toHaveCount(1);
     await restored.screenshot({ path: info.outputPath('los-angeles-clean-ka1-restored.png'), fullPage: true });
     await saveEvidence(info, 'archive-cross-zone', { sha256: createHash('sha256').update(bytes).digest('hex'), bytes: bytes.length, restoredBrowserZone: 'America/Los_Angeles', expected, actual: result });
     return result;
@@ -176,5 +179,91 @@ for (const locale of ['zh-CN', 'en'] as const) {
       expect(errors).toEqual([]);
       expect(hashes()).toEqual(frozen);
     } finally { await context.close(); }
+  });
+
+  test(`${locale} F13-05 ordinary task.reminder month-end completion, DST, explicit reschedule and cross-zone KA1`, async ({ browser }, info) => {
+    test.setTimeout(90_000);
+    const t = (key: string) => (resources[locale].translation as Record<string,string>)[key] ?? key;
+    const copy = labels[locale];
+    const mock = await aiServer();
+    const context = await browser.newContext({ locale, timezoneId: 'Asia/Shanghai', viewport: { width: 390, height: 844 }, hasTouch: true });
+    await context.addInitScript(language => localStorage.setItem('keepany-language', language), locale);
+    const errors: string[] = [];
+    try {
+      const page = await context.newPage();
+      page.on('pageerror', error => errors.push(error.name));
+      await page.clock.setFixedTime(new Date(now));
+      await page.goto('/settings#assistant');
+      const settings = page.locator('.ai-settings-panel');
+      await selectChoice(settings.locator('#ai-settings-provider'), 'compatible');
+      await settings.locator('#ai-settings-url').fill(mock.baseURL);
+      await settings.locator('#ai-settings-model').fill(model);
+      await selectChoice(settings.locator('#ai-settings-key-source'), 'session');
+      await settings.locator('#ai-settings-api-key').fill(syntheticKey);
+      await settings.getByRole('button', { name: copy.saveSettings, exact: true }).click();
+      await expect(settings.getByRole('status').filter({ hasText: copy.ready })).toBeVisible();
+      const name = `F13 ordinary recurring reminder ${locale}`;
+      const proposal = { operation: 'create', name, taskQuery: '', assetQuery: '', localDate: '2026-01-31', localTime: '09:00', timeZone: 'America/New_York', leadMinutes: 30, leadDays: 0, rule: { mode: 'fixed', unit: 'month', every: 1 } };
+      const dialog = await openAssistant(page, copy);
+      await dialog.getByRole('button', { name: copy.reminderTab, exact: true }).click();
+      mock.responses.push(JSON.stringify(proposal));
+      await dialog.getByRole('textbox', { name: copy.question, exact: true }).fill(`Create ${name} on 2026-01-31 at 09:00 America/New_York, remind 30 minutes before, fixed monthly recurrence.`);
+      await dialog.getByRole('button', { name: copy.send, exact: true }).click();
+      const preview = dialog.locator('.ai-plan');
+      await expect(preview.getByLabel(copy.time, { exact: true })).toHaveValue('09:00');
+      await expect(preview.getByLabel(copy.zone, { exact: true })).toHaveValue('America/New_York');
+      await expect(preview.locator('#ai-reminder-repeat')).toHaveAttribute('data-value', 'month');
+      expect((await snapshot(page)).tasks).toEqual([]);
+      await preview.screenshot({ path: info.outputPath('ordinary-real-ai-preview-no-task-yet.png') });
+      await preview.getByRole('button', { name: copy.confirmAction, exact: true }).click();
+      await expect(preview.getByRole('link', { name: copy.saved, exact: true })).toBeVisible();
+      await dialog.getByRole('button', { name: copy.close, exact: true }).click();
+      await page.goto('/tasks');
+      const created = (await snapshot(page)).tasks.find((task: {name:string}) => task.name === name);
+      expect(created).toMatchObject({ dueDate: '2026-01-31', done: false, completionHistory: [], reminder: { at: '2026-01-31T14:00:00.000Z', anchorAt: '2026-01-31T14:00:00.000Z', occurrence: 0, timeZone: 'America/New_York', leadMinutes: 30, rule: { mode: 'fixed', unit: 'month', every: 1 } } });
+      expect(created.maintenancePlan).toBeUndefined();
+      const row = page.locator(`#task-${created.id}`);
+      await row.getByRole('button', { name: t('complete'), exact: true }).click();
+      await expect.poll(async () => (await snapshot(page)).tasks[0]?.reminder?.at).toBe('2026-02-28T14:00:00.000Z');
+      const completed = (await snapshot(page)).tasks[0];
+      expect(completed).toMatchObject({ id: created.id, createdAt: created.createdAt, dueDate: '2026-02-28', done: false, completedAt: '', completionHistory: [now], reminder: { anchorAt: created.reminder.anchorAt, occurrence: 1 } });
+      await page.reload();
+      expect((await snapshot(page)).tasks).toEqual([completed]);
+      await expect(row.locator('time').nth(0)).toHaveAttribute('datetime', '2026-02-28T14:00:00.000Z');
+      const secondCompletedAt = '2026-03-01T14:00:00.000Z';
+      await page.clock.setFixedTime(new Date(secondCompletedAt));
+      await row.getByRole('button', { name: t('complete'), exact: true }).click();
+      await expect.poll(async () => (await snapshot(page)).tasks[0]?.reminder?.at).toBe('2026-03-31T13:00:00.000Z');
+      const advancedAcrossDst = (await snapshot(page)).tasks[0];
+      expect(advancedAcrossDst).toMatchObject({ id: created.id, dueDate: '2026-03-31', done: false, completionHistory: [now, secondCompletedAt], reminder: { anchorAt: created.reminder.anchorAt, occurrence: 2, timeZone: 'America/New_York', leadMinutes: 30 } });
+      await page.reload();
+      expect((await snapshot(page)).tasks).toEqual([advancedAcrossDst]);
+      await expect(row.locator('time').nth(0)).toHaveAttribute('datetime', '2026-03-31T13:00:00.000Z');
+      await expect(row.locator('time').nth(1)).toHaveAttribute('datetime', '2026-03-31T12:30:00.000Z');
+      await row.screenshot({ path: info.outputPath('ordinary-dst-advanced-history-two.png') });
+      await row.getByRole('button', { name: t('taskPostponeDay'), exact: true }).click();
+      await expect.poll(async () => (await snapshot(page)).tasks[0]?.reminder?.at).toBe('2026-04-01T13:00:00.000Z');
+      await page.reload();
+      const final = await snapshot(page), postponed = final.tasks[0];
+      expect(final.tasks).toHaveLength(1);
+      expect(postponed).toMatchObject({ id: created.id, name, createdAt: created.createdAt, dueDate: '2026-04-01', done: false, completedAt: '', completionHistory: [now, secondCompletedAt] });
+      expect(postponed.reminder).toEqual({ ...advancedAcrossDst.reminder, at: '2026-04-01T13:00:00.000Z', anchorAt: '2026-04-01T13:00:00.000Z', occurrence: 0 });
+      expect(Object.hasOwn(postponed.reminder, 'snoozedUntil')).toBe(false);
+      expect(Object.hasOwn(postponed, 'snoozedUntil')).toBe(false);
+      expect(postponed.dedupeKey).toBe(`${created.dedupeKey.slice(0, created.dedupeKey.lastIndexOf(':'))}:2026-04-01`);
+      expect(final.rows.filter((record: {type:string}) => record.type === 'history')).toEqual([]);
+      expect(JSON.stringify(final.rows).includes(syntheticKey)).toBe(false);
+      await expect(row.locator('time').nth(0)).toHaveAttribute('datetime', '2026-04-01T13:00:00.000Z');
+      await expect(row.locator('time').nth(1)).toHaveAttribute('datetime', '2026-04-01T12:30:00.000Z');
+      await row.screenshot({ path: info.outputPath('ordinary-explicit-date-reschedule.png') });
+      const instants = await derivedInstants(page);
+      expect(instants).toEqual([{ id: created.id, dueAt: '2026-04-01T13:00:00.000Z', scheduledAt: '2026-04-01T12:30:00.000Z' }]);
+      const restored = await exportAndReadInOtherZone(browser, page, locale, info, final, `#task-${created.id}`);
+      expect(restored.tasks).toEqual([postponed]);
+      await saveEvidence(info, 'ordinary-reminder-lifecycle', { locale, sourceHashes: frozen, created, completed, advancedAcrossDst, postponed, instants, modelRequestCount: mock.requests.length, boundary: 'B real SDK against own synthetic loopback model fixture; completion/reschedule UI plus read-only exact rows and C derived instants; no N/OS/provider claim' });
+      expect(mock.requests.length).toBe(1);
+      expect(errors).toEqual([]);
+      expect(hashes()).toEqual(frozen);
+    } finally { await context.close(); await mock.close(); }
   });
 }
