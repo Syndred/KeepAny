@@ -61,8 +61,11 @@ jobs:
       - name: Exercise native MCP core over real loopback TLS sockets
         timeout-minutes: 12
         shell: bash
+        env:
+          KEEPANY_MCP_STAGE_FILE: ${{ github.workspace }}/test-results/ios/mcp-stage-events.ndjson
         run: |
           set -o pipefail
+          mkdir -p test-results/ios
           swift test --package-path apps/mobile/ios/KeepAnyMcpTransport \
             --scratch-path test-results/ios-mcp-derived --jobs 2 \
             2>&1 | tee test-results/ios/mcp-transport-tests.log
