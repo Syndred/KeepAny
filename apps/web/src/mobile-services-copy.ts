@@ -1,5 +1,8 @@
 export const mobileServicesCopy: Record<string, [string, string]> = {
 	collectionDeletedTitle: ["已删除的集合", "Deleted collections"],
+	deletedBacklinksTitle: ["已删除的外链记录", "Deleted link records"],
+	deletedBacklinksHint: ["恢复后保留原记录、状态与依据。", "Restore the original record, status and evidence."],
+	backlinkRestoreChanged: ["这条外链记录已更改，请核对最新内容后重试恢复。", "This link record changed. Review its latest contents before restoring."],
 	collectionDeletedHint: ["恢复集合会保留原成员；成员资料不会因删除集合而删除。", "Restore a collection with its original members. Deleting a collection keeps its member records."],
 	collectionRestoreDuplicate: ["已有同名集合。请先重命名当前集合，再恢复。", "A collection with this name already exists. Rename it before restoring this one."],
 	intakeModeText: ["文字", "Text"],

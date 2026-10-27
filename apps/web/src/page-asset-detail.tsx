@@ -37,6 +37,7 @@ import {
 	saveAssetIfCurrent,
 	saveSubmissionIfCurrent,
 	deleteSubmissionIfCurrent,
+	restoreSubmissionIfCurrent,
 	saveBatch,
 	setItemArchived,
 } from "../../../packages/local-db/src";
@@ -278,6 +279,22 @@ function SubmissionRow({ submission }: { submission: Submission }) {
 			</td>
 		</tr>
 	);
+}
+
+function DeletedSubmission({ submission }: { submission: Submission }) {
+	const { t, i18n } = useTranslation(), { notify } = useAppContext();
+	const [busy, setBusy] = useState(false), [error, setError] = useState("");
+	const inFlight = useRef(false);
+	return <div className="list-row" data-deleted-submission-id={submission.id}>
+		<div><strong>{submission.name}</strong><small>{t(submission.status)}{submission.externalLink?.profileId ? ` · ${submission.externalLink.profileId}` : ""}</small><small>{t("submittedAt")}: {date(submission.submittedAt, i18n.language)} · {t("verifiedAt")}: {date(submission.verifiedAt, i18n.language)}</small>{submission.evidence && <small>{submission.evidence}</small>}{error && <p className="field-error" role="alert">{error}</p>}</div>
+		<Button disabled={busy} aria-label={`${t("restore")} · ${submission.name}`} onClick={async () => {
+			if (inFlight.current) return;
+			inFlight.current = true; setBusy(true); setError("");
+			try { await restoreSubmissionIfCurrent(submission); notify(t("saved")); }
+			catch (cause) { setError(t(cause instanceof Error && cause.message === "submission-stale" ? "backlinkRestoreChanged" : "error")); }
+			finally { inFlight.current = false; setBusy(false); }
+		}}>{t("restore")}</Button>
+	</div>;
 }
 
 export function AssetDetail() {
@@ -557,6 +574,7 @@ export function AssetDetail() {
 	const submissions = data.submissions.filter(
 		(x) => !x.deleted && x.assetId === asset?.id,
 	);
+	const deletedSubmissions = data.submissions.filter(x => x.deleted && !x.purged && x.assetId === asset?.id);
 	const relatedAssets = Array.from(new Map(relations.map((relation) => {
 		const linked = liveById.get(relation.from === asset?.id ? relation.to : relation.from);
 		return [linked?.id, linked] as const;
@@ -1820,6 +1838,7 @@ export function AssetDetail() {
 					) : (
 						<p className="asset-quiet-empty">{t("none")}</p>
 					)}
+					{deletedSubmissions.length > 0 && <details className="backlink-deleted-records"><summary>{t("deletedBacklinksTitle")}</summary><p>{t("deletedBacklinksHint")}</p>{deletedSubmissions.map(submission => <DeletedSubmission key={submission.id} submission={submission} />)}</details>}
 				</details>
 			)}
 			{asset.kind === "project" && <details className="card asset-project-materials" id="asset-project-materials" open={materialsOpen} onToggle={(event) => setMaterialsOpen(event.currentTarget.open)}>
