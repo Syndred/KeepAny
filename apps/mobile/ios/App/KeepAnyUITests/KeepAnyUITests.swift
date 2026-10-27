@@ -137,7 +137,8 @@ final class KeepAnyUITests: XCTestCase {
             app.buttons[cancel].firstMatch.tap()
             XCTAssertTrue(taskName.exists)
             tapReachable(delete, in: app)
-            guard let confirm = app.buttons[chinese ? "删除" : "Delete"].allElementsBoundByIndex.last(where: { $0.isHittable }) else {
+            guard let confirm = app.buttons.matching(NSPredicate(format: "label == %@", chinese ? "删除" : "Delete"))
+                .allElementsBoundByIndex.last(where: { $0.isHittable }) else {
                 XCTFail("Delete confirmation must have a reachable action")
                 app.terminate()
                 return
