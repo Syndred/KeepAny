@@ -89,5 +89,38 @@
       "KeepAny-0.1.0-preview.21a534e35dea-portable.zip",
       "KeepAny-0.1.0-preview.21a534e35dea-portable.zip.sha256"
     ]
-  }
+  },
+  "temporaryCandidatesMovedToTrash": [
+    {
+      "from": "/tmp/keepany-brand-return/intermediate-archives/KeepAny-0.1.0-preview.5488791f2170-portable.zip.sha256",
+      "trash": "/Users/syndred/.Trash/KeepAny-old-previews-20261027-094504/temporary-candidates/KeepAny-0.1.0-preview.5488791f2170-portable.zip.sha256",
+      "kind": "file"
+    },
+    {
+      "from": "/tmp/keepany-brand-return/intermediate-archives/KeepAny-0.1.0-preview.5547eab0b164-portable.zip.sha256",
+      "trash": "/Users/syndred/.Trash/KeepAny-old-previews-20261027-094504/temporary-candidates/KeepAny-0.1.0-preview.5547eab0b164-portable.zip.sha256",
+      "kind": "file"
+    },
+    {
+      "from": "/tmp/keepany-brand-return/intermediate-archives/KeepAny-0.1.0-preview.5488791f2170-portable.zip",
+      "trash": "/Users/syndred/.Trash/KeepAny-old-previews-20261027-094504/temporary-candidates/KeepAny-0.1.0-preview.5488791f2170-portable.zip",
+      "kind": "file"
+    },
+    {
+      "from": "/tmp/keepany-brand-return/intermediate-archives/KeepAny-0.1.0-preview.5547eab0b164-portable",
+      "trash": "/Users/syndred/.Trash/KeepAny-old-previews-20261027-094504/temporary-candidates/KeepAny-0.1.0-preview.5547eab0b164-portable",
+      "kind": "directory"
+    },
+    {
+      "from": "/tmp/keepany-brand-return/intermediate-archives/KeepAny-0.1.0-preview.5547eab0b164-portable.zip",
+      "trash": "/Users/syndred/.Trash/KeepAny-old-previews-20261027-094504/temporary-candidates/KeepAny-0.1.0-preview.5547eab0b164-portable.zip",
+      "kind": "file"
+    },
+    {
+      "from": "/tmp/keepany-brand-return/intermediate-archives/KeepAny-0.1.0-preview.5488791f2170-portable",
+      "trash": "/Users/syndred/.Trash/KeepAny-old-previews-20261027-094504/temporary-candidates/KeepAny-0.1.0-preview.5488791f2170-portable",
+      "kind": "directory"
+    }
+  ],
+  "temporaryCandidateEntryCount": 6
 }
