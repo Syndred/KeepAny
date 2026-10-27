@@ -1,0 +1,65 @@
+{
+  "results": [
+    {
+      "name": "更多入口是真实节点与连线而非列表替代",
+      "passed": true
+    },
+    {
+      "name": "账号与项目详情均直接显示图",
+      "passed": true
+    },
+    {
+      "name": "节点详情跳转与返回图",
+      "passed": true
+    },
+    {
+      "name": "连线选择显示方向来源与核验日",
+      "passed": true
+    },
+    {
+      "name": "放大缩小适应与聚焦",
+      "passed": true
+    },
+    {
+      "name": "已核验待核验筛选和无结果搜索",
+      "passed": true
+    },
+    {
+      "name": "展开收起与Escape",
+      "passed": true
+    },
+    {
+      "name": "拖动画布真实改变变换并保持缩放",
+      "passed": true
+    },
+    {
+      "name": "添加关系、拒绝自环并保留已有关系",
+      "passed": true
+    },
+    {
+      "name": "双语图与展开布局 zh/360",
+      "passed": true
+    },
+    {
+      "name": "双语图与展开布局 zh/390",
+      "passed": true
+    },
+    {
+      "name": "双语图与展开布局 zh/430",
+      "passed": true
+    },
+    {
+      "name": "双语图与展开布局 en/360",
+      "passed": true
+    },
+    {
+      "name": "双语图与展开布局 en/390",
+      "passed": true
+    },
+    {
+      "name": "双语图与展开布局 en/430",
+      "passed": true
+    }
+  ],
+  "errors": []
+}

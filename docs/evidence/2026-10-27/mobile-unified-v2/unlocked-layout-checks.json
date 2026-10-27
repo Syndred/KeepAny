@@ -1,0 +1,47 @@
+{
+  "scope": "Fictional unlocked unified-account UI only",
+  "checks": [
+    {
+      "lang": "zh",
+      "width": 360,
+      "pageOverflow": false,
+      "privateAreaPresent": true,
+      "screenOverflow": false
+    },
+    {
+      "lang": "zh",
+      "width": 390,
+      "pageOverflow": false,
+      "privateAreaPresent": true,
+      "screenOverflow": false
+    },
+    {
+      "lang": "zh",
+      "width": 430,
+      "pageOverflow": false,
+      "privateAreaPresent": true,
+      "screenOverflow": false
+    },
+    {
+      "lang": "en",
+      "width": 360,
+      "pageOverflow": false,
+      "privateAreaPresent": true,
+      "screenOverflow": false
+    },
+    {
+      "lang": "en",
+      "width": 390,
+      "pageOverflow": false,
+      "privateAreaPresent": true,
+      "screenOverflow": false
+    },
+    {
+      "lang": "en",
+      "width": 430,
+      "pageOverflow": false,
+      "privateAreaPresent": true,
+      "screenOverflow": false
+    }
+  ]
+}

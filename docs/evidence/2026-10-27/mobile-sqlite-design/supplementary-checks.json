@@ -1,0 +1,17 @@
+{
+  "scope": "Synthetic HTML sketch only, after final interaction adjustments",
+  "viewport": { "width": 360, "height": 844 },
+  "checks": {
+    "dialogReceivesFocus": true,
+    "reverseTabStaysInDialog": true,
+    "pageAndScreenHaveNoHorizontalOverflow": true,
+    "longEnglishAccountNameAndIdentifierHaveNoHorizontalOverflow": true
+  },
+  "cleanup": {
+    "egoTemporarySketchTabClosed": true,
+    "browserGroupsCreated": false,
+    "inAppDeliverablePreviewRetained": true,
+    "viewportOverrideReset": true
+  },
+  "nativeStorageOrRealBackupTested": false
+}

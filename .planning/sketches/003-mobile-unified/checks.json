@@ -1,0 +1,145 @@
+{
+  "results": [
+    {
+      "name": "资产新增、筛选与编辑",
+      "passed": true
+    },
+    {
+      "name": "资产取消、移除与原ID恢复",
+      "passed": true
+    },
+    {
+      "name": "账号新增、锁定下账号可用",
+      "passed": true
+    },
+    {
+      "name": "多组密码编辑、隐藏与锁定",
+      "passed": true
+    },
+    {
+      "name": "只删除一组密码、另一组保留与密码回收站恢复",
+      "passed": true
+    },
+    {
+      "name": "仅删除账号、密码不连带删除并恢复账号",
+      "passed": true
+    },
+    {
+      "name": "密码失败保留旧值与重试",
+      "passed": true
+    },
+    {
+      "name": "账本币种、分类、新增与移除",
+      "passed": true
+    },
+    {
+      "name": "待办新增、完成、历史与项目进度",
+      "passed": true
+    },
+    {
+      "name": "关系编辑、删除与恢复",
+      "passed": true
+    },
+    {
+      "name": "收录原文、勾选审核与去重",
+      "passed": true
+    },
+    {
+      "name": "备份密码校验与生成预览",
+      "passed": true
+    },
+    {
+      "name": "恢复错误密码、中断与续接",
+      "passed": true
+    },
+    {
+      "name": "AI选择范围、确认与示例待办",
+      "passed": true
+    },
+    {
+      "name": "密码全文识别须确认模型地址与本次发送范围",
+      "passed": true
+    },
+    {
+      "name": "同步状态、冲突与失败重试",
+      "passed": true
+    },
+    {
+      "name": "助手逐次批准、拒绝与撤销入口",
+      "passed": true
+    },
+    {
+      "name": "末级记录完整编辑：collections",
+      "passed": true
+    },
+    {
+      "name": "末级记录完整编辑：categories",
+      "passed": true
+    },
+    {
+      "name": "末级记录完整编辑：references",
+      "passed": true
+    },
+    {
+      "name": "末级记录完整编辑：backlinks",
+      "passed": true
+    },
+    {
+      "name": "末级记录完整编辑：promo",
+      "passed": true
+    },
+    {
+      "name": "末级记录完整编辑：borrow",
+      "passed": true
+    },
+    {
+      "name": "末级记录完整编辑：maintenance",
+      "passed": true
+    },
+    {
+      "name": "末级记录完整编辑：receipts",
+      "passed": true
+    },
+    {
+      "name": "末级记录完整编辑：repeat",
+      "passed": true
+    },
+    {
+      "name": "末级记录完整编辑：notes",
+      "passed": true
+    },
+    {
+      "name": "项目改名收尾、受阻与不适用",
+      "passed": true
+    },
+    {
+      "name": "返回原详情并保持列表位置",
+      "passed": true
+    },
+    {
+      "name": "中英布局 zh/360",
+      "passed": true
+    },
+    {
+      "name": "中英布局 zh/390",
+      "passed": true
+    },
+    {
+      "name": "中英布局 zh/430",
+      "passed": true
+    },
+    {
+      "name": "中英布局 en/360",
+      "passed": true
+    },
+    {
+      "name": "中英布局 en/390",
+      "passed": true
+    },
+    {
+      "name": "中英布局 en/430",
+      "passed": true
+    }
+  ],
+  "errors": []
+}

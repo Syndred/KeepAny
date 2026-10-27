@@ -1,0 +1,97 @@
+{
+  "scope": "Synthetic in-memory sketch only. No real backup was opened, saved or restored.",
+  "selectorCorrections": [
+    "Scoped relationship action to visible graph sheet",
+    "Used the exact Cancel button in the save sheet"
+  ],
+  "checks": [
+    {
+      "name": "搜索只显示匹配账号",
+      "passed": true
+    },
+    {
+      "name": "无结果空态",
+      "passed": true
+    },
+    {
+      "name": "账号筛选为3项",
+      "passed": true
+    },
+    {
+      "name": "空名称显示校验错误",
+      "passed": true
+    },
+    {
+      "name": "新增示例只加入内存列表",
+      "passed": true
+    },
+    {
+      "name": "新增账号卡片显示对应详情",
+      "passed": true
+    },
+    {
+      "name": "待办可以勾选",
+      "passed": true
+    },
+    {
+      "name": "关系图打开",
+      "passed": true
+    },
+    {
+      "name": "关联跳转显示目标资料",
+      "passed": true
+    },
+    {
+      "name": "示例密码库可切换解锁态",
+      "passed": true
+    },
+    {
+      "name": "示例密码库可重新锁定",
+      "passed": true
+    },
+    {
+      "name": "选择文件前不展示未知的恢复数量",
+      "passed": true
+    },
+    {
+      "name": "演示备份密码错误可见",
+      "passed": true
+    },
+    {
+      "name": "正确演示密码进入范围核对",
+      "passed": true
+    },
+    {
+      "name": "恢复演示完成后密码库仍锁定",
+      "passed": true
+    },
+    {
+      "name": "损坏备份拒绝状态",
+      "passed": true
+    },
+    {
+      "name": "保存失败没有显示新增成功",
+      "passed": true
+    },
+    {
+      "name": "恢复中断给出两条路径",
+      "passed": true
+    },
+    {
+      "name": "继续恢复保留范围核对",
+      "passed": true
+    },
+    {
+      "name": "保留当前资料返回备份页",
+      "passed": true
+    },
+    {
+      "name": "生成与保存分开显示",
+      "passed": true
+    },
+    {
+      "name": "取消保存界面返回原页面",
+      "passed": true
+    }
+  ]
+}

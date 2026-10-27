@@ -1,0 +1,37 @@
+/* Design-only tokens, aligned to apps/web/src/styles.css at 65636db. */
+:root {
+  --color-bg: #fff9ec;
+  --color-surface: #fffdf6;
+  --color-soft: #fff5df;
+  --color-border: #d9d8cc;
+  --color-line: #20304a;
+  --color-text: #17243a;
+  --color-text-muted: #5d6674;
+  --color-primary: #ffd24c;
+  --color-primary-hover: #ffe084;
+  --color-accent: #fff0b8;
+  --color-danger: #9a2d37;
+  --color-danger-soft: #ffe5e2;
+  --color-success: #246b50;
+  --color-success-soft: #dff2e5;
+  --color-blue: #e1edff;
+  --color-lavender: #eee4fa;
+  --font-sans: Inter, 'Avenir Next', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --text-xs: 12px;
+  --text-sm: 14px;
+  --text-base: 16px;
+  --text-lg: 18px;
+  --text-xl: 24px;
+  --text-2xl: 28px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 22px;
+  --shadow-sm: 2px 3px 0 var(--color-line);
+  --shadow-md: 3px 4px 0 var(--color-line);
+}

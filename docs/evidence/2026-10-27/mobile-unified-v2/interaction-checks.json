@@ -1,0 +1,142 @@
+{
+  "scope": "Only fictional in-memory sketch interactions; no real account, KDBX, backup or model accessed",
+  "selectorCorrection": "Scoped item filter to the filter tab bar because the summary card uses the same action",
+  "checks": [
+    {
+      "name": "锁定时不展示仅在KDBX中的条目",
+      "passed": true
+    },
+    {
+      "name": "域名汇总视图只有派生域名行",
+      "passed": true
+    },
+    {
+      "name": "域名保留所属项目",
+      "passed": true
+    },
+    {
+      "name": "实物卡显示购入年限与金额",
+      "passed": true
+    },
+    {
+      "name": "订阅卡显示距续费和两种币种",
+      "passed": true
+    },
+    {
+      "name": "资产搜索可定位订阅",
+      "passed": true
+    },
+    {
+      "name": "搜索无结果有明确空态",
+      "passed": true
+    },
+    {
+      "name": "待关联筛选先要求解锁",
+      "passed": true
+    },
+    {
+      "name": "解锁后显示独立登录资料",
+      "passed": true
+    },
+    {
+      "name": "账号信息和密码显示在同一详情",
+      "passed": true
+    },
+    {
+      "name": "保留多组凭据与附加登录标识",
+      "passed": true
+    },
+    {
+      "name": "可切换另一组凭据",
+      "passed": true
+    },
+    {
+      "name": "可在原详情切换密码显示",
+      "passed": true
+    },
+    {
+      "name": "统一编辑保留名称校验",
+      "passed": true
+    },
+    {
+      "name": "跨存储部分失败不报全部成功",
+      "passed": true
+    },
+    {
+      "name": "部分保存失败有重试路径",
+      "passed": true
+    },
+    {
+      "name": "重新锁定清除解密内容和私密索引",
+      "passed": true
+    },
+    {
+      "name": "保留功能入口：intake",
+      "passed": true
+    },
+    {
+      "name": "保留功能入口：costs",
+      "passed": true
+    },
+    {
+      "name": "保留功能入口：collections",
+      "passed": true
+    },
+    {
+      "name": "保留功能入口：categories",
+      "passed": true
+    },
+    {
+      "name": "保留功能入口：references",
+      "passed": true
+    },
+    {
+      "name": "保留功能入口：security",
+      "passed": true
+    },
+    {
+      "name": "保留功能入口：backup",
+      "passed": true
+    },
+    {
+      "name": "保留功能入口：trash",
+      "passed": true
+    },
+    {
+      "name": "保留功能入口：ai",
+      "passed": true
+    },
+    {
+      "name": "保留功能入口：assistant",
+      "passed": true
+    },
+    {
+      "name": "保留功能入口：settings",
+      "passed": true
+    },
+    {
+      "name": "移除登录资料后仍保留普通账号",
+      "passed": true
+    },
+    {
+      "name": "账号和登录资料的删除范围分开",
+      "passed": true
+    },
+    {
+      "name": "新增账号使用空表单",
+      "passed": true
+    },
+    {
+      "name": "可新增示例账号且没有覆盖原账号",
+      "passed": true
+    },
+    {
+      "name": "项目进度来自明确任务完成数",
+      "passed": true
+    },
+    {
+      "name": "日期缺失不显示虚构剩余天数",
+      "passed": true
+    }
+  ]
+}
