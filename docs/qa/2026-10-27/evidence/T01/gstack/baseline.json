@@ -1,0 +1,24 @@
+{
+  "date": "2026-10-27",
+  "url": "http://127.0.0.1:4201/assets/account",
+  "healthScore": 85,
+  "provisional": true,
+  "coverage": "T01 selected sidebar navigation only; Links category; not a full application health score",
+  "issues": [
+    {
+      "id": "T01-001",
+      "title": "Legacy account and vault routes activate both Assets and Accounts",
+      "severity": "medium",
+      "category": "Links"
+    }
+  ],
+  "categoryScores": {
+    "Links": 85
+  },
+  "final": {
+    "healthScore": 100,
+    "categoryScores": {
+      "Links": 100
+    }
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "observationCommand": "bun /Users/syndred/.codex/skills/gstack/bin/gstack-qa-deadline run docs/qa/2026-10-27/evidence/T01/gstack/deadline.json -- /Users/syndred/.codex/skills/gstack/browse/dist/browse js 'JSON.stringify({url:location.pathname,active:[...document.querySelectorAll(\".sidebar .sortable-nav-link.active\")].map(x=>({name:x.textContent.trim(),current:x.getAttribute(\"aria-current\")})),heading:document.querySelector(\"h1\")?.textContent})'",
+  "observed": "{\"url\":\"/assets/account\",\"active\":[{\"name\":\"Accounts\",\"current\":\"page\"}],\"heading\":\"Accounts\"}",
+  "hypothesis": "Inspect the selected navigation contract and preserve an independently reproducible browser observation.",
+  "nextCommand": "bun /Users/syndred/.codex/skills/gstack/bin/gstack-qa-deadline run docs/qa/2026-10-27/evidence/T01/gstack/deadline.json -- /Users/syndred/.codex/skills/gstack/browse/dist/browse screenshot docs/qa/2026-10-27/evidence/T01/gstack/issue-T01-001-after.png"
+}

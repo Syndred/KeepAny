@@ -1,0 +1,1 @@
+最初gstack浏览器预检从Codex渲染根查找依赖，因该根没有package.json而失败；未安装新依赖。改为已安装的原始toolchain根运行--check。最初goto时既有Playwright已完成并停止4201服务，故ERR_CONNECTION_REFUSED，这是环境生命周期问题；随后启动本工作树独立Vite服务再测，不算产品缺陷。

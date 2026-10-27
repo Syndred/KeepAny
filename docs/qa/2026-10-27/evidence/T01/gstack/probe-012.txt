@@ -1,0 +1,5 @@
+Screenshot saved: docs/qa/2026-10-27/evidence/T01/gstack/issue-T01-001-after.png
+
+QA_DEADLINE {"guard":"qa-deadline","event":"started","version":1,"startedAt":"2026-10-27T05:17:09.530Z","deadlineAt":"2026-10-27T05:32:09.530Z","budgetMs":900000,"observedAt":"2026-10-27T05:21:12.883Z","remainingMs":656647,"expired":false}
+
+QA_DEADLINE {"guard":"qa-deadline","event":"finished","observedAt":"2026-10-27T05:21:12.963Z","deadlineAt":"2026-10-27T05:32:09.530Z","timedOut":false,"exitCode":0}
