@@ -1,0 +1,28 @@
+{
+  "before": {
+    "id": 1394372451,
+    "node_id": "R_kgDOUxxvYw",
+    "full_name": "Syndred/StackPerch",
+    "created_at": "2026-09-29T05:09:20Z",
+    "private": false,
+    "visibility": "public",
+    "default_branch": "main",
+    "html_url": "https://github.com/Syndred/StackPerch",
+    "homepage": "https://syndred.github.io/StackPerch/",
+    "description": "StackPerch (formerly KeepAny): a local-first digital asset workspace for independent developers. Connect projects, domains, accounts, subscriptions and maintenance. Bilingual, AGPL-3.0."
+  },
+  "after": {
+    "id": 1394372451,
+    "node_id": "R_kgDOUxxvYw",
+    "full_name": "Syndred/KeepAny",
+    "created_at": "2026-09-29T05:09:20Z",
+    "private": false,
+    "visibility": "public",
+    "default_branch": "main",
+    "html_url": "https://github.com/Syndred/KeepAny",
+    "homepage": "https://syndred.github.io/KeepAny/",
+    "description": "KeepAny (previously StackPerch): a local-first digital asset workspace for independent developers. Connect projects, domains, accounts, subscriptions and maintenance. Bilingual, AGPL-3.0."
+  },
+  "sameRepositoryId": true,
+  "sameCreationTime": true
+}

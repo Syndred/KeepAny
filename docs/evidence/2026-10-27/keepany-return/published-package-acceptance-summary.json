@@ -1,0 +1,28 @@
+{
+  "publishedReadbackReport": "/tmp/keepany-brand-return/published-release-verification.json",
+  "nativeLog": "/tmp/keepany-brand-return/published-preview-native.log",
+  "nativeExitCode": 0,
+  "nativeCheckGroups": 6,
+  "nativePlatform": "darwin",
+  "sourceCommit": "21a534e35dead372b8d0d2d468592ad74b32eddd",
+  "nativeArchive": "/tmp/keepany-brand-return/published-download/KeepAny-0.1.0-preview.21a534e35dea-portable.zip",
+  "nativeWebFiles": 102,
+  "onboardingLog": "/tmp/keepany-brand-return/published-onboarding.log",
+  "onboardingExitCode": 0,
+  "onboardingTestsPassed": 4,
+  "onboardingDurationSeconds": 3.7,
+  "onboardingRetries": 0,
+  "onboardingResults": "/tmp/keepany-brand-return/published-onboarding-results",
+  "onboardingEvidence": "/tmp/keepany-brand-return/published-onboarding-evidence",
+  "onboardingScreenshotCount": 8,
+  "cleanup": {
+    "port": 4484,
+    "listenerExitCode": 1,
+    "listenerOutput": "",
+    "remainingPackageTestNodeProcesses": [],
+    "confirmedStopped": true
+  },
+  "inspectionNote": "Initial post-test ps output inspection hit a UTF-8 decode error; repeated only the read-only process inspection with replacement decoding. No validation or test was rerun.",
+  "repositoryFilesEdited": false,
+  "realUserDataAccessed": false
+}

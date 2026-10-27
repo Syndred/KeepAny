@@ -1,0 +1,15 @@
+{
+  "archive": "/tmp/keepany-brand-return/published-download/KeepAny-0.1.0-preview.21a534e35dea-portable.zip",
+  "platform": "darwin",
+  "sourceCommit": "21a534e35dead372b8d0d2d468592ad74b32eddd",
+  "sourceDirty": false,
+  "webFiles": 102,
+  "checks": [
+    "ZIP and per-file checksums, current web identity, source, launchers, license inventory, and clean external extraction",
+    "Production assets, HEAD, SPA navigation fallback, missing asset/API/dotfile rejection",
+    "Raw and encoded path traversal, malformed path, Host rejection, private state, loopback-only listener",
+    "Duplicate-start conflict, unauthenticated/cross-origin stop rejection, forged PID rejection, own-instance stop and cleanup",
+    "Occupied port leaves an unrelated HTTP service running; stop never sends process signals",
+    "Delivered darwin launcher starts without repository or project dependencies, then stops cleanly"
+  ]
+}

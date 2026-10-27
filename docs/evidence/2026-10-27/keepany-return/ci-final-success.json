@@ -1,0 +1,152 @@
+{
+  "repo": "Syndred/KeepAny",
+  "source_commit": "21a534e35dead372b8d0d2d468592ad74b32eddd",
+  "overall_status": "completed",
+  "overall_conclusion": "success",
+  "runs": [
+    {
+      "id": 40427087028,
+      "name": "Verify local release",
+      "url": "https://github.com/Syndred/KeepAny/actions/runs/40427087028",
+      "event": "push",
+      "run_attempt": 1,
+      "conclusion": "success"
+    },
+    {
+      "id": 40427087027,
+      "name": "Verify portable preview",
+      "url": "https://github.com/Syndred/KeepAny/actions/runs/40427087027",
+      "event": "push",
+      "run_attempt": 1,
+      "conclusion": "success"
+    }
+  ],
+  "jobs": [
+    {
+      "id": 121935929469,
+      "name": "portable-workflows",
+      "run_id": 40427087028,
+      "url": "https://github.com/Syndred/KeepAny/actions/runs/40427087028/job/121935929469",
+      "conclusion": "success",
+      "log": "job-121935929469.log",
+      "log_bytes": 118475,
+      "log_sha256": "6af238c94c1c73922d9a9f88148f0ff07095a4f3d8df92fda1874b89922132b9",
+      "completed_browser_groups": [
+        {
+          "passed": 261,
+          "reported_duration": "44.9m"
+        },
+        {
+          "passed": 1,
+          "reported_duration": "5.6s"
+        },
+        {
+          "passed": 1,
+          "reported_duration": "22.2s"
+        },
+        {
+          "passed": 1,
+          "reported_duration": "22.1s"
+        }
+      ]
+    },
+    {
+      "id": 121935929806,
+      "name": "verify",
+      "run_id": 40427087028,
+      "url": "https://github.com/Syndred/KeepAny/actions/runs/40427087028/job/121935929806",
+      "conclusion": "success",
+      "log": "job-121935929806.log",
+      "log_bytes": 197435,
+      "log_sha256": "889f02ce0597ebea1828c04a7096bb5551859c392d5e05ea52aa452fd72221c2",
+      "completed_browser_groups": [
+        {
+          "passed": 5,
+          "reported_duration": "15.2s"
+        },
+        {
+          "passed": 261,
+          "reported_duration": "46.2m"
+        },
+        {
+          "passed": 2,
+          "reported_duration": "31.4s"
+        }
+      ],
+      "unit_files_passed": 95,
+      "unit_tests_passed": 928,
+      "fixed_bundle_byte_identity": {
+        "current_files": 102,
+        "explicitly_retained_files": 2557
+      }
+    },
+    {
+      "id": 121935437419,
+      "name": "preview (ubuntu-latest)",
+      "run_id": 40427087027,
+      "url": "https://github.com/Syndred/KeepAny/actions/runs/40427087027/job/121935437419",
+      "conclusion": "success",
+      "log": "job-121935437419.log",
+      "log_bytes": 41569,
+      "log_sha256": "473d25634c22e506ada0cccb2428917b48df80efb315d7fe91f20985635da198",
+      "completed_browser_groups": []
+    },
+    {
+      "id": 121935437710,
+      "name": "preview (windows-latest)",
+      "run_id": 40427087027,
+      "url": "https://github.com/Syndred/KeepAny/actions/runs/40427087027/job/121935437710",
+      "conclusion": "success",
+      "log": "job-121935437710.log",
+      "log_bytes": 43150,
+      "log_sha256": "58c3904ff4d2bd0979af56140f8e51dc97986942a778f7f2f35b3b56f7727456",
+      "completed_browser_groups": []
+    },
+    {
+      "id": 121935437780,
+      "name": "preview (macos-latest)",
+      "run_id": 40427087027,
+      "url": "https://github.com/Syndred/KeepAny/actions/runs/40427087027/job/121935437780",
+      "conclusion": "success",
+      "log": "job-121935437780.log",
+      "log_bytes": 43419,
+      "log_sha256": "b32b7fa1dca80b194a2963464d0665dc2b4da9cd1241a9d1c16c78421fb5aa8a",
+      "completed_browser_groups": []
+    }
+  ],
+  "native_platforms": [
+    {
+      "platform": "linux",
+      "check_groups": 6,
+      "web_files": 102,
+      "source_dirty": false
+    },
+    {
+      "platform": "win32",
+      "check_groups": 6,
+      "web_files": 102,
+      "source_dirty": false
+    },
+    {
+      "platform": "darwin",
+      "check_groups": 6,
+      "web_files": 102,
+      "source_dirty": false
+    }
+  ],
+  "portable_group_order": [
+    "full browser suite",
+    "portable offline",
+    "published KeepAny data and encrypted vault upgrade",
+    "published StackPerch data and encrypted vault return"
+  ],
+  "verify_group_order": [
+    "intake refresh race",
+    "fixed browser suite",
+    "isolated PostgreSQL and local HTTP sync"
+  ],
+  "browser_count_note": "The same 261-scenario suite passed in both fixed and extracted portable runtimes; counts are per runtime, not unique scenarios added together.",
+  "manual_reruns": 0,
+  "source_or_workflow_mutations_by_monitor": false,
+  "old_65636_evidence_preserved_at": "/tmp/keepany-brand-return/ci-final3"
+}

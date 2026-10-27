@@ -1,0 +1,56 @@
+{
+  "release": {
+    "id": 424943502,
+    "html_url": "https://github.com/Syndred/KeepAny/releases/tag/v0.1.0-preview.20261027",
+    "tag_name": "v0.1.0-preview.20261027",
+    "target_commitish": "21a534e35dead372b8d0d2d468592ad74b32eddd",
+    "draft": false,
+    "prerelease": true
+  },
+  "tag": {
+    "ref": "refs/tags/v0.1.0-preview.20261027",
+    "object": {
+      "sha": "21a534e35dead372b8d0d2d468592ad74b32eddd",
+      "type": "commit",
+      "url": "https://api.github.com/repos/Syndred/KeepAny/git/commits/21a534e35dead372b8d0d2d468592ad74b32eddd"
+    }
+  },
+  "assets": [
+    {
+      "id": 680071715,
+      "name": "KeepAny-0.1.0-preview.21a534e35dea-portable.zip",
+      "size": 4750408,
+      "digest": "sha256:a0493de6917a4831321a6ecb3bf9e6046bb1a7f599ed6a15fc1b7a2d60f5c563",
+      "browser_download_url": "https://github.com/Syndred/KeepAny/releases/download/v0.1.0-preview.20261027/KeepAny-0.1.0-preview.21a534e35dea-portable.zip"
+    },
+    {
+      "id": 680072131,
+      "name": "KeepAny-0.1.0-preview.21a534e35dea-portable.zip.sha256",
+      "size": 114,
+      "digest": "sha256:bf252e13b050c8cb06cb8c3495910356126cac2761a40db4b00c3b40c546fe5f",
+      "browser_download_url": "https://github.com/Syndred/KeepAny/releases/download/v0.1.0-preview.20261027/KeepAny-0.1.0-preview.21a534e35dea-portable.zip.sha256"
+    }
+  ],
+  "uiVerified": {
+    "title": "KeepAny 0.1.0 Preview — KeepAny name restored",
+    "preReleaseLabel": true,
+    "commitUrl": "https://github.com/Syndred/KeepAny/commit/21a534e35dead372b8d0d2d468592ad74b32eddd",
+    "localTrialUrl": "http://127.0.0.1:4180/",
+    "bothAttachmentsVisible": true
+  },
+  "pages": {
+    "runId": 40432699143,
+    "sourceSha": "21a534e35dead372b8d0d2d468592ad74b32eddd",
+    "runUrl": "https://github.com/Syndred/KeepAny/actions/runs/40432699143",
+    "deploymentUrl": "https://syndred.github.io/KeepAny/",
+    "success": true
+  },
+  "screenshot": "/tmp/keepany-brand-return/publication/release-published.png",
+  "scope": {
+    "oldReleasesAssetsAndDraftUntouched": true,
+    "newFullTestsOrCiDispatch": false,
+    "anonymousAssetDownloadDelegated": true,
+    "taskTab": "512553828",
+    "taskTabClosed": true
+  }
+}

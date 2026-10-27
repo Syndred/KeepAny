@@ -1,0 +1,92 @@
+{
+  "source_commit": "21a534e35dead372b8d0d2d468592ad74b32eddd",
+  "files": [
+    {
+      "path": "ci-summary.json",
+      "bytes": 4550,
+      "sha256": "6312a0876680a6966d28caa701f6fe817da49b74e29e733105d8e76545b67934"
+    },
+    {
+      "path": "job-121935437419.log",
+      "bytes": 41569,
+      "sha256": "473d25634c22e506ada0cccb2428917b48df80efb315d7fe91f20985635da198"
+    },
+    {
+      "path": "job-121935437710.log",
+      "bytes": 43150,
+      "sha256": "58c3904ff4d2bd0979af56140f8e51dc97986942a778f7f2f35b3b56f7727456"
+    },
+    {
+      "path": "job-121935437780.log",
+      "bytes": 43419,
+      "sha256": "b32b7fa1dca80b194a2963464d0665dc2b4da9cd1241a9d1c16c78421fb5aa8a"
+    },
+    {
+      "path": "job-121935929469.log",
+      "bytes": 118475,
+      "sha256": "6af238c94c1c73922d9a9f88148f0ff07095a4f3d8df92fda1874b89922132b9"
+    },
+    {
+      "path": "job-121935929806.log",
+      "bytes": 197435,
+      "sha256": "889f02ce0597ebea1828c04a7096bb5551859c392d5e05ea52aa452fd72221c2"
+    },
+    {
+      "path": "native-summary.json",
+      "bytes": 2987,
+      "sha256": "b636c7504ca64beefc56549bf95d27342c0a8879d4cac315b2ef23881f9e6183"
+    },
+    {
+      "path": "observations.jsonl",
+      "bytes": 273095,
+      "sha256": "cf99b2cfb9a9d73a08aa9614c1e24aa6b05ad690ced9647b898754644b32274b"
+    },
+    {
+      "path": "run-40427087027-jobs-final.json",
+      "bytes": 6412,
+      "sha256": "5c67f316fec7a8a4639683f5afde73195c5c4769abbe89a653877a636359733a"
+    },
+    {
+      "path": "run-40427087027-jobs-latest.json",
+      "bytes": 6412,
+      "sha256": "5c67f316fec7a8a4639683f5afde73195c5c4769abbe89a653877a636359733a"
+    },
+    {
+      "path": "run-40427087027-metadata-final.json",
+      "bytes": 13318,
+      "sha256": "0ab4a64d645e71658093049cda3793cbcca7ac993825448136bedd779558dab3"
+    },
+    {
+      "path": "run-40427087027-metadata-latest.json",
+      "bytes": 13318,
+      "sha256": "0ab4a64d645e71658093049cda3793cbcca7ac993825448136bedd779558dab3"
+    },
+    {
+      "path": "run-40427087028-jobs-final.json",
+      "bytes": 6966,
+      "sha256": "4e739de1bf0de9e041c7d500ca733fbb5926b72f76774e79975ea594adeb5391"
+    },
+    {
+      "path": "run-40427087028-jobs-latest.json",
+      "bytes": 6966,
+      "sha256": "4e739de1bf0de9e041c7d500ca733fbb5926b72f76774e79975ea594adeb5391"
+    },
+    {
+      "path": "run-40427087028-metadata-final.json",
+      "bytes": 13307,
+      "sha256": "d4764e341f6aa6925a4901034ef1c485403d235a8cda3c35288fc3f09870675f"
+    },
+    {
+      "path": "run-40427087028-metadata-latest.json",
+      "bytes": 13307,
+      "sha256": "d4764e341f6aa6925a4901034ef1c485403d235a8cda3c35288fc3f09870675f"
+    },
+    {
+      "path": "runs-initial.json",
+      "bytes": 28457,
+      "sha256": "1a4b5f43a1c17c00736970b9b3a468b3c220ab966ec8d36147cd1cca3cc5cbbf"
+    }
+  ],
+  "all_five_job_logs_present": true,
+  "all_checks_success": true
+}
