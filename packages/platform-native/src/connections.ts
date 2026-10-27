@@ -102,11 +102,11 @@ export function createNativeConnections(bridge: ConnectionsPlugin = plugin): Pla
         const method = (init.method ?? (input instanceof Request ? input.method : 'GET')).toUpperCase();
         if (url.protocol !== 'https:' || url.username || url.password || url.hash || !allowed.has(`${method} ${url.href}`)) throw Error('native-backup-target');
         const headers: Record<string, string> = {};
-        for (const [name, value] of new Headers(init.headers)) {
+        for (const [name, value] of new Headers(init.headers !== undefined ? init.headers : input instanceof Request ? input.headers : undefined)) {
           if (!['authorization', 'content-type'].includes(name) || value.length > 16384 || /[\r\n\0]/.test(value)) throw Error('native-backup-header');
           headers[name] = value;
         }
-        const id = crypto.randomUUID(), signal = init.signal;
+        const id = crypto.randomUUID(), signal = init.signal !== undefined ? init.signal : input instanceof Request ? input.signal : undefined;
         try {
           return await run(id, signal, async () => {
             if (method === 'PUT') {

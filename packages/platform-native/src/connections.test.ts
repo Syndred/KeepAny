@@ -79,3 +79,47 @@ it('rejects redirect-shaped responses, oversized reads, corrupted chunks and pre
   native.backupRead = vi.fn(async () => ({ bodyBase64: '' })); await expect(fetch(url)).rejects.toThrow('response');
   expect(native.cancel).toHaveBeenCalledTimes(3);
 });
+
+it('inherits Request headers, method and original bytes while explicit init headers and body take priority', async () => {
+  const native = bridge(), adapter = createNativeConnections(native), url = 'https://backup.example.test/object.ka1';
+  const fetch = adapter.backupFetch([{ url, method: 'GET' }, { url, method: 'PUT' }]);
+  await fetch(new Request(url, { method: 'PUT', headers: { Authorization: 'Basic synthetic-request-only', 'Content-Type': 'application/octet-stream' }, body: Uint8Array.of(0, 128, 255, 64) }));
+  expect(native.backupRequest).toHaveBeenLastCalledWith(expect.objectContaining({ method: 'PUT', headers: { authorization: 'Basic synthetic-request-only', 'content-type': 'application/octet-stream' } }));
+  expect(native.backupWrite).toHaveBeenLastCalledWith(expect.objectContaining({ bodyBase64: 'AID/QA==' }));
+  await fetch(new Request(url, { method: 'GET', headers: { Authorization: 'Basic must-be-overridden' } }), { method: 'PUT', headers: { 'Content-Type': 'application/octet-stream' }, body: Uint8Array.of(1, 2, 3) });
+  expect(native.backupRequest).toHaveBeenLastCalledWith(expect.objectContaining({ method: 'PUT', headers: { 'content-type': 'application/octet-stream' } }));
+  expect(native.backupWrite).toHaveBeenLastCalledWith(expect.objectContaining({ bodyBase64: 'AQID' }));
+  await expect(fetch(new Request(url, { method: 'POST', body: 'not-an-allowed-method' }))).rejects.toThrow('native-backup-target');
+  await expect(fetch(url, { method: 'PUT', body: new FormData() })).rejects.toThrow('native-connections-body');
+  expect(native.backupRequest).toHaveBeenCalledTimes(2);
+});
+
+it('does not send or stage an already aborted Request and cancels Request-owned signals during native flight', async () => {
+  const native = bridge(), adapter = createNativeConnections(native), url = 'https://backup.example.test/object.ka1';
+  const fetch = adapter.backupFetch([{ url, method: 'GET' }, { url, method: 'PUT' }]);
+  const alreadyAborted = new AbortController(); alreadyAborted.abort();
+  await expect(fetch(new Request(url, { method: 'PUT', body: new Blob([Uint8Array.of(1)]), signal: alreadyAborted.signal }))).rejects.toMatchObject({ name: 'AbortError' });
+  expect(native.backupWrite).not.toHaveBeenCalled(); expect(native.backupRequest).not.toHaveBeenCalled();
+  let complete!: (value: Awaited<ReturnType<ConnectionsPlugin['backupRequest']>>) => void;
+  native.backupRequest = vi.fn(() => new Promise<Awaited<ReturnType<ConnectionsPlugin['backupRequest']>>>(resolve => { complete = resolve; }));
+  const controller = new AbortController();
+  const pending = fetch(new Request(url, { signal: controller.signal }));
+  await vi.waitFor(() => expect(native.backupRequest).toHaveBeenCalledTimes(1));
+  const id = vi.mocked(native.backupRequest).mock.calls[0][0].requestId;
+  controller.abort(); await expect(pending).rejects.toMatchObject({ name: 'AbortError' });
+  expect(native.cancel).toHaveBeenCalledWith({ requestId: id });
+  complete({ status: 200, headers: {}, size: 0 });
+  await Promise.resolve();
+  expect(native.backupRead).not.toHaveBeenCalled();
+});
+
+it('lets explicit init signals override an aborted Request, including explicit null', async () => {
+  const native = bridge(), adapter = createNativeConnections(native), url = 'https://backup.example.test/object.ka1';
+  const fetch = adapter.backupFetch([{ url, method: 'GET' }]);
+  const original = new AbortController(); original.abort();
+  const request = new Request(url, { signal: original.signal, headers: { Authorization: 'Basic overridden' } });
+  await expect(fetch(request, { signal: new AbortController().signal, headers: {} })).resolves.toHaveProperty('status', 204);
+  await expect(fetch(request, { signal: null, headers: {} })).resolves.toHaveProperty('status', 204);
+  expect(native.backupRequest).toHaveBeenCalledTimes(2);
+  expect(native.backupRequest).toHaveBeenLastCalledWith(expect.objectContaining({ headers: {} }));
+});
