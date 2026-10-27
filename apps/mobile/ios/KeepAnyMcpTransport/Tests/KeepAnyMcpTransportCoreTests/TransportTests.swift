@@ -100,17 +100,68 @@ private final class ResponseBytes: ChannelInboundHandler {
         context.fireChannelInactive()
     }
 }
+
+/// Owned independently of TLSProbe's initialization state: an initializer can
+/// fail before channel is initialized, or after all stored properties exist.
+/// Both paths and deinit share this one cleanup, never a second post-shutdown
+/// close/submit on an EventLoop which can no longer complete that promise.
+private final class ProbeCleanup {
+    private let group: MultiThreadedEventLoopGroup
+    private let loop: EventLoop
+    private let sink: ResponseBytes
+    private let lock = NSLock()
+    private var started = false
+    private var connected: Channel?
+    private let id = String(UUID().uuidString.prefix(8))
+
+    init(group: MultiThreadedEventLoopGroup, loop: EventLoop, sink: ResponseBytes) {
+        self.group = group; self.loop = loop; self.sink = sink
+    }
+    func stage(_ phase: String) {
+        // stderr is written immediately, including during an eventual CI
+        // timeout. No endpoint, certificate, payload or temporary key is logged.
+        FileHandle.standardError.write(Data("KeepAny TLS probe [\(id)] \(phase)\n".utf8))
+    }
+    func attach(_ channel: Channel) { connected = channel; stage("tcp-connected") }
+    func run(origin: String) {
+        lock.lock()
+        let shouldClean = !started
+        started = true
+        lock.unlock()
+        guard shouldClean else { stage("\(origin).cleanup-already-started"); return }
+        stage("\(origin).cleanup-begin")
+        stage("settle-before")
+        do { try loop.submit { self.sink.fail(ProbeFailure.closed) }.wait(); stage("settle-after") }
+        catch { stage("settle-failed-\(type(of: error))"); XCTFail("Probe promise settlement failed during cleanup") }
+        if let channel = connected {
+            stage("close-before")
+            do { try channel.close().wait(); stage("close-after") }
+            catch { stage("close-failed-\(type(of: error))") }
+        }
+        stage("shutdown-before")
+        do { try group.syncShutdownGracefully(); stage("shutdown-after") }
+        catch { stage("shutdown-failed-\(type(of: error))"); XCTFail("Probe EventLoopGroup shutdown failed") }
+        connected = nil
+        stage("\(origin).cleanup-end")
+    }
+}
+
 final class TLSProbe {
     let group = MultiThreadedEventLoopGroup(numberOfThreads: 1)
     let channel: Channel
     let result: EventLoopFuture<Data>
     private let received: ResponseBytes
+    private let cleanup: ProbeCleanup
     var observedBytes: Int { received.observedBytes }
     init(_ endpoint: McpEndpoint, trusted: Bool = true, hostname: String? = nil, timeout: Int64 = 5, maximumTLSVersion: TLSVersion? = nil) throws {
         let loop = group.next(), reply = loop.makePromise(of: Data.self)
         result = reply.futureResult
         received = ResponseBytes(reply)
-        var connectedForCleanup: Channel?
+        // A local owner remains usable in catch even when self.channel has not
+        // been initialized. Do not call an instance helper on partial self.
+        let resources = ProbeCleanup(group: group, loop: loop, sink: received)
+        cleanup = resources
+        resources.stage("init-begin")
         do {
             var config = TLSConfiguration.makeClientConfiguration()
             config.minimumTLSVersion = maximumTLSVersion == .tlsv11 ? .tlsv1 : .tlsv12
@@ -138,17 +189,20 @@ final class TLSProbe {
             // This fixture has one exact IP, not DNS/IPv4-v6 racing candidates.
             // A stateful response sink must belong to this single channel.
             }.connect(to: SocketAddress(ipAddress: "127.0.0.1", port: URL(string: endpoint.endpoint)!.port!)).wait()
-            connectedForCleanup = channel
+            resources.attach(channel)
             let connected = channel
             let deadline = loop.scheduleTask(in: .seconds(timeout)) { sink.fail(ProbeFailure.timeout); connected.close(promise: nil) }
             result.whenComplete { _ in deadline.cancel() }
             // TCP connect is not an authenticated TLS connection. Surface the
             // original handshake error before a later write says AlreadyClosed.
+            resources.stage("handshake-wait-before")
             try sink.handshake.futureResult.wait()
+            resources.stage("handshake-wait-after")
         } catch {
             // Configuration or handler construction can fail before the sink
             // is installed, so channelInactive cannot own completion there.
             // Settle on its event loop before destroying the group/promise.
+            resources.stage("init.catch-before-diagnostic")
             let sink = received
             let cause = (try? loop.submit { sink.fail(error); return sink.originalFailure(or: error) }.wait()) ?? error
             let phases = (try? loop.submit { sink.diagnostic() }.wait()) ?? "loop-unavailable"
@@ -156,15 +210,18 @@ final class TLSProbe {
             // Preserve the first typed TLS/initializer cause, not a secondary
             // close error, and leave useful phase evidence for Apple CI.
             print("KeepAny TLS probe failed [\(phases)] \(type(of: cause)): \(cause)")
-            if let connectedForCleanup { try? connectedForCleanup.close().wait() }
-            try? group.syncShutdownGracefully()
+            resources.stage("init.catch-before-cleanup")
+            resources.run(origin: "init.catch")
+            resources.stage("init.catch-after-cleanup")
             throw cause
         }
     }
     func send(_ data: Data) throws {
         var bytes = channel.allocator.buffer(capacity: data.count); bytes.writeBytes(data)
-        do { try channel.writeAndFlush(bytes).wait() }
+        cleanup.stage("write-before")
+        do { try channel.writeAndFlush(bytes).wait(); cleanup.stage("write-after") }
         catch {
+            cleanup.stage("write-failed-before-diagnostic")
             let sink = received
             let cause = try channel.eventLoop.submit { sink.originalFailure(or: error) }.wait()
             let phases = try channel.eventLoop.submit { sink.diagnostic() }.wait()
@@ -173,7 +230,11 @@ final class TLSProbe {
         }
     }
     func send(_ text: String) throws { try send(Data(text.utf8)) }
-    func reply() throws -> Data { try result.wait() }
+    func reply() throws -> Data {
+        cleanup.stage("reply-before")
+        do { let bytes = try result.wait(); cleanup.stage("reply-after"); return bytes }
+        catch { cleanup.stage("reply-failed-\(type(of: error))"); throw error }
+    }
     func assertNoBytes(file: StaticString = #filePath, line: UInt = #line) {
         do {
             // Evaluate outside XCTest's throwing autoclosure: otherwise XCTest
@@ -185,10 +246,9 @@ final class TLSProbe {
         XCTAssertEqual(observedBytes, 0, file: file, line: line)
     }
     deinit {
-        try? channel.close().wait()
-        let sink = received
-        try? channel.eventLoop.submit { sink.fail(ProbeFailure.closed) }.wait()
-        try? group.syncShutdownGracefully()
+        cleanup.stage("deinit-enter")
+        cleanup.run(origin: "deinit")
+        cleanup.stage("deinit-exit")
     }
 }
 
@@ -286,6 +346,13 @@ final class TransportTests: XCTestCase {
         }
         let invalidCertificate = McpEndpoint(instanceId: endpoint.instanceId, endpoint: endpoint.endpoint, certificatePem: "invalid PEM", spkiSha256: endpoint.spkiSha256)
         XCTAssertThrowsError(try TLSProbe(invalidCertificate))
+        // A genuine verification failure occurs after TCP/channel assignment,
+        // unlike the invalid SNI/PEM branches above. It must clean up exactly
+        // once even if failed initialization also invokes deinit, then allow
+        // the following fully verified probe to succeed.
+        XCTAssertThrowsError(try TLSProbe(endpoint, trusted: false)) { error in
+            XCTAssertTrue(error is NIOSSLError || error is NIOSSLExtraError, "Late initializer failure must retain its TLS type")
+        }
         let client = try TLSProbe(endpoint)
         try client.send(raw(endpoint)); try respond(server, events.request())
         XCTAssertFalse(try client.reply().isEmpty)
