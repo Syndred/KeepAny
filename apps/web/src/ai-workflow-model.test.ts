@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { newAsset, taskSchema } from "../../../packages/domain/src";
+import { historySchema, newAsset, taskSchema } from "../../../packages/domain/src";
 import { reviewedCandidateSchema } from "../../../packages/local-db/src/intake-review";
 import {
 	aiImportSchema,
@@ -393,6 +393,34 @@ it("normalizes nullable query strings without accepting invalid search plans", (
 		expect(searchPlanSchema.safeParse({ ...base, ...patch }).success).toBe(
 			false,
 		);
+});
+
+it("queries shared bills once through any ordinary owner kind and uses corrected renewal values and dates", () => {
+	const project = { ...newAsset("project"), name: "Studio" }, item = { ...newAsset("item"), name: "Camera" }, subscription = newAsset("subscription");
+	const shared = historySchema.parse({ id: "shared-bill", assetId: project.id, assetIds: [project.id,item.id], action: "expense", title: "Equipment invoice",
+		note: "", eventDate: "2026-10-24", amount: 1001, currency: "CNY", createdAt: "2026-10-27T00:00:00Z" });
+	const renewal = historySchema.parse({ id: "renewal-bill", assetId: subscription.id, action: "renew", note: "Original fact", title: "Original renewal",
+		billDate: "2026-09-27", amount: 2000, currency: "CNY", createdAt: "2026-10-27T00:00:00Z", financeCorrection: {
+			title: "Corrected renewal", note: "Corrected bill", eventDate: "2026-10-25", amount: 3001, currency: "JPY", assetIds: [item.id] } });
+	const data = { assets: [project,item,subscription], tasks: [], relations: [], history: [shared,renewal] };
+	const results = executeSearchPlan(searchPlanSchema.parse({ scope: "finance", kind: "item", dateFrom: "2026-10-01", dateTo: "2026-10-31" }), data);
+	expect(results.results.map(row => row.id)).toEqual([shared.id,renewal.id]);
+	expect(results.results[1].history).toMatchObject({ amount: 3001, currency: "JPY", eventDate: "2026-10-25", note: "Corrected bill" });
+	expect(executeSearchPlan(searchPlanSchema.parse({ scope: "finance", query: "Corrected renewal" }), data).count).toBe(1);
+	expect(executeSearchPlan(searchPlanSchema.parse({ scope: "finance", query: "Original renewal" }), data).count).toBe(0);
+	expect(renewal.amount).toBe(2000); expect(renewal.billDate).toBe("2026-09-27");
+});
+
+it("excludes hidden renewal bills and bills owned only by deleted or vault records from local AI finance lookup", () => {
+	const account = newAsset("account"), vault = newAsset("vault"), deleted = { ...newAsset("item"), deleted: true };
+	const base = historySchema.parse({ id: "hidden-bill", assetId: account.id, action: "renew", note: "", amount: 1,
+		currency: "CNY", billDate: "2026-10-25", createdAt: "2026-10-27T00:00:00Z", financeCorrection: {
+			note: "", eventDate: "2026-10-25", amount: 1, currency: "CNY", hidden: true } });
+	const histories = [base, { ...base, id: "vault-bill", financeCorrection: undefined, assetId: vault.id },
+		{ ...base, id: "deleted-owner-bill", financeCorrection: undefined, assetId: deleted.id },
+		{ ...base, id: "vault-source-linked-bill", assetId: vault.id, financeCorrection: { ...base.financeCorrection,
+			note: "", eventDate: "2026-10-25", amount: 1, currency: "CNY" as const, hidden: false, assetIds: [account.id] } }];
+	expect(executeSearchPlan(searchPlanSchema.parse({ scope: "finance" }), { assets: [account,vault,deleted], tasks: [], relations: [], history: histories }).count).toBe(0);
 });
 
 it("accepts DeepSeek's null subscription reminder queries as unresolved empty strings", () => {

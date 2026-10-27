@@ -27,7 +27,7 @@
 .finance-entry > div { min-width: 0; flex: 1; }
 .finance-entry b { flex: none; overflow-wrap: anywhere; text-align: right; }
 .finance-entry-content { overflow-wrap: anywhere; }
-.finance-entry .finance-entry-actions { flex: none; display: flex; flex-wrap: wrap; gap: 8px; }
+.finance-entry.list-row > .finance-entry-actions { flex: none; display: flex; flex-wrap: wrap; gap: 8px; }
 .finance-entry-actions .button { min-height: 44px; }
 .finance-owners { margin: 0; padding: 12px; border: 1px solid var(--line-soft); border-radius: 10px; display: grid; gap: 4px; min-width: 0; max-height: 200px; overflow: auto; }
 .finance-owners legend { padding: 0 4px; font-weight: 700; font-size: 12px; }
@@ -43,5 +43,5 @@
 .finance-no-target .actions { margin-top: 14px; }
 @media(max-width:860px) { .finance-summary { grid-template-columns: 1fr; } .finance-columns { grid-template-columns: 1fr; } }
 @media(max-width:620px) { .finance-linked-head { flex-wrap: wrap; } .finance-linked-top { flex-wrap: wrap; } .finance-linked-top > strong { margin-left: 0; } }
-@media(max-width:620px) { .finance-entry { flex-wrap: wrap; } .finance-entry .finance-entry-content { flex-basis: calc(100% - 100px); } .finance-entry .finance-entry-actions { width: 100%; } }
+@media(max-width:620px) { .finance-entry { flex-wrap: wrap; } .finance-entry.list-row > .finance-entry-content { flex: 1 1 calc(100% - 100px); } .finance-entry.list-row > .finance-entry-actions { flex: 0 0 100%; width: 100%; } }
 @media(max-width:420px) { .finance-filters { grid-template-columns: 1fr; } }

@@ -42,7 +42,9 @@ export function FinancePage() {
 	const liveById = new Map(liveAssets(data).map((asset) => [asset.id, asset]));
 	const records = data.history.map(effectiveFinanceEntry).filter((entry) => {
 		if (entry.deleted || !ledgerActions.has(entry.action)) return false;
-		return historyAssetIds(entry).some(id => assetsById.get(id)?.kind !== "vault");
+		const source = assetsById.get(entry.assetId);
+		if (!source || source.kind === "vault" || (entry.action === "renew" && source.kind !== "subscription")) return false;
+		return historyAssetIds(entry).some(id => { const kind = assetsById.get(id)?.kind; return kind && kind !== "vault"; });
 	});
 	const [recordOpen, setRecordOpen] = useState(false);
 	const [editingRecord, setEditingRecord] = useState<History | null>(null);

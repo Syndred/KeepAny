@@ -9,11 +9,13 @@ import {
 } from "../../../packages/domain/src";
 import {
 	buildGlobalSearchIndex,
+	projectGlobalSearchCandidate,
 	searchGlobalIndex,
 	type GlobalSearchCandidate,
 	type GlobalSearchInput,
 	type GlobalSearchLabels,
 } from "./global-search";
+import type { ReviewedCandidate } from "../../../packages/local-db/src/intake-review";
 
 const labels: GlobalSearchLabels = {
 	assetKinds: { project: "Project", account: "Account", subscription: "Subscription", item: "Item", vault: "Vault" },
@@ -62,6 +64,35 @@ function index(values: Partial<GlobalSearchInput> = {}) {
 }
 
 describe("global search public projection", () => {
+	it("finds project and item bills by either explicit owner while keeping one navigation result per bill", () => {
+		const project = asset("project", { name: "Ledger studio" }), item = asset("item", { name: "Ledger camera" });
+		const shared = history(project.id, { assetIds: [project.id, item.id], title: "Shared equipment invoice" });
+		const entries = index({ assets: [project,item], history: [shared] });
+		for (const query of ["Shared equipment invoice", "Ledger studio", "Ledger camera"])
+			expect(searchGlobalIndex(entries, query).filter(row => row.source === "finance").map(row => row.target), query)
+				.toEqual([{ type: "finance", historyId: shared.id }]);
+	});
+
+	it("rejects vault or missing bill sources even when they also claim an ordinary account owner", () => {
+		const account = asset("account"), vault = asset("vault");
+		const rows = [history(vault.id, { title: "Synthetic vault source bill", assetIds: [vault.id,account.id] }),
+			history("missing-source", { id: "missing-source-bill", assetIds: ["missing-source",account.id] })];
+		expect(index({ assets: [account,vault], history: rows }).filter(row => row.source === "finance")).toEqual([]);
+	});
+	it("uses corrected renewal bill fields and hides deleted bills without indexing the original fact or private notes", () => {
+		const subscription = asset("subscription", { name: "Original renewal source" }), project = asset("project", { name: "Effective owner" });
+		const original = history(subscription.id, { action: "renew", title: "Original invoice title", amount: 12345, billDate: "2026-09-29" });
+		const corrected = historySchema.parse({ ...original, financeCorrection: { title: "Corrected invoice title", source: "Corrected statement",
+			note: "sensitive-correction-note", eventDate: "2026-10-25", amount: 22001, currency: "JPY", assetIds: [project.id] } });
+		const entries = index({ assets: [subscription,project], history: [corrected] });
+		for (const query of ["Corrected invoice title", "Corrected statement", "22001", "2026-10-25", "Effective owner"])
+			expect(searchGlobalIndex(entries, query).filter(row => row.source === "finance")).toHaveLength(1);
+		for (const query of ["Original invoice title", "Receipt desk", "123.45", "sensitive-correction-note", "2026-09-29", "Original renewal source"])
+			expect(searchGlobalIndex(entries, query).filter(row => row.source === "finance")).toEqual([]);
+		const hidden = { ...corrected, financeCorrection: { ...corrected.financeCorrection, hidden: true } } as History;
+		expect(index({ assets: [subscription,project], history: [hidden] }).filter(row => row.source === "finance")).toEqual([]);
+		expect(corrected).toMatchObject(original);
+	});
 	it("indexes all four approved sources with object-specific navigation targets", () => {
 		const current = asset("account", { id: "visible-account", name: "Shared name" });
 		const receipt = candidate(current, { asset: { ...candidate(current).asset, name: "Shared intake" } });
@@ -208,6 +239,34 @@ describe("global search public projection", () => {
 		expect(searchGlobalIndex(entries, "camera.pdf")[0].target).toEqual({ type: "intake", candidateId: receipt.id });
 	});
 
+	it("excludes a reviewed PDF merge description while retaining the target's ordinary unselected long description", () => {
+		const current = asset("project", { description: "merged-pdf-original-secret", longDescription: "Ordinary unselected long profile" });
+		const draft = asset("project", { id: `pdf-${"c".repeat(48)}`, name: "PDF candidate" });
+		const receipt = Object.assign(candidate(draft, { source: "pdf", fileName: "Review.pdf" }), { mergeTargetId: current.id });
+		const entries = index({ assets: [current], reviewedCandidates: [receipt] });
+		expect(searchGlobalIndex(entries, "merged-pdf-original-secret")).toEqual([]);
+		expect(searchGlobalIndex(entries, "Ordinary unselected long profile").map(row => row.target))
+			.toEqual([{ type: "asset", kind: current.kind, assetId: current.id }]);
+		const nameOnly = candidate(draft, { source: "pdf", fileName: "Name-only.pdf" });
+		expect(searchGlobalIndex(index({ assets: [current], reviewedCandidates: [nameOnly] }), "merged-pdf-original-secret")).toHaveLength(1);
+	});
+
+	it("projects only a PDF description target ID and never reads source text, merge snapshots or unselected private fields", () => {
+		const draft = asset("project"), target = asset("project");
+		const merged = { ...candidate(draft, { source: "pdf" }), merge: { targetId: target.id, fields: ["description"],
+			get before() { throw Error("private before read"); }, get after() { throw Error("private after read"); } },
+			get sourceText() { throw Error("private source read"); } } as unknown as ReviewedCandidate;
+		Object.defineProperty(merged.asset, "description", { get() { throw Error("private draft description read"); } });
+		const publicRow = projectGlobalSearchCandidate(merged);
+		expect(publicRow.mergeTargetId).toBe(target.id);
+		for (const key of ["sourceText", "merge", "before", "after"]) expect(publicRow).not.toHaveProperty(key);
+		expect(publicRow.asset).not.toHaveProperty("description");
+		for (const patch of [{ source: undefined }, { merge: { targetId: target.id, fields: ["name"] } }]) {
+			const changed = Object.assign(Object.create(merged) as ReviewedCandidate, patch);
+			expect(projectGlobalSearchCandidate(changed).mergeTargetId).toBeUndefined();
+		}
+	});
+
 	it("excludes descriptions of deterministic PDF assets when an old backup has no receipts", () => {
 		const current = asset("item", { id: `pdf-${"b".repeat(48)}`, description: "legacy-pdf-secret" });
 		expect(searchGlobalIndex(index({ assets: [current] }), "legacy-pdf-secret")).toEqual([]);
@@ -235,7 +294,7 @@ describe("global search public projection", () => {
 			history(account.id, { id: "loan-event", action: "loan" })];
 		const entries = index({ assets: [account, subscription, project], history: rows });
 		expect(entries.filter((row) => row.source === "finance").map((row) => row.target))
-			.toEqual([{ type: "finance", historyId: "history-operation-id" }, { type: "finance", historyId: "renew-subscription" }]);
+			.toEqual([{ type: "finance", historyId: "history-operation-id" }, { type: "finance", historyId: "project-expense" }, { type: "finance", historyId: "renew-subscription" }]);
 	});
 
 	it("retains real ledger rows for soft-deleted assets without a broken asset target", () => {
