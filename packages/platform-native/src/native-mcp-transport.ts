@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { MCP_HTTP_REQUEST_LIMIT, MCP_HTTP_RESPONSE_LIMIT, type McpInboundHttp } from '../../mcp/src/http-handler';
 
 export interface NativeMcpTransportPlugin {
+  reset(): Promise<void>;
   start(options: { address: string }): Promise<NativeMcpEndpoint>;
   stop(options: { instanceId: string }): Promise<void>;
   cancel(options: { instanceId: string; requestId: string }): Promise<void>;
@@ -29,6 +30,12 @@ const responseHeaders = new Set(['content-type', 'cache-control', 'x-content-typ
 // SDK emits connection/x-accel-buffering for its finite SSE replies as well.
 const ioHeaders = new Set(['connection', 'keep-alive', 'transfer-encoding', 'content-length', 'x-accel-buffering']);
 const encoder = new TextEncoder();
+/** Call before mounting a new native WebView runtime; pagehide delivery alone
+ * cannot guarantee an old page's asynchronous native stop was acknowledged. */
+export async function resetNativeMcpTransport(bridge: NativeMcpTransportPlugin = native): Promise<boolean> {
+  if (!Capacitor.isNativePlatform() || !Capacitor.isPluginAvailable('KeepAnyMcpTransport')) return false;
+  try { await bridge.reset(); return true; } catch { throw Error('mcp-native-transport'); }
+}
 function privateAddress(address: string) {
   if (!/^(?:0|[1-9]\d{0,2})(?:\.(?:0|[1-9]\d{0,2})){3}$/.test(address)) return false;
   const parts = address.split('.').map(Number);

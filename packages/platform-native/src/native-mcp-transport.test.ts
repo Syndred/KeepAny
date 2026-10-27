@@ -3,14 +3,14 @@ const platform = vi.hoisted(() => ({ native: true, available: true }));
 vi.mock('@capacitor/core', () => ({ Capacitor: { isNativePlatform: () => platform.native, isPluginAvailable: () => platform.available }, registerPlugin: () => ({}) }));
 import { McpAuthority, MemoryAuthorityStorage } from '../../mcp/src/authority';
 import { createKeepAnyMcpHttpHandler } from '../../mcp/src/http-handler';
-import { startNativeMcpTransport, type NativeMcpTransportPlugin, type NativeMcpRequestHandler } from './native-mcp-transport';
+import { resetNativeMcpTransport, startNativeMcpTransport, type NativeMcpTransportPlugin, type NativeMcpRequestHandler } from './native-mcp-transport';
 
 const endpoint = { instanceId: crypto.randomUUID(), endpoint: 'https://127.0.0.1:9448/mcp',
   certificatePem: `-----BEGIN CERTIFICATE-----\n${'A'.repeat(64)}\n-----END CERTIFICATE-----\n`, spkiSha256: 'a'.repeat(64) };
 function fixture() {
   const callbacks = new Map<string, (event: unknown) => void>(), responses = new Map<string, { status: number; chunks: string[] }>();
   const bridge: NativeMcpTransportPlugin = {
-    start: vi.fn(async () => endpoint), stop: vi.fn(async () => {}), cancel: vi.fn(async () => {}),
+    reset: vi.fn(async () => {}), start: vi.fn(async () => endpoint), stop: vi.fn(async () => {}), cancel: vi.fn(async () => {}),
     addListener: vi.fn(async (name, callback) => { callbacks.set(name, callback); return { remove: vi.fn(async () => { callbacks.delete(name); }) }; }),
     responseStart: vi.fn(async row => { responses.set(row.requestId, { status: row.status, chunks: [] }); }),
     responseWrite: vi.fn(async row => { responses.get(row.requestId)?.chunks.push(row.chunkBase64); }),
@@ -25,6 +25,16 @@ function fixture() {
 }
 const idleHandler = (): NativeMcpRequestHandler => ({ fetch: vi.fn(async () => new Response('{}', { headers: { 'content-type': 'application/json' } })), close: vi.fn(async () => {}) });
 afterEach(() => { platform.native = true; platform.available = true; vi.restoreAllMocks(); });
+
+it('bootstrap resets an existing native listener without creating a port and fails closed on missing acknowledgement', async () => {
+  const test = fixture();
+  expect(await resetNativeMcpTransport(test.bridge)).toBe(true);
+  expect(test.bridge.reset).toHaveBeenCalledOnce(); expect(test.bridge.start).not.toHaveBeenCalled();
+  test.bridge.reset = vi.fn(async () => { throw Error('private platform detail'); });
+  await expect(resetNativeMcpTransport(test.bridge)).rejects.toThrow('mcp-native-transport');
+  platform.available = false;
+  expect(await resetNativeMcpTransport(test.bridge)).toBe(false);
+});
 
 it('passes actual parser Host separately to the official SDK protocol and preserves its real finite response in bounded chunks', async () => {
   const test = fixture(), authority = new McpAuthority(new MemoryAuthorityStorage());
