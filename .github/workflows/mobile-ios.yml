@@ -1,0 +1,75 @@
+name: Verify mobile iOS simulator
+
+on:
+  push:
+    branches: [codex/mobile-app]
+    paths:
+      - 'apps/mobile/**'
+      - 'apps/web/src/**'
+      - 'packages/**'
+      - 'patches/**'
+      - 'pnpm-lock.yaml'
+      - 'pnpm-workspace.yaml'
+      - '.github/workflows/mobile-ios.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mobile-ios-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  simulator:
+    runs-on: macos-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.10.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: pnpm
+      - name: Record actual Apple toolchain
+        run: |
+          mkdir -p test-results/ios
+          xcodebuild -version | tee test-results/ios/xcode.txt
+          swift --version | tee test-results/ios/swift.txt
+          xcrun simctl list devices available --json > test-results/ios/devices.json
+      - run: pnpm install --frozen-lockfile
+      - name: Build shared mobile sources and sync native packages
+        run: |
+          pnpm mobile:build
+          node scripts/mobile-cli.mjs sync ios
+      - name: Compile actual iOS simulator application
+        shell: bash
+        run: |
+          set -o pipefail
+          xcodebuild -project apps/mobile/ios/App/App.xcodeproj -scheme App \
+            -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath test-results/ios-derived CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO \
+            build 2>&1 | tee test-results/ios/build.log
+      - name: Install and launch in an available iPhone simulator
+        shell: bash
+        run: |
+          set -euo pipefail
+          simulator_id="$(node --input-type=module -e 'import fs from "node:fs";const devices=JSON.parse(fs.readFileSync("test-results/ios/devices.json","utf8"));const phone=Object.values(devices.devices).flat().find(d=>d.isAvailable&&d.name.startsWith("iPhone"));if(!phone||!/^[A-F0-9-]{36}$/i.test(phone.udid))throw Error("No available iPhone simulator");process.stdout.write(phone.udid);')"
+          xcrun simctl boot "$simulator_id"
+          xcrun simctl bootstatus "$simulator_id" -b
+          xcrun simctl install "$simulator_id" test-results/ios-derived/Build/Products/Debug-iphonesimulator/App.app
+          xcrun simctl launch "$simulator_id" io.github.syndred.keepany | tee test-results/ios/launch.txt
+          sleep 10
+          xcrun simctl io "$simulator_id" screenshot test-results/ios/startup-en.png
+          xcrun simctl terminate "$simulator_id" io.github.syndred.keepany
+          xcrun simctl shutdown "$simulator_id"
+      - name: Preserve toolchain, build and startup evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: KeepAny-ios-simulator-evidence-${{ github.sha }}
+          path: test-results/ios/
+          if-no-files-found: error
+          retention-days: 7

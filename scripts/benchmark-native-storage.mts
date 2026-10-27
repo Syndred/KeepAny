@@ -14,6 +14,7 @@ import type { PersistentFiles } from '../packages/platform-native/src/index.ts';
 // Explicit M0-12 host probe. This is real disk SQLite plus shared business code;
 // timings/RSS belong to this Node host, never to Android, iOS or React rendering.
 const output = resolve(process.argv[2] ?? 'test-results/native-storage-performance.json');
+const archivesDirectory = process.argv[3] ? resolve(process.argv[3]) : undefined;
 const root = await mkdtemp(join(tmpdir(), 'keepany-performance-'));
 if (!resolve(root).startsWith(`${resolve(tmpdir())}${sep}keepany-performance-`)) throw Error('unsafe-benchmark-cleanup');
 const opened = new Set<LocalRepository>();
@@ -59,6 +60,10 @@ try {
     const edit = await timed(() => source.save('asset', edited));
     const exported = await timed(async () => encryptBackup(await source.exportArchive(), 'Synthetic-benchmark-password'));
     if (exported.value.length > BACKUP_CONTAINER_MAX_BYTES) throw Error('benchmark-budget');
+    if (archivesDirectory) {
+      await mkdir(archivesDirectory, { recursive: true });
+      await writeFile(join(archivesDirectory, `synthetic-${count}.ka1`), exported.value);
+    }
     const target = await connect(`target-${count}`);
     const restored = await timed(async () => target.restoreArchive(await decryptBackup(exported.value, 'Synthetic-benchmark-password')));
     const original = await source.allRecords(), returned = await target.allRecords();
