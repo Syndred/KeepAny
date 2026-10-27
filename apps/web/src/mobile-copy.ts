@@ -1,5 +1,3 @@
-import i18n from "./i18n";
-
 const copy: Record<string, [string, string]> = {
 	mobileMore: ["更多", "More"],
 	mobileMainNavigation: ["主要导航", "Main navigation"],
@@ -30,11 +28,5 @@ const copy: Record<string, [string, string]> = {
 	mobileAccountCategories: ["账号分类与标签", "Account categories and tags"],
 	mobileBackToMore: ["返回更多", "Back to More"],
 };
-
-for (const [language, index] of [["zh-CN", 0], ["en", 1]] as const) {
-	i18n.addResources(language, "translation", Object.fromEntries(
-		Object.entries(copy).map(([key, value]) => [key, value[index]]),
-	));
-}
 
 export const mobileCopy = copy;

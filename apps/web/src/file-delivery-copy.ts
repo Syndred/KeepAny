@@ -1,5 +1,3 @@
-import i18n from "./i18n";
-
 const copy: Record<string, [string, string]> = {
 	exportFileReady: ["加密文件已生成。请选择保存或分享，并在所选位置确认文件。", "Encrypted file ready. Choose Save or share, then check the file at your chosen destination."],
 	exportFileOpen: ["保存或分享文件", "Save or share file"],
@@ -9,11 +7,5 @@ const copy: Record<string, [string, string]> = {
 	exportFileFailed: ["无法打开文件保存或分享，请重试。", "Could not prepare the file for saving or sharing. Try again."],
 	exportRequestReady: ["连接请求文件已生成。请选择保存或分享文件。", "The connection request file is ready. Choose Save or share file."],
 };
-
-for (const [language, index] of [["zh-CN", 0], ["en", 1]] as const) {
-	i18n.addResources(language, "translation", Object.fromEntries(
-		Object.entries(copy).map(([key, value]) => [key, value[index]]),
-	));
-}
 
 export const fileDeliveryCopy = copy;

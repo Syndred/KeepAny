@@ -95,6 +95,68 @@ function vault(aiKeyBinding?: VaultEntryDraft["aiKeyBinding"]) {
 }
 
 describe("AI settings credential boundary", () => {
+	it("waits for async metadata persistence, preserves the old connection on failure, and waits for deletion", async () => {
+		const saved = storage();
+		let finish!: () => void, fail!: (error: Error) => void;
+		const pendingStorage = {
+			...saved,
+			setItem(key: string, value: string) { return new Promise<void>((resolve, reject) => { finish = () => { saved.setItem(key, value); resolve(); }; fail = reject; }); },
+			removeItem(key: string) { return new Promise<void>((resolve, reject) => { finish = () => { saved.removeItem(key); resolve(); }; fail = reject; }); },
+		};
+		const store = new AiSettingsStore(pendingStorage);
+		const first = store.saveConfiguration({ ...configuration, apiKey: "async-session-secret" });
+		expect(store.getSnapshot().configured).toBe(false);
+		expect(saved.getItem(AI_SETTINGS_STORAGE_KEY)).toBeNull();
+		finish(); await first;
+		expect(store.getSnapshot().connection?.apiKey).toBe("async-session-secret");
+		expect(saved.getItem(AI_SETTINGS_STORAGE_KEY)).not.toContain("async-session-secret");
+		const previous = store.getSnapshot();
+		const update = store.saveConfiguration({ ...configuration, model: "not-saved" });
+		expect(store.getSnapshot()).toBe(previous);
+		fail(Error("synthetic-preferences-failure"));
+		await expect(update).rejects.toThrow("aiSettingsStorageFailed");
+		expect(store.getSnapshot()).toBe(previous);
+		const failedClear = store.clearConfiguration();
+		fail(Error("synthetic-preferences-remove-failure"));
+		await expect(failedClear).rejects.toThrow("aiSettingsStorageFailed");
+		expect(store.getSnapshot()).toBe(previous);
+		const clear = store.clearConfiguration();
+		expect(store.getSnapshot().configured).toBe(true);
+		finish(); await clear;
+		expect(store.getSnapshot().configured).toBe(false);
+		expect(saved.getItem(AI_SETTINGS_STORAGE_KEY)).toBeNull();
+	});
+	it("serializes asynchronous configuration changes before reusing a confirmed session key", async () => {
+		const saved = storage();
+		const writes: Array<() => void> = [];
+		const store = new AiSettingsStore({ ...saved, setItem(key, value) {
+			return new Promise<void>(resolve => { writes.push(() => { saved.setItem(key, value); resolve(); }); });
+		} });
+		const first = store.saveConfiguration({ ...configuration, apiKey: "queued-session-secret" });
+		const second = store.saveConfiguration({ ...configuration, model: "next-model" });
+		expect(writes).toHaveLength(1);
+		writes[0](); await first; await Promise.resolve();
+		expect(writes).toHaveLength(2);
+		writes[1](); await second;
+		expect(store.getSnapshot().connection?.model).toBe("next-model");
+		expect(store.getSnapshot().connection?.apiKey).toBe("queued-session-secret");
+	});
+	it("does not revive a vault key locked during an asynchronous metadata write or a disposed session key", async () => {
+		const saved = storage();
+		let finish!: () => void;
+		const store = new AiSettingsStore({ ...saved, setItem(key, value) {
+			return new Promise<void>(resolve => { finish = () => { saved.setItem(key, value); resolve(); }; });
+		} });
+		const session = vault(binding); store.attachVault(session);
+		const saving = store.saveConfiguration({ ...configuration, keySource: "vault", vaultEntryId: "entry", autoActivate: true });
+		session.update({ status: "locked", entries: [] });
+		finish(); await saving;
+		expect(store.getSnapshot().configured).toBe(true);
+		expect(store.getSnapshot().connection).toBeNull();
+		const pending = store.saveConfiguration({ ...configuration, apiKey: "disposed-session-secret" });
+		store.dispose(); finish(); await pending;
+		expect(store.getSnapshot().connection).toBeNull();
+	});
 	it("supports a self-hosted compatible HTTPS service without a key", () => {
 		const store = new AiSettingsStore(storage());
 		store.saveConfiguration({

@@ -12,9 +12,14 @@ import { smartImportCopy } from "./smart-import-copy";
 import { taskEditCopy } from "./task-edit-copy";
 import { financeCopy } from "./finance-copy";
 import { candidateMergeCopy } from "./candidate-merge-copy";
+import { getPlatformSetting } from "./platform-settings";
+import { mobileCopy } from "./mobile-copy";
+import { fileDeliveryCopy } from "./file-delivery-copy";
 
 const copy: Record<string, [string, string]> = {
 	brandName: ["KeepAny", "KeepAny"],
+	settingsStorageFailed: ["部分设置未能保存，请重试。", "Some settings could not be saved. Please try again."],
+	nativeStorageHint: ["资料保存在此应用中。清除应用数据或卸载会移除这些资料，请定期另存备份。", "Your records are stored in this app. Clearing app data or uninstalling removes them. Save a separate backup regularly."],
 	assetsWorkspace: ["资产", "Assets"],
 	accountsWorkspace: ["账号", "Accounts"],
 	workspaceAssetSubtitle: ["查看实物、项目、域名与订阅的进度、期限和费用。", "Track items, projects, domains and subscriptions in one place."],
@@ -2496,6 +2501,8 @@ Object.assign(
 	taskEditCopy,
 	financeCopy,
 	candidateMergeCopy,
+	mobileCopy,
+	fileDeliveryCopy,
 );
 Object.assign(
 	copy,
@@ -2534,7 +2541,7 @@ i18n.use(initReactI18next).init({
 	lng:
 		typeof window === "undefined"
 			? "en"
-			: localStorage.getItem("keepany-language") ||
+			: getPlatformSetting("keepany-language") ||
 				(navigator.language.startsWith("zh") ? "zh-CN" : "en"),
 	fallbackLng: "en",
 	interpolation: { escapeValue: false },

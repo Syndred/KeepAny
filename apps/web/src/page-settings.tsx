@@ -1,4 +1,5 @@
 import { Link, useLocation } from "@tanstack/react-router";
+import { Capacitor } from "@capacitor/core";
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { bridgeBindingKeys, createBindingBridgeFetch } from "../../../packages/binding/src/bridge";
@@ -18,6 +19,7 @@ import { COLLECTIONS_PREFERENCE_ID } from "./collection-model";
 import { PageTitle, useAppContext } from "./view-shared";
 import "./settings-intake-restoration.css";
 import { Select, SelectOption } from "./components/ui/select";
+import { getPlatformSetting, setPlatformSetting } from "./platform-settings";
 const SelfHostSessionPanel = lazy(() => import("./components/SelfHostSessionPanel").then(module => ({ default: module.SelfHostSessionPanel })));
 type AccessMode = "token" | "session" | "official";
 const officialWorkspaceKey = (accountId: string) => `keepany-official-workspace:${accountId}`;
@@ -56,6 +58,7 @@ function failure(error: unknown, fallback: string): SyncReport {
 export function SettingsPage() {
 	const { data, notify } = useAppContext();
 	const { t, i18n } = useTranslation();
+	const nativeApp = Capacitor.isNativePlatform();
 	const location = useLocation();
 	const officialAvailable = typeof officialOrigin === "string" && officialOrigin === window.location.origin &&
 		typeof bindingIssuer === "string" && typeof bindingBridgeOrigin === "string";
@@ -84,11 +87,11 @@ export function SettingsPage() {
 			document.getElementById("mcp-panel-title")?.focus();
 	}, [assistantOpen]);
 	const [accessMode, setAccessMode] = useState<AccessMode>(() => {
-		const saved = localStorage.getItem("keepany-sync-access-mode") ?? localStorage.getItem("keepany-selfhost-access-mode");
+		const saved = getPlatformSetting("keepany-sync-access-mode") ?? getPlatformSetting("keepany-selfhost-access-mode");
 		return saved === "official" && officialAvailable ? "official" : saved === "session" ? "session" : "token";
 	});
-	const [endpoint, setEndpoint] = useState(() => localStorage.getItem("keepany-selfhost-endpoint") ?? "");
-	const [workspaceId, setWorkspaceId] = useState(() => accessMode === "official" ? "" : localStorage.getItem("keepany-selfhost-workspace") ?? "");
+	const [endpoint, setEndpoint] = useState(() => getPlatformSetting("keepany-selfhost-endpoint") ?? "");
+	const [workspaceId, setWorkspaceId] = useState(() => accessMode === "official" ? "" : getPlatformSetting("keepany-selfhost-workspace") ?? "");
 	const [token, setToken] = useState("");
 	const [sessionAccountId, setSessionAccountId] = useState<string | null>(null);
 	const [officialBinding, setOfficialBinding] = useState<StoredBinding>();
@@ -101,6 +104,8 @@ export function SettingsPage() {
 	const [syncBusy, setSyncBusy] = useState(false);
 	const [migrationBusy, setMigrationBusy] = useState(false);
 	const [keyAccessBusy, setKeyAccessBusy] = useState(false);
+	const [settingsBusy, setSettingsBusy] = useState(false);
+	const settingsWriteRef = useRef(false);
 	const clientRef = useRef<SelfHostSyncClient | null>(null);
 	const clientGeneration = useRef(-1);
 	const configGeneration = useRef(0);
@@ -114,10 +119,10 @@ export function SettingsPage() {
 	const syncEndpoint = accessMode === "official" ? officialOrigin ?? "" : accessMode === "session" ? window.location.origin : endpoint;
 	const officialAccountId = officialBinding?.allowedScopes.includes("sync:write") ? officialBinding.subject : null;
 	const hasAccess = accessMode === "official" ? Boolean(officialAccountId) : accessMode === "session" ? Boolean(sessionAccountId) : Boolean(token);
-	const uiBusy = syncBusy || migrationBusy || keyAccessBusy;
+	const uiBusy = syncBusy || migrationBusy || keyAccessBusy || settingsBusy;
 	useEffect(() => {
 		mounted.current = true;
-		void navigator.storage?.persisted?.().then(value => { if (mounted.current) setPersistent(value); });
+		if (!nativeApp) void navigator.storage?.persisted?.().then(value => { if (mounted.current) setPersistent(value); });
 		return () => {
 			mounted.current = false;
 			configGeneration.current++;
@@ -125,7 +130,7 @@ export function SettingsPage() {
 			clientGeneration.current = -1;
 			clientRef.current = null;
 		};
-	}, []);
+	}, [nativeApp]);
 	const invalidateConfig = () => {
 		configGeneration.current++;
 		clientGeneration.current = -1;
@@ -140,7 +145,7 @@ export function SettingsPage() {
 		setOfficialBinding(binding);
 		if (previous === undefined) {
 			if (accessModeRef.current === "official" && binding?.allowedScopes.includes("sync:write"))
-				setWorkspaceId(localStorage.getItem(officialWorkspaceKey(binding.subject)) ?? "");
+				setWorkspaceId(getPlatformSetting(officialWorkspaceKey(binding.subject)) ?? "");
 			return;
 		}
 		if (previous === next) return;
@@ -151,15 +156,23 @@ export function SettingsPage() {
 		setConfirmCreate(false);
 		if (accessModeRef.current === "official") {
 			setAvailableWorkspaces([]);
-			setWorkspaceId(binding?.allowedScopes.includes("sync:write") ? localStorage.getItem(officialWorkspaceKey(binding.subject)) ?? "" : "");
+			setWorkspaceId(binding?.allowedScopes.includes("sync:write") ? getPlatformSetting(officialWorkspaceKey(binding.subject)) ?? "" : "");
 			setWorkspaceKey("");
 			setNeedsKeySave(false);
 		}
 	}, []);
 	const editConfig = (write: () => void) => {
-		if (activeOperation.current !== null || migrationBusy || keyAccessBusy) return;
+		if (activeOperation.current !== null || migrationBusy || keyAccessBusy || settingsWriteRef.current) return;
 		invalidateConfig();
 		write();
+	};
+	const savePageSettings = async (write: () => Promise<void>) => {
+		if (settingsWriteRef.current || activeOperation.current !== null || migrationBusy || keyAccessBusy) return;
+		settingsWriteRef.current = true;
+		setSettingsBusy(true);
+		try { await write(); }
+		catch { if (mounted.current) notify(t("settingsStorageFailed")); }
+		finally { settingsWriteRef.current = false; if (mounted.current) setSettingsBusy(false); }
 	};
 	const changeSession = (accountId: string | null) => {
 		if (sessionAccountRef.current === accountId) return;
@@ -203,7 +216,7 @@ export function SettingsPage() {
 		return () => { current = false; };
 	}, [accessMode, sessionAccountId, officialAccountId, loadWorkspaces]);
 	const beginOperation = () => {
-		if (activeOperation.current !== null) return null;
+		if (activeOperation.current !== null || settingsWriteRef.current) return null;
 		const id = ++nextOperation.current;
 		activeOperation.current = id;
 		setSyncBusy(true);
@@ -241,12 +254,14 @@ export function SettingsPage() {
 		clientGeneration.current = operation.generation;
 		return client;
 	};
-	const rememberLocation = (client: SelfHostSyncClient) => {
-		if (accessMode === "official" && officialAccountId) localStorage.setItem(officialWorkspaceKey(officialAccountId), client.workspaceId);
-		else {
-			localStorage.setItem("keepany-selfhost-endpoint", client.endpoint);
-			localStorage.setItem("keepany-selfhost-workspace", client.workspaceId);
-		}
+	const rememberLocation = async (client: SelfHostSyncClient) => {
+		try {
+			if (accessMode === "official" && officialAccountId) await setPlatformSetting(officialWorkspaceKey(officialAccountId), client.workspaceId);
+			else {
+				await setPlatformSetting("keepany-selfhost-endpoint", client.endpoint);
+				await setPlatformSetting("keepany-selfhost-workspace", client.workspaceId);
+			}
+		} catch { if (mounted.current) notify(t("settingsStorageFailed")); }
 	};
 	const createWorkspace = async () => {
 		const operation = beginOperation();
@@ -298,7 +313,7 @@ export function SettingsPage() {
 			const binding = await repository.getDatasetBinding();
 			if (!binding || binding.endpoint !== client.endpoint || binding.workspaceId !== client.workspaceId)
 				throw Error("migrationTargetChanged");
-			rememberLocation(client);
+			await rememberLocation(client);
 			return binding;
 		} finally { finishOperation(operation); }
 	};
@@ -310,7 +325,7 @@ export function SettingsPage() {
 			if (!client || !isActive(operation)) return null;
 			const report = await client.run(value => { if (isActive(operation)) setSyncReport(value); });
 			if (isActive(operation)) {
-				if (report.status !== "failed") rememberLocation(client);
+				if (report.status !== "failed") await rememberLocation(client);
 				if (report.status === "synced" && report.pending === 0) {
 					const repository = await localRepository();
 					if ((await repository.pendingArchiveMerge())?.phase === "syncing") await repository.completeArchiveMerge();
@@ -440,11 +455,11 @@ export function SettingsPage() {
 					<Select
 						aria-labelledby="settings-language-label"
 						value={i18n.language}
-						onValueChange={(selectValue) => {
-							const value = selectValue;
-							localStorage.setItem("keepany-language", value);
-							void i18n.changeLanguage(value);
-						}}
+						disabled={uiBusy}
+						onValueChange={value => { void savePageSettings(async () => {
+							await setPlatformSetting("keepany-language", value);
+							if (mounted.current) await i18n.changeLanguage(value);
+						}); }}
 					>
 						<SelectOption value="zh-CN">{t("languageChinese")}</SelectOption>
 						<SelectOption value="en">{t("languageEnglish")}</SelectOption>
@@ -452,9 +467,9 @@ export function SettingsPage() {
 				</section>
 				<section className="card padded">
 					<h2>{t("storage")}</h2>
-					<p>{t("storageHint")}</p>
+					<p>{t(nativeApp ? "nativeStorageHint" : "storageHint")}</p>
 					<div className="actions">
-						<Button
+						{!nativeApp && <Button
 							onClick={async () => {
 								const value = await navigator.storage?.persist?.();
 								setRequested(true);
@@ -463,12 +478,12 @@ export function SettingsPage() {
 							}}
 						>
 							{t("persist")}
-						</Button>
+						</Button>}
 						<Link className="button" to="/intake">
 							{t("backup")}
 						</Link>
 					</div>
-					{(persistent === true || requested) && (
+					{!nativeApp && (persistent === true || requested) && (
 						<small>{t(persistent ? "persistent" : "persistDenied")}</small>
 					)}
 				</section>
@@ -488,16 +503,18 @@ export function SettingsPage() {
 			<section className="card padded sync-panel">
 				<h2>{t(accessMode === "official" ? "officialSync" : "selfHostSync")}</h2>
 				<p>{t(accessMode === "official" ? "officialSyncHint" : "selfHostSyncHint")}</p>
-				<label htmlFor="sync-access-mode" className="field"><span>{t("syncAccessMode")}</span><Select id="sync-access-mode" value={accessMode} disabled={uiBusy} onValueChange={selectValue => editConfig(() => {
+				<label htmlFor="sync-access-mode" className="field"><span>{t("syncAccessMode")}</span><Select id="sync-access-mode" value={accessMode} disabled={uiBusy} onValueChange={selectValue => { void savePageSettings(async () => {
 					const mode: AccessMode = selectValue === "official" && officialAvailable ? "official" : selectValue === "session" ? "session" : "token";
-					localStorage.setItem("keepany-sync-access-mode", mode);
-					if (mode !== "official") localStorage.setItem("keepany-selfhost-access-mode", mode);
+					await setPlatformSetting("keepany-sync-access-mode", mode);
+					if (!mounted.current) return;
+					invalidateConfig();
 					setAccessMode(mode);
-					setWorkspaceId(mode === "official" ? officialAccountId ? localStorage.getItem(officialWorkspaceKey(officialAccountId)) ?? "" : "" : localStorage.getItem("keepany-selfhost-workspace") ?? "");
+					setWorkspaceId(mode === "official" ? officialAccountId ? getPlatformSetting(officialWorkspaceKey(officialAccountId)) ?? "" : "" : getPlatformSetting("keepany-selfhost-workspace") ?? "");
 					setWorkspaceKey("");
 					setNeedsKeySave(false);
 					setToken("");
-				})}><SelectOption value="token">{t("syncTokenMode")}</SelectOption><SelectOption value="session">{t("syncSessionMode")}</SelectOption>{officialAvailable && <SelectOption value="official">{t("syncOfficialMode")}</SelectOption>}</Select></label>
+					if (mode !== "official") await setPlatformSetting("keepany-selfhost-access-mode", mode);
+				}); }}><SelectOption value="token">{t("syncTokenMode")}</SelectOption><SelectOption value="session">{t("syncSessionMode")}</SelectOption>{officialAvailable && <SelectOption value="official">{t("syncOfficialMode")}</SelectOption>}</Select></label>
 				{accessMode === "session" && <><p>{t("syncSessionOriginHint")}</p><Suspense fallback={<p>{t("syncSessionChecking")}</p>}><SelfHostSessionPanel disabled={uiBusy} onSessionChange={changeSession} /></Suspense></>}
 				{accessMode === "official" && <p role="status">{t(hasAccess ? "syncOfficialReady" : "syncOfficialAuthorize")}</p>}
 				<div className="form-grid">

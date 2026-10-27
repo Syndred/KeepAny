@@ -5,6 +5,7 @@ import type {
 	VaultSnapshot,
 } from "../../../packages/password-vault/src";
 import { usePasswordVault } from "./components/PasswordVaultProvider";
+import { platformSettingsStorage, type PlatformSettingsStorage } from "./platform-settings";
 
 export const AI_SETTINGS_STORAGE_KEY = "keepany-ai-settings-v1";
 export const aiProviderIds: AiProviderId[] = [
@@ -37,7 +38,7 @@ export type AiSettingsSnapshot = {
 	connection: AiConnection | null;
 	revision: number;
 };
-type SettingsStorage = Pick<Storage, "getItem" | "setItem" | "removeItem">;
+type SettingsStorage = PlatformSettingsStorage;
 type AiVaultSession = {
 	getSnapshot(): VaultSnapshot;
 	subscribe(listener: () => void): () => void;
@@ -133,6 +134,8 @@ export class AiSettingsStore {
 	private unsubscribeVault: (() => void) | null = null;
 	private vaultFingerprint = "";
 	private key = "";
+	private mutationTail: Promise<void> | null = null;
+	private lifecycleRevision = 0;
 	private snapshot: AiSettingsSnapshot = {
 		loaded: true,
 		configured: false,
@@ -250,7 +253,20 @@ export class AiSettingsStore {
 			throw new AiSettingsError("aiSettingsVaultReadFailed");
 		}
 	}
-	saveConfiguration = (input: AiConfigurationInput): void => {
+	private mutate(action: () => void | Promise<void>): void | Promise<void> {
+		const outcome = this.mutationTail ? this.mutationTail.catch(() => {}).then(action) : action();
+		if (outcome) {
+			const pending = Promise.resolve(outcome);
+			this.mutationTail = pending;
+			void pending.then(() => { if (this.mutationTail === pending) this.mutationTail = null; },
+				() => { if (this.mutationTail === pending) this.mutationTail = null; });
+			return pending;
+		}
+	}
+	saveConfiguration = (input: AiConfigurationInput): void | Promise<void> => {
+		const lifecycle = this.lifecycleRevision;
+		return this.mutate(() => {
+		if (lifecycle !== this.lifecycleRevision) return;
 		const settings = normalizeAiSettings(input);
 		let nextKey = "";
 		if (settings.keySource === "vault")
@@ -271,14 +287,27 @@ export class AiSettingsStore {
 					: (input.apiKey ?? "").trim();
 			if (nextKey.length > 4096) throw new AiSettingsError("aiSettingsInvalid");
 		}
+		const commit = (revalidate = false) => {
+			if (lifecycle !== this.lifecycleRevision) return;
+			// Native persistence can yield while the vault locks or changes. Never
+			// reactivate a key captured before that change after an async write.
+			if (revalidate && settings.keySource === "vault") {
+				try { nextKey = this.readVaultKey(settings.vaultEntryId as string, settings.autoActivate ? settings : undefined); }
+				catch { nextKey = ""; }
+			}
+			this.key = nextKey;
+			this.publish(settings);
+		};
+		let written: void | Promise<void>;
 		try {
 			if (!this.storage) throw new Error();
-			this.storage.setItem(AI_SETTINGS_STORAGE_KEY, JSON.stringify(settings));
+			written = this.storage.setItem(AI_SETTINGS_STORAGE_KEY, JSON.stringify(settings));
 		} catch {
 			throw new AiSettingsError("aiSettingsStorageFailed");
 		}
-		this.key = nextKey;
-		this.publish(settings);
+		if (written) return Promise.resolve(written).then(() => commit(true), () => { throw new AiSettingsError("aiSettingsStorageFailed"); });
+		commit();
+		});
 	};
 	setSessionApiKey = (key: string): void => {
 		const settings = this.snapshot.settings;
@@ -299,14 +328,24 @@ export class AiSettingsStore {
 		);
 		this.publish(settings);
 	};
-	clearConfiguration = (): void => {
+	clearConfiguration = (): void | Promise<void> => {
+		const lifecycle = this.lifecycleRevision;
+		return this.mutate(() => {
+		if (lifecycle !== this.lifecycleRevision) return;
+		let removed: void | Promise<void>;
 		try {
-			this.storage?.removeItem(AI_SETTINGS_STORAGE_KEY);
+			removed = this.storage?.removeItem(AI_SETTINGS_STORAGE_KEY);
 		} catch {
 			throw new AiSettingsError("aiSettingsStorageFailed");
 		}
-		this.key = "";
-		this.publish(null);
+		const commit = () => {
+			if (lifecycle !== this.lifecycleRevision) return;
+			this.key = "";
+			this.publish(null);
+		};
+		if (removed) return Promise.resolve(removed).then(commit, () => { throw new AiSettingsError("aiSettingsStorageFailed"); });
+		commit();
+		});
 	};
 	acquire = (externalSignal?: AbortSignal): AiConnectionLease => {
 		const connection = this.snapshot.connection;
@@ -329,6 +368,7 @@ export class AiSettingsStore {
 		};
 	};
 	dispose = (): void => {
+		this.lifecycleRevision++;
 		this.unsubscribeVault?.();
 		this.unsubscribeVault = null;
 		this.vault = null;
@@ -340,13 +380,7 @@ export class AiSettingsStore {
 let defaultStore: AiSettingsStore | null = null;
 function getStore(): AiSettingsStore {
 	if (!defaultStore) {
-		let storage: Storage | null = null;
-		try {
-			if (typeof window !== "undefined") storage = window.localStorage;
-		} catch {
-			/* Storage may be disabled. */
-		}
-		defaultStore = new AiSettingsStore(storage);
+		defaultStore = new AiSettingsStore(platformSettingsStorage);
 	}
 	return defaultStore;
 }

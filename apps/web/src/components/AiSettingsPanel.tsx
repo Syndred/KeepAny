@@ -316,7 +316,7 @@ export function AiSettingsPanel() {
 					return;
 				}
 			}
-			ai.saveConfiguration({
+			await ai.saveConfiguration({
 				...input,
 				...(savedEntryId ? { vaultEntryId: savedEntryId } : {}),
 				apiKey:
@@ -326,6 +326,7 @@ export function AiSettingsPanel() {
 						? undefined
 						: input.apiKey,
 			});
+			if (!mounted.current || saveGeneration.current !== current) return;
 			setDraft({
 				...input,
 				...(savedEntryId ? { vaultEntryId: savedEntryId } : {}),
@@ -350,17 +351,25 @@ export function AiSettingsPanel() {
 			if (mounted.current) setSaving(false);
 		}
 	};
-	const clear = () => {
+	const clear = async () => {
+		if (savingRef.current || vaultBusy) return;
+		savingRef.current = true;
+		setSaving(true);
+		const current = ++saveGeneration.current;
 		invalidateTest();
 		setMessage("");
 		setError("");
 		try {
-			ai.clearConfiguration();
+			await ai.clearConfiguration();
+			if (!mounted.current || saveGeneration.current !== current) return;
 			setDraft(createDefaultAiConfiguration("deepseek", "vault"));
 			setMaster("");
 			setMessage("aiSettingsCleared");
 		} catch (caught) {
-			reportError(caught);
+			if (mounted.current) reportError(caught);
+		} finally {
+			savingRef.current = false;
+			if (mounted.current) setSaving(false);
 		}
 	};
 	const activate = () => {
