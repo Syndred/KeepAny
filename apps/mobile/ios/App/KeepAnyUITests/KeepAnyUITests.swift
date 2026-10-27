@@ -31,8 +31,27 @@ final class KeepAnyUITests: XCTestCase {
     }
 
     private func tapReachable(_ element: XCUIElement, in app: XCUIApplication) {
-        for _ in 0..<8 { if element.isHittable { break }; app.swipeUp() }
-        XCTAssertTrue(element.isHittable)
+        // WKWebView can report a scrolled-out HTML button as hittable even
+        // when its synthesized tap lands on the fixed bottom navigation.
+        let navigation = app.otherElements.matching(NSPredicate(
+            format: "label BEGINSWITH %@ OR label BEGINSWITH %@", "Main navigation", "主要导航"
+        )).firstMatch
+        XCTAssertTrue(navigation.exists)
+        func visibleAboveNavigation() -> Bool {
+            let bounds = app.webViews.firstMatch.frame
+            let frame = element.frame
+            return element.isHittable && frame.width > 0 && frame.height > 0
+                && frame.minX >= bounds.minX && frame.maxX <= bounds.maxX
+                && frame.minY >= bounds.minY + 8
+                && frame.maxY <= navigation.frame.minY - 8
+        }
+        for _ in 0..<8 { if visibleAboveNavigation() { break }; app.swipeUp() }
+        capture(app, "before-reachable-\(element.label)")
+        captureHierarchy(app, "before-reachable-\(element.label)")
+        guard visibleAboveNavigation() else {
+            XCTFail("The action must be visible above the fixed bottom navigation before tapping")
+            return
+        }
         element.tap()
     }
 
