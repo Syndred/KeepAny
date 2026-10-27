@@ -1,5 +1,9 @@
 import { expect, test, type Page } from '@playwright/test';
 import { selectChoice } from './helpers/select-choice';
+import { readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { strFromU8, strToU8, unzipSync, zipSync } from 'fflate';
+import { decryptBackup, encryptBackup } from '../../packages/local-db/src/backup-crypto';
 
 // Production build: read only the existing records store, never create a DB,
 // import dev source, or mutate the item through a test API.
@@ -20,6 +24,98 @@ async function records(page: Page) {
         request.onsuccess = () => resolve(request.result.sort((a, b) => String(a.id).localeCompare(String(b.id))));
       });
     } finally { db.close(); }
+  });
+}
+
+for (const language of ['en-US', 'zh-CN'] as const) {
+  test(`F10-03 legacy missing borrower import uses a named generic confirmation ${language} 390`, async ({ browser }, info) => {
+    const zh = language === 'zh-CN';
+    const source = await browser.newContext({ locale: language, viewport: { width: 390, height: 844 }, hasTouch: true });
+    const destination = await browser.newContext({ locale: language, viewport: { width: 390, height: 844 }, hasTouch: true });
+    const page = await source.newPage();
+    const restored = await destination.newPage();
+    const password = 'Synthetic-legacy-loan-backup-2026';
+    let before: Record<string, unknown>[] | undefined;
+    try {
+      for (const target of [page, restored]) {
+        await target.goto('/settings');
+        await selectChoice(target.locator('section.card').filter({ has: target.getByRole('heading', { name: /^(Language|语言)$/ }) }).getByRole('combobox'), { label: zh ? '简体中文' : 'English' });
+      }
+      await page.goto('/assets/item');
+      await page.getByRole('button', { name: zh ? '新增' : 'Add', exact: true }).click();
+      const name = `Legacy missing borrower ${language} ${crypto.randomUUID().slice(0, 8)}`;
+      await page.getByRole('dialog').getByLabel(zh ? '名称' : 'Name', { exact: true }).fill(name);
+      await page.getByRole('dialog').getByRole('button', { name: zh ? '保存' : 'Save', exact: true }).click();
+      await expect(page.getByRole('dialog')).toBeHidden();
+      await page.goto('/intake');
+      await page.locator('#backup-password').fill(password);
+      await page.getByRole('button', { name: zh ? '创建备份' : 'Create backup', exact: true }).click();
+      const downloading = page.waitForEvent('download');
+      await page.getByRole('link', { name: zh ? '保存备份文件' : 'Save backup file', exact: true }).click();
+      const download = await downloading, file = await download.path();
+      if (!file) throw Error('synthetic-backup-download-missing');
+      // A synthetic compatibility file, not claimed to be a historical release.
+      // Only the file bytes change; the destination writes through formal restore UI.
+      const entries = unzipSync(await decryptBackup(new Uint8Array(readFileSync(file)), password));
+      const rows = JSON.parse(strFromU8(entries['records.json'])) as Record<string, unknown>[];
+      const row = rows.find(row => row.type === 'asset' && payload(row).name === name);
+      expect(row).toBeTruthy();
+      const item = { ...payload(row!), status: 'loaned' };
+      delete (item as Record<string, unknown>).borrower;
+      row!.payload = JSON.stringify(item);
+      entries['records.json'] = strToU8(JSON.stringify(rows));
+      const manifest = JSON.parse(strFromU8(entries['manifest.json']));
+      manifest.recordsHash = createHash('sha256').update(entries['records.json']).digest('hex');
+      entries['manifest.json'] = strToU8(JSON.stringify(manifest));
+      const encrypted = await encryptBackup(zipSync(entries), password);
+      await info.attach('synthetic-loaned-missing-borrower.ka1', { body: Buffer.from(encrypted), contentType: 'application/octet-stream' });
+      await restored.goto('/intake');
+      await restored.locator('#backup-password').fill(password);
+      await restored.locator('#restore-file').setInputFiles({ name: 'synthetic-loaned-missing-borrower.ka1', mimeType: 'application/octet-stream', buffer: Buffer.from(encrypted) });
+      await restored.getByRole('button', { name: zh ? '预览' : 'Preview', exact: true }).first().click();
+      await restored.getByRole('button', { name: /^(确认|Confirm) ·/ }).click();
+      await expect(restored.getByText(zh ? /已恢复 \d+ 条记录/ : /Restored \d+ records/)).toBeVisible();
+      await restored.goto('/assets/item');
+      await restored.getByText(name, { exact: true }).click();
+      const returnButton = restored.getByRole('button', { name: zh ? '归还' : 'Return item', exact: true });
+      await expect(returnButton).toBeVisible();
+      before = await records(restored);
+      await returnButton.click();
+      const dialog = restored.getByRole('dialog', { name: zh ? '归还' : 'Return item', exact: true });
+      await expect(dialog).toBeVisible();
+      await restored.screenshot({ path: info.outputPath('legacy-borrower-confirmation.png'), fullPage: false });
+      await expect(dialog.locator('p').first()).toHaveText(zh ? `确认收回“${name}”？` : `Confirm that “${name}” has been returned?`);
+      expect(await dialog.innerText()).not.toMatch(/undefined|itemReturnConfirm|“”/);
+      for (const [label, control] of [['dialog', dialog], ['cancel', dialog.getByRole('button', { name: zh ? '取消' : 'Cancel', exact: true })], ['confirm', dialog.getByRole('button', { name: zh ? '确认' : 'Confirm', exact: true })]] as const) {
+        const box = await control.boundingBox();
+        expect(box?.width, `${label} width`).toBeGreaterThanOrEqual(44);
+        expect(box?.height, `${label} height`).toBeGreaterThanOrEqual(44);
+      }
+      const geometry = await dialog.evaluate(element => ({ viewport: { width: innerWidth, height: innerHeight }, dialog: element.getBoundingClientRect().toJSON(), buttons: Array.from(element.querySelectorAll('button')).map(button => ({ label: button.textContent, box: button.getBoundingClientRect().toJSON() })) }));
+      await info.attach('legacy-dialog-actual-geometry', { body: JSON.stringify(geometry), contentType: 'application/json' });
+      expect(await records(restored)).toEqual(before);
+      await dialog.getByRole('button', { name: zh ? '取消' : 'Cancel', exact: true }).click();
+      await expect(dialog).toBeHidden();
+      expect(await records(restored)).toEqual(before);
+      await returnButton.click();
+      await dialog.getByRole('button', { name: zh ? '确认' : 'Confirm', exact: true }).dblclick();
+      await expect(dialog).toBeHidden();
+      await expect(returnButton).toHaveCount(0);
+      const after = await records(restored);
+      const original = before.find(row => row.type === 'asset')!;
+      const returned = payload(after.find(row => row.id === original.id)!);
+      const history = after.filter(row => row.type === 'history');
+      expect(history).toHaveLength(1);
+      expect(payload(history[0])).toMatchObject({ action: 'return', assetId: returned.id, borrower: '' });
+      expect(after).toHaveLength(before.length + 1);
+      expect(returned).toEqual({ ...payload(original), status: 'active', borrower: '', itemExpectedReturnDate: '', lastItemEventId: payload(history[0]).id, updatedAt: payload(history[0]).createdAt });
+      await restored.reload();
+      await expect(restored.getByRole('button', { name: zh ? '借出' : 'Lend item', exact: true })).toBeVisible();
+      expect(await records(restored)).toEqual(after);
+    } finally {
+      await info.attach('legacy-full-raw-before-final', { body: JSON.stringify({ before, final: await records(restored).catch(() => null) }), contentType: 'application/json' });
+      await Promise.all([source.close(), destination.close()]);
+    }
   });
 }
 const payload = (row: Record<string, unknown>) => typeof row.payload === 'string'

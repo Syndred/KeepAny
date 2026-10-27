@@ -2042,7 +2042,7 @@ export function AssetDetail() {
 				</section>
 			)}
 			{asset.kind === "item" && itemReturnBase?.id === asset.id && <Dialog title={t("return")} closeDisabled={itemBusy} onClose={() => { if (!itemInFlight.current) setItemReturnBase(null); }}>
-				<p>{t("itemReturnConfirm", { name: itemReturnBase.name, borrower: itemReturnBase.borrower })}</p>
+				<p>{t(itemReturnBase.borrower.trim() ? "itemReturnConfirm" : "itemReturnConfirmUnnamed", { name: itemReturnBase.name, borrower: itemReturnBase.borrower })}</p>
 				{itemError && <p role="alert" className="field-error">{itemError}</p>}
 				<div className="actions">
 					<Button disabled={itemBusy} onClick={() => setItemReturnBase(null)}>{t("cancel")}</Button>

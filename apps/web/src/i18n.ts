@@ -615,6 +615,7 @@ const copy: Record<string, [string, string]> = {
 	loan: ["借出", "Lend item"],
 	return: ["归还", "Return item"],
 	itemReturnConfirm: ["确认收回借给“{{borrower}}”的“{{name}}”？", "Confirm that “{{borrower}}” has returned “{{name}}”?"],
+	itemReturnConfirmUnnamed: ["确认收回“{{name}}”？", "Confirm that “{{name}}” has been returned?"],
 	borrower: ["借用人", "Borrower"],
 	loanReturnNote: ["借还备注（可选）", "Loan or return note (optional)"],
 	maintenanceNotes: ["维护内容", "Maintenance notes"],
