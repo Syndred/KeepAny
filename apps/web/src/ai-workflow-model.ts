@@ -3,6 +3,8 @@ import {
 	type Asset,
 	assetSchema,
 	currencies,
+	effectiveFinanceEntry,
+	historyAssetIds,
 	type History,
 	monthlyMinorUnits,
 	newAsset,
@@ -269,16 +271,15 @@ export function executeSearchPlan(
 				.filter((asset) => !plan.kind || asset.kind === plan.kind)
 				.map((asset) => asset.id),
 		);
-		results = data.history
+		results = data.history.map(effectiveFinanceEntry)
 			.filter(
 				(history) =>
 					!history.deleted &&
-					assetIds.has(history.assetId) &&
+					data.assets.find(asset => asset.id === history.assetId)?.kind !== "vault" &&
+					historyAssetIds(history).some(id => assetIds.has(id)) &&
 					history.amount !== undefined &&
 					match(
-						history.title ||
-							live.find((asset) => asset.id === history.assetId)?.name ||
-							"",
+						[history.title, ...historyAssetIds(history).map(id => live.find(asset => asset.id === id)?.name)].filter(Boolean).join(" "),
 					) &&
 					inRange(history.eventDate || history.billDate || ""),
 			)
@@ -287,7 +288,7 @@ export function executeSearchPlan(
 				type: "finance",
 				title:
 					history.title ||
-					live.find((asset) => asset.id === history.assetId)?.name ||
+					historyAssetIds(history).map(id => live.find(asset => asset.id === id)?.name).filter(Boolean).join(" · ") ||
 					"",
 				history,
 			}));

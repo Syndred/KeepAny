@@ -1,5 +1,7 @@
 import {
+	effectiveFinanceEntry,
 	formatMinorUnits,
+	historyAssetIds,
 	inputFromMinorUnits,
 	parseMinorUnits,
 	type Asset,
@@ -26,11 +28,27 @@ export type GlobalSearchCandidate = Pick<
 	"id" | "source" | "fileName" | "rowNumber" | "status" | "reviewMode" | "historyId"
 > & {
 	asset: Pick<Asset, "id" | "kind" | "name" | "url">;
+	/** Only a target whose description was explicitly replaced by reviewed PDF text. */
+	mergeTargetId?: string;
 	expenseDraft?: Pick<
 		ReviewedExpenseDraft,
 		"assetId" | "title" | "amount" | "currency" | "eventDate" | "source"
 	>;
 };
+
+/** Keep provenance IDs without exposing source text, merge snapshots or private draft fields. */
+export function projectGlobalSearchCandidate(row: ReviewedCandidate): GlobalSearchCandidate {
+	return {
+		id: row.id, source: row.source, fileName: row.fileName, rowNumber: row.rowNumber,
+		status: row.status, reviewMode: row.reviewMode, historyId: row.historyId,
+		asset: { id: row.asset.id, kind: row.asset.kind, name: row.asset.name, url: row.asset.url },
+		mergeTargetId: row.source === "pdf" && row.merge?.fields.includes("description") ? row.merge.targetId : undefined,
+		expenseDraft: row.expenseDraft ? {
+			assetId: row.expenseDraft.assetId, title: row.expenseDraft.title, amount: row.expenseDraft.amount,
+			currency: row.expenseDraft.currency, eventDate: row.expenseDraft.eventDate, source: row.expenseDraft.source,
+		} : undefined,
+	};
+}
 
 export interface GlobalSearchLabels {
 	assetKinds: Readonly<Record<AssetKind, string>>;
@@ -150,6 +168,7 @@ export function buildGlobalSearchIndex(input: GlobalSearchInput): readonly Globa
 	const result: GlobalSearchEntry[] = [];
 	const assetsById = new Map(assets.map((asset) => [asset.id, asset]));
 	const pdfAssetIds = new Set(reviewedCandidates.filter((row) => row.source === "pdf").map((row) => row.asset.id));
+	const mergedPdfDescriptionIds = new Set(reviewedCandidates.filter(row => row.source === "pdf" && row.mergeTargetId).map(row => row.mergeTargetId));
 	const live = assets.filter((asset) => !asset.deleted).sort((a, b) =>
 		assetOrder[a.kind] - assetOrder[b.kind] || compareText(a.name, b.name) || compareId(a.id, b.id));
 	for (const asset of live) {
@@ -164,18 +183,19 @@ export function buildGlobalSearchIndex(input: GlobalSearchInput): readonly Globa
 		}, [
 			kind, ...publicAssetTextFields.map((field) => asset[field]), ...asset.tags,
 			publicUrl(asset.url), publicUrl(asset.projectPromoUrl),
-			...(allowDescription ? [asset.description, asset.longDescription] : []),
+			...(allowDescription ? [...(mergedPdfDescriptionIds.has(asset.id) ? [] : [asset.description]), asset.longDescription] : []),
 			...(asset.projectDomains ?? []).flatMap((domain) => [domain.name, domain.registrar]),
 		]));
 	}
-	const ledger = history.filter((row) => {
+	const ledger = history.map(effectiveFinanceEntry).filter((row) => {
 		if (row.deleted || !financeActions.has(row.action)) return false;
-		const kind = assetsById.get(row.assetId)?.kind;
-		return row.action === "renew" ? kind === "subscription" : kind === "subscription" || kind === "account";
+		const source = assetsById.get(row.assetId);
+		if (!source || source.kind === "vault" || (row.action === "renew" && source.kind !== "subscription")) return false;
+		return historyAssetIds(row).some(id => { const kind = assetsById.get(id)?.kind; return kind && kind !== "vault"; });
 	}).sort((a, b) => compareText(b.eventDate || b.billDate || b.createdAt, a.eventDate || a.billDate || a.createdAt)
 		|| compareText(b.createdAt, a.createdAt) || compareId(a.id, b.id));
 	for (const row of ledger) {
-		const assetName = assetsById.get(row.assetId)?.name;
+		const assetName = historyAssetIds(row).map(id => assetsById.get(id)).filter((asset): asset is Asset => !!asset && asset.kind !== "vault").map(asset => asset.name).join(" · ");
 		const action = labels.financeActions[row.action as GlobalSearchFinanceAction];
 		const date = row.eventDate || row.billDate || row.createdAt.slice(0, 10);
 		const money = moneyText(row.amount, row.currency, locale);

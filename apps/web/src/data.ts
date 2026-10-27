@@ -17,7 +17,7 @@ import {
 	type RecordRow,
 	saveBatch,
 } from "../../../packages/local-db/src";
-import type { GlobalSearchCandidate } from "./global-search";
+import { projectGlobalSearchCandidate, type GlobalSearchCandidate } from "./global-search";
 import { COLLECTIONS_PREFERENCE_ID, readCollections } from "./collection-model";
 export function useData() {
 	const [reviewedCandidates, setReviewedCandidates] = useState<GlobalSearchCandidate[]>([]);
@@ -29,15 +29,7 @@ export function useData() {
 			if (!active) return;
 			const subscription = liveQuery(async () => {
 				const candidates = await repository.fileStore.intakeReview.where("status").equals("accepted").toArray();
-				return candidates.map((row): GlobalSearchCandidate => ({
-					id: row.id, source: row.source, fileName: row.fileName, rowNumber: row.rowNumber,
-					status: row.status, reviewMode: row.reviewMode, historyId: row.historyId,
-					asset: { id: row.asset.id, kind: row.asset.kind, name: row.asset.name, url: row.asset.url },
-					expenseDraft: row.expenseDraft ? {
-						assetId: row.expenseDraft.assetId, title: row.expenseDraft.title, amount: row.expenseDraft.amount,
-						currency: row.expenseDraft.currency, eventDate: row.expenseDraft.eventDate, source: row.expenseDraft.source,
-					} : undefined,
-				}));
+				return candidates.map(projectGlobalSearchCandidate);
 			}).subscribe({
 				next: (candidates) => { if (active) { setReviewedCandidates(candidates); setReviewedCandidatesLoaded(true); } },
 				error: () => { if (active) { setReviewedCandidates([]); setReviewedCandidatesLoaded(false); } },
