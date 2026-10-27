@@ -1,11 +1,11 @@
 {
   "schema": "keepany.third-party-license-materials.v1",
-  "generatedAt": "2026-10-01",
+  "generatedAt": "2026-10-28",
   "scope": {
-    "source": "The 32 installed package versions recorded by the 2026-10-01 installed-tree snapshot.",
+    "source": "The 32 installed package versions recorded by the 2026-10-01 snapshot, plus exact core-js 3.50.0 and pdfjs-dist 6.3.289 mobile PDF compatibility materials added 2026-10-28. This index is not an exhaustive current dependency inventory.",
     "platformIndependent": true,
-    "packageCount": 32,
-    "verifiedPackageCount": 27,
+    "packageCount": 34,
+    "verifiedPackageCount": 29,
     "unresolvedPackageCount": 0,
     "supplementedPackageCount": 5
   },
@@ -444,6 +444,30 @@
           "integrity": "sha512-9r+yi9+mgU33AKcj6IbT9oRCO78WriSj6t/cF8DWBZJ9aOGPOTEDvdUDz1FwKim7QXWwmHqtdHnRJfhAxEG46Q==",
           "shasum": "99c20f908ee467b385b68a3469b4a3e750012223"
         }
+      }
+    },
+    {
+      "id": "core-js-3.50.0-license",
+      "path": "legal/third-party/texts/core-js-3.50.0-license.txt",
+      "sha256": "b87653fff2d44426ab5cd4723cee3b1364dc8d35a0acdf098c54689543123bf8",
+      "source": {
+        "repository": "https://github.com/zloirock/core-js.git",
+        "commit": "486e8d62611aa2f5f2321329b0c168135bf22861",
+        "path": "LICENSE",
+        "downloadUrl": "https://raw.githubusercontent.com/zloirock/core-js/486e8d62611aa2f5f2321329b0c168135bf22861/LICENSE",
+        "mapping": "Exact npm version gitHead; installed LICENSE bytes equal pinned upstream original; no modifications."
+      }
+    },
+    {
+      "id": "pdfjs-dist-6.3.289-license",
+      "path": "legal/third-party/texts/pdfjs-dist-6.3.289-license.txt",
+      "sha256": "0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594",
+      "source": {
+        "repository": "https://github.com/mozilla/pdf.js.git",
+        "commit": "1c8020a7d4e43668ac287a3ecf9a8dbea17e4c56",
+        "path": "LICENSE",
+        "downloadUrl": "https://raw.githubusercontent.com/mozilla/pdf.js/1c8020a7d4e43668ac287a3ecf9a8dbea17e4c56/LICENSE",
+        "mapping": "Exact npm version gitHead; installed LICENSE bytes equal pinned upstream original; no modifications."
       }
     }
   ],
@@ -1525,14 +1549,72 @@
           }
         ]
       }
+    },
+    {
+      "name": "core-js",
+      "version": "3.50.0",
+      "declaredLicense": "MIT",
+      "npm": {
+        "registry": "https://registry.npmjs.org/core-js/3.50.0",
+        "tarball": "https://registry.npmjs.org/core-js/-/core-js-3.50.0.tgz",
+        "integrity": "sha512-BRWgOLKkFeCgRudR6zrs8p9XJZcE14grzKMMssoYrk6krtuEZ7MTKPIY5RzOnqsEKIR9kst7wNzphttraT+Yqw==",
+        "shasum": "a18646fcb0097650189b4504c803e887bcae4c0a"
+      },
+      "repository": "https://github.com/zloirock/core-js.git",
+      "homepage": "https://core-js.io",
+      "npmGitHead": "486e8d62611aa2f5f2321329b0c168135bf22861",
+      "status": "verified",
+      "materials": [
+        "core-js-3.50.0-license"
+      ],
+      "upstream": {
+        "materials": [
+          {
+            "repository": "https://github.com/zloirock/core-js.git",
+            "commit": "486e8d62611aa2f5f2321329b0c168135bf22861",
+            "path": "LICENSE",
+            "downloadUrl": "https://raw.githubusercontent.com/zloirock/core-js/486e8d62611aa2f5f2321329b0c168135bf22861/LICENSE",
+            "mapping": "Exact npm version gitHead; installed LICENSE bytes equal pinned upstream original; no modifications."
+          }
+        ]
+      }
+    },
+    {
+      "name": "pdfjs-dist",
+      "version": "6.3.289",
+      "declaredLicense": "Apache-2.0",
+      "npm": {
+        "registry": "https://registry.npmjs.org/pdfjs-dist/6.3.289",
+        "tarball": "https://registry.npmjs.org/pdfjs-dist/-/pdfjs-dist-6.3.289.tgz",
+        "integrity": "sha512-ZHjSVpDa3D6izMq8/04lvkhkATUmL9px6ChPaXc1k6nU2Mrhlg1/7F0bdUqCwUjw3NsPTfPZsMDUU6ZIcRaeQw==",
+        "shasum": "9e46d89489782a479f58d674ae5ddde8481aaa17"
+      },
+      "repository": "https://github.com/mozilla/pdf.js.git",
+      "homepage": "https://mozilla.github.io/pdf.js/",
+      "npmGitHead": "1c8020a7d4e43668ac287a3ecf9a8dbea17e4c56",
+      "status": "verified",
+      "materials": [
+        "pdfjs-dist-6.3.289-license"
+      ],
+      "upstream": {
+        "materials": [
+          {
+            "repository": "https://github.com/mozilla/pdf.js.git",
+            "commit": "1c8020a7d4e43668ac287a3ecf9a8dbea17e4c56",
+            "path": "LICENSE",
+            "downloadUrl": "https://raw.githubusercontent.com/mozilla/pdf.js/1c8020a7d4e43668ac287a3ecf9a8dbea17e4c56/LICENSE",
+            "mapping": "Exact npm version gitHead; installed LICENSE bytes equal pinned upstream original; no modifications."
+          }
+        ]
+      }
     }
   ],
   "bundle": {
     "status": "documented-with-normative-supplements",
     "note": "这些材料可供再分发包引用；实际生产 bundle 的模块集合、压缩产物和平台原生包仍需按具体构建分别确认。本索引不把未安装的 Linux 原生包视为失败，也不把 Darwin 原生包自动宣称为浏览器 bundle 内容。",
-    "verifiedSourceMaterialCount": 17,
+    "verifiedSourceMaterialCount": 19,
     "unresolvedPackageCount": 0,
-    "materialCount": 30,
+    "materialCount": 32,
     "standardLicenseMaterialCount": 1,
     "declarationEvidenceMaterialCount": 12,
     "supplementedPackageCount": 5
