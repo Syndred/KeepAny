@@ -58,7 +58,7 @@ function NavRow({ item, index, count, activePath, onNavigate, onMove, onVisibili
       aria-label={`${item.label} ${t('drag')}`}
       title={t('drag')}
     ><GripVertical size={17}/></button>
-    {visible ? <Link to={item.to} className={`sortable-nav-link${active ? ' active' : ''}`} aria-current={active ? 'page' : undefined} onClick={onNavigate} title={item.label}>
+    {visible ? <Link to={item.to} activeOptions={{ exact: true }} className={`sortable-nav-link${active ? ' active' : ''}`} aria-current={active ? 'page' : undefined} onClick={onNavigate} title={item.label}>
       <Icon size={17}/><span className="nav-label">{item.label}</span>{item.badge != null && item.badge > 0 && <Badge className="nav-count" tone="neutral">{item.badge}</Badge>}
     </Link> : <span className="sortable-nav-link nav-link-placeholder"><Icon size={17}/><span>{item.label}</span></span>}
     {manageMode && <input

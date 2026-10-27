@@ -28,6 +28,6 @@ export function workspaceNavHidden(value: unknown): string[] {
 
 export function workspacePathGroup(path: string): "assets" | "accounts" | undefined {
 	if (path === "/accounts" || /^\/assets\/(account|vault)(\/|$)/.test(path)) return "accounts";
-	if (path === "/assets" || path === "/finance" || /^\/assets\/(project|item|subscription)(\/|$)/.test(path)) return "assets";
+	if (path === "/assets" || path === "/finance" || /^\/assets\/(project|item|subscription|domains)(\/|$)/.test(path)) return "assets";
 	return undefined;
 }

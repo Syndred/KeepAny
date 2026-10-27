@@ -17,7 +17,7 @@ describe("merged workspace navigation compatibility", () => {
 	it("selects one group for current and legacy detail, workflow and ledger URLs", () => {
 		for (const path of ["/accounts", "/assets/account", "/assets/account/example", "/assets/vault"])
 			expect(workspacePathGroup(path)).toBe("accounts");
-		for (const path of ["/assets", "/assets/project", "/assets/project/id/workflow/close", "/assets/item/id", "/assets/subscription", "/finance"])
+		for (const path of ["/assets", "/assets/project", "/assets/project/id/workflow/close", "/assets/item/id", "/assets/subscription", "/assets/domains", "/finance"])
 			expect(workspacePathGroup(path)).toBe("assets");
 		expect(workspacePathGroup("/collections")).toBeUndefined();
 	});
