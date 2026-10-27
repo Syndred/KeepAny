@@ -36,7 +36,8 @@ private final class BoundedRequest: NSObject, URLSessionDataDelegate, URLSession
     var head: HTTPURLResponse?
     var failed = false
     var session: URLSession?
-    var task: URLSessionTask?
+    private let taskLock = NSLock()
+    private var task: URLSessionTask?
     init(limit: Int, output: URL?, completion: @escaping (Result<(ConnectionReply, [HTTPCookie]), Error>) -> Void) throws {
         self.limit = limit; self.output = output; self.completion = completion
         if let output { file = try FileHandle(forWritingTo: output); try file?.truncate(atOffset: 0) }
@@ -48,10 +49,18 @@ private final class BoundedRequest: NSObject, URLSessionDataDelegate, URLSession
         config.timeoutIntervalForRequest = 30; config.timeoutIntervalForResource = 30
         let queue = OperationQueue(); queue.maxConcurrentOperationCount = 1
         let session = URLSession(configuration: config, delegate: self, delegateQueue: queue); self.session = session
-        if let upload { task = session.uploadTask(with: request, fromFile: upload) } else { task = session.dataTask(with: request) }
-        task?.resume()
+        let pending: URLSessionTask
+        if let upload { pending = session.uploadTask(with: request, fromFile: upload) } else { pending = session.dataTask(with: request) }
+        taskLock.lock(); task = pending; taskLock.unlock()
+        pending.resume()
     }
-    func cancel() { task?.cancel() }
+    func cancel() {
+        // Plugin cancellation and URLSession completion run on different queues.
+        // Capture the task under the same lock used to publish/clear it, then
+        // cancel outside the lock so Foundation callbacks cannot re-enter it.
+        taskLock.lock(); let pending = task; taskLock.unlock()
+        pending?.cancel()
+    }
     func urlSession(_ session: URLSession, task: URLSessionTask, willPerformHTTPRedirection response: HTTPURLResponse, newRequest request: URLRequest, completionHandler: @escaping (URLRequest?) -> Void) { failed = true; completionHandler(nil) }
     func urlSession(_ session: URLSession, task: URLSessionTask, didReceive challenge: URLAuthenticationChallenge, completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void) {
         if challenge.protectionSpace.authenticationMethod == NSURLAuthenticationMethodServerTrust { completionHandler(.performDefaultHandling, nil) }
@@ -67,7 +76,10 @@ private final class BoundedRequest: NSObject, URLSessionDataDelegate, URLSession
         catch { failed = true; dataTask.cancel() }
     }
     func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
-        defer { try? file?.close(); session.finishTasksAndInvalidate(); self.session = nil; self.task = nil }
+        defer {
+            try? file?.close(); session.finishTasksAndInvalidate(); self.session = nil
+            taskLock.lock(); task = nil; taskLock.unlock()
+        }
         guard error == nil, !failed, let head, let url = head.url else { completion(.failure(ConnectionFailure.failed)); return }
         var headers: [String: String] = [:]
         for name in ["content-type", "content-length"] { if let value = head.value(forHTTPHeaderField: name) { headers[name] = value } }
