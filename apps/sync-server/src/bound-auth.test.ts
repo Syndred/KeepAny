@@ -192,18 +192,26 @@ it('accepts only pinned bound JWT and device DPoP across real Hono HTTP routes',
     expect((await post('/sync/pull', valid, { body: { workspaceId, cursor: 0 } })).status).toBe(401);
     const afterEpoch = await access({}, { issuedAt: scopeCutoff + 3, expiresAt: now() + 60 });
     expect((await post('/sync/pull', afterEpoch, { body: { workspaceId, cursor: 0 } })).status).toBe(401);
-    const delayedClaim = vi.fn(async () => true);
-    const delayedBootstrap = vi.fn(async () => { await new Promise(resolve => setTimeout(resolve, 2100)); });
-    authenticate = createBoundTokenAuthenticator({ ...boundConfig, bootstrapState: delayedBootstrap,
-      stateStore: { claimProof: delayedClaim, pruneExpiredProofs: async () => {} } });
-    const shortLived = await access({}, { expiresAt: now() + 2 });
-    expect((await post('/workspaces', shortLived)).status).toBe(401);
-    expect(delayedBootstrap).toHaveBeenCalledTimes(1);
-    expect(delayedClaim).not.toHaveBeenCalled();
-    const longLived = await access();
-    expect((await post('/workspaces', longLived, { iat: now() - 59 })).status).toBe(401);
-    expect(delayedBootstrap).toHaveBeenCalledTimes(2);
-    expect(delayedClaim).not.toHaveBeenCalled();
+    const clockStart = Math.floor(Date.now() / 1000) * 1000;
+    // Keep HTTP and crypto real while making the before/after-bootstrap expiry boundary exact.
+    vi.useFakeTimers({ toFake: ['Date'] });
+    try {
+      vi.setSystemTime(clockStart);
+      const delayedClaim = vi.fn(async () => true);
+      const delayedBootstrap = vi.fn(async () => { vi.setSystemTime(Date.now() + 2100); });
+      authenticate = createBoundTokenAuthenticator({ ...boundConfig, bootstrapState: delayedBootstrap,
+        stateStore: { claimProof: delayedClaim, pruneExpiredProofs: async () => {} } });
+      const shortLived = await access({}, { expiresAt: now() + 2 });
+      expect((await post('/workspaces', shortLived)).status).toBe(401);
+      expect(delayedBootstrap).toHaveBeenCalledTimes(1);
+      expect(delayedClaim).not.toHaveBeenCalled();
+      const longLived = await access();
+      expect((await post('/workspaces', longLived, { iat: now() - 59 })).status).toBe(401);
+      expect(delayedBootstrap).toHaveBeenCalledTimes(2);
+      expect(delayedClaim).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
     authenticate = createBoundTokenAuthenticator(boundConfig);
     expect((await fetch(`${origin}/workspaces`, { method: 'POST', headers: { authorization: `Bearer ${valid}` } })).status).toBe(401);
     expect((await fetch(`${origin}/workspaces`, { method: 'POST', headers: { authorization: `DPoP ${valid}` } })).status).toBe(401);

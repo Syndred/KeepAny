@@ -1,0 +1,18 @@
+{
+  "unitFiles": 95,
+  "unitPassed": 928,
+  "failed": 0,
+  "durationSeconds": 42.15,
+  "isolatedPostgreSQL": true,
+  "typecheck": "passed",
+  "runtimeAuthUnchanged": true,
+  "modifiedOnly": "last two expiry boundary scenarios in bound-auth.test.ts; Date-only fixed clock",
+  "originalCI": {
+    "sourceCommit": "65636dbb650e6b4bdb3af4a42c2f6469db07e662",
+    "run": 40425991064,
+    "unitPassed": 927,
+    "unitFailed": 1,
+    "assertion": "delayedBootstrap expected 2 calls, actual 1"
+  },
+  "securityAssertions": "JWT/DPoP strict expiry, 401, bootstrap counts and no claim all retained"
+}

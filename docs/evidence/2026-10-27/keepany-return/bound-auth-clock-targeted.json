@@ -1,0 +1,34 @@
+{
+  "scope": "Only apps/sync-server/src/bound-auth.test.ts final two expiry-after-bootstrap cases",
+  "implementation": "Reuse Date-only vi.useFakeTimers pattern already used in packages/binding/src/bound-sync.test.ts. Real HTTP, RSA/EC signatures, PGlite and actual timers remain real. A try/finally always restores the real Date.",
+  "originalCI": "/tmp/keepany-brand-return/ci-final3/job-121931765894.log",
+  "originalFailure": "The near-expiry DPoP request returned 401 but bootstrap call count remained 1 rather than 2. Original CI did not record its exact entry timestamp.",
+  "raceMechanism": "The proof uses floor(Date.now()/1000)-59. The strict fractional 60-second entry validation leaves more than 0 and at most 1 second before expiry; signing/HTTP/scheduling can consume it before bootstrap. Product correctly rejects an already expired proof.",
+  "relativeControlledClockMs": {
+    "start": 0,
+    "shortLivedJwtExpires": 2000,
+    "firstBootstrapReturns": 2100,
+    "longLivedJwtIssuedAt": 2000,
+    "longLivedJwtExpires": 62000,
+    "oldProofIssuedAt": -57000,
+    "secondRequestBeforeBootstrap": 2100,
+    "proofAgeBeforeBootstrap": 59100,
+    "secondBootstrapReturns": 4200,
+    "proofAgeAfterBootstrap": 61200
+  },
+  "boundaryProof": "Real HTTP requests preserve status401, bootstrap count1 then2 and zero claimProof calls. At second entry the proof is 59.1s old; after the controlled bootstrap boundary it is 61.2s old while the access token remains valid.",
+  "originalSecurityAssertionsPreserved": true,
+  "productAuthUnchangedFrom65636": true,
+  "securityWindowsOrToleranceChanged": false,
+  "result": {
+    "testFilesPassed": 1,
+    "testsPassed": 2,
+    "testsFailed": 0,
+    "testsSkipped": 0,
+    "duration": "1.11s",
+    "mainHttpScenarioDurationMs": 928,
+    "exitCode": 0
+  },
+  "command": "node node_modules/vitest/vitest.mjs run apps/sync-server/src/bound-auth.test.ts --reporter=verbose",
+  "fullSuiteRunByThisReviewer": false
+}
