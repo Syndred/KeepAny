@@ -1,0 +1,23 @@
+{
+  "sourceCandidate": "7ef1b99c68c639f3394693e032c2c88689e32064",
+  "review": "independent, read only",
+  "decision": "Allow corrected user-operation paths into candidate; require final cold-vault and full CI pass",
+  "preserved": {
+    "relationExplicitReloads": 2,
+    "readabilityExplicitReloads": 3,
+    "initialColdStart": true,
+    "lifecycleFinalColdGoto": true,
+    "KDBXFieldsAndLinkedIds": 4,
+    "KA1Assets": 4,
+    "KA1Relations": 3,
+    "graphGeometryAnd49NodeAssertions": true
+  },
+  "evidence": "Each failed document returned HTTP200; JS module requests cancelled before AppShell mounted; earlier recorded navigations completed",
+  "notEstablished": [
+    "cancellation initiator",
+    "SW vs browser vs transport cause",
+    "any product-initiated second navigation"
+  ],
+  "noRuntimeBootFixClaim": true,
+  "timeoutsOrRetriesChanged": false
+}

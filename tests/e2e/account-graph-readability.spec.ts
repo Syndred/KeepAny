@@ -234,7 +234,12 @@ type Copy = ReturnType<typeof copy>;
 
 async function createScenarioAccount(page: Page, key: AccountKey, text: Copy) {
 	const record = account(key);
-	await page.goto("/assets/account");
+	const back = page.locator('.topbar-back-link[href="/assets/account"]');
+	if (await back.count()) await back.click();
+	else if (new URL(page.url()).pathname !== "/assets/account") {
+		// Retain the first cold startup and entries from other sections such as Intake.
+		await page.goto("/assets/account");
+	}
 	await page
 		.getByRole("main")
 		.getByRole("button", { name: text.add, exact: true })

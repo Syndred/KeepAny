@@ -120,8 +120,12 @@ for (const locale of ["zh-CN", "en"] as const)
 				page.screenshot({
 					path: join(evidence, `${locale}-${width}-${stage}.png`),
 				});
-			async function vault() {
-				await page.goto("/assets/vault");
+			async function vault({ cold = false }: { cold?: boolean } = {}) {
+				if (cold) await page.goto("/assets/vault");
+				else {
+					if (width < 768) await page.locator(".mobile-menu").click();
+					await page.locator('.sidebar .nav a[href="/assets/vault"]').click();
+				}
 				await expect(
 					page
 						.locator("#password-vault-unlock-master")
@@ -548,7 +552,8 @@ for (const locale of ["zh-CN", "en"] as const)
 						(line) => liveIds.has(line.from) && liveIds.has(line.to),
 					),
 				).toBe(true);
-				await vault();
+				// Reopen persisted data before checking the final encrypted entries.
+				await vault({ cold: true });
 				const downloading = page.waitForEvent("download");
 				await page
 					.getByRole("button", { name: t("pwVaultExport"), exact: true })

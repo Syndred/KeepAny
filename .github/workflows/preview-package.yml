@@ -2,6 +2,8 @@ name: Verify portable preview
 
 on:
   push:
+    # Release tags reuse the successful checks for the same branch commit.
+    branches: ['**']
   pull_request:
   workflow_dispatch:
 

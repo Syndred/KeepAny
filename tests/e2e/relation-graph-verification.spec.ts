@@ -33,7 +33,14 @@ for (const locale of ["zh-CN", "en-US"] as const) {
 			const errors: string[] = [];
 			page.on("pageerror", (error) => errors.push(error.message));
 			async function account(name: string) {
-				await page.goto("/assets/account");
+				// Use the account's normal return action while building the family;
+				// the explicit reload checks below still exercise persisted state.
+				if (/^\/assets\/account\/[^/]+$/.test(new URL(page.url()).pathname)) {
+					await page.locator('.topbar-back-link[href="/assets/account"]').click();
+					await expect(page).toHaveURL(/\/assets\/account$/);
+				} else {
+					await page.goto("/assets/account");
+				}
 				await page.getByRole("button", { name: text.add, exact: true }).click();
 				const dialog = page.getByRole("dialog");
 				await dialog.getByLabel(text.name, { exact: true }).fill(name);
