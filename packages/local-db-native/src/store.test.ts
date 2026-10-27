@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { afterEach, expect, it } from 'vitest';
-import { newAsset } from '../../domain/src';
+import { historySchema, newAsset } from '../../domain/src';
 import { VaultSession } from '../../password-vault/src';
 import { decryptBackup, encryptBackup } from '../../local-db/src/backup-crypto';
 import type { PersistentFiles } from '../../platform-native/src';
@@ -107,6 +107,64 @@ it('persists complete original fields and side tables on disk, then reopens and 
   const reopened = (await connect()).store;
   expect(await reopened.allRecords()).toEqual([next]);
   expect(await reopened.readSideRows('intakeReview')).toEqual([{ id: 'review-1', originalText: 'CSV synthetic full text' }]);
+});
+
+it('rolls back a real SQL failure between an item and its history, then commits the same intent once after reopen', async () => {
+  const { openRepositoryFromBackend } = await import('../../local-db/src');
+  const { store, db, connect } = await fixture();
+  const side = new NativeFileStore('native-history-failure', store);
+  const repository = await openRepositoryFromBackend(side.records, side);
+  const expected = { ...newAsset('item'), name: 'Synthetic transaction camera',
+    purchaseDate: '2026-01-31', warrantyDate: '2028-01-31', notes: 'Preserve the complete original payload' };
+  await repository.save('asset', expected);
+  const event = historySchema.parse({ id: crypto.randomUUID(), assetId: expected.id, action: 'maintenance',
+    note: 'Synthetic lens cleaning', eventDate: '2026-10-28', createdAt: '2026-10-28T01:00:00.000Z' });
+  const next = { ...expected, lastItemEventId: event.id, updatedAt: '2026-10-28T01:00:00.000Z' };
+  const originalRows = db.prepare('SELECT * FROM records ORDER BY id').all();
+  const originalRevision = Number(originalRows[0].revision);
+  // This is an actual SQLite constraint failure. Its distinct error also
+  // proves the asset statement ran first inside the same uncommitted write.
+  db.exec(`CREATE TRIGGER synthetic_history_failure BEFORE INSERT ON records WHEN NEW.type='history' BEGIN
+    SELECT CASE WHEN (SELECT revision FROM records WHERE id='asset:${expected.id}')=${originalRevision + 1}
+      THEN RAISE(ABORT,'synthetic-after-asset-before-history')
+      ELSE RAISE(ABORT,'synthetic-history-before-asset') END;
+    END;`);
+  await expect(repository.recordItemAction(expected, next, event)).rejects.toThrow('synthetic-after-asset-before-history');
+  expect(db.prepare('SELECT * FROM records ORDER BY id').all()).toEqual(originalRows);
+  expect(await repository.get('asset', expected.id)).toEqual(expected);
+  expect(await repository.list('history')).toEqual([]);
+  expect(await side.renewalJournal.count()).toBe(0);
+  await repository.close(); opened.delete(store);
+
+  const reopened = await connect();
+  const reopenedSide = new NativeFileStore('native-history-failure', reopened.store);
+  const returned = await openRepositoryFromBackend(reopenedSide.records, reopenedSide);
+  expect(reopened.db.prepare('SELECT * FROM records ORDER BY id').all()).toEqual(originalRows);
+  expect(returned.renewalRecoveryError).toBeNull();
+  expect(await returned.get('asset', expected.id)).toEqual(expected);
+  expect(await returned.list('history')).toEqual([]);
+  expect(await reopenedSide.renewalJournal.count()).toBe(0);
+  // The fault survived close/reopen; recovery did not secretly retry the write.
+  await expect(returned.recordItemAction(expected, next, event)).rejects.toThrow('synthetic-after-asset-before-history');
+  expect(reopened.db.prepare('SELECT * FROM records ORDER BY id').all()).toEqual(originalRows);
+  reopened.db.exec('DROP TRIGGER synthetic_history_failure');
+  await returned.recordItemAction(expected, next, event);
+  expect(await returned.get('asset', expected.id)).toEqual(next);
+  expect(await returned.list('history')).toEqual([event]);
+  expect(await reopenedSide.renewalJournal.count()).toBe(0);
+  await expect(returned.recordItemAction(expected, next, event)).rejects.toThrow('item-stale');
+  expect(await returned.list('history')).toEqual([event]);
+  const committed = reopened.db.prepare('SELECT * FROM records ORDER BY id').all();
+  await returned.close(); opened.delete(reopened.store);
+
+  const final = await connect();
+  const finalSide = new NativeFileStore('native-history-failure', final.store);
+  const finalRepository = await openRepositoryFromBackend(finalSide.records, finalSide);
+  expect(final.db.prepare('SELECT * FROM records ORDER BY id').all()).toEqual(committed);
+  expect(await finalRepository.get('asset', expected.id)).toEqual(next);
+  expect(await finalRepository.list('history')).toEqual([event]);
+  expect(await finalSide.renewalJournal.count()).toBe(0);
+  await finalRepository.close(); opened.delete(final.store);
 });
 
 it('keeps old original bytes on failed writes/readback, including a corrupt image pointer read', async () => {
