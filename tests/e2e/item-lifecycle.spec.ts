@@ -100,7 +100,8 @@ test("item loan, return, maintenance, reminder and task history survive trash an
 		await expect(second.getByRole("button", { name: "Return item" })).toBeVisible();
 		await expect(second.getByRole("button", { name: "Lend item" })).toHaveCount(0);
 		await second.close();
-		await page.getByRole("button", { name: "Return item" }).dblclick();
+		await page.getByRole("button", { name: "Return item" }).click();
+		await page.getByRole("dialog", { name: "Return item", exact: true }).getByRole("button", { name: "Confirm", exact: true }).dblclick();
 		await expect(historyRows(page, "History")).toHaveCount(2);
 		await expect(detail(page, "Status")).toContainText("Active");
 		await expect(detail(page, "Borrower")).toHaveCount(0);
@@ -279,6 +280,7 @@ test("item actions use the local calendar day across time zones and an open page
 			// Keep this detail page open while its local calendar day changes.
 			await page.clock.setFixedTime(new Date(scenario.nextInstant));
 			await page.getByRole("button", { name: "Return item" }).click();
+			await page.getByRole("dialog", { name: "Return item", exact: true }).getByRole("button", { name: "Confirm", exact: true }).click();
 			await expect(historyRows(page, "History")).toHaveCount(2);
 			await expect(historyRows(page, "History").first()).toContainText(scenario.nextDisplay);
 			await page.getByLabel("Maintenance notes").fill(`Automatic day ${unique}`);

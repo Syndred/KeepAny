@@ -448,6 +448,7 @@ export function AssetDetail() {
 	const [itemBorrower, setItemBorrower] = useState("");
 	const [itemExpectedReturnDate, setItemExpectedReturnDate] = useState("");
 	const [itemLoanNote, setItemLoanNote] = useState("");
+	const [itemReturnBase, setItemReturnBase] = useState<Asset | null>(null);
 	const [locationOpen, setLocationOpen] = useState(false);
 	const [locationArea, setLocationArea] = useState("");
 	const [locationContainer, setLocationContainer] = useState("");
@@ -475,6 +476,7 @@ export function AssetDetail() {
 	const renewalInFlight = useRef(false);
 	useEffect(() => {
 		if (!params.id) return;
+		setItemReturnBase(null);
 		itemDateManuallySet.current = false;
 		setItemEventDate(localCalendarDay(new Date()));
 	}, [params.id]);
@@ -1030,13 +1032,14 @@ export function AssetDetail() {
 			return;
 		}
 	}
-	async function recordItem(action: "loan" | "return" | "maintenance") {
+	async function recordItem(action: "loan" | "return" | "maintenance", expectedReturn?: Asset) {
 		if (!asset || itemInFlight.current) return;
+		if (action === "return" && (!expectedReturn || expectedReturn.id !== asset.id)) return;
 		itemInFlight.current = true;
 		setItemBusy(true);
 		setItemError("");
 		try {
-			const current = assetSchema.parse(asset);
+			const current = assetSchema.parse(expectedReturn ?? asset);
 			const borrower = action === "return" ? current.borrower : itemBorrower.trim();
 			const note = action === "maintenance" ? itemMaintenanceNote.trim() : itemLoanNote.trim();
 			if (action === "loan" && !borrower) throw Error("item-borrower-required");
@@ -1071,6 +1074,7 @@ export function AssetDetail() {
 				deleted: false,
 			});
 			setItemRecoveryPending(false);
+			if (action === "return") setItemReturnBase(null);
 			setItemBorrower("");
 			setItemExpectedReturnDate("");
 			if (action === "maintenance") setItemMaintenanceNote("");
@@ -1972,7 +1976,10 @@ export function AssetDetail() {
 								</label>
 								<Button
 									disabled={itemBusy || !["active", "loaned"].includes(asset.status) || (asset.status === "active" && ["repairing", "resold", "retired"].includes(asset.itemLifecycleStatus ?? ""))}
-									onClick={() => void recordItem(asset.status === "loaned" ? "return" : "loan")}
+									onClick={() => {
+										if (asset.status === "loaned") { setItemError(""); setItemReturnBase(assetSchema.parse(asset)); }
+										else void recordItem("loan");
+									}}
 								>
 									{t(asset.status === "loaned" ? "return" : "loan")}
 								</Button>
@@ -2034,6 +2041,14 @@ export function AssetDetail() {
 					)}
 				</section>
 			)}
+			{asset.kind === "item" && itemReturnBase?.id === asset.id && <Dialog title={t("return")} closeDisabled={itemBusy} onClose={() => { if (!itemInFlight.current) setItemReturnBase(null); }}>
+				<p>{t("itemReturnConfirm", { name: itemReturnBase.name, borrower: itemReturnBase.borrower })}</p>
+				{itemError && <p role="alert" className="field-error">{itemError}</p>}
+				<div className="actions">
+					<Button disabled={itemBusy} onClick={() => setItemReturnBase(null)}>{t("cancel")}</Button>
+					<Button variant="primary" disabled={itemBusy} onClick={() => void recordItem("return", itemReturnBase)}>{t("confirm")}</Button>
+				</div>
+			</Dialog>}
 			{asset.kind === "item" && locationOpen && <Dialog title={t("itemEditLocation")} onClose={() => { if (!locationBusy) setLocationOpen(false); }}>
 				<div className="asset-item-location-fields">
 					<label className="field"><span>{t("itemLocationArea")}</span><input value={locationArea} maxLength={300} disabled={locationBusy} onChange={(event) => { setLocationArea(event.target.value); setLocationError(""); }} /></label>
