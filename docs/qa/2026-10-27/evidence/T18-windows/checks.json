@@ -1,0 +1,126 @@
+{
+  "date": "2026-10-27",
+  "baseline": "f659db1cfe08e7f18c1f15974b83416f092cfd3f",
+  "environment": "Windows Node24.21.0 isolated Chromium source4205",
+  "scope": "T18-01..04",
+  "uniquePassed": 14,
+  "tests": [
+    {
+      "title": "T18-01/02/04 zh-CN 390px URL generations and persistent selective CSV review",
+      "status": "passed",
+      "durationMs": 2888,
+      "source": "T18-core-run002"
+    },
+    {
+      "title": "T18-01/02/04 zh-CN 1280px URL generations and persistent selective CSV review",
+      "status": "passed",
+      "durationMs": 2923,
+      "source": "T18-core-run002"
+    },
+    {
+      "title": "T18-01/02/04 en 390px URL generations and persistent selective CSV review",
+      "status": "passed",
+      "durationMs": 2744,
+      "source": "T18-core-run002"
+    },
+    {
+      "title": "T18-01/02/04 en 1280px URL generations and persistent selective CSV review",
+      "status": "passed",
+      "durationMs": 3236,
+      "source": "T18-core-run002"
+    },
+    {
+      "title": "zh-CN 390 PDF text requires explicit type and confirmation, retains decisions",
+      "status": "passed",
+      "durationMs": 4736,
+      "source": "T18-existing"
+    },
+    {
+      "title": "zh-CN 1280 PDF text requires explicit type and confirmation, retains decisions",
+      "status": "passed",
+      "durationMs": 4170,
+      "source": "T18-existing"
+    },
+    {
+      "title": "en-US 390 PDF text requires explicit type and confirmation, retains decisions",
+      "status": "passed",
+      "durationMs": 3692,
+      "source": "T18-existing"
+    },
+    {
+      "title": "en-US 1280 PDF text requires explicit type and confirmation, retains decisions",
+      "status": "passed",
+      "durationMs": 4054,
+      "source": "T18-existing"
+    },
+    {
+      "title": "a delayed confirmation refresh keeps a different row's saved kind edit",
+      "status": "passed",
+      "durationMs": 1648,
+      "source": "T18-existing"
+    },
+    {
+      "title": "a delayed confirmation refresh keeps a different row's failed kind edit",
+      "status": "passed",
+      "durationMs": 1896,
+      "source": "T18-existing"
+    },
+    {
+      "title": "a delayed confirmation refresh keeps a different row's ignored kind edit",
+      "status": "passed",
+      "durationMs": 1547,
+      "source": "T18-existing"
+    },
+    {
+      "title": "an older queued save failure does not leave an error after the newer edit succeeds",
+      "status": "passed",
+      "durationMs": 1259,
+      "source": "T18-existing"
+    },
+    {
+      "title": "a delayed search target read does not restore a candidate after its confirmation",
+      "status": "passed",
+      "durationMs": 1026,
+      "source": "T18-existing"
+    },
+    {
+      "title": "T18-03 corrupt picture is rejected without creating an asset or a blob",
+      "status": "passed",
+      "durationMs": 3323,
+      "source": "T18-images-final"
+    }
+  ],
+  "productIssue": {
+    "id": "T18-001",
+    "before": "A corrupt image/png created one asset and one blob; error was absent.",
+    "after": "Local Image.decode before either capture write rejects corrupt input with unchanged assets/blobs and retained input.",
+    "file": "apps/web/src/workflows.tsx",
+    "adjacent": [
+      "Valid PNG create",
+      "Valid JPEG append",
+      "Valid WebP append",
+      "Corrupt append rejected",
+      "Plain text rejected",
+      "20MiB+1 rejected"
+    ],
+    "originalAllowedMimeTypes": [
+      "image/jpeg",
+      "image/png",
+      "image/webp",
+      "image/gif"
+    ]
+  },
+  "contractGaps": [
+    "Ordinary CSV retains reviewed draft, filename/hash/row; original full CSV text is absent.",
+    "Ordinary URL capture parses host and URL locally; does not fetch metadata.",
+    "Ordinary manual capture has name/type; arbitrary source text interpretation belongs to optional AI."
+  ],
+  "fixtureFailure": "Initial core4 placed status locator inside quick card; status lives outside the card. Corrected scope while retaining exact error copy.",
+  "productModifiedFiles": [
+    "apps/web/src/workflows.tsx"
+  ],
+  "legacyPathChanges": [
+    "tests/e2e/intake-pdf.spec.ts",
+    "tests/e2e/intake-refresh-race.spec.ts"
+  ]
+}

@@ -56,6 +56,19 @@ type FieldName = keyof Asset;
 type ProjectFormFiles = { logo?: File; home?: File; products?: File[]; promo?: File };
 const projectImageTypes = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
 
+async function validateCaptureImage(file: File): Promise<void> {
+	if (file.size > 20 * 1024 * 1024 || !projectImageTypes.has(file.type)) throw Error("image-invalid");
+	const address = URL.createObjectURL(file);
+	try {
+		const image = new Image();
+		image.src = address;
+		await image.decode();
+		if (!image.naturalWidth || !image.naturalHeight) throw Error("image-invalid");
+	} finally {
+		URL.revokeObjectURL(address);
+	}
+}
+
 function ProjectFormImage({ id, file }: { id?: string; file?: File }) {
 	const [url, setUrl] = useState("");
 	useEffect(() => {
@@ -1015,6 +1028,7 @@ export function IntakeTools({ onCsvStaged }: { onCsvStaged: () => void }) {
 		setPhotoBusy(true);
 		let fileId = "";
 		try {
+			await validateCaptureImage(photoFile);
 			fileId = await putFile(photoFile);
 			await saveAssetIfCurrent(asset, {
 				...asset,
@@ -1040,6 +1054,7 @@ export function IntakeTools({ onCsvStaged }: { onCsvStaged: () => void }) {
 		setPhotoBusy(true);
 		let fileId = "";
 		try {
+			await validateCaptureImage(photoFile);
 			const existing = (await allRecords())
 				.filter((row) => row.type === "asset")
 				.map((row) => JSON.parse(row.payload) as Asset);
