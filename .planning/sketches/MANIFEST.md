@@ -16,8 +16,10 @@
 |---|---|---|---|---|---|
 | 001 | 手机日常使用（旧稿） | 打开先看维护事项，还是先搜索资料？ | 保留历史比较 | 用户指出覆盖不足，已退回；由003替换 | mobile, navigation, accounts, vault |
 | 002 | 手机迁入与备份 | 首次恢复的来源、范围和目标如何排布？ | A全页核对／B紧凑核对；建议A | 待确认 | mobile, backup, restore, failure |
-| 003 | 资产与账号整合v2 | 如何整合入口并完整保留功能？ | A分类卡片／B紧凑清单；建议A | 信息分组按本次要求调整，具体排版待确认 | mobile, assets, accounts, passwords, feature-parity |
+| 003 | 资产与账号整合v3 | 如何整合入口并完整保留功能？ | A分类卡片／B紧凑清单；建议A | 信息分组按本次要求调整，具体排版待确认 | mobile, assets, accounts, passwords, feature-parity |
 
 未选定 winner，不把推荐当作用户确认。三组 HTML 复用共享主题与素材，001／002共用旧演示规则，003使用整合后的交互与双语文案；无需构建、无需安装依赖。它们是可丢弃的设计稿，不进入正式应用。
 
 迁移合同见 `docs/mobile/Capacitor-SQLite迁移方案-20261027.md`；完整功能去向与账号整合边界见 `docs/mobile/手机功能整合与完整覆盖-v2-20261027.md`。v1证据保留于 `docs/evidence/2026-10-27/mobile-sqlite-design/`；v2证据位于 `docs/evidence/2026-10-27/mobile-unified-v2/`，两者不混作当前验收。
+
+2026-10-27 Windows v3：保留003的A／B，补齐主要末级表单、独立密码组与回收站、审核／失败／重试／恢复等演示闭环。35项交互抽样通过，真实原生功能仍未实现；见003 README与小型checks.json。winner仍待用户选择。
