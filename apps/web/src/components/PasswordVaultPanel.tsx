@@ -202,6 +202,7 @@ export function PasswordVaultPanel({
 	const [purgeTarget, setPurgeTarget] = useState<{ entries: PasswordVaultEntrySummary[]; revision: string; all: boolean } | null>(null);
 	const [entryActionError, setEntryActionError] = useState("");
 	const entryActionRunning = useRef(false);
+	const unlinkedFocus = useRef<string | null>(null);
 	const purgeOpener = useRef<HTMLElement | null>(null);
 	const generateRequestRef = useRef(0);
 	const fileInputRef = useRef<HTMLInputElement>(null);
@@ -219,6 +220,21 @@ export function PasswordVaultPanel({
 	useEffect(() => {
 		setAssetFilter(focusAssetId ?? "");
 	}, [focusAssetId]);
+	useEffect(() => {
+		if (unlinkTarget || !unlinkedFocus.current || snapshot.status !== "unlocked") return;
+		// Moving between account groups remounts the card. Resolve its current
+		// element after the committed layout instead of focusing the removed view.
+		const frame = requestAnimationFrame(() => {
+			const card = [...document.querySelectorAll<HTMLElement>(".password-vault-entry-list .password-vault-entry")]
+				.find(node => node.dataset.entryId === unlinkedFocus.current);
+			if (!card) return;
+			const group = card.closest("details");
+			if (group) group.open = true;
+			card.focus({ preventScroll: true });
+			unlinkedFocus.current = null;
+		});
+		return () => cancelAnimationFrame(frame);
+	}, [unlinkTarget, snapshot.status, snapshot.entries]);
 
 	useEffect(() => {
 		if (snapshot.status === "unlocked") return;
@@ -517,6 +533,7 @@ export function PasswordVaultPanel({
 				unlinkTarget.assetId,
 				unlinkTarget.revision,
 			);
+			unlinkedFocus.current = unlinkTarget.entryId;
 			setUnlinkTarget(null);
 			setMessageKey("pwVaultUnlinked");
 		} catch (error) {
