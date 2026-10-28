@@ -187,6 +187,17 @@ export class GraphBootRecorder {
   failedScriptPaths() {
     return [...new Set(this.events.filter(row => row.kind === 'loading-failed' && scriptPath(row.path)).reverse().map(row => row.path as string))].slice(0, 8);
   }
+  cacheCandidates() {
+    const candidates: Array<{ path: string; source: 'runtime-exception' | 'loading-failed' | 'entrypoint' }> = [];
+    const add = (path: unknown, source: 'runtime-exception' | 'loading-failed' | 'entrypoint') => {
+      if (candidates.length < 8 && scriptPath(path) && !candidates.some(row => row.path === path)) candidates.push({ path, source });
+    };
+    for (const row of [...this.events].reverse()) if (row.kind === 'runtime-exception') add(row.path, 'runtime-exception');
+    for (const path of this.failedScriptPaths()) add(path, 'loading-failed');
+    const entry = [...this.events].reverse().find(row => row.kind === 'request' && typeof row.path === 'string' && /^\/assets\/index-[\w.-]+\.m?js$/.test(row.path));
+    add(entry?.path, 'entrypoint');
+    return candidates;
+  }
   snapshot() { return { events: this.events.map(row => ({ ...row })), droppedEvents: this.droppedEvents,
     droppedRequests: this.droppedRequests, pendingRequests: this.requests.size }; }
 }
@@ -405,9 +416,9 @@ export async function observeGraphBoot(context: BrowserContext, page: Page, info
         const assetRoot = process.env.KEEPANY_GRAPH_BOOT_ASSET_ROOT;
         if (assetRoot === 'release/web' || assetRoot === 'apps/web/dist') {
           try {
-            const paths = recorder.failedScriptPaths();
+            const candidates = recorder.cacheCandidates(), paths = candidates.map(row => row.path);
             const manifest = await bounded(staticScriptManifest(assetRoot, paths));
-            failedScriptCache = { attempted: true, failedPaths: paths, sourceManifest: manifest,
+            failedScriptCache = { attempted: true, candidates, sourceManifest: manifest,
               result: await bounded(page.evaluate(inspectFailedScriptCache, { origin, manifest })) };
           } catch { unavailable.add('failed-script-cache-unavailable'); }
         } else unavailable.add('source-manifest-root-unavailable');

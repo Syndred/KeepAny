@@ -289,3 +289,18 @@ test('cache witness stops before opening another cache match after the aggregate
  assert.equal(matches,4);assert.equal(result.bytesRead,8*1024*1024);assert.equal(result.evidence.length,4);
  assert.ok(result.evidence.every(row=>row.matchesSource));
 });
+
+test('cache candidates prioritize static runtime failures, deduplicate and retain a bounded entrypoint fallback',()=>{
+ const recorder=new GraphBootRecorder(origin);
+ recorder.request(request('entry',`${origin}/assets/index-build.js`));recorder.complete({requestId:'entry'},false);
+ recorder.request(request('failed',`${origin}/assets/canceled.js`));recorder.complete({requestId:'failed'},true);
+ recorder.exception({exceptionDetails:{url:`${origin}/assets/runtime.js?secret=canary-credential`,exception:{className:'SyntaxError'}}});
+ recorder.exception({exceptionDetails:{url:`${origin}/assets/canceled.js`,exception:{className:'Error'}}});
+ recorder.exception({exceptionDetails:{url:'https://outside.test/assets/private.js',exception:{className:'Error'}}});
+ assert.deepEqual(recorder.cacheCandidates(),[
+  {path:'/assets/canceled.js',source:'runtime-exception'},{path:'/assets/runtime.js',source:'runtime-exception'},
+  {path:'/assets/index-build.js',source:'entrypoint'}]);
+ for(let i=0;i<20;i++)recorder.exception({exceptionDetails:{url:`${origin}/assets/runtime${i}.js`,exception:{className:'Error'}}});
+ const candidates=recorder.cacheCandidates();assert.equal(candidates.length,8);assert.ok(candidates.every(row=>row.source==='runtime-exception'));
+ assert.ok(!JSON.stringify(candidates).includes('canary-credential'));
+});
