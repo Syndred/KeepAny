@@ -4,6 +4,8 @@
 .asset-detail-account .image-item { gap: 10px; }
 .account-facts-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; min-width: 0; }
 .asset-detail-account.has-relations > .account-facts-grid { grid-column: 1 / -1; order: 3; }
+.account-passwords-section { scroll-margin-top: 80px; }
+.asset-detail-account.has-relations > .account-passwords-section { grid-column: 1 / -1; order: 3; }
 .account-facts-card { padding: 16px 18px; min-width: 0; }
 .account-facts-card h2 { margin: 0 0 10px; font-size: 1.04rem; }
 .account-facts-heading { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }

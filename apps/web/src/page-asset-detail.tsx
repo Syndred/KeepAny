@@ -296,6 +296,15 @@ export function AssetDetail() {
 	const [edit, setEdit] = useState(false);
 	const [passwordsFor, setPasswordsFor] = useState<string | null>(null);
 	const passwordsOpen = !!asset && passwordsFor === asset.id;
+	const passwordsSection = useRef<HTMLElement>(null);
+	useEffect(() => {
+		if (!passwordsOpen) return;
+		const frame = requestAnimationFrame(() => {
+			passwordsSection.current?.scrollIntoView({ block: "start" });
+			passwordsSection.current?.focus({ preventScroll: true });
+		});
+		return () => cancelAnimationFrame(frame);
+	}, [passwordsOpen]);
 	useEffect(() => {
 		if (!asset?.id || asset.kind !== "project" || !detailHash.startsWith("project-domain")) return;
 		const frame = requestAnimationFrame(() => document.getElementById(detailHash)?.scrollIntoView({ block: "start" }));
@@ -1688,9 +1697,9 @@ export function AssetDetail() {
 				<section className="card account-facts-card account-security-card"><h2>{t("accountRecordsSecurity")}</h2><dl>
 					<div><dt>{t("accountProfileVerifiedAt")}</dt><dd>{asset.accountProfileVerifiedAt ? date(asset.accountProfileVerifiedAt, i18n.language) : t("accountNotRecorded")}</dd></div>
 					<div><dt>{t("accountRelationVerifiedAt")}</dt><dd>{accountVerifiedAt ? date(accountVerifiedAt, i18n.language) : t("accountNotRecorded")}</dd></div>
-				</dl><div className="workspace-password-actions"><Button aria-expanded={passwordsOpen} onClick={() => setPasswordsFor((current) => current === asset.id ? null : asset.id)}>{t(passwordsOpen ? "workspaceHidePasswords" : "workspaceShowPasswords")}</Button><Button asChild><Link to="/assets/$kind" params={{ kind: "vault" }} hash={`asset-${asset.id}`}>{t("accountOpenPasswords")}<ArrowDownRight size={16} /></Link></Button></div></section>
+				</dl><div className="workspace-password-actions"><Button aria-expanded={passwordsOpen} aria-controls={`account-passwords-${asset.id}`} onClick={() => setPasswordsFor((current) => current === asset.id ? null : asset.id)}>{t(passwordsOpen ? "workspaceHidePasswords" : "workspaceShowPasswords")}</Button><Button asChild><Link to="/assets/$kind" params={{ kind: "vault" }} hash={`asset-${asset.id}`}>{t("accountOpenPasswords")}<ArrowDownRight size={16} /></Link></Button></div></section>
 			</div>}
-			{asset.kind === "account" && passwordsOpen && <section className="card account-passwords-section"><Suspense fallback={<div className="notice" role="status">{t("pwVaultLoading")}</div>}><PasswordVaultPanel assets={data.assets} notify={notify} focusAssetId={asset.id} embedded /></Suspense></section>}
+			{asset.kind === "account" && passwordsOpen && <section id={`account-passwords-${asset.id}`} ref={passwordsSection} tabIndex={-1} aria-label={t("pwVaultTitle")} className="card account-passwords-section"><Suspense fallback={<div className="notice" role="status">{t("pwVaultLoading")}</div>}><PasswordVaultPanel assets={data.assets} notify={notify} focusAssetId={asset.id} embedded /></Suspense></section>}
 			{asset.kind === "account" && attachmentSection}
 			{asset.kind === "account" && (
 				<section className="card impact-checklist">
