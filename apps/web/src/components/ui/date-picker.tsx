@@ -87,6 +87,7 @@ export function DatePicker({
 					type="text"
 					role="combobox"
 					aria-autocomplete="none"
+					aria-invalid={!valid(draft) || props["aria-invalid"] || undefined}
 					inputMode="numeric"
 					value={draft}
 					disabled={disabled}

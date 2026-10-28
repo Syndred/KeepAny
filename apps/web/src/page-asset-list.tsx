@@ -1,3 +1,4 @@
+import { AssetThumbnail as AssetCover } from "./components/AssetThumbnail";
 import { Input } from "./components/ui/input";
 import { lazy, Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
@@ -20,7 +21,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { ArrowRight, Code2, CreditCard, GripVertical, LockKeyhole, Mail, Package, Plus, Search, Shield, Smartphone, UserRound, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { normalizeCategoryName, type Asset, type AssetKind, type Category } from "../../../packages/domain/src";
-import { cancelCategoryEdit, createCategory, deleteCustomCategory, editCustomCategory, fileUrl, localRepository, retryCategoryEdit, save, saveAssetIfCurrent } from "../../../packages/local-db/src";
+import { cancelCategoryEdit, createCategory, deleteCustomCategory, editCustomCategory, localRepository, retryCategoryEdit, save, saveAssetIfCurrent } from "../../../packages/local-db/src";
 import { Button } from "./components/ui/button";
 import { matchesAssetSearch } from "./asset-search";
 import "./asset-restoration.css";
@@ -108,6 +109,7 @@ function CategoryStrip({
 }) {
 	const { data, notify } = useAppContext();
 	const { t, i18n } = useTranslation();
+	const categoryFieldId = kind === "vault" ? "vault-category-name" : "category-name";
 	const categoryNames = [
 		...builtins[kind],
 		...data.categories
@@ -301,15 +303,15 @@ function CategoryStrip({
 				<section className="card asset-category-inline" aria-label={t("category")}>
 					<div className="card-header"><h3>{editingCategory ? t("categoryEdit") : memberCategory ? t("categoryMembers") : t("newCategory")}</h3></div>
 					{(!memberCategory || editingCategory) && <div className="field">
-						<label htmlFor="category-name">{t("categoryName")}</label>
+						<label htmlFor={categoryFieldId}>{t("categoryName")}</label>
 						<Input
-							id="category-name"
+							id={categoryFieldId}
 							value={name}
 							maxLength={60}
 							disabled={blocked}
 							aria-invalid={!!categoryError}
 							aria-describedby={
-								categoryError ? "category-name-error" : undefined
+								categoryError ? `${categoryFieldId}-error` : undefined
 							}
 							onChange={(e) => {
 								setName(e.target.value);
@@ -318,7 +320,7 @@ function CategoryStrip({
 						/>
 						{categoryError && (
 							<small
-								id="category-name-error"
+								id={`${categoryFieldId}-error`}
 								className="field-error"
 								role="alert"
 							>
@@ -370,22 +372,6 @@ function CategoryStrip({
 	);
 }
 
-function AssetCover({ asset, imageId = asset.kind === "item" ? asset.itemMedia?.coverId : asset.attachments[0] }: { asset: Asset; imageId?: string }) {
-	const [src, setSrc] = useState("");
-	useEffect(() => {
-		setSrc("");
-		if (!imageId) return;
-		let active = true;
-		let objectUrl = "";
-		void fileUrl(imageId).then((url) => {
-			objectUrl = url;
-			if (active) setSrc(url);
-			else if (url) URL.revokeObjectURL(url);
-		}).catch(() => { if (active) setSrc(""); });
-		return () => { active = false; if (objectUrl) URL.revokeObjectURL(objectUrl); };
-	}, [imageId]);
-	return src ? <img src={src} alt="" /> : null;
-}
 
 function assetDomain(url: string) {
 	try { return new URL(url).hostname.replace(/^www\./, ""); }
@@ -441,12 +427,18 @@ export function AssetList() {
 }
 
 export type AccountListFilters = { search: string; category: string; tag: string };
-export function AssetKindList({ kind, beforeList, afterList, passwordCounts, onAccountFiltersChange, privateSearch = false }: {
+export function AssetKindList({ kind, beforeList, afterList, passwordCounts, onAccountFiltersChange, privateSearch = false, embedded = false, hideTitle = false, referencesOnly = false, accountSearchExtras, renderAccountDetails }: {
 	kind: AssetKind; beforeList?: ReactNode; afterList?: ReactNode;
 	passwordCounts?: ReadonlyMap<string, number>;
 	onAccountFiltersChange?: (filters: AccountListFilters) => void;
 	privateSearch?: boolean;
+	embedded?: boolean;
+	hideTitle?: boolean;
+	referencesOnly?: boolean;
+	accountSearchExtras?: ReadonlyMap<string, string>;
+	renderAccountDetails?: (asset: Asset) => ReactNode;
 }) {
+	const Container = embedded ? "section" : "main";
 	const { data, search, notify } = useAppContext();
 	const workspace = useWorkspaceSummary();
  const [assetView, setAssetView] = useAssetView();
@@ -552,7 +544,7 @@ export function AssetKindList({ kind, beforeList, afterList, passwordCounts, onA
 		(a) =>
 			(!category || a.category === category || kind === "account" && category === "other" && !a.category || !!pendingCategory && [pendingCategory.beforeName, pendingCategory.afterName].includes(a.category)) &&
 			selectedTags.every(value => a.tags.includes(value)) &&
-			matchesAssetSearch(a, search) && matchesAssetSearch(a, localQuery),
+			[search, localQuery].every((query) => matchesAssetSearch(a, query) || !!accountSearchExtras?.get(a.id)?.includes(query.trim().toLocaleLowerCase())),
 	);
 	const restored = useRef("");
 	useEffect(() => {
@@ -584,8 +576,8 @@ export function AssetKindList({ kind, beforeList, afterList, passwordCounts, onA
 		return () => cancelAnimationFrame(frame);
 	}, [kind, category, tagSignature, listSearch, data.loading, assets.length]);
 	return (
-		<main className={kind === "vault" ? "page vault-page" : "page"}>
-			{kind !== "vault" && <PageTitle
+		<Container className={embedded ? "unified-account-list" : kind === "vault" ? "page vault-page" : "page"}>
+			{kind !== "vault" && !hideTitle && <PageTitle
 				title={t(kind === "account" ? "accountsWorkspace" : kind)}
 				subtitle={t(kind === "project" ? "projectListSubtitle" : kind === "account" ? "workspaceAccountSubtitle" : kind === "item" ? "itemListSubtitle" : "summary")}
 				action={
@@ -599,30 +591,30 @@ export function AssetKindList({ kind, beforeList, afterList, passwordCounts, onA
 				}
 			/>}
 			{kind === "vault" && <>
-				<Suspense fallback={<div className="notice" role="status">{t("pwVaultLoading")}</div>}>
+				{!referencesOnly && <Suspense fallback={<div className="notice" role="status">{t("pwVaultLoading")}</div>}>
 					<PasswordVaultPanel assets={data.assets} notify={notify} focusAssetId={focusAssetId} />
-				</Suspense>
-				{<><div className="card-header vault-references-header" id="vault-references"><h2>{t("vaultReferencesTitle")}</h2><Button size="icon" aria-label={t("vaultLinkEntry")} title={t("vaultLinkEntry")} disabled={data.pendingCategoryEdits.some((pending) => pending.kind === kind)} onClick={() => setEdit(true)}><Plus size={18} /></Button></div>
+				</Suspense>}
+				{<><div className="card-header vault-references-header" id={referencesOnly ? undefined : "vault-references"}><h2>{t("vaultReferencesTitle")}</h2><Button size="icon" aria-label={t("vaultLinkEntry")} title={t("vaultLinkEntry")} disabled={data.pendingCategoryEdits.some((pending) => pending.kind === kind)} onClick={() => setEdit(true)}><Plus size={18} /></Button></div>
 				<div className="notice vault-privacy-note" role="note"><LockKeyhole size={16} aria-hidden="true" /><span>{t("vaultHint")}</span></div></>}
 			</>}
 			{beforeList}
 			{<>
 			<CategoryStrip key={kind} kind={kind} chosen={category} choose={choose} searchControl={kind !== "vault" ? <div className="asset-account-search">
 				<Search size={18} aria-hidden="true" />
-				<Input ref={accountSearchRef} type="search" aria-label={t(kind === "account" ? "accountListSearch" : "assetListSearch")} placeholder={t(kind === "account" ? "accountListSearchHint" : "assetListSearchHint")} autoComplete="off" value={localQuery} onChange={(event) => changeListSearch(event.target.value)} onKeyDown={(event) => { if (event.key === "Escape") { event.stopPropagation(); changeListSearch(""); } }} />
+				<Input id={renderAccountDetails ? "password-vault-search-input" : undefined} ref={accountSearchRef} type="search" aria-label={t(kind === "account" ? "accountListSearch" : "assetListSearch")} placeholder={t(kind === "account" ? "accountListSearchHint" : "assetListSearchHint")} autoComplete="off" value={localQuery} onChange={(event) => changeListSearch(event.target.value)} onKeyDown={(event) => { if (event.key === "Escape") { event.stopPropagation(); changeListSearch(""); } }} />
 				{localQuery && <Button variant="ghost" size="icon" aria-label={t(kind === "account" ? "accountListClearSearch" : "assetListClearSearch")} onClick={() => { changeListSearch(""); accountSearchRef.current?.focus(); }}><X size={18} /></Button>}
 			</div> : undefined} />
 			{(availableTags.length > 0 || tag) && (
 				<div className="list-filters">
-					<label htmlFor="asset-tag-filter">{t("filterTag")}</label>
-					<Select id="asset-tag-filter" value={tag} onValueChange={(selectValue) => chooseTag(selectValue)}>
+					<label className="sr-only" htmlFor={`asset-tag-filter-${kind}`}>{t("filterTag")}</label>
+					<Select id={`asset-tag-filter-${kind}`} value={tag} onValueChange={(selectValue) => chooseTag(selectValue)}>
 						<SelectOption value="">{t("allTags")}</SelectOption>
 						{tag && !availableTags.includes(tag) && <SelectOption value={tag}>{tag}</SelectOption>}
 						{availableTags.map((value) => <SelectOption key={value} value={value}>{value}</SelectOption>)}
 					</Select>
 					{tag && availableTags.some(value => !selectedTags.includes(value)) && <>
-						<label htmlFor="asset-tag-filter-add">{t("assetTagAddFilter")}</label>
-						<Select id="asset-tag-filter-add" value="" onValueChange={value => { if (value) changeTags([...selectedTags, value]); }}>
+						<label htmlFor={`asset-tag-filter-add-${kind}`}>{t("assetTagAddFilter")}</label>
+						<Select id={`asset-tag-filter-add-${kind}`} value="" onValueChange={value => { if (value) changeTags([...selectedTags, value]); }}>
 							<SelectOption value="">{t("assetTagAddFilter")}</SelectOption>
 							{availableTags.filter(value => !selectedTags.includes(value)).map(value => <SelectOption key={value} value={value}>{value}</SelectOption>)}
 						</Select>
@@ -652,7 +644,7 @@ export function AssetKindList({ kind, beforeList, afterList, passwordCounts, onA
 				</table> : <div className="vault-reference-empty"><strong>{category || tag || normalizedSearch ? t("noMatches") : t("none")}</strong></div>}
 			</section>) : <section className={`asset-list-content ${assetView === "list" && kind !== "account" ? "asset-dense-list" : ""} ${kind === "project" ? "asset-project-grid" : kind === "account" ? "asset-account-grid" : "asset-library-grid"}`}>
 				{assets.length ? (
-						assets.map((a) => kind === "project" ? <ProjectCard asset={a} search={listSearch} summary={workspace.summaries.get(a.id)} backlinks={backlinksByAsset.get(a.id) ?? { total: 0, pending: 0 }} key={a.id} /> : kind === "account" ? <AccountCard asset={a} search={listSearch} passwordCount={passwordCounts?.get(a.id)} connectionCount={new Set(data.relations.filter((relation) => !relation.deleted && liveIds.has(relation.from) && liveIds.has(relation.to) && relation.from !== relation.to && (relation.from === a.id || relation.to === a.id)).map((relation) => relation.from === a.id ? relation.to : relation.from)).size} key={a.id} /> : <LibraryCard asset={a} search={listSearch} summary={workspace.summaries.get(a.id)} key={a.id} />)
+						assets.map((a) => kind === "project" ? <ProjectCard asset={a} search={listSearch} summary={workspace.summaries.get(a.id)} backlinks={backlinksByAsset.get(a.id) ?? { total: 0, pending: 0 }} key={a.id} /> : kind === "account" ? <article className={renderAccountDetails ? "unified-account" : "account-list-entry"} key={a.id}><AccountCard asset={a} search={listSearch} passwordCount={passwordCounts?.get(a.id)} connectionCount={new Set(data.relations.filter((relation) => !relation.deleted && liveIds.has(relation.from) && liveIds.has(relation.to) && relation.from !== relation.to && (relation.from === a.id || relation.to === a.id)).map((relation) => relation.from === a.id ? relation.to : relation.from)).size} />{renderAccountDetails?.(a)}</article> : <LibraryCard asset={a} search={listSearch} summary={workspace.summaries.get(a.id)} key={a.id} />)
 				) : (
 					afterList ? null : category || tag || normalizedSearch ? (
 						<div className="empty"><strong>{t("noMatches")}</strong></div>
@@ -678,6 +670,6 @@ export function AssetKindList({ kind, beforeList, afterList, passwordCounts, onA
 					/>
 				</Suspense>
 			)}
-		</main>
+		</Container>
 	);
 }

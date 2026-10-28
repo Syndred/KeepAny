@@ -1,0 +1,90 @@
+
+[WebServer] (node:11712) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+[WebServer] $ vite apps/web --host 127.0.0.1 "--port" "4226" "--strictPort"
+[WebServer] (node:11920) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 1 test using 1 worker
+
+(node:34808) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+[1/1] tests\e2e\ui-consolidation.spec.ts:18:2 › zh-CN 1280 unified accounts, complete sample images, equal cards, shared graph and real item history
+
+[WebServer] 12:21:04 [vite] (client) [console.warn] -------------- RxDB Open Core RxStorage -------------------------------
+[WebServer] You are using the free Dexie.js based RxStorage implementation from RxDB https://rxdb.info/rx-storage-dexie.html?console=dexie 
+[WebServer] While this is a great option, we want to let you know that there are faster storage solutions available in our premium plugins.
+[WebServer] For professional users and production environments, we highly recommend considering these premium options to enhance performance and reliability.
+[WebServer]  https://rxdb.info/premium/?console=dexie 
+[WebServer] If you already purchased premium access you can disable this log by calling the setPremiumFlag() function from rxdb-premium/plugins/shared.
+[WebServer] ---------------------------------------------------------------------
+[WebServer] 12:21:06 [vite] (client) [console.warn] -------------- RxDB Open Core RxStorage -------------------------------
+
+[WebServer] You are using the free Dexie.js based RxStorage implementation from RxDB https://rxdb.info/rx-storage-dexie.html?console=dexie 
+[WebServer] While this is a great option, we want to let you know that there are faster storage solutions available in our premium plugins.
+[WebServer] For professional users and production environments, we highly recommend considering these premium options to enhance performance and reliability.
+[WebServer]  https://rxdb.info/premium/?console=dexie 
+[WebServer] If you already purchased premium access you can disable this log by calling the setPremiumFlag() function from rxdb-premium/plugins/shared.
+[WebServer] ---------------------------------------------------------------------
+
+[WebServer] 12:21:07 [vite] (client) [console.warn] -------------- RxDB Open Core RxStorage -------------------------------
+[WebServer] You are using the free Dexie.js based RxStorage implementation from RxDB https://rxdb.info/rx-storage-dexie.html?console=dexie 
+[WebServer] While this is a great option, we want to let you know that there are faster storage solutions available in our premium plugins.
+[WebServer] For professional users and production environments, we highly recommend considering these premium options to enhance performance and reliability.
+[WebServer]  https://rxdb.info/premium/?console=dexie 
+[WebServer] If you already purchased premium access you can disable this log by calling the setPremiumFlag() function from rxdb-premium/plugins/shared.
+[WebServer] ---------------------------------------------------------------------
+[WebServer] 12:21:09 [vite] (client) [console.warn] -------------- RxDB Open Core RxStorage -------------------------------
+
+[WebServer] You are using the free Dexie.js based RxStorage implementation from RxDB https://rxdb.info/rx-storage-dexie.html?console=dexie 
+[WebServer] While this is a great option, we want to let you know that there are faster storage solutions available in our premium plugins.
+[WebServer] For professional users and production environments, we highly recommend considering these premium options to enhance performance and reliability.
+[WebServer]  https://rxdb.info/premium/?console=dexie 
+[WebServer] If you already purchased premium access you can disable this log by calling the setPremiumFlag() function from rxdb-premium/plugins/shared.
+[WebServer] ---------------------------------------------------------------------
+[WebServer] 12:21:09 [vite] (client) [console.warn] -------------- RxDB Open Core RxStorage -------------------------------
+[WebServer] You are using the free Dexie.js based RxStorage implementation from RxDB https://rxdb.info/rx-storage-dexie.html?console=dexie 
+[WebServer] While this is a great option, we want to let you know that there are faster storage solutions available in our premium plugins.
+[WebServer] For professional users and production environments, we highly recommend considering these premium options to enhance performance and reliability.
+[WebServer]  https://rxdb.info/premium/?console=dexie 
+[WebServer] If you already purchased premium access you can disable this log by calling the setPremiumFlag() function from rxdb-premium/plugins/shared.
+[WebServer] ---------------------------------------------------------------------
+
+  1) tests\e2e\ui-consolidation.spec.ts:18:2 › zh-CN 1280 unified accounts, complete sample images, equal cards, shared graph and real item history 
+
+    Error: expect(locator).toHaveCount(expected) failed
+
+    Locator:  locator('.asset-item-timeline > .list-row')
+    Expected: 5
+    Received: 6
+    Timeout:  5000ms
+
+    Call log:
+      - Expect "toHaveCount" locator('.asset-item-timeline > .list-row') with timeout 5000ms
+      - waiting for locator('.asset-item-timeline > .list-row')
+        14 × locator resolved to 6 elements
+           - unexpected value "6"
+
+
+      91 | 			expect(await maintenance.getByRole("combobox", { name: t("maintenanceDate"), exact: true }).evaluate((node) => (node as HTMLInputElement).validity.valid)).toBe(false);
+      92 | 			await expect(maintenance.getByLabel(t("maintenanceNotes"), { exact: true })).toHaveValue("Synthetic maintenance saved from unified form");
+    > 93 | 			await expect(page.locator(".asset-item-timeline > .list-row")).toHaveCount(beforeInvalidDate);
+         | 			                                                               ^
+      94 | 			await maintenance.getByRole("combobox", { name: t("maintenanceDate"), exact: true }).fill("2026-10-28");
+      95 | 			await page.keyboard.press("Tab");
+      96 | 			await maintenance.getByRole("button", { name: t("maintenance"), exact: true }).click();
+        at C:\Users\Administrator\Desktop\project\KeepAny\tests\e2e\ui-consolidation.spec.ts:93:67
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\source\ui-consolidation-zh-CN-128-6317d-graph-and-real-item-history\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\source\ui-consolidation-zh-CN-128-6317d-graph-and-real-item-history\error-context.md
+
+
+  1 failed
+    tests\e2e\ui-consolidation.spec.ts:18:2 › zh-CN 1280 unified accounts, complete sample images, equal cards, shared graph and real item history 

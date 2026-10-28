@@ -73,7 +73,7 @@ const AssetEditor = lazy(() =>
 const TaskEditor = lazy(() =>
 	import("./workflows").then((module) => ({ default: module.TaskEditor })),
 );
-const AccountFamilyGraphView = lazy(() => import("./account-family-graph-view").then((module) => ({ default: module.AccountFamilyGraphView })));
+const AssetRelationGraph = lazy(() => import("./account-family-graph-view").then((module) => ({ default: module.AssetRelationGraph })));
 const PasswordVaultPanel = lazy(() => import("./components/PasswordVaultPanel").then((module) => ({ default: module.PasswordVaultPanel })));
 function validCalendarDay(value: string) {
 	if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
@@ -1803,7 +1803,7 @@ export function AssetDetail() {
 								{relationSearch}
 								<details className="account-graph-guide"><summary>{t("accountGraphHelp")}</summary><p><span>{t("accountGraphDirection")}</span><span>{t("relationGraphLegend")}</span></p></details>
 							</div>}
-							<Suspense fallback={<p role="status">{t("loading")}</p>}><AccountFamilyGraphView root={asset} assets={[asset, ...graphRelated]} relations={displayedFamily?.relations ?? relations} matches={graphMatches} selectedEdgeId={selectedGraphEdgeId} onSelectEdge={selectGraphEdge} onVisit={visitRelation} onEditRelation={openRelationEditor} returnLabel={graphReturn ? t("graphBackTo", { name: liveById.get(graphReturn.id)?.name ?? t("back") }) : undefined} onReturn={graphReturn && liveById.has(graphReturn.id) ? () => { const target = consumeGraphReturn(asset.id); if (target) void navigate({ to: "/assets/$kind/$id", params: { kind: target.kind, id: target.id }, hash: "account-relations" }); } : undefined} onDeleteRelation={(relation) => { setRelationDeleteError(""); setRelationToDelete(relation); }} /></Suspense>
+							<Suspense fallback={<p role="status">{t("loading")}</p>}><AssetRelationGraph root={asset} assets={[asset, ...graphRelated]} relations={displayedFamily?.relations ?? relations} matches={graphMatches} selectedEdgeId={selectedGraphEdgeId} onSelectEdge={selectGraphEdge} onVisit={visitRelation} onEditRelation={openRelationEditor} returnLabel={graphReturn ? t("graphBackTo", { name: liveById.get(graphReturn.id)?.name ?? t("back") }) : undefined} onReturn={graphReturn && liveById.has(graphReturn.id) ? () => { const target = consumeGraphReturn(asset.id); if (target) void navigate({ to: "/assets/$kind/$id", params: { kind: target.kind, id: target.id }, hash: "account-relations" }); } : undefined} onDeleteRelation={(relation) => { setRelationDeleteError(""); setRelationToDelete(relation); }} /></Suspense>
 							{visibleRelations.length > 0 && <details className="account-relation-details" open={relationDetailsOpen} onToggle={(event) => { const value = event.currentTarget.open; setRelationDetailsOpen(value); if (centerId) graphViewState(centerId).detailsOpen = value; }}>
 								<summary>{t("accountGraphDetails", { count: visibleRelations.length })}</summary>
 								{relationList}
@@ -1996,8 +1996,9 @@ export function AssetDetail() {
 							</label>
 						</div>
 					) : (
-						<>
-							<div className="toolbar">
+						<div className="item-history-forms">
+							<form className="item-history-group" onSubmit={(event) => { event.preventDefault(); if (asset.status === "loaned") { setItemError(""); setItemReturnBase(assetSchema.parse(asset)); } else void recordItem("loan"); }}><fieldset className="item-history-form"><legend>{t("itemLoanHistory")}</legend>
+							<div className="item-history-fields">
 								{asset.status === "active" && (
 									<><label className="field">
 										<span>{t("borrower")}</span>
@@ -2011,22 +2012,20 @@ export function AssetDetail() {
 									<span>{t("loanReturnNote")}</span>
 									<Input value={itemLoanNote} onChange={(event) => { setItemLoanNote(event.target.value); setItemError(""); }} />
 								</label>
-								<Button
+								<div className="actions item-history-actions"><Button type="submit"
 									disabled={itemBusy || !["active", "loaned"].includes(asset.status) || (asset.status === "active" && ["repairing", "resold", "retired"].includes(asset.itemLifecycleStatus ?? ""))}
-									onClick={() => {
-										if (asset.status === "loaned") { setItemError(""); setItemReturnBase(assetSchema.parse(asset)); }
-										else void recordItem("loan");
-									}}
 								>
 									{t(asset.status === "loaned" ? "return" : "loan")}
 								</Button>
 								{["active", "archived"].includes(asset.status) && (
-									<Button disabled={itemBusy} onClick={() => void changeItemArchive()}>
+									<Button type="button" disabled={itemBusy} onClick={() => void changeItemArchive()}>
 										{t(asset.status === "archived" ? "reactivateItem" : "archiveItem")}
 									</Button>
 								)}
-							</div>
-							<div className="toolbar">
+								</div>
+							</div></fieldset></form>
+							<form className="item-history-group" onSubmit={(event) => { event.preventDefault(); void recordItem("maintenance"); }}><fieldset className="item-history-form"><legend>{t("itemMaintenanceHistory")}</legend>
+							<div className="item-history-fields">
 								<label className="field">
 									<span>{t("maintenanceNotes")}</span>
 									<Input value={itemMaintenanceNote} onChange={(event) => { setItemMaintenanceNote(event.target.value); setItemError(""); }} />
@@ -2039,14 +2038,14 @@ export function AssetDetail() {
 									<span>{t("maintenanceReminderDate")}</span>
 									<DatePicker aria-label={t("maintenanceReminderDate")} value={itemReminderDate} onValueChange={(dateValue) => { setItemReminderDate(dateValue); setItemError(""); }} />
 								</label>
-								<Button
+								<div className="actions item-history-actions"><Button type="submit"
 									disabled={itemBusy || !["active", "loaned"].includes(asset.status) || ["resold", "retired"].includes(asset.itemLifecycleStatus ?? "")}
-									onClick={() => void recordItem("maintenance")}
 								>
 									{t("maintenance")}
 								</Button>
-							</div>
-						</>
+								</div>
+							</div></fieldset></form>
+						</div>
 					)}
 					{asset.kind === "subscription" && <p className="subtitle">{t("renewalLocalHint")}</p>}
 					{histories.length ? (

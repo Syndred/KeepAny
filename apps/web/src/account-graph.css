@@ -1,4 +1,5 @@
 .graph.account-family-graph { display: flex; flex-direction: column; height: clamp(660px, 74vh, 760px); min-height: 0; margin: 0 16px 16px; overflow: hidden; }
+.graph.account-family-graph.asset-relations-graph { height: clamp(360px, 52vh, 560px); }
 .account-family-graph .account-graph-view-actions { flex: none; padding: 12px; border-bottom: 1px solid var(--line-soft); background: var(--paper); }
 .account-graph-navigation { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
 .account-graph-stage { position: relative; flex: 1; min-height: 0; }

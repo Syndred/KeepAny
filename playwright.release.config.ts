@@ -12,6 +12,8 @@ export default defineConfig({
 	testDir: "./tests/e2e",
 	outputDir: "test-results/local-release",
 	testMatch: [
+		"ui-consolidation.spec.ts",
+		"account-password-consolidation.spec.ts",
 		"preview-onboarding.spec.ts",
 		"unified-workspaces-release.spec.ts",
 		"core-pages-matrix.spec.ts",

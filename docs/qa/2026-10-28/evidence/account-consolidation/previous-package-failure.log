@@ -1,0 +1,61 @@
+
+[WebServer] (node:21320) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 16 tests using 1 worker
+
+(node:2484) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+[1/16] tests\e2e\account-password-consolidation.spec.ts:28:2 › zh-CN 390 account and password features survive unified entry, locking and KDBX restore
+[2/16] tests\e2e\account-password-consolidation.spec.ts:28:2 › zh-CN 1280 account and password features survive unified entry, locking and KDBX restore
+[3/16] tests\e2e\account-password-consolidation.spec.ts:28:2 › en 390 account and password features survive unified entry, locking and KDBX restore
+[4/16] tests\e2e\account-password-consolidation.spec.ts:28:2 › en 1280 account and password features survive unified entry, locking and KDBX restore
+[5/16] tests\e2e\password-vault.spec.ts:249:2 › zh-CN 390px multiple login identifiers and same-platform accounts survive KDBX export and reopen
+[6/16] tests\e2e\password-vault.spec.ts:249:2 › zh-CN 1280px multiple login identifiers and same-platform accounts survive KDBX export and reopen
+[7/16] tests\e2e\password-vault.spec.ts:249:2 › en-US 390px multiple login identifiers and same-platform accounts survive KDBX export and reopen
+[8/16] tests\e2e\password-vault.spec.ts:249:2 › en-US 1280px multiple login identifiers and same-platform accounts survive KDBX export and reopen
+[9/16] tests\e2e\password-vault.spec.ts:1106:2 › zh-CN 390px manual passwordless entries survive editing, reload and KDBX reimport
+[10/16] tests\e2e\password-vault.spec.ts:1106:2 › zh-CN 1280px manual passwordless entries survive editing, reload and KDBX reimport
+[11/16] tests\e2e\password-vault.spec.ts:1106:2 › en-US 390px manual passwordless entries survive editing, reload and KDBX reimport
+[12/16] tests\e2e\password-vault.spec.ts:1106:2 › en-US 1280px manual passwordless entries survive editing, reload and KDBX reimport
+[13/16] tests\e2e\ui-consolidation.spec.ts:18:2 › zh-CN 390 unified accounts, complete sample images, equal cards, shared graph and real item history
+[14/16] tests\e2e\ui-consolidation.spec.ts:18:2 › zh-CN 1280 unified accounts, complete sample images, equal cards, shared graph and real item history
+[15/16] tests\e2e\ui-consolidation.spec.ts:18:2 › en 390 unified accounts, complete sample images, equal cards, shared graph and real item history
+[16/16] tests\e2e\ui-consolidation.spec.ts:18:2 › en 1280 unified accounts, complete sample images, equal cards, shared graph and real item history
+  1) tests\e2e\ui-consolidation.spec.ts:18:2 › en 1280 unified accounts, complete sample images, equal cards, shared graph and real item history 
+
+    Error: expect(locator).toHaveCount(expected) failed
+
+    Locator:  locator('.asset-item-timeline > .list-row')
+    Expected: 5
+    Received: 6
+    Timeout:  5000ms
+
+    Call log:
+      - Expect "toHaveCount" locator('.asset-item-timeline > .list-row') with timeout 5000ms
+      - waiting for locator('.asset-item-timeline > .list-row')
+        14 × locator resolved to 6 elements
+           - unexpected value "6"
+
+
+      91 | 			expect(await maintenance.getByRole("combobox", { name: t("maintenanceDate"), exact: true }).evaluate((node) => (node as HTMLInputElement).validity.valid)).toBe(false);
+      92 | 			await expect(maintenance.getByLabel(t("maintenanceNotes"), { exact: true })).toHaveValue("Synthetic maintenance saved from unified form");
+    > 93 | 			await expect(page.locator(".asset-item-timeline > .list-row")).toHaveCount(beforeInvalidDate);
+         | 			                                                               ^
+      94 | 			await maintenance.getByRole("combobox", { name: t("maintenanceDate"), exact: true }).fill("2026-10-28");
+      95 | 			await page.keyboard.press("Tab");
+      96 | 			await maintenance.getByRole("button", { name: t("maintenance"), exact: true }).click();
+        at C:\Users\Administrator\Desktop\project\KeepAny\tests\e2e\ui-consolidation.spec.ts:93:67
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\portable-release\ui-consolidation-en-1280-u-d8a71-graph-and-real-item-history\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\portable-release\ui-consolidation-en-1280-u-d8a71-graph-and-real-item-history\error-context.md
+
+
+  1 failed
+    tests\e2e\ui-consolidation.spec.ts:18:2 › en 1280 unified accounts, complete sample images, equal cards, shared graph and real item history 
+  15 passed (3.9m)

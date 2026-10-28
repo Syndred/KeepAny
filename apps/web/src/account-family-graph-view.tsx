@@ -44,7 +44,7 @@ function AccountCard({ data }: NodeProps<AccountNode>) {
 	const { t } = useTranslation();
 	const display = accountLabel(data.asset);
 	const label = <span className="asset-graph-label" title={display.text}>
-		{data.current && <span className="asset-graph-current">{t(data.asset.kind === "account" ? "accountGraphCurrent" : "graphCurrentAsset")}</span>}
+		{data.current && <span className="asset-graph-current">{t("relationGraphCurrent")}</span>}
 		<strong>{data.asset.name}</strong>
 		{display.username && <small>{display.username}</small>}
 	</span>;
@@ -89,10 +89,11 @@ function fittedViewport(layout: AccountGraphLayout, width: number, height: numbe
 	return getViewportForBounds({ x: bounds.x - 8, y: bounds.y - 8, width: bounds.width + 16, height: bounds.height + 16 }, width, height, 0.01, 1, 0);
 }
 
-function GraphViewport({ layout, layoutKey, layoutSize, rootId, restore, onSize, onReady, refreshKey, positions }: {
+function GraphViewport({ layout, layoutKey, layoutSize, rootId, fitWholeGraph, restore, onSize, onReady, refreshKey, positions }: {
 	layout: AccountGraphLayout | null; layoutKey: string; rootId: string; restore: Bookmark | null;
 	refreshKey: string;
 	positions: Record<string, { x: number; y: number }>;
+	fitWholeGraph: boolean;
 	layoutSize: { width: number; height: number };
 	onSize: (size: { width: number; height: number }) => void; onReady: (key: string) => void;
 }) {
@@ -116,18 +117,18 @@ function GraphViewport({ layout, layoutKey, layoutSize, rootId, restore, onSize,
 			|| Math.round(width) !== layoutSize.width || Math.round(height) !== layoutSize.height) return;
 		let active = true;
 		const frame = requestAnimationFrame(() => {
-			const fitted = fittedViewport(layout, width, height, rootId);
+			const fitted = fittedViewport(layout, width, height, fitWholeGraph ? undefined : rootId);
 			const bookmark = pendingRestore.current;
 			const anchor = layout.nodes.get(rootId);
 			const restoredAnchor = bookmark?.anchorId ? layout.nodes.get(bookmark.anchorId) : undefined;
 			const restoredCenter = restoredAnchor && bookmark?.anchorId ? { x: restoredAnchor.x + restoredAnchor.width / 2 + (positions[bookmark.anchorId]?.x ?? 0) + (bookmark.offsetX ?? 0), y: restoredAnchor.y + restoredAnchor.height / 2 + (positions[bookmark.anchorId]?.y ?? 0) + (bookmark.offsetY ?? 0) } : bookmark;
-			const operation = bookmark && restoredCenter ? setCenter(restoredCenter.x, restoredCenter.y, { zoom: bookmark.zoom }) : anchor && fitted.zoom < 11 / 12
+			const operation = bookmark && restoredCenter ? setCenter(restoredCenter.x, restoredCenter.y, { zoom: bookmark.zoom }) : !fitWholeGraph && anchor && fitted.zoom < 11 / 12
 				? setCenter(anchor.x + anchor.width / 2, anchor.y + anchor.height / 2, { zoom: 1 })
 				: setViewport(fitted);
 			void operation.then(() => { if (active) { appliedLayout.current = layoutKey; pendingRestore.current = null; onReady(layoutKey); } });
 		});
 		return () => { active = false; cancelAnimationFrame(frame); };
-	}, [layout, layoutKey, layoutSize.width, layoutSize.height, measured, width, height, rootId, positions, setCenter, setViewport, onReady]);
+	}, [layout, layoutKey, layoutSize.width, layoutSize.height, measured, width, height, rootId, fitWholeGraph, positions, setCenter, setViewport, onReady]);
 	return null;
 }
 
@@ -233,7 +234,7 @@ function GraphContent({ props, expanded, restore, restoreFocus, onExpand, onColl
 		return [{ id: relation.id, source: relation.from, target: relation.to, sourceHandle: route.sourceHandle, targetHandle: route.targetHandle,
 			type: "accountConnection", data: { points: route.points, labels: [relation.label], moved: !!positions[relation.from] || !!positions[relation.to] }, label: relation.label,
 			domAttributes: { "data-from": relation.from, "data-to": relation.to, "data-relation-id": relation.id } as NonNullable<Edge["domAttributes"]> & { "data-from": string; "data-to": string; "data-relation-id": string },
-			markerEnd: { type: MarkerType.ArrowClosed }, selected: active, selectable: true, focusable: true, deletable: false, zIndex: active ? 2 : 0,
+			markerEnd: relation.id.startsWith("pw-link-identifier-") ? undefined : { type: MarkerType.ArrowClosed }, selected: active, selectable: true, focusable: true, deletable: false, zIndex: active ? 2 : 0,
 			className: verified ? "relation-graph-edge--verified" : "relation-graph-edge--pending",
 			ariaLabel: `${byId.get(relation.from)?.name} → ${byId.get(relation.to)?.name} · ${relation.label} · ${t(verified ? "relationGraphVerified" : "relationGraphPending")}`,
 			style: { stroke: verified ? "var(--green)" : "var(--muted)", strokeWidth: active ? 4 : 2, strokeDasharray: verified ? "none" : "5 4", opacity: selected && !active ? 0.25 : 1 } }];
@@ -264,7 +265,7 @@ function GraphContent({ props, expanded, restore, restoreFocus, onExpand, onColl
 			return next;
 		});
 	}
-	return <section className={`graph account-family-graph${expanded ? " account-family-graph--expanded" : ""}`} aria-label={t("relations")} aria-busy={!ready && !error} data-layout-ready={ready}>
+	return <section className={`graph account-family-graph${props.root.kind !== "account" ? " asset-relations-graph" : ""}${expanded ? " account-family-graph--expanded" : ""}`} aria-label={t("relations")} aria-busy={!ready && !error} data-layout-ready={ready}>
 		<div className="account-graph-view-actions"><div className="account-graph-navigation" ref={setNavigationHost} /></div>
 		<div className={`account-graph-stage${ready ? " is-ready" : ""}`}>
 			<ReactFlow nodes={nodes} edges={edges} nodeTypes={nodeTypes} edgeTypes={edgeTypes}
@@ -277,7 +278,7 @@ function GraphContent({ props, expanded, restore, restoreFocus, onExpand, onColl
 					if (expanded) presentation.expandedCamera = camera; else presentation.camera = camera;
 				}}
 				deleteKeyCode={null} multiSelectionKeyCode={null} selectionKeyCode={null} nodesDraggable nodesConnectable={false}>
-				<GraphViewport layout={layout} positions={positions} layoutKey={inputKey} refreshKey={JSON.stringify(props.relations)} layoutSize={size} rootId={props.root.id} restore={restore} onSize={setSize} onReady={setReadyKey} />
+				<GraphViewport layout={layout} positions={positions} layoutKey={inputKey} refreshKey={JSON.stringify(props.relations)} layoutSize={size} rootId={props.root.id} fitWholeGraph={props.root.kind !== "account"} restore={restore} onSize={setSize} onReady={setReadyKey} />
 				<Background />
 				{navigationHost && createPortal(<><GraphControls layout={positionedLayout} rootId={props.root.id} expanded={expanded} onExpand={onExpand} onCollapse={onCollapse} />{props.assets.length > 12 && <GraphMiniMap rootId={props.root.id} />}{props.onReturn && <Button className="graph-return" size="small" onClick={props.onReturn}><ArrowLeft size={14} />{props.returnLabel}</Button>}</>, navigationHost)}
 				{selected && <Panel position="bottom-right" className="account-graph-selection-panel nodrag nopan"><section className="account-graph-connection-details" aria-label={t("accountGraphSelection")}>
@@ -298,7 +299,7 @@ function GraphContent({ props, expanded, restore, restoreFocus, onExpand, onColl
 	</section>;
 }
 
-export function AccountFamilyGraphView(props: Props) {
+export function AssetRelationGraph(props: Props) {
 	const { t } = useTranslation();
 	const [expanded, setExpanded] = useState(false);
 	const [restore, setRestore] = useState<{ rootId: string; bookmark: Bookmark } | null>(null);
@@ -314,5 +315,5 @@ export function AccountFamilyGraphView(props: Props) {
 	// Keep the dialog mounted while changing accounts; only reset the canvas and its camera.
 	const saved = graphViewState(props.root.id);
 	const canvas = <GraphContent key={props.root.id} props={props} expanded={expanded} restore={restore?.rootId === props.root.id ? restore.bookmark : expanded ? saved.expandedCamera ?? saved.camera ?? null : saved.camera ?? null} restoreFocus={focusAfterCollapse === props.root.id} onCollapse={closeExpanded} onExpand={(bookmark) => { normalBookmark.current = { rootId: props.root.id, bookmark }; setRestore(null); setFocusAfterCollapse(null); saved.camera = bookmark; saved.expandedCamera = bookmark; setExpanded(true); }} />;
-	return <ReactFlowProvider>{expanded ? <Dialog title={t(props.root.kind === "account" ? "accountGraphTitle" : "graphTitle")} className="account-graph-dialog" focusTitleOnOpen returnFocusTo={() => document.getElementById("account-graph-expand")} onClose={closeExpanded}>{canvas}</Dialog> : canvas}</ReactFlowProvider>;
+	return <ReactFlowProvider>{expanded ? <Dialog title={t("relations")} className="account-graph-dialog" focusTitleOnOpen returnFocusTo={() => document.getElementById("account-graph-expand")} onClose={closeExpanded}>{canvas}</Dialog> : canvas}</ReactFlowProvider>;
 }

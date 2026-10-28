@@ -1,4 +1,16 @@
 .workspace-page { min-width: 0; }
+.unified-accounts-page .password-vault-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.unified-account-list { display: grid; gap: 12px; min-width: 0; }
+.unified-account { min-width: 0; border: 2px solid var(--line); border-radius: 14px; background: var(--paper); box-shadow: var(--shadow); }
+.unified-account > .asset-account-card { height: auto; min-height: 100px; border: 0; box-shadow: none; background: transparent; }
+.unified-account-passwords { margin: 0 12px 12px; border-top: 1px solid var(--line-soft); padding-top: 8px; }
+.unified-account-passwords > summary, .unified-vault-references > summary { cursor: pointer; font-size: 13px; font-weight: 700; padding: 6px 0; }
+.unified-account-passwords > .password-vault-entry-list { grid-template-columns: minmax(0,1fr); margin-block: 10px; }
+.unified-account-locked { margin: 0 12px 12px; color: var(--muted); font-size: 12px; }
+.unified-vault-references { padding: 12px; border: 1px solid var(--line-soft); border-radius: 12px; background: var(--paper); }
+.unified-vault-references > .unified-account-list { margin-top: 12px; }
+.unified-vault-access { border: 1px solid var(--line-soft); border-radius: 12px; padding: 8px 12px; background: var(--paper); }
+.unified-vault-access > summary { cursor: pointer; padding: 4px 0; font-weight: 700; font-size: 13px; }
 .workspace-navigation { display: flex; align-items: center; flex-wrap: wrap; gap: 5px; margin: 12px 12px 0; padding: 7px; border: 1px solid var(--line-soft); border-radius: 14px; background: var(--paper); }
 .workspace-navigation > a { display: inline-flex; justify-content: center; align-items: center; min-height: 36px; padding: 6px 14px; color: var(--ink); border: 2px solid transparent; border-radius: 999px; text-decoration: none; font-size: 13px; font-weight: 700; }
 .workspace-navigation > a:hover { border-color: var(--line-soft); background: var(--paper-soft); }
