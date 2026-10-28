@@ -1,0 +1,30 @@
+name: Account disclosure layout evidence
+on:
+  push:
+    branches: ['**']
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  account-layout:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.10.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: node scripts/build-preview-release.mjs
+      - run: node scripts/check-account-layout.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: account-layout-machine-evidence
+          path: test-results/account-layout-ci
+          if-no-files-found: error
