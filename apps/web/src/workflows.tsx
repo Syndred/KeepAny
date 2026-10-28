@@ -780,7 +780,7 @@ export function AssetEditor({
 						<Button type="button" disabled={busy} onClick={() => void resolveConnections(true)}>{t("subscriptionAbandonConnections")}</Button>
 					</div>
 				</div>}
-				<footer className="asset-editor-footer">
+				<footer className="actions asset-editor-footer">
 					{failure && (
 						<p ref={failureElement} className="field-error" role="alert">
 							{failure}
