@@ -773,11 +773,6 @@ export function AssetEditor({
 					/>
 					{errors.notes && <small id="notes-error" className="field-error">{errors.notes}</small>}
 				</div>}
-				{failure && (
-					<p ref={failureElement} className="field-error" role="alert">
-						{failure}
-					</p>
-				)}
 				{pendingConnections && <div className="notice" role="status">
 					<p>{t("subscriptionPendingConnections")}</p>
 					<div className="actions">
@@ -785,14 +780,21 @@ export function AssetEditor({
 						<Button type="button" disabled={busy} onClick={() => void resolveConnections(true)}>{t("subscriptionAbandonConnections")}</Button>
 					</div>
 				</div>}
-				<div className="actions">
-					<Button type="button" onClick={closeIfIdle} disabled={busy}>
-						{t("cancel")}
-					</Button>
-					<Button type="submit" variant="primary" disabled={busy || pendingConnections || checkingConnections}>
-						{busy ? t("loading") : t("save")}
-					</Button>
-				</div>
+				<footer className="asset-editor-footer">
+					{failure && (
+						<p ref={failureElement} className="field-error" role="alert">
+							{failure}
+						</p>
+					)}
+					<div className="actions">
+						<Button type="button" onClick={closeIfIdle} disabled={busy}>
+							{t("cancel")}
+						</Button>
+						<Button type="submit" variant="primary" disabled={busy || pendingConnections || checkingConnections}>
+							{busy ? t("loading") : t("save")}
+						</Button>
+					</div>
+				</footer>
 			</form>
 		</Dialog>
 	);

@@ -121,7 +121,9 @@ for(const language of ['zh-CN','en'] as const)for(const kind of kinds)test(`F02-
   let dialog=await openEditor(first,zh);await dialog.locator('#name').fill(`A unsaved ${kind}`);await dialog.locator('#notes').fill(`A preserved unsaved ${kind} note`);const draft=await formValues(dialog);write('a-old-draft.json',draft);
   await uiUpdate(second,zh,`B first committed ${kind}`,`B first committed ${kind} note`);const latest=await snapshot(second);write('b-ui-first-save.json',latest);preserveOtherRows(before,latest,id);
   await dialog.getByRole('button',{name:zh?'保存':'Save',exact:true}).tap();await expect(dialog).toBeVisible();await expect(dialog.getByRole('alert')).toHaveText(zh?'资料已在另一处更新，请重新打开后再保存。':'This record changed elsewhere. Reopen it before saving.');expect(await formValues(dialog)).toEqual(draft);
-  const rejectedEdit=await snapshot(first);write('after-a-stale-save.json',rejectedEdit);expect(rejectedEdit).toEqual(latest);await first.screenshot({path:info.outputPath(`stale-edit-${language}-${kind}.png`),fullPage:true});
+  const rejectedEdit=await snapshot(first);write('after-a-stale-save.json',rejectedEdit);expect(rejectedEdit).toEqual(latest);
+  write('stale-edit-footer-visibility.json',await expectEditorFailureUsable(dialog,zh));
+  write('stale-edit-natural-viewport.json',await naturalViewportScreenshot(first,info.outputPath(`stale-edit-${language}-${kind}.png`)));
   await dialog.getByRole('button',{name:zh?'取消':'Cancel',exact:true}).tap();await expect(dialog).toBeHidden();await first.reload();dialog=await openEditor(first,zh);await expect(dialog.locator('#name')).toHaveValue(`B first committed ${kind}`);await expect(dialog.locator('#notes')).toHaveValue(`B first committed ${kind} note`);
   await dialog.locator('#name').fill(`A explicit reread retry ${kind}`);await dialog.getByRole('button',{name:zh?'保存':'Save',exact:true}).tap();await expect(dialog).toBeHidden();await first.reload();const retry=await snapshot(first);write('after-a-explicit-reread-save.json',retry);preserveOtherRows(before,retry,id);expect(targetAsset(retry,id)).toMatchObject({id,name:`A explicit reread retry ${kind}`,notes:`B first committed ${kind} note`,createdAt:old.createdAt});
   // The pending Delete confirmation must retain its opening snapshot while Page B commits a new version.
@@ -193,6 +195,47 @@ for (const language of ['zh-CN', 'en'] as const) test(`F02-06 ${language} pendin
 async function alertIntersectionRatio(alert: Locator) {
   return alert.evaluate(element => new Promise<number>(resolve => { const observer = new IntersectionObserver(entries => { observer.disconnect(); resolve(entries[0].intersectionRatio); }); observer.observe(element); }));
 }
+// Intersection alone cannot detect a sticky button row painting over an alert.
+// These observations never scroll, focus, or change the tested page.
+async function elementVisibility(locator: Locator, ninePoints: boolean) {
+  return locator.evaluate((element, ninePoints) => {
+    const rect = element.getBoundingClientRect();
+    const intersection = Math.max(0, Math.min(rect.right, innerWidth) - Math.max(rect.left, 0))
+      * Math.max(0, Math.min(rect.bottom, innerHeight) - Math.max(rect.top, 0));
+    const insetX = Math.min(3, rect.width / 4), insetY = Math.min(3, rect.height / 4);
+    const xs = ninePoints ? [rect.left + insetX, rect.left + rect.width / 2, rect.right - insetX] : [rect.left + rect.width / 2];
+    const ys = ninePoints ? [rect.top + insetY, rect.top + rect.height / 2, rect.bottom - insetY] : [rect.top + rect.height / 2];
+    const hits = ys.flatMap(y => xs.map(x => {
+      const hit = document.elementFromPoint(x, y);
+      return { x, y, belongs: hit === element || (hit !== null && element.contains(hit)), tag: hit?.tagName ?? null };
+    }));
+    return { top: rect.top, bottom: rect.bottom, width: rect.width, height: rect.height,
+      viewportRatio: rect.width * rect.height > 0 ? intersection / (rect.width * rect.height) : 0, hits,
+      allHits: hits.every(hit => hit.belongs), viewport: { width: innerWidth, height: innerHeight } };
+  }, ninePoints);
+}
+async function expectEditorFailureUsable(dialog: Locator, zh: boolean) {
+  const alert = dialog.getByRole('alert'), cancel = dialog.getByRole('button', { name: zh ? '取消' : 'Cancel', exact: true });
+  const save = dialog.getByRole('button', { name: zh ? '保存' : 'Save', exact: true });
+  await expect(alert).toHaveCount(1); await expect(cancel).toBeEnabled(); await expect(save).toBeEnabled();
+  const observe = async () => {
+    const [error, cancelButton, saveButton, intersectionRatio] = await Promise.all([
+      elementVisibility(alert, true), elementVisibility(cancel, false), elementVisibility(save, false), alertIntersectionRatio(alert),
+    ]);
+    return { error, cancelButton, saveButton, intersectionRatio,
+      fullyVisibleAndUncovered: intersectionRatio >= 0.99 && error.viewportRatio >= 0.99 && error.allHits
+        && cancelButton.viewportRatio >= 0.99 && cancelButton.allHits && cancelButton.width >= 43.5 && cancelButton.height >= 43.5
+        && saveButton.viewportRatio >= 0.99 && saveButton.allHits && saveButton.width >= 43.5 && saveButton.height >= 43.5
+        && error.bottom <= Math.min(cancelButton.top, saveButton.top) + 0.5 };
+  };
+  await expect.poll(observe).toMatchObject({ fullyVisibleAndUncovered: true });
+  return observe();
+}
+async function naturalViewportScreenshot(page: Page, path: string) {
+  const viewport = () => page.evaluate(() => ({ width: innerWidth, height: innerHeight }));
+  const before = await viewport(); await page.screenshot({ path, fullPage: false }); const after = await viewport();
+  expect(after).toEqual(before); return { before, after, fullPage: false };
+}
 async function replacementPng(page: Page, color: string) {
   const data = await page.evaluate(fill => { const canvas = document.createElement('canvas'); canvas.width = 8; canvas.height = 8;
     const paint = canvas.getContext('2d'); if (!paint) throw Error('synthetic-canvas-unavailable'); paint.fillStyle = fill; paint.fillRect(0, 0, 8, 8); return canvas.toDataURL('image/png').split(',')[1]; }, color);
@@ -246,10 +289,8 @@ for (const language of ['zh-CN', 'en'] as const) for (const kind of ['project', 
     write('after-image-stale-save.json', await snapshot(first)); write('after-image-stale-save-ui.json', { alert: await dialog.getByRole('alert').innerText(), form: await formValues(dialog) });
     await expect(dialog.getByRole('alert')).toHaveText(zh ? '图片或附件已不可用。请重新打开资料核对后再保存。' : 'An image or attachment is unavailable. Reopen the record and check its files before saving.');
     expect(await formValues(dialog)).toEqual(draft); expect(await snapshot(first)).toEqual(firstImage);
-    await expect.poll(() => alertIntersectionRatio(dialog.getByRole('alert'))).toBeGreaterThan(0);
-    const alertVisibility = await alertIntersectionRatio(dialog.getByRole('alert'));
-    write('image-stale-save-visibility.json', { language, kind, intersectionRatio: alertVisibility });
-    await first.screenshot({ path: info.outputPath(`image-stale-edit-${language}-${kind}.png`), fullPage: true });
+    write('image-stale-save-visibility.json', { language, kind, ...await expectEditorFailureUsable(dialog, zh) });
+    write('image-stale-save-natural-viewport.json', await naturalViewportScreenshot(first, info.outputPath(`image-stale-edit-${language}-${kind}.png`)));
     await dialog.getByRole('button', { name: zh ? '取消' : 'Cancel', exact: true }).tap(); await expect(dialog).toBeHidden(); await first.reload();
     dialog = await openDelete(first, zh); await replaceImageThroughUi(second, zh, kind, '#1d9fba', `b-second-${kind}.png`);
     const secondImage = await snapshot(second); const finalFile = preserveImageReplacement(firstImage, secondImage, id, kind); write('b-second-real-image-save.json', secondImage);
@@ -291,10 +332,9 @@ for (const language of ['zh-CN', 'en'] as const) test(`F02-06 ${language} file d
     const missing = await snapshot(page); expect(missing.rows).toEqual(before.rows); expect(missing.files).toEqual(before.files.filter(file => file.id !== fileId)); write('unchanged-record-missing-file.json', missing);
     await dialog.getByRole('button', { name: zh ? '保存' : 'Save', exact: true }).tap(); await expect(dialog).toBeVisible();
     await expect(dialog.getByRole('alert')).toHaveText(zh ? '图片或附件已不可用。请重新打开资料核对后再保存。' : 'An image or attachment is unavailable. Reopen the record and check its files before saving.');
-    await expect.poll(() => alertIntersectionRatio(dialog.getByRole('alert'))).toBeGreaterThan(0);
-    write('missing-file-error-visibility.json', { language, intersectionRatio: await alertIntersectionRatio(dialog.getByRole('alert')) });
+    write('missing-file-error-visibility.json', { language, ...await expectEditorFailureUsable(dialog, zh) });
     expect(await formValues(dialog)).toEqual(draft); const rejected = await snapshot(page); expect(rejected).toEqual(missing); write('unchanged-record-after-rejected-save.json', rejected);
-    await page.screenshot({ path: info.outputPath(`missing-file-unchanged-record-${language}.png`), fullPage: true });
+    write('missing-file-natural-viewport.json', await naturalViewportScreenshot(page, info.outputPath(`missing-file-unchanged-record-${language}.png`)));
     await dialog.getByRole('button', { name: zh ? '取消' : 'Cancel', exact: true }).tap(); await expect(dialog).toBeHidden(); expect(await snapshot(page)).toEqual(missing); expect(errors).toEqual([]);
     write('missing-file-result.json', { language, layer: 'C-assisted B: synthetic referenced file removed, record unchanged', id, allRowsAndRevisionsUnchanged: true, draftRetained: true, fileSpecificGuidance: true, noElsewhereClaim: true });
   } finally {
