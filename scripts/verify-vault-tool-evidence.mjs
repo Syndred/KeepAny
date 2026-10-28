@@ -130,8 +130,13 @@ for (const item of receipts) {
 			assert(
 				phase.visual.controls.length > 0 &&
 					phase.visual.controls.every(
-						(control) => control.width >= 44 && control.height >= 44,
+						(control) =>
+							Number.isFinite(control.width) &&
+							Number.isFinite(control.height) &&
+							control.width >= 44 &&
+							control.height >= 44,
 					),
+				"Tool control dimensions must be finite numbers and at least 44px",
 			);
 			shots.push(`${key}-default.png`);
 			for (const state of ["hover", "focus", "pressed"])

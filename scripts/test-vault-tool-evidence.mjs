@@ -78,8 +78,12 @@ async function jsonProbe(name, row, mutate, pattern) {
 	const original = await readFile(path);
 	const changed = JSON.parse(original);
 	mutate(changed);
+	const changedBytes = `${JSON.stringify(changed)}\n`;
 	try {
-		await writeFile(path, `${JSON.stringify(changed)}\n`);
+		await writeFile(path, changedBytes);
+		await writeFile(join(logs, `${name}-input.json`), changedBytes, {
+			flag: "wx",
+		});
 		await run(name, negative, "reject", pattern);
 	} finally {
 		await writeFile(path, original);
@@ -158,6 +162,18 @@ try {
 		},
 		/actualModuleResponseFinished/,
 	);
+	for (const dimension of ["width", "height"]) {
+		for (const value of ["Infinity", "44"]) {
+			await jsonProbe(
+				`tool-control-${dimension}-${value === "Infinity" ? "nonfinite" : "numeric-string"}`,
+				tool,
+				(row) => {
+					row.phases[0].visual.controls[0][dimension] = value;
+				},
+				/Tool control dimensions must be finite numbers/,
+			);
+		}
+	}
 	await jsonProbe(
 		"toast-above-modal",
 		toast,
@@ -222,7 +238,7 @@ try {
 			{
 				schema: "keepany.vault-tool-gate-probes.v1",
 				status:
-					results.length === 17 && results.every((row) => row.passed)
+					results.length === 21 && results.every((row) => row.passed)
 						? "passed"
 						: "failed",
 				archiveSha256: record.archiveSha256,
@@ -243,7 +259,7 @@ console.log(
 	JSON.stringify({
 		status: "passed",
 		positive: 1,
-		negative: 16,
+		negative: 20,
 		destination,
 		humanReviewInferred: false,
 	}),
