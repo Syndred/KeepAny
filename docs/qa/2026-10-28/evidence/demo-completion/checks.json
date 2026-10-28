@@ -1,0 +1,63 @@
+{
+  "date": "2026-10-28",
+  "origin": "http://127.0.0.1:4180/",
+  "productCommit": "79dc2ad2517ec4bef225bc6d650a9aa727c14c03",
+  "packageVersion": "0.1.0-preview.79dc2ad2517e.dirty",
+  "actualEntry": "/assets/index-DWlbg3vo.js",
+  "indexSha256": "f89ed9e6fef18b9423bd3d724f7da4a1ee9b5abdcfb79c8360847ed02490fe0c",
+  "httpIndexMatchesPackage": true,
+  "listener": {
+    "address": "127.0.0.1",
+    "port": 4180,
+    "pid": 21200
+  },
+  "userCreatedVault": true,
+  "initialVaultEntries": 0,
+  "finalActiveVaultEntries": 4,
+  "generatedDemoPasswordEntries": 3,
+  "passwordlessDemoEntries": 1,
+  "vaultTrashEntries": 1,
+  "accountPasswordLinks": {
+    "email": 1,
+    "phone": 1,
+    "media": 1,
+    "other": 1
+  },
+  "historyRestoreCandidatesShown": 1,
+  "privateSearchFoundDemoEntry": true,
+  "ordinarySearchDidNotReturnPrivateEntry": true,
+  "imageAttachment": {
+    "loaded": true,
+    "width": 848,
+    "height": 1200
+  },
+  "collectionAssets": 13,
+  "assetCards": {
+    "projects": 3,
+    "items": 3,
+    "subscriptions": 2,
+    "domains": 2,
+    "total": 10
+  },
+  "overviewCoreAssets": 13,
+  "reviewCandidates": {
+    "pending": 2,
+    "confirmed": 2,
+    "ignored": 2
+  },
+  "mergedCandidateKeepsExistingAssetId": true,
+  "finalTab": {
+    "id": "680490679",
+    "active": true,
+    "groupId": -1,
+    "url": "http://127.0.0.1:4180/"
+  },
+  "finalLocale": "zh-CN",
+  "newProductChanges": false,
+  "credentialValuesRecorded": false,
+  "screenshots": [
+    "vault-zh.jpg",
+    "vault-en.jpg",
+    "overview-zh.jpg"
+  ]
+}
