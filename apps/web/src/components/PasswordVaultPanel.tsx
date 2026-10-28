@@ -1183,7 +1183,7 @@ export function PasswordVaultPanel({
 									<div>
 										<strong>
 											{t("pwVaultHistoryVersion", {
-												count: historyRows.length - index,
+												count: index + 1,
 											})}
 										</strong>
 										<small>
