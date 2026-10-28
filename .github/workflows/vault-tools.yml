@@ -1,0 +1,45 @@
+name: Optional vault tools and modal feedback
+on:
+  push:
+    branches: ['**']
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: vault-tools-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/codex/asset-card-layout-20261028' }}
+jobs:
+  vault-tools:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.10.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: node scripts/build-preview-release.mjs
+      - run: node scripts/verify-preview-release.mjs
+      - name: Select the actual compiled portable candidate
+        run: >-
+          node --input-type=module -e "import fs from 'node:fs'; import path from 'node:path'; const files=fs.readdirSync('dist/preview').filter(file=>file.endsWith('-portable.zip')); if(files.length!==1)throw Error('Expected one compiled candidate'); fs.appendFileSync(process.env.GITHUB_ENV,'KEEPANY_PREVIEW_ARCHIVE='+path.resolve('dist/preview',files[0])+'\nKEEPANY_RELEASE_TEST_PORT=4392\n');"
+      - name: Verify module faults, cancellation, vault states, and active modal feedback
+        run: pnpm exec playwright test -c playwright.vault-tools.config.ts
+      - name: Verify frozen coverage, candidate identities, receipts and images
+        run: node scripts/verify-vault-tool-evidence.mjs
+      - name: Check that incomplete or mismatched evidence is rejected
+        run: node scripts/test-vault-tool-evidence.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: vault-tools-machine-evidence
+          path: |
+            test-results/vault-tools
+            test-results/vault-gate-probes-*/results.json
+            test-results/vault-gate-probes-*/logs
+          if-no-files-found: error
