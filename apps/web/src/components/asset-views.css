@@ -1,7 +1,7 @@
 .asset-view-toggle { display: flex; align-items: center; flex: none; gap: 6px; min-width: 0; margin: 0; padding: 0; border: 0; }
 .asset-list-view-tools { display: flex; justify-content: flex-end; margin-block: 8px; }
 .asset-card-summary, .asset-card-facts { display: grid; gap: 7px; min-width: 0; }
-.asset-list-content:not(.asset-dense-list) { align-items: stretch; }
+.asset-list-content:not(.asset-dense-list, .asset-account-grid) { align-items: stretch; }
 .asset-list-content:not(.asset-dense-list) > :is(.asset-project-card, .asset-library-card) { display: flex; flex-direction: column; }
 .asset-list-content:not(.asset-dense-list) :is(.asset-project-info, .asset-library-body) { display: flex; flex: 1; flex-direction: column; }
 .asset-list-content:not(.asset-dense-list) :is(.asset-project-foot, .asset-library-foot, .workspace-domain-action) { margin-top: auto; }
