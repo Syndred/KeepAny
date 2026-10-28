@@ -1,8 +1,8 @@
 import { createServer } from 'node:https';
-import { spawnSync } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import type { AddressInfo, Socket } from 'node:net';
 import { join, resolve } from 'node:path';
-import { readdir, rm, writeFile } from 'node:fs/promises';
+import { mkdir, readdir, rm, writeFile } from 'node:fs/promises';
 import { Client } from '@modelcontextprotocol/client';
 import { StdioClientTransport } from '@modelcontextprotocol/client/stdio';
 import { afterEach, beforeAll, expect, it } from 'vitest';
@@ -23,8 +23,8 @@ beforeAll(() => { if (process.env.KEEPANY_MOBILE_CLI_TEST_EXECUTABLE) return;
 afterEach(async () => { for (const close of cleanup.splice(0).reverse()) await close(); stopPrivateFilesHelper(); });
 const until = async (check: () => boolean) => { for (let i = 0; i < 400; i++) { if (check()) return; await new Promise(r => setTimeout(r, 10)); } throw Error('test-condition'); };
 
-async function fixture(mode: 'normal' | 'denied' | 'code' | 'scope' | 'expiry' | 'extra' = 'normal') {
-  const identity = certificate(), directory = await privateTestDirectory('keepany-mobile-cli-');
+async function fixture(mode: 'normal' | 'denied' | 'code' | 'scope' | 'expiry' | 'extra' = 'normal', readOnly = false, ownIgnoredDirectory?: string) {
+  const identity = certificate(), directory = ownIgnoredDirectory ?? await privateTestDirectory('keepany-mobile-cli-');
   cleanup.push(async () => { stopPrivateFilesHelper(); await rm(directory, { recursive: true, force: true }); });
   let asset = { ...newAsset('project'), name: 'selected ordinary project', notes: 'excluded-secret-note' };
   const original = structuredClone(asset), other = newAsset('account'), storage = new MemoryAuthorityStorage(), authority = new McpAuthority(storage);
@@ -67,7 +67,7 @@ async function fixture(mode: 'normal' | 'denied' | 'code' | 'scope' | 'expiry' |
   await new Promise<void>(r => server.listen(0, '127.0.0.1', r));
   const endpoint = `https://127.0.0.1:${(server.address() as AddressInfo).port}/mcp`;
   controller = createMobileMcpPairing({ endpoint: { endpoint, certificatePem: identity.pem, spkiSha256: identity.pin, instanceId: crypto.randomUUID() },
-    authority, store, scope: { assetIds: [asset.id], readFields: ['name'], writeFields: ['name'], ttlMs: 300000 },
+    authority, store, scope: { assetIds: [asset.id], readFields: ['name'], writeFields: readOnly ? [] : ['name'], ttlMs: 300000 },
     assertAvailable: () => {}, onClient: c => { clientNonce = c.clientNonce; } });
   cleanup.push(async () => { await controller.close(); for (const socket of sockets) socket.destroy(); await new Promise<void>(r => server.close(() => r())); });
   const path = join(directory, 'pair.json');
@@ -86,6 +86,55 @@ async function connect(path: string, stateDir?: string) {
   cleanup.push(async () => { await client.close(); await transport.close(); });
   return { client, transport, opening: client.connect(transport), diagnostic: () => diagnostic };
 }
+
+it('terminal pairing writes a private read-only profile before any parent initialize; EOF closes only the CLI and official SDK reconnects', async () => {
+  const root = resolve('test-results/desktop-mobile-mcp-terminal');
+  await mkdir(root, { recursive: true });
+  const directory = join(root, `regression-private-${crypto.randomUUID()}`);
+  if (process.platform === 'win32') await nativePrivateFiles.createDirectory(directory);
+  else await mkdir(directory, { mode: 0o700 });
+  const f = await fixture('normal', true, directory), start = performance.now();
+  const child = spawn(process.execPath, [executable, '--mobile-pairing', f.path, '--state-dir', directory], { stdio: ['pipe', 'pipe', 'pipe'], windowsHide: true });
+  let diagnostic = '', stdoutBytes = 0, exited = false;
+  child.stderr.on('data', chunk => { diagnostic += chunk.toString(); });
+  child.stdout.on('data', chunk => { stdoutBytes += chunk.length; });
+  const ending = new Promise<{ code: number | null; signal: string | null }>((done, reject) => {
+    child.once('error', reject); child.once('close', (code, signal) => { exited = true; done({ code, signal }); });
+  });
+  const boundedExit = async () => {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    try { return await Promise.race([ending, new Promise<never>((_, reject) => { timer = setTimeout(() => reject(Error('own-cli-exit-deadline')), 5000); })]); }
+    finally { if (timer) clearTimeout(timer); }
+  };
+  cleanup.push(async () => { if (!exited) { child.stdin.end(); try { await boundedExit(); } catch { child.kill(); await ending; } } });
+  // The child has an open stdin, but no parent MCP client and no bytes written.
+  await until(f.pending); await until(() => /comparison code: [A-F0-9]{8}/.test(diagnostic));
+  expect((await f.storage.read()).grants.length).toBe(0);
+  expect((await readdir(directory)).filter(name => name.startsWith('connection-')).length).toBe(0);
+  const approvedAtMs = performance.now() - start;
+  await f.approve();
+  await until(() => diagnostic.includes('KeepAny MCP private connection profile: '));
+  const profileAtMs = performance.now() - start;
+  const profiles = (await readdir(directory)).filter(name => /^connection-[a-f0-9-]{36}\.json$/.test(name));
+  expect(profiles.length).toBe(1); expect(stdoutBytes).toBe(0);
+  const profile = join(directory, profiles[0]), saved = await readMobileMcpConnectionFile(profile);
+  expect(saved.grantId === f.controller.grantId && saved.scope.writeFields.length === 0 && JSON.stringify(saved.scope.readFields) === '["name"]').toBe(true);
+  expect(diagnostic.includes(saved.grantSecret) || diagnostic.includes(saved.endpoint)).toBe(false);
+  child.stdin.end(); // Real EOF, not Windows kill('SIGINT') emulation.
+  const exit = await boundedExit(); expect(exit.code).toBe(0); expect(exit.signal).toBeNull();
+  expect((await f.authority.requireGrant(saved.grantId, saved.grantSecret)).id === saved.grantId).toBe(true);
+  const reconnect = await connect(profile); await reconnect.opening;
+  const tools = (await reconnect.client.listTools()).tools.map(tool => tool.name).sort();
+  expect(tools).toEqual(['confirm_asset_update', 'get_asset', 'list_assets', 'preview_asset_update']);
+  const selected = await reconnect.client.callTool({ name: 'list_assets', arguments: {} });
+  const rows = (selected.structuredContent as { result?: unknown })?.result;
+  expect(Array.isArray(rows) && rows.length === 1 && JSON.stringify(Object.keys(rows[0]).sort()) === '["id","name"]' && rows[0].id === f.original.id && rows[0].name === f.original.name).toBe(true);
+  expect(JSON.stringify(selected).includes('excluded-secret-note')).toBe(false);
+  expect((await reconnect.client.callTool({ name: 'get_asset', arguments: { id: f.other.id } })).isError).toBe(true);
+  expect(f.commits()).toBe(0);
+  await reconnect.client.close(); await reconnect.transport.close();
+  if (process.env.KEEPANY_TERMINAL_CLI_EVIDENCE) await writeFile(process.env.KEEPANY_TERMINAL_CLI_EVIDENCE, JSON.stringify({ classification: 'C_REAL_PACKAGED_CLI_SYNTHETIC_PHONE_NOT_DESKTOP_UI', parentInitializeSentBeforeProfile: false, stdoutBytesBeforeParentInitialize: stdoutBytes, approvedAtMs, profileAtMs, profileBeforeParentInitialize: true, profileStrictReadOnly: true, eofExitCode: exit.code, eofSignal: exit.signal, grantSurvivesCliClose: true, officialSdkReconnect: true, toolNames: tools, selectedFieldOnly: true, unselectedDenied: true, writes: f.commits() }, null, 2));
+}, 30000);
 
 it('real packaged CLI proposes scope, bridges official SDK stdio, preserves per-write approval and reconnects from a persistent profile', async () => {
   const f = await fixture(), c = await connect(f.path, f.directory);
