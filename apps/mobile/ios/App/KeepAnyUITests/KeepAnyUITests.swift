@@ -88,9 +88,18 @@ final class KeepAnyUITests: XCTestCase {
             return nil
         }
         func calendarDialog() -> XCUIElement? {
-            let candidates = app.webViews.descendants(matching: .any)
-                .matching(NSPredicate(format: "label == %@ OR label == %@", calendarTitle, calendarTitle + ", web dialog"))
+            let name = NSPredicate(format: "label == %@ OR label == %@", calendarTitle, calendarTitle + ", web dialog")
+            let dialogs = app.webViews.descendants(matching: .dialog).matching(name)
                 .allElementsBoundByIndex.filter { $0.frame.width > 0 && $0.frame.height > 0 }
+            if !dialogs.isEmpty { return dialogs.count == 1 ? dialogs[0] : nil }
+            // A same-name icon trigger is not the popup. WKWebView's Other
+            // fallback must contain both actual calendar footer controls.
+            let candidates = app.webViews.descendants(matching: .other).matching(name)
+                .allElementsBoundByIndex.filter {
+                    $0.frame.width > 0 && $0.frame.height > 0
+                        && $0.buttons[chinese ? "今天" : "Today"].firstMatch.exists
+                        && $0.buttons[chinese ? "清除日期" : "Clear dates"].firstMatch.exists
+                }
             return candidates.count == 1 ? candidates[0] : nil
         }
         func requireControl(_ stage: String) -> XCUIElement? {
