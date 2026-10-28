@@ -20,8 +20,8 @@ export function buildSampleLibrary(t: (key: string) => string, language: string,
 		...fields,
 	});
 	const work = t("sampleWorkTag");
-	const studio = create("project", "sampleStudio", { category: "website", url: "https://pinecone.example.com", description: t("sampleStudioDescription"), projectEmail: "hello@example.com", projectLaunchMonth: day(-120).slice(0, 7), projectInspectionDate: day(-2), tags: [work],
-		attachments: [images.studio, images.logo, images.cover], projectMedia: { homeScreenshotId: images.studio, logoId: images.logo, promoCoverId: images.cover, productScreenshotIds: [] } });
+	const studio = create("project", "sampleStudio", { category: "website", url: "https://pinecone.example.com", description: t("sampleStudioDescription"), projectEmail: "hello@example.com", projectLaunchMonth: day(-120).slice(0, 7), projectInspectionDate: day(-2), projectTitle: t("sampleStudio"), projectMediumDescription: t("sampleStudioDescription"), longDescription: t("sampleLongDescription"), projectFeatures: t("sampleProjectFeatures"), projectPricing: t("sampleProjectPricing"), projectPricingType: t("sampleProjectPricingType"), projectPromoUrl: "https://video.example.com/pinecone", contact: "hello@example.com", tags: [work, t("samplePersonalTag")],
+		attachments: [images.studio, images.logo, images.cover, images.product], projectMedia: { homeScreenshotId: images.studio, logoId: images.logo, promoCoverId: images.cover, productScreenshotIds: [images.product] } });
 	const notes = create("project", "sampleProject", { category: "website", url: "https://notes.example.com", description: t("sampleProjectDescription"), longDescription: t("sampleLongDescription"), tags: [work, t("sampleWritingTag")], attachments: [images.product], projectMedia: { homeScreenshotId: images.product, logoId: "", promoCoverId: "", productScreenshotIds: [] } });
 	const components = create("project", "sampleComponents", { category: "repository", description: t("sampleComponentsDescription"), tags: [work], url: "https://code.example.com/paperplane" });
 	const minimal = create("project", "sampleMinimal");
@@ -40,7 +40,7 @@ export function buildSampleLibrary(t: (key: string) => string, language: string,
 	const subscriptions = [
 		create("subscription", "sampleHosting", { category: "service", amount: 8800, dueDate: day(6), billingAnchor: day(6), tags: [work], subscriptionPaymentMethod: "Visa · 0000" }),
 		create("subscription", "sampleDesignSubscription", { category: "software", amount: 3900, dueDate: day(15), tags: [work], discountAmount: 900, discountUntil: day(30) }),
-		create("subscription", "sampleDocsSubscription", { category: "software", cycle: "year", amount: 29900, dueDate: day(90) }),
+		create("subscription", "sampleDocsSubscription", { category: "software", currency: "USD", cycle: "year", amount: 4900, dueDate: day(90) }),
 		create("subscription", "sampleTrialSubscription", { category: "service", amount: 1900, dueDate: day(7), trialEndsAt: day(7) }),
 		create("subscription", "samplePausedSubscription", { category: "service", amount: 5900, dueDate: day(20), status: "paused" }),
 		create("subscription", "sampleCancelledSubscription", { category: "service", amount: 500, cycle: "week", dueDate: day(-1), status: "cancelled", cancelledAt: day(-7) }),
@@ -69,6 +69,7 @@ export function buildSampleLibrary(t: (key: string) => string, language: string,
 		{ name: t("sampleDomainTask"), assetId: studio.id, dueDate: day(7) },
 		{ name: t("sampleCompletedTask"), assetId: components.id, dueDate: day(-2), done: true, completedAt: createdAt, completionHistory: [createdAt] },
 		{ name: t("sampleOverdueTask"), assetId: notes.id, dueDate: day(-1) },
+		{ name: t("sampleRecurringMaintenance"), assetId: items[0].id, dueDate: day(14), maintenancePlan: { schedule: { rule: { mode: "fixed", unit: "month", every: 3 }, dueDate: day(14), anchorDate: day(14), occurrence: 0, leadDays: 2, plannedAmountMinor: null, currency }, active: true, deferredUntil: "", records: [] } },
 	].map((task) => ({ id: crypto.randomUUID(), createdAt, ...task }));
 	const history = [
 		{ assetId: items[0].id, action: "maintenance", eventDate: day(-1), note: t("sampleMaintenanceNote") },

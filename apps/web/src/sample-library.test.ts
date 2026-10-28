@@ -10,6 +10,9 @@ describe("complete sample library", () => {
 		const { rows, assets } = buildSampleLibrary((key) => copy[key] ?? key, language, images, new Date("2026-10-28T04:00:00Z"));
 		for (const row of rows) expect(() => entitySchemas[row.type].parse(row.value)).not.toThrow();
 		expect(assets).toHaveLength(26);
+		expect(assets[0].projectFeatures).not.toBe("");
+		expect(assets[0].projectMedia.productScreenshotIds).toHaveLength(1);
+		expect(rows.some((row) => row.type === "task" && (row.value as { maintenancePlan?: unknown }).maintenancePlan)).toBe(true);
 		const ids = new Set(assets.map((asset) => asset.id));
 		for (const row of rows) {
 			const value = row.value as { assetId?: string; from?: string; to?: string };
