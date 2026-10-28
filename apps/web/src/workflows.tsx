@@ -1,3 +1,6 @@
+import { Textarea } from "./components/ui/textarea";
+import { Input } from "./components/ui/input";
+import { DatePicker } from "./components/ui/date-picker";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { Download, Link2 } from "lucide-react";
@@ -116,8 +119,8 @@ function Field({
 	return (
 		<div className="field">
 			<label htmlFor={name}>{label}</label>
-			{children ?? (
-				<input
+			{children ?? (type === "date" ? <DatePicker id={name} name={name} value={String(value ?? "")} onValueChange={(next) => onChange?.(next)} disabled={disabled} aria-invalid={!!error} aria-describedby={error ? `${name}-error` : undefined} /> :
+				<Input
 					id={name}
 					name={name}
 					type={type}
@@ -499,10 +502,10 @@ export function AssetEditor({
 							<details className="project-editor-group">
 								<summary>{t("projectIntroductionPricing")}</summary>
 								<div className="project-editor-fields">
-									<Field name="projectMediumDescription" label={t("projectMediumDescription")} error={errors.projectMediumDescription}><textarea id="projectMediumDescription" rows={4} value={draft.projectMediumDescription} onChange={(event) => set("projectMediumDescription", event.target.value)} /></Field>
-									<Field name="longDescription" label={t("projectFullDescription")} error={errors.longDescription}><textarea id="longDescription" rows={4} value={draft.longDescription} onChange={(event) => set("longDescription", event.target.value)} /></Field>
-									<Field name="projectFeatures" label={t("projectFeatures")} error={errors.projectFeatures}><textarea id="projectFeatures" rows={4} value={draft.projectFeatures} onChange={(event) => set("projectFeatures", event.target.value)} /></Field>
-									<Field name="projectPricing" label={t("projectPricing")} error={errors.projectPricing}><textarea id="projectPricing" rows={4} value={draft.projectPricing} onChange={(event) => set("projectPricing", event.target.value)} /></Field>
+									<Field name="projectMediumDescription" label={t("projectMediumDescription")} error={errors.projectMediumDescription}><Textarea id="projectMediumDescription" rows={4} value={draft.projectMediumDescription} onChange={(event) => set("projectMediumDescription", event.target.value)} /></Field>
+									<Field name="longDescription" label={t("projectFullDescription")} error={errors.longDescription}><Textarea id="longDescription" rows={4} value={draft.longDescription} onChange={(event) => set("longDescription", event.target.value)} /></Field>
+									<Field name="projectFeatures" label={t("projectFeatures")} error={errors.projectFeatures}><Textarea id="projectFeatures" rows={4} value={draft.projectFeatures} onChange={(event) => set("projectFeatures", event.target.value)} /></Field>
+									<Field name="projectPricing" label={t("projectPricing")} error={errors.projectPricing}><Textarea id="projectPricing" rows={4} value={draft.projectPricing} onChange={(event) => set("projectPricing", event.target.value)} /></Field>
 									<Field name="projectPricingType" label={t("projectPricingType")} value={draft.projectPricingType} onChange={(v) => set("projectPricingType", v)} error={errors.projectPricingType} />
 								</div>
 							</details>
@@ -510,7 +513,7 @@ export function AssetEditor({
 								<summary>{t("projectContactDetails")}</summary>
 								<div className="project-editor-fields">
 									<Field name="projectEmail" label={t("projectBusinessEmail")} type="email" value={draft.projectEmail} onChange={(v) => set("projectEmail", v)} error={errors.projectEmail} />
-									<Field name="notes" label={t("projectAdditionalNotes")} error={errors.notes}><textarea id="notes" rows={4} value={draft.notes} onChange={(event) => set("notes", event.target.value)} /></Field>
+									<Field name="notes" label={t("projectAdditionalNotes")} error={errors.notes}><Textarea id="notes" rows={4} value={draft.notes} onChange={(event) => set("notes", event.target.value)} /></Field>
 								</div>
 							</details>
 						</>
@@ -533,7 +536,7 @@ export function AssetEditor({
 								error={errors.contact}
 							/>
 							<Field name="description" label={t("accountPurpose")} error={errors.description}>
-								<textarea id="description" rows={3} value={draft.description} onChange={(event) => set("description", event.target.value)} />
+								<Textarea id="description" rows={3} value={draft.description} onChange={(event) => set("description", event.target.value)} />
 							</Field>
 							<Field name="status" label={t("status")}>
 								<Select id="status" value={draft.status} onValueChange={(selectValue) => set("status", selectValue as Asset["status"])}>
@@ -760,7 +763,7 @@ export function AssetEditor({
 				{kind === "vault" && <p className="notice">{t("vaultHint")}</p>}
 				{kind !== "project" && <div className="field">
 					<label htmlFor="notes">{t("notes")}</label>
-					<textarea
+					<Textarea
 						id="notes"
 						rows={3}
 						value={assetNotes(draft)}
@@ -1377,7 +1380,7 @@ export function IntakeTools({ onCsvStaged }: { onCsvStaged: () => void }) {
 						<>
 							<div className="field">
 								<label htmlFor="import-url">{t("url")}</label>
-								<input
+								<Input
 									id="import-url"
 									type="url"
 									value={url}
@@ -1421,7 +1424,7 @@ export function IntakeTools({ onCsvStaged }: { onCsvStaged: () => void }) {
 						<>
 							<div className="field">
 								<label htmlFor="intake-manual-name">{t("name")}</label>
-								<input id="intake-manual-name" value={manualName} maxLength={160} disabled={busy || inspecting} onChange={event => {
+								<Input id="intake-manual-name" value={manualName} maxLength={160} disabled={busy || inspecting} onChange={event => {
 									importGeneration.current++;
 									setManualName(event.target.value);
 									setCandidates([]);
@@ -1474,7 +1477,7 @@ export function IntakeTools({ onCsvStaged }: { onCsvStaged: () => void }) {
 								/>
 							</div>
 							{photoPreview && photoFile && <img className="image-preview" src={photoPreview} alt={photoFile.name} />}
-							{photoFile && !photoAssetId && <div className="field"><label htmlFor="intake-photo-name">{t("name")}</label><input id="intake-photo-name" value={photoName} maxLength={160} disabled={photoBusy} onChange={event => setPhotoName(event.target.value)} /></div>}
+							{photoFile && !photoAssetId && <div className="field"><label htmlFor="intake-photo-name">{t("name")}</label><Input id="intake-photo-name" value={photoName} maxLength={160} disabled={photoBusy} onChange={event => setPhotoName(event.target.value)} /></div>}
 							<Button variant="primary" disabled={photoBusy || !photoFile || (!photoAssetId && !photoName.trim())} onClick={() => void (photoAssetId ? addPhoto() : createPhotoItem())}>{t(photoAssetId ? "addPhoto" : "confirmImport")}</Button>
 						</>
 					)}
@@ -1493,7 +1496,7 @@ export function IntakeTools({ onCsvStaged }: { onCsvStaged: () => void }) {
 										))}
 									/>
 									<div style={{ gridColumn: 2, minWidth: 0 }}>
-										<input
+										<Input
 											aria-label={`${t("name")} ${index + 1}`}
 											value={candidate.asset.name}
 											aria-invalid={candidate.invalid}
@@ -1508,7 +1511,7 @@ export function IntakeTools({ onCsvStaged }: { onCsvStaged: () => void }) {
 										/>
 										{mode === "url" && <>
 											<label htmlFor={`url-description-${candidate.asset.id}`}>{t("description")}</label>
-											<textarea id={`url-description-${candidate.asset.id}`} value={candidate.asset.description} disabled={busy} maxLength={2000} onChange={event => {
+											<Textarea id={`url-description-${candidate.asset.id}`} value={candidate.asset.description} disabled={busy} maxLength={2000} onChange={event => {
 												const description = event.target.value;
 												setCandidates(current => validateImportCandidates(current.map(item => item.asset.id === candidate.asset.id ? { ...item, asset: { ...item.asset, description } } : item), previewExisting.current));
 											}} />
@@ -1540,7 +1543,7 @@ export function IntakeTools({ onCsvStaged }: { onCsvStaged: () => void }) {
 					</div>
 					<div className="field">
 						<label htmlFor="backup-password">{t("backupPassword")}</label>
-						<input
+						<Input
 							id="backup-password"
 							type="password"
 							aria-describedby="backup-password-hint"

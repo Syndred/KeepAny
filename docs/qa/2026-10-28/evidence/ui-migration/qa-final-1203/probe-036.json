@@ -1,0 +1,16 @@
+{
+  "index": 36,
+  "command": [
+    "C:\\Users\\Administrator\\.codex\\toolchains\\bun\\node_modules\\bun\\bin\\bun.exe",
+    "C:\\Users\\Administrator\\.codex\\toolchains\\gstack\\bin\\gstack-qa-deadline",
+    "run",
+    "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\test-results\\ui-migration\\qa-final-1203\\deadline.json",
+    "--",
+    "C:\\Users\\Administrator\\.codex\\toolchains\\gstack\\browse\\dist\\browse.exe",
+    "fill",
+    "#task-date-from",
+    "2026-02-30"
+  ],
+  "exitCode": 0,
+  "output": "Filled #task-date-from\n"
+}

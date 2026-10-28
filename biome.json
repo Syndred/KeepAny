@@ -1,0 +1,16 @@
+{
+	"$schema": "https://biomejs.dev/schemas/2.5.14/schema.json",
+	"css": { "parser": { "tailwindDirectives": true } },
+	"linter": {
+		"rules": {
+			"a11y": {
+				"noLabelWithoutControl": {
+					"level": "error",
+					"options": {
+						"inputComponents": ["Input", "Textarea", "DatePicker", "Select"]
+					}
+				}
+			}
+		}
+	}
+}

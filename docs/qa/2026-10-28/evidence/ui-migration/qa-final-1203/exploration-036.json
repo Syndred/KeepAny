@@ -1,0 +1,25 @@
+{
+  "observationCommand": [
+    "C:\\Users\\Administrator\\.codex\\toolchains\\bun\\node_modules\\bun\\bin\\bun.exe",
+    "C:\\Users\\Administrator\\.codex\\toolchains\\gstack\\bin\\gstack-qa-deadline",
+    "run",
+    "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\test-results\\ui-migration\\qa-final-1203\\deadline.json",
+    "--",
+    "C:\\Users\\Administrator\\.codex\\toolchains\\gstack\\browse\\dist\\browse.exe",
+    "js",
+    "JSON.stringify({value:document.querySelector(\"#task-date-from\").value,expanded:document.querySelector(\"#task-date-from\").getAttribute(\"aria-expanded\"),focused:document.activeElement.id})"
+  ],
+  "observed": "{\"value\":\"2026-10-29\",\"expanded\":\"false\",\"focused\":\"task-date-from\"}\n",
+  "hypothesis": "仅破坏日历有效日规则，2026非闰年2月30应拦截",
+  "nextCommand": [
+    "C:\\Users\\Administrator\\.codex\\toolchains\\bun\\node_modules\\bun\\bin\\bun.exe",
+    "C:\\Users\\Administrator\\.codex\\toolchains\\gstack\\bin\\gstack-qa-deadline",
+    "run",
+    "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\test-results\\ui-migration\\qa-final-1203\\deadline.json",
+    "--",
+    "C:\\Users\\Administrator\\.codex\\toolchains\\gstack\\browse\\dist\\browse.exe",
+    "fill",
+    "#task-date-from",
+    "2026-02-30"
+  ]
+}

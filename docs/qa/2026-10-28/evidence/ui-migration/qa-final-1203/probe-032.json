@@ -1,0 +1,15 @@
+{
+  "index": 32,
+  "command": [
+    "C:\\Users\\Administrator\\.codex\\toolchains\\bun\\node_modules\\bun\\bin\\bun.exe",
+    "C:\\Users\\Administrator\\.codex\\toolchains\\gstack\\bin\\gstack-qa-deadline",
+    "run",
+    "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\test-results\\ui-migration\\qa-final-1203\\deadline.json",
+    "--",
+    "C:\\Users\\Administrator\\.codex\\toolchains\\gstack\\browse\\dist\\browse.exe",
+    "js",
+    "JSON.stringify({expanded:document.querySelector(\"#task-date-from\").getAttribute(\"aria-expanded\"),filters:Array.from(document.querySelectorAll(\".task-filters button\")).map(e=>e.textContent),calendar:document.querySelector(\".date-picker-calendar\")?.textContent,planCards:document.querySelectorAll(\".tasks-plan-card\").length,single:document.querySelector(\".tasks-columns\")?.className,width:document.querySelector(\".tasks-columns\")?.getBoundingClientRect().width,taskWidth:document.querySelector(\".tasks-list-card\")?.getBoundingClientRect().width,order:Array.from(document.querySelectorAll(\".nav .nav-label\")).map(e=>e.textContent),popupRect:document.querySelector(\".date-picker-popover\")?.getBoundingClientRect().toJSON()})"
+  ],
+  "exitCode": 0,
+  "output": "{\"expanded\":\"true\",\"filters\":[\"全部 · 6\",\"待处理 · 5\",\"已完成 · 1\"],\"planCards\":0,\"single\":\"tasks-columns is-single\",\"width\":1041,\"taskWidth\":1041,\"order\":[\"概览\",\"待办\",\"资产\",\"账号\"]}\n"
+}

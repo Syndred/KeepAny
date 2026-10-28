@@ -1,0 +1,25 @@
+{
+  "observationCommand": [
+    "C:\\Users\\Administrator\\.codex\\toolchains\\bun\\node_modules\\bun\\bin\\bun.exe",
+    "C:\\Users\\Administrator\\.codex\\toolchains\\gstack\\bin\\gstack-qa-deadline",
+    "run",
+    "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\test-results\\ui-migration\\qa-fixed-package\\deadline.json",
+    "--",
+    "C:\\Users\\Administrator\\.codex\\toolchains\\gstack\\browse\\dist\\browse.exe",
+    "js",
+    "JSON.stringify({calendar:!!document.querySelector(\".date-popover\"),bounds:(()=>{let b=document.querySelector(\".date-popover\").getBoundingClientRect();return{x:b.x,y:b.y,width:b.width,bottom:b.bottom}})(),filters:Array.from(document.querySelectorAll(\".task-filters button\")).map(e=>e.textContent),order:Array.from(document.querySelectorAll(\".nav .nav-label\")).map(e=>e.textContent),days:document.querySelectorAll(\".rdp-day_button\").length})"
+  ],
+  "observed": "{\"calendar\":true,\"bounds\":{\"x\":218,\"y\":292,\"width\":276,\"bottom\":605},\"filters\":[\"全部 · 6\",\"待处理 · 5\",\"已完成 · 1\"],\"order\":[\"概览\",\"待办\",\"资产\",\"账号\"],\"days\":31}\n",
+  "hypothesis": "Capture the actual new calendar and dense task rows in the final package",
+  "nextCommand": [
+    "C:\\Users\\Administrator\\.codex\\toolchains\\bun\\node_modules\\bun\\bin\\bun.exe",
+    "C:\\Users\\Administrator\\.codex\\toolchains\\gstack\\bin\\gstack-qa-deadline",
+    "run",
+    "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\test-results\\ui-migration\\qa-fixed-package\\deadline.json",
+    "--",
+    "C:\\Users\\Administrator\\.codex\\toolchains\\gstack\\browse\\dist\\browse.exe",
+    "screenshot",
+    "--viewport",
+    "test-results/ui-migration/qa-fixed-package/screenshots/tasks-date-zh-1280.png"
+  ]
+}

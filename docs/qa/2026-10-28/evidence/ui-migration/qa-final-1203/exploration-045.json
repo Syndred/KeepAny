@@ -1,0 +1,25 @@
+{
+  "observationCommand": [
+    "C:\\Users\\Administrator\\.codex\\toolchains\\bun\\node_modules\\bun\\bin\\bun.exe",
+    "C:\\Users\\Administrator\\.codex\\toolchains\\gstack\\bin\\gstack-qa-deadline",
+    "run",
+    "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\test-results\\ui-migration\\qa-final-1203\\deadline.json",
+    "--",
+    "C:\\Users\\Administrator\\.codex\\toolchains\\gstack\\browse\\dist\\browse.exe",
+    "js",
+    "JSON.stringify({count:document.querySelectorAll(\".collections-tile\").length,gap:document.querySelector(\".collections-existing\").getBoundingClientRect().top-document.querySelector(\".collections-organize-nav\").getBoundingClientRect().bottom,rows:Array.from(document.querySelectorAll(\".collections-tile\")).map(e=>({height:e.getBoundingClientRect().height,iconCenter:e.querySelector(\"svg\").getBoundingClientRect().y+e.querySelector(\"svg\").getBoundingClientRect().height/2,titleCenter:e.querySelector(\"a\").getBoundingClientRect().y+e.querySelector(\"a\").getBoundingClientRect().height/2})),overflow:document.documentElement.scrollWidth>innerWidth})"
+  ],
+  "observed": "{\"count\":8,\"gap\":12,\"rows\":[{\"height\":52,\"iconCenter\":464.140625,\"titleCenter\":464.140625},{\"height\":52,\"iconCenter\":524.140625,\"titleCenter\":524.140625},{\"height\":52,\"iconCenter\":584.140625,\"titleCenter\":584.140625},{\"height\":52,\"iconCenter\":644.140625,\"titleCenter\":644.140625},{\"height\":52,\"iconCenter\":704.140625,\"titleCenter\":704.140625},{\"height\":52,\"iconCenter\":764.140625,\"titleCenter\":764.140625},{\"height\":52,\"iconCenter\":824.140625,\"titleCenter\":824.140625},{\"height\":52,\"iconCenter\":884.140625,\"titleCenter\":884.140625}],\"overflow\":false}\n",
+  "hypothesis": "分类当前真实截图",
+  "nextCommand": [
+    "C:\\Users\\Administrator\\.codex\\toolchains\\bun\\node_modules\\bun\\bin\\bun.exe",
+    "C:\\Users\\Administrator\\.codex\\toolchains\\gstack\\bin\\gstack-qa-deadline",
+    "run",
+    "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\test-results\\ui-migration\\qa-final-1203\\deadline.json",
+    "--",
+    "C:\\Users\\Administrator\\.codex\\toolchains\\gstack\\browse\\dist\\browse.exe",
+    "screenshot",
+    "--viewport",
+    "test-results/ui-migration/qa-final-1203/screenshots/collections-zh-1280.png"
+  ]
+}

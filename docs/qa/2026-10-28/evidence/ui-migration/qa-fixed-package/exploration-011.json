@@ -1,0 +1,24 @@
+{
+  "observationCommand": [
+    "C:\\Users\\Administrator\\.codex\\toolchains\\bun\\node_modules\\bun\\bin\\bun.exe",
+    "C:\\Users\\Administrator\\.codex\\toolchains\\gstack\\bin\\gstack-qa-deadline",
+    "run",
+    "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\test-results\\ui-migration\\qa-fixed-package\\deadline.json",
+    "--",
+    "C:\\Users\\Administrator\\.codex\\toolchains\\gstack\\browse\\dist\\browse.exe",
+    "js",
+    "JSON.stringify(Array.from(document.querySelectorAll(\"button\")).filter(b=>b.textContent.trim()===\"预览\").map(b=>({html:b.outerHTML,parent:b.parentElement.className,ancestor:b.closest(\"details\")?.outerHTML.slice(0,220)})))"
+  ],
+  "observed": "[{\"html\":\"<button type=\\\"button\\\" tabindex=\\\"0\\\" data-slot=\\\"button\\\" class=\\\"button inline-flex shrink-0 items-center justify-center gap-2 rounded-full border-2 font-semibold outline-offset-2 disabled:cursor-not-allowed disabled:opacity-60\\\">预览</button>\",\"parent\":\"actions\",\"ancestor\":\"<details class=\\\"intake-secondary\\\" open=\\\"\\\"><summary>恢复备份</summary><div class=\\\"field\\\"><label for=\\\"restore-file\\\">恢复备份</label><input id=\\\"restore-file\\\" accept=\\\".ka1\\\" type=\\\"file\\\"></div><small>恢复会合并资料并保留备份中的同步身份。同 ID 内容不同会停止恢复。\"},{\"html\":\"<button type=\\\"button\\\" data-disabled=\\\"\\\" tabindex=\\\"0\\\" disabled=\\\"\\\" data-slot=\\\"button\\\" class=\\\"button inline-flex shrink-0 items-center justify-center gap-2 rounded-full border-2 font-semibold outline-offset-2 disabled:cursor-not-allowed disabled:opacity-60\\\">预览</button>\",\"parent\":\"actions\",\"ancestor\":\"<details class=\\\"card intake-secondary\\\"><summary>导入外链记录</summary><section class=\\\"card padded external-import-panel\\\"><div class=\\\"card-header\\\"><h2 class=\\\"external-import-title\\\"><svg xmlns=\\\"http://www.w3.org/2000/svg\\\" width=\"}]\n",
+  "hypothesis": "Preview only the opened backup-restore section",
+  "nextCommand": [
+    "C:\\Users\\Administrator\\.codex\\toolchains\\bun\\node_modules\\bun\\bin\\bun.exe",
+    "C:\\Users\\Administrator\\.codex\\toolchains\\gstack\\bin\\gstack-qa-deadline",
+    "run",
+    "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\test-results\\ui-migration\\qa-fixed-package\\deadline.json",
+    "--",
+    "C:\\Users\\Administrator\\.codex\\toolchains\\gstack\\browse\\dist\\browse.exe",
+    "click",
+    "details[open]:has(#restore-file) > .actions > button"
+  ]
+}

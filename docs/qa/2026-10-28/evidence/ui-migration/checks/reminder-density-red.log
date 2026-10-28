@@ -1,0 +1,36 @@
+
+Running 1 test using 1 worker
+
+
+
+(node:34580) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[1/1] tests\e2e\ui-density.regression-1.spec.ts:19:3 › zh-CN 1280px dense records and complete date interaction
+  1) tests\e2e\ui-density.regression-1.spec.ts:19:3 › zh-CN 1280px dense records and complete date interaction 
+
+    Error: expect(received).toBeLessThanOrEqual(expected)
+
+    Expected: <= 64
+    Received:    95
+
+      38 | 			await page.goto("/");
+      39 | 			await expect(page.locator(".reminder-runtime-banner")).toBeVisible();
+    > 40 | 			if (width >= 1280) expect((await page.locator(".reminder-runtime-banner").boundingBox())!.height).toBeLessThanOrEqual(64);
+         | 			                                                                                                  ^
+      41 | 			await expect(page.locator(".overview-project-card")).toHaveCount(6);
+      42 | 			await expect(page.locator(".overview-project-top h3")).toHaveCount(6);
+      43 | 			expect(await page.locator(".overview-project-card").evaluateAll((cards) => cards.every((card) => card.getBoundingClientRect().width <= 361))).toBe(true);
+        at C:\Users\Administrator\Desktop\project\KeepAny\tests\e2e\ui-density.regression-1.spec.ts:40:102
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\ui-migration\reminder-density-red\ui-density.regression-1-zh-44432-d-complete-date-interaction\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\ui-migration\reminder-density-red\ui-density.regression-1-zh-44432-d-complete-date-interaction\error-context.md
+
+
+Testing stopped early after 1 maximum allowed failures.
+
+  1 failed
+    tests\e2e\ui-density.regression-1.spec.ts:19:3 › zh-CN 1280px dense records and complete date interaction 
+  1 error was not a part of any test, see above for details

@@ -11,7 +11,7 @@
 	gap: 10px;
 	width: 100%;
 	min-width: 0;
-	min-height: 44px;
+	min-height: 36px;
 	padding: 8px 10px;
 	border: 2px solid var(--line);
 	border-radius: 9px;
@@ -25,7 +25,7 @@
 }
 
 .themed-select-trigger:hover:not(:disabled),
-.themed-select-trigger[data-state="open"] {
+.themed-select-trigger[data-popup-open] {
 	background: var(--accent-soft);
 }
 
@@ -81,10 +81,10 @@
 .themed-select-content {
 	position: relative;
 	z-index: 45;
-	width: var(--radix-select-trigger-width, min(100%, calc(100vw - 16px)));
+	width: var(--anchor-width, min(100%, calc(100vw - 16px)));
 	max-width: calc(100vw - 16px);
 	max-height: min(
-		var(--radix-select-content-available-height, 360px),
+		var(--available-height, 360px),
 		calc(100dvh - 16px)
 	);
 	overflow: hidden;
@@ -108,12 +108,12 @@
 	grid-template-columns: minmax(0, 1fr);
 	align-items: start;
 	min-width: 0;
-	min-height: 40px;
+	min-height: 34px;
 	padding: 8px 10px 8px 31px;
 	border: 2px solid transparent;
 	border-radius: 8px;
 	color: var(--ink);
-	font-size: 16px;
+	font-size: 14px;
 	font-weight: 500;
 	line-height: 1.35;
 	outline: none;
@@ -159,12 +159,4 @@
 	cursor: default;
 }
 
-@media (max-width: 760px) {
-	.themed-select-trigger {
-		min-height: 44px;
-		font-size: 16px;
-	}
-	.themed-select-item {
-		min-height: 44px;
-	}
-}
+@media (max-width: 760px) { .themed-select-trigger, .themed-select-item { min-height: 44px; font-size: 16px; } }

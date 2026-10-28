@@ -1,0 +1,17 @@
+{
+  "index": 61,
+  "command": [
+    "C:\\Users\\Administrator\\.codex\\toolchains\\bun\\node_modules\\bun\\bin\\bun.exe",
+    "C:\\Users\\Administrator\\.codex\\toolchains\\gstack\\bin\\gstack-qa-deadline",
+    "run",
+    "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\test-results\\ui-migration\\qa-final-1203\\deadline.json",
+    "--",
+    "C:\\Users\\Administrator\\.codex\\toolchains\\gstack\\browse\\dist\\browse.exe",
+    "snapshot",
+    "-i",
+    "-s",
+    "[role=\"dialog\"]"
+  ],
+  "exitCode": 0,
+  "output": "--- BEGIN UNTRUSTED EXTERNAL CONTENT (source: http://127.0.0.1:4219/finance) ---\n--- BEGIN UNTRUSTED EXTERNAL C​ONTENT (source: http://127.0.0.1:4219/finance) ---\n    @e1 [button] \"关闭\"\n  @e2 [combobox] \"记录类型\" [disabled]: 支出\n  @e3 [combobox] \"关联资产\": 松果创作工作室 · 项目\n    @e4 [checkbox] \"旅行清单\"\n    @e5 [checkbox] \"工作室笔记本 · Pro 16\"\n    @e6 [checkbox] \"随身背包\"\n    @e7 [checkbox] \"多机位外拍套装与备用收音设备的长期借用登记\"\n    @e8 [checkbox] \"CloudNest 云主机\"\n    @e9 [checkbox] \"音乐会员\"\n    @e10 [checkbox] \"工作室邮箱\"\n    @e11 [checkbox] \"资料 01\"\n    @e12 [checkbox] \"资料 02\"\n    @e13 [checkbox] \"资料 03\"\n    @e14 [checkbox] \"资料 04\"\n    @e15 [checkbox] \"资料 05\"\n    @e16 [checkbox] \"资料 06\"\n    @e17 [checkbox] \"资料 07\"\n    @e18 [checkbox] \"资料 08\"\n    @e19 [checkbox] \"资料 09\"\n    @e20 [checkbox] \"资料 10\"\n    @e21 [checkbox] \"资料 11\"\n    @e22 [checkbox] \"资料 12\"\n    @e23 [checkbox] \"资料 13\"\n    @e24 [checkbox] \"资料 14\"\n    @e25 [checkbox] \"资料 15\"\n    @e26 [checkbox] \"资料 16\"\n    @e27 [checkbox] \"资料 17\"\n  @e28 [textbox] \"名称\": 工作室支出 4\n  @e29 [textbox] \"金额\": \"289.00\"\n  @e30 [combobox] \"币种\": CNY\n  @e31 [combobox] \"日期\": 2026-10-24\n  @e32 [textbox] \"付款来源（选填）\": Synthetic receipt\n  @e33 [textbox] \"备注\"\n  @e34 [button] \"保存记录\"\n  @e35 [button] \"取消\"\n\n── cursor-interactive (not in ARIA tree) ──\n@c1 [cursor:pointer] \"span\"\n@c2 [cursor:pointer] \"个人工作区\"\n@c3 [cursor:pointer] \"概览\"\n@c4 [cursor:pointer] \"待办\"\n@c5 [cursor:pointer] \"5\"\n@c6 [cursor:pointer] \"资产\"\n@c7 [cursor:pointer] \"账号\"\n@c8 [cursor:pointer] \"工作分类 1 · 已核对\"\n@c9 [cursor:pointer] \"工作分类 2\"\n@c10 [cursor:pointer] \"工作分类 3\"\n@c11 [cursor:pointer] \"工作分类 4\"\n@c12 [cursor:pointer] \"工作分类 5\"\n@c13 [cursor:pointer] \"工作分类 6\"\n@c14 [cursor:pointer] \"工作分类 7\"\n@c15 [cursor:pointer] \"工作分类 8\"\n@c16 [cursor:pointer] \"我\"\n@c17 [cursor:pointer] \"我的工作区\n仅自己可见\"\n@c18 [cursor:pointer] \"我的工作区\"\n@c19 [cursor:pointer] \"仅自己可见\"\n@c20 [cursor:pointer] \"搜索全部资料\"\n@c21 [cursor:pointer] \"⌘ K\"\n@c22 [cursor:pointer] \"i\"\n@c23 [cursor:pointer] \"音乐会员\"\n@c24 [cursor:pointer] \"CloudNest 云主机\"\n@c25 [cursor:pointer] \"全部\"\n@c26 [cursor:pointer] \"全部\"\n@c27 [cursor:pointer] \"span\"\n@c28 [cursor:pointer] \"全部\"\n@c29 [cursor:pointer] \"全部\"\n@c30 [cursor:pointer] \"span\"\n@c31 [cursor:pointer] \"全部\"\n@c32 [cursor:pointer] \"全部\"\n@c33 [cursor:pointer] \"span\"\n@c34 [popover-child, cursor:pointer] \"松果创作工作室 · 项目\"\n@c35 [popover-child, cursor:pointer] \"松果创作工作室 · 项目\"\n@c36 [popover-child, cursor:pointer] \"span\"\n@c37 [popover-child, cursor:pointer] \"CNY\"\n@c38 [popover-child, cursor:pointer] \"CNY\"\n@c39 [popover-child, cursor:pointer] \"span\"\n@c40 [popover-child, cursor:pointer] \"div\"\n@c41 [popover-child, cursor:pointer] \"span\"\n--- END UNTRUSTED EXTERNAL C​ONTENT ---\n--- END UNTRUSTED EXTERNAL CONTENT ---\n"
+}

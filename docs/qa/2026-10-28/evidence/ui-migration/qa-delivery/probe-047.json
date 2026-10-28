@@ -1,0 +1,16 @@
+{
+  "index": 47,
+  "command": [
+    "C:\\Users\\Administrator\\.codex\\toolchains\\bun\\node_modules\\bun\\bin\\bun.exe",
+    "C:\\Users\\Administrator\\.codex\\toolchains\\gstack\\bin\\gstack-qa-deadline",
+    "run",
+    "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\test-results\\ui-migration\\qa-delivery\\deadline.json",
+    "--",
+    "C:\\Users\\Administrator\\.codex\\toolchains\\gstack\\browse\\dist\\browse.exe",
+    "screenshot",
+    "--viewport",
+    "test-results/ui-migration/qa-delivery/screenshots/accounts-en-390.png"
+  ],
+  "exitCode": 0,
+  "output": "Screenshot saved (viewport): test-results/ui-migration/qa-delivery/screenshots/accounts-en-390.png\n"
+}

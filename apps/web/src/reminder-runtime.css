@@ -1,10 +1,21 @@
-.reminder-runtime-banner {
-  width: min(calc(100% - 40px), 1400px);
+.card.reminder-runtime-banner {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  width: calc(100% - 2 * var(--space-4));
   min-width: 0;
+  min-height: 44px;
+  padding: 8px 12px;
   margin: var(--space-4) auto 0;
+  border-radius: 12px;
   overflow-wrap: anywhere;
 }
-.reminder-runtime-banner .toolbar { flex-wrap: wrap; }
+.reminder-runtime-banner > strong { flex: none; font-size: 13px; }
+.reminder-runtime-banner .toolbar { flex: 1 1 200px; min-width: 0; justify-content: flex-start; flex-wrap: wrap; gap: 6px 12px; margin: 0; }
+.reminder-runtime-banner .text-link { max-width: 360px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; }
+.reminder-runtime-banner > p { flex-basis: 100%; margin: 0; font-size: 12px; }
 @media (max-width: 768px) {
-  .reminder-runtime-banner { width: calc(100% - 24px); }
+  .card.reminder-runtime-banner { width: calc(100% - 24px); }
+  .reminder-runtime-banner .text-link { max-width: 100%; min-height: 44px; display: inline-flex; align-items: center; white-space: normal; }
 }

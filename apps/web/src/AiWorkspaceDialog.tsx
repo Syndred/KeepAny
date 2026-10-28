@@ -1,3 +1,6 @@
+import { Textarea } from "./components/ui/textarea";
+import { Input } from "./components/ui/input";
+import { DatePicker } from "./components/ui/date-picker";
 import { Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -561,7 +564,7 @@ export function AiWorkspaceDialog({
 				<div className="form-grid">
 					<label className="field" htmlFor="ai-endpoint">
 						<span>{t("endpoint")}</span>
-						<input
+						<Input
 							id="ai-endpoint"
 							disabled={saving}
 							value={endpoint}
@@ -576,7 +579,7 @@ export function AiWorkspaceDialog({
 					</label>
 					<label className="field" htmlFor="ai-model">
 						<span>{t("model")}</span>
-						<input
+						<Input
 							id="ai-model"
 							disabled={saving}
 							value={model}
@@ -588,7 +591,7 @@ export function AiWorkspaceDialog({
 					</label>
 					<label className="field" htmlFor="ai-key">
 						<span>{t("apiKey")}</span>
-						<input
+						<Input
 							id="ai-key"
 							disabled={saving}
 							type="password"
@@ -630,7 +633,7 @@ export function AiWorkspaceDialog({
 			<div className="ai-request-footer">
 				<label className="field" htmlFor="ai-question">
 					<span>{t("question")}</span>
-					<textarea
+					<Textarea
 						id="ai-question"
 						disabled={saving}
 						className="ai-question"
@@ -720,7 +723,7 @@ export function AiWorkspaceDialog({
 						{plan.operation !== "subscription" && (
 							<label className="field">
 								<span>{t("name")}</span>
-								<input
+								<Input
 									value={plan.name}
 									disabled={saving || actionSaved}
 									onChange={(event) => editPlan({ name: event.target.value })}
@@ -794,12 +797,12 @@ export function AiWorkspaceDialog({
 						{["create", "update"].includes(plan.operation) && (
 							<label className="field">
 								<span>{t("aiReminderDate")}</span>
-								<input
-									type="date"
+								<DatePicker
+
 									value={plan.localDate || ""}
 									disabled={saving || actionSaved}
-									onChange={(event) =>
-										editPlan({ localDate: event.target.value || null })
+									onValueChange={(dateValue) =>
+										editPlan({ localDate: dateValue || null })
 									}
 								/>
 							</label>
@@ -808,7 +811,7 @@ export function AiWorkspaceDialog({
 							<>
 								<label className="field">
 									<span>{t("aiReminderTime")}</span>
-									<input
+									<Input
 										type="time"
 										value={plan.localTime || ""}
 										disabled={saving || actionSaved}
@@ -819,7 +822,7 @@ export function AiWorkspaceDialog({
 								</label>
 								<label className="field">
 									<span>{t("aiReminderZone")}</span>
-									<input
+									<Input
 										value={plan.timeZone}
 										disabled={saving || actionSaved}
 										onChange={(event) =>
@@ -832,7 +835,7 @@ export function AiWorkspaceDialog({
 						{plan.operation === "subscription" && (
 							<label className="field">
 								<span>{t("aiReminderLeadDays")}</span>
-								<input
+								<Input
 									type="number"
 									min={0}
 									max={3650}
@@ -847,7 +850,7 @@ export function AiWorkspaceDialog({
 						{["create", "update"].includes(plan.operation) && (
 							<label className="field">
 								<span>{t("aiReminderLeadMinutes")}</span>
-								<input
+								<Input
 									type="number"
 									min={0}
 									max={525600}
@@ -965,7 +968,7 @@ export function AiWorkspaceDialog({
 					].map(([id, label, value, setter]) => (
 						<label className="field" key={id as string} htmlFor={id as string}>
 							<span>{t(label as string)}</span>
-							<input
+							<Input
 								id={id as string}
 								value={value as string}
 								onChange={(event) =>

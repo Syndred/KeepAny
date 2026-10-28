@@ -1,3 +1,4 @@
+import { Input } from "./ui/input";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { KeyEnvelope, KeyEnvelopeClient, KeyEnvelopeMetadata } from "../../../../packages/sync-client/src";
@@ -182,8 +183,8 @@ export function WorkspaceKeyPanel({ endpoint, accountId, accessMode, accessToken
 			<label htmlFor="key-access-method" className="field"><span>{t("keyAccessMethod")}</span><Select id="key-access-method" value={kind} disabled={busy || otherBusy} onValueChange={selectValue => { setKind(selectValue as "recovery" | "join"); setCandidate(null); setConfirmed(false); }}>
 				<SelectOption value="recovery">{t("keyAccessRecovery")}</SelectOption><SelectOption value="join">{t("keyAccessJoin")}</SelectOption>
 			</Select></label>
-			{kind === "join" && <label className="field"><span>{t("keyAccessEnvelopeId")}</span><input value={joinId} disabled={busy || otherBusy} onChange={event => { setJoinId(event.target.value); setCandidate(null); }} autoComplete="off" /></label>}
-			<label className="field"><span>{t("keyAccessCredential")}</span><input type="password" value={credential} disabled={busy || otherBusy} onChange={event => { setCredential(event.target.value); setCandidate(null); }} autoComplete="off" /></label>
+			{kind === "join" && <label className="field"><span>{t("keyAccessEnvelopeId")}</span><Input value={joinId} disabled={busy || otherBusy} onChange={event => { setJoinId(event.target.value); setCandidate(null); }} autoComplete="off" /></label>}
+			<label className="field"><span>{t("keyAccessCredential")}</span><Input type="password" value={credential} disabled={busy || otherBusy} onChange={event => { setCredential(event.target.value); setCandidate(null); }} autoComplete="off" /></label>
 		</div>
 		<div className="actions"><Button disabled={busy || otherBusy || !hasAccess || !workspaceId || !credential || (kind === "join" && !joinId)} onClick={unlock}>{t("keyAccessCheck")}</Button></div>
 		{candidate && <div className="notice" role="status">

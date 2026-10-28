@@ -1,0 +1,24 @@
+{
+  "observationCommand": [
+    "C:\\Users\\Administrator\\.codex\\toolchains\\bun\\node_modules\\bun\\bin\\bun.exe",
+    "C:\\Users\\Administrator\\.codex\\toolchains\\gstack\\bin\\gstack-qa-deadline",
+    "run",
+    "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\test-results\\ui-migration\\qa-fixed-package\\deadline.json",
+    "--",
+    "C:\\Users\\Administrator\\.codex\\toolchains\\gstack\\browse\\dist\\browse.exe",
+    "click",
+    "details[open]:has(#restore-file) button.primary"
+  ],
+  "observed": "Clicked details[open]:has(#restore-file) button.primary → now at http://127.0.0.1:4217/intake\n",
+  "hypothesis": "Revalidate successful restoration and eight collections on the final input",
+  "nextCommand": [
+    "C:\\Users\\Administrator\\.codex\\toolchains\\bun\\node_modules\\bun\\bin\\bun.exe",
+    "C:\\Users\\Administrator\\.codex\\toolchains\\gstack\\bin\\gstack-qa-deadline",
+    "run",
+    "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\test-results\\ui-migration\\qa-fixed-package\\deadline.json",
+    "--",
+    "C:\\Users\\Administrator\\.codex\\toolchains\\gstack\\browse\\dist\\browse.exe",
+    "js",
+    "JSON.stringify({status:Array.from(document.querySelectorAll(\"[role=status]\")).map(e=>e.textContent),collections:document.querySelectorAll(\".sidebar-collection\").length})"
+  ]
+}

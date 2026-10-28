@@ -1,0 +1,15 @@
+{
+  "archive": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\preview\\KeepAny-0.1.0-preview.941d8c64173a.dirty-portable.zip",
+  "platform": "win32",
+  "sourceCommit": "941d8c64173aea24525fb1d7b1e82246caa7b3b0",
+  "sourceDirty": true,
+  "webFiles": 108,
+  "checks": [
+    "ZIP and per-file checksums, current web identity, source, launchers, license inventory, and clean external extraction",
+    "Production assets, HEAD, SPA navigation fallback, missing asset/API/dotfile rejection",
+    "Raw and encoded path traversal, malformed path, Host rejection, private state, loopback-only listener",
+    "Duplicate-start conflict, unauthenticated/cross-origin stop rejection, forged PID rejection, own-instance stop and cleanup",
+    "Occupied port leaves an unrelated HTTP service running; stop never sends process signals",
+    "Delivered win32 launcher starts without repository or project dependencies, then stops cleanly"
+  ]
+}

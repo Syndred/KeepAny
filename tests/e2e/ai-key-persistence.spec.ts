@@ -39,7 +39,7 @@ async function openSettings(page: Page, language: Language) {
 		.getByRole("button", { name: ui.assistantMenu, exact: true })
 		.click();
 	await page
-		.getByRole("link", { name: ui.assistantAccess, exact: true })
+		.getByRole("menuitem", { name: ui.assistantAccess, exact: true })
 		.click();
 	await page
 		.getByRole("link", {

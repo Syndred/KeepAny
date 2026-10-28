@@ -1,3 +1,4 @@
+import { DatePicker } from "./components/ui/date-picker";
 import { lazy, Suspense, useEffect, useState } from "react";
 import { useRouterState } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
@@ -88,13 +89,12 @@ export function TaskPage() {
 	return (
 		<main className="page tasks-page">
 			<PageTitle
-				eyebrow={t("tasks")}
 				title={t("tasksHeroTitle")}
 				subtitle={t("tasksHeroSubtitle")}
 			/>
 			<div className="tasks-toolbar">
 				<fieldset className="tabs task-filters" aria-label={t("taskFilter")}>
-					{(["pending", "done", "all"] as const).map((value) => (
+					{(["all", "pending", "done"] as const).map((value) => (
 						<Button
 							type="button"
 							key={value}
@@ -113,12 +113,12 @@ export function TaskPage() {
 				</div>
 			</div>
 			<fieldset className="task-date-range" aria-label={t("taskDateRange")}>
-				<label htmlFor="task-date-from">{t("taskDateFrom")}<input className="field" id="task-date-from" type="date" value={dateRange.from} onChange={event => setDateRange({ ...dateRange, from: event.target.value })} /></label>
-				<label htmlFor="task-date-to">{t("taskDateTo")}<input className="field" id="task-date-to" type="date" value={dateRange.to} onChange={event => setDateRange({ ...dateRange, to: event.target.value })} /></label>
+				<label htmlFor="task-date-from">{t("taskDateFrom")}<DatePicker className="field" id="task-date-from" aria-label={t("taskDateFrom")} value={dateRange.from} onValueChange={(dateValue) => setDateRange({ ...dateRange, from: dateValue })} /></label>
+				<label htmlFor="task-date-to">{t("taskDateTo")}<DatePicker className="field" id="task-date-to" aria-label={t("taskDateTo")} value={dateRange.to} onValueChange={(dateValue) => setDateRange({ ...dateRange, to: dateValue })} /></label>
 				<Button disabled={!dateRange.from && !dateRange.to} onClick={() => setDateRange({ from: "", to: "" })}>{t("taskClearDates")}</Button>
 			</fieldset>
 			{!validTaskDateRange(dateRange) && <p className="field-error" role="alert">{t("taskDateRangeInvalid")}</p>}
-			<div className="tasks-columns">
+			<div className={`tasks-columns${plans.length ? "" : " is-single"}`}>
 				<section className="card tasks-list-card" aria-labelledby="tasks-list-heading">
 					<div className="tasks-cardhead">
 						<h2 id="tasks-list-heading">{t("tasksRecent")}</h2>
@@ -130,7 +130,7 @@ export function TaskPage() {
 						</div>
 					) : <Empty />}
 				</section>
-				<section className="card tasks-plan-card" aria-labelledby="tasks-plan-heading">
+				{plans.length > 0 && <section className="card tasks-plan-card" aria-labelledby="tasks-plan-heading">
 					<div className="tasks-cardhead">
 						<h2 id="tasks-plan-heading">{t("tasksPlanDetails")}</h2>
 					</div>
@@ -165,7 +165,7 @@ export function TaskPage() {
 						>{t("viewTasks")} →</button>
 						</>
 					) : <Empty hint={false} />}
-				</section>
+				</section>}
 			</div>
 			{edit && (
 				<Suspense fallback={<div className="toast" role="status">{t("loading")}</div>}>

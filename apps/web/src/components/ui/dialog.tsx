@@ -1,4 +1,5 @@
-import * as DialogPrimitive from "@radix-ui/react-dialog";
+// shadcn Base UI composition; provenance in legal/third-party/shadcn-ui.
+import { Dialog as DialogPrimitive } from "@base-ui/react/dialog";
 import { X } from "lucide-react";
 import { type ReactNode, useRef } from "react";
 import { useTranslation } from "react-i18next";
@@ -32,22 +33,24 @@ export function Dialog({
 		opener.current = document.activeElement;
 	}
 	return (
-		<DialogPrimitive.Root open onOpenChange={(v) => !v && onClose()}>
+		<DialogPrimitive.Root
+			open
+			onOpenChange={(open, details) => {
+				if (!open) {
+					if (closeDisabled) details.cancel();
+					else onClose();
+				}
+			}}
+		>
 			<DialogPrimitive.Portal>
-				<DialogPrimitive.Overlay className="overlay" />
-				<DialogPrimitive.Content
+				<DialogPrimitive.Backdrop className="overlay" />
+				<DialogPrimitive.Popup
 					className={`dialog${className ? ` ${className}` : ""}`}
 					aria-describedby={undefined}
-					onOpenAutoFocus={(event) => {
-						if (focusTitleOnOpen) {
-							event.preventDefault();
-							titleRef.current?.focus();
-						}
-					}}
-					onCloseAutoFocus={(event) => {
-						event.preventDefault();
+					initialFocus={focusTitleOnOpen ? titleRef : undefined}
+					finalFocus={() => {
 						const target = returnFocusTo?.() ?? opener.current;
-						if (target?.isConnected) target.focus();
+						return target?.isConnected ? target : false;
 					}}
 				>
 					<header>
@@ -67,7 +70,7 @@ export function Dialog({
 						</DialogPrimitive.Close>
 					</header>
 					{children}
-				</DialogPrimitive.Content>
+				</DialogPrimitive.Popup>
 			</DialogPrimitive.Portal>
 		</DialogPrimitive.Root>
 	);

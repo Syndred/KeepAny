@@ -1,0 +1,24 @@
+{
+  "observationCommand": [
+    "C:\\Users\\Administrator\\.codex\\toolchains\\bun\\node_modules\\bun\\bin\\bun.exe",
+    "C:\\Users\\Administrator\\.codex\\toolchains\\gstack\\bin\\gstack-qa-deadline",
+    "run",
+    "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\test-results\\ui-migration\\qa-final-8457\\deadline.json",
+    "--",
+    "C:\\Users\\Administrator\\.codex\\toolchains\\gstack\\browse\\dist\\browse.exe",
+    "js",
+    "JSON.stringify({headings:Array.from(document.querySelectorAll(\"main h1,main h2\")).map(e=>e.textContent),main:document.querySelector(\"main\")?.innerText.slice(0,300),overflow:document.documentElement.scrollWidth>innerWidth})"
+  ],
+  "observed": "{\"headings\":[\"Your projects, accounts and subscriptions, connected.\",\"Next actions\",\"Account connection reminders\",\"My projects\"],\"main\":\"LOCAL DIGITAL ASSET WORKSPACE\\nYour projects, accounts and subscriptions, connected.\\n\\nSee project dependencies and track renewals and maintenance. Records stay in this browser.\\n\\nExplore my projects\\nBring scattered records together.\\nQuick import\\nView tasks\\nRecorded assets\\n25\\nProjects, accounts, subscr\",\"overflow\":false}\n",
+  "hypothesis": "概览桌面实际视觉检查",
+  "nextCommand": [
+    "C:\\Users\\Administrator\\.codex\\toolchains\\bun\\node_modules\\bun\\bin\\bun.exe",
+    "C:\\Users\\Administrator\\.codex\\toolchains\\gstack\\bin\\gstack-qa-deadline",
+    "run",
+    "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\test-results\\ui-migration\\qa-final-8457\\deadline.json",
+    "--",
+    "C:\\Users\\Administrator\\.codex\\toolchains\\gstack\\browse\\dist\\browse.exe",
+    "viewport",
+    "1280x960"
+  ]
+}

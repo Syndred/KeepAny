@@ -9,8 +9,10 @@ const sha256 = data => createHash('sha256').update(data).digest('hex');
 const readJson = async path => JSON.parse(await readFile(path, 'utf8'));
 const rootPackage = await readJson(resolve(root, 'package.json'));
 const lockSha256 = sha256(await readFile(resolve(root, 'pnpm-lock.yaml')));
-const rootLicenseSha256 = sha256(await readFile(resolve(root, 'LICENSE')));
-if (rootLicenseSha256 !== 'd8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee') {
+const rootLicense = await readFile(resolve(root, 'LICENSE'));
+const rootLicenseSha256 = sha256(rootLicense);
+// Git may check text out with CRLF on Windows; verify the canonical text, record distributed bytes.
+if (sha256(rootLicense.toString('utf8').replaceAll('\r\n', '\n')) !== 'd8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee') {
   throw new Error('Root LICENSE differs from the recorded SPDX AGPL-3.0-only text; review its provenance before regenerating');
 }
 const previousSbom = await readJson(resolve(root, 'SBOM.spdx.json')).catch(() => null);
@@ -145,6 +147,7 @@ const notice = [
   `- 当前安装树包根目录缺少许可证正文：${missing.length}，逐项状态见下表。独立历史材料索引合计${thirdPartyPackages.size}个版本：${thirdPartyManifest?.scope?.verifiedPackageCount ?? 0}项保存上游正文，${thirdPartyManifest?.scope?.supplementedPackageCount ?? 0}项保存精确声明与明确标注的规范补充，${thirdPartyManifest?.scope?.unresolvedPackageCount ?? 0}项未解决。索引还可包含自带正文的补充登记，不把索引总数当作当前缺正文包的覆盖数。规范补充不冒充上游原文件或补造版权。`,
   '- 项目源码许可证：根目录 `LICENSE` 为 AGPL-3.0-only；发布前仍需由版权持有人确认，并完成依赖兼容性复核。',
   '- 本轮未复制 HomeInventory、Wallos、DomainMOD、Homebox 的业务源码；该四项仅在 `docs/03-开源业务模块复用审计.md` 中作为候选和参考登记。',
+  '- 共享 UI 基于 shadcn/ui 的 Base UI 实现调整；MIT 原文、固定上游提交、文件路径和修改说明见 [`legal/third-party/shadcn-ui/`](legal/third-party/shadcn-ui/SOURCE.json)。',
   '',
   '## 缺少包内许可证正文的逐项记录',
   '',

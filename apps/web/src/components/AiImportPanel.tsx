@@ -1,3 +1,4 @@
+import { Textarea } from "./ui/textarea";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
@@ -185,7 +186,7 @@ export function AiImportPanel({ onStaged }: { onStaged: () => void }) {
 			)}
 			<label className="field" htmlFor="ai-import-text">
 				<span>{t("aiImportText")}</span>
-				<textarea
+				<Textarea
 					id="ai-import-text"
 					rows={4}
 					value={text}

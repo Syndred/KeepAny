@@ -1,0 +1,24 @@
+{
+  "observationCommand": [
+    "C:\\Users\\Administrator\\.codex\\toolchains\\bun\\node_modules\\bun\\bin\\bun.exe",
+    "C:\\Users\\Administrator\\.codex\\toolchains\\gstack\\bin\\gstack-qa-deadline",
+    "run",
+    "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\test-results\\ui-migration\\qa-final-1203\\deadline.json",
+    "--",
+    "C:\\Users\\Administrator\\.codex\\toolchains\\gstack\\browse\\dist\\browse.exe",
+    "js",
+    "JSON.stringify({active:Array.from(document.querySelectorAll(\".workspace-navigation [aria-current=page]\")).map(e=>e.textContent),count:document.querySelectorAll(\".asset-list-content>a\").length,widths:[...new Set(Array.from(document.querySelectorAll(\".asset-list-content>a\")).map(e=>e.getBoundingClientRect().width))],overflow:document.documentElement.scrollWidth>innerWidth})"
+  ],
+  "observed": "{\"active\":[\"实物\"],\"count\":12,\"widths\":[269.28125,269.296875],\"overflow\":false}\n",
+  "hypothesis": "最终侧栏手柄hover必须留在行内",
+  "nextCommand": [
+    "C:\\Users\\Administrator\\.codex\\toolchains\\bun\\node_modules\\bun\\bin\\bun.exe",
+    "C:\\Users\\Administrator\\.codex\\toolchains\\gstack\\bin\\gstack-qa-deadline",
+    "run",
+    "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\test-results\\ui-migration\\qa-final-1203\\deadline.json",
+    "--",
+    "C:\\Users\\Administrator\\.codex\\toolchains\\gstack\\browse\\dist\\browse.exe",
+    "hover",
+    ".nav .sortable-nav-item:first-child .nav-drag-handle"
+  ]
+}

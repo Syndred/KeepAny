@@ -1,4 +1,5 @@
 import { defineConfig } from 'vite';
+import { fileURLToPath } from 'node:url';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import { VitePWA } from 'vite-plugin-pwa';
@@ -13,7 +14,7 @@ if (selfHostProxy) {
 }
 const proxy = selfHostProxy ? Object.fromEntries(['/api/auth', '/sync', '/workspaces'].map(path =>
   [path, { target: selfHostProxy, changeOrigin: true }])) : undefined;
-export default defineConfig({ worker: pdfWorkerOptions, plugins: [react(), tailwindcss(), {
+export default defineConfig({ resolve: { alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) } }, worker: pdfWorkerOptions, plugins: [react(), tailwindcss(), {
   name: 'keepany-intake-url',
   configureServer(server) {
     let metadataMiddleware: ReturnType<typeof createUrlMetadataMiddleware> | undefined;

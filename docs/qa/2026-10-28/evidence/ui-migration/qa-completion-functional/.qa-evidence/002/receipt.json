@@ -1,0 +1,59 @@
+{
+  "version": 1,
+  "id": "002",
+  "cwd": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny",
+  "argv": [
+    "node",
+    "node_modules/@playwright/test/cli.js",
+    "test",
+    "--config",
+    "playwright.windows-qa.config.ts",
+    "collections-ledger-release.spec.ts",
+    "task-theme-release.spec.ts",
+    "themed-select.spec.ts",
+    "shell-reference.spec.ts",
+    "--max-failures=1",
+    "--output=test-results/ui-migration/completion-package",
+    "--reporter=json"
+  ],
+  "deadline": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\test-results\\ui-migration\\qa-completion-functional\\.qa-evidence\\002\\deadline.json",
+  "timing": [
+    {
+      "guard": "qa-deadline",
+      "event": "started",
+      "version": 1,
+      "startedAt": "2026-10-28T02:16:12.830Z",
+      "deadlineAt": "2026-10-28T02:19:12.830Z",
+      "budgetMs": 180000,
+      "observedAt": "2026-10-28T02:16:12.874Z",
+      "remainingMs": 179956,
+      "expired": false
+    },
+    {
+      "guard": "qa-deadline",
+      "event": "finished",
+      "observedAt": "2026-10-28T02:17:39.740Z",
+      "deadlineAt": "2026-10-28T02:19:12.830Z",
+      "timedOut": false,
+      "exitCode": 0
+    }
+  ],
+  "startedAt": "2026-10-28T02:16:12.835Z",
+  "completedAt": "2026-10-28T02:17:39.754Z",
+  "exitCode": 0,
+  "signal": null,
+  "status": "complete",
+  "observation": {
+    "sha256": "71ddf353b5e4b956ba24a0806b224783e1f707a169c18646805c0fd0f6c3a0a6",
+    "bytes": 17897
+  },
+  "publicOutput": false,
+  "stdout": {
+    "sha256": "71ddf353b5e4b956ba24a0806b224783e1f707a169c18646805c0fd0f6c3a0a6",
+    "bytes": 17897
+  },
+  "stderr": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  }
+}

@@ -1,3 +1,5 @@
+import { Textarea } from "./ui/textarea";
+import { Input } from "./ui/input";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { FileText, LoaderCircle, Lock } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -1343,7 +1345,7 @@ export function PasswordSmartImportDialog({
 							>
 								<label className="field" htmlFor="pw-smart-unlock">
 									<span>{t("pwVaultMasterPassword")}</span>
-									<input
+									<Input
 										id="pw-smart-unlock"
 										type="password"
 										autoComplete="current-password"
@@ -1425,7 +1427,7 @@ export function PasswordSmartImportDialog({
 						)}
 						<label className="field" htmlFor="pw-smart-source">
 							<span>{t("pwSmartSource")}</span>
-							<textarea
+							<Textarea
 								ref={sourceInput}
 								id="pw-smart-source"
 								rows={6}

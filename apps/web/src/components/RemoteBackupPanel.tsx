@@ -1,3 +1,5 @@
+import { Textarea } from "./ui/textarea";
+import { Input } from "./ui/input";
 import { useEffect, useRef, useState } from "react";
 import { CloudUpload, Download } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -213,7 +215,7 @@ export function RemoteBackupPanel({
 				<div className="form-grid remote-backup-fields">
 					<div className="field">
 						<label htmlFor="remote-put-url">{t("remotePutUrl")}</label>
-						<input
+						<Input
 							id="remote-put-url"
 							type="url"
 							autoComplete="off"
@@ -228,7 +230,7 @@ export function RemoteBackupPanel({
 					</div>
 					<div className="field">
 						<label htmlFor="remote-get-url">{t("remoteGetUrl")}</label>
-						<input
+						<Input
 							id="remote-get-url"
 							type="url"
 							autoComplete="off"
@@ -246,7 +248,7 @@ export function RemoteBackupPanel({
 				<div className="form-grid remote-backup-fields">
 					<div className="field wide">
 						<label htmlFor="remote-dav-url">{t("remoteDavUrl")}</label>
-						<input
+						<Input
 							id="remote-dav-url"
 							type="url"
 							autoComplete="off"
@@ -261,7 +263,7 @@ export function RemoteBackupPanel({
 					</div>
 					<div className="field">
 						<label htmlFor="remote-dav-user">{t("remoteDavUser")}</label>
-						<input
+						<Input
 							id="remote-dav-user"
 							autoComplete="off"
 							disabled={busy}
@@ -276,7 +278,7 @@ export function RemoteBackupPanel({
 						<label htmlFor="remote-dav-password">
 							{t("remoteDavPassword")}
 						</label>
-						<input
+						<Input
 							id="remote-dav-password"
 							type="password"
 							autoComplete="new-password"
@@ -309,7 +311,7 @@ export function RemoteBackupPanel({
 			</div>
 			<div className="field">
 				<label htmlFor="remote-receipt">{t("remoteReceipt")}</label>
-				<textarea
+				<Textarea
 					id="remote-receipt"
 					spellCheck={false}
 					disabled={busy}

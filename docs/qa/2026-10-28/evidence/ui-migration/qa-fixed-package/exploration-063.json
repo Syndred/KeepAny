@@ -1,0 +1,23 @@
+{
+  "observationCommand": [
+    "C:\\Users\\Administrator\\.codex\\toolchains\\bun\\node_modules\\bun\\bin\\bun.exe",
+    "C:\\Users\\Administrator\\.codex\\toolchains\\gstack\\bin\\gstack-qa-deadline",
+    "run",
+    "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\test-results\\ui-migration\\qa-fixed-package\\deadline.json",
+    "--",
+    "C:\\Users\\Administrator\\.codex\\toolchains\\gstack\\browse\\dist\\browse.exe",
+    "reload"
+  ],
+  "observed": "Reloaded http://127.0.0.1:4217/tasks\n",
+  "hypothesis": "Verify rescheduled date reread and minimize the empty-plan density finding",
+  "nextCommand": [
+    "C:\\Users\\Administrator\\.codex\\toolchains\\bun\\node_modules\\bun\\bin\\bun.exe",
+    "C:\\Users\\Administrator\\.codex\\toolchains\\gstack\\bin\\gstack-qa-deadline",
+    "run",
+    "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\test-results\\ui-migration\\qa-fixed-package\\deadline.json",
+    "--",
+    "C:\\Users\\Administrator\\.codex\\toolchains\\gstack\\browse\\dist\\browse.exe",
+    "js",
+    "JSON.stringify({dates:Array.from(document.querySelectorAll(\".tasks-list-card .date-field input\")).map(e=>e.value),planEmpty:!!document.querySelector(\".tasks-plan-card .empty\"),taskColumns:getComputedStyle(document.querySelector(\".tasks-columns\")).gridTemplateColumns})"
+  ]
+}

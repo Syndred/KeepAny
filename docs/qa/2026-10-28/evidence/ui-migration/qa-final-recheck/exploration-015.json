@@ -1,0 +1,25 @@
+{
+  "observationCommand": [
+    "C:\\Users\\Administrator\\.codex\\toolchains\\bun\\node_modules\\bun\\bin\\bun.exe",
+    "C:\\Users\\Administrator\\.codex\\toolchains\\gstack\\bin\\gstack-qa-deadline",
+    "run",
+    "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\test-results\\ui-migration\\qa-final-recheck\\deadline.json",
+    "--",
+    "C:\\Users\\Administrator\\.codex\\toolchains\\gstack\\browse\\dist\\browse.exe",
+    "js",
+    "JSON.stringify({widths:[...new Set(Array.from(document.querySelectorAll(\".workspace-asset-grid>a\")).map(e=>e.getBoundingClientRect().width))],firstScreen:Array.from(document.querySelectorAll(\".workspace-asset-grid>a\")).filter(e=>e.getBoundingClientRect().bottom<=innerHeight).length,firstRowBottoms:Array.from(document.querySelectorAll(\".workspace-asset-grid>a\")).slice(0,7).map(e=>e.getBoundingClientRect().bottom),covers:document.querySelectorAll(\".asset-project-cover\").length,active:Array.from(document.querySelectorAll(\".workspace-navigation [aria-current=page]\")).map(e=>e.textContent),overflow:document.documentElement.scrollWidth>innerWidth})"
+  ],
+  "observed": "{\"widths\":[269.28125,269.296875],\"firstScreen\":21,\"firstRowBottoms\":[655.6875,555.6875,661.6875,581.6875,632.1875,605.1875,559.6875],\"covers\":0,\"active\":[\"全部\"],\"overflow\":false}\n",
+  "hypothesis": "卡片底边数值不同，先查看真实截图确认是否违反同排对齐",
+  "nextCommand": [
+    "C:\\Users\\Administrator\\.codex\\toolchains\\bun\\node_modules\\bun\\bin\\bun.exe",
+    "C:\\Users\\Administrator\\.codex\\toolchains\\gstack\\bin\\gstack-qa-deadline",
+    "run",
+    "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\test-results\\ui-migration\\qa-final-recheck\\deadline.json",
+    "--",
+    "C:\\Users\\Administrator\\.codex\\toolchains\\gstack\\browse\\dist\\browse.exe",
+    "screenshot",
+    "--viewport",
+    "test-results/ui-migration/qa-final-recheck/screenshots/assets-cards-zh-2220.png"
+  ]
+}

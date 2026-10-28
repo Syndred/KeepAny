@@ -1,0 +1,15 @@
+{
+  "index": 42,
+  "command": [
+    "C:\\Users\\Administrator\\.codex\\toolchains\\bun\\node_modules\\bun\\bin\\bun.exe",
+    "C:\\Users\\Administrator\\.codex\\toolchains\\gstack\\bin\\gstack-qa-deadline",
+    "run",
+    "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\test-results\\ui-migration\\qa-final-8457\\deadline.json",
+    "--",
+    "C:\\Users\\Administrator\\.codex\\toolchains\\gstack\\browse\\dist\\browse.exe",
+    "js",
+    "JSON.stringify({amounts:Array.from(document.querySelectorAll(\".finance-entry>b\")).map(e=>({text:e.textContent,right:e.getBoundingClientRect().right})),buttons:Array.from(document.querySelectorAll(\".finance-entry-actions .button\")).map(e=>{let r=e.getBoundingClientRect();return {x:r.x,w:r.width,h:r.height,radius:getComputedStyle(e).borderRadius}}),overflow:document.documentElement.scrollWidth>innerWidth})"
+  ],
+  "exitCode": 0,
+  "output": "{\"amounts\":[{\"text\":\"¥289.00\",\"right\":1068},{\"text\":\"¥88.00\",\"right\":1068},{\"text\":\"¥30.00\",\"right\":1068},{\"text\":\"¥200.00\",\"right\":1068}],\"buttons\":[{\"x\":1080,\"w\":76,\"h\":32,\"radius\":\"999px\"},{\"x\":1164,\"w\":76,\"h\":32,\"radius\":\"999px\"},{\"x\":1080,\"w\":76,\"h\":32,\"radius\":\"999px\"},{\"x\":1164,\"w\":76,\"h\":32,\"radius\":\"999px\"},{\"x\":1080,\"w\":76,\"h\":32,\"radius\":\"999px\"},{\"x\":1164,\"w\":76,\"h\":32,\"radius\":\"999px\"},{\"x\":1080,\"w\":76,\"h\":32,\"radius\":\"999px\"},{\"x\":1164,\"w\":76,\"h\":32,\"radius\":\"999px\"}],\"overflow\":false}\n"
+}

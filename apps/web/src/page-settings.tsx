@@ -1,3 +1,4 @@
+import { Input } from "./components/ui/input";
 import { Link, useLocation } from "@tanstack/react-router";
 import { Capacitor } from "@capacitor/core";
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
@@ -517,10 +518,10 @@ export function SettingsPage() {
 				{accessMode === "session" && <>{!nativeApp && <p>{t("syncSessionOriginHint")}</p>}<Suspense fallback={<p>{t("syncSessionChecking")}</p>}><SelfHostSessionPanel disabled={uiBusy} onSessionChange={changeSession} onEndpointChange={origin => { invalidateConfig(); setSessionEndpoint(origin); }} /></Suspense></>}
 				{accessMode === "official" && <p role="status">{t(hasAccess ? "syncOfficialReady" : "syncOfficialAuthorize")}</p>}
 				<div className="form-grid">
-					{!(nativeApp && accessMode === "session") && <label className="field"><span>{t("syncServerUrl")}</span><input value={syncEndpoint} disabled={uiBusy} readOnly={accessMode !== "token"} onChange={event => editConfig(() => setEndpoint(event.target.value))} placeholder="https://sync.example.com" autoComplete="url" /></label>}
-					{accessMode === "token" && <label className="field"><span>{t("syncAccessToken")}</span><input type="password" value={token} disabled={uiBusy} onChange={event => editConfig(() => setToken(event.target.value))} autoComplete="off" /></label>}
-					<label className="field"><span>{t("syncWorkspace")}</span><input value={workspaceId} disabled={uiBusy || !hasAccess} onChange={event => editConfig(() => setWorkspaceId(event.target.value))} autoComplete="off" /></label>
-					<label className="field"><span>{t("syncWorkspaceKey")}</span><input type={showKey ? "text" : "password"} value={workspaceKey} disabled={uiBusy || !hasAccess} onChange={event => editConfig(() => setWorkspaceKey(event.target.value))} autoComplete="off" /><small>{t(accessMode === "token" ? "syncKeyHint" : "syncSessionKeyHint")}</small></label>
+					{!(nativeApp && accessMode === "session") && <label className="field"><span>{t("syncServerUrl")}</span><Input value={syncEndpoint} disabled={uiBusy} readOnly={accessMode !== "token"} onChange={event => editConfig(() => setEndpoint(event.target.value))} placeholder="https://sync.example.com" autoComplete="url" /></label>}
+					{accessMode === "token" && <label className="field"><span>{t("syncAccessToken")}</span><Input type="password" value={token} disabled={uiBusy} onChange={event => editConfig(() => setToken(event.target.value))} autoComplete="off" /></label>}
+					<label className="field"><span>{t("syncWorkspace")}</span><Input value={workspaceId} disabled={uiBusy || !hasAccess} onChange={event => editConfig(() => setWorkspaceId(event.target.value))} autoComplete="off" /></label>
+					<label className="field"><span>{t("syncWorkspaceKey")}</span><Input type={showKey ? "text" : "password"} value={workspaceKey} disabled={uiBusy || !hasAccess} onChange={event => editConfig(() => setWorkspaceKey(event.target.value))} autoComplete="off" /><small>{t(accessMode === "token" ? "syncKeyHint" : "syncSessionKeyHint")}</small></label>
 				</div>
 				{accessMode !== "token" && hasAccess && <div className="actions">
 					<label htmlFor="sync-select-workspace" className="field"><span>{t("syncSelectWorkspace")}</span><Select id="sync-select-workspace" value={availableWorkspaces.includes(workspaceId) ? workspaceId : ""} disabled={uiBusy || availableWorkspaces.length === 0} onValueChange={selectValue => editConfig(() => {

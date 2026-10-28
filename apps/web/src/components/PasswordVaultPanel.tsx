@@ -1,3 +1,5 @@
+import { Textarea } from "./ui/textarea";
+import { Input } from "./ui/input";
 import "../trash.css";
 import { VaultAccountLinksDialog } from "./VaultAccountLinksDialog";
 import { useNavigate, useRouterState } from "@tanstack/react-router";
@@ -851,7 +853,7 @@ export function PasswordVaultPanel({
 							>
 								{t("pwVaultSearch")}
 							</label>
-							<input
+							<Input
 								id="password-vault-search-input"
 								type="search"
 								value={search}
@@ -1243,7 +1245,7 @@ export function PasswordVaultPanel({
 							<label htmlFor="password-vault-import-password">
 								{t("pwVaultImportPassword")}
 							</label>
-							<input
+							<Input
 								id="password-vault-import-password"
 								type="password"
 								value={importPassword}
@@ -1284,7 +1286,7 @@ export function PasswordVaultPanel({
 							<label htmlFor="password-vault-current-master">
 								{t("pwVaultCurrentMaster")}
 							</label>
-							<input
+							<Input
 								id="password-vault-current-master"
 								type="password"
 								value={currentMaster}
@@ -1298,7 +1300,7 @@ export function PasswordVaultPanel({
 							<label htmlFor="password-vault-new-master">
 								{t("pwVaultNewMaster")}
 							</label>
-							<input
+							<Input
 								id="password-vault-new-master"
 								type="password"
 								value={newMaster}
@@ -1314,7 +1316,7 @@ export function PasswordVaultPanel({
 							<label htmlFor="password-vault-new-master-confirm">
 								{t("pwVaultNewMasterConfirm")}
 							</label>
-							<input
+							<Input
 								id="password-vault-new-master-confirm"
 								type="password"
 								value={newMasterConfirm}
@@ -1358,7 +1360,7 @@ export function PasswordVaultPanel({
 						<label htmlFor="password-vault-manual-copy-value">
 							{manualCopy.label}
 						</label>
-						<textarea
+						<Textarea
 							id="password-vault-manual-copy-value"
 							value={manualCopy.value}
 							readOnly
@@ -1406,7 +1408,7 @@ function EmptyState({
 						{t("pwVaultMasterPassword")}
 					</label>
 					<div className="password-vault-password-input">
-						<input
+						<Input
 							id="password-vault-master"
 							type={showMaster ? "text" : "password"}
 							value={master}
@@ -1435,7 +1437,7 @@ function EmptyState({
 					<label htmlFor="password-vault-master-confirm">
 						{t("pwVaultMasterPasswordConfirm")}
 					</label>
-					<input
+					<Input
 						id="password-vault-master-confirm"
 						type="password"
 						value={masterConfirm}
@@ -1491,7 +1493,7 @@ function LockedState({
 						{t("pwVaultMasterPassword")}
 					</label>
 					<div className="password-vault-password-input">
-						<input
+						<Input
 							id="password-vault-unlock-master"
 							type={showMaster ? "text" : "password"}
 							value={master}
@@ -1579,7 +1581,7 @@ function EntryEditor({
 						{t("pwVaultTitleField")}
 					</label>
 					<div className="pw-import-input-control">
-						<input
+						<Input
 							id="password-vault-entry-title"
 							value={draft.title}
 							onChange={(event) => update("title", event.target.value)}
@@ -1616,7 +1618,7 @@ function EntryEditor({
 					<div className="pw-import-input-control">
 						<div className="password-vault-password-input">
 							{/[\r\n]/.test(draft.password) ? (
-								<textarea
+								<Textarea
 									id="password-vault-entry-password"
 									value={showPassword ? draft.password : "••••••••"}
 									readOnly={!showPassword}
@@ -1627,7 +1629,7 @@ function EntryEditor({
 									rows={3}
 								/>
 							) : (
-								<input
+								<Input
 									id="password-vault-entry-password"
 									type={showPassword ? "text" : "password"}
 									value={draft.password}
@@ -1691,7 +1693,7 @@ function EntryEditor({
 								)}
 							</div>
 							<div className="pw-import-input-control">
-								<textarea
+								<Textarea
 									id="password-vault-entry-notes"
 									value={draft.notes}
 									onChange={(event) => update("notes", event.target.value)}
@@ -1713,7 +1715,7 @@ function EntryEditor({
 									{t("pwVaultUrlOptionalField")}
 								</label>
 								<div className="pw-import-input-control">
-									<input
+									<Input
 										id="password-vault-entry-url"
 										type="url"
 										value={draft.url}

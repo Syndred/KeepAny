@@ -22,6 +22,111 @@ async function ordinaryRecords(page: Page) {
 	}, repositoryPath);
 }
 
+test.describe("workspace tab selection through real navigation", () => {
+	test.use({ hasTouch: true });
+	for (const locale of ["zh-CN", "en"] as const) for (const width of [390, 1280]) {
+		test(`${locale} ${width}px workspace tabs keep one highlight through clicks, Back and reload`, async ({ page }) => {
+			test.setTimeout(90_000);
+			await page.setViewportSize({ width, height: 844 });
+			await page.addInitScript(language => localStorage.setItem("keepany-language", language), locale);
+			const errors: string[] = [];
+			page.on("pageerror", error => errors.push(error.message));
+			const t = (key: keyof typeof resources.en.translation) => resources[locale].translation[key];
+			await page.goto("/");
+			await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+			// The existing T01 fixture uses the same formal repository constructors.
+			// Only setup is programmatic; all selection below uses rendered links.
+			const records = await page.evaluate(async ({ repositoryPath, domainPath }) => {
+				const { saveBatch, localRepository } = await import(repositoryPath);
+				const { newAsset } = await import(domainPath);
+				if ((await (await localRepository()).list("asset")).length) throw Error("tab-fixture-not-empty");
+				const assets = (["project", "account", "subscription", "item"] as const).map(kind => ({
+					...newAsset(kind), name: `Tab selection ${kind}`,
+				}));
+				await saveBatch(assets.map(value => ({ type: "asset", value })));
+				return assets.map(({ id, kind, name }) => ({ id, kind, name }));
+			}, { repositoryPath, domainPath });
+			const before = await ordinaryRecords(page);
+			const assetTabs = page.getByRole("navigation", { name: t("assetsWorkspace"), exact: true });
+			const cards = page.locator("main .asset-list-content > a.list-row");
+			async function assertAssetView(path: string, key: keyof typeof resources.en.translation, kind?: string) {
+				await expect.poll(() => new URL(page.url()).pathname).toBe(path);
+				await expect(assetTabs.locator(":scope > a[aria-current='page']")).toHaveText([t(key)]);
+				await expect(page.getByRole("heading", { level: 1 })).toHaveText(t(path === "/finance" ? "financeTitle" : path === "/assets" ? "assetsWorkspace" : key));
+				const expected = records.filter(record => kind ? record.kind === kind : path === "/assets" && record.kind !== "account");
+				await expect(cards).toHaveCount(expected.length);
+				for (const record of expected) await expect(page.locator(`main .asset-list-content > a.list-row[href='/assets/${record.kind}/${record.id}']`)).toContainText(record.name);
+				if (path !== "/assets") {
+					const all = assetTabs.getByRole("link", { name: t("all"), exact: true });
+					await expect(all).not.toHaveAttribute("aria-current", "page");
+					const backgrounds = await assetTabs.evaluate(nav => {
+						const all = nav.querySelector("a[href='/assets']")!;
+						const selected = nav.querySelector("a[aria-current='page']")!;
+						return { all: getComputedStyle(all).backgroundColor, selected: getComputedStyle(selected).backgroundColor, allShadow: getComputedStyle(all).boxShadow };
+					});
+					expect(backgrounds.all).not.toBe(backgrounds.selected);
+					expect(backgrounds.allShadow).toBe("none");
+				}
+				await expect.poll(() => ordinaryRecords(page)).toBe(before);
+			}
+			await page.goto("/assets/project");
+			await assertAssetView("/assets/project", "project", "project");
+			let previous = { path: "/assets/project", key: "project", kind: "project" } as { path: string; key: keyof typeof resources.en.translation; kind?: string };
+			for (const current of [
+				{ path: "/assets", key: "all" },
+				{ path: "/assets/project", key: "project", kind: "project" },
+				{ path: "/assets/subscription", key: "subscription", kind: "subscription" },
+				{ path: "/assets/item", key: "item", kind: "item" },
+				{ path: "/assets/domains", key: "workspaceDomains" },
+				{ path: "/finance", key: "workspaceLedger" },
+			] as const) {
+				await assetTabs.getByRole("link", { name: t(current.key), exact: true }).click();
+				await assertAssetView(current.path, current.key, "kind" in current ? current.kind : undefined);
+				await page.goBack();
+				await assertAssetView(previous.path, previous.key, previous.kind);
+				await page.goForward();
+				await assertAssetView(current.path, current.key, "kind" in current ? current.kind : undefined);
+				await page.reload();
+				await assertAssetView(current.path, current.key, "kind" in current ? current.kind : undefined);
+				await page.screenshot({ path: join(evidence, `tab-selection-${locale}-${width}-${current.key}.png`), fullPage: false });
+				previous = current;
+			}
+			await page.goto("/accounts");
+			const accountTabs = page.getByRole("navigation", { name: t("accountsWorkspace"), exact: true });
+			async function assertAccountView(key: "workspaceAllAccounts" | "workspacePasswords" | "workspacePasswordReferences", hash: string) {
+				await expect.poll(() => `${new URL(page.url()).pathname}${new URL(page.url()).hash}`).toBe(key === "workspaceAllAccounts" ? "/accounts" : `/assets/vault${hash}`);
+				await expect(accountTabs.locator(":scope > a[aria-current='page']")).toHaveText([t(key)]);
+				if (key === "workspaceAllAccounts") {
+					await expect(cards).toHaveCount(1);
+					await expect(cards).toContainText("Tab selection account");
+				} else {
+					await expect(accountTabs.getByRole("link", { name: t("workspaceAllAccounts"), exact: true })).not.toHaveAttribute("aria-current", "page");
+					await expect(page.locator("#password-vault-master")).toBeVisible();
+					if (hash) await expect(page.locator("#vault-references")).toBeVisible();
+				}
+				await expect.poll(() => ordinaryRecords(page)).toBe(before);
+			}
+			for (const current of [
+				{ key: "workspacePasswords", hash: "" },
+				{ key: "workspacePasswordReferences", hash: "#vault-references" },
+				{ key: "workspaceAllAccounts", hash: "" },
+			] as const) {
+				const old = new URL(page.url());
+				await accountTabs.getByRole("link", { name: t(current.key), exact: true }).click();
+				await assertAccountView(current.key, current.hash);
+				await page.goBack();
+				await expect.poll(() => `${new URL(page.url()).pathname}${new URL(page.url()).hash}`).toBe(`${old.pathname}${old.hash}`);
+				await expect(accountTabs.locator(":scope > a[aria-current='page']")).toHaveCount(1);
+				await page.goForward();
+				await assertAccountView(current.key, current.hash);
+				await page.reload();
+				await assertAccountView(current.key, current.hash);
+			}
+			expect(errors).toEqual([]);
+		});
+	}
+});
+
 for (const locale of ["zh-CN", "en"] as const) for (const width of [390, 1280]) {
 	test(`${locale} ${width}px T01 new and legacy navigation select exactly one group and preserve records`, async ({ page }) => {
 		test.setTimeout(90_000);
@@ -85,6 +190,7 @@ for (const locale of ["zh-CN", "en"] as const) for (const width of [390, 1280]) 
 			// Found by /qa on 2026-10-27. Report: docs/qa/2026-10-27/scopes/T01.md
 			await expect(page.locator(".sidebar .sortable-nav-link.active")).toHaveText([t(group)]);
 			await expect(page.locator(".sidebar .sortable-nav-link[aria-current='page']")).toHaveCount(1);
+			if (await page.locator(".workspace-navigation").count()) await expect(page.locator(".workspace-navigation > a[aria-current='page']")).toHaveCount(1);
 			await expect(page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).resolves.toBe(true);
 			await expect.poll(() => ordinaryRecords(page)).toBe(before);
 		}

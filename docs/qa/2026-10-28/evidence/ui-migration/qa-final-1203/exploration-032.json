@@ -1,0 +1,24 @@
+{
+  "observationCommand": [
+    "C:\\Users\\Administrator\\.codex\\toolchains\\bun\\node_modules\\bun\\bin\\bun.exe",
+    "C:\\Users\\Administrator\\.codex\\toolchains\\gstack\\bin\\gstack-qa-deadline",
+    "run",
+    "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\test-results\\ui-migration\\qa-final-1203\\deadline.json",
+    "--",
+    "C:\\Users\\Administrator\\.codex\\toolchains\\gstack\\browse\\dist\\browse.exe",
+    "click",
+    "#task-date-from"
+  ],
+  "observed": "Clicked #task-date-from → now at http://127.0.0.1:4219/tasks\n",
+  "hypothesis": "检查日历展开、全部第一、任务全宽、顺序持久化和浮层边界",
+  "nextCommand": [
+    "C:\\Users\\Administrator\\.codex\\toolchains\\bun\\node_modules\\bun\\bin\\bun.exe",
+    "C:\\Users\\Administrator\\.codex\\toolchains\\gstack\\bin\\gstack-qa-deadline",
+    "run",
+    "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\test-results\\ui-migration\\qa-final-1203\\deadline.json",
+    "--",
+    "C:\\Users\\Administrator\\.codex\\toolchains\\gstack\\browse\\dist\\browse.exe",
+    "js",
+    "JSON.stringify({expanded:document.querySelector(\"#task-date-from\").getAttribute(\"aria-expanded\"),filters:Array.from(document.querySelectorAll(\".task-filters button\")).map(e=>e.textContent),calendar:document.querySelector(\".date-picker-calendar\")?.textContent,planCards:document.querySelectorAll(\".tasks-plan-card\").length,single:document.querySelector(\".tasks-columns\")?.className,width:document.querySelector(\".tasks-columns\")?.getBoundingClientRect().width,taskWidth:document.querySelector(\".tasks-list-card\")?.getBoundingClientRect().width,order:Array.from(document.querySelectorAll(\".nav .nav-label\")).map(e=>e.textContent),popupRect:document.querySelector(\".date-picker-popover\")?.getBoundingClientRect().toJSON()})"
+  ]
+}

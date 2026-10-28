@@ -1,3 +1,4 @@
+import { Input } from "./ui/input";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -225,7 +226,7 @@ export function ArchiveMigrationPanel({ configurationKey, syncBusy, onBusyChange
 				<p>{t("migrationSourceHint")}</p>
 				<div className="form-grid">
 					<label className="field"><span>{t("migrationSourceFile")}</span><input type="file" accept=".ka1" disabled={busy || syncBusy} onChange={event => { reset(); setSourceFile(event.target.files?.[0] ?? null); }} /></label>
-					<label className="field"><span>{t("migrationSourcePassword")}</span><input type="password" autoComplete="off" disabled={busy || syncBusy} value={sourcePassword} onChange={event => { reset(); setSourcePassword(event.target.value); }} /></label>
+					<label className="field"><span>{t("migrationSourcePassword")}</span><Input type="password" autoComplete="off" disabled={busy || syncBusy} value={sourcePassword} onChange={event => { reset(); setSourcePassword(event.target.value); }} /></label>
 				</div>
 				<Button disabled={busy || syncBusy || !sourceFile || !sourcePassword} onClick={previewSource}>{t("migrationCheckTarget")}</Button>
 			</div>
@@ -234,7 +235,7 @@ export function ArchiveMigrationPanel({ configurationKey, syncBusy, onBusyChange
 					<h3>{t("migrationTargetTitle")}</h3>
 					<p>{t(sourceBinding ? "migrationSourceDeclared" : "migrationSourceUnverified")}</p>
 					{sourceBinding ? <dl className="migration-identity"><dt>{t("syncServerUrl")}</dt><dd>{sourceBinding.endpoint}</dd><dt>{t("migrationSourceAccount")}</dt><dd>{sourceBinding.accountId}</dd><dt>{t("syncWorkspace")}</dt><dd>{sourceBinding.workspaceId}</dd></dl>
-						: <label className="field"><span>{t("migrationLegacySourceLabel")}</span><input value={legacySourceLabel} disabled={busy || syncBusy} onChange={event => { setLegacySourceLabel(event.target.value); setSourceAcknowledged(false); }} autoComplete="off" /></label>}
+						: <label className="field"><span>{t("migrationLegacySourceLabel")}</span><Input value={legacySourceLabel} disabled={busy || syncBusy} onChange={event => { setLegacySourceLabel(event.target.value); setSourceAcknowledged(false); }} autoComplete="off" /></label>}
 					<label className="sync-key-check"><input type="checkbox" checked={sourceAcknowledged} disabled={busy || syncBusy} onChange={event => setSourceAcknowledged(event.target.checked)} />{t("migrationConfirmSource")}</label>
 					<h4>{t("migrationTargetIdentity")}</h4>
 					<dl className="migration-identity"><dt>{t("syncServerUrl")}</dt><dd>{target.endpoint}</dd><dt>{t("migrationTargetAccount")}</dt><dd>{target.accountId}</dd><dt>{t("syncWorkspace")}</dt><dd>{target.workspaceId}</dd></dl>
@@ -277,7 +278,7 @@ export function ArchiveMigrationPanel({ configurationKey, syncBusy, onBusyChange
 				<div className="migration-step">
 					<h3>{t("migrationBackupTitle")}</h3><p>{t("migrationBackupHint")}</p>
 					<div className="form-grid">
-						<label className="field"><span>{t("migrationBackupPassword")}</span><input type="password" autoComplete="new-password" disabled={busy || syncBusy} value={backupPassword} onChange={event => { setBackupPassword(event.target.value); setBackupVerified(false); setTargetBackupHash(null); setBackupFile(null); }} /></label>
+						<label className="field"><span>{t("migrationBackupPassword")}</span><Input type="password" autoComplete="new-password" disabled={busy || syncBusy} value={backupPassword} onChange={event => { setBackupPassword(event.target.value); setBackupVerified(false); setTargetBackupHash(null); setBackupFile(null); }} /></label>
 						<label className="field"><span>{t("migrationVerifyFile")}</span><input type="file" accept=".ka1" disabled={busy || syncBusy} onChange={event => { setBackupFile(event.target.files?.[0] ?? null); setBackupVerified(false); }} /></label>
 					</div>
 					<div className="actions"><Button disabled={busy || syncBusy || backupPassword.length < 12 || !sourceAcknowledged || (!sourceBinding && !legacySourceLabel.trim())} onClick={createBackup}>{t("migrationCreateBackup")}</Button>
