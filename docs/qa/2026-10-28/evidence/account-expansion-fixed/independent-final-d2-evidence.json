@@ -1,0 +1,11 @@
+{
+  "path": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+  "size": 38578001,
+  "sha256": "7a10d751b10412327bd784087fa4de6b7d02baa544946a804dc5246596b67ad6",
+  "entries": 593,
+  "manifestFiles": 592,
+  "crc": "passed",
+  "manifestHashes": "passed",
+  "coverage": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-state-coverage.json",
+  "coverageSha256": "df4631e57b9f33e274250e4ed02606dee44cb93222b119a9a7f095b76e2dca30"
+}

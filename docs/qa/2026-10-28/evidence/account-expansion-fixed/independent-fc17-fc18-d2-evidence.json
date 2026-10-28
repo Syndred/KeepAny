@@ -1,0 +1,17 @@
+{
+  "path": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-fc17-fc18-d2-evidence.zip",
+  "size": 74713191,
+  "sha256": "2e08d14bd272141c69cffc88ed259a39055924e1bbac71f24647ef06f8586dc2",
+  "entries": 2129,
+  "manifestFiles": 2128,
+  "crc": "passed",
+  "allManifestHashes": "passed",
+  "scope": {
+    "candidate": "d2fdbdee264b524219ae091ca78b120c6428ff61",
+    "original24": "24 passed 10.6m; 12 two-manual-reload data preservation and 12 x23 route cases",
+    "mobileSupplement": "4 passed 2.5m; 4x23 real navigation and stable sidebar geometry",
+    "visual": "Independently actually opened all72 error-state contact sheets (1200 source frames),12 original navigation sheets,4 new stable navigation sheets (92 frames), plus6 representative native original frames. Full wide viewport not inferred from cropped contact sheets. Original mobile animation frames preserved and superseded only for stable visual claim.",
+    "FC18": "4 passed 52.8s, all28 native original PNGs actually opened; parent-authored test independently executed; full historical drafts/UUID/neighbor/reload strict assertions retained.",
+    "limitations": "Fault contexts explicitly serviceWorkers:block. Normal graph zero-recovery, underlying ERR_ABORTED transport cause unknown. Overall CI/delivery not declared complete."
+  }
+}

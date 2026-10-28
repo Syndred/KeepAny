@@ -369,7 +369,12 @@ for (const language of languages) for (const width of widths) {
 						name: destination === "/tasks" ? (language === "zh-CN" ? "待办" : "Tasks") : (language === "zh-CN" ? "账号" : "Accounts"),
 						exact: true,
 					})).toBeVisible();
-					steps.push({ stage: "error-navigation", via: "actual-sidebar-link", destination, mobileMenuOpened: width < 768, failedModule: target });
+					// The pathname can settle while the mobile sidebar is still animating.
+					// Observe its actual closed geometry before a stable navigation frame.
+					if (width < 768) await expect.poll(() => page.locator(".sidebar").evaluate(node => node.getBoundingClientRect().right)).toBeLessThanOrEqual(1);
+					const mobileSidebarRight = width < 768 ? await page.locator(".sidebar").evaluate(node => node.getBoundingClientRect().right) : null;
+					if (mobileSidebarRight !== null) { expect(Number.isFinite(mobileSidebarRight)).toBe(true); expect(mobileSidebarRight).toBeLessThanOrEqual(1); }
+					steps.push({ stage: "error-navigation", via: "actual-sidebar-link", destination, mobileMenuOpened: width < 768, mobileSidebarRight, mobileSidebarClosed: width < 768 ? true : "not-applicable-desktop", failedModule: target });
 					await capture(page, folder, `${index}-normal-navigation`, steps);
 					routeStatus = "passed";
 				} finally {
