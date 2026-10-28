@@ -447,6 +447,7 @@ export function PasswordVaultPanel({
 		try {
 			await session.unlock(master);
 			setMaster("");
+			if (session.getSnapshot().status === "unlocked") notify?.(t("pwVaultStatusUnlocked"));
 		} catch (error) {
 			announce(
 				errorCode(error) === "vault-password"
@@ -905,7 +906,7 @@ export function PasswordVaultPanel({
 							/>
 						</div>}
 						<div className="actions">
-							{missingSampleAccounts.length > 0 && <Button size="small" disabled={busy} onClick={() => void addSampleLogins()}>{t("sampleLogins")}</Button>}
+							{missingSampleAccounts.length > 0 && <Button className="password-vault-samples" size="small" disabled={busy} onClick={() => void addSampleLogins()}>{t("sampleLogins")}</Button>}
 							<VaultIconButton
 								label={t("pwConnectTitle")}
 								disabled={busy}
