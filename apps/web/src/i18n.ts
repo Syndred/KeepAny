@@ -46,6 +46,7 @@ const copy: Record<string, [string, string]> = {
 	workspacePasswordCount_one: ["{{count}} 个密码条目", "{{count}} password entry"],
 	workspacePasswordCount_other: ["{{count}} 个密码条目", "{{count}} password entries"],
 	workspacePasswordsLocked: ["密码已锁定，解锁后查看。", "Passwords are locked. Unlock to view them."],
+	workspacePasswordsNotCreated: ["尚未建立密码库。", "No password vault has been created."],
 	workspaceOpenPasswords: ["打开密码管理", "Open passwords"],
 	workspaceDomains: ["域名", "Domains"],
 	workspaceLedger: ["费用账本", "Ledger"],

@@ -64,7 +64,7 @@ export function AccountsWorkspace() {
 						<summary>{t("workspacePasswordCount", { count: grouped.linked.get(asset.id)?.length ?? 0 })}</summary>
 						<div className="password-vault-entry-list">{(grouped.linked.get(asset.id) ?? []).map(renderEntry)}</div>
 						<Button size="small" onClick={() => addEntry(asset.id)}><Plus size={15} />{t("pwVaultNewEntry")}</Button>
-					</details> : <p className="unified-account-locked">{t("workspacePasswordsLocked")}</p>}
+					</details> : <p className="unified-account-locked">{t(snapshot.status === "empty" ? "workspacePasswordsNotCreated" : snapshot.status === "loading" ? "pwVaultLoading" : "workspacePasswordsLocked")}</p>}
 					afterList={snapshot.status === "unlocked" && !filters.category && !filters.tag && unlinked.length > 0 ? <section className="workspace-password-only" aria-labelledby="workspace-unlinked-passwords">
 						<h2 id="workspace-unlinked-passwords">{t("workspacePasswordOnly")}</h2><div className="password-vault-entry-list">{unlinked.map(renderEntry)}</div>
 					</section> : null} />}
