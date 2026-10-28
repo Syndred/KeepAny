@@ -409,16 +409,87 @@ function recordGraphWork(stage: string, details: Record<string, unknown> = {}) {
 	const now = performance.now();
 	const start = graphWorkStarts.get(info) ?? now;
 	graphWorkStarts.set(info, start);
+	const event = {
+		stage,
+		elapsedMs: now - start,
+		wallTime: new Date().toISOString(),
+		monotonicMs: now,
+		...details,
+	};
 	appendFileSync(
 		info.outputPath("account-graph-work.jsonl"),
-		JSON.stringify({
-			stage,
-			elapsedMs: now - start,
-			wallTime: new Date().toISOString(),
-			monotonicMs: now,
-			...details,
-		}) + String.fromCharCode(10),
+		JSON.stringify(event) + String.fromCharCode(10),
 	);
+	if (
+		stage.startsWith("large-") ||
+		stage === "scenario-error" ||
+		stage === "backup-comparison-passed" ||
+		stage === "context-close-completed"
+	)
+		console.log("[account-graph-work]", JSON.stringify(event));
+}
+
+async function graphReadingOrder(page: Page, ids: string[]) {
+	return activeAccountGraph(page).evaluate((element, expectedIds) => {
+		const frame = element.querySelector(".react-flow")?.getBoundingClientRect();
+		if (!frame) throw Error("graph-reading-frame-missing");
+		const byId = new Map(
+			[...element.querySelectorAll(".react-flow__node")].map((node) => {
+				const rect = node.getBoundingClientRect();
+				return [
+					node.getAttribute("data-id"),
+					{
+						id: node.getAttribute("data-id") ?? "",
+						x: rect.x + rect.width / 2,
+						y: rect.y + rect.height / 2,
+					},
+				] as const;
+			}),
+		);
+		const original = expectedIds.map((id) => {
+			const point = byId.get(id);
+			if (!point) throw Error("graph-reading-node-missing");
+			return point;
+		});
+		const origin = {
+			x: frame.x + frame.width / 2,
+			y: frame.y + frame.height / 2,
+		};
+		let cursor = origin;
+		const remaining = [...original],
+			nearest: typeof original = [];
+		while (remaining.length) {
+			let best = 0;
+			for (let i = 1; i < remaining.length; i++)
+				if (
+					Math.hypot(remaining[i].x - cursor.x, remaining[i].y - cursor.y) <
+					Math.hypot(remaining[best].x - cursor.x, remaining[best].y - cursor.y)
+				)
+					best = i;
+			const point = remaining.splice(best, 1)[0];
+			nearest.push(point);
+			cursor = point;
+		}
+		const distance = (order: typeof original) => {
+			let previous = origin,
+				total = 0;
+			for (const point of order) {
+				total += Math.hypot(point.x - previous.x, point.y - previous.y);
+				previous = point;
+			}
+			return total;
+		};
+		const originalDistance = distance(original),
+			nearestDistance = distance(nearest);
+		const chosen = nearestDistance <= originalDistance ? nearest : original;
+		// This only plans a reading route from observed geometry. The caller still
+		// visits every ID through the original mouse/visibility/readability helper.
+		return {
+			ids: chosen.map((point) => point.id),
+			originalDistance,
+			plannedDistance: Math.min(originalDistance, nearestDistance),
+		};
+	}, ids);
 }
 
 async function expectBackupConnections(
@@ -1119,7 +1190,13 @@ async function largeFamilyCheckpoints(
 ) {
 	const expected = [...baseline];
 	for (const count of [24, 49]) {
-		recordGraphWork("large-setup-start", { nodes: count });
+		// Each bulk preparation starts in this scenario's original desktop
+		// viewport; the previous checkpoint intentionally ends at mobile width.
+		await page.setViewportSize({ width: 1536, height: 1024 });
+		recordGraphWork("large-setup-start", {
+			nodes: count,
+			preparationWidth: 1536,
+		});
 		for (let index = hrefs.size + 1; index <= count; index++) {
 			const key = `extra-${index}`;
 			hrefs.set(key, await createScenarioAccount(page, key, text));
@@ -1150,13 +1227,28 @@ async function largeFamilyCheckpoints(
 			await waitForAccountGraphLayout(page, { nodes: count });
 			await expectReadableAccountGraph(page);
 			const ids = await visibleGraphNodeIds(activeAccountGraph(page));
+			expect(ids).toHaveLength(count);
+			const route = await graphReadingOrder(page, ids);
+			expect(new Set(route.ids).size).toBe(ids.length);
+			expect([...route.ids].sort()).toEqual(ids);
 			recordGraphWork("large-pan-start", {
 				nodes: count,
 				width,
 				nodeCount: ids.length,
+				originalDistance: route.originalDistance,
+				plannedDistance: route.plannedDistance,
 			});
-			for (const id of ids) await panAccountGraphNodeIntoView(page, id);
-			recordGraphWork("large-pan-completed", { nodes: count, width });
+			const visited: string[] = [];
+			for (const id of route.ids) {
+				await panAccountGraphNodeIntoView(page, id);
+				visited.push(id);
+			}
+			expect(visited.sort()).toEqual(ids);
+			recordGraphWork("large-pan-completed", {
+				nodes: count,
+				width,
+				visitedCount: visited.length,
+			});
 			await exerciseAccountGraphMiniMap(page);
 			if (evidence)
 				await page.screenshot({
