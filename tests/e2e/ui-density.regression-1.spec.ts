@@ -35,6 +35,13 @@ for (const language of ["zh-CN", "en"] as const)
 			});
 			await page.reload();
 			const t = (key: string) => resources[language].translation[key];
+			await page.goto("/");
+			await expect(page.locator(".overview-project-card")).toHaveCount(6);
+			await expect(page.locator(".overview-project-top h3")).toHaveCount(6);
+			expect(await page.locator(".overview-project-card").evaluateAll((cards) => cards.every((card) => card.getBoundingClientRect().width <= 361))).toBe(true);
+			if (width >= 1280) expect((await page.locator(".overview-hero").boundingBox())!.height).toBeLessThan(130);
+			await page.screenshot({path: join(evidence, `dense-overview-${language}-${width}.png`),fullPage: true});
+			await page.goto("/assets");
 			const cards = page.locator(".workspace-asset-grid > a");
 			await expect(cards).toHaveCount(25); // 24 assets in the catalog plus the recorded domain.
 			await expect(page.locator(".workspace-asset-grid")).toHaveClass(

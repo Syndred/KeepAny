@@ -352,12 +352,6 @@
 		gap: var(--category-toolbar-gap, 6px);
 	}
 }
-@media (max-width: 430px) {
-	.asset-account-card {
-		grid-template-columns: 1fr;
-		gap: 9px;
-	}
-}
 
 .asset-detail-project {
 	display: grid;
