@@ -47,7 +47,9 @@ async function recordDependency(filename) {
   if (!filename.replaceAll('\\', '/').includes('/node_modules/')) return;
   let directory = dirname(filename.replace(/\?.*$/, ''));
   const visited = [];
-  while (directory !== dirname(directory)) {
+  // Generated Vite IDs can contain node_modules without naming an installed
+  // file. Never climb out of that dependency tree and claim the app root.
+  while (directory.replaceAll('\\', '/').includes('/node_modules/')) {
     if (packageCache.has(directory)) {
       const pkg = packageCache.get(directory);
       for (const item of visited) packageCache.set(item, pkg);
