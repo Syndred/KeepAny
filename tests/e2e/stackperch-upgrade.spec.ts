@@ -161,6 +161,8 @@ test('published assets, vault fields, import draft and backup survive the curren
   let oldService: ChildProcess | undefined;
   let newService: ChildProcess | undefined;
   let stage = 'prepare packages';
+  let compatibilityFailure: Error | undefined;
+  let cleanupFailure: Error | undefined;
   try {
     mkdirSync(join(oldPackage, 'web'), { recursive: true });
     const release = extractCandidate(root, newPackage);
@@ -350,14 +352,26 @@ test('published assets, vault fields, import draft and backup survive the curren
     // Keep failure stage useful without dumping draft/source/password field values.
     const sourceLocation = error instanceof Error ? error.stack?.split('\n')
       .find(line => line.trimStart().startsWith('at ') && line.includes('stackperch-upgrade.spec.ts'))?.trim() : undefined;
-    throw Error(`KeepAny compatibility failed at: ${stage}${sourceLocation ? ` (${sourceLocation})` : ''}`);
+    compatibilityFailure = Error(`KeepAny compatibility failed at: ${stage}${sourceLocation ? ` (${sourceLocation})` : ''}`);
   } finally {
     // Attempt every cleanup even if a browser or server fails to close.
     const cleanup = await Promise.allSettled([
       restoredContext?.close(), context?.close(), stopPackage(oldPackage, oldService), stopPackage(newPackage, newService),
     ]);
-    rmSync(directory, { recursive: true, force: true });
-    const failure = cleanup.find(result => result.status === 'rejected');
-    if (failure?.status === 'rejected') throw Error('An isolated compatibility fixture did not stop cleanly', { cause: failure.reason });
+    const cleanupErrors = cleanup.flatMap(result => result.status === 'rejected' ? [result.reason] : []);
+    const target = resolve(directory);
+    if (!target.startsWith(`${resolve(tmpdir())}${sep}keepany-stackperch-upgrade-`)) {
+      cleanupErrors.push(Error('Compatibility cleanup target escaped its allocated temporary directory'));
+    } else {
+      try { rmSync(target, { recursive: true, force: true }); }
+      catch (error) { cleanupErrors.push(error); }
+    }
+    if (cleanupErrors.length) cleanupFailure = Error('An isolated compatibility fixture did not stop cleanly', {
+      cause: new AggregateError(cleanupErrors),
+    });
   }
+  if (compatibilityFailure && cleanupFailure)
+    throw new AggregateError([compatibilityFailure, cleanupFailure], 'Compatibility and fixture cleanup both failed');
+  if (compatibilityFailure) throw compatibilityFailure;
+  if (cleanupFailure) throw cleanupFailure;
 });
