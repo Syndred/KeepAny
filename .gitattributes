@@ -1,4 +1,6 @@
 release/web/** -text -whitespace linguist-generated=true
+# Keep Vite's HTML input deterministic across Windows and POSIX builds.
+apps/web/index.html text eol=lf
 # Preserve public upstream package evidence byte-for-byte, including whitespace.
 legal/third-party/evidence/** -text -whitespace
 legal/third-party/texts/** -text
