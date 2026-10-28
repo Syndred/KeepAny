@@ -1,0 +1,196 @@
+{
+  "schema": "keepany.independent-busy-archive.v1",
+  "sourceCommit": "d187f33e24361ded19f8c2c38183fe823558677d",
+  "origin": "http://127.0.0.1:4232",
+  "archive": "independent-busy-evidence.zip",
+  "archiveBytes": 1428921,
+  "archiveSha256": "9ea2b350f9be156d880ad7f7e86203f8682571dee86aef6aeb39342f5d6dac98",
+  "performancePreparation": "CDP main-thread CPU throttle 16x, reset to1 after actual rendered busy capture; no product state injection",
+  "entries": [
+    {
+      "path": "candidate3-busy/runs/account-layout-busy-indepe-322da-async-UI-under-CPU-throttle/error-context.md",
+      "bytes": 5274,
+      "sha256": "8f6609f9a384c33d040906b8782063dfa6f4085b6505fba49c54316f78ba3388"
+    },
+    {
+      "path": "candidate3-busy/runs/account-layout-busy-indepe-322da-async-UI-under-CPU-throttle/test-failed-1.png",
+      "bytes": 114577,
+      "sha256": "8fae55e0e0b63be95c763d9a0aba77620c3a25c468c1cf3d4a5f3a88f0ad139d"
+    },
+    {
+      "path": "candidate3-busy/runs/account-layout-busy-indepe-5f64f-async-UI-under-CPU-throttle/error-context.md",
+      "bytes": 5274,
+      "sha256": "5b31eefcc11c51faf409fb4fbc1bd1d1f39d8b334b067456254da23d0a7f1a91"
+    },
+    {
+      "path": "candidate3-busy/runs/account-layout-busy-indepe-5f64f-async-UI-under-CPU-throttle/test-failed-1.png",
+      "bytes": 112767,
+      "sha256": "597e237ce095b216ce649fc9768fbe972b5c8f303c4842f42387407c67a090a1"
+    },
+    {
+      "path": "candidate3-busy/runs/account-layout-busy-indepe-903f4-async-UI-under-CPU-throttle/error-context.md",
+      "bytes": 5274,
+      "sha256": "f7247650d978a00dd3d264329975280b5e5b0a3819b6f8505b3a4dfe458513fb"
+    },
+    {
+      "path": "candidate3-busy/runs/account-layout-busy-indepe-903f4-async-UI-under-CPU-throttle/test-failed-1.png",
+      "bytes": 118125,
+      "sha256": "77e7dd3549c2fd5fb52cebc23ffa35116066d91bc4c2d1466e50343d3ad333a0"
+    },
+    {
+      "path": "candidate3-busy/runs/account-layout-busy-indepe-bdfdf-async-UI-under-CPU-throttle/error-context.md",
+      "bytes": 5273,
+      "sha256": "b1d431902a916ea29d4ea2a2a71bd2ecf12ed7b70f6fc38aa40c334bf43c5179"
+    },
+    {
+      "path": "candidate3-busy/runs/account-layout-busy-indepe-bdfdf-async-UI-under-CPU-throttle/test-failed-1.png",
+      "bytes": 60023,
+      "sha256": "7be017affed447f5fdb8fc4c23fd599ab0b887444524af806f6b6e032969cfa3"
+    },
+    {
+      "path": "candidate3-busy/runs/account-layout-busy-indepe-ea7f0-async-UI-under-CPU-throttle/error-context.md",
+      "bytes": 5273,
+      "sha256": "99ba240dfd5608f53015610b8c496a6b30a96dab77bfd0a64685fdad13450654"
+    },
+    {
+      "path": "candidate3-busy/runs/account-layout-busy-indepe-ea7f0-async-UI-under-CPU-throttle/test-failed-1.png",
+      "bytes": 101697,
+      "sha256": "9ff0e954ba8f1ea67925cbe7c7f99c5ddc02cdbeb7dc5ea61c09440add166dcd"
+    },
+    {
+      "path": "candidate3-busy/zh-CN-1280-busy.json",
+      "bytes": 242,
+      "sha256": "60af099507c5a3cfa819221f00767f9d5b8b54085dc51c647cd69d79dae9ba0b"
+    },
+    {
+      "path": "candidate3-busy/zh-CN-1920-busy.json",
+      "bytes": 242,
+      "sha256": "b7e13cea21582cedcbb1a1a7854c07de0695051794e3105ca8cf1ce9f6043f62"
+    },
+    {
+      "path": "candidate3-busy/zh-CN-2560-busy.json",
+      "bytes": 242,
+      "sha256": "39377f3ef9e392727539e287fdd62b806e054ff09e8cff7216ab28aa9c1c07ff"
+    },
+    {
+      "path": "candidate3-busy/zh-CN-390-busy.json",
+      "bytes": 241,
+      "sha256": "5d0dd17938f39df17a8ee47b885340dbae5995a2d5e4cf7188efce6ec55e987c"
+    },
+    {
+      "path": "candidate3-busy/zh-CN-768-busy.json",
+      "bytes": 241,
+      "sha256": "a5453224c0dd2910fe28eb7ce61b2d3667a00ba81de31ed1e25c3888f8717f72"
+    },
+    {
+      "path": "candidate3-busy-frame/en-1280-busy.json",
+      "bytes": 1278,
+      "sha256": "5295cd82b6f978fd254215a71a3ae0d9bcdf7f2b710605c0f25d8c1ce8471756"
+    },
+    {
+      "path": "candidate3-busy-frame/en-1280-toolbar-busy.png",
+      "bytes": 113550,
+      "sha256": "a7689134f0fa5312f3e183875041aa274ecdc55ca1d7ce975dcd1defbfd12d01"
+    },
+    {
+      "path": "candidate3-busy-frame/en-1920-busy.json",
+      "bytes": 1278,
+      "sha256": "d5b8b1245489f8a1d9487e038904b4f5c80f5a7794f4251bd942e77127285cf4"
+    },
+    {
+      "path": "candidate3-busy-frame/en-1920-toolbar-busy.png",
+      "bytes": 115412,
+      "sha256": "1e6ee0086d5eba5560657a38b9cafeeaa976adc1daf1b733bf783559572422b4"
+    },
+    {
+      "path": "candidate3-busy-frame/en-2560-busy.json",
+      "bytes": 1278,
+      "sha256": "52598007376180b490bf06a13eaa8e3eb8f6a32a289dbaac1a5c5a4f9749c9f6"
+    },
+    {
+      "path": "candidate3-busy-frame/en-2560-toolbar-busy.png",
+      "bytes": 111059,
+      "sha256": "25ada0556c4d1169b7c539538817a04be77170c3e069318781c6be9aae5ab3cf"
+    },
+    {
+      "path": "candidate3-busy-frame/en-390-busy.json",
+      "bytes": 1277,
+      "sha256": "63189f26b9cb486b27cf44071cd7f11ba0f0a619c4e2d17d98fb45d682ef6a0b"
+    },
+    {
+      "path": "candidate3-busy-frame/en-390-toolbar-busy.png",
+      "bytes": 53529,
+      "sha256": "afaab8e274a9b28e3791de74863cab8812e366966ba99f4467959d18321a943b"
+    },
+    {
+      "path": "candidate3-busy-frame/en-768-busy.json",
+      "bytes": 1277,
+      "sha256": "2dfca48b9a444b4b4c627ecc5ab754e0b4a46d7d9e1b1c5127a0cb7f61c0332a"
+    },
+    {
+      "path": "candidate3-busy-frame/en-768-toolbar-busy.png",
+      "bytes": 95957,
+      "sha256": "f96e38d284a26d224635220930558972a20760855390684f6da3c9c6357b25e9"
+    },
+    {
+      "path": "candidate3-busy-frame/results.json",
+      "bytes": 13325,
+      "sha256": "d082d1a2908d811fc44ed80bb1d251cfd80eed8b84a1c6d048b29404a83e4d7a"
+    },
+    {
+      "path": "candidate3-busy-frame/runs/.last-run.json",
+      "bytes": 45,
+      "sha256": "91d1c43004802cd49950d78eb11c8fa7d05da8ffffe219a8b13b2f561bc00903"
+    },
+    {
+      "path": "candidate3-busy-frame/zh-CN-1280-busy.json",
+      "bytes": 1284,
+      "sha256": "52b0c36ecc9a8aa926b3d9db777ad2c3a2d9b596d4766eb3b4b655cff49e1c38"
+    },
+    {
+      "path": "candidate3-busy-frame/zh-CN-1280-toolbar-busy.png",
+      "bytes": 112550,
+      "sha256": "9084f81af670e82e6bb06b2d7c83dd66fa873d04727ef1b74410de0620688bdb"
+    },
+    {
+      "path": "candidate3-busy-frame/zh-CN-1920-busy.json",
+      "bytes": 1284,
+      "sha256": "cfe73f9e9a76ddc92879506169676a14b93cd54d0b4c72fe8318d968b9164041"
+    },
+    {
+      "path": "candidate3-busy-frame/zh-CN-1920-toolbar-busy.png",
+      "bytes": 115833,
+      "sha256": "0c34572aa17c07df2abb6921f23654f92dcdbf3578e47c0415eb7332131a1aa1"
+    },
+    {
+      "path": "candidate3-busy-frame/zh-CN-2560-busy.json",
+      "bytes": 1284,
+      "sha256": "66c9a8c883830fc54cf21068722f07a6c63220733b7458736dbb7b883b78b4bf"
+    },
+    {
+      "path": "candidate3-busy-frame/zh-CN-2560-toolbar-busy.png",
+      "bytes": 109908,
+      "sha256": "bb89ae8d2f8e6aa1557a5f52df5e338a66ec36af3cd0e00a4059c2c707a4db8e"
+    },
+    {
+      "path": "candidate3-busy-frame/zh-CN-390-busy.json",
+      "bytes": 1283,
+      "sha256": "675696baa80414b025bc97014022e7a969e7c85a2e1e7e29f8415afc64fc2d58"
+    },
+    {
+      "path": "candidate3-busy-frame/zh-CN-390-toolbar-busy.png",
+      "bytes": 57294,
+      "sha256": "373a36ef402878a2c893756b8a0e503d93921d83d8918c99d140f0f6b2be5c36"
+    },
+    {
+      "path": "candidate3-busy-frame/zh-CN-768-busy.json",
+      "bytes": 1283,
+      "sha256": "314645715041be38fd9d2f031f158c8933ff4a3c5b226d052652a8d6d69d467f"
+    },
+    {
+      "path": "candidate3-busy-frame/zh-CN-768-toolbar-busy.png",
+      "bytes": 98560,
+      "sha256": "96de658d995c94ca572b5d290aa466d32d4e81323856c65e291ef2bc3b956913"
+    }
+  ]
+}
