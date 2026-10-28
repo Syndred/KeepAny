@@ -26,7 +26,7 @@
 
 Root 接受首红并限定收尾后，冻结全稿／首图→Cancel 一次→正式 Revoke local access 确认。原生 KeepAnyMcpTransport.stop 有成功 ACK，Stop／Activate／配对链接消失；本次 1 个新 grant 已真实持久 revoked，原 grant／audit 前缀相同（开始均空）。共 7 条脱敏审计，包含 applied 收据，无自动重放；`test-results/native-mcp-edit-cas-n25/device/authority-final-metadata.json` 不含 secretHash 或字段值。
 
-- 最终九行全表基线：`test-results/native-mcp-edit-cas-n25/device/final-graph/full-sql.json`；SHA `fce7b1a55b5e3ccba6e4aa7d76cfaa38b0d4e7964c13210f7b449e1f2de7bdfb`。含内部墓碑列／所有 SQL 表，WAL 感知且静止窗口见证，精确等 afterPc；不是原未修改 G6 名称基线。
+- 最终九行全表基线：`test-results/native-mcp-edit-cas-n25/device/final-graph/full-sql.json`；规范化完整 SQL SHA `fce7b1a55b5e3ccba6e4aa7d76cfaa38b0d4e7964c13210f7b449e1f2de7bdfb`；原始 JSON 文件字节 SHA `64ff066dd41f5e19509ff4ca4d4691ae339fcc52e8a7f41d07194c7cde1070eb`。含内部墓碑列／所有 SQL 表，WAL 感知且静止窗口见证，精确等 afterPc；不是原未修改 G6 名称基线。
 - 五保护 QA、三 closed 诊断、control 完整逻辑、所有引用文件映射／mode／bytes、八 Saved、偏好、AI control 实际 final 核对保持。保护证明：`test-results/native-mcp-edit-cas-n25/device/final-full-protection.json`；SHA `9eeef0bb83bcf82927e948b698d643fc2041fa1eb1fe45b2d11797b99e897d4a`。
 - 正常切回原英文 Locked／master 空，不读原 keepany-v1 业务或 KDBX。原生 stop 后重新挂载的 Settings 范围未选，Prepare disabled 是前置状态；不以其 enabled 作为停止 ACK，实际 stop resolve／grant revoked／票据入口消失分别留证。
 - 仅本次身份匹配的配对票据／私有 profile／XML 移除；旧备份、其它票据和 deferred 不动。自有 controller／pair client／SDK client 全 exit0，外部三 PID 与 children 均 0；delegate 恢复、CDP 关闭、自有 forward 清除，forward／reverse 空。
