@@ -1,5 +1,5 @@
 {
-  "checkedAt": "2026-10-28T07:28:06.756Z",
+  "checkedAt": "2026-10-28T07:29:48.221Z",
   "testedCommit": "fd0a976e5c6b7200db70915ae86e981b4e4e4975",
   "productCandidate": "d187f33e24361ded19f8c2c38183fe823558677d",
   "scope": "账号布局合同与便携包跨平台；历史全量另列，不混为本轮通过数",
@@ -32,7 +32,29 @@
       "name": "Verify local release",
       "status": "in_progress",
       "conclusion": null,
-      "boundary": "历史全量工作流，未计为本轮AL01–AL10通过证据"
+      "boundary": "历史全量工作流，未计为本轮AL01–AL10通过证据",
+      "jobs": [
+        {
+          "id": 122687087333,
+          "name": "verify",
+          "status": "completed",
+          "conclusion": "failure",
+          "passedBeforeFailure": [
+            "990 unit tests;13 skipped",
+            "5 intake refresh race UI tests",
+            "production build"
+          ],
+          "failedStep": "Verify committed web bundle",
+          "error": "Missing current bundle file: assets/index-DApZd6rU.js (and other current chunks)",
+          "boundary": "release/web保留旧正式包；本轮便携包4180已验并通过专属及三平台门禁；未宣称正式包验收/公开发布"
+        },
+        {
+          "id": 122687087548,
+          "name": "portable-workflows",
+          "status": "in_progress",
+          "conclusion": null
+        }
+      ]
     }
   ],
   "preservedFailures": [
