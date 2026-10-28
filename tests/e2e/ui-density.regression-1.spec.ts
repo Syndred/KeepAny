@@ -68,11 +68,17 @@ for (const language of ["zh-CN", "en"] as const)
 				cards.map((card) => ({
 					width: card.getBoundingClientRect().width,
 					height: card.getBoundingClientRect().height,
+					top: card.getBoundingClientRect().top,
+					bottom: card.getBoundingClientRect().bottom,
 				})),
 			);
 			expect(
 				rectangles.every((rect) => rect.width <= 361 && rect.height < 440),
 			).toBe(true);
+			for (const rect of rectangles) {
+				const sameRow = rectangles.filter((other) => Math.abs(other.top - rect.top) < 1);
+				expect(Math.max(...sameRow.map((other) => other.bottom)) - Math.min(...sameRow.map((other) => other.bottom))).toBeLessThanOrEqual(1);
+			}
 			await expect(page.locator(".asset-kind-icon img")).toHaveJSProperty(
 				"naturalWidth",
 				640,

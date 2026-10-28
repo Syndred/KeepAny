@@ -1,6 +1,10 @@
 .asset-view-toggle { display: flex; align-items: center; flex: none; gap: 6px; min-width: 0; margin: 0; padding: 0; border: 0; }
 .asset-list-view-tools { display: flex; justify-content: flex-end; margin-block: 8px; }
 .asset-card-summary, .asset-card-facts { display: grid; gap: 7px; min-width: 0; }
+.asset-list-content:not(.asset-dense-list) { align-items: stretch; }
+.asset-list-content:not(.asset-dense-list) > :is(.asset-project-card, .asset-library-card) { display: flex; flex-direction: column; }
+.asset-list-content:not(.asset-dense-list) :is(.asset-project-info, .asset-library-body) { display: flex; flex: 1; flex-direction: column; }
+.asset-list-content:not(.asset-dense-list) :is(.asset-project-foot, .asset-library-foot, .workspace-domain-action) { margin-top: auto; }
 .asset-list-content.asset-dense-list { display: grid; grid-template-columns: minmax(0,1fr); gap: 0; overflow: hidden; border: 2px solid var(--line); border-radius: 12px; background: var(--paper); box-shadow: var(--shadow); }
 .asset-dense-list > :is(.asset-project-card, .asset-library-card, .workspace-domain-card) { width: 100%; max-width: none; border: 0; border-bottom: 1px solid var(--line-soft); border-radius: 0; box-shadow: none; }
 .asset-dense-list > :last-child { border-bottom: 0; }
