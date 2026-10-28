@@ -1,7 +1,6 @@
 import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "./components/ui/button";
-import "./route-load-error.css";
 
 export function routeErrorKind(error: unknown): "module-load" | "unexpected" {
 	if (
