@@ -68,3 +68,13 @@ workflow 仅将原 inline helper 提取为可单测自包含脚本，再复制�
 - 结果原件：`gate-local-result.json`、`static-proof.json`。**这是 Windows C / 静态门禁，不是实际 codesign / otool / derq / Keychain / iOS 实证**。未跑全仓单测，未声称新 Apple 已成功。
 
 下一轮必须保留新的实际段原件 / hash、四 phase JSON，并让原 App MCP prepare / numeric OSStatus、Core 与八个 UI 用例实际执行。若运行时仍 -34018，继续按实际 stage 调查，不据本机 mock 绿核销。
+
+## c16fc77d 独立兼容复审
+
+再次只读 ce0 实际日志、workflow 与 Apple 一手资料，**未发现需要改动已提交 helper 的实证**，因此本次不改代码或安全门槛。
+
+- DER 参数：32093 行的实际 Xcode 命令就是 `/usr/bin/derq query -f xml -i App.app-Simulated.xcent -o App.app-Simulated.xcent.der --raw`；helper 使用完全相同的参数顺序与 raw 模式，仅输出到自己的临时文件。没有凭猜测使用另一套转换命令。重新生成结果是否与实际 SDK DER 相等仍由下轮真实工具比较，本机没有执行 Apple derq。
+- padding：Apple 公开 ld64 固定提交 [f60a74e… 的 opaque_section_file.cpp](https://github.com/apple-oss-distributions/ld64/blob/f60a74eaa2c99585de1dc0f2820e7a9f8aaf522c/src/ld/parsers/opaque_section_file.cpp#L37) 41 / 44 / 66 / 85 行将 `-sectcreate` 输入 fileLength 作为 atom 的原始长度，并按该长度复制原 bytes、alignment=0；[ld.cpp](https://github.com/apple-oss-distributions/ld64/blob/f60a74eaa2c99585de1dc0f2820e7a9f8aaf522c/src/ld/ld.cpp#L1083) 1096 / 1124 行累计 atom 长度作为 section.size。它支持按 section 的 offset / size 读取输入原 bytes，而非把段间 / segment 的对齐空白算进去。**该公开版本不等于本轮 Xcode 26.6 linker 的逐字节对应证明**；ce0 没有 Mach-O / 实际 xcent 原件，不能称实际无 padding 已测过。因此保持严格全 bytes 比较，不能猜测剥零来让门禁通过。
+- 四阶段路径：32076 行证实 compile 的 App target 使用 helper 中的准确 `Intermediates.noindex/App.build/Debug-iphonesimulator/App.build/App.app-Simulated.xcent`。workflow 的 generic compile 和 simulator test 都是同一 project / scheme / Debug / SDK / derivedDataPath；`installed-before` 在首次 install 后读同次 built xcent，`test` / `installed-after` 在第二次 test 重建返回后读更新的同一路径。SDK 丢失或失败阶段没有该文件时仍给固定失败，不搜索其他缓存路径冒充同次产物，原 UI 失败 exit 保留。第二次真实重建后的文件可用性仍待下一轮 Apple。
+
+复审原件：ignored `independent-compatibility-review.json`、`compatibility-log-slices.json` 及固定上游源码。没有 ADB、设备、服务、安装、权限 / DEBUG_DYLIB 变动或 push；**实际 Apple 执行仍未发生于本片**。
