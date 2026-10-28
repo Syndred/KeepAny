@@ -1,0 +1,209 @@
+{
+  "schema": "keepany.account-acceptance.v1",
+  "candidate": "231218b25c2c27d71f71cd7bd4f6036ddd023700",
+  "indexSha256": "84ca2f33d150253c07a498992ecd131169ff37ccffb3b10a61469449759f99cc",
+  "scope": "AL01–AL10冻结本地验收，最终2312真实消费与FC09-B缓存/升级补验；116相同UI的65ce事实只作明确历史支持，不改原标签。整体交付必须另等最终原分支所有云端job终态通过，不能据本地绑定宣布目标完成。",
+  "productIdentity": "docs/qa/2026-10-28/evidence/final-sw-order/product-identity.json",
+  "verdicts": {
+    "functional": "passed",
+    "visual": "passed",
+    "whitebox": "passed",
+    "ownerExperience": "passed",
+    "independentReview": "passed"
+  },
+  "manualReviewRecord": {
+    "owner": "主控本人新231正常UI六条路径及4180更新/空配置回读，实际1280/563；新双语五宽20张expanded-stable/multiple-stable原图逐张打开，7张本人原图实际查看。详owner-observations及delivery-observations。",
+    "independent": "非实现acceptance_review新231 FC12八组、三消费十二组、长字段四组及有关系两组、30真实busy+10有资料social逐图复核；实际Worker/106缓存及离线稳定UI补验；所有初帧/准备失败保留且排除。新record/门禁的独立完整性执行回执由独立报告另记，不能用实现者输出代替。"
+  },
+  "results": [
+    {
+      "id": "AL01",
+      "status": "passed",
+      "candidate": "231218b25c2c27d71f71cd7bd4f6036ddd023700",
+      "evidence": [
+        "docs/qa/2026-10-28/evidence/final-sw-order/product-identity.json",
+        "docs/qa/2026-10-28/evidence/final-sw-order/owner-observations.json",
+        "docs/qa/2026-10-28/evidence/final-sw-order/owner-evidence.zip",
+        "docs/qa/2026-10-28/evidence/final-sw-order/candidate-comparison.json",
+        "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final231-evidence.zip",
+        "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final231-state-coverage.json"
+      ],
+      "notes": "新231双语五宽10/10最终展开/收起与邻居，主控20原图目检；独立三个消费位置/有无关系与最终FC12。"
+    },
+    {
+      "id": "AL02",
+      "status": "passed",
+      "candidate": "231218b25c2c27d71f71cd7bd4f6036ddd023700",
+      "evidence": [
+        "docs/qa/2026-10-28/evidence/final-sw-order/product-identity.json",
+        "docs/qa/2026-10-28/evidence/final-sw-order/owner-observations.json",
+        "docs/qa/2026-10-28/evidence/final-sw-order/owner-evidence.zip",
+        "docs/qa/2026-10-28/evidence/final-sw-order/candidate-comparison.json",
+        "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final231-evidence.zip",
+        "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final231-state-coverage.json"
+      ],
+      "notes": "新231空/单/多、筛选清除与10个有资料自媒体组合。所有截图及raw实际新包身份。"
+    },
+    {
+      "id": "AL03",
+      "status": "passed",
+      "candidate": "231218b25c2c27d71f71cd7bd4f6036ddd023700",
+      "evidence": [
+        "docs/qa/2026-10-28/evidence/final-sw-order/product-identity.json",
+        "docs/qa/2026-10-28/evidence/final-sw-order/owner-observations.json",
+        "docs/qa/2026-10-28/evidence/final-sw-order/owner-evidence.zip",
+        "docs/qa/2026-10-28/evidence/final-sw-order/candidate-comparison.json",
+        "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final231-evidence.zip",
+        "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final231-state-coverage.json"
+      ],
+      "notes": "新231独立三位置长字段/有关系长字段，主控旧库长备注取消/保存/刷新回读；原始字段与掩码不变。"
+    },
+    {
+      "id": "AL04",
+      "status": "passed",
+      "candidate": "231218b25c2c27d71f71cd7bd4f6036ddd023700",
+      "evidence": [
+        "docs/qa/2026-10-28/evidence/final-sw-order/product-identity.json",
+        "docs/qa/2026-10-28/evidence/final-sw-order/owner-observations.json",
+        "docs/qa/2026-10-28/evidence/final-sw-order/owner-evidence.zip",
+        "docs/qa/2026-10-28/evidence/final-sw-order/candidate-comparison.json",
+        "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final231-evidence.zip",
+        "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final231-state-coverage.json"
+      ],
+      "notes": "新231本人1280已有locked→错误恢复→解锁；实际563详情top80.25/focus/无溢出→定向管理取消。独立FC12八组及三位置十二组。"
+    },
+    {
+      "id": "AL05",
+      "status": "passed",
+      "candidate": "231218b25c2c27d71f71cd7bd4f6036ddd023700",
+      "evidence": [
+        "docs/qa/2026-10-28/evidence/final-sw-order/product-identity.json",
+        "docs/qa/2026-10-28/evidence/final-sw-order/owner-observations.json",
+        "docs/qa/2026-10-28/evidence/final-sw-order/owner-evidence.zip",
+        "docs/qa/2026-10-28/evidence/final-sw-order/candidate-comparison.json",
+        "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final231-evidence.zip",
+        "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final231-state-coverage.json"
+      ],
+      "notes": "新231独立真实取消/必填/保存/错误/刷新，以及三位置30真实busy/recovered；主控本人保存后重新解锁同ID全文一致。"
+    },
+    {
+      "id": "AL06",
+      "status": "passed",
+      "candidate": "231218b25c2c27d71f71cd7bd4f6036ddd023700",
+      "evidence": [
+        "docs/qa/2026-10-28/evidence/final-sw-order/product-identity.json",
+        "docs/qa/2026-10-28/evidence/final-sw-order/owner-observations.json",
+        "docs/qa/2026-10-28/evidence/final-sw-order/owner-evidence.zip",
+        "docs/qa/2026-10-28/evidence/final-sw-order/candidate-comparison.json",
+        "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final231-evidence.zip",
+        "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final231-state-coverage.json",
+        "docs/qa/2026-10-28/evidence/final-correction/owner-evidence.zip",
+        "docs/qa/2026-10-28/evidence/final-correction/owner-observations.json"
+      ],
+      "notes": "新231本人解除取消、独立busy真实回收站恢复；两已发布基线真实worker更新、KDBX/KA1/原ID/图片摘要/草稿/干净恢复严格通过。复制/历史等65ce完整279及本人13路径按116UI字节相同保留原版本历史支持，不冒称新本机重跑279。"
+    },
+    {
+      "id": "AL07",
+      "status": "passed",
+      "candidate": "231218b25c2c27d71f71cd7bd4f6036ddd023700",
+      "evidence": [
+        "docs/qa/2026-10-28/evidence/final-sw-order/product-identity.json",
+        "docs/qa/2026-10-28/evidence/final-sw-order/owner-observations.json",
+        "docs/qa/2026-10-28/evidence/final-sw-order/owner-evidence.zip",
+        "docs/qa/2026-10-28/evidence/final-sw-order/candidate-comparison.json",
+        "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final231-evidence.zip",
+        "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final231-state-coverage.json",
+        "docs/qa/2026-10-28/evidence/final-correction/owner-evidence.zip",
+        "docs/qa/2026-10-28/evidence/final-correction/owner-observations.json"
+      ],
+      "notes": "新231本人正常概览/账号/详情/定向管理、更新与刷新；主控65ce13路径和完整279为116相同UI字节历史支持，未改其标签，最终云端全部主要任务仍另行运行。"
+    },
+    {
+      "id": "AL08",
+      "status": "passed",
+      "candidate": "231218b25c2c27d71f71cd7bd4f6036ddd023700",
+      "evidence": [
+        "docs/qa/2026-10-28/evidence/final-sw-order/product-identity.json",
+        "docs/qa/2026-10-28/evidence/final-sw-order/owner-observations.json",
+        "docs/qa/2026-10-28/evidence/final-sw-order/owner-evidence.zip",
+        "docs/qa/2026-10-28/evidence/final-sw-order/candidate-comparison.json",
+        "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final231-evidence.zip",
+        "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final231-state-coverage.json"
+      ],
+      "notes": "独立白盒实际VitePWA/Workbox顺序与379产品源/117Web；只改生成配置、所有116UI完全一致，三位置组合最终新包复核。"
+    },
+    {
+      "id": "AL09",
+      "status": "passed",
+      "candidate": "231218b25c2c27d71f71cd7bd4f6036ddd023700",
+      "evidence": [
+        "docs/qa/2026-10-28/evidence/final-sw-order/product-identity.json",
+        "docs/qa/2026-10-28/evidence/final-sw-order/owner-observations.json",
+        "docs/qa/2026-10-28/evidence/final-sw-order/owner-evidence.zip",
+        "docs/qa/2026-10-28/evidence/final-sw-order/candidate-comparison.json",
+        "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final231-evidence.zip",
+        "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final231-state-coverage.json",
+        "docs/qa/2026-10-28/evidence/final-sw-order/delivery-observations.json",
+        "docs/qa/2026-10-28/evidence/final-sw-order/delivery-4180.jpg"
+      ],
+      "notes": "379源/117HTTP、ZIP、40状态及本地分项判定绑定当前候选；主控与独立目检分列，机器检查不推导人工目检；最终云端另阻断整体。"
+    },
+    {
+      "id": "AL10",
+      "status": "passed",
+      "candidate": "231218b25c2c27d71f71cd7bd4f6036ddd023700",
+      "evidence": [
+        "docs/qa/2026-10-28/evidence/final-sw-order/product-identity.json",
+        "docs/qa/2026-10-28/evidence/final-sw-order/owner-observations.json",
+        "docs/qa/2026-10-28/evidence/final-sw-order/owner-evidence.zip",
+        "docs/qa/2026-10-28/evidence/final-sw-order/candidate-comparison.json",
+        "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final231-evidence.zip",
+        "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final231-state-coverage.json"
+      ],
+      "notes": "新231三消费×双语×五宽30真实busy/恢复及10有资料social；原视口漏镜头与取帧准备失败保留且排除，按实际缺镜头补区域原图。"
+    }
+  ],
+  "evidence": [
+    {
+      "path": "docs/qa/2026-10-28/evidence/final-sw-order/product-identity.json",
+      "sha256": "3c0cea8f90768b619dfdffe029fc2fcd4d85818e6b67e49628c0b9bac2a3abcb"
+    },
+    {
+      "path": "docs/qa/2026-10-28/evidence/final-sw-order/owner-observations.json",
+      "sha256": "d9dfef729ec6b2e2f78c7d9b2ff4371f705b94e87685292108d57f9a4ec635ec"
+    },
+    {
+      "path": "docs/qa/2026-10-28/evidence/final-sw-order/owner-evidence.zip",
+      "sha256": "e697b1bb18a991ef40494809b0d5f76512ce5b139b73ceffe5b108f904c8c8d6"
+    },
+    {
+      "path": "docs/qa/2026-10-28/evidence/final-sw-order/candidate-comparison.json",
+      "sha256": "9778f892f5d3a760795b88eb78ee8413ec77337a9ff4b561bde236e82687eba5"
+    },
+    {
+      "path": "docs/qa/2026-10-28/evidence/final-sw-order/delivery-observations.json",
+      "sha256": "ba9965228c84c4cabf4c0c44f5d3542f9f75aa08a55f88ee1e36e193132be1aa"
+    },
+    {
+      "path": "docs/qa/2026-10-28/evidence/final-sw-order/delivery-4180.jpg",
+      "sha256": "bae7d66ec30a5134b10428622fc6e38dfa82c268902a310efb424050c0cdb9eb"
+    },
+    {
+      "path": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final231-evidence.zip",
+      "sha256": "b13faa270407f17a36e980bc03f1c93316c2a575242a2b1c41a54de307878a25"
+    },
+    {
+      "path": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final231-state-coverage.json",
+      "sha256": "9e95acf7d7b40589be2c1f657a8598bd68f31c380da4b451245bab8c03da4076"
+    },
+    {
+      "path": "docs/qa/2026-10-28/evidence/final-correction/owner-evidence.zip",
+      "sha256": "a8cb40f7d6ce696b74f35b211330af16738830c2cf9ba16c665a13adaeb6ceb1"
+    },
+    {
+      "path": "docs/qa/2026-10-28/evidence/final-correction/owner-observations.json",
+      "sha256": "335ae36e1dde960aacc61a0c749e017cfe505b09801e22db8296334fef0e0bd7"
+    }
+  ],
+  "machineCoverage": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final231-state-coverage.json"
+}

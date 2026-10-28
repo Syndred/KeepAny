@@ -9,7 +9,7 @@
     {
       "id": "owner-update",
       "entry": "4234概览正常入口→新版已准备好→更新应用→账号",
-      "actual": "26项资产、原账号链接与锁定状态保留，提示消失，实际script index-CxylPI69.js；新SW身份由升级测试及117HTTP另证",
+      "actual": "概览仍显示26项资产、原账号链接与锁定状态保留，提示消失，实际script index-CxylPI69.js；新SW身份由升级测试及117HTTP另证",
       "status": "passed"
     },
     {
@@ -21,7 +21,7 @@
     {
       "id": "owner-error-recover",
       "entry": "虚构错误主密码→解锁→原正确虚构主密码",
-      "actual": "错误明确仍锁定，可纠正输入成功解锁；8原条目保留，当前CodeHub定向无关联显示明确空状态，显示全部条目跳转正常",
+      "actual": "错误明确仍锁定，可纠正输入成功解锁；条目总数仍为8，当前CodeHub定向无关联显示明确空状态，显示全部条目跳转正常",
       "status": "passed"
     },
     {

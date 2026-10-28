@@ -8,7 +8,7 @@ import { unzipSync } from "fflate";
 const root = resolve(".");
 const recordPath =
 	process.argv[2] ??
-	"docs/qa/2026-10-28/evidence/final-correction/acceptance-results.json";
+	"docs/qa/2026-10-28/evidence/final-sw-order/acceptance-results.json";
 const record = JSON.parse(await readFile(recordPath, "utf8"));
 const sha = (bytes) => createHash("sha256").update(bytes).digest("hex");
 const required = Array.from(
