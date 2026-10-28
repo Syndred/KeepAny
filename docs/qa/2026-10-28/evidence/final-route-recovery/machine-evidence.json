@@ -1,0 +1,289 @@
+{
+  "schema": "keepany.route-history-machine.v1",
+  "ids": [
+    "FC17-A",
+    "FC17-B",
+    "FC17-C",
+    "FC17-D",
+    "FC17-E",
+    "FC18-A",
+    "FC18-B",
+    "FC18-C"
+  ],
+  "separateVerdicts": {
+    "FC17-F": "Final normal zero-recovery CI and personal/independent completion are separate, never inferred from machine evidence.",
+    "FC18-D": "Whitebox, personal and independent review plus final cloud receipt remain separately required."
+  },
+  "scope": "Fixed local machine-evidence integrity only; original 24 and later 4 mobile stable-image supplements keep their source inputs and raw facts. Manual visual verdicts are in the independent report; source screenshot flags remain untouched.",
+  "candidate": "d2fdbdee264b524219ae091ca78b120c6428ff61",
+  "archiveSha256": "1378f155667cf077d15b3368bf22662da1c47f8c6fbecca5095dd2131b51ed3e",
+  "indexSha256": "3477691fbbe51486e4d31f1653c5900c7047d5d116e8b95b847ff5ff940a8c6f",
+  "productIdentity": {
+    "path": "docs/qa/2026-10-28/evidence/final-route-recovery/product-identity.json",
+    "sha256": "928909914b304f7c0ecc1e7dfd8345bb041c041d5f3a052c5218f740a298a022"
+  },
+  "testInputs": [
+    {
+      "path": "tests/e2e/route-load-recovery.spec.ts",
+      "canonicalSha256": "0b33e8beb4c0604efff63450611b24792465d24eac79d46924fe0868d499a58a"
+    },
+    {
+      "path": "tests/e2e/password-history-version.spec.ts",
+      "canonicalSha256": "4defc02d5b732fdedc4ff4156abdf9be4c0b63923ea03eb49b8814c2a6bd4f5c"
+    },
+    {
+      "path": "tests/e2e/fixtures/password-smart-import-visual.ts",
+      "canonicalSha256": "5cb532863e4bc17e51c15b8dbdd92eb90b68b8879c1dddca24cb398405346ba5"
+    },
+    {
+      "path": "tests/e2e/helpers/vault-access.ts",
+      "canonicalSha256": "e462afacd6ebed73b322d5a8a25bba00caedc77f612f30462b0eb493bce5b0aa"
+    },
+    {
+      "path": "playwright.route-error.config.ts",
+      "canonicalSha256": "ebac617db0ef841a414124ab88442f5acad91a7f6e93755861c0103188b11c81"
+    },
+    {
+      "path": "playwright.release.config.ts",
+      "canonicalSha256": "3d9fd1b81999a362ec9f7b03155b631073d5a8b1ee1e367f3fbf88a9ed37cdd2"
+    }
+  ],
+  "archives": [
+    {
+      "path": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-fc17-fc18-d2-evidence.zip",
+      "sha256": "2e08d14bd272141c69cffc88ed259a39055924e1bbac71f24647ef06f8586dc2"
+    }
+  ],
+  "recoveries": [
+    {
+      "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-fc17-fc18-d2-evidence.zip",
+      "path": "final/evidence/en-390-recovery/result.json",
+      "sha256": "6ba763a83a09e6fbb7f7966f283c96957d3f5bfd4726e384cdc96655c8411221",
+      "language": "en",
+      "width": 390
+    },
+    {
+      "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-fc17-fc18-d2-evidence.zip",
+      "path": "final/evidence/en-563-recovery/result.json",
+      "sha256": "7ec421bd516ae3e30805538504910af5cd1d8fb1ee51f17edffe125afd731a08",
+      "language": "en",
+      "width": 563
+    },
+    {
+      "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-fc17-fc18-d2-evidence.zip",
+      "path": "final/evidence/en-768-recovery/result.json",
+      "sha256": "04a41cf444268cd151c5997b3121bb01959f3a74e302fa209cbdf22f9a5048d0",
+      "language": "en",
+      "width": 768
+    },
+    {
+      "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-fc17-fc18-d2-evidence.zip",
+      "path": "final/evidence/en-1280-recovery/result.json",
+      "sha256": "5446c5099966bf3c02143afccf4b07897e94bb11620d79cb9f904c24c99937ab",
+      "language": "en",
+      "width": 1280
+    },
+    {
+      "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-fc17-fc18-d2-evidence.zip",
+      "path": "final/evidence/en-1920-recovery/result.json",
+      "sha256": "8caaa6774b66c813ff29da26e05d5172ca371ce3c5a8ad6718f759e410a971b6",
+      "language": "en",
+      "width": 1920
+    },
+    {
+      "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-fc17-fc18-d2-evidence.zip",
+      "path": "final/evidence/en-2560-recovery/result.json",
+      "sha256": "d13ba713e65bb1730ad94c1cf9368f592dda21998a45209ac6dcaf48f388681b",
+      "language": "en",
+      "width": 2560
+    },
+    {
+      "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-fc17-fc18-d2-evidence.zip",
+      "path": "final/evidence/zh-CN-390-recovery/result.json",
+      "sha256": "603c820d75a7f0aa05a689077e33911ca369b530c52ae333efc859556819ad42",
+      "language": "zh-CN",
+      "width": 390
+    },
+    {
+      "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-fc17-fc18-d2-evidence.zip",
+      "path": "final/evidence/zh-CN-563-recovery/result.json",
+      "sha256": "a88950a7d96c21e60ae3f3f7197231f1fb4391c97770b26a88ecb792f6ed7ef9",
+      "language": "zh-CN",
+      "width": 563
+    },
+    {
+      "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-fc17-fc18-d2-evidence.zip",
+      "path": "final/evidence/zh-CN-768-recovery/result.json",
+      "sha256": "808598ce4cc966fefb6a1ea43cde32ca6346cd597be6f138fee6ca7c6a2a2a48",
+      "language": "zh-CN",
+      "width": 768
+    },
+    {
+      "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-fc17-fc18-d2-evidence.zip",
+      "path": "final/evidence/zh-CN-1280-recovery/result.json",
+      "sha256": "4fa4421900356636e3cd104f31b1dbb3108b56c9737bb6b1dcb29f5e2b592c3a",
+      "language": "zh-CN",
+      "width": 1280
+    },
+    {
+      "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-fc17-fc18-d2-evidence.zip",
+      "path": "final/evidence/zh-CN-1920-recovery/result.json",
+      "sha256": "1a7046a8c10ca6636160c3e769c3b0b46962de0de8d7e801585a35b71046ae3d",
+      "language": "zh-CN",
+      "width": 1920
+    },
+    {
+      "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-fc17-fc18-d2-evidence.zip",
+      "path": "final/evidence/zh-CN-2560-recovery/result.json",
+      "sha256": "f244f143684f4b384cde5838860e92b83fa82bcc9be752bef80daf60db815ff1",
+      "language": "zh-CN",
+      "width": 2560
+    }
+  ],
+  "routes": [
+    {
+      "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-fc17-fc18-d2-evidence.zip",
+      "path": "final/evidence/en-390-routes/result.json",
+      "sha256": "72a5b022ec6abdf14e88f9ed7015f6c09d7b3f8269ee427fa4fa8c004cab9ea4",
+      "language": "en",
+      "width": 390
+    },
+    {
+      "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-fc17-fc18-d2-evidence.zip",
+      "path": "final/evidence/en-563-routes/result.json",
+      "sha256": "fc4631ec012e6b828723caa3b5c6d26b87ea26e13d770eef9366c55d0d76cdbc",
+      "language": "en",
+      "width": 563
+    },
+    {
+      "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-fc17-fc18-d2-evidence.zip",
+      "path": "final/evidence/en-768-routes/result.json",
+      "sha256": "8e7420628ba0a0899cf97332ab593146e652b6dc75a38598ad6ac23e488e2411",
+      "language": "en",
+      "width": 768
+    },
+    {
+      "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-fc17-fc18-d2-evidence.zip",
+      "path": "final/evidence/en-1280-routes/result.json",
+      "sha256": "5da8dc15f686349982a7e5331537cc15ce6943d9dfd3e30555a2cccf5d5a765f",
+      "language": "en",
+      "width": 1280
+    },
+    {
+      "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-fc17-fc18-d2-evidence.zip",
+      "path": "final/evidence/en-1920-routes/result.json",
+      "sha256": "0d55e9a5f1bcf4d39950109d467bcd731f056a985202a1827b73819e45955ebe",
+      "language": "en",
+      "width": 1920
+    },
+    {
+      "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-fc17-fc18-d2-evidence.zip",
+      "path": "final/evidence/en-2560-routes/result.json",
+      "sha256": "8bf29f68a5811fc58952bc22abf94753d8bbaa1d10432d8c293d1414d43bfc21",
+      "language": "en",
+      "width": 2560
+    },
+    {
+      "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-fc17-fc18-d2-evidence.zip",
+      "path": "final/evidence/zh-CN-390-routes/result.json",
+      "sha256": "a73d85679199b1c3f60b7a602b2fa21c0d5737a5d3f7523c4347612371d5d053",
+      "language": "zh-CN",
+      "width": 390
+    },
+    {
+      "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-fc17-fc18-d2-evidence.zip",
+      "path": "final/evidence/zh-CN-563-routes/result.json",
+      "sha256": "1b4a24eaa070d5225d789a77caa8ccfd999a09e33086d7ca6e50598fede7135e",
+      "language": "zh-CN",
+      "width": 563
+    },
+    {
+      "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-fc17-fc18-d2-evidence.zip",
+      "path": "final/evidence/zh-CN-768-routes/result.json",
+      "sha256": "d23954423146b99f5ebbe8ab91e27fd4c6e67757734f49292230d45c7088f52b",
+      "language": "zh-CN",
+      "width": 768
+    },
+    {
+      "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-fc17-fc18-d2-evidence.zip",
+      "path": "final/evidence/zh-CN-1280-routes/result.json",
+      "sha256": "a0e8fc372f64b1be3a96a85c40501b5d5bc907fdfdc08c29cd9cef0eb2a29894",
+      "language": "zh-CN",
+      "width": 1280
+    },
+    {
+      "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-fc17-fc18-d2-evidence.zip",
+      "path": "final/evidence/zh-CN-1920-routes/result.json",
+      "sha256": "39a32a70776913b0449d1dcede5c2dfa0229e25d5cbaae9af39465f13f77a693",
+      "language": "zh-CN",
+      "width": 1920
+    },
+    {
+      "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-fc17-fc18-d2-evidence.zip",
+      "path": "final/evidence/zh-CN-2560-routes/result.json",
+      "sha256": "ed43c3262eacd22147ebce41201b8d6adbfe50f8ad89cd116499fdf9ed4996a6",
+      "language": "zh-CN",
+      "width": 2560
+    }
+  ],
+  "stableNavigation": [
+    {
+      "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-fc17-fc18-d2-evidence.zip",
+      "path": "mobile-stable/evidence/en-390-routes/result.json",
+      "sha256": "1211a499456c39e35ad0ef14058ca5f16c538bc8bfa6bc040d7a7e2209f9694b",
+      "language": "en",
+      "width": 390
+    },
+    {
+      "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-fc17-fc18-d2-evidence.zip",
+      "path": "mobile-stable/evidence/en-563-routes/result.json",
+      "sha256": "f1155c74d48494a8c0ca548409238db85392436355b29fd17f1b4afaf710c740",
+      "language": "en",
+      "width": 563
+    },
+    {
+      "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-fc17-fc18-d2-evidence.zip",
+      "path": "mobile-stable/evidence/zh-CN-390-routes/result.json",
+      "sha256": "d45323fa4a2bf3ab721a2022097e44add9886cbbf7d2cf5d515831aabbf5b6e8",
+      "language": "zh-CN",
+      "width": 390
+    },
+    {
+      "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-fc17-fc18-d2-evidence.zip",
+      "path": "mobile-stable/evidence/zh-CN-563-routes/result.json",
+      "sha256": "07c1edd79516440fb081351fa6e5957f16cb5bc0f9c7fcb144b915635b8f2932",
+      "language": "zh-CN",
+      "width": 563
+    }
+  ],
+  "history": [
+    {
+      "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-fc17-fc18-d2-evidence.zip",
+      "path": "history/evidence/fc18-en-390/result.json",
+      "sha256": "da16ca208aa6e718b9caba22fe522637bec8f19e4616c1a868d31ac53b1520be",
+      "language": "en",
+      "width": 390
+    },
+    {
+      "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-fc17-fc18-d2-evidence.zip",
+      "path": "history/evidence/fc18-en-1280/result.json",
+      "sha256": "15ea0c859f8a697d28b31ffcb4cd0314e0c53a10ececdfa78283caa6c63cbb97",
+      "language": "en",
+      "width": 1280
+    },
+    {
+      "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-fc17-fc18-d2-evidence.zip",
+      "path": "history/evidence/fc18-zh-CN-390/result.json",
+      "sha256": "fb0d557ddf7eaeb33cef07d556fdea4b2067ce8e0a540b7b7ee03b873afcdcfb",
+      "language": "zh-CN",
+      "width": 390
+    },
+    {
+      "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-fc17-fc18-d2-evidence.zip",
+      "path": "history/evidence/fc18-zh-CN-1280/result.json",
+      "sha256": "bb69d4e13372918499aa5aa2b9e7df9c1191144606b1643404c333663f3df2f9",
+      "language": "zh-CN",
+      "width": 1280
+    }
+  ]
+}

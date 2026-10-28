@@ -1,0 +1,52 @@
+{
+  "schema": "keepany.route-recovery-root-evidence.v1",
+  "status": "not-complete",
+  "archives": [
+    {
+      "path": "docs/qa/2026-10-28/evidence/final-route-recovery/owner-evidence.zip",
+      "entries": 12,
+      "bytes": 641185,
+      "sha256": "579a7a27ae8a6c6098abbb8cbbb929ca99085d93e1fcfadc191f9f207ec8803e",
+      "crcAndManifest": "passed"
+    },
+    {
+      "path": "docs/qa/2026-10-28/evidence/final-route-recovery/root-verification.zip",
+      "entries": 179,
+      "bytes": 24253372,
+      "sha256": "bcd5738113e89ef38fc927a371441b001b00a16de2588b6efb709a56bda43968",
+      "crcAndManifest": "passed"
+    }
+  ],
+  "d2Candidate": "d2fdbdee264b524219ae091ca78b120c6428ff61",
+  "d2ArchiveSha256": "1378f155667cf077d15b3368bf22662da1c47f8c6fbecca5095dd2131b51ed3e",
+  "machine": {
+    "d2Layout": "10/10 passed",
+    "d2HistoryStrictBeforeVisualSupplement": "4/4 passed",
+    "d2Offline": "1/1 passed",
+    "publishedKeepAnyUpgrade": "1/1 passed",
+    "publishedStackPerchUpgrade": "1/1 passed",
+    "historical2bNormalGraph": "2/2 passed; 8304 static requests finished, zero failed; not final candidate normal CI",
+    "current117AndRetained2726": "passed; all old2700 retained hashes unchanged",
+    "productSource381AndHttp117": "passed"
+  },
+  "manual": {
+    "owner": "Native final d2 paths and 10 original JPEGs actually reviewed; scope in owner-observations.json",
+    "rootHistoryPhotos": "Immediate export-success frames retain toast. Final independent 28 frames include stable and real last-row scroll; separate evidence required."
+  },
+  "retainedLocalFullFailure": {
+    "artifact": "test-results/cif4-failed-browser-artifact.zip",
+    "artifactId": 12835026279,
+    "bytes": 154913123,
+    "sha256": "8017f7571be0d107ecf8bce4275cd8f457eb2ef258d6ed6a21e15fec357892c7",
+    "trace": "test-results/cif4-graph-add-failure/local-release/account-graph-readability--a32f5-ses-across-reload-and-edits/trace.zip",
+    "traceBytes": 144424441,
+    "traceSha256": "16dc9ef207cf39ddd54160c431d6ae23b47ca98f716f2cd2e67f0a2dbdbd2d88",
+    "gitArchiveBoundary": "Original failure image, logs and bounded independent decoded raw audit are in root-verification.zip. The complete large originals remain at the above local paths, not falsely claimed embedded."
+  },
+  "remaining": [
+    "independent normal consumer/state matrix and final complete receipt",
+    "final acceptance binding and independent negative gate review",
+    "all final cloud jobs terminal success",
+    "final clean 4180 consumption and cleanup"
+  ]
+}
