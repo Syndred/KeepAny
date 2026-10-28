@@ -48,6 +48,7 @@ type PasswordVaultPanelProps = {
 	assets: Asset[];
 	notify?: (message: string) => void;
 	focusAssetId?: string;
+	onReady?: () => void;
 	embedded?: boolean;
 	headerAction?: ReactNode;
 	sampleAccounts?: Asset[];
@@ -121,6 +122,7 @@ export function PasswordVaultPanel({
 	assets,
 	notify,
 	focusAssetId,
+	onReady,
 	embedded = false,
 	headerAction,
 	sampleAccounts = [],
@@ -133,6 +135,15 @@ export function PasswordVaultPanel({
 	const navigate = useNavigate();
 	const hash = useRouterState({ select: (state) => state.location.hash });
 	const copyGeneration = useRef(0);
+	const readyNotified = useRef(false);
+	useEffect(() => {
+		if (snapshot.status === "loading" || readyNotified.current || !onReady) return;
+		const frame = requestAnimationFrame(() => {
+			readyNotified.current = true;
+			onReady();
+		});
+		return () => cancelAnimationFrame(frame);
+	}, [snapshot.status, onReady]);
 	useEffect(
 		() => () => {
 			copyGeneration.current += 1;

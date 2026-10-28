@@ -3,7 +3,7 @@ import { Input } from "./components/ui/input";
 import { DatePicker } from "./components/ui/date-picker";
 import { assetNotes } from "./asset-notes";
 import { accountFamilyGraph } from "./account-family-graph";
-import { lazy, Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { ArrowDownRight, ArrowLeft, Check, ExternalLink, Plus } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -281,18 +281,6 @@ function SubmissionRow({ submission }: { submission: Submission }) {
 	);
 }
 
-function InlinePasswordReveal({ regionId, children }: { regionId: string; children: ReactNode }) {
-	useEffect(() => {
-		const frame = requestAnimationFrame(() => {
-			const section = document.getElementById(regionId);
-			section?.scrollIntoView({ block: "start" });
-			section?.focus({ preventScroll: true });
-		});
-		return () => cancelAnimationFrame(frame);
-	}, [regionId]);
-	return children;
-}
-
 export function AssetDetail() {
 	const params = (useRouterState({ select: (s) => s.matches.at(-1)?.params }) ??
 		{}) as { kind?: string; id?: string };
@@ -308,6 +296,11 @@ export function AssetDetail() {
 	const [edit, setEdit] = useState(false);
 	const [passwordsFor, setPasswordsFor] = useState<string | null>(null);
 	const passwordsOpen = !!asset && passwordsFor === asset.id;
+	const revealPasswords = useCallback(() => {
+		const section = document.getElementById(`account-passwords-${asset?.id}`);
+		section?.scrollIntoView({ block: "start" });
+		section?.focus({ preventScroll: true });
+	}, [asset?.id]);
 	useEffect(() => {
 		if (!asset?.id || asset.kind !== "project" || !detailHash.startsWith("project-domain")) return;
 		const frame = requestAnimationFrame(() => document.getElementById(detailHash)?.scrollIntoView({ block: "start" }));
@@ -1702,7 +1695,7 @@ export function AssetDetail() {
 					<div><dt>{t("accountRelationVerifiedAt")}</dt><dd>{accountVerifiedAt ? date(accountVerifiedAt, i18n.language) : t("accountNotRecorded")}</dd></div>
 				</dl><div className="workspace-password-actions"><Button aria-expanded={passwordsOpen} aria-controls={`account-passwords-${asset.id}`} onClick={() => setPasswordsFor((current) => current === asset.id ? null : asset.id)}>{t(passwordsOpen ? "workspaceHidePasswords" : "workspaceShowPasswords")}</Button><Button asChild><Link to="/assets/$kind" params={{ kind: "vault" }} hash={`asset-${asset.id}`}>{t("accountOpenPasswords")}<ArrowDownRight size={16} /></Link></Button></div></section>
 			</div>}
-			{asset.kind === "account" && passwordsOpen && <section id={`account-passwords-${asset.id}`} tabIndex={-1} aria-label={t("pwVaultTitle")} className="card account-passwords-section"><Suspense fallback={<div className="notice" role="status">{t("pwVaultLoading")}</div>}><InlinePasswordReveal regionId={`account-passwords-${asset.id}`}><PasswordVaultPanel assets={data.assets} notify={notify} focusAssetId={asset.id} embedded /></InlinePasswordReveal></Suspense></section>}
+			{asset.kind === "account" && passwordsOpen && <section id={`account-passwords-${asset.id}`} tabIndex={-1} aria-label={t("pwVaultTitle")} className="card account-passwords-section"><Suspense fallback={<div className="notice" role="status">{t("pwVaultLoading")}</div>}><PasswordVaultPanel assets={data.assets} notify={notify} focusAssetId={asset.id} onReady={revealPasswords} embedded /></Suspense></section>}
 			{asset.kind === "account" && attachmentSection}
 			{asset.kind === "account" && (
 				<section className="card impact-checklist">
