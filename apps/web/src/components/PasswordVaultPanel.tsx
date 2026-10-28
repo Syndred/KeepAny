@@ -230,6 +230,7 @@ export function PasswordVaultPanel({
 			if (!card) return;
 			const group = card.closest("details");
 			if (group) group.open = true;
+			card.scrollIntoView({ block: "nearest" });
 			card.focus({ preventScroll: true });
 			unlinkedFocus.current = null;
 		});
@@ -238,6 +239,7 @@ export function PasswordVaultPanel({
 
 	useEffect(() => {
 		if (snapshot.status === "unlocked") return;
+		unlinkedFocus.current = null;
 		copyGeneration.current += 1;
 		setAccountLinksOpen(false);
 		setMessageKey(null);
