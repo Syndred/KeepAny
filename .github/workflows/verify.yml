@@ -171,7 +171,7 @@ jobs:
         if: always()
         shell: bash
         run: |
-          node --input-type=module -e 'import fs from "node:fs";import path from "node:path";const root="test-results/graph-boot-narrow";const files=fs.existsSync(root)?fs.readdirSync(root,{recursive:true}).filter(name=>path.basename(name)==="account-graph-boot-diagnostics.json"):[];if(files.length!==2)throw Error("graph-boot-diagnostic-witness-missing");for(const file of files){const proof=JSON.parse(fs.readFileSync(path.join(root,file),"utf8"));if(proof.schema!=="keepany-graph-boot-diagnostics-v1"||proof.passiveMetadataOnly!==true||proof.networkOrCacheInterventions!==false||proof.events.length>512)throw Error("graph-boot-diagnostic-witness-invalid");}console.log(JSON.stringify({boundedGraphWitnesses:files.length}));'
+          node --input-type=module -e 'import fs from "node:fs";import path from "node:path";const root="test-results/graph-boot-narrow";const files=fs.existsSync(root)?fs.readdirSync(root,{recursive:true}).filter(name=>path.basename(name)==="account-graph-boot-diagnostics.json"):[];if(files.length!==2)throw Error("graph-boot-diagnostic-witness-missing");for(const file of files){const proof=JSON.parse(fs.readFileSync(path.join(root,file),"utf8"));if(proof.schema!=="keepany-graph-boot-diagnostics-v2"||proof.passiveMetadataOnly!==true||proof.networkOrCacheInterventions!==false||proof.events.length>512)throw Error("graph-boot-diagnostic-witness-invalid");}console.log(JSON.stringify({boundedGraphWitnesses:files.length}));'
       - name: Preserve only bounded graph diagnostics and failure screenshots
         if: always()
         uses: actions/upload-artifact@v4
