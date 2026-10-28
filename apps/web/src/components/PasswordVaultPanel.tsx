@@ -156,6 +156,9 @@ export function PasswordVaultPanel({
 	const [search, setSearch] = useState("");
 	const [assetFilter, setAssetFilter] = useState(focusAssetId ?? "");
 	const [editorId, setEditorId] = useState<string | null>(null);
+	const [editorError, setEditorError] = useState<{ generation: number; key: string } | null>(null);
+	const editorGeneration = useRef(0);
+	const editorSaveRequest = useRef(0);
 	const [draft, setDraft] = useState<PasswordVaultEntryDraft | null>(null);
 	const [editorLoading, setEditorLoading] = useState(false);
 	const [showPassword, setShowPassword] = useState(false);
@@ -209,6 +212,9 @@ export function PasswordVaultPanel({
 
 	useEffect(() => {
 		if (snapshot.status === "unlocked") return;
+		editorGeneration.current += 1;
+		editorSaveRequest.current += 1;
+		setEditorError(null);
 		copyGeneration.current += 1;
 		setAccountLinksOpen(false);
 		setMessageKey(null);
@@ -237,6 +243,11 @@ export function PasswordVaultPanel({
 		setNewMaster("");
 		setNewMasterConfirm("");
 	}, [snapshot.status, notice]);
+
+	useEffect(() => () => {
+		editorGeneration.current += 1;
+		editorSaveRequest.current += 1;
+	}, []);
 
 	useEffect(() => {
 		if (
@@ -332,6 +343,8 @@ export function PasswordVaultPanel({
 	}
 
 	function openNewEditor() {
+		editorGeneration.current += 1;
+		setEditorError(null);
 		clearMessage();
 		setEditorId("new");
 		setDraft(blankDraft(assetFilter));
@@ -349,6 +362,8 @@ export function PasswordVaultPanel({
 	}
 
 	function openEditor(id: string) {
+		editorGeneration.current += 1;
+		setEditorError(null);
 		clearMessage();
 		setEditorId(id);
 		setDraft(null);
@@ -374,6 +389,8 @@ export function PasswordVaultPanel({
 	}
 
 	function closeEditor() {
+		editorGeneration.current += 1;
+		setEditorError(null);
 		setEditorId(null);
 		setDraft(null);
 		setShowPassword(false);
@@ -427,6 +444,8 @@ export function PasswordVaultPanel({
 	async function saveEntry(event: React.FormEvent<HTMLFormElement>) {
 		event.preventDefault();
 		if (busy || !session || !draft) return;
+		const generation = editorGeneration.current;
+		const currentEditor = () => generation === editorGeneration.current && session.getSnapshot().status === "unlocked";
 		const next: PasswordVaultEntryDraft = {
 			...withFilledVaultIdentifiers(draft),
 			title: draft.title.trim(),
@@ -436,23 +455,29 @@ export function PasswordVaultPanel({
 			linkedAssetIds: [...new Set(draft.linkedAssetIds)],
 		};
 		if (!next.title) {
-			announce("pwVaultEntryTitleRequired");
+			setEditorError({ generation, key: "pwVaultEntryTitleRequired" });
 			return;
 		}
 		if (next.url && !/^https?:\/\//i.test(next.url)) {
-			announce("pwVaultInvalidUrl");
+			setEditorError({ generation, key: "pwVaultInvalidUrl" });
 			return;
 		}
 		setBusy(true);
+		const request = ++editorSaveRequest.current;
+		setEditorError(null);
 		clearMessage();
 		try {
 			await session.saveEntry(next);
-			closeEditor();
-			announce("pwVaultSaved");
+			if (currentEditor()) {
+				closeEditor();
+				announce("pwVaultSaved");
+			}
 		} catch (error) {
-			announce(errorKey(error));
+			if (currentEditor()) setEditorError({ generation, key: errorKey(error) });
 		} finally {
-			setBusy(false);
+			// Closing the editor still releases this save's busy state. A lock or
+			// later save owns its own state and must not be changed by this callback.
+			if (request === editorSaveRequest.current) setBusy(false);
 		}
 	}
 
@@ -1084,6 +1109,7 @@ export function PasswordVaultPanel({
 						) : (
 							<EntryEditor
 								draft={draft}
+								error={editorError?.generation === editorGeneration.current ? t(editorError.key) : null}
 								busy={busy}
 								assets={visibleAssets}
 								assetsById={assetsById}
@@ -1503,6 +1529,7 @@ function LockedState({
 
 function EntryEditor({
 	draft,
+	error,
 	busy,
 	assets,
 	assetsById,
@@ -1516,6 +1543,7 @@ function EntryEditor({
 	t,
 }: {
 	draft: PasswordVaultEntryDraft;
+	error: string | null;
 	busy: boolean;
 	assets: Asset[];
 	assetsById: Map<string, Asset>;
@@ -1530,6 +1558,10 @@ function EntryEditor({
 	onPasswordCopyError: (value: string) => void;
 	t: (key: string, options?: Record<string, unknown>) => string;
 }) {
+	const errorRef = useRef<HTMLParagraphElement>(null);
+	useEffect(() => {
+		if (error) errorRef.current?.scrollIntoView({ block: "nearest" });
+	}, [error]);
 	const [urlExpanded, setUrlExpanded] = useState(Boolean(draft.url));
 	const update = <K extends keyof PasswordVaultEntryDraft>(
 		key: K,
@@ -1754,6 +1786,7 @@ function EntryEditor({
 				)}
 			</div>
 			<div className="actions password-vault-editor-actions">
+				{error && <p className="field-error" role="alert" ref={errorRef}>{error}</p>}
 				<Button type="submit" variant="primary" disabled={busy}>
 					<Check size={16} /> {t("pwVaultSaveEntry")}
 				</Button>
