@@ -1,0 +1,52 @@
+name: Diagnose module loading
+
+on:
+  push:
+    branches: ['codex/asset-card-layout-20261028']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  module-navigation-diagnostic:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.10.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium
+      - name: Record or install official Google Chrome package
+        shell: bash
+        run: |
+          if ! command -v google-chrome >/dev/null; then
+            pnpm exec playwright install --with-deps chrome
+          fi
+          google-chrome --version
+          dpkg-query --show google-chrome-stable
+      - name: Build and verify the actual portable preview
+        run: pnpm build:preview && pnpm verify:preview
+      - name: Fixed bundled and Chrome navigation comparisons
+        shell: bash
+        env:
+          KEEPANY_GRAPH_NETWORK_DIAGNOSTICS: '1'
+        run: |
+          archive="$(node --input-type=module -e 'import fs from "node:fs"; const files=fs.readdirSync("dist/preview").filter(name=>name.endsWith(".zip")); if(files.length!==1)throw Error("Expected one fresh preview"); process.stdout.write(`dist/preview/${files[0]}`);')"
+          KEEPANY_PREVIEW_ARCHIVE="$archive" KEEPANY_RELEASE_TEST_PORT=4393 pnpm exec playwright test --config playwright.module-navigation-diagnostic.config.ts --reporter=line
+      - name: Preserve diagnostic evidence including default NetLog
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: module-navigation-${{ github.run_id }}-${{ github.run_attempt }}
+          path: test-results/module-navigation-diagnostic/
+          retention-days: 7
+          if-no-files-found: warn

@@ -1,0 +1,65 @@
+{
+  "schema": "keepany.fc19-initial-failure.v1",
+  "status": "not-complete",
+  "candidate": {
+    "sourceCommit": "6ef1c26b42191a245d248661194110554a47ca25",
+    "sourceDirty": false,
+    "scope": "Fresh clean6ef CI candidate. Independent clean Ubuntu/Windows artifact readbacks separately preserve exact package SHA and117Web/381source equivalence; this archive does not invent a missing portable-workflow inner ZIP SHA."
+  },
+  "archive": {
+    "path": "docs/qa/2026-10-28/evidence/fc19-module-fetch/initial-failure-evidence.zip",
+    "bytes": 262957,
+    "sha256": "a43142a40ed257a1ebb396af277c15da4c795aaf6f5ec664e73b6decb961375f",
+    "members": 18,
+    "manifestEntries": 17,
+    "crc": "passed",
+    "uniqueMemberSet": "passed",
+    "allManifestBytesSha256": "passed"
+  },
+  "separateOutcomes": {
+    "routeFaultRecovery": {
+      "passed": 24,
+      "duration": "14.0m",
+      "source": "original complete portable job log"
+    },
+    "normal283": {
+      "passed": 14,
+      "failed": 1,
+      "interrupted": 1,
+      "notRun": 267,
+      "mainFailure": "zh-CN1536 graph large24 preparation: Add locator15s timeout; raw papa ERR_ABORTED canceled=true earlier."
+    }
+  },
+  "largeOriginals": {
+    "outer": {
+      "path": "C:/Users/Administrator/Desktop/project/KeepAny/test-results/ci6ef-portable-failed-artifact.zip",
+      "bytes": 179256640,
+      "sha256": "acd8ddb150661f348c82ab6396fd2cd2a6fd0bfde307c471ac9e151877c9fe01",
+      "artifactId": 12844781729,
+      "apiUrl": "https://api.github.com/repos/Syndred/KeepAny/actions/artifacts/12844781729/zip",
+      "artifactPage": "https://github.com/Syndred/KeepAny/actions/runs/40750110863/artifacts/12844781729",
+      "includedInThisArchive": false
+    },
+    "trace": {
+      "path": "C:/Users/Administrator/Desktop/project/KeepAny/test-results/ci6ef-portable-primary-failure/portable-release/account-graph-readability--a890a-ses-across-reload-and-edits/trace.zip",
+      "outerMember": "portable-release/account-graph-readability--a890a-ses-across-reload-and-edits/trace.zip",
+      "bytes": 85371903,
+      "sha256": "9c041d8b140f0697fdfa74e70e24477d056cbe4faad7e76ecfdb6cfda9a95291",
+      "includedInThisArchive": false
+    }
+  },
+  "currentCiSnapshot": {
+    "source": "independent/cloud-status-snapshot.json in archive; independent GitHub jobs API at recordedAt",
+    "success": 4,
+    "failure": 1,
+    "inProgress": 1,
+    "overall": "not-complete"
+  },
+  "exclusions": [
+    "Full outer ZIP",
+    "Full trace ZIP",
+    "No raw NetLog available; none included",
+    "Prototype actively attached SW100 does not count as final normal test"
+  ],
+  "createdAt": "2026-10-28T19:54:27.356254+00:00"
+}
