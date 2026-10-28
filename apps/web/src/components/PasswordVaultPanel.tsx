@@ -225,14 +225,21 @@ export function PasswordVaultPanel({
 		// Moving between account groups remounts the card. Resolve its current
 		// element after the committed layout instead of focusing the removed view.
 		const frame = requestAnimationFrame(() => {
+			const entryId = unlinkedFocus.current;
+			unlinkedFocus.current = null;
 			const card = [...document.querySelectorAll<HTMLElement>(".password-vault-entry-list .password-vault-entry")]
-				.find(node => node.dataset.entryId === unlinkedFocus.current);
-			if (!card) return;
+				.find(node => node.dataset.entryId === entryId);
+			if (!card) {
+				const continuation = document.querySelector<HTMLElement>(".password-vault-filter button")
+					?? document.querySelector<HTMLElement>("#password-vault-search-input");
+				continuation?.scrollIntoView({ block: "nearest" });
+				continuation?.focus({ preventScroll: true });
+				return;
+			}
 			const group = card.closest("details");
 			if (group) group.open = true;
 			card.scrollIntoView({ block: "nearest" });
 			card.focus({ preventScroll: true });
-			unlinkedFocus.current = null;
 		});
 		return () => cancelAnimationFrame(frame);
 	}, [unlinkTarget, snapshot.status, snapshot.entries]);
