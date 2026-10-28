@@ -7,6 +7,7 @@
 .ai-import-panel > .field textarea { margin: 0; }
 .ai-import-panel > .file-picker { margin-top: 0; }
 .ai-import-panel > .actions { margin-top: 0; }
+.ai-import-panel > .file-picker + .actions { margin-top: var(--space-1, 4px); }
 .ai-import-panel > .notice { margin: 0; }
 .ai-import-panel > .notice .text-link { display: inline; margin-inline-start: var(--space-1, 4px); vertical-align: baseline; }
 .ai-import-panel > .ai-import-model { color: var(--muted); font-size: 12px; line-height: 1.4; overflow-wrap: anywhere; }
