@@ -1,0 +1,52 @@
+{
+  "accountCount": 12,
+  "accountHrefs": [
+    "/assets/account/0846cb64-fd34-41b1-b6d4-bf1c422f58a4",
+    "/assets/account/1079900e-75f0-4eaa-9ae2-2fc0128b47fe",
+    "/assets/account/17399cfe-6ce5-4e52-98d1-97581d25e3be",
+    "/assets/account/26584a9a-1486-4846-acc4-d2dc5256ca9b",
+    "/assets/account/47099efa-181d-4cfb-9bfc-ea17ce8d8c2c",
+    "/assets/account/4d22233f-07d5-4845-b169-e00ab3c5179d",
+    "/assets/account/5784b399-97ae-44f9-99ab-699dd5a84fb7",
+    "/assets/account/6af5ba54-fb27-4284-bc53-866851579398",
+    "/assets/account/8a7ba84f-f458-40e9-972e-958d7dfe6d11",
+    "/assets/account/b52a7eb3-9c79-40ff-b2e1-aa65a1028c38",
+    "/assets/account/ebce9ecb-214b-40df-a9f6-4a47867eda37",
+    "/assets/account/eec0b37f-8f50-45c5-a49c-6d30701bb703"
+  ],
+  "duplicateTopTabs": 0,
+  "scripts": [
+    "/assets/index-BS0WHYbQ.js"
+  ],
+  "vaultStatus": "已锁定",
+  "allFourOriginalAccountsPresent": true,
+  "originalCollectionUnchanged": true,
+  "originalCollectionCount": 13,
+  "samples": {
+    "gap": "12px",
+    "heights": [
+      148
+    ],
+    "images": [
+      {
+        "complete": true,
+        "width": 960
+      },
+      {
+        "complete": true,
+        "width": 960
+      },
+      {
+        "complete": true,
+        "width": 960
+      },
+      {
+        "complete": true,
+        "width": 960
+      }
+    ],
+    "members": 26
+  },
+  "passwordSamplesRequireUserUnlock": true,
+  "checkedAt": "2026-10-28T04:31:04.676Z"
+}
