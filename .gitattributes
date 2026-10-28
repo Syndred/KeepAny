@@ -8,3 +8,4 @@ legal/third-party/evidence/** -text -whitespace
 legal/third-party/texts/** -text
 # Acceptance hashes bind the recorded bytes across Windows and Linux checkouts.
 docs/qa/2026-10-28/evidence/account-expansion-fixed/** -text
+docs/qa/2026-10-28/evidence/final-correction/** -text

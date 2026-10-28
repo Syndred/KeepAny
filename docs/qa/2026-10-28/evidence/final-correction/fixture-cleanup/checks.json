@@ -1,0 +1,17 @@
+{
+  "scope": "Final upgrade-fixture cleanup control flow only; no product change and no weaker business comparisons.",
+  "productCandidate": "65ceb04dfeaa197a06975901d41b5e036d782e07",
+  "fixture": "tests/e2e/stackperch-upgrade.spec.ts",
+  "fixtureCanonicalSha256": "1cf53707691220bbba94efa0229e83d7475cf5ade5e401594744bab8fd5796ae",
+  "results": {
+    "publishedKeepAnyUpgrade": "passed 19.8s",
+    "publishedStackPerchUpgrade": "passed 19.5s",
+    "typecheck": "passed",
+    "targetedLint": {
+      "errors": 0,
+      "existingWarnings": 3
+    },
+    "independentStaticReview": "f1aa14eb; no independent UI rerun claimed"
+  },
+  "originalFailedLint": "correction-brand-cleanup-lint.log retained; direct throw in finally replaced by collected failures and outside-finally throw."
+}
