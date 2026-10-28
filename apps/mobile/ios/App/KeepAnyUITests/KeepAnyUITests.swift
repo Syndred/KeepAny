@@ -385,13 +385,47 @@ final class KeepAnyUITests: XCTestCase {
             }
             XCTAssertEqual(control.value as? String ?? "", "", "Replacement must clear the complete original value")
         }
-        control.typeText(value)
-        // typeText can return while WKWebView is still receiving the native
-        // keyboard events. Never save a partial value or type a second copy.
-        let typed = XCTNSPredicateExpectation(predicate: NSPredicate(format: "value == %@", value), object: control)
-        if XCTWaiter.wait(for: [typed], timeout: 20) != .completed {
-            capture(app, "project-text-input-incomplete")
-            captureHierarchy(app, "project-text-input-incomplete-AX")
+        if value.contains("\n") {
+            // Keep the same native focus and settle each prefix before sending
+            // a newline. All segments share one monotonic 20-second budget.
+            let deadline = ProcessInfo.processInfo.systemUptime + 20
+            func awaitPrefix(_ expected: String, phase: String) -> Bool {
+                let remaining = max(0, deadline - ProcessInfo.processInfo.systemUptime)
+                let typed = XCTNSPredicateExpectation(predicate: NSPredicate(format: "value == %@", expected), object: control)
+                guard remaining > 0, XCTWaiter.wait(for: [typed], timeout: remaining) == .completed else {
+                    capture(app, "project-text-input-incomplete")
+                    captureHierarchy(app, "project-text-input-incomplete-AX")
+                    let observed = control.value as? String ?? ""
+                    let detail = XCTAttachment(string: "phase=\(phase); expectedUTF16=\(expected.utf16.count); observedUTF16=\(observed.utf16.count); remaining=\(remaining)")
+                    detail.name = "project-multiline-prefix-incomplete"
+                    detail.lifetime = .keepAlways
+                    add(detail)
+                    XCTAssertEqual(control.value as? String, value)
+                    XCTFail("Native multiline input must reach each exact prefix within its shared 20-second budget")
+                    return false
+                }
+                return true
+            }
+            var prefix = ""
+            for (index, line) in value.components(separatedBy: "\n").enumerated() {
+                if index > 0 {
+                    control.typeText("\n")
+                    prefix += "\n"
+                    guard awaitPrefix(prefix, phase: "line-break-\(index)") else { return }
+                }
+                if !line.isEmpty { control.typeText(line) }
+                prefix += line
+                guard awaitPrefix(prefix, phase: "line-\(index)") else { return }
+            }
+        } else {
+            control.typeText(value)
+            // typeText can return while WKWebView is still receiving the native
+            // keyboard events. Never save a partial value or type a second copy.
+            let typed = XCTNSPredicateExpectation(predicate: NSPredicate(format: "value == %@", value), object: control)
+            if XCTWaiter.wait(for: [typed], timeout: 20) != .completed {
+                capture(app, "project-text-input-incomplete")
+                captureHierarchy(app, "project-text-input-incomplete-AX")
+            }
         }
         XCTAssertEqual(control.value as? String, value)
         dismissInputToolbar(app)
