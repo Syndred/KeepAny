@@ -433,6 +433,16 @@ final class KeepAnyUITests: XCTestCase {
         return control ?? app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", label)).firstMatch
     }
 
+    private func exactProjectCategoryValue(_ raw: String?, label: String?, expected: String,
+                                           expectedLabel: String) -> String? {
+        // N25's genuine WKWebView select exposes one trailing LF in AX value.
+        // Accept only that exact representation or the full translated value;
+        // never trim user text, other whitespace, or a different control label.
+        guard label == expectedLabel, let raw,
+              raw == expected || raw == expected + "\n" else { return nil }
+        return expected
+    }
+
     private func verifyProjectTextFields(_ fields: [ProjectTextField], in app: XCUIApplication,
                                          phase: String, language: String, marker: String,
                                          category: String, categoryLabel: String) throws {
@@ -445,8 +455,11 @@ final class KeepAnyUITests: XCTestCase {
         }
         let select = projectCategoryControl(in: app, label: categoryLabel)
         reachProjectControl(app.staticTexts[categoryLabel].firstMatch, in: app)
-        let categoryValue = select.value as? String
-        let categoryAX = "\(select.label) \(categoryValue ?? "")"
+        let categoryRawValue = select.value as? String
+        let categoryAXLabel = select.label
+        let categoryValue = exactProjectCategoryValue(categoryRawValue, label: categoryAXLabel,
+                                                      expected: category, expectedLabel: categoryLabel)
+        let categoryAX = "\(categoryAXLabel) \(categoryRawValue ?? "")"
         XCTAssertEqual(categoryValue, category, "\(phase): complete translated category must be retained")
         var expectedPayload: [String: Any] = Dictionary(uniqueKeysWithValues: fields.map { ($0.key, $0.value as Any) })
         expectedPayload["tags"] = ["iosfull", "synthetic"]
@@ -460,6 +473,8 @@ final class KeepAnyUITests: XCTestCase {
             "language": language, "phase": phase, "marker": marker,
             "expectedPayloadFields": expectedPayload,
             "observedAX": observed, "expectedCategory": "repository", "categoryAX": categoryAX,
+            "categoryRawValue": categoryRawValue as Any? ?? NSNull(),
+            "categoryNormalizedValue": categoryValue as Any? ?? NSNull(),
             "projectLinkAXValue": projectLinkAXValue as Any? ?? NSNull(),
             "recordId": linkID as Any? ?? NSNull(),
             "initialRecordId": projectOriginalID as Any? ?? NSNull(),
@@ -526,24 +541,32 @@ final class KeepAnyUITests: XCTestCase {
         option.tap()
         let selectionUpdated = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in
             guard let current = self.existingProjectCategoryControl(in: app, label: categoryLabel) else { return false }
-            return (current.value as? String) == category
+            return self.exactProjectCategoryValue(current.value as? String, label: current.label,
+                                                  expected: category, expectedLabel: categoryLabel) != nil
         }, object: nil)
         let selectionResult = XCTWaiter.wait(for: [selectionUpdated], timeout: 10)
         let selectedControl = existingProjectCategoryControl(in: app, label: categoryLabel)
         let selectedValue = selectedControl?.value as? String
-        let selectedAX = selectedControl.map { "\($0.label) \(selectedValue ?? "")" } ?? "<missing semantic control>"
+        let selectedLabel = selectedControl?.label
+        let normalizedValue = exactProjectCategoryValue(selectedValue, label: selectedLabel,
+                                                        expected: category, expectedLabel: categoryLabel)
+        let selectedAX = selectedLabel.map { "\($0) \(selectedValue ?? "")" } ?? "<missing semantic control>"
         // 544 stopped before retaining the post-selection tree. Keep both
         // success and failure observations; never retap or accept a raw slug.
         capture(app, "project-category-after-selection-\(language)")
         captureHierarchy(app, "project-category-after-selection-\(language)-AX")
         let categoryEvidence: [String: Any] = ["language": language, "expectedVisibleCategory": category,
-                                              "observedCategoryAX": selectedAX, "settled": selectionResult == .completed]
+                                              "observedCategoryAX": selectedAX, "settled": selectionResult == .completed,
+                                              "rawCategoryValue": selectedValue as Any? ?? NSNull(),
+                                              "normalizedCategoryValue": normalizedValue as Any? ?? NSNull(),
+                                              "categoryLabel": selectedLabel as Any? ?? NSNull(),
+                                              "expectedCategoryLabel": categoryLabel]
         let categoryAttachment = XCTAttachment(data: try JSONSerialization.data(withJSONObject: categoryEvidence, options: [.prettyPrinted, .sortedKeys]), uniformTypeIdentifier: "public.json")
         categoryAttachment.name = "project-category-after-selection-\(language).json"
         categoryAttachment.lifetime = .keepAlways
         add(categoryAttachment)
         XCTAssertEqual(selectionResult, .completed, "The selected category must reach the genuine semantic control: \(selectedAX)")
-        XCTAssertEqual(selectedValue, category, "Non-default category must actually be selected")
+        XCTAssertEqual(normalizedValue, category, "Non-default category must actually be selected")
         for field in fields { replaceProjectText(projectTextControl(field, in: app), with: field.value, in: app) }
         try verifyProjectTextFields(fields, in: app, phase: "before-save", language: language, marker: marker, category: category, categoryLabel: categoryLabel)
         let save = app.buttons[text("保存", "Save")].firstMatch
