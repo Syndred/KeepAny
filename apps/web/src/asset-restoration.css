@@ -189,7 +189,9 @@
 	text-overflow: ellipsis;
 	white-space: nowrap;
 }
-.asset-project-foot > span:first-child { flex: 1; }
+.asset-project-foot > span:first-child { flex: none; }
+.asset-project-links { display: flex; flex-wrap: wrap; gap: 5px 12px; min-width: 0; font-size: 11px; color: var(--muted); }
+.asset-project-links > span { min-width: 0; overflow-wrap: anywhere; }
 .asset-project-foot > .asset-project-backlinks { display: inline-flex; align-items: center; gap: 5px; flex: none; }
 .asset-account-card {
 	display: grid;

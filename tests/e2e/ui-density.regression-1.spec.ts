@@ -40,6 +40,18 @@ for (const language of ["zh-CN", "en"] as const)
 			await expect(page.locator(".workspace-asset-grid")).toHaveClass(
 				/asset-dense-list/,
 			);
+			if (width >= 1280) {
+				await expect(
+					page.locator(".asset-project-foot .chip").first(),
+				).toBeVisible();
+				const statusX = await page.evaluate(() =>
+					[".asset-project-foot .chip", ".asset-library-foot .chip"].map(
+						(selector) =>
+							document.querySelector(selector)!.getBoundingClientRect().x,
+					),
+				);
+				expect(Math.abs(statusX[0] - statusX[1])).toBeLessThanOrEqual(1);
+			}
 			expect(
 				await cards.evaluateAll((cards) =>
 					cards.every((card) => card.getBoundingClientRect().height < 195),

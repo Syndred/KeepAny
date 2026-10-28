@@ -406,10 +406,10 @@ export function ProjectCard({ asset, search, backlinks, summary, onOpen }: { ass
 	const repository = asset.category === "repository";
 	const domain = assetDomain(asset.url);
 	return <Link className={`asset-project-card list-row ${repository ? "is-repository" : ""}`} to="/assets/$kind/$id" params={{ kind: asset.kind, id: asset.id }} onClick={() => { rememberAssetList(asset, search); onOpen?.(); }}>
-		<div className="asset-project-info"><div className="asset-card-summary"><div className="asset-project-heading"><span className={`asset-project-avatar${asset.projectMedia?.homeScreenshotId ? " has-image" : ""}`}>{asset.projectMedia?.homeScreenshotId ? <AssetCover asset={asset} imageId={asset.projectMedia.homeScreenshotId} /> : repository ? <Code2 size={18} /> : Array.from(asset.name)[0]?.toLocaleUpperCase() || "•"}</span><strong title={asset.name}>{asset.name}</strong>{asset.status && <span className="chip">{t(asset.status)}</span>}</div>
+		<div className="asset-project-info"><div className="asset-card-summary"><div className="asset-project-heading"><span className={`asset-project-avatar${asset.projectMedia?.homeScreenshotId ? " has-image" : ""}`}>{asset.projectMedia?.homeScreenshotId ? <AssetCover asset={asset} imageId={asset.projectMedia.homeScreenshotId} /> : repository ? <Code2 size={18} /> : Array.from(asset.name)[0]?.toLocaleUpperCase() || "•"}</span><strong title={asset.name}>{asset.name}</strong></div>
 			{asset.description && <p>{asset.description}</p>}</div>
-			<div className="asset-card-facts"><AssetMetrics asset={asset} summary={summary} /></div>
-			<div className="asset-project-foot"><span>{domain || niceCategory(asset.category, t)}</span><span className="asset-project-backlinks">{t("projectCardBacklinks", { count: backlinks.total, pending: backlinks.pending })}<ArrowRight size={14} aria-hidden="true" /></span></div>
+			<div className="asset-card-facts"><AssetMetrics asset={asset} summary={summary} /><div className="asset-project-links"><span title={domain}>{domain || niceCategory(asset.category, t)}</span><span className="asset-project-backlinks">{t("projectCardBacklinks", { count: backlinks.total, pending: backlinks.pending })}</span></div></div>
+			<div className="asset-project-foot">{asset.status && <span className="chip">{t(asset.status)}</span>}<ArrowRight size={14} aria-hidden="true" /></div>
 		</div>
 	</Link>;
 }
