@@ -10,6 +10,10 @@ const config: CapacitorConfig = {
   android: { allowMixedContent: false, minWebViewVersion: 111 },
   ios: { contentInset: 'always', preferredContentMode: 'mobile' },
   plugins: {
+    SystemBars: {
+      insetsHandling: 'native',
+      initialViewportFitValueHint: 'contain',
+    },
     CapacitorSQLite: {
       iosDatabaseLocation: 'Library/Application Support/KeepAny/databases',
       // Ordinary records are not advertised as encrypted. Passwords stay KDBX.
