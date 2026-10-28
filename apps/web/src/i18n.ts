@@ -15,6 +15,8 @@ import { financeCopy } from "./finance-copy";
 import { candidateMergeCopy } from "./candidate-merge-copy";
 
 const copy: Record<string, [string, string]> = {
+	featureLoadErrorTitle: ["暂时无法打开这个功能", "This feature could not be opened"],
+	featureLoading: ["正在打开…", "Opening…"],
 	pageLoadErrorTitle: ["暂时无法打开这个页面", "This page could not be opened"],
 	pageUnexpectedErrorTitle: ["这个页面遇到了问题", "Something went wrong on this page"],
 	pageLoadErrorHint: ["请重新加载后再试，已保存的资料会保留。", "Reload to try again. Your saved records will be kept."],

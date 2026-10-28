@@ -1,7 +1,6 @@
 import { Textarea } from "./ui/textarea";
 import { Input } from "./ui/input";
 import "../trash.css";
-import { VaultAccountLinksDialog } from "./VaultAccountLinksDialog";
 import { useNavigate, useRouterState } from "@tanstack/react-router";
 import {
 	Network,
@@ -20,7 +19,7 @@ import {
 	WandSparkles,
 	X,
 } from "lucide-react";
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { lazy, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import type { Asset } from "../../../../packages/domain/src";
 import { MIN_MASTER_PASSWORD_LENGTH } from "../../../../packages/password-vault/src/policy";
@@ -39,10 +38,17 @@ import {
 	VaultIconButton,
 } from "./PasswordVaultEntryCard";
 import "../password-vault.css";
-import { withFilledVaultIdentifiers } from "../vault-import-model";
-import { PasswordSmartImportDialog } from "./PasswordSmartImportDialog";
+import { withFilledVaultIdentifiers } from "../vault-entry-identifiers";
+import { DeferredVaultTool } from "./DeferredVaultTool";
 import { VaultLoginIdentifiers } from "./VaultLoginIdentifiers";
 import { VaultImportFieldActions } from "./VaultImportFieldActions";
+
+const VaultAccountLinksDialog = lazy(() =>
+	import("./VaultAccountLinksDialog").then((module) => ({ default: module.VaultAccountLinksDialog })),
+);
+const PasswordSmartImportDialog = lazy(() =>
+	import("./PasswordSmartImportDialog").then((module) => ({ default: module.PasswordSmartImportDialog })),
+);
 
 type PasswordVaultPanelProps = {
 	assets: Asset[];
@@ -135,6 +141,11 @@ export function PasswordVaultPanel({
 	const navigate = useNavigate();
 	const hash = useRouterState({ select: (state) => state.location.hash });
 	const copyGeneration = useRef(0);
+	const panelElement = useRef<HTMLElement | null>(null);
+	const toolTrigger = (tool: "smart" | "links") =>
+		panelElement.current?.querySelector<HTMLElement>(`[data-vault-tool-trigger="${tool}"]`)
+		?? panelElement.current?.querySelector<HTMLElement>(".unified-vault-access > summary, #password-vault-unlock-master, #password-vault-master")
+		?? null;
 	const readyNotified = useRef(false);
 	useEffect(() => {
 		if (snapshot.status === "loading" || readyNotified.current || !onReady) return;
@@ -836,20 +847,34 @@ export function PasswordVaultPanel({
 	);
 
 	return (
-		<section className="password-vault-panel">
+		<section className="password-vault-panel" ref={panelElement}>
 			{accountLinksOpen && snapshot.status === "unlocked" && (
-				<VaultAccountLinksDialog
+				<DeferredVaultTool
+					title={t("pwConnectTitle")}
 					onClose={() => setAccountLinksOpen(false)}
-					onSaved={() => notify?.(t("pwConnectSaved"))}
-				/>
+					returnFocusTo={() => toolTrigger("links")}
+				>
+					<VaultAccountLinksDialog
+						onClose={() => setAccountLinksOpen(false)}
+						onSaved={() => notify?.(t("pwConnectSaved"))}
+						returnFocusTo={() => toolTrigger("links")}
+					/>
+				</DeferredVaultTool>
 			)}
 			{smartImportOpen &&
 				(snapshot.status === "unlocked" ||
 					notice === "pwVaultLockedElsewhere") && (
-					<PasswordSmartImportDialog
+					<DeferredVaultTool
+						title={t("pwSmartTitle")}
 						onClose={() => setSmartImportOpen(false)}
-						onLinkAccounts={() => setAccountLinksOpen(true)}
-					/>
+						returnFocusTo={() => toolTrigger("smart")}
+					>
+						<PasswordSmartImportDialog
+							onClose={() => setSmartImportOpen(false)}
+							onLinkAccounts={() => setAccountLinksOpen(true)}
+							returnFocusTo={() => toolTrigger("smart")}
+						/>
+					</DeferredVaultTool>
 				)}
 			<header
 				className={`password-vault-header card-header${snapshot.status === "unlocked" ? " password-vault-header-inline" : ""}`}
@@ -900,6 +925,7 @@ export function PasswordVaultPanel({
 							{missingSampleAccounts.length > 0 && <Button size="small" disabled={busy} onClick={() => void addSampleLogins()}>{t("sampleLogins")}</Button>}
 							<VaultIconButton
 								label={t("pwConnectTitle")}
+								data-vault-tool-trigger="links"
 								disabled={busy}
 								onClick={() => setAccountLinksOpen(true)}
 							>
@@ -921,6 +947,7 @@ export function PasswordVaultPanel({
 							</VaultIconButton>
 							<VaultIconButton
 								label={t("pwSmartTitle")}
+								data-vault-tool-trigger="smart"
 								disabled={busy}
 								onClick={() => setSmartImportOpen(true)}
 							>

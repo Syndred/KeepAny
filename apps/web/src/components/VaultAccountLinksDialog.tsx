@@ -40,9 +40,11 @@ import { VaultAccountLinkConflict } from "./VaultAccountLinkConflict";
 export function VaultAccountLinksDialog({
 	onClose,
 	onSaved,
+	returnFocusTo,
 }: {
 	onClose: () => void;
 	onSaved: () => void;
+	returnFocusTo?: () => HTMLElement | null;
 }) {
 	const { t } = useTranslation();
 	const { data } = useAppContext();
@@ -558,6 +560,7 @@ export function VaultAccountLinksDialog({
 		<Dialog
 			title={t("pwConnectTitle")}
 			className="vault-connect-dialog"
+			returnFocusTo={returnFocusTo}
 			focusTitleOnOpen
 			closeDisabled={busy}
 			onClose={() => {

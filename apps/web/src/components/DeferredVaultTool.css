@@ -1,0 +1,9 @@
+.deferred-vault-tool-dialog .button {
+	min-width: 44px;
+	min-height: 44px;
+}
+
+.deferred-vault-tool-dialog > .actions {
+	justify-content: flex-end;
+	margin-top: var(--space-4);
+}

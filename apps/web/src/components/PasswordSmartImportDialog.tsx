@@ -141,9 +141,11 @@ function errorCopy(error: unknown) {
 export function PasswordSmartImportDialog({
 	onClose,
 	onLinkAccounts,
+	returnFocusTo,
 }: {
 	onClose: () => void;
 	onLinkAccounts: () => void;
+	returnFocusTo?: () => HTMLElement | null;
 }) {
 	const { t } = useTranslation();
 	const navigate = useNavigate();
@@ -1249,6 +1251,7 @@ export function PasswordSmartImportDialog({
 			className={`password-smart-import-dialog${stage === "review" ? " password-smart-import-dialog-wide" : ""}`}
 			title={t(stage === "mapping" ? "pwSmartMap" : "pwSmartTitle")}
 			onClose={requestClose}
+			returnFocusTo={returnFocusTo}
 			closeDisabled={busy === "save" || draftClosing}
 			headerActions={
 				<div className="pw-smart-header-actions">
