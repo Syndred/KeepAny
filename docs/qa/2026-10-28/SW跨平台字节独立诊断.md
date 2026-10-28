@@ -40,3 +40,5 @@ console.log(JSON.stringify({entryCount:entries.length,revisioned:checked.length,
 将源输入 `apps/web/public/icons/*.svg` 固定 `text eol=lf`，并实际将工作树两个SVG规范为LF；仅新增属性但不重写已有CRLF工作树还不足以改变本轮构建输入。随后由主控正常构建、同步当前交付文件并保持历史保留资源原Git blob，不手改SW字符串。保持verify-local-release逐字节门禁原样。
 
 验证分层：先检查Git/index/worktree SVG均LF、12个revision与实际交付文件MD5一致；再从同一提交在Windows和Linux各正常构建，运行原严格门禁，比较sw.js以及完整当前117文件字节。本机或隔离函数通过只证明输入归一复现；云Linux正式job成功及新候选实际消费记录仍待主控回读，不预先宣称门禁闭环。
+
+主控7eaf修复后，独立只读检查两个public SVG的Git/index/worktree均LF。对其实际已构建便携包Web目录的106项/12个非null revision再次穷举，12项全部等包内文件MD5，两SVG分别为上表LF摘要，没有差异。没有重建该包；此项证明包内自洽，不替代同提交Linux重构与正式严格字节门禁的云结果。
