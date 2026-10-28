@@ -1,11 +1,11 @@
 import { test, afterEach } from 'vitest';
 import assert from 'node:assert/strict';
 import { EventEmitter } from 'node:events';
-import { mkdir, readFile, unlink, rmdir } from 'node:fs/promises';
+import { mkdir, readFile, writeFile, unlink, rmdir } from 'node:fs/promises';
 import { resolve, dirname, basename } from 'node:path';
-import { randomUUID } from 'node:crypto';
+import { randomUUID, createHash, webcrypto } from 'node:crypto';
 import vm from 'node:vm';
-import { GraphBootRecorder, installControllerObserver, observeGraphBoot } from './account-graph-boot-diagnostics.ts';
+import { GraphBootRecorder, installControllerObserver, observeGraphBoot, inspectFailedScriptCache, staticScriptManifest } from './account-graph-boot-diagnostics.ts';
 const fixtureRoot=resolve('test-results/account-graph-boot-diagnostics-unit');
 const ownedFixtures=new Set();
 async function fixtureDirectory(){
@@ -149,12 +149,12 @@ test('session lifecycle sends only passive commands, detaches, and does not repl
  session.emit('Network.requestWillBeSent',request());
  session.emit('Network.loadingFailed',{requestId:'1',errorText:'net::ERR_ABORTED',canceled:true});
  await observer.finish();await observer.finish();
- assert.deepEqual(commands,['Network.enable','Page.enable','ServiceWorker.enable','Page.setLifecycleEventsEnabled']);
+ assert.deepEqual(commands,['Network.enable','Page.enable','ServiceWorker.enable','Runtime.enable','Log.enable','Page.setLifecycleEventsEnabled']);
  assert.equal(session.detached,true);
  assert.equal(session.eventNames().length,0);
  assert.equal(state.windowEvents.size,0);assert.equal(state.swEvents.size,0);
  const proof=JSON.parse(await readFile(resolve(dir,'account-graph-boot-diagnostics.json'),'utf8'));
- assert.equal(proof.schema,'keepany-graph-boot-diagnostics-v1');
+ assert.equal(proof.schema,'keepany-graph-boot-diagnostics-v2');
  assert.equal(proof.observerAffectsTiming,true);
  assert.equal(proof.networkOrCacheInterventions,false);
  assert.equal(proof.capabilities.ServiceWorker,false);
@@ -199,4 +199,93 @@ test('denied SW is marked unavailable while an out-of-origin final page is never
  assert.equal(shots,0);assert.equal(proof.finalPage.outsideScope,true);assert.equal(proof.finalPage.available,false);
  assert.ok(proof.unavailable.includes('failure-screenshot-outside-scope'));
  assert.ok(!JSON.stringify(proof).includes('outside.example.test'));
+});
+
+test('runtime/log metadata ignores exception descriptions, values, stack and raw text',()=>{
+ const recorder=new GraphBootRecorder(origin);
+ const exception={className:'TypeError'};for(const key of ['description','value','preview'])Object.defineProperty(exception,key,{get(){throw Error('forbidden');}});
+ const details={url:`${origin}/assets/index-test.js?credential=canary-credential`,lineNumber:12,columnNumber:3,exception};
+ for(const key of ['text','stackTrace'])Object.defineProperty(details,key,{get(){throw Error('forbidden');}});
+ recorder.exception({exceptionDetails:details,timestamp:2});
+ const entry={source:'worker',level:'error',url:`${origin}/sw.js?credential=canary-credential`,lineNumber:5};
+ for(const key of ['text','args','stackTrace'])Object.defineProperty(entry,key,{get(){throw Error('forbidden');}});
+ recorder.log({entry});recorder.exception({exceptionDetails:{url:'https://foreign.test/private',exception:{className:'canary-credential'}}});
+ recorder.log({entry:{source:'canary-credential',level:'canary-credential',url:`${origin}/api/private`}});
+ const events=recorder.snapshot().events;assert.equal(events[0].errorClass,'TypeError');assert.equal(events[0].path,'/assets/index-test.js');
+ assert.equal(events[1].source,'worker');assert.equal(events[1].path,'/sw.js');assert.equal(events[2].path,null);
+ assert.ok(!JSON.stringify(events).includes('canary-credential'));assert.ok(!JSON.stringify(events).includes('foreign.test'));
+});
+
+test('page script/resource/rejection listeners are passive, static-scoped and removed',()=>{
+ const state=pageSandbox();state.sandbox.window.binding=value=>state.values.push(value);
+ vm.runInNewContext(`(${installControllerObserver.toString()})(${JSON.stringify({bindingName:'binding',cleanupName:'cleanup',origin})})`,state.sandbox);
+ const error=state.windowEvents.get('error'),rejection=state.windowEvents.get('unhandledrejection');
+ const forbidden=()=>{throw Error('must not prevent default');};
+ error({target:{tagName:'SCRIPT',src:`${origin}/assets/test.js?secret=canary-credential`},preventDefault:forbidden});
+ error({target:{tagName:'LINK',href:'https://outside.test/assets/a.js'},preventDefault:forbidden});
+ error({filename:`${origin}/assets/test.js?secret=canary-credential`,lineno:7,colno:2,error:{name:'SyntaxError',message:'canary-credential'},preventDefault:forbidden});
+ rejection({reason:{name:'TypeError',message:'canary-credential'},preventDefault:forbidden});
+ rejection({reason:'canary-credential',preventDefault:forbidden});
+ const recorder=new GraphBootRecorder(origin);for(const value of state.values.slice(1))recorder.pageError(value);
+ const events=recorder.snapshot().events;assert.equal(events.length,4);assert.equal(events[0].path,'/assets/test.js');
+ assert.equal(events[1].errorClass,'SyntaxError');assert.equal(events[2].errorClass,'TypeError');assert.equal(events[3].errorClass,'redacted');
+ assert.ok(!JSON.stringify(events).includes('canary-credential'));state.sandbox.window.cleanup();assert.equal(state.windowEvents.size,0);
+});
+
+const scriptSource=(path,body)=>({path,bytes:Buffer.byteLength(body),sha256:createHash('sha256').update(body).digest('hex')});
+async function runCacheWitness(manifest,match,url=origin){
+ return vm.runInNewContext(`(${inspectFailedScriptCache.toString()})(${JSON.stringify({origin,manifest})})`,{
+  location:new URL(url),performance,URL,Uint8Array,Promise,Number,Reflect,setTimeout,clearTimeout,crypto:webcrypto,
+  caches:{match,put(){throw Error('must not put');},delete(){throw Error('must not delete');},open(){throw Error('must not open');}},
+  fetch(){throw Error('must not fetch');}
+ });
+}
+
+test('failure cache witness hashes only explicitly scoped public scripts without network or mutation',async()=>{
+ const paths=[],body='export const synthetic = true;',source=scriptSource('/assets/synthetic.js',body);
+ const result=await runCacheWitness([source,scriptSource('/assets/different.js','original'),scriptSource('/assets/missing.js','x')],async url=>{
+  paths.push(url);if(url.endsWith('missing.js'))return undefined;
+  return new Response(body,{headers:{'content-type':'text/javascript; charset=utf-8'}});
+ });
+ assert.equal(paths.length,3);assert.ok(paths.every(p=>p.startsWith(`${origin}/assets/`)));
+ assert.equal(result.evidence[0].sha256,source.sha256);assert.equal(result.evidence[0].matchesSource,true);
+ assert.equal(result.evidence[1].matchesSource,false);assert.equal(result.evidence[2].found,false);
+ assert.equal(result.networkResponse,false);assert.equal(result.readonly,true);assert.equal(result.firstCacheMatchOnly,true);
+});
+
+test('cache witness rejects foreign/query/business/oversized sources and caps eight paths',async()=>{
+ let matches=0;const valid=scriptSource('/assets/test.js','x');
+ const invalid=[{...valid,path:'https://outside.test/assets/a.js'},{...valid,path:'/api/private'},
+ {...valid,path:'/assets/test.js?secret=canary-credential'},{...valid,bytes:2*1024*1024+1},{...valid,sha256:'canary-credential'}];
+ const first=await runCacheWitness(invalid,async()=>{matches++;});assert.equal(matches,0);assert.equal(first.evidence.length,0);
+ const foreign=await runCacheWitness([valid],async()=>{matches++;},'https://outside.test');assert.equal(foreign.outsideScope,true);assert.equal(matches,0);
+ const bounded=await runCacheWitness(Array.from({length:20},(_,i)=>scriptSource(`/assets/file${i}.js`,'x')),async()=>{matches++;});
+ assert.equal(matches,8);assert.equal(bounded.evidence.length,8);
+});
+
+test('cache stream byte budget and stalled match total deadline fail closed without delaying original case',async()=>{
+ const source=scriptSource('/assets/test.js','x');let canceled=0;
+ const budget=await runCacheWitness([source],async()=>new Response(new ReadableStream({start(controller){controller.enqueue(new Uint8Array(2*1024*1024+1));},cancel(){canceled++;}})));
+ assert.equal(budget.evidence[0].errorCode,'cache-budget');assert.equal(canceled,1);assert.equal(Object.hasOwn(budget.evidence[0],'sha256'),false);
+ const started=performance.now();const deadline=await runCacheWitness([source],()=>new Promise(()=>{}));
+ assert.equal(deadline.evidence[0].errorCode,'cache-deadline');assert.ok(performance.now()-started<2200);
+});
+
+test('source manifest and failed-path selection are bounded public build files only',async()=>{
+ const directory=await fixtureDirectory(),assets=resolve(directory,'assets');await mkdir(assets);
+ const body='export const synthetic = true;',file=resolve(assets,'test.js');await writeFile(file,body);
+ try{
+  const manifest=await staticScriptManifest(directory,['/api/private','/assets/../test.js','/assets/test.js?query=x','/assets/test.js','/assets/test.js','/assets/missing.js']);
+  assert.deepEqual(manifest,[scriptSource('/assets/test.js',body)]);
+  const recorder=new GraphBootRecorder(origin);for(let i=0;i<12;i++){recorder.request(request(String(i),`${origin}/assets/file${i}.js`));recorder.complete({requestId:String(i),errorText:'net::ERR_ABORTED'},true);}
+  assert.deepEqual(recorder.failedScriptPaths(),Array.from({length:8},(_,i)=>`/assets/file${11-i}.js`));
+ }finally{await unlink(file);await rmdir(assets);}
+});
+
+test('cache witness stops before opening another cache match after the aggregate eight MiB limit',async()=>{
+ const body='x'.repeat(2*1024*1024);let matches=0;
+ const sources=Array.from({length:8},(_,i)=>scriptSource(`/assets/large${i}.js`,body));
+ const result=await runCacheWitness(sources,async()=>{matches++;return new Response(body,{headers:{'content-type':'text/javascript'}});});
+ assert.equal(matches,4);assert.equal(result.bytesRead,8*1024*1024);assert.equal(result.evidence.length,4);
+ assert.ok(result.evidence.every(row=>row.matchesSource));
 });

@@ -1,11 +1,13 @@
-import { randomUUID } from 'node:crypto';
-import { writeFile } from 'node:fs/promises';
+import { createHash, randomUUID } from 'node:crypto';
+import { open, writeFile } from 'node:fs/promises';
+import { resolve } from 'node:path';
 import type { BrowserContext, CDPSession, Page, TestInfo } from '@playwright/test';
 
 type Metadata = Record<string, unknown>;
 type DiagnosticEvent = 'Network.requestWillBeSent' | 'Network.responseReceived' | 'Network.dataReceived' |
   'Network.loadingFinished' | 'Network.loadingFailed' | 'Page.frameNavigated' | 'Page.lifecycleEvent' |
-  'ServiceWorker.workerVersionUpdated' | 'ServiceWorker.workerRegistrationUpdated';
+  'ServiceWorker.workerVersionUpdated' | 'ServiceWorker.workerRegistrationUpdated' |
+  'Runtime.exceptionThrown' | 'Log.entryAdded';
 const object = (value: unknown): Metadata => value !== null && typeof value === 'object' && !Array.isArray(value) ? value as Metadata : {};
 const identifier = (value: unknown) => typeof value === 'string' && /^[\w.:-]{1,160}$/.test(value) ? value : null;
 const number = (value: unknown) => typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= Number.MAX_SAFE_INTEGER ? value : null;
@@ -15,6 +17,30 @@ const networkErrors = ['net::ERR_ABORTED', 'net::ERR_FAILED', 'net::ERR_CONNECTI
   'net::ERR_CONNECTION_REFUSED', 'net::ERR_CONTENT_LENGTH_MISMATCH', 'net::ERR_INSUFFICIENT_RESOURCES',
   'net::ERR_CACHE_MISS', 'net::ERR_BLOCKED_BY_CLIENT', 'net::ERR_FILE_NOT_FOUND', 'net::ERR_TIMED_OUT',
   'net::ERR_NETWORK_CHANGED', 'net::ERR_HTTP2_PROTOCOL_ERROR'];
+const errorClasses = ['Error', 'TypeError', 'SyntaxError', 'ReferenceError', 'RangeError', 'EvalError', 'URIError', 'AggregateError', 'DOMException', 'AbortError'];
+const scriptPath = (value: unknown): value is string => typeof value === 'string' && /^\/assets\/[\w.-]+\.m?js$/.test(value);
+type StaticScript = { path: string; bytes: number; sha256: string };
+
+/** Public build outputs only, never a network request or arbitrary application file. */
+export async function staticScriptManifest(root: string, paths: string[]): Promise<StaticScript[]> {
+  const result: StaticScript[] = [];
+  let total = 0;
+  for (const path of [...new Set(paths.filter(scriptPath))].slice(0, 8)) {
+    let file: Awaited<ReturnType<typeof open>> | undefined;
+    try {
+      file = await open(resolve(root, path.slice(1)), 'r');
+      const metadata = await file.stat();
+      if (!metadata.isFile() || metadata.size > 2 * 1024 * 1024 || total + metadata.size > 8 * 1024 * 1024) continue;
+      const buffer = Buffer.alloc(metadata.size + 1), read = await file.read(buffer, 0, buffer.length, 0);
+      if (read.bytesRead !== metadata.size) continue;
+      const bytes = buffer.subarray(0, read.bytesRead);
+      total += bytes.length;
+      result.push({ path, bytes: bytes.length, sha256: createHash('sha256').update(bytes).digest('hex') });
+    } catch { /* Missing build output is not fabricated as a cache match. */ }
+    finally { await file?.close().catch(() => {}); }
+  }
+  return result;
+}
 
 export function documentPath(path: string): string {
   if (/^\/assets\/(account|project|item|subscription)\/[^/]+\/?$/.test(path)) return path.replace(/\/[^/]+\/?$/, '/:id');
@@ -138,8 +164,89 @@ export class GraphBootRecorder {
       controllerPresent: boolean(event.controllerPresent), controllerPath: this.path(event.controllerPath),
       readyState: allowed(event.readyState, ['loading', 'interactive', 'complete']), persisted: boolean(event.persisted) });
   }
+  exception(input: unknown) {
+    const details = object(object(input).exceptionDetails), exception = object(details.exception);
+    const path = this.path(details.url);
+    this.push('runtime-exception', { path, line: number(details.lineNumber), column: number(details.columnNumber),
+      errorClass: allowed(exception.className, errorClasses), browserTimestamp: number(object(input).timestamp) });
+    // Never access text, description, value, stack frames or arbitrary exception properties.
+  }
+  log(input: unknown) {
+    const entry = object(object(input).entry);
+    this.push('browser-log', { source: allowed(entry.source, ['xml', 'javascript', 'network', 'storage', 'appcache', 'rendering', 'security', 'deprecation', 'worker', 'violation', 'intervention', 'recommendation', 'other']),
+      level: allowed(entry.level, ['verbose', 'info', 'warning', 'error']), path: this.path(entry.url), line: number(entry.lineNumber),
+      browserTimestamp: number(entry.timestamp) });
+    // Log text/args/stackTrace are deliberately not read, including worker log messages.
+  }
+  pageError(input: unknown) {
+    const row = object(input), event = allowed(row.event, ['script-error', 'resource-error', 'unhandled-rejection']);
+    if (event === 'redacted') return;
+    this.push('page-error', { event, path: this.path(row.path), errorClass: allowed(row.errorClass, errorClasses),
+      line: number(row.line), column: number(row.column) });
+  }
+  failedScriptPaths() {
+    return [...new Set(this.events.filter(row => row.kind === 'loading-failed' && scriptPath(row.path)).reverse().map(row => row.path as string))].slice(0, 8);
+  }
   snapshot() { return { events: this.events.map(row => ({ ...row })), droppedEvents: this.droppedEvents,
     droppedRequests: this.droppedRequests, pendingRequests: this.requests.size }; }
+}
+
+/** Failure-only, readonly public-script CacheStorage witness; not a Network response. */
+export async function inspectFailedScriptCache({ origin, manifest }: { origin: string; manifest: StaticScript[] }) {
+  const started = performance.now(), deadline = started + 1500;
+  const evidence: Array<Record<string, unknown>> = [];
+  const scoped = location.origin === origin;
+  if (!scoped || !('caches' in globalThis)) return { available: false, outsideScope: !scoped, evidence };
+  let total = 0, expired = false;
+  const timed = async <T>(promise: Promise<T>): Promise<T> => {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    try {
+      if (performance.now() >= deadline) throw Error('cache-deadline');
+      return await Promise.race([promise, new Promise<never>((_resolve, reject) => {
+        timer = setTimeout(() => { expired = true; reject(Error('cache-deadline')); }, Math.max(1, deadline - performance.now()));
+      })]);
+    } finally { clearTimeout(timer); }
+  };
+  for (const source of manifest.slice(0, 8)) {
+    if (!/^\/assets\/[\w.-]+\.m?js$/.test(source.path) || !Number.isSafeInteger(source.bytes) || source.bytes < 0 || source.bytes > 2 * 1024 * 1024 || !/^[a-f0-9]{64}$/.test(source.sha256)) continue;
+    const row: Record<string, unknown> = { path: source.path, sourceBytes: source.bytes, sourceSha256: source.sha256 };
+    let reader: ReadableStreamDefaultReader<Uint8Array> | undefined;
+    let overBudget = false;
+    try {
+      if (expired || performance.now() >= deadline || total >= 8 * 1024 * 1024) break;
+      const response = await timed(caches.match(new URL(source.path, origin).href));
+      if (expired || performance.now() >= deadline) break;
+      if (!response) { evidence.push({ ...row, found: false }); continue; }
+      row.found = true; row.status = response.status;
+      const mime = (response.headers.get('content-type') ?? '').split(';')[0].trim();
+      row.mime = /^[a-z\d.+-]{1,64}\/[a-z\d.+-]{1,80}$/i.test(mime) ? mime : 'redacted';
+      reader = response.body?.getReader();
+      if (!reader) { evidence.push({ ...row, errorCode: 'cache-body-unavailable' }); continue; }
+      let bytes = 0;
+      const chunks: Uint8Array[] = [];
+      for (;;) {
+        const part = await timed(reader.read());
+        if (expired || performance.now() >= deadline) throw Error('cache-deadline');
+        if (part.done) break;
+        bytes += part.value.byteLength;
+        total += part.value.byteLength;
+        if (bytes > 2 * 1024 * 1024 || total > 8 * 1024 * 1024) { overBudget = true; throw Error('cache-budget'); }
+        chunks.push(part.value);
+      }
+      const bytesArray = new Uint8Array(bytes);
+      let offset = 0;
+      for (const chunk of chunks) { bytesArray.set(chunk, offset); offset += chunk.byteLength; }
+      const hash = await timed(crypto.subtle.digest('SHA-256', bytesArray));
+      const sha256 = [...new Uint8Array(hash)].map(byte => byte.toString(16).padStart(2, '0')).join('');
+      evidence.push({ ...row, bytes, sha256, matchesSource: bytes === source.bytes && sha256 === source.sha256 });
+    } catch {
+      evidence.push({ ...row, errorCode: expired || performance.now() >= deadline ? 'cache-deadline' : overBudget ? 'cache-budget' : 'cache-read-unavailable' });
+      if (expired || overBudget) break;
+    } finally {
+      if (reader) void reader.cancel().catch(() => {});
+    }
+  }
+  return { available: true, readonly: true, networkResponse: false, firstCacheMatchOnly: true, elapsedMs: performance.now() - started, bytesRead: total, evidence };
 }
 
 /** Runs only in the instrumented test page. No DOM/cache/network modifications. */
@@ -158,12 +265,44 @@ export function installControllerObserver({ bindingName, cleanupName, origin }: 
     };
     const onController = () => emit('controllerchange');
     const onPageShow = (event: PageTransitionEvent) => emit('pageshow', event.persisted);
+    const errorClass = (value: unknown) => {
+      try {
+        const name = value !== null && typeof value === 'object' ? Reflect.get(value, 'name') : null;
+        return typeof name === 'string' && ['Error', 'TypeError', 'SyntaxError', 'ReferenceError', 'RangeError', 'EvalError', 'URIError', 'AggregateError', 'DOMException', 'AbortError'].includes(name) ? name : 'redacted';
+      } catch { return 'redacted'; }
+    };
+    const errorMetadata = (value: Record<string, unknown>) => {
+      try {
+        const callback: unknown = Reflect.get(window, bindingName);
+        if (typeof callback === 'function') void Promise.resolve(callback(value)).catch(() => {});
+      } catch { /* Never change the page's error handling. */ }
+    };
+    const onError = (event: Event) => {
+      try {
+        const target = event.target as HTMLScriptElement | HTMLLinkElement | null;
+        if (target?.tagName === 'SCRIPT' || target?.tagName === 'LINK') {
+          const source = target.tagName === 'SCRIPT' ? (target as HTMLScriptElement).src : (target as HTMLLinkElement).href;
+          const url = new URL(source);
+          if (url.origin === origin && /^\/assets\/[\w.-]+\.(?:m?js|css)$/.test(url.pathname)) errorMetadata({ event: 'resource-error', path: url.pathname });
+          return;
+        }
+        const error = event as ErrorEvent;
+        let path: string | null = null;
+        try { const url = new URL(error.filename); if (url.origin === origin && /^\/assets\/[\w.-]+\.m?js$/.test(url.pathname)) path = url.pathname; } catch { /* No arbitrary URL. */ }
+        errorMetadata({ event: 'script-error', path, errorClass: errorClass(error.error), line: error.lineno, column: error.colno });
+      } catch { /* No default prevention or exception propagation. */ }
+    };
+    const onRejection = (event: PromiseRejectionEvent) => errorMetadata({ event: 'unhandled-rejection', errorClass: errorClass(event.reason) });
     Reflect.set(window, cleanupName, () => {
       window.removeEventListener('pageshow', onPageShow);
+      window.removeEventListener('error', onError, true);
+      window.removeEventListener('unhandledrejection', onRejection);
       serviceWorker?.removeEventListener('controllerchange', onController);
       Reflect.deleteProperty(window, cleanupName);
     });
     window.addEventListener('pageshow', onPageShow);
+    window.addEventListener('error', onError, true);
+    window.addEventListener('unhandledrejection', onRejection);
     serviceWorker?.addEventListener('controllerchange', onController);
     emit('installed');
   } catch {
@@ -210,7 +349,9 @@ export async function observeGraphBoot(context: BrowserContext, page: Page, info
     listen('Page.lifecycleEvent', value => recorder.frame(value, true));
     listen('ServiceWorker.workerVersionUpdated', value => recorder.workers(value));
     listen('ServiceWorker.workerRegistrationUpdated', value => recorder.workers(value, true));
-    for (const domain of ['Network', 'Page', 'ServiceWorker'] as const) {
+    listen('Runtime.exceptionThrown', value => recorder.exception(value));
+    listen('Log.entryAdded', value => recorder.log(value));
+    for (const domain of ['Network', 'Page', 'ServiceWorker', 'Runtime', 'Log'] as const) {
       try { await bounded(client.send(`${domain}.enable`)); capabilities[domain] = true; }
       catch { capabilities[domain] = false; unavailable.add(`${domain.toLowerCase()}-unavailable`); }
     }
@@ -223,7 +364,9 @@ export async function observeGraphBoot(context: BrowserContext, page: Page, info
         try {
           if (new URL(source.frame.url()).origin === origin) {
             if (object(value).event === 'observer-unavailable') unavailable.add('controller-api-unavailable');
-            recorder.controller(value);
+            const event = object(value).event;
+            if (typeof event === 'string' && ['script-error', 'resource-error', 'unhandled-rejection'].includes(event)) recorder.pageError(value);
+            else recorder.controller(value);
           }
         } catch { /* Ignore an invalid/blank frame. */ }
       }
@@ -255,12 +398,26 @@ export async function observeGraphBoot(context: BrowserContext, page: Page, info
         }
         catch { unavailable.add('failure-screenshot-unavailable'); }
       }
+      let failedScriptCache: unknown = { attempted: false };
+      let cacheInScope = false;
+      try { cacheInScope = new URL(page.mainFrame().url()).origin === origin; } catch { /* A closed/blank page has no cache witness. */ }
+      if (failed && cacheInScope) {
+        const assetRoot = process.env.KEEPANY_GRAPH_BOOT_ASSET_ROOT;
+        if (assetRoot === 'release/web' || assetRoot === 'apps/web/dist') {
+          try {
+            const paths = recorder.failedScriptPaths();
+            const manifest = await bounded(staticScriptManifest(assetRoot, paths));
+            failedScriptCache = { attempted: true, failedPaths: paths, sourceManifest: manifest,
+              result: await bounded(page.evaluate(inspectFailedScriptCache, { origin, manifest })) };
+          } catch { unavailable.add('failed-script-cache-unavailable'); }
+        } else unavailable.add('source-manifest-root-unavailable');
+      }
       for (const remove of removeListeners) { try { remove(); } catch { unavailable.add('listener-cleanup-unavailable'); } }
       try { if (client) await bounded(client.detach()); } catch { unavailable.add('detach-unavailable'); }
-      const result = { schema: 'keepany-graph-boot-diagnostics-v1', observerAffectsTiming: true,
+      const result = { schema: 'keepany-graph-boot-diagnostics-v2', observerAffectsTiming: true,
         scope: 'case-main-page-only-no-worker-target-attachment', passiveMetadataOnly: true,
-        networkOrCacheInterventions: false, originalCaseFailed: failed, setupMs, capabilities,
-        unavailable: [...unavailable], finalPage, ...recorder.snapshot() };
+        networkOrCacheInterventions: false, cacheReadOnlyAfterFailure: true, originalCaseFailed: failed, setupMs, capabilities,
+        unavailable: [...unavailable], finalPage, failedScriptCache, ...recorder.snapshot() };
       try {
         const body = Buffer.from(JSON.stringify(result, null, 2));
         await writeFile(info.outputPath('account-graph-boot-diagnostics.json'), body);

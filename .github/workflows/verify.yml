@@ -56,6 +56,7 @@ jobs:
       - name: Verify delivered files and offline backup flow
         env:
           KEEPANY_GRAPH_BOOT_DIAGNOSTICS: '1'
+          KEEPANY_GRAPH_BOOT_ASSET_ROOT: release/web
         run: pnpm exec playwright test --config playwright.release.config.ts --reporter=line --trace=retain-on-failure
       - name: Verify delivered sync files with isolated PostgreSQL and local HTTP
         run: pnpm exec playwright test --config playwright.sync-release.config.ts --reporter=dot
@@ -98,6 +99,7 @@ jobs:
       - name: Exercise local workflows on the extracted portable server
         env:
           KEEPANY_GRAPH_BOOT_DIAGNOSTICS: '1'
+          KEEPANY_GRAPH_BOOT_ASSET_ROOT: apps/web/dist
         shell: bash
         run: |
           archive="$(node --input-type=module -e 'import fs from "node:fs"; const files=fs.readdirSync("dist/preview").filter(name=>name.endsWith(".zip")); if(files.length!==1)throw Error("Expected one fresh preview"); process.stdout.write(`dist/preview/${files[0]}`);')"
@@ -155,6 +157,7 @@ jobs:
       - name: Diagnose the original two large graph cases
         env:
           KEEPANY_GRAPH_BOOT_DIAGNOSTICS: '1'
+          KEEPANY_GRAPH_BOOT_ASSET_ROOT: apps/web/dist
           KEEPANY_EVIDENCE_DIR: test-results/graph-boot-narrow-evidence
         shell: bash
         run: |
