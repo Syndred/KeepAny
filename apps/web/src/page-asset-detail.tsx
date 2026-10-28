@@ -416,6 +416,25 @@ export function AssetDetail() {
 	const [uploading, setUploading] = useState(false);
 	const imageInFlight = useRef(false);
 	const [pendingImage, setPendingImage] = useState<File | null>(null);
+	const imageJob = useRef(0);
+	const imageMounted = useRef(true);
+	const imageAssetId = useRef(asset?.id);
+	const imageScope = useRef({ assetId: asset?.id, file: pendingImage });
+	imageScope.current = { assetId: asset?.id, file: pendingImage };
+	const [pendingImageError, setPendingImageError] = useState<{
+		assetId: string; file: File; job: number; key: "imageSaveFailed" | "assetStale";
+	} | null>(null);
+	useEffect(() => {
+		imageMounted.current = true;
+		return () => { imageMounted.current = false; imageJob.current++; };
+	}, []);
+	useEffect(() => {
+		if (imageAssetId.current === asset?.id) return;
+		imageAssetId.current = asset?.id;
+		imageJob.current++;
+		setPendingImage(null);
+		setPendingImageError(null);
+	}, [asset?.id]);
 	const [replaceImageId, setReplaceImageId] = useState("");
 	const [projectImageRole, setProjectImageRole] = useState<ProjectImageRole>("other");
 	const [itemImageRole, setItemImageRole] = useState<ItemImageRole>("other");
@@ -913,8 +932,18 @@ export function AssetDetail() {
 		setReplaceImageId(replaceId);
 		imageInput.current?.click();
 	}
+	function closeImagePreview() {
+		if (imageInFlight.current) return;
+		imageJob.current++;
+		setPendingImageError(null);
+		setPendingImage(null);
+	}
 	async function addImage(file: File) {
 		if (!asset || imageInFlight.current) return;
+		const assetId = asset.id, job = ++imageJob.current;
+		const currentJob = () => imageMounted.current && imageJob.current === job &&
+			imageScope.current.assetId === assetId && imageScope.current.file === file;
+		setPendingImageError(null);
 		imageInFlight.current = true;
 		setUploading(true);
 		let fileId = "";
@@ -950,14 +979,18 @@ export function AssetDetail() {
 				updatedAt: new Date().toISOString(),
 			});
 			if (replaceImageId) await cleanupUnreferencedFile(replaceImageId).catch(() => false);
-			setPendingImage(null);
-			setReplaceImageId("");
-			setProjectImageRole("other");
-			setItemImageRole("other");
-			notify(t("saved"));
+			if (currentJob()) {
+				setPendingImageError(null);
+				setPendingImage(null);
+				setReplaceImageId("");
+				setProjectImageRole("other");
+				setItemImageRole("other");
+				notify(t("saved"));
+			}
 		} catch (error) {
 			if (fileId) await cleanupUnreferencedFile(fileId).catch(() => false);
-			notify(t(error instanceof Error && error.message === "asset-stale" ? "assetStale" : "imageSaveFailed"));
+			if (currentJob()) setPendingImageError({ assetId, file, job,
+				key: error instanceof Error && error.message === "asset-stale" ? "assetStale" : "imageSaveFailed" });
 		} finally {
 			setUploading(false);
 			imageInFlight.current = false;
@@ -1326,6 +1359,8 @@ export function AssetDetail() {
 							onChange={(e) => {
 								const file = e.target.files?.[0];
 								if (file) {
+									imageJob.current++;
+									setPendingImageError(null);
 									if (
 										!(asset.kind === "project" ? ["image/jpeg", "image/png", "image/webp"] : ["image/jpeg", "image/png", "image/webp", "image/gif"]).includes(file.type) ||
 										file.size === 0 ||
@@ -2306,8 +2341,8 @@ export function AssetDetail() {
 					</div>
 				</Dialog>
 			)}
-			{pendingImage && (
-				<Dialog className={kind === "account" ? "account-detail-dialog" : undefined} title={t("preview")} onClose={() => setPendingImage(null)}>
+			{pendingImage && imageAssetId.current === asset.id && (
+				<Dialog className={kind === "account" ? "account-detail-dialog" : undefined} title={t("preview")} onClose={closeImagePreview} closeDisabled={uploading}>
 					{pendingImageUrl && (
 						<img
 							className="image-preview"
@@ -2318,11 +2353,11 @@ export function AssetDetail() {
 						/>
 					)}
 					<p style={{ overflowWrap: "anywhere" }}>{pendingImage.name}</p>
-					{pendingImageStatus === "error" && (
-						<p role="alert">{t("uploadError")}</p>
+					{(pendingImageStatus === "error" || (pendingImageError?.assetId === asset.id && pendingImageError.file === pendingImage && pendingImageError.job === imageJob.current)) && (
+						<p role="alert">{t(pendingImageStatus === "error" ? "uploadError" : pendingImageError?.key ?? "imageSaveFailed")}</p>
 					)}
 					<div className="actions">
-						<Button onClick={() => setPendingImage(null)}>{t("cancel")}</Button>
+						<Button disabled={uploading} onClick={closeImagePreview}>{t("cancel")}</Button>
 						<Button
 							variant="primary"
 							disabled={uploading || pendingImageStatus !== "ready"}

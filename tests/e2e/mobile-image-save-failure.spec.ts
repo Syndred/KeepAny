@@ -64,16 +64,34 @@ for (const language of ["en", "zh-CN"] as const) test(`${language} detail valid 
 		}, repositoryPath);
 		await confirm.click();
 		await expect(confirm).toBeEnabled();
-		await expect(page.locator(".toast")).toBeVisible();
-		persist("immediate-error.json", { text: await page.locator(".toast").innerText() });
+		const saveAlert = dialog.getByRole("alert");
+		await expect(saveAlert).toBeVisible();
+		persist("immediate-error.json", { text: await saveAlert.innerText() });
+		persist("modal-error-accessibility.json", {
+			defaultStatusCount: await page.getByRole("status").count(),
+			dialogAlertCount: await dialog.getByRole("alert").count(),
+			alertAncestors: await saveAlert.evaluate(element => {
+				const values = []; for (let node: Element | null = element; node; node = node.parentElement) values.push({ tag: node.tagName, role: node.getAttribute("role"), ariaHidden: node.getAttribute("aria-hidden"), inert: node.hasAttribute("inert") }); return values;
+			}),
+		});
 		await page.screenshot({ path: info.outputPath("immediate-error.png"), fullPage: false });
 		const expectedError = t("The image could not be saved. Try again.", "图片未能保存，请重试。");
-		try { await expect(page.locator(".toast")).toHaveText(expectedError); }
+		try { await expect(dialog.getByRole("alert")).toHaveText(expectedError); }
 		finally {
 			persist("after-rejected-write.json", await snapshot(page));
 			persist("write-failure-ui.json", { statuses: await page.getByRole("status").allTextContents(), draftVisible: await dialog.isVisible(), fileName: await dialog.getByText("replacement.png", {exact:true}).count() });
 			await page.screenshot({ path: info.outputPath("write-failure.png"), fullPage: false });
 		}
+		const visibility = await saveAlert.evaluate(element => {
+			const rect = element.getBoundingClientRect();
+			const area = Math.max(0, Math.min(innerWidth, rect.right) - Math.max(0, rect.left)) * Math.max(0, Math.min(innerHeight, rect.bottom) - Math.max(0, rect.top));
+			const points = [0.1, 0.5, 0.9].flatMap(x => [0.1, 0.5, 0.9].map(y => {
+				const target = document.elementFromPoint(rect.left + rect.width * x, rect.top + rect.height * y);
+				return { x, y, unobscured: !!target && (target === element || element.contains(target)) };
+			}));
+			return { ratio: area / (rect.width * rect.height), rect: rect.toJSON(), viewport: { width: innerWidth, height: innerHeight }, points };
+		});
+		persist("alert-natural-visibility.json", visibility); expect(visibility.ratio).toBeGreaterThanOrEqual(0.99); expect(visibility.points.every(point => point.unobscured)).toBe(true);
 		expect(await snapshot(page)).toEqual(before);
 		await expect(dialog.getByRole("img", { name: "replacement.png" })).toHaveJSProperty("naturalWidth", 8);
 		await confirm.click(); await expect(dialog).toBeHidden();
@@ -96,9 +114,76 @@ for (const language of ["en", "zh-CN"] as const) test(`${language} detail valid 
 		await expect(confirm).toBeEnabled();
 		await page.evaluate(async path => { const repository = await (await import(path)).localRepository(); repository.saveAssetIfCurrent = async () => { throw Error("asset-stale"); }; }, repositoryPath);
 		await confirm.click(); await expect(confirm).toBeEnabled();
-		await expect(page.locator(".toast")).toHaveText(t("This record changed elsewhere. Reopen it before saving.", "资料已在另一处更新，请重新打开后再保存。"));
+		await expect(dialog.getByRole("alert")).toHaveText(t("This record changed elsewhere. Reopen it before saving.", "资料已在另一处更新，请重新打开后再保存。"));
 		expect(await snapshot(page)).toEqual(retried); await expect(dialog.getByText("stale.png", { exact: true })).toBeVisible();
 		persist("stale-readback.json", await snapshot(page));
+		await dialog.getByRole("button", { name: t("Cancel", "取消"), exact: true }).click();
+		await expect(dialog).toBeHidden();
+		await input.setInputFiles({ name: "reopened.png", mimeType: "image/png", buffer: replacement });
+		await expect(confirm).toBeEnabled(); await expect(dialog.getByRole("alert")).toHaveCount(0);
+		expect(await snapshot(page)).toEqual(retried);
 		expect(errors).toEqual([]); persist("result.json", { language, width: 390, coarse: await page.evaluate(() => matchMedia("(pointer: coarse)").matches), layer: "B / C-assisted write and CAS rejection; not OS Native", sameDraftRetryRealWrite: true, fullRowsAndFilesPreservedOnFailure: true, invalidAndStaleSeparate: true });
 	} finally { await context.close(); }
+});
+
+test("en late rejected image job cannot mark a different asset's new preview", async ({ browser }, info) => {
+	const context = await browser.newContext({ locale: "en", viewport: { width: 390, height: 844 }, hasTouch: true });
+	await context.addInitScript(() => localStorage.setItem("keepany-language", "en"));
+	const page = await context.newPage();
+	try {
+		await page.goto("/assets/project");
+		for (const name of ["Synthetic late image A", "Synthetic new image B"]) {
+			await page.getByRole("button", { name: "Add", exact: true }).click();
+			await page.getByRole("dialog").locator("#name").fill(name);
+			await page.getByRole("dialog").getByRole("button", { name: "Save", exact: true }).click();
+			await expect(page.getByRole("dialog")).toBeHidden();
+		}
+		const before = await snapshot(page);
+		await page.getByText("Synthetic late image A", { exact: true }).first().click();
+		const materials = page.locator("#asset-project-materials");
+		if (await materials.getAttribute("open") === null) await materials.locator(":scope > summary").click();
+		const input = page.locator(".asset-attachments-card input[type=file]");
+		await input.setInputFiles({ name: "old-held.png", mimeType: "image/png", buffer: await png(page, "#bb4422") });
+		const dialog = page.getByRole("dialog"), confirm = dialog.getByRole("button", { name: "Confirm", exact: true });
+		await expect(confirm).toBeEnabled();
+		await page.evaluate(async path => {
+			const repository = await (await import(path)).localRepository(), original = repository.fileStore.blobs.add.bind(repository.fileStore.blobs);
+			const state = { attempts: 0, started: false, settled: false, release: () => {} };
+			Object.assign(window, { syntheticLateImage: state });
+			repository.fileStore.blobs.add = async (...args: unknown[]) => {
+				if (++state.attempts !== 1) return original(...args);
+				state.started = true;
+				try { await new Promise<void>((_, reject) => { state.release = () => reject(Error("synthetic-late-image-write")); }); }
+				finally { state.settled = true; }
+			};
+		}, repositoryPath);
+		await confirm.click();
+		await expect.poll(() => page.evaluate(() => (window as unknown as { syntheticLateImage: { started: boolean } }).syntheticLateImage.started)).toBe(true);
+		await expect(dialog.getByRole("button", { name: "Cancel", exact: true })).toBeDisabled();
+		await expect(dialog.getByRole("button", { name: "Close", exact: true })).toBeDisabled();
+		await dialog.press("Escape"); await expect(dialog).toBeVisible();
+		await page.goBack();
+		await page.getByText("Synthetic new image B", { exact: true }).first().click();
+		await expect(page.getByRole("heading", { name: "Synthetic new image B", exact: true })).toBeVisible();
+		if (await materials.getAttribute("open") === null) await materials.locator(":scope > summary").click();
+		await input.setInputFiles({ name: "new-current.png", mimeType: "image/png", buffer: await png(page, "#2299bb") });
+		await expect(confirm).toBeEnabled(); await expect(dialog.getByRole("alert")).toHaveCount(0);
+		await page.evaluate(() => (window as unknown as { syntheticLateImage: { release: () => void } }).syntheticLateImage.release());
+		await expect.poll(() => page.evaluate(() => (window as unknown as { syntheticLateImage: { settled: boolean } }).syntheticLateImage.settled)).toBe(true);
+		await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+		await expect(dialog.getByRole("alert")).toHaveCount(0);
+		await expect(dialog.getByText("new-current.png", { exact: true })).toBeVisible();
+		await expect(page.locator(".toast").filter({ hasText: "The image could not be saved. Try again." })).toHaveCount(0);
+		expect(await snapshot(page)).toEqual(before);
+		await page.screenshot({ path: info.outputPath("late-job-new-preview.png"), fullPage: false });
+		await confirm.click(); await expect(dialog).toBeHidden();
+		const after = await snapshot(page);
+		const oldA = before.rows.find((row: { payload: string }) => JSON.parse(row.payload).name === "Synthetic late image A");
+		expect(after.rows.find((row: { id: string }) => row.id === oldA.id)).toEqual(oldA);
+		expect(after.files).toHaveLength(1); expect(after.files[0].name).toBe("new-current.png");
+		writeFileSync(info.outputPath("late-job-result.json"), JSON.stringify({ before, after, currentPreviewUnaffected: true, oldFailureDidNotNotify: true, pendingCancelCloseEscapeBlocked: true }, null, 2));
+	} finally {
+		await page.evaluate(() => (window as unknown as { syntheticLateImage?: { release: () => void } }).syntheticLateImage?.release()).catch(() => {});
+		await context.close();
+	}
 });
