@@ -777,7 +777,7 @@ export function PasswordVaultPanel({
 			}
 			if (currentSession()) announce("sampleLoginsAdded");
 		} catch (error) { if (currentSession()) announce(errorKey(error)); }
-		finally { if (generation === editorGeneration.current) { entryActionRunning.current = false; if (currentSession()) setBusy(false); } }
+		finally { entryActionRunning.current = false; if (currentSession()) setBusy(false); }
 	}
 
 	const vaultAccess = <>
