@@ -4,6 +4,7 @@ import tailwindcss from '@tailwindcss/vite';
 import { VitePWA } from 'vite-plugin-pwa';
 import { createUrlMetadataMiddleware } from '../../scripts/intake-url-metadata.mjs';
 import { pdfWorkerOptions } from './pdf-worker-options';
+import { stablePrecacheManifest } from './src/pwa-manifest';
 const selfHostProxy = process.env.KEEPANY_SELFHOST_DEV_PROXY_TARGET;
 if (selfHostProxy) {
   const target = new URL(selfHostProxy);
@@ -35,5 +36,5 @@ export default defineConfig({ worker: pdfWorkerOptions, plugins: [react(), tailw
       {src:'/icons/keepany-maskable-512.png',sizes:'512x512',type:'image/png',purpose:'maskable'},
     ],
   },
-  workbox:{maximumFileSizeToCacheInBytes:5000000},
+  workbox:{maximumFileSizeToCacheInBytes:5000000,manifestTransforms:[stablePrecacheManifest]},
 })], build:{outDir:'dist'},server:{fs:{allow:['../..']},proxy} });
