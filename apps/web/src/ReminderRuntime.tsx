@@ -54,7 +54,7 @@ export function ReminderRuntime() {
 		return () => { active = false; };
 	}, [due, preference, settings, data.loading, now, t, i18n.language, navigate, notify]);
 	if (!due.length) return null;
-	return <aside className="card padded reminder-runtime-banner" aria-label={t("reminderDueTitle")}>
+	return <aside className="card reminder-runtime-banner" aria-label={t("reminderDueTitle")}>
 		<strong>{t("reminderDueCount", { count: due.length })}</strong>
 		<div className="toolbar">{due.slice(0, 3).map((reminder) => <TextLink key={`${reminder.sourceType}:${reminder.source.id}`} asChild>{reminder.sourceType === "task" ? <Link to="/tasks" hash={`task-${reminder.source.id}`}>{reminder.source.name}</Link> : <Link to="/assets/$kind/$id" params={{ kind: "subscription", id: reminder.source.id }}>{reminder.source.name} · {t("reminderDueSubscription")}</Link>}</TextLink>)}{due.length > 3 && <TextLink asChild><Link to="/tasks">{t("reminderMore")}</Link></TextLink>}</div>
 		{browserFailed && <p role="status">{t("reminderBrowserFailed")}</p>}

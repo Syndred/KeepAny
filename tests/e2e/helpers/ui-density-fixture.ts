@@ -163,7 +163,7 @@ export async function seedDensityBrowser({
 			id: crypto.randomUUID(),
 			assetId: index % 2 ? richItem.id : richProject.id,
 			name: `${zh ? "核对交付资料" : "Review delivery record"} ${index + 1}`,
-			dueDate: `2026-11-0${index + 1}`,
+			dueDate: index === 0 ? "2026-10-28" : `2026-11-0${index + 1}`,
 			done: index === 5,
 			createdAt: richProject.createdAt,
 		}),
