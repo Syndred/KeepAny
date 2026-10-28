@@ -1,6 +1,6 @@
 import { readFileSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
 import { resources } from "../../apps/web/src/i18n";
 
 const evidence = process.env.KEEPANY_EVIDENCE_DIR ?? "test-results/account-password-consolidation";
@@ -11,6 +11,28 @@ const title = "Synthetic independent login";
 const note = "Synthetic private notes excluded from ordinary search";
 const aliases = ["second-login@example.test", "+15550001234"];
 const copy = (language: "zh-CN" | "en") => (key: string) => (resources[language].translation as Record<string, string>)[key] ?? key;
+
+async function touchTarget(page: Page, target: Locator, name: string) {
+	await target.evaluate(element => element.scrollIntoView({ block: "center", inline: "nearest" }));
+	await expect(target).toBeVisible();
+	const observed = await target.evaluate(element => {
+		const r = element.getBoundingClientRect(), width = innerWidth, height = innerHeight;
+		const hits = [0.2, 0.5, 0.8].flatMap(x => [0.2, 0.5, 0.8].map(y => {
+			const hit = document.elementFromPoint(r.left + r.width * x, r.top + r.height * y);
+			return hit === element || !!hit && element.contains(hit);
+		}));
+		return { x: r.x, y: r.y, width: r.width, height: r.height, viewport: { width, height }, coarse: matchMedia("(pointer: coarse)").matches,
+			visibleRatio: Math.max(0, Math.min(r.right, width) - Math.max(r.left, 0)) * Math.max(0, Math.min(r.bottom, height) - Math.max(r.top, 0)) / (r.width * r.height), hits };
+	});
+	await test.info().attach(`touch-${name}`, { body: JSON.stringify(observed), contentType: "application/json" });
+	if (observed.width < 44 || observed.height < 44 || observed.visibleRatio < 0.99 || !observed.hits.every(Boolean))
+		await page.screenshot({ path: test.info().outputPath(`touch-${name}-failure.png`), fullPage: false });
+	expect(observed.coarse).toBe(true);
+	expect(observed.width, `${name} width`).toBeGreaterThanOrEqual(44);
+	expect(observed.height, `${name} height`).toBeGreaterThanOrEqual(44);
+	expect(observed.visibleRatio, `${name} visible ratio`).toBeGreaterThanOrEqual(0.99);
+	expect(observed.hits, `${name} nine interior hit points`).toEqual(Array(9).fill(true));
+}
 
 async function openAccess(page: Page) {
 	const section = page.locator(".unified-vault-access");
@@ -27,7 +49,7 @@ async function unlock(page: Page, t: (key: string) => string) {
 for (const language of ["zh-CN", "en"] as const) for (const width of [390, 1280]) {
 	test(`${language} ${width} account and password features survive unified entry, locking and KDBX restore`, async ({ browser }) => {
 		test.setTimeout(180_000);
-		const context = await browser.newContext({ viewport: { width, height: 950 }, locale: language, acceptDownloads: true, permissions: ["clipboard-read", "clipboard-write"] });
+		const context = await browser.newContext({ viewport: { width, height: 950 }, hasTouch: width === 390, locale: language, acceptDownloads: true, permissions: ["clipboard-read", "clipboard-write"] });
 		await context.addInitScript((language) => localStorage.setItem("keepany-language", language), language);
 		const page = await context.newPage(), t = copy(language); page.setDefaultTimeout(12_000);
 		const errors: string[] = []; page.on("pageerror", (error) => errors.push(error.message));
@@ -36,16 +58,37 @@ for (const language of ["zh-CN", "en"] as const) for (const width of [390, 1280]
 			await page.getByRole("button", { name: t("loadSample"), exact: true }).click();
 			await expect(page.getByRole("button", { name: t("sampleLibraryPresent"), exact: true })).toBeDisabled();
 			await page.goto("/accounts");
+			if (width === 390) {
+				const headerActions = page.locator(".topbar").getByRole("button");
+				await expect(headerActions.first()).toBeVisible();
+				for (const [index, button] of (await headerActions.all()).entries()) await touchTarget(page, button, `header-${index}`);
+				await touchTarget(page, page.locator(".password-vault-header").getByRole("button", { name: t("add"), exact: true }), "account-header-add");
+				await touchTarget(page, page.locator(".unified-vault-access > summary"), "vault-access-summary");
+				await touchTarget(page, page.getByRole("searchbox", { name: t("accountListSearch"), exact: true }), "account-search");
+				await touchTarget(page, page.locator("#vault-references > summary"), "external-references-summary");
+			}
 			await openAccess(page);
 			await page.locator("#password-vault-master").fill(master);
 			await page.locator("#password-vault-master-confirm").fill(master);
 			await page.getByRole("button", { name: t("pwVaultCreate"), exact: true }).click();
 			const toolbar = page.locator(".password-vault-toolbar");
+			if (width === 390) {
+				const sampleAction = toolbar.locator(".password-vault-samples");
+				await touchTarget(page, sampleAction, "sample-logins-action");
+				const lines = await sampleAction.evaluate(element => {
+					const range = document.createRange(); range.selectNodeContents(element);
+					return new Set([...range.getClientRects()].filter(r => r.width > 0 && r.height > 0).map(r => Math.round(r.top))).size;
+				});
+				expect(lines, "Sample action text must not be squeezed into vertical lines").toBe(1);
+				await page.screenshot({ path: test.info().outputPath("sample-toolbar-natural.png"), fullPage: false });
+			}
 			await toolbar.getByRole("button", { name: t("sampleLogins"), exact: true }).click();
 			await expect(toolbar.getByRole("button", { name: t("sampleLogins"), exact: true })).toHaveCount(0, { timeout: 30_000 });
 			await expect(page.locator(".unified-account-passwords .password-vault-entry")).toHaveCount(8);
+			if (width === 390) for (const [index, button] of (await toolbar.locator("button:visible").all()).entries()) await touchTarget(page, button, `vault-toolbar-${index}`);
 			const passwordless = page.locator(".unified-account").filter({ hasText: t("sampleNoPasswordAccount") });
 			await passwordless.locator("summary").click();
+			if (width === 390) await touchTarget(page, passwordless.locator("summary"), "account-password-summary");
 			await expect(passwordless).toContainText(t("pwVaultNoPassword"));
 			await passwordless.getByRole("button", { name: t("pwVaultEditEntry"), exact: true }).click();
 			await expect(page.locator("#password-vault-entry-password")).toHaveValue("");
@@ -65,6 +108,7 @@ for (const language of ["zh-CN", "en"] as const) for (const width of [390, 1280]
 			await standalone.getByRole("button", { name: t("pwVaultEditEntry"), exact: true }).click();
 			await page.locator("#password-vault-entry-password").fill(secret);
 			await page.getByRole("dialog").getByRole("button", { name: t("pwVaultSaveEntry"), exact: true }).click();
+			if (width === 390) for (const [index, button] of (await standalone.locator("button:visible").all()).entries()) await touchTarget(page, button, `login-entry-action-${index}`);
 			await standalone.getByRole("button", { name: t("pwVaultRevealPassword"), exact: true }).click();
 			await expect(standalone.locator(".password-vault-secret")).toHaveText(secret);
 			await standalone.getByRole("button", { name: t("pwVaultCopyPassword"), exact: true }).click();
@@ -123,10 +167,11 @@ for (const language of ["zh-CN", "en"] as const) for (const width of [390, 1280]
 			await page.getByRole("button", { name: t("pwVaultUnlock"), exact: true }).click();
 			await expect(page.locator(".password-vault-message").filter({ hasText: t("pwVaultUnlockFailed") })).toBeVisible();
 			await unlock(page, t);
+			await expect(page.locator(".toast[role=status]")).toHaveText(t("pwVaultStatusUnlocked"));
 			await expect(standalone).toBeVisible();
 			await page.screenshot({ path: join(evidence, `unified-logins-${language}-${width}.png`) });
 			await page.reload(); await unlock(page, t); await expect(standalone).toBeVisible();
-			const restored = await browser.newContext({ viewport: { width, height: 950 }, locale: language });
+			const restored = await browser.newContext({ viewport: { width, height: 950 }, hasTouch: width === 390, locale: language });
 			try {
 				await restored.addInitScript((language) => localStorage.setItem("keepany-language", language), language);
 				const target = await restored.newPage(); await target.goto("/accounts");
