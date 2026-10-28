@@ -18,8 +18,10 @@
 .workspace-password-status, .workspace-password-status > span { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
 .workspace-password-status { justify-content: space-between; padding: 14px 16px; box-shadow: none; }
 .workspace-password-status > span > svg { flex: none; }
-.workspace-password-only { display: grid; gap: 16px; }
+.workspace-password-only { display: grid; gap: 8px; }
 .workspace-password-only > h2 { margin: 0; }
+.workspace-password-only > .password-vault-entry-list { gap: 12px; }
+.workspace-password-only .password-vault-entry.task-card { gap: 8px; }
 .workspace-password-card { display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 14px; align-items: start; padding: 16px; color: var(--ink); text-decoration: none; }
 .workspace-asset-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 245px), 1fr)); align-items: start; gap: 16px; }
 .workspace-domain-card { width: 100%; max-width: 360px; display: flex; flex-direction: column; gap: 8px; color: var(--ink); text-decoration: none; padding: 12px; }
