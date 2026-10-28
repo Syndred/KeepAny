@@ -772,7 +772,7 @@ async function expectNoSelection(page: Page) {
 
 function expandedGraphDialog(page: Page) {
 	return page.getByRole("dialog", {
-		name: /^(账号族谱|Account connections)$/,
+		name: /^(关系图|Connections)$/,
 		exact: true,
 	});
 }

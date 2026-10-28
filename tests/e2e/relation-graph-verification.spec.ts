@@ -127,7 +127,7 @@ for (const locale of ["zh-CN", "en-US"] as const) {
 				await expect(dashed).toHaveCount(mixed ? 2 : 1);
 				const guide = targetPage.locator("details.account-graph-guide");
 				await expect(guide).toHaveCount(1);
-				const expanded = targetPage.getByRole("dialog", { name: /^(账号族谱|Account connections)$/, exact: true });
+				const expanded = targetPage.getByRole("dialog", { name: /^(关系图|Connections)$/, exact: true });
 				if (!(await expanded.isVisible()) && !(await guide.evaluate(element => (element as HTMLDetailsElement).open))) {
 					await guide.locator(":scope > summary").click();
 				}

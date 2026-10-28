@@ -62,7 +62,7 @@ for (const locale of ["zh-CN", "en-US"] as const) for (const width of [390, 1536
 			await expect(cards).toHaveCount(0);
 			await page.locator(".asset-category-scroll").getByRole("button", { name: copy.other, exact: true }).click();
 			await expect(cards).toHaveCount(2);
-			await selectChoice(page.locator("#asset-tag-filter"), "work");
+			await selectChoice(page.locator("#asset-tag-filter-account"), "work");
 			await expect(cards.locator("strong")).toHaveText(["North Studio"]);
 			await cards.click();
 			await expect(page.getByRole("heading", { name: "North Studio", exact: true })).toBeVisible();
@@ -75,7 +75,7 @@ for (const locale of ["zh-CN", "en-US"] as const) for (const width of [390, 1536
 			await search.press("Escape");
 			await expect(search).toHaveValue("");
 			await expect(cards.locator("strong")).toHaveText(["North Studio"]);
-			await selectChoice(page.locator("#asset-tag-filter"), "");
+			await selectChoice(page.locator("#asset-tag-filter-account"), "");
 			await page.locator(".asset-category-scroll").getByRole("button", { name: copy.all, exact: true }).click();
 			await expect(cards).toHaveCount(4);
 			await search.fill("north");
@@ -86,7 +86,7 @@ for (const locale of ["zh-CN", "en-US"] as const) for (const width of [390, 1536
 			await expect(search).toHaveValue("north");
 			await expect(cards).toHaveCount(2);
 			await page.getByRole("button", { name: copy.clear, exact: true }).click();
-			const geometry = await page.locator(".asset-category-toolbar").evaluate(toolbar => {
+			const geometry = await page.locator(".asset-category-toolbar--search").evaluate(toolbar => {
 				const field = toolbar.querySelector(".asset-account-search")?.getBoundingClientRect();
 				const categories = toolbar.querySelector(".asset-category-scroll")?.getBoundingClientRect();
 				return { field: field && { x: field.x, y: field.y, width: field.width, height: field.height }, categories: categories && { x: categories.x, y: categories.y, bottom: categories.bottom }, overflow: document.documentElement.scrollWidth > innerWidth };
