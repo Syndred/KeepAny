@@ -46,7 +46,6 @@ import { Button } from "./components/ui/button";
 import { Dialog } from "./components/ui/dialog";
 import { RemoteBackupPanel } from "./components/RemoteBackupPanel";
 import { RestoreRecoveryPanel } from "./components/RestoreRecoveryPanel";
-import { stageCsvForReview } from "./intake-csv";
 import { AiWorkspaceDialog } from "./AiWorkspaceDialog";
 import { builtins as categoryOptions, useAppContext } from "./view-shared";
 import "./project-editor.css";
@@ -1224,7 +1223,7 @@ export function IntakeTools({ onCsvStaged }: { onCsvStaged: () => void }) {
 		setCsvBusy(true);
 		try {
 			const pdf = file.name.toLowerCase().endsWith(".pdf") || file.type === "application/pdf";
-			const count = pdf ? await (await import("./intake-pdf")).stagePdfForReview(file) : await stageCsvForReview(file);
+			const count = pdf ? await (await import("./intake-pdf")).stagePdfForReview(file) : await (await import("./intake-csv")).stageCsvForReview(file);
 			onCsvStaged();
 			setMessage(t("reviewCsvStaged", { count }));
 		} catch (error) {
