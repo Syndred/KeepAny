@@ -6,7 +6,7 @@
 
 ## macOS 本机安装包
 
-需要 Node.js `>=20.19.0`、npm；从本仓库构建 tarball 还需要 pnpm。安装包提供 `keepany-mcp` 命令，运行时无需 KeepAny 源码目录、pnpm、tsx 或 `cwd`。npm 安装会获取包声明的三个运行依赖，离线安装需要这些依赖已在 npm 缓存中。当前是**本机安装技术验证包**，没有发布到 npm，也没有完成第三方许可证再分发核查。
+需要 Node.js `>=20.19.0`、npm；从本仓库构建 tarball 还需要 pnpm。安装包提供 `keepany-mcp` 命令，运行时无需 KeepAny 源码目录、pnpm、tsx 或 `cwd`。npm 安装会获取包声明的四个运行依赖，离线安装需要这些依赖已在 npm 缓存中。当前是**本机安装技术验证包**，没有发布到 npm，也没有完成第三方许可证再分发核查。
 
 ```bash
 pnpm install --frozen-lockfile
