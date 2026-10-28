@@ -14,7 +14,8 @@ import { selectChoice } from "./helpers/select-choice";
 async function openFinance(page: Page) {
 	const menu = page.locator(".mobile-menu");
 	if (await menu.isVisible()) await menu.click();
-	await page.locator('.nav a[href="/finance"]').click();
+	await page.locator('.nav a[href="/assets"]').click();
+	await page.locator('.workspace-navigation a[href="/finance"]').click();
 	await expect(page).toHaveURL(/\/finance$/);
 }
 

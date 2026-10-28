@@ -1,3 +1,4 @@
+import { openVaultAccess } from "./helpers/vault-access";
 import { expect, test } from "@playwright/test";
 import {
 	visualHarness,
@@ -16,6 +17,7 @@ async function saved(h: Harness) {
 
 async function reloadAndOpen(h: Harness) {
 	await h.page.reload();
+	await openVaultAccess(h.page);
 	await h.page.locator("#password-vault-unlock-master").fill(visualMaster);
 	await h.page
 		.getByRole("button", { name: h.t("pwVaultUnlock"), exact: true })

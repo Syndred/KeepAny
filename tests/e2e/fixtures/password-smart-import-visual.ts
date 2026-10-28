@@ -17,6 +17,7 @@ import type {
 } from "../../../packages/password-vault/src";
 import { aiServer, labels, model, syntheticKey } from "../helpers/ai-workflow";
 import { selectChoice } from "../helpers/select-choice";
+import { openVaultAccess } from "../helpers/vault-access";
 
 export const visualMaster = "Synthetic visual acceptance master 2026!";
 export const visualOldNotionPassword = "Demo-only-old-Notion!42";
@@ -165,12 +166,10 @@ export async function visualHarness(
 			})
 			.first()
 			.click();
-		await page.locator(".workspace-navigation").getByRole("link", {
-			name: locale === "zh-CN" ? "密码管理" : "Passwords",
-			exact: true,
-		}).click();
+		await expect(page).toHaveURL(/\/accounts$/);
 	}
 	async function createVault() {
+		await openVaultAccess(page);
 		await page.locator("#password-vault-master").fill(visualMaster);
 		await page.locator("#password-vault-master-confirm").fill(visualMaster);
 		await page

@@ -26,13 +26,12 @@ for (const locale of ["zh-CN", "en-US"] as const) {
 				const add = page.getByRole("button", { name: zh ? "加入示例资料" : "Add sample records", exact: true });
 				await expect(add).toBeEnabled();
 				await add.click();
-				await expect(page.getByText(zh ? "已保存" : "Saved", { exact: true })).toBeVisible();
-				await expect(add).toBeDisabled();
+				await expect(page.getByRole("button", { name: zh ? "完整示例资料已加入" : "Full sample records already added", exact: true })).toBeDisabled();
 				await page.goto("/");
-				await expect(page.getByText(zh ? "林间笔记" : "Mori Notes", { exact: true }).first()).toBeVisible();
+				await expect(page.getByText(zh ? "示例 | 林间笔记" : "Sample | Mori Notes", { exact: true }).first()).toBeVisible();
 				await expect(start).toHaveCount(0);
 				await page.reload();
-				await expect(page.getByText(zh ? "林间笔记" : "Mori Notes", { exact: true }).first()).toBeVisible();
+				await expect(page.getByText(zh ? "示例 | 林间笔记" : "Sample | Mori Notes", { exact: true }).first()).toBeVisible();
 				await page.screenshot({ path: `${evidence}/onboarding-${zh ? "zh" : "en"}-${width}-sample.png`, fullPage: true });
 				expect(errors).toEqual([]);
 			} finally { await context.close(); }

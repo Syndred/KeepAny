@@ -1,3 +1,5 @@
+import { openBackupRestorePanel } from "./helpers/backup-restore";
+import { prepareVaultWorkspace } from "./helpers/vault-access";
 import "fake-indexeddb/auto";
 import { createHash } from "node:crypto";
 import { mkdirSync, readFileSync } from "node:fs";
@@ -190,11 +192,8 @@ test.beforeAll(async () => {
 });
 
 async function openBackupRestore(page: Page) {
-	const details = page
-		.locator("details.intake-secondary")
-		.filter({ has: page.locator("#restore-file") });
-	if ((await details.getAttribute("open")) === null)
-		await details.locator("summary").click();
+ await openBackupRestorePanel(page);
+ await expect(page.locator('#restore-file')).toBeAttached();
 }
 
 async function downloadState(page: Page, zh: boolean, name: string) {
@@ -252,12 +251,14 @@ for (const { locale, width } of [
 		page.on("pageerror", (error) => errors.push(error.message));
 		async function openConnections() {
 			await page.goto("/assets/vault");
+			await prepareVaultWorkspace(page);
 			const unlock = page.locator("#password-vault-unlock-master");
 			await expect(unlock).toBeVisible();
 			await unlock.fill(visualMaster);
 			await page
 				.getByRole("button", { name: t("pwVaultUnlock"), exact: true })
 				.click();
+			await page.locator(".asset-category-scroll").getByRole("button", { name: zh ? "全部" : "All", exact: true }).click();
 			await expect(page.locator(".password-vault-entry")).toHaveCount(
 				records.length,
 			);

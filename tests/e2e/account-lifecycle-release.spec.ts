@@ -1,3 +1,4 @@
+import { prepareVaultWorkspace, revealPasswordEntries } from "./helpers/vault-access";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { expect, type Page, test } from "@playwright/test";
@@ -124,8 +125,9 @@ for (const locale of ["zh-CN", "en"] as const)
 				if (cold) await page.goto("/assets/vault");
 				else {
 					if (width < 768) await page.locator(".mobile-menu").click();
-					await page.locator('.sidebar .nav a[href="/assets/vault"]').click();
+					await page.locator('.sidebar .nav a[href="/accounts"]').click();
 				}
+				await prepareVaultWorkspace(page);
 				await expect(
 					page
 						.locator("#password-vault-unlock-master")
@@ -140,6 +142,7 @@ for (const locale of ["zh-CN", "en"] as const)
 						.click();
 				}
 				await expect(page.locator(".password-vault-toolbar")).toBeVisible();
+				await revealPasswordEntries(page);
 			}
 			async function importPasswords(count: number) {
 				const importer = await h.open();
@@ -375,6 +378,7 @@ for (const locale of ["zh-CN", "en"] as const)
 			}
 			try {
 				await page.goto("/assets/vault");
+				await prepareVaultWorkspace(page);
 				await h.createVault();
 				await importPasswords(4);
 				await linkAll();

@@ -1,3 +1,4 @@
+import { prepareVaultWorkspace, openVaultReferences } from "./helpers/vault-access";
 import { readFileSync } from "node:fs";
 import {
 	type Browser,
@@ -26,7 +27,8 @@ const copyFor = (zh: boolean) =>
 				save: "保存",
 				language: "语言",
 				languageValue: "zh-CN",
-				heroTitle: "密码库",
+				heroTitle: "账号",
+				referencesTitle: "外部密码库引用",
 				note: "下方保留外部密码库的引用与关联；实际密码请存入上方的加密密码库。",
 				linkEntry: "关联密码库条目",
 				entryName: "条目名称",
@@ -48,7 +50,8 @@ const copyFor = (zh: boolean) =>
 				save: "Save",
 				language: "Language",
 				languageValue: "en",
-				heroTitle: "Password vault",
+				heroTitle: "Accounts",
+				referencesTitle: "External vault references",
 				note: "Keep references and connections to external vaults below. Save passwords in the encrypted vault above.",
 				linkEntry: "Link vault entry",
 				entryName: "Entry name",
@@ -104,6 +107,8 @@ async function createAccount(page: Page, copy: Copy) {
 
 async function createVault(page: Page, copy: Copy, accountId: string) {
 	await page.goto("/assets/vault");
+	await prepareVaultWorkspace(page);
+	await openVaultReferences(page);
 	await page
 		.getByRole("main")
 		.getByRole("button", { name: copy.linkEntry, exact: true })
@@ -122,6 +127,7 @@ async function createVault(page: Page, copy: Copy, accountId: string) {
 	await dialog.getByRole("button", { name: copy.save, exact: true }).click();
 	await expect(dialog).toBeHidden();
 	await page.reload();
+	await openVaultReferences(page);
 	const row = page
 		.locator(".vault-reference-table tbody tr")
 		.filter({ hasText: vaultName });
@@ -142,9 +148,12 @@ async function assertVaultTable(
 	width?: number,
 ) {
 	await page.goto("/assets/vault");
-	const hero = page.locator(".vault-page .password-vault-header h1");
+	await prepareVaultWorkspace(page);
+	await openVaultReferences(page);
+	const hero = page.locator("main h1");
 	await expect(hero).toBeVisible();
 	await expect(hero).toHaveText(copy.heroTitle);
+	await expect(page.locator(".vault-references-header h2")).toHaveText(copy.referencesTitle);
 	const note = page.locator(".vault-privacy-note");
 	await expect(note).toBeVisible();
 	await expect(note).toHaveAttribute("role", "note");
@@ -362,6 +371,8 @@ async function restoreIntoCleanContext(
 	try {
 		await setLanguage(page, zh);
 		await page.goto("/assets/vault");
+		await prepareVaultWorkspace(page);
+	await openVaultReferences(page);
 		await expect(page.locator(".vault-reference-table tbody tr")).toHaveCount(
 			0,
 		);
@@ -382,6 +393,7 @@ async function restoreIntoCleanContext(
 
 		await assertVaultTable(page, copy, vaultHref, width);
 		await page.reload();
+	await openVaultReferences(page);
 		await assertVaultTable(page, copy, vaultHref, width);
 		const row = page
 			.locator(".vault-reference-table tbody tr")
@@ -461,6 +473,7 @@ for (const locale of ["zh-CN", "en-US"] as const) {
 				await expect(sourcePage).toHaveURL(new RegExp(`${account.href}$`));
 				await assertAccountDetails(sourcePage, copy, account.id, vault.href);
 				await sourcePage.goto("/assets/vault");
+				await prepareVaultWorkspace(sourcePage);
 				await expect(
 					sourcePage.evaluate(
 						() => document.documentElement.scrollWidth <= window.innerWidth + 1,

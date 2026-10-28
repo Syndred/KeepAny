@@ -1,3 +1,4 @@
+import { openVaultReferences } from "./helpers/vault-access";
 import { readFileSync } from "node:fs";
 import { expect, test, type Page } from "@playwright/test";
 import { strFromU8, unzipSync } from "fflate";
@@ -121,6 +122,7 @@ for (const variant of [{ locale: "zh-CN", width: 390 }, { locale: "en-US", width
 		try {
 			for (const kind of kinds) {
 				await page.goto(`/assets/${kind}`);
+				if (kind === "vault") await openVaultReferences(page);
 				await page.getByRole("button", { name: kind === "vault" ? variant.locale === "zh-CN" ? "关联密码库条目" : "Link vault entry" : copy.add, exact: true }).click();
 				const form = page.getByRole("dialog");
 				await form.getByLabel(kind === "vault" ? variant.locale === "zh-CN" ? "条目名称" : "Entry name" : copy.name, { exact: true }).fill(names[kind]);

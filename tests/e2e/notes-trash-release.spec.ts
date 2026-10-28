@@ -1,3 +1,5 @@
+import { openBackupRestorePanel } from "./helpers/backup-restore";
+import { prepareVaultWorkspace } from "./helpers/vault-access";
 import "fake-indexeddb/auto";
 import { mkdirSync, readFileSync } from "node:fs";
 import { createRequire } from "node:module";
@@ -193,11 +195,7 @@ for (const locale of ["zh-CN", "en"])
 			};
 			try {
 				await page.goto("/intake");
-				await page
-					.locator("details.intake-secondary")
-					.filter({ has: page.locator("#restore-file") })
-					.locator("summary")
-					.click();
+				await openBackupRestorePanel(page);
 				await page.locator("#backup-password").fill(backupPassword);
 				await page.locator("#restore-file").setInputFiles({
 					name: "synthetic-notes-trash.ka1",
@@ -399,6 +397,8 @@ for (const locale of ["zh-CN", "en"])
 					});
 
 				await page.goto("/assets/vault");
+
+				await prepareVaultWorkspace(page);
 				await page.locator("#password-vault-unlock-master").fill(visualMaster);
 				await page
 					.getByRole("button", {
@@ -481,6 +481,7 @@ for (const locale of ["zh-CN", "en"])
 						.history.length,
 				).toBeGreaterThan(0);
 				await page.reload();
+				await prepareVaultWorkspace(page);
 				await page.locator("#password-vault-unlock-master").fill(visualMaster);
 				await page
 					.getByRole("button", {

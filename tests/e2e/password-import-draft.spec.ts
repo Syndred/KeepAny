@@ -1,3 +1,4 @@
+import { openVaultAccess } from "./helpers/vault-access";
 import { expect, type Locator, test } from "@playwright/test";
 import {
 	inspectVisualKdbx,
@@ -83,6 +84,7 @@ for (const locale of ["zh-CN", "en"] as const) {
 
 				// A fresh page runs the new application initialization and requires vault unlock.
 				await h.page.reload();
+				await openVaultAccess(h.page);
 				await h.page
 					.locator("#password-vault-unlock-master")
 					.fill(visualMaster);
@@ -134,6 +136,7 @@ for (const locale of ["zh-CN", "en"] as const) {
 				await h.page
 					.getByRole("button", { name: h.t("pwVaultLock"), exact: true })
 					.click();
+				await openVaultAccess(h.page);
 				await h.page
 					.locator("#password-vault-unlock-master")
 					.fill(visualMaster);
@@ -181,6 +184,7 @@ for (const locale of ["zh-CN", "en"] as const) {
 				await exported.saveAs(path);
 				expect(await inspectVisualKdbx(path)).toHaveLength(0);
 				await h.page.reload();
+				await openVaultAccess(h.page);
 				await h.page
 					.locator("#password-vault-unlock-master")
 					.fill(visualMaster);
@@ -309,6 +313,7 @@ test("completing import and closing immediately clears the persisted draft", asy
 		expect(entries).toHaveLength(1);
 		expect(entries[0].draft.username).toBe("complete@example.test");
 		await h.page.reload();
+		await openVaultAccess(h.page);
 		await h.page.locator("#password-vault-unlock-master").fill(visualMaster);
 		await h.page
 			.getByRole("button", { name: h.t("pwVaultUnlock"), exact: true })

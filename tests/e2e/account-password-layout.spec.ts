@@ -77,6 +77,9 @@ for (const language of ["zh-CN", "en"] as const) for (const width of [1920, 1280
 			const notes = await entry.locator(".password-vault-notes-row").evaluate((node) => ({ rowWidth: node.getBoundingClientRect().width, valueWidth: node.querySelector(".password-vault-value")?.getBoundingClientRect().width ?? 0 }));
 			writeFileSync(join(evidence, `expanded-${language}-${width}.json`), JSON.stringify({ collapsed, geometry, maskLines, usernameLines, notes }, null, 2));
 			await page.screenshot({ path: join(evidence, `expanded-${language}-${width}.png`), fullPage: true });
+			// Retain the immediate success frame, then record unobstructed default layout.
+			await expect(page.locator(".toast")).toHaveCount(0);
+			await page.screenshot({ path: join(evidence, `expanded-stable-${language}-${width}.png`), fullPage: true });
 			expect.soft(maskLines, "A concealed password stays on one readable line").toBe(1);
 			expect.soft(usernameLines, "A short phone identifier stays on one line").toBe(1);
 			expect.soft(notes.valueWidth, "Notes use most of the available row rather than a narrow center column").toBeGreaterThanOrEqual(notes.rowWidth * 0.6);
@@ -114,6 +117,8 @@ for (const language of ["zh-CN", "en"] as const) for (const width of [1920, 1280
 			await empty.screenshot({ path: join(evidence, `empty-${language}-${width}.png`) });
 			await empty.locator("summary").click();
 			await page.screenshot({ path: join(evidence, `multiple-${language}-${width}.png`), fullPage: true });
+			await expect(page.locator(".toast")).toHaveCount(0);
+			await page.screenshot({ path: join(evidence, `multiple-stable-${language}-${width}.png`), fullPage: true });
 			expect(await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth)).toBe(false);
 			if (process.env.KEEPANY_LAYOUT_FIXTURE && language === "zh-CN" && width === 1920) {
 				await page.goto("/intake");

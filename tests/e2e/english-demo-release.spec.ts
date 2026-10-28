@@ -31,6 +31,13 @@ async function englishOnly(page: Page) {
 	expect(text).not.toMatch(/\p{Script=Han}/u);
 }
 
+async function openReferences(page: Page) {
+ const section = page.locator('.unified-vault-references');
+ await expect(section).toBeVisible();
+ if (!await section.evaluate(node => (node as HTMLDetailsElement).open)) await section.locator(':scope > summary').click();
+ await expect(section).toHaveJSProperty('open',true);
+}
+
 for (const width of [390, 1280]) {
 	test(`English sample records stay English across pages, details, menus and refresh at ${width}`, async ({ browser }) => {
 		const context = await browser.newContext({ locale: "zh-CN", viewport: { width, height: 844 } });
@@ -47,19 +54,19 @@ for (const width of [390, 1280]) {
 			await page.keyboard.press("Escape");
 			await page.locator("#advanced-settings > summary").click();
 			await page.getByRole("button", { name: "Add sample records", exact: true }).click();
-			await expect(page.getByText("Saved", { exact: true })).toBeVisible();
-			await expect(page.getByRole("button", { name: "Add sample records", exact: true })).toBeDisabled();
+			await expect(page.getByRole("button", { name: "Full sample records already added", exact: true })).toBeDisabled();
 			await page.goto("/");
-			await expect(page.getByText("Mori Notes", { exact: true }).first()).toBeVisible();
+			await expect(page.getByText("Sample | Mori Notes", { exact: true }).first()).toBeVisible();
 
 			for (const [route, expected] of [
-				["/", "Mori Notes"], ["/tasks", "Back up the work laptop"],
-				["/assets/project", "Mori Notes"], ["/assets/account", "Studio Mail"],
-				["/assets/item", "Work laptop"], ["/finance", "Cloud hosting"],
-				["/assets/vault", "Studio Mail login"], ["/collections", "Studio essentials"],
+				["/", "Sample | Mori Notes"], ["/tasks", "Review project contact details"],
+				["/assets/project", "Sample | Mori Notes"], ["/assets/account", "Sample | Studio Mail"],
+				["/assets/item", "Sample | Work laptop"], ["/finance", "Sample | Cloud hosting"],
+				["/assets/vault", "Sample | Studio Mail login"], ["/collections", "Studio essentials"],
 				["/intake", "Import & backup"], ["/trash", "Trash"], ["/settings", "Settings"],
 			] as const) {
 				await page.goto(route);
+				if (route === "/assets/vault") await openReferences(page);
 				await expect(page.getByText(expected, { exact: true }).first()).toBeVisible();
 				await englishOnly(page);
 				if (route === "/intake") {
@@ -73,23 +80,25 @@ for (const width of [390, 1280]) {
 					await page.screenshot({ path: join(evidence, `en-${width}-file-focus.png`) });
 				}
 				await page.reload();
+				if (route === "/assets/vault") await openReferences(page);
 				await expect(page.getByText(expected, { exact: true }).first()).toBeVisible();
 				await englishOnly(page);
 				if (route === "/" || route === "/assets/vault" || route === "/finance")
 					await page.screenshot({ path: join(evidence, `en-${width}-${route === "/" ? "overview" : route.split("/").at(-1)}.png`), fullPage: true });
 			}
-			for (const [kind, name] of [["project", "Mori Notes"], ["account", "Studio Mail"], ["item", "Work laptop"], ["vault", "Studio Mail login"]] as const) {
+			for (const [kind, name] of [["project", "Sample | Mori Notes"], ["account", "Sample | Studio Mail"], ["item", "Sample | Work laptop"], ["vault", "Sample | Studio Mail login"]] as const) {
 				await page.goto(`/assets/${kind}`);
+				if (kind === "vault") await openReferences(page);
 				await page.locator(`main a[href^="/assets/${kind}/"]`).filter({ hasText: name }).first().click();
 				await expect(page.getByRole("heading", { name, exact: true })).toBeVisible();
 				await englishOnly(page);
-				await page.getByRole("button", { name: "Edit", exact: true }).click();
+				await page.locator(kind === "project" ? ".asset-project-action-bar" : ".page-header > .actions").getByRole("button", { name: "Edit", exact: true }).click();
 				await expect(page.getByRole("dialog")).toBeVisible();
 				await englishOnly(page);
 				await page.getByRole("dialog").getByRole("button", { name: "Cancel", exact: true }).click();
 			}
 			await page.goto("/finance");
-			await expect(page.locator("main")).toContainText("$12.00");
+			await expect(page.locator("main")).toContainText("$88.00");
 			await expect(page.locator("main")).toContainText("Monthly hosting bill");
 			expect(errors).toEqual([]);
 		} finally { await context.close(); }
@@ -105,13 +114,13 @@ test("Chinese sample records use Chinese copy and switching language preserves s
 		await page.getByRole("button", { name: "加入示例资料", exact: true }).click();
 		await expect(page.getByText("工作室资料", { exact: true }).first()).toBeVisible();
 		await page.goto("/");
-		await expect(page.getByText("林间笔记", { exact: true }).first()).toBeVisible();
+		await expect(page.getByText("示例 | 林间笔记", { exact: true }).first()).toBeVisible();
 		await page.screenshot({ path: join(evidence, "zh-1280-overview.png"), fullPage: true });
 		await page.goto("/settings");
 		await selectChoice(page.getByRole("combobox", { name: "语言", exact: true }), { value: "en" });
 		await page.goto("/assets/project");
-		await expect(page.getByText("林间笔记", { exact: true }).first()).toBeVisible();
+		await expect(page.getByText("示例 | 林间笔记", { exact: true }).first()).toBeVisible();
 		await page.reload();
-		await expect(page.getByText("林间笔记", { exact: true }).first()).toBeVisible();
+		await expect(page.getByText("示例 | 林间笔记", { exact: true }).first()).toBeVisible();
 	} finally { await context.close(); }
 });

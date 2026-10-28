@@ -1,3 +1,4 @@
+import { openBackupRestorePanel } from "./helpers/backup-restore";
 import { readFileSync } from "node:fs";
 import { expect, type BrowserContext, type Page, test } from "@playwright/test";
 import { strFromU8, unzipSync } from "fflate";
@@ -153,13 +154,9 @@ async function downloadAndInspect(
 }
 
 async function openRestoreSection(page: Page) {
-	const section = page
-		.locator("details.intake-secondary")
-		.filter({ has: page.locator("#restore-file") });
-	await expect(section).toHaveCount(1);
-	if ((await section.getAttribute("open")) === null)
-		await section.locator("summary").click();
-	return section;
+ const section = await openBackupRestorePanel(page);
+ await expect(section.locator('#restore-file')).toBeAttached();
+ return section;
 }
 
 async function prepareRestore(

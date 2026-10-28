@@ -7,6 +7,7 @@ import {
 	visualMaster,
 } from "./fixtures/password-smart-import-visual";
 import { selectChoice } from "./helpers/select-choice";
+import { openVaultAccess, prepareVaultWorkspace, revealPasswordEntries } from "./helpers/vault-access";
 import {
 	activeAccountGraph,
 	expectAccountGraphGeometry,
@@ -41,6 +42,8 @@ for (const locale of ["zh-CN", "en"] as const)
 			};
 			async function vault() {
 				await page.goto("/assets/vault");
+				await prepareVaultWorkspace(page);
+				await openVaultAccess(page);
 				await expect(
 					page
 						.locator("#password-vault-unlock-master")
@@ -55,6 +58,8 @@ for (const locale of ["zh-CN", "en"] as const)
 						.click();
 				}
 				await expect(page.locator(".password-vault-toolbar")).toBeVisible();
+				await revealPasswordEntries(page);
+				await revealPasswordEntries(page);
 			}
 			async function connections() {
 				await page
@@ -82,6 +87,8 @@ for (const locale of ["zh-CN", "en"] as const)
 				return { dialog, suggestions };
 			}
 			async function graph() {
+				await expect(page.locator(".password-vault-linked-asset")).toBeAttached();
+				await revealPasswordEntries(page);
 				await page.locator(".password-vault-linked-asset").click();
 				await waitForAccountGraphLayout(page, { nodes: 3, edges: 2 });
 				await expectAccountGraphGeometry(page);
@@ -109,6 +116,7 @@ for (const locale of ["zh-CN", "en"] as const)
 					.click();
 				await expect(page.getByRole("dialog")).toBeHidden();
 				await page.goto("/assets/vault");
+				await prepareVaultWorkspace(page);
 				await h.createVault();
 				await page
 					.getByRole("button", { name: t("pwVaultNewEntry"), exact: true })

@@ -220,11 +220,10 @@ for (const language of ["en", "zh-CN"] as const) {
 				await dialog.getByRole("button", { name: copy.send }).focus();
 				for (let i = 0; i < 7; i += 1) {
 					await page.keyboard.press("Tab");
-					expect(
-						await dialog.evaluate((element) =>
+					// Base UI's focus guard returns focus in its queued focus task.
+					await expect.poll(() => dialog.evaluate((element) =>
 							element.contains(document.activeElement),
-						),
-					).toBe(true);
+						)).toBe(true);
 				}
 				mock.plans.push({ status: 200, answer });
 				await dialog.getByRole("button", { name: copy.send }).click();

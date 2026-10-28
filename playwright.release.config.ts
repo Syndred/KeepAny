@@ -40,6 +40,7 @@ export default defineConfig({
 		"account-detail-dedupe.spec.ts",
 		"account-list-search.spec.ts",
 		"account-link-recovery.spec.ts",
+		"account-unlink-focus.spec.ts",
 		"notes-trash-release.spec.ts",
 		"account-lifecycle-release.spec.ts",
 		"vault-dual-login.spec.ts",
