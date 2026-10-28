@@ -54,6 +54,8 @@ jobs:
       - name: Fetch previous fixed package for encrypted draft recovery
         run: git fetch --no-tags --depth=1 origin a7be6146bd34f24bdf495c3827bda69f7bd27a7d
       - name: Verify delivered files and offline backup flow
+        env:
+          KEEPANY_GRAPH_BOOT_DIAGNOSTICS: '1'
         run: pnpm exec playwright test --config playwright.release.config.ts --reporter=line --trace=retain-on-failure
       - name: Verify delivered sync files with isolated PostgreSQL and local HTTP
         run: pnpm exec playwright test --config playwright.sync-release.config.ts --reporter=dot
@@ -63,6 +65,16 @@ jobs:
         with:
           name: failed-browser-${{ github.run_id }}-${{ github.run_attempt }}-${{ github.job }}
           path: test-results/
+          retention-days: 7
+          if-no-files-found: ignore
+      - name: Preserve bounded graph boot comparison
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: graph-boot-${{ github.run_id }}-${{ github.run_attempt }}-${{ github.job }}
+          path: |
+            test-results/local-release/**/account-graph-boot-diagnostics.json
+            test-results/local-release/**/account-graph-boot-failed.png
           retention-days: 7
           if-no-files-found: ignore
 
@@ -84,6 +96,8 @@ jobs:
       - name: Fetch previous fixed package for encrypted draft recovery
         run: git fetch --no-tags --depth=1 origin a7be6146bd34f24bdf495c3827bda69f7bd27a7d
       - name: Exercise local workflows on the extracted portable server
+        env:
+          KEEPANY_GRAPH_BOOT_DIAGNOSTICS: '1'
         shell: bash
         run: |
           archive="$(node --input-type=module -e 'import fs from "node:fs"; const files=fs.readdirSync("dist/preview").filter(name=>name.endsWith(".zip")); if(files.length!==1)throw Error("Expected one fresh preview"); process.stdout.write(`dist/preview/${files[0]}`);')"
@@ -111,3 +125,57 @@ jobs:
           path: test-results/
           retention-days: 7
           if-no-files-found: ignore
+      - name: Preserve bounded graph boot comparison
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: graph-boot-${{ github.run_id }}-${{ github.run_attempt }}-${{ github.job }}
+          path: |
+            test-results/portable-release/**/account-graph-boot-diagnostics.json
+            test-results/portable-release/**/account-graph-boot-failed.png
+          retention-days: 7
+          if-no-files-found: ignore
+
+  portable-graph-boot-diagnostics:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.10.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium
+      - name: Build and verify the actual portable preview
+        run: pnpm build:preview && pnpm verify:preview
+      - name: Diagnose the original two large graph cases
+        env:
+          KEEPANY_GRAPH_BOOT_DIAGNOSTICS: '1'
+          KEEPANY_EVIDENCE_DIR: test-results/graph-boot-narrow-evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          archive="$(node --input-type=module -e 'import fs from "node:fs"; const files=fs.readdirSync("dist/preview").filter(name=>name.endsWith(".zip")); if(files.length!==1)throw Error("Expected one fresh preview"); process.stdout.write(`dist/preview/${files[0]}`);')"
+          KEEPANY_PREVIEW_ARCHIVE="$archive" KEEPANY_RELEASE_TEST_PORT=4391 node node_modules/@playwright/test/cli.js test \
+            --config playwright.portable-release.config.ts tests/e2e/account-graph-readability.spec.ts \
+            --grep '1536px multi-source identities preserve connection purposes across reload and edits' \
+            --workers=1 --retries=0 --output test-results/graph-boot-narrow --reporter=line
+      - name: Require both bounded diagnostic witnesses
+        if: always()
+        shell: bash
+        run: |
+          node --input-type=module -e 'import fs from "node:fs";import path from "node:path";const root="test-results/graph-boot-narrow";const files=fs.existsSync(root)?fs.readdirSync(root,{recursive:true}).filter(name=>path.basename(name)==="account-graph-boot-diagnostics.json"):[];if(files.length!==2)throw Error("graph-boot-diagnostic-witness-missing");for(const file of files){const proof=JSON.parse(fs.readFileSync(path.join(root,file),"utf8"));if(proof.schema!=="keepany-graph-boot-diagnostics-v1"||proof.passiveMetadataOnly!==true||proof.networkOrCacheInterventions!==false||proof.events.length>512)throw Error("graph-boot-diagnostic-witness-invalid");}console.log(JSON.stringify({boundedGraphWitnesses:files.length}));'
+      - name: Preserve only bounded graph diagnostics and failure screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: graph-boot-${{ github.run_id }}-${{ github.run_attempt }}-${{ github.job }}
+          path: |
+            test-results/graph-boot-narrow/**/account-graph-boot-diagnostics.json
+            test-results/graph-boot-narrow/**/account-graph-boot-failed.png
+          retention-days: 7
+          if-no-files-found: warn

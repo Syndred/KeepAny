@@ -15,6 +15,7 @@ import {
 import { strFromU8, unzipSync } from "fflate";
 import type { Relation } from "../../packages/domain/src";
 import { decryptBackup } from "../../packages/local-db/src/backup-crypto";
+import { observeGraphBoot } from "../support/account-graph-boot-diagnostics";
 import {
 	activeAccountGraph,
 	accountGraphCanvas,
@@ -1304,7 +1305,7 @@ for (const locale of ["zh-CN", "en-US"] as const) {
 	for (const width of [390, 1280, 1536] as const) {
 		test(`${locale} ${width}px multi-source identities preserve connection purposes across reload and edits`, async ({
 			browser,
-		}) => {
+		}, testInfo) => {
 			test.setTimeout(width === 1536 ? 480_000 : 240_000);
 			const text = copy(locale);
 			const context = await browser.newContext({
@@ -1319,6 +1320,10 @@ for (const locale of ["zh-CN", "en-US"] as const) {
 			const page = await context.newPage();
 			const errors: string[] = [];
 			page.on("pageerror", (error) => errors.push(error.message));
+			const bootDiagnostic = width === 1536 && process.env.KEEPANY_GRAPH_BOOT_DIAGNOSTICS === "1"
+				? await observeGraphBoot(context, page, testInfo).catch(() => null)
+				: null;
+			let bootDiagnosticFailed = false;
 			const hrefs = new Map<AccountKey, string>();
 			try {
 				const baseline = [...initialConnections];
@@ -1445,7 +1450,11 @@ for (const locale of ["zh-CN", "en-US"] as const) {
 				if (width === 1536)
 					await largeFamilyCheckpoints(page, hrefs, afterDelete, text, locale);
 				expect(errors).toEqual([]);
+			} catch (error) {
+				bootDiagnosticFailed = true;
+				throw error;
 			} finally {
+				await bootDiagnostic?.finish(bootDiagnosticFailed).catch(() => undefined);
 				await context.close();
 			}
 		});
