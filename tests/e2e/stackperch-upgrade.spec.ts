@@ -12,6 +12,8 @@ import { decryptBackup } from '../../packages/local-db/src/backup-crypto';
 import type * as VaultEngine from '../../packages/password-vault/src/engine';
 import { activeWorkerSource, originalImage, startPackage, stopPackage, unusedPort } from './helpers/portable-upgrade';
 import { selectChoice } from './helpers/select-choice';
+import { openVaultAccess, revealPasswordEntries } from './helpers/vault-access';
+import { openBackupRestorePanel } from './helpers/backup-restore';
 
 // Published baselines must include aliases, asset links and encrypted import drafts.
 // The older 8f9a1b5 fixture cannot establish password-vault compatibility.
@@ -122,9 +124,11 @@ async function downloadVault(page: Page, path: string) {
 }
 
 async function unlock(page: Page) {
+  await openVaultAccess(page);
   await page.locator('#password-vault-unlock-master').fill(master);
   await page.getByRole('button', { name: t('pwVaultUnlock'), exact: true }).click();
   await expect(page.locator('.password-vault-toolbar')).toBeVisible();
+  await revealPasswordEntries(page);
 }
 
 async function checkDraft(page: Page) {
@@ -318,6 +322,7 @@ test('published assets, vault fields, import draft and backup survive the curren
     await restored.goto(`${origin}/assets/vault`);
     await expect(restored.locator('#password-vault-master')).toBeVisible();
     await restored.goto(`${origin}/intake`);
+    await openBackupRestorePanel(restored);
     await restored.locator('#backup-password').fill(backupPassword);
     await restored.locator('#restore-file').setInputFiles(oldBackup);
     await restored.getByRole('button', { name: 'Preview', exact: true }).first().click();
