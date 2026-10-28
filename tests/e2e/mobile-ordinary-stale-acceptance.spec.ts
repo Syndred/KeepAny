@@ -95,8 +95,8 @@ async function openEditor(page: Page, zh: boolean) {
   return dialog;
 }
 async function formValues(dialog: Locator) {
-  return dialog.locator('input:not([type=file]):not([type=hidden]), textarea, [role=combobox]').evaluateAll(elements => Object.fromEntries(elements
-    .map(element => [element.id, element.getAttribute('role') === 'combobox' ? element.getAttribute('data-value') : (element as HTMLInputElement).value])
+  return dialog.locator('input:not([type=file]):not([type=hidden]):not([aria-hidden=true]), textarea, button[role=combobox]').evaluateAll(elements => Object.fromEntries(elements
+    .map(element => [element.id, element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement ? element.value : element.getAttribute('data-value')])
     .sort(([a], [b]) => String(a).localeCompare(String(b)))));
 }
 
