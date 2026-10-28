@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "./components/ui/button";
+import "./route-load-error.css";
 
 export function routeErrorKind(error: unknown): "module-load" | "unexpected" {
 	if (
@@ -22,7 +23,7 @@ export function RouteLoadError({ error }: { error: unknown }) {
 			heading.current?.focus();
 	}, []);
 	return (
-		<main className="page">
+		<main className="page route-load-error">
 			<section
 				className="card"
 				role="alert"
