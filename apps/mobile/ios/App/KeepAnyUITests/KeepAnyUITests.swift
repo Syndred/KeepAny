@@ -62,41 +62,150 @@ final class KeepAnyUITests: XCTestCase {
         let tasksLink = app.links[tasks].firstMatch
         XCTAssertTrue(tasksLink.waitForExistence(timeout: 30))
         tasksLink.tap()
-        // The actual WKWebView AX tree exposes these HTML date inputs as
-        // labelled Other elements (179x44), separate from their StaticText labels.
-        let kinds: [XCUIElement.ElementType] = [.popUpButton, .datePicker, .textField, .button, .other]
-        var control: XCUIElement?
-        let reachable = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in
-            control = kinds.lazy.flatMap { kind in
-                app.webViews.descendants(matching: kind)
-                    .matching(NSPredicate(format: "label BEGINSWITH %@", startDate))
-                    .allElementsBoundByIndex
-            }.first { $0.isHittable }
-            return control != nil
-        }, object: nil)
-        let result = XCTWaiter.wait(for: [reachable], timeout: 10)
-        captureHierarchy(app, "date-control-before-\(language)")
-        XCTAssertEqual(result, .completed)
-        guard let control else {
-            XCTFail("No accessible, reachable native date control for \(startDate)")
-            return
+        let chinese = language == "zh-Hans"
+        let calendarTitle = chinese ? "选择日期" : "Choose date"
+        func recordStage(_ stage: String, control: XCUIElement? = nil) {
+            let available = control?.exists == true
+            let type = available ? control!.elementType.rawValue : 0
+            let valuePresent = available && (control?.value is String)
+            let metadata = "stage=\(stage); exists=\(available); type=\(type); valuePresent=\(valuePresent)"
+            let attachment = XCTAttachment(string: metadata)
+            attachment.name = "shared-calendar-\(language)-\(stage)"
+            attachment.lifetime = .keepAlways
+            add(attachment)
+            captureHierarchy(app, "shared-calendar-\(language)-\(stage)-AX")
         }
-        let bounds = app.webViews.firstMatch.frame
-        XCTAssertGreaterThanOrEqual(control.frame.minX, bounds.minX - 1)
-        XCTAssertLessThanOrEqual(control.frame.maxX, bounds.maxX + 1)
-        control.tap()
-        let picker = app.datePickers.firstMatch
-        let presented = picker.waitForExistence(timeout: 10)
-        capture(app, "native-date-picker-\(language)")
-        captureHierarchy(app, "date-control-presented-\(language)")
-        XCTAssertTrue(presented, "Tapping the actual date input must present a native date picker")
+        func dateControl() -> XCUIElement? {
+            // Prefer the real combobox. Other is a bounded WKWebView fallback,
+            // requiring a unique labelled value-bearing control, never StaticText.
+            for kind in [XCUIElement.ElementType.comboBox, .textField, .popUpButton, .other] {
+                let candidates = app.webViews.descendants(matching: kind)
+                    .matching(NSPredicate(format: "label == %@ OR label BEGINSWITH %@", startDate, startDate + ","))
+                    .allElementsBoundByIndex.filter { $0.isHittable && $0.value is String && $0.frame.width > 0 && $0.frame.height > 0 }
+                if candidates.count == 1 { return candidates[0] }
+                if candidates.count > 1 { return nil }
+            }
+            return nil
+        }
+        func calendarDialog() -> XCUIElement? {
+            let candidates = app.webViews.descendants(matching: .any)
+                .matching(NSPredicate(format: "label == %@ OR label == %@", calendarTitle, calendarTitle + ", web dialog"))
+                .allElementsBoundByIndex.filter { $0.frame.width > 0 && $0.frame.height > 0 }
+            return candidates.count == 1 ? candidates[0] : nil
+        }
+        func requireControl(_ stage: String) -> XCUIElement? {
+            var found: XCUIElement?
+            let ready = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in found = dateControl(); return found != nil }, object: nil)
+            let result = XCTWaiter.wait(for: [ready], timeout: 10)
+            recordStage(stage, control: found)
+            guard result == .completed, let found else { XCTFail("A unique reachable Start date combobox is required"); return nil }
+            return found
+        }
+        func requireCalendar(_ stage: String) -> XCUIElement? {
+            var found: XCUIElement?
+            let ready = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in found = calendarDialog(); return found != nil }, object: nil)
+            let result = XCTWaiter.wait(for: [ready], timeout: 10)
+            recordStage(stage, control: found)
+            guard result == .completed, let found else { XCTFail("The unique shared calendar web dialog must open"); return nil }
+            let bounds = app.webViews.firstMatch.frame
+            XCTAssertGreaterThanOrEqual(found.frame.minX, bounds.minX - 1)
+            XCTAssertLessThanOrEqual(found.frame.maxX, bounds.maxX + 1)
+            for target in found.buttons.allElementsBoundByIndex where target.isHittable {
+                XCTAssertGreaterThanOrEqual(target.frame.width, 44, "Reachable calendar buttons require 44pt width")
+                XCTAssertGreaterThanOrEqual(target.frame.height, 44, "Reachable calendar buttons require 44pt height")
+                XCTAssertGreaterThanOrEqual(target.frame.minX, bounds.minX - 1)
+                XCTAssertLessThanOrEqual(target.frame.maxX, bounds.maxX + 1)
+            }
+            return found
+        }
+        func tapCalendarTarget(_ target: XCUIElement, stage: String) -> Bool {
+            recordStage(stage, control: target)
+            guard target.waitForExistence(timeout: 10), target.isHittable else { XCTFail("The calendar target must be genuinely hittable"); return false }
+            let bounds = app.webViews.firstMatch.frame
+            XCTAssertGreaterThanOrEqual(target.frame.width, 44)
+            XCTAssertGreaterThanOrEqual(target.frame.height, 44)
+            XCTAssertGreaterThanOrEqual(target.frame.minX, bounds.minX - 1)
+            XCTAssertLessThanOrEqual(target.frame.maxX, bounds.maxX + 1)
+            target.tap()
+            return true
+        }
+        func requireClosedAndValue(_ expected: String, stage: String) -> Bool {
+            let settled = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in
+                calendarDialog() == nil && (dateControl()?.value as? String) == expected
+            }, object: nil)
+            let result = XCTWaiter.wait(for: [settled], timeout: 10)
+            recordStage(stage, control: dateControl())
+            XCTAssertEqual(result, .completed, "Calendar selection must close and retain its exact ISO value")
+            return result == .completed
+        }
+        guard let control = requireControl("start-control") else { return }
+        XCTAssertGreaterThanOrEqual(control.frame.height, 44)
+        XCTAssertGreaterThanOrEqual(control.frame.width, 44)
+        guard tapCalendarTarget(control, stage: "open-current-month") else { return }
+        dismissInputToolbar(app)
+        guard let firstCalendar = requireCalendar("opened") else { return }
+        // Today is only a public navigation step to the device's current month;
+        // the actual assertion below selects its fixed 15th day, not Today alone.
+        var gregorian = Calendar(identifier: .gregorian)
+        gregorian.timeZone = .current
+        let now = Date()
+        var components = gregorian.dateComponents([.year, .month], from: now)
+        components.day = 15
+        components.hour = 12
+        guard let targetDate = gregorian.date(from: components), let year = components.year, let month = components.month else {
+            XCTFail("The device-local Gregorian month must be available"); return
+        }
+        let iso = DateFormatter()
+        iso.calendar = gregorian; iso.locale = Locale(identifier: "en_US_POSIX"); iso.timeZone = .current; iso.dateFormat = "yyyy-MM-dd"
+        let expectedISO = iso.string(from: targetDate)
+        let dateIdentity = XCTAttachment(string: "language=\(language); expectedISO=\(expectedISO); todayISO=\(iso.string(from: now)); timezone=\(TimeZone.current.identifier)")
+        dateIdentity.name = "shared-calendar-\(language)-expected-identity"
+        dateIdentity.lifetime = .keepAlways
+        add(dateIdentity)
+        guard tapCalendarTarget(firstCalendar.buttons[chinese ? "今天" : "Today"].firstMatch, stage: "today-navigation") else { return }
+        guard requireClosedAndValue(iso.string(from: now), stage: "today-iso") else { return }
+        guard let current = requireControl("reopen-current-month"), tapCalendarTarget(current, stage: "open-fixed-day") else { return }
+        dismissInputToolbar(app)
+        guard let calendar = requireCalendar("fixed-day-opened") else { return }
+        // Exact labels follow installed react-day-picker 10.0.2 labelDayButton:
+        // en-US PPPP has an ordinal; zh-CN uses its explicit Today/selected labels.
+        let weekday = gregorian.component(.weekday, from: targetDate)
+        let baseLabel: String
+        if chinese {
+            let names = ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"]
+            baseLabel = "\(year)年\(month)月15日 \(names[weekday - 1])"
+        } else {
+            let words = DateFormatter()
+            words.calendar = gregorian; words.locale = Locale(identifier: "en_US"); words.timeZone = .current
+            words.dateFormat = "EEEE, MMMM"
+            baseLabel = "\(words.string(from: targetDate)) 15th, \(year)"
+        }
+        let todayPrefix = gregorian.isDate(targetDate, inSameDayAs: now) ? (chinese ? "今天，" : "Today, ") : ""
+        let selectedSuffix = chinese ? "，已选择" : ", selected"
+        let unselectedLabel = todayPrefix + baseLabel + (todayPrefix.isEmpty ? "" : selectedSuffix)
+        guard tapCalendarTarget(calendar.buttons[unselectedLabel].firstMatch, stage: "select-fixed-15") else { return }
+        guard requireClosedAndValue(expectedISO, stage: "fixed-day-iso") else { return }
+        guard let selectedControl = requireControl("reopen-selected"), tapCalendarTarget(selectedControl, stage: "open-selected") else { return }
+        dismissInputToolbar(app)
+        guard let selectedCalendar = requireCalendar("selected-opened") else { return }
+        let selectedDay = selectedCalendar.buttons[todayPrefix + baseLabel + selectedSuffix].firstMatch
+        XCTAssertTrue(selectedDay.waitForExistence(timeout: 10), "Reopening must expose the same precisely selected day")
+        XCTAssertTrue(selectedDay.isHittable)
+        capture(app, "shared-calendar-selected-\(language)")
+        recordStage("selected-verified", control: selectedDay)
+        guard tapCalendarTarget(selectedCalendar.buttons[chinese ? "清除日期" : "Clear dates"].firstMatch, stage: "clear-own-filter") else { return }
+        let cleared = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in
+            guard calendarDialog() == nil, let value = dateControl()?.value as? String else { return false }
+            return value == "" || value == (chinese ? "年-月-日" : "YYYY-MM-DD")
+        }, object: nil)
+        XCTAssertEqual(XCTWaiter.wait(for: [cleared], timeout: 10), .completed, "The test must clear only its own date filter")
     }
 
-    func testEnglishDateInputPresentsNativePicker() {
+    func testEnglishDateInputSelectsSharedCalendarDate() {
         verifyDatePicker("en", tasks: "Tasks", startDate: "Start date")
     }
 
-    func testChineseDateInputPresentsNativePicker() {
+    func testChineseDateInputSelectsSharedCalendarDate() {
         verifyDatePicker("zh-Hans", tasks: "待办", startDate: "开始日期")
     }
 
@@ -385,9 +494,9 @@ final class KeepAnyUITests: XCTestCase {
             }
             XCTAssertEqual(control.value as? String ?? "", "", "Replacement must clear the complete original value")
         }
-        if value.contains("\n") {
-            // Keep the same native focus and settle each prefix before sending
-            // a newline. All segments share one monotonic 20-second budget.
+        if value.contains(" ") || value.contains("\n") {
+            // Preserve every original ASCII space/LF as its own native input.
+            // All exact prefix barriers share one monotonic 20-second budget.
             let deadline = ProcessInfo.processInfo.systemUptime + 20
             func awaitPrefix(_ expected: String, phase: String) -> Bool {
                 let remaining = max(0, deadline - ProcessInfo.processInfo.systemUptime)
@@ -397,25 +506,36 @@ final class KeepAnyUITests: XCTestCase {
                     captureHierarchy(app, "project-text-input-incomplete-AX")
                     let observed = control.value as? String ?? ""
                     let detail = XCTAttachment(string: "phase=\(phase); expectedUTF16=\(expected.utf16.count); observedUTF16=\(observed.utf16.count); remaining=\(remaining)")
-                    detail.name = "project-multiline-prefix-incomplete"
+                    detail.name = "project-separated-prefix-incomplete"
                     detail.lifetime = .keepAlways
                     add(detail)
                     XCTAssertEqual(control.value as? String, value)
-                    XCTFail("Native multiline input must reach each exact prefix within its shared 20-second budget")
+                    XCTFail("Native separated input must reach each exact prefix within its shared 20-second budget")
                     return false
                 }
                 return true
             }
-            var prefix = ""
-            for (index, line) in value.components(separatedBy: "\n").enumerated() {
-                if index > 0 {
-                    control.typeText("\n")
-                    prefix += "\n"
-                    guard awaitPrefix(prefix, phase: "line-break-\(index)") else { return }
+            var segments: [String] = []
+            var text = ""
+            for scalar in value.unicodeScalars {
+                if scalar.value == 0x20 || scalar.value == 0x0A {
+                    if !text.isEmpty { segments.append(text); text = "" }
+                    segments.append(String(scalar))
+                } else {
+                    text.append(String(scalar))
                 }
-                if !line.isEmpty { control.typeText(line) }
-                prefix += line
-                guard awaitPrefix(prefix, phase: "line-\(index)") else { return }
+            }
+            if !text.isEmpty { segments.append(text) }
+            var prefix = ""
+            for (index, segment) in segments.enumerated() {
+                guard ProcessInfo.processInfo.systemUptime < deadline else {
+                    _ = awaitPrefix(prefix, phase: "before-segment-\(index)")
+                    return
+                }
+                control.typeText(segment)
+                prefix += segment
+                let kind = segment == " " ? "space" : segment == "\n" ? "line-break" : "text"
+                guard awaitPrefix(prefix, phase: "\(kind)-\(index)") else { return }
             }
         } else {
             control.typeText(value)
@@ -462,6 +582,22 @@ final class KeepAnyUITests: XCTestCase {
         if XCTWaiter.wait(for: [ready], timeout: 10) != .completed {
             capture(app, "project-category-control-missing")
             captureHierarchy(app, "project-category-control-missing-AX")
+        }
+        // Diagnostic only: do not accept a new AX label/value representation
+        // until an actual Apple run proves it. Existing strict selection stays.
+        let candidates = app.webViews.descendants(matching: .any)
+            .matching(NSPredicate(format: "label == %@ OR label BEGINSWITH %@", label, label + ","))
+            .allElementsBoundByIndex.prefix(12).map { candidate -> [String: Any] in
+                ["type": candidate.elementType.rawValue,
+                 "label": String(candidate.label.prefix(160)),
+                 "value": (candidate.value as? String).map { String($0.prefix(160)) } as Any? ?? NSNull(),
+                 "hittable": candidate.isHittable]
+            }
+        if let data = try? JSONSerialization.data(withJSONObject: candidates, options: [.sortedKeys]) {
+            let attachment = XCTAttachment(data: data, uniformTypeIdentifier: "public.json")
+            attachment.name = "project-category-current-framework-AX"
+            attachment.lifetime = .keepAlways
+            add(attachment)
         }
         XCTAssertNotNil(control, "Project category must expose an accessible select control")
         return control ?? app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", label)).firstMatch
