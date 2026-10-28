@@ -12,11 +12,11 @@ import {
 } from "./fixtures/password-smart-import-visual";
 import { selectChoice } from "./helpers/select-choice";
 import {
-	activeAccountGraph,
 	expectAccountGraphGeometry,
 	expectReadableAccountGraph,
 	setAccountRelationDetailsOpen,
 	waitForAccountGraphLayout,
+	waitForAccountGraphSnapshot,
 } from "./helpers/account-graph";
 
 test.setTimeout(300_000);
@@ -288,15 +288,7 @@ for (const locale of ["zh-CN", "en"] as const)
 					all: width > 600,
 					centered: false,
 				});
-				const graph = activeAccountGraph(page);
-				const value = await graph.evaluate((element) => ({
-					nodes: [...element.querySelectorAll<HTMLElement>(".react-flow__node")]
-						.map((node) => node.dataset.id ?? "")
-						.sort(),
-					edges: [...element.querySelectorAll<HTMLElement>(".react-flow__edge")]
-						.map((edge) => edge.dataset.id ?? "")
-						.sort(),
-				}));
+				const value = await waitForAccountGraphSnapshot(page, { nodes, edges });
 				expect(new Set(value.nodes).size).toBe(nodes);
 				expect(new Set(value.edges).size).toBe(edges);
 				expect(

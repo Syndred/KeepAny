@@ -1,0 +1,7 @@
+{
+  "items": 41,
+  "manifestItems": 40,
+  "bytes": 10557530,
+  "sha256": "8726b1d4d5bf569c5d7def8e93eac9e362ae65851423c306a84848227018e6af",
+  "scope": "Original failure evidence and exact fixed test inputs. Subsequent UI replays and final Linux CI are recorded separately; this archive is not a completion claim."
+}

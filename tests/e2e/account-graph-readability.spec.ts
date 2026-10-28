@@ -240,8 +240,9 @@ async function createScenarioAccount(page: Page, key: AccountKey, text: Copy) {
 		// Retain the first cold startup and entries from other sections such as Intake.
 		await page.goto("/assets/account");
 	}
-	await page
-		.getByRole("main")
+	const workspace = page.locator("main.unified-accounts-page");
+	await expect(workspace).toBeVisible();
+	await workspace
 		.getByRole("button", { name: text.add, exact: true })
 		.click();
 	const editor = page.getByRole("dialog");
