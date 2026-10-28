@@ -403,6 +403,24 @@ async function rejectDuplicate(
 	await expect(editor).toBeHidden();
 }
 
+const graphWorkStarts = new WeakMap<object, number>();
+function recordGraphWork(stage: string, details: Record<string, unknown> = {}) {
+	const info = test.info();
+	const now = performance.now();
+	const start = graphWorkStarts.get(info) ?? now;
+	graphWorkStarts.set(info, start);
+	appendFileSync(
+		info.outputPath("account-graph-work.jsonl"),
+		JSON.stringify({
+			stage,
+			elapsedMs: now - start,
+			wallTime: new Date().toISOString(),
+			monotonicMs: now,
+			...details,
+		}) + String.fromCharCode(10),
+	);
+}
+
 async function expectBackupConnections(
 	page: Page,
 	hrefs: Map<AccountKey, string>,
@@ -411,20 +429,28 @@ async function expectBackupConnections(
 	text: Copy,
 ) {
 	const password = "synthetic-graph-readability-backup";
+	recordGraphWork("backup-start", { expectedRelations: expected.length });
 	await page.goto("/intake");
 	await page.locator("#backup-password").fill(password);
 	await page.getByRole("button", { name: text.backup, exact: true }).click();
 	const link = page.getByRole("link", { name: text.download, exact: true });
 	await expect(link).toBeVisible();
-	const downloading = page.waitForEvent("download");
-	await link.click();
+	recordGraphWork("backup-ready");
+	const downloading = page.waitForEvent("download", { timeout: 15_000 });
+	await link.click({ timeout: 15_000 });
+	recordGraphWork("backup-link-clicked");
 	const download = await downloading;
+	recordGraphWork("download-event", { filename: download.suggestedFilename() });
 	try {
 		const path = await download.path();
+		recordGraphWork("download-completed");
 		if (!path) throw Error("graph-readability-backup-download-missing");
-		const entries = unzipSync(
-			await decryptBackup(new Uint8Array(readFileSync(path)), password),
-		);
+		const encrypted = new Uint8Array(readFileSync(path));
+		recordGraphWork("decrypt-start", { bytes: encrypted.byteLength });
+		const decrypted = await decryptBackup(encrypted, password);
+		recordGraphWork("decrypt-completed", { bytes: decrypted.byteLength });
+		const entries = unzipSync(decrypted);
+		recordGraphWork("backup-unzipped");
 		const records = JSON.parse(strFromU8(entries["records.json"])) as Array<{
 			type: string;
 			payload: string;
@@ -453,8 +479,13 @@ async function expectBackupConnections(
 		const ordered = (items: typeof expectedRows) =>
 			items.map((item) => JSON.stringify(item)).sort();
 		expect(ordered(actual)).toEqual(ordered(expectedRows));
+		recordGraphWork("backup-comparison-passed", {
+			relations: expectedRows.length,
+		});
 	} finally {
+		recordGraphWork("download-delete-start");
 		await download.delete();
+		recordGraphWork("download-delete-completed");
 	}
 }
 
@@ -1088,6 +1119,7 @@ async function largeFamilyCheckpoints(
 ) {
 	const expected = [...baseline];
 	for (const count of [24, 49]) {
+		recordGraphWork("large-setup-start", { nodes: count });
 		for (let index = hrefs.size + 1; index <= count; index++) {
 			const key = `extra-${index}`;
 			hrefs.set(key, await createScenarioAccount(page, key, text));
@@ -1100,7 +1132,9 @@ async function largeFamilyCheckpoints(
 			await addScenarioConnection(page, hrefs, connection, text);
 			expected.push(connection);
 		}
+		recordGraphWork("large-setup-completed", { nodes: count });
 		for (const width of [1536, 1280, 390]) {
+			recordGraphWork("large-viewport-start", { nodes: count, width });
 			await page.setViewportSize({
 				width,
 				height: width === 1536 ? 1024 : 844,
@@ -1116,7 +1150,13 @@ async function largeFamilyCheckpoints(
 			await waitForAccountGraphLayout(page, { nodes: count });
 			await expectReadableAccountGraph(page);
 			const ids = await visibleGraphNodeIds(activeAccountGraph(page));
+			recordGraphWork("large-pan-start", {
+				nodes: count,
+				width,
+				nodeCount: ids.length,
+			});
 			for (const id of ids) await panAccountGraphNodeIntoView(page, id);
+			recordGraphWork("large-pan-completed", { nodes: count, width });
 			await exerciseAccountGraphMiniMap(page);
 			if (evidence)
 				await page.screenshot({
@@ -1148,6 +1188,7 @@ async function largeFamilyCheckpoints(
 			await expect(expand).toBeFocused();
 			await waitForAccountGraphLayout(page, { nodes: count });
 			await expectReadableAccountGraph(page);
+			recordGraphWork("large-viewport-completed", { nodes: count, width });
 		}
 	}
 	await expectBackupConnections(
@@ -1301,12 +1342,14 @@ for (const locale of ["zh-CN", "en-US"] as const) {
 			browser,
 		}) => {
 			test.setTimeout(width === 1536 ? 480_000 : 240_000);
+			recordGraphWork("test-start");
 			const text = copy(locale);
 			const context = await browser.newContext({
 				locale,
 				viewport: { width, height: width === 1536 ? 1024 : 844 },
 				acceptDownloads: true,
 			});
+			context.setDefaultTimeout(15_000);
 			await context.addInitScript(
 				(language) => localStorage.setItem("keepany-language", language),
 				locale === "zh-CN" ? "zh-CN" : "en",
@@ -1440,8 +1483,15 @@ for (const locale of ["zh-CN", "en-US"] as const) {
 				if (width === 1536)
 					await largeFamilyCheckpoints(page, hrefs, afterDelete, text, locale);
 				expect(errors).toEqual([]);
+			} catch (error) {
+				recordGraphWork("scenario-error", {
+					message: error instanceof Error ? error.message : String(error),
+				});
+				throw error;
 			} finally {
+				recordGraphWork("context-close-start");
 				await context.close();
+				recordGraphWork("context-close-completed");
 			}
 		});
 	}
