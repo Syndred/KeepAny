@@ -44,7 +44,8 @@ const packageCache = new Map();
 const applicationRoutes = await readApplicationRouteContract(root);
 async function recordDependency(filename) {
   // Vite uses forward slashes on Windows; esbuild may use native separators.
-  if (!filename.replaceAll('\\', '/').includes('/node_modules/')) return;
+  filename = filename.replaceAll('\\', '/');
+  if (!filename.includes('/node_modules/')) return;
   let directory = dirname(filename.replace(/\?.*$/, ''));
   const visited = [];
   // Generated Vite IDs can contain node_modules without naming an installed
@@ -145,7 +146,7 @@ const repositorySbom = await json(join(root, 'SBOM.spdx.json'));
 for (const pkg of repositorySbom.packages.filter(pkg => pkg.name.startsWith('workbox-'))) {
   const metadataPath = pkg.sourceInfo?.match(/Installed metadata: ([^;]+)/)?.[1];
   if (!metadataPath) throw Error(`Missing Workbox metadata path: ${pkg.name}`);
-  await recordDependency(resolve(root, metadataPath));
+  await recordDependency(resolve(root, metadataPath.replaceAll('\\', '/')));
 }
 const licenses = [];
 for (const [key, pkg] of [...distributedPackages].sort(([a], [b]) => a.localeCompare(b, 'en'))) {
