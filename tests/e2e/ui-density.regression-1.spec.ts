@@ -122,6 +122,11 @@ for (const language of ["zh-CN", "en"] as const)
 			}
 			await page.goto("/collections");
 			await expect(page.locator(".collections-tile")).toHaveCount(8);
+			if (width <= 680) {
+				const target = await page.locator(".collections-tile button[aria-haspopup=menu]").first().boundingBox();
+				expect(target!.width).toBeGreaterThanOrEqual(44);
+				expect(target!.height).toBeGreaterThanOrEqual(44);
+			}
 			const geometry = await page.evaluate(() => ({
 				navBottom: document
 					.querySelector(".collections-organize-nav")!
@@ -190,6 +195,10 @@ for (const language of ["zh-CN", "en"] as const)
 			const bounds = await page.locator(".date-popover").boundingBox();
 			expect(bounds!.x).toBeGreaterThanOrEqual(0);
 			expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(width);
+			if (width <= 760) {
+				const targets = await page.locator(".rdp-day_button, .rdp-button_previous, .rdp-button_next").evaluateAll((buttons) => buttons.map((button) => ({width: button.getBoundingClientRect().width, height: button.getBoundingClientRect().height})));
+				expect(targets.every((target) => target.width >= 44 && target.height >= 44)).toBe(true);
+			}
 			await page.screenshot({
 				path: join(evidence, `dense-date-${language}-${width}.png`),
 				fullPage: true,

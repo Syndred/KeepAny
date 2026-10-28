@@ -14,4 +14,11 @@
 .date-popover .rdp-dropdown_root { border-radius: 6px; padding: 2px 4px; }
 .date-popover .rdp-dropdown_root:hover { background: var(--accent-soft); }
 .date-footer { display: flex; justify-content: space-between; gap: 8px; padding-top: 7px; border-top: 1px solid var(--line-soft); }
-@media(max-width: 760px) { .date-field > input[type="text"], .field .date-field > input[type="text"] { min-height: 44px; font-size: 16px; } }
+@media(max-width: 760px) {
+ .date-field > input[type="text"], .field .date-field > input[type="text"] { min-height: 44px; font-size: 16px; }
+ .date-popover { max-width: calc(100vw - 16px); }
+ .date-popover .rdp-root { --rdp-day-width: 44px; --rdp-day-height: 44px; --rdp-day_button-width: 44px; --rdp-day_button-height: 44px; }
+ .date-popover .rdp-month_caption { height: 48px; }
+ .date-popover .rdp-button_previous, .date-popover .rdp-button_next { width: 44px; height: 44px; }
+ .date-popover .rdp-dropdown_root { min-height: 44px; display: inline-flex; align-items: center; }
+}

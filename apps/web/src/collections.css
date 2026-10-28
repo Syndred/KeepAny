@@ -62,4 +62,12 @@
 .collections-organize-page .collections-options { grid-template-columns: 1fr; max-height: 320px; }
 @media (max-width: 1100px) { .collections-tile { grid-template-columns: 22px minmax(0,1fr) auto 36px; gap: 7px; } .collections-tile .collections-row-actions { display: none; } .collections-row-menu { display: block; } }
 @media (max-width: 900px) { .collections-organize-page { grid-template-columns: minmax(0,1fr); } .collections-organize-page > .page-header, .collections-organize-page > .collections-editor { grid-column: 1; } }
-@media (max-width: 680px) { .collections-options { grid-template-columns: 1fr; } .collections-tile { min-height: 50px; padding: 5px 9px; } .collections-tile .button.icon { width: 36px; height: 36px; min-height: 36px; } .collections-option { min-height: 36px; } }
+@media (max-width: 680px) {
+ .collections-options { grid-template-columns: 1fr; }
+ .collections-tile { grid-template-columns: 22px minmax(0,1fr) auto 44px; min-height: 50px; padding: 5px 9px; }
+ .collections-tile .button.icon { width: 44px; height: 44px; min-height: 44px; }
+ .collections-option { min-height: 44px; }
+ .collections-nav .sortable-nav-item { grid-template-columns: 44px 20px minmax(0,1fr) 88px; }
+ .collections-nav .nav-drag-handle, .collections-nav .nav-order-actions button { width: 44px; height: 44px; }
+ .collections-nav .sortable-nav-link { min-height: 44px; }
+}
