@@ -17,10 +17,10 @@ export async function selectChoice(locator: Locator, choice: SelectChoice) {
 	const trigger = triggerId
 		? page.locator(`[id="${quoteAttributeValue(triggerId)}"]`)
 		: locator;
-	// Keyboard opening avoids Radix's opening-pointerup guard; selection still exercises the mouse.
+	// Open through the public keyboard contract, then exercise pointer selection.
 	await locator.press("ArrowDown");
-	await expect(trigger).toHaveAttribute("data-state", "open");
-	// Radix only supplies aria-controls while open and hides the background roles.
+	await expect(trigger).toHaveAttribute("aria-expanded", "true");
+	// Follow the shared control's accessible popup relationship.
 	const popupId = await trigger.getAttribute("aria-controls");
 	if (!popupId)
 		throw new Error("Select trigger is missing its popup relationship");
@@ -28,7 +28,7 @@ export async function selectChoice(locator: Locator, choice: SelectChoice) {
 		.getByRole("listbox")
 		.and(page.locator(`[id="${quoteAttributeValue(popupId)}"]`));
 	await expect(popup).toBeVisible();
-	// Wait for focus to enter Radix's menu; visibility alone is not readiness.
+	// Wait for focus to enter the list; visibility alone is not readiness.
 	await expect
 		.poll(() =>
 			popup.evaluate((element) =>
@@ -68,6 +68,6 @@ export async function selectChoice(locator: Locator, choice: SelectChoice) {
 	await option.hover();
 	await option.click();
 	await expect(trigger).toHaveAttribute("data-value", selectedValue);
-	await expect(trigger).toHaveAttribute("data-state", "closed");
+	await expect(trigger).toHaveAttribute("aria-expanded", "false");
 	await expect(popup).toBeHidden();
 }

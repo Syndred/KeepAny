@@ -14,6 +14,14 @@ import { financeCopy } from "./finance-copy";
 import { candidateMergeCopy } from "./candidate-merge-copy";
 
 const copy: Record<string, [string, string]> = {
+ assetView: ["资产视图", "Asset view"],
+ assetListView: ["紧凑列表", "Compact list"],
+ assetCardView: ["卡片", "Cards"],
+ moreActions: ["更多操作", "More actions"],
+ calendarToday: ["今天", "Today"],
+ datePickerTitle: ["选择日期", "Choose date"],
+ datePlaceholder: ["年-月-日", "YYYY-MM-DD"],
+ invalidDate: ["请输入有效日期（年-月-日）", "Enter a valid date (YYYY-MM-DD)"],
 	brandName: ["KeepAny", "KeepAny"],
 	assetsWorkspace: ["资产", "Assets"],
 	accountsWorkspace: ["账号", "Accounts"],
@@ -205,7 +213,7 @@ const copy: Record<string, [string, string]> = {
 	],
 	manageCollections: ["管理分类", "Manage collections"],
 	organizeEyebrow: ["我的工作区", "My workspace"],
-	organizeTitle: ["按你的习惯整理。", "Organize it your way."],
+	organizeTitle: ["自定义侧边栏", "Customize sidebar"],
 	organizeSubtitle: [
 		"调整常用入口，或把不同类型的资产放进同一个分类。",
 		"Arrange your sidebar and group assets of different types in one collection.",
@@ -2102,8 +2110,8 @@ Object.assign(copy, {
 	accountVaultReferences: ["密码库引用", "Vault references"],
 	accountNotRecorded: ["未记录", "Not recorded"],
 	tasksHeroTitle: [
-		"提醒之后，还要留下完成记录。",
-		"Keep a record after every reminder.",
+		"待办",
+		"Tasks",
 	],
 	tasksHeroSubtitle: [
 		"充值、续费、保修和核实任务，都能追溯处理结果。",

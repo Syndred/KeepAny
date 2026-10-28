@@ -1,3 +1,4 @@
+import { DatePicker } from "./components/ui/date-picker";
 import { Link } from "@tanstack/react-router";
 import { Check } from "lucide-react";
 import { useState } from "react";
@@ -106,12 +107,12 @@ export function ImpactTaskRow({
 			</div>
 			<div className="impact-task-actions">
 				<label htmlFor={`impact-due-${task.id}`}>{t("remindLater")}</label>
-				<input
+				<DatePicker
 					id={`impact-due-${task.id}`}
-					type="date"
+
 					value={task.dueDate}
 					disabled={busy}
-					onChange={(event) => void update({ dueDate: event.target.value })}
+					onValueChange={(dateValue) => void update({ dueDate: dateValue })}
 				/>
 				<Badge tone={task.done ? "success" : "pending"}>{t(task.done ? "done" : "pending")}</Badge>
 			</div>

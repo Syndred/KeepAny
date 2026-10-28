@@ -6,7 +6,8 @@ async function assertPopup(page: Page, trigger: Locator) {
 	await trigger.click();
 	const popup = page.getByRole("listbox");
 	await expect(popup).toBeVisible();
-	const bounds = await popup.boundingBox();
+	const surface = popup.locator("..");
+	const bounds = await surface.boundingBox();
 	if (!bounds) throw Error("select-popup-bounds-missing");
 	const viewport = page.viewportSize();
 	if (!viewport) throw Error("select-viewport-missing");
@@ -14,7 +15,7 @@ async function assertPopup(page: Page, trigger: Locator) {
 	expect(bounds.x + bounds.width).toBeLessThanOrEqual(viewport.width - 7);
 	expect(bounds.y).toBeGreaterThanOrEqual(7);
 	expect(bounds.y + bounds.height).toBeLessThanOrEqual(viewport.height - 7);
-	const theme = await popup.evaluate((element) => {
+	const theme = await surface.evaluate((element) => {
 		const style = getComputedStyle(element);
 		const root = getComputedStyle(document.documentElement);
 		return {
@@ -51,7 +52,7 @@ for (const zh of [true, false]) {
 				exact: true,
 			});
 			await expect(language).toHaveAttribute("data-value", pointerValue);
-			await expect(language).toHaveAttribute("data-state", "closed");
+			await expect(language).toHaveAttribute("aria-expanded", "false");
 			await expect(pointerPopup).toBeHidden();
 			await selectChoice(language, zh ? "zh-CN" : "en");
 			language = page.getByRole("combobox", {

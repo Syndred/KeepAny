@@ -1,6 +1,6 @@
 .workspace-page { min-width: 0; }
-.workspace-navigation { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; margin: 16px 16px 0; padding: 12px; border: 1px solid var(--line-soft); border-radius: 14px; background: var(--paper); }
-.workspace-navigation > a { display: inline-flex; justify-content: center; align-items: center; min-height: 42px; padding: 8px 16px; color: var(--ink); border: 2px solid transparent; border-radius: 10px; text-decoration: none; font-size: 13px; font-weight: 700; }
+.workspace-navigation { display: flex; align-items: center; flex-wrap: wrap; gap: 5px; margin: 12px 12px 0; padding: 7px; border: 1px solid var(--line-soft); border-radius: 14px; background: var(--paper); }
+.workspace-navigation > a { display: inline-flex; justify-content: center; align-items: center; min-height: 36px; padding: 6px 14px; color: var(--ink); border: 2px solid transparent; border-radius: 999px; text-decoration: none; font-size: 13px; font-weight: 700; }
 .workspace-navigation > a:hover { border-color: var(--line-soft); background: var(--paper-soft); }
 .workspace-navigation > a[aria-current="page"] { border-color: var(--line); background: var(--accent); box-shadow: 2px 3px 0 var(--line); }
 .workspace-password-status, .workspace-password-status > span { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
@@ -9,23 +9,21 @@
 .workspace-password-only { display: grid; gap: 16px; }
 .workspace-password-only > h2 { margin: 0; }
 .workspace-password-card { display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 14px; align-items: start; padding: 16px; color: var(--ink); text-decoration: none; }
-.workspace-asset-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 290px), 1fr)); align-items: stretch; gap: 24px; }
-.workspace-asset-grid > .asset-project-card, .workspace-asset-grid > .asset-library-card { height: 100%; }
-.workspace-asset-grid .asset-project-cover, .workspace-asset-grid .asset-library-cover { height: 175px; }
-.workspace-domain-card { display: flex; flex-direction: column; gap: 14px; color: var(--ink); text-decoration: none; padding: 20px; }
+.workspace-asset-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 245px), 1fr)); align-items: start; gap: 16px; }
+.workspace-domain-card { width: 100%; max-width: 360px; display: flex; flex-direction: column; gap: 8px; color: var(--ink); text-decoration: none; padding: 12px; }
 .workspace-domain-heading { display: flex; align-items: center; gap: 12px; min-width: 0; }
 .workspace-domain-heading > svg { flex: none; }
 .workspace-domain-heading > strong { overflow-wrap: anywhere; }
-.workspace-domain-card > strong { margin-top: 10px; font-size: 20px; }
-.workspace-domain-action { margin-top: auto; padding-top: 12px; color: var(--ink); font-size: 13px; font-weight: 700; }
-.workspace-summary-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px; }
-.workspace-summary-grid > section { display: flex; flex-direction: column; gap: 12px; padding: 18px; }
+.workspace-domain-card > strong { margin-top: 0; font-size: 17px; }
+.workspace-domain-action { margin-top: 0; padding-top: 5px; color: var(--ink); font-size: 13px; font-weight: 700; }
+.workspace-summary-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.workspace-summary-grid > section { display: flex; flex-direction: column; gap: 7px; padding: 12px 14px; }
 .workspace-summary-grid > section > span { color: var(--muted); font-size: 12px; }
 .workspace-summary-grid > section > strong { display: flex; flex-wrap: wrap; gap: 6px 12px; font-size: 20px; overflow-wrap: anywhere; }
 .workspace-search { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; justify-content: space-between; }
 .workspace-search > .asset-account-search { flex: 1 1 280px; }
 .workspace-search > span { color: var(--muted); font-size: 13px; }
-.workspace-asset-metrics { display: grid; gap: 10px; margin: 4px 0; padding: 12px 0; border-block: 1px solid var(--line-soft); font-size: 12px; overflow-wrap: anywhere; }
+.workspace-asset-metrics { display: grid; gap: 6px; margin: 0; padding: 8px 0; border-block: 1px solid var(--line-soft); font-size: 12px; overflow-wrap: anywhere; }
 .workspace-asset-metrics > strong { font-size: 14px; }
 .workspace-asset-metrics > progress { width: 100%; height: 7px; border: 0; border-radius: 5px; appearance: none; overflow: hidden; background: var(--line-soft); color: var(--accent); }
 .workspace-asset-metrics > progress::-webkit-progress-bar { background: var(--line-soft); }

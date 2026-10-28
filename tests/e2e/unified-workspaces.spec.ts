@@ -25,6 +25,7 @@ async function seed(page: Page, locale: "zh-CN" | "en") {
 	await page.clock.setFixedTime(new Date("2026-10-27T04:00:00Z"));
 	await page.goto("/assets");
 	await expect(page.locator(".workspace-catalog")).toBeVisible();
+	await page.getByRole("button", { name: resources[locale].translation.assetCardView, exact: true }).click();
 	return page.evaluate(async ({ repositoryPath, domainPath }) => {
 		const { saveBatch } = await import(repositoryPath);
 		const { newAsset, taskSchema, historySchema, relationSchema } = await import(domainPath);

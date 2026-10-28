@@ -1,3 +1,4 @@
+import { Input } from "./ui/input";
 import { Plus, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -76,7 +77,7 @@ export function VaultLoginIdentifiers({
 						{add}
 					</div>
 					<div className="pw-import-input-control">
-						<input
+						<Input
 							id={primary.id}
 							value={primary.value}
 							onChange={(event) => primary.onChange(event.target.value)}
@@ -115,7 +116,7 @@ export function VaultLoginIdentifiers({
 									{t("pwVaultOtherIdentifier", { count: index + 1 })}
 								</label>
 								<div className="pw-import-input-control">
-									<input
+									<Input
 										id={`${idPrefix}-identifier-${index + 1}`}
 										value={value}
 										onChange={(event) =>

@@ -1,3 +1,4 @@
+import { Input } from "./ui/input";
 import { Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -79,7 +80,7 @@ export function PasswordImportMapping({
 							>
 								<td className="pw-import-map-line-number">{row.lineNumber}</td>
 								<td className="field">
-									<input
+									<Input
 										id={`pw-map-value-${row.lineNumber}`}
 										aria-label={t("pwSmartIssueLine", { line: row.lineNumber })}
 										type={revealed ? "text" : "password"}

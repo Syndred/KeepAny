@@ -1,3 +1,4 @@
+import { Input } from "./components/ui/input";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { Globe, LockKeyhole, Plus, Search } from "lucide-react";
 import { lazy, Suspense, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
@@ -8,6 +9,7 @@ import { Dialog } from "./components/ui/dialog";
 import { Select, SelectOption } from "./components/ui/select";
 import { MoneyTotal, RemainingDays } from "./components/AssetMetrics";
 import { usePasswordVault } from "./components/PasswordVaultProvider";
+import { AssetViewToggle, useAssetView } from "./components/AssetViewToggle";
 import { AssetKindList, LibraryCard, ProjectCard, type AccountListFilters } from "./page-asset-list";
 import { FinancePage } from "./page-finance";
 import { matchesAssetSearch } from "./asset-search";
@@ -23,16 +25,16 @@ type AssetView = "all" | "project" | "item" | "subscription" | "domains" | "ledg
 function AssetTabs({ view }: { view: AssetView }) {
 	const { t } = useTranslation();
 	return <nav className="workspace-navigation" aria-label={t("assetsWorkspace")}>
-		<Link to="/assets" aria-current={view === "all" ? "page" : undefined}>{t("all")}</Link>
-		{(["project", "item", "domains", "subscription"] as const).map((kind) => <Link key={kind} to="/assets/$kind" params={{ kind }} aria-current={view === kind ? "page" : undefined}>{t(kind === "domains" ? "workspaceDomains" : kind)}</Link>)}
-		<Link to="/finance" aria-current={view === "ledger" ? "page" : undefined}>{t("workspaceLedger")}</Link>
+		<Link to="/assets" activeOptions={{ exact: true }} aria-current={view === "all" ? "page" : undefined}>{t("all")}</Link>
+		{(["project", "item", "domains", "subscription"] as const).map((kind) => <Link key={kind} to="/assets/$kind" params={{ kind }} activeOptions={{ exact: true }} aria-current={view === kind ? "page" : undefined}>{t(kind === "domains" ? "workspaceDomains" : kind)}</Link>)}
+		<Link to="/finance" activeOptions={{ exact: true }} aria-current={view === "ledger" ? "page" : undefined}>{t("workspaceLedger")}</Link>
 	</nav>;
 }
 
 function AccountTabs({ passwords, references }: { passwords: boolean; references: boolean }) {
 	const { t } = useTranslation();
 	return <nav className="workspace-navigation" aria-label={t("accountsWorkspace")}>
-		<Link to="/accounts" aria-current={!passwords ? "page" : undefined}>{t("workspaceAllAccounts")}</Link>
+		<Link to="/accounts" activeOptions={{ exact: true }} aria-current={!passwords ? "page" : undefined}>{t("workspaceAllAccounts")}</Link>
 		<Link to="/assets/$kind" params={{ kind: "vault" }} activeOptions={{ includeHash: true }} aria-current={passwords && !references ? "page" : undefined}>{t("workspacePasswords")}</Link>
 		<Link to="/assets/$kind" params={{ kind: "vault" }} hash="vault-references" activeOptions={{ includeHash: true }} aria-current={references ? "page" : undefined}>{t("workspacePasswordReferences")}</Link>
 	</nav>;
@@ -69,6 +71,7 @@ function AssetCatalog({ domainsOnly }: { domainsOnly: boolean }) {
 	const { t, i18n } = useTranslation();
 	const navigate = useNavigate();
 	const summary = useWorkspaceSummary();
+ const [assetView, setAssetView] = useAssetView();
 	const queryKey = `keepany-catalog-query-${domainsOnly ? "domains" : "all"}`;
 	const [query, setQuery] = useState(() => sessionStorage.getItem(queryKey) ?? "");
 	const restoredScroll = useRef(false);
@@ -123,8 +126,8 @@ function AssetCatalog({ domainsOnly }: { domainsOnly: boolean }) {
 			<section className="card"><span>{t("workspaceMonthlyPlan")}</span><strong><MoneyTotal totals={summary.monthly} empty={t("financeNoPlan")} /></strong></section>
 			<section className="card"><span>{t("workspaceUpcoming")}</span><strong>{summary.upcoming}</strong></section>
 		</div>}
-		<div className="workspace-search"><label className="asset-account-search"><Search size={18} /><input type="search" value={query} aria-label={t("workspaceSearch")} placeholder={t("workspaceSearch")} onChange={(event) => { setQuery(event.target.value); sessionStorage.setItem(queryKey, event.target.value); }} /></label><span>{t("workspaceAssetCount", { count: (domainsOnly ? 0 : visible.length) + visibleDomains.length })}</span></div>
-		{hasResults ? <section className="asset-list-content workspace-asset-grid" aria-label={t(domainsOnly ? "workspaceDomains" : "assetsWorkspace")}>
+		<div className="workspace-search"><label className="asset-account-search"><Search size={18} /><Input type="search" value={query} aria-label={t("workspaceSearch")} placeholder={t("workspaceSearch")} onChange={(event) => { setQuery(event.target.value); sessionStorage.setItem(queryKey, event.target.value); }} /></label><AssetViewToggle value={assetView} onChange={setAssetView} /><span>{t("workspaceAssetCount", { count: (domainsOnly ? 0 : visible.length) + visibleDomains.length })}</span></div>
+		{hasResults ? <section className={`asset-list-content workspace-asset-grid${assetView === "list" ? " asset-dense-list" : ""}`} aria-label={t(domainsOnly ? "workspaceDomains" : "assetsWorkspace")}>
 			{!domainsOnly && visible.map((asset) => asset.kind === "project" ? <ProjectCard key={asset.id} asset={asset} search={search} summary={summary.summaries.get(asset.id)} backlinks={backlinks.get(asset.id) ?? { total: 0, pending: 0 }} onOpen={() => rememberCatalog(asset.id)} /> : <LibraryCard key={asset.id} asset={asset} search={search} summary={summary.summaries.get(asset.id)} onOpen={() => rememberCatalog(asset.id)} />)}
 			{visibleDomains.map(({ project, domain, remainingDays }) => <Link className="card workspace-domain-card" key={`${project.id}:${domain.id}`} to="/assets/$kind/$id" params={{ kind: "project", id: project.id }} hash={`project-domain-${domain.id}`} onClick={() => rememberCatalog(project.id)}>
 				<div className="workspace-domain-heading"><Globe size={22} /><strong>{domain.name}</strong></div><span className="subtitle">{t("workspaceDomains")} · {project.name}</span>

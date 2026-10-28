@@ -192,7 +192,7 @@ for (const variant of [{ locale: "zh-CN", width: 390 }, { locale: "en-US", width
 			expect(before.assets.find((asset) => asset.kind === "item")).toMatchObject({ deleted: false, itemLifecycleStatus: "idle" });
 			expect(before.collections).toHaveLength(1);
 			expect(before.collections[0]).toMatchObject({ id: collectionHref.split("/").at(-1), name: "Travel cabinet v2" });
-			expect(before.collections[0].assetIds.toSorted()).toEqual(before.assets.filter((asset) => asset.kind !== "vault").map((asset) => asset.id).toSorted());
+			expect(before.collections[0].assetIds.slice().sort()).toEqual(before.assets.filter((asset) => asset.kind !== "vault").map((asset) => asset.id).slice().sort());
 			const destination = await browser.newContext({ locale: variant.locale, viewport: { width: variant.width, height: 844 }, acceptDownloads: true });
 			try {
 				const restored = await destination.newPage();
@@ -217,7 +217,7 @@ for (const variant of [{ locale: "zh-CN", width: 390 }, { locale: "en-US", width
 				// Read the saved preferences too, without relying on fixture writes or app internals.
 				const after = await download(restored, copy);
 				expect(after.collections).toEqual(before.collections);
-				expect(after.assets.map((asset) => asset.id).toSorted()).toEqual(before.assets.map((asset) => asset.id).toSorted());
+				expect(after.assets.map((asset) => asset.id).slice().sort()).toEqual(before.assets.map((asset) => asset.id).slice().sort());
 				for (const id of ["sidebarOrder", "sidebarHidden"]) {
 					expect(before.preferences.find((row) => row.id === id)).toBeDefined();
 					expect(after.preferences.find((row) => row.id === id)).toEqual(before.preferences.find((row) => row.id === id));

@@ -1,3 +1,4 @@
+import { Input } from "./components/ui/input";
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
@@ -20,6 +21,7 @@ import { save } from "../../../packages/local-db/src";
 import { COLLECTIONS_PREFERENCE_ID, readCollections } from "./collection-model";
 import { useData } from "./data";
 import { Button } from "./components/ui/button";
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "./components/ui/dropdown-menu";
 import {
 	SortableNav,
 	type SortableNavItem,
@@ -51,16 +53,13 @@ export function AppShell() {
 	const topSearchInputRef = useRef<HTMLInputElement>(null);
 	const [toast, setToast] = useState("");
 	const [ai, setAi] = useState(false);
-	const [aiMenu, setAiMenu] = useState(false);
-	const aiMenuRef = useRef<HTMLDivElement>(null);
-	const [toolsOpen, setToolsOpen] = useState(false);
 	const [mobile, setMobile] = useState(false);
 	const [pendingNavOrder, setPendingNavOrder] = useState<string[] | null>(null);
 	const [pendingHiddenIds, setPendingHiddenIds] = useState<string[] | null>(null);
 	const pathname = useRouterState({ select: (s) => s.location.pathname });
 	const navigate = useNavigate();
 	useEffect(() => {
-		if (pathname) { setSearchOpen(false); setSearch(""); setAiMenu(false); setToolsOpen(false); setMobile(false); }
+		if (pathname) { setSearchOpen(false); setSearch(""); setMobile(false); }
 	}, [pathname]);
 	useEffect(() => {
 		const open = () => setAi(true);
@@ -76,21 +75,11 @@ export function AppShell() {
 			} else if (event.key === "Escape") {
 				setSearchOpen(false);
 				setSearch("");
-				setAiMenu(false);
-				setToolsOpen(false);
 			}
 		};
 		window.addEventListener("keydown", keys);
 		return () => window.removeEventListener("keydown", keys);
 	}, []);
-	useEffect(() => {
-		if (!aiMenu) return;
-		const closeOutside = (event: PointerEvent) => {
-			if (event.target instanceof Node && !aiMenuRef.current?.contains(event.target)) setAiMenu(false);
-		};
-		document.addEventListener("pointerdown", closeOutside);
-		return () => document.removeEventListener("pointerdown", closeOutside);
-	}, [aiMenu]);
 	useEffect(() => {
 		if (!searchOpen) return;
 		const closeOutside = (event: PointerEvent) => {
@@ -263,7 +252,13 @@ export function AppShell() {
 							<X size={18} />
 						</Button>
 					</div>
-					<button type="button" className="workspace-current" onClick={() => setToast(t("personalWorkspace"))}><span className="workspace-avatar"><UserRound size={15}/></span><strong>{t("personalWorkspace")}</strong><ChevronDown size={14} aria-hidden="true" /></button>
+					<DropdownMenu><DropdownMenuTrigger className="workspace-current"><span className="workspace-avatar"><UserRound size={15}/></span><strong>{t("personalWorkspace")}</strong><ChevronDown size={14} aria-hidden="true" /></DropdownMenuTrigger>
+						<DropdownMenuContent>
+							<DropdownMenuItem render={<Link to="/settings" />} onClick={() => setMobile(false)}><Settings />{t("settings")}</DropdownMenuItem>
+							<DropdownMenuItem render={<Link to="/collections" />} onClick={() => setMobile(false)}><Layers />{t("customizeSidebar")}</DropdownMenuItem>
+							<DropdownMenuItem render={<Link to="/intake" />} onClick={() => setMobile(false)}><Plus />{t("intake")}</DropdownMenuItem>
+						</DropdownMenuContent>
+					</DropdownMenu>
 					<div className="sidebar-section-label">{t("workspaceSection")}</div>
 					<nav className="nav" aria-label={t("navigation")}>
 						<SortableNav
@@ -283,8 +278,9 @@ export function AppShell() {
 						<Link to="/collections" className="sidebar-customize" aria-current={/^\/collections\/?$/.test(pathname) ? "page" : undefined} onClick={() => setMobile(false)}><Plus size={15}/>{t("customizeSidebar")}</Link>
 					</div>
 					<div className="side-bottom">
-						{toolsOpen && <div className="sidebar-tools-menu"><Link to="/intake" onClick={() => { setToolsOpen(false); setMobile(false); }}><Plus size={18}/>{t("intake")}</Link><Link to="/settings" onClick={() => { setToolsOpen(false); setMobile(false); }}><Settings size={18}/>{t("settings")}</Link></div>}
-						<button type="button" className="sidebar-user" aria-expanded={toolsOpen} onClick={() => setToolsOpen((open) => !open)}><span>{t("meInitial")}</span><span><strong>{t("myWorkspace")}</strong><small>{t("privateWorkspace")}</small></span><ChevronDown size={14} aria-hidden="true" /></button>
+						<DropdownMenu><DropdownMenuTrigger className="sidebar-user"><span>{t("meInitial")}</span><span><strong>{t("myWorkspace")}</strong><small>{t("privateWorkspace")}</small></span><ChevronDown size={14} aria-hidden="true" /></DropdownMenuTrigger>
+							<DropdownMenuContent side="top"><DropdownMenuItem render={<Link to="/intake" />} onClick={() => setMobile(false)}><Plus />{t("intake")}</DropdownMenuItem><DropdownMenuItem render={<Link to="/settings" />} onClick={() => setMobile(false)}><Settings />{t("settings")}</DropdownMenuItem></DropdownMenuContent>
+						</DropdownMenu>
 					</div>
 				</aside>
 				{mobile && (
@@ -313,10 +309,7 @@ export function AppShell() {
 						</button>
 						<div className="top-actions">
 							<Link to="/tasks" className="top-icon-button" aria-label={t("taskReminders")}><Bell size={17}/>{openTasks > 0 && <i aria-hidden="true"/>}</Link>
-							<div className="top-ai-wrap" ref={aiMenuRef}>
-								<Button className="top-icon-button" variant="ghost" aria-label={t("assistantMenu")} aria-expanded={aiMenu} onClick={() => setAiMenu((value) => !value)}><Sparkles size={17}/></Button>
-								{aiMenu && <div className="top-ai-menu"><Link to="/change-impact" onClick={() => setAiMenu(false)}>{t("checkChangeImpact")}</Link><Link to="/assistant-access" onClick={() => setAiMenu(false)}>{t("settingsAssistantAccess")}</Link></div>}
-							</div>
+							<DropdownMenu><DropdownMenuTrigger render={<Button className="top-icon-button" variant="ghost" aria-label={t("assistantMenu")} />}><Sparkles size={17}/></DropdownMenuTrigger><DropdownMenuContent align="end"><DropdownMenuItem render={<Link to="/change-impact" />}>{t("checkChangeImpact")}</DropdownMenuItem><DropdownMenuItem render={<Link to="/assistant-access" />}>{t("settingsAssistantAccess")}</DropdownMenuItem></DropdownMenuContent></DropdownMenu>
 							<Link
 								to="/intake"
 								className="top-icon-button"
@@ -328,7 +321,7 @@ export function AppShell() {
 					</header>
 					{searchOpen && <div className="top-search-panel" ref={topSearchPanelRef}>
 						<label htmlFor="top-search-query">{t("globalSearch")}</label>
-						<div className="top-search-panel-input"><input id="top-search-query" ref={topSearchInputRef} value={search} onChange={(event) => setSearch(event.target.value)} placeholder={t("globalSearchHint")} autoComplete="off" /><button type="button" onClick={() => closeSearch()} aria-label={t("close")}><X size={17}/></button></div>
+						<div className="top-search-panel-input"><Input id="top-search-query" ref={topSearchInputRef} value={search} onChange={(event) => setSearch(event.target.value)} placeholder={t("globalSearchHint")} autoComplete="off" /><button type="button" onClick={() => closeSearch()} aria-label={t("close")}><X size={17}/></button></div>
 						<div className="search-results">{matches.length ? matches.map((result) => {
 							const content = <><span className="global-search-result-text"><strong>{result.title}</strong><small>{result.secondary}</small></span><small className="global-search-result-source">{searchLabels.sources[result.source]}</small></>;
 							const target = result.target;

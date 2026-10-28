@@ -1,0 +1,8 @@
+.ui-positioner { z-index: 60; max-width: calc(100vw - 24px); outline: 0; }
+.ui-popover, .ui-menu { border: 2px solid var(--line); border-radius: 12px; background: var(--paper); color: var(--ink); box-shadow: var(--shadow); outline: 0; }
+.ui-menu { display: grid; gap: 3px; min-width: 210px; max-width: min(340px, calc(100vw - 24px)); padding: 5px; }
+.ui-menu-item { display: flex; align-items: center; gap: 9px; min-height: 36px; padding: 7px 10px; border-radius: 8px; color: var(--ink); text-decoration: none; font-size: 14px; outline: 0; cursor: pointer; }
+.ui-menu-item[data-highlighted] { background: var(--accent-soft); }
+.ui-menu-item svg { flex: none; width: 17px; height: 17px; }
+
+@media(max-width:760px) { .ui-menu-item { min-height: 44px; } }

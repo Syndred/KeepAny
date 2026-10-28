@@ -16,7 +16,7 @@ export function RemainingDays({ days }: { days: number | null }) {
 export function AssetMetrics({ asset, summary }: { asset: Asset; summary?: AssetSummary }) {
 	const { t, i18n } = useTranslation();
 	if (!summary) return null;
-	return <div className="workspace-asset-metrics">
+	return <div className={`workspace-asset-metrics workspace-asset-metrics--${asset.kind}`}>
 		{asset.kind === "project" && <>
 			<strong>{summary.tasks.total ? t("workspaceProgress", summary.tasks) : t("workspaceNoProgress")}</strong>
 			{summary.tasks.total > 0 && <progress aria-label={t("tasks")} value={summary.tasks.done} max={summary.tasks.total} />}

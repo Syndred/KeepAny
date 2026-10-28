@@ -1,3 +1,5 @@
+import { Textarea } from "./ui/textarea";
+import { Input } from "./ui/input";
 import { Eye, EyeOff, Plus } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -48,7 +50,7 @@ export function VaultImportDraftFields({
 				<div className="field pw-smart-field-title">
 					<label htmlFor={`${idPrefix}-title`}>{t("pwVaultTitleField")}</label>
 					<div className="pw-import-input-control">
-						<input
+						<Input
 							id={`${idPrefix}-title`}
 							aria-invalid={!!validationErrors.title}
 							aria-describedby={
@@ -106,7 +108,7 @@ export function VaultImportDraftFields({
 					<div className="pw-import-input-control">
 						<div className="pw-smart-password">
 							{multilinePassword ? (
-								<textarea
+								<Textarea
 									id={`${idPrefix}-password`}
 									aria-invalid={!!validationErrors.password}
 									aria-describedby={
@@ -130,7 +132,7 @@ export function VaultImportDraftFields({
 									rows={Math.min(6, draft.password.split(/\r\n|\r|\n/).length)}
 								/>
 							) : (
-								<input
+								<Input
 									id={`${idPrefix}-password`}
 									aria-invalid={!!validationErrors.password}
 									aria-describedby={
@@ -212,7 +214,7 @@ export function VaultImportDraftFields({
 							)}
 						</div>
 						<div className="pw-import-input-control">
-							<textarea
+							<Textarea
 								id={`${idPrefix}-notes`}
 								value={draft.notes}
 								placeholder={t("pwSmartNotesPlaceholder")}
@@ -236,7 +238,7 @@ export function VaultImportDraftFields({
 								{t("pwVaultUrlOptionalField")}
 							</label>
 							<div className="pw-import-input-control">
-								<input
+								<Input
 									id={`${idPrefix}-url`}
 									aria-invalid={!!validationErrors.url}
 									aria-describedby={

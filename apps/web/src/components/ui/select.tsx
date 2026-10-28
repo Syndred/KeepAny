@@ -1,12 +1,11 @@
-import * as SelectPrimitive from "@radix-ui/react-select";
+import "./overlays.css";
+import { Select as SelectPrimitive } from "@base-ui/react/select";
 import { clsx } from "clsx";
 import { Check, ChevronDown, ChevronUp } from "lucide-react";
 import type { ComponentPropsWithoutRef, ReactElement, ReactNode } from "react";
 import { Fragment, useEffect, useId, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import "./select.css";
-
-const EMPTY_RADIX_VALUE = "__keepany_select_empty__";
 
 export interface SelectOptionProps {
 	value?: string;
@@ -120,17 +119,6 @@ function isReactElement(
 	);
 }
 
-function getEmptyRadixValue(
-	options: SelectOptionData[],
-	current: string | null,
-): string {
-	if (current && !options.some((option) => option.value === current))
-		return current;
-	let candidate = EMPTY_RADIX_VALUE;
-	while (options.some((option) => option.value === candidate)) candidate += "_";
-	return candidate;
-}
-
 export function Select({
 	value,
 	onValueChange,
@@ -149,128 +137,96 @@ export function Select({
 	const triggerRef = useRef<HTMLButtonElement>(null);
 	const invalidId = useId();
 	const [invalid, setInvalid] = useState(false);
-	const emptyRadixValueRef = useRef<string | null>(null);
 	const options = collectOptions(children);
-	const emptyRadixValue = getEmptyRadixValue(
-		options,
-		emptyRadixValueRef.current,
-	);
-	emptyRadixValueRef.current = emptyRadixValue;
-	const selectedOption = options.find((option) => option.value === value);
-	const radixValue = value;
-	const triggerValue =
-		selectedOption?.children ?? (value === "" ? t("select") : value);
-	const callerAriaInvalid = triggerProps["aria-invalid"];
-	const callerAriaDescribedBy = triggerProps["aria-describedby"];
-	const mergedAriaInvalid = invalid ? "true" : callerAriaInvalid;
-	const mergedAriaDescribedBy =
-		[callerAriaDescribedBy, invalid ? invalidId : undefined]
-			.filter(Boolean)
-			.join(" ") || undefined;
-
+	const label =
+		options.find((option) => option.value === value)?.children ??
+		(value || t("select"));
 	useEffect(() => {
 		if (!required || disabled || value !== "") setInvalid(false);
-	}, [disabled, required, value]);
-
+	}, [required, disabled, value]);
 	return (
 		<span
 			className="themed-select-root"
 			onInvalid={(event) => {
-				if (event.target instanceof HTMLSelectElement) {
+				if (event.target instanceof HTMLInputElement) {
 					event.preventDefault();
 					setInvalid(true);
 					triggerRef.current?.focus();
 				}
 			}}
 		>
-			<SelectPrimitive.Root
-				value={radixValue}
-				onValueChange={(nextValue) =>
-					onValueChange(nextValue === emptyRadixValue ? "" : nextValue)
-				}
+			<SelectPrimitive.Root<string>
+				value={value}
+				onValueChange={(next) => onValueChange(next ?? "")}
 				name={name}
 				disabled={disabled}
 				required={required}
 				autoComplete={autoComplete}
 				form={form}
+				items={options.map((option) => ({
+					value: option.value,
+					label: option.children,
+				}))}
 			>
 				<SelectPrimitive.Trigger
 					{...triggerProps}
 					ref={triggerRef}
 					id={id ?? `select-${invalidId}`}
-					aria-invalid={mergedAriaInvalid}
-					aria-describedby={mergedAriaDescribedBy}
-					className={clsx("themed-select-trigger", className)}
 					type="button"
 					disabled={disabled}
+					aria-invalid={invalid ? true : triggerProps["aria-invalid"]}
+					aria-describedby={
+						[triggerProps["aria-describedby"], invalid ? invalidId : undefined]
+							.filter(Boolean)
+							.join(" ") || undefined
+					}
+					className={clsx("themed-select-trigger", className)}
 					data-value={value}
 				>
-					<span className="themed-select-value" title={textValue(triggerValue)}>
-						<SelectPrimitive.Value placeholder={triggerValue}>
-							{triggerValue}
-						</SelectPrimitive.Value>
+					<span className="themed-select-value" title={textValue(label)}>
+						<SelectPrimitive.Value>{label}</SelectPrimitive.Value>
 					</span>
-					<SelectPrimitive.Icon
-						className="themed-select-icon"
-						aria-hidden="true"
-					>
-						<ChevronDown size={18} strokeWidth={2.5} />
+					<SelectPrimitive.Icon className="themed-select-icon">
+						<ChevronDown size={18} />
 					</SelectPrimitive.Icon>
 				</SelectPrimitive.Trigger>
 				<SelectPrimitive.Portal>
-					<SelectPrimitive.Content
-						className={clsx("themed-select-content", contentClassName)}
-						position="popper"
-						sideOffset={4}
-						collisionPadding={8}
+					<SelectPrimitive.Positioner
+						className="ui-positioner"
+						alignItemWithTrigger={false}
+						sideOffset={5}
+						collisionPadding={10}
 					>
-						<SelectPrimitive.ScrollUpButton
-							className="themed-select-scroll-button"
-							aria-hidden="true"
+						<SelectPrimitive.Popup
+							className={clsx("themed-select-content", contentClassName)}
 						>
-							<ChevronUp size={16} strokeWidth={2.5} />
-						</SelectPrimitive.ScrollUpButton>
-						<SelectPrimitive.Viewport className="themed-select-viewport">
-							{options.map((option) => {
-								const itemValue =
-									option.value === "" ? emptyRadixValue : option.value;
-								return (
+							<SelectPrimitive.ScrollUpArrow className="themed-select-scroll-button">
+								<ChevronUp size={16} />
+							</SelectPrimitive.ScrollUpArrow>
+							<SelectPrimitive.List className="themed-select-viewport">
+								{options.map((option) => (
 									<SelectPrimitive.Item
 										key={option.key}
-										className="themed-select-item"
-										value={itemValue}
-										textValue={textValue(option.children)}
+										value={option.value}
+										label={textValue(option.children)}
 										disabled={option.disabled}
+										className="themed-select-item"
 										data-value={option.value}
 									>
-										<SelectPrimitive.ItemText asChild>
-											<span className="themed-select-item-text">
-												{option.children}
-											</span>
+										<SelectPrimitive.ItemText className="themed-select-item-text">
+											{option.children}
 										</SelectPrimitive.ItemText>
-										{option.value === "" && value === "" ? (
-											<span
-												className="themed-select-item-indicator"
-												aria-hidden="true"
-											>
-												<Check size={16} strokeWidth={2.75} />
-											</span>
-										) : (
-											<SelectPrimitive.ItemIndicator className="themed-select-item-indicator">
-												<Check size={16} strokeWidth={2.75} />
-											</SelectPrimitive.ItemIndicator>
-										)}
+										<SelectPrimitive.ItemIndicator className="themed-select-item-indicator">
+											<Check size={16} />
+										</SelectPrimitive.ItemIndicator>
 									</SelectPrimitive.Item>
-								);
-							})}
-						</SelectPrimitive.Viewport>
-						<SelectPrimitive.ScrollDownButton
-							className="themed-select-scroll-button"
-							aria-hidden="true"
-						>
-							<ChevronDown size={16} strokeWidth={2.5} />
-						</SelectPrimitive.ScrollDownButton>
-					</SelectPrimitive.Content>
+								))}
+							</SelectPrimitive.List>
+							<SelectPrimitive.ScrollDownArrow className="themed-select-scroll-button">
+								<ChevronDown size={16} />
+							</SelectPrimitive.ScrollDownArrow>
+						</SelectPrimitive.Popup>
+					</SelectPrimitive.Positioner>
 				</SelectPrimitive.Portal>
 			</SelectPrimitive.Root>
 			{invalid && (

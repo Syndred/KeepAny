@@ -141,7 +141,7 @@ async function openAi(
 		.getByRole("button", { name: copy.assistantMenu, exact: true })
 		.click();
 	await page
-		.getByRole("link", { name: copy.assistantAccess, exact: true })
+		.getByRole("menuitem", { name: copy.assistantAccess, exact: true })
 		.click();
 	const trigger = page.getByRole("button", { name: copy.askAssistant, exact: true });
 	await trigger.click();

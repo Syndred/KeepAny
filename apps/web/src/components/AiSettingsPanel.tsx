@@ -1,3 +1,4 @@
+import { Input } from "./ui/input";
 import { Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -102,7 +103,7 @@ export function AiConnectionFields({
 			</div>
 			<div className="field">
 				<label htmlFor={`${idPrefix}-model`}>{t("aiSettingsModel")}</label>
-				<input
+				<Input
 					id={`${idPrefix}-model`}
 					value={value.model}
 					disabled={disabled}
@@ -116,7 +117,7 @@ export function AiConnectionFields({
 			</div>
 			<div className="field wide">
 				<label htmlFor={`${idPrefix}-url`}>{t("aiSettingsBaseUrl")}</label>
-				<input
+				<Input
 					id={`${idPrefix}-url`}
 					type="url"
 					value={value.baseURL}
@@ -139,7 +140,7 @@ export function AiConnectionFields({
 			{showApiKey && value.keySource === "session" && (
 				<div className="field wide">
 					<label htmlFor={`${idPrefix}-key`}>{t("aiSettingsApiKey")}</label>
-					<input
+					<Input
 						id={`${idPrefix}-key`}
 						type="password"
 						value={value.apiKey ?? ""}
@@ -562,7 +563,7 @@ export function AiSettingsPanel() {
 				{draft.keySource === "session" && (
 					<div className="field wide">
 						<label htmlFor="ai-settings-api-key">{t("aiSettingsApiKey")}</label>
-						<input
+						<Input
 							id="ai-settings-api-key"
 							type="password"
 							autoComplete="off"
@@ -589,7 +590,7 @@ export function AiSettingsPanel() {
 					<div className="field wide ai-settings-vault">
 						<p>{t("aiSettingsVaultHint")}</p>
 						<label htmlFor="ai-settings-api-key">{t("aiSettingsApiKey")}</label>
-						<input
+						<Input
 							id="ai-settings-api-key"
 							type="password"
 							autoComplete="off"
@@ -656,7 +657,7 @@ export function AiSettingsPanel() {
 								<label htmlFor="ai-settings-master">
 									{t("pwVaultMasterPassword")}
 								</label>
-								<input
+								<Input
 									id="ai-settings-master"
 									type="password"
 									autoComplete="off"

@@ -85,6 +85,7 @@ for (const locale of ["zh-CN", "en"] as const) for (const width of [390, 1280]) 
 			// Found by /qa on 2026-10-27. Report: docs/qa/2026-10-27/scopes/T01.md
 			await expect(page.locator(".sidebar .sortable-nav-link.active")).toHaveText([t(group)]);
 			await expect(page.locator(".sidebar .sortable-nav-link[aria-current='page']")).toHaveCount(1);
+			if (await page.locator(".workspace-navigation").count()) await expect(page.locator(".workspace-navigation > a[aria-current='page']")).toHaveCount(1);
 			await expect(page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).resolves.toBe(true);
 			await expect.poll(() => ordinaryRecords(page)).toBe(before);
 		}

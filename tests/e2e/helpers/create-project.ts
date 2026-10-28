@@ -10,7 +10,7 @@ export async function createProject(page: Page, name: string) {
 		.getByRole("button", { name: /^(Save|保存)$/, exact: true })
 		.click();
 	await expect(dialog).toBeHidden();
-	await page.locator("main.page .list-row").filter({ hasText: name }).click();
+	await page.locator("main.page .asset-project-card").filter({ hasText: name }).click();
 	await expect(page).toHaveURL(/\/assets\/project\/[^/]+$/);
 	const id = new URL(page.url()).pathname.split("/").at(-1);
 	if (!id) throw new Error("Project detail has no ID");

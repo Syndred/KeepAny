@@ -1,3 +1,5 @@
+import { Textarea } from "./ui/textarea";
+import { Input } from "./ui/input";
 import { Link } from "@tanstack/react-router";
 import { Check, Network, Search, WandSparkles } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -587,7 +589,7 @@ export function VaultAccountLinksDialog({
 					</span>
 					<label className="vault-connect-search">
 						<Search size={18} />
-						<input
+						<Input
 							type="search"
 							value={query}
 							onChange={(event) => setQuery(event.target.value)}
@@ -753,7 +755,7 @@ export function VaultAccountLinksDialog({
 															<span className="sr-only">
 																{t("pwConnectHint")}
 															</span>
-															<textarea
+															<Textarea
 																rows={1}
 																maxLength={500}
 																value={row.hint}

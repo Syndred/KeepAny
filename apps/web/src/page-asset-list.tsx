@@ -1,3 +1,4 @@
+import { Input } from "./components/ui/input";
 import { lazy, Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
@@ -37,6 +38,7 @@ import {
 	validKind,
 } from "./view-shared";
 import { Select, SelectOption } from "./components/ui/select";
+import { AssetViewToggle, useAssetView } from "./components/AssetViewToggle";
 import { AssetMetrics } from "./components/AssetMetrics";
 import { useWorkspaceSummary } from "./use-workspace-summary";
 import type { AssetSummary } from "./workspace-summary";
@@ -299,7 +301,7 @@ function CategoryStrip({
 					<div className="card-header"><h3>{editingCategory ? t("categoryEdit") : memberCategory ? t("categoryMembers") : t("newCategory")}</h3></div>
 					{(!memberCategory || editingCategory) && <div className="field">
 						<label htmlFor="category-name">{t("categoryName")}</label>
-						<input
+						<Input
 							id="category-name"
 							value={name}
 							maxLength={60}
@@ -389,18 +391,6 @@ function assetDomain(url: string) {
 	catch { return url; }
 }
 
-export function ProjectPreview({ asset }: { asset: Asset }) {
-	const { t } = useTranslation();
-	const repository = asset.category === "repository";
-	const domain = assetDomain(asset.url);
-	const screenshotId = asset.projectMedia?.homeScreenshotId ?? "";
-	if (repository) return <div className="asset-repository-cover"><Code2 size={36} strokeWidth={1.8} /><strong title={asset.name}>{asset.name}</strong><small>{domain || t("projectRepoCover")}</small></div>;
-	return <div className={`asset-editorial-preview asset-editorial-${asset.category}`}>
-		<div className="asset-browser-bar"><span /><span /><span /><small>{domain || asset.name}</small></div>
-		<div className={`asset-browser-body${screenshotId ? " has-image" : ""}`}><AssetCover asset={asset} imageId={screenshotId} />{!screenshotId && <div className="asset-editorial-copy"><span className="asset-editorial-kicker">{domain || niceCategory(asset.category, t)}</span><strong title={asset.name}>{asset.name}</strong>{asset.description && <p>{asset.description}</p>}</div>}</div>
-	</div>;
-}
-
 function rememberAssetList(asset: Asset, search: string) {
 	sessionStorage.removeItem(workspaceReturnKey);
 	sessionStorage.setItem(`keepany-scroll-${asset.kind}`, String(window.scrollY));
@@ -416,12 +406,9 @@ export function ProjectCard({ asset, search, backlinks, summary, onOpen }: { ass
 	const repository = asset.category === "repository";
 	const domain = assetDomain(asset.url);
 	return <Link className={`asset-project-card list-row ${repository ? "is-repository" : ""}`} to="/assets/$kind/$id" params={{ kind: asset.kind, id: asset.id }} onClick={() => { rememberAssetList(asset, search); onOpen?.(); }}>
-		<div className="asset-project-cover">
-			<ProjectPreview asset={asset} />
-		</div>
-		<div className="asset-project-info"><div className="asset-project-heading"><span className="asset-project-avatar">{Array.from(asset.name)[0]?.toLocaleUpperCase() || "•"}</span><strong>{asset.name}</strong>{asset.status && <span className="chip">{t(asset.status)}</span>}</div>
-			<p>{asset.description || niceCategory(asset.category, t)}</p>
-			<AssetMetrics asset={asset} summary={summary} />
+		<div className="asset-project-info"><div className="asset-card-summary"><div className="asset-project-heading"><span className={`asset-project-avatar${asset.projectMedia?.homeScreenshotId ? " has-image" : ""}`}>{asset.projectMedia?.homeScreenshotId ? <AssetCover asset={asset} imageId={asset.projectMedia.homeScreenshotId} /> : repository ? <Code2 size={18} /> : Array.from(asset.name)[0]?.toLocaleUpperCase() || "•"}</span><strong title={asset.name}>{asset.name}</strong>{asset.status && <span className="chip">{t(asset.status)}</span>}</div>
+			{asset.description && <p>{asset.description}</p>}</div>
+			<div className="asset-card-facts"><AssetMetrics asset={asset} summary={summary} /></div>
 			<div className="asset-project-foot"><span>{domain || niceCategory(asset.category, t)}</span><span className="asset-project-backlinks">{t("projectCardBacklinks", { count: backlinks.total, pending: backlinks.pending })}<ArrowRight size={14} aria-hidden="true" /></span></div>
 		</div>
 	</Link>;
@@ -442,10 +429,9 @@ export function LibraryCard({ asset, search, summary, onOpen }: { asset: Asset; 
 	const Icon = asset.kind === "subscription" ? CreditCard : asset.kind === "vault" ? Shield : Package;
 	const coverId = asset.kind === "item" ? asset.itemMedia?.coverId : asset.attachments[0];
 	return <Link className="asset-library-card list-row" to="/assets/$kind/$id" params={{ kind: asset.kind, id: asset.id }} onClick={() => { rememberAssetList(asset, search); onOpen?.(); }}>
-		<div className="asset-library-cover"><AssetCover asset={asset} imageId={coverId} />{!coverId && <><Icon size={40} strokeWidth={1.7} /><span>{niceCategory(asset.category, t)}</span></>}</div>
-		<div className="asset-library-body"><strong>{asset.name}</strong><small>{asset.description || asset.location || niceCategory(asset.category, t)}</small><div className="asset-library-meta">
+		<div className="asset-library-body"><div className="asset-card-summary"><div className="asset-library-heading"><span className={`asset-kind-icon${coverId ? " has-image" : ""}`}>{coverId ? <AssetCover asset={asset} imageId={coverId} /> : <Icon size={19} strokeWidth={1.8} />}</span><strong title={asset.name}>{asset.name}</strong></div>{asset.description && <small>{asset.description}</small>}</div><div className="asset-card-facts"><div className="asset-library-meta">
 			{asset.kind === "subscription" ? <><span>{money(asset.amount, asset.currency, i18n.language)}</span><span>{asset.interval} {t(asset.cycle)}</span>{asset.dueDate && <span>{t("dueDate")}: {date(asset.dueDate, i18n.language)}</span>}</> : asset.kind === "vault" ? <>{asset.category && <span>{niceCategory(asset.category, t)}</span>}{asset.url && <span>{asset.url}</span>}</> : <>{asset.category && <span>{niceCategory(asset.category, t)}</span>}{asset.location && <span>{asset.location}</span>}{asset.warrantyDate && <span>{t("warrantyDate")}: {date(asset.warrantyDate, i18n.language)}</span>}</>}
-		</div><AssetMetrics asset={asset} summary={summary} /><div className="asset-library-foot"><span className="chip">{asset.kind === "item" ? asset.itemLifecycleStatus ? t(`itemStatus_${asset.itemLifecycleStatus}`) : t("itemStatusUnrecorded") : t(asset.status)}</span>{asset.kind === "item" && asset.status !== "active" && <span className="chip">{t(asset.status)}</span>}<ArrowRight size={14} aria-hidden="true" /></div></div>
+		</div><AssetMetrics asset={asset} summary={summary} /></div><div className="asset-library-foot"><span className="chip">{asset.kind === "item" ? asset.itemLifecycleStatus ? t(`itemStatus_${asset.itemLifecycleStatus}`) : t("itemStatusUnrecorded") : t(asset.status)}</span>{asset.kind === "item" && asset.status !== "active" && <span className="chip">{t(asset.status)}</span>}<ArrowRight size={14} aria-hidden="true" /></div></div>
 	</Link>;
 }
 
@@ -466,6 +452,7 @@ export function AssetKindList({ kind, beforeList, afterList, passwordCounts, onA
 }) {
 	const { data, search, notify } = useAppContext();
 	const workspace = useWorkspaceSummary();
+ const [assetView, setAssetView] = useAssetView();
 	const [accountSearch, setAccountSearch] = useState(() => sessionStorage.getItem("keepany-account-list-search") || "");
 	const accountSearchRef = useRef<HTMLInputElement>(null);
 	const wasPrivateSearch = useRef(privateSearch);
@@ -590,8 +577,7 @@ export function AssetKindList({ kind, beforeList, afterList, passwordCounts, onA
 	return (
 		<main className={kind === "vault" ? "page vault-page" : "page"}>
 			{kind !== "vault" && <PageTitle
-				eyebrow={kind === "project" ? "PROJECT LIBRARY" : kind === "account" ? "MY ACCOUNTS" : t("brandName")}
-				title={t(kind === "project" ? "projectListTitle" : kind === "account" ? "accountsWorkspace" : kind === "subscription" ? "subscriptionListTitle" : "itemListTitle")}
+				title={t(kind === "account" ? "accountsWorkspace" : kind)}
 				subtitle={t(kind === "project" ? "projectListSubtitle" : kind === "account" ? "workspaceAccountSubtitle" : kind === "item" ? "itemListSubtitle" : "summary")}
 				action={
 					<>
@@ -614,7 +600,7 @@ export function AssetKindList({ kind, beforeList, afterList, passwordCounts, onA
 			{<>
 			<CategoryStrip key={kind} kind={kind} chosen={category} choose={choose} searchControl={kind === "account" ? <div className="asset-account-search">
 				<Search size={18} aria-hidden="true" />
-				<input ref={accountSearchRef} type="search" aria-label={t("accountListSearch")} placeholder={t("accountListSearchHint")} autoComplete="off" value={accountSearch} onChange={(event) => changeAccountSearch(event.target.value)} onKeyDown={(event) => { if (event.key === "Escape") { event.stopPropagation(); changeAccountSearch(""); } }} />
+				<Input ref={accountSearchRef} type="search" aria-label={t("accountListSearch")} placeholder={t("accountListSearchHint")} autoComplete="off" value={accountSearch} onChange={(event) => changeAccountSearch(event.target.value)} onKeyDown={(event) => { if (event.key === "Escape") { event.stopPropagation(); changeAccountSearch(""); } }} />
 				{accountSearch && <Button variant="ghost" size="icon" aria-label={t("accountListClearSearch")} onClick={() => { changeAccountSearch(""); accountSearchRef.current?.focus(); }}><X size={18} /></Button>}
 			</div> : undefined} />
 			{(availableTags.length > 0 || tag) && (
@@ -627,6 +613,7 @@ export function AssetKindList({ kind, beforeList, afterList, passwordCounts, onA
 					</Select>
 				</div>
 			)}
+			{kind !== "account" && kind !== "vault" && <div className="asset-list-view-tools"><AssetViewToggle value={assetView} onChange={setAssetView} /></div>}
 			{kind === "vault" ? (
 				<section className="card vault-table-wrap asset-list-content" aria-label={t("vaultReferencesTitle")} tabIndex={assets.length ? 0 : undefined}>
 				{assets.length ? <table className="vault-reference-table">
@@ -644,7 +631,7 @@ export function AssetKindList({ kind, beforeList, afterList, passwordCounts, onA
 						</tr>;
 					})}</tbody>
 				</table> : <div className="vault-reference-empty"><strong>{category || tag || normalizedSearch ? t("noMatches") : t("none")}</strong></div>}
-			</section>) : <section className={`asset-list-content ${kind === "project" ? "asset-project-grid" : kind === "account" ? "asset-account-grid" : "asset-library-grid"}`}>
+			</section>) : <section className={`asset-list-content ${assetView === "list" && kind !== "account" ? "asset-dense-list" : ""} ${kind === "project" ? "asset-project-grid" : kind === "account" ? "asset-account-grid" : "asset-library-grid"}`}>
 				{assets.length ? (
 						assets.map((a) => kind === "project" ? <ProjectCard asset={a} search={listSearch} summary={workspace.summaries.get(a.id)} backlinks={backlinksByAsset.get(a.id) ?? { total: 0, pending: 0 }} key={a.id} /> : kind === "account" ? <AccountCard asset={a} search={listSearch} passwordCount={passwordCounts?.get(a.id)} connectionCount={new Set(data.relations.filter((relation) => !relation.deleted && liveIds.has(relation.from) && liveIds.has(relation.to) && relation.from !== relation.to && (relation.from === a.id || relation.to === a.id)).map((relation) => relation.from === a.id ? relation.to : relation.from)).size} key={a.id} /> : <LibraryCard asset={a} search={listSearch} summary={workspace.summaries.get(a.id)} key={a.id} />)
 				) : (

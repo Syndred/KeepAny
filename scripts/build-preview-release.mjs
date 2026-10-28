@@ -29,7 +29,7 @@ const sourcePathAllowed = path => /^(?:apps|packages|patches|scripts)\//.test(pa
   || /^legal\//.test(path)
   || /^release\/preview\//.test(path)
   || ['docs/试用指南.md', 'docs/evidence/2026-10-13/stackperch/onboarding-en-1280-sample.png', 'docs/evidence/2026-10-13/stackperch/onboarding-zh-1280-sample.png', 'docs/evidence/2026-10-27/keepany-return/onboarding/onboarding-en-1280-sample.png', 'docs/evidence/2026-10-27/keepany-return/onboarding/onboarding-zh-1280-sample.png'].includes(path)
-  || /^(?:package\.json|pnpm-lock\.yaml|pnpm-workspace\.yaml|tsconfig\.json|(?:vite|vitest|playwright)[\w.-]*\.config\.[\w]+|LICENSE|NOTICE\.md|SBOM\.spdx\.json|SECURITY\.md|CONTRIBUTING\.md|README(?:\.en)?\.md|\.gitignore)$/.test(path);
+  || /^(?:package\.json|components\.json|biome\.json|pnpm-lock\.yaml|pnpm-workspace\.yaml|tsconfig\.json|(?:vite|vitest|playwright)[\w.-]*\.config\.[\w]+|LICENSE|NOTICE\.md|SBOM\.spdx\.json|SECURITY\.md|CONTRIBUTING\.md|README(?:\.en)?\.md|\.gitignore)$/.test(path);
 const sourcePaths = [...new Set(execFileSync('git', ['ls-files', '-z', '--cached', '--others', '--exclude-standard'], { cwd: root, encoding: 'utf8', maxBuffer: 20 * 1024 * 1024 }).split('\0').filter(path => path && sourcePathAllowed(path)))].sort();
 const sourceSnapshot = new Map();
 for (const path of sourcePaths) {
