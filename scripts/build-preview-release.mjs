@@ -184,7 +184,10 @@ const licenseInventory = {
 await put('legal/preview-license-inventory.json', `${JSON.stringify(licenseInventory, null, 2)}\n`);
 const packageIds = new Set(licenses.map(pkg => `${pkg.name}@${pkg.version}`));
 const previewPackages = repositorySbom.packages.filter(pkg => packageIds.has(`${pkg.name}@${pkg.versionInfo}`));
-if (previewPackages.length !== licenses.length) throw Error('Distributed dependency inventory differs from SBOM; regenerate repository legal artifacts.');
+if (previewPackages.length !== licenses.length) {
+  const recorded = new Set(previewPackages.map(pkg => `${pkg.name}@${pkg.versionInfo}`));
+  throw Error(`Distributed dependency inventory differs from SBOM: ${[...packageIds].filter(id => !recorded.has(id)).join(', ')}. Regenerate repository legal artifacts.`);
+}
 const spdxIds = new Set(previewPackages.map(pkg => pkg.SPDXID));
 await put('SBOM.spdx.json', `${JSON.stringify({
   ...repositorySbom,
