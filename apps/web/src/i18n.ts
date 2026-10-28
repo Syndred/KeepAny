@@ -10,10 +10,15 @@ import { passwordVaultCopy } from "./password-vault-copy";
 import { reminderCopy } from "./reminder-copy";
 import { smartImportCopy } from "./smart-import-copy";
 import { taskEditCopy } from "./task-edit-copy";
+import { sampleLibraryCopy } from "./sample-library-copy";
 import { financeCopy } from "./finance-copy";
 import { candidateMergeCopy } from "./candidate-merge-copy";
 
 const copy: Record<string, [string, string]> = {
+	workspaceAddAccount: ["新增账号", "Add account"],
+	itemLoanHistory: ["借还", "Lending"],
+	itemMaintenanceHistory: ["维护", "Maintenance"],
+	relationGraphCurrent: ["当前资料", "Current record"],
  assetView: ["资产视图", "Asset view"],
  assetListView: ["紧凑列表", "Compact list"],
  assetCardView: ["卡片", "Cards"],
@@ -231,7 +236,7 @@ const copy: Record<string, [string, string]> = {
 	assetCategories: ["按类型分类", "By asset type"],
 	search: ["搜索资产、标签…", "Search assets, tags…"],
 	accountListSearch: ["搜索账号", "Search accounts"],
-	accountListSearchHint: ["搜索名称、账号或服务商", "Search name, account or provider"],
+	accountListSearchHint: ["搜索账号和登录条目", "Search accounts and logins"],
 	accountListClearSearch: ["清空账号搜索", "Clear account search"],
 	globalSearch: ["搜索全部资料", "Search all records"],
 	globalSearchHint: [
@@ -2497,6 +2502,7 @@ Object.assign(copy, {
 Object.assign(
 	copy,
 	passwordVaultCopy,
+	sampleLibraryCopy,
 	aiCopy,
 	aiWorkflowCopy,
 	reminderCopy,

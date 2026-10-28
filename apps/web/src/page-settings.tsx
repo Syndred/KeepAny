@@ -15,7 +15,7 @@ import { AiSettingsPanel } from "./components/AiSettingsPanel";
 import { ReminderSettingsPanel } from "./components/ReminderSettingsPanel";
 import { Button } from "./components/ui/button";
 import { seed } from "./data";
-import { COLLECTIONS_PREFERENCE_ID } from "./collection-model";
+import { SAMPLE_LIBRARY_ID, sampleLibraryComplete } from "./sample-library";
 import { PageTitle, useAppContext } from "./view-shared";
 import "./settings-intake-restoration.css";
 import { Select, SelectOption } from "./components/ui/select";
@@ -590,14 +590,14 @@ export function SettingsPage() {
 				<div className="settings-section-body">
 			<section className="card padded">
 				<h2>{t("trial")}</h2>
-				<p>{t("emptyHint")}</p>
+				<p>{t("sampleLibraryDescription")}</p>
 				<Button
-					disabled={data.loading || data.assets.some(asset => !asset.purged) || seeding}
+					disabled={data.loading || data.preferences.some((preference) => preference.id === SAMPLE_LIBRARY_ID && sampleLibraryComplete(preference.value)) || seeding}
 					onClick={async () => {
 						setSeeding(true);
 						try {
-							await seed(t, i18n.language, data.preferences.find(preference => preference.id === COLLECTIONS_PREFERENCE_ID)?.value);
-							notify(t("saved"));
+							await seed(t, i18n.language);
+							notify(t("sampleLibraryAdded"));
 						} catch {
 							notify(t("error"));
 						} finally {
@@ -605,7 +605,7 @@ export function SettingsPage() {
 						}
 					}}
 				>
-					{t("loadSample")}
+					{t(data.preferences.some((preference) => preference.id === SAMPLE_LIBRARY_ID && sampleLibraryComplete(preference.value)) ? "sampleLibraryPresent" : "loadSample")}
 				</Button>
 			</section>
 				</div>

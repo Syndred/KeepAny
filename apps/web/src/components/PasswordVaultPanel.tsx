@@ -20,7 +20,7 @@ import {
 	WandSparkles,
 	X,
 } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import type { Asset } from "../../../../packages/domain/src";
 import { MIN_MASTER_PASSWORD_LENGTH } from "../../../../packages/password-vault/src/policy";
@@ -49,6 +49,12 @@ type PasswordVaultPanelProps = {
 	notify?: (message: string) => void;
 	focusAssetId?: string;
 	embedded?: boolean;
+	headerAction?: ReactNode;
+	sampleAccounts?: Asset[];
+	renderAccounts?: (tools: {
+		renderEntry: (entry: PasswordVaultEntrySummary) => ReactNode;
+		addEntry: (assetId: string) => void;
+	}) => ReactNode;
 };
 
 type ManualCopy = { label: string; value: string };
@@ -116,6 +122,9 @@ export function PasswordVaultPanel({
 	notify,
 	focusAssetId,
 	embedded = false,
+	headerAction,
+	sampleAccounts = [],
+	renderAccounts,
 }: PasswordVaultPanelProps) {
 	const Heading = embedded ? "h2" : "h1";
 	const { t, i18n } = useTranslation();
@@ -143,15 +152,21 @@ export function PasswordVaultPanel({
 				".password-vault-entry-list .password-vault-entry",
 			),
 		].find((node) => node.dataset.entryId === hash.slice(9));
-		card?.scrollIntoView({ block: "center" });
-		card?.focus({ preventScroll: true });
-	}, [hash, snapshot.status]);
+		const group = card?.closest("details");
+		if (group) group.open = true;
+		const frame = requestAnimationFrame(() => {
+			card?.scrollIntoView({ block: "center" });
+			card?.focus({ preventScroll: true });
+		});
+		return () => cancelAnimationFrame(frame);
+	}, [hash, snapshot.status, snapshot.entries]);
 	const [readyError, setReadyError] = useState<string | null>(null);
 	const [messageKey, setMessageKey] = useState<string | null>(null);
 	const [busy, setBusy] = useState(false);
 	const [master, setMaster] = useState("");
 	const [masterConfirm, setMasterConfirm] = useState("");
 	const [search, setSearch] = useState("");
+	const [accessOpen, setAccessOpen] = useState(!assets.some((asset) => asset.kind === "account" && !asset.deleted));
 	const [assetFilter, setAssetFilter] = useState(focusAssetId ?? "");
 	const [editorId, setEditorId] = useState<string | null>(null);
 	const [draft, setDraft] = useState<PasswordVaultEntryDraft | null>(null);
@@ -706,6 +721,51 @@ export function PasswordVaultPanel({
 		);
 	}
 
+	const missingSampleAccounts = sampleAccounts.filter((asset) => !snapshot.entries.some((entry) => entry.linkedAssetIds.includes(asset.id)));
+	async function addSampleLogins() {
+		if (session?.getSnapshot().status !== "unlocked" || busy || entryActionRunning.current) return;
+		entryActionRunning.current = true; setBusy(true); clearMessage();
+		try {
+			for (const asset of missingSampleAccounts) {
+				if (session.getSnapshot().entries.some((entry) => entry.linkedAssetIds.includes(asset.id))) continue;
+				await session.saveEntry({ title: asset.name, username: asset.username, url: asset.url, notes: "", password: asset.username ? await generatePassword() : "", linkedAssetIds: [asset.id] });
+			}
+			announce("sampleLoginsAdded");
+		} catch (error) { announce(errorKey(error)); }
+		finally { entryActionRunning.current = false; setBusy(false); }
+	}
+
+	const vaultAccess = <>
+			{snapshot.status === "loading" && (
+				<div className="password-vault-loading">
+					<RefreshCw size={18} /> {t("pwVaultLoading")}
+				</div>
+			)}
+			{snapshot.status === "empty" && (
+				<EmptyState
+					busy={busy}
+					master={master}
+					masterConfirm={masterConfirm}
+					showMaster={showMaster}
+					setMaster={setMaster}
+					setMasterConfirm={setMasterConfirm}
+					setShowMaster={setShowMaster}
+					onCreate={createVault}
+					onImport={() => setImportOpen(true)}
+				/>
+			)}
+			{snapshot.status === "locked" && (
+				<LockedState
+					busy={busy}
+					master={master}
+					showMaster={showMaster}
+					setMaster={setMaster}
+					setShowMaster={setShowMaster}
+					onUnlock={unlockVault}
+				/>
+			)}
+	</>;
+
 	const message = messageKey ? t(messageKey) : notice ? t(notice) : "";
 
 	const vaultStatus = (
@@ -713,7 +773,7 @@ export function PasswordVaultPanel({
 			<p>
 				{snapshot.status === "unlocked"
 					? t("pwVaultEntriesCount", { count: snapshot.entries.length })
-					: t("pwVaultSubtitle")}
+					: t(renderAccounts ? "workspaceAccountSubtitle" : "pwVaultSubtitle")}
 			</p>
 			<Badge
 				role="status"
@@ -758,9 +818,10 @@ export function PasswordVaultPanel({
 				className={`password-vault-header card-header${snapshot.status === "unlocked" ? " password-vault-header-inline" : ""}`}
 			>
 				<div>
-					<Heading>{t("pwVaultTitle")}</Heading>
+					<Heading>{t(renderAccounts ? "accountsWorkspace" : "pwVaultTitle")}</Heading>
 					{vaultStatus}
 				</div>
+				{headerAction}
 			</header>
 			{message && (
 				<p className="password-vault-message" role="status">
@@ -775,38 +836,14 @@ export function PasswordVaultPanel({
 					</Button>
 				</div>
 			) : null}
-			{snapshot.status === "loading" && (
-				<div className="password-vault-loading">
-					<RefreshCw size={18} /> {t("pwVaultLoading")}
-				</div>
-			)}
-			{snapshot.status === "empty" && (
-				<EmptyState
-					busy={busy}
-					master={master}
-					masterConfirm={masterConfirm}
-					showMaster={showMaster}
-					setMaster={setMaster}
-					setMasterConfirm={setMasterConfirm}
-					setShowMaster={setShowMaster}
-					onCreate={createVault}
-					onImport={() => setImportOpen(true)}
-				/>
-			)}
-			{snapshot.status === "locked" && (
-				<LockedState
-					busy={busy}
-					master={master}
-					showMaster={showMaster}
-					setMaster={setMaster}
-					setShowMaster={setShowMaster}
-					onUnlock={unlockVault}
-				/>
-			)}
+{renderAccounts && snapshot.status !== "unlocked" ? <details className="unified-vault-access" open={accessOpen} onToggle={(event) => setAccessOpen(event.currentTarget.open)}>
+				<summary>{t(snapshot.status === "empty" ? "pwVaultCreate" : "pwVaultUnlock")}</summary>{vaultAccess}
+			</details> : vaultAccess}
+			{renderAccounts && snapshot.status !== "unlocked" && renderAccounts({ renderEntry, addEntry: () => {} })}
 			{snapshot.status === "unlocked" && (
 				<>
 					<div className="password-vault-toolbar">
-						<div className="password-vault-search field">
+						{(!renderAccounts || assetFilter) && <div className="password-vault-search field">
 							<label
 								className="password-vault-sr"
 								htmlFor="password-vault-search-input"
@@ -821,8 +858,9 @@ export function PasswordVaultPanel({
 								placeholder={t("pwVaultSearch")}
 								autoComplete="off"
 							/>
-						</div>
+						</div>}
 						<div className="actions">
+							{missingSampleAccounts.length > 0 && <Button size="small" disabled={busy} onClick={() => void addSampleLogins()}>{t("sampleLogins")}</Button>}
 							<VaultIconButton
 								label={t("pwConnectTitle")}
 								disabled={busy}
@@ -918,7 +956,9 @@ export function PasswordVaultPanel({
 						</div>
 					)}
 
-					<div className="password-vault-entries-section">
+					{renderAccounts && !assetFilter ? renderAccounts({ renderEntry, addEntry: (assetId) => {
+						clearMessage(); setEditorId("new"); setDraft(blankDraft(assetId)); setSelectedAssetId(""); setShowPassword(false);
+					} }) : <div className="password-vault-entries-section">
 						{filteredEntries.length ? (
 							<div className="password-vault-entry-list">
 								{filteredEntries.map((entry) => renderEntry(entry))}
@@ -933,7 +973,7 @@ export function PasswordVaultPanel({
 								</p>
 							</div>
 						)}
-					</div>
+					</div>}
 					<div className="password-vault-trash" id="vault-trash">
 						<div className="password-vault-section-title">
 							<h3 tabIndex={-1}>

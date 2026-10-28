@@ -26,6 +26,9 @@
   --muted: #5d6674;
   --line: #20304a;
   --line-soft: #d9d8cc;
+  --field-background: #fffefa;
+  --field-border-width: 1.5px;
+  --field-radius: 9px;
   --yellow: #ffd24c;
   --yellow-soft: #fff0b8;
   --accent: var(--yellow);
@@ -271,11 +274,11 @@ p { line-height: 1.5; }
 .field input, .field textarea, input.field, textarea.field {
   width: 100%;
   min-width: 0;
-  min-height: 38px;
+  min-height: 40px;
   padding: 8px 10px;
-  border: 1.5px solid var(--line);
-  border-radius: 9px;
-  background: #fffefa;
+  border: var(--field-border-width) solid var(--line);
+  border-radius: var(--field-radius);
+  background: var(--field-background);
   color: var(--ink);
   font-size: 14px;
   font-weight: 450;
@@ -473,6 +476,10 @@ p { line-height: 1.5; }
   .mobile-nav [aria-current="page"], .mobile-nav .active { border-color: var(--line); background: var(--yellow); }
   .mobile-nav svg { width: 18px; height: 18px; }
   .toast { bottom: calc(80px + env(safe-area-inset-bottom)); }
+}
+
+@media (max-width: 760px) {
+  .field > input, input.field { min-height: 44px; font-size: 16px; }
 }
 
 @media (max-width: 620px) {

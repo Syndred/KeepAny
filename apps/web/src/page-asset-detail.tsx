@@ -5,17 +5,6 @@ import { assetNotes } from "./asset-notes";
 import { accountFamilyGraph } from "./account-family-graph";
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import {
-	Background,
-	Controls,
-	Position,
-	MarkerType,
-	ReactFlow,
-	useUpdateNodeInternals,
-	useStore,
-	type Edge,
-	type Node,
-} from "@xyflow/react";
 import { ArrowDownRight, ArrowLeft, Check, ExternalLink, Plus } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import {
@@ -80,25 +69,8 @@ const AssetEditor = lazy(() =>
 const TaskEditor = lazy(() =>
 	import("./workflows").then((module) => ({ default: module.TaskEditor })),
 );
-const AccountFamilyGraphView = lazy(() => import("./account-family-graph-view").then((module) => ({ default: module.AccountFamilyGraphView })));
+const AssetRelationGraph = lazy(() => import("./account-family-graph-view").then((module) => ({ default: module.AssetRelationGraph })));
 const PasswordVaultPanel = lazy(() => import("./components/PasswordVaultPanel").then((module) => ({ default: module.PasswordVaultPanel })));
-function GraphNodeMeasurements({ nodeIds }: { nodeIds: string }) {
-	// Controlled nodes do not receive the library's dimensions change unless onNodesChange
-	// is wired. Observe measured internals instead of the stale user-node readiness flag.
-	const initialized = useStore((state) => state.nodeLookup.size > 0 && [...state.nodeLookup.values()].every((node) =>
-		!!node.measured.width && !!node.measured.height && !!node.internals.handleBounds));
-	const updateNodeInternals = useUpdateNodeInternals();
-	useEffect(() => {
-		// An async collection refresh can leave new nodes without measured handle bounds.
-		if (!initialized) updateNodeInternals(JSON.parse(nodeIds) as string[]);
-	}, [initialized, nodeIds, updateNodeInternals]);
-	return null;
-}
-
-function graphLabel(value: string) {
-	const chars = Array.from(value);
-	return chars.length > 18 ? `${chars.slice(0, 18).join("")}…` : value;
-}
 function validCalendarDay(value: string) {
 	if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
 	const parsed = new Date(`${value}T12:00:00Z`);
@@ -533,59 +505,6 @@ export function AssetDetail() {
 			}
 		}
 	}
-	const graphRelationGroups = Array.from(
-		(displayedFamily?.relations ?? visibleRelations)
-			.reduce((groups, relation) => {
-				const pair = JSON.stringify([relation.from, relation.to]);
-				const group = groups.get(pair) ?? [];
-				group.push(relation);
-				groups.set(pair, group);
-				return groups;
-			}, new Map<string, Relation[]>())
-			.values(),
-	);
-	const graphEdges = kind === "account" ? [] : graphRelationGroups.map((group): Edge => {
-		const verified = group.every((relation) => !!relation.verifiedAt);
-		const mixed = group.some((relation) => !!relation.verifiedAt) && !verified;
-		const labels = [...new Set(group.map((relation) => relation.label))];
-		const label = group.length > 2
-			? `${graphLabel(group[0].label)} · +${group.length - 1}`
-			: group.map((relation) => graphLabel(relation.label)).join(" · ");
-		return {
-			id: group[0].id,
-			source: group[0].from,
-			target: group[0].to,
-			type: "smoothstep",
-			data: { labels },
-			markerEnd: group.every(r => r.id.startsWith("pw-link-identifier-")) ? undefined : { type: MarkerType.ArrowClosed },
-			label,
-			className: verified ? "relation-graph-edge--verified" : "relation-graph-edge--pending",
-			ariaLabel: `${liveById.get(group[0].from)?.name} → ${liveById.get(group[0].to)?.name} · ${label} · ${t(verified ? "relationGraphVerified" : mixed ? "relationGraphMixed" : "relationGraphPending")}`,
-			style: {
-				stroke: verified ? "var(--green)" : "var(--muted)",
-				strokeWidth: 2,
-				strokeDasharray: verified ? "none" : "5 4",
-			},
-		};
-	});
-	const graphNodes: Node[] = asset && kind !== "account" ? [asset, ...visibleRelated].map((entry, index) => {
-		const current = entry.id === asset.id;
-		const label = <span key={entry.id} className="asset-graph-label" title={[entry.name, entry.username].filter(Boolean).join(" · ")}>
-			<strong>{entry.name}</strong>
-		</span>;
-		return {
-			id: entry.id,
-			position: current
-				? { x: Math.max(0, visibleRelated.length - 1) * 90 - 15, y: 100 }
-				: { x: 20 + (index - 1) * 180, y: 240 },
-			data: { label },
-			sourcePosition: current ? Position.Bottom : Position.Top,
-			targetPosition: current ? Position.Bottom : Position.Top,
-			type: "default",
-			className: `${current ? "asset-graph-center" : "asset-graph-neighbor"}${graphMatches.has(entry.id) ? " asset-graph-match" : ""}`,
-			ariaLabel: [entry.name, entry.username].filter(Boolean).join(" · "),
-		};
-	}) : [];
 	const ownTasks = data.tasks.filter(
 		(x) => !x.deleted && x.assetId === asset?.id && !x.impactSnapshot,
 	);
@@ -1717,24 +1636,7 @@ export function AssetDetail() {
 								{relationSearch}
 								<details className="account-graph-guide"><summary>{t("accountGraphHelp")}</summary><p><span>{t("accountGraphDirection")}</span><span>{t("relationGraphLegend")}</span></p></details>
 							</div> : relations.length >= 5 ? relationSearch : null}
-							{kind === "account" ? <Suspense fallback={<p role="status">{t("loading")}</p>}><AccountFamilyGraphView root={asset} assets={[asset, ...graphRelated]} relations={displayedFamily?.relations ?? relations} matches={graphMatches} selectedEdgeId={selectedGraphEdgeId} onSelectEdge={setSelectedGraphEdgeId} onVisit={visitRelation} onDeleteRelations={(items) => { setRelationDeleteError(""); setRelationToDelete(items); }} /></Suspense> : <section className="graph" aria-label={t("relations")}>
-								<ReactFlow
-									fitView
-									minZoom={0.1}
-									nodes={graphNodes}
-									edges={graphEdges}
-									onNodeClick={(_, node) => {
-										const target = liveById.get(node.id);
-										if (target) visitRelation(target);
-									}}
-									nodesDraggable={false}
-									nodesConnectable={false}
-								>
-									<GraphNodeMeasurements nodeIds={JSON.stringify([asset.id, ...graphRelated.map((item) => item.id)])} />
-									<Background />
-									<Controls showInteractive={false} />
-								</ReactFlow>
-							</section>}
+							<Suspense fallback={<p role="status">{t("loading")}</p>}><AssetRelationGraph root={asset} assets={[asset, ...graphRelated]} relations={displayedFamily?.relations ?? visibleRelations} matches={graphMatches} selectedEdgeId={selectedGraphEdgeId} onSelectEdge={setSelectedGraphEdgeId} onVisit={visitRelation} onDeleteRelations={(items) => { setRelationDeleteError(""); setRelationToDelete(items); }} /></Suspense>
 							{kind === "account" ? visibleRelations.length > 0 && <details className="account-relation-details" open={relationDetailsOpen} onToggle={(event) => setRelationDetailsOpen(event.currentTarget.open)}>
 								<summary>{t("accountGraphDetails", { count: visibleRelations.length })}</summary>
 								{relationList}
@@ -1923,8 +1825,9 @@ export function AssetDetail() {
 							</label>
 						</div>
 					) : (
-						<>
-							<div className="toolbar">
+						<div className="item-history-forms">
+							<fieldset className="item-history-form"><legend>{t("itemLoanHistory")}</legend>
+							<div className="item-history-fields">
 								{asset.status === "active" && (
 									<><label className="field">
 										<span>{t("borrower")}</span>
@@ -1938,7 +1841,7 @@ export function AssetDetail() {
 									<span>{t("loanReturnNote")}</span>
 									<Input value={itemLoanNote} onChange={(event) => { setItemLoanNote(event.target.value); setItemError(""); }} />
 								</label>
-								<Button
+								<div className="actions item-history-actions"><Button
 									disabled={itemBusy || !["active", "loaned"].includes(asset.status) || (asset.status === "active" && ["repairing", "resold", "retired"].includes(asset.itemLifecycleStatus ?? ""))}
 									onClick={() => void recordItem(asset.status === "loaned" ? "return" : "loan")}
 								>
@@ -1949,8 +1852,10 @@ export function AssetDetail() {
 										{t(asset.status === "archived" ? "reactivateItem" : "archiveItem")}
 									</Button>
 								)}
-							</div>
-							<div className="toolbar">
+								</div>
+							</div></fieldset>
+							<fieldset className="item-history-form"><legend>{t("itemMaintenanceHistory")}</legend>
+							<div className="item-history-fields">
 								<label className="field">
 									<span>{t("maintenanceNotes")}</span>
 									<Input value={itemMaintenanceNote} onChange={(event) => { setItemMaintenanceNote(event.target.value); setItemError(""); }} />
@@ -1963,14 +1868,15 @@ export function AssetDetail() {
 									<span>{t("maintenanceReminderDate")}</span>
 									<DatePicker aria-label={t("maintenanceReminderDate")} value={itemReminderDate} onValueChange={(dateValue) => { setItemReminderDate(dateValue); setItemError(""); }} />
 								</label>
-								<Button
+								<div className="actions item-history-actions"><Button
 									disabled={itemBusy || !["active", "loaned"].includes(asset.status) || ["resold", "retired"].includes(asset.itemLifecycleStatus ?? "")}
 									onClick={() => void recordItem("maintenance")}
 								>
 									{t("maintenance")}
 								</Button>
-							</div>
-						</>
+								</div>
+							</div></fieldset>
+						</div>
 					)}
 					{asset.kind === "subscription" && <p className="subtitle">{t("renewalLocalHint")}</p>}
 					{histories.length ? (

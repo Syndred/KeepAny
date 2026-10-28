@@ -1,6 +1,6 @@
-.date-field { position: relative; display: flex; align-items: center; width: 100%; min-width: 0; border: 1px solid var(--line); border-radius: 9px; background: var(--paper); cursor: pointer; }
+.date-field { position: relative; display: flex; align-items: center; width: 100%; min-width: 0; min-height: 40px; border: var(--field-border-width) solid var(--line); border-radius: var(--field-radius); background: var(--field-background); cursor: pointer; }
 .date-field:focus-within { outline: 2px solid var(--accent); outline-offset: 2px; }
-.date-field > input[type="text"], .field .date-field > input[type="text"] { width: 100%; min-width: 0; min-height: 36px; padding: 7px 38px 7px 10px; border: 0; border-radius: inherit; background: transparent; box-shadow: none; font-size: 14px; font-variant-numeric: tabular-nums; outline: 0; }
+.date-field > input[type="text"], .field .date-field > input[type="text"] { width: 100%; min-width: 0; min-height: 37px; padding: 8px 38px 8px 10px; border: 0; border-radius: inherit; background: transparent; box-shadow: none; font-size: 14px; font-weight: 450; line-height: 1.4; font-variant-numeric: tabular-nums; outline: 0; }
 .date-field:has(input:invalid), .date-field:has(input[aria-invalid="true"]) { border-color: var(--danger); }
 .date-field.is-disabled { opacity: .58; cursor: not-allowed; }
 .date-trigger { position: absolute; inset: 0 0 0 auto; display: grid; place-items: center; width: 36px; padding: 0; border: 0; border-radius: 0 9px 9px 0; background: transparent; color: var(--muted); pointer-events: none; }
@@ -15,7 +15,8 @@
 .date-popover .rdp-dropdown_root:hover { background: var(--accent-soft); }
 .date-footer { display: flex; justify-content: space-between; gap: 8px; padding-top: 7px; border-top: 1px solid var(--line-soft); }
 @media(max-width: 760px) {
- .date-field > input[type="text"], .field .date-field > input[type="text"] { min-height: 44px; font-size: 16px; }
+ .date-field { min-height: 44px; }
+ .date-field > input[type="text"], .field .date-field > input[type="text"] { min-height: 41px; font-size: 16px; }
  .date-popover { max-width: calc(100vw - 16px); }
  .date-popover .rdp-root { --rdp-day-width: 44px; --rdp-day-height: 44px; --rdp-day_button-width: 44px; --rdp-day_button-height: 44px; }
  .date-popover .rdp-month_caption { height: 48px; }
