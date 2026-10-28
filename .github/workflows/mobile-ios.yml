@@ -147,11 +147,16 @@ jobs:
             fixture_observer_pid=''
           }
           trap stop_fixture_observer EXIT
+          fixture_observer_run_id=$(node -e 'process.stdout.write(require("node:crypto").randomUUID())')
           node scripts/observe-ios-project-fixtures.mjs --simulator-id "$simulator_id" \
             --bundle-id io.github.syndred.keepany \
-            --output test-results/ios/project-fixture-observer \
+            --output test-results/ios/project-fixture-observer --run-id "$fixture_observer_run_id" \
             > test-results/ios/project-fixture-observer.log 2>&1 &
           fixture_observer_pid=$!
+          node scripts/observe-ios-project-fixtures.mjs --wait-ready --observer-pid "$fixture_observer_pid" \
+            --run-id "$fixture_observer_run_id" --simulator-id "$simulator_id" \
+            --bundle-id io.github.syndred.keepany --output test-results/ios/project-fixture-observer \
+            > test-results/ios/project-fixture-observer-ready.json
           set -o pipefail
           set +e
           xcodebuild -project apps/mobile/ios/App/App.xcodeproj -scheme KeepAnyAcceptance \

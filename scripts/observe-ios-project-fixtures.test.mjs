@@ -7,7 +7,7 @@ import path from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import { EventEmitter, getEventListeners } from 'node:events';
 import { test } from 'vitest';
-import { DATABASE_RELATIVE_PATH, FIXTURE_QUERY, createProjectFixtureObserver, createSimctlContainerResolver, querySqliteReadonly } from './observe-ios-project-fixtures.mjs';
+import { DATABASE_RELATIVE_PATH, FIXTURE_QUERY, createProjectFixtureObserver, createSimctlContainerResolver, querySqliteReadonly, waitForProjectFixtureBaseline } from './observe-ios-project-fixtures.mjs';
 
 const fixture = (language = 'en', token = 'aBcD1234', id = randomUUID()) => ({
   recordId: `asset:${id}`, payload: { id, kind: 'project', name: `iOS simulator persistence fixture full-fields ${language} ${token}`, description: 'synthetic complete project' },
@@ -425,7 +425,7 @@ test('simctl timeout and cancellation wait for the exact owned child close, neve
       child.once('close', () => { closed = true; }); return child;
     } });
     const result = resolver({ signal: controller.signal }); if (abort) controller.abort();
-    await assert.rejects(result, { observerCode: abort ? 'query-cancelled' : 'container-unavailable' });
+    await assert.rejects(result, { observerCode: abort ? 'query-cancelled' : 'container-resolver-timeout' });
     assert.equal(closed, true); assert.equal(child.killed, true);
   }
 });
@@ -482,10 +482,185 @@ for (const kind of ['sqlite', 'simctl']) for (const abort of [false, true]) {
     const rescue = setTimeout(() => { if (!closed && child) { rescued = true; child.kill('SIGKILL'); } }, 4500);
     try {
       if (abort) { await Promise.race([ready, result]); controller.abort(); }
-      await assert.rejects(result, { observerCode: abort ? 'query-cancelled' : kind === 'sqlite' ? 'query-timeout' : 'container-unavailable' });
+      await assert.rejects(result, { observerCode: abort ? 'query-cancelled' : kind === 'sqlite' ? 'query-timeout' : 'container-resolver-timeout' });
       assert.equal(closed, true); assert.equal(child.killed, true); assert.equal(rescued, false);
       assert.equal(killSignal, 'SIGKILL');
       assert.ok(performance.now() - start < 4500, 'owned close must precede the safety-net deadline');
     } finally { clearTimeout(rescue); if (child && !closed) child.kill('SIGKILL'); }
   });
 }
+
+test('initial resolver retries only identified transient failures and retains safe startup history before a real empty SQLite baseline', async t => {
+  const env = await environment(t); await env.createDatabase([]); let calls = 0;
+  const observer = await env.observe({ ...liveOptions(async () => {
+    calls++; if (calls <= 2) throw coded(calls === 1 ? 'container-resolver-timeout' : 'container-resolver-failed');
+    return tuple(env);
+  }), initialRetryMs: 1 });
+  await observer.pollOnce(); const summary = observer.summary();
+  assert.equal(summary.initialization.attempts, 3); assert.equal(summary.initialization.status, 'located');
+  assert.deepEqual(summary.initialization.errors, { 'container-resolver-timeout': 1, 'container-resolver-failed': 1 });
+  assert.equal(summary.successfulQueries, 1); assert.equal(summary.binding.baselineCaptured, true);
+  assert.equal(summary.matchedSnapshots, 0); assert.equal(summary.verification.complete, false);
+  assert.doesNotMatch(JSON.stringify(summary), /private diagnostic/);
+});
+
+test('initial transient lstat absence retries; wrong tuple, path and metadata failures never retry or create output', async t => {
+  const env = await environment(t); let calls = 0;
+  await fs.rmdir(env.appData);
+  const observer = await env.observe({ ...liveOptions(async () => {
+    calls++; if (calls === 2) await env.createDatabase([]); return tuple(env);
+  }), initialRetryMs: 1 });
+  await observer.pollOnce(); assert.equal(observer.summary().initialization.attempts, 2);
+  assert.equal(observer.summary().initialization.errors['container-lookup-missing'], 1);
+  for (const kind of ['tuple', 'regular', 'metadata', 'unknown']) {
+    const bad = await environment(t); let attempts = 0;
+    if (kind === 'regular') { await fs.rmdir(bad.appData); await fs.writeFile(bad.appData, 'synthetic'); }
+    const code = kind === 'tuple' ? 'container-identity-mismatch' : kind === 'regular' ? 'container-not-regular'
+      : kind === 'metadata' ? 'identity-unproven' : 'container-unavailable';
+    await assert.rejects(bad.observe({ ...liveOptions(async () => {
+      attempts++; if (kind === 'metadata') throw coded('identity-unproven'); if (kind === 'unknown') throw new Error('private');
+      return { ...tuple(bad), ...(kind === 'tuple' ? { simulatorId: randomUUID() } : {}) };
+    }), initialRetryMs: 1 }), { observerCode: code });
+    assert.equal(attempts, 1); await assert.rejects(fs.stat(bad.output), { code: 'ENOENT' });
+  }
+});
+
+test('initial repeated command failure has an attempt bound, no output and fixed error evidence', async t => {
+  const env = await environment(t); let attempts = 0;
+  await assert.rejects(env.observe({ ...liveOptions(async () => { attempts++; throw coded('container-resolver-failed'); }), initialRetryMs: 1 }), error => {
+    assert.equal(error.observerCode, 'initial-readiness-exhausted'); assert.equal(error.initialization.attempts, 15);
+    assert.equal(error.initialization.errors['container-resolver-failed'], 15); assert.doesNotMatch(JSON.stringify(error.initialization), /private/); return true;
+  });
+  assert.equal(attempts, 15); await assert.rejects(fs.stat(env.output), { code: 'ENOENT' });
+});
+
+for (const parentAbort of [false, true]) test(`initial ${parentAbort ? 'explicit cancellation' : 'overall deadline'} kills only its child and awaits close with remaining-budget timeout`, async t => {
+  const env = await environment(t); const controller = new AbortController(); let child, callback, resolveEntered, releaseClose;
+  const entered = new Promise(resolve => { resolveEntered = resolve; }); const timeouts = []; const kills = []; let settled = false;
+  const resolver = createSimctlContainerResolver({ simulatorId, bundleId, execFileImpl: (_command, _args, options, done) => {
+    callback = done; timeouts.push(options.timeout); assert.equal(options.signal, undefined);
+    child = new EventEmitter(); releaseClose = () => child.emit('close');
+    child.kill = signal => { kills.push(signal); callback({ killed: true }, '', 'private'); return true; };
+    resolveEntered(); return child;
+  } });
+  const result = env.observe({ ...liveOptions(resolver), signal: controller.signal, initialReadinessMs: 40, initialRetryMs: 1 });
+  result.then(() => { settled = true; }, () => { settled = true; }); await entered;
+  if (parentAbort) controller.abort(); else await new Promise(resolve => setTimeout(resolve, 60));
+  await Promise.resolve(); assert.deepEqual(kills, ['SIGKILL']); assert.equal(settled, false);
+  assert.ok(timeouts[0] > 0 && timeouts[0] <= 40); releaseClose();
+  await assert.rejects(result, { observerCode: parentAbort ? 'query-cancelled' : 'initial-readiness-timeout' });
+  assert.equal(timeouts.length, 1); assert.equal(getEventListeners(controller.signal, 'abort').length, 0);
+  await assert.rejects(fs.stat(env.output), { code: 'ENOENT' });
+});
+
+test('overall startup deadline never extends a retry sleep and a real owned process is closed before rejection', async t => {
+  const env = await environment(t); let attempts = 0; const start = performance.now();
+  await assert.rejects(env.observe({ ...liveOptions(async () => { attempts++; throw coded('container-resolver-failed'); }),
+    initialReadinessMs: 25, initialRetryMs: 1000 }), { observerCode: 'initial-readiness-timeout' });
+  assert.equal(attempts, 1); assert.ok(performance.now() - start < 900, 'must not sleep the configured extra second');
+  let child, closed = false;
+  const resolver = createSimctlContainerResolver({ simulatorId, bundleId, execFileImpl: (_command, _args, options, callback) => {
+    assert.ok(options.timeout <= 80);
+    child = execFile(process.execPath, ['-e', "process.on('SIGTERM',()=>{});setInterval(()=>{},1000)"], options, callback);
+    child.once('close', () => { closed = true; }); return child;
+  } });
+  await assert.rejects(env.observe({ ...liveOptions(resolver), initialReadinessMs: 80 }), { observerCode: 'initial-readiness-timeout' });
+  assert.equal(closed, true); assert.equal(child.killed, true);
+});
+
+test('resolver distinguishes command absence, failed command, overflow and timeout without exposing stderr', async () => {
+  for (const [error, code] of [[{ code: 'ENOENT' }, 'container-resolver-unavailable'], [{ code: 1 }, 'container-resolver-failed'],
+    [{ code: 'ERR_CHILD_PROCESS_STDIO_MAXBUFFER' }, 'container-resolver-output-limit'], [{ killed: true }, 'container-resolver-timeout']]) {
+    const resolver = createSimctlContainerResolver({ simulatorId, bundleId, execFileImpl: (_command, _args, _options, callback) => {
+      const child = new EventEmitter(); queueMicrotask(() => { callback(error, 'private', 'private'); child.emit('close'); }); return child;
+    } });
+    await assert.rejects(resolver(), failure => failure.observerCode === code && failure.message === code);
+  }
+});
+
+// A real local read-only SQLite baseline supplies all binding identities below.
+// The resolver label is adapted only in the test-owned output: Windows has no
+// simctl. This verifies the gate contract, not an Apple resolver execution.
+async function readyEnvironment(t) {
+  const env = await environment(t); await env.createDatabase([]); const runId = randomUUID();
+  const observer = await env.observe({ ...liveOptions(async () => tuple(env)), runId }); await observer.pollOnce();
+  const summary = observer.summary(); summary.binding.resolver = 'simctl';
+  const filename = path.join(env.output, 'summary.json'); const write = data => fs.writeFile(filename, JSON.stringify(data));
+  await write(summary);
+  const options = { output: env.output, observerPid: process.pid, runId, simulatorId, bundleId, timeoutMs: 30, intervalMs: 1 };
+  return { env, observer, summary, filename, write, options };
+}
+
+test('readiness accepts a healthy proven empty baseline for this exact PID/run/device/bundle, not final fixture verification', async t => {
+  const { summary, options } = await readyEnvironment(t); const result = await waitForProjectFixtureBaseline(options);
+  assert.equal(result.status, 'baseline-ready'); assert.equal(result.successfulQueries, 1);
+  assert.equal(result.fullFixtureVerificationStillPending, true); assert.equal(summary.verification.complete, false);
+  assert.equal(summary.matchedSnapshots, 0);
+});
+
+for (const mismatch of ['pid', 'run', 'device', 'bundle', 'mode', 'resolver', 'empty']) test(`readiness refuses ${mismatch} identity instead of reusing another startup summary`, async t => {
+  const { summary, write, options } = await readyEnvironment(t);
+  if (mismatch === 'pid') summary.observerPid++; if (mismatch === 'run') summary.runId = randomUUID();
+  if (mismatch === 'device') summary.binding.simulatorId = randomUUID(); if (mismatch === 'bundle') summary.binding.bundleId = 'other.synthetic.app';
+  if (mismatch === 'mode') summary.binding.mode = 'static'; if (mismatch === 'resolver') summary.binding.resolver = 'injected';
+  await write(mismatch === 'empty' ? {} : summary);
+  await assert.rejects(waitForProjectFixtureBaseline(options), { observerCode: 'observer-readiness-identity' });
+});
+
+for (const missing of ['query', 'baseline', 'identity', 'stable', 'healthy']) test(`readiness never treats missing ${missing} proof as a successful zero baseline`, async t => {
+  const { summary, write, options } = await readyEnvironment(t);
+  if (missing === 'query') summary.successfulQueries = 0; if (missing === 'baseline') summary.binding.baselineCaptured = false;
+  if (missing === 'identity') delete summary.binding.after.databaseIdentitySha256;
+  if (missing === 'stable') summary.binding.after.databaseIdentitySha256 = 'f'.repeat(64);
+  if (missing === 'healthy') summary.health.status = 'unavailable'; await write(summary);
+  await assert.rejects(waitForProjectFixtureBaseline(options), { observerCode: 'observer-readiness-timeout' });
+});
+
+test('readiness tolerates incomplete summary writes but fails on fatal/stopped or exited observer even if an old complete file exists', async t => {
+  const { summary, filename, write, options } = await readyEnvironment(t); await fs.writeFile(filename, '{');
+  const pending = waitForProjectFixtureBaseline({ ...options, timeoutMs: 150 }); await new Promise(resolve => setTimeout(resolve, 5)); await write(summary);
+  assert.equal((await pending).status, 'baseline-ready');
+  await assert.rejects(waitForProjectFixtureBaseline({ ...options, isObserverAlive: () => false }), { observerCode: 'observer-exited-before-ready' });
+  let aliveCalls = 0;
+  await assert.rejects(waitForProjectFixtureBaseline({ ...options, isObserverAlive: () => ++aliveCalls === 1 }), { observerCode: 'observer-exited-before-ready' });
+  summary.health.fatalError = 'identity-unproven'; await write(summary);
+  await assert.rejects(waitForProjectFixtureBaseline(options), { observerCode: 'observer-readiness-failed' });
+  summary.health.fatalError = null; summary.status = 'stopped-without-observations'; await write(summary);
+  await assert.rejects(waitForProjectFixtureBaseline(options), { observerCode: 'observer-readiness-failed' });
+});
+
+test('readiness missing file and cancellation cannot pass, and no summary is created by the reader', async t => {
+  const env = await environment(t); const options = { output: env.output, observerPid: process.pid, runId: randomUUID(), simulatorId, bundleId, timeoutMs: 20, intervalMs: 1 };
+  await assert.rejects(waitForProjectFixtureBaseline(options), { observerCode: 'observer-readiness-timeout' });
+  const controller = new AbortController(); const pending = waitForProjectFixtureBaseline({ ...options, signal: controller.signal }); controller.abort();
+  await assert.rejects(pending, { observerCode: 'query-cancelled' }); await assert.rejects(fs.stat(env.output), { code: 'ENOENT' });
+});
+
+test('readiness rejects a well-formed but partial summary and unsafe output-file shape', async t => {
+  const { summary, filename, write, options } = await readyEnvironment(t); delete summary.verification; await write(summary);
+  await assert.rejects(waitForProjectFixtureBaseline(options), { observerCode: 'observer-readiness-failed' });
+  await fs.rm(filename); await fs.mkdir(filename);
+  await assert.rejects(waitForProjectFixtureBaseline(options), { observerCode: 'observer-readiness-failed' });
+  await fs.rmdir(filename); await fs.writeFile(filename, Buffer.alloc(128 * 1024 + 1));
+  await assert.rejects(waitForProjectFixtureBaseline(options), { observerCode: 'observer-readiness-failed' });
+});
+
+test('actual readiness CLI binds a live owned child and nonce; the same summary cannot pass after that child closes', async t => {
+  const { summary, write, options } = await readyEnvironment(t); let resolveReady; let resolveClosed;
+  const ready = new Promise(resolve => { resolveReady = resolve; }); const closed = new Promise(resolve => { resolveClosed = resolve; });
+  const child = execFile(process.execPath, ['-e', "process.stdout.write('ready');setInterval(()=>{},1000)"], { timeout: 5000 }, () => {});
+  child.once('close', resolveClosed); child.stdout.once('data', resolveReady);
+  try {
+    await ready; summary.observerPid = child.pid; await write(summary);
+    const args = [path.resolve('scripts/observe-ios-project-fixtures.mjs'), '--wait-ready', '--observer-pid', String(child.pid), '--run-id', options.runId,
+      '--simulator-id', simulatorId, '--bundle-id', bundleId, '--output', options.output];
+    const run = () => new Promise(resolve => execFile(process.execPath, args, { timeout: 2000 }, (error, stdout, stderr) => resolve({ error, stdout, stderr })));
+    const positive = await run(); assert.equal(positive.error, null); assert.equal(positive.stderr, '');
+    const result = JSON.parse(positive.stdout); assert.equal(result.status, 'baseline-ready'); assert.equal(result.runId, options.runId);
+    assert.equal(result.observerPid, child.pid); assert.equal(result.fullFixtureVerificationStillPending, true);
+    assert.doesNotMatch(positive.stdout, /description|app data|containerPath|payload/);
+    child.kill('SIGKILL'); await closed;
+    const negative = await run(); assert.equal(negative.error.code, 1); assert.equal(negative.stderr, '');
+    assert.equal(JSON.parse(negative.stdout).code, 'observer-exited-before-ready');
+  } finally { if (child.exitCode === null && child.signalCode === null) child.kill('SIGKILL'); await closed; }
+});
