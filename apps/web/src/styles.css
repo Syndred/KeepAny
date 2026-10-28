@@ -333,7 +333,7 @@ p { line-height: 1.5; }
 .dialog form > .actions, .dialog > .ai-request-footer { position: sticky; bottom: -18px; z-index: 1; margin-top: 0; margin-inline: -18px; padding: 12px 18px 8px; border-top: 1px solid var(--line-soft); background: var(--paper); }
 .ai-request-footer { display: grid; gap: var(--space-3); }
 .dialog .ai-request-footer > .actions { margin-top: 0; }
-.toast { position: fixed; right: 16px; bottom: 16px; z-index: 50; max-width: min(400px, calc(100vw - 32px)); padding: 11px 14px; border: 2px solid var(--line); border-radius: 12px; background: var(--ink); box-shadow: var(--shadow); color: #fffdf6; font-size: 13px; line-height: 1.4; overflow-wrap: anywhere; }
+.toast { position: fixed; right: 16px; bottom: 16px; z-index: 29; max-width: min(400px, calc(100vw - 32px)); padding: 11px 14px; border: 2px solid var(--line); border-radius: 12px; background: var(--ink); box-shadow: var(--shadow); color: #fffdf6; font-size: 13px; line-height: 1.4; overflow-wrap: anywhere; }
 .mobile-nav { display: none; }
 .mobile-menu, .mobile-close, .mobile-scrim { display: none; }
 .brand > div { min-width: 0; }
