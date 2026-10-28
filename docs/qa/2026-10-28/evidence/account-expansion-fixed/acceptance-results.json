@@ -107,7 +107,8 @@
         "docs/qa/2026-10-28/evidence/account-expansion-fixed/negative-gate-check.json",
         "docs/qa/2026-10-28/evidence/account-expansion-fixed/delivery-http-identity.json",
         "docs/qa/2026-10-28/evidence/account-expansion-fixed/delivery.json",
-        "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-record-gate-check.json"
+        "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-record-gate-check.json",
+        "docs/qa/2026-10-28/evidence/account-expansion-fixed/ci-readback.json"
       ]
     },
     {
@@ -181,6 +182,10 @@
     {
       "path": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-record-gate-check.json",
       "sha256": "2d96f81a3f1422093c1c3cf77b6c4a454e021c76503a7a31f49ac2fef42480d2"
+    },
+    {
+      "path": "docs/qa/2026-10-28/evidence/account-expansion-fixed/ci-readback.json",
+      "sha256": "9fe8b2ee6fb0efc00daa27f8c018acd8cb3ae605a7bcd13d59ec0668b79e6d76"
     }
   ],
   "boundaries": [
