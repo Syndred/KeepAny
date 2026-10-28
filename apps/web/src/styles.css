@@ -527,7 +527,7 @@ input.field:is([type="date"], [type="time"], [type="datetime-local"], [type="mon
   .tabs button, .tabs a { min-width: 44px; }
   .field input:not([type="checkbox"]):not([type="radio"]), input.field:not([type="checkbox"]):not([type="radio"]) { min-height: 44px; }
   .button.icon { width: 44px; height: 44px; }
-  .nav a, .nav button { min-height: 44px; }
+  .nav a, .nav button, .nav .sortable-nav-link { min-height: 44px; }
 }
 
 @media (prefers-reduced-motion: no-preference) {

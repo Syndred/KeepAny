@@ -25,7 +25,7 @@ async function ordinaryRecords(page: Page) {
 test.describe("workspace tab selection through real navigation", () => {
 	test.use({ hasTouch: true });
 	for (const locale of ["zh-CN", "en"] as const) for (const width of [390, 1280]) {
-		test(`${locale} ${width}px workspace tabs keep one highlight through clicks, Back and reload`, async ({ page }) => {
+		test(`${locale} ${width}px workspace tabs keep one highlight through clicks, Back and reload`, async ({ page }, info) => {
 			test.setTimeout(90_000);
 			await page.setViewportSize({ width, height: 844 });
 			await page.addInitScript(language => localStorage.setItem("keepany-language", language), locale);
@@ -68,6 +68,46 @@ test.describe("workspace tab selection through real navigation", () => {
 					expect(backgrounds.allShadow).toBe("none");
 				}
 				await expect.poll(() => ordinaryRecords(page)).toBe(before);
+			}
+			if (width === 390) {
+				const menu = page.getByRole("button", { name: t("navigation"), exact: true });
+				await menu.tap();
+				const drawer = page.getByRole("dialog", { name: t("navigation"), exact: true });
+				await expect(drawer).toBeVisible();
+				let previousDrawer: { left: number; right: number; viewport: number } | undefined;
+				await expect.poll(async () => {
+					const current = await drawer.evaluate(element => {
+						const box = element.getBoundingClientRect();
+						return { left: box.left, right: box.right, viewport: innerWidth };
+					});
+					const contained = (box: typeof current) => box.left >= -0.25 && box.right <= box.viewport + 0.25;
+					const stable = previousDrawer !== undefined && contained(previousDrawer) && contained(current)
+						&& Math.abs(previousDrawer.left - current.left) <= 0.25 && Math.abs(previousDrawer.right - current.right) <= 0.25;
+					previousDrawer = current;
+					return stable;
+				}).toBe(true);
+				await info.attach("drawer-stable-position", { body: JSON.stringify(previousDrawer), contentType: "application/json" });
+				// The open modal correctly makes the topbar inert; read its state without clicking it.
+				await expect(page.locator(".mobile-menu")).toHaveAttribute("aria-expanded", "true");
+				const mainLinks = drawer.locator(".nav .sortable-nav-link");
+				await expect(mainLinks).toHaveCount(4);
+				for (const key of ["overview", "tasks", "assetsWorkspace", "accountsWorkspace"] as const) {
+					await expect(drawer.locator(".nav").getByRole("link", { name: t(key), exact: true })).toBeVisible();
+				}
+				const geometry = await mainLinks.evaluateAll(links => links.map(link => {
+					const box = link.getBoundingClientRect();
+					return { label: link.textContent?.trim(), width: box.width, height: box.height };
+				}));
+				await info.attach("drawer-main-link-geometry", { body: JSON.stringify(geometry), contentType: "application/json" });
+				for (const link of geometry) {
+					expect(link.width, `${link.label} touch width`).toBeGreaterThanOrEqual(44);
+					expect(link.height, `${link.label} touch height`).toBeGreaterThanOrEqual(44);
+				}
+				await page.screenshot({ path: join(evidence, `tab-selection-${locale}-${width}-drawer.png`), fullPage: false });
+				await drawer.locator(".nav").getByRole("link", { name: t("assetsWorkspace"), exact: true }).tap();
+				await expect(menu).toHaveAttribute("aria-expanded", "false");
+				await expect(drawer).toBeHidden();
+				await assertAssetView("/assets", "all");
 			}
 			await page.goto("/assets/project");
 			await assertAssetView("/assets/project", "project", "project");
