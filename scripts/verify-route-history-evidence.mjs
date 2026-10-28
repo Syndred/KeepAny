@@ -7,7 +7,7 @@ import { unzipSync } from "fflate";
 // Machine evidence only. Human visual review, personal experience and the final
 // normal/cloud verdict remain separate; a screenshot hash does not prove them.
 const root = resolve(".");
-const recordPath = process.argv[2] ?? "docs/qa/2026-10-28/evidence/final-route-recovery/machine-evidence.json";
+const recordPath = process.argv[2] ?? "docs/qa/2026-10-28/evidence/final-8f223/machine-evidence.json";
 const sha = (bytes) => createHash("sha256").update(bytes).digest("hex");
 const digest = (value) => typeof value === "string" && /^[a-f0-9]{64}$/.test(value);
 const read = async (path) => {
