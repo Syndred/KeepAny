@@ -1,0 +1,25 @@
+{
+  "observationCommand": [
+    "C:\\Users\\Administrator\\.codex\\toolchains\\bun\\node_modules\\bun\\bin\\bun.exe",
+    "C:\\Users\\Administrator\\.codex\\toolchains\\gstack\\bin\\gstack-qa-deadline",
+    "run",
+    "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\test-results\\ui-migration\\qa-final-8457\\deadline.json",
+    "--",
+    "C:\\Users\\Administrator\\.codex\\toolchains\\gstack\\browse\\dist\\browse.exe",
+    "js",
+    "JSON.stringify({heading:document.querySelector(\"h1\")?.textContent,accountCards:document.querySelectorAll(\".asset-account-card\").length,active:Array.from(document.querySelectorAll(\".workspace-navigation [aria-current=page]\")).map(e=>e.textContent),overflow:document.documentElement.scrollWidth>innerWidth})"
+  ],
+  "observed": "{\"heading\":\"Accounts\",\"accountCards\":1,\"active\":[\"All accounts\"],\"overflow\":false}\n",
+  "hypothesis": "查看手机账号视觉，文本与动作无重叠",
+  "nextCommand": [
+    "C:\\Users\\Administrator\\.codex\\toolchains\\bun\\node_modules\\bun\\bin\\bun.exe",
+    "C:\\Users\\Administrator\\.codex\\toolchains\\gstack\\bin\\gstack-qa-deadline",
+    "run",
+    "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\test-results\\ui-migration\\qa-final-8457\\deadline.json",
+    "--",
+    "C:\\Users\\Administrator\\.codex\\toolchains\\gstack\\browse\\dist\\browse.exe",
+    "screenshot",
+    "--viewport",
+    "test-results/ui-migration/qa-final-8457/screenshots/accounts-en-390.png"
+  ]
+}

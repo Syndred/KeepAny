@@ -1,0 +1,15 @@
+{
+  "index": 32,
+  "command": [
+    "C:\\Users\\Administrator\\.codex\\toolchains\\bun\\node_modules\\bun\\bin\\bun.exe",
+    "C:\\Users\\Administrator\\.codex\\toolchains\\gstack\\bin\\gstack-qa-deadline",
+    "run",
+    "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\test-results\\ui-migration\\qa-delivery\\deadline.json",
+    "--",
+    "C:\\Users\\Administrator\\.codex\\toolchains\\gstack\\browse\\dist\\browse.exe",
+    "js",
+    "JSON.stringify({count:document.querySelectorAll(\".collections-tile\").length,gap:document.querySelector(\".collections-existing\").getBoundingClientRect().top-document.querySelector(\".collections-organize-nav\").getBoundingClientRect().bottom,centers:Array.from(document.querySelectorAll(\".collections-tile\")).map(e=>{let i=e.querySelector(\"svg\").getBoundingClientRect(),a=e.querySelector(\"a\").getBoundingClientRect();return i.y+i.height/2-a.y-a.height/2}),overflow:document.documentElement.scrollWidth>innerWidth})"
+  ],
+  "exitCode": 0,
+  "output": "{\"count\":8,\"gap\":12,\"centers\":[0,0,0,0,0,0,0,0],\"overflow\":false}\n"
+}

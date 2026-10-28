@@ -1,0 +1,43 @@
+
+Running 1 test using 1 worker
+
+(node:9952) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  1 tests\e2e\ui-density.regression-1.spec.ts:19:3 › zh-CN 1280px dense records and complete date interaction (9.5s)
+Testing stopped early after 1 maximum allowed failures.
+
+
+  1) tests\e2e\ui-density.regression-1.spec.ts:19:3 › zh-CN 1280px dense records and complete date interaction 
+
+    Error: expect(locator).toHaveClass(expected) failed
+
+    Locator: locator('.tasks-columns')
+    Expected pattern: /is-single/
+    Received string:  "tasks-columns"
+    Timeout: 5000ms
+
+    Call log:
+      - Expect "toHaveClass" locator('.tasks-columns') with timeout 5000ms
+      - waiting for locator('.tasks-columns')
+        11 × locator resolved to <div class="tasks-columns">…</div>
+           - unexpected value "tasks-columns"
+
+
+      167 | 			await page.goto("/tasks");
+      168 | 			await expect(page.locator(".tasks-plan-card")).toHaveCount(0);
+    > 169 | 			await expect(page.locator(".tasks-columns")).toHaveClass(/is-single/);
+          | 			                                             ^
+      170 | 			await expect(page.locator(".task-filters button").first()).toContainText(
+      171 | 				t("all"),
+      172 | 			);
+        at C:\Users\Administrator\Desktop\project\KeepAny\tests\e2e\ui-density.regression-1.spec.ts:169:49
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\ui-migration\empty-plan-red\ui-density.regression-1-zh-44432-d-complete-date-interaction\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\ui-migration\empty-plan-red\ui-density.regression-1-zh-44432-d-complete-date-interaction\error-context.md
+
+  1 failed
+    tests\e2e\ui-density.regression-1.spec.ts:19:3 › zh-CN 1280px dense records and complete date interaction 
+  1 error was not a part of any test, see above for details

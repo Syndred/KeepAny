@@ -1,0 +1,36 @@
+
+Running 1 test using 1 worker
+
+
+
+(node:16056) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[1/1] tests\e2e\ui-density.regression-1.spec.ts:19:3 › zh-CN 390px dense records and complete date interaction
+  1) tests\e2e\ui-density.regression-1.spec.ts:19:3 › zh-CN 390px dense records and complete date interaction 
+
+    Error: expect(received).toBeGreaterThanOrEqual(expected)
+
+    Expected: >= 44
+    Received:    36
+
+      125 | 			if (width <= 680) {
+      126 | 				const target = await page.locator(".collections-tile button[aria-haspopup=menu]").first().boundingBox();
+    > 127 | 				expect(target!.width).toBeGreaterThanOrEqual(44);
+          | 				                      ^
+      128 | 				expect(target!.height).toBeGreaterThanOrEqual(44);
+      129 | 			}
+      130 | 			const geometry = await page.evaluate(() => ({
+        at C:\Users\Administrator\Desktop\project\KeepAny\tests\e2e\ui-density.regression-1.spec.ts:127:27
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\ui-migration\mobile-target-red\ui-density.regression-1-zh-7cec3-d-complete-date-interaction\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\ui-migration\mobile-target-red\ui-density.regression-1-zh-7cec3-d-complete-date-interaction\error-context.md
+
+
+Testing stopped early after 1 maximum allowed failures.
+
+  1 failed
+    tests\e2e\ui-density.regression-1.spec.ts:19:3 › zh-CN 390px dense records and complete date interaction 
+  1 error was not a part of any test, see above for details

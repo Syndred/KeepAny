@@ -1,0 +1,15 @@
+{
+  "index": 57,
+  "command": [
+    "C:\\Users\\Administrator\\.codex\\toolchains\\bun\\node_modules\\bun\\bin\\bun.exe",
+    "C:\\Users\\Administrator\\.codex\\toolchains\\gstack\\bin\\gstack-qa-deadline",
+    "run",
+    "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\test-results\\ui-migration\\qa-fixed-package\\deadline.json",
+    "--",
+    "C:\\Users\\Administrator\\.codex\\toolchains\\gstack\\browse\\dist\\browse.exe",
+    "js",
+    "JSON.stringify({valid:document.querySelector(\"#task-date-from\").checkValidity(),message:document.querySelector(\"#task-date-from\").validationMessage})"
+  ],
+  "exitCode": 0,
+  "output": "{\"valid\":false,\"message\":\"请输入有效日期（年-月-日）\"}\n"
+}

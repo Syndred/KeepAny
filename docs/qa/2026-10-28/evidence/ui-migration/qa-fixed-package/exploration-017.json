@@ -1,0 +1,24 @@
+{
+  "observationCommand": [
+    "C:\\Users\\Administrator\\.codex\\toolchains\\bun\\node_modules\\bun\\bin\\bun.exe",
+    "C:\\Users\\Administrator\\.codex\\toolchains\\gstack\\bin\\gstack-qa-deadline",
+    "run",
+    "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\test-results\\ui-migration\\qa-fixed-package\\deadline.json",
+    "--",
+    "C:\\Users\\Administrator\\.codex\\toolchains\\gstack\\browse\\dist\\browse.exe",
+    "goto",
+    "http://127.0.0.1:4216/assets"
+  ],
+  "observed": "Navigated to http://127.0.0.1:4216/assets (200)\n",
+  "hypothesis": "Verify real visible density, restored images, unique highlighting and viewport fit",
+  "nextCommand": [
+    "C:\\Users\\Administrator\\.codex\\toolchains\\bun\\node_modules\\bun\\bin\\bun.exe",
+    "C:\\Users\\Administrator\\.codex\\toolchains\\gstack\\bin\\gstack-qa-deadline",
+    "run",
+    "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\test-results\\ui-migration\\qa-fixed-package\\deadline.json",
+    "--",
+    "C:\\Users\\Administrator\\.codex\\toolchains\\gstack\\browse\\dist\\browse.exe",
+    "js",
+    "JSON.stringify({url:location.href,active:Array.from(document.querySelectorAll(\".workspace-navigation [aria-current=page]\")).map(e=>e.textContent),rows:document.querySelectorAll(\".workspace-asset-grid > a\").length,firstScreen:Array.from(document.querySelectorAll(\".workspace-asset-grid > a\")).filter(e=>e.getBoundingClientRect().bottom<=innerHeight).length,image:document.querySelector(\".asset-kind-icon img\")?.naturalWidth,overflow:document.documentElement.scrollWidth>innerWidth,first:Array.from(document.querySelectorAll(\".workspace-asset-grid > a\")).slice(0,7).map(e=>e.querySelector(\"strong\")?.textContent)})"
+  ]
+}

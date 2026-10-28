@@ -1,0 +1,15 @@
+{
+  "index": 17,
+  "command": [
+    "C:\\Users\\Administrator\\.codex\\toolchains\\bun\\node_modules\\bun\\bin\\bun.exe",
+    "C:\\Users\\Administrator\\.codex\\toolchains\\gstack\\bin\\gstack-qa-deadline",
+    "run",
+    "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\test-results\\ui-migration\\qa-final-1203\\deadline.json",
+    "--",
+    "C:\\Users\\Administrator\\.codex\\toolchains\\gstack\\browse\\dist\\browse.exe",
+    "js",
+    "JSON.stringify({active:Array.from(document.querySelectorAll(\".workspace-navigation [aria-current=page]\")).map(e=>e.textContent),count:document.querySelectorAll(\".asset-list-content>a\").length,widths:[...new Set(Array.from(document.querySelectorAll(\".asset-list-content>a\")).map(e=>e.getBoundingClientRect().width))],overflow:document.documentElement.scrollWidth>innerWidth})"
+  ],
+  "exitCode": 0,
+  "output": "{\"active\":[\"实物\"],\"count\":12,\"widths\":[269.28125,269.296875],\"overflow\":false}\n"
+}

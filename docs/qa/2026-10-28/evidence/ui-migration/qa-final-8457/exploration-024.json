@@ -1,0 +1,25 @@
+{
+  "observationCommand": [
+    "C:\\Users\\Administrator\\.codex\\toolchains\\bun\\node_modules\\bun\\bin\\bun.exe",
+    "C:\\Users\\Administrator\\.codex\\toolchains\\gstack\\bin\\gstack-qa-deadline",
+    "run",
+    "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\test-results\\ui-migration\\qa-final-8457\\deadline.json",
+    "--",
+    "C:\\Users\\Administrator\\.codex\\toolchains\\gstack\\browse\\dist\\browse.exe",
+    "js",
+    "JSON.stringify({expanded:document.querySelector(\"#task-date-from\").getAttribute(\"aria-expanded\"),filters:Array.from(document.querySelectorAll(\".task-filters button\")).map(e=>e.textContent),planCards:document.querySelectorAll(\".tasks-plan-card\").length,cols:document.querySelector(\".tasks-columns\").getBoundingClientRect().width,list:document.querySelector(\".tasks-list-card\").getBoundingClientRect().width,rect:document.querySelector(\".date-popover\").getBoundingClientRect().toJSON()})"
+  ],
+  "observed": "{\"expanded\":\"true\",\"filters\":[\"全部 · 6\",\"待处理 · 5\",\"已完成 · 1\"],\"planCards\":0,\"cols\":1041,\"list\":1041,\"rect\":{\"x\":218,\"y\":292,\"width\":276,\"height\":313,\"top\":292,\"right\":494,\"bottom\":605,\"left\":218}}\n",
+  "hypothesis": "当前中文日历与任务截图",
+  "nextCommand": [
+    "C:\\Users\\Administrator\\.codex\\toolchains\\bun\\node_modules\\bun\\bin\\bun.exe",
+    "C:\\Users\\Administrator\\.codex\\toolchains\\gstack\\bin\\gstack-qa-deadline",
+    "run",
+    "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\test-results\\ui-migration\\qa-final-8457\\deadline.json",
+    "--",
+    "C:\\Users\\Administrator\\.codex\\toolchains\\gstack\\browse\\dist\\browse.exe",
+    "screenshot",
+    "--viewport",
+    "test-results/ui-migration/qa-final-8457/screenshots/tasks-date-zh-1280.png"
+  ]
+}
