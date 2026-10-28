@@ -165,6 +165,8 @@ for (const language of ["zh-CN", "en"] as const)
 				fullPage: true,
 			});
 			await page.goto("/tasks");
+			await expect(page.locator(".tasks-plan-card")).toHaveCount(0);
+			await expect(page.locator(".tasks-columns")).toHaveClass(/is-single/);
 			await expect(page.locator(".task-filters button").first()).toContainText(
 				t("all"),
 			);

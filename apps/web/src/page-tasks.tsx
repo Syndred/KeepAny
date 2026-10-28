@@ -118,7 +118,7 @@ export function TaskPage() {
 				<Button disabled={!dateRange.from && !dateRange.to} onClick={() => setDateRange({ from: "", to: "" })}>{t("taskClearDates")}</Button>
 			</fieldset>
 			{!validTaskDateRange(dateRange) && <p className="field-error" role="alert">{t("taskDateRangeInvalid")}</p>}
-			<div className="tasks-columns">
+			<div className={`tasks-columns${plans.length ? "" : " is-single"}`}>
 				<section className="card tasks-list-card" aria-labelledby="tasks-list-heading">
 					<div className="tasks-cardhead">
 						<h2 id="tasks-list-heading">{t("tasksRecent")}</h2>
@@ -130,7 +130,7 @@ export function TaskPage() {
 						</div>
 					) : <Empty />}
 				</section>
-				<section className="card tasks-plan-card" aria-labelledby="tasks-plan-heading">
+				{plans.length > 0 && <section className="card tasks-plan-card" aria-labelledby="tasks-plan-heading">
 					<div className="tasks-cardhead">
 						<h2 id="tasks-plan-heading">{t("tasksPlanDetails")}</h2>
 					</div>
@@ -165,7 +165,7 @@ export function TaskPage() {
 						>{t("viewTasks")} →</button>
 						</>
 					) : <Empty hint={false} />}
-				</section>
+				</section>}
 			</div>
 			{edit && (
 				<Suspense fallback={<div className="toast" role="status">{t("loading")}</div>}>
