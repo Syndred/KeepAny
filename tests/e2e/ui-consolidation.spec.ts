@@ -84,6 +84,15 @@ for (const language of ["zh-CN", "en"] as const) for (const width of [390, 1280]
 			await loan.getByRole("button", { name: t("return"), exact: true }).click();
 			await expect(loan.getByRole("button", { name: t("loan"), exact: true })).toBeVisible();
 			await maintenance.getByLabel(t("maintenanceNotes"), { exact: true }).fill("Synthetic maintenance saved from unified form");
+			const beforeInvalidDate = await page.locator(".asset-item-timeline > .list-row").count();
+			await maintenance.getByRole("combobox", { name: t("maintenanceDate"), exact: true }).fill("2026-02-30");
+			await page.keyboard.press("Tab");
+			await maintenance.getByRole("button", { name: t("maintenance"), exact: true }).click();
+			expect(await maintenance.getByRole("combobox", { name: t("maintenanceDate"), exact: true }).evaluate((node) => (node as HTMLInputElement).validity.valid)).toBe(false);
+			await expect(maintenance.getByLabel(t("maintenanceNotes"), { exact: true })).toHaveValue("Synthetic maintenance saved from unified form");
+			await expect(page.locator(".asset-item-timeline > .list-row")).toHaveCount(beforeInvalidDate);
+			await maintenance.getByRole("combobox", { name: t("maintenanceDate"), exact: true }).fill("2026-10-28");
+			await page.keyboard.press("Tab");
 			await maintenance.getByRole("button", { name: t("maintenance"), exact: true }).click();
 			await expect(page.locator(".asset-item-timeline")).toContainText("Synthetic maintenance saved from unified form");
 			await page.reload();

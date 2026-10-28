@@ -793,6 +793,7 @@
 	.asset-project-linked-subscriptions a { display: grid; gap: 2px; }
 }
 .item-history-forms { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 20px; margin-bottom: 18px; }
+.item-history-group { min-width: 0; }
 .item-history-form { min-width: 0; margin: 0; padding: 0; border: 0; }
 .item-history-form > legend { margin-bottom: 12px; padding: 0; font-size: 14px; font-weight: 700; }
 .item-history-fields { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 12px; }

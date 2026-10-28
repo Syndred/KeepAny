@@ -1826,7 +1826,7 @@ export function AssetDetail() {
 						</div>
 					) : (
 						<div className="item-history-forms">
-							<fieldset className="item-history-form"><legend>{t("itemLoanHistory")}</legend>
+							<form className="item-history-group" onSubmit={(event) => { event.preventDefault(); void recordItem(asset.status === "loaned" ? "return" : "loan"); }}><fieldset className="item-history-form"><legend>{t("itemLoanHistory")}</legend>
 							<div className="item-history-fields">
 								{asset.status === "active" && (
 									<><label className="field">
@@ -1841,20 +1841,19 @@ export function AssetDetail() {
 									<span>{t("loanReturnNote")}</span>
 									<Input value={itemLoanNote} onChange={(event) => { setItemLoanNote(event.target.value); setItemError(""); }} />
 								</label>
-								<div className="actions item-history-actions"><Button
+								<div className="actions item-history-actions"><Button type="submit"
 									disabled={itemBusy || !["active", "loaned"].includes(asset.status) || (asset.status === "active" && ["repairing", "resold", "retired"].includes(asset.itemLifecycleStatus ?? ""))}
-									onClick={() => void recordItem(asset.status === "loaned" ? "return" : "loan")}
 								>
 									{t(asset.status === "loaned" ? "return" : "loan")}
 								</Button>
 								{["active", "archived"].includes(asset.status) && (
-									<Button disabled={itemBusy} onClick={() => void changeItemArchive()}>
+									<Button type="button" disabled={itemBusy} onClick={() => void changeItemArchive()}>
 										{t(asset.status === "archived" ? "reactivateItem" : "archiveItem")}
 									</Button>
 								)}
 								</div>
-							</div></fieldset>
-							<fieldset className="item-history-form"><legend>{t("itemMaintenanceHistory")}</legend>
+							</div></fieldset></form>
+							<form className="item-history-group" onSubmit={(event) => { event.preventDefault(); void recordItem("maintenance"); }}><fieldset className="item-history-form"><legend>{t("itemMaintenanceHistory")}</legend>
 							<div className="item-history-fields">
 								<label className="field">
 									<span>{t("maintenanceNotes")}</span>
@@ -1868,14 +1867,13 @@ export function AssetDetail() {
 									<span>{t("maintenanceReminderDate")}</span>
 									<DatePicker aria-label={t("maintenanceReminderDate")} value={itemReminderDate} onValueChange={(dateValue) => { setItemReminderDate(dateValue); setItemError(""); }} />
 								</label>
-								<div className="actions item-history-actions"><Button
+								<div className="actions item-history-actions"><Button type="submit"
 									disabled={itemBusy || !["active", "loaned"].includes(asset.status) || ["resold", "retired"].includes(asset.itemLifecycleStatus ?? "")}
-									onClick={() => void recordItem("maintenance")}
 								>
 									{t("maintenance")}
 								</Button>
 								</div>
-							</div></fieldset>
+							</div></fieldset></form>
 						</div>
 					)}
 					{asset.kind === "subscription" && <p className="subtitle">{t("renewalLocalHint")}</p>}
