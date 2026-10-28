@@ -3,6 +3,7 @@ import { fileURLToPath } from 'node:url';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import { VitePWA } from 'vite-plugin-pwa';
+import { deterministicPwaBuild } from './pwa-build-order';
 import { createUrlMetadataMiddleware } from '../../scripts/intake-url-metadata.mjs';
 const selfHostProxy = process.env.KEEPANY_SELFHOST_DEV_PROXY_TARGET;
 if (selfHostProxy) {
@@ -35,5 +36,5 @@ export default defineConfig({ resolve: { alias: { '@': fileURLToPath(new URL('./
       {src:'/icons/keepany-maskable-512.png',sizes:'512x512',type:'image/png',purpose:'maskable'},
     ],
   },
-  workbox:{maximumFileSizeToCacheInBytes:5000000},
+  ...deterministicPwaBuild,
 })], build:{outDir:'dist'},server:{fs:{allow:['../..']},proxy} });
