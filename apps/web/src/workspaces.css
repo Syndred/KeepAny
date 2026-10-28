@@ -50,6 +50,11 @@
 .account-passwords-section { margin-top: 24px; }
 .workspace-password-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 16px; }
 [id^="project-domain"], #vault-references { scroll-margin-top: 24px; }
+@media (pointer: coarse) {
+  .unified-vault-access > summary,
+  .unified-account-passwords > summary,
+  .unified-vault-references > summary { min-height: 44px; padding-block: var(--space-3); }
+}
 @media (max-width: 1150px) { .workspace-summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 480px) {
   .workspace-navigation { margin: 12px 12px 0; gap: 10px; padding: 10px; }
