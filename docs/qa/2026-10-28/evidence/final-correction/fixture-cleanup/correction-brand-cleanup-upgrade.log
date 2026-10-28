@@ -1,0 +1,38 @@
+
+Running 1 test using 1 worker
+
+(node:14304) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+[1/1] tests\e2e\stackperch-upgrade.spec.ts:146:1 › published assets, vault fields, import draft and backup survive the current KeepAny portable upgrade
+tests\e2e\stackperch-upgrade.spec.ts:146:1 › published assets, vault fields, import draft and backup survive the current KeepAny portable upgrade
+
+
+{
+  "oldCommit": "64b98e7874a2fdd8d43c8e60de72a25de5800b25",
+  "oldBrand": "KeepAny",
+  "newCommit": "65ceb04dfeaa197a06975901d41b5e036d782e07",
+  "sourceDirty": true,
+  "oldWorkerHash": "31f48ec4972130555eda823bfc3b35bf3a3d7e8af41508681016889f21c0a180",
+  "newWorkerHash": "433822e272d9e716ada005942d2e0792db1cb26de92739b1e3cab43c7192a20c",
+  "oldEntry": "/assets/index-BT82-H8O.js",
+  "newEntry": "/assets/index-CxylPI69.js",
+  "assetIds": [
+    "c255e9ff-de92-4ad6-b7c1-3ceb5686c40d",
+    "95eebfaa-8f1f-49ac-a123-6d5cf886104c"
+  ],
+  "vaultEntryIds": [
+    "p2MfXSnT4KHPkJZ9XhKpRQ=="
+  ],
+  "aliasCount": 1,
+  "importDraftHash": "dff39fdd019c9d8c0fc0dc5a03abba36e3abc053ed2a00a208e058f26b3bd7e4",
+  "imageSha256": "6b2168118a1eea891b8776160ddf1ee68e6e2fffc74815602c8f4ef3086a9c5c",
+  "backupSha256": "0eedbcd6644bfd21e4f4917fade4cff63ea538b3fb30ead924fefa35704363b1",
+  "recordCount": 2,
+  "platform": "win32",
+  "sameOriginUpgrade": true,
+  "cleanBackupRestore": true
+}
+
+  1 passed (19.8s)
