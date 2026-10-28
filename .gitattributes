@@ -2,3 +2,5 @@ release/web/** -whitespace linguist-generated=true
 # Preserve public upstream package evidence byte-for-byte, including whitespace.
 legal/third-party/evidence/** -text -whitespace
 legal/third-party/texts/** -text
+# Acceptance hashes bind the recorded bytes across Windows and Linux checkouts.
+docs/qa/2026-10-28/evidence/account-expansion-fixed/** -text

@@ -20,6 +20,8 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec playwright install --with-deps chromium
+      - name: Verify recorded acceptance evidence and reviewed product identity
+        run: node scripts/verify-account-acceptance.mjs
       - run: node scripts/build-preview-release.mjs
       - run: node scripts/check-account-layout.mjs
       - uses: actions/upload-artifact@v4

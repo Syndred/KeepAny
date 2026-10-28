@@ -1,0 +1,187 @@
+{
+  "schema": "keepany.account-acceptance.v1",
+  "candidate": "d187f33e24361ded19f8c2c38183fe823558677d",
+  "indexSha256": "f8b55106af052dcabe87f8cf6e228d355e34e843f3dfc6577434f82b7ef9dc07",
+  "scope": "冻结合同AL01–AL10：账号展开/三种密码卡消费容器、相邻工具栏及主要任务入口走查；不代表全历史104重新验收",
+  "productIdentity": "docs/qa/2026-10-28/evidence/account-expansion-fixed/product-identity.json",
+  "verdicts": {
+    "functional": "passed",
+    "visual": "passed",
+    "whitebox": "passed",
+    "ownerExperience": "passed",
+    "independentReview": "passed"
+  },
+  "manualReviewRecord": {
+    "owner": "主控本人；gstack最终包真实UI及逐图查看，续轮内置浏览器真实创建/保存/备份/全新恢复/刷新；详owner-observations.json",
+    "independent": "非实现代理acceptance_review；独立运行最终候选及实际打开原图，报告提交8dc0c9b3；不替代主控"
+  },
+  "results": [
+    {
+      "id": "AL01",
+      "status": "passed",
+      "candidate": "d187f33e24361ded19f8c2c38183fe823558677d",
+      "evidence": [
+        "docs/qa/2026-10-28/evidence/account-expansion-fixed/owner-and-regression-evidence.zip",
+        "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-evidence.zip",
+        "docs/qa/2026-10-28/evidence/account-expansion-fixed/owner-observations.json"
+      ]
+    },
+    {
+      "id": "AL02",
+      "status": "passed",
+      "candidate": "d187f33e24361ded19f8c2c38183fe823558677d",
+      "evidence": [
+        "docs/qa/2026-10-28/evidence/account-expansion-fixed/owner-and-regression-evidence.zip",
+        "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-evidence.zip",
+        "docs/qa/2026-10-28/evidence/account-expansion-fixed/owner-observations.json"
+      ]
+    },
+    {
+      "id": "AL03",
+      "status": "passed",
+      "candidate": "d187f33e24361ded19f8c2c38183fe823558677d",
+      "evidence": [
+        "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-evidence.zip",
+        "docs/qa/2026-10-28/evidence/account-expansion-fixed/owner-supplement.zip",
+        "docs/qa/2026-10-28/evidence/account-expansion-fixed/owner-observations.json"
+      ]
+    },
+    {
+      "id": "AL04",
+      "status": "passed",
+      "candidate": "d187f33e24361ded19f8c2c38183fe823558677d",
+      "evidence": [
+        "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-evidence.zip",
+        "docs/qa/2026-10-28/evidence/account-expansion-fixed/owner-and-regression-evidence.zip",
+        "docs/qa/2026-10-28/evidence/account-expansion-fixed/owner-observations.json"
+      ]
+    },
+    {
+      "id": "AL05",
+      "status": "passed",
+      "candidate": "d187f33e24361ded19f8c2c38183fe823558677d",
+      "evidence": [
+        "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-evidence.zip",
+        "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-busy-evidence.zip",
+        "docs/qa/2026-10-28/evidence/account-expansion-fixed/owner-supplement.zip",
+        "docs/qa/2026-10-28/evidence/account-expansion-fixed/owner-observations.json"
+      ]
+    },
+    {
+      "id": "AL06",
+      "status": "passed",
+      "candidate": "d187f33e24361ded19f8c2c38183fe823558677d",
+      "evidence": [
+        "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-evidence.zip",
+        "docs/qa/2026-10-28/evidence/account-expansion-fixed/owner-and-regression-evidence.zip",
+        "docs/qa/2026-10-28/evidence/account-expansion-fixed/owner-supplement.zip"
+      ]
+    },
+    {
+      "id": "AL07",
+      "status": "passed",
+      "candidate": "d187f33e24361ded19f8c2c38183fe823558677d",
+      "evidence": [
+        "docs/qa/2026-10-28/evidence/account-expansion-fixed/owner-observations.json",
+        "docs/qa/2026-10-28/evidence/account-expansion-fixed/owner-and-regression-evidence.zip",
+        "docs/qa/2026-10-28/evidence/account-expansion-fixed/owner-supplement.zip",
+        "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-evidence.zip"
+      ]
+    },
+    {
+      "id": "AL08",
+      "status": "passed",
+      "candidate": "d187f33e24361ded19f8c2c38183fe823558677d",
+      "evidence": [
+        "docs/qa/2026-10-28/evidence/account-expansion-fixed/product-identity.json",
+        "docs/qa/2026-10-28/evidence/account-expansion-fixed/owner-and-regression-evidence.zip",
+        "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-evidence.zip"
+      ]
+    },
+    {
+      "id": "AL09",
+      "status": "passed",
+      "candidate": "d187f33e24361ded19f8c2c38183fe823558677d",
+      "evidence": [
+        "docs/qa/2026-10-28/evidence/account-expansion-fixed/machine-check.json",
+        "docs/qa/2026-10-28/evidence/account-expansion-fixed/negative-gate-check.json",
+        "docs/qa/2026-10-28/evidence/account-expansion-fixed/delivery-http-identity.json",
+        "docs/qa/2026-10-28/evidence/account-expansion-fixed/delivery.json"
+      ]
+    },
+    {
+      "id": "AL10",
+      "status": "passed",
+      "candidate": "d187f33e24361ded19f8c2c38183fe823558677d",
+      "evidence": [
+        "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-evidence.zip",
+        "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-busy-evidence.zip",
+        "docs/qa/2026-10-28/evidence/account-expansion-fixed/owner-and-regression-evidence.zip"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "path": "docs/qa/2026-10-28/evidence/account-expansion-fixed/owner-and-regression-evidence.zip",
+      "sha256": "7647a78ecdf3108dcb23517d8d26c9c18e9132c4cb3b795f209c628bbca2a4fd"
+    },
+    {
+      "path": "docs/qa/2026-10-28/evidence/account-expansion-fixed/owner-and-regression-manifest.json",
+      "sha256": "13151d5f0a2a2347297d553b7db2c9ac230da9b3d425fbbb20191b5999358439"
+    },
+    {
+      "path": "docs/qa/2026-10-28/evidence/account-expansion-fixed/owner-supplement.zip",
+      "sha256": "f9fa3f42c3ac6a5de9117affce9420a2aa91d2c6d5e1948bbe6081548a2bc681"
+    },
+    {
+      "path": "docs/qa/2026-10-28/evidence/account-expansion-fixed/owner-supplement-manifest.json",
+      "sha256": "568adb351e32d43defb829611e0897af86b9d03ece374e0230d36e4ce984fd16"
+    },
+    {
+      "path": "docs/qa/2026-10-28/evidence/account-expansion-fixed/owner-observations.json",
+      "sha256": "b8de5a30345c6cb39c8356bec23ef84c92c64a8c74c14296c3cc54db4346a218"
+    },
+    {
+      "path": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-evidence.zip",
+      "sha256": "2a313a515f58f3a6ccc700118355dfaa501e9ea9d9010fdfb02adac58d953e18"
+    },
+    {
+      "path": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-manifest.json",
+      "sha256": "498146964dae9a26724fcd8b1a100833b0141ecf7ece0963da297988c1972f96"
+    },
+    {
+      "path": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-busy-evidence.zip",
+      "sha256": "9ea2b350f9be156d880ad7f7e86203f8682571dee86aef6aeb39342f5d6dac98"
+    },
+    {
+      "path": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-busy-manifest.json",
+      "sha256": "a073c34b4888d9b7eb25e00807cdd27ffab9fb3bbd9166989284ed95abbe5074"
+    },
+    {
+      "path": "docs/qa/2026-10-28/evidence/account-expansion-fixed/product-identity.json",
+      "sha256": "bd8d07f7616b4cc4528d88d69c55609dc4375ef130cd718c6cb6e94575dad136"
+    },
+    {
+      "path": "docs/qa/2026-10-28/evidence/account-expansion-fixed/delivery-http-identity.json",
+      "sha256": "693dfc780d23fc122eec8b1a47d9bc43a66b628038ee47934e8d8df9d9902916"
+    },
+    {
+      "path": "docs/qa/2026-10-28/evidence/account-expansion-fixed/machine-check.json",
+      "sha256": "fe4c6b96d97d0898e5746f49a62fa7ec3c8bb522c381a14b9542be79241f0d8e"
+    },
+    {
+      "path": "docs/qa/2026-10-28/evidence/account-expansion-fixed/negative-gate-check.json",
+      "sha256": "ff622918a65088796f40c01f95c0588d76db98b068ec9cfb11e5dbf1e38fbffc"
+    },
+    {
+      "path": "docs/qa/2026-10-28/evidence/account-expansion-fixed/delivery.json",
+      "sha256": "8960c1c1c9b353feb173083c1cc23365a47a32b626eb073757e8914c4e800846"
+    }
+  ],
+  "boundaries": [
+    "CPU16x只用于捕捉真实异步busy，不伪造状态",
+    "创建库表单瞬态截图方法失败，未当有效图；本轮受影响工具栏busy用真实8条串行添加帧验证",
+    "内置浏览器独立空白配置不显示原Chrome资料；原资料未写入/清理/迁移",
+    "远端CI状态另行记录，本记录不把本地通过当云端通过"
+  ]
+}
