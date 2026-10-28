@@ -7,7 +7,7 @@ N25 在同一 emulator-5580 上完成约定四项：英文图片/密码库真实
 - N25 source：362ac6a27418194e08d6afde541d31fbfee350c6；host 与安装后/结束前实际 base.apk SHA-256 均为 cdf84d83b6a59021bd6bd79e155f858eca64b493ec8dc4cf20750e623d85c4e4，23694603B。保资料 install-r，无 clear-data/uninstall/downgrade。108资源/DEX同源等构建属性归 Root 冻结回执，本片实际独立核的是完整 APK 身份和正式运行行为。
 - Root 授权 SHA 34cd415b58d7977a24fdf82edc8cb82739bc3c5412cc8aecee6ab686fd33ec39；离线计划 SHA 41e90de29d522ceee20739825edc226b6e68d44f22ff403d4dc56f855166598d。准备文件保持 executionAuthorized=false 原件，Root 新授权覆盖本批执行，结束 runtime 已 consumed/不可再 arm。
 - 起点是 N24 26行基线44250B/db2bfc4b…ad494f，Target6、Keeper3、唯一密码条目历史2；没有用更早旧图/旧密文状态比较。只用 namespace keepany-data-3e252b67-823c-49d3-b1e7-98a5b77ab6f2，未创建新候选。
-- 安装前后五库完整记录、审核、文件/指针/mode、Preferences/control及旧八份 Saved 的 host与实际Downloads bytes/SHA均精确保持。结束再次核完整保护，最终回原英文 Locked/master空。
+- 安装前后五库既定records逻辑投影、审核、文件/指针/mode、Preferences/control及旧八份 Saved 的 host与实际Downloads bytes/SHA均精确保持。结束再次核完整保护，最终回原英文 Locked/master空。
 - 本片检查 git status/remote、fetch origin，最后观察 HEAD...origin/main behind=0；未 push、触发或取消CI。没有改产品源码、公共测试、08交接、总表或其他代理文件。
 
 ## 四项实际结果
@@ -23,7 +23,7 @@ N25 在同一 emulator-5580 上完成约定四项：英文图片/密码库真实
 
 中文各只匹配本候选一次图片或KDBX写边界，固定ENOSPC拒绝且不调用原Native write，类别明确 C_ASSISTED_NATIVE_UI_BRIDGE_REJECTION_NO_OS_IO。它们证明合成拒绝下的实际Native UI处理，不是实际磁盘满。两语均先恢复delegate/权限，再单次同稿正常Save/Confirm，不重新选文件或重填新稿掩盖原失败。
 
-每次失败后，完整26行、审核六列、旧blob/vault指针、当前引用文件bytes/hash/mode均同该次递进基线；图片仍同一个190B预览 File，密码库保留原Title稿/旧cipher/session，无假Saved，重试可用。图片旧格式/20MB错误文本已不存在，现为“图片未能保存，请重试。”及其英文；密码库原保存失败文本现在位于当前编辑Dialog内。
+每次失败后，26行既定records逻辑投影、审核六列、旧blob/vault指针、当前引用文件bytes/hash/mode均同该次递进基线；图片仍同一个190B预览 File，密码库保留原Title稿/旧cipher/session，无假Saved，重试可用。图片旧格式/20MB错误文本已不存在，现为“图片未能保存，请重试。”及其英文；密码库原保存失败文本现在位于当前编辑Dialog内。
 
 ## 真实可视与触控证据
 
@@ -59,6 +59,12 @@ Target 真实CAS revision 6→7→8；仅 attachments、itemMedia.coverId、相�
 
 最终新合法基线 test-results/native-m0-feedback-n25/final-baseline.json，43929B，SHA 2d706d10241025477bab863454c4d2ef5edb2ca4bed64817726dcae680a41861；26行raw SHA 5f4975332d93ba88c562a2f5aa5a7c8760033308377222d4234d649de645f071。Keeper和其他25行/审核全同N24；Target8、sole vault历史4。最终两张当前图片＋唯一密码库共3文件均hash/mode核实，root/files/vaults/recovery全700；该基线供后续独立授权使用。
 
+## 业务records保护覆盖边界（后续只读审计澄清）
+
+既有snapshot先SELECT records全表，再filter(!internal_deleted)。因此本片26／135／70／两历史20的行数、records摘要及对等比较，是排除CAS内部墓碑后的逻辑投影；业务payload.deleted记录仍保留。上文“行／records”均按此口径，不能据它单独断言没有内部墓碑或隐藏物理行变化。
+
+原始DB/-wal/-shm物理副本复制未过滤，已保留可供后续离线全表witness。Repo另行补含内部墓碑的物理witness结果尚待独立引用；本次澄清不改旧投影hash、原始证据或已完成Native失败/重试结果，不重跑故障、不访问原私有库。后续完整物理覆盖须以单独witness证明，不能只守本投影hash。
+
 ## 八份Saved与收尾
 
 本片没有生成新备份、没有CACHE/provider故障、没有系统Save或改旧归档。以下八份原文件的host与实际Downloads均保持原bytes/hash；其它公共文件/old deferred未动。
@@ -74,7 +80,7 @@ Target 真实CAS revision 6→7→8；仅 attachments、itemMedia.coverId、相�
 | keepany-n24-m0-backup-permission-20261028-002.ka1 | 11348 | aacfad63e36ba6ff08029b5a671775ee090b66b9bedd578e22cac93556001eb0 |
 | keepany-n24-m0-backup-synthetic-20261028-001.ka1 | 12293 | d5e3dbea93bfd655a688d29e90f865fdb57963451fbbdc38747c4ca2e047b238 |
 
-四个保护库（135、70、两历史20）fullrows、审核全部六列、图/KDBX密文及指针metadata/mode精确保持，各三journal0；control metadata/版本、Preferences和AI control字节保持，无名册delta。自身库锁定且master清空、语言恢复en后，通过正式UI切回Initial keepany-v1，仅显示原English Locked/master空；回原后本26全rows/review/files再核等新基线。
+四个保护库（135、70、两历史20）的既定records逻辑投影、审核全部六列、图/KDBX密文及指针metadata/mode精确保持，各三journal0；control metadata/版本、Preferences和AI control字节保持，无名册delta。自身库锁定且master清空、语言恢复en后，通过正式UI切回Initial keepany-v1，仅显示原English Locked/master空；回原后本26既定records逻辑投影/review/files再核等新基线。
 
 只删除重新推送的本次190B输入和精确临时XML。工具hooks/timers/newDoc无残留，CDP断开，forward/reverse空；App主PID 26821在断CDP前后相同且存活，没有强停它。控制器54649退出后独立Win32_Process只匹配本controller路径为0，才把toolReady由false置true。最终 handoff 13544B，SHA 845a5c89b38f8deeca8b529623a3efbeef2f55a063bb273c552d74340e650253；其后未再ADB。
 
