@@ -54,6 +54,8 @@ jobs:
       - name: Fetch previous fixed package for encrypted draft recovery
         run: git fetch --no-tags --depth=1 origin a7be6146bd34f24bdf495c3827bda69f7bd27a7d
       - name: Verify delivered files and offline backup flow
+        env:
+          KEEPANY_GRAPH_NETWORK_DIAGNOSTICS: '1'
         run: pnpm exec playwright test --config playwright.release.config.ts --reporter=line --trace=retain-on-failure --max-failures=1
       - name: Verify delivered sync files with isolated PostgreSQL and local HTTP
         run: pnpm exec playwright test --config playwright.sync-release.config.ts --reporter=dot
@@ -83,8 +85,15 @@ jobs:
         run: pnpm build:preview && pnpm verify:preview
       - name: Fetch previous fixed package for encrypted draft recovery
         run: git fetch --no-tags --depth=1 origin a7be6146bd34f24bdf495c3827bda69f7bd27a7d
+      - name: Verify route load recovery on the extracted portable candidate
+        shell: bash
+        run: |
+          archive="$(node --input-type=module -e 'import fs from "node:fs"; const files=fs.readdirSync("dist/preview").filter(name=>name.endsWith(".zip")); if(files.length!==1)throw Error("Expected one fresh preview"); process.stdout.write(`dist/preview/${files[0]}`);')"
+          KEEPANY_PREVIEW_ARCHIVE="$archive" KEEPANY_RELEASE_TEST_PORT=4392 pnpm exec playwright test --config playwright.route-error.config.ts --reporter=line --trace=retain-on-failure --max-failures=1
       - name: Exercise local workflows on the extracted portable server
         shell: bash
+        env:
+          KEEPANY_GRAPH_NETWORK_DIAGNOSTICS: '1'
         run: |
           archive="$(node --input-type=module -e 'import fs from "node:fs"; const files=fs.readdirSync("dist/preview").filter(name=>name.endsWith(".zip")); if(files.length!==1)throw Error("Expected one fresh preview"); process.stdout.write(`dist/preview/${files[0]}`);')"
           KEEPANY_PREVIEW_ARCHIVE="$archive" KEEPANY_RELEASE_TEST_PORT=4391 pnpm exec playwright test --config playwright.portable-release.config.ts --reporter=line --trace=retain-on-failure --max-failures=1

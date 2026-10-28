@@ -50,6 +50,7 @@ export default defineConfig({
 		"archive-migration.spec.ts",
 		"vault-reference-release.spec.ts",
 		"password-vault.spec.ts",
+		"password-history-version.spec.ts",
 		"password-vault-grid.spec.ts",
 		"password-vault-user-journey.spec.ts",
 		"password-account-upgrade.spec.ts",

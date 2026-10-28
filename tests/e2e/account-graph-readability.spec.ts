@@ -33,6 +33,7 @@ import {
 	waitForAccountGraphLayout,
 } from "./helpers/account-graph";
 import { selectChoice } from "./helpers/select-choice";
+import { observeGraphNetwork } from "./helpers/graph-network-diagnostics";
 
 test.use({ actionTimeout: 15_000 });
 test.setTimeout(180_000);
@@ -1448,6 +1449,7 @@ for (const locale of ["zh-CN", "en-US"] as const) {
 				locale === "zh-CN" ? "zh-CN" : "en",
 			);
 			const page = await context.newPage();
+			const stopNetworkDiagnostics = await observeGraphNetwork(page, test.info());
 			const errors: string[] = [];
 			page.on("pageerror", (error) => errors.push(error.message));
 			const hrefs = new Map<AccountKey, string>();
@@ -1582,6 +1584,11 @@ for (const locale of ["zh-CN", "en-US"] as const) {
 				});
 				throw error;
 			} finally {
+				await stopNetworkDiagnostics().catch((error: unknown) =>
+					recordGraphWork("diagnostics-close-error", {
+						name: error instanceof Error ? error.name : "unknown",
+					}),
+				);
 				recordGraphWork("context-close-start");
 				await context.close();
 				recordGraphWork("context-close-completed");
