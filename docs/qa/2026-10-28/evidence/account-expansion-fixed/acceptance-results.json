@@ -13,7 +13,7 @@
   },
   "manualReviewRecord": {
     "owner": "主控本人；gstack最终包真实UI及逐图查看，续轮内置浏览器真实创建/保存/备份/全新恢复/刷新；详owner-observations.json",
-    "independent": "非实现代理acceptance_review；独立运行最终候选及实际打开原图，报告提交8dc0c9b3；不替代主控"
+    "independent": "非实现代理acceptance_review；独立运行最终候选及实际打开原图，报告提交8dc0c9b3；不替代主控；最终门禁复核追加提交1e9010fe，含12个正负退出回执"
   },
   "results": [
     {
@@ -106,7 +106,8 @@
         "docs/qa/2026-10-28/evidence/account-expansion-fixed/machine-check.json",
         "docs/qa/2026-10-28/evidence/account-expansion-fixed/negative-gate-check.json",
         "docs/qa/2026-10-28/evidence/account-expansion-fixed/delivery-http-identity.json",
-        "docs/qa/2026-10-28/evidence/account-expansion-fixed/delivery.json"
+        "docs/qa/2026-10-28/evidence/account-expansion-fixed/delivery.json",
+        "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-record-gate-check.json"
       ]
     },
     {
@@ -176,6 +177,10 @@
     {
       "path": "docs/qa/2026-10-28/evidence/account-expansion-fixed/delivery.json",
       "sha256": "8960c1c1c9b353feb173083c1cc23365a47a32b626eb073757e8914c4e800846"
+    },
+    {
+      "path": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-record-gate-check.json",
+      "sha256": "2d96f81a3f1422093c1c3cf77b6c4a454e021c76503a7a31f49ac2fef42480d2"
     }
   ],
   "boundaries": [
