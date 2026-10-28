@@ -144,6 +144,14 @@ for (const language of ["zh-CN", "en"] as const) for (const width of [390, 1280]
 			expect(await inspect("after-reload")).toEqual(current);
 			await history([0, 1, 2, 0]);
 			await capture("after-reload-history");
+			// Keep the immediate export-success frame above, then separately
+			// inspect unobstructed layout and the last action inside the scrollable dialog.
+			await expect(page.locator(".toast")).toHaveCount(0);
+			await capture("after-reload-history-stable");
+			const lastRestore = page.locator(".password-vault-history-row").last().getByRole("button", { name: t("pwVaultHistoryRestore"), exact: true });
+			await lastRestore.scrollIntoViewIfNeeded();
+			await expect(lastRestore).toBeInViewport({ ratio: 1 });
+			await capture("after-reload-history-bottom");
 			await close();
 			steps.push({ stage: "preserved", entryId: before.draft.id, otherEntryId: untouched.draft.id, historyCount: target?.history.length, finalRevision: 2 });
 			status = "passed";
