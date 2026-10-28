@@ -15,6 +15,10 @@ import { financeCopy } from "./finance-copy";
 import { candidateMergeCopy } from "./candidate-merge-copy";
 
 const copy: Record<string, [string, string]> = {
+	pageLoadErrorTitle: ["暂时无法打开这个页面", "This page could not be opened"],
+	pageUnexpectedErrorTitle: ["这个页面遇到了问题", "Something went wrong on this page"],
+	pageLoadErrorHint: ["请重新加载后再试，已保存的资料会保留。", "Reload to try again. Your saved records will be kept."],
+	pageLoadErrorReload: ["重新加载", "Reload page"],
 	workspaceAddAccount: ["新增账号", "Add account"],
 	itemLoanHistory: ["借还", "Lending"],
 	itemMaintenanceHistory: ["维护", "Maintenance"],

@@ -5,6 +5,7 @@ import {
 	lazyRouteComponent,
 } from "@tanstack/react-router";
 import { AppShell } from "./AppShell";
+import { RouteLoadError } from "./RouteLoadError";
 
 const rootRoute = createRootRoute({ component: AppShell });
 const indexRoute = createRoute({
@@ -105,7 +106,11 @@ const routeTree = rootRoute.addChildren([
 	trashRoute,
 	settingsRoute,
 ]);
-export const router = createRouter({ routeTree, defaultPreload: "intent" });
+export const router = createRouter({
+	routeTree,
+	defaultPreload: "intent",
+	defaultErrorComponent: RouteLoadError,
+});
 declare module "@tanstack/react-router" {
 	interface Register {
 		router: typeof router;
