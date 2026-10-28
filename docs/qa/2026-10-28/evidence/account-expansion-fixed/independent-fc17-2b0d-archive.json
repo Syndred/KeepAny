@@ -1,0 +1,10 @@
+{
+  "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-fc17-2b0d-evidence.zip",
+  "items": 1329,
+  "manifestItems": 1328,
+  "bytes": 48284176,
+  "sha256": "04d903832cc26baeed23b3b471a6c4e4a53dbd9017856ff88f157759eda66929",
+  "crc": null,
+  "manifestVerified": true,
+  "scope": "2b0d original24 compiled runtime only; not final delivery or normal transport rootcause closure"
+}
