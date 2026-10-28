@@ -1,0 +1,66 @@
+{
+  "schema": "keepany.native-loading-preflight-checks.v1",
+  "status": "not-complete",
+  "archive": {
+    "path": "docs/qa/2026-10-28/evidence/fc19-module-fetch/native-loading-preflight-evidence.zip",
+    "bytes": 434945,
+    "sha256": "01ccc6e0146934d9b4965e5c01700ada666789e86e0c29181bc4b95597bf3287",
+    "members": 111,
+    "manifestItems": 110,
+    "crcAllDigests": "passed"
+  },
+  "inputs": {
+    "tests/e2e/helpers/graph-network-diagnostics.ts": "f1794f89ed18cc62c01c27f4e532911ccb1f6f61058281d42150113823417b88",
+    "tests/diagnostics/module-navigation.diagnostic.ts": "53f8d1a8cb1298878f70f102017159cc26511f586f728926a9f37dcae58769ef",
+    "tests/phase0/graph-network-observer.test.ts": "1a89674754e9df78b527cea36f210e7b7e4a3adf65d856dfae9e7c822a14c61a",
+    "tests/diagnostics/summarize-browser-loading-trace.mjs": "52ca699e79c47f5b99540fac9aedcfbcb2f0954e9f60e4a76b50e3ba0f45cf57",
+    "playwright.module-navigation-diagnostic.config.ts": "a3a7cf0af93257904b86110a53697e84f436216bf51123572da5502469590c3d",
+    ".github/workflows/module-loading-diagnostic.yml": "70446f0501ab17112edb5f3609eb37cb2c8b90609ea05f706eb3fcb3e3bdad9e",
+    ".github/workflows/verify.yml": "5acdce6eb77044ffb2147c826bff5c75015f886ea31832322ba1c85d69f6593c"
+  },
+  "externalOriginalReferences": [
+    {
+      "path": "test-results/fc19-native-trace-calibration/chromium-loading-trace.json",
+      "bytes": 6671165,
+      "sha256": "382b8d7a0c7f485ab5c45aa0cd37204ccc8b05b5e8f6bbebf8edaa1a16931d18",
+      "kind": "original native Chromium trace; external reference only; not embedded"
+    },
+    {
+      "path": "test-results/fc19-native-trace-calibration/run/fc19-observer-v3-calibrati-11204-alibration-forensic-workbox/trace.zip",
+      "bytes": 2304071,
+      "sha256": "4b54b428909edbb9287157bc6dc591da95dde92e2746525ab6cd4341a41ba159",
+      "kind": "complete actual browser trace; external reference only; not embedded"
+    },
+    {
+      "path": "test-results/fc19-native-trace-calibration/run/fc19-observer-v3-calibrati-3ab00--calibration-forensic-panel/trace.zip",
+      "bytes": 2253849,
+      "sha256": "f0c9008cab1136a7f9775ebbb3b02fd0bda71ae39bf54a9373dec1a23f72f08b",
+      "kind": "complete actual browser trace; external reference only; not embedded"
+    },
+    {
+      "path": "test-results/fc19-native-trace-calibration/run/fc19-observer-v3-calibrati-b58b7--calibration-metadata-panel/trace.zip",
+      "bytes": 2288125,
+      "sha256": "243d474a2891c1d35c642fb2b4e268cc327588427416818238ee80b153e61770",
+      "kind": "complete actual browser trace; external reference only; not embedded"
+    },
+    {
+      "path": "test-results/fc19-native-trace-calibration/run/fc19-observer-v3-calibrati-fbd62-alibration-metadata-workbox/trace.zip",
+      "bytes": 2301512,
+      "sha256": "68dc4d99d4a350f4e1a0f3ce5d8be1e070e9c825baffdcb19a4e1d0b0c89e2d7",
+      "kind": "complete actual browser trace; external reference only; not embedded"
+    }
+  ],
+  "scope": "diagnostics/tests/queue/docs only; apps/packages/release/web/runtime scripts unchanged",
+  "preflight": {
+    "nativeBrowserCalibration": "4of4,8.7s, declaredinspector; actualclean6efWin e40f9306a0f51fe368cb84fdd2a3e28f9231255e7601ff5e699ec2fe46f51cf2",
+    "diagnosticRedGreen": "d542 shapedUnknown and invalid-first drop-valid-output valid red; same probes52ca green",
+    "independent": "52ca shape/multi/privacy/preserve-original +3extra partial failures passed; all4actual images read; scopedqueue static verified, live readback pending",
+    "functionalCausality": "unknown; no original cancellation root-cause or final product verdict"
+  },
+  "pending": [
+    "Push updated branch and live-verify oldb4 continues/newVerify pending; dedicatednative workflow runs independently",
+    "Read oldb4 original2standard terminal results without cancel/rewrite; original diagnosticD capture remains98clean/not100",
+    "Actual newLinux native100x4 and v3 normal fullgates; no sameconditions labels for oldb4",
+    "Original healthy-import cancellation cause/remedy; finalcleanpacket117/381/server+rootnative+4180consumption+independent finalreceipt"
+  ]
+}

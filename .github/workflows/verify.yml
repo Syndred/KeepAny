@@ -11,7 +11,8 @@ permissions:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  # Preserve this branch's long acceptance runs and their original outcomes.
+  cancel-in-progress: ${{ github.ref != 'refs/heads/codex/asset-card-layout-20261028' }}
 
 jobs:
   verify:

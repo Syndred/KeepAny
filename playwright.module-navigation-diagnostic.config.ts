@@ -40,6 +40,10 @@ export default defineConfig({
 					args: [
 						`--log-net-log=${resolve(directory, "netlog-default.json")}`,
 						"--net-log-capture-mode=Default",
+						"--enable-tracing=ServiceWorker,loading",
+						`--enable-tracing-output=${resolve(directory, "chromium-loading-trace.json")}`,
+						"--enable-tracing-format=json",
+						"--trace-startup-record-mode=record-continuously",
 					],
 				},
 			},

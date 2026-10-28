@@ -5,9 +5,11 @@ export async function observeGraphNetwork(
 	page: Page,
 	info: TestInfo,
 	onStaticFailure?: (failure: Record<string, unknown>) => void,
+	options: { mode?: "metadata" | "forensic" } = {},
 ) {
 	if (process.env.KEEPANY_GRAPH_NETWORK_DIAGNOSTICS !== "1")
 		return async () => {};
+	const observerMode = options.mode ?? "metadata";
 	const origin = new URL(String(info.project.use.baseURL)).origin;
 	const path = info.outputPath("account-graph-network.jsonl");
 	const requests = new Map<string, string>();
@@ -60,6 +62,7 @@ export async function observeGraphNetwork(
 			path,
 			JSON.stringify({
 				stage,
+				observerMode,
 				recordedAt: new Date().toISOString(),
 				nodeMonotonicMs: performance.now(),
 				collectorStopping: stopping,
@@ -77,6 +80,7 @@ export async function observeGraphNetwork(
 	const attachWorkerAfterFailure = (targetId: string, url: string) => {
 		if (
 			!browserSession ||
+			observerMode !== "forensic" ||
 			!observedFailure ||
 			stopping ||
 			closed ||
@@ -226,17 +230,20 @@ export async function observeGraphNetwork(
 			})),
 			parent: depth < 2 ? cleanStack(stack.parent, depth + 1) : undefined,
 		};
-	// Only after a real failure: observe public static-resource timing and cache
-	// digests. This does not retry requests, mutate caches, or inspect user data.
+	// Dedicated forensic mode only, after a real static failure. Normal business
+	// runs stay metadata-only even after unrelated background cancellations.
 	const snapshotFailure = (url: string) => {
-		if (stopping || closed) return;
-		const urls = [...new Set([url, ...requests.values()])]
-			.filter((value) =>
-				/\/(?:PasswordVaultPanel-[^/]+|papaparse[^/]*|file-picker-[^/]+|ai-settings-store-[^/]+)\.js$/.test(
-					value,
-				),
+		if (observerMode !== "forensic" || stopping || closed) return;
+		const relatedUrls = [...new Set(requests.values())]
+			.filter(
+				(value) =>
+					value !== url &&
+					/\/(?:PasswordVaultPanel-[^/]+|papaparse[^/]*|file-picker-[^/]+|ai-settings-store-[^/]+)\.js$/.test(
+						value,
+					),
 			)
-			.slice(0, 6);
+			.slice(0, 5);
+		const urls = [url, ...relatedUrls];
 		observations.push(
 			withinDeadline(
 				page.evaluate(async (targets) => {
@@ -271,6 +278,7 @@ export async function observeGraphNetwork(
 					]);
 					return {
 						href: location.origin + location.pathname,
+						queriedUrls: targets,
 						resourceTiming,
 						cache,
 					};
@@ -372,11 +380,19 @@ export async function observeGraphNetwork(
 		};
 		record("failed", details);
 		console.log("[account-graph-network-failure]", JSON.stringify(details));
-		if (/\.(js|css)$/.test(url)) onStaticFailure?.(details);
-		observedFailure = true;
-		for (const [targetId, workerUrl] of workerTargets)
-			attachWorkerAfterFailure(targetId, workerUrl);
-		if (/\.(js|css)$/.test(url)) snapshotFailure(url);
+		if (
+			requestContexts.get(event.requestId)?.type !== "Document" &&
+			new URL(url).pathname.startsWith("/assets/") &&
+			/\.(js|css)$/.test(url)
+		) {
+			onStaticFailure?.(details);
+			if (observerMode === "forensic") {
+				observedFailure = true;
+				for (const [targetId, workerUrl] of workerTargets)
+					attachWorkerAfterFailure(targetId, workerUrl);
+				snapshotFailure(url);
+			}
+		}
 		requests.delete(event.requestId);
 		requestContexts.delete(event.requestId);
 	});
@@ -412,10 +428,13 @@ export async function observeGraphNetwork(
 	await session.send("Page.enable");
 	await session.send("Page.setLifecycleEventsEnabled", { enabled: true });
 	record("collector-start", {
-		schema: "keepany.graph-network.v2",
+		schema: "keepany.graph-network.v3",
+		observerMode,
 		origin,
 		scope:
-			"Before failure: passive navigation/request/target discovery only. SW Runtime attachment and public static-resource timing/cache digests start only after first observed failure. No interception, retry, headers, user data, cache or SW policy changes.",
+			observerMode === "forensic"
+				? "Dedicated forensic diagnostic: navigation/request/target metadata before first static failure; only then SW Runtime attachment and public static-resource timing/cache digests. Attachment may affect subsequent worker lifetime. No interception, retry, headers, user data, cache writes or SW policy changes."
+				: "Metadata only throughout: navigation/request/target discovery, including after failures. No SW Runtime attachment, page evaluation, interception, retry, headers, user data, cache or SW policy changes. Recording has observation overhead.",
 	});
 	return () => {
 		if (stopPromise) return stopPromise;

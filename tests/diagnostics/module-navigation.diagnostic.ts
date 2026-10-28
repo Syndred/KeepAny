@@ -51,17 +51,22 @@ test("fixed100 ordinary detail-to-account navigations with normal service worker
 	let roundInProgress = 0;
 	let cleanPreFailureRounds = 0;
 	let firstStaticFailure: Record<string, unknown> | undefined;
-	const stop = await observeGraphNetwork(page, info, (failure) => {
-		if (firstStaticFailure) return;
-		firstStaticFailure = failure;
-		log({
-			stage: "first-static-failure",
-			observedRound: roundInProgress,
-			cleanPreFailureRounds,
-			postFailureObservation: true,
-			failure,
-		});
-	});
+	const stop = await observeGraphNetwork(
+		page,
+		info,
+		(failure) => {
+			if (firstStaticFailure) return;
+			firstStaticFailure = failure;
+			log({
+				stage: "first-static-failure",
+				observedRound: roundInProgress,
+				cleanPreFailureRounds,
+				postFailureObservation: true,
+				failure,
+			});
+		},
+		{ mode: "forensic" },
+	);
 	const requireCleanObservation = () => {
 		if (firstStaticFailure)
 			throw Error(
