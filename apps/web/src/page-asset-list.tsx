@@ -91,16 +91,18 @@ function SortablePill({
 		</div>
 	);
 }
-function CategoryStrip({
+export function CategoryStrip({
 	kind,
 	chosen,
 	choose,
 	searchControl,
+ showCounts = false,
 }: {
 	kind: AssetKind;
 	chosen: string;
 	choose: (x: string, id?: string) => void;
 	searchControl?: ReactNode;
+ showCounts?: boolean;
 }) {
 	const { data, notify } = useAppContext();
 	const { t, i18n } = useTranslation();
@@ -274,10 +276,10 @@ function CategoryStrip({
 					className={chosen === "" ? "active" : ""}
 					onClick={() => choose("")}
 				>
-					{t("all")}
+					{t("all")} {showCounts && memberAssets.length}
 				</button>
 				{ordered.map((id) => (
-					<button type="button" key={id} className={chosen === id ? "active" : ""} aria-pressed={chosen === id} onClick={() => choose(id)}>{niceCategory(id, t)}</button>
+					<button type="button" key={id} className={chosen === id ? "active" : ""} aria-pressed={chosen === id} onClick={() => choose(id)}>{niceCategory(id, t)} {showCounts && memberAssets.filter(asset => asset.category === id).length}</button>
 				))}
 				<button type="button" className="asset-category-add" disabled={blocked} aria-label={t("newCategory")} title={t("newCategory")}
 						onClick={openNewCategory}

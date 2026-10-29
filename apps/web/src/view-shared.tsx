@@ -39,7 +39,7 @@ export const builtins: Record<AssetKind, string[]> = {
 	project: ["website", "repository", "tool"],
 	account: ["email", "phone", "social", "other"],
 	subscription: ["software", "service"],
-	item: ["device", "other"],
+	item: ["device", "appliance", "furniture", "other"],
 	vault: ["other"],
 };
 export function validKind(value: string): AssetKind {

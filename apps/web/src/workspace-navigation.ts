@@ -13,21 +13,41 @@ export function workspaceNavId(id: string): string | undefined {
 
 export function workspaceNavOrder(value: unknown): string[] {
 	const saved = Array.isArray(value)
-		? value.flatMap((id) => typeof id === "string" ? workspaceNavId(id) ?? [] : [])
+		? value.flatMap((id) =>
+				typeof id === "string" ? (workspaceNavId(id) ?? []) : [],
+			)
 		: [];
-	return [...new Set([...saved, ...workspaceNavIds])];
+	return saved.length
+		? [...new Set([...saved, ...workspaceNavIds])]
+		: ["overview", "accounts", "assets", "tasks"];
 }
 
 export function workspaceNavHidden(value: unknown): string[] {
-	const saved = new Set(Array.isArray(value) ? value.filter((id) => typeof id === "string") : []);
-	const hidden = workspaceNavIds.filter((id) => id !== "overview" &&
-		(saved.has(id) || !!members[id]?.every((member) => saved.has(member))));
+	const saved = new Set(
+		Array.isArray(value) ? value.filter((id) => typeof id === "string") : [],
+	);
+	const hidden = workspaceNavIds.filter(
+		(id) =>
+			id !== "overview" &&
+			(saved.has(id) || !!members[id]?.every((member) => saved.has(member))),
+	);
 	return workspaceGroupIds.every((id) => hidden.includes(id))
-		? hidden.filter((id) => id !== "assets") : hidden;
+		? hidden.filter((id) => id !== "assets")
+		: hidden;
 }
 
-export function workspacePathGroup(path: string): "assets" | "accounts" | undefined {
-	if (path === "/accounts" || /^\/assets\/(account|vault)(\/|$)/.test(path)) return "accounts";
-	if (path === "/assets" || path === "/finance" || /^\/assets\/(project|item|subscription|domains)(\/|$)/.test(path)) return "assets";
+export function workspacePathGroup(
+	path: string,
+): "assets" | "accounts" | undefined {
+	if (path === "/accounts" || /^\/assets\/(account|vault)(\/|$)/.test(path))
+		return "accounts";
+	if (
+		path === "/assets" ||
+		path === "/finance" ||
+		/^\/assets\/(project|item|subscription|domains|online|physical)(\/|$)/.test(
+			path,
+		)
+	)
+		return "assets";
 	return undefined;
 }

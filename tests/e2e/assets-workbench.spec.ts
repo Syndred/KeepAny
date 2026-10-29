@@ -1,0 +1,292 @@
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { join, resolve } from "node:path";
+import { expect, test, type BrowserContext, type Page } from "@playwright/test";
+import { strFromU8, unzipSync } from "fflate";
+import { resources } from "../../apps/web/src/i18n";
+import { decryptBackup } from "../../packages/local-db/src/backup-crypto";
+import type { Asset, History } from "../../packages/domain/src";
+import { readCandidate, selectCandidate } from "../../scripts/lib/portable-candidate.mjs";
+import { recordDevelopmentRequests, restoreCompletionArchive } from "./helpers/completion-archive";
+import { assetFixturePassword, assetFixtureTime, prepareAssetWorkbenchFixture, type AssetWorkbenchFixture } from "./helpers/assets-workbench-fixture";
+import { selectChoice } from "./helpers/select-choice";
+
+const evidence = resolve(process.env.KEEPANY_EVIDENCE_DIR ?? "test-results/assets-workbench/evidence");
+mkdirSync(evidence, { recursive: true });
+const candidate = readCandidate(selectCandidate());
+writeFileSync(join(evidence, "candidate.json"), JSON.stringify({ input: candidate.input, sourceCommit: candidate.release.sourceCommit, sourceDirty: candidate.release.sourceDirty, webFiles: candidate.release.webFiles, preparation: "Node synthetic KA1, restored using the compiled candidate's visible UI; no source modules in browser" }, null, 2));
+type Locale = "zh-CN" | "en";
+const translate = (locale: Locale) => (key: string) => resources[locale].translation[key];
+let fixture: AssetWorkbenchFixture;
+test.beforeAll(async () => { fixture = await prepareAssetWorkbenchFixture(join(evidence, "fixture")); });
+
+async function prepare(context: BrowserContext, locale: Locale, width = 1280) {
+	await context.addInitScript(value => localStorage.setItem("keepany-language", value), locale);
+	const page = await context.newPage();
+	await page.setViewportSize({ width, height: 1000 });
+	await page.clock.setFixedTime(new Date(assetFixtureTime));
+	const sourceRequests = recordDevelopmentRequests(context);
+	const errors: string[] = [];
+	page.on("pageerror", error => errors.push(error.message));
+	return { page, errors, sourceRequests };
+}
+
+async function restore(page: Page) {
+	await page.goto("/intake");
+	await restoreCompletionArchive(page, assetFixturePassword, fixture.archive);
+	await page.goto("/assets");
+	await expect(page.locator(".assets-workbench")).toBeVisible();
+}
+
+async function noOverflow(page: Page) {
+	expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);
+}
+
+async function capture(page: Page, name: string) {
+	await noOverflow(page);
+	await page.screenshot({ path: join(evidence, `${name}.png`), fullPage: true });
+}
+
+const grid = (page: Page) => page.locator(".assets-catalog-grid");
+const card = (page: Page, name: string) => grid(page).locator(":scope > a").filter({ has: page.locator("strong", { hasText: name }) });
+
+async function archiveFromUi(page: Page, locale: Locale) {
+	const t = translate(locale);
+	await page.goto("/intake");
+	await page.locator("#backup-password").fill(assetFixturePassword);
+	await page.getByRole("button", { name: t("backup"), exact: true }).click();
+	const link = page.getByRole("link", { name: t("saveBackupFile"), exact: true });
+	await expect(link).toBeVisible();
+	const pending = page.waitForEvent("download");
+	await link.click();
+	const download = await pending;
+	const path = await download.path();
+	if (!path) throw Error("missing-asset-archive-download");
+	const files = unzipSync(await decryptBackup(new Uint8Array(readFileSync(path)), assetFixturePassword));
+	const rows = JSON.parse(strFromU8(files["records.json"])) as { type: string; payload: string }[];
+	return { assets: rows.filter(row => row.type === "asset").map(row => JSON.parse(row.payload) as Asset), history: rows.filter(row => row.type === "history").map(row => JSON.parse(row.payload) as History) };
+}
+
+for (const locale of ["zh-CN", "en"] as const) {
+	test(`AS01 AS02 AS03 AS04 AS05 AS09 ${locale}: navigation, expenses, categories and persisted details`, async ({ context }) => {
+		const t = translate(locale), { page, errors, sourceRequests } = await prepare(context, locale);
+		await restore(page);
+		const nav = page.locator("aside .nav a");
+		await expect(nav).toHaveCount(4);
+		await expect(nav.nth(0)).toContainText(t("overview"));
+		await expect(nav.nth(1)).toContainText(t("accountsWorkspace"));
+		await expect(nav.nth(2)).toContainText(t("assetsWorkspace"));
+		await expect(nav.nth(3)).toContainText(t("tasks"));
+		await nav.nth(2).click();
+		await expect(page).toHaveURL(/\/assets$/);
+		const metrics = page.locator(".assets-metrics > section");
+		await expect(metrics).toHaveCount(4);
+		await expect(metrics.nth(0)).toContainText("19.00");
+		await expect(metrics.nth(0)).toContainText("3.00");
+		await expect(page.locator(".assets-ledger tbody tr")).toHaveCount(5);
+		await expect(page.locator(".assets-breakdown")).toContainText(t("assetsShared"));
+		await expect(page.locator(".assets-breakdown")).toContainText("2.00");
+		await expect(page.locator(".assets-renewals tbody tr")).toHaveCount(2);
+		await expect(page.locator(".assets-renewals")).toContainText("pine.example");
+		await page.getByLabel(t("assetsMonth"), { exact: true }).fill("2025-12");
+		await expect(metrics.nth(0)).toContainText("999.00");
+		await expect(page.locator(".assets-ledger tbody tr")).toHaveCount(1);
+		await page.getByLabel(t("assetsMonth"), { exact: true }).fill("2026-10");
+		await page.locator(".assets-section-nav").getByRole("link", { name: t("assetsOnline"), exact: true }).click();
+		await expect(page).toHaveURL(/\/assets\/online$/);
+		await page.getByRole("button", { name: t("assetCardView"), exact: true }).click();
+		await expect(grid(page).locator(":scope > a")).toHaveCount(6);
+		const categories = page.locator(".assets-category-pills");
+		await categories.getByRole("button", { name: new RegExp(`^${t("workspaceDomains")}`) }).click();
+		await expect(grid(page).locator(":scope > a")).toHaveCount(2);
+		await card(page, "pine.example").click();
+		await expect(page).toHaveURL(new RegExp(`/assets/project/${fixture.project.id}#project-domain-`));
+		await expect(page.getByRole("heading", { name: fixture.project.name, exact: true })).toBeVisible();
+		await page.locator(".topbar-back-link").click();
+		await expect(page).toHaveURL(/\/assets\/online$/);
+		await expect(grid(page).locator(":scope > a")).toHaveCount(2);
+		await categories.getByRole("button", { name: new RegExp(`^${t("all")} `) }).click();
+		const search = page.getByRole("searchbox", { name: t("assetsSearchOnline"), exact: true });
+		await search.fill("missing-date.example");
+		await expect(grid(page).locator(".workspace-domain-card")).toHaveCount(1);
+		await search.fill("no-such-synthetic-asset");
+		await expect(page.getByText(t("noMatches"), { exact: true })).toBeVisible();
+		await search.fill("");
+		await categories.getByRole("button", { name: new RegExp(`^${t("assetsSoftware")}`) }).click();
+		await expect(grid(page).locator(":scope > a")).toHaveCount(2);
+		await selectChoice(page.getByRole("combobox", { name: t("filterTag"), exact: true }), "Studio");
+		await expect(grid(page).locator(":scope > a")).toHaveCount(1);
+		await expect(grid(page)).toContainText(fixture.software.name);
+		await selectChoice(page.getByRole("combobox", { name: t("filterTag"), exact: true }), "");
+		await page.getByRole("button", { name: t("assetListView"), exact: true }).click();
+		await expect(grid(page)).toHaveClass(/asset-dense-list/);
+		await page.locator(".assets-section-nav").getByRole("link", { name: t("assetsPhysical"), exact: true }).click();
+		await expect(grid(page).locator(":scope > a")).toHaveCount(4);
+		await selectChoice(page.getByRole("combobox", { name: t("itemLifecycleStatus"), exact: true }), "loaned");
+		await expect(grid(page).locator(":scope > a")).toHaveCount(1);
+		await expect(grid(page)).toContainText("Synthetic friend");
+		await selectChoice(page.getByRole("combobox", { name: t("itemLifecycleStatus"), exact: true }), "");
+		await selectChoice(page.getByRole("combobox", { name: t("location"), exact: true }), "Library");
+		await expect(grid(page).locator(":scope > a")).toHaveCount(1);
+		await expect(grid(page)).toContainText(fixture.furniture.name);
+		await selectChoice(page.getByRole("combobox", { name: t("location"), exact: true }), "");
+		await expect(page.locator(".assets-maintenance")).toContainText(fixture.task.name);
+		await card(page, fixture.item.name).click();
+		await expect(page.getByRole("heading", { name: fixture.item.name, exact: true })).toBeVisible();
+		await page.locator("main.page > .page-header").getByRole("button", { name: t("edit"), exact: true }).click();
+		const edit = page.getByRole("dialog");
+		await edit.locator("#location").fill("AS Updated location");
+		await edit.getByRole("button", { name: t("save"), exact: true }).click();
+		await expect(edit).toBeHidden();
+		await page.reload();
+		await expect(page.locator("main")).toContainText("AS Updated location");
+		await page.locator(".topbar-back-link").click();
+		await expect(page).toHaveURL(/\/assets\/physical$/);
+		await expect(grid(page)).toContainText("AS Updated location");
+		await page.goto("/accounts");
+		await expect(page.locator(".asset-account-card")).toHaveCount(2);
+		await page.goto("/tasks");
+		await expect(page.locator(`#task-${fixture.task.id}`)).toContainText(fixture.task.name);
+		await noOverflow(page);
+		expect(errors).toEqual([]); expect(sourceRequests).toEqual([]);
+	});
+
+	test(`AS06 AS07 ${locale}: asset cancellation and invalid input, shared expense CRUD, non-expense archive preservation`, async ({ context }) => {
+		const t = translate(locale), { page, errors, sourceRequests } = await prepare(context, locale);
+		await restore(page);
+		await page.goto("/assets/physical");
+		await page.getByRole("button", { name: t("workspaceAddAsset"), exact: true }).click();
+		let dialog = page.getByRole("dialog");
+		await dialog.getByRole("button", { name: t("workspaceContinue"), exact: true }).click();
+		dialog = page.getByRole("dialog");
+		await dialog.locator("#name").fill("AS Cancelled physical asset");
+		await dialog.getByRole("button", { name: t("cancel"), exact: true }).click();
+		await expect(dialog).toBeHidden();
+		await expect(grid(page).locator(":scope > a")).toHaveCount(4);
+		await page.reload();
+		await expect(grid(page)).not.toContainText("AS Cancelled physical asset");
+		await page.getByRole("button", { name: t("workspaceAddAsset"), exact: true }).click();
+		await page.getByRole("dialog").getByRole("button", { name: t("workspaceContinue"), exact: true }).click();
+		dialog = page.getByRole("dialog");
+		await dialog.locator("#name").fill("AS Created physical asset");
+		await dialog.locator("#amount").fill("1.234");
+		await dialog.getByRole("button", { name: t("save"), exact: true }).click();
+		await expect(dialog).toBeVisible();
+		await expect(dialog.locator("#amount")).toHaveAttribute("aria-invalid", "true");
+		await dialog.locator("#amount").fill("15.25");
+		await dialog.getByRole("button", { name: t("save"), exact: true }).click();
+		await expect(dialog).toBeHidden();
+		await page.reload();
+		await expect(grid(page)).toContainText("AS Created physical asset");
+		await page.goto("/finance");
+		await expect(page.getByRole("heading", { name: t("financeExpenseLedger"), exact: true })).toBeVisible();
+		await expect(page.locator("#finance-filter-type")).toHaveCount(0);
+		await expect(page.locator(".finance-entry")).not.toContainText("AS Preserved refund");
+		await expect(page.locator(".finance-entry")).not.toContainText("AS Preserved balance");
+		await page.getByRole("button", { name: t("financeAddRecord"), exact: true }).click();
+		dialog = page.getByRole("dialog");
+		await expect(dialog.locator("#finance-action")).toHaveCount(0);
+		await selectChoice(dialog.locator("#finance-asset"), fixture.project.id);
+		await dialog.getByRole("checkbox", { name: fixture.item.name, exact: true }).check();
+		await dialog.locator("#finance-title").fill("AS User shared expense");
+		await dialog.locator("#finance-amount").fill("0");
+		await dialog.getByRole("button", { name: t("financeSaveRecord"), exact: true }).click();
+		await expect(dialog.getByRole("alert")).toContainText(t("financeInvalidAmount"));
+		await dialog.locator("#finance-amount").fill("12.34");
+		await dialog.getByRole("button", { name: t("cancel"), exact: true }).click();
+		await expect(dialog).toBeHidden();
+		await expect(page.locator(".finance-entry").filter({ hasText: "AS User shared expense" })).toHaveCount(0);
+		await page.getByRole("button", { name: t("financeAddRecord"), exact: true }).click();
+		dialog = page.getByRole("dialog");
+		await selectChoice(dialog.locator("#finance-asset"), fixture.project.id);
+		await dialog.getByRole("checkbox", { name: fixture.item.name, exact: true }).check();
+		await dialog.locator("#finance-title").fill("AS User shared expense");
+		await dialog.locator("#finance-amount").fill("12.34");
+		await dialog.getByRole("button", { name: t("financeSaveRecord"), exact: true }).click();
+		await expect(dialog).toBeHidden();
+		let row = page.locator(".finance-entry").filter({ hasText: "AS User shared expense" });
+		await expect(row).toHaveCount(1);
+		await expect(row).toContainText(fixture.project.name);
+		await expect(row).toContainText(fixture.item.name);
+		await page.reload();
+		await expect(row).toContainText("12.34");
+		await row.getByRole("button", { name: t("edit"), exact: true }).click();
+		dialog = page.getByRole("dialog");
+		await dialog.locator("#finance-amount").fill("14.00");
+		await dialog.getByRole("button", { name: t("financeSaveRecord"), exact: true }).click();
+		await expect(dialog).toBeHidden();
+		await page.goto("/assets");
+		await expect(page.locator(".assets-metrics > section").nth(0)).toContainText("33.00");
+		await expect(page.locator(".assets-breakdown")).toContainText("16.00");
+		await page.goto("/finance");
+		row = page.locator(".finance-entry").filter({ hasText: "AS User shared expense" });
+		await row.getByRole("button", { name: t("financeDeleteAction"), exact: true }).click();
+		dialog = page.getByRole("dialog");
+		await dialog.getByRole("button", { name: t("cancel"), exact: true }).click();
+		await expect(row).toContainText("14.00");
+		await row.getByRole("button", { name: t("financeDeleteAction"), exact: true }).click();
+		await page.getByRole("dialog").getByRole("button", { name: t("financeDeleteAction"), exact: true }).click();
+		await expect(row).toHaveCount(0);
+		await page.reload();
+		await expect(row).toHaveCount(0);
+		const archive = await archiveFromUi(page, locale);
+		expect(archive.history.find(entry => entry.id === fixture.refund.id)).toEqual(fixture.refund);
+		expect(archive.history.find(entry => entry.id === fixture.balance.id)).toEqual(fixture.balance);
+		expect(archive.assets.find(asset => asset.name === "AS Created physical asset")).toMatchObject({ amount: 1525, itemPurchasePriceKnown: true });
+		expect(archive.history.filter(entry => entry.title === "AS User shared expense")).toMatchObject([{ amount: 1400, deleted: true, assetIds: [fixture.project.id, fixture.item.id] }]);
+		expect(errors).toEqual([]); expect(sourceRequests).toEqual([]);
+	});
+
+	test(`AS01 AS02 AS06 ${locale}: empty assets and cancelled creation remain empty after refresh`, async ({ context }) => {
+		const t = translate(locale), { page, errors, sourceRequests } = await prepare(context, locale, 390);
+		await page.goto("/assets");
+		await expect(page.locator(".assets-workbench")).toBeVisible();
+		await expect(page.locator(".assets-ledger")).toContainText(t("assetsNoExpenses"));
+		await expect(page.locator(".assets-renewals")).toContainText(t("assetsNoRenewals"));
+		await page.getByRole("button", { name: t("workspaceAddAsset"), exact: true }).click();
+		await selectChoice(page.getByRole("dialog").locator("#workspace-create-kind"), "domain");
+		await expect(page.getByRole("dialog")).toContainText(t("workspaceNoProjectForDomain"));
+		await page.getByRole("dialog").getByRole("button", { name: t("cancel"), exact: true }).click();
+		await page.reload();
+		await expect(page.locator(".assets-ledger tbody tr")).toHaveCount(0);
+		for (const section of ["online", "physical"]) {
+			await page.goto(`/assets/${section}`);
+			await expect(page.locator(".assets-workbench .empty")).toBeVisible();
+			await noOverflow(page);
+		}
+		expect(errors).toEqual([]); expect(sourceRequests).toEqual([]);
+	});
+
+	test(`AS08 ${locale}: final candidate screenshot matrix of pages, categories, focus and creation dialog`, async ({ context }) => {
+		const t = translate(locale), { page, errors, sourceRequests } = await prepare(context, locale);
+		await restore(page);
+		for (const width of [390, 768, 1280, 1920, 2560]) {
+			await page.setViewportSize({ width, height: 1000 });
+			await page.goto("/assets");
+			await expect(page.locator(".assets-ledger tbody tr")).toHaveCount(5);
+			await capture(page, `${locale}-${width}-overview`);
+			await page.locator(".assets-section-nav").getByRole("link", { name: t("assetsOnline"), exact: true }).click();
+			await page.getByRole("button", { name: t("assetCardView"), exact: true }).click();
+			await expect(grid(page).locator(":scope > a")).toHaveCount(6);
+			await capture(page, `${locale}-${width}-online-cards`);
+			await page.locator(".assets-category-pills").getByRole("button", { name: new RegExp(`^${t("subscription")} `) }).click();
+			await page.getByRole("button", { name: t("assetsMoreFilters"), exact: true }).click();
+			await expect(page.locator(".asset-category-toolbar")).toBeVisible();
+			await capture(page, `${locale}-${width}-online-expanded-filters`);
+			await page.getByRole("button", { name: t("workspaceAddAsset"), exact: true }).click();
+			await expect(page.getByRole("dialog")).toBeVisible();
+			await capture(page, `${locale}-${width}-create-dialog`);
+			await page.getByRole("dialog").getByRole("button", { name: t("cancel"), exact: true }).click();
+			await page.locator(".assets-section-nav").getByRole("link", { name: t("assetsPhysical"), exact: true }).click();
+			await expect(grid(page).locator(":scope > a")).toHaveCount(4);
+			await capture(page, `${locale}-${width}-physical-cards`);
+			const filter = page.getByRole("combobox", { name: t("itemLifecycleStatus"), exact: true });
+			await filter.focus();
+			await expect(filter).toBeFocused();
+			await filter.press("ArrowDown");
+			await expect(page.getByRole("listbox")).toBeVisible();
+			await capture(page, `${locale}-${width}-physical-state-menu`);
+			await page.keyboard.press("Escape");
+		}
+		expect(errors).toEqual([]); expect(sourceRequests).toEqual([]);
+	});
+}

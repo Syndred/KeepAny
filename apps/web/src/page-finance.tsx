@@ -14,11 +14,13 @@ import { date, liveAssets, PageTitle, useAppContext } from "./view-shared";
 import "./finance.css";
 import { useSearchRowLocation } from "./search-location";
 import { Select, SelectOption } from "./components/ui/select";
+import { buildAssetExpenses } from "./asset-expenses";
 
 type ManualAction = typeof financeActions[number];
 type LedgerAction = ManualAction | "renew";
 type EntryDraft = FinanceEntryDraft & { action: LedgerAction };
 const ledgerActions = new Set<string>([...financeActions, "renew"]);
+const assetExpenseKind = (asset: Asset) => asset.kind === "project" || asset.kind === "item" || asset.kind === "subscription";
 const today = () => { const now = new Date(); return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")}`; };
 const AssetEditor = lazy(() => import("./workflow-asset-editor").then((module) => ({ default: module.AssetEditor })));
 
@@ -33,15 +35,17 @@ function MoneyLines({ totals, language, empty }: { totals: Map<string, bigint>; 
 		<strong key={currency}>{formatMinorUnits(amount, currency, language)}</strong>)}</div> : <strong>{empty}</strong>;
 }
 
-export function FinancePage() {
+export function FinancePage({ expenseOnly = false }: { expenseOnly?: boolean } = {}) {
 	const { data, notify } = useAppContext();
 	const { t, i18n } = useTranslation();
-	const targets = liveAssets(data).filter((asset) => asset.kind !== "vault");
+	const targets = liveAssets(data).filter((asset) => expenseOnly ? assetExpenseKind(asset) : asset.kind !== "vault");
 	const subscriptions = targets.filter((asset) => asset.kind === "subscription");
 	const assetsById = new Map(data.assets.map((asset) => [asset.id, asset]));
 	const liveById = new Map(liveAssets(data).map((asset) => [asset.id, asset]));
 	const records = data.history.map(effectiveFinanceEntry).filter((entry) => {
 		if (entry.deleted || !ledgerActions.has(entry.action)) return false;
+		if (expenseOnly) return !entry.purged && (entry.action === "expense" || entry.action === "renew") &&
+			historyAssetIds(entry).some((id) => { const asset = assetsById.get(id); return !!asset && assetExpenseKind(asset); });
 		const source = assetsById.get(entry.assetId);
 		if (!source || source.kind === "vault" || (entry.action === "renew" && source.kind !== "subscription")) return false;
 		return historyAssetIds(entry).some(id => { const kind = assetsById.get(id)?.kind; return kind && kind !== "vault"; });
@@ -58,10 +62,12 @@ export function FinancePage() {
 	const [assetFilter, setAssetFilter] = useState("");
 	const [sourceFilter, setSourceFilter] = useState("all");
 	const [draft, setDraft] = useState<EntryDraft>(() => ({ action: "expense", assetId: "", title: "", amount: "", currency: "CNY", eventDate: today(), source: "", note: "" }));
-	const thisMonth = today().slice(0, 7);
-	const planned = groupedMoney(subscriptions.filter((asset) => asset.status === "active")
+	const currentDate = today();
+	const thisMonth = currentDate.slice(0, 7);
+	const expenses = expenseOnly ? buildAssetExpenses({ assets: data.assets, history: data.history, today: currentDate, month: thisMonth }) : null;
+	const planned = expenses?.monthly ?? groupedMoney(subscriptions.filter((asset) => asset.status === "active")
 		.map((asset) => ({ currency: asset.currency, amount: monthlyMinorUnits(asset) })));
-	const confirmed = groupedMoney(records.filter((entry) =>
+	const confirmed = expenses?.month ?? groupedMoney(records.filter((entry) =>
 		(entry.action === "expense" && entry.eventDate?.startsWith(thisMonth)) ||
 		(entry.action === "renew" && entry.billDate?.startsWith(thisMonth)))
 		.filter((entry): entry is History & { amount: number; currency: string } => entry.amount !== undefined && !!entry.currency)
@@ -108,6 +114,9 @@ export function FinancePage() {
 	async function saveRecord(event: FormEvent) {
 		event.preventDefault();
 		if (inFlight.current || !targets.length) return;
+		if (expenseOnly && draft.action !== "expense" && !(editingRecord?.action === "renew" && draft.action === "renew")) {
+			setError(t("financeInvalidRecord")); return;
+		}
 		const amount = parseMinorUnits(draft.amount, draft.currency);
 		if (!draft.amount.trim() || !Number.isSafeInteger(amount) || amount < 0 || (draft.action !== "balance" && draft.action !== "renew" && amount === 0)) { setError(t("financeInvalidAmount")); return; }
 		const assetIds = [...new Set([draft.assetId,...(draft.assetIds ?? [])])];
@@ -146,16 +155,16 @@ export function FinancePage() {
 		} catch (error) { setError(t(error instanceof Error && error.message === "history-stale" ? "financeRecordChanged" : "error")); }
 		finally { inFlight.current = false; setBusy(false); }
 	}
-	const historyLabel = (entry: History) => entry.action === "renew" ? t("financeRenewalRecorded") : t(`financeAction${entry.action[0].toUpperCase()}${entry.action.slice(1)}`);
+	const historyLabel = (entry: Pick<History, "action">) => entry.action === "renew" ? t("financeRenewalRecorded") : t(`financeAction${entry.action[0].toUpperCase()}${entry.action.slice(1)}`);
 	return <main className="page finance-page">
-		<PageTitle eyebrow={t("financeEyebrow")} title={t("financeTitle")} subtitle={t("financeSubtitle")}
+		<PageTitle eyebrow={expenseOnly ? undefined : t("financeEyebrow")} title={t(expenseOnly ? "financeExpenseLedger" : "financeTitle")} subtitle={t(expenseOnly ? "financeExpenseSubtitle" : "financeSubtitle")}
 			action={<Button variant="primary" onClick={() => openRecord()}><Plus size={16}/>{t("financeAddRecord")}</Button>} />
 		<div className="finance-summary">
 			<section className="card"><span>{t("financeMonthlyPlan")}</span><MoneyLines totals={planned} language={i18n.language} empty={t("financeNoPlan")}/><small>{t("financePlanHint")}</small></section>
 			<section className="card"><span>{t("financeConfirmedSpent")}</span><MoneyLines totals={confirmed} language={i18n.language} empty={t("financeNoRecords")}/><small>{t("financeConfirmedHint")}</small></section>
-			<section className="card"><span>{t("financeBalances")}</span><MoneyLines totals={balances} language={i18n.language} empty={t("financeNoBalance")}/><small>{t("financeBalanceHint")}</small></section>
+			{!expenseOnly && <section className="card"><span>{t("financeBalances")}</span><MoneyLines totals={balances} language={i18n.language} empty={t("financeNoBalance")}/><small>{t("financeBalanceHint")}</small></section>}
 		</div>
-		<section className="card finance-linked-card" aria-labelledby="finance-linked-heading">
+		{!expenseOnly && <section className="card finance-linked-card" aria-labelledby="finance-linked-heading">
 			<div className="card-header finance-linked-head"><div><h2 id="finance-linked-heading">{t("financeLinkedAssets")}</h2><p>{t("financeSubscriptions")}</p></div><Button onClick={() => setEditSubscription("new")}><Plus size={16}/>{t("financeGoSubscriptions")}</Button></div>
 			{subscriptions.length ? <div className="finance-linked-list">{[...subscriptions].sort((a,b) => a.dueDate.localeCompare(b.dueDate)).map((asset) => {
 				const related = relatedAssets(asset.id);
@@ -166,10 +175,10 @@ export function FinancePage() {
 					<small>{asset.dueDate ? `${t("dueDate")}: ${date(asset.dueDate,i18n.language)} · ` : ""}{t(asset.status)} · {t("subscriptionPaymentMethod")}: {asset.subscriptionPaymentMethod || t("accountNotRecorded")} · {t("financeLatestSource")}: {source || t("financeNoSource")}</small>
 				</article>;
 			})}</div> : <p>{t("financeNoSubscriptions")}</p>}
-		</section>
+		</section>}
 		<div className="finance-columns">
 			<section className="card"><div className="card-header"><h2>{t("financeRecentRecords")}</h2></div>
-				<div className="finance-filters"><label htmlFor="finance-filter-type" className="field">{t("financeFilterType")}<Select id="finance-filter-type" value={typeFilter} onValueChange={(selectValue) => setTypeFilter(selectValue as LedgerAction | "all")}><SelectOption value="all">{t("all")}</SelectOption>{(["expense","topup","refund","balance","renew"] as const).map((action) => <SelectOption key={action} value={action}>{action === "renew" ? t("financeRenewalRecorded") : t(`financeAction${action[0].toUpperCase()}${action.slice(1)}`)}</SelectOption>)}</Select></label><label htmlFor="finance-filter-asset" className="field">{t("financeFilterAsset")}<Select id="finance-filter-asset" value={assetFilter} onValueChange={(selectValue) => setAssetFilter(selectValue)}><SelectOption value="">{t("all")}</SelectOption>{[...new Set(records.flatMap(historyAssetIds))].map((id) => <SelectOption key={id} value={id}>{assetsById.get(id)?.name ?? t("financeMissingAsset")}</SelectOption>)}</Select></label><label htmlFor="finance-filter-source" className="field">{t("financeFilterSource")}<Select id="finance-filter-source" value={sourceFilter} onValueChange={(selectValue) => setSourceFilter(selectValue)}><SelectOption value="all">{t("all")}</SelectOption>{hasEmptySource && <SelectOption value="empty">{t("financeNoSource")}</SelectOption>}{sources.map((source) => <SelectOption key={source} value={`source:${source}`}>{source}</SelectOption>)}</Select></label></div>
+				<div className="finance-filters">{!expenseOnly && <label htmlFor="finance-filter-type" className="field">{t("financeFilterType")}<Select id="finance-filter-type" value={typeFilter} onValueChange={(selectValue) => setTypeFilter(selectValue as LedgerAction | "all")}><SelectOption value="all">{t("all")}</SelectOption>{(["expense","topup","refund","balance","renew"] as const).map((action) => <SelectOption key={action} value={action}>{action === "renew" ? t("financeRenewalRecorded") : t(`financeAction${action[0].toUpperCase()}${action.slice(1)}`)}</SelectOption>)}</Select></label>}<label htmlFor="finance-filter-asset" className="field">{t("financeFilterAsset")}<Select id="finance-filter-asset" value={assetFilter} onValueChange={(selectValue) => setAssetFilter(selectValue)}><SelectOption value="">{t("all")}</SelectOption>{[...new Set(records.flatMap(historyAssetIds))].map((id) => <SelectOption key={id} value={id}>{assetsById.get(id)?.name ?? t("financeMissingAsset")}</SelectOption>)}</Select></label><label htmlFor="finance-filter-source" className="field">{t("financeFilterSource")}<Select id="finance-filter-source" value={sourceFilter} onValueChange={(selectValue) => setSourceFilter(selectValue)}><SelectOption value="all">{t("all")}</SelectOption>{hasEmptySource && <SelectOption value="empty">{t("financeNoSource")}</SelectOption>}{sources.map((source) => <SelectOption key={source} value={`source:${source}`}>{source}</SelectOption>)}</Select></label></div>
 				{filtered.length ? <div className="list">{filtered.map((entry) => <div className="list-row finance-entry" key={entry.id} id={`finance-entry-${entry.id}`} tabIndex={-1}>
 					<div className="finance-entry-content"><strong>{entry.title || assetsById.get(entry.assetId)?.name || historyLabel(entry)}</strong><small>{historyLabel(entry)} · {historyAssetIds(entry).map(id => assetsById.get(id)?.name ?? t("financeMissingAsset")).join(" · ")} · {date(entry.eventDate || entry.billDate || entry.createdAt.slice(0,10), i18n.language)} · {entry.source?.trim() || t("financeNoSource")}{entry.note ? ` · ${entry.note}` : ""}</small></div>
 					{entry.amount !== undefined && entry.currency && <b>{formatMinorUnits(entry.amount,entry.currency,i18n.language)}</b>}
@@ -180,7 +189,7 @@ export function FinancePage() {
 		{editSubscription && <Suspense fallback={<div className="toast" role="status">{t("loading")}</div>}><AssetEditor kind="subscription" asset={editSubscription === "new" ? undefined : editSubscription} categories={data.categories} onClose={() => setEditSubscription(null)} /></Suspense>}
 		{recordOpen && <Dialog title={t(editingRecord ? "financeEditRecord" : "financeAddRecord")} onClose={closeRecord} closeDisabled={busy}>
 			{targets.length ? <form className="finance-form" onSubmit={(event) => void saveRecord(event)}>
-				<div className="field"><label htmlFor="finance-action">{t("financeRecordType")}</label><Select id="finance-action" value={draft.action} disabled={busy || !!editingRecord} onValueChange={(selectValue) => { setDraft({...draft,action:selectValue as ManualAction});setError(""); }}>{editingRecord?.action === "renew" && <SelectOption value="renew">{t("financeRenewalRecorded")}</SelectOption>}{financeActions.map((action) => <SelectOption key={action} value={action}>{t(`financeAction${action[0].toUpperCase()}${action.slice(1)}`)}</SelectOption>)}</Select></div>
+				{expenseOnly ? <p>{historyLabel({ action: draft.action })}</p> : <div className="field"><label htmlFor="finance-action">{t("financeRecordType")}</label><Select id="finance-action" value={draft.action} disabled={busy || !!editingRecord} onValueChange={(selectValue) => { setDraft({...draft,action:selectValue as ManualAction});setError(""); }}>{editingRecord?.action === "renew" && <SelectOption value="renew">{t("financeRenewalRecorded")}</SelectOption>}{financeActions.map((action) => <SelectOption key={action} value={action}>{t(`financeAction${action[0].toUpperCase()}${action.slice(1)}`)}</SelectOption>)}</Select></div>}
 				{editingRecord?.action === "renew" && <p className="finance-renewal-hint">{t("financeRenewalCorrectionHint")}</p>}
 				<FinanceEntryFields draft={draft} targets={targets} disabled={busy} idPrefix="finance" allowMultiple preserveCurrency={!!editingRecord} onChange={(change) => { setDraft({ ...draft, ...change }); setError(""); }} />
 				{error && <p role="alert" className="field-error">{error}</p>}
