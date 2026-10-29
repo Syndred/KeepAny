@@ -1,5 +1,6 @@
 .workspace-page { min-width: 0; }
 .unified-accounts-page .password-vault-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.unified-accounts-page .password-vault-header > .button { min-height: 44px; min-width: 44px; }
 .unified-account-list { display: grid; gap: 12px; min-width: 0; }
 .unified-account { min-width: 0; border: 2px solid var(--line); border-radius: 14px; background: var(--paper); box-shadow: var(--shadow); }
 .unified-account > .asset-account-card { height: auto; min-height: 100px; border: 0; box-shadow: none; background: transparent; }

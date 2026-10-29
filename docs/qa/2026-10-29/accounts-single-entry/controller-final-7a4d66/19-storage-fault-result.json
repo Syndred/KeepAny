@@ -1,0 +1,8 @@
+{
+  "candidate": "7a4d66c6d91f206943c6d909f51c67bad38ee383",
+  "preparation": "One-shot IDBObjectStore.put failure only for synthetic passwordVault store; no product source changes or private API calls",
+  "failureText": "账号已保存，密码或关联尚未全部保存。请在此重试；不会重复新增账号。",
+  "accounts": 1,
+  "entriesAfterDoubleClickRetryAndRefresh": 1,
+  "verdict": "pass"
+}

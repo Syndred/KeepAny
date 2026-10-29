@@ -31,6 +31,11 @@ async function choose(page: Page, locator: Locator, label: string) {
 async function newAccount(page: Page, t: (key: string) => string) {
 	const globalAdd = page.locator(".password-vault-header").getByRole("button", { name: t("add"), exact: true });
 	await expect(globalAdd).toHaveCount(1);
+	await expect(globalAdd).toBeVisible();
+	const target = await globalAdd.boundingBox();
+	expect(target).not.toBeNull();
+	expect(target!.width).toBeGreaterThanOrEqual(44);
+	expect(target!.height).toBeGreaterThanOrEqual(44);
 	await expect(page.locator(".password-vault-toolbar .password-vault-new")).toHaveCount(0);
 	await expect(page.locator(".password-vault-trash-open")).toHaveCount(0);
 	await globalAdd.click();
@@ -60,6 +65,13 @@ async function noOverflow(page: Page, dialog?: Locator) {
 }
 
 async function snapshot(page: Page, name: string) {
+	if (name.startsWith("matrix-empty-") || name.startsWith("matrix-account-expanded-")) {
+		// Resizing across the mobile breakpoint starts the real sidebar CSS
+		// transition. Record the intended final viewport state, not an in-flight
+		// frame that still covers part of the account list.
+		if (page.viewportSize()!.width < 768) await expect.poll(() => page.locator(".sidebar").evaluate(node => node.getBoundingClientRect().right)).toBeLessThanOrEqual(1);
+		else await expect.poll(() => page.locator(".sidebar").evaluate(node => node.getBoundingClientRect().left)).toBeGreaterThanOrEqual(0);
+	}
 	await page.screenshot({ path: join(evidence, `${name}.png`), fullPage: true });
 }
 
@@ -222,6 +234,11 @@ for (const language of ["zh-CN", "en"] as const) {
 		const longTitle = `Synthetic long account ${"工作账号 Long title ".repeat(6)}`;
 		try {
 			await page.goto("/accounts");
+			// A zero card count also occurs while the lazy workspace is loading.
+			// Wait for the actual empty account list and vault access form before
+			// recording any empty-state screenshot.
+			await expect(page.locator(".unified-account-list .empty")).toBeVisible();
+			await expect(page.locator("#password-vault-master")).toBeVisible();
 			for (const width of [390, 768, 1268, 1280, 1920, 2560]) {
 				await page.setViewportSize({ width, height: 1050 });
 				await expect(page.locator(".asset-account-card")).toHaveCount(0);
