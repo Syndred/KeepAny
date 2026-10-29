@@ -59,7 +59,7 @@ function errorCode(error: unknown): string {
 	return "";
 }
 
-function errorKey(error: unknown): string {
+function errorKey(error: unknown, context: "operation" | "import" = "operation"): string {
 	switch (errorCode(error)) {
 		case "password":
 		case "vault-password":
@@ -80,7 +80,7 @@ function errorKey(error: unknown): string {
 		case "vault-invalid":
 		case "missing":
 		case "vault-missing":
-			return "pwVaultInvalidBackup";
+			return context === "import" ? "pwVaultInvalidBackup" : "pwVaultError";
 		default:
 			return "pwVaultError";
 	}
@@ -613,7 +613,7 @@ export function PasswordVaultPanel({
 			if (fileInputRef.current) fileInputRef.current.value = "";
 			announce("pwVaultImported");
 		} catch (error) {
-			announce(errorKey(error));
+			announce(errorKey(error, "import"));
 		} finally {
 			setBusy(false);
 		}

@@ -1,0 +1,765 @@
+{
+  "candidate": "cc2e9e351f3d5df8b1cd841658c9ca8ba39939f4",
+  "archiveSha256": "9d3e0496b3999176c194d8517083f9fae6c887db41aa9be5595d50e03efb7ad7",
+  "reviewer": "independent_single_entry (非产品实现者)",
+  "method": "逐文件调用 view_image 并实际检查返回图像；不是按截图数量或文件存在判定。",
+  "files": [
+    {
+      "path": "test-results/accounts-single-entry/independent-final-cc2e9e/evidence/journey-complete-form-zh-CN.png",
+      "state": "journey-complete-form",
+      "language": "zh-CN",
+      "viewportWidth": 1280,
+      "verdict": "pass",
+      "observation": "完整合并表单保留密码能力和别名；普通资料通过更多资料继续，焦点/私密备注文案清楚。",
+      "sha256": "790968d0f61dc8d83e8ef4f91edebd3899d25832a6d2bd6c69b56d1773ba1892"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-cc2e9e/evidence/journey-bottom-trash-zh-CN.png",
+      "state": "journey-bottom-trash",
+      "language": "zh-CN",
+      "viewportWidth": 1280,
+      "verdict": "pass",
+      "observation": "下方回收站显示单条和恢复/永久删除，顶部无重复回收站按钮。",
+      "sha256": "7501946400502194e346f12e85caa7091008997665bd8d0a5df2451e0080d3ed"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-cc2e9e/evidence/matrix-empty-zh-CN-390.png",
+      "state": "matrix-empty",
+      "language": "zh-CN",
+      "viewportWidth": 390,
+      "verdict": "pass",
+      "observation": "真实空态与建库入口完整；单一全局新增、分类和搜索换行正常。",
+      "sha256": "e54ad46e9718e08c02b99da1d1873dac73bd47a09f09ce0bd8b520b0342ac7b4"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-cc2e9e/evidence/matrix-empty-zh-CN-768.png",
+      "state": "matrix-empty",
+      "language": "zh-CN",
+      "viewportWidth": 768,
+      "verdict": "pass",
+      "observation": "真实空态与建库入口完整；单一全局新增、分类和搜索换行正常。",
+      "sha256": "2a8863b5b4204546dccd9b7464580b201c3cb1726e92a21ccf715ba9af8170d3"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-cc2e9e/evidence/matrix-empty-zh-CN-1268.png",
+      "state": "matrix-empty",
+      "language": "zh-CN",
+      "viewportWidth": 1268,
+      "verdict": "pass",
+      "observation": "真实空态与建库入口完整；单一全局新增、分类和搜索换行正常。",
+      "sha256": "899bca21440b48bb8dd8815f9007bf021bae73d4a50132ec3ee704c948667ab9"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-cc2e9e/evidence/matrix-empty-zh-CN-1280.png",
+      "state": "matrix-empty",
+      "language": "zh-CN",
+      "viewportWidth": 1280,
+      "verdict": "pass",
+      "observation": "真实空态与建库入口完整；单一全局新增、分类和搜索换行正常。",
+      "sha256": "a6107bd7311b2a5c72024dccb30ae190cfef01b470d1a155bb2d17f05098a5df"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-cc2e9e/evidence/matrix-empty-zh-CN-1920.png",
+      "state": "matrix-empty",
+      "language": "zh-CN",
+      "viewportWidth": 1920,
+      "verdict": "pass",
+      "observation": "真实空态与建库入口完整；单一全局新增、分类和搜索换行正常。",
+      "sha256": "c46c9b5f38882ab7bb380ff45b7deed8b042c6c515a5d13dc3704c54ae70db04"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-cc2e9e/evidence/matrix-empty-zh-CN-2560.png",
+      "state": "matrix-empty",
+      "language": "zh-CN",
+      "viewportWidth": 2560,
+      "verdict": "pass",
+      "observation": "真实空态与建库入口完整；单一全局新增、分类和搜索换行正常。",
+      "sha256": "4b1de2ad8afaf5db56b9f835acd26dbeac1aa85cc0b330b6bfa40516319fc7ec"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-cc2e9e/evidence/matrix-account-expanded-zh-CN-390.png",
+      "state": "matrix-account-expanded",
+      "language": "zh-CN",
+      "viewportWidth": 390,
+      "verdict": "pass",
+      "observation": "长标题/账号/网址/备注在卡内换行，展开条目独立增长；相邻账号保持紧凑，手机侧栏收起。",
+      "sha256": "ed416bc7bd2fdecfc530de794f4641f5da2177eab752bc64d546a20fd1154702"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-cc2e9e/evidence/matrix-account-expanded-zh-CN-768.png",
+      "state": "matrix-account-expanded",
+      "language": "zh-CN",
+      "viewportWidth": 768,
+      "verdict": "pass",
+      "observation": "长标题/账号/网址/备注在卡内换行，展开条目独立增长；相邻账号保持紧凑，手机侧栏收起。",
+      "sha256": "b0e0cba22b6cd13a6e1cd505a678fb7dc98e1bc10be2b9959e92369bae1f65aa"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-cc2e9e/evidence/matrix-account-expanded-zh-CN-1268.png",
+      "state": "matrix-account-expanded",
+      "language": "zh-CN",
+      "viewportWidth": 1268,
+      "verdict": "pass",
+      "observation": "长标题/账号/网址/备注在卡内换行，展开条目独立增长；相邻账号保持紧凑，手机侧栏收起。",
+      "sha256": "e63027471b933ecb3f2ac9fb0d56b3bde78f097b413c4f3ae3c78064f18ae23a"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-cc2e9e/evidence/matrix-account-expanded-zh-CN-1280.png",
+      "state": "matrix-account-expanded",
+      "language": "zh-CN",
+      "viewportWidth": 1280,
+      "verdict": "pass",
+      "observation": "长标题/账号/网址/备注在卡内换行，展开条目独立增长；相邻账号保持紧凑，手机侧栏收起。",
+      "sha256": "8b27db7ed4c61bd819ba5485c1f958007199480a4cf95927b50685752c1f683d"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-cc2e9e/evidence/matrix-account-expanded-zh-CN-1920.png",
+      "state": "matrix-account-expanded",
+      "language": "zh-CN",
+      "viewportWidth": 1920,
+      "verdict": "pass",
+      "observation": "长标题/账号/网址/备注在卡内换行，展开条目独立增长；相邻账号保持紧凑，手机侧栏收起。",
+      "sha256": "400fb5895e8ac6e5e4b5e927c063477cc723b1b2e883030cd0d9126c343c96bc"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-cc2e9e/evidence/matrix-account-expanded-zh-CN-2560.png",
+      "state": "matrix-account-expanded",
+      "language": "zh-CN",
+      "viewportWidth": 2560,
+      "verdict": "pass",
+      "observation": "长标题/账号/网址/备注在卡内换行，展开条目独立增长；相邻账号保持紧凑，手机侧栏收起。",
+      "sha256": "77ad78b1317581b1244f75f2ab16567198baad5e01002916d053a5cec193ed90"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-cc2e9e/evidence/matrix-editor-default-zh-CN-390.png",
+      "state": "matrix-editor-default",
+      "language": "zh-CN",
+      "viewportWidth": 390,
+      "verdict": "pass",
+      "observation": "合并表单名称焦点可见；账号、可选密码、私密备注、网址及更多资料可滚动访问，底部操作可见。",
+      "sha256": "4510cffa4e2d7a877259c89e36eb4ee4720b4f33685146ada773d70a73c9d0b4"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-cc2e9e/evidence/matrix-editor-default-zh-CN-768.png",
+      "state": "matrix-editor-default",
+      "language": "zh-CN",
+      "viewportWidth": 768,
+      "verdict": "pass",
+      "observation": "合并表单名称焦点可见；账号、可选密码、私密备注、网址及更多资料可滚动访问，底部操作可见。",
+      "sha256": "df6062c272e04627762d6dd7c031fb1c1c8eddecd185f3b4fc6a6119d42877b1"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-cc2e9e/evidence/matrix-editor-default-zh-CN-1268.png",
+      "state": "matrix-editor-default",
+      "language": "zh-CN",
+      "viewportWidth": 1268,
+      "verdict": "pass",
+      "observation": "合并表单名称焦点可见；账号、可选密码、私密备注、网址及更多资料可滚动访问，底部操作可见。",
+      "sha256": "606f3cf7ed8a11c21928654d6e01ce7e53dfcde43d4762415aa7a2a5d333fffe"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-cc2e9e/evidence/matrix-editor-default-zh-CN-1280.png",
+      "state": "matrix-editor-default",
+      "language": "zh-CN",
+      "viewportWidth": 1280,
+      "verdict": "pass",
+      "observation": "合并表单名称焦点可见；账号、可选密码、私密备注、网址及更多资料可滚动访问，底部操作可见。",
+      "sha256": "a41f9a6197b2de5e7d56f32b32711b5773e2ce234a6b5e249fa183bf19cbffc8"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-cc2e9e/evidence/matrix-editor-default-zh-CN-1920.png",
+      "state": "matrix-editor-default",
+      "language": "zh-CN",
+      "viewportWidth": 1920,
+      "verdict": "pass",
+      "observation": "合并表单名称焦点可见；账号、可选密码、私密备注、网址及更多资料可滚动访问，底部操作可见。",
+      "sha256": "68989af1309894a70bfe86fb82ba4fe0570d2109c100b6dc8d4ea105734e49d7"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-cc2e9e/evidence/matrix-editor-default-zh-CN-2560.png",
+      "state": "matrix-editor-default",
+      "language": "zh-CN",
+      "viewportWidth": 2560,
+      "verdict": "pass",
+      "observation": "合并表单名称焦点可见；账号、可选密码、私密备注、网址及更多资料可滚动访问，底部操作可见。",
+      "sha256": "82cbe0f2ead85d4da7a5a868153de369d335f36fec30551294f2dc8e19089aa2"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-cc2e9e/evidence/matrix-editor-expanded-error-zh-CN-390.png",
+      "state": "matrix-editor-expanded-error",
+      "language": "zh-CN",
+      "viewportWidth": 390,
+      "verdict": "pass",
+      "observation": "更多资料及普通长备注已展开；标签错误完整显示于固定操作栏独立行，保存/取消可见。",
+      "sha256": "7ce5fcf4af511c245561967d96345ed43ae78aee3c4ddb32f4ce2b06fde8a03f"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-cc2e9e/evidence/matrix-editor-expanded-error-zh-CN-768.png",
+      "state": "matrix-editor-expanded-error",
+      "language": "zh-CN",
+      "viewportWidth": 768,
+      "verdict": "pass",
+      "observation": "更多资料及普通长备注已展开；标签错误完整显示于固定操作栏独立行，保存/取消可见。",
+      "sha256": "e43a7d0c167eca31439eb5eaa6f3e4efb45e30d651852583919cb6567879fe99"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-cc2e9e/evidence/matrix-editor-expanded-error-zh-CN-1268.png",
+      "state": "matrix-editor-expanded-error",
+      "language": "zh-CN",
+      "viewportWidth": 1268,
+      "verdict": "pass",
+      "observation": "更多资料及普通长备注已展开；标签错误完整显示于固定操作栏独立行，保存/取消可见。",
+      "sha256": "e4de4b426916a4754bef5094c212808fa25e01eaf9dc970553ae12b932649dd1"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-cc2e9e/evidence/matrix-editor-expanded-error-zh-CN-1280.png",
+      "state": "matrix-editor-expanded-error",
+      "language": "zh-CN",
+      "viewportWidth": 1280,
+      "verdict": "pass",
+      "observation": "更多资料及普通长备注已展开；标签错误完整显示于固定操作栏独立行，保存/取消可见。",
+      "sha256": "323e5ff1f5de64bb9582512bc6f868c6029fd45398cee2406b86c88e0569d8e8"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-cc2e9e/evidence/matrix-editor-expanded-error-zh-CN-1920.png",
+      "state": "matrix-editor-expanded-error",
+      "language": "zh-CN",
+      "viewportWidth": 1920,
+      "verdict": "pass",
+      "observation": "更多资料及普通长备注已展开；标签错误完整显示于固定操作栏独立行，保存/取消可见。",
+      "sha256": "0a43ac814a0d836a7805b5372878be1022aa4f032b4e77c4d1bb0d61d44501dc"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-cc2e9e/evidence/matrix-editor-expanded-error-zh-CN-2560.png",
+      "state": "matrix-editor-expanded-error",
+      "language": "zh-CN",
+      "viewportWidth": 2560,
+      "verdict": "pass",
+      "observation": "更多资料及普通长备注已展开；标签错误完整显示于固定操作栏独立行，保存/取消可见。",
+      "sha256": "d43eee970479697754560d23412e59ebdb3d3e9cd2181f032cb8b678da0dc99f"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-cc2e9e/evidence/matrix-category-open-zh-CN-390.png",
+      "state": "matrix-category-open",
+      "language": "zh-CN",
+      "viewportWidth": 390,
+      "verdict": "pass",
+      "observation": "分类选项层位于表单内可视区域，选中项、文字与边界完整；底部错误与操作仍可见。",
+      "sha256": "de19ce65ab1ccb0627c11c9333a33dae9478888305ac0486f1401a7d5a4f23b1"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-cc2e9e/evidence/matrix-category-open-zh-CN-768.png",
+      "state": "matrix-category-open",
+      "language": "zh-CN",
+      "viewportWidth": 768,
+      "verdict": "pass",
+      "observation": "分类选项层位于表单内可视区域，选中项、文字与边界完整；底部错误与操作仍可见。",
+      "sha256": "e102b1d99922ccc04994226abfcdb5952ad2cb1777360f1581b1fbfc03fb7c84"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-cc2e9e/evidence/matrix-category-open-zh-CN-1268.png",
+      "state": "matrix-category-open",
+      "language": "zh-CN",
+      "viewportWidth": 1268,
+      "verdict": "pass",
+      "observation": "分类选项层位于表单内可视区域，选中项、文字与边界完整；底部错误与操作仍可见。",
+      "sha256": "e84ab1204257f9213224f073a3588d92bcc7851503302274bd7762603bae9f85"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-cc2e9e/evidence/matrix-category-open-zh-CN-1280.png",
+      "state": "matrix-category-open",
+      "language": "zh-CN",
+      "viewportWidth": 1280,
+      "verdict": "pass",
+      "observation": "分类选项层位于表单内可视区域，选中项、文字与边界完整；底部错误与操作仍可见。",
+      "sha256": "51a75de0b8008755cf4aedb0acca6f015e2f0a44c9d13387ebb556195f8b5980"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-cc2e9e/evidence/matrix-category-open-zh-CN-1920.png",
+      "state": "matrix-category-open",
+      "language": "zh-CN",
+      "viewportWidth": 1920,
+      "verdict": "pass",
+      "observation": "分类选项层位于表单内可视区域，选中项、文字与边界完整；底部错误与操作仍可见。",
+      "sha256": "05a7a76cac390ee1765966d084e866713b843b36c8b9015f970949de1ed7a199"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-cc2e9e/evidence/matrix-category-open-zh-CN-2560.png",
+      "state": "matrix-category-open",
+      "language": "zh-CN",
+      "viewportWidth": 2560,
+      "verdict": "pass",
+      "observation": "分类选项层位于表单内可视区域，选中项、文字与边界完整；底部错误与操作仍可见。",
+      "sha256": "a4743cde938326a903eea943a33498ec98e79c8cccd4e30d83b467ba053e3991"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-cc2e9e/evidence/same-form-create-error-zh-CN.png",
+      "state": "same-form-create-error",
+      "language": "zh-CN",
+      "viewportWidth": 390,
+      "verdict": "pass",
+      "observation": "更多资料展开后的内嵌建库密码不匹配错误完整可见，不被固定操作栏遮盖。",
+      "sha256": "47305f490e4ab14b90da4f5e6ce7f39fb7b9766071d4780746e7a57d52dac594"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-cc2e9e/evidence/journey-complete-form-en.png",
+      "state": "journey-complete-form",
+      "language": "en",
+      "viewportWidth": 1280,
+      "verdict": "pass",
+      "observation": "完整合并表单保留密码能力和别名；普通资料通过更多资料继续，焦点/私密备注文案清楚。",
+      "sha256": "f8b69f517bf060945b268d19b54d071c059a5957a2172b1475c72ff2c6abddce"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-cc2e9e/evidence/journey-bottom-trash-en.png",
+      "state": "journey-bottom-trash",
+      "language": "en",
+      "viewportWidth": 1280,
+      "verdict": "pass",
+      "observation": "下方回收站显示单条和恢复/永久删除，顶部无重复回收站按钮。",
+      "sha256": "d07ffe465129597755ba7e9f677ec3b44165db0027ce0f971c36422c8d7b19c7"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-cc2e9e/evidence/same-form-create-error-en.png",
+      "state": "same-form-create-error",
+      "language": "en",
+      "viewportWidth": 390,
+      "verdict": "pass",
+      "observation": "更多资料展开后的内嵌建库密码不匹配错误完整可见，不被固定操作栏遮盖。",
+      "sha256": "abaa5607bf75d55bf38234f16544f65ef9a4db1d9e45ea428c0f110501e36c7c"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-cc2e9e/evidence/matrix-empty-en-390.png",
+      "state": "matrix-empty",
+      "language": "en",
+      "viewportWidth": 390,
+      "verdict": "pass",
+      "observation": "真实空态与建库入口完整；单一全局新增、分类和搜索换行正常。",
+      "sha256": "f44f93a847351eb40cf3c55155b467b2e268ca3312cb70dd71c26f491b469fcc"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-cc2e9e/evidence/matrix-empty-en-768.png",
+      "state": "matrix-empty",
+      "language": "en",
+      "viewportWidth": 768,
+      "verdict": "pass",
+      "observation": "真实空态与建库入口完整；单一全局新增、分类和搜索换行正常。",
+      "sha256": "fe40941d63714ceaa23af37612e1ed7441f431773fac35cac87aa3222086df10"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-cc2e9e/evidence/matrix-empty-en-1268.png",
+      "state": "matrix-empty",
+      "language": "en",
+      "viewportWidth": 1268,
+      "verdict": "pass",
+      "observation": "真实空态与建库入口完整；单一全局新增、分类和搜索换行正常。",
+      "sha256": "fbcace7465a9e40bd0a08b04b7306bb95a8ebfcd2075d71953a0e7dbdf80b261"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-cc2e9e/evidence/matrix-empty-en-1280.png",
+      "state": "matrix-empty",
+      "language": "en",
+      "viewportWidth": 1280,
+      "verdict": "pass",
+      "observation": "真实空态与建库入口完整；单一全局新增、分类和搜索换行正常。",
+      "sha256": "5423752ae5d46a6ff90e2a18abffa2c4e96203c53f5ddd9922ac34ff9c5f2541"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-cc2e9e/evidence/matrix-empty-en-1920.png",
+      "state": "matrix-empty",
+      "language": "en",
+      "viewportWidth": 1920,
+      "verdict": "pass",
+      "observation": "真实空态与建库入口完整；单一全局新增、分类和搜索换行正常。",
+      "sha256": "a6f1317a4ef6a0f37f2cde20585b5007d5b1d880a97590e1490824677f8a42f4"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-cc2e9e/evidence/matrix-empty-en-2560.png",
+      "state": "matrix-empty",
+      "language": "en",
+      "viewportWidth": 2560,
+      "verdict": "pass",
+      "observation": "真实空态与建库入口完整；单一全局新增、分类和搜索换行正常。",
+      "sha256": "87ccd3fc70fff78fecdf19e3d945c2bd40388654e8eb1849daa43c37e0fddb36"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-cc2e9e/evidence/matrix-account-expanded-en-390.png",
+      "state": "matrix-account-expanded",
+      "language": "en",
+      "viewportWidth": 390,
+      "verdict": "pass",
+      "observation": "长标题/账号/网址/备注在卡内换行，展开条目独立增长；相邻账号保持紧凑，手机侧栏收起。",
+      "sha256": "c4a61aef508ed92145e17e15b3674bb314326d2a0709433d43871c50b6f59213"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-cc2e9e/evidence/matrix-account-expanded-en-768.png",
+      "state": "matrix-account-expanded",
+      "language": "en",
+      "viewportWidth": 768,
+      "verdict": "pass",
+      "observation": "长标题/账号/网址/备注在卡内换行，展开条目独立增长；相邻账号保持紧凑，手机侧栏收起。",
+      "sha256": "e4396e07b9e2ff04da26e6b67bd3d9a1b6a7592efaf5801de44dbbedabeb4a41"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-cc2e9e/evidence/matrix-account-expanded-en-1268.png",
+      "state": "matrix-account-expanded",
+      "language": "en",
+      "viewportWidth": 1268,
+      "verdict": "pass",
+      "observation": "长标题/账号/网址/备注在卡内换行，展开条目独立增长；相邻账号保持紧凑，手机侧栏收起。",
+      "sha256": "5cd99777b04e1b78109151576b554eae70dfca7698863ff113af880a977b8cc5"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-cc2e9e/evidence/matrix-account-expanded-en-1280.png",
+      "state": "matrix-account-expanded",
+      "language": "en",
+      "viewportWidth": 1280,
+      "verdict": "pass",
+      "observation": "长标题/账号/网址/备注在卡内换行，展开条目独立增长；相邻账号保持紧凑，手机侧栏收起。",
+      "sha256": "47d7660ee6b1751c87fed1f44c96c6d0d30265cedb6cbcd8cfe53d110a69a63c"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-cc2e9e/evidence/matrix-account-expanded-en-1920.png",
+      "state": "matrix-account-expanded",
+      "language": "en",
+      "viewportWidth": 1920,
+      "verdict": "pass",
+      "observation": "长标题/账号/网址/备注在卡内换行，展开条目独立增长；相邻账号保持紧凑，手机侧栏收起。",
+      "sha256": "ad41a6e383e028e74b0c079fcf3b8f575b02253f02d010e29aa578d8e9a6a983"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-cc2e9e/evidence/matrix-account-expanded-en-2560.png",
+      "state": "matrix-account-expanded",
+      "language": "en",
+      "viewportWidth": 2560,
+      "verdict": "pass",
+      "observation": "长标题/账号/网址/备注在卡内换行，展开条目独立增长；相邻账号保持紧凑，手机侧栏收起。",
+      "sha256": "476869db6a666d2ce3116c379c3e87ae462498cbdb152a7315e56240dcb443e6"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-cc2e9e/evidence/matrix-editor-default-en-390.png",
+      "state": "matrix-editor-default",
+      "language": "en",
+      "viewportWidth": 390,
+      "verdict": "pass",
+      "observation": "合并表单名称焦点可见；账号、可选密码、私密备注、网址及更多资料可滚动访问，底部操作可见。",
+      "sha256": "a503a318ae8365f4d03ad23d5e6d8f68ed1b01e10778be43248ff6a6f1225b00"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-cc2e9e/evidence/matrix-editor-default-en-768.png",
+      "state": "matrix-editor-default",
+      "language": "en",
+      "viewportWidth": 768,
+      "verdict": "pass",
+      "observation": "合并表单名称焦点可见；账号、可选密码、私密备注、网址及更多资料可滚动访问，底部操作可见。",
+      "sha256": "5e0cd7688ebbab49646c7d89d0eace312946e301c1c3f8c86553709d01d3234b"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-cc2e9e/evidence/matrix-editor-default-en-1268.png",
+      "state": "matrix-editor-default",
+      "language": "en",
+      "viewportWidth": 1268,
+      "verdict": "pass",
+      "observation": "合并表单名称焦点可见；账号、可选密码、私密备注、网址及更多资料可滚动访问，底部操作可见。",
+      "sha256": "2bbafd325df2c10ef6761d761c3b0f291ff25dc3857a9a00bb2c99ed948a3e3c"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-cc2e9e/evidence/matrix-editor-default-en-1280.png",
+      "state": "matrix-editor-default",
+      "language": "en",
+      "viewportWidth": 1280,
+      "verdict": "pass",
+      "observation": "合并表单名称焦点可见；账号、可选密码、私密备注、网址及更多资料可滚动访问，底部操作可见。",
+      "sha256": "443bf05ed642c5bb44d1bf94a11bb0657d2716a1d05bafab00acbe144a36d669"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-cc2e9e/evidence/matrix-editor-default-en-1920.png",
+      "state": "matrix-editor-default",
+      "language": "en",
+      "viewportWidth": 1920,
+      "verdict": "pass",
+      "observation": "合并表单名称焦点可见；账号、可选密码、私密备注、网址及更多资料可滚动访问，底部操作可见。",
+      "sha256": "1f91b3ed6f03bcdc9023d5df550583f7f367d5c6e24c4c36d25cb345c0258a40"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-cc2e9e/evidence/matrix-editor-default-en-2560.png",
+      "state": "matrix-editor-default",
+      "language": "en",
+      "viewportWidth": 2560,
+      "verdict": "pass",
+      "observation": "合并表单名称焦点可见；账号、可选密码、私密备注、网址及更多资料可滚动访问，底部操作可见。",
+      "sha256": "671fbc5d1b497941f90d2c11249b529c3a057f9e0e96976c858515dd54bc8b96"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-cc2e9e/evidence/matrix-editor-expanded-error-en-390.png",
+      "state": "matrix-editor-expanded-error",
+      "language": "en",
+      "viewportWidth": 390,
+      "verdict": "pass",
+      "observation": "更多资料及普通长备注已展开；标签错误完整显示于固定操作栏独立行，保存/取消可见。",
+      "sha256": "fcdbb9f15ec9689381ac49efdad32478e9528e624439291e99b7b46a84c00635"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-cc2e9e/evidence/matrix-editor-expanded-error-en-768.png",
+      "state": "matrix-editor-expanded-error",
+      "language": "en",
+      "viewportWidth": 768,
+      "verdict": "pass",
+      "observation": "更多资料及普通长备注已展开；标签错误完整显示于固定操作栏独立行，保存/取消可见。",
+      "sha256": "81fa6a8cc8d0286a80a60c7b91142a6b5729a4806645aa5fdf9a8aef486adf3a"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-cc2e9e/evidence/matrix-editor-expanded-error-en-1268.png",
+      "state": "matrix-editor-expanded-error",
+      "language": "en",
+      "viewportWidth": 1268,
+      "verdict": "pass",
+      "observation": "更多资料及普通长备注已展开；标签错误完整显示于固定操作栏独立行，保存/取消可见。",
+      "sha256": "4eaf461b4059795c663696e78e901b13f2fed7b611069732f41b4007a305c3b3"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-cc2e9e/evidence/matrix-editor-expanded-error-en-1280.png",
+      "state": "matrix-editor-expanded-error",
+      "language": "en",
+      "viewportWidth": 1280,
+      "verdict": "pass",
+      "observation": "更多资料及普通长备注已展开；标签错误完整显示于固定操作栏独立行，保存/取消可见。",
+      "sha256": "fef8c01bb0428b9ba7b647b51f0345164011bac09c1290b65e717c079eb73f37"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-cc2e9e/evidence/matrix-editor-expanded-error-en-1920.png",
+      "state": "matrix-editor-expanded-error",
+      "language": "en",
+      "viewportWidth": 1920,
+      "verdict": "pass",
+      "observation": "更多资料及普通长备注已展开；标签错误完整显示于固定操作栏独立行，保存/取消可见。",
+      "sha256": "7cd873503a9f474ca19cde1b3d03e7def3e78077f90b74ce4f6e1012df6797e1"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-cc2e9e/evidence/matrix-editor-expanded-error-en-2560.png",
+      "state": "matrix-editor-expanded-error",
+      "language": "en",
+      "viewportWidth": 2560,
+      "verdict": "pass",
+      "observation": "更多资料及普通长备注已展开；标签错误完整显示于固定操作栏独立行，保存/取消可见。",
+      "sha256": "a15a90a9325b7766c2906e116d15b8309364fadf291050e9f57581df2628df1b"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-cc2e9e/evidence/matrix-category-open-en-390.png",
+      "state": "matrix-category-open",
+      "language": "en",
+      "viewportWidth": 390,
+      "verdict": "pass",
+      "observation": "分类选项层位于表单内可视区域，选中项、文字与边界完整；底部错误与操作仍可见。",
+      "sha256": "febd84b56e50c9ef1ea682aa1b1d7c675811b502201a16b4b52ab5119290a4e4"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-cc2e9e/evidence/matrix-category-open-en-768.png",
+      "state": "matrix-category-open",
+      "language": "en",
+      "viewportWidth": 768,
+      "verdict": "pass",
+      "observation": "分类选项层位于表单内可视区域，选中项、文字与边界完整；底部错误与操作仍可见。",
+      "sha256": "33c9063540428c11005b0bf43187f391fb7b2c26799be10bb281b7382a07180d"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-cc2e9e/evidence/matrix-category-open-en-1268.png",
+      "state": "matrix-category-open",
+      "language": "en",
+      "viewportWidth": 1268,
+      "verdict": "pass",
+      "observation": "分类选项层位于表单内可视区域，选中项、文字与边界完整；底部错误与操作仍可见。",
+      "sha256": "1fba80286d6783be7a01b78a66ffd4e070881aaba77fe20cc9e2b485b347fdb6"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-cc2e9e/evidence/matrix-category-open-en-1280.png",
+      "state": "matrix-category-open",
+      "language": "en",
+      "viewportWidth": 1280,
+      "verdict": "pass",
+      "observation": "分类选项层位于表单内可视区域，选中项、文字与边界完整；底部错误与操作仍可见。",
+      "sha256": "6380f310614245c074523d567317108f4b2e599f5017f9a08311d34d41c435c5"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-cc2e9e/evidence/matrix-category-open-en-1920.png",
+      "state": "matrix-category-open",
+      "language": "en",
+      "viewportWidth": 1920,
+      "verdict": "pass",
+      "observation": "分类选项层位于表单内可视区域，选中项、文字与边界完整；底部错误与操作仍可见。",
+      "sha256": "4c1498bc31038ff15310cb47af708ac4f88aaecac5c4c296de6848d9e76d697c"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-cc2e9e/evidence/matrix-category-open-en-2560.png",
+      "state": "matrix-category-open",
+      "language": "en",
+      "viewportWidth": 2560,
+      "verdict": "pass",
+      "observation": "分类选项层位于表单内可视区域，选中项、文字与边界完整；底部错误与操作仍可见。",
+      "sha256": "74239b30a3c2c8ec940a8ea6049aaa08e7c936b3e7c4c5cd12d1e4b15555e3b3"
+    }
+  ],
+  "supplemental": {
+    "busy": [
+      {
+        "path": "test-results/accounts-single-entry/independent-final-cc2e9e/busy-first/evidence/busy/zh-CN-1280-workspace-samples-busy.png",
+        "verdict": "pass",
+        "observation": "已打开自然busy或恢复截图；各消费位置禁用/恢复与44px几何原始JSON一致。",
+        "sha256": "f22027199a04b9507d26e219d27c1233c636064e2066a0d2c5261f840719f7a9"
+      },
+      {
+        "path": "test-results/accounts-single-entry/independent-final-cc2e9e/busy-first/evidence/busy/zh-CN-1280-workspace-samples-recovered.png",
+        "verdict": "pass",
+        "observation": "已打开自然busy或恢复截图；各消费位置禁用/恢复与44px几何原始JSON一致。",
+        "sha256": "906f76e66062fdd9ef6681159235fafb84612dd8289d1cd52150c30cc06d58f2"
+      },
+      {
+        "path": "test-results/accounts-single-entry/independent-final-cc2e9e/busy-first/evidence/busy/en-390-workspace-samples-busy.png",
+        "verdict": "pass",
+        "observation": "已打开自然busy或恢复截图；各消费位置禁用/恢复与44px几何原始JSON一致。",
+        "sha256": "5041c5084db600c422f4bc4b9ddebd25fc4f762302bc84a889b72b992092f91b"
+      },
+      {
+        "path": "test-results/accounts-single-entry/independent-final-cc2e9e/busy-first/evidence/busy/en-390-workspace-samples-recovered.png",
+        "verdict": "pass",
+        "observation": "已打开自然busy或恢复截图；各消费位置禁用/恢复与44px几何原始JSON一致。",
+        "sha256": "a7883ce43848f23533ef91653ad7cf43e02ec021476ed9fc9a9a8c8b589a8b78"
+      },
+      {
+        "path": "test-results/accounts-single-entry/independent-final-cc2e9e/busy-first/evidence/busy/zh-CN-1280-detail-restore-busy.png",
+        "verdict": "pass",
+        "observation": "已打开自然busy或恢复截图；各消费位置禁用/恢复与44px几何原始JSON一致。",
+        "sha256": "5457cf396f9f9d3019bcdec71d1dbdd0c5a6c2a3e51c80784a4958da98a3cfcc"
+      },
+      {
+        "path": "test-results/accounts-single-entry/independent-final-cc2e9e/busy-first/evidence/busy/zh-CN-1280-detail-restore-recovered.png",
+        "verdict": "pass",
+        "observation": "已打开自然busy或恢复截图；各消费位置禁用/恢复与44px几何原始JSON一致。",
+        "sha256": "cde3ff8173cbc72c01a8c58f8f0c6c716373c961435162af8ce9d39495a94a60"
+      },
+      {
+        "path": "test-results/accounts-single-entry/independent-final-cc2e9e/busy-first/evidence/busy/en-390-detail-restore-busy.png",
+        "verdict": "pass",
+        "observation": "已打开自然busy或恢复截图；各消费位置禁用/恢复与44px几何原始JSON一致。",
+        "sha256": "bd015398f11ce6ed5c893921cff76a7cc978c7e59b29657531d8b270ba02d0be"
+      },
+      {
+        "path": "test-results/accounts-single-entry/independent-final-cc2e9e/busy-first/evidence/busy/en-390-detail-restore-recovered.png",
+        "verdict": "pass",
+        "observation": "已打开自然busy或恢复截图；各消费位置禁用/恢复与44px几何原始JSON一致。",
+        "sha256": "864698973cee04cdbfc2529bababfa7ebd50879a38fd2f37ba2bbaf335072e7a"
+      },
+      {
+        "path": "test-results/accounts-single-entry/independent-final-cc2e9e/busy-first/evidence/busy/zh-CN-1280-focused-restore-busy.png",
+        "verdict": "pass",
+        "observation": "已打开自然busy或恢复截图；各消费位置禁用/恢复与44px几何原始JSON一致。",
+        "sha256": "b9dc239d2f0eb6b2fa57e6fe9502c0e29d282707ccdf940bf0b406166013790e"
+      },
+      {
+        "path": "test-results/accounts-single-entry/independent-final-cc2e9e/busy-first/evidence/busy/zh-CN-1280-focused-restore-recovered.png",
+        "verdict": "pass",
+        "observation": "已打开自然busy或恢复截图；各消费位置禁用/恢复与44px几何原始JSON一致。",
+        "sha256": "dcd4ef1845494c6dfa579f1a2d9250486586879162a6ed5ef104b2768aca36fc"
+      },
+      {
+        "path": "test-results/accounts-single-entry/independent-final-cc2e9e/busy-first/evidence/busy/en-390-focused-restore-busy.png",
+        "verdict": "pass",
+        "observation": "已打开自然busy或恢复截图；各消费位置禁用/恢复与44px几何原始JSON一致。",
+        "sha256": "3d7c0c18cd5219fbbc5b512ecb6bf0858d89797de025ef6ee7e333ba2393da73"
+      },
+      {
+        "path": "test-results/accounts-single-entry/independent-final-cc2e9e/busy-first/evidence/busy/en-390-focused-restore-recovered.png",
+        "verdict": "pass",
+        "observation": "已打开自然busy或恢复截图；各消费位置禁用/恢复与44px几何原始JSON一致。",
+        "sha256": "f3483ae4bdd28c4accaa53a022ece3852561665d5dedd597075260b00c1d5b4e"
+      }
+    ],
+    "controllerEvidence": [
+      {
+        "path": "docs/qa/2026-10-29/accounts-single-entry/controller-final-cc2e9e/01-normal-entry-44px-focus-pressed.png",
+        "operator": "主控 /root",
+        "reviewerAction": "独立读图和JSON，未冒称本人执行故障操作",
+        "verdict": "pass",
+        "sha256": "5acb66e3968c80e9f5a66bd8def1c2447105041eb66b20fb822149b543bccdf2"
+      },
+      {
+        "path": "docs/qa/2026-10-29/accounts-single-entry/controller-final-cc2e9e/02-expanded-error-visible.png",
+        "operator": "主控 /root",
+        "reviewerAction": "独立读图和JSON，未冒称本人执行故障操作",
+        "verdict": "pass",
+        "sha256": "b94c0b5f32121bed5abe2881002ffbdf0ba92a5b3fff155f3e1f99a81d1a7893"
+      },
+      {
+        "path": "docs/qa/2026-10-29/accounts-single-entry/controller-final-cc2e9e/03-two-accounts-linked-expanded.png",
+        "operator": "主控 /root",
+        "reviewerAction": "独立读图和JSON，未冒称本人执行故障操作",
+        "verdict": "pass",
+        "sha256": "9180d3a84093fea8b2d537df0fb1993fefc94536ca2ad2ed8af9e9d7876c10d4"
+      },
+      {
+        "path": "docs/qa/2026-10-29/accounts-single-entry/controller-final-cc2e9e/04-bottom-trash-one-entry.png",
+        "operator": "主控 /root",
+        "reviewerAction": "独立读图和JSON，未冒称本人执行故障操作",
+        "verdict": "pass",
+        "sha256": "b2f672bf9e831bc2fadd131c5a63874f0dea7349b1b1ae6b7571ffaae73345bc"
+      },
+      {
+        "path": "docs/qa/2026-10-29/accounts-single-entry/controller-final-cc2e9e/05-clipboard-denied-manual-copy.png",
+        "operator": "主控 /root",
+        "reviewerAction": "独立读图和JSON，未冒称本人执行故障操作",
+        "verdict": "pass",
+        "sha256": "9cf40bad875fc52341d6836016988dcabf60f0ae829d94b7a1bb50e6e8aae33b"
+      },
+      {
+        "path": "docs/qa/2026-10-29/accounts-single-entry/controller-final-cc2e9e/06-external-write-clears-private-fields.png",
+        "operator": "主控 /root",
+        "reviewerAction": "独立读图和JSON，未冒称本人执行故障操作",
+        "verdict": "pass",
+        "sha256": "a3eebc46ae12880010b094b17e09f257ca99001bbfdd7d3474ce217d1bf57b7f"
+      },
+      {
+        "path": "docs/qa/2026-10-29/accounts-single-entry/controller-final-cc2e9e/07-en-390-final-passwordless.png",
+        "operator": "主控 /root",
+        "reviewerAction": "独立读图和JSON，未冒称本人执行故障操作",
+        "verdict": "pass",
+        "sha256": "eefaac4f2de52b93b0bce115bb4c8563afe885da7d305154cd1659fc9e7e030c"
+      },
+      {
+        "path": "docs/qa/2026-10-29/accounts-single-entry/controller-final-cc2e9e/08-vault-write-failure-partial-state.png",
+        "operator": "主控 /root",
+        "reviewerAction": "独立读图和JSON，未冒称本人执行故障操作",
+        "verdict": "pass",
+        "sha256": "c055ef5335119f7f4bf749680b84903a5b4a4ad8597adc38a1d7ff0889965431"
+      },
+      {
+        "path": "docs/qa/2026-10-29/accounts-single-entry/controller-final-cc2e9e/09-vault-retry-refresh-unique.png",
+        "operator": "主控 /root",
+        "reviewerAction": "独立读图和JSON，未冒称本人执行故障操作",
+        "verdict": "pass",
+        "sha256": "54207fa8530b9b50c2ec6565c129eb2f844228e5c9bee09bcc20b9ff804024f7"
+      }
+    ],
+    "selectedLegacy": [
+      {
+        "path": "test-results/accounts-single-entry/independent-final-cc2e9e/legacy-evidence/disconnect-confirm-zh-CN-390.png",
+        "verdict": "pass",
+        "sha256": "36af77835e9d4bd444a2e893cb35ccfaa017d1d16cd0135f3004df0127e95ddc"
+      },
+      {
+        "path": "test-results/accounts-single-entry/independent-final-cc2e9e/legacy-evidence/disconnect-done-en-1536.png",
+        "verdict": "pass",
+        "sha256": "a8de1b1fd55ba1cf4583b443cd1cecb961d99b2d8b99dd8551335a61c626d05a"
+      },
+      {
+        "path": "test-results/accounts-single-entry/independent-final-cc2e9e/legacy-evidence/graph-delete-confirm-en-390.png",
+        "verdict": "pass",
+        "sha256": "c29345eb2d9f0d94ae6a862087809809bb0fe859c234eccae9c07bc098854ece"
+      },
+      {
+        "path": "test-results/accounts-single-entry/independent-final-cc2e9e/legacy-evidence/unified-logins-zh-CN-1280.png",
+        "verdict": "pass",
+        "sha256": "74ba476997cc2a3cf6f680483a178484b677571569b5b4c53970863f10b796aa"
+      }
+    ]
+  }
+}

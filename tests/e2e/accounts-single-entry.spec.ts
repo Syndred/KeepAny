@@ -59,6 +59,29 @@ async function unlock(page: Page, t: (key: string) => string) {
 	await expect(page.locator(".password-vault-toolbar")).toBeVisible();
 }
 
+async function failNextKdbxWrite(page: Page) {
+	// Isolated fictional fault preparation only: fail one real passwordVault
+	// IndexedDB put, then restore the native method. No application API or data
+	// injection is used; subsequent save/purge/retry actions use the actual UI.
+	await page.evaluate(() => {
+		const original = IDBObjectStore.prototype.put;
+		const state = { attempts: 0 };
+		(window as Window & { singleEntryWriteFault?: { attempts: number } }).singleEntryWriteFault = state;
+		IDBObjectStore.prototype.put = function (value: unknown, key?: IDBValidKey) {
+			if (this.name === "passwordVault") {
+				state.attempts++;
+				IDBObjectStore.prototype.put = original;
+				throw new DOMException("Synthetic one-write KDBX fault", "QuotaExceededError");
+			}
+			return key === undefined ? original.call(this, value) : original.call(this, value, key);
+		};
+	});
+}
+
+async function expectOneInjectedWriteFailure(page: Page) {
+	expect(await page.evaluate(() => (window as Window & { singleEntryWriteFault?: { attempts: number } }).singleEntryWriteFault?.attempts)).toBe(1);
+}
+
 async function noOverflow(page: Page, dialog?: Locator) {
 	expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);
 	if (dialog) expect(await dialog.evaluate(node => node.scrollWidth <= node.clientWidth + 1)).toBe(true);
@@ -157,6 +180,17 @@ for (const language of ["zh-CN", "en"] as const) {
 			await page.getByRole("dialog").getByRole("button", { name: t("cancel"), exact: true }).click();
 			await expect(trash.locator(".password-vault-entry-trash")).toHaveCount(1);
 			await snapshot(page, `journey-bottom-trash-${language}`);
+			// SE15: a purge write failure is an operation error, not a malformed import.
+			await failNextKdbxWrite(page);
+			await trash.getByRole("button", { name: t("deletePermanently"), exact: true }).click();
+			const purge = page.getByRole("dialog");
+			await purge.getByRole("button", { name: t("deletePermanently"), exact: true }).click();
+			await expect(purge.getByRole("alert")).toHaveText(t("pwVaultError"));
+			await expect(purge).not.toContainText(t("pwVaultInvalidBackup"));
+			await expectOneInjectedWriteFailure(page);
+			await expect(trash.locator(".password-vault-entry-trash")).toHaveCount(1);
+			await snapshot(page, `purge-error-${language}`);
+			await purge.getByRole("button", { name: t("cancel"), exact: true }).click();
 			await trash.getByRole("button", { name: t("pwVaultRestoreEntry"), exact: true }).click();
 			await expect(entry).toHaveCount(1);
 			await expect(trash.locator(".password-vault-entry-trash")).toHaveCount(0);
@@ -207,8 +241,18 @@ for (const language of ["zh-CN", "en"] as const) {
 			await expect(dialog.locator("#password-vault-entry-password")).toBeVisible();
 			await expect(dialog.locator("#password-vault-entry-title")).toHaveValue("Synthetic retained draft");
 			await dialog.locator("#password-vault-entry-password").fill(secret);
-			await save(dialog);
+			await failNextKdbxWrite(page);
+			await dialog.getByRole("button", { name: t("save"), exact: true }).click();
+			await expect(dialog.getByRole("alert")).toHaveText(t("accountEntryPartial"));
+			await expectOneInjectedWriteFailure(page);
 			await expect(page.locator(".asset-account-card")).toHaveCount(1);
+			await expect(page.locator(".password-vault-entry")).toHaveCount(0);
+			await expect(dialog.locator("#password-vault-entry-password")).toHaveValue(secret);
+			await snapshot(page, `same-form-save-partial-${language}`);
+			await dialog.getByRole("button", { name: t("save"), exact: true }).dblclick();
+			await expect(dialog).toBeHidden();
+			await expect(page.locator(".asset-account-card")).toHaveCount(1);
+			await expect(page.locator(".password-vault-entry")).toHaveCount(1);
 			await page.locator(".password-vault-toolbar").getByRole("button", { name: t("pwVaultLock"), exact: true }).click();
 			dialog = await newAccount(page, t);
 			await dialog.locator("#password-vault-entry-title").fill("Synthetic unlock retained draft");
@@ -223,6 +267,9 @@ for (const language of ["zh-CN", "en"] as const) {
 			await expect(dialog.locator("#password-vault-entry-title")).toHaveValue("Synthetic unlock retained draft");
 			await dialog.getByRole("button", { name: t("cancel"), exact: true }).click();
 			await expect(page.locator(".asset-account-card")).toHaveCount(1);
+			await page.reload(); await unlock(page, t);
+			await expect(page.locator(".asset-account-card")).toHaveCount(1);
+			await expect(page.locator(".password-vault-entry")).toHaveCount(1);
 			await noOverflow(page);
 		} finally { await context.close(); }
 	});
