@@ -1,0 +1,406 @@
+{
+  "candidate": "398cdba992ac3364bc0f5d8d3ae06e0fc9288d53",
+  "archiveSha256": "57a3f6885cc64ec98cc6ecca92f9a7822741831ffc898539192110757d284a1a",
+  "entry": "http://127.0.0.1:4405/",
+  "reviewer": "independent_single_entry",
+  "method": "本版相邻/补充/主控证据逐张view_image打开；controller操作者root，本代理只审证，过渡截图单列不用作视觉通过",
+  "files": [
+    {
+      "path": "test-results/accounts-single-entry/independent-final-398cdb/adjacent/layout/busy/zh-CN-1280-workspace-samples-busy.png",
+      "group": "busy-consumers",
+      "verdict": "pass",
+      "sha256": "3580a3e19c383fae3f0e926e8c982b857aa04399fa0b3fed71593d08f9f38d1b",
+      "observation": "逐图打开检查，结果可读且与当前用例操作和候选一致。"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-398cdb/adjacent/layout/busy/zh-CN-1280-workspace-samples-recovered.png",
+      "group": "busy-consumers",
+      "verdict": "pass",
+      "sha256": "0aafe819de8d8f91cd7366d20b8a5167c8bac2f651cebf8c48e02a343705e361",
+      "observation": "逐图打开检查，结果可读且与当前用例操作和候选一致。"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-398cdb/adjacent/layout/busy/zh-CN-1280-detail-restore-busy.png",
+      "group": "busy-consumers",
+      "verdict": "pass",
+      "sha256": "23f41f4793733b6fd79b120e86411ae86cfd251f496bf819e5c28031a1fb6bd6",
+      "observation": "逐图打开检查，结果可读且与当前用例操作和候选一致。"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-398cdb/adjacent/layout/busy/zh-CN-1280-detail-restore-recovered.png",
+      "group": "busy-consumers",
+      "verdict": "pass",
+      "sha256": "8df4326258bee8e836154a51fc44fff88bd5906425562cc756bb39e971b3e484",
+      "observation": "逐图打开检查，结果可读且与当前用例操作和候选一致。"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-398cdb/adjacent/layout/busy/zh-CN-1280-focused-restore-busy.png",
+      "group": "busy-consumers",
+      "verdict": "pass",
+      "sha256": "7bc9e453247b9c9f77da606977ceb300cd3c1090664b54b6761ab798a20b3308",
+      "observation": "逐图打开检查，结果可读且与当前用例操作和候选一致。"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-398cdb/adjacent/layout/busy/zh-CN-1280-focused-restore-recovered.png",
+      "group": "busy-consumers",
+      "verdict": "pass",
+      "sha256": "eb9dadfc09e60feda0869b9f6f7e1d5fdbc414d05c58906fea53789c1f50ac1e",
+      "observation": "逐图打开检查，结果可读且与当前用例操作和候选一致。"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-398cdb/adjacent/layout/busy/en-390-workspace-samples-busy.png",
+      "group": "busy-consumers",
+      "verdict": "pass",
+      "sha256": "513f39ae0aab9632d05754427536b9b7c3e1e9b018fb08332ce412b3122de2c5",
+      "observation": "逐图打开检查，结果可读且与当前用例操作和候选一致。"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-398cdb/adjacent/layout/busy/en-390-workspace-samples-recovered.png",
+      "group": "busy-consumers",
+      "verdict": "pass",
+      "sha256": "85016ba65418397d2e773be15130dbdbdfc13ca20d1f62b0d7c2e301fc86140c",
+      "observation": "逐图打开检查，结果可读且与当前用例操作和候选一致。"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-398cdb/adjacent/layout/busy/en-390-detail-restore-busy.png",
+      "group": "busy-consumers",
+      "verdict": "pass",
+      "sha256": "bd015398f11ce6ed5c893921cff76a7cc978c7e59b29657531d8b270ba02d0be",
+      "observation": "逐图打开检查，结果可读且与当前用例操作和候选一致。"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-398cdb/adjacent/layout/busy/en-390-detail-restore-recovered.png",
+      "group": "busy-consumers",
+      "verdict": "pass",
+      "sha256": "8242a42a708d48caa2d5eef0e60ab90c695e4b6ee846d7e217b09915afcacbe3",
+      "observation": "逐图打开检查，结果可读且与当前用例操作和候选一致。"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-398cdb/adjacent/layout/busy/en-390-focused-restore-busy.png",
+      "group": "busy-consumers",
+      "verdict": "pass",
+      "sha256": "2072553004d9b2d4410fb7d733219ff7de501e03d5f1eea0ceae14b023e78657",
+      "observation": "逐图打开检查，结果可读且与当前用例操作和候选一致。"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-398cdb/adjacent/layout/busy/en-390-focused-restore-recovered.png",
+      "group": "busy-consumers",
+      "verdict": "pass",
+      "sha256": "e9649bac5a0cff9e7d0719c3ec5cc66581e40afa1274960a00e8d82f4445b434",
+      "observation": "逐图打开检查，结果可读且与当前用例操作和候选一致。"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-398cdb/adjacent/layout/zh-CN-1280-unlinked-long.png",
+      "group": "adjacent-consumers",
+      "verdict": "pass",
+      "sha256": "d8c7fb86c3f6465961ab54fdd04edef9c559bebc2512a560a61744bae2f822a9",
+      "observation": "逐图打开检查，结果可读且与当前用例操作和候选一致。"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-398cdb/adjacent/layout/zh-CN-1280-unlinked-editor.png",
+      "group": "adjacent-consumers",
+      "verdict": "pass",
+      "sha256": "e924663ac82e40b46cde42ccad1d648c21794835b4e80b4b09cd22285151a79c",
+      "observation": "逐图打开检查，结果可读且与当前用例操作和候选一致。"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-398cdb/adjacent/layout/zh-CN-1280-required-error.png",
+      "group": "adjacent-consumers",
+      "verdict": "pass",
+      "sha256": "a2f32ad2b033cf8985e5e7415b336f3d442d01223abe8a5df1c676e84dbf7ecf",
+      "observation": "逐图打开检查，结果可读且与当前用例操作和候选一致。"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-398cdb/adjacent/layout/zh-CN-1280-detail-embedded.png",
+      "group": "adjacent-consumers",
+      "verdict": "pass",
+      "sha256": "cd929db83f01589006a82efc6e2e95dc37ca645e1dde36a2fbac44bc71ab5102",
+      "observation": "逐图打开检查，结果可读且与当前用例操作和候选一致。"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-398cdb/adjacent/layout/en-390-unlinked-long.png",
+      "group": "adjacent-consumers",
+      "verdict": "pass",
+      "sha256": "04dd0c23ce9a73bb2fc5b82c23a5072dd4e3f3ac631b4a06860b3667749a9432",
+      "observation": "逐图打开检查，结果可读且与当前用例操作和候选一致。"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-398cdb/adjacent/layout/en-390-unlinked-editor.png",
+      "group": "adjacent-consumers",
+      "verdict": "pass",
+      "sha256": "f25e218d5f1fc64c89a2d1985e176371e551d0c72871dca7d73c8b1f5b09be94",
+      "observation": "逐图打开检查，结果可读且与当前用例操作和候选一致。"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-398cdb/adjacent/layout/en-390-required-error.png",
+      "group": "adjacent-consumers",
+      "verdict": "pass",
+      "sha256": "ace7e5a37e09ca77f886bddb8772bed03e1f59b1c43b4e8e1d4d5b0d6517848f",
+      "observation": "逐图打开检查，结果可读且与当前用例操作和候选一致。"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-398cdb/adjacent/layout/en-390-detail-embedded.png",
+      "group": "adjacent-consumers",
+      "verdict": "pass",
+      "sha256": "ff9863e1253fef5268c1ecd03c6cd0d6c66bb5c85d95d811e210765c9b6bc36f",
+      "observation": "逐图打开检查，结果可读且与当前用例操作和候选一致。"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-398cdb/adjacent/browser/toast-dialog-layer-zh-CN-1-57360-t-stays-below-modal-actions/toast-normal-page.png",
+      "group": "adjacent-consumers",
+      "verdict": "pass",
+      "sha256": "0ea455137c8df8353f2572d9406afdeeccab348e677d4a607f5624b4a5fea908",
+      "observation": "逐图打开检查，结果可读且与当前用例操作和候选一致。"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-398cdb/adjacent/browser/toast-dialog-layer-zh-CN-1-57360-t-stays-below-modal-actions/toast-and-dialog.png",
+      "group": "adjacent-consumers",
+      "verdict": "pass",
+      "sha256": "aff5583d87a8d88b6de73c454b6c3e3ebda17b9deea26ab1b268c2c898d9257f",
+      "observation": "逐图打开检查，结果可读且与当前用例操作和候选一致。"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-398cdb/adjacent/browser/toast-dialog-layer-zh-CN-1-57360-t-stays-below-modal-actions/toast-and-required-error.png",
+      "group": "adjacent-consumers",
+      "verdict": "pass",
+      "sha256": "e2330fc68947506157631954240d65bf15cd510be5c8bcf6ab1e40dc17a74b31",
+      "observation": "逐图打开检查，结果可读且与当前用例操作和候选一致。"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-398cdb/adjacent/browser/toast-dialog-layer-en-390--fc678-t-stays-below-modal-actions/toast-normal-page.png",
+      "group": "adjacent-consumers",
+      "verdict": "pass",
+      "sha256": "ebd174a0861a4c93d223d6a748b313695c9985f13e90c46ddc99b53c2e55ca50",
+      "observation": "逐图打开检查，结果可读且与当前用例操作和候选一致。"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-398cdb/adjacent/browser/toast-dialog-layer-en-390--fc678-t-stays-below-modal-actions/toast-and-dialog.png",
+      "group": "adjacent-consumers",
+      "verdict": "pass",
+      "sha256": "9054b5d85737e448050328fe33b31b8004e29814224868f549e3836ca7807596",
+      "observation": "逐图打开检查，结果可读且与当前用例操作和候选一致。"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-398cdb/adjacent/browser/toast-dialog-layer-en-390--fc678-t-stays-below-modal-actions/toast-and-required-error.png",
+      "group": "adjacent-consumers",
+      "verdict": "pass",
+      "sha256": "6e522fdbd24b0dfba6e1d01773d6951707176433a2cc01bd6dc70cc883cee5e2",
+      "observation": "逐图打开检查，结果可读且与当前用例操作和候选一致。"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-398cdb/adjacent/links/zh-CN-1280-900/007-focused.png",
+      "group": "adjacent-consumers",
+      "verdict": "pass",
+      "sha256": "37fd3b43dfcd383f00c818f782ec249ee8a9a96219af618e4d481fec2ef25f42",
+      "observation": "逐图打开检查，结果可读且与当前用例操作和候选一致。"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-398cdb/adjacent/links/zh-CN-1280-900/010-match-pressed.png",
+      "group": "adjacent-consumers",
+      "verdict": "pass",
+      "sha256": "31f3c4d7a88cbed540dc6cb21c382e68b6145dad615f1db0421a321c69406eb2",
+      "observation": "逐图打开检查，结果可读且与当前用例操作和候选一致。"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-398cdb/adjacent/links/zh-CN-1280-900/011-matched.png",
+      "group": "adjacent-consumers",
+      "verdict": "pass",
+      "sha256": "f07bf3bc26e4e1e252e57efb2ef03f07c7bd70b9a9899279b551f9df08c6b502",
+      "observation": "逐图打开检查，结果可读且与当前用例操作和候选一致。"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-398cdb/adjacent/links/zh-CN-1280-900/021-reloaded.png",
+      "group": "adjacent-consumers",
+      "verdict": "pass",
+      "sha256": "54a87a910521bc2376f64bfecc825fd2c0d26f6c91247accba4c4547960a5d50",
+      "observation": "逐图打开检查，结果可读且与当前用例操作和候选一致。"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-398cdb/adjacent/links/en-390-900/007-focused.png",
+      "group": "adjacent-consumers",
+      "verdict": "pass",
+      "sha256": "a398c14f090453a6a7c30dff5aa663a577f14ba608f6fb46b9d835a2bdf05485",
+      "observation": "逐图打开检查，结果可读且与当前用例操作和候选一致。"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-398cdb/adjacent/links/en-390-900/010-match-pressed.png",
+      "group": "adjacent-consumers",
+      "verdict": "pass",
+      "sha256": "a5d9e223888923d5805b435f9dc4ade7cc9a09d251ee9c34225db42f92d34490",
+      "observation": "逐图打开检查，结果可读且与当前用例操作和候选一致。"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-398cdb/adjacent/links/en-390-900/011-matched.png",
+      "group": "adjacent-consumers",
+      "verdict": "pass",
+      "sha256": "35b0826f77cfc1a6a4279e2c14cb2bef2c47ee8d617c7ea11fa9abf2d413e55a",
+      "observation": "逐图打开检查，结果可读且与当前用例操作和候选一致。"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-398cdb/adjacent/links/en-390-900/021-reloaded.png",
+      "group": "adjacent-consumers",
+      "verdict": "pass",
+      "sha256": "210995169fbc7e9c34ccf56b7096286d9fbf24970cf6860dd81ff09733450ecc",
+      "observation": "逐图打开检查，结果可读且与当前用例操作和候选一致。"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-398cdb/custom-category/zh-CN-custom-category-form.png",
+      "group": "custom-category",
+      "verdict": "pass",
+      "sha256": "038533239385007615a6ae92f42f402f7ee8d0ad4710d8d34ecb6a59c3caaa67",
+      "observation": "逐图打开检查，结果可读且与当前用例操作和候选一致。"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-398cdb/custom-category/zh-CN-custom-category-reloaded.png",
+      "group": "custom-category",
+      "verdict": "pass",
+      "sha256": "1007e8299ef3677104d501daca74a2374032002106a88a2f98cc08bf850997f8",
+      "observation": "逐图打开检查，结果可读且与当前用例操作和候选一致。"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-398cdb/custom-category/en-custom-category-form.png",
+      "group": "custom-category",
+      "verdict": "pass",
+      "sha256": "bc7dec82437721f30e6c2ce4c0b6daf42e810a05fb60573905cb85ef8405911c",
+      "observation": "逐图打开检查，结果可读且与当前用例操作和候选一致。"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-398cdb/custom-category/en-custom-category-reloaded.png",
+      "group": "custom-category",
+      "verdict": "pass",
+      "sha256": "71794f7a10cb304facd3abf2e659852f03594e795caf552210145bf93d81227e",
+      "observation": "逐图打开检查，结果可读且与当前用例操作和候选一致。"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-398cdb/legacy-evidence/unified-logins-zh-CN-390.png",
+      "group": "legacy-supporting",
+      "verdict": "pass",
+      "sha256": "7d369b4877326af5754af9cab827d314ac4d92256ab01a0226f17115fb09a860",
+      "observation": "逐图打开检查，结果可读且与当前用例操作和候选一致。"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-398cdb/legacy-evidence/unified-logins-en-390.png",
+      "group": "legacy-supporting",
+      "verdict": "pass",
+      "sha256": "f5671e3f15d9b5545e904d97cfad7e786a3eaf06f965e462c3f94a3ca5c688a0",
+      "observation": "逐图打开检查，结果可读且与当前用例操作和候选一致。"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-398cdb/legacy-evidence/trash-visible-zh-CN-390.png",
+      "group": "legacy-supporting",
+      "verdict": "not-used-for-visual-verdict-transition-frame",
+      "sha256": "e728bf1adb7a50c366e6f7488735bdf14382b645ed468a3fd53e98049266c117",
+      "observation": "普通资产回收站手机截图捕到侧栏关闭过渡；未作为本需求稳定视觉通过证据。"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-398cdb/legacy-evidence/trash-visible-en-390.png",
+      "group": "legacy-supporting",
+      "verdict": "not-used-for-visual-verdict-transition-frame",
+      "sha256": "6e959fcab185a9d028acc0d4c4509e2dbc136402dd0cbcc32be43955be6220cd",
+      "observation": "普通资产回收站手机截图捕到侧栏关闭过渡；未作为本需求稳定视觉通过证据。"
+    },
+    {
+      "path": "docs/qa/2026-10-29/accounts-single-entry/controller-final-398c/01-single-add-focus-pressed.png",
+      "group": "controller-evidence-readback",
+      "operator": "root",
+      "verdict": "pass",
+      "sha256": "d15ba32962305c3e4d520f5de40ac1de270bbf6356944091d29774a8b57b4c36",
+      "observation": "逐图打开检查，结果可读且与当前用例操作和候选一致。"
+    },
+    {
+      "path": "docs/qa/2026-10-29/accounts-single-entry/controller-final-398c/02-expanded-mismatch-visible.png",
+      "group": "controller-evidence-readback",
+      "operator": "root",
+      "verdict": "pass",
+      "sha256": "4d43e936e48d3375577e0601553b4062a3ff0c961cc8bb972183296dd1df204c",
+      "observation": "逐图打开检查，结果可读且与当前用例操作和候选一致。"
+    },
+    {
+      "path": "docs/qa/2026-10-29/accounts-single-entry/controller-final-398c/03-saved-linked-password.png",
+      "group": "controller-evidence-readback",
+      "operator": "root",
+      "verdict": "pass",
+      "sha256": "6b070c24d1e8358f3309dbe81caf1160a9a0410a624fcf6bf3eff2c8bb67668b",
+      "observation": "逐图打开检查，结果可读且与当前用例操作和候选一致。"
+    },
+    {
+      "path": "docs/qa/2026-10-29/accounts-single-entry/controller-final-398c/04-purge-error-correct-context.png",
+      "group": "controller-evidence-readback",
+      "operator": "root",
+      "verdict": "pass",
+      "sha256": "3847861451306bc0d7600be040835472cfb1570370f673c0d569ecd16e164ad2",
+      "observation": "永久删除故障显示通用密码库操作错误，不声称正在导入；弹窗/取消/确认操作可见。"
+    },
+    {
+      "path": "docs/qa/2026-10-29/accounts-single-entry/controller-final-398c/05-corrupt-import-retains-import-context.png",
+      "group": "controller-evidence-readback",
+      "operator": "root",
+      "verdict": "pass",
+      "sha256": "02be2800993ba6010d05119c3d32f82c0097ad81eeaece964c38525885d58eb3",
+      "observation": "逐图打开检查，结果可读且与当前用例操作和候选一致。"
+    },
+    {
+      "path": "docs/qa/2026-10-29/accounts-single-entry/controller-final-398c/06-clipboard-fallback.png",
+      "group": "controller-evidence-readback",
+      "operator": "root",
+      "verdict": "pass",
+      "sha256": "a98f4e49aaff497762f242ca9d874f595dfd13ea83f40800d6290f08e3cbf4b3",
+      "observation": "逐图打开检查，结果可读且与当前用例操作和候选一致。"
+    },
+    {
+      "path": "docs/qa/2026-10-29/accounts-single-entry/controller-final-398c/07-locked-private-draft-cleared.png",
+      "group": "controller-evidence-readback",
+      "operator": "root",
+      "verdict": "pass",
+      "sha256": "27ff9121b11693041731ba028dd57997852c668671c4970a99183cce3aecb31c",
+      "observation": "逐图打开检查，结果可读且与当前用例操作和候选一致。"
+    },
+    {
+      "path": "docs/qa/2026-10-29/accounts-single-entry/controller-final-398c/08-en-390-passwordless-persisted.png",
+      "group": "controller-evidence-readback",
+      "operator": "root",
+      "verdict": "pass",
+      "sha256": "780468c712f5a57d3e4f3e1573b2d02d38c5886c48421b8e4b3a8aa8e3a4172a",
+      "observation": "逐图打开检查，结果可读且与当前用例操作和候选一致。"
+    },
+    {
+      "path": "docs/qa/2026-10-29/accounts-single-entry/controller-final-398c/09-partial-save-retained-secret.png",
+      "group": "controller-evidence-readback",
+      "operator": "root",
+      "verdict": "pass",
+      "sha256": "fa36206026f99007e750d4c5fd0946c59b24b90e9929e70b22c96bdc5f66a1d6",
+      "observation": "逐图打开检查，结果可读且与当前用例操作和候选一致。"
+    },
+    {
+      "path": "docs/qa/2026-10-29/accounts-single-entry/controller-final-398c/10-retry-refresh-unique.png",
+      "group": "controller-evidence-readback",
+      "operator": "root",
+      "verdict": "pass",
+      "sha256": "768fd85b7aef47943345822f26cd6c1b6c8f4817c56c706d74ec728fd2f6390e",
+      "observation": "逐图打开检查，结果可读且与当前用例操作和候选一致。"
+    },
+    {
+      "path": "docs/qa/2026-10-29/accounts-single-entry/controller-final-398c/11-purge-success-refresh-empty.png",
+      "group": "controller-evidence-readback",
+      "operator": "root",
+      "verdict": "pass",
+      "sha256": "4533f31032b0ee2089a6de70b01b515910902c4814be652177a70b444cc9cece",
+      "observation": "逐图打开检查，结果可读且与当前用例操作和候选一致。"
+    },
+    {
+      "path": "docs/qa/2026-10-29/accounts-single-entry/controller-final-398c/12-local-4180-merged-form.png",
+      "group": "controller-evidence-readback",
+      "operator": "root",
+      "verdict": "pass",
+      "sha256": "361402537340e79a1d7d41c0dcf6ba721d3c00b46d67f128d035b783f0d78a1c",
+      "observation": "主控4180隔离profile入口/合并表单/更多资料实际图已独立打开；本代理另独立核验HTTP当前index/脚本与旧hash样本，不读取真实数据。"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-398cdb/validation-edges-diagnose/invalid-date-rejected.png",
+      "group": "current-valid-failure-SE16",
+      "verdict": "fail",
+      "sha256": "996d2d55e3327473512ab787b8ef9416a4a67bf806d973f157706cbd254d2a88",
+      "observation": "日期拒绝与0写入正确；当前字段错误反馈残留过期网址提示。初始附加测试要求自定义日期alert不成立，后续诊断明确原生校验本身正常，但旧提示未清理是独立确认的UI缺陷。"
+    }
+  ]
+}

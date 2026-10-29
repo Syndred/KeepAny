@@ -1,0 +1,8 @@
+{
+  "schema": "keepany.account-entry-final-acceptance.v1",
+  "state": "incomplete",
+  "failedCandidate": "398cdba992ac3364bc0f5d8d3ae06e0fc9288d53",
+  "failedId": "SE16",
+  "historicalReport": "398c阶段记录.md",
+  "next": "new clean compiled candidate and full scoped reverification"
+}

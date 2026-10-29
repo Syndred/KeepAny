@@ -48,6 +48,12 @@ export function AccountEntryDialog({ onClose }: { onClose: () => void }) {
 		needsVault: false,
 	});
 	const [error, setError] = useState("");
+	const inputError = useRef(false);
+	const clearInputError = () => {
+		if (!inputError.current) return;
+		inputError.current = false;
+		setError("");
+	};
 	const [showPassword, setShowPassword] = useState(false);
 	const [manualCopy, setManualCopy] = useState<string | null>(null);
 	const [selectedAssetId, setSelectedAssetId] = useState("");
@@ -65,6 +71,7 @@ export function AccountEntryDialog({ onClose }: { onClose: () => void }) {
 	useEffect(() => {
 		if (!unlocked && wasUnlocked.current) {
 			generation.current++;
+			inputError.current = false;
 			setDraft((value) =>
 				value
 					? {
@@ -92,6 +99,7 @@ export function AccountEntryDialog({ onClose }: { onClose: () => void }) {
 	};
 	async function access() {
 		if (running.current || !session || snapshot.status === "loading") return;
+		inputError.current = false;
 		if (
 			snapshot.status === "empty" &&
 			master.length < MIN_MASTER_PASSWORD_LENGTH
@@ -135,7 +143,10 @@ export function AccountEntryDialog({ onClose }: { onClose: () => void }) {
 			)
 				setDraft((value) => (value ? { ...value, password } : value));
 		} catch {
-			if (mounted.current) setError(t("pwVaultError"));
+			if (mounted.current) {
+				inputError.current = false;
+				setError(t("pwVaultError"));
+			}
 		}
 	}
 	async function submit(event: React.FormEvent) {
@@ -143,6 +154,7 @@ export function AccountEntryDialog({ onClose }: { onClose: () => void }) {
 		if (running.current || !draft || snapshot.status === "loading") return;
 		running.current = true;
 		setBusy(true);
+		inputError.current = false;
 		setError("");
 		try {
 			await saveAccountEntry({
@@ -163,6 +175,9 @@ export function AccountEntryDialog({ onClose }: { onClose: () => void }) {
 			notify(t("accountEntrySaved"));
 		} catch (failure) {
 			const reason = failure instanceof Error ? failure.message : "";
+			inputError.current =
+				!progress.current.account &&
+				(failure instanceof ZodError || reason === "account-entry-url");
 			const field =
 				failure instanceof ZodError
 					? String(failure.issues[0]?.path[0] ?? "")
@@ -211,6 +226,8 @@ export function AccountEntryDialog({ onClose }: { onClose: () => void }) {
 			>
 				<form
 					className="password-vault-editor account-entry-form"
+					onInput={clearInputError}
+					onInvalidCapture={clearInputError}
 					onSubmit={(event) => void submit(event)}
 				>
 					{draft && (

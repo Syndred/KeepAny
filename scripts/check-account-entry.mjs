@@ -17,7 +17,7 @@ const receipt = {
   archiveSha256: candidate.archiveSha256 ?? null,
   webManifestSha256: hash(Buffer.from(JSON.stringify(candidate.release.webFiles))),
   specSha256: hash(readFileSync("tests/e2e/accounts-single-entry.spec.ts")),
-  automatedCoverage: ["SE01", "SE02", "SE03", "SE04", "SE05", "SE06", "SE07", "SE08", "SE11", "SE13", "SE14", "SE15"],
+  automatedCoverage: ["SE01", "SE02", "SE03", "SE04", "SE05", "SE06", "SE07", "SE08", "SE11", "SE13", "SE14", "SE15", "SE16"],
   coverageNotes: { SE14: "Touch targets in this gate; natural busy frames are reviewed separately.", SE15: "Purge failure context in this gate; corrupt-import comparison is reviewed separately." },
   manualVisualReview: "separate", controllerJourney: "separate", independentReview: "separate",
   verdict: "incomplete",
@@ -48,7 +48,7 @@ if (run.error || run.status !== 0) {
     }
     for (const state of ["complete-form", "bottom-trash"]) if (!imageNames.has(`journey-${state}-${lang}.png`)) throw Error(`Missing journey evidence: ${lang}/${state}`);
     if (!imageNames.has(`same-form-create-error-${lang}.png`)) throw Error(`Missing same-form error evidence: ${lang}`);
-    for (const state of ["purge-error", "same-form-save-partial"]) if (!imageNames.has(`${state}-${lang}.png`)) throw Error(`Missing failure/recovery evidence: ${lang}/${state}`);
+    for (const state of ["purge-error", "same-form-save-partial", "sequential-validation-error"]) if (!imageNames.has(`${state}-${lang}.png`)) throw Error(`Missing failure/recovery evidence: ${lang}/${state}`);
   }
   writeFileSync(join(output, "result.json"), JSON.stringify({ ...receipt, verdict: "automated-pass", expectedTests: 6, completedTests: tests.length, retries: 0, images }, null, 2));
   console.log(`Account-entry machine checks passed for ${receipt.sourceCommit}. Manual visual review, controller journey and independent review remain separate.`);

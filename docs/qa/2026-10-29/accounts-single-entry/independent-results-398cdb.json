@@ -1,0 +1,558 @@
+{
+  "schema": "keepany.single-entry.independent-final.v1",
+  "reviewer": "independent_single_entry",
+  "candidate": {
+    "phase": "independent-final",
+    "sourceCommit": "398cdba992ac3364bc0f5d8d3ae06e0fc9288d53",
+    "sourceDirty": false,
+    "zip": "dist/preview/KeepAny-0.1.0-preview.398cdba992ac-portable.zip",
+    "archiveSha256": "57a3f6885cc64ec98cc6ecca92f9a7822741831ffc898539192110757d284a1a",
+    "entry": "http://127.0.0.1:4405/",
+    "entrySha256": "834bcd959d167bc04afe455137e948748e6940d1755b6e75fd3c70ee8919c871",
+    "archiveIndexPath": "KeepAny-0.1.0-preview.398cdba992ac-portable/web/index.html",
+    "archiveIndexIdentical": true,
+    "specSha256": "5df8c392a5b4ddac4bb42b7dd37f2b4cdcf3e36bd63ad6118eabecd8bd0aa89b",
+    "retries": 0,
+    "workers": 1
+  },
+  "verdict": "incomplete-valid-product-failure-SE16",
+  "scope": "本轮账号/密码单一新增入口及选定相邻回归；不代表全项目、发布、原生真机或云端CI验收",
+  "runs": [
+    {
+      "path": "test-results/accounts-single-entry/independent-final-398cdb/playwright.json",
+      "sha256": "8ba7641761a62de966ec9d75f63e90b823d5a55f94ca0c07f356f873df500c66",
+      "stats": {
+        "startTime": "2026-10-29T10:53:47.153Z",
+        "duration": 322184.07499999995,
+        "expected": 20,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      },
+      "workers": 1,
+      "retries": [
+        0
+      ],
+      "tests": [
+        {
+          "title": "zh-CN 1536px disconnects, deletes, restores and re-imports without reviving trashed accounts",
+          "file": "account-link-recovery.spec.ts",
+          "status": "expected",
+          "results": [
+            {
+              "status": "passed",
+              "retry": 0,
+              "durationMs": 23953
+            }
+          ]
+        },
+        {
+          "title": "en 1536px disconnects, deletes, restores and re-imports without reviving trashed accounts",
+          "file": "account-link-recovery.spec.ts",
+          "status": "expected",
+          "results": [
+            {
+              "status": "passed",
+              "retry": 0,
+              "durationMs": 20887
+            }
+          ]
+        },
+        {
+          "title": "zh-CN 390px disconnects, deletes, restores and re-imports without reviving trashed accounts",
+          "file": "account-link-recovery.spec.ts",
+          "status": "expected",
+          "results": [
+            {
+              "status": "passed",
+              "retry": 0,
+              "durationMs": 21413
+            }
+          ]
+        },
+        {
+          "title": "en 390px disconnects, deletes, restores and re-imports without reviving trashed accounts",
+          "file": "account-link-recovery.spec.ts",
+          "status": "expected",
+          "results": [
+            {
+              "status": "passed",
+              "retry": 0,
+              "durationMs": 21895
+            }
+          ]
+        },
+        {
+          "title": "zh-CN 390 account and password features survive unified entry, locking and KDBX restore",
+          "file": "account-password-consolidation.spec.ts",
+          "status": "expected",
+          "results": [
+            {
+              "status": "passed",
+              "retry": 0,
+              "durationMs": 16764
+            }
+          ]
+        },
+        {
+          "title": "zh-CN 1280 account and password features survive unified entry, locking and KDBX restore",
+          "file": "account-password-consolidation.spec.ts",
+          "status": "expected",
+          "results": [
+            {
+              "status": "passed",
+              "retry": 0,
+              "durationMs": 16809
+            }
+          ]
+        },
+        {
+          "title": "en 390 account and password features survive unified entry, locking and KDBX restore",
+          "file": "account-password-consolidation.spec.ts",
+          "status": "expected",
+          "results": [
+            {
+              "status": "passed",
+              "retry": 0,
+              "durationMs": 16616
+            }
+          ]
+        },
+        {
+          "title": "en 1280 account and password features survive unified entry, locking and KDBX restore",
+          "file": "account-password-consolidation.spec.ts",
+          "status": "expected",
+          "results": [
+            {
+              "status": "passed",
+              "retry": 0,
+              "durationMs": 17324
+            }
+          ]
+        },
+        {
+          "title": "zh-CN SE01-SE07 unified account creation, original fields, durable KDBX link and bottom trash",
+          "file": "accounts-single-entry.spec.ts",
+          "status": "expected",
+          "results": [
+            {
+              "status": "passed",
+              "retry": 0,
+              "durationMs": 12835
+            }
+          ]
+        },
+        {
+          "title": "zh-CN SE02 same-form create and unlock errors preserve ordinary draft",
+          "file": "accounts-single-entry.spec.ts",
+          "status": "expected",
+          "results": [
+            {
+              "status": "passed",
+              "retry": 0,
+              "durationMs": 5505
+            }
+          ]
+        },
+        {
+          "title": "zh-CN SE08 empty, merged form, long invalid draft and expanded account at six widths",
+          "file": "accounts-single-entry.spec.ts",
+          "status": "expected",
+          "results": [
+            {
+              "status": "passed",
+              "retry": 0,
+              "durationMs": 12171
+            }
+          ]
+        },
+        {
+          "title": "en SE01-SE07 unified account creation, original fields, durable KDBX link and bottom trash",
+          "file": "accounts-single-entry.spec.ts",
+          "status": "expected",
+          "results": [
+            {
+              "status": "passed",
+              "retry": 0,
+              "durationMs": 12645
+            }
+          ]
+        },
+        {
+          "title": "en SE02 same-form create and unlock errors preserve ordinary draft",
+          "file": "accounts-single-entry.spec.ts",
+          "status": "expected",
+          "results": [
+            {
+              "status": "passed",
+              "retry": 0,
+              "durationMs": 5628
+            }
+          ]
+        },
+        {
+          "title": "en SE08 empty, merged form, long invalid draft and expanded account at six widths",
+          "file": "accounts-single-entry.spec.ts",
+          "status": "expected",
+          "results": [
+            {
+              "status": "passed",
+              "retry": 0,
+              "durationMs": 12042
+            }
+          ]
+        },
+        {
+          "title": "zh-CN passwordless labeled notes retain punctuation and prefill reviewed fields",
+          "file": "password-vault-user-journey.spec.ts",
+          "status": "expected",
+          "results": [
+            {
+              "status": "passed",
+              "retry": 0,
+              "durationMs": 2190
+            }
+          ]
+        },
+        {
+          "title": "en passwordless labeled notes retain punctuation and prefill reviewed fields",
+          "file": "password-vault-user-journey.spec.ts",
+          "status": "expected",
+          "results": [
+            {
+              "status": "passed",
+              "retry": 0,
+              "durationMs": 2102
+            }
+          ]
+        },
+        {
+          "title": "zh-CN 1536px user imports, categorizes and follows account identities before vault maintenance",
+          "file": "password-vault-user-journey.spec.ts",
+          "status": "expected",
+          "results": [
+            {
+              "status": "passed",
+              "retry": 0,
+              "durationMs": 23955
+            }
+          ]
+        },
+        {
+          "title": "zh-CN 390px user imports, categorizes and follows account identities before vault maintenance",
+          "file": "password-vault-user-journey.spec.ts",
+          "status": "expected",
+          "results": [
+            {
+              "status": "passed",
+              "retry": 0,
+              "durationMs": 23736
+            }
+          ]
+        },
+        {
+          "title": "en 1536px user imports, categorizes and follows account identities before vault maintenance",
+          "file": "password-vault-user-journey.spec.ts",
+          "status": "expected",
+          "results": [
+            {
+              "status": "passed",
+              "retry": 0,
+              "durationMs": 23224
+            }
+          ]
+        },
+        {
+          "title": "en 390px user imports, categorizes and follows account identities before vault maintenance",
+          "file": "password-vault-user-journey.spec.ts",
+          "status": "expected",
+          "results": [
+            {
+              "status": "passed",
+              "retry": 0,
+              "durationMs": 21982
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-398cdb/adjacent/playwright.json",
+      "sha256": "952e541c235d331527b94ba0db965cb683d771222fb08e04e4e16d7353fb5627",
+      "stats": {
+        "startTime": "2026-10-29T11:01:15.836Z",
+        "duration": 139408.657,
+        "expected": 8,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      },
+      "workers": 1,
+      "retries": [
+        0
+      ],
+      "tests": [
+        {
+          "title": "zh-CN 1280 real busy across applicable toolbar consumers",
+          "file": "account-layout-busy-independent.spec.ts",
+          "status": "expected",
+          "results": [
+            {
+              "status": "passed",
+              "retry": 0,
+              "durationMs": 17816
+            }
+          ]
+        },
+        {
+          "title": "en 390 real busy across applicable toolbar consumers",
+          "file": "account-layout-busy-independent.spec.ts",
+          "status": "expected",
+          "results": [
+            {
+              "status": "passed",
+              "retry": 0,
+              "durationMs": 16858
+            }
+          ]
+        },
+        {
+          "title": "independent zh-CN 1280: AL02 AL03 AL04 AL05 shared consumers",
+          "file": "account-layout-independent.spec.ts",
+          "status": "expected",
+          "results": [
+            {
+              "status": "passed",
+              "retry": 0,
+              "durationMs": 14020
+            }
+          ]
+        },
+        {
+          "title": "independent en 390: AL02 AL03 AL04 AL05 shared consumers",
+          "file": "account-layout-independent.spec.ts",
+          "status": "expected",
+          "results": [
+            {
+              "status": "passed",
+              "retry": 0,
+              "durationMs": 14103
+            }
+          ]
+        },
+        {
+          "title": "zh-CN 1280 FC22 active success toast stays below modal actions",
+          "file": "toast-dialog-layer.spec.ts",
+          "status": "expected",
+          "results": [
+            {
+              "status": "passed",
+              "retry": 0,
+              "durationMs": 7354
+            }
+          ]
+        },
+        {
+          "title": "en 390 FC22 active success toast stays below modal actions",
+          "file": "toast-dialog-layer.spec.ts",
+          "status": "expected",
+          "results": [
+            {
+              "status": "passed",
+              "retry": 0,
+              "durationMs": 7224
+            }
+          ]
+        },
+        {
+          "title": "zh-CN 1280x900 FC24 selected bottom entry preserves dialog boundaries and saved identity",
+          "file": "vault-links-layout.spec.ts",
+          "status": "expected",
+          "results": [
+            {
+              "status": "passed",
+              "retry": 0,
+              "durationMs": 30617
+            }
+          ]
+        },
+        {
+          "title": "en 390x900 FC24 selected bottom entry preserves dialog boundaries and saved identity",
+          "file": "vault-links-layout.spec.ts",
+          "status": "expected",
+          "results": [
+            {
+              "status": "passed",
+              "retry": 0,
+              "durationMs": 30140
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "customCategorySupplement": {
+    "candidate": "398cdba992ac3364bc0f5d8d3ae06e0fc9288d53",
+    "method": "Real UI custom-category creation then single global new/form selection/save/reload; no application data injection.",
+    "records": [
+      {
+        "language": "zh-CN",
+        "width": 1280,
+        "ordinaryAccounts": 1,
+        "customCategoryAfterReload": true,
+        "passwordVaultNotRequired": true,
+        "verdict": "pass"
+      },
+      {
+        "language": "en",
+        "width": 390,
+        "ordinaryAccounts": 1,
+        "customCategoryAfterReload": true,
+        "passwordVaultNotRequired": true,
+        "verdict": "pass"
+      }
+    ]
+  },
+  "visual": {
+    "mainImagesActuallyOpened": 70,
+    "adjacentConsumerImagesActuallyOpened": 34,
+    "customCategoryImagesActuallyOpened": 4,
+    "controllerImagesActuallyOpened": 12,
+    "legacySupportingImagesActuallyOpened": 4,
+    "legacyTransitionImagesExcluded": 2,
+    "archive": {
+      "path": "test-results/accounts-single-entry/independent-final-398cdb/visual-evidence-70.zip",
+      "sha256": "35972b361ef241b4bba93584b092f6050d5dc59cb77a4f33c3c1df9cc93e5bca"
+    },
+    "manifests": [
+      "docs/qa/2026-10-29/accounts-single-entry/independent-visual-reviewed-398cdb.json",
+      "docs/qa/2026-10-29/accounts-single-entry/independent-adjacent-reviewed-398cdb.json"
+    ]
+  },
+  "rootEvidenceAudit": {
+    "operator": "root",
+    "method": "本代理独立读取JSON并打开11图，不冒称本人执行主控路径",
+    "controllerJourney": {
+      "path": "docs/qa/2026-10-29/accounts-single-entry/controller-final-398c/controller-journey.json",
+      "sha256": "5ec9486b56130889d77fae8519124213170febc8191b841719d728ca0c12742f"
+    },
+    "storageFault": {
+      "path": "docs/qa/2026-10-29/accounts-single-entry/controller-final-398c/storage-fault-result.json",
+      "sha256": "40c62117b2753f4654257399259eabf8baa8498bfb0c026a4a00cf5844ed0b2a"
+    },
+    "machineGate": {
+      "path": "test-results/accounts-single-entry/machine-final-398c/result.json",
+      "sha256": "fb975fc3dd6b728d807c11486d3531b15841884fe41b700f82e78117ca27565f",
+      "verdict": "automated-pass",
+      "cloudRunClaimed": false
+    },
+    "local4180": {
+      "path": "docs/qa/2026-10-29/accounts-single-entry/controller-final-398c/local-4180.json",
+      "sha256": "a62847abafd7e45bcf49860517ee87e7a3c55932927764e3e5f4fa582c04f135",
+      "operator": "root"
+    }
+  },
+  "historicalFailuresPreserved": [
+    {
+      "candidate": "4948904231ca",
+      "kind": "valid-product-failure-SE13",
+      "path": "docs/qa/2026-10-29/accounts-single-entry/controller-final-494890/06-expanded-create-mismatch-failure.json",
+      "result": "错误被固定操作栏遮挡；原独立20例14过6失败另保留，测试夹具/旧入口预期问题与此产品失败分列"
+    },
+    {
+      "candidate": "7a4d66c6d91f",
+      "kind": "valid-product-failure-SE14",
+      "path": "docs/qa/2026-10-29/accounts-single-entry/independent-se14-before.json",
+      "result": "原独立20过；相邻6过2失败，新增高36px低于44px，严格原断言保留"
+    },
+    {
+      "candidate": "cc2e9e351f3d",
+      "kind": "valid-product-failure-SE15",
+      "path": "docs/qa/2026-10-29/accounts-single-entry/controller-final-cc2e9e/10-purge-fault-preserves-trash.png",
+      "result": "永久删除故障错误误称导入；其他通过不能覆盖"
+    },
+    {
+      "candidate": "cc2e9e351f3d",
+      "kind": "test-observation-race",
+      "path": "test-results/accounts-single-entry/independent-final-cc2e9e/adjacent/playwright.json",
+      "result": "解锁点击返回后6ms直接读DOM；保持原8ID/原超时，增加ready与原集合精确等待；原5/6及独立重放2/2分开保留"
+    }
+  ],
+  "whitebox": {
+    "verdict": "pass-for-changed-scope",
+    "reviewed": "普通/KDBX字段边界、预验证、稳定ID部分失败重试、锁定竞态找回、running/busy与秘密渲染、各共享容器44px、操作与导入错误上下文；未发现未闭环确认缺陷",
+    "currentSourceHashes": [
+      {
+        "path": "tests/e2e/accounts-single-entry.spec.ts",
+        "sha256": "5df8c392a5b4ddac4bb42b7dd37f2b4cdcf3e36bd63ad6118eabecd8bd0aa89b"
+      },
+      {
+        "path": "tests/e2e/toast-dialog-layer.spec.ts",
+        "sha256": "7d96fefbdb0d468fd99e58ed2b9586885a02c436d9faa5bf8aba1dc7431bb278"
+      },
+      {
+        "path": "apps/web/src/components/AccountEntryDialog.tsx",
+        "sha256": "d3bd414230acdf328a5e0d86f5dd6d862c3a7acfc8fc9d49daf3fff2584e3f6f"
+      },
+      {
+        "path": "apps/web/src/components/PasswordVaultPanel.tsx",
+        "sha256": "5d37ab36aaf7b41c186347e4d771cf4533ea9e012928acafcd5d711e2539c4df"
+      },
+      {
+        "path": "apps/web/src/account-entry-save.ts",
+        "sha256": "541553e3872379281a2208aec304542aca0dfa40a74824207709b270326e30f1"
+      }
+    ]
+  },
+  "limitations": [
+    "未操作真实4180或用户秘密",
+    "synthetic KDBX/IDB故障/clipboard拒绝仅为隔离准备，UI动作是真实消费包",
+    "正式发布、全项目、移动原生真机与云端CI不在本报告结论内",
+    "旧普通资产回收站2张过渡图未作为稳定视觉通过证据；本轮密码回收站稳定图另有完整覆盖"
+  ],
+  "currentProductFailure": {
+    "path": "docs/qa/2026-10-29/accounts-single-entry/independent-final-398cdb/se16-failure.json",
+    "sha256": "6df9cb9911e8fa6c0169b19efd56c1742959cc0da6edc27c4be81e2574940976",
+    "id": "SE16",
+    "classification": "日期拒绝与0写入正确；当前字段错误反馈残留过期网址提示。初始附加测试要求自定义日期alert不成立，后续诊断明确原生校验本身正常，但旧提示未清理是独立确认的UI缺陷。"
+  },
+  "independentLocal4180": {
+    "path": "test-results/accounts-single-entry/independent-final-398cdb/local-4180-http.json",
+    "sha256": "df21da34fff8c01289ccf1fe9707e7081570f6741b8a17be8e49786a59667048",
+    "result": {
+      "candidate": "398cdba992ac3364bc0f5d8d3ae06e0fc9288d53",
+      "archiveSha256": "57a3f6885cc64ec98cc6ecca92f9a7822741831ffc898539192110757d284a1a",
+      "origin": "http://127.0.0.1:4180",
+      "reviewer": "independent_single_entry",
+      "method": "Independent HTTP GET against served local runtime; compiled index/script compared byte-for-byte to ZIP, retained sample compared to local static file. No real profile or database accessed.",
+      "checks": [
+        {
+          "route": "index.html",
+          "status": 200,
+          "sha256": "834bcd959d167bc04afe455137e948748e6940d1755b6e75fd3c70ee8919c871",
+          "expectedSha256": "834bcd959d167bc04afe455137e948748e6940d1755b6e75fd3c70ee8919c871",
+          "kind": "compiled-index",
+          "match": true
+        },
+        {
+          "route": "assets/index-uJ7cc6Wb.js",
+          "status": 200,
+          "sha256": "1beefbc02dacaf927b7bf9260da06a321ff31b3a854e7d33d7036602e68b8327",
+          "expectedSha256": "1beefbc02dacaf927b7bf9260da06a321ff31b3a854e7d33d7036602e68b8327",
+          "kind": "compiled-entry-script",
+          "match": true
+        },
+        {
+          "route": "assets/account-family-graph-view-AME1ZS-P.js",
+          "status": 200,
+          "sha256": "4bd803e9b10dd23b25b79c0f5cf79d2bc4da5c7985aabe8b99ed6f2bc46678de",
+          "expectedSha256": "4bd803e9b10dd23b25b79c0f5cf79d2bc4da5c7985aabe8b99ed6f2bc46678de",
+          "kind": "retained-static-sample",
+          "match": true
+        }
+      ],
+      "verdict": "pass",
+      "scope": "3 static HTTP artifacts; not a claim to independently verify all 3220 runtime files or real user data"
+    }
+  }
+}

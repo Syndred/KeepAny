@@ -249,6 +249,9 @@ for (const language of ["zh-CN", "en"] as const) {
 			await expect(page.locator(".password-vault-entry")).toHaveCount(0);
 			await expect(dialog.locator("#password-vault-entry-password")).toHaveValue(secret);
 			await snapshot(page, `same-form-save-partial-${language}`);
+			// Editing a private draft must keep the partial-success recovery notice.
+			await dialog.locator("#password-vault-entry-notes").fill("Synthetic retained note after partial save");
+			await expect(dialog.getByRole("alert")).toHaveText(t("accountEntryPartial"));
 			await dialog.getByRole("button", { name: t("save"), exact: true }).dblclick();
 			await expect(dialog).toBeHidden();
 			await expect(page.locator(".asset-account-card")).toHaveCount(1);
@@ -271,6 +274,28 @@ for (const language of ["zh-CN", "en"] as const) {
 			await expect(page.locator(".asset-account-card")).toHaveCount(1);
 			await expect(page.locator(".password-vault-entry")).toHaveCount(1);
 			await noOverflow(page);
+			// SE16: native date validation runs before onSubmit. A corrected URL
+			// must not leave an unrelated server/schema error beneath that feedback.
+			dialog = await newAccount(page, t);
+			await dialog.locator("#password-vault-entry-title").fill("Synthetic sequential validation recovery");
+			await dialog.locator("#password-vault-entry-url").fill("ftp://example.test/synthetic");
+			await dialog.getByRole("button", { name: t("save"), exact: true }).click();
+			await expect(dialog.getByRole("alert")).toContainText(t("url"));
+			await dialog.locator("#password-vault-entry-url").fill("https://example.test/ok");
+			await expect(dialog.getByRole("alert")).toHaveCount(0);
+			await openMore(dialog);
+			await dialog.locator("#account-entry-reviewed").fill("2026-02-30");
+			await dialog.getByRole("button", { name: t("save"), exact: true }).click();
+			expect(await dialog.locator("#account-entry-reviewed").evaluate(node => (node as HTMLInputElement).validity.valid)).toBe(false);
+			await expect(dialog.getByRole("alert")).toHaveCount(0);
+			await expect(page.locator(".asset-account-card")).toHaveCount(1);
+			await snapshot(page, `sequential-validation-error-${language}`);
+			await dialog.locator("#account-entry-reviewed").fill("2026-10-29");
+			await save(dialog);
+			await expect(page.locator(".asset-account-card")).toHaveCount(2);
+			await page.reload(); await unlock(page, t);
+			await expect(page.locator(".asset-account-card")).toHaveCount(2);
+			await expect(page.locator(".password-vault-entry")).toHaveCount(2);
 		} finally { await context.close(); }
 	});
 

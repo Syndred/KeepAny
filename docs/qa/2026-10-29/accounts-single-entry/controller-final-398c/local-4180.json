@@ -1,0 +1,29 @@
+{
+  "candidate": "398cdba992ac3364bc0f5d8d3ae06e0fc9288d53",
+  "archiveSha256": "57a3f6885cc64ec98cc6ecca92f9a7822741831ffc898539192110757d284a1a",
+  "origin": "http://127.0.0.1:4180",
+  "runtime": "C:/Users/Administrator/Desktop/project/KeepAny/dist/local-accounts-398c",
+  "verifiedCurrentFiles": 124,
+  "verifiedRetainedFiles": 3096,
+  "verifiedTotalStaticFiles": 3220,
+  "http": [
+    {
+      "route": "index.html",
+      "status": 200,
+      "sha256": "834bcd959d167bc04afe455137e948748e6940d1755b6e75fd3c70ee8919c871"
+    },
+    {
+      "route": "assets/account-family-graph-view-AME1ZS-P.js",
+      "status": 200,
+      "sha256": "4bd803e9b10dd23b25b79c0f5cf79d2bc4da5c7985aabe8b99ed6f2bc46678de"
+    }
+  ],
+  "actualUi": {
+    "normalNavigation": true,
+    "singleGlobalAdd": true,
+    "mergedPasswordAndAccountFields": true,
+    "cancelWritesNothing": true
+  },
+  "userRealData": "not read or changed; new isolated browser profile",
+  "keptRunningForUser": true
+}
