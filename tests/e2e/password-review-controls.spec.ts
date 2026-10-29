@@ -1,3 +1,4 @@
+import { openVaultAccess } from "./helpers/vault-access";
 import { execFileSync } from "node:child_process";
 import {
 	cpSync,
@@ -10,7 +11,7 @@ import {
 import { createServer } from "node:http";
 import type { AddressInfo } from "node:net";
 import { tmpdir } from "node:os";
-import { extname, join, resolve } from "node:path";
+import { extname, join, resolve, sep } from "node:path";
 import { expect, type Locator, type Page, test } from "@playwright/test";
 import {
 	inspectVisualKdbx,
@@ -62,6 +63,7 @@ async function noHorizontalOverflow(importer: Locator) {
 }
 
 async function unlock(h: Awaited<ReturnType<typeof visualHarness>>) {
+	await openVaultAccess(h.page);
 	await h.page.locator("#password-vault-unlock-master").fill(visualMaster);
 	await h.page
 		.getByRole("button", { name: h.t("pwVaultUnlock"), exact: true })
@@ -481,7 +483,7 @@ test("a7be614 encrypted review and unfinished fragment survive a same-origin fix
 		);
 		const candidate = resolve(directory, `.${pathname}`);
 		const file =
-			candidate.startsWith(`${directory}/`) &&
+			candidate.startsWith(`${resolve(directory)}${sep}`) &&
 			existsSync(candidate) &&
 			statSync(candidate).isFile()
 				? candidate
@@ -981,14 +983,24 @@ for (const { locale, width } of [
 					const style = getComputedStyle(value);
 					const topPadding = Number.parseFloat(style.paddingTop);
 					const bottomPadding = Number.parseFloat(style.paddingBottom);
-					return { top: box.top + topPadding, bottom: box.bottom - bottomPadding, topPadding, bottomPadding };
+					const actions = row.querySelector(".password-vault-value-actions")?.getBoundingClientRect();
+					if (!actions) throw Error("Expected identifier copy controls");
+					const rowBox = row.getBoundingClientRect();
+					const stacked = box.top >= actions.bottom - 1;
+					return { top: box.top + topPadding, bottom: box.bottom - bottomPadding, topPadding, bottomPadding,
+						stacked, labelTrackHeight: stacked ? actions.bottom - rowBox.top : 0,
+						fullWidth: box.width >= rowBox.width * 0.9, actionHeight: actions.height };
 				});
 				return {
 					// The approved divider layout has adjacent row boxes; its whitespace
 					// belongs inside each value, rather than an additional grid gap.
 					gap: values[1].top - values[0].bottom,
+					// Compact cards place a real label/copy-control row before the next
+					// full-width value. Its height is content, not blank spacing.
+					whitespace: values[1].top - values[0].bottom - values[1].labelTrackHeight,
 					rowGaps: boxes.slice(1).map((box, index) => box.top - boxes[index].bottom),
-					valuePadding: values.flatMap((value) => [value.topPadding, value.bottomPadding]),
+					valuePadding: values.map((value) => ({ top: value.topPadding, bottom: value.bottomPadding, stacked: value.stacked })),
+					compactValues: values.filter(value => value.stacked).map(value => ({ fullWidth: value.fullWidth, actionHeight: value.actionHeight })),
 					dividers: aliasRows.map((row) => {
 						const style = getComputedStyle(row);
 						return { width: Number.parseFloat(style.borderTopWidth), style: style.borderTopStyle, color: style.borderTopColor };
@@ -1004,10 +1016,12 @@ for (const { locale, width } of [
 					overflow: document.documentElement.scrollWidth > innerWidth + 1,
 				};
 			});
-			expect(layout.gap).toBeGreaterThanOrEqual(8);
-			expect(layout.gap).toBeLessThanOrEqual(24);
+			expect(layout.whitespace).toBeGreaterThanOrEqual(8);
+			expect(layout.whitespace).toBeLessThanOrEqual(24);
 			expect(layout.rowGaps.every((gap) => Math.abs(gap) <= 1)).toBe(true);
-			expect(layout.valuePadding.every((padding) => padding >= 8)).toBe(true);
+			expect(layout.valuePadding.every((padding) => padding.bottom >= 8 && padding.top >= (padding.stacked ? 0 : 8))).toBe(true);
+			expect(layout.compactValues).toHaveLength(2);
+			expect(layout.compactValues.every(value => value.fullWidth && value.actionHeight >= 44)).toBe(true);
 			expect(layout.dividers.every((divider) => divider.width >= 1 && divider.style === "solid" && !["transparent", "rgba(0, 0, 0, 0)"].includes(divider.color))).toBe(true);
 			expect(
 				layout.heights.every((height) => height >= 44 && height <= 90),

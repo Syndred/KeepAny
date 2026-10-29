@@ -1,0 +1,24 @@
+{
+  "observationCommand": [
+    "C:\\Users\\Administrator\\.codex\\toolchains\\bun\\node_modules\\bun\\bin\\bun.exe",
+    "C:\\Users\\Administrator\\.codex\\toolchains\\gstack\\bin\\gstack-qa-deadline",
+    "run",
+    "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\test-results\\ui-migration\\qa-final-8457\\deadline.json",
+    "--",
+    "C:\\Users\\Administrator\\.codex\\toolchains\\gstack\\browse\\dist\\browse.exe",
+    "js",
+    "JSON.stringify({buttons:Array.from(document.querySelectorAll(\".finance-entry-actions .button\")).map(e=>({w:e.getBoundingClientRect().width,h:e.getBoundingClientRect().height})),overflow:document.documentElement.scrollWidth>innerWidth})"
+  ],
+  "observed": "{\"buttons\":[{\"w\":76,\"h\":44},{\"w\":76,\"h\":44},{\"w\":76,\"h\":44},{\"w\":76,\"h\":44},{\"w\":76,\"h\":44},{\"w\":76,\"h\":44},{\"w\":76,\"h\":44},{\"w\":76,\"h\":44}],\"overflow\":false}\n",
+  "hypothesis": "手机账本末条记录可达",
+  "nextCommand": [
+    "C:\\Users\\Administrator\\.codex\\toolchains\\bun\\node_modules\\bun\\bin\\bun.exe",
+    "C:\\Users\\Administrator\\.codex\\toolchains\\gstack\\bin\\gstack-qa-deadline",
+    "run",
+    "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\test-results\\ui-migration\\qa-final-8457\\deadline.json",
+    "--",
+    "C:\\Users\\Administrator\\.codex\\toolchains\\gstack\\browse\\dist\\browse.exe",
+    "scroll",
+    ".finance-entry:last-child"
+  ]
+}

@@ -1,3 +1,4 @@
+import { openVaultAccess } from "./helpers/vault-access";
 import { mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { expect, type Locator, type Page, test } from "@playwright/test";
@@ -222,6 +223,7 @@ for (const locale of ["zh-CN", "en"] as const) {
 				secret,
 			]);
 			await h.page.reload();
+			await openVaultAccess(h.page);
 			await h.page.locator("#password-vault-unlock-master").fill(visualMaster);
 			await h.page
 				.getByRole("button", { name: h.t("pwVaultUnlock"), exact: true })
@@ -328,7 +330,7 @@ test("vault-stored model key automatically activates after unlocking without sen
 			.getByRole("button", { name: "AI assistant and access", exact: true })
 			.click();
 		await h.page
-			.getByRole("link", { name: "Assistant access", exact: true })
+			.getByRole("menuitem", { name: "Assistant access", exact: true })
 			.click();
 		await h.page
 			.getByRole("link", { name: "Configure local access", exact: true })
@@ -357,6 +359,7 @@ test("vault-stored model key automatically activates after unlocking without sen
 			),
 		).toMatchObject({ keySource: "vault", autoActivate: true, vaultEntryId });
 		await h.page.goto("/assets/vault");
+		await openVaultAccess(h.page);
 		await h.page.locator("#password-vault-unlock-master").fill(visualMaster);
 		await h.page
 			.getByRole("button", { name: h.t("pwVaultUnlock"), exact: true })

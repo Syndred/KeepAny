@@ -1,3 +1,5 @@
+import { openBackupRestorePanel } from "./helpers/backup-restore";
+import { prepareVaultWorkspace, revealPasswordEntries, openVaultReferences, openVaultAccess } from "./helpers/vault-access";
 import { mkdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { expect, type Locator, type Page, test } from "@playwright/test";
@@ -62,11 +64,14 @@ async function unlock(
 	t: ReturnType<typeof copy>,
 	password = master,
 ) {
+	await prepareVaultWorkspace(page);
+	await openVaultAccess(page);
 	await page.locator("#password-vault-unlock-master").fill(password);
 	await page
 		.getByRole("button", { name: t("pwVaultUnlock"), exact: true })
 		.click();
 	await expect(page.locator(".password-vault-toolbar")).toBeVisible();
+	await revealPasswordEntries(page);
 }
 async function closeEditor(page: Page) {
 	await page
@@ -277,12 +282,14 @@ for (const variant of variants) {
 		try {
 			await language(page, variant.locale);
 			await page.goto("/assets/vault");
+			await prepareVaultWorkspace(page);
 			await page.locator("#password-vault-master").fill(master);
 			await page.locator("#password-vault-master-confirm").fill(master);
 			await page
 				.getByRole("button", { name: t("pwVaultCreate"), exact: true })
 				.click();
 			await expect(page.locator(".password-vault-toolbar")).toBeVisible();
+			await revealPasswordEntries(page);
 			await page
 				.getByRole("button", { name: t("pwVaultNewEntry"), exact: true })
 				.click();
@@ -478,6 +485,7 @@ for (const variant of variants) {
 				});
 				await language(restored, variant.locale);
 				await restored.goto("/assets/vault");
+				await prepareVaultWorkspace(restored);
 				await restored
 					.getByRole("button", { name: t("pwVaultImportEmpty"), exact: true })
 					.click();
@@ -563,12 +571,14 @@ for (const variant of variants) {
 		try {
 			await language(page, variant.locale);
 			await page.goto("/assets/vault");
+			await prepareVaultWorkspace(page);
 			await page.locator("#password-vault-master").fill(master);
 			await page.locator("#password-vault-master-confirm").fill(master);
 			await page
 				.getByRole("button", { name: t("pwVaultCreate"), exact: true })
 				.click();
 			await expect(page.locator(".password-vault-toolbar")).toBeVisible();
+			await revealPasswordEntries(page);
 			await page
 				.getByRole("button", { name: t("pwVaultNewEntry"), exact: true })
 				.click();
@@ -698,6 +708,7 @@ for (const variant of variants) {
 				})
 				.click();
 			await expect(page).toHaveURL(/\/assets\/vault#asset-/);
+			await prepareVaultWorkspace(page);
 			await expect(page.locator("#password-vault-master")).toBeVisible();
 			await page.screenshot({
 				path: join(
@@ -712,6 +723,7 @@ for (const variant of variants) {
 				.getByRole("button", { name: t("pwVaultCreate"), exact: true })
 				.click();
 			await expect(page.locator(".password-vault-toolbar")).toBeVisible();
+			await revealPasswordEntries(page);
 			await page
 				.getByRole("button", { name: t("pwVaultNewEntry"), exact: true })
 				.click();
@@ -770,6 +782,7 @@ for (const variant of variants) {
 			await page.locator("#password-vault-search-input").fill("Studio");
 			await expect(entry).toHaveCount(1);
 			await page.locator("#password-vault-search-input").fill("");
+			await openVaultReferences(page);
 			const externalEmpty = page.locator(".vault-reference-empty");
 			await expect(externalEmpty).toContainText(zh ? "暂无" : "None");
 			await externalEmpty.scrollIntoViewIfNeeded();
@@ -818,6 +831,7 @@ for (const variant of variants) {
 			await expect(page.locator("#password-vault-entry-password")).toHaveCount(
 				0,
 			);
+			await openVaultAccess(page);
 			await page.locator("#password-vault-unlock-master").fill("wrong master");
 			await page
 				.getByRole("button", { name: t("pwVaultUnlock"), exact: true })
@@ -837,6 +851,7 @@ for (const variant of variants) {
 				.click();
 			await expect(page.getByRole("dialog")).toBeHidden();
 			await page.reload();
+			await openVaultAccess(page);
 			await page.locator("#password-vault-unlock-master").fill(master);
 			await page
 				.getByRole("button", { name: t("pwVaultUnlock"), exact: true })
@@ -916,6 +931,7 @@ for (const variant of variants) {
 				const restorePage = await restored.newPage();
 				await language(restorePage, variant.locale);
 				await restorePage.goto("/assets/vault");
+				await prepareVaultWorkspace(restorePage);
 				await expect(
 					restorePage.locator("#password-vault-master"),
 				).toBeVisible();
@@ -928,10 +944,7 @@ for (const variant of variants) {
 					.last()
 					.click();
 				await restorePage.locator("#backup-password").fill(backupPassword);
-				await restorePage
-					.locator("summary")
-					.filter({ hasText: zh ? "恢复备份" : "Restore backup" })
-					.click();
+				await openBackupRestorePanel(restorePage);
 				await restorePage.locator("#restore-file").setInputFiles(backupPath);
 				await restorePage
 					.getByRole("button", { name: zh ? "预览" : "Preview", exact: true })
@@ -960,7 +973,7 @@ for (const variant of variants) {
 					})
 					.first()
 					.click();
-				await restorePage.locator(".workspace-navigation").getByRole("link", { name: zh ? "密码管理" : "Passwords", exact: true }).click();
+				await expect(restorePage).toHaveURL(/\/accounts$/);
 				await unlock(restorePage, t, nextMaster);
 				await expect(
 					restorePage.locator(
@@ -1015,9 +1028,11 @@ test("password changes lock a revealed editor in another tab; idle lock and clea
 		await first.clock.install();
 		await language(first, "en-US");
 		await first.goto("/assets/vault");
+		await prepareVaultWorkspace(first);
 		await expect(first.locator("#password-vault-master")).toBeVisible();
 		const second = await context.newPage();
 		await second.goto("/assets/vault");
+		await prepareVaultWorkspace(second);
 		await expect(second.locator("#password-vault-master")).toBeVisible();
 		await first.locator("#password-vault-master").fill(master);
 		await first.locator("#password-vault-master-confirm").fill(master);
@@ -1025,6 +1040,7 @@ test("password changes lock a revealed editor in another tab; idle lock and clea
 			.getByRole("button", { name: t("pwVaultCreate"), exact: true })
 			.click();
 		await expect(first.locator(".password-vault-toolbar")).toBeVisible();
+		await revealPasswordEntries(first);
 		await expect(second.locator("#password-vault-unlock-master")).toBeVisible();
 		await first
 			.getByRole("button", { name: t("pwVaultNewEntry"), exact: true })
@@ -1081,6 +1097,7 @@ test("password changes lock a revealed editor in another tab; idle lock and clea
 			const page = await empty.newPage();
 			await language(page, "en-US");
 			await page.goto("/assets/vault");
+			await prepareVaultWorkspace(page);
 			await page
 				.getByRole("button", { name: t("pwVaultImportEmpty"), exact: true })
 				.click();
@@ -1114,6 +1131,7 @@ for (const variant of variants) {
 		try {
 			await language(page, variant.locale);
 			await page.goto("/assets/vault");
+			await prepareVaultWorkspace(page);
 			await page.locator("#password-vault-master").fill(master);
 			await page.locator("#password-vault-master-confirm").fill(master);
 			await page.getByRole("button", { name: t("pwVaultCreate"), exact: true }).click();
@@ -1169,6 +1187,7 @@ for (const variant of variants) {
 				const restored = await restoredContext.newPage();
 				await language(restored, variant.locale);
 				await restored.goto("/assets/vault");
+				await prepareVaultWorkspace(restored);
 				await restored.getByRole("button", { name: t("pwVaultImportEmpty"), exact: true }).click();
 				await restored.locator("#password-vault-import-file").setInputFiles(path);
 				await restored.locator("#password-vault-import-password").fill(master);

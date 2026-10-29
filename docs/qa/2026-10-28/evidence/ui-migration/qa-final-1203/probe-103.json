@@ -1,0 +1,15 @@
+{
+  "index": 103,
+  "command": [
+    "C:\\Users\\Administrator\\.codex\\toolchains\\bun\\node_modules\\bun\\bin\\bun.exe",
+    "C:\\Users\\Administrator\\.codex\\toolchains\\gstack\\bin\\gstack-qa-deadline",
+    "run",
+    "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\test-results\\ui-migration\\qa-final-1203\\deadline.json",
+    "--",
+    "C:\\Users\\Administrator\\.codex\\toolchains\\gstack\\browse\\dist\\browse.exe",
+    "js",
+    "JSON.stringify({items:Array.from(document.querySelectorAll(\"[role=menuitem]\")).map(e=>({text:e.textContent,rect:e.getBoundingClientRect().toJSON()})),trigger:document.querySelector(\".collections-tile button[aria-haspopup=menu]\").getBoundingClientRect().toJSON(),overflow:document.documentElement.scrollWidth>innerWidth})"
+  ],
+  "exitCode": 0,
+  "output": "{\"items\":[{\"text\":\"Edit\",\"rect\":{\"x\":164,\"y\":556,\"width\":196,\"height\":44,\"top\":556,\"right\":360,\"bottom\":600,\"left\":164}},{\"text\":\"Delete collection\",\"rect\":{\"x\":164,\"y\":603,\"width\":196,\"height\":44,\"top\":603,\"right\":360,\"bottom\":647,\"left\":164}}],\"trigger\":{\"x\":331,\"y\":506.734375,\"width\":36,\"height\":36,\"top\":506.734375,\"right\":367,\"bottom\":542.734375,\"left\":331},\"overflow\":false}\n"
+}

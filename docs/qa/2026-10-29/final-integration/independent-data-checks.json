@@ -1,0 +1,71 @@
+[
+  {
+    "mode": "upgrade",
+    "source": "Actual fictional UI-exported KA1; legacy decoder is read-only, secret values compared only in memory; UI execution recorded separately.",
+    "checks": {
+      "assetsExact": true,
+      "relationsExact": true,
+      "tasksExact": true,
+      "entriesAndHistoryExact": true,
+      "preexistingNonemptyHistory": true
+    },
+    "rawBytes": 33504,
+    "rawSha256": "875d64c8b920cd1b4f362921044475d9a9ed0371b9a3bf464a56713b824e70fe",
+    "original": "test-results/web-independent-review-20261029/final-integration/data-upgrade.json"
+  },
+  {
+    "mode": "cancel",
+    "source": "Actual fictional UI-exported KA1; legacy decoder is read-only, secret values compared only in memory; UI execution recorded separately.",
+    "checks": {
+      "assetsExact": true,
+      "relationsExact": true,
+      "tasksExact": true,
+      "entriesAndHistoryExact": true,
+      "preexistingNonemptyHistory": true
+    },
+    "rawBytes": 33503,
+    "rawSha256": "d325a631856a0ecbfdcc84c32a8c10cb439576cab711adaffedd7bb21069769f",
+    "original": "test-results/web-independent-review-20261029/final-integration/data-cancel.json"
+  },
+  {
+    "mode": "saved",
+    "source": "Actual fictional UI-exported KA1; legacy decoder is read-only, secret values compared only in memory; UI execution recorded separately.",
+    "checks": {
+      "originalAssetsUnchanged": true,
+      "originalRelationsUnchanged": true,
+      "originalTasksUnchanged": true,
+      "allOriginalEntryIds": true,
+      "originalFieldsApartFromIntendedBinding": true,
+      "preexistingNonemptyHistory": true,
+      "priorHistoryPrefix": true,
+      "neighborsExact": true,
+      "roles": true,
+      "direction": true,
+      "targetUniqueBinding": true,
+      "ordinaryFields": true,
+      "ordinaryNotesNotPublicDescription": true,
+      "projectPresent": true,
+      "formEntryFields": true,
+      "importEntryFields": true,
+      "newEntryCount": true,
+      "newAssetNames": true
+    },
+    "rawBytes": 43714,
+    "rawSha256": "035646aeb72c0906c01572a46bac9257f5d973af451b6c11aa21c0010cc49f8a",
+    "original": "test-results/web-independent-review-20261029/final-integration/data-saved.json"
+  },
+  {
+    "mode": "restore",
+    "source": "Actual fictional UI-exported KA1; legacy decoder is read-only, secret values compared only in memory; UI execution recorded separately.",
+    "checks": {
+      "assetsExact": true,
+      "relationsExact": true,
+      "tasksExact": true,
+      "entriesAndHistoryExact": true,
+      "preexistingNonemptyHistory": true
+    },
+    "rawBytes": 33504,
+    "rawSha256": "88c727ffa46a82ce70c672573d60e4b2428849fec83bdd8d44a0ab363387796c",
+    "original": "test-results/web-independent-review-20261029/final-integration/data-restore.json"
+  }
+]

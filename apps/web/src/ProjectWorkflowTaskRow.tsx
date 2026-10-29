@@ -1,3 +1,4 @@
+import { Textarea } from "./components/ui/textarea";
 import { Link } from '@tanstack/react-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -77,7 +78,7 @@ export function ProjectWorkflowTaskRow({ task, round: suppliedRound }: { task: T
       <label htmlFor={`workflow-result-${task.id}`}>{t('workflowResult')}<Select id={`workflow-result-${task.id}`} value={outcome} onValueChange={selectValue => setOutcome(selectValue as typeof outcome)} disabled={busy}>
         <SelectOption value="done">{t('workflowOutcome_done')}</SelectOption><SelectOption value="blocked">{t('workflowOutcome_blocked')}</SelectOption><SelectOption value="na">{t('workflowOutcome_na')}</SelectOption>
       </Select></label>
-      <label>{t('workflowEvidence')}<textarea value={evidence} maxLength={2000} rows={3} onChange={event => { setEvidence(event.target.value); setError(''); }} required disabled={busy} placeholder={t('workflowEvidenceHint')} /></label>
+      <label>{t('workflowEvidence')}<Textarea value={evidence} maxLength={2000} rows={3} onChange={event => { setEvidence(event.target.value); setError(''); }} required disabled={busy} placeholder={t('workflowEvidenceHint')} /></label>
       {error && <p className="field-error" role="alert">{error}</p>}
       <div className="project-workflow-actions"><Button type="button" onClick={() => setEditing(false)} disabled={busy}>{t('cancel')}</Button><Button type="submit" variant="primary" disabled={busy}>{t('workflowSaveRecord')}</Button></div>
     </form></TaskReveal> : <div className="project-workflow-task-footer"><small>{t('workflowSnapshotAt')}: <time dateTime={workflow.generatedAt}>{new Date(workflow.generatedAt).toLocaleString(i18n.language)}</time></small><Button size="small" aria-describedby={finalLocked ? `workflow-lock-${task.id}` : undefined} onClick={() => { setOutcome(record?.outcome ?? 'done'); setEvidence(record?.evidence ?? ''); setEditing(true); }} disabled={finalLocked}>{t(record ? 'workflowEditRecord' : 'workflowRecordResult')}</Button></div>}

@@ -1,0 +1,141 @@
+{
+  "traceSha256": "10e3b460f900fadc45880a1c313eabc462eab446c75ccc933fb5ab2d024d6832",
+  "snapshots": [
+    {
+      "time": 91743.662,
+      "call": "call@6159",
+      "phase": "after",
+      "url": "http://127.0.0.1:4235/assets/account/43fef200-3b6b-49ef-912d-9b0cb0a858a6",
+      "dialogs": [],
+      "names": 0
+    },
+    {
+      "time": 91756.728,
+      "call": "call@6161",
+      "phase": "before",
+      "url": "http://127.0.0.1:4235/assets/account/43fef200-3b6b-49ef-912d-9b0cb0a858a6",
+      "dialogs": [],
+      "names": 0
+    },
+    {
+      "time": 91762.204,
+      "call": "call@6161",
+      "phase": "after",
+      "url": "http://127.0.0.1:4235/assets/account/43fef200-3b6b-49ef-912d-9b0cb0a858a6",
+      "dialogs": [],
+      "names": 0
+    },
+    {
+      "time": 91765.929,
+      "call": "call@6163",
+      "phase": "before",
+      "url": "http://127.0.0.1:4235/assets/account/43fef200-3b6b-49ef-912d-9b0cb0a858a6",
+      "dialogs": [],
+      "names": 0
+    },
+    {
+      "time": 91771.77,
+      "call": "call@6163",
+      "phase": "after",
+      "url": "http://127.0.0.1:4235/assets/account/43fef200-3b6b-49ef-912d-9b0cb0a858a6",
+      "dialogs": [],
+      "names": 0
+    },
+    {
+      "time": 91775.311,
+      "call": "call@6165",
+      "phase": "before",
+      "url": "http://127.0.0.1:4235/assets/account/43fef200-3b6b-49ef-912d-9b0cb0a858a6",
+      "dialogs": [],
+      "names": 0
+    },
+    {
+      "time": 91780.967,
+      "call": "call@6165",
+      "phase": "after",
+      "url": "http://127.0.0.1:4235/assets/account/43fef200-3b6b-49ef-912d-9b0cb0a858a6",
+      "dialogs": [],
+      "names": 0
+    },
+    {
+      "time": 91787.061,
+      "call": "call@6167",
+      "phase": "before",
+      "url": "http://127.0.0.1:4235/assets/account/43fef200-3b6b-49ef-912d-9b0cb0a858a6",
+      "dialogs": [],
+      "names": 0
+    },
+    {
+      "time": 91791.062,
+      "call": "call@6167",
+      "phase": "after",
+      "url": "http://127.0.0.1:4235/assets/account/43fef200-3b6b-49ef-912d-9b0cb0a858a6",
+      "dialogs": [],
+      "names": 0
+    },
+    {
+      "time": 91816.098,
+      "call": "call@6169",
+      "phase": "before",
+      "url": "http://127.0.0.1:4235/assets/account/43fef200-3b6b-49ef-912d-9b0cb0a858a6",
+      "dialogs": [],
+      "names": 0
+    },
+    {
+      "time": 91830.191,
+      "call": "call@6169",
+      "phase": "action",
+      "url": "http://127.0.0.1:4235/assets/account/43fef200-3b6b-49ef-912d-9b0cb0a858a6",
+      "dialogs": [],
+      "names": 0
+    },
+    {
+      "time": 91856.498,
+      "call": "call@6169",
+      "phase": "after",
+      "url": "http://127.0.0.1:4235/assets/account",
+      "dialogs": [],
+      "names": 0
+    },
+    {
+      "time": 91859.986,
+      "call": "call@6171",
+      "phase": "before",
+      "url": "http://127.0.0.1:4235/assets/account",
+      "dialogs": [],
+      "names": 0
+    },
+    {
+      "time": 91882.794,
+      "call": "call@6171",
+      "phase": "action",
+      "url": "http://127.0.0.1:4235/assets/account",
+      "dialogs": [],
+      "names": 0
+    },
+    {
+      "time": 91953.309,
+      "call": "call@6171",
+      "phase": "after",
+      "url": "http://127.0.0.1:4235/assets/account",
+      "dialogs": [],
+      "names": 0
+    },
+    {
+      "time": 91960.388,
+      "call": "call@6173",
+      "phase": "before",
+      "url": "http://127.0.0.1:4235/assets/account",
+      "dialogs": [],
+      "names": 0
+    },
+    {
+      "time": 106973.109,
+      "call": "call@6173",
+      "phase": "after",
+      "url": "http://127.0.0.1:4235/assets/account",
+      "dialogs": [],
+      "names": 0
+    }
+  ]
+}

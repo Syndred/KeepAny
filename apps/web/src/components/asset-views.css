@@ -1,0 +1,46 @@
+.asset-view-toggle { display: flex; align-items: center; flex: none; gap: 6px; min-width: 0; margin: 0; padding: 0; border: 0; }
+.asset-list-view-tools { display: flex; justify-content: flex-end; margin-block: 8px; }
+.asset-card-summary, .asset-card-facts { display: grid; gap: 7px; min-width: 0; }
+.asset-list-content:not(.asset-dense-list, .asset-account-grid) { align-items: stretch; }
+.asset-list-content:not(.asset-dense-list) > :is(.asset-project-card, .asset-library-card) { display: flex; flex-direction: column; }
+.asset-list-content:not(.asset-dense-list) :is(.asset-project-info, .asset-library-body) { display: flex; flex: 1; flex-direction: column; }
+.asset-list-content:not(.asset-dense-list) :is(.asset-project-foot, .asset-library-foot, .workspace-domain-action) { margin-top: auto; }
+.asset-list-content.asset-dense-list { display: grid; grid-template-columns: minmax(0,1fr); gap: 0; overflow: hidden; border: 2px solid var(--line); border-radius: 12px; background: var(--paper); box-shadow: var(--shadow); }
+.asset-dense-list > :is(.asset-project-card, .asset-library-card, .workspace-domain-card) { width: 100%; max-width: none; border: 0; border-bottom: 1px solid var(--line-soft); border-radius: 0; box-shadow: none; }
+.asset-dense-list > :last-child { border-bottom: 0; }
+.asset-dense-list > :is(.asset-project-card, .asset-library-card):hover { transform: none; box-shadow: none; background: var(--paper-soft); }
+.asset-dense-list :is(.asset-project-info, .asset-library-body) { display: grid; grid-template-columns: minmax(180px,1.1fr) minmax(240px,1.6fr) 135px; gap: 16px; align-items: center; padding: 10px 12px; }
+.asset-dense-list .asset-card-summary { gap: 4px; }
+.asset-dense-list .asset-card-facts { gap: 5px; }
+.asset-dense-list .workspace-asset-metrics { display: flex; flex-wrap: wrap; align-items: center; gap: 5px 12px; margin: 0; padding: 0; border: 0; }
+.asset-dense-list .workspace-asset-metrics > progress { flex: 0 1 90px; }
+.asset-dense-list :is(.asset-project-foot, .asset-library-foot) { margin: 0; padding: 0; border: 0; }
+.asset-dense-list .asset-project-foot { display: flex; justify-content: space-between; align-items: center; gap: 4px; }
+.asset-dense-list .asset-project-foot > span { max-width: 135px; text-align: right; }
+.asset-dense-list .asset-project-foot > .asset-project-backlinks { font-weight: 500; }
+.asset-dense-list .asset-library-meta { gap: 4px; }
+.asset-dense-list .asset-library-meta span { padding: 2px 6px; }
+.asset-dense-list .workspace-domain-card { display: grid; grid-template-columns: minmax(180px,1.1fr) minmax(240px,1.6fr) 135px; gap: 5px 16px; padding: 10px 12px; }
+.asset-dense-list .workspace-domain-heading { grid-column: 1; grid-row: 1; }
+.asset-dense-list .workspace-domain-card > .subtitle { grid-column: 1; font-size: 12px; }
+.asset-dense-list .workspace-domain-card > strong { grid-column: 2; grid-row: 1; font-size: 14px; }
+.asset-dense-list .workspace-domain-card > span:not(.subtitle):not(.workspace-domain-action), .asset-dense-list .workspace-domain-card > .workspace-cost-line { grid-column: 2; font-size: 12px; }
+.asset-dense-list .workspace-domain-card > .workspace-domain-action { grid-column: 3; grid-row: 1 / 4; align-self: center; justify-self: end; margin: 0; padding: 0; }
+@media(max-width:1100px) {
+ .asset-dense-list :is(.asset-project-info,.asset-library-body), .asset-dense-list .workspace-domain-card { grid-template-columns: minmax(0,1fr) 125px; gap: 7px 12px; }
+ .asset-dense-list .asset-card-summary { grid-column: 1; }
+ .asset-dense-list .asset-card-facts { grid-column: 1 / -1; grid-row: 2; }
+ .asset-dense-list :is(.asset-project-foot,.asset-library-foot) { grid-column: 2; grid-row: 1; }
+ .asset-dense-list .workspace-domain-card > strong { grid-column: 2; }
+ .asset-dense-list .workspace-domain-card > .workspace-domain-action { grid-column: 2; grid-row: 2 / 4; }
+ .asset-dense-list .workspace-domain-card > span:not(.subtitle):not(.workspace-domain-action), .asset-dense-list .workspace-domain-card > .workspace-cost-line { grid-column: 1; }
+}
+@media(max-width:600px) {
+ .asset-dense-list :is(.asset-project-info,.asset-library-body), .asset-dense-list .workspace-domain-card { grid-template-columns: minmax(0,1fr) 84px; }
+ .asset-dense-list .asset-project-heading { flex-wrap: nowrap; }
+ .asset-dense-list .asset-project-heading > strong { flex-basis: calc(100% - 42px); }
+
+ .asset-dense-list .asset-project-foot > span { max-width: 84px; }
+ .asset-dense-list .asset-project-foot > .asset-project-backlinks { white-space: normal; text-align: right; }
+ .workspace-search .asset-view-toggle { order: 3; }
+}

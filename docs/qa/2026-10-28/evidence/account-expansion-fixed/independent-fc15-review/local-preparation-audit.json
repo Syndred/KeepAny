@@ -1,0 +1,222 @@
+{
+  "scope": "Independent reconstruction of local73163 large24 setup failure; no UI replay",
+  "traceSha256": "10e3b460f900fadc45880a1c313eabc462eab446c75ccc933fb5ab2d024d6832",
+  "traceBytes": 63794845,
+  "badCRC": null,
+  "events": [
+    {
+      "type": "before",
+      "callId": "call@6169",
+      "startTime": 91792.186,
+      "class": "Frame",
+      "method": "click",
+      "params": {
+        "selector": ".topbar-back-link[href=\"/assets/account\"]",
+        "strict": true,
+        "timeout": 15000
+      },
+      "stepId": "pw:api@3682"
+    },
+    {
+      "type": "log",
+      "callId": "call@6169",
+      "time": 91816.315,
+      "message": "waiting for locator('.topbar-back-link[href=\"/assets/account\"]')"
+    },
+    {
+      "type": "log",
+      "callId": "call@6169",
+      "time": 91818.69,
+      "message": "  locator resolved to <a aria-current=\"page\" data-status=\"active\" href=\"/assets/account\" class=\"topbar-page-label topbar-back-link active\">…</a>"
+    },
+    {
+      "type": "log",
+      "callId": "call@6169",
+      "time": 91819.51,
+      "message": "attempting click action"
+    },
+    {
+      "type": "log",
+      "callId": "call@6169",
+      "time": 91819.542,
+      "message": "  waiting for element to be visible, enabled and stable"
+    },
+    {
+      "type": "log",
+      "callId": "call@6169",
+      "time": 91826.994,
+      "message": "  element is visible, enabled and stable"
+    },
+    {
+      "type": "log",
+      "callId": "call@6169",
+      "time": 91827.003,
+      "message": "  scrolling into view if needed"
+    },
+    {
+      "type": "log",
+      "callId": "call@6169",
+      "time": 91827.371,
+      "message": "  done scrolling"
+    },
+    {
+      "type": "log",
+      "callId": "call@6169",
+      "time": 91831.278,
+      "message": "  performing click action"
+    },
+    {
+      "type": "log",
+      "callId": "call@6169",
+      "time": 91852.524,
+      "message": "  click action done"
+    },
+    {
+      "type": "log",
+      "callId": "call@6169",
+      "time": 91852.535,
+      "message": "  waiting for scheduled navigations to finish"
+    },
+    {
+      "type": "log",
+      "callId": "call@6169",
+      "time": 91852.942,
+      "message": "  navigations have finished"
+    },
+    {
+      "type": "after",
+      "callId": "call@6169",
+      "endTime": 91853.005
+    },
+    {
+      "type": "before",
+      "callId": "call@6171",
+      "startTime": 91857.778,
+      "class": "Frame",
+      "method": "click",
+      "params": {
+        "selector": "internal:role=main >> internal:role=button[name=\"新增\"s]",
+        "strict": true,
+        "timeout": 15000
+      },
+      "stepId": "pw:api@3683"
+    },
+    {
+      "type": "log",
+      "callId": "call@6171",
+      "time": 91860.188,
+      "message": "waiting for getByRole('main').getByRole('button', { name: '新增', exact: true })"
+    },
+    {
+      "type": "log",
+      "callId": "call@6171",
+      "time": 91863.343,
+      "message": "  locator resolved to <button tabindex=\"0\" type=\"button\" data-slot=\"button\" class=\"button inline-flex shrink-0 items-center justify-center gap-2 rounded-full border-2 font-semibold outline-offset-2 disabled:cursor-not-allowed disabled:opacity-60 ghost small\">…</button>"
+    },
+    {
+      "type": "log",
+      "callId": "call@6171",
+      "time": 91864.437,
+      "message": "attempting click action"
+    },
+    {
+      "type": "log",
+      "callId": "call@6171",
+      "time": 91864.477,
+      "message": "  waiting for element to be visible, enabled and stable"
+    },
+    {
+      "type": "log",
+      "callId": "call@6171",
+      "time": 91878.081,
+      "message": "  element is visible, enabled and stable"
+    },
+    {
+      "type": "log",
+      "callId": "call@6171",
+      "time": 91878.096,
+      "message": "  scrolling into view if needed"
+    },
+    {
+      "type": "log",
+      "callId": "call@6171",
+      "time": 91879.588,
+      "message": "  done scrolling"
+    },
+    {
+      "type": "log",
+      "callId": "call@6171",
+      "time": 91886.013,
+      "message": "  performing click action"
+    },
+    {
+      "type": "log",
+      "callId": "call@6171",
+      "time": 91949.421,
+      "message": "  click action done"
+    },
+    {
+      "type": "log",
+      "callId": "call@6171",
+      "time": 91949.427,
+      "message": "  waiting for scheduled navigations to finish"
+    },
+    {
+      "type": "log",
+      "callId": "call@6171",
+      "time": 91949.752,
+      "message": "  navigations have finished"
+    },
+    {
+      "type": "after",
+      "callId": "call@6171",
+      "endTime": 91949.902
+    },
+    {
+      "type": "before",
+      "callId": "call@6173",
+      "startTime": 91954.57,
+      "class": "Frame",
+      "method": "fill",
+      "params": {
+        "selector": "internal:role=dialog >> #name",
+        "strict": true,
+        "value": "QA Additional Service 14",
+        "timeout": 15000
+      },
+      "stepId": "pw:api@3684"
+    },
+    {
+      "type": "log",
+      "callId": "call@6173",
+      "time": 91960.629,
+      "message": "waiting for getByRole('dialog').locator('#name')"
+    },
+    {
+      "type": "after",
+      "callId": "call@6173",
+      "endTime": 106963.005,
+      "error": {
+        "message": "Timeout 15000ms exceeded.",
+        "stack": "TimeoutError: Timeout 15000ms exceeded.\n    at _ProgressController.run (C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\node_modules\\.pnpm\\playwright-core@1.63.0\\node_modules\\playwright-core\\lib\\coreBundle.js:12360:32)\n    at DispatcherConnection.dispatch (C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\node_modules\\.pnpm\\playwright-core@1.63.0\\node_modules\\playwright-core\\lib\\coreBundle.js:19135:44)",
+        "name": "TimeoutError"
+      }
+    }
+  ],
+  "targetEvidence": {
+    "snapshotTimeMs": 91882.794,
+    "callId": "call@6171",
+    "phase": "action",
+    "targetAttribute": "__playwright_target__",
+    "buttonText": "新增",
+    "buttonClassSuffix": "ghost small",
+    "ancestorClasses": [
+      "detail-grid asset-detail-secondary",
+      "card asset-tasks-card",
+      "card-header",
+      "actions"
+    ],
+    "sourceHandler": "apps/web/src/page-asset-detail.tsx task button onClick=setTaskEdit(true)"
+  },
+  "conclusion": "Last navigation used back-link click, not goto. URL changed to /assets/account while old detail DOM still mounted. Generic main Add locator clicked old detail task Add, not account list Add. No evidence that account dialog opened then /accounts redirect removed it. Narrow preparation fix must wait actual target workspace and use account-specific Add; business assertions stay."
+}

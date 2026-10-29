@@ -1,3 +1,4 @@
+import { prepareVaultWorkspace, revealPasswordEntries } from "./helpers/vault-access";
 import { mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { expect, type Locator, type Page, test } from "@playwright/test";
@@ -118,11 +119,13 @@ async function saveEntry(page: Page, t: VisualCopy) {
 	await expect(page.getByRole("dialog")).toBeHidden();
 }
 async function unlock(page: Page, t: VisualCopy) {
+	await prepareVaultWorkspace(page);
 	await page.locator("#password-vault-unlock-master").fill(visualMaster);
 	await page
 		.getByRole("button", { name: t("pwVaultUnlock"), exact: true })
 		.click();
 	await expect(page.locator(".password-vault-toolbar")).toBeVisible();
+	await revealPasswordEntries(page);
 }
 async function actionTargets(scope: Locator) {
 	const targets = await scope.locator("button").evaluateAll((buttons) =>
@@ -241,6 +244,7 @@ for (const locale of ["zh-CN", "en"] as const)
 				});
 			try {
 				await page.goto("/assets/vault");
+				await prepareVaultWorkspace(page);
 				await h.createVault();
 				if (width < 680) await mobileToolbarLayout(page);
 				const importer = await h.open();
@@ -396,6 +400,7 @@ for (const locale of ["zh-CN", "en"] as const)
 					.getByRole("button", { name: t("pwConnectSave"), exact: true })
 					.click();
 				await expect(connect).toBeHidden();
+				await revealPasswordEntries(page);
 				await entry("Gmail QA").locator(".password-vault-linked-asset").click();
 				await expect(page).toHaveURL(/\/assets\/account\//);
 				await expect(page.locator(".react-flow__node")).toHaveCount(6);
@@ -496,12 +501,18 @@ for (const locale of ["zh-CN", "en"] as const)
 					})
 					.click();
 				await expect(page).not.toHaveURL(/#asset-/);
+				// Clearing the account focus preserves the user's independent category.
+				await expect(page.locator(".asset-category-scroll").getByRole("button", { name: zh ? "邮箱" : "Email", exact: true })).toHaveAttribute("aria-pressed", "true");
+				await page.locator(".asset-category-scroll").getByRole("button", { name: zh ? "全部" : "All", exact: true }).click();
 				await expect(entries).toHaveCount(records.length);
+				await revealPasswordEntries(page);
 				await page
 					.locator("#password-vault-search-input")
 					.fill("not-a-saved-account");
 				await expect(entries).toHaveCount(0);
 				await page.locator("#password-vault-search-input").fill("");
+				await expect(entries).toHaveCount(records.length);
+				await revealPasswordEntries(page);
 				await entry("Notion QA")
 					.getByRole("button", { name: t("pwVaultEditEntry"), exact: true })
 					.click();
@@ -582,6 +593,7 @@ for (const locale of ["zh-CN", "en"] as const)
 					);
 					const restored = await restoredContext.newPage();
 					await restored.goto("/assets/vault");
+					await prepareVaultWorkspace(restored);
 					await restored
 						.getByRole("button", { name: t("pwVaultImportEmpty"), exact: true })
 						.click();

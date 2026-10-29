@@ -7,6 +7,8 @@ minimumReleaseAgeExclude:
   - '@tanstack/react-router@1.170.40'
   - '@tanstack/router-core@1.171.33'
   - hono@4.13.10
+  - '@shadcn/registry@0.2.1'
+  - shadcn@4.23.0
 onlyBuiltDependencies:
   - esbuild
 overrides:

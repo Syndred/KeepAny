@@ -26,8 +26,8 @@ for (const locale of ["en-US", "zh-CN"] as const) {
 							save: "保存",
 							move: "移至回收站",
 							restore: "恢复",
-						overview: "项目、账号与订阅，一眼掌握。",
-						intake: "随手收录，慢慢整理。",
+							overview: "概览",
+							intake: "随手收录，慢慢整理。",
 							settings: "设置",
 							trash: "回收站",
 						}
@@ -37,8 +37,8 @@ for (const locale of ["en-US", "zh-CN"] as const) {
 							save: "Save",
 							move: "Move to trash",
 							restore: "Restore",
-						overview: "Your projects, accounts and subscriptions, connected.",
-						intake: "Collect now, organize later.",
+							overview: "Overview",
+							intake: "Collect now, organize later.",
 							settings: "Settings",
 							trash: "Trash",
 						};

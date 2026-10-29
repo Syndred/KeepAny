@@ -1,3 +1,5 @@
+import { Textarea } from "./ui/textarea";
+import { Input } from "./ui/input";
 import { Link } from "@tanstack/react-router";
 import { Check, Network, Search, WandSparkles } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -38,9 +40,11 @@ import { VaultAccountLinkConflict } from "./VaultAccountLinkConflict";
 export function VaultAccountLinksDialog({
 	onClose,
 	onSaved,
+	returnFocusTo,
 }: {
 	onClose: () => void;
 	onSaved: () => void;
+	returnFocusTo?: () => HTMLElement | null;
 }) {
 	const { t } = useTranslation();
 	const { data } = useAppContext();
@@ -556,6 +560,7 @@ export function VaultAccountLinksDialog({
 		<Dialog
 			title={t("pwConnectTitle")}
 			className="vault-connect-dialog"
+			returnFocusTo={returnFocusTo}
 			focusTitleOnOpen
 			closeDisabled={busy}
 			onClose={() => {
@@ -587,7 +592,7 @@ export function VaultAccountLinksDialog({
 					</span>
 					<label className="vault-connect-search">
 						<Search size={18} />
-						<input
+						<Input
 							type="search"
 							value={query}
 							onChange={(event) => setQuery(event.target.value)}
@@ -753,7 +758,7 @@ export function VaultAccountLinksDialog({
 															<span className="sr-only">
 																{t("pwConnectHint")}
 															</span>
-															<textarea
+															<Textarea
 																rows={1}
 																maxLength={500}
 																value={row.hint}
@@ -893,9 +898,13 @@ export function VaultAccountLinksDialog({
 								</div>
 								<span className="vault-connect-save-count">
 									{t("pwConnectSaveHint", {
-										accounts: new Set(selectedRows.map((row) => row.account.id))
-											.size,
-										relations: chosen.length,
+										accounts: t("pwConnectSaveAccountCount", {
+											count: new Set(selectedRows.map((row) => row.account.id))
+												.size,
+										}),
+										relations: t("pwConnectSaveRelationCount", {
+											count: chosen.length,
+										}),
 									})}
 								</span>
 								<Button

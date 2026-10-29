@@ -1,0 +1,1 @@
+import{a as e,r as t}from"./createLucideIcon-B-aUmAhr.js";import{n}from"./useMatch-BJAGE2UR.js";function r(r){let i=e();return t(i.stores.location,n(r,i))}export{r as t};

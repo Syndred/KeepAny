@@ -1,0 +1,204 @@
+{
+  "schema": "keepany.final-independent-verdict.v1",
+  "reviewer": "B",
+  "status": "passed",
+  "scope": "approved-final-integrated-compiled-web-key-user-tasks-and-bounded-compatibility-review",
+  "mergePermitted": true,
+  "mergePermissionScope": "B independent review gate only, valid for exact bound product/Web; C owns final integration, Daily CI and normal merge/push; no release gate bypass",
+  "candidateHead": "77f5ac7af34123ebb27efbb167ab9e2b3d653ebe",
+  "manifestSha256": "bf9b392dab18c2d059c49b81a59d9f8b4893398ba3f1d988f8fea814b3e6ef94",
+  "actualIndexSha256": "e360c9ceb27331ba2f3e5c062157a519ef588b7722d82e2fabfa0cdd9e5663d7",
+  "entryScript": "assets/index-lQafgsXW.js",
+  "productSourceSha256": "adcd672d64045bce842b3577a10a1a2d89082469a1cd705d0756bb81ee4440ea",
+  "sourceFileCount": 397,
+  "webFileCount": 132,
+  "integrationHeadAtFinalCheck": "3f83dc36f209fe5ae9df48c5f92403801841d14a",
+  "changesSinceCandidate": [
+    "tests/e2e/account-password-layout.spec.ts"
+  ],
+  "integrationWorkingTreeCleanAtEnd": false,
+  "productAndWebStillMatch": true,
+  "functional": "passed",
+  "visual": "passed",
+  "data": "passed",
+  "whitebox": "passed",
+  "personalUserPath": "passed",
+  "independentReview": "passed",
+  "controllerOwnUserPath": "not signed by B; C records separately",
+  "stageOne": "A two-fix independent review passed on 1be1a1df, separate report; not reused as final acceptance",
+  "coverage": [
+    {
+      "id": "FI-01",
+      "evidence": [
+        "candidate-identity-start.json",
+        "candidate-identity-end.json",
+        "http-identity-start.json"
+      ],
+      "status": "passed"
+    },
+    {
+      "id": "FI-02",
+      "evidence": [
+        "03-ordinary-required-error.jpg",
+        "25-ordinary-search-zh1280x720.jpg",
+        "35-project-after-refresh-dom.txt",
+        "37-new-entry-after-refresh.jpg",
+        "data-cancel.json",
+        "data-saved.json"
+      ],
+      "status": "passed"
+    },
+    {
+      "id": "FI-03",
+      "evidence": [
+        "02-wrong-master-settled.jpg",
+        "38-empty-not-established.jpg",
+        "39-create-mismatch-zh390.jpg",
+        "40-created-empty-dom.txt"
+      ],
+      "status": "passed"
+    },
+    {
+      "id": "FI-04",
+      "evidence": [
+        "05-local-import-review-before-cancel.jpg",
+        "14-after-local-import.jpg",
+        "36-import-after-refresh.jpg",
+        "data-cancel.json",
+        "data-saved.json"
+      ],
+      "status": "passed"
+    },
+    {
+      "id": "FI-05",
+      "evidence": [
+        "06-counts-en-0-0.txt",
+        "07-counts-en-1-1.jpg",
+        "08-counts-en-2-1.txt",
+        "data-cancel.json"
+      ],
+      "status": "passed"
+    },
+    {
+      "id": "FI-06",
+      "evidence": [
+        "15-counts-en390-1-1-settled.jpg",
+        "17-existing-history-visible.jpg",
+        "data-saved.json"
+      ],
+      "status": "passed"
+    },
+    {
+      "id": "FI-07",
+      "evidence": [
+        "16-expansion-before.json",
+        "16-expansion-after.json",
+        "16-expanded-account-with-neighbor.jpg",
+        "32-management-zh390.jpg"
+      ],
+      "status": "passed"
+    },
+    {
+      "id": "FI-08",
+      "evidence": [
+        "19-detail-en390-focus-settled.jpg",
+        "26-detail-zh390-original-fixed.jpg",
+        "47-counts-zh390-1-2.jpg",
+        "47-counts-zh390-1-2-dialog.txt"
+      ],
+      "status": "passed"
+    },
+    {
+      "id": "FI-09",
+      "evidence": [
+        "12-save-toast-before-next-form.json",
+        "13-toast-next-form-required.jpg",
+        "13-toast-next-form-dom.txt"
+      ],
+      "status": "passed"
+    },
+    {
+      "id": "FI-10",
+      "evidence": [
+        "image-dimensions.json",
+        "20-detail-en768x900.jpg",
+        "21-detail-en1280x900.jpg",
+        "22-detail-en1920x1080.jpg",
+        "23-detail-en2560x1440.jpg",
+        "24-detail-en1280x720.jpg",
+        "27-detail-zh768x900.jpg",
+        "28-detail-zh1280x900.jpg",
+        "29-detail-zh1920x1080.jpg",
+        "30-detail-zh2560x1440.jpg",
+        "31-detail-zh1280x720.jpg"
+      ],
+      "status": "passed"
+    },
+    {
+      "id": "FI-11",
+      "evidence": [
+        "whitebox-equivalence.json",
+        "candidate-reader-check.json"
+      ],
+      "status": "passed"
+    },
+    {
+      "id": "FI-12",
+      "evidence": [
+        "browser-cleanup-settled.json",
+        "server-cleanup.json",
+        "download-cleanup.json",
+        "48-main-vault-locked.jpg",
+        "49-restored-vault-locked.jpg"
+      ],
+      "status": "passed"
+    },
+    {
+      "id": "FI-13",
+      "evidence": [
+        "34-task-completed-after-refresh.jpg",
+        "35-task-reopened-dom.txt",
+        "data-saved.json"
+      ],
+      "status": "passed",
+      "notApplicable": "Global task editor has no asset relationship selector; no invented task/asset selection test."
+    },
+    {
+      "id": "FI-14",
+      "evidence": [
+        "whitebox-equivalence.json"
+      ],
+      "status": "not_applicable",
+      "reason": "Extra image UI fault matrix is not needed for exact function/consumer body extraction with unchanged rules and DOM; bounded final scope."
+    },
+    {
+      "id": "FI-15",
+      "evidence": [
+        "43-different-vault-restore-refused.jpg",
+        "44-pristine-origin-before-restore.txt",
+        "46-old-restore-unlocked-settled.jpg",
+        "data-upgrade.json",
+        "data-restore.json"
+      ],
+      "status": "passed"
+    }
+  ],
+  "remainingInScope": [],
+  "excluded": [
+    "full-product-acceptance",
+    "full-release-and-real-Postgres-not-run-by-B",
+    "real-AI/cloud",
+    "4180-deployment",
+    "installer-publication",
+    "mobile",
+    "C-remote-CI-and-main-merge"
+  ],
+  "fullProductAcceptance": false,
+  "releaseAcceptance": false,
+  "newCIGateInstalledByB": false,
+  "machineEvidenceCheck": "evidence-machine-check.json",
+  "manualVisualReview": "Actual images and user actions reviewed; machine existence/hashes are not visual proof",
+  "report": "报告.md",
+  "reportSha256": "a8573acded9445beda0e5248a4147e95e11413525fc7b5ae98e707d0de9c9a1f",
+  "completedAt": "2026-10-29T11:39:06.2174881+08:00"
+}

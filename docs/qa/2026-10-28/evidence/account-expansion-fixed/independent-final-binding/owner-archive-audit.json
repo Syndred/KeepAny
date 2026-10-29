@@ -1,0 +1,10 @@
+{
+  "archive": "docs/qa/2026-10-28/evidence/final-correction/owner-evidence.zip",
+  "bytes": 19641676,
+  "sha256": "a8cb40f7d6ce696b74f35b211330af16738830c2cf9ba16c665a13adaeb6ceb1",
+  "items": 346,
+  "manifestItems": 345,
+  "errors": [],
+  "extras": [],
+  "scope": "Owner observations and version-separated current/historical runs. Cloud results are separate."
+}

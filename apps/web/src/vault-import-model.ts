@@ -366,25 +366,7 @@ export function validateVaultImportFields(
 	return result;
 }
 
-/** Blank optional form rows remain editable but do not become stored identifiers. */
-export function withFilledVaultIdentifiers(
-	draft: VaultEntryDraft,
-): VaultEntryDraft {
-	return {
-		...draft,
-		...(draft.usernameAliases
-			? {
-					usernameAliases: [
-						...new Set(
-							draft.usernameAliases.filter(
-								(value) => value.trim() && value !== draft.username,
-							),
-						),
-					],
-				}
-			: {}),
-	};
-}
+export { withFilledVaultIdentifiers } from "./vault-entry-identifiers";
 
 /** key=value pairs use explicit delimiters; JSON quotes preserve literal delimiters and whitespace. */
 export function parseVaultImportLine(line: string): {

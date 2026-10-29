@@ -1,3 +1,4 @@
+import { prepareVaultWorkspace, openVaultAccess } from "./helpers/vault-access";
 import { expect, type Locator, type Page, test } from "@playwright/test";
 import {
 	inspectVisualKdbx,
@@ -584,7 +585,8 @@ test("zh-CN duplicate conflict bulk tools save and draft close confirmations", a
 			.getByRole("button", { name: "返回", exact: true })
 			.click();
 		await importer.getByRole("combobox", { name: "更多", exact: true }).click();
-		await expect(h.page.getByRole("listbox")).toHaveCSS("width", "220px");
+		await expect(h.page.locator(".themed-select-content.pw-smart-select-menu[data-open]")).toHaveCSS("width", "220px");
+		expect(await h.page.getByRole("listbox").evaluate(node => node.scrollWidth <= node.clientWidth)).toBe(true);
 		await evidence.capture(
 			"08-B",
 			"More actions use the existing custom themed menu.",
@@ -611,7 +613,8 @@ test("zh-CN duplicate conflict bulk tools save and draft close confirmations", a
 		await h.page
 			.getByRole("combobox", { name: "导入操作菜单", exact: true })
 			.click();
-		await expect(h.page.getByRole("listbox")).toHaveCSS("width", "220px");
+		await expect(h.page.locator(".themed-select-content.pw-smart-select-menu[data-open]")).toHaveCSS("width", "220px");
+		expect(await h.page.getByRole("listbox").evaluate(node => node.scrollWidth <= node.clientWidth)).toBe(true);
 		await evidence.capture(
 			"11-A",
 			"Import actions exposes model details and lock-close.",
@@ -811,6 +814,7 @@ test("zh-CN atomic KDBX save supplementary import and cross-tab stale draft reco
 		expect(first?.notes).toBe("Synthetic supplement to already imported entry");
 		expect(second?.password).toBe("Demo-only-second!42");
 		await h.page.reload();
+		await openVaultAccess(h.page);
 		await h.page.locator("#password-vault-unlock-master").fill(visualMaster);
 		await h.page
 			.getByRole("button", { name: h.t("pwVaultUnlock"), exact: true })
@@ -833,6 +837,7 @@ test("zh-CN atomic KDBX save supplementary import and cross-tab stale draft reco
 		);
 		const secondPage = await h.context.newPage();
 		await secondPage.goto("/assets/vault");
+		await prepareVaultWorkspace(secondPage);
 		await secondPage
 			.locator("#password-vault-unlock-master")
 			.fill(visualMaster);
@@ -882,6 +887,7 @@ test("zh-CN atomic KDBX save supplementary import and cross-tab stale draft reco
 			.getByRole("button", { name: h.t("pwSmartLockClose"), exact: true })
 			.click();
 		await expect(importer).toHaveCount(0);
+		await openVaultAccess(h.page);
 		await h.page.locator("#password-vault-unlock-master").fill(visualMaster);
 		await h.page
 			.getByRole("button", { name: h.t("pwVaultUnlock"), exact: true })
@@ -930,13 +936,25 @@ for (const locale of ["zh-CN", "en"] as const) {
 			const password = field(importer, "password");
 			await expect(password).toHaveAttribute("readonly", "");
 			await h.context.grantPermissions(["clipboard-read", "clipboard-write"]);
+			await h.page.evaluate(() => {
+				const original = navigator.clipboard.writeText.bind(navigator.clipboard);
+				navigator.clipboard.writeText = async value => {
+					(window as Window & { syntheticClipboardArgument?: string }).syntheticClipboardArgument = value;
+					return original(value);
+				};
+			});
 			await editor(importer)
 				.locator(".pw-smart-source-line")
 				.nth(2)
 				.getByRole("button")
 				.click();
+			// Keep the exact application output and exercise the actual native method.
+            expect(await h.page.evaluate(() => (window as Window & { syntheticClipboardArgument?: string }).syntheticClipboardArgument)).toBe(multiline);
+            // W3C writeText specifies Windows CRLF; assert literal native output.
+            const nativeClipboard = process.platform === "win32"
+                ? "  Demo-line-1\r\nDemo-line-2\r\nDemo-line-3  " : multiline;
 			expect(await h.page.evaluate(() => navigator.clipboard.readText())).toBe(
-				multiline,
+				nativeClipboard,
 			);
 			await editor(importer)
 				.getByRole("button", {
@@ -985,7 +1003,7 @@ for (const locale of ["zh-CN", "en"] as const) {
 			const path = info.outputPath(`synthetic-multiline-${locale}.kdbx`);
 			await (await download).saveAs(path);
 			const entries = await inspectVisualKdbx(path);
-			expect(entries[0].draft.password).toBe(multiline);
+			expect(entries[0].draft.password).toBe(nativeClipboard);
 			expect(h.errors).toEqual([]);
 		} finally {
 			await h.close();
@@ -1263,4 +1281,34 @@ for (const locale of ["zh-CN", "en"] as const) {
 			await h.close();
 		}
 	});
+}
+
+
+for (const locale of ["zh-CN", "en"] as const) {
+ test(`${locale} original mixed-newline source survives KDBX without a system clipboard roundtrip`, async ({ browser }, info) => {
+  const h = await visualHarness(browser, locale, { width: 390, height: 900 });
+  const original = "  Synthetic first line\r\nsecond line\nthird line  ";
+  try {
+   await h.configure();
+   await h.createVault();
+   const importer = await h.open();
+   await importer.locator("#pw-smart-source").fill(`Title=Synthetic exact source\nUsername=exact-source@example.test\nPassword=${JSON.stringify(original)}`);
+   await importer.getByRole("button", { name: h.t("pwSmartRecognize"), exact: true }).click();
+   await importer.getByRole("tab", { name: /已核对|Reviewed/ }).click();
+   await row(importer, "exact-source@example.test").click();
+   await reviewCount(importer, 1);
+   await confirmSave(h.page, importer);
+   await expect(importer.locator(".pw-smart-receipt")).toBeVisible();
+   await closeImport(h.page, h.t);
+   const download = h.page.waitForEvent("download");
+   await h.page.getByRole("button", { name: h.t("pwVaultExport"), exact: true }).click();
+   const path = info.outputPath(`synthetic-exact-source-${locale}.kdbx`);
+   await (await download).saveAs(path);
+   const entries = await inspectVisualKdbx(path);
+   expect(entries).toHaveLength(1);
+   expect(entries[0].draft.password).toBe(original);
+   expect(h.mock.requests).toHaveLength(0);
+   expect(h.errors).toEqual([]);
+  } finally { await h.close(); }
+ });
 }

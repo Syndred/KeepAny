@@ -1,0 +1,369 @@
+{
+  "candidate": "65ceb04dfeaa197a06975901d41b5e036d782e07",
+  "recordSha256": "6f95238a67543b1e2ff33462a4d2747a05cc57530d35b0b13bdbddf340cb2d0f",
+  "validatorSha256": "d65ebf68fc575d2a9c828115e636715b3fddc406883073ec912096d4378852e6",
+  "evidence": [
+    {
+      "path": "docs/qa/2026-10-28/evidence/final-correction/product-identity.json",
+      "sha256": "114b6065800fb1f71a70c8c2304437439467e91575f29dc73deda899c621a4bc"
+    },
+    {
+      "path": "docs/qa/2026-10-28/evidence/final-correction/owner-observations.json",
+      "sha256": "335ae36e1dde960aacc61a0c749e017cfe505b09801e22db8296334fef0e0bd7"
+    },
+    {
+      "path": "docs/qa/2026-10-28/evidence/final-correction/owner-evidence.zip",
+      "sha256": "a8cb40f7d6ce696b74f35b211330af16738830c2cf9ba16c665a13adaeb6ceb1"
+    },
+    {
+      "path": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-fc11-65ce-evidence.zip",
+      "sha256": "77b7cf2d6cc33aa3b406ac7aa8ccb963e1a12f5e2c0b53ed464786f1f31682df"
+    },
+    {
+      "path": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-fc12-evidence.zip",
+      "sha256": "943fad2db5634382705c45e56303b452f1fa8009f56e2e12cda231ac1d77e045"
+    },
+    {
+      "path": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-state-coverage.json",
+      "sha256": "83202964b5289fdea023f9d701a3baff9dc8d690ae2596a5a3f4451459b490d1"
+    },
+    {
+      "path": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-state-evidence.zip",
+      "sha256": "f98241f4aef7199b81b5083272ba786682b51aa6641920a30b65275c0cad1ab7"
+    }
+  ],
+  "results": [
+    {
+      "name": "positive-final-record",
+      "expected": "PASS",
+      "exit": 0,
+      "matchedExpectedReason": true,
+      "error": null,
+      "output": "AL01–AL10, 40 state combinations, raw state semantics, evidence hashes and reviewed candidate identities match. Human review is recorded separately, not inferred from this check.\n"
+    },
+    {
+      "name": "missing-AL",
+      "expected": "Acceptance IDs are missing",
+      "exit": 1,
+      "matchedExpectedReason": true,
+      "error": "Acceptance IDs are missing or duplicated.",
+      "output": "file:///C:/Users/Administrator/Desktop/project/KeepAny/scripts/verify-account-acceptance.mjs:23\r\n\tthrow Error(\"Acceptance IDs are missing or duplicated.\");\r\n\t      ^\r\n\r\nError: Acceptance IDs are missing or duplicated.\r\n    at file:///C:/Users/Administrator/Desktop/project/KeepAny/scripts/verify-account-acceptance.mjs:23:8\r\n\r\nNode.js v24.21.0\r\n"
+    },
+    {
+      "name": "duplicate-AL",
+      "expected": "Acceptance IDs are missing",
+      "exit": 1,
+      "matchedExpectedReason": true,
+      "error": "Acceptance IDs are missing or duplicated.",
+      "output": "file:///C:/Users/Administrator/Desktop/project/KeepAny/scripts/verify-account-acceptance.mjs:23\r\n\tthrow Error(\"Acceptance IDs are missing or duplicated.\");\r\n\t      ^\r\n\r\nError: Acceptance IDs are missing or duplicated.\r\n    at file:///C:/Users/Administrator/Desktop/project/KeepAny/scripts/verify-account-acceptance.mjs:23:8\r\n\r\nNode.js v24.21.0\r\n"
+    },
+    {
+      "name": "row-wrong-candidate",
+      "expected": "Incomplete acceptance record: AL01",
+      "exit": 1,
+      "matchedExpectedReason": true,
+      "error": "Incomplete acceptance record: AL01",
+      "output": "file:///C:/Users/Administrator/Desktop/project/KeepAny/scripts/verify-account-acceptance.mjs:31\r\n\t\tthrow Error(`Incomplete acceptance record: ${id}`);\r\n\t\t      ^\r\n\r\nError: Incomplete acceptance record: AL01\r\n    at file:///C:/Users/Administrator/Desktop/project/KeepAny/scripts/verify-account-acceptance.mjs:31:9\r\n\r\nNode.js v24.21.0\r\n"
+    },
+    {
+      "name": "bad-outer-hash",
+      "expected": "Evidence changed",
+      "exit": 1,
+      "matchedExpectedReason": true,
+      "error": "Evidence changed or escaped workspace: docs/qa/2026-10-28/evidence/final-correction/product-identity.json",
+      "output": "file:///C:/Users/Administrator/Desktop/project/KeepAny/scripts/verify-account-acceptance.mjs:42\r\n\t\tthrow Error(`Evidence changed or escaped workspace: ${entry.path}`);\r\n\t\t      ^\r\n\r\nError: Evidence changed or escaped workspace: docs/qa/2026-10-28/evidence/final-correction/product-identity.json\r\n    at file:///C:/Users/Administrator/Desktop/project/KeepAny/scripts/verify-account-acceptance.mjs:42:9\r\n\r\nNode.js v24.21.0\r\n"
+    },
+    {
+      "name": "outside-evidence",
+      "expected": "escaped workspace",
+      "exit": 1,
+      "matchedExpectedReason": true,
+      "error": "Evidence changed or escaped workspace: ../outside.json",
+      "output": "file:///C:/Users/Administrator/Desktop/project/KeepAny/scripts/verify-account-acceptance.mjs:42\r\n\t\tthrow Error(`Evidence changed or escaped workspace: ${entry.path}`);\r\n\t\t      ^\r\n\r\nError: Evidence changed or escaped workspace: ../outside.json\r\n    at file:///C:/Users/Administrator/Desktop/project/KeepAny/scripts/verify-account-acceptance.mjs:42:9\r\n\r\nNode.js v24.21.0\r\n"
+    },
+    {
+      "name": "missing-40-case",
+      "expected": "combinations are missing",
+      "exit": 1,
+      "matchedExpectedReason": true,
+      "error": "State coverage combinations are missing or duplicated.",
+      "output": "file:///C:/Users/Administrator/Desktop/project/KeepAny/scripts/verify-account-acceptance.mjs:68\r\n) throw Error(\"State coverage combinations are missing or duplicated.\");\r\n        ^\r\n\r\nError: State coverage combinations are missing or duplicated.\r\n    at file:///C:/Users/Administrator/Desktop/project/KeepAny/scripts/verify-account-acceptance.mjs:68:9\r\n\r\nNode.js v24.21.0\r\n"
+    },
+    {
+      "name": "duplicate-40-case",
+      "expected": "combinations are missing",
+      "exit": 1,
+      "matchedExpectedReason": true,
+      "error": "State coverage combinations are missing or duplicated.",
+      "output": "file:///C:/Users/Administrator/Desktop/project/KeepAny/scripts/verify-account-acceptance.mjs:68\r\n) throw Error(\"State coverage combinations are missing or duplicated.\");\r\n        ^\r\n\r\nError: State coverage combinations are missing or duplicated.\r\n    at file:///C:/Users/Administrator/Desktop/project/KeepAny/scripts/verify-account-acceptance.mjs:68:9\r\n\r\nNode.js v24.21.0\r\n"
+    },
+    {
+      "name": "wrong-40-ID",
+      "expected": "Incomplete state coverage",
+      "exit": 1,
+      "matchedExpectedReason": true,
+      "error": "Incomplete state coverage: busy:workspace:zh-CN:390",
+      "output": "file:///C:/Users/Administrator/Desktop/project/KeepAny/scripts/verify-account-acceptance.mjs:119\r\n\t\tthrow Error(`Incomplete state coverage: ${id}`);\r\n\t\t      ^\r\n\r\nError: Incomplete state coverage: busy:workspace:zh-CN:390\r\n    at file:///C:/Users/Administrator/Desktop/project/KeepAny/scripts/verify-account-acceptance.mjs:119:9\r\n\r\nNode.js v24.21.0\r\n"
+    },
+    {
+      "name": "pending-state",
+      "expected": "Incomplete state coverage",
+      "exit": 1,
+      "matchedExpectedReason": true,
+      "error": "Incomplete state coverage: busy:workspace:zh-CN:390",
+      "output": "file:///C:/Users/Administrator/Desktop/project/KeepAny/scripts/verify-account-acceptance.mjs:119\r\n\t\tthrow Error(`Incomplete state coverage: ${id}`);\r\n\t\t      ^\r\n\r\nError: Incomplete state coverage: busy:workspace:zh-CN:390\r\n    at file:///C:/Users/Administrator/Desktop/project/KeepAny/scripts/verify-account-acceptance.mjs:119:9\r\n\r\nNode.js v24.21.0\r\n"
+    },
+    {
+      "name": "coverage-wrong-candidate",
+      "expected": "candidate or schema mismatch",
+      "exit": 1,
+      "matchedExpectedReason": true,
+      "error": "State coverage candidate or schema mismatch.",
+      "output": "file:///C:/Users/Administrator/Desktop/project/KeepAny/scripts/verify-account-acceptance.mjs:56\r\n) throw Error(\"State coverage candidate or schema mismatch.\");\r\n        ^\r\n\r\nError: State coverage candidate or schema mismatch.\r\n    at file:///C:/Users/Administrator/Desktop/project/KeepAny/scripts/verify-account-acceptance.mjs:56:9\r\n\r\nNode.js v24.21.0\r\n"
+    },
+    {
+      "name": "wrong-consumer-evidence",
+      "expected": "Wrong consumer state screenshot",
+      "exit": 1,
+      "matchedExpectedReason": true,
+      "error": "Wrong consumer state screenshot: busy:detail:zh-CN:390/busy",
+      "output": "file:///C:/Users/Administrator/Desktop/project/KeepAny/scripts/verify-account-acceptance.mjs:106\r\n\t\t\t\tthrow Error(`Wrong consumer state screenshot: ${id}/${state}`);\r\n\t\t\t\t      ^\r\n\r\nError: Wrong consumer state screenshot: busy:detail:zh-CN:390/busy\r\n    at verifyRawState (file:///C:/Users/Administrator/Desktop/project/KeepAny/scripts/verify-account-acceptance.mjs:106:11)\r\n    at file:///C:/Users/Administrator/Desktop/project/KeepAny/scripts/verify-account-acceptance.mjs:142:5\r\n\r\nNode.js v24.21.0\r\n"
+    },
+    {
+      "name": "busy-used-as-social",
+      "expected": "Missing populated social workflow",
+      "exit": 1,
+      "matchedExpectedReason": true,
+      "error": "Missing populated social workflow: social-populated:zh-CN:390",
+      "output": "file:///C:/Users/Administrator/Desktop/project/KeepAny/scripts/verify-account-acceptance.mjs:113\r\n\t\t\tthrow Error(`Missing populated social workflow: ${id}`);\r\n\t\t\t      ^\r\n\r\nError: Missing populated social workflow: social-populated:zh-CN:390\r\n    at verifyRawState (file:///C:/Users/Administrator/Desktop/project/KeepAny/scripts/verify-account-acceptance.mjs:113:10)\r\n    at file:///C:/Users/Administrator/Desktop/project/KeepAny/scripts/verify-account-acceptance.mjs:142:5\r\n\r\nNode.js v24.21.0\r\n"
+    },
+    {
+      "name": "inner-hash-corrupt",
+      "expected": "State evidence changed",
+      "exit": 1,
+      "matchedExpectedReason": true,
+      "error": "State evidence changed or missing: busy:workspace:zh-CN:390/final-busy-65ce-all/zh-CN-390.json",
+      "output": "file:///C:/Users/Administrator/Desktop/project/KeepAny/scripts/verify-account-acceptance.mjs:131\r\n\t\t\tthrow Error(`State evidence changed or missing: ${id}/${evidence.path}`);\r\n\t\t\t      ^\r\n\r\nError: State evidence changed or missing: busy:workspace:zh-CN:390/final-busy-65ce-all/zh-CN-390.json\r\n    at file:///C:/Users/Administrator/Desktop/project/KeepAny/scripts/verify-account-acceptance.mjs:131:10\r\n\r\nNode.js v24.21.0\r\n"
+    },
+    {
+      "name": "missing-state-PNG",
+      "expected": "Missing png state evidence",
+      "exit": 1,
+      "matchedExpectedReason": true,
+      "error": "Missing png state evidence: busy:workspace:zh-CN:390",
+      "output": "file:///C:/Users/Administrator/Desktop/project/KeepAny/scripts/verify-account-acceptance.mjs:123\r\n\t\t\tthrow Error(`Missing ${type} state evidence: ${id}`);\r\n\t\t\t      ^\r\n\r\nError: Missing png state evidence: busy:workspace:zh-CN:390\r\n    at file:///C:/Users/Administrator/Desktop/project/KeepAny/scripts/verify-account-acceptance.mjs:123:10\r\n\r\nNode.js v24.21.0\r\n"
+    },
+    {
+      "name": "missing-consumer-stage",
+      "expected": "Missing actual busy state",
+      "exit": 1,
+      "matchedExpectedReason": true,
+      "error": "Missing actual busy state: busy:detail:zh-CN:390",
+      "output": "file:///C:/Users/Administrator/Desktop/project/KeepAny/scripts/verify-account-acceptance.mjs:81\r\n\t\t\tthrow Error(`Missing actual busy state: ${id}`);\r\n\t\t\t      ^\r\n\r\nError: Missing actual busy state: busy:detail:zh-CN:390\r\n    at verifyRawState (file:///C:/Users/Administrator/Desktop/project/KeepAny/scripts/verify-account-acceptance.mjs:81:10)\r\n    at file:///C:/Users/Administrator/Desktop/project/KeepAny/scripts/verify-account-acceptance.mjs:142:5\r\n\r\nNode.js v24.21.0\r\n"
+    },
+    {
+      "name": "busy-height-missing",
+      "expected": "Invalid atomic busy frame",
+      "exit": 1,
+      "matchedExpectedReason": true,
+      "error": "Invalid atomic busy frame: busy:workspace:zh-CN:390/before-screenshot",
+      "output": "file:///C:/Users/Administrator/Desktop/project/KeepAny/scripts/verify-account-acceptance.mjs:89\r\n\t\t\t\tthrow Error(`Invalid atomic busy frame: ${id}/${suffix}`);\r\n\t\t\t\t      ^\r\n\r\nError: Invalid atomic busy frame: busy:workspace:zh-CN:390/before-screenshot\r\n    at verifyRawState (file:///C:/Users/Administrator/Desktop/project/KeepAny/scripts/verify-account-acceptance.mjs:89:11)\r\n    at file:///C:/Users/Administrator/Desktop/project/KeepAny/scripts/verify-account-acceptance.mjs:142:5\r\n\r\nNode.js v24.21.0\r\n"
+    },
+    {
+      "name": "busy-left-not-number",
+      "expected": "Invalid atomic busy frame",
+      "exit": 1,
+      "matchedExpectedReason": true,
+      "error": "Invalid atomic busy frame: busy:workspace:zh-CN:390/before-screenshot",
+      "output": "file:///C:/Users/Administrator/Desktop/project/KeepAny/scripts/verify-account-acceptance.mjs:89\r\n\t\t\t\tthrow Error(`Invalid atomic busy frame: ${id}/${suffix}`);\r\n\t\t\t\t      ^\r\n\r\nError: Invalid atomic busy frame: busy:workspace:zh-CN:390/before-screenshot\r\n    at verifyRawState (file:///C:/Users/Administrator/Desktop/project/KeepAny/scripts/verify-account-acceptance.mjs:89:11)\r\n    at file:///C:/Users/Administrator/Desktop/project/KeepAny/scripts/verify-account-acceptance.mjs:142:5\r\n\r\nNode.js v24.21.0\r\n"
+    },
+    {
+      "name": "busy-width-43",
+      "expected": "Invalid atomic busy frame",
+      "exit": 1,
+      "matchedExpectedReason": true,
+      "error": "Invalid atomic busy frame: busy:workspace:zh-CN:390/before-screenshot",
+      "output": "file:///C:/Users/Administrator/Desktop/project/KeepAny/scripts/verify-account-acceptance.mjs:89\r\n\t\t\t\tthrow Error(`Invalid atomic busy frame: ${id}/${suffix}`);\r\n\t\t\t\t      ^\r\n\r\nError: Invalid atomic busy frame: busy:workspace:zh-CN:390/before-screenshot\r\n    at verifyRawState (file:///C:/Users/Administrator/Desktop/project/KeepAny/scripts/verify-account-acceptance.mjs:89:11)\r\n    at file:///C:/Users/Administrator/Desktop/project/KeepAny/scripts/verify-account-acceptance.mjs:142:5\r\n\r\nNode.js v24.21.0\r\n"
+    },
+    {
+      "name": "busy-button-enabled",
+      "expected": "Invalid atomic busy frame",
+      "exit": 1,
+      "matchedExpectedReason": true,
+      "error": "Invalid atomic busy frame: busy:workspace:zh-CN:390/after-screenshot",
+      "output": "file:///C:/Users/Administrator/Desktop/project/KeepAny/scripts/verify-account-acceptance.mjs:89\r\n\t\t\t\tthrow Error(`Invalid atomic busy frame: ${id}/${suffix}`);\r\n\t\t\t\t      ^\r\n\r\nError: Invalid atomic busy frame: busy:workspace:zh-CN:390/after-screenshot\r\n    at verifyRawState (file:///C:/Users/Administrator/Desktop/project/KeepAny/scripts/verify-account-acceptance.mjs:89:11)\r\n    at file:///C:/Users/Administrator/Desktop/project/KeepAny/scripts/verify-account-acceptance.mjs:142:5\r\n\r\nNode.js v24.21.0\r\n"
+    },
+    {
+      "name": "recovery-part-disabled",
+      "expected": "Missing recovered toolbar geometry",
+      "exit": 1,
+      "matchedExpectedReason": true,
+      "error": "Missing recovered toolbar geometry: busy:workspace:zh-CN:390",
+      "output": "file:///C:/Users/Administrator/Desktop/project/KeepAny/scripts/verify-account-acceptance.mjs:98\r\n\t\t\tthrow Error(`Missing recovered toolbar geometry: ${id}`);\r\n\t\t\t      ^\r\n\r\nError: Missing recovered toolbar geometry: busy:workspace:zh-CN:390\r\n    at verifyRawState (file:///C:/Users/Administrator/Desktop/project/KeepAny/scripts/verify-account-acceptance.mjs:98:10)\r\n    at file:///C:/Users/Administrator/Desktop/project/KeepAny/scripts/verify-account-acceptance.mjs:142:5\r\n\r\nNode.js v24.21.0\r\n"
+    },
+    {
+      "name": "recovery-height-missing",
+      "expected": "Missing recovered toolbar geometry",
+      "exit": 1,
+      "matchedExpectedReason": true,
+      "error": "Missing recovered toolbar geometry: busy:workspace:zh-CN:390",
+      "output": "file:///C:/Users/Administrator/Desktop/project/KeepAny/scripts/verify-account-acceptance.mjs:98\r\n\t\t\tthrow Error(`Missing recovered toolbar geometry: ${id}`);\r\n\t\t\t      ^\r\n\r\nError: Missing recovered toolbar geometry: busy:workspace:zh-CN:390\r\n    at verifyRawState (file:///C:/Users/Administrator/Desktop/project/KeepAny/scripts/verify-account-acceptance.mjs:98:10)\r\n    at file:///C:/Users/Administrator/Desktop/project/KeepAny/scripts/verify-account-acceptance.mjs:142:5\r\n\r\nNode.js v24.21.0\r\n"
+    },
+    {
+      "name": "recovery-left-not-number",
+      "expected": "Missing recovered toolbar geometry",
+      "exit": 1,
+      "matchedExpectedReason": true,
+      "error": "Missing recovered toolbar geometry: busy:workspace:zh-CN:390",
+      "output": "file:///C:/Users/Administrator/Desktop/project/KeepAny/scripts/verify-account-acceptance.mjs:98\r\n\t\t\tthrow Error(`Missing recovered toolbar geometry: ${id}`);\r\n\t\t\t      ^\r\n\r\nError: Missing recovered toolbar geometry: busy:workspace:zh-CN:390\r\n    at verifyRawState (file:///C:/Users/Administrator/Desktop/project/KeepAny/scripts/verify-account-acceptance.mjs:98:10)\r\n    at file:///C:/Users/Administrator/Desktop/project/KeepAny/scripts/verify-account-acceptance.mjs:142:5\r\n\r\nNode.js v24.21.0\r\n"
+    },
+    {
+      "name": "missing-restored-entry",
+      "expected": "Missing restored entry",
+      "exit": 1,
+      "matchedExpectedReason": true,
+      "error": "Missing restored entry: busy:detail:zh-CN:390",
+      "output": "file:///C:/Users/Administrator/Desktop/project/KeepAny/scripts/verify-account-acceptance.mjs:102\r\n\t\t\t\tthrow Error(`Missing restored entry: ${id}`);\r\n\t\t\t\t      ^\r\n\r\nError: Missing restored entry: busy:detail:zh-CN:390\r\n    at verifyRawState (file:///C:/Users/Administrator/Desktop/project/KeepAny/scripts/verify-account-acceptance.mjs:102:11)\r\n    at file:///C:/Users/Administrator/Desktop/project/KeepAny/scripts/verify-account-acceptance.mjs:142:5\r\n\r\nNode.js v24.21.0\r\n"
+    },
+    {
+      "name": "raw-wrong-index",
+      "expected": "Missing matching runtime identity",
+      "exit": 1,
+      "matchedExpectedReason": true,
+      "error": "Missing matching runtime identity: busy:workspace:zh-CN:390",
+      "output": "file:///C:/Users/Administrator/Desktop/project/KeepAny/scripts/verify-account-acceptance.mjs:147\r\n\tif (!candidateReceiptFound) throw Error(`Missing matching runtime identity: ${id}`);\r\n\t                                  ^\r\n\r\nError: Missing matching runtime identity: busy:workspace:zh-CN:390\r\n    at file:///C:/Users/Administrator/Desktop/project/KeepAny/scripts/verify-account-acceptance.mjs:147:36\r\n\r\nNode.js v24.21.0\r\n"
+    },
+    {
+      "name": "raw-wrong-archive",
+      "expected": "Missing matching runtime identity",
+      "exit": 1,
+      "matchedExpectedReason": true,
+      "error": "Missing matching runtime identity: busy:workspace:zh-CN:390",
+      "output": "file:///C:/Users/Administrator/Desktop/project/KeepAny/scripts/verify-account-acceptance.mjs:147\r\n\tif (!candidateReceiptFound) throw Error(`Missing matching runtime identity: ${id}`);\r\n\t                                  ^\r\n\r\nError: Missing matching runtime identity: busy:workspace:zh-CN:390\r\n    at file:///C:/Users/Administrator/Desktop/project/KeepAny/scripts/verify-account-acceptance.mjs:147:36\r\n\r\nNode.js v24.21.0\r\n"
+    },
+    {
+      "name": "raw-wrong-language",
+      "expected": "Missing matching runtime identity",
+      "exit": 1,
+      "matchedExpectedReason": true,
+      "error": "Missing matching runtime identity: busy:workspace:zh-CN:390",
+      "output": "file:///C:/Users/Administrator/Desktop/project/KeepAny/scripts/verify-account-acceptance.mjs:147\r\n\tif (!candidateReceiptFound) throw Error(`Missing matching runtime identity: ${id}`);\r\n\t                                  ^\r\n\r\nError: Missing matching runtime identity: busy:workspace:zh-CN:390\r\n    at file:///C:/Users/Administrator/Desktop/project/KeepAny/scripts/verify-account-acceptance.mjs:147:36\r\n\r\nNode.js v24.21.0\r\n"
+    },
+    {
+      "name": "raw-wrong-width",
+      "expected": "Missing matching runtime identity",
+      "exit": 1,
+      "matchedExpectedReason": true,
+      "error": "Missing matching runtime identity: busy:workspace:zh-CN:390",
+      "output": "file:///C:/Users/Administrator/Desktop/project/KeepAny/scripts/verify-account-acceptance.mjs:147\r\n\tif (!candidateReceiptFound) throw Error(`Missing matching runtime identity: ${id}`);\r\n\t                                  ^\r\n\r\nError: Missing matching runtime identity: busy:workspace:zh-CN:390\r\n    at file:///C:/Users/Administrator/Desktop/project/KeepAny/scripts/verify-account-acceptance.mjs:147:36\r\n\r\nNode.js v24.21.0\r\n"
+    },
+    {
+      "name": "social-empty",
+      "expected": "Missing populated social workflow",
+      "exit": 1,
+      "matchedExpectedReason": true,
+      "error": "Missing populated social workflow: social-populated:zh-CN:390",
+      "output": "file:///C:/Users/Administrator/Desktop/project/KeepAny/scripts/verify-account-acceptance.mjs:113\r\n\t\t\tthrow Error(`Missing populated social workflow: ${id}`);\r\n\t\t\t      ^\r\n\r\nError: Missing populated social workflow: social-populated:zh-CN:390\r\n    at verifyRawState (file:///C:/Users/Administrator/Desktop/project/KeepAny/scripts/verify-account-acceptance.mjs:113:10)\r\n    at file:///C:/Users/Administrator/Desktop/project/KeepAny/scripts/verify-account-acceptance.mjs:142:5\r\n\r\nNode.js v24.21.0\r\n"
+    },
+    {
+      "name": "social-not-expanded",
+      "expected": "Missing populated social workflow",
+      "exit": 1,
+      "matchedExpectedReason": true,
+      "error": "Missing populated social workflow: social-populated:zh-CN:390",
+      "output": "file:///C:/Users/Administrator/Desktop/project/KeepAny/scripts/verify-account-acceptance.mjs:113\r\n\t\t\tthrow Error(`Missing populated social workflow: ${id}`);\r\n\t\t\t      ^\r\n\r\nError: Missing populated social workflow: social-populated:zh-CN:390\r\n    at verifyRawState (file:///C:/Users/Administrator/Desktop/project/KeepAny/scripts/verify-account-acceptance.mjs:113:10)\r\n    at file:///C:/Users/Administrator/Desktop/project/KeepAny/scripts/verify-account-acceptance.mjs:142:5\r\n\r\nNode.js v24.21.0\r\n"
+    },
+    {
+      "name": "social-search-not-cleared",
+      "expected": "Missing populated social workflow",
+      "exit": 1,
+      "matchedExpectedReason": true,
+      "error": "Missing populated social workflow: social-populated:zh-CN:390",
+      "output": "file:///C:/Users/Administrator/Desktop/project/KeepAny/scripts/verify-account-acceptance.mjs:113\r\n\t\t\tthrow Error(`Missing populated social workflow: ${id}`);\r\n\t\t\t      ^\r\n\r\nError: Missing populated social workflow: social-populated:zh-CN:390\r\n    at verifyRawState (file:///C:/Users/Administrator/Desktop/project/KeepAny/scripts/verify-account-acceptance.mjs:113:10)\r\n    at file:///C:/Users/Administrator/Desktop/project/KeepAny/scripts/verify-account-acceptance.mjs:142:5\r\n\r\nNode.js v24.21.0\r\n"
+    },
+    {
+      "name": "manual-visual-pending",
+      "expected": "Acceptance aspect incomplete: visual",
+      "exit": 1,
+      "matchedExpectedReason": true,
+      "error": "Acceptance aspect incomplete: visual",
+      "output": "file:///C:/Users/Administrator/Desktop/project/KeepAny/scripts/verify-account-acceptance.mjs:202\r\n\t\tthrow Error(`Acceptance aspect incomplete: ${aspect}`);\r\n\t\t      ^\r\n\r\nError: Acceptance aspect incomplete: visual\r\n    at file:///C:/Users/Administrator/Desktop/project/KeepAny/scripts/verify-account-acceptance.mjs:202:9\r\n\r\nNode.js v24.21.0\r\n"
+    },
+    {
+      "name": "manual-owner-missing",
+      "expected": "Manual review attribution missing",
+      "exit": 1,
+      "matchedExpectedReason": true,
+      "error": "Manual review attribution missing.",
+      "output": "file:///C:/Users/Administrator/Desktop/project/KeepAny/scripts/verify-account-acceptance.mjs:205\r\n\tthrow Error(\"Manual review attribution missing.\");\r\n\t      ^\r\n\r\nError: Manual review attribution missing.\r\n    at file:///C:/Users/Administrator/Desktop/project/KeepAny/scripts/verify-account-acceptance.mjs:205:8\r\n\r\nNode.js v24.21.0\r\n"
+    },
+    {
+      "name": "identity-wrong-candidate",
+      "expected": "Candidate identity mismatch",
+      "exit": 1,
+      "matchedExpectedReason": true,
+      "error": "Candidate identity mismatch.",
+      "output": "file:///C:/Users/Administrator/Desktop/project/KeepAny/scripts/verify-account-acceptance.mjs:158\r\n\tthrow Error(\"Candidate identity mismatch.\");\r\n\t      ^\r\n\r\nError: Candidate identity mismatch.\r\n    at file:///C:/Users/Administrator/Desktop/project/KeepAny/scripts/verify-account-acceptance.mjs:158:8\r\n\r\nNode.js v24.21.0\r\n"
+    },
+    {
+      "name": "identity-wrong-index",
+      "expected": "Candidate identity mismatch",
+      "exit": 1,
+      "matchedExpectedReason": true,
+      "error": "Candidate identity mismatch.",
+      "output": "file:///C:/Users/Administrator/Desktop/project/KeepAny/scripts/verify-account-acceptance.mjs:158\r\n\tthrow Error(\"Candidate identity mismatch.\");\r\n\t      ^\r\n\r\nError: Candidate identity mismatch.\r\n    at file:///C:/Users/Administrator/Desktop/project/KeepAny/scripts/verify-account-acceptance.mjs:158:8\r\n\r\nNode.js v24.21.0\r\n"
+    },
+    {
+      "name": "identity-missing-source",
+      "expected": "manifest is incomplete",
+      "exit": 1,
+      "matchedExpectedReason": true,
+      "error": "Reviewed product manifest is incomplete or duplicated.",
+      "output": "file:///C:/Users/Administrator/Desktop/project/KeepAny/scripts/verify-account-acceptance.mjs:173\r\n\tthrow Error(\"Reviewed product manifest is incomplete or duplicated.\");\r\n\t      ^\r\n\r\nError: Reviewed product manifest is incomplete or duplicated.\r\n    at file:///C:/Users/Administrator/Desktop/project/KeepAny/scripts/verify-account-acceptance.mjs:173:8\r\n\r\nNode.js v24.21.0\r\n"
+    },
+    {
+      "name": "identity-duplicate-source",
+      "expected": "manifest is incomplete",
+      "exit": 1,
+      "matchedExpectedReason": true,
+      "error": "Reviewed product manifest is incomplete or duplicated.",
+      "output": "file:///C:/Users/Administrator/Desktop/project/KeepAny/scripts/verify-account-acceptance.mjs:173\r\n\tthrow Error(\"Reviewed product manifest is incomplete or duplicated.\");\r\n\t      ^\r\n\r\nError: Reviewed product manifest is incomplete or duplicated.\r\n    at file:///C:/Users/Administrator/Desktop/project/KeepAny/scripts/verify-account-acceptance.mjs:173:8\r\n\r\nNode.js v24.21.0\r\n"
+    },
+    {
+      "name": "identity-untracked-source",
+      "expected": "manifest is incomplete",
+      "exit": 1,
+      "matchedExpectedReason": true,
+      "error": "Reviewed product manifest is incomplete or duplicated.",
+      "output": "file:///C:/Users/Administrator/Desktop/project/KeepAny/scripts/verify-account-acceptance.mjs:173\r\n\tthrow Error(\"Reviewed product manifest is incomplete or duplicated.\");\r\n\t      ^\r\n\r\nError: Reviewed product manifest is incomplete or duplicated.\r\n    at file:///C:/Users/Administrator/Desktop/project/KeepAny/scripts/verify-account-acceptance.mjs:173:8\r\n\r\nNode.js v24.21.0\r\n"
+    },
+    {
+      "name": "identity-bad-canonical",
+      "expected": "Product changed since manual review",
+      "exit": 1,
+      "matchedExpectedReason": true,
+      "error": "Product changed since manual review: apps/binding-bridge/README.md",
+      "output": "file:///C:/Users/Administrator/Desktop/project/KeepAny/scripts/verify-account-acceptance.mjs:192\r\n\t\tthrow Error(`Product changed since manual review: ${file.path}`);\r\n\t\t      ^\r\n\r\nError: Product changed since manual review: apps/binding-bridge/README.md\r\n    at file:///C:/Users/Administrator/Desktop/project/KeepAny/scripts/verify-account-acceptance.mjs:192:9\r\n\r\nNode.js v24.21.0\r\n"
+    },
+    {
+      "name": "isolated-LF-positive",
+      "expected": "PASS",
+      "exit": 0,
+      "matchedExpectedReason": true,
+      "converted": 327,
+      "tracked": 378,
+      "temporaryWorkspace": "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\keepany-final-gate-lf-uWdyUp",
+      "output": "AL01–AL10, 40 state combinations, raw state semantics, evidence hashes and reviewed candidate identities match. Human review is recorded separately, not inferred from this check.\n"
+    },
+    {
+      "name": "isolated-actual-source-mutated",
+      "expected": "Product changed since manual review",
+      "exit": 1,
+      "matchedExpectedReason": true,
+      "converted": 327,
+      "tracked": 378,
+      "temporaryWorkspace": "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\keepany-final-gate-lf-uWdyUp",
+      "output": "file:///C:/Users/ADMINI%7E1/AppData/Local/Temp/keepany-final-gate-lf-uWdyUp/scripts/verify-account-acceptance.mjs:192\r\n\t\tthrow Error(`Product changed since manual review: ${file.path}`);\r\n\t\t      ^\r\n\r\nError: Product changed since manual review: apps/web/src/page-asset-detail.tsx\r\n    at file:///C:/Users/ADMINI%7E1/AppData/Local/Temp/keepany-final-gate-lf-uWdyUp/scripts/verify-account-acceptance.mjs:192:9\r\n\r\nNode.js v24.21.0\r\n"
+    }
+  ]
+}

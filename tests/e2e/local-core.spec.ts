@@ -136,7 +136,7 @@ test("project, account, subscription, located item, linked reminder and download
 			await expect(restored.getByText(account).first()).toBeVisible();
 			await expect(restored.locator(".asset-tasks-card .list-row").filter({ hasText: task }).getByText(task, { exact: true })).toBeVisible();
 			await restored.goto("/assets/subscription");
-			await expect(restored.getByText(subscription)).toBeVisible();
+			await expect(restored.locator(".asset-library-card").getByText(subscription, { exact: true })).toBeVisible();
 			await restored.goto("/tasks");
 			const restoredReminder = restored.locator("main .list-row").filter({ hasText: task });
 			await expect(restoredReminder.getByLabel("Remind later", { exact: true })).toHaveValue("2027-01-01");

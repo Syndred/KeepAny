@@ -1,3 +1,4 @@
+import { prepareVaultWorkspace, revealPasswordEntries } from "./helpers/vault-access";
 import { createHash } from "node:crypto";
 import { aiServer, model } from "./helpers/ai-workflow";
 import { createRequire } from "node:module";
@@ -139,6 +140,7 @@ for (const locale of ["zh-CN", "en"] as const)
 			const t = visualCopy(locale);
 			try {
 				await page.goto("/assets/vault");
+				await prepareVaultWorkspace(page);
 				await page
 					.getByRole("button", { name: t("pwVaultImportEmpty"), exact: true })
 					.click();
@@ -169,10 +171,10 @@ for (const locale of ["zh-CN", "en"] as const)
 					width === 1536 ? 3 : 1,
 				);
 				if (width === 1536) {
-					// The unified Accounts workspace adds a navigation row above the
-					// original grid. Keep the grid's density budget, excluding that row.
-					const navigationHeight = await page.locator(".workspace-navigation")
-						.evaluate((node) => node.getBoundingClientRect().height);
+					// Exclude a separate navigation row only when the entry has one.
+                    const navigation = page.locator(".workspace-navigation");
+                    const navigationHeight = await navigation.count()
+                        ? await navigation.evaluate(node => node.getBoundingClientRect().height) : 0;
 					expect(
 						Math.max(...geometry.map((box) => box.bottom)) - navigationHeight,
 					).toBeLessThanOrEqual(1024);
@@ -457,6 +459,7 @@ for (const locale of ["zh-CN", "en"] as const)
 			page.on("pageerror", (e) => errors.push(e.message));
 			try {
 				await page.goto("/assets/vault");
+				await prepareVaultWorkspace(page);
 				await page
 					.getByRole("button", { name: t("pwVaultImportEmpty"), exact: true })
 					.click();
@@ -768,6 +771,7 @@ for (const locale of ["zh-CN", "en"] as const)
 						notes: record.notes,
 						username: record.username,
 					});
+				await revealPasswordEntries(page);
 				await links.filter({ hasText: records[0].title }).click();
 				await expect(page).toHaveURL(new RegExp(`/assets/account/${ids[0]}`));
 				await expect(page.locator(".react-flow__node")).toHaveCount(5);

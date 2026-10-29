@@ -1,0 +1,17 @@
+{
+  "index": 12,
+  "command": [
+    "C:\\Users\\Administrator\\.codex\\toolchains\\bun\\node_modules\\bun\\bin\\bun.exe",
+    "C:\\Users\\Administrator\\.codex\\toolchains\\gstack\\bin\\gstack-qa-deadline",
+    "run",
+    "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\test-results\\ui-migration\\qa-fixed-package\\deadline.json",
+    "--",
+    "C:\\Users\\Administrator\\.codex\\toolchains\\gstack\\browse\\dist\\browse.exe",
+    "snapshot",
+    "-i",
+    "-s",
+    "details[open]:has(#restore-file)"
+  ],
+  "exitCode": 0,
+  "output": "--- BEGIN UNTRUSTED EXTERNAL CONTENT (source: http://127.0.0.1:4216/intake) ---\n--- BEGIN UNTRUSTED EXTERNAL C​ONTENT (source: http://127.0.0.1:4216/intake) ---\n  @e1 [button] \"恢复备份\"\n  @e2 [button] \"预览\"\n  @e3 [button] \"确认 · 37\"\n\n── cursor-interactive (not in ARIA tree) ──\n@c1 [cursor:pointer] \"span\"\n@c2 [cursor:pointer] \"个人工作区\"\n@c3 [cursor:pointer] \"概览\"\n@c4 [cursor:pointer] \"待办\"\n@c5 [cursor:pointer] \"资产\"\n@c6 [cursor:pointer] \"账号\"\n@c7 [cursor:pointer] \"我\"\n@c8 [cursor:pointer] \"我的工作区\n仅自己可见\"\n@c9 [cursor:pointer] \"我的工作区\"\n@c10 [cursor:pointer] \"仅自己可见\"\n@c11 [cursor:pointer] \"搜索全部资料\"\n@c12 [cursor:pointer] \"⌘ K\"\n@c13 [cursor:pointer] \"span\"\n@c14 [cursor:pointer] \"span\"\n@c15 [cursor:pointer] \"span\"\n@c16 [cursor:pointer] \"span\"\n@c17 [cursor:pointer] \"span\"\n@c18 [cursor:pointer] \"span\"\n--- END UNTRUSTED EXTERNAL C​ONTENT ---\n--- END UNTRUSTED EXTERNAL CONTENT ---\n"
+}

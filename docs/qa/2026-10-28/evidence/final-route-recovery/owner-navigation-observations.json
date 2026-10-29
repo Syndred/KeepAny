@@ -1,0 +1,205 @@
+{
+  "candidate": "d2fdbdee264b524219ae091ca78b120c6428ff61",
+  "archiveSha256": "1378f155667cf077d15b3368bf22662da1c47f8c6fbecca5095dd2131b51ed3e",
+  "scope": "Personal normal navigation supplement for AL04/05/07. Overview, Tasks, Assets, Collections/cancel, Intake, visible configure-model link to Settings, Trash, Accounts, account detail locked/wrong-master/correct unlock and normal header return. This is not a claim of all states of every feature.",
+  "fixture": "previously created synthetic26 assets/eight accounts and independent KDBX; no real user secrets",
+  "originalIds": [
+    "/assets/account/3728687d-11bb-43cb-963e-3340f72078fe",
+    "/assets/account/436eb6b7-f861-4843-9c54-80e0921a551b",
+    "/assets/account/567984a8-6c83-45d5-8ce1-c67845a374d4",
+    "/assets/account/5d1a5845-42b3-47b8-a61b-a279117ada32",
+    "/assets/account/79131a2f-eddb-471b-94c5-3476041a5a4e",
+    "/assets/account/94c13c00-85f9-4d2d-9c89-d423d463d0c3",
+    "/assets/account/a39c658b-4065-409b-93e9-569a499dc5e6",
+    "/assets/account/a960bb1b-6e3a-4fc4-932a-56ed4ff8a93b"
+  ],
+  "afterIds": [
+    "/assets/account/3728687d-11bb-43cb-963e-3340f72078fe",
+    "/assets/account/436eb6b7-f861-4843-9c54-80e0921a551b",
+    "/assets/account/567984a8-6c83-45d5-8ce1-c67845a374d4",
+    "/assets/account/5d1a5845-42b3-47b8-a61b-a279117ada32",
+    "/assets/account/79131a2f-eddb-471b-94c5-3476041a5a4e",
+    "/assets/account/94c13c00-85f9-4d2d-9c89-d423d463d0c3",
+    "/assets/account/a39c658b-4065-409b-93e9-569a499dc5e6",
+    "/assets/account/a960bb1b-6e3a-4fc4-932a-56ed4ff8a93b"
+  ],
+  "finalVault": "locked",
+  "steps": [
+    {
+      "name": "overview",
+      "path": "C:/Users/Administrator/Desktop/project/KeepAny/test-results/final-d2-owner-navigation/overview.jpg",
+      "sha256": "666ca5d20efeb586e2539e1968ad49b4f3b7363ef6b282ab5117512b98901a80",
+      "dom": {
+        "errors": 0,
+        "heading": "概览",
+        "scripts": [
+          "/assets/index-DLEUTThZ.js"
+        ],
+        "url": "http://127.0.0.1:4234/"
+      }
+    },
+    {
+      "name": "tasks",
+      "path": "C:/Users/Administrator/Desktop/project/KeepAny/test-results/final-d2-owner-navigation/tasks.jpg",
+      "sha256": "cc9f7e6ff06897e23cc451e5c99675628e57b95970a3cea7fd0fe0bccced7247",
+      "dom": {
+        "errors": 0,
+        "heading": "待办",
+        "scripts": [
+          "/assets/index-DLEUTThZ.js"
+        ],
+        "url": "http://127.0.0.1:4234/tasks"
+      }
+    },
+    {
+      "name": "assets",
+      "path": "C:/Users/Administrator/Desktop/project/KeepAny/test-results/final-d2-owner-navigation/assets.jpg",
+      "sha256": "6e9795ea4d26c77db42109981cf45095660edb44e054de4729744c6bd138bb66",
+      "dom": {
+        "errors": 0,
+        "heading": "资产",
+        "scripts": [
+          "/assets/index-DLEUTThZ.js"
+        ],
+        "url": "http://127.0.0.1:4234/assets"
+      }
+    },
+    {
+      "name": "collections",
+      "path": "C:/Users/Administrator/Desktop/project/KeepAny/test-results/final-d2-owner-navigation/collections.jpg",
+      "sha256": "0bc11580fc131f09767af538512f26dd4a97a11c632cf96404d5f7fe101597c2",
+      "dom": {
+        "errors": 0,
+        "heading": "自定义侧边栏",
+        "scripts": [
+          "/assets/index-DLEUTThZ.js"
+        ],
+        "url": "http://127.0.0.1:4234/collections"
+      }
+    },
+    {
+      "name": "collections-cancel",
+      "path": "C:/Users/Administrator/Desktop/project/KeepAny/test-results/final-d2-owner-navigation/collections-cancel.jpg",
+      "sha256": "7ecfffff9f4795bff086453627e3711609b1fcf3b3ae70f423d8fb11e33af3d9",
+      "dom": {
+        "errors": 0,
+        "heading": "自定义侧边栏",
+        "scripts": [
+          "/assets/index-DLEUTThZ.js"
+        ],
+        "url": "http://127.0.0.1:4234/collections"
+      }
+    },
+    {
+      "name": "intake-locator-preparation",
+      "status": "selector-corrected",
+      "detail": "Header label 收录与备份 differs from actual h1 随手收录，慢慢整理。; original wait failure retained as preparation, not a product failure."
+    },
+    {
+      "name": "intake",
+      "path": "C:/Users/Administrator/Desktop/project/KeepAny/test-results/final-d2-owner-navigation/intake.jpg",
+      "sha256": "0607f2d9890ba7af9f9d209a26b79a2f869e2fc2757f0446a7917ab6e0e4d826",
+      "dom": {
+        "errors": 0,
+        "heading": "随手收录，慢慢整理。",
+        "scripts": [
+          "/assets/index-DLEUTThZ.js"
+        ],
+        "url": "http://127.0.0.1:4234/intake"
+      }
+    },
+    {
+      "name": "settings-model-section",
+      "path": "C:/Users/Administrator/Desktop/project/KeepAny/test-results/final-d2-owner-navigation/settings-model-section.jpg",
+      "sha256": "68bbd6d779b69a7322f86cadb1e3cb1dc55fddb12875ced01c590e518f895870",
+      "dom": {
+        "errors": 0,
+        "heading": "设置",
+        "scripts": [
+          "/assets/index-DLEUTThZ.js"
+        ],
+        "url": "http://127.0.0.1:4234/settings#assistant"
+      }
+    },
+    {
+      "name": "trash",
+      "path": "C:/Users/Administrator/Desktop/project/KeepAny/test-results/final-d2-owner-navigation/trash.jpg",
+      "sha256": "53fb3c3c2e6186e259ffc9380d222e960f6889a8d1ca74f9b29eb30c5ce322fe",
+      "dom": {
+        "errors": 0,
+        "heading": "回收站",
+        "scripts": [
+          "/assets/index-DLEUTThZ.js"
+        ],
+        "url": "http://127.0.0.1:4234/trash"
+      }
+    },
+    {
+      "name": "accounts",
+      "path": "C:/Users/Administrator/Desktop/project/KeepAny/test-results/final-d2-owner-navigation/accounts.jpg",
+      "sha256": "f67339c9ab6f05ffea7e72e47573441a944dadbc9f9f841af65d851c32dd50de",
+      "dom": {
+        "errors": 0,
+        "heading": "账号",
+        "scripts": [
+          "/assets/index-DLEUTThZ.js"
+        ],
+        "url": "http://127.0.0.1:4234/accounts"
+      }
+    },
+    {
+      "name": "account-detail-locked",
+      "path": "C:/Users/Administrator/Desktop/project/KeepAny/test-results/final-d2-owner-navigation/account-detail-locked.jpg",
+      "sha256": "046c44959851cbe159408530ed4589f57dc0972b198341fef7dbe584bfcae3a8",
+      "dom": {
+        "errors": 0,
+        "heading": "示例 | CodeHub 开发账号",
+        "scripts": [
+          "/assets/index-DLEUTThZ.js"
+        ],
+        "url": "http://127.0.0.1:4234/assets/account/5d1a5845-42b3-47b8-a61b-a279117ada32"
+      }
+    },
+    {
+      "name": "account-detail-wrong-master",
+      "path": "C:/Users/Administrator/Desktop/project/KeepAny/test-results/final-d2-owner-navigation/account-detail-wrong-master.jpg",
+      "sha256": "b60867bd46da935bf5beae3a6761d551fb98b1e436a78b337a1b75a38e057b42",
+      "dom": {
+        "errors": 0,
+        "heading": "示例 | CodeHub 开发账号",
+        "scripts": [
+          "/assets/index-DLEUTThZ.js"
+        ],
+        "url": "http://127.0.0.1:4234/assets/account/5d1a5845-42b3-47b8-a61b-a279117ada32"
+      }
+    },
+    {
+      "name": "account-detail-unlocked-eight-filtered-empty",
+      "path": "C:/Users/Administrator/Desktop/project/KeepAny/test-results/final-d2-owner-navigation/account-detail-unlocked-eight-filtered-empty.jpg",
+      "sha256": "dd471000eacd619ee80ac9aed83db23cf5a81e0eb7c6d6bc67e340323afe4894",
+      "dom": {
+        "errors": 0,
+        "heading": "示例 | CodeHub 开发账号",
+        "scripts": [
+          "/assets/index-DLEUTThZ.js"
+        ],
+        "url": "http://127.0.0.1:4234/assets/account/5d1a5845-42b3-47b8-a61b-a279117ada32"
+      }
+    },
+    {
+      "name": "back-to-accounts-original-eight",
+      "path": "C:/Users/Administrator/Desktop/project/KeepAny/test-results/final-d2-owner-navigation/back-to-accounts-original-eight.jpg",
+      "sha256": "a6a42ea9a7c3d839fb6c73abd23e4c742eb80c358ecdbda8bb6889ddb49a2112",
+      "dom": {
+        "errors": 0,
+        "heading": "账号",
+        "scripts": [
+          "/assets/index-DLEUTThZ.js"
+        ],
+        "url": "http://127.0.0.1:4234/assets/account"
+      }
+    }
+  ],
+  "visual": "Each listed image actually observed; unchanged screenshots can be output-deduplicated, original JPEGs preserved.",
+  "overall": "not-complete; final CI and delivery remain separate"
+}

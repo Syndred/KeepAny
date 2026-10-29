@@ -1,3 +1,4 @@
+import { DatePicker } from "./components/ui/date-picker";
 import { useTranslation } from "react-i18next";
 import { Link } from "@tanstack/react-router";
 import { Check } from "lucide-react";
@@ -13,7 +14,7 @@ import { ImpactTaskRow } from "./ImpactTaskRow";
 import { ProjectWorkflowTaskRow } from "./ProjectWorkflowTaskRow";
 import { MaintenanceTaskRow } from "./MaintenanceTaskRow";
 import { date, useAppContext } from "./view-shared";
-const TaskEditor = lazy(() => import("./workflows").then(module => ({ default: module.TaskEditor })));
+const TaskEditor = lazy(() => import("./workflow-task-editor").then(module => ({ default: module.TaskEditor })));
 export function TaskRow({ task, hideRelated = false }: { task: Task; hideRelated?: boolean }) {
 	const { t, i18n } = useTranslation();
 	const { data, notify } = useAppContext();
@@ -92,7 +93,7 @@ export function TaskRow({ task, hideRelated = false }: { task: Task; hideRelated
 				<Button size="small" disabled={busy} onClick={() => setEditing(true)}>{t("edit")}</Button>
 				{!task.done && <>
 					<label htmlFor={`task-due-${task.id}`}>{t("remindLater")}</label>
-					<input className="field" id={`task-due-${task.id}`} type="date" value={task.dueDate} disabled={busy} onChange={(event) => void reschedule(event.target.value)} />
+					<DatePicker className="field" id={`task-due-${task.id}`}  value={task.dueDate} disabled={busy} onValueChange={(dateValue) => void reschedule(dateValue)} />
 					<Button size="small" disabled={busy} onClick={postponeDay}>{t("taskPostponeDay")}</Button>
 				</>}
 				<Badge tone={task.done ? "success" : "pending"}>{t(task.done ? "done" : "pending")}</Badge>

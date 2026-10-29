@@ -21,7 +21,62 @@ export async function setAccountRelationDetailsOpen(page: Page, open = true) {
 	return details;
 }
 
-export async function waitForAccountGraphLayout(
+export async function readSettledAccountGraphSnapshot(
+	element: HTMLElement,
+	expected: { nodes?: number; edges?: number } = {},
+) {
+	const capture = () => {
+		const nodeElements = [
+			...element.querySelectorAll<HTMLElement>(".react-flow__node"),
+		];
+		const edgeElements = [
+			...element.querySelectorAll<HTMLElement>(".react-flow__edge"),
+		];
+		const paths = [
+			...element.querySelectorAll<SVGPathElement>(".react-flow__edge-path"),
+		].map((path) => [path.getAttribute("d"), path.getTotalLength()] as const);
+		const nodes = nodeElements.map((node) => node.dataset.id ?? "").sort();
+		const edges = edgeElements.map((edge) => edge.dataset.id ?? "").sort();
+		const ready = element.getAttribute("data-layout-ready");
+		const busy = element.getAttribute("aria-busy");
+		return {
+			value: { nodes, edges },
+			valid:
+				ready === "true" &&
+				busy === "false" &&
+				(expected.nodes === undefined || nodes.length === expected.nodes) &&
+				(expected.edges === undefined || edges.length === expected.edges) &&
+				edges.length === paths.length &&
+				nodes.every(Boolean) &&
+				edges.every(Boolean) &&
+				new Set(nodes).size === nodes.length &&
+				new Set(edges).size === edges.length &&
+				paths.every(([path, length]) => !!path && length > 0),
+			signature: JSON.stringify([
+				ready,
+				busy,
+				nodeElements.map((node) => [
+					node.dataset.id,
+					node.style.transform,
+					node.offsetWidth,
+					node.offsetHeight,
+				]),
+				edges,
+				paths,
+			]),
+		};
+	};
+	const before = capture();
+	await new Promise<void>((resolve) =>
+		requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+	);
+	const after = capture();
+	return before.valid && after.valid && before.signature === after.signature
+		? after.value
+		: null;
+}
+
+export async function waitForAccountGraphSnapshot(
 	page: Page,
 	expected: { nodes?: number; edges?: number } = {},
 ) {
@@ -37,47 +92,29 @@ export async function waitForAccountGraphLayout(
 		await expect(graph.locator(".react-flow__edge-path")).toHaveCount(
 			expected.edges,
 		);
+	let snapshot: { nodes: string[]; edges: string[] } | null = null;
 	await expect
 		.poll(
-			() =>
-				graph.evaluate(async (element) => {
-					const signature = () =>
-						JSON.stringify([
-							element.getAttribute("data-layout-ready"),
-							...[
-								...element.querySelectorAll<HTMLElement>(".react-flow__node"),
-							].map((node) => [
-								node.dataset.id,
-								node.style.transform,
-								node.offsetWidth,
-								node.offsetHeight,
-							]),
-							...[...element.querySelectorAll(".react-flow__edge-path")].map(
-								(path) => path.getAttribute("d"),
-							),
-						]);
-					const before = signature();
-					await new Promise<void>((resolve) =>
-						requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
-					);
-					return (
-						before === signature() &&
-						element.getAttribute("data-layout-ready") === "true" &&
-						[
-							...element.querySelectorAll<SVGPathElement>(
-								".react-flow__edge-path",
-							),
-						].every(
-							(path) => !!path.getAttribute("d") && path.getTotalLength() > 0,
-						)
-					);
-				}),
+			async () => {
+				snapshot = await graph.evaluate(readSettledAccountGraphSnapshot, expected);
+				return snapshot !== null;
+			},
 			{
 				message:
 					"The current asynchronous layout and routed paths have settled",
 			},
 		)
 		.toBe(true);
+	if (!snapshot) throw Error("account-graph-snapshot-missing");
+	return snapshot as { nodes: string[]; edges: string[] };
+}
+
+export async function waitForAccountGraphLayout(
+	page: Page,
+	expected: { nodes?: number; edges?: number } = {},
+) {
+	await waitForAccountGraphSnapshot(page, expected);
+	const graph = activeAccountGraph(page);
 	return graph;
 }
 

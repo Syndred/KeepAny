@@ -1,0 +1,26 @@
+{
+  "observationCommand": [
+    "C:\\Users\\Administrator\\.codex\\toolchains\\bun\\node_modules\\bun\\bin\\bun.exe",
+    "C:\\Users\\Administrator\\.codex\\toolchains\\gstack\\bin\\gstack-qa-deadline",
+    "run",
+    "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\test-results\\ui-migration\\qa-final-1203\\deadline.json",
+    "--",
+    "C:\\Users\\Administrator\\.codex\\toolchains\\gstack\\browse\\dist\\browse.exe",
+    "snapshot",
+    "-i",
+    "-s",
+    "[role=\"menu\"]"
+  ],
+  "observed": "--- BEGIN UNTRUSTED EXTERNAL CONTENT (source: http://127.0.0.1:4219/finance) ---\n--- BEGIN UNTRUSTED EXTERNAL C​ONTENT (source: http://127.0.0.1:4219/finance) ---\n  @e1 [menuitem] \"设置\"\n  @e2 [menuitem] \"自定义侧边栏\"\n  @e3 [menuitem] \"收录与备份\"\n\n── cursor-interactive (not in ARIA tree) ──\n@c1 [cursor:pointer] \"span\"\n@c2 [cursor:pointer] \"个人工作区\"\n@c3 [cursor:pointer] \"概览\"\n@c4 [cursor:pointer] \"待办\"\n@c5 [cursor:pointer] \"5\"\n@c6 [cursor:pointer] \"资产\"\n@c7 [cursor:pointer] \"账号\"\n@c8 [cursor:pointer] \"工作分类 1 · 已核对\"\n@c9 [cursor:pointer] \"工作分类 2\"\n@c10 [cursor:pointer] \"工作分类 3\"\n@c11 [cursor:pointer] \"工作分类 4\"\n@c12 [cursor:pointer] \"工作分类 5\"\n@c13 [cursor:pointer] \"工作分类 6\"\n@c14 [cursor:pointer] \"工作分类 7\"\n@c15 [cursor:pointer] \"工作分类 8\"\n@c16 [cursor:pointer] \"我\"\n@c17 [cursor:pointer] \"我的工作区\n仅自己可见\"\n@c18 [cursor:pointer] \"我的工作区\"\n@c19 [cursor:pointer] \"仅自己可见\"\n@c20 [cursor:pointer] \"搜索全部资料\"\n@c21 [cursor:pointer] \"⌘ K\"\n@c22 [cursor:pointer] \"i\"\n@c23 [cursor:pointer] \"音乐会员\"\n@c24 [cursor:pointer] \"CloudNest 云主机\"\n@c25 [cursor:pointer] \"全部\"\n@c26 [cursor:pointer] \"全部\"\n@c27 [cursor:pointer] \"span\"\n@c28 [cursor:pointer] \"全部\"\n@c29 [cursor:pointer] \"全部\"\n@c30 [cursor:pointer] \"span\"\n@c31 [cursor:pointer] \"全部\"\n@c32 [cursor:pointer] \"全部\"\n@c33 [cursor:pointer] \"span\"\n@c34 [popover-child, tabindex=0] \"span\"\n@c35 [popover-child, tabindex=0] \"span\"\n--- END UNTRUSTED EXTERNAL C​ONTENT ---\n--- END UNTRUSTED EXTERNAL CONTENT ---\n",
+  "hypothesis": "点设置菜单项应正常导航，不再仅弹toast",
+  "nextCommand": [
+    "C:\\Users\\Administrator\\.codex\\toolchains\\bun\\node_modules\\bun\\bin\\bun.exe",
+    "C:\\Users\\Administrator\\.codex\\toolchains\\gstack\\bin\\gstack-qa-deadline",
+    "run",
+    "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\test-results\\ui-migration\\qa-final-1203\\deadline.json",
+    "--",
+    "C:\\Users\\Administrator\\.codex\\toolchains\\gstack\\browse\\dist\\browse.exe",
+    "click",
+    "[role=\"menuitem\"][href=\"/settings\"]"
+  ]
+}

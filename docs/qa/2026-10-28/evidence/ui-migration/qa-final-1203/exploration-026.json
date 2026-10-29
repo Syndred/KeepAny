@@ -1,0 +1,24 @@
+{
+  "observationCommand": [
+    "C:\\Users\\Administrator\\.codex\\toolchains\\bun\\node_modules\\bun\\bin\\bun.exe",
+    "C:\\Users\\Administrator\\.codex\\toolchains\\gstack\\bin\\gstack-qa-deadline",
+    "run",
+    "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\test-results\\ui-migration\\qa-final-1203\\deadline.json",
+    "--",
+    "C:\\Users\\Administrator\\.codex\\toolchains\\gstack\\browse\\dist\\browse.exe",
+    "js",
+    "JSON.stringify({order:Array.from(document.querySelectorAll(\".nav .nav-label\")).map(e=>e.textContent),announcement:document.querySelector(\"[role=status]\")?.textContent,focused:document.activeElement?.getAttribute(\"aria-label\")})"
+  ],
+  "observed": "{\"order\":[\"待办\",\"概览\",\"资产\",\"账号\"],\"announcement\":\"已放下 概览\",\"focused\":\"概览 按住拖动排序\"}\n",
+  "hypothesis": "再抓取概览，恢复合成资料的原顺序",
+  "nextCommand": [
+    "C:\\Users\\Administrator\\.codex\\toolchains\\bun\\node_modules\\bun\\bin\\bun.exe",
+    "C:\\Users\\Administrator\\.codex\\toolchains\\gstack\\bin\\gstack-qa-deadline",
+    "run",
+    "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\test-results\\ui-migration\\qa-final-1203\\deadline.json",
+    "--",
+    "C:\\Users\\Administrator\\.codex\\toolchains\\gstack\\browse\\dist\\browse.exe",
+    "press",
+    "Space"
+  ]
+}

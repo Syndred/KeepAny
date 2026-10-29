@@ -12,6 +12,8 @@ import { decryptBackup } from '../../packages/local-db/src/backup-crypto';
 import type * as VaultEngine from '../../packages/password-vault/src/engine';
 import { activeWorkerSource, originalImage, startPackage, stopPackage, unusedPort } from './helpers/portable-upgrade';
 import { selectChoice } from './helpers/select-choice';
+import { openVaultAccess, revealPasswordEntries } from './helpers/vault-access';
+import { openBackupRestorePanel } from './helpers/backup-restore';
 
 // Published baselines must include aliases, asset links and encrypted import drafts.
 // The older 8f9a1b5 fixture cannot establish password-vault compatibility.
@@ -122,9 +124,11 @@ async function downloadVault(page: Page, path: string) {
 }
 
 async function unlock(page: Page) {
+  await openVaultAccess(page);
   await page.locator('#password-vault-unlock-master').fill(master);
   await page.getByRole('button', { name: t('pwVaultUnlock'), exact: true }).click();
   await expect(page.locator('.password-vault-toolbar')).toBeVisible();
+  await revealPasswordEntries(page);
 }
 
 async function checkDraft(page: Page) {
@@ -157,6 +161,8 @@ test('published assets, vault fields, import draft and backup survive the curren
   let oldService: ChildProcess | undefined;
   let newService: ChildProcess | undefined;
   let stage = 'prepare packages';
+  let compatibilityFailure: Error | undefined;
+  let cleanupFailure: Error | undefined;
   try {
     mkdirSync(join(oldPackage, 'web'), { recursive: true });
     const release = extractCandidate(root, newPackage);
@@ -318,6 +324,7 @@ test('published assets, vault fields, import draft and backup survive the curren
     await restored.goto(`${origin}/assets/vault`);
     await expect(restored.locator('#password-vault-master')).toBeVisible();
     await restored.goto(`${origin}/intake`);
+    await openBackupRestorePanel(restored);
     await restored.locator('#backup-password').fill(backupPassword);
     await restored.locator('#restore-file').setInputFiles(oldBackup);
     await restored.getByRole('button', { name: 'Preview', exact: true }).first().click();
@@ -345,14 +352,26 @@ test('published assets, vault fields, import draft and backup survive the curren
     // Keep failure stage useful without dumping draft/source/password field values.
     const sourceLocation = error instanceof Error ? error.stack?.split('\n')
       .find(line => line.trimStart().startsWith('at ') && line.includes('stackperch-upgrade.spec.ts'))?.trim() : undefined;
-    throw Error(`KeepAny compatibility failed at: ${stage}${sourceLocation ? ` (${sourceLocation})` : ''}`);
+    compatibilityFailure = Error(`KeepAny compatibility failed at: ${stage}${sourceLocation ? ` (${sourceLocation})` : ''}`);
   } finally {
     // Attempt every cleanup even if a browser or server fails to close.
     const cleanup = await Promise.allSettled([
       restoredContext?.close(), context?.close(), stopPackage(oldPackage, oldService), stopPackage(newPackage, newService),
     ]);
-    rmSync(directory, { recursive: true, force: true });
-    const failure = cleanup.find(result => result.status === 'rejected');
-    if (failure?.status === 'rejected') throw Error('An isolated compatibility fixture did not stop cleanly', { cause: failure.reason });
+    const cleanupErrors = cleanup.flatMap(result => result.status === 'rejected' ? [result.reason] : []);
+    const target = resolve(directory);
+    if (!target.startsWith(`${resolve(tmpdir())}${sep}keepany-stackperch-upgrade-`)) {
+      cleanupErrors.push(Error('Compatibility cleanup target escaped its allocated temporary directory'));
+    } else {
+      try { rmSync(target, { recursive: true, force: true }); }
+      catch (error) { cleanupErrors.push(error); }
+    }
+    if (cleanupErrors.length) cleanupFailure = Error('An isolated compatibility fixture did not stop cleanly', {
+      cause: new AggregateError(cleanupErrors),
+    });
   }
+  if (compatibilityFailure && cleanupFailure)
+    throw new AggregateError([compatibilityFailure, cleanupFailure], 'Compatibility and fixture cleanup both failed');
+  if (compatibilityFailure) throw compatibilityFailure;
+  if (cleanupFailure) throw cleanupFailure;
 });

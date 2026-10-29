@@ -1,3 +1,5 @@
+import { openBackupRestorePanel } from "./helpers/backup-restore";
+import { prepareVaultWorkspace, revealPasswordEntries } from "./helpers/vault-access";
 import "fake-indexeddb/auto";
 import { createHash } from "node:crypto";
 import { mkdirSync, readFileSync } from "node:fs";
@@ -246,13 +248,18 @@ for (const { locale, width } of [
 		page.on("pageerror", (error) => errors.push(error.message));
 		async function vault() {
 			await page.goto("/assets/vault");
+			await prepareVaultWorkspace(page);
 			await page.locator("#password-vault-unlock-master").fill(visualMaster);
 			await page
 				.getByRole("button", { name: t("pwVaultUnlock"), exact: true })
 				.click();
-			await expect(
-				page.locator(".password-vault-entry-list .password-vault-entry"),
-			).toHaveCount(records.length);
+			const entries = page.locator(".password-vault-entry-list .password-vault-entry");
+			// One encrypted entry may appear under each of its linked accounts.
+			// Count its stable ID rather than treating those views as extra entries.
+			await expect.poll(async () => new Set(await entries.evaluateAll(nodes => nodes.map(node => node.getAttribute("data-entry-id")))).size).toBe(records.length);
+			expect(await entries.evaluateAll(nodes => nodes.every(node => Boolean(node.getAttribute("data-entry-id"))))).toBe(true);
+			await revealPasswordEntries(page);
+			for (const record of records) await expect(entries.filter({ has: page.getByRole("heading", { name: record.title, exact: true }) }).first()).toBeVisible();
 		}
 		async function connect() {
 			await page
@@ -295,11 +302,7 @@ for (const { locale, width } of [
 		}
 		try {
 			await page.goto("/intake");
-			await page
-				.locator("details.intake-secondary")
-				.filter({ has: page.locator("#restore-file") })
-				.locator("summary")
-				.click();
+			await openBackupRestorePanel(page);
 			await page.locator("#backup-password").fill(backupPassword);
 			await page.locator("#restore-file").setInputFiles({
 				name: "synthetic-link-recovery.ka1",
@@ -413,6 +416,7 @@ for (const { locale, width } of [
 			).toHaveCount(0);
 			await expect(card()).toHaveCount(1);
 			await expect(card()).toBeFocused();
+			await expect(card()).toBeInViewport();
 			await expect(page.getByText(t("pwVaultUnlinked"), { exact: true })).toHaveCount(1);
 			await page.screenshot({
 				path: join(evidence, `disconnect-done-${locale}-${width}.png`),
@@ -435,7 +439,7 @@ for (const { locale, width } of [
 				.getByRole("button", { name: t("accountGraphExpand"), exact: true })
 				.click();
 			const expanded = page.getByRole("dialog", {
-				name: t("accountGraphTitle"),
+				name: zh ? "关系图" : "Connections",
 				exact: true,
 			});
 			await expect(expanded).toBeVisible();

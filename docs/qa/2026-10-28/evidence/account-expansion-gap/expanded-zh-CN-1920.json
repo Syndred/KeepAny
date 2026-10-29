@@ -1,0 +1,57 @@
+{
+  "collapsed": [
+    154,
+    154,
+    154,
+    154,
+    154,
+    154,
+    154,
+    154,
+    154
+  ],
+  "geometry": [
+    {
+      "open": true,
+      "height": 959.328125
+    },
+    {
+      "open": false,
+      "height": 959.328125
+    },
+    {
+      "open": false,
+      "height": 959.328125
+    },
+    {
+      "open": false,
+      "height": 959.328125
+    },
+    {
+      "open": false,
+      "height": 959.328125
+    },
+    {
+      "open": false,
+      "height": 959.328125
+    },
+    {
+      "open": false,
+      "height": 154
+    },
+    {
+      "open": false,
+      "height": 154
+    },
+    {
+      "open": false,
+      "height": 154
+    }
+  ],
+  "maskLines": 2,
+  "usernameLines": 2,
+  "notes": {
+    "rowWidth": 210.828125,
+    "valueWidth": 86.828125
+  }
+}

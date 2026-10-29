@@ -165,7 +165,7 @@ export async function openAssistant(page: Page, copy: Labels) {
 		.getByRole("button", { name: copy.assistantMenu, exact: true })
 		.click();
 	await page
-		.getByRole("link", { name: copy.assistantAccess, exact: true })
+		.getByRole("menuitem", { name: copy.assistantAccess, exact: true })
 		.click();
 	await page
 		.getByRole("button", { name: copy.askAssistant, exact: true })

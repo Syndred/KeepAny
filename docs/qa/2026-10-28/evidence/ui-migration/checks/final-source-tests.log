@@ -1,0 +1,1225 @@
+
+Running 28 tests using 1 worker
+
+
+
+(node:15252) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[1/28] tests\e2e\collections-ledger-release.spec.ts:114:2 › zh-CN 390 five asset types retain collection identity through trash and clean restore
+[2/28] tests\e2e\collections-ledger-release.spec.ts:114:2 › en-US 1280 five asset types retain collection identity through trash and clean restore
+[3/28] tests\e2e\task-theme-release.spec.ts:529:2 › zh-CN 390px completes the themed task workflow
+[4/28] tests\e2e\task-theme-release.spec.ts:529:2 › zh-CN 1280px completes the themed task workflow
+[5/28] tests\e2e\task-theme-release.spec.ts:529:2 › en-US 390px completes the themed task workflow
+[6/28] tests\e2e\task-theme-release.spec.ts:529:2 › en-US 1280px completes the themed task workflow
+[7/28] tests\e2e\themed-select.spec.ts:36:3 › zh-CN 390: themed choices preserve keyboard, clearing, required fields and long labels
+[8/28] tests\e2e\themed-select.spec.ts:36:3 › zh-CN 1280: themed choices preserve keyboard, clearing, required fields and long labels
+[9/28] tests\e2e\themed-select.spec.ts:36:3 › en-US 390: themed choices preserve keyboard, clearing, required fields and long labels
+[10/28] tests\e2e\themed-select.spec.ts:36:3 › en-US 1280: themed choices preserve keyboard, clearing, required fields and long labels
+[11/28] tests\e2e\ui-density.regression-1.spec.ts:17:2 › zh-CN 390px dense records and complete date interaction
+[12/28] tests\e2e\ui-density.regression-1.spec.ts:17:2 › zh-CN 768px dense records and complete date interaction
+[13/28] tests\e2e\ui-density.regression-1.spec.ts:17:2 › zh-CN 1280px dense records and complete date interaction
+[14/28] tests\e2e\ui-density.regression-1.spec.ts:17:2 › zh-CN 1920px dense records and complete date interaction
+[15/28] tests\e2e\ui-density.regression-1.spec.ts:17:2 › en 390px dense records and complete date interaction
+[16/28] tests\e2e\ui-density.regression-1.spec.ts:17:2 › en 768px dense records and complete date interaction
+[17/28] tests\e2e\ui-density.regression-1.spec.ts:17:2 › en 1280px dense records and complete date interaction
+[18/28] tests\e2e\ui-density.regression-1.spec.ts:17:2 › en 1920px dense records and complete date interaction
+[19/28] tests\e2e\workspace-navigation.regression.spec.ts:26:2 › zh-CN 390px T01 new and legacy navigation select exactly one group and preserve records
+tests\e2e\workspace-navigation.regression.spec.ts:26:2 › zh-CN 390px T01 new and legacy navigation select exactly one group and preserve records
+{"locale":"zh-CN","width":390,"count":70,"beforeScroll":7176,"returned":7176,"refreshed":7176,"targetName":"T01 Long 08"}
+
+[20/28] tests\e2e\workspace-navigation.regression.spec.ts:26:2 › zh-CN 1280px T01 new and legacy navigation select exactly one group and preserve records
+tests\e2e\workspace-navigation.regression.spec.ts:26:2 › zh-CN 1280px T01 new and legacy navigation select exactly one group and preserve records
+{"locale":"zh-CN","width":1280,"count":70,"beforeScroll":1242,"returned":1242,"refreshed":1242,"targetName":"T01 Long 17"}
+
+[21/28] tests\e2e\workspace-navigation.regression.spec.ts:26:2 › en 390px T01 new and legacy navigation select exactly one group and preserve records
+tests\e2e\workspace-navigation.regression.spec.ts:26:2 › en 390px T01 new and legacy navigation select exactly one group and preserve records
+{"locale":"en","width":390,"count":70,"beforeScroll":7261,"returned":7261,"refreshed":7261,"targetName":"T01 Long 36"}
+
+[22/28] tests\e2e\workspace-navigation.regression.spec.ts:26:2 › en 1280px T01 new and legacy navigation select exactly one group and preserve records
+tests\e2e\workspace-navigation.regression.spec.ts:26:2 › en 1280px T01 new and legacy navigation select exactly one group and preserve records
+{"locale":"en","width":1280,"count":70,"beforeScroll":1242,"returned":1242,"refreshed":1242,"targetName":"T01 Long 67"}
+
+[23/28] tests\e2e\workspace-summary-qa.spec.ts:65:2 › T02 zh-CN 390px date boundaries progress money and original paths
+[24/28] tests\e2e\workspace-summary-qa.spec.ts:65:2 › T02 zh-CN 1280px date boundaries progress money and original paths
+[25/28] tests\e2e\workspace-summary-qa.spec.ts:65:2 › T02 en 390px date boundaries progress money and original paths
+[26/28] tests\e2e\workspace-summary-qa.spec.ts:65:2 › T02 en 1280px date boundaries progress money and original paths
+[27/28] tests\e2e\workspace-summary-qa.spec.ts:164:2 › T02 zh-CN supplemental asset layouts keep controls reachable
+[28/28] tests\e2e\workspace-summary-qa.spec.ts:164:2 › T02 en supplemental asset layouts keep controls reachable
+  28 passed (3.9m)
+{
+  "config": {
+    "argv": [
+      "C:\\Users\\Administrator\\AppData\\Local\\Author Software\\nvm\\installs\\v24.21.0\\node.exe",
+      "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\node_modules\\@playwright\\test\\cli.js",
+      "test",
+      "--config",
+      "playwright.windows-qa.config.ts",
+      "tests/e2e/workspace-navigation.regression.spec.ts",
+      "tests/e2e/workspace-summary-qa.spec.ts",
+      "tests/e2e/task-theme-release.spec.ts",
+      "tests/e2e/collections-ledger-release.spec.ts",
+      "tests/e2e/themed-select.spec.ts",
+      "tests/e2e/ui-density.regression-1.spec.ts",
+      "--max-failures=1",
+      "--output=test-results/ui-migration/final-source-run",
+      "--reporter=line,json"
+    ],
+    "configFile": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\playwright.windows-qa.config.ts",
+    "rootDir": "C:/Users/Administrator/Desktop/project/KeepAny/tests/e2e",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 1,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "C:/Users/Administrator/Desktop/project/KeepAny/test-results/ui-migration/final-source-run",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "",
+        "name": "",
+        "testDir": "C:/Users/Administrator/Desktop/project/KeepAny/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 60000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "line"
+      ],
+      [
+        "json"
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.63.0",
+    "workers": 1,
+    "webServer": {
+      "command": "node node_modules/vite/bin/vite.js apps/web --host 127.0.0.1 --port 4215 --strictPort",
+      "url": "http://127.0.0.1:4215",
+      "reuseExistingServer": true,
+      "timeout": 30000
+    }
+  },
+  "suites": [
+    {
+      "title": "collections-ledger-release.spec.ts",
+      "file": "collections-ledger-release.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "zh-CN 390 five asset types retain collection identity through trash and clean restore",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 14802,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-28T01:08:22.448Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "da4549550c937eb00a75-96cd07c5baed2488c978",
+          "file": "collections-ledger-release.spec.ts",
+          "line": 114,
+          "column": 2
+        },
+        {
+          "title": "en-US 1280 five asset types retain collection identity through trash and clean restore",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 13029,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-28T01:08:37.358Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "da4549550c937eb00a75-63843c4b9d186c2accf7",
+          "file": "collections-ledger-release.spec.ts",
+          "line": 114,
+          "column": 2
+        }
+      ]
+    },
+    {
+      "title": "task-theme-release.spec.ts",
+      "file": "task-theme-release.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "zh-CN 390px completes the themed task workflow",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 11996,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-28T01:08:50.412Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "b2e889061086f95299ae-0bac5821f6ba11a80bd7",
+          "file": "task-theme-release.spec.ts",
+          "line": 529,
+          "column": 2
+        },
+        {
+          "title": "zh-CN 1280px completes the themed task workflow",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 11784,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-28T01:09:02.418Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "b2e889061086f95299ae-c841594b39a2a03f3e13",
+          "file": "task-theme-release.spec.ts",
+          "line": 529,
+          "column": 2
+        },
+        {
+          "title": "en-US 390px completes the themed task workflow",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 11645,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-28T01:09:14.210Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "b2e889061086f95299ae-42a2feee0a34949326c1",
+          "file": "task-theme-release.spec.ts",
+          "line": 529,
+          "column": 2
+        },
+        {
+          "title": "en-US 1280px completes the themed task workflow",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 12283,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-28T01:09:25.862Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "b2e889061086f95299ae-7dbaa11e4b2f315a474f",
+          "file": "task-theme-release.spec.ts",
+          "line": 529,
+          "column": 2
+        }
+      ]
+    },
+    {
+      "title": "themed-select.spec.ts",
+      "file": "themed-select.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "zh-CN 390: themed choices preserve keyboard, clearing, required fields and long labels",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 5933,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-28T01:09:38.166Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "1de30a996d24fd0912d8-f6e6ad7359ef97cca42f",
+          "file": "themed-select.spec.ts",
+          "line": 36,
+          "column": 3
+        },
+        {
+          "title": "zh-CN 1280: themed choices preserve keyboard, clearing, required fields and long labels",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 5674,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-28T01:09:44.114Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "1de30a996d24fd0912d8-6cf5c3e64cc3ddbf0e11",
+          "file": "themed-select.spec.ts",
+          "line": 36,
+          "column": 3
+        },
+        {
+          "title": "en-US 390: themed choices preserve keyboard, clearing, required fields and long labels",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 5572,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-28T01:09:49.797Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "1de30a996d24fd0912d8-f786a1acc1af6a8532ff",
+          "file": "themed-select.spec.ts",
+          "line": 36,
+          "column": 3
+        },
+        {
+          "title": "en-US 1280: themed choices preserve keyboard, clearing, required fields and long labels",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 5659,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-28T01:09:55.377Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "1de30a996d24fd0912d8-1d7b6f47519f1fee2540",
+          "file": "themed-select.spec.ts",
+          "line": 36,
+          "column": 3
+        }
+      ]
+    },
+    {
+      "title": "ui-density.regression-1.spec.ts",
+      "file": "ui-density.regression-1.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "zh-CN 390px dense records and complete date interaction",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 5680,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-28T01:10:01.128Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "a7b58ffbfa3c29525f6b-cef2640f2a4af07cec33",
+          "file": "ui-density.regression-1.spec.ts",
+          "line": 17,
+          "column": 2
+        },
+        {
+          "title": "zh-CN 768px dense records and complete date interaction",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 6405,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-28T01:10:06.818Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "a7b58ffbfa3c29525f6b-813cf30fd5353b086a02",
+          "file": "ui-density.regression-1.spec.ts",
+          "line": 17,
+          "column": 2
+        },
+        {
+          "title": "zh-CN 1280px dense records and complete date interaction",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 5708,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-28T01:10:13.233Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "a7b58ffbfa3c29525f6b-ad5baa4bd0e22a27a774",
+          "file": "ui-density.regression-1.spec.ts",
+          "line": 17,
+          "column": 2
+        },
+        {
+          "title": "zh-CN 1920px dense records and complete date interaction",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 6293,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-28T01:10:18.949Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "a7b58ffbfa3c29525f6b-246e19f4a5cc883da01a",
+          "file": "ui-density.regression-1.spec.ts",
+          "line": 17,
+          "column": 2
+        },
+        {
+          "title": "en 390px dense records and complete date interaction",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 6072,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-28T01:10:25.252Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "a7b58ffbfa3c29525f6b-6bc5aaa67b4824520f2c",
+          "file": "ui-density.regression-1.spec.ts",
+          "line": 17,
+          "column": 2
+        },
+        {
+          "title": "en 768px dense records and complete date interaction",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 5584,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-28T01:10:31.334Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "a7b58ffbfa3c29525f6b-db6a1bf08629ae772eb1",
+          "file": "ui-density.regression-1.spec.ts",
+          "line": 17,
+          "column": 2
+        },
+        {
+          "title": "en 1280px dense records and complete date interaction",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 5869,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-28T01:10:36.929Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "a7b58ffbfa3c29525f6b-1d8cc12a3321040e421d",
+          "file": "ui-density.regression-1.spec.ts",
+          "line": 17,
+          "column": 2
+        },
+        {
+          "title": "en 1920px dense records and complete date interaction",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 5935,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-28T01:10:42.806Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "a7b58ffbfa3c29525f6b-ba7b6157278cc4a5284e",
+          "file": "ui-density.regression-1.spec.ts",
+          "line": 17,
+          "column": 2
+        }
+      ]
+    },
+    {
+      "title": "workspace-navigation.regression.spec.ts",
+      "file": "workspace-navigation.regression.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "zh-CN 390px T01 new and legacy navigation select exactly one group and preserve records",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 15041,
+                  "errors": [],
+                  "stdout": [
+                    {
+                      "text": "{\"locale\":\"zh-CN\",\"width\":390,\"count\":70,\"beforeScroll\":7176,\"returned\":7176,\"refreshed\":7176,\"targetName\":\"T01 Long 08\"}\n"
+                    }
+                  ],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-28T01:10:48.761Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "257c5455171ac4533ed0-1421e7a49812b459eee0",
+          "file": "workspace-navigation.regression.spec.ts",
+          "line": 26,
+          "column": 2
+        },
+        {
+          "title": "zh-CN 1280px T01 new and legacy navigation select exactly one group and preserve records",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 9295,
+                  "errors": [],
+                  "stdout": [
+                    {
+                      "text": "{\"locale\":\"zh-CN\",\"width\":1280,\"count\":70,\"beforeScroll\":1242,\"returned\":1242,\"refreshed\":1242,\"targetName\":\"T01 Long 17\"}\n"
+                    }
+                  ],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-28T01:11:03.812Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "257c5455171ac4533ed0-80d5e3cbe43665068ed0",
+          "file": "workspace-navigation.regression.spec.ts",
+          "line": 26,
+          "column": 2
+        },
+        {
+          "title": "en 390px T01 new and legacy navigation select exactly one group and preserve records",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 14465,
+                  "errors": [],
+                  "stdout": [
+                    {
+                      "text": "{\"locale\":\"en\",\"width\":390,\"count\":70,\"beforeScroll\":7261,\"returned\":7261,\"refreshed\":7261,\"targetName\":\"T01 Long 36\"}\n"
+                    }
+                  ],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-28T01:11:13.118Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "257c5455171ac4533ed0-9893e00968b26666be21",
+          "file": "workspace-navigation.regression.spec.ts",
+          "line": 26,
+          "column": 2
+        },
+        {
+          "title": "en 1280px T01 new and legacy navigation select exactly one group and preserve records",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 9286,
+                  "errors": [],
+                  "stdout": [
+                    {
+                      "text": "{\"locale\":\"en\",\"width\":1280,\"count\":70,\"beforeScroll\":1242,\"returned\":1242,\"refreshed\":1242,\"targetName\":\"T01 Long 67\"}\n"
+                    }
+                  ],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-28T01:11:27.592Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "257c5455171ac4533ed0-4d3cd34fd9169cd7d283",
+          "file": "workspace-navigation.regression.spec.ts",
+          "line": 26,
+          "column": 2
+        }
+      ]
+    },
+    {
+      "title": "workspace-summary-qa.spec.ts",
+      "file": "workspace-summary-qa.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "T02 zh-CN 390px date boundaries progress money and original paths",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 10689,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "steps": [
+                    {
+                      "title": "T02-01: type navigation and each card's original details",
+                      "duration": 1538
+                    },
+                    {
+                      "title": "T02-02: past today future missing purchase dates and persisted edit",
+                      "duration": 5922
+                    },
+                    {
+                      "title": "T02-03: deleted tasks excluded and expiry boundaries",
+                      "duration": 976
+                    },
+                    {
+                      "title": "T02-04: separate currencies duplicate links and persisted fee change",
+                      "duration": 1348
+                    }
+                  ],
+                  "startTime": "2026-10-28T01:11:36.899Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "b7029b4d0f2295e58e13-cf8b6c4917aded555066",
+          "file": "workspace-summary-qa.spec.ts",
+          "line": 65,
+          "column": 2
+        },
+        {
+          "title": "T02 zh-CN 1280px date boundaries progress money and original paths",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 6680,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "steps": [
+                    {
+                      "title": "T02-01: type navigation and each card's original details",
+                      "duration": 1430
+                    },
+                    {
+                      "title": "T02-02: past today future missing purchase dates and persisted edit",
+                      "duration": 1340
+                    },
+                    {
+                      "title": "T02-03: deleted tasks excluded and expiry boundaries",
+                      "duration": 1073
+                    },
+                    {
+                      "title": "T02-04: separate currencies duplicate links and persisted fee change",
+                      "duration": 1936
+                    }
+                  ],
+                  "startTime": "2026-10-28T01:11:47.598Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "b7029b4d0f2295e58e13-ffd29c5f4c7c1de716bd",
+          "file": "workspace-summary-qa.spec.ts",
+          "line": 65,
+          "column": 2
+        },
+        {
+          "title": "T02 en 390px date boundaries progress money and original paths",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 10611,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "steps": [
+                    {
+                      "title": "T02-01: type navigation and each card's original details",
+                      "duration": 1672
+                    },
+                    {
+                      "title": "T02-02: past today future missing purchase dates and persisted edit",
+                      "duration": 5880
+                    },
+                    {
+                      "title": "T02-03: deleted tasks excluded and expiry boundaries",
+                      "duration": 929
+                    },
+                    {
+                      "title": "T02-04: separate currencies duplicate links and persisted fee change",
+                      "duration": 1237
+                    }
+                  ],
+                  "startTime": "2026-10-28T01:11:54.288Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "b7029b4d0f2295e58e13-77f9c6ca77f0c4d881ba",
+          "file": "workspace-summary-qa.spec.ts",
+          "line": 65,
+          "column": 2
+        },
+        {
+          "title": "T02 en 1280px date boundaries progress money and original paths",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 6184,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "steps": [
+                    {
+                      "title": "T02-01: type navigation and each card's original details",
+                      "duration": 1274
+                    },
+                    {
+                      "title": "T02-02: past today future missing purchase dates and persisted edit",
+                      "duration": 1330
+                    },
+                    {
+                      "title": "T02-03: deleted tasks excluded and expiry boundaries",
+                      "duration": 984
+                    },
+                    {
+                      "title": "T02-04: separate currencies duplicate links and persisted fee change",
+                      "duration": 1787
+                    }
+                  ],
+                  "startTime": "2026-10-28T01:12:04.908Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "b7029b4d0f2295e58e13-24d27cedeaf630a9d926",
+          "file": "workspace-summary-qa.spec.ts",
+          "line": 65,
+          "column": 2
+        },
+        {
+          "title": "T02 zh-CN supplemental asset layouts keep controls reachable",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1682,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-28T01:12:11.100Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "b7029b4d0f2295e58e13-26ad2ff84ff1d8c0fc49",
+          "file": "workspace-summary-qa.spec.ts",
+          "line": 164,
+          "column": 2
+        },
+        {
+          "title": "T02 en supplemental asset layouts keep controls reachable",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1688,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-28T01:12:12.791Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "b7029b4d0f2295e58e13-1dae2d7472b72bffc8a9",
+          "file": "workspace-summary-qa.spec.ts",
+          "line": 164,
+          "column": 2
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-10-28T01:08:21.795Z",
+    "duration": 232766.388,
+    "expected": 28,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

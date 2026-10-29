@@ -1,0 +1,312 @@
+{
+  "schema": "keepany.account-layout-evidence.v1",
+  "status": "passed",
+  "sourceCommit": "d187f33e24361ded19f8c2c38183fe823558677d",
+  "version": "0.1.0-preview.d187f33e2436.dirty",
+  "indexSha256": "f8b55106af052dcabe87f8cf6e228d355e34e843f3dfc6577434f82b7ef9dc07",
+  "receipts": [
+    {
+      "path": "result-zh-CN-390.json",
+      "sha256": "a766bd1873532db61146c5d022d12a5a02fa43127a7f5169e144b2cd42c6b76a",
+      "evidence": [
+        {
+          "path": "expanded-zh-CN-390.png",
+          "sha256": "d28f394c1e3d39595071a48c1c4bc0600b3ca6789faf8d879ab17055122cdc8d"
+        },
+        {
+          "path": "multiple-zh-CN-390.png",
+          "sha256": "25a20257b68fd13b80aba264af6db20994019e69e4f8ebc03a41cd4d7ac9ade6"
+        },
+        {
+          "path": "hover-zh-CN-390.png",
+          "sha256": "f60ed4c1bcd7d58789d642d5585490e4e34b7b696637faa905b1399b89ecd19c"
+        },
+        {
+          "path": "focus-zh-CN-390.png",
+          "sha256": "f60ed4c1bcd7d58789d642d5585490e4e34b7b696637faa905b1399b89ecd19c"
+        },
+        {
+          "path": "empty-zh-CN-390.png",
+          "sha256": "6ec9185ef0105dbed4700147463108d8196607bb345b82951b8a8a12f5c3f815"
+        },
+        {
+          "path": "toolbar-zh-CN-390.png",
+          "sha256": "3073a7653775b88c2d2337def5d4dbf72b130c26afa8ab5f886dd2790e966992"
+        }
+      ]
+    },
+    {
+      "path": "result-zh-CN-768.json",
+      "sha256": "2117db06478019990ca48de9213249be389f1bf3d87ad4d62491e3787cb0ab65",
+      "evidence": [
+        {
+          "path": "expanded-zh-CN-768.png",
+          "sha256": "77690e1446466ea1697830265b0f04caa9406a13053926d4c2f23fce981a5cad"
+        },
+        {
+          "path": "multiple-zh-CN-768.png",
+          "sha256": "0e7acec3521d2357a45e0c2109025f66efa6debf11c1e49de63651316be3c514"
+        },
+        {
+          "path": "hover-zh-CN-768.png",
+          "sha256": "e612482f5e540e9f713d60f65c8104b065adfd8418dff0a4869bfb77021bc8aa"
+        },
+        {
+          "path": "focus-zh-CN-768.png",
+          "sha256": "e612482f5e540e9f713d60f65c8104b065adfd8418dff0a4869bfb77021bc8aa"
+        },
+        {
+          "path": "empty-zh-CN-768.png",
+          "sha256": "4cc93129cdb676f8162442c47140f1f8a0ed17a2a051d8759cac3367a30a8fd0"
+        },
+        {
+          "path": "toolbar-zh-CN-768.png",
+          "sha256": "329210e1e7e16556f6bb838539e3d6cee253b240e004a12cadc004da343cbbb1"
+        }
+      ]
+    },
+    {
+      "path": "result-zh-CN-1280.json",
+      "sha256": "563889eefeaa564bb4ba614aaaf5a4354d055ea4b2449e6453f05958537b6e9f",
+      "evidence": [
+        {
+          "path": "expanded-zh-CN-1280.png",
+          "sha256": "4d21fb1dd0f2418e34f90dfedbdbd3880081c05dafb3f41e37f410109ba6cb21"
+        },
+        {
+          "path": "multiple-zh-CN-1280.png",
+          "sha256": "04f39bb70666a3653f8df7b97f38ce58cb952ff75798c955c84f49767c7e7ee6"
+        },
+        {
+          "path": "hover-zh-CN-1280.png",
+          "sha256": "be9b3d39132cf99c3a9647182095559511a8131c01c71db03127e7b97536d101"
+        },
+        {
+          "path": "focus-zh-CN-1280.png",
+          "sha256": "be9b3d39132cf99c3a9647182095559511a8131c01c71db03127e7b97536d101"
+        },
+        {
+          "path": "empty-zh-CN-1280.png",
+          "sha256": "53588470d3318e023f9968d553695b238147de9b24d5627fbdd295e067cb13b7"
+        },
+        {
+          "path": "toolbar-zh-CN-1280.png",
+          "sha256": "f3fcfccdbce29e9cbeb22e5708391df339fa1f332b5896688f92ce4ed296b201"
+        }
+      ]
+    },
+    {
+      "path": "result-zh-CN-1920.json",
+      "sha256": "c9e440414661d015de169aba158aed79b3890f2956aab7083739c469ca7a29eb",
+      "evidence": [
+        {
+          "path": "expanded-zh-CN-1920.png",
+          "sha256": "4af21cb99d9a4edc00ffcd400b5b1b6da9fcf39fa577a06b455d275def149436"
+        },
+        {
+          "path": "multiple-zh-CN-1920.png",
+          "sha256": "94ccd0aeb3d85455ee6d4ba9246025bdb4c38fe5b294c1b5ae7915a2934e5209"
+        },
+        {
+          "path": "hover-zh-CN-1920.png",
+          "sha256": "ac1cd2cdec2cbf59b22907d7c14e3835288565b9b9221ac907ffd3cd6d96c255"
+        },
+        {
+          "path": "focus-zh-CN-1920.png",
+          "sha256": "ac1cd2cdec2cbf59b22907d7c14e3835288565b9b9221ac907ffd3cd6d96c255"
+        },
+        {
+          "path": "empty-zh-CN-1920.png",
+          "sha256": "2edc427bb2d7eaf0388ba1a10b0265ca1f1da9d6bab1db868539496ca0733e7e"
+        },
+        {
+          "path": "toolbar-zh-CN-1920.png",
+          "sha256": "8e48c07a46769cc9cd6a57834e2367f45bd6656bc08045eb43e219ff22bdf612"
+        }
+      ]
+    },
+    {
+      "path": "result-zh-CN-2560.json",
+      "sha256": "1562232ef9a677af371f5ece0cbfdd837ecc86e6752c8c5c6d265c52bafc3751",
+      "evidence": [
+        {
+          "path": "expanded-zh-CN-2560.png",
+          "sha256": "b6c3b14794bef5bd04d787755eb39bd7a6f526a45b22e92f045f0c4ae4f2e92f"
+        },
+        {
+          "path": "multiple-zh-CN-2560.png",
+          "sha256": "4440bb3c374bc9d6cb72b57cc9d7ff3f274e6c4f3012b8bc5fa477b61dcd7c70"
+        },
+        {
+          "path": "hover-zh-CN-2560.png",
+          "sha256": "b46ced41c667f0c263389833279b4921de78ecd489391c52193ac6e57f5fb267"
+        },
+        {
+          "path": "focus-zh-CN-2560.png",
+          "sha256": "b46ced41c667f0c263389833279b4921de78ecd489391c52193ac6e57f5fb267"
+        },
+        {
+          "path": "empty-zh-CN-2560.png",
+          "sha256": "7eeab0b678ec0307dfff6a839ced6fcb27cccf9faaf66a5ca7aef5ee790a5626"
+        },
+        {
+          "path": "toolbar-zh-CN-2560.png",
+          "sha256": "61f29c6a46d9d1d4a7318cbe9dfb6cc961d486ede65b277e1e83de0297bb3292"
+        }
+      ]
+    },
+    {
+      "path": "result-en-390.json",
+      "sha256": "c3dd207b3069d104898705e1794e970d336cb8599db83bca91b6a8a4a8897082",
+      "evidence": [
+        {
+          "path": "expanded-en-390.png",
+          "sha256": "5f38b606ca819f13c7ceb3700396920f2ec056a58609d1265e7c0db6f384c96d"
+        },
+        {
+          "path": "multiple-en-390.png",
+          "sha256": "3420392bf6ff5fdc38701d764aa02ccb85861361091a32c15747c1e0bff07272"
+        },
+        {
+          "path": "hover-en-390.png",
+          "sha256": "508d2311e00c1ec36553b934860ad35a15ac15b91d6a176d9c4b388f698b93dc"
+        },
+        {
+          "path": "focus-en-390.png",
+          "sha256": "508d2311e00c1ec36553b934860ad35a15ac15b91d6a176d9c4b388f698b93dc"
+        },
+        {
+          "path": "empty-en-390.png",
+          "sha256": "fd0d57f281c702df795ae81cf5e27e8a622e4e5af297bb78e26f59a4deb738a8"
+        },
+        {
+          "path": "toolbar-en-390.png",
+          "sha256": "95782a371b3a2cc3d29f478df59883e57d32a101eb97070b187fb236a9713acd"
+        }
+      ]
+    },
+    {
+      "path": "result-en-768.json",
+      "sha256": "8f73825763a51437a5baca13426f3789421d7b03e569a0f4d3219bd62d2a3763",
+      "evidence": [
+        {
+          "path": "expanded-en-768.png",
+          "sha256": "604c1fb8f4fad153199af22f436d41617a02662467fc419670796221f2dbac46"
+        },
+        {
+          "path": "multiple-en-768.png",
+          "sha256": "e30d76a4fba2f323cd521cc81c64cad5e7bcba18a7b359c9b75dfe4a0cff3e43"
+        },
+        {
+          "path": "hover-en-768.png",
+          "sha256": "a1e9fa63c6d23134980dd9dd0f59bf1bad5435b1e2ab7f2d4d11cb323b152803"
+        },
+        {
+          "path": "focus-en-768.png",
+          "sha256": "a1e9fa63c6d23134980dd9dd0f59bf1bad5435b1e2ab7f2d4d11cb323b152803"
+        },
+        {
+          "path": "empty-en-768.png",
+          "sha256": "86dfbcf6ee8c570524967ae951e124bebbe462f101ded500acd58adab549ac7a"
+        },
+        {
+          "path": "toolbar-en-768.png",
+          "sha256": "42d9fd0cef088ebd401ee11395ff4a490bd7ce4a6a957dace577511e9f789337"
+        }
+      ]
+    },
+    {
+      "path": "result-en-1280.json",
+      "sha256": "acabde86b55eea534f36b422ae2bf2ff0993f0a857c11886afe44868c1920e9e",
+      "evidence": [
+        {
+          "path": "expanded-en-1280.png",
+          "sha256": "260841292cab1a0ae53314494ebd02198d2eda06c83bb507d06ab08a7a8dce17"
+        },
+        {
+          "path": "multiple-en-1280.png",
+          "sha256": "d2a17d96645eb78fba7112f8e73bdf2caff1d9e47fbce4e74a43ba637bf0e7fa"
+        },
+        {
+          "path": "hover-en-1280.png",
+          "sha256": "e861f497b211b5a94d5bfaa858594642275dab95f001b89c6ca3cbd24b538d21"
+        },
+        {
+          "path": "focus-en-1280.png",
+          "sha256": "e861f497b211b5a94d5bfaa858594642275dab95f001b89c6ca3cbd24b538d21"
+        },
+        {
+          "path": "empty-en-1280.png",
+          "sha256": "22e8c33dfaa7c8ddf27f41a2536e495e63bd08fc081ee3ffcd2c8b56a28d9acb"
+        },
+        {
+          "path": "toolbar-en-1280.png",
+          "sha256": "be7ad8ca8c51468d945f73b64682dd629af63299a4b65f8fe93cf4afbc8b982b"
+        }
+      ]
+    },
+    {
+      "path": "result-en-1920.json",
+      "sha256": "4cb739d4250e6e3e0bd0901a35c309f50965a47b9d0e9387885ecf4b99718ef7",
+      "evidence": [
+        {
+          "path": "expanded-en-1920.png",
+          "sha256": "2c283ea195923dff426ea9c207435460900fa092a337159ab88ab81e5a991add"
+        },
+        {
+          "path": "multiple-en-1920.png",
+          "sha256": "a374f997a3dd06607a37b8eacd65e7b66df14a273d3452012bbc8f0b7a5cd7f7"
+        },
+        {
+          "path": "hover-en-1920.png",
+          "sha256": "c0686e3d231a742a545705d98a7cadfb295cef63eb6e2b6079c04c75c1bbe9b4"
+        },
+        {
+          "path": "focus-en-1920.png",
+          "sha256": "c0686e3d231a742a545705d98a7cadfb295cef63eb6e2b6079c04c75c1bbe9b4"
+        },
+        {
+          "path": "empty-en-1920.png",
+          "sha256": "fe07f360f4d436c371ae30a9da639a1823db853f58242235bfdee4637c4d599d"
+        },
+        {
+          "path": "toolbar-en-1920.png",
+          "sha256": "8c62d2c49e4c4aaad608ce24d52ce4799ca1ce75d09bc87f8e2f26e12ad09fde"
+        }
+      ]
+    },
+    {
+      "path": "result-en-2560.json",
+      "sha256": "7cef9e6648e387b857f2819b482197e2f384aceafe6f77ac01befb5b26d87a79",
+      "evidence": [
+        {
+          "path": "expanded-en-2560.png",
+          "sha256": "04588e57b004fdb27867eb783f77ef7533e4d0c5ccc31cdde72212712cab88b7"
+        },
+        {
+          "path": "multiple-en-2560.png",
+          "sha256": "7f58eaa43f095c877b336cdd199142b6126a75eb2180e91adf8aeebd72325f93"
+        },
+        {
+          "path": "hover-en-2560.png",
+          "sha256": "e9ee0c20841ee0ec77c9054875c42bb7282ae869e560873f00bfc01d0d601d70"
+        },
+        {
+          "path": "focus-en-2560.png",
+          "sha256": "e9ee0c20841ee0ec77c9054875c42bb7282ae869e560873f00bfc01d0d601d70"
+        },
+        {
+          "path": "empty-en-2560.png",
+          "sha256": "a5092a1b7c0de5cdcd5d00b8c745c4de2d4f91bde56d5663b8b95c604877870a"
+        },
+        {
+          "path": "toolbar-en-2560.png",
+          "sha256": "169e43288587bace0b441b5368c10bcde1902aba67e559acf942e3c89c7982f1"
+        }
+      ]
+    }
+  ],
+  "manualVisual": "separate-required",
+  "ownerExperience": "separate-required",
+  "independentReview": "separate-required"
+}

@@ -1,0 +1,25 @@
+.date-field { position: relative; display: flex; align-items: center; width: 100%; min-width: 0; min-height: 40px; border: var(--field-border-width) solid var(--line); border-radius: var(--field-radius); background: var(--field-background); cursor: pointer; }
+.date-field:focus-within { outline: 2px solid var(--accent); outline-offset: 2px; }
+.date-field > input[type="text"], .field .date-field > input[type="text"] { width: 100%; min-width: 0; min-height: 37px; padding: 8px 38px 8px 10px; border: 0; border-radius: inherit; background: transparent; box-shadow: none; font-size: 14px; font-weight: 450; line-height: 1.4; font-variant-numeric: tabular-nums; outline: 0; }
+.date-field:has(input:invalid), .date-field:has(input[aria-invalid="true"]) { border-color: var(--danger); }
+.date-field.is-disabled { opacity: .58; cursor: not-allowed; }
+.date-trigger { position: absolute; inset: 0 0 0 auto; display: grid; place-items: center; width: 36px; padding: 0; border: 0; border-radius: 0 9px 9px 0; background: transparent; color: var(--muted); pointer-events: none; }
+.date-popover { width: max-content; max-width: min(100%, 320px); max-height: var(--available-height); overflow: auto; padding: 10px; }
+.date-popover .rdp-root { --rdp-accent-color: var(--ink); --rdp-accent-background-color: var(--accent-soft); --rdp-day-width: 36px; --rdp-day-height: 36px; --rdp-day_button-width: 34px; --rdp-day_button-height: 34px; --rdp-day_button-border-radius: 8px; --rdp-selected-border: 2px solid var(--line); --rdp-dropdown-gap: 6px; font-size: 13px; }
+.date-popover .rdp-month_caption { font-size: 14px; height: 38px; }
+.date-popover .rdp-selected .rdp-day_button { background: var(--accent); font-size: inherit; }
+.date-popover .rdp-day_button:hover { background: var(--accent-soft); }
+.date-popover .rdp-day_button:focus-visible { outline: 2px solid var(--ink); outline-offset: 1px; }
+.date-popover .rdp-button_previous, .date-popover .rdp-button_next { color: var(--ink); border: 1px solid var(--line-soft); border-radius: 8px; width: 28px; height: 28px; }
+.date-popover .rdp-dropdown_root { border-radius: 6px; padding: 2px 4px; }
+.date-popover .rdp-dropdown_root:hover { background: var(--accent-soft); }
+.date-footer { display: flex; justify-content: space-between; gap: 8px; padding-top: 7px; border-top: 1px solid var(--line-soft); }
+@media(max-width: 760px) {
+ .date-field { min-height: 44px; }
+ .date-field > input[type="text"], .field .date-field > input[type="text"] { min-height: 41px; font-size: 16px; }
+ .date-popover { max-width: calc(100vw - 16px); }
+ .date-popover .rdp-root { --rdp-day-width: 44px; --rdp-day-height: 44px; --rdp-day_button-width: 44px; --rdp-day_button-height: 44px; }
+ .date-popover .rdp-month_caption { height: 48px; }
+ .date-popover .rdp-button_previous, .date-popover .rdp-button_next { width: 44px; height: 44px; }
+ .date-popover .rdp-dropdown_root { min-height: 44px; display: inline-flex; align-items: center; }
+}

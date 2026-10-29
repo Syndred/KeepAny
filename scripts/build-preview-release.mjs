@@ -29,7 +29,7 @@ const sourcePathAllowed = path => /^(?:apps|packages|patches|scripts)\//.test(pa
   || /^legal\//.test(path)
   || /^release\/preview\//.test(path)
   || ['docs/试用指南.md', 'docs/evidence/2026-10-13/stackperch/onboarding-en-1280-sample.png', 'docs/evidence/2026-10-13/stackperch/onboarding-zh-1280-sample.png', 'docs/evidence/2026-10-27/keepany-return/onboarding/onboarding-en-1280-sample.png', 'docs/evidence/2026-10-27/keepany-return/onboarding/onboarding-zh-1280-sample.png'].includes(path)
-  || /^(?:package\.json|pnpm-lock\.yaml|pnpm-workspace\.yaml|tsconfig\.json|(?:vite|vitest|playwright)[\w.-]*\.config\.[\w]+|LICENSE|NOTICE\.md|SBOM\.spdx\.json|SECURITY\.md|CONTRIBUTING\.md|README(?:\.en)?\.md|\.gitignore)$/.test(path);
+  || /^(?:package\.json|components\.json|biome\.json|pnpm-lock\.yaml|pnpm-workspace\.yaml|tsconfig\.json|(?:vite|vitest|playwright)[\w.-]*\.config\.[\w]+|LICENSE|NOTICE\.md|SBOM\.spdx\.json|SECURITY\.md|CONTRIBUTING\.md|README(?:\.en)?\.md|\.gitignore)$/.test(path);
 const sourcePaths = [...new Set(execFileSync('git', ['ls-files', '-z', '--cached', '--others', '--exclude-standard'], { cwd: root, encoding: 'utf8', maxBuffer: 20 * 1024 * 1024 }).split('\0').filter(path => path && sourcePathAllowed(path)))].sort();
 const sourceSnapshot = new Map();
 for (const path of sourcePaths) {
@@ -44,10 +44,13 @@ const packageCache = new Map();
 const applicationRoutes = await readApplicationRouteContract(root);
 async function recordDependency(filename) {
   // Vite uses forward slashes on Windows; esbuild may use native separators.
-  if (!filename.replaceAll('\\', '/').includes('/node_modules/')) return;
+  filename = filename.replaceAll('\\', '/');
+  if (!filename.includes('/node_modules/')) return;
   let directory = dirname(filename.replace(/\?.*$/, ''));
   const visited = [];
-  while (directory !== dirname(directory)) {
+  // Generated Vite IDs can contain node_modules without naming an installed
+  // file. Never climb out of that dependency tree and claim the app root.
+  while (directory.replaceAll('\\', '/').includes('/node_modules/')) {
     if (packageCache.has(directory)) {
       const pkg = packageCache.get(directory);
       for (const item of visited) packageCache.set(item, pkg);
@@ -143,7 +146,7 @@ const repositorySbom = await json(join(root, 'SBOM.spdx.json'));
 for (const pkg of repositorySbom.packages.filter(pkg => pkg.name.startsWith('workbox-'))) {
   const metadataPath = pkg.sourceInfo?.match(/Installed metadata: ([^;]+)/)?.[1];
   if (!metadataPath) throw Error(`Missing Workbox metadata path: ${pkg.name}`);
-  await recordDependency(resolve(root, metadataPath));
+  await recordDependency(resolve(root, metadataPath.replaceAll('\\', '/')));
 }
 const licenses = [];
 for (const [key, pkg] of [...distributedPackages].sort(([a], [b]) => a.localeCompare(b, 'en'))) {
@@ -184,7 +187,10 @@ const licenseInventory = {
 await put('legal/preview-license-inventory.json', `${JSON.stringify(licenseInventory, null, 2)}\n`);
 const packageIds = new Set(licenses.map(pkg => `${pkg.name}@${pkg.version}`));
 const previewPackages = repositorySbom.packages.filter(pkg => packageIds.has(`${pkg.name}@${pkg.versionInfo}`));
-if (previewPackages.length !== licenses.length) throw Error('Distributed dependency inventory differs from SBOM; regenerate repository legal artifacts.');
+if (previewPackages.length !== licenses.length) {
+  const recorded = new Set(previewPackages.map(pkg => `${pkg.name}@${pkg.versionInfo}`));
+  throw Error(`Distributed dependency inventory differs from SBOM: ${[...packageIds].filter(id => !recorded.has(id)).join(', ')}. Regenerate repository legal artifacts.`);
+}
 const spdxIds = new Set(previewPackages.map(pkg => pkg.SPDXID));
 await put('SBOM.spdx.json', `${JSON.stringify({
   ...repositorySbom,

@@ -1,0 +1,27 @@
+{
+  "schema": "keepany.vault-finite-guard-check.v1",
+  "status": "passed",
+  "classification": "Mechanical evidence verifier only; not a product/UI defect or new browser execution",
+  "candidate": "8f2230147122ab7cb3c3bc51775cf6a4cce96387",
+  "archiveSha256": "120ba82f23966824abccb2e358facb87e37360f194bd57d7d4841e9854efdbc4",
+  "actualRealUiTests": "Original strict66/672 unchanged",
+  "sameReceiptHashes": 66,
+  "samePngHashes": 672,
+  "sameUiInputs": 6,
+  "onlyChangedMachineInput": "scripts/verify-vault-tool-evidence.mjs",
+  "originalRawArchive": {
+    "path": "docs/qa/2026-10-28/evidence/final-8f223/vault-tools-machine.zip",
+    "sha256": "6e7afd0a2f27eb1eeca6e903c7b5351ec58fc2e9ff5de69be0e58c69b674a92b",
+    "memberPrefix": "strict66/run/"
+  },
+  "supplement": {
+    "path": "docs/qa/2026-10-28/evidence/final-8f223/vault-evidence-finite-check.zip",
+    "bytes": 120638,
+    "sha256": "5e4891324cb34ff53fbe2e6e1956116486a5f1991788a01c940a8d5a2be1ee0d",
+    "members": 74,
+    "crcUniquePathsAllMemberHashes": "passed"
+  },
+  "red": "Original checker accepted width string Infinity with exit0. Exact accepted bytes reconstructed from preserved object and verified against its existing accepted-record receipt SHA ec2d9177a702516761c3c7681ca2923c185bee46b73bc68b56825bb359385e50. Original pretty evidence also retained.",
+  "green": "New checker requires finite numeric width/height >=44. Complete unchanged evidence passes;1positive20negative final probes pass, including width/height strings Infinity and44. New malformed-input artifacts store the exact bytes supplied to the verifier.",
+  "scope": "Human visual/whitebox/owner/independent and overall final delivery remain separate."
+}

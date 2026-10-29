@@ -1,0 +1,56 @@
+{
+  "productCandidate": "231218b25c2c27d71f71cd7bd4f6036ddd023700",
+  "runtimeApplicationChanged": false,
+  "testInputSha256": "6192935bb361680cdc6fb3a3d0381a1bf431be994b44231af52c53b6434679fc",
+  "linuxBaseline": {
+    "head": "15842f58853b4328dc100daee0c4869738213bbd",
+    "jobId": 122901611814,
+    "artifactId": 12826619901,
+    "artifactSha256": "fac6c8ed08c210429b571b55d7fbb63fa2423def634ad7dc2ea163c33773239d",
+    "node49Width390StartedMs": 459878.738063,
+    "primaryError": {
+      "stage": "scenario-error",
+      "elapsedMs": 479845.755395,
+      "wallTime": "2026-10-28T15:19:19.654Z",
+      "monotonicMs": 671718.036765,
+      "message": "The current asynchronous layout and routed paths have settled\n\nTest timeout of 480000ms exceeded"
+    },
+    "finalBackupEntered": false,
+    "status": "failed"
+  },
+  "windowsTwoLogicalCpuRetest": {
+    "workerCount": 1,
+    "testsPassed": 2,
+    "durationMinutes": 8.5,
+    "profiles": [
+      {
+        "caseDirectory": "account-graph-readability--a32f5-ses-across-reload-and-edits",
+        "contextClosedMs": 254404.51819999996,
+        "finalDownloadDeletedMs": 245700.0656,
+        "nodeWidthGroups": 6,
+        "visitedCount": 219,
+        "strictBackupComparisons": 3,
+        "setupWidth": 1536,
+        "status": "passed"
+      },
+      {
+        "caseDirectory": "account-graph-readability--a890a-ses-across-reload-and-edits",
+        "contextClosedMs": 254433.8238,
+        "finalDownloadDeletedMs": 244800.51950000002,
+        "nodeWidthGroups": 6,
+        "visitedCount": 219,
+        "strictBackupComparisons": 3,
+        "setupWidth": 1536,
+        "status": "passed"
+      }
+    ],
+    "same480sBudget": true,
+    "scope": "Normal UI preparation restored to original1536; original per-ID mouse/visibility/readability helper and every original assertion retained; planned distance is not an actual drag-count claim"
+  },
+  "independentStaticReviewCommit": "0fc7f862",
+  "remaining": [
+    "same Linux failures replay under original budget",
+    "full279 in both delivered interfaces plus other CI jobs terminal green"
+  ],
+  "overallStatus": "not-complete"
+}

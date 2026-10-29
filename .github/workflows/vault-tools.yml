@@ -1,0 +1,56 @@
+name: Optional vault tools and modal feedback
+on:
+  workflow_call:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: vault-tools-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/codex/asset-card-layout-20261028' }}
+jobs:
+  vault-tools:
+    timeout-minutes: 35
+    env:
+      KEEPANY_RELEASE_TEST_PORT: 4392
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.10.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: node scripts/build-preview-release.mjs
+      - name: Select the actual compiled portable candidate
+        run: node scripts/select-preview-candidate.mjs
+        timeout-minutes: 1
+      - run: pnpm verify:preview
+        timeout-minutes: 5
+      - name: Verify module faults, cancellation, vault states, and active modal feedback
+        run: pnpm exec playwright test -c playwright.vault-tools.config.ts
+      - name: Verify frozen coverage, candidate identities, receipts and images
+        run: node scripts/verify-vault-tool-evidence.mjs
+      - name: Check that incomplete or mismatched evidence is rejected
+        run: node scripts/test-vault-tool-evidence.mjs
+      - name: Verify ordinary account actions with the unused CSV module blocked
+        run: pnpm exec playwright test -c playwright.core-account.config.ts
+      - name: Verify six core cases and their candidate-bound evidence
+        run: node scripts/verify-core-account-evidence.mjs
+      - name: Reject incomplete core account evidence
+        run: node scripts/test-core-account-evidence.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: vault-tools-machine-evidence
+          path: |
+            test-results/vault-tools
+            test-results/vault-gate-probes-*/results.json
+            test-results/vault-gate-probes-*/logs
+            test-results/core-account-isolation
+            test-results/core-account-gate-probes-*/results.json
+            test-results/core-account-gate-probes-*/logs
+          if-no-files-found: error

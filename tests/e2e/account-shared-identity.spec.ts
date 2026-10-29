@@ -1,3 +1,4 @@
+import { prepareVaultWorkspace, revealPasswordEntries } from "./helpers/vault-access";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { expect, test, type Page } from "@playwright/test";
@@ -102,6 +103,7 @@ for (const locale of ["zh-CN", "en"] as const)
 			}
 			async function vault() {
 				await page.goto("/assets/vault");
+				await prepareVaultWorkspace(page);
 				await expect(
 					page
 						.locator("#password-vault-unlock-master")
@@ -116,6 +118,7 @@ for (const locale of ["zh-CN", "en"] as const)
 						.click();
 				}
 				await expect(page.locator(".password-vault-toolbar")).toBeVisible();
+				await revealPasswordEntries(page);
 			}
 			async function password(
 				name: string,
@@ -124,6 +127,7 @@ for (const locale of ["zh-CN", "en"] as const)
 				assetPath?: string,
 			) {
 				await page
+					.locator(".password-vault-toolbar")
 					.getByRole("button", { name: t("pwVaultNewEntry"), exact: true })
 					.click();
 				await page.locator("#password-vault-entry-title").fill(name);
@@ -245,6 +249,7 @@ for (const locale of ["zh-CN", "en"] as const)
 				const aliasPath = await createAccount(names.alias, phone);
 				await createAccount(names.plus, "shared.matrix+other@example.test");
 				await page.goto("/assets/vault");
+				await prepareVaultWorkspace(page);
 				await h.createVault();
 				await password(names.alias, phone, [email], aliasPath);
 				await password(names.latest, email, [phone]);

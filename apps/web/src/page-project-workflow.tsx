@@ -1,3 +1,5 @@
+import { Textarea } from "./components/ui/textarea";
+import { Input } from "./components/ui/input";
 import { Link, useRouterState } from '@tanstack/react-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -90,10 +92,10 @@ export function ProjectWorkflowPage({ projectId, flow, embedded = false }: { pro
         <h2>{t('workflowPreview')}</h2>
         <p>{t(kind === 'brand' ? 'workflowBrandIntro' : 'workflowCloseIntro')}</p>
         {kind === 'brand' && <div className="project-workflow-fields">
-          <label>{t('workflowProposedName')}<input value={proposal.proposedName} maxLength={160} onChange={event => setProposal({ ...proposal, proposedName: event.target.value })} /></label>
-          <label>{t('workflowProposedDescription')}<textarea value={proposal.proposedDescription} maxLength={2000} rows={2} onChange={event => setProposal({ ...proposal, proposedDescription: event.target.value })} /></label>
-          <label>{t('workflowProposedUrl')}<input type="url" value={proposal.proposedUrl} maxLength={2000} onChange={event => setProposal({ ...proposal, proposedUrl: event.target.value })} /></label>
-          <label>{t('workflowChangeNote')}<textarea value={proposal.changeNote} maxLength={2000} rows={2} onChange={event => setProposal({ ...proposal, changeNote: event.target.value })} /></label>
+          <label>{t('workflowProposedName')}<Input value={proposal.proposedName} maxLength={160} onChange={event => setProposal({ ...proposal, proposedName: event.target.value })} /></label>
+          <label>{t('workflowProposedDescription')}<Textarea value={proposal.proposedDescription} maxLength={2000} rows={2} onChange={event => setProposal({ ...proposal, proposedDescription: event.target.value })} /></label>
+          <label>{t('workflowProposedUrl')}<Input type="url" value={proposal.proposedUrl} maxLength={2000} onChange={event => setProposal({ ...proposal, proposedUrl: event.target.value })} /></label>
+          <label>{t('workflowChangeNote')}<Textarea value={proposal.changeNote} maxLength={2000} rows={2} onChange={event => setProposal({ ...proposal, changeNote: event.target.value })} /></label>
         </div>}
         <div className="project-workflow-before-after"><div><small>{t('workflowCurrentSnapshot')}</small><strong>{project.name}</strong><p>{project.description || '—'}</p><p>{project.url || '—'}</p></div>{kind === 'brand' && <div><small>{t('workflowProposedSnapshot')}</small><strong>{proposal.proposedName || '—'}</strong><p>{proposal.proposedDescription || '—'}</p><p>{proposal.proposedUrl || '—'}</p></div>}</div>
         <p className="project-workflow-warning">{t(kind === 'brand' ? 'workflowBrandManual' : 'workflowCloseManual')}</p>

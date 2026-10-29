@@ -1,0 +1,44 @@
+
+Running 12 tests using 1 worker
+
+
+
+(node:33992) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[1/12] tests\e2e\task-theme-release.spec.ts:529:2 › zh-CN 390px completes the themed task workflow
+[2/12] tests\e2e\task-theme-release.spec.ts:529:2 › zh-CN 1280px completes the themed task workflow
+[3/12] tests\e2e\task-theme-release.spec.ts:529:2 › en-US 390px completes the themed task workflow
+[4/12] tests\e2e\task-theme-release.spec.ts:529:2 › en-US 1280px completes the themed task workflow
+[5/12] tests\e2e\ui-density.regression-1.spec.ts:19:3 › zh-CN 390px dense records and complete date interaction
+[6/12] tests\e2e\ui-density.regression-1.spec.ts:19:3 › zh-CN 768px dense records and complete date interaction
+[7/12] tests\e2e\ui-density.regression-1.spec.ts:19:3 › zh-CN 1280px dense records and complete date interaction
+  1) tests\e2e\ui-density.regression-1.spec.ts:19:3 › zh-CN 1280px dense records and complete date interaction 
+
+    Error: expect(received).toBeGreaterThanOrEqual(expected)
+
+    Expected: >= 6
+    Received:    4
+
+      102 | 							).length,
+      103 | 					),
+    > 104 | 				).toBeGreaterThanOrEqual(6);
+          | 				  ^
+      105 | 			await page.screenshot({
+      106 | 				path: join(evidence, `dense-assets-${language}-${width}.png`),
+      107 | 				fullPage: true,
+        at C:\Users\Administrator\Desktop\project\KeepAny\tests\e2e\ui-density.regression-1.spec.ts:104:7
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\ui-migration\reminder-density-green\ui-density.regression-1-zh-44432-d-complete-date-interaction\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\ui-migration\reminder-density-green\ui-density.regression-1-zh-44432-d-complete-date-interaction\error-context.md
+
+
+Testing stopped early after 1 maximum allowed failures.
+
+  1 failed
+    tests\e2e\ui-density.regression-1.spec.ts:19:3 › zh-CN 1280px dense records and complete date interaction 
+  5 did not run
+  6 passed (1.1m)
+  1 error was not a part of any test, see above for details

@@ -1,0 +1,18 @@
+{
+  "revision": "03c676734e3edb9084540da66ff6297cbf365f03",
+  "runtime": "bun 1.4.2",
+  "cwd": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny",
+  "limits": [
+    "Browser-only run; actual native receipts are probe-NNN.json. Functional evidence materializer has no functional capture rows and prints inconclusive; do not promote that to a machine pass.",
+    "ISSUE-003 was discovered on 03c676734e3e and reproduced in probe-016. Repair verification uses a newly built input and a new report; this run is an incomplete repair checkpoint.",
+    "All screenshots and measurements here predate the card row alignment repair and cannot prove the final repaired input."
+  ],
+  "evidence": [],
+  "learning": [],
+  "verdict": {
+    "status": "inconclusive",
+    "open": [
+      "no evidence rows"
+    ]
+  }
+}

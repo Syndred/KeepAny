@@ -1,11 +1,14 @@
+import { AssetThumbnail } from "./components/AssetThumbnail";
+import { Input } from "./components/ui/input";
 import { Link, useLocation, useNavigate } from "@tanstack/react-router";
-import { Bell, FolderPlus, LayoutDashboard, Layers, Pencil, Plus, Trash2, UserRound } from "lucide-react";
+import { Bell, FolderPlus, MoreHorizontal, LayoutDashboard, Layers, Pencil, Plus, Trash2, UserRound } from "lucide-react";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { normalizeCategoryName, type Asset, type AssetKind } from "../../../packages/domain/src";
 import { localRepository, savePreferenceIfCurrent } from "../../../packages/local-db/src";
 import { Button } from "./components/ui/button";
 import { Dialog } from "./components/ui/dialog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./components/ui/dropdown-menu";
 import { SortableNav, type SortableNavItem } from "./components/navigation/SortableNav";
 import { COLLECTIONS_PREFERENCE_ID, readCollections, type AssetCollection } from "./collection-model";
 import { PageTitle, icons, kinds, liveAssets, niceCategory, useAppContext } from "./view-shared";
@@ -194,25 +197,39 @@ export function CollectionsPage() {
 	return (
 		<main className={`page collections-page${organizing ? " collections-organize-page" : ""}`}>
 			<PageTitle
-				eyebrow={organizing ? t("organizeEyebrow") : t("collectionsTitle")}
 				title={organizing ? t("organizeTitle") : selected ? selected.name : t("collectionMissing")}
 				subtitle={organizing ? t("organizeSubtitle") : selected ? t("collectionAssetCount", { count: memberAssets.length }) : undefined}
 				action={organizing ? <Button variant="primary" onClick={openNew} disabled={collections.length >= 8}><Plus size={16} />{t("collectionCreate")}</Button> :
 					selected ? <Button onClick={() => openEdit(selected)}><Pencil size={16} />{t("collectionEdit")}</Button> : undefined}
 			/>
 			{organizing ? (
+				<div className="collections-organize-main">
 				<section className="card collections-organize-nav" aria-label={t("organizeNavTitle")}>
 					<div className="card-header"><div><h2>{t("organizeNavTitle")}</h2><p>{t("organizeNavHint")}</p></div></div>
 					<div className="collections-nav"><SortableNav items={sidebarItems} activePath="/collections" manageMode onNavigate={() => {}}
 						onOrderChange={(ids) => void updateSidebar("sidebarOrder", ids)} onVisibilityChange={changeVisibility} /></div>
 					{navError && <p className="field-error collections-nav-error" role="alert">{navError}</p>}
 				</section>
+			{organizing && collections.length > 0 && <section className="collections-grid collections-existing" aria-label={t("collectionsTitle")}>
+				{collections.map((collection) => {
+					const count = collection.assetIds.filter((id) => assetById.has(id)).length;
+					return <article className="card collections-tile" key={collection.id}>
+						<FolderPlus size={20} aria-hidden="true" />
+						<Link to="/collections/$id" params={{ id: collection.id }}><strong>{collection.name}</strong></Link>
+						<small>{t("collectionAssetCount", { count })}</small>
+						<div className="actions collections-row-actions"><Button size="small" onClick={() => openEdit(collection)}>{t("edit")}</Button><Button size="small" variant="danger" onClick={() => { setError(""); setDeleteTarget(collection); }}>{t("collectionDelete")}</Button></div>
+						<div className="collections-row-menu"><DropdownMenu><DropdownMenuTrigger render={<Button size="icon" variant="ghost" aria-label={t("moreActions")} />}><MoreHorizontal size={18}/></DropdownMenuTrigger><DropdownMenuContent align="end"><DropdownMenuItem onClick={() => openEdit(collection)}>{t("edit")}</DropdownMenuItem><DropdownMenuItem onClick={() => { setError(""); setDeleteTarget(collection); }}>{t("collectionDelete")}</DropdownMenuItem></DropdownMenuContent></DropdownMenu></div>
+				</article>;
+				})}
+			</section>}
+				</div>
 			) : selected ? (
 				<section className="collections-members" aria-label={selected.name}>
 					{memberAssets.length ? <div className="collections-member-grid">{memberAssets.map((asset) => {
 						const Icon = icons[asset.kind];
+						const imageId = asset.kind === "project" ? asset.projectMedia.homeScreenshotId : asset.kind === "item" ? asset.itemMedia.coverId : asset.attachments[0];
 						return <Link className="collections-member-card" key={asset.id} to="/assets/$kind/$id" params={{ kind: asset.kind, id: asset.id }}>
-							<div className={`collections-member-cover collections-member-${asset.kind}`}><Icon size={34} strokeWidth={1.7} aria-hidden="true" /><span>{niceCategory(asset.category, t)}</span></div>
+							<div className={`collections-member-cover collections-member-${asset.kind}${imageId ? " has-image" : ""}`}>{imageId ? <AssetThumbnail asset={asset} imageId={imageId} /> : <Icon size={34} strokeWidth={1.7} aria-hidden="true" />}<span>{niceCategory(asset.category, t)}</span></div>
 							<div className="collections-member-body"><strong>{asset.name}</strong><small>{asset.description || asset.location || niceCategory(asset.category, t)}</small><div><span className="chip">{t(asset.kind)}</span><span className="chip">{asset.kind === "item" ? asset.itemLifecycleStatus ? t(`itemStatus_${asset.itemLifecycleStatus}`) : t("itemStatusUnrecorded") : t(asset.status)}</span>{asset.kind === "item" && asset.status !== "active" && <span className="chip">{t(asset.status)}</span>}</div></div>
 						</Link>;
 					})}</div> : <div className="card"><p>{t("collectionMembersEmpty")}</p></div>}
@@ -223,10 +240,10 @@ export function CollectionsPage() {
 					<div className="card-header"><h2>{editor.creating ? t("collectionCreate") : t("collectionEdit")}</h2></div>
 					<div className="field">
 						<label htmlFor="collection-name">{t("collectionName")}</label>
-						<input id="collection-name" value={editor.name} placeholder={t("collectionNameExample")} disabled={busy} aria-invalid={!!error} onChange={(event) => { setEditor({ ...editor, name: event.target.value }); setError(""); }} />
+						<Input id="collection-name" value={editor.name} placeholder={t("collectionNameExample")} disabled={busy} aria-invalid={!!error} onChange={(event) => { setEditor({ ...editor, name: event.target.value }); setError(""); }} />
 					</div>
 					<fieldset className="collections-fieldset"><legend>{t("collectionMembers")}</legend>
-						<div className="field"><label htmlFor="collection-search">{t("collectionSearchAssets")}</label><input id="collection-search" value={search} onChange={(event) => setSearch(event.target.value)} /></div>
+						<div className="field"><label htmlFor="collection-search">{t("collectionSearchAssets")}</label><Input id="collection-search" value={search} onChange={(event) => setSearch(event.target.value)} /></div>
 						<div className="collections-options">
 							{kinds.map((kind: AssetKind) => {
 								const group = visibleAssets.filter((asset) => asset.kind === kind).sort((a, b) => a.name.localeCompare(b.name));
@@ -249,17 +266,7 @@ export function CollectionsPage() {
 					</div>
 				</form>
 			</section>}
-			{organizing && collections.length > 0 && <section className="collections-grid collections-existing" aria-label={t("collectionsTitle")}>
-				{collections.map((collection) => {
-					const count = collection.assetIds.filter((id) => assetById.has(id)).length;
-					return <article className="card collections-tile" key={collection.id}>
-						<FolderPlus size={25} aria-hidden="true" />
-						<Link to="/collections/$id" params={{ id: collection.id }}><strong>{collection.name}</strong></Link>
-						<small>{t("collectionAssetCount", { count })}</small>
-						<div className="actions"><Button size="small" onClick={() => openEdit(collection)}>{t("edit")}</Button><Button size="small" variant="danger" onClick={() => { setError(""); setDeleteTarget(collection); }}>{t("collectionDelete")}</Button></div>
-				</article>;
-				})}
-			</section>}
+
 			{deleteTarget && <Dialog title={t("collectionDelete")} onClose={() => { if (!inFlight.current) setDeleteTarget(null); }}>
 				<p>{t("collectionDeleteHint")}</p>
 				{error && <p className="field-error" role="alert">{error}</p>}

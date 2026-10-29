@@ -1,21 +1,20 @@
 name: Verify local release
 
 on:
-  push:
-    # Release tags reuse the successful checks for the same branch commit.
-    branches: ['**']
-  pull_request:
+  # Full release: backups, security, migration, offline, upgrades and all platforms.
+  workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   verify:
     runs-on: ubuntu-latest
+    timeout-minutes: 100
     services:
       postgres:
         image: postgres:17.11-alpine3.24
@@ -42,21 +41,26 @@ jobs:
           node-version: '22'
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+        timeout-minutes: 10
       - name: Verify checked-in third-party license materials
         run: node scripts/phase0/verify-third-party-license-materials.mjs --release
+        timeout-minutes: 5
       - run: pnpm exec playwright install --with-deps chromium
+        timeout-minutes: 10
       - run: pnpm test
+        timeout-minutes: 15
       - name: Verify intake refresh cannot overwrite concurrent edits
         run: pnpm exec playwright test tests/e2e/intake-refresh-race.spec.ts --workers=1 --reporter=dot
+        timeout-minutes: 5
       - run: pnpm build
+        timeout-minutes: 10
       - name: Verify committed web bundle
         run: node scripts/verify-local-release.mjs
-      - name: Fetch previous fixed package for encrypted draft recovery
-        run: git fetch --no-tags --depth=1 origin a7be6146bd34f24bdf495c3827bda69f7bd27a7d
-      - name: Verify delivered files and offline backup flow
-        run: pnpm exec playwright test --config playwright.release.config.ts --reporter=line --trace=retain-on-failure
+        timeout-minutes: 5
+      # The complete business suite runs once on the fresh portable candidate below.
       - name: Verify delivered sync files with isolated PostgreSQL and local HTTP
         run: pnpm exec playwright test --config playwright.sync-release.config.ts --reporter=dot
+        timeout-minutes: 10
       - name: Preserve failed browser evidence
         if: failure()
         uses: actions/upload-artifact@v4
@@ -68,6 +72,7 @@ jobs:
 
   portable-workflows:
     runs-on: ubuntu-latest
+    timeout-minutes: 110
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -78,31 +83,50 @@ jobs:
           node-version: '22'
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+        timeout-minutes: 10
       - run: pnpm exec playwright install --with-deps chromium
-      - name: Build and verify the actual portable preview
-        run: pnpm build:preview && pnpm verify:preview
+        timeout-minutes: 10
+      - name: Build the actual portable preview
+        run: pnpm build:preview
+        timeout-minutes: 10
+      - name: Select the compiled commit explicitly
+        run: node scripts/select-preview-candidate.mjs
+        timeout-minutes: 1
+      - name: Verify that explicit compiled archive
+        run: pnpm verify:preview
+        timeout-minutes: 5
       - name: Fetch previous fixed package for encrypted draft recovery
         run: git fetch --no-tags --depth=1 origin a7be6146bd34f24bdf495c3827bda69f7bd27a7d
-      - name: Exercise local workflows on the extracted portable server
+        timeout-minutes: 5
+      - name: Verify route load recovery on the extracted portable candidate
         shell: bash
         run: |
-          archive="$(node --input-type=module -e 'import fs from "node:fs"; const files=fs.readdirSync("dist/preview").filter(name=>name.endsWith(".zip")); if(files.length!==1)throw Error("Expected one fresh preview"); process.stdout.write(`dist/preview/${files[0]}`);')"
-          KEEPANY_PREVIEW_ARCHIVE="$archive" KEEPANY_RELEASE_TEST_PORT=4391 pnpm exec playwright test --config playwright.portable-release.config.ts --reporter=line --trace=retain-on-failure
-          KEEPANY_PREVIEW_ARCHIVE="$archive" KEEPANY_RELEASE_TEST_PORT=4391 pnpm exec playwright test --config playwright.portable-offline.config.ts --reporter=dot
+          KEEPANY_RELEASE_TEST_PORT=4392 pnpm exec playwright test --config playwright.route-error.config.ts --reporter=line --trace=retain-on-failure --max-failures=1
+        timeout-minutes: 20
+      - name: Exercise local workflows on the extracted portable server
+        shell: bash
+        env:
+          KEEPANY_GRAPH_NETWORK_DIAGNOSTICS: '1'
+        run: |
+          KEEPANY_RELEASE_TEST_PORT=4391 pnpm test:final:workflows --reporter=line --trace=retain-on-failure --max-failures=1
+          KEEPANY_RELEASE_TEST_PORT=4391 pnpm exec playwright test --config playwright.portable-offline.config.ts --reporter=dot
+        timeout-minutes: 70
       - name: Fetch published KeepAny upgrade baseline
         run: git fetch --no-tags --depth=1 origin 64b98e7874a2fdd8d43c8e60de72a25de5800b25
+        timeout-minutes: 5
       - name: Verify published KeepAny data and encrypted vault compatibility
         shell: bash
         run: |
-          archive="$(node --input-type=module -e 'import fs from "node:fs"; const files=fs.readdirSync("dist/preview").filter(name=>name.endsWith(".zip")); if(files.length!==1)throw Error("Expected one fresh preview"); process.stdout.write(`dist/preview/${files[0]}`);')"
-          KEEPANY_PREVIEW_ARCHIVE="$archive" pnpm exec playwright test --config playwright.brand-upgrade.config.ts --reporter=dot
+          pnpm exec playwright test --config playwright.brand-upgrade.config.ts --reporter=dot
+        timeout-minutes: 5
       - name: Fetch published StackPerch upgrade baseline
         run: git fetch --no-tags --depth=1 origin 7ebc2c349f4826759c8b2ef848e8c6133c0b3858
+        timeout-minutes: 5
       - name: Verify StackPerch data and encrypted vault upgrade to KeepAny
         shell: bash
         run: |
-          archive="$(node --input-type=module -e 'import fs from "node:fs"; const files=fs.readdirSync("dist/preview").filter(name=>name.endsWith(".zip")); if(files.length!==1)throw Error("Expected one fresh preview"); process.stdout.write(`dist/preview/${files[0]}`);')"
-          KEEPANY_PREVIEW_ARCHIVE="$archive" pnpm exec playwright test --config playwright.brand-return.config.ts --reporter=dot
+          pnpm exec playwright test --config playwright.brand-return.config.ts --reporter=dot
+        timeout-minutes: 5
       - name: Preserve failed browser evidence
         if: failure()
         uses: actions/upload-artifact@v4
@@ -111,3 +135,12 @@ jobs:
           path: test-results/
           retention-days: 7
           if-no-files-found: ignore
+
+  account-layout:
+    uses: ./.github/workflows/account-layout.yml
+
+  vault-tools:
+    uses: ./.github/workflows/vault-tools.yml
+
+  preview-platforms:
+    uses: ./.github/workflows/preview-package.yml

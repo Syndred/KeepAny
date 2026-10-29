@@ -10,10 +10,29 @@ import { passwordVaultCopy } from "./password-vault-copy";
 import { reminderCopy } from "./reminder-copy";
 import { smartImportCopy } from "./smart-import-copy";
 import { taskEditCopy } from "./task-edit-copy";
+import { sampleLibraryCopy } from "./sample-library-copy";
 import { financeCopy } from "./finance-copy";
 import { candidateMergeCopy } from "./candidate-merge-copy";
 
 const copy: Record<string, [string, string]> = {
+	featureLoadErrorTitle: ["暂时无法打开这个功能", "This feature could not be opened"],
+	featureLoading: ["正在打开…", "Opening…"],
+	pageLoadErrorTitle: ["暂时无法打开这个页面", "This page could not be opened"],
+	pageUnexpectedErrorTitle: ["这个页面遇到了问题", "Something went wrong on this page"],
+	pageLoadErrorHint: ["请重新加载后再试，已保存的资料会保留。", "Reload to try again. Your saved records will be kept."],
+	pageLoadErrorReload: ["重新加载", "Reload page"],
+	workspaceAddAccount: ["新增账号", "Add account"],
+	itemLoanHistory: ["借还", "Lending"],
+	itemMaintenanceHistory: ["维护", "Maintenance"],
+	relationGraphCurrent: ["当前资料", "Current record"],
+ assetView: ["资产视图", "Asset view"],
+ assetListView: ["紧凑列表", "Compact list"],
+ assetCardView: ["卡片", "Cards"],
+ moreActions: ["更多操作", "More actions"],
+ calendarToday: ["今天", "Today"],
+ datePickerTitle: ["选择日期", "Choose date"],
+ datePlaceholder: ["年-月-日", "YYYY-MM-DD"],
+ invalidDate: ["请输入有效日期（年-月-日）", "Enter a valid date (YYYY-MM-DD)"],
 	brandName: ["KeepAny", "KeepAny"],
 	assetsWorkspace: ["资产", "Assets"],
 	accountsWorkspace: ["账号", "Accounts"],
@@ -27,6 +46,7 @@ const copy: Record<string, [string, string]> = {
 	workspacePasswordCount_one: ["{{count}} 个密码条目", "{{count}} password entry"],
 	workspacePasswordCount_other: ["{{count}} 个密码条目", "{{count}} password entries"],
 	workspacePasswordsLocked: ["密码已锁定，解锁后查看。", "Passwords are locked. Unlock to view them."],
+	workspacePasswordsNotCreated: ["尚未建立密码库。", "No password vault has been created."],
 	workspaceOpenPasswords: ["打开密码管理", "Open passwords"],
 	workspaceDomains: ["域名", "Domains"],
 	workspaceLedger: ["费用账本", "Ledger"],
@@ -205,7 +225,7 @@ const copy: Record<string, [string, string]> = {
 	],
 	manageCollections: ["管理分类", "Manage collections"],
 	organizeEyebrow: ["我的工作区", "My workspace"],
-	organizeTitle: ["按你的习惯整理。", "Organize it your way."],
+	organizeTitle: ["自定义侧边栏", "Customize sidebar"],
 	organizeSubtitle: [
 		"调整常用入口，或把不同类型的资产放进同一个分类。",
 		"Arrange your sidebar and group assets of different types in one collection.",
@@ -223,7 +243,7 @@ const copy: Record<string, [string, string]> = {
 	assetCategories: ["按类型分类", "By asset type"],
 	search: ["搜索资产、标签…", "Search assets, tags…"],
 	accountListSearch: ["搜索账号", "Search accounts"],
-	accountListSearchHint: ["搜索名称、账号或服务商", "Search name, account or provider"],
+	accountListSearchHint: ["搜索账号和登录条目", "Search accounts and logins"],
 	accountListClearSearch: ["清空账号搜索", "Clear account search"],
 	globalSearch: ["搜索全部资料", "Search all records"],
 	globalSearchHint: [
@@ -2102,8 +2122,8 @@ Object.assign(copy, {
 	accountVaultReferences: ["密码库引用", "Vault references"],
 	accountNotRecorded: ["未记录", "Not recorded"],
 	tasksHeroTitle: [
-		"提醒之后，还要留下完成记录。",
-		"Keep a record after every reminder.",
+		"待办",
+		"Tasks",
 	],
 	tasksHeroSubtitle: [
 		"充值、续费、保修和核实任务，都能追溯处理结果。",
@@ -2489,6 +2509,7 @@ Object.assign(copy, {
 Object.assign(
 	copy,
 	passwordVaultCopy,
+	sampleLibraryCopy,
 	aiCopy,
 	aiWorkflowCopy,
 	reminderCopy,

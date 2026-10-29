@@ -33,7 +33,7 @@
 
 `qa-t18-portable-completion.spec.ts` 最终 **2/2通过，17.363秒，0失败/跳过/重试**，报告 `test-results/completion-t18-production-results.json`。中文390、英文1280均从正式UI读取公网Example Domain标题、取消后实际备份为零记录，再确认人工修改的名称/description并刷新。默认接口拒绝合成loopback目标，返回422 metadata-private；探针使用127.0.0.1:1，未将用户4180作为目标。
 
-两组合均选择CSV、确认首条、拒绝重复、保留另两条待审核资料及修改稿，实际下载KA1并在干净context正式预览/恢复/刷新，再下载解密逐字段相等：2资产、3候选、原BOM/CRLF全文1份及2个引用完整。两个context均记录 `sourceRequests=[]`、`pageerror=[]`，没有浏览器 `/@fs/` 或 `/@vite/` 源码注入。已目检 [中文390恢复图](../evidence/T18-completion/T18-portable-zh-CN-390.png) 和 [英文1280恢复图](../evidence/T18-completion/T18-portable-en-1280.png)，原文、已确认项、待审核修改稿和操作可读，无页面横向溢出。
+两组合均选择CSV、确认首条、拒绝重复、保留另两条待审核资料及修改稿，实际下载KA1并在干净context正式预览/恢复/刷新，再下载解密逐字段相等：2资产、3候选、原BOM/CRLF全文1份及2个引用完整。两个context均记录 `sourceRequests=[]`、`pageerror=[]`，没有浏览器 `/@fs/` 或 `/@vite/` 源码注入。已目检 [中文390恢复图](https://github.com/Syndred/KeepAny/blob/b8acfe562d8a4852fffad7fb8aa5ef55104e3fb5/docs/qa/2026-10-27/evidence/T18-completion/T18-portable-zh-CN-390.png) 和 [英文1280恢复图](https://github.com/Syndred/KeepAny/blob/b8acfe562d8a4852fffad7fb8aa5ef55104e3fb5/docs/qa/2026-10-27/evidence/T18-completion/T18-portable-en-1280.png)，原文、已确认项、待审核修改稿和操作可读，无页面横向溢出。
 
 近2MiB/200行的完整备份与独立库恢复、载体移除后的原文转移、缺carrier归档拒绝，已由 [T19普通审核数据层回执](T19-completion.md) 补齐：单份原文＋199引用、候选JSON小于3MiB，不提高原备份预算。普通CSV原文与URL元数据两个缺口已有本轮源码、异常路径及新候选交付包证据；最终104项总表由主控统一收口。
 

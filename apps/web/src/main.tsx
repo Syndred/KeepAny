@@ -6,6 +6,7 @@ import { PwaUpdatePrompt } from "./PwaUpdatePrompt";
 import "./i18n";
 import "@xyflow/react/dist/style.css";
 import "./styles.css";
+import "./route-load-error.css";
 
 createRoot(document.getElementById("root")!).render(
 	<React.StrictMode>

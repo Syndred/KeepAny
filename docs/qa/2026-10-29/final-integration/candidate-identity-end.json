@@ -1,0 +1,24 @@
+{
+  "at": "2026-10-29T11:34:10.5176803+08:00",
+  "candidateSourceCommit": "77f5ac7af34123ebb27efbb167ab9e2b3d653ebe",
+  "currentCoordinationCandidateCommit": "77f5ac7af34123ebb27efbb167ab9e2b3d653ebe",
+  "currentIntegrationHead": "3f83dc36f209fe5ae9df48c5f92403801841d14a",
+  "changesSinceCandidate": [
+    "tests/e2e/account-password-layout.spec.ts"
+  ],
+  "currentIntegrationStatus": [
+    " M .gitattributes",
+    "?? docs/implementation/cleanup/final-acceptance.test.ts",
+    "?? docs/qa/2026-10-29/final-integration/"
+  ],
+  "sourceCount": 397,
+  "sourceMismatches": [],
+  "webCount": 132,
+  "webMismatches": [],
+  "manifestSha256": "bf9b392dab18c2d059c49b81a59d9f8b4893398ba3f1d988f8fea814b3e6ef94",
+  "expectedManifestSha256": "bf9b392dab18c2d059c49b81a59d9f8b4893398ba3f1d988f8fea814b3e6ef94",
+  "actualIndexSha256": "e360c9ceb27331ba2f3e5c062157a519ef588b7722d82e2fabfa0cdd9e5663d7",
+  "expectedIndexSha256": "e360c9ceb27331ba2f3e5c062157a519ef588b7722d82e2fabfa0cdd9e5663d7",
+  "httpCount": 132,
+  "httpMismatches": []
+}

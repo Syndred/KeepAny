@@ -12,6 +12,7 @@ import {
 	syntheticKey,
 } from "./helpers/ai-workflow";
 import { selectChoice } from "./helpers/select-choice";
+import { openVaultAccess, prepareVaultWorkspace, revealPasswordEntries } from "./helpers/vault-access";
 
 const evidenceRoot =
 	process.env.KEEPANY_EVIDENCE_DIR ?? "/tmp/keepany-ai-key-persistence";
@@ -39,7 +40,7 @@ async function openSettings(page: Page, language: Language) {
 		.getByRole("button", { name: ui.assistantMenu, exact: true })
 		.click();
 	await page
-		.getByRole("link", { name: ui.assistantAccess, exact: true })
+		.getByRole("menuitem", { name: ui.assistantAccess, exact: true })
 		.click();
 	await page
 		.getByRole("link", {
@@ -61,22 +62,21 @@ async function openVault(page: Page, language: Language, width: number) {
 		})
 		.first()
 		.click();
-	await page.locator(".workspace-navigation").getByRole("link", {
-		name: language === "zh-CN" ? "密码管理" : "Passwords",
-		exact: true,
-	}).click();
-	await expect(page).toHaveURL(/\/assets\/vault/);
+	await expect(page).toHaveURL(/\/accounts$/);
 }
 
 async function createVault(page: Page, language: Language) {
 	const t = copy(language);
 	await page.goto("/assets/vault");
+	await prepareVaultWorkspace(page);
+	await openVaultAccess(page);
 	await page.locator("#password-vault-master").fill(master);
 	await page.locator("#password-vault-master-confirm").fill(master);
 	await page
 		.getByRole("button", { name: t("pwVaultCreate"), exact: true })
 		.click();
 	await expect(page.locator(".password-vault-toolbar")).toBeVisible();
+	await revealPasswordEntries(page);
 }
 
 async function unlockSettings(settings: Locator, language: Language) {

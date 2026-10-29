@@ -1,0 +1,289 @@
+{
+  "schema": "keepany.route-history-machine.v1",
+  "ids": [
+    "FC17-A",
+    "FC17-B",
+    "FC17-C",
+    "FC17-D",
+    "FC17-E",
+    "FC18-A",
+    "FC18-B",
+    "FC18-C"
+  ],
+  "separateVerdicts": {
+    "FC17-F": "Human visual/owner/independent and final normal zero-recovery cloud receipt remain separate.",
+    "FC18-D": "Whitebox, owner and independent review plus final cloud receipt remain separate."
+  },
+  "scope": "Actual 8f223 original24 route and4 strict history cases. The four stableNavigation references are the mobile subset of these original24: the current frozen spec already waits for actual closed-sidebar geometry. They are not claimed as four additional executions. All raw facts and filenames are unchanged.",
+  "candidate": "8f2230147122ab7cb3c3bc51775cf6a4cce96387",
+  "archiveSha256": "120ba82f23966824abccb2e358facb87e37360f194bd57d7d4841e9854efdbc4",
+  "indexSha256": "5d711b8df3176330d7141a74b1671c59edd28ba0f45001a18486492e5b4fd028",
+  "productIdentity": {
+    "path": "docs/qa/2026-10-28/evidence/final-8f223/product-identity.json",
+    "sha256": "d0e12464f2b3afff5d3d0135571266bf85766aa8c734f48cb46d02050928c830"
+  },
+  "testInputs": [
+    {
+      "path": "tests/e2e/route-load-recovery.spec.ts",
+      "canonicalSha256": "0b33e8beb4c0604efff63450611b24792465d24eac79d46924fe0868d499a58a"
+    },
+    {
+      "path": "tests/e2e/password-history-version.spec.ts",
+      "canonicalSha256": "4defc02d5b732fdedc4ff4156abdf9be4c0b63923ea03eb49b8814c2a6bd4f5c"
+    },
+    {
+      "path": "tests/e2e/fixtures/password-smart-import-visual.ts",
+      "canonicalSha256": "5cb532863e4bc17e51c15b8dbdd92eb90b68b8879c1dddca24cb398405346ba5"
+    },
+    {
+      "path": "tests/e2e/helpers/vault-access.ts",
+      "canonicalSha256": "e462afacd6ebed73b322d5a8a25bba00caedc77f612f30462b0eb493bce5b0aa"
+    },
+    {
+      "path": "playwright.route-error.config.ts",
+      "canonicalSha256": "ebac617db0ef841a414124ab88442f5acad91a7f6e93755861c0103188b11c81"
+    },
+    {
+      "path": "playwright.release.config.ts",
+      "canonicalSha256": "3d9fd1b81999a362ec9f7b03155b631073d5a8b1ee1e367f3fbf88a9ed37cdd2"
+    }
+  ],
+  "archives": [
+    {
+      "path": "docs/qa/2026-10-28/evidence/final-8f223/route-history-machine.zip",
+      "sha256": "1a7a9d90f504de0b33f2defb6bc5fb40b5930469fd9e6bc35cb52ae649f4c12d"
+    }
+  ],
+  "recoveries": [
+    {
+      "archive": "docs/qa/2026-10-28/evidence/final-8f223/route-history-machine.zip",
+      "path": "route/evidence/en-1280-recovery/result.json",
+      "sha256": "504be6ba9defe5ba6267c7b2254db5ac4b9af1e1ea83f01af423b1cd61fe6a3f",
+      "language": "en",
+      "width": 1280
+    },
+    {
+      "archive": "docs/qa/2026-10-28/evidence/final-8f223/route-history-machine.zip",
+      "path": "route/evidence/en-1920-recovery/result.json",
+      "sha256": "bf12947dfe579265cd34bc7115e2263d6784554af088a50452a4d1edb7dcfe98",
+      "language": "en",
+      "width": 1920
+    },
+    {
+      "archive": "docs/qa/2026-10-28/evidence/final-8f223/route-history-machine.zip",
+      "path": "route/evidence/en-2560-recovery/result.json",
+      "sha256": "121028572a8e442dda9ed04e5c0513fc85a190ee9c34745a18dde5291c8b2827",
+      "language": "en",
+      "width": 2560
+    },
+    {
+      "archive": "docs/qa/2026-10-28/evidence/final-8f223/route-history-machine.zip",
+      "path": "route/evidence/en-390-recovery/result.json",
+      "sha256": "e13fdbc5f7564e991a2aed9b1544804c3e111dd75ad359c8e0b8e715d8f9c34b",
+      "language": "en",
+      "width": 390
+    },
+    {
+      "archive": "docs/qa/2026-10-28/evidence/final-8f223/route-history-machine.zip",
+      "path": "route/evidence/en-563-recovery/result.json",
+      "sha256": "359039a704f765060f9d379fa2def468bfbf0f9b9eb06e864819f56fd45d114f",
+      "language": "en",
+      "width": 563
+    },
+    {
+      "archive": "docs/qa/2026-10-28/evidence/final-8f223/route-history-machine.zip",
+      "path": "route/evidence/en-768-recovery/result.json",
+      "sha256": "47ee558a3ac29d11d7a0d06a1ebff26cc1a83e10ccf032bd740724547da9d503",
+      "language": "en",
+      "width": 768
+    },
+    {
+      "archive": "docs/qa/2026-10-28/evidence/final-8f223/route-history-machine.zip",
+      "path": "route/evidence/zh-CN-1280-recovery/result.json",
+      "sha256": "0389ab7771bb410b6ae5390613652659afd607e4660512c5dfa4474bdbf029c7",
+      "language": "zh-CN",
+      "width": 1280
+    },
+    {
+      "archive": "docs/qa/2026-10-28/evidence/final-8f223/route-history-machine.zip",
+      "path": "route/evidence/zh-CN-1920-recovery/result.json",
+      "sha256": "6c1fd7255e317f36f2f4d226e26d6a47cabd2e6d3dcfdef23888e8c060be2964",
+      "language": "zh-CN",
+      "width": 1920
+    },
+    {
+      "archive": "docs/qa/2026-10-28/evidence/final-8f223/route-history-machine.zip",
+      "path": "route/evidence/zh-CN-2560-recovery/result.json",
+      "sha256": "5103ae8c4e169435cead32f6abc19c1073c044fe7e53df00e99d3dc5f81f5725",
+      "language": "zh-CN",
+      "width": 2560
+    },
+    {
+      "archive": "docs/qa/2026-10-28/evidence/final-8f223/route-history-machine.zip",
+      "path": "route/evidence/zh-CN-390-recovery/result.json",
+      "sha256": "268188373ec63eaedb439cadddcf811544681ec6db1a68f9d8e375f51ff63097",
+      "language": "zh-CN",
+      "width": 390
+    },
+    {
+      "archive": "docs/qa/2026-10-28/evidence/final-8f223/route-history-machine.zip",
+      "path": "route/evidence/zh-CN-563-recovery/result.json",
+      "sha256": "e801aa13cc1fd357144d1ac95366541b6b90d51e690be0cd3a198962cd98dba7",
+      "language": "zh-CN",
+      "width": 563
+    },
+    {
+      "archive": "docs/qa/2026-10-28/evidence/final-8f223/route-history-machine.zip",
+      "path": "route/evidence/zh-CN-768-recovery/result.json",
+      "sha256": "45d85ab2bf385848207624429d37d5c5284ebf17be332895b7aff0e61fb3c183",
+      "language": "zh-CN",
+      "width": 768
+    }
+  ],
+  "routes": [
+    {
+      "archive": "docs/qa/2026-10-28/evidence/final-8f223/route-history-machine.zip",
+      "path": "route/evidence/en-1280-routes/result.json",
+      "sha256": "b41d4e886f6507ad66ebbfb65e93ea856f1c513de37c2480f947738273f13b7e",
+      "language": "en",
+      "width": 1280
+    },
+    {
+      "archive": "docs/qa/2026-10-28/evidence/final-8f223/route-history-machine.zip",
+      "path": "route/evidence/en-1920-routes/result.json",
+      "sha256": "da9b1e7e9550074550f383f8252853978940fcc3bc5800d01935f12be5efda54",
+      "language": "en",
+      "width": 1920
+    },
+    {
+      "archive": "docs/qa/2026-10-28/evidence/final-8f223/route-history-machine.zip",
+      "path": "route/evidence/en-2560-routes/result.json",
+      "sha256": "2294842e0bee30a192c4dda8c786cbc17e4b7e80dbba14143df4595044bff118",
+      "language": "en",
+      "width": 2560
+    },
+    {
+      "archive": "docs/qa/2026-10-28/evidence/final-8f223/route-history-machine.zip",
+      "path": "route/evidence/en-390-routes/result.json",
+      "sha256": "0e8583ac626410b5c074ab608d294483e9168c77edecb6f98f60749e592f587f",
+      "language": "en",
+      "width": 390
+    },
+    {
+      "archive": "docs/qa/2026-10-28/evidence/final-8f223/route-history-machine.zip",
+      "path": "route/evidence/en-563-routes/result.json",
+      "sha256": "4902dd146680905386ccce8c306e68809818c01ec565bba2c0adfcdd03cc4cf8",
+      "language": "en",
+      "width": 563
+    },
+    {
+      "archive": "docs/qa/2026-10-28/evidence/final-8f223/route-history-machine.zip",
+      "path": "route/evidence/en-768-routes/result.json",
+      "sha256": "7d76556e0d336d7efe920b5a6024af2467546605c0eb64e39fb6185246dd7e2b",
+      "language": "en",
+      "width": 768
+    },
+    {
+      "archive": "docs/qa/2026-10-28/evidence/final-8f223/route-history-machine.zip",
+      "path": "route/evidence/zh-CN-1280-routes/result.json",
+      "sha256": "29841a315f5c4ecfe347fb78e9f8fc380b3486b2d160db52ae466d637882608a",
+      "language": "zh-CN",
+      "width": 1280
+    },
+    {
+      "archive": "docs/qa/2026-10-28/evidence/final-8f223/route-history-machine.zip",
+      "path": "route/evidence/zh-CN-1920-routes/result.json",
+      "sha256": "6d2d0f8f04fc7d735d0408ad54a86174bfccfd110eef351072976325e6b6e023",
+      "language": "zh-CN",
+      "width": 1920
+    },
+    {
+      "archive": "docs/qa/2026-10-28/evidence/final-8f223/route-history-machine.zip",
+      "path": "route/evidence/zh-CN-2560-routes/result.json",
+      "sha256": "5f8a7155c4d239116d99f141427d1a779f5d54045fa42ad8e888ab3b04c358ae",
+      "language": "zh-CN",
+      "width": 2560
+    },
+    {
+      "archive": "docs/qa/2026-10-28/evidence/final-8f223/route-history-machine.zip",
+      "path": "route/evidence/zh-CN-390-routes/result.json",
+      "sha256": "5e05eee747d77a65587467acb0dc332b18b6a6fdf3fc59cfc0adfa8425896c05",
+      "language": "zh-CN",
+      "width": 390
+    },
+    {
+      "archive": "docs/qa/2026-10-28/evidence/final-8f223/route-history-machine.zip",
+      "path": "route/evidence/zh-CN-563-routes/result.json",
+      "sha256": "d398ae971b6ff1192a2a61a015a0cbf0280ff2986d89dbb3487e3f1f4b364e81",
+      "language": "zh-CN",
+      "width": 563
+    },
+    {
+      "archive": "docs/qa/2026-10-28/evidence/final-8f223/route-history-machine.zip",
+      "path": "route/evidence/zh-CN-768-routes/result.json",
+      "sha256": "620df3d7c2a350b67626566f89cb1f21f14965b00acafdd43fb5f093206b5e26",
+      "language": "zh-CN",
+      "width": 768
+    }
+  ],
+  "stableNavigation": [
+    {
+      "archive": "docs/qa/2026-10-28/evidence/final-8f223/route-history-machine.zip",
+      "path": "route/evidence/en-390-routes/result.json",
+      "sha256": "0e8583ac626410b5c074ab608d294483e9168c77edecb6f98f60749e592f587f",
+      "language": "en",
+      "width": 390
+    },
+    {
+      "archive": "docs/qa/2026-10-28/evidence/final-8f223/route-history-machine.zip",
+      "path": "route/evidence/en-563-routes/result.json",
+      "sha256": "4902dd146680905386ccce8c306e68809818c01ec565bba2c0adfcdd03cc4cf8",
+      "language": "en",
+      "width": 563
+    },
+    {
+      "archive": "docs/qa/2026-10-28/evidence/final-8f223/route-history-machine.zip",
+      "path": "route/evidence/zh-CN-390-routes/result.json",
+      "sha256": "5e05eee747d77a65587467acb0dc332b18b6a6fdf3fc59cfc0adfa8425896c05",
+      "language": "zh-CN",
+      "width": 390
+    },
+    {
+      "archive": "docs/qa/2026-10-28/evidence/final-8f223/route-history-machine.zip",
+      "path": "route/evidence/zh-CN-563-routes/result.json",
+      "sha256": "d398ae971b6ff1192a2a61a015a0cbf0280ff2986d89dbb3487e3f1f4b364e81",
+      "language": "zh-CN",
+      "width": 563
+    }
+  ],
+  "history": [
+    {
+      "archive": "docs/qa/2026-10-28/evidence/final-8f223/route-history-machine.zip",
+      "path": "history/evidence/fc18-en-1280/result.json",
+      "sha256": "62636d675f0dba1f3dbe2dfe0dcf88be61f8fbf9288a6271dc349db7c6a674b2",
+      "language": "en",
+      "width": 1280
+    },
+    {
+      "archive": "docs/qa/2026-10-28/evidence/final-8f223/route-history-machine.zip",
+      "path": "history/evidence/fc18-en-390/result.json",
+      "sha256": "236d22c110adc462bee7044a579f5b02433a47c4234bb191e37b6d04ebc29090",
+      "language": "en",
+      "width": 390
+    },
+    {
+      "archive": "docs/qa/2026-10-28/evidence/final-8f223/route-history-machine.zip",
+      "path": "history/evidence/fc18-zh-CN-1280/result.json",
+      "sha256": "1545acb0294e6d5c2d4ab9aef74f1f379108b707fcbe8ff65175151d540ede15",
+      "language": "zh-CN",
+      "width": 1280
+    },
+    {
+      "archive": "docs/qa/2026-10-28/evidence/final-8f223/route-history-machine.zip",
+      "path": "history/evidence/fc18-zh-CN-390/result.json",
+      "sha256": "f148e8405a563a3ba8b20ebc20edad178fe0c67aca58df439a1d9900d4b14d4a",
+      "language": "zh-CN",
+      "width": 390
+    }
+  ]
+}

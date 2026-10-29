@@ -1,0 +1,50 @@
+{
+  "version": 1,
+  "id": "001",
+  "cwd": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny",
+  "argv": [
+    "node",
+    "scripts/verify-preview-release.mjs",
+    "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\preview\\KeepAny-0.1.0-preview.941d8c64173a.dirty-portable.zip"
+  ],
+  "deadline": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\test-results\\ui-migration\\qa-completion-functional\\.qa-evidence\\001\\deadline.json",
+  "timing": [
+    {
+      "guard": "qa-deadline",
+      "event": "started",
+      "version": 1,
+      "startedAt": "2026-10-28T02:15:19.731Z",
+      "deadlineAt": "2026-10-28T02:17:19.731Z",
+      "budgetMs": 120000,
+      "observedAt": "2026-10-28T02:15:19.790Z",
+      "remainingMs": 119941,
+      "expired": false
+    },
+    {
+      "guard": "qa-deadline",
+      "event": "finished",
+      "observedAt": "2026-10-28T02:15:34.902Z",
+      "deadlineAt": "2026-10-28T02:17:19.731Z",
+      "timedOut": false,
+      "exitCode": 0
+    }
+  ],
+  "startedAt": "2026-10-28T02:15:19.742Z",
+  "completedAt": "2026-10-28T02:15:34.918Z",
+  "exitCode": 0,
+  "signal": null,
+  "status": "complete",
+  "observation": {
+    "sha256": "06fbb099ad8e5645a12d2741b4786dd24161a4b15ba1dba2daa5ae1a9bfad901",
+    "bytes": 941
+  },
+  "publicOutput": false,
+  "stdout": {
+    "sha256": "06fbb099ad8e5645a12d2741b4786dd24161a4b15ba1dba2daa5ae1a9bfad901",
+    "bytes": 941
+  },
+  "stderr": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  }
+}

@@ -1,3 +1,4 @@
+import { Input } from "./ui/input";
 import { useMemo, useRef, useState } from "react";
 import { FileDown } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -231,7 +232,7 @@ export function ExternalLinkImportPanel() {
 					<div className="form-grid external-image-rules">
 						<div className="field">
 							<label htmlFor="ext-min-images">{t("extMinScreenshots")}</label>
-							<input
+							<Input
 								id="ext-min-images"
 								type="number"
 								min="0"
@@ -242,7 +243,7 @@ export function ExternalLinkImportPanel() {
 						</div>
 						<div className="field">
 							<label htmlFor="ext-max-images">{t("extMaxScreenshots")}</label>
-							<input
+							<Input
 								id="ext-max-images"
 								type="number"
 								min="0"

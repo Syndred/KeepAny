@@ -1,0 +1,15 @@
+{
+  "index": 93,
+  "command": [
+    "C:\\Users\\Administrator\\.codex\\toolchains\\bun\\node_modules\\bun\\bin\\bun.exe",
+    "C:\\Users\\Administrator\\.codex\\toolchains\\gstack\\bin\\gstack-qa-deadline",
+    "run",
+    "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\test-results\\ui-migration\\qa-final-8457\\deadline.json",
+    "--",
+    "C:\\Users\\Administrator\\.codex\\toolchains\\gstack\\browse\\dist\\browse.exe",
+    "js",
+    "JSON.stringify({hero:document.querySelector(\".overview-hero\").getBoundingClientRect().height,cards:Array.from(document.querySelectorAll(\".overview-project-card\")).map(e=>({width:e.getBoundingClientRect().width,height:e.getBoundingClientRect().height})),headings:Array.from(document.querySelectorAll(\".overview-project-top h3\")).length})"
+  ],
+  "exitCode": 0,
+  "output": "{\"hero\":169.21875,\"cards\":[{\"width\":514.5,\"height\":147.59375},{\"width\":514.5,\"height\":147.59375}],\"headings\":0}\n"
+}

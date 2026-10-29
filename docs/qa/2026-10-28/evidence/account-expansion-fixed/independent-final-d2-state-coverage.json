@@ -1,0 +1,989 @@
+{
+  "schema": "keepany.account-state-coverage.v1",
+  "candidate": "d2fdbdee264b524219ae091ca78b120c6428ff61",
+  "indexSha256": "3477691fbbe51486e4d31f1653c5900c7047d5d116e8b95b847ff5ff940a8c6f",
+  "archiveSha256": "1378f155667cf077d15b3368bf22662da1c47f8c6fbecca5095dd2131b51ed3e",
+  "scope": "Independent actual d2 real UI busy30 and populatedSocial10. Per-consumer selection preserves earlier valid states and separates incomplete capture windows; no failed frame relabelled. Auxiliary real UI imported 200-entry fixture applies only to final English restore states. Human visual separately recorded.",
+  "cases": [
+    {
+      "id": "busy:workspace:zh-CN:390",
+      "status": "passed",
+      "operation": "workspace-samples",
+      "imageKind": "native document-coordinate region; original full toolbar or complete button union as raw capture-method specifies",
+      "recoveryImageKind": "native stable toolbar region",
+      "evidence": [
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "busy/zh-CN-390.json",
+          "sha256": "f65c7c89374e663db0c9f2e97399c6730ac49f21373318956dfcc94f6724519a"
+        },
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "busy/zh-CN-390-workspace-samples-busy.png",
+          "sha256": "da8f87f9a5218a143a65093113c128c37960320168954d7cc57fdb58d64cfb6d"
+        },
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "busy/zh-CN-390-workspace-samples-recovered.png",
+          "sha256": "b1c881975280fc6d5a569eb476bf0c8bd66376ce5dd3fe69574378a2da949a7d"
+        }
+      ]
+    },
+    {
+      "id": "busy:detail:zh-CN:390",
+      "status": "passed",
+      "operation": "detail-restore",
+      "imageKind": "native document-coordinate region; original full toolbar or complete button union as raw capture-method specifies",
+      "recoveryImageKind": "native stable toolbar region",
+      "evidence": [
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "busy/zh-CN-390.json",
+          "sha256": "f65c7c89374e663db0c9f2e97399c6730ac49f21373318956dfcc94f6724519a"
+        },
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "busy/zh-CN-390-detail-restore-busy.png",
+          "sha256": "26cade8b189c58afc9bcfffdcaa380a68f7983b5c493f7309621f3667a69bd7e"
+        },
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "busy/zh-CN-390-detail-restore-recovered.png",
+          "sha256": "1657bf96bc8772c1e52222ad43276a7891fae7684623d0f2455d4837ccab132b"
+        }
+      ]
+    },
+    {
+      "id": "busy:asset-filter:zh-CN:390",
+      "status": "passed",
+      "operation": "focused-restore",
+      "imageKind": "native document-coordinate region; original full toolbar or complete button union as raw capture-method specifies",
+      "recoveryImageKind": "native stable toolbar region",
+      "evidence": [
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "busy-focused-complement-grep-fixed/zh-CN-390.json",
+          "sha256": "82ef5d2cb7cda47f4f18a192e67d739eddd9437fab285e789261ce2d20a49710"
+        },
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "busy-focused-complement-grep-fixed/zh-CN-390-focused-restore-busy.png",
+          "sha256": "b144ee9d35d61e03393b75311872088f59b055f14c1db058c2b7595b83ff8a49"
+        },
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "busy-focused-complement-grep-fixed/zh-CN-390-focused-restore-recovered.png",
+          "sha256": "50b267dc5f3f994164678b507bcbff855d4e1ee5a27e24aa082b18d9693784c6"
+        }
+      ]
+    },
+    {
+      "id": "social-populated:zh-CN:390",
+      "status": "passed",
+      "evidence": [
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "social/zh-CN-390-social.json",
+          "sha256": "31cfe56bcb004d5a6b5c537d6bd2352fcb295eccc2e055cbe940f0b4a64b67ca"
+        },
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "social/zh-CN-390-social-filtered.png",
+          "sha256": "fa3f79da9721f23b5f8cc0c2861a34d6ad5f63771d8796859173c1f4c51f2f03"
+        },
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "social/zh-CN-390-social-neighbors.png",
+          "sha256": "a898134e1223b309b1f24c3a7abba99231fe8a40af3b9d8b4b5c92d9ad7bc7ad"
+        },
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "social/zh-CN-390-social-restored.png",
+          "sha256": "f4e5a8b9f3513c043484eec46d73c53063a96f8fe3091f831abe0e70d06b851c"
+        }
+      ]
+    },
+    {
+      "id": "busy:workspace:zh-CN:768",
+      "status": "passed",
+      "operation": "workspace-samples",
+      "imageKind": "native document-coordinate region; original full toolbar or complete button union as raw capture-method specifies",
+      "recoveryImageKind": "native stable toolbar region",
+      "evidence": [
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "busy-remaining/zh-CN-768.json",
+          "sha256": "29d892589cdb6f4a89188bcbfa9edabc53a31be2abd0e82f72a07b13c9ce70b7"
+        },
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "busy-remaining/zh-CN-768-workspace-samples-busy.png",
+          "sha256": "f2293344b7c7b19d4001f600a771ef394a9fb7d6fa0b0911decdd0d57b4b4d25"
+        },
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "busy-remaining/zh-CN-768-workspace-samples-recovered.png",
+          "sha256": "2d1caea9bd94686ddca5a18fafa404b782a8703c9b0e546430ed8c626226c116"
+        }
+      ]
+    },
+    {
+      "id": "busy:detail:zh-CN:768",
+      "status": "passed",
+      "operation": "detail-restore",
+      "imageKind": "native document-coordinate region; original full toolbar or complete button union as raw capture-method specifies",
+      "recoveryImageKind": "native stable toolbar region",
+      "evidence": [
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "busy-remaining/zh-CN-768.json",
+          "sha256": "29d892589cdb6f4a89188bcbfa9edabc53a31be2abd0e82f72a07b13c9ce70b7"
+        },
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "busy-remaining/zh-CN-768-detail-restore-busy.png",
+          "sha256": "dce471e41c5fe5d76c4c2d600c042bb62bb06e5b211f4bc1723389fd2960e952"
+        },
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "busy-remaining/zh-CN-768-detail-restore-recovered.png",
+          "sha256": "d296e14e4506c78ac96f3ebe9a0f92ce6580e69a2d097fc33171ab2ed70f41f4"
+        }
+      ]
+    },
+    {
+      "id": "busy:asset-filter:zh-CN:768",
+      "status": "passed",
+      "operation": "focused-restore",
+      "imageKind": "native document-coordinate region; original full toolbar or complete button union as raw capture-method specifies",
+      "recoveryImageKind": "native stable toolbar region",
+      "evidence": [
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "busy-remaining/zh-CN-768.json",
+          "sha256": "29d892589cdb6f4a89188bcbfa9edabc53a31be2abd0e82f72a07b13c9ce70b7"
+        },
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "busy-remaining/zh-CN-768-focused-restore-busy.png",
+          "sha256": "a53f3089a1efdfda9c27fa322f0bacd1719ad3664627a0e8f498dee7e335bff1"
+        },
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "busy-remaining/zh-CN-768-focused-restore-recovered.png",
+          "sha256": "42cb9b5c3704d0b2f35a3812a9be71d1c17dd8f926be5f58fe7860c88d4e29c5"
+        }
+      ]
+    },
+    {
+      "id": "social-populated:zh-CN:768",
+      "status": "passed",
+      "evidence": [
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "social/zh-CN-768-social.json",
+          "sha256": "9653000dd826271a8f2812e641bb7b78438d1ae27bf38e3b08d1944ac058ec2e"
+        },
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "social/zh-CN-768-social-filtered.png",
+          "sha256": "69f22246fb091d32e89c0f8f6004f1897263912a6a1e5f5d26fa464e3e38b038"
+        },
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "social/zh-CN-768-social-neighbors.png",
+          "sha256": "3f8c851cf5ab1159efd4bc39a7afa0255be722c6cf8740d5b5355cdff23f031b"
+        },
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "social/zh-CN-768-social-restored.png",
+          "sha256": "a600393465372138bf34e1ff5510462e97e3d2c073bed8562f9a745bbef57a0b"
+        }
+      ]
+    },
+    {
+      "id": "busy:workspace:zh-CN:1280",
+      "status": "passed",
+      "operation": "workspace-samples",
+      "imageKind": "native document-coordinate region; original full toolbar or complete button union as raw capture-method specifies",
+      "recoveryImageKind": "native stable toolbar region",
+      "evidence": [
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "busy-remaining/zh-CN-1280.json",
+          "sha256": "f6f45aa376fb28a705a4123180e116401d6448cffc152f7ce55236734045d849"
+        },
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "busy-remaining/zh-CN-1280-workspace-samples-busy.png",
+          "sha256": "3a9b1605a4b2e9cc9ae85ed5b95ff059c2416573fb774f42accf077d3b43ed2a"
+        },
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "busy-remaining/zh-CN-1280-workspace-samples-recovered.png",
+          "sha256": "eca6705f83c9f62aa83dc0669320114b2f759c92c9596bfca4d976c63dd051f7"
+        }
+      ]
+    },
+    {
+      "id": "busy:detail:zh-CN:1280",
+      "status": "passed",
+      "operation": "detail-restore",
+      "imageKind": "native document-coordinate region; original full toolbar or complete button union as raw capture-method specifies",
+      "recoveryImageKind": "native stable toolbar region",
+      "evidence": [
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "busy-remaining/zh-CN-1280.json",
+          "sha256": "f6f45aa376fb28a705a4123180e116401d6448cffc152f7ce55236734045d849"
+        },
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "busy-remaining/zh-CN-1280-detail-restore-busy.png",
+          "sha256": "94f28076a8856200f50c9f1d5026e5b7638247bfb7861b52f5d1ad772456b823"
+        },
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "busy-remaining/zh-CN-1280-detail-restore-recovered.png",
+          "sha256": "73257e9cd0fadaf659d43ed34113a760e3e3e9cd6cf3dd6ed953b114b8b3dc90"
+        }
+      ]
+    },
+    {
+      "id": "busy:asset-filter:zh-CN:1280",
+      "status": "passed",
+      "operation": "focused-restore",
+      "imageKind": "native document-coordinate region; original full toolbar or complete button union as raw capture-method specifies",
+      "recoveryImageKind": "native stable toolbar region",
+      "evidence": [
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "busy-remaining/zh-CN-1280.json",
+          "sha256": "f6f45aa376fb28a705a4123180e116401d6448cffc152f7ce55236734045d849"
+        },
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "busy-remaining/zh-CN-1280-focused-restore-busy.png",
+          "sha256": "d13bc1e91e9eabf03146125db8331304e53478bf2bdc2f30fc42a45fd5783194"
+        },
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "busy-remaining/zh-CN-1280-focused-restore-recovered.png",
+          "sha256": "63ae1a29aa0f7c50acb9063517fc1c2576a31d4086295b82a7d89609e6d7d4d3"
+        }
+      ]
+    },
+    {
+      "id": "social-populated:zh-CN:1280",
+      "status": "passed",
+      "evidence": [
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "social/zh-CN-1280-social.json",
+          "sha256": "b05656006c6ee16a47a9243e65639a6148645c3556d7ce16bc577a8d2291cd03"
+        },
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "social/zh-CN-1280-social-filtered.png",
+          "sha256": "9eaf155e49ffeca5a1e023440e14dd3036c097ded7964efb27c6428236d4391b"
+        },
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "social/zh-CN-1280-social-neighbors.png",
+          "sha256": "a02bf532f7b7fa02a1ae75e82e041b38866f128c6c1d21d511bcd425b66b020f"
+        },
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "social/zh-CN-1280-social-restored.png",
+          "sha256": "5747c98808c0e77dc2bc83b95079e7d05ac436f3694f804ecb2e318e765e4702"
+        }
+      ]
+    },
+    {
+      "id": "busy:workspace:zh-CN:1920",
+      "status": "passed",
+      "operation": "workspace-samples",
+      "imageKind": "native document-coordinate region; original full toolbar or complete button union as raw capture-method specifies",
+      "recoveryImageKind": "native stable toolbar region",
+      "evidence": [
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "busy-remaining/zh-CN-1920.json",
+          "sha256": "ec3d70e03a94ef1241ce0e7c6bfb5ffc0709c521981304717af395eaf2d183a9"
+        },
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "busy-remaining/zh-CN-1920-workspace-samples-busy.png",
+          "sha256": "b4dfb7257076ad8a28f1afb37ae040c48492ca7ea15e7315102d43f4c447c59c"
+        },
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "busy-remaining/zh-CN-1920-workspace-samples-recovered.png",
+          "sha256": "9040e637150ef11396bdfe9cddbfb79c6d36bce956a9c80ad0613e683dff6745"
+        }
+      ]
+    },
+    {
+      "id": "busy:detail:zh-CN:1920",
+      "status": "passed",
+      "operation": "detail-restore",
+      "imageKind": "native document-coordinate region; original full toolbar or complete button union as raw capture-method specifies",
+      "recoveryImageKind": "native stable toolbar region",
+      "evidence": [
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "busy-remaining/zh-CN-1920.json",
+          "sha256": "ec3d70e03a94ef1241ce0e7c6bfb5ffc0709c521981304717af395eaf2d183a9"
+        },
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "busy-remaining/zh-CN-1920-detail-restore-busy.png",
+          "sha256": "10f17f7114674b354c1c1b3060fdb4dc4fab5f0bd7cbc609a9ec3c3f38b5efa6"
+        },
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "busy-remaining/zh-CN-1920-detail-restore-recovered.png",
+          "sha256": "1ae2f1843a7891d8dd1b715b3449ed0f035e9a328335e001be7766ed1d7c56ed"
+        }
+      ]
+    },
+    {
+      "id": "busy:asset-filter:zh-CN:1920",
+      "status": "passed",
+      "operation": "focused-restore",
+      "imageKind": "native document-coordinate region; original full toolbar or complete button union as raw capture-method specifies",
+      "recoveryImageKind": "native stable toolbar region",
+      "evidence": [
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "busy-remaining/zh-CN-1920.json",
+          "sha256": "ec3d70e03a94ef1241ce0e7c6bfb5ffc0709c521981304717af395eaf2d183a9"
+        },
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "busy-remaining/zh-CN-1920-focused-restore-busy.png",
+          "sha256": "8b0c5a181c1963f8c90fcbecd39b0615addd73b3de3c96fb9fe52c17197eb0cf"
+        },
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "busy-remaining/zh-CN-1920-focused-restore-recovered.png",
+          "sha256": "3744709540398d545e156a35ae015dddd0bac1d71f2e6b1737c74be44ffb9f4c"
+        }
+      ]
+    },
+    {
+      "id": "social-populated:zh-CN:1920",
+      "status": "passed",
+      "evidence": [
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "social/zh-CN-1920-social.json",
+          "sha256": "9acae2b89654ef1b9b0a27f368791d5fb8a31f2752e743f9247ea4866eeae47d"
+        },
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "social/zh-CN-1920-social-filtered.png",
+          "sha256": "c64d99c40f0caaedbe6102e22716c399bcff449e4c61aaef10e1fa4cba28e522"
+        },
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "social/zh-CN-1920-social-neighbors.png",
+          "sha256": "170f7320e156427204d8f9b931d00c0f28b4da43b67496b3fd5eb0a3442897c8"
+        },
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "social/zh-CN-1920-social-restored.png",
+          "sha256": "0e0902901d4f40c7295d6a85ba1b0f45f205cd361cd9a6268d2c48ac787f9d25"
+        }
+      ]
+    },
+    {
+      "id": "busy:workspace:zh-CN:2560",
+      "status": "passed",
+      "operation": "workspace-samples",
+      "imageKind": "native document-coordinate region; original full toolbar or complete button union as raw capture-method specifies",
+      "recoveryImageKind": "native stable toolbar region",
+      "evidence": [
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "busy-remaining/zh-CN-2560.json",
+          "sha256": "4b08ff55dfd29100a21b9bef11fac2bb1a9de7152817fac2de38615958e62a7f"
+        },
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "busy-remaining/zh-CN-2560-workspace-samples-busy.png",
+          "sha256": "2fd35f62e0dba33640609b513d88e223e6799502a11bdf029dfd468087742cad"
+        },
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "busy-remaining/zh-CN-2560-workspace-samples-recovered.png",
+          "sha256": "d5f350bd008ea10d63b3152116b0efd987f66c4f7635e5da769cd6f53b3f8787"
+        }
+      ]
+    },
+    {
+      "id": "busy:detail:zh-CN:2560",
+      "status": "passed",
+      "operation": "detail-restore",
+      "imageKind": "native document-coordinate region; original full toolbar or complete button union as raw capture-method specifies",
+      "recoveryImageKind": "native stable toolbar region",
+      "evidence": [
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "busy-remaining/zh-CN-2560.json",
+          "sha256": "4b08ff55dfd29100a21b9bef11fac2bb1a9de7152817fac2de38615958e62a7f"
+        },
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "busy-remaining/zh-CN-2560-detail-restore-busy.png",
+          "sha256": "b7ab521a8bd9002beb836ff8d7421218499732025c1bb15308993b06368a8057"
+        },
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "busy-remaining/zh-CN-2560-detail-restore-recovered.png",
+          "sha256": "f412d02a93f2b4c759c553078242a6f4f6975bae5757b42f0edbf31e39838908"
+        }
+      ]
+    },
+    {
+      "id": "busy:asset-filter:zh-CN:2560",
+      "status": "passed",
+      "operation": "focused-restore",
+      "imageKind": "native document-coordinate region; original full toolbar or complete button union as raw capture-method specifies",
+      "recoveryImageKind": "native stable toolbar region",
+      "evidence": [
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "busy-focused-2560-button-union/zh-CN-2560.json",
+          "sha256": "4eed812783e53d43c499e8ea8d17308ccce26a6bd0f3a695d1595641a2f2d5d1"
+        },
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "busy-focused-2560-button-union/zh-CN-2560-focused-restore-busy.png",
+          "sha256": "037ace80f3699b9c70e09e8548ee0336647da42a2e7c3179fe7be41604a74c9d"
+        },
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "busy-focused-2560-button-union/zh-CN-2560-focused-restore-recovered.png",
+          "sha256": "43865125b9015ed4f7e45abb6b3395c6ca789ac00304a6d1a13b41b1fa14dc26"
+        }
+      ]
+    },
+    {
+      "id": "social-populated:zh-CN:2560",
+      "status": "passed",
+      "evidence": [
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "social/zh-CN-2560-social.json",
+          "sha256": "f9260f5632e4bc081291e3a598470d8f256ec8d445556a811f33682ab27048a1"
+        },
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "social/zh-CN-2560-social-filtered.png",
+          "sha256": "da32af8b3d3b07499dff14a287d487536fdbffac0b289bfc8ee48675f1575085"
+        },
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "social/zh-CN-2560-social-neighbors.png",
+          "sha256": "9e5442b63ab93c238c355703bd6bad172228315c75364f6d7264d87ebc43114b"
+        },
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "social/zh-CN-2560-social-restored.png",
+          "sha256": "7023a2a2fecbcac2b78861cb47c7258186a0b62f6bffea667783f28edc807922"
+        }
+      ]
+    },
+    {
+      "id": "busy:workspace:en:390",
+      "status": "passed",
+      "operation": "workspace-samples",
+      "imageKind": "native document-coordinate region; original full toolbar or complete button union as raw capture-method specifies",
+      "recoveryImageKind": "native stable toolbar region",
+      "evidence": [
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "busy-english-button-union/en-390.json",
+          "sha256": "1f85a1b08da2657cfceeb844264d0e7b84c9e4192adbc053475e7f57995d51e6"
+        },
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "busy-english-button-union/en-390-workspace-samples-busy.png",
+          "sha256": "a803f5b72f178db8252288b28820723bf405ba480b0eb612caebf9075918db44"
+        },
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "busy-english-button-union/en-390-workspace-samples-recovered.png",
+          "sha256": "3d5732d56d2469197a3b72fd42d510abae2c6fb350dce07bc65826a93824339d"
+        }
+      ]
+    },
+    {
+      "id": "busy:detail:en:390",
+      "status": "passed",
+      "operation": "detail-restore",
+      "imageKind": "native document-coordinate region; original full toolbar or complete button union as raw capture-method specifies",
+      "recoveryImageKind": "native stable toolbar region",
+      "evidence": [
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "busy-en390-large-missing/en-390.json",
+          "sha256": "e1dddc2b04877848d58b74f7c64be2ae8b6e8e0664679aa4580d2c3cb2701d01"
+        },
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "busy-en390-large-missing/en-390-detail-restore-busy.png",
+          "sha256": "8c2965a1c2d5baac3955b62bf411260edd3ba8610e30a5e78c04ec65d2e8a22f"
+        },
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "busy-en390-large-missing/en-390-detail-restore-recovered.png",
+          "sha256": "bd3d4f9a5523b33c189400ac570c2920ce9f15b4071ed914815081fdbf9a49be"
+        }
+      ]
+    },
+    {
+      "id": "busy:asset-filter:en:390",
+      "status": "passed",
+      "operation": "focused-restore",
+      "imageKind": "native document-coordinate region; original full toolbar or complete button union as raw capture-method specifies",
+      "recoveryImageKind": "native stable toolbar region",
+      "evidence": [
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "busy-en390-large-missing/en-390.json",
+          "sha256": "e1dddc2b04877848d58b74f7c64be2ae8b6e8e0664679aa4580d2c3cb2701d01"
+        },
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "busy-en390-large-missing/en-390-focused-restore-busy.png",
+          "sha256": "0adfdab885a6f9771696104573a67bea8657cb0408b3283743e0b82e8c27774d"
+        },
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "busy-en390-large-missing/en-390-focused-restore-recovered.png",
+          "sha256": "7430a0a12140c964e568e372a1694c42d829cc4e21e9f42992a474a9d5bbd2b8"
+        }
+      ]
+    },
+    {
+      "id": "social-populated:en:390",
+      "status": "passed",
+      "evidence": [
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "social/en-390-social.json",
+          "sha256": "0b2681438338928c6c24f572658134eac6208c2eb7d6b249f9a8b98d7b2eba6d"
+        },
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "social/en-390-social-filtered.png",
+          "sha256": "0aafd98982579d0baa186e86e39a8a4dc88db086605425ff716d617c84992287"
+        },
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "social/en-390-social-neighbors.png",
+          "sha256": "d72dfe31e6d0feeb063f93fe0965482853cfc8accbee2d0274b235ea44dd9db9"
+        },
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "social/en-390-social-restored.png",
+          "sha256": "e9c2ec3bd9bda7a08ba2cecd963f88329c907b124f38edb26f24af538c9d5687"
+        }
+      ]
+    },
+    {
+      "id": "busy:workspace:en:768",
+      "status": "passed",
+      "operation": "workspace-samples",
+      "imageKind": "native document-coordinate region; original full toolbar or complete button union as raw capture-method specifies",
+      "recoveryImageKind": "native stable toolbar region",
+      "evidence": [
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "busy-en-remaining-large/en-768.json",
+          "sha256": "fdcd299449b5cafe72bf3203b77bac004d99132cffa83f29403114c485fb0068"
+        },
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "busy-en-remaining-large/en-768-workspace-samples-busy.png",
+          "sha256": "c069c3e9280eda7df938c483781a0056feeb2c9d227a9751d67bc50c929aa298"
+        },
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "busy-en-remaining-large/en-768-workspace-samples-recovered.png",
+          "sha256": "4d63402efe1337e33516e38cc3801880b862b4cbf9f7160f579d627cad09093b"
+        }
+      ]
+    },
+    {
+      "id": "busy:detail:en:768",
+      "status": "passed",
+      "operation": "detail-restore",
+      "imageKind": "native document-coordinate region; original full toolbar or complete button union as raw capture-method specifies",
+      "recoveryImageKind": "native stable toolbar region",
+      "evidence": [
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "busy-en-remaining-large/en-768.json",
+          "sha256": "fdcd299449b5cafe72bf3203b77bac004d99132cffa83f29403114c485fb0068"
+        },
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "busy-en-remaining-large/en-768-detail-restore-busy.png",
+          "sha256": "2c1c1a5873fbbda30d52fdf0efca6ebaf37434f8b7d9042de3346b1a3e825f7a"
+        },
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "busy-en-remaining-large/en-768-detail-restore-recovered.png",
+          "sha256": "00ab02bf2929fd4f41952cdc15fd3eae778f93b2628fd604804a13a606fa5ce3"
+        }
+      ]
+    },
+    {
+      "id": "busy:asset-filter:en:768",
+      "status": "passed",
+      "operation": "focused-restore",
+      "imageKind": "native document-coordinate region; original full toolbar or complete button union as raw capture-method specifies",
+      "recoveryImageKind": "native stable toolbar region",
+      "evidence": [
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "busy-en-remaining-large/en-768.json",
+          "sha256": "fdcd299449b5cafe72bf3203b77bac004d99132cffa83f29403114c485fb0068"
+        },
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "busy-en-remaining-large/en-768-focused-restore-busy.png",
+          "sha256": "2467540c861f371560850d5b1d7912414e54531a73426e27a7adad0f8bc18296"
+        },
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "busy-en-remaining-large/en-768-focused-restore-recovered.png",
+          "sha256": "426be7d5766168a5d31ac25ef4d96b0da9d89c1b6bc1de728ae67f8bc30c6377"
+        }
+      ]
+    },
+    {
+      "id": "social-populated:en:768",
+      "status": "passed",
+      "evidence": [
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "social/en-768-social.json",
+          "sha256": "5968998b6ce09621ee09a69d81fb78cacca321044f2767d23e9dcb2a06a02bf1"
+        },
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "social/en-768-social-filtered.png",
+          "sha256": "f1024752d626805fd59d05aa3c7e8df3a009aae9cfcd84b38bf5c26d479056af"
+        },
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "social/en-768-social-neighbors.png",
+          "sha256": "c0ea1abe361f88cec0e0a912790b09b0f067c27074a0ac580a03df7cbcd5b029"
+        },
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "social/en-768-social-restored.png",
+          "sha256": "bb7537f51aa26b20a122be9759e721e58070e8487dd081d08f340c172dc94d90"
+        }
+      ]
+    },
+    {
+      "id": "busy:workspace:en:1280",
+      "status": "passed",
+      "operation": "workspace-samples",
+      "imageKind": "native document-coordinate region; original full toolbar or complete button union as raw capture-method specifies",
+      "recoveryImageKind": "native stable toolbar region",
+      "evidence": [
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "busy-en-remaining-large/en-1280.json",
+          "sha256": "3c1932c02ca7a370b7a0d864cd9e517a772a8710484601600da67fb9383ada1b"
+        },
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "busy-en-remaining-large/en-1280-workspace-samples-busy.png",
+          "sha256": "677004b7bf4f3966f7938344df2748a0b01109ef78bd52782f5aa313043104cf"
+        },
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "busy-en-remaining-large/en-1280-workspace-samples-recovered.png",
+          "sha256": "7b04748b76ecb850fa72315abe969a911c4466550ffac5c157b724cea7852a3d"
+        }
+      ]
+    },
+    {
+      "id": "busy:detail:en:1280",
+      "status": "passed",
+      "operation": "detail-restore",
+      "imageKind": "native document-coordinate region; original full toolbar or complete button union as raw capture-method specifies",
+      "recoveryImageKind": "native stable toolbar region",
+      "evidence": [
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "busy-en-remaining-large/en-1280.json",
+          "sha256": "3c1932c02ca7a370b7a0d864cd9e517a772a8710484601600da67fb9383ada1b"
+        },
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "busy-en-remaining-large/en-1280-detail-restore-busy.png",
+          "sha256": "60856607fc99498bf34304c9c33fc1d16ca6cb8d9326d5c0c6170f07f6f6d62a"
+        },
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "busy-en-remaining-large/en-1280-detail-restore-recovered.png",
+          "sha256": "ae8598bdb0b9dd2840c84a85ab52672f027f413509e539ef39028eb69dc5567e"
+        }
+      ]
+    },
+    {
+      "id": "busy:asset-filter:en:1280",
+      "status": "passed",
+      "operation": "focused-restore",
+      "imageKind": "native document-coordinate region; original full toolbar or complete button union as raw capture-method specifies",
+      "recoveryImageKind": "native stable toolbar region",
+      "evidence": [
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "busy-en-remaining-large/en-1280.json",
+          "sha256": "3c1932c02ca7a370b7a0d864cd9e517a772a8710484601600da67fb9383ada1b"
+        },
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "busy-en-remaining-large/en-1280-focused-restore-busy.png",
+          "sha256": "7c077bb32d3044a8d716271bb0a98f0102a70327b07c36363b4abbc248e5f663"
+        },
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "busy-en-remaining-large/en-1280-focused-restore-recovered.png",
+          "sha256": "ada50225ab07f9a1284fdab22140a657817eb0a8773eb22df7fda26d17544330"
+        }
+      ]
+    },
+    {
+      "id": "social-populated:en:1280",
+      "status": "passed",
+      "evidence": [
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "social/en-1280-social.json",
+          "sha256": "a70a0589bc291faa2dd5dfd60def09463222d55c57a6581d2bfa87d779018e7e"
+        },
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "social/en-1280-social-filtered.png",
+          "sha256": "ef8592cba4de02de70799b8c542186954d3384eb0a8edf5ac5cfc5793e58962b"
+        },
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "social/en-1280-social-neighbors.png",
+          "sha256": "a952ce36eec5f86463522ce52112b4ab9bae4e3bce39d52004cc013301fb2cf4"
+        },
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "social/en-1280-social-restored.png",
+          "sha256": "8e77eb7e20c0e1f5839764877d79f905ccc24ac63d0abbaaa316b52c88bbb7ec"
+        }
+      ]
+    },
+    {
+      "id": "busy:workspace:en:1920",
+      "status": "passed",
+      "operation": "workspace-samples",
+      "imageKind": "native document-coordinate region; original full toolbar or complete button union as raw capture-method specifies",
+      "recoveryImageKind": "native stable toolbar region",
+      "evidence": [
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "busy-en-remaining-large/en-1920.json",
+          "sha256": "6485cbf24d4d1a3e9b892004adb2427bf8c50111f08f0c78909ec106c6f34764"
+        },
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "busy-en-remaining-large/en-1920-workspace-samples-busy.png",
+          "sha256": "677004b7bf4f3966f7938344df2748a0b01109ef78bd52782f5aa313043104cf"
+        },
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "busy-en-remaining-large/en-1920-workspace-samples-recovered.png",
+          "sha256": "7b04748b76ecb850fa72315abe969a911c4466550ffac5c157b724cea7852a3d"
+        }
+      ]
+    },
+    {
+      "id": "busy:detail:en:1920",
+      "status": "passed",
+      "operation": "detail-restore",
+      "imageKind": "native document-coordinate region; original full toolbar or complete button union as raw capture-method specifies",
+      "recoveryImageKind": "native stable toolbar region",
+      "evidence": [
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "busy-en-remaining-large/en-1920.json",
+          "sha256": "6485cbf24d4d1a3e9b892004adb2427bf8c50111f08f0c78909ec106c6f34764"
+        },
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "busy-en-remaining-large/en-1920-detail-restore-busy.png",
+          "sha256": "c624265bd41e14e3057eb6fcbd8e8db93b098e0b86c260fd0145879a70d3a934"
+        },
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "busy-en-remaining-large/en-1920-detail-restore-recovered.png",
+          "sha256": "dc7e7d822d2e02e3dc169f53e23c33c4c636feaad062027322ed75f351c0e301"
+        }
+      ]
+    },
+    {
+      "id": "busy:asset-filter:en:1920",
+      "status": "passed",
+      "operation": "focused-restore",
+      "imageKind": "native document-coordinate region; original full toolbar or complete button union as raw capture-method specifies",
+      "recoveryImageKind": "native stable toolbar region",
+      "evidence": [
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "busy-en-remaining-large/en-1920.json",
+          "sha256": "6485cbf24d4d1a3e9b892004adb2427bf8c50111f08f0c78909ec106c6f34764"
+        },
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "busy-en-remaining-large/en-1920-focused-restore-busy.png",
+          "sha256": "ff37c0a4cc29c232db4e937e9c65c9f1131e70721bc2dbd50c29048c4c16a213"
+        },
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "busy-en-remaining-large/en-1920-focused-restore-recovered.png",
+          "sha256": "ad5024f10f697a884d0fe760a0409793e07427a31c131a60e0d209281563a6c3"
+        }
+      ]
+    },
+    {
+      "id": "social-populated:en:1920",
+      "status": "passed",
+      "evidence": [
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "social/en-1920-social.json",
+          "sha256": "321807b813e16e7d538ada98adadeb95a84f429f540f39a20d34cf5d5958754b"
+        },
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "social/en-1920-social-filtered.png",
+          "sha256": "8eb1b824c8e8a3d53d97efc82b29e1341c48533436c290da4a5b9292e06e4150"
+        },
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "social/en-1920-social-neighbors.png",
+          "sha256": "aa7aa7d2310228aaf07606e4d101200e5ba3aa4eb407b5beb85882a9d8c645b3"
+        },
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "social/en-1920-social-restored.png",
+          "sha256": "72781f8379101738c484a0dc0f8f47d250b63575ee059e0b8961b9acb4860efb"
+        }
+      ]
+    },
+    {
+      "id": "busy:workspace:en:2560",
+      "status": "passed",
+      "operation": "workspace-samples",
+      "imageKind": "native document-coordinate region; original full toolbar or complete button union as raw capture-method specifies",
+      "recoveryImageKind": "native stable toolbar region",
+      "evidence": [
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "busy-en-remaining-large/en-2560.json",
+          "sha256": "76087f47853d3c8001a5c9f48a9aa97ae8df251d7294597615b05bc495324a40"
+        },
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "busy-en-remaining-large/en-2560-workspace-samples-busy.png",
+          "sha256": "677004b7bf4f3966f7938344df2748a0b01109ef78bd52782f5aa313043104cf"
+        },
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "busy-en-remaining-large/en-2560-workspace-samples-recovered.png",
+          "sha256": "7b04748b76ecb850fa72315abe969a911c4466550ffac5c157b724cea7852a3d"
+        }
+      ]
+    },
+    {
+      "id": "busy:detail:en:2560",
+      "status": "passed",
+      "operation": "detail-restore",
+      "imageKind": "native document-coordinate region; original full toolbar or complete button union as raw capture-method specifies",
+      "recoveryImageKind": "native stable toolbar region",
+      "evidence": [
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "busy-en-remaining-large/en-2560.json",
+          "sha256": "76087f47853d3c8001a5c9f48a9aa97ae8df251d7294597615b05bc495324a40"
+        },
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "busy-en-remaining-large/en-2560-detail-restore-busy.png",
+          "sha256": "92652eacf601cd52051a4d2964f22a1331b5e375d33d4f092350c47711940c52"
+        },
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "busy-en-remaining-large/en-2560-detail-restore-recovered.png",
+          "sha256": "65243e443abda28c938f5ebc921b964081f8378107663999e71ff92c641bdae7"
+        }
+      ]
+    },
+    {
+      "id": "busy:asset-filter:en:2560",
+      "status": "passed",
+      "operation": "focused-restore",
+      "imageKind": "native document-coordinate region; original full toolbar or complete button union as raw capture-method specifies",
+      "recoveryImageKind": "native stable toolbar region",
+      "evidence": [
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "busy-en-remaining-large/en-2560.json",
+          "sha256": "76087f47853d3c8001a5c9f48a9aa97ae8df251d7294597615b05bc495324a40"
+        },
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "busy-en-remaining-large/en-2560-focused-restore-busy.png",
+          "sha256": "0421aa7490ab1e51be1314b595146677c9c339c1f36760f0785c8b727e7e9adf"
+        },
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "busy-en-remaining-large/en-2560-focused-restore-recovered.png",
+          "sha256": "7d424ebaa8199bcaeedcfb7998f511e969104f8f06e8e294ae14f0cbf99a523b"
+        }
+      ]
+    },
+    {
+      "id": "social-populated:en:2560",
+      "status": "passed",
+      "evidence": [
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "social/en-2560-social.json",
+          "sha256": "db4d897ed972ba9fe10f93370a7e34f7d466836553038b8a7ebf768778178e4d"
+        },
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "social/en-2560-social-filtered.png",
+          "sha256": "f4142b58b79f84c4b1a00a8e8355a70e97a31b52fdc0582d7f58cb39adbc28e9"
+        },
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "social/en-2560-social-neighbors.png",
+          "sha256": "88aae345ca9c9b58229701db9d6387ccd04b8b3aeab81bcc1a80b6ca21bd995d"
+        },
+        {
+          "archive": "docs/qa/2026-10-28/evidence/account-expansion-fixed/independent-final-d2-evidence.zip",
+          "path": "social/en-2560-social-restored.png",
+          "sha256": "51811d92a5a0f283e1bd2f2598ad5393fa3fa71c37b8d81bd97027fe0ee4441e"
+        }
+      ]
+    }
+  ]
+}

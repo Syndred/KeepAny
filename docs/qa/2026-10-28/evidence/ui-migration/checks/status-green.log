@@ -1,0 +1,16 @@
+
+Running 8 tests using 1 worker
+
+
+(node:29116) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+[1/8] tests\e2e\ui-density.regression-1.spec.ts:19:3 › zh-CN 390px dense records and complete date interaction
+[2/8] tests\e2e\ui-density.regression-1.spec.ts:19:3 › zh-CN 768px dense records and complete date interaction
+[3/8] tests\e2e\ui-density.regression-1.spec.ts:19:3 › zh-CN 1280px dense records and complete date interaction
+[4/8] tests\e2e\ui-density.regression-1.spec.ts:19:3 › zh-CN 1920px dense records and complete date interaction
+[5/8] tests\e2e\ui-density.regression-1.spec.ts:19:3 › en 390px dense records and complete date interaction
+[6/8] tests\e2e\ui-density.regression-1.spec.ts:19:3 › en 768px dense records and complete date interaction
+[7/8] tests\e2e\ui-density.regression-1.spec.ts:19:3 › en 1280px dense records and complete date interaction
+[8/8] tests\e2e\ui-density.regression-1.spec.ts:19:3 › en 1920px dense records and complete date interaction
+  8 passed (50.4s)

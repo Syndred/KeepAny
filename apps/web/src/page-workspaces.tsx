@@ -1,5 +1,6 @@
+import { Input } from "./components/ui/input";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { Globe, LockKeyhole, Plus, Search } from "lucide-react";
+import { Globe, Plus, Search } from "lucide-react";
 import { lazy, Suspense, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import type { AssetKind } from "../../../packages/domain/src";
@@ -8,60 +9,73 @@ import { Dialog } from "./components/ui/dialog";
 import { Select, SelectOption } from "./components/ui/select";
 import { MoneyTotal, RemainingDays } from "./components/AssetMetrics";
 import { usePasswordVault } from "./components/PasswordVaultProvider";
+import { AssetViewToggle, useAssetView } from "./components/AssetViewToggle";
 import { AssetKindList, LibraryCard, ProjectCard, type AccountListFilters } from "./page-asset-list";
 import { FinancePage } from "./page-finance";
 import { matchesAssetSearch } from "./asset-search";
+import { SAMPLE_LIBRARY_ID, sampleLibraryAssetIds } from "./sample-library";
 import { partitionAccountPasswords } from "./workspace-summary";
 import { useWorkspaceSummary } from "./use-workspace-summary";
 import { date, Empty, liveAssets, money, PageTitle, useAppContext } from "./view-shared";
 import "./workspaces.css";
 import { readWorkspaceReturn, workspaceReturnKey } from "./workspace-return";
 
-const AssetEditor = lazy(() => import("./workflows").then((module) => ({ default: module.AssetEditor })));
+const AssetEditor = lazy(() => import("./workflow-asset-editor").then((module) => ({ default: module.AssetEditor })));
 type AssetView = "all" | "project" | "item" | "subscription" | "domains" | "ledger";
 
 function AssetTabs({ view }: { view: AssetView }) {
 	const { t } = useTranslation();
 	return <nav className="workspace-navigation" aria-label={t("assetsWorkspace")}>
-		<Link to="/assets" aria-current={view === "all" ? "page" : undefined}>{t("all")}</Link>
-		{(["project", "item", "domains", "subscription"] as const).map((kind) => <Link key={kind} to="/assets/$kind" params={{ kind }} aria-current={view === kind ? "page" : undefined}>{t(kind === "domains" ? "workspaceDomains" : kind)}</Link>)}
-		<Link to="/finance" aria-current={view === "ledger" ? "page" : undefined}>{t("workspaceLedger")}</Link>
+		<Link to="/assets" activeOptions={{ exact: true }} aria-current={view === "all" ? "page" : undefined}>{t("all")}</Link>
+		{(["project", "item", "domains", "subscription"] as const).map((kind) => <Link key={kind} to="/assets/$kind" params={{ kind }} activeOptions={{ exact: true }} aria-current={view === kind ? "page" : undefined}>{t(kind === "domains" ? "workspaceDomains" : kind)}</Link>)}
+		<Link to="/finance" activeOptions={{ exact: true }} aria-current={view === "ledger" ? "page" : undefined}>{t("workspaceLedger")}</Link>
 	</nav>;
 }
 
-function AccountTabs({ passwords, references }: { passwords: boolean; references: boolean }) {
-	const { t } = useTranslation();
-	return <nav className="workspace-navigation" aria-label={t("accountsWorkspace")}>
-		<Link to="/accounts" aria-current={!passwords ? "page" : undefined}>{t("workspaceAllAccounts")}</Link>
-		<Link to="/assets/$kind" params={{ kind: "vault" }} activeOptions={{ includeHash: true }} aria-current={passwords && !references ? "page" : undefined}>{t("workspacePasswords")}</Link>
-		<Link to="/assets/$kind" params={{ kind: "vault" }} hash="vault-references" activeOptions={{ includeHash: true }} aria-current={references ? "page" : undefined}>{t("workspacePasswordReferences")}</Link>
-	</nav>;
-}
+const PasswordVaultPanel = lazy(() => import("./components/PasswordVaultPanel").then((module) => ({ default: module.PasswordVaultPanel })));
 
-export function AccountsWorkspace({ passwords = false }: { passwords?: boolean }) {
-	const { data, search } = useAppContext();
+export function AccountsWorkspace() {
+	const { data, search, notify } = useAppContext();
 	const { t } = useTranslation();
-	const { snapshot, ensureReady, lock } = usePasswordVault();
+	const { snapshot } = usePasswordVault();
 	const hash = useRouterState({ select: (state) => state.location.hash });
+	const [editAccount, setEditAccount] = useState(false);
 	const [filters, setFilters] = useState<AccountListFilters>(() => ({ search: sessionStorage.getItem("keepany-account-list-search") ?? "", category: "", tag: "" }));
-	useEffect(() => { void ensureReady().catch(() => {}); }, [ensureReady]);
-	useEffect(() => {
-		if (data.loading || !passwords || hash !== "vault-references") return;
-		const frame = requestAnimationFrame(() => document.getElementById("vault-references")?.scrollIntoView({ block: "start" }));
-		return () => cancelAnimationFrame(frame);
-	}, [passwords, hash, data.loading]);
+	const sampleIds = sampleLibraryAssetIds(data.preferences.find((preference) => preference.id === SAMPLE_LIBRARY_ID)?.value);
+	const sampleAccounts = data.assets.filter((asset) => !asset.deleted && asset.kind === "account" && sampleIds.includes(asset.id));
 	const grouped = useMemo(() => partitionAccountPasswords(snapshot.status === "unlocked" ? snapshot.entries : [], data.assets), [snapshot.status, snapshot.entries, data.assets]);
-	const passwordCounts = useMemo(() => snapshot.status === "unlocked"
-		? new Map(data.assets.filter((asset) => !asset.deleted && asset.kind === "account").map((asset) => [asset.id, grouped.linked.get(asset.id)?.length ?? 0]))
-		: undefined, [snapshot.status, data.assets, grouped.linked]);
+	const searchExtras = useMemo(() => new Map([...grouped.linked].map(([id, entries]) => [id,
+		entries.flatMap((entry) => [entry.title, entry.username, ...(entry.usernameAliases ?? []), entry.url]).join(" ").toLocaleLowerCase(),
+	])), [grouped.linked]);
 	const unlinked = grouped.unlinked.filter((entry) => [search, filters.search].every((query) => !query.trim() ||
 		[entry.title, entry.username, ...(entry.usernameAliases ?? []), entry.url].join(" ").toLocaleLowerCase().includes(query.trim().toLocaleLowerCase())));
-	return <div className="workspace-page">
-		<AccountTabs passwords={passwords} references={passwords && hash === "vault-references"} />
-		{passwords ? <AssetKindList kind="vault" /> : <AssetKindList kind="account" passwordCounts={passwordCounts} onAccountFiltersChange={setFilters} privateSearch={snapshot.status === "unlocked"}
-			beforeList={<div className="notice workspace-password-status"><span><LockKeyhole size={17} />{snapshot.status === "unlocked" ? t("pwVaultStatusUnlocked") : snapshot.status === "loading" ? t("pwVaultLoading") : snapshot.status === "empty" ? t("pwVaultStatusEmpty") : t("workspacePasswordsLocked")}</span><div className="actions">{snapshot.status === "unlocked" && <Button size="small" onClick={lock}>{t("pwVaultLock")}</Button>}<Button asChild size="small"><Link to="/assets/$kind" params={{ kind: "vault" }}>{t("workspaceOpenPasswords")}</Link></Button></div></div>}
-			afterList={snapshot.status === "unlocked" && !filters.category && !filters.tag && unlinked.length > 0 ? <section className="workspace-password-only" aria-labelledby="workspace-unlinked-passwords"><h2 id="workspace-unlinked-passwords">{t("workspacePasswordOnly")}</h2><div className="asset-account-grid">{unlinked.map((entry) => <Link key={entry.id} className="asset-account-card workspace-password-card" to="/assets/$kind" params={{ kind: "vault" }} hash={`password-${entry.id}`}><span className="asset-account-avatar"><LockKeyhole size={20} /></span><span className="asset-account-summary"><strong>{entry.title}</strong>{entry.username && <small>{entry.username}</small>}<span className="chip">{t("workspacePasswords")}</span></span></Link>)}</div></section> : null} />}
-	</div>;
+	useEffect(() => {
+		if (hash !== "vault-references" || data.loading) return;
+		const section = document.getElementById("vault-references") as HTMLDetailsElement | null;
+		if (section) { section.open = true; section.scrollIntoView({ block: "start" }); }
+	}, [hash, data.loading]);
+	return <main className="page unified-accounts-page">
+		<Suspense fallback={<p role="status">{t("pwVaultLoading")}</p>}>
+			<PasswordVaultPanel assets={data.assets} sampleAccounts={sampleAccounts} notify={notify} focusAssetId={hash.startsWith("asset-") ? hash.slice(6) : undefined}
+				headerAction={<Button variant="primary" title={t("workspaceAddAccount")} disabled={data.pendingCategoryEdits.some((pending) => pending.kind === "account")} onClick={() => setEditAccount(true)}><Plus size={17} />{t("add")}</Button>}
+				renderAccounts={({ renderEntry, addEntry }) => <AssetKindList kind="account" embedded hideTitle privateSearch={snapshot.status === "unlocked"}
+					accountSearchExtras={searchExtras} onAccountFiltersChange={setFilters}
+					renderAccountDetails={(asset) => snapshot.status === "unlocked" ? <details className="unified-account-passwords">
+						<summary>{t("workspacePasswordCount", { count: grouped.linked.get(asset.id)?.length ?? 0 })}</summary>
+						<div className="password-vault-entry-list">{(grouped.linked.get(asset.id) ?? []).map(renderEntry)}</div>
+						<Button size="small" onClick={() => addEntry(asset.id)}><Plus size={15} />{t("pwVaultNewEntry")}</Button>
+					</details> : <p className="unified-account-locked">{t(snapshot.status === "empty" ? "workspacePasswordsNotCreated" : snapshot.status === "loading" ? "pwVaultLoading" : "workspacePasswordsLocked")}</p>}
+					afterList={snapshot.status === "unlocked" && !filters.category && !filters.tag && unlinked.length > 0 ? <section className="workspace-password-only" aria-labelledby="workspace-unlinked-passwords">
+						<h2 id="workspace-unlinked-passwords">{t("workspacePasswordOnly")}</h2><div className="password-vault-entry-list">{unlinked.map(renderEntry)}</div>
+					</section> : null} />}
+			/>
+		</Suspense>
+		<details className="unified-vault-references" id="vault-references">
+			<summary>{t("vaultReferencesTitle")} <span className="chip">{data.assets.filter((asset) => asset.kind === "vault" && !asset.deleted).length}</span></summary>
+			<AssetKindList kind="vault" embedded referencesOnly />
+		</details>
+		{editAccount && <Suspense fallback={<p role="status">{t("loading")}</p>}><AssetEditor kind="account" categories={data.categories} onClose={() => setEditAccount(false)} /></Suspense>}
+	</main>;
 }
 
 function AssetCatalog({ domainsOnly }: { domainsOnly: boolean }) {
@@ -69,6 +83,7 @@ function AssetCatalog({ domainsOnly }: { domainsOnly: boolean }) {
 	const { t, i18n } = useTranslation();
 	const navigate = useNavigate();
 	const summary = useWorkspaceSummary();
+ const [assetView, setAssetView] = useAssetView();
 	const queryKey = `keepany-catalog-query-${domainsOnly ? "domains" : "all"}`;
 	const [query, setQuery] = useState(() => sessionStorage.getItem(queryKey) ?? "");
 	const restoredScroll = useRef(false);
@@ -123,8 +138,8 @@ function AssetCatalog({ domainsOnly }: { domainsOnly: boolean }) {
 			<section className="card"><span>{t("workspaceMonthlyPlan")}</span><strong><MoneyTotal totals={summary.monthly} empty={t("financeNoPlan")} /></strong></section>
 			<section className="card"><span>{t("workspaceUpcoming")}</span><strong>{summary.upcoming}</strong></section>
 		</div>}
-		<div className="workspace-search"><label className="asset-account-search"><Search size={18} /><input type="search" value={query} aria-label={t("workspaceSearch")} placeholder={t("workspaceSearch")} onChange={(event) => { setQuery(event.target.value); sessionStorage.setItem(queryKey, event.target.value); }} /></label><span>{t("workspaceAssetCount", { count: (domainsOnly ? 0 : visible.length) + visibleDomains.length })}</span></div>
-		{hasResults ? <section className="asset-list-content workspace-asset-grid" aria-label={t(domainsOnly ? "workspaceDomains" : "assetsWorkspace")}>
+		<div className="workspace-search"><label className="asset-account-search"><Search size={18} /><Input type="search" value={query} aria-label={t("workspaceSearch")} placeholder={t("workspaceSearch")} onChange={(event) => { setQuery(event.target.value); sessionStorage.setItem(queryKey, event.target.value); }} /></label><AssetViewToggle value={assetView} onChange={setAssetView} /><span>{t("workspaceAssetCount", { count: (domainsOnly ? 0 : visible.length) + visibleDomains.length })}</span></div>
+		{hasResults ? <section className={`asset-list-content workspace-asset-grid${assetView === "list" ? " asset-dense-list" : ""}`} aria-label={t(domainsOnly ? "workspaceDomains" : "assetsWorkspace")}>
 			{!domainsOnly && visible.map((asset) => asset.kind === "project" ? <ProjectCard key={asset.id} asset={asset} search={search} summary={summary.summaries.get(asset.id)} backlinks={backlinks.get(asset.id) ?? { total: 0, pending: 0 }} onOpen={() => rememberCatalog(asset.id)} /> : <LibraryCard key={asset.id} asset={asset} search={search} summary={summary.summaries.get(asset.id)} onOpen={() => rememberCatalog(asset.id)} />)}
 			{visibleDomains.map(({ project, domain, remainingDays }) => <Link className="card workspace-domain-card" key={`${project.id}:${domain.id}`} to="/assets/$kind/$id" params={{ kind: "project", id: project.id }} hash={`project-domain-${domain.id}`} onClick={() => rememberCatalog(project.id)}>
 				<div className="workspace-domain-heading"><Globe size={22} /><strong>{domain.name}</strong></div><span className="subtitle">{t("workspaceDomains")} · {project.name}</span>
@@ -151,6 +166,6 @@ export function FinanceWorkspaceRoute() { return <AssetsWorkspace view="ledger" 
 export function WorkspaceLegacyRoute() {
 	const params = useRouterState({ select: (state) => state.matches.at(-1)?.params }) as { kind?: string } | undefined;
 	const kind = params?.kind;
-	if (kind === "account" || kind === "vault") return <AccountsWorkspace passwords={kind === "vault"} />;
+	if (kind === "account" || kind === "vault") return <AccountsWorkspace />;
 	return <AssetsWorkspace view={kind === "item" || kind === "subscription" || kind === "domains" ? kind : "project"} />;
 }

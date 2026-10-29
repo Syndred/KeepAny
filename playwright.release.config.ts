@@ -1,3 +1,4 @@
+import { browserDefaults } from "./scripts/testing/browser-config";
 import { defineConfig } from "@playwright/test";
 
 // Test the committed delivery files, without serving development source.
@@ -9,9 +10,12 @@ process.env.KEEPANY_PDF_RELEASE = "1";
 process.env.KEEPANY_EVIDENCE_DIR ??= "docs/evidence/2026-09-30/delivery";
 
 export default defineConfig({
-	testDir: "./tests/e2e",
+ ...browserDefaults,
+
 	outputDir: "test-results/local-release",
 	testMatch: [
+		"ui-consolidation.spec.ts",
+		"account-password-consolidation.spec.ts",
 		"preview-onboarding.spec.ts",
 		"unified-workspaces-release.spec.ts",
 		"core-pages-matrix.spec.ts",
@@ -38,6 +42,7 @@ export default defineConfig({
 		"account-detail-dedupe.spec.ts",
 		"account-list-search.spec.ts",
 		"account-link-recovery.spec.ts",
+		"account-unlink-focus.spec.ts",
 		"notes-trash-release.spec.ts",
 		"account-lifecycle-release.spec.ts",
 		"vault-dual-login.spec.ts",
@@ -47,6 +52,7 @@ export default defineConfig({
 		"archive-migration.spec.ts",
 		"vault-reference-release.spec.ts",
 		"password-vault.spec.ts",
+		"password-history-version.spec.ts",
 		"password-vault-grid.spec.ts",
 		"password-vault-user-journey.spec.ts",
 		"password-account-upgrade.spec.ts",
@@ -64,7 +70,7 @@ export default defineConfig({
 	],
 	timeout: 90_000,
 	workers: 2,
-	use: { baseURL, screenshot: "only-on-failure" },
+	use: { ...browserDefaults.use, baseURL,  },
 	webServer: {
 		command: `node node_modules/vite/bin/vite.js preview apps/web --outDir ${webDir} --host 127.0.0.1 --port ${port} --strictPort`,
 		url: baseURL,

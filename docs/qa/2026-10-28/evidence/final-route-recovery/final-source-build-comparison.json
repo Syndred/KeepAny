@@ -1,0 +1,8 @@
+{
+  "referenceCandidate": "d2fdbdee264b524219ae091ca78b120c6428ff61",
+  "sourceBuild": "current checkout after final QA commits",
+  "currentWebCount": 117,
+  "allRuntimeBytesEqual": true,
+  "indexSha256": "3477691fbbe51486e4d31f1653c5900c7047d5d116e8b95b847ff5ff940a8c6f",
+  "scope": "Only QA, evidence and documentation changed since product d2. Actual rebuilt 117 Web files are byte identical."
+}

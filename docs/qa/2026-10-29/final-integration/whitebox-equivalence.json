@@ -1,0 +1,125 @@
+{
+  "base": "1be1a1df1a288df038d3b4b0fed31218783cc3cb",
+  "candidate": "77f5ac7af34123ebb27efbb167ab9e2b3d653ebe",
+  "method": "Whole top-level function declarations; LF normalization and export keyword only. Runtime DB source strips only moved declared interfaces/schema and three new import/export lines; ignores blank lines only.",
+  "functions": [
+    {
+      "symbol": "Field",
+      "old": "apps/web/src/workflows.tsx",
+      "current": "workflow-field.tsx",
+      "exactDeclarationApartFromExport": true,
+      "oldSha256": "a1d1b453a282209d213bcb5c8c2c81470c17b2e39781da86b126e785207e5bd5",
+      "currentSha256": "a1d1b453a282209d213bcb5c8c2c81470c17b2e39781da86b126e785207e5bd5"
+    },
+    {
+      "symbol": "AssetEditor",
+      "old": "apps/web/src/workflows.tsx",
+      "current": "workflow-asset-editor.tsx",
+      "exactDeclarationApartFromExport": true,
+      "oldSha256": "ee8d85b9b7c6af51ed25012d7a358852ede5d3299250a84d3ec71ada44583a41",
+      "currentSha256": "ee8d85b9b7c6af51ed25012d7a358852ede5d3299250a84d3ec71ada44583a41"
+    },
+    {
+      "symbol": "TaskEditor",
+      "old": "apps/web/src/workflows.tsx",
+      "current": "workflow-task-editor.tsx",
+      "exactDeclarationApartFromExport": true,
+      "oldSha256": "a0dfbc7f11e68d35ce56b0c656058e7a9b622146569a4ca74acc48150350aaa2",
+      "currentSha256": "a0dfbc7f11e68d35ce56b0c656058e7a9b622146569a4ca74acc48150350aaa2"
+    },
+    {
+      "symbol": "MaintenancePlanEditor",
+      "old": "apps/web/src/workflows.tsx",
+      "current": "workflow-task-editor.tsx",
+      "exactDeclarationApartFromExport": true,
+      "oldSha256": "fd3597f3c17fbc53bf57751c913395c78b36f6bd60df7c56b6e046adbec6c2c6",
+      "currentSha256": "fd3597f3c17fbc53bf57751c913395c78b36f6bd60df7c56b6e046adbec6c2c6"
+    },
+    {
+      "symbol": "validateCaptureImage",
+      "old": "apps/web/src/workflows.tsx",
+      "current": "workflow-image.ts",
+      "exactDeclarationApartFromExport": true,
+      "oldSha256": "ee9ea4d3b8f168a25ef9369b45384932b095d0479a8a4457cfcd378eb525f02d",
+      "currentSha256": "ee9ea4d3b8f168a25ef9369b45384932b095d0479a8a4457cfcd378eb525f02d"
+    },
+    {
+      "symbol": "validateImportCandidates",
+      "old": "apps/web/src/workflows.tsx",
+      "current": "workflow-intake-tools.tsx",
+      "exactDeclarationApartFromExport": true,
+      "oldSha256": "3d5ad349e2e741cb99abdbd4de3e4e285dd93a1068ddd3d38f4d3ce8f1d258e9",
+      "currentSha256": "3d5ad349e2e741cb99abdbd4de3e4e285dd93a1068ddd3d38f4d3ce8f1d258e9"
+    },
+    {
+      "symbol": "IntakeTools",
+      "old": "apps/web/src/workflows.tsx",
+      "current": "workflow-intake-tools.tsx",
+      "exactDeclarationApartFromExport": true,
+      "oldSha256": "cd8c9e5f9560bec9eef458c87b36fdd0aa819a27d428615e31e4ce246d172c89",
+      "currentSha256": "cd8c9e5f9560bec9eef458c87b36fdd0aa819a27d428615e31e4ce246d172c89"
+    },
+    {
+      "symbol": "AiDialog",
+      "old": "apps/web/src/workflows.tsx",
+      "current": "workflow-ai-dialog.tsx",
+      "exactDeclarationApartFromExport": true,
+      "oldSha256": "9386dad07b3ea201d84f4db8b73e448b6611288bb2ebafe837e02650b0b60ac0",
+      "currentSha256": "9386dad07b3ea201d84f4db8b73e448b6611288bb2ebafe837e02650b0b60ac0"
+    },
+    {
+      "symbol": "EntryEditor",
+      "old": "apps/web/src/components/PasswordVaultPanel.tsx",
+      "current": "PasswordVaultEntryEditor.tsx",
+      "exactDeclarationApartFromExport": true,
+      "oldSha256": "7ec3050a33d3715cfd45b3ebe3085331e6725095bbfe9a23635fe7bd614ed04e",
+      "currentSha256": "7ec3050a33d3715cfd45b3ebe3085331e6725095bbfe9a23635fe7bd614ed04e"
+    },
+    {
+      "symbol": "EmptyState",
+      "old": "apps/web/src/components/PasswordVaultPanel.tsx",
+      "current": "PasswordVaultAccessStates.tsx",
+      "exactDeclarationApartFromExport": true,
+      "oldSha256": "05714208a429588faa57676989170ca29787aa671b44d24a95a6b9496b6d769a",
+      "currentSha256": "05714208a429588faa57676989170ca29787aa671b44d24a95a6b9496b6d769a"
+    },
+    {
+      "symbol": "LockedState",
+      "old": "apps/web/src/components/PasswordVaultPanel.tsx",
+      "current": "PasswordVaultAccessStates.tsx",
+      "exactDeclarationApartFromExport": true,
+      "oldSha256": "076ecba901d4d0473d276351841602439c9c608827f584ee8f669826673b9287",
+      "currentSha256": "076ecba901d4d0473d276351841602439c9c608827f584ee8f669826673b9287"
+    }
+  ],
+  "types": [
+    {
+      "symbol": "RecordRow",
+      "exact": true
+    },
+    {
+      "symbol": "PulledRow",
+      "exact": true
+    },
+    {
+      "symbol": "ScopedOutbox",
+      "exact": true
+    },
+    {
+      "symbol": "ScopedConflict",
+      "exact": true
+    },
+    {
+      "symbol": "DatasetBinding",
+      "exact": true
+    },
+    {
+      "symbol": "ScopedAttachmentUploadPlan",
+      "exact": true
+    }
+  ],
+  "schemaExact": true,
+  "dbRuntimeExactIgnoringBlankLines": true,
+  "schemaOldSha256": "386c5a0117a6a9675c93359aea2981b495acec8ccff10c1284262b267bf39cf7",
+  "schemaNewSha256": "386c5a0117a6a9675c93359aea2981b495acec8ccff10c1284262b267bf39cf7"
+}

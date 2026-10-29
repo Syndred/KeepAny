@@ -1,0 +1,25 @@
+{
+  "observationCommand": [
+    "C:\\Users\\Administrator\\.codex\\toolchains\\bun\\node_modules\\bun\\bin\\bun.exe",
+    "C:\\Users\\Administrator\\.codex\\toolchains\\gstack\\bin\\gstack-qa-deadline",
+    "run",
+    "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\test-results\\ui-migration\\qa-delivery\\deadline.json",
+    "--",
+    "C:\\Users\\Administrator\\.codex\\toolchains\\gstack\\browse\\dist\\browse.exe",
+    "js",
+    "JSON.stringify({items:Array.from(document.querySelectorAll(\"[role=menuitem]\")).map(e=>({text:e.textContent,rect:e.getBoundingClientRect().toJSON()})),trigger:document.querySelector(\".collections-tile button[aria-haspopup=menu]\").getBoundingClientRect().toJSON(),overflow:document.documentElement.scrollWidth>innerWidth})"
+  ],
+  "observed": "{\"items\":[{\"text\":\"Edit\",\"rect\":{\"x\":164,\"y\":599,\"width\":196,\"height\":44,\"top\":599,\"right\":360,\"bottom\":643,\"left\":164}},{\"text\":\"Delete collection\",\"rect\":{\"x\":164,\"y\":646,\"width\":196,\"height\":44,\"top\":646,\"right\":360,\"bottom\":690,\"left\":164}}],\"trigger\":{\"x\":323,\"y\":541.734375,\"width\":44,\"height\":44,\"top\":541.734375,\"right\":367,\"bottom\":585.734375,\"left\":323},\"overflow\":false}\n",
+  "hypothesis": "交付分类手机视觉",
+  "nextCommand": [
+    "C:\\Users\\Administrator\\.codex\\toolchains\\bun\\node_modules\\bun\\bin\\bun.exe",
+    "C:\\Users\\Administrator\\.codex\\toolchains\\gstack\\bin\\gstack-qa-deadline",
+    "run",
+    "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\test-results\\ui-migration\\qa-delivery\\deadline.json",
+    "--",
+    "C:\\Users\\Administrator\\.codex\\toolchains\\gstack\\browse\\dist\\browse.exe",
+    "screenshot",
+    "--viewport",
+    "test-results/ui-migration/qa-delivery/screenshots/collections-en-390.png"
+  ]
+}

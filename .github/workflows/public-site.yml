@@ -59,18 +59,10 @@ jobs:
               }
               core.info(`Reusing product checks from ${verifiedSha}; only ${comparison.files.length} public documentation files changed.`);
             }
-            const { data } = await github.rest.actions.listWorkflowRunsForRepo({
-              owner: context.repo.owner, repo: context.repo.repo,
-              head_sha: verifiedSha, per_page: 100
-            });
-            for (const name of ['Verify local release', 'Verify portable preview']) {
-              const run = data.workflow_runs
-                .filter(run => run.name === name && run.event === 'push')
-                .sort((a, b) => b.id - a.id)[0];
-              if (!run || run.status !== 'completed' || run.conclusion !== 'success') {
-                core.setFailed(`${name} must pass on ${verifiedSha} before publishing documentation.`);
-              }
-            }
+            const { pathToFileURL } = require('node:url');
+            const { requireFullRelease } = await import(pathToFileURL(
+              process.env.GITHUB_WORKSPACE + '/scripts/require-full-release.mjs').href);
+            await requireFullRelease({ github, owner: context.repo.owner, repo: context.repo.repo, sha: verifiedSha });
       - uses: pnpm/action-setup@v4
         with:
           version: 11.10.0

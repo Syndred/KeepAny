@@ -1,10 +1,7 @@
 name: Verify portable preview
 
 on:
-  push:
-    # Release tags reuse the successful checks for the same branch commit.
-    branches: ['**']
-  pull_request:
+  workflow_call:
   workflow_dispatch:
 
 permissions:
@@ -16,6 +13,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
+    timeout-minutes: 25
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -29,6 +27,8 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - name: Build fresh portable preview
         run: node scripts/build-preview-release.mjs
+      - name: Select the compiled commit explicitly
+        run: node scripts/select-preview-candidate.mjs
       - name: Verify extracted package outside checkout
         run: node scripts/verify-preview-release.mjs
       - uses: actions/upload-artifact@v4

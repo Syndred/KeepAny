@@ -18,7 +18,7 @@
 
 浏览器逐探针、下一步假设、900秒deadline和完整报告保留忽略目录`test-results/gstack-round2`，共39次原生观察/操作；它们不是39条新增验收。evidence materializer首次传入相对路径重复前缀失败，修正为根内文件名后成功产出，工具总裁决为`inconclusive: no evidence rows`（浏览器模式没有functional capture行），未冒称其自动认证通过。这里的缺陷结论依据实际DOM原观察和新浏览器回归；未做全站健康评分或真实读屏器测试。
 
-仅保留[小回执](../evidence/gstack-round2/checks.json)和两张已目检图：[中文390诊断基线](../evidence/gstack-round2/zh-390.png)、[英文1280修复后](../evidence/gstack-round2/en-1280-after.png)，合计约149KiB。原完整测试大报告不加入Git，不把工具安装当作104条完成。
+仅保留[小回执](../evidence/gstack-round2/checks.json)和两张已目检图：[中文390诊断基线](https://github.com/Syndred/KeepAny/blob/b8acfe562d8a4852fffad7fb8aa5ef55104e3fb5/docs/qa/2026-10-27/evidence/gstack-round2/zh-390.png)、[英文1280修复后](https://github.com/Syndred/KeepAny/blob/b8acfe562d8a4852fffad7fb8aa5ef55104e3fb5/docs/qa/2026-10-27/evidence/gstack-round2/en-1280-after.png)，合计约149KiB。原完整测试大报告不加入Git，不把工具安装当作104条完成。
 
 ```powershell
 $env:KEEPANY_E2E_PORT='4210'

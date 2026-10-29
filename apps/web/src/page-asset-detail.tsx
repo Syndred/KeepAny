@@ -1,18 +1,10 @@
+import { Textarea } from "./components/ui/textarea";
+import { Input } from "./components/ui/input";
+import { DatePicker } from "./components/ui/date-picker";
 import { assetNotes } from "./asset-notes";
 import { accountFamilyGraph } from "./account-family-graph";
-import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import {
-	Background,
-	Controls,
-	Position,
-	MarkerType,
-	ReactFlow,
-	useUpdateNodeInternals,
-	useStore,
-	type Edge,
-	type Node,
-} from "@xyflow/react";
 import { ArrowDownRight, ArrowLeft, Check, ExternalLink, Plus } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import {
@@ -58,7 +50,6 @@ import "./account-detail.css";
 import "./backlink-ledger.css";
 import "./workspaces.css";
 import { readWorkspaceReturn } from "./workspace-return";
-import { ProjectPreview } from "./page-asset-list";
 import { TaskRow } from "./TaskRow";
 import { ImpactTaskRow } from "./ImpactTaskRow";
 import {
@@ -73,30 +64,13 @@ import {
 } from "./view-shared";
 import { Select, SelectOption } from "./components/ui/select";
 const AssetEditor = lazy(() =>
-	import("./workflows").then((module) => ({ default: module.AssetEditor })),
+	import("./workflow-asset-editor").then((module) => ({ default: module.AssetEditor })),
 );
 const TaskEditor = lazy(() =>
-	import("./workflows").then((module) => ({ default: module.TaskEditor })),
+	import("./workflow-task-editor").then((module) => ({ default: module.TaskEditor })),
 );
-const AccountFamilyGraphView = lazy(() => import("./account-family-graph-view").then((module) => ({ default: module.AccountFamilyGraphView })));
+const AssetRelationGraph = lazy(() => import("./account-family-graph-view").then((module) => ({ default: module.AssetRelationGraph })));
 const PasswordVaultPanel = lazy(() => import("./components/PasswordVaultPanel").then((module) => ({ default: module.PasswordVaultPanel })));
-function GraphNodeMeasurements({ nodeIds }: { nodeIds: string }) {
-	// Controlled nodes do not receive the library's dimensions change unless onNodesChange
-	// is wired. Observe measured internals instead of the stale user-node readiness flag.
-	const initialized = useStore((state) => state.nodeLookup.size > 0 && [...state.nodeLookup.values()].every((node) =>
-		!!node.measured.width && !!node.measured.height && !!node.internals.handleBounds));
-	const updateNodeInternals = useUpdateNodeInternals();
-	useEffect(() => {
-		// An async collection refresh can leave new nodes without measured handle bounds.
-		if (!initialized) updateNodeInternals(JSON.parse(nodeIds) as string[]);
-	}, [initialized, nodeIds, updateNodeInternals]);
-	return null;
-}
-
-function graphLabel(value: string) {
-	const chars = Array.from(value);
-	return chars.length > 18 ? `${chars.slice(0, 18).join("")}…` : value;
-}
 function validCalendarDay(value: string) {
 	if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
 	const parsed = new Date(`${value}T12:00:00Z`);
@@ -227,7 +201,7 @@ function SubmissionRow({ submission }: { submission: Submission }) {
 	return (
 		<tr className={editing ? "backlink-row-editing" : undefined}>
 			<td>
-				{editing ? <><strong className="backlink-edit-name">{submission.name}</strong><input className="field" disabled={busy} aria-label={`${submission.name} ${t("name")}`} value={name} onChange={(event) => { setName(event.target.value); setError(""); }} /><input className="field" disabled={busy} type="url" aria-label={`${submission.name} ${t("url")}`} value={url} onChange={(event) => { setUrl(event.target.value); setError(""); }} /></> : <TextLink href={submission.url} target="_blank" rel="noopener noreferrer">
+				{editing ? <><strong className="backlink-edit-name">{submission.name}</strong><Input className="field" disabled={busy} aria-label={`${submission.name} ${t("name")}`} value={name} onChange={(event) => { setName(event.target.value); setError(""); }} /><Input className="field" disabled={busy} type="url" aria-label={`${submission.name} ${t("url")}`} value={url} onChange={(event) => { setUrl(event.target.value); setError(""); }} /></> : <TextLink href={submission.url} target="_blank" rel="noopener noreferrer">
 					<span>{submission.name}</span>
 				</TextLink>}
 				{submission.externalLink && <small>{t("extImportedSource")} · {submission.externalLink.profileId}</small>}
@@ -248,17 +222,17 @@ function SubmissionRow({ submission }: { submission: Submission }) {
 				</Select> : <span className={`backlink-status backlink-status-${submission.status}`}>{t(submission.status)}</span>}
 			</td>
 			<td>
-				{editing ? <input
+				{editing ? <DatePicker
 					className="field" disabled={busy}
-					type="date"
+
 					aria-label={`${submission.name} ${t("submittedAt")}`}
 					value={submittedAt}
-					onChange={(e) => { setSubmittedAt(e.target.value); setError(""); }}
+					onValueChange={(dateValue) => { setSubmittedAt(dateValue); setError(""); }}
 				/> : date(submission.submittedAt, i18n.language)}
 			</td>
 			<td>{date(submission.verifiedAt, i18n.language)}</td>
 			<td>
-				{editing ? <input
+				{editing ? <Input
 					className="field" disabled={busy}
 					aria-label={`${submission.name} ${t("evidence")}`}
 					value={evidence}
@@ -322,6 +296,11 @@ export function AssetDetail() {
 	const [edit, setEdit] = useState(false);
 	const [passwordsFor, setPasswordsFor] = useState<string | null>(null);
 	const passwordsOpen = !!asset && passwordsFor === asset.id;
+	const revealPasswords = useCallback(() => {
+		const section = document.getElementById(`account-passwords-${asset?.id}`);
+		section?.scrollIntoView({ block: "start" });
+		section?.focus({ preventScroll: true });
+	}, [asset?.id]);
 	useEffect(() => {
 		if (!asset?.id || asset.kind !== "project" || !detailHash.startsWith("project-domain")) return;
 		const frame = requestAnimationFrame(() => document.getElementById(detailHash)?.scrollIntoView({ block: "start" }));
@@ -531,59 +510,6 @@ export function AssetDetail() {
 			}
 		}
 	}
-	const graphRelationGroups = Array.from(
-		(displayedFamily?.relations ?? visibleRelations)
-			.reduce((groups, relation) => {
-				const pair = JSON.stringify([relation.from, relation.to]);
-				const group = groups.get(pair) ?? [];
-				group.push(relation);
-				groups.set(pair, group);
-				return groups;
-			}, new Map<string, Relation[]>())
-			.values(),
-	);
-	const graphEdges = kind === "account" ? [] : graphRelationGroups.map((group): Edge => {
-		const verified = group.every((relation) => !!relation.verifiedAt);
-		const mixed = group.some((relation) => !!relation.verifiedAt) && !verified;
-		const labels = [...new Set(group.map((relation) => relation.label))];
-		const label = group.length > 2
-			? `${graphLabel(group[0].label)} · +${group.length - 1}`
-			: group.map((relation) => graphLabel(relation.label)).join(" · ");
-		return {
-			id: group[0].id,
-			source: group[0].from,
-			target: group[0].to,
-			type: "smoothstep",
-			data: { labels },
-			markerEnd: group.every(r => r.id.startsWith("pw-link-identifier-")) ? undefined : { type: MarkerType.ArrowClosed },
-			label,
-			className: verified ? "relation-graph-edge--verified" : "relation-graph-edge--pending",
-			ariaLabel: `${liveById.get(group[0].from)?.name} → ${liveById.get(group[0].to)?.name} · ${label} · ${t(verified ? "relationGraphVerified" : mixed ? "relationGraphMixed" : "relationGraphPending")}`,
-			style: {
-				stroke: verified ? "var(--green)" : "var(--muted)",
-				strokeWidth: 2,
-				strokeDasharray: verified ? "none" : "5 4",
-			},
-		};
-	});
-	const graphNodes: Node[] = asset && kind !== "account" ? [asset, ...visibleRelated].map((entry, index) => {
-		const current = entry.id === asset.id;
-		const label = <span key={entry.id} className="asset-graph-label" title={[entry.name, entry.username].filter(Boolean).join(" · ")}>
-			<strong>{entry.name}</strong>
-		</span>;
-		return {
-			id: entry.id,
-			position: current
-				? { x: Math.max(0, visibleRelated.length - 1) * 90 - 15, y: 100 }
-				: { x: 20 + (index - 1) * 180, y: 240 },
-			data: { label },
-			sourcePosition: current ? Position.Bottom : Position.Top,
-			targetPosition: current ? Position.Bottom : Position.Top,
-			type: "default",
-			className: `${current ? "asset-graph-center" : "asset-graph-neighbor"}${graphMatches.has(entry.id) ? " asset-graph-match" : ""}`,
-			ariaLabel: [entry.name, entry.username].filter(Boolean).join(" · "),
-		};
-	}) : [];
 	const ownTasks = data.tasks.filter(
 		(x) => !x.deleted && x.assetId === asset?.id && !x.impactSnapshot,
 	);
@@ -1332,7 +1258,7 @@ export function AssetDetail() {
 		<label className={kind === "account" ? "account-relation-search-label" : undefined} htmlFor="relation-filter">
 			{t(kind === "account" ? "accountGraphSearchLabel" : "filterRelations")}
 		</label>
-		<input
+		<Input
 			id="relation-filter"
 			type="search"
 			placeholder={kind === "account" ? t("accountGraphSearch") : undefined}
@@ -1411,7 +1337,7 @@ export function AssetDetail() {
 				<Button asChild><Link to="/assets/project/$id/workflow/$flow" params={{ id: asset.id, flow: "close" }}>{t("workflowCloseEntry")}</Link></Button>
 				<Button variant="danger" disabled={deleteBusy} onClick={() => { setDeleteError(""); setDeleteOpen(true); }}>{t("delete")}</Button>
 			</div>}
-			<div className="page-header">
+			<div className={`page-header${kind === "project" && projectMedia.homeScreenshotId ? " has-preview" : ""}`}>
 				<div>
 					{kind !== "project" && kind !== "account" && <TextLink asChild><Link className="back-link" to={catalogReturn?.view === "all" ? "/assets" : "/assets/$kind"} params={catalogReturn?.view === "all" ? {} : { kind: catalogReturn?.view === "domains" ? "domains" : returnKind }} onClick={() => { sessionStorage.removeItem("keepany-relation-return-id"); sessionStorage.removeItem("keepany-relation-return-kind"); }}>
 						<ArrowLeft size={16} />
@@ -1430,7 +1356,7 @@ export function AssetDetail() {
 						<Button onClick={() => scrollToFold("asset-backlinks", setBacklinksOpen)}>{t("projectViewBacklinks")}<ArrowDownRight size={15} /></Button>
 					</div>}
 				</div>
-				{kind === "project" && <div className="asset-project-hero-visual" role="img" aria-label={t("preview")}>{projectMedia.homeScreenshotId ? <ImageTile id={projectMedia.homeScreenshotId} /> : <ProjectPreview asset={{ ...asset, attachments: [] }} />}</div>}
+				{kind === "project" && projectMedia.homeScreenshotId && <div className="asset-project-hero-visual" role="img" aria-label={t("preview")}><ImageTile id={projectMedia.homeScreenshotId} /></div>}
 				{kind !== "project" && <div className="actions">
 					{kind === "subscription" && <Button asChild><Link to="/finance">{t("financeViewLedger")}</Link></Button>}
 					<Button onClick={() => setEdit(true)}>{t("edit")}</Button>
@@ -1676,11 +1602,11 @@ export function AssetDetail() {
 			</section>}
 			{asset.kind === "project" && domainEditing && domainDraft && <Dialog title={domainEditing === "new" ? t("projectAddDomain") : t("projectEditDomain")} onClose={() => { if (!domainBusy) setDomainEditing(null); }}>
 				<form className="asset-project-domain-form" onSubmit={(event) => { event.preventDefault(); void saveDomain(); }}>
-					<label className="field">{t("projectDomain")}<input disabled={domainBusy} required value={domainDraft.name} onChange={(event) => setDomainDraft({ ...domainDraft, name: event.target.value })} placeholder="example.com" /></label>
-					<label className="field">{t("projectRegistrar")}<input disabled={domainBusy} value={domainDraft.registrar} onChange={(event) => setDomainDraft({ ...domainDraft, registrar: event.target.value })} /></label>
+					<label className="field">{t("projectDomain")}<Input disabled={domainBusy} required value={domainDraft.name} onChange={(event) => setDomainDraft({ ...domainDraft, name: event.target.value })} placeholder="example.com" /></label>
+					<label className="field">{t("projectRegistrar")}<Input disabled={domainBusy} value={domainDraft.registrar} onChange={(event) => setDomainDraft({ ...domainDraft, registrar: event.target.value })} /></label>
 					<label htmlFor="project-domain-account" className="field">{t("projectDomainAccount")}<Select id="project-domain-account" disabled={domainBusy} value={domainDraft.accountId} onValueChange={(selectValue) => setDomainDraft({ ...domainDraft, accountId: selectValue })}><SelectOption value="">—</SelectOption>{liveAssets(data).filter((entry) => entry.kind === "account").map((entry) => <SelectOption value={entry.id} key={entry.id}>{entry.name}</SelectOption>)}</Select></label>
-					<label className="field">{t("projectExpiry")}<input disabled={domainBusy} type="date" value={domainDraft.expiryDate} onChange={(event) => setDomainDraft({ ...domainDraft, expiryDate: event.target.value })} /></label>
-					<label className="field">{t("projectAnnualFee")}<span className="asset-project-fee-row"><input disabled={domainBusy} inputMode="decimal" value={domainFee} onChange={(event) => setDomainFee(event.target.value)} /><Select disabled={domainBusy} aria-label={t("currency")} value={domainDraft.currency} onValueChange={(selectValue) => { const currency = selectValue as ProjectDomain["currency"]; setDomainDraft({ ...domainDraft, currency }); setDomainFee(""); }}><SelectOption>CNY</SelectOption><SelectOption>USD</SelectOption><SelectOption>EUR</SelectOption><SelectOption>GBP</SelectOption><SelectOption>JPY</SelectOption></Select></span></label>
+					<label className="field">{t("projectExpiry")}<DatePicker aria-label={t("projectExpiry")} disabled={domainBusy}  value={domainDraft.expiryDate} onValueChange={(dateValue) => setDomainDraft({ ...domainDraft, expiryDate: dateValue })} /></label>
+					<label className="field">{t("projectAnnualFee")}<span className="asset-project-fee-row"><Input disabled={domainBusy} inputMode="decimal" value={domainFee} onChange={(event) => setDomainFee(event.target.value)} /><Select disabled={domainBusy} aria-label={t("currency")} value={domainDraft.currency} onValueChange={(selectValue) => { const currency = selectValue as ProjectDomain["currency"]; setDomainDraft({ ...domainDraft, currency }); setDomainFee(""); }}><SelectOption>CNY</SelectOption><SelectOption>USD</SelectOption><SelectOption>EUR</SelectOption><SelectOption>GBP</SelectOption><SelectOption>JPY</SelectOption></Select></span></label>
 					<label htmlFor="project-domain-auto-renew" className="field">{t("projectAutoRenew")}<Select id="project-domain-auto-renew" disabled={domainBusy} value={domainDraft.autoRenew} onValueChange={(selectValue) => setDomainDraft({ ...domainDraft, autoRenew: selectValue as ProjectDomain["autoRenew"] })}><SelectOption value="unknown">{t("projectAutoRenewUnknown")}</SelectOption><SelectOption value="on">{t("projectAutoRenewOn")}</SelectOption><SelectOption value="off">{t("projectAutoRenewOff")}</SelectOption></Select></label>
 					{domainError && <p role="alert" className="field-error">{domainError}</p>}
 					<div className="actions"><Button type="submit" variant="primary" disabled={domainBusy}>{t("save")}</Button>{domainEditing !== "new" && <Button type="button" variant="danger" disabled={domainBusy} onClick={() => void removeDomain()}>{t("projectDomainDelete")}</Button>}<Button type="button" disabled={domainBusy} onClick={() => setDomainEditing(null)}>{t("cancel")}</Button></div>
@@ -1715,24 +1641,7 @@ export function AssetDetail() {
 								{relationSearch}
 								<details className="account-graph-guide"><summary>{t("accountGraphHelp")}</summary><p><span>{t("accountGraphDirection")}</span><span>{t("relationGraphLegend")}</span></p></details>
 							</div> : relations.length >= 5 ? relationSearch : null}
-							{kind === "account" ? <Suspense fallback={<p role="status">{t("loading")}</p>}><AccountFamilyGraphView root={asset} assets={[asset, ...graphRelated]} relations={displayedFamily?.relations ?? relations} matches={graphMatches} selectedEdgeId={selectedGraphEdgeId} onSelectEdge={setSelectedGraphEdgeId} onVisit={visitRelation} onDeleteRelations={(items) => { setRelationDeleteError(""); setRelationToDelete(items); }} /></Suspense> : <section className="graph" aria-label={t("relations")}>
-								<ReactFlow
-									fitView
-									minZoom={0.1}
-									nodes={graphNodes}
-									edges={graphEdges}
-									onNodeClick={(_, node) => {
-										const target = liveById.get(node.id);
-										if (target) visitRelation(target);
-									}}
-									nodesDraggable={false}
-									nodesConnectable={false}
-								>
-									<GraphNodeMeasurements nodeIds={JSON.stringify([asset.id, ...graphRelated.map((item) => item.id)])} />
-									<Background />
-									<Controls showInteractive={false} />
-								</ReactFlow>
-							</section>}
+							<Suspense fallback={<p role="status">{t("loading")}</p>}><AssetRelationGraph root={asset} assets={[asset, ...graphRelated]} relations={displayedFamily?.relations ?? visibleRelations} matches={graphMatches} selectedEdgeId={selectedGraphEdgeId} onSelectEdge={setSelectedGraphEdgeId} onVisit={visitRelation} onDeleteRelations={(items) => { setRelationDeleteError(""); setRelationToDelete(items); }} /></Suspense>
 							{kind === "account" ? visibleRelations.length > 0 && <details className="account-relation-details" open={relationDetailsOpen} onToggle={(event) => setRelationDetailsOpen(event.currentTarget.open)}>
 								<summary>{t("accountGraphDetails", { count: visibleRelations.length })}</summary>
 								{relationList}
@@ -1784,9 +1693,9 @@ export function AssetDetail() {
 				<section className="card account-facts-card account-security-card"><h2>{t("accountRecordsSecurity")}</h2><dl>
 					<div><dt>{t("accountProfileVerifiedAt")}</dt><dd>{asset.accountProfileVerifiedAt ? date(asset.accountProfileVerifiedAt, i18n.language) : t("accountNotRecorded")}</dd></div>
 					<div><dt>{t("accountRelationVerifiedAt")}</dt><dd>{accountVerifiedAt ? date(accountVerifiedAt, i18n.language) : t("accountNotRecorded")}</dd></div>
-				</dl><div className="workspace-password-actions"><Button aria-expanded={passwordsOpen} onClick={() => setPasswordsFor((current) => current === asset.id ? null : asset.id)}>{t(passwordsOpen ? "workspaceHidePasswords" : "workspaceShowPasswords")}</Button><Button asChild><Link to="/assets/$kind" params={{ kind: "vault" }} hash={`asset-${asset.id}`}>{t("accountOpenPasswords")}<ArrowDownRight size={16} /></Link></Button></div></section>
+				</dl><div className="workspace-password-actions"><Button aria-expanded={passwordsOpen} aria-controls={`account-passwords-${asset.id}`} onClick={() => setPasswordsFor((current) => current === asset.id ? null : asset.id)}>{t(passwordsOpen ? "workspaceHidePasswords" : "workspaceShowPasswords")}</Button><Button asChild><Link to="/assets/$kind" params={{ kind: "vault" }} hash={`asset-${asset.id}`}>{t("accountOpenPasswords")}<ArrowDownRight size={16} /></Link></Button></div></section>
 			</div>}
-			{asset.kind === "account" && passwordsOpen && <section className="card account-passwords-section"><Suspense fallback={<div className="notice" role="status">{t("pwVaultLoading")}</div>}><PasswordVaultPanel assets={data.assets} notify={notify} focusAssetId={asset.id} embedded /></Suspense></section>}
+			{asset.kind === "account" && passwordsOpen && <section id={`account-passwords-${asset.id}`} tabIndex={-1} aria-label={t("pwVaultTitle")} className="card account-passwords-section"><Suspense fallback={<div className="notice" role="status">{t("pwVaultLoading")}</div>}><PasswordVaultPanel assets={data.assets} notify={notify} focusAssetId={asset.id} onReady={revealPasswords} embedded /></Suspense></section>}
 			{asset.kind === "account" && attachmentSection}
 			{asset.kind === "account" && (
 				<section className="card impact-checklist">
@@ -1900,7 +1809,7 @@ export function AssetDetail() {
 							>
 								{t("renew")}
 							</Button>
-							<input
+							<Input
 								value={historyNote}
 								onChange={(e) => setHistoryNote(e.target.value)}
 								placeholder={t("notes")}
@@ -1908,7 +1817,7 @@ export function AssetDetail() {
 							/>
 							<label className="renewal-amount-field">
 								<span>{t("recordedAmount")} ({asset.currency})</span>
-								<input
+								<Input
 									type="number"
 									min="0"
 									step={asset.currency === "JPY" ? "1" : "0.01"}
@@ -1921,54 +1830,56 @@ export function AssetDetail() {
 							</label>
 						</div>
 					) : (
-						<>
-							<div className="toolbar">
+						<div className="item-history-forms">
+							<form className="item-history-group" onSubmit={(event) => { event.preventDefault(); void recordItem(asset.status === "loaned" ? "return" : "loan"); }}><fieldset className="item-history-form"><legend>{t("itemLoanHistory")}</legend>
+							<div className="item-history-fields">
 								{asset.status === "active" && (
 									<><label className="field">
 										<span>{t("borrower")}</span>
-										<input value={itemBorrower} maxLength={200} onChange={(event) => { setItemBorrower(event.target.value); setItemError(""); }} />
+										<Input value={itemBorrower} maxLength={200} onChange={(event) => { setItemBorrower(event.target.value); setItemError(""); }} />
 									</label><label className="field">
 										<span>{t("itemExpectedReturnDate")}</span>
-										<input type="date" value={itemExpectedReturnDate} onChange={(event) => { setItemExpectedReturnDate(event.target.value); setItemError(""); }} />
+										<DatePicker aria-label={t("itemExpectedReturnDate")} value={itemExpectedReturnDate} onValueChange={(dateValue) => { setItemExpectedReturnDate(dateValue); setItemError(""); }} />
 									</label></>
 								)}
 								<label className="field">
 									<span>{t("loanReturnNote")}</span>
-									<input value={itemLoanNote} onChange={(event) => { setItemLoanNote(event.target.value); setItemError(""); }} />
+									<Input value={itemLoanNote} onChange={(event) => { setItemLoanNote(event.target.value); setItemError(""); }} />
 								</label>
-								<Button
+								<div className="actions item-history-actions"><Button type="submit"
 									disabled={itemBusy || !["active", "loaned"].includes(asset.status) || (asset.status === "active" && ["repairing", "resold", "retired"].includes(asset.itemLifecycleStatus ?? ""))}
-									onClick={() => void recordItem(asset.status === "loaned" ? "return" : "loan")}
 								>
 									{t(asset.status === "loaned" ? "return" : "loan")}
 								</Button>
 								{["active", "archived"].includes(asset.status) && (
-									<Button disabled={itemBusy} onClick={() => void changeItemArchive()}>
+									<Button type="button" disabled={itemBusy} onClick={() => void changeItemArchive()}>
 										{t(asset.status === "archived" ? "reactivateItem" : "archiveItem")}
 									</Button>
 								)}
-							</div>
-							<div className="toolbar">
+								</div>
+							</div></fieldset></form>
+							<form className="item-history-group" onSubmit={(event) => { event.preventDefault(); void recordItem("maintenance"); }}><fieldset className="item-history-form"><legend>{t("itemMaintenanceHistory")}</legend>
+							<div className="item-history-fields">
 								<label className="field">
 									<span>{t("maintenanceNotes")}</span>
-									<input value={itemMaintenanceNote} onChange={(event) => { setItemMaintenanceNote(event.target.value); setItemError(""); }} />
+									<Input value={itemMaintenanceNote} onChange={(event) => { setItemMaintenanceNote(event.target.value); setItemError(""); }} />
 								</label>
 								<label className="field">
 									<span>{t("maintenanceDate")}</span>
-									<input type="date" value={itemEventDate} onChange={(event) => { itemDateManuallySet.current = true; setItemEventDate(event.target.value); setItemError(""); }} />
+									<DatePicker aria-label={t("maintenanceDate")} value={itemEventDate} onValueChange={(dateValue) => { itemDateManuallySet.current = true; setItemEventDate(dateValue); setItemError(""); }} />
 								</label>
 								<label className="field">
 									<span>{t("maintenanceReminderDate")}</span>
-									<input type="date" value={itemReminderDate} onChange={(event) => { setItemReminderDate(event.target.value); setItemError(""); }} />
+									<DatePicker aria-label={t("maintenanceReminderDate")} value={itemReminderDate} onValueChange={(dateValue) => { setItemReminderDate(dateValue); setItemError(""); }} />
 								</label>
-								<Button
+								<div className="actions item-history-actions"><Button type="submit"
 									disabled={itemBusy || !["active", "loaned"].includes(asset.status) || ["resold", "retired"].includes(asset.itemLifecycleStatus ?? "")}
-									onClick={() => void recordItem("maintenance")}
 								>
 									{t("maintenance")}
 								</Button>
-							</div>
-						</>
+								</div>
+							</div></fieldset></form>
+						</div>
 					)}
 					{asset.kind === "subscription" && <p className="subtitle">{t("renewalLocalHint")}</p>}
 					{histories.length ? (
@@ -2002,9 +1913,9 @@ export function AssetDetail() {
 			)}
 			{asset.kind === "item" && locationOpen && <Dialog title={t("itemEditLocation")} onClose={() => { if (!locationBusy) setLocationOpen(false); }}>
 				<div className="asset-item-location-fields">
-					<label className="field"><span>{t("itemLocationArea")}</span><input value={locationArea} maxLength={300} disabled={locationBusy} onChange={(event) => { setLocationArea(event.target.value); setLocationError(""); }} /></label>
-					<label className="field"><span>{t("itemLocationContainer")}</span><input value={locationContainer} maxLength={300} disabled={locationBusy} onChange={(event) => { setLocationContainer(event.target.value); setLocationError(""); }} /></label>
-					<label className="field"><span>{t("itemLocationSpot")}</span><input value={locationSpot} maxLength={300} disabled={locationBusy} onChange={(event) => { setLocationSpot(event.target.value); setLocationError(""); }} /></label>
+					<label className="field"><span>{t("itemLocationArea")}</span><Input value={locationArea} maxLength={300} disabled={locationBusy} onChange={(event) => { setLocationArea(event.target.value); setLocationError(""); }} /></label>
+					<label className="field"><span>{t("itemLocationContainer")}</span><Input value={locationContainer} maxLength={300} disabled={locationBusy} onChange={(event) => { setLocationContainer(event.target.value); setLocationError(""); }} /></label>
+					<label className="field"><span>{t("itemLocationSpot")}</span><Input value={locationSpot} maxLength={300} disabled={locationBusy} onChange={(event) => { setLocationSpot(event.target.value); setLocationError(""); }} /></label>
 				</div>
 				{locationError && <p className="field-error" role="alert">{locationError}</p>}
 				<div className="actions"><Button disabled={locationBusy} onClick={() => setLocationOpen(false)}>{t("cancel")}</Button><Button variant="primary" disabled={locationBusy} onClick={() => void saveLocation()}>{t("itemSaveLocation")}</Button></div>
@@ -2020,11 +1931,11 @@ export function AssetDetail() {
 						</label>
 						<label className="field" htmlFor="item-status-date">
 							<span>{t("itemStatusDate")}</span>
-							<input id="item-status-date" type="date" required value={itemStatusDateDraft} onChange={(event) => { setItemStatusDateDraft(event.target.value); setItemStatusError(""); }} />
+							<DatePicker aria-label={t("itemStatusDate")} id="item-status-date"  required value={itemStatusDateDraft} onValueChange={(dateValue) => { setItemStatusDateDraft(dateValue); setItemStatusError(""); }} />
 						</label>
 						<label className="field" htmlFor="item-status-note">
 							<span>{t("itemStatusNote")}</span>
-							<textarea id="item-status-note" maxLength={20000} value={itemStatusNote} onChange={(event) => setItemStatusNote(event.target.value)} />
+							<Textarea id="item-status-note" maxLength={20000} value={itemStatusNote} onChange={(event) => setItemStatusNote(event.target.value)} />
 						</label>
 					</div>
 					<p className="subtitle">{t("itemStatusLocalHint")}</p>
@@ -2091,7 +2002,7 @@ export function AssetDetail() {
 						</div>
 						<div className="field">
 							<label htmlFor="relation-label">{t("relationLabel")}</label>
-							<input
+							<Input
 								id="relation-label"
 								value={relationLabel}
 								onChange={(e) => setRelationLabel(e.target.value)}
@@ -2099,7 +2010,7 @@ export function AssetDetail() {
 						</div>
 						<div className="field">
 							<label htmlFor="relation-source">{t("relationSource")}</label>
-							<input
+							<Input
 								id="relation-source"
 								value={relationSource}
 								onChange={(e) => setRelationSource(e.target.value)}
@@ -2107,11 +2018,11 @@ export function AssetDetail() {
 						</div>
 						<div className="field">
 							<label htmlFor="relation-verified">{t("verifiedAt")}</label>
-							<input
+							<DatePicker
 								id="relation-verified"
-								type="date"
+
 								value={relationVerifiedAt}
-								onChange={(e) => setRelationVerifiedAt(e.target.value)}
+								onValueChange={(dateValue) => setRelationVerifiedAt(dateValue)}
 							/>
 						</div>
 					</div>
@@ -2181,7 +2092,7 @@ export function AssetDetail() {
 					<div className="form-grid">
 						<div className="field">
 							<label htmlFor="submission-name">{t("name")}</label>
-							<input
+							<Input
 								id="submission-name"
 								value={submissionName}
 								disabled={submissionBusy}
@@ -2196,7 +2107,7 @@ export function AssetDetail() {
 						</div>
 							<div className="field">
 							<label htmlFor="submission-url">{t("url")}</label>
-							<input
+							<Input
 								id="submission-url"
 								type="url"
 								value={submissionUrl}
@@ -2218,11 +2129,11 @@ export function AssetDetail() {
 						</div>
 						<div className="field">
 							<label htmlFor="submission-date">{t("submittedAt")}</label>
-							<input id="submission-date" type="date" value={submissionDate} disabled={submissionBusy || submissionStatus === "planned"} onChange={(event) => { setSubmissionDate(event.target.value); setSubmissionSaveError(""); }} />
+							<DatePicker id="submission-date"  value={submissionDate} disabled={submissionBusy || submissionStatus === "planned"} onValueChange={(dateValue) => { setSubmissionDate(dateValue); setSubmissionSaveError(""); }} />
 						</div>
 						<div className="field backlink-evidence-field">
 							<label htmlFor="submission-evidence">{t("evidence")}</label>
-							<input id="submission-evidence" value={submissionEvidence} disabled={submissionBusy} onChange={(event) => { setSubmissionEvidence(event.target.value); setSubmissionSaveError(""); }} />
+							<Input id="submission-evidence" value={submissionEvidence} disabled={submissionBusy} onChange={(event) => { setSubmissionEvidence(event.target.value); setSubmissionSaveError(""); }} />
 							<small>{t("backlinkReceiptHint")}</small>
 						</div>
 					</div>

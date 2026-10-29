@@ -1,3 +1,4 @@
+import { openVaultReferences } from "./helpers/vault-access";
 import { readFileSync } from "node:fs";
 import { expect, test, type Page } from "@playwright/test";
 import { strFromU8, unzipSync } from "fflate";
@@ -121,6 +122,7 @@ for (const variant of [{ locale: "zh-CN", width: 390 }, { locale: "en-US", width
 		try {
 			for (const kind of kinds) {
 				await page.goto(`/assets/${kind}`);
+				if (kind === "vault") await openVaultReferences(page);
 				await page.getByRole("button", { name: kind === "vault" ? variant.locale === "zh-CN" ? "关联密码库条目" : "Link vault entry" : copy.add, exact: true }).click();
 				const form = page.getByRole("dialog");
 				await form.getByLabel(kind === "vault" ? variant.locale === "zh-CN" ? "条目名称" : "Entry name" : copy.name, { exact: true }).fill(names[kind]);
@@ -192,7 +194,7 @@ for (const variant of [{ locale: "zh-CN", width: 390 }, { locale: "en-US", width
 			expect(before.assets.find((asset) => asset.kind === "item")).toMatchObject({ deleted: false, itemLifecycleStatus: "idle" });
 			expect(before.collections).toHaveLength(1);
 			expect(before.collections[0]).toMatchObject({ id: collectionHref.split("/").at(-1), name: "Travel cabinet v2" });
-			expect(before.collections[0].assetIds.toSorted()).toEqual(before.assets.filter((asset) => asset.kind !== "vault").map((asset) => asset.id).toSorted());
+			expect(before.collections[0].assetIds.slice().sort()).toEqual(before.assets.filter((asset) => asset.kind !== "vault").map((asset) => asset.id).slice().sort());
 			const destination = await browser.newContext({ locale: variant.locale, viewport: { width: variant.width, height: 844 }, acceptDownloads: true });
 			try {
 				const restored = await destination.newPage();
@@ -217,7 +219,7 @@ for (const variant of [{ locale: "zh-CN", width: 390 }, { locale: "en-US", width
 				// Read the saved preferences too, without relying on fixture writes or app internals.
 				const after = await download(restored, copy);
 				expect(after.collections).toEqual(before.collections);
-				expect(after.assets.map((asset) => asset.id).toSorted()).toEqual(before.assets.map((asset) => asset.id).toSorted());
+				expect(after.assets.map((asset) => asset.id).slice().sort()).toEqual(before.assets.map((asset) => asset.id).slice().sort());
 				for (const id of ["sidebarOrder", "sidebarHidden"]) {
 					expect(before.preferences.find((row) => row.id === id)).toBeDefined();
 					expect(after.preferences.find((row) => row.id === id)).toEqual(before.preferences.find((row) => row.id === id));

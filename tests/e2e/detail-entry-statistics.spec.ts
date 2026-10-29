@@ -115,8 +115,8 @@ for (const locale of ["zh-CN", "en-US"]) {
 				const other = await createAsset(page, "project", "Other project", text);
 				await addBacklink(page, "Other review", "verify", text);
 				await page.goto("/assets/project");
-				await expect(page.locator(".asset-project-card").filter({ hasText: "Entry project" }).locator(".asset-project-foot")).toContainText(text.stats(3, 2));
-				await expect(page.locator(`a[href="${other.href}"] .asset-project-foot`)).toContainText(text.stats(1, 1));
+				await expect(page.locator(".asset-project-card").filter({ hasText: "Entry project" }).locator(".asset-project-links")).toContainText(text.stats(3, 2));
+				await expect(page.locator(`a[href="${other.href}"] .asset-project-links`)).toContainText(text.stats(1, 1));
 
 				// There is no submission-delete UI. Derive this tombstone from the real UI download,
 				// update its integrity hash and restore through the supported encrypted backup UI.
@@ -144,16 +144,16 @@ for (const locale of ["zh-CN", "en-US"]) {
 				await expect(page.getByText(text.restored)).toBeVisible();
 				await page.goto("/assets/project");
 				const card = page.locator(".asset-project-card").filter({ hasText: "Entry project" });
-				await expect(card.locator(".asset-project-foot")).toContainText(text.stats(2, 1));
-				expect(await card.locator(".asset-project-foot").evaluate((footer) => {
+				await expect(card.locator(".asset-project-links")).toContainText(text.stats(2, 1));
+				expect(await card.locator(".asset-project-links").evaluate((footer) => {
 					const [domain, counts] = [...footer.children].map((element) => element.getBoundingClientRect());
 					const countElement = footer.children[1];
 					return counts.left > domain.left && Math.abs((domain.top + domain.bottom) / 2 - (counts.top + counts.bottom) / 2) < 2
 						&& countElement.scrollWidth <= countElement.clientWidth;
 				})).toBe(true);
-				await expect(page.locator(`a[href="${other.href}"] .asset-project-foot`)).toContainText(text.stats(1, 1));
-				await card.locator(".asset-project-foot").scrollIntoViewIfNeeded();
-				await expect(card.locator(".asset-project-foot")).toBeInViewport({ ratio: 1 });
+				await expect(page.locator(`a[href="${other.href}"] .asset-project-links`)).toContainText(text.stats(1, 1));
+				await card.locator(".asset-project-links").scrollIntoViewIfNeeded();
+				await expect(card.locator(".asset-project-links")).toBeInViewport({ ratio: 1 });
 				await fits(page);
 				await page.screenshot({ path: test.info().outputPath(`project-card-statistics-${locale}-${width}.png`) });
 				await card.click();
@@ -172,13 +172,13 @@ for (const locale of ["zh-CN", "en-US"]) {
 				}
 				await row.screenshot({ path: test.info().outputPath(`backlink-links-${locale}-${width}.png`) });
 				await row.getByRole("button", { name: text.verify, exact: true }).click();
-				await selectChoice(row.getByRole("combobox"), "indexed");
+				await selectChoice(row.getByRole("combobox", { name: locale === "zh-CN" ? "Live review 状态" : "Live review Status", exact: true }), "indexed");
 				await row.getByRole("button", { name: text.save, exact: true }).click();
 				await expect(row.getByRole("combobox")).toHaveCount(0);
 				await page.goto("/assets/project");
-				await expect(card.locator(".asset-project-foot")).toContainText(text.stats(2, 0));
+				await expect(card.locator(".asset-project-links")).toContainText(text.stats(2, 0));
 				await page.reload();
-				await expect(card.locator(".asset-project-foot")).toContainText(text.stats(2, 0));
+				await expect(card.locator(".asset-project-links")).toContainText(text.stats(2, 0));
 
 				const firstItem = await createAsset(page, "item", "Earlier maintenance item", text);
 				await page.locator(".asset-tasks-card").getByRole("link", { name: text.maintenance, exact: true }).click();

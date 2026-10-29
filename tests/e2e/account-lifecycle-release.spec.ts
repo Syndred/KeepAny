@@ -1,3 +1,4 @@
+import { prepareVaultWorkspace, revealPasswordEntries } from "./helpers/vault-access";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { expect, type Page, test } from "@playwright/test";
@@ -11,11 +12,11 @@ import {
 } from "./fixtures/password-smart-import-visual";
 import { selectChoice } from "./helpers/select-choice";
 import {
-	activeAccountGraph,
 	expectAccountGraphGeometry,
 	expectReadableAccountGraph,
 	setAccountRelationDetailsOpen,
 	waitForAccountGraphLayout,
+	waitForAccountGraphSnapshot,
 } from "./helpers/account-graph";
 
 test.setTimeout(300_000);
@@ -124,8 +125,9 @@ for (const locale of ["zh-CN", "en"] as const)
 				if (cold) await page.goto("/assets/vault");
 				else {
 					if (width < 768) await page.locator(".mobile-menu").click();
-					await page.locator('.sidebar .nav a[href="/assets/vault"]').click();
+					await page.locator('.sidebar .nav a[href="/accounts"]').click();
 				}
+				await prepareVaultWorkspace(page);
 				await expect(
 					page
 						.locator("#password-vault-unlock-master")
@@ -140,6 +142,7 @@ for (const locale of ["zh-CN", "en"] as const)
 						.click();
 				}
 				await expect(page.locator(".password-vault-toolbar")).toBeVisible();
+				await revealPasswordEntries(page);
 			}
 			async function importPasswords(count: number) {
 				const importer = await h.open();
@@ -285,15 +288,7 @@ for (const locale of ["zh-CN", "en"] as const)
 					all: width > 600,
 					centered: false,
 				});
-				const graph = activeAccountGraph(page);
-				const value = await graph.evaluate((element) => ({
-					nodes: [...element.querySelectorAll<HTMLElement>(".react-flow__node")]
-						.map((node) => node.dataset.id ?? "")
-						.sort(),
-					edges: [...element.querySelectorAll<HTMLElement>(".react-flow__edge")]
-						.map((edge) => edge.dataset.id ?? "")
-						.sort(),
-				}));
+				const value = await waitForAccountGraphSnapshot(page, { nodes, edges });
 				expect(new Set(value.nodes).size).toBe(nodes);
 				expect(new Set(value.edges).size).toBe(edges);
 				expect(
@@ -375,6 +370,7 @@ for (const locale of ["zh-CN", "en"] as const)
 			}
 			try {
 				await page.goto("/assets/vault");
+				await prepareVaultWorkspace(page);
 				await h.createVault();
 				await importPasswords(4);
 				await linkAll();

@@ -1,3 +1,4 @@
+import { Input } from "./ui/input";
 import { createAuthClient } from "better-auth/client";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -105,9 +106,9 @@ export function SelfHostSessionPanel({ disabled, onSessionChange }: Props) {
 		<p>{checking ? t("syncSessionChecking") : signedInEmail ? t("syncSignedInAs", { email: signedInEmail }) : t("syncSessionSignedOut")}</p>
 		{!checking && !signedInEmail && <>
 			<div className="form-grid">
-				<label className="field"><span>{t("syncAccountName")}</span><input value={name} disabled={disabled || busy} onChange={event => setName(event.target.value)} autoComplete="name" /></label>
-				<label className="field"><span>{t("syncAccountEmail")}</span><input type="email" value={email} disabled={disabled || busy} onChange={event => setEmail(event.target.value)} autoComplete="email" /></label>
-				<label className="field"><span>{t("syncAccountPassword")}</span><input type="password" value={password} disabled={disabled || busy} onChange={event => setPassword(event.target.value)} autoComplete="current-password" /></label>
+				<label className="field"><span>{t("syncAccountName")}</span><Input value={name} disabled={disabled || busy} onChange={event => setName(event.target.value)} autoComplete="name" /></label>
+				<label className="field"><span>{t("syncAccountEmail")}</span><Input type="email" value={email} disabled={disabled || busy} onChange={event => setEmail(event.target.value)} autoComplete="email" /></label>
+				<label className="field"><span>{t("syncAccountPassword")}</span><Input type="password" value={password} disabled={disabled || busy} onChange={event => setPassword(event.target.value)} autoComplete="current-password" /></label>
 			</div>
 			<div className="actions">
 				<Button disabled={disabled || busy || !email || !password} onClick={() => void submit("in")}>{t("syncSignIn")}</Button>

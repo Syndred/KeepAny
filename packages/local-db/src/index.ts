@@ -1,3 +1,6 @@
+import type { RecordRow, PulledRow, ScopedOutbox, ScopedConflict, DatasetBinding, ScopedAttachmentUploadPlan } from "./repository-types";
+export type { RecordRow, PulledRow, ScopedOutbox, ScopedConflict, DatasetBinding, ScopedAttachmentUploadPlan } from "./repository-types";
+import { recordSchema } from "./record-schema";
 import { createRxDatabase, type RxDatabase } from 'rxdb';
 import { getRxStorageDexie } from 'rxdb/plugins/storage-dexie';
 import { conflictsWithAccountRestore } from '../../domain/src/account-identity';
@@ -26,7 +29,7 @@ export type { PendingSubscriptionSave, SubscriptionLink } from './subscription-s
 export type { DeleteCustomCategoryInput, EditCustomCategoryInput, PendingCategoryEdit } from './category-edit';
 
 // This transport shape is consumed by the web app's RxDB observer.
-export interface RecordRow { id: string; type: EntityType; payload: string; updatedAt: number }
+
 export class AccountRestoreConflict extends Error {
   constructor(readonly existingId: string) { super('account-restore-conflict'); }
 }
@@ -41,21 +44,15 @@ export interface PendingRestoreRecovery {
 type ImportJournal = ReviewedImportJournal;
 interface RenewalJournal { id: string; assetId: string; expectedPayload: string; next: RecordRow; history: RecordRow }
 interface SyncBase { id: string; payload: string; version: number }
-export interface PulledRow { row: RecordRow; sequence: number; version: number; operationId?: string; keyEpoch?: number; ciphertext?: string }
+
 interface PullJournal { id: string; cursorStart: number; changes: PulledRow[] }
 interface ScopedBase { id: string; scope: string; rowId: string; payload: string; version: number; row?: RecordRow; operationId?: string; keyEpoch?: number; ciphertext?: string }
-export interface ScopedOutbox { id: string; scope: string; row: RecordRow; operation: SyncOperation; blocked?: boolean }
+
 interface ScopedPullJournal { id: string; scope: string; cursorStart: number; change: PulledRow; localPayload: string | null; decision?: 'local' | 'remote' }
-export interface ScopedConflict { rowId: string; localPayload: string | null; remotePayload: string; basePayload: string | null; remoteVersion: number }
-export interface DatasetBinding { endpoint: string; accountId: string; workspaceId: string; scope: string }
+
+
 interface StoredDatasetBinding extends DatasetBinding { id: 'active' }
-export interface ScopedAttachmentUploadPlan {
-  scope: string;
-  attachmentId: string;
-  sourceSha256: string;
-  keyEpoch: number;
-  objects: Array<{ id: string; sha256: string; bytes: Uint8Array }>;
-}
+
 interface StoredScopedAttachmentUploadPlan extends ScopedAttachmentUploadPlan { id: string }
 export type ArchiveMergeChoice = 'source' | 'target';
 export interface ArchiveMergePreviewRow {
@@ -157,16 +154,7 @@ if (!defaultState.fileStore?.subscriptionSaveJournal || !defaultState.fileStore?
   }
 }
 export const files = defaultState.fileStore;
-const recordSchema = {
-  title: 'KeepAny entity', version: 0, primaryKey: 'id', type: 'object',
-  properties: {
-    id: { type: 'string', maxLength: 120 },
-    type: { type: 'string', maxLength: 20 },
-    payload: { type: 'string' },
-    updatedAt: { type: 'number', minimum: 0, maximum: 9999999999999, multipleOf: 1 },
-  },
-  required: ['id', 'type', 'payload', 'updatedAt'], indexes: ['type'],
-} as const;
+
 
 const key = (type: EntityType, id: string) => `${type}:${id}`;
 const canonical = (doc: { toJSON(): Record<string, unknown> }): RecordRow => {

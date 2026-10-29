@@ -1,0 +1,15 @@
+{
+  "index": 48,
+  "command": [
+    "C:\\Users\\Administrator\\.codex\\toolchains\\bun\\node_modules\\bun\\bin\\bun.exe",
+    "C:\\Users\\Administrator\\.codex\\toolchains\\gstack\\bin\\gstack-qa-deadline",
+    "run",
+    "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\test-results\\ui-migration\\qa-final-1203\\deadline.json",
+    "--",
+    "C:\\Users\\Administrator\\.codex\\toolchains\\gstack\\browse\\dist\\browse.exe",
+    "js",
+    "JSON.stringify({fields:Array.from(document.querySelectorAll(\".collections-editor input\")).map(e=>({id:e.id,type:e.type,value:e.type===\"checkbox\"?undefined:e.value,checked:e.type===\"checkbox\"?e.checked:undefined})),form:document.querySelector(\".collections-editor\")?.tagName})"
+  ],
+  "exitCode": 0,
+  "output": "{\"fields\":[{\"id\":\"collection-name\",\"type\":\"text\",\"value\":\"工作分类 1\"},{\"id\":\"collection-search\",\"type\":\"text\",\"value\":\"\"},{\"id\":\"\",\"type\":\"checkbox\",\"checked\":true},{\"id\":\"\",\"type\":\"checkbox\",\"checked\":true},{\"id\":\"\",\"type\":\"checkbox\",\"checked\":false},{\"id\":\"\",\"type\":\"checkbox\",\"checked\":false},{\"id\":\"\",\"type\":\"checkbox\",\"checked\":false},{\"id\":\"\",\"type\":\"checkbox\",\"checked\":false},{\"id\":\"\",\"type\":\"checkbox\",\"checked\":false},{\"id\":\"\",\"type\":\"checkbox\",\"checked\":false},{\"id\":\"\",\"type\":\"checkbox\",\"checked\":false},{\"id\":\"\",\"type\":\"checkbox\",\"checked\":false},{\"id\":\"\",\"type\":\"checkbox\",\"checked\":false},{\"id\":\"\",\"type\":\"checkbox\",\"checked\":false},{\"id\":\"\",\"type\":\"checkbox\",\"checked\":false},{\"id\":\"\",\"type\":\"checkbox\",\"checked\":true},{\"id\":\"\",\"type\":\"checkbox\",\"checked\":true},{\"id\":\"\",\"type\":\"checkbox\",\"checked\":true},{\"id\":\"\",\"type\":\"checkbox\",\"checked\":false},{\"id\":\"\",\"type\":\"checkbox\",\"checked\":false},{\"id\":\"\",\"type\":\"checkbox\",\"checked\":false},{\"id\":\"\",\"type\":\"checkbox\",\"checked\":false},{\"id\":\"\",\"type\":\"checkbox\",\"checked\":false},{\"id\":\"\",\"type\":\"checkbox\",\"checked\":false},{\"id\":\"\",\"type\":\"checkbox\",\"checked\":false},{\"id\":\"\",\"type\":\"checkbox\",\"checked\":false},{\"id\":\"\",\"type\":\"checkbox\",\"checked\":false}],\"form\":\"SECTION\"}\n"
+}

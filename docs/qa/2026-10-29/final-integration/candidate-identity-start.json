@@ -1,0 +1,19 @@
+{
+  "at": "2026-10-29T11:08:44.6719122+08:00",
+  "sourceHead": "77f5ac7af34123ebb27efbb167ab9e2b3d653ebe",
+  "expectedHead": "77f5ac7af34123ebb27efbb167ab9e2b3d653ebe",
+  "sourceDirty": [],
+  "sourceFileCount": 397,
+  "sourceRawMismatches": [],
+  "webFileCount": 132,
+  "copiedWebFileCount": 132,
+  "webMismatches": [],
+  "manifestSha256": "bf9b392dab18c2d059c49b81a59d9f8b4893398ba3f1d988f8fea814b3e6ef94",
+  "expectedManifestSha256": "bf9b392dab18c2d059c49b81a59d9f8b4893398ba3f1d988f8fea814b3e6ef94",
+  "productSourceManifestSha256": "adcd672d64045bce842b3577a10a1a2d89082469a1cd705d0756bb81ee4440ea",
+  "expectedProductSourceManifestSha256": "adcd672d64045bce842b3577a10a1a2d89082469a1cd705d0756bb81ee4440ea",
+  "entry": [
+    "/assets/index-lQafgsXW.js"
+  ],
+  "kind": "Frozen compiled web only; no rebuild; B preview mirrors portable bytes"
+}

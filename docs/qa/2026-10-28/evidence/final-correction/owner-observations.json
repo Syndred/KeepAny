@@ -1,0 +1,137 @@
+{
+  "candidate": "65ceb04dfeaa197a06975901d41b5e036d782e07",
+  "sourceDirty": true,
+  "origin": "http://127.0.0.1:4234",
+  "entry": "/assets/index-CxylPI69.js",
+  "indexSha256": "84ca2f33d150253c07a498992ecd131169ff37ccffb3b10a61469449759f99cc",
+  "actor": "主控本人，CUA内置浏览器真实UI；自建隔离虚构26项资产/8条密码，不使用用户真实密码库",
+  "steps": [
+    {
+      "id": "OC01",
+      "action": "正常账号卡→CodeHub详情→在此查看密码",
+      "actual": "65ce既有库加载完成后panel top79.85（563x698）和79.71（1280x720），标题/锁定提示/输入/解锁完整可见，区块自身焦点；未调用DOM滚动准备结果。",
+      "status": "passed",
+      "evidence": [
+        "owner/correction-owner-inline-open-65ce.png",
+        "owner/correction-owner-reentry-65ce.png"
+      ]
+    },
+    {
+      "id": "OC02",
+      "action": "详情使用已知虚构主密码解锁→复制用户名→管理这个账号的密码",
+      "actual": "8条仍在；当前CodeHub条目掩码；复制反馈已复制；正常管理链接进入asset hash定向筛选。",
+      "status": "passed",
+      "evidence": []
+    },
+    {
+      "id": "OC03",
+      "action": "定向过滤解除关联→取消",
+      "actual": "确认说明保留条目和账号；取消仍有原关联，焦点在原卡复制用户名按钮上下文。",
+      "status": "passed",
+      "evidence": []
+    },
+    {
+      "id": "OC04",
+      "action": "定向过滤解除关联→确认",
+      "actual": "8条总数不变；当前筛选明确空结果；焦点精确落可见显示全部条目按钮，rect305.9..337.9。",
+      "status": "passed",
+      "evidence": [
+        "owner/correction-owner-filtered-unlink-65ce.png"
+      ]
+    },
+    {
+      "id": "OC05",
+      "action": "清筛选→CodeHub未关联条目编辑→改备注→关闭",
+      "actual": "原条目仍存在无关联；关闭后备注仍未填写，没有写入取消草稿；焦点返回编辑按钮，没有迟到抢回原筛选。",
+      "status": "passed",
+      "evidence": []
+    },
+    {
+      "id": "OC06",
+      "action": "同条目再编辑→保存长虚构备注→刷新",
+      "actual": "保存出现密码条目已保存提示；刷新后密码库锁定，保持账号资料。",
+      "status": "passed",
+      "evidence": []
+    },
+    {
+      "id": "OC07",
+      "action": "正常展开解锁入口→错误虚构主密码→正确虚构主密码",
+      "actual": "明确错误主密码且仍锁定；正确输入解锁后仍8条，CodeHub长备注逐字回读、网址/用户名保留，实际滚动看完整卡片。",
+      "status": "passed",
+      "evidence": [
+        "owner/correction-owner-wrong-master-65ce.png",
+        "owner/correction-owner-persisted-notes-65ce.png"
+      ]
+    },
+    {
+      "id": "OC08",
+      "action": "智能导入→更多操作→模型详情→取消",
+      "actual": "更多操作Popup实测220px且内容完整可读；模型详情明确未配置、发送本次全文范围及不发送全库/主密码；取消回原界面。",
+      "status": "passed",
+      "evidence": [
+        "owner/correction-owner-smart-menu-65ce.png"
+      ]
+    },
+    {
+      "id": "OC09",
+      "action": "智能导入实际文件选择器→虚构长名TXT→移除",
+      "actual": "文件名自然换行、1KB、本机识别/字段映射可操作，未配置AI禁用；移除清空本次来源并恢复空输入/本机识别禁用。未发AI请求。",
+      "status": "passed",
+      "evidence": [
+        "owner/correction-owner-smart-file-65ce.png"
+      ]
+    },
+    {
+      "id": "OC10",
+      "action": "正常导航收录与备份→AI整理导入选同一虚构TXT→移除",
+      "actual": "已选文件时正文disabled，文件选择器到紧邻移除区间距15.99998px；移除后正文disabled=false且value空；未配置模型，未发送请求。",
+      "status": "passed",
+      "evidence": [
+        "owner/correction-owner-file-picker-65ce.png"
+      ]
+    },
+    {
+      "id": "OC11",
+      "action": "普通账号列表→访问统计账号展开→解除关联确认",
+      "actual": "8条总数保持；条目迁至未关联区，ARTICLE自身获得焦点，entryId R60WYduJiV1O68P2tfXBCw==；top235.2/bottom719.65在720视口内，实际图核对。",
+      "status": "passed",
+      "evidence": [
+        "owner/correction-owner-ordinary-unlink-65ce.png"
+      ]
+    },
+    {
+      "id": "OC12",
+      "action": "65ce原库实际下载KDBX→全新4238空库正常导入并建立库",
+      "actual": "实际下载18453字节；真实filechooser选该文件、填已知虚构备份密码、开始导入，期间输入/取消/按钮disabled；完成后8条，实际截图核对CodeHub长备注及网址。通过UI逐个展开原库账号条目，DOM只读回读两库八个entryId完全一致。仅KDBX导入不包含普通资产，原剩余关联显示资产已不存在属于当前数据边界。",
+      "status": "passed",
+      "evidence": [
+        "owner/correction-owner-kdbx-restored-65ce.png",
+        "owner/correction-owner-kdbx-ids-65ce.json"
+      ]
+    },
+    {
+      "id": "OC13",
+      "action": "更新4180交付服务→新内置验收页签从概览正常点账号",
+      "actual": "117实际HTTP文件同65ce包；实际消费index-CxylPI69.js。概览0条及账号0条/未建立状态保持原样；只读入口，没有往4180加入测试资料，用户原Chrome库未操作。原用户页签直接绑定不可用，使用新临时验收页签观察，随后已关闭新页签；不冒称原用户页签已刷新。",
+      "status": "passed",
+      "evidence": [
+        "owner/correction-delivery-4180-65ce.png",
+        "owner/correction-delivery-4180-65ce.json"
+      ]
+    }
+  ],
+  "visualReview": {
+    "expandedStable": "已逐张实际打开65ce双语390/768/1280/1920/2560共10幅expanded-stable；标题、手机号/掩码、完整网址/备注、收起邻居和工具栏可读，无页面横溢出；成功toast原帧保留另列，未用遮挡帧替代默认状态。",
+    "additionalOpened": [
+      "focus-zh-CN-390.png",
+      "hover-en-390.png",
+      "focus-en-768.png",
+      "hover-zh-CN-1280.png",
+      "empty-en-1920.png",
+      "multiple-zh-CN-2560.png"
+    ],
+    "boundary": "此处为主控实际查看集合，不冒称本人已逐张打开所有输出截图；其他组合由独立复核和机器数据分别判定。",
+    "multipleStable": "65ce双语五宽multiple-stable共10张已逐张实际打开；第二条无密码/极简和第一条完整内容、边界、相邻紧凑布局均核对。zh1280帧有PWA更新提示，位于页底未挡两个密码条目，不将其冒称无更新提示状态。"
+  },
+  "remaining": "全部279及两个已发布升级/离线回归已通过；独立最终40状态已实际补验并目检。整体仍待最终门禁独立复核、云端全部job、交接与清理闭环。"
+}

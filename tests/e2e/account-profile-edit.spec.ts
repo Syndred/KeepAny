@@ -1,8 +1,8 @@
 import { expect, test } from "@playwright/test";
 import { selectChoice } from "./helpers/select-choice";
 
-const repositoryPath = `/@fs${process.cwd()}/packages/local-db/src/index.ts`;
-const domainPath = `/@fs${process.cwd()}/packages/domain/src/index.ts`;
+const repositoryPath = `/@fs/${process.cwd().replaceAll("\\", "/").replace(/^\/+/, "")}/packages/local-db/src/index.ts`;
+const domainPath = `/@fs/${process.cwd().replaceAll("\\", "/").replace(/^\/+/, "")}/packages/domain/src/index.ts`;
 
 for (const locale of ["zh-CN", "en-US"] as const) {
 	for (const width of [390, 1280]) {

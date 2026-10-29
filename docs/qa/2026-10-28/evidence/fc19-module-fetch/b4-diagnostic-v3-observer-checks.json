@@ -1,0 +1,47 @@
+{
+  "schema": "keepany.fc19-diagnostic-observer-checks.v1",
+  "status": "not-complete",
+  "archive": {
+    "path": "docs/qa/2026-10-28/evidence/fc19-module-fetch/b4-diagnostic-v3-observer-evidence.zip",
+    "bytes": 9528778,
+    "sha256": "3f8e05496e8a28b4c6f89da501cc84ee724f0af62962a63dca3c818df56fc633",
+    "members": 54,
+    "manifestItems": 53,
+    "crcAndAllDigests": "passed"
+  },
+  "inputs": {
+    "tests/e2e/helpers/graph-network-diagnostics.ts": "f1794f89ed18cc62c01c27f4e532911ccb1f6f61058281d42150113823417b88",
+    "tests/diagnostics/module-navigation.diagnostic.ts": "53f8d1a8cb1298878f70f102017159cc26511f586f728926a9f37dcae58769ef",
+    "tests/phase0/graph-network-observer.test.ts": "1a89674754e9df78b527cea36f210e7b7e4a3adf65d856dfae9e7c822a14c61a"
+  },
+  "originalB4Diagnostic": {
+    "runId": 40760169544,
+    "jobId": 123069629101,
+    "artifactId": 12848855183,
+    "outerBytes": 6543507,
+    "outerSha256": "8d0674be0f8a0ff4579304e2d23a888dee7bdeb5ee871a829fca900bf0d215a4",
+    "externalOriginalPath": "test-results/cib4d1-module-diagnostic-artifact.zip",
+    "result": "3passed/1diagnosticStop; A/B/C100clean,D98clean/round99Workboxcancel; normalUI/pageErrors[]"
+  },
+  "observerBoundary": {
+    "O1": "passed",
+    "O2": "passed",
+    "O3": "passed",
+    "O4": "passed; declared inspector block calibration4/4,8.5s",
+    "O5": "passed; independent5unit/readback4images",
+    "productRootCause": "unresolved"
+  },
+  "calibrationCandidate": {
+    "sourceCommit": "6ef1c26b42191a245d248661194110554a47ca25",
+    "sourceDirty": false,
+    "windowsArchiveSha256": "e40f9306a0f51fe368cb84fdd2a3e28f9231255e7601ff5e699ec2fe46f51cf2"
+  },
+  "normalDiscovery": "283tests/53files at both entryconfigs; no assertions removed or normal recovery added",
+  "rawNetLogEmbedded": false,
+  "pending": [
+    "B4 normal release+portable jobs still in progress at last20:28Z readback; no new push cancelling them",
+    "V3 metadata-only full normalCI not yet run",
+    "Original healthy module cancellation root cause/remedy",
+    "Actual final clean packet/4180 consumption and final independent delivery receipt"
+  ]
+}

@@ -42,7 +42,7 @@ export function Overview() {
     !relation.deleted && (relation.from === asset.id || relation.to === asset.id) &&
     (byId.get(relation.from)?.kind === "vault" || byId.get(relation.to)?.kind === "vault"),
   ));
-  const projects = assets.filter((asset) => asset.kind === "project").slice(0, 2);
+  const projects = assets.filter((asset) => asset.kind === "project").slice(0, 6);
   const connected = (project: Asset) => {
     const ids = new Set(data.relations.filter((relation) => !relation.deleted && (relation.from === project.id || relation.to === project.id))
       .map((relation) => relation.from === project.id ? relation.to : relation.from));
@@ -50,10 +50,9 @@ export function Overview() {
   };
   return <main className="page overview-page">
     <section className="overview-hero">
-      <div><span className="eyebrow">{t("overviewEyebrow")}</span><h1>{t("overviewHero")}</h1><p>{t("overviewHeroHint")}</p></div>
-      <Link to="/assets/$kind" params={{ kind: "project" }} className="button overview-hero-action"><ArrowUpRight size={16}/>{t("exploreProjects")}</Link>
+      <div><h1>{t("overview")}</h1><p>{t("overviewHeroHint")}</p></div>
+      <div className="overview-hero-actions"><Link to="/assets/$kind" params={{ kind: "project" }} className="button"><ArrowUpRight size={16}/>{t("exploreProjects")}</Link><Link className="button" to="/intake"><Plus size={15}/>{t("quickIntake")}</Link><Link className="button" to="/tasks">{t("viewTasks")} <ArrowRight size={15}/></Link></div>
     </section>
-    <div className="overview-intake-bar"><strong>{t("overviewCollectHint")}</strong><Link className="button" to="/intake"><Plus size={15}/>{t("quickIntake")}</Link><Link className="button" to="/tasks">{t("viewTasks")} <ArrowRight size={15}/></Link></div>
     <div className="overview-stats">
       <div className="card overview-stat"><span>{t("overviewRecorded")}<Layers2 size={16}/></span><strong>{assets.length}</strong><small>{t("overviewRecordedHint")}</small></div>
       <div className="card overview-stat"><span>{t("overviewNextThirty")}<CalendarDays size={16}/></span><strong>{upcoming.length}</strong><small>{t("overviewThisWeek", { count: weekCount })}</small></div>
@@ -61,7 +60,7 @@ export function Overview() {
     </div>
     <div className="overview-panels">
       <section className="overview-panel"><div className="overview-panel-head"><div><h2>{t("overviewNextActions")}</h2><p>{t("overviewDueOrder")}</p></div><Link to="/tasks">{t("viewAll")} <ArrowRight size={15}/></Link></div>
-        {attention.length ? attention.slice(0, 3).map((item) => {
+        {attention.length ? attention.slice(0, 4).map((item) => {
           const content = <><span className="overview-action-icon"><Bell size={16}/></span><span className="overview-action-copy"><strong>{item.name}</strong><small>{item.meta}</small></span><span className="overview-action-date"><strong>{date(item.dueDate, i18n.language)}</strong>{item.dueDate && item.dueDate < today ? t("overdue") : ""}</span></>;
           return item.asset ? <Link className="overview-action-row" key={item.id} to="/assets/$kind/$id" params={{ kind: item.asset.kind, id: item.asset.id }}>{content}</Link> :
             <Link className="overview-action-row" key={item.id} to="/tasks">{content}</Link>;
@@ -77,8 +76,8 @@ export function Overview() {
     {projects.length ? <div className="overview-project-grid">{projects.map((project) => {
       const linked = connected(project);
       return <Link key={project.id} className="overview-project-card" to="/assets/$kind/$id" params={{ kind: "project", id: project.id }}>
-        <div className="overview-project-top"><span className="overview-project-mark">{project.name.trim().charAt(0).toLocaleUpperCase() || "K"}</span><span className="chip">{t(project.status)}</span></div>
-        <h3>{project.name}</h3><p>{[project.description, project.url].filter(Boolean).join(" · ") || t("project")}</p>
+        <div className="overview-project-top"><span className="overview-project-mark">{project.name.trim().charAt(0).toLocaleUpperCase() || "K"}</span><h3 title={project.name}>{project.name}</h3><span className="chip">{t(project.status)}</span></div>
+        <p>{[project.description, project.url].filter(Boolean).join(" · ") || t("project")}</p>
         <div className="overview-project-counts"><span><strong>{linked.length}</strong> {t("overviewLinkedAssets", { count: linked.length })}</span><span><strong>{linked.filter((asset) => asset.kind === "account").length}</strong> {t("overviewAccountLabel", { count: linked.filter((asset) => asset.kind === "account").length })}</span><span><strong>{linked.filter((asset) => asset.kind === "subscription").length}</strong> {t("overviewSubscriptionLabel", { count: linked.filter((asset) => asset.kind === "subscription").length })}</span></div>
       </Link>;
     })}</div> : <div className="overview-project-empty"><p>{t("overviewNoProjects")}</p><div className="actions"><Link className="button" to="/assets/$kind" params={{ kind: "project" }}>{t("add")} {t("project")}</Link>{!data.loading && data.assets.length === 0 && <Link className="button" to="/settings" hash="advanced-settings">{t("overviewTrySample")}</Link>}</div></div>}

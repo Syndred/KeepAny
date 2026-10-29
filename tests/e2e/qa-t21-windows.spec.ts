@@ -61,7 +61,7 @@ test("T21 session key disappears on reload and encrypted automatic activation re
 		expect(await connected(h.page)).toBe(false);
 		await h.createVault();
 		await h.page.getByRole("button", { name: labels.en.assistantMenu, exact: true }).click();
-		await h.page.getByRole("link", { name: labels.en.assistantAccess, exact: true }).click();
+		await h.page.getByRole("menuitem", { name: labels.en.assistantAccess, exact: true }).click();
 		await h.page.getByRole("link", { name: "Configure local access", exact: true }).click();
 		const settings = h.page.locator(".ai-settings-panel");
 		await selectChoice(settings.locator("#ai-settings-key-source"), "vault");

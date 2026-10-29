@@ -1,0 +1,3 @@
+# B独立复核报告
+
+[完整原报告](报告.md)与independent-verdict.json同目录保留，原报告字节SHA256为a8573acded9445beda0e5248a4147e95e11413525fc7b5ae98e707d0de9c9a1f。原candidate与必要身份/数据JSON亦按原文件名保留；截图编号指向原ignored证据目录，精选图另见主控记录。未修改B的候选、结论、范围或原文。
