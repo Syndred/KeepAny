@@ -2,7 +2,7 @@ import { browserDefaults, compiledServer } from "./scripts/testing/browser-confi
 import { defineConfig } from "@playwright/test";
 const port = Number(process.env.KEEPANY_RELEASE_TEST_PORT ?? "4231");
 export default defineConfig({
- webServer: compiledServer(port),
+ webServer: compiledServer(port, true),
  ...browserDefaults,
 
 	testMatch: [

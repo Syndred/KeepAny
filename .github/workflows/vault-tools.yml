@@ -1,8 +1,6 @@
 name: Optional vault tools and modal feedback
 on:
-  push:
-    branches: ['main']
-  pull_request:
+  workflow_call:
   workflow_dispatch:
 permissions:
   contents: read
