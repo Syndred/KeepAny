@@ -144,8 +144,8 @@
     },
     {
       "path": "candidate.json",
-      "bytes": 1167,
-      "sha256": "4f0403da5e64b4df8c5bfa1fef7138ff8051c3187fb73de9b848e8d5b0a3b08e"
+      "bytes": 2669,
+      "sha256": "aa2f40b561e819db5c6393dc35a54495773ee37341902c9e25cc3fa440dcc5d5"
     },
     {
       "path": "data-cancel.json",
@@ -178,19 +178,14 @@
       "sha256": "1d78494fa551155bb88aa9d93fd6eafd27e3267f2992cec84aaf3aaec0c2f291"
     },
     {
-      "path": "independent-candidate.json",
-      "bytes": 2669,
-      "sha256": "aa2f40b561e819db5c6393dc35a54495773ee37341902c9e25cc3fa440dcc5d5"
-    },
-    {
       "path": "independent-data-checks.json",
       "bytes": 2768,
       "sha256": "02beea14bb7e96ab7286c64861d53acf51041f89fd2bf98d846b8778f91760e3"
     },
     {
       "path": "independent-report.md",
-      "bytes": 14811,
-      "sha256": "c2457d5b2eba4edefbb94f291a03df6b040565a4e7431f6d84b18fa4b97c0b1e"
+      "bytes": 375,
+      "sha256": "40b7facf8129079adad2fac3971fda67ffdeb52845a40496b98c055b39052eb1"
     },
     {
       "path": "independent-verdict.json",
@@ -238,9 +233,14 @@
       "sha256": "944bb466b522a06a8efe965c7f7b82da1aea7323b39534bfda9a3aadac171a39"
     },
     {
+      "path": "报告.md",
+      "bytes": 14618,
+      "sha256": "a8573acded9445beda0e5248a4147e95e11413525fc7b5ae98e707d0de9c9a1f"
+    },
+    {
       "path": "进度.md",
-      "bytes": 13281,
-      "sha256": "6c4bc26245b3ce8ac7dbcc48334e8b7feb088b9d1ccce0654098ba1927bebd01"
+      "bytes": 14786,
+      "sha256": "407b62e5d7a40cf14418c40db8b0de991ead0ef4b153d755694abeba77605871"
     }
   ]
 }

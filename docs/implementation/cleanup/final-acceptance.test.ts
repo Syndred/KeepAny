@@ -35,6 +35,8 @@ describe("frozen cleanup acceptance receipt", () => {
     expect(independent.candidateHead).toBe(candidate.sourceCommit);
     expect(independent.manifestSha256).toBe(candidate.webManifestSha256);
     expect(independent.actualIndexSha256).toBe(candidate.indexSha256);
+    expect(independent.report).toBe("报告.md");
+    expect(createHash("sha256").update(readFileSync(resolve(folder, independent.report))).digest("hex")).toBe(independent.reportSha256);
     expect(json("web-manifest.json")).toHaveLength(candidate.webFileCount);
     expect(json("product-source.json")).toHaveLength(candidate.productSourceCount);
     for (const name of ["web-manifest.json", "product-source.json"]) {
