@@ -34,6 +34,12 @@ jobs:
         run: node scripts/verify-vault-tool-evidence.mjs
       - name: Check that incomplete or mismatched evidence is rejected
         run: node scripts/test-vault-tool-evidence.mjs
+      - name: Verify ordinary account actions with the unused CSV module blocked
+        run: pnpm exec playwright test -c playwright.core-account.config.ts
+      - name: Verify six core cases and their candidate-bound evidence
+        run: node scripts/verify-core-account-evidence.mjs
+      - name: Reject incomplete core account evidence
+        run: node scripts/test-core-account-evidence.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -42,4 +48,7 @@ jobs:
             test-results/vault-tools
             test-results/vault-gate-probes-*/results.json
             test-results/vault-gate-probes-*/logs
+            test-results/core-account-isolation
+            test-results/core-account-gate-probes-*/results.json
+            test-results/core-account-gate-probes-*/logs
           if-no-files-found: error
