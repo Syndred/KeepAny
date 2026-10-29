@@ -1,8 +1,7 @@
 name: Diagnose module loading
 
 on:
-  push:
-    branches: ['codex/asset-card-layout-20261028']
+  workflow_dispatch:
 
 permissions:
   contents: read
