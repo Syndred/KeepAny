@@ -122,9 +122,15 @@ export const passwordVaultCopy: Record<string, [string, string]> = {
 	],
 	pwConnectLocal: ["本机匹配", "Match locally"],
 	pwConnectSaveHint: [
-		"{{accounts}} 个账号 · {{relations}} 条关系",
-		"{{accounts}} accounts · {{relations}} relationships",
+		"{{accounts}} · {{relations}}",
+		"{{accounts}} · {{relations}}",
 	],
+	pwConnectSaveAccountCount: ["{{count}} 个账号", "{{count}} accounts"],
+	pwConnectSaveAccountCount_one: ["{{count}} 个账号", "{{count}} account"],
+	pwConnectSaveAccountCount_other: ["{{count}} 个账号", "{{count}} accounts"],
+	pwConnectSaveRelationCount: ["{{count}} 条关系", "{{count}} relationships"],
+	pwConnectSaveRelationCount_one: ["{{count}} 条关系", "{{count}} relationship"],
+	pwConnectSaveRelationCount_other: ["{{count}} 条关系", "{{count}} relationships"],
 	pwConnectAiTitle: ["AI 关联", "AI relationships"],
 	pwConnectAiScope: [
 		"发送所选名称、全部登录标识、域名及线索，不含密码字段。",

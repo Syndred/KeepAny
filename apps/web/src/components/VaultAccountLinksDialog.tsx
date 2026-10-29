@@ -898,9 +898,13 @@ export function VaultAccountLinksDialog({
 								</div>
 								<span className="vault-connect-save-count">
 									{t("pwConnectSaveHint", {
-										accounts: new Set(selectedRows.map((row) => row.account.id))
-											.size,
-										relations: chosen.length,
+										accounts: t("pwConnectSaveAccountCount", {
+											count: new Set(selectedRows.map((row) => row.account.id))
+												.size,
+										}),
+										relations: t("pwConnectSaveRelationCount", {
+											count: chosen.length,
+										}),
 									})}
 								</span>
 								<Button
