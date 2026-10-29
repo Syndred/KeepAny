@@ -7,7 +7,7 @@
 - [当前检查及历史输入区别](checks/current-checks.json)
 - [4180逐文件身份](checks/local-4180-identity.json)
 - [4180浏览器实际状态](checks/local-browser-receipt.json)
-- [4180最终截图](checks/local-4180-assets-final.png)
+- [4180最终截图](https://github.com/Syndred/KeepAny/blob/b8acfe562d8a4852fffad7fb8aa5ef55104e3fb5/docs/qa/2026-10-28/evidence/ui-migration/checks/local-4180-assets-final.png)
 - [当前控制台统计](checks/console-summary.json)
 - [源码中英文四断点截图](source-density/)
 

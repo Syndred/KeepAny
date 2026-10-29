@@ -21,18 +21,18 @@
 
 |原问题|修复结果|本轮实际证据|
 |---|---|---|
-|装饰遮住卡片正文、缺图时保留大封面|删除虚构封面和溢出装饰；有真实图片时标题旁显示缩略图；详情保留原图|[最终卡片](evidence/ui-migration/qa-completion-browser/screenshots/assets-cards-zh-2220.png)，假封面0|
+|装饰遮住卡片正文、缺图时保留大封面|删除虚构封面和溢出装饰；有真实图片时标题旁显示缩略图；详情保留原图|[最终卡片](https://github.com/Syndred/KeepAny/blob/b8acfe562d8a4852fffad7fb8aa5ef55104e3fb5/docs/qa/2026-10-28/evidence/ui-migration/qa-completion-browser/screenshots/assets-cards-zh-2220.png)，假封面0|
 |卡片拉得过宽、内容少却占大块空间|默认紧凑列表，可切换限宽卡片；图标与标题同排，事实、状态、操作分列；卡片上限360px|1920宽紧凑列表首屏9项；2220宽卡片实测269.28px、首屏21项，详见原生probe026/030|
-|没有同时展示资料多与资料少的样例|隔离测试资料同页放完整项目、极简项目、带真实图片的实物、缺日期/金额实物、长标题、订阅、域名，共25资产|[完整与极简并排](evidence/ui-migration/qa-completion-browser/screenshots/assets-cards-zh-2220.png)、[紧凑列表](evidence/ui-migration/qa-completion-browser/screenshots/assets-list-zh-1920.png)。没有把合成资料导入用户4180|
+|没有同时展示资料多与资料少的样例|隔离测试资料同页放完整项目、极简项目、带真实图片的实物、缺日期/金额实物、长标题、订阅、域名，共25资产|[完整与极简并排](https://github.com/Syndred/KeepAny/blob/b8acfe562d8a4852fffad7fb8aa5ef55104e3fb5/docs/qa/2026-10-28/evidence/ui-migration/qa-completion-browser/screenshots/assets-cards-zh-2220.png)、[紧凑列表](https://github.com/Syndred/KeepAny/blob/b8acfe562d8a4852fffad7fb8aa5ef55104e3fb5/docs/qa/2026-10-28/evidence/ui-migration/qa-completion-browser/screenshots/assets-list-zh-1920.png)。没有把合成资料导入用户4180|
 |混合卡片边缘和操作不齐|同排卡片拉齐，底部状态/箭头对齐；项目状态使用与实物相同的右列|首排7卡底部同为657.6875；失败截图与红绿日志保留|
 |顶部出现多个选中态|按完整路由精确匹配；“全部”不再匹配所有子路由|原生probe030仅“全部”、probe034仅“实物”、probe041仅“费用账本”|
-|日期只能点icon、原生日历难用|统一日期输入+Base UI浮层+双语日历；整块点击、手工输入、月份年份、清除/今天、非法值阻止、键盘和焦点返回|[中文日期](evidence/ui-migration/qa-completion-browser/screenshots/tasks-date-zh-1280.png)、[英文手机日期](evidence/ui-migration/qa-completion-browser/screenshots/tasks-date-en-390.png)；正常、非法2月30日、清除、保存回读均验|
+|日期只能点icon、原生日历难用|统一日期输入+Base UI浮层+双语日历；整块点击、手工输入、月份年份、清除/今天、非法值阻止、键盘和焦点返回|[中文日期](https://github.com/Syndred/KeepAny/blob/b8acfe562d8a4852fffad7fb8aa5ef55104e3fb5/docs/qa/2026-10-28/evidence/ui-migration/qa-completion-browser/screenshots/tasks-date-zh-1280.png)、[英文手机日期](https://github.com/Syndred/KeepAny/blob/b8acfe562d8a4852fffad7fb8aa5ef55104e3fb5/docs/qa/2026-10-28/evidence/ui-migration/qa-completion-browser/screenshots/tasks-date-en-390.png)；正常、非法2月30日、清除、保存回读均验|
 |待办“全部”位置不合逻辑|统一顺序为“全部→待处理→已完成”|最终probe015为全部6/待处理5/已完成1；无维护计划时列表独占可用列|
-|分类下方空白、图标单独占行|左侧入口后12px紧接已有分类；图标、名称、数量、操作同行，右侧编辑器独立|[中文分类](evidence/ui-migration/qa-completion-browser/screenshots/collections-zh-1280.png)、[英文手机分类](evidence/ui-migration/qa-completion-browser/screenshots/collections-en-390.png)，8条分类同时检查|
-|账本金额、编辑删除按钮不齐且圆角混乱|金额列同一右边界，两个76px宽椭圆按钮；手机高度44px；订阅编辑同一规范|[实际账本操作](evidence/ui-migration/qa-completion-browser/screenshots/finance-actions-zh-1280.png)，金额右界1068、桌面按钮76×32、radius999|
+|分类下方空白、图标单独占行|左侧入口后12px紧接已有分类；图标、名称、数量、操作同行，右侧编辑器独立|[中文分类](https://github.com/Syndred/KeepAny/blob/b8acfe562d8a4852fffad7fb8aa5ef55104e3fb5/docs/qa/2026-10-28/evidence/ui-migration/qa-completion-browser/screenshots/collections-zh-1280.png)、[英文手机分类](https://github.com/Syndred/KeepAny/blob/b8acfe562d8a4852fffad7fb8aa5ef55104e3fb5/docs/qa/2026-10-28/evidence/ui-migration/qa-completion-browser/screenshots/collections-en-390.png)，8条分类同时检查|
+|账本金额、编辑删除按钮不齐且圆角混乱|金额列同一右边界，两个76px宽椭圆按钮；手机高度44px；订阅编辑同一规范|[实际账本操作](https://github.com/Syndred/KeepAny/blob/b8acfe562d8a4852fffad7fb8aa5ef55104e3fb5/docs/qa/2026-10-28/evidence/ui-migration/qa-completion-browser/screenshots/finance-actions-zh-1280.png)，金额右界1068、桌面按钮76×32、radius999|
 |个人工作区点了没有用|迁移Base UI真实菜单，连接工作区设置、自定义侧栏和现有收录入口；另两个全局菜单一并迁移|最终原生probe044–048和正式包shell-reference测试；没有同名toast冒充功能|
-|侧栏拖动手柄hover溢出|手柄hover/focus/拖动命中区留在导航行内，保持键盘排序和路由行为|[当前hover](evidence/ui-migration/qa-completion-browser/screenshots/sidebar-hover-zh-2220.png)，4个手柄边界正常；键盘拖动见历史1203检查点及源码相邻回归|
-|概览及其他页面继续浪费首屏|页头改成简短任务标题与实际动作；概览最多6张限宽项目、四项近期动作，账号图标/名称同排；提醒条横向紧凑|[有到期提醒的概览](evidence/ui-migration/qa-completion-browser/screenshots/overview-zh-1280-due.png)、[英文概览](evidence/ui-migration/qa-completion-browser/screenshots/overview-en-1280.png)、[手机账号](evidence/ui-migration/qa-completion-browser/screenshots/accounts-en-390.png)|
+|侧栏拖动手柄hover溢出|手柄hover/focus/拖动命中区留在导航行内，保持键盘排序和路由行为|[当前hover](https://github.com/Syndred/KeepAny/blob/b8acfe562d8a4852fffad7fb8aa5ef55104e3fb5/docs/qa/2026-10-28/evidence/ui-migration/qa-completion-browser/screenshots/sidebar-hover-zh-2220.png)，4个手柄边界正常；键盘拖动见历史1203检查点及源码相邻回归|
+|概览及其他页面继续浪费首屏|页头改成简短任务标题与实际动作；概览最多6张限宽项目、四项近期动作，账号图标/名称同排；提醒条横向紧凑|[有到期提醒的概览](https://github.com/Syndred/KeepAny/blob/b8acfe562d8a4852fffad7fb8aa5ef55104e3fb5/docs/qa/2026-10-28/evidence/ui-migration/qa-completion-browser/screenshots/overview-zh-1280-due.png)、[英文概览](https://github.com/Syndred/KeepAny/blob/b8acfe562d8a4852fffad7fb8aa5ef55104e3fb5/docs/qa/2026-10-28/evidence/ui-migration/qa-completion-browser/screenshots/overview-en-1280.png)、[手机账号](https://github.com/Syndred/KeepAny/blob/b8acfe562d8a4852fffad7fb8aa5ef55104e3fb5/docs/qa/2026-10-28/evidence/ui-migration/qa-completion-browser/screenshots/accounts-en-390.png)|
 
 紧凑列表的单行宽度用于横向扫读事实信息；限宽要求针对卡片。卡片同排为保持边缘和操作一致，极简资料仍可能少于完整资料，但没有额外封面或强制大高度；默认列表提供最高密度。
 
@@ -93,6 +93,6 @@ SHA256：`b27c8ae0b44b9e0b88c9e42e1c63c0a0c282bddb41f005421f48db67abfbad4a`。
 
 包内108个Web文件、454份源码、109个分发许可证记录；sourceDirty为true，反映打包时保留的未跟踪草图/历史用户产物，不是公开发行。当前产品代码已提交。4180现由本包运行，PID26268；实际HTTP108文件逐摘要一致，Chrome脚本`/assets/index-aRDqBjxo.js`一致，见[本机身份](evidence/ui-migration/checks/local-4180-identity.json)。
 
-用户Chrome通过正式“更新应用”按钮启用新版，没有清站点或导入测试备份。原10项资产与费用汇总¥9,087/¥407/¥127/2一致；最终提醒44px、假封面0、只有“全部”选中。见[实际浏览器状态](evidence/ui-migration/checks/local-browser-receipt.json)和[最终原资料截图](evidence/ui-migration/checks/local-4180-assets-final.png)。另一张local-4180-assets.png为发现提醒问题时的中间版本，不充当最终图。保留原有页签及一个普通验收页，无群组。
+用户Chrome通过正式“更新应用”按钮启用新版，没有清站点或导入测试备份。原10项资产与费用汇总¥9,087/¥407/¥127/2一致；最终提醒44px、假封面0、只有“全部”选中。见[实际浏览器状态](evidence/ui-migration/checks/local-browser-receipt.json)和[最终原资料截图](https://github.com/Syndred/KeepAny/blob/b8acfe562d8a4852fffad7fb8aa5ef55104e3fb5/docs/qa/2026-10-28/evidence/ui-migration/checks/local-4180-assets-final.png)。另一张local-4180-assets.png为发现提醒问题时的中间版本，不充当最终图。保留原有页签及一个普通验收页，无群组。
 
 本轮自建4215–4222测试服务及gstack浏览器/保活进程已结束，4180保留；预先存在的10张历史未跟踪图和output/未动。测试自动生成的16张合成图移至忽略的test-results目录，未混入原历史资料。加密合成备份及浏览器控制状态不进入公开证据。产品及报告按可回滚范围提交到`codex/asset-card-layout-20261028`；最终fetch/push回读见[交付回读](交付回读.md)。未合并main、更新官网/公开Release或替换release/web。

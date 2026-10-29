@@ -758,5 +758,13 @@
       "bytes": 76974,
       "destination": "tests/e2e/fixtures/toolbar-large-synthetic.kdbx"
     }
-  ]
+  ],
+  "historicalArchive": {
+    "sourceCommit": "b8acfe562d8a4852fffad7fb8aa5ef55104e3fb5",
+    "index": "docs/implementation/cleanup/2026-10-29-历史证据归档索引.json",
+    "filesRemovedFromCurrentTree": 4171,
+    "bytesRemovedFromCurrentTree": 820947501,
+    "historyRewritten": false,
+    "untrackedOriginalsTouched": false
+  }
 }

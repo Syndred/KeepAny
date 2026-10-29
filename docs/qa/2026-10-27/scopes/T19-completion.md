@@ -28,7 +28,7 @@ $env:KEEPANY_E2E_PORT='4208'
 node node_modules/@playwright/test/cli.js test tests/e2e/qa-t19-merge-completion.spec.ts tests/e2e/intake-refresh-race.spec.ts tests/e2e/intake-pdf.spec.ts --config=playwright.windows-qa.config.ts --workers=1 --reporter=line --output=test-results/T19-completion-final
 ```
 
-本机最终日志：`test-results/T19-completion-final.log`。保留[中文390](../evidence/T19-completion/fields-source-zh-390.png)与[英文1280](../evidence/T19-completion/fields-source-en-1280.png)代表图，已目检可读性与操作间距；不提交全量PDF重复截图或原生备份下载。
+本机最终日志：`test-results/T19-completion-final.log`。保留[中文390](https://github.com/Syndred/KeepAny/blob/b8acfe562d8a4852fffad7fb8aa5ef55104e3fb5/docs/qa/2026-10-27/evidence/T19-completion/fields-source-zh-390.png)与[英文1280](https://github.com/Syndred/KeepAny/blob/b8acfe562d8a4852fffad7fb8aa5ef55104e3fb5/docs/qa/2026-10-27/evidence/T19-completion/fields-source-en-1280.png)代表图，已目检可读性与操作间距；不提交全量PDF重复截图或原生备份下载。
 
 ## 首次失败与执行边界
 

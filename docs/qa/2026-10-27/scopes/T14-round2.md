@@ -33,6 +33,6 @@ node node_modules/@playwright/test/cli.js test tests/e2e/qa-t14-round2.spec.ts -
 
 最终 2/2 passed，10.4 秒。初跑亦为 2/2，后补订阅精确回读后复跑。两轮无产品失败。完整运行日志在忽略目录 `test-results/T14-round2-run.log`；两份小回执包含实际菜单、账单行控件、各详情按钮、原历史及订阅回读：[en-receipt.json](../evidence/T14-round2/en-receipt.json)、[zh-CN-receipt.json](../evidence/T14-round2/zh-CN-receipt.json)。
 
-双语截图已目视核对：[中文390](../evidence/T14-round2/zh-CN-390.png)、[英文1280](../evidence/T14-round2/en-1280.png)。截图可见订阅计划 25.50、已记支出 17.34、单独的 12.34 账单与 5.00 续费，未出现布局裁切。
+双语截图已目视核对：[中文390](https://github.com/Syndred/KeepAny/blob/b8acfe562d8a4852fffad7fb8aa5ef55104e3fb5/docs/qa/2026-10-27/evidence/T14-round2/zh-CN-390.png)、[英文1280](https://github.com/Syndred/KeepAny/blob/b8acfe562d8a4852fffad7fb8aa5ef55104e3fb5/docs/qa/2026-10-27/evidence/T14-round2/en-1280.png)。截图可见订阅计划 25.50、已记支出 17.34、单独的 12.34 账单与 5.00 续费，未出现布局裁切。
 
 Playwright 已关闭两个测试 context 和自建 4208 服务，端口回查无监听。无真实支付、Ego、真实用户资料或最终便携包验收。本轮未提交 Git、未部署。下一步需在保留四条原要求的前提下实现缺失能力，再做对应行为回归；不能宣布整个费用包或整个项目验收完成。

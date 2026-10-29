@@ -23,7 +23,7 @@ node node_modules/typescript/bin/tsc --noEmit
 node node_modules/@biomejs/biome/bin/biome lint apps/web/src/page-workspaces.tsx tests/e2e/qa-t25-windows.spec.ts
 ```
 
-类型检查、两文件lint均通过。截图仅保留[中文390](../evidence/T25/windows/reference-zh-CN-390.png)、[中文1280](../evidence/T25/windows/reference-zh-CN-1280.png)、[英文390](../evidence/T25/windows/reference-en-390.png)、[英文1280](../evidence/T25/windows/reference-en-1280.png)。已目检中文390与英文1280：外部引用单一黄色高亮，操作可达、文字可读，手机引用表使用既有横向滚动。
+类型检查、两文件lint均通过。截图仅保留[中文390](https://github.com/Syndred/KeepAny/blob/b8acfe562d8a4852fffad7fb8aa5ef55104e3fb5/docs/qa/2026-10-27/evidence/T25/windows/reference-zh-CN-390.png)、[中文1280](https://github.com/Syndred/KeepAny/blob/b8acfe562d8a4852fffad7fb8aa5ef55104e3fb5/docs/qa/2026-10-27/evidence/T25/windows/reference-zh-CN-1280.png)、[英文390](https://github.com/Syndred/KeepAny/blob/b8acfe562d8a4852fffad7fb8aa5ef55104e3fb5/docs/qa/2026-10-27/evidence/T25/windows/reference-en-390.png)、[英文1280](https://github.com/Syndred/KeepAny/blob/b8acfe562d8a4852fffad7fb8aa5ef55104e3fb5/docs/qa/2026-10-27/evidence/T25/windows/reference-en-1280.png)。已目检中文390与英文1280：外部引用单一黄色高亮，操作可达、文字可读，手机引用表使用既有横向滚动。
 
 ## 首次失败与夹具纠正
 

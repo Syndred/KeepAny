@@ -105,7 +105,7 @@
 - FileStorage新增三独立进程各8次更新，最终24审计/24不同ID；锁owner强杀后 authority-locked、完整原库不变；提交operation后确认再强杀，新实例逐字段读回；超限更新拒绝且保完整历史。
 - 源码4209中英5种宽度+范围/拒绝/逐次写/撤销16/16通过，但随后 SHARE_WRITE 修复使该快照过渡化。最终候选在主控4211真实便携生产Web、最新 bundled CLI 重跑16/16、0失败、0跳过，用时3.4分钟；全部16项都运行该bundled CLI，包含真实下载请求/导入配对、字段投影、写拒绝/批准/重复、过期/冲突、撤销竞态。Web候选为 `dist/preview/KeepAny-0.1.0-preview.9df576480f7f.dirty-portable/web`；CLI和源文件SHA见小回执，与独立复核一致。
 - bundled CLI由 `node scripts/build-mcp-launcher.mjs` 构建，SHA256 `01f98849e55e3743a64b7364d4679fec6d023a1a1bddda95da13adf5d75d4c37`。C#已嵌入，无额外helper文件；Node直接运行mjs。npm pack dry-run 5文件、压缩68266字节、解包292847字节，仍仅原3项runtime dependencies。此为构建和实际SDK包纵切，不冒充仓库外全新npm安装。
-- 13个涉及文件 biome lint 无警告/错误，类型检查通过；主控最终35文件lint与全仓tsc亦通过。28张中英文截图批量保留于忽略 `test-results/T23-round2-production-final-evidence`；仅复制2张390代表图进入本小回执目录：[英文](../evidence/T23-round2/write-en-390.png)、[中文](../evidence/T23-round2/write-zh-390.png)，合计72561字节。第二次误把打包标志对4209 Vite跑时，测试强等ServiceWorker超时；这是配置误用，保留失败日志，不算产品验收；正确生产来源为4211。
+- 13个涉及文件 biome lint 无警告/错误，类型检查通过；主控最终35文件lint与全仓tsc亦通过。28张中英文截图批量保留于忽略 `test-results/T23-round2-production-final-evidence`；仅复制2张390代表图进入本小回执目录：[英文](https://github.com/Syndred/KeepAny/blob/b8acfe562d8a4852fffad7fb8aa5ef55104e3fb5/docs/qa/2026-10-27/evidence/T23-round2/write-en-390.png)、[中文](https://github.com/Syndred/KeepAny/blob/b8acfe562d8a4852fffad7fb8aa5ef55104e3fb5/docs/qa/2026-10-27/evidence/T23-round2/write-zh-390.png)，合计72561字节。第二次误把打包标志对4209 Vite跑时，测试强等ServiceWorker超时；这是配置误用，保留失败日志，不算产品验收；正确生产来源为4211。
 
 ## 未完成与适用边界
 

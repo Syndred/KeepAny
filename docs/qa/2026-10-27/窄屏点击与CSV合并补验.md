@@ -70,9 +70,9 @@
 
 已工具目检修后中英代表图：窄屏字段纵排、底部确认/取消可达；原文换行与长URL可读，页面无横向溢出；审计旧/新描述显示原换行。合成数据中的中文内容在英文界面保留，应用文案为英语。
 
-- [中文390合并对话框](evidence/owner-closure/merge-zh-390.png) · [英文1280合并对话框](evidence/owner-closure/merge-en-1280.png)
-- [中文390恢复原文及审计](evidence/owner-closure/restored-source-zh-390.png) · [英文1280恢复原文及审计](evidence/owner-closure/restored-source-en-1280.png)
-- [中文390鼠标操作前页面](evidence/owner-closure/task-before-zh-390.png) · [英文1280鼠标操作前页面](evidence/owner-closure/task-before-en-1280.png)
+- [中文390合并对话框](https://github.com/Syndred/KeepAny/blob/b8acfe562d8a4852fffad7fb8aa5ef55104e3fb5/docs/qa/2026-10-27/evidence/owner-closure/merge-zh-390.png) · [英文1280合并对话框](https://github.com/Syndred/KeepAny/blob/b8acfe562d8a4852fffad7fb8aa5ef55104e3fb5/docs/qa/2026-10-27/evidence/owner-closure/merge-en-1280.png)
+- [中文390恢复原文及审计](https://github.com/Syndred/KeepAny/blob/b8acfe562d8a4852fffad7fb8aa5ef55104e3fb5/docs/qa/2026-10-27/evidence/owner-closure/restored-source-zh-390.png) · [英文1280恢复原文及审计](https://github.com/Syndred/KeepAny/blob/b8acfe562d8a4852fffad7fb8aa5ef55104e3fb5/docs/qa/2026-10-27/evidence/owner-closure/restored-source-en-1280.png)
+- [中文390鼠标操作前页面](https://github.com/Syndred/KeepAny/blob/b8acfe562d8a4852fffad7fb8aa5ef55104e3fb5/docs/qa/2026-10-27/evidence/owner-closure/task-before-zh-390.png) · [英文1280鼠标操作前页面](https://github.com/Syndred/KeepAny/blob/b8acfe562d8a4852fffad7fb8aa5ef55104e3fb5/docs/qa/2026-10-27/evidence/owner-closure/task-before-en-1280.png)
 
 ## 首次夹具与工具差异
 
