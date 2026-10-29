@@ -71,7 +71,7 @@ export async function prepareLegacyPdfArchive(directory: string, password: strin
 }
 
 export async function restoreCompletionArchive(page: Page, password: string, archive: string) {
-	await page.goto("/intake");
+	if (new URL(page.url()).pathname !== "/intake") await page.goto("/intake");
 	await page.locator("#backup-password").fill(password);
 	await openBackupRestorePanel(page);
 	await page.locator("#restore-file").setInputFiles(archive);

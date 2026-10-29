@@ -1,0 +1,1 @@
+import{n as e,r as t}from"./link-3P-9VzbS.js";import{n}from"./useMatch-B2btvFP6.js";function r(r){let i=t();return e(i.stores.location,n(r,i))}export{r as t};

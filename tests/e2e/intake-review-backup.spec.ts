@@ -50,6 +50,8 @@ for (const locale of ['zh-CN', 'en-US']) test(`${locale} downloaded encrypted ba
     await expect(rows.nth(1)).toContainText(zh ? '已确认' : 'Confirmed');
     await rows.nth(2).getByRole('button', { name: zh ? '忽略' : 'Ignore', exact: true }).click();
     await expect(rows.nth(2)).toContainText(zh ? '已忽略' : 'Ignored');
+    // The English candidate name itself contains "Ignored"; wait for the actual decision chip.
+    await expect(rows.nth(2).locator('.intake-review-source > .chip')).toHaveText(zh ? '已忽略' : 'Ignored');
     // Historical PDF rows are test preparation; only the candidate's visible KA1 restore consumes them.
     await restoreCompletionArchive(page, password, legacy.path);
     const pendingBatch = page.getByRole('region', { name: 'invoice-pending.pdf', exact: true });
@@ -61,6 +63,7 @@ for (const locale of ['zh-CN', 'en-US']) test(`${locale} downloaded encrypted ba
     await pendingBatch.getByText(zh ? '查看提取原文' : 'View extracted text', { exact: true }).click();
     await expect(pendingBatch.locator('.intake-review-original pre')).toContainText('Original PDF reference USD 12.00');
     await page.getByRole('region', { name: 'invoice-ignored.pdf', exact: true }).locator('.intake-review-row').getByRole('button', { name: zh ? '忽略' : 'Ignore', exact: true }).click();
+    await expect(page.getByRole('region', { name: 'invoice-ignored.pdf', exact: true }).locator('.intake-review-source > .chip')).toHaveText(zh ? '已忽略' : 'Ignored');
     await expect(rows).toHaveCount(5);
     const before = await download(page, zh);
     expect(before.rows).toHaveLength(1); expect(before.candidates).toHaveLength(5);
