@@ -34,7 +34,7 @@ import { Input } from "./components/ui/input";
 import { Select, SelectOption } from "./components/ui/select";
 import { CategoryStrip, LibraryCard, ProjectCard } from "./page-asset-list";
 import { matchesAssetSearch } from "./asset-search";
-import { useWorkspaceSummary } from "./use-workspace-summary";
+import { buildWorkspaceSummary } from "./workspace-summary";
 import {
 	date,
 	Empty,
@@ -128,7 +128,7 @@ export function AssetsPage({
 	const assets = liveAssets(data).filter((asset) =>
 		["project", "subscription", "item"].includes(asset.kind),
 	);
-	const summary = useWorkspaceSummary();
+
 	const expenses = useMemo(
 		() =>
 			buildAssetExpenses({
@@ -139,8 +139,27 @@ export function AssetsPage({
 			}),
 		[data.assets, data.history, today, month],
 	);
-	const [category, setCategory] = useState(() => {
+	const summary = useMemo(
+		() =>
+			buildWorkspaceSummary({
+				assets: data.assets,
+				history: expenses.records,
+				tasks: data.tasks,
+				relations: data.relations,
+				today,
+			}),
+		[data.assets, data.tasks, data.relations, expenses.records, today],
+	);
+	function savedContext() {
 		const saved = readWorkspaceReturn();
+		return saved?.view === section &&
+			(initialCategory === "all" || saved.category === initialCategory)
+			? saved
+			: null;
+	}
+
+	const [category, setCategory] = useState(() => {
+		const saved = savedContext();
 		return saved?.view === section
 			? (saved.category ?? initialCategory)
 			: initialCategory;
@@ -161,27 +180,28 @@ export function AssetsPage({
 	const [projectId, setProjectId] = useState("");
 	const [editor, setEditor] = useState<AssetKind | null>(null);
 	useEffect(() => {
-		const saved = readWorkspaceReturn();
+		const saved = savedContext();
 		setCategory(
 			saved?.view === section
 				? (saved.category ?? initialCategory)
 				: initialCategory,
 		);
 		setSubCategory(
-			section === "physical"
-				? (sessionStorage.getItem("keepany-category-item") ?? "")
-				: ["project", "subscription"].includes(initialCategory)
-					? (sessionStorage.getItem(`keepany-category-${initialCategory}`) ??
-						"")
-					: "",
+			saved?.subCategory ??
+				(section === "physical"
+					? (sessionStorage.getItem("keepany-category-item") ?? "")
+					: ["project", "subscription"].includes(initialCategory)
+						? (sessionStorage.getItem(`keepany-category-${initialCategory}`) ??
+							"")
+						: ""),
 		);
-		setTag("");
-		setStatus("");
-		setLocation("");
+		setTag(saved?.tag ?? "");
+		setStatus(saved?.status ?? "");
+		setLocation(saved?.location ?? "");
 		setQuery(sessionStorage.getItem(`keepany-assets-query-${section}`) ?? "");
 	}, [section, initialCategory]);
 	useEffect(() => {
-		const saved = readWorkspaceReturn();
+		const saved = savedContext();
 		if (saved?.view !== section) return;
 		const frame = requestAnimationFrame(() =>
 			window.scrollTo(0, saved.scrollY),
@@ -194,6 +214,10 @@ export function AssetsPage({
 			JSON.stringify({
 				view: section,
 				category,
+				subCategory,
+				tag,
+				status,
+				location,
 				assetId,
 				query,
 				scrollY: window.scrollY,
@@ -304,9 +328,12 @@ export function AssetsPage({
 			if (
 				selection &&
 				((section === "physical" && selection.kind === "item") ||
-					(section === "online" && selection.kind === category))
-			)
+					(section === "online" &&
+						["project", "subscription"].includes(selection.kind)))
+			) {
+				if (section === "online") setCategory(selection.kind);
 				setSubCategory(selection.category);
+			}
 		}
 		window.addEventListener("keepany-category-select", select);
 		return () => window.removeEventListener("keepany-category-select", select);

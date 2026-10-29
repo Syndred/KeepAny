@@ -359,7 +359,7 @@ export function AssetDetail() {
 	const assetBills = data.history
 		.filter(entry => historyAssetIds(entry).includes(asset?.id ?? ""))
 		.map(effectiveFinanceEntry)
-		.filter(entry => !entry.deleted && ["expense", "topup", "refund", "balance", "renew"].includes(entry.action))
+		.filter(entry => !entry.deleted && (asset?.kind === "account" ? ["expense", "topup", "refund", "balance", "renew"] : ["expense", "renew"]).includes(entry.action))
 		.sort((a, b) => (b.eventDate || b.billDate || b.createdAt).localeCompare(a.eventDate || a.billDate || a.createdAt));
 	if (!asset)
 		return (

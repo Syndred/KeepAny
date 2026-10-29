@@ -46,7 +46,7 @@
 .assets-catalog { display: grid; gap: 18px; min-width: 0; }
 .assets-toolbar { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
 .assets-toolbar > label { flex: 1 1 300px; }
-.assets-toolbar > .themed-select-trigger { max-width: 220px; }
+.assets-toolbar > .themed-select-root { display: block; width: auto; flex: 0 1 180px; min-width: 140px; max-width: 220px; }
 .assets-catalog-grid { grid-template-columns: repeat(auto-fill,minmax(min(100%,280px),1fr)); gap: 16px; }
 .assets-item-card { color: var(--ink); text-decoration: none; display: flex; align-items: flex-start; gap: 14px; max-width: 360px; padding: 16px; min-width: 0; }
 .assets-item-image { width: 72px; height: 100px; border-radius: 12px; background: #fff0da; display: grid; place-items: center; flex: none; overflow: hidden; }
@@ -64,4 +64,4 @@
 .assets-finance-workspace > .assets-section-nav { margin: 18px 24px 0; }
 .assets-finance-workspace .finance-summary, .assets-finance-workspace .finance-filters { grid-template-columns: repeat(2,minmax(0,1fr)); }
 @media (max-width: 1200px) { .assets-metrics { grid-template-columns: repeat(2,minmax(0,1fr)); }.assets-dashboard-columns { grid-template-columns: minmax(0,1fr); } }
-@media (max-width: 650px) { .assets-entry-grid { grid-template-columns: minmax(0,1fr); }.assets-metric { padding: 14px; gap: 8px; }.assets-metric-icon { width: 32px; height: 32px; border-radius: 10px; }.assets-metric-icon svg { width: 20px; }.assets-section-nav { gap: 4px; }.assets-section-nav > a { padding: 8px; font-size: 12px; min-height: 44px; }.assets-workbench > .page-header { padding: 16px; }.assets-toolbar > .asset-view-toggle { margin-left: auto; }.assets-workbench td { min-width: 120px; }.assets-ledger,.assets-breakdown,.assets-renewals { padding: 14px; }.assets-finance-workspace .finance-filters { grid-template-columns: minmax(0,1fr); } }
+@media (max-width: 650px) { .assets-entry-grid { grid-template-columns: minmax(0,1fr); }.assets-metric { padding: 14px; gap: 8px; }.assets-metric-icon { width: 32px; height: 32px; border-radius: 10px; }.assets-metric-icon svg { width: 20px; }.assets-section-nav { gap: 4px; }.assets-section-nav > a { padding: 8px; font-size: 12px; min-height: 44px; }.assets-workbench > .page-header { padding: 16px; }.assets-toolbar > .asset-view-toggle { margin-left: auto; }.assets-toolbar > .themed-select-root { flex: 1 1 140px; max-width: 100%; }.assets-workbench td { min-width: 120px; }.assets-ledger,.assets-breakdown,.assets-renewals { padding: 14px; }.assets-finance-workspace .finance-filters { grid-template-columns: minmax(0,1fr); } }

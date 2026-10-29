@@ -95,6 +95,8 @@ for (const locale of ["zh-CN", "en"] as const) {
 		await expect(page).toHaveURL(/\/assets\/online$/);
 		await page.getByRole("button", { name: t("assetCardView"), exact: true }).click();
 		await expect(grid(page).locator(":scope > a")).toHaveCount(6);
+		await expect(card(page, fixture.software.name)).toContainText("1,011.00");
+		await expect(card(page, fixture.software.name)).not.toContainText("1,511.00");
 		const categories = page.locator(".assets-category-pills");
 		await categories.getByRole("button", { name: new RegExp(`^${t("workspaceDomains")}`) }).click();
 		await expect(grid(page).locator(":scope > a")).toHaveCount(2);
@@ -104,6 +106,10 @@ for (const locale of ["zh-CN", "en"] as const) {
 		await page.locator(".topbar-back-link").click();
 		await expect(page).toHaveURL(/\/assets\/online$/);
 		await expect(grid(page).locator(":scope > a")).toHaveCount(2);
+		await page.goto("/assets/project");
+		await expect(grid(page).locator(".asset-project-card")).toHaveCount(2);
+		await expect(grid(page).locator(".workspace-domain-card")).toHaveCount(0);
+		await page.goto("/assets/online");
 		await categories.getByRole("button", { name: new RegExp(`^${t("all")} `) }).click();
 		const search = page.getByRole("searchbox", { name: t("assetsSearchOnline"), exact: true });
 		await search.fill("missing-date.example");
@@ -116,11 +122,23 @@ for (const locale of ["zh-CN", "en"] as const) {
 		await selectChoice(page.getByRole("combobox", { name: t("filterTag"), exact: true }), "Studio");
 		await expect(grid(page).locator(":scope > a")).toHaveCount(1);
 		await expect(grid(page)).toContainText(fixture.software.name);
+		await card(page, fixture.software.name).click();
+		await expect(page.locator(".asset-finance-card")).not.toContainText("AS Preserved refund");
+		await expect(page.locator(".asset-finance-card")).not.toContainText("AS Preserved balance");
+		await expect(page.locator(".asset-finance-card")).toContainText("AS Corrected renewal");
+		await page.locator(".topbar-back-link").click();
+		await expect(categories.getByRole("button", { name: new RegExp(`^${t("assetsSoftware")}`) })).toHaveAttribute("aria-pressed", "true");
+		await expect(page.getByRole("combobox", { name: t("filterTag"), exact: true })).toHaveAttribute("data-value", "Studio");
+		await expect(grid(page).locator(":scope > a")).toHaveCount(1);
 		await selectChoice(page.getByRole("combobox", { name: t("filterTag"), exact: true }), "");
 		await page.getByRole("button", { name: t("assetListView"), exact: true }).click();
 		await expect(grid(page)).toHaveClass(/asset-dense-list/);
 		await page.locator(".assets-section-nav").getByRole("link", { name: t("assetsPhysical"), exact: true }).click();
 		await expect(grid(page).locator(":scope > a")).toHaveCount(4);
+		await page.locator(".asset-category-toolbar").getByRole("button", { name: new RegExp(`^${t("appliance")} `) }).click();
+		await expect(grid(page).locator(":scope > a")).toHaveCount(1);
+		await expect(grid(page)).toContainText(fixture.appliance.name);
+		await page.locator(".asset-category-toolbar").getByRole("button", { name: new RegExp(`^${t("all")} `) }).click();
 		await selectChoice(page.getByRole("combobox", { name: t("itemLifecycleStatus"), exact: true }), "loaned");
 		await expect(grid(page).locator(":scope > a")).toHaveCount(1);
 		await expect(grid(page)).toContainText("Synthetic friend");
@@ -128,6 +146,10 @@ for (const locale of ["zh-CN", "en"] as const) {
 		await selectChoice(page.getByRole("combobox", { name: t("location"), exact: true }), "Library");
 		await expect(grid(page).locator(":scope > a")).toHaveCount(1);
 		await expect(grid(page)).toContainText(fixture.furniture.name);
+		await card(page, fixture.furniture.name).click();
+		await page.locator(".topbar-back-link").click();
+		await expect(page.getByRole("combobox", { name: t("location"), exact: true })).toHaveAttribute("data-value", "Library");
+		await expect(grid(page).locator(":scope > a")).toHaveCount(1);
 		await selectChoice(page.getByRole("combobox", { name: t("location"), exact: true }), "");
 		await expect(page.locator(".assets-maintenance")).toContainText(fixture.task.name);
 		await card(page, fixture.item.name).click();
@@ -142,6 +164,26 @@ for (const locale of ["zh-CN", "en"] as const) {
 		await page.locator(".topbar-back-link").click();
 		await expect(page).toHaveURL(/\/assets\/physical$/);
 		await expect(grid(page)).toContainText("AS Updated location");
+		await card(page, fixture.item.name).click();
+		const lending = page.getByRole("group", { name: t("itemLoanHistory"), exact: true });
+		await lending.getByRole("button", { name: t("loan"), exact: true }).click();
+		await expect(page.getByText(t("borrowerRequired"), { exact: true })).toBeVisible();
+		await lending.getByLabel(t("borrower"), { exact: true }).fill("AS Temporary borrower");
+		await lending.getByLabel(t("itemExpectedReturnDate"), { exact: true }).fill("2026-11-07");
+		await lending.getByRole("button", { name: t("loan"), exact: true }).click();
+		await expect(lending.getByRole("button", { name: t("return"), exact: true })).toBeVisible();
+		await page.reload();
+		await expect(lending.getByRole("button", { name: t("return"), exact: true })).toBeVisible();
+		await lending.getByRole("button", { name: t("return"), exact: true }).click();
+		await expect(lending.getByRole("button", { name: t("loan"), exact: true })).toBeVisible();
+		const maintenance = page.getByRole("group", { name: t("itemMaintenanceHistory"), exact: true });
+		await maintenance.getByRole("button", { name: t("maintenance"), exact: true }).click();
+		await expect(page.getByText(t("maintenanceNoteRequired"), { exact: true })).toBeVisible();
+		await maintenance.getByLabel(t("maintenanceNotes"), { exact: true }).fill("AS Synthetic maintenance recorded");
+		await maintenance.getByRole("button", { name: t("maintenance"), exact: true }).click();
+		await expect(page.locator(".asset-item-timeline")).toContainText("AS Synthetic maintenance recorded");
+		await page.reload();
+		await expect(page.locator(".asset-item-timeline")).toContainText("AS Synthetic maintenance recorded");
 		await page.goto("/accounts");
 		await expect(page.locator(".asset-account-card")).toHaveCount(2);
 		await page.goto("/tasks");
@@ -173,6 +215,11 @@ for (const locale of ["zh-CN", "en"] as const) {
 		await expect(dialog).toBeVisible();
 		await expect(dialog.locator("#amount")).toHaveAttribute("aria-invalid", "true");
 		await dialog.locator("#amount").fill("15.25");
+		await dialog.locator("#purchaseDate").fill("2026-02-30");
+		await dialog.getByRole("button", { name: t("save"), exact: true }).click();
+		await expect(dialog.locator("#purchaseDate")).toHaveAttribute("aria-invalid", "true");
+		await expect(dialog.locator("#purchaseDate")).toHaveValue("2026-02-30");
+		await dialog.locator("#purchaseDate").fill("2026-10-29");
 		await dialog.getByRole("button", { name: t("save"), exact: true }).click();
 		await expect(dialog).toBeHidden();
 		await page.reload();
@@ -180,8 +227,8 @@ for (const locale of ["zh-CN", "en"] as const) {
 		await page.goto("/finance");
 		await expect(page.getByRole("heading", { name: t("financeExpenseLedger"), exact: true })).toBeVisible();
 		await expect(page.locator("#finance-filter-type")).toHaveCount(0);
-		await expect(page.locator(".finance-entry")).not.toContainText("AS Preserved refund");
-		await expect(page.locator(".finance-entry")).not.toContainText("AS Preserved balance");
+		await expect(page.locator(".finance-page")).not.toContainText("AS Preserved refund");
+		await expect(page.locator(".finance-page")).not.toContainText("AS Preserved balance");
 		await page.getByRole("button", { name: t("financeAddRecord"), exact: true }).click();
 		dialog = page.getByRole("dialog");
 		await expect(dialog.locator("#finance-action")).toHaveCount(0);
@@ -236,7 +283,7 @@ for (const locale of ["zh-CN", "en"] as const) {
 		expect(errors).toEqual([]); expect(sourceRequests).toEqual([]);
 	});
 
-	test(`AS01 AS02 AS06 ${locale}: empty assets and cancelled creation remain empty after refresh`, async ({ context }) => {
+	test(`AS01 AS02 AS06 ${locale}: empty and cancelled creation, then single asset persistence`, async ({ context }) => {
 		const t = translate(locale), { page, errors, sourceRequests } = await prepare(context, locale, 390);
 		await page.goto("/assets");
 		await expect(page.locator(".assets-workbench")).toBeVisible();
@@ -253,6 +300,16 @@ for (const locale of ["zh-CN", "en"] as const) {
 			await expect(page.locator(".assets-workbench .empty")).toBeVisible();
 			await noOverflow(page);
 		}
+		await page.getByRole("button", { name: t("workspaceAddAsset"), exact: true }).click();
+		await page.getByRole("dialog").getByRole("button", { name: t("workspaceContinue"), exact: true }).click();
+		await page.getByRole("dialog").locator("#name").fill("AS Only physical asset");
+		await page.getByRole("dialog").getByRole("button", { name: t("save"), exact: true }).click();
+		await expect(page.getByRole("dialog")).toBeHidden();
+		await expect(grid(page).locator(":scope > a")).toHaveCount(1);
+		await expect(grid(page)).toContainText(t("workspaceAmountMissing"));
+		await page.reload();
+		await expect(grid(page).locator(":scope > a")).toHaveCount(1);
+		await expect(grid(page)).toContainText("AS Only physical asset");
 		expect(errors).toEqual([]); expect(sourceRequests).toEqual([]);
 	});
 

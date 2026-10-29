@@ -2,6 +2,10 @@ export const workspaceReturnKey = "keepany-workspace-return";
 export type WorkspaceReturn = {
 	view: "all" | "domains" | "overview" | "online" | "physical";
 	category?: string;
+	subCategory?: string;
+	tag?: string;
+	status?: string;
+	location?: string;
 	assetId: string;
 	query: string;
 	scrollY: number;
@@ -20,7 +24,9 @@ export function readWorkspaceReturn(assetId?: string): WorkspaceReturn | null {
 			) ||
 			typeof row.assetId !== "string" ||
 			(assetId !== undefined && row.assetId !== assetId) ||
-			(row.category !== undefined && typeof row.category !== "string") ||
+			[row.category, row.subCategory, row.tag, row.status, row.location].some(
+				(value) => value !== undefined && typeof value !== "string",
+			) ||
 			typeof row.query !== "string" ||
 			typeof row.scrollY !== "number" ||
 			!Number.isFinite(row.scrollY) ||
