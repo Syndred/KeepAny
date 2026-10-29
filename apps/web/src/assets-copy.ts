@@ -1,4 +1,5 @@
 export const assetsCopy: Record<string, [string, string]> = {
+ assetsExpenseCount: ["{{count}} 笔支出", "{{count}} expenses"],
 	assetsOverview: ["总览", "Overview"],
 	assetsOnline: ["线上资产", "Online assets"],
 	assetsPhysical: ["实物资产", "Physical assets"],

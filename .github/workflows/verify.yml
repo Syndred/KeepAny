@@ -79,6 +79,25 @@ jobs:
       - name: Verify that explicit compiled archive
         run: pnpm verify:preview
         timeout-minutes: 5
+      - name: Verify assets on the explicit compiled candidate
+        shell: bash
+        run: |
+          export KEEPANY_PREVIEW_DIRECTORY="${KEEPANY_PREVIEW_ARCHIVE%.zip}"
+          unset KEEPANY_PREVIEW_ARCHIVE
+          export KEEPANY_RELEASE_TEST_PORT=4394
+          export KEEPANY_EVIDENCE_DIR=test-results/assets-workbench/evidence
+          export KEEPANY_ASSETS_REPORT=test-results/assets-workbench/results.json
+          pnpm exec playwright test --config playwright.assets-workbench.config.ts
+          node scripts/verify-assets-workbench-evidence.mjs
+        timeout-minutes: 8
+      - name: Preserve asset acceptance evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: assets-workbench-${{ github.run_id }}-${{ github.run_attempt }}
+          path: test-results/assets-workbench/
+          retention-days: 7
+          if-no-files-found: error
       - name: Fetch previous fixed package for encrypted draft recovery
         run: git fetch --no-tags --depth=1 origin a7be6146bd34f24bdf495c3827bda69f7bd27a7d
         timeout-minutes: 5

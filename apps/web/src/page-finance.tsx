@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { Plus } from "lucide-react";
-import { lazy, Suspense, useRef, useState, type FormEvent } from "react";
+import { lazy, Suspense, useEffect, useRef, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import {
 	effectiveFinanceEntry, financeActions, formatMinorUnits, historyAssetIds, historySchema, inputFromMinorUnits, monthlyMinorUnits,
@@ -58,6 +58,10 @@ export function FinancePage({ expenseOnly = false }: { expenseOnly?: boolean } =
 	const [busy, setBusy] = useState(false);
 	const inFlight = useRef(false);
 	const [error, setError] = useState("");
+	const errorFeedbackRef = useRef<HTMLParagraphElement>(null);
+	useEffect(() => {
+		if (error) errorFeedbackRef.current?.scrollIntoView({ block: "center" });
+	}, [error]);
 	const [typeFilter, setTypeFilter] = useState<LedgerAction | "all">("all");
 	const [assetFilter, setAssetFilter] = useState("");
 	const [sourceFilter, setSourceFilter] = useState("all");
@@ -189,17 +193,17 @@ export function FinancePage({ expenseOnly = false }: { expenseOnly?: boolean } =
 		{editSubscription && <Suspense fallback={<div className="toast" role="status">{t("loading")}</div>}><AssetEditor kind="subscription" asset={editSubscription === "new" ? undefined : editSubscription} categories={data.categories} onClose={() => setEditSubscription(null)} /></Suspense>}
 		{recordOpen && <Dialog title={t(editingRecord ? "financeEditRecord" : "financeAddRecord")} onClose={closeRecord} closeDisabled={busy}>
 			{targets.length ? <form className="finance-form" onSubmit={(event) => void saveRecord(event)}>
+				{error && <p ref={errorFeedbackRef} role="alert" className="field-error">{error}</p>}
 				{expenseOnly ? <p>{historyLabel({ action: draft.action })}</p> : <div className="field"><label htmlFor="finance-action">{t("financeRecordType")}</label><Select id="finance-action" value={draft.action} disabled={busy || !!editingRecord} onValueChange={(selectValue) => { setDraft({...draft,action:selectValue as ManualAction});setError(""); }}>{editingRecord?.action === "renew" && <SelectOption value="renew">{t("financeRenewalRecorded")}</SelectOption>}{financeActions.map((action) => <SelectOption key={action} value={action}>{t(`financeAction${action[0].toUpperCase()}${action.slice(1)}`)}</SelectOption>)}</Select></div>}
 				{editingRecord?.action === "renew" && <p className="finance-renewal-hint">{t("financeRenewalCorrectionHint")}</p>}
 				<FinanceEntryFields draft={draft} targets={targets} disabled={busy} idPrefix="finance" allowMultiple preserveCurrency={!!editingRecord} onChange={(change) => { setDraft({ ...draft, ...change }); setError(""); }} />
-				{error && <p role="alert" className="field-error">{error}</p>}
 				<div className="actions"><Button variant="primary" type="submit" disabled={busy}>{busy?t("loading"):t("financeSaveRecord")}</Button><Button type="button" disabled={busy} onClick={closeRecord}>{t("cancel")}</Button></div>
 			</form> : <div className="finance-no-target"><p>{t("financeNoTarget")}</p><div className="actions"><Button asChild><Link to="/assets/$kind" params={{kind:"subscription"}}>{t("financeGoSubscriptions")}</Link></Button><Button asChild><Link to="/assets/$kind" params={{kind:"account"}}>{t("financeGoAccounts")}</Link></Button></div></div>}
 		</Dialog>}
 		{deletingRecord && <Dialog title={t("financeDeleteRecord")} closeDisabled={busy} onClose={() => { if (!inFlight.current) setDeletingRecord(null); }}>
+			{error && <p ref={errorFeedbackRef} role="alert" className="field-error">{error}</p>}
 			<p>{t("financeDeletePrompt")}</p><strong>{effectiveFinanceEntry(deletingRecord).title || historyLabel(deletingRecord)}</strong>
 			{deletingRecord.action === "renew" && <p>{t("financeRenewalCorrectionHint")}</p>}
-			{error && <p role="alert" className="field-error">{error}</p>}
 			<div className="actions"><Button variant="danger" disabled={busy} onClick={() => void deleteRecord()}>{busy ? t("loading") : t("financeDeleteAction")}</Button><Button disabled={busy} onClick={() => setDeletingRecord(null)}>{t("cancel")}</Button></div>
 		</Dialog>}
 	</main>;

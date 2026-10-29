@@ -659,7 +659,7 @@ export function AssetsPage({
 							)}
 							<div className="assets-ledger-total">
 								<span>
-									{t("assetsCount", { count: expenses.monthRecords.length })}
+									{t("assetsExpenseCount", { count: expenses.monthRecords.length })}
 								</span>
 								<MoneyTotal totals={expenses.month} empty="—" />
 							</div>

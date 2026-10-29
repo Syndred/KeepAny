@@ -41,9 +41,23 @@ async function noOverflow(page: Page) {
 	expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);
 }
 
-async function capture(page: Page, name: string) {
+async function capture(page: Page, name: string, fullPage = true) {
 	await noOverflow(page);
-	await page.screenshot({ path: join(evidence, `${name}.png`), fullPage: true });
+	await page.screenshot({ path: join(evidence, `${name}.png`), fullPage });
+}
+
+async function expectUnobscuredFinanceError(page: Page) {
+	const alert = page.getByRole("dialog").getByRole("alert");
+	await expect(alert).toBeVisible();
+	await expect(alert).toBeInViewport({ ratio: 1 });
+	await expect.poll(() => alert.evaluate(node => {
+		const popup = node.closest('[role="dialog"]');
+		const actions = node.closest("form")?.querySelector(":scope > .actions");
+		if (!popup || !actions) return false;
+		const errorBox = node.getBoundingClientRect(), popupBox = popup.getBoundingClientRect(), actionBox = actions.getBoundingClientRect();
+		return errorBox.width > 0 && errorBox.height > 0 && errorBox.top >= Math.max(0, popupBox.top) &&
+			errorBox.bottom <= Math.min(innerHeight, popupBox.bottom) && errorBox.bottom <= actionBox.top + 1;
+	})).toBe(true);
 }
 
 const grid = (page: Page) => page.locator(".assets-catalog-grid");
@@ -323,7 +337,9 @@ for (const locale of ["zh-CN", "en"] as const) {
 			await capture(page, `${locale}-${width}-overview`);
 			await page.locator(".assets-section-nav").getByRole("link", { name: t("assetsOnline"), exact: true }).click();
 			await page.getByRole("button", { name: t("assetCardView"), exact: true }).click();
+			await expect(page.getByRole("button", { name: t("assetCardView"), exact: true })).toHaveAttribute("aria-pressed", "true");
 			await expect(grid(page).locator(":scope > a")).toHaveCount(6);
+			await expect(grid(page)).not.toHaveClass(/asset-dense-list/);
 			await capture(page, `${locale}-${width}-online-cards`);
 			await page.locator(".assets-category-pills").getByRole("button", { name: new RegExp(`^${t("subscription")} `) }).click();
 			await page.getByRole("button", { name: t("assetsMoreFilters"), exact: true }).click();
@@ -334,7 +350,10 @@ for (const locale of ["zh-CN", "en"] as const) {
 			await capture(page, `${locale}-${width}-create-dialog`);
 			await page.getByRole("dialog").getByRole("button", { name: t("cancel"), exact: true }).click();
 			await page.locator(".assets-section-nav").getByRole("link", { name: t("assetsPhysical"), exact: true }).click();
+			await page.getByRole("button", { name: t("assetCardView"), exact: true }).click();
+			await expect(page.getByRole("button", { name: t("assetCardView"), exact: true })).toHaveAttribute("aria-pressed", "true");
 			await expect(grid(page).locator(":scope > a")).toHaveCount(4);
+			await expect(grid(page)).not.toHaveClass(/asset-dense-list/);
 			await capture(page, `${locale}-${width}-physical-cards`);
 			const filter = page.getByRole("combobox", { name: t("itemLifecycleStatus"), exact: true });
 			await filter.focus();
@@ -343,6 +362,19 @@ for (const locale of ["zh-CN", "en"] as const) {
 			await expect(page.getByRole("listbox")).toBeVisible();
 			await capture(page, `${locale}-${width}-physical-state-menu`);
 			await page.keyboard.press("Escape");
+			await page.goto("/finance");
+			await page.getByRole("button", { name: t("financeAddRecord"), exact: true }).click();
+			const dialog = page.getByRole("dialog");
+			await expect(dialog.locator("#finance-asset")).toBeVisible();
+			await dialog.locator("#finance-title").fill("AS Visible invalid expense");
+			await dialog.locator("#finance-amount").fill("0");
+			await capture(page, `${locale}-${width}-ledger-fields`, false);
+			await dialog.getByRole("button", { name: t("financeSaveRecord"), exact: true }).click();
+			await expect(dialog.getByRole("alert")).toHaveText(t("financeInvalidAmount"));
+			await expectUnobscuredFinanceError(page);
+			await capture(page, `${locale}-${width}-ledger-error`, false);
+			await dialog.getByRole("button", { name: t("cancel"), exact: true }).click();
+			await expect(dialog).toBeHidden();
 		}
 		expect(errors).toEqual([]); expect(sourceRequests).toEqual([]);
 	});
