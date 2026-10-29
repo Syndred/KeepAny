@@ -64,10 +64,10 @@ import {
 } from "./view-shared";
 import { Select, SelectOption } from "./components/ui/select";
 const AssetEditor = lazy(() =>
-	import("./workflows").then((module) => ({ default: module.AssetEditor })),
+	import("./workflow-asset-editor").then((module) => ({ default: module.AssetEditor })),
 );
 const TaskEditor = lazy(() =>
-	import("./workflows").then((module) => ({ default: module.TaskEditor })),
+	import("./workflow-task-editor").then((module) => ({ default: module.TaskEditor })),
 );
 const AssetRelationGraph = lazy(() => import("./account-family-graph-view").then((module) => ({ default: module.AssetRelationGraph })));
 const PasswordVaultPanel = lazy(() => import("./components/PasswordVaultPanel").then((module) => ({ default: module.PasswordVaultPanel })));

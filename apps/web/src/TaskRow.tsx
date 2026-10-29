@@ -14,7 +14,7 @@ import { ImpactTaskRow } from "./ImpactTaskRow";
 import { ProjectWorkflowTaskRow } from "./ProjectWorkflowTaskRow";
 import { MaintenanceTaskRow } from "./MaintenanceTaskRow";
 import { date, useAppContext } from "./view-shared";
-const TaskEditor = lazy(() => import("./workflows").then(module => ({ default: module.TaskEditor })));
+const TaskEditor = lazy(() => import("./workflow-task-editor").then(module => ({ default: module.TaskEditor })));
 export function TaskRow({ task, hideRelated = false }: { task: Task; hideRelated?: boolean }) {
 	const { t, i18n } = useTranslation();
 	const { data, notify } = useAppContext();

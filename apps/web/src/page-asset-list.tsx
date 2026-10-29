@@ -45,7 +45,7 @@ import { useWorkspaceSummary } from "./use-workspace-summary";
 import type { AssetSummary } from "./workspace-summary";
 import { workspaceReturnKey } from "./workspace-return";
 const AssetEditor = lazy(() =>
-	import("./workflows").then((module) => ({ default: module.AssetEditor })),
+	import("./workflow-asset-editor").then((module) => ({ default: module.AssetEditor })),
 );
 const PasswordVaultPanel = lazy(() =>
 	import("./components/PasswordVaultPanel").then((module) => ({ default: module.PasswordVaultPanel })),

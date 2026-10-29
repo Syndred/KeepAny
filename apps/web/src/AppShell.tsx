@@ -34,7 +34,7 @@ import { requestSearchLocation } from "./search-location";
 import "./shell-restoration.css";
 import { ReminderRuntime } from "./ReminderRuntime";
 const AiDialog = lazy(() =>
-	import("./workflows").then((module) => ({ default: module.AiDialog })),
+	import("./workflow-ai-dialog").then((module) => ({ default: module.AiDialog })),
 );
 import { workspaceGroupIds, workspaceNavHidden, workspaceNavIds, workspaceNavOrder, workspacePathGroup } from "./workspace-navigation";
 import { readWorkspaceReturn } from "./workspace-return";

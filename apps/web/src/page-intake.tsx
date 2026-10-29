@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { IntakeTools } from "./workflows";
+import { IntakeTools } from "./workflow-intake-tools";
 import { IntakeReview } from "./IntakeReview";
 import { ExternalLinkImportPanel } from "./components/ExternalLinkImportPanel";
 import { PageTitle } from "./view-shared";

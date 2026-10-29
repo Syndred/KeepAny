@@ -14,7 +14,7 @@ import { Badge } from "./components/ui/badge";
 import { taskWithinDateRange, validTaskDate, validTaskDateRange, type TaskDateRange } from "./task-edit";
 
 const TaskEditor = lazy(() =>
-	import("./workflows").then((module) => ({ default: module.TaskEditor })),
+	import("./workflow-task-editor").then((module) => ({ default: module.TaskEditor })),
 );
 
 type TaskFilter = "all" | "pending" | "done";

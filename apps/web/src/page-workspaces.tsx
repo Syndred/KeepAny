@@ -20,7 +20,7 @@ import { date, Empty, liveAssets, money, PageTitle, useAppContext } from "./view
 import "./workspaces.css";
 import { readWorkspaceReturn, workspaceReturnKey } from "./workspace-return";
 
-const AssetEditor = lazy(() => import("./workflows").then((module) => ({ default: module.AssetEditor })));
+const AssetEditor = lazy(() => import("./workflow-asset-editor").then((module) => ({ default: module.AssetEditor })));
 type AssetView = "all" | "project" | "item" | "subscription" | "domains" | "ledger";
 
 function AssetTabs({ view }: { view: AssetView }) {

@@ -20,7 +20,7 @@ type LedgerAction = ManualAction | "renew";
 type EntryDraft = FinanceEntryDraft & { action: LedgerAction };
 const ledgerActions = new Set<string>([...financeActions, "renew"]);
 const today = () => { const now = new Date(); return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")}`; };
-const AssetEditor = lazy(() => import("./workflows").then((module) => ({ default: module.AssetEditor })));
+const AssetEditor = lazy(() => import("./workflow-asset-editor").then((module) => ({ default: module.AssetEditor })));
 
 function groupedMoney(entries: ReadonlyArray<{ currency: string; amount: number | bigint }>): Map<string, bigint> {
 	const totals = new Map<string, bigint>();
