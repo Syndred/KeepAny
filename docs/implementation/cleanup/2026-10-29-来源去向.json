@@ -19,7 +19,7 @@
       "source": "原工作区未提交累积，具体作者未推定",
       "decision": "显式候选/必要断言保留；quick/可选基线按职责收敛，不盲带未闭环工程草稿",
       "action": "review-replace-with-shared-boundary",
-      "finalDisposition": "已审查移植必要显式候选/超时/失败产物；选择脚本统一，完整PR/main检查保留；快速反馈只在功能分支push"
+      "finalDisposition": "已整合F最终职责：push/PR日常25分钟反馈；完整手动Verify保留原业务/发布/升级/跨平台/严格证据门禁；官网发布另强制同SHA完整成功，不修改保护。真实Hosted Daily已成功，完整发布未跑。"
     },
     {
       "path": ".github/workflows/vault-tools.yml",
@@ -29,7 +29,7 @@
       "source": "原工作区未提交累积，具体作者未推定",
       "decision": "显式候选/必要断言保留；quick/可选基线按职责收敛，不盲带未闭环工程草稿",
       "action": "review-replace-with-shared-boundary",
-      "finalDisposition": "已审查移植必要显式候选/超时/失败产物；选择脚本统一，完整PR/main检查保留；快速反馈只在功能分支push"
+      "finalDisposition": "已整合F最终职责：push/PR日常25分钟反馈；完整手动Verify保留原业务/发布/升级/跨平台/严格证据门禁；官网发布另强制同SHA完整成功，不修改保护。真实Hosted Daily已成功，完整发布未跑。"
     },
     {
       "path": ".github/workflows/verify.yml",
@@ -39,7 +39,7 @@
       "source": "原工作区未提交累积，具体作者未推定",
       "decision": "显式候选/必要断言保留；quick/可选基线按职责收敛，不盲带未闭环工程草稿",
       "action": "review-replace-with-shared-boundary",
-      "finalDisposition": "已审查移植必要显式候选/超时/失败产物；选择脚本统一，完整PR/main检查保留；快速反馈只在功能分支push"
+      "finalDisposition": "已整合F最终职责：push/PR日常25分钟反馈；完整手动Verify保留原业务/发布/升级/跨平台/严格证据门禁；官网发布另强制同SHA完整成功，不修改保护。真实Hosted Daily已成功，完整发布未跑。"
     },
     {
       "path": "docs/08-项目进度交接.md",
@@ -766,5 +766,11 @@
     "bytesRemovedFromCurrentTree": 820947501,
     "historyRewritten": false,
     "untrackedOriginalsTouched": false
+  },
+  "finalIntegration": {
+    "candidate": "77f5ac7af34123ebb27efbb167ab9e2b3d653ebe",
+    "pullRequest": "https://github.com/Syndred/KeepAny/pull/2",
+    "receipt": "docs/qa/2026-10-29/final-integration/验收记录.json",
+    "sourceOnly": "No 4180/package/site/mobile publication"
   }
 }

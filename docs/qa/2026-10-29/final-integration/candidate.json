@@ -1,0 +1,26 @@
+{
+  "schema": "keepany.final-integration.web.v1",
+  "createdAt": "2026-10-29T03:06:52.449989+00:00",
+  "sourceCommit": "77f5ac7af34123ebb27efbb167ab9e2b3d653ebe",
+  "sourceDirty": false,
+  "branch": "codex/keepany-simplify-step1",
+  "webManifestSha256": "bf9b392dab18c2d059c49b81a59d9f8b4893398ba3f1d988f8fea814b3e6ef94",
+  "webFileCount": 132,
+  "indexSha256": "e360c9ceb27331ba2f3e5c062157a519ef588b7722d82e2fabfa0cdd9e5663d7",
+  "entryScript": [
+    "/assets/index-lQafgsXW.js"
+  ],
+  "productSourceCount": 397,
+  "productSourceSha256": "adcd672d64045bce842b3577a10a1a2d89082469a1cd705d0756bb81ee4440ea",
+  "sourceHashPolicy": "utf8-no-nul-crlf-to-lf-v1;binary-raw",
+  "archiveSha256": "7bfe69bbf449fcae4b2e22f4f2fe59dc9afec4d938bcf67a736ce92e40620442",
+  "packageSourceFileCount": 511,
+  "lineage": [
+    "A 1be1a1df",
+    "D 7030420b",
+    "E no_change independent source/compiled review",
+    "F 45debcf6"
+  ],
+  "boundaries": "No 4180/package publication/mobile update. Full release evidence gates remain separate and currently blocked by old candidate identities.",
+  "httpManifestSha256": "8889cb515aff8fee99cb77241e2ea5f5b9e84b928e1c8a40781b7753778684a1"
+}

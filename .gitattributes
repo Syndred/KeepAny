@@ -15,3 +15,5 @@ docs/qa/2026-10-28/evidence/fc14-graph/** -text
 docs/qa/2026-10-28/evidence/fc15-lifecycle/** -text
 docs/qa/2026-10-28/evidence/final-route-recovery/** -text
 docs/qa/2026-10-28/evidence/fc19-module-fetch/** -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+# Frozen final-integration receipts include original Windows byte digests.
+docs/qa/2026-10-29/final-integration/** -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol

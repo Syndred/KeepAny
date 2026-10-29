@@ -1,0 +1,22 @@
+[
+  {
+    "path": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\test-results\\web-independent-review-20261029\\23-detail-en390-long-token-scroll-left-failure.jpg",
+    "expectedSha256": "a8975f0d24c9e5ee895db76bb15c130f895dd995e8e42e1ee17dcc2ad6386910",
+    "actualSha256": "a8975f0d24c9e5ee895db76bb15c130f895dd995e8e42e1ee17dcc2ad6386910"
+  },
+  {
+    "path": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\test-results\\web-independent-review-20261029\\23-detail-en390-scroll-left-geometry.json",
+    "expectedSha256": "08c2b31a1f888ceebd904bc757bba67869ca7b2f2bd8f7777f457e098e203992",
+    "actualSha256": "08c2b31a1f888ceebd904bc757bba67869ca7b2f2bd8f7777f457e098e203992"
+  },
+  {
+    "path": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\test-results\\web-cua-acceptance-20261029\\30-links-matched-en1280.jpg",
+    "expectedSha256": "7a3fad71439184b2692cee0665187c6bc301b99fe62ee9af7482572e1ca3c747",
+    "actualSha256": "7a3fad71439184b2692cee0665187c6bc301b99fe62ee9af7482572e1ca3c747"
+  },
+  {
+    "path": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\test-results\\web-cua-acceptance-20261029\\32-links-matched-en390-bottom.jpg",
+    "expectedSha256": "59ca33ef694861cd05053fe82922b7310070255093fc660138ff793d587eabba",
+    "actualSha256": "59ca33ef694861cd05053fe82922b7310070255093fc660138ff793d587eabba"
+  }
+]

@@ -1,0 +1,33 @@
+{
+  "sourceCommit": "77f5ac7af34123ebb27efbb167ab9e2b3d653ebe",
+  "expectedCommit": "77f5ac7af34123ebb27efbb167ab9e2b3d653ebe",
+  "sourceDirty": false,
+  "archiveSha256": "7bfe69bbf449fcae4b2e22f4f2fe59dc9afec4d938bcf67a736ce92e40620442",
+  "expectedArchiveSha256": "7bfe69bbf449fcae4b2e22f4f2fe59dc9afec4d938bcf67a736ce92e40620442",
+  "webCount": 132,
+  "indexSha256": "e360c9ceb27331ba2f3e5c062157a519ef588b7722d82e2fabfa0cdd9e5663d7",
+  "expectedIndexSha256": "e360c9ceb27331ba2f3e5c062157a519ef588b7722d82e2fabfa0cdd9e5663d7",
+  "negative": [
+    {
+      "name": "missing explicit input",
+      "rejected": true,
+      "error": "Specify exactly one compiled portable directory or ZIP, as an argument or KEEPANY_PREVIEW_DIRECTORY/KEEPANY_PREVIEW_ARCHIVE."
+    },
+    {
+      "name": "mutually exclusive inputs",
+      "rejected": true,
+      "error": "Specify exactly one compiled portable directory or ZIP, as an argument or KEEPANY_PREVIEW_DIRECTORY/KEEPANY_PREVIEW_ARCHIVE."
+    },
+    {
+      "name": "archive-only rejects directory",
+      "rejected": true,
+      "error": "This receipt requires an explicit portable ZIP and its archive checksum."
+    },
+    {
+      "name": "traversal path",
+      "rejected": true,
+      "error": "Unsafe portable candidate path."
+    }
+  ],
+  "method": "Read and verify frozen portable ZIP using final public shared reader; do not materialize or start package."
+}
