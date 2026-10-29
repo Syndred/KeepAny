@@ -1,4 +1,4 @@
-import { validateCaptureImage, projectImageTypes } from "./workflow-image";
+import { projectImageTypes } from "./workflow-image";
 import { Textarea } from "./components/ui/textarea";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
