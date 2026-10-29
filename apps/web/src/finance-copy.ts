@@ -1,4 +1,5 @@
 export const financeCopy: Record<string, [string, string]> = {
+ financeExpenseRecords: ["支出记录", "Expense records"],
 	financeExpenseLedger: ["费用账本", "Expense ledger"],
 	financeExpenseSubtitle: ["查看已记录支出与预计固定费用。", "Review recorded expenses and estimated recurring costs."],
 	financeRelatedAsset: ["关联资产", "Related asset"],
