@@ -1,0 +1,12 @@
+{
+  "productCommit": "f4fca4754a238421d2ea10d130aacd118a5fb9f1",
+  "testSupportCommit": "77ba328c908b3aa84629e5d07cd67235b3191374",
+  "changedTrackedPathsSinceProduct": [
+    "tests/e2e/assets-workbench.spec.ts",
+    "tests/e2e/finance-ledger-release.spec.ts",
+    "tests/e2e/unified-workspaces-release.spec.ts"
+  ],
+  "productAppsPackagesBuildConfigurationUnchanged": true,
+  "command": "git diff --name-only f4fca4754a238421d2ea10d130aacd118a5fb9f1 HEAD",
+  "note": "后续文档/证据提交不重建产品；434源码文件匹配证据在final-candidate-evidence.zip的execution.json。"
+}
