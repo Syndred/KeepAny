@@ -4,7 +4,7 @@ import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { generateAiText } from "../../../../packages/ai/src";
 import { acquireAiConnection, useAiConnection } from "../ai-settings-store";
-import { hasExplicitImportSecret } from "../ai-import-input";
+import { hasExplicitImportSecret, isPdfFile } from "../ai-import-input";
 import {
 	aiImportSchema,
 	buildAiCandidates,
@@ -65,7 +65,7 @@ export function AiImportPanel({ onStaged }: { onStaged: () => void }) {
 		[],
 	);
 	useEffect(() => {
-		if (!file?.type.startsWith("image/")) {
+		if (isPdfFile(file) || !file?.type.startsWith("image/")) {
 			setPreview("");
 			return;
 		}
@@ -74,6 +74,7 @@ export function AiImportPanel({ onStaged }: { onStaged: () => void }) {
 		return () => URL.revokeObjectURL(url);
 	}, [file]);
 	async function generate() {
+		if (isPdfFile(file)) { setMessage(t("pdfImportRemoved")); return; }
 		if (running.current || !connection || (!file && !text.trim())) return;
 		running.current = true;
 		setBusy(true);
@@ -91,10 +92,7 @@ export function AiImportPanel({ onStaged }: { onStaged: () => void }) {
 			let hash: string;
 			if (file) {
 				hash = await fingerprint(await file.arrayBuffer());
-				if (file.name.toLowerCase().endsWith(".pdf"))
-					sourceText = (await (await import("../intake-pdf")).readPdfText(file))
-						.text;
-				else if (
+				if (
 					["image/png", "image/jpeg", "image/webp"].includes(file.type)
 				) {
 					image = { data: await imageData(file), mediaType: file.type };
@@ -204,10 +202,11 @@ export function AiImportPanel({ onStaged }: { onStaged: () => void }) {
 				chooseLabel={t("aiImportChooseFile")}
 				emptyLabel={t("aiImportNoFile")}
 				file={file}
-				accept=".csv,.txt,.pdf,image/png,image/jpeg,image/webp"
+				accept=".csv,.txt,image/png,image/jpeg,image/webp"
 				onFileChange={(nextFile) => {
 					cancel();
 					setFile(nextFile);
+					if (isPdfFile(nextFile)) setMessage(t("pdfImportRemoved"));
 				}}
 			/>
 			{file && (
@@ -235,7 +234,7 @@ export function AiImportPanel({ onStaged }: { onStaged: () => void }) {
 			<div className="actions">
 				<Button
 					variant="primary"
-					disabled={!connection || busy || (!file && !text.trim())}
+					disabled={!connection || busy || isPdfFile(file) || (!file && !text.trim())}
 					onClick={() => void generate()}
 				>
 					{busy ? t("aiBusy") : t("aiImportGenerate")}

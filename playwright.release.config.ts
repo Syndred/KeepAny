@@ -6,8 +6,11 @@ const port = Number(process.env.KEEPANY_RELEASE_TEST_PORT ?? "4181");
 const baseURL = `http://127.0.0.1:${port}`;
 const webDir = process.env.KEEPANY_RELEASE_WEB_DIR ?? "../../release/web";
 process.env.KEEPANY_PRODUCTION_OFFLINE = "1";
-process.env.KEEPANY_PDF_RELEASE = "1";
-process.env.KEEPANY_EVIDENCE_DIR ??= "docs/evidence/2026-09-30/delivery";
+process.env.KEEPANY_EVIDENCE_DIR ??= "test-results/local-release-evidence";
+// Completion fixtures are prepared in Node; these pages must consume compiled files only.
+process.env.KEEPANY_T14_PORTABLE = "1";
+process.env.KEEPANY_T19_PORTABLE = "1";
+process.env.KEEPANY_TASK_LINK_PORTABLE = "1";
 
 export default defineConfig({
  ...browserDefaults,
@@ -23,15 +26,14 @@ export default defineConfig({
 		"ai-key-persistence.spec.ts",
 		"ai-account-import-release.spec.ts",
 		"intake-bulk-account-links.spec.ts",
-		"externallink-import.spec.ts",
 		"ai-dialog-matrix.spec.ts",
 		"local-core.spec.ts",
 		"english-demo-release.spec.ts",
 		"production-offline.spec.ts",
-		"intake-pdf.spec.ts",
+		"pdf-removal-release.spec.ts",
+		"project-simplification.spec.ts",
 		"intake-expense.spec.ts",
 		"intake-review-backup.spec.ts",
-		"intake-review-merge.spec.ts",
 		"custom-category-release.spec.ts",
 		"global-search-release.spec.ts",
 		"detail-entry-statistics.spec.ts",
@@ -49,8 +51,6 @@ export default defineConfig({
 		"account-shared-identity.spec.ts",
 		"relation-topbar-return.spec.ts",
 		"restore-identity.spec.ts",
-		"archive-migration.spec.ts",
-		"vault-reference-release.spec.ts",
 		"password-vault.spec.ts",
 		"password-history-version.spec.ts",
 		"password-vault-grid.spec.ts",
@@ -67,6 +67,10 @@ export default defineConfig({
 		"finance-ledger-release.spec.ts",
 		"collections-ledger-release.spec.ts",
 		"restore-self-service-release.spec.ts",
+		"qa-t14-completion.spec.ts",
+		"qa-t19-merge-completion.spec.ts",
+		"qa-task-link-portable-completion.spec.ts",
+		"qa-t18-portable-completion.spec.ts",
 	],
 	timeout: 90_000,
 	workers: 2,

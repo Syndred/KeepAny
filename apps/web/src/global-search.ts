@@ -110,12 +110,6 @@ const publicAssetTextFields = [
 	"borrower",
 	"accountProvider",
 	"subscriptionPaymentMethod",
-	"projectTitle",
-	"projectMediumDescription",
-	"projectFeatures",
-	"projectPricing",
-	"projectPricingType",
-	"projectEmail",
 ] as const satisfies readonly (keyof Asset)[];
 
 function normalize(text: string): string {
@@ -169,7 +163,7 @@ export function buildGlobalSearchIndex(input: GlobalSearchInput): readonly Globa
 	const assetsById = new Map(assets.map((asset) => [asset.id, asset]));
 	const pdfAssetIds = new Set(reviewedCandidates.filter((row) => row.source === "pdf").map((row) => row.asset.id));
 	const mergedPdfDescriptionIds = new Set(reviewedCandidates.filter(row => row.source === "pdf" && row.mergeTargetId).map(row => row.mergeTargetId));
-	const live = assets.filter((asset) => !asset.deleted).sort((a, b) =>
+	const live = assets.filter((asset) => !asset.deleted && asset.kind !== "vault").sort((a, b) =>
 		assetOrder[a.kind] - assetOrder[b.kind] || compareText(a.name, b.name) || compareId(a.id, b.id));
 	for (const asset of live) {
 		// Legacy archives can contain accepted PDF assets without their review receipt.
@@ -182,8 +176,8 @@ export function buildGlobalSearchIndex(input: GlobalSearchInput): readonly Globa
 			target: { type: "asset", kind: asset.kind, assetId: asset.id },
 		}, [
 			kind, ...publicAssetTextFields.map((field) => asset[field]), ...asset.tags,
-			publicUrl(asset.url), publicUrl(asset.projectPromoUrl),
-			...(allowDescription ? [...(mergedPdfDescriptionIds.has(asset.id) ? [] : [asset.description]), asset.longDescription] : []),
+			publicUrl(asset.url),
+			...(allowDescription ? [...(mergedPdfDescriptionIds.has(asset.id) ? [] : [asset.description]), ...(asset.kind === "project" ? [] : [asset.longDescription])] : []),
 			...(asset.projectDomains ?? []).flatMap((domain) => [domain.name, domain.registrar]),
 		]));
 	}
@@ -206,7 +200,7 @@ export function buildGlobalSearchIndex(input: GlobalSearchInput): readonly Globa
 			target: { type: "finance", historyId: row.id },
 		}, [title, action, assetName, row.eventDate, row.billDate, row.createdAt.slice(0, 10), row.source, ...money]));
 	}
-	const receipts = reviewedCandidates.filter((row) => row.status === "accepted")
+	const receipts = reviewedCandidates.filter((row) => row.status === "accepted" && row.asset.kind !== "vault")
 		.sort((a, b) => compareText(a.fileName, b.fileName) || a.rowNumber - b.rowNumber || compareId(a.id, b.id));
 	for (const row of receipts) {
 		const draft = row.reviewMode === "expense" ? row.expenseDraft : undefined;

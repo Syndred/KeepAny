@@ -43,14 +43,13 @@ for (const language of ["zh-CN", "en"] as const) for (const width of [390, 1280]
 			await query.fill("");
 			await noOverflow(page);
 			await page.screenshot({ path: join(evidence, `accounts-${language}-${width}.png`) });
-			await page.locator("#vault-references > summary").click();
-			await expect(page.locator(".vault-reference-table tbody tr")).toHaveCount(2);
+			await expect(page.locator("#vault-references")).toHaveCount(0);
 			await page.goto("/assets/vault#vault-references");
-			await expect(page.locator(".vault-reference-table")).toBeVisible();
+			await expect(page.locator(".vault-reference-table")).toHaveCount(0);
 			await expect(page.locator(".asset-account-card")).toHaveCount(9);
 			await page.goto("/collections");
 			await page.locator(".collections-tile").filter({ hasText: t("sampleCollection") }).locator("a").first().click();
-			await expect(page.locator(".collections-member-card")).toHaveCount(26);
+			await expect(page.locator(".collections-member-card")).toHaveCount(24);
 			const boxes = await page.locator(".collections-member-card").evaluateAll((nodes) => nodes.map((node) => node.getBoundingClientRect().height));
 			expect(Math.max(...boxes) - Math.min(...boxes)).toBeLessThan(1);
 			await expect(page.locator(".collections-member-cover img")).toHaveCount(4);

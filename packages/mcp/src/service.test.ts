@@ -33,6 +33,17 @@ const fixture = async () => {
 };
 
 describe('local MCP capability boundary', () => {
+  it('keeps retired external-vault references unavailable even through an old explicit grant', async () => {
+    const { authority, store } = await fixture();
+    const legacy = { ...newAsset('vault'), name: 'Legacy external reference' };
+    store.seed(legacy);
+    const grant = await authority.issueGrant({ assetIds: [legacy.id], readFields: ['name'], writeFields: ['name'], ttlMs: 60_000 });
+    const service = new McpAssetService(store, authority, grant.id, grant.secret);
+    expect(await service.listAssets()).toEqual([]);
+    await expect(service.getAsset(legacy.id)).rejects.toThrow('asset-not-found');
+    await expect(service.previewUpdate(legacy.id, 'legacy-vault-operation', { name: 'New reference' })).rejects.toThrow('asset-not-found');
+    expect((await store.get(legacy.id))?.asset).toEqual(legacy);
+  });
   it('shows only granted assets and fields; denies wrong secret and revoked grants', async () => {
     const { authority, store, asset, other, grant, service } = await fixture();
     expect(await service.listAssets()).toEqual([{ id: asset.id, name: 'Visible project' }]);

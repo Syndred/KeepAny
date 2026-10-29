@@ -1,4 +1,3 @@
-import { openVaultReferences } from "./helpers/vault-access";
 import { readFileSync } from "node:fs";
 import { expect, test, type Page } from "@playwright/test";
 import { strFromU8, unzipSync } from "fflate";
@@ -8,7 +7,7 @@ import { selectChoice } from "./helpers/select-choice";
 
 const password = "collection-user-flow-backup-2026";
 test.use({ actionTimeout: 15_000 });
-const kinds = ["project", "account", "subscription", "item", "vault"] as const;
+const kinds = ["project", "account", "subscription", "item"] as const;
 const names = Object.fromEntries(kinds.map((kind) => [kind, `Travel ${kind}`]));
 const longCategory = "C".repeat(60);
 const copyFor = (zh: boolean) => zh ? {
@@ -112,7 +111,7 @@ async function assertSidebarCategory(page: Page, width: number) {
 }
 
 for (const variant of [{ locale: "zh-CN", width: 390 }, { locale: "en-US", width: 1280 }] as const) {
-	test(`${variant.locale} ${variant.width} five asset types retain collection identity through trash and clean restore`, async ({ browser }) => {
+	test(`${variant.locale} ${variant.width} four asset types retain collection identity through trash and clean restore`, async ({ browser }) => {
 		test.setTimeout(150_000);
 		const copy = copyFor(variant.locale === "zh-CN");
 		const source = await browser.newContext({ locale: variant.locale, viewport: { width: variant.width, height: 844 }, acceptDownloads: true });
@@ -122,10 +121,9 @@ for (const variant of [{ locale: "zh-CN", width: 390 }, { locale: "en-US", width
 		try {
 			for (const kind of kinds) {
 				await page.goto(`/assets/${kind}`);
-				if (kind === "vault") await openVaultReferences(page);
-				await page.getByRole("button", { name: kind === "vault" ? variant.locale === "zh-CN" ? "关联密码库条目" : "Link vault entry" : copy.add, exact: true }).click();
+				await page.getByRole("button", { name: copy.add, exact: true }).click();
 				const form = page.getByRole("dialog");
-				await form.getByLabel(kind === "vault" ? variant.locale === "zh-CN" ? "条目名称" : "Entry name" : copy.name, { exact: true }).fill(names[kind]);
+				await form.getByLabel(copy.name, { exact: true }).fill(names[kind]);
 				await form.getByRole("button", { name: copy.save, exact: true }).click();
 				await expect(form).toBeHidden();
 			}
@@ -159,29 +157,29 @@ for (const variant of [{ locale: "zh-CN", width: 390 }, { locale: "en-US", width
 			const collectionHref = new URL(page.url()).pathname;
 			await page.reload();
 			await assertSidebarCategory(page, variant.width);
-			await assertCards(page, "Travel cabinet", 5, copy, variant.width);
+			await assertCards(page, "Travel cabinet", kinds.length, copy, variant.width);
 			await page.locator(".collections-member-card").filter({ hasText: names.item }).click();
 			await expect(page).toHaveURL(new RegExp(`${itemHref}$`));
 			await page.getByRole("button", { name: copy.move, exact: true }).click();
 			await page.getByRole("dialog").getByRole("button", { name: copy.move, exact: true }).click();
 			await expect(page).toHaveURL(/\/assets\/item$/);
 			await page.goto(collectionHref);
-			await expect(page.locator(".collections-member-card")).toHaveCount(4);
+			await expect(page.locator(".collections-member-card")).toHaveCount(kinds.length - 1);
 			await expect(page.locator(".collections-member-card").filter({ hasText: names.item })).toHaveCount(0);
 			await page.goto("/trash");
 			await page.getByRole("button", { name: copy.restore, exact: true }).click();
 			await expect(page.locator(".list-row").filter({ hasText: names.item })).toHaveCount(0);
 			await page.goto(collectionHref);
-			await assertCards(page, "Travel cabinet", 5, copy, variant.width);
+			await assertCards(page, "Travel cabinet", kinds.length, copy, variant.width);
 			await page.getByRole("button", { name: copy.edit, exact: true }).click();
 			const edit = page.getByRole("region", { name: copy.edit, exact: true });
 			await edit.getByLabel(copy.collectionName, { exact: true }).fill("Travel cabinet v2");
-			await edit.getByRole("checkbox", { name: names.vault, exact: true }).uncheck();
+			await edit.getByRole("checkbox", { name: names.subscription, exact: true }).uncheck();
 			await edit.getByRole("button", { name: copy.collectionSave, exact: true }).click();
 			await expect(page).toHaveURL(new RegExp(`${collectionHref}$`));
 			await expect(page.getByRole("heading", { name: "Travel cabinet v2", exact: true })).toBeVisible();
 			await page.reload();
-			await assertCards(page, "Travel cabinet v2", 4, copy, variant.width);
+			await assertCards(page, "Travel cabinet v2", kinds.length - 1, copy, variant.width);
 			await page.getByRole("button", { name: copy.edit, exact: true }).click();
 			await edit.getByRole("button", { name: copy.another, exact: true }).click();
 			await expect(page).toHaveURL(/\/collections$/);
@@ -190,11 +188,11 @@ for (const variant of [{ locale: "zh-CN", width: 390 }, { locale: "en-US", width
 			await expect(editor.getByRole("alert")).toContainText(copy.duplicate);
 			await editor.getByRole("button", { name: copy.cancel, exact: true }).click();
 			const before = await download(page, copy);
-			expect(before.assets).toHaveLength(5);
+			expect(before.assets).toHaveLength(kinds.length);
 			expect(before.assets.find((asset) => asset.kind === "item")).toMatchObject({ deleted: false, itemLifecycleStatus: "idle" });
 			expect(before.collections).toHaveLength(1);
 			expect(before.collections[0]).toMatchObject({ id: collectionHref.split("/").at(-1), name: "Travel cabinet v2" });
-			expect(before.collections[0].assetIds.slice().sort()).toEqual(before.assets.filter((asset) => asset.kind !== "vault").map((asset) => asset.id).slice().sort());
+			expect(before.collections[0].assetIds.slice().sort()).toEqual(before.assets.filter((asset) => asset.kind !== "subscription").map((asset) => asset.id).slice().sort());
 			const destination = await browser.newContext({ locale: variant.locale, viewport: { width: variant.width, height: 844 }, acceptDownloads: true });
 			try {
 				const restored = await destination.newPage();
@@ -209,8 +207,8 @@ for (const variant of [{ locale: "zh-CN", width: 390 }, { locale: "en-US", width
 				await expect(restored.getByText(copy.restored)).toBeVisible();
 				await restored.goto(collectionHref);
 				await assertSidebarCategory(restored, variant.width);
-				await assertCards(restored, "Travel cabinet v2", 4, copy, variant.width);
-				await restored.screenshot({ path: test.info().outputPath(`collection-five-types-${variant.locale}-${variant.width}.png`), fullPage: true });
+				await assertCards(restored, "Travel cabinet v2", kinds.length - 1, copy, variant.width);
+				await restored.screenshot({ path: test.info().outputPath(`collection-four-types-${variant.locale}-${variant.width}.png`), fullPage: true });
 				await restored.goto("/collections");
 				await assertSidebarCategory(restored, variant.width);
 				const restoredSections = restored.getByRole("region", { name: copy.sidebar, exact: true });

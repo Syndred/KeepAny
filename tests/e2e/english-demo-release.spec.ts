@@ -31,13 +31,6 @@ async function englishOnly(page: Page) {
 	expect(text).not.toMatch(/\p{Script=Han}/u);
 }
 
-async function openReferences(page: Page) {
- const section = page.locator('.unified-vault-references');
- await expect(section).toBeVisible();
- if (!await section.evaluate(node => (node as HTMLDetailsElement).open)) await section.locator(':scope > summary').click();
- await expect(section).toHaveJSProperty('open',true);
-}
-
 for (const width of [390, 1280]) {
 	test(`English sample records stay English across pages, details, menus and refresh at ${width}`, async ({ browser }) => {
 		const context = await browser.newContext({ locale: "zh-CN", viewport: { width, height: 844 } });
@@ -62,11 +55,12 @@ for (const width of [390, 1280]) {
 				["/", "Sample | Mori Notes"], ["/tasks", "Review project contact details"],
 				["/assets/project", "Sample | Mori Notes"], ["/assets/account", "Sample | Studio Mail"],
 				["/assets/item", "Sample | Work laptop"], ["/finance", "Sample | Cloud hosting"],
-				["/assets/vault", "Sample | Studio Mail login"], ["/collections", "Studio essentials"],
+				["/assets/vault", "Sample | Studio Mail"], ["/collections", "Studio essentials"],
 				["/intake", "Import & backup"], ["/trash", "Trash"], ["/settings", "Settings"],
 			] as const) {
 				await page.goto(route);
-				if (route === "/assets/vault") await openReferences(page);
+				if (route === "/assets/vault") await expect(page.getByRole("heading", { name: "Accounts", exact: true })).toBeVisible();
+				await expect(page.locator(".unified-vault-references, .vault-reference-table")).toHaveCount(0);
 				await expect(page.getByText(expected, { exact: true }).first()).toBeVisible();
 				await englishOnly(page);
 				if (route === "/intake") {
@@ -80,15 +74,14 @@ for (const width of [390, 1280]) {
 					await page.screenshot({ path: join(evidence, `en-${width}-file-focus.png`) });
 				}
 				await page.reload();
-				if (route === "/assets/vault") await openReferences(page);
+				if (route === "/assets/vault") await expect(page.getByRole("heading", { name: "Accounts", exact: true })).toBeVisible();
 				await expect(page.getByText(expected, { exact: true }).first()).toBeVisible();
 				await englishOnly(page);
 				if (route === "/" || route === "/assets/vault" || route === "/finance")
 					await page.screenshot({ path: join(evidence, `en-${width}-${route === "/" ? "overview" : route.split("/").at(-1)}.png`), fullPage: true });
 			}
-			for (const [kind, name] of [["project", "Sample | Mori Notes"], ["account", "Sample | Studio Mail"], ["item", "Sample | Work laptop"], ["vault", "Sample | Studio Mail login"]] as const) {
+			for (const [kind, name] of [["project", "Sample | Mori Notes"], ["account", "Sample | Studio Mail"], ["item", "Sample | Work laptop"], ["subscription", "Sample | Cloud hosting"]] as const) {
 				await page.goto(`/assets/${kind}`);
-				if (kind === "vault") await openReferences(page);
 				await page.locator(`main a[href^="/assets/${kind}/"]`).filter({ hasText: name }).first().click();
 				await expect(page.getByRole("heading", { name, exact: true })).toBeVisible();
 				await englishOnly(page);
@@ -116,6 +109,10 @@ test("Chinese sample records use Chinese copy and switching language preserves s
 		await page.goto("/");
 		await expect(page.getByText("示例 | 林间笔记", { exact: true }).first()).toBeVisible();
 		await page.screenshot({ path: join(evidence, "zh-1280-overview.png"), fullPage: true });
+		await page.goto("/assets/vault");
+		await expect(page.getByRole("heading", { name: "账号", exact: true })).toBeVisible();
+		await expect(page.getByText("示例 | 工作室邮箱", { exact: true }).first()).toBeVisible();
+		await expect(page.locator(".unified-vault-references, .vault-reference-table")).toHaveCount(0);
 		await page.goto("/settings");
 		await selectChoice(page.getByRole("combobox", { name: "语言", exact: true }), { value: "en" });
 		await page.goto("/assets/project");

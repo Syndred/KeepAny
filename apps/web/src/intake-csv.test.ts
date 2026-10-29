@@ -6,6 +6,15 @@ import { stageCsvForReview } from "./intake-csv";
 
 beforeEach(() => stage.mockClear());
 
+test.each([
+	{ name: "renamed.csv", type: "application/pdf" },
+	{ name: "renamed.csv", type: "APPLICATION/PDF; charset=binary" },
+	{ name: "extension-only.PDF", type: "text/csv" },
+])("PDF marker is rejected before CSV parsing or staging: $name/$type", async ({ name, type }) => {
+	await expect(stageCsvForReview(new File(["name,kind\nMust not stage,project"], name, { type }))).rejects.toThrow("pdf");
+	expect(stage).not.toHaveBeenCalled();
+});
+
 test("CSV retains the complete original BOM, CRLF, quoted multiline fields and unselected duplicate rows", async () => {
 	const original = '\uFEFFkind,name,description\r\nproject,Original,"First line\r\n第二行"\r\nproject,Original,Duplicate\r\nitem,Unselected,Keep me\r\n';
 	expect(await stageCsvForReview(new File([original], "original.csv", { type: "text/csv" }))).toBe(3);

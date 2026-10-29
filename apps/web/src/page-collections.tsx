@@ -227,7 +227,7 @@ export function CollectionsPage() {
 				<section className="collections-members" aria-label={selected.name}>
 					{memberAssets.length ? <div className="collections-member-grid">{memberAssets.map((asset) => {
 						const Icon = icons[asset.kind];
-						const imageId = asset.kind === "project" ? asset.projectMedia.homeScreenshotId : asset.kind === "item" ? asset.itemMedia.coverId : asset.attachments[0];
+						const imageId = asset.kind === "item" ? asset.itemMedia.coverId : asset.attachments[0];
 						return <Link className="collections-member-card" key={asset.id} to="/assets/$kind/$id" params={{ kind: asset.kind, id: asset.id }}>
 							<div className={`collections-member-cover collections-member-${asset.kind}${imageId ? " has-image" : ""}`}>{imageId ? <AssetThumbnail asset={asset} imageId={imageId} /> : <Icon size={34} strokeWidth={1.7} aria-hidden="true" />}<span>{niceCategory(asset.category, t)}</span></div>
 							<div className="collections-member-body"><strong>{asset.name}</strong><small>{asset.description || asset.location || niceCategory(asset.category, t)}</small><div><span className="chip">{t(asset.kind)}</span><span className="chip">{asset.kind === "item" ? asset.itemLifecycleStatus ? t(`itemStatus_${asset.itemLifecycleStatus}`) : t("itemStatusUnrecorded") : t(asset.status)}</span>{asset.kind === "item" && asset.status !== "active" && <span className="chip">{t(asset.status)}</span>}</div></div>

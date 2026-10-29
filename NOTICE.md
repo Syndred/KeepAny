@@ -2,9 +2,9 @@
 
 本清单由 `node scripts/phase0/generate-legal-artifacts.mjs` 根据当前 `pnpm-lock.yaml`、实际安装树和各包 `package.json` 生成。精确版本的上游许可证原文索引见 [`legal/third-party/manifest.json`](legal/third-party/manifest.json)，本文件记录包内许可声明和包根目录中的许可/NOTICE 文件指纹；并非法律兼容性结论或可直接分发的完整第三方许可证正文包。
 
-- 锁文件 SHA-256：`60cd16e8ed424f385b1984d07cec02053e7eaeb959ebf45ff472eed4a919e32e`
-- 已安装包版本：746；直接运行依赖：48；直接开发依赖：21。
-- 包根目录缺少许可证正文：37；27 项保存上游正文，5 项保存精确声明与明确标注的规范补充，0 项未解决。规范补充不冒充上游原文件或补造版权。
+- 锁文件 SHA-256：`dab4e065dc961256da0fea506e5ecbbf198ce95a0c6cbe741afaf4910555ff1c`
+- 已安装包版本：681；直接运行依赖：41；直接开发依赖：19。
+- 包根目录缺少许可证正文：29；27 项保存上游正文，5 项保存精确声明与明确标注的规范补充，0 项未解决。规范补充不冒充上游原文件或补造版权。
 - 项目源码许可证：根目录 `LICENSE` 为 AGPL-3.0-only；发布前仍需由版权持有人确认，并完成依赖兼容性复核。
 - 本轮未复制 HomeInventory、Wallos、DomainMOD、Homebox 的业务源码；该四项仅在 `docs/03-开源业务模块复用审计.md` 中作为候选和参考登记。
 - 共享 UI 基于 shadcn/ui 的 Base UI 实现调整；MIT 原文、固定上游提交、文件路径和修改说明见 [`legal/third-party/shadcn-ui/`](legal/third-party/shadcn-ui/SOURCE.json)。
@@ -14,15 +14,9 @@
 | 已安装包 | 包内声明 | 安装元数据与来源 | 上游原文及状态 |
 |---|---|---|---|
 | `@ai-sdk/provider-utils@5.0.51` | `Apache-2.0` | `node_modules\.pnpm\@ai-sdk+provider-utils@5.0.51_zod@4.6.5\node_modules\@ai-sdk\provider-utils/package.json`；仓库：https://github.com/vercel/ai；目录：`packages/provider-utils` | 已保留上游原文：`legal/third-party/texts/vercel-ai-LICENSE-APACHE.txt`（SHA-256 `b4f9adb7c568904834d0dd6cc98d16c390d21ca32fc17ae7a267715269bd5529`；commit/path 见 manifest） |
-| `@aws-sdk/credential-provider-http@3.972.74` | `Apache-2.0` | `node_modules\.pnpm\@aws-sdk+credential-provider-http@3.972.74\node_modules\@aws-sdk\credential-provider-http/package.json`；仓库：https://github.com/aws/aws-sdk-js-v3.git；目录：`packages-internal/credential-provider-http` | 已保留上游原文：`legal/third-party/texts/aws-sdk-js-v3-LICENSE.txt`（SHA-256 `edea91454b811f127fbdea3d86f378f6719bd372ed440abf82b232f6fca06c3d`；commit/path 见 manifest） |
-| `@aws-sdk/credential-provider-login@3.972.79` | `Apache-2.0` | `node_modules\.pnpm\@aws-sdk+credential-provider-login@3.972.79\node_modules\@aws-sdk\credential-provider-login/package.json`；仓库：https://github.com/aws/aws-sdk-js-v3.git；目录：`packages-internal/credential-provider-login` | 已保留上游原文：`legal/third-party/texts/aws-sdk-js-v3-LICENSE.txt`（SHA-256 `edea91454b811f127fbdea3d86f378f6719bd372ed440abf82b232f6fca06c3d`；commit/path 见 manifest） |
-| `@aws-sdk/nested-clients@3.997.46` | `Apache-2.0` | `node_modules\.pnpm\@aws-sdk+nested-clients@3.997.46\node_modules\@aws-sdk\nested-clients/package.json`；仓库：https://github.com/aws/aws-sdk-js-v3.git；目录：`packages/nested-clients` | 已保留上游原文：`legal/third-party/texts/aws-sdk-js-v3-LICENSE.txt`（SHA-256 `edea91454b811f127fbdea3d86f378f6719bd372ed440abf82b232f6fca06c3d`；commit/path 见 manifest） |
-| `@better-auth/utils@0.4.2` | `MIT` | `node_modules\.pnpm\@better-auth+utils@0.4.2\node_modules\@better-auth\utils/package.json`；仓库：git+https://github.com/better-auth/utils.git | 精确 npm 包声明 MIT；原包 package.json/README 与作者元数据、明确标注的 SPDX MIT 规范补充见 manifest：`legal/third-party/texts/spdx-MIT-normative-supplement.txt`（SHA-256 `b05785f9f18e6716bab63424b11454513b9943a222595b70411009202fc592b5`；材料类型和来源见 manifest）<br>`legal/third-party/evidence/better-auth-utils-0.4.2-package.json`（SHA-256 `b481d52c32f0d74fa1b0599b653326df21e649a2217506770f676e8d8385acf3`；材料类型和来源见 manifest）<br>`legal/third-party/evidence/better-auth-utils-0.4.2-README.md`（SHA-256 `e7740292c8785d6b5895bf8620136662298df453cf30dbd5daaab2426dc1ac13`；材料类型和来源见 manifest）<br>`legal/third-party/evidence/better-auth-utils-0.4.2-upstream-README.md`（SHA-256 `e7740292c8785d6b5895bf8620136662298df453cf30dbd5daaab2426dc1ac13`；材料类型和来源见 manifest）。上游独立 LICENSE 正文未找到；未编造版权归属。 |
-| `@better-auth/utils@0.5.0` | `MIT` | `node_modules\.pnpm\@better-auth+utils@0.5.0\node_modules\@better-auth\utils/package.json`；仓库：git+https://github.com/better-auth/utils.git | 精确 npm 包声明 MIT；原包 package.json/README 与作者元数据、明确标注的 SPDX MIT 规范补充见 manifest：`legal/third-party/texts/spdx-MIT-normative-supplement.txt`（SHA-256 `b05785f9f18e6716bab63424b11454513b9943a222595b70411009202fc592b5`；材料类型和来源见 manifest）<br>`legal/third-party/evidence/better-auth-utils-0.5.0-package.json`（SHA-256 `79113ffa86ff97e35c95c96ca93119b3ac22112bcf52c494e0d27ee6bb296b84`；材料类型和来源见 manifest）<br>`legal/third-party/evidence/better-auth-utils-0.5.0-README.md`（SHA-256 `8ddf45255b6c321d8fd54248c3ee044e4f3da8a9bfd34eefef3ab1da0a3f3a87`；材料类型和来源见 manifest）<br>`legal/third-party/evidence/better-auth-utils-0.5.0-upstream-README.md`（SHA-256 `8ddf45255b6c321d8fd54248c3ee044e4f3da8a9bfd34eefef3ab1da0a3f3a87`；材料类型和来源见 manifest）。上游独立 LICENSE 正文未找到；未编造版权归属。 |
 | `@biomejs/biome@2.5.14` | `MIT OR Apache-2.0` | `node_modules\.pnpm\@biomejs+biome@2.5.14\node_modules\@biomejs\biome/package.json`；仓库：git+https://github.com/biomejs/biome.git；目录：`packages/@biomejs/biome` | 已保留上游原文：`legal/third-party/texts/biome-LICENSE-MIT.txt`（SHA-256 `4f6a0d776a00c0f46e1da1879321896071494229aa3219862a625e4560691a3a`；commit/path 见 manifest）<br>`legal/third-party/texts/biome-LICENSE-APACHE.txt`（SHA-256 `e2746aba8799f7a3378259f36a83a079e811ca7926cbdd248a2eb7ca9cbbac5d`；commit/path 见 manifest） |
 | `@biomejs/cli-win32-x64@2.5.14` | `MIT OR Apache-2.0` | `node_modules\.pnpm\@biomejs+cli-win32-x64@2.5.14\node_modules\@biomejs\cli-win32-x64/package.json`；仓库：git+https://github.com/biomejs/biome.git；目录：`packages/@biomejs/biome` | 未纳入上游原文索引；需补充精确版本来源。 |
 | `@esbuild/win32-x64@0.27.7` | `MIT` | `node_modules\.pnpm\@esbuild+win32-x64@0.27.7\node_modules\@esbuild\win32-x64/package.json`；仓库：git+https://github.com/evanw/esbuild.git | 未纳入上游原文索引；需补充精确版本来源。 |
-| `@napi-rs/canvas-win32-x64-msvc@1.0.9` | `MIT` | `node_modules\.pnpm\@napi-rs+canvas-win32-x64-msvc@1.0.9\node_modules\@napi-rs\canvas-win32-x64-msvc/package.json`；仓库：git+https://github.com/Brooooooklyn/canvas.git | 未纳入上游原文索引；需补充精确版本来源。 |
 | `@rolldown/binding-win32-x64-msvc@1.2.11` | `MIT` | `node_modules\.pnpm\@rolldown+binding-win32-x64-msvc@1.2.11\node_modules\@rolldown\binding-win32-x64-msvc/package.json`；仓库：git+https://github.com/rolldown/rolldown.git；目录：`packages/rolldown` | 未纳入上游原文索引；需补充精确版本来源。 |
 | `@rollup/rollup-win32-x64-gnu@4.63.5` | `MIT` | `node_modules\.pnpm\@rollup+rollup-win32-x64-gnu@4.63.5\node_modules\@rollup\rollup-win32-x64-gnu/package.json`；仓库：git+https://github.com/rollup/rollup.git | 未纳入上游原文索引；需补充精确版本来源。 |
 | `@rollup/rollup-win32-x64-msvc@4.63.5` | `MIT` | `node_modules\.pnpm\@rollup+rollup-win32-x64-msvc@4.63.5\node_modules\@rollup\rollup-win32-x64-msvc/package.json`；仓库：git+https://github.com/rollup/rollup.git | 未纳入上游原文索引；需补充精确版本来源。 |
@@ -37,8 +31,6 @@
 | `is-regexp@1.0.0` | `MIT` | `node_modules\.pnpm\is-regexp@1.0.0\node_modules\is-regexp/package.json`；仓库：sindresorhus/is-regexp | 已保留上游原文：`legal/third-party/texts/is-regexp-license.txt`（SHA-256 `6fb9754611c20f6649f68805e8c990e83261f29316e29de9e6cedae607b8634c`；commit/path 见 manifest） |
 | `jake@10.9.4` | `Apache-2.0` | `node_modules\.pnpm\jake@10.9.4\node_modules\jake/package.json`；仓库：git://github.com/jakejs/jake.git | 已保留上游原文：`legal/third-party/texts/jake-LICENSE.txt`（SHA-256 `cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30`；commit/path 见 manifest） |
 | `jsesc@3.1.0` | `MIT` | `node_modules\.pnpm\jsesc@3.1.0\node_modules\jsesc/package.json`；仓库：https://github.com/mathiasbynens/jsesc.git | 已保留上游原文：`legal/third-party/texts/mathiasbynens-LICENSE-MIT.txt`（SHA-256 `483acb265f182907d1caf6cff9c16c96f31325ed23792832cc5d8b12d5f88c8a`；commit/path 见 manifest） |
-| `pg-types@2.2.0` | `MIT` | `node_modules\.pnpm\pg-types@2.2.0\node_modules\pg-types/package.json`；仓库：git://github.com/brianc/node-pg-types.git | 已保留上游原文：`legal/third-party/texts/pg-types-LICENSE.txt`（SHA-256 `2c8a6e1b7782f0ca241792868af742f1c281c9661f59ec36c9acf40381c86645`；commit/path 见 manifest） |
-| `pgpass@1.0.5` | `MIT` | `node_modules\.pnpm\pgpass@1.0.5\node_modules\pgpass/package.json`；仓库：https://github.com/hoegaarden/pgpass.git | 已保留上游原文：`legal/third-party/texts/pgpass-LICENSE.txt`（SHA-256 `492e56ee92e47d39ca91d60ef75f55b1104678fab8f09838206b61b43136e211`；commit/path 见 manifest） |
 | `postcss-selector-parser@7.1.7` | `MIT` | `node_modules\.pnpm\postcss-selector-parser@7.1.7\node_modules\postcss-selector-parser/package.json`；仓库：https://github.com/postcss/postcss-selector-parser.git | 未纳入上游原文索引；需补充精确版本来源。 |
 | `punycode@2.3.1` | `MIT` | `node_modules\.pnpm\punycode@2.3.1\node_modules\punycode/package.json`；仓库：https://github.com/mathiasbynens/punycode.js.git | 已保留上游原文：`legal/third-party/texts/mathiasbynens-LICENSE-MIT.txt`（SHA-256 `483acb265f182907d1caf6cff9c16c96f31325ed23792832cc5d8b12d5f88c8a`；commit/path 见 manifest） |
 | `regenerate@1.4.2` | `MIT` | `node_modules\.pnpm\regenerate@1.4.2\node_modules\regenerate/package.json`；仓库：https://github.com/mathiasbynens/regenerate.git | 已保留上游原文：`legal/third-party/texts/mathiasbynens-LICENSE-MIT.txt`（SHA-256 `483acb265f182907d1caf6cff9c16c96f31325ed23792832cc5d8b12d5f88c8a`；commit/path 见 manifest） |
@@ -69,24 +61,6 @@
 | `@ai-sdk/provider@4.0.19` | 传递依赖 | `Apache-2.0` | `node_modules\.pnpm\@ai-sdk+provider@4.0.19\node_modules\@ai-sdk\provider/LICENSE` (SHA-256 `b4f9adb7c568904834d0dd6cc98d16c390d21ca32fc17ae7a267715269bd5529`) |
 | `@ai-sdk/provider-utils@5.0.51` | 传递依赖 | `Apache-2.0` | 包根目录无 LICENSE/LICENCE/COPYING/NOTICE |
 | `@apideck/better-ajv-errors@0.3.7` | 传递依赖 | `MIT` | `node_modules\.pnpm\@apideck+better-ajv-errors@0.3.7_ajv@8.20.0\node_modules\@apideck\better-ajv-errors/LICENSE` (SHA-256 `8135308bae95cd8bde79b2132bb9d7c8387b5251f3f2c4eed2b15284fbc6cdb9`) |
-| `@aws-sdk/checksums@3.1001.1` | 传递依赖 | `Apache-2.0` | `node_modules\.pnpm\@aws-sdk+checksums@3.1001.1\node_modules\@aws-sdk\checksums/LICENSE` (SHA-256 `07364a5f7d0177a59a05a0002187431f8f899320983c0dc049d72df015e8064c`) |
-| `@aws-sdk/client-s3@3.1141.0` | production | `Apache-2.0` | `node_modules\.pnpm\@aws-sdk+client-s3@3.1141.0\node_modules\@aws-sdk\client-s3/LICENSE` (SHA-256 `e345c2ee7df4446e739de7b91535f0c10ddcd909b9753889e943ee637b05db8c`) |
-| `@aws-sdk/core@3.978.1` | 传递依赖 | `Apache-2.0` | `node_modules\.pnpm\@aws-sdk+core@3.978.1\node_modules\@aws-sdk\core/LICENSE` (SHA-256 `edea91454b811f127fbdea3d86f378f6719bd372ed440abf82b232f6fca06c3d`) |
-| `@aws-sdk/credential-provider-env@3.972.72` | 传递依赖 | `Apache-2.0` | `node_modules\.pnpm\@aws-sdk+credential-provider-env@3.972.72\node_modules\@aws-sdk\credential-provider-env/LICENSE` (SHA-256 `d82ceb8cbd004a2d4834085c557d55459f528e30268d95159ee1e4030a693a6e`) |
-| `@aws-sdk/credential-provider-http@3.972.74` | 传递依赖 | `Apache-2.0` | 包根目录无 LICENSE/LICENCE/COPYING/NOTICE |
-| `@aws-sdk/credential-provider-ini@3.973.17` | 传递依赖 | `Apache-2.0` | `node_modules\.pnpm\@aws-sdk+credential-provider-ini@3.973.17\node_modules\@aws-sdk\credential-provider-ini/LICENSE` (SHA-256 `d82ceb8cbd004a2d4834085c557d55459f528e30268d95159ee1e4030a693a6e`) |
-| `@aws-sdk/credential-provider-login@3.972.79` | 传递依赖 | `Apache-2.0` | 包根目录无 LICENSE/LICENCE/COPYING/NOTICE |
-| `@aws-sdk/credential-provider-node@3.972.84` | 传递依赖 | `Apache-2.0` | `node_modules\.pnpm\@aws-sdk+credential-provider-node@3.972.84\node_modules\@aws-sdk\credential-provider-node/LICENSE` (SHA-256 `d82ceb8cbd004a2d4834085c557d55459f528e30268d95159ee1e4030a693a6e`) |
-| `@aws-sdk/credential-provider-process@3.972.72` | 传递依赖 | `Apache-2.0` | `node_modules\.pnpm\@aws-sdk+credential-provider-process@3.972.72\node_modules\@aws-sdk\credential-provider-process/LICENSE` (SHA-256 `2ef1e48ea743d9c82313e6887858f7c1feaddd636f5a3f43926aab0143e67ebd`) |
-| `@aws-sdk/credential-provider-sso@3.973.16` | 传递依赖 | `Apache-2.0` | `node_modules\.pnpm\@aws-sdk+credential-provider-sso@3.973.16\node_modules\@aws-sdk\credential-provider-sso/LICENSE` (SHA-256 `2ef1e48ea743d9c82313e6887858f7c1feaddd636f5a3f43926aab0143e67ebd`) |
-| `@aws-sdk/credential-provider-web-identity@3.972.78` | 传递依赖 | `Apache-2.0` | `node_modules\.pnpm\@aws-sdk+credential-provider-web-identity@3.972.78\node_modules\@aws-sdk\credential-provider-web-identity/LICENSE` (SHA-256 `2ef1e48ea743d9c82313e6887858f7c1feaddd636f5a3f43926aab0143e67ebd`) |
-| `@aws-sdk/middleware-sdk-s3@3.972.77` | 传递依赖 | `Apache-2.0` | `node_modules\.pnpm\@aws-sdk+middleware-sdk-s3@3.972.77\node_modules\@aws-sdk\middleware-sdk-s3/LICENSE` (SHA-256 `07364a5f7d0177a59a05a0002187431f8f899320983c0dc049d72df015e8064c`) |
-| `@aws-sdk/nested-clients@3.997.46` | 传递依赖 | `Apache-2.0` | 包根目录无 LICENSE/LICENCE/COPYING/NOTICE |
-| `@aws-sdk/signature-v4-multi-region@3.996.47` | 传递依赖 | `Apache-2.0` | `node_modules\.pnpm\@aws-sdk+signature-v4-multi-region@3.996.47\node_modules\@aws-sdk\signature-v4-multi-region/LICENSE` (SHA-256 `07364a5f7d0177a59a05a0002187431f8f899320983c0dc049d72df015e8064c`) |
-| `@aws-sdk/token-providers@3.1138.0` | 传递依赖 | `Apache-2.0` | `node_modules\.pnpm\@aws-sdk+token-providers@3.1138.0\node_modules\@aws-sdk\token-providers/LICENSE` (SHA-256 `d82ceb8cbd004a2d4834085c557d55459f528e30268d95159ee1e4030a693a6e`) |
-| `@aws-sdk/types@3.974.6` | 传递依赖 | `Apache-2.0` | `node_modules\.pnpm\@aws-sdk+types@3.974.6\node_modules\@aws-sdk\types/LICENSE` (SHA-256 `d82ceb8cbd004a2d4834085c557d55459f528e30268d95159ee1e4030a693a6e`) |
-| `@aws-sdk/xml-builder@3.972.41` | 传递依赖 | `Apache-2.0` | `node_modules\.pnpm\@aws-sdk+xml-builder@3.972.41\node_modules\@aws-sdk\xml-builder/LICENSE` (SHA-256 `d82ceb8cbd004a2d4834085c557d55459f528e30268d95159ee1e4030a693a6e`) |
-| `@aws/lambda-invoke-store@0.3.0` | 传递依赖 | `Apache-2.0` | `node_modules\.pnpm\@aws+lambda-invoke-store@0.3.0\node_modules\@aws\lambda-invoke-store/LICENSE` (SHA-256 `09e8a9bcec8067104652c168685ab0931e7868f9c8284b66f5ae6edae5f1130b`) |
 | `@babel/code-frame@7.29.7` | 传递依赖 | `MIT` | `node_modules\.pnpm\@babel+code-frame@7.29.7\node_modules\@babel\code-frame/LICENSE` (SHA-256 `117da2af0d4ce0fe1c8e19b5cff9dcd806adf973d328d27b11d4448c4ff24f76`) |
 | `@babel/compat-data@7.29.7` | 传递依赖 | `MIT` | `node_modules\.pnpm\@babel+compat-data@7.29.7\node_modules\@babel\compat-data/LICENSE` (SHA-256 `117da2af0d4ce0fe1c8e19b5cff9dcd806adf973d328d27b11d4448c4ff24f76`) |
 | `@babel/core@7.29.7` | 传递依赖 | `MIT` | `node_modules\.pnpm\@babel+core@7.29.7\node_modules\@babel\core/LICENSE` (SHA-256 `117da2af0d4ce0fe1c8e19b5cff9dcd806adf973d328d27b11d4448c4ff24f76`) |
@@ -184,16 +158,6 @@
 | `@babel/types@7.29.8` | 传递依赖 | `MIT` | `node_modules\.pnpm\@babel+types@7.29.8\node_modules\@babel\types/LICENSE` (SHA-256 `117da2af0d4ce0fe1c8e19b5cff9dcd806adf973d328d27b11d4448c4ff24f76`) |
 | `@base-ui/react@1.9.0` | production | `MIT` | `node_modules\.pnpm\@base-ui+react@1.9.0_@date-_056c59226e53572f8b26f0664b6b7cdd\node_modules\@base-ui\react/LICENSE` (SHA-256 `07fc1b39d69d14bc7d40482a628f47226258eb01265db68ae684944b916beb2a`) |
 | `@base-ui/utils@0.5.0` | 传递依赖 | `MIT` | `node_modules\.pnpm\@base-ui+utils@0.5.0_@types_3361864366adaef2285d497f06a092c6\node_modules\@base-ui\utils/LICENSE` (SHA-256 `07fc1b39d69d14bc7d40482a628f47226258eb01265db68ae684944b916beb2a`) |
-| `@better-auth/core@1.7.6` | 传递依赖 | `MIT` | `node_modules\.pnpm\@better-auth+core@1.7.6_@be_3f53fe91c3a25285a8a4798146b02b24\node_modules\@better-auth\core/LICENSE.md` (SHA-256 `7a07f7d9085cb3157e4377d944988c9712933141b0f7201955ceccfac92abde4`) |
-| `@better-auth/drizzle-adapter@1.7.6` | 传递依赖 | `MIT` | `node_modules\.pnpm\@better-auth+drizzle-adapte_622d65865d5389ebbca49d071f54e4e6\node_modules\@better-auth\drizzle-adapter/LICENSE.md` (SHA-256 `7a07f7d9085cb3157e4377d944988c9712933141b0f7201955ceccfac92abde4`) |
-| `@better-auth/kysely-adapter@1.7.6` | 传递依赖 | `MIT` | `node_modules\.pnpm\@better-auth+kysely-adapter_b5c5b5392700caf4cb855e9fb7f14649\node_modules\@better-auth\kysely-adapter/LICENSE.md` (SHA-256 `7a07f7d9085cb3157e4377d944988c9712933141b0f7201955ceccfac92abde4`) |
-| `@better-auth/memory-adapter@1.7.6` | 传递依赖 | `MIT` | `node_modules\.pnpm\@better-auth+memory-adapter_bd3af7f78f3a11b97f437dae77c90feb\node_modules\@better-auth\memory-adapter/LICENSE.md` (SHA-256 `7a07f7d9085cb3157e4377d944988c9712933141b0f7201955ceccfac92abde4`) |
-| `@better-auth/mongo-adapter@1.7.6` | 传递依赖 | `MIT` | `node_modules\.pnpm\@better-auth+mongo-adapter@_329de25251acf298369484cfde4474d5\node_modules\@better-auth\mongo-adapter/LICENSE.md` (SHA-256 `7a07f7d9085cb3157e4377d944988c9712933141b0f7201955ceccfac92abde4`) |
-| `@better-auth/prisma-adapter@1.7.6` | 传递依赖 | `MIT` | `node_modules\.pnpm\@better-auth+prisma-adapter_03a59effcf3024c7d4fc1f9abffc6117\node_modules\@better-auth\prisma-adapter/LICENSE.md` (SHA-256 `7a07f7d9085cb3157e4377d944988c9712933141b0f7201955ceccfac92abde4`) |
-| `@better-auth/telemetry@1.7.6` | 传递依赖 | `MIT` | `node_modules\.pnpm\@better-auth+telemetry@1.7._7aff822a59d39aa013f7e15477713918\node_modules\@better-auth\telemetry/LICENSE.md` (SHA-256 `7a07f7d9085cb3157e4377d944988c9712933141b0f7201955ceccfac92abde4`) |
-| `@better-auth/utils@0.4.2` | 传递依赖 | `MIT` | 包根目录无 LICENSE/LICENCE/COPYING/NOTICE |
-| `@better-auth/utils@0.5.0` | 传递依赖 | `MIT` | 包根目录无 LICENSE/LICENCE/COPYING/NOTICE |
-| `@better-fetch/fetch@1.3.2` | 传递依赖 | `MIT` | `node_modules\.pnpm\@better-fetch+fetch@1.3.2\node_modules\@better-fetch\fetch/LICENSE` (SHA-256 `54d710e643b5fd218f0c29cddea92432b2c730dddd594c7047c97993dd9f9a59`) |
 | `@biomejs/biome@2.5.14` | development | `MIT OR Apache-2.0` | 包根目录无 LICENSE/LICENCE/COPYING/NOTICE |
 | `@biomejs/cli-win32-x64@2.5.14` | 传递依赖 | `MIT OR Apache-2.0` | 包根目录无 LICENSE/LICENCE/COPYING/NOTICE |
 | `@date-fns/tz@1.5.0` | 传递依赖 | `MIT` | `node_modules\.pnpm\@date-fns+tz@1.5.0\node_modules\@date-fns\tz/LICENSE.md` (SHA-256 `cc7267726f809c066c35c81a17d7525bccf588ecc826b15ca65a15d34106c804`) |
@@ -204,14 +168,12 @@
 | `@dnd-kit/utilities@3.2.2` | production | `MIT` | `node_modules\.pnpm\@dnd-kit+utilities@3.2.2_react@19.3.0\node_modules\@dnd-kit\utilities/LICENSE` (SHA-256 `537607e3f1533ad2c5b12978967f5ab27f34ffb7e626e321017a7ccca6cc24ff`) |
 | `@dotenvx/dotenvx@1.75.1` | 传递依赖 | `BSD-3-Clause` | `node_modules\.pnpm\@dotenvx+dotenvx@1.75.1\node_modules\@dotenvx\dotenvx/LICENSE` (SHA-256 `2edeb009148c36c249712564871d8297d92094b88e417228e4f3ce7db59ee9ed`) |
 | `@dotenvx/primitives@0.8.0` | 传递依赖 | `BSD-3-Clause` | `node_modules\.pnpm\@dotenvx+primitives@0.8.0\node_modules\@dotenvx\primitives/LICENSE` (SHA-256 `2edeb009148c36c249712564871d8297d92094b88e417228e4f3ce7db59ee9ed`) |
-| `@electric-sql/pglite@0.5.8` | development | `Apache-2.0` | `node_modules\.pnpm\@electric-sql+pglite@0.5.8\node_modules\@electric-sql\pglite/LICENSE` (SHA-256 `a6cba85bc92e0cff7a450b1d873c0eaa2e9fc96bf472df0247a26bec77bf3ff9`) |
 | `@esbuild/win32-x64@0.27.7` | 传递依赖 | `MIT` | 包根目录无 LICENSE/LICENCE/COPYING/NOTICE |
 | `@floating-ui/core@1.8.0` | 传递依赖 | `MIT` | `node_modules\.pnpm\@floating-ui+core@1.8.0\node_modules\@floating-ui\core/LICENSE` (SHA-256 `0e4c9a9b6c71019cbbea3bdc20b01223110a9035700f9c960c8fcbf78c2325ce`) |
 | `@floating-ui/dom@1.8.0` | 传递依赖 | `MIT` | `node_modules\.pnpm\@floating-ui+dom@1.8.0\node_modules\@floating-ui\dom/LICENSE` (SHA-256 `0e4c9a9b6c71019cbbea3bdc20b01223110a9035700f9c960c8fcbf78c2325ce`) |
 | `@floating-ui/react-dom@2.1.9` | 传递依赖 | `MIT` | `node_modules\.pnpm\@floating-ui+react-dom@2.1._13108dbe147a342dbac6e3fd00194951\node_modules\@floating-ui\react-dom/LICENSE` (SHA-256 `0e4c9a9b6c71019cbbea3bdc20b01223110a9035700f9c960c8fcbf78c2325ce`) |
 | `@floating-ui/utils@0.2.12` | 传递依赖 | `MIT` | `node_modules\.pnpm\@floating-ui+utils@0.2.12\node_modules\@floating-ui\utils/LICENSE` (SHA-256 `0e4c9a9b6c71019cbbea3bdc20b01223110a9035700f9c960c8fcbf78c2325ce`) |
 | `@hono/node-server@2.1.1` | production | `MIT` | `node_modules\.pnpm\@hono+node-server@2.1.1_hono@4.13.10\node_modules\@hono\node-server/LICENSE` (SHA-256 `6895190430d809c4c57a7582ecc2f99acbc2ea39a5dfad20262a41d5b3e91733`) |
-| `@hookform/resolvers@5.9.1` | production | `MIT` | `node_modules\.pnpm\@hookform+resolvers@5.9.1_@_4b9d7c521e54aa1471851a8f1934640d\node_modules\@hookform\resolvers/LICENSE` (SHA-256 `e8eeb472f0a5889c2c51625b86a3f9b8630680adb9f49a125352e2e426392780`) |
 | `@isaacs/cliui@9.0.0` | 传递依赖 | `BlueOak-1.0.0` | `node_modules\.pnpm\@isaacs+cliui@9.0.0\node_modules\@isaacs\cliui/LICENSE.md` (SHA-256 `c58416e852f7603cc1c7c5f7582e8cc7b1934d7bcb5456d64ada379d6770da45`) |
 | `@jridgewell/gen-mapping@0.3.13` | 传递依赖 | `MIT` | `node_modules\.pnpm\@jridgewell+gen-mapping@0.3.13\node_modules\@jridgewell\gen-mapping/LICENSE` (SHA-256 `769d154fbde32a915af110b1123650bc79f4cbe675acc66e005265bf069c6c6c`) |
 | `@jridgewell/remapping@2.3.5` | 传递依赖 | `MIT` | `node_modules\.pnpm\@jridgewell+remapping@2.3.5\node_modules\@jridgewell\remapping/LICENSE` (SHA-256 `769d154fbde32a915af110b1123650bc79f4cbe675acc66e005265bf069c6c6c`) |
@@ -224,15 +186,11 @@
 | `@modelcontextprotocol/core@2.4.0` | 传递依赖 | `Apache-2.0` | `node_modules\.pnpm\@modelcontextprotocol+core@2.4.0\node_modules\@modelcontextprotocol\core/LICENSE` (SHA-256 `0382b0057770ca05e9c350a50aa3b1c1fea84da0bc81d723bf00b9aa841be58a`) |
 | `@modelcontextprotocol/server@2.1.0` | production | `MIT` | `node_modules\.pnpm\@modelcontextprotocol+server@2.1.0\node_modules\@modelcontextprotocol\server/LICENSE` (SHA-256 `0382b0057770ca05e9c350a50aa3b1c1fea84da0bc81d723bf00b9aa841be58a`) |
 | `@modelcontextprotocol/server@2.4.0` | production | `Apache-2.0` | `node_modules\.pnpm\@modelcontextprotocol+server@2.4.0\node_modules\@modelcontextprotocol\server/LICENSE` (SHA-256 `0382b0057770ca05e9c350a50aa3b1c1fea84da0bc81d723bf00b9aa841be58a`) |
-| `@napi-rs/canvas@1.0.9` | 传递依赖 | `MIT` | `node_modules\.pnpm\@napi-rs+canvas@1.0.9\node_modules\@napi-rs\canvas/LICENSE` (SHA-256 `8802fecf9da4367bc23bcf20b21cc143785fc6c92b152f3fa7fbe6ce08d344d6`) |
-| `@napi-rs/canvas-win32-x64-msvc@1.0.9` | 传递依赖 | `MIT` | 包根目录无 LICENSE/LICENCE/COPYING/NOTICE |
-| `@noble/ciphers@2.4.0` | 传递依赖 | `MIT` | `node_modules\.pnpm\@noble+ciphers@2.4.0\node_modules\@noble\ciphers/LICENSE` (SHA-256 `f36671a5487c9c5050efacb58011c37c24c55a889803cb036cf9d9a6347c1e2d`) |
 | `@noble/hashes@2.4.0` | production | `MIT` | `node_modules\.pnpm\@noble+hashes@2.4.0\node_modules\@noble\hashes/LICENSE` (SHA-256 `4f221aee6e072336700c408c68ab3b96a3fc09f6aebe6f48f1bd99e5ef13faec`) |
 | `@nodelib/fs.scandir@2.1.5` | 传递依赖 | `MIT` | `node_modules\.pnpm\@nodelib+fs.scandir@2.1.5\node_modules\@nodelib\fs.scandir/LICENSE` (SHA-256 `9363d160bf41d46d83901a5d24fc3fe2094c2afc17b4a2378914b273977ee2de`) |
 | `@nodelib/fs.stat@2.0.5` | 传递依赖 | `MIT` | `node_modules\.pnpm\@nodelib+fs.stat@2.0.5\node_modules\@nodelib\fs.stat/LICENSE` (SHA-256 `9363d160bf41d46d83901a5d24fc3fe2094c2afc17b4a2378914b273977ee2de`) |
 | `@nodelib/fs.walk@1.2.8` | 传递依赖 | `MIT` | `node_modules\.pnpm\@nodelib+fs.walk@1.2.8\node_modules\@nodelib\fs.walk/LICENSE` (SHA-256 `9363d160bf41d46d83901a5d24fc3fe2094c2afc17b4a2378914b273977ee2de`) |
 | `@openrouter/ai-sdk-provider@3.1.0` | production | `Apache-2.0` | `node_modules\.pnpm\@openrouter+ai-sdk-provider_b3275827f6052c7d1de7f797cbb76149\node_modules\@openrouter\ai-sdk-provider/LICENSE` (SHA-256 `dc5d6874c25b4d5af22aa7bb9a18422bc86c7516c80056c1788fc120c4121f72`) |
-| `@opentelemetry/semantic-conventions@1.43.0` | 传递依赖 | `Apache-2.0` | `node_modules\.pnpm\@opentelemetry+semantic-conventions@1.43.0\node_modules\@opentelemetry\semantic-conventions/LICENSE` (SHA-256 `c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4`) |
 | `@oxc-project/types@0.151.0` | 传递依赖 | `MIT` | `node_modules\.pnpm\@oxc-project+types@0.151.0\node_modules\@oxc-project\types/LICENSE` (SHA-256 `95ced5ecf1133fbf41d409b5555c86c344f83f3b019926057ddbc07cfdcc27b3`) |
 | `@playwright/test@1.63.0` | development | `Apache-2.0` | `node_modules\.pnpm\@playwright+test@1.63.0\node_modules\@playwright\test/LICENSE` (SHA-256 `45873d00a0dd243596deb4aa23b2493b3d1f0671921bf2538ea431d7380220eb`)<br>`node_modules\.pnpm\@playwright+test@1.63.0\node_modules\@playwright\test/NOTICE` (SHA-256 `6d602191187b35b9b01d2cffa01c8469c2c8d9de8a96f1bf868e0f264f51c81d`) |
 | `@rolldown/binding-win32-x64-msvc@1.2.11` | 传递依赖 | `MIT` | 包根目录无 LICENSE/LICENCE/COPYING/NOTICE |
@@ -247,14 +205,7 @@
 | `@sec-ant/readable-stream@0.4.1` | 传递依赖 | `MIT` | `node_modules\.pnpm\@sec-ant+readable-stream@0.4.1\node_modules\@sec-ant\readable-stream/LICENSE` (SHA-256 `7e32638e170fa7342000a703a8ed950e05095b2f73fc689992a82776a3c3bd3c`) |
 | `@shadcn/registry@0.2.1` | 传递依赖 | `MIT` | `node_modules\.pnpm\@shadcn+registry@0.2.1\node_modules\@shadcn\registry/LICENSE.md` (SHA-256 `1564074e13439397221ffd522e2e504d56561994a23d371aa5e3ad43e4f5423f`) |
 | `@sindresorhus/merge-streams@4.0.0` | 传递依赖 | `MIT` | `node_modules\.pnpm\@sindresorhus+merge-streams@4.0.0\node_modules\@sindresorhus\merge-streams/license` (SHA-256 `5c932d88256b4ab958f64a856fa48e8bd1f55bc1d96b8149c65689e0c61789d3`) |
-| `@smithy/core@3.35.0` | 传递依赖 | `Apache-2.0` | `node_modules\.pnpm\@smithy+core@3.35.0\node_modules\@smithy\core/LICENSE` (SHA-256 `07364a5f7d0177a59a05a0002187431f8f899320983c0dc049d72df015e8064c`) |
-| `@smithy/credential-provider-imds@4.5.2` | 传递依赖 | `Apache-2.0` | `node_modules\.pnpm\@smithy+credential-provider-imds@4.5.2\node_modules\@smithy\credential-provider-imds/LICENSE` (SHA-256 `d82ceb8cbd004a2d4834085c557d55459f528e30268d95159ee1e4030a693a6e`) |
-| `@smithy/fetch-http-handler@5.8.0` | 传递依赖 | `Apache-2.0` | `node_modules\.pnpm\@smithy+fetch-http-handler@5.8.0\node_modules\@smithy\fetch-http-handler/LICENSE` (SHA-256 `d82ceb8cbd004a2d4834085c557d55459f528e30268d95159ee1e4030a693a6e`) |
-| `@smithy/node-http-handler@4.12.1` | 传递依赖 | `Apache-2.0` | `node_modules\.pnpm\@smithy+node-http-handler@4.12.1\node_modules\@smithy\node-http-handler/LICENSE` (SHA-256 `d82ceb8cbd004a2d4834085c557d55459f528e30268d95159ee1e4030a693a6e`) |
-| `@smithy/signature-v4@5.7.4` | 传递依赖 | `Apache-2.0` | `node_modules\.pnpm\@smithy+signature-v4@5.7.4\node_modules\@smithy\signature-v4/LICENSE` (SHA-256 `d82ceb8cbd004a2d4834085c557d55459f528e30268d95159ee1e4030a693a6e`) |
-| `@smithy/types@4.19.0` | 传递依赖 | `Apache-2.0` | `node_modules\.pnpm\@smithy+types@4.19.0\node_modules\@smithy\types/LICENSE` (SHA-256 `07364a5f7d0177a59a05a0002187431f8f899320983c0dc049d72df015e8064c`) |
 | `@standard-schema/spec@1.1.0` | 传递依赖 | `MIT` | `node_modules\.pnpm\@standard-schema+spec@1.1.0\node_modules\@standard-schema\spec/LICENSE` (SHA-256 `653b779005a3a4d64a7288c940f7b9a0e8f0b1e0375f6aa6af9473caf131e564`) |
-| `@standard-schema/utils@0.3.0` | 传递依赖 | `MIT` | `node_modules\.pnpm\@standard-schema+utils@0.3.0\node_modules\@standard-schema\utils/LICENSE` (SHA-256 `9cf2166507311f427e083ef7671da566949391cb745789abcff8bd43ac26d1f1`) |
 | `@tailwindcss/node@4.3.3` | 传递依赖 | `MIT` | `node_modules\.pnpm\@tailwindcss+node@4.3.3\node_modules\@tailwindcss\node/LICENSE` (SHA-256 `60e0b68c0f35c078eef3a5d29419d0b03ff84ec1df9c3f9d6e39a519a5ae7985`) |
 | `@tailwindcss/oxide@4.3.3` | 传递依赖 | `MIT` | `node_modules\.pnpm\@tailwindcss+oxide@4.3.3\node_modules\@tailwindcss\oxide/LICENSE` (SHA-256 `60e0b68c0f35c078eef3a5d29419d0b03ff84ec1df9c3f9d6e39a519a5ae7985`) |
 | `@tailwindcss/oxide-win32-x64-msvc@4.3.3` | 传递依赖 | `MIT` | `node_modules\.pnpm\@tailwindcss+oxide-win32-x64-msvc@4.3.3\node_modules\@tailwindcss\oxide-win32-x64-msvc/LICENSE` (SHA-256 `60e0b68c0f35c078eef3a5d29419d0b03ff84ec1df9c3f9d6e39a519a5ae7985`) |
@@ -279,7 +230,6 @@
 | `@types/json-schema@7.0.11` | 传递依赖 | `MIT` | `node_modules\.pnpm\@types+json-schema@7.0.11\node_modules\@types\json-schema/LICENSE` (SHA-256 `c2cfccb812fe482101a8f04597dfc5a9991a6b2748266c47ac91b6a5aae15383`) |
 | `@types/node@26.6.3` | development | `MIT` | `node_modules\.pnpm\@types+node@26.6.3\node_modules\@types\node/LICENSE` (SHA-256 `c2cfccb812fe482101a8f04597dfc5a9991a6b2748266c47ac91b6a5aae15383`) |
 | `@types/papaparse@5.5.2` | development | `MIT` | `node_modules\.pnpm\@types+papaparse@5.5.2\node_modules\@types\papaparse/LICENSE` (SHA-256 `c2cfccb812fe482101a8f04597dfc5a9991a6b2748266c47ac91b6a5aae15383`) |
-| `@types/pg@8.23.1` | development | `MIT` | `node_modules\.pnpm\@types+pg@8.23.1\node_modules\@types\pg/LICENSE` (SHA-256 `c2cfccb812fe482101a8f04597dfc5a9991a6b2748266c47ac91b6a5aae15383`) |
 | `@types/react@19.3.0` | development | `MIT` | `node_modules\.pnpm\@types+react@19.3.0\node_modules\@types\react/LICENSE` (SHA-256 `c2cfccb812fe482101a8f04597dfc5a9991a6b2748266c47ac91b6a5aae15383`) |
 | `@types/react-dom@19.3.0` | development | `MIT` | `node_modules\.pnpm\@types+react-dom@19.3.0_@types+react@19.3.0\node_modules\@types\react-dom/LICENSE` (SHA-256 `c2cfccb812fe482101a8f04597dfc5a9991a6b2748266c47ac91b6a5aae15383`) |
 | `@types/resolve@1.20.2` | 传递依赖 | `MIT` | `node_modules\.pnpm\@types+resolve@1.20.2\node_modules\@types\resolve/LICENSE` (SHA-256 `c2cfccb812fe482101a8f04597dfc5a9991a6b2748266c47ac91b6a5aae15383`) |
@@ -322,10 +272,7 @@
 | `balanced-match@4.0.4` | 传递依赖 | `MIT` | `node_modules\.pnpm\balanced-match@4.0.4\node_modules\balanced-match/LICENSE.md` (SHA-256 `d408f38ffa3355c5faec517153295338892eb0f1ea43f57874bb23c6075979b5`) |
 | `base64-js@1.5.1` | 传递依赖 | `MIT` | `node_modules\.pnpm\base64-js@1.5.1\node_modules\base64-js/LICENSE` (SHA-256 `5b37224c080cdcc97c871ada971c224e9926370fe74f11b539aa1cf9f3b1aca1`) |
 | `baseline-browser-mapping@2.11.33` | 传递依赖 | `Apache-2.0` | `node_modules\.pnpm\baseline-browser-mapping@2.11.33\node_modules\baseline-browser-mapping/LICENSE.txt` (SHA-256 `c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4`) |
-| `better-auth@1.7.6` | production | `MIT` | `node_modules\.pnpm\better-auth@1.7.6_pg@8.23.0_a69e937031dab500b60eee699f3dc3b3\node_modules\better-auth/LICENSE.md` (SHA-256 `7a07f7d9085cb3157e4377d944988c9712933141b0f7201955ceccfac92abde4`) |
-| `better-call@1.4.0` | 传递依赖 | `MIT` | `node_modules\.pnpm\better-call@1.4.0_zod@4.6.5\node_modules\better-call/LICENSE` (SHA-256 `ad800a5024c64adeb3eafa2b2b01893027a68631ff367a993020d1ec36e11266`) |
 | `binary-decision-diagram@4.0.0` | 传递依赖 | `ISC` | `node_modules\.pnpm\binary-decision-diagram@4.0.0\node_modules\binary-decision-diagram/LICENSE` (SHA-256 `c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4`) |
-| `bowser@2.14.1` | 传递依赖 | `MIT` | `node_modules\.pnpm\bowser@2.14.1\node_modules\bowser/LICENSE` (SHA-256 `dfde54fedc270c2a305d9a9f993d93f706d34624455a2fd2d2a05ca34d8ae8c3`) |
 | `brace-expansion@2.1.7` | 传递依赖 | `MIT` | `node_modules\.pnpm\brace-expansion@2.1.7\node_modules\brace-expansion/LICENSE` (SHA-256 `68f12f6e2c33688699249c01d8f9623c534da20aa71989c57b061b7bc1676d14`) |
 | `brace-expansion@5.0.12` | 传递依赖 | `MIT` | `node_modules\.pnpm\brace-expansion@5.0.12\node_modules\brace-expansion/LICENSE` (SHA-256 `9c63a23124d68cd30cd316a94a1a0bca34f032786df6df69fc4b5f136bac8d2e`) |
 | `braces@3.0.3` | 传递依赖 | `MIT` | `node_modules\.pnpm\braces@3.0.3\node_modules\braces/LICENSE` (SHA-256 `35bdd8a44339719441900fb50fbefc5e2dca1ca662cbaed7a687de842c8b70f2`) |
@@ -386,7 +333,6 @@
 | `define-lazy-prop@2.0.0` | 传递依赖 | `MIT` | `node_modules\.pnpm\define-lazy-prop@2.0.0\node_modules\define-lazy-prop/license` (SHA-256 `48da2f39e100d4085767e94966b43f4fa95ff6a0698fba57ed460914e35f94a0`) |
 | `define-lazy-prop@3.0.0` | 传递依赖 | `MIT` | `node_modules\.pnpm\define-lazy-prop@3.0.0\node_modules\define-lazy-prop/license` (SHA-256 `5c932d88256b4ab958f64a856fa48e8bd1f55bc1d96b8149c65689e0c61789d3`) |
 | `define-properties@1.2.1` | 传递依赖 | `MIT` | `node_modules\.pnpm\define-properties@1.2.1\node_modules\define-properties/LICENSE` (SHA-256 `00d402c2bbe7c67369bd01ce2c16b8ed46ccc949a1ee2d6bb8f9606afa8c7434`) |
-| `defu@6.1.7` | 传递依赖 | `MIT` | `node_modules\.pnpm\defu@6.1.7\node_modules\defu/LICENSE` (SHA-256 `46231df5a7733c3f52f11b71f3df61813007745b62b09031acfb45fb42d75082`) |
 | `detect-libc@2.1.2` | 传递依赖 | `Apache-2.0` | `node_modules\.pnpm\detect-libc@2.1.2\node_modules\detect-libc/LICENSE` (SHA-256 `b40930bbcf80744c86c46a12bc9da056641d722716c378f5659b9e555ef833e1`) |
 | `dexie@4.4.2` | production | `Apache-2.0` | `node_modules\.pnpm\dexie@4.4.2\node_modules\dexie/LICENSE` (SHA-256 `cb5e8e7e5f4a3988e1063c142c60dc2df75605f4c46515e776e3aca6df976e14`)<br>`node_modules\.pnpm\dexie@4.4.2\node_modules\dexie/NOTICE` (SHA-256 `6176d2e8a3fd8a881828a1a27bbcc5a9e03a75f437ce3c4ddbedd94fdac475c1`) |
 | `diff@8.0.4` | 传递依赖 | `BSD-3-Clause` | `node_modules\.pnpm\diff@8.0.4\node_modules\diff/LICENSE` (SHA-256 `eda81a415869e67809f6a9f3fd6056062cb83a462118e07eec5e92b2e0c40ce9`) |
@@ -538,7 +484,7 @@
 | `jackspeak@4.2.3` | 传递依赖 | `BlueOak-1.0.0` | `node_modules\.pnpm\jackspeak@4.2.3\node_modules\jackspeak/LICENSE.md` (SHA-256 `2c7c5d22ed5a8ee968c64757710979afcd77438c48b4a265b94e615babd8a901`) |
 | `jake@10.9.4` | 传递依赖 | `Apache-2.0` | 包根目录无 LICENSE/LICENCE/COPYING/NOTICE |
 | `jiti@2.7.0` | 传递依赖 | `MIT` | `node_modules\.pnpm\jiti@2.7.0\node_modules\jiti/LICENSE` (SHA-256 `46231df5a7733c3f52f11b71f3df61813007745b62b09031acfb45fb42d75082`) |
-| `jose@6.2.12` | production | `MIT` | `node_modules\.pnpm\jose@6.2.12\node_modules\jose/LICENSE.md` (SHA-256 `8078b0829d6c3e9ecde2f003e1966e4cad3efc6e7a640efbab0313cc166b1af1`) |
+| `jose@6.2.12` | 传递依赖 | `MIT` | `node_modules\.pnpm\jose@6.2.12\node_modules\jose/LICENSE.md` (SHA-256 `8078b0829d6c3e9ecde2f003e1966e4cad3efc6e7a640efbab0313cc166b1af1`) |
 | `js-base64@3.9.2` | 传递依赖 | `BSD-3-Clause` | `node_modules\.pnpm\js-base64@3.9.2\node_modules\js-base64/LICENSE.md` (SHA-256 `fcf06aacb36ee29237110d6b3a9fbd6296e85ad4324263abf5f8a5cfb5706c81`) |
 | `js-tokens@4.0.0` | 传递依赖 | `MIT` | `node_modules\.pnpm\js-tokens@4.0.0\node_modules\js-tokens/LICENSE` (SHA-256 `2213d91c606205c71eb051a199478cdc2adde945893404d7f1421436dd6d5cc1`) |
 | `jsesc@3.1.0` | 传递依赖 | `MIT` | 包根目录无 LICENSE/LICENCE/COPYING/NOTICE |
@@ -552,7 +498,6 @@
 | `kdbxweb@2.1.1` | production | `MIT` | `node_modules\.pnpm\kdbxweb@2.1.1_patch_hash=05_d4a4eb1b6839e637a1f16fa3c5754fec\node_modules\kdbxweb/LICENSE` (SHA-256 `5328cd70623b0154a3d13ce41d57d6d4e9fda5b6db2e8ed994d29c3598c374a8`) |
 | `kleur@3.0.3` | 传递依赖 | `MIT` | `node_modules\.pnpm\kleur@3.0.3\node_modules\kleur/license` (SHA-256 `306fa513e39b23a6e8747520de761809d206b99800ef41907b530226574c59ae`) |
 | `kleur@4.1.5` | 传递依赖 | `MIT` | `node_modules\.pnpm\kleur@4.1.5\node_modules\kleur/license` (SHA-256 `306fa513e39b23a6e8747520de761809d206b99800ef41907b530226574c59ae`) |
-| `kysely@0.29.6` | 传递依赖 | `MIT` | `node_modules\.pnpm\kysely@0.29.6\node_modules\kysely/LICENSE` (SHA-256 `f70408a03a6ae16b093ae84757bd813f861124e851efc7a17c3cb29ff247ff54`) |
 | `leven@3.1.0` | 传递依赖 | `MIT` | `node_modules\.pnpm\leven@3.1.0\node_modules\leven/license` (SHA-256 `48da2f39e100d4085767e94966b43f4fa95ff6a0698fba57ed460914e35f94a0`) |
 | `libsodium@0.8.4` | 传递依赖 | `ISC` | `node_modules\.pnpm\libsodium@0.8.4\node_modules\libsodium/LICENSE` (SHA-256 `ce7b8ba14db085aadb72359226ccf7273225db31dad653242a7726a10dabbbd4`) |
 | `libsodium-wrappers@0.8.4` | production | `ISC` | `node_modules\.pnpm\libsodium-wrappers@0.8.4\node_modules\libsodium-wrappers/LICENSE` (SHA-256 `ce7b8ba14db085aadb72359226ccf7273225db31dad653242a7726a10dabbbd4`) |
@@ -585,7 +530,6 @@
 | `motion-utils@13.3.0` | 传递依赖 | `MIT` | `node_modules\.pnpm\motion-utils@13.3.0\node_modules\motion-utils/LICENSE.md` (SHA-256 `1bf0dc3f7727723e5a032ed12164a47cf92c05204cb1a3485f123c24e2833ed1`) |
 | `ms@2.1.3` | 传递依赖 | `MIT` | `node_modules\.pnpm\ms@2.1.3\node_modules\ms/license.md` (SHA-256 `1662fae9b5314d11cf51284e2dcd1f006a354f7343f08712a730fcff9a359801`) |
 | `nanoid@3.3.19` | 传递依赖 | `MIT` | `node_modules\.pnpm\nanoid@3.3.19\node_modules\nanoid/LICENSE` (SHA-256 `da4db1480d9beea3483a2eda5c53b22238d0827d57da162b48f122e04d2d9987`) |
-| `nanostores@1.5.4` | 传递依赖 | `MIT` | `node_modules\.pnpm\nanostores@1.5.4\node_modules\nanostores/LICENSE` (SHA-256 `181bc2685f0cea9d1beb28352420e3a7fb382b38895d2b430ed1b3bc39572af6`) |
 | `node-releases@2.0.60` | 传递依赖 | `MIT` | `node_modules\.pnpm\node-releases@2.0.60\node_modules\node-releases/LICENSE` (SHA-256 `3706296ed611888111ceccc1dff4712844dea4bde0b185c82d718c3b69895abe`) |
 | `npm-run-path@4.0.1` | 传递依赖 | `MIT` | `node_modules\.pnpm\npm-run-path@4.0.1\node_modules\npm-run-path/license` (SHA-256 `48da2f39e100d4085767e94966b43f4fa95ff6a0698fba57ed460914e35f94a0`) |
 | `npm-run-path@6.0.0` | 传递依赖 | `MIT` | `node_modules\.pnpm\npm-run-path@6.0.0\node_modules\npm-run-path/license` (SHA-256 `5c932d88256b4ab958f64a856fa48e8bd1f55bc1d96b8149c65689e0c61789d3`) |
@@ -616,15 +560,6 @@
 | `path-key@4.0.0` | 传递依赖 | `MIT` | `node_modules\.pnpm\path-key@4.0.0\node_modules\path-key/license` (SHA-256 `5c932d88256b4ab958f64a856fa48e8bd1f55bc1d96b8149c65689e0c61789d3`) |
 | `path-parse@1.0.7` | 传递依赖 | `MIT` | `node_modules\.pnpm\path-parse@1.0.7\node_modules\path-parse/LICENSE` (SHA-256 `3f4609137f65070541b9214300ea0d640af8192857de0eeb2b03403003d9228a`) |
 | `path-scurry@2.0.2` | 传递依赖 | `BlueOak-1.0.0` | `node_modules\.pnpm\path-scurry@2.0.2\node_modules\path-scurry/LICENSE.md` (SHA-256 `8a1af140fdfbf5afd3df27f7e662f989c5b963a300020dfafce42033cae9e004`) |
-| `pdfjs-dist@6.3.289` | production | `Apache-2.0` | `node_modules\.pnpm\pdfjs-dist@6.3.289\node_modules\pdfjs-dist/LICENSE` (SHA-256 `0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594`) |
-| `pg@8.23.0` | production | `MIT` | `node_modules\.pnpm\pg@8.23.0\node_modules\pg/LICENSE` (SHA-256 `192b8f5c96900f04a1271dec39688655d7416c1c6ea84a508e18b50d2b6751f3`) |
-| `pg-cloudflare@1.4.0` | 传递依赖 | `MIT` | `node_modules\.pnpm\pg-cloudflare@1.4.0\node_modules\pg-cloudflare/LICENSE` (SHA-256 `192b8f5c96900f04a1271dec39688655d7416c1c6ea84a508e18b50d2b6751f3`) |
-| `pg-connection-string@2.14.0` | 传递依赖 | `MIT` | `node_modules\.pnpm\pg-connection-string@2.14.0\node_modules\pg-connection-string/LICENSE` (SHA-256 `2244b5486c4427001b6756a87b9a297d427c111dcc3ba64a097492a8979c23d0`) |
-| `pg-int8@1.0.1` | 传递依赖 | `ISC` | `node_modules\.pnpm\pg-int8@1.0.1\node_modules\pg-int8/LICENSE` (SHA-256 `4e8e87ccdfc7e4b47fd89015f78468aa53b6bf43ab6e6e12d43e8f55294911de`) |
-| `pg-pool@3.14.0` | 传递依赖 | `MIT` | `node_modules\.pnpm\pg-pool@3.14.0_pg@8.23.0\node_modules\pg-pool/LICENSE` (SHA-256 `4f15ee7fc2a72082859d7e0d12dfa4bcdd70b1c744ad3850d07780730ac08557`) |
-| `pg-protocol@1.16.0` | 传递依赖 | `MIT` | `node_modules\.pnpm\pg-protocol@1.16.0\node_modules\pg-protocol/LICENSE` (SHA-256 `192b8f5c96900f04a1271dec39688655d7416c1c6ea84a508e18b50d2b6751f3`) |
-| `pg-types@2.2.0` | 传递依赖 | `MIT` | 包根目录无 LICENSE/LICENCE/COPYING/NOTICE |
-| `pgpass@1.0.5` | 传递依赖 | `MIT` | 包根目录无 LICENSE/LICENCE/COPYING/NOTICE |
 | `picocolors@1.1.1` | 传递依赖 | `ISC` | `node_modules\.pnpm\picocolors@1.1.1\node_modules\picocolors/LICENSE` (SHA-256 `6582629e2979466878f6014313dcc2f3756c9616148682227ce3063dde310750`) |
 | `picomatch@2.3.2` | 传递依赖 | `MIT` | `node_modules\.pnpm\picomatch@2.3.2\node_modules\picomatch/LICENSE` (SHA-256 `d0cd141b0c322fded5dfad1d4645bb2fedfc05b7321fe1009469638190d59ef9`) |
 | `picomatch@4.0.7` | 传递依赖 | `MIT` | `node_modules\.pnpm\picomatch@4.0.7\node_modules\picomatch/LICENSE` (SHA-256 `d0cd141b0c322fded5dfad1d4645bb2fedfc05b7321fe1009469638190d59ef9`) |
@@ -635,10 +570,6 @@
 | `possible-typed-array-names@1.1.0` | 传递依赖 | `MIT` | `node_modules\.pnpm\possible-typed-array-names@1.1.0\node_modules\possible-typed-array-names/LICENSE` (SHA-256 `5e325595b4ea8cfec3802f545b1def5d7b73e4a5b8e9ba63e32a320f67732292`) |
 | `postcss@8.5.28` | 传递依赖 | `MIT` | `node_modules\.pnpm\postcss@8.5.28\node_modules\postcss/LICENSE` (SHA-256 `5be1f3465bba68a626777f984878814aaf35e7ef8e9fd314d469bcf887050fb8`) |
 | `postcss-selector-parser@7.1.7` | 传递依赖 | `MIT` | 包根目录无 LICENSE/LICENCE/COPYING/NOTICE |
-| `postgres-array@2.0.0` | 传递依赖 | `MIT` | `node_modules\.pnpm\postgres-array@2.0.0\node_modules\postgres-array/license` (SHA-256 `f057f36739d53d228a746de4440c1e0c644ecde06d6beab45337d39c9d12a393`) |
-| `postgres-bytea@1.0.1` | 传递依赖 | `MIT` | `node_modules\.pnpm\postgres-bytea@1.0.1\node_modules\postgres-bytea/license` (SHA-256 `f057f36739d53d228a746de4440c1e0c644ecde06d6beab45337d39c9d12a393`) |
-| `postgres-date@1.0.7` | 传递依赖 | `MIT` | `node_modules\.pnpm\postgres-date@1.0.7\node_modules\postgres-date/license` (SHA-256 `f057f36739d53d228a746de4440c1e0c644ecde06d6beab45337d39c9d12a393`) |
-| `postgres-interval@1.2.0` | 传递依赖 | `MIT` | `node_modules\.pnpm\postgres-interval@1.2.0\node_modules\postgres-interval/license` (SHA-256 `f057f36739d53d228a746de4440c1e0c644ecde06d6beab45337d39c9d12a393`) |
 | `powershell-utils@0.2.1` | 传递依赖 | `MIT` | `node_modules\.pnpm\powershell-utils@0.2.1\node_modules\powershell-utils/license` (SHA-256 `5c932d88256b4ab958f64a856fa48e8bd1f55bc1d96b8149c65689e0c61789d3`) |
 | `pretty-bytes@5.6.0` | 传递依赖 | `MIT` | `node_modules\.pnpm\pretty-bytes@5.6.0\node_modules\pretty-bytes/license` (SHA-256 `5c932d88256b4ab958f64a856fa48e8bd1f55bc1d96b8149c65689e0c61789d3`) |
 | `pretty-bytes@6.1.1` | 传递依赖 | `MIT` | `node_modules\.pnpm\pretty-bytes@6.1.1\node_modules\pretty-bytes/license` (SHA-256 `5c932d88256b4ab958f64a856fa48e8bd1f55bc1d96b8149c65689e0c61789d3`) |
@@ -650,7 +581,6 @@
 | `react@19.3.0` | production | `MIT` | `node_modules\.pnpm\react@19.3.0\node_modules\react/LICENSE` (SHA-256 `da6d3703ed11cbe42bd212c725957c98da23cbff1998c05fa4b3d976d1a58e93`) |
 | `react-day-picker@10.0.2` | 传递依赖 | `MIT` | `node_modules\.pnpm\react-day-picker@10.0.2_@types+react@19.3.0_react@19.3.0\node_modules\react-day-picker/LICENSE` (SHA-256 `22cdffdf17a2b6b4d2e1a8c93df0ad35535193b84e6d32ed4945373126f4f3e6`) |
 | `react-dom@19.3.0` | production | `MIT` | `node_modules\.pnpm\react-dom@19.3.0_react@19.3.0\node_modules\react-dom/LICENSE` (SHA-256 `da6d3703ed11cbe42bd212c725957c98da23cbff1998c05fa4b3d976d1a58e93`) |
-| `react-hook-form@7.89.0` | production | `MIT` | `node_modules\.pnpm\react-hook-form@7.89.0_@types+react@19.3.0_react@19.3.0\node_modules\react-hook-form/LICENSE` (SHA-256 `e8eeb472f0a5889c2c51625b86a3f9b8630680adb9f49a125352e2e426392780`) |
 | `react-i18next@17.0.15` | production | `MIT` | `node_modules\.pnpm\react-i18next@17.0.15_i18ne_a16f16d7a5f0a92fd1a394cb028bb5cc\node_modules\react-i18next/LICENSE` (SHA-256 `29b8ae456ef442e53a98df183ad088cf98c2ece73aa84c462330c43e665b8ab2`) |
 | `readable-stream@3.6.2` | 传递依赖 | `MIT` | `node_modules\.pnpm\readable-stream@3.6.2\node_modules\readable-stream/LICENSE` (SHA-256 `ec62dc96da0099b87f4511736c87309335527fb7031639493e06c95728dc8c54`) |
 | `recast@0.23.21` | 传递依赖 | `MIT` | `node_modules\.pnpm\recast@0.23.21\node_modules\recast/LICENSE` (SHA-256 `6ca87d1dce5b82873603e566fd83dabe8771fb169013337d4a14bb9bbf794687`) |
@@ -670,7 +600,6 @@
 | `reusify@1.1.0` | 传递依赖 | `MIT` | `node_modules\.pnpm\reusify@1.1.0\node_modules\reusify/LICENSE` (SHA-256 `93a1506953b08ad4874e1cc0971a1d2ac387ca510da91e4d05e460a6c4966fa3`) |
 | `rolldown@1.2.11` | 传递依赖 | `MIT` | `node_modules\.pnpm\rolldown@1.2.11\node_modules\rolldown/LICENSE` (SHA-256 `23ecfff35a5a2e80d92142f75228912c3b1abc4b5a8337a821ff4397e2f9f734`) |
 | `rollup@4.63.5` | 传递依赖 | `MIT` | `node_modules\.pnpm\rollup@4.63.5\node_modules\rollup/LICENSE.md` (SHA-256 `fa1bd040c5bdeefe65b3821cebf474f2733ce65df13089bd151dda1778e62fe8`) |
-| `rou3@0.9.2` | 传递依赖 | `MIT` | `node_modules\.pnpm\rou3@0.9.2\node_modules\rou3/LICENSE` (SHA-256 `46231df5a7733c3f52f11b71f3df61813007745b62b09031acfb45fb42d75082`) |
 | `run-applescript@7.1.0` | 传递依赖 | `MIT` | `node_modules\.pnpm\run-applescript@7.1.0\node_modules\run-applescript/license` (SHA-256 `5c932d88256b4ab958f64a856fa48e8bd1f55bc1d96b8149c65689e0c61789d3`) |
 | `run-parallel@1.2.0` | 传递依赖 | `MIT` | `node_modules\.pnpm\run-parallel@1.2.0\node_modules\run-parallel/LICENSE` (SHA-256 `d4c2065e2b936e62a4eb400efb4576edec9ca1388a9f78aa288e147275e7bc8b`) |
 | `rxdb@17.5.0` | production | `Apache-2.0` | `node_modules\.pnpm\rxdb@17.5.0_react@19.3.0_rxjs@7.8.2\node_modules\rxdb/LICENSE.txt` (SHA-256 `a306f5f3012418a278b191b57755d84b8224b65ea08bec5a036612877abfbd6f`) |
@@ -686,7 +615,6 @@
 | `serialize-javascript@7.1.2` | 传递依赖 | `BSD-3-Clause` | `node_modules\.pnpm\serialize-javascript@7.1.2\node_modules\serialize-javascript/LICENSE` (SHA-256 `d3dfa68a3c80e64eb10e46cef10e4208502da5ffb1387b11db00e42a507ab8f7`) |
 | `seroval@1.6.7` | 传递依赖 | `MIT` | `node_modules\.pnpm\seroval@1.6.7\node_modules\seroval/LICENSE` (SHA-256 `2bd8a2c61751fc47dcd214f864b6fcdbcb518995fbf497c81a06c3bfe8d1d9d4`) |
 | `seroval-plugins@1.6.7` | 传递依赖 | `MIT` | `node_modules\.pnpm\seroval-plugins@1.6.7_seroval@1.6.7\node_modules\seroval-plugins/LICENSE` (SHA-256 `2bd8a2c61751fc47dcd214f864b6fcdbcb518995fbf497c81a06c3bfe8d1d9d4`) |
-| `set-cookie-parser@3.1.2` | 传递依赖 | `MIT` | `node_modules\.pnpm\set-cookie-parser@3.1.2\node_modules\set-cookie-parser/LICENSE` (SHA-256 `c5c6c5183a789d122f267c405f685037efb87e27fcde28ab1dd7378a2d2f5962`) |
 | `set-function-length@1.2.2` | 传递依赖 | `MIT` | `node_modules\.pnpm\set-function-length@1.2.2\node_modules\set-function-length/LICENSE` (SHA-256 `bf9b0d665be2a689851eea667ca9f42066ea1d903b38349c51e6a44b2577680a`) |
 | `set-function-name@2.0.2` | 传递依赖 | `MIT` | `node_modules\.pnpm\set-function-name@2.0.2\node_modules\set-function-name/LICENSE` (SHA-256 `bf9b0d665be2a689851eea667ca9f42066ea1d903b38349c51e6a44b2577680a`) |
 | `set-proto@1.0.0` | 传递依赖 | `MIT` | `node_modules\.pnpm\set-proto@1.0.0\node_modules\set-proto/LICENSE` (SHA-256 `5e325595b4ea8cfec3802f545b1def5d7b73e4a5b8e9ba63e32a320f67732292`) |
@@ -708,7 +636,6 @@
 | `source-map@0.8.0` | 传递依赖 | `BSD-3-Clause` | `node_modules\.pnpm\source-map@0.8.0\node_modules\source-map/LICENSE` (SHA-256 `6cb0631f71c7749763fd3dd1d5bee52dd1070ec17f2edc1710079ad070bd2fbd`) |
 | `source-map-js@1.2.1` | 传递依赖 | `BSD-3-Clause` | `node_modules\.pnpm\source-map-js@1.2.1\node_modules\source-map-js/LICENSE` (SHA-256 `6cb0631f71c7749763fd3dd1d5bee52dd1070ec17f2edc1710079ad070bd2fbd`) |
 | `source-map-support@0.5.21` | 传递依赖 | `MIT` | `node_modules\.pnpm\source-map-support@0.5.21\node_modules\source-map-support/LICENSE.md` (SHA-256 `3a7d3bb198e909ed642bd68bd29a7d7c09a636d27a51ec663d35f00c4760ec42`) |
-| `split2@4.2.0` | 传递依赖 | `ISC` | `node_modules\.pnpm\split2@4.2.0\node_modules\split2/LICENSE` (SHA-256 `c372ef2fa1dfcb124ed807609751e75e3a009f108c5724916b489288fcb88a0c`) |
 | `std-env@4.2.0` | 传递依赖 | `MIT` | `node_modules\.pnpm\std-env@4.2.0\node_modules\std-env/LICENCE` (SHA-256 `a6f36438e46fb911859f3b9c4cad045ba64e1af3d8f4512c60258fa2d7552d28`) |
 | `stdin-discarder@0.2.2` | 传递依赖 | `MIT` | `node_modules\.pnpm\stdin-discarder@0.2.2\node_modules\stdin-discarder/license` (SHA-256 `5c932d88256b4ab958f64a856fa48e8bd1f55bc1d96b8149c65689e0c61789d3`) |
 | `stop-iteration-iterator@1.1.0` | 传递依赖 | `MIT` | `node_modules\.pnpm\stop-iteration-iterator@1.1.0\node_modules\stop-iteration-iterator/LICENSE` (SHA-256 `b41d08bc3624d8c436fc80237d73ebb361985a67f4504bbcd703e5ca2b27254c`) |

@@ -57,13 +57,19 @@ describe("public asset search", () => {
 			"loan recipient",
 			"identity provider",
 			"4242",
-			"camera toolkit",
-			"support@",
 			"toolkit.example",
 			"domain registrar",
 		])
 			expect(matchesAssetSearch(asset, query)).toBe(true);
+		for (const query of ["camera toolkit", "support@"])
+			expect(matchesAssetSearch(asset, query)).toBe(false);
 		expect(matchesAssetSearch(asset, "private-domain-account")).toBe(false);
+	});
+	it("keeps legacy external vault references outside current search without rewriting them", () => {
+		const legacy = { ...newAsset("vault"), name: "Legacy reference", url: "bitwarden://private-ref" };
+		const before = JSON.stringify(legacy);
+		for (const query of ["", "legacy", "private-ref"]) expect(matchesAssetSearch(legacy, query)).toBe(false);
+		expect(JSON.stringify(legacy)).toBe(before);
 	});
 
 	it("never searches hidden metadata, private notes or arbitrary sensitive properties", () => {

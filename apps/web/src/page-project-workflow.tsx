@@ -80,7 +80,7 @@ export function ProjectWorkflowPage({ projectId, flow, embedded = false }: { pro
   }
   if (data.loading) return <main className="page"><p>{t('loading')}</p></main>;
   if (!project) return <main className="page"><p>{t('noMatches')}</p></main>;
-  const related = data.relations.filter(relation => !relation.deleted && (relation.from === project.id || relation.to === project.id)).map(relation => data.assets.find(asset => asset.id === (relation.from === project.id ? relation.to : relation.from) && !asset.deleted)).filter((asset): asset is Asset => !!asset);
+  const related = data.relations.filter(relation => !relation.deleted && (relation.from === project.id || relation.to === project.id)).map(relation => data.assets.find(asset => asset.id === (relation.from === project.id ? relation.to : relation.from) && !asset.deleted && asset.kind !== 'vault')).filter((asset): asset is Asset => !!asset);
   const visible = creating ? previewTasks : round;
   const Container = embedded ? 'div' : 'main';
   const HeroTitle = embedded ? 'h2' : 'h1';

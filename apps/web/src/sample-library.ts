@@ -20,9 +20,9 @@ export function buildSampleLibrary(t: (key: string) => string, language: string,
 		...fields,
 	});
 	const work = t("sampleWorkTag");
-	const studio = create("project", "sampleStudio", { category: "website", url: "https://pinecone.example.com", description: t("sampleStudioDescription"), projectEmail: "hello@example.com", projectLaunchMonth: day(-120).slice(0, 7), projectInspectionDate: day(-2), projectTitle: t("sampleStudio"), projectMediumDescription: t("sampleStudioDescription"), longDescription: t("sampleLongDescription"), projectFeatures: t("sampleProjectFeatures"), projectPricing: t("sampleProjectPricing"), projectPricingType: t("sampleProjectPricingType"), projectPromoUrl: "https://video.example.com/pinecone", contact: "hello@example.com", tags: [work, t("samplePersonalTag")],
-		attachments: [images.studio, images.logo, images.cover, images.product], projectMedia: { homeScreenshotId: images.studio, logoId: images.logo, promoCoverId: images.cover, productScreenshotIds: [images.product] } });
-	const notes = create("project", "sampleProject", { category: "website", url: "https://notes.example.com", description: t("sampleProjectDescription"), longDescription: t("sampleLongDescription"), tags: [work, t("sampleWritingTag")], attachments: [images.product], projectMedia: { homeScreenshotId: images.product, logoId: "", promoCoverId: "", productScreenshotIds: [] } });
+	const studio = create("project", "sampleStudio", { category: "website", url: "https://pinecone.example.com", description: t("sampleStudioDescription"), projectLaunchMonth: day(-120).slice(0, 7), projectInspectionDate: day(-2), notes: t("sampleLongDescription"), contact: "hello@example.com", tags: [work, t("samplePersonalTag")],
+		attachments: [images.studio, images.logo, images.cover, images.product] });
+	const notes = create("project", "sampleProject", { category: "website", url: "https://notes.example.com", description: t("sampleProjectDescription"), notes: t("sampleLongDescription"), tags: [work, t("sampleWritingTag")], attachments: [images.product] });
 	const components = create("project", "sampleComponents", { category: "repository", description: t("sampleComponentsDescription"), tags: [work], url: "https://code.example.com/paperplane" });
 	const minimal = create("project", "sampleMinimal");
 	const accounts = [
@@ -53,15 +53,14 @@ export function buildSampleLibrary(t: (key: string) => string, language: string,
 		create("item", "sampleDisplay", { category: "device", itemLifecycleStatus: "resold", status: "archived", purchaseDate: day(-700), itemStatusDate: day(-30) }),
 		create("item", "sampleCamera", { category: "device", description: t("sampleLongDescription"), purchaseDate: day(-400), itemWarrantyStatus: "outOfWarranty", location: t("sampleLocation"), tags: [work, t("samplePersonalTag")] }),
 	];
-	const vaults = [create("vault", "sampleVault", { category: "other", location: t("sampleVaultLocation") }), create("vault", "sampleOfflineVault", { category: "other", location: "KDBX" })];
-	const assets = [studio, notes, components, minimal, ...accounts, ...subscriptions, ...items, ...vaults];
+	const assets = [studio, notes, components, minimal, ...accounts, ...subscriptions, ...items];
 	const relation = (from: Asset, to: Asset, label: string, verified = true) => ({ id: crypto.randomUUID(), from: from.id, to: to.id, label: t(label), source: t("samplePrefix"), verifiedAt: verified ? day(-2) : "", createdAt });
 	const relations = [
 		relation(studio, notes, "sampleProjectRelation"), relation(studio, components, "sampleProjectRelation"), relation(studio, accounts[0], "sampleContactRelation"),
 		...accounts.slice(1).map((account, index) => relation(account, accounts[index === 1 ? 0 : 2], index === 1 ? "sampleLoginRelation" : "samplePhoneRelation", index % 2 === 0)),
 		...subscriptions.map((subscription, index) => relation(subscription, index % 2 ? notes : studio, "sampleSubscriptionRelation")),
 		...subscriptions.slice(0, 4).map((subscription, index) => relation(subscription, accounts[index], "sampleLoginRelation")),
-		relation(items[0], studio, "sampleDeviceRelation"), relation(items[1], notes, "sampleDeviceRelation"), relation(vaults[0], accounts[0], "sampleVaultRelation"),
+		relation(items[0], studio, "sampleDeviceRelation"), relation(items[1], notes, "sampleDeviceRelation"),
 	];
 	const tasks = [
 		{ name: t("sampleReviewTask"), assetId: studio.id, dueDate: day(1) },
@@ -100,7 +99,8 @@ export async function addSampleLibrary(t: (key: string) => string, language: str
 		const repository = injectedRepository ?? await localRepository();
 		let marker = await repository.get<{ id: string; value: SampleInstall }>("preference", SAMPLE_LIBRARY_ID);
 		if (sampleLibraryComplete(marker?.value)) return false;
-		if (marker && (marker.value?.phase !== "base" || sampleLibraryAssetIds(marker.value).length !== 26 || !Array.isArray(marker.value.targets))) throw Error("sample-marker-invalid");
+		// Resume both the original 26-row sample and the current 24-row sample without rewriting old records.
+		if (marker && (marker.value?.phase !== "base" || ![24, 26].includes(sampleLibraryAssetIds(marker.value).length) || !Array.isArray(marker.value.targets))) throw Error("sample-marker-invalid");
 		const uploaded: string[] = [];
 		try {
 			if (!marker) {

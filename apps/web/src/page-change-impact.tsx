@@ -55,7 +55,7 @@ export function ChangeImpactPage() {
 						(asset) =>
 							asset.id ===
 								(relation.from === selected.id ? relation.to : relation.from) &&
-							!asset.deleted,
+							!asset.deleted && asset.kind !== "vault",
 					),
 				)
 				.filter((asset): asset is Asset => !!asset)
@@ -80,7 +80,7 @@ export function ChangeImpactPage() {
 			? buildImpactTasks(
 					selected,
 					data.relations,
-					data.assets.filter((asset) => !asset.deleted),
+					data.assets.filter((asset) => !asset.deleted && asset.kind !== "vault"),
 					data.tasks,
 					new Date().toISOString(),
 					(linked) => `${t("checkConnection")}: ${linked.name}`,
@@ -91,7 +91,7 @@ export function ChangeImpactPage() {
 			? upgradeLegacyImpactTasks(
 					selected,
 					data.relations,
-					data.assets.filter((asset) => !asset.deleted),
+					data.assets.filter((asset) => !asset.deleted && asset.kind !== "vault"),
 					data.tasks,
 					new Date().toISOString(),
 				).filter((task) => !generatedKeys.current.has(task.dedupeKey))

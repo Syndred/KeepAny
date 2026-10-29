@@ -14,7 +14,7 @@ export type AssetPatch = Partial<Pick<Asset, WriteField>>;
 export type PreviewResult = { previewId: string; operationId: string; assetId: string; expectedVersion: string; expiresAt: number;
   changes: Array<{ field: WriteField; before: Asset[WriteField]; after: Asset[WriteField] }> };
 
-const allowedRead = (grant: Grant, asset: Asset) => grant.assetIds.includes(asset.id) && !asset.deleted;
+const allowedRead = (grant: Grant, asset: Asset) => grant.assetIds.includes(asset.id) && !asset.deleted && asset.kind !== 'vault';
 const project = (grant: Grant, asset: Asset): Record<string, unknown> => {
   const value: Record<string, unknown> = { id: asset.id };
   for (const field of grant.readFields) value[field] = asset[field];

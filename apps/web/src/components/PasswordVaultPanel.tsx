@@ -293,7 +293,7 @@ export function PasswordVaultPanel({
 	}, [editorId, session, snapshot.status]);
 
 	const visibleAssets = useMemo(
-		() => assets.filter((asset) => !asset.deleted),
+		() => assets.filter((asset) => !asset.deleted && asset.kind !== "vault"),
 		[assets],
 	);
 	const assetsById = useMemo(

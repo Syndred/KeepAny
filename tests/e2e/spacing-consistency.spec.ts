@@ -624,7 +624,7 @@ for (const variant of [
 	{ locale: "zh-CN", width: 1280 },
 	{ locale: "en-US", width: 390 },
 ] as const) {
-	test(`${variant.locale} ${variant.width}px settings sections, MCP, key access and AI pricing keep spacing`, async ({
+	test(`${variant.locale} ${variant.width}px settings sections, MCP and AI pricing keep spacing`, async ({
 		browser,
 	}) => {
 		const context = await browser.newContext({
@@ -693,32 +693,14 @@ for (const variant of [
 				.click();
 			await expect(ai).toBeHidden();
 
-			const connections = page.locator("#connections");
-			await connections.locator("summary").click();
-			await expect(connections.locator(".sync-panel")).toBeVisible();
-			await assertFormGeometry(
-				connections.locator(".sync-panel > .form-grid"),
-				"settings sync fields",
-			);
-			const keyPanel = connections.locator(".key-access-panel");
-			await expect(keyPanel).toBeVisible();
-			await assertFormGeometry(
-				keyPanel.locator(":scope > .form-grid"),
-				"workspace key recovery fields",
-			);
+			await expect(page.locator("#connections, .sync-panel, .binding-panel, .key-access-panel, .migration-panel")).toHaveCount(0);
 			await assertSiblingGaps(
 				page,
 				".settings-section-body > .card.padded",
 				"settings nested cards",
 				8,
 			);
-			await assertSiblingGaps(
-				page,
-				".key-access-panel > .notice",
-				"workspace key notices",
-				8,
-			);
-			await assertNoHorizontalOverflow(page, "settings connections");
+			await assertNoHorizontalOverflow(page, "settings local sections");
 			await page.screenshot({
 				path: `${evidenceRoot}/spacing-settings-${variant.locale}-${variant.width}.png`,
 				fullPage: true,

@@ -1,9 +1,10 @@
-import { createHash } from "node:crypto";
+// 2026-10-29: user removed B1 backlinks and B2 promotional fields/materials.
+// Prior expectations/evidence remain in Git and the private pre-change snapshot; retained core checks are unchanged.
 import { readFileSync } from "node:fs";
 import { expect, test, type Page } from "@playwright/test";
-import { strFromU8, strToU8, unzipSync, zipSync } from "fflate";
-import { decryptBackup, encryptBackup } from "../../packages/local-db/src/backup-crypto";
-import type { Submission, Task } from "../../packages/domain/src";
+import { strFromU8, unzipSync } from "fflate";
+import { decryptBackup } from "../../packages/local-db/src/backup-crypto";
+import type { Task } from "../../packages/domain/src";
 import { selectChoice } from "./helpers/select-choice";
 
 const password = "detail-entries-real-backup";
@@ -43,18 +44,6 @@ async function createAsset(page: Page, kind: "project" | "item", name: string, t
 	return { id: href.split("/").at(-1) as string, href };
 }
 
-async function addBacklink(page: Page, name: string, status: "verify" | "indexed", text: Copy) {
-	await page.getByRole("button", { name: text.addBacklink, exact: true }).click();
-	const editor = page.getByRole("dialog");
-	await editor.getByLabel(text.name, { exact: true }).fill(name);
-	await editor.getByLabel(text.url, { exact: true }).fill(`https://directory.example.test/${name.replaceAll(" ", "-")}`);
-	await selectChoice(editor.locator("#submission-status"), status);
-	await editor.locator("#submission-date").fill("2026-09-20");
-	await editor.locator("#submission-evidence").fill(`https://directory.example.test/${name.replaceAll(" ", "-")}`);
-	await editor.getByRole("button", { name: text.save, exact: true }).click();
-	await expect(editor).toBeHidden();
-}
-
 async function downloadArchive(page: Page, text: Copy) {
 	await page.goto("/intake");
 	await page.locator("#backup-password").fill(password);
@@ -89,7 +78,7 @@ async function createPlan(page: Page, assetId: string, name: string, date: strin
 
 for (const locale of ["zh-CN", "en-US"]) {
 	for (const width of [390, 1280]) {
-		test(`${locale} detail entries and live project statistics at ${width}px`, async ({ browser }) => {
+		test(`${locale} retained bill and maintenance entries at ${width}px`, async ({ browser }) => {
 			test.setTimeout(150_000);
 			const text = copy(locale === "zh-CN");
 			const context = await browser.newContext({ locale, viewport: { width, height: 844 }, acceptDownloads: true });
@@ -109,76 +98,7 @@ for (const locale of ["zh-CN", "en-US"]) {
 				await expect(page).toHaveURL(/\/finance$/);
 				await expect(page.locator("main.finance-page")).toBeVisible();
 				await page.goto(project.href);
-				await addBacklink(page, "Live review", "verify", text);
-				await addBacklink(page, "Deleted review", "verify", text);
-				await addBacklink(page, "Indexed record", "indexed", text);
-				const other = await createAsset(page, "project", "Other project", text);
-				await addBacklink(page, "Other review", "verify", text);
-				await page.goto("/assets/project");
-				await expect(page.locator(".asset-project-card").filter({ hasText: "Entry project" }).locator(".asset-project-links")).toContainText(text.stats(3, 2));
-				await expect(page.locator(`a[href="${other.href}"] .asset-project-links`)).toContainText(text.stats(1, 1));
-
-				// There is no submission-delete UI. Derive this tombstone from the real UI download,
-				// update its integrity hash and restore through the supported encrypted backup UI.
-				const archive = await downloadArchive(page, text);
-				const deleted = archive.rows.find((row) => row.type === "submission" && (JSON.parse(row.payload) as Submission).name === "Deleted review");
-				if (!deleted) throw Error("submission-to-delete-missing");
-				const tombstone = { ...JSON.parse(deleted.payload) as Submission, deleted: true };
-				deleted.payload = JSON.stringify(tombstone);
-				deleted.updatedAt = Math.max(Date.now(), deleted.updatedAt + 1);
-				archive.entries["records.json"] = strToU8(JSON.stringify(archive.rows));
-				const manifest = JSON.parse(strFromU8(archive.entries["manifest.json"]));
-				manifest.recordsHash = createHash("sha256").update(archive.entries["records.json"]).digest("hex");
-				archive.entries["manifest.json"] = strToU8(JSON.stringify(manifest));
-				const restoredContext = await browser.newContext({ locale, viewport: { width, height: 844 }, acceptDownloads: true });
-				contexts.push(restoredContext);
-				page = await restoredContext.newPage();
-				page.on("pageerror", (error) => errors.push(error.message));
-				await page.goto("/assets/project");
-				await expect(page.locator(".asset-project-card")).toHaveCount(0);
-				await page.goto("/intake");
-				await page.locator("#backup-password").fill(password);
-				await page.locator("#restore-file").setInputFiles({ name: "deleted-backlink.ka1", mimeType: "application/octet-stream", buffer: Buffer.from(await encryptBackup(zipSync(archive.entries), password)) });
-				await page.getByRole("button", { name: text.preview, exact: true }).first().click();
-				await page.getByRole("button", { name: text.confirmRestore }).click();
-				await expect(page.getByText(text.restored)).toBeVisible();
-				await page.goto("/assets/project");
-				const card = page.locator(".asset-project-card").filter({ hasText: "Entry project" });
-				await expect(card.locator(".asset-project-links")).toContainText(text.stats(2, 1));
-				expect(await card.locator(".asset-project-links").evaluate((footer) => {
-					const [domain, counts] = [...footer.children].map((element) => element.getBoundingClientRect());
-					const countElement = footer.children[1];
-					return counts.left > domain.left && Math.abs((domain.top + domain.bottom) / 2 - (counts.top + counts.bottom) / 2) < 2
-						&& countElement.scrollWidth <= countElement.clientWidth;
-				})).toBe(true);
-				await expect(page.locator(`a[href="${other.href}"] .asset-project-links`)).toContainText(text.stats(1, 1));
-				await card.locator(".asset-project-links").scrollIntoViewIfNeeded();
-				await expect(card.locator(".asset-project-links")).toBeInViewport({ ratio: 1 });
-				await fits(page);
-				await page.screenshot({ path: test.info().outputPath(`project-card-statistics-${locale}-${width}.png`) });
-				await card.click();
-				await expect(page.locator(".asset-project-stats > div").first().locator("strong")).toHaveText("2");
-				await expect(page.locator(".asset-project-stats > div").nth(2).locator("strong")).toHaveText("1");
-				const row = page.locator(".asset-backlinks-card tr").filter({ hasText: "Live review" });
-				if (await page.locator(".asset-backlinks-card").getAttribute("open") === null) await page.locator(".asset-backlinks-card > summary").click();
-				await expect(page.locator(".asset-backlinks-card tr").filter({ hasText: "Deleted review" })).toHaveCount(0);
-				for (const link of await row.getByRole("link").all()) {
-					await expect(link).toHaveCSS("color", "rgb(23, 36, 58)");
-					await expect(link).toHaveCSS("background-color", "rgb(255, 240, 184)");
-					await link.hover();
-					await expect(link).toHaveCSS("color", "rgb(23, 36, 58)");
-					await expect(link).toHaveCSS("background-color", "rgb(255, 210, 76)");
-					await page.mouse.move(0, 0);
-				}
-				await row.screenshot({ path: test.info().outputPath(`backlink-links-${locale}-${width}.png`) });
-				await row.getByRole("button", { name: text.verify, exact: true }).click();
-				await selectChoice(row.getByRole("combobox", { name: locale === "zh-CN" ? "Live review 状态" : "Live review Status", exact: true }), "indexed");
-				await row.getByRole("button", { name: text.save, exact: true }).click();
-				await expect(row.getByRole("combobox")).toHaveCount(0);
-				await page.goto("/assets/project");
-				await expect(card.locator(".asset-project-links")).toContainText(text.stats(2, 0));
-				await page.reload();
-				await expect(card.locator(".asset-project-links")).toContainText(text.stats(2, 0));
+				await expect(page.locator(".asset-backlinks-card, .asset-project-stats")).toHaveCount(0);
 
 				const firstItem = await createAsset(page, "item", "Earlier maintenance item", text);
 				await page.locator(".asset-tasks-card").getByRole("link", { name: text.maintenance, exact: true }).click();
@@ -213,9 +133,6 @@ for (const locale of ["zh-CN", "en-US"]) {
 				const final = await downloadArchive(page, text);
 				const tasks = final.rows.filter((value) => value.type === "task").map((value) => JSON.parse(value.payload) as Task);
 				expect(tasks.find((task) => `task-${task.id}` === taskRowId)).toMatchObject({ assetId: item.id, name: "Target maintenance plan", deleted: false });
-				const deletedReadback = final.rows.find((value) => value.id === deleted.id);
-				if (!deletedReadback) throw Error("deleted-submission-readback-missing");
-				expect(JSON.parse(deletedReadback.payload)).toEqual(tombstone);
 				expect(errors).toEqual([]);
 			} finally {
 				for (const opened of contexts) await opened.close();

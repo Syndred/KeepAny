@@ -1,3 +1,5 @@
+// 2026-10-29: user removed B1 backlinks and B2 promotional fields/materials.
+// Prior expectations/evidence remain in Git and the private pre-change snapshot; retained core checks are unchanged.
 import { mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { expect, type Page, test } from "@playwright/test";
@@ -41,7 +43,7 @@ async function projectFixture(page: Page, submissionName: string) {
 }
 
 for (const width of [360, 390, 1280]) {
-	test(`project detail uses recorded relationships, domain costs and collapsible materials at ${width}px`, async ({ page }) => {
+	test(`project detail uses recorded relationships, domain costs and retained ordinary attachments at ${width}px`, async ({ page }) => {
 		await page.setViewportSize({ width, height: 850 });
 		await page.goto("/");
 		await page.evaluate(() => localStorage.setItem("keepany-language", "en"));
@@ -51,7 +53,7 @@ for (const width of [360, 390, 1280]) {
 		await expect(page.locator(".asset-project-action-bar")).toBeVisible();
 		await expect(page.locator(".asset-project-profile-card")).toContainText("Studio Mail");
 		await expect(page.locator(".asset-project-profile-card")).toContainText("Cloud hosting");
-		await expect(page.locator(".asset-project-reminders")).toContainText("Backlinks to verify: 1");
+		await expect(page.locator(".asset-backlinks-card")).toHaveCount(0);
 		await expect(page.locator(".asset-project-costs")).toContainText("Cloud hosting");
 		await page.locator(".asset-project-action-bar").getByRole("button", { name: "Edit" }).click();
 		const editor = page.getByRole("dialog");
@@ -61,13 +63,8 @@ for (const width of [360, 390, 1280]) {
 		await expect(editor).toBeHidden();
 		await expect(page.locator(".asset-project-profile-card")).toContainText("November 2025");
 		await expect(page.locator(".asset-project-reminders")).toContainText("Oct 5, 2026");
-		await expect(page.locator(".asset-project-materials")).not.toHaveAttribute("open", "");
-		await page.getByRole("button", { name: "View submission materials" }).click();
-		await expect(page.locator(".asset-project-materials")).toHaveAttribute("open", "");
-		await expect(page.locator(".asset-project-materials")).toContainText("A quiet place for ideas");
-		await page.getByRole("button", { name: "View backlinks", exact: true }).click();
-		await expect(page.locator(".asset-backlinks-card")).toHaveAttribute("open", "");
-		await expect(page.locator(".asset-backlinks-card")).toContainText("Directory record");
+		await expect(page.locator(".asset-project-materials")).toHaveCount(0);
+		await expect(page.locator(".asset-attachments-card")).toBeVisible();
 		await page.locator(".asset-project-costs").getByRole("button", { name: "Add domain" }).click();
 		const domain = page.getByRole("dialog");
 		await domain.getByLabel("Domain", { exact: true }).fill("mori-notes.com");
@@ -111,7 +108,7 @@ test("project detail labels and recorded relationships render in Chinese at 390p
 	await expect(page.locator(".topbar-back-link")).toContainText("返回列表");
 	await expect(page.locator(".asset-project-profile-card")).toContainText("官方地址");
 	await expect(page.locator(".asset-project-profile-card")).toContainText("Studio Mail");
-	await expect(page.locator(".asset-project-reminders")).toContainText("1 条需要核验");
+	await expect(page.locator(".asset-backlinks-card")).toHaveCount(0);
 	await expect(page.locator(".asset-project-costs")).toContainText("域名与持有成本");
 	await page.getByRole("button", { name: "添加域名" }).click();
 	const domain = page.getByRole("dialog");
@@ -124,8 +121,8 @@ test("project detail labels and recorded relationships render in Chinese at 390p
 	await expect(domain).toBeHidden();
 	await page.reload();
 	await expect(page.locator(".asset-project-domain-row")).toContainText("example.test");
-	await page.getByRole("button", { name: "查看投递素材" }).click();
-	await expect(page.locator(".asset-project-materials")).toHaveAttribute("open", "");
+	await expect(page.locator(".asset-project-materials")).toHaveCount(0);
+	await expect(page.locator(".asset-attachments-card")).toBeVisible();
 	await expect(page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).resolves.toBe(true);
 	await page.screenshot({ path: join(evidenceDirectory, "keepany-project-detail-restored-zh-CN-390.png"), fullPage: true });
 });

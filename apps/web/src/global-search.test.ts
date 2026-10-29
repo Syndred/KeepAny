@@ -132,7 +132,7 @@ describe("global search public projection", () => {
 			asset("subscription", { id: "s" }), account, asset("project", { id: "p" })];
 		const entries = index({ assets: all, history: [history(account.id)], reviewedCandidates: [candidate(account)], tasks: [task()] });
 		expect(entries.map((row) => row.target.type === "asset" ? row.target.kind : row.source))
-			.toEqual(["project", "account", "item", "subscription", "vault", "finance", "intake", "task"]);
+			.toEqual(["project", "account", "item", "subscription", "finance", "intake", "task"]);
 	});
 
 	it("keeps financial date, receipt filename/row and task due-date ordering deterministic", () => {
@@ -163,11 +163,10 @@ describe("global search public projection", () => {
 				expiryDate: "", annualAmount: null, currency: "CNY", autoRenew: "unknown" }],
 		});
 		const entries = index({ assets: [current] });
-		for (const query of ["camera", "TRAVEL GEAR", "owner@", " 抽屉 ", "equipment", "compact camera", "long profile", "contact desk",
-			"loan recipient", "identity provider", "4242", "toolkit title", "promo.example/guide", "medium profile", "useful features",
-			"public pricing", "pay once", "support@", "toolkit.test/home", "tools.example", "domain desk"])
+		for (const query of ["camera", "TRAVEL GEAR", "owner@", " 抽屉 ", "equipment", "compact camera", "contact desk",
+			"loan recipient", "identity provider", "4242", "toolkit.test/home", "tools.example", "domain desk"])
 			expect(searchGlobalIndex(entries, query), query).toHaveLength(1);
-		for (const query of ["domain-private-id", "domain-private-account"])
+		for (const query of ["domain-private-id", "domain-private-account", "long profile", "toolkit title", "promo.example/guide", "medium profile", "useful features", "public pricing", "pay once", "support@"])
 			expect(searchGlobalIndex(entries, query)).toEqual([]);
 	});
 
@@ -193,9 +192,9 @@ describe("global search public projection", () => {
 			description: "See https://inline-user:inline-pass@inline.test/Profile?token=inline-secret#inline-fragment",
 		});
 		const entries = index({ assets: [current] });
-		for (const query of ["example.test:8443/public", "promo.test/promo", "inline.test/profile"])
+		for (const query of ["example.test:8443/public", "inline.test/profile"])
 			expect(searchGlobalIndex(entries, query)).toHaveLength(1);
-		for (const query of ["credential-user", "credential-pass", "query-secret", "fragment-secret", "promo-user", "promo-pass", "promo-secret", "promo-fragment",
+		for (const query of ["credential-user", "credential-pass", "query-secret", "fragment-secret", "promo.test/promo", "promo-user", "promo-pass", "promo-secret", "promo-fragment",
 			"inline-user", "inline-pass", "inline-secret", "inline-fragment"])
 			expect(searchGlobalIndex(entries, query), query).toEqual([]);
 		const result = searchGlobalIndex(entries, "example.test")[0];
@@ -208,12 +207,12 @@ describe("global search public projection", () => {
 		const current = asset("vault", { url, username: "Public account name", description: `Open ${url}` });
 		const entries = index({ assets: [current] });
 		expect(searchGlobalIndex(entries, "vault-entry-secret")).toEqual([]);
-		expect(searchGlobalIndex(entries, "public account name")).toHaveLength(1);
-		expect(entries[0].secondary).not.toContain(url);
+		expect(searchGlobalIndex(entries, "public account name")).toEqual([]);
+		expect(entries).toEqual([]);
 	});
 
 	it("removes 1password and other non-HTTP URI material from titles and contact text", () => {
-		const entries = index({ assets: [asset("vault", {
+		const entries = index({ assets: [asset("account", {
 			name: "Account 1password://title-private-ref", contact: "Desk custom+private://contact-private-ref",
 		})] });
 		for (const query of ["title-private-ref", "contact-private-ref", "1password://", "custom+private://"])
@@ -240,7 +239,7 @@ describe("global search public projection", () => {
 	});
 
 	it("excludes a reviewed PDF merge description while retaining the target's ordinary unselected long description", () => {
-		const current = asset("project", { description: "merged-pdf-original-secret", longDescription: "Ordinary unselected long profile" });
+		const current = asset("item", { description: "merged-pdf-original-secret", longDescription: "Ordinary unselected long profile" });
 		const draft = asset("project", { id: `pdf-${"c".repeat(48)}`, name: "PDF candidate" });
 		const receipt = Object.assign(candidate(draft, { source: "pdf", fileName: "Review.pdf" }), { mergeTargetId: current.id });
 		const entries = index({ assets: [current], reviewedCandidates: [receipt] });

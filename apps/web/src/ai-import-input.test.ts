@@ -1,5 +1,23 @@
 import { describe, expect, it } from "vitest";
-import { hasExplicitImportSecret } from "./ai-import-input";
+import { hasExplicitImportSecret, isPdfFile } from "./ai-import-input";
+
+describe("new file imports reject PDF before parsing or AI access", () => {
+	it.each([
+		{ name: "document.pdf", type: "" },
+		{ name: "document.PDF", type: "text/csv" },
+		{ name: "document.pdf ", type: "image/png" },
+		{ name: "renamed.csv", type: "application/pdf" },
+		{ name: "renamed.png", type: "APPLICATION/PDF; charset=binary" },
+		{ name: "renamed.txt", type: "application/x-pdf" },
+	])("rejects either PDF marker: $name / $type", file => expect(isPdfFile(file)).toBe(true));
+	it.each([
+		{ name: "records.csv", type: "text/csv" },
+		{ name: "notes.txt", type: "text/plain" },
+		{ name: "image.png", type: "image/png" },
+		{ name: "pdf-notes.csv", type: "text/csv" },
+		null,
+	])("preserves a supported non-PDF input: %j", file => expect(isPdfFile(file)).toBe(false));
+});
 
 describe("AI text import blocks explicitly labelled credentials locally", () => {
 	it.each([

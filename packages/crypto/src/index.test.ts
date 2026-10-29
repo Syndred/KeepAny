@@ -5,7 +5,6 @@ import {
   openSyncChangeEnvelope, sealEnvelope, unwrapRecovery, wrapForRecovery,
   type EnvelopeContext, type EnvelopeContextV2,
 } from './index';
-import { MemorySyncStateStore, SyncService } from '../../sync-core/src';
 import type { SyncChange } from '../../contracts/src';
 
 const workspaceId = '00000000-0000-4000-8000-000000000001';
@@ -84,37 +83,36 @@ describe('versioned XChaCha20-Poly1305 envelope', () => {
 describe('v2 pull authentication against external sync metadata', () => {
   it('opens interleaved records whose record versions differ from the workspace cursor', async () => {
     const key = await generateWorkspaceKey();
-    const service = new SyncService(new MemorySyncStateStore());
     const otherId = 'task:fixture';
     const writes = [
       v2Context(),
       v2Context({ recordId: otherId, kind: 'task', operationId: crypto.randomUUID() }),
       v2Context({ recordVersion: 2, operationId: crypto.randomUUID() }),
     ];
-    for (const item of writes) {
+    const changes: SyncChange[] = [];
+    for (const [index, item] of writes.entries()) {
       const envelope = await sealEnvelope(message, key, item);
       expect(envelope.version).toBe(2);
-      const result = (await service.push({ workspaceId, operations: [{
+      // Legacy sync ciphertext remains readable without shipping the retired sync service.
+      changes.push({
         operationId: item.operationId, id: item.recordId, kind: item.kind, schemaVersion: item.schemaVersion,
-        expectedVersion: item.recordVersion - 1, ciphertext: JSON.stringify(envelope),
-        tombstone: item.tombstone, intent: 'write',
-      }] })).results[0];
-      expect(result).toMatchObject({ status: 'accepted', version: item.recordVersion });
+        ciphertext: JSON.stringify(envelope), tombstone: item.tombstone,
+        version: item.recordVersion, sequence: index + 1,
+      });
     }
-    const page = await service.pull({ workspaceId, cursor: 0, limit: 10 });
-    expect(page.changes.map(change => [change.version, change.sequence])).toEqual([[1, 1], [1, 2], [2, 3]]);
+    expect(changes.map(change => [change.version, change.sequence])).toEqual([[1, 1], [1, 2], [2, 3]]);
     const guard = new ReplayGuard();
-    for (const change of page.changes) {
+    for (const change of changes) {
       const opened = await openSyncChangeEnvelope(JSON.parse(change.ciphertext), key,
         { workspaceId, change, keyEpoch: 1 }, guard);
       expect(opened.plaintext).toEqual(message);
       guard.markApplied(opened.context, opened.recordVersion);
     }
-    await expect(openSyncChangeEnvelope(JSON.parse(page.changes[0].ciphertext), key,
-      { workspaceId, change: page.changes[0], keyEpoch: 1 }, guard)).rejects.toThrow('envelope-replay');
+    await expect(openSyncChangeEnvelope(JSON.parse(changes[0].ciphertext), key,
+      { workspaceId, change: changes[0], keyEpoch: 1 }, guard)).rejects.toThrow('envelope-replay');
     const restored = ReplayGuard.fromSnapshot(guard.snapshot());
-    await expect(openSyncChangeEnvelope(JSON.parse(page.changes[2].ciphertext), key,
-      { workspaceId, change: page.changes[2], keyEpoch: 1 }, restored)).rejects.toThrow('envelope-replay');
+    await expect(openSyncChangeEnvelope(JSON.parse(changes[2].ciphertext), key,
+      { workspaceId, change: changes[2], keyEpoch: 1 }, restored)).rejects.toThrow('envelope-replay');
   });
 
   it('rejects changed server metadata, envelope metadata, tombstones and operation IDs', async () => {

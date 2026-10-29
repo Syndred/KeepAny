@@ -156,7 +156,7 @@ export function McpRuntimeProvider({
 
 	const prepare = useCallback((input: RequestInput) => {
 		if (clientRef.current || approvalRef.current || status === "pairing") throw Error("mcpSelectionInvalid");
-		const assetSet = new Set(assets.filter(asset => !asset.deleted).map(asset => asset.id));
+		const assetSet = new Set(assets.filter(asset => !asset.deleted && asset.kind !== "vault").map(asset => asset.id));
 		const ids = [...new Set(input.assetIds)];
 		const reads = [...new Set(input.readFields)];
 		const writes = [...new Set(input.writeFields)];
@@ -215,7 +215,7 @@ export function McpRuntimeProvider({
 		scopeDecisionInFlightRef.current = true;
 		setBusy(true);
 		void (async () => {
-			const liveIds = new Set(assets.filter(asset => !asset.deleted).map(asset => asset.id));
+			const liveIds = new Set(assets.filter(asset => !asset.deleted && asset.kind !== "vault").map(asset => asset.id));
 			const valid = Boolean(requested && selected && store &&
 				Date.now() - requested.createdAt <= 5 * 60_000 &&
 				selectedScope(selected, requested) &&

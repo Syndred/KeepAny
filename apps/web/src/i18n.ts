@@ -15,6 +15,9 @@ import { financeCopy } from "./finance-copy";
 import { candidateMergeCopy } from "./candidate-merge-copy";
 
 const copy: Record<string, [string, string]> = {
+	workflowRetiredStep: ["此步骤对应的功能已移除。可保留历史结果，或记录为不适用以结束本轮。", "This feature has been removed. Keep its historical result, or record it as not applicable to finish this round."],
+	vaultReferenceRetired: ["外部密码库引用已移除。旧记录仍包含在本地加密备份中。", "External vault references have been removed. Existing records remain in local encrypted backups."],
+	vaultReferenceBackup: ["前往本地备份", "Open local backup"],
 	featureLoadErrorTitle: ["暂时无法打开这个功能", "This feature could not be opened"],
 	featureLoading: ["正在打开…", "Opening…"],
 	pageLoadErrorTitle: ["暂时无法打开这个页面", "This page could not be opened"],
@@ -644,8 +647,8 @@ const copy: Record<string, [string, string]> = {
 	],
 	restoreBackup: ["恢复备份", "Restore backup"],
 	restoreHint: [
-		"恢复会合并资料并保留备份中的同步身份。同 ID 内容不同会停止恢复。其他账号或工作区的资料，请在设置中迁移。",
-		"Restore merges records and preserves the backup's sync identity. Conflicting IDs stop the restore. Use migration in Settings for another account or workspace.",
+		"恢复会合并资料并保留备份来源。同 ID 内容不同或来源不一致会停止恢复。请先在独立浏览器配置中核对备份。",
+		"Restore merges records and preserves the backup source. Conflicting IDs or a different source stop the restore. Check the backup in a separate browser profile first.",
 	],
 	chooseFile: ["选择文件", "Choose file"],
 	csv: ["CSV 表格", "CSV file"],
@@ -683,8 +686,8 @@ const copy: Record<string, [string, string]> = {
 		"A local record with the same ID has different content. The backup was not restored.",
 	],
 	restoreSourceIdentity: [
-		"备份来源与当前同步身份不一致，或没有来源标识，未恢复资料。请在设置中使用「迁移到另一账号或工作区」。",
-		"The backup has a different or unknown sync identity. No records were restored. Use “Move to another account or workspace” in Settings.",
+		"备份来源与当前同步身份不一致，或没有来源标识，未恢复资料。请保留当前资料，在独立浏览器配置中核对备份。",
+		"The backup has a different or unknown sync identity. No records were restored. Keep current records and check the backup in a separate browser profile.",
 	],
 	restoreRecoveryPending: [
 		"上次恢复尚未完成，当前资料可查看。请保留本机数据并寻求协助。",
@@ -1848,7 +1851,8 @@ Object.assign(copy, {
 		"导入后逐条核对资料，再决定确认或忽略。",
 		"Review each imported record before confirming or ignoring it.",
 	],
-	reviewFile: ["选择 CSV 或 PDF 文件", "Choose a CSV or PDF file"],
+	reviewFile: ["选择 CSV 文件", "Choose a CSV file"],
+	pdfImportRemoved: ["不再支持导入 PDF。请改用文字、CSV、网址或图片。", "PDF import is no longer supported. Use text, CSV, a URL, or an image instead."],
 	intakeModePdf: ["PDF 文档", "PDF document"],
 	reviewPdfHint: [
 		"在本机读取 PDF 文字。核对原文后，可保存资料，或手动确认一笔支出。扫描件暂不支持。",
@@ -1886,6 +1890,10 @@ Object.assign(copy, {
 	],
 	reviewSaving: ["正在保存审核内容…", "Saving review changes…"],
 	reviewPdfUnavailable: [
+		"PDF 读取功能未能加载。请刷新应用后重试；你的文件和已有资料未改变。",
+		"The PDF reader could not load. Refresh the app and try again; your file and existing records are unchanged.",
+	],
+	reviewPdfInvalid: [
 		"此 PDF 未生成候选。文件可能损坏或受密码保护，请使用可读取文字的 PDF。",
 		"No candidate was created from this PDF. It may be damaged or password-protected. Use a readable text PDF.",
 	],

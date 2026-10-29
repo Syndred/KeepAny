@@ -50,7 +50,7 @@ See the [trial guide](docs/试用指南.md#english) for setup, storage, and reco
 |---|---|
 | Find a project's records | Projects, accounts, subscriptions, and physical items; collections, tags, search, and a connection graph |
 | Keep track of maintenance and costs | Tasks, subscription schedules and renewal records, warranties, and lending history |
-| Organize scattered records | Review text, CSV, URL, image, or extracted PDF text before saving; optional AI using your own provider |
+| Organize scattered records | Review text, CSV, URL, or image records before saving; optional AI using your own provider |
 | Check before changing a login | Account connections, sources, verification dates, and a checklist for changes you handle yourself |
 | Keep login details | A separate encrypted KDBX vault with import, export, and reviewed batch import |
 | Take your data with you | Encrypted `.ka1` backup and restore for records, images, history, and the encrypted local vault |
@@ -60,15 +60,17 @@ You can record domains in project details and maintenance tasks. KeepAny does no
 ## Data and AI
 
 - Records are stored locally for the **current browser, profile, and site address**. A different browser, port, or `localhost` address opens a different store. Back up and restore when moving computers. Clearing site data can delete your records.
-- The local core works independently. Sync is not a backup: download `.ka1` files regularly, retain their passwords, and check that you can restore them.
-- Passwords and persistent model keys use a separate KDBX vault. They are excluded from ordinary assets, global search, MCP, and asset sync. A `.ka1` backup includes the encrypted vault; its master password is still required after restoring. There is no server-side master password reset.
+- The local core works independently. Download `.ka1` files regularly, retain their passwords, and check that you can restore them.
+- Passwords and persistent model keys use a separate KDBX vault. They are excluded from ordinary assets, global search, and MCP. A `.ka1` backup includes the encrypted vault; its master password is still required after restoring. There is no server-side master password reset.
 - AI is optional and uses a provider or compatible server you configure. Ordinary Q&A sends only the limited record fields you select. The vault's **full-text AI import** sends the current list, which may contain usernames, passwords, and notes, after you explicitly review its model, destination, and scope. It does not read or send your existing vault or master password. You review the result before saving. See the [vault guide](docs/密码库使用说明.md) and [AI data boundaries](docs/AI功能与验收合同.md), currently in Chinese.
 
 ## Preview limits
 
 This preview is for early users who are willing to report problems. Local features have automated and browser verification, but defects may remain. Physical phones, every OS and browser, low-storage conditions, and sudden shutdowns have not all been verified.
 
-Official hosting, background email or closed-page push, password autofill, and cross-device password sync are not provided. The repository contains sync, account-binding, remote-storage, and MCP implementations with partial verification. These are experimental and are not required to try the local app. Commercial feature expansion is paused while local use and recovery are improved.
+The current source focuses on local use. PDF intake, external vault-reference management, project submission and promotional-material tools, ExternalLink integration, remote backups, and experimental sync/account binding have been removed. Local KDBX, account links, and encrypted local backup/restore remain. Legacy fields and encrypted vaults retain backup compatibility; they are not cleared or converted into passwords. Published packages have their own release notes and feature scope.
+
+Official hosting, background email or closed-page push, password autofill, and cross-device password sync are not provided. MCP retains a partially verified experimental implementation and is not required to try the local app. Commercial feature expansion is paused while local use and recovery are improved.
 
 Read the downloaded package's release notes for its limits. Detailed evidence and remaining work are in the Chinese [project handoff](docs/08-项目进度交接.md).
 
@@ -90,7 +92,7 @@ pnpm test
 pnpm build
 ```
 
-Sync tests require an isolated PostgreSQL instance. Read [CONTRIBUTING.md](CONTRIBUTING.md) before changing code. `apps/web` contains the React app; `packages/*` contains the domain model, local repository, and connectors. Design HTML is an archive, not the app.
+Read [CONTRIBUTING.md](CONTRIBUTING.md) before changing code. `apps/web` contains the React app; `packages/*` contains the domain model, local repository, KDBX, AI, and MCP code. Design HTML is an archive, not the app.
 
 ## Contribute and license
 

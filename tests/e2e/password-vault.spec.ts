@@ -1,5 +1,5 @@
 import { openBackupRestorePanel } from "./helpers/backup-restore";
-import { prepareVaultWorkspace, revealPasswordEntries, openVaultReferences, openVaultAccess } from "./helpers/vault-access";
+import { prepareVaultWorkspace, revealPasswordEntries, openVaultAccess } from "./helpers/vault-access";
 import { mkdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { expect, type Locator, type Page, test } from "@playwright/test";
@@ -782,11 +782,7 @@ for (const variant of variants) {
 			await page.locator("#password-vault-search-input").fill("Studio");
 			await expect(entry).toHaveCount(1);
 			await page.locator("#password-vault-search-input").fill("");
-			await openVaultReferences(page);
-			const externalEmpty = page.locator(".vault-reference-empty");
-			await expect(externalEmpty).toContainText(zh ? "暂无" : "None");
-			await externalEmpty.scrollIntoViewIfNeeded();
-			await expect(externalEmpty.locator("strong")).toBeInViewport();
+			await expect(page.locator(".unified-vault-references, .vault-reference-table")).toHaveCount(0);
 			await page.locator(".password-vault-panel").scrollIntoViewIfNeeded();
 			await page.screenshot({
 				path: join(

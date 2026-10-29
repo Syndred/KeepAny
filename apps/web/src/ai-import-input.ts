@@ -1,4 +1,11 @@
-/** Reject clearly labelled secrets before a text/PDF import leaves this device. */
+/** New file inputs reject PDF by either extension or declared media type. */
+export function isPdfFile(file: Pick<File, "name" | "type"> | null | undefined): boolean {
+	if (!file) return false;
+	const mediaType = file.type.split(";", 1)[0].trim().toLowerCase();
+	return /\.pdf\s*$/i.test(file.name) || mediaType === "application/pdf" || mediaType === "application/x-pdf";
+}
+
+/** Reject clearly labelled secrets before a text import leaves this device. */
 export function hasExplicitImportSecret(text: string): boolean {
 	const normalized = text.normalize("NFKC");
 	if (
