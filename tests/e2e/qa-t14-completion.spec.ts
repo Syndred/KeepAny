@@ -55,7 +55,7 @@ async function searchBill(page: Page, query: string, id: string, visible = true)
 
 test.beforeAll(async () => {
     fixture = await prepareCompletionArchive(fixtureDirectory, password, async db => {
-      const project = { ...newAsset('project'), name: 'T14 Project owner', description: 'T14 ordinary original description', longDescription: 'T14 ordinary unselected long description' }, item = { ...newAsset('item'), name: 'T14 Equipment owner' };
+      const project = { ...newAsset('project'), name: 'T14 Project owner', description: 'T14 ordinary original description', contact: 'T14 public contact marker', tags: ['T14 public tag marker'], longDescription: 'T14 ordinary unselected long description' }, item = { ...newAsset('item'), name: 'T14 Equipment owner' };
       const account = { ...newAsset('account'), name: 'T14 Account owner' }, subscription: Asset = { ...newAsset('subscription'), name: 'T14 Subscription source',
         dueDate: '2026-10-27', billingAnchor: '2026-10-27', amount: 500, currency: 'CNY' };
       await db.saveBatch([project,item,account,subscription].map(value => ({ type: 'asset', value })));
@@ -277,21 +277,28 @@ for (const zh of [true,false]) test(`${zh ? 'zh' : 'en'} legacy PDF candidate me
       await selectChoice(dialog.locator('#candidate-merge-target'), fixture.project.id);
       await dialog.getByRole('checkbox', { name: zh ? `使用候选值：${field === 'name' ? '名称' : '简短描述'}` : `Use candidate value: ${field === 'name' ? 'Name' : 'Short description'}`, exact: true }).check();
       await dialog.getByRole('button', { name: zh ? '确认合并' : 'Confirm merge', exact: true }).click(); await expect(dialog).toBeHidden();
-      await page.reload(); await assertSearch(page, 'T14 ordinary unselected long description', true);
+      // B2 retired project promotion fields from current UI/search; their old values remain in KA1.
+      await page.reload(); await assertSearch(page, 'T14 ordinary unselected long description', false);
       await assertSearch(page, 'T14 ordinary original description', field === 'name');
+      await assertSearch(page, 'T14 public contact marker', true);
+      await assertSearch(page, 'T14 public tag marker', true);
       await assertSearch(page, 'T14 merged PDF description marker', false);
       await assertSearch(page, 'T14 synthetic raw PDF source marker', false);
     }
     const snapshot = await downloadArchive(page, zh);
     expect(snapshot.assets.find(asset => asset.id === fixture.project.id)).toMatchObject({ name: 'T14 renamed project',
-      description: 'T14 merged PDF description marker', longDescription: 'T14 ordinary unselected long description' });
+      description: 'T14 merged PDF description marker', contact: 'T14 public contact marker', tags: ['T14 public tag marker'], longDescription: 'T14 ordinary unselected long description' });
     const path = resolve(fixtureDirectory, `pdf-privacy-${zh ? 'zh' : 'en'}.ka1`); await snapshot.download.saveAs(path);
     const restored = await browser.newContext({ locale: zh ? 'zh-CN' : 'en-US' });
     const restoredSourceRequests = recordDevelopmentRequests(restored);
     await restored.addInitScript(language => localStorage.setItem('keepany-language', language), zh ? 'zh-CN' : 'en');
     try { const target = await restored.newPage(); await restoreFixture(target, zh, path);
       await assertSearch(target, 'T14 merged PDF description marker', false);
-      await assertSearch(target, 'T14 ordinary unselected long description', true);
+      await assertSearch(target, 'T14 ordinary unselected long description', false);
+      await assertSearch(target, 'T14 public contact marker', true);
+      await assertSearch(target, 'T14 public tag marker', true);
+      const roundTrip = await downloadArchive(target, zh);
+      expect(roundTrip.assets.find(asset => asset.id === fixture.project.id)).toEqual(snapshot.assets.find(asset => asset.id === fixture.project.id));
       if (portable) expect(restoredSourceRequests).toEqual([]);
     } finally { await restored.close(); }
     if (portable) expect(sourceRequests).toEqual([]);

@@ -48,13 +48,14 @@ async function download(page: Page, zh: boolean, filename: string) {
     manifest: JSON.parse(strFromU8(entries['manifest.json'])) as { sourceBinding?: DatasetBinding } };
 }
 
-async function restore(page: Page, file: string, zh: boolean) {
+async function restore(page: Page, file: string, zh: boolean, expectSuccess = true) {
   await page.goto('/intake'); await page.locator('#backup-password').fill(password);
   await openBackupRestorePanel(page);
   await page.locator('#restore-file').setInputFiles(file);
   await page.getByRole('button', { name: zh ? '预览' : 'Preview', exact: true }).first().click();
   const confirm = page.getByRole('button', { name: zh ? '确认 · 1' : 'Confirm · 1', exact: true });
   await expect(confirm).toBeVisible(); await confirm.click();
+  if (expectSuccess) await expect(page.getByRole('status').filter({ hasText: zh ? '已恢复 1 条记录' : 'Restored 1 records' })).toBeVisible();
 }
 
 for (const locale of ['zh-CN', 'en-US']) test(`${locale} ordinary restore preserves source identity and blocks a cross-workspace import`, async ({ browser }) => {
@@ -79,7 +80,7 @@ for (const locale of ['zh-CN', 'en-US']) test(`${locale} ordinary restore preser
     await restore(target.page, resolve(targetDirectory, 'fixture.ka1'), zh);
     const before = await download(target.page, zh, 'target-before.ka1');
     expect(before.manifest.sourceBinding?.workspaceId).toBe(targetWorkspace);
-    await restore(target.page, sourceBackup.path, zh);
+    await restore(target.page, sourceBackup.path, zh, false);
     const refusal = target.page.getByRole('status').filter({ hasText: zh
       ? '备份来源与当前同步身份不一致，或没有来源标识，未恢复资料。'
       : 'The backup has a different or unknown sync identity. No records were restored.' });

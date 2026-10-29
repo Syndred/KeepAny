@@ -61,7 +61,10 @@ export async function prepareLegacyPdfArchive(directory: string, password: strin
 					name: document.fileName.replace(/\.pdf$/i, ""), description: document.text },
 			}));
 		}
-		await stageReviewedCandidates(repository.fileStore, rows);
+		// The public staging contract accepts one source file per pending batch.
+		for (const hash of new Set(rows.map(row => row.fileHash))) {
+			await stageReviewedCandidates(repository.fileStore, rows.filter(row => row.fileHash === hash));
+		}
 		return rows;
 	});
 	return { path: resolve(directory, "fixture.ka1"), candidates };

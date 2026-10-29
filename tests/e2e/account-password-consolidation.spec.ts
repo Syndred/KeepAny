@@ -124,6 +124,7 @@ for (const language of ["zh-CN", "en"] as const) for (const width of [390, 1280]
 			await expect(page.locator(".password-vault-message").filter({ hasText: t("pwVaultUnlockFailed") })).toBeVisible();
 			await unlock(page, t);
 			await expect(standalone).toBeVisible();
+			await expect(page.locator(".toast")).not.toContainText(t("pwVaultUnlockFailed"));
 			await page.screenshot({ path: join(evidence, `unified-logins-${language}-${width}.png`) });
 			await page.reload(); await unlock(page, t); await expect(standalone).toBeVisible();
 			const restored = await browser.newContext({ viewport: { width, height: 950 }, locale: language });

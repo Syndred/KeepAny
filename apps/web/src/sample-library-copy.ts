@@ -50,7 +50,7 @@ export const sampleLibraryCopy: Record<string, [string, string]> = {
 	sampleRefund: ["退回重复付款", "Duplicate payment refund"],
 	sampleBalance: ["余额核对", "Balance check"],
 	samplePhotoName: ["示例图片", "Sample image"],
-	sampleLibraryDescription: ["26 项虚构资料，包含图片、域名、账号、订阅、费用、借还维护、待办和关系。可补充到现有工作区，不重复添加。", "26 fictional records with images, domains, accounts, subscriptions, spending, loans, maintenance, tasks and connections. Add to this workspace once without duplicates."],
+	sampleLibraryDescription: ["24 项虚构资料，包含图片、域名、账号、订阅、费用、借还维护、待办和关系。可补充到现有工作区，不重复添加。", "24 fictional records with images, domains, accounts, subscriptions, spending, loans, maintenance, tasks and connections. Add to this workspace once without duplicates."],
 	sampleLibraryAdded: ["完整示例资料已加入。", "Full sample records added."],
 	sampleLibraryPresent: ["完整示例资料已加入", "Full sample records already added"],
 };
