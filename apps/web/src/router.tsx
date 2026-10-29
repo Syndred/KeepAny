@@ -28,6 +28,9 @@ const assetsWorkspaceRoute = createRoute({
 	path: "/assets",
 	component: lazyRouteComponent(() => import("./page-workspaces"), "AssetsWorkspace"),
 });
+const onlineAssetsRoute = createRoute({ getParentRoute: () => rootRoute, path: "/assets/online", component: lazyRouteComponent(() => import("./page-workspaces"), "OnlineAssetsRoute") });
+const physicalAssetsRoute = createRoute({ getParentRoute: () => rootRoute, path: "/assets/physical", component: lazyRouteComponent(() => import("./page-workspaces"), "PhysicalAssetsRoute") });
+const domainAssetsRoute = createRoute({ getParentRoute: () => rootRoute, path: "/assets/domains", component: lazyRouteComponent(() => import("./page-workspaces"), "DomainAssetsRoute") });
 const accountsWorkspaceRoute = createRoute({
 	getParentRoute: () => rootRoute,
 	path: "/accounts",
@@ -94,6 +97,7 @@ const routeTree = rootRoute.addChildren([
 	taskRoute,
 	listRoute,
 	assetsWorkspaceRoute,
+ onlineAssetsRoute, physicalAssetsRoute, domainAssetsRoute,
 	accountsWorkspaceRoute,
 	detailRoute,
 	projectWorkflowRoute,

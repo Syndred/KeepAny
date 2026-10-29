@@ -1,0 +1,35 @@
+{
+  "scope": "资产三页；人工与机器证据分别判定",
+  "candidate": "f4fca4754a238421d2ea10d130aacd118a5fb9f1",
+  "zipSha256": "d48705345a6737360ac505a823589195979d71d2429ed02f5037d76421c27521",
+  "archives": [
+    {
+      "path": "final-candidate-evidence.zip",
+      "sha256": "56f6282f1609e7906a0c8d6c315999ce20939ae6e0469900c6ece6b87784b30e",
+      "bytes": 10003437,
+      "files": 103,
+      "eachEntrySha256VerifiedAfterExtraction": true
+    },
+    {
+      "path": "independent-and-red-evidence.zip",
+      "sha256": "c5b14f706686e9df95c23415c3cee88f11a650491dfe112a0a351f81e8643820",
+      "bytes": 10357266,
+      "files": 155,
+      "eachEntrySha256VerifiedAfterExtraction": true
+    },
+    {
+      "path": "compatibility-evidence.zip",
+      "sha256": "f3845f838e5ce3a99e120e4431de9e8d6fb6334184cd38a9fb817b8b8a2b22ca",
+      "bytes": 4204780,
+      "files": 75,
+      "eachEntrySha256VerifiedAfterExtraction": true
+    }
+  ],
+  "excluded": "重复产品包/源码、数据库、运行状态、KA1、视频和trace；原始测试目录未删除。",
+  "manualRecords": [
+    "../主控体验与视觉.md",
+    "../独立复核.md"
+  ],
+  "primaryVisualHashes": "final-candidate-evidence.zip: assets-workbench/owner/visual-review.json",
+  "independentVisualHashes": "independent-and-red-evidence.zip: independent-assets-finalf4/visual-review.json"
+}

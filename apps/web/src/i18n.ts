@@ -1,3 +1,4 @@
+import { assetsCopy } from "./assets-copy";
 import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
 import { aiCopy } from "./ai-copy";
@@ -2524,6 +2525,7 @@ Object.assign(
 	smartImportCopy,
 	taskEditCopy,
 	financeCopy,
+ assetsCopy,
 	candidateMergeCopy,
 );
 Object.assign(

@@ -1,0 +1,22 @@
+{
+  "recordedAt": "2026-10-29T08:16:03.291062+00:00",
+  "candidate": "f4fca4754a238421d2ea10d130aacd118a5fb9f1",
+  "observation": "PowerShell Get-NetTCPConnection确认仅原4180监听；4255/4256/4394/4395/4396均无监听；原目录git status --short空。",
+  "ownerBrowser": "自建page2先转同源sw.js退出应用连接，逐库删除IndexedDB，剩余[]；注销SW、删除caches并清空localStorage/sessionStorage，然后关闭page2，仅余原about:blank。",
+  "deletedOwnerDatabases": [
+    "keepany-files-v1",
+    "rxdb-dexie-keepany-v1--0--_rxdb_internal",
+    "rxdb-dexie-keepany-v1--0--records"
+  ],
+  "serviceStop": "4256包内公开stop；4255核命令行为本任务vite preview后结束；4394/4395/4396由各测试责任者正常关闭。",
+  "temporaryCopiesRemoved": [
+    "C:/Users/Administrator/Desktop/project/KeepAny/output/assets-workbench-owner/fixture.ka1",
+    "C:/Users/Administrator/.codex/visualizations/2026/10/29/01a18695-ed64-7a41-8cee-ff59596712ec/assets-fixture.ka1"
+  ],
+  "original4180": {
+    "address": "127.0.0.1",
+    "pidObserved": 14268,
+    "changedOrStopped": false
+  },
+  "retained": "本工作区test-results中的合成测试证据和最终dist便携ZIP；没有对原用户库执行测试。"
+}

@@ -21,14 +21,30 @@ for (const locale of ["zh-CN", "en-US"] as const) for (const width of [390, 1280
 			await expect(page.getByRole("button", { name: zh ? "完整示例资料已加入" : "Full sample records already added", exact: true })).toBeDisabled();
 			await page.goto("/assets");
 			await expect(page.getByRole("heading", { name: zh ? "资产" : "Assets", exact: true })).toBeVisible();
-			await expect(page.locator(".workspace-asset-grid .asset-project-card").first()).toBeVisible();
-			expect(await page.locator(".workspace-asset-grid .asset-library-card").count()).toBeGreaterThanOrEqual(2);
-			await expect(page.locator(".workspace-summary-grid > section")).toHaveCount(4);
+			// AS01/AS02: the approved asset landing page is the expense overview.
+			// Keep catalog coverage by entering both catalogs through their visible tabs.
+			await expect(page.locator(".assets-section-nav").getByRole("link", { name: zh ? "总览" : "Overview", exact: true })).toHaveAttribute("aria-current", "page");
+			await expect(page.locator(".assets-metrics > section")).toHaveCount(4);
+			await expect(page.locator(".assets-ledger")).toBeVisible();
+			await expect(page.locator(".assets-breakdown")).toBeVisible();
+			await expect(page.locator(".assets-renewals")).toBeVisible();
 			await expect(page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).resolves.toBe(true);
 			await page.screenshot({ path: join(evidence, `built-assets-${zh ? "zh" : "en"}-${width}.png`), fullPage: true });
-			await page.locator(".workspace-navigation").getByRole("link", { name: zh ? "费用账本" : "Ledger", exact: true }).click();
-			await expect(page.locator(".finance-summary > section")).toHaveCount(3);
-			await expect(page.getByRole("heading", { name: zh ? "订阅与账单" : "Subscriptions and bills", exact: true })).toBeVisible();
+			await page.locator(".assets-section-nav").getByRole("link", { name: zh ? "线上资产" : "Online assets", exact: true }).click();
+			await expect(page).toHaveURL(/\/assets\/online$/);
+			await expect(page.locator(".assets-section-nav").getByRole("link", { name: zh ? "线上资产" : "Online assets", exact: true })).toHaveAttribute("aria-current", "page");
+			await expect(page.locator(".assets-catalog-grid .asset-project-card").first()).toBeVisible();
+			expect(await page.locator(".assets-catalog-grid .asset-library-card").count()).toBeGreaterThanOrEqual(2);
+			await page.locator(".assets-section-nav").getByRole("link", { name: zh ? "实物资产" : "Physical assets", exact: true }).click();
+			await expect(page).toHaveURL(/\/assets\/physical$/);
+			await expect(page.locator(".assets-section-nav").getByRole("link", { name: zh ? "实物资产" : "Physical assets", exact: true })).toHaveAttribute("aria-current", "page");
+			await expect(page.locator(".assets-catalog-grid .assets-item-card").nth(1)).toBeVisible();
+			expect(await page.locator(".assets-catalog-grid .assets-item-card").count()).toBeGreaterThanOrEqual(2);
+			await expect(page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).resolves.toBe(true);
+			await page.locator("main > .page-header").getByRole("link", { name: zh ? "费用账本" : "Ledger", exact: true }).click();
+			await expect(page.locator(".finance-summary > section")).toHaveCount(2);
+			await expect(page.getByRole("heading", { name: zh ? "费用账本" : "Expense ledger", exact: true })).toBeVisible();
+			await expect(page.locator("#finance-filter-type")).toHaveCount(0);
 			await page.goto("/accounts");
 			await expect(page.getByRole("heading", { name: zh ? "账号" : "Accounts", exact: true })).toBeVisible();
 			await expect(page.locator(".asset-account-card").first()).toBeVisible();

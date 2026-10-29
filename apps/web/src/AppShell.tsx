@@ -119,15 +119,9 @@ export function AppShell() {
 	const openTasks = data.tasks.filter((x) => !x.done && !x.deleted).length;
 	const navigation: SortableNavItem[] = [
 		{ id: "overview", to: "/", label: t("overview"), icon: LayoutDashboard },
-		{
-			id: "tasks",
-			to: "/tasks",
-			label: t("tasks"),
-			icon: Bell,
-			badge: openTasks,
-		},
-		{ id: "assets", to: "/assets", label: t("assetsWorkspace"), icon: Layers, active: workspacePathGroup(pathname) === "assets" },
-		{ id: "accounts", to: "/accounts", label: t("accountsWorkspace"), icon: UserRound, active: workspacePathGroup(pathname) === "accounts" },
+  { id: "accounts", to: "/accounts", label: t("accountsWorkspace"), icon: UserRound, active: workspacePathGroup(pathname) === "accounts" },
+  { id: "assets", to: "/assets", label: t("assetsWorkspace"), icon: Layers, active: workspacePathGroup(pathname) === "assets" },
+  { id: "tasks", to: "/tasks", label: t("tasks"), icon: Bell, badge: openTasks },
 	];
 	const customCategories = data.categories.filter((category) => !category.deleted);
 	const collections = readCollections(data.preferences.find((preference) => preference.id === COLLECTIONS_PREFERENCE_ID)?.value);
@@ -302,7 +296,7 @@ export function AppShell() {
 						>
 							<Menu size={20} />
 						</Button>
-						{detailKind && workspaceReturn ? <Link className="topbar-page-label topbar-back-link" to={workspaceReturn.view === "domains" ? "/assets/$kind" : "/assets"} params={workspaceReturn.view === "domains" ? { kind: "domains" } : {}}><ArrowLeft size={15}/>{t("back")}</Link> : detailKind ? <Link className="topbar-page-label topbar-back-link" to="/assets/$kind" params={{ kind: detailReturnKind ?? detailKind }} onClick={hasRelationReturn ? () => { sessionStorage.removeItem("keepany-relation-return-id"); sessionStorage.removeItem("keepany-relation-return-kind"); } : undefined}><ArrowLeft size={15}/>{t("back")}</Link> : workflowProjectId ? <Link className="topbar-page-label topbar-back-link" to="/assets/$kind/$id" params={{ kind: "project", id: workflowProjectId }}><ArrowLeft size={15}/>{t("workflowBackToProject")}</Link> : collectionDetailId ? <Link className="topbar-page-label topbar-back-link" to="/collections"><ArrowLeft size={15}/>{t("collectionBack")}</Link> : pathname !== "/" ? <Link className="topbar-page-label topbar-back-link" to="/"><ArrowLeft size={15}/>{t("backToOverview")}</Link> : <strong className="topbar-page-label">{currentHeading}</strong>}
+						{detailKind && workspaceReturn ? <Link className="topbar-page-label topbar-back-link" to={workspaceReturn.view === "overview" || workspaceReturn.view === "all" ? "/assets" : "/assets/$kind"} params={workspaceReturn.view === "overview" || workspaceReturn.view === "all" ? {} : { kind: workspaceReturn.view }}><ArrowLeft size={15}/>{t("back")}</Link> : detailKind ? <Link className="topbar-page-label topbar-back-link" to="/assets/$kind" params={{ kind: detailReturnKind ?? detailKind }} onClick={hasRelationReturn ? () => { sessionStorage.removeItem("keepany-relation-return-id"); sessionStorage.removeItem("keepany-relation-return-kind"); } : undefined}><ArrowLeft size={15}/>{t("back")}</Link> : workflowProjectId ? <Link className="topbar-page-label topbar-back-link" to="/assets/$kind/$id" params={{ kind: "project", id: workflowProjectId }}><ArrowLeft size={15}/>{t("workflowBackToProject")}</Link> : collectionDetailId ? <Link className="topbar-page-label topbar-back-link" to="/collections"><ArrowLeft size={15}/>{t("collectionBack")}</Link> : pathname !== "/" ? <Link className="topbar-page-label topbar-back-link" to="/"><ArrowLeft size={15}/>{t("backToOverview")}</Link> : <strong className="topbar-page-label">{currentHeading}</strong>}
 						<div className="topbar-spacer"/>
 						<button className="top-search top-search-trigger" type="button" aria-label={t("globalSearch")} aria-expanded={searchOpen} onClick={() => { if (searchOpen) { setSearchOpen(false); setSearch(""); } else { setSearchOpen(true); window.requestAnimationFrame(() => topSearchInputRef.current?.focus()); } }}><Search size={17} /><span>{t("globalSearch")}</span>
 							<kbd>⌘ K</kbd>

@@ -359,7 +359,7 @@ export function AssetDetail() {
 	const assetBills = data.history
 		.filter(entry => historyAssetIds(entry).includes(asset?.id ?? ""))
 		.map(effectiveFinanceEntry)
-		.filter(entry => !entry.deleted && ["expense", "topup", "refund", "balance", "renew"].includes(entry.action))
+		.filter(entry => !entry.deleted && (asset?.kind === "account" ? ["expense", "topup", "refund", "balance", "renew"] : ["expense", "renew"]).includes(entry.action))
 		.sort((a, b) => (b.eventDate || b.billDate || b.createdAt).localeCompare(a.eventDate || a.billDate || a.createdAt));
 	if (!asset)
 		return (
@@ -1041,7 +1041,7 @@ export function AssetDetail() {
 			</div>}
 			<div className="page-header">
 				<div>
-					{kind !== "project" && kind !== "account" && <TextLink asChild><Link className="back-link" to={catalogReturn?.view === "all" ? "/assets" : "/assets/$kind"} params={catalogReturn?.view === "all" ? {} : { kind: catalogReturn?.view === "domains" ? "domains" : returnKind }} onClick={() => { sessionStorage.removeItem("keepany-relation-return-id"); sessionStorage.removeItem("keepany-relation-return-kind"); }}>
+					{kind !== "project" && kind !== "account" && <TextLink asChild><Link className="back-link" to={catalogReturn && ["all","overview"].includes(catalogReturn.view) ? "/assets" : "/assets/$kind"} params={catalogReturn && ["all","overview"].includes(catalogReturn.view) ? {} : { kind: catalogReturn?.view && !["all","overview"].includes(catalogReturn.view) ? catalogReturn.view : returnKind }} onClick={() => { sessionStorage.removeItem("keepany-relation-return-id"); sessionStorage.removeItem("keepany-relation-return-kind"); }}>
 						<ArrowLeft size={16} />
 						{t("back")}
 					</Link></TextLink>}
