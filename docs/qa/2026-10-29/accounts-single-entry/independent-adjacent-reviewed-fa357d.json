@@ -1,0 +1,511 @@
+{
+  "candidate": "fa357da7c1c6bcd2618693d6e813c48500dacec9",
+  "archiveSha256": "e0e38d7aba3dcd7d1229094a5e48bbae7f72983117d3e04830f65839ba0867f2",
+  "entry": "http://127.0.0.1:4407/",
+  "reviewer": "independent_aux_visual",
+  "assembler": "root; original independent auxiliary JSON preserved verbatim",
+  "method": "第二位非实现者实际逐张审证：具名相邻34、分类4、主控12，另已有稳定busy帧4；主控操作仅审证。主矩阵另见72图索引。",
+  "files": [
+    {
+      "path": "docs/qa/2026-10-29/accounts-single-entry/controller-final-fa357d/01-single-add-pressed.png",
+      "sha256": "32ac0734a82f03a32ccec874db39c028856bc0001e87b6a42faa4f5828bb4fff",
+      "verdict": "pass",
+      "observation": "账号空态只有一个全局新增，按下态黄底与焦点外圈清楚；建库表单、分类和空态均未重叠。",
+      "reviewer": "independent_aux_visual",
+      "group": "controller"
+    },
+    {
+      "path": "docs/qa/2026-10-29/accounts-single-entry/controller-final-fa357d/02-sequential-date-error-clears-old-url.png",
+      "sha256": "b013518140b578683029b1966028d99b1dfeb4b9e155318d8c9e0bf1302a34b7",
+      "verdict": "pass",
+      "observation": "已纠正HTTPS网址未显示旧网址错误；展开资料与固定取消/保存行分开。原生日期拒绝结果需结合主控JSON，当前滚动位置未展示日期控件。",
+      "reviewer": "independent_aux_visual",
+      "group": "controller"
+    },
+    {
+      "path": "docs/qa/2026-10-29/accounts-single-entry/controller-final-fa357d/03-expanded-mismatch-error-exposed.png",
+      "sha256": "7bab7e630512a275c50c640083d3b92c06e8d07b4bce7f7e466714dffe86a192",
+      "verdict": "pass",
+      "observation": "建库主密码不一致错误完整出现在固定操作行上方，长普通备注在表单内滚动，取消和保存保持清楚可用。",
+      "reviewer": "independent_aux_visual",
+      "group": "controller"
+    },
+    {
+      "path": "docs/qa/2026-10-29/accounts-single-entry/controller-final-fa357d/04-full-account-linked-password.png",
+      "sha256": "d556e7981022f129950f1ebf89357f37b0177086a15dc1f678bf41df53f70eb3",
+      "verdict": "pass",
+      "observation": "完整账号与关联密码展开后长名称自然换行，右侧无密码账号保持短卡高度，底部密码回收站空态可读。",
+      "reviewer": "independent_aux_visual",
+      "group": "controller"
+    },
+    {
+      "path": "docs/qa/2026-10-29/accounts-single-entry/controller-final-fa357d/05-purge-error-correct-context.png",
+      "sha256": "0be1a640ad71a508f09c737b41bbfcbeb1e30f10d140d44c1ece6239d07c2686",
+      "verdict": "pass",
+      "observation": "彻底删除确认中显示“密码库操作未完成，请重试”，不误称导入；取消和重试按钮无重叠，后方回收站条目仍在。",
+      "reviewer": "independent_aux_visual",
+      "group": "controller"
+    },
+    {
+      "path": "docs/qa/2026-10-29/accounts-single-entry/controller-final-fa357d/06-import-error-specific-context.png",
+      "sha256": "cda73bbb5c42ae976360eaf9aa8f768ca8b1023e1fc7cefe1911214501c88de7",
+      "verdict": "pass",
+      "observation": "损坏KDBX导入弹层保留文件、密码和重试入口，背景顶部可见导入专用拒绝文字；当前视口内无操作遮挡。",
+      "reviewer": "independent_aux_visual",
+      "group": "controller"
+    },
+    {
+      "sha256": "5ef90449de42ade3dbffa99838c806834cccda764f76fb89a4ac39581cfc8590",
+      "path": "docs/qa/2026-10-29/accounts-single-entry/controller-final-fa357d/07-clipboard-fallback.png",
+      "verdict": "pass",
+      "observation": "剪贴板拒绝后手动复制弹层居中显示可选文本与关闭按钮，位于新增表单上方；底层字段仍可辨，双层弹窗未重叠操作。",
+      "reviewer": "independent_aux_visual",
+      "group": "controller"
+    },
+    {
+      "sha256": "004486162e82db4724df5b935740231f2c259a8b78af0d8e17597b006db5d55e",
+      "path": "docs/qa/2026-10-29/accounts-single-entry/controller-final-fa357d/08-locked-private-draft-cleared.png",
+      "verdict": "pass",
+      "observation": "跨标签锁定后秘密输入已移除，普通名称仍保留；底部红色锁定及清理说明完整可读，取消/保存与提示分行。",
+      "reviewer": "independent_aux_visual",
+      "group": "controller"
+    },
+    {
+      "sha256": "35b9a82ce62972004246e5b5417956d7269acfa4524809d31282528d5c44ca82",
+      "path": "docs/qa/2026-10-29/accounts-single-entry/controller-final-fa357d/09-en-mobile-save-refresh-cancel.png",
+      "verdict": "pass",
+      "observation": "英文390单条账号回读名称、账号、计数和未建库提示，卡片不横溢；全局Add清楚，分类横向轨道在Manage左侧裁切。",
+      "reviewer": "independent_aux_visual",
+      "group": "controller"
+    },
+    {
+      "sha256": "c8cc4e1029e7127aab8b59759110a0a8a3dea9a24d8b7e4cc91b3f3af292f32f",
+      "path": "docs/qa/2026-10-29/accounts-single-entry/controller-final-fa357d/10-partial-notice-retained-after-private-edit.png",
+      "verdict": "pass",
+      "observation": "修改私密备注后部分成功说明仍完整位于表单固定底栏，未被输入纠正清除；焦点外圈与取消/保存无遮挡。",
+      "reviewer": "independent_aux_visual",
+      "group": "controller"
+    },
+    {
+      "sha256": "ba487c142bd92197a34166b12e9deab9642328383a21d07184ab6849a77fc1c8",
+      "path": "docs/qa/2026-10-29/accounts-single-entry/controller-final-fa357d/11-purge-success-refresh-empty.png",
+      "verdict": "pass",
+      "observation": "删除成功刷新后普通账号保留且密码0条，下方回收站为空；全局新增与密码工具无重复回收站入口。",
+      "reviewer": "independent_aux_visual",
+      "group": "controller"
+    },
+    {
+      "sha256": "361402537340e79a1d7d41c0dcf6ba721d3c00b46d67f128d035b783f0d78a1c",
+      "path": "docs/qa/2026-10-29/accounts-single-entry/controller-final-fa357d/12-local-4180-merged-form.png",
+      "verdict": "pass",
+      "observation": "4180同候选新增表单含名称、分类、账号、建库及更多资料，禁用复制/建库有灰态区分；固定操作栏清晰。",
+      "reviewer": "independent_aux_visual",
+      "group": "controller"
+    },
+    {
+      "sha256": "bc7dec82437721f30e6c2ce4c0b6daf42e810a05fb60573905cb85ef8405911c",
+      "path": "test-results/accounts-single-entry/independent-final-fa357d/custom-category/en-custom-category-form.png",
+      "verdict": "pass",
+      "observation": "英文390新增表单显示自定义分类完整名称，长提示自然换行；双栏在手机改为纵排，关闭、Cancel/Save清楚。",
+      "reviewer": "independent_aux_visual",
+      "group": "custom"
+    },
+    {
+      "sha256": "71794f7a10cb304facd3abf2e659852f03594e795caf552210145bf93d81227e",
+      "path": "test-results/accounts-single-entry/independent-final-fa357d/custom-category/en-custom-category-reloaded.png",
+      "verdict": "pass",
+      "observation": "英文390刷新后的自定义分类账号名称、分类徽章和未建库提示完整回读，卡片不横溢，底部无覆盖。",
+      "reviewer": "independent_aux_visual",
+      "group": "custom"
+    },
+    {
+      "sha256": "872c900ca463dda841f0d43d6ce9830df839cb4532fcbcb479f15ec211d0904f",
+      "path": "test-results/accounts-single-entry/independent-final-fa357d/custom-category/zh-CN-custom-category-form.png",
+      "verdict": "pass",
+      "observation": "中文1280表单可选自定义分类，名称与分类并排且不互挤；禁用复制/建库的灰态和固定取消/保存清楚。",
+      "reviewer": "independent_aux_visual",
+      "group": "custom"
+    },
+    {
+      "sha256": "1007e8299ef3677104d501daca74a2374032002106a88a2f98cc08bf850997f8",
+      "path": "test-results/accounts-single-entry/independent-final-fa357d/custom-category/zh-CN-custom-category-reloaded.png",
+      "verdict": "pass",
+      "observation": "中文1280刷新自定义分类筛选与卡片徽章一致，长账号标题换行，分类标签和关联数不相撞。",
+      "reviewer": "independent_aux_visual",
+      "group": "custom"
+    },
+    {
+      "sha256": "3cecff092fa4dfde72c64821ed02d3e789a587a24ea2bdad74a02352220c95cf",
+      "path": "test-results/accounts-single-entry/independent-final-fa357d/adjacent/layout/busy/zh-CN-1280-workspace-samples-busy.png",
+      "verdict": "evidence-insufficient/transitional",
+      "observation": "该图SHA对应同轮004帧（1793273042.218609），晚于DOM禁用事件约14.8ms但像素仍接近启用，不能证明灰禁用；原图保留，005–008另作稳定禁用正证。",
+      "reviewer": "independent_aux_visual",
+      "group": "adjacent",
+      "unresolved": false,
+      "resolvedBy": [
+        "test-results/accounts-single-entry/independent-final-fa357d/adjacent/layout/busy/zh-CN-1280-workspace-samples-finally-frames/005.png"
+      ],
+      "resolution": "同一轮既有005–008实际逐张打开，均显示新增/示例/工具灰禁用；未覆盖原过渡图，也未将其改判pass。"
+    },
+    {
+      "sha256": "1b78be04a3108f22bb27cec31f150010c94a8d329f530d1ad0e9cbef940c8150",
+      "path": "test-results/accounts-single-entry/independent-final-fa357d/adjacent/layout/busy/zh-CN-1280-workspace-samples-recovered.png",
+      "verdict": "pass",
+      "observation": "示例登录补齐后顶部成功条与toast清楚，八张普通账号卡保持紧凑高度，示例按钮消失且工具恢复清楚。",
+      "reviewer": "independent_aux_visual",
+      "group": "adjacent"
+    },
+    {
+      "sha256": "5457cf396f9f9d3019bcdec71d1dbdd0c5a6c2a3e51c80784a4958da98a3cfcc",
+      "path": "test-results/accounts-single-entry/independent-final-fa357d/adjacent/layout/busy/zh-CN-1280-detail-restore-busy.png",
+      "verdict": "pass",
+      "observation": "详情嵌入密码库恢复期间新增及恢复/彻底删除/清空均呈灰态，空态和局部关联提示可读，周围详情块不重叠。",
+      "reviewer": "independent_aux_visual",
+      "group": "adjacent"
+    },
+    {
+      "sha256": "23838a4a6da83e3dec44da9d029fae0c7f198874b673b844c6ec5e147ccb12ec",
+      "path": "test-results/accounts-single-entry/independent-final-fa357d/adjacent/layout/busy/zh-CN-1280-detail-restore-recovered.png",
+      "verdict": "pass",
+      "observation": "详情嵌入恢复后密码卡及工具恢复深色，回收站空态与关联标签清楚；下方待办/图片保持独立布局。",
+      "reviewer": "independent_aux_visual",
+      "group": "adjacent"
+    },
+    {
+      "sha256": "ca950367190eb76a57ce19f27c7fb7db7d6d6ccbde75ef2fb5fba6598de1e98a",
+      "path": "test-results/accounts-single-entry/independent-final-fa357d/adjacent/layout/busy/zh-CN-1280-focused-restore-busy.png",
+      "verdict": "pass",
+      "observation": "聚焦账号恢复期间工具与回收站按钮灰态一致，长筛选条与搜索不挤压，空密码区保持清楚。",
+      "reviewer": "independent_aux_visual",
+      "group": "adjacent"
+    },
+    {
+      "sha256": "171c2d4310ad892a2a67ecd31fdca7dceb2f8db2abf7b7f16e212b6e96164602",
+      "path": "test-results/accounts-single-entry/independent-final-fa357d/adjacent/layout/busy/zh-CN-1280-focused-restore-recovered.png",
+      "verdict": "pass",
+      "observation": "聚焦账号恢复后密码卡出现且工具重新深色，底部回收站空态分隔清楚，卡片链接和操作无相撞。",
+      "reviewer": "independent_aux_visual",
+      "group": "adjacent"
+    },
+    {
+      "sha256": "966e6eaf5539a51ba36405890ee70e4afd5de1a91b9285d57a0a5d2a6153311e",
+      "path": "test-results/accounts-single-entry/independent-final-fa357d/adjacent/layout/busy/en-390-workspace-samples-busy.png",
+      "verdict": "pass",
+      "observation": "英文390补齐期间Add、示例按钮及工具均清楚灰化，换行后的工具仍分开；卡片密码计数0条，页面无横溢。",
+      "reviewer": "independent_aux_visual",
+      "group": "adjacent"
+    },
+    {
+      "sha256": "46c525599a9639059a2734f1b93ade67b819f5ac7e78ba81ffae2928c70b4199",
+      "path": "test-results/accounts-single-entry/independent-final-fa357d/adjacent/layout/busy/en-390-workspace-samples-recovered.png",
+      "verdict": "pass",
+      "observation": "英文390补齐完成后Add和工具恢复深色，成功提示自然换行、样例账号回读1密码；toast在页面底部不挡全局操作。",
+      "reviewer": "independent_aux_visual",
+      "group": "adjacent"
+    },
+    {
+      "sha256": "e36c1d51cd969ebc217e2b10e91d4800826b7573524b9232058b23f24f6a358a",
+      "path": "test-results/accounts-single-entry/independent-final-fa357d/adjacent/layout/busy/en-390-detail-restore-busy.png",
+      "verdict": "pass",
+      "observation": "英文390详情恢复期间局部新增、清空、恢复和永久删除均灰化，关联提示换行可读；toast未盖住恢复按钮文案。",
+      "reviewer": "independent_aux_visual",
+      "group": "adjacent"
+    },
+    {
+      "sha256": "a437f79e95922d66c917da80b4c92ad1bb3366863eade35d9595d69f3009c575",
+      "path": "test-results/accounts-single-entry/independent-final-fa357d/adjacent/layout/busy/en-390-detail-restore-recovered.png",
+      "verdict": "pass",
+      "observation": "英文390详情恢复后密码卡和操作恢复清楚，关联标签/解绑分开，下方回收站空态可读且无横溢。",
+      "reviewer": "independent_aux_visual",
+      "group": "adjacent"
+    },
+    {
+      "sha256": "2072553004d9b2d4410fb7d733219ff7de501e03d5f1eea0ceae14b023e78657",
+      "path": "test-results/accounts-single-entry/independent-final-fa357d/adjacent/layout/busy/en-390-focused-restore-busy.png",
+      "verdict": "pass",
+      "observation": "英文390聚焦恢复期间示例/工具/恢复/删除均灰态，关联横条和空密码提示不相撞，控件完整留在视口。",
+      "reviewer": "independent_aux_visual",
+      "group": "adjacent"
+    },
+    {
+      "sha256": "b9df0e1c011f46a2a4cc41e9f3caea3d8f126e2db130bdc111a2612607ec9fa2",
+      "path": "test-results/accounts-single-entry/independent-final-fa357d/adjacent/layout/busy/en-390-focused-restore-recovered.png",
+      "verdict": "pass",
+      "observation": "英文390聚焦恢复后卡片信息与操作可读，密码遮蔽、关联与解绑分开，回收站分隔清楚，toast未覆盖关键操作。",
+      "reviewer": "independent_aux_visual",
+      "group": "adjacent"
+    },
+    {
+      "sha256": "5c207666ac85deb6395e16efa395723fd91d658cb2dbe93c359f7fc1b53110e0",
+      "path": "test-results/accounts-single-entry/independent-final-fa357d/adjacent/layout/zh-CN-1280-unlinked-long.png",
+      "verdict": "pass",
+      "observation": "中文桌面未关联密码卡长标题、长网址、多登录标识和中英备注均按卡片宽度换行，复制与外链操作独立，未设置密码灰态清楚。",
+      "reviewer": "independent_aux_visual",
+      "group": "adjacent"
+    },
+    {
+      "sha256": "20f4a4d8e230d4a14dd0d9a7a1102609af79b2d146c87b7ecce2eb6473deb4a4",
+      "path": "test-results/accounts-single-entry/independent-final-fa357d/adjacent/layout/zh-CN-1280-unlinked-editor.png",
+      "verdict": "pass",
+      "observation": "中文共享密码编辑器保留多个登录标识及私密备注，名称焦点清楚，固定保存行不挡可见操作；背景长账号卡未拉高邻卡。",
+      "reviewer": "independent_aux_visual",
+      "group": "adjacent"
+    },
+    {
+      "sha256": "f61f438d75a5ffb3212f6a90aabb543675549fbbb82625edeec0e232a9f12493",
+      "path": "test-results/accounts-single-entry/independent-final-fa357d/adjacent/layout/zh-CN-1280-required-error.png",
+      "verdict": "pass",
+      "observation": "中文空名称表单明确聚焦必填名称，分类和多登录标识/秘密/关联资料分区清楚，固定操作行不重叠；原生提示捕捉为淡色，拒绝行为由功能证据另证。",
+      "reviewer": "independent_aux_visual",
+      "group": "adjacent"
+    },
+    {
+      "sha256": "16babe57aeecb5360b405418dbc932931da11c00a72a00cc08685c1578a76977",
+      "path": "test-results/accounts-single-entry/independent-final-fa357d/adjacent/layout/zh-CN-1280-detail-embedded.png",
+      "verdict": "pass",
+      "observation": "中文详情嵌入密码库搜索/工具/关联筛选条和密码卡分层清楚，卡片复制/显示/解绑与下方回收站无重叠。",
+      "reviewer": "independent_aux_visual",
+      "group": "adjacent"
+    },
+    {
+      "sha256": "b746d210d53d29bc1997b81deeae4ebbaa56614b9c7a1e1a17936ee6bd172510",
+      "path": "test-results/accounts-single-entry/independent-final-fa357d/adjacent/layout/en-390-unlinked-long.png",
+      "verdict": "pass",
+      "observation": "英文手机未关联密码卡长标题、长URL和中英备注自然换行，复制/外链独立，底部新增/编辑/历史/移入回收站不挤压。",
+      "reviewer": "independent_aux_visual",
+      "group": "adjacent"
+    },
+    {
+      "sha256": "fc4484e7f2b2a04b1bbfa3ad8d814b26ee96929c7ac664db699bb8bcec33cd1d",
+      "path": "test-results/accounts-single-entry/independent-final-fa357d/adjacent/layout/en-390-unlinked-editor.png",
+      "verdict": "pass",
+      "observation": "英文390共享密码编辑器按纵向容纳多个登录标识与操作，长账号仍留在输入内，固定Save entry不横溢；已以original尺寸重开核对。",
+      "reviewer": "independent_aux_visual",
+      "group": "adjacent"
+    },
+    {
+      "sha256": "95c551bae94374a6d705d13b7c135c44cfb11f6ca171b25acc9fee8292362acc",
+      "path": "test-results/accounts-single-entry/independent-final-fa357d/adjacent/layout/en-390-required-error.png",
+      "verdict": "pass",
+      "observation": "英文390空名称表单聚焦Name，分类与登录标识按钮不相撞，Cancel/Save清楚；原生提示捕捉较淡，拒绝行为不以本图单独证明。",
+      "reviewer": "independent_aux_visual",
+      "group": "adjacent"
+    },
+    {
+      "sha256": "6f71c721013cc1c23848f68173dc41761a47e6eb8bd36e09f68f491e5a518db3",
+      "path": "test-results/accounts-single-entry/independent-final-fa357d/adjacent/layout/en-390-detail-embedded.png",
+      "verdict": "pass",
+      "observation": "英文390详情嵌入工具与关联提示纵向换行，密码卡信息/解绑/编辑/回收站各分开，下方空回收站可读。",
+      "reviewer": "independent_aux_visual",
+      "group": "adjacent"
+    },
+    {
+      "sha256": "58291ea84b4f875a22f7629aaf9cd8ad24849a174b40c921b43e91dcad3a4a3d",
+      "path": "test-results/accounts-single-entry/independent-final-fa357d/adjacent/browser/toast-dialog-layer-zh-CN-1-57360-t-stays-below-modal-actions/toast-normal-page.png",
+      "verdict": "pass",
+      "observation": "中文普通页面成功条与底部toast文字完整，未覆盖上方新增/工具/分类，也不改变普通账号邻卡高度。",
+      "reviewer": "independent_aux_visual",
+      "group": "adjacent"
+    },
+    {
+      "sha256": "5a1316b7177116c30710eb9d55038897eb664502bfdb97cb9ea7bcacf5ccd31d",
+      "path": "test-results/accounts-single-entry/independent-final-fa357d/adjacent/browser/toast-dialog-layer-zh-CN-1-57360-t-stays-below-modal-actions/toast-and-dialog.png",
+      "verdict": "pass",
+      "observation": "中文新增弹层位于toast上层，固定取消/保存完整露出；toast留在遮罩后的页面右下方，不覆盖表单动作。",
+      "reviewer": "independent_aux_visual",
+      "group": "adjacent"
+    },
+    {
+      "sha256": "87d3aa0b6866249fdb6632bdd664582c08c664075730b5354875c7ef9cfbef6f",
+      "path": "test-results/accounts-single-entry/independent-final-fa357d/adjacent/browser/toast-dialog-layer-zh-CN-1-57360-t-stays-below-modal-actions/toast-and-required-error.png",
+      "verdict": "pass",
+      "observation": "中文必填焦点态与toast并存时，toast在遮罩后且不盖取消/保存，名称焦点清楚；原生提示淡色的截图限制保留。",
+      "reviewer": "independent_aux_visual",
+      "group": "adjacent"
+    },
+    {
+      "sha256": "736c4df321b51bd028703acb2a304a6b05a50c37c1a8fd234f1b109841e7dbd6",
+      "path": "test-results/accounts-single-entry/independent-final-fa357d/adjacent/browser/toast-dialog-layer-en-390--fc678-t-stays-below-modal-actions/toast-normal-page.png",
+      "verdict": "pass",
+      "observation": "英文390普通页成功条自然换行，底部toast文字完整并留在全局操作下方，账号卡不横溢。",
+      "reviewer": "independent_aux_visual",
+      "group": "adjacent"
+    },
+    {
+      "sha256": "c22801ac28e64a71dff9075d125b294aac9578c19a4e9bcc70a35fb91a4eeba9",
+      "path": "test-results/accounts-single-entry/independent-final-fa357d/adjacent/browser/toast-dialog-layer-en-390--fc678-t-stays-below-modal-actions/toast-and-dialog.png",
+      "verdict": "pass",
+      "observation": "英文390新增弹层完整置于toast上，底部Cancel/Save未被通知遮挡，纵向字段/辅助按钮保持间距。",
+      "reviewer": "independent_aux_visual",
+      "group": "adjacent"
+    },
+    {
+      "sha256": "d3ed63b6f1fcaa157a52fe2c2fe56bc39ece71a7bdd62ad8557d8ad375f114db",
+      "path": "test-results/accounts-single-entry/independent-final-fa357d/adjacent/browser/toast-dialog-layer-en-390--fc678-t-stays-below-modal-actions/toast-and-required-error.png",
+      "verdict": "pass",
+      "observation": "英文390必填焦点态时Name及Save可见，toast仍在弹层后；淡色原生提示不作为单独拒绝证据。",
+      "reviewer": "independent_aux_visual",
+      "group": "adjacent"
+    },
+    {
+      "sha256": "37fd3b43dfcd383f00c818f782ec249ee8a9a96219af618e4d481fec2ef25f42",
+      "path": "test-results/accounts-single-entry/independent-final-fa357d/adjacent/links/zh-CN-1280-900/007-focused.png",
+      "verdict": "pass",
+      "observation": "中文1280关联账号双栏中勾选项、右侧待核对关系和固定保存栏分开，焦点备注位于可滚动左栏且无横溢。",
+      "reviewer": "independent_aux_visual",
+      "group": "adjacent"
+    },
+    {
+      "sha256": "2d129e96fbbdcce11a3f21bf6c42ee9a27c4d68a3018ef6c13fad673f157664c",
+      "path": "test-results/accounts-single-entry/independent-final-fa357d/adjacent/links/zh-CN-1280-900/010-match-pressed.png",
+      "verdict": "pass",
+      "observation": "中文1280本地匹配按下态保持勾选/核对关系可读，按钮按下深边清楚，右下保存及计数未被遮挡。",
+      "reviewer": "independent_aux_visual",
+      "group": "adjacent"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-fa357d/adjacent/layout/busy/zh-CN-1280-workspace-samples-finally-frames/005.png",
+      "sha256": "234fd9f40d70e2b76c9ce848cf68f36f9fcd070ab2c7e45c40433f6dedddd2f4",
+      "verdict": "pass",
+      "observation": "同轮禁用事件后的最早稳定灰帧：全局新增、示例补齐及各工具均清楚灰化，普通账号卡/未关联卡无布局跳变；与时间1793273042.237609及DOM禁用事件核对。",
+      "reviewer": "independent_aux_visual",
+      "group": "adjacent",
+      "purpose": "busy-stable-supplement"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-fa357d/adjacent/layout/busy/zh-CN-1280-workspace-samples-finally-frames/006.png",
+      "sha256": "c283908853584f9428ed3595c2fcc1f945709294eec861bc9b82f1e062bd7f5c",
+      "verdict": "pass",
+      "observation": "后续稳定帧中新增、示例与工具持续灰禁用，账号卡高度和文案未跳变，长备注仍卡内换行。",
+      "reviewer": "independent_aux_visual",
+      "group": "adjacent",
+      "purpose": "busy-stable-supplement"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-fa357d/adjacent/layout/busy/zh-CN-1280-workspace-samples-finally-frames/007.png",
+      "sha256": "765f349dccf7cc3799e6fe49eb79ca4e13e5cb56ae7ed88fbf541d8fc89b4a30",
+      "verdict": "pass",
+      "observation": "约晚0.55秒帧中新增、示例与工具继续灰禁用且结果未恢复，保持同一行44px控件组合，无重叠。",
+      "reviewer": "independent_aux_visual",
+      "group": "adjacent",
+      "purpose": "busy-stable-supplement"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-fa357d/adjacent/layout/busy/zh-CN-1280-workspace-samples-finally-frames/008.png",
+      "sha256": "254b4e4d3ccf7373f8c2db70e3a74d4384453ddc44f0bd21643b1fdec390b9e8",
+      "verdict": "pass",
+      "observation": "后续帧仍显示新增/示例/工具灰禁用，卡片仍0密码而恢复帧另显示1密码；本帧不冒称恢复完成。",
+      "reviewer": "independent_aux_visual",
+      "group": "adjacent",
+      "purpose": "busy-stable-supplement"
+    },
+    {
+      "sha256": "3dabc84989332d9cf38dccfb9a4634873e63c3e13e84d796db59012a88d1c37a",
+      "path": "test-results/accounts-single-entry/independent-final-fa357d/adjacent/links/zh-CN-1280-900/011-matched.png",
+      "verdict": "pass",
+      "observation": "中文桌面匹配结果中已选账号与待核对关系一致，说明文字、焦点本地匹配、禁用AI及保存按钮均清楚。",
+      "reviewer": "independent_aux_visual",
+      "group": "adjacent"
+    },
+    {
+      "sha256": "7ed3edab433277d06501bac215d3d7894493beddc8de1a7add28525873592c93",
+      "path": "test-results/accounts-single-entry/independent-final-fa357d/adjacent/links/zh-CN-1280-900/021-reloaded.png",
+      "verdict": "pass",
+      "observation": "中文刷新后关联账号、邮箱资产与未关联密码分区清楚，多个密码卡等列排布且备注可读，工具不重复。",
+      "reviewer": "independent_aux_visual",
+      "group": "adjacent"
+    },
+    {
+      "sha256": "a398c14f090453a6a7c30dff5aa663a577f14ba608f6fb46b9d835a2bdf05485",
+      "path": "test-results/accounts-single-entry/independent-final-fa357d/adjacent/links/en-390-900/007-focused.png",
+      "verdict": "pass",
+      "observation": "英文390关联弹层按纵向容纳账号选择与备注，选中复选框清楚，固定本地匹配/禁用AI/Save互不重叠。",
+      "reviewer": "independent_aux_visual",
+      "group": "adjacent"
+    },
+    {
+      "sha256": "a5d9e223888923d5805b435f9dc4ade7cc9a09d251ee9c34225db42f92d34490",
+      "path": "test-results/accounts-single-entry/independent-final-fa357d/adjacent/links/en-390-900/010-match-pressed.png",
+      "verdict": "pass",
+      "observation": "英文390本地匹配按下态焦点双圈清楚，已选分类与备注不变，固定操作行和范围说明可读。",
+      "reviewer": "independent_aux_visual",
+      "group": "adjacent"
+    },
+    {
+      "sha256": "35b0826f77cfc1a6a4279e2c14cb2bef2c47ee8d617c7ea11fa9abf2d413e55a",
+      "path": "test-results/accounts-single-entry/independent-final-fa357d/adjacent/links/en-390-900/011-matched.png",
+      "verdict": "pass",
+      "observation": "英文390匹配后核对关系列表加入滚动主体，长账号及邮箱自然换行，说明与固定匹配/Save栏无横溢或覆盖。",
+      "reviewer": "independent_aux_visual",
+      "group": "adjacent"
+    },
+    {
+      "sha256": "210995169fbc7e9c34ccf56b7096286d9fbf24970cf6860dd81ff09733450ecc",
+      "path": "test-results/accounts-single-entry/independent-final-fa357d/adjacent/links/en-390-900/021-reloaded.png",
+      "verdict": "pass",
+      "observation": "英文390刷新后账号/邮箱关联徽章及密码计数可读，各普通卡独立高度，底部toast未遮全局工具。",
+      "reviewer": "independent_aux_visual",
+      "group": "adjacent"
+    }
+  ],
+  "controllerReceiptsRead": [
+    {
+      "sha256": "c352478b76745aa4b374fb95cfe1a1f12a4e4173e81e1077a2b26aa90a811804",
+      "path": "docs/qa/2026-10-29/accounts-single-entry/controller-final-fa357d/controller-journey.json",
+      "read": true,
+      "reviewer": "independent_aux_visual",
+      "candidate": "fa357da7c1c6bcd2618693d6e813c48500dacec9",
+      "method": "已阅读全文；独立审证，不冒称复核者执行主控操作"
+    },
+    {
+      "sha256": "a25aeedc0f75dba10d2cb3b790ec5bb46d4b7eb69885c452136bddc4171552b2",
+      "path": "docs/qa/2026-10-29/accounts-single-entry/controller-final-fa357d/local-4180.json",
+      "read": true,
+      "reviewer": "independent_aux_visual",
+      "candidate": "fa357da7c1c6bcd2618693d6e813c48500dacec9",
+      "method": "已阅读全文；独立审证，不冒称复核者执行主控操作"
+    },
+    {
+      "sha256": "7dc56e59be9b89d74b2a6f0bc90738553028661d0643b1597c28af3c0002b456",
+      "path": "docs/qa/2026-10-29/accounts-single-entry/controller-final-fa357d/storage-fault-result.json",
+      "read": true,
+      "reviewer": "independent_aux_visual",
+      "candidate": "fa357da7c1c6bcd2618693d6e813c48500dacec9",
+      "method": "已阅读全文；独立审证，不冒称复核者执行主控操作"
+    }
+  ],
+  "supplementalEvidence": {
+    "busyTimeline": {
+      "path": "test-results/accounts-single-entry/independent-final-fa357d/adjacent/layout/busy/zh-CN-1280-workspace-samples-binding-arrivals-finally.json",
+      "summary": {
+        "samples": 14,
+        "notAllDisabled": [],
+        "last": {
+          "allDisabled": true,
+          "count": 8,
+          "epochMs": 1793273043617.4
+        },
+        "first": {
+          "allDisabled": true,
+          "count": 8,
+          "epochMs": 1793273042203.8
+        }
+      },
+      "frameIndex": "test-results/accounts-single-entry/independent-final-fa357d/adjacent/layout/busy/zh-CN-1280-workspace-samples-frames-finally.json",
+      "earliestStableFrameEpochSeconds": 1793273042.237609,
+      "earliestStableFrameMsAfterDisabledEvent": 33.809
+    },
+    "local4180Http": {
+      "path": "test-results/accounts-single-entry/independent-final-fa357d/aux-review/local-4180-http.json",
+      "verdict": "pass",
+      "method": "Independent raw HTTP byte hashes against clean portable ZIP release manifest and retained-asset manifest; no browser profile or user data accessed"
+    },
+    "mainConfirmation": {
+      "selection": "visual-progress.json mainActuallyOpened.slice(42)",
+      "count": 12,
+      "verdict": "pass",
+      "method": "重新逐张实际打开本版12PNG，分两批各6，追加独立明确观察；保留原72条图审记录。"
+    }
+  },
+  "unresolvedVisualEvidenceIssues": 0
+}

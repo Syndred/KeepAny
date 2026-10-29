@@ -1,8 +1,202 @@
 {
   "schema": "keepany.account-entry-final-acceptance.v1",
-  "state": "incomplete",
-  "failedCandidate": "398cdba992ac3364bc0f5d8d3ae06e0fc9288d53",
-  "failedId": "SE16",
-  "historicalReport": "398c阶段记录.md",
-  "next": "new clean compiled candidate and full scoped reverification"
+  "state": "complete-scoped-acceptance",
+  "date": "2026-10-29",
+  "productSourceCommit": "fa357da7c1c6bcd2618693d6e813c48500dacec9",
+  "archiveSha256": "e0e38d7aba3dcd7d1229094a5e48bbae7f72983117d3e04830f65839ba0867f2",
+  "contract": "验收合同.md",
+  "report": "验收记录.md",
+  "dimensions": {
+    "functional": "pass",
+    "whitebox": "pass",
+    "visual": "pass",
+    "controllerPersona": "pass",
+    "independent": "pass"
+  },
+  "cloudCi": "not run",
+  "publication": "not published",
+  "localOrigin": "http://127.0.0.1:4180",
+  "rows": [
+    {
+      "id": "SE01",
+      "actual": "唯一全局新增、顶部回收站移除；默认/hover/focus/pressed、自然busy禁用恢复均通过",
+      "evidence": [
+        "controller-final-fa357d/01-single-add-pressed.png",
+        "independent-results-fa357d.json",
+        "independent-adjacent-reviewed-fa357d.json"
+      ],
+      "candidate": "fa357da7c1c6bcd2618693d6e813c48500dacec9",
+      "verdict": "pass"
+    },
+    {
+      "id": "SE02",
+      "actual": "无库/锁定/解锁同表单；错误与取消保留普通输入，秘密需解锁且锁定清除",
+      "evidence": [
+        "controller-final-fa357d/03-expanded-mismatch-error-exposed.png",
+        "controller-final-fa357d/08-locked-private-draft-cleared.png",
+        "independent-results-fa357d.json"
+      ],
+      "candidate": "fa357da7c1c6bcd2618693d6e813c48500dacec9",
+      "verdict": "pass"
+    },
+    {
+      "id": "SE03",
+      "actual": "全部普通字段、可选密码/多标识/关联一次保存并回读；取消无新增",
+      "evidence": [
+        "controller-final-fa357d/controller-journey.json",
+        "independent-results-fa357d.json",
+        "independent-最终复核.md"
+      ],
+      "candidate": "fa357da7c1c6bcd2618693d6e813c48500dacec9",
+      "verdict": "pass"
+    },
+    {
+      "id": "SE04",
+      "actual": "长内容与空/必填/网址/日期UI重放；标签及标识边界单元与schema通过",
+      "evidence": [
+        "controller-final-fa357d/controller-journey.json",
+        "independent-visual-reviewed-fa357d.json",
+        "源码检查与候选准备.md"
+      ],
+      "candidate": "fa357da7c1c6bcd2618693d6e813c48500dacec9",
+      "verdict": "pass"
+    },
+    {
+      "id": "SE05",
+      "actual": "真实UI一次故障后1普通0密码，双击重试刷新1+1；跨tab锁定清私密；幂等/边界单元通过",
+      "evidence": [
+        "controller-final-fa357d/storage-fault-result.json",
+        "controller-final-fa357d/08-locked-private-draft-cleared.png",
+        "independent-results-fa357d.json"
+      ],
+      "candidate": "fa357da7c1c6bcd2618693d6e813c48500dacec9",
+      "verdict": "pass"
+    },
+    {
+      "id": "SE06",
+      "actual": "旧关联/未关联、详情嵌入和同平台多账号保留；共享编辑组件各消费场景重验",
+      "evidence": [
+        "independent-results-fa357d.json",
+        "test-results/accounts-single-entry/password-final-fa357d/report.json"
+      ],
+      "candidate": "fa357da7c1c6bcd2618693d6e813c48500dacec9",
+      "verdict": "pass"
+    },
+    {
+      "id": "SE07",
+      "actual": "下方空/单/多及移入取消、恢复、彻底删除取消/故障/成功/刷新通过；旧hash解锁定位通过",
+      "evidence": [
+        "controller-final-fa357d/storage-fault-result.json",
+        "independent-results-fa357d.json"
+      ],
+      "candidate": "fa357da7c1c6bcd2618693d6e813c48500dacec9",
+      "verdict": "pass"
+    },
+    {
+      "id": "SE08",
+      "actual": "中英六宽72具名图逐张打开；busy与自定义分类补图、主控12图另审，长内容及邻卡无新增失败",
+      "evidence": [
+        "independent-visual-reviewed-fa357d.json",
+        "independent-adjacent-reviewed-fa357d.json"
+      ],
+      "candidate": "fa357da7c1c6bcd2618693d6e813c48500dacec9",
+      "verdict": "pass"
+    },
+    {
+      "id": "SE09",
+      "actual": "主控最终包正常入口亲自走完完整/极简/错误/取消/保存/刷新/锁定/回收站任务；4180入口另验",
+      "evidence": [
+        "controller-final-fa357d/controller-journey.json",
+        "controller-final-fa357d/storage-fault-result.json",
+        "controller-final-fa357d/local-4180.json"
+      ],
+      "candidate": "fa357da7c1c6bcd2618693d6e813c48500dacec9",
+      "verdict": "pass"
+    },
+    {
+      "id": "SE10",
+      "actual": "两位非产品实现者联合独立复核：原20+8首轮零重试，主图并集72及相邻/分类/主控审证闭环；原过渡帧保留并由同轮稳定帧补证",
+      "evidence": [
+        "independent-最终复核.md",
+        "independent-results-fa357d.json",
+        "independent-first-54-verdict-fa357d.json",
+        "independent-aux-visual-fa357d.json"
+      ],
+      "candidate": "fa357da7c1c6bcd2618693d6e813c48500dacec9",
+      "verdict": "pass"
+    },
+    {
+      "id": "SE11",
+      "actual": "clean产品fa357d、ZIP/Web/spec摘要及具名证据门禁本地通过，接入Daily；云端CI未运行",
+      "evidence": [
+        "test-results/accounts-single-entry/machine-final-398c/result.json",
+        "controller-final-fa357d/local-4180.json",
+        "验收记录.md"
+      ],
+      "candidate": "fa357da7c1c6bcd2618693d6e813c48500dacec9",
+      "verdict": "pass"
+    },
+    {
+      "id": "SE12",
+      "actual": "无库极简1账号显示1条，普通账号与未关联密码计数相符；锁定/解锁邻近回归通过",
+      "evidence": [
+        "controller-final-fa357d/09-en-mobile-save-refresh-cancel.png",
+        "controller-final-fa357d/storage-fault-result.json",
+        "independent-results-fa357d.json"
+      ],
+      "candidate": "fa357da7c1c6bcd2618693d6e813c48500dacec9",
+      "verdict": "pass"
+    },
+    {
+      "id": "SE13",
+      "actual": "最终fa357d同输入错误完整可见、中心命中错误自身；中英展开错误矩阵复核通过",
+      "evidence": [
+        "controller-final-fa357d/03-expanded-mismatch-error-exposed.png",
+        "controller-final-fa357d/controller-journey.json",
+        "independent-visual-reviewed-fa357d.json"
+      ],
+      "candidate": "fa357da7c1c6bcd2618693d6e813c48500dacec9",
+      "verdict": "pass"
+    },
+    {
+      "id": "SE14",
+      "actual": "最终fa357d严格44px；中英桌面/手机自然busy禁用并恢复；主控桌面77×44/手机76.25×44",
+      "evidence": [
+        "controller-final-fa357d/controller-journey.json",
+        "independent-adjacent-reviewed-fa357d.json"
+      ],
+      "candidate": "fa357da7c1c6bcd2618693d6e813c48500dacec9",
+      "verdict": "pass"
+    },
+    {
+      "id": "SE15",
+      "actual": "最终fa357d删除故障反馈为操作错误且资料保留；取消/恢复/成功重试刷新通过；损坏导入仍为导入专用拒绝",
+      "evidence": [
+        "controller-final-fa357d/05-purge-error-correct-context.png",
+        "controller-final-fa357d/06-import-error-specific-context.png",
+        "controller-final-fa357d/storage-fault-result.json"
+      ],
+      "candidate": "fa357da7c1c6bcd2618693d6e813c48500dacec9",
+      "verdict": "pass"
+    },
+    {
+      "id": "SE16",
+      "actual": "FTP被拒后纠正立即清旧错误；非法日期仍由原生拒绝且0新增，纠正日期后保存刷新回读正确；partial后编辑私密备注不清理恢复提示",
+      "evidence": [
+        "controller-final-fa357d/02-sequential-date-error-clears-old-url.png",
+        "controller-final-fa357d/controller-journey.json",
+        "controller-final-fa357d/10-partial-notice-retained-after-private-edit.png",
+        "controller-final-fa357d/storage-fault-result.json",
+        "independent-results-fa357d.json"
+      ],
+      "candidate": "fa357da7c1c6bcd2618693d6e813c48500dacec9",
+      "verdict": "pass"
+    }
+  ],
+  "automatedGate": "scripts/check-account-entry.mjs validates explicit portable identity, six no-retry scenarios and 72 named evidence hashes; manual judgments remain separate; frozen-acceptance.test.ts checks this frozen 16-ID receipt, independent candidate binding, preserved bytes and independent HTTP metadata via existing Daily pnpm test; it never replaces future UI acceptance",
+  "boundaries": [
+    "Windows Chromium responsive UI only; no native or physical-device claim",
+    "No real user secrets or destructive tests on user data",
+    "Historical effective failures remain immutable; no full-project or full-release acceptance"
+  ]
 }

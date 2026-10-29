@@ -1,0 +1,390 @@
+{
+  "candidate": "fa357da7c1c6bcd2618693d6e813c48500dacec9",
+  "archiveSha256": "e0e38d7aba3dcd7d1229094a5e48bbae7f72983117d3e04830f65839ba0867f2",
+  "reviewer": "independent_single_entry",
+  "assembler": "root; no controller observation substituted for the independent reviewer",
+  "source": "Final collaboration reply from /root/independent_single_entry",
+  "reportedVerdict": "已记录在 visual-progress.json 的 54 张 fa357d 主图均通过，未发现新缺陷。原 20＋8 例均使用同一 fa357d 编译包，全部首轮通过，零重试。",
+  "openedListSource": "test-results/accounts-single-entry/independent-final-fa357d/visual-progress.json",
+  "openedListSha256": "314b510647c2114e645f2457dc2406e79534710ae1702596cb6d7529e32607b6",
+  "files": [
+    {
+      "path": "test-results/accounts-single-entry/independent-final-fa357d/evidence/sequential-validation-error-zh-CN.png",
+      "sha256": "955a4213159fd0866ef6e24ed56978f32f2253657454d87c83ff02846b85a426",
+      "verdict": "pass",
+      "reviewer": "independent_single_entry",
+      "observation": "原独立复核已实际逐张打开本版该图，并在最终答复明确54张均未发现新缺陷；此行为该明确判定的索引。"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-fa357d/evidence/sequential-validation-error-en.png",
+      "sha256": "3ea6c61c8e4f4fa07ccba91288e4c5f38be835004aaf3676af50f7a351278fa7",
+      "verdict": "pass",
+      "reviewer": "independent_single_entry",
+      "observation": "原独立复核已实际逐张打开本版该图，并在最终答复明确54张均未发现新缺陷；此行为该明确判定的索引。"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-fa357d/evidence/same-form-save-partial-zh-CN.png",
+      "sha256": "b67caa79e274c98dff864f45bd62d461ccbdf2c8b8212356dd087ee5527e49b8",
+      "verdict": "pass",
+      "reviewer": "independent_single_entry",
+      "observation": "原独立复核已实际逐张打开本版该图，并在最终答复明确54张均未发现新缺陷；此行为该明确判定的索引。"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-fa357d/evidence/same-form-save-partial-en.png",
+      "sha256": "e72d6515baeaaf7da25e83c90651646a8014d7d37cf6091fcec751a3aae85abb",
+      "verdict": "pass",
+      "reviewer": "independent_single_entry",
+      "observation": "原独立复核已实际逐张打开本版该图，并在最终答复明确54张均未发现新缺陷；此行为该明确判定的索引。"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-fa357d/evidence/journey-complete-form-zh-CN.png",
+      "sha256": "790968d0f61dc8d83e8ef4f91edebd3899d25832a6d2bd6c69b56d1773ba1892",
+      "verdict": "pass",
+      "reviewer": "independent_single_entry",
+      "observation": "原独立复核已实际逐张打开本版该图，并在最终答复明确54张均未发现新缺陷；此行为该明确判定的索引。"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-fa357d/evidence/journey-complete-form-en.png",
+      "sha256": "da194a16c7c2fb130a5b811535b1b4ff082bafa4a228a9920ae7fd096e6e96a7",
+      "verdict": "pass",
+      "reviewer": "independent_single_entry",
+      "observation": "原独立复核已实际逐张打开本版该图，并在最终答复明确54张均未发现新缺陷；此行为该明确判定的索引。"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-fa357d/evidence/same-form-create-error-zh-CN.png",
+      "sha256": "7b760c0a38ed4dfb53bd01a6ecc93fa4388d621764db1286575520fa9affda15",
+      "verdict": "pass",
+      "reviewer": "independent_single_entry",
+      "observation": "原独立复核已实际逐张打开本版该图，并在最终答复明确54张均未发现新缺陷；此行为该明确判定的索引。"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-fa357d/evidence/same-form-create-error-en.png",
+      "sha256": "d7efcc7dc137e96767d9760459a51870c7cf449fd20994def0d697a0ac205de8",
+      "verdict": "pass",
+      "reviewer": "independent_single_entry",
+      "observation": "原独立复核已实际逐张打开本版该图，并在最终答复明确54张均未发现新缺陷；此行为该明确判定的索引。"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-fa357d/evidence/journey-bottom-trash-zh-CN.png",
+      "sha256": "7501946400502194e346f12e85caa7091008997665bd8d0a5df2451e0080d3ed",
+      "verdict": "pass",
+      "reviewer": "independent_single_entry",
+      "observation": "原独立复核已实际逐张打开本版该图，并在最终答复明确54张均未发现新缺陷；此行为该明确判定的索引。"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-fa357d/evidence/journey-bottom-trash-en.png",
+      "sha256": "34e056aead842d935d0d1d02c517c46fe7dc05fe3c75c10f2e4d5fdef7c735e3",
+      "verdict": "pass",
+      "reviewer": "independent_single_entry",
+      "observation": "原独立复核已实际逐张打开本版该图，并在最终答复明确54张均未发现新缺陷；此行为该明确判定的索引。"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-fa357d/evidence/purge-error-zh-CN.png",
+      "sha256": "7c84858a38ba23871fd7f4be1c5066b1ca80eb86e456fdf22570174be1052515",
+      "verdict": "pass",
+      "reviewer": "independent_single_entry",
+      "observation": "原独立复核已实际逐张打开本版该图，并在最终答复明确54张均未发现新缺陷；此行为该明确判定的索引。"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-fa357d/evidence/purge-error-en.png",
+      "sha256": "e4fa88965d4af0446e5081cb35fe201b058cd6d2623b8086966ea5ef2d82f341",
+      "verdict": "pass",
+      "reviewer": "independent_single_entry",
+      "observation": "原独立复核已实际逐张打开本版该图，并在最终答复明确54张均未发现新缺陷；此行为该明确判定的索引。"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-fa357d/evidence/matrix-empty-zh-CN-390.png",
+      "sha256": "e54ad46e9718e08c02b99da1d1873dac73bd47a09f09ce0bd8b520b0342ac7b4",
+      "verdict": "pass",
+      "reviewer": "independent_single_entry",
+      "observation": "原独立复核已实际逐张打开本版该图，并在最终答复明确54张均未发现新缺陷；此行为该明确判定的索引。"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-fa357d/evidence/matrix-empty-zh-CN-768.png",
+      "sha256": "2a8863b5b4204546dccd9b7464580b201c3cb1726e92a21ccf715ba9af8170d3",
+      "verdict": "pass",
+      "reviewer": "independent_single_entry",
+      "observation": "原独立复核已实际逐张打开本版该图，并在最终答复明确54张均未发现新缺陷；此行为该明确判定的索引。"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-fa357d/evidence/matrix-empty-zh-CN-1268.png",
+      "sha256": "899bca21440b48bb8dd8815f9007bf021bae73d4a50132ec3ee704c948667ab9",
+      "verdict": "pass",
+      "reviewer": "independent_single_entry",
+      "observation": "原独立复核已实际逐张打开本版该图，并在最终答复明确54张均未发现新缺陷；此行为该明确判定的索引。"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-fa357d/evidence/matrix-empty-zh-CN-1280.png",
+      "sha256": "a6107bd7311b2a5c72024dccb30ae190cfef01b470d1a155bb2d17f05098a5df",
+      "verdict": "pass",
+      "reviewer": "independent_single_entry",
+      "observation": "原独立复核已实际逐张打开本版该图，并在最终答复明确54张均未发现新缺陷；此行为该明确判定的索引。"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-fa357d/evidence/matrix-empty-zh-CN-1920.png",
+      "sha256": "c46c9b5f38882ab7bb380ff45b7deed8b042c6c515a5d13dc3704c54ae70db04",
+      "verdict": "pass",
+      "reviewer": "independent_single_entry",
+      "observation": "原独立复核已实际逐张打开本版该图，并在最终答复明确54张均未发现新缺陷；此行为该明确判定的索引。"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-fa357d/evidence/matrix-empty-zh-CN-2560.png",
+      "sha256": "4b1de2ad8afaf5db56b9f835acd26dbeac1aa85cc0b330b6bfa40516319fc7ec",
+      "verdict": "pass",
+      "reviewer": "independent_single_entry",
+      "observation": "原独立复核已实际逐张打开本版该图，并在最终答复明确54张均未发现新缺陷；此行为该明确判定的索引。"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-fa357d/evidence/matrix-empty-en-390.png",
+      "sha256": "f44f93a847351eb40cf3c55155b467b2e268ca3312cb70dd71c26f491b469fcc",
+      "verdict": "pass",
+      "reviewer": "independent_single_entry",
+      "observation": "原独立复核已实际逐张打开本版该图，并在最终答复明确54张均未发现新缺陷；此行为该明确判定的索引。"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-fa357d/evidence/matrix-empty-en-768.png",
+      "sha256": "fe40941d63714ceaa23af37612e1ed7441f431773fac35cac87aa3222086df10",
+      "verdict": "pass",
+      "reviewer": "independent_single_entry",
+      "observation": "原独立复核已实际逐张打开本版该图，并在最终答复明确54张均未发现新缺陷；此行为该明确判定的索引。"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-fa357d/evidence/matrix-empty-en-1268.png",
+      "sha256": "fbcace7465a9e40bd0a08b04b7306bb95a8ebfcd2075d71953a0e7dbdf80b261",
+      "verdict": "pass",
+      "reviewer": "independent_single_entry",
+      "observation": "原独立复核已实际逐张打开本版该图，并在最终答复明确54张均未发现新缺陷；此行为该明确判定的索引。"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-fa357d/evidence/matrix-empty-en-1280.png",
+      "sha256": "5423752ae5d46a6ff90e2a18abffa2c4e96203c53f5ddd9922ac34ff9c5f2541",
+      "verdict": "pass",
+      "reviewer": "independent_single_entry",
+      "observation": "原独立复核已实际逐张打开本版该图，并在最终答复明确54张均未发现新缺陷；此行为该明确判定的索引。"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-fa357d/evidence/matrix-empty-en-1920.png",
+      "sha256": "a6f1317a4ef6a0f37f2cde20585b5007d5b1d880a97590e1490824677f8a42f4",
+      "verdict": "pass",
+      "reviewer": "independent_single_entry",
+      "observation": "原独立复核已实际逐张打开本版该图，并在最终答复明确54张均未发现新缺陷；此行为该明确判定的索引。"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-fa357d/evidence/matrix-empty-en-2560.png",
+      "sha256": "87ccd3fc70fff78fecdf19e3d945c2bd40388654e8eb1849daa43c37e0fddb36",
+      "verdict": "pass",
+      "reviewer": "independent_single_entry",
+      "observation": "原独立复核已实际逐张打开本版该图，并在最终答复明确54张均未发现新缺陷；此行为该明确判定的索引。"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-fa357d/evidence/matrix-account-expanded-zh-CN-390.png",
+      "sha256": "ef071b45f27a56336c17f82916074a652e0f107b17eea28935e8c116a1ca2954",
+      "verdict": "pass",
+      "reviewer": "independent_single_entry",
+      "observation": "原独立复核已实际逐张打开本版该图，并在最终答复明确54张均未发现新缺陷；此行为该明确判定的索引。"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-fa357d/evidence/matrix-account-expanded-zh-CN-768.png",
+      "sha256": "2d46e48a9caea64284bc349fab0aa5b6fd056bcbc879af0f71509ea9584c3e05",
+      "verdict": "pass",
+      "reviewer": "independent_single_entry",
+      "observation": "原独立复核已实际逐张打开本版该图，并在最终答复明确54张均未发现新缺陷；此行为该明确判定的索引。"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-fa357d/evidence/matrix-account-expanded-zh-CN-1268.png",
+      "sha256": "cf89cfe11c050776b509442c3d8b2cd0072f14c6de749e1a6521b2eee19fc1fa",
+      "verdict": "pass",
+      "reviewer": "independent_single_entry",
+      "observation": "原独立复核已实际逐张打开本版该图，并在最终答复明确54张均未发现新缺陷；此行为该明确判定的索引。"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-fa357d/evidence/matrix-account-expanded-zh-CN-1280.png",
+      "sha256": "0acc23d6666b259d5388e695c1a89a3a85590d37f161bb14519e124303dcd312",
+      "verdict": "pass",
+      "reviewer": "independent_single_entry",
+      "observation": "原独立复核已实际逐张打开本版该图，并在最终答复明确54张均未发现新缺陷；此行为该明确判定的索引。"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-fa357d/evidence/matrix-account-expanded-zh-CN-1920.png",
+      "sha256": "4ebc97e28c93e42a8eba45d08d473a57c5730d4a389891c28dcdfba39edb51ba",
+      "verdict": "pass",
+      "reviewer": "independent_single_entry",
+      "observation": "原独立复核已实际逐张打开本版该图，并在最终答复明确54张均未发现新缺陷；此行为该明确判定的索引。"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-fa357d/evidence/matrix-account-expanded-zh-CN-2560.png",
+      "sha256": "a6f6b62a6050bd2596516a64ced2be798f08f473de679f8722f1879bb3615c99",
+      "verdict": "pass",
+      "reviewer": "independent_single_entry",
+      "observation": "原独立复核已实际逐张打开本版该图，并在最终答复明确54张均未发现新缺陷；此行为该明确判定的索引。"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-fa357d/evidence/matrix-account-expanded-en-390.png",
+      "sha256": "f4ef69333f2139b67e12807866975bfcde288921e7b62ee78cfe56b7e48df46e",
+      "verdict": "pass",
+      "reviewer": "independent_single_entry",
+      "observation": "原独立复核已实际逐张打开本版该图，并在最终答复明确54张均未发现新缺陷；此行为该明确判定的索引。"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-fa357d/evidence/matrix-account-expanded-en-768.png",
+      "sha256": "88c0beb310a55ca8ba4e38784af69028a2fcb2ed38e7d9ab3a70f591bcaf973a",
+      "verdict": "pass",
+      "reviewer": "independent_single_entry",
+      "observation": "原独立复核已实际逐张打开本版该图，并在最终答复明确54张均未发现新缺陷；此行为该明确判定的索引。"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-fa357d/evidence/matrix-account-expanded-en-1268.png",
+      "sha256": "4b21d4ce392369f38cf8fa969c5622e28128fb09c3d74e139085804269f3654f",
+      "verdict": "pass",
+      "reviewer": "independent_single_entry",
+      "observation": "原独立复核已实际逐张打开本版该图，并在最终答复明确54张均未发现新缺陷；此行为该明确判定的索引。"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-fa357d/evidence/matrix-account-expanded-en-1280.png",
+      "sha256": "0b24b4953d76eb0d730ff58c31ff18da4dff1ba3ef71fd043bd375685dd6e00d",
+      "verdict": "pass",
+      "reviewer": "independent_single_entry",
+      "observation": "原独立复核已实际逐张打开本版该图，并在最终答复明确54张均未发现新缺陷；此行为该明确判定的索引。"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-fa357d/evidence/matrix-account-expanded-en-1920.png",
+      "sha256": "1ddd1ed3728c4f4a2fba0a1f1bb08895749aa347bdfdf2d937763939dfa9510c",
+      "verdict": "pass",
+      "reviewer": "independent_single_entry",
+      "observation": "原独立复核已实际逐张打开本版该图，并在最终答复明确54张均未发现新缺陷；此行为该明确判定的索引。"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-fa357d/evidence/matrix-account-expanded-en-2560.png",
+      "sha256": "27bcdd4407efc2b187d234fd7a53cb08ef255ff0b5626ffe06c7224851af22c0",
+      "verdict": "pass",
+      "reviewer": "independent_single_entry",
+      "observation": "原独立复核已实际逐张打开本版该图，并在最终答复明确54张均未发现新缺陷；此行为该明确判定的索引。"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-fa357d/evidence/matrix-editor-default-zh-CN-390.png",
+      "sha256": "fafcef62edd272eeb1998ef428a12fc9a65344041777d4ff49e1af8f6a692fc8",
+      "verdict": "pass",
+      "reviewer": "independent_single_entry",
+      "observation": "原独立复核已实际逐张打开本版该图，并在最终答复明确54张均未发现新缺陷；此行为该明确判定的索引。"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-fa357d/evidence/matrix-editor-default-zh-CN-768.png",
+      "sha256": "df6062c272e04627762d6dd7c031fb1c1c8eddecd185f3b4fc6a6119d42877b1",
+      "verdict": "pass",
+      "reviewer": "independent_single_entry",
+      "observation": "原独立复核已实际逐张打开本版该图，并在最终答复明确54张均未发现新缺陷；此行为该明确判定的索引。"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-fa357d/evidence/matrix-editor-default-zh-CN-1268.png",
+      "sha256": "be88e7d914f0f28f188a72d3a7f3ef912dcb603550833348232f3b376f92ac10",
+      "verdict": "pass",
+      "reviewer": "independent_single_entry",
+      "observation": "原独立复核已实际逐张打开本版该图，并在最终答复明确54张均未发现新缺陷；此行为该明确判定的索引。"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-fa357d/evidence/matrix-editor-default-zh-CN-1280.png",
+      "sha256": "efa0d522343320812f2d000963e066ed166dd707932b5d58c9720e659241e2d5",
+      "verdict": "pass",
+      "reviewer": "independent_single_entry",
+      "observation": "原独立复核已实际逐张打开本版该图，并在最终答复明确54张均未发现新缺陷；此行为该明确判定的索引。"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-fa357d/evidence/matrix-editor-default-zh-CN-1920.png",
+      "sha256": "68989af1309894a70bfe86fb82ba4fe0570d2109c100b6dc8d4ea105734e49d7",
+      "verdict": "pass",
+      "reviewer": "independent_single_entry",
+      "observation": "原独立复核已实际逐张打开本版该图，并在最终答复明确54张均未发现新缺陷；此行为该明确判定的索引。"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-fa357d/evidence/matrix-editor-default-zh-CN-2560.png",
+      "sha256": "adf6d342b2f38b99dafbcdc8bb6fe6e51b4a353059573ce8b8fa24ddfb4befae",
+      "verdict": "pass",
+      "reviewer": "independent_single_entry",
+      "observation": "原独立复核已实际逐张打开本版该图，并在最终答复明确54张均未发现新缺陷；此行为该明确判定的索引。"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-fa357d/evidence/matrix-editor-default-en-390.png",
+      "sha256": "a503a318ae8365f4d03ad23d5e6d8f68ed1b01e10778be43248ff6a6f1225b00",
+      "verdict": "pass",
+      "reviewer": "independent_single_entry",
+      "observation": "原独立复核已实际逐张打开本版该图，并在最终答复明确54张均未发现新缺陷；此行为该明确判定的索引。"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-fa357d/evidence/matrix-editor-default-en-768.png",
+      "sha256": "962dab6c8d25f04cf706ee43c9de681b81ff284ca4640ecb12069923f7adbfa0",
+      "verdict": "pass",
+      "reviewer": "independent_single_entry",
+      "observation": "原独立复核已实际逐张打开本版该图，并在最终答复明确54张均未发现新缺陷；此行为该明确判定的索引。"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-fa357d/evidence/matrix-editor-default-en-1268.png",
+      "sha256": "531cbaea535e947e8ceeacc0d4b3f1b45ad84b4ba7160a44a0053728fdcf1d21",
+      "verdict": "pass",
+      "reviewer": "independent_single_entry",
+      "observation": "原独立复核已实际逐张打开本版该图，并在最终答复明确54张均未发现新缺陷；此行为该明确判定的索引。"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-fa357d/evidence/matrix-editor-default-en-1280.png",
+      "sha256": "3e77178b80a3cfa21a7018259f84c6698103405fc37898e2eff1ff58c55c1e00",
+      "verdict": "pass",
+      "reviewer": "independent_single_entry",
+      "observation": "原独立复核已实际逐张打开本版该图，并在最终答复明确54张均未发现新缺陷；此行为该明确判定的索引。"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-fa357d/evidence/matrix-editor-default-en-1920.png",
+      "sha256": "1c7651e2d174f5fae0469881ddbf28d71292208c89b0e0fa36120078c29501af",
+      "verdict": "pass",
+      "reviewer": "independent_single_entry",
+      "observation": "原独立复核已实际逐张打开本版该图，并在最终答复明确54张均未发现新缺陷；此行为该明确判定的索引。"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-fa357d/evidence/matrix-editor-default-en-2560.png",
+      "sha256": "1573b194ab7aa2f232cb04706db5057929d28fb3f82e51852999a93c80171fc9",
+      "verdict": "pass",
+      "reviewer": "independent_single_entry",
+      "observation": "原独立复核已实际逐张打开本版该图，并在最终答复明确54张均未发现新缺陷；此行为该明确判定的索引。"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-fa357d/evidence/matrix-editor-expanded-error-zh-CN-390.png",
+      "sha256": "620a760d3c2e4c370ed3750e31227ef604276256bad4487663b121c3c1a7b8b0",
+      "verdict": "pass",
+      "reviewer": "independent_single_entry",
+      "observation": "原独立复核已实际逐张打开本版该图，并在最终答复明确54张均未发现新缺陷；此行为该明确判定的索引。"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-fa357d/evidence/matrix-editor-expanded-error-zh-CN-768.png",
+      "sha256": "bdba1082097417aadb6a188137d1a2cf89b532b32b151be7f3fbd912acbc8c4f",
+      "verdict": "pass",
+      "reviewer": "independent_single_entry",
+      "observation": "原独立复核已实际逐张打开本版该图，并在最终答复明确54张均未发现新缺陷；此行为该明确判定的索引。"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-fa357d/evidence/matrix-editor-expanded-error-zh-CN-1268.png",
+      "sha256": "9fe3fdf171abd7dd42a15ef3a2573c3a17265d35e665101861f1610ccbb9522e",
+      "verdict": "pass",
+      "reviewer": "independent_single_entry",
+      "observation": "原独立复核已实际逐张打开本版该图，并在最终答复明确54张均未发现新缺陷；此行为该明确判定的索引。"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-fa357d/evidence/matrix-editor-expanded-error-zh-CN-1280.png",
+      "sha256": "bc227983b546120e331c0d9ce2436fa3a60d67be68dcfdd877effe5fdfe22286",
+      "verdict": "pass",
+      "reviewer": "independent_single_entry",
+      "observation": "原独立复核已实际逐张打开本版该图，并在最终答复明确54张均未发现新缺陷；此行为该明确判定的索引。"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-fa357d/evidence/matrix-editor-expanded-error-zh-CN-1920.png",
+      "sha256": "12c2fa13b2dd2684752122a0f5ddf37db7f32170dd51d0b3b8944cdd90025ddc",
+      "verdict": "pass",
+      "reviewer": "independent_single_entry",
+      "observation": "原独立复核已实际逐张打开本版该图，并在最终答复明确54张均未发现新缺陷；此行为该明确判定的索引。"
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-fa357d/evidence/matrix-editor-expanded-error-zh-CN-2560.png",
+      "sha256": "546ef4ecda498e684db8f093effae2177460d9e1ace62b5b06846e1dc690ea3d",
+      "verdict": "pass",
+      "reviewer": "independent_single_entry",
+      "observation": "原独立复核已实际逐张打开本版该图，并在最终答复明确54张均未发现新缺陷；此行为该明确判定的索引。"
+    }
+  ]
+}

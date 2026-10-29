@@ -1,0 +1,21 @@
+{
+  "candidate": "fa357da7c1c6bcd2618693d6e813c48500dacec9",
+  "archiveSha256": "e0e38d7aba3dcd7d1229094a5e48bbae7f72983117d3e04830f65839ba0867f2",
+  "origin": "http://127.0.0.1:4407",
+  "preparation": "isolated fictional profile; one native passwordVault IDB put throws then restores original",
+  "faultAttempts": 1,
+  "partialMessage": "账号已保存，密码或关联尚未全部保存。请在此重试；不会重复新增账号。",
+  "partialAccounts": 1,
+  "partialEntries": 0,
+  "partialSecretDraftRetained": true,
+  "partialNoticeRetainedAfterPrivateEdit": true,
+  "retryDoubleClickRefresh": {
+    "accounts": 1,
+    "entries": 1
+  },
+  "purgeCancelThenSuccessRefresh": {
+    "accounts": 1,
+    "entries": 0,
+    "trash": 0
+  }
+}

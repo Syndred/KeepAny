@@ -17,3 +17,5 @@ docs/qa/2026-10-28/evidence/final-route-recovery/** -text
 docs/qa/2026-10-28/evidence/fc19-module-fetch/** -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
 # Frozen final-integration receipts include original Windows byte digests.
 docs/qa/2026-10-29/final-integration/** -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+# Keep this task's candidate-bound receipts and original observations byte exact.
+docs/qa/2026-10-29/accounts-single-entry/** -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol

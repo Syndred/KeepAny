@@ -1,0 +1,44 @@
+{
+  "candidate": "fa357da7c1c6bcd2618693d6e813c48500dacec9",
+  "archiveSha256": "e0e38d7aba3dcd7d1229094a5e48bbae7f72983117d3e04830f65839ba0867f2",
+  "origin": "http://127.0.0.1:4407",
+  "browser": "153.0.8010.12",
+  "normalNavigation": true,
+  "uniqueGlobalAdd": true,
+  "qaSize": {
+    "x": 1181,
+    "y": 94,
+    "width": 77,
+    "height": 44
+  },
+  "mobileFinalSize": {
+    "x": 301.75,
+    "y": 85.1875,
+    "width": 76.25,
+    "height": 44
+  },
+  "emptyNameInvalid": true,
+  "invalidFtpRejectedThenClearedOnCorrection": true,
+  "dateInvalid": {
+    "valid": false,
+    "message": "请输入有效日期（年-月-日）"
+  },
+  "correctedDateSavedAndReadBack": "2026-10-29",
+  "errorExposure": {
+    "complete": true,
+    "hit": true
+  },
+  "busyFrames": [
+    true
+  ],
+  "ordinaryAndPrivateAndAliasReadback": true,
+  "trashCancelRestore": true,
+  "purgeWriteFailure": "generic action error, one fault, trash retained",
+  "corruptImport": "specific invalid-backup rejection",
+  "wrongMasterThenCorrect": true,
+  "clipboardDeniedThenActualManualCopy": true,
+  "realSecondTabMutationClearsPrivateDraft": true,
+  "ordinaryDraftRetained": true,
+  "cancelNoExtraRecord": true,
+  "englishMobileSaveRefreshCancel": true
+}

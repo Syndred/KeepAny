@@ -1,0 +1,408 @@
+{
+  "schema": "keepany.single-entry.independent-final.v1",
+  "reviewer": "independent_single_entry + independent_aux_visual",
+  "assembler": "root; raw runs and independent judgments preserved",
+  "candidate": {
+    "phase": "independent-final",
+    "sourceCommit": "fa357da7c1c6bcd2618693d6e813c48500dacec9",
+    "sourceDirty": false,
+    "zip": "dist/preview/KeepAny-0.1.0-preview.fa357da7c1c6-portable.zip",
+    "archiveSha256": "e0e38d7aba3dcd7d1229094a5e48bbae7f72983117d3e04830f65839ba0867f2",
+    "entry": "http://127.0.0.1:4407/",
+    "entrySha256": "507435e8520f68a09741420d88347268306ffbaf7369bbf535c6e3f08c1be380",
+    "archiveIndexPath": "KeepAny-0.1.0-preview.fa357da7c1c6-portable/web/index.html",
+    "archiveIndexIdentical": true,
+    "specSha256": "cbce96126f9b4caea75139acfd1725568c33f6b5600f2c9222f0f3892c92d612",
+    "retries": 0,
+    "workers": 1
+  },
+  "verdict": "pass",
+  "scope": "SE01-SE16 and selected adjacent regressions only; no full-product, native, public-release or cloud-CI claim",
+  "runs": [
+    {
+      "path": "test-results/accounts-single-entry/independent-final-fa357d/playwright.json",
+      "sha256": "7bc52760c03274b596c93f2c90a594f60e725e0c22ccc6fb578c67a7914a454a",
+      "stats": {
+        "startTime": "2026-10-29T11:18:02.180Z",
+        "duration": 318396.183,
+        "expected": 20,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      },
+      "workers": 1,
+      "retries": [
+        0
+      ],
+      "tests": [
+        {
+          "title": "zh-CN 1536px disconnects, deletes, restores and re-imports without reviving trashed accounts",
+          "file": "account-link-recovery.spec.ts",
+          "status": "expected",
+          "results": [
+            {
+              "status": "passed",
+              "retry": 0,
+              "durationMs": 22983
+            }
+          ]
+        },
+        {
+          "title": "en 1536px disconnects, deletes, restores and re-imports without reviving trashed accounts",
+          "file": "account-link-recovery.spec.ts",
+          "status": "expected",
+          "results": [
+            {
+              "status": "passed",
+              "retry": 0,
+              "durationMs": 21281
+            }
+          ]
+        },
+        {
+          "title": "zh-CN 390px disconnects, deletes, restores and re-imports without reviving trashed accounts",
+          "file": "account-link-recovery.spec.ts",
+          "status": "expected",
+          "results": [
+            {
+              "status": "passed",
+              "retry": 0,
+              "durationMs": 20755
+            }
+          ]
+        },
+        {
+          "title": "en 390px disconnects, deletes, restores and re-imports without reviving trashed accounts",
+          "file": "account-link-recovery.spec.ts",
+          "status": "expected",
+          "results": [
+            {
+              "status": "passed",
+              "retry": 0,
+              "durationMs": 21241
+            }
+          ]
+        },
+        {
+          "title": "zh-CN 390 account and password features survive unified entry, locking and KDBX restore",
+          "file": "account-password-consolidation.spec.ts",
+          "status": "expected",
+          "results": [
+            {
+              "status": "passed",
+              "retry": 0,
+              "durationMs": 16555
+            }
+          ]
+        },
+        {
+          "title": "zh-CN 1280 account and password features survive unified entry, locking and KDBX restore",
+          "file": "account-password-consolidation.spec.ts",
+          "status": "expected",
+          "results": [
+            {
+              "status": "passed",
+              "retry": 0,
+              "durationMs": 17251
+            }
+          ]
+        },
+        {
+          "title": "en 390 account and password features survive unified entry, locking and KDBX restore",
+          "file": "account-password-consolidation.spec.ts",
+          "status": "expected",
+          "results": [
+            {
+              "status": "passed",
+              "retry": 0,
+              "durationMs": 16622
+            }
+          ]
+        },
+        {
+          "title": "en 1280 account and password features survive unified entry, locking and KDBX restore",
+          "file": "account-password-consolidation.spec.ts",
+          "status": "expected",
+          "results": [
+            {
+              "status": "passed",
+              "retry": 0,
+              "durationMs": 16447
+            }
+          ]
+        },
+        {
+          "title": "zh-CN SE01-SE07 unified account creation, original fields, durable KDBX link and bottom trash",
+          "file": "accounts-single-entry.spec.ts",
+          "status": "expected",
+          "results": [
+            {
+              "status": "passed",
+              "retry": 0,
+              "durationMs": 12058
+            }
+          ]
+        },
+        {
+          "title": "zh-CN SE02 same-form create and unlock errors preserve ordinary draft",
+          "file": "accounts-single-entry.spec.ts",
+          "status": "expected",
+          "results": [
+            {
+              "status": "passed",
+              "retry": 0,
+              "durationMs": 8316
+            }
+          ]
+        },
+        {
+          "title": "zh-CN SE08 empty, merged form, long invalid draft and expanded account at six widths",
+          "file": "accounts-single-entry.spec.ts",
+          "status": "expected",
+          "results": [
+            {
+              "status": "passed",
+              "retry": 0,
+              "durationMs": 10582
+            }
+          ]
+        },
+        {
+          "title": "en SE01-SE07 unified account creation, original fields, durable KDBX link and bottom trash",
+          "file": "accounts-single-entry.spec.ts",
+          "status": "expected",
+          "results": [
+            {
+              "status": "passed",
+              "retry": 0,
+              "durationMs": 12719
+            }
+          ]
+        },
+        {
+          "title": "en SE02 same-form create and unlock errors preserve ordinary draft",
+          "file": "accounts-single-entry.spec.ts",
+          "status": "expected",
+          "results": [
+            {
+              "status": "passed",
+              "retry": 0,
+              "durationMs": 8360
+            }
+          ]
+        },
+        {
+          "title": "en SE08 empty, merged form, long invalid draft and expanded account at six widths",
+          "file": "accounts-single-entry.spec.ts",
+          "status": "expected",
+          "results": [
+            {
+              "status": "passed",
+              "retry": 0,
+              "durationMs": 11301
+            }
+          ]
+        },
+        {
+          "title": "zh-CN passwordless labeled notes retain punctuation and prefill reviewed fields",
+          "file": "password-vault-user-journey.spec.ts",
+          "status": "expected",
+          "results": [
+            {
+              "status": "passed",
+              "retry": 0,
+              "durationMs": 2138
+            }
+          ]
+        },
+        {
+          "title": "en passwordless labeled notes retain punctuation and prefill reviewed fields",
+          "file": "password-vault-user-journey.spec.ts",
+          "status": "expected",
+          "results": [
+            {
+              "status": "passed",
+              "retry": 0,
+              "durationMs": 2040
+            }
+          ]
+        },
+        {
+          "title": "zh-CN 1536px user imports, categorizes and follows account identities before vault maintenance",
+          "file": "password-vault-user-journey.spec.ts",
+          "status": "expected",
+          "results": [
+            {
+              "status": "passed",
+              "retry": 0,
+              "durationMs": 23020
+            }
+          ]
+        },
+        {
+          "title": "zh-CN 390px user imports, categorizes and follows account identities before vault maintenance",
+          "file": "password-vault-user-journey.spec.ts",
+          "status": "expected",
+          "results": [
+            {
+              "status": "passed",
+              "retry": 0,
+              "durationMs": 22305
+            }
+          ]
+        },
+        {
+          "title": "en 1536px user imports, categorizes and follows account identities before vault maintenance",
+          "file": "password-vault-user-journey.spec.ts",
+          "status": "expected",
+          "results": [
+            {
+              "status": "passed",
+              "retry": 0,
+              "durationMs": 22047
+            }
+          ]
+        },
+        {
+          "title": "en 390px user imports, categorizes and follows account identities before vault maintenance",
+          "file": "password-vault-user-journey.spec.ts",
+          "status": "expected",
+          "results": [
+            {
+              "status": "passed",
+              "retry": 0,
+              "durationMs": 22107
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "test-results/accounts-single-entry/independent-final-fa357d/adjacent/playwright.json",
+      "sha256": "7f96a0591571c8eee785a624ec221cb592b8e35db40014cd190ab1369397888e",
+      "stats": {
+        "startTime": "2026-10-29T11:23:56.639Z",
+        "duration": 137767.958,
+        "expected": 8,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      },
+      "workers": 1,
+      "retries": [
+        0
+      ],
+      "tests": [
+        {
+          "title": "zh-CN 1280 real busy across applicable toolbar consumers",
+          "file": "account-layout-busy-independent.spec.ts",
+          "status": "expected",
+          "results": [
+            {
+              "status": "passed",
+              "retry": 0,
+              "durationMs": 17552
+            }
+          ]
+        },
+        {
+          "title": "en 390 real busy across applicable toolbar consumers",
+          "file": "account-layout-busy-independent.spec.ts",
+          "status": "expected",
+          "results": [
+            {
+              "status": "passed",
+              "retry": 0,
+              "durationMs": 17159
+            }
+          ]
+        },
+        {
+          "title": "independent zh-CN 1280: AL02 AL03 AL04 AL05 shared consumers",
+          "file": "account-layout-independent.spec.ts",
+          "status": "expected",
+          "results": [
+            {
+              "status": "passed",
+              "retry": 0,
+              "durationMs": 14120
+            }
+          ]
+        },
+        {
+          "title": "independent en 390: AL02 AL03 AL04 AL05 shared consumers",
+          "file": "account-layout-independent.spec.ts",
+          "status": "expected",
+          "results": [
+            {
+              "status": "passed",
+              "retry": 0,
+              "durationMs": 13046
+            }
+          ]
+        },
+        {
+          "title": "zh-CN 1280 FC22 active success toast stays below modal actions",
+          "file": "toast-dialog-layer.spec.ts",
+          "status": "expected",
+          "results": [
+            {
+              "status": "passed",
+              "retry": 0,
+              "durationMs": 7278
+            }
+          ]
+        },
+        {
+          "title": "en 390 FC22 active success toast stays below modal actions",
+          "file": "toast-dialog-layer.spec.ts",
+          "status": "expected",
+          "results": [
+            {
+              "status": "passed",
+              "retry": 0,
+              "durationMs": 7353
+            }
+          ]
+        },
+        {
+          "title": "zh-CN 1280x900 FC24 selected bottom entry preserves dialog boundaries and saved identity",
+          "file": "vault-links-layout.spec.ts",
+          "status": "expected",
+          "results": [
+            {
+              "status": "passed",
+              "retry": 0,
+              "durationMs": 30606
+            }
+          ]
+        },
+        {
+          "title": "en 390x900 FC24 selected bottom entry preserves dialog boundaries and saved identity",
+          "file": "vault-links-layout.spec.ts",
+          "status": "expected",
+          "results": [
+            {
+              "status": "passed",
+              "retry": 0,
+              "durationMs": 29466
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "visual": "independent-visual-reviewed-fa357d.json",
+  "auxVisual": "independent-aux-visual-fa357d.json",
+  "independentFirstVerdict": "independent-first-54-verdict-fa357d.json",
+  "visualEvidenceArchive": {
+    "path": "test-results/accounts-single-entry/independent-final-fa357d/visual-evidence-72.zip",
+    "sha256": "5bcd6d1fb3ac1c1b502c6ebff25060a77fc94ea71ed889e55827d02a72c7fcb1"
+  },
+  "visualReviewers": [
+    "independent_single_entry",
+    "independent_aux_visual"
+  ],
+  "additionalConfirmation": "Second reviewer confirmed twelve already opened main frames before the first reviewer final verdict arrived; kept as additional independent confirmation, not another product run.",
+  "auxVisualFileSha256": "9f68c767e9fd79e8b5439991842823cccba519265216018bc8a496d5e3f99136"
+}

@@ -1,0 +1,52 @@
+{
+  "archivePath": "dist/preview/KeepAny-0.1.0-preview.fa357da7c1c6-portable.zip",
+  "origin": "http://127.0.0.1:4180",
+  "verdict": "pass",
+  "method": "Independent raw HTTP byte hashes against clean portable ZIP release manifest and retained-asset manifest; no browser profile or user data accessed",
+  "candidate": "fa357da7c1c6bcd2618693d6e813c48500dacec9",
+  "reviewer": "independent_aux_visual",
+  "sourceDirty": false,
+  "results": [
+    {
+      "contentType": "text/html; charset=utf-8",
+      "actualSha256": "507435e8520f68a09741420d88347268306ffbaf7369bbf535c6e3f08c1be380",
+      "bytes": 1911,
+      "sha256Matches": true,
+      "expectedSha256": "507435e8520f68a09741420d88347268306ffbaf7369bbf535c6e3f08c1be380",
+      "status": 200,
+      "expectedSource": "portable ZIP RELEASE.json/webFiles",
+      "path": "index.html"
+    },
+    {
+      "contentType": "text/javascript; charset=utf-8",
+      "actualSha256": "dd6a27ac67f9eda56b5207dea6e2302c8b329550700b95e56ba2d8e14fb30ebf",
+      "bytes": 614486,
+      "sha256Matches": true,
+      "expectedSha256": "dd6a27ac67f9eda56b5207dea6e2302c8b329550700b95e56ba2d8e14fb30ebf",
+      "status": 200,
+      "expectedSource": "portable ZIP index.html + RELEASE.json/webFiles",
+      "path": "assets/index-Cq2dOyjz.js"
+    },
+    {
+      "contentType": "text/javascript; charset=utf-8",
+      "actualSha256": "d2b13c9c3ee8dacda5edda747a7b116b57c3cdd4fd94882fe5edbc3371967c96",
+      "bytes": 8386,
+      "sha256Matches": true,
+      "expectedSha256": "d2b13c9c3ee8dacda5edda747a7b116b57c3cdd4fd94882fe5edbc3371967c96",
+      "status": 200,
+      "expectedSource": "portable ZIP RELEASE.json/webFiles",
+      "path": "assets/AccountEntryDialog-3KCQmtgK.js"
+    },
+    {
+      "contentType": "text/javascript; charset=utf-8",
+      "actualSha256": "3061fe8284902a2707dd94f1b01adaa3ca03925527a52bb4a3cd228c26a26184",
+      "bytes": 8164,
+      "sha256Matches": true,
+      "expectedSha256": "3061fe8284902a2707dd94f1b01adaa3ca03925527a52bb4a3cd228c26a26184",
+      "status": 200,
+      "expectedSource": "release/retained-assets.json",
+      "path": "assets/AccountEntryDialog-BaIRui9s.js"
+    }
+  ],
+  "archiveSha256": "e0e38d7aba3dcd7d1229094a5e48bbae7f72983117d3e04830f65839ba0867f2"
+}
