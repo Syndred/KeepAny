@@ -48,6 +48,13 @@
 .account-entry-form .field-error {
 	overflow-wrap: anywhere;
 }
+.account-entry-form .password-vault-editor-actions {
+	flex-wrap: wrap;
+}
+.account-entry-form .password-vault-editor-error {
+	flex-basis: 100%;
+	margin: 0;
+}
 @media (max-width: 680px) {
 	.account-entry-form .password-vault-editor-grid {
 		grid-template-columns: minmax(0, 1fr);

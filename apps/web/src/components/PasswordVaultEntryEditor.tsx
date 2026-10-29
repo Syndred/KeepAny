@@ -278,8 +278,8 @@ export function EntryEditor({
 					</div>
 				)}
 			</div>}
-			{error && <p className="field-error" role="alert">{error}</p>}
 			<div className="actions password-vault-editor-actions">
+				{error && <p className="field-error password-vault-editor-error" role="alert">{error}</p>}
 				{onCancel && <Button type="button" disabled={busy} onClick={onCancel}>{t("cancel")}</Button>}
 				<Button type="submit" variant="primary" disabled={busy}>
 					<Check size={16} /> {t(unified ? "save" : "pwVaultSaveEntry")}

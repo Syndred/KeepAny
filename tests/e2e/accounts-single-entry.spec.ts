@@ -168,10 +168,25 @@ for (const language of ["zh-CN", "en"] as const) {
 			let dialog = await newAccount(page, t);
 			await dialog.locator("#password-vault-entry-title").fill("Synthetic retained draft");
 			await dialog.locator("#password-vault-entry-username").fill("retained@example.test");
+			await openMore(dialog);
+			await dialog.locator("#account-entry-notes").fill("Synthetic ordinary account details remain after an access error. ".repeat(24));
 			await dialog.locator("#account-entry-master").fill(master);
 			await dialog.locator("#account-entry-master-confirm").fill(`${master}wrong`);
 			await dialog.getByRole("button", { name: t("pwVaultCreate"), exact: true }).click();
-			await expect(dialog.getByRole("alert")).toBeVisible();
+			const error = dialog.getByRole("alert");
+			await expect(error).toBeVisible();
+			// SE13: DOM visibility does not prove that sticky actions do not cover
+			// feedback after the longer, expanded account form has scrolled.
+			const feedback = await error.evaluate(node => {
+				const box = node.getBoundingClientRect();
+				const hit = document.elementFromPoint(box.left + box.width / 2, box.top + box.height / 2);
+				return { top: box.top, bottom: box.bottom, left: box.left, right: box.right, width: innerWidth, height: innerHeight, exposed: !!hit && (hit === node || node.contains(hit)) };
+			});
+			expect(feedback.top).toBeGreaterThanOrEqual(0);
+			expect(feedback.bottom).toBeLessThanOrEqual(feedback.height);
+			expect(feedback.left).toBeGreaterThanOrEqual(0);
+			expect(feedback.right).toBeLessThanOrEqual(feedback.width);
+			expect(feedback.exposed).toBe(true);
 			await expect(dialog.locator("#password-vault-entry-title")).toHaveValue("Synthetic retained draft");
 			await expect(page.locator(".asset-account-card")).toHaveCount(0);
 			await snapshot(page, `same-form-create-error-${language}`);

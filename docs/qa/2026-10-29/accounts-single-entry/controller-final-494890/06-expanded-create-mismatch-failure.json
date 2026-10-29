@@ -1,0 +1,19 @@
+{
+  "candidate": "4948904231ca0f9507024cadc167ff1b052acfd9",
+  "verdict": "fail",
+  "contract": "SE13",
+  "message": "两次输入的主密码不一致。",
+  "errorRect": {
+    "x": 250,
+    "y": 873.796875,
+    "width": 780,
+    "height": 24,
+    "top": 873.796875,
+    "right": 1030,
+    "bottom": 897.796875,
+    "left": 250
+  },
+  "coveredBy": "actions password-vault-editor-actions",
+  "coveredText": "取消 保存",
+  "centerIsError": false
+}

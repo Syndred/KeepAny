@@ -168,14 +168,16 @@ async function mobileToolbarLayout(page: Page) {
 				};
 			}),
 		);
-	expect(boxes).toHaveLength(8);
+	// The duplicate global add and top trash shortcut were intentionally removed.
+	// Six remaining tools keep the same 44px targets and spacing contract.
+	expect(boxes).toHaveLength(6);
 	const rows: (typeof boxes)[] = [];
 	for (const box of boxes) {
 		const row = rows.find((row) => Math.abs(row[0].top - box.top) < 1);
 		if (row) row.push(box);
 		else rows.push([box]);
 	}
-	expect(rows.map((row) => row.length)).toEqual([5, 3]);
+	expect(rows.map((row) => row.length)).toEqual([5, 1]);
 	for (const row of rows) {
 		const sorted = [...row].sort((a, b) => a.left - b.left);
 		for (let i = 1; i < sorted.length; i++)

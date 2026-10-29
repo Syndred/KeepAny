@@ -86,8 +86,11 @@ for (const language of ["zh-CN", "en"] as const) for (const width of [390, 1280]
 			await query.fill(note); await expect(page.locator(".workspace-password-only")).toHaveCount(0);
 			await query.fill("");
 			await standalone.getByRole("button", { name: t("pwVaultHistory"), exact: true }).click();
-			await expect(page.locator(".password-vault-history-row")).not.toHaveCount(0);
-			await page.getByRole("dialog").getByRole("button", { name: t("pwVaultHistoryRestore"), exact: true }).first().click();
+			// Preparation now creates an account-linked revision, then unlinks it.
+			// Restore the exact second (unlinked, still passwordless) revision that
+			// preceded the password edit, retaining the original standalone contract.
+			await expect(page.locator(".password-vault-history-row")).toHaveCount(2);
+			await page.locator(".password-vault-history-row").nth(1).getByRole("button", { name: t("pwVaultHistoryRestore"), exact: true }).click();
 			await expect(page.getByRole("dialog")).toBeHidden();
 			await expect(standalone).toContainText(t("pwVaultNoPassword"));
 			// Linked entry unlinks after confirmation and joins standalone rows, without changing the account.
