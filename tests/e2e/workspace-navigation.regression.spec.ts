@@ -5,6 +5,7 @@ import { resources } from "../../apps/web/src/i18n";
 import { selectChoice } from "./helpers/select-choice";
 import { passwordVaultCopy } from "../../apps/web/src/password-vault-copy";
 import { sourceModuleUrl } from "./helpers/source-module-url";
+import { openStandaloneEntryDraft, saveStandaloneEntryDraft } from "./helpers/standalone-entry";
 
 const evidence = process.env.KEEPANY_EVIDENCE_DIR ?? "/tmp/keepany-navigation";
 mkdirSync(evidence, { recursive: true });
@@ -64,11 +65,11 @@ for (const locale of ["zh-CN", "en"] as const) for (const width of [390, 1280]) 
 		await page.locator("#password-vault-master").fill("T01 synthetic master!2026");
 		await page.locator("#password-vault-master-confirm").fill("T01 synthetic master!2026");
 		await page.getByRole("button", { name: p("pwVaultCreate"), exact: true }).click();
-		await page.getByRole("button", { name: p("pwVaultNewEntry"), exact: true }).click();
+		await openStandaloneEntryDraft(page, p);
 		await page.locator("#password-vault-entry-title").fill("T01 retained credential");
 		await page.locator("#password-vault-entry-username").fill("synthetic@example.test");
 		await page.locator("#password-vault-entry-password").fill("Synthetic T01 secret!2026");
-		await page.getByRole("dialog").getByRole("button", { name: p("pwVaultSaveEntry"), exact: true }).click();
+		await saveStandaloneEntryDraft(page, p);
 		await expect(page.locator(".password-vault-entry")).toHaveCount(1);
 		const before = await ordinaryRecords(page);
 		for (const [path, group] of [

@@ -33,6 +33,7 @@ function AssetTabs({ view }: { view: AssetView }) {
 }
 
 const PasswordVaultPanel = lazy(() => import("./components/PasswordVaultPanel").then((module) => ({ default: module.PasswordVaultPanel })));
+const AccountEntryDialog = lazy(() => import("./components/AccountEntryDialog").then((module) => ({ default: module.AccountEntryDialog })));
 
 export function AccountsWorkspace() {
 	const { data, search, notify } = useAppContext();
@@ -51,21 +52,21 @@ export function AccountsWorkspace() {
 		[entry.title, entry.username, ...(entry.usernameAliases ?? []), entry.url].join(" ").toLocaleLowerCase().includes(query.trim().toLocaleLowerCase())));
 	return <main className="page unified-accounts-page">
 		<Suspense fallback={<p role="status">{t("pwVaultLoading")}</p>}>
-			<PasswordVaultPanel assets={data.assets} sampleAccounts={sampleAccounts} notify={notify} focusAssetId={hash.startsWith("asset-") ? hash.slice(6) : undefined}
-				headerAction={<Button variant="primary" title={t("workspaceAddAccount")} disabled={data.pendingCategoryEdits.some((pending) => pending.kind === "account")} onClick={() => setEditAccount(true)}><Plus size={17} />{t("add")}</Button>}
-				renderAccounts={({ renderEntry, addEntry }) => <AssetKindList kind="account" embedded hideTitle privateSearch={snapshot.status === "unlocked"}
+			<PasswordVaultPanel assets={data.assets} sampleAccounts={sampleAccounts} accountCount={data.assets.filter(asset => asset.kind === "account" && !asset.deleted).length + grouped.unlinked.length} notify={notify} focusAssetId={hash.startsWith("asset-") ? hash.slice(6) : undefined}
+				headerAction={({ busy, clearMessage }) => <Button variant="primary" title={t("workspaceAddAccount")} disabled={busy || data.pendingCategoryEdits.some((pending) => pending.kind === "account")} onClick={() => { clearMessage(); setEditAccount(true); }}><Plus size={17} />{t("add")}</Button>}
+				renderAccounts={({ renderEntry, addEntry, busy }) => <AssetKindList kind="account" embedded hideTitle privateSearch={snapshot.status === "unlocked"}
 					accountSearchExtras={searchExtras} onAccountFiltersChange={setFilters}
 					renderAccountDetails={(asset) => snapshot.status === "unlocked" ? <details className="unified-account-passwords">
 						<summary>{t("workspacePasswordCount", { count: grouped.linked.get(asset.id)?.length ?? 0 })}</summary>
 						<div className="password-vault-entry-list">{(grouped.linked.get(asset.id) ?? []).map(renderEntry)}</div>
-						<Button size="small" onClick={() => addEntry(asset.id)}><Plus size={15} />{t("pwVaultNewEntry")}</Button>
+						<Button size="small" disabled={busy} onClick={() => addEntry(asset.id)}><Plus size={15} />{t("pwVaultNewEntry")}</Button>
 					</details> : <p className="unified-account-locked">{t(snapshot.status === "empty" ? "workspacePasswordsNotCreated" : snapshot.status === "loading" ? "pwVaultLoading" : "workspacePasswordsLocked")}</p>}
 					afterList={snapshot.status === "unlocked" && !filters.category && !filters.tag && unlinked.length > 0 ? <section className="workspace-password-only" aria-labelledby="workspace-unlinked-passwords">
 						<h2 id="workspace-unlinked-passwords">{t("workspacePasswordOnly")}</h2><div className="password-vault-entry-list">{unlinked.map(renderEntry)}</div>
 					</section> : null} />}
 			/>
 		</Suspense>
-		{editAccount && <Suspense fallback={<p role="status">{t("loading")}</p>}><AssetEditor kind="account" categories={data.categories} onClose={() => setEditAccount(false)} /></Suspense>}
+		{editAccount && <Suspense fallback={<p role="status">{t("loading")}</p>}><AccountEntryDialog onClose={() => setEditAccount(false)} /></Suspense>}
 	</main>;
 }
 

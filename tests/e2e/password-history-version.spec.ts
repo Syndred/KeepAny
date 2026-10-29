@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { expect, test } from "@playwright/test";
 import { inspectVisualKdbx, visualCopy, visualMaster } from "./fixtures/password-smart-import-visual";
 import { openVaultAccess, revealPasswordEntries } from "./helpers/vault-access";
+import { openStandaloneEntryDraft } from "./helpers/standalone-entry";
 
 // All records and credentials are synthetic. Setup, editing, history actions,
 // export and reopening use the actual compiled UI; KDBX inspection is read-only.
@@ -74,12 +75,14 @@ for (const language of ["zh-CN", "en"] as const) for (const width of [390, 1280]
 			await page.getByRole("button", { name: t("pwVaultCreate"), exact: true }).click();
 			await expect(page.locator(".password-vault-toolbar")).toBeVisible();
 			for (const name of [title, otherTitle]) {
-				await page.getByRole("button", { name: t("pwVaultNewEntry"), exact: true }).click();
+				await openStandaloneEntryDraft(page, t);
 				await page.locator("#password-vault-entry-title").fill(name);
 				await page.locator("#password-vault-entry-username").fill(usernames[0]);
 				await page.locator("#password-vault-entry-password").fill(passwords[0]);
 				await page.locator("#password-vault-entry-notes").fill("Synthetic FC18 saved revision 1");
-				await page.getByRole("dialog").getByRole("button", { name: t("pwVaultSaveEntry"), exact: true }).click();
+				// Keep the automatic account link: unlinking would add a history revision
+				// and would invalidate the original empty-history preparation contract.
+				await page.getByRole("dialog").getByRole("button", { name: /^(保存|Save)$/ }).click();
 				await expect(page.getByRole("dialog")).toHaveCount(0);
 			}
 			await revealPasswordEntries(page);

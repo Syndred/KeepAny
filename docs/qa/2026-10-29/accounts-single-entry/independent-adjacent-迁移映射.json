@@ -1,0 +1,122 @@
+[
+  {
+    "from": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\docs\\qa\\2026-10-29\\accounts-single-entry\\independent-source-adjacent",
+    "to": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\test-results\\accounts-single-entry\\independent-source-adjacent",
+    "files": [
+      {
+        "path": "docs\\qa\\2026-10-29\\accounts-single-entry\\independent-source-adjacent\\filtered-unlink-zh-CN-1280-empty-filter.png",
+        "sha256": "39c03e53fae0e68e0f0e3a5adf57314ec94bd1487dbcafde50e1e6c7d082d9af"
+      },
+      {
+        "path": "docs\\qa\\2026-10-29\\accounts-single-entry\\independent-source-adjacent\\filtered-unlink-zh-CN-1280-retained.png",
+        "sha256": "f6683916af17e28d4939fb8549417b4e733dfa7b77d86750d7a4e52225518ac9"
+      },
+      {
+        "path": "docs\\qa\\2026-10-29\\accounts-single-entry\\independent-source-adjacent\\filtered-unlink-zh-CN-1280.json",
+        "sha256": "92fb9fd013bddf31c69d65592f91b8088c5fb2ef6671cdbe73a8109cf3ce1d46"
+      },
+      {
+        "path": "docs\\qa\\2026-10-29\\accounts-single-entry\\independent-source-adjacent\\zh-CN-1536-automatic-suggestions.png",
+        "sha256": "bccbd4757d8e8fb2c7793cae1d11c7fb887839d34643787f0c072b27516e61a8"
+      },
+      {
+        "path": "docs\\qa\\2026-10-29\\accounts-single-entry\\independent-source-adjacent\\zh-CN-1536-both-connections.png",
+        "sha256": "4874dfb9c4b6792ea470c1e4ede42ae8c87441ed32198155a07487aedef62025"
+      },
+      {
+        "path": "docs\\qa\\2026-10-29\\accounts-single-entry\\independent-source-adjacent\\zh-CN-1536-complete-mailbox.png",
+        "sha256": "15ecab2d1647697b3c78f4fb86a7abaa68b0b09cac6fe33f09e95d4dd7e91c0b"
+      },
+      {
+        "path": "docs\\qa\\2026-10-29\\accounts-single-entry\\independent-source-adjacent\\zh-CN-1536-complete-phone.png",
+        "sha256": "aa7c7f3712f87b18c0e0bef3d18be915a5f4edc334768887bb01b3054168b7e3"
+      },
+      {
+        "path": "docs\\qa\\2026-10-29\\accounts-single-entry\\independent-source-adjacent\\zh-CN-1536-complete-preview.png",
+        "sha256": "8582c10aeffb6c8a3fe9e928f5fe2cab0ee4cc048994e8c73b5ea6fd32f244e3"
+      },
+      {
+        "path": "docs\\qa\\2026-10-29\\accounts-single-entry\\independent-source-adjacent\\zh-CN-1536-final-complete-mailbox.png",
+        "sha256": "1f03a4843715aea556bf09cb49a8a05e6893a9f5dae51844bba481701e30f278"
+      },
+      {
+        "path": "docs\\qa\\2026-10-29\\accounts-single-entry\\independent-source-adjacent\\zh-CN-1536-manual-targets.png",
+        "sha256": "63e3aedd03a95967977ad3d1243b408e2d3d8a674dffb551100b405bf58f694c"
+      },
+      {
+        "path": "docs\\qa\\2026-10-29\\accounts-single-entry\\independent-source-adjacent\\zh-CN-1536-shared-identity.json",
+        "sha256": "d4d2ceb699c7b74eb58b0136dd210651ba2e4cadb1255440ffde7658e9f17bff"
+      },
+      {
+        "path": "docs\\qa\\2026-10-29\\accounts-single-entry\\independent-source-adjacent\\fc18-zh-CN-1280\\after-first-restore.png",
+        "sha256": "1a1a392624ecee3301cdaa4f88c663928a0d780369bc16f0149b6409c3593592"
+      },
+      {
+        "path": "docs\\qa\\2026-10-29\\accounts-single-entry\\independent-source-adjacent\\fc18-zh-CN-1280\\after-reload-history-bottom.png",
+        "sha256": "cbb323c40fd3f78622344076957e0d271cc2f249180b43cb61fa870b559b8fd1"
+      },
+      {
+        "path": "docs\\qa\\2026-10-29\\accounts-single-entry\\independent-source-adjacent\\fc18-zh-CN-1280\\after-reload-history-stable.png",
+        "sha256": "cbb323c40fd3f78622344076957e0d271cc2f249180b43cb61fa870b559b8fd1"
+      },
+      {
+        "path": "docs\\qa\\2026-10-29\\accounts-single-entry\\independent-source-adjacent\\fc18-zh-CN-1280\\after-reload-history.png",
+        "sha256": "7115166d63708e1b0a99583f7b6209d07f54fb340588e2072a78df2ccf987a09"
+      },
+      {
+        "path": "docs\\qa\\2026-10-29\\accounts-single-entry\\independent-source-adjacent\\fc18-zh-CN-1280\\empty-history.png",
+        "sha256": "c4382a760e53c6ec23f8ae4ef7e24ecad53fa27ebe10d85f710584db8a3a501e"
+      },
+      {
+        "path": "docs\\qa\\2026-10-29\\accounts-single-entry\\independent-source-adjacent\\fc18-zh-CN-1280\\multiple-history.png",
+        "sha256": "c709d669f964cec8f918bde40e7779cbd5831683b9fa1c996f47643d631ee38e"
+      },
+      {
+        "path": "docs\\qa\\2026-10-29\\accounts-single-entry\\independent-source-adjacent\\fc18-zh-CN-1280\\one-history.png",
+        "sha256": "fb7eba1b49d2159a9d6aea6ca0f90d53aa08b0456a782f0133b00bdf6b20e5f0"
+      },
+      {
+        "path": "docs\\qa\\2026-10-29\\accounts-single-entry\\independent-source-adjacent\\fc18-zh-CN-1280\\result.json",
+        "sha256": "44f5529cbdf1aa977b6d0831935e8b8763b4a029c6ae23378f1f052c6f27989b"
+      }
+    ]
+  },
+  {
+    "from": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\docs\\qa\\2026-10-29\\accounts-single-entry\\independent-source-adjacent-results",
+    "to": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\test-results\\accounts-single-entry\\independent-source-adjacent-results",
+    "files": [
+      {
+        "path": "docs\\qa\\2026-10-29\\accounts-single-entry\\independent-source-adjacent-results\\.last-run.json",
+        "sha256": "91d1c43004802cd49950d78eb11c8fa7d05da8ffffe219a8b13b2f561bc00903"
+      },
+      {
+        "path": "docs\\qa\\2026-10-29\\accounts-single-entry\\independent-source-adjacent-results\\account-shared-identity-zh-51558-ounts-and-lifecycle-changes\\mailbox-matrix.kdbx",
+        "sha256": "c950e999e732970fc6581354444f5b5e555757ee564cc3e0398bfa7618291afb"
+      },
+      {
+        "path": "docs\\qa\\2026-10-29\\accounts-single-entry\\independent-source-adjacent-results\\password-history-version-z-d9e6f-saved-revision-after-reload\\after-reload.kdbx",
+        "sha256": "7ab343a70e1f0fa0500c9106e8d1b3d87fb7150858878efda2545a73bf941712"
+      },
+      {
+        "path": "docs\\qa\\2026-10-29\\accounts-single-entry\\independent-source-adjacent-results\\password-history-version-z-d9e6f-saved-revision-after-reload\\before-history-actions.kdbx",
+        "sha256": "349f7346c5aa86c0e372bf33cc84b619fb1ffca5ee39f596e4bb36af2d957993"
+      },
+      {
+        "path": "docs\\qa\\2026-10-29\\accounts-single-entry\\independent-source-adjacent-results\\password-history-version-z-d9e6f-saved-revision-after-reload\\cancel-history.kdbx",
+        "sha256": "349f7346c5aa86c0e372bf33cc84b619fb1ffca5ee39f596e4bb36af2d957993"
+      },
+      {
+        "path": "docs\\qa\\2026-10-29\\accounts-single-entry\\independent-source-adjacent-results\\password-history-version-z-d9e6f-saved-revision-after-reload\\restore-version-one.kdbx",
+        "sha256": "fd28abdfd928a10833e79790baf91fa5516991c1b500c2ac00df58aa1fcf47b5"
+      },
+      {
+        "path": "docs\\qa\\2026-10-29\\accounts-single-entry\\independent-source-adjacent-results\\password-history-version-z-d9e6f-saved-revision-after-reload\\restore-version-two.kdbx",
+        "sha256": "7ab343a70e1f0fa0500c9106e8d1b3d87fb7150858878efda2545a73bf941712"
+      },
+      {
+        "path": "docs\\qa\\2026-10-29\\accounts-single-entry\\independent-source-adjacent-results\\vault-dual-login-zh-CN-153-f4c63-ithout-pressing-local-match\\dual-login.kdbx",
+        "sha256": "28732c03e9959a90169e924a7418cfed2456b06b31be910883ed0e7013fcc63c"
+      }
+    ]
+  }
+]

@@ -50,8 +50,8 @@ for (const language of ["zh-CN", "en"] as const) for (const width of [390, 1280]
 			await passwordless.getByRole("button", { name: t("pwVaultEditEntry"), exact: true }).click();
 			await expect(page.locator("#password-vault-entry-password")).toHaveValue("");
 			await page.getByRole("dialog").getByRole("button", { name: t("close"), exact: true }).click();
-			// One standalone login, with optional password and multiple identifiers, remains on the same page.
-			await toolbar.getByRole("button", { name: t("pwVaultNewEntry"), exact: true }).click();
+			// The single global entry creates an account and its optional credential together.
+			await page.locator(".password-vault-header").getByRole("button", { name: t("add"), exact: true }).click();
 			await page.locator("#password-vault-entry-title").fill(title);
 			await page.locator("#password-vault-entry-username").fill("primary@example.test");
 			for (const alias of aliases) {
@@ -59,7 +59,15 @@ for (const language of ["zh-CN", "en"] as const) for (const width of [390, 1280]
 				await page.locator(".pw-smart-identifier-row input").last().fill(alias);
 			}
 			await page.locator("#password-vault-entry-notes").fill(note);
-			await page.getByRole("dialog").getByRole("button", { name: t("pwVaultSaveEntry"), exact: true }).click();
+			await page.getByRole("dialog").getByRole("button", { name: t("save"), exact: true }).click();
+			await expect(page.locator(".asset-account-card")).toHaveCount(9);
+			const created = page.locator(".unified-account").filter({ hasText: title });
+			await created.locator("summary").click();
+			await expect(created.locator(".password-vault-entry")).toHaveCount(1);
+			// Keep the original standalone lifecycle coverage by explicitly unlinking this new credential.
+			await created.locator(".password-vault-linked-connection button").click();
+			await page.getByRole("dialog").getByRole("button", { name: t("pwVaultUnlink"), exact: true }).click();
+			await expect(created.locator(".password-vault-entry")).toHaveCount(0);
 			const standalone = page.locator(".workspace-password-only .password-vault-entry").filter({ hasText: title });
 			await expect(standalone).toContainText(t("pwVaultNoPassword"));
 			await standalone.getByRole("button", { name: t("pwVaultEditEntry"), exact: true }).click();
@@ -91,7 +99,7 @@ for (const language of ["zh-CN", "en"] as const) for (const width of [390, 1280]
 			await linked.locator(".password-vault-linked-connection button").click();
 			await page.getByRole("dialog").getByRole("button", { name: t("pwVaultUnlink"), exact: true }).click();
 			await expect(linked.locator(".password-vault-entry")).toHaveCount(0);
-			await expect(page.locator(".asset-account-card")).toHaveCount(8);
+			await expect(page.locator(".asset-account-card")).toHaveCount(9);
 			await standalone.getByRole("button", { name: t("pwVaultDeleteEntry"), exact: true }).click();
 			await page.getByRole("dialog").getByRole("button", { name: t("cancel"), exact: true }).click();
 			await expect(standalone).toBeVisible();
@@ -116,7 +124,7 @@ for (const language of ["zh-CN", "en"] as const) for (const width of [390, 1280]
 			for (const alias of aliases) expect(encrypted.includes(Buffer.from(alias))).toBe(false);
 			await toolbar.getByRole("button", { name: t("pwVaultLock"), exact: true }).click();
 			await expect(page.locator(".password-vault-entry-list .password-vault-entry")).toHaveCount(0);
-			await expect(page.locator(".asset-account-card")).toHaveCount(8);
+			await expect(page.locator(".asset-account-card")).toHaveCount(9);
 			await expect(query).toHaveValue("");
 			await openAccess(page);
 			await page.locator("#password-vault-unlock-master").fill("Wrong synthetic password");

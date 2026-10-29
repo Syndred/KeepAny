@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { expect, test, type Page } from "@playwright/test";
 import {
 	inspectVisualKdbx,
+	importVisualKdbxEntries,
 	visualHarness,
 	visualMaster,
 } from "./fixtures/password-smart-import-visual";
@@ -78,19 +79,20 @@ for (const locale of ["zh-CN", "en"] as const)
 				await page.getByRole("button", { name: copy.add, exact: true }).click();
 				const form = page.getByRole("dialog");
 				if (checkDefault)
-					await expect(form.locator("#category")).toHaveAttribute(
+					await expect(form.locator("#account-entry-category")).toHaveAttribute(
 						"data-value",
 						"other",
 					);
-				await form.locator("#name").fill(name);
-				await form.locator("#username").fill(username);
-				await selectChoice(form.locator("#category"), category);
+				await form.locator("#password-vault-entry-title").fill(name);
+				await form.locator("#password-vault-entry-username").fill(username);
+				await selectChoice(form.locator("#account-entry-category"), category);
 				if (name === names.alias) {
 					await form
-						.locator("#url")
+						.locator("#password-vault-entry-url")
 						.fill("https://example.test/unchanged/path?public=yes#keep");
+					await form.locator(".account-entry-profile > summary").click();
 					await form
-						.locator("#notes")
+						.locator("#account-entry-notes")
 						.fill("Private ordinary note stays unchanged");
 				}
 				await form
@@ -126,44 +128,10 @@ for (const locale of ["zh-CN", "en"] as const)
 				aliases: string[] = [],
 				assetPath?: string,
 			) {
-				await page
-					.locator(".password-vault-toolbar")
-					.getByRole("button", { name: t("pwVaultNewEntry"), exact: true })
-					.click();
-				await page.locator("#password-vault-entry-title").fill(name);
-				await page.locator("#password-vault-entry-username").fill(username);
-				for (let i = 0; i < aliases.length; i++) {
-					await page
-						.getByRole("button", {
-							name: t("pwVaultAddIdentifier"),
-							exact: true,
-						})
-						.click();
-					await page
-						.locator(`#password-vault-entry-identifier-${i + 1}`)
-						.fill(aliases[i]);
-				}
-				await page
-					.locator("#password-vault-entry-password")
-					.fill(`Synthetic-${name}!42`);
-				if (assetPath) {
-					await page.locator("#password-vault-entry-asset").press("ArrowDown");
-					const popup = page.getByRole("listbox");
-					const option = popup.locator(
-						`[role="option"][data-value="${assetPath.split("/").pop()}"]`,
-					);
-					await expect(option).toBeVisible();
-					await option.hover();
-					await option.click();
-					await expect(page.locator(".password-vault-linked-chip")).toHaveCount(
-						1,
-					);
-					await expect(popup).toBeHidden();
-				}
-				await page
-					.getByRole("button", { name: t("pwVaultSaveEntry"), exact: true })
-					.click();
-				await expect(page.getByRole("dialog")).toBeHidden();
+				// Explicit fictional KDBX preparation via real import; the reviewed
+				// account publication and relationship contract is exercised below.
+				await importVisualKdbxEntries(page, t, [{ title: name, username, password: `Synthetic-${name}!42`, usernameAliases: aliases, linkedAssetIds: assetPath ? [assetPath.split("/").pop()!] : [] }]);
+				await revealPasswordEntries(page);
 			}
 			async function connect(name: string) {
 				await page

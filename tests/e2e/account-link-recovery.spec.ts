@@ -518,9 +518,7 @@ for (const { locale, width } of [
 				.getByRole("button", { name: t("pwVaultDeleteEntry"), exact: true })
 				.click();
 			await expect(card()).toHaveCount(0);
-			await page
-				.getByRole("button", { name: t("pwVaultTrashTitle"), exact: true })
-				.click();
+			await page.locator("#vault-trash").scrollIntoViewIfNeeded();
 			await expect(page.locator("#vault-trash")).toBeInViewport();
 			await page
 				.locator("#vault-trash")

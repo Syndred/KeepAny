@@ -67,12 +67,12 @@ for (const locale of ["zh-CN", "en"] as const)
 				await page.screenshot({
 					path: info.outputPath("toast-normal-page.png"),
 				});
-				await toolbar
-					.getByRole("button", { name: t("pwVaultNewEntry"), exact: true })
+				await page.locator(".password-vault-header")
+					.getByRole("button", { name: t("add"), exact: true })
 					.click();
 				const dialog = page.getByRole("dialog"),
 					save = dialog.getByRole("button", {
-						name: t("pwVaultSaveEntry"),
+						name: t("save"),
 						exact: true,
 					});
 				await expect(dialog).toBeVisible();

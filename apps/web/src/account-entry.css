@@ -1,0 +1,55 @@
+.account-entry-dialog {
+	width: min(820px, calc(100vw - 32px));
+}
+.account-entry-form .password-vault-editor-grid {
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.account-entry-form .pw-smart-identifiers,
+.account-entry-access {
+	grid-column: 1 / -1;
+}
+.account-entry-access {
+	display: grid;
+	gap: var(--space-3);
+	padding: var(--space-3);
+	border: 1px solid var(--line-soft);
+	border-radius: 10px;
+}
+.account-entry-access p {
+	margin: 0;
+	font-size: 13px;
+	color: var(--muted);
+}
+.account-entry-access > .button {
+	justify-self: start;
+}
+.account-entry-profile {
+	padding-block: var(--space-3);
+	border-block: 1px solid var(--line-soft);
+}
+.account-entry-profile summary {
+	min-height: 44px;
+	cursor: pointer;
+	font-weight: 700;
+}
+.account-entry-profile summary:focus-visible {
+	outline: 2px solid var(--ink);
+	outline-offset: 3px;
+}
+.account-entry-profile .form-grid {
+	margin-top: var(--space-3);
+}
+.account-entry-public-notes {
+	grid-column: 1 / -1;
+}
+.account-entry-public-notes small {
+	color: var(--muted);
+}
+.account-entry-form .field-error {
+	overflow-wrap: anywhere;
+}
+@media (max-width: 680px) {
+	.account-entry-form .password-vault-editor-grid {
+		grid-template-columns: minmax(0, 1fr);
+	}
+}

@@ -6,7 +6,7 @@ import { strFromU8, unzipSync } from "fflate";
 import type { Asset, Relation } from "../../packages/domain/src";
 import type { RecordRow } from "../../packages/local-db/src";
 import { decryptBackup } from "../../packages/local-db/src/backup-crypto";
-import { inspectVisualKdbx, visualCopy, visualMaster } from "./fixtures/password-smart-import-visual";
+import { importVisualKdbxEntries, inspectVisualKdbx, visualCopy, visualMaster } from "./fixtures/password-smart-import-visual";
 import { portableCandidate } from "./helpers/portable-candidate";
 import { selectChoice } from "./helpers/select-choice";
 import { openVaultAccess } from "./helpers/vault-access";
@@ -25,7 +25,7 @@ for (const language of ["zh-CN", "en"] as const) for (const size of sizes) {
   const steps: Record<string, unknown>[] = [], errors: string[] = [];
   page.on("pageerror", error => errors.push(error.message));
   const pendingBaselines: Record<string, unknown>[] = [];
-  const receipt: Record<string, unknown> = { schema: "keepany.vault-links-layout.case.v1", language, ...size, candidate: release.sourceCommit, sourceDirty: release.sourceDirty, archiveSha256, indexSha256: sha(await (await request.get("/")).body()), platform: process.platform, browser: page.context().browser()?.version(), screenshotBaseline: process.env.KEEPANY_REVIEWED_BASELINES ? "explicit-reviewed-directory" : "not-enabled-pending-human-review", pendingBaselines, preparation: "One unrelated ordinary account and twelve fictional entries created by normal UI; one normal edit creates prior history. Read-only .ka1/KDBX download inspection; no app DB injection.", steps, errors, status: "failed" };
+  const receipt: Record<string, unknown> = { schema: "keepany.vault-links-layout.case.v1", language, ...size, candidate: release.sourceCommit, sourceDirty: release.sourceDirty, archiveSha256, indexSha256: sha(await (await request.get("/")).body()), platform: process.platform, browser: page.context().browser()?.version(), screenshotBaseline: process.env.KEEPANY_REVIEWED_BASELINES ? "explicit-reviewed-directory" : "not-enabled-pending-human-review", pendingBaselines, preparation: "One unrelated ordinary account created by normal UI; twelve fictional Node VaultSession KDBX entries imported through the real file chooser; one normal edit creates prior history. Read-only .ka1/KDBX download inspection; no app DB injection.", steps, errors, status: "failed" };
   const toolbar = page.locator(".password-vault-toolbar"), dialog = page.locator(".vault-connect-dialog");
   const accounts = () => page.locator("a.asset-account-card").evaluateAll(nodes => nodes.map(node => node.getAttribute("href")).sort());
   let shot = 0;
@@ -99,16 +99,15 @@ for (const language of ["zh-CN", "en"] as const) for (const size of sizes) {
    await page.goto("/accounts");
    const workspace = page.locator("main.unified-accounts-page");
    await workspace.getByRole("button", { name: language === "zh-CN" ? "新增" : "Add", exact: true }).click();
-   const accountEditor = page.getByRole("dialog"); await accountEditor.locator("#name").fill("Independent FC24 unrelated original"); await selectChoice(accountEditor.locator("#category"), "other"); await accountEditor.locator("#username").fill("fc24-unrelated-user"); await accountEditor.getByRole("button", { name: language === "zh-CN" ? "保存" : "Save", exact: true }).click(); await expect(accountEditor).toBeHidden();
+   const accountEditor = page.getByRole("dialog"); await accountEditor.locator("#password-vault-entry-title").fill("Independent FC24 unrelated original"); await selectChoice(accountEditor.locator("#account-entry-category"), "other"); await accountEditor.locator("#password-vault-entry-username").fill("fc24-unrelated-user"); await accountEditor.getByRole("button", { name: language === "zh-CN" ? "保存" : "Save", exact: true }).click(); await expect(accountEditor).toBeHidden();
    const originalCard = workspace.locator("a.asset-account-card").filter({ hasText: "Independent FC24 unrelated original" }); await expect(originalCard.getByText("fc24-unrelated-user", { exact: true })).toBeVisible();
    const originalHref = await originalCard.getAttribute("href"); expect(originalHref).toBeTruthy();
    await openVaultAccess(page);
    await page.locator("#password-vault-master").fill(visualMaster); await page.locator("#password-vault-master-confirm").fill(visualMaster); await page.getByRole("button", { name: t("pwVaultCreate"), exact: true }).click();
    await toolbar.locator('[data-vault-tool-trigger="links"]').click(); await expect(dialog).toBeVisible(); await expect(dialog.locator(".vault-connect-choice input")).toHaveCount(0); await geometry("empty"); await expect(dialog.locator(".vault-connect-footer").getByRole("button", { name: language === "zh-CN" ? "保存" : "Save", exact: true })).toBeDisabled(); await pointer(dialog.locator(":scope > header").getByRole("button", { name: language === "zh-CN" ? "关闭" : "Close", exact: true }));
    for (let i = 0; i < 12; i++) {
-    await toolbar.getByRole("button", { name: t("pwVaultNewEntry"), exact: true }).click();
-    await page.locator("#password-vault-entry-title").fill(`Independent FC24 ${i}`); await page.locator("#password-vault-entry-username").fill(`fc24-${i}@example.test`); await page.locator("#password-vault-entry-notes").fill(`Synthetic preserved note ${i}`);
-    await page.getByRole("dialog").getByRole("button", { name: t("pwVaultSaveEntry"), exact: true }).click(); await expect(page.getByRole("dialog")).toHaveCount(0);
+    // Explicit Node fixture + actual KDBX file import leaves the publication contract untouched.
+    await importVisualKdbxEntries(page, t, [{ title: `Independent FC24 ${i}`, username: `fc24-${i}@example.test`, password: "", notes: `Synthetic preserved note ${i}` }]);
     if (i === 0) { await toolbar.locator('[data-vault-tool-trigger="links"]').click(); await expect(dialog).toBeVisible(); await expect(dialog.locator(".vault-connect-choice input")).toHaveCount(1); await geometry("single"); await pointer(dialog.locator(".vault-connect-choice input")); await geometry("single-selected"); await pointer(dialog.locator(":scope > header").getByRole("button", { name: language === "zh-CN" ? "关闭" : "Close", exact: true })); }
    }
    const first = page.locator(".password-vault-entry").filter({ has: page.getByRole("heading", { name: "Independent FC24 0", exact: true }) });

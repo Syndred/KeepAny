@@ -1,0 +1,511 @@
+{
+  "config": {
+    "argv": [
+      "C:\\Users\\Administrator\\AppData\\Local\\Author Software\\nvm\\installs\\v24.21.0\\node.exe",
+      "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\node_modules\\@playwright\\test\\cli.js",
+      "test",
+      "--config",
+      "docs/qa/2026-10-29/accounts-single-entry/independent-playwright.config.ts",
+      "--list"
+    ],
+    "configFile": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\docs\\qa\\2026-10-29\\accounts-single-entry\\independent-playwright.config.ts",
+    "rootDir": "C:/Users/Administrator/Desktop/project/KeepAny/tests/e2e",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {},
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "C:/Users/Administrator/Desktop/project/KeepAny/docs/qa/2026-10-29/accounts-single-entry/independent-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {},
+        "id": "",
+        "name": "",
+        "testDir": "C:/Users/Administrator/Desktop/project/KeepAny/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "accounts-single-entry.spec.ts",
+          "account-password-consolidation.spec.ts",
+          "account-link-recovery.spec.ts",
+          "password-vault-user-journey.spec.ts"
+        ],
+        "timeout": 150000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\docs\\qa\\2026-10-29\\accounts-single-entry\\independent-results.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.63.0",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "account-link-recovery.spec.ts",
+      "file": "account-link-recovery.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "zh-CN 1536px disconnects, deletes, restores and re-imports without reviving trashed accounts",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [],
+              "status": "skipped"
+            }
+          ],
+          "id": "e0991ce83de3c149445e-0c1ac3890c6edc4c4d99",
+          "file": "account-link-recovery.spec.ts",
+          "line": 232,
+          "column": 2
+        },
+        {
+          "title": "en 1536px disconnects, deletes, restores and re-imports without reviving trashed accounts",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [],
+              "status": "skipped"
+            }
+          ],
+          "id": "e0991ce83de3c149445e-200b71db0573d9e9acee",
+          "file": "account-link-recovery.spec.ts",
+          "line": 232,
+          "column": 2
+        },
+        {
+          "title": "zh-CN 390px disconnects, deletes, restores and re-imports without reviving trashed accounts",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [],
+              "status": "skipped"
+            }
+          ],
+          "id": "e0991ce83de3c149445e-f8cbd4b0b7157805de6d",
+          "file": "account-link-recovery.spec.ts",
+          "line": 232,
+          "column": 2
+        },
+        {
+          "title": "en 390px disconnects, deletes, restores and re-imports without reviving trashed accounts",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [],
+              "status": "skipped"
+            }
+          ],
+          "id": "e0991ce83de3c149445e-2a29f8d9033c69486bfb",
+          "file": "account-link-recovery.spec.ts",
+          "line": 232,
+          "column": 2
+        }
+      ]
+    },
+    {
+      "title": "account-password-consolidation.spec.ts",
+      "file": "account-password-consolidation.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "zh-CN 390 account and password features survive unified entry, locking and KDBX restore",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [],
+              "status": "skipped"
+            }
+          ],
+          "id": "2db6ae099467d752153d-dbccb0c8c3d9b128d07f",
+          "file": "account-password-consolidation.spec.ts",
+          "line": 28,
+          "column": 2
+        },
+        {
+          "title": "zh-CN 1280 account and password features survive unified entry, locking and KDBX restore",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [],
+              "status": "skipped"
+            }
+          ],
+          "id": "2db6ae099467d752153d-9d37bae916e84e6de950",
+          "file": "account-password-consolidation.spec.ts",
+          "line": 28,
+          "column": 2
+        },
+        {
+          "title": "en 390 account and password features survive unified entry, locking and KDBX restore",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [],
+              "status": "skipped"
+            }
+          ],
+          "id": "2db6ae099467d752153d-eb4062718ecd7ee79d74",
+          "file": "account-password-consolidation.spec.ts",
+          "line": 28,
+          "column": 2
+        },
+        {
+          "title": "en 1280 account and password features survive unified entry, locking and KDBX restore",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [],
+              "status": "skipped"
+            }
+          ],
+          "id": "2db6ae099467d752153d-0e6fb0b3e28101521b8c",
+          "file": "account-password-consolidation.spec.ts",
+          "line": 28,
+          "column": 2
+        }
+      ]
+    },
+    {
+      "title": "accounts-single-entry.spec.ts",
+      "file": "accounts-single-entry.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "zh-CN SE01-SE07 unified account creation, original fields, durable KDBX link and bottom trash",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [],
+              "status": "skipped"
+            }
+          ],
+          "id": "962fe3f7e4e0c71562ff-c9bb3d0a92f82dabb9b2",
+          "file": "accounts-single-entry.spec.ts",
+          "line": 67,
+          "column": 2
+        },
+        {
+          "title": "zh-CN SE02 same-form create and unlock errors preserve ordinary draft",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [],
+              "status": "skipped"
+            }
+          ],
+          "id": "962fe3f7e4e0c71562ff-9d5bcaa5163978b6cf9d",
+          "file": "accounts-single-entry.spec.ts",
+          "line": 162,
+          "column": 2
+        },
+        {
+          "title": "zh-CN SE08 empty, merged form, long invalid draft and expanded account at six widths",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [],
+              "status": "skipped"
+            }
+          ],
+          "id": "962fe3f7e4e0c71562ff-21c89dc1bc490682b49d",
+          "file": "accounts-single-entry.spec.ts",
+          "line": 203,
+          "column": 2
+        },
+        {
+          "title": "en SE01-SE07 unified account creation, original fields, durable KDBX link and bottom trash",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [],
+              "status": "skipped"
+            }
+          ],
+          "id": "962fe3f7e4e0c71562ff-7c2c34b39499c45034b5",
+          "file": "accounts-single-entry.spec.ts",
+          "line": 67,
+          "column": 2
+        },
+        {
+          "title": "en SE02 same-form create and unlock errors preserve ordinary draft",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [],
+              "status": "skipped"
+            }
+          ],
+          "id": "962fe3f7e4e0c71562ff-bbdbb1f86c5f765c0ef0",
+          "file": "accounts-single-entry.spec.ts",
+          "line": 162,
+          "column": 2
+        },
+        {
+          "title": "en SE08 empty, merged form, long invalid draft and expanded account at six widths",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [],
+              "status": "skipped"
+            }
+          ],
+          "id": "962fe3f7e4e0c71562ff-d270a6cc25f3e6594d3e",
+          "file": "accounts-single-entry.spec.ts",
+          "line": 203,
+          "column": 2
+        }
+      ]
+    },
+    {
+      "title": "password-vault-user-journey.spec.ts",
+      "file": "password-vault-user-journey.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "zh-CN passwordless labeled notes retain punctuation and prefill reviewed fields",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 180000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [],
+              "status": "skipped"
+            }
+          ],
+          "id": "9282a8b04869bbd41ba0-813f7289350ff9a41c30",
+          "file": "password-vault-user-journey.spec.ts",
+          "line": 188,
+          "column": 2
+        },
+        {
+          "title": "en passwordless labeled notes retain punctuation and prefill reviewed fields",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 180000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [],
+              "status": "skipped"
+            }
+          ],
+          "id": "9282a8b04869bbd41ba0-01de2cff1ee343ec6917",
+          "file": "password-vault-user-journey.spec.ts",
+          "line": 188,
+          "column": 2
+        },
+        {
+          "title": "zh-CN 1536px user imports, categorizes and follows account identities before vault maintenance",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 180000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [],
+              "status": "skipped"
+            }
+          ],
+          "id": "9282a8b04869bbd41ba0-a40903e9f81f91f2e859",
+          "file": "password-vault-user-journey.spec.ts",
+          "line": 232,
+          "column": 3
+        },
+        {
+          "title": "zh-CN 390px user imports, categorizes and follows account identities before vault maintenance",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 180000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [],
+              "status": "skipped"
+            }
+          ],
+          "id": "9282a8b04869bbd41ba0-846c45d2a90d53efccc3",
+          "file": "password-vault-user-journey.spec.ts",
+          "line": 232,
+          "column": 3
+        },
+        {
+          "title": "en 1536px user imports, categorizes and follows account identities before vault maintenance",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 180000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [],
+              "status": "skipped"
+            }
+          ],
+          "id": "9282a8b04869bbd41ba0-fc820cc0bd19d9fe9bcf",
+          "file": "password-vault-user-journey.spec.ts",
+          "line": 232,
+          "column": 3
+        },
+        {
+          "title": "en 390px user imports, categorizes and follows account identities before vault maintenance",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 180000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [],
+              "status": "skipped"
+            }
+          ],
+          "id": "9282a8b04869bbd41ba0-f6bf89d638122deb4e23",
+          "file": "password-vault-user-journey.spec.ts",
+          "line": 232,
+          "column": 3
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-10-29T09:53:04.989Z",
+    "duration": 1064.545,
+    "expected": 0,
+    "skipped": 20,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

@@ -14,6 +14,8 @@ import { passwordVaultCopy } from "../../../apps/web/src/password-vault-copy";
 import type {
 	VaultPersistence,
 	VaultSession,
+	VaultRecord,
+	VaultEntryDraft,
 } from "../../../packages/password-vault/src";
 import { aiServer, labels, model, syntheticKey } from "../helpers/ai-workflow";
 import { selectChoice } from "../helpers/select-choice";
@@ -178,24 +180,9 @@ export async function visualHarness(
 		await expect(page.locator(".password-vault-toolbar")).toBeVisible();
 	}
 	async function seedExisting(record: VisualRecord) {
-		await page
-			.getByRole("button", { name: t("pwVaultNewEntry"), exact: true })
-			.click();
-		await page.locator("#password-vault-entry-title").fill(record.title);
-		await page.locator("#password-vault-entry-username").fill(record.username);
-		await page.locator("#password-vault-entry-password").fill(record.password);
-		if (record.url) {
-			const add = page.getByRole("button", {
-				name: t("pwVaultAddUrl"),
-				exact: true,
-			});
-			if (await add.isVisible()) await add.click();
-			await page.locator("#password-vault-entry-url").fill(record.url);
-		}
-		await page
-			.getByRole("button", { name: t("pwVaultSaveEntry"), exact: true })
-			.click();
-		await expect(page.getByRole("dialog")).toBeHidden();
+		// Explicit test preparation: a Node-created fictional KDBX enters through
+		// the real file chooser/import flow. This is not global account creation.
+		await importVisualKdbxEntries(page, t, [{ ...record, usernameAliases: record.aliases }]);
 	}
 	async function open() {
 		await page
@@ -386,6 +373,17 @@ async function openVisualKdbx(
 	bytes: Uint8Array,
 	revision = "synthetic-visual-readonly",
 ) {
+	const { VaultSession: Session } = await visualRuntime();
+	const session = new Session({
+		read: async () => ({ id: "local", revision, bytes, updatedAt: "2026-10-05T00:00:00.000Z" }),
+		write: async () => { throw Error("Read-only synthetic KDBX inspection"); },
+	});
+	await session.initialize();
+	await session.unlock(visualMaster);
+	return session;
+}
+
+async function visualRuntime() {
 	readonlyRuntime ??= build({
 		entryPoints: ["packages/password-vault/src/index.ts"],
 		bundle: true,
@@ -403,21 +401,40 @@ async function openVisualKdbx(
 			VaultSession: new (storage: VaultPersistence) => VaultSession;
 		};
 	});
-	const { VaultSession: Session } = await readonlyRuntime;
+	return readonlyRuntime;
+}
+
+/** Fictional Node fixture + actual KDBX file import, preserving a password-only setup. */
+export async function importVisualKdbxEntries(
+	page: Page,
+	t: (key: string) => string,
+	entries: Array<Pick<VaultEntryDraft, "title" | "username" | "password"> & Partial<VaultEntryDraft>>,
+) {
+	const { VaultSession: Session } = await visualRuntime();
+	let record: VaultRecord | null = null;
 	const session = new Session({
-		read: async () => ({
-			id: "local",
-			revision,
-			bytes,
-			updatedAt: "2026-10-05T00:00:00.000Z",
-		}),
-		write: async () => {
-			throw Error("Read-only synthetic KDBX inspection");
+		read: async () => record,
+		write: async (bytes, expected) => {
+			if ((record?.revision ?? null) !== expected) throw Error("Synthetic fixture conflict");
+			record = { id: "local", revision: crypto.randomUUID(), bytes: bytes.slice(), updatedAt: new Date().toISOString() };
+			return record;
 		},
 	});
-	await session.initialize();
-	await session.unlock(visualMaster);
-	return session;
+	const fixtureMaster = "Synthetic fixture import master!2026";
+	let bytes: Uint8Array;
+	try {
+		await session.initialize(); await session.create(fixtureMaster);
+		for (const entry of entries) await session.saveEntry({ url: "", notes: "", linkedAssetIds: [], ...entry });
+		bytes = await session.exportKdbx();
+	} finally { session.lock(); }
+	const beforeAccounts = await page.locator("a.asset-account-card").evaluateAll(nodes => nodes.map(node => node.getAttribute("href")).sort());
+	await page.locator(".password-vault-toolbar").getByRole("button", { name: t("pwVaultImport"), exact: true }).click();
+	const dialog = page.getByRole("dialog");
+	await dialog.locator("#password-vault-import-file").setInputFiles({ name: "synthetic-password-only-preparation.kdbx", mimeType: "application/octet-stream", buffer: Buffer.from(bytes) });
+	await dialog.locator("#password-vault-import-password").fill(fixtureMaster);
+	await dialog.getByRole("button", { name: t("pwVaultImportNow"), exact: true }).click();
+	await expect(dialog).toBeHidden();
+	expect(await page.locator("a.asset-account-card").evaluateAll(nodes => nodes.map(node => node.getAttribute("href")).sort())).toEqual(beforeAccounts);
 }
 
 export async function inspectVisualKdbx(path: string) {

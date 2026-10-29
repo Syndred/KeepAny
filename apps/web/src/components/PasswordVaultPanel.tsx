@@ -25,11 +25,13 @@ type PasswordVaultPanelProps = {
 	focusAssetId?: string;
 	onReady?: () => void;
 	embedded?: boolean;
-	headerAction?: ReactNode;
+	headerAction?: ReactNode | ((state: { busy: boolean; clearMessage: () => void }) => ReactNode);
 	sampleAccounts?: Asset[];
+	accountCount?: number;
 	renderAccounts?: (tools: {
 		renderEntry: (entry: PasswordVaultEntrySummary) => ReactNode;
 		addEntry: (assetId: string) => void;
+		busy: boolean;
 	}) => ReactNode;
 };
 
@@ -101,6 +103,7 @@ export function PasswordVaultPanel({
 	embedded = false,
 	headerAction,
 	sampleAccounts = [],
+	accountCount,
 	renderAccounts,
 }: PasswordVaultPanelProps) {
 	const Heading = embedded ? "h2" : "h1";
@@ -131,11 +134,10 @@ export function PasswordVaultPanel({
 		[],
 	);
 	useEffect(() => {
-		if (hash === "vault-trash")
-			document
-				.getElementById("vault-trash")
-				?.scrollIntoView({ block: "start" });
-	}, [hash]);
+		if (hash !== "vault-trash" || snapshot.status !== "unlocked") return;
+		const frame = requestAnimationFrame(() => document.getElementById("vault-trash")?.scrollIntoView({ block: "start" }));
+		return () => cancelAnimationFrame(frame);
+	}, [hash, snapshot.status]);
 	useEffect(() => {
 		if (snapshot.status !== "unlocked" || !hash.startsWith("password-")) return;
 		const card = [
@@ -789,8 +791,8 @@ export function PasswordVaultPanel({
 	const vaultStatus = (
 		<div className="password-vault-header-meta">
 			<p>
-				{snapshot.status === "unlocked"
-					? t("pwVaultEntriesCount", { count: snapshot.entries.length })
+				{renderAccounts || snapshot.status === "unlocked"
+					? t("pwVaultEntriesCount", { count: renderAccounts ? accountCount ?? assets.filter(asset => asset.kind === "account" && !asset.deleted).length : snapshot.entries.length })
 					: t(renderAccounts ? "workspaceAccountSubtitle" : "pwVaultSubtitle")}
 			</p>
 			<Badge
@@ -831,7 +833,7 @@ export function PasswordVaultPanel({
 					<Heading>{t(renderAccounts ? "accountsWorkspace" : "pwVaultTitle")}</Heading>
 					{vaultStatus}
 				</div>
-				{headerAction}
+				{!(renderAccounts && assetFilter) && (typeof headerAction === "function" ? headerAction({ busy: busy || snapshot.status === "loading", clearMessage }) : headerAction)}
 			</header>
 			{message && (
 				<p className="password-vault-message" role="status">
@@ -849,7 +851,7 @@ export function PasswordVaultPanel({
 {renderAccounts && snapshot.status !== "unlocked" ? <details className="unified-vault-access" open={accessOpen} onToggle={(event) => setAccessOpen(event.currentTarget.open)}>
 				<summary>{t(snapshot.status === "empty" ? "pwVaultCreate" : "pwVaultUnlock")}</summary>{vaultAccess}
 			</details> : vaultAccess}
-			{renderAccounts && snapshot.status !== "unlocked" && renderAccounts({ renderEntry, addEntry: () => {} })}
+			{renderAccounts && snapshot.status !== "unlocked" && renderAccounts({ renderEntry, addEntry: () => {}, busy })}
 			{snapshot.status === "unlocked" && (
 				<>
 					<div className="password-vault-toolbar">
@@ -915,31 +917,14 @@ export function PasswordVaultPanel({
 							>
 								<KeyRound size={18} />
 							</VaultIconButton>
-							<Button
-								size="small"
-								variant="ghost"
-								type="button"
-								className="password-vault-trash-open"
-								disabled={busy}
-								onClick={() =>
-									void navigate({
-										to: "/assets/$kind",
-										params: { kind: "vault" },
-										hash: "vault-trash",
-									})
-								}
-							>
-								<Trash2 size={18} />
-								{t("pwVaultTrashTitle")}
-							</Button>
-							<VaultIconButton
+							{(!renderAccounts || assetFilter) && <VaultIconButton
 								label={t("pwVaultNewEntry")}
 								className="password-vault-new"
 								disabled={busy}
 								onClick={openNewEditor}
 							>
 								<Plus size={18} />
-							</VaultIconButton>
+							</VaultIconButton>}
 						</div>
 					</div>
 					{assetFilter && (
@@ -969,8 +954,9 @@ export function PasswordVaultPanel({
 					)}
 
 					{renderAccounts && !assetFilter ? renderAccounts({ renderEntry, addEntry: (assetId) => {
+						if (busy) return;
 						clearMessage(); setEditorId("new"); setDraft(blankDraft(assetId)); setSelectedAssetId(""); setShowPassword(false);
-					} }) : <div className="password-vault-entries-section">
+					}, busy }) : <div className="password-vault-entries-section">
 						{filteredEntries.length ? (
 							<div className="password-vault-entry-list">
 								{filteredEntries.map((entry) => renderEntry(entry))}

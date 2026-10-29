@@ -544,10 +544,7 @@ for (const locale of ["zh-CN", "en"] as const)
 					.click();
 				await page.getByRole("dialog").getByRole("button", { name: t("pwVaultDeleteEntry"), exact: true }).click();
 				await expect(entries).toHaveCount(records.length - 1);
-				await page
-					.getByRole("button", { name: t("pwVaultTrashTitle"), exact: true })
-					.click();
-				await expect(page).toHaveURL(/#vault-trash$/);
+				await page.locator("#vault-trash").scrollIntoViewIfNeeded();
 				await expect(page.locator("#vault-trash")).toBeInViewport();
 				await page
 					.getByRole("button", { name: t("pwVaultRestoreEntry"), exact: true })

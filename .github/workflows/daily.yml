@@ -45,6 +45,9 @@ jobs:
         timeout-minutes: 1
       - run: pnpm verify:preview
         timeout-minutes: 5
+      - name: Verify the unified account form on the compiled candidate
+        run: node scripts/check-account-entry.mjs
+        timeout-minutes: 12
       - name: Verify checked-in current web files
         run: node scripts/verify-local-release.mjs
         timeout-minutes: 5

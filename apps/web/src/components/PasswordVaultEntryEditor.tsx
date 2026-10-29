@@ -1,7 +1,7 @@
 import { Textarea } from "./ui/textarea";
 import { Input } from "./ui/input";
 import { Check, Eye, EyeOff, WandSparkles, X } from "lucide-react";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import type { Asset } from "../../../../packages/domain/src";
 import { type PasswordVaultEntryDraft } from "./PasswordVaultProvider";
 import { Button } from "./ui/button";
@@ -21,6 +21,13 @@ export function EntryEditor({
 	setSelectedAssetId,
 	onGenerate,
 	onPasswordCopyError,
+	titleCompanion,
+	afterFields,
+	vaultAccess,
+	vaultUnlocked = true,
+	unified = false,
+	onCancel,
+	error,
 	t,
 }: {
 	draft: PasswordVaultEntryDraft;
@@ -36,9 +43,16 @@ export function EntryEditor({
 	setSelectedAssetId: (value: string) => void;
 	onGenerate: () => void;
 	onPasswordCopyError: (value: string) => void;
+	titleCompanion?: ReactNode;
+	afterFields?: ReactNode;
+	vaultAccess?: ReactNode;
+	vaultUnlocked?: boolean;
+	unified?: boolean;
+	onCancel?: () => void;
+	error?: string;
 	t: (key: string, options?: Record<string, unknown>) => string;
 }) {
-	const [urlExpanded, setUrlExpanded] = useState(Boolean(draft.url));
+	const [urlExpanded, setUrlExpanded] = useState(unified || Boolean(draft.url));
 	const update = <K extends keyof PasswordVaultEntryDraft>(
 		key: K,
 		value: PasswordVaultEntryDraft[K],
@@ -71,8 +85,10 @@ export function EntryEditor({
 						/>
 					</div>
 				</div>
+				{titleCompanion}
 				<VaultLoginIdentifiers
 					clipboardPaste
+					aliasesEnabled={vaultUnlocked}
 					idPrefix="password-vault-entry"
 					values={draft.usernameAliases}
 					disabled={busy}
@@ -85,7 +101,7 @@ export function EntryEditor({
 					}}
 					onChange={(values) => update("usernameAliases", values)}
 				/>
-				<div className="field password-vault-password-field password-vault-secret-field">
+				{vaultUnlocked ? <div className="field password-vault-password-field password-vault-secret-field">
 					<label htmlFor="password-vault-entry-password">
 						{t("pwVaultPasswordOptionalField")}
 					</label>
@@ -145,13 +161,13 @@ export function EntryEditor({
 							onPaste={(value) => update("password", value)}
 						/>
 					</div>
-				</div>
+				</div> : vaultAccess}
 				<div className="password-vault-more-info password-vault-optional">
 					<div className="password-vault-more-info-fields">
-						<div className="field password-vault-notes-field">
+						{vaultUnlocked && <div className="field password-vault-notes-field">
 							<div className="pw-smart-field-heading">
 								<label htmlFor="password-vault-entry-notes">
-									{t("pwVaultNotesOptionalField")}
+									{t(unified ? "accountEntryPrivateNotes" : "pwVaultNotesOptionalField")}
 								</label>
 								{!urlExpanded && (
 									<Button
@@ -182,7 +198,7 @@ export function EntryEditor({
 									onPaste={(value) => update("notes", value)}
 								/>
 							</div>
-						</div>
+						</div>}
 						{urlExpanded && (
 							<div className="field">
 								<label htmlFor="password-vault-entry-url">
@@ -211,7 +227,8 @@ export function EntryEditor({
 					</div>
 				</div>
 			</div>
-			<div className="field password-vault-linked-picker">
+			{afterFields}
+			{vaultUnlocked && <div className="field password-vault-linked-picker">
 				<label htmlFor="password-vault-entry-asset">
 					{t("pwVaultLinkedAssets")}
 				</label>
@@ -260,10 +277,12 @@ export function EntryEditor({
 						))}
 					</div>
 				)}
-			</div>
+			</div>}
+			{error && <p className="field-error" role="alert">{error}</p>}
 			<div className="actions password-vault-editor-actions">
+				{onCancel && <Button type="button" disabled={busy} onClick={onCancel}>{t("cancel")}</Button>}
 				<Button type="submit" variant="primary" disabled={busy}>
-					<Check size={16} /> {t("pwVaultSaveEntry")}
+					<Check size={16} /> {t(unified ? "save" : "pwVaultSaveEntry")}
 				</Button>
 			</div>
 		</>

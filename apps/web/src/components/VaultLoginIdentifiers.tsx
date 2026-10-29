@@ -13,6 +13,7 @@ export function VaultLoginIdentifiers({
 	primary,
 	compact = false,
 	clipboardPaste = false,
+	aliasesEnabled = true,
 	onChange,
 }: {
 	idPrefix: string;
@@ -20,6 +21,7 @@ export function VaultLoginIdentifiers({
 	disabled: boolean;
 	compact?: boolean;
 	clipboardPaste?: boolean;
+	aliasesEnabled?: boolean;
 	primary?: {
 		id: string;
 		value: string;
@@ -74,7 +76,7 @@ export function VaultLoginIdentifiers({
 						<label htmlFor={primary.id}>
 							{t(compact ? "pwSmartAccountField" : "pwVaultUsernameField")}
 						</label>
-						{add}
+						{aliasesEnabled && add}
 					</div>
 					<div className="pw-import-input-control">
 						<Input
@@ -99,9 +101,9 @@ export function VaultLoginIdentifiers({
 					</div>
 				</div>
 			) : (
-				<div className="pw-smart-identifier-actions">{add}</div>
+				<div className="pw-smart-identifier-actions">{aliasesEnabled && add}</div>
 			)}
-			{values.length > 0 && (
+			{aliasesEnabled && values.length > 0 && (
 				<div className="pw-smart-alias-list">
 					<span className="pw-import-alias-caption">
 						{t("pwSmartOtherIdentifiers")}

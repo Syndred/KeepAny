@@ -3,6 +3,7 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { expect, test, type Locator } from "@playwright/test";
 import { resources } from "../../apps/web/src/i18n";
+import { openStandaloneEntryDraft, saveStandaloneEntryDraft } from "./helpers/standalone-entry";
 
 // Independent acceptance: only public navigation/UI, fresh synthetic library per case.
 const evidence =
@@ -220,12 +221,10 @@ for (const language of ["zh-CN", "en"] as const)
 				await capture("filter-empty");
 				await query.press("Escape");
 				await expect(page.locator(".unified-account")).toHaveCount(8);
-				await toolbar
-					.getByRole("button", { name: t("pwVaultNewEntry"), exact: true })
-					.click();
+				await openStandaloneEntryDraft(page, t);
 				await page
 					.getByRole("dialog")
-					.getByRole("button", { name: t("pwVaultSaveEntry"), exact: true })
+					.getByRole("button", { name: t("save"), exact: true })
 					.click();
 				await expect(page.getByRole("dialog")).toBeVisible();
 				expect(
@@ -244,9 +243,7 @@ for (const language of ["zh-CN", "en"] as const)
 					.getByRole("button", { name: t("close"), exact: true })
 					.click();
 				await expect(page.locator(".workspace-password-only")).toHaveCount(0);
-				await toolbar
-					.getByRole("button", { name: t("pwVaultNewEntry"), exact: true })
-					.click();
+				await openStandaloneEntryDraft(page, t);
 				await page.locator("#password-vault-entry-title").fill(longTitle);
 				await page
 					.locator("#password-vault-entry-username")
@@ -267,16 +264,10 @@ for (const language of ["zh-CN", "en"] as const)
 						.last()
 						.fill(alias);
 				}
-				await page
-					.getByRole("dialog")
-					.getByRole("button", { name: t("pwVaultAddUrl"), exact: true })
-					.click();
+				// The merged form exposes the one shared website field directly.
 				await page.locator("#password-vault-entry-url").fill(longUrl);
 				await page.locator("#password-vault-entry-notes").fill(notes);
-				await page
-					.getByRole("dialog")
-					.getByRole("button", { name: t("pwVaultSaveEntry"), exact: true })
-					.click();
+				await saveStandaloneEntryDraft(page, t);
 				const standalone = page.locator(
 					".workspace-password-only .password-vault-entry",
 				);
