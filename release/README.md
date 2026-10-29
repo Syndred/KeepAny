@@ -53,7 +53,7 @@ pnpm install --frozen-lockfile   # 首次使用或 node_modules 不存在时执�
 
 ## 本地包验收边界
 
-此前的中英文五宽度检查、项目新增和 `.ka1` 恢复测试见 [UI 检查结果](../docs/evidence/2026-09-29/ui-restoration-checks.json)。监督复查发现旧 Service Worker 控制的标签页仍显示旧版，且项目详情结构缺口，故此前结果不能视作最终 UI 验收。本轮另以固定旧包 `8f9a1b5` 在同源隔离浏览器中验证升级、未保存编辑、项目及原图回读；项目详情英语 360/390/1280 与中文 390 的记录驱动检查通过，见[英文 390](../docs/evidence/2026-09-29/keepany-project-detail-restored-390.png)和[中文 390](../docs/evidence/2026-09-29/keepany-project-detail-restored-zh-CN-390.png)。4180 实际包在隔离浏览器中离线重开、编辑和下载 `.ka1` 通过。Ego 原生控制受 ScreenCaptureKit `-3811` 阻断，不计入浏览器验收。以上均不代表原 Chrome 配置、真实手机或互联网部署验收。
+此前的中英文五宽度检查、项目新增和 `.ka1` 恢复测试见 [UI 检查结果](../docs/evidence/2026-09-29/ui-restoration-checks.json)。监督复查发现旧 Service Worker 控制的标签页仍显示旧版，且项目详情结构缺口，故此前结果不能视作最终 UI 验收。本轮另以固定旧包 `8f9a1b5` 在同源隔离浏览器中验证升级、未保存编辑、项目及原图回读；项目详情英语 360/390/1280 与中文 390 的记录驱动检查通过，见[英文 390](https://github.com/Syndred/KeepAny/blob/b8acfe562d8a4852fffad7fb8aa5ef55104e3fb5/docs/evidence/2026-09-29/keepany-project-detail-restored-390.png)和[中文 390](../docs/evidence/2026-09-29/keepany-project-detail-restored-zh-CN-390.png)。4180 实际包在隔离浏览器中离线重开、编辑和下载 `.ka1` 通过。Ego 原生控制受 ScreenCaptureKit `-3811` 阻断，不计入浏览器验收。以上均不代表原 Chrome 配置、真实手机或互联网部署验收。
 
 ## 2026-09-30 入口收口
 
