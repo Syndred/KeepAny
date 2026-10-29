@@ -236,3 +236,7 @@ export function WorkspaceLegacyRoute() {
 		/>
 	);
 }
+
+export function OnlineAssetsRoute() { return <AssetsWorkspace view="online"/>; }
+export function PhysicalAssetsRoute() { return <AssetsWorkspace view="physical"/>; }
+export function DomainAssetsRoute() { return <AssetsWorkspace view="domains"/>; }

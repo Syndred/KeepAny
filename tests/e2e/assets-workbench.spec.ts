@@ -84,6 +84,16 @@ for (const locale of ["zh-CN", "en"] as const) {
 	test(`AS01 AS02 AS03 AS04 AS05 AS09 ${locale}: navigation, expenses, categories and persisted details`, async ({ context }) => {
 		const t = translate(locale), { page, errors, sourceRequests } = await prepare(context, locale);
 		await restore(page);
+		for (const [path, section] of [["/assets", "assetsOverview"], ["/assets/online", "assetsOnline"], ["/assets/physical", "assetsPhysical"], ["/assets/domains", "assetsOnline"]] as const) {
+			const opened = await page.goto(path);
+			expect(opened?.status(), `${path} direct entry must be a successful application response`).toBe(200);
+			await expect(page.locator(".assets-section-nav").getByRole("link", { name: t(section), exact: true })).toHaveAttribute("aria-current", "page");
+			if (path === "/assets/domains") await expect(page.locator(".assets-category-pills").getByRole("button", { name: new RegExp(`^${t("workspaceDomains")}`) })).toHaveAttribute("aria-pressed", "true");
+			const refreshed = await page.reload();
+			expect(refreshed?.status(), `${path} refresh must remain an HTTP 200 application entry`).toBe(200);
+			await expect(page.locator(".assets-section-nav").getByRole("link", { name: t(section), exact: true })).toHaveAttribute("aria-current", "page");
+		}
+		await page.goto("/assets");
 		const nav = page.locator("aside .nav a");
 		await expect(nav).toHaveCount(4);
 		await expect(nav.nth(0)).toContainText(t("overview"));
