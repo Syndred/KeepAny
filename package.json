@@ -15,7 +15,11 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:e2e": "playwright test",
-    "lint": "biome lint apps/web/src apps/sync-server/src packages"
+    "lint": "biome lint apps/web/src apps/sync-server/src packages",
+    "test:functional:layout": "playwright test --config playwright.account-layout.config.ts",
+    "test:final:layout": "node scripts/check-account-layout.mjs",
+    "test:final:links": "playwright test --config playwright.vault-links-layout.config.ts",
+    "test:final:workflows": "playwright test --config playwright.portable-release.config.ts"
   },
   "dependencies": {
     "@ai-sdk/alibaba": "2.0.58",

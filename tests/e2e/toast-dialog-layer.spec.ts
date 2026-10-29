@@ -59,6 +59,7 @@ for (const locale of ["zh-CN", "en"] as const)
 						nodes.map((node) => node.getAttribute("href")),
 					);
 				expect(originalHrefs).toHaveLength(8);
+				const originalEntryIds = await page.locator(".password-vault-entry").evaluateAll(nodes => nodes.map(node => node.getAttribute("data-entry-id")));
 				receipt.originalHrefs = originalHrefs;
 				const toast = page.locator('.toast[role="status"]');
 				await expect(toast).toBeVisible();
@@ -181,6 +182,13 @@ for (const locale of ["zh-CN", "en"] as const)
 						),
 				).toEqual(originalHrefs);
 				receipt.assetIdentitiesPreserved = true;
+				await page.reload();
+				await openVaultAccess(page);
+				await page.locator("#password-vault-unlock-master").fill(master);
+				await page.getByRole("button", { name: t("pwVaultUnlock"), exact: true }).click();
+				expect(await page.locator("a.asset-account-card").evaluateAll(nodes => nodes.map(node => node.getAttribute("href")))).toEqual(originalHrefs);
+				expect(await page.locator(".password-vault-entry").evaluateAll(nodes => nodes.map(node => node.getAttribute("data-entry-id")))).toEqual(originalEntryIds);
+				receipt.cancelAndReloadPreservedAssetsAndEntries = true;
 				receipt.completed = true;
 			} finally {
 				writeFileSync(

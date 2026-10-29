@@ -1,7 +1,8 @@
+import { readCandidate, selectCandidate } from "./lib/portable-candidate.mjs";
 import assert from 'node:assert/strict';
 import { execFileSync, spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { mkdtemp, readFile, readdir, rm, stat, writeFile } from 'node:fs/promises';
+import { mkdtemp, readFile, rm, stat, writeFile } from 'node:fs/promises';
 import { createServer, request } from 'node:http';
 import { createConnection } from 'node:net';
 import { networkInterfaces, tmpdir } from 'node:os';
@@ -11,10 +12,8 @@ import { unzipSync } from 'fflate';
 import { readApplicationRouteContract } from './preview-route-contract.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const files = await readdir(join(root, 'dist', 'preview'));
-const archives = await Promise.all(files.filter(name => name.endsWith('.zip')).map(async name => ({ name, mtime: (await stat(join(root, 'dist', 'preview', name))).mtimeMs })));
-const defaultArchive = archives.sort((a, b) => b.mtime - a.mtime)[0]?.name;
-const archivePath = process.argv[2] ? resolve(process.argv[2]) : join(root, 'dist', 'preview', defaultArchive ?? 'missing.zip');
+const archivePath = selectCandidate({ argument: process.argv[2], archiveOnly: true });
+readCandidate(archivePath);
 const sha256 = bytes => createHash('sha256').update(bytes).digest('hex');
 const bytes = await readFile(archivePath);
 const expectedZipHash = (await readFile(`${archivePath}.sha256`, 'utf8')).split(/\s+/)[0];

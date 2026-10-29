@@ -1,8 +1,10 @@
+import { browserDefaults } from "./scripts/testing/browser-config";
 import { resolve } from "node:path";
 import { defineConfig } from "@playwright/test";
 import vaultTools from "./playwright.vault-tools.config";
 
 export default defineConfig({
+ ...browserDefaults,
 	...vaultTools,
 	testMatch: "core-account-isolation.spec.ts",
 	outputDir: resolve(

@@ -1,3 +1,4 @@
+import { browserDefaults, compiledServer } from "./scripts/testing/browser-config";
 import { mkdirSync } from "node:fs";
 import { resolve } from "node:path";
 import { defineConfig } from "@playwright/test";
@@ -14,26 +15,26 @@ const arms = [
 ] as const;
 
 export default defineConfig({
+ ...browserDefaults,
 	testDir: "./tests/diagnostics",
 	testMatch: "module-navigation.diagnostic.ts",
 	outputDir: resolve(outputRoot, "run"),
 	workers: 1,
-	retries: 0,
+
 	timeout: 300_000,
-	use: {
+	use: { ...browserDefaults.use,
 		baseURL: `http://127.0.0.1:${port}`,
 		locale: "zh-CN",
 		viewport: { width: 1536, height: 1024 },
 		serviceWorkers: "allow",
-		actionTimeout: 15_000,
-		screenshot: "only-on-failure",
+
 	},
 	projects: arms.map((arm) => {
 		const directory = resolve(process.cwd(), outputRoot, arm.name);
 		mkdirSync(directory, { recursive: true });
 		return {
 			name: arm.name,
-			use: {
+			use: { ...browserDefaults.use,
 				channel: arm.channel,
 				trace: arm.trace,
 				launchOptions: {
@@ -49,11 +50,5 @@ export default defineConfig({
 			},
 		};
 	}),
-	webServer: {
-		cwd: process.cwd(),
-		command: "node scripts/serve-preview-for-tests.mjs",
-		url: `http://127.0.0.1:${port}`,
-		reuseExistingServer: false,
-		timeout: 30_000,
-	},
+	webServer: compiledServer(port),
 });

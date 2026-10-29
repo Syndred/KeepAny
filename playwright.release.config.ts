@@ -1,3 +1,4 @@
+import { browserDefaults } from "./scripts/testing/browser-config";
 import { defineConfig } from "@playwright/test";
 
 // Test the committed delivery files, without serving development source.
@@ -9,7 +10,8 @@ process.env.KEEPANY_PDF_RELEASE = "1";
 process.env.KEEPANY_EVIDENCE_DIR ??= "docs/evidence/2026-09-30/delivery";
 
 export default defineConfig({
-	testDir: "./tests/e2e",
+ ...browserDefaults,
+
 	outputDir: "test-results/local-release",
 	testMatch: [
 		"ui-consolidation.spec.ts",
@@ -68,7 +70,7 @@ export default defineConfig({
 	],
 	timeout: 90_000,
 	workers: 2,
-	use: { baseURL, screenshot: "only-on-failure" },
+	use: { ...browserDefaults.use, baseURL,  },
 	webServer: {
 		command: `node node_modules/vite/bin/vite.js preview apps/web --outDir ${webDir} --host 127.0.0.1 --port ${port} --strictPort`,
 		url: baseURL,

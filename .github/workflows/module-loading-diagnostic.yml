@@ -33,14 +33,15 @@ jobs:
           google-chrome --version
           dpkg-query --show google-chrome-stable
       - name: Build and verify the actual portable preview
-        run: pnpm build:preview && pnpm verify:preview
+        run: pnpm build:preview
+      - run: node scripts/select-preview-candidate.mjs
+      - run: pnpm verify:preview
       - name: Fixed bundled and Chrome navigation comparisons
         shell: bash
         env:
           KEEPANY_GRAPH_NETWORK_DIAGNOSTICS: '1'
         run: |
-          archive="$(node --input-type=module -e 'import fs from "node:fs"; const files=fs.readdirSync("dist/preview").filter(name=>name.endsWith(".zip")); if(files.length!==1)throw Error("Expected one fresh preview"); process.stdout.write(`dist/preview/${files[0]}`);')"
-          KEEPANY_PREVIEW_ARCHIVE="$archive" KEEPANY_RELEASE_TEST_PORT=4393 pnpm exec playwright test --config playwright.module-navigation-diagnostic.config.ts --reporter=line
+          KEEPANY_RELEASE_TEST_PORT=4393 pnpm exec playwright test --config playwright.module-navigation-diagnostic.config.ts --reporter=line
       - name: Verify and summarize actual browser internal loading traces
         if: always()
         shell: bash

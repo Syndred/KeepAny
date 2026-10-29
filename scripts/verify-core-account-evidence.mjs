@@ -174,6 +174,9 @@ for (const path of receipts) {
 }
 assert.equal(expected.size, 0);
 const inputs = [
+ "scripts/lib/portable-candidate.mjs",
+ "scripts/testing/browser-config.ts",
+ "scripts/serve-preview-for-tests.mjs",
 	"tests/e2e/core-account-isolation.spec.ts",
 	"playwright.core-account.config.ts",
 	"playwright.vault-tools.config.ts",

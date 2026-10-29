@@ -1,6 +1,10 @@
+import { browserDefaults, compiledServer } from "./scripts/testing/browser-config";
 import { defineConfig } from "@playwright/test";
+const port = Number(process.env.KEEPANY_RELEASE_TEST_PORT ?? "4231");
 export default defineConfig({
-	testDir: "./tests/e2e",
+ webServer: compiledServer(port),
+ ...browserDefaults,
+
 	testMatch: [
 		"account-layout-independent.spec.ts",
 		"account-layout-minimal-independent.spec.ts",
@@ -10,7 +14,7 @@ export default defineConfig({
 		"account-layout-busy-independent.spec.ts",
 	],
 	outputDir: `${process.env.KEEPANY_INDEPENDENT_EVIDENCE ?? "test-results/account-layout-independent"}/runs`,
-	retries: 0,
+
 	workers: 1,
 	reporter: [
 		["list"],
@@ -21,8 +25,8 @@ export default defineConfig({
 			},
 		],
 	],
-	use: {
-		baseURL: `http://127.0.0.1:${process.env.KEEPANY_RELEASE_TEST_PORT ?? "4231"}`,
-		screenshot: "only-on-failure",
+	use: { ...browserDefaults.use,
+		baseURL: `http://127.0.0.1:${port}`,
+
 	},
 });

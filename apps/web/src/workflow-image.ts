@@ -12,4 +12,3 @@ export async function validateCaptureImage(file: File): Promise<void> {
 		URL.revokeObjectURL(address);
 	}
 }
-

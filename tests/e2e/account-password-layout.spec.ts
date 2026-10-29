@@ -1,8 +1,9 @@
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { join } from "node:path";
 import { expect, test, type Locator } from "@playwright/test";
 import { resources } from "../../apps/web/src/i18n";
+import { openVaultAccess } from "./helpers/vault-access";
 
 const evidence = process.env.KEEPANY_EVIDENCE_DIR ?? "test-results/account-password-layout";
 mkdirSync(evidence, { recursive: true });
@@ -27,6 +28,16 @@ for (const language of ["zh-CN", "en"] as const) for (const width of [1920, 1280
 		const page = await context.newPage();
 		page.setDefaultTimeout(12_000);
 		const errors: string[] = [];
+		const baselineCandidates: Array<{ state: string; path: string; sha256: string; platform: string; browser: string; baseline: string; comparison: string }> = [];
+		const baselineState = async (state: "expanded" | "collapsed") => {
+			// The real list includes the expanded card's parent grid and neighbors.
+			const list = page.locator(".unified-account-list");
+			const baseline = `account-${language}-${width}-${state}.png`;
+			const path = join(evidence, `review-${process.platform}-${baseline}`);
+			await list.screenshot({ path, animations: "disabled" });
+			if (process.env.KEEPANY_REVIEWED_BASELINES) await expect(list).toHaveScreenshot(baseline, { animations: "disabled", maxDiffPixels: 0 });
+			baselineCandidates.push({ state, path, sha256: createHash("sha256").update(readFileSync(path)).digest("hex"), platform: process.platform, browser: browser.version(), baseline: `${process.platform}/accounts/${baseline}`, comparison: process.env.KEEPANY_REVIEWED_BASELINES ? "passed" : "pending-human-review" });
+		};
 		page.on("pageerror", (error) => errors.push(error.message));
 		try {
 			await page.goto("/");
@@ -50,6 +61,8 @@ for (const language of ["zh-CN", "en"] as const) for (const width of [1920, 1280
 			await page.locator(".password-vault-toolbar").screenshot({ path: join(evidence, `toolbar-${language}-${width}.png`) });
 			expect(await lineCount(sampleButton), "The sample-login text action remains one readable line").toBe(1);
 			const account = page.locator(".unified-account").filter({ has: page.locator(".asset-account-phone") });
+			const originalAccountHref = await account.locator("a.asset-account-card").getAttribute("href");
+			expect(originalAccountHref).toBeTruthy();
 			const disclosure = account.locator(".unified-account-passwords");
 			const trigger = disclosure.locator("summary");
 			await trigger.click();
@@ -80,6 +93,7 @@ for (const language of ["zh-CN", "en"] as const) for (const width of [1920, 1280
 			// Retain the immediate success frame, then record unobstructed default layout.
 			await expect(page.locator(".toast")).toHaveCount(0);
 			await page.screenshot({ path: join(evidence, `expanded-stable-${language}-${width}.png`), fullPage: true });
+			await baselineState("expanded");
 			expect.soft(maskLines, "A concealed password stays on one readable line").toBe(1);
 			expect.soft(usernameLines, "A short phone identifier stays on one line").toBe(1);
 			expect.soft(notes.valueWidth, "Notes use most of the available row rather than a narrow center column").toBeGreaterThanOrEqual(notes.rowWidth * 0.6);
@@ -91,6 +105,7 @@ for (const language of ["zh-CN", "en"] as const) for (const width of [1920, 1280
 			await expect(entry).toBeHidden();
 			const after = await page.locator(".unified-account").evaluateAll((nodes) => nodes.map((node) => node.getBoundingClientRect().height));
 			for (const [index, height] of after.entries()) expect(height).toBeLessThanOrEqual(collapsed[index] + 1);
+			await baselineState("collapsed");
 			await trigger.press("Space"); await expect(disclosure).toHaveJSProperty("open", true);
 			await trigger.hover();
 			await account.screenshot({ path: join(evidence, `hover-${language}-${width}.png`) });
@@ -120,6 +135,24 @@ for (const language of ["zh-CN", "en"] as const) for (const width of [1920, 1280
 			await expect(page.locator(".toast")).toHaveCount(0);
 			await page.screenshot({ path: join(evidence, `multiple-stable-${language}-${width}.png`), fullPage: true });
 			expect(await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth)).toBe(false);
+			const savedEntryIds = await disclosure.locator(".password-vault-entry").evaluateAll(nodes => nodes.map(node => node.getAttribute("data-entry-id")));
+			expect(savedEntryIds.every(Boolean)).toBe(true);
+			await entry.first().getByRole("button", { name: t("pwVaultEditEntry"), exact: true }).click();
+			await page.locator("#password-vault-entry-title").fill("Discard this synthetic edit");
+			await page.getByRole("dialog").getByRole("button", { name: t("close"), exact: true }).click();
+			await expect(page.getByRole("dialog")).toBeHidden();
+			await expect(entry.first()).toContainText("Demo | Phone service login");
+			await page.reload();
+			await openVaultAccess(page);
+			await page.locator("#password-vault-unlock-master").fill(master);
+			await page.getByRole("button", { name: t("pwVaultUnlock"), exact: true }).click();
+			expect(await account.locator("a.asset-account-card").getAttribute("href")).toBe(originalAccountHref);
+			await trigger.click();
+			await expect(disclosure).toHaveJSProperty("open", true);
+			expect(await disclosure.locator(".password-vault-entry").evaluateAll(nodes => nodes.map(node => node.getAttribute("data-entry-id")))).toEqual(savedEntryIds);
+			await expect(entry.first()).toContainText("Demo | Phone service login");
+			await expect(entry.first()).toContainText(phone);
+			await expect(entry.last()).toContainText("Second passwordless phone login");
 			if (process.env.KEEPANY_LAYOUT_FIXTURE && language === "zh-CN" && width === 1920) {
 				await page.goto("/intake");
 				await page.locator("#backup-password").fill(master);
@@ -129,7 +162,7 @@ for (const language of ["zh-CN", "en"] as const) for (const width of [1920, 1280
 				await (await download).saveAs(process.env.KEEPANY_LAYOUT_FIXTURE);
 			}
 			expect(errors).toEqual([]);
-			writeFileSync(join(evidence, `result-${language}-${width}.json`), JSON.stringify({ ids: ["AL01", "AL02", "AL10"], language, width, candidate, status: "passed", errors, geometry, notes, maskLines, usernameLines, visual: "requires-human-review" }, null, 2));
+			writeFileSync(join(evidence, `result-${language}-${width}.json`), JSON.stringify({ ids: ["AL01", "AL02", "AL10"], language, width, candidate, status: "passed", errors, geometry, notes, maskLines, usernameLines, originalAccountHref, savedEntryIds, cancelAndReloadPreserved: true, baselineCandidates, visual: "requires-human-review" }, null, 2));
 		} finally { await context.close(); }
 	});
 }

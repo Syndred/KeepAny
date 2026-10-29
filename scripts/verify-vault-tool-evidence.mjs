@@ -246,6 +246,9 @@ for (const item of receipts) {
 }
 assert.equal(expected.size, 0);
 const inputs = [
+ "scripts/lib/portable-candidate.mjs",
+ "scripts/testing/browser-config.ts",
+ "scripts/serve-preview-for-tests.mjs",
 	"tests/e2e/vault-tool-loading.spec.ts",
 	"tests/e2e/vault-tool-recovery.spec.ts",
 	"tests/e2e/workspace-vault-status.spec.ts",
