@@ -1,15 +1,13 @@
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { expect, test, type Page } from '@playwright/test';
 import { strFromU8, unzipSync } from 'fflate';
-import type { Asset, History } from '../../packages/domain/src';
+import { newAsset, historySchema, type Asset, type History } from '../../packages/domain/src';
+import { reviewedCandidateSchema, stageReviewedCandidates } from '../../packages/local-db/src/intake-review';
 import { decryptBackup } from '../../packages/local-db/src/backup-crypto';
 import { selectChoice } from './helpers/select-choice';
-import { sourceModuleUrl } from './helpers/source-module-url';
-
-const repo = sourceModuleUrl('packages/local-db/src/index.ts');
-const domain = sourceModuleUrl('packages/domain/src/index.ts');
-const review = sourceModuleUrl('packages/local-db/src/intake-review.ts');
+import { openBackupRestorePanel } from './helpers/backup-restore';
+import { prepareCompletionArchive, recordDevelopmentRequests } from './helpers/completion-archive';
 const portable = process.env.KEEPANY_T14_PORTABLE === '1';
 const fixtureDirectory = resolve('test-results/T14-completion-fixture');
 const evidence = process.env.KEEPANY_EVIDENCE_DIR ?? 'docs/qa/2026-10-27/evidence/T14-completion';
@@ -42,6 +40,7 @@ async function downloadArchive(page: Page, zh = false) {
 
 async function restoreFixture(page: Page, zh: boolean, path = resolve(fixtureDirectory, 'fixture.ka1')) {
   const c = copy(zh); await page.goto('/intake'); await page.locator('#backup-password').fill(password);
+  await openBackupRestorePanel(page);
   await page.locator('#restore-file').setInputFiles(path); await page.getByRole('button', { name: c.preview, exact: true }).first().click();
   await page.getByRole('button', { name: c.confirm }).click(); await expect(page.getByText(c.restored)).toBeVisible();
 }
@@ -54,19 +53,10 @@ async function searchBill(page: Page, query: string, id: string, visible = true)
   else await page.keyboard.press('Escape');
 }
 
-test.beforeAll(async ({ browser }) => {
-  if (portable) { fixture = JSON.parse(readFileSync(resolve(fixtureDirectory, 'fixture.json'), 'utf8')); return; }
-  const context = await browser.newContext({ locale: 'en-US', acceptDownloads: true });
-  await context.addInitScript(() => localStorage.setItem('keepany-language', 'en'));
-  const page = await context.newPage();
-  try {
-    await page.goto('/finance');
-    fixture = await page.evaluate(async ({ repo, domain, review }) => {
-      const { localRepository } = await import(repo), { newAsset, historySchema } = await import(domain);
-      const { reviewedCandidateSchema, stageReviewedCandidates } = await import(review);
-      const db = await localRepository();
-      const project = { ...newAsset('project'), name: 'T14 Project owner', description: 'T14 ordinary original description', longDescription: 'T14 ordinary unselected long description' }, item = { ...newAsset('item'), name: 'T14 Equipment owner' };
-      const account = { ...newAsset('account'), name: 'T14 Account owner' }, subscription = { ...newAsset('subscription'), name: 'T14 Subscription source',
+test.beforeAll(async () => {
+    fixture = await prepareCompletionArchive(fixtureDirectory, password, async db => {
+      const project = { ...newAsset('project'), name: 'T14 Project owner', description: 'T14 ordinary original description', contact: 'T14 public contact marker', tags: ['T14 public tag marker'], longDescription: 'T14 ordinary unselected long description' }, item = { ...newAsset('item'), name: 'T14 Equipment owner' };
+      const account = { ...newAsset('account'), name: 'T14 Account owner' }, subscription: Asset = { ...newAsset('subscription'), name: 'T14 Subscription source',
         dueDate: '2026-10-27', billingAnchor: '2026-10-27', amount: 500, currency: 'CNY' };
       await db.saveBatch([project,item,account,subscription].map(value => ({ type: 'asset', value })));
       const renewal = historySchema.parse({ id: crypto.randomUUID(), assetId: subscription.id, action: 'renew', note: 'Preserved renewal fact',
@@ -83,10 +73,7 @@ test.beforeAll(async ({ browser }) => {
           description: 'T14 merged PDF description marker' } }));
       for (const row of pdfs) await stageReviewedCandidates(db.fileStore, [row]);
       return { project,item,account,subscription,renewed,renewal,dollar,yen,pdfNameId: pdfs[0].id,pdfDescriptionId: pdfs[1].id };
-    }, { repo, domain, review });
-    const archive = await downloadArchive(page); await archive.download.saveAs(resolve(fixtureDirectory, 'fixture.ka1'));
-    writeFileSync(resolve(fixtureDirectory, 'fixture.json'), JSON.stringify(fixture, null, 2));
-  } finally { await context.close(); }
+    });
 });
 
 for (const locale of ['zh-CN','en-US'] as const) for (const width of [390,1280]) {
@@ -94,6 +81,7 @@ for (const locale of ['zh-CN','en-US'] as const) for (const width of [390,1280])
     test.setTimeout(150_000);
     const zh = locale === 'zh-CN', c = copy(zh), errors: string[] = [];
     const context = await browser.newContext({ locale, timezoneId: 'Asia/Shanghai', viewport: { width, height: 900 }, acceptDownloads: true });
+    const sourceRequests = recordDevelopmentRequests(context);
     await context.addInitScript(value => localStorage.setItem('keepany-language', value), zh ? 'zh-CN' : 'en');
     const page = await context.newPage(); page.setDefaultTimeout(15_000); page.on('pageerror', error => errors.push(error.message));
     await page.clock.setFixedTime(new Date('2026-10-27T04:00:00.000Z'));
@@ -194,11 +182,14 @@ for (const locale of ['zh-CN','en-US'] as const) for (const width of [390,1280])
       expect(final.assets.find(asset => asset.id === fixture.subscription.id)).toEqual(fixture.renewed);
       const finalPath = resolve(fixtureDirectory, `final-${locale}-${width}.ka1`); await final.download.saveAs(finalPath);
       const restored = await browser.newContext({ locale, acceptDownloads: true });
+      const restoredSourceRequests = recordDevelopmentRequests(restored);
       await restored.addInitScript(value => localStorage.setItem('keepany-language', value), zh ? 'zh-CN' : 'en');
       try { const target = await restored.newPage(); await restoreFixture(target, zh, finalPath); await target.goto('/finance');
         await expect(target.locator('.finance-entry')).toHaveCount(2); const restoredData = await downloadArchive(target, zh);
         expect(restoredData.history.sort((a,b) => a.id.localeCompare(b.id))).toEqual(final.history.sort((a,b) => a.id.localeCompare(b.id)));
+        if (portable) expect(restoredSourceRequests).toEqual([]);
       } finally { await restored.close(); }
+      if (portable) expect(sourceRequests).toEqual([]);
       expect(errors).toEqual([]);
     } finally { await context.close(); }
   });
@@ -207,6 +198,7 @@ for (const locale of ['zh-CN','en-US'] as const) for (const width of [390,1280])
 test('T14 true second-tab edits and deletion reject stale review without overwriting latest bill', async ({ browser }) => {
   test.setTimeout(100_000); const c = copy(false);
   const context = await browser.newContext({ locale: 'en-US', acceptDownloads: true });
+  const sourceRequests = recordDevelopmentRequests(context);
   await context.addInitScript(() => localStorage.setItem('keepany-language', 'en'));
   try {
     const first = await context.newPage(); first.setDefaultTimeout(15_000); await restoreFixture(first, false); await first.goto('/finance');
@@ -230,12 +222,14 @@ test('T14 true second-tab edits and deletion reject stale review without overwri
     await first.getByRole('dialog').getByRole('button', { name: c.cancel, exact: true }).click();
     await first.reload(); await expect(row1).toContainText('40.03'); const snapshot = await downloadArchive(first);
     expect(snapshot.history.find(entry => entry.id === fixture.dollar.id)).toMatchObject({ amount: 4003, deleted: false });
+    if (portable) expect(sourceRequests).toEqual([]);
   } finally { await context.close(); }
 });
 
 test('T14 360 768 1440 keyboard cancellation and layout keep fields and actions reachable', async ({ browser }) => {
   test.setTimeout(80_000); const c = copy(false);
   const context = await browser.newContext({ locale: 'en-US', viewport: { width: 1440, height: 900 } });
+  const sourceRequests = recordDevelopmentRequests(context);
   await context.addInitScript(() => localStorage.setItem('keepany-language', 'en'));
   try {
     const page = await context.newPage(); page.setDefaultTimeout(15_000); await restoreFixture(page, false); await page.goto('/finance');
@@ -258,12 +252,14 @@ test('T14 360 768 1440 keyboard cancellation and layout keep fields and actions 
       await form.getByLabel(c.title, { exact: true }).focus(); await page.keyboard.press('Escape'); await expect(form).toBeHidden();
       await expect(opener).toBeFocused(); await expect(page.locator('.finance-entry')).toHaveCount(3);
     }
+    if (portable) expect(sourceRequests).toEqual([]);
   } finally { await context.close(); }
 });
 
-for (const zh of [true,false]) test(`${zh ? 'zh' : 'en'} reviewed PDF field merge preserves search privacy, ordinary unselected fields and clean restore`, async ({ browser }) => {
+for (const zh of [true,false]) test(`${zh ? 'zh' : 'en'} legacy PDF candidate merge preserves search privacy, ordinary unselected fields and clean restore`, async ({ browser }) => {
   test.setTimeout(100_000);
   const context = await browser.newContext({ locale: zh ? 'zh-CN' : 'en-US', acceptDownloads: true, viewport: { width: zh ? 390 : 1280, height: 900 } });
+  const sourceRequests = recordDevelopmentRequests(context);
   await context.addInitScript(language => localStorage.setItem('keepany-language', language), zh ? 'zh-CN' : 'en');
   const page = await context.newPage(); page.setDefaultTimeout(15_000); const errors: string[] = [];
   page.on('pageerror', error => errors.push(error.message));
@@ -281,21 +277,31 @@ for (const zh of [true,false]) test(`${zh ? 'zh' : 'en'} reviewed PDF field merg
       await selectChoice(dialog.locator('#candidate-merge-target'), fixture.project.id);
       await dialog.getByRole('checkbox', { name: zh ? `使用候选值：${field === 'name' ? '名称' : '简短描述'}` : `Use candidate value: ${field === 'name' ? 'Name' : 'Short description'}`, exact: true }).check();
       await dialog.getByRole('button', { name: zh ? '确认合并' : 'Confirm merge', exact: true }).click(); await expect(dialog).toBeHidden();
-      await page.reload(); await assertSearch(page, 'T14 ordinary unselected long description', true);
+      // B2 retired project promotion fields from current UI/search; their old values remain in KA1.
+      await page.reload(); await assertSearch(page, 'T14 ordinary unselected long description', false);
       await assertSearch(page, 'T14 ordinary original description', field === 'name');
+      await assertSearch(page, 'T14 public contact marker', true);
+      await assertSearch(page, 'T14 public tag marker', true);
       await assertSearch(page, 'T14 merged PDF description marker', false);
       await assertSearch(page, 'T14 synthetic raw PDF source marker', false);
     }
     const snapshot = await downloadArchive(page, zh);
     expect(snapshot.assets.find(asset => asset.id === fixture.project.id)).toMatchObject({ name: 'T14 renamed project',
-      description: 'T14 merged PDF description marker', longDescription: 'T14 ordinary unselected long description' });
+      description: 'T14 merged PDF description marker', contact: 'T14 public contact marker', tags: ['T14 public tag marker'], longDescription: 'T14 ordinary unselected long description' });
     const path = resolve(fixtureDirectory, `pdf-privacy-${zh ? 'zh' : 'en'}.ka1`); await snapshot.download.saveAs(path);
     const restored = await browser.newContext({ locale: zh ? 'zh-CN' : 'en-US' });
+    const restoredSourceRequests = recordDevelopmentRequests(restored);
     await restored.addInitScript(language => localStorage.setItem('keepany-language', language), zh ? 'zh-CN' : 'en');
     try { const target = await restored.newPage(); await restoreFixture(target, zh, path);
       await assertSearch(target, 'T14 merged PDF description marker', false);
-      await assertSearch(target, 'T14 ordinary unselected long description', true);
+      await assertSearch(target, 'T14 ordinary unselected long description', false);
+      await assertSearch(target, 'T14 public contact marker', true);
+      await assertSearch(target, 'T14 public tag marker', true);
+      const roundTrip = await downloadArchive(target, zh);
+      expect(roundTrip.assets.find(asset => asset.id === fixture.project.id)).toEqual(snapshot.assets.find(asset => asset.id === fixture.project.id));
+      if (portable) expect(restoredSourceRequests).toEqual([]);
     } finally { await restored.close(); }
+    if (portable) expect(sourceRequests).toEqual([]);
     expect(errors).toEqual([]);
   } finally { await context.close(); }
 });

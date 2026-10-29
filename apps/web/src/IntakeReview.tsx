@@ -530,7 +530,6 @@ export function IntakeReview() {
 
 	return <div className="intake-review">
 		<p>{t("reviewIntro")}</p>
-		<p className="muted">{t("reviewPdfHint")}</p>
 		{migrationPending && <div role="alert" className="notice">
 			<p>{t("reviewMigrationPending")}</p>
 			<Button disabled={migrationBusy} onClick={() => void retryMigration()}>{t("reviewRetryMigration")}</Button>

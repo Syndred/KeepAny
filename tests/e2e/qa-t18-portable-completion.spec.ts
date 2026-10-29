@@ -5,9 +5,10 @@ import { strFromU8, unzipSync } from "fflate";
 import { decryptBackup } from "../../packages/local-db/src/backup-crypto";
 import type { ReviewedCandidate } from "../../packages/local-db/src/intake-review";
 import { resources } from "../../apps/web/src/i18n";
+import { openBackupRestorePanel } from "./helpers/backup-restore";
 
 const password = "T18-portable-synthetic-backup-password";
-const evidence = "docs/qa/2026-10-27/evidence/T18-completion";
+const evidence = process.env.KEEPANY_EVIDENCE_DIR ?? "test-results/T18-portable-completion";
 type ArchiveRow = { id: string; type: string; payload: string };
 
 async function archive(page: Page, t: (key: keyof typeof resources.en.translation) => string) {
@@ -89,6 +90,7 @@ for (const [locale, width] of [["zh-CN", 390], ["en", 1280]] as const) test(`T18
 		expect(before.candidates.filter(row => row.status === "pending")).toHaveLength(2);
 		await restored.goto("/intake");
 		await restored.locator("#backup-password").fill(password);
+		await openBackupRestorePanel(restored);
 		await restored.locator("#restore-file").setInputFiles(before.path);
 		await restored.getByRole("button", { name: t("preview"), exact: true }).first().click();
 		await restored.getByRole("button", { name: /^(确认|Confirm) · 2/ }).click();

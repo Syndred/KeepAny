@@ -45,6 +45,12 @@ jobs:
         timeout-minutes: 1
       - run: pnpm verify:preview
         timeout-minutes: 5
+      - name: Verify checked-in current web files
+        run: node scripts/verify-local-release.mjs
+        timeout-minutes: 5
+      - name: Verify selected removals and retained local project data
+        run: pnpm exec playwright test --config playwright.portable-release.config.ts tests/e2e/pdf-removal-release.spec.ts tests/e2e/project-simplification.spec.ts --workers=2 --reporter=line --max-failures=1
+        timeout-minutes: 6
       - name: Account expansion pilot in two existing matrix cases
         run: pnpm exec playwright test --config playwright.account-layout.config.ts tests/e2e/account-password-layout.spec.ts --grep '(zh-CN 390|en 1280) ' --reporter=line --max-failures=1
         timeout-minutes: 6

@@ -1,14 +1,14 @@
 import { expect, test } from "@playwright/test";
-import { pdf } from "./fixtures/pdf";
 import { selectChoice } from "./helpers/select-choice";
 import { sourceModuleUrl } from "./helpers/source-module-url";
+import { prepareLegacyPdfArchive, restoreCompletionArchive } from "./helpers/completion-archive";
 
 const repositoryUrl = sourceModuleUrl("packages/local-db/src/index.ts");
 
 // These are explicit fault injections in disposable development contexts.
 // They test the UI recovery choices, rather than claim disk-full or power-loss evidence.
 for (const locale of ["en-US", "zh-CN"]) for (const committed of [false, true]) {
-	test(`${locale} fault-injected PDF expense ${committed ? "finishes a written receipt" : "can cancel an unwritten intent"}`, async ({ browser }) => {
+	test(`${locale} fault-injected legacy PDF expense ${committed ? "finishes a written receipt" : "can cancel an unwritten intent"}`, async ({ browser }) => {
 		const zh = locale === "zh-CN";
 		const context = await browser.newContext({ locale, viewport: { width: 390, height: 844 } });
 		const page = await context.newPage();
@@ -21,9 +21,10 @@ for (const locale of ["en-US", "zh-CN"]) for (const committed of [false, true]) 
 			await dialog.getByLabel(zh ? "名称" : "Name", { exact: true }).fill("Billing account");
 			await dialog.getByRole("button", { name: zh ? "保存" : "Save", exact: true }).click();
 			await expect(dialog).toBeHidden();
-			await page.goto("/intake");
-			await page.getByRole("button", { name: zh ? "PDF 文档" : "PDF document", exact: true }).click();
-			await page.locator("#csv-file").setInputFiles({ name: "recovery-invoice.pdf", mimeType: "application/pdf", buffer: pdf(["Paid USD 8.00"]) });
+			const password = "legacy-expense-recovery-only";
+			const legacy = await prepareLegacyPdfArchive(test.info().outputPath("legacy-pdf-fixture"), password,
+				[{ fileName: "recovery-invoice.pdf", text: "Paid USD 8.00" }]);
+			await restoreCompletionArchive(page, password, legacy.path);
 			const row = page.locator(".intake-review-row");
 			await selectChoice(row.getByLabel(zh ? "资料类型" : "Record type"), "expense");
 			await selectChoice(row.getByLabel(zh ? "关联资产" : "Related asset"), { label: zh ? "Billing account · 账号" : "Billing account · Accounts" });

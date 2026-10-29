@@ -37,7 +37,8 @@ The development app uses `http://127.0.0.1:5173/`; the portable preview uses por
 - Keep the React app and shared design variables consistent. Review spacing, long content, empty/error/loading states, focus, keyboard behavior, and narrow layouts.
 - User-facing copy belongs in locale keys and must support zh-CN/en. Developer explanations belong in docs, not in the UI.
 - RxDB is the local asset source. TanStack Query is for remote services; do not add another asset state source.
-- Passwords and persistent AI keys stay in the separate KDBX boundary. Do not place sensitive values in assets, logs, ordinary AI context, MCP, or asset sync. Any new external data transmission needs an explicit, accurate user-facing scope.
+- Passwords and persistent AI keys stay in the separate KDBX boundary. Do not place sensitive values in assets, logs, ordinary AI context, or MCP. Any new external data transmission needs an explicit, accurate user-facing scope.
+- PDF intake, external vault references, project submission/promotional tools, ExternalLink integration, remote backup, and experimental sync/account binding were removed from the current product scope. Preserve old schemas, storage keys, legacy `.ka1` fields, and KDBX ciphertext; removal of a feature must not erase a user's records or silently convert them into another kind.
 - Keep ShipAny and KeepAnyAdm source, keys, production data, and unlicensed assets out of this repository.
 - Keep changes scoped and reversible. Remove temporary fixtures, records, processes, and unrelated files when done.
 
@@ -53,7 +54,7 @@ pnpm test
 pnpm build
 ```
 
-Sync tests require an **isolated** PostgreSQL database via `KEEPANY_TEST_DATABASE_URL`; never point tests at production. Browser tests and fixed-package validation have dedicated configurations; use the instructions for the affected flow rather than treating a development page as proof of a released package.
+Browser tests and fixed-package validation have dedicated configurations; use the instructions for the affected flow rather than treating a development page as proof of a released package. The current local app does not require PostgreSQL or a remote sync service. Historical sync evidence records an older product scope and must not be relabelled as current functionality.
 
 For UI changes, inspect the actual React app in both languages and relevant desktop/mobile widths. For storage or recovery changes, verify the downloaded file in a clean profile and check actual records and images. Add meaningful regression tests for corrected behavior; documentation-only edits do not need new tests.
 

@@ -1,0 +1,26 @@
+{
+  "kind": "original-main-audit-failure-and-online-control",
+  "source": "beca326519bf6dd23dd9f52aa560ac1d585248fd",
+  "archiveSha256": "6e9e16b7cccf20edc5de866215c92b80b362ae4648cdb41fb42603324f446665",
+  "scope": "first-use-offline-PDF",
+  "result": "failed",
+  "preparation": "existing synthetic PDF generator; browser network offline simulation",
+  "control": "same PDF succeeds after explicit online reload",
+  "evidence": [
+    {
+      "path": "offline-pdf-failure.png",
+      "bytes": 49181,
+      "sha256": "8ecba22a7f621d3f4d016a5cbfc63c7de4c72347cc6c786f3d3d7dfe06ade7de"
+    },
+    {
+      "path": "online-pdf-control.png",
+      "bytes": 49749,
+      "sha256": "04f9ba200c3566b945140dc64ce2d46fa3392e0ac66581c86dc7dadfdb4d485c"
+    },
+    {
+      "path": "offline-pdf-network.json",
+      "bytes": 5196,
+      "sha256": "51d070a267415f56577aa88d40c6293cb5275513d97c55385170c2b743a3dc21"
+    }
+  ]
+}

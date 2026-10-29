@@ -1,11 +1,12 @@
+// 2026-10-29: user removed B1 backlinks and B2 promotional fields/materials.
+// Prior expectations/evidence remain in Git and the private pre-change snapshot; retained core checks are unchanged.
 import { mkdirSync } from "node:fs";
 import { expect, test, type Page } from "@playwright/test";
 import { sourceModuleUrl } from "./helpers/source-module-url";
-import { selectChoice } from "./helpers/select-choice";
 
 const repo = sourceModuleUrl("packages/local-db/src/index.ts");
 const domain = sourceModuleUrl("packages/domain/src/index.ts");
-const evidence = "docs/qa/2026-10-27/evidence/T19-windows";
+const evidence = process.env.KEEPANY_EVIDENCE_DIR ?? "test-results/T19-retained-core";
 mkdirSync(evidence, { recursive: true });
 async function state(page: Page) {
 	return page.evaluate(async path => {
@@ -14,13 +15,9 @@ async function state(page: Page) {
 		return { assets: await db.list("asset", true), submissions: await db.list("submission", true), candidates: await db.fileStore.intakeReview.toArray() };
 	}, repo);
 }
-function exportFixture() {
-	const receipt = { profileId: "T19Profile", status: "success", confirmedBy: "agent", evidence: "Synthetic receipt 19", evidenceUrl: "https://directory.example/receipt/19", submittedAt: "2026-10-26T08:00:00Z" };
-	return { format: "externallink-submission-backup", version: 2, siteProfiles: { T19Profile: { id: "T19Profile", name: "T19 source profile", fields: { Name: "T19 source profile", Url: "https://t19.example/", "Cloud LOGO": "https://cdn.example/t19-logo.png", "Screenshot 1": "https://cdn.example/t19-screen.png", "Screenshot 2": "javascript:alert(1)" } }, Other: { id: "Other", name: "Other profile", fields: {} } }, submissionRecords: { "submitted.example::T19Profile": { ...receipt, destinationKey: "submitted.example", destinationUrl: "https://submitted.example/", publicationStatus: "submitted" }, "claim.example::T19Profile": { ...receipt, destinationKey: "claim.example", destinationUrl: "https://claim.example/", publicationStatus: "published" }, "unproven.example::T19Profile": { profileId: "T19Profile", destinationKey: "unproven.example", status: "success", confirmedBy: "migration", evidence: "table.xlsx submitted seed", submittedAt: receipt.submittedAt }, "other.example::Other": { ...receipt, profileId: "Other", destinationKey: "other.example" } } };
-}
 
 for (const locale of ["zh-CN", "en-US"] as const) for (const width of [390, 1280]) {
-	test(`${locale} ${width}px T19 bulk correction, source-profile receipts and explicit backlink review`, async ({ browser }) => {
+	test(`${locale} ${width}px T19 retained CSV bulk correction`, async ({ browser }) => {
 		test.setTimeout(130_000);
 		const zh = locale === "zh-CN";
 		const c = { name: zh ? "名称" : "Name", url: zh ? "网址" : "URL", description: zh ? "简短描述" : "Short description", save: zh ? "保存" : "Save", confirm: zh ? "已确认" : "Confirmed", cancel: zh ? "取消" : "Cancel", addBacklink: zh ? "新增外链" : "Add backlink", check: zh ? "核验" : "Verify", update: zh ? "更新" : "Update", invalid: zh ? "请检查此项" : "Please check this field", evidence: zh ? "依据" : "Evidence" };
@@ -70,63 +67,7 @@ for (const locale of ["zh-CN", "en-US"] as const) for (const width of [390, 1280
 			expect(accepted.assets.find((a: { id: string }) => a.id === existing.id)).toEqual(existing);
 			expect(accepted.assets.find((a: { id: string }) => a.id === firstSaved.id)).toEqual(firstSaved);
 			expect(accepted.candidates.every((v: { status: string }) => v.status === "accepted")).toBe(true);
-			// T19-03: formal JSON import maps a selected Profile to a selected local project.
-			await page.locator("details").filter({ has: page.locator(".external-import-panel") }).locator("summary").click();
-			const panel = page.locator(".external-import-panel");
-			await selectChoice(panel.getByLabel(zh ? "选择本机项目" : "Choose local project", { exact: true }), existing.id);
-			await panel.locator("#ext-file").setInputFiles({ name: "T19-externallink.json", mimeType: "application/json", buffer: Buffer.from(JSON.stringify(exportFixture())) });
-			await selectChoice(panel.getByLabel(zh ? "选择来源资料" : "Choose source profile", { exact: true }), "T19Profile");
-			await panel.getByRole("button", { name: zh ? "预览" : "Preview", exact: true }).click();
-			await expect(panel).not.toContainText("other.example");
-			await panel.locator("#ext-min-images").fill("2");
-			await expect(panel).toContainText(zh ? "缺少 1 张截图" : "1 screenshots missing");
-			const claimed = panel.locator(".external-import-row").filter({ hasText: "claim.example" });
-			await expect(claimed).toContainText(zh ? "公开页面尚未核验" : "Public page has not been verified");
-			await expect(panel.locator(".external-import-row").filter({ hasText: "unproven.example" }).locator("input[type=checkbox]")).toBeDisabled();
-			for (const host of ["submitted.example", "claim.example"]) await panel.locator(".external-import-row").filter({ hasText: host }).locator("input[type=checkbox]").check();
-			await panel.getByRole("button", { name: zh ? "导入所选 2 条" : "Import 2 selected", exact: true }).click();
-			await expect(panel.getByRole("status")).toContainText(zh ? "已导入 2 条台账记录" : "Imported 2 ledger records");
-			let submissions = (await state(page)).submissions;
-			expect(submissions).toHaveLength(2);
-			for (const row of submissions) expect(row).toMatchObject({ assetId: existing.id, externalLink: { profileId: "T19Profile" } });
-			expect(submissions.find((v: { externalLink: { destinationKey: string } }) => v.externalLink.destinationKey === "claim.example")).toMatchObject({ status: "verify", verifiedAt: "" });
-			expect(submissions.find((v: { externalLink: { destinationKey: string } }) => v.externalLink.destinationKey === "submitted.example")).toMatchObject({ status: "submitted" });
-			// T19-04: evidence gates indexed state, double click only writes one row.
-			await page.goto(`/assets/project/${existing.id}`);
-			await page.getByRole("button", { name: c.addBacklink, exact: true }).click();
-			const form = page.getByRole("dialog", { name: c.addBacklink, exact: true });
-			await form.locator("#submission-name").fill("T19 Manual receipt");
-			await form.locator("#submission-url").fill("https://manual.example/listing");
-			await selectChoice(form.locator("#submission-status"), "indexed");
-			await form.locator("#submission-date").fill("2026-10-26");
-			await form.getByRole("button", { name: c.save, exact: true }).click();
-			await expect(form.getByRole("alert")).toBeVisible();
-			await form.locator("#submission-evidence").fill("plain text cannot prove indexed state");
-			await form.getByRole("button", { name: c.save, exact: true }).click();
-			await expect(form.getByRole("alert")).toBeVisible();
-			await form.locator("#submission-evidence").fill("https://search.example/result/t19");
-			await form.getByRole("button", { name: c.save, exact: true }).evaluate(button => { (button as HTMLButtonElement).click(); (button as HTMLButtonElement).click(); });
-			await expect(form).toBeHidden();
-			submissions = (await state(page)).submissions;
-			const manual = submissions.find((v: { name: string }) => v.name === "T19 Manual receipt");
-			expect(submissions.filter((v: { name: string }) => v.name === manual.name)).toHaveLength(1);
-			expect(manual).toMatchObject({ status: "indexed", evidence: "https://search.example/result/t19", submittedAt: "2026-10-26", verifiedAt: "2026-10-27" });
-			const ledger = page.locator(".asset-backlinks-card");
-			const row = ledger.locator("tr").filter({ hasText: manual.name });
-			await row.getByRole("button", { name: c.update, exact: true }).click();
-			await row.getByLabel(`${manual.name} ${c.name}`, { exact: true }).fill("T19 cancelled name");
-			await row.getByRole("button", { name: c.cancel, exact: true }).click();
-			expect((await state(page)).submissions.find((v: { id: string }) => v.id === manual.id)).toEqual(manual);
-			await row.getByRole("button", { name: c.update, exact: true }).click();
-			await selectChoice(row.getByRole("combobox"), "verify");
-			await row.getByLabel(`${manual.name} ${c.evidence}`, { exact: true }).fill("T19 changed source awaiting recheck");
-			await row.getByRole("button", { name: c.save, exact: true }).click();
-			await expect(row.getByRole("combobox")).toHaveCount(0);
-			await page.reload();
-			expect((await state(page)).submissions.find((v: { id: string }) => v.id === manual.id)).toMatchObject({ status: "verify", verifiedAt: "", evidence: "T19 changed source awaiting recheck" });
-			await ledger.locator("summary").click();
-			await expect(ledger.locator("tr").filter({ hasText: manual.name })).toHaveCount(1);
-			if ((zh && width === 390) || (!zh && width === 1280)) await ledger.screenshot({ path: `${evidence}/T19-ledger-${locale}-${width}.png` });
+			await expect(page.locator(".external-link-import-panel")).toHaveCount(0);
 			expect(remote).toEqual([]);
 			expect(errors).toEqual([]);
 			expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width + 1);

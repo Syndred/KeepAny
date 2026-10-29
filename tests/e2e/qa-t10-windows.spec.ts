@@ -1,3 +1,5 @@
+// 2026-10-29: user removed B1 backlinks and B2 promotional fields/materials.
+// Prior expectations/evidence remain in Git and the private pre-change snapshot; retained core checks are unchanged.
 import { mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { expect, test, type Page } from "@playwright/test";
@@ -6,7 +8,7 @@ import { selectChoice } from "./helpers/select-choice";
 
 const repositoryPath = `/@fs/${process.cwd().replaceAll("\\", "/")}/packages/local-db/src/index.ts`;
 const domainPath = `/@fs/${process.cwd().replaceAll("\\", "/")}/packages/domain/src/index.ts`;
-const evidence = "docs/qa/2026-10-27/evidence/T10-windows";
+const evidence = process.env.KEEPANY_EVIDENCE_DIR ?? "test-results/T10-retained-core";
 mkdirSync(evidence, { recursive: true });
 
 async function readAsset(page: Page, id: string) {
@@ -32,28 +34,16 @@ for (const locale of ["zh-CN", "en"] as const) for (const width of [390, 1280]) 
 			await editor.locator("#name").fill("T10 Project");
 			await editor.locator("#url").fill("https://t10.example.test");
 			await editor.locator("#description").fill("T10 short description");
-			await editor.locator("#projectTitle").fill("T10 product title");
-			await editor.locator("#projectPromoUrl").fill("https://t10.example.test/promo");
 			await editor.locator("#tags").fill("alpha, beta");
-			await editor.locator(".project-editor-group").nth(1).locator("summary").click();
-			await editor.locator("#projectMediumDescription").fill("T10 medium description");
-			await editor.locator("#longDescription").fill("T10 complete description");
-			await editor.locator("#projectFeatures").fill("T10 feature");
-			await editor.locator("#projectPricing").fill("T10 free tier");
-			await editor.locator("#projectPricingType").fill("Freemium");
-			await editor.locator(".project-editor-group").nth(2).locator("summary").click();
-			await editor.locator("#projectEmail").fill("t10@example.test");
 			await editor.locator("#notes").fill("T10 preserved notes");
 			await editor.getByRole("button", { name: t("save"), exact: true }).click();
 			await expect(editor).toBeHidden();
 			await page.reload();
 			await expect(page.locator(".asset-project-card").filter({ hasText: "T10 Project" })).toBeVisible();
 			const project = await page.evaluate(async (path) => (await (await import(path)).localRepository()).list("asset").then((rows: { name: string }[]) => rows.find((row) => row.name === "T10 Project")), repositoryPath);
-			expect(project).toMatchObject({ kind: "project", url: "https://t10.example.test", description: "T10 short description", projectTitle: "T10 product title", projectPromoUrl: "https://t10.example.test/promo", tags: ["alpha", "beta"], projectMediumDescription: "T10 medium description", longDescription: "T10 complete description", projectFeatures: "T10 feature", projectPricing: "T10 free tier", projectPricingType: "Freemium", projectEmail: "t10@example.test", notes: "T10 preserved notes" });
+			expect(project).toMatchObject({ kind: "project", url: "https://t10.example.test", description: "T10 short description", tags: ["alpha", "beta"], notes: "T10 preserved notes" });
 			await page.locator(".asset-project-card").filter({ hasText: "T10 Project" }).click();
 			await expect(page.locator(".asset-project-profile-card")).toContainText("t10.example.test");
-			await page.getByRole("button", { name: t("projectViewMaterials"), exact: true }).click();
-			await expect(page.locator(".asset-project-materials")).toContainText("T10 complete description");
 
 			// Independent existing project makes an incorrect domain association observable.
 			const otherId = await page.evaluate(async ({ repositoryPath, domainPath }) => {
@@ -149,9 +139,6 @@ for (const locale of ["zh-CN", "en"] as const) for (const width of [390, 1280]) 
 			await expect(page.locator(".asset-project-related-card")).toHaveCount(2);
 			await expect(page.locator(".asset-project-related-card").filter({ hasText: "T10 linked account" })).toHaveAttribute("href", `/assets/account/${fixtureIds.account}`);
 			await expect(page.locator(".asset-project-related-card").filter({ hasText: "T10 linked subscription" })).toHaveAttribute("href", `/assets/subscription/${fixtureIds.subscription}`);
-			await page.getByRole("button", { name: t("projectViewMaterials"), exact: true }).click();
-			await expect(page.locator(".asset-project-materials")).toContainText("T10 preserved notes");
-			await expect(page.locator(".asset-project-materials")).toContainText("https://t10.example.test/promo");
 			await expect(page.locator(".asset-project-domain-row")).toHaveCount(3);
 			await page.goto("/assets");
 			await expect(page.locator(".asset-project-card").filter({ hasText: "T10 Project renamed" })).toBeVisible();

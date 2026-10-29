@@ -25,7 +25,7 @@ export function McpPanel() {
 	const { data } = useAppContext();
 	const { status, scope, prepared, error, prepare, invalidatePrepared, importPairing, revoke } =
 		useMcpRuntime();
-	const assets = data.assets.filter((asset) => !asset.deleted);
+	const assets = data.assets.filter((asset) => !asset.deleted && asset.kind !== "vault");
 	const [assetIds, setAssetIds] = useState<string[]>([]);
 	const [readFields, setReadFields] = useState<ReadField[]>(["name"]);
 	const [writeFields, setWriteFields] = useState<WriteField[]>([]);

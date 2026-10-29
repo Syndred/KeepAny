@@ -49,11 +49,6 @@ export function AccountsWorkspace() {
 	])), [grouped.linked]);
 	const unlinked = grouped.unlinked.filter((entry) => [search, filters.search].every((query) => !query.trim() ||
 		[entry.title, entry.username, ...(entry.usernameAliases ?? []), entry.url].join(" ").toLocaleLowerCase().includes(query.trim().toLocaleLowerCase())));
-	useEffect(() => {
-		if (hash !== "vault-references" || data.loading) return;
-		const section = document.getElementById("vault-references") as HTMLDetailsElement | null;
-		if (section) { section.open = true; section.scrollIntoView({ block: "start" }); }
-	}, [hash, data.loading]);
 	return <main className="page unified-accounts-page">
 		<Suspense fallback={<p role="status">{t("pwVaultLoading")}</p>}>
 			<PasswordVaultPanel assets={data.assets} sampleAccounts={sampleAccounts} notify={notify} focusAssetId={hash.startsWith("asset-") ? hash.slice(6) : undefined}
@@ -70,10 +65,6 @@ export function AccountsWorkspace() {
 					</section> : null} />}
 			/>
 		</Suspense>
-		<details className="unified-vault-references" id="vault-references">
-			<summary>{t("vaultReferencesTitle")} <span className="chip">{data.assets.filter((asset) => asset.kind === "vault" && !asset.deleted).length}</span></summary>
-			<AssetKindList kind="vault" embedded referencesOnly />
-		</details>
 		{editAccount && <Suspense fallback={<p role="status">{t("loading")}</p>}><AssetEditor kind="account" categories={data.categories} onClose={() => setEditAccount(false)} /></Suspense>}
 	</main>;
 }
@@ -110,16 +101,7 @@ function AssetCatalog({ domainsOnly }: { domainsOnly: boolean }) {
 	const visible = assets.filter((asset) => [search, query].every((value) => matchesAssetSearch(asset, value)));
 	const visibleDomains = summary.domains.filter(({ domain, project }) => [search, query].every((value) => !value.trim() ||
 		[domain.name, domain.registrar, project.name].join(" ").toLocaleLowerCase().includes(value.trim().toLocaleLowerCase())));
-	const backlinks = useMemo(() => {
-		const counts = new Map<string, { total: number; pending: number }>();
-		for (const row of data.submissions) {
-			if (row.deleted) continue;
-			const count = counts.get(row.assetId) ?? { total: 0, pending: 0 };
-			count.total += 1; if (row.status === "verify") count.pending += 1;
-			counts.set(row.assetId, count);
-		}
-		return counts;
-	}, [data.submissions]);
+
 	function create(event: FormEvent) {
 		event.preventDefault();
 		if (createKind === "domain") {
@@ -140,7 +122,7 @@ function AssetCatalog({ domainsOnly }: { domainsOnly: boolean }) {
 		</div>}
 		<div className="workspace-search"><label className="asset-account-search"><Search size={18} /><Input type="search" value={query} aria-label={t("workspaceSearch")} placeholder={t("workspaceSearch")} onChange={(event) => { setQuery(event.target.value); sessionStorage.setItem(queryKey, event.target.value); }} /></label><AssetViewToggle value={assetView} onChange={setAssetView} /><span>{t("workspaceAssetCount", { count: (domainsOnly ? 0 : visible.length) + visibleDomains.length })}</span></div>
 		{hasResults ? <section className={`asset-list-content workspace-asset-grid${assetView === "list" ? " asset-dense-list" : ""}`} aria-label={t(domainsOnly ? "workspaceDomains" : "assetsWorkspace")}>
-			{!domainsOnly && visible.map((asset) => asset.kind === "project" ? <ProjectCard key={asset.id} asset={asset} search={search} summary={summary.summaries.get(asset.id)} backlinks={backlinks.get(asset.id) ?? { total: 0, pending: 0 }} onOpen={() => rememberCatalog(asset.id)} /> : <LibraryCard key={asset.id} asset={asset} search={search} summary={summary.summaries.get(asset.id)} onOpen={() => rememberCatalog(asset.id)} />)}
+			{!domainsOnly && visible.map((asset) => asset.kind === "project" ? <ProjectCard key={asset.id} asset={asset} search={search} summary={summary.summaries.get(asset.id)} onOpen={() => rememberCatalog(asset.id)} /> : <LibraryCard key={asset.id} asset={asset} search={search} summary={summary.summaries.get(asset.id)} onOpen={() => rememberCatalog(asset.id)} />)}
 			{visibleDomains.map(({ project, domain, remainingDays }) => <Link className="card workspace-domain-card" key={`${project.id}:${domain.id}`} to="/assets/$kind/$id" params={{ kind: "project", id: project.id }} hash={`project-domain-${domain.id}`} onClick={() => rememberCatalog(project.id)}>
 				<div className="workspace-domain-heading"><Globe size={22} /><strong>{domain.name}</strong></div><span className="subtitle">{t("workspaceDomains")} · {project.name}</span>
 				<strong><RemainingDays days={remainingDays} /></strong><span>{t("projectExpiry")}: {date(domain.expiryDate, i18n.language)}</span>

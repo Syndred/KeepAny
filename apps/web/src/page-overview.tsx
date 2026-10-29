@@ -38,10 +38,6 @@ export function Overview() {
   });
   const first = staleRelations[0];
   const account = first && [first.from, first.to].map((id) => byId.get(id)).find((asset) => asset?.kind === "account");
-  const noVault = assets.filter((asset) => asset.kind === "account" && !data.relations.some((relation) =>
-    !relation.deleted && (relation.from === asset.id || relation.to === asset.id) &&
-    (byId.get(relation.from)?.kind === "vault" || byId.get(relation.to)?.kind === "vault"),
-  ));
   const projects = assets.filter((asset) => asset.kind === "project").slice(0, 6);
   const connected = (project: Asset) => {
     const ids = new Set(data.relations.filter((relation) => !relation.deleted && (relation.from === project.id || relation.to === project.id))
@@ -69,7 +65,6 @@ export function Overview() {
       <section className="overview-panel"><div className="overview-panel-head"><div><h2>{t("overviewAccountReminders")}</h2><p>{t("overviewBeforeChanges")}</p></div></div>
         {account ? <div className="overview-risk"><h3><TriangleAlert size={16}/>{account.name}</h3><p>{t("overviewOldRelation", { count: staleRelations.filter((relation) => relation.from === account.id || relation.to === account.id).length })}</p><Link className="button" to="/assets/$kind/$id" params={{ kind: "account", id: account.id }}>{t("viewConnections")}</Link></div> :
           <div className="overview-quiet">{t("overviewNoRelationReminders")}</div>}
-        {noVault.length > 0 && <Link className="overview-reminder-row" to="/assets/$kind" params={{ kind: "account" }}><span>{t("overviewUnlinkedVault", { count: noVault.length })}</span><span className="chip">{t("planned")}</span></Link>}
       </section>
     </div>
     <div className="overview-project-heading"><h2>{t("myProjects")}</h2><Link to="/assets/$kind" params={{ kind: "project" }}>{t("allProjects")} <ArrowRight size={15}/></Link></div>

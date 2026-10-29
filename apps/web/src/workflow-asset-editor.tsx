@@ -1,38 +1,17 @@
-import { projectImageTypes } from "./workflow-image";
 import { Textarea } from "./components/ui/textarea";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { assetSchema, inputFromMinorUnits, newAsset, parseMinorUnits, type Asset, type AssetKind, type Category, type ProjectMedia } from "../../../packages/domain/src";
-import { localRepository, fileUrl, putFile, cleanupUnreferencedFile, save, saveAssetIfCurrent, saveSubscription, getPendingSubscriptionSave, retrySubscriptionSave, abandonSubscriptionSave, saveBatch } from "../../../packages/local-db/src";
+import { assetSchema, inputFromMinorUnits, newAsset, parseMinorUnits, type Asset, type AssetKind, type Category } from "../../../packages/domain/src";
+import { localRepository, save, saveAssetIfCurrent, saveSubscription, getPendingSubscriptionSave, retrySubscriptionSave, abandonSubscriptionSave } from "../../../packages/local-db/src";
 import { Button } from "./components/ui/button";
 import { Dialog } from "./components/ui/dialog";
 import { builtins as categoryOptions, useAppContext } from "./view-shared";
-import "./project-editor.css";
 import { Select, SelectOption } from "./components/ui/select";
 import { assetNotes, editAssetNotes } from "./asset-notes";
 import { saveAccountWithIdentityLinks, AccountIdentitySavePending } from "./account-identity-save";
 import { AccountLinkConflict } from "./vault-account-links";
 import { Field } from "./workflow-field";
 type FieldName = keyof Asset;
-
-type ProjectFormFiles = { logo?: File; home?: File; products?: File[]; promo?: File };
-
-function ProjectFormImage({ id, file }: { id?: string; file?: File }) {
-	const [url, setUrl] = useState("");
-	useEffect(() => {
-		let active = true;
-		let current = "";
-		const source = file ? Promise.resolve(URL.createObjectURL(file)) : id ? fileUrl(id) : null;
-		if (!source) return;
-		void source.then((value) => {
-			current = value;
-			if (active) setUrl(value);
-			else if (value) URL.revokeObjectURL(value);
-		}).catch(() => { if (active) setUrl(""); });
-		return () => { active = false; if (current) URL.revokeObjectURL(current); };
-	}, [id, file]);
-	return url ? <img className="project-editor-image" src={url} alt="" /> : null;
-}
 
 export function AssetEditor({
 	kind,
@@ -46,7 +25,7 @@ export function AssetEditor({
 	onClose: () => void;
 }) {
 	const { t } = useTranslation();
-	const { data, notify } = useAppContext();
+	const { data } = useAppContext();
 	const originalRef = useRef(asset);
 	const original = originalRef.current;
 	const linkedSubscriptionAssets = original?.kind === "subscription" ? data.relations
@@ -57,8 +36,6 @@ export function AssetEditor({
 	const linkedAccounts = linkedSubscriptionAssets.filter((candidate) => candidate.kind === "account");
 	const [projectId, setProjectId] = useState(() => linkedProjects.length === 1 ? linkedProjects[0].id : "");
 	const [accountId, setAccountId] = useState(() => linkedAccounts.length === 1 ? linkedAccounts[0].id : "");
-	const [vaultRelatedId, setVaultRelatedId] = useState("");
-	const [vaultVerifiedAt, setVaultVerifiedAt] = useState("");
 	const [draft, setDraft] = useState<Asset>(
 		() =>
 			(original && (kind === "project" || kind === "account" || kind === "subscription") ? assetSchema.parse(original) : original) ?? {
@@ -85,7 +62,6 @@ export function AssetEditor({
 	const [failure, setFailure] = useState("");
 	const [pendingConnections, setPendingConnections] = useState(false);
 	const [checkingConnections, setCheckingConnections] = useState(kind === "subscription");
-	const [projectFiles, setProjectFiles] = useState<ProjectFormFiles>({});
 	const inFlight = useRef(false);
 	useEffect(() => {
 		if (kind !== "subscription") return;
@@ -124,36 +100,9 @@ export function AssetEditor({
 		setDraft((prev) => ({ ...prev, [key]: value }));
 		setErrors((prev) => ({ ...prev, [key]: "" }));
 	}
-	function selectProjectFiles(key: keyof ProjectFormFiles, files: FileList | null) {
-		const selected = files ? Array.from(files) : [];
-		setProjectFiles((previous) => ({ ...previous, [key]: key === "products" ? selected : selected[0] }));
-		setErrors((previous) => ({ ...previous, projectMedia: "" }));
-	}
 	async function submit(e: React.FormEvent) {
 		e.preventDefault();
 		if (inFlight.current || pendingConnections || checkingConnections) return;
-		const selectedFiles = kind === "project"
-			? [projectFiles.logo, projectFiles.home, ...(projectFiles.products ?? []), projectFiles.promo].filter((file): file is File => !!file)
-			: [];
-		const previousMedia = draft.projectMedia;
-		const replacedIds = kind === "project" ? new Set([
-			projectFiles.logo ? previousMedia.logoId : "",
-			projectFiles.home ? previousMedia.homeScreenshotId : "",
-			projectFiles.promo ? previousMedia.promoCoverId : "",
-			...(projectFiles.products?.length ? previousMedia.productScreenshotIds : []),
-		].filter(Boolean)) : new Set<string>();
-		if ((projectFiles.products?.length ?? 0) > 4) {
-			setErrors((previous) => ({ ...previous, projectMedia: t("projectProductScreenshotsLimit") }));
-			return;
-		}
-		if (draft.attachments.length - replacedIds.size + selectedFiles.length > 20) {
-			setErrors((previous) => ({ ...previous, projectMedia: t("projectMediaAttachmentLimit") }));
-			return;
-		}
-		if (selectedFiles.some((file) => file.name.length > 255 || file.size > 20 * 1024 * 1024 || !projectImageTypes.has(file.type))) {
-			setErrors((previous) => ({ ...previous, projectMedia: t("uploadError") }));
-			return;
-		}
 		const parsedAmount = kind === "item" && !amount.trim() ? 0 : parseMinorUnits(amount, draft.currency);
 		const parsedDiscount = kind === "subscription" ? parseMinorUnits(discount, draft.currency) : draft.discountAmount;
 		const scheduleChanged =
@@ -199,59 +148,23 @@ export function AssetEditor({
 		inFlight.current = true;
 		setBusy(true);
 		setFailure("");
-		const uploadedIds: string[] = [];
-		let candidate: Asset | null = null;
-		let saveAttempted = false;
+		const candidate = parsed.data;
 		try {
-			if (kind === "project" && selectedFiles.length) {
-				const media: ProjectMedia = { ...previousMedia, productScreenshotIds: [...previousMedia.productScreenshotIds] };
-				const upload = async (file: File) => { const id = await putFile(file); uploadedIds.push(id); return id; };
-				if (projectFiles.logo) media.logoId = await upload(projectFiles.logo);
-				if (projectFiles.home) media.homeScreenshotId = await upload(projectFiles.home);
-				if (projectFiles.products?.length) {
-					media.productScreenshotIds = [];
-					for (const file of projectFiles.products) media.productScreenshotIds.push(await upload(file));
-				}
-				if (projectFiles.promo) media.promoCoverId = await upload(projectFiles.promo);
-				const attachments = [
-					...parsed.data.attachments.filter((id) => !replacedIds.has(id)),
-					...uploadedIds,
-				];
-				if (projectFiles.home) {
-					attachments.splice(attachments.indexOf(media.homeScreenshotId), 1);
-					attachments.unshift(media.homeScreenshotId);
-				}
-				candidate = assetSchema.parse({ ...parsed.data, attachments, projectMedia: media });
-			} else candidate = parsed.data;
 			const assetToSave = candidate;
 			const selectedLinks = kind === "subscription" ? [
 				{ id: projectId, kind: "project" as const, label: t("subscriptionProject") },
 				{ id: accountId, kind: "account" as const, label: t("subscriptionLoginAccount") },
 			].filter((link) => !!link.id) : [];
 			if (kind === "account") {
-				saveAttempted = true;
 				originalRef.current = await saveAccountWithIdentityLinks(original ?? null, assetToSave,
 					(linkKind, identifierKind) => t(`pwConnectKind_${identifierKind ?? linkKind}`));
 			} else if (kind === "subscription") {
-				saveAttempted = true;
 				originalRef.current = await saveSubscription(original ?? null, assetToSave, selectedLinks);
 			} else if (original) {
-				saveAttempted = true;
 				await saveAssetIfCurrent(original, candidate);
 				originalRef.current = candidate;
 			}
-			else if (kind === "vault" && vaultRelatedId) {
-				const linked = data.assets.some((candidate) => candidate.id === vaultRelatedId && !candidate.deleted && candidate.kind !== "vault");
-				if (!linked) throw Error("relation-endpoint");
-				await saveBatch([
-					{ type: "asset", value: candidate },
-					{ type: "relation", value: { id: crypto.randomUUID(), from: candidate.id, to: vaultRelatedId, label: t("vault"), createdAt: new Date().toISOString(), verifiedAt: vaultVerifiedAt, deleted: false } },
-				]);
-			} else { saveAttempted = true; await save("asset", candidate); }
-			if (uploadedIds.length) {
-				const cleanup = await Promise.allSettled([...replacedIds].map((id) => cleanupUnreferencedFile(id)));
-				if (cleanup.some((result) => result.status === "rejected")) notify(t("projectMediaCleanupPending"));
-			}
+			else await save("asset", candidate);
 			onClose();
 		} catch (error) {
 			if (error instanceof AccountIdentitySavePending) {
@@ -265,28 +178,6 @@ export function AssetEditor({
 					const current = await (await localRepository()).get<Asset>("asset", candidate.id);
 					if (current) originalRef.current = current;
 				} catch { /* Keep the persistent intent for the next open/retry. */ }
-			}
-			if (uploadedIds.length) {
-				let safeToCleanup = !saveAttempted;
-				if (saveAttempted && candidate) {
-					try {
-						const current = await (await localRepository()).get<Asset>("asset", candidate.id);
-						if (current && uploadedIds.every((id) => current.attachments.includes(id))) {
-							originalRef.current = current;
-							notify(t("projectMediaSavedCheck"));
-							onClose();
-							return;
-						}
-						safeToCleanup = true;
-					} catch { setFailure(t("projectMediaSaveUnknown")); return; }
-				}
-				if (safeToCleanup) {
-					const cleanup = await Promise.allSettled(uploadedIds.map((id) => cleanupUnreferencedFile(id)));
-					if (cleanup.some((result) => result.status === "rejected" || !result.value)) {
-						setFailure(t("projectMediaUploadCleanupPending"));
-						return;
-					}
-				}
 			}
 			const reason = error instanceof Error ? error.message : "";
 			setFailure(t(error instanceof AccountLinkConflict ? "accountIdentityAmbiguous" :
@@ -306,7 +197,7 @@ export function AssetEditor({
 	}
 	return (
 		<Dialog title={asset ? t("edit") : t("newRecord")} className={kind === "account" ? "account-detail-dialog" : undefined} onClose={closeIfIdle}>
-			<form className={kind === "project" ? "project-editor" : "asset-editor"} onSubmit={(e) => void submit(e)}>
+			<form className="asset-editor" onSubmit={(e) => void submit(e)}>
 				<div className="form-grid">
 					<Field
 						name="name"
@@ -378,31 +269,6 @@ export function AssetEditor({
 								onChange={(v) => set("description", v)}
 								error={errors.description}
 							/>
-							<details className="project-editor-group" open>
-								<summary>{t("projectPositioning")}</summary>
-								<div className="project-editor-fields">
-									<Field name="projectTitle" label={t("projectProductTitle")} value={draft.projectTitle} onChange={(v) => set("projectTitle", v)} error={errors.projectTitle} />
-									<Field name="projectPromoUrl" label={t("projectPromoUrl")} type="url" value={draft.projectPromoUrl} onChange={(v) => set("projectPromoUrl", v)} error={errors.projectPromoUrl} />
-									<Field name="tags" label={t("tags")} value={tagsInput} onChange={(value) => { setTagsInput(value); setErrors((previous) => ({ ...previous, tags: "" })); }} error={errors.tags} />
-								</div>
-							</details>
-							<details className="project-editor-group">
-								<summary>{t("projectIntroductionPricing")}</summary>
-								<div className="project-editor-fields">
-									<Field name="projectMediumDescription" label={t("projectMediumDescription")} error={errors.projectMediumDescription}><Textarea id="projectMediumDescription" rows={4} value={draft.projectMediumDescription} onChange={(event) => set("projectMediumDescription", event.target.value)} /></Field>
-									<Field name="longDescription" label={t("projectFullDescription")} error={errors.longDescription}><Textarea id="longDescription" rows={4} value={draft.longDescription} onChange={(event) => set("longDescription", event.target.value)} /></Field>
-									<Field name="projectFeatures" label={t("projectFeatures")} error={errors.projectFeatures}><Textarea id="projectFeatures" rows={4} value={draft.projectFeatures} onChange={(event) => set("projectFeatures", event.target.value)} /></Field>
-									<Field name="projectPricing" label={t("projectPricing")} error={errors.projectPricing}><Textarea id="projectPricing" rows={4} value={draft.projectPricing} onChange={(event) => set("projectPricing", event.target.value)} /></Field>
-									<Field name="projectPricingType" label={t("projectPricingType")} value={draft.projectPricingType} onChange={(v) => set("projectPricingType", v)} error={errors.projectPricingType} />
-								</div>
-							</details>
-							<details className="project-editor-group">
-								<summary>{t("projectContactDetails")}</summary>
-								<div className="project-editor-fields">
-									<Field name="projectEmail" label={t("projectBusinessEmail")} type="email" value={draft.projectEmail} onChange={(v) => set("projectEmail", v)} error={errors.projectEmail} />
-									<Field name="notes" label={t("projectAdditionalNotes")} error={errors.notes}><Textarea id="notes" rows={4} value={draft.notes} onChange={(event) => set("notes", event.target.value)} /></Field>
-								</div>
-							</details>
 						</>
 					)}
 					{kind === "account" && (
@@ -599,19 +465,7 @@ export function AssetEditor({
 							/>
 						</>
 					)}
-					{kind === "vault" && <>
-						<Field name="location" label={t("vaultStorageLocation")} value={draft.location} onChange={(value) => set("location", value)} error={errors.location} />
-						{!original && <>
-							<Field name="vaultRelatedId" label={t("vaultUsedFor")}>
-								<Select id="vaultRelatedId" value={vaultRelatedId} onValueChange={(selectValue) => setVaultRelatedId(selectValue)}>
-									<SelectOption value="">{t("select")}</SelectOption>
-									{data.assets.filter((candidate) => !candidate.deleted && candidate.kind !== "vault").map((candidate) => <SelectOption key={candidate.id} value={candidate.id}>{candidate.name}</SelectOption>)}
-								</Select>
-							</Field>
-							{vaultRelatedId && <Field name="vaultVerifiedAt" label={t("vaultVerifyDate")} type="date" value={vaultVerifiedAt} onChange={setVaultVerifiedAt} />}
-						</>}
-					</>}
-					{kind !== "project" && <Field
+					<Field
 						name="tags"
 						label={t("tags")}
 						value={tagsInput}
@@ -620,49 +474,24 @@ export function AssetEditor({
 							setErrors((previous) => ({ ...previous, tags: "" }));
 						}}
 						error={errors.tags}
-					/>}
+					/>
 				</div>
-				{kind === "project" && <details className="project-editor-group project-editor-media" open>
-					<summary>{t("projectMaterialsImage")}</summary>
-					<div className="project-editor-fields">
-						<Field name="projectLogoFile" label={t("projectLogo")}>
-							<input id="projectLogoFile" type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={(event) => selectProjectFiles("logo", event.target.files)} />
-							{(projectFiles.logo || draft.projectMedia.logoId) && <div className="project-editor-image-list"><ProjectFormImage id={draft.projectMedia.logoId} file={projectFiles.logo} /></div>}
-						</Field>
-						<Field name="projectHomeFile" label={t("projectHomeScreenshot")}>
-							<input id="projectHomeFile" type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={(event) => selectProjectFiles("home", event.target.files)} />
-							{(projectFiles.home || draft.projectMedia.homeScreenshotId) && <div className="project-editor-image-list"><ProjectFormImage id={draft.projectMedia.homeScreenshotId} file={projectFiles.home} /></div>}
-						</Field>
-						<Field name="projectProductFiles" label={t("projectProductScreenshots")}>
-							<input id="projectProductFiles" type="file" accept="image/jpeg,image/png,image/webp,image/gif" multiple onChange={(event) => selectProjectFiles("products", event.target.files)} />
-							<small>{t("projectProductScreenshotsLimit")}. {t("projectMediaReplaceHint")}</small>
-							<div className="project-editor-image-list">{projectFiles.products?.length
-					? projectFiles.products.map((file) => <ProjectFormImage key={`${file.name}-${file.size}-${file.lastModified}`} file={file} />)
-								: draft.projectMedia.productScreenshotIds.map((id) => <ProjectFormImage key={id} id={id} />)}</div>
-						</Field>
-						<Field name="projectPromoFile" label={t("projectPromoCover")}>
-							<input id="projectPromoFile" type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={(event) => selectProjectFiles("promo", event.target.files)} />
-							{(projectFiles.promo || draft.projectMedia.promoCoverId) && <div className="project-editor-image-list"><ProjectFormImage id={draft.projectMedia.promoCoverId} file={projectFiles.promo} /></div>}
-						</Field>
-						{errors.projectMedia && <p className="field-error" role="alert">{errors.projectMedia}</p>}
-					</div>
-				</details>}
-				{kind === "vault" && <p className="notice">{t("vaultHint")}</p>}
-				{kind !== "project" && <div className="field">
+				<div className="field">
 					<label htmlFor="notes">{t("notes")}</label>
 					<Textarea
 						id="notes"
 						rows={3}
-						value={assetNotes(draft)}
+						value={kind === "project" ? draft.notes : assetNotes(draft)}
 						onChange={(e) => {
-							setDraft((current) => editAssetNotes(current, e.target.value));
+							const value = e.target.value;
+							setDraft((current) => kind === "project" ? { ...current, notes: value } : editAssetNotes(current, value));
 							setErrors((current) => ({ ...current, notes: "", longDescription: "" }));
 						}}
 						aria-invalid={!!errors.notes}
 						aria-describedby={errors.notes ? "notes-error" : undefined}
 					/>
 					{errors.notes && <small id="notes-error" className="field-error">{errors.notes}</small>}
-				</div>}
+				</div>
 				{failure && (
 					<p className="field-error" role="alert">
 						{failure}

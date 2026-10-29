@@ -1,3 +1,5 @@
+// 2026-10-29: user removed B1 backlinks and B2 promotional fields/materials.
+// Prior expectations/evidence remain in Git and the private pre-change snapshot; retained core checks are unchanged.
 import { expect, test, type Page } from '@playwright/test';
 import { selectChoice } from "./helpers/select-choice";
 
@@ -54,24 +56,24 @@ test('brand changes use one evidence-backed round and preserve its snapshot', as
   expect(desktopHeroNameGeometry.right).toBeLessThanOrEqual(desktopHeroNameGeometry.heroRight + 1);
   expect(desktopHeroNameGeometry.scrollWidth).toBeLessThanOrEqual(desktopHeroNameGeometry.clientWidth + 1);
   await expect(page.getByRole('heading', { name: 'Review profile change impact' })).toBeVisible();
-  await expect(page.locator('.project-workflow-preview-row')).toHaveCount(5);
+  await expect(page.locator('.project-workflow-preview-row')).toHaveCount(4);
   await page.getByLabel('Proposed name').fill('Atlas Studio');
   await page.getByRole('button', { name: 'Create action plan' }).click();
-  await expect(page.locator('.project-workflow-task')).toHaveCount(5);
+  await expect(page.locator('.project-workflow-task')).toHaveCount(4);
   await page.reload();
-  await expect(page.locator('.project-workflow-task')).toHaveCount(5);
+  await expect(page.locator('.project-workflow-task')).toHaveCount(4);
   await expect(page.locator('.project-workflow-before-after')).toContainText('Atlas Studio');
   await page.locator('.project-workflow-task').first().getByRole('button', { name: 'Record result' }).click();
   await page.locator('.project-workflow-task').first().getByLabel('Evidence or note').fill('Updated local project profile and checked title.');
   await page.locator('.project-workflow-task').first().getByRole('button', { name: 'Save result' }).click();
   await expect(page.locator('.project-workflow-task').first()).toContainText('Updated local project profile and checked title.');
   await page.getByRole('button', { name: 'Review records' }).click();
-  await expect(page.locator('.project-workflow-report-counts')).toContainText('Pending: 4');
+  await expect(page.locator('.project-workflow-report-counts')).toContainText('Pending: 3');
   await expect(page.locator('.project-workflow-report')).toContainText('This record does not confirm completion');
   await page.getByRole('button', { name: 'Back to actions' }).click();
   await expect(page.getByRole('button', { name: 'Start another round' })).toBeDisabled();
   await page.reload();
-  await expect(page.locator('.project-workflow-task')).toHaveCount(5);
+  await expect(page.locator('.project-workflow-task')).toHaveCount(4);
 });
 
 test('close and handover requires evidence, records blockers and gates local archive', async ({ page }) => {
@@ -82,7 +84,7 @@ test('close and handover requires evidence, records blockers and gates local arc
   await page.getByRole('link', { name: 'Close or hand over' }).click();
   await page.getByRole('button', { name: 'Create action plan' }).click();
   const tasks = page.locator('.project-workflow-task');
-  await expect(tasks).toHaveCount(7);
+  await expect(tasks).toHaveCount(6);
   await expect(tasks.filter({ hasText: 'Atlas hosting' })).toContainText('98.00');
   await expect(tasks.filter({ hasText: 'Atlas hosting' })).toContainText('Oct 22, 2026');
   await expect(tasks.filter({ hasText: 'atlas.example' }).first()).toContainText('Registry A');
@@ -97,7 +99,7 @@ test('close and handover requires evidence, records blockers and gates local arc
   await expect(page.locator('.project-workflow-report-counts')).toContainText('Blocked, follow up: 1');
   await expect(page.getByRole('button', { name: 'Archive local project' })).toHaveCount(0);
   await page.getByRole('button', { name: 'Back to actions' }).click();
-  for (let index = 0; index < 6; index++) {
+  for (let index = 0; index < 5; index++) {
     const row = tasks.nth(index);
     await row.getByRole('button', { name: /Record result|Edit result/ }).click();
     await selectChoice(row.getByLabel('Result'), index === 0 ? 'done' : 'na');
@@ -115,7 +117,7 @@ test('close and handover requires evidence, records blockers and gates local arc
   await page.getByRole('dialog').getByRole('button', { name: 'Confirm local archive' }).click();
   await expect(page.locator('.project-workflow-report')).toContainText('This local project is archived');
   await page.reload();
-  await expect(page.locator('.project-workflow-task')).toHaveCount(7);
+  await expect(page.locator('.project-workflow-task')).toHaveCount(6);
   await page.getByRole('button', { name: 'Review records' }).click();
   await expect(page.locator('.project-workflow-report')).toContainText('This local project is archived');
   await page.getByRole('button', { name: 'Back to actions' }).click();

@@ -13,7 +13,6 @@ import {
 	type ProjectDomain,
 	type ProjectMedia,
 	type ItemMedia,
-	type Submission,
 	type Relation,
 	actualCharge,
 	effectiveFinanceEntry,
@@ -24,7 +23,6 @@ import {
 	monthlyMinorUnits,
 	parseMinorUnits,
 	projectDomainSchema,
-	submissionSchema,
 } from "../../../packages/domain/src";
 import { buildImpactTasks, upgradeLegacyImpactTasks } from "../../../packages/domain/src/impact";
 import {
@@ -37,8 +35,6 @@ import {
 	recordRenewal,
 	save,
 	saveAssetIfCurrent,
-	saveSubmissionIfCurrent,
-	deleteSubmissionIfCurrent,
 	saveBatch,
 	setItemArchived,
 } from "../../../packages/local-db/src";
@@ -47,7 +43,6 @@ import { Button } from "./components/ui/button";
 import { Dialog } from "./components/ui/dialog";
 import "./asset-restoration.css";
 import "./account-detail.css";
-import "./backlink-ledger.css";
 import "./workspaces.css";
 import { readWorkspaceReturn } from "./workspace-return";
 import { TaskRow } from "./TaskRow";
@@ -98,8 +93,6 @@ function ImageTile({ id }: { id: string }) {
 	return url ? <img src={url} alt="" className="asset-image" /> : null;
 }
 
-const submissionStatuses = ["planned", "submitted", "review", "indexed", "verify", "rejected"] as const;
-type ProjectImageRole = "logoId" | "homeScreenshotId" | "productScreenshotIds" | "promoCoverId" | "other";
 const emptyProjectMedia: ProjectMedia = { logoId: "", homeScreenshotId: "", productScreenshotIds: [], promoCoverId: "" };
 type ItemImageRole = "coverId" | "detailIds" | "receiptIds" | "other";
 const emptyItemMedia: ItemMedia = { coverId: "", detailIds: [], receiptIds: [] };
@@ -108,177 +101,6 @@ function itemLocationParts(location: string): [string, string, string] {
 	if (!location.includes(itemLocationSeparator)) return [location, "", ""];
 	const parts = location.split(itemLocationSeparator);
 	return parts.length === 3 ? [parts[0], parts[1], parts[2]] : [location, "", ""];
-}
-
-function SubmissionRow({ submission }: { submission: Submission }) {
-	const { t, i18n } = useTranslation();
-	const { notify } = useAppContext();
-	const [editing, setEditing] = useState(false);
-	const [editBase, setEditBase] = useState(submission);
-	const [conflict, setConflict] = useState(false);
-	const [name, setName] = useState(submission.name);
-	const [url, setUrl] = useState(submission.url);
-	const [status, setStatus] = useState<Submission["status"]>(submission.status);
-	const [evidence, setEvidence] = useState(submission.evidence);
-	const [submittedAt, setSubmittedAt] = useState(submission.submittedAt);
-	const [error, setError] = useState("");
-	const [busy, setBusy] = useState(false);
-	const inFlight = useRef(false);
-	const [deleteBase, setDeleteBase] = useState<Submission | null>(null);
-	const [deleteError, setDeleteError] = useState("");
-	const [deleteStale, setDeleteStale] = useState(false);
-	useEffect(() => {
-		if (editing) return;
-		setName(submission.name);
-		setUrl(submission.url);
-		setStatus(submission.status);
-		setEvidence(submission.evidence);
-		setSubmittedAt(submission.submittedAt);
-	}, [editing, submission.name, submission.url, submission.status, submission.evidence, submission.submittedAt]);
-	const changed =
-		name !== editBase.name ||
-		url !== editBase.url ||
-		status !== editBase.status ||
-		evidence !== editBase.evidence ||
-		submittedAt !== editBase.submittedAt;
-	function cancel() {
-		if (inFlight.current) return;
-		setName(submission.name);
-		setUrl(submission.url);
-		setStatus(submission.status);
-		setEvidence(submission.evidence);
-		setSubmittedAt(submission.submittedAt);
-		setError("");
-		setConflict(false);
-		setEditing(false);
-	}
-	async function store() {
-		if (inFlight.current) return;
-		if (!name.trim() || name.trim().length > 200 || !submissionSchema.shape.url.safeParse(url.trim()).success) {
-			setError(t("invalid"));
-			return;
-		}
-		if (status !== "planned" && !evidence.trim()) {
-			setError(t("evidenceRequired"));
-			return;
-		}
-		if (status === "indexed" && !submissionSchema.shape.url.safeParse(evidence.trim()).success) {
-			setError(t("invalid"));
-			return;
-		}
-		if (status !== "planned" && (!submittedAt || !validCalendarDay(submittedAt))) {
-			setError(t("submittedDateRequired"));
-			return;
-		}
-		inFlight.current = true;
-		setBusy(true);
-		setError("");
-		try {
-			const verifiedAt = ["indexed", "rejected"].includes(status)
-				? status !== editBase.status || evidence.trim() !== editBase.evidence
-					? localCalendarDay(new Date())
-					: editBase.verifiedAt
-				: "";
-			await saveSubmissionIfCurrent(editBase, {
-				...editBase,
-				name: name.trim(),
-				url: url.trim(),
-				status,
-				evidence: evidence.trim(),
-				submittedAt: status === "planned" ? "" : submittedAt,
-				verifiedAt,
-			});
-			setEditing(false);
-			notify(t("saved"));
-		} catch (cause) {
-			if (cause instanceof Error && cause.message === "submission-stale") setConflict(true);
-			else setError(t("error"));
-		} finally {
-			inFlight.current = false;
-			setBusy(false);
-		}
-	}
-	return (
-		<tr className={editing ? "backlink-row-editing" : undefined}>
-			<td>
-				{editing ? <><strong className="backlink-edit-name">{submission.name}</strong><Input className="field" disabled={busy} aria-label={`${submission.name} ${t("name")}`} value={name} onChange={(event) => { setName(event.target.value); setError(""); }} /><Input className="field" disabled={busy} type="url" aria-label={`${submission.name} ${t("url")}`} value={url} onChange={(event) => { setUrl(event.target.value); setError(""); }} /></> : <TextLink href={submission.url} target="_blank" rel="noopener noreferrer">
-					<span>{submission.name}</span>
-				</TextLink>}
-				{submission.externalLink && <small>{t("extImportedSource")} · {submission.externalLink.profileId}</small>}
-				{conflict && <small className="field-error" role="alert">{t("assetStale")}</small>}
-			</td>
-			<td>
-				{editing ? <Select
-					className="field" disabled={busy}
-					aria-label={`${submission.name} ${t("status")}`}
-					value={status}
-					onValueChange={(selectValue) => { setStatus(selectValue as Submission["status"]); setError(""); }}
-				>
-					{submissionStatuses.map((value) => (
-						<SelectOption key={value} value={value}>
-							{t(value)}
-						</SelectOption>
-					))}
-				</Select> : <span className={`backlink-status backlink-status-${submission.status}`}>{t(submission.status)}</span>}
-			</td>
-			<td>
-				{editing ? <DatePicker
-					className="field" disabled={busy}
-
-					aria-label={`${submission.name} ${t("submittedAt")}`}
-					value={submittedAt}
-					onValueChange={(dateValue) => { setSubmittedAt(dateValue); setError(""); }}
-				/> : date(submission.submittedAt, i18n.language)}
-			</td>
-			<td>{date(submission.verifiedAt, i18n.language)}</td>
-			<td>
-				{editing ? <Input
-					className="field" disabled={busy}
-					aria-label={`${submission.name} ${t("evidence")}`}
-					value={evidence}
-					onChange={(e) => { setEvidence(e.target.value); setError(""); }}
-				/> : submission.evidence ? submissionSchema.shape.url.safeParse(submission.evidence).success ? <TextLink href={submission.evidence} target="_blank" rel="noopener noreferrer"><span>{submission.evidence}</span></TextLink> : <span>{submission.evidence}</span> : "—"}
-				{error && (
-					<small className="field-error" role="alert">
-						{error}
-					</small>
-				)}
-			</td>
-			<td>
-				<div className="backlink-row-actions">
-				{editing ? <><Button
-					size="small"
-					disabled={!changed || busy || conflict}
-					onClick={() => void store()}
-				>
-					{t("save")}
-				</Button><Button size="small" disabled={busy} onClick={cancel}>{t("cancel")}</Button></> : <Button size="small" onClick={() => {
-					setEditBase(submission);
-					setName(submission.name);
-					setUrl(submission.url);
-					setStatus(submission.status);
-					setEvidence(submission.evidence);
-					setSubmittedAt(submission.submittedAt);
-					setError("");
-					setConflict(false);
-					setEditing(true);
-				}}>{t(submission.status === "verify" ? "backlinkCheck" : submission.status === "planned" ? "edit" : "backlinkUpdate")}</Button>}
-				{!editing && <Button size="small" disabled={busy} onClick={() => { setDeleteBase(submission); setDeleteError(""); setDeleteStale(false); }}>{t("backlinkDeleteAction")}</Button>}
-				</div>
-				{deleteBase && <Dialog title={t("backlinkDelete")} closeDisabled={busy} onClose={() => { if (!inFlight.current) setDeleteBase(null); }}>
-					<p>{t("backlinkDeleteConfirm", { name: deleteBase.name })}</p>
-					{deleteError && <p className="field-error" role="alert">{deleteError}</p>}
-					<div className="actions"><Button disabled={busy} onClick={() => setDeleteBase(null)}>{t("cancel")}</Button><Button variant="danger" disabled={busy || deleteStale} onClick={async () => {
-						if (inFlight.current) return;
-						inFlight.current = true; setBusy(true);
-						try { await deleteSubmissionIfCurrent(deleteBase); setDeleteBase(null); notify(t("saved")); }
-						catch (cause) { const stale = cause instanceof Error && cause.message === "submission-stale"; setDeleteStale(stale); setDeleteError(t(stale ? "assetStale" : "error")); }
-						finally { inFlight.current = false; setBusy(false); }
-					}}>{t("backlinkDeleteAction")}</Button></div>
-				</Dialog>}
-			</td>
-		</tr>
-	);
 }
 
 export function AssetDetail() {
@@ -340,20 +162,11 @@ export function AssetDetail() {
 		setSelectedGraphEdgeId(null);
 		setGraphScope(scope);
 	}
-	const [submissionEdit, setSubmissionEdit] = useState(false);
-	const [backlinkFilter, setBacklinkFilter] = useState<"all" | Submission["status"]>("all");
-	const [backlinksOpen, setBacklinksOpen] = useState(false);
-	const [materialsOpen, setMaterialsOpen] = useState(false);
 	const [domainEditing, setDomainEditing] = useState<string | null>(null);
 	const [domainDraft, setDomainDraft] = useState<ProjectDomain | null>(null);
 	const [domainFee, setDomainFee] = useState("");
 	const [domainError, setDomainError] = useState("");
 	const [domainBusy, setDomainBusy] = useState(false);
-	const [submissionNameError, setSubmissionNameError] = useState("");
-	const [submissionUrlError, setSubmissionUrlError] = useState("");
-	const [submissionSaveError, setSubmissionSaveError] = useState("");
-	const [submissionBusy, setSubmissionBusy] = useState(false);
-	const submissionInFlight = useRef(false);
 	const [taskEdit, setTaskEdit] = useState(false);
 	const [impactFilter, setImpactFilter] = useState<"all" | "pending" | "done">("all");
 	const [impactBusy, setImpactBusy] = useState(false);
@@ -368,7 +181,6 @@ export function AssetDetail() {
 	const imageInFlight = useRef(false);
 	const [pendingImage, setPendingImage] = useState<File | null>(null);
 	const [replaceImageId, setReplaceImageId] = useState("");
-	const [projectImageRole, setProjectImageRole] = useState<ProjectImageRole>("other");
 	const [itemImageRole, setItemImageRole] = useState<ItemImageRole>("other");
 	const [pendingImageUrl, setPendingImageUrl] = useState("");
 	const [pendingImageStatus, setPendingImageStatus] = useState<
@@ -388,11 +200,6 @@ export function AssetDetail() {
 	const [relationLabel, setRelationLabel] = useState("");
 	const [relationSource, setRelationSource] = useState("");
 	const [relationVerifiedAt, setRelationVerifiedAt] = useState("");
-	const [submissionName, setSubmissionName] = useState("");
-	const [submissionUrl, setSubmissionUrl] = useState("");
-	const [submissionStatus, setSubmissionStatus] = useState<Submission["status"]>("planned");
-	const [submissionDate, setSubmissionDate] = useState("");
-	const [submissionEvidence, setSubmissionEvidence] = useState("");
 	const [historyNote, setHistoryNote] = useState("");
 	const [itemBorrower, setItemBorrower] = useState("");
 	const [itemExpectedReturnDate, setItemExpectedReturnDate] = useState("");
@@ -469,7 +276,7 @@ export function AssetDetail() {
 		});
 		return () => { active = false; };
 	}, [kind]);
-	const liveById = useMemo(() => new Map(data.assets.filter((entry) => !entry.deleted).map((item) => [item.id, item])), [data.assets]);
+	const liveById = useMemo(() => new Map(data.assets.filter((entry) => !entry.deleted && entry.kind !== "vault").map((item) => [item.id, item])), [data.assets]);
 	const relations = useMemo(() => data.relations.filter(
 		(r) =>
 			!r.deleted &&
@@ -537,9 +344,6 @@ export function AssetDetail() {
 			.filter((task) => !generatedImpactKeys.current.has(task.dedupeKey))
 		: [];
 	const impactPendingCount = impactToGenerate.length + impactToUpgrade.length;
-	const submissions = data.submissions.filter(
-		(x) => !x.deleted && x.assetId === asset?.id,
-	);
 	const relatedAssets = Array.from(new Map(relations.map((relation) => {
 		const linked = liveById.get(relation.from === asset?.id ? relation.to : relation.from);
 		return [linked?.id, linked] as const;
@@ -547,7 +351,6 @@ export function AssetDetail() {
 	const relatedAccounts = relatedAssets.filter((linked) => linked.kind === "account");
 	const accountVerifiedAt = relations.map((relation) => relation.verifiedAt).filter(Boolean).sort().at(-1) ?? "";
 	const relatedSubscriptions = relatedAssets.filter((linked) => linked.kind === "subscription" && linked.status === "active");
-	const pendingBacklinks = submissions.filter((entry) => entry.status === "verify");
 	const histories = data.history
 		.filter((x) => !x.deleted && x.assetId === asset?.id)
 		.map(entry => entry.action === "renew" ? entry : effectiveFinanceEntry(entry))
@@ -567,21 +370,23 @@ export function AssetDetail() {
 				</Link></TextLink>
 			</main>
 		);
+	if (asset.kind === "vault") return (
+		<main className="page">
+			<PageTitle title={asset.name} subtitle={t("vaultReferenceRetired")} />
+			<div className="actions">
+				<Button asChild><Link to="/intake">{t("vaultReferenceBackup")}</Link></Button>
+				<TextLink asChild><Link to="/accounts">{t("account")}</Link></TextLink>
+			</div>
+		</main>
+	);
 	const dueCharge =
 		asset.kind === "subscription" && asset.dueDate
 			? actualCharge(asset, asset.dueDate)
 			: null;
 	const projectDomains = asset.kind === "project" ? (asset.projectDomains ?? []) : [];
-	const projectMedia = asset.projectMedia ?? emptyProjectMedia;
 	const itemMedia = asset.itemMedia ?? emptyItemMedia;
-	const assignedProjectImages = new Set([
-		projectMedia.logoId, projectMedia.homeScreenshotId, projectMedia.promoCoverId,
-		...projectMedia.productScreenshotIds,
-	].filter(Boolean));
 	const assignedItemImages = new Set([itemMedia.coverId, ...itemMedia.detailIds, ...itemMedia.receiptIds].filter(Boolean));
-	const visibleAttachmentIds = asset.kind === "project"
-		? asset.attachments.filter((id) => !assignedProjectImages.has(id))
-		: asset.kind === "item" ? asset.attachments.filter((id) => !assignedItemImages.has(id)) : asset.attachments;
+	const visibleAttachmentIds = asset.kind === "item" ? asset.attachments.filter((id) => !assignedItemImages.has(id)) : asset.attachments;
 	const monthlyByCurrency = new Map<string, bigint>();
 	for (const linked of relatedSubscriptions) monthlyByCurrency.set(linked.currency, (monthlyByCurrency.get(linked.currency) ?? 0n) + monthlyMinorUnits(linked));
 	const annualByCurrency = new Map<string, bigint>();
@@ -591,10 +396,6 @@ export function AssetDetail() {
 	const today = localCalendarDay(new Date());
 	const nextRenewal = [...projectDomains.map((domain) => domain.expiryDate), ...relatedSubscriptions.map((linked) => linked.dueDate)].filter((value) => value && value >= today).sort()[0] ?? "";
 	const incompleteCost = projectDomains.some((domain) => domain.annualAmount === null);
-	function scrollToFold(id: string, open: (value: boolean) => void) {
-		open(true);
-		requestAnimationFrame(() => document.getElementById(id)?.scrollIntoView({ block: "start", behavior: "smooth" }));
-	}
 	function openDomain(domain?: ProjectDomain) {
 		const next = domain ?? { id: crypto.randomUUID(), name: "", registrar: "", accountId: "", expiryDate: "", annualAmount: null, currency: "CNY", autoRenew: "unknown" } as ProjectDomain;
 		setDomainDraft(next);
@@ -661,7 +462,7 @@ export function AssetDetail() {
 	}
 	async function addRelation() {
 		if (!asset || relationInFlight.current) return;
-		const target = data.assets.find((a) => a.id === relationTarget);
+		const target = data.assets.find((a) => a.id === relationTarget && !a.deleted && a.kind !== "vault");
 		if (
 			!target ||
 			target.deleted ||
@@ -729,76 +530,8 @@ export function AssetDetail() {
 			setRelationBusy(false);
 		}
 	}
-	async function addSubmission() {
-		if (!asset || submissionInFlight.current) return;
-		const name = submissionName.trim();
-		const url = submissionUrl.trim();
-		const nameError = !name
-			? t("required")
-			: name.length > 200
-				? t("submissionNameTooLong")
-				: "";
-		const urlError = !url
-			? t("required")
-			: submissionSchema.shape.url.safeParse(url).success
-				? ""
-				: t("submissionInvalidUrl");
-		setSubmissionNameError(nameError);
-		setSubmissionUrlError(urlError);
-		const statusError = submissionStatus !== "planned" && !submissionEvidence.trim()
-			? t("evidenceRequired")
-			: submissionStatus === "indexed" && !submissionSchema.shape.url.safeParse(submissionEvidence.trim()).success
-				? t("backlinkReceiptHint")
-				: submissionStatus !== "planned" && (!submissionDate || !validCalendarDay(submissionDate))
-					? t("submittedDateRequired")
-					: "";
-		setSubmissionSaveError(statusError);
-		if (nameError || urlError || statusError) return;
-		submissionInFlight.current = true;
-		setSubmissionBusy(true);
-		try {
-			await save("submission", {
-				id: crypto.randomUUID(),
-				assetId: asset.id,
-				name,
-				url,
-				status: submissionStatus,
-				submittedAt: submissionStatus === "planned" ? "" : submissionDate,
-				verifiedAt: submissionStatus === "indexed" || submissionStatus === "rejected" ? localCalendarDay(new Date()) : "",
-				evidence: submissionEvidence.trim(),
-				deleted: false,
-			});
-			setSubmissionEdit(false);
-			setBacklinksOpen(true);
-			setBacklinkFilter("all");
-			setSubmissionName("");
-			setSubmissionUrl("");
-			setSubmissionStatus("planned");
-			setSubmissionDate("");
-			setSubmissionEvidence("");
-			notify(t("saved"));
-		} catch {
-			setSubmissionSaveError(t("error"));
-		} finally {
-			submissionInFlight.current = false;
-			setSubmissionBusy(false);
-		}
-	}
-	function closeSubmission() {
-		if (submissionInFlight.current) return;
-		setSubmissionEdit(false);
-		setSubmissionName("");
-		setSubmissionUrl("");
-		setSubmissionStatus("planned");
-		setSubmissionDate("");
-		setSubmissionEvidence("");
-		setSubmissionNameError("");
-		setSubmissionUrlError("");
-		setSubmissionSaveError("");
-	}
-	function chooseImage(role: ProjectImageRole | ItemImageRole, replaceId = "") {
-		if (asset?.kind === "item") setItemImageRole(role as ItemImageRole);
-		else setProjectImageRole(role as ProjectImageRole);
+	function chooseImage(role: ItemImageRole, replaceId = "") {
+		if (asset?.kind === "item") setItemImageRole(role);
 		setReplaceImageId(replaceId);
 		imageInput.current?.click();
 	}
@@ -813,12 +546,12 @@ export function AssetDetail() {
 				productScreenshotIds: [...(asset.projectMedia?.productScreenshotIds ?? [])] };
 			const itemImages: ItemMedia = { ...emptyItemMedia, ...asset.itemMedia,
 				detailIds: [...(asset.itemMedia?.detailIds ?? [])], receiptIds: [...(asset.itemMedia?.receiptIds ?? [])] };
-			if (asset.kind === "project") {
-				if (projectImageRole === "productScreenshotIds") {
-					media.productScreenshotIds = replaceImageId
-						? media.productScreenshotIds.map((id) => id === replaceImageId ? fileId : id)
-						: [...media.productScreenshotIds, fileId];
-				} else if (projectImageRole !== "other") media[projectImageRole] = fileId;
+			// Preserve legacy role references when an ordinary attachment is explicitly replaced.
+			if (asset.kind === "project" && replaceImageId) {
+				media.productScreenshotIds = media.productScreenshotIds.map((id) => id === replaceImageId ? fileId : id);
+				for (const key of ["logoId", "homeScreenshotId", "promoCoverId"] as const) {
+					if (media[key] === replaceImageId) media[key] = fileId;
+				}
 			}
 			if (asset.kind === "item") {
 				if (itemImageRole === "detailIds" || itemImageRole === "receiptIds") {
@@ -832,7 +565,7 @@ export function AssetDetail() {
 				: [...asset.attachments, fileId];
 			await saveAssetIfCurrent(asset, {
 				...asset,
-				attachments: (asset.kind === "project" && projectImageRole === "homeScreenshotId") || (asset.kind === "item" && itemImageRole === "coverId")
+				attachments: asset.kind === "item" && itemImageRole === "coverId"
 					? [fileId, ...updatedAttachments.filter((id) => id !== fileId)] : updatedAttachments,
 				projectMedia: media,
 				itemMedia: itemImages,
@@ -841,7 +574,6 @@ export function AssetDetail() {
 			if (replaceImageId) await cleanupUnreferencedFile(replaceImageId).catch(() => false);
 			setPendingImage(null);
 			setReplaceImageId("");
-			setProjectImageRole("other");
 			setItemImageRole("other");
 			notify(t("saved"));
 		} catch (error) {
@@ -1163,39 +895,10 @@ export function AssetDetail() {
 			setImpactBusy(false);
 		}
 	}
-	function projectMediaCard(role: "logoId" | "homeScreenshotId" | "promoCoverId", label: string) {
-		const id = projectMedia[role];
-		const attachmentCount = asset?.attachments.length ?? 20;
-		return <section className="project-media-card" data-project-media-role={role} aria-label={label} key={role}>
-			<h3>{label}</h3>
-			{id ? <ImageTile id={id} /> : <p className="asset-quiet-empty">{t("none")}</p>}
-			<div className="project-media-actions">
-				<Button size="small" disabled={uploading || (!id && attachmentCount >= 20)} onClick={() => chooseImage(role, id)}>{t(id ? "replaceImage" : "addPhoto")}</Button>
-				{id && <Button size="small" variant="danger" disabled={uploading} onClick={() => void removeImage(id)}>{t("removeImage")}</Button>}
-			</div>
-		</section>;
-	}
-	const projectMediaSection = asset.kind === "project" && <section className="project-media-section" aria-label={t("projectMaterialsImage")}>
-		<h2>{t("projectMaterialsImage")}</h2>
-		<div className="project-media-grid">
-			{projectMediaCard("logoId", t("projectLogo"))}
-			{projectMediaCard("homeScreenshotId", t("projectHomeScreenshot"))}
-			{projectMediaCard("promoCoverId", t("projectPromoCover"))}
-			<section className="project-media-card" data-project-media-role="productScreenshotIds" aria-label={t("projectProductScreenshots")}>
-				<h3>{t("projectProductScreenshots")}</h3>
-				<p className="project-media-hint">{t("projectProductScreenshotsLimit")}</p>
-				{projectMedia.productScreenshotIds.length ? <div className="project-screenshot-grid">{projectMedia.productScreenshotIds.map((id) => <div className="project-screenshot" key={id}>
-					<ImageTile id={id} />
-					<div className="project-media-actions"><Button size="small" disabled={uploading} onClick={() => chooseImage("productScreenshotIds", id)}>{t("replaceImage")}</Button><Button size="small" variant="danger" disabled={uploading} onClick={() => void removeImage(id)}>{t("removeImage")}</Button></div>
-				</div>)}</div> : <p className="asset-quiet-empty">{t("none")}</p>}
-				<Button size="small" disabled={uploading || asset.attachments.length >= 20 || projectMedia.productScreenshotIds.length >= 4} onClick={() => chooseImage("productScreenshotIds")}>{t("addPhoto")}</Button>
-			</section>
-		</div>
-	</section>;
 	const attachmentSection = (
 				<section className="card asset-attachments-card">
 					<div className="card-header">
-						<h2>{t(asset.kind === "project" ? "projectOtherImages" : asset.kind === "item" ? "itemOtherImages" : "attachments")}</h2>
+						<h2>{t(asset.kind === "item" ? "itemOtherImages" : "attachments")}</h2>
 						<Button
 							size="small"
 							disabled={uploading || asset.attachments.length >= 20}
@@ -1332,12 +1035,11 @@ export function AssetDetail() {
 		<main className={`page asset-detail asset-detail-${kind}${relations.length ? " has-relations" : ""}`}>
 			{kind === "project" && <div className="asset-project-action-bar">
 				<Button onClick={() => setEdit(true)}>{t("edit")}</Button>
-				<Button variant="primary" onClick={() => setSubmissionEdit(true)}><Plus size={14} />{t("addSubmission")}</Button>
 				<Button asChild><Link to="/assets/project/$id/workflow/$flow" params={{ id: asset.id, flow: "brand" }}>{t("workflowBrandEntry")}</Link></Button>
 				<Button asChild><Link to="/assets/project/$id/workflow/$flow" params={{ id: asset.id, flow: "close" }}>{t("workflowCloseEntry")}</Link></Button>
 				<Button variant="danger" disabled={deleteBusy} onClick={() => { setDeleteError(""); setDeleteOpen(true); }}>{t("delete")}</Button>
 			</div>}
-			<div className={`page-header${kind === "project" && projectMedia.homeScreenshotId ? " has-preview" : ""}`}>
+			<div className="page-header">
 				<div>
 					{kind !== "project" && kind !== "account" && <TextLink asChild><Link className="back-link" to={catalogReturn?.view === "all" ? "/assets" : "/assets/$kind"} params={catalogReturn?.view === "all" ? {} : { kind: catalogReturn?.view === "domains" ? "domains" : returnKind }} onClick={() => { sessionStorage.removeItem("keepany-relation-return-id"); sessionStorage.removeItem("keepany-relation-return-kind"); }}>
 						<ArrowLeft size={16} />
@@ -1346,17 +1048,12 @@ export function AssetDetail() {
 					<div className="eyebrow">
 						{t(kind)} · {niceCategory(asset.category || (kind === "account" ? "other" : ""), t)}
 					</div>
-					{kind === "project" && projectMedia.logoId ? <div className="asset-project-hero-brand"><div className="asset-project-hero-logo"><ImageTile id={projectMedia.logoId} /></div><h1>{asset.name}</h1></div> : <h1>{asset.name}</h1>}
+					<h1>{asset.name}</h1>
 					{kind !== "account" && <p className="subtitle">
 						{asset.description || asset.url || t("local")}
 					</p>}
-					{kind === "project" && <div className="asset-project-hero-meta"><span>{niceCategory(asset.category, t)}</span>{asset.status && <span>{t(asset.status)}</span>}{asset.url && <a href={asset.url} target="_blank" rel="noopener noreferrer">{asset.url}<ExternalLink size={13} /></a>}</div>}
-					{kind === "project" && <div className="asset-project-hero-actions">
-						<Button onClick={() => scrollToFold("asset-project-materials", setMaterialsOpen)}>{t("projectViewMaterials")}<ArrowDownRight size={15} /></Button>
-						<Button onClick={() => scrollToFold("asset-backlinks", setBacklinksOpen)}>{t("projectViewBacklinks")}<ArrowDownRight size={15} /></Button>
-					</div>}
+					{kind === "project" && <div className="asset-project-hero-meta">{asset.category && <span>{niceCategory(asset.category, t)}</span>}{asset.status && <span>{t(asset.status)}</span>}{asset.url && <a href={asset.url} target="_blank" rel="noopener noreferrer">{asset.url}<ExternalLink size={13} /></a>}</div>}
 				</div>
-				{kind === "project" && projectMedia.homeScreenshotId && <div className="asset-project-hero-visual" role="img" aria-label={t("preview")}><ImageTile id={projectMedia.homeScreenshotId} /></div>}
 				{kind !== "project" && <div className="actions">
 					{kind === "subscription" && <Button asChild><Link to="/finance">{t("financeViewLedger")}</Link></Button>}
 					<Button onClick={() => setEdit(true)}>{t("edit")}</Button>
@@ -1369,11 +1066,6 @@ export function AssetDetail() {
 					</Button>
 				</div>}
 			</div>
-			{kind === "project" && <div className="asset-project-stats">
-				<div><small>{t("projectRecords")}</small><strong>{submissions.length}</strong></div>
-				<div><small>{t("projectIndexed")}</small><strong>{submissions.filter((entry) => entry.status === "indexed").length}</strong></div>
-				<div><small>{t("projectNeedsReview")}</small><strong>{submissions.filter((entry) => entry.status === "verify").length}</strong></div>
-			</div>}
 			{deleteOpen && (
 				<Dialog
 					className={kind === "account" ? "account-detail-dialog" : undefined}
@@ -1413,6 +1105,9 @@ export function AssetDetail() {
 						<div><dt>{t("projectOfficialUrl")}</dt><dd>{asset.url ? <TextLink href={asset.url} target="_blank" rel="noopener noreferrer"><span>{asset.url}</span><ExternalLink aria-hidden="true" /></TextLink> : "—"}</dd></div>
 						<div><dt>{t("projectType")}</dt><dd>{niceCategory(asset.category, t) || "—"}</dd></div>
 						<div><dt>{t("projectLaunchMonth")}</dt><dd>{asset.projectLaunchMonth ? new Intl.DateTimeFormat(i18n.language, { year: "numeric", month: "long", timeZone: "UTC" }).format(new Date(`${asset.projectLaunchMonth}-01T12:00:00Z`)) : "—"}</dd></div>
+						<div><dt>{t("contact")}</dt><dd>{asset.contact || "—"}</dd></div>
+						<div><dt>{t("tags")}</dt><dd>{asset.tags.join(", ") || "—"}</dd></div>
+						<div><dt>{t("notes")}</dt><dd>{asset.notes || "—"}</dd></div>
 						<div><dt>{t("projectAccount")}</dt><dd>{relatedAccounts.length ? relatedAccounts.map((linked, index) => <span key={linked.id}>{index > 0 && " · "}<TextLink asChild><Link to="/assets/$kind/$id" params={{ kind: linked.kind, id: linked.id }} onClick={(event) => { event.preventDefault(); visitRelation(linked); }}>{linked.name}</Link></TextLink></span>) : "—"}</dd></div>
 					</dl>
 					<div className="asset-project-related">
@@ -1421,8 +1116,7 @@ export function AssetDetail() {
 					</div>
 				</section>}
 				{asset.kind === "project" && <section className="card asset-project-reminders" id="project-reminders">
-					<div className="card-header"><h2>{t("projectLinkReminders")}</h2></div>
-					{pendingBacklinks.length ? <button type="button" className="asset-project-reminder-row" onClick={() => scrollToFold("asset-backlinks", setBacklinksOpen)}><span className="asset-project-reminder-symbol" aria-hidden="true">!</span><span><strong>{t("projectVerifyCount", { count: pendingBacklinks.length })}</strong><small>{t("projectViewBacklinks")}</small></span><ArrowDownRight size={16} /></button> : <p className="asset-quiet-empty">{t("projectNoLinkReminders")}</p>}
+					<div className="card-header"><h2>{t("projectNextInspection")}</h2></div>
 					<div className="asset-project-reminder-row asset-project-reminder-static"><span className="asset-project-reminder-symbol" aria-hidden="true">↗</span><span><strong>{t("projectNextInspection")}</strong><small>{asset.projectInspectionDate ? date(asset.projectInspectionDate, i18n.language) : t("projectNoInspection")}</small></span></div>
 				</section>}
 				{asset.kind !== "project" && asset.kind !== "account" && <section className="card asset-profile-card">
@@ -1696,7 +1390,7 @@ export function AssetDetail() {
 				</dl><div className="workspace-password-actions"><Button aria-expanded={passwordsOpen} aria-controls={`account-passwords-${asset.id}`} onClick={() => setPasswordsFor((current) => current === asset.id ? null : asset.id)}>{t(passwordsOpen ? "workspaceHidePasswords" : "workspaceShowPasswords")}</Button><Button asChild><Link to="/assets/$kind" params={{ kind: "vault" }} hash={`asset-${asset.id}`}>{t("accountOpenPasswords")}<ArrowDownRight size={16} /></Link></Button></div></section>
 			</div>}
 			{asset.kind === "account" && passwordsOpen && <section id={`account-passwords-${asset.id}`} tabIndex={-1} aria-label={t("pwVaultTitle")} className="card account-passwords-section"><Suspense fallback={<div className="notice" role="status">{t("pwVaultLoading")}</div>}><PasswordVaultPanel assets={data.assets} notify={notify} focusAssetId={asset.id} onReady={revealPasswords} embedded /></Suspense></section>}
-			{asset.kind === "account" && attachmentSection}
+			{(asset.kind === "account" || asset.kind === "project") && attachmentSection}
 			{asset.kind === "account" && (
 				<section className="card impact-checklist">
 					<div className="card-header">
@@ -1733,57 +1427,6 @@ export function AssetDetail() {
 					) : <Empty hint={false} />}
 				</section>
 			)}
-			{asset.kind === "project" && (
-				<details className="card asset-backlinks-card" id="asset-backlinks" open={backlinksOpen} onToggle={(event) => setBacklinksOpen(event.currentTarget.open)}>
-					<summary>{t("backlinks")}</summary>
-					<fieldset className="backlink-filters" aria-label={t("backlinkFilter")}>
-						{(["all", ...submissionStatuses] as const).map((value) => <button type="button" key={value} aria-pressed={backlinkFilter === value} onClick={() => setBacklinkFilter(value)}>{t(value)}</button>)}
-					</fieldset>
-					{submissions.length ? (
-						<div className="table-wrap">
-							<table>
-								<thead>
-									<tr>
-										<th>{t("name")}</th>
-										<th>{t("status")}</th>
-										<th>{t("submittedAt")}</th>
-										<th>{t("verifiedAt")}</th>
-										<th>{t("evidence")}</th>
-										<th>{t("operation")}</th>
-									</tr>
-								</thead>
-								<tbody>
-									{submissions.filter((entry) => backlinkFilter === "all" || entry.status === backlinkFilter).map((s) => (
-										<SubmissionRow key={s.id} submission={s} />
-									))}
-								</tbody>
-							</table>
-							{submissions.filter((entry) => backlinkFilter === "all" || entry.status === backlinkFilter).length === 0 && <p className="asset-quiet-empty backlink-filter-empty">{t("none")}</p>}
-						</div>
-					) : (
-						<p className="asset-quiet-empty">{t("none")}</p>
-					)}
-				</details>
-			)}
-			{asset.kind === "project" && <details className="card asset-project-materials" id="asset-project-materials" open={materialsOpen} onToggle={(event) => setMaterialsOpen(event.currentTarget.open)}>
-				<summary>{t("projectProfileMaterials")}</summary>
-				<div className="asset-project-materials-body">
-					<div className="card-header"><h2>{t("projectViewMaterials")}</h2><Button size="small" onClick={() => setEdit(true)}>{t("edit")}</Button></div>
-					<div className="asset-project-copy"><strong>{t("projectProductTitle")}</strong><p>{asset.projectTitle || "—"}</p></div>
-					<div className="asset-project-copy"><strong>{t("projectPromoUrl")}</strong><p>{asset.projectPromoUrl && /^https?:\/\//i.test(asset.projectPromoUrl) ? <TextLink href={asset.projectPromoUrl} target="_blank" rel="noopener noreferrer"><span>{asset.projectPromoUrl}</span></TextLink> : asset.projectPromoUrl || "—"}</p></div>
-					<div className="asset-project-copy"><strong>{t("tags")}</strong><p>{asset.tags.join(", ") || "—"}</p></div>
-					<div className="asset-project-copy"><strong>{t("projectMaterialsShort")}</strong><p>{asset.description || "—"}</p></div>
-					<div className="asset-project-copy"><strong>{t("projectMediumDescription")}</strong><p>{asset.projectMediumDescription || "—"}</p></div>
-					<div className="asset-project-copy"><strong>{t("projectMaterialsLong")}</strong><p>{asset.longDescription || "—"}</p></div>
-					<div className="asset-project-copy"><strong>{t("projectFeatures")}</strong><p>{asset.projectFeatures || "—"}</p></div>
-					<div className="asset-project-copy"><strong>{t("projectPricing")}</strong><p>{asset.projectPricing || "—"}</p></div>
-					<div className="asset-project-copy"><strong>{t("projectPricingType")}</strong><p>{asset.projectPricingType || "—"}</p></div>
-					<div className="asset-project-copy"><strong>{t("projectBusinessEmail")}</strong><p>{asset.projectEmail || "—"}</p></div>
-					<div className="asset-project-copy"><strong>{t("projectAdditionalNotes")}</strong><p>{asset.notes || "—"}</p></div>
-					{projectMediaSection}
-					{attachmentSection}
-				</div>
-			</details>}
 			{assetBills.length > 0 && <section className="card asset-finance-card">
 				<div className="card-header"><h2>{t("workspaceLedger")}</h2><TextLink asChild><Link to="/finance">{t("financeTitle")}</Link></TextLink></div>
 				<div className="list">{assetBills.map(entry => <div className="list-row" key={entry.id} data-bill-id={entry.id}>
@@ -2080,72 +1723,6 @@ export function AssetDetail() {
 							onClick={() => void confirmRelationDelete()}
 						>
 							{t("deleteRelation")}
-						</Button>
-					</div>
-				</Dialog>
-			)}
-			{submissionEdit && (
-				<Dialog
-					title={t("addSubmission")}
-					onClose={closeSubmission}
-				>
-					<div className="form-grid">
-						<div className="field">
-							<label htmlFor="submission-name">{t("name")}</label>
-							<Input
-								id="submission-name"
-								value={submissionName}
-								disabled={submissionBusy}
-								aria-invalid={!!submissionNameError}
-								aria-describedby={submissionNameError ? "submission-name-error" : undefined}
-								onChange={(e) => {
-									setSubmissionName(e.target.value);
-									setSubmissionNameError("");
-								}}
-							/>
-							{submissionNameError && <small id="submission-name-error" role="alert">{submissionNameError}</small>}
-						</div>
-							<div className="field">
-							<label htmlFor="submission-url">{t("url")}</label>
-							<Input
-								id="submission-url"
-								type="url"
-								value={submissionUrl}
-								disabled={submissionBusy}
-								aria-invalid={!!submissionUrlError}
-								aria-describedby={submissionUrlError ? "submission-url-error" : undefined}
-								onChange={(e) => {
-									setSubmissionUrl(e.target.value);
-									setSubmissionUrlError("");
-								}}
-							/>
-							{submissionUrlError && <small id="submission-url-error" role="alert">{submissionUrlError}</small>}
-						</div>
-						<div className="field">
-							<label htmlFor="submission-status">{t("status")}</label>
-							<Select id="submission-status" value={submissionStatus} disabled={submissionBusy} onValueChange={(selectValue) => { setSubmissionStatus(selectValue as Submission["status"]); setSubmissionSaveError(""); }}>
-								{submissionStatuses.map((value) => <SelectOption key={value} value={value}>{t(value)}</SelectOption>)}
-							</Select>
-						</div>
-						<div className="field">
-							<label htmlFor="submission-date">{t("submittedAt")}</label>
-							<DatePicker id="submission-date"  value={submissionDate} disabled={submissionBusy || submissionStatus === "planned"} onValueChange={(dateValue) => { setSubmissionDate(dateValue); setSubmissionSaveError(""); }} />
-						</div>
-						<div className="field backlink-evidence-field">
-							<label htmlFor="submission-evidence">{t("evidence")}</label>
-							<Input id="submission-evidence" value={submissionEvidence} disabled={submissionBusy} onChange={(event) => { setSubmissionEvidence(event.target.value); setSubmissionSaveError(""); }} />
-							<small>{t("backlinkReceiptHint")}</small>
-						</div>
-					</div>
-					{submissionSaveError && <p className="field-error" role="alert">{submissionSaveError}</p>}
-					<div className="actions">
-						<Button disabled={submissionBusy} onClick={closeSubmission}>{t("cancel")}</Button>
-						<Button
-							variant="primary"
-							disabled={submissionBusy}
-							onClick={() => void addSubmission()}
-						>
-							{t("save")}
 						</Button>
 					</div>
 				</Dialog>

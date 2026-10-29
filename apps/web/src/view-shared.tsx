@@ -27,7 +27,6 @@ export const kinds: AssetKind[] = [
 	"account",
 	"subscription",
 	"item",
-	"vault",
 ];
 export const icons = {
 	project: Boxes,
@@ -44,7 +43,7 @@ export const builtins: Record<AssetKind, string[]> = {
 	vault: ["other"],
 };
 export function validKind(value: string): AssetKind {
-	return kinds.includes(value as AssetKind) ? (value as AssetKind) : "project";
+	return value === "vault" || kinds.includes(value as AssetKind) ? (value as AssetKind) : "project";
 }
 export function money(amount: number | bigint, currency: string, lang: string) {
 	return formatMinorUnits(amount, currency, lang);
@@ -64,7 +63,7 @@ export function niceCategory(value: string, t: (s: string) => string) {
 		: value;
 }
 export function liveAssets(data: Data) {
-	return data.assets.filter((a) => !a.deleted);
+	return data.assets.filter((a) => !a.deleted && a.kind !== "vault");
 }
 
 export function PageTitle({

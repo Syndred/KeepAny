@@ -4,7 +4,7 @@ import { mkdirSync } from "node:fs";
 const repositoryPath = `/@fs/${resolve("packages/local-db/src/index.ts").replaceAll("\\", "/")}`;
 const domainPath = `/@fs/${resolve("packages/domain/src/index.ts").replaceAll("\\", "/")}`;
 const editPath = `/@fs/${resolve("apps/web/src/task-edit.ts").replaceAll("\\", "/")}`;
-const evidence = "docs/qa/2026-10-27/evidence/T16-completion";
+const evidence = process.env.KEEPANY_EVIDENCE_DIR ?? "test-results/T16-completion";
 async function tasks(page: Page) { return page.evaluate(async path => (await (await import(path)).localRepository()).list("task", true), repositoryPath); }
 for (const zh of [true, false]) for (const width of [390, 1280]) {
 	test(`${zh ? "zh" : "en"} ${width} T16-03 edit cancel/save, date intersection and return`, async ({ browser }) => {

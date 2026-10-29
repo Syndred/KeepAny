@@ -6,6 +6,8 @@ import { decryptBackup } from "../../packages/local-db/src/backup-crypto";
 import type { ReviewedCandidate } from "../../packages/local-db/src/intake-review";
 import { pdf } from "./fixtures/pdf";
 import { selectChoice } from "./helpers/select-choice";
+import { prepareLegacyPdfArchive, restoreCompletionArchive } from "./helpers/completion-archive";
+import { openBackupRestorePanel } from "./helpers/backup-restore";
 
 test.use({ timezoneId: "Asia/Shanghai" });
 
@@ -34,6 +36,7 @@ async function backup(page: Page, zh: boolean) {
 async function restore(page: Page, path: string, zh: boolean) {
 	await page.goto("/intake");
 	await page.locator("#backup-password").fill(password);
+	await openBackupRestorePanel(page);
 	await page.locator("#restore-file").setInputFiles(path);
 	await page.getByRole("button", { name: zh ? "预览" : "Preview", exact: true }).first().click();
 	await page.getByRole("button", { name: /^(确认|Confirm) ·/ }).click();
@@ -41,7 +44,7 @@ async function restore(page: Page, path: string, zh: boolean) {
 }
 
 for (const locale of ["zh-CN", "en-US"]) for (const width of [390, 1280]) {
-	test(`${locale} ${width} PDF expense retains a draft, confirms once, and restores its receipt`, async ({ browser }) => {
+	test(`${locale} ${width} legacy PDF expense retains a draft, confirms once, and restores its receipt`, async ({ browser }) => {
 		const zh = locale === "zh-CN";
 		const contexts: BrowserContext[] = [];
 		const errors: string[] = [];
@@ -63,10 +66,10 @@ for (const locale of ["zh-CN", "en-US"]) for (const width of [390, 1280]) {
 			await editor.locator("#dueDate").fill("2026-10-31");
 			await editor.getByRole("button", { name: zh ? "保存" : "Save", exact: true }).click();
 			await expect(editor).toBeHidden();
-			await source.goto("/intake");
-			await source.getByRole("button", { name: zh ? "PDF 文档" : "PDF document", exact: true }).click();
 			const buffer = pdf(["Cloud service invoice", "Paid USD 98.00 on 2026-09-30"]);
-			await source.locator("#csv-file").setInputFiles({ name: "cloud-invoice.pdf", mimeType: "application/pdf", buffer });
+			const legacy = await prepareLegacyPdfArchive(test.info().outputPath("legacy-pdf-fixture"), password,
+				[{ fileName: "cloud-invoice.pdf", text: "Cloud service invoice Paid USD 98.00 on 2026-09-30" }]);
+			await restoreCompletionArchive(source, password, legacy.path);
 			const row = source.locator(".intake-review-row");
 			await selectChoice(row.getByLabel(zh ? "资料类型" : "Record type"), "expense");
 			await row.getByRole("button", { name: zh ? "确认支出" : "Confirm expense", exact: true }).click();
@@ -109,8 +112,9 @@ for (const locale of ["zh-CN", "en-US"]) for (const width of [390, 1280]) {
 			await expect(reviewed.locator(".finance-summary .card").nth(1)).toContainText("98.00");
 			await reviewed.screenshot({ path: test.info().outputPath(`pdf-expense-finance-${locale}-${width}.png`), fullPage: true });
 			await reviewed.goto("/intake");
-			await reviewed.getByRole("button", { name: zh ? "PDF 文档" : "PDF document", exact: true }).click();
+			await reviewed.locator(".intake-mode-tabs").getByRole("button", { name: zh ? "表格" : "Spreadsheet", exact: true }).click();
 			await reviewed.locator("#csv-file").setInputFiles({ name: "renamed-invoice.pdf", mimeType: "application/pdf", buffer });
+			await expect(reviewed.getByText(zh ? /不再支持导入 PDF/ : /PDF import is no longer supported/)).toBeVisible();
 			await expect(restoredRow).toHaveCount(1);
 			await expect(restoredRow).toContainText(zh ? "已确认" : "Confirmed");
 			const accepted = await backup(reviewed, zh);
@@ -123,8 +127,9 @@ for (const locale of ["zh-CN", "en-US"]) for (const width of [390, 1280]) {
 			await restore(final, accepted.path, zh);
 			await final.reload();
 			await expect(final.locator(".intake-expense-receipt")).toContainText("98.00");
-			await final.getByRole("button", { name: zh ? "PDF 文档" : "PDF document", exact: true }).click();
+			await final.locator(".intake-mode-tabs").getByRole("button", { name: zh ? "表格" : "Spreadsheet", exact: true }).click();
 			await final.locator("#csv-file").setInputFiles({ name: "restored-renamed.pdf", mimeType: "application/pdf", buffer });
+			await expect(final.getByText(zh ? /不再支持导入 PDF/ : /PDF import is no longer supported/)).toBeVisible();
 			await expect(final.locator(".intake-review-row")).toHaveCount(1);
 			const readback = await backup(final, zh);
 			expect(readback.history).toEqual(accepted.history);

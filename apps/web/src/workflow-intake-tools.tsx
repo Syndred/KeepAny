@@ -9,12 +9,11 @@ import { assetSchema, duplicates, newAsset, type Asset, type AssetKind } from ".
 import { decryptBackup, encryptBackup, BACKUP_CONTAINER_MAX_BYTES } from "../../../packages/local-db/src/backup-crypto";
 import { allRecords, exportArchive, inspectArchive, localRepository, putFile, cleanupUnreferencedFile, restoreArchive, save, saveAssetIfCurrent, saveBatch } from "../../../packages/local-db/src";
 import { Button } from "./components/ui/button";
-import { RemoteBackupPanel } from "./components/RemoteBackupPanel";
 import { RestoreRecoveryPanel } from "./components/RestoreRecoveryPanel";
 import { useAppContext } from "./view-shared";
 import { Select, SelectOption } from "./components/ui/select";
 import { readUrlMetadata } from "./intake-url";
-import { Field } from "./workflow-field";
+import { isPdfFile } from "./ai-import-input";
 type ImportCandidate = { asset: Asset; duplicate: boolean; invalid: boolean; selected: boolean };
 
 function validateImportCandidates(candidates: ImportCandidate[], existing: Asset[]): ImportCandidate[] {
@@ -36,7 +35,7 @@ function validateImportCandidates(candidates: ImportCandidate[], existing: Asset
 export function IntakeTools({ onCsvStaged }: { onCsvStaged: () => void }) {
 	const { t } = useTranslation();
 	const { data, notify } = useAppContext();
-	const [mode, setMode] = useState<"url" | "image" | "csv" | "pdf" | "manual">("url");
+	const [mode, setMode] = useState<"url" | "image" | "csv" | "manual">("url");
 	const [manualKind, setManualKind] = useState<AssetKind>("project");
 	const [manualName, setManualName] = useState("");
 	const [photoAssetId, setPhotoAssetId] = useState("");
@@ -51,7 +50,6 @@ export function IntakeTools({ onCsvStaged }: { onCsvStaged: () => void }) {
 	const [restoreFile, setRestoreFile] = useState<File | null>(null);
 	const [readyArchive, setReadyArchive] = useState<Uint8Array | null>(null);
 	const [readyArchiveGeneration, setReadyArchiveGeneration] = useState<number | null>(null);
-	const [readyArchiveOrigin, setReadyArchiveOrigin] = useState<"local" | "remote" | null>(null);
 	const [archiveCount, setArchiveCount] = useState(0);
 	const [archiveReviewCount, setArchiveReviewCount] = useState(0);
 	const [archiveHasVault, setArchiveHasVault] = useState(false);
@@ -167,22 +165,11 @@ export function IntakeTools({ onCsvStaged }: { onCsvStaged: () => void }) {
 		setInspecting(false);
 		setReadyArchive(null);
 		setReadyArchiveGeneration(null);
-		setReadyArchiveOrigin(null);
 		setArchiveCount(0);
 		setArchiveReviewCount(0);
 		setArchiveHasVault(false);
 		setMessage("");
 		return generation;
-	}
-	function acceptRemotePreview(archive: Uint8Array, count: number, generation: number, reviewCount = 0, hasVault = false) {
-		if (generation !== restoreGeneration.current) return false;
-		setReadyArchive(archive);
-		setReadyArchiveGeneration(generation);
-		setReadyArchiveOrigin("remote");
-		setArchiveCount(count);
-		setArchiveReviewCount(reviewCount);
-		setArchiveHasVault(hasVault);
-		return true;
 	}
 	async function download() {
 		if (password.length < 12) {
@@ -215,7 +202,6 @@ export function IntakeTools({ onCsvStaged }: { onCsvStaged: () => void }) {
 		setInspecting(true);
 		setReadyArchive(null);
 		setReadyArchiveGeneration(null);
-		setReadyArchiveOrigin(null);
 		setArchiveCount(0);
 		setArchiveReviewCount(0);
 		try {
@@ -233,7 +219,6 @@ export function IntakeTools({ onCsvStaged }: { onCsvStaged: () => void }) {
 				if (generation !== restoreGeneration.current) return;
 				setReadyArchive(decrypted);
 				setReadyArchiveGeneration(generation);
-				setReadyArchiveOrigin("local");
 				setArchiveCount(result.rows.length);
 				setArchiveReviewCount(result.intakeReview.length);
 				setArchiveHasVault(!!result.passwordVault);
@@ -258,7 +243,6 @@ export function IntakeTools({ onCsvStaged }: { onCsvStaged: () => void }) {
 			setMessage(t(archiveReviewCount ? "restoreReadyReview" : "restoreReady", { count, reviewCount: archiveReviewCount }));
 			setReadyArchive(null);
 			setReadyArchiveGeneration(null);
-			setReadyArchiveOrigin(null);
 			setRestoreFile(null);
 			if (restoreFileInput.current) restoreFileInput.current.value = "";
 		} catch (error) {
@@ -279,15 +263,15 @@ export function IntakeTools({ onCsvStaged }: { onCsvStaged: () => void }) {
 	}
 	async function stageCSV(file: File) {
 		setMessage("");
+		if (isPdfFile(file)) { setMessage(t("pdfImportRemoved")); return; }
 		setCsvBusy(true);
 		try {
-			const pdf = file.name.toLowerCase().endsWith(".pdf") || file.type === "application/pdf";
-			const count = pdf ? await (await import("./intake-pdf")).stagePdfForReview(file) : await (await import("./intake-csv")).stageCsvForReview(file);
+			const count = await (await import("./intake-csv")).stageCsvForReview(file);
 			onCsvStaged();
 			setMessage(t("reviewCsvStaged", { count }));
 		} catch (error) {
 			const reason = error instanceof Error ? error.message : "";
-			setMessage(t(reason.startsWith("pdf") ? ({ pdfLimit: "reviewPdfLimit", pdfNoText: "reviewPdfNoText", pdfTimeout: "reviewPdfTimeout" }[reason] ?? "reviewPdfUnavailable") : reason === "limit" ? "reviewCsvLimit" : reason === "invalid" ? "reviewCsvInvalid" : "error"));
+			setMessage(t(reason === "pdf" ? "pdfImportRemoved" : reason === "limit" ? "reviewCsvLimit" : reason === "invalid" ? "reviewCsvInvalid" : "error"));
 		} finally {
 			setCsvBusy(false);
 		}
@@ -401,7 +385,6 @@ export function IntakeTools({ onCsvStaged }: { onCsvStaged: () => void }) {
 							["url", "intakeModeUrl"],
 							["image", "intakeModeImage"],
 							["csv", "intakeModeCsv"],
-							["pdf", "intakeModePdf"],
 							["manual", "intakeModeManual"],
 						] as const).map(([value, key]) => (
 							<button key={value} type="button" aria-pressed={mode === value} disabled={busy || inspecting || csvBusy} onClick={() => changeMode(value)}>
@@ -434,15 +417,15 @@ export function IntakeTools({ onCsvStaged }: { onCsvStaged: () => void }) {
 							</Button>
 						</>
 					)}
-					{(mode === "csv" || mode === "pdf") && (
+					{mode === "csv" && (
 						<>
-							<p>{t(mode === "pdf" ? "reviewPdfHint" : "csvHint")}</p>
+							<p>{t("csvHint")}</p>
 							<div className="field">
-								<label htmlFor="csv-file">{t(mode === "pdf" ? "intakeModePdf" : "csv")}</label>
+								<label htmlFor="csv-file">{t("csv")}</label>
 								<input
 									id="csv-file"
 									type="file"
-									accept=".csv,text/csv,.pdf,application/pdf"
+									accept=".csv,text/csv"
 									disabled={busy || inspecting || csvBusy}
 									onChange={(event) => {
 										const file = event.target.files?.[0];
@@ -498,6 +481,13 @@ export function IntakeTools({ onCsvStaged }: { onCsvStaged: () => void }) {
 									disabled={photoBusy}
 									onChange={event => {
 										const file = event.target.files?.[0] ?? null;
+										if (isPdfFile(file)) {
+											setPhotoFile(null);
+											setPhotoName("");
+											event.currentTarget.value = "";
+											setMessage(t("pdfImportRemoved"));
+											return;
+										}
 										if (file && (file.size > 20 * 1024 * 1024 || !["image/jpeg", "image/png", "image/webp", "image/gif"].includes(file.type))) {
 											setPhotoFile(null);
 											event.currentTarget.value = "";
@@ -505,6 +495,7 @@ export function IntakeTools({ onCsvStaged }: { onCsvStaged: () => void }) {
 											return;
 										}
 										setPhotoFile(file);
+										setMessage("");
 										setPhotoName(file ? (file.name.replace(/\.[^.]+$/, "").slice(0, 160) || file.name.slice(0, 160)) : "");
 									}}
 								/>
@@ -622,31 +613,16 @@ export function IntakeTools({ onCsvStaged }: { onCsvStaged: () => void }) {
 							/>
 						</div>
 						<small>{t("restoreHint")}</small>
-						{readyArchive && readyArchiveOrigin === "local" && <p role="status">{t("restorePreviewSummary", { count: archiveCount, reviewCount: archiveReviewCount })}</p>}
-						{readyArchive && readyArchiveOrigin === "local" && archiveHasVault && <p>{t("restoreContainsVault")}</p>}
+						{readyArchive && <p role="status">{t("restorePreviewSummary", { count: archiveCount, reviewCount: archiveReviewCount })}</p>}
+						{readyArchive && archiveHasVault && <p>{t("restoreContainsVault")}</p>}
 						<div className="actions">
 							<Button onClick={() => void inspect()} disabled={busy || inspecting || !restoreFile || !password}>{t("preview")}</Button>
-							{readyArchive && readyArchiveOrigin === "local" && (
+							{readyArchive && (
 								<Button variant="primary" onClick={() => void restore()} disabled={busy || inspecting || readyArchiveGeneration !== restoreGeneration.current}>
 									{t("confirm")} · {archiveCount}
 								</Button>
 							)}
 						</div>
-					</details>
-					<details className="intake-secondary">
-						<summary>{t("intakeBackupLocation")}</summary>
-						<RemoteBackupPanel
-							password={password}
-							busy={busy || inspecting}
-							setBusy={setBusy}
-							invalidatePreview={invalidateRestorePreview}
-							acceptPreview={acceptRemotePreview}
-							canConfirm={!!readyArchive && readyArchiveOrigin === "remote" && readyArchiveGeneration === restoreGeneration.current}
-							restoreCount={archiveCount}
-							restoreReviewCount={archiveReviewCount}
-							restoreHasVault={archiveHasVault}
-							confirmRestore={() => void restore()}
-						/>
 					</details>
 				</section>
 			</div>

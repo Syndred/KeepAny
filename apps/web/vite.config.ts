@@ -5,14 +5,6 @@ import tailwindcss from '@tailwindcss/vite';
 import { VitePWA } from 'vite-plugin-pwa';
 import { deterministicPwaBuild } from './pwa-build-order';
 import { createUrlMetadataMiddleware } from '../../scripts/intake-url-metadata.mjs';
-const selfHostProxy = process.env.KEEPANY_SELFHOST_DEV_PROXY_TARGET;
-if (selfHostProxy) {
-  const target = new URL(selfHostProxy);
-  if (target.origin !== selfHostProxy || target.protocol !== 'http:' ||
-    !['localhost', '127.0.0.1', '[::1]'].includes(target.hostname)) throw Error('self-host-dev-proxy-target');
-}
-const proxy = selfHostProxy ? Object.fromEntries(['/api/auth', '/sync', '/workspaces'].map(path =>
-  [path, { target: selfHostProxy, changeOrigin: true }])) : undefined;
 export default defineConfig({ resolve: { alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) } }, plugins: [react(), tailwindcss(), {
   name: 'keepany-intake-url',
   configureServer(server) {
@@ -37,4 +29,4 @@ export default defineConfig({ resolve: { alias: { '@': fileURLToPath(new URL('./
     ],
   },
   ...deterministicPwaBuild,
-})], build:{outDir:'dist'},server:{fs:{allow:['../..']},proxy} });
+})], build:{outDir:'dist'},server:{fs:{allow:['../..']}} });

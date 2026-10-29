@@ -1,6 +1,7 @@
 import Papa from "papaparse";
 import { assetSchema, newAsset, type AssetKind } from "../../../packages/domain/src";
 import { stageReviewedCandidates, type ReviewedCandidate } from "./intake-review-store";
+import { isPdfFile } from "./ai-import-input";
 
 const importKinds = ["project", "account", "subscription", "item"] as const;
 const maxCsvBytes = 2 * 1024 * 1024;
@@ -12,7 +13,7 @@ async function fingerprint(bytes: ArrayBuffer): Promise<string> {
 }
 
 export async function stageCsvForReview(file: File): Promise<number> {
-	if (file.name.toLowerCase().endsWith(".pdf") || file.type === "application/pdf") throw Error("pdf");
+	if (isPdfFile(file)) throw Error("pdf");
 	if (!file.name.toLowerCase().endsWith(".csv") || file.size > maxCsvBytes) throw Error("limit");
 	const staged: ReviewedCandidate[] = [];
 	try {

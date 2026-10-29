@@ -41,7 +41,7 @@ export const aiWorkflowCopy: Record<string, [string, string]> = {
 		"This text or file goes to the selected model. Check its contents first; review each result before saving.",
 	],
 	aiImportText: ["文字或表格内容", "Text or spreadsheet content"],
-	aiImportFile: ["CSV、文字、PDF 或图片", "CSV, text, PDF or image"],
+	aiImportFile: ["CSV、文字或图片", "CSV, text or image"],
 	aiImportChooseFile: ["选择文件", "Choose file"],
 	aiImportNoFile: ["未选择文件", "No file selected"],
 	aiImportRemoveFile: ["移除文件", "Remove file"],
@@ -62,8 +62,8 @@ export const aiWorkflowCopy: Record<string, [string, string]> = {
 		"The model result could not be verified. Adjust the input and retry. No records were saved.",
 	],
 	aiInputLimit: [
-		"文字最多 2 万字符，文件最多 10 MB；PDF 最多 20 页。",
-		"Use up to 20,000 characters or a 10 MB file; PDFs support up to 20 pages.",
+		"文字最多 2 万字符，文件最多 10 MB。",
+		"Use up to 20,000 characters or a 10 MB file.",
 	],
 	aiSensitiveInput: [
 		"请先移除文字中的密码、API Key 或私钥，再生成资料。密码请保存在密码库。",

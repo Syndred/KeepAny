@@ -1,14 +1,15 @@
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { expect, test, type Page } from '@playwright/test';
 import { strFromU8, unzipSync } from 'fflate';
 import { decryptBackup } from '../../packages/local-db/src/backup-crypto';
-import type { Asset } from '../../packages/domain/src';
+import { newAsset, type Asset } from '../../packages/domain/src';
 import { sourceModuleUrl } from './helpers/source-module-url';
 import { selectChoice } from './helpers/select-choice';
+import { openBackupRestorePanel } from './helpers/backup-restore';
+import { prepareCompletionArchive, recordDevelopmentRequests } from './helpers/completion-archive';
 
 const repositoryPath = sourceModuleUrl('packages/local-db/src/index.ts');
-const domainPath = sourceModuleUrl('packages/domain/src/index.ts');
 const portable = process.env.KEEPANY_T19_PORTABLE === '1';
 const evidence = process.env.KEEPANY_EVIDENCE_DIR ?? 'docs/qa/2026-10-27/evidence/T19-completion';
 const password = 'Synthetic-T19-merge-only';
@@ -32,6 +33,7 @@ async function downloadArchive(page: Page, zh: boolean) {
 }
 async function restoreArchive(page: Page, zh: boolean, path: string) {
   await page.goto('/intake'); await page.locator('#backup-password').fill(password);
+  await openBackupRestorePanel(page);
   await page.locator('#restore-file').setInputFiles(path);
   await page.getByRole('button', { name: zh ? '预览' : 'Preview', exact: true }).first().click();
   await page.getByRole('button', { name: zh ? /^确认 ·/ : /^Confirm ·/ }).click();
@@ -54,24 +56,16 @@ async function prepare(page: Page, zh: boolean) {
   await expect(row).toHaveCount(1);
   return { target, row };
 }
-test.beforeAll(async ({ browser }) => {
-  if (portable) { fixtureTarget = JSON.parse(readFileSync(resolve(fixtureDirectory, 'fixture.json'), 'utf8')); return; }
-  const context = await browser.newContext({ locale: 'en-US', acceptDownloads: true });
-  await context.addInitScript(() => localStorage.setItem('keepany-language', 'en'));
-  try {
-    const page = await context.newPage(); await page.goto('/intake');
-    fixtureTarget = await page.evaluate(async ([rp, dp]) => {
-    const { newAsset } = await import(dp), { save } = await import(rp);
+test.beforeAll(async () => {
+    fixtureTarget = await prepareCompletionArchive(fixtureDirectory, password, async repository => {
     const value = { ...newAsset('project'), name: 'T19 Existing', url: 'https://original.example.test/', description: 'Original description', notes: 'Private synthetic note to keep', tags: ['keep'], category: 'existing category' };
-    await save('asset', value); return value;
-    }, [repositoryPath, domainPath]);
-    const archive = await downloadArchive(page, false); await archive.download.saveAs(resolve(fixtureDirectory, 'fixture.ka1'));
-    writeFileSync(resolve(fixtureDirectory, 'fixture.json'), JSON.stringify(fixtureTarget, null, 2));
-  } finally { await context.close(); }
+    await repository.save('asset', value); return value;
+    });
 });
 for (const zh of [true, false]) for (const width of [390, 1280]) {
   test(`${zh ? 'zh' : 'en'} ${width} T19-01 explicit selected-field merge, cancel and refresh`, async ({ browser }) => {
     const context = await browser.newContext({ locale: zh ? 'zh-CN' : 'en-US', viewport: { width, height: 900 } });
+    const sourceRequests = recordDevelopmentRequests(context);
     await context.addInitScript(language => localStorage.setItem('keepany-language', language), zh ? 'zh-CN' : 'en');
     const page = await context.newPage(), errors: string[] = [];
     page.on('pageerror', error => errors.push(error.message));
@@ -98,7 +92,7 @@ for (const zh of [true, false]) for (const width of [390, 1280]) {
       await selectChoice(dialog.locator('#candidate-merge-target'), target.id);
       await dialog.getByRole('checkbox', { name: c.description, exact: true }).check();
       if ((zh && width === 390) || (!zh && width === 1280)) await dialog.screenshot({ path: `${evidence}/fields-${portable ? 'portable' : 'source'}-${zh ? 'zh' : 'en'}-${width}.png` });
-      await dialog.getByRole('button', { name: c.confirm, exact: true }).evaluate(button => { (button as HTMLButtonElement).click(); (button as HTMLButtonElement).click(); });
+      await dialog.getByRole('button', { name: c.confirm, exact: true }).dblclick();
       await expect(dialog).toBeHidden();
       await expect(row).toContainText(zh ? '已确认' : 'Confirmed');
       await page.reload();
@@ -119,6 +113,7 @@ for (const zh of [true, false]) for (const width of [390, 1280]) {
       const finalPath = resolve(`test-results/T19-merge-final-${portable ? 'portable' : 'source'}-${zh ? 'zh' : 'en'}-${width}.ka1`);
       await backup.download.saveAs(finalPath);
       const restored = await browser.newContext({ locale: zh ? 'zh-CN' : 'en-US', acceptDownloads: true });
+      const restoredSourceRequests = recordDevelopmentRequests(restored);
       await restored.addInitScript(language => localStorage.setItem('keepany-language', language), zh ? 'zh-CN' : 'en');
       try {
         const destination = await restored.newPage();
@@ -127,7 +122,9 @@ for (const zh of [true, false]) for (const width of [390, 1280]) {
         expect(roundTrip.assets).toEqual(backup.assets);
         expect(roundTrip.candidates).toEqual(backup.candidates);
         await expect(destination.locator('.intake-review-row').getByText(zh ? '合并记录' : 'Merge record', { exact: true })).toBeVisible();
+        if (portable) expect(restoredSourceRequests).toEqual([]);
       } finally { await restored.close(); }
+      if (portable) expect(sourceRequests).toEqual([]);
       expect(errors).toEqual([]);
     } finally { await context.close(); }
   });

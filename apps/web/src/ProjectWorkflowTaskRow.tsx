@@ -19,7 +19,7 @@ export function ProjectWorkflowTaskRow({ task, round: suppliedRound }: { task: T
   const { data, notify } = useAppContext();
   const workflow = task.projectWorkflow;
   const [editing, setEditing] = useState(false);
-  const [outcome, setOutcome] = useState<'done' | 'blocked' | 'na'>(workflow?.record?.outcome ?? 'done');
+  const [outcome, setOutcome] = useState<'done' | 'blocked' | 'na'>(workflow?.record?.outcome ?? (workflow?.step === 'brandSubmission' || workflow?.step === 'closeBacklink' ? 'na' : 'done'));
   const [evidence, setEvidence] = useState(workflow?.record?.evidence ?? '');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -40,6 +40,7 @@ export function ProjectWorkflowTaskRow({ task, round: suppliedRound }: { task: T
     } catch (cause) { setError(cause instanceof Error && cause.message === 'workflow-stale' ? t('workflowRoundStale') : cause instanceof Error && cause.message === 'task-stale' ? t('workflowTaskStale') : t('error')); }
     finally { setBusy(false); }
   }
+  const retired = workflow.step === 'brandSubmission' || workflow.step === 'closeBacklink';
   const record = workflow.record;
   const linkedKind = workflow.sourceAssetKind;
   const linked = workflow.sourceAssetId && linkedKind && data.assets.some(asset => asset.id === workflow.sourceAssetId && !asset.deleted);
@@ -67,6 +68,7 @@ export function ProjectWorkflowTaskRow({ task, round: suppliedRound }: { task: T
       <div className="project-workflow-task-title"><span className="project-workflow-task-icon" aria-hidden="true"><FileCheck2 size={19} /></span><div><strong>{t(`workflowStep_${workflow.step}`)}</strong>{workflow.sourceName && <span className="project-workflow-task-name">{workflow.sourceName}</span>}</div></div>
       <Badge tone={tone} className={`project-workflow-chip ${record?.outcome ?? 'pending'}`}><StatusIcon aria-hidden="true" />{t(`workflowOutcome_${record?.outcome ?? 'pending'}`)}</Badge>
     </div>
+    {retired && <p className="project-workflow-warning">{t('workflowRetiredStep')}</p>}
     {sourceDetail && <p className="project-workflow-task-detail">{sourceDetail}</p>}
     {(linked || workflow.sourceUrl) && <div className="project-workflow-source">
       {linked && linkedKind ? <TextLink asChild><Link to="/assets/$kind/$id" params={{ kind: linkedKind, id: workflow.sourceAssetId }}>{t('workflowOpenRelated')}<ArrowUpRight aria-hidden="true" /></Link></TextLink> : null}
@@ -81,6 +83,6 @@ export function ProjectWorkflowTaskRow({ task, round: suppliedRound }: { task: T
       <label>{t('workflowEvidence')}<Textarea value={evidence} maxLength={2000} rows={3} onChange={event => { setEvidence(event.target.value); setError(''); }} required disabled={busy} placeholder={t('workflowEvidenceHint')} /></label>
       {error && <p className="field-error" role="alert">{error}</p>}
       <div className="project-workflow-actions"><Button type="button" onClick={() => setEditing(false)} disabled={busy}>{t('cancel')}</Button><Button type="submit" variant="primary" disabled={busy}>{t('workflowSaveRecord')}</Button></div>
-    </form></TaskReveal> : <div className="project-workflow-task-footer"><small>{t('workflowSnapshotAt')}: <time dateTime={workflow.generatedAt}>{new Date(workflow.generatedAt).toLocaleString(i18n.language)}</time></small><Button size="small" aria-describedby={finalLocked ? `workflow-lock-${task.id}` : undefined} onClick={() => { setOutcome(record?.outcome ?? 'done'); setEvidence(record?.evidence ?? ''); setEditing(true); }} disabled={finalLocked}>{t(record ? 'workflowEditRecord' : 'workflowRecordResult')}</Button></div>}
+    </form></TaskReveal> : <div className="project-workflow-task-footer"><small>{t('workflowSnapshotAt')}: <time dateTime={workflow.generatedAt}>{new Date(workflow.generatedAt).toLocaleString(i18n.language)}</time></small><Button size="small" aria-describedby={finalLocked ? `workflow-lock-${task.id}` : undefined} onClick={() => { setOutcome(record?.outcome ?? (retired ? 'na' : 'done')); setEvidence(record?.evidence ?? ''); setEditing(true); }} disabled={finalLocked}>{t(record ? 'workflowEditRecord' : 'workflowRecordResult')}</Button></div>}
   </TaskCard>;
 }

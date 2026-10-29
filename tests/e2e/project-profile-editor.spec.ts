@@ -1,3 +1,4 @@
+// User retired B2 promotional fields on 2026-10-29; retained basic profile assertions continue.
 import { expect, test } from "@playwright/test";
 
 const repositoryPath = `/@fs${process.cwd()}/packages/local-db/src/index.ts`;
@@ -15,20 +16,11 @@ for (const locale of ["zh-CN", "en-US"] as const) {
 			await dialog.locator("#name").fill("Project profile test");
 			await dialog.locator("#url").fill("https://example.test");
 			await dialog.locator("#description").fill("Short description");
-			await dialog.locator("#projectTitle").fill("Product heading");
-			await dialog.locator("#projectPromoUrl").fill("https://example.test/promo");
 			await dialog.locator("#tags").fill("alpha, beta");
-			await dialog.locator(".project-editor-group").nth(1).locator("summary").click();
-			await dialog.locator("#projectMediumDescription").fill("Medium introduction");
-			await dialog.locator("#longDescription").fill("Full introduction");
-			await dialog.locator("#projectFeatures").fill("Private planning");
-			await dialog.locator("#projectPricing").fill("Free tier");
-			await dialog.locator("#projectPricingType").fill("Freemium");
-			await dialog.locator(".project-editor-group").nth(2).locator("summary").click();
-			await dialog.locator("#projectEmail").fill("hello@example.test");
 			await dialog.locator("#notes").fill("Contact manually");
+			await expect(dialog.locator("#projectTitle, #projectLogoFile")).toHaveCount(0);
 			await dialog.locator("#name").scrollIntoViewIfNeeded();
-			await page.screenshot({ path: `/private/tmp/keepany-project-profile-form-${locale}.png`, fullPage: true });
+			await page.screenshot({ path: `test-results/keepany-project-profile-form-${locale}.png`, fullPage: true });
 			await dialog.getByRole("button", { name: locale === "zh-CN" ? "保存" : "Save", exact: true }).click();
 			await expect(dialog).toBeHidden();
 			await page.reload();
@@ -37,19 +29,17 @@ for (const locale of ["zh-CN", "en-US"] as const) {
 				const rows = await (await localRepository()).list("asset");
 				return rows.find((row: { name: string }) => row.name === "Project profile test");
 			}, repositoryPath);
-			expect(saved).toMatchObject({ projectTitle: "Product heading", projectPromoUrl: "https://example.test/promo", projectMediumDescription: "Medium introduction", longDescription: "Full introduction", projectFeatures: "Private planning", projectPricing: "Free tier", projectPricingType: "Freemium", projectEmail: "hello@example.test", notes: "Contact manually", tags: ["alpha", "beta"] });
+			expect(saved).toMatchObject({ description: "Short description", notes: "Contact manually", tags: ["alpha", "beta"] });
 			await page.goto(`/assets/project/${saved.id}`);
 			await page.getByRole("button", { name: locale === "zh-CN" ? "编辑" : "Edit", exact: true }).first().click();
 			dialog = page.getByRole("dialog");
-			await expect(dialog.locator("#projectTitle")).toHaveValue("Product heading");
-			await dialog.locator(".project-editor-group").nth(1).locator("summary").click();
-			await dialog.locator("#projectPricing").fill("Paid tier");
+			await dialog.locator("#notes").fill("Updated ordinary note");
 			await dialog.getByRole("button", { name: locale === "zh-CN" ? "保存" : "Save", exact: true }).click();
 			await expect(dialog).toBeHidden();
 			await page.reload();
 			const updated = await page.evaluate(async ({ path, id }) => (await (await import(path)).localRepository()).get("asset", id), { path: repositoryPath, id: saved.id });
-			expect(updated.projectPricing).toBe("Paid tier");
-			await page.screenshot({ path: `/private/tmp/keepany-project-profile-${locale}.png`, fullPage: true });
+			expect(updated.notes).toBe("Updated ordinary note");
+			await page.screenshot({ path: `test-results/keepany-project-profile-${locale}.png`, fullPage: true });
 			expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
 			expect(errors).toEqual([]);
 		} finally { await context.close(); }

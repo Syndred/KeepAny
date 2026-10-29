@@ -24,7 +24,7 @@ describe("sample installation through the real local repository", () => {
 			expect(await repository.get("preference", SAMPLE_LIBRARY_ID)).toBeNull();
 			vi.stubGlobal("fetch", vi.fn(async () => imageFetch()));
 			await expect(addSampleLibrary(t, "en", repository)).resolves.toBe(true);
-			expect(await repository.list("asset")).toHaveLength(26);
+			expect(await repository.list("asset")).toHaveLength(24);
 		} finally { await repository.close(); }
 	});
 	it("resumes committed sample IDs and atomic item transitions, preserves user data and collections, and deduplicates", async () => {
@@ -38,7 +38,7 @@ describe("sample installation through the real local repository", () => {
 			const interrupted = vi.spyOn(repository, "setItemArchived").mockRejectedValueOnce(Error("synthetic-interruption"));
 			await expect(addSampleLibrary(t, "en", repository)).rejects.toThrow("synthetic-interruption");
 			const before = await repository.list<Asset>("asset");
-			expect(before).toHaveLength(27);
+			expect(before).toHaveLength(25);
 			expect(await repository.fileStore.blobs.count()).toBe(8);
 			interrupted.mockRestore();
 			await expect(addSampleLibrary(t, "en", repository)).resolves.toBe(true);

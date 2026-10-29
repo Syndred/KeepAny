@@ -48,4 +48,15 @@ describe.each<PublicLocale>(["en", "zh-CN"])("public page in %s", (locale) => {
 		expect(html).not.toContain('type="module"');
 		expect(html).not.toContain("service-worker");
 	});
+
+	it("keeps retired remote and PDF capabilities out of current feature claims", () => {
+		const html = renderPublicPage(locale, config);
+		expect(html).toContain(locale === "en"
+			? "PDF intake, remote backups, and sync are not provided."
+			: "当前不提供 PDF 收录、远端备份或同步");
+		expect(html).toContain(locale === "en" ? "MCP remains experimental" : "MCP 仍为实验能力");
+		expect(html).not.toContain("Experimental sync, remote-storage, and MCP implementations");
+		expect(html).not.toContain("实验性同步、远端存储和 MCP 不作为");
+		expect(html).toContain(locale === "en" ? "encrypted backup/restore" : "加密备份恢复");
+	});
 });

@@ -293,7 +293,7 @@ export function PasswordVaultPanel({
 	}, [editorId, session, snapshot.status]);
 
 	const visibleAssets = useMemo(
-		() => assets.filter((asset) => !asset.deleted),
+		() => assets.filter((asset) => !asset.deleted && asset.kind !== "vault"),
 		[assets],
 	);
 	const assetsById = useMemo(
@@ -441,6 +441,7 @@ export function PasswordVaultPanel({
 		try {
 			await session.unlock(master);
 			setMaster("");
+			notify?.(t("pwVaultStatusUnlocked"));
 		} catch (error) {
 			announce(
 				errorCode(error) === "vault-password"

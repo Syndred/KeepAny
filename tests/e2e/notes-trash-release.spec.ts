@@ -28,7 +28,8 @@ const evidence =
 	process.env.KEEPANY_EVIDENCE_DIR ?? "/tmp/stackperch-notes-trash-evidence";
 const backupPassword = "Synthetic-notes-trash-backup!42";
 const password = "Synthetic-entry-only!42";
-const kinds: AssetKind[] = ["account", "subscription", "item", "vault"];
+// External vault-reference creation was retired by the user's 2026-10-29 scope.
+const kinds: AssetKind[] = ["account", "subscription", "item"];
 let fixture: Buffer;
 
 test.beforeAll(async () => {

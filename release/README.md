@@ -9,8 +9,19 @@
 ```bash
 pnpm install --frozen-lockfile
 pnpm build:preview
-pnpm verify:preview
+# Bash / zsh: select this checkout's clean candidate explicitly.
+candidate="$(node scripts/select-preview-candidate.mjs)"
+pnpm verify:preview "$candidate"
 ```
+
+PowerShell 中最后两行使用：
+
+```powershell
+$candidate = node scripts/select-preview-candidate.mjs
+pnpm verify:preview $candidate
+```
+
+验证命令必须显式指定本次候选；裸 `pnpm verify:preview` 不会自动选择目录中最新的 ZIP。CI 中同一选择脚本通过 `GITHUB_ENV` 设置后续步骤的候选，普通本地终端则使用上述变量传参。
 
 生成 `dist/preview/` 中的 ZIP、SHA-256 和对应源码。便携包使用本次完整构建，包含本机启动器、当前 Web 文件、对应源码与第三方材料；不携带仓库里的历年哈希资源。默认拒绝未提交改动；`--allow-dirty` 仅用于内部候选，不能当公开版本。
 
