@@ -43,7 +43,7 @@ async function noOverflow(page: Page) {
 
 async function capture(page: Page, name: string, fullPage = true) {
 	await noOverflow(page);
-	await page.screenshot({ path: join(evidence, `${name}.png`), fullPage });
+	await page.screenshot({ path: join(evidence, `${name}.png`), fullPage, animations: "disabled" });
 }
 
 async function expectUnobscuredFinanceError(page: Page) {
@@ -81,10 +81,12 @@ async function archiveFromUi(page: Page, locale: Locale) {
 }
 
 for (const locale of ["zh-CN", "en"] as const) {
-	test(`AS01 AS02 AS03 AS04 AS05 AS09 ${locale}: navigation, expenses, categories and persisted details`, async ({ context }) => {
+	test(`AS01 AS02 AS03 AS04 AS05 AS09 ${locale}: navigation, expenses, categories and persisted details`, async ({ context, request }) => {
 		const t = translate(locale), { page, errors, sourceRequests } = await prepare(context, locale);
 		await restore(page);
 		for (const [path, section] of [["/assets", "assetsOverview"], ["/assets/online", "assetsOnline"], ["/assets/physical", "assetsPhysical"], ["/assets/domains", "assetsOnline"]] as const) {
+			const directResponse = await request.get(path, { headers: { Accept: "text/html" } });
+			expect(directResponse.status(), `${path} independent HTML request must bypass service workers and return 200`).toBe(200);
 			const opened = await page.goto(path);
 			expect(opened?.status(), `${path} direct entry must be a successful application response`).toBe(200);
 			await expect(page.locator(".assets-section-nav").getByRole("link", { name: t(section), exact: true })).toHaveAttribute("aria-current", "page");

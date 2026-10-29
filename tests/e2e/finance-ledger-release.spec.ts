@@ -1,8 +1,10 @@
 import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { type BrowserContext, expect, type Page, test } from "@playwright/test";
 import { strFromU8, unzipSync } from "fflate";
-import type { Asset, History, Relation } from "../../packages/domain/src";
+import { historySchema, type Asset, type History, type Relation } from "../../packages/domain/src";
 import { decryptBackup } from "../../packages/local-db/src/backup-crypto";
+import { prepareCompletionArchive, restoreCompletionArchive } from "./helpers/completion-archive";
 import { selectChoice } from "./helpers/select-choice";
 
 test.use({ timezoneId: "Asia/Shanghai" });
@@ -13,6 +15,8 @@ const eventDate = "2026-09-30";
 const copies = {
 	"zh-CN": {
 		add: "新增",
+		addAsset: "新增资产",
+		continue: "继续",
 		name: "名称",
 		provider: "服务商",
 		save: "保存",
@@ -21,7 +25,7 @@ const copies = {
 		amount: "金额",
 		currency: "币种",
 		dueDate: "下次日期",
-		financeTitle: "订阅与账单",
+		financeTitle: "费用账本",
 		addRecord: "记一笔",
 		recordDialog: "记一笔",
 		recordType: "记录类型",
@@ -47,6 +51,8 @@ const copies = {
 	},
 	"en-US": {
 		add: "Add",
+		addAsset: "Add asset",
+		continue: "Continue",
 		name: "Name",
 		provider: "Provider",
 		save: "Save",
@@ -55,7 +61,7 @@ const copies = {
 		amount: "Amount",
 		currency: "Currency",
 		dueDate: "Next date",
-		financeTitle: "Subscriptions and bills",
+		financeTitle: "Expense ledger",
 		addRecord: "Record transaction",
 		recordDialog: "Record transaction",
 		recordType: "Record type",
@@ -130,7 +136,7 @@ async function readArchive(path: string): Promise<ArchiveData> {
 
 async function assetIdFromList(page: Page, name: string) {
 	const link = page
-		.locator("main .asset-list-content a")
+		.locator("main .asset-list-content a, main .assets-catalog-grid > a")
 		.filter({ hasText: name });
 	await expect(link).toHaveCount(1);
 	const href = await link.first().getAttribute("href");
@@ -159,7 +165,9 @@ async function createSubscription(
 	accountId: string,
 ) {
 	await page.goto("/assets/subscription");
-	await page.getByRole("button", { name: copy.add, exact: true }).click();
+	await page.getByRole("button", { name: copy.addAsset, exact: true }).click();
+	await selectChoice(page.getByRole("dialog").locator("#workspace-create-kind"), "subscription");
+	await page.getByRole("dialog").getByRole("button", { name: copy.continue, exact: true }).click();
 	const dialog = page.getByRole("dialog");
 	await dialog.getByLabel(copy.name, { exact: true }).fill(name);
 	await selectChoice(dialog.getByLabel(copy.account, { exact: true }), {
@@ -176,13 +184,24 @@ async function createSubscription(
 	return assetIdFromList(page, name);
 }
 
+async function createItem(page: Page, copy: Copy, name: string) {
+	await page.goto("/assets/physical");
+	await page.getByRole("button", { name: copy.addAsset, exact: true }).click();
+	await selectChoice(page.getByRole("dialog").locator("#workspace-create-kind"), "item");
+	await page.getByRole("dialog").getByRole("button", { name: copy.continue, exact: true }).click();
+	const dialog = page.getByRole("dialog");
+	await dialog.getByLabel(copy.name, { exact: true }).fill(name);
+	await dialog.getByRole("button", { name: copy.save, exact: true }).click();
+	await expect(dialog).toBeHidden();
+	return assetIdFromList(page, name);
+}
+
 async function recordTransaction(page: Page, copy: Copy, input: LedgerSpec) {
 	await page.getByRole("button", { name: copy.addRecord, exact: true }).click();
 	const dialog = page.getByRole("dialog", { name: copy.recordDialog });
-	await selectChoice(
-		dialog.getByLabel(copy.recordType, { exact: true }),
-		input.action,
-	);
+	// AS07: asset transactions are expenses; retired actions are historical fixtures below.
+	expect(input.action).toBe("expense");
+	await expect(dialog.locator("#finance-action")).toHaveCount(0);
 	await selectChoice(dialog.getByLabel(copy.relatedAsset, { exact: true }), {
 		value: input.targetId,
 	});
@@ -213,12 +232,9 @@ async function recordTransaction(page: Page, copy: Copy, input: LedgerSpec) {
 async function filterAndClear(
 	page: Page,
 	copy: Copy,
-	ids: { accountId: string; subscriptionId: string },
+	ids: { itemId: string; subscriptionId: string },
 ) {
-	const type = page.getByRole("combobox", {
-		name: copy.filterType,
-		exact: true,
-	});
+	await expect(page.locator("#finance-filter-type")).toHaveCount(0);
 	const asset = page.getByRole("combobox", {
 		name: copy.filterAsset,
 		exact: true,
@@ -229,26 +245,24 @@ async function filterAndClear(
 	});
 	const rows = page.locator(".finance-entry");
 
-	await selectChoice(type, "expense");
 	await selectChoice(asset, ids.subscriptionId);
 	await selectChoice(source, "source:JPY statement");
 	await expect(rows).toHaveCount(1);
 	await expect(rows.first()).toContainText("JPY expense");
 
-	await selectChoice(type, "all");
 	await selectChoice(asset, "");
 	await selectChoice(source, "all");
-	await expect(rows).toHaveCount(4);
+	await expect(rows).toHaveCount(2);
 
-	await selectChoice(asset, ids.accountId);
-	await expect(rows).toHaveCount(3);
+	await selectChoice(asset, ids.itemId);
+	await expect(rows).toHaveCount(1);
 	await selectChoice(source, "empty");
 	await expect(rows).toHaveCount(1);
 	await expect(rows.first()).toContainText(copy.noSource);
 
 	await selectChoice(asset, "");
 	await selectChoice(source, "all");
-	await expect(rows).toHaveCount(4);
+	await expect(rows).toHaveCount(2);
 }
 
 async function assertSummaryAndLinks(
@@ -256,24 +270,32 @@ async function assertSummaryAndLinks(
 	copy: Copy,
 	accountName: string,
 	subscriptionName: string,
+	subscriptionId: string,
 ) {
 	await expect(
 		page.getByRole("heading", { name: copy.financeTitle }),
 	).toBeVisible();
 	const summary = page.locator(".finance-summary");
+	await expect(summary.locator(".card")).toHaveCount(2);
 	await expect(summary.locator(".card").nth(0)).toContainText(copy.monthlyPlan);
 	await expect(summary.locator(".card").nth(0)).toContainText("1,200");
 	await expect(summary.locator(".card").nth(1)).toContainText(
 		copy.confirmedSpent,
 	);
 	await expect(summary.locator(".card").nth(1)).toContainText("1,234");
-	await expect(summary.locator(".card").nth(2)).toContainText(copy.balances);
-	await expect(summary.locator(".card").nth(2)).toContainText("0.00");
-	const linked = page
-		.locator(".finance-linked-row")
-		.filter({ hasText: subscriptionName });
+	await expect(summary.locator(".card").nth(1)).toContainText("6.25");
+	await expect(summary).not.toContainText(copy.balances);
+	for (const title of ["CNY top-up", "CNY refund", "Observed zero balance"])
+		await expect(page.locator(".finance-page")).not.toContainText(title);
+	// Relations continue to be managed in normal asset details, outside the expense ledger.
+	await page.goto(`/assets/subscription/${subscriptionId}`);
+	await expect(page.getByRole("heading", { name: subscriptionName, exact: true })).toBeVisible();
+	const linked = page.locator(".relation-row").filter({ hasText: accountName });
 	await expect(linked).toHaveCount(1);
 	await expect(linked).toContainText(accountName);
+	await page.goto("/finance");
+	await expect(page.getByRole("heading", { name: copy.financeTitle })).toBeVisible();
+	await expect(page.locator(".finance-entry")).toHaveCount(2);
 }
 
 async function downloadArchive(page: Page, copy: Copy) {
@@ -292,22 +314,39 @@ async function downloadArchive(page: Page, copy: Copy) {
 }
 
 async function restoreArchive(page: Page, copy: Copy, path: string) {
-	await page.goto("/intake");
-	await page.locator("#backup-password").fill(password);
-	await page.locator("#restore-file").setInputFiles(path);
-	await page
-		.getByRole("button", { name: copy.preview, exact: true })
-		.first()
-		.click();
-	await page.getByRole("button", { name: copy.confirm }).click();
+	await restoreCompletionArchive(page, password, path);
 	await expect(page.getByText(copy.restored)).toBeVisible();
+}
+
+async function restoreHistoricalTransactions(page: Page, copy: Copy, entries: LedgerSpec[]) {
+	// Node synthetic preparation, not user creation. These retired ledger actions
+	// remain part of the KA1 compatibility contract despite no longer being offered
+	// by the asset expense UI. The candidate consumes them through its restore UI.
+	const baseline = await downloadArchive(page, copy);
+	const directory = test.info().outputPath("legacy-transactions-fixture");
+	const historical = entries.map((entry) => historySchema.parse({
+		id: crypto.randomUUID(), assetId: entry.targetId, action: entry.action,
+		title: entry.title, amount: entry.amountMinor, currency: entry.currency,
+		eventDate, source: entry.source, note: entry.note, createdAt: `${eventDate}T04:00:00Z`,
+	}));
+	await prepareCompletionArchive(directory, password, async (repository) => {
+		await repository.saveBatch([
+			...baseline.data.assets.map((value) => ({ type: "asset" as const, value })),
+			...baseline.data.relations.map((value) => ({ type: "relation" as const, value })),
+			...baseline.data.history.map((value) => ({ type: "history" as const, value })),
+			...historical.map((value) => ({ type: "history" as const, value })),
+		]);
+		return { preparation: "synthetic-history-not-current-UI-creation", historical };
+	});
+	await restoreArchive(page, copy, resolve(directory, "fixture.ka1"));
+	return historical;
 }
 
 for (const variant of [
 	{ locale: "zh-CN", width: 390 },
 	{ locale: "en-US", width: 1280 },
 ] as const) {
-	test(`${variant.locale} ${variant.width} finance ledger survives UI backup and clean restore`, async ({
+	test(`${variant.locale} ${variant.width} asset expenses and historical transactions survive UI backup and clean restore`, async ({
 		browser,
 	}) => {
 		test.setTimeout(150_000);
@@ -331,6 +370,7 @@ for (const variant of [
 			const suffix = crypto.randomUUID().slice(0, 8);
 			const accountName = `Ledger account ${suffix}`;
 			const subscriptionName = `JPY subscription ${suffix}`;
+			const itemName = `Physical expense target ${suffix}`;
 			const accountId = await createAccount(sourcePage, copy, accountName);
 			const subscriptionId = await createSubscription(
 				sourcePage,
@@ -338,23 +378,9 @@ for (const variant of [
 				subscriptionName,
 				accountId,
 			);
+			const itemId = await createItem(sourcePage, copy, itemName);
 
-			await sourcePage.goto("/finance");
-			await expect(
-				sourcePage.getByRole("heading", { name: copy.financeTitle }),
-			).toBeVisible();
-			const entries: LedgerSpec[] = [
-				{
-					action: "expense",
-					targetId: subscriptionId,
-					title: "JPY expense",
-					amount: "1234",
-					amountMinor: 1234,
-					currency: "JPY",
-					source: "JPY statement",
-					note: "Checked JPY statement",
-					invalidAmount: "12.5",
-				},
+			const historicalSpecs: LedgerSpec[] = [
 				{
 					action: "topup",
 					targetId: accountId,
@@ -386,6 +412,21 @@ for (const variant of [
 					note: "Zero balance observation",
 				},
 			];
+			const historical = await restoreHistoricalTransactions(sourcePage, copy, historicalSpecs);
+			await sourcePage.goto("/finance");
+			await expect(sourcePage.getByRole("heading", { name: copy.financeTitle })).toBeVisible();
+			await expect(sourcePage.locator(".finance-entry")).toHaveCount(0);
+			const entries: LedgerSpec[] = [
+				{
+					action: "expense", targetId: subscriptionId, title: "JPY expense",
+					amount: "1234", amountMinor: 1234, currency: "JPY", source: "JPY statement",
+					note: "Checked JPY statement", invalidAmount: "12.5",
+				},
+				{
+					action: "expense", targetId: itemId, title: "CNY physical expense without source",
+					amount: "6.25", amountMinor: 625, currency: "CNY", source: "", note: "Synthetic physical expense",
+				},
+			];
 			for (const entry of entries)
 				await recordTransaction(sourcePage, copy, entry);
 
@@ -394,15 +435,17 @@ for (const variant of [
 				copy,
 				accountName,
 				subscriptionName,
+				subscriptionId,
 			);
-			await filterAndClear(sourcePage, copy, { accountId, subscriptionId });
+			await filterAndClear(sourcePage, copy, { itemId, subscriptionId });
 			await sourcePage.reload();
-			await expect(sourcePage.locator(".finance-entry")).toHaveCount(4);
+			await expect(sourcePage.locator(".finance-entry")).toHaveCount(2);
 			await assertSummaryAndLinks(
 				sourcePage,
 				copy,
 				accountName,
 				subscriptionName,
+				subscriptionId,
 			);
 			await sourcePage.screenshot({
 				path: test
@@ -414,13 +457,13 @@ for (const variant of [
 			});
 
 			const sourceArchive = await downloadArchive(sourcePage, copy);
-			expect(sourceArchive.data.assets).toHaveLength(2);
-			expect(sourceArchive.data.history).toHaveLength(4);
+			expect(sourceArchive.data.assets).toHaveLength(3);
+			expect(sourceArchive.data.history).toHaveLength(5);
 			expect(sourceArchive.data.relations).toHaveLength(1);
 			expect(sourceArchive.data.relations).toEqual([
 				expect.objectContaining({ from: subscriptionId, to: accountId }),
 			]);
-			for (const entry of entries) {
+			for (const entry of [...entries, ...historicalSpecs]) {
 				expect(sourceArchive.data.history).toEqual(
 					expect.arrayContaining([
 						expect.objectContaining({
@@ -436,6 +479,8 @@ for (const variant of [
 					]),
 				);
 			}
+			for (const entry of historical)
+				expect(sourceArchive.data.history.find((value) => value.id === entry.id)).toEqual(entry);
 
 			destination = await browser.newContext({
 				locale: variant.locale,
@@ -451,14 +496,15 @@ for (const variant of [
 			await restoreArchive(restored, copy, sourceArchive.path);
 			await restored.reload();
 			await restored.goto("/finance");
-			await expect(restored.locator(".finance-entry")).toHaveCount(4);
+			await expect(restored.locator(".finance-entry")).toHaveCount(2);
 			await assertSummaryAndLinks(
 				restored,
 				copy,
 				accountName,
 				subscriptionName,
+				subscriptionId,
 			);
-			await filterAndClear(restored, copy, { accountId, subscriptionId });
+			await filterAndClear(restored, copy, { itemId, subscriptionId });
 			await restored.screenshot({
 				path: test
 					.info()
