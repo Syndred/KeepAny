@@ -6,7 +6,7 @@ import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { strFromU8, unzipSync } from "fflate";
-import { assetSchema, newAsset, submissionSchema, type Asset } from "../../packages/domain/src";
+import { assetSchema, historySchema, newAsset, submissionSchema, type Asset } from "../../packages/domain/src";
 import { decryptBackup } from "../../packages/local-db/src/backup-crypto";
 import { resources } from "../../apps/web/src/i18n";
 import { openBackupRestorePanel } from "./helpers/backup-restore";
@@ -19,7 +19,7 @@ async function prepare() {
 	return prepareCompletionArchive(directory, password, async db => {
 		const file = readFileSync(resolve("apps/web/public/samples/logo.png"));
 		const id = await db.putFile(new File([file], "legacy-logo.png", { type: "image/png" }));
-		const project = assetSchema.parse({ ...newAsset("project"), name: "Legacy project", url: "https://project.example.test/",
+		const project = assetSchema.parse({ ...newAsset("project"), name: "Legacy project", category: "", url: "https://project.example.test/",
 			description: "Basic description", contact: "Basic contact", notes: "Basic note", tags: ["legacy"],
 			projectLaunchMonth: "2025-11", projectInspectionDate: "2026-11-15",
 			projectTitle: "Legacy title", projectPromoUrl: "https://promo.example.test/", projectMediumDescription: "Legacy medium copy",
@@ -30,7 +30,10 @@ async function prepare() {
 		const relation = { id: crypto.randomUUID(), from: project.id, to: vault.id, label: "Historical relation", createdAt: project.createdAt, verifiedAt: "", deleted: false };
 		const submission = submissionSchema.parse({ id: crypto.randomUUID(), assetId: project.id, name: "Legacy backlink", url: "https://directory.example.test/old", status: "verify", evidence: "Historical receipt" });
 		await db.saveBatch([{ type: "asset", value: project }, { type: "asset", value: vault }, { type: "relation", value: relation }, { type: "submission", value: submission }]);
-		return { project, vault, relation, submission, fileDigest: digest(file) };
+		const expense = historySchema.parse({ id: crypto.randomUUID(), assetId: project.id, action: "expense", title: "Legacy project expense",
+			note: "Ordinary retained project expense", amount: 1234, currency: "USD", eventDate: "2026-10-27", createdAt: "2026-10-27T00:00:00.000Z" });
+		await db.createFinanceEntry(expense);
+		return { project, vault, relation, submission, expense, fileDigest: digest(file) };
 	});
 }
 let fixture: Awaited<ReturnType<typeof prepare>>;
@@ -66,6 +69,19 @@ for (const [locale, width] of [["zh-CN", 390], ["en", 1280]] as const) test(`${l
 		await expect(page.locator(".asset-backlinks-card, .asset-project-materials, .asset-project-stats, [data-project-media-role]")).toHaveCount(0);
 		await expect(page.locator(".asset-attachments-card .image-item img")).toHaveCount(1);
 		await expect(page.locator(".asset-project-profile-card")).toContainText("Basic contact");
+		await expect(page.locator(`.asset-finance-card [data-bill-id="${fixture.expense.id}"]`)).toContainText(fixture.expense.title!);
+		const layout = await page.locator("main.asset-detail-project").evaluate(main => {
+			const hero = main.querySelector(":scope > .page-header")!.getBoundingClientRect();
+			const finance = main.querySelector(":scope > .asset-finance-card")!.getBoundingClientRect();
+			return { heroBottom: hero.bottom, financeTop: finance.top,
+				emptyMetaSpans: [...main.querySelectorAll(".asset-project-hero-meta > span")].filter(node => !node.textContent?.trim()).length,
+				overflow: document.documentElement.scrollWidth > innerWidth + 1 };
+		});
+		await test.info().attach("project-expense-layout", { body: JSON.stringify(layout), contentType: "application/json" });
+		await page.screenshot({ path: test.info().outputPath("project-expense-layout.png"), fullPage: true });
+		expect.soft(layout.heroBottom, "Project title and hero precede its ordinary expense ledger").toBeLessThanOrEqual(layout.financeTop);
+		expect.soft(layout.emptyMetaSpans, "An empty category must not render an empty capsule").toBe(0);
+		expect.soft(layout.overflow, "The restored project with an expense fits the viewport").toBe(false);
 		await edit(); const form = page.getByRole("dialog");
 		await expect(form.locator("#projectTitle, #projectPromoUrl, #projectEmail, #projectLogoFile, #longDescription")).toHaveCount(0);
 		await expect(form.locator("#notes")).toHaveValue("Basic note");
@@ -82,7 +98,7 @@ for (const [locale, width] of [["zh-CN", 390], ["en", 1280]] as const) test(`${l
 		expect({ name, notes, tags }).toEqual({ name: "Updated basic project", notes: "Updated ordinary note", tags: ["legacy", "retained"] });
 		expect(retained).toEqual(before);
 		expect(digest(result.entries[`files/${fixture.project.attachments[0]}`])).toBe(fixture.fileDigest);
-		for (const record of [fixture.submission, fixture.vault, fixture.relation]) expect(JSON.parse(result.rows.find(row => JSON.parse(row.payload).id === record.id)!.payload)).toEqual(record);
+		for (const record of [fixture.submission, fixture.vault, fixture.relation, fixture.expense]) expect(JSON.parse(result.rows.find(row => JSON.parse(row.payload).id === record.id)!.payload)).toEqual(record);
 		await page.goto(`/assets/vault/${fixture.vault.id}`);
 		await expect(page.getByText(t("vaultReferenceRetired"), { exact: true })).toBeVisible();
 		await expect(page.getByRole("button", { name: t("edit"), exact: true })).toHaveCount(0);

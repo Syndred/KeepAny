@@ -431,6 +431,10 @@
 .asset-detail-project .asset-tasks-card {
 	order: 10;
 }
+.asset-detail-project .asset-finance-card {
+	grid-column: 1 / -1;
+	order: 11;
+}
 .asset-detail-project .asset-relations-card {
 	order: 9;
 }

@@ -1052,7 +1052,7 @@ export function AssetDetail() {
 					{kind !== "account" && <p className="subtitle">
 						{asset.description || asset.url || t("local")}
 					</p>}
-					{kind === "project" && <div className="asset-project-hero-meta"><span>{niceCategory(asset.category, t)}</span>{asset.status && <span>{t(asset.status)}</span>}{asset.url && <a href={asset.url} target="_blank" rel="noopener noreferrer">{asset.url}<ExternalLink size={13} /></a>}</div>}
+					{kind === "project" && <div className="asset-project-hero-meta">{asset.category && <span>{niceCategory(asset.category, t)}</span>}{asset.status && <span>{t(asset.status)}</span>}{asset.url && <a href={asset.url} target="_blank" rel="noopener noreferrer">{asset.url}<ExternalLink size={13} /></a>}</div>}
 				</div>
 				{kind !== "project" && <div className="actions">
 					{kind === "subscription" && <Button asChild><Link to="/finance">{t("financeViewLedger")}</Link></Button>}
