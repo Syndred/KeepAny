@@ -69,7 +69,7 @@
       "source": "原工作区未提交累积，具体作者未推定",
       "decision": "显式候选/必要断言保留；quick/可选基线按职责收敛，不盲带未闭环工程草稿",
       "action": "review-replace-with-shared-boundary",
-      "finalDisposition": "pending"
+      "finalDisposition": "已在checkpoint纳入四命令/显式候选要求；共享识别和配置替代原重复准备实现，由F独立审查收口，不丢业务断言"
     },
     {
       "path": "playwright.account-layout.config.ts",
@@ -79,7 +79,7 @@
       "source": "原工作区未提交累积，具体作者未推定",
       "decision": "显式候选/必要断言保留；quick/可选基线按职责收敛，不盲带未闭环工程草稿",
       "action": "review-replace-with-shared-boundary",
-      "finalDisposition": "pending"
+      "finalDisposition": "已在checkpoint纳入四命令/显式候选要求；共享识别和配置替代原重复准备实现，由F独立审查收口，不丢业务断言"
     },
     {
       "path": "playwright.portable-release.config.ts",
@@ -89,7 +89,7 @@
       "source": "原工作区未提交累积，具体作者未推定",
       "decision": "显式候选/必要断言保留；quick/可选基线按职责收敛，不盲带未闭环工程草稿",
       "action": "review-replace-with-shared-boundary",
-      "finalDisposition": "pending"
+      "finalDisposition": "已在checkpoint纳入四命令/显式候选要求；共享识别和配置替代原重复准备实现，由F独立审查收口，不丢业务断言"
     },
     {
       "path": "release/retained-assets.json",
@@ -99,7 +99,7 @@
       "source": "原工作区未提交累积，具体作者未推定",
       "decision": "逐项核对后保留历史资产，当前运行入口由最终构建替换；不照抄旧候选入口",
       "action": "review-retain-history-rebuild-current",
-      "finalDisposition": "pending"
+      "finalDisposition": "旧哈希资源已逐项保留，最终当前Web同步后按严格工具重新生成retained清单；不复制旧清单掩盖新增差异"
     },
     {
       "path": "release/web/index.html",
@@ -109,7 +109,7 @@
       "source": "原工作区未提交累积，具体作者未推定",
       "decision": "逐项核对后保留历史资产，当前运行入口由最终构建替换；不照抄旧候选入口",
       "action": "review-retain-history-rebuild-current",
-      "finalDisposition": "pending"
+      "finalDisposition": "原入口由最终构建替换，不复制旧入口覆盖最终版；原0c97根文件仍在原冻结ZIP 47844663...c8dd及来源路径保留"
     },
     {
       "path": "release/web/sw.js",
@@ -119,7 +119,7 @@
       "source": "原工作区未提交累积，具体作者未推定",
       "decision": "逐项核对后保留历史资产，当前运行入口由最终构建替换；不照抄旧候选入口",
       "action": "review-retain-history-rebuild-current",
-      "finalDisposition": "pending"
+      "finalDisposition": "原入口由最终构建替换，不复制旧入口覆盖最终版；原0c97根文件仍在原冻结ZIP 47844663...c8dd及来源路径保留"
     },
     {
       "path": "scripts/check-account-layout.mjs",
@@ -129,7 +129,7 @@
       "source": "原工作区未提交累积，具体作者未推定",
       "decision": "显式候选/必要断言保留；quick/可选基线按职责收敛，不盲带未闭环工程草稿",
       "action": "review-replace-with-shared-boundary",
-      "finalDisposition": "pending"
+      "finalDisposition": "已在checkpoint纳入四命令/显式候选要求；共享识别和配置替代原重复准备实现，由F独立审查收口，不丢业务断言"
     },
     {
       "path": "scripts/verify-account-layout-evidence.mjs",
@@ -439,7 +439,7 @@
       "source": "原工作区未提交累积，具体作者未推定",
       "decision": "逐项核对后保留历史资产，当前运行入口由最终构建替换；不照抄旧候选入口",
       "action": "review-retain-history-rebuild-current",
-      "finalDisposition": "pending"
+      "finalDisposition": "按冻结摘要纳入旧0c97哈希资源，作为历史兼容保留；最终当前入口仍由新构建替换，非旧候选通过冒充新候选"
     },
     {
       "path": "release/web/assets/PasswordSmartImportDialog-DKitxdeS.js",
@@ -449,7 +449,7 @@
       "source": "原工作区未提交累积，具体作者未推定",
       "decision": "逐项核对后保留历史资产，当前运行入口由最终构建替换；不照抄旧候选入口",
       "action": "review-retain-history-rebuild-current",
-      "finalDisposition": "pending"
+      "finalDisposition": "按冻结摘要纳入旧0c97哈希资源，作为历史兼容保留；最终当前入口仍由新构建替换，非旧候选通过冒充新候选"
     },
     {
       "path": "release/web/assets/PasswordVaultPanel-C2Rm0dVh.css",
@@ -459,7 +459,7 @@
       "source": "原工作区未提交累积，具体作者未推定",
       "decision": "逐项核对后保留历史资产，当前运行入口由最终构建替换；不照抄旧候选入口",
       "action": "review-retain-history-rebuild-current",
-      "finalDisposition": "pending"
+      "finalDisposition": "按冻结摘要纳入旧0c97哈希资源，作为历史兼容保留；最终当前入口仍由新构建替换，非旧候选通过冒充新候选"
     },
     {
       "path": "release/web/assets/PasswordVaultPanel-DTN-Ln0v.js",
@@ -469,7 +469,7 @@
       "source": "原工作区未提交累积，具体作者未推定",
       "decision": "逐项核对后保留历史资产，当前运行入口由最终构建替换；不照抄旧候选入口",
       "action": "review-retain-history-rebuild-current",
-      "finalDisposition": "pending"
+      "finalDisposition": "按冻结摘要纳入旧0c97哈希资源，作为历史兼容保留；最终当前入口仍由新构建替换，非旧候选通过冒充新候选"
     },
     {
       "path": "release/web/assets/ProjectWorkflowTaskRow-_bmj-TZI.js",
@@ -479,7 +479,7 @@
       "source": "原工作区未提交累积，具体作者未推定",
       "decision": "逐项核对后保留历史资产，当前运行入口由最终构建替换；不照抄旧候选入口",
       "action": "review-retain-history-rebuild-current",
-      "finalDisposition": "pending"
+      "finalDisposition": "按冻结摘要纳入旧0c97哈希资源，作为历史兼容保留；最终当前入口仍由新构建替换，非旧候选通过冒充新候选"
     },
     {
       "path": "release/web/assets/SelfHostSessionPanel-L32XRNNK.js",
@@ -489,7 +489,7 @@
       "source": "原工作区未提交累积，具体作者未推定",
       "decision": "逐项核对后保留历史资产，当前运行入口由最终构建替换；不照抄旧候选入口",
       "action": "review-retain-history-rebuild-current",
-      "finalDisposition": "pending"
+      "finalDisposition": "按冻结摘要纳入旧0c97哈希资源，作为历史兼容保留；最终当前入口仍由新构建替换，非旧候选通过冒充新候选"
     },
     {
       "path": "release/web/assets/TaskRow-4eDwsum8.js",
@@ -499,7 +499,7 @@
       "source": "原工作区未提交累积，具体作者未推定",
       "decision": "逐项核对后保留历史资产，当前运行入口由最终构建替换；不照抄旧候选入口",
       "action": "review-retain-history-rebuild-current",
-      "finalDisposition": "pending"
+      "finalDisposition": "按冻结摘要纳入旧0c97哈希资源，作为历史兼容保留；最终当前入口仍由新构建替换，非旧候选通过冒充新候选"
     },
     {
       "path": "release/web/assets/VaultAccountLinksDialog-C2phAUB5.js",
@@ -509,7 +509,7 @@
       "source": "原工作区未提交累积，具体作者未推定",
       "decision": "逐项核对后保留历史资产，当前运行入口由最终构建替换；不照抄旧候选入口",
       "action": "review-retain-history-rebuild-current",
-      "finalDisposition": "pending"
+      "finalDisposition": "按冻结摘要纳入旧0c97哈希资源，作为历史兼容保留；最终当前入口仍由新构建替换，非旧候选通过冒充新候选"
     },
     {
       "path": "release/web/assets/account-family-graph-view-CsL6hNx3.js",
@@ -519,7 +519,7 @@
       "source": "原工作区未提交累积，具体作者未推定",
       "decision": "逐项核对后保留历史资产，当前运行入口由最终构建替换；不照抄旧候选入口",
       "action": "review-retain-history-rebuild-current",
-      "finalDisposition": "pending"
+      "finalDisposition": "按冻结摘要纳入旧0c97哈希资源，作为历史兼容保留；最终当前入口仍由新构建替换，非旧候选通过冒充新候选"
     },
     {
       "path": "release/web/assets/bound-sync--TUWhLPs.js",
@@ -529,7 +529,7 @@
       "source": "原工作区未提交累积，具体作者未推定",
       "decision": "逐项核对后保留历史资产，当前运行入口由最终构建替换；不照抄旧候选入口",
       "action": "review-retain-history-rebuild-current",
-      "finalDisposition": "pending"
+      "finalDisposition": "按冻结摘要纳入旧0c97哈希资源，作为历史兼容保留；最终当前入口仍由新构建替换，非旧候选通过冒充新候选"
     },
     {
       "path": "release/web/assets/date-picker-9SrSbR4T.js",
@@ -539,7 +539,7 @@
       "source": "原工作区未提交累积，具体作者未推定",
       "decision": "逐项核对后保留历史资产，当前运行入口由最终构建替换；不照抄旧候选入口",
       "action": "review-retain-history-rebuild-current",
-      "finalDisposition": "pending"
+      "finalDisposition": "按冻结摘要纳入旧0c97哈希资源，作为历史兼容保留；最终当前入口仍由新构建替换，非旧候选通过冒充新候选"
     },
     {
       "path": "release/web/assets/finance-9Dk6hr6f.js",
@@ -549,7 +549,7 @@
       "source": "原工作区未提交累积，具体作者未推定",
       "decision": "逐项核对后保留历史资产，当前运行入口由最终构建替换；不照抄旧候选入口",
       "action": "review-retain-history-rebuild-current",
-      "finalDisposition": "pending"
+      "finalDisposition": "按冻结摘要纳入旧0c97哈希资源，作为历史兼容保留；最终当前入口仍由新构建替换，非旧候选通过冒充新候选"
     },
     {
       "path": "release/web/assets/index-IKKtR5pD.js",
@@ -559,7 +559,7 @@
       "source": "原工作区未提交累积，具体作者未推定",
       "decision": "逐项核对后保留历史资产，当前运行入口由最终构建替换；不照抄旧候选入口",
       "action": "review-retain-history-rebuild-current",
-      "finalDisposition": "pending"
+      "finalDisposition": "按冻结摘要纳入旧0c97哈希资源，作为历史兼容保留；最终当前入口仍由新构建替换，非旧候选通过冒充新候选"
     },
     {
       "path": "release/web/assets/page-asset-detail-BHLUqCxw.js",
@@ -569,7 +569,7 @@
       "source": "原工作区未提交累积，具体作者未推定",
       "decision": "逐项核对后保留历史资产，当前运行入口由最终构建替换；不照抄旧候选入口",
       "action": "review-retain-history-rebuild-current",
-      "finalDisposition": "pending"
+      "finalDisposition": "按冻结摘要纳入旧0c97哈希资源，作为历史兼容保留；最终当前入口仍由新构建替换，非旧候选通过冒充新候选"
     },
     {
       "path": "release/web/assets/page-assistant-access-JqNDEILU.js",
@@ -579,7 +579,7 @@
       "source": "原工作区未提交累积，具体作者未推定",
       "decision": "逐项核对后保留历史资产，当前运行入口由最终构建替换；不照抄旧候选入口",
       "action": "review-retain-history-rebuild-current",
-      "finalDisposition": "pending"
+      "finalDisposition": "按冻结摘要纳入旧0c97哈希资源，作为历史兼容保留；最终当前入口仍由新构建替换，非旧候选通过冒充新候选"
     },
     {
       "path": "release/web/assets/page-change-impact-BL5mZrDw.js",
@@ -589,7 +589,7 @@
       "source": "原工作区未提交累积，具体作者未推定",
       "decision": "逐项核对后保留历史资产，当前运行入口由最终构建替换；不照抄旧候选入口",
       "action": "review-retain-history-rebuild-current",
-      "finalDisposition": "pending"
+      "finalDisposition": "按冻结摘要纳入旧0c97哈希资源，作为历史兼容保留；最终当前入口仍由新构建替换，非旧候选通过冒充新候选"
     },
     {
       "path": "release/web/assets/page-collections-BCVISBC_.js",
@@ -599,7 +599,7 @@
       "source": "原工作区未提交累积，具体作者未推定",
       "decision": "逐项核对后保留历史资产，当前运行入口由最终构建替换；不照抄旧候选入口",
       "action": "review-retain-history-rebuild-current",
-      "finalDisposition": "pending"
+      "finalDisposition": "按冻结摘要纳入旧0c97哈希资源，作为历史兼容保留；最终当前入口仍由新构建替换，非旧候选通过冒充新候选"
     },
     {
       "path": "release/web/assets/page-intake-Cvub9y4M.js",
@@ -609,7 +609,7 @@
       "source": "原工作区未提交累积，具体作者未推定",
       "decision": "逐项核对后保留历史资产，当前运行入口由最终构建替换；不照抄旧候选入口",
       "action": "review-retain-history-rebuild-current",
-      "finalDisposition": "pending"
+      "finalDisposition": "按冻结摘要纳入旧0c97哈希资源，作为历史兼容保留；最终当前入口仍由新构建替换，非旧候选通过冒充新候选"
     },
     {
       "path": "release/web/assets/page-overview-v5v2BA3_.js",
@@ -619,7 +619,7 @@
       "source": "原工作区未提交累积，具体作者未推定",
       "decision": "逐项核对后保留历史资产，当前运行入口由最终构建替换；不照抄旧候选入口",
       "action": "review-retain-history-rebuild-current",
-      "finalDisposition": "pending"
+      "finalDisposition": "按冻结摘要纳入旧0c97哈希资源，作为历史兼容保留；最终当前入口仍由新构建替换，非旧候选通过冒充新候选"
     },
     {
       "path": "release/web/assets/page-project-workflow-CcelnNw8.js",
@@ -629,7 +629,7 @@
       "source": "原工作区未提交累积，具体作者未推定",
       "decision": "逐项核对后保留历史资产，当前运行入口由最终构建替换；不照抄旧候选入口",
       "action": "review-retain-history-rebuild-current",
-      "finalDisposition": "pending"
+      "finalDisposition": "按冻结摘要纳入旧0c97哈希资源，作为历史兼容保留；最终当前入口仍由新构建替换，非旧候选通过冒充新候选"
     },
     {
       "path": "release/web/assets/page-settings-zhxXmib2.js",
@@ -639,7 +639,7 @@
       "source": "原工作区未提交累积，具体作者未推定",
       "decision": "逐项核对后保留历史资产，当前运行入口由最终构建替换；不照抄旧候选入口",
       "action": "review-retain-history-rebuild-current",
-      "finalDisposition": "pending"
+      "finalDisposition": "按冻结摘要纳入旧0c97哈希资源，作为历史兼容保留；最终当前入口仍由新构建替换，非旧候选通过冒充新候选"
     },
     {
       "path": "release/web/assets/page-tasks-DB_TkcZa.js",
@@ -649,7 +649,7 @@
       "source": "原工作区未提交累积，具体作者未推定",
       "decision": "逐项核对后保留历史资产，当前运行入口由最终构建替换；不照抄旧候选入口",
       "action": "review-retain-history-rebuild-current",
-      "finalDisposition": "pending"
+      "finalDisposition": "按冻结摘要纳入旧0c97哈希资源，作为历史兼容保留；最终当前入口仍由新构建替换，非旧候选通过冒充新候选"
     },
     {
       "path": "release/web/assets/page-trash-eIqTbEF_.js",
@@ -659,7 +659,7 @@
       "source": "原工作区未提交累积，具体作者未推定",
       "decision": "逐项核对后保留历史资产，当前运行入口由最终构建替换；不照抄旧候选入口",
       "action": "review-retain-history-rebuild-current",
-      "finalDisposition": "pending"
+      "finalDisposition": "按冻结摘要纳入旧0c97哈希资源，作为历史兼容保留；最终当前入口仍由新构建替换，非旧候选通过冒充新候选"
     },
     {
       "path": "release/web/assets/page-workspaces-DFNio1Bt.js",
@@ -669,7 +669,7 @@
       "source": "原工作区未提交累积，具体作者未推定",
       "decision": "逐项核对后保留历史资产，当前运行入口由最终构建替换；不照抄旧候选入口",
       "action": "review-retain-history-rebuild-current",
-      "finalDisposition": "pending"
+      "finalDisposition": "按冻结摘要纳入旧0c97哈希资源，作为历史兼容保留；最终当前入口仍由新构建替换，非旧候选通过冒充新候选"
     },
     {
       "path": "release/web/assets/sample-library-Mc6IgFl-.js",
@@ -679,7 +679,7 @@
       "source": "原工作区未提交累积，具体作者未推定",
       "decision": "逐项核对后保留历史资产，当前运行入口由最终构建替换；不照抄旧候选入口",
       "action": "review-retain-history-rebuild-current",
-      "finalDisposition": "pending"
+      "finalDisposition": "按冻结摘要纳入旧0c97哈希资源，作为历史兼容保留；最终当前入口仍由新构建替换，非旧候选通过冒充新候选"
     },
     {
       "path": "release/web/assets/src-DUGkU9jg.js",
@@ -689,7 +689,7 @@
       "source": "原工作区未提交累积，具体作者未推定",
       "decision": "逐项核对后保留历史资产，当前运行入口由最终构建替换；不照抄旧候选入口",
       "action": "review-retain-history-rebuild-current",
-      "finalDisposition": "pending"
+      "finalDisposition": "按冻结摘要纳入旧0c97哈希资源，作为历史兼容保留；最终当前入口仍由新构建替换，非旧候选通过冒充新候选"
     },
     {
       "path": "release/web/assets/workflows-xrnthUh7.js",
@@ -699,7 +699,7 @@
       "source": "原工作区未提交累积，具体作者未推定",
       "decision": "逐项核对后保留历史资产，当前运行入口由最终构建替换；不照抄旧候选入口",
       "action": "review-retain-history-rebuild-current",
-      "finalDisposition": "pending"
+      "finalDisposition": "按冻结摘要纳入旧0c97哈希资源，作为历史兼容保留；最终当前入口仍由新构建替换，非旧候选通过冒充新候选"
     },
     {
       "path": "scripts/verify-vault-links-layout-evidence.mjs",
