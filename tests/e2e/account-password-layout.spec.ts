@@ -31,7 +31,8 @@ for (const language of ["zh-CN", "en"] as const) for (const width of [1920, 1280
 		const baselineCandidates: Array<{ state: string; path: string; sha256: string; platform: string; browser: string; baseline: string; comparison: string }> = [];
 		const baselineState = async (state: "expanded" | "collapsed") => {
 			// The real list includes the expanded card's parent grid and neighbors.
-			const list = page.locator(".unified-account-list");
+			const list = page.locator(".unified-account-list").filter({ has: page.locator(".unified-account") });
+			await expect(list, "Capture the unique account-card list, excluding external-vault references").toHaveCount(1);
 			const baseline = `account-${language}-${width}-${state}.png`;
 			const path = join(evidence, `review-${process.platform}-${baseline}`);
 			await list.screenshot({ path, animations: "disabled" });
