@@ -1,0 +1,61 @@
+name: Daily checks
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: daily-${{ github.event.pull_request.head.ref || github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  quick-feedback:
+    env:
+      KEEPANY_RELEASE_TEST_PORT: 4396
+      KEEPANY_FINAL_CANDIDATE: 1
+      KEEPANY_EVIDENCE_DIR: test-results/quick-layout
+    # Daily feedback; full release acceptance is a separate manual workflow.
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.10.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+        timeout-minutes: 10
+      - run: pnpm exec playwright install --with-deps chromium
+        timeout-minutes: 10
+      - run: pnpm test
+        timeout-minutes: 8
+      - name: Typecheck and compile the portable candidate once
+        run: pnpm build:preview
+        timeout-minutes: 10
+      - name: Select the compiled commit explicitly
+        run: node scripts/select-preview-candidate.mjs
+        timeout-minutes: 1
+      - run: pnpm verify:preview
+        timeout-minutes: 5
+      - name: Account expansion pilot in two existing matrix cases
+        run: pnpm exec playwright test --config playwright.account-layout.config.ts tests/e2e/account-password-layout.spec.ts --grep '(zh-CN 390|en 1280) ' --reporter=line --max-failures=1
+        timeout-minutes: 6
+      - name: Matching-dialog pilot in two existing matrix cases
+        run: pnpm test:final:links --grep '(zh-CN 390x900|en 1280x900) ' --reporter=line
+        timeout-minutes: 7
+      - name: Preserve pilot results and comparison differences
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: quick-feedback-${{ github.run_id }}-${{ github.run_attempt }}
+          path: test-results/
+          retention-days: 7
+          if-no-files-found: ignore

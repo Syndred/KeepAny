@@ -1,4 +1,5 @@
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { portableCandidate } from "./helpers/portable-candidate";
+import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { expect, test, type Locator } from "@playwright/test";
 import { resources } from "../../apps/web/src/i18n";
@@ -384,14 +385,7 @@ for (const language of ["zh-CN", "en"] as const)
 				expect(errors).toEqual([]);
 				steps.push({ step: "finished", errors, result: "passed" });
 			} finally {
-				const candidate = process.env.KEEPANY_PREVIEW_DIRECTORY
-					? JSON.parse(
-							readFileSync(
-								join(process.env.KEEPANY_PREVIEW_DIRECTORY, "RELEASE.json"),
-								"utf8",
-							),
-						)
-					: null;
+				const candidate = portableCandidate().release;
 				writeFileSync(
 					join(evidence, `${stem}-independent.json`),
 					JSON.stringify(
