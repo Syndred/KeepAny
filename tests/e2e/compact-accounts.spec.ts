@@ -187,7 +187,7 @@ for (const language of ["zh-CN", "en"] as const) {
 			await page.goto("/accounts"); await screenshot(page, `empty-${language}`);
 			await prepare(page, t);
 			await createAccount(page, t, "CC long title · 账号名称用于核对紧凑卡片与相邻卡片不会互相拉伸的长标题", "long-identifier-for-compact-account@example.test");
-			for (const width of [390, 768, 1280, 1920, 2262]) {
+			for (const width of [390, 768, 1280, 1920, 2262, 2560]) {
 				await page.setViewportSize({ width, height: 1000 });
 				await expect(account(page)).toBeVisible();
 				await account(page, "CC public account").getByRole("button", { name: t("pwVaultCopyUsername"), exact: true }).click();
@@ -204,7 +204,7 @@ for (const language of ["zh-CN", "en"] as const) {
 			}
 			await page.setViewportSize({ width: 1280, height: 1000 });
 			await page.getByRole("button", { name: t("pwVaultLock"), exact: true }).click();
-			for (const width of [390, 768, 1280, 1920, 2262]) { await page.setViewportSize({ width, height: 1000 }); await screenshot(page, `matrix-locked-${language}-${width}`); expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true); }
+			for (const width of [390, 768, 1280, 1920, 2262, 2560]) { await page.setViewportSize({ width, height: 1000 }); await screenshot(page, `matrix-locked-${language}-${width}`); expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true); }
 		} finally { writeFileSync(join(evidence, `matrix-${language}.json`), JSON.stringify({ candidate: portableCandidate(), ids: ["CC01", "CC02", "CC11"], matrix }, null, 2)); await context.close(); }
 	});
 }

@@ -7,7 +7,7 @@ import { assetNotes } from "./asset-notes";
 import { accountFamilyGraph } from "./account-family-graph";
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { ArrowDownRight, ArrowLeft, Check, ExternalLink, Plus, Mail, Pencil, MoreHorizontal, ChevronRight, Network } from "lucide-react";
+import { ArrowLeft, Check, ExternalLink, Plus, Mail, Pencil, MoreHorizontal, ChevronRight, Network } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import {
 	type Asset,

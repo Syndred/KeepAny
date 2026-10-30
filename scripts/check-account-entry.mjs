@@ -22,6 +22,13 @@ const receipt = {
   compactSpecSha256: hash(readFileSync("tests/e2e/compact-accounts.spec.ts")),
   automatedCoverage: ["SR01", "SR02", "SR03", "SR04", "SR05", "SR06", "SR07", "UE01", "UE02", "UE03", "UE04", "UE05", "UE06", "UE07", "UE08", "UE09", "CC03", "CC04", "CC05", "CC09"],
   coverageNotes: { UE10: "Controller and independent actual candidate review remain separate.", supersedes: "SE01-SE16's earlier form workflow is retained as history; user now requires unlock before account management and direct merged editing." },
+  legacyLayout: {
+    replaces: "The old account-password-layout 10-case execution entry, using the current compact UI contract; not a full certification of every historical AL state.",
+    AL01: { current: ["CC01", "CC02", "CC03", "CC04", "CC05", "CC11", "SR01", "SR02", "SR03"], retired: "Inline expanded-card note width and equal-neighbor-height ratios no longer describe the separate compact/detail layout." },
+    AL02: { current: ["CC01", "CC02", "CC03", "CC04", "CC05", "CC06", "CC07", "CC08", "CC09", "CC10", "UE01", "UE02", "UE03", "UE04", "UE06", "UE08"] },
+    AL10: { current: ["UE02", "UE10", "CC11"], retired: "The previous expanded toolbar's text sample-login action is now inside Account options." },
+    boundaries: ["Historical optional pixel goldens are retired and do not certify the current UI.", "Historical Enter/Space menu trigger, category switching, and account sample-login real-busy states are not claimed as covered by these 38 cases."]
+  },
   manualVisualReview: "separate", controllerJourney: "separate", independentReview: "separate",
   verdict: "incomplete",
 };
@@ -46,7 +53,7 @@ if (run.error || run.status !== 0) {
   collect(join(output, "evidence"));
   const imageNames = new Set(images.map(image => image.path.split("/").at(-1)));
   for (const lang of ["zh-CN", "en"]) {
-    for (const width of [390, 768, 1280, 1920, 2262]) {
+    for (const width of [390, 768, 1280, 1920, 2262, 2560]) {
       for (const state of ["card", "edit", "menu", "delete", "gate"]) if (!imageNames.has(`matrix-${state}-${lang}-${width}.png`)) throw Error(`Missing unified matrix: ${lang}/${width}/${state}`);
       for (const state of ["card", "detail", "impact", "graph", "edit", "task", "reminder"]) if (!imageNames.has(`simple-${state}-${lang}-${width}.png`)) throw Error(`Missing simple account evidence: ${lang}/${width}/${state}`);
       if (!imageNames.has(`populated-impact-${lang}-${width}.png`)) throw Error(`Missing populated impact evidence: ${lang}/${width}`);

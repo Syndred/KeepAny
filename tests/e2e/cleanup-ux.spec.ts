@@ -136,8 +136,9 @@ for (const language of ["zh-CN", "en"] as const) for (const width of [390, 768, 
     await page.getByRole("button", { name: language === "en" ? "Local capture" : "本地收录", exact: true }).focus(); await capture(page, `${language}-${width}-capture-focus`);
     await page.getByRole("button", { name: language === "en" ? "Organize with AI" : "AI 整理", exact: true }).click(); await page.locator("#ai-import-text").fill("Synthetic review input");
     const tabs = page.locator(".intake-channel-tabs button");
-    const tabGeometry = await tabs.evaluateAll(nodes => nodes.map(node => { const rect = node.getBoundingClientRect(); return { left: rect.left, right: rect.right, background: getComputedStyle(node).backgroundColor, selected: node.getAttribute("aria-pressed") }; }));
+    const tabGeometry = await tabs.evaluateAll(nodes => nodes.map(node => { const rect = node.getBoundingClientRect(); return { left: rect.left, right: rect.right, height: rect.height, background: getComputedStyle(node).backgroundColor, selected: node.getAttribute("aria-pressed") }; }));
     expect(tabGeometry[1].left - tabGeometry[0].right).toBeLessThanOrEqual(16);
+    expect(tabGeometry.every(tab => tab.height >= 44)).toBe(true);
     expect(tabGeometry[0].selected).toBe("false"); expect(tabGeometry[1].selected).toBe("true");
     expect(tabGeometry[0].background).not.toBe(tabGeometry[1].background);
     await capture(page, `${language}-${width}-ai-disabled`);

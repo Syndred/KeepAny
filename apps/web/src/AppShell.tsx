@@ -6,7 +6,6 @@ import { useTranslation } from "react-i18next";
 import {
 	ArrowLeft,
 	Bell,
-	ChevronDown,
 	LayoutDashboard,
 	Layers,
 	Menu,

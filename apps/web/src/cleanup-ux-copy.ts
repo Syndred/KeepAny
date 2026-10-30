@@ -21,6 +21,5 @@ export const cleanupUxCopy: Record<string, [string, string]> = {
   sampleConfirmHint: ["加入一组虚构资料，体验项目、账号、订阅和维护事项之间的关联。已有资料会保留。", "Add fictional records to explore connected projects, accounts, subscriptions and maintenance. Your existing records are kept."],
   sampleStudioNotes: ["工作室主站的联系邮箱、域名和托管订阅在此集中维护。更新前先核对关联资料。", "Maintain the studio site's contact email, domain and hosting subscription here. Review linked records before making changes."],
   sampleProjectNotes: ["个人写作网站。定期整理内容，并核对域名和设计工具的续费安排。", "A personal writing site. Review content regularly and check renewals for the domain and design tools."],
-  manualAccountHint: ["账号资料在独立加密库中管理。进入账号后设置或解锁主密码，再新增账号。", "Accounts are managed in the separate encrypted vault. Open Accounts, set or unlock the master password, then add an account."],
   openSavedRecord: ["打开已保存资料", "Open saved record"],
 };
