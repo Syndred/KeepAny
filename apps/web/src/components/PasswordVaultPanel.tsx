@@ -459,7 +459,7 @@ export function PasswordVaultPanel({
 			await session.unlock(master);
 			setMaster("");
 		} catch (error) {
-			announce(
+			setMessageKey(
 				errorCode(error) === "vault-password"
 					? "pwVaultUnlockFailed"
 					: errorKey(error),

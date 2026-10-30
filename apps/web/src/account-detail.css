@@ -51,11 +51,13 @@
 /* Account workspace: graph/tasks on the left, login/notes/impact on the right. */
 .page.asset-detail-account.account-relation-layout { display: grid; grid-template-columns: minmax(0, 1.85fr) minmax(300px, 1fr); gap: 14px; align-items: start; }
 .account-relation-layout > .account-detail-back { grid-column: 1 / -1; justify-self: start; }
-.page.account-relation-layout > .page-header { grid-area: auto; grid-column: 1 / -1; margin: 0; display: flex; align-items: center; justify-content: space-between; gap: 14px; }
-.account-relation-layout .page-header > div:first-child { display: grid; grid-template-columns: 56px minmax(0, max-content) auto; align-items: center; gap: 14px; min-width: 0; }
-.account-detail-avatar { grid-column: 1; grid-row: 1; display: grid; place-items: center; width: 56px; height: 56px; border: 1.5px solid var(--line); border-radius: 12px; background: var(--yellow-soft); }
-.account-relation-layout .page-header h1 { grid-column: 2; grid-row: 1; margin: 0; overflow-wrap: anywhere; font-size: clamp(22px, 2vw, 30px); }
-.account-relation-layout .page-header .eyebrow { grid-column: 3; grid-row: 1; margin: 0; font-size: 12px; white-space: nowrap; }
+.page.account-relation-layout > .page-header { grid-area: auto; grid-column: 1 / -1; margin: 0; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 14px; }
+.account-relation-layout .page-header > div:first-child { display: grid; grid-template-columns: 56px minmax(0, 1fr); align-items: center; gap: 4px 14px; min-width: 0; }
+.account-detail-avatar { grid-column: 1; grid-row: 1 / span 2; display: grid; place-items: center; width: 56px; height: 56px; border: 1.5px solid var(--line); border-radius: 12px; background: var(--yellow-soft); }
+.account-relation-layout .page-header h1 { grid-column: 2; grid-row: 1; min-width: 0; margin: 0; overflow-wrap: anywhere; font-size: clamp(22px, 2vw, 30px); line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.account-relation-layout .page-header .eyebrow { grid-column: 2; grid-row: 2; margin: 0; font-size: 12px; }
+.account-relation-layout .page-header > .actions { grid-column: 2; grid-row: 1; min-width: max-content; flex-wrap: nowrap; }
+.account-relation-layout .page-header > .actions .button { flex-shrink: 0; white-space: nowrap; }
 .page.asset-detail-account.account-relation-layout > .asset-detail-secondary { display: grid; grid-template-columns: minmax(0, 1fr); grid-column: 1; grid-row: 3; gap: 14px; min-width: 0; margin: 0; }
 .page.asset-detail-account.account-relation-layout .asset-relations-card, .page.asset-detail-account.account-relation-layout .asset-tasks-card { grid-area: auto; min-width: 0; }
 .page.asset-detail-account.account-relation-layout > .account-login-column { grid-column: 2; grid-row: 3; display: grid; gap: 14px; min-width: 0; margin: 0; }
@@ -93,4 +95,8 @@
  .account-relation-layout .page-header { align-items: start; }
  .account-relation-layout .page-header > .actions { flex: none; flex-wrap: nowrap; gap: 4px; }
  .account-login-summary .card-header { flex-wrap: nowrap; }
+}
+@media (max-width: 700px) {
+ .page.account-relation-layout > .page-header { grid-template-columns: minmax(0, 1fr); gap: 10px; }
+ .account-relation-layout .page-header > .actions { grid-column: 1; grid-row: 2; justify-self: end; }
 }

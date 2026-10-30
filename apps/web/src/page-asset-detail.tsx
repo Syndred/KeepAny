@@ -1061,7 +1061,7 @@ export function AssetDetail() {
 					<div className="eyebrow">
 						{t(kind)} · {niceCategory(asset.category || (kind === "account" ? "other" : ""), t)}
 					</div>
-					<h1>{asset.name}</h1>
+					<h1 title={kind === "account" ? asset.name : undefined}>{asset.name}</h1>
 					{kind !== "account" && <p className="subtitle">
 						{asset.description || asset.url || t("local")}
 					</p>}
