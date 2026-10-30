@@ -1,4 +1,4 @@
-import { Kdbx, KdbxCredentials, ProtectedValue } from 'kdbxweb';
+import { Kdbx, KdbxCredentials, ProtectedValue, type KdbxEntry } from 'kdbxweb';
 import {
   applyDraft, checkBytes, clearCredentials, clearDatabase, configureDatabase, credentials, draftOf, fail,
   encodeImportDraft, findEntry, isTrash, loadDatabase, nextKdbxTime, normalizeDraft,
@@ -20,6 +20,18 @@ export const VAULT_IMPORT_MAX_ENTRIES = 1_000;
 export const VAULT_IMPORT_MAX_BYTES = 4 * 1024 * 1024;
 const VAULT_MAX_ENTRIES = 10_000;
 const VAULT_CONTENT_REVISION_FIELD = 'KeepAny.ContentRevision';
+
+// kdbxweb 2.1.1 copyFrom/importEntry omit these optional 4.1 properties.
+// Preserve the imported plugin metadata when splitting a shared login/history.
+function copyOptionalEntryMetadata(source: KdbxEntry, target: KdbxEntry): void {
+  target.customData = source.customData ? structuredClone(source.customData) : undefined;
+  target.qualityCheck = source.qualityCheck;
+  target.previousParentGroup = source.previousParentGroup;
+}
+function pushLoginHistory(entry: KdbxEntry): void {
+  entry.pushHistory();
+  copyOptionalEntryMetadata(entry, entry.history[entry.history.length - 1]);
+}
 
 type ImportMutation = {
   index: number;
@@ -474,19 +486,21 @@ export class VaultSession {
           // The library's import preserves all historical versions, custom fields,
           // attachments and icons. Only the current account's scope changes.
           const replacement = candidate.importEntry(entry, candidate.getDefaultGroup(), candidate);
+          copyOptionalEntryMetadata(entry, replacement);
+          entry.history.forEach((version, index) => copyOptionalEntryMetadata(version, replacement.history[index]));
           for (const version of [replacement, ...replacement.history]) {
             version.fields.set(VAULT_LINK_FIELD, ProtectedValue.fromString(JSON.stringify([accountId])));
           }
-          entry.pushHistory();
+          pushLoginHistory(entry);
           applyDraft(entry, normalizeDraft({ ...draft, linkedAssetIds: draft.linkedAssetIds.filter(link => link !== accountId) }));
           if (remaining.length) {
-            replacement.pushHistory();
+            pushLoginHistory(replacement);
             applyDraft(replacement, normalizeDraft({ ...draft, id: undefined, username: remaining[0], usernameAliases: remaining.slice(1), linkedAssetIds: [accountId] }));
           } else {
             candidate.meta.recycleBinEnabled = true; candidate.createRecycleBin(); candidate.remove(replacement);
           }
         } else if (remaining.length) {
-          entry.pushHistory();
+          pushLoginHistory(entry);
           applyDraft(entry, normalizeDraft({ ...draft, username: remaining[0], usernameAliases: remaining.slice(1) }));
         } else {
           candidate.meta.recycleBinEnabled = true; candidate.createRecycleBin();

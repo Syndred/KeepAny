@@ -40,6 +40,40 @@ function deferred() {
 
 afterEach(() => vi.restoreAllMocks());
 
+it('preserves imported entry custom metadata in every shared deletion version', async () => {
+  const { storage, session } = await created();
+  const id = await session.saveEntry({ ...draft, usernameAliases: ['alias@example.test'], linkedAssetIds: ['current-account', 'other-account'] });
+  const key = credentials(master);
+  const db = await Kdbx.load((await session.exportKdbx()).slice().buffer, key);
+  try {
+    db.header.versionMinor = 1;
+    const entry = [...db.getDefaultGroup().allEntries()].find(row => row.uuid.id === id)!;
+    const modified = new Date('2026-10-29T00:00:00Z');
+    entry.customData = new Map([['SyntheticPlugin', { value: 'Current plugin metadata', lastModified: modified }]]);
+    entry.qualityCheck = false;
+    entry.fields.set('SyntheticUnknown', ProtectedValue.fromString('Unknown protected data'));
+    entry.pushHistory();
+    entry.history[0].customData = new Map([['SyntheticPlugin', { value: 'Historical plugin metadata', lastModified: modified }]]);
+    entry.history[0].qualityCheck = false;
+    await storage.write(new Uint8Array(await db.save()), storage.record!.revision);
+  } finally { clearDatabase(db); clearCredentials(key); }
+  await session.initialize(); await session.unlock(master);
+  await session.removeLoginIdentifier(id, 'alias@example.test', session.getSnapshot().contentRevision!, 'current-account');
+  session.lock(); await session.unlock(master);
+  const own = session.getSnapshot().entries.find(row => row.linkedAssetIds.includes('current-account'))!;
+  const nextKey = credentials(master), exported = await Kdbx.load((await session.exportKdbx()).slice().buffer, nextKey);
+  try {
+    for (const entryId of [id, own.id]) {
+      const current = [...exported.getDefaultGroup().allEntries()].find(row => row.uuid.id === entryId)!;
+      expect(current.customData?.get('SyntheticPlugin')).toEqual({ value: 'Current plugin metadata', lastModified: new Date('2026-10-29T00:00:00Z') });
+      expect(current.qualityCheck).toBe(false);
+      expect((current.fields.get('SyntheticUnknown') as ProtectedValue).getText()).toBe('Unknown protected data');
+      expect(current.history.map(row => row.customData?.get('SyntheticPlugin')?.value)).toEqual(['Historical plugin metadata', 'Current plugin metadata']);
+      expect(current.history.map(row => row.qualityCheck)).toEqual([false, false]);
+    }
+  } finally { clearDatabase(exported); clearCredentials(nextKey); session.lock(); }
+});
+
 describe('product name compatibility', () => {
   it('uses KeepAny for new vaults and retains existing StackPerch names and encrypted records', async () => {
     const { session } = await created();
