@@ -1,0 +1,338 @@
+{
+  "candidate": "881a6383f0801f139e910df39a3dfb55c2fb47da",
+  "scope": "Actual compiled header controls, five widths, bilingual, no data or CSS injection.",
+  "checks": [
+    {
+      "lang": "zh-CN",
+      "width": 390,
+      "result": "passed",
+      "rects": [
+        {
+          "label": "立即锁定",
+          "rect": {
+            "x": 286,
+            "y": 77,
+            "width": 44,
+            "height": 44,
+            "top": 77,
+            "right": 330,
+            "bottom": 121,
+            "left": 286
+          }
+        },
+        {
+          "label": "账号选项",
+          "rect": {
+            "x": 334,
+            "y": 77,
+            "width": 44,
+            "height": 44,
+            "top": 77,
+            "right": 378,
+            "bottom": 121,
+            "left": 334
+          }
+        }
+      ]
+    },
+    {
+      "lang": "zh-CN",
+      "width": 768,
+      "result": "passed",
+      "rects": [
+        {
+          "label": "立即锁定",
+          "rect": {
+            "x": 654,
+            "y": 81,
+            "width": 44,
+            "height": 44,
+            "top": 81,
+            "right": 698,
+            "bottom": 125,
+            "left": 654
+          }
+        },
+        {
+          "label": "账号选项",
+          "rect": {
+            "x": 702,
+            "y": 81,
+            "width": 44,
+            "height": 44,
+            "top": 81,
+            "right": 746,
+            "bottom": 125,
+            "left": 702
+          }
+        }
+      ]
+    },
+    {
+      "lang": "zh-CN",
+      "width": 1280,
+      "result": "passed",
+      "rects": [
+        {
+          "label": "立即锁定",
+          "rect": {
+            "x": 1166,
+            "y": 81,
+            "width": 44,
+            "height": 44,
+            "top": 81,
+            "right": 1210,
+            "bottom": 125,
+            "left": 1166
+          }
+        },
+        {
+          "label": "账号选项",
+          "rect": {
+            "x": 1214,
+            "y": 81,
+            "width": 44,
+            "height": 44,
+            "top": 81,
+            "right": 1258,
+            "bottom": 125,
+            "left": 1214
+          }
+        }
+      ]
+    },
+    {
+      "lang": "zh-CN",
+      "width": 1920,
+      "result": "passed",
+      "rects": [
+        {
+          "label": "立即锁定",
+          "rect": {
+            "x": 1806,
+            "y": 81,
+            "width": 44,
+            "height": 44,
+            "top": 81,
+            "right": 1850,
+            "bottom": 125,
+            "left": 1806
+          }
+        },
+        {
+          "label": "账号选项",
+          "rect": {
+            "x": 1854,
+            "y": 81,
+            "width": 44,
+            "height": 44,
+            "top": 81,
+            "right": 1898,
+            "bottom": 125,
+            "left": 1854
+          }
+        }
+      ]
+    },
+    {
+      "lang": "zh-CN",
+      "width": 2262,
+      "result": "passed",
+      "rects": [
+        {
+          "label": "立即锁定",
+          "rect": {
+            "x": 2148,
+            "y": 81,
+            "width": 44,
+            "height": 44,
+            "top": 81,
+            "right": 2192,
+            "bottom": 125,
+            "left": 2148
+          }
+        },
+        {
+          "label": "账号选项",
+          "rect": {
+            "x": 2196,
+            "y": 81,
+            "width": 44,
+            "height": 44,
+            "top": 81,
+            "right": 2240,
+            "bottom": 125,
+            "left": 2196
+          }
+        }
+      ]
+    },
+    {
+      "lang": "en",
+      "width": 390,
+      "result": "passed",
+      "rects": [
+        {
+          "label": "Lock now",
+          "rect": {
+            "x": 286,
+            "y": 87.1875,
+            "width": 44,
+            "height": 44,
+            "top": 87.1875,
+            "right": 330,
+            "bottom": 131.1875,
+            "left": 286
+          }
+        },
+        {
+          "label": "Account options",
+          "rect": {
+            "x": 334,
+            "y": 87.1875,
+            "width": 44,
+            "height": 44,
+            "top": 87.1875,
+            "right": 378,
+            "bottom": 131.1875,
+            "left": 334
+          }
+        }
+      ]
+    },
+    {
+      "lang": "en",
+      "width": 768,
+      "result": "passed",
+      "rects": [
+        {
+          "label": "Lock now",
+          "rect": {
+            "x": 654,
+            "y": 81,
+            "width": 44,
+            "height": 44,
+            "top": 81,
+            "right": 698,
+            "bottom": 125,
+            "left": 654
+          }
+        },
+        {
+          "label": "Account options",
+          "rect": {
+            "x": 702,
+            "y": 81,
+            "width": 44,
+            "height": 44,
+            "top": 81,
+            "right": 746,
+            "bottom": 125,
+            "left": 702
+          }
+        }
+      ]
+    },
+    {
+      "lang": "en",
+      "width": 1280,
+      "result": "passed",
+      "rects": [
+        {
+          "label": "Lock now",
+          "rect": {
+            "x": 1166,
+            "y": 81,
+            "width": 44,
+            "height": 44,
+            "top": 81,
+            "right": 1210,
+            "bottom": 125,
+            "left": 1166
+          }
+        },
+        {
+          "label": "Account options",
+          "rect": {
+            "x": 1214,
+            "y": 81,
+            "width": 44,
+            "height": 44,
+            "top": 81,
+            "right": 1258,
+            "bottom": 125,
+            "left": 1214
+          }
+        }
+      ]
+    },
+    {
+      "lang": "en",
+      "width": 1920,
+      "result": "passed",
+      "rects": [
+        {
+          "label": "Lock now",
+          "rect": {
+            "x": 1806,
+            "y": 81,
+            "width": 44,
+            "height": 44,
+            "top": 81,
+            "right": 1850,
+            "bottom": 125,
+            "left": 1806
+          }
+        },
+        {
+          "label": "Account options",
+          "rect": {
+            "x": 1854,
+            "y": 81,
+            "width": 44,
+            "height": 44,
+            "top": 81,
+            "right": 1898,
+            "bottom": 125,
+            "left": 1854
+          }
+        }
+      ]
+    },
+    {
+      "lang": "en",
+      "width": 2262,
+      "result": "passed",
+      "rects": [
+        {
+          "label": "Lock now",
+          "rect": {
+            "x": 2148,
+            "y": 81,
+            "width": 44,
+            "height": 44,
+            "top": 81,
+            "right": 2192,
+            "bottom": 125,
+            "left": 2148
+          }
+        },
+        {
+          "label": "Account options",
+          "rect": {
+            "x": 2196,
+            "y": 81,
+            "width": 44,
+            "height": 44,
+            "top": 81,
+            "right": 2240,
+            "bottom": 125,
+            "left": 2196
+          }
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "verdict": "passed"
+}

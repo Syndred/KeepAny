@@ -1,0 +1,123 @@
+{
+  "scope": "Auxiliary read of own fictional context; all non-passwordVault stores, only booleans saved",
+  "containsPrivateSecret": false,
+  "containsPrivateIdentifier": false,
+  "containsPrivateNote": false,
+  "stores": [
+    {
+      "database": "keepany-files-v1",
+      "store": "archiveMerge",
+      "records": 0
+    },
+    {
+      "database": "keepany-files-v1",
+      "store": "blobs",
+      "records": 0
+    },
+    {
+      "database": "keepany-files-v1",
+      "store": "categoryEditJournal",
+      "records": 0
+    },
+    {
+      "database": "keepany-files-v1",
+      "store": "datasetBinding",
+      "records": 0
+    },
+    {
+      "database": "keepany-files-v1",
+      "store": "importJournal",
+      "records": 0
+    },
+    {
+      "database": "keepany-files-v1",
+      "store": "intakeReview",
+      "records": 0
+    },
+    {
+      "database": "keepany-files-v1",
+      "store": "journal",
+      "records": 0
+    },
+    {
+      "database": "keepany-files-v1",
+      "store": "pullJournal",
+      "records": 0
+    },
+    {
+      "database": "keepany-files-v1",
+      "store": "renewalJournal",
+      "records": 0
+    },
+    {
+      "database": "keepany-files-v1",
+      "store": "scopedAttachmentUploads",
+      "records": 0
+    },
+    {
+      "database": "keepany-files-v1",
+      "store": "scopedBase",
+      "records": 0
+    },
+    {
+      "database": "keepany-files-v1",
+      "store": "scopedMeta",
+      "records": 0
+    },
+    {
+      "database": "keepany-files-v1",
+      "store": "scopedOutbox",
+      "records": 0
+    },
+    {
+      "database": "keepany-files-v1",
+      "store": "scopedPull",
+      "records": 0
+    },
+    {
+      "database": "keepany-files-v1",
+      "store": "subscriptionSaveJournal",
+      "records": 0
+    },
+    {
+      "database": "keepany-files-v1",
+      "store": "syncBase",
+      "records": 0
+    },
+    {
+      "database": "keepany-files-v1",
+      "store": "syncMeta",
+      "records": 0
+    },
+    {
+      "database": "rxdb-dexie-keepany-v1--0--_rxdb_internal",
+      "store": "attachments",
+      "records": 0
+    },
+    {
+      "database": "rxdb-dexie-keepany-v1--0--_rxdb_internal",
+      "store": "changes",
+      "records": 0
+    },
+    {
+      "database": "rxdb-dexie-keepany-v1--0--_rxdb_internal",
+      "store": "docs",
+      "records": 2
+    },
+    {
+      "database": "rxdb-dexie-keepany-v1--0--records",
+      "store": "attachments",
+      "records": 0
+    },
+    {
+      "database": "rxdb-dexie-keepany-v1--0--records",
+      "store": "changes",
+      "records": 0
+    },
+    {
+      "database": "rxdb-dexie-keepany-v1--0--records",
+      "store": "docs",
+      "records": 2
+    }
+  ]
+}

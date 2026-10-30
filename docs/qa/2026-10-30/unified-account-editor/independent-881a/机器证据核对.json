@@ -1,0 +1,96 @@
+{
+  "candidate": "881a6383f0801f139e910df39a3dfb55c2fb47da",
+  "gateResult": {
+    "path": "C:\\Users\\Administrator\\.codex\\worktrees\\accounts-compact\\KeepAny\\test-results\\unified-editor-881a-gate\\result.json",
+    "sha256": "7cf23ffaea76216d6e879aacbe4666395b42d7ae43911b5d95b98a69dab467f6",
+    "completedTests": 30,
+    "retries": 0
+  },
+  "FC24defaultSerialCases": [
+    {
+      "path": "C:\\Users\\Administrator\\.codex\\worktrees\\accounts-compact\\KeepAny\\test-results\\unified-editor-881a-links\\evidence\\en-1280-720\\result.json",
+      "sha256": "8560aa2be1fd1a6307f996d15917732fefdeb0124b367b8bf6990df1763e8c4b",
+      "case": "en-1280-720",
+      "status": "passed"
+    },
+    {
+      "path": "C:\\Users\\Administrator\\.codex\\worktrees\\accounts-compact\\KeepAny\\test-results\\unified-editor-881a-links\\evidence\\en-1280-900\\result.json",
+      "sha256": "4f23b5f32ac6ff0b576d8bfc4d520136fe896aee0bd4e4f83ed27b91f8a0722b",
+      "case": "en-1280-900",
+      "status": "passed"
+    },
+    {
+      "path": "C:\\Users\\Administrator\\.codex\\worktrees\\accounts-compact\\KeepAny\\test-results\\unified-editor-881a-links\\evidence\\en-1920-900\\result.json",
+      "sha256": "04cc504fcd6bcf9c00e04fb38f2d83ce39c5ba28f57aa72a6dc5ef41be4dfcc8",
+      "case": "en-1920-900",
+      "status": "passed"
+    },
+    {
+      "path": "C:\\Users\\Administrator\\.codex\\worktrees\\accounts-compact\\KeepAny\\test-results\\unified-editor-881a-links\\evidence\\en-2560-900\\result.json",
+      "sha256": "cdb0659acdd910cc4d66475ace61b40f7e80e5706da137fa5cc7555656db9e9e",
+      "case": "en-2560-900",
+      "status": "passed"
+    },
+    {
+      "path": "C:\\Users\\Administrator\\.codex\\worktrees\\accounts-compact\\KeepAny\\test-results\\unified-editor-881a-links\\evidence\\en-390-900\\result.json",
+      "sha256": "55a35eadfa8e30425dd2e8c8d94baf0198f11250b6c8879bca61ca14f7efd375",
+      "case": "en-390-900",
+      "status": "passed"
+    },
+    {
+      "path": "C:\\Users\\Administrator\\.codex\\worktrees\\accounts-compact\\KeepAny\\test-results\\unified-editor-881a-links\\evidence\\en-563-900\\result.json",
+      "sha256": "fab6a5b98470fcbe177ea8937c576456e0b9b5b0090d213df27cea06cb5c59ba",
+      "case": "en-563-900",
+      "status": "passed"
+    },
+    {
+      "path": "C:\\Users\\Administrator\\.codex\\worktrees\\accounts-compact\\KeepAny\\test-results\\unified-editor-881a-links\\evidence\\en-768-900\\result.json",
+      "sha256": "ed0511c39ddeba30b87d01a3ef11c4d23adcb3570a7f779d8c4608684b2577bf",
+      "case": "en-768-900",
+      "status": "passed"
+    },
+    {
+      "path": "C:\\Users\\Administrator\\.codex\\worktrees\\accounts-compact\\KeepAny\\test-results\\unified-editor-881a-links\\evidence\\zh-CN-1280-720\\result.json",
+      "sha256": "c237a3f7a86f6293c04b437aaa1f37a995cc2a7ca6d3a5940f3cc28aa1cb3e14",
+      "case": "zh-CN-1280-720",
+      "status": "passed"
+    },
+    {
+      "path": "C:\\Users\\Administrator\\.codex\\worktrees\\accounts-compact\\KeepAny\\test-results\\unified-editor-881a-links\\evidence\\zh-CN-1280-900\\result.json",
+      "sha256": "ef94215554887e56ef2ca2f1363454d101b0a22c3d5f08a3cdbc9a1373af806a",
+      "case": "zh-CN-1280-900",
+      "status": "passed"
+    },
+    {
+      "path": "C:\\Users\\Administrator\\.codex\\worktrees\\accounts-compact\\KeepAny\\test-results\\unified-editor-881a-links\\evidence\\zh-CN-1920-900\\result.json",
+      "sha256": "2a0a3bea1f7c3436e164e16f3e04c0df815653311d6bcc1206d16c9c00917273",
+      "case": "zh-CN-1920-900",
+      "status": "passed"
+    },
+    {
+      "path": "C:\\Users\\Administrator\\.codex\\worktrees\\accounts-compact\\KeepAny\\test-results\\unified-editor-881a-links\\evidence\\zh-CN-2560-900\\result.json",
+      "sha256": "c14f1215bb1c0f4792598ef32ccf87871145dfe496f4d1b4f28d836b9871f190",
+      "case": "zh-CN-2560-900",
+      "status": "passed"
+    },
+    {
+      "path": "C:\\Users\\Administrator\\.codex\\worktrees\\accounts-compact\\KeepAny\\test-results\\unified-editor-881a-links\\evidence\\zh-CN-390-900\\result.json",
+      "sha256": "b667e9a46a34c5c7f49814550b72b35991c986f04387eb5bee88f866969fdcaa",
+      "case": "zh-CN-390-900",
+      "status": "passed"
+    },
+    {
+      "path": "C:\\Users\\Administrator\\.codex\\worktrees\\accounts-compact\\KeepAny\\test-results\\unified-editor-881a-links\\evidence\\zh-CN-563-900\\result.json",
+      "sha256": "6e1b26f33e2e547d0deb6d8fad8c9ec1e5cb99a75cce9093e2a58164938aa754",
+      "case": "zh-CN-563-900",
+      "status": "passed"
+    },
+    {
+      "path": "C:\\Users\\Administrator\\.codex\\worktrees\\accounts-compact\\KeepAny\\test-results\\unified-editor-881a-links\\evidence\\zh-CN-768-900\\result.json",
+      "sha256": "f7b56e1b76790c98a35146e8ee1697f4dda025b56850e8c9f2a411d49770d377",
+      "case": "zh-CN-768-900",
+      "status": "passed"
+    }
+  ],
+  "manualVisualSeparate": true
+}

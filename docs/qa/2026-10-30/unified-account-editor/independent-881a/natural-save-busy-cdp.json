@@ -1,0 +1,14 @@
+{
+  "candidate": "881a6383f0801f139e910df39a3dfb55c2fb47da",
+  "scope": "One bounded natural Save capture under declared CPU20 testing condition. No API delay, loading/DOM injection or actual user data.",
+  "beforeCapture": {
+    "disabled": true,
+    "time": 4472.4000000059605
+  },
+  "afterCapture": {
+    "disabled": true,
+    "time": 4965.300000011921
+  },
+  "operation": "completed",
+  "imageReview": "actual-open-passed: form inputs and Cancel/Save grey disabled, viewport capture; before/after disabled true"
+}
