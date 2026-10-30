@@ -1,0 +1,14 @@
+{
+  "sourceCommit": "03e186de181321cff5843e1ee194679acb81a0e3",
+  "origin": "http://127.0.0.1:4180",
+  "runtime": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\local-accounts-03e186",
+  "currentHTTPFilesVerified": 127,
+  "retainedFilesVerified": 3162,
+  "oldHashHTTPsample": [
+    "registerSW.js",
+    "workbox-2fbc6a65.js"
+  ],
+  "sourceDirty": false,
+  "userData": "Not read or modified; isolated controller browser only",
+  "rollback": "dist/local-accounts-fa357d unchanged"
+}

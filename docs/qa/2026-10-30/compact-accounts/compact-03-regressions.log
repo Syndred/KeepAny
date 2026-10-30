@@ -1,0 +1,27 @@
+
+[WebServer] (node:27004) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 12 tests using 2 workers
+
+
+(node:18224) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+(node:26384) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1/12] tests\e2e\account-unlink-focus.spec.ts:14:3 › zh-CN 390px filtered unlink preserves entries and visible continuation focus
+[2/12] tests\e2e\account-password-consolidation.spec.ts:29:2 › zh-CN 390 account and password features survive unified entry, locking and KDBX restore
+[3/12] tests\e2e\account-unlink-focus.spec.ts:14:3 › zh-CN 1280px filtered unlink preserves entries and visible continuation focus
+[4/12] tests\e2e\account-unlink-focus.spec.ts:14:3 › en 390px filtered unlink preserves entries and visible continuation focus
+[5/12] tests\e2e\account-password-consolidation.spec.ts:29:2 › zh-CN 1280 account and password features survive unified entry, locking and KDBX restore
+[6/12] tests\e2e\account-unlink-focus.spec.ts:14:3 › en 1280px filtered unlink preserves entries and visible continuation focus
+[7/12] tests\e2e\unified-workspaces-release.spec.ts:9:2 › zh-CN 390px built merged workspace preserves sample records, ledger and inline vault access
+[8/12] tests\e2e\account-password-consolidation.spec.ts:29:2 › en 390 account and password features survive unified entry, locking and KDBX restore
+[9/12] tests\e2e\unified-workspaces-release.spec.ts:9:2 › zh-CN 1280px built merged workspace preserves sample records, ledger and inline vault access
+[10/12] tests\e2e\unified-workspaces-release.spec.ts:9:2 › en-US 390px built merged workspace preserves sample records, ledger and inline vault access
+[11/12] tests\e2e\unified-workspaces-release.spec.ts:9:2 › en-US 1280px built merged workspace preserves sample records, ledger and inline vault access
+[12/12] tests\e2e\account-password-consolidation.spec.ts:29:2 › en 1280 account and password features survive unified entry, locking and KDBX restore
+  12 passed (1.5m)

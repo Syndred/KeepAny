@@ -1,0 +1,32 @@
+{
+  "field": {
+    "x": 33,
+    "y": 882.109375,
+    "width": 324,
+    "height": 41,
+    "bottom": 923.109375
+  },
+  "validity": false,
+  "validationMessage": "Enter a valid date (YYYY-MM-DD)",
+  "focused": true,
+  "hit": "<div class=\"actions password-vault-editor-actions\"><button type=\"button\" tabindex=\"0\" data-slot=\"button\" class=\"button inline-flex shrink-0 items-center justify-center gap-2 rounded-full border-2 font-semibold outline-offset-2 disabled:cursor-not-allowed disabled:opacity-60\">Cancel</button><button t",
+  "dialog": {
+    "x": 16,
+    "y": 75,
+    "width": 358,
+    "height": 850,
+    "bottom": 925
+  },
+  "footer": {
+    "x": 18,
+    "y": 854,
+    "width": 354,
+    "height": 69,
+    "bottom": 923
+  },
+  "viewport": {
+    "width": 390,
+    "height": 1000
+  },
+  "scroll": 736
+}
