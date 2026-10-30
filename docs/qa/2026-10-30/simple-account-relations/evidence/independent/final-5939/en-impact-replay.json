@@ -1,0 +1,264 @@
+{
+  "candidate": "593913756882e358a0f967c87b98b679304d6103",
+  "lang": "en",
+  "checks": [
+    {
+      "label": "Visible relation produces one checklist item; repeated generation disabled",
+      "result": "passed"
+    },
+    {
+      "label": "Bilingual target widths and original 1313 boundary: date stays within row/card",
+      "result": "passed"
+    },
+    {
+      "label": "Reschedule, complete, pending/completed filters and reopen preserve one item",
+      "result": "passed"
+    },
+    {
+      "label": "Same item and due date survive refresh/unlock; expanded layout remains bounded",
+      "result": "passed"
+    }
+  ],
+  "geometry": [
+    {
+      "width": 390,
+      "height": 1000,
+      "card": {
+        "x": 12,
+        "y": 330.59375,
+        "width": 366,
+        "height": 669.203125,
+        "top": 330.59375,
+        "right": 378,
+        "bottom": 999.796875,
+        "left": 12
+      },
+      "row": {
+        "x": 27,
+        "y": 617.289306640625,
+        "width": 336,
+        "height": 368.265625,
+        "top": 617.289306640625,
+        "right": 363,
+        "bottom": 985.554931640625,
+        "left": 27
+      },
+      "date": {
+        "x": 140,
+        "y": 894.554931640625,
+        "width": 158,
+        "height": 44,
+        "top": 894.554931640625,
+        "right": 298,
+        "bottom": 938.554931640625,
+        "left": 140
+      },
+      "scroll": 362,
+      "client": 362,
+      "pageScroll": 390
+    },
+    {
+      "width": 768,
+      "height": 1000,
+      "card": {
+        "x": 217,
+        "y": 286.59375,
+        "width": 529,
+        "height": 548.3125,
+        "top": 286.59375,
+        "right": 746,
+        "bottom": 834.90625,
+        "left": 217
+      },
+      "row": {
+        "x": 235,
+        "y": 557.53125,
+        "width": 493,
+        "height": 259.375,
+        "top": 557.53125,
+        "right": 728,
+        "bottom": 816.90625,
+        "left": 235
+      },
+      "date": {
+        "x": 300,
+        "y": 763.90625,
+        "width": 158,
+        "height": 40,
+        "top": 763.90625,
+        "right": 458,
+        "bottom": 803.90625,
+        "left": 300
+      },
+      "scroll": 525,
+      "client": 525,
+      "pageScroll": 768
+    },
+    {
+      "width": 1280,
+      "height": 1000,
+      "card": {
+        "x": 897.640625,
+        "y": 341,
+        "width": 360.359375,
+        "height": 637.203125,
+        "top": 341,
+        "right": 1258,
+        "bottom": 978.203125,
+        "left": 897.640625
+      },
+      "row": {
+        "x": 915.640625,
+        "y": 629.9375,
+        "width": 324.359375,
+        "height": 330.265625,
+        "top": 629.9375,
+        "right": 1240,
+        "bottom": 960.203125,
+        "left": 915.640625
+      },
+      "date": {
+        "x": 980.640625,
+        "y": 907.203125,
+        "width": 158,
+        "height": 40,
+        "top": 907.203125,
+        "right": 1138.640625,
+        "bottom": 947.203125,
+        "left": 980.640625
+      },
+      "scroll": 356,
+      "client": 356,
+      "pageScroll": 1280
+    },
+    {
+      "width": 1313,
+      "height": 1182,
+      "card": {
+        "x": 919.0625,
+        "y": 523,
+        "width": 371.9375,
+        "height": 637.203125,
+        "top": 523,
+        "right": 1291,
+        "bottom": 1160.203125,
+        "left": 919.0625
+      },
+      "row": {
+        "x": 937.0625,
+        "y": 811.9375,
+        "width": 335.9375,
+        "height": 330.265625,
+        "top": 811.9375,
+        "right": 1273,
+        "bottom": 1142.203125,
+        "left": 937.0625
+      },
+      "date": {
+        "x": 1002.0625,
+        "y": 1089.203125,
+        "width": 158,
+        "height": 40,
+        "top": 1089.203125,
+        "right": 1160.0625,
+        "bottom": 1129.203125,
+        "left": 1002.0625
+      },
+      "scroll": 368,
+      "client": 368,
+      "pageScroll": 1313
+    },
+    {
+      "width": 1920,
+      "height": 1000,
+      "card": {
+        "x": 1313.078125,
+        "y": 452,
+        "width": 584.921875,
+        "height": 548.3125,
+        "top": 452,
+        "right": 1898,
+        "bottom": 1000.3125,
+        "left": 1313.078125
+      },
+      "row": {
+        "x": 1331.078125,
+        "y": 722.9375,
+        "width": 548.921875,
+        "height": 259.375,
+        "top": 722.9375,
+        "right": 1880,
+        "bottom": 982.3125,
+        "left": 1331.078125
+      },
+      "date": {
+        "x": 1396.078125,
+        "y": 929.3125,
+        "width": 158,
+        "height": 40,
+        "top": 929.3125,
+        "right": 1554.078125,
+        "bottom": 969.3125,
+        "left": 1396.078125
+      },
+      "scroll": 581,
+      "client": 581,
+      "pageScroll": 1920
+    },
+    {
+      "width": 2262,
+      "height": 1000,
+      "card": {
+        "x": 1535.078125,
+        "y": 452,
+        "width": 704.921875,
+        "height": 528.015625,
+        "top": 452,
+        "right": 2240,
+        "bottom": 980.015625,
+        "left": 1535.078125
+      },
+      "row": {
+        "x": 1553.078125,
+        "y": 722.9375,
+        "width": 668.921875,
+        "height": 239.078125,
+        "top": 722.9375,
+        "right": 2222,
+        "bottom": 962.015625,
+        "left": 1553.078125
+      },
+      "date": {
+        "x": 1618.078125,
+        "y": 909.015625,
+        "width": 158,
+        "height": 40,
+        "top": 909.015625,
+        "right": 1776.078125,
+        "bottom": 949.015625,
+        "left": 1618.078125
+      },
+      "scroll": 701,
+      "client": 701,
+      "pageScroll": 2262
+    }
+  ],
+  "images": [
+    "en-populated-impact-390.png",
+    "en-populated-impact-768.png",
+    "en-populated-impact-1280.png",
+    "en-populated-impact-1313.png",
+    "en-populated-impact-1920.png",
+    "en-populated-impact-2262.png",
+    "en-completed-filter.png",
+    "en-refreshed-impact.png"
+  ],
+  "errors": [],
+  "archiveSha256": "2a0fb8f39af7e3fef4fed9af9298cad087a550949a5042480845a0f0819e4c21",
+  "identity": {
+    "files": 129,
+    "mismatch": [],
+    "sourceDirty": false
+  },
+  "verdict": "passed"
+}

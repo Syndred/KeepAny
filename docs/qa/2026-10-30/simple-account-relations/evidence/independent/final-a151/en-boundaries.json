@@ -1,0 +1,71 @@
+{
+  "candidate": "a1510e82f7aee66b14df2551dbdd4135c2f26a0f",
+  "lang": "en",
+  "scope": "Independent actual compiled UI in fictional isolated context. Node-only KA1/KDBX preparation and exported archive inspection are auxiliary.",
+  "checks": [
+    {
+      "label": "Single simplified editor core fields, aliases and notes saved",
+      "result": "passed"
+    },
+    {
+      "label": "Detail true clipboard and alias switch hides revealed password",
+      "result": "passed"
+    },
+    {
+      "label": "Prior boundary A→B editor→Back clears B draft",
+      "result": "passed"
+    },
+    {
+      "label": "Prior boundary relation dialog removed by lock, unlock does not revive",
+      "result": "passed"
+    },
+    {
+      "label": "Prior boundary task dialog removed by lock, unlock does not revive",
+      "result": "passed"
+    },
+    {
+      "label": "Prior boundary delete dialog removed by lock, unlock does not revive",
+      "result": "passed"
+    },
+    {
+      "label": "New compact task more menu opens one reminder dialog, cancel",
+      "result": "passed"
+    },
+    {
+      "label": "Relations, encrypted note and tasks survive refresh",
+      "result": "passed"
+    },
+    {
+      "label": "Prior boundary private editing/linking no category, no ordinary Asset and private virtual route durable",
+      "result": "passed"
+    },
+    {
+      "label": "Prior boundary >64Ki legacy ordinary+private notes save and reread as one field",
+      "result": "passed",
+      "data": {
+        "mergedLength": 70017
+      }
+    }
+  ],
+  "screenshots": [
+    "en-01-first-gate.png",
+    "en-02-back-discards-B-editor.png",
+    "en-03-relation-lock-cleared.png",
+    "en-03-task-lock-cleared.png",
+    "en-03-delete-lock-cleared.png",
+    "en-04-task-added.png",
+    "en-05-refresh-persistence.png",
+    "en-06-private-no-category.png",
+    "en-07-long-merged-note.png",
+    "en-FAILURE.png"
+  ],
+  "pageErrors": [],
+  "identity": {
+    "sourceCommit": "a1510e82f7aee66b14df2551dbdd4135c2f26a0f",
+    "dirty": false,
+    "files": 129,
+    "mismatch": []
+  },
+  "verdict": "failed",
+  "failure": "TypeError: Cannot read properties of undefined (reading 'id')\n    at C:\\Users\\Administrator\\.codex\\visualizations\\2026\\10\\30\\01a18a31-44a4-7f90-ad2e-781b2c50a4a0\\independent-simple-relations\\replay-boundaries.cjs:22:548\n    at Array.find (<anonymous>)\n    at main (C:\\Users\\Administrator\\.codex\\visualizations\\2026\\10\\30\\01a18a31-44a4-7f90-ad2e-781b2c50a4a0\\independent-simple-relations\\replay-boundaries.cjs:22:514)"
+}

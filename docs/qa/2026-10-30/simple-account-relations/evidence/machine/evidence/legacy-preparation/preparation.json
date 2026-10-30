@@ -1,0 +1,6 @@
+{
+  "kind": "node-synthetic-fixture-not-user-operation",
+  "storage": "fake-indexeddb",
+  "transport": "public-exportArchive-and-encryptBackup",
+  "consumption": "compiled-candidate-visible-KA1-restore"
+}

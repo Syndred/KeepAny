@@ -1,0 +1,21 @@
+{
+  "candidate": "1e1979ac9cbc",
+  "lang": "zh-CN",
+  "checks": [
+    {
+      "label": "Compact task edit cancel, reminder cancel/save, postpone, complete/reopen",
+      "result": "passed"
+    }
+  ],
+  "images": [
+    "zh-extra-01-title-hover.png",
+    "zh-extra-02-title-focus.png",
+    "zh-extra-03-title-pressed.png",
+    "zh-extra-04-reminder-cancel.png",
+    "zh-extra-05-compact-task-date.png",
+    "zh-extra-FAILURE.png"
+  ],
+  "errors": [],
+  "verdict": "failed",
+  "failure": "locator.click: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.sidebar nav').getByRole('link', { name: '待办', exact: true })\u001b[22m\n\n    at main (C:\\Users\\Administrator\\.codex\\visualizations\\2026\\10\\30\\01a18a31-44a4-7f90-ad2e-781b2c50a4a0\\independent-simple-relations\\final-1e19\\tasks-states.cjs:3:83)"
+}

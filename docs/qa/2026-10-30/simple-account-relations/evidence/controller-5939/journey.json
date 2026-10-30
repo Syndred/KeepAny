@@ -1,0 +1,37 @@
+{
+  "source": "593913756882e358a0f967c87b98b679304d6103",
+  "archive": "2a0fb8f39af7e3fef4fed9af9298cad087a550949a5042480845a0f0819e4c21",
+  "preparation": "Synthetic UI-created data copied between isolated test contexts; actions below use final compiled UI",
+  "journey": [
+    {
+      "label": "最终593从正常入口解锁与紧凑卡片",
+      "url": "http://127.0.0.1:4387/accounts",
+      "at": "2026-10-30T05:43:29.537Z",
+      "text": "账号\n\n5 条\n\n已解锁\n新增\n全部\n邮箱\n手机\n自媒体\n其他\n管理\n长名称邮箱 · 用于核对标题、分类和编辑按钮在不同屏幕上的排列 · Pinecone-work-account Pinecone-work-account Pinecone-work-account Pinecone-work-account\n0 个关联\n账号\nlong-identifier-with-extra-content@example.test\n密码\n••••••••••\n其他\n轻画设计工具\n1 个关联\n账号\ndesign@example.test\n密码\n••••••••••\n其他\n松果工作邮箱\n1 个关联\n账号\nhello@pinecone.example.test\n密码\n••••••••••\n其他\nCloudNest 云主机\n0 个关联\n账号\ncloud@example.test\n密码\n••••••••••\n其他\n私有导入验证\n0 个关联\n账号\nprivate-only@example.test\n密码\n••••••••••\n其他\n登录回收站\n移入回收站的条目仍可恢复。\n\n回收站为空。"
+    },
+    {
+      "label": "有变更待办右栏修后无溢出",
+      "url": "http://127.0.0.1:4387/assets/account/f5d9e239-a6ca-49c7-940c-3f94d1b24912#password-s8XL+J+7BGBPWI1/aAiTdw==",
+      "at": "2026-10-30T05:43:29.918Z",
+      "text": "返回账号\n账号 · 其他\n松果工作邮箱\n编辑\n关系图\n\n1 个直接关联 · 0 个间接关联\n\n添加关联\n直接关联\n完整关系\n查找关联\n读图说明\n\n正在打开资料…\n\n关联明细 · 1\n待办\n新增\n核对项目关联资料\n2027年1月20日\n完成记录: 2026/10/30 13:38:57\n登录信息\n账号\nhello@pinecone.example.test\n密码\n••••••••••\n登录网址\nmail.pinecone.example.test/\n备注\n\n工作邮箱统一备注，保存后重新进入仍能看到。\n\n变更影响检查\n变更影响\n\n按生成时的关联逐项核对，关联变更后请复核旧待办；完成只记录本机检查，不会更新第三方资料。\n\n生成检查待办 · 0\n全部 · 1\n待处理 · 1\n已完成 · 0\n检查关联 · 轻画设计工具\n关联资产: 轻画设计工具\n松果工作邮箱 → 轻画设计工具 · 登录邮箱\n关系来源: — · 最近核验: —\n生成于: 2026/10/30 13:40:08\n查看待办\n稍后提醒\n待处理"
+    },
+    {
+      "label": "右栏完成并按已完成筛选",
+      "url": "http://127.0.0.1:4387/assets/account/f5d9e239-a6ca-49c7-940c-3f94d1b24912#password-s8XL+J+7BGBPWI1/aAiTdw==",
+      "at": "2026-10-30T05:43:57.212Z",
+      "text": "返回账号\n账号 · 其他\n松果工作邮箱\n编辑\n关系图\n\n1 个直接关联 · 0 个间接关联\n\n添加关联\n直接关联\n完整关系\n查找关联\n读图说明\n轻画设计工具\ndesign@example.test\n当前资料\n松果工作邮箱\nhello@pinecone.example.test\nReact Flow\n关联明细 · 1\n待办\n新增\n核对项目关联资料\n2027年1月20日\n完成记录: 2026/10/30 13:38:57\n登录信息\n账号\nhello@pinecone.example.test\n密码\n••••••••••\n登录网址\nmail.pinecone.example.test/\n备注\n\n工作邮箱统一备注，保存后重新进入仍能看到。\n\n变更影响检查\n变更影响\n\n按生成时的关联逐项核对，关联变更后请复核旧待办；完成只记录本机检查，不会更新第三方资料。\n\n生成检查待办 · 0\n全部 · 1\n待处理 · 0\n已完成 · 1\n检查关联 · 轻画设计工具\n关联资产: 轻画设计工具\n松果工作邮箱 → 轻画设计工具 · 登录邮箱\n关系来源: — · 最近核验: —\n生成于: 2026/10/30 13:40:08\n完成记录: 2026/10/30 13:43:57\n查看待办\n稍后提醒\n已完成"
+    },
+    {
+      "label": "右栏重新打开并按待处理筛选",
+      "url": "http://127.0.0.1:4387/assets/account/f5d9e239-a6ca-49c7-940c-3f94d1b24912#password-s8XL+J+7BGBPWI1/aAiTdw==",
+      "at": "2026-10-30T05:43:57.397Z",
+      "text": "返回账号\n账号 · 其他\n松果工作邮箱\n编辑\n关系图\n\n1 个直接关联 · 0 个间接关联\n\n添加关联\n直接关联\n完整关系\n查找关联\n读图说明\n轻画设计工具\ndesign@example.test\n当前资料\n松果工作邮箱\nhello@pinecone.example.test\nReact Flow\n关联明细 · 1\n待办\n新增\n核对项目关联资料\n2027年1月20日\n完成记录: 2026/10/30 13:38:57\n登录信息\n账号\nhello@pinecone.example.test\n密码\n••••••••••\n登录网址\nmail.pinecone.example.test/\n备注\n\n工作邮箱统一备注，保存后重新进入仍能看到。\n\n变更影响检查\n变更影响\n\n按生成时的关联逐项核对，关联变更后请复核旧待办；完成只记录本机检查，不会更新第三方资料。\n\n生成检查待办 · 0\n全部 · 1\n待处理 · 1\n已完成 · 0\n检查关联 · 轻画设计工具\n关联资产: 轻画设计工具\n松果工作邮箱 → 轻画设计工具 · 登录邮箱\n关系来源: — · 最近核验: —\n生成于: 2026/10/30 13:40:08\n完成记录: 2026/10/30 13:43:57\n查看待办\n稍后提醒\n待处理"
+    },
+    {
+      "label": "最终593备注及右栏改期刷新回读",
+      "url": "http://127.0.0.1:4387/assets/account/f5d9e239-a6ca-49c7-940c-3f94d1b24912#password-s8XL+J+7BGBPWI1/aAiTdw==",
+      "at": "2026-10-30T05:43:59.893Z",
+      "text": "返回账号\n账号 · 其他\n松果工作邮箱\n编辑\n关系图\n\n1 个直接关联 · 0 个间接关联\n\n添加关联\n直接关联\n完整关系\n查找关联\n读图说明\n\n正在打开资料…\n\n关联明细 · 1\n待办\n新增\n核对项目关联资料\n2027年1月20日\n完成记录: 2026/10/30 13:38:57\n登录信息\n账号\nhello@pinecone.example.test\n密码\n••••••••••\n登录网址\nmail.pinecone.example.test/\n备注\n\n最终593保存的唯一备注。\n\n变更影响检查\n变更影响\n\n按生成时的关联逐项核对，关联变更后请复核旧待办；完成只记录本机检查，不会更新第三方资料。\n\n生成检查待办 · 0\n全部 · 1\n待处理 · 1\n已完成 · 0\n检查关联 · 轻画设计工具\n关联资产: 轻画设计工具\n松果工作邮箱 → 轻画设计工具 · 登录邮箱\n关系来源: — · 最近核验: —\n生成于: 2026/10/30 13:40:08\n完成记录: 2026/10/30 13:43:57\n查看待办\n稍后提醒\n待处理"
+    }
+  ]
+}

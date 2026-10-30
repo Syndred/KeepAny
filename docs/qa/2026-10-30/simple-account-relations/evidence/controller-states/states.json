@@ -1,0 +1,9 @@
+{
+  "source": "593913756882e358a0f967c87b98b679304d6103",
+  "kind": "Actual pointer held down before screenshot; UI-created synthetic storage fixture",
+  "states": [
+    "title hover/focus/pressed",
+    "detail edit hover/focus/pressed",
+    "task more hover/focus/pressed/expanded"
+  ]
+}

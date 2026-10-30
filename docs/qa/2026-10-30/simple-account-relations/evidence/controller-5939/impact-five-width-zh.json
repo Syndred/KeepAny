@@ -1,0 +1,30 @@
+{
+  "source": "593913756882e358a0f967c87b98b679304d6103",
+  "sizes": [
+    {
+      "width": 390,
+      "client": 362,
+      "scroll": 362
+    },
+    {
+      "width": 768,
+      "client": 525,
+      "scroll": 525
+    },
+    {
+      "width": 1280,
+      "client": 356,
+      "scroll": 356
+    },
+    {
+      "width": 1920,
+      "client": 581,
+      "scroll": 581
+    },
+    {
+      "width": 2262,
+      "client": 701,
+      "scroll": 701
+    }
+  ]
+}

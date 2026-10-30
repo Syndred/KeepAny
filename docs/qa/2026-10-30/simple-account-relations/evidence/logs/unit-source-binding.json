@@ -1,0 +1,38 @@
+{
+  "unitRun": "simple-boundaries-after.log",
+  "tests": 58,
+  "frozenOwningSource": "e85f8b58",
+  "candidate": "593913756882e358a0f967c87b98b679304d6103",
+  "blobs": [
+    {
+      "file": "packages/password-vault/src/engine.ts",
+      "tested": "ad2e25ec035c9d139498d0ae8e0f5008589d5985",
+      "final": "ad2e25ec035c9d139498d0ae8e0f5008589d5985"
+    },
+    {
+      "file": "packages/password-vault/src/index.ts",
+      "tested": "fa6a857c790bc4976d30ca0b19cc202b72a86dc0",
+      "final": "fa6a857c790bc4976d30ca0b19cc202b72a86dc0"
+    },
+    {
+      "file": "packages/password-vault/src/session.test.ts",
+      "tested": "950448b9b2921f6bbfcef8c9800cabc3188d3ea7",
+      "final": "950448b9b2921f6bbfcef8c9800cabc3188d3ea7"
+    },
+    {
+      "file": "apps/web/src/account-entry-edit.ts",
+      "tested": "51d94aa96b3ad3b0277a654fd2be84d9d9e113c6",
+      "final": "51d94aa96b3ad3b0277a654fd2be84d9d9e113c6"
+    },
+    {
+      "file": "apps/web/src/account-entry-edit.test.ts",
+      "tested": "f4eb5674cdc8dafcb81e60cd8f1b6bb0e46547ce",
+      "final": "f4eb5674cdc8dafcb81e60cd8f1b6bb0e46547ce"
+    }
+  ],
+  "finalAdditionalRun": {
+    "file": "save-switch-unit.log",
+    "tests": 11
+  },
+  "uniqueTests": 69
+}

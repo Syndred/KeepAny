@@ -1,0 +1,55 @@
+[WebServer] (node:22576) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 38 tests using 1 worker
+
+(node:25056) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok  1 tests\e2e\compact-accounts.spec.ts:61:2 › zh-CN CC10 restoring a deleted entry does not reopen stale login details (5.4s)
+  ok  2 tests\e2e\compact-accounts.spec.ts:78:2 › zh-CN CC03-CC10 compact copy, cyclic switch, lock, details and durable content (7.9s)
+  ok  3 tests\e2e\compact-accounts.spec.ts:139:2 › zh-CN CC09 clipboard failure stays explicit and stale failure is cancelled on query change (4.6s)
+  ok  4 tests\e2e\compact-accounts.spec.ts:164:2 › zh-CN CC05-CC09 query transition never restores a previously revealed password (4.7s)
+  ok  5 tests\e2e\compact-accounts.spec.ts:181:2 › zh-CN CC01-CC02-CC11 compiled visual geometry and supported widths (7.8s)
+  ok  6 tests\e2e\compact-accounts.spec.ts:61:2 › en CC10 restoring a deleted entry does not reopen stale login details (4.7s)
+  ok  7 tests\e2e\compact-accounts.spec.ts:78:2 › en CC03-CC10 compact copy, cyclic switch, lock, details and durable content (7.3s)
+  ok  8 tests\e2e\compact-accounts.spec.ts:139:2 › en CC09 clipboard failure stays explicit and stale failure is cancelled on query change (4.7s)
+  ok  9 tests\e2e\compact-accounts.spec.ts:164:2 › en CC05-CC09 query transition never restores a previously revealed password (4.4s)
+  ok 10 tests\e2e\compact-accounts.spec.ts:181:2 › en CC01-CC02-CC11 compiled visual geometry and supported widths (6.7s)
+-------------- RxDB Open Core RxStorage -------------------------------
+You are using the free Dexie.js based RxStorage implementation from RxDB https://rxdb.info/rx-storage-dexie.html?console=dexie 
+While this is a great option, we want to let you know that there are faster storage solutions available in our premium plugins.
+For professional users and production environments, we highly recommend considering these premium options to enhance performance and reliability.
+ https://rxdb.info/premium/?console=dexie 
+If you already purchased premium access you can disable this log by calling the setPremiumFlag() function from rxdb-premium/plugins/shared.
+---------------------------------------------------------------------
+  ok 11 tests\e2e\simple-account-relations.spec.ts:55:2 › zh-CN SR01-SR07 legacy notes combine once, retry safely and stay encrypted (8.9s)
+  ok 12 tests\e2e\simple-account-relations.spec.ts:73:2 › zh-CN SR01-SR04 simplified fields, title navigation and relation tasks survive refresh (13.6s)
+  ok 13 tests\e2e\simple-account-relations.spec.ts:112:2 › zh-CN SR02-SR03 supported widths retain compact cards and usable relation layouts (14.6s)
+  ok 14 tests\e2e\simple-account-relations.spec.ts:134:2 › zh-CN SR05-SR06 KDBX-only detail links remain encrypted and unlock does not duplicate status (13.1s)
+  ok 15 tests\e2e\simple-account-relations.spec.ts:55:2 › en SR01-SR07 legacy notes combine once, retry safely and stay encrypted (8.8s)
+  ok 16 tests\e2e\simple-account-relations.spec.ts:73:2 › en SR01-SR04 simplified fields, title navigation and relation tasks survive refresh (12.9s)
+  ok 17 tests\e2e\simple-account-relations.spec.ts:112:2 › en SR02-SR03 supported widths retain compact cards and usable relation layouts (12.0s)
+  ok 18 tests\e2e\simple-account-relations.spec.ts:134:2 › en SR05-SR06 KDBX-only detail links remain encrypted and unlock does not duplicate status (11.4s)
+  ok 19 tests\e2e\unified-account-editor.spec.ts:50:2 › zh-CN UE06b ordinary account deletion cancels, completes and restores without blocking (5.9s)
+  ok 20 tests\e2e\unified-account-editor.spec.ts:80:2 › zh-CN UE07 partial save and purge failures retain data and retry once (8.0s)
+  ok 21 tests\e2e\unified-account-editor.spec.ts:128:2 › zh-CN UE01-UE03 unified edit is direct, unique, cancellable and durable (5.6s)
+  ok 22 tests\e2e\unified-account-editor.spec.ts:133:2 › zh-CN UE04 edits the selected backup without overwriting the primary (4.6s)
+  ok 23 tests\e2e\unified-account-editor.spec.ts:136:2 › zh-CN UE06 deleting alias or entry keeps other logins and restores (5.9s)
+  ok 24 tests\e2e\unified-account-editor.spec.ts:139:2 › zh-CN UE05 external save locks and clears the entire private editor (6.3s)
+  ok 25 tests\e2e\unified-account-editor.spec.ts:142:2 › zh-CN UE07 validation is visible and correction saves once (3.8s)
+  ok 26 tests\e2e\unified-account-editor.spec.ts:145:2 › zh-CN UE08-UE09 imported logins share the same cards and retain encrypted backups (11.4s)
+  ok 27 tests\e2e\unified-account-editor.spec.ts:148:2 › zh-CN UE08b adding a private login does not publish an ordinary account (4.9s)
+  ok 28 tests\e2e\unified-account-editor.spec.ts:151:2 › zh-CN UE02-UE10 merged card, editor, menus and gate at supported widths (8.4s)
+  ok 29 tests\e2e\unified-account-editor.spec.ts:50:2 › en UE06b ordinary account deletion cancels, completes and restores without blocking (6.1s)
+  ok 30 tests\e2e\unified-account-editor.spec.ts:80:2 › en UE07 partial save and purge failures retain data and retry once (8.0s)
+  ok 31 tests\e2e\unified-account-editor.spec.ts:128:2 › en UE01-UE03 unified edit is direct, unique, cancellable and durable (5.5s)
+  ok 32 tests\e2e\unified-account-editor.spec.ts:133:2 › en UE04 edits the selected backup without overwriting the primary (4.6s)
+  ok 33 tests\e2e\unified-account-editor.spec.ts:136:2 › en UE06 deleting alias or entry keeps other logins and restores (6.0s)
+  ok 34 tests\e2e\unified-account-editor.spec.ts:139:2 › en UE05 external save locks and clears the entire private editor (6.0s)
+  ok 35 tests\e2e\unified-account-editor.spec.ts:142:2 › en UE07 validation is visible and correction saves once (3.6s)
+  ok 36 tests\e2e\unified-account-editor.spec.ts:145:2 › en UE08-UE09 imported logins share the same cards and retain encrypted backups (11.0s)
+  ok 37 tests\e2e\unified-account-editor.spec.ts:148:2 › en UE08b adding a private login does not publish an ordinary account (4.8s)
+  ok 38 tests\e2e\unified-account-editor.spec.ts:151:2 › en UE02-UE10 merged card, editor, menus and gate at supported widths (8.1s)
+
+  38 passed (4.8m)
+Account-entry machine checks passed for 1e1979ac9cbc70199b916f7e5929a70046721e72. Manual visual review, controller journey and independent review remain separate.

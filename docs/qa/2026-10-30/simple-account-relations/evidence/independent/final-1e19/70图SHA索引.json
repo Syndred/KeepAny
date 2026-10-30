@@ -1,0 +1,637 @@
+{
+  "candidate": "1e1979ac9cbc70199b916f7e5929a70046721e72",
+  "count": 70,
+  "method": "Each original PNG actually opened with view_image; file/hash checks alone were not treated as visual review.",
+  "images": [
+    {
+      "path": "C:/Users/Administrator/.codex/worktrees/accounts-compact/KeepAny/test-results/simple-final-1e19/evidence/simple-card-zh-CN-390.png",
+      "sha256": "d4f6b7f91d4ee9cbb38174e991f2a6e07cdffd0bf5c517ab7442e9bac6fd6a79",
+      "candidate": "1e1979ac9cbc70199b916f7e5929a70046721e72",
+      "state": "card",
+      "width": 390,
+      "height": 1000,
+      "actuallyOpened": true
+    },
+    {
+      "path": "C:/Users/Administrator/.codex/worktrees/accounts-compact/KeepAny/test-results/simple-final-1e19/evidence/simple-card-zh-CN-768.png",
+      "sha256": "1eea7cbc1cca7b37beefd5b30a51ad88cc578ecc97c7a3f43ca8c84855e9eeca",
+      "candidate": "1e1979ac9cbc70199b916f7e5929a70046721e72",
+      "state": "card",
+      "width": 768,
+      "height": 1004,
+      "actuallyOpened": true
+    },
+    {
+      "path": "C:/Users/Administrator/.codex/worktrees/accounts-compact/KeepAny/test-results/simple-final-1e19/evidence/simple-card-zh-CN-1280.png",
+      "sha256": "c04313642a047c6dd41a7fa232ab7891721d2481975be20937705657fa9301e9",
+      "candidate": "1e1979ac9cbc70199b916f7e5929a70046721e72",
+      "state": "card",
+      "width": 1280,
+      "height": 1004,
+      "actuallyOpened": true
+    },
+    {
+      "path": "C:/Users/Administrator/.codex/worktrees/accounts-compact/KeepAny/test-results/simple-final-1e19/evidence/simple-card-zh-CN-1920.png",
+      "sha256": "6c1efed330fbe0f92acf04d75a53887e38368fcf2004004d1031e950d653e32f",
+      "candidate": "1e1979ac9cbc70199b916f7e5929a70046721e72",
+      "state": "card",
+      "width": 1920,
+      "height": 1004,
+      "actuallyOpened": true
+    },
+    {
+      "path": "C:/Users/Administrator/.codex/worktrees/accounts-compact/KeepAny/test-results/simple-final-1e19/evidence/simple-card-zh-CN-2262.png",
+      "sha256": "d881e324f1fb71621f28aed13d3e9b0fe84a43b8c0baf0d7f8a6efed9c42ab26",
+      "candidate": "1e1979ac9cbc70199b916f7e5929a70046721e72",
+      "state": "card",
+      "width": 2262,
+      "height": 1004,
+      "actuallyOpened": true
+    },
+    {
+      "path": "C:/Users/Administrator/.codex/worktrees/accounts-compact/KeepAny/test-results/simple-final-1e19/evidence/simple-detail-zh-CN-390.png",
+      "sha256": "2917def8d56be8a1ede701b3922c46bcd4cc6a2b11b45d34e769d5ab8ebb6b85",
+      "candidate": "1e1979ac9cbc70199b916f7e5929a70046721e72",
+      "state": "detail",
+      "width": 390,
+      "height": 2051,
+      "actuallyOpened": true
+    },
+    {
+      "path": "C:/Users/Administrator/.codex/worktrees/accounts-compact/KeepAny/test-results/simple-final-1e19/evidence/simple-detail-zh-CN-768.png",
+      "sha256": "361a30cee8a0d7fb4b77cb1ac4aedca7b9b8f913277a2ba95a1a70ba8ecf1635",
+      "candidate": "1e1979ac9cbc70199b916f7e5929a70046721e72",
+      "state": "detail",
+      "width": 768,
+      "height": 1894,
+      "actuallyOpened": true
+    },
+    {
+      "path": "C:/Users/Administrator/.codex/worktrees/accounts-compact/KeepAny/test-results/simple-final-1e19/evidence/simple-detail-zh-CN-1280.png",
+      "sha256": "bfdd55f98be8866a7523eabdcdc309f049b39bdafb23cbd9998102679a190a0e",
+      "candidate": "1e1979ac9cbc70199b916f7e5929a70046721e72",
+      "state": "detail",
+      "width": 1280,
+      "height": 1080,
+      "actuallyOpened": true
+    },
+    {
+      "path": "C:/Users/Administrator/.codex/worktrees/accounts-compact/KeepAny/test-results/simple-final-1e19/evidence/simple-detail-zh-CN-1920.png",
+      "sha256": "f82c83a6b3960bf88831121e39fb980dc05cd212fdf9e7be891551d3e6abe77f",
+      "candidate": "1e1979ac9cbc70199b916f7e5929a70046721e72",
+      "state": "detail",
+      "width": 1920,
+      "height": 1079,
+      "actuallyOpened": true
+    },
+    {
+      "path": "C:/Users/Administrator/.codex/worktrees/accounts-compact/KeepAny/test-results/simple-final-1e19/evidence/simple-detail-zh-CN-2262.png",
+      "sha256": "c89492efe7b57dbcf7603414f8a916a67a0ad23097a552322c281de5a289a9fb",
+      "candidate": "1e1979ac9cbc70199b916f7e5929a70046721e72",
+      "state": "detail",
+      "width": 2262,
+      "height": 1079,
+      "actuallyOpened": true
+    },
+    {
+      "path": "C:/Users/Administrator/.codex/worktrees/accounts-compact/KeepAny/test-results/simple-final-1e19/evidence/simple-edit-zh-CN-390.png",
+      "sha256": "37df651addfae0f5dfcb9e88024bfa65067df23fbc59189f71c91b0cd761de7e",
+      "candidate": "1e1979ac9cbc70199b916f7e5929a70046721e72",
+      "state": "edit",
+      "width": 390,
+      "height": 2051,
+      "actuallyOpened": true
+    },
+    {
+      "path": "C:/Users/Administrator/.codex/worktrees/accounts-compact/KeepAny/test-results/simple-final-1e19/evidence/simple-edit-zh-CN-768.png",
+      "sha256": "76755f2beeb7dbcd7b3517632c653b1922a6ec547f781e3304baf2a70eb86657",
+      "candidate": "1e1979ac9cbc70199b916f7e5929a70046721e72",
+      "state": "edit",
+      "width": 768,
+      "height": 1894,
+      "actuallyOpened": true
+    },
+    {
+      "path": "C:/Users/Administrator/.codex/worktrees/accounts-compact/KeepAny/test-results/simple-final-1e19/evidence/simple-edit-zh-CN-1280.png",
+      "sha256": "2e1f6993efbf7881025bba4d4b169c6fcf57b2a4170a4696e5e975a7da85865b",
+      "candidate": "1e1979ac9cbc70199b916f7e5929a70046721e72",
+      "state": "edit",
+      "width": 1280,
+      "height": 1080,
+      "actuallyOpened": true
+    },
+    {
+      "path": "C:/Users/Administrator/.codex/worktrees/accounts-compact/KeepAny/test-results/simple-final-1e19/evidence/simple-edit-zh-CN-1920.png",
+      "sha256": "0e69c73d9db26fe03d9798c4fa2f8577981617797134d373c6b32e35c3893eab",
+      "candidate": "1e1979ac9cbc70199b916f7e5929a70046721e72",
+      "state": "edit",
+      "width": 1920,
+      "height": 1079,
+      "actuallyOpened": true
+    },
+    {
+      "path": "C:/Users/Administrator/.codex/worktrees/accounts-compact/KeepAny/test-results/simple-final-1e19/evidence/simple-edit-zh-CN-2262.png",
+      "sha256": "da81450781c3708cdafce14e6ee522132ed0d9644a4688ca5a249bcbd260d634",
+      "candidate": "1e1979ac9cbc70199b916f7e5929a70046721e72",
+      "state": "edit",
+      "width": 2262,
+      "height": 1079,
+      "actuallyOpened": true
+    },
+    {
+      "path": "C:/Users/Administrator/.codex/worktrees/accounts-compact/KeepAny/test-results/simple-final-1e19/evidence/simple-impact-zh-CN-390.png",
+      "sha256": "71b5e520a6ca38c8a56364a73a886fd4165d34b1ebd0f461b9ba52c43f1470da",
+      "candidate": "1e1979ac9cbc70199b916f7e5929a70046721e72",
+      "state": "impact (empty change-impact)",
+      "width": 390,
+      "height": 2311,
+      "actuallyOpened": true
+    },
+    {
+      "path": "C:/Users/Administrator/.codex/worktrees/accounts-compact/KeepAny/test-results/simple-final-1e19/evidence/simple-impact-zh-CN-768.png",
+      "sha256": "b82ba5c32c3bddb999a88eb9b3adef640a920ebdd7b74753ddea37010bd642f0",
+      "candidate": "1e1979ac9cbc70199b916f7e5929a70046721e72",
+      "state": "impact (empty change-impact)",
+      "width": 768,
+      "height": 2154,
+      "actuallyOpened": true
+    },
+    {
+      "path": "C:/Users/Administrator/.codex/worktrees/accounts-compact/KeepAny/test-results/simple-final-1e19/evidence/simple-impact-zh-CN-1280.png",
+      "sha256": "956825ca0a80022126e248e5c18822ffb92746690443f797597cc3b246d48fa0",
+      "candidate": "1e1979ac9cbc70199b916f7e5929a70046721e72",
+      "state": "impact (empty change-impact)",
+      "width": 1280,
+      "height": 1339,
+      "actuallyOpened": true
+    },
+    {
+      "path": "C:/Users/Administrator/.codex/worktrees/accounts-compact/KeepAny/test-results/simple-final-1e19/evidence/simple-impact-zh-CN-1920.png",
+      "sha256": "91d18e9dc8d2f872972efb4e510de5deeb2650f5645176f5e437affbd0f3378c",
+      "candidate": "1e1979ac9cbc70199b916f7e5929a70046721e72",
+      "state": "impact (empty change-impact)",
+      "width": 1920,
+      "height": 1240,
+      "actuallyOpened": true
+    },
+    {
+      "path": "C:/Users/Administrator/.codex/worktrees/accounts-compact/KeepAny/test-results/simple-final-1e19/evidence/simple-impact-zh-CN-2262.png",
+      "sha256": "39c0b0e229f86641e4f93145b4030f9bee1d1686df155ae9398f8952adfc8274",
+      "candidate": "1e1979ac9cbc70199b916f7e5929a70046721e72",
+      "state": "impact (empty change-impact)",
+      "width": 2262,
+      "height": 1184,
+      "actuallyOpened": true
+    },
+    {
+      "path": "C:/Users/Administrator/.codex/worktrees/accounts-compact/KeepAny/test-results/simple-final-1e19/evidence/simple-graph-zh-CN-390.png",
+      "sha256": "7ee0733813be4e50a7be2ae80da8033eebb3ae854daef74aee96d4771a440049",
+      "candidate": "1e1979ac9cbc70199b916f7e5929a70046721e72",
+      "state": "graph",
+      "width": 390,
+      "height": 1569,
+      "actuallyOpened": true
+    },
+    {
+      "path": "C:/Users/Administrator/.codex/worktrees/accounts-compact/KeepAny/test-results/simple-final-1e19/evidence/simple-graph-zh-CN-768.png",
+      "sha256": "fb243dbb5ab58ecfbbaf77f536d3ed8032564bc640d7e2581fe740f60181cd74",
+      "candidate": "1e1979ac9cbc70199b916f7e5929a70046721e72",
+      "state": "graph",
+      "width": 768,
+      "height": 1412,
+      "actuallyOpened": true
+    },
+    {
+      "path": "C:/Users/Administrator/.codex/worktrees/accounts-compact/KeepAny/test-results/simple-final-1e19/evidence/simple-graph-zh-CN-1280.png",
+      "sha256": "48f7023ff3277b5eaaeaf0473d3ae5a70e6ec951d9582a758692061d7782d9a8",
+      "candidate": "1e1979ac9cbc70199b916f7e5929a70046721e72",
+      "state": "graph",
+      "width": 1280,
+      "height": 1080,
+      "actuallyOpened": true
+    },
+    {
+      "path": "C:/Users/Administrator/.codex/worktrees/accounts-compact/KeepAny/test-results/simple-final-1e19/evidence/simple-graph-zh-CN-1920.png",
+      "sha256": "1d04e64f8979295a763b663e1eac91f4b8bae609b3724706bdd068f182c452dc",
+      "candidate": "1e1979ac9cbc70199b916f7e5929a70046721e72",
+      "state": "graph",
+      "width": 1920,
+      "height": 1004,
+      "actuallyOpened": true
+    },
+    {
+      "path": "C:/Users/Administrator/.codex/worktrees/accounts-compact/KeepAny/test-results/simple-final-1e19/evidence/simple-graph-zh-CN-2262.png",
+      "sha256": "1ff32f2559e9dc8f84721f6621d974809e3d9dbcbdebc6d492782857d0a48d97",
+      "candidate": "1e1979ac9cbc70199b916f7e5929a70046721e72",
+      "state": "graph",
+      "width": 2262,
+      "height": 1004,
+      "actuallyOpened": true
+    },
+    {
+      "path": "C:/Users/Administrator/.codex/worktrees/accounts-compact/KeepAny/test-results/simple-final-1e19/evidence/simple-task-zh-CN-390.png",
+      "sha256": "0f5b31f137a9dee295f86dd3b9248c58dd7d605351c31a09b539705cbd0e6ffd",
+      "candidate": "1e1979ac9cbc70199b916f7e5929a70046721e72",
+      "state": "task",
+      "width": 390,
+      "height": 2051,
+      "actuallyOpened": true
+    },
+    {
+      "path": "C:/Users/Administrator/.codex/worktrees/accounts-compact/KeepAny/test-results/simple-final-1e19/evidence/simple-task-zh-CN-768.png",
+      "sha256": "f683b2f9315d27632a066888a387749923d4e0577fe60b22520a7e9682fd2050",
+      "candidate": "1e1979ac9cbc70199b916f7e5929a70046721e72",
+      "state": "task",
+      "width": 768,
+      "height": 1894,
+      "actuallyOpened": true
+    },
+    {
+      "path": "C:/Users/Administrator/.codex/worktrees/accounts-compact/KeepAny/test-results/simple-final-1e19/evidence/simple-task-zh-CN-1280.png",
+      "sha256": "4a2f1d1bf8e9cae6937ff5f9e44f56b86d4d2500ff4d70daf1dd1888336f4240",
+      "candidate": "1e1979ac9cbc70199b916f7e5929a70046721e72",
+      "state": "task",
+      "width": 1280,
+      "height": 1080,
+      "actuallyOpened": true
+    },
+    {
+      "path": "C:/Users/Administrator/.codex/worktrees/accounts-compact/KeepAny/test-results/simple-final-1e19/evidence/simple-task-zh-CN-1920.png",
+      "sha256": "2dc8cf19dab21cef6029e0f9a25a0d139549aceac02658376ac7635815c71653",
+      "candidate": "1e1979ac9cbc70199b916f7e5929a70046721e72",
+      "state": "task",
+      "width": 1920,
+      "height": 1079,
+      "actuallyOpened": true
+    },
+    {
+      "path": "C:/Users/Administrator/.codex/worktrees/accounts-compact/KeepAny/test-results/simple-final-1e19/evidence/simple-task-zh-CN-2262.png",
+      "sha256": "66e4e98dd357480a55e5acd7afa6e542d33b6192b43797a3bf96891a6b4e12ae",
+      "candidate": "1e1979ac9cbc70199b916f7e5929a70046721e72",
+      "state": "task",
+      "width": 2262,
+      "height": 1079,
+      "actuallyOpened": true
+    },
+    {
+      "path": "C:/Users/Administrator/.codex/worktrees/accounts-compact/KeepAny/test-results/simple-final-1e19/evidence/simple-reminder-zh-CN-390.png",
+      "sha256": "5e11d3744d05f79300bf3f73a836641ead1c0d59a69398683de60bc7c4276c69",
+      "candidate": "1e1979ac9cbc70199b916f7e5929a70046721e72",
+      "state": "reminder",
+      "width": 390,
+      "height": 2051,
+      "actuallyOpened": true
+    },
+    {
+      "path": "C:/Users/Administrator/.codex/worktrees/accounts-compact/KeepAny/test-results/simple-final-1e19/evidence/simple-reminder-zh-CN-768.png",
+      "sha256": "fea2f65092c4e88ce112171edc88b7f0906d9485dadc3962bb79070599e87ec1",
+      "candidate": "1e1979ac9cbc70199b916f7e5929a70046721e72",
+      "state": "reminder",
+      "width": 768,
+      "height": 1894,
+      "actuallyOpened": true
+    },
+    {
+      "path": "C:/Users/Administrator/.codex/worktrees/accounts-compact/KeepAny/test-results/simple-final-1e19/evidence/simple-reminder-zh-CN-1280.png",
+      "sha256": "d23f0f993dbb8d6954e7258b82b14187a2171c8ef85b922e72cec4eb7c8cde4e",
+      "candidate": "1e1979ac9cbc70199b916f7e5929a70046721e72",
+      "state": "reminder",
+      "width": 1280,
+      "height": 1080,
+      "actuallyOpened": true
+    },
+    {
+      "path": "C:/Users/Administrator/.codex/worktrees/accounts-compact/KeepAny/test-results/simple-final-1e19/evidence/simple-reminder-zh-CN-1920.png",
+      "sha256": "b7ced149c218f55de9e58d68a899b0f7009e1055ca25e90124b3a6cdd943b9ee",
+      "candidate": "1e1979ac9cbc70199b916f7e5929a70046721e72",
+      "state": "reminder",
+      "width": 1920,
+      "height": 1079,
+      "actuallyOpened": true
+    },
+    {
+      "path": "C:/Users/Administrator/.codex/worktrees/accounts-compact/KeepAny/test-results/simple-final-1e19/evidence/simple-reminder-zh-CN-2262.png",
+      "sha256": "27a55d98c66f8061454a4c396ac1b28023dc3b4cde381e4b76a55e418a9786b9",
+      "candidate": "1e1979ac9cbc70199b916f7e5929a70046721e72",
+      "state": "reminder",
+      "width": 2262,
+      "height": 1079,
+      "actuallyOpened": true
+    },
+    {
+      "path": "C:/Users/Administrator/.codex/worktrees/accounts-compact/KeepAny/test-results/simple-final-1e19/evidence/simple-card-en-390.png",
+      "sha256": "06baddc9d1746f90c3e08d80b41d2340a972549b9ac6d38bf94df168acae3f67",
+      "candidate": "1e1979ac9cbc70199b916f7e5929a70046721e72",
+      "state": "card",
+      "width": 390,
+      "height": 1000,
+      "actuallyOpened": true
+    },
+    {
+      "path": "C:/Users/Administrator/.codex/worktrees/accounts-compact/KeepAny/test-results/simple-final-1e19/evidence/simple-card-en-768.png",
+      "sha256": "30ebefbac4e4d6cd985290a0effbaf137af938bcbfe7161148837b807ebd8957",
+      "candidate": "1e1979ac9cbc70199b916f7e5929a70046721e72",
+      "state": "card",
+      "width": 768,
+      "height": 1004,
+      "actuallyOpened": true
+    },
+    {
+      "path": "C:/Users/Administrator/.codex/worktrees/accounts-compact/KeepAny/test-results/simple-final-1e19/evidence/simple-card-en-1280.png",
+      "sha256": "f23c223e4ba6e47229e783ebc96f8f7ebe1a8611d8dd0f7ae9523f99a3e1170d",
+      "candidate": "1e1979ac9cbc70199b916f7e5929a70046721e72",
+      "state": "card",
+      "width": 1280,
+      "height": 1004,
+      "actuallyOpened": true
+    },
+    {
+      "path": "C:/Users/Administrator/.codex/worktrees/accounts-compact/KeepAny/test-results/simple-final-1e19/evidence/simple-card-en-1920.png",
+      "sha256": "58bb0192040e2f5727e75ce38760fd89e356f402edbd0d4e333885ba872024e3",
+      "candidate": "1e1979ac9cbc70199b916f7e5929a70046721e72",
+      "state": "card",
+      "width": 1920,
+      "height": 1004,
+      "actuallyOpened": true
+    },
+    {
+      "path": "C:/Users/Administrator/.codex/worktrees/accounts-compact/KeepAny/test-results/simple-final-1e19/evidence/simple-card-en-2262.png",
+      "sha256": "9f9862772f94a2e59197fdd505a4808c28e90ed401d0221be733868d933df5d5",
+      "candidate": "1e1979ac9cbc70199b916f7e5929a70046721e72",
+      "state": "card",
+      "width": 2262,
+      "height": 1004,
+      "actuallyOpened": true
+    },
+    {
+      "path": "C:/Users/Administrator/.codex/worktrees/accounts-compact/KeepAny/test-results/simple-final-1e19/evidence/simple-detail-en-390.png",
+      "sha256": "9601d0da0815fd48c447eea5aed0a5439a2ad566c00e52898e5be3c6968f7c36",
+      "candidate": "1e1979ac9cbc70199b916f7e5929a70046721e72",
+      "state": "detail",
+      "width": 390,
+      "height": 2051,
+      "actuallyOpened": true
+    },
+    {
+      "path": "C:/Users/Administrator/.codex/worktrees/accounts-compact/KeepAny/test-results/simple-final-1e19/evidence/simple-detail-en-768.png",
+      "sha256": "c7a7637ba0f2e46c9693eef10e98f8f0e734d43ffe1be916e4910f5e2e9986e5",
+      "candidate": "1e1979ac9cbc70199b916f7e5929a70046721e72",
+      "state": "detail",
+      "width": 768,
+      "height": 1894,
+      "actuallyOpened": true
+    },
+    {
+      "path": "C:/Users/Administrator/.codex/worktrees/accounts-compact/KeepAny/test-results/simple-final-1e19/evidence/simple-detail-en-1280.png",
+      "sha256": "ba59ddc1189d7f8da6b61fed58c4da697614b18e76f19a2512a06da7231c7f91",
+      "candidate": "1e1979ac9cbc70199b916f7e5929a70046721e72",
+      "state": "detail",
+      "width": 1280,
+      "height": 1080,
+      "actuallyOpened": true
+    },
+    {
+      "path": "C:/Users/Administrator/.codex/worktrees/accounts-compact/KeepAny/test-results/simple-final-1e19/evidence/simple-detail-en-1920.png",
+      "sha256": "0512461a8b60e1e24b3fe8b681dde165702a67bbc660d43dc830082d188d9b0f",
+      "candidate": "1e1979ac9cbc70199b916f7e5929a70046721e72",
+      "state": "detail",
+      "width": 1920,
+      "height": 1079,
+      "actuallyOpened": true
+    },
+    {
+      "path": "C:/Users/Administrator/.codex/worktrees/accounts-compact/KeepAny/test-results/simple-final-1e19/evidence/simple-detail-en-2262.png",
+      "sha256": "9481da2ca2a612740d5540ee20141e068b697bc625a4d0729eb13612387b3148",
+      "candidate": "1e1979ac9cbc70199b916f7e5929a70046721e72",
+      "state": "detail",
+      "width": 2262,
+      "height": 1079,
+      "actuallyOpened": true
+    },
+    {
+      "path": "C:/Users/Administrator/.codex/worktrees/accounts-compact/KeepAny/test-results/simple-final-1e19/evidence/simple-edit-en-390.png",
+      "sha256": "fb1eb50d95277185c73b586f95164d2bc297ac0c13630636d865820875fe407f",
+      "candidate": "1e1979ac9cbc70199b916f7e5929a70046721e72",
+      "state": "edit",
+      "width": 390,
+      "height": 2051,
+      "actuallyOpened": true
+    },
+    {
+      "path": "C:/Users/Administrator/.codex/worktrees/accounts-compact/KeepAny/test-results/simple-final-1e19/evidence/simple-edit-en-768.png",
+      "sha256": "8b86ea784fc5b691adde596909f58b6d33af4064228a958d82d6db88d7e3c2ab",
+      "candidate": "1e1979ac9cbc70199b916f7e5929a70046721e72",
+      "state": "edit",
+      "width": 768,
+      "height": 1894,
+      "actuallyOpened": true
+    },
+    {
+      "path": "C:/Users/Administrator/.codex/worktrees/accounts-compact/KeepAny/test-results/simple-final-1e19/evidence/simple-edit-en-1280.png",
+      "sha256": "4dbeb085ced6c3410ac3cfaee7bed529d606bac5ba9b14427eb28006cea1fe75",
+      "candidate": "1e1979ac9cbc70199b916f7e5929a70046721e72",
+      "state": "edit",
+      "width": 1280,
+      "height": 1080,
+      "actuallyOpened": true
+    },
+    {
+      "path": "C:/Users/Administrator/.codex/worktrees/accounts-compact/KeepAny/test-results/simple-final-1e19/evidence/simple-edit-en-1920.png",
+      "sha256": "d9eac93c407d75dff3cb6ead76cb87db47a0172542d18cb58b6648f8526cc9bb",
+      "candidate": "1e1979ac9cbc70199b916f7e5929a70046721e72",
+      "state": "edit",
+      "width": 1920,
+      "height": 1079,
+      "actuallyOpened": true
+    },
+    {
+      "path": "C:/Users/Administrator/.codex/worktrees/accounts-compact/KeepAny/test-results/simple-final-1e19/evidence/simple-edit-en-2262.png",
+      "sha256": "efcdece13abf81c7f69e8f74225feaddcd1dcac9c5e25b2a6528cc27b3790156",
+      "candidate": "1e1979ac9cbc70199b916f7e5929a70046721e72",
+      "state": "edit",
+      "width": 2262,
+      "height": 1079,
+      "actuallyOpened": true
+    },
+    {
+      "path": "C:/Users/Administrator/.codex/worktrees/accounts-compact/KeepAny/test-results/simple-final-1e19/evidence/simple-impact-en-390.png",
+      "sha256": "09a138de94e3416b794e4cbc8e6ec3e8f17fc71e99f62874b64f192295b83db0",
+      "candidate": "1e1979ac9cbc70199b916f7e5929a70046721e72",
+      "state": "impact (empty change-impact)",
+      "width": 390,
+      "height": 2329,
+      "actuallyOpened": true
+    },
+    {
+      "path": "C:/Users/Administrator/.codex/worktrees/accounts-compact/KeepAny/test-results/simple-final-1e19/evidence/simple-impact-en-768.png",
+      "sha256": "d1893ee7cdeafc238c35ef7321e9c9a5b2c442631a81217dd408c4a45ebff8cc",
+      "candidate": "1e1979ac9cbc70199b916f7e5929a70046721e72",
+      "state": "impact (empty change-impact)",
+      "width": 768,
+      "height": 2154,
+      "actuallyOpened": true
+    },
+    {
+      "path": "C:/Users/Administrator/.codex/worktrees/accounts-compact/KeepAny/test-results/simple-final-1e19/evidence/simple-impact-en-1280.png",
+      "sha256": "77aa137bb6698bb8c4c6874122ea86cf8989966e53101fbc353871179d70fa2b",
+      "candidate": "1e1979ac9cbc70199b916f7e5929a70046721e72",
+      "state": "impact (empty change-impact)",
+      "width": 1280,
+      "height": 1357,
+      "actuallyOpened": true
+    },
+    {
+      "path": "C:/Users/Administrator/.codex/worktrees/accounts-compact/KeepAny/test-results/simple-final-1e19/evidence/simple-impact-en-1920.png",
+      "sha256": "f5da543def1da07aecb7e0b6b1e059b21900718c6a2d7655b934a192748b7ee6",
+      "candidate": "1e1979ac9cbc70199b916f7e5929a70046721e72",
+      "state": "impact (empty change-impact)",
+      "width": 1920,
+      "height": 1258,
+      "actuallyOpened": true
+    },
+    {
+      "path": "C:/Users/Administrator/.codex/worktrees/accounts-compact/KeepAny/test-results/simple-final-1e19/evidence/simple-impact-en-2262.png",
+      "sha256": "cdb0035511e7a05255c09e9e56e7245189f8db21a4d03c76fe0cec5c561257f6",
+      "candidate": "1e1979ac9cbc70199b916f7e5929a70046721e72",
+      "state": "impact (empty change-impact)",
+      "width": 2262,
+      "height": 1258,
+      "actuallyOpened": true
+    },
+    {
+      "path": "C:/Users/Administrator/.codex/worktrees/accounts-compact/KeepAny/test-results/simple-final-1e19/evidence/simple-graph-en-390.png",
+      "sha256": "d09828217a5ccedcbd9919ce62f039301e9bc037a46a6a05e7cf32ed4ed1ec72",
+      "candidate": "1e1979ac9cbc70199b916f7e5929a70046721e72",
+      "state": "graph",
+      "width": 390,
+      "height": 1569,
+      "actuallyOpened": true
+    },
+    {
+      "path": "C:/Users/Administrator/.codex/worktrees/accounts-compact/KeepAny/test-results/simple-final-1e19/evidence/simple-graph-en-768.png",
+      "sha256": "af2bfa1a5509bf5c6d03ae24b427bd380fcb286d2090dc6e260d960fef19c4a2",
+      "candidate": "1e1979ac9cbc70199b916f7e5929a70046721e72",
+      "state": "graph",
+      "width": 768,
+      "height": 1412,
+      "actuallyOpened": true
+    },
+    {
+      "path": "C:/Users/Administrator/.codex/worktrees/accounts-compact/KeepAny/test-results/simple-final-1e19/evidence/simple-graph-en-1280.png",
+      "sha256": "ad30f511ff25102c288da5bccb1ba2ea7672ba8d082a89480f1b7ad8ea0a8016",
+      "candidate": "1e1979ac9cbc70199b916f7e5929a70046721e72",
+      "state": "graph",
+      "width": 1280,
+      "height": 1080,
+      "actuallyOpened": true
+    },
+    {
+      "path": "C:/Users/Administrator/.codex/worktrees/accounts-compact/KeepAny/test-results/simple-final-1e19/evidence/simple-graph-en-1920.png",
+      "sha256": "ea4c8e6cb491f45398fd05653eccaff90fed47e0ffd0cbad49b2f9666bfce437",
+      "candidate": "1e1979ac9cbc70199b916f7e5929a70046721e72",
+      "state": "graph",
+      "width": 1920,
+      "height": 1004,
+      "actuallyOpened": true
+    },
+    {
+      "path": "C:/Users/Administrator/.codex/worktrees/accounts-compact/KeepAny/test-results/simple-final-1e19/evidence/simple-graph-en-2262.png",
+      "sha256": "2c64d661f8d6d493bd641aa7d0452abb4665248a36c97c3b2c84ab275e70609c",
+      "candidate": "1e1979ac9cbc70199b916f7e5929a70046721e72",
+      "state": "graph",
+      "width": 2262,
+      "height": 1004,
+      "actuallyOpened": true
+    },
+    {
+      "path": "C:/Users/Administrator/.codex/worktrees/accounts-compact/KeepAny/test-results/simple-final-1e19/evidence/simple-task-en-390.png",
+      "sha256": "47f71f0b31a905febd5214ddfcb9461c32c25ceebaf45f3a4be2c3a1ed9a4d17",
+      "candidate": "1e1979ac9cbc70199b916f7e5929a70046721e72",
+      "state": "task",
+      "width": 390,
+      "height": 2051,
+      "actuallyOpened": true
+    },
+    {
+      "path": "C:/Users/Administrator/.codex/worktrees/accounts-compact/KeepAny/test-results/simple-final-1e19/evidence/simple-task-en-768.png",
+      "sha256": "04d6e06f23a22fb3205cef32fd129b5e0a86192340a4a2bb4a2b7e1b65b26bf0",
+      "candidate": "1e1979ac9cbc70199b916f7e5929a70046721e72",
+      "state": "task",
+      "width": 768,
+      "height": 1894,
+      "actuallyOpened": true
+    },
+    {
+      "path": "C:/Users/Administrator/.codex/worktrees/accounts-compact/KeepAny/test-results/simple-final-1e19/evidence/simple-task-en-1280.png",
+      "sha256": "b03e496416ca7a3218c1afeb9f8a780477c90cc68785f5bd51ba869dbd030a71",
+      "candidate": "1e1979ac9cbc70199b916f7e5929a70046721e72",
+      "state": "task",
+      "width": 1280,
+      "height": 1080,
+      "actuallyOpened": true
+    },
+    {
+      "path": "C:/Users/Administrator/.codex/worktrees/accounts-compact/KeepAny/test-results/simple-final-1e19/evidence/simple-task-en-1920.png",
+      "sha256": "6f12f7ce7e98af02d9e4e0dddc052fc747e556f5ceb021d45915a7c29e4f5569",
+      "candidate": "1e1979ac9cbc70199b916f7e5929a70046721e72",
+      "state": "task",
+      "width": 1920,
+      "height": 1079,
+      "actuallyOpened": true
+    },
+    {
+      "path": "C:/Users/Administrator/.codex/worktrees/accounts-compact/KeepAny/test-results/simple-final-1e19/evidence/simple-task-en-2262.png",
+      "sha256": "6547c083ae6dfb935c377d7768c69963c884d02945cc79845f067ccfbbca8eda",
+      "candidate": "1e1979ac9cbc70199b916f7e5929a70046721e72",
+      "state": "task",
+      "width": 2262,
+      "height": 1079,
+      "actuallyOpened": true
+    },
+    {
+      "path": "C:/Users/Administrator/.codex/worktrees/accounts-compact/KeepAny/test-results/simple-final-1e19/evidence/simple-reminder-en-390.png",
+      "sha256": "e718c1059dbab704a162d49baf51bdb28e99b959c54564b5692bb6b2966af3b2",
+      "candidate": "1e1979ac9cbc70199b916f7e5929a70046721e72",
+      "state": "reminder",
+      "width": 390,
+      "height": 2051,
+      "actuallyOpened": true
+    },
+    {
+      "path": "C:/Users/Administrator/.codex/worktrees/accounts-compact/KeepAny/test-results/simple-final-1e19/evidence/simple-reminder-en-768.png",
+      "sha256": "b4eedba420a81a62b0b54fb7e70f68a4447fc06f2b5449a2567d691e6b4b18f0",
+      "candidate": "1e1979ac9cbc70199b916f7e5929a70046721e72",
+      "state": "reminder",
+      "width": 768,
+      "height": 1894,
+      "actuallyOpened": true
+    },
+    {
+      "path": "C:/Users/Administrator/.codex/worktrees/accounts-compact/KeepAny/test-results/simple-final-1e19/evidence/simple-reminder-en-1280.png",
+      "sha256": "b7216e8b1363ddf1a1eed1903910f375cf5c4e2f7b0ac9d19e27218ca3f86761",
+      "candidate": "1e1979ac9cbc70199b916f7e5929a70046721e72",
+      "state": "reminder",
+      "width": 1280,
+      "height": 1080,
+      "actuallyOpened": true
+    },
+    {
+      "path": "C:/Users/Administrator/.codex/worktrees/accounts-compact/KeepAny/test-results/simple-final-1e19/evidence/simple-reminder-en-1920.png",
+      "sha256": "da5a01ebc49dc6c89d44e855dc0604b28af7683613590af24e3754e5a8876da8",
+      "candidate": "1e1979ac9cbc70199b916f7e5929a70046721e72",
+      "state": "reminder",
+      "width": 1920,
+      "height": 1079,
+      "actuallyOpened": true
+    },
+    {
+      "path": "C:/Users/Administrator/.codex/worktrees/accounts-compact/KeepAny/test-results/simple-final-1e19/evidence/simple-reminder-en-2262.png",
+      "sha256": "1fbd46b1580f9f4d3e61e2f5f34e44dab0c5805b4dfca49e7477e9c0777ad95e",
+      "candidate": "1e1979ac9cbc70199b916f7e5929a70046721e72",
+      "state": "reminder",
+      "width": 2262,
+      "height": 1079,
+      "actuallyOpened": true
+    }
+  ]
+}

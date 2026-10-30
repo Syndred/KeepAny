@@ -1,0 +1,32 @@
+{
+  "candidate": "593913756882e358a0f967c87b98b679304d6103",
+  "archiveSha256": "2a0fb8f39af7e3fef4fed9af9298cad087a550949a5042480845a0f0819e4c21",
+  "function": "passed-defined-scope",
+  "whitebox": "passed-defined-scope",
+  "visual": "passed-defined-scope",
+  "independent": "passed-defined-scope",
+  "controller": "separate-owner-evidence",
+  "finalOwnImages": 16,
+  "inheritedActuallyOpenedImages": 92,
+  "automaticReceipt": {
+    "candidate": "593913756882e358a0f967c87b98b679304d6103",
+    "testHarnessCommit": "85dea639f0a83a6bd107d1017e797b7e70b88044",
+    "archiveSha256": "2a0fb8f39af7e3fef4fed9af9298cad087a550949a5042480845a0f0819e4c21",
+    "verdict": "automated-pass",
+    "expected": 38,
+    "completed": 38,
+    "retries": 0,
+    "imageHashCount": 194,
+    "mismatches": [],
+    "note": "Automatic receipt checks are distinct from independent actual UI and visual review. Original simple-final-5939 incomplete result preserved."
+  },
+  "unresolvedProductFindings": [],
+  "limits": [
+    "Windows Chromium",
+    "zh-CN/en",
+    "No real user secrets",
+    "No native/cloud/full-release claim"
+  ],
+  "rawFailuresPreserved": true,
+  "browsersClosed": true
+}

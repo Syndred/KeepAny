@@ -1,0 +1,15 @@
+{
+  "candidate": "690ceca4c0337a330179dc0bc230147b88bfa2f4",
+  "scope": "Independent actual compiled UI with isolated fictional data; Node KDBX fixture preparation and ordinary-store observation are auxiliary.",
+  "checks": [],
+  "identity": {
+    "sourceCommit": "690ceca4c0337a330179dc0bc230147b88bfa2f4",
+    "sourceDirty": false,
+    "servedFileCount": 129,
+    "mismatches": []
+  },
+  "categoryVisible": 1,
+  "ordinaryCardsAfterCategorySave": 1,
+  "privateCardsAfterCategorySave": 0,
+  "verdict": "failed-private-category-visible"
+}

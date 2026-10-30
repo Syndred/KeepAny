@@ -1,0 +1,407 @@
+[WebServer] (node:7072) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 36 tests using 1 worker
+
+(node:22196) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok  1 tests\e2e\compact-accounts.spec.ts:61:2 › zh-CN CC10 restoring a deleted entry does not reopen stale login details (5.0s)
+  x   2 tests\e2e\compact-accounts.spec.ts:78:2 › zh-CN CC03-CC10 compact copy, cyclic switch, lock, details and durable content (6.8s)
+(node:35424) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok  3 tests\e2e\compact-accounts.spec.ts:139:2 › zh-CN CC09 clipboard failure stays explicit and stale failure is cancelled on query change (4.5s)
+  ok  4 tests\e2e\compact-accounts.spec.ts:164:2 › zh-CN CC05-CC09 query transition never restores a previously revealed password (4.1s)
+  x   5 tests\e2e\compact-accounts.spec.ts:181:2 › zh-CN CC01-CC02-CC11 compiled visual geometry and supported widths (6.3s)
+(node:35536) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok  6 tests\e2e\compact-accounts.spec.ts:61:2 › en CC10 restoring a deleted entry does not reopen stale login details (4.5s)
+  x   7 tests\e2e\compact-accounts.spec.ts:78:2 › en CC03-CC10 compact copy, cyclic switch, lock, details and durable content (6.2s)
+(node:35256) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok  8 tests\e2e\compact-accounts.spec.ts:139:2 › en CC09 clipboard failure stays explicit and stale failure is cancelled on query change (4.1s)
+  ok  9 tests\e2e\compact-accounts.spec.ts:164:2 › en CC05-CC09 query transition never restores a previously revealed password (4.1s)
+  x  10 tests\e2e\compact-accounts.spec.ts:181:2 › en CC01-CC02-CC11 compiled visual geometry and supported widths (6.4s)
+(node:17932) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 11 tests\e2e\simple-account-relations.spec.ts:45:2 › zh-CN SR01-SR04 simplified fields, title navigation and relation tasks survive refresh (11.1s)
+  ok 12 tests\e2e\simple-account-relations.spec.ts:80:2 › zh-CN SR02-SR03 supported widths retain compact cards and usable relation layouts (9.7s)
+  x  13 tests\e2e\simple-account-relations.spec.ts:99:2 › zh-CN SR05-SR06 KDBX-only detail links remain encrypted and unlock does not duplicate status (10.1s)
+(node:18328) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 14 tests\e2e\simple-account-relations.spec.ts:45:2 › en SR01-SR04 simplified fields, title navigation and relation tasks survive refresh (12.2s)
+  ok 15 tests\e2e\simple-account-relations.spec.ts:80:2 › en SR02-SR03 supported widths retain compact cards and usable relation layouts (11.1s)
+  x  16 tests\e2e\simple-account-relations.spec.ts:99:2 › en SR05-SR06 KDBX-only detail links remain encrypted and unlock does not duplicate status (10.5s)
+(node:32468) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 17 tests\e2e\unified-account-editor.spec.ts:50:2 › zh-CN UE06b ordinary account deletion cancels, completes and restores without blocking (9.1s)
+  ok 18 tests\e2e\unified-account-editor.spec.ts:80:2 › zh-CN UE07 partial save and purge failures retain data and retry once (8.4s)
+  x  19 tests\e2e\unified-account-editor.spec.ts:128:2 › zh-CN UE01-UE03 unified edit is direct, unique, cancellable and durable (5.4s)
+(node:8700) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 20 tests\e2e\unified-account-editor.spec.ts:133:2 › zh-CN UE04 edits the selected backup without overwriting the primary (5.2s)
+  ok 21 tests\e2e\unified-account-editor.spec.ts:136:2 › zh-CN UE06 deleting alias or entry keeps other logins and restores (6.6s)
+  ok 22 tests\e2e\unified-account-editor.spec.ts:139:2 › zh-CN UE05 external save locks and clears the entire private editor (6.7s)
+  ok 23 tests\e2e\unified-account-editor.spec.ts:142:2 › zh-CN UE07 validation is visible and correction saves once (3.8s)
+  ok 24 tests\e2e\unified-account-editor.spec.ts:145:2 › zh-CN UE08-UE09 imported logins share the same cards and retain encrypted backups (12.3s)
+  ok 25 tests\e2e\unified-account-editor.spec.ts:148:2 › zh-CN UE08b adding a private login does not publish an ordinary account (5.1s)
+  x  26 tests\e2e\unified-account-editor.spec.ts:151:2 › zh-CN UE02-UE10 merged card, editor, menus and gate at supported widths (7.5s)
+(node:18232) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 27 tests\e2e\unified-account-editor.spec.ts:50:2 › en UE06b ordinary account deletion cancels, completes and restores without blocking (7.0s)
+  ok 28 tests\e2e\unified-account-editor.spec.ts:80:2 › en UE07 partial save and purge failures retain data and retry once (8.8s)
+  x  29 tests\e2e\unified-account-editor.spec.ts:128:2 › en UE01-UE03 unified edit is direct, unique, cancellable and durable (5.2s)
+(node:28700) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 30 tests\e2e\unified-account-editor.spec.ts:133:2 › en UE04 edits the selected backup without overwriting the primary (4.9s)
+  ok 31 tests\e2e\unified-account-editor.spec.ts:136:2 › en UE06 deleting alias or entry keeps other logins and restores (6.0s)
+  ok 32 tests\e2e\unified-account-editor.spec.ts:139:2 › en UE05 external save locks and clears the entire private editor (6.2s)
+  ok 33 tests\e2e\unified-account-editor.spec.ts:142:2 › en UE07 validation is visible and correction saves once (3.8s)
+  ok 34 tests\e2e\unified-account-editor.spec.ts:145:2 › en UE08-UE09 imported logins share the same cards and retain encrypted backups (12.4s)
+  ok 35 tests\e2e\unified-account-editor.spec.ts:148:2 › en UE08b adding a private login does not publish an ordinary account (6.2s)
+  x  36 tests\e2e\unified-account-editor.spec.ts:151:2 › en UE02-UE10 merged card, editor, menus and gate at supported widths (8.2s)
+
+
+  1) tests\e2e\compact-accounts.spec.ts:78:2 › zh-CN CC03-CC10 compact copy, cyclic switch, lock, details and durable content 
+
+    Error: This receipt requires an explicit portable ZIP and its archive checksum.
+
+       at ..\..\scripts\lib\portable-candidate.mjs:19
+
+      17 |   if (selected.length !== 1) throw Error("Specify exactly one compiled portable directory or ZIP, as an argument or KEEPANY_PREVIEW_DIRECTORY/KEEPANY_PREVIEW_ARCHIVE.");
+      18 |   const input = resolve(selected[0]);
+    > 19 |   if (archiveOnly && !input.endsWith(".zip")) throw Error("This receipt requires an explicit portable ZIP and its archive checksum.");
+         |                                                     ^
+      20 |   return input;
+      21 | }
+      22 |
+        at selectCandidate (C:\Users\Administrator\.codex\worktrees\accounts-compact\KeepAny\scripts\lib\portable-candidate.mjs:19:53)
+        at portableCandidate (C:\Users\Administrator\.codex\worktrees\accounts-compact\KeepAny\tests\e2e\helpers\portable-candidate.ts:5:51)
+        at C:\Users\Administrator\.codex\worktrees\accounts-compact\KeepAny\tests\e2e\compact-accounts.spec.ts:136:104
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\simple-initial-b94\browser\compact-accounts-zh-CN-CC0-d0d63-details-and-durable-content\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\simple-initial-b94\browser\compact-accounts-zh-CN-CC0-d0d63-details-and-durable-content\error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\simple-initial-b94\browser\compact-accounts-zh-CN-CC0-d0d63-details-and-durable-content\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\simple-initial-b94\browser\compact-accounts-zh-CN-CC0-d0d63-details-and-durable-content\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) tests\e2e\compact-accounts.spec.ts:181:2 › zh-CN CC01-CC02-CC11 compiled visual geometry and supported widths 
+
+    Error: This receipt requires an explicit portable ZIP and its archive checksum.
+
+       at ..\..\scripts\lib\portable-candidate.mjs:19
+
+      17 |   if (selected.length !== 1) throw Error("Specify exactly one compiled portable directory or ZIP, as an argument or KEEPANY_PREVIEW_DIRECTORY/KEEPANY_PREVIEW_ARCHIVE.");
+      18 |   const input = resolve(selected[0]);
+    > 19 |   if (archiveOnly && !input.endsWith(".zip")) throw Error("This receipt requires an explicit portable ZIP and its archive checksum.");
+         |                                                     ^
+      20 |   return input;
+      21 | }
+      22 |
+        at selectCandidate (C:\Users\Administrator\.codex\worktrees\accounts-compact\KeepAny\scripts\lib\portable-candidate.mjs:19:53)
+        at portableCandidate (C:\Users\Administrator\.codex\worktrees\accounts-compact\KeepAny\tests\e2e\helpers\portable-candidate.ts:5:51)
+        at C:\Users\Administrator\.codex\worktrees\accounts-compact\KeepAny\tests\e2e\compact-accounts.spec.ts:208:100
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\simple-initial-b94\browser\compact-accounts-zh-CN-CC0-b9f90-ometry-and-supported-widths\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\simple-initial-b94\browser\compact-accounts-zh-CN-CC0-b9f90-ometry-and-supported-widths\error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\simple-initial-b94\browser\compact-accounts-zh-CN-CC0-b9f90-ometry-and-supported-widths\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\simple-initial-b94\browser\compact-accounts-zh-CN-CC0-b9f90-ometry-and-supported-widths\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3) tests\e2e\compact-accounts.spec.ts:78:2 › en CC03-CC10 compact copy, cyclic switch, lock, details and durable content 
+
+    Error: This receipt requires an explicit portable ZIP and its archive checksum.
+
+       at ..\..\scripts\lib\portable-candidate.mjs:19
+
+      17 |   if (selected.length !== 1) throw Error("Specify exactly one compiled portable directory or ZIP, as an argument or KEEPANY_PREVIEW_DIRECTORY/KEEPANY_PREVIEW_ARCHIVE.");
+      18 |   const input = resolve(selected[0]);
+    > 19 |   if (archiveOnly && !input.endsWith(".zip")) throw Error("This receipt requires an explicit portable ZIP and its archive checksum.");
+         |                                                     ^
+      20 |   return input;
+      21 | }
+      22 |
+        at selectCandidate (C:\Users\Administrator\.codex\worktrees\accounts-compact\KeepAny\scripts\lib\portable-candidate.mjs:19:53)
+        at portableCandidate (C:\Users\Administrator\.codex\worktrees\accounts-compact\KeepAny\tests\e2e\helpers\portable-candidate.ts:5:51)
+        at C:\Users\Administrator\.codex\worktrees\accounts-compact\KeepAny\tests\e2e\compact-accounts.spec.ts:136:104
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\simple-initial-b94\browser\compact-accounts-en-CC03-C-c4f1f-details-and-durable-content\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\simple-initial-b94\browser\compact-accounts-en-CC03-C-c4f1f-details-and-durable-content\error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\simple-initial-b94\browser\compact-accounts-en-CC03-C-c4f1f-details-and-durable-content\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\simple-initial-b94\browser\compact-accounts-en-CC03-C-c4f1f-details-and-durable-content\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  4) tests\e2e\compact-accounts.spec.ts:181:2 › en CC01-CC02-CC11 compiled visual geometry and supported widths 
+
+    Error: This receipt requires an explicit portable ZIP and its archive checksum.
+
+       at ..\..\scripts\lib\portable-candidate.mjs:19
+
+      17 |   if (selected.length !== 1) throw Error("Specify exactly one compiled portable directory or ZIP, as an argument or KEEPANY_PREVIEW_DIRECTORY/KEEPANY_PREVIEW_ARCHIVE.");
+      18 |   const input = resolve(selected[0]);
+    > 19 |   if (archiveOnly && !input.endsWith(".zip")) throw Error("This receipt requires an explicit portable ZIP and its archive checksum.");
+         |                                                     ^
+      20 |   return input;
+      21 | }
+      22 |
+        at selectCandidate (C:\Users\Administrator\.codex\worktrees\accounts-compact\KeepAny\scripts\lib\portable-candidate.mjs:19:53)
+        at portableCandidate (C:\Users\Administrator\.codex\worktrees\accounts-compact\KeepAny\tests\e2e\helpers\portable-candidate.ts:5:51)
+        at C:\Users\Administrator\.codex\worktrees\accounts-compact\KeepAny\tests\e2e\compact-accounts.spec.ts:208:100
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\simple-initial-b94\browser\compact-accounts-en-CC01-C-1788a-ometry-and-supported-widths\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\simple-initial-b94\browser\compact-accounts-en-CC01-C-1788a-ometry-and-supported-widths\error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\simple-initial-b94\browser\compact-accounts-en-CC01-C-1788a-ometry-and-supported-widths\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\simple-initial-b94\browser\compact-accounts-en-CC01-C-1788a-ometry-and-supported-widths\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  5) tests\e2e\simple-account-relations.spec.ts:99:2 › zh-CN SR05-SR06 KDBX-only detail links remain encrypted and unlock does not duplicate status 
+
+    Error: expect(locator).toHaveAttribute(expected) failed
+
+    Locator:  locator('[id="password-vault-entry-asset"]')
+    Expected: "5a3f3945-4765-4d00-9fe1-5b0a0656c7ae"
+    Received: ""
+    Timeout:  5000ms
+
+    Call log:
+      - Expect "toHaveAttribute" locator('[id="password-vault-entry-asset"]') with timeout 5000ms
+      - waiting for locator('[id="password-vault-entry-asset"]')
+        14 × locator resolved to <button tabindex="0" type="button" data-value="" role="combobox" data-placeholder="" aria-expanded="false" aria-haspopup="listbox" class="themed-select-trigger" id="password-vault-entry-asset">…</button>
+           - unexpected value ""
+
+
+       at helpers\select-choice.ts:70
+
+      68 | 	await option.hover();
+      69 | 	await option.click();
+    > 70 | 	await expect(trigger).toHaveAttribute("data-value", selectedValue);
+         | 	                      ^
+      71 | 	await expect(trigger).toHaveAttribute("aria-expanded", "false");
+      72 | 	await expect(popup).toBeHidden();
+      73 | }
+        at selectChoice (C:\Users\Administrator\.codex\worktrees\accounts-compact\KeepAny\tests\e2e\helpers\select-choice.ts:70:24)
+        at C:\Users\Administrator\.codex\worktrees\accounts-compact\KeepAny\tests\e2e\simple-account-relations.spec.ts:105:85
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\simple-initial-b94\browser\simple-account-relations-z-d119c-k-does-not-duplicate-status\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\simple-initial-b94\browser\simple-account-relations-z-d119c-k-does-not-duplicate-status\error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\simple-initial-b94\browser\simple-account-relations-z-d119c-k-does-not-duplicate-status\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\simple-initial-b94\browser\simple-account-relations-z-d119c-k-does-not-duplicate-status\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  6) tests\e2e\simple-account-relations.spec.ts:99:2 › en SR05-SR06 KDBX-only detail links remain encrypted and unlock does not duplicate status 
+
+    Error: expect(locator).toHaveAttribute(expected) failed
+
+    Locator:  locator('[id="password-vault-entry-asset"]')
+    Expected: "5cee9931-4bdc-4123-86a4-ce2a4baf1427"
+    Received: ""
+    Timeout:  5000ms
+
+    Call log:
+      - Expect "toHaveAttribute" locator('[id="password-vault-entry-asset"]') with timeout 5000ms
+      - waiting for locator('[id="password-vault-entry-asset"]')
+        14 × locator resolved to <button tabindex="0" type="button" data-value="" role="combobox" data-placeholder="" aria-expanded="false" aria-haspopup="listbox" class="themed-select-trigger" id="password-vault-entry-asset">…</button>
+           - unexpected value ""
+
+
+       at helpers\select-choice.ts:70
+
+      68 | 	await option.hover();
+      69 | 	await option.click();
+    > 70 | 	await expect(trigger).toHaveAttribute("data-value", selectedValue);
+         | 	                      ^
+      71 | 	await expect(trigger).toHaveAttribute("aria-expanded", "false");
+      72 | 	await expect(popup).toBeHidden();
+      73 | }
+        at selectChoice (C:\Users\Administrator\.codex\worktrees\accounts-compact\KeepAny\tests\e2e\helpers\select-choice.ts:70:24)
+        at C:\Users\Administrator\.codex\worktrees\accounts-compact\KeepAny\tests\e2e\simple-account-relations.spec.ts:105:85
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\simple-initial-b94\browser\simple-account-relations-e-bcdea-k-does-not-duplicate-status\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\simple-initial-b94\browser\simple-account-relations-e-bcdea-k-does-not-duplicate-status\error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\simple-initial-b94\browser\simple-account-relations-e-bcdea-k-does-not-duplicate-status\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\simple-initial-b94\browser\simple-account-relations-e-bcdea-k-does-not-duplicate-status\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  7) tests\e2e\unified-account-editor.spec.ts:128:2 › zh-CN UE01-UE03 unified edit is direct, unique, cancellable and durable 
+
+    Error: This receipt requires an explicit portable ZIP and its archive checksum.
+
+       at ..\..\scripts\lib\portable-candidate.mjs:19
+
+      17 |   if (selected.length !== 1) throw Error("Specify exactly one compiled portable directory or ZIP, as an argument or KEEPANY_PREVIEW_DIRECTORY/KEEPANY_PREVIEW_ARCHIVE.");
+      18 |   const input = resolve(selected[0]);
+    > 19 |   if (archiveOnly && !input.endsWith(".zip")) throw Error("This receipt requires an explicit portable ZIP and its archive checksum.");
+         |                                                     ^
+      20 |   return input;
+      21 | }
+      22 |
+        at selectCandidate (C:\Users\Administrator\.codex\worktrees\accounts-compact\KeepAny\scripts\lib\portable-candidate.mjs:19:53)
+        at portableCandidate (C:\Users\Administrator\.codex\worktrees\accounts-compact\KeepAny\tests\e2e\helpers\portable-candidate.ts:5:51)
+        at C:\Users\Administrator\.codex\worktrees\accounts-compact\KeepAny\tests\e2e\unified-account-editor.spec.ts:131:97
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\simple-initial-b94\browser\unified-account-editor-zh--ab899-que-cancellable-and-durable\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\simple-initial-b94\browser\unified-account-editor-zh--ab899-que-cancellable-and-durable\error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\simple-initial-b94\browser\unified-account-editor-zh--ab899-que-cancellable-and-durable\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\simple-initial-b94\browser\unified-account-editor-zh--ab899-que-cancellable-and-durable\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  8) tests\e2e\unified-account-editor.spec.ts:151:2 › zh-CN UE02-UE10 merged card, editor, menus and gate at supported widths 
+
+    Error: This receipt requires an explicit portable ZIP and its archive checksum.
+
+       at ..\..\scripts\lib\portable-candidate.mjs:19
+
+      17 |   if (selected.length !== 1) throw Error("Specify exactly one compiled portable directory or ZIP, as an argument or KEEPANY_PREVIEW_DIRECTORY/KEEPANY_PREVIEW_ARCHIVE.");
+      18 |   const input = resolve(selected[0]);
+    > 19 |   if (archiveOnly && !input.endsWith(".zip")) throw Error("This receipt requires an explicit portable ZIP and its archive checksum.");
+         |                                                     ^
+      20 |   return input;
+      21 | }
+      22 |
+        at selectCandidate (C:\Users\Administrator\.codex\worktrees\accounts-compact\KeepAny\scripts\lib\portable-candidate.mjs:19:53)
+        at portableCandidate (C:\Users\Administrator\.codex\worktrees\accounts-compact\KeepAny\tests\e2e\helpers\portable-candidate.ts:5:51)
+        at C:\Users\Administrator\.codex\worktrees\accounts-compact\KeepAny\tests\e2e\unified-account-editor.spec.ts:152:2030
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\simple-initial-b94\browser\unified-account-editor-zh--62780-nd-gate-at-supported-widths\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\simple-initial-b94\browser\unified-account-editor-zh--62780-nd-gate-at-supported-widths\error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\simple-initial-b94\browser\unified-account-editor-zh--62780-nd-gate-at-supported-widths\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\simple-initial-b94\browser\unified-account-editor-zh--62780-nd-gate-at-supported-widths\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  9) tests\e2e\unified-account-editor.spec.ts:128:2 › en UE01-UE03 unified edit is direct, unique, cancellable and durable 
+
+    Error: This receipt requires an explicit portable ZIP and its archive checksum.
+
+       at ..\..\scripts\lib\portable-candidate.mjs:19
+
+      17 |   if (selected.length !== 1) throw Error("Specify exactly one compiled portable directory or ZIP, as an argument or KEEPANY_PREVIEW_DIRECTORY/KEEPANY_PREVIEW_ARCHIVE.");
+      18 |   const input = resolve(selected[0]);
+    > 19 |   if (archiveOnly && !input.endsWith(".zip")) throw Error("This receipt requires an explicit portable ZIP and its archive checksum.");
+         |                                                     ^
+      20 |   return input;
+      21 | }
+      22 |
+        at selectCandidate (C:\Users\Administrator\.codex\worktrees\accounts-compact\KeepAny\scripts\lib\portable-candidate.mjs:19:53)
+        at portableCandidate (C:\Users\Administrator\.codex\worktrees\accounts-compact\KeepAny\tests\e2e\helpers\portable-candidate.ts:5:51)
+        at C:\Users\Administrator\.codex\worktrees\accounts-compact\KeepAny\tests\e2e\unified-account-editor.spec.ts:131:97
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\simple-initial-b94\browser\unified-account-editor-en--7a231-que-cancellable-and-durable\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\simple-initial-b94\browser\unified-account-editor-en--7a231-que-cancellable-and-durable\error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\simple-initial-b94\browser\unified-account-editor-en--7a231-que-cancellable-and-durable\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\simple-initial-b94\browser\unified-account-editor-en--7a231-que-cancellable-and-durable\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  10) tests\e2e\unified-account-editor.spec.ts:151:2 › en UE02-UE10 merged card, editor, menus and gate at supported widths 
+
+    Error: This receipt requires an explicit portable ZIP and its archive checksum.
+
+       at ..\..\scripts\lib\portable-candidate.mjs:19
+
+      17 |   if (selected.length !== 1) throw Error("Specify exactly one compiled portable directory or ZIP, as an argument or KEEPANY_PREVIEW_DIRECTORY/KEEPANY_PREVIEW_ARCHIVE.");
+      18 |   const input = resolve(selected[0]);
+    > 19 |   if (archiveOnly && !input.endsWith(".zip")) throw Error("This receipt requires an explicit portable ZIP and its archive checksum.");
+         |                                                     ^
+      20 |   return input;
+      21 | }
+      22 |
+        at selectCandidate (C:\Users\Administrator\.codex\worktrees\accounts-compact\KeepAny\scripts\lib\portable-candidate.mjs:19:53)
+        at portableCandidate (C:\Users\Administrator\.codex\worktrees\accounts-compact\KeepAny\tests\e2e\helpers\portable-candidate.ts:5:51)
+        at C:\Users\Administrator\.codex\worktrees\accounts-compact\KeepAny\tests\e2e\unified-account-editor.spec.ts:152:2030
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\simple-initial-b94\browser\unified-account-editor-en--78d21-nd-gate-at-supported-widths\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\simple-initial-b94\browser\unified-account-editor-en--78d21-nd-gate-at-supported-widths\error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\simple-initial-b94\browser\unified-account-editor-en--78d21-nd-gate-at-supported-widths\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\simple-initial-b94\browser\unified-account-editor-en--78d21-nd-gate-at-supported-widths\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  10 failed
+    tests\e2e\compact-accounts.spec.ts:78:2 › zh-CN CC03-CC10 compact copy, cyclic switch, lock, details and durable content 
+    tests\e2e\compact-accounts.spec.ts:181:2 › zh-CN CC01-CC02-CC11 compiled visual geometry and supported widths 
+    tests\e2e\compact-accounts.spec.ts:78:2 › en CC03-CC10 compact copy, cyclic switch, lock, details and durable content 
+    tests\e2e\compact-accounts.spec.ts:181:2 › en CC01-CC02-CC11 compiled visual geometry and supported widths 
+    tests\e2e\simple-account-relations.spec.ts:99:2 › zh-CN SR05-SR06 KDBX-only detail links remain encrypted and unlock does not duplicate status 
+    tests\e2e\simple-account-relations.spec.ts:99:2 › en SR05-SR06 KDBX-only detail links remain encrypted and unlock does not duplicate status 
+    tests\e2e\unified-account-editor.spec.ts:128:2 › zh-CN UE01-UE03 unified edit is direct, unique, cancellable and durable 
+    tests\e2e\unified-account-editor.spec.ts:151:2 › zh-CN UE02-UE10 merged card, editor, menus and gate at supported widths 
+    tests\e2e\unified-account-editor.spec.ts:128:2 › en UE01-UE03 unified edit is direct, unique, cancellable and durable 
+    tests\e2e\unified-account-editor.spec.ts:151:2 › en UE02-UE10 merged card, editor, menus and gate at supported widths 
+  26 passed (4.6m)

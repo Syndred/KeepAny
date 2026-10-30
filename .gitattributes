@@ -19,3 +19,6 @@ docs/qa/2026-10-28/evidence/fc19-module-fetch/** -text whitespace=blank-at-eol,b
 docs/qa/2026-10-29/final-integration/** -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
 # Keep this task's candidate-bound receipts and original observations byte exact.
 docs/qa/2026-10-29/accounts-single-entry/** -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+docs/qa/2026-10-30/simple-account-relations/evidence/** -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+# Console logs retain their original trailing spaces and final blank lines for byte receipts.
+docs/qa/2026-10-30/simple-account-relations/evidence/**/*.log -text -whitespace

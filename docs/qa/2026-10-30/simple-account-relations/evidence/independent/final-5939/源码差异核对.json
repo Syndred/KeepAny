@@ -1,0 +1,97 @@
+{
+  "fromCandidate": "1e1979ac9cbc70199b916f7e5929a70046721e72",
+  "toCandidate": "593913756882e358a0f967c87b98b679304d6103",
+  "productScope": "Only account-detail.css changed in product, adding five selectors strictly under .account-impact-details.",
+  "files": [
+    {
+      "path": "apps/web/src/account-entry-edit.ts",
+      "oldSha256": "d4334e1183af9873b0e7a968e7a8b6f79b2436703ca72b058189972b79dd081e",
+      "newSha256": "d4334e1183af9873b0e7a968e7a8b6f79b2436703ca72b058189972b79dd081e",
+      "identical": true
+    },
+    {
+      "path": "apps/web/src/account-entry-save.ts",
+      "oldSha256": "541553e3872379281a2208aec304542aca0dfa40a74824207709b270326e30f1",
+      "newSha256": "541553e3872379281a2208aec304542aca0dfa40a74824207709b270326e30f1",
+      "identical": true
+    },
+    {
+      "path": "apps/web/src/components/AccountEntryDialog.tsx",
+      "oldSha256": "b82e96a4cd0e7c0e4213bacebbc4d2d3d17133386e6576899b59413c1ee378b5",
+      "newSha256": "b82e96a4cd0e7c0e4213bacebbc4d2d3d17133386e6576899b59413c1ee378b5",
+      "identical": true
+    },
+    {
+      "path": "apps/web/src/components/AccountLoginSummary.tsx",
+      "oldSha256": "3a1928e3f5a4ce22a751e3b5b34559e6f0d2bec0f7e5797a5c1bd5dbc0b08894",
+      "newSha256": "3a1928e3f5a4ce22a751e3b5b34559e6f0d2bec0f7e5797a5c1bd5dbc0b08894",
+      "identical": true
+    },
+    {
+      "path": "apps/web/src/components/PrivateAccountDetail.tsx",
+      "oldSha256": "19bff17a06357a8334e788c92a75606a1976ff37866ba7059ef252a88a4a1e86",
+      "newSha256": "19bff17a06357a8334e788c92a75606a1976ff37866ba7059ef252a88a4a1e86",
+      "identical": true
+    },
+    {
+      "path": "apps/web/src/components/CompactAccountCard.tsx",
+      "oldSha256": "0796eb159f264a208d9177729aa535cf63586e358322b9d1a15ec123ce0d95ba",
+      "newSha256": "0796eb159f264a208d9177729aa535cf63586e358322b9d1a15ec123ce0d95ba",
+      "identical": true
+    },
+    {
+      "path": "apps/web/src/components/PasswordVaultEntryEditor.tsx",
+      "oldSha256": "7444a580cf9459c14edb3f694221d841b662135a5ea3a4074752202562836958",
+      "newSha256": "7444a580cf9459c14edb3f694221d841b662135a5ea3a4074752202562836958",
+      "identical": true
+    },
+    {
+      "path": "apps/web/src/components/PasswordVaultPanel.tsx",
+      "oldSha256": "716ab9dda51fa21d893915582af3437e23c8e342d159a92980f65fcac0feeedd",
+      "newSha256": "716ab9dda51fa21d893915582af3437e23c8e342d159a92980f65fcac0feeedd",
+      "identical": true
+    },
+    {
+      "path": "apps/web/src/page-asset-detail.tsx",
+      "oldSha256": "4afe0d15d79d409992d1427abfa58d72ebf29a445700f294801a9f311c8a389c",
+      "newSha256": "4afe0d15d79d409992d1427abfa58d72ebf29a445700f294801a9f311c8a389c",
+      "identical": true
+    },
+    {
+      "path": "apps/web/src/page-workspaces.tsx",
+      "oldSha256": "f145b3a3a46dc31c314454facced0b8c5858d6512fb5ab50692f9649d758027e",
+      "newSha256": "f145b3a3a46dc31c314454facced0b8c5858d6512fb5ab50692f9649d758027e",
+      "identical": true
+    },
+    {
+      "path": "apps/web/src/TaskRow.tsx",
+      "oldSha256": "ffaf7f215e140572ac7497e351bacc1b64dee219717e9c4cc82d51825d5b85b5",
+      "newSha256": "ffaf7f215e140572ac7497e351bacc1b64dee219717e9c4cc82d51825d5b85b5",
+      "identical": true
+    },
+    {
+      "path": "apps/web/src/ImpactTaskRow.tsx",
+      "oldSha256": "df468447ec84589265387e164f1552378cbd87e2737293d3da954ac7e9a4ef3e",
+      "newSha256": "df468447ec84589265387e164f1552378cbd87e2737293d3da954ac7e9a4ef3e",
+      "identical": true
+    },
+    {
+      "path": "packages/password-vault/src/engine.ts",
+      "oldSha256": "c19907885db99e04b23c1147f2820c71ca582fd2aefd050979bdd1bcd027c1ba",
+      "newSha256": "c19907885db99e04b23c1147f2820c71ca582fd2aefd050979bdd1bcd027c1ba",
+      "identical": true
+    },
+    {
+      "path": "packages/password-vault/src/session.ts",
+      "oldSha256": "4daef02111e7b2b9dcc01c8a32b29279ee3f47acaa0a90b7d72c459ff2c62d99",
+      "newSha256": "4daef02111e7b2b9dcc01c8a32b29279ee3f47acaa0a90b7d72c459ff2c62d99",
+      "identical": true
+    },
+    {
+      "path": "apps/web/src/account-detail.css",
+      "oldSha256": "7e2ca2626110c6ece0db834c06a7ab606c86556887a8a2b20969d6b96168d42a",
+      "newSha256": "d3afd70f1c72f58888765e640024761394ddcdb40ff5806d0905fac1f823b2db",
+      "identical": false
+    }
+  ]
+}

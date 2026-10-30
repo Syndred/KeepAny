@@ -1,0 +1,44 @@
+{
+  "scope": "Source helper reproduction on uncommitted simple-account-relations source; fake-indexeddb fictional isolated repository, no UI acceptance.",
+  "baseCommit": "b94e4ac8718ff4f3e12a63d553302b3aea311874",
+  "files": [
+    {
+      "path": "apps/web/src/account-entry-edit.ts",
+      "sha256": "d4334e1183af9873b0e7a968e7a8b6f79b2436703ca72b058189972b79dd081e"
+    },
+    {
+      "path": "apps/web/src/components/AccountEntryDialog.tsx",
+      "sha256": "2ffc2cdb266f5131392584d7c8ca9a60c4761d21518685f646cfc22f26548824"
+    },
+    {
+      "path": "apps/web/src/components/PrivateAccountDetail.tsx",
+      "sha256": "7a58bf913efa038ab094e9e6b849c516d40fbbf6288d5bbbef88caa38d17eae2"
+    }
+  ],
+  "notes": {
+    "ordinaryNotesLength": 40000,
+    "ordinaryLongLength": 10000,
+    "privateNotesLength": 20000,
+    "eachOriginalValid": true,
+    "mergedLength": 70004,
+    "expected": "Existing valid legacy notes can be preserved completely by the single-note migration without blocking all ordinary edits.",
+    "actualError": "vault-invalid",
+    "verdict": "failed-merged-limit"
+  },
+  "privateCategory": {
+    "beforeAssetCount": 0,
+    "afterAssetCount": 1,
+    "publishedRows": [
+      {
+        "id": "78834ca2-1a56-40d1-a6bf-bf7145b81be7",
+        "name": "Fictional PRIVATE source",
+        "username": "private@fictional.example.test",
+        "url": "https://private.fictional.example.test/",
+        "category": "email",
+        "notes": ""
+      }
+    ],
+    "expected": "This round private detail editing/linking stays in KDBX without silently publishing an Asset.",
+    "verdict": "failed-private-edit-publishes"
+  }
+}

@@ -1,0 +1,220 @@
+[WebServer] (node:32388) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 38 tests using 1 worker
+
+(node:22904) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok  1 tests\e2e\compact-accounts.spec.ts:61:2 › zh-CN CC10 restoring a deleted entry does not reopen stale login details (4.9s)
+  ok  2 tests\e2e\compact-accounts.spec.ts:78:2 › zh-CN CC03-CC10 compact copy, cyclic switch, lock, details and durable content (7.4s)
+  ok  3 tests\e2e\compact-accounts.spec.ts:139:2 › zh-CN CC09 clipboard failure stays explicit and stale failure is cancelled on query change (5.2s)
+  ok  4 tests\e2e\compact-accounts.spec.ts:164:2 › zh-CN CC05-CC09 query transition never restores a previously revealed password (4.3s)
+  ok  5 tests\e2e\compact-accounts.spec.ts:181:2 › zh-CN CC01-CC02-CC11 compiled visual geometry and supported widths (6.9s)
+  ok  6 tests\e2e\compact-accounts.spec.ts:61:2 › en CC10 restoring a deleted entry does not reopen stale login details (5.1s)
+  ok  7 tests\e2e\compact-accounts.spec.ts:78:2 › en CC03-CC10 compact copy, cyclic switch, lock, details and durable content (7.4s)
+  ok  8 tests\e2e\compact-accounts.spec.ts:139:2 › en CC09 clipboard failure stays explicit and stale failure is cancelled on query change (4.9s)
+  ok  9 tests\e2e\compact-accounts.spec.ts:164:2 › en CC05-CC09 query transition never restores a previously revealed password (4.3s)
+  ok 10 tests\e2e\compact-accounts.spec.ts:181:2 › en CC01-CC02-CC11 compiled visual geometry and supported widths (6.9s)
+-------------- RxDB Open Core RxStorage -------------------------------
+You are using the free Dexie.js based RxStorage implementation from RxDB https://rxdb.info/rx-storage-dexie.html?console=dexie 
+While this is a great option, we want to let you know that there are faster storage solutions available in our premium plugins.
+For professional users and production environments, we highly recommend considering these premium options to enhance performance and reliability.
+ https://rxdb.info/premium/?console=dexie 
+If you already purchased premium access you can disable this log by calling the setPremiumFlag() function from rxdb-premium/plugins/shared.
+---------------------------------------------------------------------
+  x  11 tests\e2e\simple-account-relations.spec.ts:55:2 › zh-CN SR01-SR07 legacy notes combine once, retry safely and stay encrypted (9.3s)
+(node:13848) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+-------------- RxDB Open Core RxStorage -------------------------------
+You are using the free Dexie.js based RxStorage implementation from RxDB https://rxdb.info/rx-storage-dexie.html?console=dexie 
+While this is a great option, we want to let you know that there are faster storage solutions available in our premium plugins.
+For professional users and production environments, we highly recommend considering these premium options to enhance performance and reliability.
+ https://rxdb.info/premium/?console=dexie 
+If you already purchased premium access you can disable this log by calling the setPremiumFlag() function from rxdb-premium/plugins/shared.
+---------------------------------------------------------------------
+  ok 12 tests\e2e\simple-account-relations.spec.ts:73:2 › zh-CN SR01-SR04 simplified fields, title navigation and relation tasks survive refresh (13.2s)
+  ok 13 tests\e2e\simple-account-relations.spec.ts:112:2 › zh-CN SR02-SR03 supported widths retain compact cards and usable relation layouts (12.2s)
+  x  14 tests\e2e\simple-account-relations.spec.ts:133:2 › zh-CN SR05-SR06 KDBX-only detail links remain encrypted and unlock does not duplicate status (13.6s)
+(node:20856) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+-------------- RxDB Open Core RxStorage -------------------------------
+You are using the free Dexie.js based RxStorage implementation from RxDB https://rxdb.info/rx-storage-dexie.html?console=dexie 
+While this is a great option, we want to let you know that there are faster storage solutions available in our premium plugins.
+For professional users and production environments, we highly recommend considering these premium options to enhance performance and reliability.
+ https://rxdb.info/premium/?console=dexie 
+If you already purchased premium access you can disable this log by calling the setPremiumFlag() function from rxdb-premium/plugins/shared.
+---------------------------------------------------------------------
+  x  15 tests\e2e\simple-account-relations.spec.ts:55:2 › en SR01-SR07 legacy notes combine once, retry safely and stay encrypted (11.6s)
+(node:15108) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+-------------- RxDB Open Core RxStorage -------------------------------
+You are using the free Dexie.js based RxStorage implementation from RxDB https://rxdb.info/rx-storage-dexie.html?console=dexie 
+While this is a great option, we want to let you know that there are faster storage solutions available in our premium plugins.
+For professional users and production environments, we highly recommend considering these premium options to enhance performance and reliability.
+ https://rxdb.info/premium/?console=dexie 
+If you already purchased premium access you can disable this log by calling the setPremiumFlag() function from rxdb-premium/plugins/shared.
+---------------------------------------------------------------------
+  ok 16 tests\e2e\simple-account-relations.spec.ts:73:2 › en SR01-SR04 simplified fields, title navigation and relation tasks survive refresh (14.6s)
+  ok 17 tests\e2e\simple-account-relations.spec.ts:112:2 › en SR02-SR03 supported widths retain compact cards and usable relation layouts (13.4s)
+  x  18 tests\e2e\simple-account-relations.spec.ts:133:2 › en SR05-SR06 KDBX-only detail links remain encrypted and unlock does not duplicate status (8.4s)
+(node:21220) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 19 tests\e2e\unified-account-editor.spec.ts:50:2 › zh-CN UE06b ordinary account deletion cancels, completes and restores without blocking (5.4s)
+  ok 20 tests\e2e\unified-account-editor.spec.ts:80:2 › zh-CN UE07 partial save and purge failures retain data and retry once (8.0s)
+  ok 21 tests\e2e\unified-account-editor.spec.ts:128:2 › zh-CN UE01-UE03 unified edit is direct, unique, cancellable and durable (6.0s)
+  ok 22 tests\e2e\unified-account-editor.spec.ts:133:2 › zh-CN UE04 edits the selected backup without overwriting the primary (4.7s)
+  ok 23 tests\e2e\unified-account-editor.spec.ts:136:2 › zh-CN UE06 deleting alias or entry keeps other logins and restores (6.6s)
+  ok 24 tests\e2e\unified-account-editor.spec.ts:139:2 › zh-CN UE05 external save locks and clears the entire private editor (6.7s)
+  ok 25 tests\e2e\unified-account-editor.spec.ts:142:2 › zh-CN UE07 validation is visible and correction saves once (3.6s)
+  ok 26 tests\e2e\unified-account-editor.spec.ts:145:2 › zh-CN UE08-UE09 imported logins share the same cards and retain encrypted backups (13.4s)
+  ok 27 tests\e2e\unified-account-editor.spec.ts:148:2 › zh-CN UE08b adding a private login does not publish an ordinary account (6.4s)
+  ok 28 tests\e2e\unified-account-editor.spec.ts:151:2 › zh-CN UE02-UE10 merged card, editor, menus and gate at supported widths (9.5s)
+  ok 29 tests\e2e\unified-account-editor.spec.ts:50:2 › en UE06b ordinary account deletion cancels, completes and restores without blocking (6.6s)
+  ok 30 tests\e2e\unified-account-editor.spec.ts:80:2 › en UE07 partial save and purge failures retain data and retry once (7.5s)
+  ok 31 tests\e2e\unified-account-editor.spec.ts:128:2 › en UE01-UE03 unified edit is direct, unique, cancellable and durable (5.9s)
+  ok 32 tests\e2e\unified-account-editor.spec.ts:133:2 › en UE04 edits the selected backup without overwriting the primary (5.3s)
+  ok 33 tests\e2e\unified-account-editor.spec.ts:136:2 › en UE06 deleting alias or entry keeps other logins and restores (6.3s)
+  ok 34 tests\e2e\unified-account-editor.spec.ts:139:2 › en UE05 external save locks and clears the entire private editor (6.2s)
+  ok 35 tests\e2e\unified-account-editor.spec.ts:142:2 › en UE07 validation is visible and correction saves once (4.2s)
+  ok 36 tests\e2e\unified-account-editor.spec.ts:145:2 › en UE08-UE09 imported logins share the same cards and retain encrypted backups (11.8s)
+  ok 37 tests\e2e\unified-account-editor.spec.ts:148:2 › en UE08b adding a private login does not publish an ordinary account (5.4s)
+  ok 38 tests\e2e\unified-account-editor.spec.ts:151:2 › en UE02-UE10 merged card, editor, menus and gate at supported widths (8.0s)
+
+
+  1) tests\e2e\simple-account-relations.spec.ts:55:2 › zh-CN SR01-SR07 legacy notes combine once, retry safely and stay encrypted 
+
+    TypeError: Cannot read properties of undefined (reading 'id')
+
+      67 |    await page.reload();await unlock(page,t);await row.getByRole("button",{name:t("edit"),exact:true}).click();await expect(page.locator("#password-vault-entry-notes")).toHaveValue(combined);await page.getByRole("dialog").getByRole("button",{name:t("cancel"),exact:true}).click();
+      68 |    await page.goto("/intake");await page.locator("#backup-password").fill(master);await page.getByRole("button",{name:t("backup"),exact:true}).click();const download=page.waitForEvent("download");await page.getByRole("link",{name:t("saveBackupFile"),exact:true}).click();const path=info.outputPath("notes-public.ka1");await(await download).saveAs(path);
+    > 69 |    const files=unzipSync(await decryptBackup(new Uint8Array(readFileSync(path)),master)),rows=JSON.parse(strFromU8(files["records.json"]));const ordinary=rows.find((r:{type:string;value:{id:string}})=>r.type==="asset"&&r.value.id==="sr-legacy-note").value;
+         |                                                                                                                                                                                                                                    ^
+      70 |    expect(ordinary).toMatchObject({notes:"",longDescription:"",accountProvider:"Preserved provider",contact:"Preserved contact",description:"Preserved purpose"});expect(JSON.stringify(rows)).not.toContain(privateNote);
+      71 |   }finally{await context.close();}
+      72 |  });
+        at find (C:\Users\Administrator\.codex\worktrees\accounts-compact\KeepAny\tests\e2e\simple-account-relations.spec.ts:69:228)
+        at C:\Users\Administrator\.codex\worktrees\accounts-compact\KeepAny\tests\e2e\simple-account-relations.spec.ts:69:160
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\simple-final-a151\browser\simple-account-relations-z-70fc2-y-safely-and-stay-encrypted\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\simple-final-a151\browser\simple-account-relations-z-70fc2-y-safely-and-stay-encrypted\error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\simple-final-a151\browser\simple-account-relations-z-70fc2-y-safely-and-stay-encrypted\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\simple-final-a151\browser\simple-account-relations-z-70fc2-y-safely-and-stay-encrypted\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) tests\e2e\simple-account-relations.spec.ts:133:2 › zh-CN SR05-SR06 KDBX-only detail links remain encrypted and unlock does not duplicate status 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByRole('alert').first()
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" getByRole('alert').first() with timeout 5000ms
+      - waiting for getByRole('alert').first()
+
+
+      140 |    const edge = page.locator(".react-flow__edge"); await edge.focus(); await edge.press("Enter"); await page.locator(".account-graph-selection-panel").getByRole("button", { name: t("deleteRelation"), exact: true }).click(); await page.getByRole("dialog").getByRole("button", { name: t("pwVaultUnlink"), exact: true }).click(); await expect(page.getByRole("dialog")).toHaveCount(0); await waitForAccountGraphLayout(page, { nodes: 1, edges: 0 });
+      141 |    await page.reload(); await unlock(page, t); await expect(page.locator(".account-login-summary")).toBeVisible(); await page.getByRole("link", { name: t("accountBack"), exact: true }).click(); await expect(page.locator(".compact-account-card:not([data-private-only])")).toHaveCount(1); await expect(card(page, "SR private import")).toHaveAttribute("data-private-only", "true");
+    > 142 |    await page.getByRole("button", { name: t("pwVaultLock"), exact: true }).click(); await page.locator("#password-vault-unlock-master").fill("Wrong-fictional-password"); await page.getByRole("button", { name: t("accountUnlockAction"), exact: true }).click(); await expect(page.getByText(t("pwVaultUnlockFailed"),{exact:true})).toBeVisible(); await expect(page.locator(".compact-account-card")).toHaveCount(0); await unlock(page, t); await shot(page, `unlock-single-status-${language}`);
+          |                                                                                                                                                                                                                                                                                                                  ^
+      143 |    await card(page, "SR private import").locator(".compact-account-title-block").click(); await page.locator(".page-header").getByRole("button", { name: t("edit"), exact: true }).click(); await page.locator("#password-vault-entry-notes").fill("Discarded private note");
+      144 |    // A second real page saves a revision, exercising the existing cross-tab lock boundary.
+      145 |    const other = await context.newPage(); await other.goto("/accounts"); await unlock(other, t); await card(other, "SR private import").getByRole("button", {name:t("edit"),exact:true}).click(); await other.locator("#password-vault-entry-password").fill("OtherTabPrivate!2026"); await save(other,t);
+        at C:\Users\Administrator\.codex\worktrees\accounts-compact\KeepAny\tests\e2e\simple-account-relations.spec.ts:142:306
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\simple-final-a151\browser\simple-account-relations-z-d119c-k-does-not-duplicate-status\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\simple-final-a151\browser\simple-account-relations-z-d119c-k-does-not-duplicate-status\error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\simple-final-a151\browser\simple-account-relations-z-d119c-k-does-not-duplicate-status\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\simple-final-a151\browser\simple-account-relations-z-d119c-k-does-not-duplicate-status\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3) tests\e2e\simple-account-relations.spec.ts:55:2 › en SR01-SR07 legacy notes combine once, retry safely and stay encrypted 
+
+    TypeError: Cannot read properties of undefined (reading 'id')
+
+      67 |    await page.reload();await unlock(page,t);await row.getByRole("button",{name:t("edit"),exact:true}).click();await expect(page.locator("#password-vault-entry-notes")).toHaveValue(combined);await page.getByRole("dialog").getByRole("button",{name:t("cancel"),exact:true}).click();
+      68 |    await page.goto("/intake");await page.locator("#backup-password").fill(master);await page.getByRole("button",{name:t("backup"),exact:true}).click();const download=page.waitForEvent("download");await page.getByRole("link",{name:t("saveBackupFile"),exact:true}).click();const path=info.outputPath("notes-public.ka1");await(await download).saveAs(path);
+    > 69 |    const files=unzipSync(await decryptBackup(new Uint8Array(readFileSync(path)),master)),rows=JSON.parse(strFromU8(files["records.json"]));const ordinary=rows.filter((r:{type:string})=>r.type==="asset").map((r:{payload:string})=>JSON.parse(r.payload)).find((a:{id:string})=>a.id==="sr-legacy-note");
+         |                                                                                                                                                                                                                                    ^
+      70 |    expect(ordinary).toMatchObject({notes:"",longDescription:"",accountProvider:"Preserved provider",contact:"Preserved contact",description:"Preserved purpose"});expect(JSON.stringify(rows)).not.toContain(privateNote);
+      71 |   }finally{await context.close();}
+      72 |  });
+        at find (C:\Users\Administrator\.codex\worktrees\accounts-compact\KeepAny\tests\e2e\simple-account-relations.spec.ts:69:228)
+        at C:\Users\Administrator\.codex\worktrees\accounts-compact\KeepAny\tests\e2e\simple-account-relations.spec.ts:69:160
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\simple-final-a151\browser\simple-account-relations-e-6359c-y-safely-and-stay-encrypted\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\simple-final-a151\browser\simple-account-relations-e-6359c-y-safely-and-stay-encrypted\error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\simple-final-a151\browser\simple-account-relations-e-6359c-y-safely-and-stay-encrypted\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\simple-final-a151\browser\simple-account-relations-e-6359c-y-safely-and-stay-encrypted\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  4) tests\e2e\simple-account-relations.spec.ts:133:2 › en SR05-SR06 KDBX-only detail links remain encrypted and unlock does not duplicate status 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByText('The master password is incorrect. The vault remains locked.', { exact: true })
+    Expected: visible
+    Error: strict mode violation: getByText('The master password is incorrect. The vault remains locked.', { exact: true }) resolved to 2 elements:
+        1) <div role="status" class="compact-account-feedback-message">The master password is incorrect. The vault remai…</div> aka getByText('The master password is').first()
+        2) <p role="status" class="password-vault-message">The master password is incorrect. The vault remai…</p> aka locator('p').filter({ hasText: 'The master password is' })
+
+    Call log:
+      - Expect "toBeVisible" getByText('The master password is incorrect. The vault remains locked.', { exact: true }) with timeout 5000ms
+      - waiting for getByText('The master password is incorrect. The vault remains locked.', { exact: true })
+
+
+      140 |    const edge = page.locator(".react-flow__edge"); await edge.focus(); await edge.press("Enter"); await page.locator(".account-graph-selection-panel").getByRole("button", { name: t("deleteRelation"), exact: true }).click(); await page.getByRole("dialog").getByRole("button", { name: t("pwVaultUnlink"), exact: true }).click(); await expect(page.getByRole("dialog")).toHaveCount(0); await waitForAccountGraphLayout(page, { nodes: 1, edges: 0 });
+      141 |    await page.reload(); await unlock(page, t); await expect(page.locator(".account-login-summary")).toBeVisible(); await page.getByRole("link", { name: t("accountBack"), exact: true }).click(); await expect(page.locator(".compact-account-card:not([data-private-only])")).toHaveCount(1); await expect(card(page, "SR private import")).toHaveAttribute("data-private-only", "true");
+    > 142 |    await page.getByRole("button", { name: t("pwVaultLock"), exact: true }).click(); await page.locator("#password-vault-unlock-master").fill("Wrong-fictional-password"); await page.getByRole("button", { name: t("accountUnlockAction"), exact: true }).click(); await expect(page.getByText(t("pwVaultUnlockFailed"),{exact:true})).toBeVisible(); await expect(page.locator(".compact-account-card")).toHaveCount(0); await unlock(page, t); await shot(page, `unlock-single-status-${language}`);
+          |                                                                                                                                                                                                                                                                                                                                        ^
+      143 |    await card(page, "SR private import").locator(".compact-account-title-block").click(); await page.locator(".page-header").getByRole("button", { name: t("edit"), exact: true }).click(); await page.locator("#password-vault-entry-notes").fill("Discarded private note");
+      144 |    // A second real page saves a revision, exercising the existing cross-tab lock boundary.
+      145 |    const other = await context.newPage(); await other.goto("/accounts"); await unlock(other, t); await card(other, "SR private import").getByRole("button", {name:t("edit"),exact:true}).click(); await other.locator("#password-vault-entry-password").fill("OtherTabPrivate!2026"); await save(other,t);
+        at C:\Users\Administrator\.codex\worktrees\accounts-compact\KeepAny\tests\e2e\simple-account-relations.spec.ts:142:328
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\simple-final-a151\browser\simple-account-relations-e-bcdea-k-does-not-duplicate-status\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\simple-final-a151\browser\simple-account-relations-e-bcdea-k-does-not-duplicate-status\error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\simple-final-a151\browser\simple-account-relations-e-bcdea-k-does-not-duplicate-status\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\simple-final-a151\browser\simple-account-relations-e-bcdea-k-does-not-duplicate-status\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  4 failed
+    tests\e2e\simple-account-relations.spec.ts:55:2 › zh-CN SR01-SR07 legacy notes combine once, retry safely and stay encrypted 
+    tests\e2e\simple-account-relations.spec.ts:133:2 › zh-CN SR05-SR06 KDBX-only detail links remain encrypted and unlock does not duplicate status 
+    tests\e2e\simple-account-relations.spec.ts:55:2 › en SR01-SR07 legacy notes combine once, retry safely and stay encrypted 
+    tests\e2e\simple-account-relations.spec.ts:133:2 › en SR05-SR06 KDBX-only detail links remain encrypted and unlock does not duplicate status 
+  34 passed (5.2m)

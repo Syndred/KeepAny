@@ -1,0 +1,51 @@
+{
+  "candidate": "1e1979ac9cbc",
+  "lang": "zh-CN",
+  "checks": [
+    {
+      "label": "Compact task edit cancel, reminder cancel/save, postpone, complete/reopen",
+      "result": "passed"
+    },
+    {
+      "label": "Global /tasks retains normal actions and edits persist back to compact account task",
+      "result": "passed"
+    },
+    {
+      "label": "Natural final-package save observed disabled under explicit CPU20 test condition",
+      "result": "passed"
+    },
+    {
+      "label": "Mobile URL error visible, correction clears, cancel",
+      "result": "passed"
+    }
+  ],
+  "images": [
+    "zh-extra-01-title-hover.png",
+    "zh-extra-02-title-focus.png",
+    "zh-extra-03-title-pressed.png",
+    "zh-extra-04-reminder-cancel.png",
+    "zh-extra-05-compact-task-date.png",
+    "zh-extra-06-global-tasks.png",
+    "zh-extra-07-saving-busy.png",
+    "zh-extra-08-mobile-error.png",
+    "zh-extra-09-mobile-fullscreen-viewport.png"
+  ],
+  "errors": [],
+  "busyBefore": true,
+  "busyAfter": true,
+  "fullscreen": {
+    "rect": {
+      "x": 22,
+      "y": 78,
+      "width": 346,
+      "height": 744,
+      "top": 78,
+      "right": 368,
+      "bottom": 822,
+      "left": 22
+    },
+    "width": 390,
+    "height": 844
+  },
+  "verdict": "passed"
+}

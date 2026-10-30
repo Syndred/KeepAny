@@ -1,0 +1,181 @@
+{
+  "source": "1e1979ac9cbc70199b916f7e5929a70046721e72",
+  "archive": "80664784663b19968023b4546c27263e9b857a9e25fa2656105bed2e825d55d2",
+  "preparation": "Fictional UI-created records copied as isolated browser fixture; final actions through normal UI",
+  "journey": [
+    {
+      "label": "最终候选错误解锁只在页面一处提示",
+      "url": "http://127.0.0.1:4389/accounts",
+      "at": "2026-10-30T05:29:55.519Z",
+      "text": "账号\n\n登录资料、密码与关联服务。\n\n已锁定\n\n主密码不正确，密码库仍保持锁定。\n\n解锁账号\n\n输入主密码，查看和管理保存的登录资料。\n\n主密码\n解锁\n\n忘记密码时只能使用原主密码或恢复其他备份，无法自动重置。"
+    },
+    {
+      "label": "一个已解锁徽标，无重复提示",
+      "url": "http://127.0.0.1:4389/accounts",
+      "at": "2026-10-30T05:29:55.907Z",
+      "text": "账号\n\n3 条\n\n已解锁\n新增\n全部\n邮箱\n手机\n自媒体\n其他\n管理\n轻画设计工具\n1 个关联\n账号\ndesign@example.test\n密码\n••••••••••\n其他\n松果工作邮箱\n2 个关联\n账号\nhello@pinecone.example.test\n1/2\n密码\n••••••••••\n登录 1/2：hello@pinecone.example.test\n其他\nCloudNest 云主机\n1 个关联\n账号\ncloud@example.test\n密码\n••••••••••\n其他\n登录回收站\n移入回收站的条目仍可恢复。\n\n回收站为空。"
+    },
+    {
+      "label": "最终核心详情布局与回读",
+      "url": "http://127.0.0.1:4389/assets/account/f5d9e239-a6ca-49c7-940c-3f94d1b24912#password-s8XL+J+7BGBPWI1/aAiTdw==",
+      "at": "2026-10-30T05:29:56.928Z",
+      "text": "返回账号\n账号 · 其他\n松果工作邮箱\n编辑\n关系图\n\n2 个直接关联 · 0 个间接关联\n\n添加关联\n直接关联\n完整关系\n查找关联\n读图说明\n轻画设计工具\ndesign@example.test\n当前资料\n松果工作邮箱\nhello@pinecone.example.test\nCloudNest 云主机\ncloud@example.test\nReact Flow\n关联明细 · 2\n待办\n新增\n核对项目关联资料\n2027年1月12日\n登录信息\n1/2\n账号\nhello@pinecone.example.test\n密码\n••••••••••\n登录网址\nmail.pinecone.example.test/\n备注\n\n工作邮箱统一备注，保存后重新进入仍能看到。\n\n变更影响检查"
+    },
+    {
+      "label": "zh长标题默认详情 390",
+      "url": "http://127.0.0.1:4389/assets/account/27176ce8-babb-4ce2-a497-88bb7e0f9f9a#password-D9wyRhf0REPd1F7w0Gch4g==",
+      "at": "2026-10-30T05:31:16.418Z",
+      "text": "返回账号\n账号 · 其他\n长名称邮箱 · 用于核对标题、分类和编辑按钮在不同屏幕上的排列 · Pinecone-work-account Pinecone-work-account Pinecone-work-account Pinecone-work-account\n编辑\n关系图\n添加关联\n直接关联\n完整关系\n查找关联\n读图说明\n当前资料\n长名称邮箱 · 用于核对标题、分类和编辑按钮在不同屏幕上的排列 · Pinecone-work-account Pinecone-work-account Pinecone-work-account Pinecone-work-account\nlong-identifier-with-extra-content@example.test\nReact Flow\n待办\n新增\n这里还没有内容\n登录信息\n账号\nlong-identifier-with-extra-content@example.test\n密码\n••••••••••\n备注\n\n唯一备注：用于核对精简后保存与再次打开。\n\n变更影响检查"
+    },
+    {
+      "label": "zh长标题默认详情 768",
+      "url": "http://127.0.0.1:4389/assets/account/27176ce8-babb-4ce2-a497-88bb7e0f9f9a#password-D9wyRhf0REPd1F7w0Gch4g==",
+      "at": "2026-10-30T05:31:16.543Z",
+      "text": "返回账号\n账号 · 其他\n长名称邮箱 · 用于核对标题、分类和编辑按钮在不同屏幕上的排列 · Pinecone-work-account Pinecone-work-account Pinecone-work-account Pinecone-work-account\n编辑\n关系图\n添加关联\n直接关联\n完整关系\n查找关联\n读图说明\n当前资料\n长名称邮箱 · 用于核对标题、分类和编辑按钮在不同屏幕上的排列 · Pinecone-work-account Pinecone-work-account Pinecone-work-account Pinecone-work-account\nlong-identifier-with-extra-content@example.test\nReact Flow\n待办\n新增\n这里还没有内容\n登录信息\n账号\nlong-identifier-with-extra-content@example.test\n密码\n••••••••••\n备注\n\n唯一备注：用于核对精简后保存与再次打开。\n\n变更影响检查"
+    },
+    {
+      "label": "zh长标题默认详情 1280",
+      "url": "http://127.0.0.1:4389/assets/account/27176ce8-babb-4ce2-a497-88bb7e0f9f9a#password-D9wyRhf0REPd1F7w0Gch4g==",
+      "at": "2026-10-30T05:31:16.618Z",
+      "text": "返回账号\n账号 · 其他\n长名称邮箱 · 用于核对标题、分类和编辑按钮在不同屏幕上的排列 · Pinecone-work-account Pinecone-work-account Pinecone-work-account Pinecone-work-account\n编辑\n关系图\n添加关联\n直接关联\n完整关系\n查找关联\n读图说明\nReact Flow\n\n正在打开资料…\n\n待办\n新增\n这里还没有内容\n登录信息\n账号\nlong-identifier-with-extra-content@example.test\n密码\n••••••••••\n备注\n\n唯一备注：用于核对精简后保存与再次打开。\n\n变更影响检查"
+    },
+    {
+      "label": "zh长标题默认详情 1920",
+      "url": "http://127.0.0.1:4389/assets/account/27176ce8-babb-4ce2-a497-88bb7e0f9f9a#password-D9wyRhf0REPd1F7w0Gch4g==",
+      "at": "2026-10-30T05:31:16.785Z",
+      "text": "返回账号\n账号 · 其他\n长名称邮箱 · 用于核对标题、分类和编辑按钮在不同屏幕上的排列 · Pinecone-work-account Pinecone-work-account Pinecone-work-account Pinecone-work-account\n编辑\n关系图\n添加关联\n直接关联\n完整关系\n查找关联\n读图说明\n当前资料\n长名称邮箱 · 用于核对标题、分类和编辑按钮在不同屏幕上的排列 · Pinecone-work-account Pinecone-work-account Pinecone-work-account Pinecone-work-account\nlong-identifier-with-extra-content@example.test\nReact Flow\n待办\n新增\n这里还没有内容\n登录信息\n账号\nlong-identifier-with-extra-content@example.test\n密码\n••••••••••\n备注\n\n唯一备注：用于核对精简后保存与再次打开。\n\n变更影响检查"
+    },
+    {
+      "label": "zh长标题默认详情 2262",
+      "url": "http://127.0.0.1:4389/assets/account/27176ce8-babb-4ce2-a497-88bb7e0f9f9a#password-D9wyRhf0REPd1F7w0Gch4g==",
+      "at": "2026-10-30T05:31:16.869Z",
+      "text": "返回账号\n账号 · 其他\n长名称邮箱 · 用于核对标题、分类和编辑按钮在不同屏幕上的排列 · Pinecone-work-account Pinecone-work-account Pinecone-work-account Pinecone-work-account\n编辑\n关系图\n添加关联\n直接关联\n完整关系\n查找关联\n读图说明\n当前资料\n长名称邮箱 · 用于核对标题、分类和编辑按钮在不同屏幕上的排列 · Pinecone-work-account Pinecone-work-account Pinecone-work-account Pinecone-work-account\nlong-identifier-with-extra-content@example.test\nReact Flow\n待办\n新增\n这里还没有内容\n登录信息\n账号\nlong-identifier-with-extra-content@example.test\n密码\n••••••••••\n备注\n\n唯一备注：用于核对精简后保存与再次打开。\n\n变更影响检查"
+    },
+    {
+      "label": "删除当前标识先可取消",
+      "url": "http://127.0.0.1:4389/accounts",
+      "at": "2026-10-30T05:32:05.336Z",
+      "text": "账号\n\n4 条\n\n已解锁\n新增\n已复制\n全部\n邮箱\n手机\n自媒体\n其他\n管理\n长名称邮箱 · 用于核对标题、分类和编辑按钮在不同屏幕上的排列 · Pinecone-work-account Pinecone-work-account Pinecone-work-account Pinecone-work-account\n0 个关联\n账号\nlong-identifier-with-extra-content@example.test\n密码\n••••••••••\n其他\n轻画设计工具\n1 个关联\n账号\ndesign@example.test\n密码\n••••••••••\n其他\n松果工作邮箱\n2 个关联\n账号\nbackup@pinecone.example.test\n2/2\n密码\n••••••••••\n登录 2/2：backup@pinecone.example.test\n其他\nCloudNest 云主机\n1 个关联\n账号\ncloud@example.test\n密码\n••••••••••\n其他\n登录回收站\n移入回收站的条目仍可恢复。\n\n回收站为空。"
+    },
+    {
+      "label": "仅删除切换中的别名，主登录保留",
+      "url": "http://127.0.0.1:4389/accounts",
+      "at": "2026-10-30T05:32:05.984Z",
+      "text": "账号\n\n4 条\n\n已解锁\n新增\n登录资料已保存。\n全部\n邮箱\n手机\n自媒体\n其他\n管理\n长名称邮箱 · 用于核对标题、分类和编辑按钮在不同屏幕上的排列 · Pinecone-work-account Pinecone-work-account Pinecone-work-account Pinecone-work-account\n0 个关联\n账号\nlong-identifier-with-extra-content@example.test\n密码\n••••••••••\n其他\n轻画设计工具\n1 个关联\n账号\ndesign@example.test\n密码\n••••••••••\n其他\n松果工作邮箱\n2 个关联\n账号\nhello@pinecone.example.test\n密码\n••••••••••\n其他\nCloudNest 云主机\n1 个关联\n账号\ncloud@example.test\n密码\n••••••••••\n其他\n登录回收站\n移入回收站的条目仍可恢复。\n\n回收站为空。"
+    },
+    {
+      "label": "影响检查独立折叠区域可展开",
+      "url": "http://127.0.0.1:4389/assets/account/f5d9e239-a6ca-49c7-940c-3f94d1b24912#password-s8XL+J+7BGBPWI1/aAiTdw==",
+      "at": "2026-10-30T05:32:06.261Z",
+      "text": "返回账号\n账号 · 其他\n松果工作邮箱\n编辑\n关系图\n\n2 个直接关联 · 0 个间接关联\n\n添加关联\n直接关联\n完整关系\n查找关联\n读图说明\n轻画设计工具\ndesign@example.test\n当前资料\n松果工作邮箱\nhello@pinecone.example.test\nCloudNest 云主机\ncloud@example.test\nReact Flow\n关联明细 · 2\n待办\n新增\n核对项目关联资料\n2027年1月12日\n登录信息\n账号\nhello@pinecone.example.test\n密码\n••••••••••\n登录网址\nmail.pinecone.example.test/\n备注\n\n工作邮箱统一备注，保存后重新进入仍能看到。\n\n变更影响检查\n变更影响\n\n按生成时的关联逐项核对，关联变更后请复核旧待办；完成只记录本机检查，不会更新第三方资料。\n\n生成检查待办 · 2\n全部 · 0\n待处理 · 0\n已完成 · 0\n这里还没有内容"
+    },
+    {
+      "label": "KDBX私有导入标题进入关联页",
+      "url": "http://127.0.0.1:4389/accounts#login-detail-DaqHtSeGSsPDLyasrhcTGA==",
+      "at": "2026-10-30T05:35:32.467Z",
+      "text": "返回账号\n私有导入验证\n其他\n编辑\n关系图\n\n0 个关联\n\n添加关联\n当前资料\n私有导入验证\nprivate-only@example.test\nReact Flow\n登录信息\n账号\nprivate-only@example.test\n密码\n••••••••••\n登录网址\nprivate.example.test/\n备注\n\n唯一的加密导入备注。"
+    },
+    {
+      "label": "私有编辑保持精简并回读备注",
+      "url": "http://127.0.0.1:4389/accounts#login-detail-DaqHtSeGSsPDLyasrhcTGA==",
+      "at": "2026-10-30T05:35:33.059Z",
+      "text": "返回账号\n私有导入验证\n其他\n编辑\n关系图\n\n0 个关联\n\n添加关联\n当前资料\n私有导入验证\nprivate-only@example.test\nReact Flow\n登录信息\n账号\nprivate-only@example.test\n密码\n••••••••••\n登录网址\nprivate.example.test/\n备注\n\n已在最终候选修改的唯一备注。"
+    },
+    {
+      "label": "私有登录加密关联可添加",
+      "url": "http://127.0.0.1:4389/accounts#login-detail-DaqHtSeGSsPDLyasrhcTGA==",
+      "at": "2026-10-30T05:38:49.473Z",
+      "text": "返回账号\n私有导入验证\n其他\n编辑\n关系图\n\n1 个关联\n\n添加关联\n松果工作邮箱\nhello@pinecone.example.test\n当前资料\n私有导入验证\nprivate-only@example.test\nReact Flow\n登录信息\n账号\nprivate-only@example.test\n密码\n••••••••••\n登录网址\nprivate.example.test/\n备注\n\n已在最终候选修改的唯一备注。"
+    },
+    {
+      "label": "解除私有关联后普通账号数不增加",
+      "url": "http://127.0.0.1:4389/accounts",
+      "at": "2026-10-30T05:38:56.161Z",
+      "text": "账号\n\n5 条\n\n已解锁\n新增\n已保存\n全部\n邮箱\n手机\n自媒体\n其他\n管理\n长名称邮箱 · 用于核对标题、分类和编辑按钮在不同屏幕上的排列 · Pinecone-work-account Pinecone-work-account Pinecone-work-account Pinecone-work-account\n0 个关联\n账号\nlong-identifier-with-extra-content@example.test\n密码\n••••••••••\n其他\n轻画设计工具\n1 个关联\n账号\ndesign@example.test\n密码\n••••••••••\n其他\n松果工作邮箱\n2 个关联\n账号\nhello@pinecone.example.test\n密码\n••••••••••\n其他\nCloudNest 云主机\n1 个关联\n账号\ncloud@example.test\n密码\n••••••••••\n其他\n私有导入验证\n0 个关联\n账号\nprivate-only@example.test\n密码\n••••••••••\n其他\n登录回收站\n移入回收站的条目仍可恢复。\n\n回收站为空。"
+    },
+    {
+      "label": "完整关系与搜索高亮",
+      "url": "http://127.0.0.1:4389/assets/account/f5d9e239-a6ca-49c7-940c-3f94d1b24912#password-s8XL+J+7BGBPWI1/aAiTdw==",
+      "at": "2026-10-30T05:38:56.426Z",
+      "text": "返回账号\n账号 · 其他\n松果工作邮箱\n编辑\n关系图\n\n2 个直接关联 · 0 个间接关联\n\n添加关联\n直接关联\n完整关系\n查找关联\n图中1项匹配\n读图说明\n轻画设计工具\ndesign@example.test\n当前资料\n松果工作邮箱\nhello@pinecone.example.test\nCloudNest 云主机\ncloud@example.test\nReact Flow\n关联明细 · 1\n松果工作邮箱 → \nCloudNest 云主机\n登录邮箱\n移除\n待办\n新增\n核对项目关联资料\n2027年1月12日\n登录信息\n账号\nhello@pinecone.example.test\n密码\n••••••••••\n登录网址\nmail.pinecone.example.test/\n备注\n\n工作邮箱统一备注，保存后重新进入仍能看到。\n\n变更影响检查"
+    },
+    {
+      "label": "全屏关系图与键盘返回",
+      "url": "http://127.0.0.1:4389/assets/account/f5d9e239-a6ca-49c7-940c-3f94d1b24912#password-s8XL+J+7BGBPWI1/aAiTdw==",
+      "at": "2026-10-30T05:38:56.653Z",
+      "text": "返回账号\n账号 · 其他\n松果工作邮箱\n编辑\n关系图\n\n2 个直接关联 · 0 个间接关联\n\n添加关联\n直接关联\n完整关系\n查找关联\n读图说明\n关联明细 · 2\n松果工作邮箱 → \nCloudNest 云主机\n登录邮箱\n移除\n松果工作邮箱 → \n轻画设计工具\n登录邮箱\n移除\n待办\n新增\n核对项目关联资料\n2027年1月12日\n登录信息\n账号\nhello@pinecone.example.test\n密码\n••••••••••\n登录网址\nmail.pinecone.example.test/\n备注\n\n工作邮箱统一备注，保存后重新进入仍能看到。\n\n变更影响检查"
+    },
+    {
+      "label": "紧凑待办完成状态",
+      "url": "http://127.0.0.1:4389/assets/account/f5d9e239-a6ca-49c7-940c-3f94d1b24912#password-s8XL+J+7BGBPWI1/aAiTdw==",
+      "at": "2026-10-30T05:38:57.787Z",
+      "text": "返回账号\n账号 · 其他\n松果工作邮箱\n编辑\n关系图\n\n2 个直接关联 · 0 个间接关联\n\n添加关联\n直接关联\n完整关系\n查找关联\n读图说明\n轻画设计工具\ndesign@example.test\n当前资料\n松果工作邮箱\nhello@pinecone.example.test\nCloudNest 云主机\ncloud@example.test\nReact Flow\n关联明细 · 2\n松果工作邮箱 → \nCloudNest 云主机\n登录邮箱\n移除\n松果工作邮箱 → \n轻画设计工具\n登录邮箱\n移除\n待办\n新增\n核对项目关联资料\n2027年1月12日\n登录信息\n账号\nhello@pinecone.example.test\n密码\n••••••••••\n登录网址\nmail.pinecone.example.test/\n备注\n\n工作邮箱统一备注，保存后重新进入仍能看到。\n\n变更影响检查"
+    },
+    {
+      "label": "紧凑待办重新打开",
+      "url": "http://127.0.0.1:4389/assets/account/f5d9e239-a6ca-49c7-940c-3f94d1b24912#password-s8XL+J+7BGBPWI1/aAiTdw==",
+      "at": "2026-10-30T05:38:57.901Z",
+      "text": "返回账号\n账号 · 其他\n松果工作邮箱\n编辑\n关系图\n\n2 个直接关联 · 0 个间接关联\n\n添加关联\n直接关联\n完整关系\n查找关联\n读图说明\n轻画设计工具\ndesign@example.test\n当前资料\n松果工作邮箱\nhello@pinecone.example.test\nCloudNest 云主机\ncloud@example.test\nReact Flow\n关联明细 · 2\n松果工作邮箱 → \nCloudNest 云主机\n登录邮箱\n移除\n松果工作邮箱 → \n轻画设计工具\n登录邮箱\n移除\n待办\n新增\n核对项目关联资料\n2027年1月12日\n完成记录: 2026/10/30 13:38:57\n登录信息\n账号\nhello@pinecone.example.test\n密码\n••••••••••\n登录网址\nmail.pinecone.example.test/\n备注\n\n工作邮箱统一备注，保存后重新进入仍能看到。\n\n变更影响检查"
+    },
+    {
+      "label": "改期取消未改变原日期",
+      "url": "http://127.0.0.1:4389/assets/account/f5d9e239-a6ca-49c7-940c-3f94d1b24912#password-s8XL+J+7BGBPWI1/aAiTdw==",
+      "at": "2026-10-30T05:38:58.122Z",
+      "text": "返回账号\n账号 · 其他\n松果工作邮箱\n编辑\n关系图\n\n2 个直接关联 · 0 个间接关联\n\n添加关联\n直接关联\n完整关系\n查找关联\n读图说明\n轻画设计工具\ndesign@example.test\n当前资料\n松果工作邮箱\nhello@pinecone.example.test\nCloudNest 云主机\ncloud@example.test\nReact Flow\n关联明细 · 2\n松果工作邮箱 → \nCloudNest 云主机\n登录邮箱\n移除\n松果工作邮箱 → \n轻画设计工具\n登录邮箱\n移除\n待办\n新增\n核对项目关联资料\n2027年1月12日\n完成记录: 2026/10/30 13:38:57\n登录信息\n账号\nhello@pinecone.example.test\n密码\n••••••••••\n登录网址\nmail.pinecone.example.test/\n备注\n\n工作邮箱统一备注，保存后重新进入仍能看到。\n\n变更影响检查"
+    },
+    {
+      "label": "跨账号返回不保留旧编辑稿",
+      "url": "http://127.0.0.1:4389/assets/account/f5d9e239-a6ca-49c7-940c-3f94d1b24912#password-s8XL+J+7BGBPWI1/aAiTdw==",
+      "at": "2026-10-30T05:39:12.053Z",
+      "text": "返回账号\n账号 · 其他\n松果工作邮箱\n编辑\n关系图\n\n2 个直接关联 · 0 个间接关联\n\n添加关联\n直接关联\n完整关系\n查找关联\n读图说明\n轻画设计工具\ndesign@example.test\n当前资料\n松果工作邮箱\nhello@pinecone.example.test\nCloudNest 云主机\ncloud@example.test\nReact Flow\n\n正在打开资料…\n\n关联明细 · 2\n待办\n新增\n核对项目关联资料\n2027年1月20日\n完成记录: 2026/10/30 13:38:57\n登录信息\n账号\nhello@pinecone.example.test\n密码\n••••••••••\n登录网址\nmail.pinecone.example.test/\n备注\n\n工作邮箱统一备注，保存后重新进入仍能看到。\n\n变更影响检查"
+    },
+    {
+      "label": "关系删除独立于登录，取消与确认均可用",
+      "url": "http://127.0.0.1:4389/assets/account/f5d9e239-a6ca-49c7-940c-3f94d1b24912#password-s8XL+J+7BGBPWI1/aAiTdw==",
+      "at": "2026-10-30T05:39:14.424Z",
+      "text": "返回账号\n账号 · 其他\n松果工作邮箱\n编辑\n关系图\n\n1 个直接关联 · 0 个间接关联\n\n添加关联\n直接关联\n完整关系\n查找关联\n读图说明\n轻画设计工具\ndesign@example.test\n当前资料\n松果工作邮箱\nhello@pinecone.example.test\nReact Flow\n关联明细 · 1\n待办\n新增\n核对项目关联资料\n2027年1月20日\n完成记录: 2026/10/30 13:38:57\n登录信息\n账号\nhello@pinecone.example.test\n密码\n••••••••••\n登录网址\nmail.pinecone.example.test/\n备注\n\n工作邮箱统一备注，保存后重新进入仍能看到。\n\n变更影响检查"
+    },
+    {
+      "label": "用户图片实际尺寸详情 2262x1336",
+      "url": "http://127.0.0.1:4389/assets/account/f5d9e239-a6ca-49c7-940c-3f94d1b24912#password-s8XL+J+7BGBPWI1/aAiTdw==",
+      "at": "2026-10-30T05:40:07.111Z",
+      "text": "返回账号\n账号 · 其他\n松果工作邮箱\n编辑\n关系图\n\n1 个直接关联 · 0 个间接关联\n\n添加关联\n直接关联\n完整关系\n查找关联\n读图说明\n轻画设计工具\ndesign@example.test\n当前资料\n松果工作邮箱\nhello@pinecone.example.test\nReact Flow\n关联明细 · 1\n待办\n新增\n核对项目关联资料\n2027年1月20日\n完成记录: 2026/10/30 13:38:57\n登录信息\n账号\nhello@pinecone.example.test\n密码\n••••••••••\n登录网址\nmail.pinecone.example.test/\n备注\n\n工作邮箱统一备注，保存后重新进入仍能看到。\n\n变更影响检查"
+    },
+    {
+      "label": "用户图片实际尺寸精简编辑 2262x1336",
+      "url": "http://127.0.0.1:4389/assets/account/f5d9e239-a6ca-49c7-940c-3f94d1b24912#password-s8XL+J+7BGBPWI1/aAiTdw==",
+      "at": "2026-10-30T05:40:08.134Z",
+      "text": "返回账号\n账号 · 其他\n松果工作邮箱\n编辑\n关系图\n\n1 个直接关联 · 0 个间接关联\n\n添加关联\n直接关联\n完整关系\n查找关联\n读图说明\n轻画设计工具\ndesign@example.test\n当前资料\n松果工作邮箱\nhello@pinecone.example.test\nReact Flow\n关联明细 · 1\n待办\n新增\n核对项目关联资料\n2027年1月20日\n完成记录: 2026/10/30 13:38:57\n登录信息\n账号\nhello@pinecone.example.test\n密码\n••••••••••\n登录网址\nmail.pinecone.example.test/\n备注\n\n工作邮箱统一备注，保存后重新进入仍能看到。\n\n变更影响检查"
+    },
+    {
+      "label": "用户图片实际尺寸详情 1605x980",
+      "url": "http://127.0.0.1:4389/assets/account/f5d9e239-a6ca-49c7-940c-3f94d1b24912#password-s8XL+J+7BGBPWI1/aAiTdw==",
+      "at": "2026-10-30T05:40:08.272Z",
+      "text": "返回账号\n账号 · 其他\n松果工作邮箱\n编辑\n关系图\n\n1 个直接关联 · 0 个间接关联\n\n添加关联\n直接关联\n完整关系\n查找关联\n读图说明\n轻画设计工具\ndesign@example.test\n当前资料\n松果工作邮箱\nhello@pinecone.example.test\nReact Flow\n关联明细 · 1\n待办\n新增\n核对项目关联资料\n2027年1月20日\n完成记录: 2026/10/30 13:38:57\n登录信息\n账号\nhello@pinecone.example.test\n密码\n••••••••••\n登录网址\nmail.pinecone.example.test/\n备注\n\n工作邮箱统一备注，保存后重新进入仍能看到。\n\n变更影响检查"
+    },
+    {
+      "label": "用户图片实际尺寸精简编辑 1605x980",
+      "url": "http://127.0.0.1:4389/assets/account/f5d9e239-a6ca-49c7-940c-3f94d1b24912#password-s8XL+J+7BGBPWI1/aAiTdw==",
+      "at": "2026-10-30T05:40:08.383Z",
+      "text": "返回账号\n账号 · 其他\n松果工作邮箱\n编辑\n关系图\n\n1 个直接关联 · 0 个间接关联\n\n添加关联\n直接关联\n完整关系\n查找关联\n读图说明\n轻画设计工具\ndesign@example.test\n当前资料\n松果工作邮箱\nhello@pinecone.example.test\nReact Flow\n关联明细 · 1\n待办\n新增\n核对项目关联资料\n2027年1月20日\n完成记录: 2026/10/30 13:38:57\n登录信息\n账号\nhello@pinecone.example.test\n密码\n••••••••••\n登录网址\nmail.pinecone.example.test/\n备注\n\n工作邮箱统一备注，保存后重新进入仍能看到。\n\n变更影响检查"
+    },
+    {
+      "label": "用户图片实际尺寸详情 1313x1182",
+      "url": "http://127.0.0.1:4389/assets/account/f5d9e239-a6ca-49c7-940c-3f94d1b24912#password-s8XL+J+7BGBPWI1/aAiTdw==",
+      "at": "2026-10-30T05:40:08.506Z",
+      "text": "返回账号\n账号 · 其他\n松果工作邮箱\n编辑\n关系图\n\n1 个直接关联 · 0 个间接关联\n\n添加关联\n直接关联\n完整关系\n查找关联\n读图说明\nReact Flow\n\n正在打开资料…\n\n关联明细 · 1\n待办\n新增\n核对项目关联资料\n2027年1月20日\n完成记录: 2026/10/30 13:38:57\n登录信息\n账号\nhello@pinecone.example.test\n密码\n••••••••••\n登录网址\nmail.pinecone.example.test/\n备注\n\n工作邮箱统一备注，保存后重新进入仍能看到。\n\n变更影响检查"
+    },
+    {
+      "label": "用户图片实际尺寸精简编辑 1313x1182",
+      "url": "http://127.0.0.1:4389/assets/account/f5d9e239-a6ca-49c7-940c-3f94d1b24912#password-s8XL+J+7BGBPWI1/aAiTdw==",
+      "at": "2026-10-30T05:40:08.658Z",
+      "text": "返回账号\n账号 · 其他\n松果工作邮箱\n编辑\n关系图\n\n1 个直接关联 · 0 个间接关联\n\n添加关联\n直接关联\n完整关系\n查找关联\n读图说明\n轻画设计工具\ndesign@example.test\n当前资料\n松果工作邮箱\nhello@pinecone.example.test\nReact Flow\n关联明细 · 1\n待办\n新增\n核对项目关联资料\n2027年1月20日\n完成记录: 2026/10/30 13:38:57\n登录信息\n账号\nhello@pinecone.example.test\n密码\n••••••••••\n登录网址\nmail.pinecone.example.test/\n备注\n\n工作邮箱统一备注，保存后重新进入仍能看到。\n\n变更影响检查"
+    },
+    {
+      "label": "右栏生成真实变更检查待办后的布局",
+      "url": "http://127.0.0.1:4389/assets/account/f5d9e239-a6ca-49c7-940c-3f94d1b24912#password-s8XL+J+7BGBPWI1/aAiTdw==",
+      "at": "2026-10-30T05:40:36.336Z",
+      "text": "返回账号\n账号 · 其他\n松果工作邮箱\n编辑\n关系图\n\n1 个直接关联 · 0 个间接关联\n\n添加关联\n直接关联\n完整关系\n查找关联\n读图说明\n轻画设计工具\ndesign@example.test\n当前资料\n松果工作邮箱\nhello@pinecone.example.test\nReact Flow\n关联明细 · 1\n待办\n新增\n核对项目关联资料\n2027年1月20日\n完成记录: 2026/10/30 13:38:57\n登录信息\n账号\nhello@pinecone.example.test\n密码\n••••••••••\n登录网址\nmail.pinecone.example.test/\n备注\n\n工作邮箱统一备注，保存后重新进入仍能看到。\n\n变更影响检查\n变更影响\n\n按生成时的关联逐项核对，关联变更后请复核旧待办；完成只记录本机检查，不会更新第三方资料。\n\n生成检查待办 · 0\n全部 · 1\n待处理 · 1\n已完成 · 0\n检查关联 · 轻画设计工具\n关联资产: 轻画设计工具\n松果工作邮箱 → 轻画设计工具 · 登录邮箱\n关系来源: — · 最近核验: —\n生成于: 2026/10/30 13:40:08\n查看待办\n稍后提醒\n待处理"
+    }
+  ]
+}

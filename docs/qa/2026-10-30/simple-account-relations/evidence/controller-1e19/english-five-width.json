@@ -1,0 +1,30 @@
+{
+  "source": "1e1979ac9cbc70199b916f7e5929a70046721e72",
+  "checks": [
+    {
+      "width": 390,
+      "header": 191.78125,
+      "overflow": false
+    },
+    {
+      "width": 768,
+      "header": 137.78125,
+      "overflow": false
+    },
+    {
+      "width": 1280,
+      "header": 147.796875,
+      "overflow": false
+    },
+    {
+      "width": 1920,
+      "header": 126,
+      "overflow": false
+    },
+    {
+      "width": 2262,
+      "header": 126,
+      "overflow": false
+    }
+  ]
+}
