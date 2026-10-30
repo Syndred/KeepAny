@@ -227,7 +227,18 @@ export function AccountEntryDialog({ onClose }: { onClose: () => void }) {
 				<form
 					className="password-vault-editor account-entry-form"
 					onInput={clearInputError}
-					onInvalidCapture={clearInputError}
+					onInvalidCapture={(event) => {
+						clearInputError();
+						const field = event.target;
+						if (!(field instanceof HTMLInputElement) || field.id !== "account-entry-reviewed") return;
+						// Native validation bubbles can fall behind the sticky footer.
+						// Keep browser validity, but show its date error in the visible footer.
+						event.preventDefault();
+						inputError.current = true;
+						setError(t("invalidDate"));
+						field.scrollIntoView({ block: "center" });
+						field.focus({ preventScroll: true });
+					}}
 					onSubmit={(event) => void submit(event)}
 				>
 					{draft && (

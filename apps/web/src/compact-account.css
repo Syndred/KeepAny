@@ -37,7 +37,7 @@
 .unified-accounts-page .asset-category-toolbar .list-filters { flex: 0 1 140px; margin: 0; }
 .unified-accounts-page .password-vault-header { position: relative; margin-bottom: 10px; }
 .compact-account-feedback-slot { position: absolute; left: 0; right: 0; top: 100%; padding-top: 2px; min-height: 22px; }
-.compact-account-feedback-message { color: var(--green); font-size: 12px; line-height: 20px; overflow-wrap: anywhere; }
+.compact-account-feedback-message { color: var(--ink); font-size: 12px; line-height: 20px; overflow-wrap: anywhere; }
 @media (max-width: 767px) {
 	.unified-accounts-page .asset-category-toolbar--search .asset-category-scroll { flex: 1 1 100%; }
 	.unified-accounts-page .asset-account-search { flex-basis: 100%; }

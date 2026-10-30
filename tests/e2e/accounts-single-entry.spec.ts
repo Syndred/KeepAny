@@ -291,7 +291,11 @@ for (const language of ["zh-CN", "en"] as const) {
 			await dialog.locator("#account-entry-reviewed").fill("2026-02-30");
 			await dialog.getByRole("button", { name: t("save"), exact: true }).click();
 			expect(await dialog.locator("#account-entry-reviewed").evaluate(node => (node as HTMLInputElement).validity.valid)).toBe(false);
-			await expect(dialog.getByRole("alert")).toHaveCount(0);
+			await expect(dialog.getByRole("alert")).toContainText(t("invalidDate"));
+			await expect(dialog.locator("#account-entry-reviewed")).toBeInViewport({ ratio: 1 });
+			const invalidField = await dialog.locator("#account-entry-reviewed").boundingBox();
+			const actions = await dialog.locator(".password-vault-editor-actions").boundingBox();
+			expect(invalidField!.y + invalidField!.height).toBeLessThanOrEqual(actions!.y);
 			await expect(page.locator(".asset-account-card")).toHaveCount(1);
 			await snapshot(page, `sequential-validation-error-${language}`);
 			await dialog.locator("#account-entry-reviewed").fill("2026-10-29");
