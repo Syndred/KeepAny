@@ -96,6 +96,8 @@ for (const language of ["zh-CN", "en"] as const) for (const width of [1920, 1280
 			await trigger.focus(); await account.screenshot({ path: join(evidence, `focus-${language}-${width}.png`) });
 			await addEntry(); await page.locator("#password-vault-entry-title").fill("Second passwordless phone login");
 			await page.getByRole("dialog").getByRole("button", { name: t("pwVaultSaveEntry"), exact: true }).click();
+			await expect(page.getByRole("dialog")).toHaveCount(0);
+			await expect(account.locator(".compact-account-switch")).toHaveText("1/2");
 			const savedEntryIds = await compactEntryIds(page); expect(savedEntryIds).toHaveLength(2); expect(savedEntryIds.every(Boolean)).toBe(true);
 			await account.locator(".compact-account-switch").click();
 			await expect(account).toContainText(t("pwVaultNoPassword"));
@@ -117,6 +119,7 @@ for (const language of ["zh-CN", "en"] as const) for (const width of [1920, 1280
 			await page.reload(); await openVaultAccess(page); await page.locator("#password-vault-unlock-master").fill(master);
 			await page.getByRole("button", { name: t("pwVaultUnlock"), exact: true }).click();
 			expect(await account.locator(".compact-account-title").getAttribute("href")).toBe(originalAccountHref);
+			await expect(account.locator(".compact-account-switch")).toHaveText("1/2");
 			expect(await compactEntryIds(page)).toEqual(savedEntryIds);
 			details = await openCompactLoginDetails(page, account, t); await expect(details).toContainText("Demo | Phone service login"); await expect(details).toContainText(phone); await closeCompactLoginDetails(page, t);
 			await account.locator(".compact-account-switch").click(); details = await openCompactLoginDetails(page, account, t); await expect(details).toContainText("Second passwordless phone login"); await closeCompactLoginDetails(page, t);

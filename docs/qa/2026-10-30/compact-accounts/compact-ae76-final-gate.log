@@ -1,0 +1,26 @@
+[WebServer] (node:14056) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 16 tests using 1 worker
+
+(node:26476) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok  1 tests\e2e\accounts-single-entry.spec.ts:103:2 › zh-CN SE01-SE07 unified account creation, original fields, durable KDBX link and bottom trash (14.2s)
+  ok  2 tests\e2e\accounts-single-entry.spec.ts:212:2 › zh-CN SE02 same-form create and unlock errors preserve ordinary draft (8.9s)
+  ok  3 tests\e2e\accounts-single-entry.spec.ts:306:2 › zh-CN SE08 empty, merged form, long invalid draft and compact account at six widths (14.7s)
+  ok  4 tests\e2e\accounts-single-entry.spec.ts:103:2 › en SE01-SE07 unified account creation, original fields, durable KDBX link and bottom trash (14.2s)
+  ok  5 tests\e2e\accounts-single-entry.spec.ts:212:2 › en SE02 same-form create and unlock errors preserve ordinary draft (8.6s)
+  ok  6 tests\e2e\accounts-single-entry.spec.ts:306:2 › en SE08 empty, merged form, long invalid draft and compact account at six widths (14.8s)
+  ok  7 tests\e2e\compact-accounts.spec.ts:62:2 › zh-CN CC10 restoring a deleted entry does not reopen stale login details (5.7s)
+  ok  8 tests\e2e\compact-accounts.spec.ts:81:2 › zh-CN CC03-CC10 compact copy, cyclic switch, lock, details and durable content (7.3s)
+  ok  9 tests\e2e\compact-accounts.spec.ts:143:2 › zh-CN CC09 clipboard failure stays explicit and stale failure is cancelled on query change (4.7s)
+  ok 10 tests\e2e\compact-accounts.spec.ts:168:2 › zh-CN CC05-CC09 query transition never restores a previously revealed password (4.7s)
+  ok 11 tests\e2e\compact-accounts.spec.ts:185:2 › zh-CN CC01-CC02-CC11 compiled visual geometry and supported widths (6.8s)
+  ok 12 tests\e2e\compact-accounts.spec.ts:62:2 › en CC10 restoring a deleted entry does not reopen stale login details (5.0s)
+  ok 13 tests\e2e\compact-accounts.spec.ts:81:2 › en CC03-CC10 compact copy, cyclic switch, lock, details and durable content (7.6s)
+  ok 14 tests\e2e\compact-accounts.spec.ts:143:2 › en CC09 clipboard failure stays explicit and stale failure is cancelled on query change (4.1s)
+  ok 15 tests\e2e\compact-accounts.spec.ts:168:2 › en CC05-CC09 query transition never restores a previously revealed password (4.1s)
+  ok 16 tests\e2e\compact-accounts.spec.ts:185:2 › en CC01-CC02-CC11 compiled visual geometry and supported widths (7.1s)
+
+  16 passed (2.3m)
+Account-entry machine checks passed for ae76b20e8a8c4e07779fd3cfafa4345c8dd37eb8. Manual visual review, controller journey and independent review remain separate.

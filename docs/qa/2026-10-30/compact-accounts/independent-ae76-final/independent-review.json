@@ -1,0 +1,105 @@
+{
+  "scope": "CC03/04/05/06/07/08/09/10/11/12/14 independent final-package review; fictional data only; this does not replace main-controller experience or 4180 deployment validation",
+  "candidate": {
+    "sourceCommit": "ae76b20e8a8c4e07779fd3cfafa4345c8dd37eb8",
+    "sourceDirty": false,
+    "zipSha256": "276c8da5fa24704df1ad355195babfc4b3daa759cbfe45e7b487bea43e508e32",
+    "origin": "http://127.0.0.1:4396",
+    "runtimeBytesMatchedZip": [
+      "index.html",
+      "assets/page-workspaces-BEB5CiUv.css",
+      "assets/page-workspaces-CiqIrFAU.js",
+      "assets/PasswordVaultPanel-DYJfvI_m.js"
+    ]
+  },
+  "preparation": "Fresh independent Chromium context. All accounts, vault, aliases and entries created through visible UI. Clipboard refusal and delayed rejection were explicitly simulated by replacing browser clipboard.writeText; other copy checks used real clipboard reads.",
+  "results": {
+    "createWithoutPassword": true,
+    "createVaultViaCard": true,
+    "mainCopy": true,
+    "aliasCopy": true,
+    "aliasOwner": true,
+    "backupCopy": true,
+    "selectedEntryUrl": true,
+    "queryMasked": true,
+    "foundBackup": true,
+    "focusFixed": true,
+    "deleteDialogCount": 0,
+    "restoreDialogCount": 0,
+    "feedbackNoOverlap": true,
+    "lockedFeedbackNoOverlap": true,
+    "mobile": {
+      "cardHeight": 221,
+      "targets": [
+        {
+          "label": "Independent final account",
+          "w": 200,
+          "h": 44
+        },
+        {
+          "label": "Open login website",
+          "w": 44,
+          "h": 44
+        },
+        {
+          "label": "More actions",
+          "w": 44,
+          "h": 44
+        },
+        {
+          "label": "Next login (1/3)",
+          "w": 44,
+          "h": 44
+        },
+        {
+          "label": "Copy username",
+          "w": 44,
+          "h": 44
+        },
+        {
+          "label": "Reveal password",
+          "w": 44,
+          "h": 44
+        },
+        {
+          "label": "Copy password",
+          "w": 44,
+          "h": 44
+        },
+        {
+          "label": "0 connections",
+          "w": 67.484375,
+          "h": 44
+        },
+        {
+          "label": "Details",
+          "w": 48.796875,
+          "h": 44
+        }
+      ],
+      "overflow": false
+    },
+    "lockHidden": true,
+    "noPrivateCounter": true,
+    "publicCopy": true,
+    "wrongStillLocked": true,
+    "manualValueCorrect": true,
+    "lateQueryCancelled": true,
+    "lateLockCancelled": true,
+    "notesSaved": true,
+    "historyVisible": true,
+    "cancelKeptId": true,
+    "unlinkedPreserved": true,
+    "reloadPreserved": true,
+    "pageErrors": []
+  },
+  "artifacts": [
+    "mobile-copy-feedback.png",
+    "mobile-locked-feedback.png",
+    "manual-copy-failure.png",
+    "desktop-menu-after-reload.png"
+  ],
+  "beforeFixEvidence": "../independent-a967-before; original valid failures retained",
+  "visualBoundary": "Independent actual views: own final 390 success/locked feedback, 1280 manual-copy error/menu; earlier a967 screenshot review recorded separately. This receipt does not claim independent re-execution of every locale/width combination.",
+  "verdict": "上述明确复核范围通过；无未解决发现"
+}

@@ -1,0 +1,514 @@
+{
+  "schema": "keepany.account-layout-evidence.v2",
+  "status": "passed",
+  "sourceCommit": "ae76b20e8a8c4e07779fd3cfafa4345c8dd37eb8",
+  "version": "0.1.0-preview.ae76b20e8a8c",
+  "indexSha256": "ea991c52c1bce249258aa61352accdc535eed2a425873ff817fb8c111d6a4b9a",
+  "receipts": [
+    {
+      "path": "result-zh-CN-390.json",
+      "sha256": "d63c6870e8f2d960ef4c747d716cf0c833e4636513de32495ab78e365cb96751",
+      "evidence": [
+        {
+          "path": "expanded-zh-CN-390.png",
+          "sha256": "851242e37e929e1c45b44a39e5453d7ec1000dfeb65f8f8136f25891d9c9065e"
+        },
+        {
+          "path": "multiple-zh-CN-390.png",
+          "sha256": "524c626c7c5c21511386a0964ff82cdec25cb3c2219fd1ff1a75c804fe10a421"
+        },
+        {
+          "path": "hover-zh-CN-390.png",
+          "sha256": "bc3c5711a8dd9e5e071ddd4e3e0054cfb369cb2630eaed074f69d6c3bcf94f7a"
+        },
+        {
+          "path": "focus-zh-CN-390.png",
+          "sha256": "021ddbf34a19a419255ffdcf519968b5ff1cc238edbf4c284ab77e4d4402d3b4"
+        },
+        {
+          "path": "empty-zh-CN-390.png",
+          "sha256": "d7337a08c98696152e916ccdcd2071fd25ef138bbde15c1d402b408fa8258f48"
+        },
+        {
+          "path": "toolbar-zh-CN-390.png",
+          "sha256": "ff1be0a7efa3e08f846bfa0f54caf95b360f6b91c62901f2824126731f2e562e"
+        }
+      ],
+      "baselineCandidates": [
+        {
+          "state": "expanded",
+          "path": "review-win32-account-zh-CN-390-expanded.png",
+          "sha256": "25f5ba76f702141ab228f57a6b407d59c5de8d077a55635549f130ca2c2e64f0",
+          "platform": "win32",
+          "browser": "153.0.8010.12",
+          "baseline": "win32/accounts/account-zh-CN-390-expanded.png",
+          "comparison": "pending-human-review"
+        },
+        {
+          "state": "collapsed",
+          "path": "review-win32-account-zh-CN-390-collapsed.png",
+          "sha256": "b97d54bc9d345240656fbd93559593c2a72d8a29c0e826e329c1def5a252db67",
+          "platform": "win32",
+          "browser": "153.0.8010.12",
+          "baseline": "win32/accounts/account-zh-CN-390-collapsed.png",
+          "comparison": "pending-human-review"
+        }
+      ]
+    },
+    {
+      "path": "result-zh-CN-768.json",
+      "sha256": "29743db5907348476c9beca44ea90f872bac0ecf1ea8c007b22c9ffc89f099c5",
+      "evidence": [
+        {
+          "path": "expanded-zh-CN-768.png",
+          "sha256": "e302796cf5fe550bf12010c4aee513ee72e22f2e0570e00121b21944aae3533a"
+        },
+        {
+          "path": "multiple-zh-CN-768.png",
+          "sha256": "2e8fa009f151b5857642fe5b113bf98f502d5664615842301e0cdee914f8df9b"
+        },
+        {
+          "path": "hover-zh-CN-768.png",
+          "sha256": "8f03a3ba062d761eb45c8db0bb1376cd92d486075f76886f210d4f86791e37f6"
+        },
+        {
+          "path": "focus-zh-CN-768.png",
+          "sha256": "e5352fc204549366df602637d2e84f3ec8f110b31a1df34102f114d20189a28a"
+        },
+        {
+          "path": "empty-zh-CN-768.png",
+          "sha256": "468840f2c1a438ed854f00fd6c7ee7c40bd8efc0cec27edab328a4ca1aa6cb93"
+        },
+        {
+          "path": "toolbar-zh-CN-768.png",
+          "sha256": "e79dbe81dc30fda77101922e28e89eb8320df8347a118ec72c3cb49cd5d0f09b"
+        }
+      ],
+      "baselineCandidates": [
+        {
+          "state": "expanded",
+          "path": "review-win32-account-zh-CN-768-expanded.png",
+          "sha256": "a7d8d307697243845ab299c8f236bc8883a89565391ed0761da89d53253fa449",
+          "platform": "win32",
+          "browser": "153.0.8010.12",
+          "baseline": "win32/accounts/account-zh-CN-768-expanded.png",
+          "comparison": "pending-human-review"
+        },
+        {
+          "state": "collapsed",
+          "path": "review-win32-account-zh-CN-768-collapsed.png",
+          "sha256": "d8ca7d5de87153c62d10a6daaca86e7ee1ee2bfb0666607729f2b49c2a6f3a53",
+          "platform": "win32",
+          "browser": "153.0.8010.12",
+          "baseline": "win32/accounts/account-zh-CN-768-collapsed.png",
+          "comparison": "pending-human-review"
+        }
+      ]
+    },
+    {
+      "path": "result-zh-CN-1280.json",
+      "sha256": "3ad24dc0d5ea21876ac4be196e0a956e94a46bb2a9398fd18bc3d880de4cfb8c",
+      "evidence": [
+        {
+          "path": "expanded-zh-CN-1280.png",
+          "sha256": "acaf6dbaf375aa8647c3932a9c3b4a9184fbed7a7e3a098cbb73511559090a75"
+        },
+        {
+          "path": "multiple-zh-CN-1280.png",
+          "sha256": "bda8fe0fff63163ee1b5cfc3833d4e8163312ef93b5f707a05ad216bc5e61304"
+        },
+        {
+          "path": "hover-zh-CN-1280.png",
+          "sha256": "7eee5478e78e890effd3acf62bd74e35f5966a5d3e00f66ef0ad502395c7fa58"
+        },
+        {
+          "path": "focus-zh-CN-1280.png",
+          "sha256": "4ac8699bfdcfded3348bdb7b71e8e37b02fb1da98c72bece87303a31be35ebb4"
+        },
+        {
+          "path": "empty-zh-CN-1280.png",
+          "sha256": "b2d0713cbe3ebc3c8f1dd7cf6e7049fa4709d62425f41d651de74485e268bf4b"
+        },
+        {
+          "path": "toolbar-zh-CN-1280.png",
+          "sha256": "b87e75890925e9778b7ff16df565f585e4afab5ee8530f1689d21c1aeb9c62b0"
+        }
+      ],
+      "baselineCandidates": [
+        {
+          "state": "expanded",
+          "path": "review-win32-account-zh-CN-1280-expanded.png",
+          "sha256": "8dbca367151f4bd1861982fa033a23e98c2af45dd5cb0aedb78aa7e1d28b4d12",
+          "platform": "win32",
+          "browser": "153.0.8010.12",
+          "baseline": "win32/accounts/account-zh-CN-1280-expanded.png",
+          "comparison": "pending-human-review"
+        },
+        {
+          "state": "collapsed",
+          "path": "review-win32-account-zh-CN-1280-collapsed.png",
+          "sha256": "2f6b1483b511ca9d158dc5d6197ba90eb7c699f1e4f82ce58f7b328289e5f9f7",
+          "platform": "win32",
+          "browser": "153.0.8010.12",
+          "baseline": "win32/accounts/account-zh-CN-1280-collapsed.png",
+          "comparison": "pending-human-review"
+        }
+      ]
+    },
+    {
+      "path": "result-zh-CN-1920.json",
+      "sha256": "e24b539b5d69a9f8a9c014a70b2daaba5de8fb2d98b60ae13ddb0e0da232fecc",
+      "evidence": [
+        {
+          "path": "expanded-zh-CN-1920.png",
+          "sha256": "c131a989daf31cf59954707e62a045c65e59bcd257d600d3b56742918937669f"
+        },
+        {
+          "path": "multiple-zh-CN-1920.png",
+          "sha256": "3af3e6f427ae1e5488e46bf10fedef470c30a4c497a0045b8be78264234e29a1"
+        },
+        {
+          "path": "hover-zh-CN-1920.png",
+          "sha256": "933f2c4401777e9aaff8a52cb7e39d611747627ca3256b5f85c42ae404b645df"
+        },
+        {
+          "path": "focus-zh-CN-1920.png",
+          "sha256": "9a0601b62993c1c107f9e54937b398f2302d30ffb3bb2b2c59c6be21490cdfa5"
+        },
+        {
+          "path": "empty-zh-CN-1920.png",
+          "sha256": "89e8ce33a4db1fbb54631c8d40ecc603a4370ea643296495283a5f548f64c73a"
+        },
+        {
+          "path": "toolbar-zh-CN-1920.png",
+          "sha256": "b81155a9c77af8a01bb7d6f2f26c419d30549ab033a873988c64fb75a740b542"
+        }
+      ],
+      "baselineCandidates": [
+        {
+          "state": "expanded",
+          "path": "review-win32-account-zh-CN-1920-expanded.png",
+          "sha256": "eaf184be69b7c7c54e4e1ca3b4adef5b03a06b174d6ea0e71f043ddc68e0f0da",
+          "platform": "win32",
+          "browser": "153.0.8010.12",
+          "baseline": "win32/accounts/account-zh-CN-1920-expanded.png",
+          "comparison": "pending-human-review"
+        },
+        {
+          "state": "collapsed",
+          "path": "review-win32-account-zh-CN-1920-collapsed.png",
+          "sha256": "3142de7dd2a02401475d15ce5d9b99d6996c494a7130c2f50e428b092243e3af",
+          "platform": "win32",
+          "browser": "153.0.8010.12",
+          "baseline": "win32/accounts/account-zh-CN-1920-collapsed.png",
+          "comparison": "pending-human-review"
+        }
+      ]
+    },
+    {
+      "path": "result-zh-CN-2560.json",
+      "sha256": "5b8c40016cda39ed4b47e77bd4f535fbd01f9d22ea507a25c92cb8953994ef18",
+      "evidence": [
+        {
+          "path": "expanded-zh-CN-2560.png",
+          "sha256": "5226bdaabca5a26ac28193467b8338497e161961ee4cb753bfdd9a73707ba25c"
+        },
+        {
+          "path": "multiple-zh-CN-2560.png",
+          "sha256": "ab441c4b6aac4818c59632b05c2359446f19badaad485844215984ceb9da775d"
+        },
+        {
+          "path": "hover-zh-CN-2560.png",
+          "sha256": "e4e8afa9674b2404c9fa5493e2161ac72790bc67b2a8fd4f9e01f63f721f593c"
+        },
+        {
+          "path": "focus-zh-CN-2560.png",
+          "sha256": "e3583d3ec5c63cd76d3e971e81c177fa2b23320794ce786b3513e4c1fde4183e"
+        },
+        {
+          "path": "empty-zh-CN-2560.png",
+          "sha256": "a70c0a3d8df74b73b5aa151a24ffc539b345d209cf4488192171c200fd76349e"
+        },
+        {
+          "path": "toolbar-zh-CN-2560.png",
+          "sha256": "ab6b9e46cbc383476d8f99082960a05d6c6a748ea8e99cb0f2fecdff165a67df"
+        }
+      ],
+      "baselineCandidates": [
+        {
+          "state": "expanded",
+          "path": "review-win32-account-zh-CN-2560-expanded.png",
+          "sha256": "264bb7efc5dfbd80d3e93d9e3e4cd9c0ed308e5ca418f33c232d213baa3de8c3",
+          "platform": "win32",
+          "browser": "153.0.8010.12",
+          "baseline": "win32/accounts/account-zh-CN-2560-expanded.png",
+          "comparison": "pending-human-review"
+        },
+        {
+          "state": "collapsed",
+          "path": "review-win32-account-zh-CN-2560-collapsed.png",
+          "sha256": "129aad595e43f4b240735026dba5d6826614d314c8c1c499b4ec96ea98f4825d",
+          "platform": "win32",
+          "browser": "153.0.8010.12",
+          "baseline": "win32/accounts/account-zh-CN-2560-collapsed.png",
+          "comparison": "pending-human-review"
+        }
+      ]
+    },
+    {
+      "path": "result-en-390.json",
+      "sha256": "09722ccb34ad8e1b1a17a93b9cb6ebb4ef2d2b347d8117f658dfb7e3d82f0ba3",
+      "evidence": [
+        {
+          "path": "expanded-en-390.png",
+          "sha256": "801d65c8c41c679725567e715e4b5303a7f3ac4ef075d26a445005a96b46f622"
+        },
+        {
+          "path": "multiple-en-390.png",
+          "sha256": "c5dd5ab542100f513e10a36b266c42815d3cb4079a408b470ee1f56ed7324951"
+        },
+        {
+          "path": "hover-en-390.png",
+          "sha256": "b95759459c55e1741356cb7a9a31b50ee2124a75f9add2aebc04e82101b6fc07"
+        },
+        {
+          "path": "focus-en-390.png",
+          "sha256": "3926e6e89e20e445377c37eab607af832327a6335a2016bf1e7e83275f9f0a72"
+        },
+        {
+          "path": "empty-en-390.png",
+          "sha256": "fe765bf918d4a4c430beaa4f3b192442911f1bcadc5f70e8ef42f4d4a3c45a40"
+        },
+        {
+          "path": "toolbar-en-390.png",
+          "sha256": "f9b264f6d0c27597750e652e635a9176cf0ebd1cfe891d2aac30077518e5a1ca"
+        }
+      ],
+      "baselineCandidates": [
+        {
+          "state": "expanded",
+          "path": "review-win32-account-en-390-expanded.png",
+          "sha256": "5cf6b2018b7c60ad8d424576e04eca5abab13b7ef46ab53a9b57958763b48690",
+          "platform": "win32",
+          "browser": "153.0.8010.12",
+          "baseline": "win32/accounts/account-en-390-expanded.png",
+          "comparison": "pending-human-review"
+        },
+        {
+          "state": "collapsed",
+          "path": "review-win32-account-en-390-collapsed.png",
+          "sha256": "6fda227fadd218c574a3e4277c348f3bbe7ae72868feea5f2443f37ad3d1380d",
+          "platform": "win32",
+          "browser": "153.0.8010.12",
+          "baseline": "win32/accounts/account-en-390-collapsed.png",
+          "comparison": "pending-human-review"
+        }
+      ]
+    },
+    {
+      "path": "result-en-768.json",
+      "sha256": "eaf50d7ccf165307c92b78670ef99a06d2ab4733973f487c82a4e91581fd8ebe",
+      "evidence": [
+        {
+          "path": "expanded-en-768.png",
+          "sha256": "78d3698326cff6c3e89fd5f9ab9e3376bb668b651042c44d7849e42b63740597"
+        },
+        {
+          "path": "multiple-en-768.png",
+          "sha256": "44fdace6d8dc7e7e0846049b7fb969638d5825655f56cac678d541673fb23321"
+        },
+        {
+          "path": "hover-en-768.png",
+          "sha256": "b7f718e0696d7917ade36775ab7c909b3651c0af382125bc98e23540cd6d14bf"
+        },
+        {
+          "path": "focus-en-768.png",
+          "sha256": "383a581cde21ff7a12fe392be0795cabb1543c483ca4ea2e0ea385742b5f131f"
+        },
+        {
+          "path": "empty-en-768.png",
+          "sha256": "69eb094f94a6851e62ee22998d014566280089c3052c8a014a08a87e5db5dc6c"
+        },
+        {
+          "path": "toolbar-en-768.png",
+          "sha256": "a94ec7782311e9986383b6f9ea9e4dd6cd3be12123fded4dca3633edd11a5f24"
+        }
+      ],
+      "baselineCandidates": [
+        {
+          "state": "expanded",
+          "path": "review-win32-account-en-768-expanded.png",
+          "sha256": "aad4e926ac07a809cdd4d0ad537887f90f696282b59b2bee8b926051f143ad26",
+          "platform": "win32",
+          "browser": "153.0.8010.12",
+          "baseline": "win32/accounts/account-en-768-expanded.png",
+          "comparison": "pending-human-review"
+        },
+        {
+          "state": "collapsed",
+          "path": "review-win32-account-en-768-collapsed.png",
+          "sha256": "b34584ba243ce65181f941b4923938bfc68d9471a1aa361db82f8f1ae539ea96",
+          "platform": "win32",
+          "browser": "153.0.8010.12",
+          "baseline": "win32/accounts/account-en-768-collapsed.png",
+          "comparison": "pending-human-review"
+        }
+      ]
+    },
+    {
+      "path": "result-en-1280.json",
+      "sha256": "d21a6db4b436155f19794caa744570eef6a4f0dfc7640c21e0cc78e4d1089fb2",
+      "evidence": [
+        {
+          "path": "expanded-en-1280.png",
+          "sha256": "36529f78ad878ee4f8303e2790dd9a6445a44ff5581aa9a3b58ee921d92a8619"
+        },
+        {
+          "path": "multiple-en-1280.png",
+          "sha256": "3885f706c21b2dcf5a1ac2af33bfc746ec0b2053bc775f4c6ed30b792e975f9c"
+        },
+        {
+          "path": "hover-en-1280.png",
+          "sha256": "dae50ec22cf54204c0a4603141fba21ea8c8cabeb4094a40cbafad26aba52e77"
+        },
+        {
+          "path": "focus-en-1280.png",
+          "sha256": "dcf63d5a2e9dbbdae225e99906aa6cc45f166df29c02df2ceee3e259c864e2bc"
+        },
+        {
+          "path": "empty-en-1280.png",
+          "sha256": "a2fc449a93c4eb0b8050a33d726ad98f96ad46c041d1d6122e7b71f2671770d5"
+        },
+        {
+          "path": "toolbar-en-1280.png",
+          "sha256": "dd51ad4bef08a8e0b0214997160674db1b5d7c265fbed6794068c0e598e41cf9"
+        }
+      ],
+      "baselineCandidates": [
+        {
+          "state": "expanded",
+          "path": "review-win32-account-en-1280-expanded.png",
+          "sha256": "bfa4696b4518213c7d00ff47654472907fbbf1f26dd0a564eb567aa33855e5a2",
+          "platform": "win32",
+          "browser": "153.0.8010.12",
+          "baseline": "win32/accounts/account-en-1280-expanded.png",
+          "comparison": "pending-human-review"
+        },
+        {
+          "state": "collapsed",
+          "path": "review-win32-account-en-1280-collapsed.png",
+          "sha256": "8afd9386bef86b87b23bef2e2d1396a562b563ed1a67ba1d271b46868ed9f160",
+          "platform": "win32",
+          "browser": "153.0.8010.12",
+          "baseline": "win32/accounts/account-en-1280-collapsed.png",
+          "comparison": "pending-human-review"
+        }
+      ]
+    },
+    {
+      "path": "result-en-1920.json",
+      "sha256": "605def83fa0ce244ab28c636f4b5bdac90eecd46385ff2e197f5733d73036ae6",
+      "evidence": [
+        {
+          "path": "expanded-en-1920.png",
+          "sha256": "92a124aafae43dfe5cba776495775664e69101ff4c9426e8e3cefea6d1788b8b"
+        },
+        {
+          "path": "multiple-en-1920.png",
+          "sha256": "11f8361746f142636937c019253889539c16e7c7c1f44f070ec46b225881b9ba"
+        },
+        {
+          "path": "hover-en-1920.png",
+          "sha256": "b78f5c568c9b29b792aa9e1a83f04e1f91f3f8818d3c6e329a8ad1328cb78139"
+        },
+        {
+          "path": "focus-en-1920.png",
+          "sha256": "b7b1577c31657c494997b9508577046cd7fb4537d39db7b9bcd06d4a9646efb5"
+        },
+        {
+          "path": "empty-en-1920.png",
+          "sha256": "ee4504e88ce92ae76a6158b33884bf36139f8e69c455a69665963f7277929553"
+        },
+        {
+          "path": "toolbar-en-1920.png",
+          "sha256": "da3f40c615d7ded752e1717adf59361a3241e5011fad74180f9050f5e7b91f0c"
+        }
+      ],
+      "baselineCandidates": [
+        {
+          "state": "expanded",
+          "path": "review-win32-account-en-1920-expanded.png",
+          "sha256": "0204e8ef433c13c1ce6a672d3490ffc357fc5d02f9b6117d63e8b19b515174bf",
+          "platform": "win32",
+          "browser": "153.0.8010.12",
+          "baseline": "win32/accounts/account-en-1920-expanded.png",
+          "comparison": "pending-human-review"
+        },
+        {
+          "state": "collapsed",
+          "path": "review-win32-account-en-1920-collapsed.png",
+          "sha256": "d4a5a7e1a0195191bf65ebebbaf1e2e9b39724b32144da39b641d1c5160a67ef",
+          "platform": "win32",
+          "browser": "153.0.8010.12",
+          "baseline": "win32/accounts/account-en-1920-collapsed.png",
+          "comparison": "pending-human-review"
+        }
+      ]
+    },
+    {
+      "path": "result-en-2560.json",
+      "sha256": "d9869bb12668ebc6d2ff7d6c02896f8213dc881cf7525081458541a603f11f38",
+      "evidence": [
+        {
+          "path": "expanded-en-2560.png",
+          "sha256": "7b84f2b67ea47aa1add03d4d4d24095ba1e6725e6682951ba0cb152c570ea8d0"
+        },
+        {
+          "path": "multiple-en-2560.png",
+          "sha256": "962290e16e0578d4d94ebcdc469757606da25c7fb3c763675e92cbdee5ca6774"
+        },
+        {
+          "path": "hover-en-2560.png",
+          "sha256": "13a3ad25a598f77f126d76645d8b8d82ee5e435839c2bdfb905d849a7eac890f"
+        },
+        {
+          "path": "focus-en-2560.png",
+          "sha256": "663a03e53257c10f25f7d8c34384b97f765e1a16e4b6ba2f15e5b768befa24cf"
+        },
+        {
+          "path": "empty-en-2560.png",
+          "sha256": "0f214a8829d4211924fd971da9c556a357e5b5317de91e574d626428ef10c424"
+        },
+        {
+          "path": "toolbar-en-2560.png",
+          "sha256": "5eac6b02673eb69d6a1c4b1d9d077a6126b1e6461eac21c2376cc75c76bb858b"
+        }
+      ],
+      "baselineCandidates": [
+        {
+          "state": "expanded",
+          "path": "review-win32-account-en-2560-expanded.png",
+          "sha256": "92b1c46fe6b11489b8232f19fef4a50e4bd8d63a3a2a6751afa39670a745ee09",
+          "platform": "win32",
+          "browser": "153.0.8010.12",
+          "baseline": "win32/accounts/account-en-2560-expanded.png",
+          "comparison": "pending-human-review"
+        },
+        {
+          "state": "collapsed",
+          "path": "review-win32-account-en-2560-collapsed.png",
+          "sha256": "5a4ea5bd32b81a1b1db3de22a1de87e4e2aa3192f74898847eab0d0d3b17ee72",
+          "platform": "win32",
+          "browser": "153.0.8010.12",
+          "baseline": "win32/accounts/account-en-2560-collapsed.png",
+          "comparison": "pending-human-review"
+        }
+      ]
+    }
+  ],
+  "baselineComparison": "pending-human-review",
+  "finiteTestImprovementAcceptance": "separate-required",
+  "manualVisual": "separate-required",
+  "ownerExperience": "separate-required",
+  "independentReview": "separate-required"
+}

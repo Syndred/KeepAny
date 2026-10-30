@@ -184,7 +184,7 @@ for (const language of ["zh-CN", "en"] as const) {
 
 	test(`${language} CC01-CC02-CC11 compiled visual geometry and supported widths`, async ({ browser }, info) => {
 		test.setTimeout(180_000);
-		const context = await browser.newContext({ baseURL: info.project.use.baseURL, viewport: { width: 1280, height: 1000 }, locale: language });
+		const context = await browser.newContext({ baseURL: info.project.use.baseURL, viewport: { width: 1280, height: 1000 }, locale: language, permissions: ["clipboard-read", "clipboard-write"] });
 		await context.addInitScript(lang => localStorage.setItem("keepany-language", lang), language);
 		const page = await context.newPage(), t = text(language), matrix: unknown[] = [];
 		try {

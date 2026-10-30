@@ -1,0 +1,21 @@
+[WebServer] (node:35864) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 10 tests using 1 worker
+
+
+(node:16368) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+[1/10] tests\e2e\account-password-layout.spec.ts:21:2 › zh-CN 1920 compact account keeps masked fields readable and neighbors compact
+[2/10] tests\e2e\account-password-layout.spec.ts:21:2 › zh-CN 1280 compact account keeps masked fields readable and neighbors compact
+[3/10] tests\e2e\account-password-layout.spec.ts:21:2 › zh-CN 768 compact account keeps masked fields readable and neighbors compact
+[4/10] tests\e2e\account-password-layout.spec.ts:21:2 › zh-CN 390 compact account keeps masked fields readable and neighbors compact
+[5/10] tests\e2e\account-password-layout.spec.ts:21:2 › zh-CN 2560 compact account keeps masked fields readable and neighbors compact
+[6/10] tests\e2e\account-password-layout.spec.ts:21:2 › en 1920 compact account keeps masked fields readable and neighbors compact
+[7/10] tests\e2e\account-password-layout.spec.ts:21:2 › en 1280 compact account keeps masked fields readable and neighbors compact
+[8/10] tests\e2e\account-password-layout.spec.ts:21:2 › en 768 compact account keeps masked fields readable and neighbors compact
+[9/10] tests\e2e\account-password-layout.spec.ts:21:2 › en 390 compact account keeps masked fields readable and neighbors compact
+[10/10] tests\e2e\account-password-layout.spec.ts:21:2 › en 2560 compact account keeps masked fields readable and neighbors compact
+  10 passed (1.4m)

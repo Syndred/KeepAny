@@ -1,0 +1,22 @@
+{
+  "candidate": {
+    "sourceCommit": "a967f3b7ecf7e8cc912e53a70a3f5d4d7cb899d6",
+    "zipSha256": "b0b3b436bbcd844e1c72e4d7ad45260ec0ae6125fe96598d25b0d28e082f2f64",
+    "origin": "http://127.0.0.1:4396"
+  },
+  "preparation": "Isolated independent context; fictional ordinary account and linked KDBX entry created through visible UI; idle auto-lock was unlocked with this synthetic master password before replay",
+  "steps": [
+    "Accounts → More actions on Independent delete restore",
+    "Login details",
+    "Close",
+    "Read document.activeElement after 120ms"
+  ],
+  "expected": "Return focus to same account More actions button or focusable card",
+  "actual": {
+    "tag": "BODY",
+    "className": "",
+    "label": null,
+    "id": ""
+  },
+  "verdict": "失败"
+}

@@ -17,14 +17,16 @@ export async function closeCompactLoginDetails(page: Page, t: Copy) {
 
 /** Count distinct business entries through the visible card's real switch control. */
 export async function compactEntryIds(page: Page) {
+	await expect(page.locator(".password-vault-toolbar")).toBeVisible();
 	const ids = new Set<string>();
 	for (const card of await page.locator(".compact-account-card").all()) {
 		const switcher = card.locator(".compact-account-switch");
-		const count = await switcher.count() ? Number((await switcher.innerText()).split("/").at(-1)) : 1;
+		const position = await switcher.count() ? (await switcher.innerText()).split("/").map(Number) : [1, 1];
+		const [start, count] = position;
 		for (let step = 0; step < count; step++) {
 			const id = await card.getAttribute("data-entry-id");
 			if (id) ids.add(id);
-			if (count > 1) await switcher.click();
+			if (count > 1) { await switcher.click(); await expect(switcher).toHaveText(`${(start + step) % count + 1}/${count}`); }
 		}
 	}
 	for (const id of await page.locator(".workspace-password-only .password-vault-entry").evaluateAll(cards => cards.map(card => (card as HTMLElement).dataset.entryId))) if (id) ids.add(id);
