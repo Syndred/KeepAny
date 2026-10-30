@@ -280,6 +280,12 @@ export function AssetDetail() {
 		});
 		return () => { active = false; };
 	}, [kind]);
+    useEffect(() => {
+        setEdit(false); setAccountAddingLogin(false); setRelationEdit(false); setTaskEdit(false);
+        setRelationToDelete(null); setDeleteOpen(false); setPendingImage(null);
+        setRelationTarget(""); setRelationLabel(""); setRelationSource(""); setRelationVerifiedAt("");
+        setRelationError(""); setRelationDeleteError("");
+    }, [params.id, kind === "account" && snapshot.status !== "unlocked"]);
 	const liveById = useMemo(() => new Map(data.assets.filter((entry) => !entry.deleted && entry.kind !== "vault").map((item) => [item.id, item])), [data.assets]);
 	const relations = useMemo(() => data.relations.filter(
 		(r) =>
@@ -1589,7 +1595,7 @@ export function AssetDetail() {
 						</div>
 					}
 				>
-					{kind === "account" ? <AccountEntryDialog asset={asset} entryId={accountAddingLogin ? undefined : currentLogin?.entry.id} newLogin={accountAddingLogin} onClose={() => { setEdit(false); setAccountAddingLogin(false); }} /> : <AssetEditor
+					{kind === "account" ? <AccountEntryDialog key={`${asset.id}:${accountAddingLogin ? "new" : currentLogin?.entry.id ?? "empty"}`} asset={asset} entryId={accountAddingLogin ? undefined : currentLogin?.entry.id} newLogin={accountAddingLogin} onClose={() => { setEdit(false); setAccountAddingLogin(false); }} /> : <AssetEditor
 						kind={kind}
 						asset={asset}
 						categories={data.categories}

@@ -1081,7 +1081,7 @@ describe('real encrypted local KDBX session', () => {
     await expect(session.importKdbx(new Uint8Array(VAULT_MAX_BYTES + 1), master)).rejects.toThrow('vault-size');
     for (const invalid of [
       { ...draft, url: 'javascript:alert(1)' }, { ...draft, url: 'https://user:secret@example.test/' }, { ...draft, title: '' },
-      { ...draft, password: 'a'.repeat(65_537) }, { ...draft, linkedAssetIds: Array(101).fill('id') },
+      { ...draft, password: 'a'.repeat(65_537) }, { ...draft, notes: 'a'.repeat(256 * 1024 + 1) }, { ...draft, linkedAssetIds: Array(101).fill('id') },
     ]) await expect(session.saveEntry(invalid)).rejects.toThrow('vault-invalid');
     const malicious = Kdbx.create(credentials(master), 'Oversized work factor');
     configureDatabase(malicious);

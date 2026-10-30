@@ -14,6 +14,16 @@ async function fixture(){const repository=await openLocalRepository(`unified-edi
 const label=()=>"Login";const state=(asset:Asset|null):AccountEditProgress=>({account:asset,accountChanged:false});
 const entry=(username:string):VaultEntryDraft=>({title:"Private backup",username,password:"Backup secret!",notes:"Private backup note",url:"https://private.example.test/",linkedAssetIds:[]});
 describe("merged account editing",()=>{
+ it("preserves the complete combination of valid long legacy and encrypted notes after reopen",async()=>{
+  const f=await fixture(), asset={...f.asset,notes:"公".repeat(50000),longDescription:"旧".repeat(30000)};
+  await f.repository.save("asset",asset);
+  const old={...f.session.readEntry(f.primary),notes:"密".repeat(60000)};await f.session.saveEntry(old);
+  const draft=mergedAccountDraft(asset,old);
+  await saveMergedAccount({original:asset,originalEntry:old,baseProfile:asset,profile:asset,draft,session:f.session,progress:state(asset),label,repository:f.repository});
+  f.session.lock();const reopened=new VaultSession(f.storage);await reopened.initialize();await reopened.unlock("Synthetic master2026!");
+  expect(reopened.readEntry(f.primary).notes).toBe(draft.notes);reopened.lock();
+  expect((await f.repository.get<Asset>("asset",asset.id))?.notes).toBe("");
+ });
  it("merges legacy and encrypted notes once and preserves hidden profile fields",async()=>{
   const f=await fixture(),asset={...f.asset,accountProvider:"Legacy provider",contact:"Legacy contact",description:"Legacy purpose",longDescription:"Legacy supplemental note"};
   await f.repository.saveAssetIfCurrent(f.asset,asset);const old=f.session.readEntry(f.primary),draft=mergedAccountDraft(asset,old);

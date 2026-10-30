@@ -31,7 +31,7 @@ export function AccountEntryDialog({ onClose, asset, entryId, returnFocusTo, new
 	const [baseProfile] = useState<Asset>(() => asset ?? ({ ...newAsset("account"), category: "other", name: originalEntry?.title ?? "", username: originalEntry?.username ?? "", url: originalEntry?.url ?? "" }));
 	const [profile, setProfile] = useState(baseProfile);
 	const editProgress = useRef<AccountEditProgress>({ account: asset ?? null, accountChanged: false });
-	const [draft, setDraft] = useState<PasswordVaultEntryDraft | null>(() => newLogin ? { ...mergedAccountDraft(asset, null), username: "", usernameAliases: [], password: "", notes: "" } : mergedAccountDraft(asset, originalEntry));
+	const [draft, setDraft] = useState<PasswordVaultEntryDraft | null>(() => newLogin ? { ...mergedAccountDraft(asset, null), username: "", usernameAliases: [], password: "", notes: "" } : mergedAccountDraft(asset, originalEntry));
 	const [busy, setBusy] = useState(false);
 	const running = useRef(false);
 	const mounted = useRef(true);

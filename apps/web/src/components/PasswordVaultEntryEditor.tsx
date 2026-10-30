@@ -1,3 +1,4 @@
+import { VAULT_NOTES_MAX_LENGTH } from "../../../../packages/password-vault/src";
 import { Textarea } from "./ui/textarea";
 import { Input } from "./ui/input";
 import { Check, Eye, EyeOff, WandSparkles, X } from "lucide-react";
@@ -193,7 +194,7 @@ export function EntryEditor({
 									onChange={(event) => update("notes", event.target.value)}
 									disabled={busy}
 									rows={4}
-									maxLength={65536}
+									maxLength={VAULT_NOTES_MAX_LENGTH}
 								/>
 								<VaultImportFieldActions
 									label={t("pwVaultNotesField")}

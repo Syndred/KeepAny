@@ -19,6 +19,7 @@ export default defineConfig({
 	testMatch: [
 		"compact-accounts.spec.ts",
 		"unified-account-editor.spec.ts",
+		"simple-account-relations.spec.ts",
 		"ui-consolidation.spec.ts",
 		"account-password-consolidation.spec.ts",
 		"preview-onboarding.spec.ts",
