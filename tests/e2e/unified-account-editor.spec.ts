@@ -15,7 +15,17 @@ async function setup(page:Page,t:T){await page.goto("/");await page.locator(".si
 async function create(page:Page,t:T,name="UE main account",user="main@example.test",password=primary,aliases:string[]=[]){await page.locator(".password-vault-header").getByRole("button",{name:t("add"),exact:true}).click();const d=page.getByRole("dialog");await d.locator("#password-vault-entry-title").fill(name);await d.locator("#password-vault-entry-username").fill(user);await d.locator("#password-vault-entry-password").fill(password);await d.locator("#password-vault-entry-url").fill("https://main.example.test/");for(const alias of aliases){await d.getByRole("button",{name:t("pwVaultAddIdentifier"),exact:true}).click();await d.locator(".pw-smart-identifier-row input").last().fill(alias);}await save(page,t);await expect(card(page,name)).toBeVisible();}
 async function unlock(page:Page,t:T,password=master){await page.locator("#password-vault-unlock-master").fill(password);await page.getByRole("button",{name:t("accountUnlockAction"),exact:true}).click();await expect(page.locator(".password-vault-toolbar")).toBeVisible();}
 async function addLogin(page:Page,t:T,account:Locator){await account.getByRole("button",{name:t("moreActions"),exact:true}).click();await page.getByRole("menuitem",{name:t("pwVaultNewEntry"),exact:true}).click();await expect(page.getByRole("dialog")).toHaveCount(1);await page.locator("#password-vault-entry-title").fill("UE backup login");await page.locator("#password-vault-entry-username").fill("backup@example.test");await page.locator("#password-vault-entry-password").fill(backup);await page.locator("#password-vault-entry-url").fill("https://backup.example.test/");await save(page,t);await expect(account.locator(".compact-account-switch")).toBeVisible();}
-async function shot(page:Page,name:string){if(page.viewportSize()!.width<768)await expect.poll(()=>page.locator(".sidebar").evaluate(n=>n.getBoundingClientRect().right)).toBeLessThanOrEqual(1);await page.screenshot({path:join(evidence,name+".png"),fullPage:true});}
+async function shot(page:Page,name:string){
+ if(page.viewportSize()!.width<768)await expect.poll(()=>page.locator(".sidebar").evaluate(n=>n.getBoundingClientRect().right)).toBeLessThanOrEqual(1);
+ if(name.startsWith("matrix-card-")){
+  const header=await page.locator(".password-vault-header").boundingBox(),tools=await page.locator(".password-vault-toolbar").boundingBox();
+  expect(tools!.y).toBeGreaterThanOrEqual(header!.y);expect(tools!.y+tools!.height).toBeLessThanOrEqual(header!.y+header!.height+1);
+  const buttons=await page.locator(".password-vault-toolbar button").evaluateAll(ns=>ns.map(n=>({y:n.getBoundingClientRect().top,h:n.getBoundingClientRect().height})));
+  expect(buttons).toHaveLength(2);expect(Math.abs(buttons[0].y-buttons[1].y)).toBeLessThanOrEqual(1);
+  if(page.viewportSize()!.width===390)expect((await page.locator(".compact-account-card").first().boundingBox())!.y).toBeLessThanOrEqual(330);
+ }
+ await page.screenshot({path:join(evidence,name+".png"),fullPage:true});
+}
 async function chooseLogin(account:Locator,username:string){for(let i=0;i<5;i++){if(await account.locator("[data-login-username]").innerText()===username)return;await account.locator(".compact-account-switch").click();}await expect(account.locator("[data-login-username]")).toHaveText(username);}
 async function failNextKdbxWrite(page: Page) {
  // Fault preparation in an isolated fictional browser. All following operations use the real UI.

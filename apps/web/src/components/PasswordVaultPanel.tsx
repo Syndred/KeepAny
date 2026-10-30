@@ -876,6 +876,17 @@ export function PasswordVaultPanel({
 					{vaultStatus}
 				</div>
 				{(!renderAccounts || snapshot.status === "unlocked") && !(renderAccounts && assetFilter) && (typeof headerAction === "function" ? headerAction({ busy: busy || snapshot.status === "loading", clearMessage }) : headerAction)}
+				{renderAccounts && snapshot.status === "unlocked" && <div className="password-vault-toolbar account-header-tools"><div className="actions">
+                    <VaultIconButton label={t("pwVaultLock")} disabled={busy} onClick={lock}><Lock size={18} /></VaultIconButton>
+                    <DropdownMenu><DropdownMenuTrigger render={<Button size="icon" variant="ghost" className="password-vault-icon account-options-trigger" aria-label={t("accountTools")} disabled={busy} />}><MoreHorizontal size={18} /></DropdownMenuTrigger><DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => setAccountLinksOpen(true)}>{t("pwConnectTitle")}</DropdownMenuItem>
+                        {missingSampleAccounts.length > 0 && <DropdownMenuItem onClick={() => void addSampleLogins()}>{t("sampleLogins")}</DropdownMenuItem>}
+                        <DropdownMenuItem onClick={() => setImportOpen(true)}>{t("pwVaultImport")}</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setSmartImportOpen(true)}>{t("pwSmartTitle")}</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => void exportVault()}>{t("pwVaultExport")}</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setChangeMasterOpen(true)}>{t("pwVaultChangeMaster")}</DropdownMenuItem>
+                    </DropdownMenuContent></DropdownMenu>
+                </div></div>}
 				{headerFeedback}
 			</header>
 			{message && (
@@ -894,7 +905,7 @@ export function PasswordVaultPanel({
 {renderAccounts ? snapshot.status !== "unlocked" && <div className="account-unlock-gate">{vaultAccess}</div> : vaultAccess}
 			{snapshot.status === "unlocked" && (
 				<>
-					<div className="password-vault-toolbar">
+					{!renderAccounts && <div className="password-vault-toolbar">
 						{(!renderAccounts || assetFilter) && <div className="password-vault-search field">
 							<label
 								className="password-vault-sr"
@@ -912,17 +923,6 @@ export function PasswordVaultPanel({
 							/>
 						</div>}
 						<div className="actions">
-                            {renderAccounts ? <>
-                                <VaultIconButton label={t("pwVaultLock")} disabled={busy} onClick={lock}><Lock size={18} /></VaultIconButton>
-                                <DropdownMenu><DropdownMenuTrigger render={<Button size="icon" variant="ghost" className="account-options-trigger" aria-label={t("accountTools")} disabled={busy} />}><MoreHorizontal size={18} /></DropdownMenuTrigger><DropdownMenuContent align="end">
-                                    <DropdownMenuItem onClick={() => setAccountLinksOpen(true)}>{t("pwConnectTitle")}</DropdownMenuItem>
-                                    {missingSampleAccounts.length > 0 && <DropdownMenuItem onClick={() => void addSampleLogins()}>{t("sampleLogins")}</DropdownMenuItem>}
-                                    <DropdownMenuItem onClick={() => setImportOpen(true)}>{t("pwVaultImport")}</DropdownMenuItem>
-                                    <DropdownMenuItem onClick={() => setSmartImportOpen(true)}>{t("pwSmartTitle")}</DropdownMenuItem>
-                                    <DropdownMenuItem onClick={() => void exportVault()}>{t("pwVaultExport")}</DropdownMenuItem>
-                                    <DropdownMenuItem onClick={() => setChangeMasterOpen(true)}>{t("pwVaultChangeMaster")}</DropdownMenuItem>
-                                </DropdownMenuContent></DropdownMenu>
-                            </> : <>
 							{missingSampleAccounts.length > 0 && <Button size="small" disabled={busy} onClick={() => void addSampleLogins()}>{t("sampleLogins")}</Button>}
 							<VaultIconButton
 								label={t("pwConnectTitle")}
@@ -975,10 +975,10 @@ export function PasswordVaultPanel({
 								onClick={openNewEditor}
 							>
 								<Plus size={18} />
-							</VaultIconButton>}</>}
+							</VaultIconButton>}
 
 						</div>
-					</div>
+					</div>}
 					{assetFilter && (
 						<div className="password-vault-filter">
 							<span>

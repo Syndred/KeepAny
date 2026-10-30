@@ -66,7 +66,26 @@
 
 .account-unlock-gate { display: grid; justify-items: center; padding: 28px 0; }
 .account-unlock-gate > .password-vault-empty-state, .account-unlock-gate > .password-vault-unlock { width: min(100%, 510px); }
-.unified-accounts-page .password-vault-toolbar { justify-self: end; }
+.unified-accounts-page .password-vault-panel:has(.account-header-tools) > .password-vault-header {
+    display: grid;
+    grid-template-columns: minmax(0, max-content) auto minmax(92px, 1fr);
+    grid-column: 1 / -1;
+    grid-row: auto;
+    gap: 8px;
+}
+.unified-accounts-page .password-vault-header > div:first-child { min-width: 0; }
+.unified-accounts-page .password-vault-header .account-header-tools {
+    grid-area: auto;
+    grid-column: 3;
+    justify-self: end;
+    align-items: center;
+    flex-direction: row;
+}
+.unified-accounts-page .account-header-tools .actions {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 4px;
+}
 .unified-accounts-page .compact-account-title:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; border-radius: 4px; }
 .unified-accounts-page .compact-account-heading { gap: 4px; }
 .unified-accounts-page .compact-account-footer { min-height: 32px; }
