@@ -57,6 +57,10 @@ See the [trial guide](docs/试用指南.md#english) for setup, storage, and reco
 
 You can record domains in project details and maintenance tasks. KeepAny does not manage registrars or renew domains automatically. Bills and renewal records are your ledger; they do not confirm a third-party charge. Change checklists do not log in, rebind accounts, or cancel services for you.
 
+### Example: keeping website records
+
+I also maintain [SyndredVideo](https://syndredvideo.com/) (AI video creation) and [RapperAIVideo](https://rapperaivideo.com/) (AI rap videos). Independent sites like these are one use case for KeepAny: record a site's name, URL, and notes, then connect its login accounts, subscriptions, and maintenance tasks so you can find the details and follow up later.
+
 ## Data and AI
 
 - Records are stored locally for the **current browser, profile, and site address**. A different browser, port, or `localhost` address opens a different store. Back up and restore when moving computers. Clearing site data can delete your records.
