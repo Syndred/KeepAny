@@ -135,7 +135,10 @@ for (const [kind, label] of [["item", "Item"], ["subscription", "Subscription"]]
   await page.getByRole("menuitem", { name: label, exact: true }).click();
   await expect(page).toHaveURL(new RegExp(`/assets/${kind}$`));
   const form = page.getByRole("dialog");
-  await expect(form.getByRole("heading", { level: 2, name: new RegExp(label, "i") })).toBeVisible();
+  // The contract requires the selected object form; the unchanged generic dialog title is not an object label.
+  await expect(form).toBeVisible();
+  await expect(form.getByRole("combobox", { name: kind === "item" ? "Purchase date" : "Cycle", exact: true })).toBeVisible();
+  await expect(form.getByRole("combobox", { name: kind === "item" ? "Cycle" : "Purchase date", exact: true })).toHaveCount(0);
   const name = `Synthetic cancelled ${kind}`;
   await form.locator("#name").fill(name);
   await form.getByRole("button", { name: "Cancel", exact: true }).click();
@@ -143,6 +146,18 @@ for (const [kind, label] of [["item", "Item"], ["subscription", "Subscription"]]
   await expect(form).toBeHidden(); await expect(page.getByText(name, { exact: true })).toHaveCount(0);
  });
 }
+
+test("UX03c switching creation from an item list to subscriptions uses the newly selected kind", async ({ page }) => {
+ await prepare(page);
+ for (const [kind, label, field] of [["item", "Item", "Purchase date"], ["subscription", "Subscription", "Cycle"]] as const) {
+  await page.getByRole("button", { name: "Add a record", exact: true }).click();
+  await page.getByRole("menuitem", { name: label, exact: true }).click();
+  await expect(page).toHaveURL(new RegExp(`/assets/${kind}$`));
+  const form = page.getByRole("dialog"); await expect(form).toBeVisible();
+  await expect(form.getByRole("combobox", { name: field, exact: true })).toBeVisible();
+  await form.getByRole("button", { name: "Cancel", exact: true }).click(); await expect(form).toBeHidden();
+ }
+});
 
 test("UX07b global search reveals a completed task from the pending view and survives reload", async ({ page }) => {
  await prepare(page); await sample(page); await page.goto("/tasks");
