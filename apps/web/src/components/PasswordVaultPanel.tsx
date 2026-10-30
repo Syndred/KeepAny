@@ -147,7 +147,7 @@ export function PasswordVaultPanel({
 		if (snapshot.status !== "unlocked" || !hash.startsWith("password-")) return;
 		const card = [
 			...document.querySelectorAll<HTMLElement>(
-				".password-vault-entry-list .password-vault-entry",
+				".password-vault-entry-list .password-vault-entry, .compact-account-card",
 			),
 		].find((node) => node.dataset.entryId === hash.slice(9));
 		const group = card?.closest("details");

@@ -1,9 +1,10 @@
 import { Link } from "@tanstack/react-router";
 import { ArrowLeftRight, Check, ChevronRight, Copy, ExternalLink, Eye, EyeOff, LockKeyhole, Mail, MoreHorizontal, Plus, Smartphone, UserRound } from "lucide-react";
-import { useRef, useState, type ButtonHTMLAttributes, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ButtonHTMLAttributes, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import type { Asset } from "../../../../packages/domain/src";
 import { accountHttpUrl, accountLoginChoices, nextAccountLogin, preferredAccountLogin } from "../account-login-choices";
+import { matchesAssetSearch } from "../asset-search";
 import { niceCategory } from "../view-shared";
 import type { AccountVaultTools } from "./PasswordVaultPanel";
 import { usePasswordVault, type PasswordVaultEntrySummary } from "./PasswordVaultProvider";
@@ -18,11 +19,11 @@ function CompactIcon({ label, children, ...props }: ButtonHTMLAttributes<HTMLBut
 	return <Button type="button" variant="ghost" size="icon" className="compact-account-icon" aria-label={label} title={label} {...props}>{children}</Button>;
 }
 
-function Frame({ asset, connectionCount, onOpen, url, menu, children }: Pick<Props, "asset" | "connectionCount" | "onOpen"> & { url: string; menu: ReactNode; children: ReactNode }) {
+function Frame({ asset, connectionCount, onOpen, url, menu, children, entryId }: Pick<Props, "asset" | "connectionCount" | "onOpen"> & { url: string; menu: ReactNode; children: ReactNode; entryId?: string }) {
 	const { t } = useTranslation();
 	const Icon = asset.category === "email" ? Mail : asset.category === "phone" ? Smartphone : UserRound;
 	const details = { to: "/assets/$kind/$id" as const, params: { kind: asset.kind, id: asset.id }, onClick: onOpen };
-	return <article className={`unified-account asset-account-card compact-account-card asset-account-${asset.category}`} data-account-id={asset.id}>
+	return <article className={`unified-account asset-account-card compact-account-card asset-account-${asset.category}`} data-account-id={asset.id} data-entry-id={entryId} aria-label={asset.name} tabIndex={-1}>
 		<header className="compact-account-heading"><span className="compact-account-avatar"><Icon size={18} /></span>
 			<Link {...details} className="compact-account-title" title={asset.name}>{asset.name}</Link>
 			{url && <a className="compact-account-icon compact-account-url" href={url} target="_blank" rel="noreferrer" aria-label={t("compactAccountOpenUrl")} title={`${t("compactAccountOpenUrl")} · ${url}`}><ExternalLink size={16} /></a>}
@@ -45,7 +46,7 @@ function LockedCard({ asset, connectionCount, onOpen, tools }: Props) {
 	const access = t(empty ? "pwVaultCreate" : "pwVaultUnlock");
 	return <Frame asset={asset} connectionCount={connectionCount} onOpen={onOpen} url={url} menu={<>{url && <DropdownMenuItem onClick={() => void tools.copy("pwVaultUrlField", url, false)}>{t("compactAccountCopyUrl")}</DropdownMenuItem>}<DropdownMenuItem disabled={tools.busy || loading} onClick={tools.requestAccess}>{access}</DropdownMenuItem></>}>
 		<ValueRow label={t("pwVaultAccountShort")} actions={<CompactIcon label={t("pwVaultCopyUsername")} disabled={!asset.username || tools.busy} onClick={() => void tools.copy("pwVaultUsernameField", asset.username, false).then((success) => setCopied(success))}>{copied ? <Check size={16} /> : <Copy size={16} />}</CompactIcon>}><span title={asset.username}>{asset.username || t("pwVaultValueEmpty")}</span></ValueRow>
-		<ValueRow label={t("pwVaultPasswordField")} actions={<Button type="button" className="compact-account-access" size="small" disabled={tools.busy || loading} onClick={tools.requestAccess}>{loading ? t("loading") : access}</Button>}><span className="compact-account-muted"><LockKeyhole size={13} />{t(loading ? "loading" : empty ? "pwVaultStatusEmpty" : "pwVaultStatusLocked")}</span></ValueRow>
+		<ValueRow label={t("pwVaultPasswordField")} actions={<Button type="button" className="compact-account-access" size="small" disabled={tools.busy || loading} onClick={tools.requestAccess}>{t(loading ? "loading" : empty ? "compactAccountCreate" : "compactAccountUnlock")}</Button>}><span className="compact-account-muted"><LockKeyhole size={13} />{t(loading ? "loading" : empty ? "pwVaultStatusEmpty" : "pwVaultStatusLocked")}</span></ValueRow>
 	</Frame>;
 }
 
@@ -55,11 +56,12 @@ function UnlockedCard({ asset, entries, connectionCount, onOpen, tools, queries,
 	const queryKey = JSON.stringify(queries);
 	const [selection, setSelection] = useState({ key: "", queryKey });
 	const choices = accountLoginChoices(entries);
-	const current = preferredAccountLogin(choices, selection.queryKey === queryKey ? selection.key : "", queries, focusEntryId);
+	const current = preferredAccountLogin(choices, selection.queryKey === queryKey ? selection.key : "", queries, focusEntryId, (query) => matchesAssetSearch(asset, query));
 	const [revealedKey, setRevealedKey] = useState("");
 	const [copied, setCopied] = useState("");
 	const [detailsEntryId, setDetailsEntryId] = useState("");
 	const generation = useRef(0);
+	useEffect(() => () => { generation.current++; tools.cancelCopy(); }, [tools.cancelCopy]);
 	const scope = current ? `${current.key}:${current.entry.modifiedAt}` : "";
 	const live = session?.getSnapshot().status === "unlocked";
 	const draft = current && live ? session.readEntry(current.entry.id) : null;
@@ -82,7 +84,7 @@ function UnlockedCard({ asset, entries, connectionCount, onOpen, tools, queries,
 		setSelection({ key: nextAccountLogin(choices, current.key)?.key ?? "", queryKey });
 	}
 	const copiedIcon = (field: string) => copied === `${scope}:${field}` ? <Check size={16} /> : <Copy size={16} />;
-	return <Frame asset={asset} connectionCount={connectionCount} onOpen={onOpen} url={url} menu={<>
+	return <Frame asset={asset} connectionCount={connectionCount} onOpen={onOpen} url={url} entryId={current?.entry.id} menu={<>
 		{current && <DropdownMenuItem disabled={tools.busy} onClick={() => setDetailsEntryId(current.entry.id)}>{t("compactAccountLoginDetails")}</DropdownMenuItem>}
 		<DropdownMenuItem disabled={tools.busy} onClick={() => tools.addEntry(asset.id)}>{t("pwVaultNewEntry")}</DropdownMenuItem>
 		{url && <DropdownMenuItem disabled={tools.busy} onClick={() => void copy("pwVaultUrlField", url, "url", Boolean(current))}>{t("compactAccountCopyUrl")}</DropdownMenuItem>}
@@ -103,5 +105,5 @@ function UnlockedCard({ asset, entries, connectionCount, onOpen, tools, queries,
 export function CompactAccountCard(props: Props) {
 	const { snapshot } = usePasswordVault();
 	// Switching branches unmounts every reveal/selection/dialog state on lock.
-	return snapshot.status === "unlocked" ? <UnlockedCard {...props} /> : <LockedCard {...props} />;
+	return snapshot.status === "unlocked" ? <UnlockedCard key={JSON.stringify([props.queries, props.focusEntryId])} {...props} /> : <LockedCard {...props} />;
 }

@@ -10,12 +10,12 @@ export function accountLoginChoices(entries: readonly VaultEntrySummary[]): Acco
 	});
 }
 
-export function preferredAccountLogin(choices: readonly AccountLoginChoice[], selectedKey: string, queries: readonly string[] = [], entryId?: string) {
+export function preferredAccountLogin(choices: readonly AccountLoginChoice[], selectedKey: string, queries: readonly string[] = [], entryId?: string, matchesPublic?: (query: string) => boolean) {
 	const selected = choices.find((choice) => choice.key === selectedKey);
 	if (selected) return selected;
 	const focused = entryId && choices.find((choice) => choice.entry.id === entryId);
 	if (focused) return focused;
-	const terms = queries.map((query) => query.trim().toLocaleLowerCase()).filter(Boolean);
+	const terms = queries.map((query) => query.trim().toLocaleLowerCase()).filter((query) => query && !matchesPublic?.(query));
 	return (terms.length ? choices.find(({ entry, username }) => terms.every((query) => [entry.title, username, entry.url].some((value) => value.toLocaleLowerCase().includes(query)))) : undefined) ?? choices[0];
 }
 

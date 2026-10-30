@@ -31,6 +31,8 @@ const copy: Record<string, [string, string]> = {
 	compactAccountDetails: ["详情", "Details"],
 	compactAccountLoginDetails: ["登录资料详情", "Login details"],
 	compactAccountAddPassword: ["添加", "Add"],
+	compactAccountCreate: ["创建", "Create"],
+	compactAccountUnlock: ["解锁", "Unlock"],
 	compactAccountNextLogin: ["切换登录账号（{{index}}/{{total}}）", "Next login ({{index}}/{{total}})"],
 	compactAccountLoginPosition: ["登录 {{index}}/{{total}}：{{username}}", "Login {{index}} of {{total}}: {{username}}"],
 	itemLoanHistory: ["借还", "Lending"],

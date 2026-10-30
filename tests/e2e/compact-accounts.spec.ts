@@ -35,6 +35,7 @@ async function addLogin(page: Page, t: (key: string) => string) {
 	await dialog.locator("#password-vault-entry-title").fill("CC secondary login");
 	await dialog.locator("#password-vault-entry-username").fill("backup@example.test");
 	await dialog.locator("#password-vault-entry-password").fill(secondPassword);
+	await dialog.getByRole("button", { name: t("pwVaultAddUrl"), exact: true }).click();
 	await dialog.locator("#password-vault-entry-url").fill("https://backup.example.test/login");
 	await save(dialog);
 }
@@ -45,7 +46,7 @@ async function prepare(page: Page, t: (key: string) => string, aliases: string[]
 	await openVaultAccess(page);
 	await page.locator("#password-vault-master").fill(master);
 	await page.locator("#password-vault-master-confirm").fill(master);
-	await page.getByRole("button", { name: t("pwVaultCreate"), exact: true }).click();
+	await page.locator(".unified-vault-access").getByRole("button", { name: t("pwVaultCreate"), exact: true }).click();
 	await expect(page.locator(".password-vault-toolbar")).toBeVisible();
 	await createAccount(page, t, "CC studio account", "main@example.test", mainPassword, aliases);
 	await addLogin(page, t);
@@ -93,7 +94,7 @@ for (const language of ["zh-CN", "en"] as const) {
 			await expect(card.getByRole("button", { name: /^(切换登录账号|Next login)/ })).toHaveCount(0);
 			await account(page, "CC public account").getByRole("button", { name: t("pwVaultCopyUsername"), exact: true }).click();
 			await expect.poll(() => clipboard(page)).toBe("public@example.test");
-			await card.getByRole("button", { name: t("pwVaultUnlock"), exact: true }).click();
+			await card.getByRole("button", { name: t("compactAccountUnlock"), exact: true }).click();
 			await page.locator("#password-vault-unlock-master").fill("wrong-fictional-password");
 			await page.getByRole("button", { name: t("pwVaultUnlock"), exact: true }).first().click();
 			await expect(card.locator("[data-login-password]")).toHaveCount(0);
@@ -117,6 +118,31 @@ for (const language of ["zh-CN", "en"] as const) {
 			await screenshot(page, `flow-reloaded-${language}`);
 			expect(errors).toEqual([]);
 		} finally { writeFileSync(join(evidence, `functional-${language}.json`), JSON.stringify({ candidate: portableCandidate(), errors, ids: ["CC03", "CC04", "CC06", "CC07", "CC08", "CC10"] }, null, 2)); await context.close(); }
+	});
+
+	test(`${language} CC09 clipboard failure stays explicit and stale failure is cancelled on query change`, async ({ browser }, info) => {
+		test.setTimeout(120_000);
+		const context = await browser.newContext({ baseURL: info.project.use.baseURL, viewport: { width: 1280, height: 1000 }, locale: language });
+		await context.addInitScript(lang => localStorage.setItem("keepany-language", lang), language);
+		const page = await context.newPage(), t = text(language);
+		try {
+			await prepare(page, t);
+			// Synthetic clipboard failure preparation. The tested copy/search/lock actions use real UI.
+			await page.evaluate(() => Object.defineProperty(navigator.clipboard, "writeText", { configurable: true, value: async () => { throw new DOMException("Synthetic clipboard denied", "NotAllowedError"); } }));
+			await account(page).getByRole("button", { name: t("pwVaultCopyPassword"), exact: true }).click();
+			const manual = page.getByRole("dialog", { name: t("pwVaultManualCopyTitle"), exact: true });
+			await expect(manual.locator("textarea")).toHaveValue(mainPassword);
+			await screenshot(page, `clipboard-failure-${language}`);
+			await manual.getByRole("button", { name: t("close"), exact: true }).click();
+			await page.evaluate(() => Object.defineProperty(navigator.clipboard, "writeText", { configurable: true, value: () => new Promise((_resolve, reject) => { (window as Window & { rejectCompactCopy?: () => void }).rejectCompactCopy = () => reject(new DOMException("Synthetic late denial", "NotAllowedError")); }) }));
+			await account(page).getByRole("button", { name: t("pwVaultCopyPassword"), exact: true }).click();
+			await page.locator("#password-vault-search-input").fill("backup@example.test");
+			await page.evaluate(() => (window as Window & { rejectCompactCopy?: () => void }).rejectCompactCopy?.());
+			await expect(page.getByRole("dialog", { name: t("pwVaultManualCopyTitle"), exact: true })).toHaveCount(0);
+			await expect(account(page).locator("[data-login-username]")).toHaveText("backup@example.test");
+			await page.getByRole("button", { name: t("pwVaultLock"), exact: true }).click();
+			await expect(page.getByRole("dialog", { name: t("pwVaultManualCopyTitle"), exact: true })).toHaveCount(0);
+		} finally { await context.close(); }
 	});
 
 	test(`${language} CC05-CC09 query transition never restores a previously revealed password`, async ({ browser }, info) => {

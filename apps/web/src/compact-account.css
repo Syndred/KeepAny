@@ -43,6 +43,7 @@ body:has(.unified-accounts-page) .toast { pointer-events: none; }
 	.unified-accounts-page .compact-account-card { padding: 10px 12px 0; }
 	.compact-account-heading { min-height: 44px; margin-bottom: 7px; gap: 6px; }
 	.compact-account-title { font-size: 15px; }
+	.compact-account-title { min-height: 44px; line-height: 44px; }
 	.compact-account-card .compact-account-icon, .compact-account-url { width: 44px; min-width: 44px; height: 44px; min-height: 44px; }
 	.compact-account-card .compact-account-switch { height: 44px; min-width: 44px; gap: 1px; }
 	.compact-account-row { min-height: 49px; padding: 1px 2px 1px 8px; gap: 5px; }
@@ -54,6 +55,7 @@ body:has(.unified-accounts-page) .toast { pointer-events: none; }
 	.compact-account-meta > span:first-child { max-width: 105px; }
 }
 @media (pointer: coarse) {
+	.compact-account-title { min-height: 44px; line-height: 44px; }
 	.compact-account-card .compact-account-icon, .compact-account-url { min-width: 44px; min-height: 44px; }
 	.compact-account-card .compact-account-access, .compact-account-footer a { min-height: 44px; }
 }

@@ -23,6 +23,10 @@ describe("compact account login selection", () => {
 		expect(accountLoginChoices([entry("empty", "")])[0].username).toBe("");
 		expect(accountLoginChoices([entry("alias", "", ["one", "one", "two"]) ]).map((choice) => choice.username)).toEqual(["one", "two"]);
 	});
+	it("uses private search terms after ordinary account information has matched", () => {
+		const choices = accountLoginChoices([entry("first", "main@example.test"), entry("second", "backup@example.test")]);
+		expect(preferredAccountLogin(choices, "", ["CC studio", "backup"], undefined, (query) => query === "cc studio")).toBe(choices[1]);
+	});
 	it("rejects executable and malformed URLs while retaining HTTP(S)", () => {
 		for (const url of ["javascript:alert(1)", "data:text/html,test", "file:///secret", "not a url", ""]) expect(accountHttpUrl(url)).toBe("");
 		expect(accountHttpUrl("https://example.test/path?q=one#part")).toBe("https://example.test/path?q=one#part");
