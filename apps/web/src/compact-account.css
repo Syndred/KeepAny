@@ -8,6 +8,11 @@
 .asset-account-social .compact-account-avatar { background: var(--lavender); }
 .compact-account-title { min-width: 0; flex: 1; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; padding: 0; border: 0; background: transparent; text-align: left; cursor: pointer; font-size: 14px; font-weight: 750; color: var(--ink); text-decoration: none; }
 .compact-account-title:hover { text-decoration: underline; text-underline-offset: 3px; }
+.compact-account-title-block { display: flex; flex: 1; flex-direction: column; justify-content: center; min-width: 0; min-height: 32px; color: var(--ink); text-decoration: none; }
+.compact-account-title-block .compact-account-title { display: block; flex: none; min-height: 0; line-height: 18px; }
+.compact-account-associations { display: flex; align-items: center; gap: 2px; font-size: 11px; line-height: 14px; color: var(--muted); }
+.compact-account-title-block:hover .compact-account-title { text-decoration: underline; text-underline-offset: 3px; }
+.compact-account-title-block:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; border-radius: 4px; }
 .compact-account-card .compact-account-icon, .compact-account-url { display: inline-flex; align-items: center; justify-content: center; flex: none; width: 32px; height: 32px; min-width: 32px; min-height: 32px; margin: 0; padding: 0; border: 1px solid transparent; border-radius: 7px; background: transparent; box-shadow: none; color: var(--ink); text-decoration: none; }
 .compact-account-card .compact-account-icon:hover, .compact-account-url:hover { background: var(--paper-soft); border-color: var(--line-soft); transform: none; }
 .compact-account-card .compact-account-icon:active, .compact-account-url:active { transform: translate(1px, 1px); }
@@ -39,6 +44,7 @@
 .compact-account-feedback-slot { position: absolute; left: 0; right: 0; top: 100%; padding-top: 2px; min-height: 22px; }
 .compact-account-feedback-message { color: var(--ink); font-size: 12px; line-height: 20px; overflow-wrap: anywhere; }
 @media (max-width: 767px) {
+    .compact-account-title-block { min-height: 44px; }
 	.unified-accounts-page .asset-category-toolbar--search .asset-category-scroll { flex: 1 1 100%; }
 	.unified-accounts-page .asset-account-search { flex-basis: 100%; }
 	.unified-accounts-page .asset-category-toolbar .list-filters { flex: 1; min-width: 0; }

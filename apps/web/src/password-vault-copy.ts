@@ -7,7 +7,7 @@ export const passwordVaultCopy: Record<string, [string, string]> = {
 	accountEntryNotes: ["账号备注", "Account notes"],
 	accountEntryNotesHint: ["普通资料，请勿填写密码。", "Account details. Do not enter passwords here."],
 	accountEntryUnlockHint: ["密码可留空。需要保存密码、其他登录标识或私密备注时，请先创建或解锁密码库。", "A password is optional. Create or unlock the vault to save a password, other login identifiers or private notes."],
-	accountEntryPartial: ["账号已保存，密码或关联尚未全部保存。请在此重试；不会重复新增账号。", "The account was saved. Its password or connections are not fully saved. Retry here to continue without creating another account."],
+	accountEntryPartial: ["部分内容已保存，请在此重试完成更新，不会重复新增账号。", "Some changes were saved. Retry here to finish without creating another account."],
 	accountEntryPartialStale: ["账号资料已保存。登录资料已发生变化，请关闭后重新打开，查看最新信息。", "Account details were saved. The login changed. Close and reopen to see the latest information."],
 	accountEntryLockedDraft: ["密码库已锁定，未保存的密码和私密资料已清除；账号资料仍保留。解锁后请重新填写私密资料。", "The vault locked. Unsaved passwords and private fields were cleared; account details remain. Unlock and enter private fields again."],
 	accountImpactGuide: ["按生成时的关联逐项核对，关联变更后请复核旧待办；完成只记录本机检查，不会更新第三方资料。", "Check the saved connections and review older tasks when connections change. Completing a task records a local check; it does not update other services."],

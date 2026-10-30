@@ -22,7 +22,7 @@ import { Select, SelectOption } from "./ui/select";
 import { Textarea } from "./ui/textarea";
 import "../account-entry.css";
 
-export function AccountEntryDialog({ onClose, asset, entryId, returnFocusTo, newLogin = false }: { onClose: () => void; asset?: Asset; entryId?: string; newLogin?: boolean; returnFocusTo?: () => HTMLElement | null }) {
+export function AccountEntryDialog({ onClose, asset, entryId, returnFocusTo, newLogin = false, linking = false }: { onClose: () => void; asset?: Asset; entryId?: string; newLogin?: boolean; linking?: boolean; returnFocusTo?: () => HTMLElement | null }) {
 	const { t } = useTranslation();
 	const { data, notify } = useAppContext();
 	const { snapshot, session, generatePassword } = usePasswordVault();
@@ -31,8 +31,7 @@ export function AccountEntryDialog({ onClose, asset, entryId, returnFocusTo, new
 	const [baseProfile] = useState<Asset>(() => asset ?? ({ ...newAsset("account"), category: "other", name: originalEntry?.title ?? "", username: originalEntry?.username ?? "", url: originalEntry?.url ?? "" }));
 	const [profile, setProfile] = useState(baseProfile);
 	const editProgress = useRef<AccountEditProgress>({ account: asset ?? null, accountChanged: false });
-	const [draft, setDraft] = useState<PasswordVaultEntryDraft | null>(() => newLogin ? { ...mergedAccountDraft(asset, null), username: "", usernameAliases: [], password: "", notes: "" } : mergedAccountDraft(asset, originalEntry));
-	const [tags, setTags] = useState(() => asset?.tags.join(", ") ?? "");
+	const [draft, setDraft] = useState<PasswordVaultEntryDraft | null>(() => newLogin ? { ...mergedAccountDraft(asset, null), username: "", usernameAliases: [], password: "", notes: "" } : mergedAccountDraft(asset, originalEntry));
 	const [busy, setBusy] = useState(false);
 	const running = useRef(false);
 	const mounted = useRef(true);
@@ -151,16 +150,10 @@ export function AccountEntryDialog({ onClose, asset, entryId, returnFocusTo, new
 		inputError.current = false;
 		setError("");
 		try {
-            if (editing) await saveMergedAccount({ original: asset, originalEntry, baseProfile, profile: { ...profile, tags: tags.split(",").map(value => value.trim()).filter(Boolean) }, draft, session, progress: editProgress.current, newLogin, label: (kind, identifierKind) => t(`pwConnectKind_${identifierKind ?? kind}`) });
+            if (editing) await saveMergedAccount({ original: asset, originalEntry, baseProfile, profile, draft, session, progress: editProgress.current, newLogin, label: (kind, identifierKind) => t(`pwConnectKind_${identifierKind ?? kind}`) });
             else {
 			await saveAccountEntry({
-				profile: {
-					...profile,
-					tags: tags
-						.split(",")
-						.map((tag) => tag.trim())
-						.filter(Boolean),
-				},
+				profile,
 				draft,
 				session,
 				progress: progress.current,
@@ -207,7 +200,7 @@ export function AccountEntryDialog({ onClose, asset, entryId, returnFocusTo, new
 									? "pwVaultLockedError"
 									: field && labels[field]
 										? "accountEntryInvalidField"
-										: "invalid",
+											: "pwVaultError",
 					{ field: t(labels[field] ?? "invalid") },
 				),
 			);
@@ -228,18 +221,6 @@ export function AccountEntryDialog({ onClose, asset, entryId, returnFocusTo, new
 				<form
 					className="password-vault-editor account-entry-form"
 					onInput={clearInputError}
-					onInvalidCapture={(event) => {
-						clearInputError();
-						const field = event.target;
-						if (!(field instanceof HTMLInputElement) || field.id !== "account-entry-reviewed") return;
-						// Native validation bubbles can fall behind the sticky footer.
-						// Keep browser validity, but show its date error in the visible footer.
-						event.preventDefault();
-						inputError.current = true;
-						setError(t("invalidDate"));
-						field.scrollIntoView({ block: "center" });
-						field.focus({ preventScroll: true });
-					}}
 					onSubmit={(event) => void submit(event)}
 				>
 					{draft && (
@@ -259,6 +240,7 @@ export function AccountEntryDialog({ onClose, asset, entryId, returnFocusTo, new
 							unified
                             ownerAssetId={asset?.id}
 							vaultUnlocked={unlocked}
+                            showLinkedAssets={linking}
 							onCancel={close}
 							error={error}
 							titleCompanion={
@@ -335,89 +317,7 @@ export function AccountEntryDialog({ onClose, asset, entryId, returnFocusTo, new
 									</Button>
 								</section>
 							}
-							afterFields={
-								<details className="account-entry-profile" open={editing ? true : undefined}>
-									<summary>{t("accountEntryMore")}</summary>
-									<div className="form-grid">
-										<Field
-											name="account-entry-provider"
-											label={t("accountProvider")}
-											value={profile.accountProvider}
-											disabled={busy}
-											onChange={(value) => set("accountProvider", value)}
-										/>
-										<Field
-											name="account-entry-contact"
-											label={t("contact")}
-											value={profile.contact}
-											disabled={busy}
-											onChange={(value) => set("contact", value)}
-										/>
-										<Field
-											name="account-entry-purpose"
-											label={t("accountPurpose")}
-										>
-											<Textarea
-												id="account-entry-purpose"
-												rows={3}
-												value={profile.description}
-												disabled={busy}
-												onChange={(event) =>
-													set("description", event.target.value)
-												}
-											/>
-										</Field>
-										<Field
-											name="account-entry-tags"
-											label={t("tags")}
-											value={tags}
-											disabled={busy}
-											onChange={setTags}
-										/>
-										<Field name="account-entry-status" label={t("status")}>
-											<Select
-												id="account-entry-status"
-												value={profile.status}
-												disabled={busy}
-												onValueChange={(value) =>
-													set("status", value as Asset["status"])
-												}
-											>
-												{["active", "paused", "cancelled", "archived"].map(
-													(value) => (
-														<SelectOption key={value} value={value}>
-															{t(value)}
-														</SelectOption>
-													),
-												)}
-											</Select>
-										</Field>
-										<Field
-											name="account-entry-reviewed"
-											label={t("accountProfileVerifiedAt")}
-											type="date"
-											value={profile.accountProfileVerifiedAt}
-											disabled={busy}
-											onChange={(value) =>
-												set("accountProfileVerifiedAt", value)
-											}
-										/>
-										<div className="field account-entry-public-notes">
-											<label htmlFor="account-entry-notes">
-												{t("accountEntryNotes")}
-											</label>
-											<Textarea
-												id="account-entry-notes"
-												rows={3}
-												value={profile.notes}
-												disabled={busy}
-												onChange={(event) => set("notes", event.target.value)}
-											/>
-											<small>{t("accountEntryNotesHint")}</small>
-										</div>
-									</div>
-								</details>
-							}
+
 						/>
 					)}
 				</form>

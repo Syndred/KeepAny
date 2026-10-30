@@ -458,7 +458,6 @@ export function PasswordVaultPanel({
 		try {
 			await session.unlock(master);
 			setMaster("");
-			notify?.(t("pwVaultStatusUnlocked"));
 		} catch (error) {
 			announce(
 				errorCode(error) === "vault-password"

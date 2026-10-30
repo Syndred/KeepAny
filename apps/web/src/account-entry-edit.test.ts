@@ -14,6 +14,41 @@ async function fixture(){const repository=await openLocalRepository(`unified-edi
 const label=()=>"Login";const state=(asset:Asset|null):AccountEditProgress=>({account:asset,accountChanged:false});
 const entry=(username:string):VaultEntryDraft=>({title:"Private backup",username,password:"Backup secret!",notes:"Private backup note",url:"https://private.example.test/",linkedAssetIds:[]});
 describe("merged account editing",()=>{
+ it("merges legacy and encrypted notes once and preserves hidden profile fields",async()=>{
+  const f=await fixture(),asset={...f.asset,accountProvider:"Legacy provider",contact:"Legacy contact",description:"Legacy purpose",longDescription:"Legacy supplemental note"};
+  await f.repository.saveAssetIfCurrent(f.asset,asset);const old=f.session.readEntry(f.primary),draft=mergedAccountDraft(asset,old);
+  expect(draft.notes).toBe("Legacy supplemental note\n\nPublic note\n\nPrivate primary");
+  await saveMergedAccount({original:asset,originalEntry:old,baseProfile:asset,profile:asset,draft,session:f.session,progress:state(asset),label,repository:f.repository});
+  const saved=(await f.repository.get<Asset>("asset",asset.id))!;
+  expect(saved).toMatchObject({notes:"",longDescription:"",accountProvider:asset.accountProvider,contact:asset.contact,description:asset.description});
+  expect(f.session.readEntry(f.primary).notes).toBe(draft.notes);
+  expect(mergedAccountDraft(saved,f.session.readEntry(f.primary)).notes).toBe(draft.notes);
+  await saveMergedAccount({original:saved,originalEntry:f.session.readEntry(f.primary),baseProfile:saved,profile:saved,draft:{...f.session.readEntry(f.primary),notes:""},session:f.session,progress:state(saved),label,repository:f.repository});
+  expect(mergedAccountDraft((await f.repository.get<Asset>("asset",asset.id))!,f.session.readEntry(f.primary)).notes).toBe("");
+ });
+ it("never clears legacy notes before an encrypted save succeeds",async()=>{
+  const f=await fixture(),old=f.session.readEntry(f.primary),draft=mergedAccountDraft(f.asset,old),progress=state(f.asset);
+  f.storage.fail=true;
+  const input={original:f.asset,originalEntry:old,baseProfile:f.asset,profile:f.asset,draft,session:f.session,progress,label,repository:f.repository};
+  await expect(saveMergedAccount(input)).rejects.toThrow();
+  expect((await f.repository.get<Asset>("asset",f.asset.id))?.notes).toBe("Public note");
+  expect(f.session.readEntry(f.primary).notes).toBe("Private primary");
+  f.storage.fail=false;await saveMergedAccount(input);
+  expect(f.session.readEntry(f.primary).notes).toBe("Public note\n\nPrivate primary");
+  expect((await f.repository.get<Asset>("asset",f.asset.id))?.notes).toBe("");
+ });
+ it("retries a failed legacy-note cleanup without rewriting the encrypted entry",async()=>{
+  const f=await fixture(),old=f.session.readEntry(f.primary),draft=mergedAccountDraft(f.asset,old),progress=state(f.asset);
+  const actual=f.repository.saveAssetIfCurrent.bind(f.repository);
+  const spy=vi.spyOn(f.repository,"saveAssetIfCurrent").mockImplementationOnce(async()=>{throw Error("Synthetic cleanup fault");});
+  const input={original:f.asset,originalEntry:old,baseProfile:f.asset,profile:f.asset,draft,session:f.session,progress,label,repository:f.repository};
+  await expect(saveMergedAccount(input)).rejects.toThrow("Synthetic cleanup fault");
+  const revision=f.session.getSnapshot().revision;
+  expect(f.session.readEntry(f.primary).notes).toBe(draft.notes);expect((await f.repository.get<Asset>("asset",f.asset.id))?.notes).toBe("Public note");
+  spy.mockImplementation(actual);await saveMergedAccount(input);
+  expect(f.session.getSnapshot().revision).toBe(revision);expect(f.session.getSnapshot().entries).toHaveLength(1);
+  expect((await f.repository.get<Asset>("asset",f.asset.id))?.notes).toBe("");spy.mockRestore();
+ });
  it("retains every historical password and scopes each version after shared removal",async()=>{
   const f=await fixture();
   await f.session.saveEntry({...f.session.readEntry(f.primary),password:"Second generation!",linkedAssetIds:[f.asset.id,"other-account"]});

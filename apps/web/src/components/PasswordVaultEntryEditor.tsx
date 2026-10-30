@@ -27,6 +27,7 @@ export function EntryEditor({
 	vaultAccess,
 	vaultUnlocked = true,
 	unified = false,
+    showLinkedAssets = true,
 	onCancel,
 	error,
 	t,
@@ -50,6 +51,7 @@ export function EntryEditor({
 	vaultAccess?: ReactNode;
 	vaultUnlocked?: boolean;
 	unified?: boolean;
+    showLinkedAssets?: boolean;
 	onCancel?: () => void;
 	error?: string;
 	t: (key: string, options?: Record<string, unknown>) => string;
@@ -169,7 +171,7 @@ export function EntryEditor({
 						{vaultUnlocked && <div className="field password-vault-notes-field">
 							<div className="pw-smart-field-heading">
 								<label htmlFor="password-vault-entry-notes">
-									{t(unified ? "accountEntryPrivateNotes" : "pwVaultNotesOptionalField")}
+									{t(unified ? "notes" : "pwVaultNotesOptionalField")}
 								</label>
 								{!urlExpanded && (
 									<Button
@@ -191,7 +193,7 @@ export function EntryEditor({
 									onChange={(event) => update("notes", event.target.value)}
 									disabled={busy}
 									rows={4}
-									maxLength={20000}
+									maxLength={65536}
 								/>
 								<VaultImportFieldActions
 									label={t("pwVaultNotesField")}
@@ -230,7 +232,7 @@ export function EntryEditor({
 				</div>
 			</div>
 			{afterFields}
-			{vaultUnlocked && <div className="field password-vault-linked-picker">
+			{vaultUnlocked && showLinkedAssets && <div className="field password-vault-linked-picker">
 				<label htmlFor="password-vault-entry-asset">
 					{t("pwVaultLinkedAssets")}
 				</label>

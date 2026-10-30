@@ -21,16 +21,18 @@ function CompactIcon({ label, children, ...props }: ButtonHTMLAttributes<HTMLBut
 function Frame({ asset, connectionCount, onOpen, onEdit, onDelete, url, menu, children, entryId, menuId, editId, busy, virtual }: Pick<Props, "asset" | "connectionCount" | "onOpen" | "virtual"> & { onEdit: () => void; onDelete: () => void; editId?: string; busy: boolean; url: string; menu: ReactNode; children: ReactNode; entryId?: string; menuId?: string }) {
 	const { t } = useTranslation();
 	const Icon = asset.category === "email" ? Mail : asset.category === "phone" ? Smartphone : UserRound;
-	const details = { to: "/assets/$kind/$id" as const, params: { kind: asset.kind, id: asset.id }, onClick: onOpen };
+	const details = virtual
+        ? { to: "/accounts" as const, hash: `login-detail-${entryId}`, onClick: onOpen }
+        : { to: "/assets/$kind/$id" as const, params: { kind: asset.kind, id: asset.id }, hash: entryId ? `password-${entryId}` : undefined, onClick: onOpen };
 	return <article className={`unified-account asset-account-card compact-account-card asset-account-${asset.category}`} data-account-id={asset.id} data-private-only={virtual ? "true" : undefined} data-entry-id={entryId} aria-label={asset.name} tabIndex={-1}>
 		<header className="compact-account-heading"><span className="compact-account-avatar"><Icon size={18} /></span>
-			<button type="button" className="compact-account-title" title={asset.name} onClick={onEdit}>{asset.name}</button>
+			<Link {...details} className="compact-account-title-block" aria-label={asset.name} title={asset.name}><span className="compact-account-title">{asset.name}</span><span className="compact-account-associations" aria-hidden="true">{t("accountConnectionCount", { count: connectionCount })}<ChevronRight size={11} /></span></Link>
 			{url && <a className="compact-account-icon compact-account-url" href={url} target="_blank" rel="noreferrer" aria-label={t("compactAccountOpenUrl")} title={`${t("compactAccountOpenUrl")} · ${url}`}><ExternalLink size={16} /></a>}
             <CompactIcon id={editId} label={t("edit")} disabled={busy} onClick={onEdit}><Pencil size={16} /></CompactIcon>
             <CompactIcon label={t(entryId ? "accountDeleteLogin" : "pwVaultDeleteEntry")} disabled={busy} onClick={onDelete}><Trash2 size={16} /></CompactIcon>
 		</header>
 		{children}
-        <footer className="compact-account-footer"><span className="compact-account-meta" title={[niceCategory(asset.category || "other", t), ...asset.tags].join(" · ")}>{[niceCategory(asset.category || "other", t), ...asset.tags].join(" · ")}</span>{!virtual && <Link {...details} hash="account-relations">{t("accountConnectionCount", { count: connectionCount })}<ChevronRight size={12} /></Link>}<DropdownMenu><DropdownMenuTrigger render={<Button id={menuId} variant="ghost" size="icon" className="compact-account-icon" aria-label={t("moreActions")} title={t("moreActions")} />}><MoreHorizontal size={17} /></DropdownMenuTrigger><DropdownMenuContent align="end">{menu}{!virtual && <DropdownMenuItem render={<Link {...details} />}>{t("accountViewRelations")}</DropdownMenuItem>}</DropdownMenuContent></DropdownMenu></footer>
+        <footer className="compact-account-footer"><span className="compact-account-meta" title={[niceCategory(asset.category || "other", t), ...asset.tags].join(" · ")}>{[niceCategory(asset.category || "other", t), ...asset.tags].join(" · ")}</span><DropdownMenu><DropdownMenuTrigger render={<Button id={menuId} variant="ghost" size="icon" className="compact-account-icon" aria-label={t("moreActions")} title={t("moreActions")} />}><MoreHorizontal size={17} /></DropdownMenuTrigger><DropdownMenuContent align="end">{menu}<DropdownMenuItem render={<Link {...details} />}>{t("accountViewRelations")}</DropdownMenuItem></DropdownMenuContent></DropdownMenu></footer>
 	</article>;
 }
 

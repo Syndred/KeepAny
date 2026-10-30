@@ -47,3 +47,47 @@
 	.asset-detail-account .account-graph-toolbar .relation-filter { order: 2; flex-basis: 100%; }
 }
 .asset-detail-account .more > summary { min-height: 44px; padding-block: 12px; cursor: pointer; }
+
+/* Account workspace: graph/tasks on the left, login/notes/impact on the right. */
+.page.asset-detail-account.account-relation-layout { display: grid; grid-template-columns: minmax(0, 1.85fr) minmax(300px, 1fr); gap: 14px; align-items: start; }
+.account-relation-layout > .account-detail-back { grid-column: 1 / -1; justify-self: start; }
+.page.account-relation-layout > .page-header { grid-area: auto; grid-column: 1 / -1; margin: 0; display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+.account-relation-layout .page-header > div:first-child { display: grid; grid-template-columns: 56px minmax(0, max-content) auto; align-items: center; gap: 14px; min-width: 0; }
+.account-detail-avatar { grid-column: 1; grid-row: 1; display: grid; place-items: center; width: 56px; height: 56px; border: 1.5px solid var(--line); border-radius: 12px; background: var(--yellow-soft); }
+.account-relation-layout .page-header h1 { grid-column: 2; grid-row: 1; margin: 0; overflow-wrap: anywhere; font-size: clamp(22px, 2vw, 30px); }
+.account-relation-layout .page-header .eyebrow { grid-column: 3; grid-row: 1; margin: 0; font-size: 12px; white-space: nowrap; }
+.page.asset-detail-account.account-relation-layout > .asset-detail-secondary { display: grid; grid-template-columns: minmax(0, 1fr); grid-column: 1; grid-row: 3; gap: 14px; min-width: 0; margin: 0; }
+.page.asset-detail-account.account-relation-layout .asset-relations-card, .page.asset-detail-account.account-relation-layout .asset-tasks-card { grid-area: auto; min-width: 0; }
+.page.asset-detail-account.account-relation-layout > .account-login-column { grid-column: 2; grid-row: 3; display: grid; gap: 14px; min-width: 0; margin: 0; }
+.account-login-summary, .account-note-summary { min-width: 0; overflow: hidden; }
+.account-relation-layout .graph.account-family-graph:not(.account-family-graph--expanded) { height: clamp(360px, 47vh, 580px); margin: 0 12px 12px; }
+.account-login-summary .card-header { margin: 0; padding: 16px 18px; gap: 8px; border-bottom: 1px solid var(--line-soft); }
+.account-login-summary h2, .account-note-summary h2 { margin: 0; font-size: 20px; }
+.account-login-value { padding: 14px 18px; border-bottom: 1px solid var(--line-soft); }
+.account-login-value:last-child { border-bottom: 0; }
+.account-login-label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 13px; }
+.account-login-value > div, .account-login-value > a { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-width: 0; }
+.account-login-value > div > span:first-child, .account-login-value > a > span { min-width: 0; overflow-wrap: anywhere; font-size: 16px; }
+.account-login-value > a { color: var(--ink); text-decoration: none; }
+.account-login-value > a:hover { text-decoration: underline; text-underline-offset: 3px; }
+.account-login-value .actions { flex: none; flex-wrap: nowrap; gap: 4px; }
+.account-login-value .button { flex: none; }
+.account-login-secret { white-space: pre-wrap; font-family: var(--font-mono, monospace); }
+.account-note-summary { padding: 16px 18px; }
+.account-note-summary p { margin: 12px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.account-impact-details > summary { display: flex; align-items: center; gap: 10px; min-height: 60px; padding: 14px 18px; font-weight: 750; cursor: pointer; list-style: none; }
+.account-impact-details > summary span { flex: 1; }
+.account-impact-details[open] > summary { border-bottom: 1px solid var(--line-soft); }
+.account-impact-details[open] > summary > svg:last-child { transform: rotate(90deg); }
+.account-existing-attachments > summary { min-height: 44px; cursor: pointer; }
+@media (max-width: 1000px) {
+ .page.asset-detail-account.account-relation-layout { grid-template-columns: minmax(0, 1fr); }
+ .page.asset-detail-account.account-relation-layout > .asset-detail-secondary { grid-column: 1; grid-row: 4; }
+ .page.asset-detail-account.account-relation-layout > .account-login-column { grid-column: 1; grid-row: 3; }
+ .account-relation-layout .page-header > div:first-child { grid-template-columns: 44px minmax(0, 1fr); gap: 8px; }
+ .account-detail-avatar { width: 44px; height: 44px; grid-row: 1 / span 2; }
+ .account-relation-layout .page-header .eyebrow { grid-column: 2; grid-row: 2; }
+ .account-relation-layout .page-header { align-items: start; }
+ .account-relation-layout .page-header > .actions { flex: none; flex-wrap: nowrap; gap: 4px; }
+ .account-login-summary .card-header { flex-wrap: nowrap; }
+}

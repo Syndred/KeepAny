@@ -9,7 +9,7 @@ const evidence = resolve(process.env.KEEPANY_COMPACT_EVIDENCE ?? `test-results/c
 mkdirSync(evidence, { recursive: true });
 const master = "SyntheticCompactMaster2026!", mainPassword = "Synthetic-Main!2026", secondPassword = "Synthetic-Backup!2026";
 const text = (language: "zh-CN" | "en") => (key: string) => (resources[language].translation as Record<string, string>)[key] ?? key;
-const account = (page: Page, name = "CC studio account") => page.locator(".compact-account-card").filter({ has: page.getByRole("button", { name: name === "CC studio account" ? /^(CC studio account|CC secondary login)$/ : name, exact: true }) });
+const account = (page: Page, name = "CC studio account") => page.locator(".compact-account-card").filter({ has: page.getByRole("link", { name: name === "CC studio account" ? /^(CC studio account|CC secondary login)$/ : name, exact: true }) });
 
 async function save(dialog: Locator) {
 	await dialog.getByRole("button", { name: /^(保存|Save|保存条目|Save entry)$/ }).click();

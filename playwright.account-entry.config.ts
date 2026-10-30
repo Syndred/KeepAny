@@ -6,7 +6,7 @@ const evidence = process.env.KEEPANY_SINGLE_ENTRY_EVIDENCE ?? "test-results/acco
 process.env.KEEPANY_SINGLE_ENTRY_EVIDENCE = evidence;
 export default defineConfig({
 	...browserDefaults,
-	testMatch: ["unified-account-editor.spec.ts", "compact-accounts.spec.ts"],
+	testMatch: ["unified-account-editor.spec.ts", "compact-accounts.spec.ts", "simple-account-relations.spec.ts"],
 	outputDir: process.env.KEEPANY_INDEPENDENT_RESULTS ?? "test-results/account-entry-ci/browser",
 	timeout: 150_000,
 	workers: 1,

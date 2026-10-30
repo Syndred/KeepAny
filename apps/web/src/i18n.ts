@@ -15,6 +15,13 @@ import { financeCopy } from "./finance-copy";
 import { candidateMergeCopy } from "./candidate-merge-copy";
 
 const copy: Record<string, [string, string]> = {
+ accountLoginInfo: ["登录信息", "Login information"],
+ accountRelationMap: ["关系图", "Relationships"],
+ accountUnlinkConfirm: ["解除与“{{name}}”的关联？", "Disconnect from “{{name}}”?"],
+ accountLoginUrl: ["登录网址", "Login URL"],
+ accountNoNotes: ["暂无备注", "No notes"],
+ accountBack: ["返回账号", "Back to accounts"],
+ accountImpactTitle: ["变更影响检查", "Review change impact"],
  accountAddLogin: ["新增登录", "Add login"],
  accountEditUnified: ["编辑账号", "Edit account"],
  accountDeleteLogin: ["删除当前登录", "Delete current login"],
