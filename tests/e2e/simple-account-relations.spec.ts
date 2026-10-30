@@ -1,14 +1,24 @@
-import { mkdirSync } from "node:fs";
+import { mkdirSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { expect, test, type Page } from "@playwright/test";
 import { resources } from "../../apps/web/src/i18n";
 import { importVisualKdbxEntries } from "./fixtures/password-smart-import-visual";
 import { selectChoice } from "./helpers/select-choice";
 import { waitForAccountGraphLayout } from "./helpers/account-graph";
+import { prepareCompletionArchive, restoreCompletionArchive } from "./helpers/completion-archive";
+import { newAsset } from "../../packages/domain/src";
+import { decryptBackup } from "../../packages/local-db/src/backup-crypto";
+import { strFromU8, unzipSync } from "fflate";
 
 const evidence = resolve(process.env.KEEPANY_SIMPLE_ACCOUNT_EVIDENCE ?? "test-results/simple-account/evidence");
 mkdirSync(evidence, { recursive: true });
 const master = "SyntheticSimpleMaster2026!";
+const legacyDirectory = join(evidence, "legacy-preparation");
+const legacyNote = "Legacy ordinary note", supplemental = "L".repeat(20000), privateNote = "P".repeat(50000);
+test.beforeAll(async () => { await prepareCompletionArchive(legacyDirectory, master, async repo => {
+ const asset = { ...newAsset("account"), id: "sr-legacy-note", name: "SR legacy old", category: "email", username: "old@example.test", accountProvider: "Preserved provider", contact: "Preserved contact", description: "Preserved purpose", notes: legacyNote, longDescription: supplemental };
+ await repo.save("asset", asset); return { id: asset.id };
+}); });
 const text = (language: "zh-CN" | "en") => (key: string) => (resources[language].translation as Record<string, string>)[key] ?? key;
 type T = (key: string) => string;
 const card = (page: Page, name: string) => page.locator(".compact-account-card").filter({ has: page.getByRole("link", { name, exact: true }) });
@@ -42,6 +52,24 @@ async function shot(page: Page, name: string) {
 
 for (const language of ["zh-CN", "en"] as const) {
  const t = text(language);
+ test(`${language} SR01-SR07 legacy notes combine once, retry safely and stay encrypted`, async ({browser},info) => {
+  const context=await browser.newContext({baseURL:info.project.use.baseURL,viewport:{width:1280,height:1000},locale:language,acceptDownloads:true});await context.addInitScript(lang=>localStorage.setItem("keepany-language",lang),language);const page=await context.newPage();
+  try {
+   await setup(page,t);await restoreCompletionArchive(page,master,join(legacyDirectory,"fixture.ka1"));await page.locator(".sidebar nav").getByRole("link",{name:t("accountsWorkspace"),exact:true}).click();
+   if(await page.locator("#password-vault-unlock-master").count())await unlock(page,t);
+   await importVisualKdbxEntries(page,t,[{title:"SR legacy old",username:"old@example.test",password:"LegacySynthetic!2026",notes:privateNote,linkedAssetIds:["sr-legacy-note"]}]);
+   const row=card(page,"SR legacy old"), combined=`${supplemental}\n\n${legacyNote}\n\n${privateNote}`;
+   await row.getByRole("button",{name:t("edit"),exact:true}).click();await expect(page.locator("#password-vault-entry-notes")).toHaveValue(combined);await page.getByRole("dialog").getByRole("button",{name:t("cancel"),exact:true}).click();
+   await row.getByRole("button",{name:t("edit"),exact:true}).click();
+   // Single synthetic storage fault; preparation only. Save/retry use the real form.
+   await page.evaluate(()=>{const put=IDBObjectStore.prototype.put;IDBObjectStore.prototype.put=function(value,key){if(this.name==="passwordVault"){IDBObjectStore.prototype.put=put;throw new DOMException("Synthetic note write failure","QuotaExceededError");}return key===undefined?put.call(this,value):put.call(this,value,key);};});
+   await page.getByRole("dialog").getByRole("button",{name:t("save"),exact:true}).click();await expect(page.getByRole("dialog").getByRole("alert")).toBeVisible();await expect(page.locator("#password-vault-entry-notes")).toHaveValue(combined);await save(page,t);
+   await page.reload();await unlock(page,t);await row.getByRole("button",{name:t("edit"),exact:true}).click();await expect(page.locator("#password-vault-entry-notes")).toHaveValue(combined);await page.getByRole("dialog").getByRole("button",{name:t("cancel"),exact:true}).click();
+   await page.goto("/intake");await page.locator("#backup-password").fill(master);await page.getByRole("button",{name:t("backup"),exact:true}).click();const download=page.waitForEvent("download");await page.getByRole("link",{name:t("saveBackupFile"),exact:true}).click();const path=info.outputPath("notes-public.ka1");await(await download).saveAs(path);
+   const files=unzipSync(await decryptBackup(new Uint8Array(readFileSync(path)),master)),rows=JSON.parse(strFromU8(files["records.json"]));const ordinary=rows.find((r:{type:string;value:{id:string}})=>r.type==="asset"&&r.value.id==="sr-legacy-note").value;
+   expect(ordinary).toMatchObject({notes:"",longDescription:"",accountProvider:"Preserved provider",contact:"Preserved contact",description:"Preserved purpose"});expect(JSON.stringify(rows)).not.toContain(privateNote);
+  }finally{await context.close();}
+ });
  test(`${language} SR01-SR04 simplified fields, title navigation and relation tasks survive refresh`, async ({ browser }, info) => {
   const context = await browser.newContext({ baseURL: info.project.use.baseURL, viewport: { width: 1605, height: 1000 }, locale: language, permissions: ["clipboard-read", "clipboard-write"] });
   await context.addInitScript(lang => localStorage.setItem("keepany-language", lang), language);
