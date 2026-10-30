@@ -1,3 +1,4 @@
+import { materializeCandidate, selectCandidate } from "../../scripts/lib/portable-candidate.mjs";
 import { openProjectDetails } from "./helpers/project-details";
 import { openBackupPage } from "./helpers/backup-restore";
 import { execFileSync, spawn, spawnSync, type ChildProcess } from 'node:child_process';
@@ -21,16 +22,6 @@ async function unusedPort() {
   if (!address || typeof address === 'string') throw Error('No reserved loopback address');
   await new Promise<void>(resolve => reservation.close(() => resolve()));
   return address.port;
-}
-
-function candidateDirectory(root: string) {
-  if (process.env.KEEPANY_PORTABLE_PREVIEW_PATH) return resolve(process.env.KEEPANY_PORTABLE_PREVIEW_PATH);
-  const directory = join(root, 'dist', 'preview');
-  const candidates = readdirSync(directory).filter(name => name.endsWith('.zip'))
-    .map(name => ({ name, modified: statSync(join(directory, name)).mtimeMs }))
-    .sort((a, b) => b.modified - a.modified);
-  if (!candidates.length) throw Error('Build a portable preview before running this test');
-  return join(directory, candidates[0].name.slice(0, -4));
 }
 
 async function startPackage(directory: string, port: number) {
@@ -120,6 +111,8 @@ async function activeWorkerSource(context: BrowserContext, origin: string) {
 }
 
 async function originalImage(page: Page) {
+  // The pinned old UI exposes images directly; current UI opens its real disclosure.
+  if (await page.locator(".asset-project-media-disclosure").count()) await openProjectDetails(page);
   await expect(page.locator('.asset-image')).toHaveCount(1);
   await expect.poll(() => page.locator('.asset-image').evaluate((image: HTMLImageElement) => image.naturalWidth)).toBeGreaterThan(0);
   return page.locator('.asset-image').evaluate(async (image: HTMLImageElement) => Array.from(new Uint8Array(await (await fetch(image.src)).arrayBuffer())));
@@ -127,8 +120,9 @@ async function originalImage(page: Page) {
 
 test('closed old PWA upgrades to the fresh-only portable package on the same persistent origin and restores its actual backup', async () => {
   const root = process.cwd();
-  const candidate = candidateDirectory(root);
-  const release = JSON.parse(readFileSync(join(candidate, 'RELEASE.json'), 'utf8'));
+  const checked = materializeCandidate(selectCandidate());
+  const candidate = checked.directory;
+  const release = checked.release;
   const directory = mkdtempSync(join(tmpdir(), 'keepany-portable-pwa-upgrade-'));
   const oldPackage = join(directory, 'old-package');
   const newPackage = join(directory, 'new-package');
@@ -188,7 +182,6 @@ test('closed old PWA upgrades to the fresh-only portable package on the same per
       return canvas.toDataURL('image/png').split(',')[1];
     });
     const imageBytes = Buffer.from(imageBase64, 'base64');
-    await openProjectDetails(page);
     await page.getByLabel('Add image').setInputFiles({ name: 'portable-upgrade.png', mimeType: 'image/png', buffer: imageBytes });
     await page.getByRole('dialog').getByRole('button', { name: 'Confirm', exact: true }).click();
     expect(Buffer.from(await originalImage(page))).toEqual(imageBytes);
@@ -291,5 +284,6 @@ test('closed old PWA upgrades to the fresh-only portable package on the same per
     await stopPackage(oldPackage, oldService);
     await stopPackage(newPackage, newService);
     rmSync(directory, { recursive: true, force: true });
+    checked.cleanup();
   }
 });
