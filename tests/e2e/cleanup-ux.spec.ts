@@ -21,7 +21,7 @@ async function sample(page: Page, lang = "en") {
   await dialog.getByRole("button", { name: lang === "en" ? "Add sample records" : "加入示例资料", exact: true }).click();
   await expect(dialog).toBeHidden(); await expect(page.locator(".overview-project-card")).toHaveCount(4);
 }
-async function capture(page: Page, name: string) { mkdirSync(shots, { recursive: true }); await page.screenshot({ path: `${shots}/${name}.png` }); }
+async function capture(page: Page, name: string) { mkdirSync(shots, { recursive: true }); await page.screenshot({ path: `${shots}/${name}.png`, animations: "disabled" }); }
 
 test("UX01 local capture and AI stay independently reachable; backup has its own entry", async ({ page }) => {
   await prepare(page); await page.goto("/intake");
@@ -151,9 +151,9 @@ for (const language of ["zh-CN", "en"] as const) for (const width of [390, 768, 
     expect(Math.min(menuBox!.y + menuBox!.height, infoBox!.y + infoBox!.height) - Math.max(menuBox!.y, infoBox!.y)).toBeGreaterThan(0);
     await capture(page, `${language}-${width}-project-collapsed`);
     const graph = page.locator("#account-relations"); await graph.locator(":scope > summary").click(); await expect(graph.locator(".react-flow")).toBeVisible();
-    await graph.scrollIntoViewIfNeeded(); await expect(graph.locator(".react-flow__node").first()).toBeVisible(); await graph.screenshot({ path: `${shots}/${language}-${width}-project-graph.png` });
+    await graph.scrollIntoViewIfNeeded(); await expect(graph.locator(".react-flow__node").first()).toBeVisible(); await graph.screenshot({ path: `${shots}/${language}-${width}-project-graph.png`, animations: "disabled" });
     await expect(page.locator(".asset-project-facts")).not.toContainText(language === "en" ? "comma separated" : "逗号分隔");
-    const media = page.locator(".asset-project-media-disclosure"); await media.locator(":scope > summary").click(); await media.scrollIntoViewIfNeeded(); await media.screenshot({ path: `${shots}/${language}-${width}-project-media.png` });
+    const media = page.locator(".asset-project-media-disclosure"); await media.locator(":scope > summary").click(); await media.scrollIntoViewIfNeeded(); await media.screenshot({ path: `${shots}/${language}-${width}-project-media.png`, animations: "disabled" });
     await page.locator(".asset-project-action-bar").getByRole("button", { name: language === "en" ? "More actions" : "更多操作", exact: true }).click(); await capture(page, `${language}-${width}-project-menu`); await page.keyboard.press("Escape");
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     await page.getByRole("button", { name: language === "en" ? "Add a record" : "新增资料", exact: true }).click();

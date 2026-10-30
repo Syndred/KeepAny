@@ -2,6 +2,7 @@ import { expect, type Page } from "@playwright/test";
 
 /** Navigate through a visible application entry, keeping the unlocked session. */
 export async function openBackupPage(page: Page) {
+	await expect(page.locator("main")).toBeVisible();
 	if (new URL(page.url()).pathname !== "/backup") {
         const shortcut = page.locator('main a[href="/backup"]');
         if (await shortcut.isVisible()) await shortcut.click();
