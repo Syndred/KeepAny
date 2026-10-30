@@ -26,7 +26,7 @@ export function AccountEntryDialog({ onClose, asset, entryId, returnFocusTo, new
 	const { t } = useTranslation();
 	const { data, notify } = useAppContext();
 	const { snapshot, session, generatePassword } = usePasswordVault();
-	const editing = Boolean(asset || entryId);
+	const editing = Boolean(asset || entryId || newLogin);
 	const [originalEntry] = useState(() => entryId && session?.getSnapshot().status === "unlocked" ? session.readEntry(entryId) : null);
 	const [baseProfile] = useState<Asset>(() => asset ?? ({ ...newAsset("account"), category: "other", name: originalEntry?.title ?? "", username: originalEntry?.username ?? "", url: originalEntry?.url ?? "" }));
 	const [profile, setProfile] = useState(baseProfile);
@@ -195,7 +195,9 @@ export function AccountEntryDialog({ onClose, asset, entryId, returnFocusTo, new
 			};
 			setError(
 				t(
-					partial
+					["vault-stale", "asset-stale"].includes(reason)
+                        ? partial ? "accountEntryPartialStale" : "assetStale"
+					: partial
 						? "accountEntryPartial"
 						: failure instanceof AccountLinkConflict
 							? "accountIdentityAmbiguous"

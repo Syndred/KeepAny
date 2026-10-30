@@ -42,6 +42,7 @@ export function EmptyState({
 					<div className="password-vault-password-input">
 						<Input
 							id="password-vault-master"
+                            autoFocus={accounts}
 							type={showMaster ? "text" : "password"}
 							value={master}
 							onChange={(event) => setMaster(event.target.value)}
@@ -129,6 +130,7 @@ export function LockedState({
 					<div className="password-vault-password-input">
 						<Input
 							id="password-vault-unlock-master"
+                            autoFocus={accounts}
 							type={showMaster ? "text" : "password"}
 							value={master}
 							onChange={(event) => setMaster(event.target.value)}

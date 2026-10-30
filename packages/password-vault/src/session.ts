@@ -1,8 +1,8 @@
-import { Kdbx, KdbxCredentials } from 'kdbxweb';
+import { Kdbx, KdbxCredentials, ProtectedValue } from 'kdbxweb';
 import {
   applyDraft, checkBytes, clearCredentials, clearDatabase, configureDatabase, credentials, draftOf, fail,
   encodeImportDraft, findEntry, isTrash, loadDatabase, nextKdbxTime, normalizeDraft,
-  readImportDraft, safeError, summaryOf, VAULT_IMPORT_DRAFT_FIELD,
+  readImportDraft, safeError, summaryOf, sameVaultDraft, VAULT_IMPORT_DRAFT_FIELD, VAULT_LINK_FIELD,
 } from './engine';
 import type {
   VaultEntryDraft,
@@ -299,7 +299,7 @@ export class VaultSession {
       if (baseline) {
         if (!draft.id || draft.id !== baseline.id) fail('vault-stale');
         const current = findEntry(db, draft.id);
-        if (isTrash(db, current) || JSON.stringify(normalizeDraft(draftOf(current))) !== JSON.stringify(baseline)) fail('vault-stale');
+        if (isTrash(db, current) || !sameVaultDraft(draftOf(current), baseline)) fail('vault-stale');
       } else if (baseline === null && draft.id) fail('vault-stale');
       return this.mutate(generation, (candidate) => {
       const entry = draft.id ? findEntry(candidate, draft.id) : candidate.createEntry(candidate.getDefaultGroup());
@@ -471,17 +471,19 @@ export class VaultSession {
       await this.mutate(generation, candidate => {
         const entry = findEntry(candidate, id);
         if (accountId && draft.linkedAssetIds.some(link => link !== accountId)) {
+          // The library's import preserves all historical versions, custom fields,
+          // attachments and icons. Only the current account's scope changes.
+          const replacement = candidate.importEntry(entry, candidate.getDefaultGroup(), candidate);
+          for (const version of [replacement, ...replacement.history]) {
+            version.fields.set(VAULT_LINK_FIELD, ProtectedValue.fromString(JSON.stringify([accountId])));
+          }
           entry.pushHistory();
           applyDraft(entry, normalizeDraft({ ...draft, linkedAssetIds: draft.linkedAssetIds.filter(link => link !== accountId) }));
           if (remaining.length) {
-            const replacement = candidate.createEntry(candidate.getDefaultGroup());
-            applyDraft(replacement, normalizeDraft({ ...draft, id: undefined, linkedAssetIds: [accountId] }));
             replacement.pushHistory();
             applyDraft(replacement, normalizeDraft({ ...draft, id: undefined, username: remaining[0], usernameAliases: remaining.slice(1), linkedAssetIds: [accountId] }));
           } else {
-            const removed = candidate.createEntry(candidate.getDefaultGroup());
-            applyDraft(removed, normalizeDraft({ ...draft, id: undefined, linkedAssetIds: [accountId] }));
-            candidate.meta.recycleBinEnabled = true; candidate.createRecycleBin(); candidate.remove(removed);
+            candidate.meta.recycleBinEnabled = true; candidate.createRecycleBin(); candidate.remove(replacement);
           }
         } else if (remaining.length) {
           entry.pushHistory();

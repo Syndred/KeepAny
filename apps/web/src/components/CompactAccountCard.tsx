@@ -85,7 +85,7 @@ function UnlockedCard({ asset, entries, connectionCount, onOpen, tools, queries,
 	}
 	const copiedIcon = (field: string) => copied === `${scope}:${field}` ? <Check size={16} /> : <Copy size={16} />;
 	return <Frame asset={{ ...asset, name: current?.entry.title ?? asset.name }} connectionCount={connectionCount} onOpen={onOpen} onEdit={() => onEdit(asset, current?.entry.id, editId)} onDelete={() => current ? tools.deleteLogin(current.entry, username, virtual ? undefined : asset.id) : onDeleteAccount(asset)} busy={tools.busy} virtual={virtual} url={url} entryId={current?.entry.id} menuId={menuId} editId={editId} menu={<>
-		{current && <DropdownMenuItem disabled={tools.busy} onClick={() => tools.history(current.entry)}>{t("pwVaultHistory")}</DropdownMenuItem>}
+		{current && <DropdownMenuItem disabled={tools.busy} onClick={() => tools.history(current.entry, menuId)}>{t("pwVaultHistory")}</DropdownMenuItem>}
 		<DropdownMenuItem disabled={tools.busy} onClick={() => onEdit(asset, undefined, editId, true)}>{t("pwVaultNewEntry")}</DropdownMenuItem>
 		{current && !virtual && <DropdownMenuItem disabled={tools.busy} onClick={() => tools.unlink(current.entry, asset)}>{t("pwVaultUnlink")}</DropdownMenuItem>}
 		{url && <DropdownMenuItem disabled={tools.busy} onClick={() => void copy("pwVaultUrlField", url, "url", Boolean(current))}>{t("compactAccountCopyUrl")}</DropdownMenuItem>}

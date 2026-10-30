@@ -1,7 +1,7 @@
 import { assetSchema, type Asset } from "../../../packages/domain/src";
 import { localRepository, type LocalRepository } from "../../../packages/local-db/src";
 import type { VaultEntryDraft, VaultSession } from "../../../packages/password-vault/src";
-import { normalizeDraft } from "../../../packages/password-vault/src/engine";
+import { normalizeDraft, sameVaultDraft } from "../../../packages/password-vault/src/engine";
 import { saveAccountWithIdentityLinks, AccountIdentitySavePending } from "./account-identity-save";
 import type { AccountLinkLabel } from "./vault-account-links";
 import { withFilledVaultIdentifiers } from "./vault-entry-identifiers";
@@ -11,7 +11,7 @@ export function mergedAccountDraft(asset: Asset | undefined, entry: VaultEntryDr
 }
 
 export type AccountEditProgress = { account: Asset | null; accountChanged: boolean; pendingEntry?: VaultEntryDraft };
-const sameEntry = (a: VaultEntryDraft, b: VaultEntryDraft) => JSON.stringify(normalizeDraft(a)) === JSON.stringify(normalizeDraft(b));
+const sameEntry = sameVaultDraft;
 const publicFields = ["category", "accountProvider", "contact", "description", "tags", "status", "accountProfileVerifiedAt", "notes", "longDescription"] as const;
 
 /** One editor, two existing stores. Never publish a password, aliases or private notes. */

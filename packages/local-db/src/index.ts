@@ -424,6 +424,18 @@ export class LocalRepository {
     return this.saveUnlocked('asset', next, rowFor('asset', expected).payload);
   }
 
+  /** Empty-account confirmation freezes both the public row and encrypted revision. */
+  async trashEmptyAccountIfCurrent(expected: Asset, expectedVaultRevision: string): Promise<RecordRow> {
+    if (expected.kind !== 'account' || expected.deleted || !expectedVaultRevision) throw Error('asset-stale');
+    return this.fileStore.transaction('rw', this.fileStore.passwordVault, async () => {
+      // Obtain the cross-tab vault write lock before checking the public version.
+      const record = await this.fileStore.passwordVault.get('local');
+      if (record?.revision !== expectedVaultRevision) throw Error('vault-stale');
+      return Dexie.waitFor(Dexie.ignoreTransaction(() => this.saveAssetIfCurrent(expected,
+        { ...expected, deleted: true, updatedAt: new Date().toISOString() })));
+    });
+  }
+
   async saveRelationIfCurrent(expected: Relation, next: Relation): Promise<RecordRow> {
     if (expected.id !== next.id || expected.from !== next.from || expected.to !== next.to) throw Error('relation-stale');
     return this.saveUnlocked('relation', next, rowFor('relation', expected).payload);

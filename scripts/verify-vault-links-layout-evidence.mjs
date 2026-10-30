@@ -54,7 +54,8 @@ async function verify(record, base) {
   for(const s of shots){ check(typeof s.name==='string' && basename(s.path)===s.name+'.png' && !s.name.includes('/') && !s.name.includes('\\'), 'Unsafe screenshot name'); const b=await readFile(join(dirname(p),s.name+'.png')); check(sha(b)===s.sha256 && b.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10])) && b.readUInt32BE(16)===r.width && b.readUInt32BE(20)===r.height, 'PNG hash/signature/dimension mismatch'); }
   const cancel=r.steps.filter(s=>s.stage==='cancel-preserved'), saved=r.steps.filter(s=>s.stage==='saved-refreshed');
   check(cancel.length===1 && /^[a-f0-9]{64}$/.test(cancel[0].fingerprint) && saved.length===1, 'Missing persistence stage'); const s=saved[0];
-  check(Array.isArray(s.ids) && s.ids.length===12 && new Set(s.ids).size===12 && s.ids.every(id=>typeof id==='string'&&id.length>0) && s.ids.includes(s.linkedEntryId), 'Invalid preserved entry IDs');
+  const expectedEntries = r.fixtureVersion === 'unified-accounts-13' ? 13 : r.fixtureVersion === undefined ? 12 : 0;
+  check(Array.isArray(s.ids) && expectedEntries>0 && s.ids.length===expectedEntries && new Set(s.ids).size===expectedEntries && s.ids.every(id=>typeof id==='string'&&id.length>0) && s.ids.includes(s.linkedEntryId), 'Invalid preserved entry IDs');
   const chosen=r.steps.filter(x=>x.stage==='selected-bottom');
   check(chosen.length===2 && chosen.every(x=>x.selectedId===`vault-connect-choice-${s.linkedEntryId}`), 'Selected entry does not match saved entry');
   check(Array.isArray(s.originalAccounts) && s.originalAccounts.length===1 && same(s.originalAccounts,cancel[0].originalAccounts) && Array.isArray(s.accounts) && s.accounts.length===3 && new Set(s.accounts).size===3 && s.originalAccounts.every(id=>s.accounts.includes(id)) && s.linkedAssetIds?.length===1 && s.primaryId===s.linkedAssetIds[0] && s.accounts.includes('/assets/account/'+s.primaryId), 'Invalid saved account link');

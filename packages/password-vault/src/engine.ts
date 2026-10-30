@@ -131,6 +131,17 @@ function normalizeUsernameAliases(value: unknown, username: string): string[] | 
   return aliases.length ? aliases : undefined;
 }
 
+/** Compare field values, independent of the caller's object insertion order. */
+export function sameVaultDraft(first: VaultEntryDraft, second: VaultEntryDraft): boolean {
+  const key = (value: VaultEntryDraft) => {
+    const draft = normalizeDraft(value);
+    return [draft.id, draft.title, draft.username, draft.password, draft.url, draft.notes,
+      draft.usernameAliases ?? [], [...draft.linkedAssetIds].sort(),
+      draft.aiKeyBinding ? [draft.aiKeyBinding.version, draft.aiKeyBinding.provider, draft.aiKeyBinding.baseURL] : null];
+  };
+  return JSON.stringify(key(first)) === JSON.stringify(key(second));
+}
+
 function validAiKeyBinding(value: unknown): value is NonNullable<VaultEntryDraft['aiKeyBinding']> {
   if (!value || typeof value !== 'object') return false;
   const binding = value as Record<string, unknown>;
