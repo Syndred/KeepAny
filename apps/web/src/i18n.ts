@@ -13,8 +13,10 @@ import { taskEditCopy } from "./task-edit-copy";
 import { sampleLibraryCopy } from "./sample-library-copy";
 import { financeCopy } from "./finance-copy";
 import { candidateMergeCopy } from "./candidate-merge-copy";
+import { cleanupUxCopy } from "./cleanup-ux-copy";
 
 const copy: Record<string, [string, string]> = {
+ ...cleanupUxCopy,
  accountLoginInfo: ["登录信息", "Login information"],
  accountRelationMap: ["关系图", "Relationships"],
  accountUnlinkConfirm: ["解除与“{{name}}”的关联？", "Disconnect from “{{name}}”?"],
@@ -123,78 +125,42 @@ const copy: Record<string, [string, string]> = {
 	subscription: ["订阅", "Subscriptions"],
 	item: ["实物", "Items"],
 	vault: ["密码库", "Password vault"],
-	intake: ["收录与备份", "Import & backup"],
+	intake: ["收录", "Capture & import"],
 	trash: ["回收站", "Trash"],
 	settings: ["设置", "Settings"],
-	bindingTitle: ["连接账号", "Connect account"],
-	bindingHint: [
-		"连接后可在此设备查看授权状态。同步需另行开启。",
-		"View account authorization on this device. Sync is enabled separately.",
-	],
-	bindingStart: ["开始连接", "Start connecting"],
-	bindingStartOfficial: [
-		"授权官方同步读写",
-		"Authorize official sync read and write",
-	],
-	bindingWriteRequest: [
-		"此连接可读取和修改同步资料。请在账号页面核对权限后批准。",
-		"This connection can read and change synced data. Review the permissions in your account before approving.",
-	],
-	bindingReadOnly: [
-		"此连接仅可查看授权状态。若要使用官方同步，请先在账号页面撤销旧授权、从本机移除连接，再批准读写权限。",
-		"This connection can only check authorization. For official sync, revoke its access in your account, remove it here, then approve read and write access.",
-	],
-	bindingWriteEnabled: [
-		"已授权读取和修改同步资料；只有你主动同步时才会传输。",
-		"Read and write access is approved. Data transfers only when you choose to sync.",
-	],
-	bindingCode: ["授权码", "Approval code"],
-	bindingApprove: [
-		"在账号页面确认此授权码，再返回检查结果。",
-		"Confirm this code in your account, then return to check the result.",
-	],
-	bindingOpenApproval: ["打开授权页面", "Open approval page"],
-	bindingCheck: ["检查状态", "Check status"],
-	bindingWait: ["请在 {{count}} 秒后重试。", "Try again in {{count}} seconds."],
-	bindingConnected: ["本机已保存账号连接", "Connection saved on this device"],
-	bindingForget: ["从本机移除", "Remove from this device"],
-	bindingForgetConfirm: [
-		"仅移除本机连接。要撤销设备授权，请到账号页面操作。",
-		"This removes the local connection only. Revoke device access in your account settings.",
-	],
-	bindingForgotten: ["已从本机移除连接", "Connection removed from this device"],
-	bindingFailed: [
-		"连接未完成，请稍后重试。",
-		"Connection could not be completed. Try again.",
-	],
-	bindingLocalError: [
-		"无法读取本机连接状态。",
-		"Could not read the connection on this device.",
-	],
-	bindingDeviceName: ["KeepAny 网页", "KeepAny Web"],
-	bindingState_active: ["授权有效", "Authorization is active"],
-	bindingState_inactive: ["授权暂不可用", "Authorization is inactive"],
-	bindingState_device_limit: ["设备数量已达上限", "Device limit reached"],
-	bindingState_credential_expired: [
-		"授权凭据已过期",
-		"Authorization credentials expired",
-	],
-	bindingState_revoked: ["授权已撤销", "Authorization revoked"],
-	bindingState_unavailable: [
-		"服务授权状态暂不可用",
-		"Server authorization state unavailable",
-	],
-	bindingDevicesRefresh: ["查看设备授权", "View device access"],
-	bindingDevicesHint: [
-		"以下为同步服务最近验证的授权状态。到账号页面撤销设备授权；状态更新可能有短暂延迟。",
-		"These are the latest access states verified by the sync service. Revoke device access in your account settings; updates may take a short time.",
-	],
-	bindingDevicesEmpty: ["暂无可查看的设备授权", "No device access to show"],
-	bindingThisDevice: ["此浏览器", "This browser"],
-	bindingOtherDevice: ["其他浏览器", "Other browser"],
-	bindingPoll_denied: ["授权被拒绝", "Authorization denied"],
-	bindingPoll_expired: ["授权码已过期", "Approval code expired"],
-	bindingPoll_revoked: ["授权已撤销", "Authorization revoked"],
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 	assistant: ["AI 助手", "AI assistant"],
 	all: ["全部", "All"],
 	add: ["新增", "Add"],
@@ -893,10 +859,7 @@ const copy: Record<string, [string, string]> = {
 		"关联保存尚未完成。可重试，或放弃未完成关联后重新编辑；已保存资料和已有关系会保留。",
 		"Connections are incomplete. Retry, or discard pending connections before editing again. Saved details and existing connections stay in place.",
 	],
-	syncPendingSubscription: [
-		"订阅关联尚未保存完成。请在订阅编辑中重试或放弃未完成关联，再继续同步。",
-		"Subscription connections are incomplete. Retry or discard the pending connections in the subscription editor before syncing.",
-	],
+
 	password: ["密码", "Password"],
 	noDue: ["未设置日期", "No date set"],
 	total: ["合计", "Total"],
@@ -910,134 +873,59 @@ const copy: Record<string, [string, string]> = {
 	close: ["关闭", "Close"],
 	more: ["更多资料", "More details"],
 	secureBackup: ["加密备份", "Encrypted backup"],
-	remoteBackupTitle: ["远端加密备份", "Encrypted remote backup"],
-	remoteBackupHint: [
-		"将本机资料加密后存到你选择的位置；恢复前会读回并核对。",
-		"Encrypt your local data to storage you choose. The backup is read back and checked before restore.",
-	],
-	remoteBackupKind: ["存储方式", "Storage type"],
-	remoteS3: ["S3 预签名链接", "S3 presigned URLs"],
-	remotePutUrl: ["上传链接（PUT）", "Upload URL (PUT)"],
-	remoteGetUrl: ["读取链接（GET）", "Download URL (GET)"],
-	remoteDavUrl: ["WebDAV 文件地址", "WebDAV file URL"],
-	remoteDavUser: ["WebDAV 用户名", "WebDAV username"],
-	remoteDavPassword: ["WebDAV 应用密码", "WebDAV app password"],
-	remotePrivateHint: [
-		"使用 HTTPS 域名，不支持 IP 或 localhost。浏览器须获准向存储地址发出读写请求；链接和凭据只在当前页面保留。S3 恢复只需有效的读取链接。",
-		"Use an HTTPS hostname, not an IP address or localhost. Your storage must allow browser reads and writes. URLs and credentials stay in this tab. S3 restore only needs a current download URL.",
-	],
-	remoteUpload: ["加密上传并核对", "Encrypt, upload and verify"],
-	remoteStored: [
-		"已上传并读回核对。请保存校验凭条，恢复时需要它。",
-		"Uploaded and checked by reading it back. Save the receipt for restore.",
-	],
-	remoteSaveReceipt: ["保存校验凭条", "Save receipt"],
-	remoteReceipt: ["校验凭条", "Backup receipt"],
-	remoteReceiptHint: [
-		"可粘贴已保存的凭条，或在下方选择文件。凭条不含备份密码。",
-		"Paste a saved receipt or choose its file below. It does not contain your backup password.",
-	],
-	remoteReceiptFile: ["选择校验凭条文件", "Choose receipt file"],
-	remotePreview: ["读取并预览远端备份", "Read and preview remote backup"],
-	remotePreviewReady: [
-		"远端备份已核对。检查条数后确认恢复。",
-		"Remote backup verified. Check the record count, then confirm restore.",
-	],
-	remoteConfigError: [
-		"检查存储地址、链接是否指向同一文件，以及 WebDAV 登录资料。",
-		"Check the storage URLs, that both S3 links target the same file, and WebDAV sign-in details.",
-	],
-	remoteReceiptError: [
-		"校验凭条无效，请选择上传时保存的文件。",
-		"Invalid receipt. Choose the file saved after upload.",
-	],
-	remoteReadbackError: [
-		"远端文件与校验凭条不符，未准备恢复。",
-		"The remote file does not match the receipt. Nothing is ready to restore.",
-	],
-	remoteSizeError: [
-		"远端备份超过大小限制，未继续操作。",
-		"The remote backup exceeds the size limit. Nothing was restored.",
-	],
-	remoteRequestError: [
-		"无法读写存储地址。请检查链接、权限及浏览器访问设置。",
-		"Could not read or write storage. Check the URL, permissions and browser access settings.",
-	],
-	remotePreviewError: [
-		"无法解密或检查远端备份。请核对密码及文件。",
-		"Could not decrypt or check the remote backup. Check the password and file.",
-	],
-	extImportTitle: ["导入外链记录", "Import backlink records"],
-	extImportHint: [
-		"选择 JSON 导出文件，匹配本机项目与来源资料，预览后导入所选记录。当前支持 ExternalLink 导出格式；其他资料可使用 CSV 导入。不会向外链站提交或覆盖项目资料。",
-		"Choose a JSON export, match a local project and source profile, then preview and import selected records. Currently supports the ExternalLink export format; use CSV import for other records. No site submissions or project details are changed.",
-	],
-	extChooseProject: ["选择本机项目", "Choose local project"],
-	extExportFile: ["JSON 导出文件", "JSON export file"],
-	extChooseProfile: ["选择来源资料", "Choose source profile"],
-	extInvalidExport: [
-		"导出文件无效、过大或版本不支持。",
-		"The export is invalid, too large or an unsupported version.",
-	],
-	extInvalidLedger: [
-		"资料与投递记录的标识不一致，未准备导入。",
-		"Profile and ledger identities do not match. Nothing is ready to import.",
-	],
-	extProfilePreview: ["资料预览", "Profile preview"],
-	extImageCounts: [
-		"图片引用：Logo {{logo}}、主图 {{featured}}、截图 {{screenshots}}",
-		"Image references: logo {{logo}}, featured {{featured}}, screenshots {{screenshots}}",
-	],
-	extMinScreenshots: ["目标站最少截图", "Minimum screenshots for target"],
-	extMaxScreenshots: ["目标站最多截图", "Maximum screenshots for target"],
-	extRequireLogo: ["目标站要求 Logo", "Target requires a logo"],
-	extImageCheck: [
-		"按当前要求：缺少 {{missing}} 张截图，超出 {{extra}} 张，Logo {{logo}}",
-		"Against these requirements: {{missing}} screenshots missing, {{extra}} extra, logo {{logo}}",
-	],
-	extImageRuleInvalid: [
-		"请检查截图数量要求。",
-		"Check the screenshot requirements.",
-	],
-	extMissing: ["缺少", "missing"],
-	extReady: ["满足", "ready"],
-	extUnresolvedImages: [
-		"{{count}} 个图片字段无法解析。",
-		"{{count}} image fields could not be resolved.",
-	],
-	extMediaReferenceHint: [
-		"这里只检查图片链接与数量，不会下载或上传图片。",
-		"Only image references and counts are checked. No images are downloaded or uploaded.",
-	],
-	extLedgerPreview: ["投递记录预览", "Submission ledger preview"],
-	extSnapshotHint: [
-		"状态来自所选导出文件；这里不会实时核验目标站。",
-		"Statuses come from the selected export file. This page does not check the target sites live.",
-	],
-	extMissingReceipt: [
-		"缺少可核对的提交依据",
-		"No checkable submission evidence",
-	],
-	extMissingDate: ["缺少提交日期", "No submission date"],
-	extPublicationUnverified: [
-		"公开页面尚未核验",
-		"Public page has not been verified",
-	],
-	extIncompleteRecord: ["记录依据不完整", "Record evidence is incomplete"],
-	extExisting: [
-		"本机已有记录；勾选后会更新",
-		"Already on this device; selecting will update it",
-	],
-	extNoRecords: [
-		"此资料没有可预览的投递记录。",
-		"This profile has no submission records to preview.",
-	],
-	extImportSelected: ["导入所选 {{count}} 条", "Import {{count}} selected"],
-	extImported: [
-		"已导入 {{count}} 条台账记录",
-		"Imported {{count}} ledger records",
-	],
-	extImportedSource: ["ExternalLink 导出记录", "ExternalLink export record"],
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 	confirm: ["确认", "Confirm"],
 	connectionEmpty: [
 		"关联邮箱、手机、项目或订阅，查看它们如何相连。",
@@ -1135,79 +1023,40 @@ const copy: Record<string, [string, string]> = {
 	grant: ["允许本次发送", "Allow this request"],
 	recordRenewal: ["续费记录", "Renewal record"],
 	addPhoto: ["添加图片", "Add image"],
-	selfHostSync: ["自托管同步", "Self-hosted sync"],
-	selfHostSyncHint: [
-		"仅在你主动操作时连接自有服务。资料和图片在发送前于本机加密。",
-		"Connect to your own server only when you choose to. Records and photos are encrypted on this device before upload.",
-	],
-	officialSync: ["官方加密同步", "Official encrypted sync"],
-	officialSyncHint: [
-		"使用已批准读写权限的账号连接。资料和图片在本机加密，只有主动同步时才会传输。工作区密钥由你保管。",
-		"Connect with an account approved for read and write access. Records and photos are encrypted on this device and transfer only when you choose to sync. Keep the workspace key safe.",
-	],
-	syncAccessMode: ["连接方式", "Connection method"],
-	syncTokenMode: ["单人访问令牌", "Single-user access token"],
-	syncSessionMode: ["自部署账号", "Self-hosted account"],
-	syncOfficialMode: ["官方账号连接", "Official account connection"],
-	syncOfficialReady: [
-		"账号已批准读写权限。可以选择工作区或创建新工作区。",
-		"Read and write access is approved. Choose a workspace or create one.",
-	],
-	syncOfficialAuthorize: [
-		"请先在上方连接账号并批准官方同步读写权限。",
-		"Connect your account above and approve official sync read and write access first.",
-	],
-	syncOfficialAuthFailed: [
-		"账号授权或同步权益不可用。请检查账号授权状态后重试；本机资料仍可使用。",
-		"Account authorization or sync access is unavailable. Check your account access and retry; local records remain available.",
-	],
-	syncOfficialAccountMismatch: [
-		"账号与本机资料所关联的官方账号不符。请恢复原连接；连接另一账号需使用独立浏览器资料。",
-		"This account differs from the official account linked to this device's records. Restore the original connection, or use a separate browser profile.",
-	],
-	syncOfficialFilesFailed: [
-		"图片同步未完成，请稍后重试。本机图片仍可使用。",
-		"Photo sync did not complete. Try again later; local photos remain available.",
-	],
-	syncSessionOriginHint: [
-		"账号连接使用当前网站的同源服务。",
-		"Account connection uses the service on this site's origin.",
-	],
-	syncSessionChecking: ["正在检查登录状态", "Checking sign-in status"],
-	syncSessionSignedOut: [
-		"尚未登录自部署服务",
-		"Not signed in to the self-hosted service",
-	],
-	syncSignedInAs: ["已登录：{{email}}", "Signed in: {{email}}"],
-	syncAccountName: ["姓名", "Name"],
-	syncAccountEmail: ["邮箱地址", "Email address"],
-	syncAccountPassword: ["密码", "Password"],
-	syncSignIn: ["登录", "Sign in"],
-	syncSignUp: ["创建账号", "Create account"],
-	syncSignOut: ["退出登录", "Sign out"],
-	syncSigninFailed: [
-		"登录失败，请核对账号和密码。",
-		"Sign-in failed. Check your email and password.",
-	],
-	syncSignupFailed: [
-		"无法创建账号。此服务可能未开放注册。",
-		"Could not create an account. Registration may be closed on this server.",
-	],
-	syncSignoutFailed: [
-		"退出登录未完成，请重试。",
-		"Sign-out did not complete. Try again.",
-	],
-	syncSessionUnavailable: [
-		"无法检查服务登录状态，请检查连接。",
-		"Could not check the server session. Check the connection.",
-	],
-	syncSelectWorkspace: ["选择已有工作区", "Choose an existing workspace"],
-	syncRefreshWorkspaces: ["刷新工作区", "Refresh workspaces"],
-	syncNoWorkspaces: ["暂无可用工作区", "No workspaces available"],
-	syncServerUrl: ["服务地址", "Server URL"],
-	syncAccessToken: ["访问令牌", "Access token"],
-	syncWorkspace: ["工作区 ID", "Workspace ID"],
-	syncWorkspaceKey: ["工作区密钥", "Workspace key"],
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 	keyAccessTitle: ["新设备加入与密钥恢复", "Add a browser or recover a key"],
 	keyAccessHint: [
 		"已有浏览器可生成限时加入凭据；独立恢复凭据在旧浏览器丢失后仍可取回密钥。两者都需要当前账号的工作区访问权。",
@@ -1295,85 +1144,43 @@ const copy: Record<string, [string, string]> = {
 		"凭据不可用、错误、过期或已撤销；未更改工作区密钥。",
 		"Credential unavailable, incorrect, expired or revoked. The workspace key was not changed.",
 	],
-	syncKeyHint: [
-		"请将密钥另存于安全处。此页面不会保存密钥或访问令牌，丢失后无法读取已同步的资料。",
-		"Save this key somewhere safe. This page does not save the key or access token. Without the key, synced records cannot be read.",
-	],
-	syncSessionKeyHint: [
-		"请将工作区密钥另存于安全处。此页面不会保存密钥；丢失后无法读取已同步的资料。",
-		"Save the workspace key somewhere safe. This page does not store it; without the key, synced records cannot be read.",
-	],
-	syncCreateWorkspace: ["创建新工作区和密钥", "Create workspace and key"],
-	syncCreateConfirm: [
-		"创建新工作区会替换页面中当前填写的工作区和密钥。请先保存现有密钥。继续吗？",
-		"Creating a new workspace replaces the workspace and key in this form. Save the current key first. Continue?",
-	],
-	syncKeySavedConfirm: [
-		"我已在安全位置保存工作区密钥",
-		"I have saved the workspace key in a safe place",
-	],
-	syncShowKey: ["显示密钥", "Show key"],
-	syncHideKey: ["隐藏密钥", "Hide key"],
-	syncCopyKey: ["复制密钥", "Copy key"],
-	syncKeyCopied: ["密钥已复制", "Key copied"],
-	syncCopyFailed: [
-		"复制失败，请显示并手动保存密钥",
-		"Copy failed. Show and save the key manually.",
-	],
-	syncNow: ["立即同步", "Sync now"],
-	syncCheckLocal: ["查看本机状态", "Check local status"],
-	syncState_local: ["仅保存在本机", "Saved on this device only"],
-	syncState_pending: ["有待同步的更改", "Changes waiting to sync"],
-	syncState_syncing: ["正在同步", "Syncing"],
-	syncState_synced: ["本次同步已完成", "This sync completed"],
-	syncState_conflict: ["有更改需要你选择", "Choose which changes to keep"],
-	syncState_failed: ["本次同步未完成", "This sync did not complete"],
-	syncFilesUnsupported: [
-		"图片同步未完成，请检查服务端附件存储并重试。",
-		"Photo sync did not complete. Check your server's attachment storage and retry.",
-	],
-	syncAuthFailed: [
-		"服务拒绝了访问，请检查令牌和工作区权限。",
-		"The server denied access. Check the token and workspace permissions.",
-	],
-	syncSessionAuthFailed: [
-		"服务拒绝了访问，请重新登录并检查工作区权限。",
-		"The server denied access. Sign in again and check workspace permissions.",
-	],
-	syncKeyMismatch: [
-		"此工作区之前使用另一把密钥。请找回原密钥后再试。",
-		"This workspace was previously used with a different key. Re-enter the original key.",
-	],
-	syncDatasetBound: [
-		"本机资料已关联原服务、账号和工作区。请恢复原配置；要连接另一处，请使用独立浏览器资料。",
-		"This device's records are linked to their original server, account, and workspace. Restore that configuration, or use a separate browser profile for another destination.",
-	],
-	syncAccountMismatch: [
-		"服务返回的账号与本机自托管同步账号不符。请检查服务账号；要连接另一账号，请使用独立浏览器资料。",
-		"The server account does not match this device's self-hosted sync account. Check the account, or use a separate browser profile for another account.",
-	],
-	syncFailedHint: [
-		"请检查服务、网络和密钥后重试。已保存在本机的更改仍在本机。",
-		"Check the server, network, and key, then retry. Changes saved on this device remain here.",
-	],
-	syncPendingCount: [
-		"{{count}} 条更改待同步",
-		"{{count}} changes waiting to sync",
-	],
-	syncConflictTitle: ["选择保留的版本", "Choose a version to keep"],
-	syncConflictHint: [
-		"请核对下列差异。保留本机版本会在下次同步时发送；保留服务器版本会替换本机记录。",
-		"Review the differences. Keeping this device's version sends it on the next sync. Keeping the server version replaces the record on this device.",
-	],
-	syncOtherField: ["其他字段 {{count}}", "Other field {{count}}"],
-	syncDeleted: ["已删除", "Deleted"],
-	syncYes: ["是", "Yes"],
-	syncNo: ["否", "No"],
-	syncMultipleValues: ["多个值", "Multiple values"],
-	syncLocalValue: ["本机", "This device"],
-	syncRemoteValue: ["服务器", "Server"],
-	syncKeepLocal: ["保留本机版本", "Keep this device's version"],
-	syncKeepRemote: ["保留服务器版本", "Keep server version"],
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 	migrationTitle: [
 		"迁移到另一账号或工作区",
 		"Move to another account or workspace",

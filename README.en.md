@@ -40,7 +40,7 @@ In an empty **Overview**, choose **Start with sample records**, then **Add sampl
 2. Add a login account and connect it to the project.
 3. Record a subscription, its renewal date, and its project.
 4. Create a maintenance task and review an account's connections and change impact.
-5. Create an encrypted `.ka1` backup in **Import & backup**, **save the downloaded file**, then preview and restore it in a separate browser profile.
+5. Create an encrypted `.ka1` backup in **Backup & restore**, **save the downloaded file**, then preview and restore it in a separate browser profile.
 
 See the [trial guide](docs/试用指南.md#english) for setup, storage, and recovery. Start with sample records and complete a restore before adding important information.
 

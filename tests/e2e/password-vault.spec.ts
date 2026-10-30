@@ -928,7 +928,7 @@ for (const variant of variants) {
 				// Keep the initialized empty session alive through the SPA restore route.
 				await restorePage
 					.getByRole("link", {
-						name: zh ? "收录与备份" : "Import & backup",
+						name: zh ? "收录" : "Capture & import",
 						exact: true,
 					})
 					.last()

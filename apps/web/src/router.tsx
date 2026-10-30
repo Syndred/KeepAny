@@ -81,6 +81,11 @@ const trashRoute = createRoute({
 	path: "/trash",
 	component: lazyRouteComponent(() => import("./page-trash"), "TrashPage"),
 });
+const backupRoute = createRoute({
+	getParentRoute: () => rootRoute,
+	path: "/backup",
+	component: lazyRouteComponent(() => import("./page-intake"), "BackupPage"),
+});
 const settingsRoute = createRoute({
 	getParentRoute: () => rootRoute,
 	path: "/settings",
@@ -103,6 +108,7 @@ const routeTree = rootRoute.addChildren([
 	collectionDetailRoute,
 	financeRoute,
 	intakeRoute,
+	backupRoute,
 	trashRoute,
 	settingsRoute,
 ]);

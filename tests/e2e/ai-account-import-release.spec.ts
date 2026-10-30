@@ -2,6 +2,7 @@ import { mkdirSync } from "node:fs";
 import { expect, test } from "@playwright/test";
 import {
 	aiServer,
+	openCapture,
 	checkLayout,
 	evidence,
 	labels,
@@ -52,10 +53,7 @@ for (const language of ["zh-CN", "en"] as const) {
 				await expect(
 					settings.getByRole("status").filter({ hasText: copy.ready }),
 				).toBeVisible();
-				await page
-					.locator(".top-actions")
-					.getByRole("link", { name: copy.intake, exact: true })
-					.click();
+				await openCapture(page, copy.intake);
 				const importer = page.locator(".ai-import-panel"),
 					rows = page.locator(".intake-review-row");
 				await expect(importer).toContainText(

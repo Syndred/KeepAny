@@ -1,0 +1,636 @@
+{
+  "root": "C:/Users/Administrator/Desktop/project/KeepAny",
+  "protected": [
+    "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\local-accounts-593913",
+    "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\local-accounts-881a63"
+  ],
+  "archivedResources": [
+    {
+      "original": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\local-accounts-03e186\\web\\workbox-2fbc6a65.js",
+      "archive": "C:\\Users\\Administrator\\.codex\\worktrees\\cleanup-ux-20261030\\KeepAny\\docs\\qa\\2026-10-30\\cleanup-ux\\compatibility-assets\\39c2e6ae44c3f29666f6a328b6523bf13a053a1d95c74af8ddea82b1045b0b6e-workbox-2fbc6a65.js",
+      "sha256": "39c2e6ae44c3f29666f6a328b6523bf13a053a1d95c74af8ddea82b1045b0b6e"
+    },
+    {
+      "original": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\local-accounts-398c\\web\\workbox-2fbc6a65.js",
+      "archive": "C:\\Users\\Administrator\\.codex\\worktrees\\cleanup-ux-20261030\\KeepAny\\docs\\qa\\2026-10-30\\cleanup-ux\\compatibility-assets\\39c2e6ae44c3f29666f6a328b6523bf13a053a1d95c74af8ddea82b1045b0b6e-workbox-2fbc6a65.js",
+      "sha256": "39c2e6ae44c3f29666f6a328b6523bf13a053a1d95c74af8ddea82b1045b0b6e"
+    },
+    {
+      "original": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\local-accounts-ae76b2\\web\\assets\\account-family-graph-view-6sn2Ydoz.js",
+      "archive": "C:\\Users\\Administrator\\.codex\\worktrees\\cleanup-ux-20261030\\KeepAny\\docs\\qa\\2026-10-30\\cleanup-ux\\compatibility-assets\\f7c464554edde30eb9811fa08d5a0c050a099a2e16a784e7a07d344ea8657cb9-account-family-graph-view-6sn2Ydoz.js",
+      "sha256": "f7c464554edde30eb9811fa08d5a0c050a099a2e16a784e7a07d344ea8657cb9"
+    },
+    {
+      "original": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\local-accounts-ae76b2\\web\\assets\\AccountEntryDialog-BYowAWUN.js",
+      "archive": "C:\\Users\\Administrator\\.codex\\worktrees\\cleanup-ux-20261030\\KeepAny\\docs\\qa\\2026-10-30\\cleanup-ux\\compatibility-assets\\53f2d6c9313da686c95a7c16ac6c198797e87d74b2cd69ea1992a83c97d6e82e-AccountEntryDialog-BYowAWUN.js",
+      "sha256": "53f2d6c9313da686c95a7c16ac6c198797e87d74b2cd69ea1992a83c97d6e82e"
+    },
+    {
+      "original": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\local-accounts-ae76b2\\web\\assets\\finance-C2VGDf1_.js",
+      "archive": "C:\\Users\\Administrator\\.codex\\worktrees\\cleanup-ux-20261030\\KeepAny\\docs\\qa\\2026-10-30\\cleanup-ux\\compatibility-assets\\a1bea5f8e5ec8744652fe2fee81a8fd01aecc8a4b38089ad3986cabd493dfbb5-finance-C2VGDf1_.js",
+      "sha256": "a1bea5f8e5ec8744652fe2fee81a8fd01aecc8a4b38089ad3986cabd493dfbb5"
+    },
+    {
+      "original": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\local-accounts-ae76b2\\web\\assets\\ImpactTaskRow-DFsxum6W.js",
+      "archive": "C:\\Users\\Administrator\\.codex\\worktrees\\cleanup-ux-20261030\\KeepAny\\docs\\qa\\2026-10-30\\cleanup-ux\\compatibility-assets\\8ea8633fb9be687a6eb5f5388e90048717fa56b511ec431aa608896ebfad3256-ImpactTaskRow-DFsxum6W.js",
+      "sha256": "8ea8633fb9be687a6eb5f5388e90048717fa56b511ec431aa608896ebfad3256"
+    },
+    {
+      "original": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\local-accounts-ae76b2\\web\\assets\\index-atooDSia.js",
+      "archive": "C:\\Users\\Administrator\\.codex\\worktrees\\cleanup-ux-20261030\\KeepAny\\docs\\qa\\2026-10-30\\cleanup-ux\\compatibility-assets\\9fda5839466e81130aae216f835ffb5238ad429e8106aaa3511279ece061935a-index-atooDSia.js",
+      "sha256": "9fda5839466e81130aae216f835ffb5238ad429e8106aaa3511279ece061935a"
+    },
+    {
+      "original": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\local-accounts-ae76b2\\web\\assets\\intake-csv-DrYLc8GR.js",
+      "archive": "C:\\Users\\Administrator\\.codex\\worktrees\\cleanup-ux-20261030\\KeepAny\\docs\\qa\\2026-10-30\\cleanup-ux\\compatibility-assets\\06f3db6394c289622d521f9cecadfb1567a09e6172c90ed04b0b25ed3c4c9106-intake-csv-DrYLc8GR.js",
+      "sha256": "06f3db6394c289622d521f9cecadfb1567a09e6172c90ed04b0b25ed3c4c9106"
+    },
+    {
+      "original": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\local-accounts-ae76b2\\web\\assets\\page-asset-detail-BjZ6511i.js",
+      "archive": "C:\\Users\\Administrator\\.codex\\worktrees\\cleanup-ux-20261030\\KeepAny\\docs\\qa\\2026-10-30\\cleanup-ux\\compatibility-assets\\c3bf934efb745502ec5ee7afcc9768adcafe683c7d45e932e5751cd7a08e55a4-page-asset-detail-BjZ6511i.js",
+      "sha256": "c3bf934efb745502ec5ee7afcc9768adcafe683c7d45e932e5751cd7a08e55a4"
+    },
+    {
+      "original": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\local-accounts-ae76b2\\web\\assets\\page-assistant-access-DvUFG88y.js",
+      "archive": "C:\\Users\\Administrator\\.codex\\worktrees\\cleanup-ux-20261030\\KeepAny\\docs\\qa\\2026-10-30\\cleanup-ux\\compatibility-assets\\97747a470d812d1a247f1ec17b682b6b007150705bf1de3da81c18fb576ba9f2-page-assistant-access-DvUFG88y.js",
+      "sha256": "97747a470d812d1a247f1ec17b682b6b007150705bf1de3da81c18fb576ba9f2"
+    },
+    {
+      "original": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\local-accounts-ae76b2\\web\\assets\\page-change-impact-CmYZDWgE.js",
+      "archive": "C:\\Users\\Administrator\\.codex\\worktrees\\cleanup-ux-20261030\\KeepAny\\docs\\qa\\2026-10-30\\cleanup-ux\\compatibility-assets\\e522339ebd52b7867874eca0ebb6a16fd5b330dd3f68acc02d5e2f2b907ebf4b-page-change-impact-CmYZDWgE.js",
+      "sha256": "e522339ebd52b7867874eca0ebb6a16fd5b330dd3f68acc02d5e2f2b907ebf4b"
+    },
+    {
+      "original": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\local-accounts-ae76b2\\web\\assets\\page-collections-Bgav18Fp.js",
+      "archive": "C:\\Users\\Administrator\\.codex\\worktrees\\cleanup-ux-20261030\\KeepAny\\docs\\qa\\2026-10-30\\cleanup-ux\\compatibility-assets\\bb1fa38bdc46b29abdac42be93a5882ac1c7684d2c69502ddc22f888cdb311f8-page-collections-Bgav18Fp.js",
+      "sha256": "bb1fa38bdc46b29abdac42be93a5882ac1c7684d2c69502ddc22f888cdb311f8"
+    },
+    {
+      "original": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\local-accounts-ae76b2\\web\\assets\\page-intake-D0l33BvU.js",
+      "archive": "C:\\Users\\Administrator\\.codex\\worktrees\\cleanup-ux-20261030\\KeepAny\\docs\\qa\\2026-10-30\\cleanup-ux\\compatibility-assets\\d05468022c0ba4fb0c4f0b4c02b4d8af3ba2a4184a80adb46a39a6a6e7f5e96d-page-intake-D0l33BvU.js",
+      "sha256": "d05468022c0ba4fb0c4f0b4c02b4d8af3ba2a4184a80adb46a39a6a6e7f5e96d"
+    },
+    {
+      "original": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\local-accounts-ae76b2\\web\\assets\\page-overview-ceHvTwW0.js",
+      "archive": "C:\\Users\\Administrator\\.codex\\worktrees\\cleanup-ux-20261030\\KeepAny\\docs\\qa\\2026-10-30\\cleanup-ux\\compatibility-assets\\34305f67807ea99b775663978f737e27651b2bb108e1b87f98e2dffd4eb5c744-page-overview-ceHvTwW0.js",
+      "sha256": "34305f67807ea99b775663978f737e27651b2bb108e1b87f98e2dffd4eb5c744"
+    },
+    {
+      "original": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\local-accounts-ae76b2\\web\\assets\\page-project-workflow-CkT87lCz.js",
+      "archive": "C:\\Users\\Administrator\\.codex\\worktrees\\cleanup-ux-20261030\\KeepAny\\docs\\qa\\2026-10-30\\cleanup-ux\\compatibility-assets\\1eb175e7897735f37e65ab1aa95136e19d68d008aa42d7b951bb3560c48429f7-page-project-workflow-CkT87lCz.js",
+      "sha256": "1eb175e7897735f37e65ab1aa95136e19d68d008aa42d7b951bb3560c48429f7"
+    },
+    {
+      "original": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\local-accounts-ae76b2\\web\\assets\\page-settings-CjJIHaOT.js",
+      "archive": "C:\\Users\\Administrator\\.codex\\worktrees\\cleanup-ux-20261030\\KeepAny\\docs\\qa\\2026-10-30\\cleanup-ux\\compatibility-assets\\56d9f64d5984385decab8b10278739f8b45b67a79fd73cdbcce00026e29c5c8b-page-settings-CjJIHaOT.js",
+      "sha256": "56d9f64d5984385decab8b10278739f8b45b67a79fd73cdbcce00026e29c5c8b"
+    },
+    {
+      "original": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\local-accounts-ae76b2\\web\\assets\\page-tasks-Be1loDP6.js",
+      "archive": "C:\\Users\\Administrator\\.codex\\worktrees\\cleanup-ux-20261030\\KeepAny\\docs\\qa\\2026-10-30\\cleanup-ux\\compatibility-assets\\42b051d65e21f24e37f73baff3d67670abbd7deb247f227018ca2564d35562f0-page-tasks-Be1loDP6.js",
+      "sha256": "42b051d65e21f24e37f73baff3d67670abbd7deb247f227018ca2564d35562f0"
+    },
+    {
+      "original": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\local-accounts-ae76b2\\web\\assets\\page-trash-w3tZ290z.js",
+      "archive": "C:\\Users\\Administrator\\.codex\\worktrees\\cleanup-ux-20261030\\KeepAny\\docs\\qa\\2026-10-30\\cleanup-ux\\compatibility-assets\\e4a449b769b03ed347502fb5c4044683fd3aaf6a68276fcafe62d7b792610427-page-trash-w3tZ290z.js",
+      "sha256": "e4a449b769b03ed347502fb5c4044683fd3aaf6a68276fcafe62d7b792610427"
+    },
+    {
+      "original": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\local-accounts-ae76b2\\web\\assets\\page-workspaces-BEB5CiUv.css",
+      "archive": "C:\\Users\\Administrator\\.codex\\worktrees\\cleanup-ux-20261030\\KeepAny\\docs\\qa\\2026-10-30\\cleanup-ux\\compatibility-assets\\e9860a75e923ead18a809fa079996495a47a36942fcf310a3559864f19e5c00b-page-workspaces-BEB5CiUv.css",
+      "sha256": "e9860a75e923ead18a809fa079996495a47a36942fcf310a3559864f19e5c00b"
+    },
+    {
+      "original": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\local-accounts-ae76b2\\web\\assets\\page-workspaces-CiqIrFAU.js",
+      "archive": "C:\\Users\\Administrator\\.codex\\worktrees\\cleanup-ux-20261030\\KeepAny\\docs\\qa\\2026-10-30\\cleanup-ux\\compatibility-assets\\e4783f756a3deaabec9d63a738262d046da7618c041c33f4a4652dffd80754e0-page-workspaces-CiqIrFAU.js",
+      "sha256": "e4783f756a3deaabec9d63a738262d046da7618c041c33f4a4652dffd80754e0"
+    },
+    {
+      "original": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\local-accounts-ae76b2\\web\\assets\\PasswordSmartImportDialog-BCVGaHfa.js",
+      "archive": "C:\\Users\\Administrator\\.codex\\worktrees\\cleanup-ux-20261030\\KeepAny\\docs\\qa\\2026-10-30\\cleanup-ux\\compatibility-assets\\89d2084bc4df2cfe3a089770c7852d393d0b788c6bb55d27e604789b29a297ff-PasswordSmartImportDialog-BCVGaHfa.js",
+      "sha256": "89d2084bc4df2cfe3a089770c7852d393d0b788c6bb55d27e604789b29a297ff"
+    },
+    {
+      "original": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\local-accounts-ae76b2\\web\\assets\\PasswordVaultEntryEditor-CRtOJRWV.js",
+      "archive": "C:\\Users\\Administrator\\.codex\\worktrees\\cleanup-ux-20261030\\KeepAny\\docs\\qa\\2026-10-30\\cleanup-ux\\compatibility-assets\\10692c2417cd3d6834e70682b51dba56484e518256c46be0b431bc9e7926fe45-PasswordVaultEntryEditor-CRtOJRWV.js",
+      "sha256": "10692c2417cd3d6834e70682b51dba56484e518256c46be0b431bc9e7926fe45"
+    },
+    {
+      "original": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\local-accounts-ae76b2\\web\\assets\\PasswordVaultPanel-DYJfvI_m.js",
+      "archive": "C:\\Users\\Administrator\\.codex\\worktrees\\cleanup-ux-20261030\\KeepAny\\docs\\qa\\2026-10-30\\cleanup-ux\\compatibility-assets\\c9e0541e1b5fdef1d1e52b435c333b6023b5ad136a17ca1fe00d78790795f364-PasswordVaultPanel-DYJfvI_m.js",
+      "sha256": "c9e0541e1b5fdef1d1e52b435c333b6023b5ad136a17ca1fe00d78790795f364"
+    },
+    {
+      "original": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\local-accounts-ae76b2\\web\\assets\\ProjectWorkflowTaskRow-F4t0872B.js",
+      "archive": "C:\\Users\\Administrator\\.codex\\worktrees\\cleanup-ux-20261030\\KeepAny\\docs\\qa\\2026-10-30\\cleanup-ux\\compatibility-assets\\869143032cfef844cb3c22701fe58b99be73c8b7f12c3573d7032ef1dae98096-ProjectWorkflowTaskRow-F4t0872B.js",
+      "sha256": "869143032cfef844cb3c22701fe58b99be73c8b7f12c3573d7032ef1dae98096"
+    },
+    {
+      "original": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\local-accounts-ae76b2\\web\\assets\\sample-library-CG4Mg1to.js",
+      "archive": "C:\\Users\\Administrator\\.codex\\worktrees\\cleanup-ux-20261030\\KeepAny\\docs\\qa\\2026-10-30\\cleanup-ux\\compatibility-assets\\c6aaa15defa0d8186ac00816af90440ac4c95659c5765dd53fe5a176e9ac17b8-sample-library-CG4Mg1to.js",
+      "sha256": "c6aaa15defa0d8186ac00816af90440ac4c95659c5765dd53fe5a176e9ac17b8"
+    },
+    {
+      "original": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\local-accounts-ae76b2\\web\\assets\\src-BgPKr8KS.js",
+      "archive": "C:\\Users\\Administrator\\.codex\\worktrees\\cleanup-ux-20261030\\KeepAny\\docs\\qa\\2026-10-30\\cleanup-ux\\compatibility-assets\\dc131d0eaf0c7120bc7434336e1017e61ab0e47f67ad8a09ae0ab4f461e4cbed-src-BgPKr8KS.js",
+      "sha256": "dc131d0eaf0c7120bc7434336e1017e61ab0e47f67ad8a09ae0ab4f461e4cbed"
+    },
+    {
+      "original": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\local-accounts-ae76b2\\web\\assets\\TaskRow-ByXLHRnP.js",
+      "archive": "C:\\Users\\Administrator\\.codex\\worktrees\\cleanup-ux-20261030\\KeepAny\\docs\\qa\\2026-10-30\\cleanup-ux\\compatibility-assets\\4bd439689b4a3aac55469f9b46a46c252fe1e236fbf97a43268706436172fa32-TaskRow-ByXLHRnP.js",
+      "sha256": "4bd439689b4a3aac55469f9b46a46c252fe1e236fbf97a43268706436172fa32"
+    },
+    {
+      "original": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\local-accounts-ae76b2\\web\\assets\\VaultAccountLinksDialog-CuBXYlOJ.js",
+      "archive": "C:\\Users\\Administrator\\.codex\\worktrees\\cleanup-ux-20261030\\KeepAny\\docs\\qa\\2026-10-30\\cleanup-ux\\compatibility-assets\\d8fbe4c617ae108de855ad09b85efd9896d653134945d103033f32fc9b5906ca-VaultAccountLinksDialog-CuBXYlOJ.js",
+      "sha256": "d8fbe4c617ae108de855ad09b85efd9896d653134945d103033f32fc9b5906ca"
+    },
+    {
+      "original": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\local-accounts-ae76b2\\web\\assets\\workflow-ai-dialog-wmy2mubE.js",
+      "archive": "C:\\Users\\Administrator\\.codex\\worktrees\\cleanup-ux-20261030\\KeepAny\\docs\\qa\\2026-10-30\\cleanup-ux\\compatibility-assets\\d5681d2ea75ccbc2d54fc529fe48e4638ca05ba998ad91a75b929b7c639edc6f-workflow-ai-dialog-wmy2mubE.js",
+      "sha256": "d5681d2ea75ccbc2d54fc529fe48e4638ca05ba998ad91a75b929b7c639edc6f"
+    },
+    {
+      "original": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\local-accounts-ae76b2\\web\\assets\\workflow-asset-editor-DI6DX0rh.js",
+      "archive": "C:\\Users\\Administrator\\.codex\\worktrees\\cleanup-ux-20261030\\KeepAny\\docs\\qa\\2026-10-30\\cleanup-ux\\compatibility-assets\\b2a3a450d27cab033bb7cbf1cccbb2f23890f371b05e220ec5c4fa975b2a1692-workflow-asset-editor-DI6DX0rh.js",
+      "sha256": "b2a3a450d27cab033bb7cbf1cccbb2f23890f371b05e220ec5c4fa975b2a1692"
+    },
+    {
+      "original": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\local-accounts-ae76b2\\web\\assets\\workflow-field-DLKKCOzE.js",
+      "archive": "C:\\Users\\Administrator\\.codex\\worktrees\\cleanup-ux-20261030\\KeepAny\\docs\\qa\\2026-10-30\\cleanup-ux\\compatibility-assets\\be578822fcddbffa97a9cde56c6031d2da6ea429d4e95261b2ce15b86b5f8856-workflow-field-DLKKCOzE.js",
+      "sha256": "be578822fcddbffa97a9cde56c6031d2da6ea429d4e95261b2ce15b86b5f8856"
+    },
+    {
+      "original": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\local-accounts-ae76b2\\web\\assets\\workflow-task-editor-Jjn-i1Ld.js",
+      "archive": "C:\\Users\\Administrator\\.codex\\worktrees\\cleanup-ux-20261030\\KeepAny\\docs\\qa\\2026-10-30\\cleanup-ux\\compatibility-assets\\8915f236536c40723fb860192d172376080c3cddd76a22b83df4691e32c3ba3b-workflow-task-editor-Jjn-i1Ld.js",
+      "sha256": "8915f236536c40723fb860192d172376080c3cddd76a22b83df4691e32c3ba3b"
+    },
+    {
+      "original": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\local-accounts-ae76b2\\web\\workbox-2fbc6a65.js",
+      "archive": "C:\\Users\\Administrator\\.codex\\worktrees\\cleanup-ux-20261030\\KeepAny\\docs\\qa\\2026-10-30\\cleanup-ux\\compatibility-assets\\39c2e6ae44c3f29666f6a328b6523bf13a053a1d95c74af8ddea82b1045b0b6e-workbox-2fbc6a65.js",
+      "sha256": "39c2e6ae44c3f29666f6a328b6523bf13a053a1d95c74af8ddea82b1045b0b6e"
+    },
+    {
+      "original": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\local-accounts-cc2e9e\\web\\workbox-2fbc6a65.js",
+      "archive": "C:\\Users\\Administrator\\.codex\\worktrees\\cleanup-ux-20261030\\KeepAny\\docs\\qa\\2026-10-30\\cleanup-ux\\compatibility-assets\\39c2e6ae44c3f29666f6a328b6523bf13a053a1d95c74af8ddea82b1045b0b6e-workbox-2fbc6a65.js",
+      "sha256": "39c2e6ae44c3f29666f6a328b6523bf13a053a1d95c74af8ddea82b1045b0b6e"
+    },
+    {
+      "original": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\local-accounts-fa357d\\web\\workbox-2fbc6a65.js",
+      "archive": "C:\\Users\\Administrator\\.codex\\worktrees\\cleanup-ux-20261030\\KeepAny\\docs\\qa\\2026-10-30\\cleanup-ux\\compatibility-assets\\39c2e6ae44c3f29666f6a328b6523bf13a053a1d95c74af8ddea82b1045b0b6e-workbox-2fbc6a65.js",
+      "sha256": "39c2e6ae44c3f29666f6a328b6523bf13a053a1d95c74af8ddea82b1045b0b6e"
+    }
+  ],
+  "rules": "Only listed superseded deployments and exact duplicate extractions; no screenshots, traces, logs or failed evidence removed",
+  "rows": [
+    {
+      "path": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\local-accounts-03e186",
+      "reason": "Superseded local deployment; current593 retains every versioned web resource byte-for-byte; original commit retained in Git, immediate881 fallback kept",
+      "sourceCommit": "03e186de181321cff5843e1ee194679acb81a0e3",
+      "retained": 3267,
+      "bytes": 353783033,
+      "files": 3874
+    },
+    {
+      "path": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\local-accounts-1e1979",
+      "reason": "Superseded local deployment; current593 retains every versioned web resource byte-for-byte; original commit retained in Git, immediate881 fallback kept",
+      "sourceCommit": "1e1979ac9cbc70199b916f7e5929a70046721e72",
+      "retained": 3352,
+      "bytes": 362607192,
+      "files": 3963
+    },
+    {
+      "path": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\local-accounts-398c",
+      "reason": "Superseded local deployment; current593 retains every versioned web resource byte-for-byte; original commit retained in Git, immediate881 fallback kept",
+      "sourceCommit": "398cdba992ac3364bc0f5d8d3ae06e0fc9288d53",
+      "retained": 3198,
+      "bytes": 345631722,
+      "files": 3802
+    },
+    {
+      "path": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\local-accounts-ae76b2",
+      "reason": "Superseded local deployment; current593 retains every versioned web resource byte-for-byte; original commit retained in Git, immediate881 fallback kept",
+      "sourceCommit": "ae76b20e8a8c4e07779fd3cfafa4345c8dd37eb8",
+      "retained": 3266,
+      "bytes": 353780856,
+      "files": 3873
+    },
+    {
+      "path": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\local-accounts-cc2e9e",
+      "reason": "Superseded local deployment; current593 retains every versioned web resource byte-for-byte; original commit retained in Git, immediate881 fallback kept",
+      "sourceCommit": "cc2e9e351f3d5df8b1cd841658c9ca8ba39939f4",
+      "retained": 3168,
+      "bytes": 341802824,
+      "files": 3770
+    },
+    {
+      "path": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\local-accounts-fa357d",
+      "reason": "Superseded local deployment; current593 retains every versioned web resource byte-for-byte; original commit retained in Git, immediate881 fallback kept",
+      "sourceCommit": "fa357da7c1c6bcd2618693d6e813c48500dacec9",
+      "retained": 3228,
+      "bytes": 349460406,
+      "files": 3832
+    },
+    {
+      "path": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\preview\\delivery-231218b2\\KeepAny-0.1.0-preview.231218b25c2c.dirty-portable",
+      "reason": "Exact redundant extraction; original archive retained",
+      "archive": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\preview\\KeepAny-0.1.0-preview.231218b25c2c.dirty-portable.zip",
+      "sourceCommit": "231218b25c2c27d71f71cd7bd4f6036ddd023700",
+      "bytes": 15270468,
+      "files": 748
+    },
+    {
+      "path": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\preview\\delivery-65ceb04d\\KeepAny-0.1.0-preview.65ceb04dfeaa.dirty-portable",
+      "reason": "Exact redundant extraction; original archive retained",
+      "archive": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\preview\\KeepAny-0.1.0-preview.65ceb04dfeaa.dirty-portable.zip",
+      "sourceCommit": "65ceb04dfeaa197a06975901d41b5e036d782e07",
+      "bytes": 15263926,
+      "files": 747
+    },
+    {
+      "path": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\preview\\KeepAny-0.1.0-preview.02a4622a7c0c.dirty-portable",
+      "reason": "Exact redundant extraction; original archive retained",
+      "archive": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\preview\\KeepAny-0.1.0-preview.02a4622a7c0c.dirty-portable.zip",
+      "sourceCommit": "02a4622a7c0c6050fcc9489c91561d5563da623e",
+      "bytes": 14231389,
+      "files": 700
+    },
+    {
+      "path": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\preview\\KeepAny-0.1.0-preview.03c676734e3e.dirty-portable",
+      "reason": "Exact redundant extraction; original archive retained",
+      "archive": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\preview\\KeepAny-0.1.0-preview.03c676734e3e.dirty-portable.zip",
+      "sourceCommit": "03c676734e3edb9084540da66ff6297cbf365f03",
+      "bytes": 14754362,
+      "files": 719
+    },
+    {
+      "path": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\preview\\KeepAny-0.1.0-preview.0c97f3a8d9e3.dirty-portable",
+      "reason": "Exact redundant extraction; original archive retained",
+      "archive": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\preview\\KeepAny-0.1.0-preview.0c97f3a8d9e3.dirty-portable.zip",
+      "sourceCommit": "0c97f3a8d9e3ef314d889a9b4eabdd00bbd42ecf",
+      "bytes": 15334544,
+      "files": 772
+    },
+    {
+      "path": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\preview\\KeepAny-0.1.0-preview.120373026486.dirty-portable",
+      "reason": "Exact redundant extraction; original archive retained",
+      "archive": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\preview\\KeepAny-0.1.0-preview.120373026486.dirty-portable.zip",
+      "sourceCommit": "12037302648680f517a21684c5da6d404b919efd",
+      "bytes": 14755288,
+      "files": 719
+    },
+    {
+      "path": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\preview\\KeepAny-0.1.0-preview.19c1d9261370.dirty-portable",
+      "reason": "Exact redundant extraction; original archive retained",
+      "archive": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\preview\\KeepAny-0.1.0-preview.19c1d9261370.dirty-portable.zip",
+      "sourceCommit": "19c1d92613706764a8a46b946f25871a99a1d825",
+      "bytes": 14753730,
+      "files": 719
+    },
+    {
+      "path": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\preview\\KeepAny-0.1.0-preview.19cf7d074eb8.dirty-portable",
+      "reason": "Exact redundant extraction; original archive retained",
+      "archive": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\preview\\KeepAny-0.1.0-preview.19cf7d074eb8.dirty-portable.zip",
+      "sourceCommit": "19cf7d074eb8f3ca8a68b481238440ea03a5beea",
+      "bytes": 15274972,
+      "files": 750
+    },
+    {
+      "path": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\preview\\KeepAny-0.1.0-preview.1d2e591bb30d.dirty-portable",
+      "reason": "Exact redundant extraction; original archive retained",
+      "archive": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\preview\\KeepAny-0.1.0-preview.1d2e591bb30d.dirty-portable.zip",
+      "sourceCommit": "1d2e591bb30d9f0296e4a97a3bd240b0ef3aa507",
+      "bytes": 15255304,
+      "files": 746
+    },
+    {
+      "path": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\preview\\KeepAny-0.1.0-preview.211cb9e3faa5.dirty-portable",
+      "reason": "Exact redundant extraction; original archive retained",
+      "archive": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\preview\\KeepAny-0.1.0-preview.211cb9e3faa5.dirty-portable.zip",
+      "sourceCommit": "211cb9e3faa5922b5ac268ea8ae5b893a05fe90a",
+      "bytes": 15303121,
+      "files": 764
+    },
+    {
+      "path": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\preview\\KeepAny-0.1.0-preview.231218b25c2c.dirty-portable",
+      "reason": "Exact redundant extraction; original archive retained",
+      "archive": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\preview\\KeepAny-0.1.0-preview.231218b25c2c.dirty-portable.zip",
+      "sourceCommit": "231218b25c2c27d71f71cd7bd4f6036ddd023700",
+      "bytes": 15270468,
+      "files": 748
+    },
+    {
+      "path": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\preview\\KeepAny-0.1.0-preview.2b0d068155c8.dirty-portable",
+      "reason": "Exact redundant extraction; original archive retained",
+      "archive": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\preview\\KeepAny-0.1.0-preview.2b0d068155c8.dirty-portable.zip",
+      "sourceCommit": "2b0d068155c898b68fbfe7a9546ee759bed1d511",
+      "bytes": 15275418,
+      "files": 751
+    },
+    {
+      "path": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\preview\\KeepAny-0.1.0-preview.34881af41d12.dirty-portable",
+      "reason": "Exact redundant extraction; original archive retained",
+      "archive": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\preview\\KeepAny-0.1.0-preview.34881af41d12.dirty-portable.zip",
+      "sourceCommit": "34881af41d126f60a2de7691d78767f19cc76a74",
+      "bytes": 15262378,
+      "files": 747
+    },
+    {
+      "path": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\preview\\KeepAny-0.1.0-preview.398cdba992ac-portable",
+      "reason": "Exact redundant extraction; original archive retained",
+      "archive": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\preview\\KeepAny-0.1.0-preview.398cdba992ac-portable.zip",
+      "sourceCommit": "398cdba992ac3364bc0f5d8d3ae06e0fc9288d53",
+      "bytes": 12192919,
+      "files": 704
+    },
+    {
+      "path": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\preview\\KeepAny-0.1.0-preview.4182c5d2af77.dirty-portable",
+      "reason": "Exact redundant extraction; original archive retained",
+      "archive": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\preview\\KeepAny-0.1.0-preview.4182c5d2af77.dirty-portable.zip",
+      "sourceCommit": "4182c5d2af7768f3aabf6c6100edce5b3bdcff44",
+      "bytes": 15263736,
+      "files": 747
+    },
+    {
+      "path": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\preview\\KeepAny-0.1.0-preview.4948904231ca-portable",
+      "reason": "Exact redundant extraction; original archive retained",
+      "archive": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\preview\\KeepAny-0.1.0-preview.4948904231ca-portable.zip",
+      "sourceCommit": "4948904231ca0f9507024cadc167ff1b052acfd9",
+      "bytes": 12191817,
+      "files": 704
+    },
+    {
+      "path": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\preview\\KeepAny-0.1.0-preview.4988c7f59ff9.dirty-portable",
+      "reason": "Exact redundant extraction; original archive retained",
+      "archive": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\preview\\KeepAny-0.1.0-preview.4988c7f59ff9.dirty-portable.zip",
+      "sourceCommit": "4988c7f59ff9184d5fac050b0409e4bd1114a405",
+      "bytes": 15321673,
+      "files": 770
+    },
+    {
+      "path": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\preview\\KeepAny-0.1.0-preview.4ba57215ec8e.dirty-portable",
+      "reason": "Exact redundant extraction; original archive retained",
+      "archive": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\preview\\KeepAny-0.1.0-preview.4ba57215ec8e.dirty-portable.zip",
+      "sourceCommit": "4ba57215ec8e122dc8e81d8f0d675c34ba7282b2",
+      "bytes": 14753302,
+      "files": 719
+    },
+    {
+      "path": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\preview\\KeepAny-0.1.0-preview.641b3a76caf0.dirty-portable",
+      "reason": "Exact redundant extraction; original archive retained",
+      "archive": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\preview\\KeepAny-0.1.0-preview.641b3a76caf0.dirty-portable.zip",
+      "sourceCommit": "641b3a76caf0bccee8ce4500ab4037dd4c9f74e6",
+      "bytes": 15261606,
+      "files": 747
+    },
+    {
+      "path": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\preview\\KeepAny-0.1.0-preview.65ceb04dfeaa.dirty-portable",
+      "reason": "Exact redundant extraction; original archive retained",
+      "archive": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\preview\\KeepAny-0.1.0-preview.65ceb04dfeaa.dirty-portable.zip",
+      "sourceCommit": "65ceb04dfeaa197a06975901d41b5e036d782e07",
+      "bytes": 15263926,
+      "files": 747
+    },
+    {
+      "path": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\preview\\KeepAny-0.1.0-preview.745565a93c5d.dirty-portable",
+      "reason": "Exact redundant extraction; original archive retained",
+      "archive": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\preview\\KeepAny-0.1.0-preview.745565a93c5d.dirty-portable.zip",
+      "sourceCommit": "745565a93c5dfa3b6e2ff2a3496c105c7ac5234b",
+      "bytes": 14445979,
+      "files": 719
+    },
+    {
+      "path": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\preview\\KeepAny-0.1.0-preview.79dc2ad2517e.dirty-portable",
+      "reason": "Exact redundant extraction; original archive retained",
+      "archive": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\preview\\KeepAny-0.1.0-preview.79dc2ad2517e.dirty-portable.zip",
+      "sourceCommit": "79dc2ad2517ec4bef225bc6d650a9aa727c14c03",
+      "bytes": 14449385,
+      "files": 720
+    },
+    {
+      "path": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\preview\\KeepAny-0.1.0-preview.7a4d66c6d91f-portable",
+      "reason": "Exact redundant extraction; original archive retained",
+      "archive": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\preview\\KeepAny-0.1.0-preview.7a4d66c6d91f-portable.zip",
+      "sourceCommit": "7a4d66c6d91f206943c6d909f51c67bad38ee383",
+      "bytes": 12192171,
+      "files": 704
+    },
+    {
+      "path": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\preview\\KeepAny-0.1.0-preview.7df5d0e1c42d.dirty-portable",
+      "reason": "Exact redundant extraction; original archive retained",
+      "archive": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\preview\\KeepAny-0.1.0-preview.7df5d0e1c42d.dirty-portable.zip",
+      "sourceCommit": "7df5d0e1c42d9b09337b80f2c35f5839ab2c74ff",
+      "bytes": 14446039,
+      "files": 719
+    },
+    {
+      "path": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\preview\\KeepAny-0.1.0-preview.7eafaf7f4f98.dirty-portable",
+      "reason": "Exact redundant extraction; original archive retained",
+      "archive": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\preview\\KeepAny-0.1.0-preview.7eafaf7f4f98.dirty-portable.zip",
+      "sourceCommit": "7eafaf7f4f9827cc51f4e444a479fc5d544e7d58",
+      "bytes": 15261561,
+      "files": 747
+    },
+    {
+      "path": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\preview\\KeepAny-0.1.0-preview.8457271ded6a.dirty-portable",
+      "reason": "Exact redundant extraction; original archive retained",
+      "archive": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\preview\\KeepAny-0.1.0-preview.8457271ded6a.dirty-portable.zip",
+      "sourceCommit": "8457271ded6a55bb559cf32129dd78629f726579",
+      "bytes": 14756725,
+      "files": 719
+    },
+    {
+      "path": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\preview\\KeepAny-0.1.0-preview.8b9ee945ed2c.dirty-portable",
+      "reason": "Exact redundant extraction; original archive retained",
+      "archive": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\preview\\KeepAny-0.1.0-preview.8b9ee945ed2c.dirty-portable.zip",
+      "sourceCommit": "8b9ee945ed2c4c830aab4ab935f9dccfeb72c6ab",
+      "bytes": 15263532,
+      "files": 747
+    },
+    {
+      "path": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\preview\\KeepAny-0.1.0-preview.8f2230147122.dirty-portable",
+      "reason": "Exact redundant extraction; original archive retained",
+      "archive": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\preview\\KeepAny-0.1.0-preview.8f2230147122.dirty-portable.zip",
+      "sourceCommit": "8f2230147122ab7cb3c3bc51775cf6a4cce96387",
+      "bytes": 15312120,
+      "files": 766
+    },
+    {
+      "path": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\preview\\KeepAny-0.1.0-preview.941d8c64173a.dirty-portable",
+      "reason": "Exact redundant extraction; original archive retained",
+      "archive": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\preview\\KeepAny-0.1.0-preview.941d8c64173a.dirty-portable.zip",
+      "sourceCommit": "941d8c64173aea24525fb1d7b1e82246caa7b3b0",
+      "bytes": 14756101,
+      "files": 719
+    },
+    {
+      "path": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\preview\\KeepAny-0.1.0-preview.98da5cae494c.dirty-portable",
+      "reason": "Exact redundant extraction; original archive retained",
+      "archive": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\preview\\KeepAny-0.1.0-preview.98da5cae494c.dirty-portable.zip",
+      "sourceCommit": "98da5cae494c8e4a0eca5e43e682818a89483604",
+      "bytes": 14754865,
+      "files": 719
+    },
+    {
+      "path": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\preview\\KeepAny-0.1.0-preview.9a35e4c51dad.dirty-portable",
+      "reason": "Exact redundant extraction; original archive retained",
+      "archive": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\preview\\KeepAny-0.1.0-preview.9a35e4c51dad.dirty-portable.zip",
+      "sourceCommit": "9a35e4c51dad82833d7b625fe9326e70b05f4c84",
+      "bytes": 15260167,
+      "files": 747
+    },
+    {
+      "path": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\preview\\KeepAny-0.1.0-preview.9df576480f7f.dirty-portable",
+      "reason": "Exact redundant extraction; original archive retained",
+      "archive": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\preview\\KeepAny-0.1.0-preview.9df576480f7f.dirty-portable.zip",
+      "sourceCommit": "9df576480f7f252742beeb4a9458390cdde34c79",
+      "bytes": 14276034,
+      "files": 704
+    },
+    {
+      "path": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\preview\\KeepAny-0.1.0-preview.a0034d99105d.dirty-portable",
+      "reason": "Exact redundant extraction; original archive retained",
+      "archive": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\preview\\KeepAny-0.1.0-preview.a0034d99105d.dirty-portable.zip",
+      "sourceCommit": "a0034d99105d1ac59a0ce456b294a19d62418404",
+      "bytes": 15262112,
+      "files": 747
+    },
+    {
+      "path": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\preview\\KeepAny-0.1.0-preview.ab7035be6b2c.dirty-portable",
+      "reason": "Exact redundant extraction; original archive retained",
+      "archive": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\preview\\KeepAny-0.1.0-preview.ab7035be6b2c.dirty-portable.zip",
+      "sourceCommit": "ab7035be6b2ce6c7de66343bf6d073ce7a358a23",
+      "bytes": 15255396,
+      "files": 746
+    },
+    {
+      "path": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\preview\\KeepAny-0.1.0-preview.afd0a7a7e43b.dirty-portable",
+      "reason": "Exact redundant extraction; original archive retained",
+      "archive": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\preview\\KeepAny-0.1.0-preview.afd0a7a7e43b.dirty-portable.zip",
+      "sourceCommit": "afd0a7a7e43be4f31a1672e7bd8e3effebc02919",
+      "bytes": 15262077,
+      "files": 747
+    },
+    {
+      "path": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\preview\\KeepAny-0.1.0-preview.b50789013163.dirty-portable",
+      "reason": "Exact redundant extraction; original archive retained",
+      "archive": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\preview\\KeepAny-0.1.0-preview.b50789013163.dirty-portable.zip",
+      "sourceCommit": "b5078901316309ee138a42b66f53c4324cf5c020",
+      "bytes": 15304213,
+      "files": 765
+    },
+    {
+      "path": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\preview\\KeepAny-0.1.0-preview.b5ec44d692d4.dirty-portable",
+      "reason": "Exact redundant extraction; original archive retained",
+      "archive": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\preview\\KeepAny-0.1.0-preview.b5ec44d692d4.dirty-portable.zip",
+      "sourceCommit": "b5ec44d692d43e7ebae163c262ebfd42a28c7c7a",
+      "bytes": 15250061,
+      "files": 743
+    },
+    {
+      "path": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\preview\\KeepAny-0.1.0-preview.c4e3f3eeec9a.dirty-portable",
+      "reason": "Exact redundant extraction; original archive retained",
+      "archive": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\preview\\KeepAny-0.1.0-preview.c4e3f3eeec9a.dirty-portable.zip",
+      "sourceCommit": "c4e3f3eeec9a37c458ce0cff20e17cb84816e9a5",
+      "bytes": 15261474,
+      "files": 747
+    },
+    {
+      "path": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\preview\\KeepAny-0.1.0-preview.cc2e9e351f3d-portable",
+      "reason": "Exact redundant extraction; original archive retained",
+      "archive": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\preview\\KeepAny-0.1.0-preview.cc2e9e351f3d-portable.zip",
+      "sourceCommit": "cc2e9e351f3d5df8b1cd841658c9ca8ba39939f4",
+      "bytes": 12192352,
+      "files": 704
+    },
+    {
+      "path": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\preview\\KeepAny-0.1.0-preview.d187f33e2436.dirty-portable",
+      "reason": "Exact redundant extraction; original archive retained",
+      "archive": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\preview\\KeepAny-0.1.0-preview.d187f33e2436.dirty-portable.zip",
+      "sourceCommit": "d187f33e24361ded19f8c2c38183fe823558677d",
+      "bytes": 15255522,
+      "files": 746
+    },
+    {
+      "path": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\preview\\KeepAny-0.1.0-preview.d2fdbdee264b.dirty-portable",
+      "reason": "Exact redundant extraction; original archive retained",
+      "archive": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\preview\\KeepAny-0.1.0-preview.d2fdbdee264b.dirty-portable.zip",
+      "sourceCommit": "d2fdbdee264b524219ae091ca78b120c6428ff61",
+      "bytes": 15275432,
+      "files": 751
+    },
+    {
+      "path": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\preview\\KeepAny-0.1.0-preview.d7421c1c8be5.dirty-portable",
+      "reason": "Exact redundant extraction; original archive retained",
+      "archive": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\preview\\KeepAny-0.1.0-preview.d7421c1c8be5.dirty-portable.zip",
+      "sourceCommit": "d7421c1c8be58280ad026a2ef615370c05843dd7",
+      "bytes": 15260019,
+      "files": 747
+    },
+    {
+      "path": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\preview\\KeepAny-0.1.0-preview.d9db69ed54cd.dirty-portable",
+      "reason": "Exact redundant extraction; original archive retained",
+      "archive": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\preview\\KeepAny-0.1.0-preview.d9db69ed54cd.dirty-portable.zip",
+      "sourceCommit": "d9db69ed54cd15ba7e7d54b0314abb3876b0928f",
+      "bytes": 14277202,
+      "files": 704
+    },
+    {
+      "path": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\preview\\KeepAny-0.1.0-preview.dbee5d3af305.dirty-portable",
+      "reason": "Exact redundant extraction; original archive retained",
+      "archive": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\preview\\KeepAny-0.1.0-preview.dbee5d3af305.dirty-portable.zip",
+      "sourceCommit": "dbee5d3af3050cd6d0d9504621a694b662572727",
+      "bytes": 14753729,
+      "files": 719
+    },
+    {
+      "path": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\preview\\KeepAny-0.1.0-preview.f992b727dbb0.dirty-portable",
+      "reason": "Exact redundant extraction; original archive retained",
+      "archive": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\preview\\KeepAny-0.1.0-preview.f992b727dbb0.dirty-portable.zip",
+      "sourceCommit": "f992b727dbb0d0778806fad73a5acf22f2b23a1f",
+      "bytes": 15302722,
+      "files": 764
+    },
+    {
+      "path": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\preview\\KeepAny-0.1.0-preview.fa357da7c1c6-portable",
+      "reason": "Exact redundant extraction; original archive retained",
+      "archive": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\preview\\KeepAny-0.1.0-preview.fa357da7c1c6-portable.zip",
+      "sourceCommit": "fa357da7c1c6bcd2618693d6e813c48500dacec9",
+      "bytes": 12193664,
+      "files": 704
+    },
+    {
+      "path": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\test-results\\account-layout-independent\\final231\\package",
+      "reason": "Exact redundant extraction; original archive retained",
+      "archive": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\preview\\KeepAny-0.1.0-preview.231218b25c2c.dirty-portable.zip",
+      "sourceCommit": "231218b25c2c27d71f71cd7bd4f6036ddd023700",
+      "bytes": 89333,
+      "files": 1
+    },
+    {
+      "path": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\test-results\\independent-final-4988\\runtime\\KeepAny-0.1.0-preview.4988c7f59ff9.dirty-portable",
+      "reason": "Exact redundant extraction; original archive retained",
+      "archive": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\preview\\KeepAny-0.1.0-preview.4988c7f59ff9.dirty-portable.zip",
+      "sourceCommit": "4988c7f59ff9184d5fac050b0409e4bd1114a405",
+      "bytes": 15321673,
+      "files": 770
+    },
+    {
+      "path": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\test-results\\retained-owner-validation\\owner-final-65ce-restore-package\\KeepAny-0.1.0-preview.65ceb04dfeaa.dirty-portable",
+      "reason": "Exact redundant extraction; original archive retained",
+      "archive": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\preview\\KeepAny-0.1.0-preview.65ceb04dfeaa.dirty-portable.zip",
+      "sourceCommit": "65ceb04dfeaa197a06975901d41b5e036d782e07",
+      "bytes": 15263926,
+      "files": 747
+    },
+    {
+      "path": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\test-results\\web-independent-review-20261029\\runtime",
+      "reason": "Exact redundant extraction; original archive retained",
+      "archive": "C:\\Users\\Administrator\\Desktop\\project\\KeepAny\\dist\\preview\\KeepAny-0.1.0-preview.0c97f3a8d9e3.dirty-portable.zip",
+      "sourceCommit": "0c97f3a8d9e3ef314d889a9b4eabdd00bbd42ecf",
+      "bytes": 8124648,
+      "files": 128
+    }
+  ],
+  "bytes": 2823400614
+}

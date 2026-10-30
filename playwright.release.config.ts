@@ -1,10 +1,9 @@
-import { browserDefaults } from "./scripts/testing/browser-config";
+import { browserDefaults, compiledServer } from "./scripts/testing/browser-config";
 import { defineConfig } from "@playwright/test";
 
-// Test the committed delivery files, without serving development source.
+// Every delivery test names the same compiled portable candidate.
 const port = Number(process.env.KEEPANY_RELEASE_TEST_PORT ?? "4181");
 const baseURL = `http://127.0.0.1:${port}`;
-const webDir = process.env.KEEPANY_RELEASE_WEB_DIR ?? "../../release/web";
 process.env.KEEPANY_PRODUCTION_OFFLINE = "1";
 process.env.KEEPANY_EVIDENCE_DIR ??= "test-results/local-release-evidence";
 // Completion fixtures are prepared in Node; these pages must consume compiled files only.
@@ -78,10 +77,5 @@ export default defineConfig({
 	timeout: 90_000,
 	workers: 2,
 	use: { ...browserDefaults.use, baseURL,  },
-	webServer: {
-		command: `node node_modules/vite/bin/vite.js preview apps/web --outDir ${webDir} --host 127.0.0.1 --port ${port} --strictPort`,
-		url: baseURL,
-		reuseExistingServer: false,
-		timeout: 30_000,
-	},
+	webServer: compiledServer(port),
 });

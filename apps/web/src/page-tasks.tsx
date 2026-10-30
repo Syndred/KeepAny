@@ -30,8 +30,8 @@ function readTaskDateRange(): TaskDateRange {
 function readTaskFilter(): TaskFilter {
 	try {
 		const value = sessionStorage.getItem(taskFilterKey);
-		return value === "pending" || value === "done" ? value : "all";
-	} catch { return "all"; }
+		return value === "all" || value === "done" ? value : "pending";
+	} catch { return "pending"; }
 }
 
 export function TaskPage() {

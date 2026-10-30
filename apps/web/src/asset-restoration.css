@@ -422,26 +422,32 @@
 	order: 4;
 }
 .asset-detail-project .asset-project-reminders {
-	order: 5;
-}
-.asset-detail-project .asset-project-costs {
 	grid-column: 1 / -1;
 	order: 6;
 }
+.asset-detail-project .asset-project-costs {
+	grid-column: 1 / -1;
+	order: 7;
+}
 .asset-detail-project .asset-tasks-card {
-	order: 10;
+	order: 5;
 }
 .asset-detail-project .asset-finance-card {
 	grid-column: 1 / -1;
 	order: 11;
 }
 .asset-detail-project .asset-relations-card {
-	order: 9;
+	grid-column: 1 / -1;
+	order: 8;
 }
 .asset-detail-project .asset-attachments-card {
 	grid-column: 1 / -1;
 	order: 8;
 }
+.detail-disclosure > summary, .asset-project-media-disclosure > summary { padding: var(--space-4); cursor: pointer; font-weight: 800; overflow-wrap: anywhere; }
+.detail-disclosure { align-self: start; min-width: 0; }
+.asset-detail-project .asset-project-media-disclosure { grid-column: 1 / -1; order: 9; min-width: 0; border: 2px solid var(--line); border-radius: 17px; background: var(--paper); box-shadow: var(--shadow); }
+.asset-project-media-disclosure .asset-attachments-card { margin: 0; border: 0; box-shadow: none; }
 .asset-project-facts { margin: 0; }
 .asset-project-facts > div {
 	display: grid;

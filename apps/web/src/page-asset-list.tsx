@@ -1,7 +1,7 @@
 import { AssetThumbnail as AssetCover } from "./components/AssetThumbnail";
 import { Input } from "./components/ui/input";
 import { lazy, Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { Link, useRouterState } from "@tanstack/react-router";
+import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import {
 	DndContext,
 	PointerSensor,
@@ -508,6 +508,9 @@ export function AssetKindList({ kind, beforeList, afterList, passwordCounts, onA
 		setCategoryIds((prev) => ({ ...prev, [kind]: sessionStorage.getItem(`keepany-category-id-${kind}`) || "" }));
 	}, [kind]);
 	const [edit, setEdit] = useState(false);
+ const navigateForCreation = useNavigate();
+ const creationHash = useRouterState({ select: state => state.location.hash });
+ useEffect(() => { if (creationHash === "new" && !embedded && !data.loading) { setEdit(true); void navigateForCreation({ to: "/assets/$kind", params: { kind }, hash: "", replace: true }); } }, [creationHash, embedded, data.loading, kind, navigateForCreation]);
 	const allLiveAssets = [...liveAssets(data), ...accountExtras];
 	const liveIds = new Set(allLiveAssets.map((asset) => asset.id));
 	const allKindAssets = allLiveAssets.filter((asset) => asset.kind === kind);

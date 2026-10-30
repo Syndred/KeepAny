@@ -2,6 +2,7 @@ import { mkdirSync } from "node:fs";
 import { expect, type Page, test } from "@playwright/test";
 import {
 	aiServer,
+	openCapture,
 	checkLayout,
 	evidence,
 	labels,
@@ -77,10 +78,7 @@ for (const language of ["en", "zh-CN"] as const) {
 					settings.getByRole("status").filter({ hasText: copy.ready }),
 				).toBeVisible();
 				await checkLayout(page, settings, width);
-				await page
-					.locator(".top-actions")
-					.getByRole("link", { name: copy.intake, exact: true })
-					.click();
+				await openCapture(page, copy.intake);
 				const importer = page.locator(".ai-import-panel");
 				const source = `${subscriptionName}: USD 12.50 every month, next renewal 2026-12-20.`;
 				mock.responses.push(
@@ -137,10 +135,7 @@ for (const language of ["en", "zh-CN"] as const) {
 				});
 				await openFinance(page);
 				await expect(page.locator(".finance-subscription")).toHaveCount(0);
-				await page
-					.locator(".top-actions")
-					.getByRole("link", { name: copy.intake, exact: true })
-					.click();
+				await openCapture(page, copy.intake);
 				await expect(review).toHaveCount(1);
 				await review
 					.getByRole("button", { name: copy.confirmImport, exact: true })

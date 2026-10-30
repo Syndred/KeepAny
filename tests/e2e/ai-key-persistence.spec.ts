@@ -283,10 +283,7 @@ for (const variant of variants) {
 			for (const value of [syntheticKey, replacementKey, master])
 				expect(encrypted.includes(Buffer.from(value))).toBe(false);
 
-			await page
-				.locator(".top-actions")
-				.getByRole("link", { name: ui.intake, exact: true })
-				.click();
+			await page.getByRole("link", { name: variant.language === "zh-CN" ? "备份与恢复" : "Backup & restore", exact: true }).first().click();
 			await page.locator("#backup-password").fill(backupPassword);
 			await page
 				.getByRole("button", {

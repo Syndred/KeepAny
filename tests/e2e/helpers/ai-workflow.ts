@@ -94,7 +94,7 @@ export const labels = {
 		connected: "Connected · model",
 		needsKey: "Model configured; activate or enter an API key",
 		ready: "Model configuration is active",
-		intake: "Import & backup",
+		intake: "Capture & import",
 		importTitle: "Organize with AI",
 		generate: "Generate records to review",
 		confirmImport: "Confirm and save",
@@ -132,7 +132,7 @@ export const labels = {
 		connected: "连接成功 · 模型",
 		needsKey: "模型已配置，请启用或输入 API Key",
 		ready: "模型配置已启用",
-		intake: "收录与备份",
+		intake: "收录",
 		importTitle: "AI 整理导入",
 		generate: "生成待审核资料",
 		confirmImport: "确认入库",
@@ -186,4 +186,9 @@ export async function checkLayout(page: Page, element: Locator, width: number) {
 	expect(
 		await page.evaluate(() => document.documentElement.scrollWidth),
 	).toBeLessThanOrEqual(width + 1);
+}
+
+export async function openCapture(page: Page, label: string) {
+  await page.getByRole("button", { name: /^(Add a record|新增资料)$/ }).click();
+  await page.getByRole("menuitem", { name: label, exact: true }).click();
 }

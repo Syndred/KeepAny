@@ -56,7 +56,7 @@ for (const width of [390, 1280]) {
 				["/assets/project", "Sample | Mori Notes"], ["/assets/account", "Sample | Studio Mail"],
 				["/assets/item", "Sample | Work laptop"], ["/finance", "Sample | Cloud hosting"],
 				["/assets/vault", "Sample | Studio Mail"], ["/collections", "Studio essentials"],
-				["/intake", "Import & backup"], ["/trash", "Trash"], ["/settings", "Settings"],
+				["/intake", "Capture & import"], ["/trash", "Trash"], ["/settings", "Settings"],
 			] as const) {
 				await page.goto(route);
 				if (route === "/assets/vault") await expect(page.getByRole("heading", { name: "Accounts", exact: true })).toBeVisible();

@@ -63,3 +63,6 @@
   .workspace-password-status > .button { width: 100%; }
   .workspace-search > .asset-account-search { flex-basis: 100%; }
 }
+
+.workspace-catalog-controls { display: flex; flex-wrap: wrap; gap: var(--space-3); }
+.workspace-catalog-controls > .field { flex: 1 1 180px; max-width: 320px; min-width: 0; }

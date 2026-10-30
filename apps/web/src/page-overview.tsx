@@ -4,6 +4,7 @@ import { ArrowRight, ArrowUpRight, Bell, CalendarDays, Layers2, Plus, ScanEye, T
 import type { Asset } from "../../../packages/domain/src";
 import { date, liveAssets, useAppContext } from "./view-shared";
 import "./overview-restoration.css";
+import { SampleLibraryButton } from "./components/SampleLibraryButton";
 
 type Attention = { id: string; name: string; meta: string; dueDate: string; asset?: Asset };
 const day = (value: Date) => `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, "0")}-${String(value.getDate()).padStart(2, "0")}`;
@@ -75,6 +76,6 @@ export function Overview() {
         <p>{[project.description, project.url].filter(Boolean).join(" · ") || t("project")}</p>
         <div className="overview-project-counts"><span><strong>{linked.length}</strong> {t("overviewLinkedAssets", { count: linked.length })}</span><span><strong>{linked.filter((asset) => asset.kind === "account").length}</strong> {t("overviewAccountLabel", { count: linked.filter((asset) => asset.kind === "account").length })}</span><span><strong>{linked.filter((asset) => asset.kind === "subscription").length}</strong> {t("overviewSubscriptionLabel", { count: linked.filter((asset) => asset.kind === "subscription").length })}</span></div>
       </Link>;
-    })}</div> : <div className="overview-project-empty"><p>{t("overviewNoProjects")}</p><div className="actions"><Link className="button" to="/assets/$kind" params={{ kind: "project" }}>{t("add")} {t("project")}</Link>{!data.loading && data.assets.length === 0 && <Link className="button" to="/settings" hash="advanced-settings">{t("overviewTrySample")}</Link>}</div></div>}
+    })}</div> : <div className="overview-project-empty"><p>{t("overviewNoProjects")}</p><div className="actions"><Link className="button" to="/assets/$kind" params={{ kind: "project" }} hash="new">{t("add")} {t("project")}</Link>{!data.loading && data.assets.length === 0 && <SampleLibraryButton label={t("overviewTrySample")} />}</div></div>}
   </main>;
 }

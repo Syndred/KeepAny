@@ -18,6 +18,8 @@ import { partitionAccountPasswords } from "./workspace-summary";
 import { useWorkspaceSummary } from "./use-workspace-summary";
 import { date, Empty, liveAssets, money, PageTitle, useAppContext } from "./view-shared";
 import "./workspaces.css";
+import { CatalogDomainCard } from "./components/CatalogDomainCard";
+import { catalogAssets, sortCatalogRows, isManagedAsset, type CatalogScope, type CatalogSort } from "./catalog-view";
 import { readWorkspaceReturn, workspaceReturnKey } from "./workspace-return";
 import { localRepository } from "../../../packages/local-db/src";
 import { CompactAccountCard } from "./components/CompactAccountCard";
@@ -47,6 +49,7 @@ export function AccountsWorkspace() {
     const [deleteAccount, setDeleteAccount] = useState<{ asset: Asset; vaultRevision: string } | null>(null);
     const [deleteBusy, setDeleteBusy] = useState(false), [deleteError, setDeleteError] = useState("");
     const navigate = useNavigate();
+    useEffect(() => { if (hash === "new-account" && snapshot.status === "unlocked") { setEditAccount({}); void navigate({ to: "/accounts", hash: "", replace: true }); } }, [hash, snapshot.status, navigate]);
     useEffect(() => { if (snapshot.status !== "unlocked") { setEditAccount(null); setDeleteAccount(null); setDeleteError(""); } }, [snapshot.status]);
 	const [filters, setFilters] = useState<AccountListFilters>(() => ({ search: sessionStorage.getItem("keepany-account-list-search") ?? "", category: "", tag: "" }));
 	const sampleIds = sampleLibraryAssetIds(data.preferences.find((preference) => preference.id === SAMPLE_LIBRARY_ID)?.value);
@@ -95,7 +98,9 @@ function AssetCatalog({ domainsOnly }: { domainsOnly: boolean }) {
 	const summary = useWorkspaceSummary();
  const [assetView, setAssetView] = useAssetView();
 	const queryKey = `keepany-catalog-query-${domainsOnly ? "domains" : "all"}`;
-	const [query, setQuery] = useState(() => sessionStorage.getItem(queryKey) ?? "");
+	const [scope, setScope] = useState<CatalogScope>(() => (sessionStorage.getItem("keepany-catalog-scope") as CatalogScope) || "managed");
+ const [sort, setSort] = useState<CatalogSort>(() => sessionStorage.getItem("keepany-catalog-sort") === "due" ? "due" : "updated");
+ const [query, setQuery] = useState(() => sessionStorage.getItem(queryKey) ?? "");
 	const restoredScroll = useRef(false);
 	useEffect(() => {
 		setQuery(sessionStorage.getItem(queryKey) ?? "");
@@ -117,8 +122,8 @@ function AssetCatalog({ domainsOnly }: { domainsOnly: boolean }) {
 	const [editor, setEditor] = useState<AssetKind | null>(null);
 	const assets = liveAssets(data).filter((asset) => ["project", "item", "subscription"].includes(asset.kind));
 	const projects = assets.filter((asset) => asset.kind === "project");
-	const visible = assets.filter((asset) => [search, query].every((value) => matchesAssetSearch(asset, value)));
-	const visibleDomains = summary.domains.filter(({ domain, project }) => [search, query].every((value) => !value.trim() ||
+	const visible = catalogAssets(assets, ["managed", "all", "archived"].includes(scope) ? scope : "managed", sort).filter((asset) => [search, query].every((value) => matchesAssetSearch(asset, value)));
+	const visibleDomains = summary.domains.filter(({ domain, project }) => (scope === "all" || isManagedAsset(project) === (scope === "managed")) && [search, query].every((value) => !value.trim() ||
 		[domain.name, domain.registrar, project.name].join(" ").toLocaleLowerCase().includes(value.trim().toLocaleLowerCase())));
 
 	function create(event: FormEvent) {
@@ -139,15 +144,10 @@ function AssetCatalog({ domainsOnly }: { domainsOnly: boolean }) {
 			<section className="card"><span>{t("workspaceMonthlyPlan")}</span><strong><MoneyTotal totals={summary.monthly} empty={t("financeNoPlan")} /></strong></section>
 			<section className="card"><span>{t("workspaceUpcoming")}</span><strong>{summary.upcoming}</strong></section>
 		</div>}
+		<div className="workspace-catalog-controls"><label className="field">{t("assetStatusView")}<Select value={scope} onValueChange={value => { setScope(value as CatalogScope); sessionStorage.setItem("keepany-catalog-scope", value); }}>{(["managed", "all", "archived"] as const).map(value => <SelectOption key={value} value={value}>{t(value === "managed" ? "managedAssets" : value === "all" ? "all" : "archivedAssets")}</SelectOption>)}</Select></label><label className="field">{t("assetSort")}<Select value={sort} onValueChange={value => { setSort(value as CatalogSort); sessionStorage.setItem("keepany-catalog-sort", value); }}><SelectOption value="updated">{t("recentlyUpdated")}</SelectOption><SelectOption value="due">{t("nearestDue")}</SelectOption></Select></label></div>
 		<div className="workspace-search"><label className="asset-account-search"><Search size={18} /><Input type="search" value={query} aria-label={t("workspaceSearch")} placeholder={t("workspaceSearch")} onChange={(event) => { setQuery(event.target.value); sessionStorage.setItem(queryKey, event.target.value); }} /></label><AssetViewToggle value={assetView} onChange={setAssetView} /><span>{t("workspaceAssetCount", { count: (domainsOnly ? 0 : visible.length) + visibleDomains.length })}</span></div>
 		{hasResults ? <section className={`asset-list-content workspace-asset-grid${assetView === "list" ? " asset-dense-list" : ""}`} aria-label={t(domainsOnly ? "workspaceDomains" : "assetsWorkspace")}>
-			{!domainsOnly && visible.map((asset) => asset.kind === "project" ? <ProjectCard key={asset.id} asset={asset} search={search} summary={summary.summaries.get(asset.id)} onOpen={() => rememberCatalog(asset.id)} /> : <LibraryCard key={asset.id} asset={asset} search={search} summary={summary.summaries.get(asset.id)} onOpen={() => rememberCatalog(asset.id)} />)}
-			{visibleDomains.map(({ project, domain, remainingDays }) => <Link className="card workspace-domain-card" key={`${project.id}:${domain.id}`} to="/assets/$kind/$id" params={{ kind: "project", id: project.id }} hash={`project-domain-${domain.id}`} onClick={() => rememberCatalog(project.id)}>
-				<div className="workspace-domain-heading"><Globe size={22} /><strong>{domain.name}</strong></div><span className="subtitle">{t("workspaceDomains")} · {project.name}</span>
-				<strong><RemainingDays days={remainingDays} /></strong><span>{t("projectExpiry")}: {date(domain.expiryDate, i18n.language)}</span>
-				<div className="workspace-cost-line"><span>{t("projectAnnualFee")}</span><strong>{domain.annualAmount === null ? t("workspaceAmountMissing") : money(domain.annualAmount, domain.currency, i18n.language)}</strong></div>
-				{domain.registrar && <span className="subtitle">{domain.registrar}</span>}<span className="workspace-domain-action">{t("workspaceManageDomain")} ↗</span>
-			</Link>)}
+      {sortCatalogRows([...(domainsOnly ? [] : visible.map(asset => ({ type: "asset" as const, asset }))), ...visibleDomains.map(row => ({ type: "domain" as const, ...row }))], sort).map(row => row.type === "asset" ? row.asset.kind === "project" ? <ProjectCard key={row.asset.id} asset={row.asset} search={search} summary={summary.summaries.get(row.asset.id)} onOpen={() => rememberCatalog(row.asset.id)} /> : <LibraryCard key={row.asset.id} asset={row.asset} search={search} summary={summary.summaries.get(row.asset.id)} onOpen={() => rememberCatalog(row.asset.id)} /> : <CatalogDomainCard key={`${row.project.id}:${row.domain.id}`} {...row} onOpen={() => rememberCatalog(row.project.id)} />)}
 		</section> : query || search ? <div className="empty"><strong>{t("noMatches")}</strong></div> : <Empty />}
 		{createOpen && <Dialog title={t("workspaceAddAsset")} onClose={() => setCreateOpen(false)}><form className="workspace-create-form" onSubmit={create}>
 			<label className="field" htmlFor="workspace-create-kind">{t("workspaceAssetType")}<Select id="workspace-create-kind" value={createKind} onValueChange={(value) => setCreateKind(value as typeof createKind)}>{(["project", "item", "subscription", "domain"] as const).map((kind) => <SelectOption key={kind} value={kind}>{t(kind === "domain" ? "workspaceDomains" : kind)}</SelectOption>)}</Select></label>

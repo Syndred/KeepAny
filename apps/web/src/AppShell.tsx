@@ -254,13 +254,7 @@ export function AppShell() {
 							<X size={18} />
 						</Button>
 					</div>
-					<DropdownMenu><DropdownMenuTrigger className="workspace-current"><span className="workspace-avatar"><UserRound size={15}/></span><strong>{t("personalWorkspace")}</strong><ChevronDown size={14} aria-hidden="true" /></DropdownMenuTrigger>
-						<DropdownMenuContent>
-							<DropdownMenuItem render={<Link to="/settings" />} onClick={() => setMobile(false)}><Settings />{t("settings")}</DropdownMenuItem>
-							<DropdownMenuItem render={<Link to="/collections" />} onClick={() => setMobile(false)}><Layers />{t("customizeSidebar")}</DropdownMenuItem>
-							<DropdownMenuItem render={<Link to="/intake" />} onClick={() => setMobile(false)}><Plus />{t("intake")}</DropdownMenuItem>
-						</DropdownMenuContent>
-					</DropdownMenu>
+
 					<div className="sidebar-section-label">{t("workspaceSection")}</div>
 					<nav className="nav" aria-label={t("navigation")}>
 						<SortableNav
@@ -280,9 +274,8 @@ export function AppShell() {
 						<Link to="/collections" className="sidebar-customize" aria-current={/^\/collections\/?$/.test(pathname) ? "page" : undefined} onClick={() => setMobile(false)}><Plus size={15}/>{t("customizeSidebar")}</Link>
 					</div>
 					<div className="side-bottom">
-						<DropdownMenu><DropdownMenuTrigger className="sidebar-user"><span>{t("meInitial")}</span><span><strong>{t("myWorkspace")}</strong><small>{t("privateWorkspace")}</small></span><ChevronDown size={14} aria-hidden="true" /></DropdownMenuTrigger>
-							<DropdownMenuContent side="top"><DropdownMenuItem render={<Link to="/intake" />} onClick={() => setMobile(false)}><Plus />{t("intake")}</DropdownMenuItem><DropdownMenuItem render={<Link to="/settings" />} onClick={() => setMobile(false)}><Settings />{t("settings")}</DropdownMenuItem></DropdownMenuContent>
-						</DropdownMenu>
+                      <Link to="/backup" className="sidebar-customize" onClick={() => setMobile(false)}><Plus size={15}/>{t("backupAndRestore")}</Link>
+                      <Link to="/settings" className="sidebar-customize" onClick={() => setMobile(false)}><Settings size={15}/>{t("settings")}</Link>
 					</div>
 				</aside>
 				{mobile && (
@@ -311,14 +304,13 @@ export function AppShell() {
 						</button>
 						<div className="top-actions">
 							<Link to="/tasks" className="top-icon-button" aria-label={t("taskReminders")}><Bell size={17}/>{openTasks > 0 && <i aria-hidden="true"/>}</Link>
-							<DropdownMenu><DropdownMenuTrigger render={<Button className="top-icon-button" variant="ghost" aria-label={t("assistantMenu")} />}><Sparkles size={17}/></DropdownMenuTrigger><DropdownMenuContent align="end"><DropdownMenuItem render={<Link to="/change-impact" />}>{t("checkChangeImpact")}</DropdownMenuItem><DropdownMenuItem render={<Link to="/assistant-access" />}>{t("settingsAssistantAccess")}</DropdownMenuItem></DropdownMenuContent></DropdownMenu>
-							<Link
-								to="/intake"
-								className="top-icon-button"
-								aria-label={t("intake")}
-							>
-							<Plus size={18} />
-							</Link>
+							<DropdownMenu><DropdownMenuTrigger render={<Button className="top-icon-button" variant="ghost" aria-label={t("assistantMenu")} />}><Sparkles size={17}/></DropdownMenuTrigger><DropdownMenuContent align="end"><DropdownMenuItem onClick={() => setAi(true)}>{t("settingsAskAssistant")}</DropdownMenuItem><DropdownMenuItem render={<Link to="/intake" hash="ai" />}>{t("aiCaptureTab")}</DropdownMenuItem><DropdownMenuItem render={<Link to="/change-impact" />}>{t("checkChangeImpact")}</DropdownMenuItem><DropdownMenuItem render={<Link to="/assistant-access" />}>{t("settingsAssistantAccess")}</DropdownMenuItem></DropdownMenuContent></DropdownMenu>
+                           <DropdownMenu><DropdownMenuTrigger render={<Button className="top-icon-button" variant="ghost" aria-label={t("newRecord")} />}><Plus size={18}/></DropdownMenuTrigger><DropdownMenuContent align="end">
+                            <DropdownMenuItem render={<Link to="/accounts" hash="new-account" />}>{t("accountsWorkspace")}</DropdownMenuItem>
+                            {(["project", "item", "subscription"] as const).map(kind => <DropdownMenuItem key={kind} render={<Link to="/assets/$kind" params={{ kind }} hash="new" />}>{t(kind)}</DropdownMenuItem>)}
+                            <DropdownMenuItem render={<Link to="/intake" />}>{t("intake")}</DropdownMenuItem>
+                            <DropdownMenuItem render={<Link to="/intake" hash="ai" />}>{t("aiCaptureTab")}</DropdownMenuItem>
+                           </DropdownMenuContent></DropdownMenu>
 						</div>
 					</header>
 					{searchOpen && <div className="top-search-panel" ref={topSearchPanelRef}>

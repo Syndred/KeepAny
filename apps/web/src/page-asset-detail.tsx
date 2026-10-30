@@ -1,6 +1,8 @@
 import { Textarea } from "./components/ui/textarea";
 import { Input } from "./components/ui/input";
 import { DatePicker } from "./components/ui/date-picker";
+import { DetailDisclosure } from "./components/DetailDisclosure";
+import { ProjectProfile } from "./components/ProjectProfile";
 import { assetNotes } from "./asset-notes";
 import { accountFamilyGraph } from "./account-family-graph";
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
@@ -1044,12 +1046,14 @@ export function AssetDetail() {
 	);
 	return (
 		<main className={`page asset-detail asset-detail-${kind}${relations.length ? " has-relations" : ""}${kind === "account" ? " account-relation-layout" : ""}`}>
-			{kind === "project" && <div className="asset-project-action-bar">
-				<Button onClick={() => setEdit(true)}>{t("edit")}</Button>
-				<Button asChild><Link to="/assets/project/$id/workflow/$flow" params={{ id: asset.id, flow: "brand" }}>{t("workflowBrandEntry")}</Link></Button>
-				<Button asChild><Link to="/assets/project/$id/workflow/$flow" params={{ id: asset.id, flow: "close" }}>{t("workflowCloseEntry")}</Link></Button>
-				<Button variant="danger" disabled={deleteBusy} onClick={() => { setDeleteError(""); setDeleteOpen(true); }}>{t("delete")}</Button>
-			</div>}
+            {kind === "project" && <div className="asset-project-action-bar">
+              <Button variant="primary" onClick={() => setEdit(true)}>{t("edit")}</Button>
+              <DropdownMenu><DropdownMenuTrigger render={<Button aria-label={t("moreActions")} />}><MoreHorizontal size={18}/>{t("moreActions")}</DropdownMenuTrigger><DropdownMenuContent align="end">
+                <DropdownMenuItem render={<Link to="/assets/project/$id/workflow/$flow" params={{ id: asset.id, flow: "brand" }} />}>{t("workflowBrandEntry")}</DropdownMenuItem>
+                <DropdownMenuItem render={<Link to="/assets/project/$id/workflow/$flow" params={{ id: asset.id, flow: "close" }} />}>{t("workflowCloseEntry")}</DropdownMenuItem>
+                <DropdownMenuItem disabled={deleteBusy} onClick={() => { setDeleteError(""); setDeleteOpen(true); }}>{t("delete")}</DropdownMenuItem>
+              </DropdownMenuContent></DropdownMenu>
+            </div>}
 			{kind === "account" && <TextLink asChild><Link className="account-detail-back" to="/accounts"><ArrowLeft size={16} />{t("accountBack")}</Link></TextLink>}
 			<div className="page-header">
 				<div>
@@ -1113,23 +1117,8 @@ export function AssetDetail() {
 						<Button size="small" disabled={uploading || asset.attachments.length >= 20} onClick={() => chooseImage("detailIds")}>{t("itemDetailPhotos")}</Button>
 					</div>
 				</section>}
-				{asset.kind === "project" && <section className="card asset-profile-card asset-project-profile-card">
-					<div className="card-header"><h2>{t("profile")}</h2></div>
-					<dl className="asset-project-facts">
-						<div><dt>{t("projectOfficialUrl")}</dt><dd>{asset.url ? <TextLink href={asset.url} target="_blank" rel="noopener noreferrer"><span>{asset.url}</span><ExternalLink aria-hidden="true" /></TextLink> : "—"}</dd></div>
-						<div><dt>{t("projectType")}</dt><dd>{niceCategory(asset.category, t) || "—"}</dd></div>
-						<div><dt>{t("projectLaunchMonth")}</dt><dd>{asset.projectLaunchMonth ? new Intl.DateTimeFormat(i18n.language, { year: "numeric", month: "long", timeZone: "UTC" }).format(new Date(`${asset.projectLaunchMonth}-01T12:00:00Z`)) : "—"}</dd></div>
-						<div><dt>{t("contact")}</dt><dd>{asset.contact || "—"}</dd></div>
-						<div><dt>{t("tags")}</dt><dd>{asset.tags.join(", ") || "—"}</dd></div>
-						<div><dt>{t("notes")}</dt><dd>{asset.notes || "—"}</dd></div>
-						<div><dt>{t("projectAccount")}</dt><dd>{relatedAccounts.length ? relatedAccounts.map((linked, index) => <span key={linked.id}>{index > 0 && " · "}<TextLink asChild><Link to="/assets/$kind/$id" params={{ kind: linked.kind, id: linked.id }} onClick={(event) => { event.preventDefault(); visitRelation(linked); }}>{linked.name}</Link></TextLink></span>) : "—"}</dd></div>
-					</dl>
-					<div className="asset-project-related">
-						<div className="card-header"><h3>{t("related")}</h3><Button asChild size="small"><Link to="/finance">{t("financeViewLedger")}<ArrowDownRight size={15} aria-hidden="true" /></Link></Button></div>
-						{relatedAssets.length ? <div className="asset-project-related-list">{relatedAssets.map((linked) => <Link key={linked.id} className="asset-project-related-card" to="/assets/$kind/$id" params={{ kind: linked.kind, id: linked.id }} onClick={(event) => { event.preventDefault(); visitRelation(linked); }}><span className="asset-project-related-icon" aria-hidden="true">{linked.name.charAt(0).toUpperCase()}</span><span><strong>{linked.name}</strong><small>{t(linked.kind)}{linked.kind === "subscription" ? ` · ${money(linked.amount, linked.currency, i18n.language)}` : linked.username ? ` · ${linked.username}` : ""}</small></span><ArrowDownRight size={15} aria-hidden="true" /></Link>)}</div> : <p className="asset-quiet-empty">{t("none")}</p>}
-					</div>
-				</section>}
-				{asset.kind === "project" && <section className="card asset-project-reminders" id="project-reminders">
+				{asset.kind === "project" && <ProjectProfile asset={asset} accounts={relatedAccounts} onVisit={visitRelation} onEdit={() => setEdit(true)} />}
+				{asset.kind === "project" && asset.projectInspectionDate && <section className="card asset-project-reminders" id="project-reminders">
 					<div className="card-header"><h2>{t("projectNextInspection")}</h2></div>
 					<div className="asset-project-reminder-row asset-project-reminder-static"><span className="asset-project-reminder-symbol" aria-hidden="true">↗</span><span><strong>{t("projectNextInspection")}</strong><small>{asset.projectInspectionDate ? date(asset.projectInspectionDate, i18n.language) : t("projectNoInspection")}</small></span></div>
 				</section>}
@@ -1321,7 +1310,7 @@ export function AssetDetail() {
 				</form>
 			</Dialog>}
 			<div className="detail-grid asset-detail-secondary">
-				<section id="account-relations" className="card asset-relations-card">
+				<DetailDisclosure id="account-relations" className="card asset-relations-card" collapsible={kind === "project"} label={t("projectRelatedDetails")}>
 					<div className="card-header">
 						<div>
 							<h2>{t(kind === "account" ? "accountRelationMap" : "relations")}</h2>
@@ -1358,7 +1347,7 @@ export function AssetDetail() {
 					) : (
 						asset.kind === "project" ? <p className="asset-quiet-empty">{t("none")}</p> : <Empty hint={false} />
 					)}
-				</section>
+				</DetailDisclosure>
 				<section className="card asset-tasks-card">
 					<div className="card-header">
 						<h2>{t("tasks")}</h2>
@@ -1377,7 +1366,7 @@ export function AssetDetail() {
 					{ownTasks.length ? (
 						<div className="list">
 							{ownTasks.map((task) => (
-								<TaskRow key={task.id} task={task} hideRelated={kind === "account"} compact={kind === "account"} />
+								<TaskRow key={task.id} task={task} hideRelated={kind === "account" || kind === "project"} compact={kind === "account" || kind === "project"} />
 							))}
 						</div>
 					) : (
@@ -1385,7 +1374,7 @@ export function AssetDetail() {
 					)}
 				</section>
 			</div>
-			{asset.kind === "project" && attachmentSection}
+			{asset.kind === "project" && <DetailDisclosure className="asset-project-media-disclosure" collapsible label={t("attachments")}>{attachmentSection}</DetailDisclosure>}
 			{asset.kind === "account" && <aside className="account-login-column">
                 <AccountLoginSummary key={`${asset.id}:${currentLogin?.key ?? "empty"}:${currentLogin?.entry.modifiedAt ?? ""}`} asset={asset} current={currentLogin} total={accountChoices.length} index={accountChoices.findIndex(choice => choice.key === currentLogin?.key)} onSwitch={() => { if (currentLogin) setAccountSelection({ assetId: asset.id, key: nextAccountLogin(accountChoices, currentLogin.key)?.key ?? "" }); }} onEdit={() => { setAccountAddingLogin(false); setEdit(true); }} />
                 {asset.attachments.length > 0 && <details className="account-existing-attachments"><summary>{t("attachments")}</summary>{attachmentSection}</details>}

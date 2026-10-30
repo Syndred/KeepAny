@@ -464,7 +464,7 @@ test("a7be614 encrypted review and unfinished fragment survive a same-origin fix
 		return match[1];
 	};
 	const oldEntry = moduleEntry(directory);
-	const newPackage = join(root, "release/web");
+	const newPackage = process.env.KEEPANY_PREVIEW_DIRECTORY ? join(process.env.KEEPANY_PREVIEW_DIRECTORY, "web") : join(root, "apps/web/dist");
 	const newEntry = moduleEntry(newPackage);
 	expect(newEntry).not.toBe(oldEntry);
 	const contentTypes: Record<string, string> = {
