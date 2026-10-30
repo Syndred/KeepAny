@@ -2,7 +2,7 @@ import { expect, type Page } from "@playwright/test";
 
 /** Navigate through a visible application entry, keeping the unlocked session. */
 export async function openBackupPage(page: Page) {
-	await expect(page.locator("main")).toBeVisible();
+	await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
 	if (new URL(page.url()).pathname !== "/backup") {
         const shortcut = page.locator('main a[href="/backup"]');
         if (await shortcut.isVisible()) await shortcut.click();
@@ -12,6 +12,7 @@ export async function openBackupPage(page: Page) {
         }
 		await expect(page).toHaveURL(/\/backup$/);
 	}
+	await expect(page.getByRole("heading", { level: 1, name: /^(备份与恢复|Backup & restore)$/ })).toBeVisible();
 	await expect(page.locator(".intake-backup-card")).toBeVisible();
 }
 
