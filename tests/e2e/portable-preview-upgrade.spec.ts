@@ -111,6 +111,7 @@ async function activeWorkerSource(context: BrowserContext, origin: string) {
 }
 
 async function originalImage(page: Page) {
+  await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
   // The pinned old UI exposes images directly; current UI opens its real disclosure.
   if (await page.locator(".asset-project-media-disclosure").count()) await openProjectDetails(page);
   await expect(page.locator('.asset-image')).toHaveCount(1);
