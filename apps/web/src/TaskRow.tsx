@@ -1,7 +1,7 @@
 import { DatePicker } from "./components/ui/date-picker";
 import { useTranslation } from "react-i18next";
 import { Link } from "@tanstack/react-router";
-import { Check } from "lucide-react";
+import { Check, MoreHorizontal } from "lucide-react";
 import { lazy, Suspense, useRef, useState } from "react";
 import { dueOnCycle, type Task } from "../../../packages/domain/src";
 import { rescheduleTaskReminder, zonedParts } from "../../../packages/domain/src/task-reminder";
@@ -14,19 +14,23 @@ import { ImpactTaskRow } from "./ImpactTaskRow";
 import { ProjectWorkflowTaskRow } from "./ProjectWorkflowTaskRow";
 import { MaintenanceTaskRow } from "./MaintenanceTaskRow";
 import { date, useAppContext } from "./view-shared";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./components/ui/dropdown-menu";
+import { Dialog } from "./components/ui/dialog";
 const TaskEditor = lazy(() => import("./workflow-task-editor").then(module => ({ default: module.TaskEditor })));
-export function TaskRow({ task, hideRelated = false }: { task: Task; hideRelated?: boolean }) {
+export function TaskRow({ task, hideRelated = false, compact = false }: { task: Task; hideRelated?: boolean; compact?: boolean }) {
 	const { t, i18n } = useTranslation();
 	const { data, notify } = useAppContext();
 	const [busy, setBusy] = useState(false);
 	const inFlight = useRef(false);
 	const [editing, setEditing] = useState(false);
+    const [reminderOpen, setReminderOpen] = useState(false), [reminderDraft, setReminderDraft] = useState(task.dueDate), [reminderError, setReminderError] = useState("");
 	if (task.impactSnapshot) return <ImpactTaskRow task={task} />;
 	if (task.projectWorkflow) return <ProjectWorkflowTaskRow task={task} />;
 	if (task.maintenancePlan) return <MaintenanceTaskRow task={task} />;
 	const related = data.assets.find((asset) => asset.id === task.assetId && !asset.deleted);
 	async function reschedule(dueDate: string) {
-		if (inFlight.current || task.done || task.dueDate === dueDate) return;
+		if (inFlight.current || task.done) return false;
+        if (task.dueDate === dueDate) return true;
 		inFlight.current = true;
 		setBusy(true);
 		try {
@@ -36,8 +40,10 @@ export function TaskRow({ task, hideRelated = false }: { task: Task; hideRelated
 			const reminder = task.reminder && dueDate ? rescheduleTaskReminder(task.reminder, dueDate) : undefined;
 			await saveTaskIfCurrent(task, { ...task, ...(task.reminder ? { reminder } : {}), dueDate, dedupeKey });
 			notify(t("saved"));
+			return true;
 		} catch (error) {
-			notify(t(error instanceof Error && error.message === "task-stale" ? "workflowTaskStale" : error instanceof Error && error.message === "task-duplicate" ? "taskDuplicatePending" : "error"));
+			const message = t(error instanceof Error && error.message === "task-stale" ? "workflowTaskStale" : error instanceof Error && error.message === "task-duplicate" ? "taskDuplicatePending" : "error");
+            notify(message); setReminderError(message); return false;
 		} finally { inFlight.current = false; setBusy(false); }
 	}
 	function postponeDay() {
@@ -53,7 +59,7 @@ export function TaskRow({ task, hideRelated = false }: { task: Task; hideRelated
 	const reminderAt = task.reminder ? new Date(Date.parse(task.reminder.at) - task.reminder.leadMinutes * 60_000).toISOString() : null;
 	const formatReminderTime = (at: string) => new Date(at).toLocaleString(i18n.language, { timeZone: task.reminder?.timeZone, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" });
 	return (
-		<TaskCard className="list-row impact-task-row" id={`task-${task.id}`} tabIndex={-1}>
+		<TaskCard className={`list-row impact-task-row${compact ? " account-compact-task" : ""}`} id={`task-${task.id}`} tabIndex={-1}>
 			<Button
 				size="icon"
 				variant="ghost"
@@ -83,13 +89,13 @@ export function TaskRow({ task, hideRelated = false }: { task: Task; hideRelated
 					<small>{t("reminderSavedTime")}: <time dateTime={reminderAt}>{formatReminderTime(reminderAt)}</time></small>
 					<small>{t("reminderSavedZone", { timeZone: task.reminder.timeZone })}</small>
 					<small>{t("reminderSavedLead", { count: task.reminder.leadMinutes })} · {task.reminder.rule.mode === "once" ? t("reminderSavedOnce") : t(`reminderSavedRepeat_${task.reminder.rule.mode}_${task.reminder.rule.unit}`, { count: task.reminder.rule.every })}</small>
-				</> : <small>{date(task.dueDate, i18n.language)}</small>}
+				</> : (task.dueDate || !compact) && <small>{date(task.dueDate, i18n.language)}</small>}
 				{task.assetId && !hideRelated && <small>{t("related")}: {related ? <TextLink asChild><Link to="/assets/$kind/$id" params={{ kind: related.kind, id: related.id }}>{related.name}</Link></TextLink> : t("taskRelatedMissing")}</small>}
 				{completionHistory.length ? (
 					<small>{t("impactCompletedHistory")}: {completionHistory.map((value) => new Date(value).toLocaleString(i18n.language)).join(" · ")}</small>
 				) : null}
 			</div>
-			<div className="impact-task-actions">
+			{compact ? <DropdownMenu><DropdownMenuTrigger render={<Button size="icon" variant="ghost" aria-label={t("moreActions")} disabled={busy} />}><MoreHorizontal size={18} /></DropdownMenuTrigger><DropdownMenuContent align="end"><DropdownMenuItem onClick={() => setEditing(true)}>{t("edit")}</DropdownMenuItem>{!task.done && <><DropdownMenuItem onClick={() => { setReminderDraft(task.dueDate); setReminderError(""); setReminderOpen(true); }}>{t("remindLater")}</DropdownMenuItem><DropdownMenuItem onClick={postponeDay}>{t("taskPostponeDay")}</DropdownMenuItem></>}</DropdownMenuContent></DropdownMenu> : <div className="impact-task-actions">
 				<Button size="small" disabled={busy} onClick={() => setEditing(true)}>{t("edit")}</Button>
 				{!task.done && <>
 					<label htmlFor={`task-due-${task.id}`}>{t("remindLater")}</label>
@@ -97,7 +103,8 @@ export function TaskRow({ task, hideRelated = false }: { task: Task; hideRelated
 					<Button size="small" disabled={busy} onClick={postponeDay}>{t("taskPostponeDay")}</Button>
 				</>}
 				<Badge tone={task.done ? "success" : "pending"}>{t(task.done ? "done" : "pending")}</Badge>
-			</div>
+			</div>}
+			{reminderOpen && <Dialog title={t("remindLater")} closeDisabled={busy} onClose={() => { if (!busy) setReminderOpen(false); }}><form onSubmit={event => { event.preventDefault(); void reschedule(reminderDraft).then(saved => { if (saved) setReminderOpen(false); }); }}><label htmlFor={`compact-task-due-${task.id}`}>{t("date")}</label><DatePicker id={`compact-task-due-${task.id}`} value={reminderDraft} disabled={busy} onValueChange={value => { setReminderDraft(value); setReminderError(""); }} />{reminderError && <p role="alert">{reminderError}</p>}<div className="actions"><Button type="button" disabled={busy} onClick={() => setReminderOpen(false)}>{t("cancel")}</Button><Button type="submit" variant="primary" disabled={busy}>{t("save")}</Button></div></form></Dialog>}
 			{editing && <Suspense fallback={null}><TaskEditor task={task} onClose={() => setEditing(false)} /></Suspense>}
 		</TaskCard>
 	);

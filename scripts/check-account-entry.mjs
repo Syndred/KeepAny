@@ -47,7 +47,7 @@ if (run.error || run.status !== 0) {
   for (const lang of ["zh-CN", "en"]) {
     for (const width of [390, 768, 1280, 1920, 2262]) {
       for (const state of ["card", "edit", "menu", "delete", "gate"]) if (!imageNames.has(`matrix-${state}-${lang}-${width}.png`)) throw Error(`Missing unified matrix: ${lang}/${width}/${state}`);
-      for (const state of ["card", "detail", "impact", "graph", "edit"]) if (!imageNames.has(`simple-${state}-${lang}-${width}.png`)) throw Error(`Missing simple account evidence: ${lang}/${width}/${state}`);
+      for (const state of ["card", "detail", "impact", "graph", "edit", "task", "reminder"]) if (!imageNames.has(`simple-${state}-${lang}-${width}.png`)) throw Error(`Missing simple account evidence: ${lang}/${width}/${state}`);
       for (const state of ["normal", "locked"]) if (!imageNames.has(`matrix-${state}-${lang}-${width}.png`)) throw Error(`Missing compact evidence: ${lang}/${width}/${state}`);
     }
     for (const state of ["relation-fullscreen", "relation-expanded", "relation-after-delete", "private-detail", "unlock-single-status", "unified-edit", "selected-backup", "delete-restored", "ordinary-restored", "locked-editor", "validation-error", "partial-save", "purge-error", "imported-cards", "private-added", "entry-restored", "clipboard-failure", "query-return", "flow-switched", "flow-reloaded"]) if (!imageNames.has(`${state}-${lang}.png`)) throw Error(`Missing unified flow: ${lang}/${state}`);

@@ -243,7 +243,7 @@ export function AccountEntryDialog({ onClose, asset, entryId, returnFocusTo, new
                             showLinkedAssets={linking}
 							onCancel={close}
 							error={error}
-							titleCompanion={
+							titleCompanion={entryId && !asset ? undefined :
 								<Field name="account-entry-category" label={t("category")}>
 									<Select
 										id="account-entry-category"

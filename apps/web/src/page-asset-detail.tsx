@@ -1377,7 +1377,7 @@ export function AssetDetail() {
 					{ownTasks.length ? (
 						<div className="list">
 							{ownTasks.map((task) => (
-								<TaskRow key={task.id} task={task} hideRelated={kind === "account"} />
+								<TaskRow key={task.id} task={task} hideRelated={kind === "account"} compact={kind === "account"} />
 							))}
 						</div>
 					) : (
