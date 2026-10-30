@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { Button } from "./ui/button";
 import { MIN_MASTER_PASSWORD_LENGTH as MIN_MASTER_LENGTH } from "../../../../packages/password-vault/src/policy";
 export function EmptyState({
+    accounts = false,
 	busy,
 	master,
 	masterConfirm,
@@ -14,6 +15,7 @@ export function EmptyState({
 	onCreate,
 	onImport,
 }: {
+    accounts?: boolean;
 	busy: boolean;
 	master: string;
 	masterConfirm: string;
@@ -30,8 +32,8 @@ export function EmptyState({
 			<div className="password-vault-empty-icon">
 				<ShieldCheck size={28} />
 			</div>
-			<h3>{t("pwVaultEmptyTitle")}</h3>
-			<p>{t("pwVaultEmptyHint")}</p>
+			<h3>{t(accounts ? "accountSetUpTitle" : "pwVaultEmptyTitle")}</h3>
+			<p>{t(accounts ? "accountSetUpHint" : "pwVaultEmptyHint")}</p>
 			<form className="password-vault-master-form" onSubmit={onCreate}>
 				<div className="field">
 					<label htmlFor="password-vault-master">
@@ -83,7 +85,7 @@ export function EmptyState({
 				</p>
 				<div className="actions">
 					<Button type="submit" variant="primary" disabled={busy}>
-						<ShieldCheck size={16} /> {t("pwVaultCreate")}
+						<ShieldCheck size={16} /> {t(accounts ? "accountSetUp" : "pwVaultCreate")}
 					</Button>
 					<Button type="button" disabled={busy} onClick={onImport}>
 						<Upload size={16} /> {t("pwVaultImportEmpty")}
@@ -95,6 +97,7 @@ export function EmptyState({
 }
 
 export function LockedState({
+    accounts = false,
 	busy,
 	master,
 	showMaster,
@@ -102,6 +105,7 @@ export function LockedState({
 	setShowMaster,
 	onUnlock,
 }: {
+    accounts?: boolean;
 	busy: boolean;
 	master: string;
 	showMaster: boolean;
@@ -115,8 +119,8 @@ export function LockedState({
 			<div className="password-vault-empty-icon">
 				<Lock size={26} />
 			</div>
-			<h3>{t("pwVaultLockedTitle")}</h3>
-			<p>{t("pwVaultLockedHint")}</p>
+			<h3>{t(accounts ? "accountUnlockTitle" : "pwVaultLockedTitle")}</h3>
+			<p>{t(accounts ? "accountUnlockHint" : "pwVaultLockedHint")}</p>
 			<form className="password-vault-master-form" onSubmit={onUnlock}>
 				<div className="field">
 					<label htmlFor="password-vault-unlock-master">
@@ -148,7 +152,7 @@ export function LockedState({
 				</div>
 				<div className="actions">
 					<Button type="submit" variant="primary" disabled={busy}>
-						<Lock size={16} /> {t("pwVaultUnlock")}
+						<Lock size={16} /> {t(accounts ? "accountUnlockAction" : "pwVaultUnlock")}
 					</Button>
 				</div>
 			</form>

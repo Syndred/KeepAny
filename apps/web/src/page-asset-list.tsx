@@ -426,7 +426,8 @@ export function AssetList() {
 }
 
 export type AccountListFilters = { search: string; category: string; tag: string };
-export function AssetKindList({ kind, beforeList, afterList, passwordCounts, onAccountFiltersChange, privateSearch = false, embedded = false, hideTitle = false, accountSearchExtras, renderAccountDetails, renderAccountCard }: {
+export function AssetKindList({ kind, beforeList, afterList, passwordCounts, onAccountFiltersChange, privateSearch = false, embedded = false, hideTitle = false, accountSearchExtras, renderAccountDetails, renderAccountCard, accountExtras = [], filterAccountId }: {
+	accountExtras?: Asset[]; filterAccountId?: string;
 	kind: AssetKind; beforeList?: ReactNode; afterList?: ReactNode;
 	passwordCounts?: ReadonlyMap<string, number>;
 	onAccountFiltersChange?: (filters: AccountListFilters) => void;
@@ -507,7 +508,7 @@ export function AssetKindList({ kind, beforeList, afterList, passwordCounts, onA
 		setCategoryIds((prev) => ({ ...prev, [kind]: sessionStorage.getItem(`keepany-category-id-${kind}`) || "" }));
 	}, [kind]);
 	const [edit, setEdit] = useState(false);
-	const allLiveAssets = liveAssets(data);
+	const allLiveAssets = [...liveAssets(data), ...accountExtras];
 	const liveIds = new Set(allLiveAssets.map((asset) => asset.id));
 	const allKindAssets = allLiveAssets.filter((asset) => asset.kind === kind);
 	const availableTags = [...new Set(allKindAssets.flatMap((asset) => asset.tags))].sort(
@@ -516,6 +517,7 @@ export function AssetKindList({ kind, beforeList, afterList, passwordCounts, onA
 	const normalizedSearch = `${search} ${accountQuery}`.trim().toLocaleLowerCase();
 	const assets = allKindAssets.filter(
 		(a) =>
+            (!filterAccountId || a.id === filterAccountId) &&
 			(!category || a.category === category || kind === "account" && category === "other" && !a.category || !!pendingCategory && [pendingCategory.beforeName, pendingCategory.afterName].includes(a.category)) &&
 			(!tag || a.tags.includes(tag)) &&
 			[search, accountQuery].every((query) => matchesAssetSearch(a, query) || !!accountSearchExtras?.get(a.id)?.includes(query.trim().toLocaleLowerCase())),

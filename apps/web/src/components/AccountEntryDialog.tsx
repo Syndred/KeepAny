@@ -9,6 +9,7 @@ import {
 } from "../account-entry-save";
 import { AccountLinkConflict } from "../vault-account-links";
 import { builtins, useAppContext } from "../view-shared";
+import { mergedAccountDraft, saveMergedAccount, type AccountEditProgress } from "../account-entry-edit";
 import { Field } from "../workflow-field";
 import { EntryEditor } from "./PasswordVaultEntryEditor";
 import {
@@ -21,24 +22,17 @@ import { Select, SelectOption } from "./ui/select";
 import { Textarea } from "./ui/textarea";
 import "../account-entry.css";
 
-export function AccountEntryDialog({ onClose }: { onClose: () => void }) {
+export function AccountEntryDialog({ onClose, asset, entryId, returnFocusTo, newLogin = false }: { onClose: () => void; asset?: Asset; entryId?: string; newLogin?: boolean; returnFocusTo?: () => HTMLElement | null }) {
 	const { t } = useTranslation();
 	const { data, notify } = useAppContext();
 	const { snapshot, session, generatePassword } = usePasswordVault();
-	const [profile, setProfile] = useState<Asset>(() => ({
-		...newAsset("account"),
-		category: "other",
-	}));
-	const [draft, setDraft] = useState<PasswordVaultEntryDraft | null>(() => ({
-		title: "",
-		username: "",
-		usernameAliases: [],
-		password: "",
-		notes: "",
-		url: "",
-		linkedAssetIds: [],
-	}));
-	const [tags, setTags] = useState("");
+	const editing = Boolean(asset || entryId);
+	const [originalEntry] = useState(() => entryId && session?.getSnapshot().status === "unlocked" ? session.readEntry(entryId) : null);
+	const [baseProfile] = useState<Asset>(() => asset ?? ({ ...newAsset("account"), category: "other", name: originalEntry?.title ?? "", username: originalEntry?.username ?? "", url: originalEntry?.url ?? "" }));
+	const [profile, setProfile] = useState(baseProfile);
+	const editProgress = useRef<AccountEditProgress>({ account: asset ?? null, accountChanged: false });
+	const [draft, setDraft] = useState<PasswordVaultEntryDraft | null>(() => newLogin ? { ...mergedAccountDraft(asset, null), username: "", usernameAliases: [], password: "", notes: "" } : mergedAccountDraft(asset, originalEntry));
+	const [tags, setTags] = useState(() => asset?.tags.join(", ") ?? "");
 	const [busy, setBusy] = useState(false);
 	const running = useRef(false);
 	const mounted = useRef(true);
@@ -157,6 +151,8 @@ export function AccountEntryDialog({ onClose }: { onClose: () => void }) {
 		inputError.current = false;
 		setError("");
 		try {
+            if (editing) await saveMergedAccount({ original: asset, originalEntry, baseProfile, profile: { ...profile, tags: tags.split(",").map(value => value.trim()).filter(Boolean) }, draft, session, progress: editProgress.current, newLogin, label: (kind, identifierKind) => t(`pwConnectKind_${identifierKind ?? kind}`) });
+            else {
 			await saveAccountEntry({
 				profile: {
 					...profile,
@@ -171,12 +167,14 @@ export function AccountEntryDialog({ onClose }: { onClose: () => void }) {
 				label: (kind, identifierKind) =>
 					t(`pwConnectKind_${identifierKind ?? kind}`),
 			});
+            }
 			onClose();
 			notify(t("accountEntrySaved"));
 		} catch (failure) {
 			const reason = failure instanceof Error ? failure.message : "";
+			const partial = editing ? editProgress.current.accountChanged : Boolean(progress.current.account);
 			inputError.current =
-				!progress.current.account &&
+				!partial &&
 				(failure instanceof ZodError || reason === "account-entry-url");
 			const field =
 				failure instanceof ZodError
@@ -197,7 +195,7 @@ export function AccountEntryDialog({ onClose }: { onClose: () => void }) {
 			};
 			setError(
 				t(
-					progress.current.account
+					partial
 						? "accountEntryPartial"
 						: failure instanceof AccountLinkConflict
 							? "accountIdentityAmbiguous"
@@ -219,7 +217,8 @@ export function AccountEntryDialog({ onClose }: { onClose: () => void }) {
 	return (
 		<>
 			<Dialog
-				title={t("workspaceAddAccount")}
+				title={t(newLogin ? "accountAddLogin" : editing ? "accountEditUnified" : "workspaceAddAccount")}
+                returnFocusTo={returnFocusTo}
 				className="account-entry-dialog"
 				onClose={close}
 				closeDisabled={busy}
@@ -256,6 +255,7 @@ export function AccountEntryDialog({ onClose }: { onClose: () => void }) {
 							onPasswordCopyError={setManualCopy}
 							t={t}
 							unified
+                            ownerAssetId={asset?.id}
 							vaultUnlocked={unlocked}
 							onCancel={close}
 							error={error}
@@ -334,7 +334,7 @@ export function AccountEntryDialog({ onClose }: { onClose: () => void }) {
 								</section>
 							}
 							afterFields={
-								<details className="account-entry-profile">
+								<details className="account-entry-profile" open={editing ? true : undefined}>
 									<summary>{t("accountEntryMore")}</summary>
 									<div className="form-grid">
 										<Field

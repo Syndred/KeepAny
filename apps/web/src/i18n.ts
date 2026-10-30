@@ -15,6 +15,20 @@ import { financeCopy } from "./finance-copy";
 import { candidateMergeCopy } from "./candidate-merge-copy";
 
 const copy: Record<string, [string, string]> = {
+ accountAddLogin: ["新增登录", "Add login"],
+ accountEditUnified: ["编辑账号", "Edit account"],
+ accountDeleteLogin: ["删除当前登录", "Delete current login"],
+ accountDeleteLoginHint: ["将移除当前登录 {{username}}。其他登录和账号资料保留。", "Remove the current login {{username}}. Other logins and account details are kept."],
+ accountUnlockTitle: ["解锁账号", "Unlock accounts"],
+ accountUnlockHint: ["输入主密码，查看和管理保存的登录资料。", "Enter your master password to view and manage saved logins."],
+ accountSetUpTitle: ["设置账号主密码", "Set up your account master password"],
+ accountSetUpHint: ["设置主密码，开始保存和管理登录资料。", "Set a master password to start saving and managing logins."],
+ accountSetUp: ["设置并进入", "Set up and continue"],
+ accountUnlockAction: ["解锁", "Unlock"],
+ accountTools: ["账号选项", "Account options"],
+ accountTrashTitle: ["登录回收站", "Login trash"],
+ accountViewRelations: ["查看关联", "View connections"],
+
 	workflowRetiredStep: ["此步骤对应的功能已移除。可保留历史结果，或记录为不适用以结束本轮。", "This feature has been removed. Keep its historical result, or record it as not applicable to finish this round."],
 	vaultReferenceRetired: ["外部密码库引用已移除。旧记录仍包含在本地加密备份中。", "External vault references have been removed. Existing records remain in local encrypted backups."],
 	vaultReferenceBackup: ["前往本地备份", "Open local backup"],

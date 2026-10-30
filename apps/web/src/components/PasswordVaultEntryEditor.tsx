@@ -21,6 +21,7 @@ export function EntryEditor({
 	setSelectedAssetId,
 	onGenerate,
 	onPasswordCopyError,
+	ownerAssetId,
 	titleCompanion,
 	afterFields,
 	vaultAccess,
@@ -43,6 +44,7 @@ export function EntryEditor({
 	setSelectedAssetId: (value: string) => void;
 	onGenerate: () => void;
 	onPasswordCopyError: (value: string) => void;
+	ownerAssetId?: string;
 	titleCompanion?: ReactNode;
 	afterFields?: ReactNode;
 	vaultAccess?: ReactNode;
@@ -75,7 +77,7 @@ export function EntryEditor({
 							onChange={(event) => update("title", event.target.value)}
 							disabled={busy}
 							required
-							maxLength={160}
+							maxLength={draft.id ? 256 : 160}
 						/>
 						<VaultImportFieldActions
 							label={t("pwVaultTitleField")}
@@ -252,7 +254,7 @@ export function EntryEditor({
 				</Select>
 				{draft.linkedAssetIds.length > 0 && (
 					<div className="password-vault-linked-picker-list">
-						{draft.linkedAssetIds.map((id) => (
+						{draft.linkedAssetIds.filter(id => id !== ownerAssetId).map((id) => (
 							<span className="password-vault-linked-chip" key={id}>
 								{assetsById.get(id)?.name ?? t("pwVaultAssetUnavailable")}
 								<Button

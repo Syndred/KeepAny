@@ -287,14 +287,27 @@ export class VaultSession {
   }
 
   async saveEntry(value: VaultEntryDraft): Promise<string> {
+    return this.saveEntryIfCurrent(value);
+  }
+
+  /** Guard inside the serialized mutation, not before an awaited queue slot. */
+  async saveEntryIfCurrent(value: VaultEntryDraft, expected?: VaultEntryDraft | null): Promise<string> {
     const draft = normalizeDraft(value);
-    return this.run((generation) => this.mutate(generation, (candidate) => {
+    const baseline = expected ? normalizeDraft(expected) : expected;
+    return this.run((generation) => {
+      const db = this.unlocked();
+      if (baseline) {
+        if (!draft.id || draft.id !== baseline.id) fail('vault-stale');
+        const current = findEntry(db, draft.id);
+        if (isTrash(db, current) || JSON.stringify(normalizeDraft(draftOf(current))) !== JSON.stringify(baseline)) fail('vault-stale');
+      } else if (baseline === null && draft.id) fail('vault-stale');
+      return this.mutate(generation, (candidate) => {
       const entry = draft.id ? findEntry(candidate, draft.id) : candidate.createEntry(candidate.getDefaultGroup());
       if (isTrash(candidate, entry)) fail('vault-invalid');
       if (draft.id) entry.pushHistory();
       applyDraft(entry, draft);
       return entry.uuid.id;
-    }));
+    }); });
   }
 
   /** Link reviewed public account records in one encrypted write, without replacing entry content. */
@@ -442,6 +455,42 @@ export class VaultSession {
         entryIdsByRow,
         revision: this.record.revision,
       };
+    });
+  }
+
+  /** Remove precisely the visible login. Shared records keep other assets intact. */
+  async removeLoginIdentifier(id: string, username: string, expectedContentRevision: string, accountId?: string): Promise<void> {
+    return this.run(async generation => {
+      const db = this.unlocked();
+      if (this.contentRevision(db) !== expectedContentRevision) fail('vault-stale');
+      const source = findEntry(db, id), draft = draftOf(source);
+      if (isTrash(db, source) || draft.aiKeyBinding || accountId && !draft.linkedAssetIds.includes(accountId)) fail('vault-stale');
+      const identifiers = [...new Set([draft.username, ...(draft.usernameAliases ?? [])].filter(Boolean))];
+      if (identifiers.length ? !identifiers.includes(username) : username !== '') fail('vault-stale');
+      const remaining = identifiers.filter(value => value !== username);
+      await this.mutate(generation, candidate => {
+        const entry = findEntry(candidate, id);
+        if (accountId && draft.linkedAssetIds.some(link => link !== accountId)) {
+          entry.pushHistory();
+          applyDraft(entry, normalizeDraft({ ...draft, linkedAssetIds: draft.linkedAssetIds.filter(link => link !== accountId) }));
+          if (remaining.length) {
+            const replacement = candidate.createEntry(candidate.getDefaultGroup());
+            applyDraft(replacement, normalizeDraft({ ...draft, id: undefined, linkedAssetIds: [accountId] }));
+            replacement.pushHistory();
+            applyDraft(replacement, normalizeDraft({ ...draft, id: undefined, username: remaining[0], usernameAliases: remaining.slice(1), linkedAssetIds: [accountId] }));
+          } else {
+            const removed = candidate.createEntry(candidate.getDefaultGroup());
+            applyDraft(removed, normalizeDraft({ ...draft, id: undefined, linkedAssetIds: [accountId] }));
+            candidate.meta.recycleBinEnabled = true; candidate.createRecycleBin(); candidate.remove(removed);
+          }
+        } else if (remaining.length) {
+          entry.pushHistory();
+          applyDraft(entry, normalizeDraft({ ...draft, username: remaining[0], usernameAliases: remaining.slice(1) }));
+        } else {
+          candidate.meta.recycleBinEnabled = true; candidate.createRecycleBin();
+          const previous = entry.locationChanged; candidate.remove(entry); entry.times.locationChanged = nextKdbxTime(previous);
+        }
+      });
     });
   }
 

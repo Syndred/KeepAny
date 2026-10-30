@@ -6,7 +6,7 @@
 .compact-account-avatar { display: grid; place-items: center; flex: none; width: 32px; height: 34px; border: 1.5px solid var(--line); border-radius: 9px; background: var(--yellow-soft); }
 .asset-account-phone .compact-account-avatar { background: var(--green-soft); }
 .asset-account-social .compact-account-avatar { background: var(--lavender); }
-.compact-account-title { min-width: 0; flex: 1; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: 14px; font-weight: 750; color: var(--ink); text-decoration: none; }
+.compact-account-title { min-width: 0; flex: 1; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; padding: 0; border: 0; background: transparent; text-align: left; cursor: pointer; font-size: 14px; font-weight: 750; color: var(--ink); text-decoration: none; }
 .compact-account-title:hover { text-decoration: underline; text-underline-offset: 3px; }
 .compact-account-card .compact-account-icon, .compact-account-url { display: inline-flex; align-items: center; justify-content: center; flex: none; width: 32px; height: 32px; min-width: 32px; min-height: 32px; margin: 0; padding: 0; border: 1px solid transparent; border-radius: 7px; background: transparent; box-shadow: none; color: var(--ink); text-decoration: none; }
 .compact-account-card .compact-account-icon:hover, .compact-account-url:hover { background: var(--paper-soft); border-color: var(--line-soft); transform: none; }
@@ -63,3 +63,11 @@
 	.compact-account-card .compact-account-access, .compact-account-footer a { min-height: 44px; }
 	.compact-account-footer a { min-width: 44px; }
 }
+
+.account-unlock-gate { display: grid; justify-items: center; padding: 28px 0; }
+.account-unlock-gate > .password-vault-empty-state, .account-unlock-gate > .password-vault-unlock { width: min(100%, 510px); }
+.unified-accounts-page .password-vault-toolbar { justify-self: end; }
+.unified-accounts-page .compact-account-title:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; border-radius: 4px; }
+.unified-accounts-page .compact-account-heading { gap: 4px; }
+.unified-accounts-page .compact-account-footer { min-height: 32px; }
+@media (max-width: 767px) { .unified-accounts-page .compact-account-footer { min-height: 44px; } }

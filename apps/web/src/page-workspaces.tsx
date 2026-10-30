@@ -3,7 +3,7 @@ import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { Globe, Plus, Search } from "lucide-react";
 import { lazy, Suspense, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
-import type { AssetKind } from "../../../packages/domain/src";
+import { newAsset, type Asset, type AssetKind } from "../../../packages/domain/src";
 import { Button } from "./components/ui/button";
 import { Dialog } from "./components/ui/dialog";
 import { Select, SelectOption } from "./components/ui/select";
@@ -19,6 +19,7 @@ import { useWorkspaceSummary } from "./use-workspace-summary";
 import { date, Empty, liveAssets, money, PageTitle, useAppContext } from "./view-shared";
 import "./workspaces.css";
 import { readWorkspaceReturn, workspaceReturnKey } from "./workspace-return";
+import { localRepository } from "../../../packages/local-db/src";
 import { CompactAccountCard } from "./components/CompactAccountCard";
 
 const AssetEditor = lazy(() => import("./workflow-asset-editor").then((module) => ({ default: module.AssetEditor })));
@@ -41,7 +42,11 @@ export function AccountsWorkspace() {
 	const { t } = useTranslation();
 	const { snapshot } = usePasswordVault();
 	const hash = useRouterState({ select: (state) => state.location.hash });
-	const [editAccount, setEditAccount] = useState(false);
+	const [editAccount, setEditAccount] = useState<{ asset?: Asset; entryId?: string; triggerId?: string; newLogin?: boolean } | null>(null);
+    const [deleteAccount, setDeleteAccount] = useState<Asset | null>(null);
+    const [deleteBusy, setDeleteBusy] = useState(false), [deleteError, setDeleteError] = useState("");
+    const navigate = useNavigate();
+    useEffect(() => { if (snapshot.status !== "unlocked") { setEditAccount(null); setDeleteAccount(null); setDeleteError(""); } }, [snapshot.status]);
 	const [filters, setFilters] = useState<AccountListFilters>(() => ({ search: sessionStorage.getItem("keepany-account-list-search") ?? "", category: "", tag: "" }));
 	const sampleIds = sampleLibraryAssetIds(data.preferences.find((preference) => preference.id === SAMPLE_LIBRARY_ID)?.value);
 	const sampleAccounts = data.assets.filter((asset) => !asset.deleted && asset.kind === "account" && sampleIds.includes(asset.id));
@@ -49,22 +54,32 @@ export function AccountsWorkspace() {
 	const searchExtras = useMemo(() => new Map([...grouped.linked].map(([id, entries]) => [id,
 		entries.flatMap((entry) => [entry.title, entry.username, ...(entry.usernameAliases ?? []), entry.url]).join(" ").toLocaleLowerCase(),
 	])), [grouped.linked]);
-	const unlinked = grouped.unlinked.filter((entry) => [search, filters.search].every((query) => !query.trim() ||
-		[entry.title, entry.username, ...(entry.usernameAliases ?? []), entry.url].join(" ").toLocaleLowerCase().includes(query.trim().toLocaleLowerCase())));
+    const virtualAccounts = useMemo(() => grouped.unlinked.map(entry => ({ ...newAsset("account"), id: `login-${entry.id}`, name: entry.title, category: "other", username: entry.username, url: entry.url, updatedAt: entry.modifiedAt })), [grouped.unlinked]);
+    const virtualEntries = new Map(grouped.unlinked.map(entry => [`login-${entry.id}`, entry]));
+    const filterAccountId = hash.startsWith("asset-") ? hash.slice(6) : undefined;
+    async function removeOrdinaryAccount() {
+        if (!deleteAccount || deleteBusy || snapshot.status !== "unlocked") return;
+        setDeleteBusy(true); setDeleteError("");
+        try {
+            const repo = await localRepository(), current = await repo.get<Asset>("asset", deleteAccount.id);
+            if (JSON.stringify(current) !== JSON.stringify(deleteAccount)) throw Error("asset-stale");
+            await repo.deleteEntity("asset", deleteAccount.id); setDeleteAccount(null); notify(t("pwVaultSaved"));
+        } catch { setDeleteError(t("error")); } finally { setDeleteBusy(false); }
+    }
 	return <main className="page unified-accounts-page">
-		<Suspense fallback={<p role="status">{t("pwVaultLoading")}</p>}>
-			<PasswordVaultPanel assets={data.assets} sampleAccounts={sampleAccounts} accountCount={data.assets.filter(asset => asset.kind === "account" && !asset.deleted).length + grouped.unlinked.length} notify={notify} focusAssetId={hash.startsWith("asset-") ? hash.slice(6) : undefined}
+		<Suspense fallback={<p role="status">{t("loading")}</p>}>
+			<PasswordVaultPanel assets={data.assets} sampleAccounts={sampleAccounts} accountCount={data.assets.filter(asset => asset.kind === "account" && !asset.deleted).length + grouped.unlinked.length} notify={notify}
 				headerFeedback={<div className="compact-account-feedback-slot" ref={registerFeedbackTarget} />}
-				headerAction={({ busy, clearMessage }) => <Button variant="primary" title={t("workspaceAddAccount")} disabled={busy || data.pendingCategoryEdits.some((pending) => pending.kind === "account")} onClick={() => { clearMessage(); setEditAccount(true); }}><Plus size={17} />{t("add")}</Button>}
+				headerAction={({ busy, clearMessage }) => <Button variant="primary" title={t("workspaceAddAccount")} disabled={busy || data.pendingCategoryEdits.some((pending) => pending.kind === "account")} onClick={() => { clearMessage(); setEditAccount({}); }}><Plus size={17} />{t("add")}</Button>}
 				renderAccounts={(tools) => <AssetKindList kind="account" embedded hideTitle privateSearch={snapshot.status === "unlocked"}
+                    accountExtras={virtualAccounts} filterAccountId={filterAccountId}
+                    beforeList={filterAccountId ? <div className="password-vault-filter"><span>{data.assets.find(asset => asset.id === filterAccountId)?.name}</span><Button onClick={() => void navigate({ to: "/accounts", hash: "", replace: true })}>{t("pwVaultClearAssetFilter")}</Button></div> : null}
 					accountSearchExtras={searchExtras} onAccountFiltersChange={setFilters}
-					renderAccountCard={(asset, context) => <CompactAccountCard asset={asset} entries={grouped.linked.get(asset.id) ?? []} {...context} tools={tools} focusEntryId={hash.startsWith("password-") ? hash.slice(9) : undefined} />}
-					afterList={snapshot.status === "unlocked" && !filters.category && !filters.tag && unlinked.length > 0 ? <section className="workspace-password-only" aria-labelledby="workspace-unlinked-passwords">
-						<h2 id="workspace-unlinked-passwords">{t("workspacePasswordOnly")}</h2><div className="password-vault-entry-list">{unlinked.map(tools.renderEntry)}</div>
-					</section> : null} />}
+					renderAccountCard={(asset, context) => <CompactAccountCard asset={asset} entries={virtualEntries.has(asset.id) ? [virtualEntries.get(asset.id)!] : grouped.linked.get(asset.id) ?? []} virtual={virtualEntries.has(asset.id)} onEdit={(asset, entryId, triggerId, newLogin) => setEditAccount({ asset: virtualEntries.has(asset.id) ? undefined : asset, entryId, triggerId, newLogin })} onDeleteAccount={asset => { setDeleteError(""); setDeleteAccount(asset); }} {...context} tools={tools} focusEntryId={hash.startsWith("password-") ? hash.slice(9) : undefined} />} />}
 			/>
 		</Suspense>
-		{editAccount && <Suspense fallback={<p role="status">{t("loading")}</p>}><AccountEntryDialog onClose={() => setEditAccount(false)} /></Suspense>}
+		{snapshot.status === "unlocked" && editAccount && <Suspense fallback={<p role="status">{t("loading")}</p>}><AccountEntryDialog {...editAccount} returnFocusTo={() => editAccount.triggerId ? document.getElementById(editAccount.triggerId) : document.querySelector<HTMLElement>(".password-vault-header button")} onClose={() => setEditAccount(null)} /></Suspense>}
+        {snapshot.status === "unlocked" && deleteAccount && <Dialog title={t("pwVaultDeleteEntry")} onClose={() => { if (!deleteBusy) setDeleteAccount(null); }} closeDisabled={deleteBusy}><p>{deleteAccount.name}</p>{deleteError && <p role="alert" className="field-error">{deleteError}</p>}<div className="actions"><Button disabled={deleteBusy} onClick={() => setDeleteAccount(null)}>{t("cancel")}</Button><Button variant="danger" disabled={deleteBusy} onClick={() => void removeOrdinaryAccount()}>{t("pwVaultDeleteEntry")}</Button></div></Dialog>}
 	</main>;
 }
 
