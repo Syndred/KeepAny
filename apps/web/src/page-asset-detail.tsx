@@ -911,7 +911,7 @@ export function AssetDetail() {
 	const attachmentSection = (
 				<section className="card asset-attachments-card">
 					<div className="card-header">
-						<h2>{t(asset.kind === "item" ? "itemOtherImages" : "attachments")}</h2>
+						{asset.kind !== "project" && <h2>{t(asset.kind === "item" ? "itemOtherImages" : "attachments")}</h2>}
 						<Button
 							size="small"
 							disabled={uploading || asset.attachments.length >= 20}

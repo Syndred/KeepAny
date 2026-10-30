@@ -5,7 +5,7 @@ import { mkdirSync } from "node:fs";
 import { expect, test, type Page } from "@playwright/test";
 import { selectChoice } from "./helpers/select-choice";
 import { openBackupRestorePanel } from "./helpers/backup-restore";
-import { openVaultAccess } from "./helpers/vault-access";
+import { enterAccounts, openVaultAccess } from "./helpers/vault-access";
 
 test.beforeEach(async ({ page }, info) => {
  const candidate = portableCandidate();
@@ -77,7 +77,7 @@ test("UX02 UX03 manual account name survives vault setup and cancellation", asyn
   await openVaultAccess(page);
   await page.locator("#password-vault-master").fill("Synthetic account setup 2026!");
   await page.locator("#password-vault-master-confirm").fill("Synthetic account setup 2026!");
-  await page.locator(".unified-vault-access").getByRole("button", { name: "Set up and continue", exact: true }).click();
+  await page.getByRole("button", { name: "Set up and continue", exact: true }).click();
   const dialog = page.getByRole("dialog");
   await expect(dialog.locator("#password-vault-entry-title")).toHaveValue("Synthetic carried account");
   await dialog.getByRole("button", { name: "Cancel", exact: true }).click();
@@ -85,11 +85,14 @@ test("UX02 UX03 manual account name survives vault setup and cancellation", asyn
   await expect(page.getByText("Synthetic carried account", { exact: true })).toHaveCount(0);
   await page.getByRole("button", { name: "Add a record", exact: true }).click();
   await page.getByRole("menuitem", { name: "Account", exact: true }).click();
+  await enterAccounts(page, "en", "Synthetic account setup 2026!");
   await expect(dialog.locator("#password-vault-entry-title")).toHaveValue("");
   await dialog.locator("#password-vault-entry-title").fill("Synthetic saved account");
   await dialog.locator("#password-vault-entry-username").fill("synthetic@example.test");
   await dialog.getByRole("button", { name: "Save", exact: true }).click();
   await expect(dialog).toBeHidden(); await page.reload();
+  await expect(page.locator("#password-vault-unlock-master")).toBeAttached();
+  await enterAccounts(page, "en", "Synthetic account setup 2026!");
   await expect(page.getByText("Synthetic saved account", { exact: true })).toBeVisible();
 });
 
@@ -126,20 +129,30 @@ test("UX06 UX07 UX08 sample cancel is safe, inactive filters remain discoverable
 });
 
 for (const language of ["zh-CN", "en"] as const) for (const width of [390, 768, 1280, 1920, 2560]) {
-  test(`VR01 ${language} ${width} local AI backup menus and expanded project`, async ({ page }) => {
+  test(`VR01 ${language} ${width} local AI backup menus and expanded project UX05 UX09`, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 }); await prepare(page, language); await sample(page, language);
     await page.goto("/intake"); await expect(page.locator(".intake-quick-card")).toBeVisible();
     await page.getByRole("button", { name: language === "en" ? "Organize with AI" : "AI 整理", exact: true }).hover(); await capture(page, `${language}-${width}-capture-hover`);
     await page.getByRole("button", { name: language === "en" ? "Local capture" : "本地收录", exact: true }).focus(); await capture(page, `${language}-${width}-capture-focus`);
     await page.getByRole("button", { name: language === "en" ? "Organize with AI" : "AI 整理", exact: true }).click(); await page.locator("#ai-import-text").fill("Synthetic review input");
+    const tabs = page.locator(".intake-channel-tabs button");
+    const tabGeometry = await tabs.evaluateAll(nodes => nodes.map(node => { const rect = node.getBoundingClientRect(); return { left: rect.left, right: rect.right, background: getComputedStyle(node).backgroundColor, selected: node.getAttribute("aria-pressed") }; }));
+    expect(tabGeometry[1].left - tabGeometry[0].right).toBeLessThanOrEqual(16);
+    expect(tabGeometry[0].selected).toBe("false"); expect(tabGeometry[1].selected).toBe("true");
+    expect(tabGeometry[0].background).not.toBe(tabGeometry[1].background);
     await capture(page, `${language}-${width}-ai-disabled`);
     await page.goto("/backup"); await expect(page.locator("#backup-password")).toBeVisible(); await capture(page, `${language}-${width}-backup`);
     await page.goto("/"); await page.locator(".overview-project-card").filter({ hasText: language === "en" ? "Pinecone Studio" : "松果工作室" }).click(); await expect(page.locator(".asset-project-profile-card")).toBeVisible();
+    const firstTask = page.locator(".asset-tasks-card .account-compact-task").first();
+    const infoBox = await firstTask.locator(".impact-task-info").boundingBox(), menuBox = await firstTask.getByRole("button", { name: language === "en" ? "More actions" : "更多操作", exact: true }).boundingBox();
+    expect(infoBox).not.toBeNull(); expect(menuBox).not.toBeNull();
+    expect(menuBox!.x).toBeGreaterThanOrEqual(infoBox!.x + infoBox!.width);
+    expect(Math.min(menuBox!.y + menuBox!.height, infoBox!.y + infoBox!.height) - Math.max(menuBox!.y, infoBox!.y)).toBeGreaterThan(0);
     await capture(page, `${language}-${width}-project-collapsed`);
     const graph = page.locator("#account-relations"); await graph.locator(":scope > summary").click(); await expect(graph.locator(".react-flow")).toBeVisible();
-    await graph.scrollIntoViewIfNeeded(); await capture(page, `${language}-${width}-project-graph`);
+    await graph.scrollIntoViewIfNeeded(); await expect(graph.locator(".react-flow__node").first()).toBeVisible(); await graph.screenshot({ path: `${shots}/${language}-${width}-project-graph.png` });
     await expect(page.locator(".asset-project-facts")).not.toContainText(language === "en" ? "comma separated" : "逗号分隔");
-    const media = page.locator(".asset-project-media-disclosure"); await media.locator(":scope > summary").click(); await media.scrollIntoViewIfNeeded(); await capture(page, `${language}-${width}-project-media`);
+    const media = page.locator(".asset-project-media-disclosure"); await media.locator(":scope > summary").click(); await media.scrollIntoViewIfNeeded(); await media.screenshot({ path: `${shots}/${language}-${width}-project-media.png` });
     await page.locator(".asset-project-action-bar").getByRole("button", { name: language === "en" ? "More actions" : "更多操作", exact: true }).click(); await capture(page, `${language}-${width}-project-menu`); await page.keyboard.press("Escape");
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     await page.getByRole("button", { name: language === "en" ? "Add a record" : "新增资料", exact: true }).click();

@@ -687,3 +687,5 @@
 .item-history-actions { grid-column: 1 / -1; justify-content: flex-start; }
 @media (max-width: 1100px) { .item-history-forms { grid-template-columns: minmax(0,1fr); } }
 @media (max-width: 640px) { .item-history-fields { grid-template-columns: minmax(0,1fr); } .item-history-actions { flex-wrap: wrap; } }
+
+.asset-project-media-disclosure .card-header { justify-content: flex-end; }

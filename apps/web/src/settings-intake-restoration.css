@@ -34,7 +34,8 @@
 
 .intake-restored .intake-tools { display: grid; gap: var(--space-4); min-width: 0; }
 .intake-restored .intake-primary-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-4); }
-.intake-channel-tabs { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.intake-channel-tabs { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-2); padding: 2px 2px 6px; }
+.intake-channel-tabs .button { min-height: 32px; padding: 5px 10px; box-shadow: none; }
 .intake-channel-tabs [aria-pressed="true"] { background: var(--yellow); }
 .intake-restored :is(.intake-quick-card, .intake-backup-card) { display: grid; align-content: start; gap: var(--space-4); }
 .intake-restored :is(.intake-quick-card, .intake-backup-card) > * { margin-block: 0; }

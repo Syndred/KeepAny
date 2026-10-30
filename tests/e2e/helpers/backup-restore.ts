@@ -1,10 +1,15 @@
 import { expect, type Page } from "@playwright/test";
 
-/** Reach data management through its visible capture-page shortcut. */
+/** Navigate through a visible application entry, keeping the unlocked session. */
 export async function openBackupPage(page: Page) {
 	if (new URL(page.url()).pathname !== "/backup") {
-		await page.goto("/intake");
-		await page.locator('main a[href="/backup"]').click();
+        const shortcut = page.locator('main a[href="/backup"]');
+        if (await shortcut.isVisible()) await shortcut.click();
+        else {
+            if (await page.locator('.mobile-menu').isVisible() && !(await page.locator('.sidebar.open').count())) await page.locator('.mobile-menu').click();
+            await page.locator('.sidebar a[href="/backup"]').click();
+        }
+		await expect(page).toHaveURL(/\/backup$/);
 	}
 	await expect(page.locator(".intake-backup-card")).toBeVisible();
 }

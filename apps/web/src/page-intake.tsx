@@ -21,7 +21,7 @@ export function IntakePage() {
 	return (
 		<main className="page intake-restored">
 			<PageTitle eyebrow={t("intake")} title={t("intakePageTitle")} subtitle={t("intakePageSubtitle")} action={<Link className="button" to="/backup">{t("backupAndRestore")}</Link>} />
-			<div className="tabs intake-channel-tabs" role="group" aria-label={t("intakeMode")}>
+			<div className="intake-channel-tabs" role="group" aria-label={t("intakeMode")}>
 				<Button aria-pressed={mode === "local"} onClick={() => selectMode("local")}>{t("captureTab")}</Button>
 				<Button aria-pressed={mode === "ai"} onClick={() => selectMode("ai")}>{t("aiCaptureTab")}</Button>
 			</div>

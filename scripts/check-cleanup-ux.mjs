@@ -23,7 +23,7 @@ for (const suite of report.suites) collect(suite);
 const check = (condition, message) => { if (!condition) throw Error(message); };
 check(!report.errors?.length && report.stats.unexpected === 0 && report.stats.skipped === 0, 'Incomplete browser run.');
 const own = specs.filter(spec => spec.file.replaceAll('\\', '/').endsWith('cleanup-ux.spec.ts'));
-for (const id of ['UX01', 'UX02', 'UX03', 'UX04', 'UX06', 'UX07', 'UX08', 'AI01']) check(own.some(spec => spec.title.includes(id)), `Missing coverage: ${id}`);
+for (const id of ['UX01', 'UX02', 'UX03', 'UX04', 'UX05', 'UX06', 'UX07', 'UX08', 'UX09', 'AI01']) check(own.some(spec => spec.title.includes(id)), `Missing coverage: ${id}`);
 const index = candidate.release.webFiles.find(file => file.path === 'index.html').sha256;
 for (const spec of own) for (const test of spec.tests) {
  check(test.status === 'expected' && test.results.length === 1 && test.results[0].status === 'passed', `Unclosed result: ${spec.title}`);
@@ -41,5 +41,5 @@ for (const language of ['zh-CN', 'en']) for (const width of [390, 768, 1280, 192
   screenshots.push({ file: path, sha256: createHash('sha256').update(bytes).digest('hex') });
  }
 }
-writeFileSync(join(output, 'receipt.json'), JSON.stringify({ schema: 'keepany.cleanup-ux-check.v1', sourceCommit: candidate.release.sourceCommit, archiveSha256: candidate.archiveSha256, indexSha256: index, automatedCases: specs.length, screenshots, machineVerdict: 'passed', humanVisualReview: 'separate', controllerJourney: 'separate', independentReview: 'separate' }, null, 2));
+writeFileSync(join(output, 'receipt.json'), JSON.stringify({ schema: 'keepany.cleanup-ux-check.v1', testHarnessCommit: spawnSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).stdout.trim(), sourceCommit: candidate.release.sourceCommit, archiveSha256: candidate.archiveSha256, indexSha256: index, automatedCases: specs.length, screenshots, machineVerdict: 'passed', humanVisualReview: 'separate', controllerJourney: 'separate', independentReview: 'separate' }, null, 2));
 console.log(`Current-candidate workflow integrity passed: ${specs.length} cases, ${screenshots.length} screenshot digests. Human review remains separate.`);
