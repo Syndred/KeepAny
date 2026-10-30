@@ -5,6 +5,7 @@ import { expect, test } from "@playwright/test";
 import { resources } from "../../apps/web/src/i18n";
 import { openVaultAccess } from "./helpers/vault-access";
 import { openStandaloneEntryDraft, saveStandaloneEntryDraft } from "./helpers/standalone-entry";
+import { closeCompactLoginDetails, compactEntryIds, openCompactLoginDetails } from "./helpers/compact-account";
 
 const master = "Synthetic filtered unlink acceptance 2026!";
 
@@ -121,25 +122,18 @@ for (const language of ["zh-CN", "en"] as const) {
 					.locator(".unified-account")
 					.filter({ hasText: accountName });
 				await expect(account).toHaveCount(1);
-				const disclosure = account.locator(".unified-account-passwords");
-				await expect(disclosure).toBeVisible();
-				if (
-					!(await disclosure.evaluate(
-						(node) => (node as HTMLDetailsElement).open,
-					))
-				)
-					await disclosure.locator(":scope > summary").click();
-				await disclosure
-					.getByRole("button", { name: t("pwVaultNewEntry"), exact: true })
-					.click();
+				await account.getByRole("button", { name: t("moreActions"), exact: true }).click();
+				await page.getByRole("menuitem", { name: t("pwVaultNewEntry"), exact: true }).click();
 				await saveEntry(linkedTitle, "Synthetic linked note");
+				await openCompactLoginDetails(page, account, t);
 				await expect(card(linkedTitle)).toBeVisible();
 				const linkedId = await card(linkedTitle).getAttribute("data-entry-id");
 				if (!linkedId) throw Error("linked-entry-id-missing");
+				await closeCompactLoginDetails(page, t);
 				await openStandaloneEntryDraft(page, t);
 				await saveEntry(otherTitle, "Before adjacent edit");
-				await expect(entries).toHaveCount(2);
-				await account.locator("a.asset-account-card").click();
+				await expect.poll(async () => (await compactEntryIds(page)).length).toBe(2);
+				await account.locator(".compact-account-title").click();
 				await expect(
 					page.getByRole("heading", {
 						level: 1,
@@ -253,7 +247,7 @@ for (const language of ["zh-CN", "en"] as const) {
 					)
 					.toBe(false);
 				await observe("adjacent-save-no-late-focus");
-				await account.locator("a.asset-account-card").click();
+				await account.locator(".compact-account-title").click();
 				await page
 					.getByRole("link", { name: t("accountOpenPasswords"), exact: true })
 					.click();

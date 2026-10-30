@@ -35,6 +35,7 @@ type PasswordVaultPanelProps = {
 	onReady?: () => void;
 	embedded?: boolean;
 	headerAction?: ReactNode | ((state: { busy: boolean; clearMessage: () => void }) => ReactNode);
+	headerFeedback?: ReactNode;
 	sampleAccounts?: Asset[];
 	accountCount?: number;
 	renderAccounts?: (tools: AccountVaultTools) => ReactNode;
@@ -107,6 +108,7 @@ export function PasswordVaultPanel({
 	onReady,
 	embedded = false,
 	headerAction,
+	headerFeedback,
 	sampleAccounts = [],
 	accountCount,
 	renderAccounts,
@@ -855,6 +857,7 @@ export function PasswordVaultPanel({
 					{vaultStatus}
 				</div>
 				{!(renderAccounts && assetFilter) && (typeof headerAction === "function" ? headerAction({ busy: busy || snapshot.status === "loading", clearMessage }) : headerAction)}
+				{headerFeedback}
 			</header>
 			{message && (
 				<p className="password-vault-message" role="status">

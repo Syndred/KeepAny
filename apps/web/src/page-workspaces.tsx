@@ -37,7 +37,7 @@ const PasswordVaultPanel = lazy(() => import("./components/PasswordVaultPanel").
 const AccountEntryDialog = lazy(() => import("./components/AccountEntryDialog").then((module) => ({ default: module.AccountEntryDialog })));
 
 export function AccountsWorkspace() {
-	const { data, search, notify } = useAppContext();
+	const { data, search, notify, registerFeedbackTarget } = useAppContext();
 	const { t } = useTranslation();
 	const { snapshot } = usePasswordVault();
 	const hash = useRouterState({ select: (state) => state.location.hash });
@@ -54,6 +54,7 @@ export function AccountsWorkspace() {
 	return <main className="page unified-accounts-page">
 		<Suspense fallback={<p role="status">{t("pwVaultLoading")}</p>}>
 			<PasswordVaultPanel assets={data.assets} sampleAccounts={sampleAccounts} accountCount={data.assets.filter(asset => asset.kind === "account" && !asset.deleted).length + grouped.unlinked.length} notify={notify} focusAssetId={hash.startsWith("asset-") ? hash.slice(6) : undefined}
+				headerFeedback={<div className="compact-account-feedback-slot" ref={registerFeedbackTarget} />}
 				headerAction={({ busy, clearMessage }) => <Button variant="primary" title={t("workspaceAddAccount")} disabled={busy || data.pendingCategoryEdits.some((pending) => pending.kind === "account")} onClick={() => { clearMessage(); setEditAccount(true); }}><Plus size={17} />{t("add")}</Button>}
 				renderAccounts={(tools) => <AssetKindList kind="account" embedded hideTitle privateSearch={snapshot.status === "unlocked"}
 					accountSearchExtras={searchExtras} onAccountFiltersChange={setFilters}

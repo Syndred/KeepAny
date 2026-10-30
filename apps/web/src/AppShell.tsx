@@ -1,5 +1,6 @@
 import { Input } from "./components/ui/input";
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import {
@@ -52,6 +53,7 @@ export function AppShell() {
 	const topSearchPanelRef = useRef<HTMLDivElement>(null);
 	const topSearchInputRef = useRef<HTMLInputElement>(null);
 	const [toast, setToast] = useState("");
+	const [feedbackTarget, setFeedbackTarget] = useState<HTMLElement | null>(null);
 	const [ai, setAi] = useState(false);
 	const [mobile, setMobile] = useState(false);
 	const [pendingNavOrder, setPendingNavOrder] = useState<string[] | null>(null);
@@ -113,7 +115,7 @@ export function AppShell() {
 		if (hash) requestSearchLocation(hash);
 	}
 	const context = useMemo(
-		() => ({ data, search, setSearch, notify: setToast }),
+		() => ({ data, search, setSearch, notify: setToast, registerFeedbackTarget: setFeedbackTarget }),
 		[data, search],
 	);
 	const openTasks = data.tasks.filter((x) => !x.done && !x.deleted).length;
@@ -348,11 +350,11 @@ export function AppShell() {
 					{t("error")}
 				</div>
 			)}
-			{toast && (
+			{toast && (feedbackTarget ? createPortal(<div className="compact-account-feedback-message" role="status">{toast}</div>, feedbackTarget) : (
 				<div className="toast" role="status">
 					{toast}
 				</div>
-			)}
+			))}
 			{ai && (
 				<Suspense
 					fallback={

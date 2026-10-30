@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { ArrowLeftRight, Check, ChevronRight, Copy, ExternalLink, Eye, EyeOff, LockKeyhole, Mail, MoreHorizontal, Plus, Smartphone, UserRound } from "lucide-react";
-import { useEffect, useRef, useState, type ButtonHTMLAttributes, type ReactNode } from "react";
+import { useEffect, useId, useRef, useState, type ButtonHTMLAttributes, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import type { Asset } from "../../../../packages/domain/src";
 import { accountHttpUrl, accountLoginChoices, nextAccountLogin, preferredAccountLogin } from "../account-login-choices";
@@ -19,7 +19,7 @@ function CompactIcon({ label, children, ...props }: ButtonHTMLAttributes<HTMLBut
 	return <Button type="button" variant="ghost" size="icon" className="compact-account-icon" aria-label={label} title={label} {...props}>{children}</Button>;
 }
 
-function Frame({ asset, connectionCount, onOpen, url, menu, children, entryId }: Pick<Props, "asset" | "connectionCount" | "onOpen"> & { url: string; menu: ReactNode; children: ReactNode; entryId?: string }) {
+function Frame({ asset, connectionCount, onOpen, url, menu, children, entryId, menuId }: Pick<Props, "asset" | "connectionCount" | "onOpen"> & { url: string; menu: ReactNode; children: ReactNode; entryId?: string; menuId?: string }) {
 	const { t } = useTranslation();
 	const Icon = asset.category === "email" ? Mail : asset.category === "phone" ? Smartphone : UserRound;
 	const details = { to: "/assets/$kind/$id" as const, params: { kind: asset.kind, id: asset.id }, onClick: onOpen };
@@ -27,7 +27,7 @@ function Frame({ asset, connectionCount, onOpen, url, menu, children, entryId }:
 		<header className="compact-account-heading"><span className="compact-account-avatar"><Icon size={18} /></span>
 			<Link {...details} className="compact-account-title" title={asset.name}>{asset.name}</Link>
 			{url && <a className="compact-account-icon compact-account-url" href={url} target="_blank" rel="noreferrer" aria-label={t("compactAccountOpenUrl")} title={`${t("compactAccountOpenUrl")} · ${url}`}><ExternalLink size={16} /></a>}
-			<DropdownMenu><DropdownMenuTrigger render={<Button variant="ghost" size="icon" className="compact-account-icon" aria-label={t("moreActions")} title={t("moreActions")} />}><MoreHorizontal size={17} /></DropdownMenuTrigger><DropdownMenuContent align="end">{menu}<DropdownMenuItem render={<Link {...details} />}>{t("compactAccountProfile")}</DropdownMenuItem></DropdownMenuContent></DropdownMenu>
+			<DropdownMenu><DropdownMenuTrigger render={<Button id={menuId} variant="ghost" size="icon" className="compact-account-icon" aria-label={t("moreActions")} title={t("moreActions")} />}><MoreHorizontal size={17} /></DropdownMenuTrigger><DropdownMenuContent align="end">{menu}<DropdownMenuItem render={<Link {...details} />}>{t("compactAccountProfile")}</DropdownMenuItem></DropdownMenuContent></DropdownMenu>
 		</header>
 		{children}
 		<footer className="compact-account-footer"><span className="compact-account-meta" title={[niceCategory(asset.category || "other", t), ...asset.tags].join(" · ")}><span>{[niceCategory(asset.category || "other", t), ...asset.tags].join(" · ")}</span><span aria-hidden="true">·</span><Link {...details} hash="account-relations">{t("accountConnectionCount", { count: connectionCount })}</Link></span><Link {...details}>{t("compactAccountDetails")}<ChevronRight size={12} /></Link></footer>
@@ -52,7 +52,8 @@ function LockedCard({ asset, connectionCount, onOpen, tools }: Props) {
 
 function UnlockedCard({ asset, entries, connectionCount, onOpen, tools, queries, focusEntryId }: Props) {
 	const { t } = useTranslation();
-	const { session } = usePasswordVault();
+	const menuId = useId();
+	const { session, snapshot } = usePasswordVault();
 	const queryKey = JSON.stringify(queries);
 	const [selection, setSelection] = useState({ key: "", queryKey });
 	const choices = accountLoginChoices(entries);
@@ -63,6 +64,7 @@ function UnlockedCard({ asset, entries, connectionCount, onOpen, tools, queries,
 	const generation = useRef(0);
 	useEffect(() => () => { generation.current++; tools.cancelCopy(); }, [tools.cancelCopy]);
 	const scope = current ? `${current.key}:${current.entry.modifiedAt}` : "";
+	const detailsScope = current ? `${current.entry.id}:${snapshot.contentRevision}` : "";
 	const live = session?.getSnapshot().status === "unlocked";
 	const draft = current && live ? session.readEntry(current.entry.id) : null;
 	const username = current?.username ?? asset.username;
@@ -84,8 +86,8 @@ function UnlockedCard({ asset, entries, connectionCount, onOpen, tools, queries,
 		setSelection({ key: nextAccountLogin(choices, current.key)?.key ?? "", queryKey });
 	}
 	const copiedIcon = (field: string) => copied === `${scope}:${field}` ? <Check size={16} /> : <Copy size={16} />;
-	return <Frame asset={asset} connectionCount={connectionCount} onOpen={onOpen} url={url} entryId={current?.entry.id} menu={<>
-		{current && <DropdownMenuItem disabled={tools.busy} onClick={() => setDetailsEntryId(current.entry.id)}>{t("compactAccountLoginDetails")}</DropdownMenuItem>}
+	return <Frame asset={asset} connectionCount={connectionCount} onOpen={onOpen} url={url} entryId={current?.entry.id} menuId={menuId} menu={<>
+		{current && <DropdownMenuItem disabled={tools.busy} onClick={() => setDetailsEntryId(detailsScope)}>{t("compactAccountLoginDetails")}</DropdownMenuItem>}
 		<DropdownMenuItem disabled={tools.busy} onClick={() => tools.addEntry(asset.id)}>{t("pwVaultNewEntry")}</DropdownMenuItem>
 		{url && <DropdownMenuItem disabled={tools.busy} onClick={() => void copy("pwVaultUrlField", url, "url", Boolean(current))}>{t("compactAccountCopyUrl")}</DropdownMenuItem>}
 	</>}>
@@ -98,7 +100,7 @@ function UnlockedCard({ asset, entries, connectionCount, onOpen, tools, queries,
 			<CompactIcon label={t("pwVaultCopyPassword")} disabled={tools.busy} onClick={() => { if (current && session?.getSnapshot().status === "unlocked") void copy("pwVaultPasswordField", session.readEntry(current.entry.id).password, "password"); }}>{copiedIcon("password")}</CompactIcon>
 		</> : <Button type="button" size="small" className="compact-account-access" disabled={tools.busy} onClick={() => tools.addEntry(asset.id)}><Plus size={13} />{t("compactAccountAddPassword")}</Button>}><span className={hasPassword ? "compact-account-secret" : "compact-account-muted"} data-login-password>{hasPassword ? reveal ? draft?.password : "••••••••••" : t("pwVaultNoPassword")}</span></ValueRow>
 		<span className="sr-only" role="status">{current && choices.length > 1 ? t("compactAccountLoginPosition", { index: position, total: choices.length, username }) : ""}</span>
-		{current && detailsEntryId === current.entry.id && <Dialog title={t("compactAccountLoginDetails")} className="compact-account-entry-dialog" onClose={() => setDetailsEntryId("")}><div className="password-vault-entry-list">{tools.renderEntry(current.entry)}</div></Dialog>}
+		{current && detailsEntryId === detailsScope && <Dialog title={t("compactAccountLoginDetails")} className="compact-account-entry-dialog" returnFocusTo={() => document.getElementById(menuId)} onClose={() => setDetailsEntryId("")}><div className="password-vault-entry-list">{tools.renderEntry(current.entry)}</div></Dialog>}
 	</Frame>;
 }
 

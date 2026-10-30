@@ -15,6 +15,7 @@ type AppContextValue = {
 	search: string;
 	setSearch: (s: string) => void;
 	notify: (s: string) => void;
+	registerFeedbackTarget?: (node: HTMLElement | null) => void;
 };
 export const AppContext = createContext<AppContextValue | null>(null);
 export function useAppContext() {

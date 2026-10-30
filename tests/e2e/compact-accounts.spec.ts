@@ -39,7 +39,7 @@ async function addLogin(page: Page, t: (key: string) => string) {
 	await dialog.locator("#password-vault-entry-url").fill("https://backup.example.test/login");
 	await save(dialog);
 }
-async function prepare(page: Page, t: (key: string) => string, aliases: string[] = []) {
+async function prepare(page: Page, t: (key: string) => string, aliases: string[] = [], extraLogin = true) {
 	await page.goto("/");
 	await page.locator(".sidebar nav").getByRole("link", { name: t("accountsWorkspace"), exact: true }).click();
 	await createAccount(page, t, "CC public account", "public@example.test");
@@ -49,7 +49,7 @@ async function prepare(page: Page, t: (key: string) => string, aliases: string[]
 	await page.locator(".unified-vault-access").getByRole("button", { name: t("pwVaultCreate"), exact: true }).click();
 	await expect(page.locator(".password-vault-toolbar")).toBeVisible();
 	await createAccount(page, t, "CC studio account", "main@example.test", mainPassword, aliases);
-	await addLogin(page, t);
+	if (extraLogin) await addLogin(page, t);
 }
 async function screenshot(page: Page, name: string) {
 	if (page.viewportSize()!.width < 768) await expect.poll(() => page.locator(".sidebar").evaluate(node => node.getBoundingClientRect().right)).toBeLessThanOrEqual(1);
@@ -59,6 +59,25 @@ async function screenshot(page: Page, name: string) {
 async function clipboard(page: Page) { return page.evaluate(() => navigator.clipboard.readText()); }
 
 for (const language of ["zh-CN", "en"] as const) {
+	test(`${language} CC10 restoring a deleted entry does not reopen stale login details`, async ({ browser }, info) => {
+		test.setTimeout(120_000);
+		const context = await browser.newContext({ baseURL: info.project.use.baseURL, viewport: { width: 1280, height: 1000 }, locale: language });
+		await context.addInitScript(lang => localStorage.setItem("keepany-language", lang), language);
+		const page = await context.newPage(), t = text(language);
+		try {
+			await prepare(page, t, [], false);
+			await account(page).getByRole("button", { name: t("moreActions"), exact: true }).click();
+			await page.getByRole("menuitem", { name: t("compactAccountLoginDetails"), exact: true }).click();
+			await page.getByRole("dialog", { name: t("compactAccountLoginDetails"), exact: true }).getByRole("button", { name: t("pwVaultDeleteEntry"), exact: true }).click();
+			await page.getByRole("dialog", { name: t("pwVaultDeleteEntry"), exact: true }).getByRole("button", { name: t("pwVaultDeleteEntry"), exact: true }).click();
+			await expect(page.getByRole("dialog")).toHaveCount(0);
+			await page.locator("#vault-trash").getByRole("button", { name: t("pwVaultRestoreEntry"), exact: true }).click();
+			await expect(page.getByRole("dialog")).toHaveCount(0);
+			await expect(account(page)).toHaveAttribute("data-entry-id", /.+/);
+			await screenshot(page, `entry-restored-${language}`);
+			await expect(page.getByRole("dialog")).toHaveCount(0);
+		} finally { await context.close(); }
+	});
 	test(`${language} CC03-CC10 compact copy, cyclic switch, lock, details and durable content`, async ({ browser }, info) => {
 		test.setTimeout(180_000);
 		const context = await browser.newContext({ baseURL: info.project.use.baseURL, viewport: { width: 1280, height: 1000 }, locale: language, permissions: ["clipboard-read", "clipboard-write"] });
@@ -110,6 +129,7 @@ for (const language of ["zh-CN", "en"] as const) {
 			await detail.getByRole("button", { name: t("pwVaultHistory"), exact: true }).click();
 			await page.getByRole("dialog").last().getByRole("button", { name: t("close"), exact: true }).click();
 			await detail.getByRole("button", { name: t("close"), exact: true }).click();
+			await expect(card.getByRole("button", { name: t("moreActions"), exact: true })).toBeFocused();
 			await page.reload(); await openVaultAccess(page);
 			await page.locator("#password-vault-unlock-master").fill(master);
 			await page.getByRole("button", { name: t("pwVaultUnlock"), exact: true }).first().click();
@@ -174,6 +194,13 @@ for (const language of ["zh-CN", "en"] as const) {
 			for (const width of [390, 768, 1280, 1920, 2262]) {
 				await page.setViewportSize({ width, height: 1000 });
 				await expect(account(page)).toBeVisible();
+				await account(page, "CC public account").getByRole("button", { name: t("pwVaultCopyUsername"), exact: true }).click();
+				await expect(page.locator(".compact-account-feedback-message")).toBeVisible();
+				const feedbackOverlap = await page.locator(".compact-account-feedback-message").evaluate(message => {
+					const r = message.getBoundingClientRect();
+					return [...document.querySelectorAll(".compact-account-card, .password-vault-toolbar button, .asset-category-toolbar")].some(node => { const c = node.getBoundingClientRect(); return r.left < c.right && r.right > c.left && r.top < c.bottom && r.bottom > c.top; });
+				});
+				expect(feedbackOverlap).toBe(false);
 				await screenshot(page, `matrix-normal-${language}-${width}`);
 				const result = await page.locator(".compact-account-card").evaluateAll((cards, width) => ({ width, overflow: document.documentElement.scrollWidth > innerWidth + 1, cards: cards.map(card => ({ height: card.getBoundingClientRect().height, width: card.getBoundingClientRect().width, targets: [...card.querySelectorAll("button,a")].filter(el => el.checkVisibility()).map(el => ({ label: el.getAttribute("aria-label") || el.textContent, width: el.getBoundingClientRect().width, height: el.getBoundingClientRect().height })) })) }), width);
 				matrix.push(result); expect(result.overflow).toBe(false);

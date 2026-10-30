@@ -33,7 +33,7 @@ for (const locale of ["zh-CN", "en-US"] as const) for (const width of [390, 1280
 			await expect(page.getByRole("heading", { name: zh ? "账号" : "Accounts", exact: true })).toBeVisible();
 			await expect(page.locator(".asset-account-card").first()).toBeVisible();
 			await page.screenshot({ path: join(evidence, `built-accounts-${zh ? "zh" : "en"}-${width}.png`), fullPage: true });
-			await page.locator(".asset-account-card").first().click();
+			await page.locator(".compact-account-title").first().click();
 			await page.getByRole("button", { name: zh ? "在此查看密码" : "View passwords here", exact: true }).click();
 			const passwords = page.locator(".account-passwords-section");
 			await expect(passwords.locator("#password-vault-master")).toBeVisible();

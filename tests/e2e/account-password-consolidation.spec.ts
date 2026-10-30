@@ -2,6 +2,7 @@ import { readFileSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { expect, test, type Page } from "@playwright/test";
 import { resources } from "../../apps/web/src/i18n";
+import { closeCompactLoginDetails, compactEntryIds, openCompactLoginDetails } from "./helpers/compact-account";
 
 const evidence = process.env.KEEPANY_EVIDENCE_DIR ?? "test-results/account-password-consolidation";
 mkdirSync(evidence, { recursive: true });
@@ -43,13 +44,14 @@ for (const language of ["zh-CN", "en"] as const) for (const width of [390, 1280]
 			const toolbar = page.locator(".password-vault-toolbar");
 			await toolbar.getByRole("button", { name: t("sampleLogins"), exact: true }).click();
 			await expect(toolbar.getByRole("button", { name: t("sampleLogins"), exact: true })).toHaveCount(0, { timeout: 30_000 });
-			await expect(page.locator(".unified-account-passwords .password-vault-entry")).toHaveCount(8);
+			await expect.poll(async () => (await compactEntryIds(page)).length).toBe(8);
 			const passwordless = page.locator(".unified-account").filter({ hasText: t("sampleNoPasswordAccount") });
-			await passwordless.locator("summary").click();
 			await expect(passwordless).toContainText(t("pwVaultNoPassword"));
-			await passwordless.getByRole("button", { name: t("pwVaultEditEntry"), exact: true }).click();
+			let loginDetail = await openCompactLoginDetails(page, passwordless, t);
+			await loginDetail.getByRole("button", { name: t("pwVaultEditEntry"), exact: true }).click();
 			await expect(page.locator("#password-vault-entry-password")).toHaveValue("");
-			await page.getByRole("dialog").getByRole("button", { name: t("close"), exact: true }).click();
+			await page.getByRole("dialog").last().getByRole("button", { name: t("close"), exact: true }).click();
+			await closeCompactLoginDetails(page, t);
 			// The single global entry creates an account and its optional credential together.
 			await page.locator(".password-vault-header").getByRole("button", { name: t("add"), exact: true }).click();
 			await page.locator("#password-vault-entry-title").fill(title);
@@ -62,12 +64,12 @@ for (const language of ["zh-CN", "en"] as const) for (const width of [390, 1280]
 			await page.getByRole("dialog").getByRole("button", { name: t("save"), exact: true }).click();
 			await expect(page.locator(".asset-account-card")).toHaveCount(9);
 			const created = page.locator(".unified-account").filter({ hasText: title });
-			await created.locator("summary").click();
-			await expect(created.locator(".password-vault-entry")).toHaveCount(1);
+			loginDetail = await openCompactLoginDetails(page, created, t);
+			await expect(loginDetail.locator(".password-vault-entry")).toHaveCount(1);
 			// Keep the original standalone lifecycle coverage by explicitly unlinking this new credential.
-			await created.locator(".password-vault-linked-connection button").click();
-			await page.getByRole("dialog").getByRole("button", { name: t("pwVaultUnlink"), exact: true }).click();
-			await expect(created.locator(".password-vault-entry")).toHaveCount(0);
+			await loginDetail.locator(".password-vault-linked-connection button").click();
+			await page.getByRole("dialog", { name: t("pwVaultUnlink"), exact: true }).getByRole("button", { name: t("pwVaultUnlink"), exact: true }).click();
+			await expect(created).not.toHaveAttribute("data-entry-id", /.+/);
 			const standalone = page.locator(".workspace-password-only .password-vault-entry").filter({ hasText: title });
 			await expect(standalone).toContainText(t("pwVaultNoPassword"));
 			await standalone.getByRole("button", { name: t("pwVaultEditEntry"), exact: true }).click();
@@ -95,13 +97,13 @@ for (const language of ["zh-CN", "en"] as const) for (const width of [390, 1280]
 			await expect(standalone).toContainText(t("pwVaultNoPassword"));
 			// Linked entry unlinks after confirmation and joins standalone rows, without changing the account.
 			const linked = page.locator(".unified-account").filter({ hasText: t("sampleAccount") });
-			await linked.locator("summary").click();
-			await linked.locator(".password-vault-linked-connection button").click();
-			await page.getByRole("dialog").getByRole("button", { name: t("cancel"), exact: true }).click();
-			await expect(linked.locator(".password-vault-entry")).toHaveCount(1);
-			await linked.locator(".password-vault-linked-connection button").click();
-			await page.getByRole("dialog").getByRole("button", { name: t("pwVaultUnlink"), exact: true }).click();
-			await expect(linked.locator(".password-vault-entry")).toHaveCount(0);
+			loginDetail = await openCompactLoginDetails(page, linked, t);
+			await loginDetail.locator(".password-vault-linked-connection button").click();
+			await page.getByRole("dialog", { name: t("pwVaultUnlink"), exact: true }).getByRole("button", { name: t("cancel"), exact: true }).click();
+			await expect(loginDetail.locator(".password-vault-entry")).toHaveCount(1);
+			await loginDetail.locator(".password-vault-linked-connection button").click();
+			await page.getByRole("dialog", { name: t("pwVaultUnlink"), exact: true }).getByRole("button", { name: t("pwVaultUnlink"), exact: true }).click();
+			await expect(linked).not.toHaveAttribute("data-entry-id", /.+/);
 			await expect(page.locator(".asset-account-card")).toHaveCount(9);
 			await standalone.getByRole("button", { name: t("pwVaultDeleteEntry"), exact: true }).click();
 			await page.getByRole("dialog").getByRole("button", { name: t("cancel"), exact: true }).click();

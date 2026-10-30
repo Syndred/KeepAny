@@ -3,6 +3,7 @@ import { join, resolve } from "node:path";
 import { expect, test, type Locator, type Page } from "@playwright/test";
 import { resources } from "../../apps/web/src/i18n";
 import { openVaultAccess } from "./helpers/vault-access";
+import { closeCompactLoginDetails, openCompactLoginDetails } from "./helpers/compact-account";
 
 const evidence = resolve(process.env.KEEPANY_SINGLE_ENTRY_EVIDENCE ?? "docs/qa/2026-10-29/accounts-single-entry/independent-final");
 mkdirSync(evidence, { recursive: true });
@@ -88,7 +89,7 @@ async function noOverflow(page: Page, dialog?: Locator) {
 }
 
 async function snapshot(page: Page, name: string) {
-	if (name.startsWith("matrix-empty-") || name.startsWith("matrix-account-expanded-")) {
+	if (name.startsWith("matrix-empty-") || name.startsWith("matrix-account-compact-")) {
 		// Resizing across the mobile breakpoint starts the real sidebar CSS
 		// transition. Record the intended final viewport state, not an in-flight
 		// frame that still covers part of the account list.
@@ -143,8 +144,8 @@ for (const language of ["zh-CN", "en"] as const) {
 			await save(dialog);
 			await expect(page.locator(".asset-account-card")).toHaveCount(2);
 			const account = page.locator(".unified-account").filter({ hasText: "Synthetic complete account" });
-			await account.locator(":scope > details > summary").click();
-			const entry = account.locator(".password-vault-entry");
+			await openCompactLoginDetails(page, account, t);
+			const entry = page.getByRole("dialog", { name: t("compactAccountLoginDetails"), exact: true }).locator(".password-vault-entry");
 			await expect(entry).toHaveCount(1);
 			await expect(entry).toContainText("alias@example.test");
 			await entry.getByRole("button", { name: t("pwVaultRevealPassword"), exact: true }).click();
@@ -152,8 +153,9 @@ for (const language of ["zh-CN", "en"] as const) {
 			await entry.getByRole("button", { name: t("pwVaultHidePasswordValue"), exact: true }).click();
 			await entry.getByRole("button", { name: t("pwVaultEditEntry"), exact: true }).click();
 			await expect(page.locator("#password-vault-entry-notes")).toHaveValue(privateNotes);
-			await page.getByRole("dialog").getByRole("button", { name: t("close"), exact: true }).click();
-			await account.locator(".asset-account-card").click();
+			await page.getByRole("dialog").last().getByRole("button", { name: t("close"), exact: true }).click();
+			await closeCompactLoginDetails(page, t);
+			await account.locator(".compact-account-title").click();
 			await expect(page.locator(".account-facts-card").first()).toContainText("Synthetic provider");
 			await expect(page.locator(".account-facts-card").first()).toContainText("Synthetic project access");
 			await page.locator(".page-header").getByRole("button", { name: t("edit"), exact: true }).click();
@@ -165,13 +167,13 @@ for (const language of ["zh-CN", "en"] as const) {
 			await dialog.getByRole("button", { name: t("cancel"), exact: true }).click();
 			await page.locator(".sidebar nav").getByRole("link", { name: t("accountsWorkspace"), exact: true }).click();
 			await page.reload(); await unlock(page, t);
-			await account.locator(":scope > details > summary").click();
+			await openCompactLoginDetails(page, account, t);
 			await expect(entry).toContainText("complete@example.test");
 			await entry.getByRole("button", { name: t("pwVaultDeleteEntry"), exact: true }).click();
-			await page.getByRole("dialog").getByRole("button", { name: t("cancel"), exact: true }).click();
+			await page.getByRole("dialog", { name: t("pwVaultDeleteEntry"), exact: true }).getByRole("button", { name: t("cancel"), exact: true }).click();
 			await expect(entry).toHaveCount(1);
 			await entry.getByRole("button", { name: t("pwVaultDeleteEntry"), exact: true }).click();
-			await page.getByRole("dialog").getByRole("button", { name: t("pwVaultDeleteEntry"), exact: true }).click();
+			await page.getByRole("dialog", { name: t("pwVaultDeleteEntry"), exact: true }).getByRole("button", { name: t("pwVaultDeleteEntry"), exact: true }).click();
 			await expect(entry).toHaveCount(0);
 			const trash = page.locator("#vault-trash");
 			await trash.scrollIntoViewIfNeeded();
@@ -192,10 +194,12 @@ for (const language of ["zh-CN", "en"] as const) {
 			await snapshot(page, `purge-error-${language}`);
 			await purge.getByRole("button", { name: t("cancel"), exact: true }).click();
 			await trash.getByRole("button", { name: t("pwVaultRestoreEntry"), exact: true }).click();
+			await expect(page.getByRole("dialog", { name: t("compactAccountLoginDetails"), exact: true })).toHaveCount(0);
+			await openCompactLoginDetails(page, account, t);
 			await expect(entry).toHaveCount(1);
 			await expect(trash.locator(".password-vault-entry-trash")).toHaveCount(0);
 			await page.reload(); await unlock(page, t);
-			await account.locator(":scope > details > summary").click();
+			await openCompactLoginDetails(page, account, t);
 			await expect(entry).toHaveCount(1);
 			await page.goto("/assets/vault#vault-trash");
 			await unlock(page, t);
@@ -246,7 +250,7 @@ for (const language of ["zh-CN", "en"] as const) {
 			await expect(dialog.getByRole("alert")).toHaveText(t("accountEntryPartial"));
 			await expectOneInjectedWriteFailure(page);
 			await expect(page.locator(".asset-account-card")).toHaveCount(1);
-			await expect(page.locator(".password-vault-entry")).toHaveCount(0);
+			await expect(page.locator(".compact-account-card[data-entry-id], .workspace-password-only .password-vault-entry")).toHaveCount(0);
 			await expect(dialog.locator("#password-vault-entry-password")).toHaveValue(secret);
 			await snapshot(page, `same-form-save-partial-${language}`);
 			// Editing a private draft must keep the partial-success recovery notice.
@@ -255,7 +259,7 @@ for (const language of ["zh-CN", "en"] as const) {
 			await dialog.getByRole("button", { name: t("save"), exact: true }).dblclick();
 			await expect(dialog).toBeHidden();
 			await expect(page.locator(".asset-account-card")).toHaveCount(1);
-			await expect(page.locator(".password-vault-entry")).toHaveCount(1);
+			await expect(page.locator(".compact-account-card[data-entry-id], .workspace-password-only .password-vault-entry")).toHaveCount(1);
 			await page.locator(".password-vault-toolbar").getByRole("button", { name: t("pwVaultLock"), exact: true }).click();
 			dialog = await newAccount(page, t);
 			await dialog.locator("#password-vault-entry-title").fill("Synthetic unlock retained draft");
@@ -272,7 +276,7 @@ for (const language of ["zh-CN", "en"] as const) {
 			await expect(page.locator(".asset-account-card")).toHaveCount(1);
 			await page.reload(); await unlock(page, t);
 			await expect(page.locator(".asset-account-card")).toHaveCount(1);
-			await expect(page.locator(".password-vault-entry")).toHaveCount(1);
+			await expect(page.locator(".compact-account-card[data-entry-id], .workspace-password-only .password-vault-entry")).toHaveCount(1);
 			await noOverflow(page);
 			// SE16: native date validation runs before onSubmit. A corrected URL
 			// must not leave an unrelated server/schema error beneath that feedback.
@@ -295,11 +299,11 @@ for (const language of ["zh-CN", "en"] as const) {
 			await expect(page.locator(".asset-account-card")).toHaveCount(2);
 			await page.reload(); await unlock(page, t);
 			await expect(page.locator(".asset-account-card")).toHaveCount(2);
-			await expect(page.locator(".password-vault-entry")).toHaveCount(2);
+			await expect(page.locator(".compact-account-card[data-entry-id], .workspace-password-only .password-vault-entry")).toHaveCount(2);
 		} finally { await context.close(); }
 	});
 
-	test(`${language} SE08 empty, merged form, long invalid draft and expanded account at six widths`, async ({ browser }, info) => {
+	test(`${language} SE08 empty, merged form, long invalid draft and compact account at six widths`, async ({ browser }, info) => {
 		const context = await browser.newContext({ baseURL: info.project.use.baseURL, viewport: { width: 1280, height: 1050 }, locale: language });
 		await context.addInitScript(language => localStorage.setItem("keepany-language", language), language);
 		const page = await context.newPage(), t = copy(language), dimensions: unknown[] = [];
@@ -329,19 +333,27 @@ for (const language of ["zh-CN", "en"] as const) {
 			}
 			const account = page.locator(".unified-account").filter({ hasText: longTitle });
 			const neighbor = page.locator(".unified-account").filter({ hasText: "Synthetic neighboring account" });
-			await account.locator(":scope > details > summary").click();
 			for (const width of [390, 768, 1268, 1280, 1920, 2560]) {
 				await page.setViewportSize({ width, height: 1050 });
 				await noOverflow(page);
-				await snapshot(page, `matrix-account-expanded-${language}-${width}`);
+				await snapshot(page, `matrix-account-compact-${language}-${width}`);
 				const measure = (node: SVGElement | HTMLElement) => {
 					const box = node.getBoundingClientRect();
 					return { top: box.top, left: box.left, width: box.width, height: box.height };
 				};
 				const expanded = await account.evaluate(measure), compact = await neighbor.evaluate(measure);
 				const geometry = { expanded, compact };
-				if (Math.abs(expanded.top - compact.top) < 2) expect(compact.height).toBeLessThan(expanded.height - 100);
+				// The approved compact contract replaces inline expansion: both cards
+				// remain compact even with long notes; full details open separately.
+				expect(expanded.height).toBeLessThanOrEqual(width === 390 ? 250 : 220);
+				if (Math.abs(expanded.top - compact.top) < 2) expect(Math.abs(compact.height - expanded.height)).toBeLessThanOrEqual(2);
 				dimensions.push({ width, language, geometry });
+				await openCompactLoginDetails(page, account, t);
+				await noOverflow(page, page.getByRole("dialog", { name: t("compactAccountLoginDetails"), exact: true }));
+				// Preserve the gate's historical filename for the user-opened
+				// account details state; details now live in their own dialog.
+				await snapshot(page, `matrix-account-expanded-${language}-${width}`);
+				await closeCompactLoginDetails(page, t);
 				let dialog = await newAccount(page, t);
 				await dialog.locator("#password-vault-entry-title").fill("Synthetic compact editor");
 				await dialog.locator("#password-vault-entry-title").focus();
