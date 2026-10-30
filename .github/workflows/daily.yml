@@ -54,6 +54,9 @@ jobs:
       - name: Verify capture, AI, backup and current-candidate evidence
         run: node scripts/check-cleanup-ux.mjs
         timeout-minutes: 7
+      - name: Verify configurable asset categories on the same compiled candidate
+        run: node scripts/check-catalog-categories.mjs
+        timeout-minutes: 5
       - name: Matching-dialog pilot in two existing matrix cases
         run: pnpm test:final:links --grep '(zh-CN 390x900|en 1280x900) ' --reporter=line
         timeout-minutes: 7

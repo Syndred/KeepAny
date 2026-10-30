@@ -12,6 +12,7 @@ export const projectDomainSchema=z.object({
  registrar:z.string().max(200).default(''),accountId:z.string().max(96).default(''),
  expiryDate:z.string().default(''),annualAmount:z.number().int().min(0).max(Number.MAX_SAFE_INTEGER).nullable().default(null),
  currency:z.enum(currencies).default('CNY'),autoRenew:z.enum(['unknown','on','off']).default('unknown'),
+ catalog:z.object({categoryId:z.string().max(96),name:z.string().trim().min(1).max(253),url:z.string().max(2000),tags:z.array(z.string().max(60)).max(100),status:z.enum(['active','paused','cancelled','archived']),notes:z.string().max(50002),attachments:z.array(z.string().uuid()).max(20).default([]),deleted:z.boolean().default(false)}).optional(),
 });
 export type ProjectDomain=z.infer<typeof projectDomainSchema>;
 export const projectMediaSchema=z.object({
@@ -49,6 +50,7 @@ function formatDateOnly(date:Date){
 // Operation markers identify committed history pairs even if the asset is edited before journal cleanup.
 export const assetSchema = z.object({
  id:z.string().min(1).max(96), kind:z.enum(kinds), name:z.string().trim().min(1).max(160), category:z.string().max(100).default(''), tags:z.array(z.string().max(60)).max(100).default([]),
+ catalogCategoryId:z.string().max(96).optional(),
  description:z.string().max(20000).default(''), url:z.string().max(2000).default(''), contact:z.string().max(500).default(''), longDescription:z.string().max(30000).default(''),
  accountProvider:z.string().max(200).default(''),accountProfileVerifiedAt:z.string().default(''),subscriptionPaymentMethod:z.string().max(200).default(''),
  projectLaunchMonth:z.string().default(''),projectInspectionDate:z.string().default(''),projectDomains:z.array(projectDomainSchema).max(50).default([]),
@@ -58,7 +60,11 @@ export const assetSchema = z.object({
  if(v.purged&&!v.deleted)ctx.addIssue({code:'custom',path:['purged'],message:'purged'});
  for(const key of ['dueDate','billingAnchor','purchaseDate','warrantyDate','itemStartDate','itemStatusDate','itemExpectedReturnDate','trialEndsAt','discountUntil','projectInspectionDate','accountProfileVerifiedAt'] as const) if(v[key] && !validDateOnly(v[key]))ctx.addIssue({code:'custom',path:[key],message:'date'});
  if(v.projectLaunchMonth && !/^\d{4}-(0[1-9]|1[0-2])$/.test(v.projectLaunchMonth))ctx.addIssue({code:'custom',path:['projectLaunchMonth'],message:'month'});
- for(const [index,domain] of v.projectDomains.entries())if(domain.expiryDate&&!validDateOnly(domain.expiryDate))ctx.addIssue({code:'custom',path:['projectDomains',index,'expiryDate'],message:'date'});
+ for(const [index,domain] of v.projectDomains.entries()){
+   if(domain.expiryDate&&!validDateOnly(domain.expiryDate))ctx.addIssue({code:'custom',path:['projectDomains',index,'expiryDate'],message:'date'});
+   if(domain.catalog?.url&&!/^https?:\/\//i.test(domain.catalog.url))ctx.addIssue({code:'custom',path:['projectDomains',index,'catalog','url'],message:'url'});
+   if(domain.catalog?.attachments.some(id=>!v.attachments.includes(id)))ctx.addIssue({code:'custom',path:['projectDomains',index,'catalog','attachments'],message:'attachment-reference'});
+ }
  if(v.discountAmount>v.amount)ctx.addIssue({code:'custom',path:['discountAmount'],message:'discount'});
  if(v.url && !/^https?:\/\//i.test(v.url) && !(v.kind==='vault' && /^(bitwarden|onepassword):\/\//i.test(v.url)))ctx.addIssue({code:'custom',path:['url'],message:'url'});
  if(v.projectPromoUrl && (!/^https?:\/\//i.test(v.projectPromoUrl) || !z.url().safeParse(v.projectPromoUrl).success))ctx.addIssue({code:'custom',path:['projectPromoUrl'],message:'url'});
@@ -112,7 +118,7 @@ export const taskSchema=z.object({id:z.string().min(1).max(96),name:z.string().m
  }
 });
 export type Task=z.infer<typeof taskSchema>;
-export const categorySchema=z.object({id:z.string().min(1).max(96),kind:z.enum(kinds),name:z.string().min(1).max(60),order:z.number().int(),deleted:z.boolean().default(false)});
+export const categorySchema=z.object({id:z.string().min(1).max(96),kind:z.enum(kinds),name:z.string().min(1).max(60),order:z.number().int(),deleted:z.boolean().default(false),scope:z.literal('catalog').optional(),hidden:z.boolean().optional(),source:z.enum(['project','domains']).optional(),legacyName:z.string().max(100).optional()});
 export type Category=z.infer<typeof categorySchema>;
 export const normalizeCategoryName = (name: string): string => name.trim().normalize('NFKC').toLowerCase();
 export const submissionSchema=z.object({id:z.string().min(1).max(96),assetId:z.string().min(1).max(96),name:z.string().min(1).max(200),url:z.string().url().refine(v=>/^https?:\/\//.test(v)),status:z.enum(['planned','submitted','review','indexed','verify','rejected']),submittedAt:z.string().default(''),verifiedAt:z.string().default(''),evidence:z.string().max(2000).default(''),deleted:z.boolean().default(false),purged:z.literal(true).optional(),externalLink:z.object({profileId:z.string().min(1).max(96),destinationKey:z.string().min(1).max(512),ledgerKey:z.string().min(1).max(640),publicationStatus:z.string().max(64),listingClaim:z.enum(['none','claimed','verified']),publicUrl:z.string().max(2048),evidenceUrl:z.string().max(2048),indexEvidenceUrl:z.string().max(2048),failureReason:z.string().max(2000),importedAt:z.string().datetime()}).optional()}).refine(v=>!v.purged||v.deleted,'purged');
@@ -165,7 +171,7 @@ export function effectiveFinanceEntry(entry: History): History {
  return correction ? {...entry,title:correction.title,source:correction.source,note:correction.note,eventDate:correction.eventDate,
   amount:correction.amount,currency:correction.currency,billDate:correction.eventDate,deleted:entry.deleted||correction.hidden} : entry;
 }
-export function newAsset(kind:AssetKind):Asset{const now=new Date().toISOString();return assetSchema.parse({id:crypto.randomUUID(),kind,name:'Untitled',...(kind==='item'?{itemLifecycleStatus:'inUse',itemWarrantyStatus:'unverified'}:{}),createdAt:now,updatedAt:now});}
+export function newAsset(kind:AssetKind):Asset{const now=new Date().toISOString();return assetSchema.parse({id:crypto.randomUUID(),kind,name:'Untitled',...(kind==='project'?{catalogCategoryId:''}:{}),...(kind==='item'?{itemLifecycleStatus:'inUse',itemWarrantyStatus:'unverified'}:{}),createdAt:now,updatedAt:now});}
 export function calendarDayDistance(from:string,to:string){return (parseDateOnly(to).getTime()-parseDateOnly(from).getTime())/86_400_000;}
 export function nextDue(date:string,cycle:Asset['cycle'],interval=1){return dueOnCycle(date,cycle,interval,1);}
 export function monthlyMinorUnits(asset:Asset):bigint{

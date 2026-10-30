@@ -47,11 +47,11 @@ export function Overview() {
   };
   return <main className="page overview-page">
     <section className="overview-hero">
-      <div><h1>{t("overview")}</h1><p>{t("overviewHeroHint")}</p></div>
-      <div className="overview-hero-actions"><Link to="/assets/$kind" params={{ kind: "project" }} className="button"><ArrowUpRight size={16}/>{t("exploreProjects")}</Link><Link className="button" to="/intake"><Plus size={15}/>{t("quickIntake")}</Link><Link className="button" to="/tasks">{t("viewTasks")} <ArrowRight size={15}/></Link></div>
+      <div><h1>{t("overview")}</h1><p>{t("catalogOverviewSubtitle")}</p></div>
+      <div className="overview-hero-actions"><Link to="/assets" className="button"><ArrowUpRight size={16}/>{t("catalogExplore")}</Link><Link className="button" to="/intake"><Plus size={15}/>{t("quickIntake")}</Link><Link className="button" to="/tasks">{t("viewTasks")} <ArrowRight size={15}/></Link></div>
     </section>
     <div className="overview-stats">
-      <div className="card overview-stat"><span>{t("overviewRecorded")}<Layers2 size={16}/></span><strong>{assets.length}</strong><small>{t("overviewRecordedHint")}</small></div>
+      <div className="card overview-stat"><span>{t("overviewRecorded")}<Layers2 size={16}/></span><strong>{assets.length}</strong><small>{t("catalogKinds")}</small></div>
       <div className="card overview-stat"><span>{t("overviewNextThirty")}<CalendarDays size={16}/></span><strong>{upcoming.length}</strong><small>{t("overviewThisWeek", { count: weekCount })}</small></div>
       <div className="card overview-stat"><span>{t("overviewRelationsReview")}<ScanEye size={16}/></span><strong>{staleRelations.length}</strong><small>{t("overviewRelationsHint")}</small></div>
     </div>
@@ -68,14 +68,14 @@ export function Overview() {
           <div className="overview-quiet">{t("overviewNoRelationReminders")}</div>}
       </section>
     </div>
-    <div className="overview-project-heading"><h2>{t("myProjects")}</h2><Link to="/assets/$kind" params={{ kind: "project" }}>{t("allProjects")} <ArrowRight size={15}/></Link></div>
+    <div className="overview-project-heading"><h2>{t("catalogMyRecords")}</h2><Link to="/assets">{t("catalogAllRecords")} <ArrowRight size={15}/></Link></div>
     {projects.length ? <div className="overview-project-grid">{projects.map((project) => {
       const linked = connected(project);
       return <Link key={project.id} className="overview-project-card" to="/assets/$kind/$id" params={{ kind: "project", id: project.id }}>
         <div className="overview-project-top"><span className="overview-project-mark">{project.name.trim().charAt(0).toLocaleUpperCase() || "K"}</span><h3 title={project.name}>{project.name}</h3><span className="chip">{t(project.status)}</span></div>
-        <p>{[project.description, project.url].filter(Boolean).join(" · ") || t("project")}</p>
+        <p>{[project.description, project.url].filter(Boolean).join(" · ") || t("catalogRecords")}</p>
         <div className="overview-project-counts"><span><strong>{linked.length}</strong> {t("overviewLinkedAssets", { count: linked.length })}</span><span><strong>{linked.filter((asset) => asset.kind === "account").length}</strong> {t("overviewAccountLabel", { count: linked.filter((asset) => asset.kind === "account").length })}</span><span><strong>{linked.filter((asset) => asset.kind === "subscription").length}</strong> {t("overviewSubscriptionLabel", { count: linked.filter((asset) => asset.kind === "subscription").length })}</span></div>
       </Link>;
-    })}</div> : <div className="overview-project-empty"><p>{t("overviewNoProjects")}</p><div className="actions"><Link className="button" to="/assets/$kind" params={{ kind: "project" }} hash="new">{t("add")} {t("project")}</Link>{!data.loading && data.assets.length === 0 && <SampleLibraryButton label={t("overviewTrySample")} />}</div></div>}
+    })}</div> : <div className="overview-project-empty"><p>{t("catalogEmptyRecords")}</p><div className="actions"><Link className="button" to="/assets" hash="new">{t("add")} {t("catalogRecords")}</Link>{!data.loading && data.assets.length === 0 && <SampleLibraryButton label={t("overviewTrySample")} />}</div></div>}
   </main>;
 }

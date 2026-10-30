@@ -16,6 +16,7 @@ export default defineConfig({
 
 	outputDir: "test-results/local-release",
 	testMatch: [
+        "catalog-categories.spec.ts",
         "cleanup-ux.spec.ts",
 		"compact-accounts.spec.ts",
 		"unified-account-editor.spec.ts",

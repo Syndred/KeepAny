@@ -1,4 +1,4 @@
-import { portableCandidate } from "./helpers/portable-candidate";
+import { acceptanceCandidate } from "./helpers/acceptance-candidate";
 import { openBackupPage } from "./helpers/backup-restore";
 import { openProjectDetails } from "./helpers/project-details";
 // 2026-10-29 user scope: B1/B2/B8 retired; historical schema/KA1 data stays lossless.
@@ -59,10 +59,10 @@ for (const [locale, width] of [["zh-CN", 390], ["en", 1280]] as const) test(`${l
 		const rows = JSON.parse(strFromU8(entries["records.json"])) as { id: string; type: string; payload: string }[];
 		return { entries, rows, asset: JSON.parse(rows.find(row => row.type === "asset" && JSON.parse(row.payload).id === fixture.project.id)!.payload) as Asset };
 	}
-	const goProject = () => page.goto(`/assets/project/${fixture.project.id}`);
+	const goProject = async () => {await page.goto(`/assets/project/${fixture.project.id}`);await openProjectDetails(page);};
 	const edit = () => page.locator(".asset-project-action-bar").getByRole("button", { name: t("edit"), exact: true }).click();
 	try {
-        const actualCandidate = portableCandidate();
+        const actualCandidate = acceptanceCandidate();
         const indexSha256 = createHash("sha256").update(await (await page.request.get("/")).body()).digest("hex");
         expect(indexSha256).toBe(actualCandidate.release.webFiles.find(file => file.path === "index.html")!.sha256);
         await test.info().attach("candidate", { body: JSON.stringify({ sourceCommit: actualCandidate.release.sourceCommit, archiveSha256: actualCandidate.archiveSha256, indexSha256 }), contentType: "application/json" });

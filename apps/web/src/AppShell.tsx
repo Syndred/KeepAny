@@ -1,4 +1,5 @@
 import { Input } from "./components/ui/input";
+import { catalogCategoryLabel } from './catalog-records';
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
@@ -132,7 +133,7 @@ export function AppShell() {
 		{ id: "assets", to: "/assets", label: t("assetsWorkspace"), icon: Layers, active: workspacePathGroup(pathname) === "assets" },
 		{ id: "accounts", to: "/accounts", label: t("accountsWorkspace"), icon: UserRound, active: workspacePathGroup(pathname) === "accounts" },
 	];
-	const customCategories = data.categories.filter((category) => !category.deleted);
+	const customCategories = data.categories.filter((category) => !category.deleted && !category.hidden);
 	const collections = readCollections(data.preferences.find((preference) => preference.id === COLLECTIONS_PREFERENCE_ID)?.value);
 	const currentKind = kinds.find((kind) => pathname.startsWith(`/assets/${kind}`));
 	const currentHeading = pathname === "/" ? t("overview") : currentKind ? t(currentKind) :
@@ -271,7 +272,7 @@ export function AppShell() {
 					<div className="sidebar-custom">
 						<div className="sidebar-section-label">{t("collectionsTitle")}</div>
 						{collections.map((collection) => <Link key={collection.id} to="/collections/$id" params={{ id: collection.id }} className="sidebar-category sidebar-collection" aria-current={collectionDetailId === collection.id ? "page" : undefined} onClick={() => setMobile(false)} title={collection.name}><span>{collection.name}</span></Link>)}
-						{customCategories.map((category) => <button type="button" key={category.id} className="sidebar-category" onClick={() => selectCategory(category.kind, category.name, category.id)} title={category.name}><span>{category.name}</span></button>)}
+						{customCategories.map((category) => <button type="button" key={category.id} className="sidebar-category" onClick={() => { if(category.scope === 'catalog'||category.kind==='project'){setMobile(false);void navigate({to:'/assets/category/$categoryId',params:{categoryId:category.id}});}else selectCategory(category.kind, category.name, category.id); }} title={catalogCategoryLabel(category,t)}><span>{catalogCategoryLabel(category,t)}</span></button>)}
 						<Link to="/collections" className="sidebar-customize" aria-current={/^\/collections\/?$/.test(pathname) ? "page" : undefined} onClick={() => setMobile(false)}><Plus size={15}/>{t("customizeSidebar")}</Link>
 					</div>
 					<div className="side-bottom">
@@ -308,7 +309,7 @@ export function AppShell() {
 							<DropdownMenu><DropdownMenuTrigger render={<Button className="top-icon-button" variant="ghost" aria-label={t("assistantMenu")} />}><Sparkles size={17}/></DropdownMenuTrigger><DropdownMenuContent align="end"><DropdownMenuItem onClick={() => setAi(true)}>{t("settingsAskAssistant")}</DropdownMenuItem><DropdownMenuItem render={<Link to="/intake" hash="ai" />}>{t("aiCaptureTab")}</DropdownMenuItem><DropdownMenuItem render={<Link to="/change-impact" />}>{t("checkChangeImpact")}</DropdownMenuItem><DropdownMenuItem render={<Link to="/assistant-access" />}>{t("settingsAssistantAccess")}</DropdownMenuItem></DropdownMenuContent></DropdownMenu>
                            <DropdownMenu><DropdownMenuTrigger render={<Button className="top-icon-button" variant="ghost" aria-label={t("globalAddRecord")} />}><Plus size={18}/></DropdownMenuTrigger><DropdownMenuContent align="end">
                             <DropdownMenuItem render={<Link to="/accounts" hash="new-account" />}>{t("newAccountKind")}</DropdownMenuItem>
-                            {(["project", "item", "subscription"] as const).map(kind => <DropdownMenuItem key={kind} render={<Link to="/assets/$kind" params={{ kind }} hash="new" />}>{t(({ project: "newProjectKind", item: "newItemKind", subscription: "newSubscriptionKind" })[kind])}</DropdownMenuItem>)}
+                            {(["project", "item", "subscription"] as const).map(kind => <DropdownMenuItem key={kind} render={<Link to="/assets/$kind" params={{ kind }} hash="new" />}>{t(({ project: "catalogRecords", item: "newItemKind", subscription: "newSubscriptionKind" })[kind])}</DropdownMenuItem>)}
                             <DropdownMenuItem render={<Link to="/intake" />}>{t("intake")}</DropdownMenuItem>
                             <DropdownMenuItem render={<Link to="/intake" hash="ai" />}>{t("aiCaptureTab")}</DropdownMenuItem>
                            </DropdownMenuContent></DropdownMenu>

@@ -1,4 +1,5 @@
 import { Textarea } from "./components/ui/textarea";
+import { CatalogRecordPage } from './page-catalog-record';
 import { Input } from "./components/ui/input";
 import { DatePicker } from "./components/ui/date-picker";
 import { DetailDisclosure } from "./components/DetailDisclosure";
@@ -111,6 +112,11 @@ function itemLocationParts(location: string): [string, string, string] {
 }
 
 export function AssetDetail() {
+ const route=useRouterState({select:state=>({params:state.matches.at(-1)?.params as {kind?:string;id?:string},hash:state.location.hash})});
+ if(route.params?.kind==='project'&&!route.hash.startsWith('project-'))return <CatalogRecordPage recordId={`asset:${route.params.id}`}/>;
+ return <LegacyAssetDetail/>;
+}
+function LegacyAssetDetail() {
 	const params = (useRouterState({ select: (s) => s.matches.at(-1)?.params }) ??
 		{}) as { kind?: string; id?: string };
 	const kind = validKind(params.kind ?? "project");

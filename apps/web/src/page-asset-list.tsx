@@ -108,7 +108,7 @@ function CategoryStrip({
 	const categoryNames = [
 		...builtins[kind],
 		...data.categories
-			.filter((c) => c.kind === kind && !c.deleted)
+			.filter((c) => c.kind === kind && !c.deleted && !c.scope)
 			.map((c) => c.name),
 	].filter((v, i, a) => a.indexOf(v) === i);
 	const preference = data.preferences.find(

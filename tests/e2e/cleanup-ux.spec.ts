@@ -1,4 +1,5 @@
-import { portableCandidate } from "./helpers/portable-candidate";
+import { acceptanceCandidate } from "./helpers/acceptance-candidate";
+import { openOriginalProjectPage } from './helpers/project-details';
 import { openBackupPage } from "./helpers/backup-restore";
 import { createHash } from "node:crypto";
 import { mkdirSync } from "node:fs";
@@ -8,7 +9,7 @@ import { openBackupRestorePanel } from "./helpers/backup-restore";
 import { enterAccounts, openVaultAccess } from "./helpers/vault-access";
 
 test.beforeEach(async ({ page }, info) => {
- const candidate = portableCandidate();
+ const candidate = acceptanceCandidate();
  const actualIndex = createHash("sha256").update(await (await page.request.get("/")).body()).digest("hex");
  expect(actualIndex).toBe(candidate.release.webFiles.find((file: { path: string }) => file.path === "index.html")!.sha256);
  await info.attach("candidate", { body: JSON.stringify({ sourceCommit: candidate.release.sourceCommit, sourceDirty: candidate.release.sourceDirty, archiveSha256: candidate.archiveSha256, indexSha256: candidate.release.webFiles.find((file: { path: string }) => file.path === "index.html")!.sha256 }), contentType: "application/json" });
@@ -50,10 +51,10 @@ test("UX02 direct manual save keeps input on duplicates and survives reload", as
 
 test("UX03 context creation and cancellation consume the hash without reopening", async ({ page }) => {
   await prepare(page); await page.getByRole("button", { name: "Add a record", exact: true }).click();
-  await page.getByRole("menuitem", { name: "Project", exact: true }).click();
+  await page.getByRole("menuitem", { name: "Records", exact: true }).click();
   const dialog = page.getByRole("dialog"); await expect(dialog).toBeVisible(); await dialog.getByRole("button", { name: "Cancel", exact: true }).click();
   await expect(dialog).toBeHidden(); await page.reload(); await expect(page.getByRole("dialog")).toBeHidden();
-  await page.getByRole("button", { name: "Add a record", exact: true }).click(); await page.getByRole("menuitem", { name: "Project", exact: true }).click(); await expect(page.getByRole("dialog")).toBeVisible();
+  await page.getByRole("button", { name: "Add a record", exact: true }).click(); await page.getByRole("menuitem", { name: "Records", exact: true }).click(); await expect(page.getByRole("dialog")).toBeVisible();
 });
 
 test("AI01 same-route global AI entry opens the AI channel", async ({ page }) => {
@@ -191,7 +192,7 @@ for (const language of ["zh-CN", "en"] as const) for (const width of [390, 768, 
     expect(tabGeometry[0].background).not.toBe(tabGeometry[1].background);
     await capture(page, `${language}-${width}-ai-disabled`);
     await page.goto("/backup"); await expect(page.locator("#backup-password")).toBeVisible(); await capture(page, `${language}-${width}-backup`);
-    await page.goto("/"); await page.locator(".overview-project-card").filter({ hasText: language === "en" ? "Pinecone Studio" : "松果工作室" }).click(); await expect(page.locator(".asset-project-profile-card")).toBeVisible();
+    await page.goto("/"); await page.locator(".overview-project-card").filter({ hasText: language === "en" ? "Pinecone Studio" : "松果工作室" }).click(); await openOriginalProjectPage(page); await expect(page.locator(".asset-project-profile-card")).toBeVisible();
     const firstTask = page.locator(".asset-tasks-card .account-compact-task").first();
     const infoBox = await firstTask.locator(".impact-task-info").boundingBox(), menuBox = await firstTask.getByRole("button", { name: language === "en" ? "More actions" : "更多操作", exact: true }).boundingBox();
     expect(infoBox).not.toBeNull(); expect(menuBox).not.toBeNull();
@@ -206,17 +207,17 @@ for (const language of ["zh-CN", "en"] as const) for (const width of [390, 768, 
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     await page.getByRole("button", { name: language === "en" ? "Add a record" : "新增资料", exact: true }).click();
     await capture(page, `${language}-${width}-global-menu`);
-    await page.getByRole("menuitem", { name: language === "en" ? "Project" : "项目", exact: true }).click();
+    await page.getByRole("menuitem", { name: language === "en" ? "Records" : "资料", exact: true }).click();
     const form = page.getByRole("dialog");
-    await form.locator("#name").fill(language === "en" ? "Minimal synthetic project" : "极简虚构项目");
+    await form.locator("#catalog-record-name").fill(language === "en" ? "Minimal synthetic project" : "极简虚构项目");
     await form.getByRole("button", { name: language === "en" ? "Save" : "保存", exact: true }).click();
     await expect(form).toBeHidden();
-    await page.locator(".asset-project-card").filter({ hasText: language === "en" ? "Minimal synthetic project" : "极简虚构项目" }).first().click();
-    await expect(page.locator(".asset-project-profile-card")).toBeVisible();
+    await page.locator(".catalog-record-card").filter({ hasText: language === "en" ? "Minimal synthetic project" : "极简虚构项目" }).first().click();
+    await expect(page.locator(".catalog-record-info")).toBeVisible();
     await capture(page, `${language}-${width}-project-minimal`);
-    await page.locator(".asset-project-action-bar").getByRole("button", { name: language === "en" ? "Edit" : "编辑", exact: true }).click();
-    await form.locator("#name").fill((language === "en" ? "Long synthetic project name " : "较长的虚构项目名称").repeat(4));
-    await form.locator("#notes").fill((language === "en" ? "Long synthetic notes, kept for checking wrapping and readable content. " : "用于检查换行和阅读体验的虚构长备注内容。").repeat(10));
+    await page.locator('.catalog-record-detail').getByRole("button", { name: language === "en" ? "Edit" : "编辑", exact: true }).click();
+    await form.locator("#catalog-record-name").fill((language === "en" ? "Long synthetic project name " : "较长的虚构项目名称").repeat(4));
+    await form.locator("#catalog-record-notes").fill((language === "en" ? "Long synthetic notes, kept for checking wrapping and readable content. " : "用于检查换行和阅读体验的虚构长备注内容。").repeat(10));
     await capture(page, `${language}-${width}-project-long-edit`);
     await form.getByRole("button", { name: language === "en" ? "Save" : "保存", exact: true }).click();
     await expect(form).toBeHidden(); await capture(page, `${language}-${width}-project-long`);

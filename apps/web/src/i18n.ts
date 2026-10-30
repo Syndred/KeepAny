@@ -14,8 +14,10 @@ import { sampleLibraryCopy } from "./sample-library-copy";
 import { financeCopy } from "./finance-copy";
 import { candidateMergeCopy } from "./candidate-merge-copy";
 import { cleanupUxCopy } from "./cleanup-ux-copy";
+import { catalogCopy } from "./catalog-copy";
 
 const copy: Record<string, [string, string]> = {
+ ...catalogCopy,
  ...cleanupUxCopy,
  accountLoginInfo: ["登录信息", "Login information"],
  accountRelationMap: ["关系图", "Relationships"],
