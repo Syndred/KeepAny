@@ -1,3 +1,4 @@
+import { confirmSampleLibrary } from "./helpers/sample-library";
 import { mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { expect, test, type Page } from "@playwright/test";
@@ -9,6 +10,7 @@ const copy = (language: "zh-CN" | "en") => (key: string) => (resources[language]
 async function installSamples(page: Page, t: (key: string) => string) {
 	await page.goto("/settings#advanced-settings");
 	await page.getByRole("button", { name: t("loadSample"), exact: true }).click();
+await confirmSampleLibrary(page);
 	await expect(page.getByRole("button", { name: t("sampleLibraryPresent"), exact: true })).toBeDisabled();
 }
 async function noOverflow(page: Page) {

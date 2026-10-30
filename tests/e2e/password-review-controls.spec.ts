@@ -1,3 +1,4 @@
+import { materializeCandidate, selectCandidate } from "../../scripts/lib/portable-candidate.mjs";
 import { openVaultAccess } from "./helpers/vault-access";
 import { execFileSync } from "node:child_process";
 import {
@@ -464,7 +465,8 @@ test("a7be614 encrypted review and unfinished fragment survive a same-origin fix
 		return match[1];
 	};
 	const oldEntry = moduleEntry(directory);
-	const newPackage = process.env.KEEPANY_PREVIEW_DIRECTORY ? join(process.env.KEEPANY_PREVIEW_DIRECTORY, "web") : join(root, "apps/web/dist");
+	const currentCandidate = materializeCandidate(selectCandidate());
+	const newPackage = join(currentCandidate.directory, "web");
 	const newEntry = moduleEntry(newPackage);
 	expect(newEntry).not.toBe(oldEntry);
 	const contentTypes: Record<string, string> = {
@@ -657,6 +659,7 @@ test("a7be614 encrypted review and unfinished fragment survive a same-origin fix
 		);
 		expect(h.errors).toEqual([]);
 	} finally {
+		currentCandidate.cleanup();
 		await h.close();
 		server.closeAllConnections();
 		await new Promise<void>((closed) => server.close(() => closed()));

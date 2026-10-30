@@ -2,7 +2,7 @@ export const cleanupUxCopy: Record<string, [string, string]> = {
   captureTab: ["本地收录", "Local capture"],
   aiCaptureTab: ["AI 整理", "Organize with AI"],
   backupAndRestore: ["备份与恢复", "Backup & restore"],
-  newRecord: ["新增资料", "Add a record"],
+  globalAddRecord: ["新增资料", "Add a record"],
   managedAssets: ["正在管理", "In use"],
   archivedAssets: ["已归档及停用", "Archived & inactive"],
   assetStatusView: ["资料范围", "Records to show"],

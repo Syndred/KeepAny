@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { newAsset } from "../../../packages/domain/src";
-import { catalogAssets } from "./catalog-view";
+import { catalogAssets, catalogScope, sortCatalogRows } from "./catalog-view";
 describe("catalog task views", () => {
   const active = { ...newAsset("project"), name: "Active", updatedAt: "2026-10-29" };
   const paused = { ...newAsset("subscription"), name: "Paused", status: "paused" as const, dueDate: "2026-11-03", updatedAt: "2026-10-30" };
@@ -14,5 +14,11 @@ describe("catalog task views", () => {
   it("orders due dates first and retains undated records", () => {
     expect(catalogAssets([active, paused], "all", "due").map(row => row.name)).toEqual(["Paused", "Active"]);
     expect(catalogAssets([active, paused], "all", "updated").map(row => row.name)).toEqual(["Paused", "Active"]);
+  });
+  it("recovers an invalid stored scope and interleaves domain and subscription deadlines", () => {
+    expect(catalogScope("retired-setting")).toBe("managed");
+    const domain = { id: "domain", name: "earlier.example.test", expiryDate: "2026-11-01" } as NonNullable<typeof active.projectDomains>[number];
+    const rows = sortCatalogRows([{ type: "asset", asset: paused }, { type: "asset", asset: active }, { type: "domain", project: active, domain, remainingDays: 2 }], "due");
+    expect(rows.map(row => row.type === "asset" ? row.asset.name : row.domain.name)).toEqual(["earlier.example.test", "Paused", "Active"]);
   });
 });

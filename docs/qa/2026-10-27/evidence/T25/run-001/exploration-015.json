@@ -1,6 +1,0 @@
-{
-  "observationCommand": "bun /Users/syndred/.codex/toolchains/gstack/bin/gstack-qa-deadline run docs/qa/2026-10-27/evidence/T25/run-001/deadline.json -- /Users/syndred/.codex/toolchains/gstack/browse/dist/browse reload",
-  "observed": "Reloaded http://127.0.0.1:4205/assets/vault#vault-references\n",
-  "hypothesis": "刷新完成，核对引用表仍空、未设置主密码，取消确实不新增。",
-  "nextCommand": "bun /Users/syndred/.codex/toolchains/gstack/bin/gstack-qa-deadline run docs/qa/2026-10-27/evidence/T25/run-001/deadline.json -- /Users/syndred/.codex/toolchains/gstack/browse/dist/browse text"
-}

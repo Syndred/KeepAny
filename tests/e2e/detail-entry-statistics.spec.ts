@@ -1,3 +1,4 @@
+import { openBackupPage } from "./helpers/backup-restore";
 // 2026-10-29: user removed B1 backlinks and B2 promotional fields/materials.
 // Prior expectations/evidence remain in Git and the private pre-change snapshot; retained core checks are unchanged.
 import { readFileSync } from "node:fs";
@@ -46,7 +47,7 @@ async function createAsset(page: Page, kind: "project" | "item", name: string, t
 
 async function downloadArchive(page: Page, text: Copy) {
 	await page.goto("/intake");
-	await page.locator("#backup-password").fill(password);
+	await openBackupPage(page); await page.locator("#backup-password").fill(password);
 	await page.getByRole("button", { name: text.backup, exact: true }).click();
 	const link = page.getByRole("link", { name: text.download, exact: true });
 	await expect(link).toBeVisible();

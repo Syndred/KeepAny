@@ -1,3 +1,4 @@
+import { openProjectDetails } from "./helpers/project-details";
 import { expect, test } from "@playwright/test";
 import { selectChoice } from "./helpers/select-choice";
 
@@ -13,6 +14,7 @@ test("the single account topbar returns to a related source list or the direct a
 	await add("account", "Linked login");
 	await add("project", "Source project");
 	await page.getByText("Source project", { exact: true }).first().click();
+	await openProjectDetails(page);
 	await page.getByRole("button", { name: "Add connection" }).click();
 	const relation = page.getByRole("dialog");
 	await selectChoice(relation.getByLabel("Connect to"), { label: "Linked login" });

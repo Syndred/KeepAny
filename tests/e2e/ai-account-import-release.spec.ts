@@ -31,6 +31,7 @@ for (const language of ["zh-CN", "en"] as const) {
 			page.on("pageerror", (error) => errors.push(error.message));
 			try {
 				await page.goto("/intake");
+				await page.getByRole("button", { name: zh ? "AI 整理" : "Organize with AI", exact: true }).click();
 				await expect(page.locator(".ai-import-panel")).toContainText(
 					zh ? "尚未配置 AI 模型" : "No AI model is configured",
 				);

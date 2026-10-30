@@ -1,3 +1,4 @@
+import { openCapture } from "./helpers/ai-workflow";
 import { mkdirSync } from "node:fs";
 import { expect, type Page, test } from "@playwright/test";
 import type { Asset, Task } from "../../packages/domain/src";
@@ -143,10 +144,7 @@ for (const language of ["en", "zh-CN"] as const) {
 					.click();
 
 				// SPA navigation keeps the intentionally temporary page-session credential.
-				await page
-					.locator(".top-actions")
-					.getByRole("link", { name: copy.intake, exact: true })
-					.click();
+				await openCapture(page, copy.intake);
 				const importer = page.locator(".ai-import-panel");
 				await expect(
 					importer.getByRole("heading", {

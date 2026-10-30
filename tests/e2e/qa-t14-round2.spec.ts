@@ -6,7 +6,7 @@ import type { History } from "../../packages/domain/src";
 
 const repositoryPath = sourceModuleUrl("packages/local-db/src/index.ts");
 const domainPath = sourceModuleUrl("packages/domain/src/index.ts");
-const evidence = "docs/qa/2026-10-27/evidence/T14-round2";
+const evidence = "test-results/qa/2026-10-27/evidence/T14-round2";
 
 async function history(page: Page): Promise<History[]> {
 	return page.evaluate(async (path) => {

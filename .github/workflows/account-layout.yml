@@ -19,10 +19,6 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec playwright install --with-deps chromium
-      - name: Verify recorded acceptance evidence and reviewed product identity
-        run: node scripts/verify-account-acceptance.mjs
-      - name: Verify route recovery and password history machine evidence
-        run: node scripts/verify-route-history-evidence.mjs
       - run: node scripts/build-preview-release.mjs
         timeout-minutes: 10
       - name: Select the compiled commit explicitly

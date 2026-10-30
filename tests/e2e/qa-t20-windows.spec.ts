@@ -1,3 +1,4 @@
+import { openBackupPage } from "./helpers/backup-restore";
 import { readFileSync } from "node:fs";
 import { expect, test } from "@playwright/test";
 import { visualHarness, visualVaultContentFingerprint } from "./fixtures/password-smart-import-visual";
@@ -21,7 +22,8 @@ for (const locale of ["zh-CN", "en"] as const) {
 				await (await import(r)).save("asset", { ...newAsset("project"), name: "Incoming project must not partially appear" });
 			}, [repository, domain]);
 			await source.page.goto("/intake");
-			await source.page.locator("#backup-password").fill(backupPassword);
+			await openBackupPage(source.page);
+			await openBackupPage(source.page); await source.page.locator("#backup-password").fill(backupPassword);
 			await source.page.getByRole("button", { name: zh ? "创建备份" : "Create backup", exact: true }).click();
 			const download = source.page.waitForEvent("download");
 			await source.page.getByRole("link", { name: zh ? "保存备份文件" : "Save backup file", exact: true }).click();
@@ -34,7 +36,8 @@ for (const locale of ["zh-CN", "en"] as const) {
 			await target.page.goto("/intake");
 			await target.page.locator("summary").filter({ hasText: zh ? "恢复备份" : "Restore backup" }).click();
 			for (const kind of ["wrong-password", "damaged", "different-vault"]) {
-				await target.page.locator("#backup-password").fill(kind === "wrong-password" ? "Definitely wrong synthetic password" : backupPassword);
+				await openBackupPage(target.page);
+				await openBackupPage(target.page); await target.page.locator("#backup-password").fill(kind === "wrong-password" ? "Definitely wrong synthetic password" : backupPassword);
 				const damaged = Buffer.from(readFileSync(path));
 				damaged[damaged.length - 1] ^= 1;
 				await target.page.locator("#restore-file").setInputFiles(kind === "damaged" ? { name: "damaged.ka1", mimeType: "application/octet-stream", buffer: damaged } : path);

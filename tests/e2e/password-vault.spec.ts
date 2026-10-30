@@ -1,3 +1,4 @@
+import { openBackupPage } from "./helpers/backup-restore";
 import { openBackupRestorePanel } from "./helpers/backup-restore";
 import { openStandaloneEntryDraft, saveStandaloneEntryDraft } from "./helpers/standalone-entry";
 import { prepareVaultWorkspace, revealPasswordEntries, openVaultAccess } from "./helpers/vault-access";
@@ -879,7 +880,7 @@ for (const variant of variants) {
 			const currentKdbxPath = test.info().outputPath("current-passwords.kdbx");
 			await currentDownload.saveAs(currentKdbxPath);
 			await page.goto("/intake");
-			await page.locator("#backup-password").fill(backupPassword);
+			await openBackupPage(page); await page.locator("#backup-password").fill(backupPassword);
 			await page
 				.getByRole("button", {
 					name: zh ? "创建备份" : "Create backup",
@@ -933,7 +934,7 @@ for (const variant of variants) {
 					})
 					.last()
 					.click();
-				await restorePage.locator("#backup-password").fill(backupPassword);
+				await openBackupPage(restorePage); await restorePage.locator("#backup-password").fill(backupPassword);
 				await openBackupRestorePanel(restorePage);
 				await restorePage.locator("#restore-file").setInputFiles(backupPath);
 				await restorePage

@@ -1,3 +1,4 @@
+import { openBackupPage } from "./helpers/backup-restore";
 import { mkdirSync, readFileSync } from "node:fs";
 import { expect, type Locator, type Page, test } from "@playwright/test";
 import { aiCopy } from "../../apps/web/src/ai-copy";
@@ -284,7 +285,7 @@ for (const variant of variants) {
 				expect(encrypted.includes(Buffer.from(value))).toBe(false);
 
 			await page.getByRole("link", { name: variant.language === "zh-CN" ? "备份与恢复" : "Backup & restore", exact: true }).first().click();
-			await page.locator("#backup-password").fill(backupPassword);
+			await openBackupPage(page); await page.locator("#backup-password").fill(backupPassword);
 			await page
 				.getByRole("button", {
 					name: variant.language === "zh-CN" ? "创建备份" : "Create backup",

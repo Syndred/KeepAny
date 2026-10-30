@@ -50,7 +50,7 @@ jobs:
                 'README.md', 'README.en.md', 'docs/试用指南.md',
                 'docs/08-项目进度交接.md', 'scripts/build-public-site.mjs',
                 '.github/workflows/public-site.yml'
-              ].includes(path) || path.startsWith('docs/evidence/') || path.startsWith('apps/public-site/');
+              ].includes(path) || path.startsWith('apps/public-site/');
               const disallowed = comparison.files.filter(file =>
                 !publicDocumentation(file.filename) ||
                 (file.previous_filename && !publicDocumentation(file.previous_filename)));

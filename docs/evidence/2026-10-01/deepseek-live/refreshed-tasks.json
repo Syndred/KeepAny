@@ -1,7 +1,0 @@
-{
-  "scripts": [
-    "/assets/index-B7gedowB.js"
-  ],
-  "snapshot": "\n  - generic: 待办\n  - heading \"提醒之后，还要留下完成记录。\" [level=1]\n  - paragraph: 充值、续费、保修和核实任务，都能追溯处理结果。\n  - group \"筛选待办\":\n    - button \"待处理 · 1\"\n    - button \"已完成 · 1\"\n    - button \"全部 · 2\" [pressed]\n  - button \"新建待办\"\n  - button \"新建维护计划\":\n    - text: 新建维护计划\n  - region \"近期任务\":\n    - heading \"近期任务\" [level=2]\n    - generic: \"2\"\n    - article:\n      - button \"完成\"\n      - strong: DS 验收待办\n      - text: \"到期时间:\"\n      - time: 2026/10/03 09:00\n      - text: \"提醒时间:\"\n      - time: 2026/10/03 08:30\n      - generic: 时区：Asia/Shanghai\n      - generic: 提前 30 分钟 · 每 1 个月\n      - text: \"关联资产:\"\n      - link \"DS 验收项目\":\n        - /url: /assets/project/ai-4d05dab1d30f209f8bcb5f70615c17951257f064bfc5dd79-1\n      - generic: 稍后提醒\n      - textbox \"稍后提醒\": 2026-10-03\n      - button \"稍后 1 天\"\n      - generic: 待处理\n    - article:\n      - button \"重新打开\":\n      - strong: DS 到期提醒\n      - text: \"到期时间:\"\n      - time: 2026/10/01 09:00\n      - text: \"提醒时间:\"\n      - time: 2026/10/01 09:00\n      - generic: 时区：Asia/Shanghai\n      - generic: 提前 0 分钟 · 仅一次\n      - generic: \"完成记录: 2026/10/1 09:27:58\"\n      - generic: 已完成\n  - region \"计划详情\":\n    - heading \"计划详情\" [level=2]\n    - strong: 这里还没有内容",
-  "activeCards": 0
-}

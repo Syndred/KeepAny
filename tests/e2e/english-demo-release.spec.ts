@@ -1,3 +1,4 @@
+import { confirmSampleLibrary } from "./helpers/sample-library";
 import { mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { expect, type Page, test } from "@playwright/test";
@@ -5,7 +6,7 @@ import { selectChoice } from "./helpers/select-choice";
 
 test.setTimeout(120_000);
 
-const evidence = process.env.KEEPANY_EVIDENCE_DIR ?? "docs/evidence/2026-10-01/english-demo";
+const evidence = process.env.KEEPANY_EVIDENCE_DIR ?? "test-results/evidence/2026-10-01/english-demo";
 mkdirSync(evidence, { recursive: true });
 
 async function englishOnly(page: Page) {
@@ -47,6 +48,7 @@ for (const width of [390, 1280]) {
 			await page.keyboard.press("Escape");
 			await page.locator("#advanced-settings > summary").click();
 			await page.getByRole("button", { name: "Add sample records", exact: true }).click();
+await confirmSampleLibrary(page);
 			await expect(page.getByRole("button", { name: "Full sample records already added", exact: true })).toBeDisabled();
 			await page.goto("/");
 			await expect(page.getByText("Sample | Mori Notes", { exact: true }).first()).toBeVisible();
@@ -105,6 +107,7 @@ test("Chinese sample records use Chinese copy and switching language preserves s
 		await page.goto("/settings");
 		await page.locator("#advanced-settings > summary").click();
 		await page.getByRole("button", { name: "加入示例资料", exact: true }).click();
+await confirmSampleLibrary(page);
 		await expect(page.getByText("工作室资料", { exact: true }).first()).toBeVisible();
 		await page.goto("/");
 		await expect(page.getByText("示例 | 林间笔记", { exact: true }).first()).toBeVisible();

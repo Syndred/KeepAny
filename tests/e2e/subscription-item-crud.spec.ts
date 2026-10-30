@@ -1,8 +1,10 @@
+import { openProjectDetails } from "./helpers/project-details";
+import { openBackupPage } from "./helpers/backup-restore";
 import { mkdirSync } from "node:fs";
 import { expect, type Page, test } from "@playwright/test";
 import { selectChoice } from "./helpers/select-choice";
 
-const evidence = process.env.KEEPANY_EVIDENCE_DIR ?? "docs/evidence/2026-09-29";
+const evidence = process.env.KEEPANY_EVIDENCE_DIR ?? "test-results/evidence/2026-09-29";
 import { sourceModuleUrl } from "./helpers/source-module-url";
 const repositoryModuleUrl = sourceModuleUrl("packages/local-db/src/index.ts");
 
@@ -286,6 +288,7 @@ test("subscription and item shared CRUD, filters, image and actual backup restor
 			9_007_199_254_740_001,
 		);
 		const subscriptionBefore = await png(page, "#b83942");
+		await openProjectDetails(page);
 		await page.getByLabel("Add image").setInputFiles({
 			name: "subscription-before.png",
 			mimeType: "image/png",
@@ -405,6 +408,7 @@ test("subscription and item shared CRUD, filters, image and actual backup restor
 			tags: expect.arrayContaining([tag, longTag]),
 		});
 		const oldImage = await png(page, "#d43b45");
+		await openProjectDetails(page);
 		await page.getByLabel("Add image").setInputFiles({
 			name: "item-before.png",
 			mimeType: "image/png",
@@ -541,7 +545,7 @@ test("subscription and item shared CRUD, filters, image and actual backup restor
 		).toEqual([subscriptionCurrentFile.id]);
 		expect(before.every((asset) => !asset.deleted)).toBe(true);
 		await page.goto("/intake");
-		await page.locator("#backup-password").fill(password);
+		await openBackupPage(page); await page.locator("#backup-password").fill(password);
 		await page.getByRole("button", { name: "Create backup" }).click();
 		const downloadEvent = page.waitForEvent("download");
 		await page.getByRole("link", { name: "Save backup file" }).click();
@@ -560,7 +564,7 @@ test("subscription and item shared CRUD, filters, image and actual backup restor
 			await restored.goto("/assets/item");
 			await expect(restored.getByText(itemSaved)).toHaveCount(0);
 			await restored.goto("/intake");
-			await restored.locator("#backup-password").fill(password);
+			await openBackupPage(restored); await restored.locator("#backup-password").fill(password);
 			const restoreSection = restored.locator("details.intake-secondary").filter({ has: restored.locator("#restore-file") });
 			await expect(restoreSection).toBeVisible();
 			if ((await restoreSection.getAttribute("open")) === null)

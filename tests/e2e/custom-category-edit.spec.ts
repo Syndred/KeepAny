@@ -1,3 +1,4 @@
+import { openBackupPage } from "./helpers/backup-restore";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect, type Page, test } from "@playwright/test";
@@ -314,7 +315,7 @@ for (const locale of ["en", "zh-CN"] as const) {
 				}
 				const password = "category-local-backup-2026";
 				await page.goto("/intake");
-				await page.locator("#backup-password").fill(password);
+				await openBackupPage(page); await page.locator("#backup-password").fill(password);
 				await page
 					.getByRole("button", { name: text.backup, exact: true })
 					.click();
@@ -340,7 +341,7 @@ for (const locale of ["en", "zh-CN"] as const) {
 						locale,
 					);
 					await restored.goto("/intake");
-					await restored.locator("#backup-password").fill(password);
+					await openBackupPage(restored); await restored.locator("#backup-password").fill(password);
 					await restored
 						.locator("#restore-file")
 						.setInputFiles(backupPath as string);

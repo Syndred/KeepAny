@@ -5,7 +5,7 @@ import { resources } from "../../apps/web/src/i18n";
 import { openVaultAccess } from "./helpers/vault-access";
 import { closeCompactLoginDetails, openCompactLoginDetails } from "./helpers/compact-account";
 
-const evidence = resolve(process.env.KEEPANY_SINGLE_ENTRY_EVIDENCE ?? "docs/qa/2026-10-29/accounts-single-entry/independent-final");
+const evidence = resolve(process.env.KEEPANY_SINGLE_ENTRY_EVIDENCE ?? "test-results/qa/2026-10-29/accounts-single-entry/independent-final");
 mkdirSync(evidence, { recursive: true });
 const master = "SyntheticIndependentMaster2026!";
 const secret = "SyntheticIndependentSecret2026!";

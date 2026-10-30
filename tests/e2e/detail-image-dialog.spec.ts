@@ -1,7 +1,8 @@
+import { openProjectDetails } from "./helpers/project-details";
 import { mkdirSync } from "node:fs";
 import { expect, type Page, test } from "@playwright/test";
 
-const evidence = process.env.KEEPANY_EVIDENCE_DIR ?? "docs/evidence/2026-09-29";
+const evidence = process.env.KEEPANY_EVIDENCE_DIR ?? "test-results/evidence/2026-09-29";
 const repositoryModuleUrl = `/@fs${process.cwd()}/packages/local-db/src/index.ts`;
 
 async function openMaterials(page: Page) {
@@ -163,6 +164,7 @@ for (const language of ["en", "zh-CN"] as const) {
 				await expect(dialog).toBeHidden();
 				await expect(addImage).toBeFocused();
 				expect(await imageState(page)).toEqual({ attachments: [], files: 0 });
+				await openProjectDetails(page);
 				await images.getByLabel(labels.addImage, { exact: true }).setInputFiles({
 					name: "valid.png",
 					mimeType: "image/png",

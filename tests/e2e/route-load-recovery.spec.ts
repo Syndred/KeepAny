@@ -1,3 +1,4 @@
+import { openBackupPage } from "./helpers/backup-restore";
 import { createHash } from "node:crypto";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { basename, join } from "node:path";
@@ -208,7 +209,7 @@ async function exportedKdbx(page: Page, t: ReturnType<typeof visualCopy>, info: 
 }
 async function exportedBackup(page: Page, language: Language, info: TestInfo, name: string) {
 	await page.goto("/intake");
-	await page.locator("#backup-password").fill(backupPassword);
+	await openBackupPage(page); await page.locator("#backup-password").fill(backupPassword);
 	await page.getByRole("button", { name: copy(language).createBackup, exact: true }).click();
 	const downloading = page.waitForEvent("download");
 	await page.getByRole("link", { name: copy(language).saveBackup, exact: true }).click();

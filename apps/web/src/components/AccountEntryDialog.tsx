@@ -22,16 +22,16 @@ import { Select, SelectOption } from "./ui/select";
 import { Textarea } from "./ui/textarea";
 import "../account-entry.css";
 
-export function AccountEntryDialog({ onClose, asset, entryId, returnFocusTo, newLogin = false, linking = false }: { onClose: () => void; asset?: Asset; entryId?: string; newLogin?: boolean; linking?: boolean; returnFocusTo?: () => HTMLElement | null }) {
+export function AccountEntryDialog({ onClose, asset, entryId, returnFocusTo, newLogin = false, linking = false, initialName = "" }: { onClose: () => void; asset?: Asset; entryId?: string; newLogin?: boolean; linking?: boolean; initialName?: string; returnFocusTo?: () => HTMLElement | null }) {
 	const { t } = useTranslation();
 	const { data, notify } = useAppContext();
 	const { snapshot, session, generatePassword } = usePasswordVault();
 	const editing = Boolean(asset || entryId || newLogin);
 	const [originalEntry] = useState(() => entryId && session?.getSnapshot().status === "unlocked" ? session.readEntry(entryId) : null);
-	const [baseProfile] = useState<Asset>(() => asset ?? ({ ...newAsset("account"), category: "other", name: originalEntry?.title ?? "", username: originalEntry?.username ?? "", url: originalEntry?.url ?? "" }));
+	const [baseProfile] = useState<Asset>(() => asset ?? ({ ...newAsset("account"), category: "other", name: originalEntry?.title ?? initialName, username: originalEntry?.username ?? "", url: originalEntry?.url ?? "" }));
 	const [profile, setProfile] = useState(baseProfile);
 	const editProgress = useRef<AccountEditProgress>({ account: asset ?? null, accountChanged: false });
-	const [draft, setDraft] = useState<PasswordVaultEntryDraft | null>(() => newLogin ? { ...mergedAccountDraft(asset, null), username: "", usernameAliases: [], password: "", notes: "" } : mergedAccountDraft(asset, originalEntry));
+	const [draft, setDraft] = useState<PasswordVaultEntryDraft | null>(() => newLogin ? { ...mergedAccountDraft(asset, null), username: "", usernameAliases: [], password: "", notes: "" } : { ...mergedAccountDraft(asset, originalEntry), ...(!asset && !originalEntry ? { title: initialName } : {}) });
 	const [busy, setBusy] = useState(false);
 	const running = useRef(false);
 	const mounted = useRef(true);

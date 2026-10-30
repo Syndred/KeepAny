@@ -1,2 +1,0 @@
-$ vitest run --reporter=json --outputFile=/private/tmp/keepany-graph-navigation-unit.json
-JSON report written to /private/tmp/keepany-graph-navigation-unit.json

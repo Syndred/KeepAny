@@ -1,6 +1,7 @@
 import type { Asset, ProjectDomain } from "../../../packages/domain/src";
 export type CatalogScope = "managed" | "all" | "archived";
 export type CatalogSort = "updated" | "due";
+export function catalogScope(value: unknown): CatalogScope { return value === "all" || value === "archived" ? value : "managed"; }
 export type CatalogRow = { type: "asset"; asset: Asset } | { type: "domain"; project: Asset; domain: ProjectDomain; remainingDays: number | null };
 export function sortCatalogRows(rows: CatalogRow[], sort: CatalogSort): CatalogRow[] {
   const owner = (row: CatalogRow) => row.type === "asset" ? row.asset : row.project;

@@ -1,3 +1,4 @@
+import { openBackupPage } from "./helpers/backup-restore";
 import { openBackupRestorePanel } from "./helpers/backup-restore";
 import { prepareVaultWorkspace, revealPasswordEntries } from "./helpers/vault-access";
 import "fake-indexeddb/auto";
@@ -193,7 +194,7 @@ async function chooseRecovery(scope: Locator, targetId: string) {
 
 async function inspectState(page: Page, zh: boolean, filename: string) {
 	await page.goto("/intake");
-	await page.locator("#backup-password").fill(backupPassword);
+	await openBackupPage(page); await page.locator("#backup-password").fill(backupPassword);
 	await page
 		.getByRole("button", {
 			name: zh ? "创建备份" : "Create backup",
@@ -303,7 +304,7 @@ for (const { locale, width } of [
 		try {
 			await page.goto("/intake");
 			await openBackupRestorePanel(page);
-			await page.locator("#backup-password").fill(backupPassword);
+			await openBackupPage(page); await page.locator("#backup-password").fill(backupPassword);
 			await page.locator("#restore-file").setInputFiles({
 				name: "synthetic-link-recovery.ka1",
 				mimeType: "application/octet-stream",

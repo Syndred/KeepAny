@@ -14,11 +14,10 @@ for (const locale of ["zh-CN", "en-US"] as const) for (const width of [390, 1280
 		const zh = locale === "zh-CN";
 		try {
 			await page.goto("/");
-			await page.getByRole("link", { name: zh ? "用示例资料开始" : "Start with sample records", exact: true }).click();
-			const add = page.getByRole("button", { name: zh ? "加入示例资料" : "Add sample records", exact: true });
+			await page.getByRole("button", { name: zh ? "用示例资料开始" : "Start with sample records", exact: true }).click();
+			const add = page.getByRole("dialog").getByRole("button", { name: zh ? "加入示例资料" : "Add sample records", exact: true });
 			await add.click();
-			await expect(add).toBeDisabled();
-			await expect(page.getByRole("button", { name: zh ? "完整示例资料已加入" : "Full sample records already added", exact: true })).toBeDisabled();
+			await expect(page.getByRole("dialog")).toBeHidden();
 			await page.goto("/assets");
 			await expect(page.getByRole("heading", { name: zh ? "资产" : "Assets", exact: true })).toBeVisible();
 			await expect(page.locator(".workspace-asset-grid .asset-project-card").first()).toBeVisible();

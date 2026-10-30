@@ -10,7 +10,7 @@
 
 无需注册。简体中文和英语界面。本地核心采用 [AGPL-3.0-only](LICENSE) 开源；未来可选付费托管，当前官方云同步和付费服务未开放。
 
-![KeepAny 中文概览，使用虚构的项目、账号与订阅示例](docs/evidence/2026-10-27/keepany-return/onboarding/onboarding-zh-1280-sample.png)
+![KeepAny 中文概览，使用虚构的项目、账号与订阅示例](apps/public-site/assets/onboarding-zh.png)
 
 *真实应用截图，内容为示例资料。*
 
@@ -92,7 +92,7 @@ pnpm test
 pnpm build
 ```
 
-参与开发前请读 [贡献指南](CONTRIBUTING.md)。`apps/web` 是正式 React 应用，`packages/*` 包含领域模型、本地仓库、KDBX、AI 与 MCP；设计 HTML 仅为档案。
+参与开发前请读 [贡献指南](CONTRIBUTING.md)。`apps/web` 是正式 React 应用，`packages/*` 包含领域模型、本地仓库、KDBX、AI 与 MCP。
 
 ## 参与与许可证
 

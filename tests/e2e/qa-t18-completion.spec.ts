@@ -7,7 +7,7 @@ import { sourceModuleUrl } from "./helpers/source-module-url";
 
 const repositoryPath = sourceModuleUrl("packages/local-db/src/index.ts");
 const parserPath = sourceModuleUrl("apps/web/src/intake-url.ts");
-const evidence = "docs/qa/2026-10-27/evidence/T18-completion";
+const evidence = "test-results/qa/2026-10-27/evidence/T18-completion";
 let fixture: Server;
 let fixtureOrigin = "";
 let metadataGets = 0;

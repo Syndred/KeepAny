@@ -1,2 +1,0 @@
-
-QA_EVIDENCE {"producer":"gstack-qa-evidence","version":1,"action":"materialize","status":"complete","sha256":"c1011f73db599823a341297aef46199939237f8aad4972cf6349d633cddf0fea","annotationsSha256":"af4ad6d26d66fbc265c403c0c906e1a3ad91959cd1e066ff3790e54489a6d2f2","exitCode":0,"verdict":{"status":"pass","open":[]},"reportLinks":["[checkpoint 002](exploration-002.json)"],"next":"Include every reportLinks entry in the Markdown report, and report the overall status as pass; this verdict is final. Next, write the Markdown report beside evidence.json."}

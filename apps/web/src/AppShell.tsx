@@ -49,6 +49,7 @@ export function AppShell() {
 	const [search, setSearch] = useState(
 		() => sessionStorage.getItem("keepany-search") || "",
 	);
+	const [pendingAccountName, setPendingAccountName] = useState("");
 	const [searchOpen, setSearchOpen] = useState(false);
 	const topSearchPanelRef = useRef<HTMLDivElement>(null);
 	const topSearchInputRef = useRef<HTMLInputElement>(null);
@@ -61,6 +62,7 @@ export function AppShell() {
 	const pathname = useRouterState({ select: (s) => s.location.pathname });
 	const navigate = useNavigate();
 	useEffect(() => {
+		if (pathname !== "/accounts") setPendingAccountName("");
 		if (pathname) { setSearchOpen(false); setSearch(""); setMobile(false); }
 	}, [pathname]);
 	useEffect(() => {
@@ -115,8 +117,8 @@ export function AppShell() {
 		if (hash) requestSearchLocation(hash);
 	}
 	const context = useMemo(
-		() => ({ data, search, setSearch, notify: setToast, registerFeedbackTarget: setFeedbackTarget }),
-		[data, search],
+		() => ({ data, search, setSearch, notify: setToast, registerFeedbackTarget: setFeedbackTarget, pendingAccountName, setPendingAccountName }),
+		[data, search, pendingAccountName],
 	);
 	const openTasks = data.tasks.filter((x) => !x.done && !x.deleted).length;
 	const navigation: SortableNavItem[] = [
@@ -305,7 +307,7 @@ export function AppShell() {
 						<div className="top-actions">
 							<Link to="/tasks" className="top-icon-button" aria-label={t("taskReminders")}><Bell size={17}/>{openTasks > 0 && <i aria-hidden="true"/>}</Link>
 							<DropdownMenu><DropdownMenuTrigger render={<Button className="top-icon-button" variant="ghost" aria-label={t("assistantMenu")} />}><Sparkles size={17}/></DropdownMenuTrigger><DropdownMenuContent align="end"><DropdownMenuItem onClick={() => setAi(true)}>{t("settingsAskAssistant")}</DropdownMenuItem><DropdownMenuItem render={<Link to="/intake" hash="ai" />}>{t("aiCaptureTab")}</DropdownMenuItem><DropdownMenuItem render={<Link to="/change-impact" />}>{t("checkChangeImpact")}</DropdownMenuItem><DropdownMenuItem render={<Link to="/assistant-access" />}>{t("settingsAssistantAccess")}</DropdownMenuItem></DropdownMenuContent></DropdownMenu>
-                           <DropdownMenu><DropdownMenuTrigger render={<Button className="top-icon-button" variant="ghost" aria-label={t("newRecord")} />}><Plus size={18}/></DropdownMenuTrigger><DropdownMenuContent align="end">
+                           <DropdownMenu><DropdownMenuTrigger render={<Button className="top-icon-button" variant="ghost" aria-label={t("globalAddRecord")} />}><Plus size={18}/></DropdownMenuTrigger><DropdownMenuContent align="end">
                             <DropdownMenuItem render={<Link to="/accounts" hash="new-account" />}>{t("accountsWorkspace")}</DropdownMenuItem>
                             {(["project", "item", "subscription"] as const).map(kind => <DropdownMenuItem key={kind} render={<Link to="/assets/$kind" params={{ kind }} hash="new" />}>{t(kind)}</DropdownMenuItem>)}
                             <DropdownMenuItem render={<Link to="/intake" />}>{t("intake")}</DropdownMenuItem>

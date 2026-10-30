@@ -1,8 +1,9 @@
+import { openBackupPage } from "./helpers/backup-restore";
 import { mkdirSync, readFileSync } from "node:fs";
 import { expect, type Page, test } from "@playwright/test";
 import { selectChoice } from "./helpers/select-choice";
 
-const evidence = process.env.KEEPANY_EVIDENCE_DIR ?? "docs/evidence/2026-09-29";
+const evidence = process.env.KEEPANY_EVIDENCE_DIR ?? "test-results/evidence/2026-09-29";
 import { sourceModuleUrl } from "./helpers/source-module-url";
 const repositoryModuleUrl = sourceModuleUrl("packages/local-db/src/index.ts");
 
@@ -174,7 +175,7 @@ test("item loan, return, maintenance, reminder and task history survive trash an
 		await captureWidths(page, "en", "History");
 
 		await page.goto("/intake");
-		await page.locator("#backup-password").fill(password);
+		await openBackupPage(page); await page.locator("#backup-password").fill(password);
 		await page.getByRole("button", { name: "Create backup" }).click();
 		const downloadEvent = page.waitForEvent("download");
 		await page.getByRole("link", { name: "Save backup file" }).click();
@@ -193,7 +194,7 @@ test("item loan, return, maintenance, reminder and task history survive trash an
 			await expect(restored.getByText(name)).toHaveCount(0);
 			await setLanguage(restored, "zh-CN");
 			await restored.goto("/intake");
-			await restored.locator("#backup-password").fill(password);
+			await openBackupPage(restored); await restored.locator("#backup-password").fill(password);
 			await restored.locator("#restore-file").setInputFiles(backupPath);
 			await restored.getByRole("button", { name: "预览", exact: true }).first().click();
 			await restored.getByRole("button", { name: /确认 ·/ }).click();
@@ -302,7 +303,7 @@ test("item actions use the local calendar day across time zones and an open page
 				["maintenance", "2026-09-20"],
 			].sort((left, right) => `${left[0]}:${left[1]}`.localeCompare(`${right[0]}:${right[1]}`)));
 			await page.goto("/intake");
-			await page.locator("#backup-password").fill(password);
+			await openBackupPage(page); await page.locator("#backup-password").fill(password);
 			await page.getByRole("button", { name: "Create backup" }).click();
 			const downloadEvent = page.waitForEvent("download");
 			await page.getByRole("link", { name: "Save backup file" }).click();
@@ -315,7 +316,7 @@ test("item actions use the local calendar day across time zones and an open page
 				await restored.goto("/assets/item");
 				await expect(restored.getByText(name)).toHaveCount(0);
 				await restored.goto("/intake");
-				await restored.locator("#backup-password").fill(password);
+				await openBackupPage(restored); await restored.locator("#backup-password").fill(password);
 				await restored.locator("#restore-file").setInputFiles(backupPath);
 				await restored.getByRole("button", { name: "Preview", exact: true }).first().click();
 				await restored.getByRole("button", { name: /Confirm ·/ }).click();

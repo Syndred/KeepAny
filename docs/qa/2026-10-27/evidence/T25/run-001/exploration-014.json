@@ -1,6 +1,0 @@
-{
-  "observationCommand": "bun /Users/syndred/.codex/toolchains/gstack/bin/gstack-qa-deadline run docs/qa/2026-10-27/evidence/T25/run-001/deadline.json -- /Users/syndred/.codex/toolchains/gstack/browse/dist/browse click @e9",
-  "observed": "Clicked @e9 → now at http://127.0.0.1:4205/assets/vault#vault-references\n",
-  "hypothesis": "取消后弹窗已关闭，刷新确认没有未保存引用落库。",
-  "nextCommand": "bun /Users/syndred/.codex/toolchains/gstack/bin/gstack-qa-deadline run docs/qa/2026-10-27/evidence/T25/run-001/deadline.json -- /Users/syndred/.codex/toolchains/gstack/browse/dist/browse reload"
-}

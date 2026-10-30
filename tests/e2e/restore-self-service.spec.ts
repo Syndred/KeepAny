@@ -1,3 +1,4 @@
+import { openBackupPage } from "./helpers/backup-restore";
 import { readFileSync } from "node:fs";
 import { expect, type BrowserContext, type Page, test } from "@playwright/test";
 import type { Asset } from "../../packages/domain/src";
@@ -48,7 +49,7 @@ async function editAccount(page: Page, copy: Copy, name: string, notes: string, 
 
 async function downloadAndInspect(page: Page, copy: Copy, filename: string): Promise<Archive> {
 	await page.goto("/intake");
-	await page.locator("#backup-password").fill(password);
+	await openBackupPage(page); await page.locator("#backup-password").fill(password);
 	await page.getByRole("button", { name: copy.backup, exact: true }).click();
 	const link = page.getByRole("link", { name: copy.download, exact: true });
 	await expect(link).toBeVisible();
@@ -66,7 +67,7 @@ async function downloadAndInspect(page: Page, copy: Copy, filename: string): Pro
 
 async function prepareRestore(page: Page, copy: Copy, archivePath: string, navigate = true) {
 	if (navigate) await page.goto("/intake");
-	await page.locator("#backup-password").fill(password);
+	await openBackupPage(page); await page.locator("#backup-password").fill(password);
 	await page.locator("#restore-file").setInputFiles(archivePath);
 	await page.getByRole("button", { name: copy.preview, exact: true }).first().click();
 	await expect(page.getByRole("button", { name: copy.confirm })).toBeVisible();

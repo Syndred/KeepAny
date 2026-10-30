@@ -19,7 +19,7 @@ For security issues, follow [SECURITY.md](SECURITY.md). Do not post exploit deta
 
 ## Development setup / 开发环境
 
-Read [README](README.md), [product boundaries](docs/00-产品范围与开放边界.md), the latest [handoff](docs/08-项目进度交接.md), and the relevant [acceptance criteria](docs/06-开发计划与验收清单.md). Check `git status` before syncing or editing; preserve local changes. Maintainers should fetch the remote and fast-forward only when safe.
+Read [README](README.md), [product boundaries](docs/00-产品范围与开放边界.md), the latest [handoff](docs/08-项目进度交接.md), and the relevant [acceptance criteria](docs/开发与验证.md). Check `git status` before syncing or editing; preserve local changes. Maintainers should fetch the remote and fast-forward only when safe.
 
 Use Node.js 22+ and the pnpm version in `package.json`:
 

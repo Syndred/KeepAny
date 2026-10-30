@@ -1,3 +1,4 @@
+import { confirmSampleLibrary } from "./helpers/sample-library";
 import { writeFileSync } from "node:fs";
 import { expect, test } from "@playwright/test";
 import { resources } from "../../apps/web/src/i18n";
@@ -33,6 +34,7 @@ for (const locale of ["zh-CN", "en"] as const)
 				await page
 					.getByRole("button", { name: t("loadSample"), exact: true })
 					.click();
+await confirmSampleLibrary(page);
 				await expect(
 					page.getByRole("button", {
 						name: t("sampleLibraryPresent"),

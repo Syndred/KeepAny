@@ -1,9 +1,0 @@
-{
-  "verifiedHead": "595b82d066483b2c4de75298492a6c7a7faa4845",
-  "remoteBranch": "refs/heads/main",
-  "method": "git push then git ls-remote",
-  "incomingBeforePush": 0,
-  "liveEntry": "index-CimHBlrx.js",
-  "internetDeployment": false,
-  "ciChecked": false
-}

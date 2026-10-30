@@ -1,3 +1,4 @@
+import { openBackupPage } from "./helpers/backup-restore";
 import { openBackupRestorePanel } from "./helpers/backup-restore";
 import { prepareVaultWorkspace } from "./helpers/vault-access";
 import "fake-indexeddb/auto";
@@ -198,7 +199,7 @@ async function openBackupRestore(page: Page) {
 
 async function downloadState(page: Page, zh: boolean, name: string) {
 	await page.goto("/intake");
-	await page.locator("#backup-password").fill(backupPassword);
+	await openBackupPage(page); await page.locator("#backup-password").fill(backupPassword);
 	await page
 		.getByRole("button", {
 			name: zh ? "创建备份" : "Create backup",
@@ -287,7 +288,7 @@ for (const { locale, width } of [
 		try {
 			await page.goto("/intake");
 			await openBackupRestore(page);
-			await page.locator("#backup-password").fill(backupPassword);
+			await openBackupPage(page); await page.locator("#backup-password").fill(backupPassword);
 			await page.locator("#restore-file").setInputFiles({
 				name: "synthetic-legacy-account-upgrade.ka1",
 				mimeType: "application/octet-stream",

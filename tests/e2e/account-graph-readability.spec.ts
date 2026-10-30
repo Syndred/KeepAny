@@ -1,3 +1,5 @@
+import { openProjectDetails } from "./helpers/project-details";
+import { openBackupPage } from "./helpers/backup-restore";
 import {
 	appendFileSync,
 	mkdirSync,
@@ -295,6 +297,7 @@ async function addScenarioConnection(
 	text: Copy,
 ) {
 	await page.goto(detailsHref(hrefs, connection.from));
+	await openProjectDetails(page);
 	await page
 		.getByRole("button", { name: text.addConnection, exact: true })
 		.click();
@@ -389,6 +392,7 @@ async function rejectDuplicate(
 	text: Copy,
 ) {
 	await page.goto(detailsHref(hrefs, connection.from));
+	await openProjectDetails(page);
 	await page
 		.getByRole("button", { name: text.addConnection, exact: true })
 		.click();
@@ -504,7 +508,7 @@ async function expectBackupConnections(
 	const password = "synthetic-graph-readability-backup";
 	recordGraphWork("backup-start", { expectedRelations: expected.length });
 	await page.goto("/intake");
-	await page.locator("#backup-password").fill(password);
+	await openBackupPage(page); await page.locator("#backup-password").fill(password);
 	await page.getByRole("button", { name: text.backup, exact: true }).click();
 	const link = page.getByRole("link", { name: text.download, exact: true });
 	await expect(link).toBeVisible();

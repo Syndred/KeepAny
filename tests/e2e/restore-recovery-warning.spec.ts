@@ -1,10 +1,11 @@
+import { openBackupPage } from "./helpers/backup-restore";
 import { mkdirSync } from 'node:fs';
 import { expect, test } from '@playwright/test';
 import { selectChoice } from "./helpers/select-choice";
 
 import { sourceModuleUrl } from "./helpers/source-module-url";
 const modulePath = sourceModuleUrl("packages/local-db/src/index.ts");
-const evidence = process.env.KEEPANY_EVIDENCE_DIR ?? 'docs/evidence/2026-09-29';
+const evidence = process.env.KEEPANY_EVIDENCE_DIR ?? 'test-results/evidence/2026-09-29';
 
 test('a partial image restore keeps local data readable and warns after refresh in both languages', async ({ browser }) => {
   test.setTimeout(90_000);
@@ -25,7 +26,7 @@ test('a partial image restore keeps local data readable and warns after refresh 
     await page.getByRole('dialog').getByRole('button', { name: 'Save' }).click();
     await expect(page.locator('main.page .list-row').filter({ hasText: localName })).toBeVisible();
     await page.goto('/intake');
-    await page.locator('#backup-password').fill(password);
+    await openBackupPage(page); await page.locator('#backup-password').fill(password);
     await page.getByRole('button', { name: 'Create backup' }).click();
     const event = page.waitForEvent('download');
     await page.getByRole('link', { name: 'Save backup file' }).click();
@@ -75,7 +76,7 @@ test('a partial image restore keeps local data readable and warns after refresh 
     await expect(page.locator('img.asset-image')).toHaveJSProperty('naturalWidth', 8);
 
     await page.goto('/intake');
-    await page.locator('#backup-password').fill(password);
+    await openBackupPage(page); await page.locator('#backup-password').fill(password);
     await page.locator('#restore-file').setInputFiles(path);
     await page.getByRole('button', { name: 'Preview', exact: true }).first().click();
     await page.getByRole('button', { name: /Confirm ·/ }).click();

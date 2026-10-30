@@ -1,9 +1,0 @@
-
- RUN  v5.0.2 /Users/syndred/Desktop/projects/KeepAny
-
-
- Test Files  1 passed (1)
-      Tests  9 passed (9)
-   Start at  21:31:55
-   Duration  178ms (import 58%, transform 31%, tests 9%, worker 2%)
-

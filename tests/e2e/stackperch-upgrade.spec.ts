@@ -1,3 +1,5 @@
+import { openProjectDetails } from "./helpers/project-details";
+import { openBackupPage } from "./helpers/backup-restore";
 import { execFileSync, spawnSync, type ChildProcess } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { cpSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
@@ -210,6 +212,7 @@ test('published assets, vault fields, import draft and backup survive the curren
       return canvas.toDataURL('image/png').split(',')[1];
     });
     const imageBytes = Buffer.from(imageBase64, 'base64');
+    await openProjectDetails(page);
     await page.getByLabel('Add image').setInputFiles({ name: 'synthetic-upgrade.png', mimeType: 'image/png', buffer: imageBytes });
     await page.getByRole('dialog').getByRole('button', { name: 'Confirm', exact: true }).click();
     expect(sha256(Buffer.from(await originalImage(page)))).toBe(sha256(imageBytes));
@@ -258,7 +261,7 @@ test('published assets, vault fields, import draft and backup survive the curren
 
     stage = 'download the published UI backup before replacing the package';
     await page.goto(`${origin}/intake`);
-    await page.locator('#backup-password').fill(backupPassword);
+    await openBackupPage(page); await page.locator('#backup-password').fill(backupPassword);
     await page.getByRole('button', { name: 'Create backup', exact: true }).click();
     const backupDownload = page.waitForEvent('download');
     await page.getByRole('link', { name: 'Save backup file', exact: true }).click();
@@ -325,7 +328,7 @@ test('published assets, vault fields, import draft and backup survive the curren
     await expect(restored.locator('#password-vault-master')).toBeVisible();
     await restored.goto(`${origin}/intake`);
     await openBackupRestorePanel(restored);
-    await restored.locator('#backup-password').fill(backupPassword);
+    await openBackupPage(restored); await restored.locator('#backup-password').fill(backupPassword);
     await restored.locator('#restore-file').setInputFiles(oldBackup);
     await restored.getByRole('button', { name: 'Preview', exact: true }).first().click();
     await restored.getByRole('button', { name: /Confirm ·/ }).click();

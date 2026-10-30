@@ -1,3 +1,4 @@
+import { openBackupPage } from "./helpers/backup-restore";
 import { createHash } from "node:crypto";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
@@ -40,7 +41,7 @@ for (const language of ["zh-CN", "en"] as const) for (const size of sizes) {
   }
   async function metadata(name: string) {
    await page.goto("/intake");
-   await page.locator("#backup-password").fill("Synthetic FC24 backup inspection 2026!");
+   await openBackupPage(page); await page.locator("#backup-password").fill("Synthetic FC24 backup inspection 2026!");
    await page.getByRole("button", { name: language === "zh-CN" ? "创建备份" : "Create backup", exact: true }).click();
    const waiting = page.waitForEvent("download");
    await page.getByRole("link", { name: language === "zh-CN" ? "保存备份文件" : "Save backup file", exact: true }).click();

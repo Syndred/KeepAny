@@ -1,9 +1,0 @@
-{
-  "filesPassed": 85,
-  "testsPassed": 792,
-  "skipped": 0,
-  "realPostgreSQL": true,
-  "durationSeconds": 42.87,
-  "sourceScope": "brand runtime, before fixture-only changes",
-  "additionalMcpTestsPassed": 41
-}

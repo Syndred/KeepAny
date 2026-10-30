@@ -1,7 +1,0 @@
-
-Running 2 tests using 1 worker
-
-  ✓  1 tests/e2e/account-graph-readability.spec.ts:1109:3 › en-US 390px multi-source identities preserve connection purposes across reload and edits (31.9s)
-  ✓  2 tests/e2e/account-graph-readability.spec.ts:1109:3 › en-US 390px multi-source identities preserve connection purposes across reload and edits (33.0s)
-
-  2 passed (1.1m)

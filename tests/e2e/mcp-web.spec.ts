@@ -10,7 +10,7 @@ import { assertPrivateTestFile, privateTestDirectory } from '../../packages/mcp/
 
 const repo = resolve('.');
 const packagedExecutable = process.env.KEEPANY_MCP_EXECUTABLE;
-const evidence = process.env.KEEPANY_MCP_EVIDENCE_DIR ?? join(repo, 'docs/evidence/2026-09-29', packagedExecutable ? 'mcp-packaged' : '');
+const evidence = process.env.KEEPANY_MCP_EVIDENCE_DIR ?? join(repo, 'test-results/evidence/2026-09-29', packagedExecutable ? 'mcp-packaged' : '');
 const exists = (path: string) => access(path).then(() => true, () => false);
 
 async function wrongHostStatus(url: string, origin: string, pairingSecret: string): Promise<number> {

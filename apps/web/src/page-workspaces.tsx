@@ -19,7 +19,7 @@ import { useWorkspaceSummary } from "./use-workspace-summary";
 import { date, Empty, liveAssets, money, PageTitle, useAppContext } from "./view-shared";
 import "./workspaces.css";
 import { CatalogDomainCard } from "./components/CatalogDomainCard";
-import { catalogAssets, sortCatalogRows, isManagedAsset, type CatalogScope, type CatalogSort } from "./catalog-view";
+import { catalogAssets, catalogScope, sortCatalogRows, isManagedAsset, type CatalogScope, type CatalogSort } from "./catalog-view";
 import { readWorkspaceReturn, workspaceReturnKey } from "./workspace-return";
 import { localRepository } from "../../../packages/local-db/src";
 import { CompactAccountCard } from "./components/CompactAccountCard";
@@ -41,15 +41,16 @@ const AccountEntryDialog = lazy(() => import("./components/AccountEntryDialog").
 const PrivateAccountDetail = lazy(() => import("./components/PrivateAccountDetail").then(module => ({ default: module.PrivateAccountDetail })));
 
 export function AccountsWorkspace() {
-	const { data, search, notify, registerFeedbackTarget } = useAppContext();
+	const { data, search, notify, registerFeedbackTarget, pendingAccountName, setPendingAccountName } = useAppContext();
 	const { t } = useTranslation();
 	const { snapshot, session } = usePasswordVault();
 	const hash = useRouterState({ select: (state) => state.location.hash });
-	const [editAccount, setEditAccount] = useState<{ asset?: Asset; entryId?: string; triggerId?: string; newLogin?: boolean } | null>(null);
+	const [editAccount, setEditAccount] = useState<{ asset?: Asset; entryId?: string; triggerId?: string; newLogin?: boolean; initialName?: string } | null>(null);
     const [deleteAccount, setDeleteAccount] = useState<{ asset: Asset; vaultRevision: string } | null>(null);
     const [deleteBusy, setDeleteBusy] = useState(false), [deleteError, setDeleteError] = useState("");
     const navigate = useNavigate();
-    useEffect(() => { if (hash === "new-account" && snapshot.status === "unlocked") { setEditAccount({}); void navigate({ to: "/accounts", hash: "", replace: true }); } }, [hash, snapshot.status, navigate]);
+    const creationConsumed = useRef(false);
+    useEffect(() => { if (hash !== "new-account") { creationConsumed.current = false; return; } if (snapshot.status === "unlocked" && !creationConsumed.current) { creationConsumed.current = true; setEditAccount({ initialName: pendingAccountName ?? "" }); setPendingAccountName?.(""); void navigate({ to: "/accounts", hash: "", replace: true }); } }, [hash, snapshot.status, navigate, pendingAccountName, setPendingAccountName]);
     useEffect(() => { if (snapshot.status !== "unlocked") { setEditAccount(null); setDeleteAccount(null); setDeleteError(""); } }, [snapshot.status]);
 	const [filters, setFilters] = useState<AccountListFilters>(() => ({ search: sessionStorage.getItem("keepany-account-list-search") ?? "", category: "", tag: "" }));
 	const sampleIds = sampleLibraryAssetIds(data.preferences.find((preference) => preference.id === SAMPLE_LIBRARY_ID)?.value);
@@ -98,7 +99,7 @@ function AssetCatalog({ domainsOnly }: { domainsOnly: boolean }) {
 	const summary = useWorkspaceSummary();
  const [assetView, setAssetView] = useAssetView();
 	const queryKey = `keepany-catalog-query-${domainsOnly ? "domains" : "all"}`;
-	const [scope, setScope] = useState<CatalogScope>(() => (sessionStorage.getItem("keepany-catalog-scope") as CatalogScope) || "managed");
+	const [scope, setScope] = useState<CatalogScope>(() => { try { return catalogScope(sessionStorage.getItem("keepany-catalog-scope")); } catch { return "managed"; } });
  const [sort, setSort] = useState<CatalogSort>(() => sessionStorage.getItem("keepany-catalog-sort") === "due" ? "due" : "updated");
  const [query, setQuery] = useState(() => sessionStorage.getItem(queryKey) ?? "");
 	const restoredScroll = useRef(false);

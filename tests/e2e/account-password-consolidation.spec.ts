@@ -1,3 +1,4 @@
+import { confirmSampleLibrary } from "./helpers/sample-library";
 import { readFileSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { expect, test, type Page } from "@playwright/test";
@@ -35,6 +36,7 @@ for (const language of ["zh-CN", "en"] as const) for (const width of [390, 1280]
 		try {
 			await page.goto("/settings#advanced-settings");
 			await page.getByRole("button", { name: t("loadSample"), exact: true }).click();
+await confirmSampleLibrary(page);
 			await expect(page.getByRole("button", { name: t("sampleLibraryPresent"), exact: true })).toBeDisabled();
 			await page.goto("/accounts");
 			await openAccess(page);

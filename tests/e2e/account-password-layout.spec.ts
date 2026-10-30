@@ -1,3 +1,5 @@
+import { confirmSampleLibrary } from "./helpers/sample-library";
+import { openBackupPage } from "./helpers/backup-restore";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { join } from "node:path";
@@ -40,6 +42,7 @@ for (const language of ["zh-CN", "en"] as const) for (const width of [1920, 1280
 			const candidate = { origin: new URL(page.url()).origin, indexSha256: createHash("sha256").update(indexHtml).digest("hex"), portable: Boolean(process.env.KEEPANY_PREVIEW_DIRECTORY || process.env.KEEPANY_PREVIEW_ARCHIVE) };
 			await page.goto("/settings#advanced-settings");
 			await page.getByRole("button", { name: t("loadSample"), exact: true }).click();
+await confirmSampleLibrary(page);
 			await expect(page.getByRole("button", { name: t("sampleLibraryPresent"), exact: true })).toBeDisabled();
 			await page.goto("/accounts");
 			await page.locator(".password-vault-header").getByRole("button", { name: t("add"), exact: true }).click();
@@ -123,7 +126,7 @@ for (const language of ["zh-CN", "en"] as const) for (const width of [1920, 1280
 			expect(await compactEntryIds(page)).toEqual(savedEntryIds);
 			details = await openCompactLoginDetails(page, account, t); await expect(details).toContainText("Demo | Phone service login"); await expect(details).toContainText(phone); await closeCompactLoginDetails(page, t);
 			await account.locator(".compact-account-switch").click(); details = await openCompactLoginDetails(page, account, t); await expect(details).toContainText("Second passwordless phone login"); await closeCompactLoginDetails(page, t);
-			if (process.env.KEEPANY_LAYOUT_FIXTURE && language === "zh-CN" && width === 1920) { await page.goto("/intake"); await page.locator("#backup-password").fill(master); await page.getByRole("button", { name: t("backup"), exact: true }).click(); const download = page.waitForEvent("download"); await page.getByRole("link", { name: t("saveBackupFile"), exact: true }).click(); await (await download).saveAs(process.env.KEEPANY_LAYOUT_FIXTURE); }
+			if (process.env.KEEPANY_LAYOUT_FIXTURE && language === "zh-CN" && width === 1920) { await page.goto("/intake"); await openBackupPage(page); await page.locator("#backup-password").fill(master); await page.getByRole("button", { name: t("backup"), exact: true }).click(); const download = page.waitForEvent("download"); await page.getByRole("link", { name: t("saveBackupFile"), exact: true }).click(); await (await download).saveAs(process.env.KEEPANY_LAYOUT_FIXTURE); }
 			expect(errors).toEqual([]);
 			writeFileSync(join(evidence, `result-${language}-${width}.json`), JSON.stringify({ ids: ["AL01", "AL02", "AL10"], layoutMode: "compact-card-with-details-dialog", language, width, candidate, status: "passed", errors, geometry, notes, maskLines, usernameLines, originalAccountHref, savedEntryIds, cancelAndReloadPreserved: true, baselineCandidates, visual: "requires-human-review" }, null, 2));
 		} finally { await context.close(); }

@@ -1,3 +1,4 @@
+import { openProjectDetails } from "./helpers/project-details";
 import { mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { expect, test, type Browser, type Locator, type Page } from "@playwright/test";
@@ -73,6 +74,7 @@ async function addAccount<T extends Account>(page: Page, copy: Copy, account: T)
 }
 
 async function addRelation(page: Page, copy: Copy, target: string, purpose: string, source: string, verifiedAt = "2026-10-22") {
+	await openProjectDetails(page);
 	await page.locator("#account-relations").getByRole("button", { name: copy.addRelation, exact: true }).click();
 	const dialog = page.getByRole("dialog");
 	await expect(dialog.getByRole("button", { name: copy.save, exact: true })).toBeDisabled();
@@ -356,6 +358,7 @@ for (const locale of variants) for (const width of [390, 1536]) {
 			await expect(dialog.locator("#tags")).toHaveValue(service.tags);
 			await expect(dialog.locator("#longDescription")).toHaveCount(0);
 			await dialog.getByRole("button", { name: copy.cancel, exact: true }).click();
+			await openProjectDetails(page);
 			await page.locator("#account-relations").getByRole("button", { name: copy.addRelation, exact: true }).click();
 			await page.keyboard.press("Escape");
 			await expect(dialog).toBeHidden();

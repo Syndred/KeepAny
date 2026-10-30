@@ -1,6 +1,0 @@
-{
-  "observationCommand": "bun /Users/syndred/.codex/skills/gstack/bin/gstack-qa-deadline run docs/qa/2026-10-27/evidence/T01/gstack/deadline.json -- /Users/syndred/.codex/skills/gstack/browse/dist/browse screenshot docs/qa/2026-10-27/evidence/T01/gstack/issue-T01-001-before.png",
-  "observed": "Screenshot saved: docs/qa/2026-10-27/evidence/T01/gstack/issue-T01-001-before.png",
-  "hypothesis": "Inspect the selected navigation contract and preserve an independently reproducible browser observation.",
-  "nextCommand": "bun /Users/syndred/.codex/skills/gstack/bin/gstack-qa-deadline run docs/qa/2026-10-27/evidence/T01/gstack/deadline.json -- /Users/syndred/.codex/skills/gstack/browse/dist/browse goto http://127.0.0.1:4201/assets/account"
-}

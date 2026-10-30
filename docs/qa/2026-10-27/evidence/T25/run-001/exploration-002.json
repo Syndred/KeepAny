@@ -1,6 +1,0 @@
-{
-  "observationCommand": "bun /Users/syndred/.codex/toolchains/gstack/bin/gstack-qa-deadline run docs/qa/2026-10-27/evidence/T25/run-001/deadline.json -- /Users/syndred/.codex/toolchains/gstack/browse/dist/browse goto http://127.0.0.1:4205/accounts",
-  "observed": "Navigated to http://127.0.0.1:4205/accounts (200)\n",
-  "hypothesis": "隔离账号入口已加载，读取交互快照寻找外部密码引用入口和当前状态。",
-  "nextCommand": "bun /Users/syndred/.codex/toolchains/gstack/bin/gstack-qa-deadline run docs/qa/2026-10-27/evidence/T25/run-001/deadline.json -- /Users/syndred/.codex/toolchains/gstack/browse/dist/browse snapshot -i"
-}

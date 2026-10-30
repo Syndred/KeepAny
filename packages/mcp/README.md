@@ -14,7 +14,7 @@
 
 ## 当前接线状态
 
-`RxdbMcpAssetStore` 可在**持有 Web 应用同一个 IndexedDB 上下文**的代码中操作现有 RxDB 资产集。独立 Node stdio 进程不能直接打开浏览器 IndexedDB。`bridge.ts` 提供只监听数值 loopback 的单会话 RPC，`browser-bridge.ts` 提供同源仓库执行器。配对须由可信启动器把随机密钥交给 Web 应用，再由用户对作用域进行一次批准。桥只发送获批可读字段的投影；写入在浏览器端合并原记录并按版本比较。威胁边界见 [ADR 0002](../../docs/adr/0002-mcp-bridge.md)。
+`RxdbMcpAssetStore` 可在**持有 Web 应用同一个 IndexedDB 上下文**的代码中操作现有 RxDB 资产集。独立 Node stdio 进程不能直接打开浏览器 IndexedDB。`bridge.ts` 提供只监听数值 loopback 的单会话 RPC，`browser-bridge.ts` 提供同源仓库执行器。配对须由可信启动器把随机密钥交给 Web 应用，再由用户对作用域进行一次批准。桥只发送获批可读字段的投影；写入在浏览器端合并原记录并按版本比较。威胁边界见 当前代码、锁文件与下列测试。
 
 开发版正式 Web 设置页、逐次写批准和独立 [本机 stdio 启动器](../../apps/mcp-launcher/README.md) 已接通同一 RxDB 资料库；用户须自行配置 MCP 客户端并选择一次性配对文件。真实官方 SDK 子进程与隔离 Chromium 已完成本机联调。**普通用户入口尚未发布**：正式跨平台打包、生产 HTTPS/PWA 回环、安全审计和真实设备仍待验收。不得提供“从备份复制出第二份可写资产库”的启动脚本，这会造成两个状态源。同一操作系统账户下可读取进程内存或浏览器资料的恶意进程不受本桥隔离。
 

@@ -5,7 +5,7 @@ const repositoryUrl = `/@fs${process.cwd()}/packages/local-db/src/index.ts`;
 const domainUrl = `/@fs${process.cwd()}/packages/domain/src/index.ts`;
 const reminderDomainUrl = `/@fs${process.cwd()}/packages/domain/src/task-reminder.ts`;
 const remindersUrl = `/@fs${process.cwd()}/apps/web/src/reminders.ts`;
-const evidence = process.env.KEEPANY_EVIDENCE_DIR ?? "docs/evidence/2026-10-01";
+const evidence = process.env.KEEPANY_EVIDENCE_DIR ?? "test-results/evidence/2026-10-01";
 type CapturedNotification = { title: string; body: string; tag: string };
 type MockWindow = Window & { __captureMockReminder?: (value: CapturedNotification) => Promise<void> };
 

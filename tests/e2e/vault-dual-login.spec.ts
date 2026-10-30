@@ -1,3 +1,4 @@
+import { openProjectDetails } from "./helpers/project-details";
 import { mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { expect, test } from "@playwright/test";
@@ -151,6 +152,7 @@ for (const locale of ["zh-CN", "en"] as const)
 				const initial = await graph();
 				await shot("both-connections");
 
+				await openProjectDetails(page);
 				await page
 					.getByRole("button", {
 						name: zh ? "添加关联" : "Add connection",

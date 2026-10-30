@@ -1,3 +1,4 @@
+import { openBackupPage } from "./helpers/backup-restore";
 import { readFileSync } from "node:fs";
 import { expect, test, type Page } from "@playwright/test";
 import { strFromU8, unzipSync } from "fflate";
@@ -26,7 +27,7 @@ async function addAsset(page: Page, kind: Kind, name: string, zh: boolean) {
 async function download(page: Page, zh: boolean) {
 	const text = copy(zh);
 	await page.goto("/intake");
-	await page.locator("#backup-password").fill(password);
+	await openBackupPage(page); await page.locator("#backup-password").fill(password);
 	await page.getByRole("button", { name: text.backup, exact: true }).click();
 	const link = page.getByRole("link", { name: text.download, exact: true });
 	await expect(link).toBeVisible();
@@ -124,7 +125,7 @@ for (const locale of ["en-US", "zh-CN"]) {
 				await restored.goto("/assets/project");
 				await expect(restored.locator("main .asset-list-content a")).toHaveCount(0);
 				await restored.goto("/intake");
-				await restored.locator("#backup-password").fill(password);
+				await openBackupPage(restored); await restored.locator("#backup-password").fill(password);
 				await restored.locator("#restore-file").setInputFiles(after.path);
 				await restored.getByRole("button", { name: text.preview, exact: true }).first().click();
 				await restored.getByRole("button", { name: text.confirm }).click();

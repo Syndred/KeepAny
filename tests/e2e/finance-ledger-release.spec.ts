@@ -1,3 +1,4 @@
+import { openBackupPage } from "./helpers/backup-restore";
 import { readFileSync } from "node:fs";
 import { type BrowserContext, expect, type Page, test } from "@playwright/test";
 import { strFromU8, unzipSync } from "fflate";
@@ -278,7 +279,7 @@ async function assertSummaryAndLinks(
 
 async function downloadArchive(page: Page, copy: Copy) {
 	await page.goto("/intake");
-	await page.locator("#backup-password").fill(password);
+	await openBackupPage(page); await page.locator("#backup-password").fill(password);
 	await page.getByRole("button", { name: copy.backup, exact: true }).click();
 	const link = page.getByRole("link", { name: copy.download, exact: true });
 	await expect(link).toBeVisible();
@@ -293,7 +294,7 @@ async function downloadArchive(page: Page, copy: Copy) {
 
 async function restoreArchive(page: Page, copy: Copy, path: string) {
 	await page.goto("/intake");
-	await page.locator("#backup-password").fill(password);
+	await openBackupPage(page); await page.locator("#backup-password").fill(password);
 	await page.locator("#restore-file").setInputFiles(path);
 	await page
 		.getByRole("button", { name: copy.preview, exact: true })

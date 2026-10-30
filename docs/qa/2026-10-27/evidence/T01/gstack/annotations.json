@@ -1,9 +1,0 @@
-{
-  "evidence": [],
-  "limits": [
-    "First setup probe ran after the Playwright-owned Vite server had stopped; ERR_CONNECTION_REFUSED was environmental, not a product defect.",
-    "Codex runtime-root browser-ensure mislocated dependencies; original toolchain --check succeeded without installing dependencies.",
-    "One initial capture wrapper missed stderr; those notes are not used to substantiate the finding. Later original DOM probes, native red regression and before/after screenshots substantiate the issue.",
-    "Only T01 navigation scope and requested adjacent checks were exercised; no full-site score or production acceptance is claimed."
-  ]
-}

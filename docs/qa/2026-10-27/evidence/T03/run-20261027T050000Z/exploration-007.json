@@ -1,6 +1,0 @@
-{
-  "observationCommand": "bun /Users/syndred/.codex/toolchains/gstack/bin/gstack-qa-deadline run docs/qa/2026-10-27/evidence/T03/run-20261027T050000Z/deadline.json -- /Users/syndred/.codex/toolchains/gstack/browse/dist/browse fill @e2 \"Gstack QA synthetic account\"",
-  "observed": "Selector matched multiple elements. Be more specific or use @refs from 'snapshot'.",
-  "hypothesis": "gstack的ref填写返回多元素匹配，属于工具定位失败而非产品校验；使用既有UI测试中的精确#name定位同一字段。",
-  "nextCommand": "bun /Users/syndred/.codex/toolchains/gstack/bin/gstack-qa-deadline run docs/qa/2026-10-27/evidence/T03/run-20261027T050000Z/deadline.json -- /Users/syndred/.codex/toolchains/gstack/browse/dist/browse fill '#name' 'Gstack QA synthetic account'"
-}

@@ -1,2 +1,0 @@
-# Preserve the original patch, including tabbed context lines.
-targeted/*.patch -text -whitespace

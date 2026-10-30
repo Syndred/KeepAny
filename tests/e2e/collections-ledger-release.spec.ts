@@ -1,3 +1,4 @@
+import { openBackupPage } from "./helpers/backup-restore";
 import { readFileSync } from "node:fs";
 import { expect, test, type Page } from "@playwright/test";
 import { strFromU8, unzipSync } from "fflate";
@@ -21,7 +22,7 @@ type SavedPreference = { id: string; value: unknown };
 
 async function download(page: Page, copy: Copy) {
 	await page.goto("/intake");
-	await page.locator("#backup-password").fill(password);
+	await openBackupPage(page); await page.locator("#backup-password").fill(password);
 	await page.getByRole("button", { name: copy.backup, exact: true }).click();
 	const link = page.getByRole("link", { name: copy.download, exact: true });
 	await expect(link).toBeVisible();
@@ -200,7 +201,7 @@ for (const variant of [{ locale: "zh-CN", width: 390 }, { locale: "en-US", width
 				await restored.goto("/collections");
 				await expect(restored.locator(".collections-member-card")).toHaveCount(0);
 				await restored.goto("/intake");
-				await restored.locator("#backup-password").fill(password);
+				await openBackupPage(restored); await restored.locator("#backup-password").fill(password);
 				await restored.locator("#restore-file").setInputFiles(before.path);
 				await restored.getByRole("button", { name: copy.preview, exact: true }).first().click();
 				await restored.getByRole("button", { name: copy.confirm }).click();

@@ -1,3 +1,4 @@
+import { openBackupPage } from "./helpers/backup-restore";
 import { mkdirSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { expect, test, type Page } from '@playwright/test';
@@ -10,7 +11,7 @@ import { openBackupRestorePanel } from './helpers/backup-restore';
 import { prepareCompletionArchive, recordDevelopmentRequests } from './helpers/completion-archive';
 const portable = process.env.KEEPANY_T14_PORTABLE === '1';
 const fixtureDirectory = resolve('test-results/T14-completion-fixture');
-const evidence = process.env.KEEPANY_EVIDENCE_DIR ?? 'docs/qa/2026-10-27/evidence/T14-completion';
+const evidence = process.env.KEEPANY_EVIDENCE_DIR ?? 'test-results/qa/2026-10-27/evidence/T14-completion';
 const password = 'Synthetic-T14-only-backup';
 mkdirSync(fixtureDirectory, { recursive: true }); mkdirSync(evidence, { recursive: true });
 type Fixture = { project: Asset; item: Asset; account: Asset; subscription: Asset; renewed: Asset; renewal: History; dollar: History; yen: History; pdfNameId: string; pdfDescriptionId: string };
@@ -27,7 +28,7 @@ const copy = (zh: boolean) => ({
 
 async function downloadArchive(page: Page, zh = false) {
   const c = copy(zh); await page.goto('/intake');
-  await page.locator('#backup-password').fill(password);
+  await openBackupPage(page); await page.locator('#backup-password').fill(password);
   await page.getByRole('button', { name: c.backup, exact: true }).click();
   const link = page.getByRole('link', { name: c.download, exact: true }); await expect(link).toBeVisible();
   const pending = page.waitForEvent('download'); await link.click(); const download = await pending;
@@ -39,7 +40,7 @@ async function downloadArchive(page: Page, zh = false) {
 }
 
 async function restoreFixture(page: Page, zh: boolean, path = resolve(fixtureDirectory, 'fixture.ka1')) {
-  const c = copy(zh); await page.goto('/intake'); await page.locator('#backup-password').fill(password);
+  const c = copy(zh); await page.goto('/intake'); await openBackupPage(page); await page.locator('#backup-password').fill(password);
   await openBackupRestorePanel(page);
   await page.locator('#restore-file').setInputFiles(path); await page.getByRole('button', { name: c.preview, exact: true }).first().click();
   await page.getByRole('button', { name: c.confirm }).click(); await expect(page.getByText(c.restored)).toBeVisible();

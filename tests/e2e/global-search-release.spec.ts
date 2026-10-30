@@ -1,3 +1,4 @@
+import { openBackupPage } from "./helpers/backup-restore";
 import { readFileSync } from "node:fs";
 import { expect, test, type Page } from "@playwright/test";
 import { strFromU8, unzipSync } from "fflate";
@@ -37,7 +38,7 @@ async function locate(page: Page, value: string, id: string) {
 async function archive(page: Page, zh: boolean) {
 	const copy = text(zh);
 	await page.goto("/intake");
-	await page.locator("#backup-password").fill(password);
+	await openBackupPage(page); await page.locator("#backup-password").fill(password);
 	await page.getByRole("button", { name: copy.backup, exact: true }).click();
 	const link = page.getByRole("link", { name: copy.download, exact: true });
 	await expect(link).toBeVisible();
@@ -135,7 +136,7 @@ for (const locale of ["en-US", "zh-CN"]) {
 				await restored.goto("/assets/account");
 				await expect(restored.locator("main .asset-account-card")).toHaveCount(0);
 				await restored.goto("/intake");
-				await restored.locator("#backup-password").fill(password);
+				await openBackupPage(restored); await restored.locator("#backup-password").fill(password);
 				await restored.locator("#restore-file").setInputFiles(saved.path);
 				await restored.getByRole("button", { name: copy.preview, exact: true }).first().click();
 				await restored.getByRole("button", { name: copy.confirmRestore }).click();

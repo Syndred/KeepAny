@@ -36,7 +36,7 @@ export function IntakeTools({ onCsvStaged, section = "capture" }: { onCsvStaged:
  const navigate = useNavigate();
  const [lastSaved, setLastSaved] = useState<Asset | null>(null);
 	const { t } = useTranslation();
-	const { data, notify } = useAppContext();
+	const { data, notify, setPendingAccountName } = useAppContext();
 	const [mode, setMode] = useState<"url" | "image" | "csv" | "manual">("url");
 	const [manualKind, setManualKind] = useState<AssetKind>("project");
 	const [manualName, setManualName] = useState("");
@@ -319,7 +319,7 @@ export function IntakeTools({ onCsvStaged, section = "capture" }: { onCsvStaged:
     if (importing.current) return;
     const name = manualName.trim();
     if (!name) { setMessage(t("required")); return; }
-    if (manualKind === "account") { void navigate({ to: "/accounts", hash: "new-account" }); return; }
+    if (manualKind === "account") { setPendingAccountName?.(name); void navigate({ to: "/accounts", hash: "new-account" }); return; }
     importing.current = true; setBusy(true); setMessage("");
     try {
       const existing = (await allRecords()).filter(row => row.type === "asset").map(row => JSON.parse(row.payload) as Asset);
@@ -357,7 +357,7 @@ export function IntakeTools({ onCsvStaged, section = "capture" }: { onCsvStaged:
 			importGeneration.current++;
 			setCandidates([]);
 			setCandidateGeneration(null);
-			setMessage(`${t("imported")} 路 ${selected.length}`);
+			setMessage(`${t("imported")} · ${selected.length}`);
 		} catch {
 			setMessage(t("error"));
 		} finally {
@@ -610,11 +610,7 @@ export function IntakeTools({ onCsvStaged, section = "capture" }: { onCsvStaged:
 						{readyArchive && archiveHasVault && <p>{t("restoreContainsVault")}</p>}
 						<div className="actions">
 							<Button onClick={() => void inspect()} disabled={busy || inspecting || !restoreFile || !password}>{t("preview")}</Button>
-							{readyArchive && (
-								<Button variant="primary" onClick={() => void restore()} disabled={busy || inspecting || readyArchiveGeneration !== restoreGeneration.current}>
-									{t("confirm")} 路 {archiveCount}
-								</Button>
-							)}
+              {readyArchive && <><Button variant="primary" onClick={() => void restore()} disabled={busy || inspecting || readyArchiveGeneration !== restoreGeneration.current}>{t("confirm")} · {archiveCount}</Button><Button disabled={busy || inspecting} onClick={() => invalidateRestorePreview()}>{t("cancel")}</Button></>}
 						</div>
 					</details>
 				</section>}

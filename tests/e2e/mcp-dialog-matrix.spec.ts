@@ -9,7 +9,7 @@ import { assertPrivateTestFile, privateTestDirectory } from '../../packages/mcp/
 
 const repo = resolve('.');
 const packagedExecutable = process.env.KEEPANY_MCP_EXECUTABLE;
-const evidence = process.env.KEEPANY_MCP_EVIDENCE_DIR ?? join(repo, 'docs/evidence/2026-09-29');
+const evidence = process.env.KEEPANY_MCP_EVIDENCE_DIR ?? join(repo, 'test-results/evidence/2026-09-29');
 test.beforeAll(async () => { await mkdir(evidence, { recursive: true }); });
 const evidenceSuffix = process.env.KEEPANY_MCP_EVIDENCE_MODE === 'preview' ? '-preview' : '';
 const widths = [360, 390, 768, 1280, 1440] as const;

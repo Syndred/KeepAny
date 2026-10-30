@@ -1,3 +1,0 @@
-# Preserve raw verification log bytes and hashes across platforms.
-# Command-output whitespace is evidence, not source formatting.
-*.log -text -whitespace

@@ -1,8 +1,0 @@
-{
-  "candidate": "cc2e9e351f3d5df8b1cd841658c9ca8ba39939f4",
-  "cancelPreservedTrash": true,
-  "simulatedPurgeWriteFailurePreservedTrash": true,
-  "retryAndReloadTrashEmpty": true,
-  "ordinaryAccountRetained": true,
-  "preparation": "Isolated synthetic UI account; one passwordVault store put throws to verify purge error recovery"
-}

@@ -1,3 +1,4 @@
+import { openBackupPage } from "./helpers/backup-restore";
 import { readFileSync } from "node:fs";
 import { expect, type Page, test } from "@playwright/test";
 
@@ -213,7 +214,7 @@ test("late restore inspection cannot enable confirmation for a replaced file", a
 	const backupCard = page.locator("section.card").filter({
 		has: page.getByRole("heading", { name: "Records & backup" }),
 	});
-	await backupCard.locator("#backup-password").fill("test-only-backup-2026");
+	await openBackupPage(page); await backupCard.locator("#backup-password").fill("test-only-backup-2026");
 	await backupCard.getByRole("button", { name: "Create backup" }).click();
 	const saveFile = backupCard.getByRole("link", { name: "Save backup file" });
 	await expect(saveFile).toBeVisible();

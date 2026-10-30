@@ -1,3 +1,5 @@
+import { openProjectDetails } from "./helpers/project-details";
+import { openBackupPage } from "./helpers/backup-restore";
 import { execFileSync, spawn, spawnSync, type ChildProcess } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { cpSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
@@ -186,6 +188,7 @@ test('closed old PWA upgrades to the fresh-only portable package on the same per
       return canvas.toDataURL('image/png').split(',')[1];
     });
     const imageBytes = Buffer.from(imageBase64, 'base64');
+    await openProjectDetails(page);
     await page.getByLabel('Add image').setInputFiles({ name: 'portable-upgrade.png', mimeType: 'image/png', buffer: imageBytes });
     await page.getByRole('dialog').getByRole('button', { name: 'Confirm', exact: true }).click();
     expect(Buffer.from(await originalImage(page))).toEqual(imageBytes);
@@ -239,7 +242,7 @@ test('closed old PWA upgrades to the fresh-only portable package on the same per
 
     stage = 'download actual encrypted backup and inspect original identity/image';
     await upgraded.goto(`${origin}/intake`);
-    await upgraded.locator('#backup-password').fill(password);
+    await openBackupPage(upgraded); await upgraded.locator('#backup-password').fill(password);
     await upgraded.getByRole('button', { name: 'Create backup', exact: true }).click();
     const downloadEvent = upgraded.waitForEvent('download');
     await upgraded.getByRole('link', { name: 'Save backup file', exact: true }).click();
@@ -261,7 +264,7 @@ test('closed old PWA upgrades to the fresh-only portable package on the same per
     await restored.goto(`${origin}/assets/project`);
     await expect(restored.getByText(project, { exact: true })).toHaveCount(0);
     await restored.goto(`${origin}/intake`);
-    await restored.locator('#backup-password').fill(password);
+    await openBackupPage(restored); await restored.locator('#backup-password').fill(password);
     await restored.locator('#restore-file').setInputFiles(backupPath);
     await restored.getByRole('button', { name: 'Preview', exact: true }).first().click();
     await restored.getByRole('button', { name: /Confirm ·/ }).click();

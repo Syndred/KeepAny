@@ -5,7 +5,7 @@ import { expect, type Locator, type Page } from "@playwright/test";
 export const syntheticKey = "keepany-ai-workflow-synthetic-key-do-not-use";
 export const model = "keepany-synthetic-model";
 export const evidence =
-	process.env.KEEPANY_EVIDENCE_DIR ?? "docs/evidence/2026-10-01";
+	process.env.KEEPANY_EVIDENCE_DIR ?? "test-results/evidence/2026-10-01";
 
 type ChatBody = {
 	model: string;

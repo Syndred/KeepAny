@@ -5,7 +5,7 @@ import { expect, test, type Page } from "@playwright/test";
 const repo = `/@fs/${resolve("packages/local-db/src/index.ts").replaceAll("\\", "/")}`;
 const domain = `/@fs/${resolve("packages/domain/src/index.ts").replaceAll("\\", "/")}`;
 const reminders = `/@fs/${resolve("apps/web/src/reminders.ts").replaceAll("\\", "/")}`;
-const evidence = "docs/qa/2026-10-27/evidence/T16-windows";
+const evidence = "test-results/qa/2026-10-27/evidence/T16-windows";
 mkdirSync(evidence, { recursive: true });
 const t0 = "2026-10-27T04:00:00.000Z";
 const t1 = "2026-10-27T04:01:00.000Z";

@@ -1,3 +1,5 @@
+import { openBackupPage } from "./helpers/backup-restore";
+import { openProjectDetails } from "./helpers/project-details";
 // 2026-10-29 user scope: B1/B2/B8 retired; historical schema/KA1 data stays lossless.
 // Node preparation is synthetic, not user interaction. Mutations and readback use
 // the compiled candidate's visible UI and downloaded encrypted backup only.
@@ -47,7 +49,7 @@ for (const [locale, width] of [["zh-CN", 390], ["en", 1280]] as const) test(`${l
 	const page = await context.newPage(); page.on("pageerror", error => errors.push(error.message));
 	const t = (key: keyof typeof resources.en.translation) => resources[locale].translation[key];
 	async function archive() {
-		await page.goto("/intake"); await page.locator("#backup-password").fill(password);
+		await page.goto("/intake"); await openBackupPage(page); await page.locator("#backup-password").fill(password);
 		await page.getByRole("button", { name: t("backup"), exact: true }).click();
 		const link = page.getByRole("link", { name: t("saveBackupFile"), exact: true }); await expect(link).toBeVisible();
 		const pending = page.waitForEvent("download"); await link.click(); const path = await (await pending).path();
@@ -59,7 +61,7 @@ for (const [locale, width] of [["zh-CN", 390], ["en", 1280]] as const) test(`${l
 	const goProject = () => page.goto(`/assets/project/${fixture.project.id}`);
 	const edit = () => page.locator(".asset-project-action-bar").getByRole("button", { name: t("edit"), exact: true }).click();
 	try {
-		await page.goto("/intake"); await page.locator("#backup-password").fill(password); await openBackupRestorePanel(page);
+		await page.goto("/intake"); await openBackupPage(page); await page.locator("#backup-password").fill(password); await openBackupRestorePanel(page);
 		await page.locator("#restore-file").setInputFiles(resolve(directory, "fixture.ka1"));
 		await page.getByRole("button", { name: t("preview"), exact: true }).first().click();
 		await page.getByRole("button", { name: /^(确认|Confirm) ·/ }).click();
@@ -67,6 +69,7 @@ for (const [locale, width] of [["zh-CN", 390], ["en", 1280]] as const) test(`${l
 		await expect(page.getByText(t("intakeExternalLinkImport"), { exact: true })).toHaveCount(0);
 		await goProject();
 		await expect(page.locator(".asset-backlinks-card, .asset-project-materials, .asset-project-stats, [data-project-media-role]")).toHaveCount(0);
+		await openProjectDetails(page);
 		await expect(page.locator(".asset-attachments-card .image-item img")).toHaveCount(1);
 		await expect(page.locator(".asset-project-profile-card")).toContainText("Basic contact");
 		await expect(page.locator(`.asset-finance-card [data-bill-id="${fixture.expense.id}"]`)).toContainText(fixture.expense.title!);

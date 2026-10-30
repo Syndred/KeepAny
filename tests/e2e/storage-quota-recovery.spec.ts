@@ -1,3 +1,4 @@
+import { openBackupPage } from "./helpers/backup-restore";
 import { createHash } from 'node:crypto';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
@@ -43,7 +44,7 @@ async function png(page: Page, large = false): Promise<Buffer> {
 }
 
 async function backup(page: Page, zh: boolean, fileName: string) {
-  await page.goto('/intake'); await page.locator('#backup-password').fill(password);
+  await page.goto('/intake'); await openBackupPage(page); await page.locator('#backup-password').fill(password);
   await page.getByRole('button', { name: zh ? '创建备份' : 'Create backup', exact: true }).click();
   const link = page.getByRole('link', { name: zh ? '保存备份文件' : 'Save backup file' }); await expect(link).toBeVisible();
   const event = page.waitForEvent('download'); await link.click(); const downloaded = await event;

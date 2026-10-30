@@ -1,3 +1,4 @@
+import { openBackupPage } from "./helpers/backup-restore";
 import { mkdirSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { expect, test, type Page } from '@playwright/test';
@@ -11,7 +12,7 @@ import { prepareCompletionArchive, recordDevelopmentRequests } from './helpers/c
 
 const repositoryPath = sourceModuleUrl('packages/local-db/src/index.ts');
 const portable = process.env.KEEPANY_T19_PORTABLE === '1';
-const evidence = process.env.KEEPANY_EVIDENCE_DIR ?? 'docs/qa/2026-10-27/evidence/T19-completion';
+const evidence = process.env.KEEPANY_EVIDENCE_DIR ?? 'test-results/qa/2026-10-27/evidence/T19-completion';
 const password = 'Synthetic-T19-merge-only';
 const fixtureDirectory = resolve('test-results/T19-merge-fixture');
 mkdirSync(fixtureDirectory, { recursive: true });
@@ -20,7 +21,7 @@ let fixtureTarget: Asset;
 const csv = '\ufeffname,kind,url,description\r\nT19 Existing,project,https://incoming.example.test/,Reviewed description\r\n';
 async function downloadArchive(page: Page, zh: boolean) {
   await page.goto('/intake');
-  await page.locator('#backup-password').fill(password);
+  await openBackupPage(page); await page.locator('#backup-password').fill(password);
   await page.getByRole('button', { name: zh ? '创建备份' : 'Create backup', exact: true }).click();
   const link = page.getByRole('link', { name: zh ? '保存备份文件' : 'Save backup file', exact: true });
   await expect(link).toBeVisible();
@@ -32,7 +33,7 @@ async function downloadArchive(page: Page, zh: boolean) {
     candidates: JSON.parse(strFromU8(files['intake-review.json'])), download };
 }
 async function restoreArchive(page: Page, zh: boolean, path: string) {
-  await page.goto('/intake'); await page.locator('#backup-password').fill(password);
+  await page.goto('/intake'); await openBackupPage(page); await page.locator('#backup-password').fill(password);
   await openBackupRestorePanel(page);
   await page.locator('#restore-file').setInputFiles(path);
   await page.getByRole('button', { name: zh ? '预览' : 'Preview', exact: true }).first().click();

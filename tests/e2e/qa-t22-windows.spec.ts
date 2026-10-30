@@ -1,3 +1,4 @@
+import { openBackupPage } from "./helpers/backup-restore";
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
@@ -11,7 +12,7 @@ import { selectChoice } from "./helpers/select-choice";
 
 const repo = sourceModuleUrl("packages/local-db/src/index.ts");
 const domain = sourceModuleUrl("packages/domain/src/index.ts");
-const evidence = "docs/qa/2026-10-27/evidence/T22-windows";
+const evidence = "test-results/qa/2026-10-27/evidence/T22-windows";
 mkdirSync(evidence, { recursive: true });
 const host = "keepany-storage.test";
 const password = "T22 synthetic archive password 2026!";
@@ -124,7 +125,7 @@ for (const kind of ["s3", "webdav"] as const) for (const { locale, width } of [{
 				return { projectId: project.id, imageId };
 			}, { repositoryPath: repo, domainPath: domain, image: png.toString("base64") });
 			const baseline = await snapshot(page);
-			await page.locator("#backup-password").fill(password);
+			await openBackupPage(page); await page.locator("#backup-password").fill(password);
 			const panel = await configure(page);
 			const notice = panel.locator(".notice[role=status]");
 			// Authentication denial, actual socket disconnect, and corrupt readback.
@@ -174,12 +175,12 @@ for (const kind of ["s3", "webdav"] as const) for (const { locale, width } of [{
 			const retained = await snapshot(targetPage);
 			const targetPanel = await configure(targetPage, true);
 			await targetPanel.locator("#remote-receipt-file").setInputFiles(receiptPath);
-			await targetPage.locator("#backup-password").fill("T22 wrong synthetic archive password");
+			await openBackupPage(targetPage); await targetPage.locator("#backup-password").fill("T22 wrong synthetic archive password");
 			await targetPanel.getByRole("button", { name: copy.preview, exact: true }).click();
 			await expect(targetPanel.locator(".notice")).toContainText(zh ? "无法解密" : "Could not decrypt");
 			await expect(targetPanel.getByRole("button", { name: /^(确认|Confirm) ·/ })).toHaveCount(0);
 			expect(await snapshot(targetPage)).toEqual(retained);
-			await targetPage.locator("#backup-password").fill(password); service.state.corrupt = true;
+			await openBackupPage(targetPage); await targetPage.locator("#backup-password").fill(password); service.state.corrupt = true;
 			await targetPanel.getByRole("button", { name: copy.preview, exact: true }).click();
 			await expect(targetPanel.locator(".notice")).toContainText(zh ? "校验凭条" : "receipt");
 			await expect(targetPanel.getByRole("button", { name: /^(确认|Confirm) ·/ })).toHaveCount(0);
@@ -197,7 +198,7 @@ for (const kind of ["s3", "webdav"] as const) for (const { locale, width } of [{
 			const archivePath = test.info().outputPath("T22-actual-remote.ka1"); await (await downloading).saveAs(archivePath);
 			expect(readFileSync(archivePath)).toEqual(service.state.bytes);
 			await cleanPage.goto("/intake");
-			await cleanPage.locator("#backup-password").fill(password);
+			await openBackupPage(cleanPage); await cleanPage.locator("#backup-password").fill(password);
 			await cleanPage.locator("#restore-file").setInputFiles(archivePath);
 			await cleanPage.getByRole("button", { name: zh ? "预览" : "Preview", exact: true }).first().click();
 			await cleanPage.getByRole("button", { name: /^(确认|Confirm) ·/ }).click();

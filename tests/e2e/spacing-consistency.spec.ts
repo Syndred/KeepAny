@@ -1,3 +1,4 @@
+import { openProjectDetails } from "./helpers/project-details";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { expect, test, type Locator, type Page } from "@playwright/test";
 import { selectChoice } from "./helpers/select-choice";
@@ -794,6 +795,7 @@ for (const variant of variants) {
 			);
 
 			await page.goto(`/assets/project/${projectId}`);
+			await openProjectDetails(page);
 			await page
 				.getByRole("button", { name: copy.addConnection, exact: true })
 				.click();
@@ -810,6 +812,7 @@ for (const variant of variants) {
 				.getByRole("button", { name: copy.save, exact: true })
 				.click();
 			await expect(relation).toBeHidden();
+			await openProjectDetails(page);
 			await page.getByRole("button", { name: copy.addConnection, exact: true }).click();
 			await selectChoice(relation.locator("#relation-target"), { value: subscriptionId });
 			await relation.locator("#relation-label").fill("Project subscription");

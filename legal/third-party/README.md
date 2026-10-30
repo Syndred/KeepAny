@@ -18,7 +18,7 @@ node scripts/phase0/verify-third-party-license-materials.mjs
 node scripts/phase0/verify-third-party-license-materials.mjs --release
 ```
 
-严格模式拒绝未知／冲突声明、未解决项、缺失证据或失配哈希；允许有完整证据的 `declared-with-supplement`，但不会把通过写成每项都有上游独立 LICENSE、整体兼容性已裁定或正式发布成功。补充材料的可复现生成命令为 `node scripts/phase0/supplement-declared-mit-materials.mjs`，会先核对原 tarball 的 SHA-1／SHA-512，当前材料完成后再跑为只读 no-op。有界追查见 [2026-10-11 发布审计](../../docs/开源发布审计-2026-10-11.md)。
+严格模式拒绝未知／冲突声明、未解决项、缺失证据或失配哈希；允许有完整证据的 `declared-with-supplement`，但不会把通过写成每项都有上游独立 LICENSE、整体兼容性已裁定或正式发布成功。补充材料的可复现生成命令为 `node scripts/phase0/supplement-declared-mit-materials.mjs`，会先核对原 tarball 的 SHA-1／SHA-512，当前材料完成后再跑为只读 no-op。有界追查见 当前代码、锁文件与下列测试。
 
 ## elkjs 0.12.0 源码与分发说明
 

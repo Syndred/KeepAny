@@ -1,3 +1,4 @@
+import { openProjectDetails } from "./helpers/project-details";
 import { expect, test, type Page } from "@playwright/test";
 import { mkdirSync } from "node:fs";
 import { join } from "node:path";
@@ -6,7 +7,7 @@ import { selectChoice } from "./helpers/select-choice";
 import { sourceModuleUrl } from "./helpers/source-module-url";
 
 const repositoryPath = sourceModuleUrl("packages/local-db/src/index.ts");
-const evidence = "docs/qa/2026-10-27/evidence/T18-windows";
+const evidence = "test-results/qa/2026-10-27/evidence/T18-windows";
 mkdirSync(evidence, { recursive: true });
 
 async function readback(page: Page) {
@@ -46,6 +47,7 @@ test("T18-03 corrupt picture is rejected without creating an asset or a blob", a
 	expect(created.fileIds).toHaveLength(1);
 	await selectChoice(page.locator("#intake-photo-asset"), created.assets[0].id);
 	await page.locator("#intake-photo-file").setInputFiles({ name: "broken-attachment.png", mimeType: "image/png", buffer: Buffer.from("synthetic-broken-attachment") });
+	await openProjectDetails(page);
 	await page.getByRole("button", { name: "Add image", exact: true }).click();
 	await expect(page.getByRole("status").filter({ hasText: "Choose a JPEG, PNG, WebP or GIF up to 20 MB." })).toBeVisible();
 	expect(await readback(page)).toEqual(created);
@@ -56,6 +58,7 @@ test("T18-03 corrupt picture is rejected without creating an asset or a blob", a
 	await expect(page.locator("#intake-photo-file")).toHaveValue("");
 	expect(await readback(page)).toEqual(created);
 	await page.locator("#intake-photo-file").setInputFiles({ name: "valid.jpg", mimeType: "image/jpeg", buffer: Buffer.from(images.jpeg, "base64") });
+	await openProjectDetails(page);
 	await page.getByRole("button", { name: "Add image", exact: true }).click();
 	await expect(page.locator(".intake-quick-card img.image-preview")).toHaveCount(0);
 	const appended = await readback(page);
@@ -66,6 +69,7 @@ test("T18-03 corrupt picture is rejected without creating an asset or a blob", a
 	expect(appended.fileIds).toHaveLength(2);
 	expect(images.webp).toMatch(/^data:image\/webp;base64,/);
 	await page.locator("#intake-photo-file").setInputFiles({ name: "valid.webp", mimeType: "image/webp", buffer: Buffer.from(images.webp.split(",")[1], "base64") });
+	await openProjectDetails(page);
 	await page.getByRole("button", { name: "Add image", exact: true }).click();
 	await expect(page.locator(".intake-quick-card img.image-preview")).toHaveCount(0);
 	const webpAppended = await readback(page);
