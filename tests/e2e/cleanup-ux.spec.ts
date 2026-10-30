@@ -128,6 +128,38 @@ test("UX06 UX07 UX08 sample cancel is safe, inactive filters remain discoverable
   await page.getByRole("button", { name: /^All ·/ }).click(); await page.reload(); await expect(page.getByRole("button", { name: /^All ·/ })).toHaveAttribute("aria-pressed", "true");
 });
 
+for (const [kind, label] of [["item", "Item"], ["subscription", "Subscription"]] as const) {
+ test(`UX03b global ${kind} creation opens the correct form and cancellation survives reload`, async ({ page }) => {
+  await prepare(page);
+  await page.getByRole("button", { name: "Add a record", exact: true }).click();
+  await page.getByRole("menuitem", { name: label, exact: true }).click();
+  await expect(page).toHaveURL(new RegExp(`/assets/${kind}$`));
+  const form = page.getByRole("dialog");
+  await expect(form.getByRole("heading", { level: 2, name: new RegExp(label, "i") })).toBeVisible();
+  const name = `Synthetic cancelled ${kind}`;
+  await form.locator("#name").fill(name);
+  await form.getByRole("button", { name: "Cancel", exact: true }).click();
+  await expect(form).toBeHidden(); await page.reload();
+  await expect(form).toBeHidden(); await expect(page.getByText(name, { exact: true })).toHaveCount(0);
+ });
+}
+
+test("UX07b global search reveals a completed task from the pending view and survives reload", async ({ page }) => {
+ await prepare(page); await sample(page); await page.goto("/tasks");
+ const pending = page.getByRole("button", { name: /^Pending ·/ }), all = page.getByRole("button", { name: /^All ·/ });
+ await expect(pending).toHaveAttribute("aria-pressed", "true"); await all.click();
+ const completed = page.locator(".tasks-list-card .task-card").filter({ has: page.getByRole("button", { name: "Reopen", exact: true }) }).first();
+ await expect(completed).toBeVisible();
+ const id = await completed.getAttribute("id"), name = await completed.locator(".impact-task-info > strong").innerText();
+ expect(id).toMatch(/^task-/); await pending.click(); await expect(page.locator(`[id="${id}"]`)).toBeHidden();
+ await page.getByRole("button", { name: "Search all records", exact: true }).click();
+ await page.locator("#top-search-query").fill(name);
+ await page.locator(`.search-results a[href="/tasks#${id}"]`).click();
+ await expect(page.locator(`[id="${id}"]`)).toBeVisible(); await expect(all).toHaveAttribute("aria-pressed", "true");
+ await expect(page.locator(`[id="${id}"]`).getByRole("button", { name: "Reopen", exact: true })).toBeVisible();
+ await page.reload(); await expect(page.locator(`[id="${id}"]`)).toBeVisible();
+});
+
 for (const language of ["zh-CN", "en"] as const) for (const width of [390, 768, 1280, 1920, 2560]) {
   test(`VR01 ${language} ${width} local AI backup menus and expanded project UX05 UX09`, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 }); await prepare(page, language); await sample(page, language);
