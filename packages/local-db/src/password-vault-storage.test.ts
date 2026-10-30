@@ -3,7 +3,7 @@ import { afterEach, expect, it, vi } from 'vitest';
 import { Credentials, Kdbx, ProtectedValue } from 'kdbxweb';
 import { strFromU8, strToU8, unzipSync, zipSync } from 'fflate';
 import { newAsset } from '../../domain/src';
-import { inspectArchive, LocalRepository, openLocalRepository, type DatasetBinding } from './index';
+import { inspectArchive, LocalRepository, openLocalRepository, type DatasetBinding, type RecordRow } from './index';
 import { PASSWORD_VAULT_LIMIT } from './password-vault-storage';
 
 const repositories: LocalRepository[] = [];
@@ -72,7 +72,7 @@ it('empty-account trash compares the frozen public version at the actual write p
   const document = (await target.db.records.findOne(`asset:${account.id}`).exec())!;
   const actual = document.incrementalModify.bind(document);
   vi.spyOn(document, 'incrementalModify').mockImplementationOnce(async (mutation) => {
-    await actual(data => ({ ...data, payload: JSON.stringify({ ...account, contact: 'Concurrent update' }) }));
+    await actual((data: RecordRow) => ({ ...data, payload: JSON.stringify({ ...account, contact: 'Concurrent update' }) }));
     return actual(mutation);
   });
   await expect(target.trashEmptyAccountIfCurrent(account, record.revision)).rejects.toThrow('asset-stale');

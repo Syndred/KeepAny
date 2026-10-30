@@ -43,7 +43,7 @@ for(const language of ["zh-CN","en"] as const){
   await context.addInitScript(lang=>localStorage.setItem("keepany-language",lang),language);
   const page=await context.newPage();
   try {
-   await setup(page,t);await create(page,t,"UE ordinary only","","");
+   await setup(page,t);await create(page,t);const retained=card(page),retainedId=await retained.getAttribute("data-entry-id");await create(page,t,"UE ordinary only","","");
    const ordinary=card(page,"UE ordinary only"),id=await ordinary.getAttribute("data-account-id");
    await ordinary.getByRole("button",{name:t("accountDeleteLogin"),exact:true}).click();
    await page.getByRole("dialog").getByRole("button",{name:t("accountDeleteLogin"),exact:true}).click();
@@ -56,12 +56,14 @@ for(const language of ["zh-CN","en"] as const){
    await page.getByRole("dialog").getByRole("button",{name:t("pwVaultDeleteEntry"),exact:true}).click();
    await expect(page.getByRole("dialog")).toHaveCount(0);
    await expect(ordinary).toHaveCount(0);
+   await expect(retained).toHaveAttribute("data-entry-id",retainedId!);await expect(page.locator("#vault-trash .password-vault-entry-trash")).toHaveCount(1);
    await page.locator(".sidebar").getByRole("link",{name:t("trash"),exact:true}).click();
    const row=page.locator(".trash-row").filter({hasText:"UE ordinary only"});
    await row.getByRole("button",{name:t("restore"),exact:true}).click();await expect(row).toHaveCount(0);
    await page.locator(".sidebar nav").getByRole("link",{name:t("accountsWorkspace"),exact:true}).click();
    await expect(ordinary).toHaveAttribute("data-account-id",id!);
    await page.reload();await unlock(page,t);await expect(ordinary).toHaveAttribute("data-account-id",id!);
+   await expect(retained).toHaveAttribute("data-entry-id",retainedId!);await expect(page.locator("#vault-trash .password-vault-entry-trash")).toHaveCount(1);
    await shot(page,`ordinary-restored-${language}`);
   } finally {await context.close();}
  });
