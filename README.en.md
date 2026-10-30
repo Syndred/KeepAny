@@ -10,7 +10,7 @@ Which email does a project use? Where is its domain registered? Which subscripti
 
 No registration required. English and Simplified Chinese interfaces. The local core is open source under [AGPL-3.0-only](LICENSE). Optional paid hosting is planned; official cloud sync and paid services are not available yet.
 
-Navigation now groups records into **Accounts** and **Assets**. Accounts manages account records and login entries on one page, including passwordless logins. External vault references remain in a collapsible section; linked passwords can also be managed inside account details. Assets combines items, projects, domains and subscriptions, with ownership duration, task progress, time remaining and costs. Categories, tags, details and the transaction ledger remain available. Recorded spending and planned costs are shown separately by currency.
+Navigation now groups records into **Accounts** and **Assets**. Open Accounts to set up or unlock the master password. Compact cards copy usernames and passwords directly, cycle logins with one icon, and edit or delete the current login. One short form contains the account details and a single note; passwords are optional. The connection count sits below the title, which opens the relationship graph, login information and notes. Secrets remain in the separate encrypted KDBX store. Assets combines items, projects, domains and subscriptions, with ownership duration, task progress, time remaining and costs. Categories, tags, details and the transaction ledger remain available. Recorded spending and planned costs are shown separately by currency.
 
 ![KeepAny overview with fictional project, account, and subscription records](docs/evidence/2026-10-27/keepany-return/onboarding/onboarding-en-1280-sample.png)
 

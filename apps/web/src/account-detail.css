@@ -81,6 +81,11 @@
 .account-impact-details > summary span { flex: 1; }
 .account-impact-details[open] > summary { border-bottom: 1px solid var(--line-soft); }
 .account-impact-details[open] > summary > svg:last-child { transform: rotate(90deg); }
+.account-impact-details .impact-task-row { display: grid; grid-template-columns: 44px minmax(0, 1fr); align-items: start; gap: 8px; }
+.account-impact-details .impact-task-info { min-width: 0; }
+.account-impact-details .impact-task-actions { grid-column: 2; display: flex; flex-wrap: wrap; align-items: center; min-width: 0; max-width: 100%; gap: 8px; padding: 0; }
+.account-impact-details .impact-task-actions label { flex: 0 0 100%; }
+.account-impact-details .impact-task-actions .date-field { width: min(100%, 158px); max-width: 100%; }
 .account-existing-attachments > summary { min-height: 44px; cursor: pointer; }
 .account-relation-layout .asset-tasks-card .account-compact-task { display: grid; grid-template-columns: 44px minmax(0, 1fr) 44px; align-items: center; gap: 8px; min-height: 58px; margin: 0; padding: 6px 0; border: 0; border-bottom: 1px solid var(--line-soft); border-radius: 0; box-shadow: none; }
 .account-relation-layout .account-compact-task > .impact-task-info { min-width: 0; }
