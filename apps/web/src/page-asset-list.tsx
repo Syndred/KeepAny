@@ -422,7 +422,7 @@ export function AssetList() {
 		select: (s) => s.matches.at(-1)?.params,
 	}) ?? {}) as { kind?: string };
 	const kind = validKind(rawKind ?? "project");
-	return <AssetKindList kind={kind === "vault" ? "account" : kind} />;
+	return <AssetKindList key={kind} kind={kind === "vault" ? "account" : kind} />;
 }
 
 export type AccountListFilters = { search: string; category: string; tag: string };
@@ -509,8 +509,19 @@ export function AssetKindList({ kind, beforeList, afterList, passwordCounts, onA
 	}, [kind]);
 	const [edit, setEdit] = useState(false);
  const navigateForCreation = useNavigate();
- const creationHash = useRouterState({ select: state => state.location.hash });
- useEffect(() => { if (creationHash === "new" && !embedded && !data.loading) { setEdit(true); void navigateForCreation({ to: "/assets/$kind", params: { kind }, hash: "", replace: true }); } }, [creationHash, embedded, data.loading, kind, navigateForCreation]);
+ const creationConsumed = useRef(false);
+ const creationRoute = useRouterState({ select: state => ({
+  pathname: state.location.pathname, hash: state.location.hash, status: state.status,
+  kind: (state.matches.at(-1)?.params as { kind?: string } | undefined)?.kind,
+ }) });
+ useEffect(() => {
+  if (creationRoute.hash !== "new") { creationConsumed.current = false; return; }
+  // A pending destination can arrive before this outlet receives its new kind.
+  if (embedded || data.loading || creationRoute.status !== "idle" || creationRoute.pathname !== `/assets/${kind}` || creationRoute.kind !== kind || creationConsumed.current) return;
+  creationConsumed.current = true;
+  setEdit(true);
+  void navigateForCreation({ hash: "", replace: true });
+ }, [creationRoute.pathname, creationRoute.hash, creationRoute.status, creationRoute.kind, embedded, data.loading, kind, navigateForCreation]);
 	const allLiveAssets = [...liveAssets(data), ...accountExtras];
 	const liveIds = new Set(allLiveAssets.map((asset) => asset.id));
 	const allKindAssets = allLiveAssets.filter((asset) => asset.kind === kind);
@@ -608,6 +619,7 @@ export function AssetKindList({ kind, beforeList, afterList, passwordCounts, onA
 					}
 				>
 					<AssetEditor
+                        key={kind}
 						kind={kind}
 						categories={data.categories}
 						onClose={() => setEdit(false)}

@@ -160,7 +160,7 @@ function AssetCatalog({ domainsOnly }: { domainsOnly: boolean }) {
 }
 
 export function AssetsWorkspace({ view = "all" }: { view?: AssetView }) {
-	return <div className="workspace-page"><AssetTabs view={view} />{view === "ledger" ? <FinancePage /> : view === "all" || view === "domains" ? <AssetCatalog domainsOnly={view === "domains"} /> : <AssetKindList kind={view} />}</div>;
+	return <div className="workspace-page"><AssetTabs view={view} />{view === "ledger" ? <FinancePage /> : view === "all" || view === "domains" ? <AssetCatalog domainsOnly={view === "domains"} /> : <AssetKindList key={view} kind={view} />}</div>;
 }
 
 export function FinanceWorkspaceRoute() { return <AssetsWorkspace view="ledger" />; }

@@ -149,14 +149,15 @@ for (const [kind, label] of [["item", "Item"], ["subscription", "Subscription"]]
 
 test("UX03c switching creation from an item list to subscriptions uses the newly selected kind", async ({ page }) => {
  await prepare(page);
- for (const [kind, label, field] of [["item", "Item", "Purchase date"], ["subscription", "Subscription", "Cycle"]] as const) {
+ for (const [kind, label, field] of [["item", "Item", "#purchaseDate"], ["subscription", "Subscription", "#cycle"], ["project", "Project", "#projectLaunchMonth"], ["item", "Item", "#purchaseDate"], ["subscription", "Subscription", "#cycle"]] as const) {
   await page.getByRole("button", { name: "Add a record", exact: true }).click();
   await page.getByRole("menuitem", { name: label, exact: true }).click();
   await expect(page).toHaveURL(new RegExp(`/assets/${kind}$`));
   const form = page.getByRole("dialog"); await expect(form).toBeVisible();
-  await expect(form.getByRole("combobox", { name: field, exact: true })).toBeVisible();
+  await expect(form.locator(field)).toBeVisible();
   await form.getByRole("button", { name: "Cancel", exact: true }).click(); await expect(form).toBeHidden();
  }
+ await page.reload(); await expect(page.getByRole("dialog")).toBeHidden();
 });
 
 test("UX07b global search reveals a completed task from the pending view and survives reload", async ({ page }) => {
