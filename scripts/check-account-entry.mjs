@@ -20,7 +20,7 @@ const receipt = {
   specSha256: hash(readFileSync("tests/e2e/unified-account-editor.spec.ts")),
   simpleSpecSha256: hash(readFileSync("tests/e2e/simple-account-relations.spec.ts")),
   compactSpecSha256: hash(readFileSync("tests/e2e/compact-accounts.spec.ts")),
-  automatedCoverage: ["SR01", "SR02", "SR03", "SR04", "SR05", "SR06", "SR07", "UE01", "UE02", "UE03", "UE04", "UE05", "UE06", "UE07", "UE08", "UE09", "CC03", "CC04", "CC05", "CC09"],
+  automatedCoverage: ["CC01", "CC02", "CC11", "UE10", "SR01", "SR02", "SR03", "SR04", "SR05", "SR06", "SR07", "UE01", "UE02", "UE03", "UE04", "UE05", "UE06", "UE07", "UE08", "UE09", "CC03", "CC04", "CC05", "CC09"],
   coverageNotes: { UE10: "Controller and independent actual candidate review remain separate.", supersedes: "SE01-SE16's earlier form workflow is retained as history; user now requires unlock before account management and direct merged editing." },
   legacyLayout: {
     replaces: "The old account-password-layout 10-case execution entry, using the current compact UI contract; not a full certification of every historical AL state.",
