@@ -19,6 +19,7 @@ import { useWorkspaceSummary } from "./use-workspace-summary";
 import { date, Empty, liveAssets, money, PageTitle, useAppContext } from "./view-shared";
 import "./workspaces.css";
 import { readWorkspaceReturn, workspaceReturnKey } from "./workspace-return";
+import { CompactAccountCard } from "./components/CompactAccountCard";
 
 const AssetEditor = lazy(() => import("./workflow-asset-editor").then((module) => ({ default: module.AssetEditor })));
 type AssetView = "all" | "project" | "item" | "subscription" | "domains" | "ledger";
@@ -54,15 +55,11 @@ export function AccountsWorkspace() {
 		<Suspense fallback={<p role="status">{t("pwVaultLoading")}</p>}>
 			<PasswordVaultPanel assets={data.assets} sampleAccounts={sampleAccounts} accountCount={data.assets.filter(asset => asset.kind === "account" && !asset.deleted).length + grouped.unlinked.length} notify={notify} focusAssetId={hash.startsWith("asset-") ? hash.slice(6) : undefined}
 				headerAction={({ busy, clearMessage }) => <Button variant="primary" title={t("workspaceAddAccount")} disabled={busy || data.pendingCategoryEdits.some((pending) => pending.kind === "account")} onClick={() => { clearMessage(); setEditAccount(true); }}><Plus size={17} />{t("add")}</Button>}
-				renderAccounts={({ renderEntry, addEntry, busy }) => <AssetKindList kind="account" embedded hideTitle privateSearch={snapshot.status === "unlocked"}
+				renderAccounts={(tools) => <AssetKindList kind="account" embedded hideTitle privateSearch={snapshot.status === "unlocked"}
 					accountSearchExtras={searchExtras} onAccountFiltersChange={setFilters}
-					renderAccountDetails={(asset) => snapshot.status === "unlocked" ? <details className="unified-account-passwords">
-						<summary>{t("workspacePasswordCount", { count: grouped.linked.get(asset.id)?.length ?? 0 })}</summary>
-						<div className="password-vault-entry-list">{(grouped.linked.get(asset.id) ?? []).map(renderEntry)}</div>
-						<Button size="small" disabled={busy} onClick={() => addEntry(asset.id)}><Plus size={15} />{t("pwVaultNewEntry")}</Button>
-					</details> : <p className="unified-account-locked">{t(snapshot.status === "empty" ? "workspacePasswordsNotCreated" : snapshot.status === "loading" ? "pwVaultLoading" : "workspacePasswordsLocked")}</p>}
+					renderAccountCard={(asset, context) => <CompactAccountCard asset={asset} entries={grouped.linked.get(asset.id) ?? []} {...context} tools={tools} focusEntryId={hash.startsWith("password-") ? hash.slice(9) : undefined} />}
 					afterList={snapshot.status === "unlocked" && !filters.category && !filters.tag && unlinked.length > 0 ? <section className="workspace-password-only" aria-labelledby="workspace-unlinked-passwords">
-						<h2 id="workspace-unlinked-passwords">{t("workspacePasswordOnly")}</h2><div className="password-vault-entry-list">{unlinked.map(renderEntry)}</div>
+						<h2 id="workspace-unlinked-passwords">{t("workspacePasswordOnly")}</h2><div className="password-vault-entry-list">{unlinked.map(tools.renderEntry)}</div>
 					</section> : null} />}
 			/>
 		</Suspense>

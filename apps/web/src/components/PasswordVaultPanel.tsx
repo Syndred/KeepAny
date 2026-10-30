@@ -3,7 +3,7 @@ import { Input } from "./ui/input";
 import "../trash.css";
 import { useNavigate, useRouterState } from "@tanstack/react-router";
 import { Network, Download, Eye, EyeOff, KeyRound, Lock, Plus, RefreshCw, Trash2, Undo2, Upload, WandSparkles, X } from "lucide-react";
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import type { Asset } from "../../../../packages/domain/src";
 import { MIN_MASTER_PASSWORD_LENGTH } from "../../../../packages/password-vault/src/policy";
@@ -19,6 +19,15 @@ import { PasswordVaultTools } from "./PasswordVaultTools";
 import { EntryEditor } from "./PasswordVaultEntryEditor";
 import { EmptyState, LockedState } from "./PasswordVaultAccessStates";
 
+export type AccountVaultTools = {
+	renderEntry: (entry: PasswordVaultEntrySummary) => ReactNode;
+	addEntry: (assetId: string) => void;
+	requestAccess: () => void;
+	copy: (label: string, value: string, privateValue?: boolean) => Promise<boolean>;
+	cancelCopy: () => void;
+	busy: boolean;
+};
+
 type PasswordVaultPanelProps = {
 	assets: Asset[];
 	notify?: (message: string) => void;
@@ -28,14 +37,10 @@ type PasswordVaultPanelProps = {
 	headerAction?: ReactNode | ((state: { busy: boolean; clearMessage: () => void }) => ReactNode);
 	sampleAccounts?: Asset[];
 	accountCount?: number;
-	renderAccounts?: (tools: {
-		renderEntry: (entry: PasswordVaultEntrySummary) => ReactNode;
-		addEntry: (assetId: string) => void;
-		busy: boolean;
-	}) => ReactNode;
+	renderAccounts?: (tools: AccountVaultTools) => ReactNode;
 };
 
-type ManualCopy = { label: string; value: string };
+type ManualCopy = { label: string; value: string; privateValue?: boolean };
 
 const MIN_MASTER_LENGTH = MIN_MASTER_PASSWORD_LENGTH;
 
@@ -183,6 +188,7 @@ export function PasswordVaultPanel({
 	const [newMaster, setNewMaster] = useState("");
 	const [newMasterConfirm, setNewMasterConfirm] = useState("");
 	const [manualCopy, setManualCopy] = useState<ManualCopy | null>(null);
+	const cancelCopy = useCallback(() => { copyGeneration.current += 1; setManualCopy(null); }, []);
 	const [unlinkTarget, setUnlinkTarget] = useState<{
 		entryId: string;
 		assetId: string;
@@ -674,32 +680,47 @@ export function PasswordVaultPanel({
 		}
 	}
 
-	async function copyValue(labelKey: string, value: string) {
-		if (session?.getSnapshot().status !== "unlocked") return;
+	async function copyValue(labelKey: string, value: string, privateValue = true): Promise<boolean> {
+		if (privateValue && session?.getSnapshot().status !== "unlocked") return false;
 		const request = ++copyGeneration.current;
 		if (!value) {
 			announce("pwVaultError");
-			return;
+			return false;
 		}
 		try {
 			if (!navigator.clipboard?.writeText) throw new Error("clipboard");
 			await navigator.clipboard.writeText(value);
 			if (
 				request !== copyGeneration.current ||
-				session?.getSnapshot().status !== "unlocked"
+				privateValue && session?.getSnapshot().status !== "unlocked"
 			)
-				return;
+				return false;
 			announce("pwVaultCopied");
+			return true;
 		} catch {
 			if (
 				request !== copyGeneration.current ||
-				session?.getSnapshot().status !== "unlocked"
+				privateValue && session?.getSnapshot().status !== "unlocked"
 			)
-				return;
-			setManualCopy({ label: t(labelKey), value });
+				return false;
+			setManualCopy({ label: t(labelKey), value, privateValue });
 			announce("pwVaultClipboardManual");
+			return false;
 		}
 	}
+
+	function requestAccountAccess() {
+		setAccessOpen(true);
+		requestAnimationFrame(() => {
+			const input = panelElement.current?.querySelector<HTMLInputElement>("#password-vault-unlock-master, #password-vault-master");
+			input?.scrollIntoView({ block: "center" }); input?.focus({ preventScroll: true });
+		});
+	}
+	const accountTools: AccountVaultTools = { renderEntry, copy: copyValue, cancelCopy, busy: busy || snapshot.status === "loading", requestAccess: requestAccountAccess, addEntry: (assetId) => {
+		if (busy) return;
+		if (snapshot.status !== "unlocked") { requestAccountAccess(); return; }
+		clearMessage(); setEditorId("new"); setDraft(blankDraft(assetId)); setSelectedAssetId(""); setShowPassword(false);
+	} };
 
 	function linkedAssetLabel(id: string): string {
 		return assetsById.get(id)?.name ?? t("pwVaultAssetUnavailable");
@@ -851,7 +872,7 @@ export function PasswordVaultPanel({
 {renderAccounts && snapshot.status !== "unlocked" ? <details className="unified-vault-access" open={accessOpen} onToggle={(event) => setAccessOpen(event.currentTarget.open)}>
 				<summary>{t(snapshot.status === "empty" ? "pwVaultCreate" : "pwVaultUnlock")}</summary>{vaultAccess}
 			</details> : vaultAccess}
-			{renderAccounts && snapshot.status !== "unlocked" && renderAccounts({ renderEntry, addEntry: () => {}, busy })}
+			{renderAccounts && snapshot.status !== "unlocked" && renderAccounts(accountTools)}
 			{snapshot.status === "unlocked" && (
 				<>
 					<div className="password-vault-toolbar">
@@ -953,10 +974,7 @@ export function PasswordVaultPanel({
 						</div>
 					)}
 
-					{renderAccounts && !assetFilter ? renderAccounts({ renderEntry, addEntry: (assetId) => {
-						if (busy) return;
-						clearMessage(); setEditorId("new"); setDraft(blankDraft(assetId)); setSelectedAssetId(""); setShowPassword(false);
-					}, busy }) : <div className="password-vault-entries-section">
+					{renderAccounts && !assetFilter ? renderAccounts(accountTools) : <div className="password-vault-entries-section">
 						{filteredEntries.length ? (
 							<div className="password-vault-entry-list">
 								{filteredEntries.map((entry) => renderEntry(entry))}
@@ -1338,7 +1356,7 @@ export function PasswordVaultPanel({
 					</form>
 				</Dialog>
 			)}
-			{manualCopy && (
+			{manualCopy && (manualCopy.privateValue === false || snapshot.status === "unlocked") && (
 				<Dialog
 					title={t("pwVaultManualCopyTitle")}
 					onClose={() => setManualCopy(null)}
