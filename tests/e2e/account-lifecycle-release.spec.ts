@@ -1,3 +1,4 @@
+import { openBackupPage } from "./helpers/backup-restore";
 import { prepareVaultWorkspace, revealPasswordEntries } from "./helpers/vault-access";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
@@ -61,7 +62,7 @@ const csv = [
 
 async function exportedState(page: Page, zh: boolean, filename: string) {
 	await page.goto("/intake");
-	await page.locator("#backup-password").fill(backupPassword);
+	await openBackupPage(page); await page.locator("#backup-password").fill(backupPassword);
 	await page
 		.getByRole("button", {
 			name: zh ? "创建备份" : "Create backup",

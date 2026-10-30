@@ -3,6 +3,7 @@ export type CandidateRelease = {
   sourceCommit: string;
   sourceDirty: boolean;
   version?: string;
+  applicationRoutes?: { source: string; paths: string[]; parameters: { kind: string[] } };
   webFiles: Array<{ path: string; sha256: string }>;
 };
 export function safeCandidatePath(name: unknown): string;

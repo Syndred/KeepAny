@@ -20,9 +20,9 @@ export function buildSampleLibrary(t: (key: string) => string, language: string,
 		...fields,
 	});
 	const work = t("sampleWorkTag");
-	const studio = create("project", "sampleStudio", { category: "website", url: "https://pinecone.example.com", description: t("sampleStudioDescription"), projectLaunchMonth: day(-120).slice(0, 7), projectInspectionDate: day(-2), notes: t("sampleLongDescription"), contact: "hello@example.com", tags: [work, t("samplePersonalTag")],
+	const studio = create("project", "sampleStudio", { category: "website", url: "https://pinecone.example.com", description: t("sampleStudioDescription"), projectLaunchMonth: day(-120).slice(0, 7), projectInspectionDate: day(-2), notes: t("sampleStudioNotes"), contact: "hello@example.com", tags: [work, t("samplePersonalTag")],
 		attachments: [images.studio, images.logo, images.cover, images.product] });
-	const notes = create("project", "sampleProject", { category: "website", url: "https://notes.example.com", description: t("sampleProjectDescription"), notes: t("sampleLongDescription"), tags: [work, t("sampleWritingTag")], attachments: [images.product] });
+	const notes = create("project", "sampleProject", { category: "website", url: "https://notes.example.com", description: t("sampleProjectDescription"), notes: t("sampleProjectNotes"), tags: [work, t("sampleWritingTag")], attachments: [images.product] });
 	const components = create("project", "sampleComponents", { category: "repository", description: t("sampleComponentsDescription"), tags: [work], url: "https://code.example.com/paperplane" });
 	const minimal = create("project", "sampleMinimal");
 	const accounts = [

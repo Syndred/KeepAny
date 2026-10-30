@@ -26,7 +26,8 @@ async function main() {
   const record = { schema: 'keepany.vault-links-layout.evidence.v1', candidate: first.candidate, archiveSha256: first.archiveSha256, indexSha256: first.indexSha256, scope: '14 language/viewport combinations, actual empty/single/multiple UI; machine integrity/geometry only, separate human review required. Shared raw identity is checked; no rebuild/live runtime is inferred.', cases, inputs: await Promise.all(inputs.map(async path => ({ path, canonicalSha256: sha(canonical(await readFile(join(root,path)))) }))) };
   await verify(record, dirname(destination)); await writeFile(destination, JSON.stringify(record,null,2)+'\n', { flag: 'wx' }); console.log('Created and verified FC24 14-case record'); return;
  }
- const recordPath = resolve(args[0] ?? 'docs/qa/2026-10-29/evidence/final-0c97/links-layout-machine.json');
+ check(args[0], 'Provide the current evidence record path, or --create evidenceDir record.json');
+ const recordPath = resolve(args[0]);
  await verify(await read(recordPath), dirname(recordPath)); console.log('FC24 evidence passed: 14 combinations; human visual verdict not inferred');
 }
 async function verify(record, base) {
@@ -54,7 +55,8 @@ async function verify(record, base) {
   for(const s of shots){ check(typeof s.name==='string' && basename(s.path)===s.name+'.png' && !s.name.includes('/') && !s.name.includes('\\'), 'Unsafe screenshot name'); const b=await readFile(join(dirname(p),s.name+'.png')); check(sha(b)===s.sha256 && b.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10])) && b.readUInt32BE(16)===r.width && b.readUInt32BE(20)===r.height, 'PNG hash/signature/dimension mismatch'); }
   const cancel=r.steps.filter(s=>s.stage==='cancel-preserved'), saved=r.steps.filter(s=>s.stage==='saved-refreshed');
   check(cancel.length===1 && /^[a-f0-9]{64}$/.test(cancel[0].fingerprint) && saved.length===1, 'Missing persistence stage'); const s=saved[0];
-  check(Array.isArray(s.ids) && s.ids.length===12 && new Set(s.ids).size===12 && s.ids.every(id=>typeof id==='string'&&id.length>0) && s.ids.includes(s.linkedEntryId), 'Invalid preserved entry IDs');
+  const expectedEntries = r.fixtureVersion === 'unified-accounts-13' ? 13 : r.fixtureVersion === undefined ? 12 : 0;
+  check(Array.isArray(s.ids) && expectedEntries>0 && s.ids.length===expectedEntries && new Set(s.ids).size===expectedEntries && s.ids.every(id=>typeof id==='string'&&id.length>0) && s.ids.includes(s.linkedEntryId), 'Invalid preserved entry IDs');
   const chosen=r.steps.filter(x=>x.stage==='selected-bottom');
   check(chosen.length===2 && chosen.every(x=>x.selectedId===`vault-connect-choice-${s.linkedEntryId}`), 'Selected entry does not match saved entry');
   check(Array.isArray(s.originalAccounts) && s.originalAccounts.length===1 && same(s.originalAccounts,cancel[0].originalAccounts) && Array.isArray(s.accounts) && s.accounts.length===3 && new Set(s.accounts).size===3 && s.originalAccounts.every(id=>s.accounts.includes(id)) && s.linkedAssetIds?.length===1 && s.primaryId===s.linkedAssetIds[0] && s.accounts.includes('/assets/account/'+s.primaryId), 'Invalid saved account link');

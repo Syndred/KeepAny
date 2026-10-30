@@ -3,7 +3,7 @@ import { afterEach, expect, it, vi } from 'vitest';
 import { Credentials, Kdbx, ProtectedValue } from 'kdbxweb';
 import { strFromU8, strToU8, unzipSync, zipSync } from 'fflate';
 import { newAsset } from '../../domain/src';
-import { inspectArchive, LocalRepository, openLocalRepository, type DatasetBinding } from './index';
+import { inspectArchive, LocalRepository, openLocalRepository, type DatasetBinding, type RecordRow } from './index';
 import { PASSWORD_VAULT_LIMIT } from './password-vault-storage';
 
 const repositories: LocalRepository[] = [];
@@ -52,6 +52,33 @@ async function vaultArchive(withAsset = false) {
   if (withAsset) await source.save('asset', { ...newAsset('item'), name: 'Restore companion' });
   return { source, record, bytes, archive: await source.exportArchive() };
 }
+
+it('empty-account trash rejects a changed encrypted revision and preserves the public row', async () => {
+  const target = await repository(), bytes = await encryptedVault();
+  const record = await target.savePasswordVault(bytes, null);
+  const account = { ...newAsset('account'), name: 'Empty account' };
+  await target.save('asset', account);
+  const updated = await target.savePasswordVault(bytes, record.revision);
+  await expect(target.trashEmptyAccountIfCurrent(account, record.revision)).rejects.toThrow('vault-stale');
+  expect(await target.get('asset', account.id)).toEqual(account);
+  await target.trashEmptyAccountIfCurrent(account, updated.revision);
+  expect(await target.get('asset', account.id)).toMatchObject({ deleted: true });
+});
+
+it('empty-account trash compares the frozen public version at the actual write point', async () => {
+  const target = await repository(), record = await target.savePasswordVault(await encryptedVault(), null);
+  const account = { ...newAsset('account'), name: 'Empty account' };
+  await target.save('asset', account);
+  const document = (await target.db.records.findOne(`asset:${account.id}`).exec())!;
+  const actual = document.incrementalModify.bind(document);
+  vi.spyOn(document, 'incrementalModify').mockImplementationOnce(async (mutation) => {
+    await actual((data: RecordRow) => ({ ...data, payload: JSON.stringify({ ...account, contact: 'Concurrent update' }) }));
+    return actual(mutation);
+  });
+  await expect(target.trashEmptyAccountIfCurrent(account, record.revision)).rejects.toThrow('asset-stale');
+  expect(await target.get('asset', account.id)).toMatchObject({ deleted: false, contact: 'Concurrent update' });
+  expect((await target.readPasswordVault())?.revision).toBe(record.revision);
+});
 
 it('CAS persists cloned encrypted bytes without ordinary records, sync operations or plaintext', async () => {
   const target = await repository(), other = secondHandle(target);

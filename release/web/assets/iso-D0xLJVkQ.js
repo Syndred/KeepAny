@@ -1,1 +1,0 @@
-import{g as e,t}from"./schemas-Ca3xBH2A.js";function n(n){return e(t,n)}export{n as t};

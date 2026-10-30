@@ -1,3 +1,4 @@
+import { openProjectDetails } from "./helpers/project-details";
 import { expect, type Page, test } from "@playwright/test";
 import { selectChoice } from "./helpers/select-choice";
 
@@ -49,6 +50,7 @@ for (const locale of ["zh-CN", "en"] as const) {
 		}, { repositoryPath, domainPath });
 		await page.goto(`/assets/item/${id}`);
 		const receipts = page.locator('[data-item-media-role="receiptIds"]');
+		await openProjectDetails(page);
 		await receipts.getByRole("button", { name: zh ? "添加图片" : "Add image" }).click();
 		await page.locator(".asset-attachments-card input[type=file]").setInputFiles({
 			name: "receipt.png", mimeType: "image/png", buffer: await png(page, "#e5bd57"),
@@ -161,6 +163,7 @@ for (const locale of ["zh-CN", "en"] as const) {
 
 			async function upload(role: string, name: string, color: string) {
 				const section = page.locator(`[data-item-media-role="${role}"]`);
+				await openProjectDetails(page);
 				await section
 					.getByRole("button", { name: zh ? "添加图片" : "Add image" })
 					.click();

@@ -12,7 +12,7 @@ test.setTimeout(120_000);
 
 const evidenceRoot =
 	process.env.KEEPANY_EVIDENCE_DIR ??
-	"docs/evidence/2026-09-30/task-theme-release";
+	"test-results/evidence/2026-09-30/task-theme-release";
 mkdirSync(evidenceRoot, { recursive: true });
 
 const variants = [

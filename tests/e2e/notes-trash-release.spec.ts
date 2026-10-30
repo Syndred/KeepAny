@@ -1,3 +1,4 @@
+import { openBackupPage } from "./helpers/backup-restore";
 import { openBackupRestorePanel } from "./helpers/backup-restore";
 import { prepareVaultWorkspace } from "./helpers/vault-access";
 import "fake-indexeddb/auto";
@@ -138,7 +139,7 @@ test.beforeAll(async () => {
 
 async function exportRows(page: Page, zh: boolean) {
 	await page.goto("/intake");
-	await page.locator("#backup-password").fill(backupPassword);
+	await openBackupPage(page); await page.locator("#backup-password").fill(backupPassword);
 	await page
 		.getByRole("button", {
 			name: zh ? "创建备份" : "Create backup",
@@ -197,7 +198,7 @@ for (const locale of ["zh-CN", "en"])
 			try {
 				await page.goto("/intake");
 				await openBackupRestorePanel(page);
-				await page.locator("#backup-password").fill(backupPassword);
+				await openBackupPage(page); await page.locator("#backup-password").fill(backupPassword);
 				await page.locator("#restore-file").setInputFiles({
 					name: "synthetic-notes-trash.ka1",
 					mimeType: "application/octet-stream",

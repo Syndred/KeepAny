@@ -3,7 +3,7 @@ import { expect, test } from "@playwright/test";
 import { selectChoice } from "./helpers/select-choice";
 
 const evidence =
-	process.env.KEEPANY_INTAKE_EVIDENCE_DIR ?? "docs/evidence/2026-09-29";
+	process.env.KEEPANY_INTAKE_EVIDENCE_DIR ?? "test-results/evidence/2026-09-29";
 const photo = Buffer.from(
 	"iVBORw0KGgoAAAANSUhEUgAAACAAAAAYCAIAAAAUMWhjAAAAhUlEQVR4nLXNuRXCQBAE0WJCIQlZikEJYZLZ5iGfLOTyYI85Wu3NlPEfn2Pja/vzhXT2c7fzfS+A2rDuV2jYKKgMmzSJYfPcysYCoGysAWqGC6BgeAGyRgAgZcQA4kYYIGhkACJGEsBt5AF8RgnAYVQBVoYAYGpoAMaGDGBgKIGuIQb+jQtZ/TPNXBjnggAAAABJRU5ErkJggg==",
 	"base64",

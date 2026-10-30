@@ -1,3 +1,4 @@
+import { openBackupPage } from "./helpers/backup-restore";
 import { createHash } from "node:crypto";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { basename, join } from "node:path";
@@ -14,6 +15,7 @@ import { strFromU8, unzipSync } from "fflate";
 import { decryptBackup } from "../../packages/local-db/src/backup-crypto";
 import {
 	inspectVisualKdbx,
+	importVisualKdbxEntries,
 	visualCopy,
 	visualMaster,
 } from "./fixtures/password-smart-import-visual";
@@ -23,7 +25,8 @@ import {
 } from "./helpers/vault-access";
 
 // Test author is independent of the product implementation. All writes below
-// are real UI operations on synthetic data. Read-only KDBX/backup decryption is
+// are real UI operations on synthetic data. KDBX setup is explicitly generated
+// in Node and imported through the real file chooser. Read-only backup inspection is
 // auxiliary observation, not a claim that it is itself a user interaction.
 const widths = [390, 563, 768, 1280, 1920, 2560] as const;
 const languages = ["zh-CN", "en"] as const;
@@ -167,16 +170,9 @@ async function seedSavedData(page: Page, t: ReturnType<typeof visualCopy>) {
 	await page.getByRole("button", { name: t("pwVaultCreate"), exact: true }).click();
 	await expect(page.locator(".password-vault-toolbar")).toBeVisible();
 	for (const [index, title] of titles.entries()) {
-		await page.getByRole("button", { name: t("pwVaultNewEntry"), exact: true }).click();
-		await page.locator("#password-vault-entry-title").fill(title);
-		await page.locator("#password-vault-entry-username").fill("fc17.owner@gmail.com");
-		await page.locator("#password-vault-entry-password").fill(syntheticPassword);
-		const addUrl = page.getByRole("button", { name: t("pwVaultAddUrl"), exact: true });
-		if (await addUrl.isVisible()) await addUrl.click();
-		await page.locator("#password-vault-entry-url").fill(index ? "https://github.com/" : "https://mail.google.com/");
-		await page.locator("#password-vault-entry-notes").fill(`Synthetic saved FC17 note ${index}. ${"Long saved text stays local. ".repeat(5)}`);
-		await page.getByRole("dialog").getByRole("button", { name: t("pwVaultSaveEntry"), exact: true }).click();
-		await expect(page.getByRole("dialog")).toHaveCount(0);
+		// Password-only preparation is a fictional Node KDBX imported through
+		// the real file chooser; publication remains the reviewed Connect flow.
+		await importVisualKdbxEntries(page, t, [{ title, username: "fc17.owner@gmail.com", password: syntheticPassword, url: index ? "https://github.com/" : "https://mail.google.com/", notes: `Synthetic saved FC17 note ${index}. ${"Long saved text stays local. ".repeat(5)}` }]);
 	}
 	const first = page.locator(".password-vault-entry").filter({ has: page.getByRole("heading", { name: titles[0], exact: true }) });
 	await first.getByRole("button", { name: t("pwVaultEditEntry"), exact: true }).click();
@@ -213,7 +209,7 @@ async function exportedKdbx(page: Page, t: ReturnType<typeof visualCopy>, info: 
 }
 async function exportedBackup(page: Page, language: Language, info: TestInfo, name: string) {
 	await page.goto("/intake");
-	await page.locator("#backup-password").fill(backupPassword);
+	await openBackupPage(page); await page.locator("#backup-password").fill(backupPassword);
 	await page.getByRole("button", { name: copy(language).createBackup, exact: true }).click();
 	const downloading = page.waitForEvent("download");
 	await page.getByRole("link", { name: copy(language).saveBackup, exact: true }).click();

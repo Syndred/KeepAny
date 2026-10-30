@@ -1,8 +1,10 @@
+import { openProjectDetails } from "./helpers/project-details";
+import { openBackupPage } from "./helpers/backup-restore";
 import { mkdirSync, readFileSync } from "node:fs";
 import { expect, test, type Page } from "@playwright/test";
 import { selectChoice } from "./helpers/select-choice";
 
-const evidence = process.env.KEEPANY_EVIDENCE_DIR ?? "docs/evidence/2026-09-29";
+const evidence = process.env.KEEPANY_EVIDENCE_DIR ?? "test-results/evidence/2026-09-29";
 const repositoryModuleUrl = `/@fs${process.cwd()}/packages/local-db/src/index.ts`;
 
 async function taskRows(page: Page) {
@@ -57,6 +59,7 @@ for (const scenario of [
 			return page.url();
 		}
 		async function addRelation(label: string, metadata: boolean) {
+			await openProjectDetails(page);
 			await page.getByRole("button", { name: scenario.addRelation }).click();
 			const dialog = page.getByRole("dialog");
 			await selectChoice(dialog.getByLabel(scenario.target), { label: project });
@@ -116,7 +119,7 @@ for (const scenario of [
 			await page.reload();
 			await expect(checklist.locator(".impact-task-row")).toHaveCount(2);
 			await page.goto("/intake");
-			await page.locator("#backup-password").fill(password);
+			await openBackupPage(page); await page.locator("#backup-password").fill(password);
 			await page.getByRole("button", { name: scenario.backup }).click();
 			const saveFile = page.getByRole("link", { name: scenario.download });
 			await expect(saveFile).toBeVisible();
@@ -133,7 +136,7 @@ for (const scenario of [
 			restored.on("pageerror", (error) => errors.push(error.message));
 			try {
 				await restored.goto("/intake");
-				await restored.locator("#backup-password").fill(password);
+				await openBackupPage(restored); await restored.locator("#backup-password").fill(password);
 				await restored.locator("#restore-file").setInputFiles(path);
 				await restored.getByRole("button", { name: scenario.preview, exact: true }).first().click();
 				await restored.getByRole("button", { name: /Confirm ·|确认 ·/ }).click();
@@ -177,6 +180,7 @@ test("relation changes preserve completed impact history and add only new relati
 		return page.url();
 	}
 	async function addRelation(target: string, name: string) {
+		await openProjectDetails(page);
 		await page.getByRole("button", { name: "Add connection" }).click();
 		const dialog = page.getByRole("dialog");
 		await selectChoice(dialog.getByLabel("Connect to"), { label: target });
@@ -229,6 +233,7 @@ test("legacy neighbor task fixture upgrades in place through the checklist UI", 
 	}
 	await addAsset("project", project);
 	await addAsset("account", account);
+	await openProjectDetails(page);
 	await page.getByRole("button", { name: "Add connection" }).click();
 	const dialog = page.getByRole("dialog");
 	await selectChoice(dialog.getByLabel("Connect to"), { label: project });
@@ -292,6 +297,7 @@ test("old completed neighbor task cannot complete a replacement relation after .
 		await page.getByText(name, { exact: true }).first().click();
 	}
 	async function addRelation(targetPage: Page, label: string) {
+		await openProjectDetails(targetPage);
 		await targetPage.getByRole("button", { name: "Add connection" }).click();
 		const dialog = targetPage.getByRole("dialog");
 		await selectChoice(dialog.getByLabel("Connect to"), { label: project });
@@ -345,7 +351,7 @@ test("old completed neighbor task cannot complete a replacement relation after .
 		await expect(checklist.getByRole("button", { name: "Create checklist · 0" })).toBeDisabled();
 		await expect(checklist.getByRole("button", { name: "Pending · 2" })).toBeVisible();
 		await page.goto("/intake");
-		await page.locator("#backup-password").fill(password);
+		await openBackupPage(page); await page.locator("#backup-password").fill(password);
 		await page.getByRole("button", { name: "Create backup" }).click();
 		const downloadPromise = page.waitForEvent("download");
 		await page.getByRole("link", { name: "Save backup file" }).click();
@@ -357,7 +363,7 @@ test("old completed neighbor task cannot complete a replacement relation after .
 		restored.on("pageerror", (error) => errors.push(error.message));
 		try {
 			await restored.goto("/intake");
-			await restored.locator("#backup-password").fill(password);
+			await openBackupPage(restored); await restored.locator("#backup-password").fill(password);
 			await restored.locator("#restore-file").setInputFiles(path);
 			await restored.getByRole("button", { name: "Preview", exact: true }).first().click();
 			await restored.getByRole("button", { name: /Confirm ·/ }).click();
@@ -412,6 +418,7 @@ test("built PWA keeps the account checklist editable across offline reloads", as
 			await expect(dialog).toBeHidden();
 			await page.getByText(name, { exact: true }).first().click();
 		}
+		await openProjectDetails(page);
 		await page.getByRole("button", { name: "Add connection" }).click();
 		const relation = page.getByRole("dialog");
 		await selectChoice(relation.getByLabel("Connect to"), { label: `Project ${suffix}` });

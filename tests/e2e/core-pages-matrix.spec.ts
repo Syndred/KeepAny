@@ -2,7 +2,7 @@ import { mkdirSync } from "node:fs";
 import { expect, test } from "@playwright/test";
 import { selectChoice } from "./helpers/select-choice";
 
-const evidence = process.env.KEEPANY_EVIDENCE_DIR ?? "docs/evidence/2026-09-29";
+const evidence = process.env.KEEPANY_EVIDENCE_DIR ?? "test-results/evidence/2026-09-29";
 
 for (const locale of ["en-US", "zh-CN"] as const) {
 	for (const width of [360, 390, 768, 1280, 1440]) {

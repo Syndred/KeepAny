@@ -1,1 +1,0 @@
-import{P as e,t}from"./schemas-CGTMZIIT.js";function n(n){return e(t,n)}export{n as t};

@@ -1,3 +1,4 @@
+import { confirmSampleLibrary } from "./helpers/sample-library";
 import { portableCandidate } from "./helpers/portable-candidate";
 import {createHash} from 'node:crypto';
 import { mkdirSync, writeFileSync } from "node:fs";
@@ -40,6 +41,7 @@ for (const language of ["zh-CN", "en"] as const)
 				await page
 					.getByRole("button", { name: t("loadSample"), exact: true })
 					.click();
+await confirmSampleLibrary(page);
 				await expect(
 					page.getByRole("button", {
 						name: t("sampleLibraryPresent"),

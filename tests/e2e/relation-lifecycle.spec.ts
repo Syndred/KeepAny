@@ -1,8 +1,9 @@
+import { openProjectDetails } from "./helpers/project-details";
 import { mkdirSync } from "node:fs";
 import { expect, test, type Page } from "@playwright/test";
 import { selectChoice } from "./helpers/select-choice";
 
-const evidence = process.env.KEEPANY_EVIDENCE_DIR ?? "docs/evidence/2026-09-29";
+const evidence = process.env.KEEPANY_EVIDENCE_DIR ?? "test-results/evidence/2026-09-29";
 const repositoryModuleUrl = `/@fs${process.cwd()}/packages/local-db/src/index.ts`;
 
 async function relationRows(page: Page) {
@@ -140,6 +141,7 @@ for (const scenario of [
 			await expect(page.getByRole("heading", { name })).toBeVisible();
 		}
 		async function addRelation(labelValue: string, withMetadata = false) {
+			await openProjectDetails(page);
 			await page.getByRole("button", { name: scenario.addRelation }).click();
 			const dialog = page.getByRole("dialog");
 			await selectChoice(dialog.getByLabel(scenario.target), { label: account });
@@ -162,6 +164,7 @@ for (const scenario of [
 			).toHaveAttribute("aria-pressed", "true");
 			await addAsset("project", project);
 			await addRelation(label, true);
+			await openProjectDetails(page);
 			await page.getByRole("button", { name: scenario.addRelation }).click();
 			const duplicate = page.getByRole("dialog");
 			await selectChoice(duplicate
@@ -354,6 +357,7 @@ test("crowded graph filters neighbors and clears filter on center change", async
 		await page.goto("/assets/project");
 		await page.getByText(project, { exact: true }).first().click();
 		for (const [index, neighbor] of neighbors.entries()) {
+			await openProjectDetails(page);
 			await page.getByRole("button", { name: "Add connection" }).click();
 			const dialog = page.getByRole("dialog");
 			await selectChoice(dialog.getByLabel("Connect to"), { label: neighbor });

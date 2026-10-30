@@ -1,6 +1,7 @@
 import type { RecordRow, PulledRow, ScopedOutbox, ScopedConflict, DatasetBinding, ScopedAttachmentUploadPlan } from "./repository-types";
 export type { RecordRow, PulledRow, ScopedOutbox, ScopedConflict, DatasetBinding, ScopedAttachmentUploadPlan } from "./repository-types";
 import { recordSchema } from "./record-schema";
+import { assertCatalogCategoryName } from '../../domain/src/catalog-category';
 import { createRxDatabase, type RxDatabase } from 'rxdb';
 import { getRxStorageDexie } from 'rxdb/plugins/storage-dexie';
 import { conflictsWithAccountRestore } from '../../domain/src/account-identity';
@@ -424,6 +425,57 @@ export class LocalRepository {
     return this.saveUnlocked('asset', next, rowFor('asset', expected).payload);
   }
 
+  /** Catalog categories have stable IDs: rename/remove never rewrites asset data. */
+  async saveCatalogCategory(expected: Category | null, changes: { name: string; hidden?: boolean; deleted?: boolean; order?: number; source?: 'project' | 'domains' }): Promise<Category> {
+    assertCatalogCategoryName(changes.name);
+    return withRenewalLock(`keepany-catalog-categories:${this.db.name}`, () =>
+      withCategoryMutationGate(this.db, this.fileStore, [{ type: 'category', id: expected?.id ?? '', kind: 'project' }], async () => {
+        const query = this.db.records.find({ selector: { type: 'category' } });
+        const categories = (await this.db.records.storageInstance.query(query.getPreparedQuery())).documents
+          .map((row: RecordRow) => entitySchemas.category.parse(JSON.parse(row.payload))).filter((category: Category) => category.scope === 'catalog' || category.kind === 'project' && !category.scope);
+        if (changes.source && !expected) {
+          const existing = categories.find((category: Category) => category.source === changes.source);
+          if (existing) return existing; // Tombstones prevent an intentionally removed legacy category reappearing.
+        }
+        const current = expected && categories.find((category: Category) => category.id === expected.id);
+        if (expected && (!current || current.deleted || JSON.stringify(current) !== JSON.stringify(entitySchemas.category.parse(expected)))) throw Error('category-stale');
+        let name=changes.name.trim();
+        const duplicate=()=>categories.some((category:Category)=>!category.deleted && category.id!==expected?.id && normalizeCategoryName(category.name)===normalizeCategoryName(name));
+        if(!expected && changes.source){let suffix=2;while(duplicate())name=`${changes.name.trim()} (${suffix++})`;}
+        else if(duplicate())throw Error('category-duplicate');
+        const next = entitySchemas.category.parse({ ...(expected ?? { id: crypto.randomUUID(), kind: 'project', order: categories.length, deleted: false }), ...(expected && !expected.scope ? {legacyName:expected.name}:{}), scope:'catalog', ...changes, name });
+        if (expected) await this.saveEntityUnlocked('category', next, rowFor('category', expected).payload, false, false, true);
+        else await this.db.records.insert(rowFor('category', next));
+        return next;
+      }));
+  }
+
+  async saveCatalogAsset(expected: Asset | null, next: Asset, categoryId: string): Promise<RecordRow> {
+    return withRenewalLock(`keepany-catalog-categories:${this.db.name}`, async () => {
+      if (categoryId) {
+        const [row] = await this.db.records.storageInstance.findDocumentsById([key('category', categoryId)], false);
+        const category = row && entitySchemas.category.parse(JSON.parse(row.payload));
+        if (!category || category.deleted || !(category.scope === 'catalog' || category.kind==='project'&&!category.scope)) throw Error('category-stale');
+      }
+      return expected ? this.saveAssetIfCurrent(expected, next) : this.save('asset', next);
+    });
+  }
+
+  /** Empty-account confirmation freezes both the public row and encrypted revision. */
+  async trashEmptyAccountIfCurrent(expected: Asset, expectedVaultRevision: string): Promise<RecordRow> {
+    if (expected.kind !== 'account' || expected.deleted || !expectedVaultRevision) throw Error('asset-stale');
+    return this.fileStore.transaction('rw', this.fileStore.passwordVault, this.fileStore.categoryEditJournal, this.fileStore.blobs, async () => {
+      // Acquire all FileStore locks together. Nesting a category transaction behind
+      // a queued overlapping live query can otherwise deadlock a real browser.
+      const record = await this.fileStore.passwordVault.get('local');
+      if (record?.revision !== expectedVaultRevision) throw Error('vault-stale');
+      for (const id of expected.attachments) if (!(await this.fileStore.blobs.get(id))) throw Error('attachment-missing');
+      await assertCategoryMutationAllowed(this.db, this.fileStore, [{ type: 'asset', id: expected.id, kind: 'account' }]);
+      return Dexie.waitFor(Dexie.ignoreTransaction(() => this.saveEntityUnlocked('asset',
+        { ...expected, deleted: true, updatedAt: new Date().toISOString() }, rowFor('asset', expected).payload, false, true)));
+    });
+  }
+
   async saveRelationIfCurrent(expected: Relation, next: Relation): Promise<RecordRow> {
     if (expected.id !== next.id || expected.from !== next.from || expected.to !== next.to) throw Error('relation-stale');
     return this.saveUnlocked('relation', next, rowFor('relation', expected).payload);
@@ -660,7 +712,7 @@ export class LocalRepository {
       () => this.saveEntityUnlocked(type, value, expectedPayload, subscriptionSave, true));
   }
 
-  private async saveEntityUnlocked(type: EntityType, value: unknown, expectedPayload?: string | null, subscriptionSave = false, attachmentsChecked = false): Promise<RecordRow> {
+  private async saveEntityUnlocked(type: EntityType, value: unknown, expectedPayload?: string | null, subscriptionSave = false, attachmentsChecked = false, catalogCategoryWrite = false): Promise<RecordRow> {
     if (type === 'asset' && this.renewalRecoveryError) throw Error('renewal-recovery-pending');
     const next = rowFor(type, value);
     const entity = parsedPayload(next) as Record<string, unknown>;
@@ -702,7 +754,8 @@ export class LocalRepository {
         if (parsedPayload(data).deleted && !parsedPayload(next).deleted) throw Error('tombstone-restore-required');
         if (type === 'category') {
           const previous = parsedPayload(data) as Category, proposed = parsedPayload(next) as Category;
-          if (previous.kind !== proposed.kind || previous.name !== proposed.name || previous.order !== proposed.order) throw Error('category-stale');
+          if (previous.kind !== proposed.kind || previous.source !== proposed.source ||
+            (!catalogCategoryWrite && (previous.scope !== proposed.scope || previous.name !== proposed.name || previous.order !== proposed.order || previous.legacyName !== proposed.legacyName))) throw Error('category-stale');
         }
         if (type === 'asset') {
           const previous = parsedPayload(data) as Asset;

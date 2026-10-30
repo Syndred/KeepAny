@@ -1,6 +1,0 @@
-{
-  "observationCommand": "bun /Users/syndred/.codex/skills/gstack/bin/gstack-qa-deadline run docs/qa/2026-10-27/evidence/T02/deadline.json -- /Users/syndred/.codex/toolchains/gstack/browse/dist/browse screenshot docs/qa/2026-10-27/evidence/T02/gstack-dialog-en-390.png",
-  "observed": "Screenshot saved: docs/qa/2026-10-27/evidence/T02/gstack-dialog-en-390.png",
-  "hypothesis": "The retained screenshot shows the asset-type dialog with separated Continue and Cancel; Escape should close without creating data.",
-  "nextCommand": "bun /Users/syndred/.codex/skills/gstack/bin/gstack-qa-deadline run docs/qa/2026-10-27/evidence/T02/deadline.json -- /Users/syndred/.codex/toolchains/gstack/browse/dist/browse press Escape"
-}

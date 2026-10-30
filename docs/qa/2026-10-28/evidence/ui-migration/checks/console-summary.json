@@ -1,8 +1,0 @@
-{
-  "from": "2026-10-28T02:17:00.096Z",
-  "probe": "../qa-completion-browser/probe-062.json",
-  "entries": 11,
-  "errors": 0,
-  "warnings": 11,
-  "warningType": "Existing RxDB Dexie premium storage notices; raw console history preserved in probe062."
-}

@@ -6,7 +6,7 @@ import { activeAccountGraph, setAccountRelationDetailsOpen, waitForAccountGraphL
 
 const repo = `/@fs/${resolve("packages/local-db/src/index.ts").replaceAll("\\", "/")}`;
 const domain = `/@fs/${resolve("packages/domain/src/index.ts").replaceAll("\\", "/")}`;
-const evidence = "docs/qa/2026-10-27/evidence/T15-windows";
+const evidence = "test-results/qa/2026-10-27/evidence/T15-windows";
 mkdirSync(evidence, { recursive: true });
 
 async function rows(page: Page) {

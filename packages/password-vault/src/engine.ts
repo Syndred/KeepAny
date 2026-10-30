@@ -38,6 +38,8 @@ export function readImportDraft(db: Kdbx): string | null {
 
 const MAX_ENTRIES = 10_000;
 const MAX_TEXT = 64 * 1024;
+// One account note can combine the three bounded legacy note fields losslessly.
+export const VAULT_NOTES_MAX_LENGTH = 256 * 1024;
 
 function integer(value: unknown, min: number, max: number): value is number {
   return typeof value === 'number' && Number.isSafeInteger(value) && value >= min && value <= max;
@@ -88,9 +90,10 @@ export async function loadDatabase(bytes: Uint8Array, key: KdbxCredentials): Pro
       if (entry.history.length > 1000) fail('vault-size');
       for (const item of [entry, ...entry.history]) {
         if (item.fields.size > 128) fail('vault-size');
-        for (const value of item.fields.values()) {
-          if ((typeof value === 'string' && value.length > MAX_TEXT)
-            || (value instanceof ProtectedValue && value.byteLength > MAX_TEXT * 4)) fail('vault-size');
+        for (const [field, value] of item.fields) {
+          const limit = field === 'Notes' ? VAULT_NOTES_MAX_LENGTH : MAX_TEXT;
+          if ((typeof value === 'string' && value.length > limit)
+            || (value instanceof ProtectedValue && value.byteLength > limit * 4)) fail('vault-size');
         }
       }
     }
@@ -101,7 +104,8 @@ export async function loadDatabase(bytes: Uint8Array, key: KdbxCredentials): Pro
 export function normalizeDraft(draft: VaultEntryDraft): VaultEntryDraft {
   if (!draft || typeof draft !== 'object') fail('vault-invalid');
   for (const field of ['title', 'username', 'password', 'url', 'notes'] as const) {
-    if (typeof draft[field] !== 'string' || draft[field].length > MAX_TEXT || draft[field].includes('\0')) fail('vault-invalid');
+    const limit = field === 'notes' ? VAULT_NOTES_MAX_LENGTH : MAX_TEXT;
+    if (typeof draft[field] !== 'string' || draft[field].length > limit || draft[field].includes('\0')) fail('vault-invalid');
   }
   if (!draft.title.trim() || draft.title.length > 256 || draft.username.length > 1024 || draft.url.length > 4096) fail('vault-invalid');
   if (draft.id !== undefined && (typeof draft.id !== 'string' || draft.id.length > 128)) fail('vault-invalid');
@@ -129,6 +133,17 @@ function normalizeUsernameAliases(value: unknown, username: string): string[] | 
   // Login identifiers are exact values: do not trim or case-fold them.
   const aliases = [...new Set(value.filter((alias) => alias !== username))];
   return aliases.length ? aliases : undefined;
+}
+
+/** Compare field values, independent of the caller's object insertion order. */
+export function sameVaultDraft(first: VaultEntryDraft, second: VaultEntryDraft): boolean {
+  const key = (value: VaultEntryDraft) => {
+    const draft = normalizeDraft(value);
+    return [draft.id, draft.title, draft.username, draft.password, draft.url, draft.notes,
+      draft.usernameAliases ?? [], [...draft.linkedAssetIds].sort(),
+      draft.aiKeyBinding ? [draft.aiKeyBinding.version, draft.aiKeyBinding.provider, draft.aiKeyBinding.baseURL] : null];
+  };
+  return JSON.stringify(key(first)) === JSON.stringify(key(second));
 }
 
 function validAiKeyBinding(value: unknown): value is NonNullable<VaultEntryDraft['aiKeyBinding']> {

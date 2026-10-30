@@ -1,4 +1,0 @@
-
-QA_DEADLINE {"guard":"qa-deadline","event":"started","version":1,"startedAt":"2026-10-27T05:17:04.196Z","deadlineAt":"2026-10-27T05:32:04.196Z","budgetMs":900000,"observedAt":"2026-10-27T05:21:35.770Z","remainingMs":628426,"expired":false}
-
-QA_DEADLINE {"guard":"qa-deadline","event":"finished","observedAt":"2026-10-27T05:21:35.875Z","deadlineAt":"2026-10-27T05:32:04.196Z","timedOut":false,"exitCode":0}

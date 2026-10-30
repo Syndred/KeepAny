@@ -1,11 +1,12 @@
 import { Input } from "./components/ui/input";
+import { catalogCategoryLabel } from './catalog-records';
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import {
 	ArrowLeft,
 	Bell,
-	ChevronDown,
 	LayoutDashboard,
 	Layers,
 	Menu,
@@ -48,10 +49,12 @@ export function AppShell() {
 	const [search, setSearch] = useState(
 		() => sessionStorage.getItem("keepany-search") || "",
 	);
+	const [pendingAccountName, setPendingAccountName] = useState("");
 	const [searchOpen, setSearchOpen] = useState(false);
 	const topSearchPanelRef = useRef<HTMLDivElement>(null);
 	const topSearchInputRef = useRef<HTMLInputElement>(null);
 	const [toast, setToast] = useState("");
+	const [feedbackTarget, setFeedbackTarget] = useState<HTMLElement | null>(null);
 	const [ai, setAi] = useState(false);
 	const [mobile, setMobile] = useState(false);
 	const [pendingNavOrder, setPendingNavOrder] = useState<string[] | null>(null);
@@ -59,6 +62,7 @@ export function AppShell() {
 	const pathname = useRouterState({ select: (s) => s.location.pathname });
 	const navigate = useNavigate();
 	useEffect(() => {
+		if (pathname !== "/accounts") setPendingAccountName("");
 		if (pathname) { setSearchOpen(false); setSearch(""); setMobile(false); }
 	}, [pathname]);
 	useEffect(() => {
@@ -113,8 +117,8 @@ export function AppShell() {
 		if (hash) requestSearchLocation(hash);
 	}
 	const context = useMemo(
-		() => ({ data, search, setSearch, notify: setToast }),
-		[data, search],
+		() => ({ data, search, setSearch, notify: setToast, registerFeedbackTarget: setFeedbackTarget, pendingAccountName, setPendingAccountName }),
+		[data, search, pendingAccountName],
 	);
 	const openTasks = data.tasks.filter((x) => !x.done && !x.deleted).length;
 	const navigation: SortableNavItem[] = [
@@ -129,7 +133,7 @@ export function AppShell() {
 		{ id: "assets", to: "/assets", label: t("assetsWorkspace"), icon: Layers, active: workspacePathGroup(pathname) === "assets" },
 		{ id: "accounts", to: "/accounts", label: t("accountsWorkspace"), icon: UserRound, active: workspacePathGroup(pathname) === "accounts" },
 	];
-	const customCategories = data.categories.filter((category) => !category.deleted);
+	const customCategories = data.categories.filter((category) => !category.deleted && !category.hidden);
 	const collections = readCollections(data.preferences.find((preference) => preference.id === COLLECTIONS_PREFERENCE_ID)?.value);
 	const currentKind = kinds.find((kind) => pathname.startsWith(`/assets/${kind}`));
 	const currentHeading = pathname === "/" ? t("overview") : currentKind ? t(currentKind) :
@@ -252,13 +256,7 @@ export function AppShell() {
 							<X size={18} />
 						</Button>
 					</div>
-					<DropdownMenu><DropdownMenuTrigger className="workspace-current"><span className="workspace-avatar"><UserRound size={15}/></span><strong>{t("personalWorkspace")}</strong><ChevronDown size={14} aria-hidden="true" /></DropdownMenuTrigger>
-						<DropdownMenuContent>
-							<DropdownMenuItem render={<Link to="/settings" />} onClick={() => setMobile(false)}><Settings />{t("settings")}</DropdownMenuItem>
-							<DropdownMenuItem render={<Link to="/collections" />} onClick={() => setMobile(false)}><Layers />{t("customizeSidebar")}</DropdownMenuItem>
-							<DropdownMenuItem render={<Link to="/intake" />} onClick={() => setMobile(false)}><Plus />{t("intake")}</DropdownMenuItem>
-						</DropdownMenuContent>
-					</DropdownMenu>
+
 					<div className="sidebar-section-label">{t("workspaceSection")}</div>
 					<nav className="nav" aria-label={t("navigation")}>
 						<SortableNav
@@ -274,13 +272,12 @@ export function AppShell() {
 					<div className="sidebar-custom">
 						<div className="sidebar-section-label">{t("collectionsTitle")}</div>
 						{collections.map((collection) => <Link key={collection.id} to="/collections/$id" params={{ id: collection.id }} className="sidebar-category sidebar-collection" aria-current={collectionDetailId === collection.id ? "page" : undefined} onClick={() => setMobile(false)} title={collection.name}><span>{collection.name}</span></Link>)}
-						{customCategories.map((category) => <button type="button" key={category.id} className="sidebar-category" onClick={() => selectCategory(category.kind, category.name, category.id)} title={category.name}><span>{category.name}</span></button>)}
+						{customCategories.map((category) => <button type="button" key={category.id} className="sidebar-category" onClick={() => { if(category.scope === 'catalog'||category.kind==='project'){setMobile(false);void navigate({to:'/assets/category/$categoryId',params:{categoryId:category.id}});}else selectCategory(category.kind, category.name, category.id); }} title={catalogCategoryLabel(category,t)}><span>{catalogCategoryLabel(category,t)}</span></button>)}
 						<Link to="/collections" className="sidebar-customize" aria-current={/^\/collections\/?$/.test(pathname) ? "page" : undefined} onClick={() => setMobile(false)}><Plus size={15}/>{t("customizeSidebar")}</Link>
 					</div>
 					<div className="side-bottom">
-						<DropdownMenu><DropdownMenuTrigger className="sidebar-user"><span>{t("meInitial")}</span><span><strong>{t("myWorkspace")}</strong><small>{t("privateWorkspace")}</small></span><ChevronDown size={14} aria-hidden="true" /></DropdownMenuTrigger>
-							<DropdownMenuContent side="top"><DropdownMenuItem render={<Link to="/intake" />} onClick={() => setMobile(false)}><Plus />{t("intake")}</DropdownMenuItem><DropdownMenuItem render={<Link to="/settings" />} onClick={() => setMobile(false)}><Settings />{t("settings")}</DropdownMenuItem></DropdownMenuContent>
-						</DropdownMenu>
+                      <Link to="/backup" className="sidebar-customize" onClick={() => setMobile(false)}><Plus size={15}/>{t("backupAndRestore")}</Link>
+                      <Link to="/settings" className="sidebar-customize" onClick={() => setMobile(false)}><Settings size={15}/>{t("settings")}</Link>
 					</div>
 				</aside>
 				{mobile && (
@@ -309,14 +306,13 @@ export function AppShell() {
 						</button>
 						<div className="top-actions">
 							<Link to="/tasks" className="top-icon-button" aria-label={t("taskReminders")}><Bell size={17}/>{openTasks > 0 && <i aria-hidden="true"/>}</Link>
-							<DropdownMenu><DropdownMenuTrigger render={<Button className="top-icon-button" variant="ghost" aria-label={t("assistantMenu")} />}><Sparkles size={17}/></DropdownMenuTrigger><DropdownMenuContent align="end"><DropdownMenuItem render={<Link to="/change-impact" />}>{t("checkChangeImpact")}</DropdownMenuItem><DropdownMenuItem render={<Link to="/assistant-access" />}>{t("settingsAssistantAccess")}</DropdownMenuItem></DropdownMenuContent></DropdownMenu>
-							<Link
-								to="/intake"
-								className="top-icon-button"
-								aria-label={t("intake")}
-							>
-							<Plus size={18} />
-							</Link>
+							<DropdownMenu><DropdownMenuTrigger render={<Button className="top-icon-button" variant="ghost" aria-label={t("assistantMenu")} />}><Sparkles size={17}/></DropdownMenuTrigger><DropdownMenuContent align="end"><DropdownMenuItem onClick={() => setAi(true)}>{t("settingsAskAssistant")}</DropdownMenuItem><DropdownMenuItem render={<Link to="/intake" hash="ai" />}>{t("aiCaptureTab")}</DropdownMenuItem><DropdownMenuItem render={<Link to="/change-impact" />}>{t("checkChangeImpact")}</DropdownMenuItem><DropdownMenuItem render={<Link to="/assistant-access" />}>{t("settingsAssistantAccess")}</DropdownMenuItem></DropdownMenuContent></DropdownMenu>
+                           <DropdownMenu><DropdownMenuTrigger render={<Button className="top-icon-button" variant="ghost" aria-label={t("globalAddRecord")} />}><Plus size={18}/></DropdownMenuTrigger><DropdownMenuContent align="end">
+                            <DropdownMenuItem render={<Link to="/accounts" hash="new-account" />}>{t("newAccountKind")}</DropdownMenuItem>
+                            {(["project", "item", "subscription"] as const).map(kind => <DropdownMenuItem key={kind} render={<Link to="/assets/$kind" params={{ kind }} hash="new" />}>{t(({ project: "catalogRecords", item: "newItemKind", subscription: "newSubscriptionKind" })[kind])}</DropdownMenuItem>)}
+                            <DropdownMenuItem render={<Link to="/intake" />}>{t("intake")}</DropdownMenuItem>
+                            <DropdownMenuItem render={<Link to="/intake" hash="ai" />}>{t("aiCaptureTab")}</DropdownMenuItem>
+                           </DropdownMenuContent></DropdownMenu>
 						</div>
 					</header>
 					{searchOpen && <div className="top-search-panel" ref={topSearchPanelRef}>
@@ -348,11 +344,11 @@ export function AppShell() {
 					{t("error")}
 				</div>
 			)}
-			{toast && (
+			{toast && (feedbackTarget ? createPortal(<div className="compact-account-feedback-message" role="status">{toast}</div>, feedbackTarget) : (
 				<div className="toast" role="status">
 					{toast}
 				</div>
-			)}
+			))}
 			{ai && (
 				<Suspense
 					fallback={

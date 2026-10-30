@@ -4,6 +4,7 @@ import { expect, test, type Page } from "@playwright/test";
 import { resources } from "../../apps/web/src/i18n";
 import { passwordVaultCopy } from "../../apps/web/src/password-vault-copy";
 import { selectChoice } from "./helpers/select-choice";
+import { openStandaloneEntryDraft, saveStandaloneEntryDraft } from "./helpers/standalone-entry";
 
 test.use({ timezoneId: "Asia/Shanghai" });
 test.setTimeout(90_000);
@@ -120,11 +121,15 @@ test("account detail manages its own passwords and the merged list hides private
 	await expect(inline.locator(".password-vault-entry")).toHaveCount(1);
 	await page.locator(".workspace-password-actions").getByRole("link").click();
 	await page.getByRole("button", { name: p("pwVaultClearAssetFilter"), exact: true }).click();
-	await page.getByRole("button", { name: p("pwVaultNewEntry"), exact: true }).click();
+	await openStandaloneEntryDraft(page, p);
 	await page.locator("#password-vault-entry-title").fill("Standalone private credential");
 	await page.locator("#password-vault-entry-username").fill("private-login@example.test");
 	await page.locator("#password-vault-entry-password").fill("Synthetic private secret 2026!");
-	await page.getByRole("dialog").getByRole("button", { name: p("pwVaultSaveEntry"), exact: true }).click();
+	await saveStandaloneEntryDraft(page, p);
+	// Creating the merged record intentionally publishes one ordinary account.
+	const afterCreate = await ordinaryAssets(page);
+	expect(JSON.parse(afterCreate)).toHaveLength(JSON.parse(before).length + 1);
+	expect(afterCreate).not.toContain("Synthetic private secret 2026!");
 	await page.locator(".sidebar .nav").getByRole("link", { name: "Accounts", exact: true }).click();
 	await expect(page.locator(".asset-account-card").filter({ hasText: "Workspace Mail" })).toContainText("1 password entry");
 	await expect(page.locator(".workspace-password-only .workspace-password-card")).toHaveCount(1);
@@ -136,8 +141,8 @@ test("account detail manages its own passwords and the merged list hides private
 	await expect(page.locator(".workspace-password-only")).toHaveCount(0);
 	await expect(page.getByRole("searchbox", { name: resources.en.translation.accountListSearch })).toHaveValue("");
 	await expect(page.locator(".asset-account-card").filter({ hasText: "Workspace Mail" })).toHaveCount(1);
-	await expect.poll(() => ordinaryAssets(page)).toBe(before);
+	await expect.poll(() => ordinaryAssets(page)).toBe(afterCreate);
 	await page.reload();
 	await expect(page.locator(".workspace-password-only")).toHaveCount(0);
-	await expect.poll(() => ordinaryAssets(page)).toBe(before);
+	await expect.poll(() => ordinaryAssets(page)).toBe(afterCreate);
 });

@@ -1,3 +1,4 @@
+import { openBackupPage } from "./helpers/backup-restore";
 import { expect, test, type Page } from '@playwright/test';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -56,7 +57,7 @@ for (const zh of [true, false]) for (const width of [390, 1280]) {
     }
     async function archive(current: Page): Promise<Archive> {
       if (!current.url().endsWith('/intake')) await current.goto('/intake');
-      await current.locator('#backup-password').fill(password);
+      await openBackupPage(current); await current.locator('#backup-password').fill(password);
       await current.getByRole('button', { name: c.backup, exact: true }).click();
       const link = current.getByRole('link', { name: c.saveBackup, exact: true });
       await expect(link).toBeVisible();
@@ -152,7 +153,7 @@ for (const zh of [true, false]) for (const width of [390, 1280]) {
         expect(final.candidates[2]).toMatchObject({ status: 'pending', asset: { name: 'Owner Waiting Edited' } }); return '1份全文+2引用，第三候选未确认，修改稿保持。';
       });
       await step('S15', '干净浏览器资料中用正式文件选择器预览并恢复KA1', '预览列明范围，确认才恢复，刷新后记录与审核完整。', async () => {
-        await language(restored); await restored.goto('/intake'); await restored.locator('#backup-password').fill(password);
+        await language(restored); await restored.goto('/intake'); await openBackupPage(restored); await restored.locator('#backup-password').fill(password);
         const summary = restored.locator('summary').filter({ hasText: zh ? '恢复备份' : 'Restore backup' }); await summary.click();
         const waiting = restored.waitForEvent('filechooser'); await restored.locator('#restore-file').click(); const chooser = await waiting; await chooser.setFiles(final.file);
         await restored.getByRole('button', { name: c.preview, exact: true }).first().click(); await expect(restored.getByRole('button', { name: /^确认 ·|^Confirm ·/ })).toBeVisible();

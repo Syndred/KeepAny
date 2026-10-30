@@ -1,3 +1,4 @@
+import { openBackupPage } from "./helpers/backup-restore";
 import { readFileSync } from 'node:fs';
 import { expect, test, type Page } from '@playwright/test';
 import { strFromU8, unzipSync } from 'fflate';
@@ -13,7 +14,7 @@ const csv = Buffer.from('name,kind\nPending CSV,project\nAccepted CSV,project\nI
 
 
 async function download(page: Page, zh: boolean) {
-  await page.locator('#backup-password').fill(password);
+  await openBackupPage(page); await page.locator('#backup-password').fill(password);
   await page.getByRole('button', { name: zh ? '创建备份' : 'Create backup', exact: true }).click();
   const link = page.getByRole('link', { name: zh ? '保存备份文件' : 'Save backup file' });
   await expect(link).toBeVisible();
@@ -77,7 +78,7 @@ for (const locale of ['zh-CN', 'en-US']) test(`${locale} downloaded encrypted ba
     const restored = await destination.newPage(); restored.on('pageerror', error => errors.push(error.message));
     try {
       await restored.goto('/intake'); await expect(restored.locator('.intake-review-row')).toHaveCount(0);
-      await restored.locator('#backup-password').fill(password);
+      await openBackupPage(restored); await restored.locator('#backup-password').fill(password);
       await openBackupRestorePanel(restored);
       await restored.locator('#restore-file').setInputFiles(before.path);
       await restored.getByRole('button', { name: zh ? '预览' : 'Preview', exact: true }).first().click();

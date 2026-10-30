@@ -1,3 +1,4 @@
+import { openBackupPage } from "./helpers/backup-restore";
 import { expect, test, type Page } from "@playwright/test";
 import { readFileSync, mkdirSync } from "node:fs";
 import { createHash } from "node:crypto";
@@ -12,7 +13,7 @@ const evidence = process.env.KEEPANY_EVIDENCE_DIR ?? "test-results/T18-portable-
 type ArchiveRow = { id: string; type: string; payload: string };
 
 async function archive(page: Page, t: (key: keyof typeof resources.en.translation) => string) {
-	await page.locator("#backup-password").fill(password);
+	await openBackupPage(page); await page.locator("#backup-password").fill(password);
 	await page.getByRole("button", { name: t("backup"), exact: true }).click();
 	const link = page.getByRole("link", { name: t("saveBackupFile"), exact: true });
 	await expect(link).toBeVisible();
@@ -89,7 +90,7 @@ for (const [locale, width] of [["zh-CN", 390], ["en", 1280]] as const) test(`T18
 		expect(before.candidates.every(row => row.fileHash === createHash("sha256").update(Buffer.from(original)).digest("hex"))).toBe(true);
 		expect(before.candidates.filter(row => row.status === "pending")).toHaveLength(2);
 		await restored.goto("/intake");
-		await restored.locator("#backup-password").fill(password);
+		await openBackupPage(restored); await restored.locator("#backup-password").fill(password);
 		await openBackupRestorePanel(restored);
 		await restored.locator("#restore-file").setInputFiles(before.path);
 		await restored.getByRole("button", { name: t("preview"), exact: true }).first().click();

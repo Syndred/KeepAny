@@ -1,3 +1,4 @@
+import { openBackupPage } from "./helpers/backup-restore";
 import { openBackupRestorePanel } from "./helpers/backup-restore";
 import { readFileSync } from "node:fs";
 import { expect, type BrowserContext, type Page, test } from "@playwright/test";
@@ -121,7 +122,7 @@ async function downloadAndInspect(
 	filename: string,
 ): Promise<Archive> {
 	await page.goto("/intake");
-	await page.locator("#backup-password").fill(password);
+	await openBackupPage(page); await page.locator("#backup-password").fill(password);
 	await page.getByRole("button", { name: copy.backup, exact: true }).click();
 	const link = page.getByRole("link", { name: copy.download, exact: true });
 	await expect(link).toBeVisible();
@@ -167,7 +168,7 @@ async function prepareRestore(
 ) {
 	if (navigate) await page.goto("/intake");
 	await openRestoreSection(page);
-	await page.locator("#backup-password").fill(password);
+	await openBackupPage(page); await page.locator("#backup-password").fill(password);
 	await page.locator("#restore-file").setInputFiles(archivePath);
 	await page
 		.getByRole("button", { name: copy.preview, exact: true })

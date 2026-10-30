@@ -33,6 +33,8 @@ const accountsWorkspaceRoute = createRoute({
 	path: "/accounts",
 	component: lazyRouteComponent(() => import("./page-workspaces"), "AccountsWorkspace"),
 });
+const categoryWorkspaceRoute=createRoute({getParentRoute:()=>rootRoute,path:'/assets/category/$categoryId',component:lazyRouteComponent(()=>import('./page-workspaces'),'CategoryWorkspaceRoute')});
+const catalogRecordRoute=createRoute({getParentRoute:()=>rootRoute,path:'/records/$id',component:lazyRouteComponent(()=>import('./page-catalog-record'),'CatalogRecordPage')});
 export const detailRoute = createRoute({
 	getParentRoute: () => rootRoute,
 	path: "/assets/$kind/$id",
@@ -81,6 +83,11 @@ const trashRoute = createRoute({
 	path: "/trash",
 	component: lazyRouteComponent(() => import("./page-trash"), "TrashPage"),
 });
+const backupRoute = createRoute({
+	getParentRoute: () => rootRoute,
+	path: "/backup",
+	component: lazyRouteComponent(() => import("./page-intake"), "BackupPage"),
+});
 const settingsRoute = createRoute({
 	getParentRoute: () => rootRoute,
 	path: "/settings",
@@ -95,6 +102,8 @@ const routeTree = rootRoute.addChildren([
 	listRoute,
 	assetsWorkspaceRoute,
 	accountsWorkspaceRoute,
+ categoryWorkspaceRoute,
+ catalogRecordRoute,
 	detailRoute,
 	projectWorkflowRoute,
 	changeImpactRoute,
@@ -103,6 +112,7 @@ const routeTree = rootRoute.addChildren([
 	collectionDetailRoute,
 	financeRoute,
 	intakeRoute,
+	backupRoute,
 	trashRoute,
 	settingsRoute,
 ]);

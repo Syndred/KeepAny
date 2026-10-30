@@ -1,6 +1,0 @@
-{
-  "observationCommand": "bun /Users/syndred/.codex/skills/gstack/bin/gstack-qa-deadline run docs/qa/2026-10-27/evidence/T01/gstack/deadline.json -- /Users/syndred/.codex/skills/gstack/browse/dist/browse goto http://127.0.0.1:4201/assets/domains",
-  "observed": "Navigated to http://127.0.0.1:4201/assets/domains (200)\n",
-  "hypothesis": "The domains route now loaded with the isolated source server. Inspect its visible navigation and controls before any interaction.",
-  "nextCommand": "bun /Users/syndred/.codex/skills/gstack/bin/gstack-qa-deadline run docs/qa/2026-10-27/evidence/T01/gstack/deadline.json -- /Users/syndred/.codex/skills/gstack/browse/dist/browse snapshot -i"
-}

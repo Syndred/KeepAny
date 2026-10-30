@@ -1,3 +1,4 @@
+import { confirmSampleLibrary } from "./helpers/sample-library";
 import { writeFileSync } from "node:fs";
 import { expect, test } from "@playwright/test";
 import { resources } from "../../apps/web/src/i18n";
@@ -33,6 +34,7 @@ for (const locale of ["zh-CN", "en"] as const)
 				await page
 					.getByRole("button", { name: t("loadSample"), exact: true })
 					.click();
+await confirmSampleLibrary(page);
 				await expect(
 					page.getByRole("button", {
 						name: t("sampleLibraryPresent"),
@@ -67,12 +69,12 @@ for (const locale of ["zh-CN", "en"] as const)
 				await page.screenshot({
 					path: info.outputPath("toast-normal-page.png"),
 				});
-				await toolbar
-					.getByRole("button", { name: t("pwVaultNewEntry"), exact: true })
+				await page.locator(".password-vault-header")
+					.getByRole("button", { name: t("add"), exact: true })
 					.click();
 				const dialog = page.getByRole("dialog"),
 					save = dialog.getByRole("button", {
-						name: t("pwVaultSaveEntry"),
+						name: t("save"),
 						exact: true,
 					});
 				await expect(dialog).toBeVisible();
@@ -186,8 +188,11 @@ for (const locale of ["zh-CN", "en"] as const)
 				await openVaultAccess(page);
 				await page.locator("#password-vault-unlock-master").fill(master);
 				await page.getByRole("button", { name: t("pwVaultUnlock"), exact: true }).click();
+				// A click completes before the asynchronous KDBX unlock commits its
+				// render. Wait for that real UI state, retaining every original ID.
+				await expect(page.locator(".password-vault-toolbar")).toBeVisible();
 				expect(await page.locator("a.asset-account-card").evaluateAll(nodes => nodes.map(node => node.getAttribute("href")))).toEqual(originalHrefs);
-				expect(await page.locator(".password-vault-entry").evaluateAll(nodes => nodes.map(node => node.getAttribute("data-entry-id")))).toEqual(originalEntryIds);
+				await expect.poll(() => page.locator(".password-vault-entry").evaluateAll(nodes => nodes.map(node => node.getAttribute("data-entry-id")))).toEqual(originalEntryIds);
 				receipt.cancelAndReloadPreservedAssetsAndEntries = true;
 				receipt.completed = true;
 			} finally {

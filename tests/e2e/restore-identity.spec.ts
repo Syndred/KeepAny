@@ -1,3 +1,4 @@
+import { openBackupPage } from "./helpers/backup-restore";
 import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { resolve } from 'node:path';
@@ -37,7 +38,7 @@ test.beforeAll(async () => {
 });
 
 async function download(page: Page, zh: boolean, filename: string) {
-  await page.goto('/intake'); await page.locator('#backup-password').fill(password);
+  await page.goto('/intake'); await openBackupPage(page); await page.locator('#backup-password').fill(password);
   await page.getByRole('button', { name: zh ? '创建备份' : 'Create backup', exact: true }).click();
   const link = page.getByRole('link', { name: zh ? '保存备份文件' : 'Save backup file' });
   await expect(link).toBeVisible();
@@ -49,7 +50,7 @@ async function download(page: Page, zh: boolean, filename: string) {
 }
 
 async function restore(page: Page, file: string, zh: boolean, expectSuccess = true) {
-  await page.goto('/intake'); await page.locator('#backup-password').fill(password);
+  await page.goto('/intake'); await openBackupPage(page); await page.locator('#backup-password').fill(password);
   await openBackupRestorePanel(page);
   await page.locator('#restore-file').setInputFiles(file);
   await page.getByRole('button', { name: zh ? '预览' : 'Preview', exact: true }).first().click();
@@ -95,7 +96,7 @@ for (const locale of ['zh-CN', 'en-US']) test(`${locale} ordinary restore preser
     const oversized = test.info().outputPath('synthetic-oversized.ka1');
     const sparse = await open(oversized, 'w');
     try { await sparse.truncate(BACKUP_CONTAINER_MAX_BYTES + 1); } finally { await sparse.close(); }
-    await clean.page.goto('/intake'); await clean.page.locator('#backup-password').fill(password);
+    await clean.page.goto('/intake'); await openBackupPage(clean.page); await clean.page.locator('#backup-password').fill(password);
     await openBackupRestorePanel(clean.page);
     await clean.page.locator('#restore-file').setInputFiles(oversized);
     await clean.page.getByRole('button', { name: zh ? '预览' : 'Preview', exact: true }).first().click();

@@ -1,8 +1,8 @@
-import { Kdbx, KdbxCredentials } from 'kdbxweb';
+import { Kdbx, KdbxCredentials, ProtectedValue, type KdbxEntry } from 'kdbxweb';
 import {
   applyDraft, checkBytes, clearCredentials, clearDatabase, configureDatabase, credentials, draftOf, fail,
   encodeImportDraft, findEntry, isTrash, loadDatabase, nextKdbxTime, normalizeDraft,
-  readImportDraft, safeError, summaryOf, VAULT_IMPORT_DRAFT_FIELD,
+  readImportDraft, safeError, summaryOf, sameVaultDraft, VAULT_IMPORT_DRAFT_FIELD, VAULT_LINK_FIELD,
 } from './engine';
 import type {
   VaultEntryDraft,
@@ -20,6 +20,18 @@ export const VAULT_IMPORT_MAX_ENTRIES = 1_000;
 export const VAULT_IMPORT_MAX_BYTES = 4 * 1024 * 1024;
 const VAULT_MAX_ENTRIES = 10_000;
 const VAULT_CONTENT_REVISION_FIELD = 'KeepAny.ContentRevision';
+
+// kdbxweb 2.1.1 copyFrom/importEntry omit these optional 4.1 properties.
+// Preserve the imported plugin metadata when splitting a shared login/history.
+function copyOptionalEntryMetadata(source: KdbxEntry, target: KdbxEntry): void {
+  target.customData = source.customData ? structuredClone(source.customData) : undefined;
+  target.qualityCheck = source.qualityCheck;
+  target.previousParentGroup = source.previousParentGroup;
+}
+function pushLoginHistory(entry: KdbxEntry): void {
+  entry.pushHistory();
+  copyOptionalEntryMetadata(entry, entry.history[entry.history.length - 1]);
+}
 
 type ImportMutation = {
   index: number;
@@ -287,14 +299,27 @@ export class VaultSession {
   }
 
   async saveEntry(value: VaultEntryDraft): Promise<string> {
+    return this.saveEntryIfCurrent(value);
+  }
+
+  /** Guard inside the serialized mutation, not before an awaited queue slot. */
+  async saveEntryIfCurrent(value: VaultEntryDraft, expected?: VaultEntryDraft | null): Promise<string> {
     const draft = normalizeDraft(value);
-    return this.run((generation) => this.mutate(generation, (candidate) => {
+    const baseline = expected ? normalizeDraft(expected) : expected;
+    return this.run((generation) => {
+      const db = this.unlocked();
+      if (baseline) {
+        if (!draft.id || draft.id !== baseline.id) fail('vault-stale');
+        const current = findEntry(db, draft.id);
+        if (isTrash(db, current) || !sameVaultDraft(draftOf(current), baseline)) fail('vault-stale');
+      } else if (baseline === null && draft.id) fail('vault-stale');
+      return this.mutate(generation, (candidate) => {
       const entry = draft.id ? findEntry(candidate, draft.id) : candidate.createEntry(candidate.getDefaultGroup());
       if (isTrash(candidate, entry)) fail('vault-invalid');
-      if (draft.id) entry.pushHistory();
+      if (draft.id) pushLoginHistory(entry);
       applyDraft(entry, draft);
       return entry.uuid.id;
-    }));
+    }); });
   }
 
   /** Link reviewed public account records in one encrypted write, without replacing entry content. */
@@ -324,7 +349,7 @@ export class VaultSession {
           const draft = draftOf(entry);
           if (draft.aiKeyBinding) fail('vault-invalid');
           if (unchangedLink(draft, item)) continue;
-          entry.pushHistory();
+          pushLoginHistory(entry);
           applyDraft(entry, normalizeDraft({ ...draft, linkedAssetIds: [...new Set([...draft.linkedAssetIds.filter(id => !item.replaceAccountIds.includes(id)), item.accountId])] }));
         }
       });
@@ -349,7 +374,7 @@ export class VaultSession {
       }
       await this.mutate(generation, candidate => {
         const target = findEntry(candidate, entryId);
-        target.pushHistory();
+        pushLoginHistory(target);
         const draft = draftOf(target);
         applyDraft(target, normalizeDraft({ ...draft, linkedAssetIds: draft.linkedAssetIds.filter(id => id !== assetId) }));
       });
@@ -424,7 +449,7 @@ export class VaultSession {
             if (isTrash(candidate, entry)) fail('vault-invalid');
             if (mutation.action === 'update') {
               if (entry.history.length >= 1_000) fail('vault-size');
-              entry.pushHistory();
+              pushLoginHistory(entry);
             }
             applyDraft(entry, mutation.draft);
             entryIdsByRow[mutation.index] = entry.uuid.id;
@@ -442,6 +467,46 @@ export class VaultSession {
         entryIdsByRow,
         revision: this.record.revision,
       };
+    });
+  }
+
+  /** Remove precisely the visible login. Shared records keep other assets intact. */
+  async removeLoginIdentifier(id: string, username: string, expectedContentRevision: string, accountId?: string): Promise<void> {
+    return this.run(async generation => {
+      const db = this.unlocked();
+      if (this.contentRevision(db) !== expectedContentRevision) fail('vault-stale');
+      const source = findEntry(db, id), draft = draftOf(source);
+      if (isTrash(db, source) || draft.aiKeyBinding || accountId && !draft.linkedAssetIds.includes(accountId)) fail('vault-stale');
+      const identifiers = [...new Set([draft.username, ...(draft.usernameAliases ?? [])].filter(Boolean))];
+      if (identifiers.length ? !identifiers.includes(username) : username !== '') fail('vault-stale');
+      const remaining = identifiers.filter(value => value !== username);
+      await this.mutate(generation, candidate => {
+        const entry = findEntry(candidate, id);
+        if (accountId && draft.linkedAssetIds.some(link => link !== accountId)) {
+          // The library's import preserves all historical versions, custom fields,
+          // attachments and icons. Only the current account's scope changes.
+          const replacement = candidate.importEntry(entry, candidate.getDefaultGroup(), candidate);
+          copyOptionalEntryMetadata(entry, replacement);
+          entry.history.forEach((version, index) => copyOptionalEntryMetadata(version, replacement.history[index]));
+          for (const version of [replacement, ...replacement.history]) {
+            version.fields.set(VAULT_LINK_FIELD, ProtectedValue.fromString(JSON.stringify([accountId])));
+          }
+          pushLoginHistory(entry);
+          applyDraft(entry, normalizeDraft({ ...draft, linkedAssetIds: draft.linkedAssetIds.filter(link => link !== accountId) }));
+          if (remaining.length) {
+            pushLoginHistory(replacement);
+            applyDraft(replacement, normalizeDraft({ ...draft, id: undefined, username: remaining[0], usernameAliases: remaining.slice(1), linkedAssetIds: [accountId] }));
+          } else {
+            candidate.meta.recycleBinEnabled = true; candidate.createRecycleBin(); candidate.remove(replacement);
+          }
+        } else if (remaining.length) {
+          pushLoginHistory(entry);
+          applyDraft(entry, normalizeDraft({ ...draft, username: remaining[0], usernameAliases: remaining.slice(1) }));
+        } else {
+          candidate.meta.recycleBinEnabled = true; candidate.createRecycleBin();
+          const previous = entry.locationChanged; candidate.remove(entry); entry.times.locationChanged = nextKdbxTime(previous);
+        }
+      });
     });
   }
 
@@ -500,7 +565,7 @@ export class VaultSession {
       const entry = findEntry(candidate, id);
       if (isTrash(candidate, entry) || !Number.isSafeInteger(index) || !entry.history[index]) fail('vault-invalid');
       const draft = normalizeDraft(draftOf(entry.history[index]));
-      entry.pushHistory();
+      pushLoginHistory(entry);
       applyDraft(entry, draft);
     }));
   }

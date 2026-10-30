@@ -9,3 +9,6 @@
 	.task-card.list-row.impact-task-row { flex-wrap: wrap; }
 	.task-card .impact-task-actions { flex: 0 0 100%; display: flex; flex-wrap: wrap; align-items: center; padding-left: 0; }
 }
+.asset-tasks-card .task-card.account-compact-task { display: grid; grid-template-columns: 44px minmax(0, 1fr) 44px; align-items: center; gap: 8px; min-height: 58px; margin: 0; padding: 6px 0; border: 0; border-bottom: 1px solid var(--line-soft); border-radius: 0; box-shadow: none; }
+.asset-tasks-card .account-compact-task > .impact-task-info { min-width: 0; }
+.asset-tasks-card .account-compact-task .impact-task-info > strong { overflow-wrap: anywhere; }

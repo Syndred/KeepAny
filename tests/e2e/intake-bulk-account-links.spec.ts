@@ -1,3 +1,5 @@
+import { openCapture } from "./helpers/ai-workflow";
+import { openBackupPage } from "./helpers/backup-restore";
 import { mkdirSync, readFileSync } from "node:fs";
 import { expect, type Page, test } from "@playwright/test";
 import { strFromU8, unzipSync } from "fflate";
@@ -30,7 +32,7 @@ const sourceText = `${sourceLines.join("\n")}\ngmail=${email}`;
 // Same real .ka1 download/decrypt path used by intake-review-backup.spec.ts.
 // No database seeding or development module injection: writes enter through UI.
 async function download(page: Page, zh: boolean, filename: string) {
-	await page.locator("#backup-password").fill(password);
+	await openBackupPage(page); await page.locator("#backup-password").fill(password);
 	await page
 		.getByRole("button", {
 			name: zh ? "创建备份" : "Create backup",
@@ -109,10 +111,7 @@ for (const language of ["zh-CN", "en"] as const) {
 				await expect(
 					settings.getByRole("status").filter({ hasText: copy.ready }),
 				).toBeVisible();
-				await page
-					.locator(".top-actions")
-					.getByRole("link", { name: copy.intake, exact: true })
-					.click();
+				await openCapture(page, copy.intake);
 				const importer = page.locator(".ai-import-panel");
 				mock.responses.push(
 					JSON.stringify({
@@ -403,7 +402,7 @@ for (const language of ["zh-CN", "en"] as const) {
 					restored.on("pageerror", (error) => errors.push(error.message));
 					await restored.goto("/intake");
 					await expect(restored.locator(".intake-review-row")).toHaveCount(0);
-					await restored.locator("#backup-password").fill(password);
+					await openBackupPage(restored); await restored.locator("#backup-password").fill(password);
 					await restored.locator("#restore-file").setInputFiles(saved.path);
 					await restored
 						.getByRole("button", { name: zh ? "预览" : "Preview", exact: true })

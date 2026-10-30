@@ -1,1 +1,0 @@
-import{S as e,b as t}from"./view-shared-dyVx9Xci.js";import{n}from"./useMatch-BDifbiC7.js";function r(r){let i=e();return t(i.stores.location,n(r,i))}export{r as t};

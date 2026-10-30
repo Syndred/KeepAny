@@ -20,8 +20,8 @@ function publicUrl(value, name, trailingSlash = false) {
 const siteUrl = publicUrl(process.env.KEEPANY_PUBLIC_SITE_URL ?? process.env.STACKPERCH_PUBLIC_SITE_URL ?? 'https://syndred.github.io/KeepAny/', 'KEEPANY_PUBLIC_SITE_URL / STACKPERCH_PUBLIC_SITE_URL', true);
 const downloadUrl = publicUrl(process.env.KEEPANY_PUBLIC_DOWNLOAD_URL ?? process.env.STACKPERCH_PUBLIC_DOWNLOAD_URL ?? `${repositoryUrl}/releases`, 'KEEPANY_PUBLIC_DOWNLOAD_URL / STACKPERCH_PUBLIC_DOWNLOAD_URL');
 const screenshots = {
-  en: resolve(root, process.env.KEEPANY_PUBLIC_SCREENSHOT_EN ?? process.env.STACKPERCH_PUBLIC_SCREENSHOT_EN ?? 'docs/evidence/2026-10-27/keepany-return/onboarding/onboarding-en-1280-sample.png'),
-  zh: resolve(root, process.env.KEEPANY_PUBLIC_SCREENSHOT_ZH ?? process.env.STACKPERCH_PUBLIC_SCREENSHOT_ZH ?? 'docs/evidence/2026-10-27/keepany-return/onboarding/onboarding-zh-1280-sample.png'),
+  en: resolve(root, process.env.KEEPANY_PUBLIC_SCREENSHOT_EN ?? process.env.STACKPERCH_PUBLIC_SCREENSHOT_EN ?? 'apps/public-site/assets/onboarding-en.png'),
+  zh: resolve(root, process.env.KEEPANY_PUBLIC_SCREENSHOT_ZH ?? process.env.STACKPERCH_PUBLIC_SCREENSHOT_ZH ?? 'apps/public-site/assets/onboarding-zh.png'),
 };
 
 const screenshotSizes = Object.fromEntries(await Promise.all(Object.entries(screenshots).map(async ([locale, path]) => {

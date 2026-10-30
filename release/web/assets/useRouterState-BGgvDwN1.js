@@ -1,1 +1,0 @@
-import{n as e,r as t}from"./link-3P-9VzbS.js";import{n}from"./useMatch-B2btvFP6.js";function r(r){let i=t({warn:r?.router===void 0}),a=r?.router||i;return e(a.stores.__store,n(r,a))}export{r as t};

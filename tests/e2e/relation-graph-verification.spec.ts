@@ -1,3 +1,5 @@
+import { openProjectDetails } from "./helpers/project-details";
+import { openBackupPage } from "./helpers/backup-restore";
 import { mkdirSync, readFileSync } from "node:fs";
 import { expect, test, type Locator, type Page } from "@playwright/test";
 import { strFromU8, unzipSync } from "fflate";
@@ -54,6 +56,7 @@ for (const locale of ["zh-CN", "en-US"] as const) {
 				return href;
 			}
 			async function connect(target: string, label: string, verified = false) {
+				await openProjectDetails(page);
 				await page.getByRole("button", { name: text.addRelation, exact: true }).click();
 				const dialog = page.getByRole("dialog");
 				await selectChoice(dialog.getByLabel(text.target, { exact: true }), { label: target });
@@ -203,7 +206,7 @@ for (const locale of ["zh-CN", "en-US"] as const) {
 				await expect(page.locator(".relation-graph-edge--pending")).toHaveCount(1);
 				if (width === 390) {
 					await page.goto("/intake");
-					await page.locator("#backup-password").fill(password);
+					await openBackupPage(page); await page.locator("#backup-password").fill(password);
 					await page.getByRole("button", { name: text.backup, exact: true }).click();
 					const link = page.getByRole("link", { name: text.download, exact: true });
 					await expect(link).toBeVisible();
@@ -222,7 +225,7 @@ for (const locale of ["zh-CN", "en-US"] as const) {
 					target.on("pageerror", (error) => errors.push(error.message));
 					await target.goto("/intake");
 					await target.locator("#restore-file").setInputFiles(path);
-					await target.locator("#backup-password").fill(password);
+					await openBackupPage(target); await target.locator("#backup-password").fill(password);
 					await target.locator("details").filter({ has: target.locator("#restore-file") }).getByRole("button", { name: text.preview, exact: true }).click();
 					await target.getByRole("button", { name: text.restore }).click();
 					await expect(target.getByRole("main")).toContainText(text.restored);

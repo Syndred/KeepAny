@@ -2,8 +2,8 @@ import { Textarea } from "./ui/textarea";
 import { Input } from "./ui/input";
 import "../trash.css";
 import { useNavigate, useRouterState } from "@tanstack/react-router";
-import { Network, Download, Eye, EyeOff, KeyRound, Lock, Plus, RefreshCw, Trash2, Undo2, Upload, WandSparkles, X } from "lucide-react";
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { Network, Download, Eye, EyeOff, KeyRound, Lock, MoreHorizontal, Plus, RefreshCw, Trash2, Undo2, Upload, WandSparkles, X } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import type { Asset } from "../../../../packages/domain/src";
 import { MIN_MASTER_PASSWORD_LENGTH } from "../../../../packages/password-vault/src/policy";
@@ -17,7 +17,21 @@ import "../password-vault.css";
 import { withFilledVaultIdentifiers } from "../vault-entry-identifiers";
 import { PasswordVaultTools } from "./PasswordVaultTools";
 import { EntryEditor } from "./PasswordVaultEntryEditor";
+import { removeAccountLogin } from "../account-entry-edit";
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "./ui/dropdown-menu";
 import { EmptyState, LockedState } from "./PasswordVaultAccessStates";
+
+export type AccountVaultTools = {
+	renderEntry: (entry: PasswordVaultEntrySummary) => ReactNode;
+	addEntry: (assetId?: string) => void;
+	history: (entry: PasswordVaultEntrySummary, triggerId?: string) => void;
+	unlink: (entry: PasswordVaultEntrySummary, asset: Asset) => void;
+	deleteLogin: (entry: PasswordVaultEntrySummary, username: string, accountId?: string) => void;
+	requestAccess: () => void;
+	copy: (label: string, value: string, privateValue?: boolean) => Promise<boolean>;
+	cancelCopy: () => void;
+	busy: boolean;
+};
 
 type PasswordVaultPanelProps = {
 	assets: Asset[];
@@ -25,15 +39,14 @@ type PasswordVaultPanelProps = {
 	focusAssetId?: string;
 	onReady?: () => void;
 	embedded?: boolean;
-	headerAction?: ReactNode;
+	headerAction?: ReactNode | ((state: { busy: boolean; clearMessage: () => void }) => ReactNode);
+	headerFeedback?: ReactNode;
 	sampleAccounts?: Asset[];
-	renderAccounts?: (tools: {
-		renderEntry: (entry: PasswordVaultEntrySummary) => ReactNode;
-		addEntry: (assetId: string) => void;
-	}) => ReactNode;
+	accountCount?: number;
+	renderAccounts?: (tools: AccountVaultTools) => ReactNode;
 };
 
-type ManualCopy = { label: string; value: string };
+type ManualCopy = { label: string; value: string; privateValue?: boolean };
 
 const MIN_MASTER_LENGTH = MIN_MASTER_PASSWORD_LENGTH;
 
@@ -57,7 +70,7 @@ function errorCode(error: unknown): string {
 	return "";
 }
 
-function errorKey(error: unknown): string {
+function errorKey(error: unknown, context: "operation" | "import" = "operation"): string {
 	switch (errorCode(error)) {
 		case "password":
 		case "vault-password":
@@ -78,7 +91,7 @@ function errorKey(error: unknown): string {
 		case "vault-invalid":
 		case "missing":
 		case "vault-missing":
-			return "pwVaultInvalidBackup";
+			return context === "import" ? "pwVaultInvalidBackup" : "pwVaultError";
 		default:
 			return "pwVaultError";
 	}
@@ -100,7 +113,9 @@ export function PasswordVaultPanel({
 	onReady,
 	embedded = false,
 	headerAction,
+	headerFeedback,
 	sampleAccounts = [],
+	accountCount,
 	renderAccounts,
 }: PasswordVaultPanelProps) {
 	const Heading = embedded ? "h2" : "h1";
@@ -113,7 +128,7 @@ export function PasswordVaultPanel({
 	const panelElement = useRef<HTMLElement | null>(null);
 	const toolTrigger = (tool: "smart" | "links") =>
 		panelElement.current?.querySelector<HTMLElement>(`[data-vault-tool-trigger="${tool}"]`)
-		?? panelElement.current?.querySelector<HTMLElement>(".unified-vault-access > summary, #password-vault-unlock-master, #password-vault-master")
+		?? panelElement.current?.querySelector<HTMLElement>(".account-options-trigger, .unified-vault-access > summary, #password-vault-unlock-master, #password-vault-master")
 		?? null;
 	const readyNotified = useRef(false);
 	useEffect(() => {
@@ -131,16 +146,15 @@ export function PasswordVaultPanel({
 		[],
 	);
 	useEffect(() => {
-		if (hash === "vault-trash")
-			document
-				.getElementById("vault-trash")
-				?.scrollIntoView({ block: "start" });
-	}, [hash]);
+		if (hash !== "vault-trash" || snapshot.status !== "unlocked") return;
+		const frame = requestAnimationFrame(() => document.getElementById("vault-trash")?.scrollIntoView({ block: "start" }));
+		return () => cancelAnimationFrame(frame);
+	}, [hash, snapshot.status]);
 	useEffect(() => {
 		if (snapshot.status !== "unlocked" || !hash.startsWith("password-")) return;
 		const card = [
 			...document.querySelectorAll<HTMLElement>(
-				".password-vault-entry-list .password-vault-entry",
+				".password-vault-entry-list .password-vault-entry, .compact-account-card",
 			),
 		].find((node) => node.dataset.entryId === hash.slice(9));
 		const group = card?.closest("details");
@@ -170,6 +184,8 @@ export function PasswordVaultPanel({
 	const [historyRows, setHistoryRows] = useState<
 		Array<{ at: string; draft: PasswordVaultEntryDraft }>
 	>([]);
+	const historyOpener = useRef<HTMLElement | null>(null);
+    const loginDeleteOpener = useRef<HTMLElement | null>(null);
 	const [historyReveal, setHistoryReveal] = useState<number | null>(null);
 	const [importOpen, setImportOpen] = useState(false);
 	const [smartImportOpen, setSmartImportOpen] = useState(false);
@@ -181,6 +197,7 @@ export function PasswordVaultPanel({
 	const [newMaster, setNewMaster] = useState("");
 	const [newMasterConfirm, setNewMasterConfirm] = useState("");
 	const [manualCopy, setManualCopy] = useState<ManualCopy | null>(null);
+	const cancelCopy = useCallback(() => { copyGeneration.current += 1; setManualCopy(null); }, []);
 	const [unlinkTarget, setUnlinkTarget] = useState<{
 		entryId: string;
 		assetId: string;
@@ -189,7 +206,7 @@ export function PasswordVaultPanel({
 		revision: string;
 	} | null>(null);
 	const [deleteTarget, setDeleteTarget] =
-		useState<PasswordVaultEntrySummary | null>(null);
+		useState<(PasswordVaultEntrySummary & { loginIdentifier?: string; accountId?: string; expectedDraft?: PasswordVaultEntryDraft }) | null>(null);
 	const [purgeTarget, setPurgeTarget] = useState<{ entries: PasswordVaultEntrySummary[]; revision: string; all: boolean } | null>(null);
 	const [entryActionError, setEntryActionError] = useState("");
 	const entryActionRunning = useRef(false);
@@ -218,7 +235,7 @@ export function PasswordVaultPanel({
 		const frame = requestAnimationFrame(() => {
 			const entryId = unlinkedFocus.current;
 			unlinkedFocus.current = null;
-			const card = [...document.querySelectorAll<HTMLElement>(".password-vault-entry-list .password-vault-entry")]
+			const card = [...document.querySelectorAll<HTMLElement>(".password-vault-entry-list .password-vault-entry, .compact-account-card[data-entry-id]")]
 				.find(node => node.dataset.entryId === entryId);
 			if (!card) {
 				const continuation = document.querySelector<HTMLElement>(".password-vault-filter button")
@@ -441,9 +458,8 @@ export function PasswordVaultPanel({
 		try {
 			await session.unlock(master);
 			setMaster("");
-			notify?.(t("pwVaultStatusUnlocked"));
 		} catch (error) {
-			announce(
+			setMessageKey(
 				errorCode(error) === "vault-password"
 					? "pwVaultUnlockFailed"
 					: errorKey(error),
@@ -491,7 +507,8 @@ export function PasswordVaultPanel({
 		setBusy(true);
 		clearMessage();
 		try {
-			await session.trashEntry(entry.id);
+			if (deleteTarget?.expectedDraft && deleteTarget.loginIdentifier !== undefined) await removeAccountLogin(session, deleteTarget.expectedDraft, deleteTarget.loginIdentifier, deleteTarget.accountId);
+            else await session.trashEntry(entry.id);
 			setDeleteTarget(null);
 			announce("pwVaultSaved");
 		} catch (error) {
@@ -559,7 +576,8 @@ export function PasswordVaultPanel({
 		}
 	}
 
-	async function openHistory(entry: PasswordVaultEntrySummary) {
+	async function openHistory(entry: PasswordVaultEntrySummary, triggerId?: string) {
+        historyOpener.current = triggerId ? document.getElementById(triggerId) : document.activeElement instanceof HTMLElement ? document.activeElement : null;
 		if (!session || busy) return;
 		setBusy(true);
 		clearMessage();
@@ -611,7 +629,7 @@ export function PasswordVaultPanel({
 			if (fileInputRef.current) fileInputRef.current.value = "";
 			announce("pwVaultImported");
 		} catch (error) {
-			announce(errorKey(error));
+			announce(errorKey(error, "import"));
 		} finally {
 			setBusy(false);
 		}
@@ -672,32 +690,55 @@ export function PasswordVaultPanel({
 		}
 	}
 
-	async function copyValue(labelKey: string, value: string) {
-		if (session?.getSnapshot().status !== "unlocked") return;
+	async function copyValue(labelKey: string, value: string, privateValue = true): Promise<boolean> {
+		if (privateValue && session?.getSnapshot().status !== "unlocked") return false;
 		const request = ++copyGeneration.current;
 		if (!value) {
 			announce("pwVaultError");
-			return;
+			return false;
 		}
 		try {
 			if (!navigator.clipboard?.writeText) throw new Error("clipboard");
 			await navigator.clipboard.writeText(value);
 			if (
 				request !== copyGeneration.current ||
-				session?.getSnapshot().status !== "unlocked"
+				privateValue && session?.getSnapshot().status !== "unlocked"
 			)
-				return;
+				return false;
 			announce("pwVaultCopied");
+			return true;
 		} catch {
 			if (
 				request !== copyGeneration.current ||
-				session?.getSnapshot().status !== "unlocked"
+				privateValue && session?.getSnapshot().status !== "unlocked"
 			)
-				return;
-			setManualCopy({ label: t(labelKey), value });
+				return false;
+			setManualCopy({ label: t(labelKey), value, privateValue });
 			announce("pwVaultClipboardManual");
+			return false;
 		}
 	}
+
+	function requestAccountAccess() {
+		setAccessOpen(true);
+		requestAnimationFrame(() => {
+			const input = panelElement.current?.querySelector<HTMLInputElement>("#password-vault-unlock-master, #password-vault-master");
+			input?.scrollIntoView({ block: "center" }); input?.focus({ preventScroll: true });
+		});
+	}
+	const accountTools: AccountVaultTools = { renderEntry,
+        history: (entry, triggerId) => void openHistory(entry, triggerId),
+        unlink: (entry, asset) => { const revision = session?.getSnapshot().contentRevision; if (!revision || busy) return; clearMessage(); setEntryActionError(""); setUnlinkTarget({ entryId: entry.id, assetId: asset.id, entryName: entry.title, assetName: asset.name, revision }); },
+        deleteLogin: (entry, username, accountId) => {
+            if (busy || session?.getSnapshot().status !== "unlocked") return;
+            clearMessage(); setEntryActionError("");
+            loginDeleteOpener.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+            setDeleteTarget({ ...entry, loginIdentifier: username, accountId, expectedDraft: session.readEntry(entry.id) });
+        }, copy: copyValue, cancelCopy, busy: busy || snapshot.status === "loading", requestAccess: requestAccountAccess, addEntry: (assetId) => {
+		if (busy) return;
+		if (snapshot.status !== "unlocked") { requestAccountAccess(); return; }
+		clearMessage(); setEditorId("new"); setDraft(blankDraft(assetId)); setSelectedAssetId(""); setShowPassword(false);
+	} };
 
 	function linkedAssetLabel(id: string): string {
 		return assetsById.get(id)?.name ?? t("pwVaultAssetUnavailable");
@@ -761,6 +802,7 @@ export function PasswordVaultPanel({
 			)}
 			{snapshot.status === "empty" && (
 				<EmptyState
+                    accounts={Boolean(renderAccounts)}
 					busy={busy}
 					master={master}
 					masterConfirm={masterConfirm}
@@ -774,6 +816,7 @@ export function PasswordVaultPanel({
 			)}
 			{snapshot.status === "locked" && (
 				<LockedState
+                    accounts={Boolean(renderAccounts)}
 					busy={busy}
 					master={master}
 					showMaster={showMaster}
@@ -790,7 +833,7 @@ export function PasswordVaultPanel({
 		<div className="password-vault-header-meta">
 			<p>
 				{snapshot.status === "unlocked"
-					? t("pwVaultEntriesCount", { count: snapshot.entries.length })
+					? t("pwVaultEntriesCount", { count: renderAccounts ? accountCount ?? assets.filter(asset => asset.kind === "account" && !asset.deleted).length : snapshot.entries.length })
 					: t(renderAccounts ? "workspaceAccountSubtitle" : "pwVaultSubtitle")}
 			</p>
 			<Badge
@@ -831,7 +874,19 @@ export function PasswordVaultPanel({
 					<Heading>{t(renderAccounts ? "accountsWorkspace" : "pwVaultTitle")}</Heading>
 					{vaultStatus}
 				</div>
-				{headerAction}
+				{(!renderAccounts || snapshot.status === "unlocked") && !(renderAccounts && assetFilter) && (typeof headerAction === "function" ? headerAction({ busy: busy || snapshot.status === "loading", clearMessage }) : headerAction)}
+				{renderAccounts && snapshot.status === "unlocked" && <div className="password-vault-toolbar account-header-tools"><div className="actions">
+                    <VaultIconButton label={t("pwVaultLock")} disabled={busy} onClick={lock}><Lock size={18} /></VaultIconButton>
+                    <DropdownMenu><DropdownMenuTrigger render={<Button size="icon" variant="ghost" className="password-vault-icon account-options-trigger" aria-label={t("accountTools")} disabled={busy} />}><MoreHorizontal size={18} /></DropdownMenuTrigger><DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => setAccountLinksOpen(true)}>{t("pwConnectTitle")}</DropdownMenuItem>
+                        {missingSampleAccounts.length > 0 && <DropdownMenuItem onClick={() => void addSampleLogins()}>{t("sampleLogins")}</DropdownMenuItem>}
+                        <DropdownMenuItem onClick={() => setImportOpen(true)}>{t("pwVaultImport")}</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setSmartImportOpen(true)}>{t("pwSmartTitle")}</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => void exportVault()}>{t("pwVaultExport")}</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setChangeMasterOpen(true)}>{t("pwVaultChangeMaster")}</DropdownMenuItem>
+                    </DropdownMenuContent></DropdownMenu>
+                </div></div>}
+				{headerFeedback}
 			</header>
 			{message && (
 				<p className="password-vault-message" role="status">
@@ -846,13 +901,10 @@ export function PasswordVaultPanel({
 					</Button>
 				</div>
 			) : null}
-{renderAccounts && snapshot.status !== "unlocked" ? <details className="unified-vault-access" open={accessOpen} onToggle={(event) => setAccessOpen(event.currentTarget.open)}>
-				<summary>{t(snapshot.status === "empty" ? "pwVaultCreate" : "pwVaultUnlock")}</summary>{vaultAccess}
-			</details> : vaultAccess}
-			{renderAccounts && snapshot.status !== "unlocked" && renderAccounts({ renderEntry, addEntry: () => {} })}
+{renderAccounts ? snapshot.status !== "unlocked" && <div className="account-unlock-gate">{vaultAccess}</div> : vaultAccess}
 			{snapshot.status === "unlocked" && (
 				<>
-					<div className="password-vault-toolbar">
+					{!renderAccounts && <div className="password-vault-toolbar">
 						{(!renderAccounts || assetFilter) && <div className="password-vault-search field">
 							<label
 								className="password-vault-sr"
@@ -915,33 +967,17 @@ export function PasswordVaultPanel({
 							>
 								<KeyRound size={18} />
 							</VaultIconButton>
-							<Button
-								size="small"
-								variant="ghost"
-								type="button"
-								className="password-vault-trash-open"
-								disabled={busy}
-								onClick={() =>
-									void navigate({
-										to: "/assets/$kind",
-										params: { kind: "vault" },
-										hash: "vault-trash",
-									})
-								}
-							>
-								<Trash2 size={18} />
-								{t("pwVaultTrashTitle")}
-							</Button>
-							<VaultIconButton
+							{(!renderAccounts || assetFilter) && <VaultIconButton
 								label={t("pwVaultNewEntry")}
 								className="password-vault-new"
 								disabled={busy}
 								onClick={openNewEditor}
 							>
 								<Plus size={18} />
-							</VaultIconButton>
+							</VaultIconButton>}
+
 						</div>
-					</div>
+					</div>}
 					{assetFilter && (
 						<div className="password-vault-filter">
 							<span>
@@ -968,9 +1004,7 @@ export function PasswordVaultPanel({
 						</div>
 					)}
 
-					{renderAccounts && !assetFilter ? renderAccounts({ renderEntry, addEntry: (assetId) => {
-						clearMessage(); setEditorId("new"); setDraft(blankDraft(assetId)); setSelectedAssetId(""); setShowPassword(false);
-					} }) : <div className="password-vault-entries-section">
+					{renderAccounts && !assetFilter ? renderAccounts(accountTools) : <div className="password-vault-entries-section">
 						{filteredEntries.length ? (
 							<div className="password-vault-entry-list">
 								{filteredEntries.map((entry) => renderEntry(entry))}
@@ -989,7 +1023,7 @@ export function PasswordVaultPanel({
 					<div className="password-vault-trash" id="vault-trash">
 						<div className="password-vault-section-title">
 							<h3 tabIndex={-1}>
-								<Trash2 size={18} /> {t("pwVaultTrashTitle")}
+								<Trash2 size={18} /> {t(renderAccounts ? "accountTrashTitle" : "pwVaultTrashTitle")}
 							</h3>
 							<small>{t("pwVaultTrashHint")}</small>
 							{snapshot.trash.length > 0 && <Button variant="danger" disabled={busy} onClick={() => reviewPurge(snapshot.trash, true)}>{t("emptyTrash")}</Button>}
@@ -1024,7 +1058,7 @@ export function PasswordVaultPanel({
 					</div>
 				</>
 			)}
-			{purgeTarget && <Dialog className="password-vault-purge-dialog" title={t(purgeTarget.all ? "emptyTrash" : "deletePermanently")} closeDisabled={busy}
+			{snapshot.status === "unlocked" && purgeTarget && <Dialog className="password-vault-purge-dialog" title={t(purgeTarget.all ? "emptyTrash" : "deletePermanently")} closeDisabled={busy}
 				returnFocusTo={() => purgeOpener.current?.isConnected ? purgeOpener.current : document.querySelector<HTMLElement>(".password-vault-entry-trash .actions button, #vault-trash h3")}
 				onClose={() => { if (!entryActionRunning.current) setPurgeTarget(null); }}>
 				<p>{!purgeTarget.all ? purgeTarget.entries[0].title : t("emptyTrashConfirm", { count: purgeTarget.entries.length })}</p>
@@ -1034,13 +1068,13 @@ export function PasswordVaultPanel({
 					<Button variant="danger" disabled={busy} onClick={() => void purgeEntries()}>{t(busy ? "loading" : purgeTarget.all ? "emptyTrash" : "deletePermanently")}</Button></div>
 			</Dialog>}
 
-			{unlinkTarget && (
+			{snapshot.status === "unlocked" && unlinkTarget && (
 				<Dialog
 					title={t("pwVaultUnlink")}
 					returnFocusTo={() =>
 						[
 							...document.querySelectorAll<HTMLElement>(
-								".password-vault-entry-list .password-vault-entry",
+								".password-vault-entry-list .password-vault-entry, .compact-account-card[data-entry-id]",
 							),
 						].find((card) => card.dataset.entryId === unlinkTarget.entryId) ??
 						null
@@ -1076,16 +1110,17 @@ export function PasswordVaultPanel({
 					</div>
 				</Dialog>
 			)}
-			{deleteTarget && (
+			{snapshot.status === "unlocked" && deleteTarget && (
 				<Dialog
-					title={t("pwVaultDeleteEntry")}
+					title={t(deleteTarget.loginIdentifier !== undefined ? "accountDeleteLogin" : "pwVaultDeleteEntry")}
+                    returnFocusTo={() => loginDeleteOpener.current?.isConnected ? loginDeleteOpener.current : panelElement.current?.querySelector<HTMLElement>("#password-vault-search-input") ?? null}
 					closeDisabled={busy}
 					onClose={() => {
 						if (!entryActionRunning.current) setDeleteTarget(null);
 					}}
 				>
 					<p>{deleteTarget.title}</p>
-					<p>{t("pwVaultTrashEntryHint")}</p>
+					<p>{deleteTarget.loginIdentifier !== undefined ? t("accountDeleteLoginHint", { username: deleteTarget.loginIdentifier || t("pwVaultValueEmpty") }) : t("pwVaultTrashEntryHint")}</p>
 					{entryActionError && (
 						<p className="field-error" role="alert">
 							{t(entryActionError)}
@@ -1100,12 +1135,12 @@ export function PasswordVaultPanel({
 							disabled={busy}
 							onClick={() => void deleteEntry(deleteTarget)}
 						>
-							{t("pwVaultDeleteEntry")}
+							{t(deleteTarget.loginIdentifier !== undefined ? "accountDeleteLogin" : "pwVaultDeleteEntry")}
 						</Button>
 					</div>
 				</Dialog>
 			)}
-			{editorId && (
+			{snapshot.status === "unlocked" && editorId && (
 				<Dialog
 					title={
 						editorId === "new" ? t("pwVaultEntryNew") : t("pwVaultEntryEdit")
@@ -1142,9 +1177,10 @@ export function PasswordVaultPanel({
 					</form>
 				</Dialog>
 			)}
-			{historyEntry && (
+			{snapshot.status === "unlocked" && historyEntry && (
 				<Dialog
 					title={t("pwVaultHistoryTitle")}
+                    returnFocusTo={() => historyOpener.current?.isConnected ? historyOpener.current : panelElement.current?.querySelector<HTMLElement>("#password-vault-search-input") ?? null}
 					onClose={() => {
 						setHistoryEntry(null);
 						setHistoryRows([]);
@@ -1215,6 +1251,7 @@ export function PasswordVaultPanel({
 			{importOpen && (
 				<Dialog
 					title={t("pwVaultImportTitle")}
+                    returnFocusTo={snapshot.status === "unlocked" ? () => toolTrigger("links") : undefined}
 					onClose={() => {
 						if (!busy) {
 							setImportOpen(false);
@@ -1275,9 +1312,10 @@ export function PasswordVaultPanel({
 					</form>
 				</Dialog>
 			)}
-			{changeMasterOpen && (
+			{snapshot.status === "unlocked" && changeMasterOpen && (
 				<Dialog
 					title={t("pwVaultChangeMasterTitle")}
+                    returnFocusTo={() => toolTrigger("links")}
 					onClose={() => {
 						if (!busy) setChangeMasterOpen(false);
 					}}
@@ -1352,7 +1390,7 @@ export function PasswordVaultPanel({
 					</form>
 				</Dialog>
 			)}
-			{manualCopy && (
+			{manualCopy && (manualCopy.privateValue === false || snapshot.status === "unlocked") && (
 				<Dialog
 					title={t("pwVaultManualCopyTitle")}
 					onClose={() => setManualCopy(null)}

@@ -1,3 +1,4 @@
+import { openBackupPage } from "./helpers/backup-restore";
 import { readFileSync } from "node:fs";
 import { expect, type Page, test } from "@playwright/test";
 import { selectChoice } from "./helpers/select-choice";
@@ -153,7 +154,7 @@ test("physical item facts, atomic status history and encrypted backup survive in
 			await page.getByRole("dialog").getByRole("button", { name: "Cancel" }).click();
 		}
 		await page.goto("/intake");
-		await page.locator("#backup-password").fill(password);
+		await openBackupPage(page); await page.locator("#backup-password").fill(password);
 		await page.getByRole("button", { name: "Create backup" }).click();
 		const downloadEvent = page.waitForEvent("download");
 		await page.getByRole("link", { name: "Save backup file" }).click();
@@ -170,7 +171,7 @@ test("physical item facts, atomic status history and encrypted backup survive in
 			await restored.goto("/settings");
 			await selectChoice(restored.locator("section.card").filter({ has: restored.getByRole("heading", { name: "语言" }) }).getByRole("combobox"), "zh-CN");
 			await restored.goto("/intake");
-			await restored.locator("#backup-password").fill(password);
+			await openBackupPage(restored); await restored.locator("#backup-password").fill(password);
 			await restored.locator("#restore-file").setInputFiles(backupPath);
 			await restored.getByRole("button", { name: "预览", exact: true }).first().click();
 			await restored.getByRole("button", { name: /确认 ·/ }).click();

@@ -1,9 +1,10 @@
+import { openProjectDetails } from "./helpers/project-details";
 import { mkdirSync } from "node:fs";
 import { expect, type Page, test } from "@playwright/test";
 import { selectChoice } from "./helpers/select-choice";
 
 const repositoryModuleUrl = `/@fs${process.cwd()}/packages/local-db/src/index.ts`;
-const evidenceDir = process.env.KEEPANY_EVIDENCE_DIR ?? "docs/evidence/2026-09-29";
+const evidenceDir = process.env.KEEPANY_EVIDENCE_DIR ?? "test-results/evidence/2026-09-29";
 
 type Copy = {
 	language: "zh-CN" | "en";
@@ -79,6 +80,7 @@ async function addRelation(
 	target: string,
 	label: string,
 ) {
+	await openProjectDetails(page);
 	await page.getByRole("button", { name: copy.addRelation }).click();
 	const dialog = page.getByRole("dialog");
 	await selectChoice(dialog.getByLabel(copy.target), { label: target });

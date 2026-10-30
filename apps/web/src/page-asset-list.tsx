@@ -1,7 +1,7 @@
 import { AssetThumbnail as AssetCover } from "./components/AssetThumbnail";
 import { Input } from "./components/ui/input";
 import { lazy, Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { Link, useRouterState } from "@tanstack/react-router";
+import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import {
 	DndContext,
 	PointerSensor,
@@ -108,7 +108,7 @@ function CategoryStrip({
 	const categoryNames = [
 		...builtins[kind],
 		...data.categories
-			.filter((c) => c.kind === kind && !c.deleted)
+			.filter((c) => c.kind === kind && !c.deleted && !c.scope)
 			.map((c) => c.name),
 	].filter((v, i, a) => a.indexOf(v) === i);
 	const preference = data.preferences.find(
@@ -422,11 +422,12 @@ export function AssetList() {
 		select: (s) => s.matches.at(-1)?.params,
 	}) ?? {}) as { kind?: string };
 	const kind = validKind(rawKind ?? "project");
-	return <AssetKindList kind={kind === "vault" ? "account" : kind} />;
+	return <AssetKindList key={kind} kind={kind === "vault" ? "account" : kind} />;
 }
 
 export type AccountListFilters = { search: string; category: string; tag: string };
-export function AssetKindList({ kind, beforeList, afterList, passwordCounts, onAccountFiltersChange, privateSearch = false, embedded = false, hideTitle = false, accountSearchExtras, renderAccountDetails }: {
+export function AssetKindList({ kind, beforeList, afterList, passwordCounts, onAccountFiltersChange, privateSearch = false, embedded = false, hideTitle = false, accountSearchExtras, renderAccountDetails, renderAccountCard, accountExtras = [], filterAccountId }: {
+	accountExtras?: Asset[]; filterAccountId?: string;
 	kind: AssetKind; beforeList?: ReactNode; afterList?: ReactNode;
 	passwordCounts?: ReadonlyMap<string, number>;
 	onAccountFiltersChange?: (filters: AccountListFilters) => void;
@@ -435,6 +436,7 @@ export function AssetKindList({ kind, beforeList, afterList, passwordCounts, onA
 	hideTitle?: boolean;
 	accountSearchExtras?: ReadonlyMap<string, string>;
 	renderAccountDetails?: (asset: Asset) => ReactNode;
+	renderAccountCard?: (asset: Asset, context: { connectionCount: number; queries: string[]; onOpen: () => void }) => ReactNode;
 }) {
 	const Container = embedded ? "section" : "main";
 	const { data, search } = useAppContext();
@@ -506,7 +508,21 @@ export function AssetKindList({ kind, beforeList, afterList, passwordCounts, onA
 		setCategoryIds((prev) => ({ ...prev, [kind]: sessionStorage.getItem(`keepany-category-id-${kind}`) || "" }));
 	}, [kind]);
 	const [edit, setEdit] = useState(false);
-	const allLiveAssets = liveAssets(data);
+ const navigateForCreation = useNavigate();
+ const creationConsumed = useRef(false);
+ const creationRoute = useRouterState({ select: state => ({
+  pathname: state.location.pathname, hash: state.location.hash, status: state.status,
+  kind: (state.matches.at(-1)?.params as { kind?: string } | undefined)?.kind,
+ }) });
+ useEffect(() => {
+  if (creationRoute.hash !== "new") { creationConsumed.current = false; return; }
+  // A pending destination can arrive before this outlet receives its new kind.
+  if (embedded || data.loading || creationRoute.status !== "idle" || creationRoute.pathname !== `/assets/${kind}` || creationRoute.kind !== kind || creationConsumed.current) return;
+  creationConsumed.current = true;
+  setEdit(true);
+  void navigateForCreation({ hash: "", replace: true });
+ }, [creationRoute.pathname, creationRoute.hash, creationRoute.status, creationRoute.kind, embedded, data.loading, kind, navigateForCreation]);
+	const allLiveAssets = [...liveAssets(data), ...accountExtras];
 	const liveIds = new Set(allLiveAssets.map((asset) => asset.id));
 	const allKindAssets = allLiveAssets.filter((asset) => asset.kind === kind);
 	const availableTags = [...new Set(allKindAssets.flatMap((asset) => asset.tags))].sort(
@@ -515,6 +531,7 @@ export function AssetKindList({ kind, beforeList, afterList, passwordCounts, onA
 	const normalizedSearch = `${search} ${accountQuery}`.trim().toLocaleLowerCase();
 	const assets = allKindAssets.filter(
 		(a) =>
+            (!filterAccountId || a.id === filterAccountId) &&
 			(!category || a.category === category || kind === "account" && category === "other" && !a.category || !!pendingCategory && [pendingCategory.beforeName, pendingCategory.afterName].includes(a.category)) &&
 			(!tag || a.tags.includes(tag)) &&
 			[search, accountQuery].every((query) => matchesAssetSearch(a, query) || !!accountSearchExtras?.get(a.id)?.includes(query.trim().toLocaleLowerCase())),
@@ -547,6 +564,15 @@ export function AssetKindList({ kind, beforeList, afterList, passwordCounts, onA
 		});
 		return () => cancelAnimationFrame(frame);
 	}, [kind, category, tag, listSearch, data.loading, assets.length]);
+	const tagFilter = (availableTags.length > 0 || tag) ? <div className="list-filters">
+		<label className="sr-only" htmlFor={`asset-tag-filter-${kind}`}>{t("filterTag")}</label>
+		<Select id={`asset-tag-filter-${kind}`} value={tag} onValueChange={chooseTag}>
+			<SelectOption value="">{t("allTags")}</SelectOption>
+			{tag && !availableTags.includes(tag) && <SelectOption value={tag}>{tag}</SelectOption>}
+			{availableTags.map((value) => <SelectOption key={value} value={value}>{value}</SelectOption>)}
+		</Select>
+	</div> : null;
+	const connectionCount = (asset: Asset) => new Set(data.relations.filter((relation) => !relation.deleted && liveIds.has(relation.from) && liveIds.has(relation.to) && relation.from !== relation.to && (relation.from === asset.id || relation.to === asset.id)).map((relation) => relation.from === asset.id ? relation.to : relation.from)).size;
 	return (
 		<Container className={embedded ? "unified-account-list" : "page"}>
 			{!hideTitle && <PageTitle
@@ -564,25 +590,16 @@ export function AssetKindList({ kind, beforeList, afterList, passwordCounts, onA
 			/>}
 			{beforeList}
 			{<>
-			<CategoryStrip key={kind} kind={kind} chosen={category} choose={choose} searchControl={kind === "account" ? <div className="asset-account-search">
+			<CategoryStrip key={kind} kind={kind} chosen={category} choose={choose} searchControl={kind === "account" ? <><div className="asset-account-search">
 				<Search size={18} aria-hidden="true" />
-				<Input id={renderAccountDetails ? "password-vault-search-input" : undefined} ref={accountSearchRef} type="search" aria-label={t("accountListSearch")} placeholder={t("accountListSearchHint")} autoComplete="off" value={accountSearch} onChange={(event) => changeAccountSearch(event.target.value)} onKeyDown={(event) => { if (event.key === "Escape") { event.stopPropagation(); changeAccountSearch(""); } }} />
+				<Input id={renderAccountDetails || renderAccountCard ? "password-vault-search-input" : undefined} ref={accountSearchRef} type="search" aria-label={t("accountListSearch")} placeholder={t("accountListSearchHint")} autoComplete="off" value={accountSearch} onChange={(event) => changeAccountSearch(event.target.value)} onKeyDown={(event) => { if (event.key === "Escape") { event.stopPropagation(); changeAccountSearch(""); } }} />
 				{accountSearch && <Button variant="ghost" size="icon" aria-label={t("accountListClearSearch")} onClick={() => { changeAccountSearch(""); accountSearchRef.current?.focus(); }}><X size={18} /></Button>}
-			</div> : undefined} />
-			{(availableTags.length > 0 || tag) && (
-				<div className="list-filters">
-					<label className="sr-only" htmlFor={`asset-tag-filter-${kind}`}>{t("filterTag")}</label>
-					<Select id={`asset-tag-filter-${kind}`} value={tag} onValueChange={(selectValue) => chooseTag(selectValue)}>
-						<SelectOption value="">{t("allTags")}</SelectOption>
-						{tag && !availableTags.includes(tag) && <SelectOption value={tag}>{tag}</SelectOption>}
-						{availableTags.map((value) => <SelectOption key={value} value={value}>{value}</SelectOption>)}
-					</Select>
-				</div>
-			)}
+			</div>{renderAccountCard && tagFilter}</> : undefined} />
+			{!renderAccountCard && tagFilter}
 			{kind !== "account" && kind !== "vault" && <div className="asset-list-view-tools"><AssetViewToggle value={assetView} onChange={setAssetView} /></div>}
 <section className={`asset-list-content ${assetView === "list" && kind !== "account" ? "asset-dense-list" : ""} ${kind === "project" ? "asset-project-grid" : kind === "account" ? "asset-account-grid" : "asset-library-grid"}`}>
 				{assets.length ? (
-						assets.map((a) => kind === "project" ? <ProjectCard asset={a} search={listSearch} summary={workspace.summaries.get(a.id)} key={a.id} /> : kind === "account" ? <article className={renderAccountDetails ? "unified-account" : "account-list-entry"} key={a.id}><AccountCard asset={a} search={listSearch} passwordCount={passwordCounts?.get(a.id)} connectionCount={new Set(data.relations.filter((relation) => !relation.deleted && liveIds.has(relation.from) && liveIds.has(relation.to) && relation.from !== relation.to && (relation.from === a.id || relation.to === a.id)).map((relation) => relation.from === a.id ? relation.to : relation.from)).size} />{renderAccountDetails?.(a)}</article> : <LibraryCard asset={a} search={listSearch} summary={workspace.summaries.get(a.id)} key={a.id} />)
+						assets.map((a) => kind === "project" ? <ProjectCard asset={a} search={listSearch} summary={workspace.summaries.get(a.id)} key={a.id} /> : kind === "account" ? renderAccountCard ? <div className="compact-account-slot" key={a.id}>{renderAccountCard(a, { connectionCount: connectionCount(a), queries: [search, accountQuery], onOpen: () => rememberAssetList(a, listSearch) })}</div> : <article className={renderAccountDetails ? "unified-account" : "account-list-entry"} key={a.id}><AccountCard asset={a} search={listSearch} passwordCount={passwordCounts?.get(a.id)} connectionCount={connectionCount(a)} />{renderAccountDetails?.(a)}</article> : <LibraryCard asset={a} search={listSearch} summary={workspace.summaries.get(a.id)} key={a.id} />)
 				) : (
 					afterList ? null : category || tag || normalizedSearch ? (
 						<div className="empty"><strong>{t("noMatches")}</strong></div>
@@ -602,6 +619,7 @@ export function AssetKindList({ kind, beforeList, afterList, passwordCounts, onA
 					}
 				>
 					<AssetEditor
+                        key={kind}
 						kind={kind}
 						categories={data.categories}
 						onClose={() => setEdit(false)}

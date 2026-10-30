@@ -2,7 +2,7 @@ import { validateCaptureImage } from "./workflow-image";
 import { Textarea } from "./components/ui/textarea";
 import { Input } from "./components/ui/input";
 import { useEffect, useRef, useState } from "react";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { Download, Link2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { assetSchema, duplicates, newAsset, type Asset, type AssetKind } from "../../../packages/domain/src";
@@ -32,9 +32,11 @@ function validateImportCandidates(candidates: ImportCandidate[], existing: Asset
 	});
 }
 
-export function IntakeTools({ onCsvStaged }: { onCsvStaged: () => void }) {
+export function IntakeTools({ onCsvStaged, section = "capture" }: { onCsvStaged: () => void; section?: "capture" | "backup" }) {
+ const navigate = useNavigate();
+ const [lastSaved, setLastSaved] = useState<Asset | null>(null);
 	const { t } = useTranslation();
-	const { data, notify } = useAppContext();
+	const { data, notify, setPendingAccountName } = useAppContext();
 	const [mode, setMode] = useState<"url" | "image" | "csv" | "manual">("url");
 	const [manualKind, setManualKind] = useState<AssetKind>("project");
 	const [manualName, setManualName] = useState("");
@@ -313,30 +315,21 @@ export function IntakeTools({ onCsvStaged }: { onCsvStaged: () => void }) {
 			if (generation === importGeneration.current) setUrlLoading(false);
 		}
 	}
-	async function previewManual() {
-		const generation = ++importGeneration.current;
-		setCandidates([]);
-		setCandidateGeneration(null);
-		const name = manualName.trim();
-		if (!name) {
-			setMessage(t("required"));
-			return;
-		}
-		try {
-			const existing = (await allRecords())
-				.filter((row) => row.type === "asset")
-				.map((row) => JSON.parse(row.payload) as Asset);
-			if (generation !== importGeneration.current) return;
-			const asset = { ...newAsset(manualKind), name };
-			const duplicate = duplicates(asset, existing).length > 0;
-			previewExisting.current = existing;
-			setCandidates([{ asset, duplicate, invalid: false, selected: !duplicate }]);
-			setCandidateGeneration(generation);
-			setMessage(t("preview"));
-		} catch {
-			if (generation === importGeneration.current) setMessage(t("error"));
-		}
-	}
+	async function saveManual() {
+    if (importing.current) return;
+    const name = manualName.trim();
+    if (!name) { setMessage(t("required")); return; }
+    if (manualKind === "account") { setPendingAccountName?.(name); void navigate({ to: "/accounts", hash: "new-account" }); return; }
+    importing.current = true; setBusy(true); setMessage("");
+    try {
+      const existing = (await allRecords()).filter(row => row.type === "asset").map(row => JSON.parse(row.payload) as Asset);
+      const asset = assetSchema.parse({ ...newAsset(manualKind), name });
+      if (duplicates(asset, existing).length) { setMessage(t("duplicate")); return; }
+      await save("asset", asset);
+      setLastSaved(asset); setManualName(""); setMessage(t("saved"));
+    } catch { setMessage(t("error")); }
+    finally { importing.current = false; setBusy(false); }
+  }
 	async function importCandidates() {
 		if (importing.current || candidateGeneration !== importGeneration.current) return;
 		importing.current = true;
@@ -374,8 +367,8 @@ export function IntakeTools({ onCsvStaged }: { onCsvStaged: () => void }) {
 	}
 	return (
 		<div className="intake-tools">
-			<div className="card-grid intake-primary-grid">
-				<section className="card padded intake-quick-card">
+			<div className="intake-primary-grid">
+				{section === "capture" && <section className="card padded intake-quick-card">
 					<div className="intake-card-title">
 						<h2>{t("intakeQuickTitle")}</h2>
 					</div>
@@ -458,7 +451,7 @@ export function IntakeTools({ onCsvStaged }: { onCsvStaged: () => void }) {
 									{(["project", "account", "subscription", "item"] as const).map(kind => <SelectOption key={kind} value={kind}>{t(kind)}</SelectOption>)}
 								</Select>
 							</div>
-							<Button variant="primary" onClick={() => void previewManual()} disabled={busy || inspecting || !manualName.trim()}>{t("intakePreviewRecords")}</Button>
+							<Button variant="primary" onClick={() => void saveManual()} disabled={busy || inspecting || !manualName.trim()}>{t(manualKind === "account" ? "accountsWorkspace" : "save")}</Button>
 						</>
 					)}
 					{mode === "image" && (
@@ -553,8 +546,8 @@ export function IntakeTools({ onCsvStaged }: { onCsvStaged: () => void }) {
 							}>{t("confirmImport")}</Button>
 						</div>
 					)}
-				</section>
-				<section className="card padded intake-backup-card">
+				</section>}
+				{section === "backup" && <section className="card padded intake-backup-card">
 					<div className="intake-card-title">
 						<h2>{t("intakeBackupTitle")}</h2>
 						<p>{t("backupHint")}</p>
@@ -617,16 +610,12 @@ export function IntakeTools({ onCsvStaged }: { onCsvStaged: () => void }) {
 						{readyArchive && archiveHasVault && <p>{t("restoreContainsVault")}</p>}
 						<div className="actions">
 							<Button onClick={() => void inspect()} disabled={busy || inspecting || !restoreFile || !password}>{t("preview")}</Button>
-							{readyArchive && (
-								<Button variant="primary" onClick={() => void restore()} disabled={busy || inspecting || readyArchiveGeneration !== restoreGeneration.current}>
-									{t("confirm")} · {archiveCount}
-								</Button>
-							)}
+              {readyArchive && <><Button variant="primary" onClick={() => void restore()} disabled={busy || inspecting || readyArchiveGeneration !== restoreGeneration.current}>{t("confirm")} · {archiveCount}</Button><Button disabled={busy || inspecting} onClick={() => invalidateRestorePreview()}>{t("cancel")}</Button></>}
 						</div>
 					</details>
-				</section>
+				</section>}
 			</div>
-			<section className="card intake-recent">
+			{section === "capture" && <section className="card intake-recent">
 				<h2>{t("intakeRecent")}</h2>
 				{recentAssets.length ? (
 					<ul className="list">
@@ -638,7 +627,8 @@ export function IntakeTools({ onCsvStaged }: { onCsvStaged: () => void }) {
 						))}
 					</ul>
 				) : <p>{t("intakeRecentEmpty")}</p>}
-			</section>
+			</section>}
+			{lastSaved && <Link className="button" to="/assets/$kind/$id" params={{ kind: lastSaved.kind, id: lastSaved.id }}>{t("openSavedRecord")}</Link>}
 			{message && <div className="notice" role="status">{message}</div>}
 		</div>
 	);

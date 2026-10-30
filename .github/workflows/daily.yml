@@ -21,7 +21,7 @@ jobs:
       KEEPANY_EVIDENCE_DIR: test-results/quick-layout
     # Daily feedback; full release acceptance is a separate manual workflow.
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -45,15 +45,18 @@ jobs:
         timeout-minutes: 1
       - run: pnpm verify:preview
         timeout-minutes: 5
-      - name: Verify checked-in current web files
-        run: node scripts/verify-local-release.mjs
-        timeout-minutes: 5
+      - name: Verify unlock, compact cards and merged account editing on the compiled candidate
+        run: node scripts/check-account-entry.mjs
+        timeout-minutes: 12
       - name: Verify selected removals and retained local project data
         run: pnpm exec playwright test --config playwright.portable-release.config.ts tests/e2e/pdf-removal-release.spec.ts tests/e2e/project-simplification.spec.ts --workers=2 --reporter=line --max-failures=1
         timeout-minutes: 6
-      - name: Account expansion pilot in two existing matrix cases
-        run: pnpm exec playwright test --config playwright.account-layout.config.ts tests/e2e/account-password-layout.spec.ts --grep '(zh-CN 390|en 1280) ' --reporter=line --max-failures=1
-        timeout-minutes: 6
+      - name: Verify capture, AI, backup and current-candidate evidence
+        run: node scripts/check-cleanup-ux.mjs
+        timeout-minutes: 7
+      - name: Verify configurable asset categories on the same compiled candidate
+        run: node scripts/check-catalog-categories.mjs
+        timeout-minutes: 5
       - name: Matching-dialog pilot in two existing matrix cases
         run: pnpm test:final:links --grep '(zh-CN 390x900|en 1280x900) ' --reporter=line
         timeout-minutes: 7

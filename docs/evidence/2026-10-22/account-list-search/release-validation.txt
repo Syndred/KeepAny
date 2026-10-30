@@ -1,2 +1,0 @@
-Recorded 2361 retained files after verifying 101 current files.
-Verified 101 current files byte for byte and 2361 explicitly listed retained files.

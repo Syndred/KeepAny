@@ -1,6 +1,0 @@
-{
-  "observationCommand": "bun /Users/syndred/.codex/toolchains/gstack/bin/gstack-qa-deadline run docs/qa/2026-10-27/evidence/T25/run-001/deadline.json -- /Users/syndred/.codex/toolchains/gstack/browse/dist/browse click @e20",
-  "observed": "Clicked @e20 → now at http://127.0.0.1:4205/assets/vault#vault-references\n",
-  "hypothesis": "链接到达vault-references锚点，重新快照定位新增外部引用按钮。",
-  "nextCommand": "bun /Users/syndred/.codex/toolchains/gstack/bin/gstack-qa-deadline run docs/qa/2026-10-27/evidence/T25/run-001/deadline.json -- /Users/syndred/.codex/toolchains/gstack/browse/dist/browse snapshot -i"
-}

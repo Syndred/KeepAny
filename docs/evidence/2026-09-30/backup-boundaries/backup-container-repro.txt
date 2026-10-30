@@ -1,1 +1,0 @@
-{"ciphertextBytes":104857653,"decryptedBytes":104857601,"cryptoAcceptedOversize":true,"rejectedOnlyAtArchiveInspection":"archive-size"}

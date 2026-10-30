@@ -4,6 +4,8 @@ import { join } from "node:path";
 import { expect, test } from "@playwright/test";
 import { resources } from "../../apps/web/src/i18n";
 import { openVaultAccess } from "./helpers/vault-access";
+import { openStandaloneEntryDraft, saveStandaloneEntryDraft } from "./helpers/standalone-entry";
+import { closeCompactLoginDetails, compactEntryIds, openCompactLoginDetails } from "./helpers/compact-account";
 
 const master = "Synthetic filtered unlink acceptance 2026!";
 
@@ -76,6 +78,10 @@ for (const language of ["zh-CN", "en"] as const) {
 					.locator("#password-vault-entry-password")
 					.fill("Synthetic-only-secret!42");
 				await page.locator("#password-vault-entry-notes").fill(notes);
+				if (await page.getByRole("dialog").locator(".account-entry-form").count()) {
+					await saveStandaloneEntryDraft(page, t);
+					return;
+				}
 				await page
 					.getByRole("dialog")
 					.getByRole("button", { name: t("pwVaultSaveEntry"), exact: true })
@@ -98,9 +104,9 @@ for (const language of ["zh-CN", "en"] as const) {
 					.getByRole("button", { name: t("add"), exact: true })
 					.click();
 				const accountEditor = page.getByRole("dialog");
-				await accountEditor.locator("#name").fill(accountName);
+				await accountEditor.locator("#password-vault-entry-title").fill(accountName);
 				await accountEditor
-					.locator("#username")
+					.locator("#password-vault-entry-username")
 					.fill("synthetic-account@example.test");
 				await accountEditor
 					.getByRole("button", { name: t("save"), exact: true })
@@ -116,28 +122,18 @@ for (const language of ["zh-CN", "en"] as const) {
 					.locator(".unified-account")
 					.filter({ hasText: accountName });
 				await expect(account).toHaveCount(1);
-				const disclosure = account.locator(".unified-account-passwords");
-				await expect(disclosure).toBeVisible();
-				if (
-					!(await disclosure.evaluate(
-						(node) => (node as HTMLDetailsElement).open,
-					))
-				)
-					await disclosure.locator(":scope > summary").click();
-				await disclosure
-					.getByRole("button", { name: t("pwVaultNewEntry"), exact: true })
-					.click();
+				await account.getByRole("button", { name: t("moreActions"), exact: true }).click();
+				await page.getByRole("menuitem", { name: t("pwVaultNewEntry"), exact: true }).click();
 				await saveEntry(linkedTitle, "Synthetic linked note");
+				await openCompactLoginDetails(page, account, t);
 				await expect(card(linkedTitle)).toBeVisible();
 				const linkedId = await card(linkedTitle).getAttribute("data-entry-id");
 				if (!linkedId) throw Error("linked-entry-id-missing");
-				await page
-					.locator(".password-vault-toolbar")
-					.getByRole("button", { name: t("pwVaultNewEntry"), exact: true })
-					.click();
+				await closeCompactLoginDetails(page, t);
+				await openStandaloneEntryDraft(page, t);
 				await saveEntry(otherTitle, "Before adjacent edit");
-				await expect(entries).toHaveCount(2);
-				await account.locator("a.asset-account-card").click();
+				await expect.poll(async () => (await compactEntryIds(page)).length).toBe(2);
+				await account.locator(".compact-account-title").click();
 				await expect(
 					page.getByRole("heading", {
 						level: 1,
@@ -251,7 +247,7 @@ for (const language of ["zh-CN", "en"] as const) {
 					)
 					.toBe(false);
 				await observe("adjacent-save-no-late-focus");
-				await page.locator(".unified-account a.asset-account-card").click();
+				await account.locator(".compact-account-title").click();
 				await page
 					.getByRole("link", { name: t("accountOpenPasswords"), exact: true })
 					.click();
@@ -277,7 +273,8 @@ for (const language of ["zh-CN", "en"] as const) {
 				await expect(card(otherTitle)).toContainText(
 					"After adjacent edit without delayed focus",
 				);
-				await expect(page.locator(".unified-account")).toHaveCount(1);
+				// The new global flow deliberately retains its newly created ordinary account.
+				await expect(page.locator(".unified-account")).toHaveCount(2);
 				await observe("refresh-and-unlock-retains-data");
 				await page.screenshot({ path: join(evidence, `${stem}-retained.png`) });
 				expect(errors).toEqual([]);

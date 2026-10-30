@@ -1,3 +1,5 @@
+import { openProjectDetails } from "./helpers/project-details";
+import { openBackupPage } from "./helpers/backup-restore";
 import { createHash } from "node:crypto";
 import { mkdirSync, readFileSync } from "node:fs";
 import { expect, type Page, test } from "@playwright/test";
@@ -5,7 +7,7 @@ import { strFromU8, strToU8, unzipSync, zipSync } from "fflate";
 import { decryptBackup, encryptBackup } from "../../packages/local-db/src/backup-crypto";
 import { selectChoice } from "./helpers/select-choice";
 
-const evidence = process.env.KEEPANY_EVIDENCE_DIR ?? "docs/evidence/2026-09-29";
+const evidence = process.env.KEEPANY_EVIDENCE_DIR ?? "test-results/evidence/2026-09-29";
 import { sourceModuleUrl } from "./helpers/source-module-url";
 const repositoryModuleUrl = sourceModuleUrl("packages/local-db/src/index.ts");
 
@@ -45,6 +47,7 @@ async function addAsset(page: Page, kind: "project" | "account" | "subscription"
 }
 
 async function addRelation(page: Page, target: string, label: string, source = "") {
+	await openProjectDetails(page);
 	await page.getByRole("button", { name: "Add connection" }).click();
 	const dialog = page.getByRole("dialog");
 	await selectChoice(dialog.getByLabel("Connect to"), { label: target });
@@ -56,7 +59,7 @@ async function addRelation(page: Page, target: string, label: string, source = "
 
 async function restoreFromFile(page: Page, path: string, password: string) {
 	await page.goto("/intake");
-	await page.locator("#backup-password").fill(password);
+	await openBackupPage(page); await page.locator("#backup-password").fill(password);
 	await page.locator("#restore-file").setInputFiles(path);
 	await page.getByRole("button", { name: "Preview", exact: true }).first().click();
 	await expect(page.getByRole("button", { name: /Confirm ·/ })).toBeVisible();
@@ -135,6 +138,7 @@ test("formal backup restores full local graph, history, ledger, tombstones and o
 			}, color);
 			const bytes = Array.from(Buffer.from(base64, "base64"));
 			imageBytes.push(bytes);
+			await openProjectDetails(page);
 			await page.getByLabel("Add image").setInputFiles({ name: `camera-${imageBytes.length}.png`, mimeType: "image/png", buffer: Buffer.from(bytes) });
 			const preview = page.getByRole("dialog");
 			await expect(preview.getByRole("button", { name: "Confirm" })).toBeEnabled();
@@ -190,7 +194,7 @@ test("formal backup restores full local graph, history, ledger, tombstones and o
 		const vaultBytes = await page.evaluate(async modulePath => Array.from((await (await (await import(modulePath)).localRepository()).readPasswordVault()).bytes), repositoryModuleUrl);
 
 		await page.goto("/intake");
-		await page.locator("#backup-password").fill(password);
+		await openBackupPage(page); await page.locator("#backup-password").fill(password);
 		await page.getByRole("button", { name: "Create backup" }).click();
 		const saveFile = page.getByRole("link", { name: "Save backup file" });
 		await expect(saveFile).toBeVisible();
@@ -202,7 +206,7 @@ test("formal backup restores full local graph, history, ledger, tombstones and o
 		const path = await download.path();
 		if (!path) throw Error("backup download missing");
 		expect(readFileSync(path).length).toBeGreaterThan(52);
-		await page.locator("#backup-password").fill(`wrong-password-${suffix}`);
+		await openBackupPage(page); await page.locator("#backup-password").fill(`wrong-password-${suffix}`);
 		await page.locator("#restore-file").setInputFiles(path);
 		await page.getByRole("button", { name: "Preview", exact: true }).first().click();
 		await expect(page.getByText("Incorrect password or damaged backup.")).toBeVisible();
@@ -221,7 +225,7 @@ test("formal backup restores full local graph, history, ledger, tombstones and o
 			await restored.goto("/assets/project");
 			await expect(restored.getByText(project)).toHaveCount(0);
 			await restored.goto("/intake");
-			await restored.locator("#backup-password").fill(`wrong-password-${suffix}`);
+			await openBackupPage(restored); await restored.locator("#backup-password").fill(`wrong-password-${suffix}`);
 			await restored.locator("#restore-file").setInputFiles(path);
 			await restored.getByRole("button", { name: "Preview", exact: true }).first().click();
 			await expect(restored.getByText("Incorrect password or damaged backup.")).toBeVisible();
@@ -231,7 +235,7 @@ test("formal backup restores full local graph, history, ledger, tombstones and o
 			await restored.screenshot({ path: `${evidence}/restore-success-en-390.png`, fullPage: true });
 			const after = await snapshot(restored);
 			expect(after).toEqual(before);
-			await restored.locator("#backup-password").fill(password);
+			await openBackupPage(restored); await restored.locator("#backup-password").fill(password);
 			await restored.getByRole("button", { name: "Create backup" }).click();
 			await expect(restored.getByRole("link", { name: "Save backup file" })).toBeVisible();
 			await restored.screenshot({ path: `${evidence}/backup-ready-en-390.png`, fullPage: true });
@@ -262,16 +266,16 @@ test("formal backup restores full local graph, history, ledger, tombstones and o
 			await restored.goto("/settings");
 			await selectChoice(restored.locator("section.card").filter({ has: restored.getByRole("heading", { name: "Language" }) }).getByRole("combobox"), "zh-CN");
 			await restored.goto("/intake");
-			await restored.locator("#backup-password").fill(password);
+			await openBackupPage(restored); await restored.locator("#backup-password").fill(password);
 			await restored.getByRole("button", { name: "创建备份" }).click();
 			await expect(restored.getByRole("link", { name: "保存备份文件" })).toBeVisible();
 			await restored.screenshot({ path: `${evidence}/backup-ready-zh-390.png`, fullPage: true });
-			await restored.locator("#backup-password").fill(`wrong-password-${suffix}`);
+			await openBackupPage(restored); await restored.locator("#backup-password").fill(`wrong-password-${suffix}`);
 			await restored.locator("#restore-file").setInputFiles(path);
 			await restored.getByRole("button", { name: "预览", exact: true }).first().click();
 			await expect(restored.getByText("密码不正确或备份已损坏。")).toBeVisible();
 			await restored.screenshot({ path: `${evidence}/restore-error-zh-390.png`, fullPage: true });
-			await restored.locator("#backup-password").fill(password);
+			await openBackupPage(restored); await restored.locator("#backup-password").fill(password);
 			await restored.locator("#restore-file").setInputFiles(path);
 			await restored.getByRole("button", { name: "预览", exact: true }).first().click();
 			await restored.getByRole("button", { name: /确认 ·/ }).click();
@@ -295,7 +299,7 @@ test("formal backup restores full local graph, history, ledger, tombstones and o
 			}, { modulePath: repositoryModuleUrl, value: { ...archivedProject, name: `Local edit ${suffix}` } });
 			const conflictBefore = await snapshot(conflictPage);
 			await conflictPage.goto("/intake");
-			await conflictPage.locator("#backup-password").fill(password);
+			await openBackupPage(conflictPage); await conflictPage.locator("#backup-password").fill(password);
 			await conflictPage.locator("#restore-file").setInputFiles(path);
 			await conflictPage.getByRole("button", { name: "Preview", exact: true }).first().click();
 			await conflictPage.getByRole("button", { name: /Confirm ·/ }).click();
@@ -346,16 +350,16 @@ test("formal backup restores full local graph, history, ledger, tombstones and o
 		await page.goto("/settings");
 		await selectChoice(page.locator("section.card").filter({ has: page.getByRole("heading", { name: "Language" }) }).getByRole("combobox"), "zh-CN");
 		await page.goto("/intake");
-		await page.locator("#backup-password").fill(password);
+		await openBackupPage(page); await page.locator("#backup-password").fill(password);
 		await page.getByRole("button", { name: "创建备份" }).click();
 		await expect(page.getByRole("link", { name: "保存备份文件" })).toBeVisible();
 		await page.screenshot({ path: `${evidence}/backup-ready-zh-desktop.png`, fullPage: true });
-		await page.locator("#backup-password").fill(`wrong-password-${suffix}`);
+		await openBackupPage(page); await page.locator("#backup-password").fill(`wrong-password-${suffix}`);
 		await page.locator("#restore-file").setInputFiles(path);
 		await page.getByRole("button", { name: "预览", exact: true }).first().click();
 		await expect(page.getByText("密码不正确或备份已损坏。")).toBeVisible();
 		await page.screenshot({ path: `${evidence}/restore-error-zh-desktop.png`, fullPage: true });
-		await page.locator("#backup-password").fill(password);
+		await openBackupPage(page); await page.locator("#backup-password").fill(password);
 		await page.locator("#restore-file").setInputFiles(path);
 		await page.getByRole("button", { name: "预览", exact: true }).first().click();
 		await page.getByRole("button", { name: /确认 ·/ }).click();

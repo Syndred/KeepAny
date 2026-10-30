@@ -3,7 +3,7 @@ import { expect, test } from "@playwright/test";
 import { selectChoice } from "./helpers/select-choice";
 
 const evidence =
-	process.env.KEEPANY_CONDITIONAL_EVIDENCE_DIR ?? "docs/evidence/2026-09-29";
+	process.env.KEEPANY_CONDITIONAL_EVIDENCE_DIR ?? "test-results/evidence/2026-09-29";
 
 const copies = {
 	"en-US": {

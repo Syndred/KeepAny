@@ -1,8 +1,10 @@
+import { openProjectDetails } from "./helpers/project-details";
+import { openBackupPage } from "./helpers/backup-restore";
 import { mkdirSync } from "node:fs";
 import { expect, type Page, test } from "@playwright/test";
 import type { Asset } from "../../packages/domain/src";
 
-const evidence = process.env.KEEPANY_EVIDENCE_DIR ?? "docs/evidence/2026-09-29";
+const evidence = process.env.KEEPANY_EVIDENCE_DIR ?? "test-results/evidence/2026-09-29";
 const repositoryModuleUrl = `/@fs${process.cwd()}/packages/local-db/src/index.ts`;
 
 type AssetState = {
@@ -136,6 +138,7 @@ test("stale detail delete cannot erase another tab's rename and replacement imag
 		const assetId = new URL(first.url()).pathname.split("/").at(-1);
 		if (!assetId) throw Error("Project ID missing from detail URL");
 		const original = await png(first, "#d23b45");
+		await openProjectDetails(first);
 		await first.getByLabel("Add image").setInputFiles({
 			name: "before.png",
 			mimeType: "image/png",
@@ -264,7 +267,7 @@ test("stale detail delete cannot erase another tab's rename and replacement imag
 		});
 
 		await first.goto("/intake");
-		await first.locator("#backup-password").fill(password);
+		await openBackupPage(first); await first.locator("#backup-password").fill(password);
 		await first.getByRole("button", { name: "Create backup" }).click();
 		const downloadEvent = first.waitForEvent("download");
 		await first.getByRole("link", { name: "Save backup file" }).click();
@@ -278,7 +281,7 @@ test("stale detail delete cannot erase another tab's rename and replacement imag
 		restored.on("pageerror", (error) => errors.push(error.message));
 		try {
 			await restored.goto("/intake");
-			await restored.locator("#backup-password").fill(password);
+			await openBackupPage(restored); await restored.locator("#backup-password").fill(password);
 			await restored.locator("#restore-file").setInputFiles(backupPath);
 			await restored
 				.getByRole("button", { name: "预览", exact: true })

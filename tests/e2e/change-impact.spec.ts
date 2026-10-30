@@ -4,7 +4,7 @@ import { selectChoice } from "./helpers/select-choice";
 
 const domainUrl = `/@fs${process.cwd()}/packages/domain/src/index.ts`;
 const repositoryUrl = `/@fs${process.cwd()}/packages/local-db/src/index.ts`;
-const evidence = process.env.KEEPANY_EVIDENCE_DIR ?? "docs/evidence/2026-09-29";
+const evidence = process.env.KEEPANY_EVIDENCE_DIR ?? "test-results/evidence/2026-09-29";
 
 test("all three impact scenarios save and reopen their work on the same page", async ({
 	page,

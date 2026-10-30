@@ -1,3 +1,4 @@
+import { openProjectDetails } from "./helpers/project-details";
 import { mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { expect, test } from "@playwright/test";
@@ -107,9 +108,9 @@ for (const locale of ["zh-CN", "en"] as const)
 				await page
 					.getByRole("button", { name: zh ? "新增" : "Add", exact: true })
 					.click();
-				await page.locator("#name").fill(phone);
-				await page.locator("#username").fill(phone);
-				await selectChoice(page.locator("#category"), "phone");
+				await page.locator("#password-vault-entry-title").fill(phone);
+				await page.locator("#password-vault-entry-username").fill(phone);
+				await selectChoice(page.locator("#account-entry-category"), "phone");
 				await page
 					.getByRole("dialog")
 					.getByRole("button", { name: zh ? "保存" : "Save", exact: true })
@@ -118,9 +119,10 @@ for (const locale of ["zh-CN", "en"] as const)
 				await page.goto("/assets/vault");
 				await prepareVaultWorkspace(page);
 				await h.createVault();
-				await page
-					.getByRole("button", { name: t("pwVaultNewEntry"), exact: true })
-					.click();
+				// Pure KDBX preparation uses real file import. The real editor below
+				// still exercises manual identifiers and password generation.
+				await h.seedExisting({ title, username: primary, password: "" });
+				await page.locator(".password-vault-entry").filter({ hasText: title }).getByRole("button", { name: t("pwVaultEditEntry"), exact: true }).click();
 				await page.locator("#password-vault-entry-title").fill(title);
 				await page.locator("#password-vault-entry-username").fill(primary);
 				await page
@@ -150,6 +152,7 @@ for (const locale of ["zh-CN", "en"] as const)
 				const initial = await graph();
 				await shot("both-connections");
 
+				await openProjectDetails(page);
 				await page
 					.getByRole("button", {
 						name: zh ? "添加关联" : "Add connection",

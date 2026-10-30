@@ -1,5 +1,0 @@
-Clicked @e9 → now at http://127.0.0.1:4201/accounts
-
-QA_DEADLINE {"guard":"qa-deadline","event":"started","version":1,"startedAt":"2026-10-27T05:17:09.530Z","deadlineAt":"2026-10-27T05:32:09.530Z","budgetMs":900000,"observedAt":"2026-10-27T05:18:05.156Z","remainingMs":844374,"expired":false}
-
-QA_DEADLINE {"guard":"qa-deadline","event":"finished","observedAt":"2026-10-27T05:18:05.231Z","deadlineAt":"2026-10-27T05:32:09.530Z","timedOut":false,"exitCode":0}

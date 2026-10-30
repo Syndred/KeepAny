@@ -1,8 +1,9 @@
+import { openProjectDetails } from "./helpers/project-details";
 import { mkdirSync } from "node:fs";
 import { expect, test } from "@playwright/test";
 import { selectChoice } from "./helpers/select-choice";
 
-const evidence = process.env.KEEPANY_EVIDENCE_DIR ?? "docs/evidence/2026-09-29";
+const evidence = process.env.KEEPANY_EVIDENCE_DIR ?? "test-results/evidence/2026-09-29";
 const mode = process.env.KEEPANY_SCROLL_MODE ?? "dev";
 
 for (const width of [1280, 390]) {
@@ -103,6 +104,7 @@ for (const width of [1280, 390]) {
 			await expectReturnedScroll(stored);
 			await page.goto("/assets/project");
 			await page.getByText(project, { exact: true }).first().click();
+			await openProjectDetails(page);
 			await page.getByRole("button", { name: "Add connection" }).click();
 			const dialog = page.getByRole("dialog");
 			await selectChoice(dialog.getByLabel("Connect to"), { label: target });

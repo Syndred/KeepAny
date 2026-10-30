@@ -1,1 +1,0 @@
-import{a as e,t}from"./useTranslation-DQZauu0m.js";import{i as n}from"./view-shared-1uTWVf0l.js";import{IntakeTools as r}from"./workflows-P2-9st3W.js";var i=e();function a(){let{t:e}=t();return(0,i.jsxs)(`main`,{className:`page`,children:[(0,i.jsx)(n,{title:e(`intake`),subtitle:e(`storageHint`)}),(0,i.jsx)(r,{})]})}export{a as IntakePage};

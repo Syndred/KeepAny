@@ -1,7 +1,8 @@
+import { openBackupPage } from "./helpers/backup-restore";
 import { mkdirSync } from "node:fs";
 import { expect, test } from "@playwright/test";
 
-const evidence = process.env.KEEPANY_EVIDENCE_DIR ?? "docs/evidence/2026-09-29";
+const evidence = process.env.KEEPANY_EVIDENCE_DIR ?? "test-results/evidence/2026-09-29";
 
 test("local release keeps edited project and restores its downloaded backup", async ({
 	browser,
@@ -51,7 +52,7 @@ test("local release keeps edited project and restores its downloaded backup", as
 			fullPage: true,
 		});
 		await page.goto("/intake");
-		await page.locator("#backup-password").fill(password);
+		await openBackupPage(page); await page.locator("#backup-password").fill(password);
 		await page.getByRole("button", { name: "Create backup" }).click();
 		const downloadEvent = page.waitForEvent("download");
 		await page.getByRole("link", { name: "Save backup file" }).click();
@@ -67,7 +68,7 @@ test("local release keeps edited project and restores its downloaded backup", as
 		restored.on("pageerror", (error) => errors.push(error.message));
 		try {
 			await restored.goto("/intake");
-			await restored.locator("#backup-password").fill(password);
+			await openBackupPage(restored); await restored.locator("#backup-password").fill(password);
 			await restored.locator("#restore-file").setInputFiles(backupPath);
 			await restored.getByRole("button", { name: "预览", exact: true }).click();
 			await restored.getByRole("button", { name: /确认 ·/ }).click();

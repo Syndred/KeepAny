@@ -1,3 +1,4 @@
+import { openBackupPage } from "./helpers/backup-restore";
 import { readFileSync } from "node:fs";
 import { expect, test, type BrowserContext, type Page } from "@playwright/test";
 import { strFromU8, unzipSync } from "fflate";
@@ -15,7 +16,7 @@ const password = "reviewed-expense-test-only-password";
 
 async function backup(page: Page, zh: boolean) {
 	await page.goto("/intake");
-	await page.locator("#backup-password").fill(password);
+	await openBackupPage(page); await page.locator("#backup-password").fill(password);
 	await page.getByRole("button", { name: zh ? "创建备份" : "Create backup", exact: true }).click();
 	const link = page.getByRole("link", { name: zh ? "保存备份文件" : "Save backup file" });
 	await expect(link).toBeVisible();
@@ -35,7 +36,7 @@ async function backup(page: Page, zh: boolean) {
 
 async function restore(page: Page, path: string, zh: boolean) {
 	await page.goto("/intake");
-	await page.locator("#backup-password").fill(password);
+	await openBackupPage(page); await page.locator("#backup-password").fill(password);
 	await openBackupRestorePanel(page);
 	await page.locator("#restore-file").setInputFiles(path);
 	await page.getByRole("button", { name: zh ? "预览" : "Preview", exact: true }).first().click();

@@ -41,9 +41,6 @@ jobs:
         timeout-minutes: 8
       - run: pnpm build
         timeout-minutes: 10
-      - name: Verify committed web bundle
-        run: node scripts/verify-local-release.mjs
-        timeout-minutes: 5
       # The complete business suite runs once on the fresh portable candidate below.
       - name: Preserve failed browser evidence
         if: failure()

@@ -217,7 +217,7 @@ export function AssetEditor({
 									draft.category,
 									...categoryOptions[kind],
 									...categories
-										.filter((c) => c.kind === kind && !c.deleted)
+										.filter((c) => c.kind === kind && !c.deleted && !c.scope)
 										.map((c) => c.name),
 								]),
 							].map((c) => (

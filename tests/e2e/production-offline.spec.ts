@@ -1,3 +1,4 @@
+import { openBackupPage } from "./helpers/backup-restore";
 import { statSync } from "node:fs";
 import { expect, test } from "@playwright/test";
 
@@ -65,7 +66,7 @@ test("built PWA reopens offline, edits local data and downloads a backup", async
 		await dialog.getByRole("button", { name: "Save" }).click();
 		await expect(page.getByRole("heading", { name: `${name} edited` })).toBeVisible();
 		await page.goto("/intake");
-		await page.locator("#backup-password").fill("offline-local-only-password-2026");
+		await openBackupPage(page); await page.locator("#backup-password").fill("offline-local-only-password-2026");
 		await page.getByRole("button", { name: "Create backup" }).click();
 		const saveFile = page.getByRole("link", { name: "Save backup file" });
 		await expect(saveFile).toBeVisible();

@@ -1,9 +1,11 @@
+import { openProjectDetails } from "./helpers/project-details";
+import { openBackupPage } from "./helpers/backup-restore";
 import { mkdirSync } from "node:fs";
 import { expect, type Page, test } from "@playwright/test";
 import { selectChoice } from "./helpers/select-choice";
 
 const evidence =
-	process.env.KEEPANY_EVIDENCE_DIR ?? process.env.KEEPANY_LEGACY_EVIDENCE_DIR ?? "docs/evidence/2026-09-29";
+	process.env.KEEPANY_EVIDENCE_DIR ?? process.env.KEEPANY_LEGACY_EVIDENCE_DIR ?? "test-results/evidence/2026-09-29";
 const repositoryModuleUrl = `/@fs${process.cwd()}/packages/local-db/src/index.ts`;
 
 type StoredAsset = {
@@ -474,7 +476,7 @@ test("project and account CRUD, intersecting filters, trash and actual backup re
 		expect(before.every((asset) => !asset.deleted)).toBe(true);
 
 		await page.goto("/intake");
-		await page.locator("#backup-password").fill(password);
+		await openBackupPage(page); await page.locator("#backup-password").fill(password);
 		await page.getByRole("button", { name: "Create backup" }).click();
 		const link = page.getByRole("link", { name: "Save backup file" });
 		await expect(link).toBeVisible();
@@ -496,7 +498,7 @@ test("project and account CRUD, intersecting filters, trash and actual backup re
 			await restored.goto("/assets/project");
 			await expect(restored.getByText(projectSaved)).toHaveCount(0);
 			await restored.goto("/intake");
-			await restored.locator("#backup-password").fill(password);
+			await openBackupPage(restored); await restored.locator("#backup-password").fill(password);
 			await restored.locator("#restore-file").setInputFiles(backupPath);
 			await restored
 				.getByRole("button", { name: "预览", exact: true })
@@ -627,6 +629,7 @@ for (const kind of ["project", "account"] as const) {
 			)?.id;
 			if (!assetId) throw Error(`${kind} ID missing`);
 			const first = await png("#e43b44");
+			await openProjectDetails(page);
 			await page.getByLabel("Add image").setInputFiles({
 				name: "original.png",
 				mimeType: "image/png",
@@ -667,7 +670,7 @@ for (const kind of ["project", "account"] as const) {
 			});
 
 			await page.goto("/intake");
-			await page.locator("#backup-password").fill(password);
+			await openBackupPage(page); await page.locator("#backup-password").fill(password);
 			await page.getByRole("button", { name: "Create backup" }).click();
 			const downloadEvent = page.waitForEvent("download");
 			await page.getByRole("link", { name: "Save backup file" }).click();
@@ -681,7 +684,7 @@ for (const kind of ["project", "account"] as const) {
 			restored.on("pageerror", (error) => errors.push(error.message));
 			try {
 				await restored.goto("/intake");
-				await restored.locator("#backup-password").fill(password);
+				await openBackupPage(restored); await restored.locator("#backup-password").fill(password);
 				await restored.locator("#restore-file").setInputFiles(backupPath);
 				await restored
 					.getByRole("button", { name: "预览", exact: true })

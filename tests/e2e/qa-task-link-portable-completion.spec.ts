@@ -1,3 +1,4 @@
+import { openBackupPage } from "./helpers/backup-restore";
 import { expect, test, type Page } from "@playwright/test";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
@@ -16,7 +17,7 @@ type Copy = (key: string) => string;
 type Row = { type: string; payload: string };
 type Entity = { id: string; [key: string]: unknown };
 async function archive(page: Page, t: Copy) {
-	await page.goto("/intake"); await page.locator("#backup-password").fill(password);
+	await page.goto("/intake"); await openBackupPage(page); await page.locator("#backup-password").fill(password);
 	await page.getByRole("button", { name: t("backup"), exact: true }).click();
 	const link = page.getByRole("link", { name: t("saveBackupFile"), exact: true }); await expect(link).toBeVisible();
 	const wait = page.waitForEvent("download"); await link.click(); const download = await wait;
@@ -27,7 +28,7 @@ async function archive(page: Page, t: Copy) {
 	return { download, path, tasks: entities("task"), assets: entities("asset") };
 }
 async function restore(page: Page, t: Copy, path: string) {
-	await page.goto("/intake"); await page.locator("#backup-password").fill(password);
+	await page.goto("/intake"); await openBackupPage(page); await page.locator("#backup-password").fill(password);
 	await openBackupRestorePanel(page);
 	await page.locator("#restore-file").setInputFiles(path);
 	await page.getByRole("button", { name: t("preview"), exact: true }).first().click();

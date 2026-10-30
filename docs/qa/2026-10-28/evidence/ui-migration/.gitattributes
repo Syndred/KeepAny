@@ -1,2 +1,0 @@
-# Raw tool receipts retain exact bytes and original whitespace for digest verification.
-* -text whitespace=-blank-at-eol,-blank-at-eof,cr-at-eol

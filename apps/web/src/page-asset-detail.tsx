@@ -1,11 +1,14 @@
 import { Textarea } from "./components/ui/textarea";
+import { CatalogRecordPage } from './page-catalog-record';
 import { Input } from "./components/ui/input";
 import { DatePicker } from "./components/ui/date-picker";
+import { DetailDisclosure } from "./components/DetailDisclosure";
+import { ProjectProfile } from "./components/ProjectProfile";
 import { assetNotes } from "./asset-notes";
 import { accountFamilyGraph } from "./account-family-graph";
-import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { ArrowDownRight, ArrowLeft, Check, ExternalLink, Plus } from "lucide-react";
+import { ArrowLeft, Check, ExternalLink, Plus, Mail, Pencil, MoreHorizontal, ChevronRight, Network } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import {
 	type Asset,
@@ -58,6 +61,11 @@ import {
 	validKind,
 } from "./view-shared";
 import { Select, SelectOption } from "./components/ui/select";
+import { usePasswordVault } from "./components/PasswordVaultProvider";
+import { AccountLoginSummary } from "./components/AccountLoginSummary";
+import { accountLoginChoices, preferredAccountLogin, nextAccountLogin } from "./account-login-choices";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./components/ui/dropdown-menu";
+const AccountEntryDialog = lazy(() => import("./components/AccountEntryDialog").then(module => ({ default: module.AccountEntryDialog })));
 const AssetEditor = lazy(() =>
 	import("./workflow-asset-editor").then((module) => ({ default: module.AssetEditor })),
 );
@@ -104,6 +112,11 @@ function itemLocationParts(location: string): [string, string, string] {
 }
 
 export function AssetDetail() {
+ const route=useRouterState({select:state=>({params:state.matches.at(-1)?.params as {kind?:string;id?:string},hash:state.location.hash})});
+ if(route.params?.kind==='project'&&!route.hash.startsWith('project-'))return <CatalogRecordPage recordId={`asset:${route.params.id}`}/>;
+ return <LegacyAssetDetail/>;
+}
+function LegacyAssetDetail() {
 	const params = (useRouterState({ select: (s) => s.matches.at(-1)?.params }) ??
 		{}) as { kind?: string; id?: string };
 	const kind = validKind(params.kind ?? "project");
@@ -116,13 +129,12 @@ export function AssetDetail() {
 		(a) => a.id === params.id && a.kind === kind && !a.deleted,
 	);
 	const [edit, setEdit] = useState(false);
-	const [passwordsFor, setPasswordsFor] = useState<string | null>(null);
-	const passwordsOpen = !!asset && passwordsFor === asset.id;
-	const revealPasswords = useCallback(() => {
-		const section = document.getElementById(`account-passwords-${asset?.id}`);
-		section?.scrollIntoView({ block: "start" });
-		section?.focus({ preventScroll: true });
-	}, [asset?.id]);
+    const { snapshot } = usePasswordVault();
+    const [accountSelection, setAccountSelection] = useState({ assetId: "", key: "" });
+    const [accountAddingLogin, setAccountAddingLogin] = useState(false);
+    const accountChoices = asset?.kind === "account" && snapshot.status === "unlocked" ? accountLoginChoices(snapshot.entries.filter(entry => entry.linkedAssetIds.includes(asset.id))) : [];
+    const currentLogin = preferredAccountLogin(accountChoices, accountSelection.assetId === asset?.id ? accountSelection.key : "", [], detailHash.startsWith("password-") ? detailHash.slice(9) : undefined);
+    useEffect(() => { if (kind === "account" && snapshot.status !== "unlocked") { setEdit(false); setAccountAddingLogin(false); setAccountSelection({ assetId: "", key: "" }); } }, [kind, snapshot.status]);
 	useEffect(() => {
 		if (!asset?.id || asset.kind !== "project" || !detailHash.startsWith("project-domain")) return;
 		const frame = requestAnimationFrame(() => document.getElementById(detailHash)?.scrollIntoView({ block: "start" }));
@@ -276,6 +288,12 @@ export function AssetDetail() {
 		});
 		return () => { active = false; };
 	}, [kind]);
+    useEffect(() => {
+        setEdit(false); setAccountAddingLogin(false); setRelationEdit(false); setTaskEdit(false);
+        setRelationToDelete(null); setDeleteOpen(false); setPendingImage(null);
+        setRelationTarget(""); setRelationLabel(""); setRelationSource(""); setRelationVerifiedAt("");
+        setRelationError(""); setRelationDeleteError("");
+    }, [params.id, kind === "account" && snapshot.status !== "unlocked"]);
 	const liveById = useMemo(() => new Map(data.assets.filter((entry) => !entry.deleted && entry.kind !== "vault").map((item) => [item.id, item])), [data.assets]);
 	const relations = useMemo(() => data.relations.filter(
 		(r) =>
@@ -349,7 +367,7 @@ export function AssetDetail() {
 		return [linked?.id, linked] as const;
 	})).values()).filter((linked): linked is Asset => !!linked);
 	const relatedAccounts = relatedAssets.filter((linked) => linked.kind === "account");
-	const accountVerifiedAt = relations.map((relation) => relation.verifiedAt).filter(Boolean).sort().at(-1) ?? "";
+
 	const relatedSubscriptions = relatedAssets.filter((linked) => linked.kind === "subscription" && linked.status === "active");
 	const histories = data.history
 		.filter((x) => !x.deleted && x.assetId === asset?.id)
@@ -379,6 +397,7 @@ export function AssetDetail() {
 			</div>
 		</main>
 	);
+    if (asset.kind === "account" && snapshot.status !== "unlocked") return <main className="page unified-accounts-page"><TextLink asChild><Link to="/accounts"><ArrowLeft size={16} />{t("accountBack")}</Link></TextLink><Suspense fallback={<p role="status">{t("loading")}</p>}><PasswordVaultPanel assets={data.assets} renderAccounts={() => null} notify={notify} /></Suspense></main>;
 	const dueCharge =
 		asset.kind === "subscription" && asset.dueDate
 			? actualCharge(asset, asset.dueDate)
@@ -898,7 +917,7 @@ export function AssetDetail() {
 	const attachmentSection = (
 				<section className="card asset-attachments-card">
 					<div className="card-header">
-						<h2>{t(asset.kind === "item" ? "itemOtherImages" : "attachments")}</h2>
+						{asset.kind !== "project" && <h2>{t(asset.kind === "item" ? "itemOtherImages" : "attachments")}</h2>}
 						<Button
 							size="small"
 							disabled={uploading || asset.attachments.length >= 20}
@@ -1032,29 +1051,33 @@ export function AssetDetail() {
 		asset.kind === "project" ? <p className="asset-quiet-empty">{t("noMatches")}</p> : <Empty hint={false} />
 	);
 	return (
-		<main className={`page asset-detail asset-detail-${kind}${relations.length ? " has-relations" : ""}`}>
-			{kind === "project" && <div className="asset-project-action-bar">
-				<Button onClick={() => setEdit(true)}>{t("edit")}</Button>
-				<Button asChild><Link to="/assets/project/$id/workflow/$flow" params={{ id: asset.id, flow: "brand" }}>{t("workflowBrandEntry")}</Link></Button>
-				<Button asChild><Link to="/assets/project/$id/workflow/$flow" params={{ id: asset.id, flow: "close" }}>{t("workflowCloseEntry")}</Link></Button>
-				<Button variant="danger" disabled={deleteBusy} onClick={() => { setDeleteError(""); setDeleteOpen(true); }}>{t("delete")}</Button>
-			</div>}
+		<main className={`page asset-detail asset-detail-${kind}${relations.length ? " has-relations" : ""}${kind === "account" ? " account-relation-layout" : ""}`}>
+            {kind === "project" && <div className="asset-project-action-bar">
+              <Button variant="primary" onClick={() => setEdit(true)}>{t("edit")}</Button>
+              <DropdownMenu><DropdownMenuTrigger render={<Button aria-label={t("moreActions")} />}><MoreHorizontal size={18}/>{t("moreActions")}</DropdownMenuTrigger><DropdownMenuContent align="end">
+                <DropdownMenuItem render={<Link to="/assets/project/$id/workflow/$flow" params={{ id: asset.id, flow: "brand" }} />}>{t("workflowBrandEntry")}</DropdownMenuItem>
+                <DropdownMenuItem render={<Link to="/assets/project/$id/workflow/$flow" params={{ id: asset.id, flow: "close" }} />}>{t("workflowCloseEntry")}</DropdownMenuItem>
+                <DropdownMenuItem disabled={deleteBusy} onClick={() => { setDeleteError(""); setDeleteOpen(true); }}>{t("delete")}</DropdownMenuItem>
+              </DropdownMenuContent></DropdownMenu>
+            </div>}
+			{kind === "account" && <TextLink asChild><Link className="account-detail-back" to="/accounts"><ArrowLeft size={16} />{t("accountBack")}</Link></TextLink>}
 			<div className="page-header">
 				<div>
 					{kind !== "project" && kind !== "account" && <TextLink asChild><Link className="back-link" to={catalogReturn?.view === "all" ? "/assets" : "/assets/$kind"} params={catalogReturn?.view === "all" ? {} : { kind: catalogReturn?.view === "domains" ? "domains" : returnKind }} onClick={() => { sessionStorage.removeItem("keepany-relation-return-id"); sessionStorage.removeItem("keepany-relation-return-kind"); }}>
 						<ArrowLeft size={16} />
 						{t("back")}
 					</Link></TextLink>}
+					{kind === "account" && <span className="account-detail-avatar"><Mail size={30} /></span>}
 					<div className="eyebrow">
 						{t(kind)} · {niceCategory(asset.category || (kind === "account" ? "other" : ""), t)}
 					</div>
-					<h1>{asset.name}</h1>
+					<h1 title={kind === "account" ? asset.name : undefined}>{asset.name}</h1>
 					{kind !== "account" && <p className="subtitle">
 						{asset.description || asset.url || t("local")}
 					</p>}
 					{kind === "project" && <div className="asset-project-hero-meta">{asset.category && <span>{niceCategory(asset.category, t)}</span>}{asset.status && <span>{t(asset.status)}</span>}{asset.url && <a href={asset.url} target="_blank" rel="noopener noreferrer">{asset.url}<ExternalLink size={13} /></a>}</div>}
 				</div>
-				{kind !== "project" && <div className="actions">
+				{kind === "account" ? <div className="actions"><Button variant="primary" onClick={() => { setAccountAddingLogin(false); setEdit(true); }}><Pencil size={17} />{t("edit")}</Button><DropdownMenu><DropdownMenuTrigger render={<Button size="icon" variant="ghost" aria-label={t("moreActions")} />}><MoreHorizontal size={18} /></DropdownMenuTrigger><DropdownMenuContent align="end"><DropdownMenuItem onClick={() => { setAccountAddingLogin(true); setEdit(true); }}>{t("accountAddLogin")}</DropdownMenuItem></DropdownMenuContent></DropdownMenu></div> : kind !== "project" && <div className="actions">
 					{kind === "subscription" && <Button asChild><Link to="/finance">{t("financeViewLedger")}</Link></Button>}
 					<Button onClick={() => setEdit(true)}>{t("edit")}</Button>
 					<Button
@@ -1065,6 +1088,7 @@ export function AssetDetail() {
 						{t("delete")}
 					</Button>
 				</div>}
+
 			</div>
 			{deleteOpen && (
 				<Dialog
@@ -1099,23 +1123,8 @@ export function AssetDetail() {
 						<Button size="small" disabled={uploading || asset.attachments.length >= 20} onClick={() => chooseImage("detailIds")}>{t("itemDetailPhotos")}</Button>
 					</div>
 				</section>}
-				{asset.kind === "project" && <section className="card asset-profile-card asset-project-profile-card">
-					<div className="card-header"><h2>{t("profile")}</h2></div>
-					<dl className="asset-project-facts">
-						<div><dt>{t("projectOfficialUrl")}</dt><dd>{asset.url ? <TextLink href={asset.url} target="_blank" rel="noopener noreferrer"><span>{asset.url}</span><ExternalLink aria-hidden="true" /></TextLink> : "—"}</dd></div>
-						<div><dt>{t("projectType")}</dt><dd>{niceCategory(asset.category, t) || "—"}</dd></div>
-						<div><dt>{t("projectLaunchMonth")}</dt><dd>{asset.projectLaunchMonth ? new Intl.DateTimeFormat(i18n.language, { year: "numeric", month: "long", timeZone: "UTC" }).format(new Date(`${asset.projectLaunchMonth}-01T12:00:00Z`)) : "—"}</dd></div>
-						<div><dt>{t("contact")}</dt><dd>{asset.contact || "—"}</dd></div>
-						<div><dt>{t("tags")}</dt><dd>{asset.tags.join(", ") || "—"}</dd></div>
-						<div><dt>{t("notes")}</dt><dd>{asset.notes || "—"}</dd></div>
-						<div><dt>{t("projectAccount")}</dt><dd>{relatedAccounts.length ? relatedAccounts.map((linked, index) => <span key={linked.id}>{index > 0 && " · "}<TextLink asChild><Link to="/assets/$kind/$id" params={{ kind: linked.kind, id: linked.id }} onClick={(event) => { event.preventDefault(); visitRelation(linked); }}>{linked.name}</Link></TextLink></span>) : "—"}</dd></div>
-					</dl>
-					<div className="asset-project-related">
-						<div className="card-header"><h3>{t("related")}</h3><Button asChild size="small"><Link to="/finance">{t("financeViewLedger")}<ArrowDownRight size={15} aria-hidden="true" /></Link></Button></div>
-						{relatedAssets.length ? <div className="asset-project-related-list">{relatedAssets.map((linked) => <Link key={linked.id} className="asset-project-related-card" to="/assets/$kind/$id" params={{ kind: linked.kind, id: linked.id }} onClick={(event) => { event.preventDefault(); visitRelation(linked); }}><span className="asset-project-related-icon" aria-hidden="true">{linked.name.charAt(0).toUpperCase()}</span><span><strong>{linked.name}</strong><small>{t(linked.kind)}{linked.kind === "subscription" ? ` · ${money(linked.amount, linked.currency, i18n.language)}` : linked.username ? ` · ${linked.username}` : ""}</small></span><ArrowDownRight size={15} aria-hidden="true" /></Link>)}</div> : <p className="asset-quiet-empty">{t("none")}</p>}
-					</div>
-				</section>}
-				{asset.kind === "project" && <section className="card asset-project-reminders" id="project-reminders">
+				{asset.kind === "project" && <ProjectProfile asset={asset} accounts={relatedAccounts} onVisit={visitRelation} onEdit={() => setEdit(true)} />}
+				{asset.kind === "project" && asset.projectInspectionDate && <section className="card asset-project-reminders" id="project-reminders">
 					<div className="card-header"><h2>{t("projectNextInspection")}</h2></div>
 					<div className="asset-project-reminder-row asset-project-reminder-static"><span className="asset-project-reminder-symbol" aria-hidden="true">↗</span><span><strong>{t("projectNextInspection")}</strong><small>{asset.projectInspectionDate ? date(asset.projectInspectionDate, i18n.language) : t("projectNoInspection")}</small></span></div>
 				</section>}
@@ -1307,10 +1316,10 @@ export function AssetDetail() {
 				</form>
 			</Dialog>}
 			<div className="detail-grid asset-detail-secondary">
-				<section id="account-relations" className="card asset-relations-card">
+				<DetailDisclosure id="account-relations" className="card asset-relations-card" collapsible={kind === "project"} label={t("projectRelatedDetails")}>
 					<div className="card-header">
 						<div>
-							<h2>{t("relations")}</h2>
+							<h2>{t(kind === "account" ? "accountRelationMap" : "relations")}</h2>
 							{relations.length > 0 && <p>{kind === "account" ? t("accountGraphCounts", { direct: directCount, indirect: Math.max(0, (family?.neighbors.length ?? 0) - directCount) }) : t("relationGraphLegend")}</p>}
 						</div>
 						<Button
@@ -1344,7 +1353,7 @@ export function AssetDetail() {
 					) : (
 						asset.kind === "project" ? <p className="asset-quiet-empty">{t("none")}</p> : <Empty hint={false} />
 					)}
-				</section>
+				</DetailDisclosure>
 				<section className="card asset-tasks-card">
 					<div className="card-header">
 						<h2>{t("tasks")}</h2>
@@ -1363,7 +1372,7 @@ export function AssetDetail() {
 					{ownTasks.length ? (
 						<div className="list">
 							{ownTasks.map((task) => (
-								<TaskRow key={task.id} task={task} hideRelated={kind === "account"} />
+								<TaskRow key={task.id} task={task} hideRelated={kind === "account" || kind === "project"} compact={kind === "account" || kind === "project"} />
 							))}
 						</div>
 					) : (
@@ -1371,28 +1380,11 @@ export function AssetDetail() {
 					)}
 				</section>
 			</div>
-			{asset.kind === "account" && <div className="account-facts-grid">
-				<section className="card account-facts-card"><div className="account-facts-heading"><h2>{t("accountBasicInfo")}</h2></div><dl>
-					<div><dt>{t("accountProvider")}</dt><dd>{asset.accountProvider || t("accountNotRecorded")}</dd></div>
-					{asset.username.trim() !== asset.name.trim() && <div><dt>{t("username")}</dt><dd>{asset.username || t("accountNotRecorded")}</dd></div>}
-					<div><dt>{t("status")}</dt><dd>{t(asset.status)}</dd></div>
-					<div><dt>{t("accountPurpose")}</dt><dd>{asset.description || t("accountNotRecorded")}</dd></div>
-					{asset.url && <div><dt>{t("url")}</dt><dd><TextLink href={asset.url} target="_blank" rel="noopener noreferrer"><span>{asset.url}</span></TextLink></dd></div>}
-					{asset.contact && <div><dt>{t("contact")}</dt><dd>{asset.contact}</dd></div>}
-				</dl>
-				{asset.tags.length > 0 && <div className="chips">{asset.tags.map((tag) => <span className="chip" key={tag}>{tag}</span>)}</div>}
-				{assetNotes(asset) && <p className="note asset-supplemental-notes">{assetNotes(asset)}</p>}
-				</section>
-
-				<section className="card account-facts-card account-security-card"><h2>{t("accountRecordsSecurity")}</h2><dl>
-					<div><dt>{t("accountProfileVerifiedAt")}</dt><dd>{asset.accountProfileVerifiedAt ? date(asset.accountProfileVerifiedAt, i18n.language) : t("accountNotRecorded")}</dd></div>
-					<div><dt>{t("accountRelationVerifiedAt")}</dt><dd>{accountVerifiedAt ? date(accountVerifiedAt, i18n.language) : t("accountNotRecorded")}</dd></div>
-				</dl><div className="workspace-password-actions"><Button aria-expanded={passwordsOpen} aria-controls={`account-passwords-${asset.id}`} onClick={() => setPasswordsFor((current) => current === asset.id ? null : asset.id)}>{t(passwordsOpen ? "workspaceHidePasswords" : "workspaceShowPasswords")}</Button><Button asChild><Link to="/assets/$kind" params={{ kind: "vault" }} hash={`asset-${asset.id}`}>{t("accountOpenPasswords")}<ArrowDownRight size={16} /></Link></Button></div></section>
-			</div>}
-			{asset.kind === "account" && passwordsOpen && <section id={`account-passwords-${asset.id}`} tabIndex={-1} aria-label={t("pwVaultTitle")} className="card account-passwords-section"><Suspense fallback={<div className="notice" role="status">{t("pwVaultLoading")}</div>}><PasswordVaultPanel assets={data.assets} notify={notify} focusAssetId={asset.id} onReady={revealPasswords} embedded /></Suspense></section>}
-			{(asset.kind === "account" || asset.kind === "project") && attachmentSection}
-			{asset.kind === "account" && (
-				<section className="card impact-checklist">
+			{asset.kind === "project" && <DetailDisclosure className="asset-project-media-disclosure" collapsible label={t("attachments")}>{attachmentSection}</DetailDisclosure>}
+			{asset.kind === "account" && <aside className="account-login-column">
+                <AccountLoginSummary key={`${asset.id}:${currentLogin?.key ?? "empty"}:${currentLogin?.entry.modifiedAt ?? ""}`} asset={asset} current={currentLogin} total={accountChoices.length} index={accountChoices.findIndex(choice => choice.key === currentLogin?.key)} onSwitch={() => { if (currentLogin) setAccountSelection({ assetId: asset.id, key: nextAccountLogin(accountChoices, currentLogin.key)?.key ?? "" }); }} onEdit={() => { setAccountAddingLogin(false); setEdit(true); }} />
+                {asset.attachments.length > 0 && <details className="account-existing-attachments"><summary>{t("attachments")}</summary>{attachmentSection}</details>}
+				<details className="card impact-checklist account-impact-details"><summary><Network size={21} /><span>{t("accountImpactTitle")}</span><ChevronRight size={18} /></summary>
 					<div className="card-header">
 						<div>
 							<h2>{t("impact")}</h2>
@@ -1425,8 +1417,8 @@ export function AssetDetail() {
 							))}
 						</div>
 					) : <Empty hint={false} />}
-				</section>
-			)}
+				</details>
+            </aside>}
 			{assetBills.length > 0 && <section className="card asset-finance-card">
 				<div className="card-header"><h2>{t("workspaceLedger")}</h2><TextLink asChild><Link to="/finance">{t("financeTitle")}</Link></TextLink></div>
 				<div className="list">{assetBills.map(entry => <div className="list-row" key={entry.id} data-bill-id={entry.id}>
@@ -1598,12 +1590,12 @@ export function AssetDetail() {
 						</div>
 					}
 				>
-					<AssetEditor
+					{kind === "account" ? <AccountEntryDialog key={`${asset.id}:${accountAddingLogin ? "new" : currentLogin?.entry.id ?? "empty"}`} asset={asset} entryId={accountAddingLogin ? undefined : currentLogin?.entry.id} newLogin={accountAddingLogin} onClose={() => { setEdit(false); setAccountAddingLogin(false); }} /> : <AssetEditor
 						kind={kind}
 						asset={asset}
 						categories={data.categories}
 						onClose={() => setEdit(false)}
-					/>
+					/>}
 				</Suspense>
 			)}
 			{taskEdit && (

@@ -1,13 +1,12 @@
 import { Link, useLocation } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { SampleLibraryButton } from "./components/SampleLibraryButton";
 import { McpPanel } from "./components/McpPanel";
 import { AiSettingsPanel } from "./components/AiSettingsPanel";
 import { ReminderSettingsPanel } from "./components/ReminderSettingsPanel";
 import { Button } from "./components/ui/button";
 import { Select, SelectOption } from "./components/ui/select";
-import { seed } from "./data";
-import { SAMPLE_LIBRARY_ID, sampleLibraryComplete } from "./sample-library";
 import { PageTitle, useAppContext } from "./view-shared";
 import "./settings-intake-restoration.css";
 
@@ -17,7 +16,6 @@ export function SettingsPage() {
   const location = useLocation();
   const [persistent, setPersistent] = useState<boolean | null>(null);
   const [requested, setRequested] = useState(false);
-  const [seeding, setSeeding] = useState(false);
   const [assistantOpen, setAssistantOpen] = useState(() => window.location.hash === "#assistant");
   const [advancedOpen, setAdvancedOpen] = useState(() => window.location.hash === "#advanced-settings");
   useEffect(() => {
@@ -74,8 +72,8 @@ export function SettingsPage() {
 						>
 							{t("persist")}
 						</Button>
-						<Link className="button" to="/intake">
-							{t("backup")}
+						<Link className="button" to="/backup">
+							{t("backupAndRestore")}
 						</Link>
 					</div>
 					{(persistent === true || requested) && (
@@ -98,22 +96,7 @@ export function SettingsPage() {
 			<section className="card padded">
 				<h2>{t("trial")}</h2>
 				<p>{t("sampleLibraryDescription")}</p>
-				<Button
-					disabled={data.loading || data.preferences.some((preference) => preference.id === SAMPLE_LIBRARY_ID && sampleLibraryComplete(preference.value)) || seeding}
-					onClick={async () => {
-						setSeeding(true);
-						try {
-							await seed(t, i18n.language);
-							notify(t("sampleLibraryAdded"));
-						} catch {
-							notify(t("error"));
-						} finally {
-							setSeeding(false);
-						}
-					}}
-				>
-					{t(data.preferences.some((preference) => preference.id === SAMPLE_LIBRARY_ID && sampleLibraryComplete(preference.value)) ? "sampleLibraryPresent" : "loadSample")}
-				</Button>
+				<SampleLibraryButton />
 			</section>
 				</div>
 			</details>

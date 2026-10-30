@@ -1,4 +1,6 @@
+import { openBackupPage } from "./helpers/backup-restore";
 import { openBackupRestorePanel } from "./helpers/backup-restore";
+import { openStandaloneEntryDraft, saveStandaloneEntryDraft } from "./helpers/standalone-entry";
 import { prepareVaultWorkspace, revealPasswordEntries, openVaultAccess } from "./helpers/vault-access";
 import { mkdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
@@ -290,15 +292,14 @@ for (const variant of variants) {
 				.click();
 			await expect(page.locator(".password-vault-toolbar")).toBeVisible();
 			await revealPasswordEntries(page);
-			await page
-				.getByRole("button", { name: t("pwVaultNewEntry"), exact: true })
-				.click();
+			await openStandaloneEntryDraft(page, t);
 			const dialog = page.getByRole("dialog");
 			await expect(page.locator("#password-vault-entry-notes")).toBeVisible();
 			await expect(
 				page.locator(".password-vault-optional summary"),
 			).toHaveCount(0);
-			await expect(page.locator("#password-vault-entry-url")).toBeHidden();
+			// The confirmed merged form displays its shared account website directly.
+			await expect(page.locator("#password-vault-entry-url")).toBeVisible();
 			await page.locator("#password-vault-entry-title").fill(title);
 			await page.locator("#password-vault-entry-username").fill(primary);
 			for (const [index, value] of [
@@ -377,9 +378,7 @@ for (const variant of variants) {
 					`password-identifiers-${variant.locale}-${variant.width}-notes-actions.png`,
 				),
 			});
-			await page
-				.getByRole("button", { name: t("pwVaultSaveEntry"), exact: true })
-				.click();
+			await saveStandaloneEntryDraft(page, t);
 			await expect(dialog).toBeHidden();
 			await expect(entries).toHaveCount(1);
 			const first = entries.filter({ hasText: primary });
@@ -579,11 +578,9 @@ for (const variant of variants) {
 				.click();
 			await expect(page.locator(".password-vault-toolbar")).toBeVisible();
 			await revealPasswordEntries(page);
-			await page
-				.getByRole("button", { name: t("pwVaultNewEntry"), exact: true })
-				.click();
+			await openStandaloneEntryDraft(page, t);
 			const details = page.locator(".password-vault-optional");
-			await expect(page.locator("#password-vault-entry-url")).toBeHidden();
+			await expect(page.locator("#password-vault-entry-url")).toBeVisible();
 			await expect(page.locator("#password-vault-entry-notes")).toBeVisible();
 			await expect(details.locator("summary")).toHaveCount(0);
 			await page.locator("#password-vault-entry-title").fill(appTitle);
@@ -596,9 +593,7 @@ for (const variant of variants) {
 				),
 				fullPage: true,
 			});
-			await page
-				.getByRole("button", { name: t("pwVaultSaveEntry"), exact: true })
-				.click();
+			await saveStandaloneEntryDraft(page, t);
 			await expect(page.getByRole("dialog")).toBeHidden();
 			const entry = page
 				.locator(".password-vault-entry-list .password-vault-entry")
@@ -885,7 +880,7 @@ for (const variant of variants) {
 			const currentKdbxPath = test.info().outputPath("current-passwords.kdbx");
 			await currentDownload.saveAs(currentKdbxPath);
 			await page.goto("/intake");
-			await page.locator("#backup-password").fill(backupPassword);
+			await openBackupPage(page); await page.locator("#backup-password").fill(backupPassword);
 			await page
 				.getByRole("button", {
 					name: zh ? "创建备份" : "Create backup",
@@ -934,12 +929,12 @@ for (const variant of variants) {
 				// Keep the initialized empty session alive through the SPA restore route.
 				await restorePage
 					.getByRole("link", {
-						name: zh ? "收录与备份" : "Import & backup",
+						name: zh ? "收录" : "Capture & import",
 						exact: true,
 					})
 					.last()
 					.click();
-				await restorePage.locator("#backup-password").fill(backupPassword);
+				await openBackupPage(restorePage); await restorePage.locator("#backup-password").fill(backupPassword);
 				await openBackupRestorePanel(restorePage);
 				await restorePage.locator("#restore-file").setInputFiles(backupPath);
 				await restorePage
@@ -1038,14 +1033,10 @@ test("password changes lock a revealed editor in another tab; idle lock and clea
 		await expect(first.locator(".password-vault-toolbar")).toBeVisible();
 		await revealPasswordEntries(first);
 		await expect(second.locator("#password-vault-unlock-master")).toBeVisible();
-		await first
-			.getByRole("button", { name: t("pwVaultNewEntry"), exact: true })
-			.click();
+		await openStandaloneEntryDraft(first, t);
 		await first.locator("#password-vault-entry-title").fill(entryName);
 		await first.locator("#password-vault-entry-password").fill(password2);
-		await first
-			.getByRole("button", { name: t("pwVaultSaveEntry"), exact: true })
-			.click();
+		await saveStandaloneEntryDraft(first, t);
 		await expect(first.getByRole("dialog")).toBeHidden();
 		await unlock(second, t);
 		await second
@@ -1131,7 +1122,7 @@ for (const variant of variants) {
 			await page.locator("#password-vault-master").fill(master);
 			await page.locator("#password-vault-master-confirm").fill(master);
 			await page.getByRole("button", { name: t("pwVaultCreate"), exact: true }).click();
-			await page.getByRole("button", { name: t("pwVaultNewEntry"), exact: true }).click();
+			await openStandaloneEntryDraft(page, t);
 			await page.locator("#password-vault-entry-title").fill(title);
 			await page.locator("#password-vault-entry-username").fill(user);
 			const field = page.getByLabel(t("pwVaultPasswordOptionalField"), { exact: true });
@@ -1140,7 +1131,7 @@ for (const variant of variants) {
 			await page.getByRole("button", { name: t("pwVaultAddIdentifier"), exact: true }).click();
 			await page.locator(".pw-smart-identifier-row input").fill("+15550000999");
 			await page.screenshot({ path: join(evidenceRoot, `passwordless-${variant.locale}-${variant.width}-new.png`), fullPage: true });
-			await page.getByRole("button", { name: t("pwVaultSaveEntry"), exact: true }).click();
+			await saveStandaloneEntryDraft(page, t);
 			await expect(page.getByRole("dialog")).toBeHidden();
 			const entries = page.locator(".password-vault-entry-list .password-vault-entry");
 			const first = entries.filter({ has: page.getByText(user, { exact: true }) });

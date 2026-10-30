@@ -1,6 +1,0 @@
-{
-  "observationCommand": "bun /Users/syndred/.codex/toolchains/gstack/bin/gstack-qa-deadline run docs/qa/2026-10-27/evidence/T25/run-001/deadline.json -- /Users/syndred/.codex/toolchains/gstack/browse/dist/browse click @e10",
-  "observed": "Clicked @e10 → now at http://127.0.0.1:4205/assets/vault#vault-references\n",
-  "hypothesis": "Save操作完成，读取可见反馈，确认非法协议不会变成可用外链。",
-  "nextCommand": "bun /Users/syndred/.codex/toolchains/gstack/bin/gstack-qa-deadline run docs/qa/2026-10-27/evidence/T25/run-001/deadline.json -- /Users/syndred/.codex/toolchains/gstack/browse/dist/browse text"
-}

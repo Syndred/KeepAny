@@ -1,3 +1,4 @@
+import { openProjectDetails } from "./helpers/project-details";
 import { mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { expect, test, type Page } from "@playwright/test";
@@ -7,7 +8,7 @@ import { sourceModuleUrl } from "./helpers/source-module-url";
 
 const repositoryPath = sourceModuleUrl("packages/local-db/src/index.ts");
 const domainPath = sourceModuleUrl("packages/domain/src/index.ts");
-const evidence = "docs/qa/2026-10-27/evidence/T12-windows";
+const evidence = "test-results/qa/2026-10-27/evidence/T12-windows";
 mkdirSync(evidence, { recursive: true });
 
 async function state(page: Page, id: string) {
@@ -53,6 +54,7 @@ for (const locale of ["zh-CN", "en"] as const) for (const width of [390, 1280]) 
 			await card.click();
 			const id = new URL(page.url()).pathname.split("/").at(-1) as string;
 			expect((await state(page, id)).asset).toMatchObject({ amount: 12345, currency: "USD", itemPurchasePriceKnown: true, purchaseDate: "2026-08-14", warrantyDate: "2027-08-14", location: "Studio / shelf" });
+			await openProjectDetails(page);
 			await page.locator('[data-item-media-role="coverId"]').getByRole("button", { name: t("addImage"), exact: true }).click();
 			const pngBase64 = await page.evaluate(() => {
 				const canvas = document.createElement("canvas"); canvas.width = canvas.height = 24;

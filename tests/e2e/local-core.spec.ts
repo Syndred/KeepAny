@@ -1,3 +1,5 @@
+import { openProjectDetails } from "./helpers/project-details";
+import { openBackupPage } from "./helpers/backup-restore";
 import { expect, type Page, test } from "@playwright/test";
 import { selectChoice } from "./helpers/select-choice";
 
@@ -63,6 +65,7 @@ test("project, account, subscription, located item, linked reminder and download
 		await expect(edit).toBeHidden();
 		await page.reload();
 		await expect(page.getByRole("heading", { name: editedProject })).toBeVisible();
+		await openProjectDetails(page);
 		await page.getByRole("button", { name: "Add connection" }).click();
 		const relation = page.getByRole("dialog");
 		await selectChoice(relation.getByLabel("Connect to"), { label: account });
@@ -93,7 +96,7 @@ test("project, account, subscription, located item, linked reminder and download
 		await expect(page.getByRole("heading", { name: editedProject, exact: true })).toBeVisible();
 
 		await page.goto("/intake");
-		await page.locator("#backup-password").fill(password);
+		await openBackupPage(page); await page.locator("#backup-password").fill(password);
 		await page.getByRole("button", { name: "Create backup" }).click();
 		const saveFile = page.getByRole("link", { name: "Save backup file" });
 		await expect(saveFile).toBeVisible();
@@ -116,7 +119,7 @@ test("project, account, subscription, located item, linked reminder and download
 			await restored.goto("/assets/project");
 			await expect(restored.getByText(project)).toHaveCount(0);
 			await restored.goto("/intake");
-			await restored.locator("#backup-password").fill(password);
+			await openBackupPage(restored); await restored.locator("#backup-password").fill(password);
 			await restored.locator("#restore-file").setInputFiles(backupPath);
 			await restored
 				.getByRole("button", { name: "Preview", exact: true })

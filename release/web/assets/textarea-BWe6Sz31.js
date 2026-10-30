@@ -1,1 +1,0 @@
-import{s as e}from"./createLucideIcon-Ldp9oRMv.js";import{Q as t}from"./useScrollLock-DRDIHCke.js";var n=e();function r({className:e,...r}){return(0,n.jsx)(`textarea`,{"data-slot":`textarea`,...r,className:t(`ui-input min-w-0 rounded-lg border bg-background text-foreground outline-offset-2 disabled:cursor-not-allowed disabled:opacity-60`,e)})}export{r as t};

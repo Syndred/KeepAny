@@ -70,7 +70,7 @@ export function buildWorkspaceSummary(input: {
 	}
 	let upcoming = 0;
 	const domains = assets.filter((asset) => asset.kind === "project")
-		.flatMap((project) => (project.projectDomains ?? []).map((domain) => ({ project, domain, remainingDays: daysBetween(input.today, domain.expiryDate) })));
+		.flatMap((project) => (project.projectDomains ?? []).filter(domain=>!domain.catalog?.deleted).map((domain) => ({ project, domain, remainingDays: daysBetween(input.today, domain.expiryDate) })));
 	for (const row of domains) if (row.remainingDays !== null && row.remainingDays >= 0 && row.remainingDays <= 30) upcoming += 1;
 	const summaries = new Map<string, AssetSummary>();
 	for (const asset of assets) {

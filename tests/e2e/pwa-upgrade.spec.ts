@@ -1,3 +1,4 @@
+import { openProjectDetails } from "./helpers/project-details";
 import { execFileSync, spawnSync } from "node:child_process";
 import { cpSync, existsSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { createServer } from "node:http";
@@ -40,6 +41,7 @@ test("old controlled tab upgrades on the same origin without losing its project,
 		await page.getByRole("dialog").getByRole("button", { name: "Save" }).click();
 		await page.getByText(project, { exact: true }).click();
 		await expect(page.getByRole("heading", { name: project })).toBeVisible();
+		await openProjectDetails(page);
 		await page.getByLabel("Add image").setInputFiles({ name: "upgrade.png", mimeType: "image/png", buffer: Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Y9nR+IAAAAASUVORK5CYII=", "base64") });
 		await page.getByRole("dialog").getByRole("button", { name: "Confirm" }).click();
 		await expect(page.locator(".asset-image")).toHaveCount(1);

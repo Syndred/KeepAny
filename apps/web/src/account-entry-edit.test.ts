@@ -1,0 +1,98 @@
+import "fake-indexeddb/auto";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { newAsset, type Asset } from "../../../packages/domain/src";
+import { openLocalRepository } from "../../../packages/local-db/src";
+import { VaultSession, type VaultRecord, type VaultPersistence, type VaultEntryDraft } from "../../../packages/password-vault/src";
+import { mergedAccountDraft, removeAccountLogin, saveMergedAccount, type AccountEditProgress } from "./account-entry-edit";
+class Storage implements VaultPersistence {
+ record: VaultRecord | null = null; fail=false; afterWrite?:()=>void;
+ beforeWrite?:()=>Promise<void>; async read(){return this.record;}
+ async write(bytes:Uint8Array,revision:string|null){ await this.beforeWrite?.(); if(this.fail)throw Error("Synthetic failure");if((this.record?.revision??null)!==revision)throw Error("vault-stale");this.record={id:"local",bytes:bytes.slice(),revision:crypto.randomUUID(),updatedAt:new Date().toISOString()};this.afterWrite?.();return this.record; }
+}
+const disposals:Array<()=>Promise<void>>=[];afterEach(async()=>{for(const dispose of disposals.splice(0))await dispose();});
+async function fixture(){const repository=await openLocalRepository(`unified-edit-${crypto.randomUUID().slice(0,8)}`),storage=new Storage(),session=new VaultSession(storage);await session.initialize();await session.create("Synthetic master2026!");disposals.push(async()=>{session.lock();await repository.close();});const asset={...newAsset("account"),name:"Public account",category:"other",username:"main@example.test",url:"https://public.example.test/",notes:"Public note"};await repository.save("asset",asset);const primary=await session.saveEntry({title:"Legacy primary title",username:asset.username,password:"Primary secret!",notes:"Private primary",url:asset.url,linkedAssetIds:[asset.id],usernameAliases:["alias@example.test"]});return{repository,storage,session,asset,primary};}
+const label=()=>"Login";const state=(asset:Asset|null):AccountEditProgress=>({account:asset,accountChanged:false});
+const entry=(username:string):VaultEntryDraft=>({title:"Private backup",username,password:"Backup secret!",notes:"Private backup note",url:"https://private.example.test/",linkedAssetIds:[]});
+describe("merged account editing",()=>{
+ it("preserves the complete combination of valid long legacy and encrypted notes after reopen",async()=>{
+  const f=await fixture(), asset={...f.asset,notes:"公".repeat(50000),longDescription:"旧".repeat(30000)};
+  await f.repository.save("asset",asset);
+  const old={...f.session.readEntry(f.primary),notes:"密".repeat(60000)};await f.session.saveEntry(old);
+  const draft=mergedAccountDraft(asset,old);
+  await saveMergedAccount({original:asset,originalEntry:old,baseProfile:asset,profile:asset,draft,session:f.session,progress:state(asset),label,repository:f.repository});
+  f.session.lock();const reopened=new VaultSession(f.storage);await reopened.initialize();await reopened.unlock("Synthetic master2026!");
+  expect(reopened.readEntry(f.primary).notes).toBe(draft.notes);reopened.lock();
+  expect((await f.repository.get<Asset>("asset",asset.id))?.notes).toBe("");
+ });
+ it("merges legacy and encrypted notes once and preserves hidden profile fields",async()=>{
+  const f=await fixture(),asset={...f.asset,accountProvider:"Legacy provider",contact:"Legacy contact",description:"Legacy purpose",longDescription:"Legacy supplemental note"};
+  await f.repository.saveAssetIfCurrent(f.asset,asset);const old=f.session.readEntry(f.primary),draft=mergedAccountDraft(asset,old);
+  expect(draft.notes).toBe("Legacy supplemental note\n\nPublic note\n\nPrivate primary");
+  await saveMergedAccount({original:asset,originalEntry:old,baseProfile:asset,profile:asset,draft,session:f.session,progress:state(asset),label,repository:f.repository});
+  const saved=(await f.repository.get<Asset>("asset",asset.id))!;
+  expect(saved).toMatchObject({notes:"",longDescription:"",accountProvider:asset.accountProvider,contact:asset.contact,description:asset.description});
+  expect(f.session.readEntry(f.primary).notes).toBe(draft.notes);
+  expect(mergedAccountDraft(saved,f.session.readEntry(f.primary)).notes).toBe(draft.notes);
+  await saveMergedAccount({original:saved,originalEntry:f.session.readEntry(f.primary),baseProfile:saved,profile:saved,draft:{...f.session.readEntry(f.primary),notes:""},session:f.session,progress:state(saved),label,repository:f.repository});
+  expect(mergedAccountDraft((await f.repository.get<Asset>("asset",asset.id))!,f.session.readEntry(f.primary)).notes).toBe("");
+ });
+ it("never clears legacy notes before an encrypted save succeeds",async()=>{
+  const f=await fixture(),old=f.session.readEntry(f.primary),draft=mergedAccountDraft(f.asset,old),progress=state(f.asset);
+  f.storage.fail=true;
+  const input={original:f.asset,originalEntry:old,baseProfile:f.asset,profile:f.asset,draft,session:f.session,progress,label,repository:f.repository};
+  await expect(saveMergedAccount(input)).rejects.toThrow();
+  expect((await f.repository.get<Asset>("asset",f.asset.id))?.notes).toBe("Public note");
+  expect(f.session.readEntry(f.primary).notes).toBe("Private primary");
+  f.storage.fail=false;await saveMergedAccount(input);
+  expect(f.session.readEntry(f.primary).notes).toBe("Public note\n\nPrivate primary");
+  expect((await f.repository.get<Asset>("asset",f.asset.id))?.notes).toBe("");
+ });
+ it("retries a failed legacy-note cleanup without rewriting the encrypted entry",async()=>{
+  const f=await fixture(),old=f.session.readEntry(f.primary),draft=mergedAccountDraft(f.asset,old),progress=state(f.asset);
+  const actual=f.repository.saveAssetIfCurrent.bind(f.repository);
+  const spy=vi.spyOn(f.repository,"saveAssetIfCurrent").mockImplementationOnce(async()=>{throw Error("Synthetic cleanup fault");});
+  const input={original:f.asset,originalEntry:old,baseProfile:f.asset,profile:f.asset,draft,session:f.session,progress,label,repository:f.repository};
+  await expect(saveMergedAccount(input)).rejects.toThrow("Synthetic cleanup fault");
+  const revision=f.session.getSnapshot().revision;
+  expect(f.session.readEntry(f.primary).notes).toBe(draft.notes);expect((await f.repository.get<Asset>("asset",f.asset.id))?.notes).toBe("Public note");
+  spy.mockImplementation(actual);await saveMergedAccount(input);
+  expect(f.session.getSnapshot().revision).toBe(revision);expect(f.session.getSnapshot().entries).toHaveLength(1);
+  expect((await f.repository.get<Asset>("asset",f.asset.id))?.notes).toBe("");spy.mockRestore();
+ });
+ it("retains every historical password and scopes each version after shared removal",async()=>{
+  const f=await fixture();
+  await f.session.saveEntry({...f.session.readEntry(f.primary),password:"Second generation!",linkedAssetIds:[f.asset.id,"other-account"]});
+  await f.session.saveEntry({...f.session.readEntry(f.primary),password:"Third generation!"});
+  await removeAccountLogin(f.session,f.session.readEntry(f.primary),"alias@example.test",f.asset.id);
+  const own=f.session.getSnapshot().entries.find(e=>e.linkedAssetIds.includes(f.asset.id))!;
+  const versions=f.session.history(own.id);
+  expect(versions.map(v=>v.draft.password)).toEqual(["Primary secret!","Second generation!","Third generation!"]);
+  for(const version of versions)expect(version.draft.linkedAssetIds).toEqual([f.asset.id]);
+  f.session.lock();await f.session.unlock("Synthetic master2026!");
+  await f.session.restoreHistory(own.id,0);
+  expect(f.session.readEntry(own.id)).toMatchObject({password:"Primary secret!",linkedAssetIds:[f.asset.id]});
+  expect(f.session.readEntry(f.primary)).toMatchObject({password:"Third generation!",linkedAssetIds:["other-account"]});
+ });
+ it("matches an acknowledged new login by values on retry, regardless of field order",async()=>{
+  const f=await fixture(),draft=entry("retry-new@example.test"),progress=state(f.asset);
+  const actual=f.session.saveEntryIfCurrent.bind(f.session);
+  const spy=vi.spyOn(f.session,"saveEntryIfCurrent").mockImplementationOnce(async(...args)=>{await actual(...args);throw Error("Synthetic lost acknowledgement");});
+  const input={original:f.asset,originalEntry:null,baseProfile:f.asset,profile:f.asset,draft,session:f.session,progress,label,repository:f.repository,newLogin:true};
+  await expect(saveMergedAccount(input)).rejects.toThrow("Synthetic lost acknowledgement");
+  const ids=f.session.getSnapshot().entries.map(e=>e.id);
+  expect(ids).toHaveLength(2);
+  await saveMergedAccount(input);
+  expect(f.session.getSnapshot().entries.map(e=>e.id)).toEqual(ids);
+  spy.mockRestore();
+ });
+ it("updates precisely the backup and ordinary metadata without publishing its private identifiers or rewriting legacy names",async()=>{const f=await fixture(),id=await f.session.saveEntry({...entry("private-backup"),linkedAssetIds:[f.asset.id]}),old=f.session.readEntry(id),draft={...mergedAccountDraft(f.asset,old),username:"private-edited",password:"Changed backup!"};await saveMergedAccount({original:f.asset,originalEntry:old,baseProfile:f.asset,profile:{...f.asset,contact:"Updated contact"},draft,session:f.session,progress:state(f.asset),label,repository:f.repository});expect(f.session.getSnapshot().entries).toHaveLength(2);expect(f.session.readEntry(f.primary).password).toBe("Primary secret!");expect(f.session.readEntry(id)).toMatchObject({title:"Private backup",username:"private-edited",password:"Changed backup!"});const saved=await f.repository.get<Asset>("asset",f.asset.id);expect(saved).toMatchObject({name:f.asset.name,username:f.asset.username,url:f.asset.url,contact:"Updated contact"});for(const secret of ["private-edited","private.example.test","Changed backup!","Private backup note"])expect(JSON.stringify(saved)).not.toContain(secret);});
+ it("does not create a public asset when only a private imported login is edited",async()=>{const f=await fixture(),id=await f.session.saveEntry(entry("private-only")),old=f.session.readEntry(id),profile={...newAsset("account"),name:old.title,category:"other",username:old.username,url:old.url};await saveMergedAccount({originalEntry:old,baseProfile:profile,profile,draft:{...mergedAccountDraft(undefined,old),notes:"Updated private note"},session:f.session,progress:state(null),label,repository:f.repository});expect(await f.repository.list("asset")).toHaveLength(1);expect(f.session.readEntry(id).notes).toBe("Updated private note");});
+ it("keeps IDs and public progress on encrypted failure, then retries without duplication",async()=>{const f=await fixture(),old=f.session.readEntry(f.primary),draft={...mergedAccountDraft(f.asset,old),password:"Retried secret!"},progress=state(f.asset),profile={...f.asset,contact:"Retained contact"};f.storage.fail=true;await expect(saveMergedAccount({original:f.asset,originalEntry:old,baseProfile:f.asset,profile,draft,session:f.session,progress,label,repository:f.repository})).rejects.toThrow();expect(progress.accountChanged).toBe(true);expect((await f.repository.list<Asset>("asset"))).toHaveLength(1);f.storage.fail=false;await saveMergedAccount({original:f.asset,originalEntry:old,baseProfile:f.asset,profile,draft,session:f.session,progress,label,repository:f.repository});expect(f.session.getSnapshot().entries).toHaveLength(1);expect(f.session.readEntry(f.primary).password).toBe(draft.password);});
+ it("rejects stale encrypted and ordinary edits before overwriting either",async()=>{const f=await fixture(),old=f.session.readEntry(f.primary),draft={...mergedAccountDraft(f.asset,old),password:"Stale secret"};await f.session.saveEntry({...old,password:"Another window"});await expect(saveMergedAccount({original:f.asset,originalEntry:old,baseProfile:f.asset,profile:{...f.asset,contact:"Must not save"},draft,session:f.session,progress:state(f.asset),label,repository:f.repository})).rejects.toThrow("vault-stale");expect((await f.repository.get<Asset>("asset",f.asset.id))?.contact).toBe("");const fresh=f.session.readEntry(f.primary);await f.repository.saveAssetIfCurrent(f.asset,{...f.asset,contact:"Another public editor",updatedAt:new Date().toISOString()});await expect(saveMergedAccount({original:f.asset,originalEntry:fresh,baseProfile:f.asset,profile:f.asset,draft:mergedAccountDraft(f.asset,fresh),session:f.session,progress:state(f.asset),label,repository:f.repository})).rejects.toThrow("asset-stale");f.session.lock();await expect(saveMergedAccount({original:f.asset,originalEntry:old,baseProfile:f.asset,profile:f.asset,draft,session:f.session,progress:state(f.asset),label,repository:f.repository})).rejects.toThrow("vault-locked");});
+ it("removes only the selected alias or primary, preserves siblings and enables history",async()=>{const f=await fixture();await removeAccountLogin(f.session,f.session.readEntry(f.primary),"alias@example.test",f.asset.id);expect(f.session.readEntry(f.primary).username).toBe(f.asset.username);expect(f.session.getSnapshot().trash).toHaveLength(0);await f.session.saveEntry({...f.session.readEntry(f.primary),usernameAliases:["promoted@example.test"]});await removeAccountLogin(f.session,f.session.readEntry(f.primary),f.asset.username,f.asset.id);expect(f.session.readEntry(f.primary)).toMatchObject({username:"promoted@example.test",password:"Primary secret!"});expect(f.session.getSnapshot().entries[0].historyCount).toBeGreaterThan(0);});
+ it("splits a shared login atomically so another asset keeps every identifier and secret",async()=>{const f=await fixture();await f.session.saveEntry({...f.session.readEntry(f.primary),linkedAssetIds:[f.asset.id,"other-account"]});await removeAccountLogin(f.session,f.session.readEntry(f.primary),"alias@example.test",f.asset.id);const original=f.session.readEntry(f.primary);expect(original.linkedAssetIds).toEqual(["other-account"]);expect(original.usernameAliases).toEqual(["alias@example.test"]);const own=f.session.getSnapshot().entries.find(e=>e.linkedAssetIds.includes(f.asset.id))!;expect(f.session.readEntry(own.id)).toMatchObject({username:f.asset.username,password:"Primary secret!"});expect(f.session.readEntry(own.id).usernameAliases??[]).toEqual([]);});
+ it("does not partially split shared identifiers if the encrypted write fails",async()=>{const f=await fixture();await f.session.saveEntry({...f.session.readEntry(f.primary),linkedAssetIds:[f.asset.id,"other-account"]});const original=f.session.readEntry(f.primary);f.storage.fail=true;await expect(removeAccountLogin(f.session,original,"alias@example.test",f.asset.id)).rejects.toThrow();expect(f.session.getSnapshot().entries).toHaveLength(1);expect(f.session.readEntry(f.primary)).toEqual(original);});
+ it("edits valid long private imported fields without applying public asset limits",async()=>{const f=await fixture(),id=await f.session.saveEntry({...entry("u".repeat(400)),title:"T".repeat(200),url:"https://private.example.test/"+"x".repeat(2100)}),old=f.session.readEntry(id),profile={...newAsset("account"),name:old.title,category:"other",username:old.username,url:old.url};await saveMergedAccount({originalEntry:old,baseProfile:profile,profile,draft:{...mergedAccountDraft(undefined,old),password:"Long record updated!"},session:f.session,progress:state(null),label,repository:f.repository});expect(f.session.readEntry(id).password).toBe("Long record updated!");expect(await f.repository.list("asset")).toHaveLength(1);});
+ it("guards against queued same-session writes at execution time",async()=>{const f=await fixture(),old=f.session.readEntry(f.primary);let release!:()=>void,entered!:()=>void;const blocked=new Promise<void>(r=>release=r),started=new Promise<void>(r=>entered=r);f.storage.beforeWrite=async()=>{entered();await blocked;};const first=f.session.saveEntry({...old,password:"First queued change!"});await started;const later=f.session.saveEntryIfCurrent({...old,password:"Stale queued overwrite!"},old);release();await first;await expect(later).rejects.toThrow("vault-stale");expect(f.session.readEntry(f.primary).password).toBe("First queued change!");});
+ it("shared removal can restore from the replacement history or scoped trash",async()=>{const f=await fixture();await f.session.saveEntry({...f.session.readEntry(f.primary),linkedAssetIds:[f.asset.id,"other-account"]});await removeAccountLogin(f.session,f.session.readEntry(f.primary),"alias@example.test",f.asset.id);let own=f.session.getSnapshot().entries.find(e=>e.linkedAssetIds.includes(f.asset.id))!;expect(own.historyCount).toBeGreaterThan(0);const history=f.session.history(own.id);expect(history[0].draft.usernameAliases).toEqual(["alias@example.test"]);await removeAccountLogin(f.session,f.session.readEntry(own.id),f.asset.username,f.asset.id);expect(f.session.getSnapshot().trash).toHaveLength(1);await f.session.restoreEntry(own.id);expect(f.session.readEntry(own.id).password).toBe("Primary secret!");expect(f.session.readEntry(f.primary).linkedAssetIds).toEqual(["other-account"]);});
+});
