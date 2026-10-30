@@ -13,6 +13,7 @@ mkdirSync(output, { recursive: true });
 const hash = bytes => createHash("sha256").update(bytes).digest("hex");
 const receipt = {
   schema: "keepany.account-entry-check.v1", input: candidate.input,
+  testHarnessCommit: spawnSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).stdout.trim(),
   sourceCommit: candidate.release.sourceCommit, sourceDirty: candidate.release.sourceDirty,
   archiveSha256: candidate.archiveSha256 ?? null,
   webManifestSha256: hash(Buffer.from(JSON.stringify(candidate.release.webFiles))),
