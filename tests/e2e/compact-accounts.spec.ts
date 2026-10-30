@@ -9,7 +9,7 @@ const evidence = resolve(process.env.KEEPANY_COMPACT_EVIDENCE ?? `test-results/c
 mkdirSync(evidence, { recursive: true });
 const master = "SyntheticCompactMaster2026!", mainPassword = "Synthetic-Main!2026", secondPassword = "Synthetic-Backup!2026";
 const text = (language: "zh-CN" | "en") => (key: string) => (resources[language].translation as Record<string, string>)[key] ?? key;
-const account = (page: Page, name = "CC studio account") => page.locator(".compact-account-card").filter({ has: page.getByRole("link", { name, exact: true }) });
+const account = (page: Page, name = "CC studio account") => page.locator(".compact-account-card").filter({ has: page.getByRole("button", { name: name === "CC studio account" ? /^(CC studio account|CC secondary login)$/ : name, exact: true }) });
 
 async function save(dialog: Locator) {
 	await dialog.getByRole("button", { name: /^(保存|Save|保存条目|Save entry)$/ }).click();
@@ -35,19 +35,18 @@ async function addLogin(page: Page, t: (key: string) => string) {
 	await dialog.locator("#password-vault-entry-title").fill("CC secondary login");
 	await dialog.locator("#password-vault-entry-username").fill("backup@example.test");
 	await dialog.locator("#password-vault-entry-password").fill(secondPassword);
-	await dialog.getByRole("button", { name: t("pwVaultAddUrl"), exact: true }).click();
-	await dialog.locator("#password-vault-entry-url").fill("https://backup.example.test/login");
+		await dialog.locator("#password-vault-entry-url").fill("https://backup.example.test/login");
 	await save(dialog);
 }
 async function prepare(page: Page, t: (key: string) => string, aliases: string[] = [], extraLogin = true) {
 	await page.goto("/");
 	await page.locator(".sidebar nav").getByRole("link", { name: t("accountsWorkspace"), exact: true }).click();
-	await createAccount(page, t, "CC public account", "public@example.test");
-	await openVaultAccess(page);
+		await openVaultAccess(page);
 	await page.locator("#password-vault-master").fill(master);
 	await page.locator("#password-vault-master-confirm").fill(master);
-	await page.locator(".unified-vault-access").getByRole("button", { name: t("pwVaultCreate"), exact: true }).click();
+	await page.getByRole("button", { name: t("accountSetUp"), exact: true }).click();
 	await expect(page.locator(".password-vault-toolbar")).toBeVisible();
+    await createAccount(page, t, "CC public account", "public@example.test");
 	await createAccount(page, t, "CC studio account", "main@example.test", mainPassword, aliases);
 	if (extraLogin) await addLogin(page, t);
 }
@@ -66,10 +65,8 @@ for (const language of ["zh-CN", "en"] as const) {
 		const page = await context.newPage(), t = text(language);
 		try {
 			await prepare(page, t, [], false);
-			await account(page).getByRole("button", { name: t("moreActions"), exact: true }).click();
-			await page.getByRole("menuitem", { name: t("compactAccountLoginDetails"), exact: true }).click();
-			await page.getByRole("dialog", { name: t("compactAccountLoginDetails"), exact: true }).getByRole("button", { name: t("pwVaultDeleteEntry"), exact: true }).click();
-			await page.getByRole("dialog", { name: t("pwVaultDeleteEntry"), exact: true }).getByRole("button", { name: t("pwVaultDeleteEntry"), exact: true }).click();
+			await account(page).getByRole("button", { name: t("accountDeleteLogin"), exact: true }).click();
+            await page.getByRole("dialog", { name: t("accountDeleteLogin"), exact: true }).getByRole("button", { name: t("accountDeleteLogin"), exact: true }).click();
 			await expect(page.getByRole("dialog")).toHaveCount(0);
 			await page.locator("#vault-trash").getByRole("button", { name: t("pwVaultRestoreEntry"), exact: true }).click();
 			await expect(page.getByRole("dialog")).toHaveCount(0);
@@ -111,28 +108,27 @@ for (const language of ["zh-CN", "en"] as const) {
 			await page.getByRole("button", { name: t("pwVaultLock"), exact: true }).click();
 			await expect(card.locator("[data-login-password]")).toHaveCount(0);
 			await expect(card.getByRole("button", { name: /^(切换登录账号|Next login)/ })).toHaveCount(0);
-			await account(page, "CC public account").getByRole("button", { name: t("pwVaultCopyUsername"), exact: true }).click();
-			await expect.poll(() => clipboard(page)).toBe("public@example.test");
-			await card.getByRole("button", { name: t("compactAccountUnlock"), exact: true }).click();
+            await expect(page.locator(".compact-account-card")).toHaveCount(0);
 			await page.locator("#password-vault-unlock-master").fill("wrong-fictional-password");
-			await page.getByRole("button", { name: t("pwVaultUnlock"), exact: true }).first().click();
+			await page.getByRole("button", { name: t("accountUnlockAction"), exact: true }).first().click();
 			await expect(card.locator("[data-login-password]")).toHaveCount(0);
 			await page.locator("#password-vault-unlock-master").fill(master);
-			await page.getByRole("button", { name: t("pwVaultUnlock"), exact: true }).first().click();
+			await page.getByRole("button", { name: t("accountUnlockAction"), exact: true }).first().click();
 			await expect(card.locator("[data-login-password]")).toHaveText("••••••••••");
-			await card.getByRole("button", { name: t("moreActions"), exact: true }).click();
-			await page.getByRole("menuitem", { name: t("compactAccountLoginDetails"), exact: true }).click();
-			let detail = page.getByRole("dialog", { name: t("compactAccountLoginDetails"), exact: true });
-			await detail.getByRole("button", { name: t("pwVaultEditEntry"), exact: true }).click();
-			await expect(page.locator("#password-vault-entry-username")).toHaveValue("main@example.test");
-			await page.getByRole("dialog").last().getByRole("button", { name: t("close"), exact: true }).click();
-			await detail.getByRole("button", { name: t("pwVaultHistory"), exact: true }).click();
-			await page.getByRole("dialog").last().getByRole("button", { name: t("close"), exact: true }).click();
-			await detail.getByRole("button", { name: t("close"), exact: true }).click();
-			await expect(card.getByRole("button", { name: t("moreActions"), exact: true })).toBeFocused();
+            await account(page, "CC public account").getByRole("button", { name: t("pwVaultCopyUsername"), exact: true }).click();
+            await expect.poll(() => clipboard(page)).toBe("public@example.test");
+            await card.getByRole("button", { name: t("edit"), exact: true }).click();
+            const edit = page.getByRole("dialog", { name: t("accountEditUnified"), exact: true });
+            await expect(page.getByRole("dialog")).toHaveCount(1);
+            await expect(edit.locator("#password-vault-entry-username")).toHaveValue("main@example.test");
+            await edit.getByRole("button", { name: t("cancel"), exact: true }).click();
+            await expect(card.getByRole("button", { name: t("edit"), exact: true })).toBeFocused();
+            await card.getByRole("button", { name: t("moreActions"), exact: true }).click();
+            await page.getByRole("menuitem", { name: t("pwVaultHistory"), exact: true }).click();
+            await page.getByRole("dialog").getByRole("button", { name: t("close"), exact: true }).click();
 			await page.reload(); await openVaultAccess(page);
 			await page.locator("#password-vault-unlock-master").fill(master);
-			await page.getByRole("button", { name: t("pwVaultUnlock"), exact: true }).first().click();
+			await page.getByRole("button", { name: t("accountUnlockAction"), exact: true }).first().click();
 			await expect(account(page)).toBeVisible();
 			await expect(account(page).getByRole("button", { name: /^(切换登录账号|Next login)/ })).toContainText("1/3");
 			await screenshot(page, `flow-reloaded-${language}`);

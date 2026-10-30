@@ -18,7 +18,7 @@ export default defineConfig({
 	outputDir: "test-results/local-release",
 	testMatch: [
 		"compact-accounts.spec.ts",
-		"accounts-single-entry.spec.ts",
+		"unified-account-editor.spec.ts",
 		"ui-consolidation.spec.ts",
 		"account-password-consolidation.spec.ts",
 		"preview-onboarding.spec.ts",

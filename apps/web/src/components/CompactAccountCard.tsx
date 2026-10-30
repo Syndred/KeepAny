@@ -22,7 +22,7 @@ function Frame({ asset, connectionCount, onOpen, onEdit, onDelete, url, menu, ch
 	const { t } = useTranslation();
 	const Icon = asset.category === "email" ? Mail : asset.category === "phone" ? Smartphone : UserRound;
 	const details = { to: "/assets/$kind/$id" as const, params: { kind: asset.kind, id: asset.id }, onClick: onOpen };
-	return <article className={`unified-account asset-account-card compact-account-card asset-account-${asset.category}`} data-account-id={asset.id} data-entry-id={entryId} aria-label={asset.name} tabIndex={-1}>
+	return <article className={`unified-account asset-account-card compact-account-card asset-account-${asset.category}`} data-account-id={asset.id} data-private-only={virtual ? "true" : undefined} data-entry-id={entryId} aria-label={asset.name} tabIndex={-1}>
 		<header className="compact-account-heading"><span className="compact-account-avatar"><Icon size={18} /></span>
 			<button type="button" className="compact-account-title" title={asset.name} onClick={onEdit}>{asset.name}</button>
 			{url && <a className="compact-account-icon compact-account-url" href={url} target="_blank" rel="noreferrer" aria-label={t("compactAccountOpenUrl")} title={`${t("compactAccountOpenUrl")} · ${url}`}><ExternalLink size={16} /></a>}

@@ -19,6 +19,7 @@ import type {
 } from "../../../packages/password-vault/src";
 import { aiServer, labels, model, syntheticKey } from "../helpers/ai-workflow";
 import { selectChoice } from "../helpers/select-choice";
+import { openAccountOption } from "../helpers/account-options";
 import { openVaultAccess } from "../helpers/vault-access";
 
 export const visualMaster = "Synthetic visual acceptance master 2026!";
@@ -372,6 +373,7 @@ let readonlyRuntime:
 async function openVisualKdbx(
 	bytes: Uint8Array,
 	revision = "synthetic-visual-readonly",
+    password = visualMaster,
 ) {
 	const { VaultSession: Session } = await visualRuntime();
 	const session = new Session({
@@ -379,7 +381,7 @@ async function openVisualKdbx(
 		write: async () => { throw Error("Read-only synthetic KDBX inspection"); },
 	});
 	await session.initialize();
-	await session.unlock(visualMaster);
+	await session.unlock(password);
 	return session;
 }
 
@@ -427,18 +429,18 @@ export async function importVisualKdbxEntries(
 		for (const entry of entries) await session.saveEntry({ url: "", notes: "", linkedAssetIds: [], ...entry });
 		bytes = await session.exportKdbx();
 	} finally { session.lock(); }
-	const beforeAccounts = await page.locator("a.asset-account-card").evaluateAll(nodes => nodes.map(node => node.getAttribute("href")).sort());
-	await page.locator(".password-vault-toolbar").getByRole("button", { name: t("pwVaultImport"), exact: true }).click();
+	const beforeAccounts = await page.locator(".compact-account-card:not([data-private-only]), a.asset-account-card").evaluateAll(nodes => nodes.map(node => node.getAttribute("data-account-id") ?? node.getAttribute("href")).sort());
+	await openAccountOption(page,t,"pwVaultImport");
 	const dialog = page.getByRole("dialog");
 	await dialog.locator("#password-vault-import-file").setInputFiles({ name: "synthetic-password-only-preparation.kdbx", mimeType: "application/octet-stream", buffer: Buffer.from(bytes) });
 	await dialog.locator("#password-vault-import-password").fill(fixtureMaster);
 	await dialog.getByRole("button", { name: t("pwVaultImportNow"), exact: true }).click();
 	await expect(dialog).toBeHidden();
-	expect(await page.locator("a.asset-account-card").evaluateAll(nodes => nodes.map(node => node.getAttribute("href")).sort())).toEqual(beforeAccounts);
+	expect(await page.locator(".compact-account-card:not([data-private-only]), a.asset-account-card").evaluateAll(nodes => nodes.map(node => node.getAttribute("data-account-id") ?? node.getAttribute("href")).sort())).toEqual(beforeAccounts);
 }
 
-export async function inspectVisualKdbx(path: string) {
-	const session = await openVisualKdbx(new Uint8Array(readFileSync(path)));
+export async function inspectVisualKdbx(path: string, password = visualMaster) {
+	const session = await openVisualKdbx(new Uint8Array(readFileSync(path)), undefined, password);
 	try {
 		return session.getSnapshot().entries.map(({ id }) => ({
 			draft: session.readEntry(id),

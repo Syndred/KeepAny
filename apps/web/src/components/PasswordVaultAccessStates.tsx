@@ -88,7 +88,7 @@ export function EmptyState({
 						<ShieldCheck size={16} /> {t(accounts ? "accountSetUp" : "pwVaultCreate")}
 					</Button>
 					<Button type="button" disabled={busy} onClick={onImport}>
-						<Upload size={16} /> {t("pwVaultImportEmpty")}
+						<Upload size={16} /> {t(accounts ? "accountImportBackup" : "pwVaultImportEmpty")}
 					</Button>
 				</div>
 			</form>

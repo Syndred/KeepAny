@@ -25,6 +25,7 @@ const copy: Record<string, [string, string]> = {
  accountSetUpHint: ["设置主密码，开始保存和管理登录资料。", "Set a master password to start saving and managing logins."],
  accountSetUp: ["设置并进入", "Set up and continue"],
  accountUnlockAction: ["解锁", "Unlock"],
+ accountImportBackup: ["导入账号备份", "Import account backup"],
  accountTools: ["账号选项", "Account options"],
  accountTrashTitle: ["登录回收站", "Login trash"],
  accountViewRelations: ["查看关联", "View connections"],

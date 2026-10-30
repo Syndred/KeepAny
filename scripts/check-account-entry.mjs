@@ -16,16 +16,16 @@ const receipt = {
   sourceCommit: candidate.release.sourceCommit, sourceDirty: candidate.release.sourceDirty,
   archiveSha256: candidate.archiveSha256 ?? null,
   webManifestSha256: hash(Buffer.from(JSON.stringify(candidate.release.webFiles))),
-  specSha256: hash(readFileSync("tests/e2e/accounts-single-entry.spec.ts")),
+  specSha256: hash(readFileSync("tests/e2e/unified-account-editor.spec.ts")),
   compactSpecSha256: hash(readFileSync("tests/e2e/compact-accounts.spec.ts")),
-  automatedCoverage: ["SE01", "SE02", "SE03", "SE04", "SE05", "SE06", "SE07", "SE08", "SE11", "SE13", "SE14", "SE15", "SE16", "CC01", "CC02", "CC03", "CC04", "CC05", "CC06", "CC07", "CC08", "CC09", "CC10", "CC11"],
-  coverageNotes: { SE14: "Touch targets in this gate; natural busy frames are reviewed separately.", SE15: "Purge failure context in this gate; corrupt-import comparison is reviewed separately." },
+  automatedCoverage: ["UE01", "UE02", "UE03", "UE04", "UE05", "UE06", "UE07", "UE08", "UE09", "CC03", "CC04", "CC05", "CC09"],
+  coverageNotes: { UE10: "Controller and independent actual candidate review remain separate.", supersedes: "SE01-SE16's earlier form workflow is retained as history; user now requires unlock before account management and direct merged editing." },
   manualVisualReview: "separate", controllerJourney: "separate", independentReview: "separate",
   verdict: "incomplete",
 };
 writeFileSync(join(output, "candidate.json"), JSON.stringify(receipt, null, 2));
 const reportPath = join(output, "playwright.json");
-const env = { ...process.env, KEEPANY_SINGLE_ENTRY_EVIDENCE: join(output, "evidence"), KEEPANY_COMPACT_EVIDENCE: join(output, "evidence", "compact"), KEEPANY_INDEPENDENT_RESULTS: join(output, "browser"), KEEPANY_INDEPENDENT_REPORT: reportPath };
+const env = { ...process.env, KEEPANY_UNIFIED_EDITOR_EVIDENCE: join(output, "evidence"), KEEPANY_COMPACT_EVIDENCE: join(output, "evidence", "compact"), KEEPANY_INDEPENDENT_RESULTS: join(output, "browser"), KEEPANY_INDEPENDENT_REPORT: reportPath };
 delete env.KEEPANY_PREVIEW_ARCHIVE;
 delete env.KEEPANY_PREVIEW_DIRECTORY;
 env[candidate.input.endsWith(".zip") ? "KEEPANY_PREVIEW_ARCHIVE" : "KEEPANY_PREVIEW_DIRECTORY"] = candidate.input;
@@ -38,21 +38,18 @@ if (run.error || run.status !== 0) {
   const tests = [];
   const walk = suites => suites.forEach(suite => { for (const spec of suite.specs ?? []) tests.push(...spec.tests); walk(suite.suites ?? []); });
   walk(report.suites);
-  if (report.errors?.length || tests.length !== 16 || tests.some(test => test.status !== "expected" || test.results.length !== 1 || test.results[0].status !== "passed")) throw Error("Account-entry coverage is missing, skipped, retried or failed.");
+  if (report.errors?.length || tests.length !== 24 || tests.some(test => test.status !== "expected" || test.results.length !== 1 || test.results[0].status !== "passed")) throw Error("Account-entry coverage is missing, skipped, retried or failed.");
   const images = [];
   function collect(dir) { for (const file of readdirSync(dir, { withFileTypes: true })) { const path = join(dir, file.name); if (file.isDirectory()) collect(path); else if (file.name.endsWith(".png")) images.push({ path: relative(output, path).replaceAll("\\", "/"), sha256: hash(readFileSync(path)) }); } }
   collect(join(output, "evidence"));
   const imageNames = new Set(images.map(image => image.path.split("/").at(-1)));
   for (const lang of ["zh-CN", "en"]) {
-    for (const width of [390, 768, 1268, 1280, 1920, 2560]) {
-      for (const state of ["empty", "account-expanded", "editor-default", "editor-expanded-error", "category-open"]) if (!imageNames.has(`matrix-${state}-${lang}-${width}.png`)) throw Error(`Missing matrix evidence: ${lang}/${width}/${state}`);
+    for (const width of [390, 768, 1280, 1920, 2262]) {
+      for (const state of ["card", "edit", "menu", "delete", "gate"]) if (!imageNames.has(`matrix-${state}-${lang}-${width}.png`)) throw Error(`Missing unified matrix: ${lang}/${width}/${state}`);
+      for (const state of ["normal", "locked"]) if (!imageNames.has(`matrix-${state}-${lang}-${width}.png`)) throw Error(`Missing compact evidence: ${lang}/${width}/${state}`);
     }
-    for (const width of [390, 768, 1280, 1920, 2262]) for (const state of ["normal", "locked"]) if (!imageNames.has(`matrix-${state}-${lang}-${width}.png`)) throw Error(`Missing compact evidence: ${lang}/${width}/${state}`);
-    for (const state of ["entry-restored", "clipboard-failure", "query-return", "flow-switched", "flow-reloaded"]) if (!imageNames.has(`${state}-${lang}.png`)) throw Error(`Missing compact flow evidence: ${lang}/${state}`);
-    for (const state of ["complete-form", "bottom-trash"]) if (!imageNames.has(`journey-${state}-${lang}.png`)) throw Error(`Missing journey evidence: ${lang}/${state}`);
-    if (!imageNames.has(`same-form-create-error-${lang}.png`)) throw Error(`Missing same-form error evidence: ${lang}`);
-    for (const state of ["purge-error", "same-form-save-partial", "sequential-validation-error"]) if (!imageNames.has(`${state}-${lang}.png`)) throw Error(`Missing failure/recovery evidence: ${lang}/${state}`);
+    for (const state of ["unified-edit", "selected-backup", "delete-restored", "locked-editor", "validation-error", "imported-cards", "entry-restored", "clipboard-failure", "query-return", "flow-switched", "flow-reloaded"]) if (!imageNames.has(`${state}-${lang}.png`)) throw Error(`Missing unified flow: ${lang}/${state}`);
   }
-  writeFileSync(join(output, "result.json"), JSON.stringify({ ...receipt, verdict: "automated-pass", expectedTests: 16, completedTests: tests.length, retries: 0, images }, null, 2));
+  writeFileSync(join(output, "result.json"), JSON.stringify({ ...receipt, verdict: "automated-pass", expectedTests: 24, completedTests: tests.length, retries: 0, images }, null, 2));
   console.log(`Account-entry machine checks passed for ${receipt.sourceCommit}. Manual visual review, controller journey and independent review remain separate.`);
 }

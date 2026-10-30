@@ -910,7 +910,7 @@ export function PasswordVaultPanel({
 						<div className="actions">
                             {renderAccounts ? <>
                                 <VaultIconButton label={t("pwVaultLock")} disabled={busy} onClick={lock}><Lock size={18} /></VaultIconButton>
-                                <DropdownMenu><DropdownMenuTrigger render={<Button size="icon" variant="ghost" aria-label={t("accountTools")} disabled={busy} />}><MoreHorizontal size={18} /></DropdownMenuTrigger><DropdownMenuContent align="end">
+                                <DropdownMenu><DropdownMenuTrigger render={<Button size="icon" variant="ghost" className="account-options-trigger" aria-label={t("accountTools")} disabled={busy} />}><MoreHorizontal size={18} /></DropdownMenuTrigger><DropdownMenuContent align="end">
                                     <DropdownMenuItem onClick={() => setAccountLinksOpen(true)}>{t("pwConnectTitle")}</DropdownMenuItem>
                                     {missingSampleAccounts.length > 0 && <DropdownMenuItem onClick={() => void addSampleLogins()}>{t("sampleLogins")}</DropdownMenuItem>}
                                     <DropdownMenuItem onClick={() => setImportOpen(true)}>{t("pwVaultImport")}</DropdownMenuItem>
