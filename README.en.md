@@ -10,7 +10,7 @@ Which email does a project use? Where is its domain registered? Which subscripti
 
 No registration required. English and Simplified Chinese interfaces. The local core is open source under [AGPL-3.0-only](LICENSE). Optional paid hosting is planned; official cloud sync and paid services are not available yet.
 
-Navigation now groups records into **Accounts** and **Assets**. Open Accounts to set up or unlock the master password. Compact cards copy usernames and passwords directly, cycle logins with one icon, and edit or delete the current login. One short form contains the account details and a single note; passwords are optional. The connection count sits below the title, which opens the relationship graph, login information and notes. Secrets remain in the separate encrypted KDBX store. Assets combines items, projects, domains and subscriptions, with ownership duration, task progress, time remaining and costs. Categories, tags, details and the transaction ledger remain available. Recorded spending and planned costs are shown separately by currency.
+Navigation groups records into **Accounts** and **Assets**. Open Accounts to set up or unlock the master password. Compact cards copy usernames and passwords directly, cycle logins with one icon, and edit or delete the current login. One short form contains the account details and a single note; passwords are optional. The connection count sits below the title, which opens the relationship graph, login information and notes. Secrets remain in the separate encrypted KDBX store. Assets keeps **All, Items, Subscriptions, and Ledger** as fixed pages. Add, rename, reorder, hide, or remove your own categories. Ordinary records share name, category, URL, tags, status, date, and notes; only the name is required. Expand details for images and connections. Removing a category keeps its records, and original project and domain details remain accessible. Items, subscriptions, and the ledger retain their specialized features. Recorded spending and planned costs are shown separately by currency.
 
 ![KeepAny overview with fictional project, account, and subscription records](apps/public-site/assets/onboarding-en.png)
 
@@ -36,9 +36,9 @@ Before updating an existing installation, download and verify a backup, save you
 
 In an empty **Overview**, choose **Start with sample records**, then **Add sample records** in Settings. You can also use **Settings → More options → Add sample records**. Then try:
 
-1. Create a project and record its website or domain.
-2. Add a login account and connect it to the project.
-3. Record a subscription, its renewal date, and its project.
+1. Add your own category in Assets, then add a record; a project or domain is optional.
+2. Add a login account and connect it to a related record.
+3. Record a subscription, its renewal date, and related records.
 4. Create a maintenance task and review an account's connections and change impact.
 5. Create an encrypted `.ka1` backup in **Backup & restore**, **save the downloaded file**, then preview and restore it in a separate browser profile.
 
