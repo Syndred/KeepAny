@@ -1,13 +1,16 @@
 import { portableCandidate } from "./helpers/portable-candidate";
 import { openBackupPage } from "./helpers/backup-restore";
+import { createHash } from "node:crypto";
 import { mkdirSync } from "node:fs";
 import { expect, test, type Page } from "@playwright/test";
 import { selectChoice } from "./helpers/select-choice";
 import { openBackupRestorePanel } from "./helpers/backup-restore";
 import { openVaultAccess } from "./helpers/vault-access";
 
-test.beforeEach(async ({}, info) => {
+test.beforeEach(async ({ page }, info) => {
  const candidate = portableCandidate();
+ const actualIndex = createHash("sha256").update(await (await page.request.get("/")).body()).digest("hex");
+ expect(actualIndex).toBe(candidate.release.webFiles.find((file: { path: string }) => file.path === "index.html")!.sha256);
  await info.attach("candidate", { body: JSON.stringify({ sourceCommit: candidate.release.sourceCommit, sourceDirty: candidate.release.sourceDirty, archiveSha256: candidate.archiveSha256, indexSha256: candidate.release.webFiles.find((file: { path: string }) => file.path === "index.html")!.sha256 }), contentType: "application/json" });
 });
 const shots = process.env.KEEPANY_EVIDENCE_DIR ?? "test-results/cleanup-ux/evidence";
@@ -74,7 +77,7 @@ test("UX02 UX03 manual account name survives vault setup and cancellation", asyn
   await openVaultAccess(page);
   await page.locator("#password-vault-master").fill("Synthetic account setup 2026!");
   await page.locator("#password-vault-master-confirm").fill("Synthetic account setup 2026!");
-  await page.locator(".unified-vault-access").getByRole("button", { name: "Create vault", exact: true }).click();
+  await page.locator(".unified-vault-access").getByRole("button", { name: "Set up and continue", exact: true }).click();
   const dialog = page.getByRole("dialog");
   await expect(dialog.locator("#password-vault-entry-title")).toHaveValue("Synthetic carried account");
   await dialog.getByRole("button", { name: "Cancel", exact: true }).click();
@@ -105,6 +108,7 @@ test("UX04 sample backup rejects wrong passwords, supports cancellation and rest
     const confirm = restored.getByRole("button", { name: /^Confirm ·/ }); await expect(confirm).toBeVisible();
     await restored.getByRole("button", { name: "Cancel", exact: true }).click(); await expect(confirm).toBeHidden();
     await restored.getByRole("button", { name: "Preview", exact: true }).click(); await confirm.click();
+    await expect(restored.getByText(/^Restored \d+ records/).first()).toBeVisible();
     await restored.goto("/"); await expect(restored.locator(".overview-project-card")).toHaveCount(4); await restored.reload(); await expect(restored.locator(".overview-project-card")).toHaveCount(4);
     await restored.locator(".overview-project-card").filter({ hasText: "Pinecone Studio" }).click();
     const graph = restored.locator("#account-relations"); await graph.locator(":scope > summary").click(); await expect(graph.locator(".react-flow")).toBeVisible();

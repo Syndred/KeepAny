@@ -1,3 +1,5 @@
+import { resources } from "../../apps/web/src/i18n";
+import { compactEntryIds } from "./helpers/compact-account";
 import { openBackupPage } from "./helpers/backup-restore";
 import { mkdirSync, readFileSync } from "node:fs";
 import { expect, type Locator, type Page, test } from "@playwright/test";
@@ -32,7 +34,7 @@ type Language = (typeof variants)[number]["language"];
 function copy(language: Language) {
 	const index = language === "zh-CN" ? 0 : 1;
 	return (key: string) =>
-		aiCopy[key]?.[index] ?? passwordVaultCopy[key]?.[index] ?? key;
+		(resources[language].translation as Record<string, string>)[key] ?? aiCopy[key]?.[index] ?? passwordVaultCopy[key]?.[index] ?? key;
 }
 
 async function openSettings(page: Page, language: Language) {
@@ -74,7 +76,7 @@ async function createVault(page: Page, language: Language) {
 	await page.locator("#password-vault-master").fill(master);
 	await page.locator("#password-vault-master-confirm").fill(master);
 	await page
-		.getByRole("button", { name: t("pwVaultCreate"), exact: true })
+		.getByRole("button", { name: t("accountSetUp"), exact: true })
 		.click();
 	await expect(page.locator(".password-vault-toolbar")).toBeVisible();
 	await revealPasswordEntries(page);
@@ -163,7 +165,7 @@ for (const variant of variants) {
 		});
 		try {
 			// A real ordinary asset makes the backup assertion check both storage paths.
-			await page.goto("/assets/account");
+			await page.goto("/assets/project");
 			await page
 				.getByRole("main")
 				.getByRole("button", { name: ui.add, exact: true })
@@ -259,11 +261,12 @@ for (const variant of variants) {
 
 			await openVault(page, variant.language, variant.width);
 			const entries = page.locator(
-				".password-vault-entry-list .password-vault-entry",
+				`.compact-account-card[data-entry-id="${original.vaultEntryId}"]`,
 			);
 			await expect(entries).toHaveCount(1);
+            expect(await compactEntryIds(page)).toEqual([original.vaultEntryId]);
 			await entries
-				.getByRole("button", { name: t("pwVaultEditEntry"), exact: true })
+				.getByRole("button", { name: t("edit"), exact: true })
 				.click();
 			await expect(page.locator("#password-vault-entry-password")).toHaveValue(
 				replacementKey,
@@ -273,9 +276,10 @@ for (const variant of variants) {
 				.getByRole("button", { name: ui.close, exact: true })
 				.first()
 				.click();
-			const kdbxDownload = page.waitForEvent("download");
+			await page.getByRole("button", { name: t("accountTools"), exact: true }).click();
+            const kdbxDownload = page.waitForEvent("download");
 			await page
-				.getByRole("button", { name: t("pwVaultExport"), exact: true })
+				.getByRole("menuitem", { name: t("pwVaultExport"), exact: true })
 				.click();
 			const kdbx = await kdbxDownload;
 			const kdbxPath = test.info().outputPath("encrypted-api-key.kdbx");

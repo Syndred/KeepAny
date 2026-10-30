@@ -1,3 +1,4 @@
+import { resources } from "../../../apps/web/src/i18n";
 import { expect, type Page } from "@playwright/test";
 
 /** Open the user-visible access disclosure before entering a synthetic master. */
@@ -47,4 +48,20 @@ export async function openVaultReferences(page: Page) {
 	if (!(await references.evaluate((node) => (node as HTMLDetailsElement).open)))
 		await references.locator(":scope > summary").click();
 	await expect(references).toHaveJSProperty("open", true);
+}
+
+/** Real account gate operation; never inserts a vault or reads a secret fixture internally. */
+export async function enterAccounts(page: Page, language: "zh-CN" | "en", master: string) {
+ await openVaultAccess(page);
+ const t = resources[language].translation;
+ const confirm = page.locator("#password-vault-master-confirm");
+ if (await confirm.count()) {
+  await page.locator("#password-vault-master").fill(master);
+  await confirm.fill(master);
+  await page.getByRole("button", { name: t.accountSetUp, exact: true }).click();
+ } else {
+  await page.locator("#password-vault-unlock-master").fill(master);
+  await page.getByRole("button", { name: t.accountUnlockAction, exact: true }).click();
+ }
+ await expect(page.locator("#password-vault-master-confirm, #password-vault-unlock-master")).toHaveCount(0);
 }

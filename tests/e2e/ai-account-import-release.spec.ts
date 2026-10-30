@@ -1,3 +1,4 @@
+import { enterAccounts } from "./helpers/vault-access";
 import { mkdirSync } from "node:fs";
 import { expect, test } from "@playwright/test";
 import {
@@ -235,18 +236,25 @@ for (const language of ["zh-CN", "en"] as const) {
 					})
 					.click();
 				await expect(page).toHaveURL(/\/assets\/account\//);
+                const accountPath = new URL(page.url()).pathname;
+                const master = "Synthetic AI reviewed account 2026!";
+                await enterAccounts(page, language, master);
 				await expect(
 					page
-						.locator(".account-facts-grid dl")
+						.locator(".account-login-summary [data-login-username]")
 						.getByText("edited@example.test", { exact: true }),
 				).toBeVisible();
 				await page.reload();
+                await expect(page.locator("#password-vault-unlock-master")).toBeAttached();
+                await enterAccounts(page, language, master);
+                expect(new URL(page.url()).pathname).toBe(accountPath);
 				await expect(
 					page
-						.locator(".account-facts-grid dl")
+						.locator(".account-login-summary [data-login-username]")
 						.getByText("edited@example.test", { exact: true }),
 				).toBeVisible();
 				await page.goto("/intake");
+                await page.getByRole("button", { name: zh ? "AI 整理" : "Organize with AI", exact: true }).click();
 				await expect(importer).toContainText(
 					zh
 						? `${model} 已配置。当前页面尚未启用 API Key`

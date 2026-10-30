@@ -308,8 +308,8 @@ export function AppShell() {
 							<Link to="/tasks" className="top-icon-button" aria-label={t("taskReminders")}><Bell size={17}/>{openTasks > 0 && <i aria-hidden="true"/>}</Link>
 							<DropdownMenu><DropdownMenuTrigger render={<Button className="top-icon-button" variant="ghost" aria-label={t("assistantMenu")} />}><Sparkles size={17}/></DropdownMenuTrigger><DropdownMenuContent align="end"><DropdownMenuItem onClick={() => setAi(true)}>{t("settingsAskAssistant")}</DropdownMenuItem><DropdownMenuItem render={<Link to="/intake" hash="ai" />}>{t("aiCaptureTab")}</DropdownMenuItem><DropdownMenuItem render={<Link to="/change-impact" />}>{t("checkChangeImpact")}</DropdownMenuItem><DropdownMenuItem render={<Link to="/assistant-access" />}>{t("settingsAssistantAccess")}</DropdownMenuItem></DropdownMenuContent></DropdownMenu>
                            <DropdownMenu><DropdownMenuTrigger render={<Button className="top-icon-button" variant="ghost" aria-label={t("globalAddRecord")} />}><Plus size={18}/></DropdownMenuTrigger><DropdownMenuContent align="end">
-                            <DropdownMenuItem render={<Link to="/accounts" hash="new-account" />}>{t("accountsWorkspace")}</DropdownMenuItem>
-                            {(["project", "item", "subscription"] as const).map(kind => <DropdownMenuItem key={kind} render={<Link to="/assets/$kind" params={{ kind }} hash="new" />}>{t(kind)}</DropdownMenuItem>)}
+                            <DropdownMenuItem render={<Link to="/accounts" hash="new-account" />}>{t("newAccountKind")}</DropdownMenuItem>
+                            {(["project", "item", "subscription"] as const).map(kind => <DropdownMenuItem key={kind} render={<Link to="/assets/$kind" params={{ kind }} hash="new" />}>{t(({ project: "newProjectKind", item: "newItemKind", subscription: "newSubscriptionKind" })[kind])}</DropdownMenuItem>)}
                             <DropdownMenuItem render={<Link to="/intake" />}>{t("intake")}</DropdownMenuItem>
                             <DropdownMenuItem render={<Link to="/intake" hash="ai" />}>{t("aiCaptureTab")}</DropdownMenuItem>
                            </DropdownMenuContent></DropdownMenu>

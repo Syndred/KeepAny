@@ -1,4 +1,8 @@
 export const cleanupUxCopy: Record<string, [string, string]> = {
+  newProjectKind: ["项目", "Project"],
+  newAccountKind: ["账号", "Account"],
+  newItemKind: ["实物", "Item"],
+  newSubscriptionKind: ["订阅", "Subscription"],
   captureTab: ["本地收录", "Local capture"],
   aiCaptureTab: ["AI 整理", "Organize with AI"],
   backupAndRestore: ["备份与恢复", "Backup & restore"],
