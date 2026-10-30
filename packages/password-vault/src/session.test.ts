@@ -61,6 +61,9 @@ it('preserves imported entry custom metadata in every shared deletion version', 
   await session.removeLoginIdentifier(id, 'alias@example.test', session.getSnapshot().contentRevision!, 'current-account');
   session.lock(); await session.unlock(master);
   const own = session.getSnapshot().entries.find(row => row.linkedAssetIds.includes('current-account'))!;
+  const currentDraft = session.readEntry(own.id);
+  await session.saveEntryIfCurrent({ ...currentDraft, notes: 'Unified edit of imported record' }, currentDraft);
+  session.lock(); await session.unlock(master);
   const nextKey = credentials(master), exported = await Kdbx.load((await session.exportKdbx()).slice().buffer, nextKey);
   try {
     for (const entryId of [id, own.id]) {
@@ -68,8 +71,9 @@ it('preserves imported entry custom metadata in every shared deletion version', 
       expect(current.customData?.get('SyntheticPlugin')).toEqual({ value: 'Current plugin metadata', lastModified: new Date('2026-10-29T00:00:00Z') });
       expect(current.qualityCheck).toBe(false);
       expect((current.fields.get('SyntheticUnknown') as ProtectedValue).getText()).toBe('Unknown protected data');
-      expect(current.history.map(row => row.customData?.get('SyntheticPlugin')?.value)).toEqual(['Historical plugin metadata', 'Current plugin metadata']);
-      expect(current.history.map(row => row.qualityCheck)).toEqual([false, false]);
+      const expectedMetadata = entryId === own.id ? ['Historical plugin metadata', 'Current plugin metadata', 'Current plugin metadata'] : ['Historical plugin metadata', 'Current plugin metadata'];
+      expect(current.history.map(row => row.customData?.get('SyntheticPlugin')?.value)).toEqual(expectedMetadata);
+      expect(current.history.map(row => row.qualityCheck)).toEqual(expectedMetadata.map(() => false));
     }
   } finally { clearDatabase(exported); clearCredentials(nextKey); session.lock(); }
 });

@@ -316,7 +316,7 @@ export class VaultSession {
       return this.mutate(generation, (candidate) => {
       const entry = draft.id ? findEntry(candidate, draft.id) : candidate.createEntry(candidate.getDefaultGroup());
       if (isTrash(candidate, entry)) fail('vault-invalid');
-      if (draft.id) entry.pushHistory();
+      if (draft.id) pushLoginHistory(entry);
       applyDraft(entry, draft);
       return entry.uuid.id;
     }); });
@@ -349,7 +349,7 @@ export class VaultSession {
           const draft = draftOf(entry);
           if (draft.aiKeyBinding) fail('vault-invalid');
           if (unchangedLink(draft, item)) continue;
-          entry.pushHistory();
+          pushLoginHistory(entry);
           applyDraft(entry, normalizeDraft({ ...draft, linkedAssetIds: [...new Set([...draft.linkedAssetIds.filter(id => !item.replaceAccountIds.includes(id)), item.accountId])] }));
         }
       });
@@ -374,7 +374,7 @@ export class VaultSession {
       }
       await this.mutate(generation, candidate => {
         const target = findEntry(candidate, entryId);
-        target.pushHistory();
+        pushLoginHistory(target);
         const draft = draftOf(target);
         applyDraft(target, normalizeDraft({ ...draft, linkedAssetIds: draft.linkedAssetIds.filter(id => id !== assetId) }));
       });
@@ -449,7 +449,7 @@ export class VaultSession {
             if (isTrash(candidate, entry)) fail('vault-invalid');
             if (mutation.action === 'update') {
               if (entry.history.length >= 1_000) fail('vault-size');
-              entry.pushHistory();
+              pushLoginHistory(entry);
             }
             applyDraft(entry, mutation.draft);
             entryIdsByRow[mutation.index] = entry.uuid.id;
@@ -565,7 +565,7 @@ export class VaultSession {
       const entry = findEntry(candidate, id);
       if (isTrash(candidate, entry) || !Number.isSafeInteger(index) || !entry.history[index]) fail('vault-invalid');
       const draft = normalizeDraft(draftOf(entry.history[index]));
-      entry.pushHistory();
+      pushLoginHistory(entry);
       applyDraft(entry, draft);
     }));
   }
