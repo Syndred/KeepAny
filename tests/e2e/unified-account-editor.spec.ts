@@ -37,6 +37,34 @@ async function oneWriteFault(page: Page) {
 }
 for(const language of ["zh-CN","en"] as const){
  const t=text(language);
+ test(`${language} UE06b ordinary account deletion cancels, completes and restores without blocking`,async({browser},info)=>{
+  test.setTimeout(60000);
+  const context=await browser.newContext({baseURL:info.project.use.baseURL,viewport:{width:1280,height:1000},locale:language});
+  await context.addInitScript(lang=>localStorage.setItem("keepany-language",lang),language);
+  const page=await context.newPage();
+  try {
+   await setup(page,t);await create(page,t,"UE ordinary only","","");
+   const ordinary=card(page,"UE ordinary only"),id=await ordinary.getAttribute("data-account-id");
+   await ordinary.getByRole("button",{name:t("accountDeleteLogin"),exact:true}).click();
+   await page.getByRole("dialog").getByRole("button",{name:t("accountDeleteLogin"),exact:true}).click();
+   await expect(page.getByRole("dialog")).toHaveCount(0);
+   await expect(ordinary).not.toHaveAttribute("data-entry-id",/.+/);
+   await ordinary.getByRole("button",{name:t("pwVaultDeleteEntry"),exact:true}).click();
+   await page.getByRole("dialog").getByRole("button",{name:t("cancel"),exact:true}).click();
+   await expect(ordinary).toBeVisible();
+   await ordinary.getByRole("button",{name:t("pwVaultDeleteEntry"),exact:true}).click();
+   await page.getByRole("dialog").getByRole("button",{name:t("pwVaultDeleteEntry"),exact:true}).click();
+   await expect(page.getByRole("dialog")).toHaveCount(0);
+   await expect(ordinary).toHaveCount(0);
+   await page.locator(".sidebar").getByRole("link",{name:t("trash"),exact:true}).click();
+   const row=page.locator(".trash-row").filter({hasText:"UE ordinary only"});
+   await row.getByRole("button",{name:t("restore"),exact:true}).click();await expect(row).toHaveCount(0);
+   await page.locator(".sidebar nav").getByRole("link",{name:t("accountsWorkspace"),exact:true}).click();
+   await expect(ordinary).toHaveAttribute("data-account-id",id!);
+   await page.reload();await unlock(page,t);await expect(ordinary).toHaveAttribute("data-account-id",id!);
+   await shot(page,`ordinary-restored-${language}`);
+  } finally {await context.close();}
+ });
  test(`${language} UE07 partial save and purge failures retain data and retry once`,async({browser},info)=>{
   test.setTimeout(150000);
   const context=await browser.newContext({baseURL:info.project.use.baseURL,viewport:{width:1280,height:1000},locale:language,permissions:["clipboard-read","clipboard-write"]});

@@ -69,10 +69,11 @@ it('empty-account trash compares the frozen public version at the actual write p
   const target = await repository(), record = await target.savePasswordVault(await encryptedVault(), null);
   const account = { ...newAsset('account'), name: 'Empty account' };
   await target.save('asset', account);
-  const actual = target.saveAssetIfCurrent.bind(target);
-  vi.spyOn(target, 'saveAssetIfCurrent').mockImplementationOnce(async (expected, next) => {
-    await actual(account, { ...account, contact: 'Concurrent update' });
-    return actual(expected, next);
+  const document = (await target.db.records.findOne(`asset:${account.id}`).exec())!;
+  const actual = document.incrementalModify.bind(document);
+  vi.spyOn(document, 'incrementalModify').mockImplementationOnce(async (mutation) => {
+    await actual(data => ({ ...data, payload: JSON.stringify({ ...account, contact: 'Concurrent update' }) }));
+    return actual(mutation);
   });
   await expect(target.trashEmptyAccountIfCurrent(account, record.revision)).rejects.toThrow('asset-stale');
   expect(await target.get('asset', account.id)).toMatchObject({ deleted: false, contact: 'Concurrent update' });

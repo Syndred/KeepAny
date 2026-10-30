@@ -427,12 +427,15 @@ export class LocalRepository {
   /** Empty-account confirmation freezes both the public row and encrypted revision. */
   async trashEmptyAccountIfCurrent(expected: Asset, expectedVaultRevision: string): Promise<RecordRow> {
     if (expected.kind !== 'account' || expected.deleted || !expectedVaultRevision) throw Error('asset-stale');
-    return this.fileStore.transaction('rw', this.fileStore.passwordVault, async () => {
-      // Obtain the cross-tab vault write lock before checking the public version.
+    return this.fileStore.transaction('rw', this.fileStore.passwordVault, this.fileStore.categoryEditJournal, this.fileStore.blobs, async () => {
+      // Acquire all FileStore locks together. Nesting a category transaction behind
+      // a queued overlapping live query can otherwise deadlock a real browser.
       const record = await this.fileStore.passwordVault.get('local');
       if (record?.revision !== expectedVaultRevision) throw Error('vault-stale');
-      return Dexie.waitFor(Dexie.ignoreTransaction(() => this.saveAssetIfCurrent(expected,
-        { ...expected, deleted: true, updatedAt: new Date().toISOString() })));
+      for (const id of expected.attachments) if (!(await this.fileStore.blobs.get(id))) throw Error('attachment-missing');
+      await assertCategoryMutationAllowed(this.db, this.fileStore, [{ type: 'asset', id: expected.id, kind: 'account' }]);
+      return Dexie.waitFor(Dexie.ignoreTransaction(() => this.saveEntityUnlocked('asset',
+        { ...expected, deleted: true, updatedAt: new Date().toISOString() }, rowFor('asset', expected).payload, false, true)));
     });
   }
 

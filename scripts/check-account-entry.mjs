@@ -38,7 +38,7 @@ if (run.error || run.status !== 0) {
   const tests = [];
   const walk = suites => suites.forEach(suite => { for (const spec of suite.specs ?? []) tests.push(...spec.tests); walk(suite.suites ?? []); });
   walk(report.suites);
-  if (report.errors?.length || tests.length !== 28 || tests.some(test => test.status !== "expected" || test.results.length !== 1 || test.results[0].status !== "passed")) throw Error("Account-entry coverage is missing, skipped, retried or failed.");
+  if (report.errors?.length || tests.length !== 30 || tests.some(test => test.status !== "expected" || test.results.length !== 1 || test.results[0].status !== "passed")) throw Error("Account-entry coverage is missing, skipped, retried or failed.");
   const images = [];
   function collect(dir) { for (const file of readdirSync(dir, { withFileTypes: true })) { const path = join(dir, file.name); if (file.isDirectory()) collect(path); else if (file.name.endsWith(".png")) images.push({ path: relative(output, path).replaceAll("\\", "/"), sha256: hash(readFileSync(path)) }); } }
   collect(join(output, "evidence"));
@@ -48,8 +48,8 @@ if (run.error || run.status !== 0) {
       for (const state of ["card", "edit", "menu", "delete", "gate"]) if (!imageNames.has(`matrix-${state}-${lang}-${width}.png`)) throw Error(`Missing unified matrix: ${lang}/${width}/${state}`);
       for (const state of ["normal", "locked"]) if (!imageNames.has(`matrix-${state}-${lang}-${width}.png`)) throw Error(`Missing compact evidence: ${lang}/${width}/${state}`);
     }
-    for (const state of ["unified-edit", "selected-backup", "delete-restored", "locked-editor", "validation-error", "partial-save", "purge-error", "imported-cards", "private-added", "entry-restored", "clipboard-failure", "query-return", "flow-switched", "flow-reloaded"]) if (!imageNames.has(`${state}-${lang}.png`)) throw Error(`Missing unified flow: ${lang}/${state}`);
+    for (const state of ["unified-edit", "selected-backup", "delete-restored", "ordinary-restored", "locked-editor", "validation-error", "partial-save", "purge-error", "imported-cards", "private-added", "entry-restored", "clipboard-failure", "query-return", "flow-switched", "flow-reloaded"]) if (!imageNames.has(`${state}-${lang}.png`)) throw Error(`Missing unified flow: ${lang}/${state}`);
   }
-  writeFileSync(join(output, "result.json"), JSON.stringify({ ...receipt, verdict: "automated-pass", expectedTests: 28, completedTests: tests.length, retries: 0, images }, null, 2));
+  writeFileSync(join(output, "result.json"), JSON.stringify({ ...receipt, verdict: "automated-pass", expectedTests: 30, completedTests: tests.length, retries: 0, images }, null, 2));
   console.log(`Account-entry machine checks passed for ${receipt.sourceCommit}. Manual visual review, controller journey and independent review remain separate.`);
 }
