@@ -9,6 +9,23 @@ import { prepareCompletionArchive, restoreCompletionArchive } from "./helpers/co
 const password = "Toolbar-fictional-only-2026";
 const fixture = resolve(process.env.KEEPANY_EVIDENCE_DIR ?? "test-results/asset-toolbar", "toolbar-fixture");
 const longTag = "Reference-".repeat(6);
+async function expectSingleEmptyFrame(page: import("@playwright/test").Page) {
+	const empty = page.locator(".asset-list-content > .empty");
+	await expect(empty).toBeVisible();
+	const frames = await empty.evaluate(node => {
+		const content = node.parentElement!;
+		const styles = [getComputedStyle(content), getComputedStyle(node)];
+		return {
+			borders: styles.filter(style => parseFloat(style.borderTopWidth) > 0 && style.borderTopStyle !== "none").length,
+			shadows: styles.filter(style => style.boxShadow !== "none").length,
+			width: node.getBoundingClientRect().width,
+			availableWidth: content.clientWidth,
+		};
+	});
+	expect(frames.borders, "empty state must have one frame, never a framed parent and framed child").toBe(1);
+	expect(frames.shadows, "empty state must have one shadow").toBe(1);
+	expect(Math.abs(frames.width - frames.availableWidth)).toBeLessThanOrEqual(1);
+}
 test.beforeAll(async () => {
 	await prepareCompletionArchive(fixture, password, async db => {
 		for (const kind of ["item", "subscription"] as const) {
@@ -68,6 +85,49 @@ for (const locale of ["zh-CN", "en"] as const) {
 				await filter.click();
 				await page.getByRole("option", { name: t("allTags"), exact: true }).click();
 				await expect(content.locator(".asset-library-card")).toHaveCount(3);
+			}
+		}
+	});
+	test(`${locale}: EF01 EF02 EF03 EF04 empty and filtered states have one frame`, async ({ page }, info) => {
+		const t = (key: string) => (resources[locale].translation as Record<string, string>)[key];
+		const { release } = acceptanceCandidate();
+		const index = await page.request.get("/");
+		expect(createHash("sha256").update(await index.body()).digest("hex")).toBe(release.webFiles.find(file => file.path === "index.html")!.sha256);
+		await info.attach("candidate.json", { body: JSON.stringify(release), contentType: "application/json" });
+		await page.addInitScript(language => localStorage.setItem("keepany-language", language), locale);
+		for (const width of [390, 768, 1004, 1280, 1920]) {
+			await page.setViewportSize({ width, height: 900 });
+			for (const kind of ["item", "subscription"] as const) {
+				await page.goto(`/assets/${kind}`);
+				for (const view of ["assetListView", "assetCardView"]) {
+					await page.locator(".asset-view-toggle").getByRole("button", { name: t(view), exact: true }).click();
+					await page.screenshot({ path: info.outputPath(`${kind}-${width}-empty-${view}.png`), fullPage: true });
+					await expectSingleEmptyFrame(page);
+				}
+			}
+		}
+		await restoreCompletionArchive(page, password, resolve(fixture, "fixture.ka1"));
+		for (const width of [390, 768, 1004, 1280, 1920]) {
+			await page.setViewportSize({ width, height: 900 });
+			for (const kind of ["item", "subscription"] as const) {
+				await page.goto(`/assets/${kind}`);
+				const content = page.locator(".asset-list-content");
+				await expect(content.locator(".asset-library-card")).toHaveCount(3);
+				await page.locator(".asset-category-scroll").getByRole("button", { name: t(kind === "item" ? "other" : "service"), exact: true }).click();
+				for (const view of ["assetListView", "assetCardView"]) {
+					await page.locator(".asset-view-toggle").getByRole("button", { name: t(view), exact: true }).click();
+					await page.screenshot({ path: info.outputPath(`${kind}-${width}-no-match-${view}.png`), fullPage: true });
+					await expect(content).toContainText(t("noMatches"));
+					await expectSingleEmptyFrame(page);
+				}
+				await page.locator(".asset-category-scroll").getByRole("button", { name: t("all"), exact: true }).click();
+				await page.locator(".asset-view-toggle").getByRole("button", { name: t("assetListView"), exact: true }).click();
+				await expect(content.locator(".asset-library-card")).toHaveCount(3);
+				await expect(content).toHaveCSS("border-top-width", "2px");
+				await page.screenshot({ path: info.outputPath(`${kind}-${width}-populated-list.png`), fullPage: true });
+				await page.reload();
+				await expect(content.locator(".asset-library-card")).toHaveCount(3);
+				expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
 			}
 		}
 	});

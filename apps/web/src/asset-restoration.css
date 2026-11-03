@@ -320,6 +320,8 @@
 }
 .asset-list-content > .empty {
 	grid-column: 1 / -1;
+}
+.asset-list-content:not(.asset-dense-list) > .empty {
 	border: 2px solid var(--line);
 	border-radius: 17px;
 	background: var(--paper);
