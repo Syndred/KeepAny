@@ -1,5 +1,8 @@
 .asset-view-toggle { display: flex; align-items: center; flex: none; gap: 6px; min-width: 0; margin: 0; padding: 0; border: 0; }
-.asset-list-view-tools { display: flex; justify-content: flex-end; margin-block: 8px; }
+.asset-list-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); min-width: 0; }
+.asset-list-toolbar > .list-filters { flex: 0 1 280px; min-width: 0; margin: 0; }
+.asset-list-toolbar > .list-filters .themed-select-root { width: 100%; }
+.asset-list-toolbar > .asset-view-toggle { margin-inline-start: auto; }
 .asset-card-summary, .asset-card-facts { display: grid; gap: 7px; min-width: 0; }
 .asset-list-content:not(.asset-dense-list, .asset-account-grid) { align-items: stretch; }
 .asset-list-content:not(.asset-dense-list) > :is(.asset-project-card, .asset-library-card) { display: flex; flex-direction: column; }
