@@ -10,6 +10,7 @@ export default defineConfig({
 	testDir: "./tests/e2e",
 	testMatch: [
 		"catalog-categories.spec.ts",
+		"asset-toolbar.spec.ts",
 		"cleanup-ux.spec.ts",
 		"project-simplification.spec.ts",
 	],

@@ -595,8 +595,10 @@ export function AssetKindList({ kind, beforeList, afterList, passwordCounts, onA
 				<Input id={renderAccountDetails || renderAccountCard ? "password-vault-search-input" : undefined} ref={accountSearchRef} type="search" aria-label={t("accountListSearch")} placeholder={t("accountListSearchHint")} autoComplete="off" value={accountSearch} onChange={(event) => changeAccountSearch(event.target.value)} onKeyDown={(event) => { if (event.key === "Escape") { event.stopPropagation(); changeAccountSearch(""); } }} />
 				{accountSearch && <Button variant="ghost" size="icon" aria-label={t("accountListClearSearch")} onClick={() => { changeAccountSearch(""); accountSearchRef.current?.focus(); }}><X size={18} /></Button>}
 			</div>{renderAccountCard && tagFilter}</> : undefined} />
-			{!renderAccountCard && tagFilter}
-			{kind !== "account" && kind !== "vault" && <div className="asset-list-view-tools"><AssetViewToggle value={assetView} onChange={setAssetView} /></div>}
+			{kind !== "account" && kind !== "vault" ? <div className="asset-list-toolbar">
+				{tagFilter}
+				<AssetViewToggle value={assetView} onChange={setAssetView} />
+			</div> : !renderAccountCard && tagFilter}
 <section className={`asset-list-content ${assetView === "list" && kind !== "account" ? "asset-dense-list" : ""} ${kind === "project" ? "asset-project-grid" : kind === "account" ? "asset-account-grid" : "asset-library-grid"}`}>
 				{assets.length ? (
 						assets.map((a) => kind === "project" ? <ProjectCard asset={a} search={listSearch} summary={workspace.summaries.get(a.id)} key={a.id} /> : kind === "account" ? renderAccountCard ? <div className="compact-account-slot" key={a.id}>{renderAccountCard(a, { connectionCount: connectionCount(a), queries: [search, accountQuery], onOpen: () => rememberAssetList(a, listSearch) })}</div> : <article className={renderAccountDetails ? "unified-account" : "account-list-entry"} key={a.id}><AccountCard asset={a} search={listSearch} passwordCount={passwordCounts?.get(a.id)} connectionCount={connectionCount(a)} />{renderAccountDetails?.(a)}</article> : <LibraryCard asset={a} search={listSearch} summary={workspace.summaries.get(a.id)} key={a.id} />)
