@@ -1,3 +1,4 @@
+import { UnifiedDetailColumns, UnifiedDetailDescription, UnifiedDetailHeader, UnifiedDetailHistory, UnifiedDetailImage, UnifiedDetailRelations } from "./components/UnifiedAssetDetail";
 import { historyCny, readSubscriptionRates, subscriptionCny, subscriptionRatesId } from "./subscription-cny";
 import { Textarea } from "./components/ui/textarea";
 import { CatalogRecordPage } from './page-catalog-record';
@@ -115,12 +116,14 @@ function itemLocationParts(location: string): [string, string, string] {
 export function AssetDetail() {
  const route=useRouterState({select:state=>({params:state.matches.at(-1)?.params as {kind?:string;id?:string},hash:state.location.hash})});
  if(route.params?.kind==='project'&&!route.hash.startsWith('project-'))return <CatalogRecordPage recordId={`asset:${route.params.id}`}/>;
- return <LegacyAssetDetail/>;
+ return <LegacyAssetDetail key={`${route.params?.kind}:${route.params?.id}:${route.hash.startsWith('project-')}`}/>;
 }
 function LegacyAssetDetail() {
 	const params = (useRouterState({ select: (s) => s.matches.at(-1)?.params }) ??
 		{}) as { kind?: string; id?: string };
 	const kind = validKind(params.kind ?? "project");
+ const unified = kind === "item" || kind === "subscription";
+ const [activityOpen, setActivityOpen] = useState(false);
 	const detailHash = useRouterState({ select: (state) => state.location.hash });
 	const { data, notify } = useAppContext();
 	const { t, i18n } = useTranslation();
@@ -714,6 +717,7 @@ function LegacyAssetDetail() {
 				deleted: false,
 			});
 			setItemRecoveryPending(false);
+   setActivityOpen(false);
 			setItemBorrower("");
 			setItemExpectedReturnDate("");
 			if (action === "maintenance") setItemMaintenanceNote("");
@@ -877,6 +881,7 @@ function LegacyAssetDetail() {
 			setRenewalAmountError("");
 			await recordAction("renew");
 			setRenewalRecoveryPending(false);
+   setActivityOpen(false);
 			notify(t("saved"));
 		} catch (error) {
 			if (error instanceof Error && error.message === "renewal-amount-invalid") {
@@ -1051,377 +1056,47 @@ function LegacyAssetDetail() {
 	) : (
 		asset.kind === "project" ? <p className="asset-quiet-empty">{t("noMatches")}</p> : <Empty hint={false} />
 	);
-	return (
-		<main className={`page asset-detail asset-detail-${kind}${relations.length ? " has-relations" : ""}${kind === "account" ? " account-relation-layout" : ""}`}>
-            {kind === "project" && <div className="asset-project-action-bar">
-              <Button variant="primary" onClick={() => setEdit(true)}>{t("edit")}</Button>
-              <DropdownMenu><DropdownMenuTrigger render={<Button aria-label={t("moreActions")} />}><MoreHorizontal size={18}/>{t("moreActions")}</DropdownMenuTrigger><DropdownMenuContent align="end">
-                <DropdownMenuItem render={<Link to="/assets/project/$id/workflow/$flow" params={{ id: asset.id, flow: "brand" }} />}>{t("workflowBrandEntry")}</DropdownMenuItem>
-                <DropdownMenuItem render={<Link to="/assets/project/$id/workflow/$flow" params={{ id: asset.id, flow: "close" }} />}>{t("workflowCloseEntry")}</DropdownMenuItem>
-                <DropdownMenuItem disabled={deleteBusy} onClick={() => { setDeleteError(""); setDeleteOpen(true); }}>{t("delete")}</DropdownMenuItem>
-              </DropdownMenuContent></DropdownMenu>
-            </div>}
-			<div className="page-header">
-				<div>
-					{kind !== "project" && kind !== "account" && <TextLink asChild><Link className="back-link" to={catalogReturn?.view === "all" ? "/assets" : "/assets/$kind"} params={catalogReturn?.view === "all" ? {} : { kind: catalogReturn?.view === "domains" ? "domains" : returnKind }} onClick={() => { sessionStorage.removeItem("keepany-relation-return-id"); sessionStorage.removeItem("keepany-relation-return-kind"); }}>
-						<ArrowLeft size={16} />
-						{t("back")}
-					</Link></TextLink>}
-					{kind === "account" && <span className="account-detail-avatar"><Mail size={30} /></span>}
-					<div className="eyebrow">
-						{t(kind)} · {niceCategory(asset.category || (kind === "account" ? "other" : ""), t)}
-					</div>
-					<h1 title={kind === "account" ? asset.name : undefined}>{asset.name}</h1>
-					{kind !== "account" && <p className="subtitle">
-						{asset.description || asset.url || t("local")}
-					</p>}
-					{kind === "project" && <div className="asset-project-hero-meta">{asset.category && <span>{niceCategory(asset.category, t)}</span>}{asset.status && <span>{t(asset.status)}</span>}{asset.url && <a href={asset.url} target="_blank" rel="noopener noreferrer">{asset.url}<ExternalLink size={13} /></a>}</div>}
-				</div>
-				{kind === "account" ? <div className="actions"><Button variant="primary" onClick={() => { setAccountAddingLogin(false); setEdit(true); }}><Pencil size={17} />{t("edit")}</Button><Button onClick={() => { setAccountAddingLogin(true); setEdit(true); }}><Plus size={17} />{t("add")}</Button></div> : kind !== "project" && <div className="actions">
-					<Button onClick={() => setEdit(true)}>{t("edit")}</Button>
-					<Button
-						variant="danger"
-						disabled={deleteBusy}
-						onClick={() => { setDeleteError(""); setDeleteOpen(true); }}
-					>
-						{t("delete")}
-					</Button>
-				</div>}
 
-			</div>
-			{deleteOpen && (
-				<Dialog
-					className={kind === "account" ? "account-detail-dialog" : undefined}
-					title={t("delete")}
-					onClose={() => {
-						if (!deleteInFlight.current) setDeleteOpen(false);
-					}}
-				>
-					<p>{t(kind === "account" ? "accountTrashConfirm" : "deleteConfirm")}</p>
-					{deleteError && <p className="field-error" role="alert">{deleteError}</p>}
-					<div className="actions">
-						<Button disabled={deleteBusy} onClick={() => setDeleteOpen(false)}>
-							{t("cancel")}
-						</Button>
-						<Button
-							variant="danger"
-							disabled={deleteBusy}
-							onClick={() => void confirmDelete()}
-						>
-							{t("delete")}
-						</Button>
-					</div>
-				</Dialog>
-			)}
-			<div className={`detail-grid asset-detail-primary${asset.kind === "account" ? " account-empty-primary" : ""}`}>
-				{asset.kind === "item" && <section className="card asset-item-photo-main" aria-label={t("itemCoverPhoto")}>
-					<div className="asset-item-photo-stage">{itemMedia.coverId ? <ImageTile id={itemMedia.coverId} /> : <p>{t("itemStatusUnrecorded")}</p>}
-						<span className="chip">{asset.status === "loaned" ? t("loaned") : asset.itemLifecycleStatus ? t(`itemStatus_${asset.itemLifecycleStatus}`) : t("itemStatusUnrecorded")}</span>
-					</div>
-					<div className="asset-item-photo-actions"><Button size="small" disabled={uploading || (!itemMedia.coverId && asset.attachments.length >= 20)} onClick={() => chooseImage("coverId", itemMedia.coverId)}>{t(itemMedia.coverId ? "replaceImage" : "addPhoto")}</Button>
-						<Button size="small" disabled={uploading || asset.attachments.length >= 20} onClick={() => chooseImage("detailIds")}>{t("itemDetailPhotos")}</Button>
-					</div>
-				</section>}
-				{asset.kind === "project" && <ProjectProfile asset={asset} accounts={relatedAccounts} onVisit={visitRelation} onEdit={() => setEdit(true)} />}
-				{asset.kind === "project" && asset.projectInspectionDate && <section className="card asset-project-reminders" id="project-reminders">
-					<div className="card-header"><h2>{t("projectNextInspection")}</h2></div>
-					<div className="asset-project-reminder-row asset-project-reminder-static"><span className="asset-project-reminder-symbol" aria-hidden="true">↗</span><span><strong>{t("projectNextInspection")}</strong><small>{asset.projectInspectionDate ? date(asset.projectInspectionDate, i18n.language) : t("projectNoInspection")}</small></span></div>
-				</section>}
-				{asset.kind !== "project" && asset.kind !== "account" && <section className="card asset-profile-card">
-					<div className="card-header">
-						<div><h2>{t(asset.kind === "item" ? "itemStateTitle" : "profile")}</h2>{asset.kind === "item" && <small>{t("itemStateSubtitle")}</small>}</div>
-						{asset.kind === "item" && <Button size="small" disabled={itemBusy} onClick={openItemStatus}>{t("itemStatusChange")}</Button>}
-					</div>
-					<dl className="facts">
-						<div>
-							<dt>{t("category")}</dt>
-							<dd>{niceCategory(asset.category, t) || "—"}</dd>
-						</div>
-						{asset.url && (
-							<div>
-								<dt>{t("url")}</dt>
-								<dd>
-									<TextLink href={asset.url} target="_blank" rel="noopener noreferrer">
-										<span>{asset.url}</span>
-									</TextLink>
-								</dd>
-							</div>
-						)}
-						{asset.username && (
-							<div>
-								<dt>{t("username")}</dt>
-								<dd>{asset.username}</dd>
-							</div>
-						)}
-						{asset.contact && (
-							<div>
-								<dt>{t("contact")}</dt>
-								<dd>{asset.contact}</dd>
-							</div>
-						)}
-						{asset.kind === "subscription" && (
-							<>
-								<div>
-									<dt>{t("amount")}</dt>
-									<dd>{cnySubscription ? money(cnySubscription.amount, "CNY", i18n.language) : t("subscriptionCnyMissing")}</dd>
-								</div>
-								<div>
-									<dt>{t("monthly")}</dt>
-									<dd>
-										{cnySubscription ? money(monthlyMinorUnits(cnySubscription), "CNY", i18n.language) : t("subscriptionCnyMissing")}
-									</dd>
-								</div>
-								<div>
-									<dt>{t("cycle")}</dt>
-									<dd>
-										{asset.interval} {t(asset.cycle)}
-									</dd>
-								</div>
-								<div>
-									<dt>{t("dueDate")}</dt>
-									<dd>{date(asset.dueDate, i18n.language)}</dd>
-								</div>
-								<div>
-									<dt>{t("actualCharge")}</dt>
-									<dd>
-										{dueCharge === null
-											? "—"
-											: money(dueCharge, "CNY", i18n.language)}
-									</dd>
-								</div>
-								{asset.trialEndsAt && (
-									<div>
-										<dt>{t("trialEndsAt")}</dt>
-										<dd>{date(asset.trialEndsAt, i18n.language)}</dd>
-									</div>
-								)}
-								{asset.discountUntil && (
-									<div>
-										<dt>{t("discountUntil")}</dt>
-										<dd>
-											{date(asset.discountUntil, i18n.language)} ·{" "}
-											{cnySubscription ? money(cnySubscription.discountAmount,"CNY",i18n.language) : t("subscriptionCnyMissing")}
-										</dd>
-									</div>
-								)}
-							</>
-						)}
-						{asset.kind === "item" && (
-							<>
-								<div>
-									<dt>{t("itemPurchasePrice")}</dt>
-									<dd>{asset.itemPurchasePriceKnown ? money(asset.amount, asset.currency, i18n.language) : t("itemStatusUnrecorded")}</dd>
-								</div>
-								<div>
-									<dt>{t("purchaseDate")}</dt>
-									<dd>{asset.purchaseDate ? date(asset.purchaseDate, i18n.language) : t("itemStatusUnrecorded")}</dd>
-								</div>
-								<div>
-									<dt>{t("itemStartDate")}</dt>
-									<dd>{asset.itemStartDate ? date(asset.itemStartDate, i18n.language) : t("itemStatusUnrecorded")}</dd>
-								</div>
-								<div>
-									<dt>{t("itemLifecycleStatus")}</dt>
-									<dd><span className="chip">{asset.itemLifecycleStatus ? t(`itemStatus_${asset.itemLifecycleStatus}`) : t("itemStatusUnrecorded")}</span></dd>
-								</div>
-								<div>
-									<dt>{t("itemStatusDate")}</dt>
-									<dd>{asset.itemStatusDate ? date(asset.itemStatusDate, i18n.language) : t("itemStatusUnrecorded")}</dd>
-								</div>
-								<div>
-									<dt>{t("itemWarrantyStatus")}</dt>
-									<dd>{asset.itemWarrantyStatus ? t(`itemWarranty_${asset.itemWarrantyStatus}`) : t("itemStatusUnrecorded")}</dd>
-								</div>
-								<div>
-									<dt>{t("warrantyDate")}</dt>
-									<dd>{date(asset.warrantyDate, i18n.language)}</dd>
-								</div>
-								<div>
-									<dt>{t("location")}</dt>
-									<dd>{asset.location ? asset.location.replaceAll("\u2063", "") : "—"}</dd><Button size="small" onClick={openLocation}>{t("itemEditLocation")}</Button>
-								</div>
-								{asset.status === "loaned" && asset.borrower && (
-									<div>
-										<dt>{t("borrower")}</dt>
-										<dd>{asset.borrower}</dd>
-									</div>
-								)}
-								{asset.status === "loaned" && <div><dt>{t("itemExpectedReturnDate")}</dt><dd>{asset.itemExpectedReturnDate ? date(asset.itemExpectedReturnDate, i18n.language) : t("itemStatusUnrecorded")}</dd></div>}
-							</>
-						)}
-						{asset.status && (asset.kind !== "item" || asset.status !== "active" || !asset.itemLifecycleStatus || asset.itemLifecycleStatus === "inUse") && (
-							<div>
-								<dt>{t("status")}</dt>
-								<dd>
-									<span className="chip">{t(asset.status)}</span>
-								</dd>
-							</div>
-						)}
-					</dl>
-					{asset.tags.length > 0 && (
-						<div className="chips">
-							{asset.tags.map((tag) => (
-								<span className="chip" key={tag}>
-									{tag}
-								</span>
-							))}
-						</div>
-					)}
-					{assetNotes(asset) && <p className="note asset-supplemental-notes">{assetNotes(asset)}</p>}
-				</section>}
-				{asset.kind === "item" && <section className="card asset-item-evidence" aria-label={t("itemPhotosAndEvidence")}>
-					<div className="card-header"><h2>{t("itemPhotosAndEvidence")}</h2></div>
-					<p className="asset-item-evidence-hint">{t("itemEvidenceHint")}</p>
-					<div className="asset-item-evidence-groups">
-						{(["coverId", "detailIds", "receiptIds"] as const).map((role) => {
-							const ids = role === "coverId" ? (itemMedia.coverId ? [itemMedia.coverId] : []) : itemMedia[role];
-							const label = t(role === "coverId" ? "itemCoverPhoto" : role === "detailIds" ? "itemDetailPhotos" : "itemReceiptImages");
-							return <section className="asset-item-evidence-group" data-item-media-role={role} aria-label={label} key={role}>
-								<div className="asset-item-evidence-head"><h3>{label}</h3><Button size="small" disabled={uploading || (asset.attachments.length >= 20 && !(role === "coverId" && itemMedia.coverId))} onClick={() => chooseImage(role, role === "coverId" ? itemMedia.coverId : "")}>{t(role === "coverId" && itemMedia.coverId ? "replaceImage" : "addPhoto")}</Button></div>
-								{ids.length ? <div className="asset-item-evidence-grid">{ids.map((id) => <div className="asset-item-evidence-image" key={id}>
-									<ImageTile id={id} />
-									<div className="project-media-actions"><Button size="small" disabled={uploading} onClick={() => chooseImage(role, id)}>{t("replaceImage")}</Button><Button size="small" variant="danger" disabled={uploading} onClick={() => void removeImage(id)}>{t("removeImage")}</Button></div>
-								</div>)}</div> : <p className="asset-quiet-empty">{t("none")}</p>}
-							</section>;
-						})}
-					</div>
-				</section>}
-				{asset.kind !== "project" && asset.kind !== "account" && attachmentSection}
-			</div>
-			{asset.kind === "project" && <section className="card asset-project-costs" id="project-domains">
-				<div className="card-header"><h2>{t("projectDomainCosts")}</h2><Button size="small" onClick={() => openDomain()}><Plus size={14} />{t("projectAddDomain")}</Button></div>
-				<div className="asset-project-cost-grid">
-					<div><small>{t("projectMonthlyCost")}</small><strong>{formatTotals(monthlyByCurrency)}</strong><small>{relatedSubscriptions.length} {t("projectLinkedSubscriptions")}</small>{missingSubscriptionCny > 0 && <small>{t("subscriptionCnyPartial",{count:missingSubscriptionCny})}</small>}</div>
-					<div><small>{t("projectAnnualEstimate")}</small><strong>{formatTotals(annualByCurrency)}</strong>{incompleteCost && <small>{t("projectCostPartial")}</small>}</div>
-					<div><small>{t("projectNextRenewal")}</small><strong>{nextRenewal ? date(nextRenewal, i18n.language) : "—"}</strong><small>{projectDomains.length} {t("projectDomain")}</small></div>
-				</div>
-				{projectDomains.length ? <div className="asset-project-domain-list">{projectDomains.map((domain) => <div className="asset-project-domain-row" key={domain.id} id={`project-domain-${domain.id}`}><div><strong>{domain.name}</strong><small>{[domain.registrar, domain.accountId ? liveById.get(domain.accountId)?.name : "", domain.annualAmount === null ? "" : `${money(domain.annualAmount, domain.currency, i18n.language)} / ${t("year")}`].filter(Boolean).join(" · ") || "—"}</small><span>{t("projectExpiry")}: {date(domain.expiryDate, i18n.language)} · {t("projectAutoRenew")}: {t(domain.autoRenew === "on" ? "projectAutoRenewOn" : domain.autoRenew === "off" ? "projectAutoRenewOff" : "projectAutoRenewUnknown")}</span></div><Button size="small" onClick={() => openDomain(domain)}>{t("edit")}</Button></div>)}</div> : <p className="asset-quiet-empty">{t("projectNoDomains")}</p>}
-				<details className="asset-project-linked-subscriptions"><summary>{t("projectLinkedSubscriptions")} · {relatedSubscriptions.length}</summary>{relatedSubscriptions.length ? relatedSubscriptions.map((linked) => <Link key={linked.id} to="/assets/$kind/$id" params={{ kind: linked.kind, id: linked.id }} onClick={(event) => { event.preventDefault(); visitRelation(linked); }}><strong>{linked.name}</strong><span>{subscriptionCny(linked,subscriptionRates) ? money(subscriptionCny(linked,subscriptionRates)!.amount,"CNY",i18n.language) : t("subscriptionCnyMissing")} / {t(linked.cycle)} · {date(linked.dueDate, i18n.language)}</span></Link>) : <p className="asset-quiet-empty">{t("none")}</p>}</details>
-			</section>}
-			{asset.kind === "project" && domainEditing && domainDraft && <Dialog title={domainEditing === "new" ? t("projectAddDomain") : t("projectEditDomain")} onClose={() => { if (!domainBusy) setDomainEditing(null); }}>
-				<form className="asset-project-domain-form" onSubmit={(event) => { event.preventDefault(); void saveDomain(); }}>
-					<label className="field">{t("projectDomain")}<Input disabled={domainBusy} required value={domainDraft.name} onChange={(event) => setDomainDraft({ ...domainDraft, name: event.target.value })} placeholder="example.com" /></label>
-					<label className="field">{t("projectRegistrar")}<Input disabled={domainBusy} value={domainDraft.registrar} onChange={(event) => setDomainDraft({ ...domainDraft, registrar: event.target.value })} /></label>
-					<label htmlFor="project-domain-account" className="field">{t("projectDomainAccount")}<Select id="project-domain-account" disabled={domainBusy} value={domainDraft.accountId} onValueChange={(selectValue) => setDomainDraft({ ...domainDraft, accountId: selectValue })}><SelectOption value="">—</SelectOption>{liveAssets(data).filter((entry) => entry.kind === "account").map((entry) => <SelectOption value={entry.id} key={entry.id}>{entry.name}</SelectOption>)}</Select></label>
-					<label className="field">{t("projectExpiry")}<DatePicker aria-label={t("projectExpiry")} disabled={domainBusy}  value={domainDraft.expiryDate} onValueChange={(dateValue) => setDomainDraft({ ...domainDraft, expiryDate: dateValue })} /></label>
-					<label className="field">{t("projectAnnualFee")}<span className="asset-project-fee-row"><Input disabled={domainBusy} inputMode="decimal" value={domainFee} onChange={(event) => setDomainFee(event.target.value)} /><Select disabled={domainBusy} aria-label={t("currency")} value={domainDraft.currency} onValueChange={(selectValue) => { const currency = selectValue as ProjectDomain["currency"]; setDomainDraft({ ...domainDraft, currency }); setDomainFee(""); }}><SelectOption>CNY</SelectOption><SelectOption>USD</SelectOption><SelectOption>EUR</SelectOption><SelectOption>GBP</SelectOption><SelectOption>JPY</SelectOption></Select></span></label>
-					<label htmlFor="project-domain-auto-renew" className="field">{t("projectAutoRenew")}<Select id="project-domain-auto-renew" disabled={domainBusy} value={domainDraft.autoRenew} onValueChange={(selectValue) => setDomainDraft({ ...domainDraft, autoRenew: selectValue as ProjectDomain["autoRenew"] })}><SelectOption value="unknown">{t("projectAutoRenewUnknown")}</SelectOption><SelectOption value="on">{t("projectAutoRenewOn")}</SelectOption><SelectOption value="off">{t("projectAutoRenewOff")}</SelectOption></Select></label>
-					{domainError && <p role="alert" className="field-error">{domainError}</p>}
-					<div className="actions"><Button type="submit" variant="primary" disabled={domainBusy}>{t("save")}</Button>{domainEditing !== "new" && <Button type="button" variant="danger" disabled={domainBusy} onClick={() => void removeDomain()}>{t("projectDomainDelete")}</Button>}<Button type="button" disabled={domainBusy} onClick={() => setDomainEditing(null)}>{t("cancel")}</Button></div>
-				</form>
-			</Dialog>}
-			<div className="detail-grid asset-detail-secondary">
-				<DetailDisclosure id="account-relations" tabIndex={kind === "account" ? -1 : undefined} className="card asset-relations-card" collapsible={kind === "project"} label={t("projectRelatedDetails")}>
-					<div className="card-header">
-						<div>
-							<h2>{t(kind === "account" ? "accountRelationMap" : "relations")}</h2>
-							{relations.length > 0 && <p>{kind === "account" ? t("accountGraphCounts", { direct: directCount, indirect: Math.max(0, (family?.neighbors.length ?? 0) - directCount) }) : t("relationGraphLegend")}</p>}
-						</div>
-						<Button
-							variant="ghost"
-							size="small"
-							onClick={() => {
-								setRelationError("");
-								setRelationEdit(true);
-							}}
-						>
-							<Plus size={14} />
-							{t("addRelation")}
-						</Button>
-					</div>
-					{relations.length || kind === "account" ? (
-						<>
-							{kind === "account" ? <div className="account-graph-toolbar">
-								<div className="actions">
-									<Button size="small" variant={graphScope === "direct" ? "primary" : "default"} aria-pressed={graphScope === "direct"} onClick={() => changeGraphScope("direct")}>{t("accountGraphDirect")}</Button>
-									<Button size="small" variant={graphScope === "family" ? "primary" : "default"} aria-pressed={graphScope === "family"} onClick={() => changeGraphScope("family")}>{t("accountGraphFamily")}</Button>
-								</div>
-								{relationSearch}
-								<details className="account-graph-guide"><summary>{t("accountGraphHelp")}</summary><p><span>{t("accountGraphDirection")}</span><span>{t("relationGraphLegend")}</span></p></details>
-							</div> : relations.length >= 5 ? relationSearch : null}
-							<Suspense fallback={<p role="status">{t("loading")}</p>}><AssetRelationGraph root={asset} assets={[asset, ...graphRelated]} relations={displayedFamily?.relations ?? visibleRelations} matches={graphMatches} selectedEdgeId={selectedGraphEdgeId} onSelectEdge={setSelectedGraphEdgeId} onVisit={visitRelation} onDeleteRelations={(items) => { setRelationDeleteError(""); setRelationToDelete(items); }} /></Suspense>
-							{kind === "account" ? visibleRelations.length > 0 && <details className="account-relation-details" open={relationDetailsOpen} onToggle={(event) => setRelationDetailsOpen(event.currentTarget.open)}>
-								<summary>{t("accountGraphDetails", { count: visibleRelations.length })}</summary>
-								{relationList}
-							</details> : relationList}
-						</>
-					) : (
-						asset.kind === "project" ? <p className="asset-quiet-empty">{t("none")}</p> : <Empty hint={false} />
-					)}
-				</DetailDisclosure>
-				<section className="card asset-tasks-card">
-					<div className="card-header">
-						<h2>{t("tasks")}</h2>
-						<div className="actions">
-						{asset.kind === "item" && <Button asChild size="small"><Link to="/tasks" hash={maintenanceTask ? `task-${maintenanceTask.id}` : undefined}>{t("itemOpenMaintenancePlan")}</Link></Button>}
-						<Button
-							variant="ghost"
-							size="small"
-							onClick={() => setTaskEdit(true)}
-						>
-							<Plus size={14} />
-							{t("add")}
-						</Button>
-						</div>
-					</div>
-					{ownTasks.length ? (
-						<div className="list">
-							{ownTasks.map((task) => (
-								<TaskRow key={task.id} task={task} hideRelated={kind === "account" || kind === "project"} compact={kind === "account" || kind === "project"} />
-							))}
-						</div>
-					) : (
-						asset.kind === "project" ? <p className="asset-quiet-empty">{t("none")}</p> : <Empty hint={false} />
-					)}
-				</section>
-			</div>
-			{asset.kind === "project" && <DetailDisclosure className="asset-project-media-disclosure" collapsible label={t("attachments")}>{attachmentSection}</DetailDisclosure>}
-			{asset.kind === "account" && <aside className="account-login-column">
-                <AccountLoginSummary key={`${asset.id}:${currentLogin?.key ?? "empty"}:${currentLogin?.entry.modifiedAt ?? ""}`} asset={asset} current={currentLogin} total={accountChoices.length} index={accountChoices.findIndex(choice => choice.key === currentLogin?.key)} onSwitch={() => { if (currentLogin) setAccountSelection({ assetId: asset.id, key: nextAccountLogin(accountChoices, currentLogin.key)?.key ?? "" }); }} onEdit={() => { setAccountAddingLogin(false); setEdit(true); }} />
-                <AccountDetailActions asset={asset} entry={currentLogin?.entry} />
-                {asset.attachments.length > 0 && <details className="account-existing-attachments"><summary>{t("attachments")}</summary>{attachmentSection}</details>}
-				<details className="card impact-checklist account-impact-details"><summary><Network size={21} /><span>{t("accountImpactTitle")}</span><ChevronRight size={18} /></summary>
-					<div className="card-header">
-						<div>
-							<h2>{t("impact")}</h2>
-							<p>{t("accountImpactGuide")}</p>
-						</div>
-						<Button
-							size="small"
-							disabled={impactBusy || impactPendingCount === 0}
-							onClick={() => void createImpact()}
-						>
-							{t("makeChecklist")} · {impactPendingCount}
-						</Button>
-					</div>
-					<fieldset className="tabs task-filters" aria-label={t("taskFilter")}>
-						{(["all", "pending", "done"] as const).map((value) => (
-							<button
-								type="button"
-								key={value}
-								aria-pressed={impactFilter === value}
-								onClick={() => setImpactFilter(value)}
-							>
-								{t(value)} · {impactCounts[value]}
-							</button>
-						))}
-					</fieldset>
-					{visibleImpactTasks.length ? (
-						<div className="list">
-							{visibleImpactTasks.map((task) => (
-								<ImpactTaskRow task={task} showTaskLink key={task.id} />
-							))}
-						</div>
-					) : <Empty hint={false} />}
-				</details>
-            </aside>}
-
-			{(asset.kind === "item" || asset.kind === "subscription") && (
-				<section className="card">
-					<div className="card-header">
-						<div><h2>{t("history")}</h2>{asset.kind === "item" && <small>{t("itemTimeline")}</small>}</div>
-					</div>
-			{asset.kind === "subscription" && renewalRecoveryPending && <p className="notice" role="alert">{t("renewalRecoveryPending")}</p>}
+ const unifiedInfo = <section className="card unified-detail-info">
+ <header className="card-header"><h2>{t("detailBasicInfo")}</h2>{asset.kind === "item" && <Button size="small" variant="ghost" disabled={itemBusy} onClick={openItemStatus}>{t("itemStatusChange")}</Button>}</header>
+ {asset.kind === "subscription" && <div className="unified-detail-highlight"><div><small>{t("amount")}</small><strong>{cnySubscription ? money(cnySubscription.amount,"CNY",i18n.language) : t("subscriptionCnyMissing")}<small> / {asset.interval > 1 ? asset.interval : ""} {t(asset.cycle)}</small></strong></div><Button size="small" disabled={asset.status !== "active" || !asset.dueDate || !cnySubscription} onClick={()=>setActivityOpen(true)}>{t("renew")}</Button></div>}
+ {asset.kind === "item" && asset.warrantyDate && <div className="unified-detail-highlight"><div><small>{t("warrantyDate")}</small><strong>{date(asset.warrantyDate,i18n.language)}</strong></div></div>}
+ <dl className="facts">
+ {asset.category && <div><dt>{t("category")}</dt><dd>{niceCategory(asset.category,t)}</dd></div>}
+ {asset.url && <div><dt>{t("url")}</dt><dd>{/^https?:\/\//i.test(asset.url) ? <TextLink href={asset.url} target="_blank" rel="noopener noreferrer">{asset.url}</TextLink> : asset.url}</dd></div>}
+ {asset.username && <div><dt>{t("username")}</dt><dd>{asset.username}</dd></div>}
+ {asset.contact && <div><dt>{t("contact")}</dt><dd>{asset.contact}</dd></div>}
+ {asset.kind === "subscription" && <>
+ <div><dt>{t("cycle")}</dt><dd>{asset.interval} {t(asset.cycle)}</dd></div>
+ <div><dt>{t("dueDate")}</dt><dd>{date(asset.dueDate,i18n.language)}</dd></div>
+ {asset.cycle !== "month" || asset.interval !== 1 ? <div><dt>{t("monthly")}</dt><dd>{cnySubscription ? money(monthlyMinorUnits(cnySubscription),"CNY",i18n.language) : t("subscriptionCnyMissing")}</dd></div> : null}
+ {asset.trialEndsAt || asset.discountUntil ? <div><dt>{t("actualCharge")}</dt><dd>{dueCharge === null ? "—" : money(dueCharge,"CNY",i18n.language)}</dd></div> : null}
+ {asset.trialEndsAt && <div><dt>{t("trialEndsAt")}</dt><dd>{date(asset.trialEndsAt,i18n.language)}</dd></div>}
+ {asset.discountUntil && <div><dt>{t("discountUntil")}</dt><dd>{date(asset.discountUntil,i18n.language)} · {cnySubscription ? money(cnySubscription.discountAmount,"CNY",i18n.language) : t("subscriptionCnyMissing")}</dd></div>}
+ </>}
+ {asset.kind === "item" && <>
+ <div><dt>{t("itemPurchasePrice")}</dt><dd>{asset.itemPurchasePriceKnown ? money(asset.amount,asset.currency,i18n.language) : t("itemStatusUnrecorded")}</dd></div>
+ <div><dt>{t("purchaseDate")}</dt><dd>{asset.purchaseDate ? date(asset.purchaseDate,i18n.language) : t("itemStatusUnrecorded")}</dd></div>
+ {asset.itemStartDate && <div><dt>{t("itemStartDate")}</dt><dd>{date(asset.itemStartDate,i18n.language)}</dd></div>}
+ {asset.itemStatusDate && <div><dt>{t("itemStatusDate")}</dt><dd>{date(asset.itemStatusDate,i18n.language)}</dd></div>}
+ {asset.itemWarrantyStatus && <div><dt>{t("itemWarrantyStatus")}</dt><dd>{t(`itemWarranty_${asset.itemWarrantyStatus}`)}</dd></div>}
+ <div><dt>{t("location")}</dt><dd className="unified-detail-location">{asset.location ? asset.location.replaceAll("\u2063","") : "—"}<Button size="small" variant="ghost" onClick={openLocation}>{t("itemEditLocation")}</Button></dd></div>
+ {asset.status === "loaned" && <><div><dt>{t("borrower")}</dt><dd>{asset.borrower || t("none")}</dd></div><div><dt>{t("itemExpectedReturnDate")}</dt><dd>{date(asset.itemExpectedReturnDate ?? "",i18n.language)}</dd></div></>}
+ </>}
+ </dl>{asset.tags.length > 0 && <div className="unified-detail-tags">{asset.tags.map(tag=><span key={tag}>{tag}</span>)}</div>}
+ </section>;
+ const unifiedDescription = <UnifiedDetailDescription asset={asset} actions={<div className="actions">
+  {asset.kind === "item" && <Select aria-label={t("itemPhotosAndEvidence")} value={itemImageRole} onValueChange={value => setItemImageRole(value as ItemImageRole)}><SelectOption value="other">{t("itemOtherImages")}</SelectOption><SelectOption value="coverId">{t("itemCoverPhoto")}</SelectOption><SelectOption value="detailIds">{t("itemDetailPhotos")}</SelectOption><SelectOption value="receiptIds">{t("itemReceiptImages")}</SelectOption></Select>}
+  <Button size="small" variant="ghost" disabled={uploading || asset.attachments.length >= 20 && !(itemImageRole === "coverId" && itemMedia.coverId)} onClick={() => chooseImage(itemImageRole, itemImageRole === "coverId" ? itemMedia.coverId : "")}>{t("addPhoto")}</Button>
+ </div>}>
+  <input ref={imageInput} type="file" accept="image/png,image/jpeg,image/webp,image/gif" className="sr-only" aria-label={t("addPhoto")} onChange={event => { const file=event.target.files?.[0]; event.target.value=""; if(!file)return; if(!["image/png","image/jpeg","image/webp","image/gif"].includes(file.type)||!file.size||file.size>20*1024*1024||file.name.length>255)notify(t("uploadError")); else {setPendingImageUrl("");setPendingImageStatus("loading");setPendingImage(file);} }}/>
+  {asset.attachments.length ? <div className="unified-detail-gallery">{asset.attachments.map((id,index)=>{
+   const role:ItemImageRole = itemMedia.coverId===id ? "coverId" : itemMedia.detailIds.includes(id) ? "detailIds" : itemMedia.receiptIds.includes(id) ? "receiptIds" : "other";
+   const label = asset.kind === "item" ? t(role === "coverId" ? "itemCoverPhoto" : role === "detailIds" ? "itemDetailPhotos" : role === "receiptIds" ? "itemReceiptImages" : "itemOtherImages") : t("detailPhotoNumber",{number:index+1});
+   return <UnifiedDetailImage key={id} id={id} label={label} actions={<><Button size="small" disabled={uploading} onClick={()=>chooseImage(role,id)}>{t("replaceImage")}</Button><Button size="small" variant="danger" disabled={uploading} onClick={()=>void removeImage(id)}>{t("removeImage")}</Button></>}/>;
+  })}</div> : <p className="unified-detail-empty">{t("detailNoImages")}</p>}
+ </UnifiedDetailDescription>;
+ const unifiedActivity = <>{asset.kind === "subscription" && renewalRecoveryPending && <p className="notice" role="alert">{t("renewalRecoveryPending")}</p>}
 			{asset.kind === "item" && itemRecoveryPending && <p className="notice" role="alert">{t("itemRecoveryPending")}</p>}
 					{asset.kind === "item" && itemError && <p className="notice" role="alert">{itemError}</p>}
 					{asset.kind === "subscription" ? (
@@ -1491,10 +1166,7 @@ function LegacyAssetDetail() {
 									<span>{t("maintenanceDate")}</span>
 									<DatePicker aria-label={t("maintenanceDate")} value={itemEventDate} onValueChange={(dateValue) => { itemDateManuallySet.current = true; setItemEventDate(dateValue); setItemError(""); }} />
 								</label>
-								<label className="field">
-									<span>{t("maintenanceReminderDate")}</span>
-									<DatePicker aria-label={t("maintenanceReminderDate")} value={itemReminderDate} onValueChange={(dateValue) => { setItemReminderDate(dateValue); setItemError(""); }} />
-								</label>
+								
 								<div className="actions item-history-actions"><Button type="submit"
 									disabled={itemBusy || !["active", "loaned"].includes(asset.status) || ["resold", "retired"].includes(asset.itemLifecycleStatus ?? "")}
 								>
@@ -1505,35 +1177,234 @@ function LegacyAssetDetail() {
 						</div>
 					)}
 					{asset.kind === "subscription" && <p className="subtitle">{t("renewalLocalHint")}</p>}
-					{histories.length ? (
-						<div className={asset.kind === "item" ? "list asset-item-timeline" : "list"}>
-							{histories.map((h) => (
-								<div className="list-row" key={h.id}>
-									<Check size={17} />
-									<div>
-										<strong>{h.action === "itemStatus" ? `${h.itemStatusBefore ? t(`itemStatus_${h.itemStatusBefore}`) : t("itemStatusUnrecorded")} → ${h.itemStatusAfter ? t(`itemStatus_${h.itemStatusAfter}`) : t("itemStatusUnrecorded")}` : ["expense", "topup", "refund", "balance"].includes(h.action) ? t(`financeAction${h.action[0].toUpperCase()}${h.action.slice(1)}`) : t(h.action)}</strong>
-										<small>
-											{h.eventDate
-												? date(h.eventDate, i18n.language)
-												: new Intl.DateTimeFormat(i18n.language, {
-													dateStyle: "medium",
-												}).format(new Date(h.createdAt))}
-											{h.action === "renew" && h.billDate && h.amount !== undefined && h.currency
-												? ` · ${date(h.billDate, i18n.language)} · ${t("recordedAmount")}: ${historyCny(h,subscriptionRates) === null ? t("subscriptionCnyMissing") : money(historyCny(h,subscriptionRates)!,"CNY",i18n.language)}${h.currency !== "CNY" ? ` · ${t("subscriptionCnyEstimate")}` : ""}`
-												: ""}
-											{h.borrower ? ` · ${t("borrower")}: ${h.borrower}` : ""}
-											{h.expectedReturnDate ? ` · ${t("itemExpectedReturnDate")}: ${date(h.expectedReturnDate, i18n.language)}` : ""}
-											{h.note && ` · ${h.note}`}
-										</small>
-									</div>
+					</>;
+	return (
+		<main className={unified ? "page unified-asset-detail" : `page asset-detail asset-detail-${kind}${relations.length ? " has-relations" : ""}${kind === "account" ? " account-relation-layout" : ""}`}>
+            {kind === "project" && <div className="asset-project-action-bar">
+              <Button variant="primary" onClick={() => setEdit(true)}>{t("edit")}</Button>
+              <DropdownMenu><DropdownMenuTrigger render={<Button aria-label={t("moreActions")} />}><MoreHorizontal size={18}/>{t("moreActions")}</DropdownMenuTrigger><DropdownMenuContent align="end">
+                <DropdownMenuItem render={<Link to="/assets/project/$id/workflow/$flow" params={{ id: asset.id, flow: "brand" }} />}>{t("workflowBrandEntry")}</DropdownMenuItem>
+                <DropdownMenuItem render={<Link to="/assets/project/$id/workflow/$flow" params={{ id: asset.id, flow: "close" }} />}>{t("workflowCloseEntry")}</DropdownMenuItem>
+                <DropdownMenuItem disabled={deleteBusy} onClick={() => { setDeleteError(""); setDeleteOpen(true); }}>{t("delete")}</DropdownMenuItem>
+              </DropdownMenuContent></DropdownMenu>
+            </div>}
+{unified ? <UnifiedDetailHeader asset={asset} category={niceCategory(asset.category,t)||t(asset.kind)} state={asset.kind === "item" && asset.status === "active" && asset.itemLifecycleStatus ? t(`itemStatus_${asset.itemLifecycleStatus}`) : t(asset.status)} actions={<><Button variant="primary" onClick={()=>setEdit(true)}>{t("edit")}</Button><DropdownMenu><DropdownMenuTrigger render={<Button aria-label={t("moreActions")}/>}>{t("moreActions")}<MoreHorizontal size={18}/></DropdownMenuTrigger><DropdownMenuContent align="end"><DropdownMenuItem onClick={()=>setActivityOpen(true)}>{t(asset.kind === "subscription" ? "renew" : "detailRecordActivity")}</DropdownMenuItem><DropdownMenuItem onClick={()=>{setDeleteError("");setDeleteOpen(true);}}>{t("delete")}</DropdownMenuItem></DropdownMenuContent></DropdownMenu></>}/> : (			<div className="page-header">
+				<div>
+					{kind !== "project" && kind !== "account" && <TextLink asChild><Link className="back-link" to={catalogReturn?.view === "all" ? "/assets" : "/assets/$kind"} params={catalogReturn?.view === "all" ? {} : { kind: catalogReturn?.view === "domains" ? "domains" : returnKind }} onClick={() => { sessionStorage.removeItem("keepany-relation-return-id"); sessionStorage.removeItem("keepany-relation-return-kind"); }}>
+						<ArrowLeft size={16} />
+						{t("back")}
+					</Link></TextLink>}
+					{kind === "account" && <span className="account-detail-avatar"><Mail size={30} /></span>}
+					<div className="eyebrow">
+						{t(kind)} · {niceCategory(asset.category || (kind === "account" ? "other" : ""), t)}
+					</div>
+					<h1 title={kind === "account" ? asset.name : undefined}>{asset.name}</h1>
+					{kind !== "account" && <p className="subtitle">
+						{asset.description || asset.url || t("local")}
+					</p>}
+					{kind === "project" && <div className="asset-project-hero-meta">{asset.category && <span>{niceCategory(asset.category, t)}</span>}{asset.status && <span>{t(asset.status)}</span>}{asset.url && <a href={asset.url} target="_blank" rel="noopener noreferrer">{asset.url}<ExternalLink size={13} /></a>}</div>}
+				</div>
+				{kind === "account" ? <div className="actions"><Button variant="primary" onClick={() => { setAccountAddingLogin(false); setEdit(true); }}><Pencil size={17} />{t("edit")}</Button><Button onClick={() => { setAccountAddingLogin(true); setEdit(true); }}><Plus size={17} />{t("add")}</Button></div> : kind !== "project" && <div className="actions">
+					<Button onClick={() => setEdit(true)}>{t("edit")}</Button>
+					<Button
+						variant="danger"
+						disabled={deleteBusy}
+						onClick={() => { setDeleteError(""); setDeleteOpen(true); }}
+					>
+						{t("delete")}
+					</Button>
+				</div>}
+
+			</div>)}
+			{deleteOpen && (
+				<Dialog
+					className={kind === "account" ? "account-detail-dialog" : undefined}
+					title={t("delete")}
+					onClose={() => {
+						if (!deleteInFlight.current) setDeleteOpen(false);
+					}}
+				>
+					<p>{t(kind === "account" ? "accountTrashConfirm" : "deleteConfirm")}</p>
+					{deleteError && <p className="field-error" role="alert">{deleteError}</p>}
+					<div className="actions">
+						<Button disabled={deleteBusy} onClick={() => setDeleteOpen(false)}>
+							{t("cancel")}
+						</Button>
+						<Button
+							variant="danger"
+							disabled={deleteBusy}
+							onClick={() => void confirmDelete()}
+						>
+							{t("delete")}
+						</Button>
+					</div>
+				</Dialog>
+			)}
+{unified ? <UnifiedDetailColumns info={unifiedInfo} description={unifiedDescription} relations={<UnifiedDetailRelations key={asset.id} asset={asset}/>} history={<UnifiedDetailHistory asset={asset}>{asset.kind === "item" && <Button size="small" variant="ghost" onClick={()=>setActivityOpen(true)}>{t("detailRecordActivity")}</Button>}</UnifiedDetailHistory>}/> : (			<div className={`detail-grid asset-detail-primary${asset.kind === "account" ? " account-empty-primary" : ""}`}>
+				{asset.kind === "item" && <section className="card asset-item-photo-main" aria-label={t("itemCoverPhoto")}>
+					<div className="asset-item-photo-stage">{itemMedia.coverId ? <ImageTile id={itemMedia.coverId} /> : <p>{t("itemStatusUnrecorded")}</p>}
+						<span className="chip">{asset.status === "loaned" ? t("loaned") : asset.itemLifecycleStatus ? t(`itemStatus_${asset.itemLifecycleStatus}`) : t("itemStatusUnrecorded")}</span>
+					</div>
+					<div className="asset-item-photo-actions"><Button size="small" disabled={uploading || (!itemMedia.coverId && asset.attachments.length >= 20)} onClick={() => chooseImage("coverId", itemMedia.coverId)}>{t(itemMedia.coverId ? "replaceImage" : "addPhoto")}</Button>
+						<Button size="small" disabled={uploading || asset.attachments.length >= 20} onClick={() => chooseImage("detailIds")}>{t("itemDetailPhotos")}</Button>
+					</div>
+				</section>}
+				{asset.kind === "project" && <ProjectProfile asset={asset} accounts={relatedAccounts} onVisit={visitRelation} onEdit={() => setEdit(true)} />}
+				{asset.kind === "project" && asset.projectInspectionDate && <section className="card asset-project-reminders" id="project-reminders">
+					<div className="card-header"><h2>{t("projectNextInspection")}</h2></div>
+					<div className="asset-project-reminder-row asset-project-reminder-static"><span className="asset-project-reminder-symbol" aria-hidden="true">↗</span><span><strong>{t("projectNextInspection")}</strong><small>{asset.projectInspectionDate ? date(asset.projectInspectionDate, i18n.language) : t("projectNoInspection")}</small></span></div>
+				</section>}
+
+				{asset.kind === "item" && <section className="card asset-item-evidence" aria-label={t("itemPhotosAndEvidence")}>
+					<div className="card-header"><h2>{t("itemPhotosAndEvidence")}</h2></div>
+					<p className="asset-item-evidence-hint">{t("itemEvidenceHint")}</p>
+					<div className="asset-item-evidence-groups">
+						{(["coverId", "detailIds", "receiptIds"] as const).map((role) => {
+							const ids = role === "coverId" ? (itemMedia.coverId ? [itemMedia.coverId] : []) : itemMedia[role];
+							const label = t(role === "coverId" ? "itemCoverPhoto" : role === "detailIds" ? "itemDetailPhotos" : "itemReceiptImages");
+							return <section className="asset-item-evidence-group" data-item-media-role={role} aria-label={label} key={role}>
+								<div className="asset-item-evidence-head"><h3>{label}</h3><Button size="small" disabled={uploading || (asset.attachments.length >= 20 && !(role === "coverId" && itemMedia.coverId))} onClick={() => chooseImage(role, role === "coverId" ? itemMedia.coverId : "")}>{t(role === "coverId" && itemMedia.coverId ? "replaceImage" : "addPhoto")}</Button></div>
+								{ids.length ? <div className="asset-item-evidence-grid">{ids.map((id) => <div className="asset-item-evidence-image" key={id}>
+									<ImageTile id={id} />
+									<div className="project-media-actions"><Button size="small" disabled={uploading} onClick={() => chooseImage(role, id)}>{t("replaceImage")}</Button><Button size="small" variant="danger" disabled={uploading} onClick={() => void removeImage(id)}>{t("removeImage")}</Button></div>
+								</div>)}</div> : <p className="asset-quiet-empty">{t("none")}</p>}
+							</section>;
+						})}
+					</div>
+				</section>}
+				{asset.kind !== "project" && asset.kind !== "account" && attachmentSection}
+			</div>)}
+ {unified && activityOpen && <Dialog title={t(asset.kind === "subscription" ? "renew" : "detailRecordActivity")} closeDisabled={itemBusy || renewalBusy} onClose={()=>{if(!itemInFlight.current&&!renewalInFlight.current)setActivityOpen(false);}}>{unifiedActivity}</Dialog>}
+
+			{asset.kind === "project" && <section className="card asset-project-costs" id="project-domains">
+				<div className="card-header"><h2>{t("projectDomainCosts")}</h2><Button size="small" onClick={() => openDomain()}><Plus size={14} />{t("projectAddDomain")}</Button></div>
+				<div className="asset-project-cost-grid">
+					<div><small>{t("projectMonthlyCost")}</small><strong>{formatTotals(monthlyByCurrency)}</strong><small>{relatedSubscriptions.length} {t("projectLinkedSubscriptions")}</small>{missingSubscriptionCny > 0 && <small>{t("subscriptionCnyPartial",{count:missingSubscriptionCny})}</small>}</div>
+					<div><small>{t("projectAnnualEstimate")}</small><strong>{formatTotals(annualByCurrency)}</strong>{incompleteCost && <small>{t("projectCostPartial")}</small>}</div>
+					<div><small>{t("projectNextRenewal")}</small><strong>{nextRenewal ? date(nextRenewal, i18n.language) : "—"}</strong><small>{projectDomains.length} {t("projectDomain")}</small></div>
+				</div>
+				{projectDomains.length ? <div className="asset-project-domain-list">{projectDomains.map((domain) => <div className="asset-project-domain-row" key={domain.id} id={`project-domain-${domain.id}`}><div><strong>{domain.name}</strong><small>{[domain.registrar, domain.accountId ? liveById.get(domain.accountId)?.name : "", domain.annualAmount === null ? "" : `${money(domain.annualAmount, domain.currency, i18n.language)} / ${t("year")}`].filter(Boolean).join(" · ") || "—"}</small><span>{t("projectExpiry")}: {date(domain.expiryDate, i18n.language)} · {t("projectAutoRenew")}: {t(domain.autoRenew === "on" ? "projectAutoRenewOn" : domain.autoRenew === "off" ? "projectAutoRenewOff" : "projectAutoRenewUnknown")}</span></div><Button size="small" onClick={() => openDomain(domain)}>{t("edit")}</Button></div>)}</div> : <p className="asset-quiet-empty">{t("projectNoDomains")}</p>}
+				<details className="asset-project-linked-subscriptions"><summary>{t("projectLinkedSubscriptions")} · {relatedSubscriptions.length}</summary>{relatedSubscriptions.length ? relatedSubscriptions.map((linked) => <Link key={linked.id} to="/assets/$kind/$id" params={{ kind: linked.kind, id: linked.id }} onClick={(event) => { event.preventDefault(); visitRelation(linked); }}><strong>{linked.name}</strong><span>{subscriptionCny(linked,subscriptionRates) ? money(subscriptionCny(linked,subscriptionRates)!.amount,"CNY",i18n.language) : t("subscriptionCnyMissing")} / {t(linked.cycle)} · {date(linked.dueDate, i18n.language)}</span></Link>) : <p className="asset-quiet-empty">{t("none")}</p>}</details>
+			</section>}
+			{asset.kind === "project" && domainEditing && domainDraft && <Dialog title={domainEditing === "new" ? t("projectAddDomain") : t("projectEditDomain")} onClose={() => { if (!domainBusy) setDomainEditing(null); }}>
+				<form className="asset-project-domain-form" onSubmit={(event) => { event.preventDefault(); void saveDomain(); }}>
+					<label className="field">{t("projectDomain")}<Input disabled={domainBusy} required value={domainDraft.name} onChange={(event) => setDomainDraft({ ...domainDraft, name: event.target.value })} placeholder="example.com" /></label>
+					<label className="field">{t("projectRegistrar")}<Input disabled={domainBusy} value={domainDraft.registrar} onChange={(event) => setDomainDraft({ ...domainDraft, registrar: event.target.value })} /></label>
+					<label htmlFor="project-domain-account" className="field">{t("projectDomainAccount")}<Select id="project-domain-account" disabled={domainBusy} value={domainDraft.accountId} onValueChange={(selectValue) => setDomainDraft({ ...domainDraft, accountId: selectValue })}><SelectOption value="">—</SelectOption>{liveAssets(data).filter((entry) => entry.kind === "account").map((entry) => <SelectOption value={entry.id} key={entry.id}>{entry.name}</SelectOption>)}</Select></label>
+					<label className="field">{t("projectExpiry")}<DatePicker aria-label={t("projectExpiry")} disabled={domainBusy}  value={domainDraft.expiryDate} onValueChange={(dateValue) => setDomainDraft({ ...domainDraft, expiryDate: dateValue })} /></label>
+					<label className="field">{t("projectAnnualFee")}<span className="asset-project-fee-row"><Input disabled={domainBusy} inputMode="decimal" value={domainFee} onChange={(event) => setDomainFee(event.target.value)} /><Select disabled={domainBusy} aria-label={t("currency")} value={domainDraft.currency} onValueChange={(selectValue) => { const currency = selectValue as ProjectDomain["currency"]; setDomainDraft({ ...domainDraft, currency }); setDomainFee(""); }}><SelectOption>CNY</SelectOption><SelectOption>USD</SelectOption><SelectOption>EUR</SelectOption><SelectOption>GBP</SelectOption><SelectOption>JPY</SelectOption></Select></span></label>
+					<label htmlFor="project-domain-auto-renew" className="field">{t("projectAutoRenew")}<Select id="project-domain-auto-renew" disabled={domainBusy} value={domainDraft.autoRenew} onValueChange={(selectValue) => setDomainDraft({ ...domainDraft, autoRenew: selectValue as ProjectDomain["autoRenew"] })}><SelectOption value="unknown">{t("projectAutoRenewUnknown")}</SelectOption><SelectOption value="on">{t("projectAutoRenewOn")}</SelectOption><SelectOption value="off">{t("projectAutoRenewOff")}</SelectOption></Select></label>
+					{domainError && <p role="alert" className="field-error">{domainError}</p>}
+					<div className="actions"><Button type="submit" variant="primary" disabled={domainBusy}>{t("save")}</Button>{domainEditing !== "new" && <Button type="button" variant="danger" disabled={domainBusy} onClick={() => void removeDomain()}>{t("projectDomainDelete")}</Button>}<Button type="button" disabled={domainBusy} onClick={() => setDomainEditing(null)}>{t("cancel")}</Button></div>
+				</form>
+			</Dialog>}
+{!unified && (			<div className="detail-grid asset-detail-secondary">
+				<DetailDisclosure id="account-relations" tabIndex={kind === "account" ? -1 : undefined} className="card asset-relations-card" collapsible={kind === "project"} label={t("projectRelatedDetails")}>
+					<div className="card-header">
+						<div>
+							<h2>{t(kind === "account" ? "accountRelationMap" : "relations")}</h2>
+							{relations.length > 0 && <p>{kind === "account" ? t("accountGraphCounts", { direct: directCount, indirect: Math.max(0, (family?.neighbors.length ?? 0) - directCount) }) : t("relationGraphLegend")}</p>}
+						</div>
+						<Button
+							variant="ghost"
+							size="small"
+							onClick={() => {
+								setRelationError("");
+								setRelationEdit(true);
+							}}
+						>
+							<Plus size={14} />
+							{t("addRelation")}
+						</Button>
+					</div>
+					{relations.length || kind === "account" ? (
+						<>
+							{kind === "account" ? <div className="account-graph-toolbar">
+								<div className="actions">
+									<Button size="small" variant={graphScope === "direct" ? "primary" : "default"} aria-pressed={graphScope === "direct"} onClick={() => changeGraphScope("direct")}>{t("accountGraphDirect")}</Button>
+									<Button size="small" variant={graphScope === "family" ? "primary" : "default"} aria-pressed={graphScope === "family"} onClick={() => changeGraphScope("family")}>{t("accountGraphFamily")}</Button>
 								</div>
+								{relationSearch}
+								<details className="account-graph-guide"><summary>{t("accountGraphHelp")}</summary><p><span>{t("accountGraphDirection")}</span><span>{t("relationGraphLegend")}</span></p></details>
+							</div> : relations.length >= 5 ? relationSearch : null}
+							<Suspense fallback={<p role="status">{t("loading")}</p>}><AssetRelationGraph root={asset} assets={[asset, ...graphRelated]} relations={displayedFamily?.relations ?? visibleRelations} matches={graphMatches} selectedEdgeId={selectedGraphEdgeId} onSelectEdge={setSelectedGraphEdgeId} onVisit={visitRelation} onDeleteRelations={(items) => { setRelationDeleteError(""); setRelationToDelete(items); }} /></Suspense>
+							{kind === "account" ? visibleRelations.length > 0 && <details className="account-relation-details" open={relationDetailsOpen} onToggle={(event) => setRelationDetailsOpen(event.currentTarget.open)}>
+								<summary>{t("accountGraphDetails", { count: visibleRelations.length })}</summary>
+								{relationList}
+							</details> : relationList}
+						</>
+					) : (
+						asset.kind === "project" ? <p className="asset-quiet-empty">{t("none")}</p> : <Empty hint={false} />
+					)}
+				</DetailDisclosure>
+				<section className="card asset-tasks-card">
+					<div className="card-header">
+						<h2>{t("tasks")}</h2>
+						<div className="actions">
+						{asset.kind === "item" && <Button asChild size="small"><Link to="/tasks" hash={maintenanceTask ? `task-${maintenanceTask.id}` : undefined}>{t("itemOpenMaintenancePlan")}</Link></Button>}
+						<Button
+							variant="ghost"
+							size="small"
+							onClick={() => setTaskEdit(true)}
+						>
+							<Plus size={14} />
+							{t("add")}
+						</Button>
+						</div>
+					</div>
+					{ownTasks.length ? (
+						<div className="list">
+							{ownTasks.map((task) => (
+								<TaskRow key={task.id} task={task} hideRelated={kind === "account" || kind === "project"} compact={kind === "account" || kind === "project"} />
 							))}
 						</div>
 					) : (
-						<Empty hint={false} />
+						asset.kind === "project" ? <p className="asset-quiet-empty">{t("none")}</p> : <Empty hint={false} />
 					)}
 				</section>
-			)}
+			</div>)}
+			{asset.kind === "project" && <DetailDisclosure className="asset-project-media-disclosure" collapsible label={t("attachments")}>{attachmentSection}</DetailDisclosure>}
+			{asset.kind === "account" && <aside className="account-login-column">
+                <AccountLoginSummary key={`${asset.id}:${currentLogin?.key ?? "empty"}:${currentLogin?.entry.modifiedAt ?? ""}`} asset={asset} current={currentLogin} total={accountChoices.length} index={accountChoices.findIndex(choice => choice.key === currentLogin?.key)} onSwitch={() => { if (currentLogin) setAccountSelection({ assetId: asset.id, key: nextAccountLogin(accountChoices, currentLogin.key)?.key ?? "" }); }} onEdit={() => { setAccountAddingLogin(false); setEdit(true); }} />
+                <AccountDetailActions asset={asset} entry={currentLogin?.entry} />
+                {asset.attachments.length > 0 && <details className="account-existing-attachments"><summary>{t("attachments")}</summary>{attachmentSection}</details>}
+				<details className="card impact-checklist account-impact-details"><summary><Network size={21} /><span>{t("accountImpactTitle")}</span><ChevronRight size={18} /></summary>
+					<div className="card-header">
+						<div>
+							<h2>{t("impact")}</h2>
+							<p>{t("accountImpactGuide")}</p>
+						</div>
+						<Button
+							size="small"
+							disabled={impactBusy || impactPendingCount === 0}
+							onClick={() => void createImpact()}
+						>
+							{t("makeChecklist")} · {impactPendingCount}
+						</Button>
+					</div>
+					<fieldset className="tabs task-filters" aria-label={t("taskFilter")}>
+						{(["all", "pending", "done"] as const).map((value) => (
+							<button
+								type="button"
+								key={value}
+								aria-pressed={impactFilter === value}
+								onClick={() => setImpactFilter(value)}
+							>
+								{t(value)} · {impactCounts[value]}
+							</button>
+						))}
+					</fieldset>
+					{visibleImpactTasks.length ? (
+						<div className="list">
+							{visibleImpactTasks.map((task) => (
+								<ImpactTaskRow task={task} showTaskLink key={task.id} />
+							))}
+						</div>
+					) : <Empty hint={false} />}
+				</details>
+            </aside>}
+
+
 			{asset.kind === "item" && locationOpen && <Dialog title={t("itemEditLocation")} onClose={() => { if (!locationBusy) setLocationOpen(false); }}>
 				<div className="asset-item-location-fields">
 					<label className="field"><span>{t("itemLocationArea")}</span><Input value={locationArea} maxLength={300} disabled={locationBusy} onChange={(event) => { setLocationArea(event.target.value); setLocationError(""); }} /></label>
@@ -1708,7 +1579,7 @@ function LegacyAssetDetail() {
 				</Dialog>
 			)}
 			{pendingImage && (
-				<Dialog className={kind === "account" ? "account-detail-dialog" : undefined} title={t("preview")} onClose={() => setPendingImage(null)}>
+				<Dialog className={kind === "account" ? "account-detail-dialog" : undefined} title={t("preview")} closeDisabled={unified && uploading} onClose={() => { if (!unified || !imageInFlight.current) setPendingImage(null); }}>
 					{pendingImageUrl && (
 						<img
 							className="image-preview"
@@ -1723,7 +1594,7 @@ function LegacyAssetDetail() {
 						<p role="alert">{t("uploadError")}</p>
 					)}
 					<div className="actions">
-						<Button onClick={() => setPendingImage(null)}>{t("cancel")}</Button>
+						<Button disabled={unified && uploading} onClick={() => setPendingImage(null)}>{t("cancel")}</Button>
 						<Button
 							variant="primary"
 							disabled={uploading || pendingImageStatus !== "ready"}

@@ -16,8 +16,10 @@ import { candidateMergeCopy } from "./candidate-merge-copy";
 import { cleanupUxCopy } from "./cleanup-ux-copy";
 import { catalogCopy } from "./catalog-copy";
 import { walletCopy } from "./wallet-copy";
+import { unifiedDetailCopy } from "./unified-detail-copy";
 
 const copy: Record<string, [string, string]> = {
+ ...unifiedDetailCopy,
  overviewAllRecorded: ["已记录资料", "Recorded information"],
  overviewAllRelations: ["全部资料的关系", "Connections across all information"],
  overviewGraphCounts: ["{{records}} 份资料 · {{connections}} 条关联", "{{records}} records · {{connections}} connections"],

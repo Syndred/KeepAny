@@ -1,525 +1,72 @@
-import { AssetCardContent } from "./components/AssetSummaryCard";
-import { WalletCardFace } from './components/WalletCardFace';
-import { readCatalogRecordReturn } from './workspace-return';
 import { useEffect, useRef, useState } from "react";
-import "./workspaces.css";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
-import { Plus, ExternalLink } from "lucide-react";
-import {
-	putFile,
-	fileUrl,
-	cleanupUnreferencedFile,
-	save,
-	saveAssetIfCurrent,
-	saveRelationIfCurrent,
-} from "../../../packages/local-db/src";
-import type { Relation } from "../../../packages/domain/src";
+import { ExternalLink, MoreHorizontal, Plus } from "lucide-react";
+import { cleanupUnreferencedFile, putFile, saveAssetIfCurrent } from "../../../packages/local-db/src";
+import { AssetCardContent } from "./components/AssetSummaryCard";
+import { WalletCardFace } from "./components/WalletCardFace";
+import { UnifiedDetailColumns, UnifiedDetailDescription, UnifiedDetailHeader, UnifiedDetailHistory, UnifiedDetailImage, UnifiedDetailRelations } from "./components/UnifiedAssetDetail";
 import { CatalogRecordEditor } from "./catalog-record-editor";
-import {
-	applyCatalogEdit,
-	catalogCategories,
-	catalogCategoryLabel,
-	catalogRecords,
-	type CatalogRecord,
-} from "./catalog-records";
+import { applyCatalogEdit, catalogCategories, catalogCategoryLabel, catalogRecords, type CatalogRecord } from "./catalog-records";
 import { Button } from "./components/ui/button";
 import { Dialog } from "./components/ui/dialog";
-import { Select, SelectOption } from "./components/ui/select";
-import { Input } from "./components/ui/input";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./components/ui/dropdown-menu";
 import { date, useAppContext } from "./view-shared";
+import "./workspaces.css";
+import { withDetailImages } from "./unified-detail-data";
 
-function RecordImage({
-	id,
-	onRemove,
-	disabled,
-}: {
-	id: string;
-	onRemove: () => void;
-	disabled: boolean;
-}) {
-	const [url, setUrl] = useState("");
-	useEffect(() => {
-		let active = true;
-		let current = "";
-		void fileUrl(id).then((value) => {
-			current = value;
-			if (active) setUrl(value);
-			else if (value) URL.revokeObjectURL(value);
-		});
-		return () => {
-			active = false;
-			if (current) URL.revokeObjectURL(current);
-		};
-	}, [id]);
-	const { t } = useTranslation();
-	return (
-		<div className="catalog-image">
-			{url && (
-				<a href={url} target="_blank" rel="noopener noreferrer">
-					<img src={url} alt={t("attachments")} />
-				</a>
-			)}
-			<Button size="small" disabled={disabled} onClick={onRemove}>
-				{t("removeImage")}
-			</Button>
-		</div>
-	);
+export function CatalogRecordCard({ record, categoryName, onOpen }: { record: CatalogRecord; categoryName: string; onOpen?: () => void }) {
+ return <Link className="asset-summary-card catalog-record-card" to="/records/$id" params={{ id: record.id }} onClick={onOpen}><AssetCardContent asset={record.asset} categoryName={categoryName}/></Link>;
 }
-
-export function CatalogRecordCard({
-	record,
-	categoryName,
-	onOpen,
-}: {
-	record: CatalogRecord;
-	categoryName: string;
-	onOpen?: () => void;
-}) {
-    return <Link className="asset-summary-card catalog-record-card" to="/records/$id" params={{id:record.id}} onClick={onOpen}><AssetCardContent asset={record.asset} categoryName={categoryName}/></Link>;
-}
-
 export function CatalogRecordPage({ recordId }: { recordId?: string } = {}) {
-	const { data, notify } = useAppContext();
-	const { t, i18n } = useTranslation();
-	const navigate = useNavigate();
-	const id = useRouterState({
-		select: (state) => (state.matches.at(-1)?.params as { id?: string })?.id,
-	});
-	const record = catalogRecords(data.assets, data.categories).find(
-		(value) => value.id === (recordId ?? id),
-	);
-	const category =
-		record &&
-		catalogCategories(data.categories).find(
-			(value) => value.id === record.categoryId,
-		);
-	const [edit, setEdit] = useState(false),
-		[remove, setRemove] = useState<CatalogRecord | null>(null);
-	const [unlink, setUnlink] = useState<Relation | null>(null);
-	const [busy, setBusy] = useState(false),
-		[error, setError] = useState("");
-	const running = useRef(false);
-	const [target, setTarget] = useState(""),
-		[label, setLabel] = useState("");
-	const upload = useRef<HTMLInputElement>(null);
-	useEffect(() => {
-		setEdit(false);
-		setRemove(null);
-		setUnlink(null);
-		setTarget("");
-		setLabel("");
-		setError("");
-	}, [id, recordId]);
-	async function run(action: () => Promise<void>) {
-		if (running.current) return;
-		running.current = true;
-		setBusy(true);
-		setError("");
-		try {
-			await action();
-		} catch (reason) {
-			setError(
-				t(
-					reason instanceof Error && reason.message === "asset-stale"
-						? "assetStale"
-						: reason instanceof Error && reason.message === "relation-duplicate"
-							? "relationDuplicate"
-							: "error",
-				),
-			);
-		} finally {
-			running.current = false;
-			setBusy(false);
-		}
-	}
-	if (data.loading) return <p role="status">{t("loading")}</p>;
-	if (!record)
-		return (
-			<main className="page">
-				<p>{t("noMatches")}</p>
-				<Button asChild>
-					<Link to="/assets">{t("back")}</Link>
-				</Button>
-			</main>
-		);
-	const current = record;
-	const {categoryId:backCategoryId,wallet:backWallet} = readCatalogRecordReturn(current.id,catalogCategories(data.categories),!!current.asset.walletCard);
-	const linked = data.relations.filter(
-		(relation) =>
-			!relation.deleted &&
-			(relation.from === current.owner.id || relation.to === current.owner.id),
-	);
-	const related = linked
-		.map((relation) => ({
-			relation,
-			asset: data.assets.find(
-				(asset) =>
-					!asset.deleted &&
-					asset.id ===
-						(relation.from === current.owner.id ? relation.to : relation.from),
-			),
-		}))
-		.filter((value) => value.asset && value.asset.kind !== "vault");
-	async function storeImages(ids: string[]) {
-		await saveAssetIfCurrent(
-			current.owner,
-			applyCatalogEdit(
-				current,
-				{
-					...current.asset,
-					attachments: ids,
-					updatedAt: new Date().toISOString(),
-				},
-				current.categoryId,
-			),
-		);
-	}
-	return (
-		<main className="page catalog-record-detail">
-			<div className="page-header">
-				<div>
-					<Link
-						className="back-link"
-						to={backCategoryId ? "/assets/category/$categoryId" : backWallet ? "/cards" : "/assets"}
-						params={backCategoryId ? { categoryId: backCategoryId } : {}}
-					>
-						{t("back")}
-					</Link>
-					<div className="eyebrow">
-						{current.asset.walletCard ? t('wallet') : category
-							? catalogCategoryLabel(category, t)
-							: t("catalogUnclassified")}
-					</div>
-					<h1>{current.asset.name}</h1>
-				</div>
-				<div className="actions">
-					<Button
-						variant="primary"
-						disabled={busy}
-						onClick={() => setEdit(true)}
-					>
-						{t("edit")}
-					</Button>
-					{!current.domain && (
-						<Button
-							variant="danger"
-							disabled={busy}
-							onClick={() => setRemove(structuredClone(current))}
-						>
-							{t("delete")}
-						</Button>
-					)}
-				</div>
-			</div>
-			{error && !remove && !unlink && (
-				<p role="alert" className="field-error">
-					{error}
-				</p>
-			)}
-			<section className="card catalog-record-info">
-				{current.asset.walletCard && <WalletCardFace asset={current.asset}/>}
-				<dl>
-					{current.asset.walletCard && <><dt>{t('walletType')}</dt><dd>{t(`walletType_${current.asset.walletCard.type}`)}</dd></>}
-					<dt>{t("category")}</dt>
-					<dd>
-						{category
-							? catalogCategoryLabel(category, t)
-							: t("catalogUnclassified")}
-					</dd>
-					<dt>{t("url")}</dt>
-					<dd>
-						{/^https?:\/\//i.test(current.asset.url) ? (
-							<a
-								href={current.asset.url}
-								target="_blank"
-								rel="noopener noreferrer"
-							>
-								{current.asset.url}
-								<ExternalLink size={14} />
-							</a>
-						) : (
-							t("none")
-						)}
-					</dd>
-					<dt>{t("tags")}</dt>
-					<dd>{current.asset.tags.join(" · ") || t("none")}</dd>
-					<dt>{t("status")}</dt>
-					<dd>{t(current.asset.status)}</dd>
-					<dt>{t(current.asset.walletCard ? "walletExpiry" : "catalogDate")}</dt>
-					<dd>{date(current.asset.dueDate, i18n.language)}</dd>
-				</dl>
-				<h2>{t("notes")}</h2>
-				<p className="catalog-record-notes">
-					{current.asset.notes || t("none")}
-				</p>
-			</section>
-			<details className="card catalog-record-extra">
-				<summary>{t("catalogSupplement")}</summary>
-				<section>
-					<header className="card-header">
-						<h2>{t("attachments")}</h2>
-						<Button
-							size="small"
-							disabled={busy || current.asset.attachments.length >= 20}
-							onClick={() => upload.current?.click()}
-						>
-							<Plus size={16} />
-							{t("addPhoto")}
-						</Button>
-					</header>
-					<input
-						ref={upload}
-						type="file"
-						accept="image/png,image/jpeg,image/webp,image/gif"
-						className="sr-only"
-						aria-label={t("addPhoto")}
-						disabled={busy}
-						onChange={(event) => {
-							const file = event.target.files?.[0];
-							event.target.value = "";
-							if (!file) return;
-							void run(async () => {
-								let fileId = "";
-								try {
-									fileId = await putFile(file);
-									await storeImages([...current.asset.attachments, fileId]);
-									notify(t("saved"));
-								} catch (reason) {
-									if (fileId) await cleanupUnreferencedFile(fileId);
-									throw reason;
-								}
-							});
-						}}
-					/>
-					<div className="catalog-images">
-						{current.asset.attachments.map((image) => (
-							<RecordImage
-								key={image}
-								id={image}
-								disabled={busy}
-								onRemove={() =>
-									void run(async () => {
-										await storeImages(
-											current.asset.attachments.filter((id) => id !== image),
-										);
-										await cleanupUnreferencedFile(image);
-									})
-								}
-							/>
-						))}
-					</div>
-				</section>
-				{current.domain ? (
-					<section>
-						<h2>{t("catalogRelated")}</h2>
-						<Link
-							to="/assets/$kind/$id"
-							params={{ kind: "project", id: current.owner.id }}
-							hash={`project-domain-${current.domain.id}`}
-						>
-							{t("catalogLegacy")} · {current.owner.name}
-						</Link>
-					</section>
-				) : (
-					<section>
-						<h2>{t("catalogRelated")}</h2>
-						{related.map(({ relation, asset }) => (
-							<div className="catalog-related-row" key={relation.id}>
-								<Link
-									to="/assets/$kind/$id"
-									params={{ kind: asset!.kind, id: asset!.id }}
-								>
-									{asset!.name}
-								</Link>
-								<span>{relation.label}</span>
-								<Button
-									size="small"
-									disabled={busy}
-									onClick={() => setUnlink(structuredClone(relation))}
-								>
-									{t("remove")}
-								</Button>
-							</div>
-						))}
-						<form
-							className="catalog-relation-form"
-							onSubmit={(event) => {
-								event.preventDefault();
-								void run(async () => {
-									if (
-										linked.some(
-											(relation) =>
-												relation.from === current.owner.id &&
-												relation.to === target &&
-												relation.label.trim().toLocaleLowerCase() ===
-													label.trim().toLocaleLowerCase(),
-										)
-									)
-										throw Error("relation-duplicate");
-									await save("relation", {
-										id: crypto.randomUUID(),
-										from: current.owner.id,
-										to: target,
-										label: label.trim(),
-										createdAt: new Date().toISOString(),
-										verifiedAt: "",
-										deleted: false,
-									});
-									setTarget("");
-									setLabel("");
-									notify(t("saved"));
-								});
-							}}
-						>
-							<label className="field" htmlFor="catalog-relation-target">
-								{t("catalogRelated")}
-								<Select
-									id="catalog-relation-target"
-									value={target}
-									disabled={busy}
-									onValueChange={setTarget}
-								>
-									<SelectOption value="">{t("none")}</SelectOption>
-									{data.assets
-										.filter(
-											(asset) =>
-												!asset.deleted &&
-												asset.kind !== "vault" &&
-												asset.id !== current.owner.id,
-										)
-										.map((asset) => (
-											<SelectOption key={asset.id} value={asset.id}>
-												{asset.name}
-											</SelectOption>
-										))}
-								</Select>
-							</label>
-							<label className="field" htmlFor="catalog-relation-label">
-								{t("relationLabel")}
-								<Input
-									id="catalog-relation-label"
-									value={label}
-									maxLength={100}
-									disabled={busy}
-									onChange={(event) => setLabel(event.target.value)}
-								/>
-							</label>
-							<Button type="submit" disabled={busy || !target || !label.trim()}>
-								{t("addRelation")}
-							</Button>
-						</form>
-					</section>
-				)}
-			</details>
-			{(current.domain ||
-				current.owner.catalogCategoryId === undefined ||
-				current.owner.projectDomains.length > 0 ||
-				[
-					current.owner.description,
-					current.owner.contact,
-					current.owner.longDescription,
-					current.owner.projectLaunchMonth,
-					current.owner.projectInspectionDate,
-					current.owner.projectTitle,
-					current.owner.projectPromoUrl,
-					current.owner.projectMediumDescription,
-					current.owner.projectFeatures,
-					current.owner.projectPricing,
-					current.owner.projectPricingType,
-					current.owner.projectEmail,
-				].some(Boolean)) && (
-				<Button asChild>
-					<Link
-						to="/assets/$kind/$id"
-						params={{ kind: "project", id: current.owner.id }}
-						hash={
-							current.domain
-								? `project-domain-${current.domain.id}`
-								: "project-details"
-						}
-					>
-						{t("catalogLegacy")}
-					</Link>
-				</Button>
-			)}
-			{edit && (
-				<CatalogRecordEditor
-					key={current.id}
-					record={current}
-					onClose={() => setEdit(false)}
-				/>
-			)}
-			{unlink && (
-				<Dialog
-					title={t("remove")}
-					onClose={() => setUnlink(null)}
-					closeDisabled={busy}
-				>
-					<p>{unlink.label}</p>
-					{error && (
-						<p role="alert" className="field-error">
-							{error}
-						</p>
-					)}
-					<div className="actions">
-						<Button disabled={busy} onClick={() => setUnlink(null)}>
-							{t("cancel")}
-						</Button>
-						<Button
-							variant="danger"
-							disabled={busy}
-							onClick={() =>
-								void run(async () => {
-									await saveRelationIfCurrent(unlink, {
-										...unlink,
-										deleted: true,
-									});
-									setUnlink(null);
-								})
-							}
-						>
-							{t("remove")}
-						</Button>
-					</div>
-				</Dialog>
-			)}
-			{remove && (
-				<Dialog
-					title={t("delete")}
-					closeDisabled={busy}
-					onClose={() => setRemove(null)}
-				>
-					<p>{remove.asset.name}</p>
-					{error && (
-						<p role="alert" className="field-error">
-							{error}
-						</p>
-					)}
-					<div className="actions">
-						<Button disabled={busy} onClick={() => setRemove(null)}>
-							{t("cancel")}
-						</Button>
-						<Button
-							variant="danger"
-							disabled={busy}
-							onClick={() =>
-								void run(async () => {
-									await saveAssetIfCurrent(remove.owner, {
-										...remove.owner,
-										deleted: true,
-										updatedAt: new Date().toISOString(),
-									});
-									setRemove(null);
-									void navigate({ to: "/assets" });
-								})
-							}
-						>
-							{t("delete")}
-						</Button>
-					</div>
-				</Dialog>
-			)}
-		</main>
-	);
+ const id = useRouterState({ select: state => (state.matches.at(-1)?.params as { id?: string })?.id });
+ return <CatalogDetail key={recordId ?? id} recordId={recordId ?? id ?? ""}/>;
 }
+function CatalogDetail({ recordId }: { recordId: string }) {
+ const { data, notify } = useAppContext(), { t, i18n } = useTranslation(), navigate = useNavigate();
+ const current = catalogRecords(data.assets, data.categories).find(record => record.id === recordId);
+ const [edit, setEdit] = useState(false), [remove, setRemove] = useState<CatalogRecord | null>(null);
+ const [busy, setBusy] = useState(false), [error, setError] = useState("");
+ const [pending, setPending] = useState<{ file: File; replace: string } | null>(null), [preview, setPreview] = useState(""), [ready, setReady] = useState(false);
+ const upload = useRef<HTMLInputElement>(null), replaceId = useRef(""), inFlight = useRef(false);
+ useEffect(() => { if (!pending) { setPreview(""); return; } const url = URL.createObjectURL(pending.file); setPreview(url); setReady(false); return () => URL.revokeObjectURL(url); }, [pending]);
+ if (data.loading) return <p role="status">{t("loading")}</p>;
+ if (!current) return <main className="page"><h1>{t("noMatches")}</h1><Button asChild><Link to="/assets">{t("back")}</Link></Button></main>;
+ const category = catalogCategories(data.categories).find(row => row.id === current.categoryId);
+ const categoryName = current.asset.walletCard ? t(`walletType_${current.asset.walletCard.type}`) : category ? catalogCategoryLabel(category, t) : t("catalogUnclassified");
+ async function run(action: () => Promise<void>) {
+  if (inFlight.current) return;
+  inFlight.current = true; setBusy(true); setError("");
+  try { await action(); notify(t("saved")); }
+  catch (reason) { setError(t(reason instanceof Error && reason.message === "asset-stale" ? "assetStale" : "error")); }
+  finally { inFlight.current = false; setBusy(false); }
+ }
+ async function storeImages(ids: string[], replace = "", replacement = "") {
+  if (!current) return;
+  const draft = current.domain ? { ...current.asset, attachments: ids } : withDetailImages(current.asset, ids, replace, replacement);
+  await saveAssetIfCurrent(current.owner, applyCatalogEdit(current, { ...draft, updatedAt: new Date().toISOString() }, current.categoryId));
+ }
+ function chooseImage(id = "") { replaceId.current = id; setError(""); upload.current?.click(); }
+ const hasLegacy = current.domain || current.owner.catalogCategoryId === undefined || current.owner.projectDomains.length > 0 || [current.owner.contact, current.owner.projectLaunchMonth, current.owner.projectInspectionDate, current.owner.projectTitle, current.owner.projectPromoUrl, current.owner.projectMediumDescription, current.owner.projectFeatures, current.owner.projectPricing, current.owner.projectPricingType, current.owner.projectEmail].some(Boolean);
+ const info = <section className="card unified-detail-info"><header className="card-header"><h2>{t("detailBasicInfo")}</h2></header>{current.asset.walletCard ? <WalletCardFace asset={current.asset}/> : current.asset.url && /^https?:\/\//i.test(current.asset.url) ? <div className="unified-detail-highlight"><a href={current.asset.url} target="_blank" rel="noopener noreferrer">{current.asset.url}<ExternalLink size={15}/></a></div> : null}<dl>
+  <div><dt>{t("category")}</dt><dd>{categoryName}</dd></div>
+  {current.asset.walletCard?.issuer ? <div><dt>{t("walletIssuer")}</dt><dd>{current.asset.walletCard.issuer}</dd></div> : null}
+  {current.asset.walletCard?.lastFour ? <div><dt>{t("walletLastFour")}</dt><dd>{current.asset.walletCard.lastFour}</dd></div> : null}
+  <div><dt>{t("status")}</dt><dd>{t(current.asset.status)}</dd></div>
+  <div><dt>{t(current.asset.walletCard ? "walletExpiry" : "catalogDate")}</dt><dd>{date(current.asset.dueDate, i18n.language)}</dd></div>
+  {current.domain ? <div><dt>{t("project")}</dt><dd>{current.owner.name}</dd></div> : null}
+ </dl>{current.asset.tags.length ? <div className="unified-detail-tags">{current.asset.tags.map(tag => <span key={tag}>{tag}</span>)}</div> : null}{hasLegacy ? <div className="actions"><Button size="small" asChild><Link to="/assets/$kind/$id" params={{ kind: "project", id: current.owner.id }} hash={current.domain ? `project-domain-${current.domain.id}` : "project-details"}>{t("catalogLegacy")}</Link></Button></div> : null}</section>;
+ const description = <UnifiedDetailDescription asset={current.asset} actions={<Button size="small" variant="ghost" disabled={busy || current.asset.attachments.length >= 20} onClick={() => chooseImage()}><Plus size={16}/>{t("addPhoto")}</Button>}>
+  <input ref={upload} type="file" accept="image/png,image/jpeg,image/webp,image/gif" className="sr-only" aria-label={t("addPhoto")} disabled={busy} onChange={event => { const file = event.target.files?.[0]; event.target.value = ""; if (!file) return; if (!["image/png", "image/jpeg", "image/webp", "image/gif"].includes(file.type) || !file.size || file.size > 20 * 1024 * 1024 || file.name.length > 255) { setError(t("uploadError")); return; } setPending({ file, replace: replaceId.current }); }}/>
+  {current.asset.attachments.length ? <div className="unified-detail-gallery">{current.asset.attachments.map((image, index) => <UnifiedDetailImage key={image} id={image} label={t("detailPhotoNumber", { number: index + 1 })} actions={<><Button size="small" disabled={busy} onClick={() => chooseImage(image)}>{t("replaceImage")}</Button><Button size="small" variant="danger" disabled={busy} onClick={() => void run(async () => { await storeImages(current.asset.attachments.filter(id => id !== image)); await cleanupUnreferencedFile(image); })}>{t("removeImage")}</Button></>}/>)}</div> : <p className="unified-detail-empty">{t("detailNoImages")}</p>}
+ </UnifiedDetailDescription>;
+ return <main className="page unified-asset-detail catalog-record-detail">
+  <UnifiedDetailHeader asset={current.asset} category={categoryName} state={t(current.asset.status)} actions={<><Button variant="primary" onClick={() => setEdit(true)}>{t("edit")}</Button><DropdownMenu><DropdownMenuTrigger render={<Button aria-label={t("moreActions")}/>}>{t("moreActions")}<MoreHorizontal size={18}/></DropdownMenuTrigger><DropdownMenuContent align="end"><DropdownMenuItem disabled={!!current.domain || busy} onClick={() => { setError(""); setRemove(structuredClone(current)); }}>{t("delete")}</DropdownMenuItem></DropdownMenuContent></DropdownMenu></>}/>
+  {error && !pending && !remove ? <p className="field-error" role="alert">{error}</p> : null}
+  <UnifiedDetailColumns info={info} description={description} relations={<UnifiedDetailRelations key={current.id} asset={current.asset} owner={current.domain ? current.owner : undefined}/>} history={<UnifiedDetailHistory asset={current.asset}/>}/>
+  {edit ? <CatalogRecordEditor record={current} onClose={() => setEdit(false)}/> : null}
+  {pending ? <Dialog title={t("preview")} closeDisabled={busy} onClose={() => { if (!inFlight.current) setPending(null); }}>{preview ? <img className="image-preview" src={preview} alt={pending.file.name} onLoad={() => setReady(true)} onError={() => { setReady(false); setError(t("uploadError")); }}/> : null}{error ? <p role="alert">{error}</p> : null}<div className="actions"><Button disabled={busy} onClick={() => setPending(null)}>{t("cancel")}</Button><Button variant="primary" disabled={busy || !ready} onClick={() => void run(async () => { let id = ""; try { id = await putFile(pending.file); const ids = pending.replace ? current.asset.attachments.map(value => value === pending.replace ? id : value) : [...current.asset.attachments, id]; await storeImages(ids, pending.replace, id); if (pending.replace) await cleanupUnreferencedFile(pending.replace); setPending(null); } catch (reason) { if (id) await cleanupUnreferencedFile(id); throw reason; } })}>{t("confirm")}</Button></div></Dialog> : null}
+  {remove ? <Dialog title={t("delete")} closeDisabled={busy} onClose={() => { if (!inFlight.current) setRemove(null); }}><p>{t("deleteConfirm")}</p><p>{remove.asset.name}</p>{error ? <p role="alert">{error}</p> : null}<div className="actions"><Button disabled={busy} onClick={() => setRemove(null)}>{t("cancel")}</Button><Button variant="danger" disabled={busy} onClick={() => void run(async () => { await saveAssetIfCurrent(remove.owner, { ...remove.owner, deleted: true, updatedAt: new Date().toISOString() }); setRemove(null); void navigate({ to: "/assets" }); })}>{t("delete")}</Button></div></Dialog> : null}
+ </main>;
+}
+
