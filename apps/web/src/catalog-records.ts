@@ -118,7 +118,14 @@ export function applyCatalogEdit(
 	categoryId: string,
 ): Asset {
 	if (!record.domain)
-		return { ...draft, id: record.owner.id, catalogCategoryId: categoryId };
+		return {
+			...draft,
+			id: record.owner.id,
+			// Editing visible fields must not rewrite an unchanged legacy category.
+			catalogCategoryId: categoryId === record.categoryId
+				? record.owner.catalogCategoryId
+				: categoryId,
+		};
 	return {
 		...record.owner,
 		updatedAt: draft.updatedAt,

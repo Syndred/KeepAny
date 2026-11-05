@@ -1,8 +1,8 @@
 import { ReminderTaskContext } from "./ReminderTaskContext";
-import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
-import { ExternalLink, MoreHorizontal, Plus, X } from "lucide-react";
+import { ExternalLink, MoreHorizontal, Plus } from "lucide-react";
 import {
 	cleanupUnreferencedFile,
 	putFile,
@@ -38,7 +38,7 @@ import { money, date, useAppContext } from "./view-shared";
 import "./workspaces.css";
 import { withDetailImages } from "./unified-detail-data";
 
-const ProjectDetailExtras = lazy(() => import("./page-asset-detail").then(module => ({ default: module.ProjectDetailExtras })));
+const ProjectDetailInfo = lazy(() => import("./page-asset-detail").then(module => ({ default: module.ProjectDetailInfo })));
 
 export function CatalogRecordCard({
 	record,
@@ -73,18 +73,6 @@ function CatalogDetail({ recordId }: { recordId: string }) {
 	const current = catalogRecords(data.assets, data.categories).find(
 		(record) => record.id === recordId,
 	);
-	const [extrasOpen, setExtrasOpen] = useState(false);
-	const extrasToggle = useRef<HTMLButtonElement>(null);
-	const extrasRegion = useRef<HTMLElement>(null);
-	// Reveal after the lazy content commits, when its final height is available.
-	const revealExtras = useCallback(() => {
-		extrasRegion.current?.focus({ preventScroll: true });
-		extrasRegion.current?.scrollIntoView({ block: "start" });
-	}, []);
-	function closeExtras() {
-		setExtrasOpen(false);
-		extrasToggle.current?.focus();
-	}
 	const [edit, setEdit] = useState(false),
 		[remove, setRemove] = useState<CatalogRecord | null>(null);
 	const [busy, setBusy] = useState(false),
@@ -230,9 +218,7 @@ function CatalogDetail({ recordId }: { recordId: string }) {
 					</div>
 				)}
 			</dl>
-			{hasLegacy && (
-                <Button size="small" variant="ghost" aria-expanded={extrasOpen} aria-controls="project-detail-extras" onClick={event => { extrasToggle.current = event.currentTarget; setExtrasOpen(value => !value); }}>{t("detailMoreInfo")}</Button>
-			)}
+			{hasLegacy && <Suspense fallback={<p role="status">{t("loading")}</p>}><ProjectDetailInfo projectId={current.owner.id} domainId={current.domain?.id} /></Suspense>}
 		</section>
 	);
 	const description = (
@@ -372,7 +358,7 @@ function CatalogDetail({ recordId }: { recordId: string }) {
 				history={<UnifiedDetailHistory asset={current.asset} />}
 				tasks={<UnifiedDetailTasks assetId={current.owner.id} />}
 			/>
-            {hasLegacy && extrasOpen && <section ref={extrasRegion} tabIndex={-1} id="project-detail-extras" className="unified-detail-extras-region" aria-label={t("detailMoreInfo")}><div className="unified-detail-extras-actions"><h2>{current.domain ? `${t("project")}: ${current.owner.name}` : t("detailMoreInfo")}</h2><Button size="small" aria-label={t("close")} onClick={closeExtras}><X size={18}/></Button></div><Suspense fallback={<p role="status">{t("loading")}</p>}><ProjectDetailExtras projectId={current.owner.id} onReady={revealExtras} /></Suspense></section>}
+
 
 			{edit ? (
 				<CatalogRecordEditor record={current} onClose={() => setEdit(false)} />

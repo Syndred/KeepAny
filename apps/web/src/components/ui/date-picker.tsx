@@ -113,7 +113,11 @@ export function DatePicker({
 							focusCalendar.current = true;
 							setOpen(true);
 						}
-						if (event.key === "Escape") setOpen(false);
+						if (event.key === "Escape" && open && editable) {
+							event.preventDefault();
+							event.stopPropagation();
+							setOpen(false);
+						}
 					}}
 				/>
 				<span className="date-trigger" aria-hidden="true">

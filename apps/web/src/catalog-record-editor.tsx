@@ -137,6 +137,11 @@ export function CatalogRecordEditor({
 							<Field name="wallet-balance" label={t('walletBalance')} value={balance} error={errors.balance} onChange={value=>{setBalance(value);setErrors(current=>({...current,balance:''}));}}/>
 							<Field name="wallet-uses" label={t('walletRemaining')} value={uses} error={errors.uses} onChange={value=>{setUses(value);setErrors(current=>({...current,uses:''}));}}/>
 						</>}
+                        {original && !original.domain && !draft.walletCard && <>
+                            <Field name="catalog-record-contact" label={t("contact")} value={draft.contact} error={errors.contact} onChange={contact=>setDraft(current=>({...current,contact}))}/>
+                            <Field name="catalog-record-launch" label={t("projectLaunchMonth")} type="month" value={draft.projectLaunchMonth} error={errors.projectLaunchMonth} onChange={projectLaunchMonth=>setDraft(current=>({...current,projectLaunchMonth}))}/>
+                            <Field name="catalog-record-inspection" label={t("projectNextInspection")} error={errors.projectInspectionDate}><DatePicker id="catalog-record-inspection" aria-label={t("projectNextInspection")} value={draft.projectInspectionDate} onValueChange={projectInspectionDate=>setDraft(current=>({...current,projectInspectionDate}))}/></Field>
+                        </>}
 						<Field name="catalog-record-category" label={t("category")}>
 							<Select
 								id="catalog-record-category"

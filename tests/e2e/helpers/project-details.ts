@@ -4,12 +4,8 @@ export async function openOriginalProjectPage(page: Page) {
 	await expect(
 		page.locator("main.asset-detail-project, main.catalog-record-detail"),
 	).toBeVisible();
-	const original = page.getByRole("button", {
-		name: /^(更多资料|More details)$/,
-		exact: true,
-	});
-	if (await original.isVisible() && await original.getAttribute("aria-expanded") !== "true") await original.click();
-	if (await original.isVisible()) await expect(page.locator(".unified-detail-project-extras")).toBeVisible();
+    const info = page.locator('.unified-detail-project-info');
+    if (await page.locator('main.catalog-record-detail').count()) await expect(info).toBeVisible();
 }
 export async function openProjectDetails(page: Page) {
 	await openOriginalProjectPage(page);

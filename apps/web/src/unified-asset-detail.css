@@ -75,7 +75,7 @@
 	padding: 4px 12px;
 	border: 1px solid var(--line-soft);
 	border-radius: 20px;
-	background: var(--blue-soft, var(--paper-soft));
+	background: var(--accent);
 	overflow-wrap: anywhere;
 }
 .unified-detail-labels .unified-detail-state {
@@ -192,7 +192,7 @@
 	margin: 0;
 	padding: 16px;
 	border-radius: 12px;
-	background: var(--yellow-soft);
+	background: transparent;
 }
 .unified-detail-record-fields > div {
 	display: grid;
@@ -228,7 +228,7 @@
 }
 .unified-detail-tags > span {
 	padding: 3px 10px;
-	border: 1px solid var(--yellow);
+	border: 1px solid var(--line);
 	border-radius: 10px;
 	background: var(--yellow-soft);
 }
@@ -415,7 +415,7 @@
 	overflow-wrap: anywhere;
 }
 .unified-detail-event-type.is-loan {
-	background: var(--blue-soft, var(--paper-soft));
+	background: var(--accent);
 }
 .unified-detail-event-content {
 	min-width: 0;
@@ -666,10 +666,9 @@
 
 .unified-detail-activity-dialog .renewal-amount-field > small[role='alert'] { font-size: 14px; line-height: 1.5; color: var(--danger); font-weight: 500; }
 
-.unified-detail-project-extras { display: grid; gap: 20px; min-width: 0; }
-.unified-detail-project-extras > .card { min-width: 0; margin: 0; }
-.unified-detail-project-extras .asset-project-costs { grid-column: auto; }
-.unified-detail-extras-region { margin-top: 20px; scroll-margin-top: 88px; }
-.unified-detail-extras-region:focus-visible { outline: 2px solid var(--line); outline-offset: 4px; }
-.unified-detail-extras-actions { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 12px; }
-.unified-detail-extras-actions h2 { min-width: 0; margin: 0; font-size: 22px; overflow-wrap: anywhere; }
+.unified-detail-project-info { margin-top: 10px !important; }
+.unified-detail-project-info dd .button, .unified-detail-project-info dt .button { min-height: 32px; padding: 4px 8px; vertical-align: middle; }
+.unified-detail-domains { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; }
+.unified-detail-domains > span { display: inline-flex; align-items: center; min-width: 0; gap: 4px; }
+.unified-detail-domains a { color: var(--ink); text-decoration-color: var(--accent); text-underline-offset: 3px; overflow-wrap: anywhere; }
+.unified-detail-record-fields :focus-visible, .button.primary:focus-visible { outline-color: var(--line); }

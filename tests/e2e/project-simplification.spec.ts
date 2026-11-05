@@ -60,7 +60,7 @@ for (const [locale, width] of [["zh-CN", 390], ["en", 1280]] as const) test(`${l
 		return { entries, rows, asset: JSON.parse(rows.find(row => row.type === "asset" && JSON.parse(row.payload).id === fixture.project.id)!.payload) as Asset };
 	}
 	const goProject = async () => {await page.goto(`/assets/project/${fixture.project.id}`);await openProjectDetails(page);};
-	const edit = () => page.locator(".asset-project-profile-card").getByRole("button", { name: t("supplementProfile"), exact: true }).click();
+	const edit = () => page.locator(".unified-detail-header").getByRole("button", { name: t("edit"), exact: true }).click();
 	try {
         const actualCandidate = acceptanceCandidate();
         const indexSha256 = createHash("sha256").update(await (await page.request.get("/")).body()).digest("hex");
@@ -76,7 +76,7 @@ for (const [locale, width] of [["zh-CN", 390], ["en", 1280]] as const) test(`${l
 		await expect(page.locator(".asset-backlinks-card, .asset-project-materials, .asset-project-stats, [data-project-media-role]")).toHaveCount(0);
 		await openProjectDetails(page);
 		await expect(page.locator(".unified-detail-gallery img")).toHaveCount(1);
-		await expect(page.locator(".asset-project-profile-card")).toContainText("Basic contact");
+		await expect(page.locator(".unified-detail-info")).toContainText("Basic contact");
 		await expect(page.locator('.unified-detail-events > li').filter({hasText:fixture.expense.title!})).toContainText(fixture.expense.title!);
 		const layout = await page.locator("main.catalog-record-detail").evaluate(main => {
 			const hero = main.querySelector(".unified-detail-header")!.getBoundingClientRect();
@@ -92,15 +92,15 @@ for (const [locale, width] of [["zh-CN", 390], ["en", 1280]] as const) test(`${l
 		expect.soft(layout.overflow, "The restored project with an expense fits the viewport").toBe(false);
 		await edit(); const form = page.getByRole("dialog");
 		await expect(form.locator("#projectTitle, #projectPromoUrl, #projectEmail, #projectLogoFile, #longDescription")).toHaveCount(0);
-		await expect(form.locator("#notes")).toHaveValue("Basic note");
-		await form.locator("#name").fill("Cancelled name"); await form.getByRole("button", { name: t("cancel"), exact: true }).click();
+		await expect(form.locator("#catalog-record-notes")).toHaveValue("Basic note");
+		await form.locator("#catalog-record-name").fill("Cancelled name"); await form.getByRole("button", { name: t("cancel"), exact: true }).click();
 		expect((await archive()).asset).toEqual(fixture.project);
 		await goProject(); await edit();
-		await form.locator("#name").fill("Updated basic project"); await form.locator("#notes").fill("Updated ordinary note");
-		await form.locator("#tags").fill("legacy, retained");
+		await form.locator("#catalog-record-name").fill("Updated basic project"); await form.locator("#catalog-record-notes").fill("Updated ordinary note");
+		await form.locator("#catalog-record-tags").fill("legacy, retained");
 		await form.getByRole("button", { name: t("save"), exact: true }).click(); await expect(form).toHaveCount(0); await page.reload();
 		await openProjectDetails(page);
-		await expect(page.locator(".asset-project-profile-card")).toContainText("Updated ordinary note");
+		await expect(page.locator(".unified-detail-record-fields")).toContainText("Updated ordinary note");
 		const result = await archive();
 		const { name, notes, tags, updatedAt, ...retained } = result.asset;
 		const { name: oldName, notes: oldNotes, tags: oldTags, updatedAt: oldUpdatedAt, ...before } = fixture.project;
