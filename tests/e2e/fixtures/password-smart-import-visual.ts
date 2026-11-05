@@ -411,6 +411,7 @@ export async function importVisualKdbxEntries(
 	page: Page,
 	t: (key: string) => string,
 	entries: Array<Pick<VaultEntryDraft, "title" | "username" | "password"> & Partial<VaultEntryDraft>>,
+	beforeSubmit?: (dialog: Locator) => Promise<void>,
 ) {
 	const { VaultSession: Session } = await visualRuntime();
 	let record: VaultRecord | null = null;
@@ -434,6 +435,7 @@ export async function importVisualKdbxEntries(
 	const dialog = page.getByRole("dialog");
 	await dialog.locator("#password-vault-import-file").setInputFiles({ name: "synthetic-password-only-preparation.kdbx", mimeType: "application/octet-stream", buffer: Buffer.from(bytes) });
 	await dialog.locator("#password-vault-import-password").fill(fixtureMaster);
+	await beforeSubmit?.(dialog);
 	await dialog.getByRole("button", { name: t("pwVaultImportNow"), exact: true }).click();
 	await expect(dialog).toBeHidden();
 	expect(await page.locator(".compact-account-card:not([data-private-only]), a.asset-account-card").evaluateAll(nodes => nodes.map(node => node.getAttribute("data-account-id") ?? node.getAttribute("href")).sort())).toEqual(beforeAccounts);

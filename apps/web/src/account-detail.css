@@ -128,6 +128,16 @@
 .page.account-relation-layout:has(>.reminder-task-context) { grid-template-rows:auto auto auto; }
 .page.account-relation-layout > .reminder-task-context { grid-column:1 / -1; grid-row:2; margin:0; }
 .page.asset-detail-account.account-relation-layout:has(>.reminder-task-context) > .asset-detail-secondary,.page.asset-detail-account.account-relation-layout:has(>.reminder-task-context) > .account-login-column { grid-row:3; }
+@media(min-width:1001px) and (min-height:720px) and (max-height:799px) {
+ .page.asset-detail-account.account-relation-layout { gap:12px; padding-bottom:12px; }
+ .account-relation-layout .page-header { padding:8px 14px; }
+ .account-relation-layout .page-header > div:first-child { grid-template-columns:44px minmax(0,1fr); }
+ .account-relation-layout .account-detail-avatar { width:44px; height:44px; }
+ .page.asset-detail-account.account-relation-layout > .account-login-column,.page.asset-detail-account.account-relation-layout > .asset-detail-secondary { gap:12px; }
+ .account-login-summary .card-header { padding-block:10px; }
+ .account-login-value { padding-block:6px; }
+ .account-note-summary { padding-block:12px; }
+}
 @media(min-width:1001px) and (max-width:1450px) {
  .account-relation-layout .account-graph-toolbar .relation-filter { flex-basis:160px; }
  .account-relation-layout .account-graph-toolbar .actions .button { padding-inline:10px; font-size:12px; }

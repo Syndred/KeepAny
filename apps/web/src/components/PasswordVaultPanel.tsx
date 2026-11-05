@@ -196,6 +196,7 @@ export function PasswordVaultPanel({
 	const [accountLinksOpen, setAccountLinksOpen] = useState(false);
 	const [importFile, setImportFile] = useState<File | null>(null);
 	const [importPassword, setImportPassword] = useState("");
+	const [importError, setImportError] = useState("");
 	const [changeMasterOpen, setChangeMasterOpen] = useState(false);
 	const [currentMaster, setCurrentMaster] = useState("");
 	const [newMaster, setNewMaster] = useState("");
@@ -278,6 +279,7 @@ export function PasswordVaultPanel({
 		setPurgeTarget(null);
 		setEntryActionError("");
 		setImportPassword("");
+		setImportError("");
 		setImportOpen(false);
 		if (notice !== "pwVaultLockedElsewhere") setSmartImportOpen(false);
 		setChangeMasterOpen(false);
@@ -613,16 +615,29 @@ export function PasswordVaultPanel({
 		}
 	}
 
+	function openImport() {
+		setImportError("");
+		setImportOpen(true);
+	}
+	function closeImport() {
+		if (busy) return;
+		setImportOpen(false);
+		setImportFile(null);
+		setImportPassword("");
+		setImportError("");
+	}
 	async function importVault(event: React.FormEvent<HTMLFormElement>) {
 		event.preventDefault();
 		if (busy || !session || !importFile || !importPassword) {
-			if (!importFile) announce("pwVaultNoFile");
+			if (!importFile) { setImportError("pwVaultNoFile"); announce("pwVaultNoFile"); }
 			return;
 		}
 		setBusy(true);
 		clearMessage();
+		setImportError("");
 		try {
 			if (importFile.size > 16 * 1024 * 1024) {
+				setImportError("pwVaultFileTooLarge");
 				announce("pwVaultFileTooLarge");
 				return;
 			}
@@ -634,7 +649,9 @@ export function PasswordVaultPanel({
 			if (fileInputRef.current) fileInputRef.current.value = "";
 			announce("pwVaultImported");
 		} catch (error) {
-			announce(errorKey(error, "import"));
+			const key = errorKey(error, "import");
+			setImportError(key);
+			announce(key);
 		} finally {
 			setBusy(false);
 		}
@@ -816,7 +833,7 @@ export function PasswordVaultPanel({
 					setMasterConfirm={setMasterConfirm}
 					setShowMaster={setShowMaster}
 					onCreate={createVault}
-					onImport={() => setImportOpen(true)}
+					onImport={openImport}
 				/>
 			)}
 			{snapshot.status === "locked" && (
@@ -839,7 +856,7 @@ export function PasswordVaultPanel({
 		<DropdownMenu><DropdownMenuTrigger render={<Button size="icon" variant="ghost" className="password-vault-icon account-options-trigger" aria-label={t("accountTools")} disabled={busy} />}><MoreHorizontal size={18} /></DropdownMenuTrigger><DropdownMenuContent align="end">
 			<DropdownMenuItem onClick={() => setAccountLinksOpen(true)}>{t("pwConnectTitle")}</DropdownMenuItem>
 			{missingSampleAccounts.length > 0 && <DropdownMenuItem onClick={() => void addSampleLogins()}>{t("sampleLogins")}</DropdownMenuItem>}
-			<DropdownMenuItem onClick={() => setImportOpen(true)}>{t("pwVaultImport")}</DropdownMenuItem>
+			<DropdownMenuItem onClick={openImport}>{t("pwVaultImport")}</DropdownMenuItem>
 			<DropdownMenuItem onClick={() => setSmartImportOpen(true)}>{t("pwSmartTitle")}</DropdownMenuItem>
 			<DropdownMenuItem onClick={() => void exportVault()}>{t("pwVaultExport")}</DropdownMenuItem>
 			<DropdownMenuItem onClick={() => setChangeMasterOpen(true)}>{t("pwVaultChangeMaster")}</DropdownMenuItem>
@@ -950,7 +967,7 @@ export function PasswordVaultPanel({
 							<VaultIconButton
 								label={t("pwVaultImport")}
 								disabled={busy}
-								onClick={() => setImportOpen(true)}
+								onClick={openImport}
 							>
 								<Upload size={18} />
 							</VaultIconButton>
@@ -1259,13 +1276,7 @@ export function PasswordVaultPanel({
 				<Dialog
 					title={t("pwVaultImportTitle")}
                     returnFocusTo={snapshot.status === "unlocked" ? () => toolTrigger("links") : undefined}
-					onClose={() => {
-						if (!busy) {
-							setImportOpen(false);
-							setImportFile(null);
-							setImportPassword("");
-						}
-					}}
+					onClose={closeImport}
 				>
 					<form
 						className="password-vault-dialog-form"
@@ -1304,11 +1315,12 @@ export function PasswordVaultPanel({
 								required
 							/>
 						</div>
+						{importError && <p className="field-error" role="alert">{t(importError)}</p>}
 						<div className="actions">
 							<Button
 								type="button"
 								disabled={busy}
-								onClick={() => setImportOpen(false)}
+								onClick={closeImport}
 							>
 								{t("cancel")}
 							</Button>

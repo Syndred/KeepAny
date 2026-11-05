@@ -6,6 +6,7 @@ import {selectChoice} from "./helpers/select-choice";
 import {portableCandidate} from "./helpers/portable-candidate";
 import {importVisualKdbxEntries} from "./fixtures/password-smart-import-visual";
 import {waitForAccountGraphLayout} from "./helpers/account-graph";
+import {openAccountOption} from "./helpers/account-options";
 
 const output=resolve(process.env.KEEPANY_ACCOUNT_DETAIL_EVIDENCE??"test-results/account-detail-approved/evidence");mkdirSync(output,{recursive:true});
 const master="SyntheticAccountDetail2026!", rootName="Synthetic Douyin";
@@ -40,13 +41,15 @@ async function screenshot(page:Page,name:string){
 }
 async function addRelations(page:Page,t:T,ids:string[]){for(const id of ids){await page.locator("#account-relations").getByRole("button",{name:t("addRelation"),exact:true}).click();await selectChoice(page.locator("#relation-target"),{value:id});await page.locator("#relation-label").fill("Synthetic connection");await page.getByRole("dialog").getByRole("button",{name:t("save"),exact:true}).click();await expect(page.getByRole("dialog")).toHaveCount(0)}}
 async function checkHistoryViewport(page:Page,name:string){
- await page.setViewportSize({width:1280,height:800});await waitForAccountGraphLayout(page);
+ for(const height of [720,800]){
+ await page.setViewportSize({width:1280,height});await waitForAccountGraphLayout(page);
  await page.evaluate(()=>{(document.activeElement as HTMLElement|null)?.blur();scrollTo(0,0)});
- expect(await page.evaluate(()=>document.documentElement.scrollHeight)).toBeLessThanOrEqual(801);
+ expect(await page.evaluate(()=>document.documentElement.scrollHeight)).toBeLessThanOrEqual(height+1);
  const list=page.locator('.account-history-list'),row=page.locator('.account-history-row').first();
  expect(await list.evaluate(e=>e.clientHeight)).toBeGreaterThanOrEqual((await row.boundingBox())!.height);
  await page.locator('.account-history-row').last().getByRole('button').scrollIntoViewIfNeeded();
- expect(await page.evaluate(()=>scrollY)).toBe(0);await screenshot(page,name);
+ expect(await page.evaluate(()=>scrollY)).toBe(0);await screenshot(page,`${name}-${height}`);
+ }
 }
 
 for(const language of ["zh-CN","en"] as const){
@@ -101,9 +104,13 @@ for(const language of ["zh-CN","en"] as const){
   writeFileSync(join(output,`visual-${language}.json`),JSON.stringify({ids:["AS02","AS03","AS04"],candidate:portableCandidate(),screenshots:shots,status:"machine geometry only; manual review separate"},null,2));
  });
 
- test(`${language} AS05 AS09 AS10 private account history and template navigation`,async({page})=>{
+ test(`${language} AS05 AS09 AS10 AS11 private account history and template navigation`,async({page})=>{
   await page.setViewportSize({width:1280,height:900});await page.goto("/accounts");await page.locator("#password-vault-master").fill(master);await page.locator("#password-vault-master-confirm").fill(master);await page.getByRole("button",{name:t("accountSetUp"),exact:true}).click();
-  await importVisualKdbxEntries(page,t,[{title:"Private related",username:"first@example.test",password:"Synthetic private password",notes:"Private original notes"},{title:"Private related",username:"second@example.test",password:"Other synthetic password"}]);
+  await importVisualKdbxEntries(page,t,[{title:"Private related",username:"first@example.test",password:"Synthetic private password",notes:"Private original notes"},{title:"Private related",username:"second@example.test",password:"Other synthetic password"}],async dialog=>{
+   await injectMemoryFailure(page);await dialog.getByRole('button',{name:t('pwVaultImportNow'),exact:true}).click();
+   await expect(dialog.getByRole('alert')).toHaveText(t('pwVaultMemoryUnavailable'));await expect(dialog.locator('#password-vault-import-password')).not.toHaveValue('');expect(await dialog.locator('#password-vault-import-file').evaluate((e:HTMLInputElement)=>e.files?.length)).toBe(1);await screenshot(page,`import-memory-${language}`);
+  });
+  await openAccountOption(page,t,'pwVaultImport');await page.locator('#password-vault-import-password').fill('Synthetic cancelled import password');await page.getByRole('dialog').getByRole('button',{name:t('cancel'),exact:true}).click();await openAccountOption(page,t,'pwVaultImport');await expect(page.locator('#password-vault-import-password')).toHaveValue('');await expect(page.getByRole('dialog').getByRole('alert')).toHaveCount(0);expect(await page.locator('#password-vault-import-file').evaluate((e:HTMLInputElement)=>e.files?.length)).toBe(0);await page.getByRole('dialog').getByRole('button',{name:t('cancel'),exact:true}).click();
   await card(page,"first@example.test").locator(".compact-account-title-block").click();await expect(page.locator(".account-related-link")).toHaveCount(1);await page.locator(".page-header").getByRole("button",{name:t("edit"),exact:true}).click();await page.locator("#password-vault-entry-notes").fill("Private updated notes");await save(page,t);await page.locator(".account-history-row").first().getByRole("button").click();await page.getByRole("dialog").getByRole("button",{name:t("pwVaultHistoryRestore"),exact:true}).click();await expect(page.locator(".account-note-summary")).toContainText("Private original notes");
   await screenshot(page,`private-history-${language}`);await page.locator(".page-header").getByRole("button",{name:t("add"),exact:true}).click();await expect(page.locator("#password-vault-entry-username")).toHaveValue("");await expect(page.locator("#password-vault-entry-password")).toHaveValue("");await page.locator("#password-vault-entry-username").fill("child@example.test");await save(page,t);await card(page,"first@example.test").locator(".compact-account-title-block").click();await expect(page.locator(".account-related-link").first()).toContainText(t("accountRelated_template"));await page.locator(".account-related-link").first().click();await expect(page.locator(".account-login-summary [data-login-username]")).toHaveText("child@example.test");
  });
