@@ -1968,7 +1968,7 @@ test("V701 category and all-list return origins; V711 overview account and legac
     await expect(page.locator('.asset-relations-card .relation-list')).toBeVisible();
     await page.locator('.asset-relations-card').getByRole('button',{name:t('addRelation'),exact:true}).click();
     await expect(page.getByRole('dialog')).toBeVisible();
-    await page.getByRole('dialog').getByRole('button',{name:t('cancel'),exact:true}).click();
+    await page.getByRole('dialog').getByRole('button',{name:t('close'),exact:true}).click();
 	await screenshot(page, info, "legacy-consumer");
 	await page.goto("/");
 	await expect(page.locator(".overview-page .graph")).toHaveAttribute(
