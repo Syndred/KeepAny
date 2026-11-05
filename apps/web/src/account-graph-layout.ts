@@ -344,3 +344,38 @@ export async function layoutAccountGraph(rootId: string, assets: Asset[], relati
 	} else { cache.delete(key); cache.set(key, pending); }
 	return clone(await pending);
 }
+
+/** Lay out every real component, then pack disjoint canvases. No synthetic business node or edge. */
+export async function layoutWorkspaceGraph(assets: Asset[], relations: Relation[], viewport: { width: number; height: number }): Promise<AccountGraphLayout> {
+	const live = new Map(assets.filter(asset => !asset.deleted && !asset.purged && asset.kind !== "vault").map(asset => [asset.id, asset]));
+	const adjacency = new Map([...live.keys()].sort().map(id => [id, new Set<string>()]));
+	for (const relation of relations) {
+		if (relation.deleted || relation.from === relation.to || !live.has(relation.from) || !live.has(relation.to)) continue;
+		adjacency.get(relation.from)?.add(relation.to); adjacency.get(relation.to)?.add(relation.from);
+	}
+	const remaining = new Set(adjacency.keys()), components: string[][] = [];
+	while (remaining.size) {
+		const first = remaining.values().next().value!;
+		const component = [first]; remaining.delete(first);
+		for (let i = 0; i < component.length; i++) for (const id of adjacency.get(component[i]) ?? []) if (remaining.delete(id)) component.push(id);
+		components.push(component);
+	}
+	const layouts: AccountGraphLayout[] = [];
+	for (const ids of components.sort((a, b) => b.length - a.length || a[0].localeCompare(b[0]))) {
+		const root = [...ids].sort((a, b) => (adjacency.get(b)?.size ?? 0) - (adjacency.get(a)?.size ?? 0) || a.localeCompare(b))[0];
+		layouts.push(await layoutAccountGraph(root, ids.map(id => live.get(id)!), relations, viewport));
+	}
+	const result = emptyLayout();
+	const area = layouts.reduce((sum, layout) => sum + (layout.bounds.width + gap) * (layout.bounds.height + gap), 0);
+	const targetWidth = Math.max(...layouts.map(layout => layout.bounds.width), Math.sqrt(area * Math.max(0.4, viewport.width / Math.max(1, viewport.height))), 1);
+	let x = 0, y = 0, rowHeight = 0;
+	for (const layout of layouts) {
+		if (x && x + layout.bounds.width > targetWidth) { x = 0; y += rowHeight + gap; rowHeight = 0; }
+		translate(layout, x, y);
+		for (const [id, node] of layout.nodes) result.nodes.set(id, node);
+		for (const [id, edge] of layout.edges) result.edges.set(id, edge);
+		x += layout.bounds.width + gap; rowHeight = Math.max(rowHeight, layout.bounds.height);
+	}
+	setBounds(result);
+	return result;
+}

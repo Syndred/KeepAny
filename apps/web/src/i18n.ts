@@ -17,6 +17,17 @@ import { cleanupUxCopy } from "./cleanup-ux-copy";
 import { catalogCopy } from "./catalog-copy";
 
 const copy: Record<string, [string, string]> = {
+ overviewAllRecorded: ["已记录资料", "Recorded information"],
+ overviewAllRelations: ["全部资料的关系", "Connections across all information"],
+ overviewGraphCounts: ["{{records}} 份资料 · {{connections}} 条关联", "{{records}} records · {{connections}} connections"],
+ overviewKindCounts: ["{{account}} 账号 · {{item}} 实物 · {{subscription}} 订阅 · {{project}} 自定义资料", "{{account}} accounts · {{item}} items · {{subscription}} subscriptions · {{project}} custom records"],
+ overviewCountdown: ["到期倒计时", "Due date countdown"],
+ overviewOverdueCount: ["已逾期 {{count}} 项", "{{count}} overdue"],
+ overviewVaultLocked: ["账号库未解锁", "Accounts locked"],
+ overviewVaultUnlocked: ["账号库已解锁", "Accounts unlocked"],
+ overviewAllAccounts: ["全部账号 {{count}}", "All accounts {{count}}"],
+ overviewAllConnections: ["全部关联", "All connections"],
+ overviewLocalStorage: ["资料保存在本机，可随时备份和恢复。", "Information stays on this device. Back up and restore anytime."],
  ...catalogCopy,
  ...cleanupUxCopy,
  accountLoginInfo: ["登录信息", "Login information"],

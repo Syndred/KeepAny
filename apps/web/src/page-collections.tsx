@@ -52,7 +52,7 @@ export function CollectionsPage() {
 	const sidebarOrder = orderedSidebarIds(pendingOrder ?? savedOrder?.value);
 	const sidebarHidden = hiddenSidebarIds(pendingHidden ?? savedHidden?.value);
 	const visibleAssetKinds = workspaceGroupIds.filter((kind) => !sidebarHidden.includes(kind)).length;
-	const sidebarItems: SortableNavItem[] = sidebarOrder.map((id) => ({
+	const sidebarItems: SortableNavItem[] = sidebarOrder.filter(id => id !== "tasks").map((id) => ({
 		id,
 		to: id === "overview" ? "/" : id === "tasks" ? "/tasks" : id === "accounts" ? "/accounts" : "/assets",
 		label: t(id === "assets" ? "assetsWorkspace" : id === "accounts" ? "accountsWorkspace" : id),
