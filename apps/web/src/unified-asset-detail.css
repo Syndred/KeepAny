@@ -192,7 +192,7 @@
 	margin: 0;
 	padding: 16px;
 	border-radius: 12px;
-	background: var(--yellow-soft);
+	background: transparent;
 }
 .unified-detail-record-fields > div {
 	display: grid;

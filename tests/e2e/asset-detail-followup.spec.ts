@@ -60,7 +60,7 @@ async function geometry(page: Page, width: number) {
  const media = page.locator('.unified-detail-media');
  const expected = await fields.evaluate(el => { const p=document.createElement('span'); p.style.background='var(--yellow-soft)'; el.append(p); const c=getComputedStyle(p).backgroundColor; p.remove(); return c; });
  expect(expected).toBe('rgb(255, 210, 76)');
- expect(await fields.evaluate(el => getComputedStyle(el).backgroundColor)).toBe('rgb(255, 210, 76)');
+ expect(await fields.evaluate(el => getComputedStyle(el).backgroundColor)).toBe('rgba(0, 0, 0, 0)');
  expect(await media.evaluate(el => getComputedStyle(el).backgroundColor)).toBe('rgba(0, 0, 0, 0)');
  const h = await page.locator('.unified-detail-history').boundingBox();
  const tasks = await page.locator('.unified-detail-tasks').boundingBox();
@@ -159,6 +159,7 @@ for (const locale of ['zh-CN', 'en'] as const) {
   for(const route of ['/','/assets','/cards','/collections','/settings','/backup','/intake','/accounts']){
    await page.goto(route);await expect(page.getByRole('heading',{level:1}).first()).toBeVisible();
    if(route==='/')await expect(page.locator('.overview-page .graph')).toHaveAttribute('data-layout-ready','true');
+   if(route==='/accounts')await expect(page.locator('#password-vault-master')).toBeVisible();
    await page.evaluate(()=>document.fonts.ready);
    const palette=await page.evaluate(()=>{const values:Record<string,string>={};for(const name of ['--yellow','--yellow-soft','--accent','--accent-soft','--accent-hover']){const el=document.createElement('span');el.style.background=`var(${name})`;document.body.append(el);values[name]=getComputedStyle(el).backgroundColor;el.remove();}return values;});
    expect(Object.values(palette)).toEqual(Array(5).fill('rgb(255, 210, 76)'));
