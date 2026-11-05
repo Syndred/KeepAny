@@ -68,14 +68,14 @@ for (const locale of ["zh-CN", "en"] as const) {
   await page.locator('.sidebar nav a[href="/"]').click(); await expect(page.locator(".overview-graph-empty")).toBeVisible();
   await page.locator(".overview-graph-empty a").click(); await dialog.getByRole("button", { name: text("save"), exact: true }).click();
   await expect(dialog.locator("#catalog-record-name")).toHaveAttribute("aria-invalid", "true");
-  await page.screenshot({ path: info.outputPath("validation-error.png"), fullPage: true });
+  await page.screenshot({ path: info.outputPath("validation-error.png"), fullPage: false });
   await dialog.locator("#catalog-record-name").fill("Single fictional record / 单条资料");
   await dialog.locator("#catalog-record-date").fill("2026-11-06"); await dialog.locator("#catalog-record-name").click();
   await dialog.getByRole("button", { name: text("save"), exact: true }).click(); await expect(dialog).toHaveCount(0);
   await page.locator('.sidebar nav a[href="/"]').click(); await expect(page.locator('[data-layout-ready="true"]')).toBeVisible();
   await expect(page.locator(".react-flow__node")).toHaveCount(1); await expect(page.locator(".react-flow__edge")).toHaveCount(0);
   await expect(page.locator(".overview-action-date")).toContainText(locale === "zh-CN" ? "剩余 1 天" : "1 day");
-  await page.screenshot({ path: info.outputPath("single.png"), fullPage: true });
+  await page.screenshot({ path: info.outputPath("single.png"), fullPage: false });
   // Reset near local midnight, dispatch the ordinary focus update, then let its timer fire.
   const zone = await page.evaluate(() => Intl.DateTimeFormat().resolvedOptions().timeZone);
   await page.clock.setSystemTime(await page.evaluate(() => new Date(2026, 10, 5, 23, 59, 59, 900).getTime())); await page.evaluate(() => window.dispatchEvent(new Event("focus")));
@@ -92,10 +92,10 @@ for (const locale of ["zh-CN", "en"] as const) {
   await page.locator('.sidebar nav a[href="/"]').click();
   await expect.poll(() => intercepted).toBe(1);
   await expect(page.locator(".overview-graph-panel [role=status]")).toContainText(text("loading"));
-  await page.screenshot({ path: info.outputPath("graph-loading.png"), fullPage: true });
+  await page.screenshot({ path: info.outputPath("graph-loading.png"), fullPage: false });
   release();
   await expect(page.locator(".route-load-error")).toBeVisible();
-  await page.screenshot({ path: info.outputPath("graph-load-error.png"), fullPage: true });
+  await page.screenshot({ path: info.outputPath("graph-load-error.png"), fullPage: false });
   await page.unroute(/account-family-graph-view-.*\.js$/);
   await page.getByRole("button", { name: text("pageLoadErrorReload"), exact: true }).click();
   await expect(page.locator('[data-layout-ready="true"]')).toBeVisible();
@@ -107,7 +107,7 @@ for (const locale of ["zh-CN", "en"] as const) {
   await start(page, locale);
   await expect(page.locator(".overview-hero,.overview-project-grid")).toHaveCount(0);
   await expect(page.locator('.sidebar nav a[href="/tasks"]')).toHaveCount(0);
-  await page.screenshot({ path: info.outputPath("empty.png"), fullPage: true });
+  await page.screenshot({ path: info.outputPath("empty.png"), fullPage: false });
   await populated(page);
   const upcoming = page.locator(".overview-panels > section").first();
   await expect(upcoming.locator(".overview-action-copy strong")).toHaveText(["Today task / 今日事项", "Music plan / 音乐订阅", "Learning plan / 学习订阅"]);
@@ -125,7 +125,7 @@ for (const locale of ["zh-CN", "en"] as const) {
   await page.getByRole("button", { name: text("accountGraphFit"), exact: true }).click();
   await page.getByRole("button", { name: text("accountGraphExpand"), exact: true }).click();
   await expect(page.getByRole("dialog").locator('[data-layout-ready="true"]')).toBeVisible();
-  await page.screenshot({ path: info.outputPath("fullscreen.png"), fullPage: true });
+  await page.screenshot({ path: info.outputPath("fullscreen.png"), fullPage: false });
   await page.keyboard.press("Escape"); await expect(page.getByRole("dialog")).toHaveCount(0);
   await page.locator('.sidebar nav a[href="/accounts"]').click();
   await page.locator("#password-vault-master").fill(password); await page.locator("#password-vault-master-confirm").fill(password);
@@ -138,7 +138,7 @@ for (const locale of ["zh-CN", "en"] as const) {
   expect(await page.locator(".react-flow__node").count()).toBeLessThan(18);
   await page.locator(".react-flow__edge").first().focus(); await page.keyboard.press("Enter");
   await expect(page.locator(".account-graph-selection-panel")).toBeVisible();
-  await page.screenshot({ path: info.outputPath("ordinary-detail-selected.png"), fullPage: true });
+  await page.screenshot({ path: info.outputPath("ordinary-detail-selected.png"), fullPage: false });
   await page.locator('.sidebar nav a[href="/accounts"]').click(); await expect(page.locator(".account-toolbar-actions")).toBeVisible();
   await importVisualKdbxEntries(page, text, [{ title: "Private isolated / 私密独立", username: "private@example.test", password: "SyntheticOverviewSecret!", notes: "PRIVATE-NOTES-NEVER-IN-GRAPH", linkedAssetIds: ["ov-air"] }, { title: "Mixed private login / 混合关联登录", username: "mixed@example.test", password: "SyntheticMixed!", linkedAssetIds: ["ov-mail", "ov-camera"] }]);
   await page.locator('.sidebar nav a[href="/"]').click(); await expect(page.locator('[data-layout-ready="true"]')).toBeVisible();
@@ -151,7 +151,7 @@ for (const locale of ["zh-CN", "en"] as const) {
   await expect(page.locator('[data-layout-ready="true"]')).toBeVisible();
   await page.locator(".react-flow__edge").first().focus(); await page.keyboard.press("Enter");
   await expect(page.locator(".account-graph-selection-panel")).toBeVisible();
-  await page.screenshot({ path: info.outputPath("private-detail-selected.png"), fullPage: true });
+  await page.screenshot({ path: info.outputPath("private-detail-selected.png"), fullPage: false });
   await page.goto("/accounts"); await page.locator("#password-vault-unlock-master").fill(password); await page.getByRole("button", { name: text("accountUnlockAction"), exact: true }).click();
   await page.locator('.sidebar nav a[href="/"]').click(); await expect(page.locator('[data-layout-ready="true"]')).toBeVisible();
   // The standard inactivity lock must also remove private nodes from an open fullscreen portal.
@@ -167,31 +167,36 @@ for (const locale of ["zh-CN", "en"] as const) {
  });
  for (const width of [390, 768, 1280, 1920, 2262]) test(`${locale} ${width} OV08 responsive overview states`, async ({ page }, info) => {
   const text = t(locale); await page.setViewportSize({ width, height: 1000 }); await start(page, locale, "date");
-  await page.screenshot({ path: info.outputPath("empty.png"), fullPage: true }); await populated(page);
+  await page.screenshot({ path: info.outputPath("empty.png"), fullPage: false }); await populated(page);
   // Keep the original feedback evidence in prior runs; stable layout checks wait for
   // the existing notification timeout so it cannot cover the countdown content.
   await expect(page.locator(".toast")).toHaveCount(0, { timeout: 10_000 });
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   // Edge positions settle one paint after node measurement; inspect first-visit selection too.
   await page.evaluate(() => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))));
-  await page.screenshot({ path: info.outputPath("populated.png"), fullPage: true });
+  await page.screenshot({ path: info.outputPath("populated.png"), fullPage: false });
+  // React Flow reacts to viewport changes. Full-page capture perturbs its ResizeObserver
+  // during capture, so keep the real viewport and inspect the bottom by ordinary scrolling.
+  await page.locator(".overview-footer").scrollIntoViewIfNeeded();
+  await page.screenshot({ path: info.outputPath("countdown.png"), fullPage: false });
+  await page.locator(".overview-stats").scrollIntoViewIfNeeded();
   await page.locator(".react-flow__edge").first().focus(); await page.keyboard.press("Enter");
   const selection = page.locator(".account-graph-selection-panel"); await expect(selection).toBeVisible();
   expect(await selection.evaluate(node => getComputedStyle(node).backgroundColor)).not.toBe("rgba(0, 0, 0, 0)");
-  await page.screenshot({ path: info.outputPath("edge-selected-first-visit.png"), fullPage: true });
+  await page.screenshot({ path: info.outputPath("edge-selected-first-visit.png"), fullPage: false });
   await selection.getByRole("button", { name: text("close"), exact: true }).click();
-  const link = page.locator(".overview-action-row").first(); await link.hover(); await page.screenshot({ path: info.outputPath("hover.png"), fullPage: true });
+  const link = page.locator(".overview-action-row").first(); await link.hover(); await page.screenshot({ path: info.outputPath("hover.png"), fullPage: false });
   const box = (await link.boundingBox())!; await page.mouse.move(box.x + 15, box.y + 15); await page.mouse.down();
-  await page.screenshot({ path: info.outputPath("pressed.png"), fullPage: true }); await page.mouse.move(0, 0); await page.mouse.up();
+  await page.screenshot({ path: info.outputPath("pressed.png"), fullPage: false }); await page.mouse.move(0, 0); await page.mouse.up();
   await link.focus(); await page.keyboard.press("Shift+Tab"); await page.keyboard.press("Tab");
   await expect(link).toBeFocused();
   expect(await link.evaluate(node => node.matches(":focus-visible"))).toBe(true);
-  await page.screenshot({ path: info.outputPath("focus.png"), fullPage: true });
-  await page.locator(".overview-countdown-footer button").click(); await page.screenshot({ path: info.outputPath("overdue.png"), fullPage: true });
+  await page.screenshot({ path: info.outputPath("focus.png"), fullPage: false });
+  await page.locator(".overview-countdown-footer button").click(); await page.screenshot({ path: info.outputPath("overdue.png"), fullPage: false });
   await page.keyboard.press("Escape"); await page.getByRole("button", { name: text("accountGraphExpand"), exact: true }).click();
   await expect(page.getByRole("dialog").locator('[data-layout-ready="true"]')).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-  await page.screenshot({ path: info.outputPath("fullscreen.png"), fullPage: true }); await page.keyboard.press("Escape");
-  await info.attach("contract-results.json", { body: JSON.stringify({ ids: ["OV08"], locale, width, screenshots: ["empty", "populated", "hover", "pressed", "focus", "overdue", "fullscreen", "edge-selected-first-visit"].map(name=>info.outputPath(`${name}.png`)), candidate: identity(), result: "passed" }), contentType: "application/json" });
+  await page.screenshot({ path: info.outputPath("fullscreen.png"), fullPage: false }); await page.keyboard.press("Escape");
+  await info.attach("contract-results.json", { body: JSON.stringify({ ids: ["OV08"], locale, width, screenshots: ["empty", "populated", "countdown", "hover", "pressed", "focus", "overdue", "fullscreen", "edge-selected-first-visit"].map(name=>info.outputPath(`${name}.png`)), candidate: identity(), result: "passed" }), contentType: "application/json" });
  });
 }

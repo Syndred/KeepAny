@@ -23,6 +23,6 @@ if(run.error||run.status!==0){writeFileSync(join(output,'result.json'),JSON.stri
  for(const id of ['OV01','OV02','OV03','OV04','OV05','OV06','OV07','OV08','OV09'])if(!receipts.some(r=>r.ids.includes(id)))throw Error(`Missing ${id}`);
  for(const receipt of receipts.filter(r=>r.locale&&r.width))for(const path of receipt.screenshots??[])if(!existsSync(path))throw Error(`Missing screenshot ${path}`);
  if(receipts.some(r=>r.candidate!==identity||r.result!=='passed'))throw Error('Candidate mismatch.');
- for(const locale of ['zh-CN','en'])for(const width of [390,768,1280,1920,2262])if(!receipts.some(r=>r.locale===locale&&r.width===width&&r.screenshots?.length===8))throw Error(`Missing ${locale}/${width}`);
+ for(const locale of ['zh-CN','en'])for(const width of [390,768,1280,1920,2262])if(!receipts.some(r=>r.locale===locale&&r.width===width&&r.screenshots?.length===9))throw Error(`Missing ${locale}/${width}`);
  writeFileSync(join(output,'result.json'),JSON.stringify({status:'machine-checks-passed',candidate:identity,tests:tests.length,manualVisual:'separate',controller:'separate',independentReview:'separate'},null,2));
 }
