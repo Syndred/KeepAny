@@ -14,6 +14,12 @@
 .password-vault-trash .password-vault-section-title > small { flex: 1 1 180px; }
 .password-vault-entry-trash > .actions { gap: 12px; margin-top: 16px; }
 .password-vault-trash .button { min-height: 44px; }
+.encrypted-trash-section .password-vault-trash { margin-top: 0; padding-top: 0; border-top: 0; }
+.encrypted-trash-section .password-vault-section-title { margin-bottom: 12px; }
+.encrypted-trash-section .password-vault-entry-trash { min-width: 0; }
+.encrypted-trash-section .password-vault-entry-main strong,
+.encrypted-trash-section .password-vault-entry-main small { overflow-wrap: anywhere; }
+.encrypted-trash-section .password-vault-header { align-items: center; }
 
 
 .trash-confirm-dialog > header .button, .password-vault-purge-dialog > header .button { min-width: 44px; }

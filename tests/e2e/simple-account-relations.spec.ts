@@ -24,9 +24,9 @@ const text = (language: "zh-CN" | "en") => (key: string) => (resources[language]
 type T = (key: string) => string;
 const card = (page: Page, name: string) => page.locator(".compact-account-card").filter({ has: page.getByRole("link", { name, exact: true }) });
 async function save(page: Page, t: T) { await page.getByRole("dialog").getByRole("button", { name: t("save"), exact: true }).click(); await expect(page.getByRole("dialog")).toHaveCount(0); }
-async function setup(page: Page, t: T) { await page.goto("/accounts"); await page.locator("#password-vault-master").fill(master); await page.locator("#password-vault-master-confirm").fill(master); await page.getByRole("button", { name: t("accountSetUp"), exact: true }).click(); await expect(page.locator(".password-vault-toolbar")).toBeVisible(); }
+async function setup(page: Page, t: T) { await page.goto("/accounts"); await page.locator("#password-vault-master").fill(master); await page.locator("#password-vault-master-confirm").fill(master); await page.getByRole("button", { name: t("accountSetUp"), exact: true }).click(); await expect(page.locator(".account-toolbar-actions")).toBeVisible(); }
 async function create(page: Page, t: T, name: string, alias = false) {
- await page.locator(".password-vault-header").getByRole("button", { name: t("add"), exact: true }).click();
+ await page.locator(".asset-category-toolbar").getByRole("button", { name: t("add"), exact: true }).click();
  const d = page.getByRole("dialog");
  await d.locator("#password-vault-entry-title").fill(name);
  await d.locator("#password-vault-entry-username").fill("main@example.test");
@@ -38,7 +38,7 @@ async function create(page: Page, t: T, name: string, alias = false) {
  await expect(d.locator("#account-entry-provider,#account-entry-contact,#account-entry-purpose,#account-entry-notes,.account-entry-profile,.password-vault-linked-picker")).toHaveCount(0);
  await save(page, t);
 }
-async function unlock(page: Page, t: T) { await page.locator("#password-vault-unlock-master").fill(master); await page.getByRole("button", { name: t("accountUnlockAction"), exact: true }).click(); await expect(page.locator(".account-login-summary,.password-vault-toolbar").first()).toBeVisible(); expect(await page.getByText(t("pwVaultStatusUnlocked"), { exact: true }).count()).toBeLessThanOrEqual(1); }
+async function unlock(page: Page, t: T) { await page.locator("#password-vault-unlock-master").fill(master); await page.getByRole("button", { name: t("accountUnlockAction"), exact: true }).click(); await expect(page.locator(".account-login-summary,.account-toolbar-actions").first()).toBeVisible(); expect(await page.getByText(t("pwVaultStatusUnlocked"), { exact: true }).count()).toBeLessThanOrEqual(1); }
 async function connect(page: Page, t: T, name: string) {
  await expect(page.locator("main.asset-detail-account")).toBeVisible();
  await page.getByRole("button", { name: t("addRelation"), exact: true }).click();
@@ -58,7 +58,7 @@ for (const language of ["zh-CN", "en"] as const) {
   const context=await browser.newContext({baseURL:info.project.use.baseURL,viewport:{width:1280,height:1000},locale:language,acceptDownloads:true});await context.addInitScript(lang=>localStorage.setItem("keepany-language",lang),language);const page=await context.newPage();
   try {
    await setup(page,t);await restoreCompletionArchive(page,master,join(legacyDirectory,"fixture.ka1"));await page.locator(".sidebar nav").getByRole("link",{name:t("accountsWorkspace"),exact:true}).click();
-   await expect(page.locator(".password-vault-toolbar,#password-vault-unlock-master").first()).toBeVisible(); if(await page.locator("#password-vault-unlock-master").count())await unlock(page,t); await expect(page.locator(".password-vault-toolbar")).toBeVisible();
+   await expect(page.locator(".account-toolbar-actions,#password-vault-unlock-master").first()).toBeVisible(); if(await page.locator("#password-vault-unlock-master").count())await unlock(page,t); await expect(page.locator(".account-toolbar-actions")).toBeVisible();
    await importVisualKdbxEntries(page,t,[{title:"SR legacy old",username:"old@example.test",password:"LegacySynthetic!2026",notes:privateNote,linkedAssetIds:["sr-legacy-note"]}]);
    const row=card(page,"SR legacy old"), combined=`${supplemental}\n\n${legacyNote}\n\n${privateNote}`;
    await row.getByRole("button",{name:t("edit"),exact:true}).click();await expect(page.locator("#password-vault-entry-notes")).toHaveValue(combined);await page.getByRole("dialog").getByRole("button",{name:t("cancel"),exact:true}).click();

@@ -1,5 +1,5 @@
 import "./trash.css";
-import { useRef, useState } from "react";
+import { lazy, Suspense, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { Trash2 } from "lucide-react";
@@ -15,6 +15,7 @@ import { Button } from "./components/ui/button";
 import { Dialog } from "./components/ui/dialog";
 import { TextLink } from "./components/ui/text-link";
 import { Empty, PageTitle, date, useAppContext } from "./view-shared";
+const PasswordVaultPanel = lazy(() => import("./components/PasswordVaultPanel").then(module => ({ default: module.PasswordVaultPanel })));
 export function TrashPage() {
 	const { data, notify } = useAppContext();
 	const { t, i18n } = useTranslation();
@@ -142,11 +143,16 @@ export function TrashPage() {
 								])
 							}
 						>
-							{t("emptyTrash")}
+							{t("trashEmptyAssets")}
 						</Button>
 					)
 				}
 			/>
+			<section className="card encrypted-trash-section" aria-label={t("pwVaultTrashTitle")}>
+				<Suspense fallback={<p role="status">{t("loading")}</p>}>
+					<PasswordVaultPanel assets={data.assets} notify={notify} embedded trashOnly />
+				</Suspense>
+			</section>
 			{purgeError && !purgePlan && (
 				<p className="field-error" role="alert">
 					{purgeError}
@@ -344,6 +350,7 @@ export function TrashPage() {
 			)}
 			{assets.length === 0 && relations.length === 0 && (
 				<section className="card">
+					<h2>{t("deletedAssets")}</h2>
 					<Empty hint={false} />
 				</section>
 			)}

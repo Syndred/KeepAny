@@ -17,7 +17,7 @@ async function save(dialog: Locator) {
 	await expect(dialog).toBeHidden();
 }
 async function createAccount(page: Page, t: (key: string) => string, name: string, user = "", password = "", aliases: string[] = []) {
-	await page.locator(".password-vault-header").getByRole("button", { name: t("add"), exact: true }).click();
+	await page.locator(".asset-category-toolbar").getByRole("button", { name: t("add"), exact: true }).click();
 	const dialog = page.getByRole("dialog").last();
 	await dialog.locator("#password-vault-entry-title").fill(name);
 	await dialog.locator("#password-vault-entry-username").fill(user);
@@ -41,7 +41,7 @@ async function prepare(page: Page, t: (key: string) => string, aliases: string[]
 	await page.locator("#password-vault-master").fill(master);
 	await page.locator("#password-vault-master-confirm").fill(master);
 	await page.getByRole("button", { name: t("accountSetUp"), exact: true }).click();
-	await expect(page.locator(".password-vault-toolbar")).toBeVisible();
+	await expect(page.locator(".account-toolbar-actions")).toBeVisible();
     await createAccount(page, t, "CC public account", "public@example.test");
 	await createAccount(page, t, "CC studio account", "main@example.test", mainPassword, aliases);
 	if (extraLogin) await addLogin(page, t);
@@ -64,8 +64,10 @@ for (const language of ["zh-CN", "en"] as const) {
 			await account(page).getByRole("button", { name: t("accountDeleteLogin"), exact: true }).click();
             await page.getByRole("dialog", { name: t("accountDeleteLogin"), exact: true }).getByRole("button", { name: t("accountDeleteLogin"), exact: true }).click();
 			await expect(page.getByRole("dialog")).toHaveCount(0);
+			await page.locator(".sidebar-trash").click();
 			await page.locator("#vault-trash").getByRole("button", { name: t("pwVaultRestoreEntry"), exact: true }).click();
 			await expect(page.getByRole("dialog")).toHaveCount(0);
+			await page.locator(".sidebar nav").getByRole("link", { name: t("accountsWorkspace"), exact: true }).click();
 			await expect(account(page)).toHaveAttribute("data-entry-id", /.+/);
 			await screenshot(page, `entry-restored-${language}`);
 			await expect(page.getByRole("dialog")).toHaveCount(0);
@@ -192,7 +194,7 @@ for (const language of ["zh-CN", "en"] as const) {
 				await expect(page.locator(".compact-account-feedback-message")).toBeVisible();
 				const feedbackOverlap = await page.locator(".compact-account-feedback-message").evaluate(message => {
 					const r = message.getBoundingClientRect();
-					return [...document.querySelectorAll(".compact-account-card, .password-vault-toolbar button, .asset-category-toolbar")].some(node => { const c = node.getBoundingClientRect(); return r.left < c.right && r.right > c.left && r.top < c.bottom && r.bottom > c.top; });
+					return [...document.querySelectorAll(".compact-account-card, .account-toolbar-actions button, .asset-category-toolbar")].some(node => { const c = node.getBoundingClientRect(); return r.left < c.right && r.right > c.left && r.top < c.bottom && r.bottom > c.top; });
 				});
 				expect(feedbackOverlap).toBe(false);
 				await screenshot(page, `matrix-normal-${language}-${width}`);
