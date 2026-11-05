@@ -621,6 +621,30 @@ async function enter(
 	return main;
 }
 async function screenshot(page: Page, info: TestInfo, name: string) {
+	// Observe the rendered state, including the next React commit and natural
+	// animations. A click resolving does not prove a portal or reveal is visible.
+	if (/^(ordinary|item|subscription|wallet)-menu$/.test(name)) {
+		const menu = page.getByRole("menu");
+		await expect(menu).toBeVisible();
+		await expect(menu.getByRole("menuitem").first()).toBeVisible();
+		await expect.poll(() => menu.evaluate((element) => {
+			for (let current: Element | null = element; current; current = current.parentElement) {
+				if (Number(getComputedStyle(current).opacity) < 0.999) return false;
+			}
+			const rect = element.getBoundingClientRect();
+			return rect.width > 0 && rect.height > 0 && rect.left >= 0 && rect.top >= 0 && rect.right <= innerWidth + 1 && rect.bottom <= innerHeight + 1;
+		})).toBe(true);
+	}
+	if (/^(ordinary|item|subscription|wallet)-editor$/.test(name)) {
+		await expect(page.getByRole("dialog").locator("#name, #catalog-record-name")).toBeVisible();
+	}
+	await expect.poll(() => page.evaluate(() => document.getAnimations().filter(animation => animation.playState === "running" && animation.effect?.getTiming().iterations !== Infinity).length)).toBe(0);
+	await expect.poll(() => page.locator(".unified-detail-tasks form").evaluateAll((forms) => forms.every(form => {
+		for (let current: Element | null = form; current; current = current.parentElement) {
+			if (Number(getComputedStyle(current).opacity) < 0.999) return false;
+		}
+		return true;
+	}))).toBe(true);
 	const file = info.outputPath(`${name}.png`);
 	await page.screenshot({ path: file, fullPage: false });
 	await info.attach(`${name}.png`, { path: file, contentType: "image/png" });
@@ -790,7 +814,10 @@ for (const locale of ["zh-CN", "en"] as const)
 					.getByRole("button", { name: t("moreActions"), exact: true })
 					.click();
 				await screenshot(page, info, `${kind}-menu`);
+				await page.keyboard.press("ArrowDown");
+				await expect.poll(() => page.evaluate(() => document.activeElement?.getAttribute("role"))).toBe("menuitem");
 				await page.keyboard.press("Escape");
+				await expect(page.getByRole("menu")).toBeHidden();
 			}
 			for (const kind of kinds) {
 				await enter(page, kind, "minimal");
@@ -804,7 +831,7 @@ for (const locale of ["zh-CN", "en"] as const)
 					.scrollIntoViewIfNeeded();
 				await screenshot(page, info, `${kind}-long-description`);
 			}
-			await receipt(info, ["V701", "V710"], { locale, width, matrix: true });
+			await receipt(info, ["V701", "V710"], { locale, width, matrix: true, stableMenus: true });
 		});
 
 for (const locale of ["zh-CN", "en"] as const) {
