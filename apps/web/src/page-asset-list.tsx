@@ -1,20 +1,19 @@
 import { AssetCardContent } from "./components/AssetSummaryCard";
 import { AssetThumbnail as AssetCover } from "./components/AssetThumbnail";
 import { Input } from "./components/ui/input";
-import { lazy, Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { lazy, Suspense, useEffect, useId, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import {
 	DndContext,
 	PointerSensor,
-	KeyboardSensor,
 	closestCenter,
 	useSensor,
 	useSensors,
 	type DragEndEvent,
-	type KeyboardCoordinateGetter,
 } from "@dnd-kit/core";
 import {
 	SortableContext,
+	arrayMove,
 	horizontalListSortingStrategy,
 	useSortable,
 } from "@dnd-kit/sortable";
@@ -54,6 +53,11 @@ function SortablePill({
 	active,
 	reorder = false,
 	disabled = false,
+	keyboardMode = false,
+	keyboardActive = false,
+	onSortKey,
+	registerHandle,
+	instructionsId,
 	onClick,
 }: {
 	id: string;
@@ -61,11 +65,16 @@ function SortablePill({
 	active: boolean;
 	reorder?: boolean;
 	disabled?: boolean;
+	keyboardMode?: boolean;
+	keyboardActive?: boolean;
+	onSortKey?: (id: string, event: KeyboardEvent<HTMLButtonElement>) => void;
+	registerHandle?: (id: string, node: HTMLButtonElement | null) => void;
+	instructionsId?: string;
 	onClick: () => void;
 }) {
 	const { t } = useTranslation();
-	const { attributes, listeners, setNodeRef, transform, transition } =
-		useSortable({ id });
+	const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition } =
+		useSortable({ id, disabled: keyboardMode });
 	return (
 		<div
 			ref={setNodeRef}
@@ -77,6 +86,11 @@ function SortablePill({
 				className="drag-handle"
 				{...attributes}
 				{...listeners}
+				ref={(node) => { setActivatorNodeRef(node); registerHandle?.(id, node); }}
+				aria-disabled={disabled}
+				aria-pressed={keyboardActive || attributes["aria-pressed"]}
+				aria-describedby={instructionsId ?? attributes["aria-describedby"]}
+				onKeyDown={(event) => onSortKey?.(id, event)}
 				aria-label={`${label} ${t("drag")}`}
 			>
 				<GripVertical size={14} />
@@ -126,26 +140,14 @@ function CategoryStrip({
 			bi = savedOrder.indexOf(b);
 		return (ai < 0 ? 999 : ai) - (bi < 0 ? 999 : bi);
 	});
-	const keyboardCoordinates: KeyboardCoordinateGetter = (event, { context }) => {
-		if (event.code !== "ArrowLeft" && event.code !== "ArrowRight") return;
-		event.preventDefault();
-		const current = ordered.indexOf(String(context.over?.id ?? context.active?.id));
-		if (current < 0 || !context.collisionRect) return;
-		const target = ordered[current + (event.code === "ArrowLeft" ? -1 : 1)];
-		const rect = target ? context.droppableRects.get(target) : undefined;
-		if (!rect) return;
-		// Match closestCenter even when adjacent category pills have different widths.
-		return {
-			x: rect.left + (rect.width - context.collisionRect.width) / 2,
-			y: rect.top + (rect.height - context.collisionRect.height) / 2,
-		};
-	};
+	const [keyboardSort, setKeyboardSort] = useState<{ id: string; order: string[] } | null>(null);
+	const [sortStatus, setSortStatus] = useState("");
+	const sortInstructionsId = useId();
+	const sortHandles = useRef(new Map<string, HTMLButtonElement>());
+	const sortReturnId = useRef<string | null>(null);
+	const displayedOrder = keyboardSort?.order ?? ordered;
 	const sensors = useSensors(
 		useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
-		useSensor(KeyboardSensor, {
-			coordinateGetter: keyboardCoordinates,
-			scrollBehavior: "auto",
-		}),
 	);
 	const [manage, setManage] = useState<false | "manage" | "new">(false);
 	const [name, setName] = useState("");
@@ -159,6 +161,15 @@ function CategoryStrip({
 	const [expectedCategories, setExpectedCategories] = useState<Category[]>([]);
 	const pending = data.pendingCategoryEdits.find((edit) => edit.kind === kind);
 	const blocked = categoryBusy || !!pending || data.categoryEditsLoading || data.categoryEditsError;
+	useEffect(() => {
+		if (!manage || categoryBusy) return;
+		const id = keyboardSort?.id ?? sortReturnId.current;
+		if (!id) return;
+		const handle = sortHandles.current.get(id);
+		handle?.focus({ preventScroll: true });
+		if (keyboardSort) handle?.closest(".sortable-pill")?.scrollIntoView({ block: "nearest", inline: "nearest" });
+		else sortReturnId.current = null;
+	}, [keyboardSort, categoryBusy, manage]);
 	const memberAssets = (manage ? expectedAssets : data.assets).filter((asset) => asset.kind === kind && !asset.deleted).sort((a, b) => a.name.localeCompare(b.name));
 	const membersChanged = memberCategory !== "" && memberAssets.some((asset) => memberIds.includes(asset.id) !== (asset.category === memberCategory));
 	function categoryFailure(error: unknown) {
@@ -171,6 +182,9 @@ function CategoryStrip({
 		return t("error");
 	}
 	function selectManagedCategory(category: string, expectedId?: string) {
+		setKeyboardSort(null);
+		setSortStatus("");
+		sortReturnId.current = null;
 		const selected = builtins[kind].includes(category) ? null : data.categories.find((item) => item.kind === kind && !item.deleted && item.name === category) ?? null;
 		if ((expectedId && selected?.id !== expectedId) || (category && !builtins[kind].includes(category) && !selected)) {
 			setCategoryError(t("categoryEditStale"));
@@ -196,6 +210,9 @@ function CategoryStrip({
 	}
 	function closeManager() {
 		if (categoryBusy) return;
+		setKeyboardSort(null);
+		setSortStatus("");
+		sortReturnId.current = null;
 		setCategoryError("");
 		setManage(false);
 	}
@@ -242,15 +259,48 @@ function CategoryStrip({
 			setCategoryError(categoryFailure(error));
 		} finally { setCategoryBusy(false); }
 	}
+	async function persistOrder(next: string[]) {
+		if (blocked) return;
+		setCategoryBusy(true);
+		setCategoryError("");
+		try { await save("preference", { id: `categoryOrder-${kind}`, value: next }); setSortStatus(t("saved")); }
+		catch (error) { setCategoryError(categoryFailure(error)); }
+		finally { setKeyboardSort(null); setCategoryBusy(false); }
+	}
+	function sortKey(id: string, event: KeyboardEvent<HTMLButtonElement>) {
+		if (blocked) return;
+		if (event.key === "Tab" && keyboardSort) { setKeyboardSort(null); setSortStatus(t("categorySortCancelled")); return; }
+		if (![" ", "Enter", "ArrowLeft", "ArrowRight", "Escape"].includes(event.key)) return;
+		if (!keyboardSort && event.key !== " " && event.key !== "Enter") return;
+		event.preventDefault();
+		event.stopPropagation();
+		if (!keyboardSort) {
+			setKeyboardSort({ id, order: [...ordered] });
+			setSortStatus(t("categorySortPosition", { name: niceCategory(id, t), position: ordered.indexOf(id) + 1, total: ordered.length }));
+		} else if (event.key === "Escape") {
+			sortReturnId.current = keyboardSort.id;
+			setKeyboardSort(null);
+			setSortStatus(t("categorySortCancelled"));
+		} else if (event.key === " " || event.key === "Enter") {
+			sortReturnId.current = keyboardSort.id;
+			const next = keyboardSort.order;
+			void persistOrder(next);
+		} else {
+			const index = keyboardSort.order.indexOf(keyboardSort.id);
+			const target = index + (event.key === "ArrowLeft" ? -1 : 1);
+			if (index < 0 || target < 0 || target >= keyboardSort.order.length) return;
+			setKeyboardSort({ ...keyboardSort, order: arrayMove(keyboardSort.order, index, target) });
+			setSortStatus(t("categorySortPosition", { name: niceCategory(keyboardSort.id, t), position: target + 1, total: keyboardSort.order.length }));
+		}
+	}
 	async function onDragEnd(e: DragEndEvent) {
-		if (blocked || !e.over || e.active.id === e.over.id) return;
+		if (blocked || keyboardSort || !e.over || e.active.id === e.over.id) return;
 		const from = ordered.indexOf(String(e.active.id)),
 			to = ordered.indexOf(String(e.over.id));
 		if (from < 0 || to < 0) return;
 		const next = [...ordered];
 		next.splice(to, 0, next.splice(from, 1)[0]);
-		try { await save("preference", { id: `categoryOrder-${kind}`, value: next }); }
-		catch (error) { setCategoryError(categoryFailure(error)); }
+		await persistOrder(next);
 	}
 	async function addCategory() {
 		if (addingCategory.current || pending) return;
@@ -322,8 +372,8 @@ function CategoryStrip({
 			</section>}
 			{manage && (
 				<Dialog title={editingCategory ? t("categoryEdit") : manage === "new" ? t("newCategory") : t("categoryManage")} closeDisabled={categoryBusy} onClose={closeManager} onKeyDown={(event) => {
-					// Active drag movement and cancellation must reach dnd-kit before the popup closes.
-					if (["ArrowLeft", "ArrowRight", "Escape"].includes(event.key) && event.target instanceof Element && event.target.closest('.asset-category-order .drag-handle[aria-pressed="true"]')) event.preventBaseUIHandler();
+					// Pointer drag cancellation must reach dnd-kit before the popup closes.
+					if (event.key === "Escape" && event.target instanceof Element && event.target.closest('.asset-category-order .drag-handle[aria-pressed="true"]')) event.preventBaseUIHandler();
 				}}>
 				<div className="asset-category-inline">
 					{(!memberCategory || editingCategory) && <div className="field">
@@ -355,12 +405,14 @@ function CategoryStrip({
 					{memberCategory && !editingCategory && categoryError && <p className="field-error" role="alert">{categoryError}</p>}
 					<div className="list">
 						<DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
-							<SortableContext items={ordered} strategy={horizontalListSortingStrategy}>
+							<SortableContext items={displayedOrder} strategy={horizontalListSortingStrategy}>
 								<fieldset className="asset-category-order" aria-label={t("category")}>
-									{ordered.map((id) => <SortablePill key={id} id={id} label={niceCategory(id, t)} active={memberCategory === id} disabled={blocked} reorder={!blocked} onClick={() => { if (!blocked) selectManagedCategory(id); }} />)}
+									{displayedOrder.map((id) => <SortablePill key={id} id={id} label={niceCategory(id, t)} active={memberCategory === id} disabled={blocked} reorder={!blocked} keyboardMode={!!keyboardSort} keyboardActive={keyboardSort?.id === id} instructionsId={sortInstructionsId} registerHandle={(key, node) => { if (node) sortHandles.current.set(key, node); else sortHandles.current.delete(key); }} onSortKey={sortKey} onClick={() => { if (!blocked) selectManagedCategory(id); }} />)}
 								</fieldset>
 							</SortableContext>
 						</DndContext>
+						<p id={sortInstructionsId} className="sr-only">{t("categorySortKeysHint")}</p>
+						<p className="sr-only category-sort-status" role="status" aria-live="polite">{sortStatus}</p>
 						<div className="asset-category-members">
 							<div className="card-header"><h3>{t("categoryMembers")}{memberCategory ? ` · ${niceCategory(memberCategory, t)}` : ""}</h3>{memberCategory && !editingCategory && <Button size="small" disabled={blocked || !membersChanged} onClick={() => void saveMembers()}>{t("saveMembers")}</Button>}</div>
 							<p className="subtitle">{t("categoryMembersHint")}</p>
