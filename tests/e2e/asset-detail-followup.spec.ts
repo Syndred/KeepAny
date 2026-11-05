@@ -96,6 +96,7 @@ for (const locale of ['zh-CN', 'en'] as const) {
   await expect(page.locator('#project-detail-extras')).toBeVisible();
   await expect(page.locator('#project-detail-extras')).toBeFocused();
   await expect(page.locator('.asset-project-costs')).toBeVisible();
+  await expect.poll(async () => (await page.locator('#project-detail-extras').boundingBox())!.y).toBeLessThan(600);
   await page.locator('.asset-project-domain-row').getByRole('button', { name: t('edit'), exact: true }).click();
   let dialog = page.getByRole('dialog');
   const registrar = dialog.getByRole('textbox', { name: t('projectRegistrar'), exact: true });

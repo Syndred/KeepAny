@@ -121,7 +121,8 @@ export function AssetDetail() {
  }
  return <LegacyAssetDetail key={`${route.params?.kind}:${route.params?.id}:${route.hash.startsWith('project-')}`}/>;
 }
-export function ProjectDetailExtras({ projectId }: { projectId: string }) {
+export function ProjectDetailExtras({ projectId, onReady }: { projectId: string; onReady?: () => void }) {
+ useEffect(() => { onReady?.(); }, [onReady]);
  return <LegacyAssetDetail projectId={projectId} />;
 }
 function LegacyAssetDetail({ projectId }: { projectId?: string } = {}) {
