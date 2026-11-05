@@ -15,7 +15,7 @@ const copy = (locale: string) =>
 				add: "新增分类",
 				manage: "管理",
 				save: "保存分类",
-				collapse: "收起",
+				collapse: "取消",
 				remove: "移除",
 				edit: "编辑",
 				restore: "恢复",
@@ -25,7 +25,7 @@ const copy = (locale: string) =>
 				confirm: /确认 ·/,
 				restored: /已恢复 \d+ 条记录/,
 				duplicate: "该分类已存在。",
-				stale: "资料已变化，请收起后重新编辑。",
+				stale: "资料已变化，请关闭后重新编辑。",
 			}
 		: {
 				category: "Category",
@@ -33,7 +33,7 @@ const copy = (locale: string) =>
 				add: "New category",
 				manage: "Manage",
 				save: "Save collection",
-				collapse: "Collapse",
+				collapse: "Cancel",
 				remove: "Remove",
 				edit: "Edit",
 				restore: "Restore",

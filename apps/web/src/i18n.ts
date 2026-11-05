@@ -435,7 +435,7 @@ const copy: Record<string, [string, string]> = {
 		"Records changed. These changes could not be completed.",
 	],
 	categoryEditStale: [
-		"资料已变化，请收起后重新编辑。",
+		"资料已变化，请关闭后重新编辑。",
 		"Records changed. Close this editor and open it again.",
 	],
 	categoryNameInvalid: [
@@ -457,6 +457,10 @@ const copy: Record<string, [string, string]> = {
 	categoryEditCancelled: ["分类改动已撤销。", "Category changes undone."],
 	categoryDuplicate: ["该分类已存在。", "This category already exists."],
 	newCategory: ["新增分类", "New category"],
+	categoryManage: ["分类管理", "Manage categories"],
+	categorySortKeysHint: ["空格开始排序，左右键移动，空格或回车保存，Esc取消当前排序。", "Press Space to start sorting, arrow keys to move, Space or Enter to save, and Escape to cancel sorting."],
+	categorySortPosition: ["{{name}}，第 {{position}} 项，共 {{total}} 项。", "{{name}}, position {{position}} of {{total}}."],
+	categorySortCancelled: ["已取消排序。", "Sorting cancelled."],
 	categoryCollapse: ["收起", "Collapse"],
 	categoryHelp: [
 		"删除分类不会删除资产。",

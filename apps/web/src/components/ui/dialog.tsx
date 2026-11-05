@@ -1,7 +1,7 @@
 // shadcn Base UI composition; provenance in legal/third-party/shadcn-ui.
 import { Dialog as DialogPrimitive } from "@base-ui/react/dialog";
 import { X } from "lucide-react";
-import { type ReactNode, useRef } from "react";
+import { type ComponentProps, type ReactNode, useRef } from "react";
 import { useTranslation } from "react-i18next";
 export function Dialog({
 	title,
@@ -12,9 +12,11 @@ export function Dialog({
 	className,
 	headerActions,
 	focusTitleOnOpen = false,
+	onKeyDown,
 }: {
 	headerActions?: ReactNode;
 	focusTitleOnOpen?: boolean;
+	onKeyDown?: ComponentProps<typeof DialogPrimitive.Popup>["onKeyDown"];
 	className?: string;
 	title: string;
 	children: ReactNode;
@@ -47,6 +49,7 @@ export function Dialog({
 				<DialogPrimitive.Popup
 					className={`dialog${className ? ` ${className}` : ""}`}
 					aria-describedby={undefined}
+					onKeyDown={onKeyDown}
 					initialFocus={focusTitleOnOpen ? titleRef : undefined}
 					finalFocus={() => {
 						const target = returnFocusTo?.() ?? opener.current;
