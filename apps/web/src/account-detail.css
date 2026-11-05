@@ -57,6 +57,7 @@
 .page.asset-detail-account.account-relation-layout .asset-relations-card { grid-area:auto; order:0; display:flex; flex-direction:column; flex:1; min-width:0; min-height:0; }
 .page.asset-detail-account.account-relation-layout > .account-login-column { grid-column:2; grid-row:2; display:flex; flex-direction:column; gap:16px; min-width:0; min-height:0; margin:0; }
 .account-login-summary,.account-note-summary { flex:none; min-width:0; overflow:hidden; }
+.account-login-summary { padding:0; }
 .account-relation-layout .graph.account-family-graph:not(.account-family-graph--expanded) { flex:1; height:auto; min-height:180px; margin:0 12px 12px; }
 .account-relation-layout .asset-relations-card > .card-header { flex:none; }
 .account-relation-layout .account-graph-toolbar { flex:none; gap:10px; margin-bottom:12px; }
@@ -118,6 +119,8 @@
 .account-existing-attachments > summary { min-height:44px; cursor:pointer; }
 @media(min-width:1001px) and (min-height:720px) {
  .shell:has(.page.asset-detail-account.account-relation-layout) { min-height:calc(100dvh - 4px); }
+ .account-history-card:not(.is-empty) { min-height:150px; }
+ .account-history-list { contain:size; }
  .page.asset-detail-account.account-relation-layout { height:auto; min-height:calc(100dvh - var(--account-page-top,68px) - 2px); grid-template-rows:auto minmax(min-content,1fr); }
  .page.asset-detail-account.account-relation-layout:has(.account-graph-guide[open],.account-relation-details[open],.account-existing-attachments[open],>.reminder-task-context) { height:auto; min-height:calc(100dvh - var(--account-page-top,68px) - 2px); }
  .account-relation-layout:has(.account-graph-guide[open],.account-relation-details[open],>.reminder-task-context) .graph.account-family-graph:not(.account-family-graph--expanded) { flex:none; height:clamp(320px,42vh,520px); }

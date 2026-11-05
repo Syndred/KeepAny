@@ -39,6 +39,15 @@ async function screenshot(page:Page,name:string){
  const path=join(output,name+".png");await page.screenshot({path});return path;
 }
 async function addRelations(page:Page,t:T,ids:string[]){for(const id of ids){await page.locator("#account-relations").getByRole("button",{name:t("addRelation"),exact:true}).click();await selectChoice(page.locator("#relation-target"),{value:id});await page.locator("#relation-label").fill("Synthetic connection");await page.getByRole("dialog").getByRole("button",{name:t("save"),exact:true}).click();await expect(page.getByRole("dialog")).toHaveCount(0)}}
+async function checkHistoryViewport(page:Page,name:string){
+ await page.setViewportSize({width:1280,height:800});await waitForAccountGraphLayout(page);
+ await page.evaluate(()=>{(document.activeElement as HTMLElement|null)?.blur();scrollTo(0,0)});
+ expect(await page.evaluate(()=>document.documentElement.scrollHeight)).toBeLessThanOrEqual(801);
+ const list=page.locator('.account-history-list'),row=page.locator('.account-history-row').first();
+ expect(await list.evaluate(e=>e.clientHeight)).toBeGreaterThanOrEqual((await row.boundingBox())!.height);
+ await page.locator('.account-history-row').last().getByRole('button').scrollIntoViewIfNeeded();
+ expect(await page.evaluate(()=>scrollY)).toBe(0);await screenshot(page,name);
+}
 
 for(const language of ["zh-CN","en"] as const){
  const t:T=key=>(resources[language].translation as Record<string,string>)[key]??key;
@@ -56,10 +65,11 @@ for(const language of ["zh-CN","en"] as const){
   await login.getByRole("button",{name:t("accountDetailAddPassword"),exact:true}).click();await page.locator("#password-vault-entry-title").fill("");await page.getByRole("dialog").getByRole("button",{name:t("save"),exact:true}).click();expect(await page.locator("#password-vault-entry-title").evaluate((e:HTMLInputElement)=>e.validity.valueMissing)).toBe(true);await page.getByRole("dialog").getByRole("button",{name:t("cancel"),exact:true}).click();await expect(login.locator("[data-login-password]")).toHaveText(t("pwVaultNoPassword"));
   await page.locator(".page-header").getByRole("button",{name:t("edit"),exact:true}).click();await page.locator("#password-vault-entry-title").fill("Updated account title");await page.locator("#password-vault-entry-username").fill("changed@example.test");await page.locator("#password-vault-entry-url").fill("https://changed.example.test/new");await page.locator("#password-vault-entry-notes").fill("Updated account notes");await page.locator("#password-vault-entry-password").fill("Synthetic edited password");
   await injectMemoryFailure(page);await page.getByRole('dialog').getByRole('button',{name:t('save'),exact:true}).click();await expect(page.getByRole('dialog').getByRole('alert')).toHaveText(t('accountEntryPartialMemory'));await expect(page.locator('#password-vault-entry-notes')).toHaveValue('Updated account notes');await expect(page.locator('#password-vault-entry-password')).toHaveValue('Synthetic edited password');await screenshot(page,`memory-error-${language}`);
-  await save(page,t);await expect(page.locator(".account-note-summary")).toContainText("Updated account notes");await expect(page.locator(".account-history-row")).toHaveCount(1);
+  await save(page,t);await expect(page.locator(".account-note-summary")).toContainText("Updated account notes");await expect(page.locator(".account-history-row")).toHaveCount(1);await checkHistoryViewport(page,`history-one-${language}`);
   await login.getByRole("button",{name:t("pwVaultRevealPassword"),exact:true}).click();await expect(login.locator("[data-login-password]")).toHaveText("Synthetic edited password");await login.getByRole("button",{name:t("pwVaultHidePasswordValue"),exact:true}).click();await login.getByRole("button",{name:t("pwVaultCopyPassword"),exact:true}).click();expect(await page.evaluate(()=>navigator.clipboard.readText())).toBe("Synthetic edited password");
   const restore=page.locator(".account-history-row").first().getByRole("button");await restore.click();await page.getByRole("dialog").getByRole("button",{name:t("cancel"),exact:true}).click();await expect(page.locator(".account-note-summary")).toContainText("Updated account notes");
   await restore.click();await page.getByRole("dialog").getByRole("button",{name:t("pwVaultHistoryRestore"),exact:true}).click();await expect(page.getByRole("dialog")).toHaveCount(0);await expect(page.locator(".account-note-summary")).toContainText("Original account notes");await expect(login.locator("[data-login-password]")).toHaveText(t("pwVaultNoPassword"));await expect(page.locator(".account-history-row")).toHaveCount(2);await expect(page.locator(".page-header h1")).toHaveText(rootName);await expect(login.locator("[data-login-username]")).toHaveText("13800000056");await expect(login.locator(".account-login-url-value")).toHaveAttribute("href","https://account.example.test/");await expect(page.locator(`#account-relations [data-id="${ids.root}"]`)).toContainText(rootName);
+  await checkHistoryViewport(page,`history-multiple-${language}`);
   await page.reload();await page.locator("#password-vault-unlock-master").fill(master);await page.getByRole("button",{name:t("accountUnlockAction"),exact:true}).click();await expect(page.locator(".account-note-summary")).toContainText("Original account notes");await expect(related.first()).toContainText(t("accountRelated_template"));
   // An injected clipboard rejection is an auxiliary error fixture; user interaction remains visible.
   await login.getByRole("button",{name:t("compactAccountCopyUrl"),exact:true}).click();await expect(login.getByRole('button',{name:t('compactAccountCopyUrl'),exact:true}).locator('.lucide-check')).toHaveCount(1);
