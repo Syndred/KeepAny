@@ -192,7 +192,7 @@ for (const locale of ["zh-CN", "en"] as const) {
   await expect(link).toBeFocused();
   expect(await link.evaluate(node => node.matches(":focus-visible"))).toBe(true);
   await page.screenshot({ path: info.outputPath("focus.png"), fullPage: false });
-  await page.locator(".overview-countdown-footer button").click(); await page.screenshot({ path: info.outputPath("overdue.png"), fullPage: false });
+  await page.locator(".overview-countdown-footer button").filter({hasText:/逾期|overdue/i}).click(); await page.screenshot({ path: info.outputPath("overdue.png"), fullPage: false });
   await page.keyboard.press("Escape"); await page.getByRole("button", { name: text("accountGraphExpand"), exact: true }).click();
   await expect(page.getByRole("dialog").locator('[data-layout-ready="true"]')).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
