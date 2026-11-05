@@ -39,7 +39,7 @@ In an empty **Overview**, choose **Start with sample records**, then **Add sampl
 1. Add your own category in Assets, then add a record; a project or domain is optional.
 2. Add a login account and connect it to a related record.
 3. Record a subscription, its renewal date, and related records.
-4. Create a maintenance task and review an account's connections and change impact.
+4. Open reminders from the top-right bell, follow them to the relevant records, and review account connections and change impact.
 5. Create an encrypted `.ka1` backup in **Backup & restore**, **save the downloaded file**, then preview and restore it in a separate browser profile.
 
 See the [trial guide](docs/试用指南.md#english) for setup, storage, and recovery. Start with sample records and complete a restore before adding important information.
